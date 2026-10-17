@@ -921,8 +921,9 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {};
     var nomeHost = (t.giocatori && t.giocatori[0]) || "Host";
+    var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
     var H = { fase: "lobby", codice: "…", pronta: false, secondi: imp.secondi || 80, giri: imp.giri || 2, difficili: !!imp.difficili,
-      players: [{ id: "host", nome: nomeHost, omino: mioAvatar(nomeHost), punti: 0, col: COL_GIOC[0] }],
+      players: [{ id: IO, nome: nomeHost, omino: mioAvatar(nomeHost), punti: 0, col: COL_GIOC[0] }],
       giro: 0, idx: -1, ordine: [], turno: 0, disegnatore: null, parola: null, opzioni: null, usate: {},
       scadenza: 0, indovinati: [], scoperte: [], guad: {}, tratti: [], chat: [], nMsg: 0, ultimo: null, classifica: null, to: null, toInd: [],
       partitaId: null, statGiocatori: Object.create(null), paroleDifficiliDisegnate: 0, prossimi: [], perche: null, cestino: null, disegnato: false,
@@ -941,6 +942,16 @@
     }
     var nostre0 = Array.isArray(imp.nostre) ? imp.nostre : nostreDelProfilo();
     preparaNostre(nostre0, modoNostre(imp, nostre0.length));
+    // la partita di prima (l'host ha ricaricato la pagina o riaperto l'app: t.ripresa): si riprende da lì. Il disegno no
+    // (non si ricorda: è grosso): chi disegnava ricomincia con la stessa parola e il tempo intero; i punti restano.
+    // Gli amici non si danno per usciti: si aspettano ("attesi") e rientrano da soli; chi non torna entro 10 secondi esce
+    var R0 = t.ripresa && t.ripresa.stato, ripresa = !!(R0 && R0.fase && R0.fase !== "lobby" && R0.players), attesi = {}, tAttesi = null;
+    if (ripresa) {
+      H = R0; H.to = null; H.toInd = []; H.tratti = []; H.cestino = null; H.pronta = false;
+      H.guardano = H.guardano || []; H.prossimi = H.prossimi || []; H.chat = H.chat || [];
+      H.statGiocatori = Object.assign(Object.create(null), H.statGiocatori || {}); H.alt = Object.assign(Object.create(null), H.alt || {});
+      H.players.forEach(function (p) { if (p.id !== IO && !p.via) attesi[p.id] = 1; });
+    }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function statP(id) { return H.statGiocatori[id] || (H.statGiocatori[id] = statVuoteScara()); }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
@@ -962,17 +973,7 @@
     var rete = SGNet.ospita("scarabocchio", {
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
-      onAddio: function (id) {
-        if (H.guardano.indexOf(id) >= 0) H.guardano.splice(H.guardano.indexOf(id), 1);
-        var p = pById(id); if (!p || p.via) return;
-        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); ricolora(); bd(); return; }
-        p.via = true; msg("sys", "👋 " + p.nome + " ha lasciato la partita");
-        if (H.fase === "fine") return bd();
-        if (presenti().length < 2) { H.perche = "soli"; return fine(); }
-        if (id === H.disegnatore && (H.fase === "scelta" || H.fase === "disegno")) return fineTurno("via");
-        if (H.fase === "disegno" && tuttiOk()) return fineTurno("tutti");
-        bd();
-      },
+      onAddio: addio,
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") return join(id, m);
@@ -984,11 +985,26 @@
         else if (m.t === "prova") prova(id, m.x);
         else if (m.t === "sync") sync(id);
       },
-      onErrore: function () { senzaRete(t); }
-    });
+      onErrore: function () { clearTimeout(tAttesi); t.ricorda(null); senzaRete(t); }
+    }, { ripresa: ripresa });   // (gli amici non tornano in saletta: la partita riprende)
+    if (ripresa && rete && rete.codice) H.codice = rete.codice;
+    // chi se ne va (o, dopo una ripresa, non è tornato in tempo)
+    function addio(id) {
+      delete attesi[id];
+      if (H.guardano.indexOf(id) >= 0) H.guardano.splice(H.guardano.indexOf(id), 1);
+      var p = pById(id); if (!p || p.via) return;
+      if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); ricolora(); bd(); return; }
+      p.via = true; msg("sys", "👋 " + p.nome + " ha lasciato la partita");
+      if (H.fase === "fine") return bd();
+      if (presenti().length < 2) { H.perche = "soli"; return fine(); }
+      if (id === H.disegnatore && (H.fase === "scelta" || H.fase === "disegno")) return fineTurno("via");
+      if (H.fase === "disegno" && tuttiOk()) return fineTurno("tutti");
+      bd();
+    }
     // chi entra (o rientra con lo stesso id: pagina ricaricata, telefono riacceso)
     function join(id, m) {
       var p = pById(id);
+      delete attesi[id];   // (dopo una ripresa: è tornato)
       if (p) {
         if (p.via) {   // era stato dato per uscito: torna in partita (o nella prossima, se è finita)
           p.via = false;
@@ -997,6 +1013,8 @@
           bd();
         } else rete.invia({ t: "vm", vm: vm() });   // ha solo bisogno della foto (niente da ridisegnare qui)
         if (H.fase !== "lobby" && H.fase !== "fine") sync(id);   // il disegno fin qui e i suoi segreti (la parola, se disegna o l'ha indovinata)
+        // la partita è ripresa mentre disegnava: glielo dico (la lavagna è di nuovo vuota, il tempo è di nuovo tutto)
+        if (H.ridisegna === id && H.fase === "disegno" && id === H.disegnatore) { H.ridisegna = null; privato(id, { t: "avviso", x: "🔁 Ridisegna: la partita è ripresa" }); }
         return;
       }
       var nome = String(m.nome || "Amico").slice(0, 16), omino = avatarValido(m.omino);
@@ -1024,7 +1042,7 @@
     function mappaOmini() { var o = {}; H.players.forEach(function (p) { o[p.id] = p.omino || null; }); return o; }
     // a un telefono solo (parola da disegnare, "ci sei quasi"…): gli altri la ignorano
     function privato(id, m) {
-      if (id === "host") {
+      if (id === IO) {
         if (!vista) return;
         if (m.t === "quasi") vista.quasi(m.x); else if (m.t === "avviso") vista.avviso(m.x); else if (m.t === "sa") vista.sa(m);
         return;
@@ -1033,8 +1051,8 @@
     }
     function sa(id) { return H.fase === "disegno" && H.indovinati.indexOf(id) >= 0; }   // ha indovinato la parola di questo turno?
     function priv() {   // quello che vedo solo io: la parola se disegno (o se l'ho indovinata), le 3 scelte
-      if (H.disegnatore === "host") return { parola: H.parola, opzioni: H.fase === "scelta" ? H.opzioni : null, nostre: H.fase === "scelta" ? H.opzNostre : null };
-      if (sa("host")) return { parola: H.parola };
+      if (H.disegnatore === IO) return { parola: H.parola, opzioni: H.fase === "scelta" ? H.opzioni : null, nostre: H.fase === "scelta" ? H.opzNostre : null };
+      if (sa(IO)) return { parola: H.parola };
       return null;
     }
 
@@ -1053,17 +1071,54 @@
       if (H.guardano.length) o.guardano = H.guardano.slice();
       return o;
     }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
+    var viciK = "";
+    function vici() { var k = H.guardano.join(","); if (k !== viciK && t.vici) { viciK = k; t.vici(H.guardano.length ? H.guardano.slice() : null); } }
     function bd() {
       var v = vm();
       rete.invia({ t: "vm", vm: v });
+      ricorda(); vici();
       if (v.fase === "lobby") { chiudiVista(); lobbyScara(t, v, cbH); }
       else if (v.fase === "fine") { chiudiVista(); finale(t, v, cbH); }
       else {
-        if (!vista) { cbH._chiaveFine = null; vista = creaVista(t, "host", cbH); vista.omini(mappaOmini()); }
+        if (!vista) { cbH._chiaveFine = null; vista = creaVista(t, IO, cbH); vista.omini(mappaOmini()); }
         vista.aggiorna(v, priv());
       }
     }
     function chiudiVista() { if (vista) { vista.chiudi(); vista = null; } }
+    // la partita com'è adesso, per riprenderla se ricarico la pagina: tutto H tranne i timer e il disegno (grosso: alla
+    // ripresa si ridisegna da capo). La parola segreta resta qui (e nella copia per il vice), mai nella foto
+    function ricorda() {
+      if (H.fase === "lobby") return t.ricorda(null);
+      var s = {}; Object.keys(H).forEach(function (k) { if (k !== "to" && k !== "toInd" && k !== "tratti" && k !== "cestino") s[k] = H[k]; });
+      t.ricorda(s);
+    }
+    // la ripresa: chi sceglieva la parola sceglie di nuovo; chi disegnava ricomincia con la stessa parola, la lavagna
+    // vuota e il tempo intero (un turno nuovo: tutti i telefoni puliscono la lavagna); chi l'aveva già indovinata tiene i punti
+    function riprendi() {
+      var f = H.fase;
+      tAttesi = setTimeout(function () { Object.keys(attesi).forEach(addio); }, 10000);
+      if (f === "fine") return bd();
+      if (f === "scelta" || f === "disegno") {
+        H.turno++; H.q = 0; H.disegnato = false; H.corti = false; H.scoperte = [];
+        if (f === "scelta" || !H.parola) {
+          H.fase = "scelta"; H.scadenza = Date.now() + SCELTA_MS; bd();
+          privato(H.disegnatore, { t: "priv", opzioni: H.opzioni, nostre: H.opzNostre });
+          H.to = setTimeout(function () { scegli(H.disegnatore, Math.floor(Math.random() * 3)); }, SCELTA_MS);
+          return;
+        }
+        msg("sys", "🔁 La partita è ripresa: " + ((pById(H.disegnatore) || {}).nome || "…") + " ridisegna da capo");
+        H.ridisegna = H.disegnatore;   // (glielo dico appena rientra)
+        armaDisegno(); bd();
+        privato(H.disegnatore, { t: "priv", parola: H.parola });
+        if (H.disegnatore === IO) { H.ridisegna = null; privato(IO, { t: "avviso", x: "🔁 Ridisegna: la partita è ripresa" }); }
+        return;
+      }
+      if (f === "punti") {   // il risultato del turno: ancora qualche secondo, poi il prossimo
+        bd(); H.to = setTimeout(prossimoTurno, PUNTI_MS); return;
+      }
+      prossimoTurno();
+    }
 
     // ----- la partita -----
     function comincia() {
@@ -1121,9 +1176,16 @@
       H.parola = H.opzioni[i]; H.usate[H.parola] = 1; H.parolaNostra = H.opzNostre.indexOf(i) >= 0;
       statP(id).turniDisegnati++;
       if (DIFFICILI.indexOf(H.parola) >= 0) { statP(id).paroleDifficiliDisegnate++; H.paroleDifficiliDisegnate++; }
-      H.fase = "disegno"; H.scadenza = Date.now() + H.secondi * 1000;
       var d = pById(H.disegnatore);
       msg("sys", "✏️ " + (d ? d.nome : "…") + " sta disegnando");
+      armaDisegno();
+      bd();
+      privato(H.disegnatore, { t: "priv", parola: H.parola });
+    }
+    // si disegna: il tempo intero, le lettere che si scoprono col tempo, la lavagna vuota troppo a lungo
+    // (anche alla ripresa, quando chi disegnava ricomincia con la stessa parola)
+    function armaDisegno() {
+      H.fase = "disegno"; H.scadenza = Date.now() + H.secondi * 1000;
       // col passare del tempo si scoprono alcune lettere (mai tutte)
       var lettere = []; for (var j = 0; j < H.parola.length; j++) if (/[a-zà-ù]/i.test(H.parola[j])) lettere.push(j);
       var quante = lettere.length >= 8 ? 3 : (lettere.length >= 5 ? 2 : (lettere.length >= 3 ? 1 : 0));
@@ -1136,8 +1198,6 @@
       // chi disegna è distratto? dopo 20 secondi con la lavagna ancora vuota si passa al prossimo
       H.toInd.push(setTimeout(function () { if (H.fase === "disegno" && !H.disegnato && !H.indovinati.length) fineTurno("vuoto"); }, 20000));
       H.to = setTimeout(function () { fineTurno("tempo"); }, H.secondi * 1000);
-      bd();
-      privato(H.disegnatore, { t: "priv", parola: H.parola });
     }
     function tuttiOk() { return presenti().every(function (p) { return p.id === H.disegnatore || H.indovinati.indexOf(p.id) >= 0; }); }
     function prova(id, x) {
@@ -1238,6 +1298,9 @@
     function nuova() {   // "Nuova partita": tutti tornano nella saletta, stessi amici
       ferma();
       H.players = presenti();
+      // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
+      if (!pById(IO)) { H.guardano = H.guardano.filter(function (x) { return x !== IO; }); H.players.push({ id: IO, nome: nomeHost, omino: mioAvatar(nomeHost), punti: 0 }); statP(IO); }
+      H.players.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
       H.prossimi.forEach(function (x) { if (!pById(x.id) && H.players.length < 10) { H.players.push({ id: x.id, nome: x.nome, omino: x.omino, punti: 0 }); statP(x.id); } });   // chi è arrivato a partita finita
       H.prossimi = []; ricolora();
       H.players.forEach(function (p) { p.punti = 0; });
@@ -1265,28 +1328,28 @@
       Array.prototype.push.apply(tr.p, pul);
       H.disegnato = true; H.cestino = null;
       rete.inviaVeloce({ t: "tr", da: da, n: H.turno, q: ++H.q, id: tr.id, c: tr.c, w: tr.w, f: tr.f, p: pul });
-      if (da !== "host" && vista) vista.tratto({ id: tr.id, c: tr.c, w: tr.w, f: tr.f, p: pul });
+      if (da !== IO && vista) vista.tratto({ id: tr.id, c: tr.c, w: tr.w, f: tr.f, p: pul });
     }
     function annulla(da, id) {
       if (H.fase !== "disegno" || da !== H.disegnatore) return;
       var tr = trova(id) || H.tratti[H.tratti.length - 1]; if (!tr) return;
       H.tratti = H.tratti.filter(function (x) { return x !== tr; });
       rete.inviaVeloce({ t: "annulla", da: da, n: H.turno, q: ++H.q, id: tr.id });
-      if (da !== "host" && vista) vista.annulla(tr.id);
+      if (da !== IO && vista) vista.annulla(tr.id);
     }
     function pulisci(da) {
       if (H.fase !== "disegno" || da !== H.disegnatore) return;
       if (H.tratti.length) H.cestino = H.tratti;   // per poterlo annullare
       H.tratti = [];
       rete.inviaVeloce({ t: "pulisci", da: da, n: H.turno, q: ++H.q });
-      if (da !== "host" && vista) vista.pulisci();
+      if (da !== IO && vista) vista.pulisci();
     }
     // "Annulla" subito dopo il cestino: torna il disegno com'era
     function ripristina(da) {
       if (H.fase !== "disegno" || da !== H.disegnatore || !H.cestino || H.tratti.length) return;
       H.tratti = H.cestino; H.cestino = null;
       rete.inviaVeloce({ t: "disegno", da: da, turno: H.turno, q: ++H.q, tratti: H.tratti });
-      if (da !== "host" && vista) vista.tutti(H.tratti);
+      if (da !== IO && vista) vista.tutti(H.tratti);
     }
     // chi arriva a disegno iniziato (o si ricollega) chiede tutto il disegno
     function sync(id) {
@@ -1297,21 +1360,21 @@
     }
 
     var cbH = {
-      sonoHost: true, myId: "host",
+      sonoHost: true, myId: IO,
       onComincia: comincia, onNuova: nuova,
       onEsci: function () {
-        function via() { ferma(); chiudiVista(); rete.chiudi(); t.esci(); }
+        function via() { ferma(); clearTimeout(tAttesi); t.ricorda(null); chiudiVista(); rete.chiudi(); t.esci(); }
         if (H.fase !== "lobby" && H.fase !== "fine") return conferma(t, "Chiudere la partita per tutti?", "🚪 Chiudi", via);
         via();
       },
-      onTratto: function (m) { tratto("host", m); },
-      onAnnulla: function (id) { annulla("host", id); },
-      onPulisci: function () { pulisci("host"); },
-      onRipristina: function () { ripristina("host"); },
-      onScegli: function (i) { scegli("host", i); },
-      onProva: function (x) { prova("host", x); }
+      onTratto: function (m) { tratto(IO, m); },
+      onAnnulla: function (id) { annulla(IO, id); },
+      onPulisci: function () { pulisci(IO); },
+      onRipristina: function () { ripristina(IO); },
+      onScegli: function (i) { scegli(IO, i); },
+      onProva: function (x) { prova(IO, x); }
     };
-    bd();
+    if (ripresa) riprendi(); else bd();
   }
 
   // =========================================================
@@ -1456,6 +1519,8 @@
     descrizione: "Uno disegna una parola segreta, gli altri la indovinano scrivendo in chat: prendi tanti punti quanti secondi mancano. Si gioca online, ognuno dal suo telefono. Da 2 a 10.",
     giocatoriMin: 2, giocatoriMax: 10, difficolta: 1,
     postiOnline: 10,   // posti online
+    riprende: true,      // se l'host ricarica a metà partita, la partita riprende (chi disegnava ricomincia con la stessa parola)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     modi: [],            // solo online: ognuno ha bisogno del suo schermo (la parola la vede solo chi disegna)
     soloOnline: true,
     etichettaGiocatori: "🔗 Online · 2–10",

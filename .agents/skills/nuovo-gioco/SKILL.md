@@ -7,7 +7,7 @@ description: Usala quando devi creare un nuovo gioco in SPeeD GAME (o portare un
 
 ## Parti SEMPRE dal modello
 Copia `.agents/skills/nuovo-gioco/modello-gioco-online.js` in `js/games/<id>.js` e cambia **solo le parti segnate con "QUI"**.
-È un gioco vero e già provato ("Il più veloce"). Saletta, ingresso col profilo, segreti a un telefono solo, "⚙️ Regole", uscite con `t.conferma`, chi ricarica o riaccende il telefono, chi arriva tardi e guarda, chi non è stato scelto in "Chi gioca?" e guarda (`t.puoSedersi`), "Prossimo giro" che va avanti da solo (`t.contoAvanti`), "Riprova" se il primo collegamento non riesce, fine partita con faccine, medaglie a pari merito e i tasti di fine del core (`t.tastiFine`: Rivincita col 3-2-1, Cambia gioco, Ci sto), torneo e "Nuova partita" (`t.onRivincita`) sono già fatti giusti: **non riscriverli a modo tuo**.
+È un gioco vero e già provato ("Il più veloce"). Saletta, ingresso col profilo, segreti a un telefono solo, "⚙️ Regole", uscite con `t.conferma`, chi ricarica o riaccende il telefono, chi arriva tardi e guarda, chi non è stato scelto in "Chi gioca?" e guarda (`t.puoSedersi`), "Prossimo giro" che va avanti da solo (`t.contoAvanti`), "Riprova" se il primo collegamento non riesce, fine partita con faccine, medaglie a pari merito e i tasti di fine del core (`t.tastiFine`: Rivincita col 3-2-1, Cambia gioco, Ci sto), torneo e "Nuova partita" (`t.onRivincita`), **l'host che ricarica e ritrova la partita** (`riprende`, `t.ricorda`, `t.ripresa`) e **l'amico che la porta avanti se l'host sparisce** (`riserva`, `t.mioId`) sono già fatti giusti: **non riscriverli a modo tuo**.
 Se il gioco ha anche un modo sullo stesso telefono (o contro il Bot), aggiungilo accanto, sempre partendo dal modello.
 
 **Online = la Sala della serata.** "Online" da un gioco apre la Sala (un codice per tutta la serata; interruttore `SALA_SEMPRE` in core.js). Il gioco non deve fare niente di speciale: apre la sua stanza come nel modello, e il core gli passa nel tavolo `t` chi gioca, i tasti di fine e la rivincita. Chi entra arriva da solo nella saletta del gioco, con lo stesso id che ha nella Sala.
@@ -32,6 +32,8 @@ SG.registra({
   modi: [ { modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "..." } ],   // solo i modi LOCALI
   // soloOnline: true,        // se si gioca solo online (allora modi: [])
   postiOnline: 10,            // quanti giocano alla stessa partita online (2 = gioco a due); nella Sala oltre questo numero c'è "Chi gioca?"
+  riprende: true,             // se l'host ricarica o riapre l'app, la partita online riprende da dove era (vedi "La rete salta, la partita no")
+  riserva: true,              // se l'host sparisce del tutto un amico porta avanti la partita (NON nei giochi a due né in tempo reale)
   // riassunto: function (imp) { return imp.giri + " giri"; },   // facoltativo: la riga "📜 Si gioca così" della saletta
   regole: [ "Riga di regola con <b>grassetto</b>." ],
   impostazioni: function (box, dove, aiuti) { ... },
@@ -50,7 +52,7 @@ Aiuti nuovi (14 ott 2026):
 - `t.contoAvanti(nodo, secondi, fn, chiave)`: su un tasto mette il numero che conta e a zero chiama `fn` (l'host); su una scritta mostra "Si va avanti tra N…" (gli altri, `fn = null`). Stessa `chiave` = il conto continua anche se il tasto viene ridisegnato. Toccato il tasto, il conto si ferma.
 - `t.faccine()`: la fila delle faccine della saletta, da mettere dove si aspetta o si guarda. `null` se la partita non è online.
 - `t.conferma(domanda, nota, testoSì, fn)` (o `t.conferma(domanda, fn)`): la finestra di conferma dell'app, al posto di `window.confirm`.
-- In `SG.registra`: `postiOnline` (quanti giocano online; 2 = giochi a due, gli altri guardano), `riassunto(imp)` (facoltativo), `hostDiRiserva: true` (se l'host sparisce un amico porta avanti la partita), nei `modi` `diretto: true` (parte senza impostazioni) e `min` (minimo di giocatori di quel modo). `impostazioni` riceve anche `aiuti.giocatori` (i nomi).
+- In `SG.registra`: `postiOnline` (quanti giocano online; 2 = giochi a due, gli altri guardano), `riassunto(imp)` (facoltativo), `riprende` e `riserva` (vedi sotto; `hostDiRiserva: true` è il vecchio host di riserva fatto in casa di Parola d'ordine: nei giochi nuovi mai), nei `modi` `diretto: true` (parte senza impostazioni) e `min` (minimo di giocatori di quel modo). `impostazioni` riceve anche `aiuti.giocatori` (i nomi).
 Il contratto della Sala (15 ott 2026, nel modello sono già usati tutti):
 - `t.onRivincita = function () { … }`: l'host ci mette la sua "Nuova partita" (tutti di nuovo nella STESSA saletta, solo a partita finita). La usa il tasto "↻ Rivincita" del core: se ci sono tutti, la saletta riparte da sola col 3-2-1.
 - `t.tastiFine(piede, { host, nuova, esci })`: nella schermata finale online mette nel `piede` i tasti uguali per tutti (Sala: "↻ Rivincita · 👍 3" e "🎮 Cambia gioco" per l'host, "👍 Ci sto!" e "🏠 Torna in Sala" per gli altri; fuori dalla Sala "↻ Nuova partita (stessi amici)" e "🏠 Esci"). Torna `true` se li ha messi; `false` (sullo stesso telefono, col Bot, torneo a eliminazione, chi guarda la partita di altri) = metti i tasti di sempre. `nuova` = la tua "Nuova partita" (se manca, `t.onRivincita`), `esci` = la tua uscita.
@@ -64,7 +66,7 @@ Il contratto della Sala (15 ott 2026, nel modello sono già usati tutti):
 - `onErrore` arriva **solo se il primo collegamento non riesce** (15 secondi): mostra "Riprova" (nel modello: `erroreRete`). Dopo, la rete che salta la gestisce il core ("📶 Mi ricollego…"): il gioco non deve chiudere niente.
 - `onChiuso(perché)`: `{ voluto: true }` l'host ha chiuso apposta, `{ sparito: true }` l'host non è tornato (fuori dalla Sala il core mostra già "La stanza è chiusa").
 - `onForse(id)` / `onTornato(id)`: un amico è sparito senza salutare / è tornato in tempo (nel modello: 📶 accanto al nome). Dopo 20 secondi arriva `onAddio(id)`. Se poi torna, il suo "join" ha lo stesso id: ridagli il suo posto.
-- Nella foto metti sempre `fase` ("lobby", "gioco", "fine"): se l'host ricarica la pagina il core riapre la stanza con lo stesso codice e tutti ripartono dalla saletta.
+- Nella foto metti sempre `fase` ("lobby", "gioco", "fine"): se l'host ricarica la pagina il core riapre la stanza con lo stesso codice; con `riprende` la partita continua da dove era, senza si riparte dalla saletta.
 - I messaggi `"__…"` sono del core: il gioco non li riceve e non deve usare nomi così.
 - **Gli id dei giocatori devono comparire nei messaggi di lobby/vm**: chi entra ripete "join" finché non vede il suo id.
 - Saletta: `t.lobby({ host, codice, pronta, giocatori: [{ id, nome, omino, host, tu }], min, puoiDaSolo, vuoti, extra: [nodi], attesa, testoComincia, onComincia, onEsci })`. Chiamala a ogni cambio: si aggiorna al suo posto.
@@ -74,6 +76,22 @@ Il contratto della Sala (15 ott 2026, nel modello sono già usati tutti):
 - Ogni attesa di un tocco ha un tempo: l'host ha il tasto con `t.contoAvanti(...)`, gli altri la scritta col conto. Nella foto manda i **secondi che mancano** (non l'ora: gli orologi dei telefoni sono diversi).
 - Giochi a due (`postiOnline: 2`): gioca solo l'avversario scelto dall'host (il suo id nella foto); chi è in più guarda, senza "Tu" né "Tocca a te", con le faccine. Nella Sala con 3 o più persone il core propone il "⚔️ Torneo a eliminazione" (tabellone con semifinali e finale) o "Una sfida" (l'host sceglie i due): per entrarci il gioco deve stare in `GIOCHI_ELIMINAZIONE` (core.js), mostrare la partita a chi guarda (`t.linkParams.guarda`) e trasmettere quella col Bot (`t.trasmetti`), come dice `AGENTS.md`.
 - Mai mandare segreti a tutti (le carte di un altro, i ruoli nascosti): solo al telefono giusto.
+
+## La rete salta, la partita no (Passo 5: ripresa e host di riserva)
+Ogni gioco online nuovo **riprende** (nel modello è già tutto fatto: parti da lì).
+- `riprende: true` in `SG.registra`: se l'host ricarica la pagina o l'app si chiude e si riapre (entro 20 minuti), il core gli riapre la stessa stanza e passa al gioco la partita di prima in `t.ripresa`. Gli amici non tornano in saletta: leggono «🔁 Paky è tornato: la partita riprende da dove era».
+- `riserva: true` (solo con `riprende`): se l'host sparisce del tutto (telefono spento, batteria), dopo pochi secondi un amico (il "vice": i primi due arrivati, o quelli scelti con `t.vici([id, …])`) porta avanti la partita: il core fa partire il gioco sul suo telefono **da host**, con la copia della partita in `t.ripresa` (`daRiserva: true`). L'host di prima che torna rientra da giocatore, col suo posto. **Niente `riserva`** nei giochi a due (l'unico amico è l'avversario: vedrebbe le navi o le carte dell'host) e in quelli in tempo reale. Se ci sono segreti e c'è chi guarda, preferisci lui come vice con `t.vici`.
+- **`t.mioId`**: chi tiene la partita su questo telefono, `"host"` oppure, dopo un subentro, l'id da amico del vice. Nel gioco `var IO = t.mioId;` e **IO ovunque** intendi "io che tengo la partita" (il mio posto, le mie mosse, i miei segreti): mai `"host"` scritto fisso.
+- **`t.ricorda(stato, soloQui)`** in `bd()`, dopo ogni cambiamento: `stato` = un oggetto **semplice** con fase, giocatori **con gli id**, punti, segreti, mazzi e le **scadenze come ore** (`Date.now() + ms`). Niente timer, niente nodi della pagina, niente funzioni. `soloQui` (facoltativo) = i pezzi grossi che restano su questo telefono e non vanno al vice (es. i tratti di un disegno): la copia per il vice deve stare sotto i 60 KB (gli avatar lasciali fuori: tornano col "join"). Il core salva al massimo ogni mezzo secondo.
+- **`t.ricorda(null)`** quando non c'è niente da riprendere: in saletta (anche dopo "Nuova partita") e quando l'host esce apposta (Esci). Prima di `t.risultato` non serve: un risultato uguale a quello già dato per la stessa stanza il core lo ignora (niente XP doppi).
+- **`t.ripresa`** = `null` oppure `{ stato, soloQui, io, gen, daRiserva, vecchioHost, eta, ora(x) }`. All'inizio dell'host, se c'è (e la fase non è la saletta):
+  1. ricostruisci lo stato da `t.ripresa.stato` (togli i timer, ricostruisci mazzi e liste se li hai salvati in breve);
+  2. metti **tutti gli altri `via`**: rientrano da soli in un secondo col loro "join" (stesso id), e lì gli rimandi foto e segreti come sempre (o, come Balla e Taboo, segnali "attesi" e fai uscire chi non torna in 10 secondi);
+  3. le ore salvate le converti con `t.ripresa.ora(x)` (sono dell'orologio di chi teneva la partita: per il vice cambia);
+  4. riparti con **almeno 5 secondi di respiro**: la fase a metà si rifà da capo (nessun punto dato due volte) o si passa alla successiva; sulla classifica finale si resta lì;
+  5. apri la stanza con **`SGNet.ospita(ID, cb, { ripresa: true })`** (così gli amici non tornano in saletta).
+- Nella **foto** si mandano sempre i **secondi che mancano**; nello **stato da ricordare** l'**ora** (`Date.now() + ms`). Nelle chiavi di `t.contoAvanti` metti anche un contatore delle riprese (nel modello `vm.rip`): così dopo una ripresa il conto riparte giusto su tutti i telefoni.
+- Gli ospiti non fanno niente di nuovo: il loro collegamento ripete il "join" da solo e l'host rimanda foto e segreti.
 
 ## Schermo
 - Niente titolo in alto e **niente scorrimento** per giocare. A tutto schermo: `.schermata.<pref>-piena{padding:0!important;height:var(--alt,100dvh);overflow:hidden}` con testa e piede nascosti (vedi `horto.js`).
@@ -97,6 +115,13 @@ Il contratto della Sala (15 ott 2026, nel modello sono già usati tutti):
 - **Saletta**: `vuoti` sono solo i posti che mancano per arrivare al minimo, non tutti quelli fino al massimo. Se qualcuno esce, non rimescolare le squadre o i posti già decisi dall'host.
 - **Punti e penalità**: rileggi chi deve prenderli o perderli (per esempio, un BUZZ penalizza la squadra di chi ha sbagliato, non quella di chi l'ha visto).
 - Nessuna scritta col nome del gioco in alto nello schermo di gioco.
+- **`"host"` scritto fisso** dove si intende "io che tengo la partita" (il mio posto, `privato`, `myId`, il tocco dell'host): dopo un subentro chi tiene la partita è il vice, col suo id da amico, e il gioco gli darebbe il posto e i segreti dell'host sparito. Sempre `IO = t.mioId`.
+- **Timer o nodi della pagina nello stato da ricordare** (`setTimeout`, schermate, funzioni): non si salvano e la ripresa si rompe. Tienili fuori (nel modello `H.to` resta fuori da `ricorda()`).
+- **Scadenze come "secondi che restano" nello stato da ricordare**: dopo la ricarica non si sa più da quando contavano. Nello stato l'ora (`Date.now() + ms`, poi `t.ripresa.ora(x)`); nella foto invece i secondi che mancano.
+- **Dimenticare `{ ripresa: true }` in `SGNet.ospita`**: la stanza si riapre ma gli amici tornano in saletta e la partita è persa.
+- **Riprendere senza respiro** o rifare una fase dando i punti due volte: dopo la ripresa almeno 5 secondi (gli amici intanto rientrano), poi la fase a metà da capo o la successiva.
+- **I pezzi grossi nello stato** (i tratti di un disegno, liste lunghe): la copia per il vice supera i 60 KB e non parte. Vanno in `soloQui` (o non si salvano, e la fase si rifà).
+- **Disegni fatti solo per l'host fisso**: la corona in saletta va a chi tiene la partita (nel modello `vm.tiene`), non al primo della lista; i testi "l'host" con i nomi della foto.
 - **Nella Sala l'host può cambiare tra una partita e l'altra** (Passo 3: se chi tiene la Sala se ne va, la prende un amico e diventa lui "host"): il gioco non deve contare sul fatto che "host" sia sempre lo stesso telefono fuori dalla partita (niente memorie del gioco legate a "host" tra una partita e l'altra). E quando il core porta via il gioco (Sala passata a un amico, "Cambia gioco") i suoi timer, suoni e sfondi non devono restare sopra la Sala: se la schermata del gioco non è più nella pagina, fermali (già successo con Black Jack, Scarabocchio, Gara di pesca e La Balla).
 
 ## Nella pull request: copia questa lista e spunta solo quello che hai davvero fatto
@@ -115,6 +140,9 @@ Il contratto della Sala (15 ott 2026, nel modello sono già usati tutti):
 - [ ] Non conta su "host" sempre lo stesso telefono fuori dalla partita; portato via dal core (Sala passata, Cambia gioco) non lascia timer, suoni o sfondi sopra la Sala
 - [ ] Provato dalla Sala: una partita intera con 3 amici finti, uno che esce a metà, "↻ Rivincita" col 3-2-1, "🎮 Cambia gioco" (vedi passo2/modello.js)
 - [ ] Provato coi telefoni finti: un amico che ricarica la pagina, uno col telefono spento più di 20 s che poi torna, l'host che ricarica, uno che arriva a partita cominciata
+- [ ] riprende: true; IO = t.mioId (mai "host" fisso); t.ricorda in bd (stato semplice, ore assolute, niente timer né nodi; i pezzi grossi in soloQui); t.ricorda(null) in saletta e su Esci; SGNet.ospita(ID, cb, { ripresa: true }) con la partita ripresa
+- [ ] riserva: true solo se il gioco non è a due né in tempo reale
+- [ ] Provato: l'host ricarica in ogni fase (a metà, a fase decisa, sulla classifica, in saletta) e la partita riprende senza punti doppi; l'host si spegne e non torna (se riserva): un amico porta avanti la partita fino alla classifica (vedi passo5/modello.js)
 - [ ] Console senza errori; schermi 360x640 e 412x915 senza scorrere
 ```
 Se un punto non l'hai potuto provare, scrivilo chiaramente: lo controllo io.
@@ -122,5 +150,6 @@ Se un punto non l'hai potuto provare, scrivilo chiaramente: lo controllo io.
 ## Prima di aprire la pull request
 - Segui la skill `prova-nel-browser`: partita locale, partita online con amici finti, console senza errori, schermo di un telefono piccolo (360x640) e grande (412x915).
 - Online usa i **telefoni finti** (`telefoni-finti.js` della skill `prova-nel-browser`): `apriTel`, `ricarica`, `spegni`/`riaccendi` (più di 20 s), `erroriTel()`. Per provare un gioco non ancora in `GIOCHI_ONLINE` (per esempio il modello) nella Sala, registralo al posto di un gioco online vero: `passo2/modello.js` della skill `prova-nel-browser` fa così (`apriTel(nome, { salaSempre: true, comeGioco: "garapesca", prima: w => w.eval(testo) })`, scenari 240-241) e si copia per un gioco nuovo.
+- Ripresa e host di riserva: `passo5/modello.js` della skill `prova-nel-browser` (scenari "5m1" l'host ricarica in ogni fase, "5m2" l'host si spegne e non torna, "5m3" le due cose nella Sala) si copia allo stesso modo. Aiuti del copione: `ricarica`/`chiudiApp` (telefoni finti), `COPIONE.aiuti.muore`/`torna` (telefono spento davvero / riacceso), `chiTiene(C)` (chi tiene la partita: `_g`, `_h`), `pilloleDi`, `contaStoria(C, '"__esito"')` (esiti doppi).
 - Regole con i bot: tienile in funzioni separate dalla grafica e simula tante partite.
 - Voce in `data/novita.js`; pull request (mai su `master`) con la spiegazione in italiano semplice.

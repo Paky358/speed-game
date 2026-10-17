@@ -19,6 +19,8 @@
 //      (Black Jack: una serie nuova allo stesso tavolo, senza saletta).
 //   Black Jack e Poker: ognuno gioca con le SUE monete (finte, per telefono: Paky 900, Giulia 700, Luca 600). Al tavolo di
 //   Giulia lei ha il suo saldo di quel momento, Luca il suo; nessun telefono scrive le monete di un altro; Paky non c'è.
+// DAL PASSO 5 (p5-z): Black Jack, Poker, Asta, Sì... però e Scarabocchio hanno l'host di riserva del core: 391-395 controllano
+// che il gioco NON si perda (restaGioco). I punti 2-4 qui sopra valgono ancora per la 396 (Gara di pesca, senza riserva).
 // Profili finti, mai account veri.
 (function () {
   "use strict";
@@ -326,6 +328,47 @@
     } else if (v.fase === "esito") W.clicca(H, /Classifica ▶|Basta così/);
   }
 
+  // ---- (Passo 5, p5-z) il gioco con l'host di riserva (riprende + riserva) continua quando Paky si spegne ----
+  // Un amico lo porta avanti (6 s: _g 2 e _h = il suo id nella foto), la Sala passa a Giulia (20 s) col gioco ancora dentro,
+  // nessuno torna nella Sala né vede «Ops»/«Collegamento perso»; per 6 s il gioco resta
+  // a lui (la fine vera col vice nella Sala: 599 e 405; le monete del vice: 594, 595).
+  var CON_RISERVA = { blackjack: 1, poker: 1, asta: 1, sipero: 1, scarabocchio: 1 };
+  async function restaGioco(gioco, g, CMP, C, dopo, Gw) {
+    var note = [], s0 = W.statoStanza(C) || {}, g0 = +s0._g || 1;
+    if (s0._h !== "host") no("prima del subentro la foto del gioco non dice che la tiene Paky (_h " + s0._h + "): il gioco ha la riserva?");
+    var membri0 = (vm(CMP).membri || []).slice(), punti0 = JSON.stringify(((vm(CMP).torneo || {}).punti) || {});
+    var passa = sentinella(dopo, ERRORI), t0 = Date.now();
+    spentoDavvero("Paky");
+    var sG = await W.aspetta(function () { var s = W.statoStanza(C) || {}; return s._h && s._h !== "host" && (+s._g || 1) > g0 ? s : null; }, 15000, 200);
+    if (!sG) no("nessun amico prende la partita (_h " + (W.statoStanza(C) || {})._h + ", _g " + (W.statoStanza(C) || {})._g + ")");
+    var VG = (membri0.filter(function (m) { return m.id === sG._h; })[0] || {}).nome, dtG = ((Date.now() - t0) / 1000).toFixed(1);
+    if (!VG) no("chi tiene la partita (" + sG._h + ") non è un amico della Sala");
+    if (!await W.aspetta(function () { return hostDi(CMP) === "Giulia" && vm(CMP).gen === 2; }, 32000, 250)) no("la Sala non passa a Giulia (host " + hostDi(CMP) + ", gen " + vm(CMP).gen + ")");
+    var dtS = ((Date.now() - t0) / 1000).toFixed(1);
+    await W.dorme(2000);
+    if (vm(CMP).gioco !== gioco || vm(CMP).stanza !== C) no("la Sala di Giulia ha chiuso il gioco (gioco " + vm(CMP).gioco + ", stanza " + vm(CMP).stanza + ")");
+    if ((W.statoStanza(C) || {})._h !== sG._h) no("con la Sala nuova il gioco lo tiene " + (W.statoStanza(C) || {})._h + " invece di " + VG);
+    var inS = dopo.filter(function (x) { return !!W.finestra(x).document.querySelector(".saletta-schermo"); });
+    if (inS.length) no("il gioco continua ma " + inS.join(", ") + " è tornato nella Sala (o in saletta)");
+    var visti = passa.stop(); if (visti.length) no("durante i passaggi: " + visti.join("; "));
+    note.push("Paky spento: il gioco lo tiene " + VG + " dopo " + dtG + " s, la Sala Giulia dopo " + dtS + " s col gioco ancora dentro");
+    // per 6 s la partita resta tenuta da lui, nessuno torna nella Sala, nessun errore. (La fine finta dal tavolo vale solo
+    // per chi apre la stanza, non per il vice: la fine vera col vice nella Sala la provano la 599 e la 405, le monete 594-595)
+    var finoS = Date.now() + 6000, rotto = "", sent2 = sentinella(dopo, ERRORI);
+    while (Date.now() < finoS && !rotto) {
+      if ((W.statoStanza(C) || {})._h !== sG._h) rotto = "il gioco lo tiene " + (W.statoStanza(C) || {})._h;
+      dopo.forEach(function (x) { if (!rotto && W.finestra(x).document.querySelector(".saletta-schermo")) rotto = x + " è tornato nella Sala"; });
+      await W.dorme(300);
+    }
+    var vs2 = sent2.stop();
+    if (rotto) no("dopo il subentro: " + rotto);
+    if (vs2.length) no("dopo il subentro: " + vs2.join("; "));
+    note.push("per 6 s il gioco resta a " + VG + ", nessuno torna nella Sala");
+    await P3.unSoloHost(CMP, 1500);
+    erroriVuoti();
+    return note;
+  }
+
   // ---- uno scenario ----
   async function cambioHost(gid, CMP) {
     var g = G[gid], note = [], gioco = gid === "astaFanta" ? "asta" : gid;
@@ -355,6 +398,8 @@
       if (f1.Paky !== 900 || f1.Giulia !== 700 || f1.Luca !== 600) no("al tavolo di Paky le monete non sono quelle di ognuno: " + JSON.stringify(f1));
     }
     note.push(g.nome + " di Paky " + await g.aMeta(C1, "Paky", tutti));
+    // (Passo 5) i giochi con l'host di riserva del core: il gioco NON si perde quando la Sala passa
+    if (CON_RISERVA[gioco]) return note.concat(await restaGioco(gioco, g, CMP, C1, dopo, Gw)).join(" · ");
     // 2. il telefono di Paky si spegne a metà partita
     var nSalvPaky = W.__salvate.filter(function (s) { return s.tel === "Paky"; }).length;
     var passa = sentinella(dopo, ERRORI), t0 = Date.now();
@@ -433,11 +478,11 @@
     erroriVuoti();
     return note.join(" · ");
   }
-  aggiungi(391, { nome: "Black Jack nella Compagnia: Paky sparisce dopo le puntate, la Sala a Giulia, lei riapre il tavolo con le sue monete, Rivincita", fai: function () { return cambioHost("blackjack", "GCBJKQ"); } });
-  aggiungi(392, { nome: "Poker nella Compagnia: Paky sparisce a mano aperta, la Sala a Giulia, lei riapre il tavolo con le sue monete, Rivincita col 3-2-1", fai: function () { return cambioHost("poker", "GCPKRQ"); } });
-  aggiungi(393, { nome: "L'Asta Fantacalcio nella Compagnia: Paky sparisce con un'offerta in corso, niente si ferma, Giulia la rifà fino al podio, Rivincita col 3-2-1", fai: function () { return cambioHost("astaFanta", "GCFNTQ"); } });
-  aggiungi("393b", { nome: "L'Asta coi temi nella Compagnia: Paky sparisce alla prima carta, Giulia la rifà fino al voto, Rivincita col 3-2-1", fai: function () { return cambioHost("asta", "GCASTQ"); } });
-  aggiungi(394, { nome: "Sì... però nella Compagnia (in 4): Paky sparisce a metà round, la Sala a Giulia, si rifà in 3, Rivincita col 3-2-1", fai: function () { return cambioHost("sipero", "GCSPRQ"); } });
-  aggiungi(395, { nome: "Scarabocchio nella Compagnia: Paky sparisce mentre si disegna, la Sala a Giulia, si rifà, Rivincita col 3-2-1", fai: function () { return cambioHost("scarabocchio", "GCSCRQ"); } });
+  aggiungi(391, { nome: "Black Jack nella Compagnia: Paky sparisce dopo le puntate, il tavolo continua con un amico, la Sala a Giulia senza chiuderlo", fai: function () { return cambioHost("blackjack", "GCBJKQ"); } });
+  aggiungi(392, { nome: "Poker nella Compagnia: Paky sparisce a mano aperta, il tavolo continua con un amico, la Sala a Giulia senza chiuderlo", fai: function () { return cambioHost("poker", "GCPKRQ"); } });
+  aggiungi(393, { nome: "L'Asta Fantacalcio nella Compagnia: Paky sparisce con un'offerta in corso, l'asta continua con un amico, la Sala a Giulia senza chiuderla", fai: function () { return cambioHost("astaFanta", "GCFNTQ"); } });
+  aggiungi("393b", { nome: "L'Asta coi temi nella Compagnia: Paky sparisce alla prima carta, l'asta continua con un amico, la Sala a Giulia senza chiuderla", fai: function () { return cambioHost("asta", "GCASTQ"); } });
+  aggiungi(394, { nome: "Sì... però nella Compagnia (in 4): Paky sparisce a metà round, il gioco continua con un amico, la Sala a Giulia senza chiuderlo", fai: function () { return cambioHost("sipero", "GCSPRQ"); } });
+  aggiungi(395, { nome: "Scarabocchio nella Compagnia: Paky sparisce mentre si disegna, il gioco continua con un amico, la Sala a Giulia senza chiuderlo", fai: function () { return cambioHost("scarabocchio", "GCSCRQ"); } });
   aggiungi(396, { nome: "Gara di pesca nella Compagnia: Paky sparisce a gara cominciata, la Sala a Giulia, si rifà, Rivincita col 3-2-1", fai: function () { return cambioHost("garapesca", "GCPSCQ"); } });
 })();

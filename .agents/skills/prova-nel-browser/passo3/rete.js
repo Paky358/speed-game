@@ -51,7 +51,7 @@
   var X = "m00000000xxx", Y = "k00000000yyy", Z = "z00000000zzz";
 
   // ---------- 301 Sbirciata ----------
-  aggiungi(301, { nome: "Sbircia: viva, ferma, vuota (e boh) con un collegamento solo, senza «Mi ricollego…»", fai: async function () {
+  aggiungi(301, { nome: "Sbircia: viva, ferma, vuota (e boh) con un collegamento solo (uno per ufficio), senza «Mi ricollego…»", fai: async function () {
     var P = await W.apriTel("Paky", { x: 0 }), L = await W.apriTel("Luca", { x: 185 }), G = await W.apriTel("Giulia", { x: 370 });
     var hp = await host(P, {}), hl = await host(L, { testamento: { g: 4 } });
     if (!await W.aspetta(function () { return hp.conn && hl.conn; }, 3000)) no("gli host non si collegano");
@@ -70,9 +70,11 @@
     if (es[B].stato !== "ferma" || es[B].gen !== 4) no("Sala ferma: " + JSON.stringify(es[B]));
     if (es[V].stato !== "vuota" || es[V].msg !== null) no("stanza vuota: " + JSON.stringify(es[V]));
     if (dt > 2500) no("troppo lenta: " + dt + " ms");
-    if (nuovi.length !== 1) no("collegamenti aperti: " + nuovi.length);
+    // (Passo 5: un collegamento per ufficio postale, uno solo con la riserva spenta)
+    var nUff = G.SGNet.uffici ? G.SGNet.uffici().length : 1;
+    if (nuovi.length !== nUff) no("collegamenti aperti: " + nuovi.length + " (uffici " + nUff + ")");
     await W.dorme(50);
-    if (nuovi[0].connected) no("il collegamento della sbirciata resta aperto");
+    if (nuovi.some(function (c) { return c.connected; })) no("il collegamento della sbirciata resta aperto");
     // un codice solo che risponde subito: non aspetta i 400 ms
     var t1 = Date.now(), e1 = await new Promise(function (r) { G.SGNet.sbircia([A], r); }), dt1 = Date.now() - t1;
     if (e1[A].stato !== "viva" || dt1 > 300) no("un codice solo: " + e1[A].stato + " in " + dt1 + " ms");

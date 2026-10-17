@@ -738,18 +738,37 @@
   // ========================================================
   function hostScopa2(t, diff) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var IO = t.mioId || "host";   // chi tiene la partita su questo telefono (posto 0)
+    // la ripresa (l'host ha ricaricato la pagina a metà partita): quello che si è ricordato in bcast()
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.scopa2;
     var st = null, rete = null, codice = "…", pronta = false, chiuso = false, attesa = false, giroT = null, nAvviso = 0;
+    var respiroFino = 0;   // (ripresa) fino a quando i bot aspettano a giocare: un attimo per accorgersi che si riprende
     // posti[1..3]: id se umano collegato, null se libero. Il posto 0 è l'host.
-    var posti = { 1: null, 2: null, 3: null };
+    var posti = { 0: null, 1: null, 2: null, 3: null };
+    // il mio posto: lo 0; se ho preso il posto dell'host sparito (host di riserva), quello dove giocavo (l'host di prima
+    // resta al suo posto come un amico: se non torna gioca il bot)
+    var MIO = 0;
+    function altri() { return [0, 1, 2, 3].filter(function (s) { return s !== MIO; }); }
     var guarda = [];   // nella Sala: chi non è stato scelto per giocare ({ id, nome }): niente posto al tavolo
-    var nomiUmani = { 1: null, 2: null, 3: null }, avatariUmani = { 1: null, 2: null, 3: null };
+    var nomiUmani = { 0: null, 1: null, 2: null, 3: null }, avatariUmani = { 0: null, 1: null, 2: null, 3: null };
     var via = {};   // via[posto] = chi è uscito a partita in corso: se torna si riprende il suo posto
     var botSeat = { 0: false, 1: true, 2: true, 3: true };  // chi è gestito dal computer durante la partita
 
-    function esci() { chiuso = true; Cl.chiuso = true; if (giroT) clearTimeout(giroT); if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
+    function esci() { ricorda(null); chiuso = true; Cl.chiuso = true; if (giroT) clearTimeout(giroT); if (window.SGMusica) window.SGMusica.ferma(); if (rete) rete.chiudi(); t.esci(); }
+    // dopo ogni cambiamento la partita si ricorda (se l'host ricarica, la mano continua); in saletta niente da riprendere
+    var ricordato = !!RIP;
+    function ricorda(x) {
+      if (!t.ricorda) return;
+      if (!x) { if (ricordato) { ricordato = false; t.ricorda(null); } return; }
+      ricordato = true; t.ricorda(x);
+    }
+    function ricordaOra() {
+      ricorda(st ? { scopa2: { st: JSON.parse(JSON.stringify(st)), mio: MIO, io: IO, posti: posti, nomiUmani: nomiUmani, avatariUmani: avatariUmani, via: via,
+        botSeat: botSeat, guarda: guarda, diff: diff, nAvviso: nAvviso, detto: detto } } : null);
+    }
     var Cl = creaClient(t, {
       sonoHost: true, online: true,
-      onMossa: function (id, presa) { if (st) passo(0, id, presa); },
+      onMossa: function (id, presa) { if (st) passo(MIO, id, presa); },
       onAvanti: function () { if (st && st.fase === "fineround") { prossimaMano(st); bcast(); giro(); } },
       onNuova: function () { tornaSaletta(); },
       onEsci: esci
@@ -762,7 +781,7 @@
     // né col nome di chi gioca, di chi è uscito o di chi guarda
     function botLibero() {
       var escludi = [mioNome()], s;
-      for (s = 1; s <= 3; s++) if (nomiUmani[s]) escludi.push(nomiUmani[s]);
+      altri().forEach(function (k) { if (nomiUmani[k]) escludi.push(nomiUmani[k]); });
       if (st) for (s = 0; s < 4; s++) if (st.nomi[s]) escludi.push(st.nomi[s]);
       Object.keys(via).forEach(function (k) { escludi.push(via[k].nome); });
       guarda.forEach(function (g) { escludi.push(g.nome); });
@@ -774,22 +793,30 @@
       for (var s = 1; s <= 3; s++) if (posti[s]) { st.nomi[s] = nomiUmani[s]; st.avatari[s] = avatariUmani[s]; }
       for (s = 1; s <= 3; s++) if (!posti[s]) mettiBot(s);   // i bot del gruppo fisso, col loro avatar
     }
-    function postoLibero() { for (var s = 1; s <= 3; s++) if (!posti[s]) return s; return 0; }
-    function seatDi(id) { for (var s = 1; s <= 3; s++) if (posti[s] === id) return s; return -1; }
+    function postoLibero() { var l = altri().filter(function (s) { return !posti[s]; }); return l.length ? l[0] : -1; }
+    function seatDi(id) { var l = altri().filter(function (s) { return posti[s] === id; }); return l.length ? l[0] : -1; }
     function avviso(testo) { if (st) st.avviso = { n: ++nAvviso, testo: testo }; }
 
     var detto = false;   // il risultato della partita è già stato dato al torneo online?
     function mandaVm(s) { if (rete && posti[s]) rete.inviaVeloce({ t: "vm", to: posti[s], vm: vistaDa(st, s) }); }   // solo a lui, e non resta sul server
+    // (host di riserva) chi porta avanti la partita se sparisco: chi è seduto al tavolo (ha già le sue carte e il suo posto)
+    var viciK = "";
+    function vici() {
+      var l = altri().filter(function (s) { return posti[s]; }).map(function (s) { return posti[s]; }), k = l.join(",");
+      if (k !== viciK && t.vici) { viciK = k; t.vici(l.length ? l : null); }
+    }
     function bcast() {
       if (chiuso) return;
       if (!st) { disegnaLobby(); return; }
-      for (var s = 1; s <= 3; s++) mandaVm(s);
-      Cl.setVm(vistaDa(st, 0));
+      ricordaOra();
+      altri().forEach(mandaVm);
+      vici();
+      Cl.setVm(vistaDa(st, MIO));
       if (st.fase !== "fine") { detto = false; return; }
       if (!detto && t.risultato) {   // per il torneo online: la squadra che vince, poi l'altra (pari = stesso posto)
-        detto = true;
+        detto = true; ricordaOra();
         var v = st.punti[0] >= st.punti[1] ? 0 : 1, pari = st.punti[0] === st.punti[1];
-        t.risultato([0, 1, 2, 3].map(function (k) { var x = { nome: st.nomi[k], pos: (k % 2 === v || pari) ? 1 : 3 }; if (k > 0 && botSeat[k]) x.bot = true; return x; })
+        t.risultato([0, 1, 2, 3].map(function (k) { var x = { nome: st.nomi[k], pos: (k % 2 === v || pari) ? 1 : 3 }; if (k !== MIO && botSeat[k]) x.bot = true; return x; })
           .sort(function (a, b) { return a.pos - b.pos; }));
       }
     }
@@ -812,7 +839,7 @@
         giroT = null;
         if (chiuso || !st || attesa || st.fase !== "gioco" || !botSeat[st.turno]) return;
         var m = mossaBot(st, st.turno, diff); if (!m) return; passo(st.turno, m.carta, m.presa);
-      }, Math.max(700 + Math.random() * 350, (Cl._dealFino || 0) - Date.now() + 250));   // i bot aspettano la fine della distribuzione
+      }, Math.max(700 + Math.random() * 350, (Cl._dealFino || 0) - Date.now() + 250, respiroFino - Date.now()));   // i bot aspettano la fine della distribuzione
     }
     function rientra(s) {   // chi era uscito a partita in corso torna al suo posto (al posto del bot)
       var v = via[s]; delete via[s];
@@ -824,20 +851,53 @@
     function tornaSaletta() {   // "Nuova partita": tutti in saletta (chi era uscito può rientrare, l'host può cambiare regole e squadre)
       if (giroT) clearTimeout(giroT); giroT = null;
       st = null; via = {}; detto = false; attesa = false;
+      if (MIO !== 0) {   // (avevo preso il posto dell'host sparito: in saletta torno al posto 0, chi era lì prende il mio)
+        posti[MIO] = posti[0]; nomiUmani[MIO] = nomiUmani[0]; avatariUmani[MIO] = avatariUmani[0];
+        posti[0] = nomiUmani[0] = avatariUmani[0] = null; MIO = 0;
+      }
       for (var s = 1; s <= 3; s++) botSeat[s] = true;
       Cl.azzera();
       aggiornaLobby();
     }
     t.onRivincita = tornaSaletta;   // la Rivincita della Sala
 
-    rete = SGNet.ospita("scopa2v2", {
+    // ---- la ripresa: stessa mano (carte in mano a tutti, tavolo, prese, punti), stessi posti e stesse squadre. Gli amici
+    // restano al loro posto e rientrano da soli (il join gli rimanda le sue carte); chi non torna in 30 s lascia il posto al bot
+    var attesi = {};
+    if (RIP && RIP.st && Array.isArray(RIP.st.mani)) {
+      st = RIP.st; st.presa = null;   // (una presa che si stava guardando è già fatta: si va avanti)
+      ["posti", "nomiUmani", "avatariUmani", "botSeat"].forEach(function (k) {
+        var x = RIP[k] || {}, d = ({ posti: posti, nomiUmani: nomiUmani, avatariUmani: avatariUmani, botSeat: botSeat })[k];
+        for (var s = 0; s <= 3; s++) d[s] = k === "botSeat" ? !!x[s] : (x[s] || null);
+      });
+      via = RIP.via && typeof RIP.via === "object" ? RIP.via : {};
+      guarda = Array.isArray(RIP.guarda) ? RIP.guarda : [];
+      diff = RIP.diff || diff; nAvviso = +RIP.nAvviso || 0; detto = !!RIP.detto;
+      // chi teneva la partita (il suo posto e il suo id); se adesso la tengo io da un altro posto (host di riserva),
+      // il suo posto diventa quello di un amico che rientra (o del bot) e il mio quello dove giocavo
+      var mioPrima = RIP.mio >= 0 && RIP.mio <= 3 ? +RIP.mio : 0, ioPrima = RIP.io || "host";
+      MIO = mioPrima;
+      if (ioPrima !== IO) {
+        var sMio = [0, 1, 2, 3].filter(function (s) { return posti[s] === IO; })[0];
+        if (sMio != null) {
+          posti[mioPrima] = ioPrima; nomiUmani[mioPrima] = st.nomi[mioPrima]; avatariUmani[mioPrima] = st.avatari[mioPrima] || null; botSeat[mioPrima] = false;
+          MIO = sMio; posti[MIO] = null; nomiUmani[MIO] = avatariUmani[MIO] = null; botSeat[MIO] = false;
+          Object.keys(via).forEach(function (k) { if (+k === MIO) delete via[k]; });
+        } else {   // (guardavo: mi siedo al posto di chi teneva la partita e gioco le sue carte)
+          guarda = guarda.filter(function (g) { return g.id !== IO; }); st.nomi[MIO] = mioNome(); st.avatari[MIO] = mioAv();
+        }
+      }
+      altri().forEach(function (sa) { if (posti[sa]) attesi[posti[sa]] = 1; });
+    }
+    var cbR = {
       onCodice: function (c) { codice = c; if (!st) aggiornaLobby(); },
       onConnesso: function () { pronta = true; if (!st) aggiornaLobby(); },
       onAddio: function (id) {
+        delete attesi[id];
         var g0 = guarda.length; guarda = guarda.filter(function (g) { return g.id !== id; });
         if (guarda.length !== g0 && !st) aggiornaLobby();
         var s = seatDi(id);
-        if (s <= 0) return;
+        if (s < 0) return;
         posti[s] = null;
         if (st) {   // il suo posto passa al bot (se torna, se lo riprende)
           var vecchio = nomiUmani[s] || st.nomi[s];
@@ -850,6 +910,7 @@
       },
       onMsg: function (id, m) {
         if (chiuso || !m || !m.t) return;
+        delete attesi[id];   // (ripresa: si è rifatto vivo)
         if (m.t === "join") {
           var nomeJ = String(m.nome || "Amico").slice(0, 16);
           // nella Sala chi non è stato scelto non si siede: questa volta guarda (lo vede scritto nella saletta)
@@ -861,26 +922,27 @@
           }
           if (st) {   // a partita iniziata
             var sj = seatDi(id);
-            if (sj > 0) { mandaVm(sj); return; }   // chi rientra al suo posto si riprende le sue carte
-            for (var k = 1; k <= 3; k++) if (via[k] && via[k].id === id && !posti[k]) { rientra(k); return; }
+            if (sj >= 0) { mandaVm(sj); return; }   // chi rientra al suo posto si riprende le sue carte
+            var kv = altri().filter(function (k) { return via[k] && via[k].id === id && !posti[k]; })[0]; if (kv != null) { rientra(kv); return; }
             if (rete) rete.inviaVeloce({ t: "piena", to: id, inCorso: true });   // nessun posto per lui: glielo dico
             return;
           }
           if (seatDi(id) < 0) {
             var s = postoLibero();
-            if (s > 0) { posti[s] = id; nomiUmani[s] = String(m.nome || "Amico").slice(0, 16); avatariUmani[s] = C().avatarValido(m.omino); }
+            if (s >= 0) { posti[s] = id; nomiUmani[s] = String(m.nome || "Amico").slice(0, 16); avatariUmani[s] = C().avatarValido(m.omino); }
             else { if (rete) rete.inviaVeloce({ t: "piena", to: id }); return; }
           }
           aggiornaLobby();   // trasmette la sala aggiornata a tutti gli ospiti
-        } else if (m.t === "gioca" && st) { var sm = seatDi(id); if (sm > 0) passo(sm, m.carta, m.presa); }
+        } else if (m.t === "gioca" && st) { var sm = seatDi(id); if (sm >= 0) passo(sm, m.carta, m.presa); }
       },
       // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
       onErrore: function () { if (!chiuso && !pronta && !st) { chiuso = true; Cl.chiuso = true; erroreScopa2(t, "Problema di collegamento. Controlla la connessione e riprova."); } }
-    });
+    };
+    rete = SGNet.ospita("scopa2v2", cbR, st ? { ripresa: true } : null);
 
     function seggiLobby() {
       var nh = mioNome();
-      return [{ nome: nh, id: "host", omino: mioAv() },
+      return [{ nome: nh, id: IO, omino: mioAv() },
         posti[1] ? { nome: nomiUmani[1], id: posti[1], omino: avatariUmani[1] } : null,
         posti[2] ? { nome: nomiUmani[2], id: posti[2], omino: avatariUmani[2] } : null,
         posti[3] ? { nome: nomiUmani[3], id: posti[3], omino: avatariUmani[3] } : null];
@@ -888,6 +950,7 @@
     function regoleLobby() { var imp = t.impostazioni || {}; return { traguardo: C().traguardoDa(imp), diff: imp.difficolta || diff }; }
     function aggiornaLobby() {
       if (st || chiuso) return;
+      ricorda(null);   // (in saletta niente da riprendere)
       var R = regoleLobby();
       if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff, guarda: guarda });
       disegnaLobby();
@@ -901,20 +964,26 @@
     function disegnaLobby() {
       if (st || chiuso) return;
       var R = regoleLobby();
-      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff, guarda: guarda }, {
+      renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: IO, seggi: seggiLobby(), traguardo: R.traguardo, diff: R.diff, guarda: guarda }, {
         onComincia: function () {
           var imp = t.impostazioni || {}; diff = imp.difficolta || diff;
           st = creaStato(C().traguardoDa(imp)); nomiPartenza();
           for (var s = 1; s <= 3; s++) botSeat[s] = !posti[s];
           nuovaMano(st);
-          if (rete) rete.invia({ t: "inCorso" });   // sul server resta solo "partita in corso" (niente carte di nessuno)
+          if (rete) rete.invia({ t: "inCorso", fase: "gioco" });   // sul server resta solo "partita in corso" (niente carte di nessuno)
           bcast(); giro();
         },
         onCambia: cambiaCompagno,
         onEsci: esci
       });
     }
-    disegnaLobby();
+    if (!st) { disegnaLobby(); return; }
+    // (ripresa) il tavolo com'era, a ognuno le sue carte; dopo un attimo di respiro tocca a chi toccava (il Bot riparte dal suo turno)
+    if (rete) rete.invia({ t: "inCorso", fase: st.fase === "fine" ? "fine" : "gioco" });
+    bcast();
+    respiroFino = Date.now() + 3000; giro();
+    // chi non si rifà vivo in 30 s lascia il posto al bot (come quando se ne va; se torna, se lo riprende)
+    setTimeout(function () { if (!chiuso && st) Object.keys(attesi).forEach(function (id) { cbR.onAddio(id); }); }, 30000);
   }
 
   function ospiteScopa2(t, codice) {
@@ -1060,6 +1129,8 @@
     descrizione: "La Scopa a squadre, in quattro al tavolo: tu e il tuo compagno contro due. Contro i bot o online, ognuno dal suo telefono (i posti vuoti li fanno i bot).",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i bot)
     postiOnline: 4,   // 4 al tavolo: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
+    riprende: true,    // se l'host ricarica la pagina, la mano continua (a ognuno le sue carte, i Bot ripartono dal loro turno)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro i Bot", sotto: "Tu e un Bot contro due Bot" }],
     regole: [
       "Si gioca <b>in quattro, due squadre</b>: tu + il compagno (di fronte) contro due avversari. Le carte sono le 40 napoletane.",

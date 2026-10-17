@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 214,
+    data: "16 ottobre 2026",
+    titolo: "La rete salta, la partita no 🔁",
+    descrizione: [
+      "Se a chi ha aperto la partita si ricarica la pagina o si chiude l'app, riaprendola la partita riprende da dove era: stessi punti, stesse carte, stesso turno. Gli amici restano al loro posto e leggono «🔁 Paky è tornato: la partita riprende da dove era». Vale in quasi tutti i giochi online (non ancora in Stessa Lunghezza d'Onda, Chi di Noi?, Scopone e L'Impostore).",
+      "Se invece sparisce del tutto (telefono spento, batteria finita), nei giochi lunghi dopo pochi secondi un amico porta avanti la partita: «👑 Ora la partita la tiene Luca». Quando chi è sparito torna, rientra a giocare col suo posto; se intanto la partita è già finita, riaprendo l'app torna alla home e legge «🏁 La partita è finita mentre eri via». Nei giochi a due no: l'unico amico è l'avversario, e vedrebbe le tue carte.",
+      "Anche nella Sala della serata: se chi tiene la Sala ricarica a metà gioco, il gioco riprende con lo stesso codice, e il duello tra due amici continua.",
+      "📶 Se l'ufficio postale della rete che usiamo non risponde, l'app ne usa un secondo da sola e si gioca lo stesso.",
+      "🚢 Battaglia Navale: chi ricarica ritrova sempre le sue navi, anche a metà sistemazione e anche se a ricaricare è chi ha aperto la partita."
+    ]
+  },
+  {
     v: 213,
     data: "16 ottobre 2026",
     titolo: "Gioco nuovo: Chi di Noi? 🫵",

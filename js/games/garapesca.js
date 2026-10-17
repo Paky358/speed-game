@@ -92,6 +92,26 @@
     }
     function avviso(testo, chi) { H.ultimo = { s: ++H.nUlt, chi: chi || null, testo: testo, at: Date.now() }; }
 
+    // ---- la ripresa (l'host ha ricaricato la pagina o l'app si è chiusa): la gara riprende col tempo che restava + 5 s,
+    // stessi chili e stessi pesci. Gli amici rientrano da soli (stesso id): nessuno è messo "via"
+    var CAMPI = ["fase", "durata", "fineT", "classifica", "premi", "motivo", "gara", "nUlt", "coda", "players"];
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.garapesca, ricordata = !!RIP;
+    if (RIP) {
+      CAMPI.forEach(function (k) { if (RIP[k] !== undefined) H[k] = RIP[k]; });
+      H.players.forEach(function (p) { p.visti = p.visti || {}; p.specie = p.specie || {}; });
+      if (H.fase === "gioco") {
+        var resta = Math.max(0, (t.ripresa.ora(H.fineT) || 0) - Date.now());
+        H.fineT = Date.now() + resta + 5000;
+        avviso("🔁 Gara ripresa: lenze di nuovo in acqua!");
+      }
+    }
+    function ricorda() {   // a ogni foto (il core salva al massimo ogni mezzo secondo); in saletta non c'è niente da riprendere
+      if (!t.ricorda) return;
+      if (H.fase === "lobby") { if (ricordata) { ricordata = false; t.ricorda(null); } return; }
+      var o = {}; CAMPI.forEach(function (k) { o[k] = H[k]; });
+      ricordata = true; t.ricorda({ garapesca: JSON.parse(JSON.stringify(o)) });   // (una copia: i chili cambiano prima che il core salvi)
+    }
+
     // "⚙️ Regole" nella saletta: l'host cambia la durata quando vuole
     t.onRegole = function (im) { if (H.fase !== "lobby") return; H.durata = im.durata || 180; bd(); };
     t.onRivincita = function () { if (H.fase === "fine") nuova(); };   // la Rivincita: tutti di nuovo nella saletta
@@ -127,7 +147,7 @@
           if (ok) bd();
         }
       }
-    });
+    }, { ripresa: !!RIP });   // (ripresa: gli amici restano nel laghetto, non tornano in saletta)
     // la "foto" per tutti: SEMPRE con gli id; il tempo come "quanto manca" (gli orologi dei telefoni non sono uguali)
     function vm() {
       var u = H.ultimo;
@@ -137,7 +157,7 @@
         ultimo: u ? { s: u.s, chi: u.chi, testo: u.testo, eta: Date.now() - u.at } : null,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, kg: Math.round((p.kg || 0) * 100) / 100, n: p.n || 0, best: p.best, via: !!p.via, uscito: !!p.uscito, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }) };
     }
-    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); }
+    function bd() { ricorda(); var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); }
 
     // ----- la gara -----
     function comincia() {
@@ -145,12 +165,17 @@
       H.players = presenti(); H.players.forEach(function (p) { p.kg = 0; p.n = 0; p.best = null; p.visti = {}; p.specie = {}; p.uscito = false; });
       H.fase = "gioco"; H.gara++; H.classifica = null; H.motivo = null; H.fineT = Date.now() + H.durata * 1000 + 1500;
       avviso(frase("via"));
-      H.tick = setInterval(bd, 5000);   // ogni tanto il tempo giusto a tutti
-      var tot = H.durata * 1000 + 1500;
-      H.timer.push(setTimeout(function () { fine("tempo"); }, tot));
-      if (H.durata >= 60) H.timer.push(setTimeout(function () { avviso(frase("ultimi30")); bd(); }, tot - 30000));
-      H.timer.push(setTimeout(function () { avviso(frase("ultimi10")); bd(); }, tot - 10000));
+      orologi();
       bd();
+    }
+    // il tempo della gara: la fine e gli avvisi degli ultimi secondi (da H.fineT: vale anche per la gara ripresa)
+    function orologi() {
+      ferma();
+      H.tick = setInterval(bd, 5000);   // ogni tanto il tempo giusto a tutti
+      var tot = Math.max(0, H.fineT - Date.now());
+      H.timer.push(setTimeout(function () { fine("tempo"); }, tot));
+      if (H.durata >= 60 && tot > 30000) H.timer.push(setTimeout(function () { avviso(frase("ultimi30")); bd(); }, tot - 30000));
+      if (tot > 10000) H.timer.push(setTimeout(function () { avviso(frase("ultimi10")); bd(); }, tot - 10000));
     }
     function capo() { var c = null; H.players.forEach(function (p) { if ((p.kg || 0) > 0 && (!c || p.kg > c.kg)) c = p; }); return c; }
     function preso(id, m) {   // un pesce preso da qualcuno (anche dall'host): true se conta
@@ -210,6 +235,7 @@
         if (H.fase === "gioco" && UI && UI._gara) return UI._gara.chiedi("Chiudere la gara per tutti?", "Gli amici escono dalla gara.", "🏠 Chiudi ed esci", via);   // un tocco sbagliato non chiude la gara a tutti
         via();
       } };
+    if (RIP && H.fase === "gioco") orologi();   // la gara ripresa: il tempo che restava (+ 5 s)
     bd();
   }
 
@@ -486,6 +512,7 @@
     descrizione: "Tutti nello stesso laghetto, ognuno dal suo telefono: in pochi minuti vince chi pesca più chili!",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
     postiOnline: MAX,   // posti online (8 pescatori)
+    riprende: true,   // se l'host ricarica la pagina, la gara riprende col tempo che restava (t.ripresa)
     modi: [], soloOnline: true,
     regole: [
       "Ognuno pesca dal suo telefono nello <b>stesso laghetto</b>, da <b>1 a 10 minuti</b> (lo sceglie l'host).",

@@ -38,8 +38,7 @@
     return b;
   }
   var MAX_GUARDA = 12;      // spettatori al massimo (online)
-  var CHIAVE_HOST = "sg-scalinata-host";   // la partita dell'host, per riprenderla se la pagina si ricarica
-  var VITA_SALVATA = 30 * 60 * 1000;
+  var CHIAVE_VECCHIA = "sg-scalinata-host";   // (il salvataggio di prima, fatto in casa: ora la partita si ricorda col modo comune)
 
   // ---------- il commento sotto la scala ----------
   // {a} {b} {c} = nomi, {il} = "il 5" / "l'1", {sul} = "sul 5" / "sull'1", {gr} = "3 gradini", {tutti} = elenco di nomi
@@ -230,6 +229,7 @@
   SG.registra({
     id: "scalinata",
     riprende: true,   // se l'host ricarica a metà partita, la partita riprende da dove era (il core lo dice agli amici)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     nome: "La Scalinata",
     icona: "🪜",
     descrizione: "Tutti sulla scala, fino a 8: scegli in segreto quanti gradini salire. Avanza solo chi sceglie un numero che nessun altro ha scelto. Primo in cima, vince.",
@@ -769,33 +769,26 @@
       guarda: st.guarda.map(function (p) { return { id: p.id, nome: p.nome }; }),
       resta: st.fase === "scelta" || st.fase === "rivela" ? Math.max(0, st.deadline - Date.now()) : 0,   // il tempo che resta (non l'ora: gli orologi dei telefoni non sono uguali)
       ripresa: st.ripresa || 0,   // il round in cui la partita è ripresa (l'host aveva ricaricato)
+      nRip: st.nRip || 0,         // quante volte è ripresa (chi gioca rifà il round anche a una seconda ripresa nello stesso round)
       scelti: !!st.scelti,        // nella Sala ha scelto l'host chi sale: chi guarda non dà il cambio alla partita dopo
       sc: st.sc || SCELTE, scala: st.scala || "misura", maxPosti: st.scala === "piccola" ? 4 : MAX_POSTI,   // i numeri di questa scala; quanti possono salire
       scelte: null, avanza: null, prev: null, caso: null, commento: "", vincitori: st.vincitori || [] };
     if (st.fase === "rivela") { vm.scelte = st.scelte; vm.avanza = st.avanza; vm.prev = st.prev; vm.caso = st.caso; vm.commento = st.commento; }
     return vm;
   }
-  function leggiSalvata() {
-    try {
-      var v = JSON.parse(localStorage.getItem(CHIAVE_HOST) || "null");
-      if (v && v.st && v.st.codice && v.st.codice !== "…" && Date.now() - v.t < VITA_SALVATA) return v;
-    } catch (e) {}
-    return null;
-  }
-  function togliSalvata() { try { localStorage.removeItem(CHIAVE_HOST); } catch (e) {} }
-
   // la partita lasciata a metà (pagina ricaricata, app chiusa) riparte da sola quando l'app riapre la STESSA stanza
-  // (lo fa il core, con lo stesso codice): gradini e round restano, gli amici rientrano da soli.
-  // Una stanza nuova (o la Sala, che dà sempre un codice nuovo) parte da zero.
+  // (lo fa il core, con lo stesso codice, e la passa in t.ripresa): gradini e round restano, gli amici rientrano da soli.
   function hostScala(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteScala(t);
-    apriHost(t, leggiSalvata());
+    try { localStorage.removeItem(CHIAVE_VECCHIA); } catch (e) {}
+    apriHost(t, t.ripresa && t.ripresa.stato);
   }
 
   function apriHost(t, salvata) {
+    var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
     var st = {
       fase: "lobby", codice: "…", pronta: false, partita: 0, nRound: 0, vincitori: [],
-      posti: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], bot: false, passi: 0, scelta: null, omino: t.mioOmino ? t.mioOmino() : null }],
+      posti: [{ id: IO, nome: (t.giocatori && t.giocatori[0]) || "Host", colore: COLORI[0], bot: false, passi: 0, scelta: null, omino: t.mioOmino ? t.mioOmino() : null }],
       guarda: [], deadline: 0, scelte: null, avanza: null, prev: null, caso: null, commento: "", ripresa: 0,
       scala: scalaDa(t.impostazioni), sc: SCELTE   // la scala scelta dall'host e i suoi numeri (1-3-5, 1-5 o 1-6)
     };
@@ -804,7 +797,7 @@
     var V = nuovaVista();
     function trova(id, lista) { var r = null; (lista || st.posti).forEach(function (p) { if (p.id === id) r = p; }); return r; }
     // può salire sulla scala? (nella Sala solo chi è stato scelto; fuori dalla Sala tutti)
-    function siede(p) { return p.id === "host" || !t.puoSedersi || t.puoSedersi(p.id, p.nome); }
+    function siede(p) { return p.id === IO || !t.puoSedersi || t.puoSedersi(p.id, p.nome); }
     function ricolora() { st.posti.forEach(function (p, i) { p.colore = COLORI[i]; }); }
     // quanti possono salire sulla scala (in saletta): la piccola 4, le altre fino a 8
     function maxPosti() { return st.scala === "piccola" ? 4 : MAX_POSTI; }
@@ -820,13 +813,22 @@
       ricolora(); bd();
     };
 
+    // la partita di prima (t.ripresa: la stessa stanza, riaperta dal core) era cominciata: si riprende da lì
+    // (anche sulla classifica finale: gli XP non si ridanno, lo controlla il core)
+    var ripresa = !!(salvata && salvata.st && salvata.st.fase && salvata.st.fase !== "lobby");
+    if (ripresa) {
+      st = salvata.st; T = salvata.T || T;
+      st.pronta = false; st.guarda = st.guarda || [];
+      // gli amici sono "via" finché non rientrano (lo fanno da soli in un attimo); chi non torna in tempo, per lui sceglie il bot
+      st.posti.forEach(function (p) { if (!p.bot && p.id !== IO) p.via = true; });
+    }
     var rete = SGNet.ospita("scalinata", {
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
         var g = trova(id, st.guarda);
         if (g) { st.guarda.splice(st.guarda.indexOf(g), 1); return bd(); }
-        var p = trova(id); if (!p || p.id === "host") return;
+        var p = trova(id); if (!p || p.id === IO) return;
         if (st.fase === "lobby") { st.posti.splice(st.posti.indexOf(p), 1); ricolora(); return bd(); }
         // a partita iniziata il posto resta: lo gioca il bot (e alla partita dopo il posto si libera)
         p.via = true;
@@ -839,27 +841,23 @@
         else if (m.t === "scegli") registraScelta(id, m.n, m.r);
       },
       // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
-      onErrore: function () { if (!st.pronta && !chiusa) { chiusa = true; fermaTimer(); togliSalvata(); erroreScala(t, "Non riesco ad aprire la stanza. Controlla la connessione e riprova."); } }
-    });
+      onErrore: function () { if (!st.pronta && !chiusa) { chiusa = true; fermaTimer(); t.ricorda(null); erroreScala(t, "Non riesco ad aprire la stanza. Controlla la connessione e riprova."); } }
+    }, { ripresa: ripresa });   // (gli amici non tornano in saletta: la partita riprende)
     if (!rete) return senzaReteScala(t);
-    // la stanza riaperta è quella della partita salvata (e la partita era a metà): si riprende da lì
-    var ripresa = !!(salvata && salvata.st && String(rete.codice || "").toUpperCase() === String(salvata.st.codice).toUpperCase() &&
-      (salvata.st.fase === "scelta" || salvata.st.fase === "rivela"));
-    if (ripresa) {
-      st = salvata.st; T = salvata.T || T;
-      st.pronta = false; st.guarda = st.guarda || [];
-      // gli amici sono "via" finché non rientrano (lo fanno da soli in un attimo); chi non torna in tempo, per lui sceglie il bot
-      st.posti.forEach(function (p) { if (!p.bot && p.id !== "host") p.via = true; });
-    } else togliSalvata();
+    if (ripresa && rete.codice) st.codice = rete.codice;
+    // ho preso il posto dell'host sparito (host di riserva): i trofei sono i miei (quelli contati da ospite), non i suoi
+    if (ripresa && t.ripresa.daRiserva) T = leggiTraccia(st.codice);
 
     function invia() { if (!chiusa) rete.invia({ t: "vm", vm: vmScala(st) }); }
-    function salva() {
-      try {
-        if (st.fase === "lobby" && st.posti.length < 2 && !st.guarda.length) localStorage.removeItem(CHIAVE_HOST);
-        else localStorage.setItem(CHIAVE_HOST, JSON.stringify({ t: Date.now(), st: st, T: T }));
-      } catch (e) {}
+    // la partita com'è adesso, per riprenderla (st è già un oggetto semplice, senza timer); in saletta niente
+    function salva() { t.ricorda(st.fase === "lobby" ? null : { st: st, T: T }); }
+    function bd() { if (chiusa) return; invia(); salva(); disegna(); vici(); }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
+    var viciK = "";
+    function vici() {
+      var l = st.guarda.map(function (p) { return p.id; }), k = l.join(",");
+      if (k !== viciK && t.vici) { viciK = k; t.vici(l.length ? l : null); }
     }
-    function bd() { if (chiusa) return; invia(); salva(); disegna(); }
     function fermaTimer() {
       if (tScelta) { clearTimeout(tScelta); tScelta = null; }
       if (tAuto) { clearTimeout(tAuto); tAuto = null; }
@@ -930,7 +928,8 @@
       var storie = st.posti.map(function (p) { return p.storia || (p.storia = []); });
       st.commento = commentoRound(st.posti.map(function (p) { return p.nome; }), scelte, st.avanza, passi, st.posti.map(function (p) { return p.bot || p.via; }), storie, vinc);
       storie.forEach(function (h, i) { h.push(scelte[i]); if (h.length > 30) h.shift(); });   // abitudini per i bot
-      tracciaScala(T, 0, st.partita + ":" + st.nRound, st.nRound, scelte, st.avanza, st.prev, passi);   // l'host è sempre il posto 0
+      var mioPosto = st.posti.indexOf(trova(IO));   // (il mio posto: di solito lo 0; dopo un cambio di host quello dell'amico)
+      if (mioPosto >= 0) tracciaScala(T, mioPosto, st.partita + ":" + st.nRound, st.nRound, scelte, st.avanza, st.prev, passi);
       // il round dopo (o il podio) parte da solo; l'host può andare avanti prima col tasto (che conta)
       var dur = durataRivela(st.posti.length) + (vinc.length ? PAUSA_FINE : PAUSA_AUTO);
       st.fase = "rivela"; st.deadline = Date.now() + dur; bd();
@@ -950,7 +949,9 @@
       if (chiusa) return;
       fermaTimer();
       var umani = st.posti.filter(function (p) { return !p.bot && !p.via; });
-      var host = umani.shift();
+      var host = trova(IO) || trova(IO, st.guarda) || umani[0];   // (io resto il primo, anche se guardavo: host di riserva)
+      umani = umani.filter(function (p) { return p !== host; });
+      st.guarda = st.guarda.filter(function (p) { return p !== host; });
       umani.sort(function (a, b) { return b.passi - a.passi; });
       // (nella Sala chi non è stato scelto resta a guardare anche alla partita dopo)
       var fila = [host].concat(st.guarda.filter(siede), umani);
@@ -963,20 +964,22 @@
     // esce l'host: prima si torna indietro (nella Sala gli altri vengono avvisati), poi si chiude la stanza
     function esci() {
       if (chiusa) return;
-      chiusa = true; fermaTimer(); togliSalvata();
+      chiusa = true; fermaTimer(); t.ricorda(null);
       if (V.tav) V.tav.ferma();
       t.esci();
       setTimeout(function () { rete.chiudi(); }, 1600);
     }
-    var cb = { sonoHost: true, myId: "host",
-      onScegli: function (n, r) { registraScelta("host", n, r); },
+    var cb = { sonoHost: true, myId: IO,
+      onScegli: function (n, r) { registraScelta(IO, n, r); },
       onComincia: comincia, onProssimo: prossimo, onNuova: nuova, onEsci: esci };
     t.onRivincita = nuova;   // la "Nuova partita" dell'host (la usa la Rivincita della Sala)
     st.scelti = !!(t.scelti && t.scelti.length);   // nella Sala si è scelto chi gioca: chi guarda lo sa
     function disegna() { if (!chiusa) disegnaVM(t, vmScala(st), cb, V); }
 
     if (ripresa) {   // il round a metà riparte da capo (con 3 secondi in più); dopo il risultato si va al round dopo
-      if (st.fase === "scelta") { st.nRound -= 1; st.ripresa = st.nRound + 1; nuovaScelta(3000); }
+      st.nRip = (st.nRip || 0) + 1;
+      if (st.fase === "fine") bd();   // (sulla classifica finale si resta lì)
+      else if (st.fase === "scelta") { st.nRound -= 1; st.ripresa = st.nRound + 1; nuovaScelta(3000); }
       else { st.ripresa = st.nRound + 1; st.deadline = Date.now() + 3000; bd(); tAuto = setTimeout(prossimo, 3000); }
     } else disegna();
   }
@@ -1095,7 +1098,10 @@
 
     if (vm.fase === "scelta") {
       tav.etichetta("Round " + vm.nRound, sotto);
-      if (V.fase === "scelta" && V.round === vm.nRound) {   // stesso round: si accende solo chi ha appena scelto (col bip)
+      // la partita è ripresa (l'host aveva ricaricato): questo round si rifà da capo, anche per chi aveva già scelto
+      var ripNuova = !!vm.ripresa && vm.ripresa === vm.nRound && V.rip !== (vm.nRip || vm.ripresa);
+      if (ripNuova) { V.rip = vm.nRip || vm.ripresa; if (V.mia && V.mia.r === vm.nRound) V.mia = null; }
+      if (V.fase === "scelta" && V.round === vm.nRound && !ripNuova) {   // stesso round: si accende solo chi ha appena scelto (col bip)
         vm.posti.forEach(function (p, i) { if (p.chosen && !V.bip[p.id]) { V.bip[p.id] = 1; tav.scelto(i, true); if (i !== io) suono("bip"); } });
         return;
       }

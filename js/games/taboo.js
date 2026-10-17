@@ -244,7 +244,7 @@
     function chiave(v) {
       var r = ruolo(v);
       if (v.fase === "turno") return ["T", v.turno, v.chiaveCarta, r, v.carta ? 1 : 0, v.pausa ? 1 : 0, v.passati].join("|");
-      if (v.fase === "pronto") return ["P", v.turno, v.attivo, r, v.avviso || "", v.pausa ? 1 : 0, (v.riepilogo && v.riepilogo.turno) || 0, o.sonoHost ? v.presenti : 0].join("|");
+      if (v.fase === "pronto") return ["P", v.turno, v.attivo, r, v.avviso || "", v.pausa ? 1 : 0, (v.riepilogo && v.riepilogo.turno) || 0, o.sonoHost ? v.presenti : 0, v.rifatto || 0].join("|");
       return "F|" + v.partitaId;
     }
     function corpo(v) {
@@ -311,6 +311,8 @@
     }
     function corpoPronto(v, ui) {
       riepilogo(v, ui);
+      // la partita è ripresa a metà turno (l'host aveva ricaricato): quel turno si rifà da capo
+      if (v.rifatto && v.attivo && !v.avviso) ui.corpo.appendChild(t.el("div", { class: "tb-nota", text: "🔁 La partita è ripresa: questo turno si rifà da capo, con il tempo intero e una carta nuova." }));
       var me = io();
       if (v.avviso) {
         ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [t.el("div", {}, [t.el("b", { text: "⏳ Aspettiamo…" }), t.el("span", { text: v.avviso })])]));
@@ -499,8 +501,10 @@
     var livello = [1, 2, 3].indexOf(Number(imp.carte)) >= 0 ? Number(imp.carte) : 2;
     var codice = "…", pronta = false, fase = "lobby", rete = null, tic = null;
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
-    var giocatori = [{ id: "host", nome: nomeHost, omino: avatar(nomeHost), host: true }];
-    var squadre = { host: 0 }, punti = [0, 0], carte = [], indiceCarta = 0, uscite = [];
+    var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
+    var giocatori = [{ id: IO, nome: nomeHost, omino: avatar(nomeHost), host: true }];
+    var squadre = {}, punti = [0, 0], carte = [], indiceCarta = 0, uscite = [];
+    squadre[IO] = 0;
     var coda = [], indiceTurno = 0, puntatore = [0, 0], primaSquadra = 0, sceltoPer = null;
     var attivo = null, deadline = 0, prontoScade = 0, pausa = false, rimasto = 0, avviso = null;
     var passati = 0, cartaOra = null, chiaveCarta = 0, statTurno = null, riepilogo = null;
@@ -508,7 +512,9 @@
     var partitaId = nuovoId(), statGiocatori = Object.create(null);
     var box = null, fotoOspiti = 0;
     var guarda = [];   // nella Sala: chi non è stato scelto per giocare (guarda soltanto: le squadre si fanno senza di lui)
-    statPersona("host");
+    var rifatto = 0;   // la partita è ripresa a metà turno: quel turno si rifà da capo (il numero del turno, per la scritta)
+    var inizioTurno = null;   // punti e statistiche com'erano a inizio turno (per rifarlo da capo se la partita riprende)
+    statPersona(IO);
 
     function nuovoId() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
     function statPersona(id) {
@@ -523,9 +529,9 @@
 
     var vista = creaVista(t, {
       sonoHost: true,
-      mioId: function () { return "host"; },
-      azione: function (tipo, extra) { azione("host", tipo, chiaveCarta, extra); },
-      esci: function () { chiudi(); t.esci(); },
+      mioId: function () { return IO; },
+      azione: function (tipo, extra) { azione(IO, tipo, chiaveCarta, extra); },
+      esci: function () { t.ricorda(null); chiudi(); t.esci(); },
       pausa: cambiaPausa,
       rifai: rifaiSquadre,
       chiudiPartita: function () { finePartita("Mancavano giocatori in una squadra."); },
@@ -547,16 +553,17 @@
     function aggiornaLobby() {
       if (fase !== "lobby") return;
       if (!box) box = boxSquadre(t, { host: true, aCaso: function () { distribuisci(giocatori); aggiornaLobby(); }, sposta: sposta });
-      box.aggiorna(giocatori, squadre, "host");
+      box.aggiorna(giocatori, squadre, IO);
       var lista = giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino, host: !!p.host }; });
       if (rete) rete.invia({ t: "vm", vm: { fase: "lobby", codice: codice, pronta: pronta, giocatori: lista, squadre: squadre, punti: [0, 0], guarda: guarda.slice() } });
+      t.ricorda(null);   // in saletta non c'è niente da riprendere
       vista.vm({ fase: "lobby" });
       var piccola = membri(0).length < 2 || membri(1).length < 2;
       t.lobby({ host: true, codice: codice, pronta: pronta, min: MIN, vuoti: Math.max(0, MIN - giocatori.length), giocatori: lista, extra: [box],
         puoComincia: giocatori.length >= MIN && !piccola,
         testoComincia: "Comincia ▶",
         nota: giocatori.length < MIN ? "Servono almeno 4 persone. Potete arrivare fino a 16." : (piccola ? "Ogni squadra deve avere almeno 2 persone: sposta qualcuno o fai le squadre a caso." : "Squadre pronte! Quando volete, si comincia."),
-        onComincia: inizia, onEsci: function () { chiudi(); t.esci(); } });
+        onComincia: inizia, onEsci: function () { t.ricorda(null); chiudi(); t.esci(); } });
     }
     t.onRegole = function (nuove) {
       if (fase !== "lobby") return;
@@ -584,20 +591,53 @@
         restano: restano(), pausa: pausa, avviso: avviso, presenti: giocatori.filter(function (p) { return !p.via; }).length,
         chiaveCarta: chiaveCarta, carta: fase === "turno" ? cartaOra : null, passati: passati,
         giusteTurno: statTurno ? statTurno.giuste.length : 0, combo: attivo ? statPersona(attivo).comboCarte : 0,
-        ultimo: ultimo, riepilogo: fase === "pronto" ? riepilogo : null,
+        ultimo: ultimo, riepilogo: fase === "pronto" ? riepilogo : null, rifatto: fase === "pronto" && rifatto === indiceTurno + 1 ? rifatto : 0,
         fine: fase === "fine" ? fine : null, statGiocatori: fase === "fine" ? statGiocatori : null, guarda: guarda.slice() };
     }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
+    var viciK = "";
+    function vici() { var k = guarda.join(","); if (k !== viciK && t.vici) { viciK = k; t.vici(guarda.length ? guarda.slice() : null); } }
     function inviaStato(conOmini) {
       if (fase === "lobby") return aggiornaLobby();
       var x = vm(conOmini);
       if (rete) rete.invia({ t: "vm", vm: x });
+      ricorda();
+      vici();
       vista.vm(x);
     }
+    // la partita com'è adesso, per riprenderla se la pagina si ricarica (t.ripresa). Il mazzo va come numeri
+    // (la posizione delle carte nella lista di tutte le carte), così resta piccolo
+    var TUTTE = window.SG_TABOO_CARTE || [];
+    function numeroCarta(c) { var i = TUTTE.indexOf(c); if (i < 0) for (var k = 0; k < TUTTE.length; k++) if (TUTTE[k].p === c.p) return k; return i; }
+    function ricorda() {
+      if (fase === "lobby") return t.ricorda(null);
+      var resto = carte.slice(indiceCarta).map(numeroCarta).filter(function (i) { return i >= 0; });
+      t.ricorda({ fase: fase, giocatori: giocatori, squadre: squadre, punti: punti, livello: livello, durata: durata, giri: giri,
+        resto: resto, uscite: uscite, coda: coda, indiceTurno: indiceTurno, puntatore: puntatore, primaSquadra: primaSquadra,
+        sceltoPer: sceltoPer, attivo: attivo, avviso: avviso, riepilogo: riepilogo, fine: fine, partitaId: partitaId,
+        statGiocatori: statGiocatori, guarda: guarda, inizioTurno: inizioTurno, seqEv: seqEv, chiaveCarta: chiaveCarta });
+    }
 
-    rete = SGNet.ospita("taboo", {
-      onCodice: function (c) { codice = c; aggiornaLobby(); },
+    // la partita di prima (l'host ha ricaricato la pagina o riaperto l'app: t.ripresa): si riprende da lì.
+    // Gli amici non si danno per usciti: si aspettano ("attesi") e rientrano da soli; chi non torna entro 10 secondi esce
+    var R0 = t.ripresa && t.ripresa.stato, ripresa = !!(R0 && R0.fase && R0.fase !== "lobby" && R0.giocatori), attesi = {}, tAttesi = null;
+    if (ripresa) {
+      fase = R0.fase; giocatori = R0.giocatori; squadre = R0.squadre || {}; punti = R0.punti || [0, 0];
+      livello = R0.livello || livello; durata = R0.durata || durata; giri = R0.giri || giri;
+      carte = (R0.resto || []).map(function (i) { return TUTTE[i]; }).filter(Boolean); indiceCarta = 0; uscite = R0.uscite || [];
+      coda = R0.coda || []; indiceTurno = R0.indiceTurno || 0; puntatore = R0.puntatore || [0, 0]; primaSquadra = R0.primaSquadra || 0;
+      sceltoPer = R0.sceltoPer || null; attivo = R0.attivo || null; avviso = R0.avviso || null; riepilogo = R0.riepilogo || null;
+      fine = R0.fine || null; partitaId = R0.partitaId || partitaId; guarda = R0.guarda || [];
+      statGiocatori = R0.statGiocatori || Object.create(null); inizioTurno = R0.inizioTurno || null;
+      seqEv = R0.seqEv || 0; chiaveCarta = (R0.chiaveCarta || 0) + 1;   // (una carta vecchia toccata adesso non vale)
+      giocatori.forEach(function (p) { statPersona(p.id); if (p.id !== IO && !p.via) attesi[p.id] = 1; });
+      giocatori.forEach(function (p) { p.host = p.id === IO; });   // (ho preso il posto dell'host sparito: ora la corona è mia)
+    }
+    var cbRete = {
+      onCodice: function (c) { codice = c; if (fase === "lobby") aggiornaLobby(); else inviaStato(true); },
       onConnesso: function () { pronta = true; if (fase === "lobby") aggiornaLobby(); else inviaStato(true); },
       onAddio: function (id) {
+        delete attesi[id];
         if (guarda.indexOf(id) >= 0) { guarda.splice(guarda.indexOf(id), 1); return inviaStato(true); }
         var p = gioc(id); if (!p) return;
         if (fase === "lobby") { giocatori.splice(indice(id), 1); delete squadre[id]; delete statGiocatori[id]; aggiornaLobby(); return; }
@@ -610,6 +650,7 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
+          delete attesi[id];   // (dopo una ripresa: è tornato)
           var p = gioc(id);
           if (p) {   // già dentro (pagina ricaricata, rete tornata): stesso posto, gli rimando la foto
             var eraVia = p.via; p.via = false;
@@ -634,13 +675,34 @@
         } else azione(id, m.t, m.chiave, m);
       },
       onErrore: function () { senzaRete(t); }
-    });
-    aggiornaLobby();
+    };
+    rete = SGNet.ospita("taboo", cbRete, { ripresa: ripresa });   // (con la ripresa gli amici non tornano in saletta)
+    if (ripresa) riprendi(); else aggiornaLobby();
+
+    // la ripresa: tra un turno e l'altro si resta lì (chi doveva spiegare ha di nuovo il suo tempo); a metà turno quel
+    // turno si rifà da capo (punti com'erano a inizio turno, tempo intero, carta nuova: quella di prima l'hanno vista in tanti);
+    // sulla classifica finale si resta sulla classifica
+    function riprendi() {
+      if (rete && rete.codice) codice = rete.codice;
+      tAttesi = setTimeout(function () { Object.keys(attesi).forEach(function (id) { if (rete) cbRete.onAddio(id); }); }, 10000);
+      pausa = false; rimasto = 0; ultimoBuzz = null; deadline = 0;
+      if (fase === "fine") return inviaStato(true);
+      if (fase === "turno") {
+        if (inizioTurno) { punti = inizioTurno.punti.slice(); statGiocatori = inizioTurno.stat; }
+        indiceTurno = Math.max(0, indiceTurno - 1);   // (avviaTurno lo rifà avanzare)
+        sceltoPer = { turno: indiceTurno, id: attivo };
+        rifatto = indiceTurno + 1;
+        if (uscite.length) { segnaViste(uscite); uscite = []; }
+        cartaOra = null; statTurno = null;
+      }
+      riepilogo = fase === "turno" ? null : riepilogo;
+      preparaPronto();
+    }
 
     // le mosse (dell'host e degli amici): ognuna vale solo per la carta su cui è stata fatta
     function azione(id, tipo, chiave, extra) {
       if (fase === "pronto" && tipo === "pronto" && id === attivo && !pausa && !avviso) return avviaTurno();
-      if (tipo === "annulla") { if (id === "host" || id === attivo) annullaBuzz(extra && extra.seq); return; }
+      if (tipo === "annulla") { if (id === IO || id === attivo) annullaBuzz(extra && extra.seq); return; }
       if (fase !== "turno" || pausa || chiave !== chiaveCarta || !cartaOra) return;
       if (tipo === "indovinata" && id === attivo) registra("giusta", id);
       else if (tipo === "passo" && id === attivo && passati < MAX_PASSI) registra("passata", id);
@@ -683,6 +745,8 @@
       inviaStato(true);
     }
     function avviaTurno() {
+      // (com'era prima del turno: se la partita riprende a metà, il turno si rifà da qui)
+      inizioTurno = { punti: punti.slice(), stat: JSON.parse(JSON.stringify(statGiocatori)) };
       fase = "turno"; indiceTurno++; passati = 0; pausa = false;
       statTurno = { giuste: [], buzz: [], passate: [] };
       statPersona(attivo).turniSpiegati++; statPersona(attivo).comboCarte = 0;
@@ -762,12 +826,16 @@
       fine = motivo ? { annullata: true, motivo: motivo, vincitore: -1, premi: [] } : { vincitore: vincitore(), premi: premi() };
       var x = vm(true);
       if (rete) rete.invia({ t: "vm", vm: x });
-      if (!motivo) { salvaStatTaboo(t, "host", x); if (t.risultato) t.risultato(classificaGiocatori()); }
+      ricorda();
+      if (!motivo) { salvaStatTaboo(t, IO, x); if (t.risultato) t.risultato(classificaGiocatori()); }
       vista.vm(x);
     }
     // "Nuova partita": tutti tornano nella saletta con le stesse squadre (chi se n'è andato esce dalla lista)
     function nuovaPartita() {
       giocatori = giocatori.filter(function (p) { return !p.via; });
+      // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
+      if (indice(IO) < 0) { guarda = guarda.filter(function (x) { return x !== IO; }); giocatori.push({ id: IO, nome: nomeHost, omino: avatar(nomeHost), host: true }); squadre[IO] = membri(0).length <= membri(1).length ? 0 : 1; }
+      giocatori.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
       Object.keys(squadre).forEach(function (id) { if (indice(id) < 0) delete squadre[id]; });
       if (giocatori.length >= MIN && (membri(0).length < 2 || membri(1).length < 2)) distribuisci(giocatori);
       fase = "lobby"; partitaId = nuovoId(); statGiocatori = Object.create(null); giocatori.forEach(function (p) { statPersona(p.id); });
@@ -775,7 +843,7 @@
       ultimo = null; fine = null; pausa = false; avviso = null; primaSquadra = 1 - primaSquadra;   // la prossima volta comincia l'altra squadra
       aggiornaLobby();
     }
-    function chiudi() { if (tic) { clearInterval(tic); tic = null; } if (rete) { rete.chiudi(); rete = null; } }
+    function chiudi() { clearTimeout(tAttesi); if (tic) { clearInterval(tic); tic = null; } if (rete) { rete.chiudi(); rete = null; } }
     // la Rivincita dei tasti di fine comuni: tutti di nuovo nella saletta, stesse squadre (il core fa il 3-2-1)
     t.onRivincita = function () { if (fase === "fine") nuovaPartita(); };
 
@@ -1215,6 +1283,8 @@
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Chi spiega tiene il telefono, un avversario guarda e preme BUZZ", amici: true, min: MIN }],
     postiOnline: MAX,   // posti online (16)
+    riprende: true,     // se l'host ricarica a metà partita, la partita riprende (il turno in corso si rifà da capo, con una carta nuova)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     // le regole in una riga, per la saletta: "90 secondi a turno · 1 giro · carte miste"
     riassunto: function (imp) {
       imp = imp || {};

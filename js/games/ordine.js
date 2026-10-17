@@ -126,32 +126,39 @@
   // =========================================================
   //  HOST: tiene la partita vera e manda a tutti la "foto" (vm)
   // =========================================================
-  // HOST DI RISERVA: mentre si gioca l'host passa di nascosto tutta la partita a due "vice" (i primi due giocatori collegati).
-  // Se l'host sparisce (schermo bloccato, WhatsApp, app chiusa) dopo pochi secondi il vice prende il suo posto
-  // e la partita va avanti dal suo telefono; quando l'host torna rientra come giocatore normale, nella sua squadra.
-  // "gen" conta i cambi di host: le foto di un host vecchio (gen più basso) non contano più.
-  var SUBENTRO_MS = 6000;   // quanto aspetta il vice prima di prendere il posto (se l'host torna prima, niente cambia)
-  // ripresa (solo per il vice che prende il posto): { codice, stato (la copia della partita), io (il suo id), omini }
-  function host(t, ripresa) {
+  // LA PARTITA NON SI PERDE (Passo 5, lo fa il core: riprende + riserva in SG.registra). L'host ricorda la partita a ogni
+  // foto (t.ricorda, senza gli avatar e con la chiave del tabellone, che resta sul suo telefono e su quello dei vice):
+  // - se gli si ricarica la pagina o si chiude l'app, riaprendo la partita riprende da lui, stesso tabellone (t.ripresa);
+  // - se sparisce del tutto, dopo pochi secondi un amico (vice) la porta avanti dal suo telefono con la stessa copia
+  //   (t.ripresa.daRiserva, t.mioId = il suo id); quando l'host torna rientra come giocatore, nella sua squadra.
+  function host(t) {
     var imp = t.impostazioni || {};
-    var prova = !ripresa && imp.modo === "prova";   // 🧪 prova da solo (solo per il proprietario): tu e un bot contro due bot, senza rete
+    var prova = imp.modo === "prova";   // 🧪 prova da solo (solo per il proprietario): tu e un bot contro due bot, senza rete
     if (!prova && !(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var IO = ripresa ? ripresa.io : "host";   // il mio id nella partita
+    var IO = t.mioId || "host";   // il mio id nella partita ("host", o l'amico che ha preso il posto dell'host)
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
-    var H = ripresa ? (function (r) {   // la partita come l'aveva l'host di prima
-      var h = JSON.parse(JSON.stringify(r.stato)), vecchio = h.hostId, io = null;
-      h.codice = r.codice; h.pronta = false; h.gen = (h.gen || 1) + 1; h.hostId = IO; h.vici = []; h.prop = {};
+    // la partita di prima (solo a tabellone aperto o sulla classifica: in saletta si riparte dalla saletta)
+    var R0 = !prova && t.ripresa && t.ripresa.stato;
+    var ripresa = !!(R0 && Array.isArray(R0.players) && R0.tab && (R0.fase === "gioco" || R0.fase === "fine"));
+    var attesi = {}, tAttesi = null;   // dopo la ripresa: gli amici che devono ancora rientrare (rientrano da soli col loro "join")
+    var H = ripresa ? (function (r) {
+      var h = JSON.parse(JSON.stringify(r)), ora = t.ripresa.ora, vecchio = t.ripresa.daRiserva ? t.ripresa.vecchioHost : null, adesso = Date.now();
+      h.codice = "…"; h.pronta = false; h.hostId = IO; h.msg = "";
+      h.progressi = h.progressi || {}; h.prossimi = h.prossimi || []; h.salta = h.salta || {}; h.nTurni = h.nTurni || 0; h.guarda = h.guarda || [];
+      h.prop = h.prop || {}; h.storia = h.storia || []; h.fuori = h.fuori || []; h.capo = h.capo || [null, null, null];
       h.players.forEach(function (p) {
-        p.omino = avatarValido((r.omini || {})[p.id]);
-        if (p.id === vecchio) p.via = true;   // l'host di prima è sparito: se torna, rientra come giocatore
-        if (p.id === IO) { p.via = false; io = p; }
+        if (p.id === IO) { p.via = false; p.omino = t.mioOmino(p.nome); }
+        else if (p.id === vecchio) { p.via = true; delete h.prop[p.id]; }   // l'host di prima è sparito: se torna, rientra come giocatore
+        else if (!p.via && !p.bot) attesi[p.id] = 1;
       });
-      h.msg = ""; h.progressi = h.progressi || {}; h.prossimi = h.prossimi || []; h.salta = h.salta || {}; h.nTurni = h.nTurni || 0; h.guarda = h.guarda || [];
+      // le scadenze erano ore dell'host di prima: nell'orologio di questo telefono, e almeno 10 secondi di respiro
+      if (h.attesa && h.attesa.fino) h.attesa.fino = Math.max(ora(h.attesa.fino), adesso + 10000);
+      if (h.cless && h.cless.fino) h.cless.fino = Math.max(ora(h.cless.fino), adesso + 10000);
       return h;
-    })(ripresa) : { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, nparole: +imp.parole === 20 ? 20 : 25, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false, tempo: tempoDa(imp.tempo), mazzo: imp.mazzo || "classico",
+    })(R0) : { fase: "lobby", codice: "…", pronta: false, nsq: +imp.squadre === 3 ? 3 : 2, nparole: +imp.parole === 20 ? 20 : 25, gruppo: imp.usaMie === false ? [] : leggiGruppo(imp.gruppo), oro: imp.oro !== false, tempo: tempoDa(imp.tempo), mazzo: imp.mazzo || "classico",
       players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), team: 0 }], capo: [null, null, null],
       tab: null, bid: 0, turno: 0, passo: "indizio", indizio: null, tentativi: 0, girate: 0, prop: {}, storia: [], fuori: [],
-      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, gen: 1, hostId: IO, vici: [], progressi: {}, prossimi: [], salta: {}, nTurni: 0,
+      vince: -1, classifica: null, msg: "", ultima: null, nGirate: 0, hostId: IO, progressi: {}, prossimi: [], salta: {}, nTurni: 0,
       guarda: [] };   // guarda: nella Sala, chi non è stato scelto per giocare (guarda soltanto, col suo id nella foto)
     if (prova) {   // i bot fissi del gruppo (SG.bot): il primo in squadra con te, gli altri due nell'altra. Giocano a caso: livello facile
       H.nsq = 2;
@@ -204,30 +211,25 @@
       onCodice: function (c) { H.codice = c; if (SGNet.ricordaId) SGNet.ricordaId(c, IO); bd(); },   // se rientro come ospite, torno la stessa persona
       onConnesso: function () {
         H.pronta = true;
-        if (!ripresaFatta) {   // il vice ha appena preso il posto: le chiavi ai capi e l'appello (chi non risponde è uscito anche lui)
+        if (!ripresaFatta) {   // la partita è appena ripresa: le chiavi ai capi, e chi non rientra entro 10 secondi è uscito
           ripresaFatta = true; mandaChiavi();
           if (H.sospeso) { clearTimeout(tSosp); tSosp = setTimeout(rivela, 1500); }   // c'era una parola in sospeso: la scopro io
-          H.appello = {}; rete.inviaVeloce({ t: "appello", gen: H.gen });
-          setTimeout(function () {
-            if (ceduto || !H.appello) return;
-            H.players.forEach(function (p) { if (p.id !== IO && !p.via && !H.appello[p.id]) { p.via = true; delete H.prop[p.id]; } });
-            H.appello = null;
+          clearTimeout(tAttesi);
+          tAttesi = setTimeout(function () {
+            if (spento()) return;
+            var cambia = false;
+            Object.keys(attesi).forEach(function (id) { var p = pById(id); if (p && !p.via) { p.via = true; delete H.prop[id]; cambia = true; } });
+            attesi = {};
+            if (!cambia) return;
             if (H.fase === "gioco") controllaTurno();
             bd();
-          }, 5000);
-          controllaTurno();
+          }, 10000);
+          if (H.fase === "gioco") controllaTurno();
         }
         bd();
       },
-      // le foto degli host: se un altro ha preso il mio posto (gen più alto) torno giocatore;
-      // se arriva una foto vecchia (un host che non sa ancora di essere stato sostituito) rimetto la mia
-      onStato: function (s) {
-        if (ceduto || !s || s.t !== "vm" || !s.vm || s.vm.gen == null) return;
-        if (s.vm.gen > H.gen && s.vm.hostId !== IO) return cediPosto();
-        if (s.vm.gen === H.gen && s.vm.hostId && s.vm.hostId !== IO && s.vm.hostId < IO) return cediPosto();   // due vice partiti insieme: ne resta uno solo
-        if (s.vm.gen < H.gen) bd();
-      },
       onAddio: function (id) {
+        delete attesi[id];
         var np = (H.prossimi || []).length;
         H.prossimi = (H.prossimi || []).filter(function (x) { return x.id !== id; });
         var ng = H.guarda.length; H.guarda = H.guarda.filter(function (x) { return x !== id; });
@@ -239,37 +241,25 @@
       },
       onMsg: function (id, m) { azione(id, m); }
     };
+    // (codice imposto, host di riserva e foto di chi tiene la partita: li fa il core. { ripresa: true } = gli amici non
+    // tornano in saletta)
     var rete = prova ? { invia: function () {}, inviaVeloce: function () {}, chiudi: function () {}, lascia: function () {} }
-      : SGNet.ospita(ID, callbacks, { codice: ripresa ? ripresa.codice : null, ascoltaStato: true, keepalive: 10 });
+      : SGNet.ospita(ID, callbacks, { ripresa: ripresa, keepalive: 10 });
     if (prova) setTimeout(function () { H.codice = "PROVA"; H.pronta = true; comincia(); }, 0);   // in prova niente saletta: si comincia subito
-    // un altro telefono ha preso il posto di host (io ero sparito): esco in silenzio e rientro come giocatore normale
-    function cediPosto() {
-      if (ceduto) return; ceduto = true; clearTimeout(tAttesa); clearTimeout(tSosp); clearTimeout(tCless); clearTimeout(tRis);
-      try { rete.lascia(); } catch (e) {}
-      if (SGNet.ricordaId) SGNet.ricordaId(H.codice, IO);
-      ospite(t, H.codice);
+    // la mia stanza non c'è più (sono uscito, o il core mi ha fatto rientrare come giocatore perché la partita la tiene un
+    // altro): da qui niente foto, niente timer, niente schermate
+    function spento() {
+      if (!ceduto && rete && rete._chiusa) { ceduto = true; clearTimeout(tAttesa); clearTimeout(tSosp); clearTimeout(tCless); clearTimeout(tAttesi); }
+      return ceduto;
     }
-    // i vice: i primi due giocatori collegati dopo di me (se uno esce, lo sostituisce il prossimo). Gli mando di nascosto tutta la partita
-    // (senza gli avatar, li hanno già). Due, così se escono l'host e il primo vice quasi insieme c'è ancora chi prende il posto.
-    function scegliVice() {
-      var tenuti = (H.vici || []).filter(function (id) { var p = pById(id); return p && !p.via && id !== IO; });
-      H.players.forEach(function (p) { if (tenuti.length < 2 && !p.via && !p.bot && p.id !== IO && tenuti.indexOf(p.id) < 0) tenuti.push(p.id); });
-      H.vici = tenuti;
-    }
-    // la copia parte subito quando cambia qualcosa di importante (turno, parola girata, capi, fine…);
-    // per il resto (es. le parole segnate) al massimo una volta ogni 3 secondi
-    var tRis = null, oraRis = 0, kRis = "";
-    function mandaRiserva() {
-      if (!H.vici.length || (H.fase !== "gioco" && H.fase !== "fine")) return;
-      var k = [H.fase, H.turno, H.passo, H.nGirate, H.storia.length, H.capo.join(","), H.players.length, H.vici.join(","), !!H.sospeso, H.fuori.join("")].join("|"), ora = Date.now();
-      if (k === kRis && ora - oraRis < 3000) {
-        if (!tRis) tRis = setTimeout(function () { tRis = null; if (!ceduto) { kRis = ""; mandaRiserva(); } }, 3000 - (ora - oraRis));
-        return;
-      }
-      clearTimeout(tRis); tRis = null; kRis = k; oraRis = ora;
-      var copia = JSON.parse(JSON.stringify(H));
-      copia.players.forEach(function (p) { p.omino = null; });
-      H.vici.forEach(function (id) { rete.inviaVeloce({ t: "riserva", to: id, gen: H.gen, stato: copia }); });
+    // la partita com'è adesso, per riprenderla (t.ricorda): tutto H tranne gli avatar (li rimanda ognuno rientrando).
+    // C'è anche la chiave del tabellone: resta sul mio telefono e va solo ai vice (mai nella foto). In saletta niente
+    var ricordata = !!t.ripresa;   // (una ripresa vecchia che non vale più si scorda alla prima foto)
+    function ricorda() {
+      if (prova) return;
+      if (H.fase !== "gioco" && H.fase !== "fine") { if (ricordata) { ricordata = false; t.ricorda(null); } return; }
+      ricordata = true;
+      t.ricorda(JSON.parse(JSON.stringify(H, function (k, v) { return k === "omino" ? undefined : v; })));
     }
     // la "foto" per tutti: SEMPRE con gli id; la chiave del tabellone MAI (va solo ai capi)
     function vm() {
@@ -285,7 +275,7 @@
         tab: H.tab ? H.tab.map(function (c) { return { w: c.w, g: c.g, c: (c.g || fine) ? c.c : null, oro: (c.g || fine) && c.oro ? 1 : 0 }; }) : null, oro: H.oro,
         bid: H.bid, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
         storia: H.storia.slice(-8), log: (H.log || []).slice(-40), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r,
-        gen: H.gen, hostId: H.hostId, vici: H.vici.slice(), sospeso: H.sospeso || null, guarda: (H.guarda || []).slice(),
+        hostId: H.hostId, sospeso: H.sospeso || null, guarda: (H.guarda || []).slice(),
         progressiFine: fine ? H.progressi : null };
     }
     function progresso(id) {
@@ -304,7 +294,7 @@
       privato(id, { t: "chiave", bid: H.bid, col: chiave() });
     }
     function mandaChiavi() { for (var k = 0; k < H.nsq; k++) mandaChiave(H.capo[k]); }
-    function bd() { if (ceduto) return; scegliVice(); var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); mandaRiserva(); if (prova) pianificaBot(); }
+    function bd() { if (spento()) return; var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); ricorda(); if (prova) pianificaBot(); }
 
     // ----- le mosse (dell'host e degli ospiti passano tutte da qui) -----
     function azione(id, m) {
@@ -313,7 +303,8 @@
       if (m.t === "join") {
         var nuovo = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino) };
         var gia = (H.prossimi || []).some(function (x) { return x.id === id; });
-        if (p) { if (p.via) delete H.salta[p.team]; p.via = false; }   // rientra: è di nuovo nella sua squadra
+        delete attesi[id];   // (dopo una ripresa: è rientrato)
+        if (p) { if (p.via) delete H.salta[p.team]; p.via = false; if (!p.omino && nuovo.omino) p.omino = nuovo.omino; }   // rientra: è di nuovo nella sua squadra (col suo avatar)
         else if (gia) {}   // aspetta già la prossima partita
         else if (H.guarda.indexOf(id) >= 0 || (t.puoSedersi && !t.puoSedersi(id, nuovo.nome))) {   // nella Sala gioca solo chi è stato scelto: gli altri guardano
           if (H.guarda.indexOf(id) < 0) H.guarda.push(id);
@@ -334,11 +325,6 @@
       }
       if (!p) return;
       if (m.t === "chiedi_chiave") { if (H.fase === "gioco" && H.capo[p.team] === id) mandaChiave(id); return; }
-      if (m.t === "presente") {   // risponde all'appello del nuovo host (se l'avevo già segnato uscito, rientra)
-        if (H.appello) H.appello[id] = 1;
-        if (p.via) { p.via = false; delete H.salta[p.team]; if (H.fase === "gioco") controllaTurno(); bd(); if (H.capo.indexOf(id) >= 0) mandaChiave(id); }
-        return;
-      }
       if (H.fase === "lobby") {
         if (m.t === "squadra" && +m.s >= 0 && +m.s < H.nsq) { p.team = +m.s; sistemaCapi(); bd(); }
         else if (m.t === "capo") { H.capo[p.team] = id; bd(); }
@@ -438,7 +424,7 @@
       clearTimeout(tSosp); tSosp = setTimeout(rivela, SOSPENSE_MS);
     }
     function rivela() {
-      var s = H.sospeso; if (!s || ceduto) return;
+      var s = H.sospeso; if (!s || spento()) return;
       H.sospeso = null;
       if (H.fase !== "gioco" || H.turno !== s.k) return bd();
       gira(s.i, s.id);
@@ -519,7 +505,7 @@
       if (!H.attesa || H.attesa.k !== k || H.attesa.passo !== H.passo || H.attesa.n !== H.nTurni)
         H.attesa = { k: k, passo: H.passo, n: H.nTurni, fino: Date.now() + (cosa === "indovino" && H.passo === "indovina" ? ATTESA_INDOVINO : ATTESA_SQUADRA) };
       H.attesa.chi = chiManca(k, cosa);
-      function riprova(ms) { tAttesa = setTimeout(function () { if (!ceduto) { controllaTurno(); bd(); } }, ms); }
+      function riprova(ms) { tAttesa = setTimeout(function () { if (!spento()) { controllaTurno(); bd(); } }, ms); }
       if (Date.now() < H.attesa.fino) { riprova(H.attesa.fino - Date.now() + 50); return; }
       if (puoCapo) {
         H.capo[k] = m[0].id; mandaChiave(m[0].id); H.attesa = null;
@@ -541,7 +527,7 @@
       // nessuna squadra può giocare: si aspetta ancora (l'host può chiudere la partita)
       if (!H.attesa) H.attesa = { k: k, passo: H.passo, n: H.nTurni, chi: chiManca(k, manca(k)) };
       H.attesa.fino = Date.now() + 30000;
-      tAttesa = setTimeout(function () { if (!ceduto) { controllaTurno(); bd(); } }, 30050);
+      tAttesa = setTimeout(function () { if (!spento()) { controllaTurno(); bd(); } }, 30050);
     }
     // ⏳ la clessidra del capo (se l'host l'ha accesa): allo scadere il turno passa
     var tCless = null;
@@ -551,7 +537,7 @@
       var key = H.turno + "|" + H.nTurni;
       if (!H.cless || H.cless.key !== key) H.cless = { key: key, fino: Date.now() + H.tempo * 1000 };
       tCless = setTimeout(function () {
-        if (ceduto || H.fase !== "gioco" || H.passo !== "indizio" || !H.cless || H.cless.key !== H.turno + "|" + H.nTurni) return;
+        if (spento() || H.fase !== "gioco" || H.passo !== "indizio" || !H.cless || H.cless.key !== H.turno + "|" + H.nTurni) return;
         H.msg = "⏳ Tempo scaduto per i " + SQ[H.turno].nome + "!";
         scrivi({ t: "sis", testo: "⏳ Tempo scaduto per il capo dei " + SQ[H.turno].nome });
         fineTurno();
@@ -643,13 +629,14 @@
       manda: function (m) { azione(IO, m); },
       onEsci: function (gia) {   // gia = l'ha già confermato il tasto ‹ dello studio
         if (H.fase === "gioco" && !gia && !window.confirm(prova ? "Uscire dalla prova?" : "Chiudere la partita per tutti?")) return;   // un tocco sbagliato non chiude il gioco a tutti
-        clearTimeout(tBot); clearTimeout(tAttesa); clearTimeout(tCless); clearTimeout(tSosp); clearTimeout(tRis);
+        clearTimeout(tBot); clearTimeout(tAttesa); clearTimeout(tCless); clearTimeout(tSosp); clearTimeout(tAttesi);
         ceduto = true;   // da qui niente più foto né schermate
         rete.chiudi(); t.esci();
       } };
     // la Rivincita dei tasti di fine comuni: tutti di nuovo nella saletta, stesse squadre (il core fa il 3-2-1).
     // Vale anche per l'amico che porta avanti la partita al posto dell'host (host di riserva)
-    if (!prova) t.onRivincita = function () { if (H.fase === "fine" && !ceduto) nuova(); };
+    if (!prova) t.onRivincita = function () { if (H.fase === "fine" && !spento()) nuova(); };
+    if (ripresa) mandaChiave(IO);   // (se sono capo: la chiave del tabellone è nella partita ripresa)
     if (!prova) bd();
   }
 
@@ -658,7 +645,7 @@
   // =========================================================
   function ospite(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var S = { rete: null, myId: null, nome: "", vm: null, omini: {}, chiave: null, chiesta: 0, gen: 0, copia: null, tVice: null };
+    var S = { rete: null, myId: null, nome: "", vm: null, omini: {}, chiave: null, chiesta: 0 };
     var cb = { sonoHost: false, myId: null,
       omini: function () { return S.omini; },
       chiave: function () { return S.chiave && S.vm && S.vm.fase === "gioco" && S.chiave.bid === S.vm.bid ? S.chiave.col : null; },
@@ -694,7 +681,6 @@
           if (!m || !m.t) return;
           if (m.to && m.to !== S.myId) return;          // era per un altro telefono
           if (m.t === "vm") {
-            if (m.vm.gen != null) { if (m.vm.gen < S.gen) return; S.gen = m.vm.gen; }   // la foto di un host vecchio (sostituito): non conta
             var faseDi = S.vm ? S.vm.fase : null;
             S.vm = m.vm;
             if (m.vm.fase === "fine" && !t.guarda) salvaProgressiOrdine(m.vm.codice + "|" + m.vm.bid, S.myId, m.vm.progressiFine, m.vm.players, t.guarda);
@@ -708,9 +694,8 @@
             disegna(t, m.vm, cb); controllaChiave();
           }
           else if (m.t === "chiave") { S.chiave = { bid: m.bid, col: m.col }; if (S.vm) disegna(t, S.vm, cb); }
-          else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
-          else if (m.t === "riserva") { if (m.gen >= S.gen) S.copia = m.stato; }   // sono il vice: tengo la copia della partita
-          else if (m.t === "appello") { if (S.rete) S.rete.invia({ t: "presente" }); }   // il nuovo host chiede chi c'è
+          // gli avatar: si tengono quelli che ho già (dopo una ripresa arrivano man mano che gli amici rientrano)
+          else if (m.t === "omini") { var om = m.omini || {}; Object.keys(om).forEach(function (k) { if (om[k] || !(k in S.omini)) S.omini[k] = om[k]; }); if (S.vm) disegna(t, S.vm, cb); }
           else if (m.t === "avviso") avviso(m.testo);
           else if (m.t === "piena" && S.rete) {   // la stanza ha già 12 giocatori: esco e lo dico
             var r = S.rete; S.rete = null; try { r.chiudi(); } catch (e) {}
@@ -718,25 +703,9 @@
             errore(t, "La stanza è piena: ci sono già " + MAX + " giocatori.");
           }
         },
-        // l'host è sparito (o è tornato): se sono un vice, dopo un attimo prendo il suo posto (il secondo vice aspetta il doppio)
-        onHostVia: function (via) {
-          clearTimeout(S.tVice); S.tVice = null;
-          if (!via) return;
-          var v = S.vm, pos = v && v.vici ? v.vici.indexOf(S.myId) : -1;
-          if (!v || (v.fase !== "gioco" && v.fase !== "fine") || pos < 0 || !S.copia || S.copia.gen !== v.gen) return;
-          S.tVice = setTimeout(subentra, SUBENTRO_MS * (pos + 1));
-        },
         onChiuso: function () { errore(t, "La partita è stata chiusa dall'host."); },
         onErrore: function () { errore(t, "Problema di collegamento. Riprova."); }
       });
-    }
-    function subentra() {
-      S.tVice = null;
-      var v = S.vm; if (!v || !v.vici || v.vici.indexOf(S.myId) < 0 || !S.copia || !S.rete || S.copia.gen !== S.gen) return;   // se un altro vice ha già preso il posto, niente
-      var copia = S.copia, rete = S.rete;
-      S.copia = null; S.rete = null;
-      try { rete.lascia(); } catch (e) {}
-      host(t, { codice: codice, stato: copia, io: S.myId, omini: S.omini });
     }
     function attesa() {
       var s = t.schermata({ icona: "🕵️", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
@@ -751,10 +720,13 @@
   var UI = null;   // la schermata di gioco si costruisce UNA volta per tabellone e poi si aggiorna a pezzi
   function disegna(t, vm, cb) {
     if (vm.fase === "lobby" || !vm.tab) { UI = null; return lobby(t, vm, cb); }
-    if (!UI || UI.bid !== vm.bid || !UI.S || !UI.S.vivo()) UI = creaSchermo(t, vm, cb);
+    // (da capo anche se il tavolo è un altro: l'amico che prende il posto dell'host sparito, Passo 5, non usa la schermata di quando era ospite)
+    if (!UI || UI.t !== t || UI.bid !== vm.bid || !UI.S || !UI.S.vivo()) UI = creaSchermo(t, vm, cb);
     UI.cb = cb; UI.vm = vm;
     aggiorna(UI, vm, cb);
   }
+  // quanti avatar ci sono (le chiavi dei pezzi da ridisegnare: cambiano anche quando un avatar arriva dopo, es. dopo una ripresa)
+  function nAvatar(om) { var n = 0; for (var k in om || {}) if (om[k]) n++; return n; }
   function trova(vm, id) { for (var i = 0; i < vm.players.length; i++) if (vm.players[i].id === id) return vm.players[i]; return null; }
   function prontiVm(vm) {
     var vivi = vm.players.filter(function (p) { return !p.via; });
@@ -812,7 +784,7 @@
       if (p && p.id === cb.myId) io = k;
       k2.push(p ? p.id : "");
     }
-    return { lista: lista, io: io, k: k2.join(",") + "|" + Object.keys(om).length + "|" + cb.myId };
+    return { lista: lista, io: io, k: k2.join(",") + "|" + nAvatar(om) + "|" + cb.myId };
   }
   function posizionaBanchi(ui, S) {   // i banconi delle squadre, in basso (si risistemano se cambia la misura dello schermo)
     if (!ui.banchi || !ui.banchi.length) return;
@@ -833,7 +805,7 @@
     var om = (ui.cb.omini && ui.cb.omini()) || {};
     ui.banchi.forEach(function (B, k) {
       var mem = vm.players.filter(function (p) { return p.team === k && p.id !== vm.capo[k]; });
-      var key = mem.map(function (p) { return p.id + (p.via ? "-" : "") + (B.facce[p.id] || ""); }).join(",") + "|" + Object.keys(om).length;
+      var key = mem.map(function (p) { return p.id + (p.via ? "-" : "") + (B.facce[p.id] || ""); }).join(",") + "|" + nAvatar(om);
       if (key === B.k) return;
       B.k = key;
       while (B.gente.firstChild) B.gente.removeChild(B.gente.firstChild);
@@ -1106,7 +1078,7 @@
       P.el.classList.toggle("fuori", vm.fuori.indexOf(k) >= 0);
       var mem = vm.players.filter(function (p) { return p.team === k; });
       mem.sort(function (a, b) { return (b.id === vm.capo[k]) - (a.id === vm.capo[k]); });   // il capo per primo
-      var kf = mem.map(function (p) { return p.id + (p.via ? "-" : "") + (p.id === vm.capo[k] ? "*" : ""); }).join(",") + "|" + cb.myId + "|" + Object.keys((cb.omini && cb.omini()) || {}).length;
+      var kf = mem.map(function (p) { return p.id + (p.via ? "-" : "") + (p.id === vm.capo[k] ? "*" : ""); }).join(",") + "|" + cb.myId + "|" + nAvatar(cb.omini && cb.omini());
       if (P.kf !== kf) {
         P.kf = kf;
         while (P.facce.firstChild) P.facce.removeChild(P.facce.firstChild);
@@ -1143,7 +1115,7 @@
       var cls = "or-carta" + (c.g ? " g" : "") + (col != null ? " c" + col : "") + (!c.g && key ? " chiave" : "") + (fine && !c.g ? " svelata" : "") + (c.oro ? " oro" : "") + (vm.sospeso && vm.sospeso.i === i && !c.g ? " sospesa" : "") +
         (r.indovino && !c.g && !vm.sospeso ? " attiva" : "") + (segnata(vm, cb.myId, i) && r.indovino ? " mia" : "");
       if (C.cls !== cls) { C.b.className = cls; C.cls = cls; }
-      var kp = (chi[i] || []).join(",") + "|" + Object.keys((cb.omini && cb.omini()) || {}).length;   // si ridisegna anche quando arrivano gli avatar
+      var kp = (chi[i] || []).join(",") + "|" + nAvatar(cb.omini && cb.omini());   // si ridisegna anche quando arrivano gli avatar
       if (C.kp !== kp) {
         C.kp = kp;
         C.pr.innerHTML = (chi[i] || []).slice(0, 4).map(function (id) { var p = trova(vm, id); return testaAvatar(ui, id, p && p.nome, p ? p.team : -1); }).join("");
@@ -1161,7 +1133,7 @@
     if (vm.sospeso && vm.sospeso.n !== ui.sospN) { ui.sospN = vm.sospeso.n; if (ui.avviato) scenaSospeso(ui, vm, vm.sospeso); }
     // ---- la chat: si aggiungono solo le righe nuove, e si scende in fondo; con le righe nuove partono anche le scene ----
     // (se arrivano gli avatar dopo le righe, es. chi rientra, le righe già scritte si rifanno una volta con le facce giuste)
-    var nOm = Object.keys((cb.omini && cb.omini()) || {}).length;
+    var nOm = nAvatar(cb.omini && cb.omini());
     if (ui.logOm !== nOm) {
       if (ui.logOm != null && ui.logN) {
         while (ui.log.firstChild) ui.log.removeChild(ui.log.firstChild);
@@ -1441,7 +1413,8 @@
     postiOnline: MAX,   // posti online (12)
     // "Prova da solo" la vede solo il proprietario (account IL PAPPONE): per vedere com'è il gioco anche senza amici
     modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e un Bot contro due Bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
-    hostDiRiserva: true,   // se l'host sparisce, un amico porta avanti la partita (il core non la riavvia)
+    // se all'host si ricarica la pagina la partita riprende da lui; se sparisce del tutto, un amico la porta avanti (il core)
+    riprende: true, riserva: true,
     regole: [
       "Si gioca a <b>2 o 3 squadre</b>. Sul tabellone ci sono 25 parole (o 20, se l'host sceglie così): alcune sono di una squadra, alcune di nessuno e una è la <b>parola nera</b>.",
       "Solo il <b>capo</b> di ogni squadra (👑) vede di chi è ogni parola. Nel suo turno dà un <b>indizio di una parola sola</b> e un numero: quante parole sue c'entrano (es. «Caldo, 2»).",

@@ -19,9 +19,30 @@
     var t = setInterval(function () { nomi.forEach(function (n) { var w = W.finestra(n); if (!w || !w.document || !w.document.body) return; var tx = W.testo(w); var m = tx.match(/Problema di collegamento|Collegamento perso|Ops|La stanza è chiusa|non risponde|è ferma/); if (m && visti.indexOf(n + ": " + m[0]) < 0) visti.push(n + ": " + m[0]); }); }, 50);
     return { stop: function () { clearInterval(t); return visti; } };
   }
+  // (Passo 5) l'host (Paky) ricarica la pagina o chiude e riapre l'app: la partita RIPRENDE da dove era (non più la saletta).
+  // Foto nuova dell'host con _r, la fase non è "lobby", controlla(vm) vero, nessun amico passa dalla saletta e tutti leggono
+  // «🔁 Paky è tornato: la partita riprende da dove era». Restituisce { P, dt }
+  async function ripresaHost(C, amici, come, controlla) {
+    var s0 = (W.statoStanza(C) || {})._s, t0 = Date.now(), pills = {}, sal = {}, perche = "";
+    var P = come === "chiudiApp" ? await W.chiudiApp("Paky") : await W.ricarica("Paky");
+    var ok = await W.aspetta(function () {
+      amici.forEach(function (n) { var f = W.finestra(n); if (!f) return; var p = pill(f); if (/riprende da dove era/.test(p)) pills[n] = p; if (f.document.querySelector(".saletta-schermo")) sal[n] = 1; });
+      var s = W.statoStanza(C) || {}, v = vm(C);
+      if (!s._s || s._s === s0) { perche = "nessuna foto nuova dell'host"; return false; }
+      if (!s._r) { perche = "la foto nuova non dice che la partita riprende (_r)"; return false; }
+      if (!v.fase || v.fase === "lobby") { perche = "la partita è tornata in saletta"; return false; }
+      var c = controlla ? controlla(v) : true;
+      if (c !== true) { perche = typeof c === "string" ? c : "la partita non è quella di prima"; return false; }
+      if (!amici.every(function (n) { return pills[n]; })) { perche = "non tutti leggono «la partita riprende da dove era» (" + amici.filter(function (n) { return !pills[n]; }).map(function (n) { return n + ": " + (pill(W.finestra(n)) || "-"); }).join("; ") + ")"; return false; }
+      return true;
+    }, 12000);
+    if (!ok) no("ricarica dell'host: " + perche + " (fase " + vm(C).fase + ") · " + note.join(" · "));
+    var ns = Object.keys(sal); if (ns.length) no("dopo la ricarica dell'host " + ns.join(", ") + " è passato dalla saletta · " + note.join(" · "));
+    return { P: P, dt: ((Date.now() - t0) / 1000).toFixed(1) };
+  }
 
   // ---------- 101 TRIS ----------
-  S[101] = { nome: "Tris: ricarica dell'ospite, telefono spento, ricarica dell'host, partita intera e rivincita", fai: async function () {
+  S[101] = { nome: "Tris: ricarica dell'ospite, telefono spento, ricarica dell'host (la partita riprende), fine e rivincita", fai: async function () {
     note = [];
     var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Tris");
     await W.apriTel("Giulia", { hash: "gioco=tris&stanza=" + C, x: 185 });
@@ -45,28 +66,27 @@
     await W.dorme(1500);
     await tocca(8); if (!await W.aspetta(function () { return n() === 3; }, 5000)) no("mossa 3 dopo il telefono spento");
     nota("Giulia spenta 5 s: si continua");
-    // l'host ricarica a metà partita: tutti in saletta, stesso codice
-    var t0 = Date.now();
-    P = await W.ricarica("Paky");
-    ok = await W.aspetta(function () { var b = W.finestra("Paky").document.querySelector(".sl-cod b"); return b && b.textContent === C && vm(C).avvId === mioId("Giulia") && dentro(W.finestra("Giulia")); }, 10000);
-    if (!ok) no("ricarica dell'host: non sono tutti in saletta (" + T(W.finestra("Giulia")).slice(0, 80) + ")");
-    nota("host ricarica: saletta " + C + " in " + ((Date.now() - t0) / 1000).toFixed(1) + " s");
-    W.clicca(W.finestra("Paky"), /Comincia/);
-    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && n() === 0; }, 4000)) no("la partita nuova non comincia");
-    var primo = vm(C).turno, seq = [0, 3, 1, 4, 2], chi1 = null;
-    for (var i = 0; i < seq.length; i++) { var c = await tocca(seq[i]); if (!i) chi1 = c; if (!await W.aspetta(function () { return n() === i + 1; }, 4000)) no("mossa " + (i + 1)); }
+    // l'host ricarica a metà partita (Passo 5): la partita riprende, stesse 3 mosse, tocca a chi toccava, stesso codice
+    await W.dorme(900);   // (la ripresa si salva al massimo ogni mezzo secondo)
+    var board0 = JSON.stringify(vm(C).board), turno0 = vm(C).turno, idG = mioId("Giulia");
+    var r = await ripresaHost(C, ["Giulia"], "ricarica", function (v) { return v.fase === "gioco" && JSON.stringify(v.board) === board0 && v.turno === turno0 && v.avvId === idG || "tavolo diverso (" + JSON.stringify(v.board) + ", turno " + v.turno + ")"; });
+    P = r.P;
+    nota("host ricarica: partita ripresa in " + r.dt + " s (stesse 3 mosse)");
+    // si finisce la partita sulle caselle libere (X vince con 2-5-8)
+    var libere = [1, 2, 3, 5, 6, 7], chi1 = null;
+    for (var i = 0; i < libere.length && vm(C).fase !== "fine"; i++) { var nn = n(), c = await tocca(libere[i]); if (!await W.aspetta(function () { return n() === nn + 1 || vm(C).fase === "fine"; }, 4000)) no("mossa dopo la ripresa " + (i + 1)); chi1 = c; }
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 4000)) no("non finisce");
-    if (!await W.aspetta(function () { return /vinto|vince|perso/i.test(W.testo(W.finestra("Giulia"))); }, 3000)) no("Giulia non vede la fine");
+    if (!await W.aspetta(function () { return /vinto|vince|perso|pari/i.test(W.testo(W.finestra("Giulia"))); }, 3000)) no("Giulia non vede la fine");
     // (dal p2-f la fine online è del core: "↻ Nuova partita (stessi amici)" → saletta → 3-2-1 da solo con tutti dentro)
     if (!await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /Rivincita|Nuova partita/); }, 3000)) no("niente Rivincita");
     if (!await W.aspetta(function () { return vm(C).fase === "gioco" && n() === 0; }, 8000)) no("la rivincita non parte");
     var v = sent.stop();
     if (v.length) no("schermate viste: " + v.join("; "));
-    return note.join(" · ") + " · vince " + chi1 + " (" + primo + "), rivincita partita";
+    return note.join(" · ") + " · ultima mossa di " + chi1 + " (partita finita), rivincita partita";
   } };
 
   // ---------- 102 SCALINATA ----------
-  S[102] = { nome: "Scalinata: ospite che ricarica, telefono spento 25 s, host che chiude l'app a fine partita", fai: async function () {
+  S[102] = { nome: "Scalinata: ospite che ricarica, telefono spento 25 s, host che chiude l'app sul podio (lo ritrova) e nuova partita", fai: async function () {
     note = [];
     var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La Scalinata");
     await W.apriTel("Giulia", { hash: "gioco=scalinata&stanza=" + C, x: 185 });
@@ -95,16 +115,16 @@
     await W.dorme(800);
     var gw = W.finestra("Giulia");
     nota("Giulia riaccesa vede: «" + T(gw).slice(0, 60) + "» pillole: " + (pill(gw) || "-"));
-    // l'host chiude l'app sul podio e la riapre
-    var t0 = Date.now();
-    await W.chiudiApp("Paky");
-    ok = await W.aspetta(function () { var b = W.finestra("Paky").document.querySelector(".sl-cod b"); return b && b.textContent === C && vm(C).fase === "lobby" && dentro(W.finestra("Luca")); }, 10000);
-    if (!ok) no("l'host riapre l'app: la saletta non torna con Luca dentro (" + T(W.finestra("Luca")).slice(0, 80) + ")");
-    var gDentro = await W.aspetta(function () { return dentro(W.finestra("Giulia")); }, 6000);
-    nota("host chiude e riapre l'app: saletta " + C + " in " + ((Date.now() - t0) / 1000).toFixed(1) + " s, Luca dentro, Giulia " + (gDentro ? "dentro" : "NON dentro: " + T(W.finestra("Giulia")).slice(0, 60)));
+    // l'host chiude l'app sul podio e la riapre (Passo 5): ritrova il podio, nessuno passa dalla saletta
+    await W.dorme(900);
+    var nR = vm(C).nRound, nP = ids().length;
+    var r = await ripresaHost(C, ["Giulia", "Luca"], "chiudiApp", function (v) { var np = ids().length; return v.fase === "fine" && v.nRound === nR && np === nP || "non è il podio di prima (fase " + v.fase + ", round " + v.nRound + "/" + nR + ", posti " + np + "/" + nP + ")"; });
+    nota("host chiude e riapre l'app sul podio: podio ripreso in " + r.dt + " s, Giulia e Luca sul podio");
+    // e da lì si rigioca: «Nuova partita» porta tutti nella saletta della stessa stanza
+    if (!await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /Rivincita|Nuova partita/); }, 6000)) no("sul podio ripreso niente «Nuova partita» · " + note.join(" · "));
+    if (!await W.aspetta(function () { return vm(C).fase === "lobby" || vm(C).fase === "scelta"; }, 8000)) no("«Nuova partita» dal podio ripreso non riparte (fase " + vm(C).fase + ")");
     var vv = sent.stop();
     if (vv.length) nota("schermate viste: " + vv.join("; "));
-    if (!gDentro) no(note.join(" · "));
     return note.join(" · ");
   } };
 
@@ -156,7 +176,7 @@
   } };
 
   // ---------- 104 BLACK JACK ----------
-  S[104] = { nome: "Black Jack in 3: ospite che ricarica, telefono spento 25 s, mani intere, host che ricarica", fai: async function () {
+  S[104] = { nome: "Black Jack in 3: ospite che ricarica, telefono spento 25 s, mani intere, host che ricarica (la partita riprende)", fai: async function () {
     note = [];
     var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Black Jack");
     await W.apriTel("Giulia", { hash: "gioco=blackjack&stanza=" + C, x: 185 });
@@ -208,16 +228,18 @@
     // Giulia può ancora giocare dopo la ricarica? (deve poter puntare da sola sul suo telefono)
     var gw = W.finestra("Giulia");
     nota("Giulia dopo la ricarica, alla mano " + mani + ": " + (seatDi("Giulia") >= 0 ? "seat " + seatDi("Giulia") : "senza posto"));
-    // l'host ricarica: tutti in saletta
-    var t0 = Date.now();
-    await W.ricarica("Paky");
-    var ok = await W.aspetta(function () { var b = W.finestra("Paky").document.querySelector(".sl-cod b"); return b && b.textContent === C && dentro(W.finestra("Giulia")) && (vm(C).giocatori || []).length >= 2; }, 10000);
-    if (!ok) no("ricarica dell'host: saletta non pronta (" + T(W.finestra("Giulia")).slice(0, 80) + ") · " + note.join(" · "));
-    await W.aspetta(function () { return dentro(W.finestra("Luca")); }, 5000);
-    nota("host ricarica: saletta in " + ((Date.now() - t0) / 1000).toFixed(1) + " s con " + (vm(C).giocatori || []).map(function (g) { return g.nome; }).join(", "));
-    W.clicca(W.finestra("Paky"), /Comincia/);
-    mani = 0; ultimaFase = ""; fatto = {};
-    if (!await giocaFinoA(1, 60000)) no("dopo la ricarica dell'host la mano non va avanti · " + note.join(" · "));
+    // l'host ricarica (Passo 5): la partita riprende, stessi posti e stesse fiches, nessuno in saletta; poi un'altra mano
+    await W.dorme(900);
+    var nomi0 = (vm(C).giocatori || []).map(function (g) { return g.nome; }).join(","), fiches0 = (vm(C).giocatori || []).map(function (g) { return g.fiches; }).join(",");
+    var r = await ripresaHost(C, ["Giulia", "Luca"], "ricarica", function (v) {
+      var gg = v.giocatori || [];
+      if (gg.map(function (g) { return g.nome; }).join(",") !== nomi0) return "posti diversi (" + gg.map(function (g) { return g.nome; }).join(",") + " / " + nomi0 + ")";
+      if (gg.map(function (g) { return g.fiches; }).join(",") !== fiches0) return "fiches diverse (" + gg.map(function (g) { return g.fiches; }).join(",") + " / " + fiches0 + ")";
+      return true;
+    });
+    nota("host ricarica: partita ripresa in " + r.dt + " s con " + nomi0);
+    mani = 0; ultimaFase = vm(C).fase; fatto = {};
+    if (!await giocaFinoA(1, 60000)) no("dopo la ripresa la mano non va avanti (fase " + vm(C).fase + ") · " + note.join(" · "));
     var vv = sent.stop(); if (vv.length) nota("schermate viste: " + vv.join("; "));
     if (difetti.length) no(difetti.join("; ") + " (blackjack.js: nelle foto della partita mancano gli id dei giocatori) · " + note.join(" · "));
     return note.join(" · ");
@@ -242,7 +264,7 @@
   } };
 
   // ---------- 106 Parola d'ordine: host di riserva ----------
-  // (se l'host rientra entro 5 secondi dal cambio, l'appello del nuovo host lo segna "via": è del gioco, vedi ordine.js)
+  // (dal Passo 5 il cambio di host lo fa il core: riprende + riserva; vedi anche passo5/ordine.js 580-582)
   S[106] = { nome: "Parola d'ordine: l'host sparisce a metà partita, un amico la porta avanti; l'host torna e rientra", fai: async function () {
     var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Parola d'ordine");
     var amici = ["Giulia", "Luca", "Sara"];
@@ -252,12 +274,13 @@
     if (!await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /Comincia/); }, 4000)) no("niente Comincia");
     if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 9000)) no("non comincia (" + vm(C).fase + ")");   // (c'è il 3-2-1-Via!)
     await W.dorme(3000);
-    var gen0 = vm(C).gen, host0 = vm(C).hostId;
+    // (Passo 5: l'host di riserva è del core: chi tiene la partita sta nella foto, _g = il cambio, _h = il suo id)
+    var s0 = W.statoStanza(C) || {}, gen0 = s0._g || 0;
     W.spegni("Paky");
     var t0 = Date.now();
-    var nuovo = await W.aspetta(function () { var v = vm(C); return v.gen > gen0 && v.fase === "gioco" && v.hostId && v.hostId !== host0 && v.hostId !== "host" && v; }, 40000, 250);
-    if (!nuovo) no("nessun amico ha preso il posto (gen " + vm(C).gen + ", host " + vm(C).hostId + ")");
-    var chi = (nuovo.players || []).filter(function (p) { return p.id === nuovo.hostId; })[0], dt = ((Date.now() - t0) / 1000).toFixed(1);
+    var nuovo = await W.aspetta(function () { var s = W.statoStanza(C) || {}, v = s.vm || s; return (s._g || 0) > gen0 && v.fase === "gioco" && s._h && s._h !== "host" && s; }, 40000, 250);
+    if (!nuovo) no("nessun amico ha preso il posto (_g " + (W.statoStanza(C) || {})._g + ", _h " + (W.statoStanza(C) || {})._h + ")");
+    var chi = ((nuovo.vm || nuovo).players || []).filter(function (p) { return p.id === nuovo._h; })[0], dt = ((Date.now() - t0) / 1000).toFixed(1);
     await W.dorme(8000);
     var sbagli = amici.filter(function (n) { var w = W.finestra(n); return w.document.querySelector(".sg-ferma") || /Ops|chiusa|Problema/.test(W.testo(w)) || w.document.querySelector(".saletta-schermo"); });
     if (sbagli.length) no("dopo il cambio di host: " + sbagli.map(function (n) { return n + ": " + T(W.finestra(n)).slice(0, 50); }).join("; "));
@@ -301,7 +324,7 @@
     if (!ok) no("dopo la ripresa non sono tutti di nuovo in gioco (fase " + vm(C).fase + ", " + (vm(C).giocatori || []).map(function (g) { return g.nome + (g.via ? " via" : ""); }).join(",") + ")");
     var dt = ((Date.now() - t0) / 1000).toFixed(1);
     if (punti() !== prima) no("punti cambiati: " + prima + " → " + punti());
-    if (!/si riprende la partita/.test(pg)) no("Giulia non legge «si riprende la partita» (" + (pg || "niente") + ")");
+    if (!/riprende da dove era/.test(pg)) no("Giulia non legge «la partita riprende da dove era» (" + (pg || "niente") + ")");
     // si gioca: il turno dopo la ripresa arriva fino all'esito
     var fine = Date.now() + 40000, visto = false;
     while (Date.now() < fine && !visto) {

@@ -51,7 +51,7 @@
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
   var GIOCHI_ONLINE = { asta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1, pallamatta: 1, garapesca: 1, balla: 1, lunghezza: 1, chidinoi: 1, scopone: 1, impostore: 1 };
-  function giocoOnline(g) { return !!(g && GIOCHI_ONLINE[g.id]); }
+  function giocoOnline(g) { return !!(g && (GIOCHI_ONLINE[g.id] || g.provaOnline)); }   // (provaOnline: solo i giochi finti delle prove, es. il Contatore)
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
 
@@ -244,8 +244,25 @@
   // con lo stesso codice e gli amici rientrano da soli. Si dimentica quando la chiudo apposta.
   var DURATA_MIA = 20 * 60 * 1000;
   function ricordaMiaStanza(o) { o.t = Date.now(); scriviM(localStorage, "sg-mia-stanza", o); }
-  function dimenticaMiaStanza(codice) { var o = leggiM(localStorage, "sg-mia-stanza"); if (o && (!codice || o.codice === codice)) scriviM(localStorage, "sg-mia-stanza", null); }
+  function dimenticaMiaStanza(codice) { var o = leggiM(localStorage, "sg-mia-stanza"); if (o && (!codice || o.codice === codice)) scriviM(localStorage, "sg-mia-stanza", null); scordaRipresa(codice); }
   function miaStanzaRecente() { var o = leggiM(localStorage, "sg-mia-stanza"); return o && o.gioco && o.codice && Date.now() - o.t < DURATA_MIA ? o : null; }
+  // ---- La ripresa (Passo 5): la partita dell'host com'era, per riprenderla da dove era se la pagina si ricarica o l'app
+  // si chiude (t.ricorda / t.ripresa). Una sola alla volta, vale 20 minuti come la stanza:
+  // { gioco, codice, t, io, gen, stato, soloQui, nomeHost, ultimoRisultato }
+  var DURATA_RIPRESA = DURATA_MIA;
+  function leggiRipresa() { var o = leggiM(localStorage, "sg-ripresa"); return o && o.gioco && o.codice && o.stato != null && Date.now() - (+o.t || 0) < DURATA_RIPRESA ? o : null; }
+  // quella di questo gioco e di questa stanza (null se non c'è o è vecchia)
+  function ripresaDi(gioco, codice) { var o = leggiRipresa(); return o && codice && o.codice === String(codice).toUpperCase() && (!gioco || o.gioco === gioco) ? o : null; }
+  function scordaRipresa(codice) { var o = leggiM(localStorage, "sg-ripresa"); if (o && (!codice || o.codice === String(codice).toUpperCase())) scriviM(localStorage, "sg-ripresa", null); }
+  function scriviRipresa(o) {
+    try {
+      var tx = JSON.stringify(o);
+      if (tx.length > 1500000) { console.warn("Ripresa di " + o.gioco + " troppo grande (" + tx.length + " caratteri): non la salvo"); return false; }
+      localStorage.setItem("sg-ripresa", tx); return true;
+    } catch (e) { console.warn("Ripresa non salvata: " + (e && e.message)); return false; }
+  }
+  // c'è una partita da riprendere per questa stanza ricordata (anche senza profilo: c'è il nome dell'host)
+  function ripresaValida(mt) { var g = mt && giocoDa(mt.gioco); return !!(g && g.riprende && ripresaDi(g.id, mt.codice)); }
   // la Sala che ho aperto io: si salva a ogni invio a tutti e si riapre con lo stesso codice
   function ricordaMiaSala(o) { o.t = Date.now(); scriviM(localStorage, "sg-mia-sala", o); }
   function dimenticaMiaSala() { scriviM(localStorage, "sg-mia-sala", null); }
@@ -310,7 +327,7 @@
 
   // ---- gli avvisi della rete, in alto (pillole una sotto l'altra, non si toccano: il gioco sotto resta usabile) ----
   //  "📶 Mi ricollego…", "⏳ Aspettiamo l'host…", "👀 entri alla prossima", "🎉 è tornato", "🔁 Riapro la tua stanza"
-  var PILLOLE = { box: null, n: {}, t: {} }, ORDINE_PILLOLE = ["rete", "host", "prossima", "tornato", "riapro", "sala", "saletta"];
+  var PILLOLE = { box: null, n: {}, t: {} }, ORDINE_PILLOLE = ["rete", "host", "prossima", "tornato", "riapro", "ripresa", "riserva", "sala", "saletta"];
   function pillola(k, testo, colore, durata) {
     var n = PILLOLE.n[k];
     clearTimeout(PILLOLE.t[k]); delete PILLOLE.t[k];
@@ -4457,13 +4474,35 @@
         n: Dz.fine ? +Dz.fine.n || 0 : 0, fine: Dz.fine || null, visti: Dz.fine ? (function (o) { o[String(Dz.fine.giro | 0)] = 1; return o; })({}) : {} };
       if (EZ.ctx) { sala.inGioco = true; sala.ctx = EZ.ctx; }
     }
+    // (Passo 5) la mia pagina si è ricaricata con un gioco in corso nella Sala: il duello dei due amici continua (era sul
+    // telefono di chi l'ha aperto); il mio gioco, se sa riprendere e la sua partita è ricordata, si riapre con lo STESSO codice
+    // appena la Sala è di nuovo mia (riprendiG): la prima foto della Sala dice già il gioco, così gli amici restano dentro
+    var riprendiG = null, RG = R0 && R0.gioco && R0.gioco.id && R0.gioco.stanza && !R0.elim ? R0.gioco : null, gRG = RG ? giocoDa(RG.id) : null;
+    if (gRG) {
+      var Dr = RG.duello && RG.duello.stanza === RG.stanza && RG.duello.a && RG.duello.b ? RG.duello : null;
+      if (Dr || (gRG.riprende && ripresaDi(gRG.id, RG.stanza))) {
+        sala.gioco = gRG.id; sala.stanza = RG.stanza; sala.fase = typeof RG.fase === "string" ? RG.fase : "gioco";
+        sala.fuori = RG.fuori && typeof RG.fuori === "object" ? RG.fuori : {}; sala.scelti = Array.isArray(RG.scelti) ? RG.scelti : null;
+        if (Dr) sala.duello = { a: Dr.a, b: Dr.b, na: Dr.na, nb: Dr.nb, stanza: Dr.stanza, gioco: Dr.gioco || gRG.id, imp: Dr.imp || {},
+          n: Dr.fine ? +Dr.fine.n || 0 : 0, fine: Dr.fine || null, visti: Dr.fine ? (function (o) { o[String(Dr.fine.giro | 0)] = 1; return o; })({}) : {} };
+        else { sala.inGioco = true; riprendiG = { g: gRG, imp: RG.imp || {} }; }
+      }
+    }
     if (sala.torneo && EZ) membri.forEach(function (m) { segnaNomeT(sala.torneo, m.nome); });
     // la Compagnia che apro io: va (o resta) tra le mie, in cima
     if (CF && sala.comp && window.SGCompagnia) try { SGCompagnia.salva({ c: CF, n: sala.comp.nome, e: sala.comp.emoji, rv: sala.comp.rv || 0 }); SGCompagnia.usata(CF); } catch (e) {}
     // ogni volta che la Sala cambia la mando a tutti e me la segno (per riaprirla se la pagina si ricarica: stessa gen e stesso
     // nato, così chi è dentro capisce che è sempre la stessa Sala)
     function salva() { if (sala === S0 && sala.codice && sala.codice !== "…") ricordaMiaSala({ codice: sala.codice, nomeHost: sala.membri[0] && sala.membri[0].nome, membri: sala.membri, torneo: sala.torneo, elim: sala.elim, giocate: sala.giocate, porta: sala.rete && sala.rete._sv && sala.rete._sv.porta ? 1 : 0,
-      nato: sala.nato, gen: sala.gen, comp: sala.comp || null, s: sala.rete ? sala.rete.sessione : null }); if (sala === S0) ricordaSalaIeri(sala); }
+      nato: sala.nato, gen: sala.gen, comp: sala.comp || null, s: sala.rete ? sala.rete.sessione : null, gioco: giocoSalvato() }); if (sala === S0) ricordaSalaIeri(sala); }
+    // (Passo 5) il gioco in corso nella Sala: se la pagina si ricarica la Sala lo riapre con lo stesso codice e la partita
+    // riprende (il gioco col suo t.ripresa), oppure il duello dei due amici continua. null = nessun gioco da ritrovare
+    function giocoSalvato() {
+      if (!sala.gioco || !sala.stanza || sala.elim) return null;
+      var D = sala.duello && sala.duello.stanza === sala.stanza ? sala.duello : null;
+      return { id: sala.gioco, stanza: sala.stanza, fase: sala.fase || "lobby", fuori: sala.fuori || {}, scelti: sala.scelti || null, imp: D ? null : (sala.impGioco || null),
+        duello: D ? { a: D.a, b: D.b, na: D.na, nb: D.nb, stanza: D.stanza, gioco: D.gioco, imp: D.imp || {}, fine: D.fine || null } : null };
+    }
     // (col gioco: fase = a che punto è, nel = chi è dentro la sua stanza, fuori = chi ne è uscito apposta;
     //  duello = il gioco a due tra due amici senza l'host: chi apre la stanza, chi entra, com'è finita)
     function bcast(soloFoto) {   // (soloFoto: la manda e basta, senza riscrivere la Sala ricordata: la pausa)
@@ -4551,6 +4590,7 @@
         if (sala !== S0) return;
         sala.pronta = true;
         if (gPartenza) { var gp2 = gPartenza; gPartenza = null; bcast(); return salaPreparaGioco(gp2); }
+        if (riprendiG) { var rg = riprendiG; riprendiG = null; bcast(); return salaRiprendiGioco(rg.g, rg.imp); }   // (la Sala è mia: il gioco riprende)
         agg();
       },
       // collegandomi c'è già la Sala viva di un altro su questo codice: se vince la mia parlo, se no entro da amico
@@ -4614,6 +4654,7 @@
     }, opzR);
     if (sala.rete && sala.rete._sv) sala.rete._sv.salva = salva;   // (la porta chiusa o aperta si ricorda subito)
     if ((!gPartenza || CF || RZ) && !sala.inGioco) disegnaSalaHost();   // (con un gioco di partenza si va dritti nella sua saletta; nel subentro dentro un gioco si resta nel gioco)
+    else if (riprendiG) mostra(schermata({ icona: riprendiG.g.icona || "🎲", titolo: "Riprendo la partita…", sotto: riprendiG.g.nome }));   // (un attimo: la Sala torna mia, poi il gioco)
   }
 
   function chiudiSala() { try { if (sala && sala.rete) sala.rete.chiudi(); } catch (e) {} if (sala && sala.tVivo) clearInterval(sala.tVivo); sala = null; dimenticaMiaSala(); }
@@ -4694,7 +4735,7 @@
   }
   // la partita in corso resta quando cambia l'host della Sala? Solo se la sua stanza non era sul telefono che se ne va:
   // il duello di due amici, o un gioco col suo host di riserva (Passo 5: g.riserva || hostDiRiserva(g))
-  function haRiserva(g) { return hostDiRiserva(g); }
+  function haRiserva(g) { return !!(g && g.riserva && g.riprende) || hostDiRiserva(g); }   // (riserva vale solo con riprende: riservaPer)
   // il vice prende la Sala (perche: "passata" = me l'ha passata l'host; "sparito" = l'host non c'è più). m = l'ultima foto
   // della Sala. Lascio la Sala da amico e la riapro con lo stesso codice e la generazione dopo, da "host": gli stessi amici
   // (con 30 s per rientrare: lo fanno da soli), la stessa classifica e le stesse partite giocate; il mio id di prima diventa
@@ -5440,16 +5481,21 @@
     salaPreparaGioco(g, { sfida: true });
   }
 
-  function salaLancia(g, impostazioni, box) {
+  // opz (facoltativo) = { codice, ripresa }: la partita di prima riprende nella stessa stanza (salaRiprendiGioco): stesso
+  // codice, e la Sala resta a che punto era (fase, chi è uscito) invece di ripartire dalla saletta
+  function salaLancia(g, impostazioni, box, opz) {
     if (!sala) return schermataHome();
+    opz = opz || {};
     SGNet.chiudiGiochi();                     // se era rimasta aperta la stanza del gioco di prima, si chiude
-    var C = SGNet.nuovoCodice();
+    var C = opz.codice ? String(opz.codice).toUpperCase() : SGNet.nuovoCodice();
     SGNet._forza = C;                         // il gioco userà QUESTO codice stanza
     sala.gioco = g.id; sala.stanza = C; sala.inGioco = true; sala.sceglie = false;
-    sala.fase = "lobby"; sala.fuori = {}; sala.duello = null;
+    if (!opz.ripresa) { sala.fase = "lobby"; sala.fuori = {}; }
+    sala.duello = null;
+    sala.impGioco = impSalvabili(impostazioni);   // (le regole di questa partita: se la pagina si ricarica, la Sala la riprende con queste)
     // chi gioca, se l'ha scelto l'host ("Chi gioca?"): gli altri guardano e a fine partita non hanno «Ci sto»
     sala.scelti = impostazioni && impostazioni.scelti && impostazioni.scelti.length ? impostazioni.scelti.map(function (x) { return x.id; }) : null;     // (si comincia dalla saletta; chi era uscito dal gioco di prima conta di nuovo)
-    if (RIV && RIV.daSala && !RIV.codice) RIV.codice = C;   // "↻ Rivincita" di un gioco che si rilancia: la saletta nuova parte col 3-2-1
+    if (RIV && RIV.daSala && !RIV.codice && !opz.ripresa) RIV.codice = C;   // "↻ Rivincita" di un gioco che si rilancia: la saletta nuova parte col 3-2-1
     sala._bcast();                            // dice agli altri quale gioco aprire e con che codice
     var ctx = sala.ctx = {
       // si torna in sala: prima lo dico a tutti (tornano da soli), poi chiudo la stanza del gioco
@@ -5461,12 +5507,34 @@
       rigioca: function () { if (!sala || sala.ctx !== ctx) return; lasciaPartita(); SGNet.chiudiGiochi(1500); salaPreparaGioco(g, { stessi: true }); },
       // la partita è finita: nel torneo si sommano i punti
       risultato: function (g2, classifica) { salaRisultato(g2, classifica); },
-      fine: function (g2, classifica) { salaRisultato(g2, classifica); salaFine(g2, classifica, ctx); }
+      // (giaDato: la stessa classifica già contata prima che la pagina si ricaricasse: niente punti di nuovo)
+      fine: function (g2, classifica, gi, imp, giaDato) { if (!giaDato) salaRisultato(g2, classifica); salaFine(g2, classifica, ctx); }
     };
     linkParams = {};      // l'host apre da host, non da ospite
     // la stanza del gioco nasce con la porta com'è quella della Sala (chi è nella Sala entra lo stesso)
     if (salaSempre() && sala.rete && sala.rete._sv && sala.rete._sv.porta) PORTA_SEME = true;
     avviaPartita(g, [sala.membri[0].nome], impostazioni, { regole: box }, ctx);
+  }
+  // (Passo 5) la pagina dell'host si è ricaricata a partita in corso: la Sala riaperta rilancia il gioco nella STESSA stanza e
+  // il gioco riprende da dove era (avviaPartita trova la sua ripresa da P.forza: t.ripresa). Le regole sono quelle di prima;
+  // il riquadro ⚙️ si rifà fuori dalla pagina come in salaPreparaGioco (serve alla Rivincita)
+  function salaRiprendiGioco(g, impPrima) {
+    if (!sala || !g || sala.gioco !== g.id || !sala.stanza) return disegnaSalaHost();
+    // (intanto la partita non c'è più: es. scaduta. La Sala torna senza gioco, come prima)
+    if (!ripresaDi(g.id, sala.stanza)) {
+      sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.scelti = null; sala.ctx = null;
+      sala._bcast(); return disegnaSalaHost();
+    }
+    var imp = {}, box = null;
+    if (typeof g.impostazioni === "function") {
+      box = el("div");
+      try { g.impostazioni(box, imp, { el: el, sala: true, modo: "online", giocatori: sala.membri.map(function (m) { return m.nome; }) }); }
+      catch (e) { setTimeout(function () { throw e; }, 0); }
+    }
+    Object.keys(impPrima || {}).forEach(function (k) { imp[k] = impPrima[k]; });
+    imp.modo = "online";
+    sala.regole = sala.regole || {}; sala.regole[g.id] = { box: box, imp: imp };
+    salaLancia(g, imp, box, { codice: sala.stanza, ripresa: true });
   }
 
   // "🎮 Cambia gioco" dalla fine partita: tutti tornano nella Sala ("Paky sceglie il prossimo gioco… 🎲") e l'host è già
@@ -5565,6 +5633,11 @@
           // l'host mi passa la Sala ("👑 Passa la Sala a …"): la prendo subito
           if (m.cede && m.cede === mioIdSala(S) && !m.elim && profiloAttivo()) return subentraSala(S, m, "passata");
         }
+        // l'host è tornato mentre giocavo: se il gioco continua (la stessa stanza) lo dice il gioco; se no "si riparte dalla Sala"
+        if (S.tornatoDopo) {
+          var tD = S.tornatoDopo; S.tornatoDopo = 0;
+          if (Date.now() - tD < 6000 && !(m.gioco && m.stanza && S.inGioco === m.stanza)) pillola("tornato", "🎉 " + (nomeHostDi(m) || S.nomeHost || "L'host") + " è tornato: si riparte dalla Sala", "verde", 3500);
+        }
         // la Sala si è spostata nella Compagnia (p3-b): si va lì da soli, con lo stesso id
         if (m.trasloco && codiceComp(m.trasloco.codice) && codiceComp(m.trasloco.codice) !== S.codice) return traslocoOspite(S, m.trasloco);
         // la Compagnia: la tengo tra le mie (la prima volta "📌 … è nella tua home"); un nome più nuovo lo prendo
@@ -5626,9 +5699,13 @@
       },
       // l'host ha riaperto la Sala (la sua pagina si è ricaricata): il join riparte da solo, qui solo l'avviso.
       // (se la Sala è passata a un altro c'è già "👑 Ora la Sala la tiene Luca")
+      // (Passo 5: se sto giocando, la pillola aspetta la foto della Sala: se il gioco continua lo dice il gioco, "riprende da dove era")
       onHostNuovo: function (eraDentro) {
         var cambio = S.cambioHost; S.cambioHost = false;
-        if (eraDentro && salaG === S && !cambio) pillola("tornato", "🎉 " + (S.nomeHost || "L'host") + " è tornato: si riparte dalla Sala", "verde", 3500);
+        if (!eraDentro || salaG !== S || cambio) return;
+        if (S.elim && (S.inPartitaK || S.guardaK)) return;   // (torneo a eliminazione: la mia partita, o quella che guardo, continua: lo dice lei)
+        if (S.inGioco !== null) { S.tornatoDopo = Date.now(); return; }
+        pillola("tornato", "🎉 " + (S.nomeHost || "L'host") + " è tornato: si riparte dalla Sala", "verde", 3500);
       },
       // l'host è sparito (il broker l'ha detto: schermo bloccato, app chiusa…). Se sono uno dei vice (i primi due arrivati col
       // profilo, scritti nella sua ultima foto) prendo la Sala io: il primo dopo 20 s, il secondo dopo 30 s; se l'host era uscito
@@ -8498,8 +8575,17 @@
   var reteOsp = null;     // la stanza di un gioco in cui sono entrato da ospite: { h, codice, P, guarda, sala }
   var NOMI_SEME = null;   // stanza riaperta: i nomi già dati (id -> nome), così ognuno ritrova il suo
   var PORTA_SEME = false; // stanza riaperta con la porta chiusa
+  var RIPRESA_SEME = null; // (Passo 5, host di riserva) la partita che questo telefono prende in mano: la usa la prossima avviaPartita
+  // la ripresa da salvare subito quando l'app va in secondo piano o la pagina se ne va (quella della partita aperta)
+  var ripresaSubito = null;
+  function salvaRipresaSubito() { if (ripresaSubito) try { ripresaSubito(); } catch (e) {} }
+  document.addEventListener("visibilitychange", function () { if (document.hidden) salvaRipresaSubito(); });
+  window.addEventListener("pagehide", salvaRipresaSubito);
+  document.addEventListener("freeze", salvaRipresaSubito);
   var PORTA_SALA_SEME = false;   // (lo stesso per la Sala)
-  var HOST_DI_RISERVA = { ordine: 1 };   // giochi col loro host di riserva (Parola d'ordine): quando cambia l'host non si riavviano
+  // giochi col loro host di riserva fatto in casa: quando cambia l'host non si riavviano. Dal Passo 5 è vuoto: Parola
+  // d'ordine usa l'host di riserva del core (riprende + riserva in SG.registra); resta per un gioco con hostDiRiserva: true
+  var HOST_DI_RISERVA = {};
   function hostDiRiserva(g) { return !!(g && (g.hostDiRiserva || HOST_DI_RISERVA[g.id])); }
   function delCore(m) { return !!(m && typeof m.t === "string" && m.t.slice(0, 2) === "__"); }
   // a che punto è la partita, da una foto che l'host manda a tutti: "lobby" (saletta), "fine" (classifica), "gioco" (il resto).
@@ -8530,6 +8616,293 @@
     nomi[id] = n; if (m.pr) conPr[id] = 1;
     return true;
   }
+  // =========================================================
+  //  L'HOST DI RISERVA (Passo 5, p5-b): nei giochi con riprende e riserva, se l'host sparisce del tutto (telefono
+  //  spento, batteria) un amico porta avanti la partita da dove era. Fuori dai tornei (eliminazione e serata a punti
+  //  sullo stesso telefono). Le regole, uguali su tutti i telefoni:
+  //  - l'host scrive in ogni foto _g (il numero del cambio di host: 1, 2, 3…) e _h (l'id di chi tiene la partita);
+  //    vince sempre il _g più alto, a pari _g l'id più piccolo (vinceSu). Gli ospiti scartano le foto "perdenti";
+  //  - l'host manda una copia della partita (__ris, al massimo una al secondo, al massimo 60 KB, mai soloQui) ai due
+  //    vice: i primi due amici arrivati e presenti (o quelli scelti dal gioco con t.vici);
+  //  - quando l'host sparisce (testamento), il vice n° k aspetta 6 s × (k + 1) (60 s se l'host era appena uscito
+  //    dall'app: pausa) e poi apre la stanza con lo stesso codice da host, con la copia (t.ripresa.daRiserva);
+  //  - prima guardo, poi parlo (net.js): chi riapre o subentra legge la foto trattenuta e, se la tiene già un altro
+  //    che vince, non pubblica niente e rientra da giocatore (cediPosto). Anche chi tiene la partita, se vede una foto
+  //    che vince (onStato), cede il posto.
+  // =========================================================
+  var SUBENTRO_MS = 6000, SUBENTRO_PAUSA = 60000, RIS_MAX = 60000, RIS_OGNI = 1000;
+  var RIS_HOST = null;   // la partita che tengo io con la riserva accesa (per la pausa: app in secondo piano)
+  function riservaPer(P) {
+    return !!(P && P.g && P.g.riprende && P.g.riserva && !(P.salaCtx && P.salaCtx.tabellone) && !(P.opts && P.opts.torneo));
+  }
+  // (g1, h1) vince su (g2, h2)? _g più alto; a pari _g l'id più piccolo
+  function vinceSu(g1, h1, g2, h2) {
+    g1 = +g1 || 0; g2 = +g2 || 0;
+    if (g1 !== g2) return g1 > g2;
+    return !!h1 && h1 !== h2 && (!h2 || String(h1) < String(h2));
+  }
+  // (solo per le prove: window.__sgSubentroMs = lo stesso tempo per tutti i vice)
+  function attesaVice(k, pausa) {
+    if (typeof window.__sgSubentroMs === "number") return window.__sgSubentroMs;
+    return pausa ? SUBENTRO_PAUSA + SUBENTRO_MS * k : SUBENTRO_MS * (k + 1);
+  }
+
+  // ---- HOST ----
+  // i nomi della stanza per la copia: id -> nome, col mio id (niente "__io")
+  function nomiRiserva(RS) {
+    var SV = RS.h && RS.h._sv, n = {};
+    Object.keys((SV && SV.nomi) || {}).forEach(function (k) { if (k !== "__io") n[k] = SV.nomi[k]; });
+    n[RS.hid] = RS.nome;
+    return n;
+  }
+  // i vice: i primi due presenti (dentro, non 📶, non fatti uscire), prima quelli scelti dal gioco, poi in ordine d'arrivo
+  function viciDi(RS) {
+    var SV = RS.h && RS.h._sv; if (!SV) return [];
+    function ok(id) { return !!id && id !== RS.hid && SV.dentro[id] && !SV.forse[id] && !SV.fuori[id] && !SV.andati[id] && RS.arrivi.indexOf(id) >= 0; }
+    var l = [];
+    (RS.P.viciScelti || []).concat(RS.arrivi).forEach(function (id) { if (l.length < 2 && ok(id) && l.indexOf(id) < 0) l.push(id); });
+    return l;
+  }
+  // la copia della partita ai vice (stato = quello di t.ricorda; null = niente da portare avanti)
+  function copiaRiserva(RS, stato) {
+    if (RS.ceduto) return;
+    if (stato == null) {
+      RS.ult = null; clearTimeout(RS.tCopia); RS.tCopia = null; RS.faseCopia = null;
+      if (RS.mandata && RS.h && !RS.h._chiusa) { RS.mandata = false; try { RS.h.inviaVeloce({ t: "__ris", g: RS.gen, vici: RS.vici, s: null }); } catch (e) {} }
+      return;
+    }
+    RS.ult = stato;
+    if ((stato && stato.fase) !== RS.faseCopia) return mandaCopia(RS);   // cambia la fase: subito
+    if (RS.tCopia) return;
+    RS.tCopia = setTimeout(function () { mandaCopia(RS); }, Math.max(0, RIS_OGNI - (Date.now() - RS.quando)));
+  }
+  function mandaCopia(RS) {
+    clearTimeout(RS.tCopia); RS.tCopia = null;
+    var h = RS.h;
+    if (RS.ceduto || !h || h._chiusa || !RS.ult || !RS.P.viva()) return;
+    RS.vici = viciDi(RS); RS.quando = Date.now();
+    if (!RS.vici.length) return;
+    var tx; try { tx = JSON.stringify(RS.ult); } catch (e) { return; }
+    if (tx.length > RIS_MAX) {   // troppo grande: il gioco deve mettere i pezzi grossi in soloQui
+      if (!RS.avvisato) { RS.avvisato = true; console.warn("Host di riserva: la copia di " + RS.P.g.id + " è troppo grande (" + tx.length + " caratteri): non la mando ai vice"); }
+      return;
+    }
+    RS.faseCopia = RS.ult.fase; RS.mandata = true;
+    try {
+      h.inviaVeloce({ t: "__ris", g: RS.gen, ora: Date.now(), io: RS.hid, vici: RS.vici, n: nomiRiserva(RS),
+        imp: impSalvabili(RS.P.tavolo ? RS.P.tavolo.impostazioni : RS.P.impostazioni), s: JSON.parse(tx) });
+    } catch (e) {}
+  }
+  // i vice sono cambiati (uno è arrivato, uno se n'è andato): la copia subito ai nuovi
+  function controllaVici(RS) {
+    if (!RS.h) return;
+    if (RS.ceduto || RS.h._chiusa || !RS.P.viva()) return fermaRiserva(RS);
+    var v = viciDi(RS);
+    if (v.join("|") !== (RS.vici || []).join("|") && RS.ult) mandaCopia(RS);
+    else if (!RS.ult) RS.vici = v;
+  }
+  function fermaRiserva(RS) {
+    clearTimeout(RS.tCopia); RS.tCopia = null; clearInterval(RS.tVici); RS.tVici = null;
+    if (RIS_HOST === RS) RIS_HOST = null;
+  }
+  // le foto della mia stanza (anche le mie: ascoltaStato): una che vince → cedo il posto; una che perde (il vecchio host
+  // tornato senza accorgersi, o l'altro vice partito insieme a me) → rimetto la mia ultima foto
+  function statoRiserva(RS, s) {
+    if (RS.ceduto || !s || typeof s !== "object" || s.t === "__hostgone" || s._g == null || !RS.h || RS.h._chiusa) return;
+    if (s._s && s._s === RS.h.sessione) return;   // (la mia)
+    if (vinceSu(s._g, s._h, RS.gen, RS.hid)) return cediPosto(RS, s);
+    if (s._h !== RS.hid && RS.ultFoto && Date.now() - (RS.rimessa || 0) > 1000) { RS.rimessa = Date.now(); try { RS.h.invia(RS.ultFoto); } catch (e) {} }
+  }
+  // la stanza la tiene già un altro (guardaPrima o guardaRitorno: la foto trattenuta di un'altra sessione).
+  // true = parlo io (copro la sua foto); false = non pubblico niente e cedo il posto
+  function occupataRiserva(RS, m) {
+    if (RS.ceduto) return false;
+    if (!m || m._g == null) return true;   // (non è una partita con la riserva: la copro)
+    var cedo = vinceSu(m._g, m._h, RS.gen, RS.hid);
+    // (sto prendendo il posto dell'host sparito: se intanto la stanza è tornata viva con la partita che ho copiato,
+    // tenuta da lui che ha riaperto o da un altro, non la prendo)
+    if (!cedo && RS.P.ripresa && RS.P.ripresa.daRiserva && +m._g >= RS.gen - 1 && m._h !== RS.hid) cedo = true;
+    if (!cedo) return true;
+    setTimeout(function () { cediPosto(RS, m); }, 0);
+    return false;
+  }
+  // cedo il posto: esco dalla stanza in silenzio (senza testamento e senza toccare la sua foto) e rientro da giocatore,
+  // con lo stesso id di prima (l'host ritrova il suo posto). Dentro una Sala resto nel gioco con un ctx da amico
+  function cediPosto(RS, s) {
+    if (RS.ceduto) return;
+    RS.ceduto = true; fermaRiserva(RS);
+    var P = RS.P, h = RS.h, C = h.codice;
+    var nome = (s && s._hn) || (h._sv && h._sv.nomi && s && h._sv.nomi[s._h]) || "un amico";
+    try { h.lascia(); } catch (e) {}
+    SGNet.ricordaId(C, RS.hid); scordaRipresa(C); dimenticaMiaStanza(C);
+    if (!P.viva()) return;
+    pillola("riapro", null); pillola("ripresa", null);
+    pillola("riserva", P.ripresa && P.ripresa.daRiserva ? "👑 Ora la partita la tiene " + nome
+      : "👋 Bentornato! Ora la partita la tiene " + nome + ": rientri come giocatore", "blu", 4000);
+    var ctx = ctxDopoCeduto(P, C);
+    lasciaPartita();
+    linkParams = { gioco: P.g.id, stanza: C };
+    avviaPartita(P.g, [], {}, null, ctx);
+  }
+  // il ctx di chi cede il posto dentro una Sala: un amico della Sala tiene il suo (esce senza chiudere niente);
+  // l'host della Sala ne ha uno da amico: esce dal gioco senza chiuderlo agli altri, la Sala segue la fase e conta i punti
+  function ctxDopoCeduto(P, code) {
+    var ctx0 = P.salaCtx;
+    if (!ctx0 || !sala || sala.ctx !== ctx0) return ctx0 || null;
+    var contati = {};
+    function mia() { return sala && sala.stanza === code; }
+    function conta(g2, cl) {
+      if (!mia() || sala.duello || !g2 || !cl || !cl.length) return;
+      var k = JSON.stringify(cl.map(function (r) { return [r.nome, r.pos]; }));
+      if (contati[k]) return;
+      contati[k] = 1; salaRisultato(g2, cl);
+    }
+    var ctx = {
+      stanza: code,
+      esci: function () {
+        lasciaPartita(); SGNet.chiudiGiochi();
+        if (!sala) return schermataHome();
+        if (sala.ctx === ctx) sala.ctx = null;
+        sala.inGioco = false;
+        if (mia()) { sala.fuori = sala.fuori || {}; sala.fuori.host = code; sala._bcast(); }   // (gli altri continuano)
+        disegnaSalaHost();
+      },
+      cambia: function () { salaCambiaGioco(); },
+      risultato: function (g2, cl) { conta(g2, cl); },
+      // la classifica che manda chi tiene la partita (__esito): la Sala la conta una volta
+      esito: function (g2, cl) { conta(g2, cl); },
+      // a che punto è la partita (dalle foto di chi la tiene): la Sala lo dice a tutti
+      fase: function (f) { if (mia() && sala.fase !== f) { sala.fase = f; if (sala._bcast) sala._bcast(); } },
+      fine: function (g2, cl) {
+        conta(g2, cl);
+        var P2 = partitaCorrente && partitaCorrente.viva() && partitaCorrente.salaCtx === ctx ? partitaCorrente : null;
+        if (!P2 || !g2 || !cl || !cl.length) return ctx.esci();
+        fineSalaAmico(g2, cl, P2, ctx, false, function () { ctx.esci(); });
+      },
+      chiusa: function () { ctx.esci(); pillola("sala", "🏁 Partita finita: si torna in Sala", "verde", 2600); }
+    };
+    sala.ctx = ctx; sala.inGioco = true;
+    return ctx;
+  }
+  // l'host di riserva sulla stanza appena aperta (dal wrapper di SGNet.ospita): opzioni di rete e cb
+  function preparaRiserva(P, cb, opz) {
+    var t = P.tavolo, pr = profiloAttivo();
+    var RS = { P: P, gen: (P.ripresa && P.ripresa.gen) || 1, hid: (t && t.mioId) || "host", h: null, arrivi: [], vici: [],
+      nome: (P.giocatori && P.giocatori[0]) || (pr && pr.nome) || "", ult: null, ultFoto: null, tCopia: null, quando: 0,
+      faseCopia: null, mandata: false, ceduto: false, pausa: 0, tVici: null };
+    opz = Object.assign({}, opz || {});
+    opz.ascoltaStato = true;
+    opz.testamento = Object.assign({}, opz.testamento || {}, { g: RS.gen });
+    if (!opz.guardaRitorno) opz.guardaRitorno = 1200;
+    // riapro dopo una ricarica, o prendo il posto dell'host sparito: prima guardo chi tiene la stanza
+    if (P.ripresa) { if (!opz.guardaPrima) opz.guardaPrima = 1500; if (P.ripSopra && !opz.sopra) opz.sopra = P.ripSopra; }
+    var onStatoG = cb.onStato, onOccG = cb.onOccupata;
+    cb.onStato = function (s) { statoRiserva(RS, s); if (onStatoG && !RS.ceduto) return onStatoG.apply(this, arguments); };
+    cb.onOccupata = function (m) { var si = occupataRiserva(RS, m); if (si && onOccG) return onOccG.apply(this, arguments); return si; };
+    // riapro (ripresa) o mi ricollego dopo un buco e la stanza è vuota davvero (nemmeno il mio testamento): chi la teneva
+    // dopo di me l'ha chiusa apposta, la partita è finita senza di me. Non la riapro da solo: torno in home
+    // (solo se avevo già mandato una foto: prima della prima foto la stanza vuota l'ho pulita io)
+    cb.onVuota = function () {
+      if (P.salaCtx || RS.ceduto || !(P.ripresa || RS.ultFoto)) return true;
+      RS.ceduto = true; fermaRiserva(RS);
+      setTimeout(function () {
+        var h = RS.h, C = h && h.codice;
+        try { if (h) h.lascia(); } catch (e) {}
+        if (C) { scordaRipresa(C); dimenticaMiaStanza(C); }
+        if (!P.viva()) return;
+        pillola("riapro", null); pillola("ripresa", null);
+        lasciaPartita(); tornaHome();
+        pillola("riserva", "🏁 La partita è finita mentre eri via", "blu", 4500);
+      }, 0);
+      return false;
+    };
+    return { RS: RS, opz: opz };
+  }
+  // le foto e i messaggi della stanza dicono chi tiene la partita (_g, _h, _hn; _p = l'host è uscito un attimo dall'app)
+  function decoraRiserva(RS, h) {
+    function dec(msg) {
+      if (!msg || typeof msg !== "object" || Array.isArray(msg) || delCore(msg)) return msg;
+      var o = Object.assign({}, msg); o._g = RS.gen; o._h = RS.hid; if (RS.nome) o._hn = RS.nome; if (RS.pausa) o._p = 1;
+      return o;
+    }
+    var iv = h.invia, vv = h.inviaVeloce, ia = h.inviaA;
+    h.invia = function (msg) { if (msg && typeof msg === "object" && !delCore(msg)) RS.ultFoto = msg; return iv.call(h, dec(msg)); };
+    if (vv) h.inviaVeloce = function (msg) { return vv.call(h, dec(msg)); };
+    if (ia) h.inviaA = function (id, msg) { return ia.call(h, id, dec(msg)); };
+  }
+  // l'host esce un attimo dall'app (WhatsApp per mandare il link): i vice aspettano 60 s invece di 6 se poi sparisce
+  document.addEventListener("visibilitychange", function () {
+    var RS = RIS_HOST;
+    if (!RS || RS.ceduto || !RS.h || RS.h._chiusa || !RS.P.viva()) return;
+    var p = document.hidden ? 1 : 0;
+    if (!!RS.pausa === !!p) return;
+    RS.pausa = p ? Date.now() : 0;
+    try { RS.h.inviaVeloce({ t: "__rp", p: p }); } catch (e) {}
+  });
+
+  // ---- OSPITE ----
+  // la copia della partita per i vice
+  function prendiCopia(R, m) {
+    var RR = R.ris, io = R.h && R.h.mioId;
+    if (!RR || !m || !Array.isArray(m.vici) || +m.g < RR.gen) return;
+    if (m.vici.indexOf(io) < 0 || m.s == null) { RR.copia = null; return; }   // (non sono più vice, o niente da portare avanti)
+    RR.copia = { g: +m.g || 0, ora: +m.ora || Date.now(), arrivo: Date.now(), io: m.io, vici: m.vici.slice(), n: m.n && typeof m.n === "object" ? m.n : {},
+      imp: m.imp && typeof m.imp === "object" ? m.imp : {}, s: m.s };
+  }
+  // una foto con _g: false = è di chi ha perso (il gioco non la vede). Se tiene la partita un altro (_g più alto, o a pari
+  // _g l'id più piccolo) seguo lui (seguiHost: anche se ha l'orologio indietro) e lo dico: "👑 Ora la partita la tiene Luca"
+  function fotoRiserva(R, m) {
+    var RR = R.ris, g = +m._g || 0;
+    if (m._p) { if (!RR.pausaVista) RR.pausaVista = Date.now(); } else if (m._s) RR.pausaVista = 0;
+    if (RR.gen && (g < RR.gen || (g === RR.gen && m._h !== RR.hid && !vinceSu(g, m._h, RR.gen, RR.hid)))) return false;
+    if (g === RR.gen && m._h === RR.hid) {   // lo stesso di prima (anche tornato dopo una ricarica)
+      if (m._s) RR.sess = m._s;
+      if (RR.hq) { var f = RR.hq; RR.hq = null; f(); }
+      return true;
+    }
+    var primo = !RR.gen, prima = RR.hid;
+    RR.gen = g; RR.hid = m._h || null; if (m._hn) RR.nome = m._hn;
+    clearTimeout(RR.tVice); RR.tVice = null;
+    var st = R.h && R.h.stato ? R.h.stato() : null;
+    if (m._s) { RR.sess = m._s; if (!primo && st && !st.chiusa && st.sessione !== m._s) try { R.h.seguiHost(m._s); } catch (e) {} }
+    if (RR.hq) { clearTimeout(RR.hqT); RR.hq = null; }
+    if (!primo && prima !== RR.hid && R.P && R.P.viva()) {
+      pillola("tornato", null); pillola("host", null);
+      pillola("riserva", "👑 Ora la partita la tiene " + (m._hn || (R.h._sv && R.h._sv.nomi && R.h._sv.nomi[m._h]) || "un amico"), "blu", 4000);
+    }
+    return true;
+  }
+  // l'host è sparito (via) o tornato: il vice aspetta il suo turno e poi prende il posto
+  function viceVia(R, via) {
+    var RR = R.ris; if (!RR) return;
+    clearTimeout(RR.tVice); RR.tVice = null;
+    if (!via) return;
+    var c = RR.copia, io = R.h && R.h.mioId;
+    if (!c || !c.s || c.g !== RR.gen || !R.P || !R.P.viva()) return;
+    var k = c.vici.indexOf(io); if (k < 0) return;
+    var pausa = (!!RR.pausaVista && Date.now() - RR.pausaVista < VICE_PAUSA) ||
+      (RR.hid === "host" && R.P.salaCtx && salaG && !!salaG.pausaVista && Date.now() - salaG.pausaVista < VICE_PAUSA);   // (l'host della Sala è uscito un attimo)
+    RR.tVice = setTimeout(function () { RR.tVice = null; subentraGioco(R); }, attesaVice(k, pausa));
+  }
+  // prendo il posto dell'host sparito: lascio la stanza da ospite e la riapro da host con lo stesso codice e la copia
+  // (il gioco parte da host con t.ripresa.daRiserva: nessun codice nuovo nei giochi)
+  function subentraGioco(R) {
+    var RR = R.ris, P = R.P, c = RR && RR.copia;
+    if (!RR || RR.fatto || !P || !P.viva() || !R.h || !c || !c.s || c.g !== RR.gen) return;
+    var st = R.h.stato ? R.h.stato() : null; if (!st || st.chiusa) return;
+    RR.fatto = true;
+    var io = R.h.mioId, n = c.n || {};
+    var mioNome = n[io] || nomeStanza(R.codice) || ((profiloAttivo() || {}).nome) || "Io";
+    var vecchio = n[c.io] || RR.nome || "L'host";
+    var seme = {}; Object.keys(n).forEach(function (k) { if (k !== "__io" && k !== io) seme[k] = n[k]; });
+    try { R.h.lascia(); } catch (e) {}
+    RIPRESA_SEME = { stato: c.s, io: io, gen: c.g + 1, daRiserva: true, vecchioHost: c.io, t: c.arrivo, scarto: c.arrivo - c.ora, sopra: st.sessione || null };
+    NOMI_SEME = seme; SGNet._forza = R.codice; linkParams = {};
+    pillola("host", null); pillola("tornato", null);
+    pillola("riserva", "👑 " + vecchio + " è sparito: la partita la porti avanti tu", "blu", 4000);
+    avviaPartita(P.g, [mioNome], Object.assign({}, c.imp || {}, { modo: "online" }), { modo: "online" }, P.salaCtx);
+  }
+
   function agganciaRete() {
     if (!window.SGNet || SGNet.__strato) return;
     SGNet.__strato = true;
@@ -8542,6 +8915,9 @@
       var seme = sala ? NOMI_SEME : (P && P.nomiSeme), portaSeme = sala ? PORTA_SALA_SEME : !!(P && P.portaSeme);
       if (sala) { NOMI_SEME = null; PORTA_SALA_SEME = false; } else if (P) { P.nomiSeme = null; P.portaSeme = null; }
       if (!sala && P && P.forza) { if (!(opz && opz.codice)) opz = Object.assign({}, opz || {}, { codice: P.forza }); P.forza = null; }
+      // l'host di riserva (Passo 5): solo i giochi con riprende e riserva, fuori dai tornei
+      var RIS = !sala && P && P.g.id === giocoId && riservaPer(P) ? preparaRiserva(P, cb, opz) : null;
+      if (RIS) opz = RIS.opz;
       var nomi = seme || {}, conPr = {}, salva = null;
       var io = profiloAttivo(); if (io && io.nome) { nomi.__io = String(io.nome).trim().slice(0, 16); conPr.__io = 1; }   // il nome dell'host è suo
       // la saletta viva di questa stanza: chi è dentro, chi è pronto, chi si ricollega, chi è stato fatto uscire, la porta
@@ -8556,6 +8932,7 @@
           if (nomeUnico(nomi, conPr, id, m) && salva) salva();
           var nuovo = !SV.dentro[id];
           SV.dentro[id] = 1; delete SV.andati[id];
+          if (RIS) { if (RIS.RS.arrivi.indexOf(id) < 0) RIS.RS.arrivi.push(id); controllaVici(RIS.RS); }   // (i vice: in ordine d'arrivo)
           svRiassunto(SV);   // (chi entra riceve subito chi è pronto e chi si ricollega)
           if (nuovo && SV.onDentro) SV.onDentro();
           // "Giocato di recente": l'uid di chi ha il profilo online (i join si ripetono: __chi solo se cambia qualcosa)
@@ -8568,12 +8945,23 @@
       };
       var h = ospita.call(SGNet, giocoId, cb, opz);
       if (!h) return h;
+      if (RIS) {   // (per prima: ogni foto e messaggio del gioco dice chi tiene la partita)
+        var RS = RIS.RS; RS.h = h; P.riserva = RS; RIS_HOST = RS; decoraRiserva(RS, h);
+        RS.tVici = setInterval(function () { controllaVici(RS); }, 2000);
+      }
       SV.h = h; SV.codice = h.codice; h._sv = SV; h._P = sala ? null : P; SVH[SV.codice] = SV;
       var chiudiSV = h.chiudi, lasciaSV = h.lascia;
-      function viaSV() { clearTimeout(SV.tSl); clearTimeout(SV.tChi); if (SVH[SV.codice] === SV) delete SVH[SV.codice]; }
+      // (stanza di un gioco chiusa o lasciata apposta: la sua partita non si riprende più)
+      function viaSV() { clearTimeout(SV.tSl); clearTimeout(SV.tChi); if (SVH[SV.codice] === SV) delete SVH[SV.codice]; if (!sala) { h._chiusa = true; scordaRipresa(SV.codice); } }
       h.chiudi = function () { viaSV(); return chiudiSV.apply(h, arguments); };
       h.lascia = function () { viaSV(); return lasciaSV.apply(h, arguments); };
       if (!sala) reteXp = h;
+      // la partita riprende da dove era (il gioco ha aperto con { ripresa: true }, vedi t.ripresa): gli amici non tornano
+      // in saletta (net.js lo dice a tutti con r: 1 / _r: 1)
+      // (il vice che prende il posto dell'host legge già «👑 … la porti avanti tu»)
+      if (!sala && opz && opz.ripresa && !(P && P.ripresa && P.ripresa.daRiserva)) { pillola("riapro", null); pillola("ripresa", "🔁 Partita ripresa! Si continua da dove eravate", "verde", 3500); }
+      // t.ricorda chiamato prima che la stanza ci fosse: si salva adesso che c'è il codice
+      if (!sala && P && P.ripAperta) P.ripAperta();
       // la fase della partita di ogni stanza di gioco aperta da qui ("lobby" / "gioco" / "fine"), letta dalle foto che
       // l'host manda a tutti: SV.fase. Chi vuole saperlo quando cambia si mette in SV.suFase (SV.onFase la dice a tutti):
       // la stanza che si ricorda (qui sotto), la Sala (gioco in corso o saletta), poi il salvataggio e "__fase"
@@ -8601,7 +8989,8 @@
       if (!sala && P && !P.salaCtx && P.g.id === giocoId && (P.impostazioni || {}).modo === "online") {
         var C = h.codice, tVivo = null, salvata = 0;
         P.miaStanza = C;
-        salva = function () { salvata = Date.now(); ricordaMiaStanza({ gioco: giocoId, codice: C, imp: impSalvabili(P.tavolo ? P.tavolo.impostazioni : P.impostazioni), nomi: nomi, fase: SV.fase, porta: SV.porta ? 1 : 0 }); };
+        // (nomeHost: il mio nome nella partita, per riaprire e riprendere anche senza profilo)
+        salva = function () { salvata = Date.now(); ricordaMiaStanza({ gioco: giocoId, codice: C, imp: impSalvabili(P.tavolo ? P.tavolo.impostazioni : P.impostazioni), nomi: nomi, fase: SV.fase, porta: SV.porta ? 1 : 0, nomeHost: (P.giocatori && P.giocatori[0]) || nomi.__io || "" }); };
         SV.salva = salva;
         SV.suFase.push(salva);   // (subito quando cambia la fase)
         salva();
@@ -8622,10 +9011,18 @@
       var P = !sala && partitaCorrente && partitaCorrente.viva() ? partitaCorrente : null;
       var guarda = !!(P && P.tavolo && P.tavolo.linkParams && P.tavolo.linkParams.guarda);
       var R = { codice: C, P: P, sala: sala, guarda: guarda, h: null };
+      // l'host di riserva (Passo 5): chi tiene la partita (_g, _h), la copia per i vice, la pausa dell'host
+      var RR = R.ris = !sala && !guarda && riservaPer(P) ? { gen: 0, hid: null, nome: "", sess: null, copia: null, tVice: null, pausaVista: 0, fatto: false, hq: null, hqT: null } : null;
       var SV = nuovoSV(false, C, sala);   // la saletta viva vista da qui: chi è pronto, chi si ricollega, i nomi, la porta
       var onMsg = cb.onMsg;
       cb.onMsg = function (m) {
+        if (RR && m && typeof m === "object") {
+          if (m.t === "__ris") { prendiCopia(R, m); return; }
+          if (m.t === "__rp") { RR.pausaVista = m.p ? Date.now() : 0; return; }
+          if (m._g != null && !delCore(m) && !fotoRiserva(R, m)) return;   // (di chi ha perso il posto: il gioco non la vede)
+        }
         if (m && m.t === "__esito") {
+          if (!sala && !guarda && P && P.viva() && P.salaCtx && P.salaCtx.esito) try { P.salaCtx.esito(P.g, m.c); } catch (e) {}   // (l'host della Sala che gioca da amico: la Sala conta)
           if (!sala && !guarda && P && P.viva()) try { segnaRecentiDa(m.c, SV, P); } catch (e) {}   // "Giocato di recente"
           premiaPartita(m.c, true, C); return;   // gli XP: ognuno si dà i suoi
         }
@@ -8639,6 +9036,7 @@
           return;
         }
         var fz = faseDaFoto(m); if (fz) SV.fase = fz;   // (a che punto è: sulla classifica una chiusura apposta non è "Collegamento perso")
+        if (fz && P && P.salaCtx && P.salaCtx.fase && P.viva()) try { P.salaCtx.fase(fz); } catch (e) {}   // (host della Sala che gioca da amico)
         return onMsg ? onMsg.apply(this, arguments) : undefined;
       };
       // nella Sala: se il gioco chiude la sua stanza (partita finita) si torna nella Sala, senza "Collegamento perso"
@@ -8670,7 +9068,26 @@
         };
       }
       var onHN = cb.onHostNuovo;
-      cb.onHostNuovo = function (eraDentro, eraVivo) { if (onHN) try { onHN.apply(this, arguments); } catch (e) {} hostTornato(R, eraDentro, eraVivo); };
+      // (msg = il messaggio dell'host nuovo: con r / _r la partita riprende da dove era, Passo 5)
+      cb.onHostNuovo = function (eraDentro, eraVivo, msg) {
+        if (onHN) try { onHN.apply(this, arguments); } catch (e) {}
+        var info = { ripresa: !!(msg && (msg.r || msg._r)) };
+        if (RR && msg && msg._g != null) {
+          var gPrima = RR.gen, hPrima = RR.hid;
+          // una sessione "più nuova" che però perde (es. il vecchio host tornato): resto con chi tiene la partita
+          if (!fotoRiserva(R, msg)) { if (RR.sess) try { R.h.seguiHost(RR.sess); } catch (e) {} return; }
+          if (gPrima && hPrima !== RR.hid) return;   // (la tiene un altro: "👑 Ora la partita la tiene…", già detto)
+        } else if (RR && msg && msg.t === "__hostqui") {
+          // "ci sono" non dice chi tiene la partita: la pillola giusta quando arriva la sua foto (al massimo 1,5 s)
+          var fatto = false, fn = function () { if (fatto) return; fatto = true; clearTimeout(RR.hqT); RR.hq = null; hostTornato(R, eraDentro, eraVivo, info); };
+          clearTimeout(RR.hqT); RR.hq = fn; RR.hqT = setTimeout(fn, 1500);
+          return;
+        }
+        hostTornato(R, eraDentro, eraVivo, info);
+      };
+      // l'host è sparito (testamento) o tornato: il vice aspetta il suo turno e prende il posto
+      var onHV = cb.onHostVia;
+      if (RR) cb.onHostVia = function (via) { var r; if (onHV) try { r = onHV.apply(this, arguments); } catch (e) {} viceVia(R, via); return r; };
       var h = entra.call(SGNet, codice, cb, guarda ? Object.assign({}, opz || {}, { guarda: true }) : opz);
       if (!h) return h;
       R.h = h; SV.h = h; h._sv = SV;
@@ -8706,7 +9123,9 @@
   }
   // l'host ha riaperto la stanza (la sua pagina si è ricaricata, l'app si è riaperta): chi era dentro riparte pulito
   // dalla saletta, con lo stesso posto (stesso id). Il gioco vecchio non disegna più (partitaN).
-  function hostTornato(R, eraDentro, eraVivo) {
+  // info.ripresa (Passo 5): la partita riprende da dove era (t.ripresa dell'host): niente riavvio, solo la pillola; il
+  // collegamento ripete già "sono entrato" e l'host rimette ognuno al suo posto
+  function hostTornato(R, eraDentro, eraVivo, info) {
     // (la Sala si rimette a posto da sola; chi non aveva ancora chiesto di entrare rientra col join)
     // Anche chi per il collegamento non era "dentro" ma stava già giocando riparte: es. ricaricato a metà partita
     // in un gioco che nelle foto non mette gli id (l'host non l'ha riconosciuto), altrimenti resterebbe sul tavolo vecchio
@@ -8716,8 +9135,12 @@
     if (!P || !P.viva() || hostDiRiserva(P.g)) return;
     var U = SL.ultimo, inSaletta = !!(U && !U.host && U.o && U.o._rete === R.h && document.body.contains(U.s));
     var nh = nomeStanza(R.codice, true);
-    // (i giochi con riprende: true, come Linea del tempo e Scalinata, all'host che ricarica riprendono la partita da dove era)
-    if (eraDentro || !inSaletta) pillola("tornato", "🎉 " + (nh || "L'host") + " è tornato: " + (P.g.riprende && !inSaletta ? "si riprende la partita" : "si riparte dalla saletta"), "verde", 3500);
+    if (info && info.ripresa) {
+      if (eraDentro || !inSaletta) pillola("tornato", "🔁 " + (nh || "L'host") + " è tornato: la partita riprende da dove era", "verde", 3500);
+      return;
+    }
+    // (la partita non riprende: il gioco non lo sa fare, o la ripresa dell'host era scaduta → si riparte dalla saletta)
+    if (eraDentro || !inSaletta) pillola("tornato", "🎉 " + (nh || "L'host") + " è tornato: si riparte dalla saletta", "verde", 3500);
     // ero già in saletta: basta rientrare (il collegamento ha già ripetuto "sono entrato"), niente da rifare sullo schermo
     if (inSaletta) return;
     try { R.h.lascia(); } catch (e) {}
@@ -8794,6 +9217,46 @@
       forza: (window.SGNet && SGNet._forza) || null, nomiSeme: NOMI_SEME, portaSeme: PORTA_SEME };
     if (window.SGNet) SGNet._forza = null;
     NOMI_SEME = null; PORTA_SEME = false;
+    // ---- la ripresa (Passo 5): la partita di prima, se questa stanza (stesso codice imposto) era mia e il gioco riprende.
+    // Oppure quella che mi ha passato l'host di riserva (RIPRESA_SEME, p5-b)
+    var rip = RIPRESA_SEME; RIPRESA_SEME = null;
+    if (!rip && g.riprende && P.forza) rip = ripresaDi(g.id, P.forza);
+    var ripresa = rip ? { stato: rip.stato, soloQui: rip.soloQui != null ? rip.soloQui : null, io: rip.io || "host", gen: +rip.gen || 1,
+      daRiserva: !!rip.daRiserva, vecchioHost: rip.vecchioHost || null, eta: Math.max(0, Date.now() - (+rip.t || Date.now())),
+      // un'ora salvata (orologio dell'host di prima) nell'orologio di questo telefono
+      ora: function (x) { return x == null ? x : x + (+rip.scarto || 0); } } : null;
+    P.ripresa = ripresa;
+    // (host di riserva, p5-b) la sessione di prima di questa stanza: la sua foto non conta come "occupata" (guardaPrima)
+    P.ripSopra = rip ? (rip.sopra || rip.s || null) : null;
+    // RIP: quello che si salva (l'ultimo stato del gioco, a tempo) e l'ultima classifica data in questa stanza.
+    // risPrima: la classifica già data prima della ricarica (l'host ha ricaricato proprio sulla classifica: niente XP doppi)
+    var RIP = { ult: null, t: null, quando: 0, ris: (rip && rip.ultimoRisultato) || null,
+      risPrima: (rip && rip.ultimoRisultato) || null, risFino: Date.now() + 20000 };
+    function reteRip() { var h = reteXp; return h && h._P === P && !h._chiusa && h.codice ? h : null; }   // la mia stanza di questa partita
+    function salvaRip() {
+      clearTimeout(RIP.t); RIP.t = null;
+      var h = reteRip(), u = RIP.ult;
+      if (!viva() || !h || !u) return;
+      RIP.quando = Date.now();
+      scriviRipresa({ gioco: g.id, codice: h.codice, t: Date.now(), io: tavolo.mioId, gen: (ripresa && ripresa.gen) || 1,
+        stato: u.stato, soloQui: u.soloQui, nomeHost: (giocatori && giocatori[0]) || "", ultimoRisultato: RIP.ris, s: h.sessione || null });
+    }
+    // al massimo un salvataggio ogni mezzo secondo (l'ultimo stato vince)
+    function inCodaRip() {
+      if (RIP.t || !viva()) return;
+      // (in secondo piano si salva comunque, anche senza novità: la ripresa vale 20 minuti da adesso)
+      ripresaSubito = function () { if (RIP.ult && viva()) salvaRip(); };
+      RIP.t = setTimeout(salvaRip, Math.max(0, 500 - (Date.now() - RIP.quando)));
+    }
+    P.ripAperta = function () { if (RIP.ult && viva()) inCodaRip(); };
+    // la classifica è la stessa già data prima della ricarica? (true = niente XP né punti di nuovo)
+    function risultatoDato(classifica) {
+      var k = null; try { k = JSON.stringify(classifica); } catch (e) {}
+      if (!k) return false;
+      if (RIP.risPrima && k === RIP.risPrima && Date.now() < RIP.risFino) return true;
+      if (RIP.ult) { RIP.ris = k; inCodaRip(); }   // (solo nei giochi che si fanno ricordare)
+      return false;
+    }
 
     var tavolo = {
       giocatori: giocatori.slice(),
@@ -8911,11 +9374,44 @@
         chiediConferma(domanda, nota, siTesto, function () { if (viva()) siFn(); });
       },
 
+      // ---- la ripresa (Passo 5): se l'host ricarica la pagina o l'app si chiude, la partita riprende da dove era ----
+      // t.ripresa: null, oppure { stato, soloQui, io, gen, daRiserva, vecchioHost, eta, ora(x) } (la partita di prima: il
+      // gioco la ricostruisce, mette "via" gli altri umani, riparte con qualche secondo di respiro e apre la stanza con
+      // SGNet.ospita(ID, cb, { ripresa: true }), così gli amici non tornano in saletta)
+      ripresa: ripresa,
+      // chi tiene la partita su questo telefono: "host", oppure l'id da ospite dell'amico che ha preso il posto dell'host
+      mioId: (ripresa && ripresa.io) || "host",
+      // l'host online ricorda la partita a ogni cambiamento: stato = oggetto semplice (fase, giocatori con gli id, punti,
+      // segreti, scadenze come ore assolute: Date.now() + ms); soloQui = pezzi grossi che restano solo su questo telefono.
+      // null = niente da riprendere (saletta, o uscito apposta). Si salva al massimo ogni mezzo secondo, e subito quando
+      // l'app va in secondo piano. Vale solo per l'host online nella sua stanza (altrimenti non fa niente)
+      ricorda: function (stato, soloQui) {
+        if (!viva() || !g.riprende || (tavolo.impostazioni || {}).modo !== "online") return;   // (solo i giochi con riprende: true)
+        if (stato == null) {
+          RIP.ult = null; RIP.ris = null; clearTimeout(RIP.t); RIP.t = null;
+          var h0 = reteRip(); if (h0) scordaRipresa(h0.codice); else if (P.forza) scordaRipresa(P.forza);
+          if (P.riserva) copiaRiserva(P.riserva, null);   // (i vice buttano la copia: niente da portare avanti)
+          return;
+        }
+        RIP.ult = { stato: stato, soloQui: soloQui != null ? soloQui : null };
+        if (reteRip()) inCodaRip();   // (se la stanza non c'è ancora: appena ha il codice, vedi P.ripAperta)
+        if (P.riserva) copiaRiserva(P.riserva, stato);   // (host di riserva: la copia ai vice, mai soloQui)
+      },
+      // (host di riserva) chi porta avanti la partita se l'host sparisce: il gioco può sceglierlo lui (es. prima chi guarda).
+      // lista di id in ordine; null = i primi due arrivati (di partenza)
+      vici: function (lista) {
+        if (!viva()) return;
+        P.viciScelti = Array.isArray(lista) ? lista.slice(0, 10) : null;
+        if (P.riserva) controllaVici(P.riserva);
+      },
+
       // i giochi online dicono com'è finita ogni partita, senza lasciare la loro schermata finale:
       // serve al torneo online per sommare i punti. classifica = [{ nome, pos? }] dal primo all'ultimo
       // (dà anche gli XP: a questo telefono e, se è l'host, a tutti gli altri con "__esito")
+      // (la stessa classifica già data prima che l'host ricaricasse la pagina: niente XP né punti di nuovo)
       risultato: function (classifica) {
         if (!viva() || !classifica || !classifica.length) return;
+        if (risultatoDato(classifica)) return;
         // "Giocato di recente" (solo online): prima __chi, così anche chi è entrato per ultimo sa chi ha il profilo
         var SVr = reteXp && reteXp._P === P ? reteXp._sv : null;
         if (SVr && !SVr.sala) try { inviaChi(SVr, true); segnaRecentiDa(classifica, SVr, P); } catch (e) {}
@@ -8927,8 +9423,9 @@
       // il gioco chiama questa quando è finito
       fine: function (classifica) {
         if (!viva()) return;
-        premiaPartita(classifica, false);
-        if (salaCtx) return salaCtx.fine(g, classifica, giocatori, impostazioni);
+        var dato = !!(classifica && classifica.length && risultatoDato(classifica));
+        if (!dato) premiaPartita(classifica, false);
+        if (salaCtx) return salaCtx.fine(g, classifica, giocatori, impostazioni, dato);   // (dato: la Sala non la conta di nuovo)
         if (opts && opts.torneo && torneo) return torneoRisultato(g, classifica);
         var fac = null; try { fac = tavolo.faccine(); } catch (e) {}   // partita online: la fila delle faccine anche nella classifica
         if (!fac && !reteXp) serataLocale(g, classifica);   // sullo stesso telefono: i punti nella Classifica della serata, da soli
@@ -8942,6 +9439,8 @@
         if (!viva()) return;
         if (!salaCtx && tavolo.linkParams && tavolo.linkParams.stanza) dimenticaStanza();   // uscito apposta: niente "Rientra"
         if (P.miaStanza) dimenticaMiaStanza(P.miaStanza);   // l'host è uscito apposta: la sua stanza non si riapre da sola
+        var hR = reteRip(); RIP.ult = null; clearTimeout(RIP.t); RIP.t = null; if (hR) scordaRipresa(hR.codice);   // (né la sua partita)
+        if (P.riserva) fermaRiserva(P.riserva);
         lasciaPartita();   // da qui il gioco non disegna più (un suo timer rimasto acceso non copre la Sala o la home)
         (salaCtx ? salaCtx.esci : tornaHome)();   // entrato da un edificio della città: si torna lì
       }
@@ -8958,16 +9457,18 @@
     var cand = [], io = profiloAttivo();
     var ms = miaSalaRecente(), mt = miaStanzaRecente(), ls = linkSessione();
     if (ms && (io || (ms.nomeHost && salaSempre()))) cand.push({ t: ms.t, vai: function () { creaSala({ riapri: ms }); } });   // (senza profilo: col nome dell'host salvato)
-    if (mt && io && giocoDa(mt.gioco)) cand.push({ t: mt.t, vai: function () { riapriStanza(mt); } });
+    if (mt && (io || ripresaValida(mt)) && giocoDa(mt.gioco)) cand.push({ t: mt.t, vai: function () { riapriStanza(mt); } });   // (senza profilo solo se la partita riprende)
     if (ls) cand.push({ t: ls.t || 0, vai: function () { if (ls.sala) return salaOspite(ls.sala); var g = giocoDa(ls.gioco); if (!g) return schermataHome(); linkParams = { gioco: g.id, stanza: ls.stanza }; avviaPartita(g, [], {}); } });
     if (!cand.length) return null;
     cand.sort(function (a, b) { return b.t - a.t; });
     return cand[0].vai;
   }
-  // l'host riapre la sua stanza: stesso gioco, stesso codice, stesse regole (la partita in corso si perde, il gruppo no)
+  // l'host riapre la sua stanza: stesso gioco, stesso codice, stesse regole (il gruppo resta; la partita in corso riprende
+  // se il gioco lo sa fare, t.ripresa: anche senza profilo, col nome di prima)
   function riapriStanza(o) {
-    var g = giocoDa(o.gioco), io = profiloAttivo();
-    if (!g || !io) return schermataHome();
+    var g = giocoDa(o.gioco), io = profiloAttivo(), rp = ripresaValida(o) ? ripresaDi(g.id, o.codice) : null;
+    if (!g || !(io || rp)) return schermataHome();
+    var mioNome = (io && io.nome) || o.nomeHost || rp.nomeHost || "Giocatore 1";
     // un gioco con l'host di riserva (Parola d'ordine) a partita iniziata: la porta avanti un amico, io rientro come giocatore
     if (hostDiRiserva(g) && o.fase && o.fase !== "lobby") {
       dimenticaMiaStanza(o.codice);
@@ -8977,7 +9478,7 @@
     var imp = {}, box = null;
     if (typeof g.impostazioni === "function") {
       box = el("div");
-      try { g.impostazioni(box, imp, { el: el, modo: "online", giocatori: [io.nome] }); } catch (e) {}
+      try { g.impostazioni(box, imp, { el: el, modo: "online", giocatori: [mioNome] }); } catch (e) {}
     }
     Object.keys(o.imp || {}).forEach(function (k) { imp[k] = o.imp[k]; });   // le regole scelte prima (il foglio ⚙️ mostra le scelte di partenza)
     imp.modo = "online";
@@ -8986,7 +9487,7 @@
     PORTA_SEME = !!o.porta;   // la porta resta com'era (chiusa: entra solo chi c'era)
     SGNet._forza = o.codice;
     linkParams = {};
-    avviaPartita(g, [io.nome], imp, { modo: "online", regole: box });
+    avviaPartita(g, [mioNome], imp, { modo: "online", regole: box });
   }
 
   // =========================================================

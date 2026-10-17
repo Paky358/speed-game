@@ -674,6 +674,7 @@
     if (online && !(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var imp = t.impostazioni || {}, liv = imp.difficolta || "medio", mancheTot = Math.max(1, Math.min(6, Math.floor(+imp.manche || 4))), reg = regoleDa(imp);
     var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
+    var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
     var posti = [];   // chi gioca: { id, nome, bot, omino }
     var guarda = [];  // nella Sala: chi non è stato scelto per giocare ({ id, nome }): guarda la partita
     var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, omini: {}, gameId: "" };
@@ -697,11 +698,24 @@
       (t.giocatori || []).slice(0, MAX).forEach(function (n, i) { posti.push({ id: "p" + i, nome: n, omino: window.SGOmino ? SGOmino.casuale(n) : null }); });
       while (posti.length < 2) aggiungiBot();
     } else {
-      posti.push({ id: "host", nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null });
+      posti.push({ id: IO, nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null });
       if (!online) { var nb = Math.max(1, Math.min(MAX - 1, Math.floor(+imp.avversari || 2))); for (var b = 0; b < nb; b++) aggiungiBot(); }
     }
-    H.omini.host = posti[0].omino;
+    H.omini[posti[0].id] = posti[0].omino;
     var P = null, rete = null, tBot = null, tTempo = null, tFase = null, tLampo = null, tWin = null, tBotL = [];
+    // online, la partita di prima (l'host ha ricaricato la pagina o riaperto l'app: t.ripresa): stessa frase, stesse
+    // lettere, stessi soldi, tocca a chi toccava (vedi riprendi). Gli amici si aspettano ("attesi") e rientrano da soli;
+    // chi non torna entro 10 secondi esce
+    var R0 = online && t.ripresa && t.ripresa.stato, ripresa = !!(R0 && R0.P && (R0.fase === "gioco" || R0.fase === "fine")), attesi = {}, tAttesi = null;
+    if (ripresa) {
+      mancheTot = R0.mancheTot || mancheTot; liv = R0.liv || liv; reg = R0.reg || reg; guarda = R0.guarda || [];
+      H.omini = R0.omini || H.omini;
+      posti = (R0.posti || []).map(function (p) { return Object.assign({}, p, { omino: H.omini[p.id] || null }); });
+      P = creaPartita(posti, mancheTot, { modo: modo, difficolta: liv, prenota: reg.prenota, express: reg.express, veloce: reg.veloce, finale: reg.finale, decimo: !!R0.P.decimo });
+      Object.keys(R0.P).forEach(function (k) { if (typeof P[k] !== "function" && k !== "regole" && k !== "spicchi") P[k] = R0.P[k]; });
+      P.giocatori.forEach(function (g) { g.omino = H.omini[g.id] || null; if (!g.bot && g.id !== IO && !g.via) attesi[g.id] = 1; });
+      H.fase = R0.fase; H.gameId = R0.gameId || ""; H.giocate = R0.giocate || 1; H.risultato = !!R0.risultato; H.pagato = !!R0.pagato;
+    }
     H.mosse = 0;        // cresce a ogni mossa vera: il tempo per decidere riparte solo allora
     H.kFase = "";       // per quale momento è partito il timer dei momenti che vanno avanti da soli
     H.kTempo = ""; H.scade = 0;   // il tempo per decidere: per chi e fino a quando
@@ -720,13 +734,30 @@
       if (H.scade && H.fase === "gioco") { v.resta = Math.max(0, H.scade - Date.now()); v.tempoTot = H.tempoTot; v.kTempo = H.kTempo; if (online && P.fase === "ftempo") v.grazia = FIN_GRAZIA; }
       return v;
     }
-    function bd() { var v = vm(); if (rete) { rete.invia({ t: "vm", vm: v }); ricordaPosti(); } disegna(t, v, cb); }
+    function bd() { var v = vm(); if (rete) { rete.invia({ t: "vm", vm: v }); ricordaPosti(); ricorda(); vici(); } disegna(t, v, cb); }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
+    var viciK = "";
+    function vici() {
+      var l = guarda.map(function (g) { return g.id; }), k = l.join(",");
+      if (k !== viciK && t.vici) { viciK = k; t.vici(l.length ? l : null); }
+    }
+    // online: la partita com'è adesso, per riprenderla se ricarico la pagina (in saletta niente). Gli avatar una volta sola
+    // (in omini), non anche nei posti e nei giocatori
+    function senzaOmino(o) { var x = Object.assign({}, o); delete x.omino; return x; }
+    function ricorda() {
+      if (H.fase !== "gioco" && H.fase !== "fine" || !P) return t.ricorda(null);
+      var p = {};
+      Object.keys(P).forEach(function (k) { if (typeof P[k] !== "function" && k !== "regole" && k !== "spicchi") p[k] = P[k]; });
+      p.giocatori = P.giocatori.map(senzaOmino);
+      t.ricorda({ fase: H.fase, P: p, posti: posti.map(senzaOmino), guarda: guarda, mancheTot: mancheTot, liv: liv, reg: reg, omini: H.omini,
+        gameId: H.gameId, giocate: H.giocate, risultato: !!H.risultato, pagato: !!H.pagato, risposta: H.risposta });
+    }
     // online: se l'host ricarica (la stanza si riapre con lo stesso codice), per 15 secondi i posti alla ruota restano
     // a chi stava giocando, non a chi guardava ed è stato più svelto a rientrare (come il Tris)
     var riserva = null, scritti = "", tScritti = 0;   // riserva: { ids: chi giocava, fino }
     function ricordaPosti() {
       if (!online || !H.codice || H.codice === "…" || (riserva && Date.now() < riserva.fino)) return;
-      var ids = posti.filter(function (p) { return !p.bot && p.id !== "host"; }).map(function (p) { return p.id; });
+      var ids = posti.filter(function (p) { return !p.bot && p.id !== IO; }).map(function (p) { return p.id; });
       var k = H.codice + "|" + ids.join(",");
       if (k === scritti && Date.now() - tScritti < 60000) return;   // (si riscrive solo se cambia, o una volta al minuto)
       scritti = k; tScritti = Date.now();
@@ -750,7 +781,7 @@
       var sc = online && t.scelti; if (!sc || !sc.length) return 0;
       return sc.filter(function (x) {
         var id = x && typeof x === "object" ? x.id : x, nm = x && typeof x === "object" ? x.nome : x;
-        return id !== "host" && !posti.some(function (p) { return !p.bot && (p.id === id || (!!nm && stessoNome(p.nome, nm))); });
+        return id !== IO && !posti.some(function (p) { return !p.bot && (p.id === id || (!!nm && stessoNome(p.nome, nm))); });
       }).length;
     }
     function attoreHost() {
@@ -895,14 +926,14 @@
     // la classifica è pronta (anche se poi c'è la finale): trofei, XP e torneo
     function risultato() {
       var v = vm();
-      salvaTrofei(v, modo === "telefono" ? null : "host", modo, liv);
+      salvaTrofei(v, modo === "telefono" ? null : IO, modo, liv);
       if (t.risultato && P.classifica) t.risultato(P.classifica.filter(function (r) { var x = posti.filter(function (p) { return p.id === r.id; })[0]; return x && !x.bot && !r.uscito; }).map(function (r) { return { nome: r.nome, pos: r.pos }; }));
     }
     // la finale vinta da chi gioca su questo telefono: le Speed Coins (sullo stesso telefono solo se il campione ha il nome del profilo)
     function pagaQui() {
       var F = P.fin; if (!F || !F.vinto || !F.premio) return;
       var pr = profiloAttivo();
-      var mio = modo === "telefono" ? !!(pr && stessoNome(pr.nome, F.nome)) : F.id === "host";
+      var mio = modo === "telefono" ? !!(pr && stessoNome(pr.nome, F.nome)) : F.id === IO;
       if (mio) incassa(H.gameId, F.premio);
     }
     function finePartita() {
@@ -963,9 +994,9 @@
       }
       if (ok) { H.mosse++; dopo(); }
     }
-    var cb = { sonoHost: true, online: online, telefono: modo === "telefono", myId: "host",
+    var cb = { sonoHost: true, online: online, telefono: modo === "telefono", myId: IO,
       omini: function () { return H.omini; },
-      onAzione: function (a, x) { azione("host", a, x); },
+      onAzione: function (a, x) { azione(IO, a, x); },
       onComincia: comincia,
       onBot: function (piu) {
         if (H.fase !== "lobby") return;
@@ -976,11 +1007,17 @@
       onNuova: function () {
         ferma();
         // chi è uscito e non è tornato lascia il posto (se torna dopo, rientra dalla saletta)
-        if (online) { posti = posti.filter(function (p) { return !P || !P.giocatori.some(function (g) { return g.id === p.id && g.via; }); }); H.fase = "lobby"; P = null; bd(); }
+        if (online) { posti = posti.filter(function (p) { return !P || !P.giocatori.some(function (g) { return g.id === p.id && g.via; }); });
+          // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede (se c'è posto)
+          if (!posti.some(function (p) { return p.id === IO; }) && posti.length < MAX) {
+            guarda = guarda.filter(function (g) { return g.id !== IO; });
+            posti.push({ id: IO, nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null }); H.omini[IO] = posti[posti.length - 1].omino;
+          }
+          posti.sort(function (a, b) { return (b.id === IO) - (a.id === IO); }); H.fase = "lobby"; P = null; bd(); }
         else { P = null; comincia(); }
       },
       onEsci: function (gia) {   // gia = l'ha già confermato il tasto ‹ dello studio
-        var via = function () { ferma(); if (rete) rete.chiudi(); t.esci(); };
+        var via = function () { ferma(); clearTimeout(tAttesi); if (rete) { t.ricorda(null); rete.chiudi(); } t.esci(); };
         if (H.fase === "gioco" && !gia) return t.conferma(online ? "Chiudere la partita per tutti?" : "Uscire dalla partita?", null, "Esci", via);   // la finestra dell'app
         via();
       } };
@@ -995,11 +1032,31 @@
       bd();
     };
 
+    // la ripresa: stessa frase e stesse lettere, tocca a chi toccava col suo tempo intero. La ruota non gira da sola:
+    // se stava girando, chi l'aveva girata la rigira; se due avevano appena prenotato la frase lampo, vince il più veloce
+    function riprendi() {
+      tAttesi = setTimeout(function () { Object.keys(attesi).forEach(function (id) { cbRete.onAddio(id); }); }, 10000);
+      H.risposta = R0.risposta || {};
+      if (H.fase === "fine") return bd();
+      H.sigla = false;
+      var f = P.fase, g = P.giocatori[P.turno];
+      if (f === "girando") {
+        if (P.veloce) P.fase = "vgiro";   // (nel round veloce la ruota la gira il gioco)
+        else { P.fase = "gira"; if (g) { if (g.stat.giri) g.stat.giri--; P.msg = "🔁 La partita è ripresa: " + g.nome + ", gira di nuovo la ruota!"; } }
+      }
+      var L = P.lampo;
+      if (L && P.fase === "lampo") {
+        L.T = (L.T || []).map(function (x) { return t.ripresa.ora(x); });
+        if (L.cand && L.cand.length) P.lampoAssegna();
+      }
+      H.mosse++; dopo();
+    }
     if (online) {
-      rete = SGNet.ospita(ID, {
+      var cbRete = {
         onCodice: function (c) { H.codice = c; if (!riserva) riserva = leggiRiserva(c); bd(); },
         onConnesso: function () { H.pronta = true; bd(); },
         onAddio: function (id) {
+          delete attesi[id];
           var g0 = guarda.length; guarda = guarda.filter(function (g) { return g.id !== id; });
           if (H.fase === "lobby") { posti = posti.filter(function (p) { return p.id !== id; }); bd(); return; }
           if (guarda.length !== g0) return bd();
@@ -1008,6 +1065,7 @@
         onMsg: function (id, m) {
           if (!m || !m.t) return;
           if (m.t === "join") {
+            delete attesi[id];   // (dopo una ripresa: è tornato)
             var gia = posti.some(function (p) { return p.id === id; }), nomeJ = String(m.nome || "Amico").slice(0, 16);
             if (!gia && t.puoSedersi && !t.puoSedersi(id, nomeJ)) {   // nella Sala non è tra gli scelti: questa volta guarda
               if (!guarda.some(function (g) { return g.id === id; }) && guarda.length < 12) guarda.push({ id: id, nome: nomeJ });
@@ -1027,9 +1085,10 @@
           if (m.t === "azione") azione(id, m.a, m.x);
         },
         // (con la rete nuova arriva solo se la stanza non si apre proprio: a partita cominciata ci pensa il core)
-        onErrore: function () { ferma(); errore(t, "Non riesco ad aprire la stanza. Controlla internet e riprova."); }
-      });
-      bd();
+        onErrore: function () { ferma(); clearTimeout(tAttesi); t.ricorda(null); errore(t, "Non riesco ad aprire la stanza. Controlla internet e riprova."); }
+      };
+      rete = SGNet.ospita(ID, cbRete, { ripresa: ripresa });   // (con la ripresa gli amici non tornano in saletta)
+      if (ripresa) { if (rete && rete.codice) H.codice = rete.codice; riprendi(); } else bd();
     } else comincia();
   }
 
@@ -1117,6 +1176,8 @@
       }
       R = null; return finale(t, vm, cb);
     }
+    // (da capo anche se il tavolo è un altro: l'amico che prende il posto dell'host sparito, Passo 5, non usa lo studio di quando era ospite)
+    if (R && R.t !== t) { try { fermaRegia(R); } catch (e) {} R = null; }
     if (!R || !R.S.vivo()) R = creaStudioRuota(t, vm, cb);
     R.cb = cb; R.vm = vm;
     if (!R.sigla) aggiorna(R, vm);
@@ -1147,7 +1208,7 @@
     var piena = !cb.sonoHost && !dentro && !guardo && vm.giocatori.length >= MAX;
     if (vm.guarda && vm.guarda.length) extra.push(el("p", { class: "modulo-nota", text: "👀 Guardano: " + vm.guarda.map(function (g) { return g.id === cb.myId ? "tu" : g.nome; }).join(", ") }));
     var s = t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, puoiDaSolo: vm.giocatori.length >= 2, vuoti: Math.max(0, 2 - vm.giocatori.length),
-      giocatori: vm.giocatori.map(function (p) { return { id: p.id, nome: p.nome, omino: (cb.omini() || {})[p.id] || (p.bot && window.SGOmino ? SGOmino.casuale(p.nome) : null), host: p.id === "host", tu: p.id === cb.myId, bot: p.bot }; }),
+      giocatori: vm.giocatori.map(function (p, i) { return { id: p.id, nome: p.nome, omino: (cb.omini() || {})[p.id] || (p.bot && window.SGOmino ? SGOmino.casuale(p.nome) : null), host: i === 0, tu: p.id === cb.myId, bot: p.bot }; }),
       extra: extra, attesa: cb.sonoHost || dentro ? "Aspetta che l'host cominci: si gira la ruota! 🎡" :
         guardo ? "Questa partita la guardi: si gira la ruota tra poco! 👀" : piena ? "Quando comincia, guarderai la partita. 👀" : "Un attimo: ti metto alla ruota…",
       // "Sei dentro!" e "Sto entrando…" li scrive il core; la ruota piena (4 posti) la sa solo il gioco
@@ -1954,6 +2015,8 @@
     descrizione: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase! Come in TV: Bancarotta, Passa, Jolly, la frase lampo da prenotare, l'Express, l'ultimo round veloce e la finale per le Speed Coins.",
     giocatoriMin: 1, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 1–4 giocatori",
     postiOnline: MAX,   // 4 alla ruota: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
+    riprende: true,     // online: se l'host ricarica a metà partita, la partita riprende (stessa frase, tocca a chi toccava)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     modi: [
       { modo: "bot", icona: "🤖", nome: "Contro i Bot", sotto: "Tu contro i Bot, come in TV" },
       { modo: "telefono", icona: "📱", nome: "Sullo stesso telefono", sotto: "Da 2 a 4, tutti davanti allo stesso schermo", amici: true }

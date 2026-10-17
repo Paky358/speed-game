@@ -1286,6 +1286,35 @@
       while (H.fase === "lobby" && H.players.length < MAX_ON && H.attesa.length) { var a = H.attesa.shift(); if (!pById(a.id)) H.players.push(a); }
     }
 
+    // ---- la ripresa (l'host ha ricaricato la pagina o l'app si è chiusa): stesso livello, stessi pioli, punti, palline e
+    // turno. Si ricorda solo tra un tiro e l'altro: un tiro che era in volo non vale e lo rifà lo stesso giocatore.
+    // Gli amici rientrano da soli (stesso id); chi non torna entro 15 secondi è come se fosse uscito
+    var CAMPI = ["fase", "lvSc", "partita", "seq", "ultimo", "classifica", "attesa", "guarda", "rip"];
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.pallamatta, ricordata = !!RIP, attesi = {};
+    if (RIP) {
+      CAMPI.forEach(function (k) { if (RIP.H[k] !== undefined) H[k] = RIP.H[k]; });
+      H.rip = (H.rip || 0) + 1;   // (nella foto: gli amici sanno che il tiro di prima non vale)
+      if (H.fase !== "lobby" && RIP.st) {
+        H.st = RIP.st; H.st.colpo = null; H.players = H.st.gioc;   // (in partita i giocatori sono quelli del tavolo)
+        if (H.fase === "fine") H.st.fase = "fine";
+        else {
+          H.st.fase = "mira";
+          H.players.forEach(function (p) { if (p.id !== "host" && !p.via) attesi[p.id] = 1; });
+          setTimeout(function () { Object.keys(attesi).forEach(function (id) { var p = pById(id); delete attesi[id]; if (p && !p.via && H.fase === "gioco") viaInGioco(p); }); }, 15000);
+        }
+      } else H.fase = "lobby";
+    }
+    function ricorda() {   // a ogni foto, ma mai a metà tiro (il core salva al massimo ogni mezzo secondo)
+      if (!t.ricorda) return;
+      if (H.fase === "lobby" || !H.st) { if (ricordata) { ricordata = false; t.ricorda(null); } return; }
+      if (H.st.fase === "volo" || H.st.fase === "pulizia") return;   // (resta quella di prima del tiro)
+      var o = {}; CAMPI.forEach(function (k) { o[k] = H[k]; });
+      var colpo = H.st.colpo; H.st.colpo = null;
+      var copia = JSON.parse(JSON.stringify({ H: o, st: H.st }));   // (una copia: il tavolo cambia prima che il core salvi)
+      H.st.colpo = colpo;
+      ricordata = true; t.ricorda({ pallamatta: copia });
+    }
+
     // "⚙️ Regole" nella saletta: l'host cambia il livello quando vuole
     t.onRegole = function (im) { if (H.fase !== "lobby") return; H.lvSc = im.lv == null ? "caso" : im.lv; bd(); };
 
@@ -1299,15 +1328,12 @@
         H.guarda = H.guarda.filter(function (a) { return a.id !== id; });
         var p = pById(id); if (!p) { if (H.attesa.length + H.guarda.length !== prima) bd(); return; }
         if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); accogli(); bd(); return; }
-        p.via = true;   // a partita iniziata resta in classifica, ma i suoi turni si saltano
-        if (H.fase === "gioco") {
-          if (presenti().length < MIN_ON) { pausa(); return bd(); }   // è rimasto solo l'host: si aspetta chi è uscito (magari ha solo bloccato lo schermo)
-          if (H.st.gioc[H.st.turno] === p && H.st.fase === "mira") return cambiaTurno();   // (se nessuno ha più palline, finisce lì)
-        }
-        bd();
+        delete attesi[id];
+        viaInGioco(p);
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
+        delete attesi[id];   // (ripresa) si è rifatto vivo
         var p = pById(id);
         if (m.t === "join") {
           var nuovo = { id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: avatarValido(m.omino), potere: POTERI[m.potere] ? m.potere : "bomba", vinte: 0 };
@@ -1329,10 +1355,18 @@
         if (m.t === "mira") altraMira(id, m.a, m.seq);
         else if (m.t === "tira") tiro(id, m.a, m.seq, m.ts);
       }
-    });
+    }, { ripresa: !!RIP });   // (ripresa: gli amici restano al tavolo, non tornano in saletta)
+    function viaInGioco(p) {   // uno che gioca se ne va a partita iniziata: resta in classifica, ma i suoi turni si saltano
+      p.via = true;
+      if (H.fase === "gioco") {
+        if (presenti().length < MIN_ON) { pausa(); return bd(); }   // è rimasto solo l'host: si aspetta chi è uscito (magari ha solo bloccato lo schermo)
+        if (H.st.gioc[H.st.turno] === p && H.st.fase === "mira") return cambiaTurno();   // (se nessuno ha più palline, finisce lì)
+      }
+      bd();
+    }
     // la "foto" per tutti: SEMPRE con gli id dei giocatori (e di chi aspetta di entrare); nel gioco anche il tavolo (tipi e pezzi già scoppiati)
     function vm() {
-      var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, lvSc: H.lvSc, partita: H.partita, classifica: H.classifica, attesa: H.attesa.map(function (a) { return a.id; }),
+      var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, lvSc: H.lvSc, partita: H.partita, rip: H.rip || 0, classifica: H.classifica, attesa: H.attesa.map(function (a) { return a.id; }),
         guarda: H.guarda.map(function (a) { return { id: a.id, nome: a.nome }; }),
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, potere: p.potere, vinte: p.vinte || 0, via: !!p.via, punti: p.punti || 0, palline: p.palline || 0, mira: p.mira || 0, fuoco: p.fuoco || 0 }; }) };
       if (H.fase !== "lobby" && H.st) {
@@ -1344,7 +1378,7 @@
       }
       return v;
     }
-    function bd() { rete.invia({ t: "vm", vm: vm() }); mostra(); }
+    function bd() { ricorda(); rete.invia({ t: "vm", vm: vm() }); mostra(); }
     function mostra() {
       if (H.fase === "lobby") { if (H.tav) { H.tav.chiudi(); H.tav = null; } return lobbyPM(t, vm(), cbHost); }
       if (!H.tav) {
@@ -1375,7 +1409,7 @@
       H.tav.riproduci(rec, dopoTiro);
     }
     function dopoTiro() {
-      if (H.fase === "fine") { H.st.fase = "fine"; return finePM(); }   // (finita mentre si guardava il tiro: è uscito qualcuno)
+      if (H.fase === "fine") { H.st.fase = "fine"; ricorda(); return finePM(); }   // (finita mentre si guardava il tiro: è uscito qualcuno)
       if (H.fase !== "gioco") return;
       if (H.st.febbre) return fine();
       cambiaTurno();
@@ -1472,6 +1506,14 @@
         if (H.fase === "gioco" && H.tav) return H.tav.chiedi("Chiudere la partita per tutti?", "Gli amici escono dalla partita.", "🏠 Chiudi ed esci", via);   // un tocco sbagliato non chiude il gioco a tutti
         via();
       } };
+    if (RIP && H.fase === "gioco") {   // la partita ripresa: tocca di nuovo a chi toccava (se c'è ancora e ha palline)
+      var g0 = H.st.gioc[H.st.turno];
+      if (presenti().length < MIN_ON) { pausa(); return bd(); }   // (era in pausa: si aspetta ancora chi era uscito)
+      if (!g0 || g0.via || g0.palline <= 0) return cambiaTurno();
+      bd(); avvisaTurno(); timerTurno();
+      if (H.tav) H.tav.dimmi("🔁 Partita ripresa: " + (g0.id === "host" ? "tocca a te!" : "tocca a " + g0.nome));
+      return;
+    }
     bd();
   }
 
@@ -1543,9 +1585,13 @@
           : "👀 C'è una partita in corso: entri nella saletta appena finisce. Resta qui!", true);
       }
       if (vm.fase === "lobby") { if (S.tav) { S.tav.chiudi(); S.tav = null; S.st = null; } S.coda = null; return lobbyPM(t, vm, cb); }
+      var ripresa = S.rip != null && vm.rip != null && vm.rip !== S.rip; S.rip = vm.rip;   // l'host ha ripreso la partita (ha ricaricato)
       if (!S.tav || vm.partita !== S.partita) { if (!creaTavolo(vm)) return; }
-      else if (S.tav.occupato()) { S.coda = vm; return; }   // sto ancora guardando il tiro: la foto dopo
-      sincronizza(vm);
+      else if (S.tav.occupato()) {
+        if (!ripresa) { S.coda = vm; return; }   // sto ancora guardando il tiro: la foto dopo
+        S.coda = null; S.tav.salta();   // (ripresa: il tiro che si vedeva non vale, il tavolo torna com'era)
+      }
+      sincronizza(vm, ripresa);
     }
     function creaTavolo(vm) {
       var pioli = LIVELLI[vm.lv] ? creaLivello(vm.lv, false) : [];
@@ -1559,8 +1605,8 @@
       S.tav.dimmi(nomeLivello(vm.lv) + " · un tiro a testa!");
       return true;
     }
-    function sincronizza(vm) {   // la foto dell'host è quella giusta: punti, palline, turno e pezzi rimasti
-      var st = S.st, nuovoT = vm.seq !== st.seq;
+    function sincronizza(vm, ripresa) {   // la foto dell'host è quella giusta: punti, palline, turno e pezzi rimasti
+      var st = S.st, nuovoT = vm.seq !== st.seq || !!ripresa;
       st.seq = vm.seq; st.turno = vm.turno; st.arPresi = vm.ar; st.febbre = !!vm.feb;
       vm.players.forEach(function (p, i) {
         var g = st.gioc[i] || (st.gioc[i] = {});
@@ -1571,7 +1617,7 @@
       if (vm.fase === "fine") { st.fase = "fine"; S.tav.nuovoTurno(vm.seq); return fineOspite(vm); }
       st.fase = vm.fs === "mira" ? "mira" : "attesa";
       S.tav.nuovoTurno(vm.seq);
-      if (nuovoT && st.fase === "mira") S.tav.dimmi(mioTurno() ? "🎯 Tocca a te!" : "🎯 Tocca a " + st.gioc[st.turno].nome);
+      if (nuovoT && st.fase === "mira") S.tav.dimmi((ripresa ? "🔁 Si riprende: " : "🎯 ") + (mioTurno() ? (ripresa ? "tocca a te!" : "Tocca a te!") : (ripresa ? "tocca a " : "Tocca a ") + st.gioc[st.turno].nome));
     }
     function tiroArrivato(m) {
       if (!S.tav || !S.st) return;
@@ -1723,6 +1769,7 @@
     descrizione: "Spara la pallina dall'alto e falla rimbalzare sui pioli: fai scoppiare tutti gli arancioni con 10 palline. Livelli, poteri e la febbre finale!",
     giocatoriMin: 1, giocatoriMax: 4, difficolta: 2,
     postiOnline: 4,   // online si gioca in 4 al massimo: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
+    riprende: true,   // se l'host ricarica la pagina, la partita riprende (stesso tavolo, punti, palline e turno: t.ripresa)
     // la riga «📜 Si gioca così» della saletta
     riassunto: function (imp) { var lv = imp && imp.lv; return lv == null || lv === "caso" ? "Livello a sorte" : "Livello: " + nomeLivello(+lv); },
     modi: [{ modo: "solo", icona: "🎯", nome: "Da solo", sotto: "I livelli, uno dopo l'altro", diretto: true, min: 1 },   // diretto: niente impostazioni, si va ai livelli

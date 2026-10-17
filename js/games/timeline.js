@@ -619,6 +619,7 @@
   var gioco = {
     id: "timeline",
     riprende: true,   // se l'host ricarica a metà partita, la partita riprende da dove era (il core lo dice agli amici)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     nome: "La linea del tempo",
     icona: "📜",
     descrizione: "Metti gli avvenimenti nell'ordine giusto e sfida gli amici a punti.",
@@ -893,29 +894,35 @@
     };
   }
 
-  // ---- la partita dell'host si salva sul telefono: se ricarica la pagina la riprende con lo stesso codice ----
-  var SALVA_HOST = "sg-tl-host", VITA_SALVATO = 20 * 60000;
+  // ---- la partita dell'host si ricorda col modo comune (t.ricorda / t.ripresa): se ricarica la pagina la riprende ----
+  // (il mazzo si ricorda come chiavi delle carte e si rifà alla ripresa)
   function chiaveEv(e) { return (e._cat || "") + "|" + e.titolo; }
-  function leggiSalvato() {
-    try { var v = JSON.parse(localStorage.getItem(SALVA_HOST) || "null"); if (v && v.st && v.codice && Date.now() - v.t < VITA_SALVATO) return v; } catch (e) {}
-    return null;
-  }
-  function scordaSalvato() { try { localStorage.removeItem(SALVA_HOST); } catch (e) {} }
+  // (il mazzo si ricorda come numeri: il posto della carta nell'elenco di tutte le carte, uguale su ogni telefono.
+  // Così la copia per l'host di riserva resta piccola: con le chiavi intere erano più di 60 KB)
   function rifaiMazzo(chiavi) {
-    var tutte = {}; pescaDati(null).forEach(function (e) { tutte[chiaveEv(e)] = e; });
-    return (chiavi || []).map(function (k) { return tutte[k]; }).filter(Boolean);
+    var lista = pescaDati(null), tutte = {}; lista.forEach(function (e) { tutte[chiaveEv(e)] = e; });
+    return (chiavi || []).map(function (k) { return typeof k === "number" ? lista[k] : tutte[k]; }).filter(Boolean);
+  }
+  var POS_CARTE = null, POS_N = -1;
+  function mazzoInNumeri(mazzo) {
+    var n = 0; (window.SG_CATEGORIE || []).forEach(function (c) { n += (c.eventi || []).length; });
+    if (!POS_CARTE || POS_N !== n) { POS_CARTE = {}; POS_N = n; pescaDati(null).forEach(function (e, i) { POS_CARTE[chiaveEv(e)] = i; }); }
+    var pos = POS_CARTE;
+    return mazzo.map(function (e) { return pos[chiaveEv(e)]; }).filter(function (n) { return n != null; });
   }
   function idPartita() { return Math.random().toString(36).slice(2, 8); }
 
   // la partita lasciata a metà (pagina ricaricata, app chiusa) riparte da sola quando l'app riapre la STESSA stanza
-  // (lo fa il core, con lo stesso codice): punti, linea e carte restano, gli amici rientrano da soli.
-  // Se invece la stanza è un'altra (stanza nuova), quella vecchia si dimentica.
+  // (lo fa il core, con lo stesso codice, e la passa in t.ripresa): punti, linea e carte restano, gli amici rientrano da soli.
   function hostCrea(t) {
     if (!(window.SGNet && SGNet.disponibile())) return schermataNoNet(t);
-    hostAvvia(t, leggiSalvato());
+    try { localStorage.removeItem("sg-tl-host"); } catch (e) {}   // (il salvataggio di prima, fatto in casa: non serve più)
+    var R0 = t.ripresa && t.ripresa.stato;
+    hostAvvia(t, R0 && R0.st ? { st: R0.st, T: R0.T || null } : null);
   }
   function hostAvvia(t, sv) {
     REG = null;
+    var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
     var carte = (t.impostazioni && t.impostazioni.carte) || 5, imp = t.impostazioni || {};
     var nomeHost = (t.giocatori && t.giocatori[0]) || "Host";
     var st = {
@@ -923,7 +930,7 @@
       fase: "lobby", iniziata: false, carte: carte, codice: "…", scelta: null, voti: {}, scadenza: null, durata: null, _to: null,
       tutteCat: tutteLeCategorie(imp), nCat: quanteCategorie(imp), T: null, partita: idPartita(), pronta: false,
       insieme: imp.gara === "insieme", giro: 0, mosse: {}, avanti: {}, esitoT: null, inizio: 0,   // "⚡ Tutti insieme"
-      giocatori: [{ id: "host", nome: nomeHost, restano: carte, punti: 0, omino: mioAvatar(nomeHost) }],
+      giocatori: [{ id: IO, nome: nomeHost, restano: carte, punti: 0, omino: mioAvatar(nomeHost) }],
       guarda: []   // nella Sala: chi non è stato scelto per giocare (guarda soltanto; con l'id, così sa di essere entrato)
     };
     function corr() { return st.giocatori[st.turno % st.giocatori.length]; }
@@ -941,6 +948,8 @@
       bd();
     };
 
+    // la partita di prima (t.ripresa): si riprende anche sulla classifica finale (gli XP non si ridanno: lo controlla il core)
+    var ripresa = !!(sv && sv.st && sv.st.fase !== "lobby");
     var rete = SGNet.ospita("timeline", {
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
@@ -949,7 +958,7 @@
         var g = gDi(id); if (!g) return;
         // nella saletta si toglie e basta; a partita iniziata resta al suo posto (grigio): se torna riprende con punti e carte
         if (!st.iniziata) { st.giocatori.splice(indexById(st, id), 1); bd(); return; }
-        if (g.via || g.id === "host") return;
+        if (g.via || g.id === IO) return;
         g.via = true; delete st.voti[id];
         dopoUscita(id);
         bd();
@@ -984,29 +993,36 @@
         else if (m.t === "avanti") { if (st.insieme) avantiT(id); else if (st.fase === "esito" && corr().id === id) prossimo(); }
       },
       // (arriva solo se il primo collegamento non riesce: a partita cominciata la rete si ricollega da sola)
-      onErrore: function (e) { clearTo(); scordaSalvato(); schermataErrore(t, "Non riesco ad aprire la stanza. " + codiceErrore(e)); }
-    });
+      onErrore: function (e) { clearTo(); t.ricorda(null); schermataErrore(t, "Non riesco ad aprire la stanza. " + codiceErrore(e)); }
+    }, { ripresa: ripresa });   // (gli amici non tornano in saletta: la partita riprende)
     if (!rete) return schermataNoNet(t);
-    // la stanza riaperta è quella della partita salvata: la partita riprende da dove era
-    if (sv && sv.st && String(rete.codice || "").toUpperCase() === String(sv.codice).toUpperCase() && ["lobby", "fine"].indexOf(sv.st.fase) < 0) {
+    // la stanza riaperta è quella della partita ricordata: la partita riprende da dove era
+    if (ripresa) {
       var o = sv.st;
       ["linea", "turno", "n", "carta", "esito", "fase", "carte", "scelta", "voti", "tutteCat", "nCat", "giocatori", "partita", "riprEsito",
-       "insieme", "giro", "mosse", "avanti", "esitoT"].forEach(function (k) { if (o[k] !== undefined) st[k] = o[k]; });
-      st.mazzo = rifaiMazzo(o.mazzo); st.iniziata = true; st.codice = sv.codice; st.T = sv.T || null;
-      st.giocatori.forEach(function (g) { if (g.id !== "host") g.via = true; });   // gli amici tornano "dentro" appena si rifanno vivi
-      riprendi();
-    } else if (sv) scordaSalvato();   // una stanza nuova: la partita vecchia non c'entra più
+       "insieme", "giro", "mosse", "avanti", "esitoT", "classifica"].forEach(function (k) { if (o[k] !== undefined) st[k] = o[k]; });
+      st.mazzo = rifaiMazzo(o.mazzo); st.iniziata = true; st.codice = rete.codice || st.codice; st.T = sv.T || null;
+      // ho preso il posto dell'host sparito (host di riserva): i trofei sono i miei (quelli contati da ospite), non i suoi
+      if (t.ripresa && t.ripresa.daRiserva) st.T = caricaT(chiaveT(st.codice, st, IO)) || creaTraccia({ online: true, carte: st.carte, tutteCat: st.tutteCat });
+      st.giocatori.forEach(function (g) { if (g.id !== IO) g.via = true; });   // gli amici tornano "dentro" appena si rifanno vivi
+      if (st.fase !== "fine") riprendi();   // (sulla classifica finale si resta lì)
+    }
     function invia() { rete.invia({ t: "vm", vm: vmDa(st) }); }
-    function bd() { invia(); salva(); disegna(); }
+    function bd() { invia(); salva(); disegna(); vici(); }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
+    var viciK = "";
+    function vici() {
+      var l = st.guarda.concat(Object.keys(visti).filter(function (id) { return !gDi(id); })), k = l.join(",");
+      if (k !== viciK && t.vici) { viciK = k; t.vici(l.length ? l : null); }
+    }
+    // la partita com'è adesso, per riprenderla (niente in saletta: lì non c'è niente da riprendere)
     function salva() {
-      if (!st.iniziata || st.fase === "fine" || st.fase === "lobby") return;
-      try {
-        localStorage.setItem(SALVA_HOST, JSON.stringify({ t: Date.now(), codice: st.codice, T: st.T, st: {
-          linea: st.linea, turno: st.turno, n: st.n, carta: st.carta, esito: st.esito, fase: st.fase, carte: st.carte, scelta: st.scelta,
-          voti: st.voti, tutteCat: st.tutteCat, nCat: st.nCat, partita: st.partita, riprEsito: !!st.riprEsito, mazzo: st.mazzo.map(chiaveEv),
-          insieme: !!st.insieme, giro: st.giro || 0, mosse: st.mosse || {}, avanti: st.avanti || {}, esitoT: st.esitoT || null,
-          giocatori: st.giocatori.map(function (g) { return { id: g.id, nome: g.nome, restano: g.restano, punti: g.punti, omino: g.omino || null }; }) } }));
-      } catch (e) {}
+      if (!st.iniziata || st.fase === "lobby") return t.ricorda(null);
+      t.ricorda({ T: st.T, st: {
+        linea: st.linea, turno: st.turno, n: st.n, carta: st.carta, esito: st.esito, fase: st.fase, carte: st.carte, scelta: st.scelta,
+        voti: st.voti, tutteCat: st.tutteCat, nCat: st.nCat, partita: st.partita, riprEsito: !!st.riprEsito, mazzo: mazzoInNumeri(st.mazzo),
+        insieme: !!st.insieme, giro: st.giro || 0, mosse: st.mosse || {}, avanti: st.avanti || {}, esitoT: st.esitoT || null, classifica: st.classifica || null,
+        giocatori: st.giocatori.map(function (g) { return { id: g.id, nome: g.nome, restano: g.restano, punti: g.punti, omino: g.omino || null, via: !!g.via }; }) } });
     }
 
     // qualcuno è sparito: se toccava a lui si passa al prossimo (la carta torna nel mazzo), se votava non lo si aspetta
@@ -1087,7 +1103,7 @@
       var risultati = st.giocatori.map(function (x) {
         var m = st.mosse[x.id], ok = !!m && gapGiusto(st.linea, m.gap, carta.anno), delta = ok ? (PUNTI + (x.id === veloce ? VELOCE : 0)) * molt : 0;
         x.punti += delta; x.restano = Math.max(0, x.restano - 1);
-        if (x.id === "host") tPiazza(st.T, ok, carta._cat);
+        if (x.id === IO) tPiazza(st.T, ok, carta._cat);
         return { id: x.id, giusto: ok, delta: delta, veloce: x.id === veloce, scelto: !!m, sec: m ? Math.round(m.ms / 100) / 10 : null };
       });
       st.linea.push(carta); ordina(st.linea);   // la carta entra nella linea per tutti (si impara la data)
@@ -1137,10 +1153,10 @@
         if (st.voti[x.id] == null) return; // non ha votato: 0
         var giustoV = (st.voti[x.id] === ok);
         x.punti += giustoV ? VOTO : -VOTO;
-        if (x.id === "host") tVoto(st.T, st.voti[x.id], giustoV);
+        if (x.id === IO) tVoto(st.T, st.voti[x.id], giustoV);
         voti.push({ id: x.id, nome: x.nome, omino: x.omino || null, d: st.voti[x.id], giusto: giustoV, delta: giustoV ? VOTO : -VOTO });
       });
-      if (g.id === "host") tPiazza(st.T, ok, carta._cat);
+      if (g.id === IO) tPiazza(st.T, ok, carta._cat);
       if (ok) { st.linea.push(carta); ordina(st.linea); g.punti += PUNTI; } else { g.punti -= PUNTI; }
       g.restano -= 1;
       st.esito = { giusto: ok, anno: carta.anno, titolo: carta.titolo, fatto: carta.fatto || "", nome: g.nome, cat: carta._cat,
@@ -1166,20 +1182,21 @@
       st.classifica = classificaPunti(st.giocatori);
       // torneo online: i nomi coi posti (pari merito = stesso posto)
       if (t.risultato) t.risultato(st.classifica.map(function (r) { return { nome: r.nome, pos: r.pos, punti: r.punti }; }));
-      var io = gDi("host");
-      if (io) tFine(st.T, st.classifica, function (r) { return r.id === "host"; }, io.restano === 0);
-      scordaSalvato();
-      bd();
+      var io = gDi(IO);
+      if (io) tFine(st.T, st.classifica, function (r) { return r.id === IO; }, io.restano === 0);
+      bd();   // (si ricorda anche la classifica: se l'host ricarica qui, la ritrova)
     }
     // "Rigioca": stessa stanza, stessi amici (chi era sparito resta fuori), tutti di nuovo nella saletta
     function nuova() {
       clearTo();
       st.giocatori = st.giocatori.filter(function (g) { return !g.via; });
+      // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
+      if (!gDi(IO)) { st.guarda = st.guarda.filter(function (x) { return x !== IO; }); st.giocatori.push({ id: IO, nome: nomeHost, restano: 0, punti: 0, omino: mioAvatar(nomeHost) }); }
+      st.giocatori.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
       st.giocatori.forEach(function (g) { g.punti = 0; g.restano = st.carte = (imp.carte || st.carte); });
       st.mazzo = mischiaArr(pescaDati(imp)); st.linea = []; st.turno = 0; st.carta = null; st.esito = null; st.classifica = null;
       st.scelta = null; st.voti = {}; st.scadenza = null; st.durata = null; st.T = null; st.iniziata = false; st.fase = "lobby"; st.partita = idPartita();
       st.insieme = imp.gara === "insieme"; st.giro = 0; st.mosse = {}; st.avanti = {}; st.esitoT = null;
-      scordaSalvato();
       bd();
     }
     // partita ripresa dopo che l'host ha ricaricato la pagina: "🔁 Partita ripresa!" per qualche secondo (gli amici
@@ -1197,15 +1214,15 @@
         if (eraEsito) prossimo(); else iniziaTurno();
       });
     }
-    var cb = { myId: "host", sonoHost: true,
-      onGap: function (g) { scelta("host", g); }, onVoto: function (d) { voto("host", d); },
-      onPosa: function (g) { posa("host", g); },
+    var cb = { myId: IO, sonoHost: true,
+      onGap: function (g) { scelta(IO, g); }, onVoto: function (d) { voto(IO, d); },
+      onPosa: function (g) { posa(IO, g); },
       // a turno l'host può sempre andare avanti (anche al posto di chi si è distratto); tutti insieme conta come un voto
-      onAvanti: function () { if (st.insieme) avantiT("host"); else if (st.fase === "esito") prossimo(); },
+      onAvanti: function () { if (st.insieme) avantiT(IO); else if (st.fase === "esito") prossimo(); },
       onComincia: comincia, onNuova: function () { if (st.fase === "fine") nuova(); },
       onFinisci: function () { if (st.fase === "attesa") finisci(); },   // chi manca non torna più: si chiude qui
       onEsci: function (soloRete) {
-        clearTo(); scordaSalvato(); rete.chiudi(); if (soloRete !== true) t.esci();
+        clearTo(); t.ricorda(null); rete.chiudi(); if (soloRete !== true) t.esci();
       } };
     // la Rivincita dei tasti di fine comuni: tutti di nuovo nella saletta, stessi amici (il core fa il 3-2-1)
     t.onRivincita = cb.onNuova;

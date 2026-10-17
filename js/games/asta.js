@@ -529,6 +529,8 @@
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono per rilanciare", amici: true }],
     giocatoriMax: MAX_GIOCATORI,
     postiOnline: MAX_GIOCATORI,   // posti online (10)
+    riprende: true,   // se l'host ricarica a metà partita, la partita riprende (il lotto all'asta riparte da capo, nessuno paga niente)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     // le regole in una riga, per la saletta: "🎁 Temi classici · Vacanze · 15 crediti" o "⚽ Mini asta Fantacalcio · 20 crediti"
     riassunto: function (imp) {
       imp = imp || {};
@@ -663,7 +665,8 @@
   // ---- la stanza dell'host resta la stessa anche se in saletta cambi modalità (temi <-> fantacalcio):
   //      il nuovo "motore" riceve la stessa stanza e chi era già entrato, senza che gli amici escano ----
   var PONTE = null;   // { vera, cb, codice, pronta, entrati: [{ id, m }], maniglia }
-  function ospitaAsta(cb) {
+  // (opz: { ripresa } la prima volta, quando la partita riprende dopo una ricarica dell'host)
+  function ospitaAsta(cb, opz) {
     var P = PONTE;
     if (P) {
       P.cb = cb;
@@ -685,7 +688,7 @@
         if (P.cb.onMsg) P.cb.onMsg(id, m);
       },
       onErrore: function (e) { if (P.cb.onErrore) P.cb.onErrore(e); }
-    });
+    }, opz || {});
     if (!P.vera) { PONTE = null; return null; }
     P.maniglia = {
       invia: function (x) { P.vera.invia(x); },
@@ -696,9 +699,19 @@
     return P.maniglia;
   }
 
+  // la partita di prima da riprendere (l'host ha ricaricato la pagina: t.ripresa), una volta sola per partita
+  // (se poi in saletta si cambia modalità, il motore nuovo parte da zero)
+  var RIP_USATA = null;
+  function prendiRipresa(t, formato) {
+    var s = t.ripresa && t.ripresa.stato;
+    if (RIP_USATA === t || !s || s.formato !== formato || !s.fase || s.fase === "lobby" || !s.giocatori) return null;
+    RIP_USATA = t; return s;
+  }
   function avviaAsta(t) {
       pulisciCache();
       var formato = (t.impostazioni && t.impostazioni.formato) || "temi";
+      var rs = RIP_USATA !== t && t.ripresa && t.ripresa.stato;
+      if (rs && rs.formato && t.impostazioni && t.impostazioni.modo === "online") formato = rs.formato;   // (la partita ripresa decide la modalità)
       if (formato === "fanta") {
         if (t.impostazioni && t.impostazioni.modo === "online") return hostFanta(t);
         return avviaFanta(t);
@@ -1663,19 +1676,38 @@
     document.addEventListener("visibilitychange", T.sveglia);
     return T;
   }
+  // la ripresa (Passo 5): lo stato dell'host da ricordare è tutto st tranne i timer (campi con "_") e il tema (si
+  // ricorda solo il suo id); toAt = l'ora del prossimo passo che va avanti da solo (esito, round, voto…)
+  function statoDaRicordare(st, formato) {
+    var s = { formato: formato, toAt: st._toFn ? st._toAt : null, temaId: st.tema ? st.tema.id : null };
+    Object.keys(st).forEach(function (k) { if (k.charAt(0) !== "_" && k !== "tema" && k !== "morto" && k !== "pronta") s[k] = st[k]; });
+    return s;
+  }
+  function ripristina(st, R0) {
+    Object.keys(R0).forEach(function (k) { if (k !== "formato" && k !== "toAt" && k !== "temaId") st[k] = R0[k]; });
+    st.pronta = false;
+  }
   // un tocco alla volta: un doppio tocco (entro mezzo secondo) conta una volta sola
   function unTocco(cb) { var ora = Date.now(); if (ora - (cb._tocco || 0) < 500) return false; cb._tocco = ora; return true; }
 
   // ---------- L'HOST ----------
   function hostAsta(t, tema, crediti) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
     var st = {
       tema: tema, crediti: crediti, sessione: null, roundIdx: 0, chooserPtr: 0,
       tavolo: [], senzaCarta: [], asta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, voti: {}, giro: 0,
       nAsta: 0, nScelta: 0, fineScelta: null, fineAuto: null,
-      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
+      giocatori: [{ id: IO, nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: crediti, kit: [], stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
+    // la partita di prima (l'host ha ricaricato: t.ripresa): stessi crediti, stesse carte, stessa fase (vedi riprendi)
+    var R0 = prendiRipresa(t, "temi"), ripresa = !!R0, attesi = {}, tAttesi = null;
+    if (ripresa) {
+      ripristina(st, R0);
+      st.tema = (window.SG_ASTA_TEMI || []).filter(function (x) { return x.id === R0.temaId; })[0] || st.tema;
+      st.giocatori.forEach(function (g) { if (g.id !== IO && !g.via) attesi[g.id] = 1; });
+    }
     var TM = timerHost(st, function () { return !cb._uscito && !st.morto; });
     function stopTo() { TM.ferma(); }
     // "⚙️ Regole" in saletta: tema e crediti nuovi; se passi al Fantacalcio cambia motore (stessa stanza, stessi amici)
@@ -1691,10 +1723,11 @@
     // la Rivincita (dalla classifica): tutti di nuovo nella saletta, stessi amici
     t.onRivincita = function () { if (st.fase === "fine" && !st.morto) nuovaInLobby(); };
 
-    var rete = ospitaAsta({
+    var cbRete = {
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
+        delete attesi[id];
         var g = perId(st, id); if (!g) return;
         if (!st.iniziata) { st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; }); return bd(); }   // in saletta chi esce se ne va davvero
         // a partita cominciata chi perde la connessione resta al suo posto ("non c'è"): passa da solo, tiene le sue carte, e se rientra riprende a giocare
@@ -1707,6 +1740,7 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
+          delete attesi[id];   // (dopo una ripresa: è tornato)
           var gj = perId(st, id);
           if (gj) {   // chi rientra (stesso id) riprende il suo posto
             var eraVia = gj.via; gj.via = false;
@@ -1727,10 +1761,34 @@
         if (e && e.type === "no-mqtt") return senzaRete(t);
         erroreSchermo(t, "Non riesco ad aprire la stanza. Controlla la connessione e riprova.");
       }
-    });
+    };
+    var rete = ospitaAsta(cbRete, { ripresa: ripresa });   // (con la ripresa gli amici non tornano in saletta)
 
-    function invia() { rete.invia({ t: "vm", vm: vmAsta(st) }); }
+    function invia() { rete.invia({ t: "vm", vm: vmAsta(st) }); ricorda(); }
+    // la partita com'è adesso, per riprenderla se ricarico la pagina (in saletta niente)
+    function ricorda() { if (!st.morto) t.ricorda(st.iniziata && st.fase !== "lobby" ? statoDaRicordare(st, "temi") : null); }
+    var dopoTM = TM.dopo; TM.dopo = function (fn, ms) { dopoTM(fn, ms); ricorda(); };   // (anche l'ora del prossimo passo)
     function bd() { invia(); disegna(); }
+    // la ripresa: si ricomincia dalla stessa fase coi secondi che restavano (almeno 5); il lotto all'asta riparte
+    // da capo a 1 credito da chi l'aveva scelto (le offerte di prima non valgono: i crediti si pagano solo all'aggiudicazione);
+    // il voto continua coi secondi che mancano e coi voti già dati
+    function riprendi() {
+      tAttesi = setTimeout(function () { Object.keys(attesi).forEach(function (id) { cbRete.onAddio(id); }); }, 10000);
+      var f = st.fase, ms = Math.max(5000, ((t.ripresa.ora(R0.toAt) || 0) - Date.now()));
+      st.scadenza = null;
+      if (f === "round" || f === "esito") { avantiDaSolo(ms); return bd(); }
+      if (f === "kit") { avantiDaSolo(ms, avanti); return bd(); }
+      if (f === "scelta") { tempoScelta(Math.max(8000, ms)); return bd(); }
+      if (f === "voto") { st.fineVoto = Date.now() + ms; TM.dopo(function () { verificaVoti(true); }, ms); bd(); return verificaVoti(); }
+      if (f === "asta" && st.asta) {
+        var ch = chiSceglie(), a = st.asta;
+        st.nAsta++; st.esito = null;
+        st.asta = { carta: st.tavolo[a.idx] || a.carta, idx: a.idx, offerta: 1, leader: ch ? ch.id : a.leader, passati: {} };
+        if (!verificaPassati()) riparti();
+        return;
+      }
+      bd();   // (la classifica: si resta lì)
+    }
     function chiSceglie() { return st.senzaCarta.length ? perId(st, st.senzaCarta[st.chooserPtr % st.senzaCarta.length]) : null; }
 
     function comincia() {
@@ -1795,7 +1853,7 @@
       bd();
     }
     function tardi(id) {   // chi ha rilanciato quando il prezzo era già cambiato: glielo dico (non paga niente)
-      if (id === "host") { cb._tardi = Date.now(); return disegna(); }
+      if (id === IO) { cb._tardi = Date.now(); return disegna(); }
       rete.inviaVeloce({ t: "tardi", a: id, prezzo: st.asta ? st.asta.offerta : 0 });
     }
     // m: { n (quale asta), prezzo (quello che ha visto) }: un'offerta vecchia o doppia non conta
@@ -1807,7 +1865,7 @@
       if (maxPuntataG(st, g) < m.prezzo) return;
       st.asta.offerta = m.prezzo; st.asta.leader = id;
       delete st.asta.passati[id];
-      FX.rilancio(id === "host");
+      FX.rilancio(id === IO);
       if (!verificaPassati()) riparti();   // se nessun altro può più offrire, è subito sua
     }
     function passaO(id, m) {
@@ -1894,24 +1952,25 @@
       st.tavolo = []; st.senzaCarta = []; st.asta = null; st.esito = null; st.classifica = null; st.voti = {}; st.scadenza = null;
       st.fineScelta = null; st.fineAuto = null; st.fineVoto = null;
       st.giocatori = st.giocatori.filter(function (g) { return !g.via; });   // chi non c'è più esce dalla stanza
+      st.giocatori.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });   // (chi tiene la partita è il primo: in saletta ha la corona)
       st.giocatori.forEach(function (g) { g.crediti = st.crediti; g.kit = []; g.stelle = 0; g.asteVinte = 0; });
       bd();
     }
     var cb = {
-      myId: "host", sonoHost: true,
+      myId: IO, sonoHost: true,
       onComincia: comincia,
       onTema: scegliTema,
       onNuova: nuovaInLobby,
-      onScegli: function (x) { scegli("host", x); },
-      onRilancia: function (x) { rilanciaO("host", x); },
-      onPassa: function (x) { passaO("host", x); },
+      onScegli: function (x) { scegli(IO, x); },
+      onRilancia: function (x) { rilanciaO(IO, x); },
+      onPassa: function (x) { passaO(IO, x); },
       onAvanti: avanti,
-      onVoto: function (v) { voto("host", v, st.sessione); },
+      onVoto: function (v) { voto(IO, v, st.sessione); },
       onChiudiVoti: function () { if (st.fase === "voto") t.conferma("Chiudere il voto?", "Chi non ha votato dà 3,5 ⭐ a testa.", "Chiudi", function () { if (st.fase === "voto") verificaVoti(true); }); },
-      onEsci: function () { stopTo(); TM.smetti(); cb._uscito = true; fermaTutto(); rete.chiudi(); t.esci(); }
+      onEsci: function () { stopTo(); clearTimeout(tAttesi); t.ricorda(null); TM.smetti(); cb._uscito = true; fermaTutto(); rete.chiudi(); t.esci(); }
     };
     function disegna() { if (!st.morto && !cb._uscito) disegnaAstaVM(t, vmAsta(st), cb); }
-    disegna();
+    if (ripresa) riprendi(); else disegna();
   }
 
   // ---------- UN OSPITE ----------
@@ -2533,21 +2592,29 @@
   var ESITO_MS = 3100, ACCOLLO_MS = 2300;   // quanto resta a schermo l'esito prima del prossimo calciatore
   function hostFanta(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
     var st = {
       formato: "fanta", crediti: FANTA_BUDGET, sessione: null, mazzo: [], asta: null, esito: null, classifica: null,
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, giriVuoti: 0, giro: 0, nCarta: 0, nEsiti: 0,
-      giocatori: [{ id: "host", nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
+      giocatori: [{ id: IO, nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, omino: t.mioOmino ? t.mioOmino() : null }]
     };
+    // la partita di prima (l'host ha ricaricato: t.ripresa): stesse rose, stessi crediti, stesso mazzo (vedi riprendi)
+    var R0 = prendiRipresa(t, "fanta"), ripresa = !!R0, attesi = {}, tAttesi = null;
+    if (ripresa) {
+      ripristina(st, R0);
+      st.giocatori.forEach(function (g) { if (g.id !== IO && !g.via) attesi[g.id] = 1; });
+    }
     var TM = timerHost(st, function () { return !cb._uscito && !st.morto; });   // (al risveglio del telefono recupera i tempi scaduti)
     function stopTo() { TM.ferma(); }
     // "⚙️ Regole" in saletta: se torni ai Temi classici cambia motore (stessa stanza, stessi amici)
     t.onRegole = function (im) { if (!st.iniziata && (im.formato || "temi") !== "fanta") { st.morto = true; TM.smetti(); avviaAsta(t); } };
     t.onRivincita = function () { if (st.fase === "fine" && !st.morto) nuovaInLobby(); };   // la Rivincita: tutti di nuovo nella saletta
 
-    var rete = ospitaAsta({
+    var cbRete = {
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: function (id) {
+        delete attesi[id];
         var g = perId(st, id); if (!g) return;
         if (!st.iniziata) { st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; }); return bd(); }
         // a partita cominciata chi perde la connessione tiene la sua rosa: passa da solo finché non rientra
@@ -2558,6 +2625,7 @@
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
+          delete attesi[id];   // (dopo una ripresa: è tornato)
           var gj = perId(st, id);
           if (gj) gj.via = false;   // chi rientra (stesso id) riprende il suo posto e la sua rosa
           else if (!st.iniziata && st.giocatori.length < MAX_GIOCATORI && (!t.puoSedersi || t.puoSedersi(id, m.nome)))   // (chi non è tra chi gioca guarda)
@@ -2573,10 +2641,31 @@
         if (e && e.type === "no-mqtt") return senzaRete(t);
         erroreSchermo(t, "Non riesco ad aprire la stanza. Controlla la connessione e riprova.");
       }
-    });
+    };
+    var rete = ospitaAsta(cbRete, { ripresa: ripresa });   // (con la ripresa gli amici non tornano in saletta)
 
-    function invia() { rete.invia({ t: "vm", vm: vmFanta(st) }); }
+    function invia() { rete.invia({ t: "vm", vm: vmFanta(st) }); ricorda(); }
+    // la partita com'è adesso, per riprenderla se ricarico la pagina (in saletta niente)
+    function ricorda() { if (!st.morto) t.ricorda(st.iniziata && st.fase !== "lobby" ? statoDaRicordare(st, "fanta") : null); }
+    var dopoTM = TM.dopo; TM.dopo = function (fn, ms) { dopoTM(fn, ms); ricorda(); };   // (anche l'ora del prossimo passo)
     function bd() { invia(); disegna(); }
+    // la ripresa: rose e crediti restano; il calciatore all'asta riparte da capo (nessuno l'ha ancora pagato),
+    // l'esito resta il tempo che gli restava (almeno 5 secondi)
+    function riprendi() {
+      tAttesi = setTimeout(function () { Object.keys(attesi).forEach(function (id) { cbRete.onAddio(id); }); }, 10000);
+      var f = st.fase, ms = Math.max(5000, ((t.ripresa.ora(R0.toAt) || 0) - Date.now()));
+      st.scadenza = null;
+      if (f === "esito") { bd(); return TM.dopo(prossima, ms); }
+      if (f === "asta" && st.mazzo.length) {
+        var carta = st.mazzo[0];
+        st.nCarta++; st.esito = null;
+        st.asta = { carta: carta, ruolo: carta.ruolo, offerta: 1, leader: null, passati: {} };
+        if (!verifica()) riparti(FANTA_VUOTO_MS);
+        return;
+      }
+      if (f === "asta") return prossima();
+      bd();   // (la classifica: si resta lì)
+    }
 
     function comincia() {
       if (st.iniziata || st.giocatori.length < 2) return;
@@ -2601,7 +2690,7 @@
     function riparti(ms) { st.giro++; st.durata = ms; st.scadenza = Date.now() + ms; TM.dopo(scade, ms); bd(); }
     function scade() { if (st.fase !== "asta" || !st.asta) return; if (st.asta.leader !== null) chiudi(); else accollo(); }
     function tardi(id) {   // chi ha offerto quando il prezzo era già cambiato: glielo dico (non paga niente)
-      if (id === "host") { cb._tardi = Date.now(); return disegna(); }
+      if (id === IO) { cb._tardi = Date.now(); return disegna(); }
       rete.inviaVeloce({ t: "tardi", a: id, prezzo: st.asta ? st.asta.offerta : 0 });
     }
     // m: { n (quale calciatore), prezzo (quello che ha visto) }: un'offerta arrivata in ritardo o doppia non conta
@@ -2612,7 +2701,7 @@
       if (m.prezzo !== prezzo) return tardi(id);
       if (maxFanta(g) < prezzo) return;
       st.asta.offerta = prezzo; st.asta.leader = id; delete st.asta.passati[id];
-      FX.rilancio(id === "host");
+      FX.rilancio(id === IO);
       if (!verifica()) riparti(FANTA_RILANCIO_MS);   // se nessun altro può più offrire, aggiudico subito
     }
     function passaO(id, m) {
@@ -2658,17 +2747,18 @@
       stopTo();
       st.iniziata = false; st.fase = "lobby"; st.mazzo = []; st.asta = null; st.esito = null; st.classifica = null; st.scadenza = null; st.giriVuoti = 0;
       st.giocatori = st.giocatori.filter(function (g) { return !g.via; });   // chi non c'è più esce dalla stanza
+      st.giocatori.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });   // (chi tiene la partita è il primo: in saletta ha la corona)
       st.giocatori.forEach(function (g) { g.crediti = FANTA_BUDGET; g.kit = []; g.conta = { P: 0, D: 0, C: 0, A: 0 }; g.stelle = 0; g.asteVinte = 0; });
       bd();
     }
     var cb = {
-      myId: "host", sonoHost: true,
+      myId: IO, sonoHost: true,
       onComincia: comincia, onNuova: nuovaInLobby,
-      onRilancia: function (x) { rilanciaO("host", x); }, onPassa: function (x) { passaO("host", x); },
-      onEsci: function () { stopTo(); TM.smetti(); cb._uscito = true; fermaTutto(); rete.chiudi(); t.esci(); }
+      onRilancia: function (x) { rilanciaO(IO, x); }, onPassa: function (x) { passaO(IO, x); },
+      onEsci: function () { stopTo(); clearTimeout(tAttesi); t.ricorda(null); TM.smetti(); cb._uscito = true; fermaTutto(); rete.chiudi(); t.esci(); }
     };
     function disegna() { if (!st.morto && !cb._uscito) disegnaFantaVM(t, vmFanta(st), cb); }
-    disegna();
+    if (ripresa) riprendi(); else disegna();
   }
 
   function vmFanta(st) {

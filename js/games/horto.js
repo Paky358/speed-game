@@ -527,7 +527,8 @@
     }
     var conto = el("div", { class: "ho-conto", text: "" }); pista.appendChild(conto);
     var gpEl = null;   // Gran Premio: al via la scritta "Corsa 2 di 3" (all'ultima: punti doppi)
-    if (cb.gp) { gpEl = el("div", { class: "ho-gp-via" + (cb.gp.doppi ? " doppi" : ""), text: cb.gp.doppi ? "🔥 Ultima corsa: punti doppi!" : "🏆 Gran Premio · corsa " + cb.gp.corsa + " di " + cb.gp.di }); pista.appendChild(gpEl); }
+    if (cb.rip) { gpEl = el("div", { class: "ho-gp-via", text: "🔁 Si riparte dai cancelletti" }); pista.appendChild(gpEl); }   // (la corsa rifatta dopo la ripresa)
+    else if (cb.gp) { gpEl = el("div", { class: "ho-gp-via" + (cb.gp.doppi ? " doppi" : ""), text: cb.gp.doppi ? "🔥 Ultima corsa: punti doppi!" : "🏆 Gran Premio · corsa " + cb.gp.corsa + " di " + cb.gp.di }); pista.appendChild(gpEl); }
     scena.appendChild(pista);
     // comandi
     var info = el("span", { text: "Pronti…" });
@@ -595,7 +596,7 @@
       if (d) { d.setAttribute("cx", pm[0].toFixed(1)); d.setAttribute("cy", pm[1].toFixed(1)); }
     }
     // suoni: bip del 3-2-1-VIA, campanella agli ultimi 200 m, folla nel finale
-    if (sn.fase === "via" && sn.conto !== ref.ultConto) { ref.ultConto = sn.conto; if (sn.conto > 0) bip(660, 0.18, 0.18); else bip(990, 0.45, 0.22); }
+    if (sn.fase === "via" && sn.conto !== ref.ultConto && sn.conto <= 3) { ref.ultConto = sn.conto; if (sn.conto > 0) bip(660, 0.18, 0.18); else bip(990, 0.45, 0.22); }
     if (corre && !ref.campana && mx >= 0.8) { ref.campana = true; campanaFX(); }
     if (corre && !ref.boato && mx >= 0.86) { ref.boato = true; follaFX(); }
     // posizione e metri che mancano
@@ -610,7 +611,7 @@
     }
     if (sn.fase === "via") {
       stato = "via"; testo = "🚦 Pronti…";
-      if (sn.conto !== ref.contoScritto) { ref.contoScritto = sn.conto; ref.conto.className = "ho-conto" + (sn.conto > 0 ? "" : " via"); ref.conto.textContent = sn.conto > 0 ? String(sn.conto) : "VIA!"; }
+      if (sn.conto !== ref.contoScritto) { ref.contoScritto = sn.conto; ref.conto.className = "ho-conto" + (sn.conto > 0 ? "" : " via"); ref.conto.textContent = sn.conto > 3 ? "" : sn.conto > 0 ? String(sn.conto) : "VIA!"; }
       info = guardo ? "👀 Guardi la corsa: entri alla prossima!" : (ref.cavallo ? "🐴 " + ref.cavallo + " · tocca a ritmo!" : "Tocca a ritmo, non a raffica!");
       if (sn.conto <= 0) ref.cancelli.classList.add("aperti");
     } else if (corre) {
@@ -999,6 +1000,27 @@
     // Gran Premio (regola dell'host): G = punti e corsa a cui siamo; avanti = chi ha toccato «⏩ Avanti» sulla classifica;
     // ffHost = il photo finish dell'host (si ferma se intanto parte la corsa dopo); gpR = la classifica sullo schermo dell'host
     var gpOn = !!imp.gp, G = null, avantiGP = {}, gpScade = 0, ffHost = null, gpR = null, avCorsa = null;
+    // ---- la ripresa (l'host ha ricaricato la pagina o l'app si è chiusa): restano gli iscritti, i loro posti e i punti
+    // del Gran Premio. Una corsa in tempo reale non si riprende a metà: «🔁 Si riparte dai cancelletti» e ricomincia.
+    // Sulla classifica si torna alla classifica (senza dare di nuovo XP né trofei)
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.horto, ricordata = !!RIP;
+    if (RIP) {
+      N = RIP.N || N; diff = RIP.diff || diff; gpOn = !!RIP.gpOn; imp.cavalli = N;
+      posti = RIP.posti || posti; nomiU = RIP.nomiU || nomiU; ominiU = RIP.ominiU || {}; usciti = RIP.usciti || {}; attesa = RIP.attesa || []; visti = RIP.visti || [];
+      G = RIP.G || null; avantiGP = RIP.avantiGP || {};
+      if (RIP.fase === "fine") {
+        ord = RIP.ord; foto = RIP.foto; nomi = RIP.nomi; ids = RIP.ids; cn = RIP.cn; garaId = RIP.garaId; avCorsa = RIP.avCorsa;
+        umaniGara = RIP.umaniGara || 1; msgFine = RIP.msgFine; gpScade = RIP.gpScade ? t.ripresa.ora(RIP.gpScade) : 0;
+      } else if (G) G.corsa--;   // (la corsa a metà si rifà: inizia() la conta di nuovo)
+    }
+    function ricorda() {   // dopo ogni cambiamento che conta (non le posizioni dei cavalli); in saletta niente da riprendere
+      if (!t.ricorda) return;
+      if (fase === "lobby") { if (ricordata) { ricordata = false; t.ricorda(null); } return; }
+      var o = { fase: fase === "fine" ? "fine" : "corsa", N: N, diff: diff, gpOn: gpOn, posti: posti, nomiU: nomiU, ominiU: ominiU, usciti: usciti,
+        attesa: attesa, visti: visti, G: G, avantiGP: avantiGP };
+      if (fase === "fine") Object.assign(o, { ord: ord, foto: foto, nomi: nomi, ids: ids, cn: cn, garaId: garaId, avCorsa: avCorsa, umaniGara: umaniGara, msgFine: msgFine, gpScade: gpScade });
+      ricordata = true; t.ricorda({ horto: JSON.parse(JSON.stringify(o)) });   // (una copia: il core salva un attimo dopo)
+    }
 
     function seatDi(id) { for (var s = 1; s < N; s++) if (posti[s] === id) return s; return -1; }
     function postoLibero() { for (var s = 1; s < N; s++) if (!posti[s]) return s; return 0; }
@@ -1050,41 +1072,49 @@
         usciti[id] = true;   // resta in classifica col suo nome; il suo cavallo lo porta al traguardo un bot
         if (cav && cav[s] && fase !== "fine") { cav[s].umano = false; cav[s].ai = nuovoBot(diff); cav[s].nextClick = 0; }
         if (fase === "fine") contaAvanti();   // (Gran Premio: chi resta può essere già più di metà)
+        ricorda();
       },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") {
-          var s = seatDi(id);
-          if (s >= 0) {   // è già dentro (pagina ricaricata, app riaperta): gli rimando la corsa com'è adesso
-            if (usciti[id]) { delete usciti[id]; if (cav && cav[s] && (fase === "via" || fase === "corsa")) { cav[s].umano = true; cav[s].ai = null; } }
-            if ((fase === "via" || fase === "corsa") && msgVia) rete.inviaVeloce(Object.assign({}, msgVia, { to: id }));
-            else if (fase === "fine" && msgFine) { rete.inviaVeloce(Object.assign({}, msgFine, { to: id })); if (gpScade) rete.inviaVeloce(Object.assign(msgConto(), { to: id })); }
-            else aggiornaLobby();
-            return;
-          }
-          var ia = inAttesa(id);
-          if (ia) { if (ia.fuori && fase === "lobby") aggiornaLobby(); else rete.inviaVeloce({ t: "aspetta", to: id, pieno: fase === "lobby", guardi: !!ia.fuori }); return; }
-          var nomeVero = String(m.nome || "Amico").trim().slice(0, 16) || "Amico";
-          var nome = nomeLibero(nomeVero), om = avatarValido(m.omino);
-          visti.push(nome);   // anche se poi esce, nessun bot prenderà il suo nome (sennò, se rientra, prenderebbe XP non suoi)
-          // nella Sala corre solo chi è stato scelto ("Chi gioca?"): gli altri guardano (anche alle corse dopo)
-          if (t.puoSedersi && !t.puoSedersi(id, nomeVero)) {
-            attesa.push({ id: id, nome: nome, om: om, fuori: true });
-            if (fase === "lobby") aggiornaLobby(); else rete.inviaVeloce({ t: "aspetta", to: id, guardi: true });
-            return;
-          }
-          if (fase === "lobby" && siediti(id, nome, om)) { aggiornaLobby(); return; }
-          attesa.push({ id: id, nome: nome, om: om });   // corsa già partita (o 8 cavalli già pieni): entra alla prossima
-          rete.inviaVeloce({ t: "aspetta", to: id, pieno: fase === "lobby" });
-        } else if (m.t === "frusta" && fase === "corsa") {
+        if (m.t === "join") { arrivo(id, m); if (fase !== "lobby") ricorda(); }   // (in saletta lo fa aggiornaLobby)
+        else if (m.t === "frusta" && fase === "corsa") {
           var sm = seatDi(id); if (sm > 0 && cav[sm] && cav[sm].umano) frusta(cav[sm], performance.now());
-        } else if (m.t === "avanti" && fase === "fine" && m.garaId === garaId) votoAvanti(id);   // Gran Premio: «⏩ Avanti» sulla classifica
+        } else if (m.t === "avanti" && fase === "fine" && m.garaId === garaId) { votoAvanti(id); ricorda(); }   // Gran Premio: «⏩ Avanti» sulla classifica
       },
       onErrore: function () { chiudi(); errore(t, "Problema di collegamento: la stanza non si apre. Riprova."); }   // (solo se il primo collegamento non riesce)
-    });
+    }, { ripresa: !!RIP });   // (ripresa: gli amici restano alla corsa, non tornano in saletta)
 
-    function inizia() {
+    // chi entra (o rientra: pagina ricaricata, app riaperta)
+    function arrivo(id, m) {
+      var s = seatDi(id);
+      if (s >= 0) {   // è già dentro (pagina ricaricata, app riaperta): gli rimando la corsa com'è adesso
+        if (usciti[id] || attesiRip[id]) { delete usciti[id]; delete attesiRip[id]; if (cav && cav[s] && (fase === "via" || fase === "corsa")) { cav[s].umano = true; cav[s].ai = null; } }
+        if ((fase === "via" || fase === "corsa") && msgVia) rete.inviaVeloce(Object.assign({}, msgVia, { to: id, conto: fase === "via" ? Math.max(0, conto) : 0 }));   // (il 3-2-1 da dove è arrivato)
+        else if (fase === "fine" && msgFine) { rete.inviaVeloce(Object.assign({}, msgFine, { to: id })); if (gpScade) rete.inviaVeloce(Object.assign(msgConto(), { to: id })); }
+        else aggiornaLobby();
+        return;
+      }
+      var ia = inAttesa(id);
+      if (ia) { if (ia.fuori && fase === "lobby") aggiornaLobby(); else rete.inviaVeloce({ t: "aspetta", to: id, pieno: fase === "lobby", guardi: !!ia.fuori }); return; }
+      var nomeVero = String(m.nome || "Amico").trim().slice(0, 16) || "Amico";
+      var nome = nomeLibero(nomeVero), om = avatarValido(m.omino);
+      visti.push(nome);   // anche se poi esce, nessun bot prenderà il suo nome (sennò, se rientra, prenderebbe XP non suoi)
+      // nella Sala corre solo chi è stato scelto ("Chi gioca?"): gli altri guardano (anche alle corse dopo)
+      if (t.puoSedersi && !t.puoSedersi(id, nomeVero)) {
+        attesa.push({ id: id, nome: nome, om: om, fuori: true });
+        if (fase === "lobby") aggiornaLobby(); else rete.inviaVeloce({ t: "aspetta", to: id, guardi: true });
+        return;
+      }
+      if (fase === "lobby" && siediti(id, nome, om)) { aggiornaLobby(); return; }
+      attesa.push({ id: id, nome: nome, om: om });   // corsa già partita (o 8 cavalli già pieni): entra alla prossima
+      rete.inviaVeloce({ t: "aspetta", to: id, pieno: fase === "lobby" });
+    }
+
+    // rip = true: la corsa rifatta dopo la ripresa (5 secondi di respiro: «🔁 Si riparte dai cancelletti» e poi 3-2-1).
+    // (dai tasti arriva l'evento del tocco: conta solo true)
+    function inizia(rip) {
       if (fase === "via" || fase === "corsa") return;
+      var ripCorsa = rip === true;
       // Gran Premio: dalla saletta (o finito quello di prima) se ne comincia uno nuovo; se no è la corsa dopo
       if (!gpOn) G = null;
       else if (fase === "lobby" || !G || G.finito) G = gpNuovo();
@@ -1092,7 +1122,7 @@
       if (ffHost && ffHost.annulla) ffHost.annulla();   // (il mio photo finish, se intanto si parte)
       ffHost = null; gpR = null; avantiGP = {}; gpScade = 0;
       sistemaPosti();
-      fase = "via"; conto = 3; arrivi = []; primoArr = 0; ord = null; foto = null; msgFine = null; garaId = idGara();
+      fase = "via"; conto = ripCorsa ? 6 : 3; arrivi = []; primoArr = 0; ord = null; foto = null; msgFine = null; garaId = idGara();
       nomi = [nomeHost]; ids = ["host"]; cav = [nuovoCav(true, "host")];
       var cfgs = [mioAvatar(t, nomeHost)], liberi = [];
       for (var s = 1; s < N; s++) {
@@ -1110,11 +1140,11 @@
       if (G) G.cn = cn;
       var av = avCorsa = avatariPer(nomi, cfgs);
       // ogni telefono costruisce la corsa e fa il suo 3-2-1. Resta in stanza: chi rientra ritrova il suo posto (ids)
-      msgVia = { t: "via", nomi: nomi, n: N, av: av, ids: ids, cn: cn, garaId: garaId, diff: diff, umani: umaniGara, gp: gpVia(G) };
+      msgVia = { t: "via", nomi: nomi, n: N, av: av, ids: ids, cn: cn, garaId: garaId, diff: diff, umani: umaniGara, gp: gpVia(G), fase: "via", conto: conto, rip: ripCorsa ? 1 : 0 };
       rete.invia(msgVia);
       if (ref) ref.rimuovi();
       ref = costruisci(t, N, nomi, 0, {
-        cavallo: cn[0], conferma: "Chiudere la corsa per tutti?", gp: gpVia(G),
+        cavallo: cn[0], conferma: "Chiudere la corsa per tutti?", gp: gpVia(G), rip: ripCorsa,
         onFrusta: function () {
           if (fase !== "corsa") return;
           var now = performance.now(); if (cav[0].boostU > now && !cav[0].sfin && !cav[0].arr) segnalaPresto(ref);
@@ -1122,7 +1152,9 @@
         },
         onEsci: function () { chiudi(); t.esci(); }
       }, av);
-      disegna(ref, snap(cav, "via", 3, nomi));
+      disegna(ref, snap(cav, "via", conto, nomi));
+      if (ripCorsa) aspettaRitorno();
+      ricorda();
       toC = setInterval(function () {
         conto--; if (ref) disegna(ref, snap(cav, "via", Math.max(0, conto), nomi));
         if (conto < 0) { clearInterval(toC); toC = null; fase = "corsa"; ultimo = performance.now(); nTick = 0; loop = setInterval(tick, 16); }
@@ -1142,7 +1174,7 @@
       fase = "fine"; ord = classificaDa(cav, arrivi);
       if (!foto) foto = cav.map(function (h) { return Math.min(1, h.pos); });
       salvaTrofeiHorto(t, { id: garaId, n: N, diff: diff, online: true, umani: umaniGara }, ord, 0);
-      msgFine = { t: "fine", ord: ord, nomi: nomi, ids: ids, cn: cn, foto: foto, garaId: garaId, diff: diff, n: N, umani: umaniGara };
+      msgFine = { t: "fine", fase: "fine", ord: ord, nomi: nomi, ids: ids, cn: cn, foto: foto, garaId: garaId, diff: diff, n: N, umani: umaniGara };
       var gp = null;
       if (G) {   // Gran Premio: i punti di questa corsa (chi gioca col suo id, i Bot col nome)
         var chiavi = ids.map(function (id, s) { return id || "bot:" + nomi[s]; });
@@ -1163,15 +1195,42 @@
       // FOTO_MS, più i secondi della classifica): così anche un telefono lento ha i suoi 12 secondi per guardarla
       if (gp && !gp.finito) { gpScade = Date.now() + FOTO_MS + GP_ATTESA * 1000; mandaConto(); }
       ffHost = finale(t, ord, nomi, 0, foto, cn, { sonoHost: true, onRigioca: inizia, onSaletta: tornaInSaletta, onEsci: esci,
-        dopoFoto: gp ? function () {
-          ffHost = null;
-          var g0 = garaId;
-          gpR = renderGP(t, gp, { mia: "host", mioId: "host", av: avCorsa, sonoHost: true, chiaveConto: "ho-gp|" + garaId,
-            secondi: gp.finito ? 0 : Math.max(3, Math.round((gpScade - Date.now()) / 1000)), onConto: function () { if (fase === "fine" && garaId === g0) inizia(); },
-            onAvanti: gp.finito ? null : function () { votoAvanti("host"); },
-            onRigioca: inizia, onSaletta: tornaInSaletta, onEsci: esci });
-          if (!gp.finito) mandaConto();   // (anche sul mio schermo: chi ha già toccato «⏩ Avanti»)
-        } : null });
+        dopoFoto: gp ? function () { ffHost = null; mostraGP(gp); } : null });
+      ricorda();
+    }
+    // Gran Premio: la classifica a punti sullo schermo dell'host (tra le corse col conto alla rovescia e «⏩ Avanti»)
+    function mostraGP(gp) {
+      var g0 = garaId, esci = function () { chiudi(); t.esci(); };
+      gpR = renderGP(t, gp, { mia: "host", mioId: "host", av: avCorsa, sonoHost: true, chiaveConto: "ho-gp|" + garaId,
+        secondi: gp.finito ? 0 : Math.max(3, Math.round((gpScade - Date.now()) / 1000)), onConto: function () { if (fase === "fine" && garaId === g0) inizia(); },
+        onAvanti: gp.finito ? null : function () { votoAvanti("host"); },
+        onRigioca: inizia, onSaletta: tornaInSaletta, onEsci: esci });
+      if (!gp.finito) mandaConto();   // (anche sul mio schermo: chi ha già toccato «⏩ Avanti»)
+    }
+    // la ripresa sulla classifica: si torna lì (niente photo finish, XP e trofei già dati); chi rientra la ritrova (arrivo)
+    function riprendiFine() {
+      fase = "fine"; ultimiAv = avCorsa || ultimiAv;
+      if (msgFine) rete.invia(msgFine);   // (la foto trattenuta della stanza: la classifica)
+      var gp = msgFine && msgFine.gp;
+      if (gp) { if (!gp.finito) gpScade = Math.max(gpScade || 0, Date.now() + 5000); mostraGP(gp); }   // (5 s di respiro prima della corsa dopo)
+      else renderFine(t, ord, nomi, 0, cn, { sonoHost: true, onRigioca: inizia, onSaletta: tornaInSaletta, onEsci: function () { chiudi(); t.esci(); } });
+      aspettaRitorno();
+      ricorda();
+    }
+    // dopo la ripresa gli amici rientrano da soli (stesso id): finché non tornano il loro cavallo lo porta un bot;
+    // chi non torna entro 20 secondi è come se fosse uscito
+    var attesiRip = {};
+    function aspettaRitorno() {
+      for (var s = 1; s < N; s++) if (posti[s] && !usciti[posti[s]]) {
+        attesiRip[posti[s]] = 1;
+        if (cav && cav[s] && (fase === "via" || fase === "corsa")) { cav[s].umano = false; cav[s].ai = nuovoBot(diff); cav[s].nextClick = 0; }
+      }
+      setTimeout(function () {
+        var via = Object.keys(attesiRip); if (!via.length) return;
+        via.forEach(function (id) { delete attesiRip[id]; if (seatDi(id) >= 0) usciti[id] = true; });
+        if (fase === "fine") contaAvanti();
+        ricorda();
+      }, 20000);
     }
     // Gran Premio, sulla classifica tra le corse: chi corre e ha toccato «⏩ Avanti» (più di metà: si parte subito)
     function presentiGP() { return (ids || []).filter(function (id) { return id && !usciti[id]; }); }
@@ -1207,7 +1266,8 @@
     }
     function aggiornaLobby() {
       if (fase !== "lobby") return;
-      rete.invia({ t: "lobby", codice: codice, pronta: pronta, seggi: seggi(), fuori: fuori() }); // a tutti gli ospiti
+      ricorda();
+      rete.invia({ t: "lobby", fase: "lobby", codice: codice, pronta: pronta, seggi: seggi(), fuori: fuori() }); // a tutti gli ospiti
       disegnaLobby();
     }
     function disegnaLobby() {
@@ -1215,7 +1275,9 @@
       renderLobby(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggi(), fuori: fuori() },
         { onComincia: inizia, onEsci: function () { chiudi(); t.esci(); } });
     }
-    disegnaLobby();
+    if (RIP && RIP.fase === "fine" && ord && msgFine) riprendiFine();   // la ripresa: di nuovo la classifica
+    else if (RIP) { fase = "rip"; inizia(true); }   // la ripresa a metà corsa: si riparte dai cancelletti
+    else disegnaLobby();
   }
 
   function ospiteHorto(t, codice) {
@@ -1289,8 +1351,8 @@
             if (m.garaId && m.garaId === S.garaId && (S.fase === "fine" || (S.ref && S.ref.io === seat))) return;   // la stessa corsa, rimandata a chi rientra
             chiudiCorsa();
             S.mySeat = seat; S.nomi = m.nomi; S.N = m.n || (m.nomi ? m.nomi.length : 4); S.av = m.av || null; S.cn = m.cn || null;
-            S.garaId = m.garaId; S.diff = m.diff || "medio"; S.umani = m.umani || 1; S.gp = m.gp || null; S.gpR = null;
-            build({ nomi: S.nomi, N: S.N }); S.fase = "via"; contoOspite();
+            S.garaId = m.garaId; S.diff = m.diff || "medio"; S.umani = m.umani || 1; S.gp = m.gp || null; S.gpR = null; S.rip = !!m.rip;
+            build({ nomi: S.nomi, N: S.N }); S.fase = "via"; contoOspite(m.conto);
           } else if (m.t === "snap") {
             if (S.fase === "fine" || S.fase === "lobby") return;   // pacchetti in ritardo di una corsa già finita
             if (S.contoTimer) { clearInterval(S.contoTimer); S.contoTimer = null; }
@@ -1342,7 +1404,7 @@
       annullaFine();
       S.nomi = sn.nomi; S.N = sn.N;
       S.ref = costruisci(t, sn.N, sn.nomi, S.mySeat, {
-        cavallo: S.cn && S.mySeat >= 0 ? S.cn[S.mySeat] : "", gp: S.gp,
+        cavallo: S.cn && S.mySeat >= 0 ? S.cn[S.mySeat] : "", gp: S.gp, rip: S.rip,
         onFrusta: function () {
           if (S.fase !== "corsa" || !S.rete || S.mySeat < 0) return;
           var io = mioCav(); if (io && (io.f || io.a)) return;
@@ -1354,9 +1416,9 @@
       // l'ospite guida il movimento a 60fps con l'interpolazione: niente transizione CSS
       S.ref.cavEl.forEach(function (c) { c.style.transition = "none"; });
     }
-    function contoOspite() {   // 3-2-1-VIA dell'ospite, poi arrivano le posizioni
+    function contoOspite(c0) {   // 3-2-1-VIA dell'ospite, poi arrivano le posizioni (c0: da dove parte, se l'host lo dice)
       if (S.contoTimer) clearInterval(S.contoTimer);
-      var c = 3; disegna(S.ref, snapFermo(S.nomi, S.N, 3, "via"));
+      var c = c0 != null && isFinite(+c0) ? Math.max(0, Math.min(9, +c0)) : 3; disegna(S.ref, snapFermo(S.nomi, S.N, c, "via"));
       S.contoTimer = setInterval(function () {
         if (!S.ref || S.fase !== "via") { clearInterval(S.contoTimer); S.contoTimer = null; return; }
         c--; disegna(S.ref, snapFermo(S.nomi, S.N, Math.max(0, c), "via"));
@@ -1416,6 +1478,7 @@
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
     etichettaGiocatori: "👥 1–8 giocatori",   // 1 da solo contro i bot, fino a 8 online (i cavalli in gara)
     postiOnline: 8,   // 8 cavalli al massimo: nella Sala, se siete di più, corre chi sceglie l'host e gli altri guardano
+    riprende: true,   // se l'host ricarica la pagina restano iscritti e punti: la corsa a metà riparte dai cancelletti (t.ripresa)
     // le regole in una riga, per la saletta ("📜 Si gioca così")
     riassunto: function (imp) {
       imp = imp || {};

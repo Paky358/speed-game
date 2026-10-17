@@ -4,6 +4,9 @@
 //   await COPIONE.carica("passo3/comune.js"); await COPIONE.carica("passo3/giochi-d.js"); await COPIONE.prova(401)
 //   (tutte in fila: await COPIONE.gruppoD3())
 //
+// DAL PASSO 5 (p5-z): tutti e sei i giochi hanno l'host di riserva del core (riprende + riserva), quindi 401-404 e 406
+// fanno come la 405 (giocoResta: il gioco NON si perde quando la Sala passa). La vecchia cambioHost (qui sotto, punti 1-4:
+// il gioco si perde e Giulia lo rilancia) resta per i giochi senza riserva; i passi 2-3 valgono ancora per loro.
 // 401-404 e 406, uno per gioco (401 Linea del tempo, 402 Nomi Cose e Città, 403 Balla, 404 Taboo, 406 Patata):
 //   1. Compagnia (3 telefoni; Balla 4, Taboo 5: il gioco ne vuole 3 o 4 anche dopo): Paky la apre, gli amici entrano dal
 //      link fisso. Paky lancia il gioco dalla Sala, gli amici arrivano nella saletta, si comincia e si gioca un pezzo.
@@ -21,7 +24,7 @@
 //   alla fine. A fine partita «🏠 Torna in Sala» porta tutti nella Sala di Giulia; lei rilancia e si arriva alla Rivincita.
 //   405  il vice del gioco è Giulia (lo stesso telefono del vice della Sala)
 //   405b il vice del gioco è Luca (Giulia entra nella partita per ultima): host della Sala e host del gioco su due telefoni
-//   405c come 405b, ma Paky era uscito un attimo dall'app (pausa): la Sala passa dopo 90 s, il gioco dopo 6 s
+//   405c come 405b, ma Paky era uscito un attimo dall'app (pausa): la Sala passa dopo 90 s, il gioco dopo 60 s (Passo 5: la riserva del core aspetta 60 s con la pausa)
 // Le mosse: quelle degli amici partono dai loro telefoni (reteDi(nome).invia), quelle di chi tiene la stanza entrano nella
 // sua stanza col suo id (come i suoi tocchi). Taboo: l'orologio di taboo.js di chi tiene la stanza va avanti di un turno.
 // Profili finti, mai account veri.
@@ -147,10 +150,10 @@
     umani.forEach(function (n) { var i = n === apre ? "host" : A.mioId(n); X.id[n] = i; if (i) X.nomeDi[i] = n; });
     return X;
   }
-  // chi tiene la stanza adesso (Parola d'ordine: dopo il subentro è il vice)
+  // chi tiene la stanza adesso (Passo 5, giochi con la riserva: dopo il subentro è il vice, _h nella foto)
   function chiTiene(X) {
-    var v = vm(X.C);
-    if (X.gid === "ordine" && v.hostId && v.hostId !== "host") return X.nomeDi[v.hostId] || X.apre;
+    var h = (W.statoStanza(X.C) || {})._h;
+    if (h && h !== "host") return X.nomeDi[h] || X.apre;
     return X.apre;
   }
   // una mossa di id: di chi tiene la stanza (entra nella sua stanza col suo id) o di un amico (dal suo telefono)
@@ -186,6 +189,8 @@
     balla: function (X, v, F) {
       F.prova = F.prova || {};
       (v.players || []).forEach(function (p) {
+        // (p5-z) la classifica del round: tutti «Avanti», se no ogni round aspetta il tempo intero e la partita non sta nei 120 s
+        if (v.fase === "punti" && !p.via && (v.avanti || []).indexOf(p.id) < 0) { var ka = "a|" + v.giro + "|" + p.id; if (!F[ka]) { F[ka] = 1; manda(X, p.id, { t: "avanti" }); } return; }
         if (p.via || (v.fatti || []).indexOf(p.id) >= 0) return;
         if (v.fase === "scrittura") { var k = "s|" + v.giro + "|" + p.id; if (!F[k]) { F[k] = 1; manda(X, p.id, { t: "balla", testo: "una balla inventata da " + p.nome }); } }
         if (v.fase === "voto" && v.scelte && v.scelte.length) { F.prova[p.id] = (F.prova[p.id] || 0) + 1; manda(X, p.id, { t: "voto", k: F.prova[p.id] % v.scelte.length }); }
@@ -380,8 +385,9 @@
     return "Paky torna da amico" + (salvata ? " (aveva la partita salvata)" : "") + (sue.length ? "" : ", la partita vecchia non riparte nemmeno ricaricando") + " («" + T(P).slice(0, 40) + "»)";
   }
 
-  // ---- 405: Parola d'ordine, la partita resta (host di riserva) ----
-  async function ordineResta(CMP, o) {
+  // ---- 405 (e dal Passo 5 anche 401-404, 406): la partita resta (host di riserva del core: riprende + riserva) ----
+  function ordineResta(CMP, o) { return giocoResta("ordine", CMP, o); }
+  async function giocoResta(gid, CMP, o) {
     o = o || {};
     var lenta = null;
     // (405b, c) il telefono di Giulia entra nella partita per ultimo: il suo "join" parte 3 secondi dopo
@@ -393,32 +399,36 @@
         return ent.apply(this, arguments);
       };
     } : null;
-    var I = await inizio("ordine", CMP, { lenta: lentaFn }), dopo = I.dopo, Gw = I.Gw, C = I.C1, X = I.X, note = [];
+    var I = await inizio(gid, CMP, { lenta: lentaFn }), g = I.g, dopo = I.dopo, Gw = I.Gw, C = I.C1, X = I.X, note = [];
     if (lenta) Gw.SGNet.entra = lenta.prima;
-    var v0 = vm(C), vici = (v0.vici || []).map(function (id) { return X.nomeDi[id]; });
-    var atteso = o.viceLuca ? "Luca" : "Giulia";
-    if (vici[0] !== atteso) no("il primo vice del gioco è " + vici[0] + " invece di " + atteso + " (vici " + vici.join(", ") + ")");
-    var VG = vici[0], idVG = X.id[VG];
-    note.push("Parola d'ordine di Paky (" + I.meta + ", passo " + v0.passo + "), vice del gioco " + vici.join(" e ") + ", vice della Sala Giulia");
+    var s0 = W.statoStanza(C) || {}, v0 = vm(C), nGen = +s0._g || 1;
+    if (s0._h == null) no("nella foto del gioco non c'è chi la tiene (_h): il gioco non ha la riserva? (");
+    if (s0._h !== "host") no("prima del subentro la partita non la tiene Paky (_h " + s0._h + ", _g " + s0._g + ")");
+    note.push(g.nome + " di Paky (" + I.meta + (v0.passo ? ", passo " + v0.passo : "") + "), vice della Sala Giulia");
     if (o.pausa) {
       nascondi(I.P, true);
       if (!await W.aspetta(function () { return vm(CMP).pausa; }, 3000)) no("nella foto della Sala non c'è la pausa");
     }
-    var nGen = v0.gen;
     var passa = sentinella(dopo, ERRORI), t0 = Date.now();
     spentoDavvero("Paky");
-    // il vice del gioco porta avanti la partita dopo 6 s; nessuno esce dal gioco
-    if (!await W.aspetta(function () { var v = vm(C); return v.hostId === idVG && v.gen > nGen; }, 15000, 200)) no("il vice del gioco (" + VG + ") non prende la partita (hostId " + vm(C).hostId + ", gen " + vm(C).gen + ")");
+    // il vice del gioco (i vici li sceglie il core: i primi arrivati) porta avanti la partita dopo 6 s (60 s con la pausa:
+    // l'host era appena uscito dall'app, come per la Sala che aspetta 90 s); nessuno esce dal gioco
+    var sG = await W.aspetta(function () { var s = W.statoStanza(C) || {}; return s._h && s._h !== "host" && (+s._g || 1) > nGen && X.nomeDi[s._h] ? s : null; }, o.pausa ? 75000 : 15000, 200);
+    if (!sG) no("nessun amico prende la partita (_h " + (W.statoStanza(C) || {})._h + ", _g " + (W.statoStanza(C) || {})._g + ")");
+    var VG = X.nomeDi[sG._h], idVG = sG._h;
+    var atteso = o.viceLuca ? "Luca" : null;
+    if (atteso && VG !== atteso) no("il vice del gioco è " + VG + " invece di " + atteso);
     var dtG = ((Date.now() - t0) / 1000).toFixed(1);
-    if (vm(C).fase !== "gioco") no("dopo il subentro del gioco la partita non è in corso (fase " + vm(C).fase + ")");
-    // (chi NON è nella partita: ha davanti la Sala o una saletta, o non ha più i pezzi di Parola d'ordine)
-    var nelGioco = function () { return dopo.filter(function (x) { var w = W.finestra(x); return !!w.document.querySelector(".saletta-schermo") || !w.document.querySelector("[class^='or-'], [class*=' or-']"); }); };
+    if (o.pausa && +dtG < 45) no("con la pausa il gioco è passato a " + VG + " già dopo " + dtG + " s (doveva aspettare 60 s)");
+    if (!inGioco(vm(C))) no("dopo il subentro del gioco la partita non è in corso (fase " + vm(C).fase + ")");
+    // (chi NON è nella partita: ha davanti la Sala o una saletta)
+    var nelGioco = function () { return dopo.filter(function (x) { var w = W.finestra(x); return !!w.document.querySelector(".saletta-schermo"); }); };
     var fuori = nelGioco(); if (fuori.length) no("dopo il subentro del gioco non sono nella partita: " + fuori.map(function (x) { return x + " «" + T(W.finestra(x)).slice(0, 40) + "»"; }).join(" · "));
     note.push("il gioco passa a " + VG + " dopo " + dtG + " s");
     // la Sala passa a Giulia (20 s, 90 s con la pausa) e il gioco resta
     var attesaSala = o.pausa ? 110000 : 32000;
     if (o.pausa) {
-      await W.dorme(60000);
+      await W.dorme(Math.max(0, 60000 - (Date.now() - t0)));   // (il gioco è già passato dopo ~60 s: la Sala no, aspetta 90 s)
       // (la foto trattenuta adesso è il testamento di Paky: la Sala è passata solo se c'è una foto della Sala di gen 2)
       if (vm(CMP).t === "sala" && (+vm(CMP).gen || 1) >= 2) no("con la pausa la Sala è passata prima di 60 s (a " + hostDi(CMP) + ")");
       if (eHost(Gw) || eHost(W.finestra("Luca"))) no("con la pausa un vice ha preso la Sala prima di 60 s");
@@ -429,20 +439,20 @@
     var dtS = ((Date.now() - t0) / 1000).toFixed(1);
     await W.dorme(1500);
     var vs = vm(CMP);
-    if (vs.gioco !== "ordine" || vs.stanza !== C) no("la Sala di Giulia ha chiuso il gioco (gioco " + vs.gioco + ", stanza " + vs.stanza + ")");
-    if (vm(C).fase !== "gioco" || vm(C).hostId !== idVG) no("con la Sala nuova la partita non va più avanti (fase " + vm(C).fase + ", hostId " + vm(C).hostId + ")");
+    if (vs.gioco !== gid || vs.stanza !== C) no("la Sala di Giulia ha chiuso il gioco (gioco " + vs.gioco + ", stanza " + vs.stanza + ")");
+    if (!inGioco(vm(C)) || (W.statoStanza(C) || {})._h !== idVG) no("con la Sala nuova la partita non va più avanti (fase " + vm(C).fase + ", _h " + (W.statoStanza(C) || {})._h + ")");
     fuori = nelGioco(); if (fuori.length) no("con la Sala nuova non sono più nella partita: " + fuori.map(function (x) { return x + " «" + T(W.finestra(x)).slice(0, 40) + "»"; }).join(" · "));
     if (inSalaHost(Gw)) no("Giulia è nella Sala invece che nella partita");
     var visti = passa.stop(); if (visti.length) no("durante i passaggi: " + visti.join("; "));
     note.push("Sala a Giulia dopo " + dtS + " s" + (o.pausa ? " (pausa)" : "") + " col gioco ancora aperto (" + vs.stanza + ", fase " + vs.fase + "), tutti ancora nella partita");
     // si gioca fino alla fine con l'host nuovo del gioco
     var punti0 = JSON.stringify(((vs.torneo || {}).punti) || {});
-    await finoAllaFine(X, 120000);
+    await finoAllaFine(X, 200000);   // (p5-z: la partita intera col vice, es. Balla in 3 round)
     await W.dorme(2500);
     var tasti = {};
     for (var i = 0; i < dopo.length; i++) {
       var w = W.finestra(dopo[i]);
-      var t = await W.aspetta(function () { return A.tastiFineDi(w); }, 15000);
+      var t = await W.aspetta(function () { return A.tastiFineDi(w); }, 40000);   // (la fine col podio dello studio dura anche 30 s: come in rilancia)
       if (!t) no("alla fine " + dopo[i] + " non ha i tasti di fine («" + T(w).slice(-80) + "»)");
       tasti[dopo[i]] = t.join(" | ");
     }
@@ -472,7 +482,7 @@
     era(dopo, "dopo");
     await W.dorme(2000);
     var resti = ancoraInStanza(C, ["Paky"]); if (resti.length) no("restano collegati alla stanza del gioco " + C + ": " + resti.join(", "));
-    note.push(await rilancia("ordine", CMP, I, "Giulia", dopo));
+    note.push(await rilancia(gid, CMP, I, "Giulia", dopo));
     await P3.unSoloHost(CMP, 1500);
     erroriVuoti();
     return note.join(" · ");
@@ -483,14 +493,14 @@
     w.document.dispatchEvent(new w.Event("visibilitychange"));
   }
 
-  aggiungi(401, { nome: "Linea del tempo nella Compagnia: Paky sparisce a metà, la Sala a Giulia, lei la rifà fino alla Rivincita; Paky torna e ricarica: niente ripresa della partita vecchia", fai: function () { return cambioHost("timeline", "GDTLNQ"); } });
-  aggiungi(402, { nome: "Nomi, Cose e Città nella Compagnia: Paky sparisce mentre si scrive, la Sala a Giulia, si rifà fino alla Rivincita col 3-2-1", fai: function () { return cambioHost("nomicose", "GDNCCQ"); } });
-  aggiungi(403, { nome: "La Balla Colossale nella Compagnia (in 4): Paky sparisce durante il voto, la Sala a Giulia, si rifà in 3 fino alla Rivincita col 3-2-1", fai: function () { return cambioHost("balla", "GDBLLQ"); } });
-  aggiungi(404, { nome: "Taboo nella Compagnia (in 5): Paky sparisce a turno in corso, la Sala a Giulia, si rifà in 4 fino alla Rivincita col 3-2-1", fai: function () { return cambioHost("taboo", "GDTBBQ"); } });
+  aggiungi(401, { nome: "Linea del tempo nella Compagnia: Paky sparisce a metà, un amico porta avanti il gioco e Giulia prende la Sala senza chiuderlo; a fine partita tutti nella Sala, Rivincita", fai: function () { return giocoResta("timeline", "GDTLNQ"); } });
+  aggiungi(402, { nome: "Nomi, Cose e Città nella Compagnia: Paky sparisce mentre si scrive, il gioco continua con un amico, la Sala a Giulia; fine, tutti nella Sala, Rivincita", fai: function () { return giocoResta("nomicose", "GDNCCQ"); } });
+  aggiungi(403, { nome: "La Balla Colossale nella Compagnia (in 4): Paky sparisce durante il voto, il gioco continua con un amico, la Sala a Giulia; fine, Sala, Rivincita in 3", fai: function () { return giocoResta("balla", "GDBLLQ"); } });
+  aggiungi(404, { nome: "Taboo nella Compagnia (in 5): Paky sparisce a turno in corso, il gioco continua con un amico, la Sala a Giulia; fine, Sala, Rivincita in 4", fai: function () { return giocoResta("taboo", "GDTBBQ"); } });
   aggiungi(405, { nome: "Parola d'ordine nella Compagnia (in 5): Paky sparisce, Giulia porta avanti il gioco e tiene la Sala senza chiuderlo; a fine partita tutti nella sua Sala, Rivincita", fai: function () { return ordineResta("GDRDNQ"); } });
   aggiungi("405b", { nome: "Parola d'ordine: il gioco lo porta avanti Luca, la Sala la prende Giulia (due telefoni diversi); a fine partita tutti nella Sala di Giulia, Rivincita", fai: function () { return ordineResta("GDRDBQ", { viceLuca: true }); } });
-  aggiungi("405c", { nome: "Parola d'ordine con la pausa: Paky era uscito un attimo dall'app e poi sparisce: il gioco passa a Luca dopo 6 s, la Sala a Giulia dopo 90 s senza chiuderlo", fai: function () { return ordineResta("GDRDCQ", { viceLuca: true, pausa: true }); } });
-  aggiungi(406, { nome: "La Patata Bollente nella Compagnia: Paky sparisce a bomba accesa, la Sala a Giulia, si rifà fino alla Rivincita col 3-2-1", fai: function () { return cambioHost("patata", "GDPTTQ"); } });
+  aggiungi("405c", { nome: "Parola d'ordine con la pausa: Paky era uscito un attimo dall'app e poi sparisce: il gioco passa a Luca dopo 60 s, la Sala a Giulia dopo 90 s senza chiuderlo", fai: function () { return ordineResta("GDRDCQ", { viceLuca: true, pausa: true }); } });
+  aggiungi(406, { nome: "La Patata Bollente nella Compagnia: Paky sparisce a bomba accesa, il gioco continua con un amico, la Sala a Giulia; fine, Sala, Rivincita", fai: function () { return giocoResta("patata", "GDPTTQ"); } });
 
   // tutte in fila: await COPIONE.gruppoD3()
   COPIONE.gruppoD3 = async function () {

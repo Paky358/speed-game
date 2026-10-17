@@ -788,6 +788,10 @@
         restoPartita: P.fase === "gioco" && P.vince === "tempo" ? Math.max(0, Math.round((P.fineTempo - Date.now()) / 1000)) : null,
         st: { x: P.s.x.map(r4), y: P.s.y.map(r4) }, stat: P.fase === "fine" ? P.stat : null };
     };
+    // la ripresa (l'host ha ricaricato la pagina): la partita com'è (un oggetto semplice, fineTempo è un'ora assoluta) e
+    // di nuovo dentro il motore
+    M.esporta = function () { return JSON.parse(JSON.stringify(P)); };
+    M.importa = function (x) { if (x && typeof x === "object") Object.keys(x).forEach(function (k) { P[k] = x[k]; }); };
     return M;
   }
   // il messaggio nella targhetta della squadra q (chi = { mie: squadre di questo telefono, bot: squadra del Bot o -1, botNome: il suo nome })
@@ -954,6 +958,16 @@
       players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost) }], spett: [] };
     var ch = CH(), filtra = ch ? ch.filtro() : null;   // 💬 le faccine e le frasi (accese o spente dall'host nel ⚙️)
     H.ch = !!ch && ch.attive(imp);
+    // ---- la ripresa: se l'host ricarica la pagina (o l'app si chiude) la partita riprende: stessi gol, stesse pedine,
+    // stesso turno. Un tiro che era a metà si annulla e chi tirava rifà la mira. Si ricorda a ogni foto (bd)
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.calcio, ricordata = !!RIP;
+    function ricorda() {
+      if (!t.ricorda) return;
+      if (H.fase === "lobby" || !H.M) { if (ricordata) { ricordata = false; t.ricorda(null); } return; }
+      ricordata = true;
+      t.ricorda({ calcio: { H: { fase: H.fase, primo: H.primo, ritiro: H.ritiro, partita: H.partita, opz: H.opz, form: H.form, formImp: H.formImp, formDi: H.formDi, fischio: !!H.fischio,
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null }; }) }, P: H.M.esporta() } });
+    }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function guarda(id) { return H.spett.some(function (x) { return x.id === id; }); }
     function fermaTimer() { if (H.to) { clearTimeout(H.to); H.to = null; } }
@@ -1028,7 +1042,7 @@
         if (H.fase !== "gioco" || !avv || avv.id !== id) return;
         if (m.t === "tiro") tira(1, m.i | 0, +m.vx || 0, +m.vy || 0);
       }
-    });
+    }, { ripresa: !!(RIP && RIP.H && RIP.P) });   // (ripresa: chi gioca resta sul campo, non torna in saletta)
     function vm() {
       var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, opz: H.opz, form: H.form.slice(), ritiro: H.ritiro, partita: H.partita, ch: H.ch ? 1 : 0,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, via: !!p.via, omino: p.omino || null }; }),
@@ -1046,6 +1060,7 @@
       var blu = H.players[1] ? H.players[1].id : null;
       ricordaAvv(ID, H.codice, blu || (H.riserva && Date.now() < H.riserva.fino ? H.riserva.id : null));
       if (blu !== H.formDi) { H.formDi = blu; H.form[1] = "classica"; }
+      ricorda();
       var v = vm(); rete.invia({ t: "vm", vm: v }); disegnaOnline(t, v, cbHost); }
 
     function comincia() {
@@ -1111,8 +1126,35 @@
       ogniSecondo: function () { if (H.fase !== "gioco" || !H.M || H.to && H.M.P.stato !== "mira") return; var r = H.M.controllaTempo(); if (r) avanti(r > 0 ? r : 0); },
       onEsci: function () {
         if (H.fase === "gioco" && !H._siChiude) return chiedi(t, "Chiudere la partita per tutti?", function () { H._siChiude = true; cbHost.onEsci(); });
+        if (t.ricorda) t.ricorda(null);   // (uscito apposta: niente da riprendere)
         fermaTimer(); H.tiroN++; follaFerma(); rete.chiudi(); t.esci();
       } };
+    // (ripresa) la partita com'era. L'avversario rientra da solo; se non torna entro un minuto, vince l'host (come quando
+    // perde la rete). Il tempo della partita a tempo è un'ora assoluta: si porta sull'orologio di questo telefono
+    if (RIP && RIP.H && RIP.P) {
+      var h = RIP.H;
+      H.fase = h.fase === "fine" ? "fine" : "gioco"; H.primo = h.primo || 0; H.ritiro = !!h.ritiro; H.partita = h.partita || ""; H.fischio = !!h.fischio;
+      if (h.opz) H.opz = h.opz;
+      if (h.form) H.form = h.form;
+      H.formImp = h.formImp; H.formDi = h.formDi || null;
+      H.players = (h.players || []).map(function (p) { return { id: p.id, nome: p.nome, omino: p.id === "host" ? H.players[0].omino : avatarValido(p.omino) }; });
+      if (!H.players.length || H.players[0].id !== "host") H.players.unshift({ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost) });
+      H.M = creaMotore({ vince: H.opz.vince, gol: H.opz.gol, minuti: H.opz.minuti, form: H.form, primo: RIP.P.primo || 0 });
+      H.M.importa(RIP.P);
+      var P0 = H.M.P;
+      if (P0.fineTempo && t.ripresa.ora) P0.fineTempo = t.ripresa.ora(P0.fineTempo);
+      if (H.fase === "gioco") {
+        H.players.forEach(function (p) {
+          if (p.id === "host") return;
+          p.via = true;
+          p.viaT = setTimeout(function () { if (p.via && H.fase === "gioco" && pById(p.id) === p) fineRitiro(); }, 60000);
+        });
+        if (P0.stato === "moto" && P0.fase !== "fine") P0.stato = "mira";   // il tiro in volo non vale: si rifà la mira
+        if (P0.stato === "pausa") { bd(); H.to = setTimeout(function () { H.to = null; if (H.fase === "gioco") avanti(H.M.continua() || 0); }, 1500); }
+        else nuovoTurno();
+        return;
+      }
+    }
     bd();
   }
 
@@ -1373,6 +1415,7 @@
     descrizione: "Il calcio coi dischi: tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. Contro il Bot, in due sullo stesso telefono o online.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
     postiOnline: 2,   // online si gioca in due: gli altri guardano
+    riprende: true,   // se l'host ricarica la pagina, la partita riprende (stessi gol; un tiro a metà si rifà)
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
       { modo: "telefono", icona: "📱", nome: "In due su questo telefono", sotto: "Uno per lato, il telefono in mezzo", amici: true }],
     regole: [

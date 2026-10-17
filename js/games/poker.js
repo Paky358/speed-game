@@ -413,6 +413,14 @@
       M.giocatori.forEach(function (q) { q.stack += q.messo; q.messo = 0; q.inGiro = 0; q.inMano = false; q.mano = []; q.allin = false; });
       M.piatto = 0; M.turno = -1; M.corsa = false; M.stato = "attesa"; M.esito = null; M.tavolo = [];
     };
+    // la ripresa (l'host ha ricaricato la pagina): il tavolo com'è (M senza le sue funzioni: un oggetto semplice, con mazzo,
+    // carte in mano, puntate e turno) e di nuovo dentro il motore: la mano continua dallo stesso punto
+    M.esporta = function () { return JSON.parse(JSON.stringify(M)); };
+    M.importa = function (x) {
+      if (!x || typeof x !== "object" || !Array.isArray(x.giocatori)) return false;
+      Object.keys(x).forEach(function (k) { if (typeof M[k] !== "function") M[k] = x[k]; });
+      return true;
+    };
     return M;
   }
 
@@ -547,17 +555,45 @@
     var V = { variante: variante(imp.variante), liv: imp.difficolta || "medio", torneo: !!imp.torneo, ogni: +imp.ogni === 10 ? 10 : 5 };
     var prof = conProfilo();
     var nome = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Tu";
+    var IO = t.mioId || "host";   // chi tiene il tavolo su questo telefono ("host", o l'amico che ha preso il posto dell'host)
+    // la ripresa (l'host ha ricaricato la pagina a metà partita): quello che si è ricordato in bd()
+    var RIP = online && t.ripresa && t.ripresa.stato && t.ripresa.stato.poker;
+    if (RIP && !(RIP.M && Array.isArray(RIP.M.giocatori) && RIP.H && RIP.V)) RIP = null;
+    if (RIP) V = RIP.V;
     var W = prof ? portafoglio() : BUYIN;   // il mio portafoglio (le Speed Coins del profilo); senza profilo 1.000 per giocare
-    if (prof && W < GRANDE && !V.torneo) return senzaFiches(t, function () { partita(t, online); });   // (il torneo si gioca con fiches finte)
+    if (!RIP && prof && W < GRANDE && !V.torneo) return senzaFiches(t, function () { partita(t, online); });   // (il torneo si gioca con fiches finte)
     var partitaId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     var M = creaMotore(V.variante);
-    var io = M.siedi({ id: "host", nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null, stack: V.torneo ? FICHES_TORNEO : Math.min(W, BUYIN) });
+    var io = M.siedi({ id: IO, nome: nome, omino: t.mioOmino ? t.mioOmino(nome) : null, stack: V.torneo ? FICHES_TORNEO : Math.min(W, BUYIN) });
     io.portato = Math.min(W, BUYIN);   // le monete vere che ho portato al tavolo (nel torneo restano da parte)
     var fuori = W - io.portato;   // quello che resta nel portafoglio, fuori dal tavolo
-    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, classifica: null, omini: { host: io.omino }, guardano: {},
+    var omini0 = {}; omini0[IO] = io.omino;
+    var H = { fase: online ? "lobby" : "gioco", codice: "…", pronta: !online, classifica: null, omini: omini0, guardano: {},
       soloGuarda: {},   // chi non è tra chi gioca (scelti nella Sala): guarda e non si siede
       nElim: 0, n0: 0, aspetta: {}, fineT: 0, fineDur: 0, detto: false };   // torneo: quanti sono usciti; chi è arrivato a torneo iniziato (entra al prossimo)
     var rete = null, tBot = null, tTempo = null, tMano = null, tSalva = null, salvato = W;
+    // ---- la ripresa: stesso tavolo, stessa mano (carte in mano, carte in tavola, puntate, turno), stesse fiches. Gli amici
+    // restano seduti e rientrano da soli (il join gli rimanda le sue carte); se tocca a un Bot, il Bot riparte dal suo turno
+    var attesi = {};
+    if (RIP && M.importa(RIP.M)) {
+      ["fase", "classifica", "omini", "guardano", "soloGuarda", "nElim", "n0", "aspetta", "detto"].forEach(function (k) { if (RIP.H[k] != null) H[k] = RIP.H[k]; });
+      if (RIP.partitaId) partitaId = RIP.partitaId;
+      if (isFinite(RIP.fuori)) fuori = RIP.fuori;
+      // (le fiches del profilo le ho già salvate dal tavolo prima di ricaricare: si risalva solo se cambiano)
+      M.scadenza = null;
+      var iIo = M.trova(IO);
+      if (iIo >= 0) io = M.giocatori[iIo];
+      else { M.giocatori.push(io); H.omini[IO] = io.omino; }   // (non dovrebbe succedere: mi risiedo, gioco dalla prossima mano)
+      // ho preso il tavolo dall'host sparito (host di riserva): le monete fuori dal tavolo sono le MIE (quelle che tenevo da
+      // ospite su questo telefono), non le sue
+      if (t.ripresa.daRiserva) {
+        var rOsp = null;
+        try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf("sg-poker-fuori-") === 0 && k.slice(-(IO.length + 1)) === "-" + IO) { var x = JSON.parse(localStorage.getItem(k)); if (x && isFinite(x.fuori) && isFinite(x.salvato) && (!rOsp || x.t > rOsp.t)) rOsp = x; } }); } catch (e) {}
+        fuori = iIo < 0 ? W - io.portato : rOsp ? Math.max(0, rOsp.fuori + (W - rOsp.salvato)) : Math.max(0, W - io.stack);
+        salvato = W;
+      }
+      M.giocatori.forEach(function (p) { if (!p.bot && !p.via && p.id !== IO) attesi[p.id] = 1; });
+    } else RIP = null;
 
     function salvaMio(subito) {   // nel profilo: fiches fuori + fiches sul tavolo (nel torneo le fiches sono finte: niente)
       if (!prof || V.torneo) return;
@@ -606,6 +642,7 @@
         // torneo: tra = quante mani mancano (dopo questa) prima che salgano i bui
         torneo: V.torneo ? { ogni: V.ogni, livello: M.livello, fiches: FICHES_TORNEO, tra: M.n > H.n0 ? V.ogni - ((M.n - H.n0 - 1) % V.ogni) - 1 : V.ogni } : null,
         guardano: Object.keys(H.guardano),   // chi è entrato a tavolo pieno e guarda
+        hostId: IO,   // chi tiene il tavolo (in saletta ha la corona)
         soloGuarda: Object.keys(H.soloGuarda),   // (di questi, chi non è tra chi gioca: non si siede)
         players: seduti().map(function (p) {
           return { id: p.id, nome: p.nome, bot: p.bot, stack: p.stack, buyin: p.buyin, inGiro: p.inGiro, lascia: p.lascia, allin: p.allin, azione: p.azione, frase: p.frase || "",
@@ -675,12 +712,27 @@
     function mandaCarte(soloId) {   // a ognuno le sue carte, a parte
       if (!rete) return;
       M.giocatori.forEach(function (p) {
-        if (p.bot || p.id === "host" || p.via || (soloId && p.id !== soloId)) return;
+        if (p.bot || p.id === IO || p.via || (soloId && p.id !== soloId)) return;
         rete.inviaVeloce({ t: "mie", to: p.id, n: M.n, carte: p.inMano ? p.mano.slice() : [] });
       });
     }
     function mandaOmini() { if (rete) rete.inviaVeloce({ t: "omini", omini: H.omini }); }
-    function bd() { var v = vm(); if (rete) rete.invia({ t: "vm", vm: v }); disegna(t, v, cb); }
+    function bd() { var v = vm(); if (rete) { rete.invia({ t: "vm", vm: v }); vici(); } ricorda(); disegna(t, v, cb); }
+    // (host di riserva) chi porta avanti il tavolo se sparisco: chi è seduto (ha già il suo posto e le sue fiches)
+    var viciK = "";
+    function vici() {
+      var l = M.giocatori.filter(function (p) { return !p.bot && !p.via && p.id !== IO; }).map(function (p) { return p.id; }), k = l.join(",");
+      if (k !== viciK && t.vici) { viciK = k; t.vici(l.length ? l : null); }
+    }
+    // online, dopo ogni cambiamento il tavolo si ricorda (se l'host ricarica, la mano continua); in saletta niente da riprendere
+    var ricordato = !!RIP;
+    function ricorda() {
+      if (!online || !t.ricorda) return;
+      if (H.fase === "lobby") { if (ricordato) { ricordato = false; t.ricorda(null); } return; }
+      ricordato = true;
+      t.ricorda({ poker: { V: V, M: M.esporta(), partitaId: partitaId, fuori: fuori,
+        H: { fase: H.fase, classifica: H.classifica, omini: H.omini, guardano: H.guardano, soloGuarda: H.soloGuarda, nElim: H.nElim, n0: H.n0, aspetta: H.aspetta, detto: H.detto } } });
+    }
 
     // ---- il giro: bot, tempo per decidere, carte che escono da sole, mano finita ----
     function ciclo() {
@@ -770,16 +822,16 @@
     function attuale(rif) { return !rif || (rif.n === M.n && rif.st === M.stato && rif.dc === M.daChiamare); }
 
     // ---- le mie mosse (host o chi gioca contro il computer) ----
-    var cb = { sonoHost: true, online: online, myId: "host",
+    var cb = { sonoHost: true, online: online, myId: IO,
       mie: function () { return { n: M.n, carte: io.inMano ? io.mano.slice() : [] }; },
       omini: function () { return H.omini; },
       fuori: function () { return fuori; },
       puoRientrare: function () { if (V.torneo) return 0; return prof ? Math.min(fuori, BUYIN - io.stack) : BUYIN - io.stack; },   // senza profilo le fiches sono per finta (nel torneo non si rientra)
       rientroInCorso: function () { return false; },
-      onAzione: function (tipo, tot, rif) { if (attuale(rif) && M.azione(M.trova("host"), tipo, tot)) { io.pausa = false; if (tipo !== "lascia" && tipo !== "passa") suono("fiche"); dopoMossa(); } },
-      onCambio: function (quali, rif) { if ((!rif || rif.n === M.n) && M.cambia(M.trova("host"), quali)) { io.pausa = false; suono("carta"); dopoMossa(); } },
-      onSvela: function (n) { if (n == null || n === M.n) svela(M.trova("host")); },
-      onTace: function (n) { if (n == null || n === M.n) tace(M.trova("host")); },
+      onAzione: function (tipo, tot, rif) { if (attuale(rif) && M.azione(M.trova(IO), tipo, tot)) { io.pausa = false; if (tipo !== "lascia" && tipo !== "passa") suono("fiche"); dopoMossa(); } },
+      onCambio: function (quali, rif) { if ((!rif || rif.n === M.n) && M.cambia(M.trova(IO), quali)) { io.pausa = false; suono("carta"); dopoMossa(); } },
+      onSvela: function (n) { if (n == null || n === M.n) svela(M.trova(IO)); },
+      onTace: function (n) { if (n == null || n === M.n) tace(M.trova(IO)); },
       onCiSono: function () { io.pausa = false; if (H.fase === "gioco" && M.stato === "attesa") prossimaMano(); else bd(); },
       onRientra: function () {   // si risiede con altre fiches del portafoglio
         var x = cb.puoRientrare(); if (V.torneo || x < GRANDE || io.stack >= GRANDE || (M.inCorso() && io.inMano && !io.lascia)) return;
@@ -843,9 +895,10 @@
         // nel torneo lasciato a metà conta il posto che avevi in quel momento)
         if (!online && M.n > 0 && t.risultato && !H.detto) {
           var mioPos = io.stack - io.buyin > 0 ? 1 : 2;
-          if (V.torneo) classificaTorneo().forEach(function (r) { if (r.id === "host") mioPos = r.pos; });
+          if (V.torneo) classificaTorneo().forEach(function (r) { if (r.id === IO) mioPos = r.pos; });
           H.detto = true; t.risultato([{ nome: io.nome, pos: mioPos }]);
         }
+        if (online && t.ricorda) t.ricorda(null);   // (uscito apposta: niente da riprendere)
         if (rete) rete.chiudi();
         t.esci();
       } };
@@ -862,10 +915,11 @@
     if (online) t.onRivincita = function () { if (H.fase === "fine") cb.onNuova(); };
 
     if (online) {
-      rete = SGNet.ospita(ID, {
+      var cbR = {
         onCodice: function (c) { H.codice = c; bd(); },
         onConnesso: function () { H.pronta = true; bd(); },
         onAddio: function (id) {
+          delete attesi[id];
           delete H.guardano[id]; delete H.soloGuarda[id];
           var i = M.trova(id); if (i < 0) { bd(); return; }
           if (H.fase === "lobby") { M.giocatori.splice(i, 1); if (M.dealer >= M.giocatori.length) M.dealer = -1; bd(); return; }
@@ -876,6 +930,7 @@
         },
         onMsg: function (id, m) {
           if (!m || !m.t) return;
+          delete attesi[id];   // (ripresa: si è rifatto vivo)
           var i = M.trova(id), p = i >= 0 ? M.giocatori[i] : null;
           if (m.t === "join") {
             if (i < 0 && t.puoSedersi && !t.puoSedersi(id, m.nome)) {   // non è tra chi gioca: guarda il tavolo
@@ -916,7 +971,16 @@
           }
         },
         onErrore: function () { ferma(); clearTimeout(tMano); tMano = null; errore(t, "Problema di collegamento: la stanza non si apre. Riprova."); }   // (solo se il primo collegamento non riesce)
-      });
+      };
+      rete = SGNet.ospita(ID, cbR, RIP ? { ripresa: true } : null);
+      if (RIP) {   // (ripresa) il giro riparte da chi toccava: tempo per decidere intero, o il Bot che ci pensa
+        if (H.fase === "gioco") ciclo();
+        // chi non si rifà vivo in 20 s si alza come quando se ne va
+        setTimeout(function () {
+          if (!document.body.contains(t.radice)) return;
+          Object.keys(attesi).forEach(function (id) { cbR.onAddio(id); });
+        }, 20000);
+      }
       bd();
     } else {
       var nBot = Math.max(1, Math.min(MAX[M.variante] - 1, Math.floor(+imp.avversari || 3)));
@@ -1060,7 +1124,8 @@
       FINE = { k: k, s: finale(t, vm, cb) }; return;
     }
     FINE = null;
-    if (!UI || !document.body.contains(UI.s)) UI = creaSchermo(t, cb);
+    // (rifatta anche quando questo telefono passa da ospite a chi tiene il tavolo: host di riserva, il 🏁 è solo dell'host)
+    if (!UI || !document.body.contains(UI.s) || UI.sonoHost !== !!cb.sonoHost) { UI = creaSchermo(t, cb); UI.sonoHost = !!cb.sonoHost; }
     UI.cb = cb;
     aggiorna(UI, vm);
   }
@@ -1091,7 +1156,7 @@
       puoComincia: vm.players.length >= MIN && vm.players.length <= MAX[vm.variante],
       vuoti: Math.max(0, MIN - vm.players.length),
       giocatori: vm.players.map(function (p) {
-        return { id: p.id, nome: p.nome, omino: (cb.omini() || {})[p.id] || (p.bot && window.SGOmino ? SGOmino.casuale(p.nome) : null), host: p.id === "host", tu: p.id === cb.myId, bot: p.bot };
+        return { id: p.id, nome: p.nome, omino: (cb.omini() || {})[p.id] || (p.bot && window.SGOmino ? SGOmino.casuale(p.nome) : null), host: p.id === (vm.hostId || "host"), tu: p.id === cb.myId, bot: p.bot };
       }),
       extra: extra, attesa: "Aspetta che l'host cominci: si gioca a " + NOME_VAR[vm.variante] + "! 🃏", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
@@ -1653,6 +1718,8 @@
     descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro i Bot o online. Si gioca con le tue Speed Coins.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 2–10 giocatori",
     postiOnline: 10,   // posti online (all'italiana il tavolo ne fa sedere 6: la regola resta del gioco)
+    riprende: true,    // se l'host ricarica la pagina, la mano continua (le carte tornano a ognuno, i Bot ripartono dal loro turno)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     // le regole in una riga, per la saletta: "Texas Hold'em · fino a 10 al tavolo · Bot medi"
     riassunto: function (imp) {
       imp = imp || {};

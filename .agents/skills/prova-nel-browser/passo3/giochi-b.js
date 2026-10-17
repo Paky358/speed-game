@@ -10,6 +10,8 @@
 // 381 Scalinata (riprende: true): Giulia rilancia e la partita parte da zero (niente ripresa della partita di Paky); Paky
 // che torna entra da amico e non ripubblica la sua Scalinata, nemmeno ricaricando la pagina.
 // La fine nei giochi lunghi (Palla Matta, Ruota, Scopa 2 vs 2) si chiama dal tavolo (spiaTavolo, come nel 56);
+// DAL PASSO 5 (p5-z): Scalinata, Ruota e Scopa 2 vs 2 hanno l'host di riserva del core: 381, 383 e 384 controllano che il gioco
+// NON si perda (restaGioco: un amico lo porta avanti, la Sala passa a Giulia col gioco dentro, fine, Classifica della serata).
 // Scalinata, Pendolo e Horto si giocano fino in fondo. Profili finti, mai account veri.
 (function () {
   "use strict";
@@ -133,6 +135,68 @@
     erroriVuoti();
     return { S: S, C: C, P: P, G: G, dt: dt, guarda: guarda };
   }
+  // (Passo 5, p5-z) i giochi con l'host di riserva del core (riprende + riserva: Scalinata, Ruota, Scopa 2 vs 2): quando Paky
+  // si spegne il gioco NON si perde. Un amico lo porta avanti (6 s: _g 2 e _h = il suo id nella foto), la Sala passa a Giulia
+  // (20 s) col gioco ancora dentro, nessuno torna nella Sala; la Scalinata si gioca fino in fondo (la fine
+  // arriva a chi tiene il gioco, la Classifica della serata la conta), poi Giulia torna nella Sala («🏠 Torna in Sala» o «🎮 Cambia gioco») e gli altri la seguono.
+  async function restaGioco(o) {
+    var X = await salaCon(o.amici, o.gid), S = X.S, G = X.w.Giulia;
+    var ospiti = o.amici.slice();
+    var C = await lancia("Paky", S, o.nome, o.gid, o.scelti);
+    await tuttiInSaletta(C, ospiti);
+    await comincia("Paky", C, o.partita);
+    await W.dorme(o.attesa || 2500);
+    if (o.aMeta) await o.aMeta(C);
+    await W.dorme(900);   // (la ripresa si salva al massimo ogni mezzo secondo)
+    var s0 = W.statoStanza(C) || {}, g0 = +s0._g || 1;
+    if (s0._h !== "host") no("prima del subentro la foto del gioco non dice che la tiene Paky (_h " + s0._h + "): il gioco ha la riserva?");
+    var membri0 = (vm(S).membri || []).slice(), punti0 = JSON.stringify(((vm(S).torneo || {}).punti) || {});
+    var t0 = Date.now();
+    spentoDavvero("Paky");
+    var sG = await W.aspetta(function () { var s = W.statoStanza(C) || {}; return s._h && s._h !== "host" && (+s._g || 1) > g0 ? s : null; }, 15000, 200);
+    if (!sG) no("nessun amico prende la partita (_h " + (W.statoStanza(C) || {})._h + ", _g " + (W.statoStanza(C) || {})._g + ")");
+    var VG = (membri0.filter(function (m) { return m.id === sG._h; })[0] || {}).nome, dtG = ((Date.now() - t0) / 1000).toFixed(1);
+    if (!VG) no("chi tiene la partita (" + sG._h + ") non è un amico della Sala");
+    if (!await W.aspetta(function () { return nomeHost(S) === "Giulia" && vm(S).gen === 2; }, 32000, 250)) no("la Sala non passa a Giulia (host " + nomeHost(S) + ", gen " + vm(S).gen + ")");
+    var dtS = ((Date.now() - t0) / 1000).toFixed(1);
+    await W.dorme(2000);
+    if (vm(S).gioco !== o.gid || vm(S).stanza !== C) no("la Sala di Giulia ha chiuso il gioco (gioco " + vm(S).gioco + ", stanza " + vm(S).stanza + ")");
+    if ((W.statoStanza(C) || {})._h !== sG._h) no("con la Sala nuova il gioco lo tiene " + (W.statoStanza(C) || {})._h + " invece di " + VG);
+    var inS = ospiti.filter(function (n, k) { return inSala(W.finestra(n), S, k === 0); });
+    if (inS.length) no("il gioco continua ma " + inS.join(", ") + " è tornato nella Sala");
+    var fase = vm(C).fase || vm(C).giocoFase;
+    if (!fase || fase === "lobby") no("il gioco è tornato in saletta (fase " + fase + ")");
+    // senza un modo di giocarla fino in fondo (Ruota, Scopa 2 vs 2: la fine finta dal tavolo vale solo per chi apre la
+    // stanza, non per il vice): per 6 s la partita resta tenuta da lui, nessuno torna nella Sala, nessun errore. La fine
+    // vera con il vice nella Sala la provano la 599 (Linea del tempo) e la 405 (Parola d'ordine)
+    if (!o.finoR) {
+      var finoS = Date.now() + 6000, rotto = "";
+      while (Date.now() < finoS && !rotto) {
+        if ((W.statoStanza(C) || {})._h !== sG._h) rotto = "il gioco lo tiene " + (W.statoStanza(C) || {})._h;
+        ospiti.forEach(function (n, k) { if (!rotto && inSala(W.finestra(n), S, k === 0)) rotto = n + " è tornato nella Sala"; });
+        await W.dorme(300);
+      }
+      if (rotto) no("dopo il subentro: " + rotto);
+      await P3.unSoloHost(S, 1500);
+      erroriVuoti();
+      return o.nome + ": Paky spento, il gioco lo tiene " + VG + " dopo " + dtG + " s, la Sala Giulia dopo " + dtS + " s col gioco ancora dentro (" + C + ", fase " + fase + "); nessuno torna nella Sala";
+    }
+    // la partita giocata fino in fondo: la fine arriva a chi tiene il gioco, e la Classifica della serata la conta
+    if (!await o.finoR(C, ospiti, VG)) no("la partita tenuta da " + VG + " non arriva alla fine (fase " + vm(C).fase + ")");
+    var wV = W.finestra(VG);
+    if (!await W.aspetta(function () { return A.tastiFineDi(wV); }, 20000, 300)) no("la fine non arriva a " + VG + " che tiene il gioco («" + T(wV).slice(0, 60) + "»)");
+    var tasti = (A.tastiFineDi(wV) || []).join(" | ");
+    if (!await W.aspetta(function () { return JSON.stringify(((vm(S).torneo || {}).punti) || {}) !== punti0; }, 8000)) no("la Classifica della serata nella Sala di Giulia non conta la partita finita da " + VG);
+    // Giulia torna nella Sala e gli altri la seguono
+    var tocco = W.clicca(G, /Torna in Sala/) ? "Torna in Sala" : W.clicca(G, /Cambia gioco/, ".fine-tasti button") ? "Cambia gioco" : null;
+    if (!tocco) no("Giulia non ha «🏠 Torna in Sala» né «🎮 Cambia gioco» («" + T(G).slice(0, 80) + "»)");
+    if (tocco === "Cambia gioco") { await W.aspetta(function () { return /Quale gioco/.test(T(G)); }, 8000); await W.dorme(400); W.clicca(G, /^‹$/); }
+    if (!await W.aspetta(function () { return inSala(G, S, true) && !vm(S).gioco; }, 10000)) no("Giulia non torna nella sua Sala (gioco " + vm(S).gioco + ", «" + T(G).slice(0, 60) + "»)");
+    if (!await W.aspetta(function () { return ospiti.slice(1).every(function (n) { return inSala(W.finestra(n), S); }); }, 10000)) no("gli altri non seguono Giulia nella Sala (" + ospiti.slice(1).filter(function (n) { return !inSala(W.finestra(n), S); }).join(", ") + ")");
+    await P3.unSoloHost(S, 1500);
+    erroriVuoti();
+    return o.nome + ": Paky spento, il gioco lo tiene " + VG + " dopo " + dtG + " s, la Sala Giulia dopo " + dtS + " s col gioco ancora dentro; fine a " + VG + " («" + tasti + "»), Classifica della serata aggiornata; Giulia «" + tocco + "» → tutti nella Sala";
+  }
   // Giulia rilancia lo stesso gioco con chi è rimasto (4 posti per 4: niente «Chi gioca?»), fino alla Rivincita col 3-2-1
   async function rilancia(R, o) {
     var altri = o.amici.slice(1);
@@ -159,8 +223,9 @@
         if (!await W.aspetta(function () { return vm(C).fase === "rivela"; }, 15000)) no("il primo round della Scalinata non si chiude");
         W.clicca(W.finestra("Paky"), /Prossimo round/);
         if (!await W.aspetta(function () { return vm(C).fase === "scelta"; }, 6000)) no("non parte il secondo round");
-        var sv = JSON.parse(W.finestra("Paky").localStorage.getItem("sg-scalinata-host") || "null");
-        if (!sv || !sv.st || sv.st.codice !== C) no("la partita di Paky non è salvata sul suo telefono (serve alla prova)");
+        // (Passo 5: la partita si salva nella ripresa comune, sg-ripresa)
+        var sv = await W.aspetta(function () { var r = JSON.parse(W.finestra("Paky").localStorage.getItem("sg-ripresa") || "null"); return r && r.codice === C ? r : null; }, 3000);
+        if (!sv) no("la partita di Paky non è salvata sul suo telefono (sg-ripresa)");
       },
       inSaletta: async function (C2) {
         var v = vm(C2), G = W.finestra("Giulia");
@@ -170,7 +235,8 @@
         var sv = JSON.parse(G.localStorage.getItem("sg-scalinata-host") || "null");
         if (sv && sv.st && sv.st.codice !== C2) no("Giulia ha salvata una Scalinata di un'altra stanza (" + sv.st.codice + ")");
       },
-      fino: function (C2, altri) { return A.scalinataFinoAllaFine(C2, altri, "Giulia"); }, attesaFine: 12000 },
+      fino: function (C2, altri) { return A.scalinataFinoAllaFine(C2, altri, "Giulia"); }, attesaFine: 12000,
+      finoR: function (C, chi, host) { return A.scalinataFinoAllaFine(C, chi, host); } },
     // Giulia (il vice) GUARDA il tavolo; la fine si chiama dal tavolo
     382: { nome: "Palla Matta", gid: "pallamatta", amici: ["Giulia", "Luca", "Marco", "Bea"], scelti: ["Paky", "Luca", "Marco", "Bea"],
       partita: function (v) { return v.fase === "gioco"; } },
@@ -189,9 +255,15 @@
       fino: function (C2) { return W.aspetta(function () { return W.finestra("Giulia").document.querySelector(".fine-tasti"); }, 90000, 300); }, attesaFine: 5000 }
   };
 
+  // (Passo 5) Scalinata, Ruota e Scopa 2 vs 2 hanno l'host di riserva: il gioco continua (restaGioco)
+  GIOCHI[381].riserva = GIOCHI[383].riserva = GIOCHI[384].riserva = true;
   Object.keys(GIOCHI).forEach(function (k) {
     var o = GIOCHI[k];
     var chiGuarda = o.scelti ? ["Paky"].concat(o.amici).filter(function (n) { return o.scelti.indexOf(n) < 0; })[0] : null;
+    if (o.riserva) {
+      aggiungi(+k, { nome: o.nome + " nella Sala: Paky si spegne a metà partita" + (chiGuarda ? " (" + chiGuarda + " guardava)" : "") + " → il gioco continua con un amico, la Sala a Giulia senza chiuderlo" + (o.finoR ? "; fine, Classifica della serata, tutti nella Sala" : ""), fai: function () { return restaGioco(o); } });
+      return;
+    }
     aggiungi(+k, { nome: o.nome + " nella Sala: Paky si spegne a metà partita" + (chiGuarda ? " (" + chiGuarda + " guardava)" : "") + " → tutti nella Sala di Giulia, niente gioco sopra la Sala; Giulia rilancia fino alla Rivincita col 3-2-1", fai: async function () {
       var R = await cambioHost(o);
       var parte = o.nome + ": Sala a Giulia dopo " + R.dt + " s" + (R.guarda.length ? " (guardava " + R.guarda.join(", ") + ")" : "") + ", niente gioco sopra la Sala per 8 s, nessuno nella stanza vecchia";
@@ -203,7 +275,7 @@
   });
 
   // (gli aiuti di questo file, per riprovare a mano un pezzo: COPIONE.passo3.giochiB.salaCon(…))
-  if (P3) P3.giochiB = { salaCon: salaCon, lancia: lancia, tuttiInSaletta: tuttiInSaletta, comincia: comincia, fineFinta: fineFinta, finoAllaRivincita: finoAllaRivincita, cambioHost: cambioHost, rilancia: rilancia, GIOCHI: GIOCHI, ancoraInStanza: ancoraInStanza };
+  if (P3) P3.giochiB = { salaCon: salaCon, lancia: lancia, tuttiInSaletta: tuttiInSaletta, comincia: comincia, fineFinta: fineFinta, finoAllaRivincita: finoAllaRivincita, cambioHost: cambioHost, restaGioco: restaGioco, rilancia: rilancia, GIOCHI: GIOCHI, ancoraInStanza: ancoraInStanza };
 
   // 381, in fondo: Paky (che aveva la Scalinata salvata) si riaccende e poi ricarica la pagina: entra da amico nella Sala di
   // Giulia, non riapre né ripubblica la sua Scalinata vecchia, mai due host

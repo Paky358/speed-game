@@ -508,6 +508,8 @@
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Giudice e squadre sullo stesso telefono", amici: true }],
     giocatoriMax: MAX,
     postiOnline: MAX,   // posti online (10)
+    riprende: true,     // se l'host ricarica a metà partita, la partita riprende dalla stessa fase (le carte tornano alle squadre)
+    riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     difficolta: 2,
     regole: [
       "A ogni round uno di voi fa da <b>giudice</b> (a turno: tutti lo stesso numero di volte) e gli altri si dividono <b>a sorte</b> in due squadre. Bastano 3 giocatori.",
@@ -792,9 +794,10 @@
   function hostSipero(t, dati) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteS(t);
     var nomeHost = (t.giocatori && t.giocatori[0]) || (t.nomeProfilo && t.nomeProfilo()) || "Host";
+    var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
     var st = {
       fase: "lobby", codice: "…", pronta: false,
-      giocatori: [{ id: "host", nome: nomeHost, omino: t.mioOmino ? t.mioOmino(nomeHost) : null, via: false, guarda: false }],
+      giocatori: [{ id: IO, nome: nomeHost, omino: t.mioOmino ? t.mioOmino(nomeHost) : null, via: false, guarda: false }],
       assegna: {}, regole: null, manuale: false, seq: CLASSICA, arringaSec: 0,
       round: 0, totale: 0, punti: {}, giudicati: {}, giocato: {}, coppie: {}, ordine: [],
       mazzi: { bonus: nuovoMazzo(t, dati.bonus), malus: nuovoMazzo(t, dati.malus) },
@@ -814,13 +817,38 @@
     t.onRivincita = function () { if (st.fase === "fine") nuova(); };   // la Rivincita: tutti di nuovo nella saletta
     var V = { t: t };
 
+    // la partita di prima (l'host ha ricaricato la pagina o riaperto l'app: t.ripresa): si riprende dalla stessa fase.
+    // Gli amici non si danno per usciti: si aspettano ("attesi") e rientrano da soli (con le carte della loro squadra);
+    // chi non torna entro 10 secondi esce
+    var R0 = t.ripresa && t.ripresa.stato, ripresa = !!(R0 && R0.fase && R0.fase !== "lobby" && R0.giocatori), attesi = {}, tAttesi = null;
+    if (ripresa) {
+      Object.keys(R0).forEach(function (k) { if (k !== "mazzi") st[k] = R0[k]; });
+      st.mazzi = { bonus: mazzoDa(dati.bonus, R0.mazzi && R0.mazzi.bonus), malus: mazzoDa(dati.malus, R0.mazzi && R0.mazzi.malus) };
+      st.attesaTo = null; st.autoTo = null; st.pronta = false;
+      st.statGiocatori = st.statGiocatori || Object.create(null);
+      st.giocatori.forEach(function (p) { if (p.id !== IO && !p.via) attesi[p.id] = 1; });
+    }
+    // il mazzo nella memoria: le carte ancora da pescare come numeri (la posizione nella lista delle carte), così resta piccolo
+    function mazzoDa(lista, numeri) {
+      var pila = (numeri || []).map(function (i) { return lista[i]; }).filter(function (c) { return c != null; });
+      return { carte: lista.slice(), pila: pila.length ? pila : t.mischia(lista) };
+    }
+    function numeri(mz, lista) { return mz.pila.map(function (c) { return lista.indexOf(c); }).filter(function (i) { return i >= 0; }); }
+    function ricorda() {
+      if (st.fase === "lobby") return t.ricorda(null);
+      var s = {};
+      Object.keys(st).forEach(function (k) { if (k !== "attesaTo" && k !== "autoTo" && k !== "mazzi") s[k] = st[k]; });
+      s.mazzi = { bonus: numeri(st.mazzi.bonus, dati.bonus), malus: numeri(st.mazzi.malus, dati.malus) };
+      t.ricorda(s);
+    }
+
     var rete = SGNet.ospita("sipero", {
       onCodice: function (c) { st.codice = c; bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: addio,
       onMsg: function (id, m) {
         if (!m || !m.t) return;
-        if (m.t === "join") return entra(id, m);
+        if (m.t === "join") { delete attesi[id]; return entra(id, m); }   // (dopo una ripresa: è tornato)
         if (!pById(id)) return;
         if (m.t === "chiediMano") manoA(id);
         else if (m.t === "gioca") giocaCarte(id, m.carte);
@@ -828,7 +856,8 @@
         else if (m.t === "giudica") giudica(id, m.sq);
       },
       onErrore: function (e) { if (e && e.type === "no-mqtt") senzaReteS(t); }   // gli altri intoppi li ripara la rete da sola
-    });
+    }, { ripresa: ripresa });   // (con la ripresa gli amici non tornano in saletta)
+    if (ripresa && rete && rete.codice) st.codice = rete.codice;
     function pById(id) { for (var i = 0; i < st.giocatori.length; i++) if (st.giocatori[i].id === id) return st.giocatori[i]; return null; }
     function presenti() { return st.giocatori.filter(function (p) { return !p.via; }); }
     function giudice() { for (var i = 0; i < st.giocatori.length; i++) if (st.assegna[st.giocatori[i].id] === "g") return st.giocatori[i]; return null; }
@@ -845,19 +874,20 @@
       st.attesaTo = setTimeout(function () { st.attesaTo = null; st.scadenza = 0; fn(); }, sec * 1000);
     }
     // la squadra di turno sceglie le carte: se non gioca in tempo, le sceglie il caso
-    function attendiPasso() {
+    // (sec: il tempo che restava, quando la partita riprende)
+    function attendiPasso(sec) {
       if (st.fase !== "gioco" || st.passo >= st.passi.length) return;
       var quale = st.passo;
-      attendi(TEMPO_CARTE, function () {
+      attendi(sec || TEMPO_CARTE, function () {
         if (st.fase !== "gioco" || st.passo !== quale) return;
         var p = st.passi[st.passo];
         giocaPasso(p, t.mischia(st.mani[p.sq][p.f.tipo]).slice(0, nCarte(p)));
       });
     }
     // l'arringa di una squadra: finito il suo tempo (più un attimo) si va avanti da soli
-    function attendiArringa() {
+    function attendiArringa(sec) {
       var parla = st.parla;
-      attendi(st.arringaSec ? st.arringaSec + TEMPO_DOPO_ARRINGA : TEMPO_ARRINGA, function () {
+      attendi(sec || (st.arringaSec ? st.arringaSec + TEMPO_DOPO_ARRINGA : TEMPO_ARRINGA), function () {
         if (st.fase === "arringa" && st.parla === parla) avanzaArringa();
       });
     }
@@ -884,7 +914,8 @@
       st.ordine = st.ordine.map(function (x) { return x === vec ? nuovo : x; });
     }
     function addio(id) {
-      var p = pById(id); if (!p || id === "host") return;
+      delete attesi[id];
+      var p = pById(id); if (!p || id === IO) return;
       if (st.fase === "lobby") { st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; }); delete st.assegna[id]; bd(); return; }
       p.via = true;   // a partita iniziata tiene il suo posto (e il suo ruolo): se rientra, riprende da lì
       bd(); controllaVuota();
@@ -892,19 +923,19 @@
 
     // ----- la mano: solo ai telefoni della squadra -----
     function manoA(id) {
-      if (id === "host" || !st.mani || st.fase === "lobby" || st.fase === "fine") return;
+      if (id === IO || !st.mani || st.fase === "lobby" || st.fase === "fine") return;
       var k = squadraDi(st.assegna, id); if (k < 0) return;
       rete.inviaVeloce({ t: "mano", per: [id], sq: k, v: st.manoV[k], mano: st.mani[k] });
     }
     function manoSquadra(k) {
-      var per = presentiSq(k).map(function (p) { return p.id; }).filter(function (id) { return id !== "host"; });
+      var per = presentiSq(k).map(function (p) { return p.id; }).filter(function (id) { return id !== IO; });
       if (per.length) rete.inviaVeloce({ t: "mano", per: per, sq: k, v: st.manoV[k], mano: st.mani[k] });
     }
 
     // la "foto" per tutti: SEMPRE con gli id; MAI le carte in mano
     function vm() {
       var g = giudice(), r = st.regole;
-      var v = { fase: st.fase, codice: st.codice, pronta: st.pronta,
+      var v = { fase: st.fase, codice: st.codice, pronta: st.pronta, hostId: IO,
         giocatori: st.giocatori.map(function (p) { return { id: p.id, nome: p.nome, via: !!p.via, guarda: !!p.guarda, punti: st.punti[p.id] || 0, omino: st.fase === "lobby" ? (p.omino || null) : undefined }; }),
         regole: { seq: r.seq, vuota: r.vuota, giri: r.giri, arringa: r.arringa, squadre: r.squadre },
         manuale: st.manuale, round: st.round, totale: st.totale, assegna: st.assegna,
@@ -921,7 +952,25 @@
       }
       return v;
     }
-    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegnaOn(V, v, cb); }
+    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegnaOn(V, v, cb); vici(); }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
+    var viciK = "";
+    function vici() {
+      var l = st.giocatori.filter(function (p) { return p.guarda && !p.via && p.id !== IO; }).map(function (p) { return p.id; }), k = l.join(",");
+      if (k !== viciK && t.vici) { viciK = k; t.vici(l.length ? l : null); }
+    }
+
+    // la ripresa: la stessa fase, coi secondi che restavano (almeno 8, per respirare); l'arringa a tempo si rifà da
+    // capo (il cronometro lo vedono tutti); le carte tornano alle squadre (a chi rientra col suo "join")
+    function riprendi() {
+      tAttesi = setTimeout(function () { Object.keys(attesi).forEach(addio); }, 10000);
+      var f = st.fase, resta = Math.max(8000, ((t.ripresa.ora(st.scadenza) || 0) - Date.now())) / 1000;
+      st.scadenza = 0;
+      if (f === "gioco") { attendiPasso(resta); bd(); manoSquadra(0); manoSquadra(1); controllaVuota(); return; }
+      if (f === "arringa") { if (st.arringaSec) { st.timerN++; attendiArringa(); } else attendiArringa(resta); return bd(); }
+      if (f === "giudizio") { attendi(resta, function () { if (st.fase === "giudizio") decidi(Math.random() < 0.5 ? 0 : 1, true); }); return bd(); }
+      bd();   // (il verdetto e la classifica: si resta lì)
+    }
 
     // ----- la partita -----
     function manualeOk() {
@@ -1005,7 +1054,7 @@
       }, 3500);
     }
     // decide il giudice; se il giudice è uscito, decide l'host
-    function puoDecidere(id) { var g = giudice(); return (g && !g.via && id === g.id) || (id === "host" && (!g || g.via)); }
+    function puoDecidere(id) { var g = giudice(); return (g && !g.via && id === g.id) || (id === IO && (!g || g.via)); }
     function avanti(id) {
       if (st.fase !== "arringa" || !puoDecidere(id)) return;
       avanzaArringa();
@@ -1049,7 +1098,7 @@
       bd();
     }
     var cb = {
-      sonoHost: true, myId: "host",
+      sonoHost: true, myId: IO,
       mano: function (k) { return st.mani ? st.mani[k] : null; },
       onAssegna: function (pid, val) {
         if (st.fase !== "lobby" || !pById(pid)) return;
@@ -1058,15 +1107,15 @@
         bd();
       },
       onComincia: comincia, onProssimo: prossimo, onNuova: nuova,
-      onGioca: function (carte) { giocaCarte("host", carte); },
-      onAvanti: function () { avanti("host"); },
-      onGiudica: function (k) { giudica("host", k); },
+      onGioca: function (carte) { giocaCarte(IO, carte); },
+      onAvanti: function () { avanti(IO); },
+      onGiudica: function (k) { giudica(IO, k); },
       onEsci: function (ok) {
         if (ok !== true && st.fase !== "lobby" && st.fase !== "fine") return t.conferma("Chiudere la partita per tutti?", null, "Esci", function () { cb.onEsci(true); });
-        ferma(); chiudiLente(); rete.chiudi(); t.esci();
+        ferma(); clearTimeout(tAttesi); t.ricorda(null); chiudiLente(); rete.chiudi(); t.esci();
       }
     };
-    bd();
+    if (ripresa) riprendi(); else bd();
   }
 
   function ospiteSipero(t, codice) {
@@ -1204,7 +1253,7 @@
       if (!ok) nota = "Per cominciare servono un giudice (⚖️) e almeno uno per squadra (🟥 🟦).";
     } else ok = pres.length >= MIN;
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN, vuoti: Math.max(0, MIN - pres.length), puoComincia: ok,
-      giocatori: pres.map(function (g) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: g.id === "host", tu: g.id === cb.myId }; }),
+      giocatori: pres.map(function (g) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: g.id === (vm.hostId || "host"), tu: g.id === cb.myId }; }),
       extra: [V.lobbyNodo], nota: cb.sonoHost && pres.length >= MIN && !ok ? nota : null,
       attesa: r.squadre === "mano" ? "Aspetta: chi organizza sta scegliendo il giudice e le squadre. 🤨" : "Aspetta che si cominci: giudice e squadre li decide la sorte. 🤨",
       onComincia: cb.onComincia, onEsci: cb.onEsci });

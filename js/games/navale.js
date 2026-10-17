@@ -65,6 +65,17 @@
   }
   // la flotta come "posizioni" (per mandarla in rete) e ritorno
   function posa(st) { return st ? st.navi.map(function (n) { return { x: n.celle[0].x, y: n.celle[0].y, o: n.oriz ? 1 : 0 }; }) : null; }
+  // le navi messe fin qui (la flotta a metà mentre si sistema: "bozza") e ritorno; null se non è valida
+  function dallaBozza(p, staccate) {
+    if (!Array.isArray(p) || p.length > NTOT) return null;
+    var st = statoVuoto();
+    for (var i = 0; i < p.length; i++) {
+      var q = p[i] || {}, x = +q.x, y = +q.y, o = !!q.o;
+      if (x !== Math.floor(x) || y !== Math.floor(y) || !liberoPer(st.mappa, x, y, FLOTTA[i].len, o, staccate)) return null;
+      poni(st, i, FLOTTA[i], x, y, o);
+    }
+    return st;
+  }
   function dallaPosa(p, staccate) {
     if (!Array.isArray(p) || p.length !== NTOT) return null;
     var st = statoVuoto();
@@ -421,6 +432,7 @@
     descrizione: "La battaglia navale classica: sistemi la tua flotta e affondi quella dell'avversario. Contro il Bot o online, uno contro uno.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 2, etichettaGiocatori: "👥 1–2 giocatori",   // (sullo stesso telefono: contro il Bot; online in due)
     postiOnline: 2,   // online si gioca in due: gli altri guardano
+    riprende: true,   // se l'host ricarica la pagina, la battaglia riprende con le stesse navi e gli stessi colpi (t.ripresa)
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "Giochi da solo contro il Bot" }],
     regole: [
       "Ognuno ha una griglia <b>10×10</b> e una <b>flotta</b>: Portaerei (5), Corazzata (4), Incrociatore (3), Sommergibile (3), Cacciatorpediniere (2).",
@@ -514,11 +526,13 @@
     }
 
     // ---------- piazzamento (con ANTEPRIMA: prima vedi dove va la nave, poi confermi) ----------
-    // o: { staccate, onPronto(stato), stato (già pronta: si aspetta solo l'altro), attesa (testo d'attesa) }
+    // o: { staccate, onPronto(stato), stato (già pronta: si aspetta solo l'altro), attesa (testo d'attesa),
+    //      bozza (le navi già messe: si continua da lì), onBozza(stato) (a ogni nave messa o tolta: per ritrovarle ricaricando) }
     function piazza(o) {
       if (!vivo()) return;
       schermo("piazza");
-      var pz = U.pz = { st: o.stato || statoVuoto(), prossima: o.stato ? NTOT : 0, oriz: true, ante: null, fatto: !!o.stato, o: o };
+      var bz = !o.stato && o.bozza && o.bozza.navi ? o.bozza : null;
+      var pz = U.pz = { st: o.stato || bz || statoVuoto(), prossima: o.stato ? NTOT : (bz ? bz.navi.length : 0), oriz: true, ante: null, fatto: !!o.stato, o: o };
       U.tit = el("div", { class: "nav-tit" });
       U.sub = el("div", { class: "nav-sub" });
       U.gr = Griglia(el, "", toccaCella);
@@ -552,14 +566,14 @@
     function metti() {
       var pz = U.pz, a = anteCelle(); if (!a || !a.ok) return;
       poni(pz.st, pz.prossima, FLOTTA[pz.prossima], pz.ante.x, pz.ante.y, pz.oriz); pz.prossima++; pz.ante = null;
-      suono("colpito", true); aggPiazza();
+      suono("colpito", true); aggPiazza(); bozza();
     }
     function ruota() { var pz = U.pz; if (!pz || pz.fatto) return; pz.oriz = !pz.oriz; aggancia(); aggPiazza(); }
-    function aCaso() { var pz = U.pz; if (!pz || pz.fatto) return; pz.st = flottaCasuale(pz.o.staccate); pz.prossima = NTOT; pz.ante = null; aggPiazza(); }
+    function aCaso() { var pz = U.pz; if (!pz || pz.fatto) return; pz.st = flottaCasuale(pz.o.staccate); pz.prossima = NTOT; pz.ante = null; aggPiazza(); bozza(); }
     function togli() {
       var pz = U.pz; if (!pz || pz.fatto || pz.prossima === 0) return;
       pz.prossima--; pz.st.navi[pz.prossima].celle.forEach(function (c) { pz.st.mappa[c.y][c.x] = -1; });
-      pz.st.navi.length = pz.prossima; pz.ante = null; aggPiazza();
+      pz.st.navi.length = pz.prossima; pz.ante = null; aggPiazza(); bozza();
     }
     function vai() {
       var pz = U.pz; if (!pz || pz.fatto) return;
@@ -597,6 +611,7 @@
       else if (a && a.ok) { U.bVai.textContent = "✅ Metti qui la " + f.nome; U.bVai.disabled = false; }
       else { U.bVai.textContent = "Tocca il mare per mettere la nave"; U.bVai.disabled = true; }
     }
+    function bozza() { var pz = U.pz; if (pz && pz.o.onBozza) try { pz.o.onBozza(pz.st); } catch (e) {} }   // (la flotta a metà, da ritrovare)
     function staPiazzando() { return fase === "piazza" && U.pz && !U.pz.fatto; }
 
     // ---------- battaglia ----------
@@ -790,6 +805,29 @@
     L.ch = !!ch && ch.attive(t.impostazioni);
     function nomeAvv() { return L.nomeAvv || "l'avversario"; }
     function regole() { return regoleDa(t.impostazioni, true); }
+    // ---- la ripresa: se l'host ricarica la pagina (o l'app si chiude), si ritrovano le due flotte, i colpi e il turno;
+    // mentre sistema le navi anche quelle già messe (L.bozza). Si ricorda a ogni foto mandata e a ogni nave messa
+    var RIP = t.ripresa && t.ripresa.stato && t.ripresa.stato.navale, ricordata = !!RIP;
+    function ricorda() {
+      if (!t.ricorda) return;
+      if (L.fase === "lobby" || !P) { if (ricordata) { ricordata = false; t.ricorda(null); } return; }
+      ricordata = true;
+      t.ricorda({ navale: { L: { fase: L.fase, avvId: L.avvId, nomeAvv: L.nomeAvv, ominoAvv: L.ominoAvv, bozza: L.bozza || null }, P: P, cf: chiaveFine } });
+    }
+    // l'avversario è sparito a metà partita: il posto resta suo per un altro minuto; se torna (stesso id) si riprende da
+    // dove era rimasta, se no vinci a tavolino
+    function aspettaAvv(id, avvisa) {
+      if (L.assente) return;
+      var chi = L.nomeAvv || "L'avversario";
+      L.assente = setTimeout(function () {
+        L.assente = null;
+        if (L.avvId !== id) return;
+        L.avvId = null; L.ominoAvv = null;
+        if (P && P.fase !== "fine") { P.fase = "fine"; P.vince = 0; P.tavolino = chi; }   // non è tornato: vinci a tavolino
+        if (P && ui) aggiorna(true); else mandaVm(true);
+      }, 60000);
+      if (avvisa && ui) ui.reteAvviso("📶 " + chi + " ha perso il collegamento: se non torna entro un minuto, vinci a tavolino.");
+    }
 
     // "⚙️ Regole" nella saletta: si vedono subito anche dall'altro
     t.onRegole = function (im) { L.ch = !!ch && ch.attive(im || t.impostazioni); if (L.fase === "lobby") { lobby(); mandaVm(); } };
@@ -799,21 +837,8 @@
       onConnesso: function () { L.pronta = true; if (L.fase === "lobby") lobby(); },
       onAddio: function (id) {
         if (id !== L.avvId) return;
-        var chi = L.nomeAvv || "L'avversario";
-        // a metà partita (telefono spento, app chiusa): il posto resta suo per un altro minuto; se torna (stesso id) si
-        // riprende da dove era rimasta, se no vinci a tavolino
-        if (L.fase !== "lobby" && P && P.fase !== "fine") {
-          if (L.assente) return;
-          L.assente = setTimeout(function () {
-            L.assente = null;
-            if (L.avvId !== id) return;
-            L.avvId = null; L.ominoAvv = null;
-            if (P && P.fase !== "fine") { P.fase = "fine"; P.vince = 0; P.tavolino = chi; }   // non è tornato: vinci a tavolino
-            if (P && ui) aggiorna(true); else mandaVm(true);
-          }, 60000);
-          if (ui) ui.reteAvviso("📶 " + chi + " ha perso il collegamento: se non torna entro un minuto, vinci a tavolino.");
-          return;
-        }
+        // a metà partita (telefono spento, app chiusa): il posto resta suo per un altro minuto (vedi aspettaAvv)
+        if (L.fase !== "lobby" && P && P.fase !== "fine") return aspettaAvv(id, true);
         L.avvId = null; L.ominoAvv = null;
         if (L.fase === "lobby") { L.nomeAvv = null; lobby(); mandaVm(); return; }
         aggiorna(true);
@@ -863,7 +888,7 @@
       },
       // (arriva solo se il primo collegamento non riesce: a partita iniziata la rete si ricollega da sola)
       onErrore: function () { if (L.fase === "lobby" && !L.pronta) erroreNav(t, "Problema di collegamento. Controlla la connessione e riprova."); }
-    });
+    }, { ripresa: !!(RIP && RIP.P) });   // (ripresa: l'avversario resta sulla plancia, non torna in saletta)
     function vmPub() {
       var v = P && L.fase === "gioco" ? vmPartita(P) : { fase: "lobby", regole: regole() };
       v.ids = { host: "host", avv: L.avvId };
@@ -874,6 +899,7 @@
     }
     function mandaVm(forza) {
       ricordaAvv("navale", L.codice, L.avvId || (L.riserva && Date.now() < L.riserva.fino ? L.riserva.id : null));
+      ricorda();
       var v = vmPub(), j = JSON.stringify(v);
       if (!forza && j === ultimoVm) return;
       ultimoVm = j; rete.invia({ t: "vm", vm: v });
@@ -888,21 +914,28 @@
         extra: [el("p", { class: "modulo-nota", style: "text-align:center", text: testoRegole(regole()) })],
         onComincia: comincia, onEsci: function () { chiudi(); } });
     }
-    function chiudi() { if (ui) ui.spegni(); clearTimeout(tTurno); clearTimeout(L.assente); L.assente = null; rete.chiudi(); t.esci(); }
+    function chiudi() { if (t.ricorda) t.ricorda(null); if (ui) ui.spegni(); clearTimeout(tTurno); clearTimeout(L.assente); L.assente = null; rete.chiudi(); t.esci(); }
     function comincia() {
       if (!L.avvId) return;
-      L.fase = "gioco"; P = nuovaPartita(regole()); chiaveFine = null;
+      L.fase = "gioco"; P = nuovaPartita(regole()); chiaveFine = null; L.bozza = null;
+      nuovaPlancia();
+      piazzaIo();
+      mandaVm();
+    }
+    function nuovaPlancia() {
       if (ui) ui.spegni();
       ui = Plancia(t, { nomeAvv: nomeAvv, onEsci: function () {
         if (P && P.fase !== "fine") conferma(t, "Chiudere la partita per tutti?", "Chiudi", chiudi); else chiudi();
       },
         chiacOn: function () { return L.ch && !!P && P.fase === "battaglia"; },
         chiac: function (c) { if (!L.ch || !P || !ch.valido("navale", c)) return; ui.chiac(true, c); rete.inviaVeloce({ t: "chiac", k: 0, id: "host", c: c }); } });
-      piazzaIo();
-      mandaVm();
     }
+    // sistemo le mie navi (dalla bozza, se ricaricando ne avevo già messe qualcuna)
     function piazzaIo() {
-      ui.piazza({ staccate: P.regole.staccate, onPronto: function (st) { if (P.fase !== "piazza") return; P.flotte[0] = st; provaVia(); aggiorna(); } });
+      var bz = L.bozza ? dallaBozza(L.bozza, P.regole.staccate) : null;
+      ui.piazza({ staccate: P.regole.staccate, bozza: bz,
+        onBozza: function (st) { if (P && P.fase === "piazza" && !P.flotte[0]) { L.bozza = posa(st); ricorda(); } },
+        onPronto: function (st) { if (P.fase !== "piazza") return; P.flotte[0] = st; L.bozza = null; provaVia(); aggiorna(); } });
     }
     function provaVia() {   // tutti e due pronti: si comincia (a caso chi spara per primo)
       if (P.fase !== "piazza" || !P.flotte[0] || !P.flotte[1]) return;
@@ -953,20 +986,41 @@
     t.onRivincita = allaRivincita;
     function rivincita() {   // stessa stanza, stesso avversario: si risistemano le navi
       if (!L.avvId || L.assente) return allaSaletta();   // (l'avversario è uscito e non è ancora tornato: si torna in saletta)
-      P = nuovaPartita(regole()); chiaveFine = null; clearTimeout(tTurno);
+      P = nuovaPartita(regole()); chiaveFine = null; clearTimeout(tTurno); L.bozza = null;
       piazzaIo(); mandaVm();
     }
     function allaSaletta() {
       if (L.assente) { clearTimeout(L.assente); L.assente = null; L.avvId = null; L.ominoAvv = null; }   // chi era uscito un attimo e non è tornato: il posto si libera
       if (ui) ui.spegni(); ui = null; P = null; clearTimeout(tTurno); L.nomeAvv = L.avvId ? L.nomeAvv : null; lobby(); mandaVm(); }
-    lobby();
+    // (ripresa) la partita com'era: stesse flotte, stessi colpi, stesso turno (il tempo per sparare riparte intero).
+    // L'avversario rientra da solo (gli si rimandano foto e navi); se non torna entro un minuto, vinci a tavolino
+    if (RIP && RIP.P && RIP.L) {
+      L.fase = "gioco"; L.avvId = RIP.L.avvId || null; L.nomeAvv = RIP.L.nomeAvv || null; L.ominoAvv = avatarOk(RIP.L.ominoAvv); L.bozza = RIP.L.bozza || null;
+      P = RIP.P; chiaveFine = RIP.cf || (P.fase === "fine" ? "ripresa" : null);   // (a partita finita: niente trofei né classifica di nuovo)
+      nuovaPlancia();
+      if (P.fase === "piazza") {
+        if (P.flotte[0]) ui.piazza({ staccate: P.regole.staccate, stato: P.flotte[0], onPronto: function () {} });   // le mie navi erano già pronte
+        else piazzaIo();
+      }
+      if (L.avvId && P.fase !== "fine") aspettaAvv(L.avvId, false);
+      aggiorna(true);
+    } else lobby();
   }
 
   function ospiteNavale(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var el = t.el;
-    var S = { myId: null, rete: null, nome: "", vm: null, g: null, stato: null, prontoMandato: false, pend: null, lastN: null, salvata: {}, spett: null, msg: null };
+    var S = { myId: null, rete: null, nome: "", vm: null, g: null, stato: null, prontoMandato: false, pend: null, lastN: null, salvata: {}, spett: null, msg: null, bozza: null };
     var ui = null, tRipeti = null;
+    // le mie navi restano su questo telefono (sg-nav-CODICE: { g, navi, bozza }): ricaricando la pagina, anche mentre le
+    // sistemo, le ritrovo; se l'host non le ha ancora (ha ricaricato lui), gliele rimando da solo. Si cancella a fine partita
+    var CHIAVE = "sg-nav-" + String(codice).toUpperCase();
+    function leggiNav() { try { var o = JSON.parse(localStorage.getItem(CHIAVE) || "null"); return o && typeof o === "object" ? o : null; } catch (e) { return null; } }
+    function salvaNav(o) { try { localStorage.setItem(CHIAVE, JSON.stringify(o)); } catch (e) {} }
+    function scordaNav() { try { localStorage.removeItem(CHIAVE); } catch (e) {} }
+    try {   // (quelle rimaste di altre partite non servono più)
+      for (var kn = localStorage.length - 1; kn >= 0; kn--) { var k0 = localStorage.key(kn); if (k0 && k0.indexOf("sg-nav-") === 0 && k0 !== CHIAVE) localStorage.removeItem(k0); }
+    } catch (e) {}
     if (t.nomeProfilo && t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else schermaNome();   // col profilo si entra da soli
     function schermaNome() {
       var s = t.schermata({ icona: "🚢", titolo: "Entra nella Battaglia", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
@@ -984,7 +1038,7 @@
       s._contenuto.appendChild(S.msg);
       t.mostra(s);
     }
-    function esci() { if (ui) ui.spegni(); clearInterval(tRipeti); if (S.rete) { try { if (!S.spett) S.rete.invia({ t: "esco" }); } catch (e) {} S.rete.chiudi(); } t.esci(); }   // (l'host sa che sono uscito apposta)
+    function esci() { scordaNav(); if (ui) ui.spegni(); clearInterval(tRipeti); if (S.rete) { try { if (!S.spett) S.rete.invia({ t: "esco" }); } catch (e) {} S.rete.chiudi(); } t.esci(); }   // (l'host sa che sono uscito apposta)
     function join() { if (S.rete) S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null }); }
     function collega() {
       attesa("Collegamento in corso…");
@@ -1005,7 +1059,7 @@
             return;
           }
           if (m.t === "vm" && m.vm) foto(m.vm);
-          else if (m.t === "flotta") { if (S.vm && m.g === S.vm.g) { S.stato = dallaPosa(m.navi, false); if (S.vm) foto(S.vm); } }
+          else if (m.t === "flotta") { if (S.vm && m.g === S.vm.g) { S.stato = dallaPosa(m.navi, false); if (S.stato) { S.prontoMandato = true; salvaNav({ g: m.g, navi: m.navi }); } if (S.vm) foto(S.vm); } }
         },
         onHostVia: function (via) { if (ui) ui.reteAvviso(via ? "📡 " + ((S.vm && S.vm.nomi && S.vm.nomi[0]) || "L'host") + " si è disconnesso: aspettiamo che torni…" : ""); },
         onChiuso: function () { if (ui) ui.spegni(); clearInterval(tRipeti); erroreNav(t, "La partita è stata chiusa dall'host."); },
@@ -1014,7 +1068,7 @@
       // ogni 2,5 s: rimando quello che è rimasto senza risposta (il "pronto", il colpo) e chiedo le mie navi se mi mancano
       tRipeti = setInterval(function () {
         var vm = S.vm; if (!vm || !S.rete || S.spett) return;
-        if (vm.fase === "piazza" && S.prontoMandato && S.stato && !vm.pronti[1]) S.rete.invia({ t: "pronto", navi: posa(S.stato) });
+        if (vm.fase === "piazza" && S.stato && !vm.pronti[1]) S.rete.invia({ t: "pronto", navi: posa(S.stato) });
         if (S.pend && vm.fase === "battaglia" && vm.n === S.pend.n) S.rete.invia({ t: "colpo", x: S.pend.x, y: S.pend.y, n: S.pend.n });
         if (!S.stato && vm.fase !== "lobby" && vm.pronti && vm.pronti[1]) S.rete.invia({ t: "flotta?" });
       }, 2500);
@@ -1049,7 +1103,19 @@
         return;
       }
       // una partita nuova (anche la rivincita): si ricomincia a sistemare le navi
-      if (vm.g !== S.g) { S.g = vm.g; S.stato = null; S.prontoMandato = false; S.pend = null; S.lastN = null; S.pzKey = null; }
+      if (vm.g !== S.g) {
+        S.g = vm.g; S.stato = null; S.prontoMandato = false; S.pend = null; S.lastN = null; S.pzKey = null; S.bozza = null;
+        // ho ricaricato la pagina (o l'host la sua): le mie navi di questa partita, salvate qui
+        var sv = leggiNav();
+        if (sv && sv.g === vm.g && vm.fase === "piazza" && !vm.pronti[1]) {
+          if (sv.navi) {   // erano pronte, ma l'host non le ha: gliele rimando da solo (non le rifaccio)
+            S.stato = dallaPosa(sv.navi, false);
+            if (S.stato) { S.prontoMandato = true; if (S.rete) S.rete.invia({ t: "pronto", navi: posa(S.stato) }); }
+          } else if (sv.bozza) S.bozza = dallaBozza(sv.bozza, false);   // le stavo sistemando: si continua da lì
+        }
+      }
+      // le mie navi sono pronte ma l'host non le ha (ha ricaricato prima di riceverle): gliele rimando subito
+      if (vm.fase === "piazza" && S.stato && !vm.pronti[1] && S.rete && Date.now() - (S.tPronto || 0) > 1500) { S.tPronto = Date.now(); S.rete.invia({ t: "pronto", navi: posa(S.stato) }); }
       if (!ui) ui = Plancia(t, { nomeAvv: function () { return (S.vm && S.vm.nomi && S.vm.nomi[0]) || "l'host"; }, onEsci: function () {
         if (S.vm && S.vm.fase !== "fine") conferma(t, "Uscire dalla partita?", "Esci", esci); else esci();
       },
@@ -1061,9 +1127,11 @@
         var key = S.stato && (S.prontoMandato || vm.pronti[1]) ? "pronta" : (vm.pronti[1] || vm.fase !== "piazza") ? "recupero" : "libera";
         if (ui.fase() !== "piazza" || S.pzKey !== key) {
           S.pzKey = key;
-          if (key === "libera") ui.piazza({ staccate: vm.regole.staccate, onPronto: function (st) {
-            S.stato = st; S.prontoMandato = true; S.pzKey = "pronta"; S.rete.invia({ t: "pronto", navi: posa(st) });
-          } });
+          if (key === "libera") ui.piazza({ staccate: vm.regole.staccate, bozza: S.bozza,
+            onBozza: function (st) { if (S.vm && S.vm.g === S.g) salvaNav({ g: S.g, bozza: posa(st) }); },
+            onPronto: function (st) {
+              S.stato = st; S.prontoMandato = true; S.pzKey = "pronta"; salvaNav({ g: S.g, navi: posa(st) }); S.rete.invia({ t: "pronto", navi: posa(st) });
+            } });
           else if (key === "pronta") ui.piazza({ staccate: vm.regole.staccate, stato: S.stato, onPronto: function () {} });
           else { ui.piazza({ staccate: false, stato: statoVuoto(), attesa: "Recupero le tue navi…", onPronto: function () {} }); S.rete.invia({ t: "flotta?" }); }
         }
@@ -1078,7 +1146,7 @@
       if (vm.fase === "battaglia") return disegnaBattaglia();
       // fine
       var vinto = vm.vince === 1, k = "navale-" + vm.g + "-" + S.myId;
-      if (!S.salvata[vm.g]) { S.salvata[vm.g] = true; if (vm.stat) salvaStatNavale(t, vinto, vm.stat[1], "online", null, k); }
+      if (!S.salvata[vm.g]) { S.salvata[vm.g] = true; scordaNav(); if (vm.stat) salvaStatNavale(t, vinto, vm.stat[1], "online", null, k); }   // (partita finita: le mie navi non servono più)
       var fa = t.faccine ? t.faccine() : null;   // la fila delle faccine (se la schermata c'è già, non si usa)
       if (fa) fa.style.margin = "0 0 8px";
       ui.fine({ key: vm.g, vinto: vinto, nomeAvv: nomeHost, suAvv: vm.campi[0], naviAvv: vm.svela && vm.svela[0], statTxt: testoStat(vm.stat && vm.stat[1]),

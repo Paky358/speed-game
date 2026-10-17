@@ -27,12 +27,44 @@
 // Per contare e guardare: contaCollegamenti(nome) (collegamenti aperti da quel telefono, anche le sbirciate),
 // BR.storia (ogni messaggio passato su un ".../<codice>/stato": { ms, da, r, topic, p }), BR.nube[uid].liste (le liste
 // del profilo: due telefoni con lo stesso uid le vedono uguali), BR.amicizie (le richieste d'amicizia mandate).
+// GLI UFFICI POSTALI (Passo 5, l'ufficio di riserva): c'è un broker finto per indirizzo (BR.indirizzi: 0 = HiveMQ, il primo;
+// 1 = EMQX, la riserva). Il primo usa BR.clients, BR.retained e BR.storia come sempre (le prove vecchie non cambiano); gli
+// altri stanno in BR.uffici[url] = { clients, retained, storia }. pulisci() del copione (BR.retained = {}) li azzera tutti.
+//   giuBroker(n, si)      = l'ufficio n è giù (si = false: torna su). Chi era collegato lì cade (niente testamento: il broker
+//                           è sparito), chi si collega aspetta; quando torna su, i collegamenti si rifanno da soli
+//   lentoBroker(n, ms)    = l'ufficio n ci mette ms a collegare (anche i ricollegamenti); 0 = normale
+//   statoStanza(cod, n)   = la foto trattenuta della stanza sull'ufficio n (senza n: il primo)
+//   congela(nome, n) / scongela(nome, n) / contaCollegamenti(nome, n) / viviDi(nome, n) = solo l'ufficio n (senza n: tutti)
+//   la riserva: di partenza accesa; BR.riserva = false (tutti i telefoni che si aprono) o apriTel(nome, { riserva: false })
+//   la spengono (sg-riserva = "0" nella memoria del telefono: un ufficio solo, come prima)
 document.open(); document.write('<!doctype html><body style="margin:0;background:#333;position:relative"></body>'); document.close();
-window.BR = { clients: [], retained: {}, log: [], perNome: {}, mem: {}, tel: {}, conti: {}, ritardo: 4, nube: {}, amicizie: [], storia: [], congelati: {} };
-// ogni messaggio sullo "stato" di una stanza (foto dell'host, testamenti) resta in BR.storia (per fotoSale del Passo 3)
-window.segnaStoria = function (da, topic, payload, r) {
+window.BR = { clients: [], retained: {}, log: [], perNome: {}, mem: {}, tel: {}, conti: {}, ritardo: 4, nube: {}, amicizie: [], storia: [], congelati: {},
+  indirizzi: ["wss://broker.hivemq.com:8884/mqtt", "wss://broker.emqx.io:8084/mqtt"], uffici: {}, giu: {}, lento: {}, riserva: true };
+// gli uffici che non sono il primo si azzerano quando il copione azzera BR.retained (pulisci)
+(function () {
+  let r0 = BR.retained;
+  Object.defineProperty(BR, "retained", { configurable: true, enumerable: true, get: () => r0, set: v => {
+    r0 = v;
+    Object.keys(BR.uffici || {}).forEach(u => (BR.uffici[u].clients || []).forEach(c => { c.morto = true; c.connected = false; }));
+    BR.uffici = {}; BR.giu = {}; BR.lento = {};
+  } });
+})();
+// il numero di un ufficio dal suo indirizzo (un indirizzo nuovo si aggiunge; nessun indirizzo = il primo)
+window.numeroUfficio = url => { if (!url) return 0; let i = BR.indirizzi.indexOf(url); if (i < 0) { BR.indirizzi.push(url); i = BR.indirizzi.length - 1; } return i; };
+// l'ufficio n (o di un indirizzo): { n, url, clients, retained, storia }
+window.ufficio = function (x) {
+  const n = typeof x === "number" ? x : numeroUfficio(x), url = BR.indirizzi[n];
+  if (!n) return { n: 0, url, get clients() { return BR.clients; }, set clients(v) { BR.clients = v; }, get retained() { return BR.retained; },
+    get storia() { return (BR.storia = BR.storia || []); } };
+  BR.uffici = BR.uffici || {};
+  return BR.uffici[url] = BR.uffici[url] || { n, url, clients: [], retained: {}, storia: [] };
+};
+const ufficioGiu = n => !!(BR.giu && BR.giu[n]);
+// ogni messaggio sullo "stato" di una stanza (foto dell'host, testamenti) resta in BR.storia (per fotoSale del Passo 3);
+// quelli degli altri uffici nella storia del loro ufficio (ufficio(1).storia)
+window.segnaStoria = function (da, topic, payload, r, n) {
   if (!/\/stato$/.test(topic)) return;
-  const s = BR.storia = BR.storia || [];
+  const s = n ? ufficio(n).storia : (BR.storia = BR.storia || []);
   s.push({ ms: Date.now(), da, r: !!r, topic, p: String(payload) });
   if (s.length > 1500) s.splice(0, 500);
 };
@@ -43,48 +75,86 @@ window.contoFinto = (nome, pwd, extra) => { const k = String(nome).trim().toLowe
 if (!window.__autoConferma) window.__autoConferma = setInterval(() => {
   document.querySelectorAll("iframe").forEach(f => { try { const b = f.contentWindow.document.querySelector(".conferma-sfondo .btn-rosso:not([disabled])"); if (b) b.click(); } catch (e) {} });
 }, 100);
-window.creaClient = function (nome, opts) {
-  const c = { nome, opts, h: {}, subs: new Set(), connected: false, frozen: false, morto: false,
+// un telefono congelato (tutto, o solo su un ufficio: congela(nome, n))
+const gelato = (nome, n) => { const g = BR.congelati && BR.congelati[nome]; return g === true || !!(g && g[n]); };
+// url = l'ufficio a cui si collega (il finto mqtt.connect(url, o) lo passa; senza: il primo)
+window.creaClient = function (nome, opts, url) {
+  const n0 = numeroUfficio(url), U = () => ufficio(n0), segno = n0 ? " [u" + (n0 + 1) + "]" : "";
+  const c = { nome, opts, url: BR.indirizzi[n0], u: n0, h: {}, subs: new Set(), connected: false, frozen: false, morto: false,
     on(ev, fn) { (this.h[ev] = this.h[ev] || []).push(fn); return this; },
     emit(ev, ...a) { (this.h[ev] || []).forEach(f => { try { f(...a); } catch (e) { BR.log.push("ERR " + nome + ": " + e.message); } }); },
     subscribe(topic, cb) {
       const lista = Array.isArray(topic) ? topic : [topic];
       lista.forEach(t => this.subs.add(t));
-      setTimeout(() => { if (cb) cb(null, lista.map(t => ({ topic: t, qos: 0 }))); lista.forEach(t => { const r = BR.retained[t]; if (r != null) this.deliver(t, r, true); }); }, 5);
+      setTimeout(() => { if (cb) cb(null, lista.map(t => ({ topic: t, qos: 0 }))); lista.forEach(t => { const r = U().retained[t]; if (r != null) this.deliver(t, r, true); }); }, 5);
       return this;
     },
     unsubscribe(topic) { (Array.isArray(topic) ? topic : [topic]).forEach(t => this.subs.delete(t)); return this; },
     publish(topic, payload, o) {
       if (!this.connected || this.frozen) return this;
-      if (o && o.retain) { if (payload === "") delete BR.retained[topic]; else BR.retained[topic] = payload; }
-      BR.log.push(nome + " → " + topic.split("/").slice(2).join("/") + " " + String(payload).slice(0, 80));
+      const u = U();
+      if (o && o.retain) { if (payload === "") delete u.retained[topic]; else u.retained[topic] = payload; }
+      BR.log.push(nome + " → " + topic.split("/").slice(2).join("/") + " " + String(payload).slice(0, 80) + segno);
       if (BR.log.length > 400) BR.log.splice(0, 100);
-      segnaStoria(nome, topic, payload, o && o.retain);
-      BR.clients.forEach(k => { if (k.connected && !k.frozen && k.subs.has(topic)) k.deliver(topic, payload, false); });
+      segnaStoria(nome, topic, payload, o && o.retain, n0);
+      u.clients.forEach(k => { if (k.connected && !k.frozen && k.subs.has(topic)) k.deliver(topic, payload, false); });
       return this;
     },
     deliver(topic, payload, ret) { setTimeout(() => { if (this.connected && !this.frozen) this.emit("message", topic, { toString: () => payload }, { retain: ret }); }, BR.ritardo); },
     // uscita educata (come mqtt.end): niente testamento
-    end() { if (!this.connected && this.morto) return this; this.connected = false; this.morto = true; BR.clients = BR.clients.filter(x => x !== this); setTimeout(() => { this.emit("close"); this.emit("end"); }, 1); return this; },
-    reconnect() { if (this.morto || this.connected) return; this.frozen = false; this.connected = true; this.subs = new Set(); if (!BR.clients.includes(this)) BR.clients.push(this); this.emit("connect"); },
+    end() { if (!this.connected && this.morto) return this; this.connected = false; this.morto = true; const u = U(); u.clients = u.clients.filter(x => x !== this); setTimeout(() => { this.emit("close"); this.emit("end"); }, 1); return this; },
+    // (si collega davvero: se l'ufficio è giù aspetta che torni)
+    collegati() {
+      if (this.morto) return;
+      if (spento(nome)) { this.connected = false; this.frozen = true; const u0 = U(); u0.clients = u0.clients.filter(x => x !== this); return; }   // (telefono spento: niente rete)
+      if (ufficioGiu(n0)) { this.connected = false; this.__giuBr = true; return; }
+      delete this.__giuBr; this.frozen = false; this.connected = true; this.subs = new Set();
+      const u = U(); if (!u.clients.includes(this)) u.clients.push(this);
+      this.emit("connect");
+    },
+    reconnect() { if (this.morto || this.connected) return; this.collegati(); },
     testamento() {
       const w = this.opts && this.opts.will; if (!w) return;
-      if (w.retain) { if (w.payload === "") delete BR.retained[w.topic]; else BR.retained[w.topic] = w.payload; }
-      BR.log.push(nome + " ✝ " + w.topic.split("/").slice(2).join("/") + " " + String(w.payload).slice(0, 60));
-      segnaStoria(nome + " ✝", w.topic, w.payload, w.retain);
-      BR.clients.forEach(k => { if (k.connected && !k.frozen && k.subs.has(w.topic)) k.deliver(w.topic, w.payload, false); });
+      const u = U();
+      if (w.retain) { if (w.payload === "") delete u.retained[w.topic]; else u.retained[w.topic] = w.payload; }
+      BR.log.push(nome + " ✝ " + w.topic.split("/").slice(2).join("/") + " " + String(w.payload).slice(0, 60) + segno);
+      segnaStoria(nome + " ✝", w.topic, w.payload, w.retain, n0);
+      u.clients.forEach(k => { if (k.connected && !k.frozen && k.subs.has(w.topic)) k.deliver(w.topic, w.payload, false); });
     },
     // sparisci() = telefono che si spegne all'improvviso (il broker manda il "testamento"); torna() = si riaccende
-    sparisci() { if (!this.connected) return; delete this.__gelo; this.connected = false; this.frozen = true; BR.clients = BR.clients.filter(x => x !== this); this.testamento(); this.emit("close"); this.emit("offline"); },
-    torna() { if (this.morto) return; delete this.__gelo; this.frozen = false; this.connected = true; this.subs = new Set(); if (!BR.clients.includes(this)) BR.clients.push(this); this.emit("connect"); },
+    sparisci() { if (!this.connected) return; delete this.__gelo; this.connected = false; this.frozen = true; const u = U(); u.clients = u.clients.filter(x => x !== this); this.testamento(); this.emit("close"); this.emit("offline"); },
+    torna() { if (this.morto) return; delete this.__gelo; this.collegati(); },
+    // l'ufficio è caduto: il collegamento si chiude (niente testamento: il broker non c'è); torna da solo quando l'ufficio torna
+    cadeUfficio() { if (!this.connected || this.morto) return; this.connected = false; this.__giuBr = true; const u = U(); u.clients = u.clients.filter(x => x !== this); this.emit("close"); this.emit("offline"); },
     // la rete salta un attimo: errore, il broker manda il testamento, poi mqtt si ricollega da solo dopo ms
     inciampa(ms) { if (!this.connected) return; this.emit("error", new Error("rete saltata (finta)")); this.sparisci(); setTimeout(() => this.torna(), ms || 2500); }
   };
-  BR.clients.push(c); (BR.perNome[nome] = BR.perNome[nome] || []).push(c);
-  // (un telefono congelato non arriva al broker: il collegamento parte quando si scongela)
-  setTimeout(() => { if (c.morto) return; if (BR.congelati && BR.congelati[nome]) { c.__gelo = true; c.frozen = true; BR.clients = BR.clients.filter(x => x !== c); return; } c.connected = true; c.emit("connect"); }, 10);
+  U().clients.push(c); (BR.perNome[nome] = BR.perNome[nome] || []).push(c);
+  // (un telefono congelato non arriva al broker: il collegamento parte quando si scongela; un ufficio lento ci mette di più;
+  // un ufficio giù: si collega quando torna, tranne i collegamenti che non riprovano da soli, reconnectPeriod 0)
+  setTimeout(() => {
+    if (c.morto) return;
+    if (gelato(nome, n0)) { c.__gelo = true; c.frozen = true; const u = U(); u.clients = u.clients.filter(x => x !== c); return; }
+    if (spento(nome)) { c.frozen = true; const u = U(); u.clients = u.clients.filter(x => x !== c); return; }   // (spento: parte quando si riaccende)
+    if (ufficioGiu(n0)) { c.__giuBr = true; if (opts && opts.reconnectPeriod === 0) c.__maiPiu = true; const u = U(); u.clients = u.clients.filter(x => x !== c); return; }
+    c.connected = true; c.emit("connect");
+  }, 10 + ((BR.lento && BR.lento[n0]) || 0));
   return c;
 };
+// tutti i collegamenti di tutti i telefoni (anche la regia)
+const tuttiClient = () => Object.keys(BR.perNome || {}).flatMap(n => BR.perNome[n] || []);
+// l'ufficio n va giù (si = true, di partenza) o torna su (si = false)
+window.giuBroker = function (n, si) {
+  n = +n || 0; si = si !== false;
+  BR.giu = BR.giu || {};
+  if (si) { BR.giu[n] = true; tuttiClient().filter(c => c.u === n).forEach(c => c.cadeUfficio()); BR.log.push("UFFICIO " + n + " GIÙ"); return; }
+  delete BR.giu[n]; BR.log.push("UFFICIO " + n + " SU");
+  tuttiClient().filter(c => c.u === n && c.__giuBr && !c.morto && !c.__gelo && !c.__maiPiu).forEach(c => {
+    setTimeout(() => { if (!c.morto && !c.connected && !c.__gelo && !ufficioGiu(n)) c.collegati(); }, 10 + ((BR.lento && BR.lento[n]) || 0));
+  });
+};
+// l'ufficio n ci mette ms a collegare (0 = normale)
+window.lentoBroker = function (n, ms) { BR.lento = BR.lento || {}; if (+ms > 0) BR.lento[+n || 0] = +ms; else delete BR.lento[+n || 0]; };
 // una memoria finta (localStorage o sessionStorage) che resta nella pagina dei telefoni
 window.memoriaFinta = function (d) {
   return { getItem: k => (Object.prototype.hasOwnProperty.call(d, k) ? d[k] : null), setItem: (k, v) => { d[k] = String(v); },
@@ -119,7 +189,7 @@ window.preparaFinestra = function (w, nome, opz) {
   const def = (k, get, set) => Object.defineProperty(w, k, { configurable: true, get, set: set || (() => {}) });
   def("localStorage", () => memoriaFinta(mem.l));
   def("sessionStorage", () => memoriaFinta(mem.s));
-  const finto = { connect: (url, o) => creaClient(nome, o), finto: true };
+  const finto = { connect: (url, o) => creaClient(nome, o, url), finto: true };   // (ogni indirizzo è un ufficio postale finto suo)
   def("mqtt", () => finto);   // (lo script vero di mqtt prova a mettersi qui: viene ignorato)
   let sg = null;
   def("SG", () => sg, v => { sg = v; const avvia = v.avviaApp; v.avviaApp = function () { if (!w.__permesso) return; return avvia.apply(v, arguments); }; });   // l'app parte quando lo dico io
@@ -219,6 +289,7 @@ window.apriTel = async function (nome, opz) {
   opz = Object.assign({}, BR.tel[nome] ? BR.tel[nome].opz : {}, opz || {});
   const vecchio = document.getElementById("tel-" + nome); if (vecchio) vecchio.remove();
   if (BR.congelati) delete BR.congelati[nome];   // (un telefono che si apre non è più fermo)
+  if (BR.spenti) delete BR.spenti[nome];         // (né spento)
   const f = document.createElement("iframe"); f.id = "tel-" + nome;
   f.src = "/index.html?v=prova" + (opz.hash ? "#" + opz.hash : "");
   const x = opz.x != null ? opz.x : 185 * Object.keys(BR.tel).length;
@@ -226,6 +297,8 @@ window.apriTel = async function (nome, opz) {
   document.body.appendChild(f);
   preparaFinestra(f.contentWindow, nome, opz);
   if (nuovo || chiesto) { const l = BR.mem[nome].l; if (opz.salaSempre) delete l["sg-sala-sempre"]; else l["sg-sala-sempre"] = "0"; }
+  // l'ufficio di riserva: acceso, salvo opz.riserva = false o BR.riserva = false (vale a ogni apertura, anche le ricariche)
+  { const l = BR.mem[nome].l, no = opz.riserva === false || (opz.riserva == null && BR.riserva === false); if (no) l["sg-riserva"] = "0"; else delete l["sg-riserva"]; }
   BR.tel[nome] ={ f, opz: Object.assign({}, opz, { hash: null, x }) };
   await new Promise(r => { f.onload = r; });
   const w = f.contentWindow;
@@ -258,28 +331,37 @@ window.clicca = function (w, cerca, sel) {
   if (!n) return false;
   n.click(); return true;
 };
-// i collegamenti vivi di un telefono
-window.viviDi = nome => (BR.perNome[nome] || []).filter(c => c.connected && !c.morto);
-window.spegni = nome => viviDi(nome).forEach(c => c.sparisci());
-window.riaccendi = nome => (BR.perNome[nome] || []).filter(c => c.frozen && !c.morto).forEach(c => c.torna());
+// i collegamenti vivi di un telefono (n: solo quelli dell'ufficio n)
+window.viviDi = (nome, n) => (BR.perNome[nome] || []).filter(c => c.connected && !c.morto && (n == null || c.u === n));
+// spegni: il telefono non ha più rete, verso NESSUN ufficio (anche i collegamenti nuovi, es. quello di riserva, restano
+// fermi finché non si riaccende); riaccendi: tutti i collegamenti fermi ripartono
+window.spegni = nome => { BR.spenti = BR.spenti || {}; BR.spenti[nome] = true; viviDi(nome).forEach(c => c.sparisci()); };
+window.riaccendi = nome => { if (BR.spenti) delete BR.spenti[nome]; (BR.perNome[nome] || []).filter(c => c.frozen && !c.morto).forEach(c => c.torna()); };
+const spento = nome => !!(BR.spenti && BR.spenti[nome]);
 window.inciampa = (nome, ms) => viviDi(nome).forEach(c => c.inciampa(ms));
 // il telefono si ferma ma il broker non se n'è accorto (niente testamento): non manda e non riceve niente.
 // (la pagina va avanti: è solo la rete che tace. spegni(nome) dopo congela = il broker se ne accorge e manda il testamento)
-window.congela = nome => {
-  BR.congelati = BR.congelati || {}; BR.congelati[nome] = true;
-  viviDi(nome).forEach(c => { c.__gelo = true; c.frozen = true; BR.clients = BR.clients.filter(x => x !== c); });
+// congela(nome, n) = fermo solo verso l'ufficio n (anche i collegamenti nuovi a quell'ufficio): per gli altri va tutto bene
+window.congela = (nome, n) => {
+  BR.congelati = BR.congelati || {};
+  if (n == null) BR.congelati[nome] = true;
+  else if (BR.congelati[nome] !== true) { BR.congelati[nome] = Object.assign({}, BR.congelati[nome] || {}); BR.congelati[nome][n] = true; }
+  viviDi(nome, n).forEach(c => { c.__gelo = true; c.frozen = true; const u = ufficio(c.u); u.clients = u.clients.filter(x => x !== c); });
 };
-// riparte da dove era (gli stessi collegamenti, gli stessi topic: quello che è passato intanto è perso)
-window.scongela = nome => {
-  if (BR.congelati) delete BR.congelati[nome];
-  (BR.perNome[nome] || []).filter(c => c.__gelo && !c.morto).forEach(c => {
+// riparte da dove era (gli stessi collegamenti, gli stessi topic: quello che è passato intanto è perso). n: solo l'ufficio n
+window.scongela = (nome, n) => {
+  const g = BR.congelati && BR.congelati[nome];
+  if (n == null || g === true) { if (BR.congelati) delete BR.congelati[nome]; }
+  else if (g) { delete g[n]; if (!Object.keys(g).length) delete BR.congelati[nome]; }
+  (BR.perNome[nome] || []).filter(c => c.__gelo && !c.morto && !gelato(nome, c.u)).forEach(c => {
     delete c.__gelo; c.frozen = false;
-    if (!BR.clients.includes(c)) BR.clients.push(c);
+    if (ufficioGiu(c.u)) { c.connected = false; c.__giuBr = true; return; }   // (intanto l'ufficio è caduto: torna con lui)
+    const u = ufficio(c.u); if (!u.clients.includes(c)) u.clients.push(c);
     if (!c.connected) { c.connected = true; c.emit("connect"); }   // (nato mentre era fermo)
   });
 };
-// quanti collegamenti ha aperto quel telefono da quando c'è (ricariche e sbirciate comprese)
-window.contaCollegamenti = nome => (BR.perNome[nome] || []).length;
+// quanti collegamenti ha aperto quel telefono da quando c'è (ricariche e sbirciate comprese; n: solo verso l'ufficio n)
+window.contaCollegamenti = (nome, n) => (BR.perNome[nome] || []).filter(c => n == null || c.u === n).length;
 // la pagina si ricarica: i collegamenti cadono di colpo (il broker manda i testamenti), poi la pagina riparte
 // senza il "#..." (l'app l'ha già tolto dall'indirizzo) e con la stessa memoria
 window.ricarica = async function (nome, opz) {
@@ -296,7 +378,8 @@ window.chiudiApp = async function (nome, opz) {
 };
 // il codice dell'ultima stanza aperta (dall'annuncio trattenuto "meta") e la sua foto trattenuta
 window.codici = () => Object.keys(BR.retained).filter(k => k.endsWith("/meta")).map(k => k.split("/")[2]);
-window.statoStanza = cod => { try { return JSON.parse(BR.retained["seratagiochi/v1/" + cod + "/stato"] || "null"); } catch (e) { return null; } };
+// (n: la foto trattenuta sull'ufficio n; senza: il primo)
+window.statoStanza = (cod, n) => { try { return JSON.parse(ufficio(+n || 0).retained["seratagiochi/v1/" + cod + "/stato"] || "null"); } catch (e) { return null; } };
 // l'host apre una stanza online di un gioco (nome come nella tessera, es. "Tris"): restituisce il codice
 window.apriStanza = async function (w, nomeGioco) {
   const tess = await aspetta(() => [...w.document.querySelectorAll(".tessera")].find(t => (t.querySelector("h2") || {}).textContent === nomeGioco), 5000);

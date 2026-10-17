@@ -486,7 +486,11 @@
     nuovoRound();
     return {
       st: st, gioca: gioca, prossimoRound: prossimoRound, chiudiPresa: chiudiPresa,
-      catture: function (val) { return catture(val, st.tavolo); }
+      catture: function (val) { return catture(val, st.tavolo); },
+      // la ripresa (l'host ha ricaricato la pagina): la partita com'è (un oggetto semplice) e di nuovo dentro il motore.
+      // I nomi restano quelli di chi tiene il motore (sono lo stesso oggetto dell'host)
+      esporta: function () { return JSON.parse(JSON.stringify(st)); },
+      importa: function (x) { if (x && typeof x === "object") Object.keys(x).forEach(function (k) { if (k !== "nomi") st[k] = x[k]; }); }
     };
   }
   function validaSet(opts, set) {
@@ -1689,7 +1693,10 @@
     }
     function prossimoRound() { if (st.fase !== "fineround") return; st.primo = (st.primo + 1) % 3; nuovaMano(); }
     nuovaMano();
-    return { st: st, gioca: gioca, chiudiPresa: chiudiPresa, prossimoRound: prossimoRound };
+    return { st: st, gioca: gioca, chiudiPresa: chiudiPresa, prossimoRound: prossimoRound,
+      // la ripresa (l'host ha ricaricato la pagina): la partita com'è (un oggetto semplice) e di nuovo dentro il motore
+      esporta: function () { return JSON.parse(JSON.stringify(st)); },
+      importa: function (x) { if (x && typeof x === "object") Object.keys(x).forEach(function (k) { st[k] = x[k]; }); } };
   }
   // a chi va il punto: a chi ne ha di più da solo (e più di "min"); a pari merito a nessuno
   function primoSolo(a, min) {
@@ -2211,11 +2218,28 @@
 
   // ---------- ONLINE IN TRE: host = posto 0; gli amici i posti 1 e 2; i posti liberi al Bot ----------
   // R = la stanza condivisa con la Scopa a due (vedi presaHost): l'host può passare da due a tre in saletta senza far uscire nessuno
-  function hostScopa3(t, R) {
+  // rip = la partita da riprendere (l'host ha ricaricato: vedi hostScopaAuto), o null
+  function hostScopa3(t, R, rip) {
     var imp0 = t.impostazioni || {}, diff = imp0.difficolta || "medio";
     var CHI = window.SGChiacchiere, filtra = CHI.filtro(), chOn = CHI.attive(imp0);
     var M = null, rete = null, codice = "…", pronta = false, chiuso = false, botT = null, detto = false, nAvv = 0, primoDopo = 0;
     var posti = { 1: null, 2: null }, nomiU = { 1: null, 2: null }, avU = { 1: null, 2: null }, via = {}, botSeat = { 0: false, 1: true, 2: true }, guarda = [];
+    var ricorda = ricordatore(t, !!rip);
+    function ricordaOra() {   // dopo ogni cambiamento: la mano com'è, chi è seduto e dove (in saletta niente da riprendere)
+      ricorda(M ? { scopa: { tre: 1, diff: diff, nAvv: nAvv, posti: posti, nomiU: nomiU, avU: avU, via: via, botSeat: botSeat, st: M.esporta() } } : null);
+    }
+    // ---- la ripresa: stessa mano, stessi posti. Chi era seduto resta al suo posto e rientra da solo (gli si rimanda la
+    // sua mano); se non torna, al suo turno dopo un minuto gioca il Bot per lui (come sempre)
+    if (rip && rip.st) {
+      diff = rip.diff || diff; nAvv = +rip.nAvv || 0;
+      ["posti", "nomiU", "avU"].forEach(function (k) { var x = rip[k] || {}; for (var s = 1; s <= 2; s++) ({ posti: posti, nomiU: nomiU, avU: avU })[k][s] = x[s] || null; });
+      via = rip.via && typeof rip.via === "object" ? rip.via : {};
+      if (rip.botSeat) for (var sb = 1; sb <= 2; sb++) botSeat[sb] = !!rip.botSeat[sb];
+      M = creaMotore3(traguardoDa(imp0), null, rip.st.primoPartita || 0);
+      M.importa(rip.st);
+      detto = M.st.fase === "fine";   // (la classifica era già stata data)
+      S3.posti = {}; S3.prevMano = 0; S3.prevTav = {};
+    }
     function mioNome() { return (t.giocatori && t.giocatori[0]) || "Host"; }
     function mioAv() { return t.mioOmino ? t.mioOmino(mioNome()) : mioAvatar(mioNome()); }
     function seatDi(id) { for (var s = 1; s <= 2; s++) if (posti[s] === id) return s; return -1; }
@@ -2229,7 +2253,7 @@
       var b = prendiBot3(1, diff, escludi)[0]; M.st.nomi[s] = b.nome; M.st.avatari[s] = b.omino || null;
     }
     function avviso(testo) { if (M) M.st.avviso = { n: ++nAvv, testo: testo }; }
-    function esci() { if (chiuso) return; chiuso = true; C.esci(); clearTimeout(botT); fermaTurno(); if (rete) rete.chiudi(); t.esci(); }
+    function esci() { if (chiuso) return; ricorda(null); chiuso = true; C.esci(); clearTimeout(botT); fermaTurno(); if (rete) rete.chiudi(); t.esci(); }
     var C = creaClient3(t, {
       sonoHost: true,
       onChiac: function (c) { if (!chOn || !M || M.st.fase !== "gioco" || !CHI.valido("scopa", c)) return; chiac3(C, 0, c); if (rete) rete.inviaVeloce({ t: "chiac", k: 0, id: "host", c: c }); },
@@ -2247,6 +2271,7 @@
     function bcast() {
       if (chiuso) return;
       if (!M) return aggiornaLobby();
+      ricordaOra();
       // nella stanza resta la foto di chi guarda (nessuna carta in mano); a ognuno la sua
       if (rete) rete.invia({ t: "vm", tre: 1, guarda: 1, vm: vistaDi(-1) });
       for (var s = 1; s <= 2; s++) mandaVm(s);
@@ -2379,6 +2404,7 @@
     }
     function aggiornaLobby() {
       if (M || chiuso) return;
+      ricorda(null);   // (in saletta niente da riprendere)
       var imp = t.impostazioni || {}, tr = traguardoDa(imp), d = imp.difficolta || diff;
       if (rete) rete.invia({ t: "lobby", tre: 1, codice: codice, pronta: pronta, seggi: seggi(), traguardo: tr, diff: d, guarda: guarda });
       renderLobby3(t, { codice: codice, pronta: pronta, sonoHost: true, myId: "host", seggi: seggi(), traguardo: tr, diff: d, guarda: guarda }, {
@@ -2396,7 +2422,14 @@
         onEsci: esci
       });
     }
-    aggiornaLobby();
+    if (!M) aggiornaLobby();
+    else {   // (ripresa) il tavolo com'era; una presa che si stava guardando si chiude da sola, poi tocca a chi toccava
+      bcast();
+      var m0 = M, s0 = M.st;
+      if (s0.fase === "gioco" && (s0.presa || (!s0.mani[0].length && !s0.mani[1].length && !s0.mani[2].length)))
+        dopoMossa(M, { presa: !!s0.presa, chiudere: true }, bcast, giro, function () { return !chiuso && M === m0; });
+      else giro();
+    }
     return { lascia: function () { chiuso = true; C.esci(); clearTimeout(botT); fermaTurno(); }, inSaletta: function () { return !M && !chiuso; } };
   }
 
@@ -2485,7 +2518,8 @@
   // ---------- la stanza condivisa tra Scopa a due e in tre ----------
   // L'host apre la stanza una volta; il gioco (a due o a tre) le dà i suoi "ascoltatori". Se in saletta l'host cambia
   // "Quanti al tavolo", il gioco nuovo prende la stessa stanza e si fa raccontare chi c'è già dentro (stessi id: nessuno esce).
-  function presaHost() {
+  // opz = { ripresa: true } quando la partita riprende (l'host ha ricaricato: gli amici restano sul tavolo)
+  function presaHost(opz) {
     var P = { h: null, cb: {}, codice: null, pronta: false, dentro: {} };
     P.apri = function (cb) {
       P.cb = cb;
@@ -2496,7 +2530,7 @@
           onAddio: function (id) { delete P.dentro[id]; if (P.cb.onAddio) P.cb.onAddio(id); },
           onMsg: function (id, m) { if (m && m.t === "join" && !P.dentro[id]) P.dentro[id] = m; if (P.cb.onMsg) P.cb.onMsg(id, m); },
           onErrore: function (e) { if (P.cb.onErrore) P.cb.onErrore(e); }
-        });
+        }, opz || null);
         return P.h;
       }
       setTimeout(function () {   // (dopo: il gioco nuovo ha finito di prepararsi)
@@ -2511,13 +2545,15 @@
   }
   function hostScopaAuto(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-    var R = presaHost(), tre = null, cur = null;
+    // la ripresa (l'host ha ricaricato a metà partita): si riparte dal tavolo giusto (a due o a tre) con la stessa mano
+    var rip = t.ripresa && t.ripresa.stato && t.ripresa.stato.scopa;
+    var R = presaHost(rip ? { ripresa: true } : null), tre = null, cur = null;
     function voluto(im) { return !!(im && im.inTre) && !t.eliminazione; }
-    function parti(x) {
+    function parti(x, rp) {
       if (cur && cur.lascia) cur.lascia();
       tre = x;
       S3.m = null;
-      cur = (x ? hostScopa3 : hostScopa)(t, R);
+      cur = (x ? hostScopa3 : hostScopa)(t, R, rp || null);
       var reg = t.onRegole;   // (quella del gioco appena partito)
       t.onRegole = function (im) {
         var v = voluto(im || t.impostazioni);
@@ -2525,7 +2561,12 @@
         if (reg) reg(im);
       };
     }
-    parti(voluto(t.impostazioni));
+    if (rip) parti(!!rip.tre, rip); else parti(voluto(t.impostazioni));
+  }
+  // t.ricorda con la memoria di quello che si è già detto: null (niente da riprendere) solo se prima c'era qualcosa
+  function ricordatore(t, gia) {
+    var on = !!gia;
+    return function (stato) { if (!t.ricorda) return; if (stato) { on = true; t.ricorda(stato); } else if (on) { on = false; t.ricorda(null); } };
   }
   // chi entra: non sa se il tavolo è da due o da tre finché l'host non risponde (i messaggi del tavolo a tre hanno tre: 1)
   function presaOspite(codice) {
@@ -2566,6 +2607,7 @@
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 3, etichettaGiocatori: "👥 1–3 giocatori",   // (in tre: online o con due Bot)
     inTre: true,   // si gioca anche in tre, ognuno per sé (impostazioni.inTre; nella Sala il core la offre a chi è in tre)
     postiOnline: 2,   // online si gioca in due: gli altri guardano
+    riprende: true,   // se l'host ricarica la pagina, la smazzata continua dalla stessa mano (t.ripresa)
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
       { modo: "bot3", icona: "🃏", nome: "In tre contro due Bot", sotto: "Ognuno per sé: tu e due Bot" }],
     regole: [
@@ -2736,11 +2778,32 @@
 
   // ---------- ONLINE : host = A, ospite = B ----------
   // R = la stanza condivisa con la Scopa in tre (vedi presaHost; senza, se ne apre una sua)
-  function hostScopa(t, R) {
+  // rip = la partita da riprendere (l'host ha ricaricato: vedi hostScopaAuto), o null
+  function hostScopa(t, R, rip) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var nomi = { A: (t.giocatori && t.giocatori[0]) || "Host", B: "Avversario" };
     var M = null, rete = null, avvId = null, avvVia = false, pronta = false, problema = false, codice = "…", omini = { A: mioAvatar(nomi.A), B: null };
     var detto = false, riserva = null;   // detto: il risultato della partita è già stato dato al torneo online? riserva: il posto di chi giocava (vedi riservaAvv)
+    var ricorda = ricordatore(t, !!rip);
+    function ricordaOra() {   // dopo ogni cambiamento: la mano com'è (in saletta niente da riprendere)
+      ricorda(M ? { scopa: { tre: 0, avvId: avvId, nomeB: nomi.B, ominoB: omini.B, st: M.esporta() } } : null);
+    }
+    // ---- la ripresa: stessa mano, stesse carte, stessi punti. L'avversario è "via" finché non si rifà vivo (rientra da solo
+    // in un attimo e gli si rimanda la sua mano); se in 30 s non torna: "ha lasciato la partita", come quando esce
+    if (rip && rip.st) {
+      avvId = rip.avvId || null; nomi.B = rip.nomeB || "Avversario"; omini.B = avatarValido(rip.ominoB);
+      M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni), rip.st.primoPartita);
+      M.importa(rip.st);
+      detto = M.st.fase === "fine";   // (la classifica era già stata data)
+      if (avvId) {
+        avvVia = true;
+        setTimeout(function () {
+          if (!avvVia || !M || C.uscito) return;
+          C.avviso = { testo: "🚪 " + nomi.B + " ha lasciato la partita. Se rientra, si riprende da qui.", tasto: "Chiudi la partita", onTasto: chiudiPartita };
+          C.mostraAvviso();
+        }, 30000);
+      }
+    }
     var CHI = window.SGChiacchiere, filtra = CHI.filtro(), chOn = CHI.attive(t.impostazioni);   // 💬 accese o spente dall'host nel ⚙️
     var C = creaClient(t, {
       sonoHost: true,
@@ -2751,7 +2814,7 @@
       onAvantiDaSolo: function () { if (!avvVia) avanti(); },
       onNuova: function () { if (!M) return; M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni), altro(M.st.primoPartita)); bcast(); },   // nella partita dopo comincia l'altro
       onSaletta: function () { allaSaletta(); },
-      onEsci: function () { C.esci(); if (rete) rete.chiudi(); t.esci(); }
+      onEsci: function () { ricorda(null); C.esci(); if (rete) rete.chiudi(); t.esci(); }
     });
     // la rivincita dei tasti di fine comuni: si torna nella saletta con lo stesso avversario (il core fa il 3-2-1), poi comincia l'altro
     var primoDopo = null;
@@ -2765,6 +2828,7 @@
     function vistaB() { return vistaDa(M.st, "B", omini, { idB: avvId, ch: chOn ? 1 : 0 }); }
     function aggiornaLobby() {
       ricordaAvv("scopa", codice, avvId || (riserva && Date.now() < riserva.fino ? riserva.id : null));
+      ricordaOra();
       if (M || C.uscito) return;
       if (rete) rete.invia({ t: "lobby", codice: codice, pronta: pronta, avversario: !!avvId, avvId: avvId, traguardo: traguardoDa(t.impostazioni),
         nomi: { A: nomi.A, B: nomi.B }, omini: { A: omini.A, B: avvId ? omini.B : null } });
@@ -2773,6 +2837,7 @@
     t.onRegole = function (im) { chOn = CHI.attive(im || t.impostazioni); aggiornaLobby(); };   // l'host ha cambiato i punti in saletta: lo vede anche chi aspetta
     function bcast() {
       if (C.uscito) return;
+      ricordaOra();
       // all'ospite mando la SUA vista (vede solo le proprie carte, e c'è il suo id); io disegno la mia
       if (M) { if (rete) rete.invia({ t: "vm", vm: vistaB() }); C.setVm(vistaDa(M.st, "A", omini, { idB: avvId, ch: chOn ? 1 : 0 })); }
       else disegnaLobby();
@@ -2843,10 +2908,16 @@
       renderLobby(t, { codice: codice, pronta: pronta, avversario: !!avvId, avvId: avvId, sonoHost: true, io: "A", nomi: nomi, omini: omini, traguardo: traguardoDa(t.impostazioni), problema: problema, terzo: terzoVisto }, {
         sonoHost: true,
         onComincia: function () { if (avvId && !M) { M = creaMotore(nomi, t.mischia, traguardoDa(t.impostazioni), primoDopo || undefined); primoDopo = null; bcast(); } },
-        onEsci: function () { C.esci(); if (rete) rete.chiudi(); t.esci(); }
+        onEsci: function () { ricorda(null); C.esci(); if (rete) rete.chiudi(); t.esci(); }
       });
     }
-    disegnaLobby();
+    if (!M) disegnaLobby();
+    else {   // (ripresa) il tavolo com'era; una presa che si stava guardando si chiude da sola
+      bcast();
+      var m0 = M, s0 = M.st;
+      if (s0.fase === "gioco" && (s0.presa || (!s0.mani.A.length && !s0.mani.B.length)))
+        dopoMossa(M, { presa: !!s0.presa, chiudere: true }, bcast, function () {}, function () { return !C.uscito && M === m0; });
+    }
     // (per la stanza condivisa: lascia = si passa al tavolo a tre senza chiudere la stanza)
     return { lascia: function () { C.esci(); }, inSaletta: function () { return !M && !C.uscito; } };
   }
