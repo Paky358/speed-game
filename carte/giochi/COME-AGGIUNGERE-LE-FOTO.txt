@@ -11,6 +11,8 @@ FORMATO CONSIGLIATO
 
 NOME ESATTO DEL FILE PER OGNI GIOCO  (tutto minuscolo, .jpg)
   timeline.jpg    -> La linea del tempo
+  ordine.jpg      -> Parola d'ordine
+  balla.jpg       -> La Balla Colossale
   asta.jpg        -> L'Asta
   nomicose.jpg    -> Nomi, Cose e Citta'
   impostore.jpg   -> L'Impostore
