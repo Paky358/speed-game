@@ -9,6 +9,7 @@
   nome: "La Squadra da Calcetto",
   icona: "⚽",
   sottotitolo: "Metti su la squadra per la partitella del giovedì",
+  scenari: [ { emoji: "🏆", testo: "Finale del torneo di quartiere: quale squadra alza la coppa?" }, { emoji: "🌧️", testo: "Si gioca sotto il diluvio: chi vince lo stesso?" }, { emoji: "🍻", testo: "Terzo tempo in pizzeria: quale squadra è la più simpatica?" } ],
   round: [
     {
       nome: "Il Portiere", icona: "🧤",

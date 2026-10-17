@@ -9,6 +9,117 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 225,
+    data: "17 ottobre 2026",
+    titolo: "L'Asta più bella 🔨",
+    descrizione: [
+      "Si rilancia a salto: +1 o +3 nei temi, +1, +2 o +5 nel fantacalcio. Chi ha l'offerta più alta può sempre rialzare da solo (è strategia!): due tocchi di fila sono +2, anche velocissimi e con la rete lenta, e la tua offerta compare subito sul tabellone.",
+      "Sotto ogni avatar vedi i crediti e fin dove può arrivare («20 💰 · max 16»); nel fantacalcio anche i posti che gli mancano (🧤🛡️🎽⚽).",
+      "Nei temi 4 round diversi: 🔨 normale, ✉️ busta chiusa (tutti offrono in segreto e le buste si aprono insieme), 📦 lotto doppio (2 carte in un colpo) e 🎁 pacco a sorpresa (si scopre solo quando qualcuno lo vince). Chi vuole l'asta di sempre sceglie «Tutti normali» nelle regole.",
+      "🧨 La carta maledetta (la accende l'host): una volta a partita esce una carta che nessuno vuole, a turno paghi per scansarla o te la prendi.",
+      "Alla fine esce la carta-scenario («Arrivano gli zombie: chi sopravvive?») e ognuno dà con un tocco la sua ⭐ al kit migliore che non è il suo; i kit stanno sempre tutti nello schermo, anche in tanti.",
+      "Il banditore sfotte («Follia!», «rialza da solo!»), a fine partita arrivano i titoli scherzosi (💸 Lo sprecone, 🧊 Il braccino corto, 🎯 Il cecchino dell'ultimo secondo…) e 📸 la foto della tua rosa o del tuo kit da mandare su WhatsApp."
+    ]
+  },
+  {
+    v: 224,
+    data: "17 ottobre 2026",
+    titolo: "Parola d'ordine ancora più bella 🕵️",
+    descrizione: [
+      "💭 A fine turno si scopre a cosa pensava il capo; 🤔 «Cosa intendevi?»: dopo l'indizio il capo segna di nascosto le parole che aveva in mente, e a fine partita si rivedono gli indizi uno per uno col premio 🧠 alla squadra più in sintonia.",
+      "🎬 Ritmo «Show» o «⚡ Veloce», e ⏳ il «Tempo per indovinare» (1 o 2 minuti, doppio al primo indizio, la clessidra diventa rossa negli ultimi 10 secondi).",
+      "🏆 La serata a squadre («Rossi 2 – 1 Blu»); alla rivincita l'host sceglie «Capo nuovo», «Stessi capi» o «🔀 Squadre a caso». Nella stessa serata le parole non si ripetono.",
+      "📝 Le parole vostre le portano tutti gli amici, e si sceglie quante usarne (5, 10, metà o tutte).",
+      "Mazzi nuovi: «⚽ Serie A e Fanta» (soprannomi delle squadre, stadi, allenatori, campioni e le parole dell'asta) e «🌶️ Serata» (malizioso ma senza volgarità, lo accende l'host).",
+      "🤖 Siete solo in 2 o 3? Giocate tutti insieme «Contro il Bot»: dopo ogni vostro turno il Bot scopre una sua parola."
+    ]
+  },
+  {
+    v: 223,
+    data: "17 ottobre 2026",
+    titolo: "La Linea del tempo: l'anno si vede sempre 📅",
+    descrizione: [
+      "542 carte nuove in tutte le categorie: ora sono 1.920, ognuna controllata con due fonti (e corretti anche anni e titoli di quelle che c'erano).",
+      "Quando sbagli, la carta si gira e vedi l'anno vero («Sbagliato di 12 anni!» o «😬 Per un pelo»), e «📍 Andava qui» ti fa vedere dove doveva stare. I posti sulla linea dicono gli anni («Tra il 1982 e il 1994»).",
+      "📅 Dimmi l'anno: dopo il posto, se vuoi, scegli anche l'anno (esatto +100, a 1 o 2 anni +30). ✋ Rubala con l'anno (nel ⚙️): mentre voti scrivi l'anno esatto e, se chi gioca sbaglia, la carta è tua.",
+      "📸 I nostri ricordi: in saletta scrivete fatti vostri con l'anno («Il viaggio a Ibiza», 2019): diventano carte, e il tuo lo giocano gli altri.",
+      "Le carte già uscite non tornano per un bel po'. Online da 5 in su si parte ⚡ Tutti insieme e appena toccate tutti «⏩ Avanti» si va avanti. 🔥 L'ultima carta di ognuno vale doppio."
+    ]
+  },
+  {
+    v: 222,
+    data: "17 ottobre 2026",
+    titolo: "Taboo: tre round e la rubata 🗣️",
+    descrizione: [
+      "🧺 Tre round: le stesse carte si giocano tre volte, prima spiegando, poi con una parola sola, poi solo a gesti. Tra un round e l'altro c'è la classifica, e «⏩ Avanti» fa partire subito se lo tocca più di metà.",
+      "🫳 Rubata!: se il tempo finisce con una carta in gioco, l'altra squadra ha 5 secondi per dirla e prendersi il punto. Si accendono nelle regole, sullo stesso telefono e online."
+    ]
+  },
+  {
+    v: 221,
+    data: "17 ottobre 2026",
+    titolo: "Poker come in TV 📊",
+    descrizione: [
+      "Quando qualcuno va all-in e le carte si girano, accanto a ogni giocatore vedi quante possibilità ha di vincere, e cambiano a ogni carta che esce; al river chi vince si illumina (Texas Hold'em, si spengono nelle regole).",
+      "💣 Nel Torneo della serata l'host può accendere la Mano bomba: una mano ogni 5 o 10 tutti mettono la stessa puntata nel piatto, escono subito le prime tre carte e si punta da lì."
+    ]
+  },
+  {
+    v: 220,
+    data: "17 ottobre 2026",
+    titolo: "Sì… però: ognuno per sé 🙋",
+    descrizione: [
+      "Nuovo modo «Ognuno per sé»: niente squadre, ognuno ha la sua mano, gioca in segreto 2 Bonus sul suo scenario e 1 Malus su quello del vicino. Gli scenari si svelano uno alla volta e il giudice sceglie il migliore.",
+      "🃏 Carta bianca: una volta a partita scrivi tu una carta, Bonus o Malus, e sul tavolo compare con la tua firma. Online, a fine round si riparte subito se più di metà tocca «⏩ Avanti»."
+    ]
+  },
+  {
+    v: 219,
+    data: "17 ottobre 2026",
+    titolo: "L'Impostore a eliminazione 🔪",
+    descrizione: [
+      "Nuovo modo 🔪 A eliminazione (nel ⚙️, «Come si vota»): il più votato esce e si scopre chi era («Luca era un cittadino 😇»); chi resta fa un altro giro con la stessa parola, finché l'impostore è fuori o restate in due. Al secondo pareggio c'è il ballottaggio, e chi esce guarda e manda le faccine.",
+      "👥 Da 7 giocatori si gioca anche con due impostori: l'host sceglie se si conoscono oppure no. Sullo stesso telefono, online e nella Sala."
+    ]
+  },
+  {
+    v: 218,
+    data: "17 ottobre 2026",
+    titolo: "Scopa 2 vs 2 e Scopone: il messaggio al compagno 🤫",
+    descrizione: [
+      "🤫 Messaggio al compagno (si accende nel ⚙️): online, un tasto vicino alla mano manda al tuo compagno una frase pronta come «Ho il settebello» o «Lascia, ci penso io». La legge solo lui, gli altri vedono solo 🤫. Al massimo 2 a mano.",
+      "🏅 Il migliore in campo: a fine mano, in ogni coppia, la medaglia a chi ha portato di più («🏅 Luca: 2 scope e il settebello»).",
+      "Nello Scopone «👫 Paky e Luca: 3 vinte, 1 persa» per tutta la giornata e 🔁 Rivincita a coppie scambiate; nella Scopa 2 vs 2 online «⏩ Avanti» a fine mano: se lo tocca più di metà si riparte subito."
+    ]
+  },
+  {
+    v: 217,
+    data: "17 ottobre 2026",
+    titolo: "Ruota della Fortuna: lo spicchio Mistero ❓",
+    descrizione: [
+      "Nelle ultime due manche c'è lo spicchio Mistero: se ci cadi e la consonante c'è, puoi aprirlo. Metà delle volte +10.000, metà Bancarotta!",
+      "✍️ Le frasi della compagnia: nelle regole scegliete «Anche le nostre» e scrivetene fino a 5; online anche chi guarda può mandarne una con «✍️ Scrivi una frase», che esce con la sua firma.",
+      "A fine manche si riparte subito se più di metà tocca «⏩ Avanti»."
+    ]
+  },
+  {
+    v: 216,
+    data: "17 ottobre 2026",
+    titolo: "Stessa Lunghezza d'Onda: le nostre scale 📝",
+    descrizione: [
+      "Nelle regole scrivete le scale del vostro gruppo («Pizza al ristorante ↔ Pizza a casa»): restano sul profilo, si copiano agli amici e in partita escono mescolate alle altre (o solo quelle) con la firma «📝 della compagnia».",
+      "Online, dopo ogni rivelazione si va avanti subito se lo tocca più di metà."
+    ]
+  },
+  {
+    v: 215,
+    data: "17 ottobre 2026",
+    titolo: "Gara di pesca: l'obiettivo della gara 🎯",
+    descrizione: [
+      "L'host sceglie l'🎯 obiettivo: più chili, il pesce più lungo, più specie diverse o più pesci. La classifica dal vivo mostra quello che conta, e il cronista lo dice quando qualcuno passa in testa."
+    ]
+  },
+  {
     v: 214,
     data: "16 ottobre 2026",
     titolo: "La rete salta, la partita no 🔁",

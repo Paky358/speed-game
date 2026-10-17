@@ -358,19 +358,22 @@
     await finche(C, function (v) { return v.fase === "esito"; }, passoA(fatti), 15000, "l'asta non si chiude");
     r = await ricaricaHost(C, amici, { salva: 500, controlla: function (a, b) { return crediti(a) === crediti(b) ? true : "crediti o carte cambiati: " + crediti(a) + " → " + crediti(b); } });
     L.nota("esito → si va avanti, crediti uguali (" + r.dt + " s)");
-    // sui kit
-    await finche(C, function (v) { return v.fase === "kit"; }, passoA(fatti), 150000, "non si arriva ai kit");
-    r = await ricaricaHost(C, amici, { controlla: function (a, b) { return (b.fase !== "kit" && b.fase !== "voto") ? "fase " + b.fase : crediti(a) === crediti(b) ? true : "kit cambiati"; } });
-    L.nota("kit → kit (" + r.dt + " s)");
-    // al voto: Giulia ha votato, gli altri no → il suo voto resta, i secondi continuano
-    await finche(C, function (v) { return v.fase === "voto"; }, null, 20000, "non si arriva al voto");
-    var vv0 = vm(C), idG = idDi(vv0, "Giulia"), vg = {}; vv0.giocatori.forEach(function (x) { if (x.id !== idG) vg[x.id] = 5; });
-    manda("asta", "Giulia", { t: "voto", voti: vg, s: vv0.sessione });
-    if (!await W.aspetta(function () { return (vm(C).hannoVotato || []).indexOf(idG) >= 0; }, 4000)) no("il voto di Giulia non arriva");
-    await W.dorme(3000);
-    r = await ricaricaHost(C, amici, { controlla: function (a, b) { return b.fase !== "voto" ? "fase " + b.fase : (b.hannoVotato || []).indexOf(idG) < 0 ? "il voto di Giulia non c'è più" : b.restaVoto > a.restaVoto + 1500 ? "il voto ha di nuovo tutto il tempo (" + a.restaVoto + " → " + b.restaVoto + " ms)" : true; } });
-    L.nota("voto → il voto di Giulia resta, " + Math.round(r.dopo.restaVoto / 1000) + " s che restavano (" + r.dt + " s)");
-    await finche(C, function (v) { return v.fase === "fine"; }, passoA(fatti), 15000, "il voto non si chiude");
+    // al voto (dal 17 ott niente più fase «kit»: alla fine la carta-scenario e il voto a un tocco, vedi preferiti/asta.js paP)
+    await finche(C, function (v) { return v.fase === "voto"; }, passoA(fatti), 150000, "non si arriva al voto");
+    await W.dorme(2000);
+    r = await ricaricaHost(C, amici, { controlla: function (a, b) { return b.fase !== "voto" ? "fase " + b.fase : crediti(a) === crediti(b) ? true : "kit cambiati"; } });
+    L.nota("voto → voto, stessi kit (" + r.dt + " s)");
+    // si chiude il voto: tutti danno la ⭐ al primo kit che non è il loro
+    await finche(C, function (v) { return v.fase === "fine"; }, function (v) {
+      if (v.fase !== "voto") return;
+      (v.giocatori || []).forEach(function (g) {
+        if (fatti["v" + g.id]) return;
+        var altro = (v.giocatori || []).filter(function (x) { return x.id !== g.id; })[0]; if (!altro) return;
+        var w = W.finestra(g.nome); if (!w) return;
+        var b2 = w.document.querySelector("[data-kit='" + altro.id + "'], [data-id='" + altro.id + "']");
+        if (b2) { b2.click(); fatti["v" + g.id] = 1; }
+      });
+    }, 90000, "il voto non si chiude");
     await W.dorme(1500);
     var nE = A.contaStoria(C, '"__esito"');
     r = await ricaricaHost(C, amici, { controlla: function (a, b) { return b.fase !== "fine" ? "fase " + b.fase : JSON.stringify(a.classifica) === JSON.stringify(b.classifica) ? true : "classifica cambiata"; } });

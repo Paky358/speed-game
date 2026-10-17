@@ -75,7 +75,8 @@
     if (v.passo === "rivela") {
       await W.dorme(opz.veloce ? 300 : 2900);
       var k = v.partita + "|" + v.turno;
-      tocca(P, /Avanti|Classifica/);
+      // «⏩ Avanti» a maggioranza (g4): toccano tutti quelli che giocano
+      v.players.filter(function (p) { return !p.via; }).forEach(function (p) { var wp = tel(C, p.id); if (wp) tocca(wp, /Avanti|Classifica/); });
       await W.aspetta(function () { var x = vm(C); return x.fase !== "gioco" || x.partita + "|" + x.turno !== k; }, 4000); return true;
     }
     await W.dorme(150);
@@ -560,7 +561,9 @@
     var spento = altri.filter(function (p) { return p.nome !== "Paky"; })[0];
     W.spegni(spento.nome);
     var bloccano = altri.filter(function (p) { return p.id !== spento.id; });
-    for (var i = 0; i < bloccano.length; i++) { var w = W.finestra(bloccano[i].nome); await trascina(w, 10 + i * 15); await W.dorme(80); if (i < bloccano.length - 1) { tocca(w, /Blocca/); await W.dorme(150); } }
+    // (prima di trascinare si aspetta che il quadrante si possa toccare: se il sensitivo è l'host, il suo turno va avanti
+    //  subito e i telefoni degli amici arrivano all'«indovina» un attimo dopo)
+    for (var i = 0; i < bloccano.length; i++) { var w = W.finestra(bloccano[i].nome); await W.aspetta(function () { return w.document.querySelector(".lu-dial.tocca"); }, 5000); await trascina(w, 10 + i * 15); await W.dorme(80); if (i < bloccano.length - 1) { tocca(w, /Blocca/); await W.dorme(150); } }
     await W.dorme(800);
     // chi ha bloccato vede le lancette degli altri (avatar sul bordo); chi non ha bloccato no
     var wb = W.finestra(bloccano[0].nome), wl = W.finestra(bloccano[bloccano.length - 1].nome);

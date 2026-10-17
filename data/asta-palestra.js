@@ -9,6 +9,7 @@
   nome: "La Palestra di Quartiere",
   icona: "🏋️",
   sottotitolo: "Metti insieme la palestra perfetta (o l'incubo del lunedì mattina)",
+  scenari: [ { emoji: "👙", testo: "Prova costume a giugno: chi arriva pronto?" }, { emoji: "🏋️", testo: "Arriva il personal trainer più severo: chi resiste?" }, { emoji: "🤳", testo: "Selfie allo specchio: quale palestra fa più like?" } ],
   round: [
     {
       nome: "L'Istruttore di Sala", icona: "🧑‍🏫",

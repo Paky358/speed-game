@@ -9,6 +9,7 @@
   nome: "Il Coinquilino Ideale",
   icona: "🏠",
   sottotitolo: "Costruisci il coinquilino perfetto (o l'incubo dell'affitto)",
+  scenari: [ { emoji: "🧹", testo: "Un anno nello stesso appartamento: con chi si vive meglio?" }, { emoji: "🎉", testo: "Festa a sorpresa in casa: quale coinquilino la rende epica?" }, { emoji: "💸", testo: "Scade l'affitto: su chi puoi contare?" } ],
   round: [
     {
       nome: "L'Abitudine Notturna", icona: "🌙",

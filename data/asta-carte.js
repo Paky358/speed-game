@@ -11,6 +11,7 @@
   nome: "Sopravvivenza Zombie",
   icona: "🧟",
   sottotitolo: "Costruisci il kit che ti salva la pelle",
+  scenari: [ { emoji: "🧟", testo: "Gli zombie sfondano la porta: chi arriva vivo a domani mattina?" }, { emoji: "🌉", testo: "Il ponte è crollato: chi attraversa la città infestata da solo?" }, { emoji: "🏚️", testo: "Un mese chiusi in cantina: chi resiste senza impazzire?" } ],
   round: [
     {
       nome: "L'Arma", icona: "🔪",
@@ -314,3 +315,26 @@
     }
   ]
 });
+
+/* =========================================================
+   LE CARTE MALEDETTE dell'Asta (regola «🧨 La carta maledetta», solo nell'asta a temi).
+   Una volta a partita ne esce una: si paga per scansarla, e il primo che se la prende
+   la mette nel suo kit (−0,5 ⭐ di media nel voto finale). Vanno bene con TUTTI i temi.
+   ========================================================= */
+window.SG_ASTA_MALEDETTE = [
+  { nome: "Lo scarafaggio nel panino", emoji: "🪳" },
+  { nome: "Il calzino puzzolente", emoji: "🧦" },
+  { nome: "La suocera al telefono", emoji: "📞" },
+  { nome: "La zanzara che ronza tutta la notte", emoji: "🦟" },
+  { nome: "La multa sul parabrezza", emoji: "🧾" },
+  { nome: "Il telefono all'1%", emoji: "🔋" },
+  { nome: "La sveglia alle 5 di domenica", emoji: "⏰" },
+  { nome: "Il vicino che suona la batteria", emoji: "🥁" },
+  { nome: "La doccia gelata", emoji: "🥶" },
+  { nome: "Il cugino che non se ne va mai", emoji: "🛋️" },
+  { nome: "La gomma da masticare sotto la scarpa", emoji: "👟" },
+  { nome: "Il piccione che ti ha preso di mira", emoji: "🐦" },
+  { nome: "La puzzola in macchina", emoji: "🦨" },
+  { nome: "Il Wi-Fi che non va", emoji: "📶" },
+  { nome: "La cipolla cruda nel tiramisù", emoji: "🧅" }
+];

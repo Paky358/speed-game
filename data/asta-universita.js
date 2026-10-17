@@ -9,6 +9,7 @@
   nome: "La Sessione Universitaria",
   icona: "🎓",
   sottotitolo: "Affronta l'esame più difficile (o quello che ti manda fuori corso)",
+  scenari: [ { emoji: "📚", testo: "L'esame più difficile è domani mattina: chi lo passa?" }, { emoji: "😴", testo: "La notte prima dell'esame: chi non crolla?" }, { emoji: "🎓", testo: "Il giorno della laurea: quale festa è la più bella?" } ],
   round: [
     {
       nome: "La Preparazione", icona: "📚",

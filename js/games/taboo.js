@@ -9,6 +9,24 @@
   var BLOCCO_MS = 400;         // dopo un tocco i tasti si fermano un attimo (niente doppio tocco)
   var LIVELLI = { 1: [1], 2: [1, 2, 3], 3: [2, 3] };   // carte: 1 facili, 2 miste, 3 difficili
   var CHIAVE_VISTE = "sg-taboo-viste";
+  var ATTESA_ROUND = 15;       // tra un round e l'altro: 15 s (o subito se più di metà tocca «⏩ Avanti»)
+  var RUBATA_MS = 5000, DECIDI_MS = 7000;   // 🫳 Rubata: 5 s all'altra squadra, poi chi spiega ha ancora 7 s per dire com'è andata (se no: niente rubata)
+  var RIPRESA_MIN = 3000;      // il turno a metà continua nel round dopo solo se restano almeno 3 s
+  // i tre round alla Time's Up: le stesse carte, regole sempre più strette
+  var ROUND = [null,
+    { ico: "🗣️", nome: "Spiega", regola: "Spiega come sempre, senza dire le parole vietate.", prom: "Vietati anche: la parola stessa, un suo pezzo, i gesti" },
+    { ico: "☝️", nome: "Una parola sola", regola: "Le vietate spariscono: chi spiega può dire UNA parola sola. Se ne dice di più: BUZZ!", prom: "Una parola sola! Se ne dici di più: BUZZ" },
+    { ico: "🤐", nome: "Solo mimo", regola: "Niente voce: solo gesti. Se chi spiega parla o fa suoni: BUZZ!", prom: "Solo gesti! Se parli o fai suoni: BUZZ" }];
+  function leggiImp(imp) {
+    imp = imp || {};
+    return { durata: [60, 90, 120].indexOf(Number(imp.tempo)) >= 0 ? Number(imp.tempo) : 90,
+      giri: Math.max(1, Math.min(4, Number(imp.giri) || 1)),
+      livello: [1, 2, 3].indexOf(Number(imp.carte)) >= 0 ? Number(imp.carte) : 2,
+      tre: imp.partita === "tre",
+      mazzoN: [20, 30, 40].indexOf(Number(imp.mazzo)) >= 0 ? Number(imp.mazzo) : 30,
+      rubata: Number(imp.rubata) === 1 };
+  }
+  function nomeRound(n) { var r = ROUND[n] || ROUND[1]; return r.ico + " " + r.nome; }
 
   function avatar(nome) {
     var p = window.SGNube && SGNube.profilo && SGNube.profilo();
@@ -116,6 +134,14 @@
       ".tb-loc-nomi{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-content:flex-start;min-height:0;overflow:hidden;padding-top:4px}.tb-loc-nomi .tb-scelta{font-size:clamp(14px,4vw,17px);padding:7px 12px;max-width:100%}",
       ".tb-loc-ctrl{width:100%;box-sizing:border-box;border-radius:16px;background:rgba(250,82,82,.16);border:2px solid rgba(250,82,82,.55);padding:8px 12px}.tb-loc-ctrl b{display:block;font-size:clamp(17px,5vw,22px)}.tb-loc-ctrl span{display:block;font-size:clamp(13px,3.7vw,16px);font-weight:700;opacity:.9;margin-top:2px}",
       "button.tb-chip{border:0;color:#fff;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}.tb-chip.nu{background:rgba(255,255,255,.22)}.tb-loc-corr{color:#fff;opacity:.7;margin-top:auto}",
+      // 🧺 tre round e 🫳 rubata
+      ".tb-chip.ru{background:#7048e8}",
+      ".tb-round{flex:none;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;border-radius:20px;background:linear-gradient(160deg,#5f3dc4,#364fc7);padding:clamp(10px,2.4vh,20px) 12px;box-shadow:0 10px 26px #0005}.tb-round small{font-size:clamp(13px,3.8vw,16px);font-weight:850;opacity:.9;letter-spacing:.04em;text-transform:uppercase}.tb-round b{font-size:clamp(30px,9.5vw,48px);font-weight:1000;line-height:1.05}.tb-round span{font-size:clamp(14px,4.1vw,18px);font-weight:750;line-height:1.25;opacity:.95}",
+      ".tb-rtab{flex:none;display:flex;flex-direction:column;gap:4px;border-radius:14px;background:rgba(255,255,255,.08);padding:7px 10px}.tb-rtab div{display:grid;grid-template-columns:minmax(0,1fr) 3.2em 3.2em;align-items:center;font-size:clamp(13px,3.8vw,16px);font-weight:800}.tb-rtab div.ora{color:#ffd43b}.tb-rtab em{font-style:normal;text-align:center;font-variant-numeric:tabular-nums}.tb-rtab div:first-child em{font-size:12px;opacity:.8}",
+      ".tb-rub{font-size:clamp(64px,22vw,110px);font-weight:1000;line-height:1;font-variant-numeric:tabular-nums;color:#b197fc}.tb-rubp{font-size:clamp(17px,5vw,22px);font-weight:900;border-radius:12px;background:rgba(255,255,255,.12);padding:6px 14px}",
+      ".tb-btn.viola{background:#9775fa;color:#170b3b}.tb-btn .tb-q{display:block;font-size:.62em;font-weight:850;opacity:.85}",
+      ".tb-turno.tre{color:#d0bfff}.tb-corpo:has(>.tb-round){justify-content:center}",
+      "@media(max-height:700px){.tb-round{padding:8px 10px}.tb-round b{font-size:30px}.tb-rub{font-size:64px}}",
       "@media(max-height:700px){.tb{gap:6px;padding-top:calc(6px + env(safe-area-inset-top));padding-bottom:calc(8px + env(safe-area-inset-bottom))}.tb-timer{font-size:34px}.tb-btn{min-height:60px}.tb-btn.buzz{min-height:78px}.tb-carta{gap:7px;padding:9px}.tb-vietata{padding:5px}.tb-av{height:84px}}"
     ].join("");
     document.head.appendChild(s);
@@ -171,7 +197,7 @@
   // ---- la schermata di gioco, uguale per host e amici: si disegna dalla "foto" (vm) ----
   // o: { sonoHost, mioId(), azione(tipo, extra), esci(), pausa(), rifai(), chiudiPartita(), nuova() }
   function creaVista(t, o) {
-    var V = { ui: null, v: null, key: "", seq: null, fineLocale: 0, ultimoSec: -1, omini: Object.create(null), bloccoFino: 0, tBanner: null, festa: "" };
+    var V = { ui: null, v: null, key: "", seq: null, fineLocale: 0, ultimoSec: -1, omini: Object.create(null), bloccoFino: 0, tBanner: null, festa: "", avantiK: null };
     function io() { return o.mioId(); }
     function giocatore(v, id) { return (v.giocatori || []).find(function (p) { return p.id === id; }) || null; }
     function nomeDi(v, id) { var p = giocatore(v, id); return p ? p.nome : "…"; }
@@ -183,8 +209,12 @@
       if (!dentro(v)) return "guarda";   // arrivato a partita cominciata: guarda e gioca dalla prossima
       if (!v.attivo) return "nessuno";
       if (me === v.attivo) return "spiega";
-      return squadraDi(v, me) === v.team ? "compagno" : "avversario";
+      if (squadraDi(v, me) === v.team) return "compagno";
+      // 🫳 con la Rubata solo uno degli avversari controlla (vede la carta e ha il BUZZ): gli altri ascoltano per rubarla
+      if (v.ctrl && me !== v.ctrl) return "ruba";
+      return "avversario";
     }
+    function roundN(v) { return v.tre ? v.tre.n : 1; }
     function tasto(classe, testo, fn) {
       return bottone(t, classe, testo, function () { if (Date.now() < V.bloccoFino) return; V.bloccoFino = Date.now() + BLOCCO_MS; fn(); });
     }
@@ -238,27 +268,37 @@
         var puo = (o.sonoHost || io() === v.attivo);
         banner("🚨 BUZZ di " + (ev.nome || "…") + "!", "Parola vietata detta · carta: " + (ev.parola || ""), false, puo ? ANNULLA_MS : 2400, puo ? ev.seq : 0);
       } else if (ev.tipo === "annullato") { suono("via"); banner("↩️ BUZZ annullato", "Il punto torna alla squadra " + SQUADRE[v.team], true, 2200); }
+      else if (ev.tipo === "rubata") {   // l'altra squadra ha preso l'ultima carta: è un momento che conta
+        suono("giusta"); vola("🫳 +1", "ok");
+        if (dentro(v) && v.rubata && squadraDi(v, io()) === v.rubata.ruba) vibra(30);
+      } else if (ev.tipo === "rubno") suono("passo");
+      else if (ev.tipo === "rubann") suono("via");
     }
 
     // ---- la parte che cambia: si rifà solo quando cambia carta, turno o fase ----
     function chiave(v) {
       var r = ruolo(v);
-      if (v.fase === "turno") return ["T", v.turno, v.chiaveCarta, r, v.carta ? 1 : 0, v.pausa ? 1 : 0, v.passati].join("|");
-      if (v.fase === "pronto") return ["P", v.turno, v.attivo, r, v.avviso || "", v.pausa ? 1 : 0, (v.riepilogo && v.riepilogo.turno) || 0, o.sonoHost ? v.presenti : 0, v.rifatto || 0].join("|");
+      if (v.fase === "turno") return ["T", v.turno, v.chiaveCarta, r, v.carta ? 1 : 0, v.pausa ? 1 : 0, v.passati, roundN(v)].join("|");
+      if (v.fase === "pronto") return ["P", v.turno, v.attivo, r, v.avviso || "", v.pausa ? 1 : 0, (v.riepilogo && v.riepilogo.turno) || 0, o.sonoHost ? v.presenti : 0, v.ctrl || "", v.ripresa ? 1 : 0, roundN(v), v.rifatto || 0].join("|");
+      if (v.fase === "rubata") return ["U", v.turno, r, v.rubata ? v.rubata.esito || "" : ""].join("|");
+      if (v.fase === "round") return ["R", v.inter ? v.inter.k : "", dentro(v) ? 1 : 0].join("|");
       return "F|" + v.partitaId;
     }
     function corpo(v) {
-      var ui = V.ui; ui.corpo.innerHTML = ""; ui.tasti.innerHTML = ""; ui.conta = null; nascondiBanner();
+      var ui = V.ui; ui.corpo.innerHTML = ""; ui.tasti.innerHTML = ""; ui.conta = null; ui.rubN = null; ui.avanti = null; nascondiBanner();
       if (v.fase === "turno") corpoTurno(v, ui);
       else if (v.fase === "pronto") corpoPronto(v, ui);
+      else if (v.fase === "rubata") corpoRubata(v, ui);
+      else if (v.fase === "round") corpoRound(v, ui);
       else corpoFine(v, ui);
     }
-    function carta(c, conPromemoria) {
+    // la carta: nel round ☝️ e 🤐 le vietate spariscono (si vede solo la parola)
+    function carta(c, conPromemoria, n) {
       var box = t.el("div", { class: "tb-carta tb-entra" });
       if (!c) { box.appendChild(t.el("div", { class: "tb-attesa-carta", text: "Carta in arrivo…" })); return box; }
       box.appendChild(t.el("div", { class: "tb-parola", text: c.p }));
-      box.appendChild(t.el("div", { class: "tb-vietate" }, (c.v || []).map(function (w) { return t.el("div", { class: "tb-vietata", text: w }); })));
-      if (conPromemoria) box.appendChild(t.el("div", { class: "tb-promemoria", text: "Vietati anche: la parola stessa, un suo pezzo, i gesti" }));
+      if (!(n > 1)) box.appendChild(t.el("div", { class: "tb-vietate" }, (c.v || []).map(function (w) { return t.el("div", { class: "tb-vietata", text: w }); })));
+      if (conPromemoria || n > 1) box.appendChild(t.el("div", { class: "tb-promemoria", text: (ROUND[n] || ROUND[1]).prom }));
       return box;
     }
     function corpoTurno(v, ui) {
@@ -269,13 +309,13 @@
         return;
       }
       if (r === "guarda") {   // arrivato a partita cominciata: vede la carta (come chi controlla), senza tasti
-        ui.corpo.appendChild(carta(v.carta, false));
+        ui.corpo.appendChild(carta(v.carta, false, roundN(v)));
         ui.tasti.appendChild(t.el("div", { class: "tb-nota", text: "👀 Partita in corso: giochi dalla prossima." }));
         faccine(ui.tasti);
         return;
       }
       if (r === "spiega" || r === "avversario") {
-        ui.corpo.appendChild(carta(v.carta, r === "spiega"));
+        ui.corpo.appendChild(carta(v.carta, r === "spiega", roundN(v)));
         if (r === "spiega") {
           var ok = tasto("", "✅ Indovinata", function () { o.azione("indovinata"); });
           var pa = tasto("pass", "⏭️ Passo " + v.passati + "/" + MAX_PASSI, function () { o.azione("passo"); });
@@ -289,10 +329,11 @@
         // i compagni di chi spiega: l'avatar di chi spiega, quante ne avete fatte, la serie
         var conto = t.el("div", { class: "tb-conto" }, [t.el("span", { text: "✅ " + (v.giusteTurno || 0) + (v.giusteTurno === 1 ? " indovinata" : " indovinate") })]);
         if (v.combo >= 3) conto.appendChild(t.el("span", { class: "fuoco", text: "🔥 " + v.combo + " di fila!" }));
+        var ruba = r === "ruba", verbo = roundN(v) === 3 ? "Guarda " : "Ascolta ";
         ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, [
           avatarNodo(t, V.omini[v.attivo], nomeDi(v, v.attivo)),
-          t.el("div", { class: "tb-indovina", text: "Indovina!" }),
-          t.el("div", { class: "tb-sub", text: "Ascolta " + nomeDi(v, v.attivo) + " e grida la risposta" }), conto]));
+          t.el("div", { class: "tb-indovina", text: ruba ? "🫳 Occhio!" : "Indovina!" }),
+          t.el("div", { class: "tb-sub", text: ruba ? verbo + nomeDi(v, v.attivo) + " in silenzio: se il tempo scade, la tua squadra può rubare l'ultima carta!" : verbo + nomeDi(v, v.attivo) + " e grida la risposta" }), conto]));
       }
     }
     function riepilogo(v, ui) {
@@ -303,6 +344,7 @@
       r.giuste.forEach(function (p) { voci.push(["ok", "✅ " + p]); });
       r.buzz.forEach(function (p) { voci.push(["no", "❌ " + p]); });
       r.passate.forEach(function (p) { voci.push(["pa", "⏭️ " + p]); });
+      if (r.rubata) voci.push(["ru", "🫳 " + r.rubata.p + " · rubata da " + SQUADRE[r.rubata.team]]);
       if (!voci.length) chips.appendChild(t.el("span", { class: "tb-chip altre", text: "Nessuna carta in questo turno" }));
       var max = window.innerHeight < 700 ? 9 : 14;
       voci.slice(0, voci.length > max ? max - 1 : max).forEach(function (x) { chips.appendChild(t.el("span", { class: "tb-chip " + x[0], text: x[1] })); });
@@ -335,11 +377,14 @@
         ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [t.el("div", {}, [t.el("b", { text: "🏁 Ultimo turno finito!" }), t.el("span", { text: "Tra un attimo vediamo chi ha vinto…" })])]));
         return;
       }
-      var r = ruolo(v), nome = nomeDi(v, v.attivo);
-      var sotto = r === "spiega" ? "Spiega alla tua squadra senza dire le parole vietate." : (r === "compagno" ? "Tu indovini: ascolta " + nome + "." :
-        r === "guarda" ? "Tu guardi: giochi dalla prossima partita." : "Tu controlli: premi BUZZ se dice una parola vietata.");
+      var r = ruolo(v), nome = nomeDi(v, v.attivo), n = roundN(v);
+      var regolaSpiega = n === 2 ? "Puoi dire una parola sola." : (n === 3 ? "Solo gesti: niente voce." : "Spiega alla tua squadra senza dire le parole vietate.");
+      var sotto = r === "spiega" ? regolaSpiega : (r === "compagno" ? "Tu indovini: " + (n === 3 ? "guarda " : "ascolta ") + nome + "." :
+        r === "guarda" ? "Tu guardi: giochi dalla prossima partita." : r === "ruba" ? "Controlla " + nomeDi(v, v.ctrl) + ". Tu stai attento: a fine tempo potete rubare l'ultima carta!" :
+        "Tu controlli: premi BUZZ se " + (n === 2 ? "dice più di una parola." : n === 3 ? "parla o fa suoni." : "dice una parola vietata."));
+      if (v.ripresa) sotto = (r === "spiega" ? "Continui tu: " : nome + " continua: ") + "restano " + Math.ceil(v.ripresa / 1000) + " s. " + sotto;
       ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [avatarNodo(t, V.omini[v.attivo], nome),
-        t.el("div", {}, [t.el("b", { text: r === "spiega" ? "Tocca a te!" : "Tocca a " + nome }), t.el("span", { text: "Squadra " + SQUADRE[v.team] + " · " + sotto })])]));
+        t.el("div", {}, [t.el("b", { text: r === "spiega" ? (v.ripresa ? "Tocca ancora a te!" : "Tocca a te!") : "Tocca a " + nome }), t.el("span", { text: "Squadra " + SQUADRE[v.team] + " · " + sotto })])]));
       if (v.pausa) {
         ui.tasti.appendChild(t.el("div", { class: "tb-nota", text: "⏸️ Pausa: si riparte quando l'host vuole." }));
         if (o.sonoHost) ui.tasti.appendChild(tasto("largo", "▶ Riprendi", function () { o.pausa(); }));
@@ -348,6 +393,64 @@
       if (r === "spiega") ui.tasti.appendChild(tasto("largo", "▶ Pronti, via!", function () { o.azione("pronto"); }));
       ui.conta = t.el("div", { class: "tb-nota" }); ui.tasti.appendChild(ui.conta);
       if (r !== "spiega") faccine(ui.tasti);   // tra un turno e l'altro: le faccine
+    }
+    // ---- 🫳 Rubata: il tempo è finito con una carta in gioco, l'altra squadra ha 5 secondi per dirla ----
+    function corpoRubata(v, ui) {
+      var rb = v.rubata || {}, r = ruolo(v), ladri = "Squadra " + SQUADRE[rb.ruba], nome = nomeDi(v, v.attivo);
+      var x = [];
+      if (!rb.esito) {
+        x.push(t.el("div", { class: "tb-indovina", text: "🫳 RUBATA?" }));
+        ui.rubN = t.el("div", { class: "tb-rub", text: "5" }); x.push(ui.rubN);
+        var sotto = r === "spiega" ? "La " + ladri + " prova a dire la tua carta. L'hanno detta?" :
+          (dentro(v) && squadraDi(v, io()) === rb.ruba ? (io() === v.ctrl ? "La tua squadra prova a dirla (tu l'hai vista: zitto!)" : "Dite subito l'ultima carta: avete 5 secondi!") :
+          (r === "compagno" ? "La " + ladri + " prova a rubarvi l'ultima carta…" : "La " + ladri + " prova a rubare l'ultima carta…"));
+        x.push(t.el("div", { class: "tb-sub", text: sotto }));
+        if (r === "spiega" || io() === v.ctrl || r === "guarda") x.push(t.el("div", { class: "tb-rubp", text: "La carta: " + (rb.parola || "") }));
+        if (r === "spiega") {
+          ui.tasti.appendChild(tasto("", "✅ L'hanno presa", function () { o.azione("rubata", { presa: 1 }); }));
+          ui.tasti.appendChild(tasto("grigio", "❌ No", function () { o.azione("rubata", { presa: 0 }); }));
+        } else {
+          ui.conta = t.el("div", { class: "tb-nota" }); ui.tasti.appendChild(ui.conta);
+        }
+      } else if (rb.esito === "presa") {
+        x.push(t.el("div", { class: "tb-indovina", text: "🫳 Rubata!" }));
+        x.push(t.el("div", { class: "tb-sub", text: "+1 alla " + ladri }));
+        x.push(t.el("div", { class: "tb-rubp", text: "La carta: " + (rb.parola || "") }));
+        if (o.sonoHost) ui.tasti.appendChild(tasto("grigio largo", "↩️ Annulla rubata", function () { o.azione("annullaRubata"); }));
+      } else {
+        x.push(t.el("div", { class: "tb-indovina", text: rb.esito === "annullata" ? "↩️ Rubata annullata" : "❌ Niente rubata" }));
+        x.push(t.el("div", { class: "tb-rubp", text: "La carta: " + (rb.parola || "") }));
+      }
+      ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, x));
+      if (r !== "spiega" && !ui.tasti.querySelector(".tb-btn")) faccine(ui.tasti);
+    }
+    // ---- 🧺 tra un round e l'altro: i punti, il round nuovo con la sua regola, «⏩ Avanti» a maggioranza ----
+    function corpoRound(v, ui) {
+      var it = v.inter || {}, me = io();
+      ui.corpo.appendChild(rigaRound(t, it.n || 2));
+      ui.corpo.appendChild(tabellaRound(t, v.tre && v.tre.punti, (it.n || 2) - 1));
+      if (it.riepilogo) { var salva = v.riepilogo; v.riepilogo = it.riepilogo; riepilogo(v, ui); v.riepilogo = salva; }
+      else if (it.chi) ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [avatarNodo(t, V.omini[it.chi], nomeDi(v, it.chi)),
+        t.el("div", {}, [t.el("b", { text: it.chi === me ? "Poi continui tu" : "Poi continua " + nomeDi(v, it.chi) }), t.el("span", { text: "Il turno va avanti col tempo che restava: " + Math.ceil((it.resta || 0) / 1000) + " s" })])]));
+      var conto = t.el("div", { class: "tb-nota" });
+      ui.tasti.appendChild(conto);
+      if (t.contoAvanti) t.contoAvanti(conto, Math.max(1, Math.ceil((v.restano || 0) / 1000)), null, "tb-round|" + it.k);
+      var p = giocatore(v, me);
+      if (p && !p.via) {
+        ui.avanti = tasto("largo viola", "⏩ Avanti", function () { V.avantiK = it.k; aggiornaAvanti(V.v); o.azione("avanti", { k: it.k }); });
+        ui.tasti.appendChild(ui.avanti);
+        aggiornaAvanti(v);
+      }
+      faccine(ui.tasti);
+    }
+    // il mio tocco resta «✅ Avanti»: cambia solo il numero (niente lampeggio)
+    function aggiornaAvanti(v) {
+      var b = V.ui && V.ui.avanti, it = v && v.inter; if (!b || !it) return;
+      var l = it.pronti || [], mio = V.avantiK === it.k || l.indexOf(io()) >= 0, n = l.length + (mio && l.indexOf(io()) < 0 ? 1 : 0);
+      var testo = (mio ? "✅ Avanti" : "⏩ Avanti"), q = Math.min(n, it.servono || 1) + " su " + (it.servono || 1);
+      if (b.firstChild && b.firstChild.nodeType === 3 && b.firstChild.nodeValue === testo && b.querySelector(".tb-q") && b.querySelector(".tb-q").textContent === q) return;
+      b.textContent = testo; b.appendChild(t.el("span", { class: "tb-q", text: q }));
+      b.disabled = mio;
     }
     function corpoFine(v, ui) {
       var f = v.fine || {}, win = f.vincitore, me = io();
@@ -390,6 +493,16 @@
         ui.barra.classList.toggle("rossa", sec <= 10);
         if (!v.pausa && sec <= 5 && sec > 0 && sec !== V.ultimoSec) suono("tic");
         V.ultimoSec = sec;
+      } else if (v.fase === "rubata") {
+        ui.barra.style.visibility = "hidden"; ui.timer.className = "tb-timer testo";
+        var esito = v.rubata && v.rubata.esito;
+        ui.timer.textContent = esito ? "🫳" : (sec > 0 ? String(sec) : "⏰");
+        if (ui.rubN) ui.rubN.textContent = sec > 0 ? String(sec) : "⏰";
+        if (ui.conta) ui.conta.textContent = sec > 0 ? "" : "Decide " + nomeDi(v, v.attivo) + "…";
+        if (!esito && sec <= 5 && sec > 0 && sec !== V.ultimoSec) suono("tic");
+        V.ultimoSec = sec;
+      } else if (v.fase === "round") {
+        ui.barra.style.visibility = "hidden"; ui.timer.className = "tb-timer testo"; ui.timer.textContent = "🧺";
       } else {
         ui.barra.style.visibility = "hidden"; ui.timer.className = "tb-timer testo";
         ui.timer.textContent = v.fase === "fine" ? "Fine" : (v.pausa ? "⏸️" : (v.avviso ? "⏳" : (v.attivo ? "Pronti?" : "🏁")));
@@ -403,9 +516,14 @@
         if (ui.score[q].textContent !== nuovo) { ui.score[q].textContent = nuovo; ui.box[q].classList.remove("tb-bump"); void ui.box[q].offsetWidth; ui.box[q].classList.add("tb-bump"); }
         ui.box[q].classList.toggle("mia", dentro(v) && squadraDi(v, me) === q);
       });
-      if (v.fase === "turno") ui.turno.textContent = "Turno " + v.turno + " di " + v.totale + " · " + (v.attivo === me ? "spieghi tu" : nomeDi(v, v.attivo) + " spiega");
-      else if (v.fase === "pronto") ui.turno.textContent = v.attivo ? "Turno " + v.turno + " di " + v.totale : (v.avviso ? "Partita ferma" : "Turni finiti");
+      var tre = v.tre, testa = tre ? nomeRound(tre.n) + " · 🧺 " + tre.carte :"Turno " + v.turno + " di " + v.totale;
+      ui.turno.classList.toggle("tre", !!tre);
+      if (v.fase === "turno") ui.turno.textContent = testa + " · " + (v.attivo === me ? "spieghi tu" : nomeDi(v, v.attivo) + " spiega");
+      else if (v.fase === "pronto") ui.turno.textContent = v.attivo ? testa : (v.avviso ? "Partita ferma" : (tre ? "Tre round finiti" : "Turni finiti"));
+      else if (v.fase === "rubata") ui.turno.textContent = "Tempo! · " + (v.attivo === me ? "hai spiegato tu" : nomeDi(v, v.attivo) + " ha spiegato");
+      else if (v.fase === "round") ui.turno.textContent = "Round " + ((v.inter && v.inter.n) || 2) + " di 3";
       else ui.turno.textContent = "";
+      if (v.fase === "round") aggiornaAvanti(v);
       var puoPausa = o.sonoHost && ((v.fase === "turno") || (v.fase === "pronto" && v.attivo && !v.avviso));
       ui.pausa.style.visibility = puoPausa ? "visible" : "hidden";
       ui.pausa.textContent = v.pausa ? "▶️" : "⏸️";
@@ -424,12 +542,13 @@
         testi(v); tick();
         // suoni dei cambi di fase (non a chi è appena rientrato)
         if (prima && V.seq != null) {
-          if (prima.fase === "turno" && v.fase === "pronto") suono("gong");
+          if (prima.fase === "turno" && (v.fase === "pronto" || v.fase === "rubata")) suono("gong");
           else if (prima.fase === "pronto" && v.fase === "turno") suono("via");
+          else if (prima.fase !== "round" && v.fase === "round") { suono("fanfara"); if (dentro(v)) vibra(25); }   // round nuovo
         }
         var ev = v.ultimo;
         if (V.seq == null) V.seq = ev ? ev.seq : 0;   // appena arrivato: gli eventi vecchi non si ripetono
-        else if (ev && ev.seq !== V.seq) { V.seq = ev.seq; if (v.fase === "turno") evento(ev, v); }
+        else if (ev && ev.seq !== V.seq) { V.seq = ev.seq; if (v.fase === "turno" || v.fase === "rubata") evento(ev, v); }
       },
       tick: tick,
       azzera: function () { V.ui = null; V.key = ""; }
@@ -495,10 +614,8 @@
   //  HOST: tiene la partita e manda a tutti la "foto"
   // =========================================================
   function host(t) {
-    var imp = t.impostazioni || {};
-    var durata = [60, 90, 120].indexOf(Number(imp.tempo)) >= 0 ? Number(imp.tempo) : 90;
-    var giri = Math.max(1, Math.min(4, Number(imp.giri) || 1));
-    var livello = [1, 2, 3].indexOf(Number(imp.carte)) >= 0 ? Number(imp.carte) : 2;
+    var RI = leggiImp(t.impostazioni);
+    var durata = RI.durata, giri = RI.giri, livello = RI.livello, treOn = RI.tre, mazzoN = RI.mazzoN, rubataOn = RI.rubata;
     var codice = "…", pronta = false, fase = "lobby", rete = null, tic = null;
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
     var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
@@ -514,6 +631,12 @@
     var guarda = [];   // nella Sala: chi non è stato scelto per giocare (guarda soltanto: le squadre si fanno senza di lui)
     var rifatto = 0;   // la partita è ripresa a metà turno: quel turno si rifà da capo (il numero del turno, per la scritta)
     var inizioTurno = null;   // punti e statistiche com'erano a inizio turno (per rifarlo da capo se la partita riprende)
+    // 🧺 tre round: tre = { n: il round, tutte: le carte della partita, coda: quelle ancora da indovinare in questo round, punti: [[A, B] per round], finita }
+    var tre = null;
+    var continua = null;    // { id, ms }: il turno rimasto a metà quando il mazzo è finito continua nel round dopo
+    var inter = null;      // tra un round e l'altro: { n, k, pronti, scade, riepilogo, chi, resta }
+    // 🫳 rubata: rub = { parola, ruba (la squadra che prova), scade, decidi, esito: null/"presa"/"no"/"annullata", fino }
+    var rub = null, ctrl = null, ctrlPunt = [0, 0], rubate = [0, 0];
     statPersona(IO);
 
     function nuovoId() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
@@ -568,9 +691,10 @@
     t.onRegole = function (nuove) {
       if (fase !== "lobby") return;
       t.impostazioni = t.impostazioni || {};
-      if ([60, 90, 120].indexOf(Number(nuove.tempo)) >= 0) { durata = Number(nuove.tempo); t.impostazioni.tempo = durata; }
-      giri = Math.max(1, Math.min(4, Number(nuove.giri) || 1)); t.impostazioni.giri = giri;
-      if ([1, 2, 3].indexOf(Number(nuove.carte)) >= 0) { livello = Number(nuove.carte); t.impostazioni.carte = livello; }
+      var x = leggiImp(Object.assign({}, t.impostazioni, nuove || {}));
+      durata = x.durata; giri = x.giri; livello = x.livello; treOn = x.tre; mazzoN = x.mazzoN; rubataOn = x.rubata;
+      t.impostazioni.tempo = durata; t.impostazioni.giri = giri; t.impostazioni.carte = livello;
+      t.impostazioni.partita = treOn ? "tre" : "classica"; t.impostazioni.mazzo = mazzoN; t.impostazioni.rubata = rubataOn ? 1 : 0;
       aggiornaLobby();
     };
 
@@ -579,19 +703,28 @@
       if (pausa) return rimasto;
       if (fase === "turno") return Math.max(0, deadline - Date.now());
       if (fase === "pronto" && prontoScade) return Math.max(0, prontoScade - Date.now());
+      if (fase === "rubata" && rub) return rub.esito ? 0 : Math.max(0, rub.scade - Date.now());
+      if (fase === "round" && inter) return Math.max(0, inter.scade - Date.now());
       return 0;
     }
+    function inRipresa() { return fase === "pronto" && continua && continua.id === attivo; }
     function vm(conOmini) {
       var omini = conOmini || fase !== "turno";
       return { fase: fase, codice: codice, pronta: pronta, partitaId: partitaId,
         giocatori: giocatori.map(function (p) { var x = { id: p.id, nome: p.nome, host: !!p.host, via: !!p.via }; if (omini) x.omino = p.omino; return x; }),
         squadre: squadre, punti: punti.slice(), durata: durata, giri: giri,
-        turno: fase === "turno" ? indiceTurno : indiceTurno + 1, totale: coda.length,
+        turno: (fase === "turno" || fase === "rubata" || inRipresa()) ? indiceTurno : indiceTurno + 1, totale: tre ? 0 : coda.length,
         attivo: attivo, team: attivo == null ? null : squadra(attivo),
         restano: restano(), pausa: pausa, avviso: avviso, presenti: giocatori.filter(function (p) { return !p.via; }).length,
         chiaveCarta: chiaveCarta, carta: fase === "turno" ? cartaOra : null, passati: passati,
         giusteTurno: statTurno ? statTurno.giuste.length : 0, combo: attivo ? statPersona(attivo).comboCarte : 0,
         ultimo: ultimo, riepilogo: fase === "pronto" ? riepilogo : null, rifatto: fase === "pronto" && rifatto === indiceTurno + 1 ? rifatto : 0,
+        // 🧺 / 🫳
+        tre: tre ? { n: tre.n, carte: tre.coda.length + (cartaOra && (fase === "turno" || fase === "rubata") ? 1 : 0), punti: tre.punti.map(function (p) { return p.slice(); }) } : null,
+        rubataOn: rubataOn, ctrl: ctrl,
+        rubata: fase === "rubata" && rub ? { parola: rub.parola, ruba: rub.ruba, esito: rub.esito } : null,
+        inter: fase === "round" && inter ? { n: inter.n, k: inter.k, pronti: prontiVeri(), servono: servono(), riepilogo: inter.riepilogo, chi: inter.chi, resta: inter.resta } : null,
+        ripresa: inRipresa() ? continua.ms : 0,   // (il turno che continua nel round dopo: i ms che restano)
         fine: fase === "fine" ? fine : null, statGiocatori: fase === "fine" ? statGiocatori : null, guarda: guarda.slice() };
     }
     // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
@@ -615,7 +748,10 @@
       t.ricorda({ fase: fase, giocatori: giocatori, squadre: squadre, punti: punti, livello: livello, durata: durata, giri: giri,
         resto: resto, uscite: uscite, coda: coda, indiceTurno: indiceTurno, puntatore: puntatore, primaSquadra: primaSquadra,
         sceltoPer: sceltoPer, attivo: attivo, avviso: avviso, riepilogo: riepilogo, fine: fine, partitaId: partitaId,
-        statGiocatori: statGiocatori, guarda: guarda, inizioTurno: inizioTurno, seqEv: seqEv, chiaveCarta: chiaveCarta });
+        statGiocatori: statGiocatori, guarda: guarda, inizioTurno: inizioTurno, seqEv: seqEv, chiaveCarta: chiaveCarta,
+        // 🧺 / 🫳 (le ore restano ore: alla ripresa si convertono con t.ripresa.ora)
+        treOn: treOn, mazzoN: mazzoN, rubataOn: rubataOn, tre: tre, continua: continua, inter: inter, rub: rub, ctrl: ctrl,
+        ctrlPunt: ctrlPunt, rubate: rubate, statTurno: statTurno });
     }
 
     // la partita di prima (l'host ha ricaricato la pagina o riaperto l'app: t.ripresa): si riprende da lì.
@@ -632,6 +768,10 @@
       seqEv = R0.seqEv || 0; chiaveCarta = (R0.chiaveCarta || 0) + 1;   // (una carta vecchia toccata adesso non vale)
       giocatori.forEach(function (p) { statPersona(p.id); if (p.id !== IO && !p.via) attesi[p.id] = 1; });
       giocatori.forEach(function (p) { p.host = p.id === IO; });   // (ho preso il posto dell'host sparito: ora la corona è mia)
+      if (R0.treOn != null) { treOn = !!R0.treOn; mazzoN = R0.mazzoN || mazzoN; rubataOn = !!R0.rubataOn; }
+      tre = R0.tre || null; continua = R0.continua || null; inter = R0.inter || null; rub = R0.rub || null; ctrl = R0.ctrl || null;
+      ctrlPunt = R0.ctrlPunt || ctrlPunt; rubate = R0.rubate || rubate; statTurno = R0.statTurno || null;
+      if (inter) inter.scade = Date.now() + Math.max(8000, (t.ripresa.ora(inter.scade) || 0) - Date.now());   // (il cambio di round: almeno 8 s di respiro)
     }
     var cbRete = {
       onCodice: function (c) { codice = c; if (fase === "lobby") aggiornaLobby(); else inviaStato(true); },
@@ -644,6 +784,9 @@
         // a partita iniziata non si toglie nessuno: resta "assente" e può rientrare
         p.via = true;
         if (fase === "turno" && id === attivo) return fineTurno(true);
+        if (fase === "rubata" && id === attivo && rub && !rub.esito) return decidiRubata(false);   // chi spiegava non c'è più: niente rubata
+        if (fase === "round") { if (prontiVeri().length >= servono()) return fineIntermezzo(); return inviaStato(); }
+        if ((fase === "turno" || fase === "pronto") && id === ctrl && attivo) ctrl = scegliCtrl(1 - squadra(attivo));   // controlla un altro
         if (fase === "pronto" && (id === attivo || (!avviso && attivo && (presenti(0).length < 2 || presenti(1).length < 2)))) return preparaPronto();
         inviaStato();
       },
@@ -687,8 +830,15 @@
       tAttesi = setTimeout(function () { Object.keys(attesi).forEach(function (id) { if (rete) cbRete.onAddio(id); }); }, 10000);
       pausa = false; rimasto = 0; ultimoBuzz = null; deadline = 0;
       if (fase === "fine") return inviaStato(true);
-      if (fase === "turno") {
-        if (inizioTurno) { punti = inizioTurno.punti.slice(); statGiocatori = inizioTurno.stat; }
+      if (fase === "round" && inter) return inviaStato(true);   // 🧺 tra un round e l'altro si resta lì (col conto che restava)
+      if (fase === "turno" || fase === "rubata") {   // (anche la 🫳 rubata: il turno si rifà da capo, rubata compresa)
+        if (inizioTurno) {
+          punti = inizioTurno.punti.slice(); statGiocatori = inizioTurno.stat;
+          if (inizioTurno.tre) tre = inizioTurno.tre;   // 🧺 il mazzo del round com'era a inizio turno
+          if (inizioTurno.rubate) rubate = inizioTurno.rubate.slice();
+          if (inizioTurno.cont && attivo) statPersona(attivo).turniSpiegati = Math.max(0, statPersona(attivo).turniSpiegati - 1);   // (avviaTurno lo riconta)
+        }
+        rub = null; continua = null; fase = "turno";
         indiceTurno = Math.max(0, indiceTurno - 1);   // (avviaTurno lo rifà avanzare)
         sceltoPer = { turno: indiceTurno, id: attivo };
         rifatto = indiceTurno + 1;
@@ -703,20 +853,32 @@
     function azione(id, tipo, chiave, extra) {
       if (fase === "pronto" && tipo === "pronto" && id === attivo && !pausa && !avviso) return avviaTurno();
       if (tipo === "annulla") { if (id === IO || id === attivo) annullaBuzz(extra && extra.seq); return; }
+      if (tipo === "avanti") return avanti(id, extra && extra.k);
+      if (tipo === "rubata") { if (fase === "rubata" && rub && !rub.esito && id === attivo) decidiRubata(!!(extra && extra.presa)); return; }
+      if (tipo === "annullaRubata") { if (id === IO) annullaRubata(); return; }
       if (fase !== "turno" || pausa || chiave !== chiaveCarta || !cartaOra) return;
       if (tipo === "indovinata" && id === attivo) registra("giusta", id);
       else if (tipo === "passo" && id === attivo && passati < MAX_PASSI) registra("passata", id);
-      else if (tipo === "buzz" && gioc(id) && squadra(id) !== squadra(attivo)) registra("buzz", id);
+      else if (tipo === "buzz" && gioc(id) && squadra(id) !== squadra(attivo) && (!ctrl || id === ctrl)) registra("buzz", id);
     }
 
     // ---- turni: le due squadre si alternano, ognuna con lo stesso numero di turni; dentro la squadra si va a giro ----
+    // (nei tre round i turni non sono contati: si va avanti finché il terzo round non ha finito le carte)
+    function squadraTurno(i) { return tre ? (primaSquadra + i) % 2 : coda[i]; }
+    function finiti() { return tre ? !!tre.finita : indiceTurno >= coda.length; }
     function inizia() {
       if (fase !== "lobby" || giocatori.length < MIN || membri(0).length < 2 || membri(1).length < 2) return;
       punti = [0, 0]; carte = mazzo(livello); indiceCarta = 0; indiceTurno = 0; uscite = [];
       puntatore = [0, 0]; coda = []; sceltoPer = null; ultimo = null; ultimoBuzz = null; fine = null; riepilogo = null; pausa = false;
+      continua = null; inter = null; rub = null; ctrl = null; ctrlPunt = [Math.floor(Math.random() * 16), Math.floor(Math.random() * 16)]; rubate = [0, 0]; tre = null;
       giocatori.forEach(function (p) { statPersona(p.id); });
-      var turniSquadra = Math.max(membri(0).length, membri(1).length) * giri;
-      for (var k = 0; k < turniSquadra * 2; k++) coda.push((primaSquadra + k) % 2);
+      if (treOn) {   // 🧺 si pesca il mazzo della partita: le stesse carte nei tre round
+        var tutte = carte.slice(0, mazzoN); indiceCarta = tutte.length;
+        tre = { n: 1, tutte: tutte, coda: mescola(tutte), punti: [[0, 0], [0, 0], [0, 0]], finita: false };
+      } else {
+        var turniSquadra = Math.max(membri(0).length, membri(1).length) * giri;
+        for (var k = 0; k < turniSquadra * 2; k++) coda.push((primaSquadra + k) % 2);
+      }
       preparaPronto();
     }
     function scegli(s) {   // il prossimo della squadra che c'è
@@ -727,6 +889,14 @@
       }
       return null;
     }
+    function scegliCtrl(s) {   // 🫳 chi controlla, a giro tra gli avversari collegati
+      var m = membri(s); if (!m.length) return null;
+      for (var i = 0; i < m.length; i++) {
+        var p = m[(ctrlPunt[s] + i) % m.length];
+        if (!p.via) { ctrlPunt[s] = (ctrlPunt[s] + i + 1) % m.length; return p.id; }
+      }
+      return null;
+    }
     function testoMancano() {
       var via = giocatori.filter(function (p) { return p.via; }).map(function (p) { return p.nome; });
       var corta = [0, 1].filter(function (s) { return presenti(s).length < 2; }).map(function (s) { return "Squadra " + SQUADRE[s]; });
@@ -734,59 +904,162 @@
     }
     // tra un turno e l'altro: chi spiega dopo si prepara e tocca "Pronti, via!"
     function preparaPronto() {
-      fase = "pronto"; pausa = false; avviso = null; cartaOra = null; statTurno = null;
-      if (indiceTurno >= coda.length) { attivo = null; prontoScade = Date.now() + 6500; return inviaStato(true); }
-      if (presenti(0).length < 2 || presenti(1).length < 2) { attivo = null; prontoScade = 0; avviso = testoMancano(); return inviaStato(true); }
-      // se per questo turno era già stato scelto qualcuno (e c'è ancora), resta lui: nessuno perde il suo turno
-      var s = coda[indiceTurno], prima = sceltoPer && sceltoPer.turno === indiceTurno ? gioc(sceltoPer.id) : null;
-      attivo = prima && !prima.via && squadra(prima.id) === s ? prima.id : scegli(s);
-      sceltoPer = { turno: indiceTurno, id: attivo };
+      fase = "pronto"; pausa = false; avviso = null; cartaOra = null; rub = null;
+      if (continua) {   // il turno rimasto a metà: se chi spiegava non c'è più, il suo turno si chiude qui
+        var rp = gioc(continua.id);
+        if (!rp || rp.via) { attivo = continua.id; continua = null; if (statTurno) chiudiTurno(true); }
+      }
+      if (!continua) statTurno = null;
+      if (finiti()) { attivo = null; ctrl = null; prontoScade = Date.now() + 6500; return inviaStato(true); }
+      if (presenti(0).length < 2 || presenti(1).length < 2) { attivo = null; ctrl = null; prontoScade = 0; avviso = testoMancano(); return inviaStato(true); }
+      if (continua) attivo = continua.id;
+      else {
+        // se per questo turno era già stato scelto qualcuno (e c'è ancora), resta lui: nessuno perde il suo turno
+        var s = squadraTurno(indiceTurno), prima = sceltoPer && sceltoPer.turno === indiceTurno ? gioc(sceltoPer.id) : null;
+        attivo = prima && !prima.via && squadra(prima.id) === s ? prima.id : scegli(s);
+        sceltoPer = { turno: indiceTurno, id: attivo };
+      }
+      if (rubataOn) {   // 🫳 tra gli avversari controlla uno solo (gli altri ascoltano per rubare l'ultima carta)
+        var c = ctrl ? gioc(ctrl) : null;
+        if (!(continua && c && !c.via && squadra(ctrl) !== squadra(attivo))) ctrl = scegliCtrl(1 - squadra(attivo));
+      } else ctrl = null;
       prontoScade = Date.now() + ATTESA_PRONTO;
       inviaStato(true);
     }
     function avviaTurno() {
-      // (com'era prima del turno: se la partita riprende a metà, il turno si rifà da qui)
-      inizioTurno = { punti: punti.slice(), stat: JSON.parse(JSON.stringify(statGiocatori)) };
-      fase = "turno"; indiceTurno++; passati = 0; pausa = false;
+      // (com'era prima del turno: se la partita riprende a metà, il turno si rifà da qui; 🧺 col mazzo del round com'era)
+      var cont = !!(continua && continua.id === attivo);
+      inizioTurno = { punti: punti.slice(), stat: JSON.parse(JSON.stringify(statGiocatori)), tre: tre ? JSON.parse(JSON.stringify(tre)) : null, rubate: rubate.slice(), cont: cont };
+      fase = "turno"; pausa = false;
+      if (cont) {   // 🧺 il turno di prima continua nel round nuovo, col tempo che restava
+        deadline = Date.now() + continua.ms; continua = null;
+        pescaCarta(); return inviaStato();
+      }
+      continua = null;
+      indiceTurno++; passati = 0;
       statTurno = { giuste: [], buzz: [], passate: [] };
       statPersona(attivo).turniSpiegati++; statPersona(attivo).comboCarte = 0;
       deadline = Date.now() + durata * 1000;
       pescaCarta(); inviaStato();
     }
     function pescaCarta() {
-      if (indiceCarta >= carte.length) { carte = mescola(carteDelLivello(livello)); indiceCarta = 0; }   // mazzo finito: si rimescola
-      cartaOra = carte[indiceCarta++]; chiaveCarta++; uscite.push(cartaOra.p);
+      if (tre) { cartaOra = tre.coda.shift() || null; if (!cartaOra) return; }
+      else {
+        if (indiceCarta >= carte.length) { carte = mescola(carteDelLivello(livello)); indiceCarta = 0; }   // mazzo finito: si rimescola
+        cartaOra = carte[indiceCarta++];
+      }
+      chiaveCarta++; uscite.push(cartaOra.p);
     }
     function evento(tipo, id, parola) { ultimo = { tipo: tipo, seq: ++seqEv, nome: id ? (gioc(id) || {}).nome : null, parola: parola || null }; }
     function registra(tipo, id) {
-      var speaker = statPersona(attivo), parola = cartaOra.p;
-      if (tipo === "giusta") { punti[squadra(attivo)]++; statTurno.giuste.push(parola); speaker.carteIndovinate++; speaker.comboCarte++; speaker.comboCarteMax = Math.max(speaker.comboCarteMax, speaker.comboCarte); evento("giusta", id, parola); }
+      var speaker = statPersona(attivo), parola = cartaOra.p, sq = squadra(attivo), c = cartaOra;
+      if (tipo === "giusta") { punti[sq]++; statTurno.giuste.push(parola); speaker.carteIndovinate++; speaker.comboCarte++; speaker.comboCarteMax = Math.max(speaker.comboCarteMax, speaker.comboCarte); evento("giusta", id, parola); }
       else if (tipo === "buzz") {
-        punti[squadra(attivo)]--; statTurno.buzz.push(parola); speaker.buzzSubiti++; speaker.comboCarte = 0; statPersona(id).buzzFatti++;
+        punti[sq]--; statTurno.buzz.push(parola); speaker.buzzSubiti++; speaker.comboCarte = 0; statPersona(id).buzzFatti++;
         evento("buzz", id, parola);
-        ultimoBuzz = { seq: ultimo.seq, ora: Date.now(), da: id, speaker: attivo, team: squadra(attivo), parola: parola, turno: indiceTurno };
+        ultimoBuzz = { seq: ultimo.seq, ora: Date.now(), da: id, speaker: attivo, team: sq, parola: parola, turno: indiceTurno, round: tre ? tre.n : 0 };
       } else { passati++; statTurno.passate.push(parola); speaker.cartePassate++; speaker.comboCarte = 0; evento("passo", id, parola); }
+      cartaOra = null;
+      if (tre) {   // 🧺 la carta indovinata esce dal round; quelle passate o col BUZZ tornano in fondo al mazzo
+        if (tipo === "giusta") tre.punti[tre.n - 1][sq]++;
+        else { if (tipo === "buzz") tre.punti[tre.n - 1][sq]--; tre.coda.push(c); }
+        if (!tre.coda.length) return roundFinitoNelTurno();
+      }
       pescaCarta(); inviaStato();
     }
     function annullaBuzz(seq) {
       var b = ultimoBuzz;
       if (!b || b.seq !== seq || b.annullato || fase !== "turno" || b.turno !== indiceTurno || Date.now() - b.ora > ANNULLA_MS + 1500) return;
       b.annullato = true; punti[b.team]++;
+      if (tre && b.round) tre.punti[b.round - 1][b.team]++;
       var i = statTurno.buzz.lastIndexOf(b.parola); if (i >= 0) statTurno.buzz.splice(i, 1);
       statPersona(b.da).buzzFatti = Math.max(0, statPersona(b.da).buzzFatti - 1);
       statPersona(b.speaker).buzzSubiti = Math.max(0, statPersona(b.speaker).buzzSubiti - 1);
       evento("annullato", b.da, b.parola); inviaStato();
     }
-    function fineTurno(uscito) {
-      if (fase !== "turno") return;
+    // il riepilogo del turno e i contatori di chi ha spiegato
+    function chiudiTurno(uscito) {
       var buono = statTurno.giuste.length > statTurno.buzz.length, st = statPersona(attivo);
       if (buono) st.turniPositivi++;
       st.esitiTurni.push(buono);
       riepilogo = { turno: indiceTurno, id: attivo, nome: (gioc(attivo) || {}).nome || "…", uscito: !!uscito, team: squadra(attivo),
-        giuste: statTurno.giuste.slice(), buzz: statTurno.buzz.slice(), passate: statTurno.passate.slice() };
+        giuste: statTurno.giuste.slice(), buzz: statTurno.buzz.slice(), passate: statTurno.passate.slice(), rubata: statTurno.rubata || null };
       segnaViste(uscite); uscite = [];
+    }
+    function fineTurno(uscito) {
+      if (fase !== "turno" && fase !== "rubata") return;
+      if (tre && cartaOra) tre.coda.push(cartaOra);   // 🧺 la carta rimasta in mano torna in fondo al mazzo del round
+      cartaOra = null; rub = null;
+      chiudiTurno(uscito);
+      if (tre && !tre.coda.length) {
+        if (tre.n >= 3) tre.finita = true;
+        else return apriRound(riepilogo, null, 0);
+      }
       preparaPronto();
     }
+    // il tempo è finito: con la Rubata e una carta in gioco, prima l'altra squadra prova a dirla
+    function tempoFinito() {
+      if (rubataOn && cartaOra) return iniziaRubata();
+      fineTurno(false);
+    }
+
+    // ---- 🧺 i tre round ----
+    function roundFinitoNelTurno() {   // il mazzo del round è finito mentre si spiegava
+      if (tre.n >= 3) { tre.finita = true; return fineTurno(false); }
+      var resta = Math.max(0, deadline - Date.now());
+      if (resta < RIPRESA_MIN) return fineTurno(false);
+      continua = { id: attivo, ms: resta };
+      apriRound(null, attivo, resta);
+    }
+    function apriRound(riep, chi, resta) {
+      fase = "round"; attivo = null; cartaOra = null; pausa = false; avviso = null; rub = null;
+      if (!chi) ctrl = null;
+      tre.n++; tre.coda = mescola(tre.tutte);
+      inter = { n: tre.n, k: partitaId + "|r" + tre.n, pronti: [], scade: Date.now() + ATTESA_ROUND * 1000, riepilogo: riep, chi: chi, resta: resta };
+      inviaStato(true);
+    }
+    function servono() { return Math.floor(giocatori.filter(function (p) { return !p.via; }).length / 2) + 1; }
+    function prontiVeri() { return inter ? inter.pronti.filter(function (id) { var p = gioc(id); return p && !p.via; }) : []; }
+    // «⏩ Avanti»: si parte subito se lo tocca più di metà di chi gioca ed è collegato (il tocco vale solo per questo cambio di round)
+    function avanti(id, k) {
+      if (fase !== "round" || !inter || k !== inter.k) return;
+      var p = gioc(id); if (!p || p.via) return;
+      if (inter.pronti.indexOf(id) < 0) inter.pronti.push(id);
+      if (prontiVeri().length >= servono()) return fineIntermezzo();
+      inviaStato();
+    }
+    function fineIntermezzo() {
+      if (fase !== "round") return;
+      inter = null; riepilogo = null;
+      preparaPronto();
+    }
+
+    // ---- 🫳 la rubata ----
+    function iniziaRubata() {
+      fase = "rubata";
+      rub = { parola: cartaOra.p, ruba: 1 - squadra(attivo), scade: Date.now() + RUBATA_MS, decidi: Date.now() + RUBATA_MS + DECIDI_MS, esito: null, fino: 0 };
+      inviaStato();
+    }
+    function decidiRubata(presa) {
+      if (fase !== "rubata" || !rub || rub.esito) return;
+      if (presa) {
+        rub.esito = "presa"; punti[rub.ruba]++; rubate[rub.ruba]++; if (tre) tre.punti[tre.n - 1][rub.ruba]++;
+        evento("rubata", attivo, rub.parola); rub.fino = Date.now() + ANNULLA_MS;   // l'host può ancora annullarla
+      } else { rub.esito = "no"; evento("rubno", attivo, rub.parola); rub.fino = Date.now() + 1800; }
+      inviaStato();
+    }
+    function annullaRubata() {
+      if (fase !== "rubata" || !rub || rub.esito !== "presa") return;
+      rub.esito = "annullata"; punti[rub.ruba]--; rubate[rub.ruba]--; if (tre) tre.punti[tre.n - 1][rub.ruba]--;
+      evento("rubann", IO, rub.parola); rub.fino = Date.now() + 1800;
+      inviaStato();
+    }
+    function chiudiRubata() {
+      if (fase !== "rubata" || !rub) return;
+      if (rub.esito === "presa") { statTurno.rubata = { p: rub.parola, team: rub.ruba }; cartaOra = null; }   // presa: esce anche dal mazzo del round
+      fineTurno(false);
+    }
+
     function cambiaPausa() {
       if (fase !== "turno" && !(fase === "pronto" && attivo && !avviso)) return;
       if (!pausa) { rimasto = restano(); pausa = true; }
@@ -797,6 +1070,7 @@
       if (fase !== "pronto" || !avviso) return;
       var vivi = giocatori.filter(function (p) { return !p.via; });
       if (vivi.length < MIN) return;
+      if (continua && statTurno) { attivo = continua.id; continua = null; chiudiTurno(false); }   // squadre nuove: il turno a metà si chiude
       distribuisci(vivi); puntatore = [0, 0];
       preparaPronto();
     }
@@ -812,6 +1086,8 @@
       });
       if (best) x.push("🎙️ Miglior spiegatore: " + best.nome + " (" + best.n + (best.n === 1 ? " carta" : " carte") + ")");
       if (cic) x.push("🚨 Cicalino d'oro: " + cic.nome + " (" + cic.n + " BUZZ)");
+      if (tre) x.push("🧺 Round per round (A–B): " + tre.punti.map(function (p) { return p[0] + "–" + p[1]; }).join(" · "));
+      if (rubate[0] || rubate[1]) x.push("🫳 Carte rubate: A " + rubate[0] + " · B " + rubate[1]);
       return x;
     }
     function classificaGiocatori() {
@@ -822,7 +1098,7 @@
     function finePartita(motivo) {
       if (fase === "fine") return;
       if (uscite.length) { segnaViste(uscite); uscite = []; }
-      fase = "fine"; attivo = null; pausa = false; avviso = null; deadline = 0; prontoScade = 0;
+      fase = "fine"; attivo = null; pausa = false; avviso = null; deadline = 0; prontoScade = 0; rub = null; inter = null; continua = null; ctrl = null;
       fine = motivo ? { annullata: true, motivo: motivo, vincitore: -1, premi: [] } : { vincitore: vincitore(), premi: premi() };
       var x = vm(true);
       if (rete) rete.invia({ t: "vm", vm: x });
@@ -841,17 +1117,21 @@
       fase = "lobby"; partitaId = nuovoId(); statGiocatori = Object.create(null); giocatori.forEach(function (p) { statPersona(p.id); });
       punti = [0, 0]; attivo = null; deadline = 0; prontoScade = 0; riepilogo = null; cartaOra = null; coda = []; indiceTurno = 0;
       ultimo = null; fine = null; pausa = false; avviso = null; primaSquadra = 1 - primaSquadra;   // la prossima volta comincia l'altra squadra
+      tre = null; continua = null; inter = null; rub = null; ctrl = null; rubate = [0, 0];
       aggiornaLobby();
     }
     function chiudi() { clearTimeout(tAttesi); if (tic) { clearInterval(tic); tic = null; } if (rete) { rete.chiudi(); rete = null; } }
     // la Rivincita dei tasti di fine comuni: tutti di nuovo nella saletta, stesse squadre (il core fa il 3-2-1)
     t.onRivincita = function () { if (fase === "fine") nuovaPartita(); };
 
-    // l'orologio dell'host: fine del tempo e partenza da soli
+    // l'orologio dell'host: fine del tempo, rubata, cambio di round e partenza da soli
     tic = setInterval(function () {
+      var ora = Date.now();
       if (!pausa) {
-        if (fase === "turno" && Date.now() >= deadline) fineTurno(false);
-        else if (fase === "pronto" && prontoScade && Date.now() >= prontoScade) { if (attivo) avviaTurno(); else finePartita(); }
+        if (fase === "turno" && ora >= deadline) tempoFinito();
+        else if (fase === "pronto" && prontoScade && ora >= prontoScade) { if (attivo) avviaTurno(); else finePartita(); }
+        else if (fase === "rubata" && rub) { if (!rub.esito && ora >= rub.decidi) decidiRubata(false); else if (rub.esito && ora >= rub.fino) chiudiRubata(); }
+        else if (fase === "round" && inter && ora >= inter.scade) fineIntermezzo();
       }
       vista.tick();
     }, 200);
@@ -910,33 +1190,52 @@
     G.tic = setInterval(function () { vista.tick(); }, 200);
   }
 
+  // ---- 🧺 il round nuovo e i punti round per round (online e su questo telefono) ----
+  function rigaRound(t, n) { return t.el("div", { class: "tb-round" }, [t.el("small", { text: "Round " + n + " di 3" }), t.el("b", { text: nomeRound(n) }), t.el("span", { text: ROUND[n].regola })]); }
+  // i punti round per round (la riga del round in corso in giallo)
+  function tabellaRound(t, pr, ora) {
+    var tab = t.el("div", { class: "tb-rtab" }, [t.el("div", {}, [t.el("span", { text: "" }), t.el("em", { text: "A" }), t.el("em", { text: "B" })])]);
+    (pr || []).forEach(function (x, i) {
+      if (i + 1 > ora) return;
+      tab.appendChild(t.el("div", { class: i + 1 === ora ? "ora" : "" }, [t.el("span", { text: nomeRound(i + 1) }), t.el("em", { text: String(x[0]) }), t.el("em", { text: String(x[1]) })]));
+    });
+    return tab;
+  }
   // =========================================================
   //  SU QUESTO TELEFONO: il classico. Chi spiega tiene il telefono,
   //  un avversario guarda la carta da sopra la spalla e preme BUZZ.
   // =========================================================
-  var ICONE = { ok: "✅", no: "❌", pa: "⏭️" };
+  var ICONE = { ok: "✅", no: "❌", pa: "⏭️", ru: "🫳" };
   function vibra(x) { try { if (navigator.vibrate) navigator.vibrate(x); } catch (e) {} }
   function elenco(nomi) { return nomi.length > 1 ? nomi.slice(0, -1).join(", ") + " e " + nomi[nomi.length - 1] : (nomi[0] || ""); }
+  function presa(e) { return e === "ok" || e === "ru"; }   // la carta è stata detta (dalla squadra o rubata)
 
   function locale(t) {
     stile();
-    var imp = t.impostazioni || {};
-    var durata = [60, 90, 120].indexOf(Number(imp.tempo)) >= 0 ? Number(imp.tempo) : 90;
-    var giri = Math.max(1, Math.min(4, Number(imp.giri) || 1));
-    var livello = [1, 2, 3].indexOf(Number(imp.carte)) >= 0 ? Number(imp.carte) : 2;
+    var R = leggiImp(t.impostazioni);
+    var durata = R.durata, giri = R.giri, livello = R.livello;
     var mio = (t.nomeProfilo && t.nomeProfilo()) || "", ominoMio = mio ? avatar(mio) : null;
     // i giocatori per posto (due nomi uguali restano due persone diverse)
     var gio = (t.giocatori || []).map(function (n, k) { return { k: k, nome: String(n || "").trim() || ("Giocatore " + (k + 1)), sq: 0 }; });
     var L = { turni: [], coda: [], idx: 0, punt: [0, 0], ctrl: [0, 0], prima: Math.random() < 0.5 ? 0 : 1,
-      carte: mazzo(livello), ic: 0, uscite: [], T: null, ui: null, tic: null, finita: false };
+      carte: mazzo(livello), ic: 0, uscite: [], T: null, ui: null, tic: null, finita: false,
+      tre: null,              // 🧺 { n: il round, tutte: le carte della partita, coda: quelle ancora da dire in questo round }
+      rubata: R.rubata };     // 🫳
 
     function membri(s) { return gio.filter(function (p) { return p.sq === s; }); }
-    function punti() {
+    function tuttiTurni() { return L.T && L.turni.indexOf(L.T) < 0 ? L.turni.concat([L.T]) : L.turni; }   // (anche il turno in corso)
+    function punti(round) {
       var p = [0, 0];
-      var tutti = L.T && L.turni.indexOf(L.T) < 0 ? L.turni.concat([L.T]) : L.turni;   // (anche il turno in corso)
-      tutti.forEach(function (T) { T.carte.forEach(function (c) { if (c.e === "ok") p[T.sq]++; else if (c.e === "no") p[T.sq]--; }); });
+      tuttiTurni().forEach(function (T) {
+        T.carte.forEach(function (c) {
+          if (round && c.r !== round) return;
+          if (c.e === "ok") p[T.sq]++; else if (c.e === "no") p[T.sq]--; else if (c.e === "ru") p[1 - T.sq]++;
+        });
+      });
       return p;
     }
+    function puntiRound() { return [punti(1), punti(2), punti(3)]; }
+    function treFinito() { return L.tre && L.tre.n >= 3 && !L.tre.coda.length; }
     function omino(nome) { return nome === mio && ominoMio ? ominoMio : null; }
     function ferma() { if (L.tic) { clearInterval(L.tic); L.tic = null; } }
     function viva() { return L.ui && document.body.contains(L.ui.s); }
@@ -961,7 +1260,7 @@
       ui.timer = t.el("div", { class: "tb-timer testo" });
       ui.barraI = t.el("i");
       ui.barra = t.el("div", { class: "tb-barra" }, [ui.barraI]);
-      ui.turno = t.el("div", { class: "tb-turno" });
+      ui.turno = t.el("div", { class: "tb-turno" + (L.tre ? " tre" : "") });
       ui.corpo = t.el("div", { class: "tb-corpo" });
       ui.banner = t.el("div", { class: "tb-banner" });
       ui.centro = t.el("div", { class: "tb-centro" }, [ui.corpo, ui.banner]);
@@ -992,7 +1291,7 @@
     function schermoSquadre() {
       var ui = cornice(false);
       ui.timer.textContent = "👥";
-      ui.turno.textContent = "Le squadre";
+      ui.turno.textContent = R.tre ? "Le squadre · 🧺 Tre round con " + R.mazzoN + " carte" : "Le squadre";
       var col = t.el("div", { class: "tb-colonne tb-sq-loc" }), nota = t.el("div", { class: "tb-nota" });
       var via = tasto("", "Via ▶", function () { if (membri(0).length >= 2 && membri(1).length >= 2) comincia(); });
       function disegna() {
@@ -1010,7 +1309,7 @@
         nota.textContent = ok ? "Tocca un nome per cambiargli squadra." : "Ogni squadra deve avere almeno 2 persone: tocca un nome per spostarlo.";
       }
       ui.corpo.appendChild(t.el("div", { class: "tb-nascondi tb-loc-squadre" }, [col,
-        t.el("div", { class: "tb-sub", text: "A turno uno spiega alla sua squadra; un avversario guarda la carta e preme BUZZ." })]));
+        t.el("div", { class: "tb-sub", text: "A turno uno spiega alla sua squadra; un avversario guarda la carta e preme BUZZ." + (L.rubata ? " 🫳 A fine tempo gli altri possono rubare l'ultima carta." : "") })]));
       ui.tasti.appendChild(tasto("grigio", "🔀 A caso", function () { dividi(); disegna(); }));
       ui.tasti.appendChild(via);
       ui.tasti.appendChild(nota);
@@ -1022,46 +1321,62 @@
     }
 
     // ---- 2. i turni: le squadre si alternano, stessi turni per tutte e due; dentro la squadra si va a giro ----
+    // (nei tre round i turni non sono contati: si va avanti finché il terzo round non ha finito le carte)
     function comincia() {
-      var turniSquadra = Math.max(membri(0).length, membri(1).length) * giri;
-      L.coda = []; for (var k = 0; k < turniSquadra * 2; k++) L.coda.push((L.prima + k) % 2);
+      if (R.tre) {   // 🧺 si pesca il mazzo della partita: le stesse carte nei tre round
+        var tutte = L.carte.slice(0, R.mazzoN); L.ic = tutte.length;
+        L.tre = { n: 1, tutte: tutte, coda: mescola(tutte) };
+        L.coda = [];
+      } else {
+        var turniSquadra = Math.max(membri(0).length, membri(1).length) * giri;
+        L.coda = []; for (var k = 0; k < turniSquadra * 2; k++) L.coda.push((L.prima + k) % 2);
+      }
       L.idx = 0; L.turni = []; L.punt = [0, 0]; L.ctrl = [1, 1];   // (chi controlla non è chi spiega subito dopo: si può preparare)
       prossimo();
     }
     function prossimoChi() {   // chi spiega e chi controlla nel prossimo turno (senza andare avanti)
-      if (L.idx >= L.coda.length) return null;
-      var s = L.coda[L.idx], m = membri(s), a = membri(1 - s);
+      if (L.tre ? treFinito() : L.idx >= L.coda.length) return null;
+      var s = L.tre ? (L.prima + L.idx) % 2 : L.coda[L.idx], m = membri(s), a = membri(1 - s);
       return { sq: s, chi: m[L.punt[s] % m.length], ctrl: a[L.ctrl[1 - s] % a.length] };
     }
     function prossimo() {
       var x = prossimoChi(); if (!x) return finale();
       L.punt[x.sq]++; L.ctrl[1 - x.sq]++; L.idx++;
-      L.T = { n: L.idx, sq: x.sq, chi: x.chi, ctrl: x.ctrl, carte: [], passati: 0, carta: null, corre: false, pausa: false, combo: 0, comboMax: 0 };
+      L.T = { n: L.idx, sq: x.sq, chi: x.chi, ctrl: x.ctrl, carte: [], passati: 0, carta: null, corre: false, pausa: false, combo: 0, comboMax: 0, ripresa: 0 };
       schermoPronto();
     }
-    function testoTurno() { return "Turno " + L.T.n + " di " + L.coda.length; }
+    function nR() { return L.tre ? L.tre.n : 1; }
+    function testoTurno() { return L.tre ? "Turno " + L.T.n + " · " + nomeRound(L.tre.n) : "Turno " + L.T.n + " di " + L.coda.length; }
+    function regolaBuzz() { var n = nR(); return n === 2 ? "dice più di una parola" : (n === 3 ? "parla o fa suoni" : "dice una parola vietata"); }
     function schermoPronto() {
       var T = L.T, ui = cornice(false), compagni = membri(T.sq).filter(function (p) { return p !== T.chi; }).map(function (p) { return p.nome; });
+      var n = nR(), rip = T.ripresa;
       ui.timer.textContent = "Pronti?";
       ui.turno.textContent = testoTurno();
+      var spiega = rip ? "Continui tu: restano " + Math.ceil(rip / 1000) + " s" : "Squadra " + SQUADRE[T.sq] + " · spieghi a " + elenco(compagni);
+      if (L.tre) spiega += " · " + (n === 1 ? "come sempre, senza le vietate" : n === 2 ? "una parola sola!" : "solo gesti, niente voce!");
       ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, [
-        t.el("div", { class: "tb-sub", text: "📱 Passa il telefono a" }),
+        t.el("div", { class: "tb-sub", text: rip ? "📱 Tieni il telefono:" : "📱 Passa il telefono a" }),
         avatarNodo(t, omino(T.chi.nome), T.chi.nome),
         t.el("div", { class: "tb-indovina", text: T.chi.nome }),
-        t.el("div", { class: "tb-sub", text: "Squadra " + SQUADRE[T.sq] + " · spieghi a " + elenco(compagni) }),
+        t.el("div", { class: "tb-sub", text: spiega }),
         t.el("div", { class: "tb-loc-ctrl" }, [t.el("b", { text: "👀 " + T.ctrl.nome + " controlla" }),
-          t.el("span", { text: "Mettiti dietro a " + T.chi.nome + ", guarda la carta e premi BUZZ se dice una parola vietata." })])
+          t.el("span", { text: "Mettiti dietro a " + T.chi.nome + ", guarda la carta e premi BUZZ se " + regolaBuzz() + "." })])
       ]));
-      ui.tasti.appendChild(tasto("largo", "▶ Pronti, via!", partenza));
-      ui.tasti.appendChild(t.el("div", { class: "tb-nota", text: "I compagni di " + T.chi.nome + " non guardano lo schermo!" }));
+      ui.tasti.appendChild(tasto("largo", rip ? "▶ Si riparte!" : "▶ Pronti, via!", partenza));
+      ui.tasti.appendChild(t.el("div", { class: "tb-nota", text: "I compagni di " + T.chi.nome + " non guardano lo schermo!" + (L.rubata ? " 🫳 Squadra " + SQUADRE[1 - T.sq] + ": a fine tempo potete rubare l'ultima carta." : "") }));
       t.mostra(ui.s);
     }
 
     // ---- 3. il turno: la carta, ✅, ⏭️ e il BUZZ sullo stesso telefono ----
+    function rigaTurno() {
+      var T = L.T;
+      if (!L.tre) return testoTurno() + " · 👀 " + T.ctrl.nome + " controlla";
+      return nomeRound(L.tre.n) + " · 🧺 " + (L.tre.coda.length + (T.carta ? 1 : 0)) + " · 👀 " + T.ctrl.nome;
+    }
     function partenza() {
       var T = L.T, ui = cornice(true);
-      T.corre = true; T.fine = Date.now() + durata * 1000;
-      ui.turno.textContent = testoTurno() + " · 👀 " + T.ctrl.nome + " controlla";
+      T.corre = true; T.fine = Date.now() + (T.ripresa || durata * 1000); T.ripresa = 0;
       ui.timer.className = "tb-timer"; ui.barra.style.visibility = "visible";
       ui.ok = tasto("", "✅ Indovinata", function () { mossa("ok"); });
       ui.pa = tasto("pass", "⏭️ Passo 0/" + MAX_PASSI, function () { mossa("pa"); });
@@ -1075,14 +1390,19 @@
     }
     function pesca() {
       var T = L.T;
-      if (L.ic >= L.carte.length) { L.carte = mescola(carteDelLivello(livello)); L.ic = 0; }   // mazzo finito: si rimescola
-      T.carta = L.carte[L.ic++]; L.uscite.push(T.carta.p);
+      if (L.tre) { T.carta = L.tre.coda.shift() || null; if (!T.carta) return; }
+      else {
+        if (L.ic >= L.carte.length) { L.carte = mescola(carteDelLivello(livello)); L.ic = 0; }   // mazzo finito: si rimescola
+        T.carta = L.carte[L.ic++];
+      }
+      L.uscite.push(T.carta.p);
       mostraCarta();
     }
-    function cartaNodo(c) {
-      return t.el("div", { class: "tb-carta tb-entra" }, [t.el("div", { class: "tb-parola", text: c.p }),
-        t.el("div", { class: "tb-vietate" }, (c.v || []).map(function (w) { return t.el("div", { class: "tb-vietata", text: w }); })),
-        t.el("div", { class: "tb-promemoria", text: "Vietati anche: la parola stessa, un suo pezzo, i gesti" })]);
+    function cartaNodo(c) {   // nel round ☝️ e 🤐 le vietate spariscono
+      var n = nR(), x = [t.el("div", { class: "tb-parola", text: c.p })];
+      if (n === 1) x.push(t.el("div", { class: "tb-vietate" }, (c.v || []).map(function (w) { return t.el("div", { class: "tb-vietata", text: w }); })));
+      x.push(t.el("div", { class: "tb-promemoria", text: ROUND[n].prom }));
+      return t.el("div", { class: "tb-carta tb-entra" }, x);
     }
     function mostraCarta() {   // cambia solo la carta e il tasto dei passi (niente lampeggio)
       var T = L.T, ui = L.ui; if (!viva()) return;
@@ -1090,6 +1410,7 @@
       if (T.pausa) {
         ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, [t.el("div", { class: "tb-indovina", text: "⏸️ Pausa" }), t.el("div", { class: "tb-sub", text: "Il tempo è fermo. La carta torna quando riprendete." })]));
       } else if (T.carta) ui.corpo.appendChild(cartaNodo(T.carta));
+      ui.turno.textContent = rigaTurno();
       ui.pa.textContent = "⏭️ Passo " + T.passati + "/" + MAX_PASSI;
       ui.pa.disabled = T.pausa || T.passati >= MAX_PASSI;
       ui.ok.disabled = ui.bz.disabled = T.pausa;
@@ -1101,23 +1422,25 @@
     function mossa(e) {
       var T = L.T; if (!T || !T.corre || T.pausa || !T.carta) return;
       if (e === "pa" && T.passati >= MAX_PASSI) return;
-      var rec = { p: T.carta.p, e: e, base: "pa" };
+      var c = T.carta, rec = { p: c.p, e: e, base: "pa", c: c, r: nR() };
       T.carte.push(rec); T.carta = null;   // (fino alla carta nuova i tocchi non contano)
+      if (L.tre && e !== "ok") L.tre.coda.push(c);   // 🧺 passata o BUZZ: torna in fondo al mazzo del round
       if (e === "ok") { T.combo++; T.comboMax = Math.max(T.comboMax, T.combo); suono("giusta"); vola("✅ +1", "ok"); if (T.combo >= 5 && T.combo % 5 === 0) vibra(25); }
       else if (e === "pa") { T.passati++; T.combo = 0; suono("passo"); vola("⏭️ Passata", "pa"); }
       else {
         T.combo = 0; suono("buzz"); vola("❌ −1", "no"); vibra([60, 40, 60]);
-        var c = L.ui.corpo.querySelector(".tb-carta"); if (c) { c.classList.remove("tb-entra"); c.classList.add("tb-trema"); }
+        var cn = L.ui.corpo.querySelector(".tb-carta"); if (cn) { cn.classList.remove("tb-entra"); cn.classList.add("tb-trema"); }
         bannerBuzz(rec);
       }
       segna(true);
+      if (L.tre && !L.tre.coda.length) return roundFinitoNelTurno();
       if (e !== "no") return pesca();
       setTimeout(function () { if (L.T === T && T.corre && !T.carta) pesca(); }, 380);   // dopo il BUZZ la carta trema, poi arriva la nuova
     }
     function bannerBuzz(rec) {
       var b = L.ui.banner; b.innerHTML = ""; b.classList.remove("verde");
       b.appendChild(t.el("b", { text: "🚨 BUZZ!" }));
-      b.appendChild(t.el("small", { text: "Parola vietata · carta: " + rec.p }));
+      b.appendChild(t.el("small", { text: (nR() === 2 ? "Più di una parola" : nR() === 3 ? "Ha parlato" : "Parola vietata") + " · carta: " + rec.p }));
       b.appendChild(tasto("", "↩️ Annulla BUZZ", function () {
         if (rec.e !== "no") return;
         rec.e = "nu"; rec.base = "nu"; rec.ico = "↩️"; segna(true); suono("via");
@@ -1143,50 +1466,128 @@
       ui.barra.classList.toggle("rossa", sec <= 10);
       if (!T.pausa && sec <= 5 && sec > 0 && sec !== L.ultimoSec) suono("tic");
       L.ultimoSec = sec;
-      if (!T.pausa && rest <= 0) tempoScaduto();
+      if (!T.pausa && rest <= 0) tempoScaduto(false);
     }
-    function tempoScaduto() {
+    // il turno finisce (tempo scaduto, o mazzo finito nel terzo round)
+    function tempoScaduto(mazzoFinito) {
       var T = L.T; T.corre = false; ferma(); nascondiBanner();
-      if (T.carta) T.carte.push({ p: T.carta.p, e: "nu", base: "nu", ico: "⏰" });   // la carta allo scadere: se l'avevano detta in tempo, si corregge
-      T.carta = null;
       segnaViste(L.uscite); L.uscite = [];
-      suono("gong"); vola("⏰ Tempo!", "pa");
-      var ui = L.ui; ui.ok.disabled = ui.pa.disabled = ui.bz.disabled = true; ui.timer.textContent = "0";
+      var ui = L.ui; ui.ok.disabled = ui.pa.disabled = ui.bz.disabled = true; ui.timer.textContent = mazzoFinito ? "🧺" : "0";
+      if (T.carta && L.rubata) { suono("gong"); return setTimeout(function () { if (L.T === T && viva()) schermoRubata(); }, 600); }   // 🫳 prima la rubata
+      if (T.carta) {   // la carta allo scadere: se l'avevano detta in tempo, si corregge
+        T.carte.push({ p: T.carta.p, e: "nu", base: "nu", ico: "⏰", c: T.carta, r: nR() });
+        if (L.tre) L.tre.coda.push(T.carta);
+      }
+      T.carta = null;
+      suono("gong"); vola(mazzoFinito ? "🧺 Carte finite!" : "⏰ Tempo!", "pa");
       L.turni.push(T);
       setTimeout(function () { if (L.T === T && viva()) schermoRiepilogo(); }, 1100);
     }
 
+    // ---- 🧺 il mazzo del round è finito mentre si spiegava ----
+    function roundFinitoNelTurno() {
+      var T = L.T;
+      if (L.tre.n >= 3) return tempoScaduto(true);
+      var resta = Math.max(0, T.fine - Date.now());
+      if (resta < RIPRESA_MIN) return tempoScaduto(true);
+      T.corre = false; ferma(); nascondiBanner(); T.ripresa = resta;
+      L.ui.ok.disabled = L.ui.pa.disabled = L.ui.bz.disabled = true; L.ui.timer.textContent = "🧺";
+      vola("🧺 Carte finite!", "ok");
+      setTimeout(function () { if (L.T === T && viva()) schermoRound(schermoPronto); }, 1000);
+    }
+    // ---- 🧺 tra un round e l'altro: i punti, il round nuovo con la sua regola ----
+    function schermoRound(poi) {
+      L.tre.n++; L.tre.coda = mescola(L.tre.tutte);
+      var n = L.tre.n, ui = cornice(false), T = L.T, fatto = false;
+      function vai() { if (fatto || L.ui !== ui) return; fatto = true; poi(); }
+      ui.timer.textContent = "🧺"; ui.turno.textContent = "Round " + n + " di 3";
+      ui.corpo.appendChild(rigaRound(t, n));
+      ui.corpo.appendChild(tabellaRound(t, puntiRound(), n - 1));
+      var dopo = T && T.ripresa ? { chi: T.chi, testo: "Il turno va avanti col tempo che restava: " + Math.ceil(T.ripresa / 1000) + " s", b: "Poi continua " + T.chi.nome } : null;
+      if (!dopo) { var x = prossimoChi(); if (x) dopo = { chi: x.chi, testo: "Squadra " + SQUADRE[x.sq] + " · 👀 controlla " + x.ctrl.nome, b: "Poi tocca a " + x.chi.nome }; }
+      if (dopo) ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [avatarNodo(t, omino(dopo.chi.nome), dopo.chi.nome), t.el("div", {}, [t.el("b", { text: dopo.b }), t.el("span", { text: dopo.testo })])]));
+      var b = tasto("largo viola", "⏩ Avanti", vai);
+      ui.tasti.appendChild(b);
+      if (t.contoAvanti) t.contoAvanti(b, ATTESA_ROUND, vai, "tb-loc-round|" + n + "|" + L.T.n);
+      t.mostra(ui.s);
+      suono("fanfara"); vibra(25);
+    }
+
+    // ---- 🫳 la rubata: il tempo è finito con una carta in gioco, l'altra squadra ha 5 secondi ----
+    function schermoRubata() {
+      var T = L.T, c = T.carta, ui = cornice(false), ladri = "Squadra " + SQUADRE[1 - T.sq], fatto = false, fine = Date.now() + RUBATA_MS, ultimo = -1;
+      ui.timer.textContent = "5"; ui.turno.textContent = "Tempo! · " + testoTurno();
+      var num = t.el("div", { class: "tb-rub", text: "5" });
+      var sub = t.el("div", { class: "tb-sub", text: ladri + ": dite subito l'ultima carta! (Non vale " + T.ctrl.nome + ", che l'ha vista.)" });
+      ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, [t.el("div", { class: "tb-indovina", text: "🫳 RUBATA?" }), num, sub]));
+      ui.tasti.appendChild(tasto("", "✅ L'hanno presa", function () { decidi(true); }));
+      ui.tasti.appendChild(tasto("grigio", "❌ No", function () { decidi(false); }));
+      ui.tasti.appendChild(t.el("div", { class: "tb-nota", text: T.chi.nome + ", decidi tu: l'hanno detta?" }));
+      t.mostra(ui.s);
+      function conto() {
+        if (!viva() || fatto) { ferma(); return; }
+        var s = Math.max(0, Math.ceil((fine - Date.now()) / 1000));
+        num.textContent = s > 0 ? String(s) : "⏰"; ui.timer.textContent = s > 0 ? String(s) : "⏰";
+        if (s > 0 && s !== ultimo) suono("tic");
+        ultimo = s;
+        if (s <= 0) { sub.textContent = "Tempo! " + T.chi.nome + ": l'hanno detta in tempo?"; ferma(); }
+      }
+      ferma(); L.tic = setInterval(conto, 200); conto();
+      function decidi(si) {
+        if (fatto) return; fatto = true; ferma();
+        T.carte.push({ p: c.p, e: si ? "ru" : "nu", base: si ? "ru" : "nu", ico: "⏰", c: c, r: nR() });
+        if (L.tre && !si) L.tre.coda.push(c);   // 🧺 non presa: torna in fondo al mazzo del round
+        T.carta = null; L.turni.push(T); segna(true);
+        if (si) { suono("giusta"); vola("🫳 +1 " + ladri, "ok"); vibra(30); } else { suono("passo"); vola("❌ Niente rubata", "pa"); }
+        ui.tasti.querySelectorAll(".tb-btn").forEach(function (x) { x.disabled = true; });
+        setTimeout(function () { if (L.T === T && viva()) schermoRiepilogo(); }, si ? 1300 : 800);
+      }
+    }
+
     // ---- 4. com'è andato il turno: le carte si toccano per correggerle ----
     function schermoRiepilogo() {
-      var T = L.T, ui = cornice(false), dopo = prossimoChi();
-      ui.timer.textContent = dopo ? "⏰" : "🏁";
-      ui.turno.textContent = testoTurno() + (dopo ? "" : " · l'ultimo!");
+      var T = L.T, ui = cornice(false);
+      ui.timer.textContent = "⏰";
+      ui.turno.textContent = testoTurno();
       var em = t.el("em"), box = t.el("div", { class: "tb-riep" }, [t.el("h3", {}, [t.el("span", { text: T.chi.nome + " · Squadra " + SQUADRE[T.sq] }), em])]);
-      var chips = t.el("div", { class: "tb-chips" });
+      var chips = t.el("div", { class: "tb-chips" }), dopoBox = t.el("div", { style: "display:contents" });
       function delta() { var d = 0; T.carte.forEach(function (c) { if (c.e === "ok") d++; else if (c.e === "no") d--; }); em.textContent = (d > 0 ? "+" : "") + d; }
-      function testoChip(c) { return (c.e === "nu" ? (c.ico || "⏰") : ICONE[c.e]) + " " + c.p; }
+      function testoChip(c) { return (c.e === "nu" ? (c.ico || "⏰") : ICONE[c.e]) + " " + c.p + (c.e === "ru" ? " · rubata da " + SQUADRE[1 - T.sq] : ""); }
       var max = window.innerHeight < 700 ? 16 : 24;
       if (!T.carte.length) chips.appendChild(t.el("span", { class: "tb-chip altre", text: "Nessuna carta in questo turno" }));
       T.carte.slice(-max).forEach(function (c) {
         var b = t.el("button", { class: "tb-chip " + c.e, type: "button", text: testoChip(c), onclick: function () {
-          var giro = ["ok", "no", c.base || "pa"], i = giro.indexOf(c.e);
+          var giro = L.rubata && (c.base === "nu" || c.base === "ru") ? ["ok", "no", "ru", "nu"] : ["ok", "no", c.base || "pa"], i = giro.indexOf(c.e), prima = c.e;
           c.e = giro[(i + 1) % giro.length]; b.className = "tb-chip " + c.e; b.textContent = testoChip(c);
+          // 🧺 la carta corretta entra o esce dal mazzo del round (solo se è di questo round)
+          if (L.tre && c.c && c.r === L.tre.n) {
+            var k = L.tre.coda.indexOf(c.c);
+            if (presa(c.e) && !presa(prima) && k >= 0) L.tre.coda.splice(k, 1);
+            else if (!presa(c.e) && presa(prima) && k < 0) L.tre.coda.push(c.c);
+            disegnaDopo();
+          }
           delta(); segna(true);
         } });
         chips.appendChild(b);
       });
       if (T.carte.length > max) chips.insertBefore(t.el("span", { class: "tb-chip altre", text: "+" + (T.carte.length - max) + " prima" }), chips.firstChild);
       box.appendChild(chips);
-      if (T.carte.length) box.appendChild(t.el("div", { class: "tb-promemoria tb-loc-corr", text: "Sbagliato un tocco? Tocca una carta per correggerla (✅ → ❌ → ⏭️)." }));
-      delta(); ui.corpo.appendChild(box);
-      if (dopo) {
-        ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [avatarNodo(t, omino(dopo.chi.nome), dopo.chi.nome),
-          t.el("div", {}, [t.el("b", { text: "Ora tocca a " + dopo.chi.nome }), t.el("span", { text: "Squadra " + SQUADRE[dopo.sq] + " · 👀 controlla " + dopo.ctrl.nome })])]));
-        ui.tasti.appendChild(tasto("largo", "Avanti ▶", prossimo));
-      } else {
-        ui.corpo.appendChild(t.el("div", { class: "tb-prossimo" }, [t.el("div", {}, [t.el("b", { text: "🏁 Turni finiti!" }), t.el("span", { text: "Controllate le carte, poi vediamo chi ha vinto." })])]));
-        ui.tasti.appendChild(tasto("largo", "🏆 Chi ha vinto?", finale));
+      if (T.carte.length) box.appendChild(t.el("div", { class: "tb-promemoria tb-loc-corr", text: "Sbagliato un tocco? Tocca una carta per correggerla (✅ → ❌ → " + (L.rubata ? "🫳 → ⏰" : "⏭️") + ")." }));
+      delta(); ui.corpo.appendChild(box); ui.corpo.appendChild(dopoBox);
+      // sotto: chi tocca dopo (o il round nuovo, o la fine): si ridisegna se una correzione cambia il mazzo del round
+      function disegnaDopo() {
+        dopoBox.innerHTML = ""; ui.tasti.innerHTML = "";
+        var dopo = prossimoChi(), cambio = L.tre && !L.tre.coda.length && L.tre.n < 3;
+        if (dopo) {
+          dopoBox.appendChild(t.el("div", { class: "tb-prossimo" }, [avatarNodo(t, omino(dopo.chi.nome), dopo.chi.nome),
+            t.el("div", {}, [t.el("b", { text: "Ora tocca a " + dopo.chi.nome }), t.el("span", { text: cambio ? "🧺 Carte finite: si passa al round " + (L.tre.n + 1) + " " + nomeRound(L.tre.n + 1) : "Squadra " + SQUADRE[dopo.sq] + " · 👀 controlla " + dopo.ctrl.nome })])]));
+          ui.tasti.appendChild(tasto("largo", "Avanti ▶", function () { if (L.tre && !L.tre.coda.length && L.tre.n < 3) schermoRound(prossimo); else prossimo(); }));
+        } else {
+          dopoBox.appendChild(t.el("div", { class: "tb-prossimo" }, [t.el("div", {}, [t.el("b", { text: L.tre ? "🏁 Tre round finiti!" : "🏁 Turni finiti!" }), t.el("span", { text: "Controllate le carte, poi vediamo chi ha vinto." })])]));
+          ui.tasti.appendChild(tasto("largo", "🏆 Chi ha vinto?", finale));
+        }
       }
+      disegnaDopo();
       t.mostra(ui.s);
     }
 
@@ -1196,11 +1597,12 @@
       var p = punti(), win = p[0] === p[1] ? -1 : (p[0] > p[1] ? 0 : 1), ui = cornice(false);
       ui.timer.textContent = "Fine"; ui.turno.textContent = "";
       // i premi (contati dopo le correzioni)
-      var spieg = {}, serie = null;
+      var spieg = {}, serie = null, rubate = [0, 0];
       L.turni.forEach(function (T) {
         var n = T.carte.filter(function (c) { return c.e === "ok"; }).length;
         spieg[T.chi.k] = (spieg[T.chi.k] || 0) + n;
-        var cc = 0, mx = 0; T.carte.forEach(function (c) { if (c.e === "ok") { cc++; mx = Math.max(mx, cc); } else if (c.e !== "nu") cc = 0; });
+        T.carte.forEach(function (c) { if (c.e === "ru") rubate[1 - T.sq]++; });
+        var cc = 0, mx = 0; T.carte.forEach(function (c) { if (c.e === "ok") { cc++; mx = Math.max(mx, cc); } else if (c.e !== "nu" && c.e !== "ru") cc = 0; });
         if (mx >= 3 && (!serie || mx > serie.n)) serie = { nome: T.chi.nome, n: mx };
       });
       var best = null; gio.forEach(function (g) {
@@ -1211,6 +1613,8 @@
       var premi = [];
       if (best) premi.push("🎙️ Miglior spiegatore: " + best.nome + " (" + best.n + (best.n === 1 ? " carta" : " carte") + ")");
       if (serie) premi.push("🔥 Serie più lunga: " + serie.nome + " (" + serie.n + " di fila)");
+      if (L.tre) premi.push("🧺 Round per round (A–B): " + puntiRound().map(function (x) { return x[0] + "–" + x[1]; }).join(" · "));
+      if (rubate[0] || rubate[1]) premi.push("🫳 Carte rubate: A " + rubate[0] + " · B " + rubate[1]);
       var col = t.el("div", { class: "tb-colonne" });
       [0, 1].forEach(function (s) {
         var gente = t.el("div", { class: "tb-gente" });
@@ -1230,7 +1634,7 @@
     }
     // i trofei di chi ha il profilo (se gioca anche lui su questo telefono)
     function salvaLocale(win) {
-      if (imp.prova || !mio) return;
+      if ((t.impostazioni || {}).prova || !mio) return;
       if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
       var me = gio.filter(function (g) { return g.nome === mio; })[0]; if (!me) return;
       var x = { partite: 1, turniSpiegati: 0, carteIndovinate: 0, cartePassate: 0, turniPositivi: 0, vittorie: win >= 0 && me.sq === win ? 1 : 0 }, combo = 0, esiti = [];
@@ -1239,7 +1643,7 @@
         var ok = 0, no = 0, cc = 0;
         x.turniSpiegati++;
         T.carte.forEach(function (c) {
-          if (c.e === "ok") { ok++; cc++; combo = Math.max(combo, cc); } else { if (c.e === "no") no++; if (c.e === "pa") x.cartePassate++; if (c.e !== "nu") cc = 0; }
+          if (c.e === "ok") { ok++; cc++; combo = Math.max(combo, cc); } else { if (c.e === "no") no++; if (c.e === "pa") x.cartePassate++; if (c.e !== "nu" && c.e !== "ru") cc = 0; }
         });
         x.carteIndovinate += ok; if (ok > no) x.turniPositivi++;
         esiti.push(ok > no);
@@ -1261,36 +1665,48 @@
   }
 
   function impostazioni(box, dove, aiuti) {
-    dove.tempo = Number(dove.tempo) || 90; dove.giri = Number(dove.giri) || 1; dove.carte = Number(dove.carte) || 2;
+    var R = leggiImp(dove);
+    dove.tempo = R.durata; dove.giri = R.giri; dove.carte = R.livello;
+    dove.partita = R.tre ? "tre" : "classica"; dove.mazzo = R.mazzoN; dove.rubata = R.rubata ? 1 : 0;
     var el = aiuti.el;
-    function gruppo(label, valori, prop, titoli) {
-      box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: label }));
+    function gruppo(label, valori, prop, titoli, dopo) {
+      var blocco = el("div");
+      blocco.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: label }));
       var row = el("div", { style: "display:flex;gap:8px" });
       valori.forEach(function (v, i) {
-        var b = el("button", { class: "modo-chip" + (Number(dove[prop]) === v ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
+        var b = el("button", { class: "modo-chip" + (String(dove[prop]) === String(v) ? " attiva" : ""), style: "flex:1;justify-content:center;text-align:center", onclick: function () {
           dove[prop] = v; [].forEach.call(row.children, function (c) { c.classList.remove("attiva"); }); b.classList.add("attiva");
+          if (dopo) dopo();
         } }, [el("div", { class: "mt", text: titoli[i] })]); row.appendChild(b);
-      }); box.appendChild(row);
+      });
+      blocco.appendChild(row); box.appendChild(blocco);
+      return blocco;
     }
+    // 🧺 «Tre round»: le stesse carte spiegate, poi con una parola sola, poi mimate (i giri contano solo nella classica)
+    var giri = null, quante = null;
+    function mostra() { var tre = dove.partita === "tre"; if (giri) giri.hidden = tre; if (quante) quante.hidden = !tre; }   // (hidden: il core salta i pezzi nascosti)
+    gruppo("Partita", ["classica", "tre"], "partita", ["Classica", "🧺 Tre round"], mostra);
+    quante = gruppo("Carte della partita (le stesse nei tre round)", [20, 30, 40], "mazzo", ["20", "30", "40"]);
+    giri = gruppo("Quanti giri (in un giro spiegano tutti)", [1, 2, 3, 4], "giri", ["1", "2", "3", "4"]);
+    mostra();
     gruppo("Tempo del turno", [60, 90, 120], "tempo", ["60 s", "90 s", "120 s"]);
-    gruppo("Quanti giri (in un giro spiegano tutti)", [1, 2, 3, 4], "giri", ["1", "2", "3", "4"]);
     gruppo("Carte", [1, 2, 3], "carte", ["Facili", "Miste", "Difficili"]);
+    gruppo("🫳 Rubata! (a fine tempo l'altra squadra prova a dire l'ultima carta)", [0, 1], "rubata", ["No", "Sì"]);
   }
 
   SG.registra({
     id: "taboo", nome: "Taboo", icona: "🤐",
-    descrizione: "Spiega la parola senza dire quelle vietate! Su un telefono solo che passa di mano, o online ognuno col suo.",
+    descrizione: "Spiega la parola senza dire quelle vietate! Su un telefono solo che passa di mano, o online ognuno col suo. Anche in tre round: spiega, una parola sola, mimo.",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Chi spiega tiene il telefono, un avversario guarda e preme BUZZ", amici: true, min: MIN }],
     postiOnline: MAX,   // posti online (16)
     riprende: true,     // se l'host ricarica a metà partita, la partita riprende (il turno in corso si rifà da capo, con una carta nuova)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
-    // le regole in una riga, per la saletta: "90 secondi a turno · 1 giro · carte miste"
+    // le regole in una riga, per la saletta: "90 secondi a turno · 1 giro · carte miste" / "🧺 Tre round con 30 carte · 90 secondi a turno · carte miste · 🫳 Rubata"
     riassunto: function (imp) {
-      imp = imp || {};
-      var tempo = [60, 90, 120].indexOf(Number(imp.tempo)) >= 0 ? Number(imp.tempo) : 90, giri = Math.max(1, Math.min(4, Number(imp.giri) || 1));
-      var carte = { 1: "carte facili", 2: "carte miste", 3: "carte difficili" }[Number(imp.carte)] || "carte miste";
-      return tempo + " secondi a turno · " + (giri === 1 ? "1 giro" : giri + " giri") + " · " + carte;
+      var R = leggiImp(imp);
+      var carte = { 1: "carte facili", 2: "carte miste", 3: "carte difficili" }[R.livello];
+      return (R.tre ? "🧺 Tre round con " + R.mazzoN + " carte · " : "") + R.durata + " secondi a turno · " + (R.tre ? "" : (R.giri === 1 ? "1 giro" : R.giri + " giri") + " · ") + carte + (R.rubata ? " · 🫳 Rubata" : "");
     },
     regole: [
       "Fate due squadre. A turno, una persona spiega la parola alla propria squadra senza pronunciare le cinque parole vietate.",
@@ -1299,7 +1715,9 @@
       "<b>Online</b>: ognuno col suo telefono. Chi spiega vede la carta; la squadra avversaria la vede e può premere <b>BUZZ</b>. I compagni vedono solo il tempo e chi spiega.",
       "Ogni parola indovinata vale <b>+1</b>. Ogni BUZZ toglie <b>1 punto</b> (se è sbagliato si annulla entro 5 secondi: online lo fanno chi spiega o l'host). Si possono saltare al massimo <b>3 carte per turno</b>, senza perdere punti.",
       "Le squadre si alternano e ogni squadra ha gli stessi turni. Il tempo parte quando chi spiega tocca «Pronti, via!».",
-      "Prima di cominciare si sceglie il tempo, quanti giri fare e le carte (facili, miste o difficili). Vince la squadra con più punti."
+      "<b>🧺 Tre round</b>: all'inizio si pesca il mazzo della partita (20, 30 o 40 carte) e si usano <b>le stesse carte</b> in tutti e tre i round. Round 1 <b>🗣️ Spiega</b>: come sempre. Round 2 <b>☝️ Una parola sola</b>: le vietate spariscono e chi spiega può dire una parola sola. Round 3 <b>🤐 Solo mimo</b>: niente voce. Un round finisce quando sono state dette tutte le carte (quelle passate o col BUZZ tornano in fondo); se finisce a metà turno, chi spiegava continua nel round dopo col tempo che restava.",
+      "<b>🫳 Rubata!</b>: se il tempo finisce con una carta in gioco, l'altra squadra ha <b>5 secondi</b> per dirla: se ci riesce prende <b>+1</b>. Decide chi spiegava («✅ L'hanno presa» o «❌ No»); online l'host può annullare. Non vale chi controllava, che la carta l'ha vista: online, con la Rubata, tra gli avversari controlla uno solo a giro (vede la carta e preme BUZZ), gli altri ascoltano.",
+      "Prima di cominciare si sceglie il tipo di partita, il tempo, quanti giri fare (nella classica), le carte (facili, miste o difficili) e la Rubata. Vince la squadra con più punti."
     ],
     impostazioni: impostazioni,
     avvia: avvia

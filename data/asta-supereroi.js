@@ -9,6 +9,7 @@
   nome: "Supereroi",
   icona: "🦸",
   sottotitolo: "Costruisci il supereroe e vediamo chi fa più paura",
+  scenari: [ { emoji: "🦹", testo: "Il cattivo attacca la città: quale supereroe la salva?" }, { emoji: "🥊", testo: "Tutti contro tutti: quale supereroe resta in piedi?" }, { emoji: "📺", testo: "Intervista in TV: quale supereroe fa più paura?" } ],
   round: [
     {
       nome: "Il Superpotere", icona: "⚡",

@@ -9,6 +9,7 @@
   nome: "Il Natale in Famiglia",
   icona: "🎄",
   sottotitolo: "Prepara il Natale perfetto (o quello che i parenti ricorderanno per anni)",
+  scenari: [ { emoji: "🎄", testo: "Pranzo di Natale con tutti i parenti: chi sopravvive?" }, { emoji: "🎁", testo: "Lo scambio dei regali: chi fa il regalo più bello?" }, { emoji: "⛄", testo: "La Vigilia sotto la neve: quale Natale è il più magico?" } ],
   round: [
     {
       nome: "Il Cenone", icona: "🍽️",

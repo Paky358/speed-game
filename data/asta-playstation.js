@@ -9,6 +9,7 @@
   nome: "Il Party PlayStation",
   icona: "🎮",
   sottotitolo: "Costruisci la squadra dei sogni (o il disastro del matchmaking online)",
+  scenari: [ { emoji: "🏆", testo: "Finale del torneo online: quale squadra vince?" }, { emoji: "😡", testo: "Avversari insopportabili in chat: chi non perde la calma?" }, { emoji: "🌙", testo: "Partita fino alle 4 di notte: con chi si gioca meglio?" } ],
   round: [
     {
       nome: "La Connessione Internet", icona: "📶",

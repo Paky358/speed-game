@@ -9,6 +9,7 @@
   nome: "Il Capodanno",
   icona: "🎆",
   sottotitolo: "Metti insieme il Capodanno perfetto (o quello da dimenticare)",
+  scenari: [ { emoji: "🎆", testo: "Mezzanotte: quale Capodanno ricorderete per sempre?" }, { emoji: "🥶", testo: "Si gela in piazza: quale festa regge fino all'alba?" }, { emoji: "🤕", testo: "Il primo gennaio: chi sta meglio la mattina dopo?" } ],
   round: [
     {
       nome: "L'Organizzatore", icona: "📋",

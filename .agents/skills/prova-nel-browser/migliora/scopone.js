@@ -229,7 +229,7 @@
     var tP = A.tastiFineDi(P).join(" | "), tG = A.tastiFineDi(G).join(" | ");
     if (tP !== "↻ Rivincita | 🎮 Cambia gioco") no("Paky ha «" + tP + "»");
     if (tG !== "👍 Ci sto! | 🏠 Torna in Sala") no("Giulia ha «" + tG + "»");
-    if (!/📊 .* e .*: [01] vint/.test(T(P))) no("a fine partita non c'è lo storico delle coppie");
+    if (!/👫 .* e .*: [01] vint/.test(T(P))) no("a fine partita non c'è lo storico delle coppie");   // (dal giro 2: «👫 Paky e Luca: 1 vinta, 0 perse»)
     if (!await W.aspetta(function () { return stato(F) === "fine" && /l'hai guardata/.test(T(F)); }, 4000)) no(fuori + " non legge «Questa partita l'hai guardata»");
     var clG = G.document.querySelector(".sp-tab");
     W.clicca(G, /Ci sto/, ".fine-tasti button");
