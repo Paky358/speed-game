@@ -602,7 +602,7 @@
          : [el("span", { text: "👤" }), el("span", { text: "Crea il tuo profilo" })]);
     var rigaProfilo = el("div", { class: "home-profilo" }, [profiloChip]);
     if ((window.SG_NOVITA || []).length) {
-      var bNov = el("button", { class: "home-novita", onclick: schermataNovita });
+      var bNov = el("button", { class: "home-novita", onclick: function () { novitaLista(); } });   // dal menu: la lista semplice (la bacheca è in città)
       bNov.appendChild(el("span", { text: "🆕 Novità" }));
       if (!novitaTutteViste()) bNov.appendChild(el("span", { class: "pallino" }));
       rigaProfilo.appendChild(bNov);
@@ -1804,6 +1804,30 @@
   }
   function segnaNovitaViste() {
     try { localStorage.setItem(CHIAVE_NOVITA, String(ultimaVersioneNovita())); } catch (e) {}
+  }
+  // dal menu normale: la lista semplice delle novità, come una volta (in città invece si leggono sulla bacheca della piazza)
+  function novitaLista() {
+    var visto = 0;
+    try { visto = Number(localStorage.getItem(CHIAVE_NOVITA)) || 0; } catch (e) {}
+    var s = schermata({ icona: "🆕", titolo: "Novità", sotto: "Cosa è stato aggiunto", indietro: tornaHome });
+    var tutte = window.SG_NOVITA || [], messe = 0;
+    function altre(quante) {   // a gruppi: sono tante, e tutte insieme sui telefoni lo scorrimento rallenta
+      var vecchio = s._contenuto.querySelector(".novita-altre"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
+      for (var fine = Math.min(tutte.length, messe + quante); messe < fine; messe++) {
+        var n = tutte[messe], punti = el("ul", { class: "novita-punti" });
+        (n.descrizione || []).forEach(function (r) { punti.appendChild(el("li", { text: r })); });
+        s._contenuto.appendChild(el("div", { class: "novita-card" }, [
+          el("div", { class: "novita-data", text: n.data + (n.v > visto ? " · 🆕 NUOVO" : "") }),
+          el("h2", { class: "novita-titolo", text: n.titolo }),
+          punti
+        ]));
+      }
+      if (messe < tutte.length) s._contenuto.appendChild(el("button", { class: "btn btn-fantasma novita-altre", text: "📜 Le novità più vecchie", onclick: function () { altre(25); } }));
+    }
+    altre(25);
+    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ho capito", onclick: tornaHome }));
+    segnaNovitaViste();   // aperto = visto
+    mostra(s);
   }
   function cittaSfocata(src) {   // la città sfocata, fatta una volta sola: rimpicciolita e ringrandita (niente filtri da ricalcolare mentre si anima)
     var a = document.createElement("canvas"), b = document.createElement("canvas"), x, y;
