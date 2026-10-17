@@ -121,7 +121,7 @@
     { anno: 1845, titolo: "A Milano Bernardino Branca inventa il Fernet", fatto: "All'inizio si vende come rimedio per lo stomaco, non come amaro da fine cena." },
     { anno: 1933, titolo: "Francesco Illy fonda a Trieste la sua ditta di caffè", fatto: "Lo stesso anno in cui Bialetti inventa la moka." },
     { anno: 1936, titolo: "A Milano apre la rosticceria che diventerà le patatine San Carlo", fatto: "Francesco Vitaloni la chiama come la vicina chiesa di San Carlo al Lazzaretto." },
-    { anno: 1950, titolo: "Esce il ricettario «Il cucchiaio d'argento»", fatto: "Circa 2.000 ricette da tutta Italia: in inglese è diventato «The Silver Spoon»." },
+    { anno: 1950, titolo: "Esce il ricettario «Il cucchiaio d'argento»", fatto: "Oggi ha più di 2.000 ricette da tutta Italia: in inglese è diventato «The Silver Spoon»." },
     { anno: 1959, titolo: "A Napoli nasce il gelato Cornetto", fatto: "Alla gelateria Spica trovano il trucco: uno strato di cioccolato dentro il cono, così la cialda non si ammolla." },
     { anno: 1959, titolo: "Apre il primo Autogrill «a ponte» sopra l'autostrada", fatto: "A Fiorenzuola d'Arda: lo vuole Mario Pavesi, quello dei Pavesini." },
     { anno: 1962, titolo: "Giovanni Rana apre il suo pastificio di tortellini", fatto: "A San Giovanni Lupatoto, vicino a Verona: all'inizio li consegnava lui in motorino." },
@@ -159,7 +159,7 @@
     { anno: 2001, titolo: "Il 2 giugno torna a essere un giorno di festa", fatto: "Dal 1977 la Festa della Repubblica si faceva la prima domenica di giugno, per non perdere un giorno di lavoro." },
     { anno: 2011, titolo: "Nei negozi spariscono i sacchetti di plastica non biodegradabili", fatto: "Al loro posto arrivano le buste compostabili che si usano anche per l'umido." },
     { anno: 2017, titolo: "L'Inno di Mameli diventa per legge l'inno ufficiale d'Italia", fatto: "Fino ad allora era «provvisorio», dal 1946: lo è rimasto per più di settant'anni." },
-    { anno: 2018, titolo: "I sacchetti per frutta e verdura al supermercato diventano a pagamento", fatto: "Costano da 1 a 3 centesimi l'uno, e non si possono portare da casa." },
+    { anno: 2018, titolo: "I sacchetti per frutta e verdura al supermercato diventano a pagamento", fatto: "Costano da 1 a 3 centesimi l'uno: è subito polemica, e dopo qualche mese si potranno portare anche da casa." },
     // luoghi famosi
     { anno: 1591, titolo: "A Venezia viene finito il ponte di Rialto in pietra", fatto: "Prima era di legno; l'architetto ha il nome perfetto: Antonio da Ponte." },
     { anno: 1737, titolo: "A Napoli si inaugura il Teatro San Carlo", fatto: "È il teatro d'opera più antico d'Europa ancora in attività: ha 41 anni più della Scala." },

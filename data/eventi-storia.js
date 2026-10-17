@@ -214,7 +214,7 @@
     { anno: 1946, titolo: "Le donne italiane votano per la prima volta", fatto: "Prima alle elezioni comunali di primavera, poi al referendum tra monarchia e repubblica." },
     { anno: 1947, titolo: "A Roswell, in America, si parla di un «disco volante» caduto", fatto: "L'esercito dirà che era un pallone sonda: intanto nasce la leggenda degli alieni." },
     { anno: 1955, titolo: "Rosa Parks non cede il suo posto sull'autobus a un bianco", fatto: "Viene arrestata a Montgomery: parte il boicottaggio degli autobus guidato da Martin Luther King." },
-    { anno: 1959, titolo: "Fidel Castro prende il potere a Cuba", fatto: "Accanto a lui c'è anche Che Guevara: Cuba diventa comunista a due passi dagli Stati Uniti." },
+    { anno: 1959, titolo: "Fidel Castro prende il potere a Cuba", fatto: "Accanto a lui c'è anche Che Guevara: dopo poco Cuba diventa comunista, a due passi dagli Stati Uniti." },
     { anno: 1962, titolo: "La crisi dei missili di Cuba fa temere una guerra atomica", fatto: "Per 13 giorni USA e URSS sono a un passo dallo scontro; alla fine i missili sovietici vengono ritirati." },
     { anno: 1968, titolo: "Il Maggio francese: studenti e operai in piazza a Parigi", fatto: "Barricate nel Quartiere Latino e scioperi in tutta la Francia: uno degli slogan è «L'immaginazione al potere»." },
     { anno: 1974, titolo: "Richard Nixon si dimette per lo scandalo Watergate", fatto: "È l'unico presidente americano ad aver lasciato l'incarico con le dimissioni." },
