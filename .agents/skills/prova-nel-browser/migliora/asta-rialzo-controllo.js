@@ -125,7 +125,7 @@
 
   // ===== ac1: online temi, 4 telefoni, partita intera =====
   COPIONE.aggiungi("ac1", { nome: "Asta online (temi), 4 telefoni: partita intera coi rialzi da soli controllati mossa per mossa", fai: async function () {
-    var o = await quattroTelefoni({ formato: "temi", crediti: 15 }), P = o.P, C = o.C;
+    var o = await quattroTelefoni({ formato: "temi", crediti: 15, round: "normali", maledetta: false }), P = o.P, C = o.C;
     var conti = { offerte: 0, rialzi: 0, rifiuti: 0, vinte: [] }, aspettato = false, tardiFatto = false, doppioFatto = false, aste = 0;
     var fino = Date.now() + 300000;
     while (Date.now() < fino && vm(C).fase !== "voto" && vm(C).fase !== "fine") {
@@ -314,7 +314,7 @@
   }
 
   COPIONE.aggiungi("ac3", { nome: "Asta stesso telefono (temi), 4 giocatori: partita intera coi rialzi da soli", fai: async function () {
-    var P = await partitaLocale({ formato: "temi", crediti: 15 }), conti = { offerte: 0, rialzi: 0, rifiuti: 0, vinte: [] }, aste = 0;
+    var P = await partitaLocale({ formato: "temi", crediti: 15, round: "normali", maledetta: false }), conti = { offerte: 0, rialzi: 0, rifiuti: 0, vinte: [] }, aste = 0;
     var fino = Date.now() + 240000;
     while (Date.now() < fino) {
       if (/vota|stelle|Classifica|Vince/i.test(T(P)) && !q(P, ".sa-pers") && !q(P, ".as-carta")) break;

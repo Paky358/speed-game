@@ -15997,7 +15997,11 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
         sala.fuori = RG.fuori && typeof RG.fuori === "object" ? RG.fuori : {}; sala.scelti = Array.isArray(RG.scelti) ? RG.scelti : null;
         if (Dr) sala.duello = { a: Dr.a, b: Dr.b, na: Dr.na, nb: Dr.nb, stanza: Dr.stanza, gioco: Dr.gioco || gRG.id, imp: Dr.imp || {},
           n: Dr.fine ? +Dr.fine.n || 0 : 0, fine: Dr.fine || null, visti: Dr.fine ? (function (o) { o[String(Dr.fine.giro | 0)] = 1; return o; })({}) : {} };
-        else { sala.inGioco = true; riprendiG = { g: gRG, imp: RG.imp || {} }; }
+        else {
+          sala.inGioco = true; riprendiG = { g: gRG, imp: RG.imp || {} };
+          // (chi era nella partita: anche se adesso è via, quando ricarica torna nella partita e non resta nella Sala)
+          if (Array.isArray(RG.nel)) sala.nelSeme = { stanza: RG.stanza, ids: RG.nel.filter(function (id) { return typeof id === "string"; }).slice(0, 40) };
+        }
       }
     }
     if (sala.torneo && EZ) membri.forEach(function (m) { segnaNomeT(sala.torneo, m.nome); });
@@ -16015,6 +16019,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       if (!sala.gioco || !sala.stanza || sala.elim) return null;
       var D = sala.duello && sala.duello.stanza === sala.stanza ? sala.duello : null;
       return { id: sala.gioco, stanza: sala.stanza, fase: sala.fase || "lobby", fuori: sala.fuori || {}, scelti: sala.scelti || null, imp: D ? null : (sala.impGioco || null),
+        nel: nelGiocoSala(sala),   // (chi è nella partita: se la pagina si ricarica, chi è via e poi torna rientra nella partita)
         duello: D ? { a: D.a, b: D.b, na: D.na, nb: D.nb, stanza: D.stanza, gioco: D.gioco, imp: D.imp || {}, fine: D.fine || null } : null };
     }
     // (col gioco: fase = a che punto è, nel = chi è dentro la sua stanza, fuori = chi ne è uscito apposta;
@@ -16933,9 +16938,17 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     };
   }
   // chi è dentro la stanza del gioco (id), tranne chi ha detto "esco"
+  // Conta anche chi era dentro ed è sparito senza dire "esco" (rete persa, telefono spento più di 20 s: per il gioco è
+  // "andato"): se ricarica la pagina deve tornare nella partita col suo posto, non restare nella Sala ad aspettare la
+  // prossima (18 ott: Palla Matta coi telefoni veri). Non chi ne è uscito apposta né chi l'host ha fatto uscire.
+  // E se la pagina dell'host si è ricaricata (la Sala riprende il gioco nella stessa stanza), anche chi era nella partita
+  // prima della ricarica e non è ancora tornato (SA.nelSeme): la stanza riaperta non lo conosce, ma la partita sì.
   function nelGiocoSala(SA) {
-    var SVg = SA.stanza ? SVH[SA.stanza] : null; if (!SVg) return [];
-    return Object.keys(SVg.dentro).filter(function (id) { return !(SA.fuori && SA.fuori[id]); });
+    var SVg = SA.stanza ? SVH[SA.stanza] : null, ids = [];
+    if (SVg) ids = Object.keys(SVg.dentro).concat(Object.keys(SVg.andati || {}).filter(function (id) { return !SVg.dentro[id] && !(SVg.fuori && SVg.fuori[id]); }));
+    var Sm = SA.nelSeme && SA.nelSeme.stanza === SA.stanza ? SA.nelSeme.ids : [];
+    Sm.forEach(function (id) { if (ids.indexOf(id) < 0 && !(SVg && SVg.fuori && SVg.fuori[id])) ids.push(id); });
+    return ids.filter(function (id) { return !(SA.fuori && SA.fuori[id]); });
   }
   // chi è uscito apposta dal gioco in corso (id)
   function fuoriSala(SA) { var F = SA.fuori || {}; return Object.keys(F).filter(function (id) { return F[id] === SA.stanza; }); }
@@ -22579,7 +22592,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       var guardo = null, giro = 0;
       // le mosse già viste (from|i|k → ora): chi cambia ufficio rimanda le ultime, qui passano una volta sola;
       // da quale ufficio parla ognuno (un "sparito" che arriva da un ufficio che non usa più non conta)
-      var visti = {}, nVisti = 0, ufficioDi = {}, statiVisti = [];
+      var visti = {}, nVisti = 0, ufficioDi = {}, statiVisti = [], entrataDi = {};   // entrataDi: l'ultima "entrata" (i) sentita da ognuno
       // un "ufficio" per indirizzo: il suo collegamento, la sua coda (quello mandato mentre era giù), ecc.
       var U = uffici().map(function (url, n) {
         return { n: n, url: url, client: null, col: null, coda: [], passato: false, guardando: false, pronto: false,
@@ -22740,6 +22753,10 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
         var lascio = m.data && m.data.t === "__leave";
         // "sparito" da un ufficio che quell'amico non usa più (è passato all'altro): è il testamento del collegamento vecchio
         if (lascio && !m.data.voluto && ufficioDi[m.from] != null && ufficioDi[m.from] !== u.n) return;
+        // "sparito" di una sua entrata di prima (ha ricaricato la pagina e il broker se ne accorge solo adesso, anche 30 s
+        // dopo): lui è già rientrato con l'entrata nuova, quindi non conta (18 ott: con Palla Matta restava "via" pur essendoci)
+        if (lascio && !m.data.voluto && m.i != null && entrataDi[m.from] != null && entrataDi[m.from] !== m.i) return;
+        if (!lascio && m.i != null) entrataDi[m.from] = m.i;
         if (!lascio) ufficioDi[m.from] = u.n;
         if (inForse[m.from]) { clearTimeout(inForse[m.from]); delete inForse[m.from]; forse(m.from, false, true); }   // si è rifatto vivo in tempo
         if (lascio) {
@@ -22873,7 +22890,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       var sonda = null, ultimaSonda = 0, cambio = null, giuDa = 0, tGiu = null, tSonda = null;
       function opzioni() {
         return { clean: true, reconnectPeriod: 2000, keepalive: KEEPALIVE,
-          will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false } };
+          will: { topic: T.azioni, payload: JSON.stringify({ from: myId, i: istanza, data: { t: "__leave" } }), retain: false } };   // (i: di quale entrata è il testamento)
       }
       function busta(msg) { return { from: myId, data: msg, i: istanza, k: ++nMossa }; }
       function pubblicaBusta(b, c) {
@@ -45420,6 +45437,16 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 237,
+    data: "18 ottobre 2026",
+    titolo: "Chi perde la rete torna a giocare 📶",
+    descrizione: [
+      "🔁 Nella Sala, se un amico perde la rete o spegne il telefono per un po' e poi ricarica la pagina, torna dritto nella partita al suo posto, coi suoi punti (in Palla Matta anche con le sue palline), invece di restare nella Sala ad aspettare la prossima. A chi ha aperto la partita sparisce subito «Aspettiamo…» e si va avanti.",
+      "📶 Vale anche se intanto chi ha aperto la partita ha ricaricato la pagina, e chi ricarica subito dopo un buco di rete non viene più tolto dalla partita per sbaglio qualche secondo dopo (restava «Aspettiamo…» anche se era lì).",
+      "🎯 Palla a Pendolo: chi torna a partita in corso si riprende il suo personaggio, che intanto muoveva il Bot."
+    ]
+  },
   {
     v: 236,
     data: "18 ottobre 2026",
@@ -83553,6 +83580,7 @@ window.SG_SIPERO = {
             if (!dentro(id) && attesa.indexOf(id) < 0) { var p = postoLibero(); if (p >= 0 && siede(id)) posti[p] = id; else attesa.push(id); }
             lobbyAgg();
           } else if (dentro(id)) { if (fase === "gioco" && viaMsg) rete.invia(viaMsg); else if (fase === "ripresa") rete.inviaVeloce(msgRiparte(id)); }   // chi rientra: gli rimando la partita (nomi, avatar, ruoli)
+          else if (riprendePosto(id)) { if (viaMsg) rete.invia(viaMsg); }   // tornato dopo i 20 secondi (stesso id): riprende il suo personaggio dal bot
           else { if (attesa.indexOf(id) < 0) attesa.push(id); rete.inviaVeloce({ t: "guardi", to: id, fuori: !siede(id) }); ricorda(); }   // arrivato a partita iniziata: guarda
         }
         else if (m.t === "vuoiLanciare") {
@@ -83585,8 +83613,25 @@ window.SG_SIPERO = {
       if (ST && fase === "gioco") {   // a partita in corso il suo personaggio lo prende un bot
         if (eraLanc) { ST.aiLanc = true; ST.aiTarget = -1; ST.aimHold = 0; ST.aiCd = 0.6; }
         if (s >= 0 && ST.chars[s]) diventaBot(ST.chars[s]);
+        if (eraLanc || s >= 0) exPosto[id] = { s: eraLanc ? "L" : s, g: gameId };   // (se torna in questa partita, se lo riprende)
       }
       ricorda();
+    }
+    // chi era sparito (telefono spento, rete persa, pagina ricaricata dopo i 20 secondi) torna con lo stesso id a partita
+    // in corso: riprende il suo posto (sulla trave o a lanciare) se il bot lo tiene ancora
+    var exPosto = {};
+    function riprendePosto(id) {
+      var x = exPosto[id]; delete exPosto[id];
+      if (!x || x.g !== gameId || fase !== "gioco" || !ST || !siede(id)) return false;
+      if (x.s === "L") { if (lanc !== null) return false; lanc = id; ST.aiLanc = false; ST.aimHold = 0; }
+      else {
+        if (posti[x.s]) return false;
+        posti[x.s] = id; var c = ST.chars[x.s];
+        if (c && c.alive) { c.human = true; c.ctrl = id; c.mov = 0; }
+      }
+      attesa = attesa.filter(function (y) { return y !== id; });
+      ricorda();
+      return true;
     }
     // ---- la ripresa: si riparte da capo dopo 5 secondi; intanto gli amici rientrano (stesso id) ----
     function msgRiparte(to) { var m = { t: "riparte", fase: "gioco", ms: Math.max(0, ripFino - Date.now()) }; if (to) m.to = to; return m; }

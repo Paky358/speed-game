@@ -785,6 +785,7 @@
             if (!dentro(id) && attesa.indexOf(id) < 0) { var p = postoLibero(); if (p >= 0 && siede(id)) posti[p] = id; else attesa.push(id); }
             lobbyAgg();
           } else if (dentro(id)) { if (fase === "gioco" && viaMsg) rete.invia(viaMsg); else if (fase === "ripresa") rete.inviaVeloce(msgRiparte(id)); }   // chi rientra: gli rimando la partita (nomi, avatar, ruoli)
+          else if (riprendePosto(id)) { if (viaMsg) rete.invia(viaMsg); }   // tornato dopo i 20 secondi (stesso id): riprende il suo personaggio dal bot
           else { if (attesa.indexOf(id) < 0) attesa.push(id); rete.inviaVeloce({ t: "guardi", to: id, fuori: !siede(id) }); ricorda(); }   // arrivato a partita iniziata: guarda
         }
         else if (m.t === "vuoiLanciare") {
@@ -817,8 +818,25 @@
       if (ST && fase === "gioco") {   // a partita in corso il suo personaggio lo prende un bot
         if (eraLanc) { ST.aiLanc = true; ST.aiTarget = -1; ST.aimHold = 0; ST.aiCd = 0.6; }
         if (s >= 0 && ST.chars[s]) diventaBot(ST.chars[s]);
+        if (eraLanc || s >= 0) exPosto[id] = { s: eraLanc ? "L" : s, g: gameId };   // (se torna in questa partita, se lo riprende)
       }
       ricorda();
+    }
+    // chi era sparito (telefono spento, rete persa, pagina ricaricata dopo i 20 secondi) torna con lo stesso id a partita
+    // in corso: riprende il suo posto (sulla trave o a lanciare) se il bot lo tiene ancora
+    var exPosto = {};
+    function riprendePosto(id) {
+      var x = exPosto[id]; delete exPosto[id];
+      if (!x || x.g !== gameId || fase !== "gioco" || !ST || !siede(id)) return false;
+      if (x.s === "L") { if (lanc !== null) return false; lanc = id; ST.aiLanc = false; ST.aimHold = 0; }
+      else {
+        if (posti[x.s]) return false;
+        posti[x.s] = id; var c = ST.chars[x.s];
+        if (c && c.alive) { c.human = true; c.ctrl = id; c.mov = 0; }
+      }
+      attesa = attesa.filter(function (y) { return y !== id; });
+      ricorda();
+      return true;
     }
     // ---- la ripresa: si riparte da capo dopo 5 secondi; intanto gli amici rientrano (stesso id) ----
     function msgRiparte(to) { var m = { t: "riparte", fase: "gioco", ms: Math.max(0, ripFino - Date.now()) }; if (to) m.to = to; return m; }

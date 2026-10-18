@@ -321,7 +321,7 @@
       var guardo = null, giro = 0;
       // le mosse già viste (from|i|k → ora): chi cambia ufficio rimanda le ultime, qui passano una volta sola;
       // da quale ufficio parla ognuno (un "sparito" che arriva da un ufficio che non usa più non conta)
-      var visti = {}, nVisti = 0, ufficioDi = {}, statiVisti = [];
+      var visti = {}, nVisti = 0, ufficioDi = {}, statiVisti = [], entrataDi = {};   // entrataDi: l'ultima "entrata" (i) sentita da ognuno
       // un "ufficio" per indirizzo: il suo collegamento, la sua coda (quello mandato mentre era giù), ecc.
       var U = uffici().map(function (url, n) {
         return { n: n, url: url, client: null, col: null, coda: [], passato: false, guardando: false, pronto: false,
@@ -482,6 +482,10 @@
         var lascio = m.data && m.data.t === "__leave";
         // "sparito" da un ufficio che quell'amico non usa più (è passato all'altro): è il testamento del collegamento vecchio
         if (lascio && !m.data.voluto && ufficioDi[m.from] != null && ufficioDi[m.from] !== u.n) return;
+        // "sparito" di una sua entrata di prima (ha ricaricato la pagina e il broker se ne accorge solo adesso, anche 30 s
+        // dopo): lui è già rientrato con l'entrata nuova, quindi non conta (18 ott: con Palla Matta restava "via" pur essendoci)
+        if (lascio && !m.data.voluto && m.i != null && entrataDi[m.from] != null && entrataDi[m.from] !== m.i) return;
+        if (!lascio && m.i != null) entrataDi[m.from] = m.i;
         if (!lascio) ufficioDi[m.from] = u.n;
         if (inForse[m.from]) { clearTimeout(inForse[m.from]); delete inForse[m.from]; forse(m.from, false, true); }   // si è rifatto vivo in tempo
         if (lascio) {
@@ -615,7 +619,7 @@
       var sonda = null, ultimaSonda = 0, cambio = null, giuDa = 0, tGiu = null, tSonda = null;
       function opzioni() {
         return { clean: true, reconnectPeriod: 2000, keepalive: KEEPALIVE,
-          will: { topic: T.azioni, payload: JSON.stringify({ from: myId, data: { t: "__leave" } }), retain: false } };
+          will: { topic: T.azioni, payload: JSON.stringify({ from: myId, i: istanza, data: { t: "__leave" } }), retain: false } };   // (i: di quale entrata è il testamento)
       }
       function busta(msg) { return { from: myId, data: msg, i: istanza, k: ++nMossa }; }
       function pubblicaBusta(b, c) {

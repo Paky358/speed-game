@@ -103,6 +103,12 @@
   }
   async function pronto(w) { var b = await W.aspetta(function () { var x = w && w.document.querySelector(".im-pronto"); return x && !x.disabled ? x : null; }, 3000); if (!b) return false; b.click(); return true; }
   async function prontiTutti(nomi) { for (var i = 0; i < nomi.length; i++) await pronto(W.finestra(nomi[i])); }
+  // il telefono dell'host cambia schermata subito, gli altri appena arriva la foto: prima di votare si aspetta che su ognuno
+  // ci siano i tasti del voto (al ballottaggio con «⚖️ Ballottaggio!»), se no il tocco cade sulla schermata di prima
+  async function schedePronte(chi, ballo) {
+    if (await W.aspetta(function () { return chi.every(function (n) { var w = W.finestra(n); return w.document.querySelector(".im-vb") && (!ballo || /Ballottaggio!/.test(T(w))); }); }, 5000)) return;
+    no("non tutti hanno i tasti del voto" + (ballo ? " del ballottaggio" : "") + ": " + chi.map(function (n) { return n + " «" + T(W.finestra(n)).slice(0, 40).replace(/\s+/g, " ") + "»"; }).join(" "));
+  }
   function nomiTel(C) { return (vm(C).players || []).map(function (p) { return p.nome; }); }
   function idDi(C, nome) { var p = (vm(C).players || []).filter(function (x) { return x.nome === nome; })[0]; return p ? p.id : null; }
   function nomeDi(C, id) { var p = (vm(C).players || []).filter(function (x) { return x.id === id; })[0]; return p ? p.nome : null; }
@@ -121,6 +127,7 @@
     if (!await aspettaPasso(C, "discuti", 8000)) no("dopo gli indizi non si discute (" + vm(C).passo + ")");
     await prontiTutti(chi);
     if (!await aspettaPasso(C, "voto", 5000)) no("«🗳️ Votiamo» non porta al voto (" + vm(C).passo + ")");
+    await schedePronte(chi);
   }
   // tutti votano "bersaglio" (lui vota il primo che può)
   function votanoTutti(chi, bersaglio) {
@@ -280,6 +287,7 @@
     if (!await W.aspetta(function () { return /Ballottaggio/.test(T(P)); }, 3000)) no("manca «⚖️ Ballottaggio!»");
     // il ballottaggio: due cittadini votano l'impostore
     var civD = dentro.filter(function (n) { return n !== imp; });
+    await schedePronte(dentro, true);
     civD.forEach(function (n) { vota(W.finestra(n), imp); });
     vota(W.finestra(imp), civD[0]);
     v = await aspettaPasso(C, "ultima", 12000); if (!v) no("l'impostore non esce al ballottaggio (" + vm(C).passo + ")");
@@ -394,6 +402,7 @@
     if (!await W.aspetta(function () { return carta(M).grande === "🕵️ " + imp; }, 15000)) no("Marco non vede il segreto: " + JSON.stringify(carta(M)));
     await prontiTutti(nomi);
     if (!await aspettaPasso(C, "voto", 5000)) no("niente voto");
+    await schedePronte(nomi);
     var x = G.civ[0];
     votanoTutti(nomi, x);
     v = await aspettaPasso(C, "esito", 15000); if (!v) no("in 2 con l'impostore dentro non finisce (" + vm(C).passo + ")");
@@ -410,6 +419,7 @@
     if (!imp2) no("mano 2 senza impostore");
     await prontiTutti(nomi);
     if (!await aspettaPasso(C, "voto", 5000)) no("mano 2: niente voto");
+    await schedePronte(nomi);
     votanoTutti(nomi, imp2);
     v = await aspettaPasso(C, "ultima", 12000); if (!v) no("mano 2: l'impostore non esce");
     var parola = null;

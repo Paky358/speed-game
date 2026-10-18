@@ -4674,7 +4674,11 @@
         sala.fuori = RG.fuori && typeof RG.fuori === "object" ? RG.fuori : {}; sala.scelti = Array.isArray(RG.scelti) ? RG.scelti : null;
         if (Dr) sala.duello = { a: Dr.a, b: Dr.b, na: Dr.na, nb: Dr.nb, stanza: Dr.stanza, gioco: Dr.gioco || gRG.id, imp: Dr.imp || {},
           n: Dr.fine ? +Dr.fine.n || 0 : 0, fine: Dr.fine || null, visti: Dr.fine ? (function (o) { o[String(Dr.fine.giro | 0)] = 1; return o; })({}) : {} };
-        else { sala.inGioco = true; riprendiG = { g: gRG, imp: RG.imp || {} }; }
+        else {
+          sala.inGioco = true; riprendiG = { g: gRG, imp: RG.imp || {} };
+          // (chi era nella partita: anche se adesso è via, quando ricarica torna nella partita e non resta nella Sala)
+          if (Array.isArray(RG.nel)) sala.nelSeme = { stanza: RG.stanza, ids: RG.nel.filter(function (id) { return typeof id === "string"; }).slice(0, 40) };
+        }
       }
     }
     if (sala.torneo && EZ) membri.forEach(function (m) { segnaNomeT(sala.torneo, m.nome); });
@@ -4692,6 +4696,7 @@
       if (!sala.gioco || !sala.stanza || sala.elim) return null;
       var D = sala.duello && sala.duello.stanza === sala.stanza ? sala.duello : null;
       return { id: sala.gioco, stanza: sala.stanza, fase: sala.fase || "lobby", fuori: sala.fuori || {}, scelti: sala.scelti || null, imp: D ? null : (sala.impGioco || null),
+        nel: nelGiocoSala(sala),   // (chi è nella partita: se la pagina si ricarica, chi è via e poi torna rientra nella partita)
         duello: D ? { a: D.a, b: D.b, na: D.na, nb: D.nb, stanza: D.stanza, gioco: D.gioco, imp: D.imp || {}, fine: D.fine || null } : null };
     }
     // (col gioco: fase = a che punto è, nel = chi è dentro la sua stanza, fuori = chi ne è uscito apposta;
@@ -5610,9 +5615,17 @@
     };
   }
   // chi è dentro la stanza del gioco (id), tranne chi ha detto "esco"
+  // Conta anche chi era dentro ed è sparito senza dire "esco" (rete persa, telefono spento più di 20 s: per il gioco è
+  // "andato"): se ricarica la pagina deve tornare nella partita col suo posto, non restare nella Sala ad aspettare la
+  // prossima (18 ott: Palla Matta coi telefoni veri). Non chi ne è uscito apposta né chi l'host ha fatto uscire.
+  // E se la pagina dell'host si è ricaricata (la Sala riprende il gioco nella stessa stanza), anche chi era nella partita
+  // prima della ricarica e non è ancora tornato (SA.nelSeme): la stanza riaperta non lo conosce, ma la partita sì.
   function nelGiocoSala(SA) {
-    var SVg = SA.stanza ? SVH[SA.stanza] : null; if (!SVg) return [];
-    return Object.keys(SVg.dentro).filter(function (id) { return !(SA.fuori && SA.fuori[id]); });
+    var SVg = SA.stanza ? SVH[SA.stanza] : null, ids = [];
+    if (SVg) ids = Object.keys(SVg.dentro).concat(Object.keys(SVg.andati || {}).filter(function (id) { return !SVg.dentro[id] && !(SVg.fuori && SVg.fuori[id]); }));
+    var Sm = SA.nelSeme && SA.nelSeme.stanza === SA.stanza ? SA.nelSeme.ids : [];
+    Sm.forEach(function (id) { if (ids.indexOf(id) < 0 && !(SVg && SVg.fuori && SVg.fuori[id])) ids.push(id); });
+    return ids.filter(function (id) { return !(SA.fuori && SA.fuori[id]); });
   }
   // chi è uscito apposta dal gioco in corso (id)
   function fuoriSala(SA) { var F = SA.fuori || {}; return Object.keys(F).filter(function (id) { return F[id] === SA.stanza; }); }

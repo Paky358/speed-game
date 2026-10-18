@@ -6,7 +6,7 @@
 // c21 Scopa in tre online (stanza di un gioco solo, a 11 punti): Giulia spegne il telefono più di 20 s a partita in corso
 //     (gioca il Bot al posto suo), poi lo riaccende e si riprende il posto con le sue carte; Marco arriva tardi e guarda
 //     senza carte; il tavolo dell'ospite e di chi guarda sta a 360x640 e 412x915; l'host ricarica la pagina: tutti di nuovo
-//     nella saletta a tre (stesso codice, «In tre» ricordato) e si riparte in tre.
+//     (dal Passo 5) la stessa partita riprende: ognuno al suo posto con le sue carte, una sola persona di turno.
 // c22 Impostore online FUORI dalla Sala (stanza di un gioco solo): Marco arriva a partita cominciata e guarda; a fine
 //     partita l'host fa «Nuova partita» e Marco entra a giocare (prima restava fuori).
 (function () {
@@ -77,16 +77,28 @@
     if (!await W.aspetta(function () { var v = W.vmDi(C) || {}; return v.nomi && v.nomi[1] === "Giulia"; }, 15000)) no("Giulia riaccende il telefono ma non si riprende il posto (" + JSON.stringify((W.vmDi(C) || {}).nomi) + ")");
     if (!await W.aspetta(function () { var v = W.vmDi(C) || {}; return v.fase !== "gioco" || (alTavolo3(G) && manoDi(G) === v.nCarte[1]); }, 8000))
       no("Giulia non ritrova le sue carte (" + manoDi(G) + " invece di " + JSON.stringify((W.vmDi(C) || {}).nCarte) + ")");
-    // l'host ricarica: tutti nella saletta a tre, stesso codice, e si riparte in tre
+    // l'host ricarica (dal Passo 5 la Scopa riprende): la stessa partita, stesso codice, ognuno al suo posto con le sue carte,
+    // una sola persona con «Tocca a te» (quella di turno nella foto) e la partita va avanti
+    var vPrima = W.vmDi(C) || {};
     P = await W.ricarica("Paky");
-    if (!await W.aspetta(function () { return [G, L].every(function (w) { return /Scopa in tre/.test(T(w)) && !alTavolo3(w); }) && P.document.querySelector(".sl-go"); }, 25000))
-      no("dopo la ricarica dell'host non sono tutti nella saletta a tre (Giulia: «" + T(G).slice(0, 100) + "», Paky: «" + T(P).slice(0, 100) + "»)");
-    if ((A.codiceSaletta(P) || A.codiceTestata(P)) !== C) no("dopo la ricarica il codice è cambiato (" + (A.codiceSaletta(P) || A.codiceTestata(P)) + ")");
-    await W.dorme(600);
-    if (!W.clicca(P, /Comincia/, ".sl-go") && !W.clicca(P, /Comincia/)) no("dopo la ricarica non trovo «Comincia»");
-    if (!await W.aspetta(function () { return alTavolo3(P) && alTavolo3(G) && alTavolo3(L); }, 10000)) no("dopo la ricarica non si riparte in tre («" + T(G).slice(0, 80) + "»)");
+    function tuoi() { return ["Paky", "Giulia", "Luca"].filter(function (n) { return W.finestra(n).document.querySelector(".sc-mensola1.tuo"); }); }
+    var okR = await W.aspetta(function () {
+      var v = W.vmDi(C) || {};
+      return v.fase === "gioco" && alTavolo3(P) && alTavolo3(G) && alTavolo3(L) && manoDi(G) === v.nCarte[1] && manoDi(L) === v.nCarte[2] && manoDi(P) === v.nCarte[0] && tuoi().length <= 1;
+    }, 25000);
+    var vD = W.vmDi(C) || {};
+    if (!okR) no("dopo la ricarica dell'host la partita non riprende bene (fase " + vD.fase + ", carte " + JSON.stringify(vD.nCarte) + " / Paky " + manoDi(P) + " Giulia " + manoDi(G) + " Luca " + manoDi(L) + ", «Tocca a te» per " + tuoi().join("+") + "; Giulia: «" + T(G).slice(0, 90) + "», Paky: «" + T(P).slice(0, 90) + "»)");
+    if (vD.nMano !== vPrima.nMano) no("dopo la ricarica la mano è cambiata (" + vPrima.nMano + " → " + vD.nMano + ")");
+    if ((A.codiceSaletta(P) || A.codiceTestata(P) || C) !== C) no("dopo la ricarica il codice è cambiato");
+    var k0 = JSON.stringify(vD.nCarte) + vD.mazzoN;
+    await giocaPer(["Paky", "Giulia", "Luca"], 6000);
+    var vF = W.vmDi(C) || {};
+    if (vF.fase === "gioco" && JSON.stringify(vF.nCarte) + vF.mazzoN === k0) no("dopo la ripresa la partita resta ferma (" + k0 + ")");
+    await W.dorme(2500);
+    var scritte = tuoi();   // (la scritta «Tocca a te!» c'è sempre nella pagina: si vede solo sulla mensola .tuo)
+    if ((W.vmDi(C) || {}).fase === "gioco" && scritte.length > 1) no("dopo la ripresa tocca a più di uno: " + scritte.join(" e "));
     var e = W.erroriTel(); if (e.length) no("errori: " + e.slice(0, 3).join(" / "));
-    return "Giulia spenta → gioca il Bot " + visto + ", riaccesa → riprende con le sue carte; Marco guarda senza carte; misure ok; host ricarica → saletta a tre (" + C + ") e si riparte in tre";
+    return "Giulia spenta → gioca il Bot " + visto + ", riaccesa → riprende con le sue carte; Marco guarda senza carte; misure ok; host ricarica → la partita riprende (" + C + ", mano " + vD.nMano + ") e va avanti";
   } });
 
   // c23 Scopa in tre online: chi non gioca per troppo (telefono in tasca) riceve l'avviso e il Bot gioca UNA carta per lui;

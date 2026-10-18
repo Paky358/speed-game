@@ -84,7 +84,7 @@
 
   // ===== ar1: stesso telefono, temi =====
   COPIONE.aggiungi("ar1", { nome: "Asta stesso telefono (temi): chi ha l'offerta rialza da solo", fai: async function () {
-    var P = await partitaLocale({ formato: "temi", crediti: 15 }), note = [];
+    var P = await partitaLocale({ formato: "temi", crediti: 15, round: "normali", maledetta: false }), note = [];
     if (!await finoAllAsta(P)) no("non arrivo alla sala d'asta («" + T(P).slice(0, 80) + "»)");
     var capo = capoNome(P); if (!capo) no("all'apertura non c'è chi guida (chi sceglie parte da 1)");
     if (prezzo(P) !== 1) no("si parte da " + prezzo(P) + " invece di 1");
@@ -180,7 +180,7 @@
   function tasto(w, re) { return qa(w, ".sa-piede button").filter(function (b) { return re.test(b.textContent); })[0] || null; }
 
   COPIONE.aggiungi("ar3", { nome: "Asta online (temi), 3 telefoni: rialzo da soli", fai: async function () {
-    var o = await treTelefoni({ formato: "temi", crediti: 15 }), P = o.P, C = o.C, G = W.finestra("Giulia"), note = [];
+    var o = await treTelefoni({ formato: "temi", crediti: 15, round: "normali", maledetta: false }), P = o.P, C = o.C, G = W.finestra("Giulia"), note = [];
     // l'host sceglie (o chi tocca): aspetto la scelta e scelgo la prima carta
     var fino = Date.now() + 20000;
     while (Date.now() < fino && vm(C).fase !== "asta") {
