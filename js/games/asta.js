@@ -75,7 +75,7 @@
     ".as-round .t{font-size:2rem;font-weight:900;line-height:1.05;margin-top:2px;",
       "background:linear-gradient(135deg,#ffe58a,var(--accento) 55%,#ff9d3a);",
       "-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}",
-    ".as-top{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;margin:0 -2px 10px;}",
+    ".as-top{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 8px;margin:0 -2px 10px;}",
     ".as-pt{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--carta);",
       "border:2px solid transparent;border-radius:14px;padding:7px 12px;min-width:66px;}",
     ".as-pt .n{font-size:.78rem;font-weight:700;color:var(--testo-tenue);max-width:9ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
@@ -145,7 +145,9 @@
     ".as-fuori{opacity:.45;}",
     // (online) classifica finale alta come lo schermo: i tasti in fondo si vedono sempre, se serve scorre solo il centro
     ".schermata.as-fissa{flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0;}",
-    ".schermata.as-fissa>.contenuto{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}",
+    ".schermata.as-fissa>.contenuto{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}",
+    // (online) chi si aggiudica il lotto su un telefono basso: tutto in uno schermo, senza scorrere (il 🔨 grande sta già nel titolo)
+    "@media (max-height:760px){.as-esito .as-martello{display:none;}.as-esito .as-big{padding:10px 14px 12px;margin-bottom:6px;}.as-esito .as-big .em{width:60px;height:60px;font-size:2.1rem;margin:0 auto 4px;}.as-esito .as-big .nm{font-size:1.18rem;}.as-esito .as-testa-round>:not(:first-child),.as-esito .as-buste-tit{display:none;}.as-esito .as-buste .r{padding-top:3px;padding-bottom:3px;}.as-esito .as-buste~.as-big .em{width:44px;height:44px;font-size:1.6rem;}}",
     // chi guarda col link: in basso la targhetta del core "👀 Guardi · 😂 · ✕" (la schermata le lascia il posto)
     ".schermata.as-targa,.schermata.sa-sala.as-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom));}",
     ".as-kit{background:var(--carta);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--ombra);}",
@@ -308,6 +310,8 @@
     ".as-griglia.molte .as-carta{padding:6px 4px;gap:3px;border-radius:14px;}",
     ".as-griglia.molte .as-carta .em{width:36px;height:36px;font-size:1.3rem;border-radius:11px;}",
     ".as-griglia.molte .as-carta .nm{font-size:.74rem;line-height:1.15;}",
+    // (telefoni bassi) la scelta della carta sta tutta in uno schermo anche col 🎁 pacco o il 📦 lotto doppio
+    "@media (max-height:700px){.as-griglia.tante:not(.molte) .as-carta{padding:7px 6px;gap:4px;}.as-griglia.tante:not(.molte) .as-carta .em{width:42px;height:42px;font-size:1.5rem;}}",
     // tante carte da scegliere (7-10): tutto un po' più stretto, così entra nello schermo senza scorrere
     ".as-stretto .as-round{margin:0 0 2px !important;}.as-stretto .as-steps{margin-bottom:6px;}.as-stretto .as-step{padding:4px 3px;}",
     ".as-stretto .as-top{margin-bottom:6px;padding-bottom:4px;gap:6px;}.as-stretto .as-pt{padding:3px 9px;min-width:54px;border-radius:11px;}",
@@ -2055,7 +2059,7 @@
   function nodiEsitoTemi(el, e, myId) {
     var c = e.carta || {}, tu = myId != null && e.chiId === myId, out = [];
     if (e.buste && e.buste.length) {
-      out.push(el("div", { style: "font-size:1.05rem;font-weight:900", text: "✉️ Si aprono le buste!" }));
+      out.push(el("div", { class: "as-buste-tit", style: "font-size:1.05rem;font-weight:900", text: "✉️ Si aprono le buste!" }));
       var box = el("div", { class: "as-buste" }), dal = e.buste.slice().reverse();   // dalla più bassa alla più alta
       dal.forEach(function (b, i) {
         var vince = i === dal.length - 1, r = el("div", { class: "r" + (vince ? " vince" : "") }, [ el("span", { text: vince ? "🏆" : "✉️" }),
@@ -2064,7 +2068,7 @@
         box.appendChild(r);
       });
       out.push(box);
-    } else out.push(el("div", { style: "font-size:3rem;line-height:1", text: "🔨" }));
+    } else out.push(el("div", { class: "as-martello", style: "font-size:3rem;line-height:1", text: "🔨" }));
     out.push(el("div", { style: "font-size:1.45rem;font-weight:900", text: tu ? "Te lo aggiudichi tu!" : e.chiNome + " si aggiudica" }));
     if (c.pacco) out.push(el("div", { style: "font-weight:900;color:#e4b5ff", text: "🎁 Dentro il pacco c'era…" }));
     var big = el("div", { class: "as-big" + (c.pacco ? " as-sorpresa" : ""), style: "margin-top:4px" }, [
@@ -3198,7 +3202,7 @@
     return top;
   }
   function testaRound(el, vm) {
-    var wrap = el("div", {});
+    var wrap = el("div", { class: "as-testa-round" });
     wrap.appendChild(el("div", { class: "as-round", style: "margin:6px 0 4px" }, [
       el("div", { class: "n", text: "Round " + (vm.roundIdx + 1) + " di " + vm.totRound })
     ]));
@@ -3244,6 +3248,7 @@
     var esci = function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); };
     var s = vm.fase === "scelta" ? t.schermata({ indietro: esci })   // la scelta della carta: il tavolo prima di tutto (niente titolo)
       : t.schermata({ sotto: "Stanza " + (vm.codice || ""), icona: "🔨", titolo: titoloFaseAsta(vm, myId), indietro: esci });
+    s.classList.add("as-fissa");   // (alta come lo schermo: «Avanti ▶» sempre a vista anche a 360x640, se serve scorre solo il centro)
 
     s._contenuto.appendChild(testaRound(el, vm));
     s._contenuto.appendChild(strisciaOnline(el, vm, myId));
@@ -3273,7 +3278,7 @@
     }
 
     else if (vm.fase === "esito") {
-      var e2 = vm.esito || {};
+      var e2 = vm.esito || {}; s.classList.add("as-esito");
       s._contenuto.appendChild(el("div", { style: "display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" }, nodiEsitoTemi(el, e2, myId)));
       var kV = vm.sessione + "|" + vm.roundIdx + "|" + (e2.carta && e2.carta.nome);
       if (e2.chiId === myId && cb._vibEsito !== kV) { cb._vibEsito = kV; vibra(35); }   // l'hai vinta tu: il martello si sente
@@ -3281,7 +3286,7 @@
     }
 
     else if (vm.fase === "malEsito" && vm.malEsito) {   // 🧨 chi si è presa la carta maledetta e chi ha pagato
-      var em = vm.malEsito;
+      var em = vm.malEsito; s.classList.add("as-esito");
       nodiEsitoMal(el, em, myId).forEach(function (n) { s._contenuto.appendChild(n); });
       if (em.chiId === myId && cb._vibMal !== vm.sessione + "|" + em.n) { cb._vibMal = vm.sessione + "|" + em.n; vibra([40, 60, 40]); }   // è toccata a te: un momento che conta
       piedeAuto(t, s, vm, cb, "Avanti ▶", "Si va avanti da soli…");
