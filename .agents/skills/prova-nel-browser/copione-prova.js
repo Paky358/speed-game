@@ -3654,9 +3654,15 @@
     var r = await apriRiserva(), C = r.C;
     W.finestra("Giulia").__sgSubentroMs = 6000; W.finestra("Luca").__sgSubentroMs = 6000;
     var vince = r.ids.Giulia < r.ids.Luca ? "Giulia" : "Luca", perde = vince === "Giulia" ? "Luca" : "Giulia", t0 = Date.now();
-    muore("Paky");
-    if (!await W.aspetta(function () { return chiTiene(C).g === 2; }, 9000)) no("nessuno prende la partita");
-    await W.dorme(2000);
+    // (rete lenta mentre i due vice partono: nessuno dei due vede la foto dell'altro prima di pubblicare la sua, così la gara
+    //  c'è sempre; con la rete di 4 ms in Edge invisibile a volte la foto della prima arrivava prima che partisse il secondo)
+    var rit0 = W.BR.ritardo; W.BR.ritardo = 250;   // (sotto i 400 ms in cui chi guarda prima decide che la stanza è vuota)
+    try {
+      muore("Paky");
+      if (!await W.aspetta(function () { return chiTiene(C).g === 2; }, 10000)) no("nessuno prende la partita");
+      await W.dorme(2000);
+    } finally { W.BR.ritardo = rit0; }
+    await W.dorme(1000);
     // (la gara c'è stata davvero: tutti e due hanno pubblicato la loro foto con _g 2)
     var gara = {}; fotoDa(C, t0).forEach(function (x) { if (x.g === 2) gara[x.da] = 1; });
     if (!gara.Giulia || !gara.Luca) no("non c'è stata la gara: foto con _g 2 solo di " + Object.keys(gara).join(", "));
