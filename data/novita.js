@@ -9,19 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 233,
-    data: "17 ottobre 2026",
+    v: 236,
+    data: "18 ottobre 2026",
     titolo: "Più gente, più festa 🎉",
     descrizione: [
       "👀 Guarda qualsiasi partita, anche già cominciata: dal link della partita o col tasto «👀 Guarda» nella Sala. In basso hai «👀 Guardi · 😂 · ✕»: con 😂 mandi le faccine a chi gioca, con ✕ smetti di guardare. Alla partita dopo entri anche tu, da solo.",
-      "✋ Chi arriva tardi gioca prima: nella Balla Colossale, Scarabocchio, Nomi Cose e Città, Parola d'ordine e Sì però entra dal round dopo (con 0 punti), nel Black Jack e nel Poker dalla mano dopo; negli altri giochi guardi ed entri alla prossima partita. Nella Sala trovi «▶ Entra» o «👀 Guarda» e c'è scritto a che punto è la partita («🎮 Si gioca a Balla · Round 3 di 5»). (Non ancora in Stessa Lunghezza d'Onda, Chi di Noi?, Scopone e L'Impostore.)",
+      "✋ Chi arriva tardi gioca prima: nella Balla Colossale, Scarabocchio, Nomi Cose e Città, Parola d'ordine e Sì però entra dal round dopo (con 0 punti), nel Black Jack e nel Poker dalla mano dopo; negli altri giochi guardi ed entri alla prossima partita. Nella Sala trovi «▶ Entra» o «👀 Guarda» e c'è scritto a che punto è la partita («🎮 Si gioca a Balla · Round 3 di 5»). (Non ancora in Stessa Lunghezza d'Onda, Chi di Noi?, Scopone, L'Impostore e Il Prezzo è Giusto.)",
       "👑 Chi vince resta: nei giochi a due della Sala (Tris, Drop 4, Battaglia Navale, Scopa, Calcio Biliardo), quando siete almeno in tre, scegli «👑 Chi vince resta» in «Chi gioca?». Chi vince resta al tavolo, gli altri aspettano in coda e chi perde va in fondo; col pareggio resta il campione. La sfida dopo parte da sola in 8 secondi, e alla fine resta scritto il record della serata («🔥 4 di fila»).",
       "🗳️ Scegliamo insieme: chi tiene la Sala lo accende nel ⚙️. L'app propone 3 giochi, tutti votano per 20 secondi e poi gira la ruota, uguale su tutti i telefoni: più voti vuol dire più spicchi, ma anche il gioco senza voti può uscire. Il gioco parte per tutti.",
       "🟢 Gli amici online: in home vedi chi dei tuoi amici è nell'app («🟢 Giulia è nell'app · 📨 Chiama») e nella Sala c'è «➕ Invita gli amici». All'amico arriva un avviso con «Entra» che lo porta nella tua Sala, anche se aveva l'app chiusa (vale 10 minuti). Se non vuoi farti vedere, spegni «🟢 Fatti vedere online» in Classifica → Amici."
     ]
   },
   {
-    v: 232,
+    v: 235,
     data: "18 ottobre 2026",
     titolo: "L'Impostore: la partita non si perde 🔁",
     descrizione: [
@@ -31,7 +31,7 @@ window.SG_NOVITA = [
     ]
   },
   {
-    v: 231,
+    v: 234,
     data: "18 ottobre 2026",
     titolo: "Scopone: la partita non si perde 🔁",
     descrizione: [
@@ -41,7 +41,7 @@ window.SG_NOVITA = [
     ]
   },
   {
-    v: 230,
+    v: 233,
     data: "18 ottobre 2026",
     titolo: "Chi di Noi?: la partita non si perde 🔁",
     descrizione: [
@@ -52,13 +52,38 @@ window.SG_NOVITA = [
     ]
   },
   {
-    v: 229,
+    v: 232,
     data: "18 ottobre 2026",
     titolo: "Stessa Lunghezza d'Onda: la partita non si perde 🔁",
     descrizione: [
       "Se a chi ha aperto la partita si ricarica la pagina o si chiude l'app, riaprendola la partita riprende da dove era: stessi punti, stesso turno, stesso sensitivo col suo bersaglio, e gli amici leggono «🔁 Paky è tornato: la partita riprende da dove era».",
       "Prima qualche secondo col tempo fermo («🔁 Si riprende!»), poi si continua: la parola scelta, la lancetta e le lancette già bloccate restano dov'erano, e il tempo riparte da quello che mancava (mai troppo poco). Se si stava guardando dov'era il bersaglio, la rivelazione si rivede senza dare i punti due volte.",
       "Se il telefono di chi ha aperto la partita si spegne del tutto, dopo pochi secondi un amico porta avanti la partita («👑 Ora la partita la tiene Luca») e chi torna rientra a giocare col suo posto e la sua squadra."
+    ]
+  },
+  {
+    v: 231,
+    data: "18 ottobre 2026",
+    titolo: "La Balla Colossale: notizie vere controllate ✅",
+    descrizione: [
+      "Tutte le notizie vere della Balla Colossale sono state ricontrollate su due fonti: una ventina sistemate, tolte quelle che erano solo leggende (per esempio non è vero che il Canada ha più laghi del resto del mondo: è vero solo per quelli grandi)."
+    ]
+  },
+  {
+    v: 230,
+    data: "18 ottobre 2026",
+    titolo: "L'Asta: 5 temi nuovi 🔨",
+    descrizione: [
+      "Cinque temi nuovi da mettere insieme all'asta: 💒 Il Matrimonio da Sogno, 🚌 La Gita Scolastica, 📦 Il Trasloco, 🎤 La Serata Karaoke e ⛺ Il Campeggio.",
+      "Ognuno ha 4 round e più di 260 carte, dalle migliori ai disastri (la torta nuziale crollata in diretta, il prof con la verifica in pullman, il divano che non passa dalla porta), e il suo scenario per il voto finale."
+    ]
+  },
+  {
+    v: 229,
+    data: "18 ottobre 2026",
+    titolo: "Le immagini nuove dei giochi 🖼️",
+    descrizione: [
+      "In home 14 giochi hanno la loro immagine nuova, tutte nello stesso stile: L'Asta, La Linea del tempo, Parola d'ordine, La Balla Colossale, Calcio Biliardo, Il Prezzo è Giusto, Chi di Noi?, Stessa Lunghezza d'Onda, L'Impostore, Sì… però, Scarabocchio, Taboo, Nomi Cose e Città e La Patata Bollente. Le altre arrivano presto."
     ]
   },
   {
@@ -74,14 +99,6 @@ window.SG_NOVITA = [
   {
     v: 227,
     data: "17 ottobre 2026",
-    titolo: "Le novità, di nuovo in lista 📜",
-    descrizione: [
-      "Dal menu, «🆕 Novità» apre di nuovo la lista semplice di tutte le novità, come prima. In città restano sulla bacheca della piazza, con la città dietro."
-    ]
-  },
-  {
-    v: 226,
-    data: "17 ottobre 2026",
     titolo: "Gioco nuovo: Il Prezzo è Giusto! 🏷️",
     descrizione: [
       "Quanto costa? Si indovina il prezzo di cose vere: la spesa, il caffè al bar, lo smartphone, la Vespa, una settimana al mare… Quasi 500 prodotti con i prezzi medi in Italia del 2026.",
@@ -90,6 +107,14 @@ window.SG_NOVITA = [
       "Chi vince l'Offerta sceglie il gioco a premi tra due (🔼🔽 Più o meno, 🧗 L'Alpinista, 📊 Mettili in ordine, ✋ È troppo! e 🟡 Plinko) e si gioca tutti insieme; poi 🎡 la Ruota del 100, dove girate tutti insieme («CENTO! CENTO! CENTO!»), e 🛍️ la Vetrina finale: se ci andate vicinissimo, VINCI TUTTO! Alla fine il carrello con quello che vi portate a casa.",
       "🎯 Solo il prezzo: esce un oggetto, 20 secondi, vince chi ci va più vicino (sopra o sotto) e chi lo indovina preciso prende il bonus. L'ultimo oggetto vale doppio.",
       "Chi ospita sceglie il formato, quanto dura (⚡ Veloce, 📺 Puntata, 🌙 Serata lunga), le offerte a vista o segrete e le categorie dei prodotti."
+    ]
+  },
+  {
+    v: 226,
+    data: "17 ottobre 2026",
+    titolo: "Le novità, di nuovo in lista 📜",
+    descrizione: [
+      "Dal menu, «🆕 Novità» apre di nuovo la lista semplice di tutte le novità, come prima. In città restano sulla bacheca della piazza, con la città dietro."
     ]
   },
   {
