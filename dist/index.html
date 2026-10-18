@@ -2329,7 +2329,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 </style>
 <div id="app"></div>
 <script>window.SG_EXTRA = 'extra.js?v=6e30c08d42';</script>
-<script>window.SG_FOTO = {"asta":1,"balla":1,"blackjack":1,"calciobiliardo":1,"chidinoi":1,"impostore":1,"lunghezza":1,"nomicose":1,"ordine":1,"patata":1,"prezzo":1,"scarabocchio":1,"sipero":1,"taboo":1,"timeline":1,};</script>
+<script>window.SG_FOTO = {"asta":1,"balla":1,"blackjack":1,"calciobiliardo":1,"chidinoi":1,"drop4":1,"hockey":1,"impostore":1,"lunghezza":1,"navale":1,"nomicose":1,"ordine":1,"patata":1,"poker":1,"prezzo":1,"ruota":1,"scalinata":1,"scarabocchio":1,"scopa":1,"scopa2v2":1,"scopone":1,"sipero":1,"taboo":1,"timeline":1,"tris":1,};</script>
 <form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>
 <form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea><input type="text" name="contesto" /></form>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
@@ -16933,9 +16933,13 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     };
   }
   // chi è dentro la stanza del gioco (id), tranne chi ha detto "esco"
+  // Conta anche chi era dentro ed è sparito senza dire "esco" (rete persa, telefono spento più di 20 s: per il gioco è
+  // "andato"): se ricarica la pagina deve tornare nella partita col suo posto, non restare nella Sala ad aspettare la
+  // prossima (18 ott: Palla Matta coi telefoni veri). Non chi ne è uscito apposta né chi l'host ha fatto uscire.
   function nelGiocoSala(SA) {
     var SVg = SA.stanza ? SVH[SA.stanza] : null; if (!SVg) return [];
-    return Object.keys(SVg.dentro).filter(function (id) { return !(SA.fuori && SA.fuori[id]); });
+    var ids = Object.keys(SVg.dentro).concat(Object.keys(SVg.andati || {}).filter(function (id) { return !SVg.dentro[id] && !(SVg.fuori && SVg.fuori[id]); }));
+    return ids.filter(function (id) { return !(SA.fuori && SA.fuori[id]); });
   }
   // chi è uscito apposta dal gioco in corso (id)
   function fuoriSala(SA) { var F = SA.fuori || {}; return Object.keys(F).filter(function (id) { return F[id] === SA.stanza; }); }
@@ -45420,6 +45424,15 @@ window.SG_NCC_CATEGORIE = {
      descrizione-> elenco di righe: cosa cambia per chi gioca
    ========================================================= */
 window.SG_NOVITA = [
+  {
+    v: 237,
+    data: "18 ottobre 2026",
+    titolo: "Chi perde la rete torna a giocare 📶",
+    descrizione: [
+      "🔁 Nella Sala, se un amico perde la rete o spegne il telefono per un po' e poi ricarica la pagina, torna dritto nella partita al suo posto, coi suoi punti (in Palla Matta anche con le sue palline), invece di restare nella Sala ad aspettare la prossima. A chi ha aperto la partita sparisce subito «Aspettiamo…» e si va avanti.",
+      "🎯 Palla a Pendolo: chi torna a partita in corso si riprende il suo personaggio, che intanto muoveva il Bot."
+    ]
+  },
   {
     v: 236,
     data: "18 ottobre 2026",
@@ -83553,6 +83566,7 @@ window.SG_SIPERO = {
             if (!dentro(id) && attesa.indexOf(id) < 0) { var p = postoLibero(); if (p >= 0 && siede(id)) posti[p] = id; else attesa.push(id); }
             lobbyAgg();
           } else if (dentro(id)) { if (fase === "gioco" && viaMsg) rete.invia(viaMsg); else if (fase === "ripresa") rete.inviaVeloce(msgRiparte(id)); }   // chi rientra: gli rimando la partita (nomi, avatar, ruoli)
+          else if (riprendePosto(id)) { if (viaMsg) rete.invia(viaMsg); }   // tornato dopo i 20 secondi (stesso id): riprende il suo personaggio dal bot
           else { if (attesa.indexOf(id) < 0) attesa.push(id); rete.inviaVeloce({ t: "guardi", to: id, fuori: !siede(id) }); ricorda(); }   // arrivato a partita iniziata: guarda
         }
         else if (m.t === "vuoiLanciare") {
@@ -83585,8 +83599,25 @@ window.SG_SIPERO = {
       if (ST && fase === "gioco") {   // a partita in corso il suo personaggio lo prende un bot
         if (eraLanc) { ST.aiLanc = true; ST.aiTarget = -1; ST.aimHold = 0; ST.aiCd = 0.6; }
         if (s >= 0 && ST.chars[s]) diventaBot(ST.chars[s]);
+        if (eraLanc || s >= 0) exPosto[id] = { s: eraLanc ? "L" : s, g: gameId };   // (se torna in questa partita, se lo riprende)
       }
       ricorda();
+    }
+    // chi era sparito (telefono spento, rete persa, pagina ricaricata dopo i 20 secondi) torna con lo stesso id a partita
+    // in corso: riprende il suo posto (sulla trave o a lanciare) se il bot lo tiene ancora
+    var exPosto = {};
+    function riprendePosto(id) {
+      var x = exPosto[id]; delete exPosto[id];
+      if (!x || x.g !== gameId || fase !== "gioco" || !ST || !siede(id)) return false;
+      if (x.s === "L") { if (lanc !== null) return false; lanc = id; ST.aiLanc = false; ST.aimHold = 0; }
+      else {
+        if (posti[x.s]) return false;
+        posti[x.s] = id; var c = ST.chars[x.s];
+        if (c && c.alive) { c.human = true; c.ctrl = id; c.mov = 0; }
+      }
+      attesa = attesa.filter(function (y) { return y !== id; });
+      ricorda();
+      return true;
     }
     // ---- la ripresa: si riparte da capo dopo 5 secondi; intanto gli amici rientrano (stesso id) ----
     function msgRiparte(to) { var m = { t: "riparte", fase: "gioco", ms: Math.max(0, ripFino - Date.now()) }; if (to) m.to = to; return m; }

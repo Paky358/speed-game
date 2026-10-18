@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 237,
+    data: "18 ottobre 2026",
+    titolo: "Chi perde la rete torna a giocare 📶",
+    descrizione: [
+      "🔁 Nella Sala, se un amico perde la rete o spegne il telefono per un po' e poi ricarica la pagina, torna dritto nella partita al suo posto, coi suoi punti (in Palla Matta anche con le sue palline), invece di restare nella Sala ad aspettare la prossima. A chi ha aperto la partita sparisce subito «Aspettiamo…» e si va avanti.",
+      "🎯 Palla a Pendolo: chi torna a partita in corso si riprende il suo personaggio, che intanto muoveva il Bot."
+    ]
+  },
+  {
     v: 236,
     data: "18 ottobre 2026",
     titolo: "Più gente, più festa 🎉",

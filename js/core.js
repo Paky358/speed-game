@@ -5610,9 +5610,13 @@
     };
   }
   // chi è dentro la stanza del gioco (id), tranne chi ha detto "esco"
+  // Conta anche chi era dentro ed è sparito senza dire "esco" (rete persa, telefono spento più di 20 s: per il gioco è
+  // "andato"): se ricarica la pagina deve tornare nella partita col suo posto, non restare nella Sala ad aspettare la
+  // prossima (18 ott: Palla Matta coi telefoni veri). Non chi ne è uscito apposta né chi l'host ha fatto uscire.
   function nelGiocoSala(SA) {
     var SVg = SA.stanza ? SVH[SA.stanza] : null; if (!SVg) return [];
-    return Object.keys(SVg.dentro).filter(function (id) { return !(SA.fuori && SA.fuori[id]); });
+    var ids = Object.keys(SVg.dentro).concat(Object.keys(SVg.andati || {}).filter(function (id) { return !SVg.dentro[id] && !(SVg.fuori && SVg.fuori[id]); }));
+    return ids.filter(function (id) { return !(SA.fuori && SA.fuori[id]); });
   }
   // chi è uscito apposta dal gioco in corso (id)
   function fuoriSala(SA) { var F = SA.fuori || {}; return Object.keys(F).filter(function (id) { return F[id] === SA.stanza; }); }
