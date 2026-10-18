@@ -16,7 +16,7 @@
 //       classifica coi tasti del core; «↻ Rivincita» col 3-2-1 e si rigioca.
 // imp3: chi arriva a partita cominciata (Marco) guarda: niente tasti, «👀 Guardi», tenendo premuto vede la parola e chi è
 //       l'impostore; alla Rivincita entra a giocare. Indizi «🗣️ A voce» (3 giocatori): «Inizia …» e il giro.
-// imp4: l'host ricarica a metà partita: tutti tornano nella Sala (stesso codice), il gioco si rilancia e le carte arrivano di nuovo.
+// imp4: l'host ricarica a metà partita: (dal 18 ott, riprende) la partita riprende dalla Sala col suo codice, stesse parole.
 // imp5: le misure 360x640 e 412x915 con 8 telefoni: indizi, voto, spoglio, fine mano, classifica senza scorrere.
 // imp6: sullo stesso telefono (3 giocatori) dalla home alla classifica, solo coi tasti: niente rotto.
 (function () {
@@ -99,6 +99,7 @@
       var x; try { x = JSON.parse(m.p); } catch (e) { return; }
       var dati = x && (x.data || x), s = m.p;
       if (dati && dati.t === "seg") { if (!dati.to) male.push("segreto senza «to» da " + m.da); return; }
+      if (dati && dati.t === "__ris") { if (!(dati.vici || []).length) male.push("copia per i vice senza vice da " + m.da); return; }   // (dal 18 ott: la copia della partita per i vice, come i segreti «to»)
       if (dati && (dati.t === "indizio" || dati.t === "indovina")) return;   // (le mosse di chi gioca vanno solo all host: l indizio rifiutato lo manda la prova apposta)
       if (dati && dati.t === "vm" && dati.vm && (dati.vm.passo === "esito" || dati.vm.fase !== "gioco")) return;   // a mano finita le parole sono svelate
       if (dati && dati.t === "vm" && dati.vm && dati.vm.passo === "ultima" && dati.vm.ultima) s = JSON.stringify(Object.assign({}, dati.vm, { ultima: null }));
@@ -325,7 +326,7 @@
   } });
 
   // ===================== imp4: l'host ricarica =====================
-  COPIONE.aggiungi("imp4", { nome: "Impostore: l'host ricarica a metà partita, tutti di nuovo in saletta", fai: async function () {
+  COPIONE.aggiungi("imp4", { nome: "Impostore: l'host ricarica a metà partita nella Sala, la partita riprende", fai: async function () {
     var Z = await salaImp(["Giulia", "Luca"], { aiuto: "categoria", spia: "no", mani: 3, giri: 1, indizi: "scritti", tempo: 60 });
     var S = Z.S, P = W.finestra("Paky");
     var C = await A.lanciaDallaSala("Paky", S, NOME);
@@ -334,16 +335,23 @@
     if (!await aspettaPasso(C, "indizi", 10000)) no("la partita non comincia");
     await giroIndizi(C, ["Paky", "Giulia", "Luca"]);
     if (!await aspettaPasso(C, "discuti", 5000)) no("con 1 giro di indizi si discute subito");
+    // (dal 18 ott, Passo 5: l'Impostore riprende) nella Sala l'host che ricarica ritrova la partita col suo codice: nessuno
+    // torna nella Sala, stessa mano, stesse parole, si discute ancora
+    var carte0 = {}; ["Paky", "Giulia", "Luca"].forEach(function (n) { carte0[n] = carta(W.finestra(n)).grande; });
+    var mano0 = vm(C).mano, s0 = (W.statoStanza(C) || {})._s, inSala = "";
+    await W.dorme(900);
     P = await W.ricarica("Paky");
-    // nella Sala l'host che ricarica riporta tutti nella Sala (stesso codice); poi si rilancia il gioco
-    if (!await W.aspetta(function () { return ((vm(S).membri) || []).length === 3 && /Sei dentro/.test(T(W.finestra("Giulia"))) && !W.finestra("Giulia").document.querySelector(".im-scena") && !W.finestra("Luca").document.querySelector(".im-scena"); }, 20000)) no("dopo la ricarica dell'host non tornano tutti nella Sala");
-    C = await A.lanciaDallaSala("Paky", S, NOME);
-    if (!await W.aspetta(function () { return (vm(C).players || []).length === 3; }, 12000)) no("dopo la ricarica il gioco non riparte con tutti (" + nomiTel(C) + ")");
-    if (!W.clicca(W.finestra("Paky"), /Comincia/, ".sl-go")) no("Paky non trova «Comincia» la seconda volta");
-    if (!await aspettaPasso(C, "indizi", 10000)) no("la seconda partita non comincia");
-    if (!await W.aspetta(function () { return ["Paky", "Giulia", "Luca"].every(function (n) { return ruoloDi(W.finestra(n)); }); }, 6000)) no("dopo la ricarica non arrivano le carte");
+    var ok = await W.aspetta(function () {
+      ["Giulia", "Luca"].forEach(function (n) { var w = W.finestra(n); if (!w.document.querySelector(".im-scena") && /Sei dentro/.test(T(w))) inSala = n; });
+      var s = W.statoStanza(C) || {}, v = vm(C);
+      return s._s && s._s !== s0 && s._r && v.fase === "gioco" && v.passo === "discuti" && v.mano === mano0 && W.finestra("Paky").document.querySelector(".im-scena");
+    }, 20000);
+    if (!ok) no("dopo la ricarica dell'host la partita non riprende (" + vm(C).fase + " " + vm(C).passo + ", «" + T(W.finestra("Paky")).slice(0, 60) + "»)");
+    if (inSala) no(inSala + " è tornato nella Sala");
+    if (!await W.aspetta(function () { return ["Paky", "Giulia", "Luca"].every(function (n) { return carta(W.finestra(n)).grande === carte0[n]; }); }, 8000)) no("dopo la ricarica le parole non sono quelle di prima");
+    if (!await W.aspetta(function () { return ["Giulia", "Luca"].every(function (n) { return W.finestra(n).document.querySelector(".im-scena"); }); }, 4000)) no("gli amici non sono più nella partita");
     var e = errori(); if (e) no("errori: " + e);
-    return "l'host ricarica: tutti in saletta (" + nomiTel(C).join(", ") + ")";
+    return "l'host ricarica: la partita riprende (stessa mano, stesse parole, codice " + C + ")";
   } });
 
   // ===================== imp5: le misure =====================

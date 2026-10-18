@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 232,
+    data: "18 ottobre 2026",
+    titolo: "L'Impostore: la partita non si perde 🔁",
+    descrizione: [
+      "Se a chi ha aperto la partita si ricarica la pagina o si chiude l'app, riaprendola la partita riprende da dove era: stessi punti, stessa mano e la stessa parola segreta sul telefono di ognuno. Gli amici leggono «🔁 Paky è tornato: la partita riprende da dove era».",
+      "Gli indizi già scritti e i voti già dati restano, e si continua col tempo che mancava (mai troppo poco). Se l'impostore scoperto stava scegliendo la parola, la scelta resta sua. Se si stava guardando la fine della mano, i punti non si danno due volte.",
+      "Se il telefono di chi ha aperto la partita si spegne del tutto, dopo pochi secondi un amico porta avanti la partita («👑 Ora la partita la tiene Giulia»; se qualcuno sta guardando, la tiene lui). Chi torna rientra a giocare col suo posto e la sua parola."
+    ]
+  },
+  {
     v: 231,
     data: "18 ottobre 2026",
     titolo: "Scopone: la partita non si perde 🔁",

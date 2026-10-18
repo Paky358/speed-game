@@ -214,6 +214,8 @@
     difficolta: 2,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono e guardate la parola in segreto", amici: true }],
     postiOnline: MAX_ON,
+    riprende: true,   // se l'host ricarica o riapre l'app, la partita online riprende da dove era (t.ripresa, t.ricorda)
+    riserva: true,    // se l'host sparisce del tutto un amico la porta avanti (gioco lungo, a turni, da 3 a 10: non a due né in tempo reale)
     // la riga "📜 Si gioca così" che gli amici leggono in saletta
     riassunto: function (imp) {
       var r = regoleDa(imp), con = r.spia !== "no", elim = r.voto === "elim";
@@ -956,8 +958,12 @@
   function host(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
+    // io che tengo la partita: "host", oppure (host di riserva) l'id da amico di chi ha preso il posto dell'host sparito
+    var IO = t.mioId || "host";
     var H = { fase: "lobby", codice: "…", pronta: false, partita: 0, mano: 0, R: regoleDa(t.impostazioni), cats: categorie(),
-      players: [{ id: "host", nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, piu: 0 }],
+      rip: 0,        // quante volte la partita è ripresa (nelle chiavi dei conti: così ripartono da capo su tutti i telefoni)
+      respiro: 0,    // dopo una ripresa, fino a quest'ora nessun momento si chiude da solo (gli amici intanto rientrano)
+      players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, piu: 0 }],
       guarda: [],   // nella Sala: chi non è stato scelto per giocare (guarda soltanto, col suo id nella foto): { id, nome }
       tardi: [],    // arrivati a partita cominciata: guardano ed entrano alla prossima
       passo: null, giro: 0, ordine: [], ind: {}, cor: {}, voti: {}, pronti: [], scadenza: 0, to: null,
@@ -965,6 +971,22 @@
       // 🔪 a eliminazione: il giro, chi è fuori ({ id, ruolo, turno }), i pareggi di fila, il ballottaggio (gli id dei pari),
       // i giri restati dentro di ogni impostore, i voti presi in tutta la mano, chi ha votato giusto, l'ultimo uscito
       elim: false, turno: 0, fuori: [], pari: 0, ballo: null, sopr: {}, ricevuti: {}, giusti: {}, ultimoFuori: null, dec: null };
+    // ----- la partita di prima (t.ripresa): l'host ha ricaricato la pagina o riaperto l'app, oppure (daRiserva) l'host è
+    // sparito e questo telefono la porta avanti. Chi giocava resta dentro "atteso" (rientra da solo col suo join, stesso id:
+    // lì gli si rimanda il segreto); chi non torna in 15 secondi esce. L'host sparito (se la porto avanti io) è fuori subito
+    var R0 = t.ripresa, riprendo = !!(R0 && R0.stato && R0.stato.fase && R0.stato.fase !== "lobby" && R0.stato.players), attesi = {}, tAttesi = null;
+    if (riprendo) {
+      H = R0.stato;
+      H.to = null; H.pronta = false; H.cats = categorie(); H.rip = H.rip || 0; H.guarda = H.guarda || []; H.tardi = H.tardi || [];
+      H.players.forEach(function (p) {
+        p.forse = false;
+        if (p.id === IO) { p.via = false; p.omino = t.mioOmino(p.nome); return; }
+        if (R0.daRiserva && p.id === R0.vecchioHost) { p.via = true; return; }
+        if (!p.via) attesi[p.id] = 1;
+      });
+      // (chi guarda e chi è arrivato tardi restano nelle loro liste: rientrano anche loro col join. Se la porto avanti io
+      // guardando, resto tra chi guarda: vedo la partita come prima e alla "Nuova partita" mi siedo)
+    }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function iDi(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return i; return -1; }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
@@ -985,31 +1007,35 @@
     // "⚙️ Regole" nella saletta: l'host cambia le impostazioni quando vuole
     t.onRegole = function (im) { if (H.fase !== "lobby") return; H.R = regoleDa(im); bd(); };
 
+    // chi se ne va (uscito apposta, sparito da più di 20 secondi o, dopo una ripresa, non tornato in tempo)
+    function addio(id) {
+      delete attesi[id];
+      if (guardaId(id)) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
+      if (H.tardi.indexOf(id) >= 0) { H.tardi.splice(H.tardi.indexOf(id), 1); return; }
+      var p = pById(id); if (!p || (p.via && H.fase !== "lobby")) return;
+      p.forse = false;
+      // nella saletta si toglie e basta (i posti degli altri restano come sono)
+      if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
+      p.via = true;   // a partita iniziata resta in classifica, ma non gioca più (se torna riprende il suo posto)
+      if (H.fase === "gioco" && presenti().length < MIN_ON) return fine();
+      controlla(); bd();
+    }
     var rete = SGNet.ospita("impostore", {
       onCodice: function (c) { H.codice = c; bd(); },
       onConnesso: function () { H.pronta = true; bd(); },
       // la stanza non si è proprio aperta (primo collegamento): si riprova da capo. Dopo, la rete che salta la gestisce il core
       onErrore: function () {
         if (H.pronta) return;
-        ferma(); if (rete) rete.chiudi();
+        ferma(); clearTimeout(tAttesi); if (rete) rete.chiudi();
         erroreRete(t, "Non riesco ad aprire la stanza.", function () { host(t); });
       },
       onForse: function (id) { var p = pById(id); if (p && !p.forse) { p.forse = true; bd(); } },
       onTornato: function (id) { var p = pById(id); if (p && p.forse) { p.forse = false; bd(); } },
-      onAddio: function (id) {
-        if (guardaId(id)) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
-        if (H.tardi.indexOf(id) >= 0) { H.tardi.splice(H.tardi.indexOf(id), 1); return; }
-        var p = pById(id); if (!p) return;
-        p.forse = false;
-        // nella saletta si toglie e basta (i posti degli altri restano come sono)
-        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
-        p.via = true;   // a partita iniziata resta in classifica, ma non gioca più (se torna riprende il suo posto)
-        if (H.fase === "gioco" && presenti().length < MIN_ON) return fine();
-        controlla(); bd();
-      },
+      onAddio: addio,
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
+          delete attesi[id];   // (dopo una ripresa: è tornato)
           var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
           // nella Sala, se siete più dei posti, gioca chi ha scelto l'host: gli altri guardano (col loro id nella foto)
           if (!p && (guardaId(id) || !t.puoSedersi(id, nome))) {
@@ -1023,7 +1049,7 @@
             bd(); spettatore(id); return;
           }
           // chi rientra (pagina ricaricata, telefono riacceso) ha lo STESSO id: ritrova il suo posto, i suoi punti e la sua parola
-          if (p) { p.forse = false; if (p.via && H.fase === "gioco") { p.via = false; controlla(); } }
+          if (p) { p.forse = false; if (!p.omino) p.omino = avatarValido(m.omino); if (p.via && H.fase === "gioco") { p.via = false; controlla(); } }
           bd();
           if (p && H.fase === "gioco") privato(id, segretoDi(id));
           return;
@@ -1036,8 +1062,9 @@
         else if (m.t === "avanti") avanti(id, m.k);
         else if (m.t === "indovina") indovina(id, m.w);
       }
-    });
+    }, { ripresa: riprendo });   // con la partita ripresa gli amici NON tornano in saletta (leggono "🔁 … la partita riprende")
     if (!rete) return senzaRete(t);
+    if (riprendo && rete.codice) H.codice = rete.codice;
 
     // ----- i segreti: a un telefono solo -----
     function segretoDi(id) {
@@ -1065,13 +1092,14 @@
     }
     function privato(id, m) {
       if (!m) return;
-      if (id === "host") { riceviPrivato(cbHost, m); return; }
+      if (id === IO) { riceviPrivato(cbHost, m); return; }
       m.to = id; rete.inviaVeloce(m);   // (con "to": non resta in stanza e gli altri telefoni lo ignorano)
     }
     // la "foto" per tutti: SEMPRE con gli id e con "fase"; MAI le parole (solo a fine mano, nell'esito)
     function vm() {
       var u = H.ultima;
       return { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, mano: H.mano, mani: H.R.mani,
+        tiene: IO, rip: H.rip,   // chi tiene la partita (la corona in saletta) e quante volte è ripresa (nelle chiavi dei conti)
         indizi: H.R.indizi, giri: H.elim ? 1 : H.R.giri, passo: H.passo, giro: H.giro, k: chiave(),
         resta: H.fase === "gioco" && H.scadenza ? Math.max(0, Math.ceil((H.scadenza - Date.now()) / 1000)) : 0,   // i secondi che mancano (non l'ora)
         ordine: H.ordine, ind: H.ind, scritto: Object.keys(H.cor), votato: Object.keys(H.voti),
@@ -1086,7 +1114,26 @@
           omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }),
         guarda: H.guarda };
     }
-    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); disegna(t, v, cbHost); }
+    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegna(t, v, cbHost); vici(); }
+    // la partita da ricordare (se l'host ricarica, o se la porta avanti un amico): tutto H tranne il timer e le parole del
+    // gioco (cats: si rileggono), senza avatar (tornano col join), con le scadenze come ORE. I segreti (chi è l'impostore,
+    // le parole) ci sono: restano su questo telefono e nella copia per il vice, mai nella foto per tutti. In saletta niente
+    function ricorda() {
+      if (H.fase === "lobby") return t.ricorda(null);
+      var s = {};
+      Object.keys(H).forEach(function (k) { if (k !== "to" && k !== "cats") s[k] = H[k]; });
+      s.players = H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, piu: p.piu || 0, via: !!p.via }; });
+      t.ricorda(s);
+    }
+    // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (vede già tutto: parola e impostore), poi
+    // il core aggiunge i primi arrivati
+    var viciK = "";
+    function vici() {
+      if (!t.vici) return;
+      var l = H.guarda.map(function (x) { return x.id; }).concat(H.tardi).filter(function (id, i, a) { return id !== IO && a.indexOf(id) === i; });
+      var k = l.join(","); if (k === viciK) return;
+      viciK = k; t.vici(l.length ? l : null);
+    }
 
     // ----- la partita -----
     function comincia() {
@@ -1175,7 +1222,14 @@
       H.passo = "spoglio"; H.giro = 0;
       var ms = 1000 + H.spoglio.ordine.length * 350 + 2600;
       H.scadenza = Date.now() + ms; bd();
-      dopo(ms, function () { if (acc != null && acc === H.seg.imp) iniziaUltima(); else chiudiMano(false); });
+      dopo(ms, dopoSpoglio);
+    }
+    // dopo lo spoglio (non a eliminazione): il più votato è l'impostore → l'ultima possibilità, se no la mano si chiude
+    function dopoSpoglio() {
+      if (H.passo !== "spoglio") return;
+      if (H.elim) return dopoSpoglioElim();
+      var acc = H.spoglio ? H.spoglio.acc : null;
+      if (acc != null && acc === H.seg.imp) iniziaUltima(); else chiudiMano(false);
     }
     // ----- 🔪 a eliminazione: lo spoglio decide chi esce (o pareggio, ballottaggio, sorte) -----
     function chiudiVotoElim(conte) {
@@ -1259,7 +1313,12 @@
       // a eliminazione, se resta dentro un altro impostore la parola NON si svela (la saprebbe anche lui)
       u.svela = !H.elim || u.giusto || !!fineElim(vivi().map(function (p) { return p.id; }), H.seg.imps);
       scade(3); bd();
-      dopo(3000, function () { if (H.elim) dopoUltimaElim(u); else chiudiMano(u.giusto); });
+      dopo(3000, dopoIndovina);
+    }
+    // la parola dell'ultima possibilità è stata scelta (o il tempo è finito): si va avanti
+    function dopoIndovina() {
+      var u = H.ultima; if (H.passo !== "ultima" || !u || u.scelto == null) return;
+      if (H.elim) dopoUltimaElim(u); else chiudiMano(u.giusto);
     }
     function dopoUltimaElim(u) {
       if (H.passo !== "ultima") return;
@@ -1288,7 +1347,7 @@
       if (H.passo !== "discuti" && H.passo !== "esito" && H.passo !== "fuori") return;
       if (eFuori(id)) return;   // chi è fuori guarda: non decide
       if (H.pronti.indexOf(id) < 0) H.pronti.push(id);
-      if (prontiVeri().length >= servono()) return passoPronti();
+      if (prontiVeri().length >= servono()) { if (Date.now() >= H.respiro) return passoPronti(); controlla(); }   // (nel respiro: dopo)
       bd();
     }
     function passoPronti() { if (H.passo === "discuti") iniziaVoto(); else if (H.passo === "fuori") nuovoTurno(); else avantiEsito(); }
@@ -1298,8 +1357,12 @@
       nuovaMano();
     }
     // qualcuno ha finito (o è uscito): se ci sono tutti si va avanti senza aspettare il tempo
+    // (dopo una ripresa, nei primi secondi di respiro nessun momento si chiude: si ricontrolla quando il respiro finisce)
+    var tRespiro = null, uscito = false;
     function controlla() {
       if (H.fase !== "gioco") return;
+      var presto = (H.respiro || 0) - Date.now();
+      if (presto > 0) { clearTimeout(tRespiro); tRespiro = setTimeout(function () { tRespiro = null; if (!uscito) controlla(); }, presto + 60); return; }
       var att = attivi();
       if (H.passo === "indizi" && att.every(function (p) { return H.cor[p.id] != null; })) { scade(1); dopo(900, chiudiIndizi); }
       else if (H.passo === "voto" && att.every(function (p) { return H.voti[p.id] != null; })) { scade(2); dopo(1500, chiudiVoto); }
@@ -1319,24 +1382,61 @@
       ferma(); H.fase = "lobby"; H.passo = null; H.mano = 0; H.classifica = null; H.tardi = [];
       H.seg = H.V = H.vv = H.spoglio = H.ultima = H.esito = null; H.ordine = []; H.ind = {}; H.cor = {}; H.voti = {}; H.pronti = []; H.scadenza = 0;
       H.elim = false; H.turno = 0; H.fuori = []; H.pari = 0; H.ballo = null; H.ultimoFuori = null; H.dec = null;
-      H.players = presenti(); H.players.forEach(function (p) { p.punti = 0; p.piu = 0; });
-      bd();
+      H.players = presenti();
+      // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
+      if (!pById(IO)) {
+        var g0 = H.guarda.filter(function (x) { return x.id === IO; })[0];
+        H.guarda = H.guarda.filter(function (x) { return x.id !== IO; });
+        H.players.push({ id: IO, nome: (g0 && g0.nome) || t.nomeProfilo() || nomeHost, omino: t.mioOmino((g0 && g0.nome) || nomeHost), punti: 0, piu: 0 });
+      }
+      H.players.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
+      H.players.forEach(function (p) { p.punti = 0; p.piu = 0; });
+      bd();   // (in saletta bd() fa t.ricorda(null): niente da riprendere)
     }
     t.onRivincita = nuova;
 
-    var cbHost = { sonoHost: true, myId: "host", seg: null, mio: {}, vm: null, chiedi: null,
+    // ----- la ripresa: ogni momento continua col tempo che restava (mai troppo poco), con almeno 5 secondi di respiro
+    // (gli amici intanto rientrano). I punti si danno solo a fine mano (chiudiMano): una mano già chiusa resta chiusa,
+    // e sulla classifica finale si resta lì (t.risultato l'aveva già dato chi teneva la partita)
+    function riprendi() {
+      tAttesi = setTimeout(function () { tAttesi = null; if (!uscito) Object.keys(attesi).forEach(addio); }, 15000);
+      // i trofei di questa mano li avevo già contati prima di ricaricare
+      if (!R0.daRiserva && H.passo === "esito") MEM.fatti[H.codice + "|" + chiave()] = 1;
+      if (H.fase !== "gioco") { H.scadenza = 0; return bd(); }
+      var ora = Date.now(), resta = H.scadenza ? R0.ora(H.scadenza) - ora : 0, p = H.passo, u = H.ultima, ms, fn;
+      function almeno(sec) { return Math.max(resta, sec * 1000); }
+      H.rip++; H.respiro = ora + 5000;
+      if (p === "indizi") { ms = almeno(12); fn = chiudiIndizi; }
+      else if (p === "discuti") { ms = almeno(10); fn = iniziaVoto; }
+      else if (p === "voto") { ms = almeno(12); fn = chiudiVoto; }
+      else if (p === "spoglio") { ms = almeno(5); fn = dopoSpoglio; }
+      else if (p === "ultima" && u && u.scelto == null) { ms = almeno(10); fn = function () { indovina(u.chi, null, true); }; }
+      else if (p === "ultima" && u) { ms = almeno(5); fn = dopoIndovina; }
+      else if (p === "fuori") { ms = almeno(6); fn = nuovoTurno; }
+      else if (p === "esito") { ms = almeno(6); fn = avantiEsito; }
+      else { H.mano = Math.max(0, H.mano - 1); ms = 5000; fn = nuovaMano; }   // (un momento che non c'è: la mano si rifà, nessun punto dato)
+      H.scadenza = ora + ms; dopo(ms, fn);
+      // il mio segreto (la mia parola, o quello di chi guarda): gli altri lo riavranno col loro join
+      if (H.seg) { if (pById(IO)) privato(IO, segretoDi(IO)); else privato(IO, segretoGuarda(false)); }
+      bd();
+      controlla();   // (se c'erano già tutti: si va avanti appena finisce il respiro)
+    }
+
+    var cbHost = { sonoHost: true, myId: IO, seg: null, mio: {}, vm: null, chiedi: null,
       onComincia: comincia, onNuova: nuova,
-      onIndizio: function (w) { indizio("host", w); },
-      onVoto: function (chi) { voto("host", chi); },
-      onAvanti: function (k) { avanti("host", k); },
-      onIndovina: function (w) { indovina("host", w); },
+      onIndizio: function (w) { indizio(IO, w); },
+      onVoto: function (chi) { voto(IO, chi); },
+      onAvanti: function (k) { avanti(IO, k); },
+      onIndovina: function (w) { indovina(IO, w); },
       onEsci: function () {
-        function via() { ferma(); rete.chiudi(); t.esci(); }
+        // uscito apposta: niente da riprendere (t.ricorda(null)), poi si chiude la stanza
+        function via() { uscito = true; ferma(); clearTimeout(tAttesi); clearTimeout(tRespiro); t.ricorda(null); rete.chiudi(); t.esci(); }
         // (dalla saletta il core ha già chiesto "Chiudere la stanza per tutti?")
         if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla home.", "Chiudi", via);
         via();
       } };
-    bd();
+    window.__impHost = { H: function () { return H; }, io: IO };   // (per le prove: passo5/impostore.js)
+    if (riprendo) riprendi(); else bd();
   }
 
   // =========================================================
@@ -1432,7 +1532,7 @@
     if (guardano.length) extra.push(t.el("p", { class: "modulo-nota", text: "👀 Guardano: " + guardano.map(function (p) { return p.id === cb.myId ? "tu" : p.nome; }).join(", ") }));
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN_ON,
       vuoti: Math.max(0, MIN_ON - vm.players.length),   // solo i posti che mancano per cominciare
-      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
+      giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),   // (la corona a chi tiene la partita)
       extra: extra,
       spettatore: guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX_ON ? "👀 La stanza è piena: guardi la partita" : false,
       attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
@@ -1834,7 +1934,7 @@
     // il conto per tutti ("Si va avanti tra 20…": il tempo lo tiene l'host) e «⏩ Avanti» a chi gioca
     var conto = el("p", { class: "im-conto" });
     ui.piede.appendChild(conto);
-    ui.t.contoAvanti(conto, vm.resta || T_ESITO, null, "im-esito|" + vm.k);
+    var ripC = contoRip(ui, conto, vm, T_ESITO, "im-esito");
     var tp = me && !me.via ? tastoPronti(ui, vm, cb, e.ultima ? "🏆 Classifica" : "⏩ Avanti", e.ultima ? "✅ Classifica" : "✅ Avanti") : null;
     if (me) faccine(ui); else piedeGuarda(ui, vm, cb);
     // i trofei: ognuno conta i suoi, una volta per mano
@@ -1850,7 +1950,7 @@
       } catch (er) {}
     }
     if (me && me.piu >= 3) vibra(20);   // tanti punti
-    return { agg: function (v) { if (tp) tp.agg(v); } };
+    return { agg: function (v) { if (tp) tp.agg(v); ripC(v); } };
   }
 
   // ---- 🔪 il ruolo di chi esce, in grande ("Luca era un cittadino 😇") ----
@@ -1872,12 +1972,12 @@
       el("p", { class: "im-ruoli", text: "🚪 Fuori: " + righeFuori(vm, cb) })]));
     var conto = el("p", { class: "im-conto" });
     ui.piede.appendChild(conto);
-    ui.t.contoAvanti(conto, vm.resta || T_FUORI, null, "im-fuori|" + vm.k);
+    var ripC = contoRip(ui, conto, vm, T_FUORI, "im-fuori");
     var tp = me ? tastoPronti(ui, vm, cb, "⏩ Avanti", "✅ Avanti") : null;
     if (me) faccine(ui); else piedeGuarda(ui, vm, cb);
     if (trova(vm, cb.myId)) vibra([30, 40, 30]);   // la rivelazione del ruolo
     fanfara(u.ruolo !== "cit");
-    return { agg: function (v) { if (tp) tp.agg(v); } };
+    return { agg: function (v) { if (tp) tp.agg(v); ripC(v); } };
   }
   // ---- 🏁 fine mano a eliminazione: chi ha vinto, chi era chi, quando è uscito ognuno, i punti ----
   function fEsitoElim(ui, vm, cb) {
@@ -1904,7 +2004,7 @@
     ui.corpo.appendChild(lista);
     var conto = el("p", { class: "im-conto" });
     ui.piede.appendChild(conto);
-    ui.t.contoAvanti(conto, vm.resta || T_ESITO, null, "im-esito|" + vm.k);
+    var ripC = contoRip(ui, conto, vm, T_ESITO, "im-esito");
     var tp = me && !me.via ? tastoPronti(ui, vm, cb, e.ultima ? "🏆 Classifica" : "⏩ Avanti", e.ultima ? "✅ Classifica" : "✅ Avanti") : null;
     if (me) faccine(ui); else piedeGuarda(ui, vm, cb);
     // i trofei: ognuno conta i suoi, una volta per mano
@@ -1918,9 +2018,19 @@
     }
     if (me && (e.ultimo || me.piu >= 3)) vibra(e.ultimo ? [30, 40, 30] : 20);   // la rivelazione dell'ultimo uscito, o tanti punti
     fanfara(e.vince === "cit");
-    return { agg: function (v) { if (tp) tp.agg(v); } };
+    return { agg: function (v) { if (tp) tp.agg(v); ripC(v); } };
   }
 
+  // il conto «Si va avanti tra N…» (il tempo lo tiene chi tiene la partita). Dopo una ripresa (vm.rip cambia) riparte
+  // dai secondi nuovi: il momento è lo stesso (stessa vm.k), ma chi tiene la partita aspetta di nuovo qualche secondo
+  function contoRip(ui, nodo, vm, def, pre) {
+    var rip = vm.rip || 0, c = ui.t.contoAvanti(nodo, vm.resta || def, null, pre + "|" + vm.k + "|" + rip);
+    return function (v) {
+      if ((v.rip || 0) === rip) return;
+      rip = v.rip || 0; if (c) c.ferma();
+      c = ui.t.contoAvanti(nodo, v.resta || def, null, pre + "|" + v.k + "|" + rip);
+    };
+  }
   function avviso(testo) {
     if (!UI || !testo) return;
     UI.avviso.textContent = testo; UI.avviso.classList.remove("su"); void UI.avviso.offsetWidth; UI.avviso.classList.add("su");

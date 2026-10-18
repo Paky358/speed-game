@@ -133,6 +133,7 @@
       var x; try { x = JSON.parse(m.p); } catch (e) { return; }
       var dati = x && (x.data || x), s = m.p;
       if (dati && dati.t === "seg") { if (!dati.to) male.push("segreto senza «to» da " + m.da); return; }
+      if (dati && dati.t === "__ris") { if (!(dati.vici || []).length) male.push("copia per i vice senza vice da " + m.da); return; }   // (dal 18 ott: la copia della partita per i vice, come i segreti «to»)
       if (dati && (dati.t === "indizio" || dati.t === "indovina")) return;
       if (dati && dati.t === "vm" && dati.vm && (dati.vm.passo === "esito" || dati.vm.fase !== "gioco")) return;
       // (le 6 parole dell'ultima possibilità le vedono tutti; la parola giusta "ultima.parola" solo se la partita finisce)
