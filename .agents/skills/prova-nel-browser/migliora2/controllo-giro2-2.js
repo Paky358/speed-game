@@ -2,7 +2,7 @@
 // Uso (dopo copione-prova.js): await COPIONE.carica("migliora2/controllo-giro2-2.js"); await COPIONE.prova("cg1")  (… "cg5")
 //
 // cg1 Asta online in 3, 🧨: chi è di turno sulla carta maledetta SPEGNE il telefono. Allo scadere se la prende lui (non si blocca),
-//     dopo 20 s è fuori; si arriva ai kit, «⏩ Avanti» conta solo chi c'è, voto e classifica; riacceso, rientra senza errori.
+//     dopo 20 s è fuori; si arriva al voto a un tocco (Paky vota e chiude) e alla classifica; riacceso, rientra senza errori.
 // cg2 Ruota online in 3 (Luca vince la frase lampo): Luca cade sul ❓ Mistero, chiama la consonante giusta e, sulla scelta
 //     «Apri / Mi tengo», SPEGNE il telefono: la partita non resta ferma (tocca a un altro), riacceso rientra; partita fino alla fine.
 // cg3 Scopa 2 vs 2 online in 4 con 🤫 + Bea che arriva a partita cominciata e guarda (niente tasto 🤫, mai la frase);
@@ -60,7 +60,7 @@
   }
 
   // ======================================================== cg1: Asta, 🧨 e il telefono spento
-  COPIONE.aggiungi("cg1", { nome: "Asta online in 3, 🧨: chi è di turno spegne il telefono; si arriva comunque a kit, voto e classifica", fai: async function () {
+  COPIONE.aggiungi("cg1", { nome: "Asta online in 3, 🧨: chi è di turno spegne il telefono; si arriva comunque al voto a un tocco e alla classifica", fai: async function () {
     var F = {}, note = [];
     var P = F.Paky = await tel("Paky", { x: 0 });
     P.__astaMalProva = { round: 1, quando: 2 };
@@ -123,8 +123,9 @@
     if (!mal) no("la carta maledetta non è uscita");
     if (W.vmDi(C).fase !== "voto") no("non si arriva al voto (fase " + W.vmDi(C).fase + ")");
     if (kit) note.push(kit.ok);
-    // voto: chi c'è conferma, l'host chiude
-    if (!W.clicca(P, /Conferma i voti/)) no("Paky non ha «Conferma i voti»");
+    // voto a un tocco (dal 17 ott niente più kit né «Conferma i voti»): Paky dà la ⭐ al kit di un amico, poi chiude il voto
+    var bk = await W.aspetta(function () { return P.document.querySelector(".as-vk:not([disabled])"); }, 4000);   // (il kit di un amico: il mio non si vota)
+    if (!bk) no("Paky non ha il kit di un amico da votare"); bk.click();
     if (!await W.aspetta(function () { return W.clicca(P, /Chiudi il voto/); }, 4000)) no("Paky non ha «Chiudi il voto»");
     if (!await W.aspetta(function () { return W.vmDi(C).fase === "fine"; }, 6000)) no("chiuso il voto non c'è la classifica");
     var cl = W.vmDi(C).classifica || [];
