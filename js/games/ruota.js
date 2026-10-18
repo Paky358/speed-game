@@ -1450,7 +1450,7 @@
     // il Jolly sul leggio di chi ce l'ha
     ui.jb = S.L.map(function (X) { var j = el("div", { class: "ru-jolly" }); X.el.appendChild(j); return j; });
     vm.giocatori.forEach(function (p, i) { ST.puntiLeggio(S, i, p.soldi); ui.mostrati[p.id] = p.soldi; });
-    function via() { ui.schTipo = ""; schermo(ui, ui.vm); ST.barra(S, [ ui.tempo, ui.azioni, ui.scriviR ]); ui.sopra.classList.remove("via"); }
+    function via() { ui.schTipo = ""; schermo(ui, ui.vm); ST.barra(S, ui.cb.guarda ? [ ui.tempo, ui.azioni ] : [ ui.tempo, ui.azioni, ui.scriviR ]); ui.sopra.classList.remove("via"); }   // (chi guarda col link non scrive frasi: la riga non c’è proprio)
     if (vm.sigla) {   // a inizio partita la sigla dello studio (il tabellone compare dopo); quando si rigioca, una corta
       ui.sigla = true; ui.sopra.classList.add("via");
       Promise.resolve(vm.sigla === "corta" ? siglaCorta(S) : ST.apertura(S)).catch(function () {}).then(function () {
@@ -1704,7 +1704,7 @@
     if (k !== "apre") rianima(n, "rivela");
   }
   // ✍️ la riga di chi guarda: «Scrivi una frase» (o «la tua frase è in coda»)
-  function guardoIo(ui, vm) { var cb = ui.cb; return !!cb.online && !cb.telefono && !cb.sonoHost && !trovaG(vm, cb.myId); }
+  function guardoIo(ui, vm) { var cb = ui.cb; return !!cb.online && !cb.telefono && !cb.sonoHost && !cb.guarda && !trovaG(vm, cb.myId); }   // (chi guarda soltanto col link no: le sue mosse il core le butta)
   function scriviRiga(ui, vm) {
     var si = guardoIo(ui, vm) && !!(vm.regole && vm.regole.frasi === "nostre");
     if (ui.scriviR.hidden === si) ui.scriviR.hidden = !si;

@@ -528,6 +528,7 @@
   } });
 
   COPIONE.aggiungi("lu3", { nome: "Lunghezza d'Onda sullo stesso telefono con «Solo le nostre»", fai: async function () {
+    if (!COPIONE.lu) await COPIONE.carica("passo2/lunghezza.js");   // (COPIONE.lu.trascina: anche da sola, in una scheda nuova)
     var w = await W.apriTel("Paky", { x: 0, g4: true, profilo: { liste: { lunghezza: NOSTRE.slice() } } });
     var tess = await W.aspetta(function () { return A.tessera(w, "Stessa Lunghezza d'Onda"); }, 4000); if (!tess) no("niente tessera"); tess.click(); await W.dorme(400);
     W.clicca(w, /Sullo stesso telefono/, ".modo-grande, button, [role=button]"); await W.dorme(500);

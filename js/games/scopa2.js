@@ -238,7 +238,7 @@
 
   function escH(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   // ---------- vista per chi guarda: il tavolo da chi sta al posto 0, senza le carte in mano di nessuno ----------
-  function vistaGuarda(st) { var v = vistaDa(st, 0); v.mano = []; v.spett = 1; if (v.psst) v.psst.k = null; return v; }   // (chi guarda vede solo 🤫, mai la frase al compagno)
+  function vistaGuarda(st) { var v = vistaDa(st, 0); v.mano = []; v.spett = 1; delete v.psst; return v; }   // (chi guarda: niente 🤫, men che meno la frase al compagno: questa foto passa a tutti e resta sul server)
   // ---------- vista per il giocatore "io" (0..3) ----------
   function vistaDa(st, io) {
     var mioTeam = team(io), comp = (io + 2) % 4;
@@ -441,6 +441,9 @@
       ".sc-fumetto.s2-dx{transform-origin:100% 100%}",
       ".sc-fumetto.s2-dx::after{left:auto;right:-6px;border:7px solid transparent;border-left-color:#fff;border-right:0}",
       ".s2-mvp{text-align:center;font-size:.8rem;font-weight:700;margin-top:6px;line-height:1.35}",
+      ".schermata.s2-fissa{flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0}",   // il riepilogo sta nello schermo: se è lungo scorre solo il centro, i tasti restano a vista
+      ".schermata.s2-fissa>.contenuto{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}",
+      "@media (max-height:700px){.s2-fissa .s2-riga{margin-bottom:3px!important;padding-top:3px!important;padding-bottom:3px!important}.s2-fissa .s2-mvp{margin-top:3px}}",
       ".s2-avanti{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:6px}",
       ".s2-avanti .btn{margin:0}",
       ".s2-avanti p{margin:0;text-align:center;font-weight:800}",
@@ -739,6 +742,7 @@
     }
     var s = t.schermata({ icona: vm.fase === "fine" ? "🏆" : "🧮", titolo: titolo, sotto: "Scopa 2 vs 2",
       indietro: vm.fase === "fine" ? null : function () { t.conferma(cb.guarda ? "Smetti di guardare?" : "Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); } });
+    s.classList.add("s2-fissa");   // (alta come lo schermo: «⏩ Avanti» e i tasti di fine sempre a vista)
     var nRiga = 0;
     function riga(nome, a, b, vinc, sotto) {
       var d = el("div", { class: "s2-riga", style: "padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:5px;animation-delay:" + (nRiga++ * 0.22).toFixed(2) + "s" }, [
@@ -817,7 +821,8 @@
     var toccato = !!A.mio || memo.mioVoto === kM;
     if (memo.avTocc !== toccato || !memo.avNodo || !memo.avBox.contains(memo.avNodo)) {
       memo.avTocc = toccato;
-      var nodo = toccato
+      var nodo = vm.spett ? el("p", { class: "modulo-nota s2-conto-guarda", style: "font-weight:800" })   // (chi guarda: solo il conto, niente «⏩ Avanti»)
+        : toccato
         ? el("button", { class: "btn btn-primario s2-fatto", type: "button", disabled: "disabled", text: "✅ Avanti " })
         : el("button", { class: "btn btn-primario", type: "button", text: "⏩ Avanti ", onclick: function () {
             memo.mioVoto = kM;
@@ -827,7 +832,7 @@
       if (memo.avNodo && memo.avNodo.parentNode) memo.avNodo.parentNode.removeChild(memo.avNodo);
       memo.avBox.insertBefore(nodo, memo.avBox.firstChild); memo.avNodo = nodo;
       // il conto: a zero l'host fa partire la mano (gli altri vedono solo il numero); il conto chiama la funzione, niente vibrazione
-      if (t.contoAvanti) t.contoAvanti(nodo, Math.max(1, Math.ceil((memo.avScade - Date.now()) / 1000)), cb.sonoHost ? cb.onAvanti : null, "mano|" + kM);
+      if (t.contoAvanti) t.contoAvanti(nodo, Math.max(1, Math.ceil((memo.avScade - Date.now()) / 1000)), cb.sonoHost && !vm.spett ? cb.onAvanti : null, "mano|" + kM);
     }
     memo.vmFine = vm;
     var tx = A.si ? "⏩ " + A.si + " su " + A.tot + " vogliono andare avanti" : "";
