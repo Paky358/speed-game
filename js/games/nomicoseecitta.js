@@ -161,6 +161,7 @@
     postiOnline: 10,   // posti online
     riprende: true,    // se l'host ricarica a metà partita, la partita riprende da dove era (t.ripresa)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
+    ritardatari: "turno",   // online: chi arriva a partita cominciata gioca dal giro dopo (con 0 punti)
     difficolta: 2,   // Media — quanto vale vincerlo nel torneo
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono: scrive uno alla volta", amici: true }],
     regole: [
@@ -463,6 +464,9 @@
       ".nc-mio.si{background:#2ecc71;color:#08210f}",
       ".nc-mio.no{background:#ff5d6c;color:#2a0006}",
       ".nc-attesa{margin:0;text-align:center;font-weight:800;color:#cdd6ff}",
+      // chi guarda soltanto: in basso il posto della targhetta del core ("👀 Guardi · 😂 · ✕")
+      ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",
+      ".nc-con-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
       ".nc-lobby{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,.06);font-weight:700}",
       ".nc-lobby .fac{width:38px;height:38px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto}",
       ".nc-lobby .fac svg{width:100%;height:100%;display:block}",
@@ -948,16 +952,24 @@
       stop: imp.stop !== false, stopDi: null,   // ✋ STOP acceso? e chi l'ha fatto in questo giro
       avanti: {},   // alla classifica del giro: chi ha toccato "⏩ Avanti" (più di metà = si parte subito)
       rip: 0,       // quante volte la partita è ripresa (l'host ha ricaricato): chi sta scrivendo ha di nuovo il tempo intero
-      guarda: [] };   // guarda: nella Sala, chi non è stato scelto per giocare (guarda soltanto)
+      guarda: [],   // guarda: nella Sala, chi non è stato scelto per giocare (guarda soltanto)
+      prossimi: [] };   // chi è arrivato a partita cominciata: { id, nome, omino }, entra all'inizio del giro dopo
     // la partita di prima (l'host ha ricaricato la pagina o riaperto l'app: t.ripresa): si riprende da lì.
     // Gli amici non si danno per usciti: si aspettano ("attesi") e rientrano da soli; chi non torna entro 10 secondi esce
     var R0 = t.ripresa && t.ripresa.stato, ripresa = !!(R0 && R0.fase && R0.fase !== "lobby" && R0.players), attesi = {}, tAttesi = null;
     if (ripresa) {
-      H = R0; H.to = null; H.pronta = false; H.guarda = H.guarda || []; H.avanti = H.avanti || {}; H.rip = H.rip || 0;
+      H = R0; H.to = null; H.pronta = false; H.guarda = H.guarda || []; H.avanti = H.avanti || {}; H.rip = H.rip || 0; H.prossimi = H.prossimi || [];
       H.players.forEach(function (p) { if (p.id !== IO && !p.via) attesi[p.id] = 1; });
+      H.prossimi.forEach(function (x) { attesi[x.id] = 1; });
     }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function pres() { return H.players.filter(function (p) { return !p.via; }); }
+    function prossimo(id) { return H.prossimi.some(function (x) { return x.id === id; }); }
+    // chi aspettava entra in partita (all'inizio di un giro, o nella saletta della partita dopo) con 0 punti e i suoi trofei da zero
+    function entrano() {
+      H.prossimi.forEach(function (x) { if (!pById(x.id) && H.players.length < 10) H.players.push({ id: x.id, nome: x.nome, omino: x.omino || null, punti: 0, _trofei: nuovoProgresso() }); });
+      H.prossimi = [];
+    }
     function clearTo() { if (H.to) { clearTimeout(H.to); H.to = null; } }
     function pulisciR(r) { return H.cats.map(function (_, ci) { return String((r && r[ci]) || "").trim().slice(0, 30); }); }
     function privato(id, m) { if (id === IO) return m.t === "tardi" ? avvisoTardi(RN, m.bozza) : null; m.to = id; rete.inviaVeloce(m); }
@@ -986,6 +998,7 @@
     function addio(id) {
       delete attesi[id];
       if (H.guarda.indexOf(id) >= 0) { H.guarda.splice(H.guarda.indexOf(id), 1); bd(); return; }
+      if (prossimo(id)) { H.prossimi = H.prossimi.filter(function (x) { return x.id !== id; }); bd(); return; }   // aspettava il giro dopo: via e basta
       if (H.fase === "lobby") { H.players = H.players.filter(function (p) { return p.id !== id; }); bd(); return; }
       var p = pById(id); if (!p || p.via) return;
       p.via = true; controlla(); bd();
@@ -1002,6 +1015,9 @@
           // nella Sala gioca solo chi è stato scelto: gli altri guardano (col loro id nella foto)
           if (!p && (H.guarda.indexOf(id) >= 0 || (t.puoSedersi && !t.puoSedersi(id, nomeJ)))) { if (H.guarda.indexOf(id) < 0) H.guarda.push(id); bd(); return; }
           if (!p && H.fase === "lobby" && H.players.length < 10) H.players.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), omino: ST.avatarValido(m.omino), punti: 0, _trofei: nuovoProgresso() });
+          // a partita cominciata: aspetta il giro dopo (il giro in corso non cambia: lettera, fogli e voti restano di chi c'era).
+          // Se non c'è più posto guarda soltanto
+          else if (!p && H.fase !== "lobby" && !prossimo(id) && H.players.length + H.prossimi.length < 10) H.prossimi.push({ id: id, nome: nomeJ, omino: ST.avatarValido(m.omino) });
           else if (p && p.via && H.fase !== "fine") { p.via = false; controlla(); }   // era uscito (o senza rete): rientra nella partita
           // si scrive e non ha ancora consegnato: le parole che l'host ha già di lui (la sua bozza) gli tornano, se non le ha più
           if (p && !p.via && H.fase === "scrittura" && !H.fatti[id] && H.bozze[id]) privato(id, { t: "bozza", k: chiaveBozza(id), r: H.bozze[id] });
@@ -1026,6 +1042,7 @@
         difficili: H.difficili, interrotta: H.interrotta, giriFatti: H.giriFatti, stopAcceso: H.stop, stopDi: H.stopDi,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via, trofei: p._trofei || null }; }),
         fatti: Object.keys(H.fatti), guarda: H.guarda.slice() };
+      if (H.prossimi.length) o.prossimi = H.prossimi.map(function (x) { return x.id; });   // chi gioca dal giro dopo
       if (H.fase === "scrittura" || H.fase === "punti") o.rimMs = Math.max(0, H.scadenza - Date.now());
       if (H.fase === "tabellone") {
         o.ci = H.ci; o.pronti = Object.keys(H.pronti); o.corto = H.corto; o.resta = Math.max(0, H.votoScade - Date.now());
@@ -1081,6 +1098,8 @@
     }
     function nuovoGiro() {
       clearTo();
+      entrano();   // chi è arrivato durante il giro di prima gioca da questo
+      if (t.aCheSiamo) t.aCheSiamo("Giro " + (H.giro + 1) + " di " + H.giri);   // (nella Sala, per chi è fuori)
       H.lettera = letteraACaso(H.usate, H.difficili); H.risposte = {}; H.bozze = {}; H.fatti = {}; H.voti = {}; H.ci = 0; H.pronti = {}; H.ultimo = null; H.corto = false; H.stopDi = null; H.avanti = {};
       H.fase = "lettera"; bd();
       H.to = setTimeout(scrittura, DURATA_LETTERA);
@@ -1217,7 +1236,7 @@
     function nuova() {   // "Nuova partita": stessa stanza, si torna nella saletta (chi è uscito non c'è più, chi aspettava entra)
       if (H.fase !== "fine") return;
       clearTo();
-      H.players = pres();
+      H.players = pres(); entrano();   // (e chi aspettava)
       // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
       if (!pById(IO)) { H.guarda = H.guarda.filter(function (x) { return x !== IO; }); H.players.push({ id: IO, nome: nomeHost, omino: ST.mioAvatar(nomeHost), punti: 0 }); }
       H.players.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
@@ -1307,17 +1326,27 @@
 
   // ---- ogni telefono: lobby, poi lo studio con la sua regia ----
   var RN = null;
+  // chi guarda soltanto (col link "guarda", fuori dal torneo a eliminazione): le faccine e l'uscita le dà la targhetta del core
+  function conTargaN(t) { return !!(t && t.guarda && !t.eliminazione); }
+  function faccineN(t) { return conTargaN(t) || !t.faccine ? null : t.faccine(); }
   function idxN(vm, id) { for (var i = 0; i < vm.players.length; i++) if (vm.players[i].id === id) return i; return -1; }
   function disegnaNccVM(t, vm, cb) {
     assicuraStileN();
     if (vm.fase === "lobby") { RN = null; return lobbyN(t, vm, cb); }
     // lo studio si fa una volta per partita (e di nuovo se l'host ricomincia dopo la fine)
     // (e da capo se il tavolo è un altro: l'amico che prende il posto dell'host sparito, Passo 5, non usa lo studio di quando era ospite)
+    var ids = vm.players.map(function (p) { return p.id; }).join("|");
     if (!RN || RN.t !== t || (!RN.S.vivo() && (vm.fase !== "fine" || !RN.fineFatta))) {
-      RN = { t: t, cb: cb, usciti: {} };
+      RN = { t: t, cb: cb, usciti: {}, ids: ids };
       RN.S = ST.crea(t, vm.players, { io: idxN(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: "Nomi, Cose e Città", logo: ["NOMI, COSE", "E CITTÀ"] });
+      if (conTargaN(t)) RN.S.vista.classList.add("st-con-targa");   // chi guarda soltanto: il posto della targhetta del core in basso
       vm.players.forEach(function (p, i) { ST.puntiLeggio(RN.S, i, p.punti, 0); });
-      // (chi è arrivato a partita iniziata guarda: "👀 Partita in corso: la guardi ed entri alla prossima" lo scrive il core)
+      // (chi è arrivato a partita iniziata aspetta il giro dopo: "✋ Partita in corso: giochi dal prossimo turno" lo scrive il core)
+    } else if (RN.ids !== ids && RN.S.vivo()) {   // è entrato chi aspettava il giro dopo: rifaccio i leggii (i posti di prima restano gli stessi)
+      RN.ids = ids; RN.usciti = {};
+      RN.S.impostaGiocatori(vm.players, idxN(vm, cb.myId));
+      vm.players.forEach(function (p, i) { ST.puntiLeggio(RN.S, i, p.punti, 0); });
+      if (RN.S.shot) ST.camera(RN.S, RN.S.shot(), 0);
     }
     RN.vm = vm; RN.cb = cb; RN.vmTs = Date.now();
     if (vm.fase !== "scrittura" && RN.S._chiudiFoglio) RN.S._chiudiFoglio();   // il tempo è finito per tutti: il foglio si chiude
@@ -1411,7 +1440,8 @@
     schermoScritturaOnline(R, vm);
     if (io < 0 || !me || me.via || (vm.fatti || []).indexOf(cb.myId) >= 0) {   // guarda, o ha già consegnato: le faccine mentre gli altri scrivono
       await ST.suSchermo(S, 800);
-      if (S.vivo() && R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: io < 0 && (R.vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : io < 0 || !me || me.via ? "👀 Stai guardando: alla prossima partita giochi anche tu." : "Fatto! Aspettiamo gli altri…" }), R.t.faccine() ]);
+      if (S.vivo() && R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: io < 0 && (R.vm.prossimi || []).indexOf(cb.myId) >= 0 ? "✋ Giochi dal prossimo giro: intanto guarda!"
+        : io < 0 && (R.vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : io < 0 || !me || me.via ? "👀 Stai guardando: alla prossima partita giochi anche tu." : "Fatto! Aspettiamo gli altri…" }), faccineN(R.t) ]);
       return;
     }
     R.foglioGiro = vm.giro;
@@ -1439,7 +1469,7 @@
     fogliettoS(S, io, true); ST.testoLeggio(S, io, fermati ? "✋ STOP!" : "✅ fatto"); ST.faccia(S, io, "esulta");
     await ST.suSchermo(S, 800);
     ST.faccia(S, io, null);
-    if (R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: "Fatto! Aspettiamo gli altri…" }), R.t.faccine() ]);
+    if (R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "nc-attesa", text: "Fatto! Aspettiamo gli altri…" }), faccineN(R.t) ]);
   }
   function schermoScritturaOnline(R, vm) {
     var S = R.S, el = R.t.el;
@@ -1550,7 +1580,7 @@
       ST.barra(S, [
         el("p", { class: "nc-attesa" }, [ document.createTextNode(mancano.length ? "Aspettiamo: " + mancano.join(", ") + " · " : "Si va avanti…"), conto ]),
         avanti ? el("button", { class: "btn btn-fantasma", text: "⏭ Avanti senza aspettare", onclick: function () { ST.viaBarra(S); cb.onAvanti && cb.onAvanti(); } }) : null,
-        R.t.faccine()
+        faccineN(R.t)
       ]);
       if (conto) R.t.contoAvanti(conto, sec, null, kC);
     }
@@ -1605,7 +1635,8 @@
     var nodo;
     if (gioco && !toccato) nodo = el("button", { class: "btn btn-primario", text: "⏩ Avanti", onclick: function () { R.avantiGiro = giro; cb.onAvantiGiro(vm.giro); aggiornaAvanti(R, R.vm); } });
     else nodo = el("p", { class: "nc-attesa" });
-    ST.barra(S, [ nodo, quanti, R.t.faccine() ]);
+    if (!gioco && (vm.prossimi || []).indexOf(cb.myId) >= 0) quanti = el("p", { class: "nc-attesa", text: "✋ Al prossimo giro giochi anche tu!" });   // (chi aspettava)
+    ST.barra(S, [ nodo, quanti, faccineN(R.t) ]);
     R.t.contoAvanti(nodo, sec, fn, kC);
   }
   async function finaleOnline(R, vm) {
@@ -1637,12 +1668,14 @@
       ]));
     });
     s._contenuto.appendChild(box);
-    var fa = t.faccine();   // le faccine mentre si guarda la classifica
+    var fa = faccineN(t);   // le faccine mentre si guarda la classifica
     if (fa) { fa.style.marginTop = "10px"; s._contenuto.appendChild(fa); }
     // i tasti di fine comuni (all'host e a chi ha giocato), se li disegna il core: allora niente tasti nostri.
-    // La nota resta nascosta: serve solo se l'host chiude la stanza
-    var haGiocato = cb.sonoHost || idxN(vm, cb.myId) >= 0;
-    if (haGiocato && t.tastiFine(s._piede, cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : { host: false, esci: cb.onEsci })) {
+    // La nota resta nascosta: serve solo se l'host chiude la stanza.
+    // (chi guarda soltanto: i tasti del core se ci sono, se no la targhetta "👀 Guardi · ✕" basta: niente Esci nostro)
+    var haGiocato = cb.sonoHost || idxN(vm, cb.myId) >= 0, targa = conTargaN(t);
+    if (targa) s.classList.add("nc-con-targa");
+    if ((haGiocato || targa) && t.tastiFine(s._piede, cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : { host: false, esci: cb.onEsci })) {
       if (!cb.sonoHost) {
         var nC = el("p", { class: "modulo-nota", style: "text-align:center", text: cb.chiusa ? NOTA_CHIUSA_N : "" });
         if (!cb.chiusa) nC.hidden = true;
@@ -1654,10 +1687,12 @@
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏁 Fine", onclick: cb.onEsci }));
     } else {
       var nota = el("p", { class: "modulo-nota", style: "text-align:center", text: cb.chiusa ? NOTA_CHIUSA_N
-        : !haGiocato && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta hai guardato." : "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta." });
+        : !haGiocato && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta hai guardato."
+        : !haGiocato && (vm.prossimi || []).indexOf(cb.myId) >= 0 ? "✋ Sei dentro: alla prossima partita giochi anche tu!"
+        : targa ? "👀 Hai guardato: se l'host fa un'altra partita, entri anche tu." : "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta." });
       if (R) R.notaFine = nota;
       s._piede.appendChild(nota);
-      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+      if (!targa) s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     }
     t.mostra(s);
   }

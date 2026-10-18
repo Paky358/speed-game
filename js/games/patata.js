@@ -94,6 +94,7 @@
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono con la bomba!", amici: true }],
     giocatoriMax: 10,
     postiOnline: 10,   // posti online
+    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     riprende: true,    // se l'host ricarica la pagina, la partita riprende: la bomba torna in mano a chi l'aveva, col tempo intero
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     difficolta: 2,
@@ -458,6 +459,9 @@
       ".pt-allarme.on{animation:ptAllarme 1.1s ease-out}",
       "@keyframes ptAllarme{0%{opacity:0}12%{opacity:1}35%{opacity:.35}50%{opacity:.9}100%{opacity:0}}",
       ".pt-guardi{font-size:.98rem;color:#cdd6ff}",
+      // chi guarda soltanto: la targhetta del core in basso (44 px + 10 di margine) ha il suo posto
+      ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",
+      ".schermata.pt-con-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
       ".pt-indietro b{display:block;font-size:1.15rem}",
       ".pt-chi{font-size:34px;font-weight:800;color:#fff}",
       ".pt-chi b{color:#ffd43b}",
@@ -766,6 +770,9 @@
   //  chi ce l'ha tocca il leggio di chi la riceve. Quando scade: BOOM, zoom sul leggio.
   // =========================================================
   var RP = null;   // la regia di questo telefono
+  // chi guarda soltanto (link con guarda=1): in basso la targhetta del core "👀 Guardi · 😂 · ✕" (faccine e uscita le dà lei)
+  function conTargaP(t) { return !!(t && t.guarda && !t.eliminazione); }
+  function faccineP(t) { return conTargaP(t) || !t.faccine ? null : t.faccine(); }
   function idxP(vm, id) { for (var i = 0; i < vm.players.length; i++) if (vm.players[i].id === id) return i; return -1; }
   // il testo sul leggio di chi è in gara (con più vite: i cuori che restano)
   function testoInGara(vm, p) { return (vm.viteMax || 1) > 1 ? new Array((p.vite || 0) + 1).join("❤️") : "IN GARA"; }
@@ -783,6 +790,7 @@
         RP = { t: t, ids: ids, cb: cb, presentato: !!cb._presentato || rientro, rientro: rientro, rientroFine: rientro && vm.fase === "fine" };
         if (rientro) { cb._presentato = true; RP.kCat = vm.categoria; }
         RP.S = ST.crea(t, vm.players, { io: cb.locale ? -1 : idxP(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: "La Patata Bollente", logo: ["LA PATATA", "BOLLENTE"] });
+        if (conTargaP(t)) RP.S.vista.classList.add("st-con-targa");   // chi guarda soltanto: il posto della targhetta del core
         RP.S.onTocca = function (i) { var p = RP.vm && RP.vm.players[i]; if (p) { swishP(); RP.cb.onPassa(p.id); } };
         vm.players.forEach(function (p, i) { ST.testoLeggio(RP.S, i, p.eliminato ? testoFuori(p) : testoInGara(vm, p), p.eliminato); if (p.eliminato) { ST.fuori(RP.S, i, true); if (!p.via) ST.faccia(RP.S, i, "esploso"); } });
         RP.bomba = creaBomba(RP.S);
@@ -892,6 +900,7 @@
       if (x.sorpresa) testo = (testo ? testo + " · " : "") + "una categoria a caso";
       if (x.small.textContent !== testo) x.small.textContent = testo;
       x.b.classList.toggle("scelta", !!mio && mio.voto === i);
+      if (x.b.disabled !== !!R.cb.guardo) x.b.disabled = !!R.cb.guardo;   // chi guarda soltanto non vota
     });
     if (R.inq !== "schermo") { R.inq = "schermo"; ST.suSchermo(S, 900); }
     var kB = "v|" + (cb.locale ? "l" : cb.sonoHost ? "h" : cb.guardo ? "g" : "o");
@@ -904,7 +913,7 @@
         ST.barra(S, [ bVia ]);
         if (R.t.contoAvanti) R.t.contoAvanti(bVia, TEMPO_VOTO, function () { if (RP === R && R.vm.fase === "voto") { ST.viaBarra(S); R.barraK = null; cb.onVia(); } }, kConto);
       }
-      else if (cb.guardo) ST.barra(S, [ el("p", { class: "tl-attesa pt-guardi", text: cb.scartato ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: entri nella prossima partita" }), R.t.faccine ? R.t.faccine() : null ]);
+      else if (cb.guardo) ST.barra(S, [ el("p", { class: "tl-attesa pt-guardi", text: cb.scartato ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: entri nella prossima partita" }), faccineP(R.t) ]);
       else if (!cb.locale) {
         var conto = el("p", { class: "tl-attesa" });
         ST.barra(S, [ el("p", { class: "tl-attesa", text: "Vota pure: parte quando l'host dà il via" }), conto ]);
@@ -1040,8 +1049,8 @@
       var nodi = [];
       if (mia && vm.soloDare) { var chiRi = null; vm.players.forEach(function (p) { if (p.id === vm.soloDare) chiRi = p; }); nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Te l'hanno rimandata: di' la parola e ridàlla a " + (chiRi ? chiRi.nome : "chi te l'ha rimandata") + " 👇" })); }
       else if (mia) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Di' una parola su «" + vm.categoria + "» e tocca chi la riceve 👇" }));
-      else if (cb.guardo) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: cb.scartato ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: entri nella prossima partita" }), R.t.faccine ? R.t.faccine() : null);
-      else if (ioFuori) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: "💀 Sei fuori: guarda chi resta in piedi!" }), R.t.faccine ? R.t.faccine() : null);
+      else if (cb.guardo) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: cb.scartato ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: entri nella prossima partita" }), faccineP(R.t));
+      else if (ioFuori) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: "💀 Sei fuori: guarda chi resta in piedi!" }), faccineP(R.t));
       else if (!cb.locale && hi >= 0) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "💣 Ce l'ha " + vm.players[hi].nome + "… occhio che può toccare a te!" }));
       if (mia && prevP && !prevP.eliminato) nodi.push(el("button", { class: "pt-indietro", html: "↩️ Non valeva! <b>Ridalla a " + escP(prevP.nome) + "</b>", onclick: function () { swishP(); cb.onIndietro(); } }));
       if (nodi.length) ST.barra(S, nodi); else ST.viaBarra(S);
@@ -1199,11 +1208,12 @@
       ]));
     });
     sf._contenuto.appendChild(box);
-    var fac = !cb.locale && t.faccine ? t.faccine() : null;   // online: le faccine della saletta, si festeggia tutti insieme
+    var targa = !cb.locale && cb.guardo && conTargaP(t);   // chi guarda col link: faccine e uscita le dà la targhetta del core
+    var fac = !cb.locale && !targa && t.faccine ? t.faccine() : null;   // online: le faccine della saletta, si festeggia tutti insieme
     if (fac) { fac.classList.add("fine-faccine"); sf._contenuto.appendChild(fac); }
     // online: i tasti di fine comuni (all'host e a chi ha giocato), se li disegna il core: allora niente tasti nostri.
     // La nota resta nascosta: serve solo se l'host chiude la stanza
-    var tf = cb.locale ? null : cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : (!cb.guardo ? { host: false, esci: cb.onEsci } : null);
+    var tf = cb.locale ? null : cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : (!cb.guardo || targa ? { host: false, esci: cb.onEsci } : null);
     cb._notaFine = null;
     if (tf && t.tastiFine && t.tastiFine(sf._piede, tf)) {
       if (!cb.sonoHost) {
@@ -1219,7 +1229,8 @@
     } else {
       sf._contenuto.appendChild(cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:12px",
         text: cb.chiusa ? NOTA_CHIUSA_P : cb.scartato ? "👀 Questa volta hai guardato." : cb.guardo ? "👀 Hai guardato questa partita: se l'host ne fa un'altra, entri anche tu." : "Se l'host fa un'altra partita, torni da solo nella saletta." }));
-      sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+      if (!targa) sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+      else sf.classList.add("pt-con-targa");   // (si esce dalla targhetta)
     }
     t.mostra(sf);
   }

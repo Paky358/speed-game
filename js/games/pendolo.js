@@ -372,13 +372,14 @@
     var el = t.el;
     opz = opz || {};
     assicuraStilePendolo();
-    var s = t.schermata({ indietro: function () { if (window.confirm("Uscire dal gioco?")) cb.onEsci(); } });
+    var s = t.schermata({ indietro: function () { t.conferma(ruolo === "guarda" ? "Smetti di guardare?" : "Uscire dal gioco?", null, "Esci", function () { cb.onEsci(); }); } });   // (la finestra dell'app)
     s.classList.add("pd-piena");   // a tutto schermo: niente titolo, niente bordi
     var campo = el("div", { class: "pd-campo" });
     var cv = el("canvas");
     campo.appendChild(cv); s._contenuto.appendChild(campo);
     var bSalta = null, bLancia = null, setDir = function () {};
-    if (ruolo === "guarda") campo.appendChild(el("div", { class: "pd-guarda", text: "👀 Stai guardando la partita" }));
+    // chi guarda: la scritta in basso (chi guarda soltanto, opz.targa, ha già la targhetta del core «👀 Guardi · 😂 · ✕»)
+    if (ruolo === "guarda") { if (!opz.targa) campo.appendChild(el("div", { class: "pd-guarda", text: "👀 Stai guardando la partita" })); }
     else {
       var comandi = el("div", { class: "pd-comandi" }), sx = el("div"), dx = el("div");
       comandi.appendChild(sx); comandi.appendChild(dx); campo.appendChild(comandi);
@@ -411,7 +412,7 @@
     var ctx = cv.getContext("2d"), ref = { cv: cv, ctx: ctx, W: 0, H: 0, dpr: 1, primo: true, prevA: [], prevM: [], fallers: [], splashes: [], gocce: [], testi: [], fumetti: {},
       shake: 0, colpiLancio: 0, prevSw: 0, ruolo: ruolo, mirino: !!opz.mirino, bSalta: bSalta, bLancia: bLancia, posti: posti,
       lancCfg: facciaDi(lanc.nome || "Bot", lanc.cfg), lancNome: lanc.nome || "Bot", t0: performance.now(), tBan: 0,
-      aiuto: ruolo === "trave" ? "Scappa ◀ ▶ o SALTA quando arriva la palla!" : ruolo === "guarda" ? "Stai guardando: tocca a te alla prossima!" : "Mira ◀ ▶ (o trascina) e LANCIA!" };
+      aiuto: ruolo === "trave" ? "Scappa ◀ ▶ o SALTA quando arriva la palla!" : ruolo === "guarda" ? (opz.targa ? "👀 Stai guardando la partita" : "Stai guardando: tocca a te alla prossima!") : "Mira ◀ ▶ (o trascina) e LANCIA!" };
     function dim() {
       var w = campo.clientWidth || Math.min(window.innerWidth || 360, 600), h = campo.clientHeight || (window.innerHeight || 640), dpr = Math.min(3, window.devicePixelRatio || 1);
       cv.style.width = w + "px"; cv.style.height = h + "px"; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -637,7 +638,7 @@
     ctx.restore();
   }
   // schermata finale: titolo, frase, numeri della partita, record
-  // o = { vinto, guarda, icona?, titolo?, frase, stat: [[valore, etichetta] x3], record?, onRigioca?, onEsci }
+  // o = { vinto, guarda, targa, icona?, titolo?, frase, stat: [[valore, etichetta] x3], record?, onRigioca?, onEsci }
   function schermataFine(t, o) {
     assicuraStilePendolo();
     if (o.vinto && !o.guarda) fanfara();
@@ -648,8 +649,10 @@
     // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
     if (o.online && t.tastiFine && t.tastiFine(r._piede, { host: !!o.online.host, nuova: o.onRigioca || null, esci: o.onEsci })) { t.mostra(r); return; }
     if (o.onRigioca) r._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: o.onRigioca }));
-    else r._piede.appendChild(t.el("p", { class: "modulo-nota", text: "In attesa dell'host per un'altra partita…" }));
-    r._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: o.onEsci }));
+    else r._piede.appendChild(t.el("p", { class: "modulo-nota", text: o.targa ? "👀 Se l'host fa un'altra partita, entri anche tu nella saletta." : "In attesa dell'host per un'altra partita…" }));
+    // chi guarda soltanto (o.targa): una sola uscita, il ✕ della targhetta del core in basso (qui il suo posto)
+    if (o.targa) r._piede.style.paddingBottom = "calc(62px + env(safe-area-inset-bottom))";
+    else r._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: o.onEsci }));
     t.mostra(r);
   }
   function statFine(ruolo, d) {   // d = { abbattuti, durata, lanci, schivate, scampati, resistito }
@@ -862,6 +865,7 @@
       for (var sb = 0; sb < NSEAT; sb++) av.posti.push(posti[sb] ? { nome: nomi[posti[sb]], cfg: omini[posti[sb]] || null } : bots[nb++]);
       viaMsg = { t: "via", fase: "gioco", lanc: lanc, seggi: seggi(), av: av, gameId: gameId, difficolta: diff, mir: mirino ? 1 : 0 };
       rete.invia(viaMsg);   // resta "trattenuto": chi rientra o arriva tardi lo riceve subito
+      if (t.aCheSiamo && av.lanc) t.aCheSiamo("lancia " + (av.lanc.nome || "il Bot"));   // (nella Sala: chi lancia, per chi è fuori)
       var mioRuolo = (lanc === "host") ? "lanciatore" : "trave";
       function mioC() { var s = seatDi("host"); return s >= 0 && ST && ST.fase === "gioco" ? ST.chars[s] : null; }
       ref = creaScena(t, mioRuolo, {
@@ -936,9 +940,11 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var el = t.el, S = { rete: null, myId: null, nome: "", ruolo: null, seat: -1, ref: null, fase: null, buf: [], raf: null, delayMs: 120, lanc: null, seggi: null,
       msg2: null, mov: 0, predX: null, gameId: null, fineId: null, guardi: false, chiesto: 0, drag: 0, tDrag: 0 };
+    // guardo soltanto (link con guarda=1): la partita come chi guarda, niente ruolo, niente trofei; in basso la targhetta del core
+    var GUARDA = !!t.guarda, TARGA = GUARDA && !t.eliminazione;
     schermaNome();
     function schermaNome() {
-      var s = t.schermata({ icona: "🎯", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ icona: GUARDA ? "👀" : "🎯", titolo: GUARDA ? "Guardi la partita" : "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" }); s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
       var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -984,7 +990,7 @@
             for (var si = 0; si < (m.seggi || []).length; si++) if (m.seggi[si] && m.seggi[si].id === S.myId) { mioSeat = si; break; }
             var sonoLanc = m.lanc === S.myId;
             if (!sonoLanc && mioSeat < 0) {   // non giocavo (arrivato tardi o trave piena): niente trofei, solo com'è andata
-              schermataFine(t, { online: { host: false }, guarda: true, icona: "🏁", titolo: "Partita finita", frase: (m.vintoLanc ? "Chi lanciava li ha buttati giù tutti! 💦" : "Qualcuno è rimasto sulla trave fino alla fine! 🏆") + (S.ioFuori ? "" : " Alla prossima giochi anche tu."),
+              schermataFine(t, { online: { host: false }, guarda: true, targa: TARGA, icona: "🏁", titolo: "Partita finita", frase: (m.vintoLanc ? "Chi lanciava li ha buttati giù tutti! 💦" : "Qualcuno è rimasto sulla trave fino alla fine! 🏆") + (S.ioFuori || TARGA ? "" : " Alla prossima giochi anche tu."),
                 onEsci: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
               return;
             }
@@ -1015,7 +1021,7 @@
         onMov: function (d) { S.mov = d || 0; if (S.ruolo === "trave" && S.rete) S.rete.invia({ t: "mov", d: d }); },
         onSalta: function () { if (S.ruolo === "trave" && S.rete) S.rete.invia({ t: "salta" }); },
         onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); }
-      }, S.av, { mirino: S.mir });
+      }, S.av, { mirino: S.mir, targa: TARGA });
     }
     function vistaOra(now) {   // interpola gli snapshot (movimento liscio come Horto)
       var b = S.buf, rt = now - S.delayMs;
@@ -1049,7 +1055,7 @@
     }
     function avviaGiro() { if (!S.raf) { S._last = performance.now(); S.raf = requestAnimationFrame(giro); } }
     function fermaGiro() { if (S.raf) cancelAnimationFrame(S.raf); S.raf = null; }
-    function mostraLobby(m) { renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, lanc: m.lanc, seggi: m.seggi, nomi: m.nomi, omini: m.omini, att: m.att, fuori: m.fuori },
+    function mostraLobby(m) { renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, lanc: m.lanc, seggi: m.seggi, nomi: m.nomi, omini: m.omini, att: m.att, fuori: m.fuori, guarda: GUARDA },
       { onLancio: function () { if (S.rete) S.rete.invia({ t: "vuoiLanciare" }); },
         onTrave: function () { if (S.rete) S.rete.invia({ t: "vuoiTrave" }); }, onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } }); }
     function attesa() { if (S.ref) return;
@@ -1084,10 +1090,12 @@
       return el("button", { class: "modo-chip" + (attiva ? " attiva" : ""), style: !attiva && !puo ? "opacity:.5" : "", onclick: function () { if (!attiva && puo) fn(); } }, [
         el("span", { class: "mi", text: icona }), el("div", {}, [el("div", { class: "mt", text: tit }), el("div", { class: "ms", text: sotto })])]);
     }
-    s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Il tuo ruolo" }));
-    if (ioFuori) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin:2px 0 8px", text: "👀 Questa volta guardi: giocano gli amici scelti." }));
+    // chi guarda soltanto (vm.guarda: dal link) non ha un ruolo da scegliere
+    if (vm.guarda) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin:12px 0 8px", text: "👀 Guardi la partita: i ruoli li scelgono gli amici." }));
+    else s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:12px", text: "Il tuo ruolo" }));
+    if (vm.guarda) { /* (niente scelta del ruolo) */ } else if (ioFuori) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin:2px 0 8px", text: "👀 Questa volta guardi: giocano gli amici scelti." }));
     else if (ioAtt) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin:2px 0 8px", text: lBot ?"👀 La trave è piena: per ora guardi. Se vuoi, puoi lanciare tu al posto del bot!" : "👀 La trave è piena: per ora guardi. Appena si libera un posto entri tu." }));
-    s._contenuto.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [
+    if (!vm.guarda) s._contenuto.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [
       chip("🎯", "Lancio io", ioAtt && !lBot ? "C'è già chi lancia" : "Butti giù chi è sulla trave", ioLanc, puoLanciare, cb.onLancio),
       chip("🏃", "Sto sulla trave", ioLanc && !puoTrave ? "La trave è piena" : "Salti e schivi la palla", ioTrave, puoTrave, cb.onTrave)
     ]));
@@ -1111,8 +1119,8 @@
     }
     t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: vuoti, giocatori: gio, extra: [s._contenuto],
       nota: vm.sonoHost ? "Cominci quando vuoi: i posti vuoti sulla trave diventano bot." : null,
-      spettatore: ioFuori ? "👀 Questa volta guardi" : null,
-      attesa: ioAtt ? "Aspetta che l'host cominci: per questa partita guardi. 👀" : "Aspetta che l'host cominci: sotto puoi chiedere di lanciare tu! 🎯", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      spettatore: vm.guarda ? "👀 Guardi la partita" : ioFuori ? "👀 Questa volta guardi" : null,
+      attesa: vm.guarda ? "Guardi la partita: si comincia tra poco! 🎯" : ioAtt ? "Aspetta che l'host cominci: per questa partita guardi. 👀" : "Aspetta che l'host cominci: sotto puoi chiedere di lanciare tu! 🎯", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function errore(t, txt) { var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
@@ -1132,6 +1140,7 @@
     etichettaGiocatori: "👥 1–4 giocatori",   // (da solo, o online: chi lancia più 3 posti)
     postiOnline: 4,   // chi lancia più 3 sulla trave: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
     riprende: true,   // se l'host ricarica la pagina restano ruoli e regole: la manche a metà si rifà da capo (t.ripresa)
+    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     regole: [
       "Sei di spalle: davanti una <b>trave sull'acqua</b> con dei personaggi. La palla appesa oscilla <b>in profondità</b>.",
       "<b>Lanciatore</b>: miri di lato (◀ ▶ o trascini) e premi <b>LANCIA</b>. Il lancio è <b>sempre uguale</b>: il <b>mirino rosso</b> mostra dove arriverà. Mira dove <b>andranno</b>, non dove sono!",

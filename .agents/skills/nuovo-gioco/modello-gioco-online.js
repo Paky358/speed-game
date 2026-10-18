@@ -27,7 +27,12 @@
    - fine partita: t.risultato coi NOMI dei giocatori, medaglie a pari merito, le faccine (t.faccine);
      i tasti di fine li mette il core (t.tastiFine: "↻ Rivincita" col 3-2-1, "🎮 Cambia gioco", "👍 Ci sto!"),
      e la Rivincita usa la "Nuova partita" del gioco (t.onRivincita): tutti nella STESSA saletta;
-   - chi arriva a partita cominciata la guarda (con le faccine) ed entra alla prossima;
+   - chi arriva a partita cominciata (RITARDATARI): di partenza la guarda (con le faccine) ed entra alla prossima;
+     con "turno" aspetta in "prossimi" ed entra all'inizio del giro dopo con 0 punti (mai a metà giro);
+   - chi guarda soltanto (t.guarda: link con &guarda=1, o "👀 Guarda" nella Sala): il core non manda il suo "join" e butta
+     le sue mosse; il gioco disegna la partita senza "Tu", senza tasti e senza segreti, e lascia in basso il posto alla
+     targhetta del core ("👀 Guardi · 😂 · ✕": lì ci sono le faccine e l'uscita);
+   - l'host dice alla Sala a che punto è la partita (t.aCheSiamo("Giro 2 di 5")): chi arriva lo legge nel riquadro;
    - schermo intero senza scorrere e senza titolo, aggiornato a pezzi (niente lampeggio);
    - tocchi con pointerdown (su iPhone il click a volte non arriva).
    Come usarlo: copialo in js/games/<id>.js, cambia ID/nome/testi e riscrivi
@@ -40,6 +45,11 @@
   var MIN = 2, MAX = 10;         // QUI: quanti giocatori
   var PAUSA = 4;                 // QUI: i secondi tra un giro e l'altro (l'host può toccare prima)
   var RESPIRO = 5;               // i secondi di respiro quando la partita riprende (gli amici intanto rientrano)
+  // QUI: chi arriva a partita cominciata. "partita" = guarda ed entra alla prossima partita (va bene sempre);
+  // "turno" = entra dal prossimo giro con 0 punti (solo se un giro nuovo non dipende da quelli di prima: domande, disegni,
+  // round). Il core lo dice a chi arriva ("✋ Partita in corso: giochi dal prossimo turno") e nella Sala dà "▶ Entra".
+  // (c'è anche "mano", come "turno" ma per i giochi di carte: Black Jack, Poker)
+  var RITARDATARI = "partita";
 
   function fmtN(n) { var s = String(Math.round(Math.abs(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); return (n < 0 ? "−" : "") + s; }   // 1.000
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
@@ -57,13 +67,15 @@
     var H = { fase: "lobby", codice: "…", pronta: false, giri: imp.giri || 5, giro: 0, partita: 0, stato: "attesa", vincitore: null, classifica: null, scadenza: 0, to: null,
       rip: 0,   // quante volte la partita è ripresa (nelle chiavi dei conti: così ripartono da capo su tutti i telefoni)
       players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0 }],
-      guarda: [] };   // chi è entrato ma questa volta guarda (nella Sala non è tra gli scelti di "Chi gioca?"): { id, nome }
+      guarda: [],     // chi è entrato ma questa volta guarda (nella Sala non è tra gli scelti di "Chi gioca?"): { id, nome }
+      prossimi: [] }; // (RITARDATARI "turno") chi è arrivato a partita cominciata ed entra all'inizio del giro dopo: { id, nome, omino }
     // ----- la partita di prima (t.ripresa): l'host ha ricaricato la pagina o riaperto l'app, oppure (t.ripresa.daRiserva)
     // l'host è sparito e questo telefono la porta avanti. Si riprende solo una partita cominciata (in saletta non c'è niente)
     var R = t.ripresa, riprendo = !!(R && R.stato && R.stato.fase && R.stato.fase !== "lobby" && R.stato.players), respiroMs = 0, attesi = [];
     if (riprendo) {
       H = R.stato;   // QUI: lo stato salvato da ricorda() (se il tuo stato ha mazzi o liste lunghe, ricostruiscili qui)
       H.to = null; H.pronta = false; H.rip = H.rip || 0;
+      H.prossimi = [];   // chi aspettava il giro dopo rimanda il suo join da solo e torna in "prossimi"
       // gli altri sono "via" finché il loro join (lo ripete da solo il collegamento, stesso id) non li rimette al loro posto.
       // attesi = chi giocava ancora (non l'host sparito, se la porto avanti io): il respiro li aspetta un po'
       H.players.forEach(function (p) {
@@ -81,6 +93,12 @@
     }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
     function presenti() { return H.players.filter(function (p) { return !p.via; }); }
+    function inProssimi(id) { return H.prossimi.some(function (x) { return x.id === id; }); }
+    // (RITARDATARI "turno") all'inizio di un giro chi aspettava entra, con 0 punti
+    function entrano() {
+      H.prossimi.forEach(function (x) { if (!pById(x.id) && presenti().length < MAX) H.players.push({ id: x.id, nome: x.nome, omino: x.omino, punti: 0 }); });
+      H.prossimi = [];
+    }
     function ferma() { if (H.to) { clearTimeout(H.to); H.to = null; } }
 
     // "⚙️ Regole" nella saletta: l'host cambia le impostazioni quando vuole
@@ -102,6 +120,7 @@
       // uscito apposta, oppure sparito da più di 20 secondi
       onAddio: function (id) {
         if (H.guarda.some(function (x) { return x.id === id; })) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
+        if (inProssimi(id)) { H.prossimi = H.prossimi.filter(function (x) { return x.id !== id; }); bd(); return; }
         var p = pById(id); if (!p) return;
         p.forse = false;
         // nella saletta si toglie e basta (squadre e posti degli altri restano come sono)
@@ -118,6 +137,14 @@
           // (nella foto c'è anche il loro id: così il collegamento sa che sono dentro e smette di ripetere il "join")
           if (!p && !t.puoSedersi(id, nome)) {
             if (!H.guarda.some(function (x) { return x.id === id; })) H.guarda.push({ id: id, nome: nome });
+            bd(); return;
+          }
+          // chi arriva a partita cominciata (RITARDATARI "turno"): aspetta in "prossimi" (il suo id nella foto: è dentro) ed
+          // entra all'inizio del giro dopo, con 0 punti. MAI subito nei giocatori: a metà giro cambierebbe i conti del giro.
+          // Con "partita" non si fa niente: riceve le foto e guarda, e alla "Nuova partita" il suo join lo porta in saletta.
+          // (chi guarda soltanto, t.guarda, il join non lo manda proprio: qui non arriva mai)
+          if (!p && H.fase === "gioco" && RITARDATARI === "turno") {
+            if (!inProssimi(id) && presenti().length + H.prossimi.length < MAX) H.prossimi.push({ id: id, nome: nome, omino: avatarValido(m.omino) });
             bd(); return;
           }
           if (!p && H.fase === "lobby" && H.players.length < MAX)
@@ -141,7 +168,8 @@
         // i secondi che mancano (non l'ora: gli orologi dei telefoni sono diversi). Nella MEMORIA invece l'ora (vedi ricorda)
         resta: H.stato === "preso" || H.stato === "ripresa" ? Math.max(1, Math.ceil((H.scadenza - Date.now()) / 1000)) : 0,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }),
-        guarda: H.guarda };
+        guarda: H.guarda,
+        prossimi: H.prossimi.map(function (x) { return { id: x.id, nome: x.nome }; }) };   // (con gli id: chi aspetta sa di essere dentro)
     }
     // un messaggio per un telefono solo (carta, ruolo, avviso): inviaVeloce con "to", così non resta in stanza
     function privato(id, m) {
@@ -155,7 +183,7 @@
     function ricorda() {
       if (H.fase === "lobby") return t.ricorda(null);
       var s = {};
-      Object.keys(H).forEach(function (k) { if (k !== "to") s[k] = H[k]; });
+      Object.keys(H).forEach(function (k) { if (k !== "to" && k !== "prossimi") s[k] = H[k]; });   // (chi aspettava il giro dopo rimanda il join)
       s.players = H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via }; });
       t.ricorda(s);
     }
@@ -190,6 +218,9 @@
       ferma();
       H.giro++;
       if (H.giro > H.giri) return fine();
+      entrano();   // (RITARDATARI "turno": chi aspettava gioca da questo giro)
+      // a che punto è la partita, per chi è nella Sala e non gioca ("🎮 Si gioca a … · Giro 2 di 5"). Fuori dalla Sala non fa niente
+      t.aCheSiamo("Giro " + H.giro + " di " + H.giri);   // QUI: una riga corta (al massimo 40 lettere)
       H.stato = "attesa"; H.vincitore = null; bd();
       H.to = setTimeout(function () { H.stato = "via"; bd(); H.to = setTimeout(nessuno, 4000); }, 1500 + Math.random() * 2500);
     }
@@ -214,7 +245,7 @@
     }
     // "Nuova partita": stessa stanza, stessi amici, tutti tornano nella saletta (MAI chiudere e riaprire la stanza).
     // (chi guardava resta a guardare: chi gioca l'ha scelto l'host nella Sala). In saletta bd() fa t.ricorda(null)
-    function nuova() { if (H.fase !== "fine") return; ferma(); H.fase = "lobby"; H.stato = "attesa"; H.classifica = null; H.players = presenti(); H.players.forEach(function (p) { p.punti = 0; }); bd(); }
+    function nuova() { if (H.fase !== "fine") return; ferma(); H.fase = "lobby"; H.stato = "attesa"; H.classifica = null; H.players = presenti(); entrano(); H.players.forEach(function (p) { p.punti = 0; }); bd(); }
     // la "↻ Rivincita" dei tasti di fine del core (e la "Nuova partita" fuori dalla Sala) usa questa: tutti nella saletta,
     // e se ci sono tutti la partita riparte da sola col 3-2-1 (lo fa il core)
     t.onRivincita = nuova;
@@ -241,10 +272,13 @@
       onTocco: function () { if (S.rete) S.rete.invia({ t: "tocco" }); },   // QUI: le tue mosse
       onEsci: function () {
         function via() { if (S.rete) S.rete.chiudi(); t.esci(); }
+        if (t.guarda) return t.conferma("Smetti di guardare?", null, "Esci", via);   // (chi guarda soltanto: non lascia un posto)
         if (S.vm && S.vm.fase === "gioco") return t.conferma("Uscire dalla partita?", null, "Esci", via);
         via();
       } };
-    if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo (o già entrato prima) si entra da soli
+    // col profilo (o già entrato prima) si entra da soli. Chi guarda soltanto (t.guarda) non vede mai la schermata del nome:
+    // t.nomeProfilo() per lui c'è sempre
+    if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();
     function chiediNome() {
       var s = t.schermata({ icona: "🎲", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });   // (il core ci aggiunge il 🎲 e l'avatar)
@@ -258,7 +292,8 @@
     function collega() {
       attesa();
       S.rete = SGNet.entra(codice, {
-        // il "join" lo ripete il collegamento finché il mio id non compare nella foto dell'host
+        // il "join" lo ripete il collegamento finché il mio id non compare nella foto dell'host.
+        // Chi guarda soltanto (t.guarda) lo manda uguale: il core lo cambia in "sono qui a guardare" e butta le sue mosse
         onAperto: function (id) { S.myId = id; cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); },
         onMsg: function (m) {
           if (!m || !m.t) return;
@@ -313,7 +348,8 @@
       // (la corona a chi tiene la partita: dopo un subentro non è più il primo della lista)
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),
       extra: extra,
-      spettatore: guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX ? "👀 La stanza è piena: guardi la partita" : false,
+      // (chi guarda soltanto col link: il core non lo mette tra i giocatori; alla prossima saletta entra da solo)
+      spettatore: t.guarda ? "👀 Guardi soltanto" : guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX ? "👀 La stanza è piena: guardi la partita" : false,
       attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function creaSchermo(t, cb) {
@@ -324,19 +360,27 @@
     // tocco immediato col pointerdown (su iPhone il click a volte non arriva)
     ui.tasto.addEventListener("pointerdown", function (e) { e.preventDefault(); if (!ui.guardo) cb.onTocco(); });
     var esci = t.el("button", { class: "mo-esci", "aria-label": "Esci", text: "‹", onclick: cb.onEsci });
-    s._contenuto.appendChild(t.el("div", { class: "mo-scena" }, [t.el("div", { class: "mo-barra" }, [esci, ui.giro]), ui.tasto, ui.avviso, ui.avanti, ui.punti]));
+    // chi guarda soltanto (t.guarda) ha in basso la targhetta del core ("👀 Guardi · 😂 · ✕", alta 44 px): le si lascia il
+    // posto (mo-con-targa). Nel torneo a eliminazione (t.eliminazione) la targhetta non c'è: lì c'è il tabellone
+    ui.targa = !!t.guarda && !t.eliminazione;
+    s._contenuto.appendChild(t.el("div", { class: "mo-scena" + (ui.targa ? " mo-con-targa" : "") }, [t.el("div", { class: "mo-barra" }, [esci, ui.giro]), ui.tasto, ui.avviso, ui.avanti, ui.punti]));
     t.mostra(s);
     return ui;
   }
   function aggiorna(ui, vm, cb) {   // QUI: aggiorna solo i pezzi che cambiano (testi e classi), mai tutta la schermata
     var io = null; vm.players.forEach(function (p) { if (p.id === cb.myId) io = p; });
-    ui.guardo = !io || io.via;   // arrivato a partita cominciata (o tolto): guarda soltanto
-    ui.giro.textContent = (ui.guardo ? "👀 Guardi · " : "") + "Giro " + vm.giro + " di " + vm.giri;
+    // il mio id non è tra i giocatori: guardo (arrivato a partita cominciata, non scelto, tolto, o t.guarda). Niente "Tu",
+    // niente tasti che contano: si disegna la partita com'è (QUI: e mai i segreti, che a chi guarda non arrivano)
+    ui.guardo = !io || io.via;
+    var aspetto = (vm.prossimi || []).some(function (p) { return p.id === cb.myId; });   // (RITARDATARI "turno") entro al giro dopo
+    var tg = (aspetto ? "✋ Entri al prossimo giro · " : ui.guardo ? "👀 Guardi · " : "") + "Giro " + vm.giro + " di " + vm.giri;
+    if (ui.giro.textContent !== tg) ui.giro.textContent = tg;
     var testo = vm.stato === "attesa" ? "Aspetta…" : vm.stato === "via" ? "TOCCA!" : vm.stato === "ripresa" ? "🔁 Si riprende…" : (vm.vincitore ? "Punto a " + vm.vincitore : "Nessuno…");
     if (ui.tasto.textContent !== testo) ui.tasto.textContent = testo;
     ui.tasto.className = "mo-tasto " + vm.stato + (ui.guardo ? " guarda" : "");
-    // chi guarda: le faccine (il suo avatar le fa sui telefoni di tutti). t.faccine() è null se la partita non è online
-    if (ui.guardo && !ui.faccine) { ui.faccine = ui.t.faccine(); if (ui.faccine) ui.avanti.parentNode.appendChild(ui.faccine); }
+    // chi guarda: le faccine (il suo avatar le fa sui telefoni di tutti). t.faccine() è null se la partita non è online.
+    // Con la targhetta del core (ui.targa) niente fila del gioco: le faccine sono nel suo 😂
+    if (ui.guardo && !ui.targa && !ui.faccine) { ui.faccine = ui.t.faccine(); if (ui.faccine) ui.avanti.parentNode.appendChild(ui.faccine); }
     if (ui.faccine) ui.faccine.style.display = ui.guardo ? "" : "none";   // rientrato in partita: si torna a giocare
     // tra un giro e l'altro: l'host ha "Prossimo giro ▶ 4" che va avanti da solo, gli altri leggono "Si va avanti tra 4…".
     // Si fa UNA volta per giro (chiave): le foto che arrivano intanto non ricostruiscono il tasto.
@@ -375,7 +419,9 @@
   }
   function finale(t, vm, cb) {
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale" });
-    var cl = vm.classifica || [], fac = t.faccine();   // le faccine: si aspetta l'host, ci si prende in giro
+    // le faccine: si aspetta l'host, ci si prende in giro (chi guarda col link le ha già nella targhetta del core)
+    var targa = !!t.guarda && !t.eliminazione, cl = vm.classifica || [], fac = targa ? null : t.faccine();
+    if (targa) s.classList.add("mo-fine-targa");   // (il posto in basso per la targhetta)
     // tanti giocatori (o schermo basso): righe su due colonne, così i tasti restano a vista senza scorrere
     var fitta = cl.length > 6 || cl.length * 71 + 300 + (fac ? 56 : 0) > (window.innerHeight || 640);
     var ol = t.el("ol", { class: "classifica" + (fitta ? " fitta" : "") }), med = medaglie(cl.map(function (r) { return r.pos; }));
@@ -391,11 +437,12 @@
     // I TASTI DI FINE LI METTE IL CORE, uguali in tutti i giochi: nella Sala "↻ Rivincita" (col 3-2-1 da solo) e
     // "🎮 Cambia gioco" per l'host, "👍 Ci sto!" e "🏠 Torna in Sala" per gli altri; fuori dalla Sala "↻ Nuova partita
     // (stessi amici)" ed "🏠 Esci". La rivincita chiama t.onRivincita (qui: nuova). Non disegnarli a mano.
-    // Se torna false (partita non online, col Bot, torneo a eliminazione, chi guarda la partita di altri) i tasti di sempre:
+    // Se torna false (partita non online, col Bot, torneo a eliminazione, chi guarda la partita di altri) i tasti di sempre.
+    // Si chiama anche per chi guarda: nella Sala con "👑 Chi vince resta" il core gli mette il suo conto
     if (!t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
       if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
-      else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
-      s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+      else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: targa ? "👀 Se l'host fa un'altra partita, entri anche tu nella saletta." : "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+      if (!targa) s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));   // (chi guarda esce col ✕ della targhetta)
     }
     t.mostra(s);
     return s;
@@ -440,7 +487,10 @@
       ".mo-vai{width:auto;min-width:60%;margin:0}.mo-conto{margin:0;font-weight:800;opacity:.85}",
       ".mo-punti{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}",
       ".mo-chip{padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800;font-size:.85rem}.mo-chip.via{opacity:.4}",
-      ".mo-scena>.sl-faccine{align-self:center;flex:none}"
+      ".mo-scena>.sl-faccine{align-self:center;flex:none}",
+      // chi guarda soltanto: il posto in basso per la targhetta del core (alta 44 px, a 10 px dal fondo)
+      ".mo-scena.mo-con-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom))}",
+      ".schermata.mo-fine-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -453,6 +503,9 @@
     // QUI: quanti giocano alla stessa partita online. Nella Sala, se gli amici sono di più, l'host sceglie "Chi gioca?"
     // e gli altri guardano (t.puoSedersi). 2 = gioco a due (gli altri guardano; con 3 o più c'è anche il Torneo a eliminazione)
     postiOnline: MAX,
+    // chi arriva a partita cominciata: "partita" (guarda ed entra alla prossima), "turno" o "mano" (entra dal prossimo
+    // giro/mano). Sempre dichiarato: senza, nella Sala "👀 Guarda" manda ancora il join (il gioco deve far guardare lui)
+    ritardatari: RITARDATARI,
     // la rete salta, la partita no: se l'host ricarica o riapre l'app la partita riprende (t.ripresa, t.ricorda)…
     riprende: true,
     // …e se l'host sparisce del tutto, un amico la porta avanti (riceve la copia di t.ricorda e diventa lui "IO").

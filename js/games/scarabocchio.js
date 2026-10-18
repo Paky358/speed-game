@@ -383,6 +383,8 @@
       ".sb-msg.sa b{color:#8ce99a!important}",
       ".sb-basso{flex:0 0 auto;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:rgba(0,0,0,.25)}",
       ".sb-basso[hidden],.sb-scrivi[hidden]{display:none}",
+      ".sb-posto-targa{flex:0 0 auto;height:calc(58px + env(safe-area-inset-bottom))}",   // chi guarda soltanto: la targhetta del core sta qui
+      ".sb-fine-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
       ".sb-sopra .sb-faccine{width:min(320px,92%);flex:0 0 auto}",
       ".sb-riga .sb-faccine{margin-top:4px}",
       ".sb-podio{font-size:2rem;text-align:center;margin:0 0 6px}",
@@ -444,7 +446,10 @@
     inp.addEventListener("blur", function () { setTimeout(misura, 80); });
     // chi disegna non scrive: al posto del campo vede chi gioca (e chi ha già indovinato)
     var basso = el("div", { class: "sb-basso", hidden: "hidden" });
-    [barra, lav, riga, chat, form, basso].forEach(function (n) { scena.appendChild(n); });
+    // chi guarda soltanto (col link): niente campo per scrivere (non può), in fondo il posto della targhetta del core "👀 Guardi · 😂 · ✕"
+    var targa = !!(t.guarda && !t.eliminazione), postoTarga = targa ? el("div", { class: "sb-posto-targa" }) : null;
+    if (targa) form.hidden = true;
+    [barra, lav, riga, chat, form, basso, postoTarga].forEach(function (n) { if (n) scena.appendChild(n); });
     s._contenuto.appendChild(scena);
     t.mostra(s);
 
@@ -616,7 +621,7 @@
       var W = scena.clientWidth, Ht = scena.clientHeight; if (!W || !Ht) return;
       var scrive = document.activeElement === inp && !inp.disabled;
       scena.classList.toggle("scrive", scrive);   // tastiera aperta: via le figurine, la chat al minimo
-      var fisso = barra.offsetHeight + riga.offsetHeight + form.offsetHeight + basso.offsetHeight;
+      var fisso = barra.offsetHeight + riga.offsetHeight + form.offsetHeight + basso.offsetHeight + (postoTarga ? postoTarga.offsetHeight : 0);
       var hMax = Ht - fisso - (scrive ? 44 : (puoi ? 40 : 84)) - 8;   // chi disegna non scrive: a lui basta meno chat
       var cw = Math.min(W - 10, 720), ch = Math.round(cw * LH / LW);
       if (ch > hMax) { ch = Math.max(110, hMax); cw = Math.round(ch * LW / LH); }
@@ -735,7 +740,7 @@
       if (cambiato) {
         dove = dv;
         if (dv === "basso") { basso.appendChild(gente); form.hidden = true; basso.hidden = false; if (document.activeElement === inp) inp.blur(); }
-        else { riga.appendChild(gente); form.hidden = false; basso.hidden = true; }
+        else { riga.appendChild(gente); form.hidden = targa; basso.hidden = true; }
       }
       strumenti.hidden = !puoi; gente.hidden = false;
       // chi aspetta mentre gli altri indovinano (ha già indovinato, o è appena arrivato): sotto chi gioca, le faccine
@@ -796,7 +801,7 @@
     }
     // la fila delle faccine (una sola, si sposta dove serve)
     var fac;
-    function faccine() { if (fac === undefined) { fac = t.faccine ? t.faccine() : null; if (fac) fac.classList.add("sb-faccine"); } return fac; }
+    function faccine() { if (fac === undefined) { fac = t.faccine && !targa ? t.faccine() : null; if (fac) fac.classList.add("sb-faccine"); } return fac; }   // (chi guarda: le faccine sono nella targhetta)
     function esc(x) { return String(x == null ? "" : x).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
 
     return {
@@ -873,7 +878,9 @@
         el("span", { class: "punti", text: fmtN(r.punti) }) ]));
     });
     s._contenuto.appendChild(ol);
-    var fac = t.faccine ? t.faccine() : null;   // le faccine della saletta: si festeggia (o si sfotte) tutti insieme
+    var targa = !!(t.guarda && !t.eliminazione);   // chi guarda soltanto (col link): faccine e uscita le dà la targhetta del core
+    if (targa) s.classList.add("sb-fine-targa");
+    var fac = t.faccine && !targa ? t.faccine() : null;   // le faccine della saletta: si festeggia (o si sfotte) tutti insieme
     if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
     // la galleria degli scarabocchi della partita: si tocca per vederli grandi
     var gal = GALLERIA.id === vm.partitaId ? GALLERIA.lista : [];
@@ -892,11 +899,12 @@
     }
     // i tasti di fine uguali per tutti (Rivincita, Cambia gioco, Ci sto…) li mette il core; se no quelli di sempre
     cb._notaFine = null;
-    var notaFuori = (vm.guardano || []).indexOf(cb.myId) >= 0 ? "Questa partita l'hai guardata 👀" : "La partita è appena finita: entri nella prossima! 🎨";
+    var notaFuori = (vm.guardano || []).indexOf(cb.myId) >= 0 ? "Questa partita l'hai guardata 👀"
+      : targa ? "👀 Hai guardato: se l'host fa un'altra partita, entri anche tu." : "La partita è appena finita: entri nella prossima! 🎨";
     if (!(t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci }))) {
       if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
       else s._contenuto.appendChild(cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: gioco ? "Se l'host fa un'altra partita, torni da solo nella saletta." : notaFuori }));
-      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+      if (!targa) s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     } else if (!cb.sonoHost && !gioco) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: notaFuori }));
     t.mostra(s);
   }
@@ -1161,6 +1169,7 @@
         var d = pById(H.ordine[H.idx]); if (d && !d.via) break;
       }
       H.turno++; H.disegnatore = H.ordine[H.idx];
+      if (t.aCheSiamo) t.aCheSiamo("Giro " + H.giro + " di " + H.giri);   // (nella Sala, per chi è fuori)
       H.opzioni = pesca(); H.parola = null; H.parolaNostra = false; H.tratti = []; H.q = 0; H.indovinati = []; H.scoperte = []; H.guad = {}; H.ultimo = null;
       H.cestino = null; H.disegnato = false; H.corti = false;
       H.attesi = Math.max(1, presenti().length - 1);   // quanti possono indovinare in questo turno
@@ -1198,6 +1207,25 @@
       // chi disegna è distratto? dopo 20 secondi con la lavagna ancora vuota si passa al prossimo
       H.toInd.push(setTimeout(function () { if (H.fase === "disegno" && !H.disegnato && !H.indovinati.length) fineTurno("vuoto"); }, 20000));
       H.to = setTimeout(function () { fineTurno("tempo"); }, H.secondi * 1000);
+      var tPub = setInterval(function () { if (H.fase !== "disegno") return clearInterval(tPub); guardaArrivati(); }, 2000);
+      H.toInd.push(tPub);   // (si ferma con gli altri timer del turno)
+    }
+    // chi guarda col link (👀) non manda niente all'host (il core butta i suoi messaggi), quindi non può chiedere il disegno
+    // fin qui: quando ne arriva uno nuovo (o lo stesso che ha ricaricato) durante il disegno, il disegno intero va a tutti.
+    // Chi è già in pari (stesso numero dell'ultimo pezzo) lo ignora: niente lampeggio. Chi guarda lo legge il core
+    // (sola lettura: il core non ha ancora un aiuto per questo)
+    var pubVisti = {};
+    function guardaArrivati() {
+      var pub = null; try { pub = rete && rete._sv && rete._sv.pubblico; } catch (e) {}
+      if (!pub || typeof pub !== "object") return;
+      var nuovo = false;
+      Object.keys(pub).forEach(function (id) {
+        var tt = (pub[id] && pub[id].t) || 0, prima = pubVisti[id];
+        // (chi guarda si fa sentire ogni 20 secondi: se si rifà sentire molto prima, ha ricaricato la pagina)
+        if (prima == null || (tt !== prima && tt - prima < 15000)) nuovo = true;
+        pubVisti[id] = tt;
+      });
+      if (nuovo && H.tratti.length) rete.inviaVeloce({ t: "disegno", kf: 1, da: H.disegnatore, turno: H.turno, q: H.q || 0, tratti: H.tratti });
     }
     function tuttiOk() { return presenti().every(function (p) { return p.id === H.disegnatore || H.indovinati.indexOf(p.id) >= 0; }); }
     function prova(id, x) {
@@ -1402,6 +1430,7 @@
     function mandaJoin() { S.ultJoin = Date.now(); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : mioAvatar(S.nome) }); }
     // sono nella foto? se no (dato per uscito, tolto alla "Nuova partita"…) richiedo di entrare, al massimo ogni 2 secondi
     function ciSono(vm) {
+      if (t.guarda) return true;   // guardo soltanto (col link): il "join" non parte (lo toglie il core), niente da ripetere
       var id = S.myId, io = (vm.players || []).filter(function (p) { return p.id === id; })[0];
       if (!io && (vm.guardano || []).indexOf(id) >= 0) return true;   // non sono tra chi gioca: guardo e basta
       if (vm.fase === "fine") return !!io || (vm.prossimi || []).indexOf(id) >= 0 || (vm.classifica || []).some(function (r) { return r.id === id; });
@@ -1421,12 +1450,12 @@
       S.vista.aggiorna(vm, privDi(vm));
       if (nuova) chiediTutto();   // appena entro in partita (anche a turno iniziato) chiedo il disegno intero
     }
-    function chiediTutto() { S.ultimaSync = Date.now(); S.rete.invia({ t: "sync" }); }
+    function chiediTutto() { if (t.guarda) return; S.ultimaSync = Date.now(); S.rete.invia({ t: "sync" }); }   // (chi guarda col link: il disegno intero glielo manda l'host da solo)
     // i pezzi di disegno sono numerati: se ne manca uno (la rete ha fatto un salto) chiedo il disegno intero
     function controllaNumero(m) {
       if (!S.vm || m.n !== S.vm.turno) return;
-      if (S.qN !== m.n) { S.qN = m.n; S.q = 0; }
-      if (m.q !== S.q + 1 && Date.now() - (S.ultimaSync || 0) > 2000) chiediTutto();
+      if (S.qN !== m.n) { S.qN = m.n; S.q = 0; S.pari = m.n; }   // turno nuovo: sono in pari se arriva il primo pezzo
+      if (m.q !== S.q + 1) { S.pari = null; if (Date.now() - (S.ultimaSync || 0) > 2000) chiediTutto(); }   // (S.pari: ho tutto il disegno di questo turno)
       S.q = m.q;
     }
     function schermaNome() {
@@ -1474,7 +1503,9 @@
           else if (m.t === "pulisci") { controllaNumero(m); S.vista.pulisci(); }
           else if (m.t === "disegno") {   // il disegno intero (anche per chi disegna e ha ricaricato la pagina)
             if (m.omini) { for (var id in m.omini) if (m.omini[id]) S.omini[id] = m.omini[id]; S.vista.omini(S.omini); }
-            if (S.vm && m.turno === S.vm.turno) { S.vista.tutti(m.tratti); S.qN = m.turno; S.q = m.q || 0; }
+            // (kf: il disegno intero mandato a tutti per chi guarda col link ed è appena arrivato: se ho già tutti i pezzi lo ignoro)
+            if (m.kf && S.pari === m.turno && S.qN === m.turno && (S.q || 0) >= (m.q || 0)) return;
+            if (S.vm && m.turno === S.vm.turno) { S.vista.tutti(m.tratti); S.qN = m.turno; S.q = m.q || 0; S.pari = m.turno; }
           }
           else if (m.t === "avviso") S.vista.avviso(m.x);
           else if (m.t === "sa") S.vista.sa(m);
@@ -1521,6 +1552,7 @@
     postiOnline: 10,   // posti online
     riprende: true,      // se l'host ricarica a metà partita, la partita riprende (chi disegnava ricomincia con la stessa parola)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
+    ritardatari: "turno",   // chi arriva a partita cominciata entra subito nel giro dei disegnatori (con 0 punti)
     modi: [],            // solo online: ognuno ha bisogno del suo schermo (la parola la vede solo chi disegna)
     soloOnline: true,
     etichettaGiocatori: "🔗 Online · 2–10",

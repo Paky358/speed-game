@@ -351,7 +351,7 @@
     var inCoda = (vm.coda || []).indexOf(cb.myId) >= 0, guardo = (vm.guardano || []).indexOf(cb.myId) >= 0;   // guardo: non sono tra chi pesca (Sala)
     if (vm.fase === "lobby") {
       if (UI || finale0 || FU) chiudiSchermo();
-      if (!io && !cb.sonoHost && !guardo) return fuori(t, inCoda ? "pieno" : "entro", vm, cb);   // (chi guarda sta nella saletta con gli altri)
+      if (!io && !cb.sonoHost && !guardo && !t.guarda) return fuori(t, inCoda ? "pieno" : "entro", vm, cb);   // (chi guarda sta nella saletta con gli altri)
       vista = "lobby"; return lobby(t, vm, cb);
     }
     if (vm.fase === "fine") {
@@ -365,7 +365,7 @@
       if (finale0) return;
       return finale(t, vm, cb);
     }
-    if (!io) return fuori(t, guardo ? "garaS" : "gara", vm, cb);   // arrivato a gara iniziata (o non è tra chi pesca): aspetta la prossima (è nella lista dell'host)
+    if (!io) return fuori(t, t.guarda ? "link" : guardo ? "garaS" : "gara", vm, cb);   // arrivato a gara iniziata (o non è tra chi pesca): aspetta la prossima (è nella lista dell'host)
     if (!UI) {
       if (!window.SGPesca) return errore(t, "Manca il laghetto: aggiorna l'app.");
       UI = SGPesca.crea({ omino: t.mioOmino(io.nome), audio: audio, indietro: cb.onEsci, gara: { onPreso: function (f) {
@@ -438,7 +438,7 @@
   }
   function lobby(t, vm, cb) {
     var n = (vm.coda || []).length;
-    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN, spettatore: t.guarda ? "👀 Guardi soltanto" : false,   // (chi guarda col link)
       vuoti: Math.max(0, MIN - vm.players.length),   // solo i posti che mancano per cominciare
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
       extra: [t.el("p", { class: "modulo-nota", text: "🎣 Gara di " + minuti(vm.durata) + " nel laghetto: 🎯 " + OBIETTIVI[ob(vm.obiettivo)].frase + (ob(vm.obiettivo) !== "kg" ? " (a parità, chi ha più chili)" : "") + ". Canna e lombrichi uguali per tutti." + (n ? " (Stanza piena: " + n + (n === 1 ? " aspetta" : " aspettano") + " un posto.)" : "") })],
@@ -454,18 +454,21 @@
     chiudiSchermo(); vista = "fuori-" + tipo; FU = null;
     var T = { gara: ["👀 Gara in corso", "La guardi ed entri alla prossima", "Quando l'host fa un'altra gara entri da solo nella saletta."],
       garaS: ["👀 Gara in corso", "Questa volta pescano gli altri", "Intanto guardi la classifica e fai il tifo!"],
+      link: ["👀 Gara in corso", "Guardi la gara", "Quando l'host fa un'altra gara entri anche tu nella saletta."],   // (chi guarda col link)
       pieno: ["Stanza piena", "Al massimo " + MAX + " pescatori", "Ci sono già " + MAX + " pescatori: appena si libera un posto entri da solo."],
       entro: ["⏳ Sto entrando…", "Gara di pesca", "Un attimo: l'host ti sta facendo entrare."] }[tipo];
     var s = t.schermata({ icona: "🎣", titolo: T[0], sotto: T[1] });
-    if (tipo === "gara" || tipo === "garaS") {
+    var link = tipo === "link";   // chi guarda col link: faccine e uscita nella targhetta del core (la schermata le lascia il posto)
+    if (link) { stile(); s.classList.add("gp-targa"); }
+    if (tipo === "gara" || tipo === "garaS" || link) {
       stile();
       FU = { tempo: t.el("div", { class: "gp-guarda-tempo" }), lista: t.el("ol", { class: "gp-resto gp-guarda" }) };
       s._contenuto.appendChild(FU.tempo); s._contenuto.appendChild(FU.lista);
       TIC = setInterval(function () { if (FU && !document.body.contains(FU.tempo)) return chiudiSchermo(); if (FU) scriviTempo(); }, 1000);
     }
-    s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:" + (tipo === "gara" ? "10px" : "24px"), text: T[2] }));
-    if (tipo !== "entro") { var f = t.faccine && t.faccine(); if (f) { f.style.margin = "12px auto 0"; f.style.maxWidth = "320px"; s._contenuto.appendChild(f); } }   // si aspetta a lungo: le faccine
-    s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: ultimoCb && ultimoCb.onEsci || t.esci }));
+    s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:" + (tipo === "gara" || link ? "10px" : "24px"), text: T[2] }));
+    if (tipo !== "entro" && !link) { var f = t.faccine && t.faccine(); if (f) { f.style.margin = "12px auto 0"; f.style.maxWidth = "320px"; s._contenuto.appendChild(f); } }   // si aspetta a lungo: le faccine
+    if (!link) s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: ultimoCb && ultimoCb.onEsci || t.esci }));
     t.mostra(s);
     aggFuori(vm, cb);
   }
@@ -510,6 +513,7 @@
       ".gp-premio canvas{flex:none}",
       ".gp-guarda-tempo{text-align:center;font-weight:900;font-size:1.6rem;margin:6px 0 10px;font-variant-numeric:tabular-nums}",
       ".gp-guarda li span:last-child{font-weight:800}",
+      ".schermata.gp-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom))}",   // (chi guarda col link: il posto della targhetta del core)
       ".gp-piede2{display:flex;gap:8px}.gp-piede2>.btn{flex:1;min-width:0}",
       ".gp-fin.tanti .gp-av{width:40px;height:52px}.gp-fin.tanti .gp-gr.p1 .gp-av{width:50px;height:64px}"
     ].join("\n");
@@ -557,6 +561,11 @@
     });
     if (pr.children.length) box.appendChild(pr);
     s._contenuto.appendChild(box);
+    if (t.guarda) {   // chi guarda col link: faccine e uscita nella targhetta del core; alla gara dopo entra da solo
+      s.classList.add("gp-targa");
+      s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: "👀 Quando l'host fa un'altra gara entri anche tu nella saletta." }));
+      t.mostra(s); return;
+    }
     var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }   // le faccine anche sulla classifica
     var esci = t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci });
     // i tasti di fine uguali per tutti (Rivincita, Cambia gioco, Ci sto…) li mette il core; se no quelli di sempre
@@ -586,6 +595,7 @@
     descrizione: "Tutti nello stesso laghetto, ognuno dal suo telefono: in pochi minuti vince chi pesca più chili!",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
     postiOnline: MAX,   // posti online (8 pescatori)
+    ritardatari: "partita",   // chi arriva a gara cominciata la guarda ed entra alla gara dopo
     riprende: true,   // se l'host ricarica la pagina, la gara riprende col tempo che restava (t.ripresa)
     modi: [], soloOnline: true,
     regole: [

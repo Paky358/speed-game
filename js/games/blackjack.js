@@ -743,7 +743,10 @@
     ".bj-pr.oro{background:linear-gradient(90deg,rgba(255,214,90,.35),rgba(255,214,90,.08));border:1px solid rgba(255,214,90,.6)}",
     ".bj-pr .md{width:26px;text-align:center}.bj-pr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}",
     ".bj-pr .nt{white-space:nowrap}.bj-pr .nt.piu{color:#7dffa8}.bj-pr .nt.meno{color:#ff9d8a}.bj-pr .ff{color:#ffe58a;font-size:.8em;white-space:nowrap}",
-    ".bj-podio.fitto{gap:2px}.bj-podio.fitto .bj-pr{padding:1px 8px;font-size:.8rem}"
+    ".bj-podio.fitto{gap:2px}.bj-podio.fitto .bj-pr{padding:1px 8px;font-size:.8rem}",
+    // chi guarda col link: in basso c'è la targhetta del core "👀 Guardi · 😂 · ✕" (il tavolo le lascia il posto)
+    ".bj-wrap.bj-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom))}",
+    ".bj-hfa{display:flex;justify-content:center;margin-top:2px}"
   ].join("");
 
   function iniettaCSS() {
@@ -945,7 +948,7 @@
       titolo: "🃏 Black Jack", sotto: drv.sotto || "Banco: Bot",
       indietro: function () { chiediUscita(); }
     });
-    var wrap = el("div", { class: "bj-wrap" });
+    var wrap = el("div", { class: "bj-wrap" + (t.guarda ? " bj-targa" : "") });
     var zBanco = el("div", { class: "bj-sala" }), zHero = el("div", { class: "bj-hero" }),
         zMsg = el("div", { class: "bj-msg" }), zTav = el("div", { class: "bj-tavolata" });
     [zBanco, zHero, zMsg, zTav].forEach(function (z) { wrap.appendChild(z); });
@@ -1513,7 +1516,13 @@
       svuota(zHero);
       var mio = drv.puoAgire(vm);
       if (vm.fase === "fine") return heroFine();
-      if (drv.mioIdx && !vm.giocatori[mioIdx()]) return heroInfo(drv.guardo && drv.guardo(vm) ? "👀" : "🪑", (drv.guardo && drv.guardo(vm)) || "Ti stai sedendo al tavolo…");   // appena arrivato: il posto sta arrivando (o guardo e basta)
+      var gtx = drv.mioIdx && !vm.giocatori[mioIdx()] ? (drv.guardo && drv.guardo(vm)) || "" : "";
+      if (drv.mioIdx && !vm.giocatori[mioIdx()] && !gtx) return heroInfo("🪑", "Ti stai sedendo al tavolo…");   // appena arrivato: il posto sta arrivando
+      // guardo e basta (link "guarda", tavolo pieno, nella Sala non gioco): la mano di chi tocca, senza tasti, con la riga sopra
+      if (gtx) zHero.appendChild(el("div", { class: "bj-hmini", text: gtx }));
+      // arrivato a mano cominciata: ho già il posto, gioco dalla prossima mano (niente tasti finché la mano non è mia)
+      var meH = drv.mioIdx ? vm.giocatori[mioIdx()] : null;
+      if (meH && !meH.mani.length && !meH.puntata && ["distrib", "assic", "gioca", "banco"].indexOf(vm.fase) >= 0) zHero.appendChild(el("div", { class: "bj-hmini", text: "✋ Giochi dalla prossima mano" }));
       if (vm.fase === "distrib") return heroInfo("🂠", nomeBanco(vm) + " distribuisce…");
       if (vm.fase === "punta") return heroPunta(chiDecide());
       if (vm.fase === "assic") return heroAssic(chiDecide());
@@ -1687,7 +1696,8 @@
       // online: i tasti di fine uguali per tutti li mette il core (la Rivincita è la serie nuova); se no quelli di sempre
       var delCore = !!(drv.stanza && t.tastiFine && t.tastiFine(az, { host: host, nuova: drv.onAncora, esci: function () { chiudi(); drv.onEsci(); } }));
       if (host) zHero.appendChild(el("div", { class: "bj-hnome", text: "Bella partita! 🎉" }));
-      else if (!delCore) zHero.appendChild(el("div", { class: "bj-hfiches", text: "Aspettiamo l'host: si gioca ancora?" }));
+      else if (!delCore) zHero.appendChild(el("div", { class: "bj-hfiches", text: (t.guarda ? "👀 " : "") + "Aspettiamo l'host: si gioca ancora?" }));
+      if (t.guarda && !host) return;   // chi guarda col link: esce e manda le faccine dalla targhetta del core
       if (!delCore) {
         if (host) az.appendChild(tasto(drv.testoAncora || "Gioca ancora ▶", "bj-b-carta", function () { bloccaTasti(); drv.onAncora(); }));
         az.appendChild(tasto("🚪 Mi alzo", "bj-b-no", function () { chiediUscita(); }));
@@ -1803,7 +1813,7 @@
   function renderLobbyBJ(t, info, cb) {
     iniettaCSS();
     document.body.classList.remove("bj-verde");
-    t.lobby({ host: info.sonoHost, codice: info.codice, pronta: info.pronta, min: 1, puoiDaSolo: true,
+    t.lobby({ host: info.sonoHost, codice: info.codice, pronta: info.pronta, min: 1, puoiDaSolo: true, spettatore: info.spettatore || false,
       giocatori: info.giocatori.map(function (g, i) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: i === 0, tu: info.sonoHost ? i === 0 : g.id === info.mioId }; }),
       attesa: "Aspetta che l'host apra il tavolo: poi si punta tutti insieme.",
       extra: [cb.bonus, cb.nota],   // saldo + ruota del giorno per chi ha il profilo (anche chi entra da invito) e le regole del tavolo
@@ -1841,6 +1851,8 @@
     var M = null, rete = null, codice = "…", tav = null, pronta = false, finito = false;
     var guardano = [];   // chi è entrato ma non è tra chi gioca (scelti nella Sala): guarda il tavolo senza sedersi
     var attesaUguali = [];   // torneo a fiches uguali: chi è arrivato a partita iniziata guarda e si siede alla serie dopo
+    var pieni = [];   // chi è arrivato a tavolo pieno (10 su 10): guarda (è anche in guardano); in saletta si siede appena si libera un posto
+    var pieniDati = {};   // (in saletta) id -> il suo posto pronto (nome, fiches, avatar)
     var maniFinite = 0, detto = false, salvato = mieFiches;
     var TT = { k: "", fine: 0, to: null };   // il conto alla rovescia per decidere (lo tiene l'host)
     // la ruota girata in saletta (o dal tavolo): si gioca con le monete nuove (e se eri a zero non è più di prova)
@@ -1856,6 +1868,20 @@
     }
 
     function seatDiId(id) { for (var i = 0; i < seats.length; i++) if (seats[i].id === id) return i; return -1; }
+    // tavolo pieno (10 su 10): invece di mandarlo via lo si fa guardare (riceve le foto)
+    function guardaPieno(id, m) {
+      if (guardano.indexOf(id) < 0) guardano.push(id);
+      if (pieni.indexOf(id) < 0) pieni.push(id);
+      pieniDati[id] = nuovoSeat(id, m);
+    }
+    // in saletta si è liberato un posto: si siede il primo arrivato a tavolo pieno
+    function siediPieni() {
+      while (!M && seats.length < 10 && pieni.length) {
+        var id = pieni.shift(), ns = pieniDati[id]; delete pieniDati[id];
+        var k = guardano.indexOf(id); if (k >= 0) guardano.splice(k, 1);
+        if (ns && seatDiId(id) < 0) seats.push(ns);
+      }
+    }
     function mio() { var i = seatDiId(IO); return i < 0 ? (M ? -1 : 0) : i; }   // il mio posto (di solito il primo; -1 = guardo soltanto: ho preso il tavolo da chi guardava)
     function nuovoSeat(id, m) {
       var f = (typeof m.fiches === "number" && isFinite(m.fiches)) ? Math.max(0, Math.floor(m.fiches)) : null;
@@ -1900,12 +1926,22 @@
       var vm = vistaBJ(M.st, RG);
       vm.tempo = TT.k ? { k: TT.k, ms: Math.max(0, TT.fine - Date.now()) } : null;
       if (guardano.length) vm.guardano = guardano.slice();
+      if (pieni.length) vm.pieni = pieni.slice();
       if (rete) rete.invia({ t: "vm", vm: vm });
+      aCheSiamo();
       if (tav) tav.aggiorna(vm);
       vici();
       salva();
       ricorda();
     }
+    // (nella Sala) a che punto è la partita, per chi è fuori: "mano 3 di 10" (la mano in corso; st.mano conta quelle finite)
+    function aCheSiamo() {
+      if (!t.aCheSiamo || !M || M.st.fase === "fine") return;
+      var st = M.st, n = st.mano + (st.fase === "esito" ? 0 : 1);
+      t.aCheSiamo("mano " + n + (st.maniTot ? " di " + st.maniTot : ""));
+    }
+    // a ogni mano nuova gli avatar a tutti: chi guarda col link (il gioco non lo vede: niente join) li ha dalla mano dopo
+    function avatariATutti() { if (rete) rete.inviaVeloce({ t: "avatari", lista: listaAvatari() }); }
     // il saldo dell'host segue il tavolo (la puntata si toglie subito)
     function salva() { var g = M && M.st.giocatori[mio()]; if (prof && g && !RG.uguali && !g.prova && g.fiches !== salvato) { salvato = g.fiches; SGNube.salvaFiches("blackjack", salvato); } }
     // dopo ogni cambiamento il tavolo si ricorda (se l'host ricarica, la mano continua); in saletta niente da riprendere
@@ -1914,14 +1950,15 @@
       if (!t.ricorda) return;
       if (!M || finito) { if (ricordato) { ricordato = false; t.ricorda(null); } return; }
       ricordato = true;
-      t.ricorda({ bj: { st: M.esporta(), seats: seats, guardano: guardano, attesaUguali: attesaUguali, maniFinite: maniFinite,
+      t.ricorda({ bj: { st: M.esporta(), seats: seats, guardano: guardano, pieni: pieni, attesaUguali: attesaUguali, maniFinite: maniFinite,
         detto: detto, RG: RG, imp: imp } });
     }
     function lobbyOut() {
       ricorda();
       var rt = testoRegole(RG, true);
       nota.textContent = "🃏 " + rt;
-      if (rete) rete.invia({ t: "lobby", codice: codice, regole: rt, giocatori: seats.map(function (x) { return { id: x.id, nome: x.nome, omino: x.omino || null }; }) });
+      if (rete) rete.invia({ t: "lobby", codice: codice, regole: rt, giocatori: seats.map(function (x) { return { id: x.id, nome: x.nome, omino: x.omino || null }; }),
+        pieni: pieni.length ? pieni.slice() : undefined });   // (chi è arrivato a tavolo pieno: guarda)
       renderLobbyBJ(t, { sonoHost: true, codice: codice, pronta: pronta, giocatori: seats }, {
         bonus: boxBonus, nota: nota,
         onComincia: comincia,
@@ -1936,7 +1973,7 @@
       M.st.giocatori.forEach(function (g, i) { g.rid = seats[i].id; g.prova = !RG.uguali && !!seats[i].prova; });
       M.st.croupier = croupierDa(seats.map(function (x) { return x.nome; }));   // il banco: uno dei bot fissi (va a tutti nel vm)
       maniFinite = 0; detto = false;
-      avviaTavoloHost(); M.nuovaMano(); bcast();
+      avviaTavoloHost(); M.nuovaMano(); bcast(); avatariATutti();
     }
     function avviaTavoloHost(senzaIntro) {
       tav = tavoloBJ(t, {
@@ -1957,7 +1994,7 @@
         onMossa: function (m, chk) { if (M.st.turno === mio()) { if (m === "stai") suonoStai(); M.azione(m, chk); bcast(); } },
         onAssicura: function (si) { if (mio() < 0) return; M.assicura(mio(), si); bcast(); },
         onFineMano: function (vm) { var g = vm.giocatori[mio()]; if (prof && g && !g.prova) { salvaFineMano(g, vm); if (!RG.uguali) salvato = g.fiches; } maniFinite++; },
-        onNuova: function () { M.nuovaMano(); bcast(); },
+        onNuova: function () { M.nuovaMano(); bcast(); avatariATutti(); },
         onFine: function () { M.fineTavolo(); bcast(); },
         onFinePartita: function () { risultatoBJ(); },
         testoAncora: RG.uguali ? "🔄 Un altro torneo ▶" : null,
@@ -1990,6 +2027,7 @@
       if (M.importa(RIP.st)) {
         seats = RIP.seats;
         guardano = Array.isArray(RIP.guardano) ? RIP.guardano : [];
+        pieni = Array.isArray(RIP.pieni) ? RIP.pieni : [];
         attesaUguali = Array.isArray(RIP.attesaUguali) ? RIP.attesaUguali : [];
         maniFinite = +RIP.maniFinite || 0; detto = !!RIP.detto;
         // (il saldo del profilo l'ho già salvato dal tavolo prima di ricaricare: si risalva solo se è diverso)
@@ -2004,9 +2042,10 @@
       onAddio: function (id) {
         delete attesi[id];
         if (guardano.indexOf(id) >= 0) guardano.splice(guardano.indexOf(id), 1);
+        var ip = pieni.indexOf(id); if (ip >= 0) { pieni.splice(ip, 1); delete pieniDati[id]; if (!M) lobbyOut(); }
         var i = seatDiId(id); if (i < 0 || i === mio()) return;
         if (M) { M.esce(i); bcast(); }   // a partita iniziata il posto resta (gli altri non cambiano numero): non si aspetta più
-        else { seats.splice(i, 1); lobbyOut(); }
+        else { seats.splice(i, 1); siediPieni(); lobbyOut(); }
       },
       onMsg: function (id, m) {
         if (!m || !m.t || finito) return;
@@ -2024,7 +2063,7 @@
               rete.inviaVeloce({ t: "avatari", to: id, lista: listaAvatari() });
               bcast(); return;
             }
-            if (seats.length >= 10) { rete.inviaVeloce({ t: "pieno", to: id }); return; }
+            if (seats.length >= 10) { guardaPieno(id, m); rete.inviaVeloce({ t: "avatari", to: id, lista: listaAvatari() }); bcast(); return; }   // tavolo pieno: guarda
             if (RG.uguali) {   // torneo a fiches uguali già cominciato: guarda, e si siede alla serie dopo
               if (guardano.indexOf(id) < 0) guardano.push(id);
               if (!attesaUguali.some(function (x) { return x.id === id; })) attesaUguali.push(nuovoSeat(id, m));
@@ -2037,7 +2076,7 @@
             bcast(); return;
           }
           if (i < 0) {
-            if (seats.length >= 10) { rete.inviaVeloce({ t: "pieno", to: id }); return; }
+            if (seats.length >= 10) { guardaPieno(id, m); lobbyOut(); return; }   // saletta piena: guarda, e si siede se si libera un posto
             seats.push(nuovoSeat(id, m));
           }
           lobbyOut();
@@ -2115,7 +2154,10 @@
       if (t.nomeProfilo && t.nomeProfilo()) { input.value = t.nomeProfilo(); bEntra.click(); }   // entra da solo col nome del profilo di questo telefono
     }
     function invia(m) { if (S.rete && !S.finito) S.rete.invia(m); }
-    function mandaJoin() { S.ultimoJoin = Date.now(); invia({ t: "join", nome: S.nome, fiches: S.fiches, prova: S.prova, omino: mioAvatar(S.nome) }); }
+    // chi guarda soltanto (link con guarda=1): niente join, niente puntate, niente ruota (il core butta comunque le sue mosse)
+    S.guarda = !!t.guarda;
+    function pieno(vm) { return (vm && vm.pieni || []).indexOf(S.mioId) >= 0; }
+    function mandaJoin() { S.ultimoJoin = Date.now(); if (S.guarda) return; invia({ t: "join", nome: S.nome, fiches: S.fiches, prova: S.prova, omino: mioAvatar(S.nome) }); }
     // il saldo del profilo segue il tavolo: la puntata si toglie subito (uscendo a metà mano non torna indietro)
     function salvaMio(vm) {
       var me = vm.giocatori[S.mioSeat];
@@ -2132,12 +2174,15 @@
         puoAgire: function (vm) { return S.mioSeat >= 0 && vm.turno === S.mioSeat; },
         puoNuova: function () { return false; },
         guida: function () { return false; },
-        puoRuota: function () { return !(S.vm && S.vm.uguali) && puoRuotaProfilo(prof); },
+        puoRuota: function () { return !S.guarda && S.mioSeat >= 0 && !(S.vm && S.vm.uguali) && puoRuotaProfilo(prof); },
         onRuota: function () { ruotaDalTavolo(mandaBonus); },
         onRicarica: function () { invia({ t: "ricarica" }); },
-        // non ho un posto: guardo (nella Sala non sono tra chi gioca, o il torneo è già cominciato)
+        // non ho un posto: guardo (col link "guarda", nella Sala non sono tra chi gioca, tavolo pieno, o il torneo è già cominciato)
+        guarda: S.guarda,
         guardo: function (vm) {
+          if (S.guarda) return "👀 Guardi il tavolo";
           if ((vm.guardano || []).indexOf(S.mioId) < 0) return "";
+          if (pieno(vm)) return "🪑 Il tavolo è pieno (10 su 10): guardi la partita";
           return vm.uguali ? "🏆 Torneo in corso: lo guardi e giochi al prossimo" : "👀 Guardi il tavolo: questa volta giocano gli altri";
         },
         onPasso: function () {},
@@ -2173,7 +2218,8 @@
           if (m.t === "lobby") {
             S.avatari = (m.giocatori || []).map(function (x) { return x.omino; });
             nota.textContent = m.regole ? "🃏 " + m.regole : "";
-            if (!S.tav) renderLobbyBJ(t, { sonoHost: false, codice: m.codice, giocatori: m.giocatori || [], mioId: S.mioId }, { bonus: boxBonus, nota: m.regole ? nota : null, onEsci: function () { S.finito = true; if (S.rete) S.rete.chiudi(); t.esci(); } });
+            var sp = S.guarda ? "👀 Guardi soltanto" : ((m.pieni || []).indexOf(S.mioId) >= 0 ? "🪑 Tavolo pieno: guardi e ti siedi se si libera un posto" : false);
+            if (!S.tav) renderLobbyBJ(t, { sonoHost: false, codice: m.codice, giocatori: m.giocatori || [], mioId: S.mioId, spettatore: sp }, { bonus: boxBonus, nota: m.regole ? nota : null, onEsci: function () { S.finito = true; if (S.rete) S.rete.chiudi(); t.esci(); } });
           } else if (m.t === "vm") {
             S.vm = m.vm;
             S.mioSeat = (m.vm.giocatori || []).findIndex(function (x) { return x.rid === S.mioId; });   // il mio posto lo ritrovo dal mio id (anche dopo aver ricaricato)
@@ -2223,7 +2269,8 @@
       s._contenuto.appendChild(ol);
     }
     // chi era al tavolo: i tasti di fine uguali per tutti (se li mette il core); se no si torna alla home
-    if (!(vm && t.tastiFine && t.tastiFine(s._piede, { host: false, esci: t.esci })))
+    // (chi guarda col link esce dalla targhetta del core "👀 Guardi · ✕": niente seconda uscita)
+    if (!(vm && t.tastiFine && t.tastiFine(s._piede, { host: false, esci: t.esci })) && !t.guarda)
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
@@ -2244,6 +2291,7 @@
     descrizione: "Il 21 contro il banco: punta le monete, chiedi carta o stai, raddoppia e dividi. Carte francesi vere, 6 mazzi. Da 1 a 10 giocatori.",
     giocatoriMin: 1, giocatoriMax: 10, difficolta: 2,
     postiOnline: 10,   // posti al tavolo online
+    ritardatari: "mano",   // chi arriva a partita cominciata si siede subito e gioca dalla prossima mano (con le sue monete)
     riprende: true,    // se l'host ricarica la pagina, la mano continua da dove era (stesse carte, puntate e fiches)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     // le regole in una riga, per la saletta ("📜 Si gioca così"): col torneo "🏆 Torneo: tutti con 1.000 fiches finte · …"

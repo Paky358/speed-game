@@ -865,7 +865,7 @@
           rete.chiudi(); t.esci();
         }
         // un tocco sbagliato non chiude il gioco a tutti (la finestra al centro dell'app)
-        if (H.fase === "gioco" && !gia) return t.conferma(prova ? "Uscire dalla prova?" : "Chiudere la partita per tutti?", prova ? null : "Gli amici tornano alla saletta.", prova ? "Esci" : "Chiudi", via);
+        if (H.fase === "gioco" && !gia) return t.conferma(prova ? "Uscire dalla prova?" : "Chiudere la partita per tutti?", prova ? null : "La partita finisce anche per gli amici.", prova ? "Esci" : "Chiudi", via);
         via();
       } };
     // la Rivincita dei tasti di fine comuni: tutti di nuovo nella saletta, stesse squadre (il core fa il 3-2-1).
@@ -1264,6 +1264,7 @@
       posti: function (S) { return postiCapi(S, ui.nsq); }, dopoLayout: function (S) { posizionaBanchi(ui, S); adattaScritte(ui); } });
     var S = ui.S;
     S.vista.classList.add("or-studio");
+    if (t.guarda && !t.eliminazione) S.vista.classList.add("st-con-targa");   // chi guarda soltanto: il posto della targhetta del core in basso
     // il tabellone finisce sopra la barra dei tasti anche quando la barra cresce da sola (es. «👥 Avete giocato con» che arriva dopo)
     try { if (window.ResizeObserver && S.barraEl) new ResizeObserver(function () { if (S.barraEl.offsetHeight) S.vista.style.setProperty("--or-barra", (S.barraEl.offsetHeight + 6) + "px"); }).observe(S.barraEl); } catch (e) {}
     for (var k = 0; k < vm.nsq; k++) ST.testoLeggio(S, k, nomeSq(vm, k).toUpperCase());
@@ -1620,12 +1621,14 @@
     }
     return false;
   }
+  // chi guarda soltanto (link con guarda=1): in basso la targhetta del core "👀 Guardi · 😂 · ✕": faccine e uscita le dà lei
+  function conTarga(t) { return !!(t && t.guarda && !t.eliminazione); }
   function disegnaSotto(ui, vm, cb, r) {
     var el = ui.el, box = ui.sotto;
     while (box.firstChild) box.removeChild(box.firstChild);
     function stato(tx) { var d = el("div", { class: "or-stato", text: tx }); box.appendChild(d); return d; }
     // la fila delle faccine (online), dove si aspetta: il turno degli altri, la squadra fuori, la fine
-    function faccine() { var f = ui.t.faccine ? ui.t.faccine() : null; if (f) { f.classList.add("or-faccine"); box.appendChild(f); } }
+    function faccine() { if (conTarga(ui.t)) return; var f = ui.t.faccine ? ui.t.faccine() : null; if (f) { f.classList.add("or-faccine"); box.appendChild(f); } }
     ui.bAv = ui.selOk = null;
     // 🤔 «Cosa intendevi?» a schermo: il conto per tutti e «⏩ Avanti» a chi ha giocato (più di metà = si va subito ai tasti di fine)
     if (vm.fase === "fine" && vm.rivedi && vm.cosa) {
@@ -1675,9 +1678,10 @@
       box.appendChild(riga);
       // i tasti di fine comuni (all'host del momento, anche se è l'amico che ha preso il posto dell'host, e a chi ha giocato):
       // se li disegna il core nella riga, niente tasti nostri. In prova (da solo) restano i nostri
-      var tf = ui.t.tastiFine && !(ui.t.impostazioni && ui.t.impostazioni.modo === "prova") && (cb.sonoHost || r.team >= 0)
+      var tf = ui.t.tastiFine && !(ui.t.impostazioni && ui.t.impostazioni.modo === "prova") && (cb.sonoHost || r.team >= 0 || conTarga(ui.t))
         ? (cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: function () { cb.onEsci(); } } : { host: false, esci: function () { cb.onEsci(); } }) : null;
       if (tf && ui.t.tastiFine(riga, tf)) { riga.classList.add("or-fine"); return; }   // (in colonna: sopra i tasti il core può mettere «👥 Avete giocato con»)
+      if (conTarga(ui.t)) { stato("👀 Hai guardato: se l'host fa un'altra partita, entri anche tu."); return; }   // (si esce dalla targhetta)
       if (cb.sonoHost) riga.appendChild(el("button", { class: "or-btn", text: "↻ Nuova partita", onclick: cb.onNuova }));
       riga.appendChild(el("button", { class: "or-btn chiaro", text: "🏠 Esci", onclick: function () { cb.onEsci(); } }));
       if (!cb.sonoHost && !r.prossimo) stato(r.team < 0 && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta hai guardato." : "Se l'host fa un'altra partita, tornate da soli nella saletta.");
@@ -1861,6 +1865,7 @@
       ".or-sch{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;color:#1f1f1f}",
       ".or-sch .or-pannelli{flex:none}.or-sch .or-ind{min-height:40px}",
       ".or-studio .st-barra{gap:6px;padding:10px 10px calc(10px + env(safe-area-inset-bottom))}",
+      ".or-studio.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}",   // chi guarda: il posto della targhetta
       ".or-studio .or-btn{background:#fff;color:#1f1f1f}.or-studio .or-btn.chiaro{background:rgba(255,255,255,.18);color:#fff}",
       ".or-studio .or-stato{color:#e6e9ff}",
       ".or-studio .or-num{background:rgba(255,255,255,.18);color:#fff}.or-studio .or-num.on{background:#fff;color:#1f1f1f}",
@@ -1952,6 +1957,7 @@
     descrizione: "Il capo dà un indizio di una parola sola, la squadra trova le sue parole sul tabellone. Occhio alla parola nera! A 2 o 3 squadre, o in pochi contro il Bot, ognuno dal suo telefono.",
     giocatoriMin: 2, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 2–12 giocatori",   // (in 2-3 si gioca contro il Bot)
     postiOnline: MAX,   // posti online (12)
+    ritardatari: "turno",   // chi arriva a partita cominciata entra subito nella squadra più piccola e gioca dal prossimo turno
     // "Prova da solo" la vede solo il proprietario (account IL PAPPONE): per vedere com'è il gioco anche senza amici
     modi: [ { modo: "prova", icona: "🧪", nome: "Prova da solo", sotto: "Solo per te: tu e un Bot contro due Bot", soloPer: "IL PAPPONE" } ], soloOnline: true,
     // se all'host si ricarica la pagina la partita riprende da lui; se sparisce del tutto, un amico la porta avanti (il core)

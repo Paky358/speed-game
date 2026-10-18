@@ -266,6 +266,7 @@
       ".ho-stam{height:12px;border-radius:7px;background:rgba(0,0,0,.45);overflow:hidden;border:1px solid rgba(255,255,255,.25)}",
       ".ho-stam .fill{height:100%;width:100%;border-radius:7px;transform-origin:0 50%;transition:transform .1s linear}",
       ".ho-sotto.guardo .ho-stam{visibility:hidden}",
+      ".ho-sotto.solo-guardo .ho-stam,.ho-sotto.solo-guardo .ho-frusta{display:none}.ho-sotto.solo-guardo{padding-bottom:calc(62px + env(safe-area-inset-bottom))}",
       ".ho-frusta{width:100%;min-height:72px;border:0;border-radius:18px;cursor:pointer;font-family:inherit;font-weight:900;",
         "font-size:1.5rem;color:#241f00;background:linear-gradient(135deg,#ffe58a,var(--accento) 60%,var(--accento-scuro));",
         "box-shadow:0 8px 22px rgba(224,169,10,.35);-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;}",
@@ -535,14 +536,15 @@
     var fillEl = el("div", { class: "fill", style: "background:#51cf66" });
     var bFr = el("button", { class: "ho-frusta", text: "🚦 Pronti…", disabled: "disabled" });
     bFr.addEventListener("pointerdown", function (e) { e.preventDefault(); cb.onFrusta(); });
-    scena.appendChild(el("div", { class: "ho-sotto" + (io < 0 ? " guardo" : "") }, [ el("div", { class: "ho-info" }, [info]), el("div", { class: "ho-stam" }, [fillEl]), bFr ]));
+    // (cb.targa: guardo soltanto, sotto c'è la targhetta del core: solo la scritta, niente frusta né energia)
+    scena.appendChild(el("div", { class: "ho-sotto" + (io < 0 ? " guardo" : "") + (io < 0 && cb.targa ? " solo-guardo" : "") }, [ el("div", { class: "ho-info" }, [info]), el("div", { class: "ho-stam" }, [fillEl]), bFr ]));
     s._contenuto.appendChild(scena);
     function suTasto(e) { if (e.code === "Space" || e.key === " ") { e.preventDefault(); cb.onFrusta(); } }
     document.addEventListener("keydown", suTasto);
     t.mostra(s);
     var dots = [].slice.call(mappa.querySelectorAll("circle")).sort(function (a, b) { return a.getAttribute("data-k") - b.getAttribute("data-k"); });
     return { scena: scena, pista: pista, mondo: mondo, cancelli: cancelli, cartelli: cartelli, arrivo: arrivo, erba: erba, pali: pali, folla: folla,
-      cavEl: cavEl, fillEl: fillEl, frusta: bFr, info: info, conto: conto, hudB: hudB, hudS: hudS, dots: dots, io: io, N: N, cavallo: cb.cavallo || "", gpEl: gpEl,
+      cavEl: cavEl, fillEl: fillEl, frusta: bFr, info: info, conto: conto, hudB: hudB, hudS: hudS, dots: dots, io: io, N: N, cavallo: cb.cavallo || "", gpEl: gpEl, targa: !!cb.targa,
       cam: null, W: 0, hw: 0, nMis: 0, tU: 0, arrT: [], prestoU: 0,
       rimuovi: function () { document.removeEventListener("keydown", suTasto); } };
   }
@@ -612,7 +614,7 @@
     if (sn.fase === "via") {
       stato = "via"; testo = "🚦 Pronti…";
       if (sn.conto !== ref.contoScritto) { ref.contoScritto = sn.conto; ref.conto.className = "ho-conto" + (sn.conto > 0 ? "" : " via"); ref.conto.textContent = sn.conto > 3 ? "" : sn.conto > 0 ? String(sn.conto) : "VIA!"; }
-      info = guardo ? "👀 Guardi la corsa: entri alla prossima!" : (ref.cavallo ? "🐴 " + ref.cavallo + " · tocca a ritmo!" : "Tocca a ritmo, non a raffica!");
+      info = guardo ? (ref.targa ? "👀 Guardi la corsa" : "👀 Guardi la corsa: entri alla prossima!") : (ref.cavallo ? "🐴 " + ref.cavallo + " · tocca a ritmo!" : "Tocca a ritmo, non a raffica!");
       if (sn.conto <= 0) ref.cancelli.classList.add("aperti");
     } else if (corre) {
       ref.cancelli.classList.add("aperti");
@@ -823,7 +825,7 @@
     }
     var R = { s: s, bAv: null, quanti: null };
     if (gp.finito) {
-      if (!o.locale) { var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); } }
+      if (!o.locale && !o.targa) { var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); } }
       if (!o.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!o.sonoHost, nuova: o.sonoHost ? o.onRigioca : null, esci: o.onEsci })) { /* i tasti del core */ }
       else if (o.sonoHost || o.locale) {
         s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Un altro Gran Premio", onclick: o.onRigioca }));
@@ -832,7 +834,8 @@
           el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: o.onEsci }) ]));
       } else {
         s._piede.appendChild(el("p", { class: "modulo-nota", text: "Aspetta l'host: un altro Gran Premio o di nuovo in saletta…" }));
-        s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: o.onEsci }));
+        if (o.targa) s._piede.style.paddingBottom = "calc(62px + env(safe-area-inset-bottom))";   // (chi guarda soltanto: esce dal ✕ della targhetta)
+        else s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: o.onEsci }));
       }
       t.mostra(s);
       return R;
@@ -846,7 +849,8 @@
       } }, [ el("span", { class: "tx", text: "⏩ Avanti" }), el("span", { class: "ho-gp-quanti" }) ]);
       s._piede.appendChild(R.bAv);
     }
-    s._piede.appendChild(el("div", { class: "ho-piede2" }, [
+    if (o.targa) s._piede.style.paddingBottom = "calc(62px + env(safe-area-inset-bottom))";   // (chi guarda soltanto: esce dal ✕ della targhetta)
+    else s._piede.appendChild(el("div", { class: "ho-piede2" }, [
       o.onSaletta ? el("button", { class: "btn btn-fantasma", text: "🛋️ Saletta", onclick: o.onSaletta }) : null,
       el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: o.onEsci }) ]));
     t.mostra(s);
@@ -897,7 +901,7 @@
       });
       s._contenuto.appendChild(box);
     }
-    if (!cb.locale) { var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); } }   // online: le faccine anche sulla classifica
+    if (!cb.locale && !cb.targa) { var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); } }   // online: le faccine anche sulla classifica
     // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
     if (!cb.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onRigioca : null, esci: cb.onEsci })) { /* fatto dal core */ }
     else if (cb.sonoHost) {
@@ -909,8 +913,10 @@
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: cb.onRigioca }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     } else {
-      s._piede.appendChild(el("p", { class: "modulo-nota", text: guardo ? "Entri alla prossima corsa! 🐎" : "Aspetta l'host: un'altra corsa o di nuovo in saletta…" }));
-      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+      s._piede.appendChild(el("p", { class: "modulo-nota", text: cb.targa ? "👀 Se l'host fa un'altra corsa, entri anche tu nella saletta." : guardo ? "Entri alla prossima corsa! 🐎" : "Aspetta l'host: un'altra corsa o di nuovo in saletta…" }));
+      // chi guarda soltanto (cb.targa): una sola uscita, il ✕ della targhetta del core in basso (qui il suo posto)
+      if (cb.targa) s._piede.style.paddingBottom = "calc(62px + env(safe-area-inset-bottom))";
+      else s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     }
     t.mostra(s);
   }
@@ -1142,6 +1148,7 @@
       // ogni telefono costruisce la corsa e fa il suo 3-2-1. Resta in stanza: chi rientra ritrova il suo posto (ids)
       msgVia = { t: "via", nomi: nomi, n: N, av: av, ids: ids, cn: cn, garaId: garaId, diff: diff, umani: umaniGara, gp: gpVia(G), fase: "via", conto: conto, rip: ripCorsa ? 1 : 0 };
       rete.invia(msgVia);
+      if (t.aCheSiamo) t.aCheSiamo(G ? "Gran Premio, corsa " + G.corsa + " di " + G.di : "si corre");   // (nella Sala: a che punto è, per chi è fuori)
       if (ref) ref.rimuovi();
       ref = costruisci(t, N, nomi, 0, {
         cavallo: cn[0], conferma: "Chiudere la corsa per tutti?", gp: gpVia(G), rip: ripCorsa,
@@ -1284,6 +1291,8 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var el = t.el, S = { rete: null, myId: null, nome: "", mySeat: -1, ref: null, fase: null, nomi: null, N: 0, garaId: null, diff: "medio", umani: 1,
       av: null, cn: null, ff: null, contoTimer: null, buf: [], raf: null, lastP: [], delayMs: 120 };   // buf: le posizioni ricevute, per un movimento liscio
+    // guardo soltanto (link con guarda=1): la corsa in tempo reale, senza cavallo né frusta; in basso la targhetta del core
+    var GUARDA = !!t.guarda, TARGA = GUARDA && !t.eliminazione;
     if (t.nomeProfilo && t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else schermaNome();   // col profilo si entra da soli
 
     // Calcola la vista da disegnare "adesso - delay" interpolando fra le posizioni ricevute.
@@ -1373,14 +1382,14 @@
             // Gran Premio: dopo il photo finish la classifica a punti (tra le corse col «⏩ Avanti», alla fine il podio)
             var classificaGP = function () {
               S.ff = null;
-              S.gpR = renderGP(t, gp, { mia: S.myId, mioId: S.myId, av: avF, chiaveConto: "ho-gp|" + gid, onEsci: esci,
+              S.gpR = renderGP(t, gp, { mia: S.myId, mioId: S.myId, av: avF, targa: TARGA, chiaveConto: "ho-gp|" + gid, onEsci: esci,
                 onAvanti: !gp.finito && io >= 0 ? function () { if (S.rete) S.rete.invia({ t: "avanti", garaId: gid }); } : null });
               S.gpR.gara = gid;
               mostraConto();
             };
             // chi rientra (pagina ricaricata) mentre c'è la classifica del Gran Premio: dritto lì, senza rivedere il photo finish
             if (gp && m.to) classificaGP();
-            else S.ff = finale(t, m.ord, m.nomi, io, m.foto, m.cn, { sonoHost: false, onEsci: esci, dopoFoto: gp ? classificaGP : null });
+            else S.ff = finale(t, m.ord, m.nomi, io, m.foto, m.cn, { sonoHost: false, targa: TARGA, onEsci: esci, dopoFoto: gp ? classificaGP : null });
           } else if (m.t === "gpconto") {   // Gran Premio: il tempo che manca e chi ha già toccato «⏩ Avanti»
             S.gpConto = { garaId: m.garaId, fine: Date.now() + (+m.ms || 0), avanti: m.avanti || [], servono: m.servono || 1 };
             mostraConto();
@@ -1404,7 +1413,7 @@
       annullaFine();
       S.nomi = sn.nomi; S.N = sn.N;
       S.ref = costruisci(t, sn.N, sn.nomi, S.mySeat, {
-        cavallo: S.cn && S.mySeat >= 0 ? S.cn[S.mySeat] : "", gp: S.gp, rip: S.rip,
+        cavallo: S.cn && S.mySeat >= 0 ? S.cn[S.mySeat] : "", gp: S.gp, rip: S.rip, targa: TARGA,
         onFrusta: function () {
           if (S.fase !== "corsa" || !S.rete || S.mySeat < 0) return;
           var io = mioCav(); if (io && (io.f || io.a)) return;
@@ -1426,10 +1435,10 @@
       }, 800);
     }
     function mostraLobby(m) {
-      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, fuori: m.fuori }, { onEsci: esci });
+      renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, fuori: m.fuori, guarda: GUARDA }, { onEsci: esci });
     }
     function attesa() {   // finché non arriva la saletta dall'host
-      var s = t.schermata({ icona: "🐎", titolo: "⏳ Sto entrando…", sotto: "Horto Muso · stanza " + String(codice).toUpperCase(), indietro: esci });
+      var s = t.schermata({ icona: GUARDA ? "👀" : "🐎", titolo: GUARDA ? "👀 Guardo la corsa…" : "⏳ Sto entrando…", sotto: "Horto Muso · stanza " + String(codice).toUpperCase(), indietro: esci });
       s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(s);
     }
@@ -1451,8 +1460,8 @@
     t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: vuoti, giocatori: gio, testoComincia: "Comincia la corsa ▶",
       nota: vm.sonoHost ? "Puoi cominciare quando vuoi: i posti liberi li corrono i bot." : null,
       extra: fuori.length ? [t.el("p", { class: "modulo-nota", text: "👀 Guardano: " + fuori.map(function (g) { return g.id === vm.myId ? "tu" : g.nome; }).join(", ") })] : null,
-      spettatore: guardo ? "👀 Questa volta guardi" : null,
-      attesa: guardo ? "Corrono gli amici scelti: questa corsa la guardi! 🐎" : "Aspetta che l'host dia il via alla corsa! 🐎", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      spettatore: vm.guarda ? "👀 Guardi la corsa" : guardo ? "👀 Questa volta guardi" : null,   // (vm.guarda: guardo soltanto, dal link)
+      attesa: vm.guarda ? "Guardi la corsa: si parte tra poco! 🐎" : guardo ? "Corrono gli amici scelti: questa corsa la guardi! 🐎" : "Aspetta che l'host dia il via alla corsa! 🐎", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function errore(t, txt) {
@@ -1479,6 +1488,7 @@
     etichettaGiocatori: "👥 1–8 giocatori",   // 1 da solo contro i bot, fino a 8 online (i cavalli in gara)
     postiOnline: 8,   // 8 cavalli al massimo: nella Sala, se siete di più, corre chi sceglie l'host e gli altri guardano
     riprende: true,   // se l'host ricarica la pagina restano iscritti e punti: la corsa a metà riparte dai cancelletti (t.ripresa)
+    ritardatari: "partita",   // chi arriva a corsa partita la guarda ed entra alla prossima
     // le regole in una riga, per la saletta ("📜 Si gioca così")
     riassunto: function (imp) {
       imp = imp || {};

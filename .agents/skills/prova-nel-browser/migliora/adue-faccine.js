@@ -385,11 +385,13 @@
     if (!await W.aspetta(function () { return A.vm(gioca.stanza).fase === "gioco"; }, 8000)) no("la partita non comincia");
     var bg = await W.aspetta(function () { return wG.document.querySelector(".tb-guarda"); }, 8000); if (!bg) no(nG + " non ha «👀 Guarda»");
     bg.click();
-    if (!await W.aspetta(function () { return wG.document.querySelectorAll(".tr-cella").length === 9 && tasto(wG); }, 8000)) no(nG + " guarda ma non ha il 💬 («" + T(wG).slice(0, 80) + "»)");
-    // chi guarda: solo faccine
-    tasto(wG).click(); await W.dorme(200);
+    // (dal Passo 6 chi guarda non ha il 💬 del gioco, che il core butterebbe: ha la fila delle faccine del core, t.faccine())
+    var faG = function () { return [].find.call(wG.document.querySelectorAll(".sl-fa"), function (b) { return b.textContent === "👏" && b.offsetParent !== null; }); };
+    if (!await W.aspetta(function () { return wG.document.querySelectorAll(".tr-cella").length === 9 && faG(); }, 8000)) no(nG + " guarda ma non ha le faccine («" + T(wG).slice(0, 80) + "»)");
+    // chi guarda: solo faccine (niente 💬 né frasi)
+    if (tasto(wG)) no("chi guarda ha ancora il 💬 del gioco");
     if (wG.document.querySelector(".sgc-frasi")) no("chi guarda ha anche le frasi");
-    var f0 = wG.document.querySelector(".sgc-fac button"); if (!f0) no("il foglio delle faccine non si apre"); f0.click();
+    faG().click();
     var reG = new RegExp("👏\\s*" + nG);
     if (!await vedeVolante(wA, reG) || !await vedeVolante(wB, reG)) no("i due che giocano non vedono «👏 " + nG + "» (" + volanti(wA).join(", ") + ")");
     // chi gioca (B, cerchio) manda una frase: chi guarda la vede sotto l'avatar dell'O

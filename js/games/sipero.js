@@ -269,6 +269,9 @@
       ".schermata.sp-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden}",
       ".schermata.sp-piena>.testa,.schermata.sp-piena>.piede{display:none}",
       ".schermata.sp-piena>.contenuto{height:100%;margin:0;padding:0}",
+      // chi guarda col link: in basso la targhetta del core "👀 Guardi · 😂 · ✕" (la scena le lascia il posto)
+      ".sp-scena.sp-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom))}",
+      ".schermata.sp-fine-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom))}",
       ".sp-scena{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;gap:7px;padding:calc(8px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));overflow:hidden;user-select:none;-webkit-user-select:none}",
       ".sp-barra{flex:0 0 auto;display:flex;align-items:center;gap:8px;min-height:38px}",
       ".sp-esci{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1.3rem;font-weight:900;cursor:pointer}",
@@ -466,7 +469,7 @@
     ui.turno = el("div", { class: "sp-turno" });
     ui.azione = el("div", { class: "sp-azione" });
     ui.piede = el("div", { class: "sp-piede" });
-    ui.scena = el("div", { class: "sp-scena" }, [ui.barra, ui.tavolo, ui.turno, ui.azione, ui.piede]);
+    ui.scena = el("div", { class: "sp-scena" + (t.guarda ? " sp-targa" : "") }, [ui.barra, ui.tavolo, ui.turno, ui.azione, ui.piede]);
     s._contenuto.appendChild(ui.scena);
     t.mostra(s);
     return ui;
@@ -680,6 +683,7 @@
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono: le carte restano segrete", amici: true }],
     giocatoriMax: MAX,
     postiOnline: MAX,   // posti online (10)
+    ritardatari: "turno",   // chi arriva a partita cominciata guarda il round in corso ed entra dal round dopo (squadre a sorte)
     riprende: true,     // se l'host ricarica a metà partita, la partita riprende dalla stessa fase (le carte tornano alle squadre)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     difficolta: 2,
@@ -1366,7 +1370,10 @@
       if (st.solo && st.R && st.fase !== "lobby" && st.fase !== "fine") vmSolo(v);
       return v;
     }
-    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegnaOn(V, v, cb); vici(); }
+    function bd() {
+      var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegnaOn(V, v, cb); vici();
+      if (t.aCheSiamo && st.fase !== "lobby" && st.fase !== "fine" && st.totale > 1) t.aCheSiamo("round " + st.round + " di " + st.totale);   // (nella Sala, per chi è fuori)
+    }
     // (host di riserva) chi porta avanti la partita se sparisco: prima chi guarda (non gioca: non ha niente da perdere)
     var viciK = "";
     function vici() {
@@ -1840,6 +1847,7 @@
       if (!ok) nota = "Per cominciare servono un giudice (⚖️) e almeno uno per squadra (🟥 🟦).";
     } else ok = pres.length >= MIN;
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN, vuoti: Math.max(0, MIN - pres.length), puoComincia: ok,
+      spettatore: t.guarda ? "👀 Guardi soltanto" : false,   // (chi guarda col link)
       giocatori: pres.map(function (g) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: g.id === (vm.hostId || "host"), tu: g.id === cb.myId }; }),
       extra: [V.lobbyNodo], nota: cb.sonoHost && pres.length >= MIN && !ok ? nota : null,
       attesa: r.squadre === "mano" ? "Aspetta: chi organizza sta scegliendo il giudice e le squadre. 🤨" : "Aspetta che si cominci: giudice e squadre li decide la sorte. 🤨",
@@ -1856,7 +1864,8 @@
     var kConto = "sp|" + vm.sessione + "|" + vm.round + "|" + vm.fase + "|" + (vm.fase === "gioco" && step ? step.i : vm.parla);
     function conto(nodo, fn) { if (vm.resta && t.contoAvanti) t.contoAvanti(nodo, vm.resta, fn || null, kConto); }
     // la fila delle faccine (online): dove si aspetta o si guarda
-    function faccine(dove) { var f = t.faccine ? t.faccine() : null; if (f) { f.classList.add("sp-faccine"); dove.appendChild(f); } }
+    // (chi guarda col link le ha nella targhetta del core)
+    function faccine(dove) { var f = t.faccine && !t.guarda ? t.faccine() : null; if (f) { f.classList.add("sp-faccine"); dove.appendChild(f); } }
 
     // barra in alto
     var fase = vm.fase === "gioco" && step ? step.ic + " " + step.nome : vm.fase === "arringa" ? "🎤 L'arringa" : vm.fase === "giudizio" ? "⚖️ Il verdetto" : "🏅 Il verdetto";
@@ -1891,8 +1900,8 @@
     if (vm.fase === "gioco" && step) {
       if (me.giudice) { chiave = "giud"; fai = function () { messaggio(ui, "⚖️", "Sei il giudice: guarda il tavolo. Alla fine scegli tu lo scenario migliore da vivere."); faccine(ui.azione); }; }
       else if (me.sq < 0) {
-        chiave = "guarda|" + me.guarda;
-        fai = function () { messaggio(ui, "👀", me.guarda ? "Partita in corso: entri dal prossimo round. Intanto guardi!" : "Questo round lo giocano gli altri: tu guardi."); faccine(ui.azione); };
+        chiave = "guarda|" + me.guarda + "|" + !!t.guarda;
+        fai = function () { messaggio(ui, "👀", t.guarda ? "Guardi la partita: fai il tifo!" : me.guarda ? "Partita in corso: entri dal prossimo round. Intanto guardi!" : "Questo round lo giocano gli altri: tu guardi."); faccine(ui.azione); };
       } else {
         var mano = cb.mano(me.sq);
         if (!mano) { chiave = "carte"; fai = function () { messaggio(ui, "🃏", "Arrivano le tue carte…"); }; }
@@ -2176,7 +2185,8 @@
     var titolo = vm.manuale && vm.vincitore != null ? "Vince la " + nomeSq(vm.vincitore) + "!" :
       primi.length === 1 ? (primi[0].id === cb.myId ? "Hai vinto!" : "Vince " + primi[0].nome + "!") : "Pari merito in testa!";
     var s = t.schermata({ icona: "🏆", titolo: titolo, sotto: "Classifica finale" });
-    var fac = t.faccine ? t.faccine() : null;   // le faccine della saletta: si festeggia (o si sfotte) tutti insieme
+    var fac = t.faccine && !t.guarda ? t.faccine() : null;   // le faccine della saletta: si festeggia (o si sfotte) tutti insieme (chi guarda col link: dalla targhetta)
+    if (t.guarda) { stile(); s.classList.add("sp-fine-targa"); }
     // tanti giocatori: righe basse su due colonne, così la classifica e i tasti stanno in uno schermo
     var fitta = cl.length > 6 || cl.length * 71 + 262 + (fac ? 56 : 0) + 40 > (window.innerHeight || 640);
     var ol = el("ol", { class: "classifica" + (fitta ? " fitta" : "") });
@@ -2188,9 +2198,10 @@
     });
     s._contenuto.appendChild(ol);
     if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
-    if (!cl.some(function (r) { return r.id === cb.myId; })) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Questa partita l'hai guardata: giochi dalla prossima." }));
+    if (!cl.some(function (r) { return r.id === cb.myId; })) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: t.guarda ? "👀 Se chi organizza fa un'altra partita, entri anche tu nella saletta." : "Questa partita l'hai guardata: giochi dalla prossima." }));
     // i tasti di fine uguali per tutti (Rivincita, Cambia gioco, Ci sto…) li mette il core; se no quelli di sempre
-    if (!(t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci }))) {
+    // (chi guarda col link: niente tasti, esce dalla targhetta del core)
+    if (!t.guarda && !(t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci }))) {
       if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
       else s._contenuto.appendChild(cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: "Se chi organizza fa un'altra partita, torni da solo nella saletta." }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));

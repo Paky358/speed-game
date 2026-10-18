@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 233,
+    data: "17 ottobre 2026",
+    titolo: "Più gente, più festa 🎉",
+    descrizione: [
+      "👀 Guarda qualsiasi partita, anche già cominciata: dal link della partita o col tasto «👀 Guarda» nella Sala. In basso hai «👀 Guardi · 😂 · ✕»: con 😂 mandi le faccine a chi gioca, con ✕ smetti di guardare. Alla partita dopo entri anche tu, da solo.",
+      "✋ Chi arriva tardi gioca prima: nella Balla Colossale, Scarabocchio, Nomi Cose e Città, Parola d'ordine e Sì però entra dal round dopo (con 0 punti), nel Black Jack e nel Poker dalla mano dopo; negli altri giochi guardi ed entri alla prossima partita. Nella Sala trovi «▶ Entra» o «👀 Guarda» e c'è scritto a che punto è la partita («🎮 Si gioca a Balla · Round 3 di 5»). (Non ancora in Stessa Lunghezza d'Onda, Chi di Noi?, Scopone e L'Impostore.)",
+      "👑 Chi vince resta: nei giochi a due della Sala (Tris, Drop 4, Battaglia Navale, Scopa, Calcio Biliardo), quando siete almeno in tre, scegli «👑 Chi vince resta» in «Chi gioca?». Chi vince resta al tavolo, gli altri aspettano in coda e chi perde va in fondo; col pareggio resta il campione. La sfida dopo parte da sola in 8 secondi, e alla fine resta scritto il record della serata («🔥 4 di fila»).",
+      "🗳️ Scegliamo insieme: chi tiene la Sala lo accende nel ⚙️. L'app propone 3 giochi, tutti votano per 20 secondi e poi gira la ruota, uguale su tutti i telefoni: più voti vuol dire più spicchi, ma anche il gioco senza voti può uscire. Il gioco parte per tutti.",
+      "🟢 Gli amici online: in home vedi chi dei tuoi amici è nell'app («🟢 Giulia è nell'app · 📨 Chiama») e nella Sala c'è «➕ Invita gli amici». All'amico arriva un avviso con «Entra» che lo porta nella tua Sala, anche se aveva l'app chiusa (vale 10 minuti). Se non vuoi farti vedere, spegni «🟢 Fatti vedere online» in Classifica → Amici."
+    ]
+  },
+  {
     v: 232,
     data: "18 ottobre 2026",
     titolo: "L'Impostore: la partita non si perde 🔁",

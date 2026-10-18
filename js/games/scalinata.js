@@ -230,6 +230,7 @@
     id: "scalinata",
     riprende: true,   // se l'host ricarica a metà partita, la partita riprende da dove era (il core lo dice agli amici)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
+    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     nome: "La Scalinata",
     icona: "🪜",
     descrizione: "Tutti sulla scala, fino a 8: scegli in segreto quanti gradini salire. Avanza solo chi sceglie un numero che nessun altro ha scelto. Primo in cima, vince.",
@@ -465,6 +466,7 @@
       ".sc-voce{flex:0 0 auto;height:46px;padding:4px 14px 0;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;font-size:.9rem;line-height:1.25;color:#ffe8a3}",
       ".sc-voce span{opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s}.sc-voce span.su{opacity:1;transform:none}",
       ".sc-pann{flex:0 0 auto;height:150px;padding:4px 12px 12px;display:flex;flex-direction:column;justify-content:center;gap:8px}",
+      ".sc-scena.con-targa .sc-pann{padding-bottom:62px}",   // chi guarda soltanto: sotto c'è la targhetta del core
       ".sc-tasti{display:flex;gap:10px}",
       ".sc-tasto{flex:1;height:96px;border:0;border-radius:18px;color:#08210f;font-weight:900;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit}",
       ".sc-tasto b{font-size:2.5rem;line-height:1}.sc-tasto small{font-size:.75rem;font-weight:700;opacity:.8}",
@@ -896,6 +898,7 @@
       fermaTimer();
       extra = extra || 0;
       st.nRound += 1; st.fase = "scelta"; st.vincitori = [];
+      if (t.aCheSiamo) t.aCheSiamo("Round " + st.nRound);   // (nella Sala: a che punto è la salita, per chi è fuori)
       st.scelte = st.avanza = st.prev = st.caso = null; st.commento = "";
       st.posti.forEach(function (p) { p.scelta = null; p.caso = false; });
       st.deadline = Date.now() + SECONDI * 1000 + extra;
@@ -995,16 +998,18 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaReteScala(t);
     var el = t.el, S = { myId: null, vm: null, rete: null, nome: "", msg: null, T: leggiTraccia(codice), chiuso: false };
     var V = nuovaVista();
+    var GUARDA = !!t.guarda;   // guardo soltanto (link con guarda=1): niente posto, niente mosse, niente trofei
     function niente() {}
     var cb = {
       sonoHost: false, myId: null,
+      guarda: GUARDA, targa: GUARDA && !t.eliminazione,   // targa: in basso c'è la targhetta del core «👀 Guardi · 😂 · ✕»
       onScegli: function (n, r) { if (S.rete) S.rete.invia({ t: "scegli", n: n, r: r }); },
       onComincia: niente, onProssimo: niente, onNuova: niente,
       onEsci: function () { S.chiuso = true; if (V.tav) V.tav.ferma(); if (S.rete) S.rete.chiudi(); t.esci(); }
     };
     schermaNome();
     function schermaNome() {
-      var s = t.schermata({ icona: "🪜", titolo: "Entra nella Scalinata", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ icona: GUARDA ? "👀" : "🪜", titolo: GUARDA ? "Guardi la Scalinata" : "Entra nella Scalinata", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
@@ -1029,7 +1034,7 @@
           }
           if (m.t !== "vm" || !m.vm || !m.vm.posti) return;
           var vm = S.vm = m.vm;
-          if (vm.fase === "rivela") {
+          if (vm.fase === "rivela" && !GUARDA) {   // (chi guarda soltanto non conta i trofei)
             var io = -1; vm.posti.forEach(function (p, k) { if (p.id === S.myId) io = k; });
             if (tracciaScala(S.T, io, vm.partita + ":" + vm.nRound, vm.nRound, vm.scelte, vm.avanza, vm.prev, vm.posti.map(function (p) { return p.passi; }))) salvaTraccia(codice, S.T);
           }
@@ -1074,7 +1079,8 @@
   function disegnaVM(t, vm, cb, V) {
     var myId = cb.myId, io = -1;
     vm.posti.forEach(function (p, k) { if (p.id === myId) io = k; });
-    var guarda = vm.guarda || [], guardo = io < 0 && guarda.some(function (g) { return g.id === myId; });
+    // guardo: sono tra chi guarda (scala piena, partita cominciata, nella Sala non scelto) o guardo soltanto (cb.guarda)
+    var guarda = vm.guarda || [], guardo = io < 0 && (!!cb.guarda || guarda.some(function (g) { return g.id === myId; }));
 
     if (vm.fase === "lobby") { V.tav = null; V.fine = null; V.fase = null; return lobbyVM(t, vm, cb, V, guardo); }
     if (vm.fase === "fine") {
@@ -1091,6 +1097,7 @@
       var posti = vm.posti.map(function (p, i) { return { nome: p.nome, colore: p.colore, bot: p.bot, via: p.via, omino: p.omino, passi: vm.fase === "rivela" && vm.prev ? vm.prev[i] : p.passi }; });
       tav = V.tav = creaTavolo(t, { posti: posti, io: io, tu: true, conferma: cb.sonoHost ? "Chiudere la partita per tutti?" : "Uscire dalla partita?", onEsci: cb.onEsci });
       V.partita = vm.partita; V.fase = null; V.round = -1;
+      if (cb.targa) { var scn = tav.s.querySelector(".sc-scena"); if (scn) scn.classList.add("con-targa"); }   // (sotto, il posto per la targhetta)
       t.mostra(tav.s);
     }
     tav.nomi(vm.posti);
@@ -1120,6 +1127,8 @@
           cb.onScegli(n, nR);
         }, vm.sc)]);
       } else if (mio && !mio.bot && !mio.via) tav.pannello([pMsg(t, giaMia ? "Hai scelto " + V.mia.n + " ✓" : "Hai scelto ✓", "Aspetta gli altri…")]);
+      // chi guarda soltanto ha già la targhetta del core (col 😂 delle faccine): qui solo la scritta
+      else if (cb.guarda) tav.pannello([pMsg(t, "👀 Stai guardando", "Le scelte si scoprono tutte insieme…")]);
       else tav.pannello([pMsg(t, "👀 Stai guardando", !guardo ? null : vm.scelti ? "Questa volta sulla scala ci sono gli altri." : vm.posti.length >= (vm.maxPosti || 4) ? "La scala è piena (" + (vm.maxPosti || 4) + " posti): entri alla prossima partita." : "La partita era già cominciata: entri alla prossima partita."), t.faccine ? t.faccine() : null]);
       vm.posti.forEach(function (p, i) { if (p.chosen || (i === io && giaMia)) { V.bip[p.id] = 1; tav.scelto(i, true); } });
       return;
@@ -1155,8 +1164,9 @@
       var altri = guarda.filter(function (g) { return g.id !== cb.myId; }).map(function (g) { return g.nome; });
       var conTe = altri.length ? " (con te " + (altri.length === 1 ? "guarda " : "guardano ") + elenco(altri) + ")" : "";
       // nella Sala chi sale l'ha scelto l'host: niente cambio alla partita dopo
-      var txt = vm.scelti ? (guardo ? "👀 Questa volta guardi" + conTe + ": sulla scala salgono gli amici scelti." : "👀 Guardano: " + elenco(guarda.map(function (g) { return g.nome; })) + ".")
-        : guardo ? "👀 Sulla scala c'è posto per " + mp + ": questa partita la guardi" + conTe + ". Alla prossima tocca prima a chi ha guardato!"
+      var gi = guardo && !cb.guarda;   // (chi guarda soltanto non è in questa lista)
+      var txt = vm.scelti ? (gi ? "👀 Questa volta guardi" + conTe + ": sulla scala salgono gli amici scelti." : "👀 Guardano: " + elenco(guarda.map(function (g) { return g.nome; })) + ".")
+        : gi ? "👀 Sulla scala c'è posto per " + mp + ": questa partita la guardi" + conTe + ". Alla prossima tocca prima a chi ha guardato!"
         : "👀 Guardano: " + elenco(guarda.map(function (g) { return g.nome; })) + ". Sulla scala c'è posto per " + mp + ": alla prossima partita si dà il cambio.";
       if (V.notaGuarda.textContent !== txt) V.notaGuarda.textContent = txt;
       extra.push(V.notaGuarda);
@@ -1173,8 +1183,8 @@
       giocatori: vm.posti.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
       nota: cb.sonoHost && liberi > 0 ? "Puoi cominciare quando vuoi: " + (liberi === 1 ? "il posto libero lo prende un Bot." : "i " + liberi + " posti liberi li prendono i Bot.") : null,
       extra: extra,
-      attesa: guardo ? (vm.scelti ? "Si comincia tra poco: questa partita la guardi." : "La scala è piena: questa partita la guardi da spettatore.") : "Aspetta che l'host cominci la salita! 🪜",
-      spettatore: guardo ? "👀 Questa volta guardi" : null,   // (chi guarda non è "dentro" e non ha "Sono pronto")
+      attesa: cb.guarda ? "Guardi la salita: si comincia tra poco! 🪜" : guardo ? (vm.scelti ? "Si comincia tra poco: questa partita la guardi." : "La scala è piena: questa partita la guardi da spettatore.") : "Aspetta che l'host cominci la salita! 🪜",
+      spettatore: cb.guarda ? "👀 Guardi la partita" : guardo ? "👀 Questa volta guardi" : null,   // (chi guarda non è "dentro" e non ha "Sono pronto")
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
@@ -1202,10 +1212,15 @@
         : hoGuardato ? "👀 Hai guardato: alla prossima partita sali tu sulla scala!"
         : (guarda.length === 1 ? "👀 Ha guardato " : "👀 Hanno guardato ") + elenco(guarda.map(function (g) { return g.nome; })) +
           (guarda.length === 1 ? ": alla prossima partita sale sulla scala" : ": alla prossima partita salgono sulla scala") + (cambio ? " e dà il cambio chi è arrivato più in basso." : ".") }));
-    var fa = t.faccine ? t.faccine() : null;   // le faccine mentre si guarda la classifica
+    // le faccine mentre si guarda la classifica (chi guarda soltanto le ha nella targhetta del core, in basso)
+    var fa = t.faccine && !cb.targa ? t.faccine() : null;
     if (fa) { fa.style.marginTop = "12px"; s._contenuto.appendChild(fa); }
+    if (cb.targa) s._piede.style.paddingBottom = "calc(62px + env(safe-area-inset-bottom))";   // (il posto per la targhetta)
     // i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
     if (t.tastiFine && t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) V.notaFine = null;
+    else if (cb.targa) {   // chi guarda soltanto: una sola uscita, il ✕ della targhetta
+      s._piede.appendChild(V.notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: V.chiusa ? NOTA_CHIUSA : "👀 Se l'host fa un'altra partita, entri anche tu nella saletta." }));
+    }
     else if (cb.sonoHost) {
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: cb.onEsci }));

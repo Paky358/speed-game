@@ -224,6 +224,7 @@
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,
     postiOnline: 2,   // online si gioca in due: gli altri guardano
     riprende: true,   // se l'host ricarica la pagina, la partita riprende dalla stessa mossa (t.ripresa)
+    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     // la riga «📜 Si gioca così» della saletta
     riassunto: function (imp) { var p = imp && imp.primo; return "Comincia " + (p === "ospite" ? "chi entra" : p === "caso" ? "chi capita, a sorte" : "chi apre la stanza"); },
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
@@ -318,6 +319,9 @@
       ".d4-piede .btn{flex:1 1 0;min-width:0;margin:0}",
       ".d4-piede .sl-faccine{flex:1 1 100%}",
       ".d4-scena.con-fa{--d4w:min(96vw,calc(var(--alt,100dvh) - 290px),540px)}",
+      // chi guarda: in basso c'è la targhetta del core (alta 44 px + 10): la si lascia libera
+      ".d4-scena.con-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom));--d4w:min(96vw,calc(var(--alt,100dvh) - 282px),540px)}",
+      ".d4-scena.con-targa.con-fa{--d4w:min(96vw,calc(var(--alt,100dvh) - 340px),540px)}",
       ".d4-nota{flex:1 1 100%;margin:0;text-align:center;font-weight:700;font-size:.92rem;color:var(--testo-tenue,#cdd6ff)}",      ".d4-chiedi{position:absolute;inset:0;z-index:20;background:rgba(10,14,40,.6);display:flex;align-items:center;justify-content:center;padding:20px}",
       ".d4-chiedi-box{background:var(--carta,#34479a);border-radius:18px;padding:18px;max-width:320px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.45);text-align:center}",
       ".d4-chiedi-box p{margin:0 0 14px;font-weight:800;font-size:1.1rem}",
@@ -517,26 +521,38 @@
 
   // ---- in basso: i tasti e gli avvisi (si rifanno solo quando cambiano) ----
   function piedeDrop(ui, vm, cb) {
-    var el = ui.t.el, f, nodi, tf = null;   // tf: i tasti di fine uguali per tutti (online), se li disegna il core
+    var el = ui.t.el, f, nodi, tf = null, sopra = null;   // tf: i tasti di fine uguali per tutti (online), se li disegna il core (sopra: una nota sopra di loro)
     function nota(txt) { return el("p", { class: "d4-nota", text: txt }); }
     function tasto(txt, cls, fn) { return el("button", { class: "btn " + cls, text: txt, onclick: fn }); }
-    // 💬 durante la partita: contro il Bot, online se l'host le ha lasciate accese (chi guarda il torneo: solo faccine)
+    // chi guarda soltanto (fuori dal torneo a eliminazione) ha la targhetta del core in basso "👀 Guardi · 😂 · ✕":
+    // lì ci sono le faccine e l'uscita, quindi qui niente fila (e sotto si lascia il suo posto)
+    var targa = !!(ui.t.guarda && !ui.t.eliminazione);
+    // 💬 durante la partita: contro il Bot, online se l'host le ha lasciate accese (chi guarda: le faccine del core)
     var chiac = vm.fase === "gioco" && !!cb.onChiac && !!CH() && !cb.spettatore && !(cb.sonoHost && vm.assente) && (cb.locale ? !!cb.bot : vm.ch === 1);
     if (cb.guarda) {
-      f = "guarda|" + vm.fase + "|" + !!(vm.fine && vm.fine.vincitore) + (chiac ? "|c" : "");
-      nodi = function () { return vm.fase === "fine" ? [nota(vm.fine && vm.fine.vincitore ? "Tra poco si torna al tabellone…" : "Pareggio: si rigioca!")] : (chiac ? ["c"] : []); };
+      f = "guarda|" + vm.fase + "|" + !!(vm.fine && vm.fine.vincitore);
+      // a fine partita i tasti del core, se ne ha per chi guarda (es. "Chi vince resta")
+      if (vm.fase === "fine" && !cb.locale) tf = { host: false, esci: cb.onEsci };
+      nodi = function () {
+        if (vm.fase !== "fine") return ["fa"];   // (nel torneo a eliminazione la fila delle faccine)
+        return [nota(!ui.t.eliminazione ? "👀 Aspettiamo la prossima partita…" : (vm.fine && vm.fine.vincitore ? "Tra poco si torna al tabellone…" : "Pareggio: si rigioca!")), "fa"];
+      };
     } else if (cb.spettatore) {
       f = "spett";
+      // nella Sala con "Chi gioca?" a fine partita decide il core (es. «🏠 Torna in Sala»)
+      if (vm.fase === "fine" && ui.t.scelti) tf = { host: false, esci: cb.onEsci };
       nodi = function () { return [nota("👀 Giocano in due: tu guardi la partita."), "fa"]; };
     } else if (cb.torneo) {
       f = "torneo|" + vm.fase;
       nodi = function () { return vm.fase === "fine" ? [nota("Tra poco i punti del torneo…")] : []; };
     } else if (cb.sonoHost && vm.assente) {
       var chi = vm.nomi.B || "L'avversario";
+      var via = vm.assente.voluto ? "🚪 " + chi + " ha lasciato la partita." : "⏳ " + chi + " si è disconnesso… lo aspettiamo.";
       f = "assente|" + vm.assente.voluto + "|" + chi;
+      // a partita finita restano i tasti di fine del core (con "Chi vince resta" niente "Nuovo avversario"): sopra, chi se n'è andato
+      if (vm.fase === "fine" && !cb.locale) { tf = { host: true, nuova: cb.onSaletta, esci: cb.esciSubito || cb.onEsci }; sopra = via; }
       nodi = function () {
-        return [nota(vm.assente.voluto ? "🚪 " + chi + " ha lasciato la partita." : "⏳ " + chi + " si è disconnesso… lo aspettiamo."),
-          tasto("👥 Nuovo avversario", "btn-fantasma", cb.onNuovoAvv), tasto("🏠 Esci", "btn-fantasma", cb.esciSubito)];
+        return [nota(via), tasto("👥 Nuovo avversario", "btn-fantasma", cb.onNuovoAvv), tasto("🏠 Esci", "btn-fantasma", cb.esciSubito)];
       };
     } else if (vm.fase === "fine" && (cb.locale || cb.sonoHost)) {
       f = "fine";
@@ -559,17 +575,19 @@
     ui.piede.innerHTML = "";
     // "fa" = la fila delle faccine (solo online: il mio avatar le fa sui telefoni di tutti)
     var conFa = false;
-    if (tf && ui.t.tastiFine(ui.piede, tf)) {   // li ha messi il core: sopra, le faccine
-      var fa0 = ui.t.faccine ? ui.t.faccine() : null;
+    if (tf && ui.t.tastiFine(ui.piede, tf)) {   // li ha messi il core: sopra, le faccine (e i tasti del gioco non servono)
+      var fa0 = ui.t.faccine && !targa ? ui.t.faccine() : null;
       if (fa0) { ui.piede.insertBefore(fa0, ui.piede.firstChild); conFa = true; }
+      if (sopra) ui.piede.insertBefore(nota(sopra), ui.piede.firstChild);
       nodi = function () { return []; };
     }
     nodi().forEach(function (n) {
-      if (n === "fa") { var fa = !cb.locale && ui.t.faccine ? ui.t.faccine() : null; if (fa) { ui.piede.appendChild(fa); conFa = true; } return; }
+      if (n === "fa") { var fa = !cb.locale && !targa && ui.t.faccine ? ui.t.faccine() : null; if (fa) { ui.piede.appendChild(fa); conFa = true; } return; }
       if (n === "c") { ui.piede.appendChild(CH().tasto({ gioco: "drop4", soloFaccine: !!ui.cb.guarda, onScegli: function (c) { if (ui.cb && ui.cb.onChiac) ui.cb.onChiac(c); } })); return; }
       ui.piede.appendChild(n);
     });
     if (ui.scena.classList.contains("con-fa") !== conFa) ui.scena.classList.toggle("con-fa", conFa);   // la griglia un po' più piccola: niente scorre
+    if (ui.scena.classList.contains("con-targa") !== targa) ui.scena.classList.toggle("con-targa", targa);   // (il posto della targhetta)
   }
 
   // ---- aggiorna solo quello che è cambiato ----
@@ -932,7 +950,8 @@
     }
     function rivincita() { if (st.fase !== "fine" || !st.avv || st.assente) return; parti(altro(st.primo)); }
     // la rivincita dei tasti di fine comuni: si torna nella saletta con lo stesso avversario (il core fa il 3-2-1), poi comincia l'altro
-    function allaSaletta() { if (st.fase !== "fine" || !st.avv || st.assente) return; st.prossimo = altro(st.primo); st.fase = "lobby"; bd(); }
+    // (l'avversario se n'è andato: si torna nella saletta col posto libero, come "👥 Nuovo avversario")
+    function allaSaletta() { if (st.fase !== "fine") return; if (!st.avv || st.assente) return cbH.onNuovoAvv(); st.prossimo = altro(st.primo); st.fase = "lobby"; bd(); }
     t.onRivincita = allaSaletta;
     function chiudi() { if (t.ricorda) t.ricorda(null); uscito = true; rete.chiudi(); t.esci(); }   // (uscito apposta: niente da riprendere)
     var cbH = {
@@ -1016,22 +1035,18 @@
     }
   }
 
-  // chi guarda una partita del torneo a eliminazione: la vede in diretta, senza poter toccare
+  // chi guarda soltanto (torneo a eliminazione, duello della Sala, "👀 Guarda"): la vede in diretta, senza poter toccare.
+  // Le sue faccine passano dal core (la fila t.faccine(), o il 😂 della targhetta): le sue mosse il core le butta
   function guardaDrop(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var rete = null, scritta = null, ui = null;   // (chi guarda: niente suoni)
     var cb = { guarda: true, sonoHost: false, mio: "-", onColonna: function () {}, onRivincita: function () {},
-      onEsci: function () { if (rete) rete.chiudi(); t.esci(); },
-      // 💬 chi guarda manda solo faccine (col suo nome); si vede subito qui, poi l'host la manda a tutti
-      onChiac: function (c) {
-        if (!rete || !CH() || !CH().valido("drop4", c, true)) return;
-        var n = CH().nomeDi(t.nomeProfilo && t.nomeProfilo());
-        chiacDrop(ui, "g", c, n); rete.invia({ t: "chiac", c: c, n: n });
-      } };
+      onEsci: function () { if (rete) rete.chiudi(); t.esci(); } };
     function attesa(txt) {
       if (scritta === txt) return; scritta = txt; ui = null;
       var s = t.schermata({ indietro: cb.onEsci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa", text: txt }));
+      if (t.eliminazione && t.faccine) { var fa = t.faccine(); if (fa) s._piede.appendChild(fa); }   // (fuori dal torneo le faccine sono nella targhetta)
       t.mostra(s);
     }
     attesa("👀 Mi collego alla partita…");

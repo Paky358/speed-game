@@ -196,6 +196,7 @@
     giocatoriMin: 1, giocatoriMax: 6, difficolta: 1,
     postiOnline: 2,   // online si gioca in due: gli altri guardano
     riprende: true,   // se l'host ricarica la pagina, la partita riprende dalla stessa mossa (t.ripresa)
+    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
       { modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "In due (o di più: chi vince resta)", amici: true }],
     regole: [
@@ -300,6 +301,9 @@
       ".tr-piede .btn{flex:1 1 0;min-width:0;margin:0}",
       ".tr-piede .sl-faccine{flex:1 1 100%}",
       ".tr-scena.con-fa{--trw:min(92vw,calc(var(--alt,100dvh) - 350px),480px)}",
+      // chi guarda: in basso c'è la targhetta del core (alta 44 px + 10): la si lascia libera
+      ".tr-scena.con-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom));--trw:min(92vw,calc(var(--alt,100dvh) - 340px),480px)}",
+      ".tr-scena.con-targa.con-fa{--trw:min(92vw,calc(var(--alt,100dvh) - 400px),480px)}",
       ".tr-nota{flex:1 1 100%;margin:0;text-align:center;font-weight:700;font-size:.9rem;opacity:.85;line-height:1.3}",
       ".tr-nota.corta{flex:1 1 0;min-width:0}",   // (accanto al tasto 💬)
       ".tr-cor{position:absolute;left:50%;top:45%;width:9px;height:14px;border-radius:2px;pointer-events:none;z-index:8;will-change:transform,opacity}",
@@ -484,19 +488,25 @@
   }
   function piede(ui, vm, cb) {
     var el = ui.t.el, voci = [];   // [tipo, testo, azione]; "fa" = la fila delle faccine (solo online); "c" = il tasto 💬
-    var fa = !cb.locale && ui.t.faccine ? ["fa", ""] : null;
-    // 💬 durante la partita: contro il Bot, online se l'host le ha lasciate accese (chi guarda il torneo: solo faccine)
+    // chi guarda soltanto (fuori dal torneo a eliminazione) ha la targhetta del core in basso "👀 Guardi · 😂 · ✕":
+    // lì ci sono le faccine e l'uscita, quindi qui niente fila né "🏠 Esci" (e sotto si lascia il suo posto)
+    var targa = !!(ui.t.guarda && !ui.t.eliminazione);
+    var fa = !cb.locale && ui.t.faccine && !targa ? ["fa", ""] : null;
+    // 💬 durante la partita: contro il Bot, online se l'host le ha lasciate accese (chi guarda: le faccine del core)
     var chiac = vm.fase === "gioco" && !!cb.onChiac && !!CH() && (cb.locale ? !!cb.bot : vm.ch === 1);
-    // fine di una partita online (host o avversario): i tasti di fine uguali per tutti, se li disegna il core
-    var tf = vm.fase === "fine" && !cb.locale && !cb.guarda && !cb.spettatore && !cb.torneo && ui.t.tastiFine
-      ? { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onSaletta : null, esci: cb.onEsci } : null;
+    // fine di una partita online: i tasti di fine uguali per tutti, se li disegna il core (host e avversario; chi guarda
+    // soltanto, se il core li ha per lui, es. "Chi vince resta"; chi è in più nella stanza, solo nella Sala con "Chi gioca?")
+    var tf = vm.fase === "fine" && !cb.locale && !cb.torneo && ui.t.tastiFine && (!cb.guarda || ui.t.guarda || (cb.spettatore && !!ui.t.scelti))
+      ? { host: !!cb.sonoHost && !cb.guarda, nuova: cb.sonoHost && !cb.guarda ? cb.onSaletta : null, esci: cb.onEsci } : null;
     if (vm.fase === "gioco") {
       if (cb.spettatore) { if (fa) voci.push(fa); voci.push(["f", "🏠 Esci", cb.onEsci]); }   // ("👀 Giocano in due: tu guardi" lo dice la pillola in alto)
+      else if (cb.guarda) { if (fa) voci.push(fa); }   // (nel torneo a eliminazione chi guarda ha la fila qui)
       else if (cb.notaGioco) voci.push(["n", cb.notaGioco]);
       else if (vm.variante === "sparisce") voci.push(["n", "♻️ Tris che sparisce: al 4° segno sparisce il tuo più vecchio (quello chiaro)."]);
       if (chiac) voci.unshift(["c", ""]);
     } else if (cb.guarda && !cb.spettatore) {
-      voci.push(["n", vm.fine && vm.fine.vincitore ? "Tra poco si torna al tabellone…" : "Pareggio: si rigioca!"]);
+      voci.push(["n", !ui.t.eliminazione ? "👀 Aspettiamo la prossima partita…" : (vm.fine && vm.fine.vincitore ? "Tra poco si torna al tabellone…" : "Pareggio: si rigioca!")]);
+      if (fa) voci.push(fa);
     } else if (cb.spettatore) {
       if (fa) voci.push(fa); voci.push(["f", "🏠 Esci", cb.onEsci]);
     } else if (cb.torneo) {
@@ -534,6 +544,7 @@
     });
     // con le faccine il piede è più alto: la griglia si fa un po' più piccola (niente scorre)
     if (ui.scena.classList.contains("con-fa") !== conFa) ui.scena.classList.toggle("con-fa", conFa);
+    if (ui.scena.classList.contains("con-targa") !== targa) ui.scena.classList.toggle("con-targa", targa);   // (il posto della targhetta)
   }
   function fineEffetti(ui, vm, cb) {
     var w = vm.fine.vincitore;
@@ -871,18 +882,13 @@
     }
   }
 
-  // chi guarda una partita del torneo a eliminazione: la vede in diretta, senza poter toccare
+  // chi guarda soltanto (torneo a eliminazione, duello della Sala, "👀 Guarda"): la vede in diretta, senza poter toccare.
+  // Le sue faccine passano dal core (la fila t.faccine(), o il 😂 della targhetta): le sue mosse il core le butta
   function guardaTris(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var rete = null, S = { scritta: null, chiuso: false }, M = { ui: null, fase: null };   // (chi guarda: niente suoni né trofei)
     var cb = { guarda: true, sonoHost: false, mio: "-", onCella: function () {}, onRivincita: function () {},
-      onEsci: function () { if (S.chiuso) return; S.chiuso = true; if (rete) rete.chiudi(); t.esci(); },
-      // 💬 chi guarda manda solo faccine (col suo nome); si vede subito qui, poi l'host la manda a tutti
-      onChiac: function (c) {
-        if (!rete || !CH() || !CH().valido("tris", c, true)) return;
-        var n = CH().nomeDi(t.nomeProfilo && t.nomeProfilo());
-        chiacTris(M.ui, "g", c, n); rete.invia({ t: "chiac", c: c, n: n });
-      } };
+      onEsci: function () { if (S.chiuso) return; S.chiuso = true; if (rete) rete.chiudi(); t.esci(); } };
     attesa(t, S, "👀 Mi collego alla partita…", cb.onEsci);
     rete = SGNet.entra(codice, {
       onMsg: function (m) {
@@ -934,6 +940,7 @@
     var s = t.schermata({ indietro: onEsci });
     s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa tr-attesa", text: txt }));
     if (!t.linkParams || !t.linkParams.guarda) s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: onEsci }));
+    else if (t.eliminazione && t.faccine) { var fa = t.faccine(); if (fa) s._piede.appendChild(fa); }   // (fuori dal torneo le faccine sono nella targhetta)
     t.mostra(s);
   }
   // l'host ha chiuso la partita (o non risponde più): niente errore, un saluto col conto finale

@@ -97,6 +97,7 @@
       ".schermata.tb-piena>.testa,.schermata.tb-piena>.piede{display:none}",
       ".schermata.tb-piena>.contenuto{height:100%;margin:0;padding:0}",
       ".tb{height:var(--alt,100dvh);box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;gap:clamp(7px,1.6vh,14px);padding:calc(10px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));font-family:inherit}",
+      ".tb.tb-con-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom))}",   // chi guarda: il posto della targhetta del core
       ".tb-top{display:grid;grid-template-columns:36px minmax(0,1fr) auto minmax(0,1fr) 36px;align-items:center;gap:6px}",
       ".tb-mini{width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.13);color:#fff;font:inherit;font-size:16px;padding:0;touch-action:manipulation}",
       ".tb-squadra{min-width:0;text-align:center;border-radius:13px;padding:5px 6px;background:rgba(255,255,255,.1)}.tb-squadra span{display:block;font-size:clamp(10px,2.9vw,13px);font-weight:800;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tb-squadra.mia{outline:2px solid #ffd43b;outline-offset:-2px}.tb-squadra b{display:block;font-size:clamp(22px,7vw,32px);line-height:1.1}.tb-squadra.a{box-shadow:inset 0 -4px #e64980}.tb-squadra.b{box-shadow:inset 0 -4px #4263eb}.tb-squadra.mia span::after{content:' · tu'}",
@@ -198,12 +199,15 @@
   // o: { sonoHost, mioId(), azione(tipo, extra), esci(), pausa(), rifai(), chiudiPartita(), nuova() }
   function creaVista(t, o) {
     var V = { ui: null, v: null, key: "", seq: null, fineLocale: 0, ultimoSec: -1, omini: Object.create(null), bloccoFino: 0, tBanner: null, festa: "", avantiK: null };
+    // chi guarda soltanto (link con guarda=1): in basso la targhetta del core "👀 Guardi · 😂 · ✕" (faccine e uscita le dà
+    // lei: niente ✕ né fila delle faccine del gioco), e niente carta (la parola segreta e le vietate le vede solo chi gioca)
+    var targa = !!(t.guarda && !t.eliminazione);
     function io() { return o.mioId(); }
     function giocatore(v, id) { return (v.giocatori || []).find(function (p) { return p.id === id; }) || null; }
     function nomeDi(v, id) { var p = giocatore(v, id); return p ? p.nome : "…"; }
     function squadraDi(v, id) { return v.squadre && v.squadre[id] === 1 ? 1 : 0; }
     function dentro(v) { return !!giocatore(v, io()); }
-    function faccine(dove) { var f = t.faccine ? t.faccine() : null; if (f) dove.appendChild(f); }
+    function faccine(dove) { if (targa) return; var f = t.faccine ? t.faccine() : null; if (f) dove.appendChild(f); }
     function ruolo(v) {
       var me = io();
       if (!dentro(v)) return "guarda";   // arrivato a partita cominciata: guarda e gioca dalla prossima
@@ -238,7 +242,8 @@
       ui.banner = t.el("div", { class: "tb-banner" });
       ui.centro = t.el("div", { class: "tb-centro" }, [ui.corpo, ui.banner]);
       ui.tasti = t.el("div", { class: "tb-tasti" });
-      s._contenuto.appendChild(t.el("div", { class: "tb" }, [t.el("div", { class: "tb-top" }, [ui.pausa, ui.box[0], ui.timer, ui.box[1], ui.esci]), ui.barra, ui.turno, ui.centro, ui.tasti]));
+      s._contenuto.appendChild(t.el("div", { class: "tb" + (targa ? " tb-con-targa" : "") }, [t.el("div", { class: "tb-top" }, [ui.pausa, ui.box[0], ui.timer, ui.box[1], ui.esci]), ui.barra, ui.turno, ui.centro, ui.tasti]));
+      if (targa) ui.esci.style.visibility = "hidden";   // (si esce dalla targhetta)
       t.mostra(s);
       V.key = ""; V.festa = "";
     }
@@ -306,6 +311,15 @@
       if (v.pausa) {
         ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, [t.el("div", { class: "tb-indovina", text: "⏸️ Pausa" }), t.el("div", { class: "tb-sub", text: o.sonoHost ? "Il tempo è fermo per tutti." : "L'host ha fermato il tempo." })]));
         if (o.sonoHost) ui.tasti.appendChild(tasto("largo", "▶ Riprendi", function () { o.pausa(); }));
+        return;
+      }
+      if (r === "guarda" && targa) {   // guarda soltanto col link: chi spiega e quante ne hanno fatte, la carta no
+        var cg = t.el("div", { class: "tb-conto" }, [t.el("span", { text: "✅ " + (v.giusteTurno || 0) + (v.giusteTurno === 1 ? " indovinata" : " indovinate") })]);
+        if (v.combo >= 3) cg.appendChild(t.el("span", { class: "fuoco", text: "🔥 " + v.combo + " di fila!" }));
+        ui.corpo.appendChild(t.el("div", { class: "tb-nascondi" }, [
+          avatarNodo(t, V.omini[v.attivo], nomeDi(v, v.attivo)),
+          t.el("div", { class: "tb-indovina", text: "👀 Guardi" }),
+          t.el("div", { class: "tb-sub", text: nomeDi(v, v.attivo) + " spiega alla squadra " + SQUADRE[v.team] }), cg]));
         return;
       }
       if (r === "guarda") {   // arrivato a partita cominciata: vede la carta (come chi controlla), senza tasti
@@ -474,12 +488,12 @@
       })()));
       faccine(ui.tasti);   // si festeggia (o si sfotte) tutti insieme
       // i tasti di fine comuni (all'host e a chi ha giocato), se li disegna il core: allora niente tasti nostri
-      var tf = o.sonoHost ? { host: true, nuova: o.nuova, esci: o.esci } : (dentro(v) ? { host: false, esci: o.esci } : null);
-      if (!(tf && t.tastiFine && t.tastiFine(ui.tasti, tf))) {
+      var tf = o.sonoHost ? { host: true, nuova: o.nuova, esci: o.esci } : (dentro(v) || targa ? { host: false, esci: o.esci } : null);
+      if (!(tf && t.tastiFine && t.tastiFine(ui.tasti, tf)) && !targa) {   // (chi guarda col link esce dalla targhetta)
         if (o.sonoHost) ui.tasti.appendChild(tasto("largo", "🔁 Nuova partita (stessi amici)", function () { o.nuova(); }));
         ui.tasti.appendChild(tasto("grigio largo", "Esci", function () { o.esci(); }));
       }
-      if (V.festa !== v.partitaId) { V.festa = v.partitaId; if (!f.annullata) suono("fanfara"); }
+      if (V.festa !== v.partitaId) { V.festa = v.partitaId; if (!f.annullata && !targa) suono("fanfara"); }   // (chi guarda non ha vinto niente)
     }
 
     // ---- ogni 200 ms: tempo, barra e conto alla rovescia (solo testi) ----
@@ -1700,6 +1714,7 @@
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Chi spiega tiene il telefono, un avversario guarda e preme BUZZ", amici: true, min: MIN }],
     postiOnline: MAX,   // posti online (16)
+    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     riprende: true,     // se l'host ricarica a metà partita, la partita riprende (il turno in corso si rifà da capo, con una carta nuova)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     // le regole in una riga, per la saletta: "90 secondi a turno · 1 giro · carte miste" / "🧺 Tre round con 30 carte · 90 secondi a turno · carte miste · 🫳 Rubata"

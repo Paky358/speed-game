@@ -946,6 +946,7 @@
       if (!online && !io.seduto) { M.azzera(); salvaMio(true); ciclo(); bd(); return; }
       if (M.nuovaMano(bomba ? { bomba: bomba } : null)) { suono("carta"); mandaCarte(); }
       salvaMio(true); ciclo(); bd();
+      if (online && t.aCheSiamo) t.aCheSiamo("mano " + (M.n - (H.n0 || 0)));   // (nella Sala: "Si gioca a Poker · mano 12")
     }
     // la mossa vale solo se è per la mano, il momento e la puntata che si vedevano quando si è toccato
     function attuale(rif) { return !rif || (rif.n === M.n && rif.st === M.stato && rif.dc === M.daChiamare); }
@@ -1175,6 +1176,7 @@
     }
     function rif() { return S.vm ? { n: S.vm.n, st: S.vm.stato, dc: S.vm.daChiamare } : {}; }
     var cb = { sonoHost: false, online: true, myId: null,
+      guarda: !!t.guarda,   // guardo soltanto (link "guarda"): niente posto, niente fiches, niente trofei
       mie: function () { return S.mie && S.vm && S.mie.n === S.vm.n ? S.mie : null; },
       omini: function () { return S.omini; },
       fuori: function () { return S.fuori; },
@@ -1284,6 +1286,7 @@
     if (io && !vm.torneo) extra.push(fichesBox(t, cb, io, true));   // (nel torneo le fiches sono uguali per tutti: lo dice già la riga sopra)
     else if (!io && (vm.guardano || []).indexOf(cb.myId) >= 0) extra.push(boxPieno(t, cb, vm));
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN, puoiDaSolo: vm.players.length >= MIN,
+      spettatore: cb.guarda ? "👀 Guardi soltanto" : false,   // (chi guarda col link: non si siede)
       puoComincia: vm.players.length >= MIN && vm.players.length <= MAX[vm.variante],
       vuoti: Math.max(0, MIN - vm.players.length),
       giocatori: vm.players.map(function (p) {
@@ -1337,7 +1340,7 @@
     ui.mioInfo = el("div", { class: "pk-mio-info" });
     ui.mie = el("div", { class: "pk-mie" });
     ui.azioni = el("div", { class: "pk-azioni" });
-    ui.scena = el("div", { class: "pk-scena" }, [ barra, ui.tavolo, el("div", { class: "pk-io" }, [ ui.tempo, ui.mioInfo, ui.mie, ui.azioni ]) ]);
+    ui.scena = el("div", { class: "pk-scena" + (cb.guarda ? " pk-targa" : "") }, [ barra, ui.tavolo, el("div", { class: "pk-io" }, [ ui.tempo, ui.mioInfo, ui.mie, ui.azioni ]) ]);
     s._contenuto.appendChild(ui.scena);
     t.mostra(s);
     return ui;
@@ -1648,6 +1651,7 @@
     // una mossa: dopo il tocco i tasti restano fermi un attimo (un doppio tocco non vale per il giro dopo)
     function mossa(fn) { return function () { if (Date.now() < ui.blocco) return; ui.blocco = Date.now() + 600; fn(); }; }
     if (!io) {
+      if (cb.guarda) { stato("👀 Guardi il tavolo"); return; }   // (col link: le faccine e l'uscita sono nella targhetta del core)
       if ((vm.guardano || []).indexOf(cb.myId) >= 0) ui.azioni.appendChild(boxPieno(ui.t, cb, vm));
       else stato("Stai guardando il tavolo");
       if (ui.fac === undefined) ui.fac = (ui.t.faccine && ui.t.faccine()) || null;   // chi guarda manda le faccine a chi gioca
@@ -1692,7 +1696,7 @@
       if (vm.stato === "attesa") return stato(messaggio(vm, cb) || "Si comincia…");
       if (vm.stato === "cambio") return stato("Aspetta che gli altri cambino le carte…");
       if (io.lascia) return stato("Hai lasciato: aspetta la prossima mano");
-      if (!io.inMano) return stato("Entri alla prossima mano");
+      if (!io.inMano) return stato("✋ Giochi dalla prossima mano");
       if (io.allin) return stato("Sei all-in: vediamo come va…");
       return stato(vm.turno ? "Tocca a " + nomeDi(vm, cb, vm.turno) + "…" : "…");
     }
@@ -1760,6 +1764,12 @@
         t.el("span", { class: "punti", text: torneo ? (r.fuori ? "🏳️ fuori" : fmtN(r.punti) + " 🪙") : (r.punti > 0 ? "+" : "") + fmtN(r.punti) }) ]));
     });
     s._contenuto.appendChild(ol);
+    if (cb.guarda) {   // chi guarda col link: faccine e uscita nella targhetta del core; alla prossima partita entra da solo
+      stile(); s.classList.add("pk-fine-targa");
+      s._contenuto.appendChild(cb._notaFine = t.el("p", { class: "modulo-nota", style: "text-align:center", text: "👀 Se l'host fa un'altra partita, entri anche tu nella saletta." }));
+      t.mostra(s);
+      return s;
+    }
     var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }   // le faccine anche sulla classifica
     // contro i Bot, il torneo finito: un altro torneo o via
     if (torneo && !cb.online) {
@@ -1804,6 +1814,9 @@
       ".schermata.pk-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#0b1912}",
       ".schermata.pk-piena>.testa,.schermata.pk-piena>.piede{display:none}",
       ".schermata.pk-piena>.contenuto{height:100%;margin:0;padding:0}",
+      // chi guarda col link: in basso la targhetta del core "👀 Guardi · 😂 · ✕" (il tavolo le lascia il posto)
+      ".pk-scena.pk-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom))}",
+      ".schermata.pk-fine-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom))}",
       ".pk-scena{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;padding:calc(6px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom));overflow:hidden;user-select:none;-webkit-user-select:none;color:#fff;background:radial-gradient(120% 80% at 50% 40%,#1d3b2c,#0b1912)}",
       ".pk-barra{display:flex;align-items:center;gap:8px;min-height:36px;flex:none}",
       ".pk-tastino{width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1.1rem;font-weight:900;cursor:pointer;flex:none}",
@@ -1916,6 +1929,7 @@
     descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro i Bot o online. Si gioca con le tue Speed Coins.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 2–10 giocatori",
     postiOnline: 10,   // posti online (all'italiana il tavolo ne fa sedere 6: la regola resta del gioco)
+    ritardatari: "mano",   // chi arriva a partita cominciata si siede con le sue fiches (al massimo 1.000) e gioca dalla prossima mano
     riprende: true,    // se l'host ricarica la pagina, la mano continua (le carte tornano a ognuno, i Bot ripartono dal loro turno)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     // le regole in una riga, per la saletta: "Texas Hold'em · fino a 10 al tavolo · Bot medi"

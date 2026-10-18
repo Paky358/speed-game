@@ -194,6 +194,10 @@
     ".tl-fine.molti .tl-gradino.p1 .blocco{height:64px}.tl-fine.molti .tl-gradino.p2 .blocco{height:48px}.tl-fine.molti .tl-gradino.p3 .blocco{height:36px}",
     ".tl-nota-fine{text-align:center;margin:10px 0 0}",
     ".tl-faccine{margin-top:10px}",
+    // chi guarda soltanto: la targhetta del core in basso (44 px + 10 di margine) ha il suo posto, sotto la barra e la classifica
+    ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}",
+    ".st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",
+    ".tl-fine.tl-con-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
     ".tl-lobby{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:14px;background:rgba(255,255,255,.06);margin-bottom:6px;font-weight:800}",
     ".tl-lobby .fac{width:36px;height:36px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto}",
     ".tl-lobby .fac svg{width:100%;height:100%;display:block}",
@@ -831,10 +835,13 @@
     var testoNota = comuni ? (opz.chiusa ? NOTA_CHIUSA : "") : opz.nota;
     if (testoNota || (comuni && !opz.tf.host)) s._contenuto.appendChild(notaFine = el("p", { class: "modulo-nota tl-nota-fine", text: testoNota || "" }));
     if (notaFine && !testoNota) notaFine.hidden = true;
-    var fa = opz.online && t.faccine ? t.faccine() : null;   // online: le faccine, mentre si guarda la classifica
+    var targa = opz.online && conTarga(t);   // chi guarda soltanto: faccine e uscita le dà la targhetta del core
+    var fa = opz.online && !targa && t.faccine ? t.faccine() : null;   // online: le faccine, mentre si guarda la classifica
     if (fa) { fa.classList.add("tl-faccine"); s._contenuto.appendChild(fa); }
-    FX.vittoria(); setTimeout(coriandoli, 300);
-    if (comuni) { t.mostra(s); return; }
+    if (!targa) FX.vittoria();   // (chi guarda non ha vinto niente: niente fanfara)
+    setTimeout(coriandoli, 300);
+    if (targa) s.classList.add("tl-con-targa");
+    if (comuni || targa) { t.mostra(s); return; }
     if (rigioca) s._piede.appendChild(el("button", { class: "btn btn-primario", text: opz.testoRigioca || "↻ Rigioca", onclick: rigioca }));
     if (opz.online) {
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { esci(); } }));
@@ -985,6 +992,7 @@
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono, uno alla volta", amici: true }],
     giocatoriMax: MAX_GIOCATORI,
     postiOnline: MAX_GIOCATORI,   // posti online (10)
+    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     // le regole in una riga, per la saletta: "5 carte a testa · Storia, Cinema" (o "· tutte le categorie")
     riassunto: function (imp) {
       imp = imp || {};
@@ -1894,6 +1902,10 @@
   // Le novità dall'host arrivano in qualsiasi momento: la regia le mette in fila
   // e fa partire i momenti dello spettacolo uno dopo l'altro, senza saltarne.
   var REG = null;
+  // chi guarda soltanto (link con guarda=1): in basso c'è la targhetta del core "👀 Guardi · 😂 · ✕" (le faccine e l'uscita
+  // le dà lei: niente fila delle faccine né "🏠 Esci" del gioco, e la barra lascia il suo posto)
+  function conTarga(t) { return !!(t && t.guarda && !t.eliminazione); }
+  function faccineDi(t) { return conTarga(t) || !t.faccine ? null : t.faccine(); }
   function idxDi(vm, id) { for (var i = 0; i < vm.giocatori.length; i++) if (vm.giocatori[i].id === id) return i; return -1; }
   function giocHUD(vm, meId) { return vm.giocatori.map(function (g) { return { id: g.id, nome: g.nome, punti: g.punti, omino: g.omino, via: g.via, _me: g.id === meId }; }); }
   function disegnaVM(t, vm, cb) {
@@ -1903,6 +1915,7 @@
     if (!REG || REG.codice !== vm.codice || REG.partita !== vm.partita || (!REG.S.vivo() && !REG.fineFatta)) {
       REG = { t: t, cb: cb, vm: vm, ids: ids, codice: vm.codice, partita: vm.partita };
       REG.S = creaStudio(t, vm.giocatori, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo });
+      if (conTarga(t)) REG.S.vista.classList.add("st-con-targa");   // (il posto della targhetta di chi guarda)
       vm.giocatori.forEach(function (g, i) { puntiLeggio(REG.S, i, g.punti, 0); });
     } else if (REG.ids !== ids && REG.S.vivo()) {   // i giocatori sono cambiati: rifaccio i leggii
       REG.ids = ids; REG.S.impostaGiocatori(vm.giocatori, idxDi(vm, cb.myId));
@@ -1942,12 +1955,12 @@
       var cl = vm.classifica || [], vinc = cl[0] ? idxDi(vm, cl[0].id) : -1;
       await ST.finale(S, vinc, fmtN(cl[0] ? cl[0].punti : 0) + " punti");
       // i tasti di fine comuni: all'host e a chi ha giocato (chi ha solo guardato tiene i suoi)
-      var tf = cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : (io >= 0 ? { host: false, esci: cb.onEsci } : null);
+      var tf = cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : (io >= 0 || conTarga(R.t) ? { host: false, esci: cb.onEsci } : null);   // (chi guarda col link: se c'è, la fine del core)
       schermataFine(R.t, cl, cb.sonoHost ? cb.onNuova : null, cb.sonoHost
         ? { online: true, testoRigioca: "↻ Nuova partita (stessi amici)", esci: cb.onEsci, tf: tf }
         : { online: true, esci: cb.onEsci, tf: tf, chiusa: !!cb.chiusa, nota: cb.chiusa ? NOTA_CHIUSA
           : io >= 0 ? "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta."
-          : (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta hai guardato." : "⏳ Aspetta l'host: alla prossima partita giochi anche tu." });
+          : (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta hai guardato." : conTarga(R.t) ? "👀 Hai guardato: se l'host fa un'altra partita, entri anche tu." : "⏳ Aspetta l'host: alla prossima partita giochi anche tu." });
       return true;
     }
     if (vm.fase === "attesa") {   // chi ha ancora carte è scollegato: si aspetta che torni (al massimo 90 secondi)
@@ -1959,7 +1972,7 @@
       var secA = vm._fino ? Math.max(1, Math.round((vm._fino - Date.now()) / 1000)) : 90, kFin = "tl-attesa|" + vm.partita + "|" + vm.n;
       var bFin = cb.sonoHost ? el("button", { class: "btn btn-fantasma", text: "🏁 Finisci qui la partita", onclick: function () { viaBarra(S); cb.onFinisci(); } }) : null;
       var pFin = cb.sonoHost ? null : el("p", { class: "tl-attesa" });
-      barraTL(S, [ el("p", { class: "tl-attesa", text: "💤 Aspettiamo che torni " + (assenti.join(", ") || "chi manca") + ": deve ancora giocare le sue carte." }), bFin, pFin, R.t.faccine() ]);
+      barraTL(S, [ el("p", { class: "tl-attesa", text: "💤 Aspettiamo che torni " + (assenti.join(", ") || "chi manca") + ": deve ancora giocare le sue carte." }), bFin, pFin, faccineDi(R.t) ]);
       R.t.contoAvanti(bFin || pFin, secA, bFin ? function () { viaBarra(S); cb.onFinisci(); } : null, kFin);
       return false;
     }
@@ -2099,7 +2112,7 @@
       } : null });
     if (conf) barraTL(S, [sel, conf]);
     else barraTL(S, [ el("p", { class: "tl-attesa", text: io < 0 ? ((vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: alla prossima partita giochi anche tu!")
-      : (vm.carta && vm.carta.autore === cb.myId ? "📸 È un tuo ricordo: guardali sudare!" : "Guarda bene la linea: dopo tocca votare!") }), R.t.faccine() ]);
+      : (vm.carta && vm.carta.autore === cb.myId ? "📸 È un tuo ricordo: guardali sudare!" : "Guarda bene la linea: dopo tocca votare!") }), faccineDi(R.t) ]);
   }
   // il mio «✋ Rubala»: quanti gettoni ho (🪙🪙)
   function mieiGettoni(vm, myId) { var g = trovaG(vm, myId); return g && g.gettoni != null ? g.gettoni : 0; }
@@ -2152,7 +2165,7 @@
       // niente da fare: la telecamera va sui concorrenti a vedere i cartellini che si alzano
       barraTL(S, [ el("p", { class: "tl-attesa", text: mioTurno ? "Gli altri stanno votando la tua scelta…" : (guardo ? "👀 Stai guardando: gli altri votano la carta di " + nomeT + "."
         : mioRicordo ? "📸 L'hai scritto tu: questa volta non voti." : R.mioRuba != null ? "✋ Hai provato a rubarla (" + annoTesto(R.mioRuba) + "). Aspetta gli altri…"
-        : (vm.rubano || []).indexOf(cb.myId) >= 0 ? "✋ Hai provato a rubarla. Aspetta gli altri…" : "Hai votato. Aspetta gli altri…") }), R.t.faccine() ]);
+        : (vm.rubano || []).indexOf(cb.myId) >= 0 ? "✋ Hai provato a rubarla. Aspetta gli altri…" : "Hai votato. Aspetta gli altri…") }), faccineDi(R.t) ]);
       largo(S, 900);
       if (R.mioVoto != null && io >= 0 && R.mioRuba == null) cartello(S, io, "su", R.mioVoto);
     }
@@ -2179,21 +2192,21 @@
     if (io < 0) {
       o.sotto = "Tutti piazzano questa carta…";
       schermoGioco(S, o);
-      barraTL(S, [ R.contaT, el("p", { class: "tl-attesa", text: (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: alla prossima partita giochi anche tu!" }), R.t.faccine() ]);
+      barraTL(S, [ R.contaT, el("p", { class: "tl-attesa", text: (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: alla prossima partita giochi anche tu!" }), faccineDi(R.t) ]);
       return;
     }
     // il mio ricordo: lo giocano gli altri, io guardo
     if (vm.carta && vm.carta.autore === cb.myId) {
       o.sotto = "📸 È un tuo ricordo: lo giocano gli altri!";
       schermoGioco(S, o);
-      barraTL(S, [ R.contaT, R.t.faccine() ]);
+      barraTL(S, [ R.contaT, faccineDi(R.t) ]);
       return;
     }
     if (hoScelto) {
       o.sotto = R.mioPosa != null ? "✅ Fatta! L'hai messa qui" + (R.mioAnnoT != null ? " (" + annoTesto(R.mioAnnoT) + ")" : "") + ": aspetta gli altri…" : "✅ Hai già scelto: aspetta gli altri…";
       if (R.mioPosa != null) o.tent = R.mioPosa;
       schermoGioco(S, o);
-      barraTL(S, [ R.contaT, R.t.faccine() ]);
+      barraTL(S, [ R.contaT, faccineDi(R.t) ]);
       return;
     }
     // da scegliere: tocca il punto, (se vuoi) l'anno, poi "✅ Mettila qui" (vale la prima: conta anche chi è più veloce)
