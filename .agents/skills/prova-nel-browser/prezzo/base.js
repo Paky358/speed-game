@@ -447,11 +447,13 @@
   } });
 
   // ===================== pz10: chi vince l'Offerta sceglie il gioco a premi =====================
-  // (finché c'è un gioco a premi solo, la scelta non si vede: qui se ne registra un secondo finto, copia di «Più o meno»)
+  // (qui se ne registra un secondo finto, copia di «Più o meno», e si tolgono tutti gli altri giochi a premi arrivati dopo,
+  //  così i due che escono sono per forza «Più o meno» e il finto)
   COPIONE.aggiungi("pz10", { nome: "Prezzo: 🤖 Contro il Bot, con due giochi a premi chi vince l'Offerta sceglie", fai: async function () {
     var w = await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "puntata", offerte: "vista", liv: "facile", nBot: 1 }; } });
     if (!await W.aspetta(function () { return w.SG_PREZZO_PREMI && w.SG_PREZZO_PREMI.piuomeno; }, 5000)) no("«Più o meno» non è registrato");
     w.SG_PREZZO_PREMI.finto = Object.assign({}, w.SG_PREZZO_PREMI.piuomeno, { nome: "Il Finto", icona: "🧪", regola: "Una copia di Più o meno, per la prova" });
+    Object.keys(w.SG_PREZZO_PREMI).forEach(function (k) { if (k !== "piuomeno" && k !== "finto") delete w.SG_PREZZO_PREMI[k]; });
     await apriGioco(w);
     if (!W.clicca(w, /Contro il Bot/)) no("niente «🤖 Contro il Bot»");
     if (!await W.aspetta(function () { return w.__prezzoH && w.__prezzoH.fase !== "lobby"; }, 5000)) no("la partita col Bot non parte al secondo tocco");
