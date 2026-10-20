@@ -9,6 +9,27 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 242,
+    data: "20 ottobre 2026",
+    titolo: "Stessa Lunghezza d'Onda parte in 🎯 Classico",
+    descrizione: [
+      "🎯 Di partenza si gioca come l'originale: il bersaglio è a caso e l'indizio lo inventa il sensitivo. «🤔 Cosa ne pensi?» e «Misto» restano da scegliere nel ⚙️.",
+      "Se sul tuo telefono avevi già scelto un modo, resta quello: per cambiarlo basta toccarlo una volta nel ⚙️."
+    ]
+  },
+  {
+    v: 241,
+    data: "20 ottobre 2026",
+    titolo: "Gioco nuovo: ☝️ Una parola sola",
+    descrizione: [
+      "☝️ A turno uno indovina: gli altri vedono la parola misteriosa e scrivono di nascosto un indizio di una parola sola. Ma attenti: gli indizi uguali si cancellano! 💥 «Paky e Luca: stessa idea!»",
+      "🔍 Prima di mostrarli, chi ha scritto ha qualche secondo per cancellare anche i quasi uguali (pane e panino). Poi gli indizi si girano uno alla volta e chi indovina ha un tentativo solo, o passa.",
+      "🏆 A punti: +3 a chi indovina, +1 a ogni indizio rimasto e ⭐ +2 all’indizio che ha aiutato di più (lo sceglie chi ha indovinato). Ognuno indovina lo stesso numero di volte.",
+      "🤝 Oppure «Tutti insieme», come l’originale: una squadra sola e 13 parole. Quante ne indovinate?",
+      "📱 Online ognuno dal suo telefono (anche nella Sala della serata) o sullo stesso telefono passandovelo. Da 3 a 10 giocatori, 600 parole in tre mazzi: 🟢 Facile, 🟡 Media e 🌶️ Serata."
+    ]
+  },
+  {
     v: 240,
     data: "20 ottobre 2026",
     titolo: "Parola d'ordine: il capo che esce si aspetta 👑",

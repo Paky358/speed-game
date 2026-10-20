@@ -183,7 +183,7 @@
     i = i || {};
     var tt = tuttiTemi(), temi = Array.isArray(i.temi) ? i.temi.filter(function (x) { return tt.indexOf(x) >= 0; }) : tt.slice();
     if (temi.length < 3) temi = tt.slice();
-    return { domande: ["cosa", "classico", "misto"].indexOf(i.domande) >= 0 ? i.domande : "cosa",
+    return { domande: ["cosa", "classico", "misto"].indexOf(i.domande) >= 0 ? i.domande : "classico",   // (di partenza 🎯 Classico, come l'originale: deciso il 20 ott)
       formula: ["squadre", "solo", "insieme"].indexOf(i.formula) >= 0 ? i.formula : "squadre",
       traguardo: [7, 10, 15].indexOf(+i.traguardo) >= 0 ? +i.traguardo : 10,
       giri: [1, 2, 3].indexOf(+i.giri) >= 0 ? +i.giri : 2,

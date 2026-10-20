@@ -118,6 +118,9 @@
 
   COPIONE.aggiungi(280, { nome: "Lunghezza d'Onda: 3 telefoni senza squadre, ricariche, sensitivo spento, Rivincita, Cambia gioco", fai: async function () {
     var Z = await salaECominci(["Giulia", "Luca"]), C = Z.C, P = W.finestra("Paky");
+    // (dal 20 ott di partenza è 🎯 Classico: questa prova sceglie «Cosa ne pensi?»)
+    if (!await W.aspetta(function () { return /Classico · a squadre/.test(A.regoleDi(W.finestra("Giulia"))); }, 5000)) no("di partenza Giulia non legge «Classico · a squadre» («" + A.regoleDi(W.finestra("Giulia")) + "»)");
+    await regola(P, /Cosa ne pensi/);
     if (!await W.aspetta(function () { return /Cosa ne pensi\? · a squadre/.test(A.regoleDi(W.finestra("Giulia"))); }, 5000)) no("Giulia legge le regole «" + A.regoleDi(W.finestra("Giulia")) + "»");
     await comincia(C);
     var v = vm(C);
@@ -206,6 +209,7 @@
 
   COPIONE.aggiungi(281, { nome: "Lunghezza d'Onda: 4 telefoni a squadre, lancetta contesa, conferme, scommessa, host che ricarica", fai: async function () {
     var Z = await salaECominci(["Giulia", "Luca", "Sara"]), C = Z.C, P = W.finestra("Paky");
+    await regola(P, /Cosa ne pensi/);   // (dal 20 ott di partenza è 🎯 Classico)
     await regola(P, /^7 punti$/);
     if (!await W.aspetta(function () { return /fino a 7/.test(A.regoleDi(W.finestra("Sara"))); }, 4000)) no("Sara non legge «fino a 7» («" + A.regoleDi(W.finestra("Sara")) + "»)");
     if (!P.document.querySelector(".lu-squad-box")) no("in saletta non ci sono le squadre");
