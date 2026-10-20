@@ -15,6 +15,8 @@
 // pz9: online nella Sala con 8 telefoni, 📺 Come in TV ⚡ Veloce (8 leggii, Ruota e Vetrina in 8).
 // pz10: «🤖 Contro il Bot» con un secondo gioco a premi finto: chi vince l'Offerta sceglie tra due.
 // pz11: «🤖 Contro il Bot» parte in due tocchi (gioco → Contro il Bot, niente impostazioni) con le regole di partenza.
+// pz12: la Ruota del 100 si gira anche in su (la striscia sale) e il mio numero sul maxischermo resta «—» finché la ruota
+//       gira: compare solo quando si ferma, col pannello della ruota ancora aperto.
 // (pz8 a una misura sola: W.__pz8misure = [[360, 640]])
 // Le regole della partita per la prova: w.__imp (le legge solo chi apre, all'avvio), con apriTel(nome, { spiaPrezzo: true }).
 (function () {
@@ -499,6 +501,43 @@
     Object.keys(atteso).forEach(function (k) { if (I2[k] !== atteso[k]) no("dopo «Rigioca» la regola «" + k + "» = " + JSON.stringify(I2[k])); });
     if (w.__prezzoH.players.length !== 4) no("dopo «Rigioca» giocatori " + w.__prezzoH.players.length);
     return "partita col Bot al 2° tocco · " + JSON.stringify(atteso) + " · " + nCat + " categorie · " + cast + " · finita: " + clas + " · Rigioca ok" + errori();
+  } });
+
+  // ===================== pz12: la Ruota del 100 si gira anche in su; il numero si vede solo a ruota ferma =====================
+  // (20 ott: prima si girava solo in giù e il numero compariva sul maxischermo appena si girava, con la ruota ancora in corsa)
+  async function spingiSu(w) {
+    var r = w.document.querySelector(".pz-pan.su .pz-ruota.attiva"); if (!r) return false;
+    var b = r.getBoundingClientRect(), x = b.left + b.width / 2, y = b.bottom - 20;
+    function ev(t, yy) { r.dispatchEvent(new w.PointerEvent(t, { bubbles: true, pointerId: 8, pointerType: "touch", clientX: x, clientY: yy })); }
+    ev("pointerdown", y);
+    for (var k = 1; k <= 5; k++) { await W.dorme(18); ev("pointermove", y - k * 45); }
+    ev("pointerup", y - 225);
+    return true;
+  }
+  COPIONE.aggiungi("pz12", { nome: "Prezzo: la Ruota del 100 si gira anche in su e il numero si vede solo quando la ruota si ferma", fai: async function () {
+    var w = await contrBot({ formato: "tv", durata: "veloce", offerte: "vista", liv: "facile", nBot: 1 });
+    var H = function () { return w.__prezzoH; };
+    if (!await giocaTutti(["Paky"], function () { return H().fase === "ruota"; }, { ms: 300000 })) no("non si arriva alla Ruota del 100");
+    var r = await W.aspetta(function () { return w.document.querySelector(".pz-pan.su .pz-ruota.attiva"); }, 8000);
+    if (!r) no("la mia ruota non si può girare");
+    var nota0 = (w.document.querySelector(".pz-pan.su .pz-nota") || {}).textContent || "";
+    if (!/su o giù/.test(nota0)) no("sotto la ruota non c'è «Trascina la ruota su o giù» («" + nota0 + "»)");
+    var io = H().players.filter(function (p) { return !p.bot; })[0].id, str = r.querySelector(".pz-rstr");
+    var yDi = function () { var m = /,\s*(-?[\d.]+)px/.exec(str.style.transform); return m ? +m[1] : 0; };
+    var cella = function () { var c = [].filter.call(w.document.querySelectorAll(".pz-rg"), function (x) { return (x.querySelector(".nm") || {}).textContent === "Tu"; })[0]; return c ? (c.querySelector(".val") || {}).textContent : null; };
+    await spingiSu(w);
+    await W.dorme(120); var y1 = yDi(); await W.dorme(120); var y2 = yDi();
+    if (!(y2 < y1)) no("spinta in su: la striscia non sale (" + y1 + " → " + y2 + ")");
+    if (!await W.aspetta(function () { var x = H().ruota.g[io]; return x && x.v1 != null; }, 4000)) no("la spinta in su non arriva (niente numero)");
+    var v1 = H().ruota.g[io].v1;
+    if (cella() !== "—") no("mentre la ruota gira, sul maxischermo c'è già «" + cella() + "» (il numero è " + v1 + ")");
+    if (!await W.aspetta(function () { return /^\d+/.test(cella() || ""); }, 9000)) no("la ruota non si ferma o il numero non arriva sul maxischermo");
+    if (!w.document.querySelector(".pz-pan.su .pz-ruota")) no("il pannello della ruota si è chiuso prima che la ruota si fermasse");
+    if (parseInt(cella(), 10) !== v1) no("sul maxischermo " + cella() + " invece di " + v1);
+    var nota = (w.document.querySelector(".pz-pan.su .pz-nota") || {}).textContent || "";
+    if (v1 !== 100 && nota.indexOf(String(v1)) < 0) no("sotto la ruota ferma non c'è " + v1 + " («" + nota + "»)");
+    if (!await giocaTutti(["Paky"], function () { return H().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("la partita non finisce (fase " + H().fase + "." + H().sotto + ")");
+    return "ruota girata in su (striscia " + Math.round(y1) + " → " + Math.round(y2) + " px), «—» finché gira, poi " + v1 + " a ruota ferma; partita finita" + errori();
   } });
 
   W.PZ = { agisci: agisci, giocaTutti: giocaTutti, spiaFasi: spiaFasi, controllaVista: controllaVista, contrBot: contrBot, stessoTelefono: stessoTelefono, salaPrezzo: salaPrezzo, conSpia: conSpia, senzaSpia: senzaSpia };

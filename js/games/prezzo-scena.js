@@ -320,7 +320,8 @@
   var GIRI_STRISCIA = 12;
   function coloreSpicchio(v) { return v === 100 ? "rosso" : (v === 5 || v === 15) ? "verde" : (SPICCHI.indexOf(v) % 2 ? "arg" : "oro"); }
   // opz = { alt (altezza di una casella), onSpinta(forza 0..1) → false per rifiutare, onCambio(valore) }
-  // La ruota si spinge trascinando il dito IN GIÙ. Restituisce { el, attiva(si), gira(forza), arriva(valore) → Promise, mostra(valore) }
+  // La ruota si spinge trascinando il dito IN GIÙ o IN SU (gira dalla parte della spinta).
+  // Restituisce { el, attiva(si), gira(forza, v, verso), arriva(valore) → Promise, mostra(valore) }
   function ruota(el, opz) {
     opz = opz || {};
     var H = opz.alt || 62, N = SPICCHI.length * GIRI_STRISCIA;
@@ -328,8 +329,8 @@
     for (var i = 0; i < N; i++) { var v = SPICCHI[i % SPICCHI.length]; str.appendChild(el("div", { class: "pz-rcel " + coloreSpicchio(v), text: String(v) })); }
     var fin = el("div", { class: "pz-ruota" }, [ str, el("div", { class: "luce" }), el("div", { class: "freccia" }) ]);
     fin.style.setProperty("--h", H + "px");
-    var pos = SPICCHI.length * (GIRI_STRISCIA - 2), attiva = false, stato = "fermo", vel = 0, target = null, piano = null, ultimoInt = Math.round(pos), ultimoClic = 0, raf = null, fineCb = null;
-    // pos = quale casella sta davanti alla freccia (con la virgola): pos più piccolo = la striscia scende
+    var pos = SPICCHI.length * (GIRI_STRISCIA - 2), attiva = false, stato = "fermo", vel = 0, verso = -1, target = null, piano = null, ultimoInt = Math.round(pos), ultimoClic = 0, raf = null, fineCb = null;
+    // pos = quale casella sta davanti alla freccia (con la virgola): pos più piccolo = la striscia scende (verso -1), più grande = sale (+1)
     function disegna() {
       var y = -(pos * H) + H;   // la freccia sta sulla seconda casella dall'alto (si vedono 3 caselle)
       str.style.transform = "translate3d(0," + y.toFixed(1) + "px,0)";
@@ -337,9 +338,11 @@
       if (k !== ultimoInt) { ultimoInt = k; var ora = performance.now(); if (ora - ultimoClic > 40) { ultimoClic = ora; FX.clic(Math.min(1, Math.abs(vel) / 14 + 0.25)); } }
     }
     function valoreA(p) { var k = ((Math.round(p) % SPICCHI.length) + SPICCHI.length) % SPICCHI.length; return SPICCHI[k]; }
-    function normalizza() { var k = ((pos % SPICCHI.length) + SPICCHI.length) % SPICCHI.length; pos = k + SPICCHI.length * (GIRI_STRISCIA - 2); }
+    // (la striscia si ripete ogni 20 caselle: si salta avanti o indietro di giri interi, la ruota resta uguale.
+    //  Per girare in giù si parte dalla fine della striscia, per girare in su dall'inizio)
+    function normalizza(su) { var k = ((pos % SPICCHI.length) + SPICCHI.length) % SPICCHI.length; pos = k + SPICCHI.length * (su ? 2 : GIRI_STRISCIA - 2); }
     disegna();
-    // ---- spinta col dito ----
+    // ---- spinta col dito, in giù o in su ----
     var giu = null, punti = [];
     fin.addEventListener("pointerdown", function (e) {
       if (!attiva || stato !== "fermo") return;
@@ -348,45 +351,50 @@
     });
     fin.addEventListener("pointermove", function (e) {
       if (!giu || e.pointerId !== giu.id) return;
-      var dy = Math.max(-H, e.clientY - giu.y);
+      var dy = Math.max(-4 * H, Math.min(4 * H, e.clientY - giu.y));
       pos = giu.p - dy / H; disegna();
       punti.push({ y: e.clientY, t: performance.now() }); if (punti.length > 8) punti.shift();
     });
     function lascia(e) {
       if (!giu || (e && e.pointerId !== giu.id)) return;
-      var tot = (e ? e.clientY : giu.y) - giu.y, a = punti[0], b = punti[punti.length - 1], dt = Math.max(16, b.t - a.t), v = (b.y - a.y) / dt;   // px/ms
-      if (performance.now() - b.t > 120) v = 0;   // dito fermo prima di lasciare
+      var tot = (e ? e.clientY : giu.y) - giu.y, a = punti[0], b = punti[punti.length - 1], dt = Math.max(16, b.t - a.t), vs = (b.y - a.y) / dt;   // px/ms (+ giù, − su)
+      if (performance.now() - b.t > 120) vs = 0;   // dito fermo prima di lasciare
       giu = null;
+      var dir = vs < 0 ? 1 : -1, v = Math.abs(vs);   // dito in su → la striscia sale (pos cresce)
       var forza = Math.max(0, Math.min(1, (v - 0.45) / 1.6));
-      if (tot < H * 0.7 || v < 0.45) {   // spinta debole: «Più forte!»
+      if (Math.abs(tot) < H * 0.7 || v < 0.45 || (tot < 0) !== (vs < 0)) {   // spinta debole: «Più forte!»
         fin.classList.remove("debole"); void fin.offsetWidth; fin.classList.add("debole");
         var da = pos, fine = Math.round(pos), t0 = performance.now();
         (function torna() { var u = Math.min(1, (performance.now() - t0) / 250); pos = da + (fine - da) * u; disegna(); if (u < 1) requestAnimationFrame(torna); })();
         if (opz.debole) opz.debole();
         return;
       }
-      if (opz.onSpinta && opz.onSpinta(Math.max(0.15, forza)) === false) return;
-      gira(Math.max(0.15, forza), v);
+      // (col Bot o sullo stesso telefono il numero arriva subito, dentro onSpinta: arriva() deve girare con QUESTA spinta)
+      spintaOra = { f: Math.max(0.15, forza), v: v, dir: dir };
+      if (opz.onSpinta && opz.onSpinta(spintaOra.f) === false) { spintaOra = null; return; }
+      var sp = spintaOra; spintaOra = null;
+      if (sp) gira(sp.f, sp.v, sp.dir);
     }
+    var spintaOra = null;
     fin.addEventListener("pointerup", lascia);
     fin.addEventListener("pointercancel", function () { giu = null; });
-    // ---- il giro: veloce finché non si sa il numero, poi frena e si ferma lì ----
-    function gira(forza, v0) {
+    // ---- il giro: veloce finché non si sa il numero, poi frena e si ferma lì (dalla parte della spinta) ----
+    function gira(forza, v0, dir) {
       if (stato !== "fermo") return;
-      stato = "gira"; target = null; piano = null;
+      stato = "gira"; target = null; piano = null; verso = dir > 0 ? 1 : -1;
       vel = Math.max(9, Math.min(34, (v0 ? v0 * 1000 / H : 0) || (12 + forza * 18)));   // caselle al secondo
       var prima = performance.now();
-      if (pos < SPICCHI.length * 3) normalizza();
+      normalizza(verso > 0);   // (sempre: così c'è striscia per tutto il giro, da tutte e due le parti)
       cancelAnimationFrame(raf);
       (function passo() {
         var ora = performance.now(), dt = Math.min(0.05, (ora - prima) / 1000); prima = ora;
         if (piano) {
           var u = Math.min(1, (ora - piano.t0) / piano.T), e = 1 - Math.pow(1 - u, 2);
-          pos = piano.p0 - piano.L * e; vel = piano.L / piano.T * 2 * (1 - u) * 1000;
+          pos = piano.p0 + verso * piano.L * e; vel = piano.L / piano.T * 2 * (1 - u) * 1000;
           disegna();
-          if (u >= 1) { pos = piano.p0 - piano.L; disegna(); stato = "fermo"; vel = 0; var cb = fineCb; fineCb = null; if (cb) cb(target); return; }
+          if (u >= 1) { pos = piano.p0 + verso * piano.L; disegna(); stato = "fermo"; vel = 0; var cb = fineCb; fineCb = null; if (cb) cb(target); return; }
         } else {
-          pos -= vel * dt; disegna();
+          pos += verso * vel * dt; disegna();
           if (target != null && !piano) pianifica();
         }
         raf = requestAnimationFrame(passo);
@@ -396,16 +404,16 @@
     function pianifica() {
       var j = SPICCHI.indexOf(target); if (j < 0) j = 0;
       var minimo = vel * (0.9 + Math.random() * 0.5) / 2 + 2;   // almeno un bel pezzo di giro prima di fermarsi
-      var p0 = pos, fine = Math.floor(p0 - minimo);
-      while ((((fine % SPICCHI.length) + SPICCHI.length) % SPICCHI.length) !== j) fine--;
-      var L = p0 - fine, T = Math.max(700, Math.min(5200, 2 * L / vel * 1000));
-      if (fine < 2) { normalizza(); return pianifica(); }
+      var p0 = pos, fine = verso < 0 ? Math.floor(p0 - minimo) : Math.ceil(p0 + minimo);
+      while ((((fine % SPICCHI.length) + SPICCHI.length) % SPICCHI.length) !== j) fine += verso;
+      var L = Math.abs(fine - p0), T = Math.max(700, Math.min(5200, 2 * L / vel * 1000));
+      if (verso < 0 ? fine < 2 : fine > N - 3) { normalizza(verso > 0); return pianifica(); }
       piano = { t0: performance.now(), p0: p0, L: L, T: T };
     }
     // il numero dell'host è arrivato: la ruota frena e si ferma lì (Promise quando è ferma)
     function arriva(valore) {
       return new Promise(function (ok) {
-        if (stato === "fermo") { gira(0.5); }
+        if (stato === "fermo") { var sp = spintaOra; spintaOra = null; if (sp) gira(sp.f, sp.v, sp.dir); else gira(0.5); }
         target = valore; fineCb = ok;
       });
     }

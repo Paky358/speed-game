@@ -12,6 +12,10 @@
 //       scorrono i prezzi (il pannello riparte al prezzo giusto), Ada arriva tardi e guarda.
 // pzb6: online nella Sala in 8: partita intera, tutti giocano insieme.
 // pzb7: le misure a 360x640 e 412x915 (Bot in 6) mentre si gioca e nella rivelazione.
+// pzb8: Plinko col Bot: a ogni domanda si tocca il prezzo sbagliato e, dopo l'esito, anche l'altro → non conta, le 3 domande
+//       vanno avanti e si lasciano i gettoni (20 ott: prima la domanda dopo restava bloccata).
+// pzb9: «Più o meno» col Bot: la regola resta circa 10 s con «Si comincia tra…»; dopo un prezzo sbagliato il tastierino è vuoto
+//       (il prezzo provato resta nelle chip) e si riscrive da capo; poi il prezzo giusto viene preso.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, T = A.T, no = A.no;
@@ -343,6 +347,72 @@
     }
     if (esiti.some(function (e) { return !/: ok/.test(e); })) no(esiti.join(" ‖ "));
     return esiti.join(" ‖ ") + errori();
+  } });
+
+  // ===================== pzb8: Plinko, dopo l'esito si tocca anche l'altro prezzo =====================
+  // (20 ott: il secondo tocco lasciava la domanda dopo bloccata: i tasti c'erano ma non rispondevano più)
+  COPIONE.aggiungi("pzb8", { nome: "Prezzo: Plinko, dopo l'esito si tocca anche l'altro prezzo: non conta e le domande vanno avanti", fai: async function () {
+    var w = await PZ().contrBot({ formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 1 });
+    var L = w.SG_PREZZO_PREMI || {}; if (!L.plinko) no("«Plinko» non è registrato");
+    Object.keys(L).forEach(function (k) { if (k !== "plinko") delete L[k]; });
+    var H = function () { return w.__prezzoH; };
+    if (!await giocaTuttiB(["Paky"], function () { var h = H(); return h.fase === "premio" && h.premio && h.premio.tipo === "plinko"; }, { ms: 240000 })) no("non si arriva a Plinko");
+    var io = H().players.filter(function (p) { return !p.bot; })[0].id;
+    for (var q = 0; q < 3; q++) {
+      var ops = await W.aspetta(function () {
+        var l = [].slice.call(w.document.querySelectorAll(".pz-pan.su .pzb-op")), t = (w.document.querySelector(".pz-pan.su .pzb-qtesta span") || {}).textContent || "";
+        return l.length === 2 && !l[0].disabled && !l[1].disabled && t.indexOf((q + 1) + " di 3") >= 0 ? l : null;
+      }, 15000);
+      if (!ops) no("la domanda " + (q + 1) + " di Plinko non arriva («" + ((w.document.querySelector(".pz-pan.su") || {}).textContent || "").slice(0, 120) + "»)");
+      var d = H().premio.st.comuni[q], sb = ops[1 - d.ok], gi = ops[d.ok];
+      tocca(w, sb);
+      if (!await W.aspetta(function () { return sb.classList.contains("sbagliato"); }, 4000)) no("alla domanda " + (q + 1) + " il tocco sul prezzo sbagliato non dà l'esito (i tasti non rispondono)");
+      tocca(w, gi);   // il secondo tocco, sull'altro prezzo: non deve contare
+      await W.dorme(100);
+    }
+    if (!await W.aspetta(function () { return w.document.querySelectorAll(".pz-pan.su .pzb-z").length === 9; }, 5000)) no("dopo le 3 domande non si lasciano i gettoni");
+    var risp = (H().premio.st.risp || {})[io] || [], giusti = (H().premio.st.giusti || {})[io] || 0;
+    if (risp.length !== 3 || giusti !== 0) no("risposte arrivate: " + JSON.stringify(risp) + ", giuste " + giusti + " (dovevano essere 3 sbagliate: il secondo tocco non conta)");
+    if (!await giocaTuttiB(["Paky"], function () { return H().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("la partita non finisce (fase " + H().fase + "." + H().sotto + ")");
+    return "3 domande col doppio tocco: risposte " + JSON.stringify(risp) + ", 1 gettone, partita finita" + errori();
+  } });
+
+  // ===================== pzb9: Più o meno, il tastierino riparte vuoto; la regola resta ~10 s =====================
+  COPIONE.aggiungi("pzb9", { nome: "Prezzo: Più o meno, dopo un prezzo sbagliato il tastierino riparte vuoto; la regola resta ~10 s con «Si comincia tra…»", fai: async function () {
+    var w = await PZ().contrBot({ formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 1 });
+    var L = w.SG_PREZZO_PREMI || {}; if (!L.piuomeno) no("«Più o meno» non è registrato");
+    Object.keys(L).forEach(function (k) { if (k !== "piuomeno") delete L[k]; });
+    var H = function () { return w.__prezzoH; }, intro = null;
+    var ok = await PZ().giocaTutti(["Paky"], function () {
+      var h = H();
+      if (h.fase === "premio" && h.sotto === "intro") { if (!intro) intro = { t0: Date.now(), conto: false }; if (/Si comincia tra/.test(T(w))) intro.conto = true; }
+      return h.fase === "premio" && h.sotto === "gioca" && w.document.querySelector(".pz-pan.su .pz-ok");
+    }, { ms: 240000, passo: 200 });
+    if (!ok) no("non si arriva a «Più o meno»");
+    if (!intro) no("la regola del gioco a premi non si è vista");
+    var durIntro = Date.now() - intro.t0;
+    if (durIntro < 8000) no("la regola è restata solo " + durIntro + " ms (deve essere circa 10 s)");
+    if (!intro.conto) no("sulla regola manca «Si comincia tra…»");
+    function tasto(tx) { return [].filter.call(w.document.querySelectorAll(".pz-pan.su .pz-k"), function (x) { return x.textContent.trim() === tx; })[0]; }
+    function disp() { return ((w.document.querySelector(".pz-pan.su .pz-disp .v") || {}).textContent || "").trim(); }
+    var p = H().premio.st.prod.prezzo, sbagliato = Math.max(1, Math.round(p * 0.5));
+    String(sbagliato).split("").forEach(function (c) { tocca(w, tasto(c)); });
+    if (disp().replace(/\D/g, "") !== String(sbagliato)) no("sul tastierino non c'è " + sbagliato + " («" + disp() + "»)");
+    tocca(w, w.document.querySelector(".pz-pan.su .pz-ok"));
+    if (!await W.aspetta(function () { return /PIÙ SU|PIÙ GIÙ/.test(T(w)); }, 4000)) no("dopo «Prova!» non arriva «più su / più giù»");
+    await W.dorme(150);
+    var v = w.document.querySelector(".pz-pan.su .pz-disp .v");
+    if (!v || !v.classList.contains("vuoto")) no("dopo il prezzo sbagliato il tastierino non è vuoto («" + disp() + "»)");
+    var chip = [].map.call(w.document.querySelectorAll(".pz-pan.su .pz-offrow .pz-offch"), function (c) { return c.textContent; }).join(" | ");
+    if (chip.replace(/\./g, "").indexOf(String(sbagliato)) < 0) no("il prezzo provato non resta nelle chip qui sopra («" + chip + "»)");
+    tocca(w, tasto("7"));
+    if (disp().replace(/\D/g, "") !== "7") no("riscrivendo, il tastierino non riparte da capo («" + disp() + "»)");
+    for (var i = 0; i < 3; i++) tocca(w, tasto("⌫"));
+    String(Math.round(p)).split("").forEach(function (c) { tocca(w, tasto(c)); });
+    tocca(w, w.document.querySelector(".pz-pan.su .pz-ok"));
+    if (!await W.aspetta(function () { return /PRESO/.test(T(w)); }, 4000)) no("il prezzo giusto (" + Math.round(p) + ") non viene preso");
+    if (!await PZ().giocaTutti(["Paky"], function () { return H().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("la partita non finisce (fase " + H().fase + "." + H().sotto + ")");
+    return "regola " + (durIntro / 1000).toFixed(1).replace(".", ",") + " s con «Si comincia tra…» · sbagliato " + sbagliato + " → tastierino vuoto, chip «" + chip + "», riscritto da capo · preso " + Math.round(p) + errori();
   } });
 
   W.PZB = { agisciB: agisciB, giocaTuttiB: giocaTuttiB, soloNostri: soloNostri, spiaPremi: spiaPremi, controllaTroppo: controllaTroppo, controllaPlinko: controllaPlinko };

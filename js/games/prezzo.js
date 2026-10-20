@@ -29,7 +29,8 @@
 
   var MIN_ON = 2, MAX_ON = 8;
   // i tempi (ms). Online (e contro il Bot) per tutti insieme; sullo stesso telefono (TL) a testa
-  var T = { prodotto: 4800, offri: 20000, rifai: 12000, sopra: 4400, scegli: 8000, intro: 3800, punti: 10000, vetOffri: 30000, giro: 15000, decidi: 10000 };
+  // (scegli e intro: il tempo per leggere le regole dei giochi a premi, anche per chi non li conosce)
+  var T = { prodotto: 4800, offri: 20000, rifai: 12000, sopra: 4400, scegli: 15000, intro: 10000, punti: 10000, vetOffri: 30000, giro: 15000, decidi: 10000 };
   var TL = { offri: 25000, vetOffri: 35000, giro: 20000, decidi: 15000, scegli: 15000 };
   var SCALA = [300, 150, 75], SCALA_V = [900, 450, 225];
   var BONUS_GIUSTO = 500, BONUS_TUTTO = 1500, BONUS_CENTO = 1000;
@@ -38,6 +39,7 @@
   var RV = { cam: 650, rullo: 1300, cifra: 280, dopoConta: 450, riga: 420, banner: 2000, cattivo: 2500, leggii: 2700 };
   var RVET = { pezzo: 2300, prezzo: 850, cifra: 240, riga: 600, banner: 2100, tutto: 3900 };
   var RRU = { riga: 650, cento: 2700, banner: 2100 };
+  var RU_FERMA = 6500;   // dopo l'ultima spinta della Ruota: la ruota frena (fino a ~5,5 s) e il numero resta un attimo
 
   // =========================================================
   //  LE REGOLE (senza grafica)
@@ -710,11 +712,12 @@
       if (f === "premio" && s === "gioca" && H.premio && pres.every(function (p) { return H.premio.fatti[p.id]; })) return dopo(online ? 1100 : 700, fineGioco);
       if (f === "ruota" && H.ruota) {
         var x = function (id) { return H.ruota.g[id] || {}; }, conta = pres.filter(function (p) { return H.ruota.g[p.id]; });
-        if (s === "giro1" && conta.every(function (p) { return x(p.id).v1 != null; })) return dopo(2900, decidi);
+        // (dopo l'ultima spinta si aspetta che la sua ruota si fermi: frena fino a ~5 s, e il numero si vede solo allora)
+        if (s === "giro1" && conta.every(function (p) { return x(p.id).v1 != null; })) return dopo(RU_FERMA, decidi);
         if (s === "decidi" && conta.every(function (p) { return x(p.id).si != null; })) return dopo(700, giro2);
-        if (s === "giro2" && conta.every(function (p) { return x(p.id).si !== true || x(p.id).v2 != null; })) return dopo(3100, rivRuota);
+        if (s === "giro2" && conta.every(function (p) { return x(p.id).si !== true || x(p.id).v2 != null; })) return dopo(RU_FERMA, rivRuota);
         // (sullo stesso telefono la ruota la chiude la regia quando l'ultimo ha visto fermarsi la sua: «finiti»)
-        if (s === "bonus" && modo !== "telefono" && conta.every(function (p) { return !x(p.id).cento || x(p.id).b != null; })) return dopo(3100, rivBonus);
+        if (s === "bonus" && modo !== "telefono" && conta.every(function (p) { return !x(p.id).cento || x(p.id).b != null; })) return dopo(RU_FERMA, rivBonus);
       }
       if (f === "vetrina" && s === "offri" && pres.every(function (p) { return H.vet.off[p.id] != null || H.vpassati[p.id]; })) return dopo(pausa, chiudiVetrina);
       if (f === "punti" && H.avanti.length >= servono()) return oltre();
@@ -1002,7 +1005,7 @@
       if (f === "vetrina" && s === "offri") return ST.testoLeggio(S, i, (vm.vet.fatti || []).indexOf(p.id) >= 0 ? "✅" : "🤔");
       if (f === "premio" && s === "gioca") return ST.testoLeggio(S, i, ((vm.premio || {}).fatti || []).indexOf(p.id) >= 0 ? "✅" : "🎮");
       if (f === "ruota" && !fermi && vm.ruota) {
-        var x = vm.ruota.g[p.id]; if (!x) return ST.puntiLeggio(S, i, p.punti, 0);
+        var x = vistaRuota(R, p.id); if (!x) return ST.puntiLeggio(S, i, p.punti, 0);
         var tot = (x.v1 || 0) + (x.v2 || 0);
         return ST.testoLeggio(S, i, x.v1 == null ? "🎡" : tot > 100 ? "💥 " + tot : String(tot), tot > 100);
       }
@@ -1392,6 +1395,10 @@
     schermo(R, [ el("div", { class: "pz-testa", text: "🎁 Gioco a premi" + (vm.nPremio > 1 ? " · " + vm.iPremio + " di " + vm.nPremio : "") }),
       el("div", { class: "pz-intro" }, [ el("span", { class: "i", text: pr.icona }), el("b", { text: pr.nome }), el("p", { text: pr.regola }) ]),
       el("div", { class: "pz-sotto", text: (pr.da ? "Scelto da " + (pr.da === R.cb.myId ? "te" : nomeDi(vm, pr.da)) + " · " : "") + "si gioca tutti insieme!" }) ]);
+    // quanto manca per leggere la regola: «Si comincia tra 7…» (in basso, come sulle classifiche)
+    var conto = el("p", { class: "pz-attesa" }), sec = Math.max(1, Math.round(((vm.restaMs || T.intro) - (Date.now() - R.vmTs)) / 1000));
+    ST.barra(S, [ conto, R.t.faccine() ]);
+    R.t.contoAvanti(conto, sec, null, "pz|" + vm.sessione + "|" + k, "Si comincia tra ");
     Z().FX.tada(); ST.pubblico(S, "applauso");
   }
   // gli aiuti per i giochi a premi su ogni telefono (vedi interfaccia in js/games/prezzo-premi-piu.js)
@@ -1527,12 +1534,19 @@
     if (x.v2 != null) return x.v1 + " + " + x.v2 + " = " + (tot > 100 ? "💥" + tot : tot);
     return String(x.v1) + (x.si === false && mostraSi ? " ✋" : x.si === true && mostraSi ? " 🎡" : x.si === "?" ? " ✅" : "");
   }
+  // il numero di chi sta girando su QUESTO telefono si vede solo quando la sua ruota si ferma (fino ad allora resta quello di prima)
+  function vistaRuota(R, id) {
+    var x = R.vm.ruota && R.vm.ruota.g[id], RU = R.ruotaUI;
+    if (!x || !RU || RU.chi !== id || RU.fermo || x[RU.campo] == null) return x;
+    var y = {}; for (var k in x) y[k] = x[k];
+    y[RU.campo] = null; return y;
+  }
   function aggiornaRuota(R) {
     var vm = R.vm, U = R.schRu, el = R.t.el; if (!vm.ruota) return;
     if (U && U.grid.isConnected) {
       vm.players.forEach(function (p) {
         if (p.via || !vm.ruota.g[p.id]) return;
-        var c = U.celle[p.id], x = vm.ruota.g[p.id];
+        var c = U.celle[p.id], x = vistaRuota(R, p.id);
         if (!c) { c = U.celle[p.id] = el("div", { class: "pz-rg" }, [ fac(el, p), el("span", { class: "nm", text: p.id === R.cb.myId ? "Tu" : p.nome }), el("span", { class: "val" }) ]); U.grid.appendChild(c); }
         var tx = testoRuota(x, vm.sotto !== "decidi"), v = c.querySelector(".val"); if (v.textContent !== tx) v.textContent = tx;
         var tot = (x.v1 || 0) + (x.v2 || 0); c.classList.toggle("fuori", tot > 100); c.classList.toggle("cento", tot === 100);
@@ -1547,6 +1561,8 @@
     var val = mx[RU.campo];
     if (RU.tb) RU.tb.ferma();
     RU.atterra = RU.ru.arriva(val).then(function () {
+      // la ruota si è fermata: solo adesso il numero va sul maxischermo e sul leggio
+      RU.fermo = true; aggiornaRuota(R); leggii(R);
       var tot = RU.campo === "b" ? val : (mx.v1 || 0) + (RU.campo === "v2" ? (mx.v2 || 0) : 0);
       RU.nota.textContent = RU.campo === "b" ? "🎁 " + val + (puntiBonus(val) ? "! +" + N(puntiBonus(val)) : "") : tot > 100 ? "💥 " + tot + ": sballato!" : tot === 100 ? "💯 CENTO!" : "🎡 " + val + (RU.campo === "v2" ? " · totale " + tot : "");
       if (tot === 100 || (RU.campo === "b" && val === 100)) { Z().FX.cento(); fumetto(R.S, "CENTO! CENTO! CENTO!"); Z().vibra([40, 50, 90]); ST.pubblico(R.S, "ovazione"); }
@@ -1556,11 +1572,11 @@
   }
   function apriRuota(R, chi, campo, fine, allaFine) {
     var el = R.t.el, k = R.vm.k;
-    var nota = el("p", { class: "pz-nota forte", text: campo === "b" ? "🎁 Giro bonus! Trascina la ruota in giù 👇" : "👇 Trascina la ruota in giù per girarla!" });
-    var RU = { campo: campo, chi: chi.id, nota: nota, arrivato: false, mandato: false };
+    var nota = el("p", { class: "pz-nota forte", text: campo === "b" ? "🎁 Giro bonus! Trascina la ruota su o giù ↕️" : "↕️ Trascina la ruota su o giù per girarla!" });
+    var RU = { campo: campo, chi: chi.id, nota: nota, arrivato: false, mandato: false, fermo: false };
     RU.ru = Z().ruota(el, { alt: altRuota(),
       onSpinta: function (f) { if (RU.mandato || !vivoK(R, k)) return false; RU.mandato = true; RU.ru.attiva(false); R.cb.mossa({ t: "spinta", k: k, f: f }, chi.id); nota.textContent = "🎡 Gira…"; },
-      debole: function () { nota.textContent = "💪 Più forte! Trascina giù più veloce"; fumetto(R.S, "Più forte! 💪"); } });
+      debole: function () { nota.textContent = "💪 Più forte! Trascina più veloce"; fumetto(R.S, "Più forte! 💪"); } });
     RU.ru.attiva(true);
     var mx = (R.vm.ruota.g || {})[chi.id]; if (mx && mx.v1 != null && campo !== "v1") RU.ru.mostra(campo === "b" ? 100 : mx.v1);
     RU.tb = Z().barraTempo(el, fine, function () { RU.ru.attiva(false); if (allaFine) allaFine(); });
@@ -1899,7 +1915,7 @@
       if (R.tast && R.tastK === m.kk) {
         clearTimeout(R.toAttesa);
         if (!R.pan.aperto() && R.tastChi) apriOfferta(R);
-        else { R.tast.riapri(); }
+        else { R.tast.svuota(); R.tast.riapri(); }   // il prezzo non va: si riscrive da capo
         fumetto(R.S, m.k === "preso" ? "Già preso da " + m.da + "! 😬" : "Sotto i " + E(m.lim) + "!");
       }
       return;
