@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 239,
+    data: "20 ottobre 2026",
+    titolo: "Calcio Biliardo: tiri a tutta forza anche dal bordo ⚽",
+    descrizione: [
+      "👆 Una pedina vicino al bordo si tira a tutta forza: toccala e lasciala (resta scelta, con l'anello bianco), poi trascina da un punto libero del campo. Prima il dito finiva fuori dallo schermo prima della forza massima.",
+      "✋ Ci hai ripensato? Torna col dito dove eri partito e lascia: il tiro non parte. Per cambiare pedina basta toccarne un'altra.",
+      "📱 Il tiro dalla pedina arriva alla forza piena prima del bordo dello schermo (lì su Android c'è il gesto «indietro» che rubava il dito)."
+    ]
+  },
+  {
     v: 238,
     data: "20 ottobre 2026",
     titolo: "Il Prezzo è Giusto: Ruota, Plinko e più tempo per le regole 🎡",

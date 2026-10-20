@@ -305,10 +305,11 @@
     stile();
     MUTO = !!o.muto;
     var el = t.el, s = t.schermata({}); s.classList.add("cb-piena");
-    var ui = { t: t, cb: cb, o: o, st: null, anim: null, mira: null, zoom: 1, turno: 0, fase: "mira", puoi: false, mie: [], solo: null,
+    var ui = { t: t, cb: cb, o: o, st: null, anim: null, mira: null, scelta: null, zoom: 1, turno: 0, fase: "mira", puoi: false, mie: [], solo: null,
       eventoVisto: null, scadenza: null, fineTempo: null, testo: { giu: "", su: "" }, facce: [null, null], avviso: null, stDopo: null };
     var scena = el("div", { class: "cb-scena" + (o.ruota ? " ruota" : "") + (o.targa ? " con-targa" : "") });
     ui.basso = o.targa ? 54 : 0;   // (il posto della targhetta di chi guarda, sotto la targhetta in basso)
+    if (window.__CB) window.__CB.ui = ui;   // (per le prove: la mira col dito)
     ui.cv = el("canvas", { class: "cb-campo" }); ui.ctx = ui.cv.getContext("2d");
     var esci = el("button", { class: "cb-esci", "aria-label": "Esci", text: "‹", onclick: function () { cb.onEsci(); if (!vivo()) follaFerma(); } });
     var audio = el("button", { class: "cb-audio", "aria-label": "Suoni", text: suoniOn() ? "🔊" : "🔇", onclick: function () {
@@ -376,21 +377,36 @@
       var x = (sx - ui.ox) / ui.S, y = (sy - ui.oy) / ui.S;
       return o.flip ? { x: W - x, y: L - y } : { x: x, y: y };
     }
+    function puoTirare(i) { var q = squadraDi(i); return q === ui.turno && ui.mie.indexOf(q) >= 0 && (!ui.solo || i === ui.solo); }
     ui.cv.addEventListener("pointerdown", function (e) {
       if (!ui.puoi || ui.anim || !ui.st) return;
       var p = alCampo(e), best = -1, bd = R * 1.7;
       for (var i = 1; i <= 10; i++) {
-        var q = squadraDi(i); if (q !== ui.turno || ui.mie.indexOf(q) < 0 || (ui.solo && i !== ui.solo)) continue;
+        if (!puoTirare(i)) continue;
         var d = Math.hypot(ui.st.x[i] - p.x, ui.st.y[i] - p.y); if (d < bd) { bd = d; best = i; }
       }
+      // 👆 il dito non è su una pedina: si tira quella scelta prima, trascinando da qui (anche lontano da lei).
+      // Così una pedina vicino al bordo si tira a tutta forza: il dito parte da un punto libero, non dal bordo
+      var lontano = false;
+      if (best < 0 && ui.scelta && puoTirare(ui.scelta)) { best = ui.scelta; lontano = true; }
       if (best < 0) return;
       e.preventDefault(); try { ui.cv.setPointerCapture(e.pointerId); } catch (er) {}
       var f = alDito(e);
-      ui.mira = { i: best, x0: f.x, y0: f.y, x: f.x, y: f.y, id: e.pointerId };
+      ui.scelta = best;
+      ui.mira = { i: best, x0: f.x, y0: f.y, x: f.x, y: f.y, id: e.pointerId, lontano: lontano };
+      // vicino al bordo dello schermo il dito ha poco posto: lo si dice (le prime volte)
+      if (!lontano && Math.min(f.x, ui.cw - f.x, f.y, ui.ch - f.y) < TIRA * ui.S * 0.6 + BORDO_DITO) suggerisci(squadraDi(best), "💡 Lascia: tira da dove vuoi");
       vibra(8); try { if (window.SG && SG.audioCtx) SG.audioCtx(); } catch (er2) {}
       follaAvvia();
       gira();
     });
+    // un suggerimento nella targhetta, solo le prime 4 volte su questo telefono
+    function suggerisci(q, txt) {
+      var n = 0; try { n = +localStorage.getItem("sg-cb-sugg") || 0; } catch (e) {}
+      if (n >= 4) return;
+      try { localStorage.setItem("sg-cb-sugg", String(n + 1)); } catch (e) {}
+      ui.avvisa(q, txt, 3500);
+    }
     ui.cv.addEventListener("pointermove", function (e) {
       if (!ui.mira || e.pointerId !== ui.mira.id) return;
       var f = alDito(e); ui.mira.x = f.x; ui.mira.y = f.y;
@@ -398,7 +414,10 @@
     function lascia(e) {
       var m = ui.mira; if (!m || e.pointerId !== m.id) return;
       var fz = forza(ui); ui.mira = null;
-      if (e.type === "pointerup" && fz.p >= 0.07 && ui.puoi) { cb.onTiro(m.i, fz.ux * VMAX * fz.p, fz.uy * VMAX * fz.p); }
+      if (e.type === "pointerup" && fz.p >= 0.07 && ui.puoi) { ui.scelta = null; cb.onTiro(m.i, fz.ux * VMAX * fz.p, fz.uy * VMAX * fz.p); }
+      // lasciato vicino a dove era partito: niente tiro. La pedina resta scelta (si tira trascinando da dove si vuole)
+      // e toccandone un'altra si cambia
+      else if (e.type === "pointerup" && !m.lontano && ui.puoi) suggerisci(squadraDi(m.i), "👆 Ora tira da dove vuoi");
       gira();
     }
     ui.cv.addEventListener("pointerup", lascia);
@@ -440,14 +459,14 @@
       var s0 = daFoto(tiro.st);
       s0.vx[tiro.i] = tiro.vx; s0.vy[tiro.i] = tiro.vy;
       (tiro.extra || []).forEach(function (x) { s0.vx[x[0]] = x[1]; s0.vy[x[0]] = x[2]; });
-      ui.mira = null; ui.stDopo = null; ui.anim = { s: s0, acc: 0, passi: 0, fatto: fatto || function () {} };
+      ui.mira = null; ui.scelta = null; ui.stDopo = null; ui.anim = { s: s0, acc: 0, passi: 0, fatto: fatto || function () {} };
       gira();
     };
     // aggiorna solo quello che cambia (testi, punti, orologio, posizioni da ferme)
     ui.aggiorna = function (d, testi) {
       if (d.st) { if (!ui.anim) ui.st = daFoto(d.st); else ui.stDopo = d.st; }   // durante un tiro la foto si tiene per dopo
       ui.turno = d.turno; ui.fase = d.fase; ui.puoi = !!d.puoi; ui.mie = d.mie || []; ui.solo = d.solo || null;
-      if (!ui.puoi) ui.mira = null;
+      if (!ui.puoi) { ui.mira = null; ui.scelta = null; }
       var g = d.gol || [0, 0];
       if (ui.giu.gol.textContent !== String(g[qGiu])) ui.giu.gol.textContent = g[qGiu];
       if (ui.su.gol.textContent !== String(g[1 - qGiu])) ui.su.gol.textContent = g[1 - qGiu];
@@ -532,17 +551,19 @@
   }
   // la forza del tiro: si conta da dove hai appoggiato il dito. Vicino al bordo dello schermo la forza piena
   // arriva prima (prima che il dito esca dallo schermo), così si tira forte anche dai lati
-  var ZOOM_MAX = 0.18;   // a tutta forza il campo si rimpicciolisce del 18% (la telecamera "si alza")
+  // (BORDO_DITO: gli ultimi pixel dello schermo non contano, lì su Android c'è il gesto «indietro» che ruba il dito.
+  //  ANNULLA: il dito tornato a meno di così da dove era partito = niente tiro)
+  var ZOOM_MAX = 0.18, BORDO_DITO = 26, ANNULLA = 10;   // a tutta forza il campo si rimpicciolisce del 18% (la telecamera "si alza")
   function forza(ui) {
     var m = ui.mira; if (!m) return { p: 0, ux: 0, uy: 0 };
     var dx = m.x0 - m.x, dy = m.y0 - m.y, len = Math.hypot(dx, dy);
-    if (len < 1) return { p: 0, ux: 0, uy: 0 };
+    if (len < ANNULLA) return { p: 0, ux: 0, uy: 0 };
     var fx = -dx / len, fy = -dy / len, posto = Infinity;   // dove va il dito e quanto posto ha
     if (fx > 0.01) posto = Math.min(posto, (ui.cw - m.x0) / fx); else if (fx < -0.01) posto = Math.min(posto, m.x0 / -fx);
     if (fy > 0.01) posto = Math.min(posto, (ui.ch - m.y0) / fy); else if (fy < -0.01) posto = Math.min(posto, m.y0 / -fy);
-    var pieno = Math.max(24, Math.min(TIRA * ui.S, posto - 8));
+    var pieno = Math.max(ANNULLA + 16, Math.min(TIRA * ui.S, posto - BORDO_DITO));
     var ux = dx / len, uy = dy / len; if (ui.o.flip) { ux = -ux; uy = -uy; }
-    return { p: Math.min(1, len / pieno), ux: ux, uy: uy };
+    return { p: Math.min(1, (len - ANNULLA) / (pieno - ANNULLA)), ux: ux, uy: uy };
   }
 
   // il campo, le righe e le porte: disegnati una volta (per ogni misura) su una tela a parte
@@ -633,6 +654,7 @@
       var cx = X(s.x[m.i]), cy = Y(s.y[m.i]), qm = squadraDi(m.i), fz = forza(ui);
       pm = fz.p;
       var fxs = mx + (m.x - mx) / z, fys = my + (m.y - my) / z;   // il dito, nello spazio della telecamera
+      if (m.lontano) { fxs = cx + (m.x - m.x0) / z; fys = cy + (m.y - m.y0) / z; }   // (tirata da lontano: l'elastico parte dalla pedina, lungo quanto il dito si è spostato)
       g.strokeStyle = colore(qm); g.globalAlpha = 0.55; g.lineWidth = 3; g.setLineDash([2, 5]);
       g.beginPath(); g.moveTo(cx, cy); g.lineTo(fxs, fys); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
       if (pm > 0) {
@@ -654,6 +676,10 @@
       if (ui.fase === "mira" && q === ui.turno && !ui.anim && (!ui.solo || i === ui.solo)) {   // chi deve tirare: un anello che gira intorno
         g.strokeStyle = colore(q); g.lineWidth = 2.5; g.setLineDash([5, 4]);
         g.beginPath(); g.arc(x, y, r + 5, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+        if (!m && ui.scelta === i && ui.puoi) {   // la pedina scelta (si tira trascinando da dove si vuole): un anello pieno bianco
+          g.strokeStyle = "#ffffff"; g.lineWidth = 3.5;
+          g.beginPath(); g.arc(x, y, r + 9, 0, Math.PI * 2); g.stroke();
+        }
       }
       if (m && m.i === i) {   // la forza: un anello che si riempie (verde, giallo, rosso)
         g.strokeStyle = "rgba(255,255,255,.25)"; g.lineWidth = 6;
