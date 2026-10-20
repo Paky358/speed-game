@@ -2990,7 +2990,7 @@
       spiaTavolo();
       var LISTA = ["tris", "drop4", "navale", "scopa", "calciobiliardo", "scalinata", "pallamatta", "ruota", "scopa2v2", "pendolo", "horto",
         "blackjack", "poker", "asta", "sipero", "scarabocchio", "garapesca", "timeline", "nomicose", "balla", "taboo", "ordine", "patata",
-        "scopone", "impostore", "chidinoi", "prezzo"];   // (dal 16 ott anche lo Scopone e L'Impostore online e «Chi di Noi?»; dal 17 «Il Prezzo è Giusto!»)
+        "scopone", "impostore", "chidinoi", "prezzo", "unaparola"];   // (dal 20 ott «Una parola sola»; dal 16 ott anche lo Scopone e L'Impostore online e «Chi di Noi?»; dal 17 «Il Prezzo è Giusto!»)
       if (opz && opz.solo) LISTA = LISTA.filter(function (g) { return opz.solo.indexOf(g) >= 0; });
       var nomi = ["Paky", "Giulia", "Luca", "Marco", "Bea"], prof = { fiches: { blackjack: 5000 } };
       await W.apriTel("Paky", { x: 0, salaSempre: true, spiaTav: LISTA, profilo: prof });
