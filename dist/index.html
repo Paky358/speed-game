@@ -2053,6 +2053,37 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .bc-liv{ flex:1 1 0; min-width:0; padding:10px 4px; border:2px solid transparent; border-radius:14px; background:var(--carta); color:inherit; font:inherit; font-size:.88rem; font-weight:800; cursor:pointer; }
 .bc-liv.on{ border-color:#ffd43b; background:var(--carta-2); }
 .bc-avviso{ min-height:1.3em; margin-top:6px; }
+/* 🧩 Ordine dei giochi (solo il proprietario: tocco lungo su una tessera della home). Alta come lo schermo: scorre solo la lista;
+   la riga presa con la maniglia ⠿ segue il dito (solo transform), le altre si spostano nel loro posto */
+.og-sc{ flex:0 0 auto; height:var(--alt, 100dvh); max-height:var(--alt, 100dvh); min-height:0; }
+.og-sc > .contenuto{ min-height:0; display:flex; flex-direction:column; }
+.og-lista{ position:relative; flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+  display:flex; flex-direction:column; gap:8px; padding:2px 2px 6px; }
+/* (mentre si trascina il browser non deve "tenere ferme" le righe spostando la lista da solo: andrebbe contro lo scorrimento) */
+.og-lista.og-trascino{ overflow-anchor:none; }
+.og-riga{ position:relative; flex:0 0 auto; display:flex; align-items:center; gap:9px; min-width:0; padding:7px 10px 7px 0; border-radius:16px;
+  background:var(--carta); box-shadow:inset 0 1px 0 rgba(255,255,255,.1); }
+.og-riga.og-preso{ z-index:2; background:var(--carta-2); box-shadow:0 10px 24px rgba(0,0,0,.45), 0 0 0 2px #ffd43b; }
+.og-riga.og-mosso::after{ content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 2px #ffd43b; opacity:0; pointer-events:none; animation:og-luce .9s ease; }
+@keyframes og-luce{ from{ opacity:1; } to{ opacity:0; } }
+.og-maniglia{ flex:0 0 auto; align-self:stretch; display:flex; align-items:center; justify-content:center; width:36px; margin:-7px -4px -7px 0;
+  font-size:1.5rem; line-height:1; color:var(--testo-tenue); touch-action:none; cursor:grab; -webkit-tap-highlight-color:transparent; }
+.og-riga.og-preso .og-maniglia{ color:#ffd43b; cursor:grabbing; }
+.og-ic{ position:relative; flex:0 0 auto; width:46px; height:46px; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center;
+  font-size:1.6rem; background:linear-gradient(150deg,#5a6cd0,#33418c); }
+.og-ic img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.og-centro{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:5px; }
+.og-nome{ display:flex; align-items:baseline; gap:6px; min-width:0; font-weight:800; font-size:.98rem; line-height:1.2; }
+.og-nome span{ min-width:0; overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }   /* (i nomi lunghi vanno a capo) */
+.og-n{ flex:0 0 auto; color:#ffd76a; font-size:.85rem; }
+.og-tasti{ display:flex; gap:6px; min-width:0; }
+.og-t{ flex:0 0 auto; min-height:34px; min-width:42px; padding:4px 10px; border:0; border-radius:10px; background:var(--carta-2); color:inherit;
+  font:inherit; font-size:.85rem; font-weight:800; white-space:nowrap; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.og-t:active{ transform:scale(.94); }
+.og-t:disabled{ opacity:.35; cursor:default; }
+.og-piede-riga{ display:flex; gap:8px; }
+.og-piede-riga .btn{ flex:1 1 0; min-width:0; min-height:44px; padding:8px 6px; font-size:.92rem; }
+.og-piede-riga .og-partenza{ flex-grow:1.6; }   /* («↩️ Ordine di partenza» in una riga anche a 360 px) */
 /* =========================================================
    IL TORNEINO (p2-t): giochi a due con 3 o più persone. La scelta nella Sala ("🏆 Torneino" o "⚔️ Una sfida"),
    il tasto "🏆 Fate il torneino in N" nella saletta, il tabellone compatto (anche in 10 senza scorrere).
@@ -11351,7 +11382,8 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     [100, 400, 1000].forEach(function (ms) { setTimeout(misura, ms); });   // dopo il caricamento le barre si assestano
   })();
 
-  var giochi = [];            // giochi registrati
+  var giochi = [];            // giochi registrati, nell'ordine scelto dal proprietario (🧩 Ordine dei giochi: vedi ordinaGiochi)
+  var giochiReg = [];         // gli stessi giochi nell'ordine in cui si sono registrati (= "ordine di partenza")
 
   // Categorie della home. "tutti" mostra tutto; le altre filtrano per tipo di gioco.
   // Ogni gioco ha la sua categoria in CAT_GIOCO (per id): nessuno resta senza.
@@ -11505,7 +11537,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
       icona.appendChild(img);
     }
-    return el("button", { class: "tessera", onclick: onclick }, [
+    return el("button", { class: "tessera", "data-gioco": g.id, onclick: onclick }, [
       icona,
       el("div", { class: "info" }, [
         el("h2", { text: g.nome }),
@@ -12160,11 +12192,14 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
         el("p", { text: "Uno alla volta, fatto bene." })
       ])
     ]);
+    var padrone = eProprietario();   // (solo IL PAPPONE: tenendo premuta una tessera si apre «🧩 Ordine dei giochi»)
     function riempiGriglia() {
       griglia.innerHTML = "";
       giochi.forEach(function (g) {
         if (catAttiva === "tutti" || catDi(g) === catAttiva) {
-          griglia.appendChild(tesseraGioco(g, function () { apriGioco(g); }));
+          var tess = tesseraGioco(g, function () { apriGioco(g); });
+          if (padrone) tienPremuto(tess, schermataOrdineGiochi);
+          griglia.appendChild(tess);
         }
       });
       if (catAttiva === "tutti") griglia.appendChild(presto); // il segnaposto solo in "Tutti"
@@ -12637,7 +12672,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
   function botDaId(id) { var b = botTutti().filter(function (x) { return x.id === id; })[0]; return b ? copiaBot(b) : null; }
   // salva i bot (solo il proprietario): su questo telefono e nella sua scheda pubblica, dove li leggono tutti
   function salvaBot(lista) {
-    botCast = botDaSalvati(lista); botSalvatoA = Date.now();
+    botCast = botDaSalvati(lista); botSalvatoA = Date.now(); schedaProp = null;   // (la scheda letta prima ha i bot vecchi)
     try { localStorage.setItem("sg-bot", JSON.stringify(botCast)); } catch (e) {}
     var N = window.SGNube;
     if (N && N.pubblica && eProprietario()) try { Promise.resolve(N.pubblica({ bot: botCast })).catch(function () {}); } catch (e) {}
@@ -12648,7 +12683,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
     function fine(c) { if (poi) try { poi(c); } catch (e) {} }
     if (!(N && N.cercaNome)) return fine(false);
     try {
-      Promise.resolve(N.cercaNome(PROPRIETARIO)).then(function (sch) {
+      schedaDelProprietario().then(function (sch) {
         if (!sch || !Array.isArray(sch.bot) || t0 < botSalvatoA) return fine(false);   // (salvati qui nel frattempo: valgono quelli)
         var nuovi = botDaSalvati(sch.bot);
         if (JSON.stringify(nuovi) === JSON.stringify(botTutti())) return fine(false);
@@ -12730,6 +12765,253 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       indietro();
     } }));
     mostra(s);
+  }
+
+  // ---- la scheda pubblica del proprietario, letta una volta per tutti quelli che la chiedono insieme (i bot e l'ordine dei
+  //      giochi all'avvio: una lettura sola). Per 5 s si riusa la stessa risposta ----
+  var schedaProp = null;
+  function schedaDelProprietario() {
+    var N = window.SGNube;
+    if (!(N && N.cercaNome)) return Promise.resolve(null);
+    if (schedaProp && Date.now() - schedaProp.t < 5000) return schedaProp.p;
+    var p;
+    try { p = Promise.resolve(N.cercaNome(PROPRIETARIO)); } catch (e) { p = Promise.reject(e); }
+    p.catch(function () {});   // (chi la usa ha il suo catch: questa non resta "senza risposta")
+    schedaProp = { t: Date.now(), p: p };
+    return p;
+  }
+
+  // ---- 🧩 L'ORDINE DEI GIOCHI: lo decide il proprietario (IL PAPPONE) ed è uguale per tutti, in home (anche nelle categorie),
+  //      nella Sala («Quale gioco?»), nel torneo e negli edifici. Tenendo premuta una tessera della home (~0,6 s) si apre la
+  //      schermata per riordinarli. Si salva nella sua scheda pubblica (campo ordineGiochi: la lista degli id, [] = di partenza),
+  //      come i bot e la commessa; ogni telefono ne tiene una copia (sg-ordine-giochi) e la usa subito all'avvio, così la home
+  //      non salta. I giochi che non sono nella lista (quelli nuovi) vanno in fondo, nell'ordine di sempre ----
+  var ORDINE_K = "sg-ordine-giochi", ordineAttivo = null, ordineSalvatoA = 0;
+  function pulisciOrdine(l) {
+    var visti = {};
+    return (Array.isArray(l) ? l : []).filter(function (x) {
+      if (typeof x !== "string" || !x || x.length > 40 || visti[x]) return false;
+      visti[x] = 1; return true;
+    }).slice(0, 150);
+  }
+  function ordineSalvato() { try { var l = pulisciOrdine(JSON.parse(localStorage.getItem(ORDINE_K) || "null")); return l.length ? l : null; } catch (e) { return null; } }
+  // rimette in fila la lista dei giochi (sul posto: tutto il core usa la stessa)
+  function ordinaGiochi() {
+    var pos = {}, n = ordineAttivo ? ordineAttivo.length : 0;
+    (ordineAttivo || []).forEach(function (id, i) { pos[id] = i; });
+    var l = giochiReg.map(function (g, i) { return { g: g, k: Object.prototype.hasOwnProperty.call(pos, g.id) ? pos[g.id] : n + i, i: i }; });
+    l.sort(function (a, b) { return a.k - b.k || a.i - b.i; });
+    giochi.length = 0;
+    l.forEach(function (x) { giochi.push(x.g); });
+  }
+  function idGiochi(lista) { return lista.map(function (g) { return g.id; }); }
+  // un ordine nuovo (salvato qui o arrivato dalla scheda): [] o null = di partenza
+  function usaOrdine(l) {
+    l = pulisciOrdine(l);
+    if (l.join("|") === idGiochi(giochiReg).join("|")) l = [];   // (uguale a quello di partenza: è quello di partenza)
+    ordineAttivo = l.length ? l : null;
+    try { if (l.length) localStorage.setItem(ORDINE_K, JSON.stringify(l)); else localStorage.removeItem(ORDINE_K); } catch (e) {}
+    ordinaGiochi();
+    return l;
+  }
+  // la home aperta si rimette in fila spostando le tessere che ci sono già (niente da ridisegnare: le foto restano)
+  function riordinaHome() {
+    [].forEach.call(document.querySelectorAll(".home .griglia-giochi"), function (gr) {
+      var per = {}, ora = [];
+      [].forEach.call(gr.children, function (c) { var id = c.getAttribute("data-gioco"); if (id) { per[id] = c; ora.push(id); } });
+      var giusto = giochi.filter(function (g) { return per[g.id]; }).map(function (g) { return g.id; });
+      if (giusto.join("|") === ora.join("|")) return;
+      var prima = gr.querySelector(".tessera.presto");
+      giusto.forEach(function (id) { gr.insertBefore(per[id], prima); });
+    });
+  }
+  // salva (solo il proprietario): su questo telefono e nella sua scheda pubblica, dove lo leggono tutti
+  function salvaOrdine(ids) {
+    var l = usaOrdine(ids);
+    ordineSalvatoA = Date.now(); schedaProp = null;
+    var N = window.SGNube;
+    if (N && N.pubblica && eProprietario()) try { Promise.resolve(N.pubblica({ ordineGiochi: l })).catch(function () {}); } catch (e) {}
+  }
+  // l'ordine del proprietario dalla sua scheda pubblica (all'avvio e aprendo «🧩 Ordine dei giochi»). poi(cambiato)
+  function caricaOrdine(poi) {
+    var t0 = Date.now();
+    function fine(c) { if (poi) try { poi(c); } catch (e) {} }
+    try {
+      schedaDelProprietario().then(function (sch) {
+        // (nessuna scheda o mai salvato, o salvato qui nel frattempo: vale quello che c'è. [] salvato = ordine di partenza)
+        if (!sch || !Array.isArray(sch.ordineGiochi) || t0 < ordineSalvatoA) return fine(false);
+        var l = pulisciOrdine(sch.ordineGiochi), prima = idGiochi(giochi).join("|");
+        if (l.join("|") === (ordineAttivo || []).join("|")) return fine(false);
+        usaOrdine(l);
+        if (idGiochi(giochi).join("|") === prima) return fine(false);
+        riordinaHome();
+        fine(true);
+      }).catch(function () { fine(false); });
+    } catch (e) { fine(false); }
+  }
+  // ---- il tocco lungo (solo il proprietario, sulle tessere della home): ~0,6 s col dito fermo = fn(). Il dito che si muove
+  //      (sta scorrendo) lo annulla; all'appoggio non vibra (vibra solo quando la schermata si apre: è una scelta), e il
+  //      "click" che arriva quando si alza il dito non apre il gioco ----
+  var LUNGO = { t: null, x: 0, y: 0, id: null, ingoia: 0, pronto: false };
+  function annullaLungo() { if (LUNGO.t) { clearTimeout(LUNGO.t); LUNGO.t = null; } }
+  function tienPremuto(nodo, fn) {
+    if (!LUNGO.pronto) {
+      LUNGO.pronto = true;
+      // (window, in cattura: arriva prima di tutti, anche della vibrazione dei tasti)
+      window.addEventListener("click", function (e) { if (LUNGO.ingoia && Date.now() < LUNGO.ingoia) { LUNGO.ingoia = 0; e.stopPropagation(); e.preventDefault(); } }, true);
+      var alzato = function () { annullaLungo(); if (LUNGO.ingoia) LUNGO.ingoia = Date.now() + 450; };
+      window.addEventListener("pointerup", alzato, true);
+      window.addEventListener("pointercancel", alzato, true);
+      window.addEventListener("scroll", annullaLungo, true);   // (si scorre la pagina o un riquadro: niente tocco lungo)
+    }
+    function parti() {
+      LUNGO.t = null;
+      if (!nodo.isConnected) return;
+      LUNGO.ingoia = Date.now() + 10000;
+      fn();   // (la vibrazione breve la dà la schermata che si apre)
+    }
+    nodo.addEventListener("pointerdown", function (e) {
+      if (e.button > 0 || e.isPrimary === false) return;
+      annullaLungo();
+      LUNGO.x = e.clientX; LUNGO.y = e.clientY; LUNGO.id = e.pointerId;
+      LUNGO.t = setTimeout(parti, 600);
+    });
+    nodo.addEventListener("pointermove", function (e) {
+      if (LUNGO.t && e.pointerId === LUNGO.id && Math.abs(e.clientX - LUNGO.x) + Math.abs(e.clientY - LUNGO.y) > 10) annullaLungo();
+    });
+    nodo.addEventListener("pointerleave", annullaLungo);
+    // (e anche se il "click" arriva proprio alla tessera, che intanto è uscita dalla pagina: il gioco non si apre)
+    nodo.addEventListener("click", function (e) { if (LUNGO.ingoia && Date.now() < LUNGO.ingoia) { LUNGO.ingoia = 0; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+    // (il telefono ha già capito che è un tocco lungo, es. Android: si apre subito)
+    nodo.addEventListener("contextmenu", function () { if (LUNGO.t) { clearTimeout(LUNGO.t); parti(); } });
+  }
+  // «🧩 Ordine dei giochi» (solo il proprietario): la lista di tutti i giochi, da riordinare trascinando la maniglia ⠿,
+  // con «⬆️ In cima» e ⬆️/⬇️ di uno. Si spostano le righe che ci sono (niente lampeggio); scorre solo la lista
+  function schermataOrdineGiochi() {
+    if (!eProprietario()) return schermataHome();
+    annullaLungo();
+    var s = schermata({ icona: "🧩", titolo: "Ordine dei giochi", sotto: "Trascina ⠿ · vale per tutti", indietro: function () { esci(); } });
+    s.classList.add("og-sc");
+    var lista = el("div", { class: "og-lista", role: "list" }), righe = {}, firma0 = idGiochi(giochi).join("|"), partenza = idGiochi(giochiReg).join("|"), toccato = false;
+    function attuale() { return [].map.call(lista.children, function (r) { return r.getAttribute("data-gioco"); }); }
+    function riga(g) {
+      var ic = el("span", { class: "og-ic", "aria-hidden": "true" }, [ el("span", { text: g.icona || "🎲" }) ]);
+      if (!window.SG_FOTO || SG_FOTO[g.id]) {
+        var img = el("img", { src: "carte/giochi/" + g.id + ".jpg", alt: "", loading: "lazy" });
+        img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
+        ic.appendChild(img);
+      }
+      var man = el("span", { class: "og-maniglia", "aria-hidden": "true", text: "⠿" });
+      var r = el("div", { class: "og-riga", role: "listitem", "data-gioco": g.id });
+      r._n = el("b", { class: "og-n" });
+      r._cima = el("button", { class: "og-t og-cima", type: "button", text: "⬆️ In cima", onclick: function () { sposta(r, "cima"); } });
+      r._sale = el("button", { class: "og-t og-sale", type: "button", text: "⬆️", "aria-label": "Su di uno", onclick: function () { sposta(r, "su"); } });
+      r._scende = el("button", { class: "og-t og-scende", type: "button", text: "⬇️", "aria-label": "Giù di uno", onclick: function () { sposta(r, "giu"); } });
+      r._nome = g.nome;
+      r.appendChild(man); r.appendChild(ic);
+      r.appendChild(el("div", { class: "og-centro" }, [
+        el("div", { class: "og-nome" }, [ r._n, el("span", { text: g.nome }) ]),
+        el("div", { class: "og-tasti" }, [ r._cima, r._sale, r._scende ]) ]));
+      man.addEventListener("pointerdown", function (e) { prendi(e, r); });
+      righe[g.id] = r;
+      return r;
+    }
+    giochi.forEach(function (g) { lista.appendChild(riga(g)); });
+    // numeri e tasti spenti (primo: niente ⬆️; ultimo: niente ⬇️): si cambiano solo le scritte e i "disabled"
+    function numeri() {
+      var rr = lista.children, n = rr.length;
+      for (var i = 0; i < n; i++) {
+        var r = rr[i], t = (i + 1) + ".";
+        if (r._n.textContent !== t) r._n.textContent = t;
+        r._cima.disabled = r._sale.disabled = i === 0;
+        r._scende.disabled = i === n - 1;
+      }
+      var ids = attuale().join("|");
+      bSalva.disabled = ids === firma0;
+      bPartenza.disabled = ids === partenza;
+    }
+    function luce(r) { r.classList.remove("og-mosso"); void r.offsetWidth; r.classList.add("og-mosso"); }
+    function inVista(r) {   // (solo la lista scorre: la pagina resta ferma)
+      var a = r.offsetTop, b = a + r.offsetHeight;
+      if (a < lista.scrollTop) lista.scrollTop = a - 4;
+      else if (b > lista.scrollTop + lista.clientHeight) lista.scrollTop = b - lista.clientHeight + 4;
+    }
+    function sposta(r, dove) {
+      if (dove === "cima") { if (!r.previousElementSibling) return; lista.insertBefore(r, lista.firstElementChild); }
+      else if (dove === "su") { if (!r.previousElementSibling) return; lista.insertBefore(r, r.previousElementSibling); }
+      else { var d = r.nextElementSibling; if (!d) return; lista.insertBefore(d, r); }
+      toccato = true; numeri(); luce(r);
+      if (dove === "cima") pillola("ordine", "⬆️ " + r._nome + " ora è il primo", "verde", 1800);
+      else inVista(r);
+    }
+    // trascinare con la maniglia: la riga segue il dito e scavalca le altre a metà; vicino ai bordi la lista scorre da sola
+    var drag = null;
+    function prendi(e, r) {
+      if (drag || e.button > 0 || e.isPrimary === false) return;
+      e.preventDefault();
+      var lr = lista.getBoundingClientRect();
+      drag = { r: r, id: e.pointerId, y: e.clientY, presa: e.clientY - lr.top + lista.scrollTop - r.offsetTop, raf: 0 };
+      r.classList.add("og-preso"); lista.classList.add("og-trascino");
+      try { e.target.setPointerCapture(e.pointerId); } catch (x) {}
+      window.addEventListener("pointermove", muovi); window.addEventListener("pointerup", lascia); window.addEventListener("pointercancel", lascia);
+      drag.raf = requestAnimationFrame(scorri);
+    }
+    function segui() {
+      var d = drag, r = d.r, lr = lista.getBoundingClientRect(), h = r.offsetHeight, p, cambiato = false;
+      var voluto = Math.max(0, Math.min(lista.scrollHeight - h, d.y - lr.top + lista.scrollTop - d.presa)), c = voluto + h / 2;
+      while ((p = r.previousElementSibling) && c < p.offsetTop + p.offsetHeight / 2) { lista.insertBefore(r, p); cambiato = true; }
+      while ((p = r.nextElementSibling) && c > p.offsetTop + p.offsetHeight / 2) { lista.insertBefore(p, r); cambiato = true; }
+      r.style.transform = "translateY(" + Math.round(voluto - r.offsetTop) + "px)";
+      if (cambiato) { toccato = true; numeri(); }
+    }
+    function muovi(e) { if (!drag || e.pointerId !== drag.id) return; drag.y = e.clientY; segui(); }
+    function scorri() {
+      if (!drag) return;
+      if (!lista.isConnected) return lascia();
+      var lr = lista.getBoundingClientRect(), v = 0, bordo = 48;
+      if (drag.y < lr.top + bordo) v = -Math.ceil((lr.top + bordo - drag.y) / 4);
+      else if (drag.y > lr.bottom - bordo) v = Math.ceil((drag.y - lr.bottom + bordo) / 4);
+      if (v) { var t0 = lista.scrollTop; lista.scrollTop = t0 + Math.max(-14, Math.min(14, v)); if (lista.scrollTop !== t0) segui(); }
+      drag.raf = requestAnimationFrame(scorri);
+    }
+    function lascia(e) {
+      if (!drag || (e && e.pointerId != null && e.pointerId !== drag.id)) return;
+      var r = drag.r;
+      cancelAnimationFrame(drag.raf); drag = null;
+      window.removeEventListener("pointermove", muovi); window.removeEventListener("pointerup", lascia); window.removeEventListener("pointercancel", lascia);
+      r.classList.remove("og-preso"); r.style.transform = ""; lista.classList.remove("og-trascino");
+      numeri();
+    }
+    // rimette le righe in un ordine (ids), spostando quelle che ci sono
+    function metti(ids) {
+      ids.forEach(function (id) { if (righe[id]) lista.appendChild(righe[id]); });
+      numeri();
+    }
+    function esci() {
+      if (drag) lascia();
+      if (attuale().join("|") !== firma0) chiediConferma("Uscire senza salvare?", "L'ordine nuovo dei giochi si perde.", "Esci", schermataHome);
+      else schermataHome();
+    }
+    var bSalva = el("button", { class: "btn btn-primario og-salva", type: "button", text: "💾 Salva per tutti", onclick: function () {
+      chiediConferma("Salvare quest'ordine per tutti?", "Tutti vedranno i giochi in quest'ordine: in home, nelle categorie e nella Sala.", "💾 Salva", function () {
+        salvaOrdine(attuale());
+        pillola("ordine", "🧩 Ordine salvato: ora lo vedono tutti", "verde", 2500);
+        schermataHome();
+      });
+    } });
+    var bPartenza = el("button", { class: "btn btn-fantasma og-partenza", type: "button", text: "↩️ Ordine di partenza", onclick: function () {
+      chiediConferma("Rimettere l'ordine di partenza?", "I giochi tornano nell'ordine di sempre. Poi tocca «💾 Salva per tutti».", "↩️ Rimetti", function () {
+        toccato = true; metti(idGiochi(giochiReg)); lista.scrollTop = 0;
+      });
+    } });
+    s._contenuto.appendChild(lista);
+    s._piede.appendChild(bSalva);
+    s._piede.appendChild(el("div", { class: "og-piede-riga" }, [ bPartenza,
+      el("button", { class: "btn btn-fantasma og-annulla", type: "button", text: "Annulla", onclick: function () { esci(); } }) ]));
+    mostra(s); numeri();
+    try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+    // (cambiato da un altro telefono del proprietario: se qui non ha ancora toccato niente, la lista si rimette in fila)
+    caricaOrdine(function (c) { if (c && !toccato && !drag && lista.isConnected) { firma0 = idGiochi(giochi).join("|"); metti(idGiochi(giochi)); } });
   }
   var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
   var CITTA_A_PIEDI = true, ultimoEdificio = null;   // (dal 13 ott 2026 per tutti)
@@ -22154,13 +22436,14 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
   })();
 
   window.SG = {
-    registra: function (gioco) { giochi.push(gioco); },
+    registra: function (gioco) { giochiReg.push(gioco); ordinaGiochi(); },   // (va al suo posto nell'ordine del proprietario: se non c'è, in fondo)
     audioCtx: audioCtx,
     listaProfilo: listaProfilo, salvaListaProfilo: salvaListaProfilo,   // liste salvate sul profilo di chi gioca
     // 🤖 i bot fissi, uguali in tutti i giochi: { id, nome, omino, frase, livello: "facile"|"medio"|"difficile", bot: true }
     // prendi(n, { livello, escludi: [nomi o id], caso }) = n bot diversi (stessi nello stesso ordine, se no a sorte con caso: true)
     bot: { tutti: function () { return botTutti().map(copiaBot); }, prendi: botPrendi, daId: botDaId, livelli: BOT_LIVELLI.slice() },
     avviaApp: function () {
+      ordineAttivo = ordineSalvato(); ordinaGiochi();   // 🧩 l'ordine dei giochi visto l'ultima volta (subito: la home non salta)
       agganciaRete();   // lo strato comune della rete (stanze ricordate, nomi doppi, XP, host che torna…)
       // niente menu della pressione lunga (copia, salva immagine…) fuori dai campi dove si scrive
       document.addEventListener("contextmenu", function (e) { if (!(e.target && e.target.closest && e.target.closest("input, textarea, [contenteditable='true']"))) e.preventDefault(); });
@@ -22205,6 +22488,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       }
       function vai() {
         caricaBot();   // i bot come li ha fatti il proprietario (in sottofondo: intanto valgono gli ultimi visti)
+        caricaOrdine();   // e l'ordine dei giochi (stessa lettura della sua scheda; la home aperta si rimette in fila da sola)
         amiciAvvia();   // il pallino verde degli amici e i loro inviti (solo col profilo)
         // pagina ricaricata (o app riaperta) senza link: la mia stanza o la mia Sala si riaprono, o si torna in quella dell'amico
         var torna = !daLink && rientroAutomatico();
