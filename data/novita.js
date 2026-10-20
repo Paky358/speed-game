@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 242,
+    data: "20 ottobre 2026",
+    titolo: "Stessa Lunghezza d'Onda parte in 🎯 Classico",
+    descrizione: [
+      "🎯 Di partenza si gioca come l'originale: il bersaglio è a caso e l'indizio lo inventa il sensitivo. «🤔 Cosa ne pensi?» e «Misto» restano da scegliere nel ⚙️.",
+      "Se sul tuo telefono avevi già scelto un modo, resta quello: per cambiarlo basta toccarlo una volta nel ⚙️."
+    ]
+  },
+  {
     v: 241,
     data: "20 ottobre 2026",
     titolo: "Gioco nuovo: ☝️ Una parola sola",
