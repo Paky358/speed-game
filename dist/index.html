@@ -45438,6 +45438,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 240,
+    data: "20 ottobre 2026",
+    titolo: "Parola d'ordine: il capo che esce si aspetta 👑",
+    descrizione: [
+      "⏳ Se il capo che deve dare l'indizio esce un attimo (WhatsApp, telefono bloccato…), la sua squadra lo aspetta e basta: «⏳ aspettiamo il capo, Paky…». Il capo non cambia più da solo dopo un minuto.",
+      "👑 Se dopo 3 minuti non è ancora tornato, i compagni possono scegliere di prendere il suo posto con «Faccio io il capo». Se in squadra non c'è nessun altro, tocca alla squadra dopo.",
+      "🔁 Quando torna è di nuovo lui il capo, con la sua mappa segreta."
+    ]
+  },
+  {
     v: 239,
     data: "20 ottobre 2026",
     titolo: "Calcio Biliardo: tiri a tutta forza anche dal bordo ⚽",
@@ -78036,7 +78046,7 @@ window.SG_SIPERO = {
       var fine = H.fase === "fine", r = [];
       for (var k = 0; k < H.nsq; k++) r.push(resto(k));
       var ora = Date.now(), att = null, cl = null;
-      if (H.fase === "gioco" && H.attesa) att = { k: H.attesa.k, chi: H.attesa.chi || "", ms: Math.max(0, H.attesa.fino - ora) };
+      if (H.fase === "gioco" && H.attesa) att = { k: H.attesa.k, chi: H.attesa.chi || "", ms: Math.max(0, H.attesa.fino - ora), capo: H.attesa.capo ? 1 : 0, scad: H.attesa.scaduta ? 1 : 0 };
       if (H.fase === "gioco" && H.cless && !H.attesa) cl = { ms: Math.max(0, H.cless.fino - ora), p: H.cless.p, doppio: H.cless.doppio ? 1 : 0 };
       var pg = poolGruppo();
       return { fase: H.fase, codice: H.codice, pronta: H.pronta, nsq: H.nsq, gruppoN: pg.l.length, gruppoDa: pg.da, quante: H.quante, tempo: H.tempo || 0, tempoInd: H.tempoInd || 0, mazzo: H.mazzo || "classico",
@@ -78139,8 +78149,9 @@ window.SG_SIPERO = {
         ricorda(); return;   // (la foto non cambia: le parole pensate non ci vanno, ma la partita da ricordare sì)
       }
       var miaSquadra = p.team === H.turno, sonoCapo = H.capo[p.team] === id;
-      if (m.t === "capo") {   // a partita iniziata: solo se il capo della squadra non c'è più
+      if (m.t === "capo") {   // a partita iniziata: solo se il capo della squadra non c'è più e la squadra l'ha aspettato 3 minuti
         if (capoVivo(p.team) || H.fuori.indexOf(p.team) >= 0) return;
+        if (!(H.attesa && H.attesa.k === p.team && H.attesa.capo && H.attesa.scaduta)) return;
         H.capo[p.team] = id; mandaChiave(id); H.msg = p.nome + " fa il capo dei " + SQ[p.team].nome + ".";
         scrivi({ t: "sis", testo: "👑 " + p.nome + " fa il capo dei " + SQ[p.team].nome });
         controllaTurno(); bd(); return;
@@ -78335,10 +78346,12 @@ window.SG_SIPERO = {
       return via.length ? via.slice(0, 2).join(" e ") : "i compagni";
     }
     // Se manca qualcuno (es. è andato su WhatsApp) si aspetta, e tutti vedono chi e per quanto ("⏳ Aspettiamo Giulia… 0:45").
-    // Scaduto il tempo: se manca il capo e la squadra ha ancora due persone, il capo lo fa un compagno; se no tocca alla squadra dopo,
-    // e da lì in poi i turni di quella squadra si saltano subito finché non torna qualcuno (niente attese a ogni giro).
-    // La scadenza sta nella partita, così vale anche se intanto cambia l'host.
-    var ATTESA_SQUADRA = 60000, ATTESA_INDOVINO = 30000, tAttesa = null;
+    // Se manca il CAPO lo si aspetta e basta (deciso dal proprietario il 20 ott 2026: «non ha senso che il capo diventi un altro»):
+    // niente capo nuovo da solo. Dopo 3 minuti, se non è tornato, i compagni vedono «👑 Faccio io il capo» (lo decidono loro);
+    // se in squadra non c'è nessuno che possa prendere il suo posto, tocca alla squadra dopo.
+    // Se manca chi indovina, scaduto il tempo tocca alla squadra dopo, e da lì in poi i turni di quella squadra si saltano subito
+    // finché non torna qualcuno (niente attese a ogni giro). La scadenza sta nella partita, così vale anche se intanto cambia l'host.
+    var ATTESA_SQUADRA = 60000, ATTESA_INDOVINO = 30000, ATTESA_CAPO = 180000, tAttesa = null;
     function controllaTurno() {
       clearTimeout(tAttesa); tAttesa = null;
       if (H.fase !== "gioco") { H.attesa = null; H.cless = null; clearTimeout(tCless); return; }
@@ -78348,16 +78361,13 @@ window.SG_SIPERO = {
       H.cless = null; clearTimeout(tCless);   // la clessidra riparte da capo quando la squadra è di nuovo al completo
       var m = membri(k), puoCapo = cosa === "capo" && m.length >= 2;
       if (H.salta[k] && !puoCapo) return salta(k);
-      if (!H.attesa || H.attesa.k !== k || H.attesa.passo !== H.passo || H.attesa.n !== H.nTurni)
-        H.attesa = { k: k, passo: H.passo, n: H.nTurni, fino: Date.now() + (cosa === "indovino" && H.passo === "indovina" ? ATTESA_INDOVINO : ATTESA_SQUADRA) };
+      if (!H.attesa || H.attesa.k !== k || H.attesa.passo !== H.passo || H.attesa.n !== H.nTurni || !!H.attesa.capo !== (cosa === "capo"))
+        H.attesa = { k: k, passo: H.passo, n: H.nTurni, capo: cosa === "capo" ? 1 : 0,
+          fino: Date.now() + (cosa === "capo" ? ATTESA_CAPO : cosa === "indovino" && H.passo === "indovina" ? ATTESA_INDOVINO : ATTESA_SQUADRA) };
       H.attesa.chi = chiManca(k, cosa);
       function riprova(ms) { tAttesa = setTimeout(function () { if (!spento()) { controllaTurno(); bd(); } }, ms); }
       if (Date.now() < H.attesa.fino) { riprova(H.attesa.fino - Date.now() + 50); return; }
-      if (puoCapo) {
-        H.capo[k] = m[0].id; mandaChiave(m[0].id); H.attesa = null;
-        scrivi({ t: "sis", testo: "👑 Ora il capo dei " + SQ[k].nome + " è " + m[0].nome });
-        return controllaTurno();
-      }
+      if (puoCapo) { H.attesa.scaduta = 1; return; }   // il capo non torna: si aspetta ancora, i compagni possono fare loro il capo
       H.salta[k] = 1;
       salta(k);
     }
@@ -79036,7 +79046,9 @@ window.SG_SIPERO = {
     // 🤔 io capo ho appena dato l'indizio: posso dire (di nascosto) quali parole intendevo, finché la squadra cerca
     var ind = vm.indizio, intendo = vm.fase === "gioco" && !!vm.intendi && capo && team === vm.turno && vm.passo === "indovina" &&
       !!ind && ind.id === cb.myId && ind.x != null && !INTESI[vm.bid + "|" + ind.x];
-    return { io: io, team: team, capo: capo, capoVia: capoVia, altri: altri, prossimo: prossimo, mioTurno: vm.fase === "gioco" && team === vm.turno,
+    // 👑 posso fare io il capo: solo se la mia squadra l'ha aspettato 3 minuti e non è tornato
+    var prendi = capoVia && altri && !!vm.attesa && vm.attesa.k === team && !!vm.attesa.capo && !!vm.attesa.scad;
+    return { io: io, team: team, capo: capo, capoVia: capoVia, altri: altri, prendi: prendi, prossimo: prossimo, mioTurno: vm.fase === "gioco" && team === vm.turno,
       indovino: vm.fase === "gioco" && team === vm.turno && !capo && vm.passo === "indovina", intendo: intendo };
   }
   function segnata(vm, id, i) { var l = vm.prop && vm.prop[id]; return l != null && [].concat(l).indexOf(i) >= 0; }   // la parola i è tra quelle segnate da id?
@@ -79208,9 +79220,9 @@ window.SG_SIPERO = {
     ui.avviato = true;
     // ---- in basso: cosa posso fare io (si ricostruisce solo se cambia il mio ruolo o la fase) ----
     // (mentre il capo segna le parole che intendeva, la sua barra resta quella: niente lampeggi a ogni parola girata)
-    var ks = r.intendo ? ["int", vm.bid, vm.indizio.x, vm.attesa ? vm.attesa.k + "/" + vm.attesa.chi : "", r.capoVia && r.altri, cb.sonoHost && puoChiudere(vm), !!cb.sonoHost].join("|")
-      : [vm.fase, vm.passo, vm.turno, r.team, r.capo, vm.girate > 0, vm.fuori.join(""), !!vm.sospeso, r.capoVia && r.altri,
-      vm.attesa ? vm.attesa.k + "/" + vm.attesa.chi : "", r.prossimo, cb.sonoHost && puoChiudere(vm), !!cb.sonoHost, !!vm.rivedi, !!vm.cosa].join("|");   // (sonoHost: l'amico che prende il posto dell'host ha i tasti giusti)
+    var ks = r.intendo ? ["int", vm.bid, vm.indizio.x, vm.attesa ? vm.attesa.k + "/" + vm.attesa.chi + (vm.attesa.scad ? "/s" : "") : "", r.prendi, cb.sonoHost && puoChiudere(vm), !!cb.sonoHost].join("|")
+      : [vm.fase, vm.passo, vm.turno, r.team, r.capo, vm.girate > 0, vm.fuori.join(""), !!vm.sospeso, r.prendi,
+      vm.attesa ? vm.attesa.k + "/" + vm.attesa.chi + (vm.attesa.scad ? "/s" : "") : "", r.prossimo, cb.sonoHost && puoChiudere(vm), !!cb.sonoHost, !!vm.rivedi, !!vm.cosa].join("|");   // (sonoHost: l'amico che prende il posto dell'host ha i tasti giusti)
     if (ks !== ui.kSotto) { ui.kSotto = ks; disegnaSotto(ui, vm, cb, r); }
     if (r.intendo) aggiornaSel(ui, vm);
     if (vm.fase === "fine" && vm.rivedi && ui.bAv) aggAvanti(ui, vm, cb);
@@ -79372,7 +79384,7 @@ window.SG_SIPERO = {
     }
     // i tasti "di servizio": fare il capo al posto di chi è uscito, e (solo l'host) chiudere la partita
     var servizio = el("div", { class: "or-riga" });
-    if (r.capoVia && r.altri) servizio.appendChild(el("button", { class: "or-btn", text: "👑 Faccio io il capo", onclick: function () { cb.manda({ t: "capo" }); } }));
+    if (r.prendi) servizio.appendChild(el("button", { class: "or-btn", text: "👑 Faccio io il capo", onclick: function () { cb.manda({ t: "capo" }); } }));
     if (cb.sonoHost && puoChiudere(vm)) servizio.appendChild(el("button", { class: "or-btn chiaro", text: "🏁 Chiudi la partita", onclick: function () {
       ui.t.conferma("Chiudere la partita?", "Vince la squadra che ha meno parole da trovare.", "🏁 Chiudi", function () { cb.manda({ t: "chiudi" }); });
     } }));
@@ -79396,12 +79408,12 @@ window.SG_SIPERO = {
     if (vm.sospeso) { stato("🥁 Vediamo se è giusta…"); return; }
     // manca qualcuno: tutti vedono chi aspettiamo e per quanto
     if (vm.attesa) {
-      var d = stato("⏳ " + (vm.attesa.k === r.team ? "" : "I " + SQ[vm.attesa.k].nome + ": ") + "aspettiamo " + vm.attesa.chi + "… ");
-      d.appendChild(conto(ui, "attesa", vm.attesa.ms));
-      if (r.capoVia && r.altri) stato("Il vostro capo è uscito: uno di voi può prendere il suo posto.");
+      // (il capo: lo si aspetta; passati i 3 minuti niente più conto, e i suoi compagni possono fare loro il capo)
+      var d = stato("⏳ " + (vm.attesa.k === r.team ? "" : "I " + SQ[vm.attesa.k].nome + ": ") + "aspettiamo " + (vm.attesa.capo ? "il capo, " : "") + vm.attesa.chi + "… ");
+      if (!vm.attesa.scad) d.appendChild(conto(ui, "attesa", vm.attesa.ms));
+      if (r.prendi) stato("Il vostro capo non è ancora tornato: se volete, uno di voi può prendere il suo posto.");
       return fineServizio();
     }
-    if (r.capoVia && r.altri) { stato("Il vostro capo è uscito: uno di voi può prendere il suo posto."); return fineServizio(); }
     if (vm.passo === "bot") { stato("🤖 Tocca a " + nomeBot(vm) + ": scopre una sua parola…" + (r.capo ? " Intanto pensa al prossimo indizio." : "")); faccine(); return fineServizio(); }
     if (!r.mioTurno) { stato("Tocca ai " + SQ[vm.turno].nome + "…" + (r.capo ? " Intanto pensa al prossimo indizio." : "")); faccine(); return fineServizio(); }
     if (vm.passo === "indizio") {
@@ -79652,7 +79664,7 @@ window.SG_SIPERO = {
       "Chi gira la <b>parola nera</b> perde (a 3 squadre esce dalla partita). Vince la squadra che trova per prima tutte le sue parole.",
       "L'indizio non può essere una parola del tabellone (né quasi uguale: niente plurali o parole che ci cominciano). Il capo può dare anche «∞»: tentativi liberi.",
       "🤖 <b>In 2 o 3? Contro il Bot.</b> Siete tutti nella stessa squadra (uno fa il capo, gli altri indovinano) e dall'altra parte c'è un Bot: dopo ogni vostro turno scopre da solo una sua parola. Trovate tutte le vostre prima che lui finisca le sue!",
-      "⏳ <b>Clessidre</b> (se l'host le accende): il capo ha 90 secondi o 2 minuti per l'indizio, la squadra 1 o 2 minuti per indovinare. Il primo indizio della partita ha il <b>tempo doppio</b>; negli ultimi 10 secondi la clessidra diventa rossa. Allo zero il turno passa. Se il capo esce, un compagno può prendere il suo posto (👑 Faccio io il capo).",
+      "⏳ <b>Clessidre</b> (se l'host le accende): il capo ha 90 secondi o 2 minuti per l'indizio, la squadra 1 o 2 minuti per indovinare. Il primo indizio della partita ha il <b>tempo doppio</b>; negli ultimi 10 secondi la clessidra diventa rossa. Allo zero il turno passa. Se il capo esce (WhatsApp, telefono bloccato…) la sua squadra lo aspetta; se dopo 3 minuti non è tornato, un compagno può prendere il suo posto (👑 Faccio io il capo).",
       "🎬 <b>Ritmo</b>: con «Show» la suspense lunga c'è sulle parole che contano (la prima di ogni indizio, l'ultimo tentativo, l'ultima parola che manca); con «⚡ Veloce» si scopre tutto in un attimo.",
       "⭐ <b>Parola d'oro</b> (se l'host la lascia accesa): tra le parole di nessuno una è d'oro, e non lo sa nessuno, nemmeno i capi. Chi la gira non perde il turno: la squadra continua a indovinare con lo stesso indizio, senza consumare un tentativo.",
       "🤔 <b>Cosa intendevi?</b> (se l'host lo lascia acceso): dopo l'indizio il capo può toccare, di nascosto, le parole che intendeva (o «Salta»). A fine turno si vede «💭 Paky pensava a…» con le parole già trovate (le altre restano segrete). A fine partita si rivedono gli indizi uno per uno («Paky pensava: ONDA, SALE · la squadra ha toccato: ONDA ✅, PESCE ❌») e la squadra che ha trovato più parole pensate vince il premio <b>🧠 Più in sintonia</b>.",

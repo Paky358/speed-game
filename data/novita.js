@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 240,
+    data: "20 ottobre 2026",
+    titolo: "Parola d'ordine: il capo che esce si aspetta 👑",
+    descrizione: [
+      "⏳ Se il capo che deve dare l'indizio esce un attimo (WhatsApp, telefono bloccato…), la sua squadra lo aspetta e basta: «⏳ aspettiamo il capo, Paky…». Il capo non cambia più da solo dopo un minuto.",
+      "👑 Se dopo 3 minuti non è ancora tornato, i compagni possono scegliere di prendere il suo posto con «Faccio io il capo». Se in squadra non c'è nessun altro, tocca alla squadra dopo.",
+      "🔁 Quando torna è di nuovo lui il capo, con la sua mappa segreta."
+    ]
+  },
+  {
     v: 239,
     data: "20 ottobre 2026",
     titolo: "Calcio Biliardo: tiri a tutta forza anche dal bordo ⚽",
