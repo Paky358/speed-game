@@ -10667,7 +10667,7 @@
       // un tasto che va avanti da solo col conto alla rovescia ("Avanti ▶ 12"): nessuna schermata resta ferma.
       // L'host passa fn (a zero si va avanti); gli ospiti fn = null e una scritta: "Si va avanti tra 12…".
       // chiave: lo stesso conto anche se il tasto viene ridisegnato (es. "esito|" + numero del turno)
-      contoAvanti: function (nodo, secondi, fn, chiave) { return contoAvanti(nodo, secondi, fn ? function () { if (viva()) fn(); } : null, chiave); },
+      contoAvanti: function (nodo, secondi, fn, chiave, pre) { return contoAvanti(nodo, secondi, fn ? function () { if (viva()) fn(); } : null, chiave, pre); },
 
       // passaggio del telefono, poi esegue "quando" (in alto c'è ‹ per uscire dal gioco, con la conferma)
       passaA: function (nome, quando) { if (!viva()) return; passaIlTelefono(nome, function () { if (viva() && quando) quando.apply(this, arguments); }, function () { tavolo.esci(); }); },

@@ -149,7 +149,7 @@
           esito.textContent = m.e === "su" ? "⬆️ PIÙ SU!" : "⬇️ PIÙ GIÙ!";
           esito.classList.remove("pz-scuoti"); void esito.offsetWidth; esito.classList.add("pz-scuoti");
           A.FX.toc(m.e === "su" ? 880 : 440);
-          tast.riapri();
+          tast.svuota(); tast.riapri();   // si riscrive da capo (il prezzo provato resta nelle chip qui sopra)
         }
       }
       return { privato: risposta, tempo: function () { if (!finito) { esito.textContent = "⏰ Tempo scaduto"; tast.blocca("⏰ Tempo scaduto"); } } };

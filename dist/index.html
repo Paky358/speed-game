@@ -21990,7 +21990,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
       // un tasto che va avanti da solo col conto alla rovescia ("Avanti ▶ 12"): nessuna schermata resta ferma.
       // L'host passa fn (a zero si va avanti); gli ospiti fn = null e una scritta: "Si va avanti tra 12…".
       // chiave: lo stesso conto anche se il tasto viene ridisegnato (es. "esito|" + numero del turno)
-      contoAvanti: function (nodo, secondi, fn, chiave) { return contoAvanti(nodo, secondi, fn ? function () { if (viva()) fn(); } : null, chiave); },
+      contoAvanti: function (nodo, secondi, fn, chiave, pre) { return contoAvanti(nodo, secondi, fn ? function () { if (viva()) fn(); } : null, chiave, pre); },
 
       // passaggio del telefono, poi esegue "quando" (in alto c'è ‹ per uscire dal gioco, con la conferma)
       passaA: function (nome, quando) { if (!viva()) return; passaIlTelefono(nome, function () { if (viva() && quando) quando.apply(this, arguments); }, function () { tavolo.esci(); }); },
@@ -45438,6 +45438,27 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 239,
+    data: "20 ottobre 2026",
+    titolo: "Calcio Biliardo: tiri a tutta forza anche dal bordo ⚽",
+    descrizione: [
+      "👆 Una pedina vicino al bordo si tira a tutta forza: toccala e lasciala (resta scelta, con l'anello bianco), poi trascina da un punto libero del campo. Prima il dito finiva fuori dallo schermo prima della forza massima.",
+      "✋ Ci hai ripensato? Torna col dito dove eri partito e lascia: il tiro non parte. Per cambiare pedina basta toccarne un'altra.",
+      "📱 Il tiro dalla pedina arriva alla forza piena prima del bordo dello schermo (lì su Android c'è il gesto «indietro» che rubava il dito)."
+    ]
+  },
+  {
+    v: 238,
+    data: "20 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: Ruota, Plinko e più tempo per le regole 🎡",
+    descrizione: [
+      "🎡 La Ruota del 100 si gira trascinando il dito in giù O in su, e gira dalla parte della spinta. Il tuo numero compare sul maxischermo solo quando la ruota si ferma (prima si vedeva subito, con la ruota ancora in corsa), e si aspetta che l'ultima ruota si fermi prima di andare avanti.",
+      "🟡 Plinko: in «Occhio al prezzo», se dopo aver scelto un prezzo tocchi anche l'altro, il secondo tocco non conta più e le domande vanno avanti (prima la domanda dopo restava bloccata).",
+      "📖 Più tempo per i giochi a premi: chi ha vinto l'Offerta ha 15 secondi per leggere i due giochi e sceglierne uno, e prima di giocare la regola resta sul maxischermo 10 secondi, con «Si comincia tra…».",
+      "🔼🔽 Più o meno: dopo un prezzo sbagliato il tastierino si svuota e il prezzo si riscrive da capo (quelli già provati restano lì sopra). Anche nell'Offerta, se il prezzo era già preso, si riparte da zero."
+    ]
+  },
+  {
     v: 237,
     data: "18 ottobre 2026",
     titolo: "Chi perde la rete torna a giocare 📶",
@@ -61846,10 +61867,11 @@ window.SG_SIPERO = {
     stile();
     MUTO = !!o.muto;
     var el = t.el, s = t.schermata({}); s.classList.add("cb-piena");
-    var ui = { t: t, cb: cb, o: o, st: null, anim: null, mira: null, zoom: 1, turno: 0, fase: "mira", puoi: false, mie: [], solo: null,
+    var ui = { t: t, cb: cb, o: o, st: null, anim: null, mira: null, scelta: null, zoom: 1, turno: 0, fase: "mira", puoi: false, mie: [], solo: null,
       eventoVisto: null, scadenza: null, fineTempo: null, testo: { giu: "", su: "" }, facce: [null, null], avviso: null, stDopo: null };
     var scena = el("div", { class: "cb-scena" + (o.ruota ? " ruota" : "") + (o.targa ? " con-targa" : "") });
     ui.basso = o.targa ? 54 : 0;   // (il posto della targhetta di chi guarda, sotto la targhetta in basso)
+    if (window.__CB) window.__CB.ui = ui;   // (per le prove: la mira col dito)
     ui.cv = el("canvas", { class: "cb-campo" }); ui.ctx = ui.cv.getContext("2d");
     var esci = el("button", { class: "cb-esci", "aria-label": "Esci", text: "‹", onclick: function () { cb.onEsci(); if (!vivo()) follaFerma(); } });
     var audio = el("button", { class: "cb-audio", "aria-label": "Suoni", text: suoniOn() ? "🔊" : "🔇", onclick: function () {
@@ -61917,21 +61939,36 @@ window.SG_SIPERO = {
       var x = (sx - ui.ox) / ui.S, y = (sy - ui.oy) / ui.S;
       return o.flip ? { x: W - x, y: L - y } : { x: x, y: y };
     }
+    function puoTirare(i) { var q = squadraDi(i); return q === ui.turno && ui.mie.indexOf(q) >= 0 && (!ui.solo || i === ui.solo); }
     ui.cv.addEventListener("pointerdown", function (e) {
       if (!ui.puoi || ui.anim || !ui.st) return;
       var p = alCampo(e), best = -1, bd = R * 1.7;
       for (var i = 1; i <= 10; i++) {
-        var q = squadraDi(i); if (q !== ui.turno || ui.mie.indexOf(q) < 0 || (ui.solo && i !== ui.solo)) continue;
+        if (!puoTirare(i)) continue;
         var d = Math.hypot(ui.st.x[i] - p.x, ui.st.y[i] - p.y); if (d < bd) { bd = d; best = i; }
       }
+      // 👆 il dito non è su una pedina: si tira quella scelta prima, trascinando da qui (anche lontano da lei).
+      // Così una pedina vicino al bordo si tira a tutta forza: il dito parte da un punto libero, non dal bordo
+      var lontano = false;
+      if (best < 0 && ui.scelta && puoTirare(ui.scelta)) { best = ui.scelta; lontano = true; }
       if (best < 0) return;
       e.preventDefault(); try { ui.cv.setPointerCapture(e.pointerId); } catch (er) {}
       var f = alDito(e);
-      ui.mira = { i: best, x0: f.x, y0: f.y, x: f.x, y: f.y, id: e.pointerId };
+      ui.scelta = best;
+      ui.mira = { i: best, x0: f.x, y0: f.y, x: f.x, y: f.y, id: e.pointerId, lontano: lontano };
+      // vicino al bordo dello schermo il dito ha poco posto: lo si dice (le prime volte)
+      if (!lontano && Math.min(f.x, ui.cw - f.x, f.y, ui.ch - f.y) < TIRA * ui.S * 0.6 + BORDO_DITO) suggerisci(squadraDi(best), "💡 Lascia: tira da dove vuoi");
       vibra(8); try { if (window.SG && SG.audioCtx) SG.audioCtx(); } catch (er2) {}
       follaAvvia();
       gira();
     });
+    // un suggerimento nella targhetta, solo le prime 4 volte su questo telefono
+    function suggerisci(q, txt) {
+      var n = 0; try { n = +localStorage.getItem("sg-cb-sugg") || 0; } catch (e) {}
+      if (n >= 4) return;
+      try { localStorage.setItem("sg-cb-sugg", String(n + 1)); } catch (e) {}
+      ui.avvisa(q, txt, 3500);
+    }
     ui.cv.addEventListener("pointermove", function (e) {
       if (!ui.mira || e.pointerId !== ui.mira.id) return;
       var f = alDito(e); ui.mira.x = f.x; ui.mira.y = f.y;
@@ -61939,7 +61976,10 @@ window.SG_SIPERO = {
     function lascia(e) {
       var m = ui.mira; if (!m || e.pointerId !== m.id) return;
       var fz = forza(ui); ui.mira = null;
-      if (e.type === "pointerup" && fz.p >= 0.07 && ui.puoi) { cb.onTiro(m.i, fz.ux * VMAX * fz.p, fz.uy * VMAX * fz.p); }
+      if (e.type === "pointerup" && fz.p >= 0.07 && ui.puoi) { ui.scelta = null; cb.onTiro(m.i, fz.ux * VMAX * fz.p, fz.uy * VMAX * fz.p); }
+      // lasciato vicino a dove era partito: niente tiro. La pedina resta scelta (si tira trascinando da dove si vuole)
+      // e toccandone un'altra si cambia
+      else if (e.type === "pointerup" && !m.lontano && ui.puoi) suggerisci(squadraDi(m.i), "👆 Ora tira da dove vuoi");
       gira();
     }
     ui.cv.addEventListener("pointerup", lascia);
@@ -61981,14 +62021,14 @@ window.SG_SIPERO = {
       var s0 = daFoto(tiro.st);
       s0.vx[tiro.i] = tiro.vx; s0.vy[tiro.i] = tiro.vy;
       (tiro.extra || []).forEach(function (x) { s0.vx[x[0]] = x[1]; s0.vy[x[0]] = x[2]; });
-      ui.mira = null; ui.stDopo = null; ui.anim = { s: s0, acc: 0, passi: 0, fatto: fatto || function () {} };
+      ui.mira = null; ui.scelta = null; ui.stDopo = null; ui.anim = { s: s0, acc: 0, passi: 0, fatto: fatto || function () {} };
       gira();
     };
     // aggiorna solo quello che cambia (testi, punti, orologio, posizioni da ferme)
     ui.aggiorna = function (d, testi) {
       if (d.st) { if (!ui.anim) ui.st = daFoto(d.st); else ui.stDopo = d.st; }   // durante un tiro la foto si tiene per dopo
       ui.turno = d.turno; ui.fase = d.fase; ui.puoi = !!d.puoi; ui.mie = d.mie || []; ui.solo = d.solo || null;
-      if (!ui.puoi) ui.mira = null;
+      if (!ui.puoi) { ui.mira = null; ui.scelta = null; }
       var g = d.gol || [0, 0];
       if (ui.giu.gol.textContent !== String(g[qGiu])) ui.giu.gol.textContent = g[qGiu];
       if (ui.su.gol.textContent !== String(g[1 - qGiu])) ui.su.gol.textContent = g[1 - qGiu];
@@ -62073,17 +62113,19 @@ window.SG_SIPERO = {
   }
   // la forza del tiro: si conta da dove hai appoggiato il dito. Vicino al bordo dello schermo la forza piena
   // arriva prima (prima che il dito esca dallo schermo), così si tira forte anche dai lati
-  var ZOOM_MAX = 0.18;   // a tutta forza il campo si rimpicciolisce del 18% (la telecamera "si alza")
+  // (BORDO_DITO: gli ultimi pixel dello schermo non contano, lì su Android c'è il gesto «indietro» che ruba il dito.
+  //  ANNULLA: il dito tornato a meno di così da dove era partito = niente tiro)
+  var ZOOM_MAX = 0.18, BORDO_DITO = 26, ANNULLA = 10;   // a tutta forza il campo si rimpicciolisce del 18% (la telecamera "si alza")
   function forza(ui) {
     var m = ui.mira; if (!m) return { p: 0, ux: 0, uy: 0 };
     var dx = m.x0 - m.x, dy = m.y0 - m.y, len = Math.hypot(dx, dy);
-    if (len < 1) return { p: 0, ux: 0, uy: 0 };
+    if (len < ANNULLA) return { p: 0, ux: 0, uy: 0 };
     var fx = -dx / len, fy = -dy / len, posto = Infinity;   // dove va il dito e quanto posto ha
     if (fx > 0.01) posto = Math.min(posto, (ui.cw - m.x0) / fx); else if (fx < -0.01) posto = Math.min(posto, m.x0 / -fx);
     if (fy > 0.01) posto = Math.min(posto, (ui.ch - m.y0) / fy); else if (fy < -0.01) posto = Math.min(posto, m.y0 / -fy);
-    var pieno = Math.max(24, Math.min(TIRA * ui.S, posto - 8));
+    var pieno = Math.max(ANNULLA + 16, Math.min(TIRA * ui.S, posto - BORDO_DITO));
     var ux = dx / len, uy = dy / len; if (ui.o.flip) { ux = -ux; uy = -uy; }
-    return { p: Math.min(1, len / pieno), ux: ux, uy: uy };
+    return { p: Math.min(1, (len - ANNULLA) / (pieno - ANNULLA)), ux: ux, uy: uy };
   }
 
   // il campo, le righe e le porte: disegnati una volta (per ogni misura) su una tela a parte
@@ -62174,6 +62216,7 @@ window.SG_SIPERO = {
       var cx = X(s.x[m.i]), cy = Y(s.y[m.i]), qm = squadraDi(m.i), fz = forza(ui);
       pm = fz.p;
       var fxs = mx + (m.x - mx) / z, fys = my + (m.y - my) / z;   // il dito, nello spazio della telecamera
+      if (m.lontano) { fxs = cx + (m.x - m.x0) / z; fys = cy + (m.y - m.y0) / z; }   // (tirata da lontano: l'elastico parte dalla pedina, lungo quanto il dito si è spostato)
       g.strokeStyle = colore(qm); g.globalAlpha = 0.55; g.lineWidth = 3; g.setLineDash([2, 5]);
       g.beginPath(); g.moveTo(cx, cy); g.lineTo(fxs, fys); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
       if (pm > 0) {
@@ -62195,6 +62238,10 @@ window.SG_SIPERO = {
       if (ui.fase === "mira" && q === ui.turno && !ui.anim && (!ui.solo || i === ui.solo)) {   // chi deve tirare: un anello che gira intorno
         g.strokeStyle = colore(q); g.lineWidth = 2.5; g.setLineDash([5, 4]);
         g.beginPath(); g.arc(x, y, r + 5, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+        if (!m && ui.scelta === i && ui.puoi) {   // la pedina scelta (si tira trascinando da dove si vuole): un anello pieno bianco
+          g.strokeStyle = "#ffffff"; g.lineWidth = 3.5;
+          g.beginPath(); g.arc(x, y, r + 9, 0, Math.PI * 2); g.stroke();
+        }
       }
       if (m && m.i === i) {   // la forza: un anello che si riempie (verde, giallo, rosso)
         g.strokeStyle = "rgba(255,255,255,.25)"; g.lineWidth = 6;
@@ -87479,18 +87526,22 @@ window.SG_SIPERO = {
         });
         root.appendChild(el("div", { class: "pzb-opz" }, bs));
         root.appendChild(nota);
-        S.ui = { bs: bs, nota: nota, gf: gf, opz: opz, q: q };
+        S.ui = { bs: bs, nota: nota, gf: gf, opz: opz, q: q, risposto: false };
+        S.attende = false;   // (domanda nuova: niente risposta in sospeso)
         bar.style.transition = "none"; bar.style.transform = "scaleX(1)";
         void bar.offsetWidth; setTimeout(function () { bar.style.transition = "transform " + (PL.QSEC - 0.05) + "s linear"; bar.style.transform = "scaleX(0)"; }, 30);
         tq = setTimeout(function () { if (vivo() && S.q === q && !S.attende) { S.ui.nota.textContent = "⏰ Tempo!"; manda(q, -1); } }, PL.QSEC * 1000);
       }
       function scegli(k) {
-        if (!vivo() || S.attende || !S.ui || S.ui.q !== S.q) return;
+        // una risposta sola per domanda: dopo l'esito l'altro prezzo resta lì ancora un attimo, ma toccarlo non conta
+        // (prima il secondo tocco lasciava la domanda dopo bloccata, senza più tasti che rispondono)
+        if (!vivo() || S.attende || !S.ui || S.ui.q !== S.q || S.ui.risposto) return;
         S.ui.bs[k].classList.add("sel"); S.ui.bs.forEach(function (b) { b.disabled = true; });
         A.vibra(25);
         manda(S.q, k);
       }
       function manda(q, s) {
+        if (S.ui) S.ui.risposto = true;
         S.attende = true; clearTimeout(tq);
         S.ui.bs.forEach(function (b) { b.disabled = true; });
         A.invia({ q: q, s: s });
@@ -87814,7 +87865,7 @@ window.SG_SIPERO = {
           esito.textContent = m.e === "su" ? "⬆️ PIÙ SU!" : "⬇️ PIÙ GIÙ!";
           esito.classList.remove("pz-scuoti"); void esito.offsetWidth; esito.classList.add("pz-scuoti");
           A.FX.toc(m.e === "su" ? 880 : 440);
-          tast.riapri();
+          tast.svuota(); tast.riapri();   // si riscrive da capo (il prezzo provato resta nelle chip qui sopra)
         }
       }
       return { privato: risposta, tempo: function () { if (!finito) { esito.textContent = "⏰ Tempo scaduto"; tast.blocca("⏰ Tempo scaduto"); } } };
@@ -88169,7 +88220,8 @@ window.SG_SIPERO = {
   var GIRI_STRISCIA = 12;
   function coloreSpicchio(v) { return v === 100 ? "rosso" : (v === 5 || v === 15) ? "verde" : (SPICCHI.indexOf(v) % 2 ? "arg" : "oro"); }
   // opz = { alt (altezza di una casella), onSpinta(forza 0..1) → false per rifiutare, onCambio(valore) }
-  // La ruota si spinge trascinando il dito IN GIÙ. Restituisce { el, attiva(si), gira(forza), arriva(valore) → Promise, mostra(valore) }
+  // La ruota si spinge trascinando il dito IN GIÙ o IN SU (gira dalla parte della spinta).
+  // Restituisce { el, attiva(si), gira(forza, v, verso), arriva(valore) → Promise, mostra(valore) }
   function ruota(el, opz) {
     opz = opz || {};
     var H = opz.alt || 62, N = SPICCHI.length * GIRI_STRISCIA;
@@ -88177,8 +88229,8 @@ window.SG_SIPERO = {
     for (var i = 0; i < N; i++) { var v = SPICCHI[i % SPICCHI.length]; str.appendChild(el("div", { class: "pz-rcel " + coloreSpicchio(v), text: String(v) })); }
     var fin = el("div", { class: "pz-ruota" }, [ str, el("div", { class: "luce" }), el("div", { class: "freccia" }) ]);
     fin.style.setProperty("--h", H + "px");
-    var pos = SPICCHI.length * (GIRI_STRISCIA - 2), attiva = false, stato = "fermo", vel = 0, target = null, piano = null, ultimoInt = Math.round(pos), ultimoClic = 0, raf = null, fineCb = null;
-    // pos = quale casella sta davanti alla freccia (con la virgola): pos più piccolo = la striscia scende
+    var pos = SPICCHI.length * (GIRI_STRISCIA - 2), attiva = false, stato = "fermo", vel = 0, verso = -1, target = null, piano = null, ultimoInt = Math.round(pos), ultimoClic = 0, raf = null, fineCb = null;
+    // pos = quale casella sta davanti alla freccia (con la virgola): pos più piccolo = la striscia scende (verso -1), più grande = sale (+1)
     function disegna() {
       var y = -(pos * H) + H;   // la freccia sta sulla seconda casella dall'alto (si vedono 3 caselle)
       str.style.transform = "translate3d(0," + y.toFixed(1) + "px,0)";
@@ -88186,9 +88238,11 @@ window.SG_SIPERO = {
       if (k !== ultimoInt) { ultimoInt = k; var ora = performance.now(); if (ora - ultimoClic > 40) { ultimoClic = ora; FX.clic(Math.min(1, Math.abs(vel) / 14 + 0.25)); } }
     }
     function valoreA(p) { var k = ((Math.round(p) % SPICCHI.length) + SPICCHI.length) % SPICCHI.length; return SPICCHI[k]; }
-    function normalizza() { var k = ((pos % SPICCHI.length) + SPICCHI.length) % SPICCHI.length; pos = k + SPICCHI.length * (GIRI_STRISCIA - 2); }
+    // (la striscia si ripete ogni 20 caselle: si salta avanti o indietro di giri interi, la ruota resta uguale.
+    //  Per girare in giù si parte dalla fine della striscia, per girare in su dall'inizio)
+    function normalizza(su) { var k = ((pos % SPICCHI.length) + SPICCHI.length) % SPICCHI.length; pos = k + SPICCHI.length * (su ? 2 : GIRI_STRISCIA - 2); }
     disegna();
-    // ---- spinta col dito ----
+    // ---- spinta col dito, in giù o in su ----
     var giu = null, punti = [];
     fin.addEventListener("pointerdown", function (e) {
       if (!attiva || stato !== "fermo") return;
@@ -88197,45 +88251,50 @@ window.SG_SIPERO = {
     });
     fin.addEventListener("pointermove", function (e) {
       if (!giu || e.pointerId !== giu.id) return;
-      var dy = Math.max(-H, e.clientY - giu.y);
+      var dy = Math.max(-4 * H, Math.min(4 * H, e.clientY - giu.y));
       pos = giu.p - dy / H; disegna();
       punti.push({ y: e.clientY, t: performance.now() }); if (punti.length > 8) punti.shift();
     });
     function lascia(e) {
       if (!giu || (e && e.pointerId !== giu.id)) return;
-      var tot = (e ? e.clientY : giu.y) - giu.y, a = punti[0], b = punti[punti.length - 1], dt = Math.max(16, b.t - a.t), v = (b.y - a.y) / dt;   // px/ms
-      if (performance.now() - b.t > 120) v = 0;   // dito fermo prima di lasciare
+      var tot = (e ? e.clientY : giu.y) - giu.y, a = punti[0], b = punti[punti.length - 1], dt = Math.max(16, b.t - a.t), vs = (b.y - a.y) / dt;   // px/ms (+ giù, − su)
+      if (performance.now() - b.t > 120) vs = 0;   // dito fermo prima di lasciare
       giu = null;
+      var dir = vs < 0 ? 1 : -1, v = Math.abs(vs);   // dito in su → la striscia sale (pos cresce)
       var forza = Math.max(0, Math.min(1, (v - 0.45) / 1.6));
-      if (tot < H * 0.7 || v < 0.45) {   // spinta debole: «Più forte!»
+      if (Math.abs(tot) < H * 0.7 || v < 0.45 || (tot < 0) !== (vs < 0)) {   // spinta debole: «Più forte!»
         fin.classList.remove("debole"); void fin.offsetWidth; fin.classList.add("debole");
         var da = pos, fine = Math.round(pos), t0 = performance.now();
         (function torna() { var u = Math.min(1, (performance.now() - t0) / 250); pos = da + (fine - da) * u; disegna(); if (u < 1) requestAnimationFrame(torna); })();
         if (opz.debole) opz.debole();
         return;
       }
-      if (opz.onSpinta && opz.onSpinta(Math.max(0.15, forza)) === false) return;
-      gira(Math.max(0.15, forza), v);
+      // (col Bot o sullo stesso telefono il numero arriva subito, dentro onSpinta: arriva() deve girare con QUESTA spinta)
+      spintaOra = { f: Math.max(0.15, forza), v: v, dir: dir };
+      if (opz.onSpinta && opz.onSpinta(spintaOra.f) === false) { spintaOra = null; return; }
+      var sp = spintaOra; spintaOra = null;
+      if (sp) gira(sp.f, sp.v, sp.dir);
     }
+    var spintaOra = null;
     fin.addEventListener("pointerup", lascia);
     fin.addEventListener("pointercancel", function () { giu = null; });
-    // ---- il giro: veloce finché non si sa il numero, poi frena e si ferma lì ----
-    function gira(forza, v0) {
+    // ---- il giro: veloce finché non si sa il numero, poi frena e si ferma lì (dalla parte della spinta) ----
+    function gira(forza, v0, dir) {
       if (stato !== "fermo") return;
-      stato = "gira"; target = null; piano = null;
+      stato = "gira"; target = null; piano = null; verso = dir > 0 ? 1 : -1;
       vel = Math.max(9, Math.min(34, (v0 ? v0 * 1000 / H : 0) || (12 + forza * 18)));   // caselle al secondo
       var prima = performance.now();
-      if (pos < SPICCHI.length * 3) normalizza();
+      normalizza(verso > 0);   // (sempre: così c'è striscia per tutto il giro, da tutte e due le parti)
       cancelAnimationFrame(raf);
       (function passo() {
         var ora = performance.now(), dt = Math.min(0.05, (ora - prima) / 1000); prima = ora;
         if (piano) {
           var u = Math.min(1, (ora - piano.t0) / piano.T), e = 1 - Math.pow(1 - u, 2);
-          pos = piano.p0 - piano.L * e; vel = piano.L / piano.T * 2 * (1 - u) * 1000;
+          pos = piano.p0 + verso * piano.L * e; vel = piano.L / piano.T * 2 * (1 - u) * 1000;
           disegna();
-          if (u >= 1) { pos = piano.p0 - piano.L; disegna(); stato = "fermo"; vel = 0; var cb = fineCb; fineCb = null; if (cb) cb(target); return; }
+          if (u >= 1) { pos = piano.p0 + verso * piano.L; disegna(); stato = "fermo"; vel = 0; var cb = fineCb; fineCb = null; if (cb) cb(target); return; }
         } else {
-          pos -= vel * dt; disegna();
+          pos += verso * vel * dt; disegna();
           if (target != null && !piano) pianifica();
         }
         raf = requestAnimationFrame(passo);
@@ -88245,16 +88304,16 @@ window.SG_SIPERO = {
     function pianifica() {
       var j = SPICCHI.indexOf(target); if (j < 0) j = 0;
       var minimo = vel * (0.9 + Math.random() * 0.5) / 2 + 2;   // almeno un bel pezzo di giro prima di fermarsi
-      var p0 = pos, fine = Math.floor(p0 - minimo);
-      while ((((fine % SPICCHI.length) + SPICCHI.length) % SPICCHI.length) !== j) fine--;
-      var L = p0 - fine, T = Math.max(700, Math.min(5200, 2 * L / vel * 1000));
-      if (fine < 2) { normalizza(); return pianifica(); }
+      var p0 = pos, fine = verso < 0 ? Math.floor(p0 - minimo) : Math.ceil(p0 + minimo);
+      while ((((fine % SPICCHI.length) + SPICCHI.length) % SPICCHI.length) !== j) fine += verso;
+      var L = Math.abs(fine - p0), T = Math.max(700, Math.min(5200, 2 * L / vel * 1000));
+      if (verso < 0 ? fine < 2 : fine > N - 3) { normalizza(verso > 0); return pianifica(); }
       piano = { t0: performance.now(), p0: p0, L: L, T: T };
     }
     // il numero dell'host è arrivato: la ruota frena e si ferma lì (Promise quando è ferma)
     function arriva(valore) {
       return new Promise(function (ok) {
-        if (stato === "fermo") { gira(0.5); }
+        if (stato === "fermo") { var sp = spintaOra; spintaOra = null; if (sp) gira(sp.f, sp.v, sp.dir); else gira(0.5); }
         target = valore; fineCb = ok;
       });
     }
@@ -88495,7 +88554,8 @@ window.SG_SIPERO = {
 
   var MIN_ON = 2, MAX_ON = 8;
   // i tempi (ms). Online (e contro il Bot) per tutti insieme; sullo stesso telefono (TL) a testa
-  var T = { prodotto: 4800, offri: 20000, rifai: 12000, sopra: 4400, scegli: 8000, intro: 3800, punti: 10000, vetOffri: 30000, giro: 15000, decidi: 10000 };
+  // (scegli e intro: il tempo per leggere le regole dei giochi a premi, anche per chi non li conosce)
+  var T = { prodotto: 4800, offri: 20000, rifai: 12000, sopra: 4400, scegli: 15000, intro: 10000, punti: 10000, vetOffri: 30000, giro: 15000, decidi: 10000 };
   var TL = { offri: 25000, vetOffri: 35000, giro: 20000, decidi: 15000, scegli: 15000 };
   var SCALA = [300, 150, 75], SCALA_V = [900, 450, 225];
   var BONUS_GIUSTO = 500, BONUS_TUTTO = 1500, BONUS_CENTO = 1000;
@@ -88504,6 +88564,7 @@ window.SG_SIPERO = {
   var RV = { cam: 650, rullo: 1300, cifra: 280, dopoConta: 450, riga: 420, banner: 2000, cattivo: 2500, leggii: 2700 };
   var RVET = { pezzo: 2300, prezzo: 850, cifra: 240, riga: 600, banner: 2100, tutto: 3900 };
   var RRU = { riga: 650, cento: 2700, banner: 2100 };
+  var RU_FERMA = 6500;   // dopo l'ultima spinta della Ruota: la ruota frena (fino a ~5,5 s) e il numero resta un attimo
 
   // =========================================================
   //  LE REGOLE (senza grafica)
@@ -89176,11 +89237,12 @@ window.SG_SIPERO = {
       if (f === "premio" && s === "gioca" && H.premio && pres.every(function (p) { return H.premio.fatti[p.id]; })) return dopo(online ? 1100 : 700, fineGioco);
       if (f === "ruota" && H.ruota) {
         var x = function (id) { return H.ruota.g[id] || {}; }, conta = pres.filter(function (p) { return H.ruota.g[p.id]; });
-        if (s === "giro1" && conta.every(function (p) { return x(p.id).v1 != null; })) return dopo(2900, decidi);
+        // (dopo l'ultima spinta si aspetta che la sua ruota si fermi: frena fino a ~5 s, e il numero si vede solo allora)
+        if (s === "giro1" && conta.every(function (p) { return x(p.id).v1 != null; })) return dopo(RU_FERMA, decidi);
         if (s === "decidi" && conta.every(function (p) { return x(p.id).si != null; })) return dopo(700, giro2);
-        if (s === "giro2" && conta.every(function (p) { return x(p.id).si !== true || x(p.id).v2 != null; })) return dopo(3100, rivRuota);
+        if (s === "giro2" && conta.every(function (p) { return x(p.id).si !== true || x(p.id).v2 != null; })) return dopo(RU_FERMA, rivRuota);
         // (sullo stesso telefono la ruota la chiude la regia quando l'ultimo ha visto fermarsi la sua: «finiti»)
-        if (s === "bonus" && modo !== "telefono" && conta.every(function (p) { return !x(p.id).cento || x(p.id).b != null; })) return dopo(3100, rivBonus);
+        if (s === "bonus" && modo !== "telefono" && conta.every(function (p) { return !x(p.id).cento || x(p.id).b != null; })) return dopo(RU_FERMA, rivBonus);
       }
       if (f === "vetrina" && s === "offri" && pres.every(function (p) { return H.vet.off[p.id] != null || H.vpassati[p.id]; })) return dopo(pausa, chiudiVetrina);
       if (f === "punti" && H.avanti.length >= servono()) return oltre();
@@ -89468,7 +89530,7 @@ window.SG_SIPERO = {
       if (f === "vetrina" && s === "offri") return ST.testoLeggio(S, i, (vm.vet.fatti || []).indexOf(p.id) >= 0 ? "✅" : "🤔");
       if (f === "premio" && s === "gioca") return ST.testoLeggio(S, i, ((vm.premio || {}).fatti || []).indexOf(p.id) >= 0 ? "✅" : "🎮");
       if (f === "ruota" && !fermi && vm.ruota) {
-        var x = vm.ruota.g[p.id]; if (!x) return ST.puntiLeggio(S, i, p.punti, 0);
+        var x = vistaRuota(R, p.id); if (!x) return ST.puntiLeggio(S, i, p.punti, 0);
         var tot = (x.v1 || 0) + (x.v2 || 0);
         return ST.testoLeggio(S, i, x.v1 == null ? "🎡" : tot > 100 ? "💥 " + tot : String(tot), tot > 100);
       }
@@ -89858,6 +89920,10 @@ window.SG_SIPERO = {
     schermo(R, [ el("div", { class: "pz-testa", text: "🎁 Gioco a premi" + (vm.nPremio > 1 ? " · " + vm.iPremio + " di " + vm.nPremio : "") }),
       el("div", { class: "pz-intro" }, [ el("span", { class: "i", text: pr.icona }), el("b", { text: pr.nome }), el("p", { text: pr.regola }) ]),
       el("div", { class: "pz-sotto", text: (pr.da ? "Scelto da " + (pr.da === R.cb.myId ? "te" : nomeDi(vm, pr.da)) + " · " : "") + "si gioca tutti insieme!" }) ]);
+    // quanto manca per leggere la regola: «Si comincia tra 7…» (in basso, come sulle classifiche)
+    var conto = el("p", { class: "pz-attesa" }), sec = Math.max(1, Math.round(((vm.restaMs || T.intro) - (Date.now() - R.vmTs)) / 1000));
+    ST.barra(S, [ conto, R.t.faccine() ]);
+    R.t.contoAvanti(conto, sec, null, "pz|" + vm.sessione + "|" + k, "Si comincia tra ");
     Z().FX.tada(); ST.pubblico(S, "applauso");
   }
   // gli aiuti per i giochi a premi su ogni telefono (vedi interfaccia in js/games/prezzo-premi-piu.js)
@@ -89993,12 +90059,19 @@ window.SG_SIPERO = {
     if (x.v2 != null) return x.v1 + " + " + x.v2 + " = " + (tot > 100 ? "💥" + tot : tot);
     return String(x.v1) + (x.si === false && mostraSi ? " ✋" : x.si === true && mostraSi ? " 🎡" : x.si === "?" ? " ✅" : "");
   }
+  // il numero di chi sta girando su QUESTO telefono si vede solo quando la sua ruota si ferma (fino ad allora resta quello di prima)
+  function vistaRuota(R, id) {
+    var x = R.vm.ruota && R.vm.ruota.g[id], RU = R.ruotaUI;
+    if (!x || !RU || RU.chi !== id || RU.fermo || x[RU.campo] == null) return x;
+    var y = {}; for (var k in x) y[k] = x[k];
+    y[RU.campo] = null; return y;
+  }
   function aggiornaRuota(R) {
     var vm = R.vm, U = R.schRu, el = R.t.el; if (!vm.ruota) return;
     if (U && U.grid.isConnected) {
       vm.players.forEach(function (p) {
         if (p.via || !vm.ruota.g[p.id]) return;
-        var c = U.celle[p.id], x = vm.ruota.g[p.id];
+        var c = U.celle[p.id], x = vistaRuota(R, p.id);
         if (!c) { c = U.celle[p.id] = el("div", { class: "pz-rg" }, [ fac(el, p), el("span", { class: "nm", text: p.id === R.cb.myId ? "Tu" : p.nome }), el("span", { class: "val" }) ]); U.grid.appendChild(c); }
         var tx = testoRuota(x, vm.sotto !== "decidi"), v = c.querySelector(".val"); if (v.textContent !== tx) v.textContent = tx;
         var tot = (x.v1 || 0) + (x.v2 || 0); c.classList.toggle("fuori", tot > 100); c.classList.toggle("cento", tot === 100);
@@ -90013,6 +90086,8 @@ window.SG_SIPERO = {
     var val = mx[RU.campo];
     if (RU.tb) RU.tb.ferma();
     RU.atterra = RU.ru.arriva(val).then(function () {
+      // la ruota si è fermata: solo adesso il numero va sul maxischermo e sul leggio
+      RU.fermo = true; aggiornaRuota(R); leggii(R);
       var tot = RU.campo === "b" ? val : (mx.v1 || 0) + (RU.campo === "v2" ? (mx.v2 || 0) : 0);
       RU.nota.textContent = RU.campo === "b" ? "🎁 " + val + (puntiBonus(val) ? "! +" + N(puntiBonus(val)) : "") : tot > 100 ? "💥 " + tot + ": sballato!" : tot === 100 ? "💯 CENTO!" : "🎡 " + val + (RU.campo === "v2" ? " · totale " + tot : "");
       if (tot === 100 || (RU.campo === "b" && val === 100)) { Z().FX.cento(); fumetto(R.S, "CENTO! CENTO! CENTO!"); Z().vibra([40, 50, 90]); ST.pubblico(R.S, "ovazione"); }
@@ -90022,11 +90097,11 @@ window.SG_SIPERO = {
   }
   function apriRuota(R, chi, campo, fine, allaFine) {
     var el = R.t.el, k = R.vm.k;
-    var nota = el("p", { class: "pz-nota forte", text: campo === "b" ? "🎁 Giro bonus! Trascina la ruota in giù 👇" : "👇 Trascina la ruota in giù per girarla!" });
-    var RU = { campo: campo, chi: chi.id, nota: nota, arrivato: false, mandato: false };
+    var nota = el("p", { class: "pz-nota forte", text: campo === "b" ? "🎁 Giro bonus! Trascina la ruota su o giù ↕️" : "↕️ Trascina la ruota su o giù per girarla!" });
+    var RU = { campo: campo, chi: chi.id, nota: nota, arrivato: false, mandato: false, fermo: false };
     RU.ru = Z().ruota(el, { alt: altRuota(),
       onSpinta: function (f) { if (RU.mandato || !vivoK(R, k)) return false; RU.mandato = true; RU.ru.attiva(false); R.cb.mossa({ t: "spinta", k: k, f: f }, chi.id); nota.textContent = "🎡 Gira…"; },
-      debole: function () { nota.textContent = "💪 Più forte! Trascina giù più veloce"; fumetto(R.S, "Più forte! 💪"); } });
+      debole: function () { nota.textContent = "💪 Più forte! Trascina più veloce"; fumetto(R.S, "Più forte! 💪"); } });
     RU.ru.attiva(true);
     var mx = (R.vm.ruota.g || {})[chi.id]; if (mx && mx.v1 != null && campo !== "v1") RU.ru.mostra(campo === "b" ? 100 : mx.v1);
     RU.tb = Z().barraTempo(el, fine, function () { RU.ru.attiva(false); if (allaFine) allaFine(); });
@@ -90365,7 +90440,7 @@ window.SG_SIPERO = {
       if (R.tast && R.tastK === m.kk) {
         clearTimeout(R.toAttesa);
         if (!R.pan.aperto() && R.tastChi) apriOfferta(R);
-        else { R.tast.riapri(); }
+        else { R.tast.svuota(); R.tast.riapri(); }   // il prezzo non va: si riscrive da capo
         fumetto(R.S, m.k === "preso" ? "Già preso da " + m.da + "! 😬" : "Sotto i " + E(m.lim) + "!");
       }
       return;

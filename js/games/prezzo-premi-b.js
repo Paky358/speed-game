@@ -735,18 +735,22 @@
         });
         root.appendChild(el("div", { class: "pzb-opz" }, bs));
         root.appendChild(nota);
-        S.ui = { bs: bs, nota: nota, gf: gf, opz: opz, q: q };
+        S.ui = { bs: bs, nota: nota, gf: gf, opz: opz, q: q, risposto: false };
+        S.attende = false;   // (domanda nuova: niente risposta in sospeso)
         bar.style.transition = "none"; bar.style.transform = "scaleX(1)";
         void bar.offsetWidth; setTimeout(function () { bar.style.transition = "transform " + (PL.QSEC - 0.05) + "s linear"; bar.style.transform = "scaleX(0)"; }, 30);
         tq = setTimeout(function () { if (vivo() && S.q === q && !S.attende) { S.ui.nota.textContent = "⏰ Tempo!"; manda(q, -1); } }, PL.QSEC * 1000);
       }
       function scegli(k) {
-        if (!vivo() || S.attende || !S.ui || S.ui.q !== S.q) return;
+        // una risposta sola per domanda: dopo l'esito l'altro prezzo resta lì ancora un attimo, ma toccarlo non conta
+        // (prima il secondo tocco lasciava la domanda dopo bloccata, senza più tasti che rispondono)
+        if (!vivo() || S.attende || !S.ui || S.ui.q !== S.q || S.ui.risposto) return;
         S.ui.bs[k].classList.add("sel"); S.ui.bs.forEach(function (b) { b.disabled = true; });
         A.vibra(25);
         manda(S.q, k);
       }
       function manda(q, s) {
+        if (S.ui) S.ui.risposto = true;
         S.attende = true; clearTimeout(tq);
         S.ui.bs.forEach(function (b) { b.disabled = true; });
         A.invia({ q: q, s: s });
