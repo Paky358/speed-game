@@ -238,4 +238,49 @@
     if (W.erroriTel().length) no("errori: " + W.erroriTel().slice(0, 3).join(" | "));
     return "[" + GIOCO + "] Giulia (che tiene la partita) e Paky (rientrato) vedono la chiave giusta; Luca e Sara no, la foto non ce l'ha";
   } });
+
+  // 583 / 584: il CAPO di turno esce (20 ott 2026, deciso dal proprietario: «mi devono aspettare e basta»).
+  // 583: il capo di turno si spegne: tutti leggono «⏳ … aspettiamo il capo, X»; dopo più di un minuto (prima a 60 s il capo
+  //      lo faceva un compagno da solo) il capo è sempre lui, niente «👑 Faccio io il capo»; torna e dà l'indizio lui.
+  // 584: in 2 contro 2 il capo di turno non torna: si aspetta 3 minuti (a 70 s ancora lui, niente turno saltato), poi tocca
+  //      all'altra squadra (in squadra non c'è nessuno che possa fare il capo e indovinare).
+  async function capoDiTurnoVia(o) {
+    var r = await apriPartita(o), C = r.C, v = vm(C), k = v.turno, idCapo = v.capo[k], capo = r.nome(idCapo);
+    if (!capo || capo === "Paky") no("il capo di turno è " + capo + " (serve un amico)");
+    A.muore(capo);
+    if (!await W.aspetta(function () { var a = vm(C).attesa; return a && a.capo && a.k === k; }, 45000)) no("spento " + capo + ", non si aspetta il capo (" + JSON.stringify(vm(C).attesa) + ")");
+    var altri = ["Paky"].concat(r.amici).filter(function (n) { return n !== capo; });
+    if (!await W.aspetta(function () { return altri.every(function (n) { return new RegExp("aspettiamo il capo, " + capo).test(T(W.finestra(n))); }); }, 5000))
+      no("non tutti leggono «aspettiamo il capo, " + capo + "» (" + altri.map(function (n) { return n + ": " + (/aspettiamo[^…]*/.exec(T(W.finestra(n))) || [""])[0]; }).join("; ") + ")");
+    return { r: r, C: C, k: k, idCapo: idCapo, capo: capo, altri: altri, t0: Date.now() };
+  }
+  function bottoneCapo(nomi) { return nomi.filter(function (n) { return /Faccio io il capo/.test(T(W.finestra(n))); }); }
+  aggiungi(583, { nome: "Parola d'ordine: il capo di turno esce: lo si aspetta (niente capo nuovo da solo), torna e dà l'indizio lui", fai: async function () {
+    var X = await capoDiTurnoVia({ lucaCapo: true }), C = X.C;
+    await W.dorme(70000);
+    var v = vm(C);
+    if (v.capo[X.k] !== X.idCapo) no("dopo 70 s il capo è cambiato da solo (" + JSON.stringify(v.capo) + ")");
+    if (!v.attesa || !v.attesa.capo) no("dopo 70 s non si aspetta più il capo (" + JSON.stringify(v.attesa) + ", turno " + v.turno + ")");
+    if (v.turno !== X.k) no("dopo 70 s il turno è passato all'altra squadra");
+    var b = bottoneCapo(X.altri); if (b.length) no("prima dei 3 minuti c'è «👑 Faccio io il capo» per " + b.join(", "));
+    A.torna(X.capo);
+    if (!await W.aspetta(function () { var q = chiDi(vm(C), X.capo); return q && !q.via && !vm(C).attesa; }, 15000)) no(X.capo + " torna ma non rientra (" + JSON.stringify(vm(C).attesa) + ")");
+    if (vm(C).capo[X.k] !== X.idCapo) no("tornato " + X.capo + ", il capo non è più lui");
+    await indizioDa(X.capo, C);
+    if (W.erroriTel().length) no("errori: " + W.erroriTel().slice(0, 3).join(" | "));
+    return "spento " + X.capo + " (capo di turno): «aspettiamo il capo, " + X.capo + "» su tutti; a 70 s ancora capo lui, niente «Faccio io il capo»; torna e dà l'indizio";
+  } });
+  aggiungi(584, { nome: "Parola d'ordine: 2 contro 2, il capo di turno non torna: 3 minuti di attesa, poi tocca all'altra squadra", fai: async function () {
+    var X = await capoDiTurnoVia({ lucaCapo: true }), C = X.C;
+    await W.dorme(70000);
+    if (vm(C).turno !== X.k || !vm(C).attesa) no("a 70 s non si aspetta più il capo (turno " + vm(C).turno + ")");
+    if (!await W.aspetta(function () { return vm(C).turno !== X.k; }, 150000)) no("dopo 3 minuti e mezzo il turno non passa");
+    var dt = Math.round((Date.now() - X.t0) / 1000);
+    if (dt < 150) no("il turno è passato dopo " + dt + " s (doveva aspettare 3 minuti)");
+    var v = vm(C), capo2 = X.r.nome(v.capo[v.turno]);
+    if (vm(C).capo[X.k] !== X.idCapo) no("il capo della squadra che aspettava è cambiato");
+    await indizioDa(capo2, C);
+    if (W.erroriTel().length) no("errori: " + W.erroriTel().slice(0, 3).join(" | "));
+    return "spento " + X.capo + ": dopo " + dt + " s (3 minuti dall'uscita vista) tocca all'altra squadra, " + capo2 + " dà l'indizio; " + X.capo + " resta capo";
+  } });
 })();
