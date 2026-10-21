@@ -1,6 +1,6 @@
 // PROVE DI PAROLA D'ORDINE, giro 2 (21 ott 2026), compito «La fine partita e i momenti forti» (js/games/ordine.js).
 // Uso (dopo aver caricato copione-prova.js): await COPIONE.carica("ordine2/fine.js"); await COPIONE.prova("o2f1")
-// Con Edge invisibile: prova.js --porta 8995 --carica ordine2/fine.js --prova o2f1,o2f2,o2f3 --rifai
+// Con Edge invisibile: prova.js --porta 8995 --carica ordine2/fine.js --prova o2f1,o2f2,o2f3,o2f4,o2f5 --rifai
 //
 // o2f1: online in 4 (Rossi = Luca capo + Paky host; Blu = Giulia capo + Sara). Tre turni con le scritte grandi delle mosse
 //       sopra il tabellone su tutti i telefoni («✅ … giusta! / Finiti i tentativi · Tocca ai …», «😬 … era dei …!», «✋ I …
@@ -28,6 +28,15 @@
 //       sparisce e il vice (un amico) tiene la fine coi titoli e fa la Rivincita; la clessidra rossa negli ultimi 10 secondi
 //       (le cifre diventano rosse davvero, p12); in saletta «🤔 Cosa intendevi?» senza «?.»; «📋 Copia tutte» senza la
 //       finestra del browser (le parole compaiono già selezionate nell'app).
+// o2f4 (revisione, 22 ott 2026): contro il Bot in 3. 🎭 «Il consigliere» conta le PAROLE segnate (togliere e rimettere il
+//       segno sulla stessa non conta di più); 🏁 la partita chiusa dall'host non dà 🎯 punti né record anche se vincete voi;
+//       il mio titolo grande non compare sopra una scheda già aperta (a chi non l'ha aperta sì, e aprendo una scheda mentre
+//       c'è la scritta se ne va); nella 📸 foto il «pensava
+//       a» più buffo dice «la squadra ha girato anche …» quando qualcuna delle parole pensate è stata trovata.
+// o2f5 (revisione, 22 ott 2026): a 3 squadre in 6 (regole con la spia di preferiti/ordine.js): la squadra di turno gira la
+//       parola nera a metà partita («… sono fuori · Tocca ai …», la partita va avanti), poi un'altra trova tutte le sue con un
+//       indizio ∞: in alto «🎉 Vincono i …!», vinto/perso giusti su 6 telefoni, «💣 L'artificiere» dice la parola nera VERA
+//       (prima diceva l'ultima parola girata della partita), tabellone sopra la barra a 360x640.
 // Profili finti, mai account veri.
 (function () {
   "use strict";
@@ -475,6 +484,148 @@
     nota(N, "«📋 Copia tutte» senza permesso: «" + campo.value + "» nell'app, niente finestra del browser");
     var errs = W.erroriTel().filter(function (e) { return !/^Paky/.test(e); });   // (Paky è stato spento apposta)
     if (errs.length) no("errori: " + errs.slice(0, 3).join(" | "));
+    return N.join(" · ");
+  } });
+
+  // ---------------- o2f4 (revisione del 22 ott 2026) ----------------
+  COPIONE.aggiungi("o2f4", { nome: "Parola d'ordine (revisione della fine): «Il consigliere» conta le parole, la partita chiusa non dà punti, il titolo grande non copre una scheda aperta, «ha girato anche»", fai: async function () {
+    var N = [];
+    var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "Parola d'ordine");
+    await W.apriTel("Giulia", { hash: "gioco=ordine&stanza=" + C, x: 185 }); await W.apriTel("Luca", { hash: "gioco=ordine&stanza=" + C, x: 370 });
+    if (!await W.aspetta(function () { return (vm(C).players || []).length >= 3; }, 8000)) no("non entrano in 3");
+    if (!await W.aspetta(function () { return W.clicca(P, /contro il Bot/); }, 4000)) no("niente «🤖 Siete in 3: giocate contro il Bot»");
+    if (!await W.aspetta(function () { return vm(C).vsBot; }, 4000)) no("non si passa a «contro il Bot»");
+    W.reteDi("Giulia").invia({ t: "capo" });
+    if (!await W.aspetta(function () { return vm(C).capo[0] === idDi(C, "Giulia"); }, 4000)) no("Giulia non diventa capo");
+    if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 5000)) no("niente «Comincia»");
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && vm(C).passo === "indizio" && vm(C).turno === 0; }, 10000)) no("la partita contro il Bot non comincia");
+    var chiave = await W.aspetta(function () { var c = chiaveDa(W.finestra("Giulia")); return c.length && c.every(function (x) { return x != null; }) && c; }, 6000);
+    if (!chiave) no("Giulia non vede la chiave");
+    await W.dorme(8000);   // (la presentazione)
+    await indizio(C, "Giulia", 2);
+    var mie = coperteDi(C, chiave, 0), a = mie[0], b = mie[1], c = mie[2];
+    manda("Giulia", { t: "intendo", x: 0, l: [a, c] });   // Giulia pensava ad A e C
+    // 🎭 Luca segna A, toglie il segno e lo rimette (tre volte la stessa parola), poi segna B: per «Il consigliere» sono 2 parole
+    var luca = idDi(C, "Luca");
+    async function segno(m, ok) {
+      manda("Luca", m);
+      if (!await W.aspetta(function () { return ok((vm(C).prop || {})[luca] || []); }, 3000)) no("il segno di Luca (" + JSON.stringify(m) + ") non arriva");
+    }
+    for (var r = 0; r < 3; r++) {
+      await segno({ t: "proponi", i: a }, function (l) { return l.indexOf(a) >= 0; });
+      if (r < 2) await segno({ t: "togli", i: a }, function (l) { return l.indexOf(a) < 0; });
+    }
+    await segno({ t: "proponi", i: b }, function (l) { return l.indexOf(b) >= 0; });
+    await W.dorme(900);   // (il core salva la partita ricordata al massimo ogni mezzo secondo)
+    var st =(JSON.parse(W.BR.mem.Paky.l["sg-ripresa"] || "null") || {}).stato || {}, sg = (st.st || {})[luca];
+    if (!sg) no("nella partita ricordata non ci sono i numeri di Luca");
+    if (sg.segni !== 2) no("«Il consigliere»: Luca ha segnato 2 parole (una tre volte) ma ne contano " + sg.segni);
+    nota(N, "🎭 Luca segna la stessa parola 3 volte e un'altra: " + sg.segni + " parole segnate");
+    // Luca gira A (pensata) e B (non pensata): i Rossi sono avanti sul Bot
+    await gira(C, "Luca", a); await gira(C, "Luca", b);
+    var v = vm(C);
+    if (v.fase !== "gioco" || !(v.resto[0] < v.resto[1])) no("dopo due parole giuste i Rossi non sono avanti (" + v.resto.join("/") + ", " + v.fase + ")");
+    // la spia del titolo grande: chi lo vede, e se in quel momento ha una scheda aperta
+    var spiati = { Paky: [], Luca: [] };
+    var spia = setInterval(function () {
+      Object.keys(spiati).forEach(function (n) {
+        var w = W.finestra(n), x = w && w.document.querySelector(".or-cart.su");
+        if (x && /Il tuo titolo/.test(x.textContent)) spiati[n].push(!!w.document.querySelector(".or-riv.su, .or-tit-f.su"));
+      });
+    }, 80);
+    try {
+      // 🏁 l'host chiude: vincete voi (meno parole da trovare), ma niente 🎯 punti né record (si vince trovando tutte le parole)
+      W.finestra("Paky").__ORDINE.ui.cb.manda({ t: "chiudi" });
+      if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 6000)) no("la partita non si chiude");
+      var wL = W.finestra("Luca");
+      var chip = await W.aspetta(function () { return wL.document.querySelector(".or-chip[data-f='titoli']"); }, 3000);
+      if (!chip) no("Luca non ha il tasto del suo titolo");
+      chip.click();   // Luca apre subito «🎭 I titoli», prima della fine della festa
+      await W.dorme(300);
+      if (!wL.document.querySelector(".or-tit-f.su")) no("il tasto del titolo non apre la scheda di Luca");
+      // Paky (niente scheda aperta) vede il suo titolo grande; se apre «🤔 Cosa intendevi?» mentre c'è, la scritta se ne va
+      var wP = W.finestra("Paky");
+      var visto = await W.aspetta(function () { var x = wP.document.querySelector(".or-cart.su"); return x && /Il tuo titolo/.test(x.textContent); }, 8000, 40);
+      if (!visto) no("a Paky (nessuna scheda aperta) il titolo grande non compare");
+      var bc = bottone(wP, /Cosa intendevi/, ".or-chip"); if (!bc) no("Paky non ha «🤔 Cosa intendevi?»");
+      bc.click(); await W.dorme(250);
+      if (!wP.document.querySelector(".or-riv.su")) no("il tasto non apre la scheda di Paky");
+      if (wP.document.querySelector(".or-cart.su")) no("aprendo la scheda la scritta grande del titolo resta sopra");
+      await W.dorme(3000);
+    } finally { clearInterval(spia); }
+    v = vm(C);
+    if (v.vince !== 0 || !v.fineCome || v.fineCome.t !== "chiusa") no("la partita chiusa non la vincete voi (" + v.vince + ", " + JSON.stringify(v.fineCome) + ")");
+    if (v.punti) no("la partita chiusa dall'host dà i punti: " + JSON.stringify(v.punti));
+    var st2 = (JSON.parse(W.BR.mem.Paky.l["sg-ripresa"] || "null") || {}).stato || {};
+    if (st2.recBot) no("la partita chiusa fa il record della serata (" + st2.recBot + ")");
+    var alto = testa(P);
+    if (!/Partita chiusa: vincete voi/.test(alto) || /🎯|punt/.test(alto)) no("in alto Paky legge «" + alto + "»");
+    nota(N, "🏁 chiusa dall'host: «" + alto + "», niente punti né record");
+    if (spiati.Luca.some(Boolean)) no("il titolo grande compare sopra la scheda aperta di Luca");
+    if (spiati.Paky.some(Boolean)) no("a Paky il titolo grande resta sopra la scheda aperta");
+    nota(N, "titolo grande: a Paky sì (e se ne va quando apre «Cosa intendevi?»), a Luca (scheda già aperta) no");
+    // 📸 il «pensava a» più buffo: A trovata, B girata senza che Giulia ci pensasse → «la squadra ha girato anche B»
+    var tx = W.finestra("Paky").__ORDINE.pensavaBuffo(v), wa = v.tab[a].w, wb = v.tab[b].w, wc = v.tab[c].w;
+    if (tx.indexOf("Giulia pensava a " + wa + " e " + wc + ", la squadra ha girato anche " + wb) < 0) no("nella foto il «pensava a» dice «" + tx + "»");
+    nota(N, "📸 «" + tx + "»");
+    senzaErrori();
+    return N.join(" · ");
+  } });
+
+  // ---------------- o2f5 (revisione del 22 ott 2026) ----------------
+  COPIONE.aggiungi("o2f5", { nome: "Parola d'ordine a 3 squadre (revisione della fine): la nera a metà partita, poi vince un'altra squadra; «L'artificiere» dice la parola nera vera", fai: async function () {
+    var N = [];
+    if (!W.__prepPO) await COPIONE.carica("preferiti/ordine.js");   // (la spia delle regole: w.__imp = { squadre: 3 })
+    var P = await W.apriTel("Paky", { x: 0, po: true, prima: function (w) { w.__imp = { squadre: 3 }; } });
+    var C = await W.apriStanza(P, "Parola d'ordine"), amici = ["Giulia", "Luca", "Sara", "Ugo", "Bea"];
+    for (var i = 0; i < amici.length; i++) {
+      await W.apriTel(amici[i], { hash: "gioco=ordine&stanza=" + C, x: 150 * (i + 1), po: true });
+      var quanti = i + 2;
+      if (!await W.aspetta(function () { return (vm(C).players || []).length >= quanti; }, 8000)) no(amici[i] + " non entra");
+    }
+    if (!await W.aspetta(function () { return vm(C).nsq === 3; }, 4000)) no("la stanza non è a 3 squadre");
+    var nomi = ["Paky"].concat(amici);
+    if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 6000)) no("niente «Comincia»");
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && vm(C).tab; }, 10000)) no("non comincia (" + vm(C).fase + ")");
+    if (!await W.aspetta(function () { return nomi.every(function (n) { return carte(W.finestra(n)).length >= 20; }); }, 6000)) no("non tutti vedono il tabellone");
+    await W.dorme(10000);   // (la presentazione di tre squadre)
+    // la squadra di turno gira la parola nera: esce, ma la partita va avanti
+    var v = vm(C), k0 = v.turno, capo0 = nomeDi(C, v.capo[k0]);
+    await indizio(C, capo0, 1);
+    var chiave = await W.aspetta(function () { var c = chiaveDa(W.finestra(capo0)); return c.length && c.every(function (x) { return x != null; }) && c; }, 6000);
+    if (!chiave) no(capo0 + " non vede la chiave");
+    var iNera = chiave.indexOf("x"), wNera = vm(C).tab[iNera].w, chiNera = indovinoDi(C, k0);
+    await gira(C, chiNera, iNera);
+    var c0 = await cartelloSuTutti(nomi, /la parola nera/, 2500);
+    if (c0.indexOf("sono fuori") < 0 || !/Tocca ai /.test(c0)) no("la scritta della nera a metà partita dice «" + c0 + "»");
+    if (vm(C).fase !== "gioco" || vm(C).fuori.indexOf(k0) < 0) no("dopo la nera i " + k0 + " non sono fuori o la partita è finita (" + vm(C).fase + ")");
+    nota(N, "nera a metà partita: «" + c0 + "»");
+    // la squadra dopo trova tutte le sue parole con un indizio ∞
+    if (!await W.aspetta(function () { var x = vm(C); return x.passo === "indizio" && x.turno !== k0 && !x.sospeso; }, 8000)) no("il turno non passa");
+    await W.dorme(2500);
+    v = vm(C); var k1 = v.turno, capo1 = nomeDi(C, v.capo[k1]);
+    await indizio(C, capo1, 0, ["QUOKKA"]);
+    var mie = coperteDi(C, chiave, k1), ultima = vm(C).tab[mie[mie.length - 1]].w;
+    for (var j = 0; j < mie.length && vm(C).fase === "gioco"; j++) await gira(C, indovinoDi(C, k1), mie[j]);
+    if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 8000)) no("la partita non finisce");
+    v = vm(C);
+    if (v.vince !== k1 || !v.fineCome || v.fineCome.t !== "tutte") no("vince " + v.vince + " (" + JSON.stringify(v.fineCome) + ") invece di " + k1);
+    // 🎭 «L'artificiere»: la parola nera vera, non l'ultima parola girata
+    var art = (v.titoli || []).filter(function (x) { return x && x.nome === chiNera; })[0];
+    if (!art || art.titolo !== "L'artificiere") no(chiNera + " (ha girato la nera) ha il titolo " + JSON.stringify(art));
+    if (art.dett.indexOf(wNera) < 0 || art.dett.indexOf(ultima) >= 0) no("«L'artificiere» dice «" + art.dett + "» (la nera era " + wNera + ", l'ultima girata " + ultima + ")");
+    nota(N, "fine: vincono i " + k1 + ", " + chiNera + " 💣 «" + art.dett + "»");
+    // in alto e sotto, su tutti
+    await W.dorme(1500);
+    nomi.forEach(function (n) {
+      var w = W.finestra(n), p = chiDi(C, n), sf = statoFine(w);
+      if (!/^🎉 Vincono i /.test(testa(w))) no(n + " legge in alto «" + testa(w) + "»");
+      if (p.team === k1 ? !/Avete vinto/.test(sf) : !/Avete perso/.test(sf)) no(n + " (squadra " + p.team + ") legge «" + sf + "»");
+    });
+    var m = await misuraFine("Paky", 360, 640);
+    if (m.err) no("a 360x640 (3 squadre): " + m.err);
+    nota(N, "in alto «" + testa(P) + "», vinto/perso giusti su 6 telefoni, 360x640 a posto (righe " + m.righe + " px)");
+    senzaErrori();
     return N.join(" · ");
   } });
 

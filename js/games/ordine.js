@@ -519,7 +519,9 @@
         if (i === -1) delete H.prop[id];   // (togli tutti i miei segni)
         else if (H.tab[i] && !H.tab[i].g) {   // ognuno può segnare più parole: si aggiungono (al massimo 9; l'ultima è quella che «👆 Gira» scopre)
           var mie = (H.prop[id] || []).filter(function (x) { return x !== i && H.tab[x] && !H.tab[x].g; });
-          if ((H.prop[id] || []).indexOf(i) < 0) stat(id).segni++;   // (🎭 un segno nuovo)
+          // (🎭 «Il consigliere»: le PAROLE segnate, ognuna una volta sola: togliere e rimettere il segno non conta di più)
+          var sS = stat(id); sS.viste = sS.viste || [];
+          if (sS.viste.indexOf(i) < 0) { sS.viste.push(i); sS.segni++; }
           mie.push(i); H.prop[id] = mie.slice(-9);
         }
         bd(); return;
@@ -788,9 +790,10 @@
       H.fase = "fine"; H.vince = k; H.prop = {}; H.indizio = null; H.attesa = null; H.cless = null;
       clearTimeout(tAttesa); clearTimeout(tCless); clearTimeout(tBotSq);
       H.fineCome = H.fineCome || { t: motivo ? "chiusa" : "tutte", k: k };
-      // 🎯 contro il Bot: se vincete, tanti punti quante parole mancavano al Bot (la regola ufficiale quando si è in pochi)
+      // 🎯 contro il Bot: se vincete, tanti punti quante parole mancavano al Bot (la regola ufficiale quando si è in pochi).
+      // La partita chiusa dall'host (🏁) non dà punti né record: si vince trovando tutte le parole
       H.punti = null;
-      if (H.vsBot && k === 0) { var np = resto(1), prima = H.recBot || 0; H.recBot = Math.max(prima, np); H.punti = { n: np, rec: prima }; }
+      if (H.vsBot && k === 0 && H.fineCome.t !== "chiusa") { var np = resto(1), prima = H.recBot || 0; H.recBot = Math.max(prima, np); H.punti = { n: np, rec: prima }; }
       // posti: 1 chi vince, 2 chi era ancora in gioco, 3 chi è uscito con la parola nera (il Bot non è in classifica)
       var restaAltro = vive().some(function (x) { return x !== k; });
       H.classifica = H.players.filter(function (p) { return p.id !== BOT_ID; }).map(function (p) {
@@ -880,7 +883,8 @@
       function media(x) { return x.s.nInd ? x.s.tInd / x.s.nInd : null; }
       var nomeBot = H.vsBot ? (pById(BOT_ID) || { nome: "Bot" }).nome : "";
       var capiT = L.filter(function (x) { return x.s.nInd > 0; }).length;
-      prova("💣", "L'artificiere", function (x) { return x.s.nera ? 1 : null; }, 1, function () { return "ha girato " + ((H.fineCome && H.fineCome.w) || ((H.tab || []).filter(function (c) { return c.c === "x"; })[0] || {}).w || "") + ", la parola nera"; });
+      // (la parola nera dal tabellone: a 3 squadre la nera non chiude la partita, e fineCome.w è l'ultima parola girata)
+      prova("💣", "L'artificiere", function (x) { return x.s.nera ? 1 : null; }, 1, function () { return "ha girato " + (((H.tab || []).filter(function (c) { return c.c === "x"; })[0] || {}).w || "") + ", la parola nera"; });
       prova("🍀", "Il fortunato", function (x) { return x.s.oro || null; }, 1, function (v, x) { return "ha trovato " + (x.s.oroW || "") + ", la parola d'oro"; });
       prova("🧠", "Il telepate", function (x) { return x.best || null; }, 2, function (v, x) { return "«" + x.bestI.p + " " + (x.bestI.n === 0 ? "∞" : x.bestI.n) + "»: " + v + " parole trovate"; });
       prova("🎯", "Il cecchino", function (x) { return x.s.giuste || null; }, 2, function (v) { return v + " parole giuste girate"; });
@@ -1378,6 +1382,7 @@
   // 🎭 a fine partita, dopo la festa: il mio titolo scherzoso, grande per un attimo («🎯 Il cecchino · 5 parole giuste girate»)
   function mioTitolo(ui) {
     var vm = ui.vm; if (!vm || vm.fase !== "fine" || !ui.cb) return;
+    if (ui.foglio) return;   // (ha già aperto una scheda, es. «🎭 I titoli»: niente scritta grande sopra)
     var x = (vm.titoli || []).filter(function (q) { return q && q.id === ui.cb.myId; })[0];
     if (x) cartello(ui, x.icona + " " + x.titolo, "Il tuo titolo: " + x.dett, "#fcc419", 2600);
   }
@@ -1882,6 +1887,7 @@
     if (tipo === "cosa" && !(vm.cosa && vm.cosa.l && vm.cosa.l.length)) return;
     if (tipo === "titoli" && !(vm.titoli && vm.titoli.length)) return;
     ui.foglio = tipo;
+    if (ui.cart) { clearTimeout(ui.tCart); ui.cart.classList.remove("su"); }   // (la scritta grande, se c'è, lascia il posto alla scheda)
     try { ui.S.vista.style.setProperty("--or-barra", (ui.S.barraEl.offsetHeight + 6) + "px"); } catch (e) {}   // (la barra può essere cresciuta coi tasti di fine)
     suona("indizio");
     fogliFine(ui, vm);
@@ -2134,7 +2140,8 @@
     }
     var e = best.e, nomi = function (l) { return l.length === 1 ? l[0] : l.slice(0, -1).join(", ") + " e " + l[l.length - 1]; };
     var tx = "🤔 «" + e.p + " " + (e.n === 0 ? "∞" : e.n) + "»: " + e.nome + " pensava a " + nomi(e.pen.map(function (x) { return x.w; }));
-    if (best.fuori.length) tx += ", la squadra ha girato " + nomi(best.fuori.slice(0, 3).map(function (t) { return t.w + (t.c === "x" ? " 💣" : ""); }));
+    // («anche» se qualcuna di quelle pensate l'hanno trovata: se no sembra che abbiano girato solo quelle)
+    if (best.fuori.length) tx += (e.pen.some(function (x) { return x.ok; }) ? ", la squadra ha girato anche " : ", la squadra ha girato ") + nomi(best.fuori.slice(0, 3).map(function (t) { return t.w + (t.c === "x" ? " 💣" : ""); }));
     return tx;
   }
   function fotoPartita(vm, mioId) {
@@ -2613,5 +2620,5 @@
     }
   });
   window.__ORDINE = { erroreIndizio: erroreIndizio, leggiGruppo: leggiGruppo, radice: radice, mazzoDa: mazzoDa, sorelle: sorelle, MAZZI: MAZZI, MEMORIA: MEMORIA,
-    titoloFine: titoloFine, testoPunti: testoPunti, fotoPartita: fotoPartita };
+    titoloFine: titoloFine, testoPunti: testoPunti, fotoPartita: fotoPartita, pensavaBuffo: pensavaBuffo };
 })();
