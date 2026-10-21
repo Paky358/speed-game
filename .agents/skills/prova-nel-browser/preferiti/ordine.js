@@ -15,7 +15,9 @@
 //      vostro turno scopre da solo una sua parola, chi ricarica ritrova tutto, «🎉 Avete battuto …»; misure della saletta.
 // po5: 🤖 contro il Bot, l'host sparisce durante il turno del Bot: l'amico che porta avanti la partita fa giocare il Bot.
 // po6: nella Sala in 3: la partita parte già «contro il Bot», la riga «📜» lo dice, fino alla fine e Rivincita.
-// po7: i mazzi nuovi «⚽ Serie A e Fanta» e «🌶️ Serata» (spento di partenza): il tabellone è tutto del mazzo, la riga «📜».
+// po7: i mazzi (dal 21 ott 2026 solo il Classico e «🌶️ Serata», spento di partenza; via i mazzi a tema): un mazzo a tema
+//      rimasto nelle regole («fanta») torna da solo al Classico (tabellone tutto del Classico, saletta e riga «📜» zitte),
+//      nel ⚙️ due mazzi soli e nessun riferimento ai temi; «🌶️ Serata» c'è ed è detto nella riga «📜».
 // po8: ⚡ ritmo veloce: suspense sempre breve, regole nella saletta e riga «📜».
 (function () {
   "use strict";
@@ -406,37 +408,42 @@
     return N.join(" · ");
   } });
 
-  COPIONE.aggiungi("po7", { nome: "Parola d'ordine: i mazzi «⚽ Serie A e Fanta» e «🌶️ Serata»", fai: async function () {
+  COPIONE.aggiungi("po7", { nome: "Parola d'ordine: i mazzi (Classico e 🌶️ Serata; un mazzo a tema vecchio torna al Classico)", fai: async function () {
     var N = [];
-    var P = await W.apriTel("Paky", { x: 0, po: true, prima: function (w) { w.__imp = { mazzo: "fanta" }; } });
-    var M = P.SG_ORDINE_MAZZI || {};
-    ["fanta", "serata"].forEach(function (id) {
-      var l = M[id] || [];
-      if (l.length < 120) no("il mazzo " + id + " ha solo " + l.length + " parole");
-      var brutte = l.filter(function (w) { return w.length > 12 || /[^A-ZÀÈÉÌÒÙ' ]/.test(w); });
-      if (brutte.length) no("nel mazzo " + id + " parole che non stanno nelle caselle: " + brutte.join(", "));
-    });
-    nota(N, "mazzi: fanta " + (M.fanta || []).length + ", serata " + (M.serata || []).length);
+    var P = await W.apriTel("Paky", { x: 0, po: true, prima: function (w) { w.__imp = { mazzo: "fanta" }; } });   // (un mazzo a tema che non c'è più)
+    var M = P.SG_ORDINE_MAZZI || {}, CL = P.SG_ORDINE_PAROLE || [];
+    var l = M.serata || [];
+    if (l.length < 120) no("il mazzo 🌶️ Serata ha solo " + l.length + " parole");
+    var brutte = l.filter(function (w) { return w.length > 12 || /[^A-ZÀÈÉÌÒÙ' ]/.test(w); });
+    if (brutte.length) no("nel mazzo 🌶️ Serata parole che non stanno nelle caselle: " + brutte.join(", "));
+    nota(N, "Classico " + CL.length + " parole, 🌶️ Serata " + l.length);
     var C = await W.apriStanza(P, "Parola d'ordine");
     var amici = ["Giulia", "Luca", "Sara"];
     for (var i = 0; i < amici.length; i++) await W.apriTel(amici[i], { hash: "gioco=ordine&stanza=" + C, x: 185 * (i + 1), po: true });
     await W.aspetta(function () { return (vm(C).players || []).length === 4; }, 10000);
     var X = { P: P, C: C, hostId: "host", nomi: ["Paky"].concat(amici) };
-    if (!/Mazzo ⚽ Serie A e Fanta/.test(T(P))) no("la saletta non dice «Mazzo ⚽ Serie A e Fanta»");
+    if (/Mazzo|Fanta|Serie A/.test(T(P))) no("la saletta parla ancora di un mazzo a tema («" + T(P).slice(0, 200) + "»)");
+    if (vm(C).mazzo !== "classico") no("nella foto della saletta il mazzo è «" + vm(C).mazzo + "»");
     await comincia(X);
-    var fuori = vm(C).tab.map(function (c) { return c.w; }).filter(function (w) { return M.fanta.indexOf(w) < 0; });
-    if (fuori.length) no("parole non del mazzo Fanta: " + fuori.join(", "));
-    nota(N, "tabellone tutto ⚽ Serie A e Fanta: " + vm(C).tab.slice(0, 6).map(function (c) { return c.w; }).join(", ") + "…");
-    // le regole: il Classico di partenza, 🌶️ Serata spento
+    var fuori = vm(C).tab.map(function (c) { return c.w; }).filter(function (w) { return CL.indexOf(w) < 0; });
+    if (fuori.length) no("con il mazzo vecchio «fanta» sul tabellone parole non del Classico: " + fuori.join(", "));
+    nota(N, "regola «fanta» → tabellone tutto del Classico: " + vm(C).tab.slice(0, 5).map(function (c) { return c.w; }).join(", ") + "…");
+    // le regole: due mazzi soli (Classico di partenza, 🌶️ Serata), niente mazzi a tema da nessuna parte
     var g = P.__gOrdine;
-    if (g) {
-      var box = P.document.createElement("div"), dove = {};
-      g.impostazioni(box, dove, { el: P.__t.el, modo: "online" });
-      if (dove.mazzo !== "classico") no("il mazzo di partenza è " + dove.mazzo);
-      var r = g.riassunto({ mazzo: "serata" });
-      if (!/🌶️ Serata/.test(r)) no("la riga 📜 non dice il mazzo 🌶️ Serata («" + r + "»)");
-      nota(N, "di partenza Classico; 📜 «" + r + "»");
-    }
+    if (!g) no("non trovo il gioco registrato");
+    var box = P.document.createElement("div"), dove = {};
+    g.impostazioni(box, dove, { el: P.__t.el, modo: "online" });
+    if (dove.mazzo !== "classico") no("il mazzo di partenza è " + dove.mazzo);
+    var et = [].filter.call(box.querySelectorAll(".etichetta"), function (e) { return /mazzo/i.test(e.textContent); })[0];
+    var chipMazzi = et && et.nextElementSibling ? [].map.call(et.nextElementSibling.querySelectorAll(".modo-chip"), function (c) { return c.textContent.trim(); }) : [];
+    if (JSON.stringify(chipMazzi) !== JSON.stringify(["Classico", "🌶️ Serata"])) no("nel ⚙️ i mazzi sono " + JSON.stringify(chipMazzi));
+    var temi = /Film|Sport|Fanta|Napoli|Anni 80|a tema/;
+    if (temi.test(box.textContent)) no("nel ⚙️ si parla ancora dei mazzi a tema: «" + (box.textContent.match(temi) || [""])[0] + "»");
+    if (temi.test((g.regole || []).join(" "))) no("nelle regole del gioco si parla ancora dei mazzi a tema");
+    var r = g.riassunto({ mazzo: "serata" }), r2 = g.riassunto({ mazzo: "fanta" });
+    if (!/🌶️ Serata/.test(r)) no("la riga 📜 non dice il mazzo 🌶️ Serata («" + r + "»)");
+    if (/mazzo|Fanta/i.test(r2)) no("la riga 📜 di un mazzo vecchio dice ancora «" + r2 + "»");
+    nota(N, "⚙️ " + chipMazzi.join(" / ") + "; 📜 «" + r + "»; «fanta» → «" + r2 + "»");
     senzaErrori();
     return N.join(" · ");
   } });
