@@ -9,7 +9,7 @@
 //     avatar; round 2 ✉️ busta chiusa passando il telefono (3, 5, 0 → vince 5; poi a pari offerta vince chi ha chiuso prima);
 //     round 3 📦 lotto doppio (2 carte nel kit); round 4 🎁 pacco coperto che si scopre; voto a un tocco (3 passaggi); fasce
 //     svelate con «⭐ da…», titoli e 📸 (la foto si fa davvero: un PNG); classifica.
-// pa2 Stesso telefono, fantacalcio in 3: selettore +1 +2 +5 (+5 senza offerte → 5; +2 → 7), icone dei posti che mancano,
+// pa2 Stesso telefono, fantacalcio in 3: selettore +1 +2 +5 (+5 senza offerte → 5; +2 → 7), riquadri delle squadre (5 posti vuoti, «20 💰 · max 16»),
 //     partita intera, podio con «📸 Foto», titoli dopo il podio, foto delle rose, classifica.
 // pa3 Online temi, host + 2 amici + Bea che arriva tardi e guarda: tasti +1/+3 (e +3 spento oltre il massimo), offerta vecchia →
 //     «Troppo tardi di un soffio», doppio messaggio non conta; ✉️ busta: nella foto mai le offerte, Giulia chiude la busta e
@@ -279,10 +279,11 @@
     await W.dorme(300);
     var sel = qa(P, ".as-sel button").map(function (b) { return b.textContent; }).join(",");
     if (sel !== "+1,+2,+5") no("il selettore del fanta è «" + sel + "»");
-    var manca = qa(P, ".sa-manca").map(function (m) { return m.textContent; });
-    if (manca.length !== 3 || manca.some(function (m) { return m !== "🧤🛡️🎽🎽⚽"; })) no("i posti che mancano all'inizio: " + JSON.stringify(manca));
-    var note0 = qa(P, ".sa-pers small").map(function (m) { return m.textContent; });
-    if (note0.some(function (m) { return m !== "20 💰 · max 16"; })) no("sotto gli avatar all'inizio: " + JSON.stringify(note0) + " (voluto «20 💰 · max 16»)");
+    // (dal 21 ott le squadre sono nei riquadri dello stadio: 5 posti vuoti a testa e i crediti sotto il nome; la panchina ha solo le faccine)
+    var manca = qa(P, ".st-sq").map(function (c) { return c.querySelectorAll(".st-slot.vuoto").length; });
+    if (manca.length !== 3 || manca.some(function (m) { return m !== 5; })) no("i posti vuoti all'inizio: " + JSON.stringify(manca));
+    var note0 = qa(P, ".st-sq-nomi small").map(function (m) { return m.textContent; });
+    if (note0.length !== 3 || note0.some(function (m) { return m !== "20 💰 · max 16"; })) no("nei riquadri delle squadre all'inizio: " + JSON.stringify(note0) + " (voluto «20 💰 · max 16»)");
     var gara = qa(P, ".sa-pers.puo").map(function (p) { return p.querySelector("b").textContent; });
     if (gara.length < 2) no("all'inizio possono offrire in " + gara.length);
     bott(P, ".as-sel button", /^\+5$/).click(); persDi(P, gara[0]).click(); await W.dorme(150);
@@ -297,14 +298,14 @@
         var c = capoNome(P);
         if (!c) { var pu = q(P, ".sa-pers.puo"); if (pu) pu.click(); }
         else qa(P, ".sa-pers").forEach(function (p) { var b = p.querySelector("b").textContent, ps = p.querySelector(".sa-passo"); if (b !== c && ps && ps.style.visibility !== "hidden" && !p.classList.contains("fuori")) ps.click(); });
-        if (!ruoliPieni && qa(P, ".sa-manca").some(function (m) { return /[🧤🛡🎽⚽]/u.test(m.textContent) && m.textContent.indexOf("🧤🛡️🎽🎽⚽") < 0; })) ruoliPieni = true;
+        if (!ruoliPieni && qa(P, ".st-sq .st-slot:not(.vuoto)").length) ruoliPieni = true;   // (le maglie comprate entrano nei campetti)
       }
       await W.dorme(250);
     }
     if (!q(P, ".st-rivela")) no("il fanta non arriva alla classifica delle rose");
-    if (!ruoliPieni) no("le icone dei posti che mancano non calano");
-    W.clicca(P, /Salta/);
-    if (!await W.aspetta(function () { return bott(P, ".sa-testa .sa-tasto", /📸 Foto/); }, 4000)) no("sul podio non c'è «📸 Foto»");
+    if (!ruoliPieni) no("nei campetti non entra nessuna maglia");
+    // (dal 21 ott: «Salta» salta il valore delle rose e porta alla ⚽ giornata; un altro «Salta» porta al podio)
+    if (!await W.aspetta(function () { return bott(P, ".sa-testa .sa-tasto", /📸 Foto/) || (W.clicca(P, /Salta/), false); }, 8000)) no("sul podio non c'è «📸 Foto»");
     bott(P, ".sa-testa .sa-tasto", /📸 Foto/).click(); x.push(await fotoFatta(P, "delle rose (podio)"));
     W.clicca(P, /Avanti/); await W.dorme(300);
     if (!/I titoli della serata/.test(T(P))) no("dopo il podio non ci sono i titoli («" + T(P).slice(0, 80) + "»)");
@@ -512,10 +513,10 @@
     var F = vm(C);
     if (!F.titoli) no("nella foto di fine non ci sono i titoli");
     var L = W.finestra("Luca");
-    await W.aspetta(function () { return W.clicca(L, /Salta/) || bott(L, ".sa-testa .sa-tasto", /📸 Foto/); }, 15000);
+    await W.aspetta(function () { return bott(L, ".sa-testa .sa-tasto", /📸 Foto/) || (W.clicca(L, /Salta/), false); }, 15000);   // (un «Salta» per la ⚽ giornata, uno per il podio)
     if (!await W.aspetta(function () { return bott(L, ".sa-testa .sa-tasto", /📸 Foto/); }, 6000)) no("sul podio di Luca non c'è «📸 Foto»");
     bott(L, ".sa-testa .sa-tasto", /📸 Foto/).click(); x.push(await fotoFatta(L, "della rosa di Luca"));
-    if ((F.titoli || []).length) { var tk = await W.aspetta(function () { var t = (q(L, ".st-ticker") || {}).textContent || ""; return /^(💎|🎯|💸|🧊|🤡|🔥|🛍️|🚀|📣) /.test(t) && t; }, 9000); if (!tk) no("i titoli non girano sul maxischermo"); else x.push("ticker «" + tk + "»"); }
+    if ((F.titoli || []).length) { var tk = await W.aspetta(function () { var t = (q(L, ".st-ticker") || {}).textContent || ""; return /^(💎|🎯|💸|🧊|🤡|🔥|🛍️|🚀|📣|⚽) /.test(t) && t; }, 9000); if (!tk) no("i titoli non girano sul maxischermo"); else x.push("ticker «" + tk + "»"); }
     x.push("titoli: " + (F.titoli || []).map(function (t) { return t.icona + " " + t.titolo + " " + t.chi + " (" + t.dett + ")"; }).join(" | "));
     return x.join(" · ");
   } });

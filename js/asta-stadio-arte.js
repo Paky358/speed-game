@@ -281,10 +281,10 @@
   //  sono strisce piene, non bordi). La porta resta in basso; in un rettangolo più alto si vede anche un pezzo dell'altra metà.
   // =========================================================
   A.campo = function (rap) {
-    rap = Math.max(.6, Math.min(2.2, +rap || 1.44));
+    rap = Math.max(.4, Math.min(2.2, +rap || 1.44));
     var chiave = "campo" + rap.toFixed(2);
     if (pronti[chiave]) return pronti[chiave];
-    var p = "astC", SX = 250 / 68, SY = SX * rap, LW = .5, r = rnd(1898), d = "", s = "", i, a, b;
+    var p = "astC", SX = 250 / 68, SY = Math.max(SX * rap, 1.98), LW = .5, r = rnd(1898), d = "", s = "", i, a, b;   // (nei rettangoli molto alti il campo si allunga un po': la metà campo non scende sotto il 60%)
     function X(m) { return 150 + m * SX; }
     function Y(m) { return 284 - (52.5 - m) * SY; }
     var mSu = Math.min(0, 52.5 - 290 / SY);   // fin dove arrivano le linee laterali (oltre il bordo in alto)

@@ -9,6 +9,30 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 246,
+    data: "21 ottobre 2026",
+    titolo: "⚽ Mini asta Fantacalcio: dopo l'asta si gioca la giornata!",
+    descrizione: [
+      "🏟️ Scoperte le quotazioni, si gioca una giornata di Serie A finta, come nel fantacalcio vero: i tuoi calciatori giocano con le loro squadre contro chi capita, e tu prendi i loro punti.",
+      "📊 Le 20 squadre si sorteggiano in 10 partite e i risultati dipendono da attacco e difesa veri dell'anno scorso. In alto vedi tutti i risultati che cambiano a ogni gol.",
+      "🎯 I rigori li tirano i rigoristi veri di quest'anno, con la loro percentuale: all'asta il maxischermo ti dice chi è il rigorista. I cartellini dipendono da quanti ne ha presi davvero ognuno.",
+      "🎬 Sul campetto vedi i momenti dei tuoi calciatori: gol, assist, pali, parate, rigori, cartellini, gol subiti. Quando ci sono due di voi è una sfida: «⚔️ Paky contro Giulia».",
+      "🏆 Punti del fantacalcio: voto in pagella + gol +3, assist +1, giallo −0,5, rosso −1, rigore sbagliato −3, autogol −2; il portiere gol subito −1, porta inviolata +1, rigore parato +3. Vince chi fa più fantapunti.",
+      "⚙️ Se preferisci com'era prima, nel ⚙️ «⚽ La giornata dopo l'asta: No» e vince la rosa che vale di più."
+    ]
+  },
+  {
+    v: 245,
+    data: "21 ottobre 2026",
+    titolo: "⚽ Mini asta Fantacalcio: tutte le squadre sott'occhio",
+    descrizione: [
+      "👀 Nello stadio ora vedi 4 squadre alla volta, ognuna col suo campetto: maglie, nomi sui colori della squadra, crediti e fin dove può arrivare. In 2 le squadre sono più grandi, una accanto all'altra.",
+      "🟨 La squadra di chi ha l'offerta più alta si illumina d'oro col cartellino del prezzo. La maglia trasparente del calciatore all'asta compare in tutte le squadre che ne hanno ancora bisogno: vedi subito chi è in corsa.",
+      "📄 Se siete più di 4 si cambia pagina con le frecce (in 7: 4 squadre e poi 3); la pagina va da sola dove c'è chi ha appena offerto.",
+      "🙂 Sullo stesso telefono la panchina sotto ha solo le faccine: tocchi la tua per offrire, come prima. Online si offre coi tasti e la panchina non c'è più: più spazio alle squadre."
+    ]
+  },
+  {
     v: 244,
     data: "21 ottobre 2026",
     titolo: "⚽ Mini asta Fantacalcio: la formazione in grande",
