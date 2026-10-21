@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 251,
+    data: "22 ottobre 2026",
+    titolo: "⚽ La giornata: i suoni dello stadio e il tasto ⏩",
+    descrizione: [
+      "🔊 I suoni dello stadio: il colpo al pallone, il palo, la rete che si gonfia, l'«ooh» della folla sui tiri sbagliati, il boato sui gol e il fischietto dell'arbitro (inizio, fine primo tempo, fine partita, falli e rigori).",
+      "⏩ Sopra il campo c'è il tasto Veloce: tutto va al doppio della velocità (il telefono se lo ricorda).",
+      "📋 Le pagelle del primo tempo restano finché non tocchi «Avanti ▶» (al massimo 25 secondi). Al fischio finale «Avanti ▶» mostra subito tutta la pagella e passa alla prossima.",
+      "🔢 Nelle pagelle del primo tempo il fantavoto è grande come il voto, accanto: a sinistra il voto, a destra il fantavoto (col giallo, il gol o il gol subito già contati).",
+      "⏱️ Più svelta: dopo un gol la scritta resta meno, meno attese tra un momento e l'altro, pagelle e gol della giornata più rapidi."
+    ]
+  },
+  {
     v: 250,
     data: "22 ottobre 2026",
     titolo: "⚽ La giornata: gli omini in campo e tante azioni nuove",
@@ -17,8 +29,7 @@ window.SG_NOVITA = [
       "⚽ Tanti modi di segnare: cross e colpo di testa, calcio d'angolo, uno-due, contropiede (scarta anche il portiere), pallonetto, tiro da fuori, slalom, punizione sopra la barriera, tap-in sulla respinta. Il pallone si alza davvero: lo vedi dall'ombra a terra.",
       "😱 Colpi di scena: rigore parato e ribattuta, gol annullato dal VAR, rigore assegnato dal VAR, rigore da ripetere, palo e dentro, deviazioni, salvataggi sulla linea, traverse, secondo giallo, gialli per simulazione e proteste, rosso per fallo da ultimo uomo.",
       "🌟 Ogni tanto le rarità: rovesciata, gol da centrocampo, gol direttamente dal calcio d'angolo, rigore a cucchiaio, il portiere che segna di testa all'ultimo minuto. Si vedono da vicino e al rallentatore.",
-      "🎙️ Frasi sempre diverse, il recupero (90'+3), «DOPPIETTA!» e «TRIPLETTA!», e al fischio finale «🎬 Il gol della giornata» rivisto al rallentatore.",
-      "⏱️ Più svelta: dopo un gol la scritta resta meno, meno attese tra un momento e l'altro, pagelle e gol della giornata più rapidi."
+      "🎙️ Frasi sempre diverse, il recupero (90'+3), «DOPPIETTA!» e «TRIPLETTA!», e al fischio finale «🎬 Il gol della giornata» rivisto al rallentatore."
     ]
   },
   {
