@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 250,
+    data: "22 ottobre 2026",
+    titolo: "⚽ La giornata: gli omini in campo e tante azioni nuove",
+    descrizione: [
+      "🏃 Al posto dei cerchietti ci sono gli omini in piedi, con le maglie vere (le righe di Inter, Milan, Juve…), e la telecamera segue l'azione da vicino. I tuoi calciatori hanno la tua faccina come testa.",
+      "⚽ Tanti modi di segnare: cross e colpo di testa, calcio d'angolo, uno-due, contropiede (scarta anche il portiere), pallonetto, tiro da fuori, slalom, punizione sopra la barriera, tap-in sulla respinta. Il pallone si alza davvero: lo vedi dall'ombra a terra.",
+      "😱 Colpi di scena: rigore parato e ribattuta, gol annullato dal VAR, rigore assegnato dal VAR, rigore da ripetere, palo e dentro, deviazioni, salvataggi sulla linea, traverse, secondo giallo, gialli per simulazione e proteste, rosso per fallo da ultimo uomo.",
+      "🌟 Ogni tanto le rarità: rovesciata, gol da centrocampo, gol direttamente dal calcio d'angolo, rigore a cucchiaio, il portiere che segna di testa all'ultimo minuto. Si vedono da vicino e al rallentatore.",
+      "🎙️ Frasi sempre diverse, il recupero (90'+3), «DOPPIETTA!» e «TRIPLETTA!», e al fischio finale «🎬 Il gol della giornata» rivisto al rallentatore."
+    ]
+  },
+  {
     v: 249,
     data: "21 ottobre 2026",
     titolo: "⚽ La giornata: i tuoi calciatori si riconoscono subito",
