@@ -423,7 +423,7 @@
     "@keyframes stPal{from{transform:scale(1.35)}to{transform:none}}",
     // le squadre nello stadio: 4 alla volta, ognuna nel suo riquadro (faccina, nome, crediti, il campetto); la misura delle maglie (--mg) la mette misuraGriglia
     ".st-griglia{flex:1 1 0;min-height:calc(var(--alt,100dvh)*.3);display:flex;flex-direction:column;margin:6px 6px 0;}",
-    ".st-gr-carte{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;}.st-gr-carte.due{grid-template-rows:1fr;}",
+    ".st-gr-carte{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;}.st-gr-carte.due{grid-template-rows:1fr;}.st-gr-carte.uno{grid-template-columns:1fr;grid-template-rows:1fr;}",
     ".st-sq{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;padding:4px;border-radius:12px;background:rgba(6,12,30,.8);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14),0 6px 14px rgba(0,0,0,.4);}",
     ".st-sq-testa{flex:none;display:flex;align-items:center;gap:5px;min-width:0;padding:0 2px 4px;}",
     ".st-sq-faccia{flex:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.16);}",
@@ -816,6 +816,7 @@
     icona: "🔨",
     descrizione: "Compra all'asta le carte migliori e costruisci il kit che gli altri voteranno.",
     giocatoriMin: 2,
+    provaDaSolo: true,   // il proprietario (IL PAPPONE) la prova da solo sullo stesso telefono
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono per rilanciare", amici: true }],
     giocatoriMax: MAX_GIOCATORI,
     postiOnline: MAX_GIOCATORI,   // posti online (10)
@@ -1736,7 +1737,7 @@
   function griglia(el, S, persone) {
     var n = persone.length;
     S.pagine = Math.ceil(n / PER_PAGINA); S.pagina = 0; S.sq = {};
-    S.carte = el("div", { class: "st-gr-carte" + (n <= 2 ? " due" : "") }, persone.map(function (p) {
+    S.carte = el("div", { class: "st-gr-carte" + (n === 1 ? " uno" : n <= 2 ? " due" : "") }, persone.map(function (p) {
       var palN = el("span"), nota = el("small"), slot = postiCampo(el), campo = el("div", { class: "st-sq-campo" }, slot.map(function (s) { return s.nodo; }));
       var nodo = el("div", { class: "st-sq" }, [
         el("div", { class: "st-sq-testa" }, [ el("img", { class: "st-sq-faccia", src: srcAv(cfgDi(p.nome, p.omino), { busto: true }), alt: "" }),
@@ -2134,6 +2135,18 @@
   // una partita: { c: squadra di casa, f: fuori casa, gc, gf: i gol, ev: [{ m: minuto, t: "gol"|"rig"|"rigP"|"rigF"|"aut"|"amm"|"esp"|"occ",
   //   s: "c"|"f" (la squadra di chi fa la cosa), chi: chiave del calciatore (o nome, o null), ass, esito (occasione: "palo"|"fuori"|"parata"),
   //   r: [gc, gf] il risultato dopo questo momento }] }
+  // le squadre con lo stesso stadio non giocano mai in casa tutte e due nella stessa giornata (il derby tra loro sì)
+  var STADI_COMUNI = [["Inter", "Milan"], ["Roma", "Lazio"]];   // San Siro, l'Olimpico
+  function stadiGiusti(coppie) {   // coppie: [[casa, fuori]]; se due «coinquiline» sono in casa, una delle due partite si gira
+    for (var giro = 0; giro < 30; giro++) {
+      var ok = true;
+      STADI_COMUNI.forEach(function (st) {
+        var a = coppie.filter(function (c) { return c[0] === st[0]; })[0], b = coppie.filter(function (c) { return c[0] === st[1]; })[0];
+        if (a && b && a !== b) { ok = false; var c = caso01() < 0.5 ? a : b, x = c[0]; c[0] = c[1]; c[1] = x; }
+      });
+      if (ok) return;
+    }
+  }
   function partitaSA(casa, fuori, med, rose, comprati) {
     var P = { c: casa, f: fuori, gc: 0, gf: 0, ev: [] }, lato = { c: casa, f: fuori };
     ["c", "f"].forEach(function (s) {
@@ -2177,7 +2190,9 @@
     righe.forEach(function (r) { r.kit.forEach(function (c) { comprati[chiaveCalc(c)] = 1; }); });
     var sq = Object.keys(((window.SG_FANTA_SQUADRE || {}).squadre) || {}); if (sq.length < 2) sq = Object.keys(COLORI_SQUADRE);
     sq = mischia(sq); A.partite = [];
-    for (var i = 0; i + 1 < sq.length; i += 2) A.partite.push(partitaSA(sq[i], sq[i + 1], med, rose, comprati));
+    var coppie = []; for (var i = 0; i + 1 < sq.length; i += 2) coppie.push([sq[i], sq[i + 1]]);
+    stadiGiusti(coppie);
+    coppie.forEach(function (c) { A.partite.push(partitaSA(c[0], c[1], med, rose, comprati)); });
     function dai(k, m, t, d, p, e) { if (k && comprati[k]) (punti[k] = punti[k] || []).push({ m: m, t: t, d: d, p: p, e: e }); }
     A.partite.forEach(function (P, pi) {
       var por = { c: (rose[P.c] || []).filter(function (y) { return y.ruolo === "P"; }), f: (rose[P.f] || []).filter(function (y) { return y.ruolo === "P"; }) }, presi = { c: 0, f: 0 };
@@ -2891,7 +2906,7 @@
 
   // ---- il voto a un tocco: si passa il telefono, ognuno tocca il kit che se la cava meglio (non il suo) ----
   function votazione(t, st, votante) {
-    if (votante >= st.giocatori.length) {
+    if (votante >= st.giocatori.length || st.giocatori.length < 2) {   // (da solo, per provare: niente voto)
       contaVotiLocali(st);
       return finePartita(t, st);
     }
@@ -4393,7 +4408,7 @@
     var carta = st.mazzo[0], elegg = eleggibiliFanta(st, carta.ruolo);
     if (!elegg.length) { st.mazzo.shift(); return prossimaFanta(t, st); }        // carta di troppo: la salto
     st.nCarta = (st.nCarta || 0) + 1;
-    if (elegg.length === 1 || rifiutatiTutti(st.mazzo, carta.ruolo)) {           // uno solo ne ha bisogno, o tutti quelli del ruolo rifiutati 2 volte: d'ufficio a 1
+    if ((elegg.length === 1 && st.giocatori.length > 1) || rifiutatiTutti(st.mazzo, carta.ruolo)) {   // uno solo ne ha bisogno, o tutti quelli del ruolo rifiutati 2 volte: d'ufficio a 1 (da solo, per provare, si fa l'asta lo stesso)
       var i = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(st.giocatori[i], carta, 1);
       st.giriVuoti = 0; FX.aggiudicato();
       return esitoFanta(t, st, i, carta, 1, "forzata", elegg.length === 1 ? "unico" : "ufficio");

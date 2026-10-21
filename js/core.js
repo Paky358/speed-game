@@ -4390,8 +4390,13 @@
 
   function nomiGruppo() { return gruppo.map(function (p, i) { return (p.nome || "").trim() || ("Giocatore " + (i + 1)); }); }
 
-  // quanti giocatori servono almeno: quelli del modo scelto (modi[].min, es. Palla Matta: 1 da solo, 2 nella sfida), se no quelli del gioco
-  function minDi(g, modo) { var M = g && modo ? modoDi(g, modo) : null; return (M && M.min) || (g && g.giocatoriMin) || 2; }
+  // quanti giocatori servono almeno: quelli del modo scelto (modi[].min, es. Palla Matta: 1 da solo, 2 nella sfida), se no quelli del gioco.
+  // Il proprietario (IL PAPPONE) prova da solo, sullo stesso telefono, i giochi che lo permettono (provaDaSolo in SG.registra)
+  function minDi(g, modo) {
+    var M = g && modo ? modoDi(g, modo) : null;
+    if (g && g.provaDaSolo && modo !== "online" && eProprietario()) return 1;
+    return (M && M.min) || (g && g.giocatoriMin) || 2;
+  }
   function schermataSala(g, opts) {
     var torn = !!(opts && opts.torneo);
     var min = g ? minDi(g, opts && opts.modo) : 2;

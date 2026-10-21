@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 247,
+    data: "21 ottobre 2026",
+    titolo: "⚽ La giornata dopo l'asta: gli stadi giusti",
+    descrizione: [
+      "🏟️ Inter e Milan (San Siro) e Roma e Lazio (l'Olimpico) non giocano mai in casa nella stessa giornata, come nella realtà. Il derby tra loro può uscire."
+    ]
+  },
+  {
     v: 246,
     data: "21 ottobre 2026",
     titolo: "⚽ Mini asta Fantacalcio: dopo l'asta si gioca la giornata!",
