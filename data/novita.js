@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 248,
+    data: "21 ottobre 2026",
+    titolo: "⚽ La giornata dopo l'asta: con calma, e con le pagelle",
+    descrizione: [
+      "🐢 Tutto più lento: prima ti dice cosa succede («⚡ Azione pericolosa per il Napoli», «🎯 Rigore per il Napoli») senza svelare come finisce, poi vedi l'azione con calma e alla fine l'esito resta sullo schermo.",
+      "👀 In alto niente nomi dei calciatori: i nomi stanno solo sul campo, e solo dei calciatori che avete comprato (tutti quelli delle due squadre, con la faccina di chi li ha). Se due di voi hanno il Napoli, fino al tiro non si sa chi segna. Tolta la scritta con i nomi delle persone sopra il campo: ora la porta si vede sempre.",
+      "🤫 I gol delle squadre dove nessuno ha un calciatore cambiano solo i risultati in alto, in silenzio.",
+      "🏟️ Durante la giornata il campo è più grande (in verticale) e i risultati di tutte le partite si leggono meglio.",
+      "📋 Voti come nel fantacalcio vero: tutti partono da 6 e poi si sale o si scende (anche 5,5, 5 e più di rado 4,5). Il portiere di solito prende 6, più 1 se non prende gol (l'imbattibilità). A fine primo tempo vedi le pagelle di tutti; al fischio finale le pagelle vere, una rosa alla volta, da chi ha fatto meno a chi ha fatto di più."
+    ]
+  },
+  {
     v: 247,
     data: "21 ottobre 2026",
     titolo: "⚽ La giornata dopo l'asta: gli stadi giusti",
