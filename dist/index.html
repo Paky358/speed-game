@@ -27204,7 +27204,7 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
    L'ASTA, scena 2: LO STADIO del fantacalcio, di sera.
    - SGAstaArte.stadio()     sfondo a tutto schermo (viewBox 400×800, "slice": si taglia ai lati, le cose importanti stanno tra x 40 e 360)
    - SGAstaArte.seggiolino() il seggiolino di plastica blu visto di fronte, nel sistema dell'avatar (200×264): va DIETRO l'avatar seduto
-   - SGAstaArte.campo()      mezzo campo visto dall'alto (300×300, si stira: è pensato per un rettangolo di circa 360×250)
+   - SGAstaArte.campo(rap)   mezzo campo visto dall'alto (300×300, si stira: è pensato per un rettangolo con larghezza / altezza = rap, di partenza 1,44)
    Solo stringhe SVG: niente filtri, niente testo, niente Math.random (le trame usano un caso fisso col seme). Id col prefisso "ast".
    ========================================================= */
 (function () {
@@ -27478,14 +27478,18 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
   // =========================================================
   //  IL CAMPO: mezzo campo visto dall'alto (300×300, preserveAspectRatio none). Misure vere in metri (campo 68 di larghezza,
   //  mezzo campo 52,5: area di rigore 40,32 × 16,5, area piccola 18,32 × 5,5, dischetto a 11 m, cerchi di 9,15 m, porta 7,32 m).
-  //  Le scale X e Y sono diverse apposta: stirato in circa 360×250 il campo torna con le proporzioni giuste, i cerchi tondi
-  //  e le linee tutte dello stesso spessore (gli archi sono strisce piene, non bordi).
+  //  Le scale X e Y sono diverse apposta: stirato nel rettangolo di proporzioni `rap` (larghezza / altezza, di partenza 1,44,
+  //  circa 360×250) il campo torna con le proporzioni giuste, i cerchi tondi e le linee tutte dello stesso spessore (gli archi
+  //  sono strisce piene, non bordi). La porta resta in basso; in un rettangolo più alto si vede anche un pezzo dell'altra metà.
   // =========================================================
-  A.campo = function () {
-    if (pronti.campo) return pronti.campo;
-    var p = "astC", SX = 250 / 68, SY = 278 / 52.5, LW = .5, r = rnd(1898), d = "", s = "", i, a, b;
+  A.campo = function (rap) {
+    rap = Math.max(.6, Math.min(2.2, +rap || 1.44));
+    var chiave = "campo" + rap.toFixed(2);
+    if (pronti[chiave]) return pronti[chiave];
+    var p = "astC", SX = 250 / 68, SY = SX * rap, LW = .5, r = rnd(1898), d = "", s = "", i, a, b;
     function X(m) { return 150 + m * SX; }
-    function Y(m) { return 6 + m * SY; }
+    function Y(m) { return 284 - (52.5 - m) * SY; }
+    var mSu = Math.min(0, 52.5 - 290 / SY);   // fin dove arrivano le linee laterali (oltre il bordo in alto)
     function rettH(x0, x1, ym) { return "M" + q(X(x0) - LW * SX / 2, Y(ym) - LW * SY / 2) + " H" + n1(X(x1) + LW * SX / 2) + " v" + n1(LW * SY) + " H" + n1(X(x0) - LW * SX / 2) + " Z "; }
     function rettV(xm, y0, y1) { return "M" + q(X(xm) - LW * SX / 2, Y(y0) - LW * SY / 2) + " h" + n1(LW * SX) + " V" + n1(Y(y1) + LW * SY / 2) + " h" + n1(-LW * SX) + " Z "; }
     function arco(cx, cy, R, a0, a1) {   // un arco di cerchio (angoli in gradi, 90 = verso il basso) come striscia piena
@@ -27506,12 +27510,13 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
       rad(p + "l", .5, .4, .55, [[0, "#f4ffd8", .1], [1, "#f4ffd8", 0]]) + rad(p + "v", .5, .46, .72, [[.5, "#06140a", 0], [1, "#06140a", .42]]);
     s += "<rect width='300' height='300' fill='url(#" + p + "t)'/><rect width='300' height='300' fill='url(#" + p + "l)'/>";
     // le linee bianche
-    var L = rettH(-34, 34, 0) + rettV(-34, 0, 52.5) + rettV(34, 0, 52.5) + rettH(-34, 34, 52.5) +
+    var L = rettH(-34, 34, 0) + rettV(-34, mSu, 52.5) + rettV(34, mSu, 52.5) + rettH(-34, 34, 52.5) +
       rettH(-20.16, 20.16, 36) + rettV(-20.16, 36, 52.5) + rettV(20.16, 36, 52.5) +
       rettH(-9.16, 9.16, 47) + rettV(-9.16, 47, 52.5) + rettV(9.16, 47, 52.5) +
-      arco(0, 0, 9.15, 0, 180) + arco(0, 41.5, 9.15, -143.05, -36.95) + arco(-34, 52.5, 1, -90, 0) + arco(34, 52.5, 1, -180, -90);
+      arco(0, 0, 9.15, 0, 180) + arco(0, 0, 9.15, 180, 360) +   // (il cerchio di centrocampo intero: quello che esce dal disegno non si vede)
+      arco(0, 41.5, 9.15, -143.05, -36.95) + arco(-34, 52.5, 1, -90, 0) + arco(34, 52.5, 1, -180, -90);
     s += "<path d='" + L + "' fill='#f6faf2' opacity='.92'/>" +
-      "<ellipse cx='150' cy='" + n1(Y(41.5)) + "' rx='" + n1(.42 * SX) + "' ry='" + n1(.42 * SY) + "' fill='#f6faf2'/><ellipse cx='150' cy='6' rx='" + n1(.5 * SX) + "' ry='" + n1(.5 * SY) + "' fill='#f6faf2'/>";
+      "<ellipse cx='150' cy='" + n1(Y(41.5)) + "' rx='" + n1(.42 * SX) + "' ry='" + n1(.42 * SY) + "' fill='#f6faf2'/><ellipse cx='150' cy='" + n1(Y(0)) + "' rx='" + n1(.5 * SX) + "' ry='" + n1(.5 * SY) + "' fill='#f6faf2'/>";
     // la porta: la rete fino a 2 m dietro la linea, la traversa vista dall'alto (con la sua ombra), i pali
     var gx = 3.66, g0 = Y(52.5), g1 = Y(54.6), rete = "M" + q(X(-gx), g0) + " L" + q(X(gx), g0) + " L" + q(X(gx + .25), g1) + " L" + q(X(-gx - .25), g1) + " Z";
     s += "<path d='" + rete + "' fill='#1d4a24' opacity='.45'/><path d='" + rete + "' fill='url(#" + p + "r)'/>" +
@@ -27527,7 +27532,7 @@ window.SG_ABLY_KEY = "D0TUSg.cGAqaw:N7kk1E8XhKVWkyHpEdGNQ2RnTqb28UjH3iyvsAaB-HY"
         "<ellipse cx='" + n1(fx) + "' cy='" + n1(fy) + "' rx='1' ry='1.25' fill='#fff' stroke='" + LINEA + "' stroke-width='.5'/>";
     });
     s += "<rect width='300' height='300' fill='url(#" + p + "v)'/>";
-    return (pronti.campo = svg("0 0 300 300", " preserveAspectRatio='none'", "<defs>" + d + "</defs>" + s));
+    return (pronti[chiave] = svg("0 0 300 300", " preserveAspectRatio='none'", "<defs>" + d + "</defs>" + s));
   };
 })();
 /* =========================================================
@@ -47196,6 +47201,18 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 244,
+    data: "21 ottobre 2026",
+    titolo: "⚽ Mini asta Fantacalcio: la formazione in grande",
+    descrizione: [
+      "🏟️ Al centro dello stadio ora c'è il campo grande con la formazione: maglie molto più grandi e il nome di ogni calciatore sui colori della sua squadra, con accanto quanto è stato pagato.",
+      "🧑‍💼 Il tuo avatar sta in piedi a bordo campo come l'allenatore: quando fai un'offerta alza il cartellino col prezzo, accanto alla sua squadra. Se qualcuno rilancia, in campo entra lui con la sua formazione.",
+      "👕 Dove andrebbe il calciatore all'asta lo vedi subito: la sua maglia in trasparenza nel posto libero. Quando è aggiudicato, la maglia vola dal maxischermo al suo posto e l'allenatore salta di gioia.",
+      "🪑 Tutti gli avatar stanno nella panchina sotto il campo, coi crediti e i posti che mancano: lì tocchi il tuo per offrire, come prima.",
+      "🏆 Anche alla fine la rosa di ognuno si scopre sul campo grande, col valore vero sopra ogni maglia."
+    ]
+  },
+  {
     v: 243,
     data: "20 ottobre 2026",
     titolo: "Gioco nuovo: 🍹 Da dove viene?",
@@ -55535,7 +55552,7 @@ window.SG_UNAPAROLA = [
     ".schermata.sa-sala{position:fixed;inset:0;z-index:5;padding:0;min-height:0;height:var(--alt,100dvh);overflow:hidden;display:flex;flex-direction:column;color:#fff;animation:none;background:linear-gradient(180deg,#3d1620 0%,#5c2331 36%,#5a3218 37.5%,#2c160b 100%);}",
     ".sa-sfondo{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;}",
     ".sa-sala::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 42%,rgba(0,0,0,0) 48%,rgba(0,0,0,.42) 100%);}",
-    ".sa-testa,.sa-pannello,.st-board,.sa-avviso,.sa-tempo,.sa-platea,.st-tribuna,.st-campo-box,.st-podio,.sa-basso,.sa-piede{position:relative;z-index:2;}",
+    ".sa-testa,.sa-pannello,.st-board,.sa-avviso,.sa-tempo,.sa-platea,.st-palco,.st-panchina,.st-podio,.sa-basso,.sa-piede{position:relative;z-index:2;}",
     ".sa-testa{flex:none;display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 10px 2px;}",
     ".sa-tasto{border:0;height:38px;min-width:38px;padding:0 12px;border-radius:19px;background:rgba(255,255,255,.93);color:#2b1a10;font-weight:900;font-size:15px;font-family:inherit;box-shadow:0 3px 10px rgba(0,0,0,.3);}",
     ".sa-info{flex:1;min-width:0;text-align:center;font-weight:800;font-size:.8rem;text-shadow:0 1px 3px rgba(0,0,0,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
@@ -55651,15 +55668,15 @@ window.SG_UNAPAROLA = [
     ".sa-formazioni{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}",
     ".sa-squadra{background:#fff;border-radius:12px;padding:6px;box-shadow:0 2px 8px rgba(0,0,0,.12);}",
     ".sa-sq-nome{font-weight:900;font-size:.8rem;text-align:center;margin-bottom:4px;}",
-    ".sa-campo{position:relative;height:150px;border-radius:8px;background:repeating-linear-gradient(180deg,#3fa34d 0 15px,#37944a 15px 30px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.6);}",
+    ".sa-campo{position:relative;height:178px;border-radius:8px;background:repeating-linear-gradient(180deg,#3fa34d 0 15px,#37944a 15px 30px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.6);}",
     ".sa-gioc{position:absolute;display:flex;flex-direction:column;align-items:center;width:30%;transform:translate(-50%,-50%);}",
     ".sa-maglia{width:30px;height:30px;font-style:normal;font-size:8px;font-weight:900;color:#fff;display:flex;align-items:center;justify-content:center;}",
     ".sa-gioc.vuoto .sa-maglia{border:2px dashed rgba(255,255,255,.75);border-radius:50%;width:24px;height:24px;}",
-    ".sa-gioc span{font-size:9px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
-    // ---- lo stadio: maxischermo, tribuna, campetto ----
+    ".sa-gioc .sa-gioc-nome{padding:0 4px;border-radius:5px;text-shadow:none;box-shadow:0 1px 3px rgba(0,0,0,.4);}.sa-gioc span{font-size:9px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    // ---- lo stadio: maxischermo, campo grande con l'allenatore, panchina ----
     ".schermata.st-stadio{background:linear-gradient(180deg,#06112b 0%,#0c2150 30%,#1a2f3e 52%,#1d5a2b 60%,#226b31 100%);}",
     ".st-board{flex:none;margin:4px 12px 0;padding:5px;border-radius:12px;background:linear-gradient(180deg,#444a54,#1d2026);box-shadow:0 0 0 2px #0b0c0f,0 14px 30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.2);}",
-    ".st-schermo{position:relative;overflow:hidden;border-radius:7px;height:clamp(104px,calc(var(--alt,100dvh)*.19),176px);background:#0c1424;}",
+    ".st-schermo{position:relative;overflow:hidden;border-radius:7px;height:clamp(92px,calc(var(--alt,100dvh)*.155),146px);background:#0c1424;}",
     ".st-colori{position:absolute;inset:0;}",
     ".st-led{position:absolute;inset:0;pointer-events:none;z-index:3;background-image:radial-gradient(circle,rgba(0,0,0,0) 52%,rgba(0,0,0,.26) 56%);background-size:4px 4px;}",
     ".st-dentro{position:absolute;z-index:2;left:0;right:0;top:0;bottom:24px;display:flex;align-items:center;gap:8px;padding:6px 10px;transition:opacity .2s;}",
@@ -55684,39 +55701,71 @@ window.SG_UNAPAROLA = [
     ".st-ticker.conta{color:#fff;background:#c92a2a;font-size:.95rem;text-align:center;}",
     ".st-stadio.ultimi .st-board{animation:stBordo .5s ease-in-out infinite alternate;}",
     "@keyframes stBordo{from{box-shadow:0 0 0 2px #0b0c0f,0 14px 30px rgba(0,0,0,.6)}to{box-shadow:0 0 0 3px #ff6b6b,0 14px 30px rgba(0,0,0,.6)}}",
-    ".st-tribuna{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:4px 4px 0;}",
-    ".st-tribuna .sa-fila0 .sa-pers{width:18%;max-width:84px;}.st-tribuna .sa-fila0.n1 .sa-pers,.st-tribuna .sa-fila0.n2 .sa-pers{width:22%;max-width:100px;}",
-    // due file in tribuna (6-10 giocatori): più piccoli sugli schermi bassi, così non toccano il maxischermo né il campetto
-    ".st-tribuna .sa-fila1 ~ .sa-fila0 .sa-pers{max-width:min(84px,calc(var(--alt,100dvh)*.09));}",
-    ".st-tribuna .sa-fila1 .sa-pers{width:14.5%;max-width:min(66px,calc(var(--alt,100dvh)*.075));}",
-    ".st-tribuna .sa-fila1 .sa-pers b,.st-tribuna .sa-fila1 ~ .sa-fila0 .sa-pers b{font-size:.64rem;}.st-tribuna .sa-fila1 .sa-pers small,.st-tribuna .sa-fila1 ~ .sa-fila0 .sa-pers small{font-size:.56rem;}",
-    ".st-campo-box{flex:none;margin:2px 10px 0;padding:5px;border-radius:12px;background:rgba(0,0,0,.28);}",
-    ".st-campo-testa{display:flex;align-items:center;gap:6px;margin-bottom:4px;}",
+    // il palco: il campo grande con la formazione della squadra che si guarda e, a bordo campo, il suo avatar in piedi (l'allenatore).
+    // Le misure delle maglie (--mg) e dell'allenatore (--all) le mette misuraPalco, dalla grandezza vera del campo
+    ".st-palco{flex:1 1 0;min-height:calc(var(--alt,100dvh)*.37);display:flex;flex-direction:column;margin:6px 8px 0;}.st-stadio.fitta .st-palco{min-height:calc(var(--alt,100dvh)*.31);}",
+    ".st-campo-testa{flex:none;display:flex;align-items:center;gap:6px;margin-bottom:4px;}",
     ".st-freccia{flex:none;border:0;width:36px;height:28px;border-radius:14px;background:rgba(255,255,255,.92);color:#16351f;font-weight:900;font-size:18px;line-height:1;font-family:inherit;}",
-    ".st-campo-nome{flex:1;min-width:0;text-align:center;font-weight:900;font-size:.8rem;text-shadow:0 1px 3px rgba(0,0,0,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
-    ".st-campo{position:relative;height:min(clamp(118px,calc(var(--alt,100dvh)*.23),230px),calc((100vw - 44px) / 1.44));aspect-ratio:36/25;margin:0 auto;border-radius:8px;background:repeating-linear-gradient(180deg,#3d9b49 0 18px,#358a41 18px 36px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7);overflow:hidden;}",
-    ".st-campo.dipinto{background-size:100% 100%;box-shadow:none;}",
-    ".st-slot{position:absolute;width:21%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;}",
-    ".st-slot-maglia{display:block;width:clamp(30px,58%,52px);aspect-ratio:1;transition:opacity .2s;}",
+    ".st-campo-nome{flex:1;min-width:0;text-align:center;font-weight:900;font-size:.86rem;text-shadow:0 1px 3px rgba(0,0,0,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".st-campo-wrap{position:relative;flex:1;min-height:0;}",
+    ".st-campo{position:absolute;inset:0;border-radius:12px;background:repeating-linear-gradient(180deg,#3d9b49 0 18px,#358a41 18px 36px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7),0 10px 24px rgba(0,0,0,.45);overflow:hidden;}",
+    ".st-campo.dipinto{background-size:100% 100%;box-shadow:0 0 0 2px rgba(0,0,0,.35),0 10px 24px rgba(0,0,0,.45);}",
+    ".st-slot{position:absolute;z-index:1;width:calc(var(--mg,52px)*1.9);transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;}",
+    ".st-slot-fig{position:relative;width:var(--mg,52px);height:var(--mg,52px);}",
+    ".st-slot-maglia,.st-slot-ombra{position:absolute;left:0;top:0;width:100%;height:100%;transition:opacity .2s;}",
     ".st-slot.vuoto .st-slot-maglia{opacity:0;}",
-    ".st-slot-vuoto{position:absolute;top:0;left:50%;width:clamp(30px,58%,52px);aspect-ratio:1;transform:translateX(-50%);box-sizing:border-box;border:2px dashed rgba(255,255,255,.75);border-radius:50%;font-style:normal;font-size:.6rem;font-weight:900;color:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;}",
+    ".st-slot-ombra{opacity:0;}.st-slot.cerca .st-slot-ombra{opacity:.5;}",   // dove andrebbe il calciatore all'asta: la sua maglia in trasparenza
+    ".st-slot-vuoto{position:absolute;left:6%;top:6%;width:88%;height:88%;box-sizing:border-box;border:2px dashed rgba(255,255,255,.75);border-radius:50%;font-style:normal;font-size:calc(var(--mg,52px)*.2);font-weight:900;color:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;}",
     ".st-slot:not(.vuoto) .st-slot-vuoto{display:none;}",
-    ".st-slot.cerca .st-slot-vuoto{border-color:#ffe066;color:#ffe066;background:rgba(255,224,102,.16);animation:stCerca .8s ease-in-out infinite alternate;}",
-    "@keyframes stCerca{from{transform:translateX(-50%) scale(.9)}to{transform:translateX(-50%) scale(1.08)}}",
-    ".st-slot span{font-size:.62rem;font-weight:900;line-height:1.1;text-shadow:0 1px 2px rgba(0,0,0,.9);white-space:nowrap;max-width:150%;overflow:hidden;text-overflow:ellipsis;}",
-    ".st-slot.arriva .st-slot-maglia{animation:stArriva .45s cubic-bezier(.2,1.6,.4,1);}",
+    ".st-slot.cerca .st-slot-vuoto{border-color:#ffe066;color:transparent;background:rgba(255,224,102,.14);animation:stCerca .8s ease-in-out infinite alternate;}",
+    "@keyframes stCerca{from{transform:scale(.92)}to{transform:scale(1.1)}}",
+    // sotto la maglia il nome sui colori della sua squadra; nell'angolo quanto è stato pagato
+    ".st-slot span{display:block;max-width:100%;margin-top:-1px;padding:1px 6px;border-radius:7px;border:1.5px solid rgba(255,255,255,.5);background:#2b3550;color:#fff;font-size:clamp(.56rem,calc(var(--mg,52px)*.19),.84rem);font-weight:900;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 5px rgba(0,0,0,.45);}",
+    ".st-slot.vuoto span{visibility:hidden;}",
+    ".st-paga{position:absolute;right:-22%;bottom:4%;padding:0 4px;border-radius:7px;background:rgba(10,14,30,.86);color:#ffe066;font-style:normal;font-weight:900;font-size:clamp(.5rem,calc(var(--mg,52px)*.17),.74rem);line-height:1.45;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.5);}",
+    ".st-slot.vuoto .st-paga,.st-paga:empty{display:none;}",
+    ".st-slot.arriva .st-slot-fig{animation:stArriva .45s cubic-bezier(.2,1.6,.4,1);}",
     "@keyframes stArriva{from{transform:scale(1.5)}to{transform:none}}",
-    ".st-val{position:absolute;top:-10%;right:2%;min-width:24px;padding:1px 5px;border-radius:9px;background:#ffd43b;color:#3a2200;font-style:normal;font-weight:900;font-size:.74rem;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,.4);opacity:0;transform:scale(.4);transition:transform .25s cubic-bezier(.2,1.6,.4,1),opacity .15s;}",
+    ".st-campo.cambia .st-slot:not(.vuoto) .st-slot-fig{animation:stCambia .3s ease-out;}",   // si guarda un'altra squadra: le sue maglie spuntano
+    "@keyframes stCambia{from{transform:scale(.6);opacity:.3}to{transform:none;opacity:1}}",
+    ".st-val{position:absolute;top:-12%;right:-24%;min-width:24px;padding:1px 5px;border-radius:9px;background:#ffd43b;color:#3a2200;font-style:normal;font-weight:900;font-size:clamp(.66rem,calc(var(--mg,52px)*.2),.9rem);text-align:center;box-shadow:0 2px 5px rgba(0,0,0,.4);opacity:0;transform:scale(.4);transition:transform .25s cubic-bezier(.2,1.6,.4,1),opacity .15s;}",
     ".st-val.su{opacity:1;transform:none;}",
-    ".st-mister{position:absolute;z-index:3;left:4px;bottom:6px;width:14%;max-width:66px;pointer-events:none;}",   // l'allenatore a bordo campo, fuori dalle linee
+    // l'allenatore: in piedi sulla linea laterale, in basso a destra; alza il cartellino col prezzo quando l'offerta più alta è sua
+    ".st-mister{position:absolute;z-index:3;right:-2px;bottom:-4px;height:var(--all,40%);aspect-ratio:200/264;pointer-events:none;}",
+    ".st-mister img{position:absolute;left:0;top:0;width:100%;height:100%;}",
+    ".st-mister.entra{animation:stMEntra .38s cubic-bezier(.2,1.3,.4,1);}",
+    "@keyframes stMEntra{from{transform:translateX(30%);opacity:0}to{transform:none;opacity:1}}",
+    ".st-mister.esulta{animation:stEsulta .5s ease-out 3;}",
+    "@keyframes stEsulta{0%,100%{transform:none}40%{transform:translateY(-12%)}}",
+    ".st-pal{position:absolute;width:40%;aspect-ratio:1;transform:translate(-50%,-112%) rotate(8deg) scale(.3);opacity:0;transition:transform .25s cubic-bezier(.3,1.6,.5,1),opacity .15s;}",
+    ".st-pal span{position:absolute;inset:0;border-radius:50%;background:#fff;border:3px solid #c92a2a;color:#c92a2a;font-weight:900;font-size:calc(var(--all,150px)*.095);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 6px rgba(0,0,0,.35);}",
+    ".st-pal::after{content:'';position:absolute;left:50%;top:94%;width:10%;height:62%;margin-left:-5%;border-radius:3px;background:#8b5a2b;z-index:-1;}",
+    ".st-mister.alza .st-pal{opacity:1;transform:translate(-50%,-112%) rotate(8deg) scale(1);}",
+    ".st-pal.batte span{animation:stPal .3s ease-out;}",
+    "@keyframes stPal{from{transform:scale(1.35)}to{transform:none}}",
+    // la panchina: tutti gli avatar in piccolo (il busto) coi crediti e i posti che mancano; chi ha l'offerta più alta alza il cartellino
+    ".st-panchina{flex:0 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;margin:6px 6px 0;padding:5px 4px;border-radius:14px;background:linear-gradient(180deg,rgba(14,20,44,.82),rgba(6,10,24,.9));box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 6px 16px rgba(0,0,0,.4);}",
+    ".st-pp-file{display:grid;grid-template-columns:repeat(var(--col,4),minmax(0,104px));justify-content:center;gap:4px;}",
+    ".st-panchina .sa-pers{width:auto;max-width:none;min-width:0;padding:4px 2px 3px;border-radius:11px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);}",
+    ".st-panchina .sa-figura{width:min(60%,52px);aspect-ratio:178/182;}",
+    ".st-busto{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;}",
+    ".st-panchina .sa-pers.puo{box-shadow:inset 0 0 0 2px rgba(105,219,124,.7);}",
+    ".st-panchina .sa-pers.puo .sa-figura::before{content:none;}",
+    ".st-panchina .sa-pers.mio{background:rgba(255,224,102,.16);}",
+    ".st-panchina .sa-pers.guida{background:linear-gradient(180deg,rgba(255,212,59,.42),rgba(255,212,59,.12));box-shadow:inset 0 0 0 2px #ffd43b;}",
+    ".st-panchina .sa-paletta{left:88%;top:40%;width:46%;}",
+    ".st-panchina .sa-paletta span{font-size:.66rem;border-width:2px;}",
+    ".st-panchina .sa-pers b{font-size:.68rem;}.st-panchina .sa-pers small{font-size:.58rem;}",
+    ".st-panchina .sa-passo{min-height:24px;margin-top:3px;padding:2px 8px;font-size:.68rem;}",
+    ".st-panchina.fitta .sa-figura{width:min(52%,36px);}.st-panchina.fitta .sa-passo{min-height:21px;margin-top:2px;padding:1px 7px;font-size:.62rem;}.st-panchina.fitta .sa-pers{padding:3px 2px 2px;}.st-panchina.fitta .sa-pers b{font-size:.62rem;}.st-panchina.fitta .sa-pers small{font-size:.52rem;}",
     ".st-volo{position:absolute;z-index:7;pointer-events:none;}",
-    ".st-piede{flex:none;flex-direction:row;flex-wrap:wrap;justify-content:center;padding:6px 12px calc(8px + env(safe-area-inset-bottom));}",
+    // in basso: la riga d'aiuto e i tasti, sempre alti uguali (così il campo non cambia misura a ogni offerta)
+    ".st-piede{flex:none;flex-direction:row;flex-wrap:wrap;justify-content:center;align-content:flex-end;padding:6px 12px calc(8px + env(safe-area-inset-bottom));}",
+    ".st-piede.loc{min-height:calc(96px + env(safe-area-inset-bottom));}.st-piede.onl{min-height:calc(150px + env(safe-area-inset-bottom));}",
     ".st-piede .sa-nota{width:100%;}.st-piede .btn{flex:1;width:auto;}",
     ".st-stadio .sa-aggiudicato{top:14%;font-size:1.6rem;}",
     // la classifica finale del fantacalcio: il contatore che sale, poi il podio
-    ".st-rivela .st-campo-box.st-grande{flex:1;min-height:0;display:flex;flex-direction:column;margin-top:10px;}",
-    ".st-rivela .st-grande{justify-content:center;}.st-rivela .st-grande .st-campo{flex:none;height:min(calc(var(--alt,100dvh) * .36),calc((100vw - 44px) / 1.44));}",
-    ".st-rivela .st-mister{width:16%;}",
+    ".st-rivela .st-palco{margin-top:10px;margin-bottom:10px;}",
     ".st-podio{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:8px 12px 0;}",
     ".st-gradini{display:flex;align-items:flex-end;justify-content:center;gap:6px;}",
     ".st-gradino{display:flex;flex-direction:column;align-items:center;width:31%;max-width:130px;animation:stSale .6s cubic-bezier(.2,1.3,.4,1) both;}",
@@ -55731,7 +55780,7 @@ window.SG_UNAPAROLA = [
     ".st-altri{margin-top:6px;padding:6px 10px;border-radius:10px;background:rgba(0,0,0,.35);font-size:.76rem;font-weight:800;line-height:1.5;text-align:center;}",
     // sotto ogni avatar: i crediti e fin dove può arrivare; nel fantacalcio anche i posti che gli mancano (🧤🛡️🎽⚽)
     ".sa-pers .sa-manca{font-style:normal;font-size:.6rem;line-height:1.1;white-space:nowrap;text-align:center;letter-spacing:-.04em;text-shadow:0 1px 2px rgba(0,0,0,.8);}",
-    ".st-tribuna .sa-pers .sa-manca{min-height:1.15em;}.st-tribuna .sa-fila1 .sa-pers .sa-manca,.st-tribuna .sa-fila1 ~ .sa-fila0 .sa-pers .sa-manca{font-size:.5rem;}",
+    ".st-panchina .sa-pers .sa-manca{min-height:1.15em;font-size:.56rem;}.st-panchina.fitta .sa-pers .sa-manca{font-size:.5rem;}",
     // i rilanci a salto: il tasto grande (+1) e accanto i salti (+3, o +2 e +5) e «Passo»
     ".as-salti{display:flex;gap:6px;width:100%;}.as-salti .btn{flex:1 1 0;min-width:0;padding-left:4px;padding-right:4px;font-size:.92rem;}",
     ".as-salti .btn small{display:block;font-size:.68rem;font-weight:800;opacity:.85;line-height:1.05;}",
@@ -56525,7 +56574,6 @@ window.SG_UNAPAROLA = [
   }
   var SVG0 = "<svg xmlns='http://www.w3.org/2000/svg' ";
   var SEDIA_RIS = SVG0 + "viewBox='0 0 200 264'><rect x='54' y='98' width='92' height='104' rx='22' fill='#9b2335' stroke='#c99a3b' stroke-width='6'/><rect x='44' y='190' width='112' height='16' rx='7' fill='#b02a3e' stroke='#c99a3b' stroke-width='4'/><path d='M56 206v44M144 206v44' stroke='#b8862f' stroke-width='7' stroke-linecap='round'/></svg>";
-  var SEGG_RIS = SVG0 + "viewBox='0 0 200 264'><path d='M58 198V138q0-18 18-18h48q18 0 18 18v60z' fill='#1c6fd1' stroke='#0b3f80' stroke-width='5'/><rect x='50' y='192' width='100' height='14' rx='7' fill='#2a84ea' stroke='#0b3f80' stroke-width='4'/><path d='M100 206v44' stroke='#5c6670' stroke-width='9'/></svg>";
   var LEGGIO_RIS = SVG0 + "viewBox='0 0 200 150'><path d='M10 20h180l-8 130H18z' fill='#5a2e16' stroke='#2e160a' stroke-width='5'/><rect x='4' y='6' width='192' height='18' rx='5' fill='#7a4423' stroke='#2e160a' stroke-width='4'/><rect x='30' y='44' width='140' height='70' rx='6' fill='#3e1f0e'/></svg>";
   function magliaRis(sq) {   // la maglia di riserva: i due colori della squadra
     var c = coloriSquadra(sq) || ["#adb5bd", "#868e96"];
@@ -56546,16 +56594,15 @@ window.SG_UNAPAROLA = [
   function svuotaNodo(n) { while (n.firstChild) n.removeChild(n.firstChild); }
 
   // ---- pezzi in comune tra la sala e lo stadio ----
-  // quanti nella fila davanti e in quella dietro: nella sala dai 3 in su c'è chi sta più avanti e chi più indietro; nello stadio una fila sola fino a 5
-  function fileSala(n, unaFila) { if (n <= (unaFila || 2)) return [n]; var d = Math.ceil(n / 2); return [d, n - d]; }
-  // una persona del pubblico: la sedia (o il seggiolino) dietro, l'avatar seduto, la paletta col numero, la nuvoletta dell'offerta
+  // quanti nella fila davanti e in quella dietro: nella sala dai 3 in su c'è chi sta più avanti e chi più indietro
+  function fileSala(n) { if (n <= 2) return [n]; var d = Math.ceil(n / 2); return [d, n - d]; }
+  // una persona del pubblico: la sedia dietro, l'avatar seduto, la paletta col numero, la nuvoletta dell'offerta
   function personaAsta(el, S, p, sedia) {
     var cfg = cfgDi(p.nome, p.omino), m = manoAlzata(cfg);
     var paletta = el("div", { class: "sa-paletta", style: "left:" + (m.x / 2) + "%;top:" + (m.y / 2.64) + "%" }, [ el("span", { text: String(p.num) }) ]);
     var nuvola = el("div", { class: "sa-nuvola" }), nota = el("small"), manca = el("i", { class: "sa-manca" });
-    var passo = el("button", { class: "sa-passo", text: "passo", onclick: function (e) { e.stopPropagation(); S.ultimiDati.onPassa(p.id); } });
-    var nodo = el("div", { class: "sa-pers", role: "button", onclick: function () {
-      var dd = S.ultimiDati, q = S.pers[p.id]; if ((dd.io == null || dd.io === p.id) && q && q.puo) dd.onRilancia(p.id); } }, [
+    var passo = tastoPasso(el, S, p);
+    var nodo = el("div", { class: "sa-pers", role: "button", onclick: function () { toccaPersona(S, p.id); } }, [
       el("div", { class: "sa-figura" }, [ el("img", { class: "sa-sedia", src: sedia, alt: "" }), el("img", { class: "sa-av", src: srcAv(cfg, GIU), alt: "" }),
         el("img", { class: "sa-av sa-su", src: srcAv(cfg, SU), alt: "" }), paletta, nuvola, el("i", { class: "sa-num", text: String(p.num) }) ]),
       el("b", { text: p.nome.length > 9 ? p.nome.slice(0, 9) + "…" : p.nome }), nota, manca, passo
@@ -56563,9 +56610,13 @@ window.SG_UNAPAROLA = [
     S.pers[p.id] = { nodo: nodo, nota: nota, manca: manca, passo: passo, nuvola: nuvola, puo: false };
     return nodo;
   }
-  function pubblico(el, S, persone, sedia, cls, unaFila) {   // le file del pubblico: davanti i primi numeri, dietro (più piccoli) gli altri
+  function tastoPasso(el, S, p) { return el("button", { class: "sa-passo", text: "passo", onclick: function (e) { e.stopPropagation(); S.ultimiDati.onPassa(p.id); } }); }
+  function toccaPersona(S, id) {   // tocco sul proprio avatar: offro (sullo stesso telefono tutti, online solo il mio)
+    var dd = S.ultimiDati, q = S.pers[id]; if ((dd.io == null || dd.io === id) && q && q.puo) dd.onRilancia(id);
+  }
+  function pubblico(el, S, persone, sedia, cls) {   // le file del pubblico: davanti i primi numeri, dietro (più piccoli) gli altri
     var file = el("div", { class: "sa-file" }), box = el("div", { class: cls }, [ file ]), k = 0;
-    fileSala(persone.length, unaFila).map(function (quanti, r) {
+    fileSala(persone.length).map(function (quanti, r) {
       var fila = el("div", { class: "sa-fila sa-fila" + r + " n" + quanti });
       for (var i = 0; i < quanti; i++) fila.appendChild(personaAsta(el, S, persone[k++], sedia));
       return fila;
@@ -56579,7 +56630,7 @@ window.SG_UNAPAROLA = [
     var h = box.clientHeight, c = f.offsetHeight;
     if (h > 0 && c > h) f.style.transform = "scale(" + Math.max(0.5, (h - 2) / c).toFixed(3) + ")";
   }
-  window.addEventListener("resize", function () { if (SALA) adattaPubblico(SALA.pubblico); if (STADIO) adattaPubblico(STADIO.pubblico); });
+  window.addEventListener("resize", function () { if (SALA) adattaPubblico(SALA.pubblico); if (STADIO) { adattaPubblico(STADIO.pubblico); misuraPalco(STADIO); } if (RIVELA) misuraPalco(RIVELA); });
   function pulisciCache() { Object.keys(CACHE_AV).forEach(function (k) { if (k.indexOf("arte|") !== 0) delete CACHE_AV[k]; }); }   // le pose degli avatar della partita prima (i disegni fissi restano)
   function fermaTutto() { fermaConta(SALA); fermaConta(STADIO); fermaRivela(RIVELA); fermaMal(); fermaBus(); SALA = null; STADIO = null; RIVELA = null; }   // si esce dalla partita: niente più timer che ridisegnano
   function testaAsta(el, S, d) {
@@ -56814,12 +56865,13 @@ window.SG_UNAPAROLA = [
   // =========================================================
   //  LO STADIO (asta del fantacalcio, sullo stesso telefono e online).
   //  In alto il maxischermo col calciatore all'asta (lo sfondo prende i colori della sua squadra, la maglia, il prezzo, e lo
-  //  speaker che conta "12 e uno… 12 e due…"); in mezzo la tribuna coi giocatori seduti che alzano la paletta; in basso il
-  //  campetto con la formazione: quando un calciatore è aggiudicato la sua maglia vola dal maxischermo al suo posto.
+  //  speaker che conta "12 e uno… 12 e due…"); in mezzo il campo grande con la formazione di chi ha appena offerto e il suo
+  //  avatar in piedi a bordo campo (l'allenatore) col cartellino alzato; sotto la panchina con tutti in piccolo (si tocca il
+  //  proprio per offrire). Quando un calciatore è aggiudicato la sua maglia vola dal maxischermo al suo posto nel campo.
   //  Si costruisce una volta per partita: poi cambia solo quello che serve (niente lampeggio).
   // =========================================================
   var STADIO = null;
-  var POSTI_CAMPO = [ { r: "A", x: 50, y: 18 }, { r: "C", x: 26, y: 42 }, { r: "C", x: 74, y: 42 }, { r: "D", x: 50, y: 59 }, { r: "P", x: 50, y: 85 } ];
+  var POSTI_CAMPO = [ { r: "A", x: 50, y: 15 }, { r: "C", x: 25, y: 39 }, { r: "C", x: 75, y: 39 }, { r: "D", x: 50, y: 62 }, { r: "P", x: 50, y: 86 } ];
   function nomeCampo(n) {   // "Martinez L." → "Martinez" (via le iniziali)
     var s = String(n || ""), p = s.split(" ").filter(function (x) { return !/^[A-Za-zÀ-ÿ]{1,3}\.$/.test(x); });
     return p.join(" ") || s;
@@ -56829,29 +56881,73 @@ window.SG_UNAPAROLA = [
     (kit || []).forEach(function (c) { if (per[c.ruolo]) per[c.ruolo].push(c); });
     return POSTI_CAMPO.map(function (p) { return per[p.r][usati[p.r]++] || null; });
   }
-  // la parte del campetto (anche alla fine, per svelare i valori): 5 posti in formazione e il mister a bordo campo
-  function campetto(el, S) {
-    S.slot = POSTI_CAMPO.map(function (p) {
-      var img = el("img", { class: "st-slot-maglia", alt: "" }), nm = el("span"), val = el("em", { class: "st-val" });
-      var n = el("div", { class: "st-slot vuoto", style: "left:" + p.x + "%;top:" + p.y + "%" }, [ el("i", { class: "st-slot-vuoto", text: (FANTA_RUOLI[p.r] || {}).breve }), img, nm, val ]);
-      return { nodo: n, img: img, nome: nm, val: val, ruolo: p.r, k: null };
-    });
-    S.mister = el("img", { class: "st-mister", alt: "" });
-    S.campo = el("div", { class: "st-campo" }, S.slot.map(function (s) { return s.nodo; }));   // (il mister sta fuori, a bordo campo)
-    var fondo = arte("campo", ""); if (fondo) { S.campo.style.backgroundImage = "url(\"" + fondo + "\")"; S.campo.classList.add("dipinto"); }
+  // il palco (anche alla fine, per svelare i valori): in alto il nome della squadra (con le frecce per guardare le altre), sotto il
+  // campo grande con i 5 posti in formazione e, a bordo campo, l'avatar in piedi di chi ha la squadra: l'allenatore
+  function palco(el, S, frecce) {
     S.campoNome = el("div", { class: "st-campo-nome" });
-    return S.campo;
+    var testa = !frecce ? [ S.campoNome ] : [
+      el("button", { class: "st-freccia", text: "‹", "aria-label": "La squadra prima", onclick: function () { giraSquadra(S, -1); } }), S.campoNome,
+      el("button", { class: "st-freccia", text: "›", "aria-label": "La squadra dopo", onclick: function () { giraSquadra(S, 1); } }) ];
+    S.slot = POSTI_CAMPO.map(function (p) {
+      var img = el("img", { class: "st-slot-maglia", alt: "" }), ombra = el("img", { class: "st-slot-ombra", alt: "" }), nm = el("span"),
+        val = el("em", { class: "st-val" }), paga = el("em", { class: "st-paga" });
+      var n = el("div", { class: "st-slot vuoto", style: "left:" + p.x + "%;top:" + p.y + "%" }, [
+        el("div", { class: "st-slot-fig" }, [ el("i", { class: "st-slot-vuoto", text: (FANTA_RUOLI[p.r] || {}).breve }), ombra, img, paga, val ]), nm ]);
+      return { nodo: n, img: img, ombra: ombra, nome: nm, val: val, paga: paga, ruolo: p.r, k: null };
+    });
+    S.campo = el("div", { class: "st-campo" }, S.slot.map(function (s) { return s.nodo; }));
+    S.misterImg = el("img", { alt: "" }); S.palN = el("span");
+    S.pal = el("div", { class: "st-pal" }, [ S.palN ]);
+    S.mister = el("div", { class: "st-mister" }, [ S.misterImg, S.pal ]);
+    S.wrap = el("div", { class: "st-campo-wrap" }, [ S.campo, S.mister ]);
+    if (window.ResizeObserver) { try { new ResizeObserver(function () { misuraPalco(S); }).observe(S.wrap); } catch (e) {} }
+    return (S.palco = el("div", { class: "st-palco" }, [ el("div", { class: "st-campo-testa" }, testa), S.wrap ]));
   }
-  function riempiSlot(s, c, valore) {   // un posto del campetto: la maglia e il nome del calciatore (o vuoto col ruolo)
-    var k = c ? c.nome + "|" + c.squadra : "";
+  // le maglie e l'allenatore crescono col campo; il disegno del campo si rifà con le sue proporzioni (cerchi tondi)
+  function misuraPalco(S) {
+    if (!S || !S.wrap || !document.body.contains(S.wrap)) return;
+    var w = S.wrap.clientWidth, h = S.wrap.clientHeight; if (!w || !h) return;
+    var mg = 2 * Math.round(Math.max(30, Math.min(w * 0.19, h * 0.175, 96)) / 2), al = Math.round(Math.min(h * 0.5, w * 0.34 * 264 / 200));
+    if (mg !== S.mg) { S.mg = mg; S.wrap.style.setProperty("--mg", mg + "px"); }
+    if (al !== S.al) { S.al = al; S.wrap.style.setProperty("--all", al + "px"); }
+    var rap = (Math.round(w / h * 20) / 20).toFixed(2);
+    if (rap !== S.rap) { S.rap = rap; var fondo = arte("campo", "", rap); if (fondo) { S.campo.style.backgroundImage = "url(\"" + fondo + "\")"; S.campo.classList.add("dipinto"); } }
+  }
+  function chiaro(hex) { var n = parseInt(String(hex || "#000").slice(1), 16) || 0; return ((n >> 16) * 299 + (n >> 8 & 255) * 587 + (n & 255) * 114) / 1000 > 150; }
+  function riempiSlot(s, c, valore) {   // un posto del campo: la maglia, il nome sui colori della squadra e quanto è stato pagato (o vuoto col ruolo)
+    var k = c ? c.nome + "|" + c.squadra + "|" + (c.prezzo || "") : "";
     if (k !== s.k) {
       s.k = k; s.nodo.classList.toggle("vuoto", !c);
-      if (c) { s.img.src = maglia(c.squadra); s.nome.textContent = nomeCampo(c.nome); } else { s.img.removeAttribute("src"); s.nome.textContent = ""; }
+      if (c) {
+        var col = coloriSquadra(c.squadra) || ["#2b3550", "#9aa5bd"];
+        s.img.src = maglia(c.squadra); s.nome.textContent = nomeCampo(c.nome);
+        s.nome.style.background = col[0]; s.nome.style.borderColor = col[1]; s.nome.style.color = chiaro(col[0]) ? "#141414" : "#fff";
+        s.paga.textContent = c.prezzo ? c.prezzo + " 💰" : "";
+      } else { s.img.removeAttribute("src"); s.nome.textContent = ""; s.paga.textContent = ""; }
       s.val.classList.remove("su"); s.val.textContent = "";
     }
     if (valore != null) { s.val.textContent = valore; s.val.classList.add("su"); }
   }
-  function mostraMister(S, g) { var k = g ? g.nome + JSON.stringify(g.omino || "") : ""; if (k !== S.misterK) { S.misterK = k; S.mister.src = g ? srcAv(cfgDi(g.nome, g.omino), {}) : ""; } }
+  // l'allenatore: la persona che ha la squadra che si guarda, in piedi a bordo campo. posa: "giu", "paletta" (il cartellino alzato col
+  // prezzo: l'offerta più alta è sua) o "esulta" (il calciatore è suo: salta col cartellino ancora su). Quando cambia squadra entra da destra
+  var IN_PIEDI_SU = { braccia: "canna", angolo: ANG_PALETTA };
+  function allenatore(S, g, posa, prezzo) {
+    var cfg = g ? cfgDi(g.nome, g.omino) : null, chi = g ? g.nome + JSON.stringify(g.omino || "") : "";
+    S.mister.style.visibility = cfg ? "" : "hidden";
+    if (!cfg) { S.misterChi = S.misterK = ""; return; }
+    if (chi !== S.misterChi) {
+      S.misterChi = chi; rianima(S.mister, "entra");
+      var m = { x: 155, y: 110 }; try { m = SGOmino.mano(cfg, IN_PIEDI_SU); } catch (e) {}
+      S.pal.style.left = (m.x / 2) + "%"; S.pal.style.top = (m.y / 2.64) + "%";
+    }
+    if (chi + "|" + posa !== S.misterK) {
+      S.misterK = chi + "|" + posa;
+      S.misterImg.src = srcAv(cfg, posa === "giu" ? {} : IN_PIEDI_SU);
+      S.mister.classList.toggle("alza", posa !== "giu"); S.mister.classList.toggle("esulta", posa === "esulta");
+    }
+    var p = posa !== "giu" && prezzo != null ? String(prezzo) : "";
+    if (p !== S.palN.textContent) { S.palN.textContent = p; if (p) rianima(S.pal, "batte"); }
+  }
   function maxischermo(el, S, conContatore) {   // il maxischermo: due strati di colore che sfumano, la maglia, i dati, lo speaker in basso
     S.colA = el("div", { class: "st-colori" }); S.colB = el("div", { class: "st-colori" });
     S.magliaImg = el("img", { class: "st-maglia", alt: "" });
@@ -56885,20 +56981,28 @@ window.SG_UNAPAROLA = [
     if (quadro) sfondo.style.backgroundImage = "url(\"" + quadro + "\")";
     S.avviso = el("div", { class: "sa-avviso" });
     S.tempo = el("i");
-    S.piede = el("div", { class: "sa-piede st-piede" });
-    var board = maxischermo(el, S, false), campo = campetto(el, S);
-    S.radice = el("div", { class: "schermata sa-sala st-stadio" + (t.guarda ? " as-targa" : "") }, [ sfondo, testaAsta(el, S, d), board, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
-      pubblico(el, S, d.persone, arte("seggiolino", SEGG_RIS), "st-tribuna", 5),
-      el("div", { class: "st-campo-box" }, [
-        el("div", { class: "st-campo-testa" }, [
-          el("button", { class: "st-freccia", text: "‹", "aria-label": "La squadra prima", onclick: function () { giraSquadra(S, -1); } }), S.campoNome,
-          el("button", { class: "st-freccia", text: "›", "aria-label": "La squadra dopo", onclick: function () { giraSquadra(S, 1); } }) ]),
-        campo, S.mister ]),
-      S.piede ]);
+    S.piede = el("div", { class: "sa-piede st-piede" + (d.piedeAlto ? " " + d.piedeAlto : "") });
+    var board = maxischermo(el, S, false);
+    S.radice = el("div", { class: "schermata sa-sala st-stadio" + (d.persone.length > 5 ? " fitta" : "") + (t.guarda ? " as-targa" : "") }, [ sfondo, testaAsta(el, S, d), board, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
+      palco(el, S, true), panchina(el, S, d.persone), S.piede ]);
     S.ultimiDati = d; STADIO = S;
     t.mostra(S.radice);
     aggiornaStadio(d);
-    adattaPubblico(S.pubblico);
+    adattaPubblico(S.pubblico); misuraPalco(S);
+  }
+  // la panchina: tutti in piccolo (il busto), coi crediti e i posti che mancano; chi ha l'offerta più alta alza il cartellino col prezzo.
+  // Fino a 5 su una fila, da 6 in su su due. Si tocca il proprio avatar per offrire (sullo stesso telefono anche «passo»)
+  function panchina(el, S, persone) {
+    var n = persone.length, col = n <= 5 ? n : Math.ceil(n / 2);
+    var file = el("div", { class: "sa-file st-pp-file", style: "--col:" + col }, persone.map(function (p) {
+      var pal = el("span"), nuvola = el("div", { class: "sa-nuvola" }), nota = el("small"), manca = el("i", { class: "sa-manca" }), passo = tastoPasso(el, S, p);
+      var nodo = el("div", { class: "sa-pers", role: "button", onclick: function () { toccaPersona(S, p.id); } }, [
+        el("div", { class: "sa-figura" }, [ el("img", { class: "st-busto", src: srcAv(cfgDi(p.nome, p.omino), { busto: true }), alt: "" }), el("div", { class: "sa-paletta" }, [ pal ]), nuvola ]),
+        el("b", { text: p.nome.length > 9 ? p.nome.slice(0, 9) + "…" : p.nome }), nota, manca, passo ]);
+      S.pers[p.id] = { nodo: nodo, nota: nota, manca: manca, passo: passo, nuvola: nuvola, pal: pal, puo: false };
+      return nodo;
+    }));
+    return (S.pubblico = el("div", { class: "st-panchina" + (n > 5 ? " fitta" : "") }, [ file ]));
   }
   function aggiornaStadio(d) {
     var S = STADIO; if (!S) return; S.ultimiDati = d;
@@ -56907,7 +57011,7 @@ window.SG_UNAPAROLA = [
     // il calciatore sul maxischermo: cambia solo quando ne esce uno nuovo
     var c = d.carta, k = c ? c.nome + "|" + c.squadra + "|" + (d.giroCarta || "") : "";
     if (k !== S.carta) {
-      S.carta = k; S.prezzo = undefined; S.leader = undefined; S.giro = undefined; S.fine = 0;   // calciatore nuovo: il conto alla rovescia riparte comunque
+      S.carta = k; S.prezzo = undefined; S.leader = undefined; S.giro = undefined; S.fine = 0; S.festa = false;   // calciatore nuovo: il conto alla rovescia riparte comunque
       if (d.io != null && d.fase === "asta") { S.vista = d.io; S.ultimoLeader = null; }   // (online) si torna a guardare la propria squadra
       var vecchio = S.radice.querySelector(".sa-aggiudicato"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
       S.radice.classList.remove("chiusa");
@@ -56924,9 +57028,11 @@ window.SG_UNAPAROLA = [
     S.chi.textContent = !c ? "" : capo ? (d.io != null && capo.id === d.io ? "👑 l'offerta è tua" : "offerta di " + capo.nome) : (d.base ? "prezzo di partenza" : "");
     S.avviso.textContent = d.avviso || ""; S.avviso.style.display = d.avviso ? "" : "none";
     aggiornaPubblico(S, d);
-    // il campetto: online la tua squadra; sullo stesso telefono quella di chi ha appena offerto (con le frecce si guardano le altre)
+    d.persone.forEach(function (p) { var q = S.pers[p.id]; if (q && q.pal && p.id === d.leader && q.pal.textContent !== String(d.prezzo)) q.pal.textContent = d.prezzo; });   // in panchina il cartellino col prezzo
+    // il campo: la squadra di chi ha appena offerto, col suo allenatore che alza il cartellino (con le frecce si guardano le altre);
+    // all'inizio di ogni calciatore, online, la tua
     if (S.vista == null || !S.squadre[S.vista]) S.vista = d.io != null && S.squadre[d.io] ? d.io : d.persone[0].id;
-    if (d.io == null && d.fase === "asta" && d.leader != null && d.leader !== S.ultimoLeader) S.vista = d.leader;
+    if (d.fase === "asta" && d.leader != null && d.leader !== S.ultimoLeader) S.vista = d.leader;
     S.ultimoLeader = d.leader;
     if (d.fase === "asta") {
       nuovaOfferta(S, d, speaker);
@@ -56938,14 +57044,17 @@ window.SG_UNAPAROLA = [
   }
   function disegnaCampo(S, d, salta) {   // la formazione della squadra che si guarda (salta: un posto lasciato vuoto, ci arriva la maglia in volo)
     var g = S.squadre[S.vista]; if (!g) return;
-    S.campoNome.textContent = (d.io != null && g.id === d.io ? "La tua squadra" : "Squadra di " + g.nome) + " · " + g.crediti + " 💰";
-    mostraMister(S, g);
-    var posti = slotRosa(g.kit), cerca = d.fase === "asta" && d.carta ? d.carta.ruolo : null, segnato = false;
+    var nomeSq = (d.io != null && g.id === d.io ? "La tua squadra" : "Squadra di " + g.nome) + " · " + g.crediti + " 💰";
+    if (S.campoNome.textContent !== nomeSq) S.campoNome.textContent = nomeSq;
+    var e = d.esito, suo = e && e.tipo !== "accollo" && g.id === e.chiId;
+    allenatore(S, g, d.fase === "asta" ? (g.id === d.leader ? "paletta" : "giu") : suo ? (S.festa ? "esulta" : e.tipo === "vinta" ? "paletta" : "giu") : "giu", d.prezzo);
+    if (S.vistaFatta !== S.vista) { S.vistaFatta = S.vista; rianima(S.campo, "cambia"); }   // un'altra squadra: le sue maglie spuntano
+    var posti = slotRosa(g.kit), cerca = d.fase === "asta" && d.carta ? d.carta.ruolo : null, segnato = false, ombra = cerca ? maglia(d.carta.squadra) : "";
     S.slot.forEach(function (s, i) {
       var c = i === salta ? null : posti[i], qui = !c && !segnato && cerca === s.ruolo;
       riempiSlot(s, c);
-      if (qui) segnato = true;
-      s.nodo.classList.toggle("cerca", qui);   // il posto dove andrebbe il calciatore all'asta
+      if (qui) { segnato = true; if (s.ombra.getAttribute("src") !== ombra) s.ombra.src = ombra; }
+      if (s.nodo.classList.contains("cerca") !== qui) s.nodo.classList.toggle("cerca", qui);   // il posto dove andrebbe il calciatore all'asta (la sua maglia in trasparenza)
     });
   }
   function giraSquadra(S, dir) {
@@ -56974,7 +57083,7 @@ window.SG_UNAPAROLA = [
     var n = S.esitoN; S.volo = { slot: i, chi: e.chiId };
     setTimeout(function () {
       if (STADIO !== S || S.esitoN !== n) return;
-      volo(S, i, function () { if (STADIO !== S) return; S.volo = null; disegnaCampo(S, S.ultimiDati); rianima(S.slot[i].nodo, "arriva"); FX.pop(); });
+      volo(S, i, function () { if (STADIO !== S) return; S.volo = null; S.festa = S.esitoN === n; disegnaCampo(S, S.ultimiDati); rianima(S.slot[i].nodo, "arriva"); FX.pop(); });   // (arrivata la maglia, l'allenatore esulta)
     }, 450);
   }
   function volo(S, i, poi) {   // la maglia vola dal maxischermo al suo posto nel campetto (solo transform: niente scatti)
@@ -57008,12 +57117,13 @@ window.SG_UNAPAROLA = [
   function formazioni(t, giocatori) {
     var el = t.el, box = el("div", { class: "sa-formazioni" });
     (giocatori || []).forEach(function (g) {
-      var posti = slotRosa(g.kit), campo = el("div", { class: "sa-campo" });
+      var posti = slotRosa(g.kit), campo = el("div", { class: "sa-campo" }), fondo = arte("campo", "", "0.95");
+      if (fondo) { campo.style.backgroundImage = "url(\"" + fondo + "\")"; campo.style.backgroundSize = "100% 100%"; campo.style.boxShadow = "0 1px 4px rgba(0,0,0,.3)"; }   // (lo stesso campo dello stadio)
       posti.forEach(function (c, i) {
-        var p = POSTI_CAMPO[i];
+        var p = POSTI_CAMPO[i], col = c ? coloriSquadra(c.squadra) || ["#2b3550", "#9aa5bd"] : null;
         campo.appendChild(el("div", { class: "sa-gioc" + (c ? "" : " vuoto"), style: "left:" + p.x + "%;top:" + p.y + "%" }, [
           c ? el("img", { class: "sa-maglia", src: maglia(c.squadra), alt: "" }) : el("i", { class: "sa-maglia", text: (FANTA_RUOLI[p.r] || {}).breve }),
-          el("span", { text: c ? nomeCampo(c.nome) : "" })
+          c ? el("span", { class: "sa-gioc-nome", text: nomeCampo(c.nome), style: "background:" + col[0] + ";color:" + (chiaro(col[0]) ? "#141414" : "#fff") }) : el("span")   // il nome sui colori della squadra
         ]));
       });
       box.appendChild(el("div", { class: "sa-squadra" }, [ el("div", { class: "sa-sq-nome", text: g.nome + " · " + g.crediti + " 💰" }), campo ]));
@@ -57134,7 +57244,7 @@ window.SG_UNAPAROLA = [
       chiave: "fo|" + (vm.codice || "") + "|" + (vm.sessione || ""), fase: a ? "asta" : "esito",
       info: (a ? ru.nome + " all'asta" : e.tipo === "accollo" ? "Nessuno lo vuole" : "Aggiudicato!") + " · " + (vm.presi || (vm.restano + " in mazzo")),
       carta: carta, giroCarta: a ? a.nCarta : e.nCarta, prezzo: a ? v.offerta : e.prezzo, base: !!a && !v.leader, leader: a ? v.leader : (e.chiId || null),
-      budget: FANTA_BUDGET, grosso: 5,
+      budget: FANTA_BUDGET, grosso: 5, piedeAlto: io ? "onl" : "",
       persone: persone, io: myId || "—", mie: mie, giro: a ? a.giro : null, resta: a ? a.resta : 0, durata: a ? (a.durata || FANTA_RILANCIO_MS) : FANTA_RILANCIO_MS, puoPassare: false,
       kPiede: a ? [a.nCarta, hoPassato ? 1 : 0, inGara ? 1 : 0, max].join("|") : null,   // (prezzi e «Passo» cambiano al loro posto, anche quando divento io il capo: vedi tastiOfferta)
       esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, motivo: e.motivo || "", chiId: e.chiId, chiNome: e.chiNome, carta: e.carta, prezzo: e.prezzo } : null,
@@ -57176,8 +57286,8 @@ window.SG_UNAPAROLA = [
     fermaRivela(RIVELA);
     var el = t.el, R = { chiave: opz.chiave, opz: opz, righe: righe, timer: [], iv: null, finito: false, conta: [] }, sfondo = el("div", { class: "sa-sfondo" }), quadro = arte("stadio", "");
     if (quadro) sfondo.style.backgroundImage = "url(\"" + quadro + "\")";
-    var board = maxischermo(el, R, true), campo = campetto(el, R);
-    R.campoBox = el("div", { class: "st-campo-box st-grande" }, [ el("div", { class: "st-campo-testa" }, [ R.campoNome ]), campo, R.mister ]);
+    var board = maxischermo(el, R, true);
+    R.campoBox = palco(el, R, false);
     R.podio = el("div", { class: "st-podio", style: "display:none" });
     R.piede = el("div", { class: "sa-piede st-piede" });
     R.salta = el("button", { class: "sa-tasto", text: "Salta ⏭", onclick: function () { podioRivela(R); } });
@@ -57187,7 +57297,7 @@ window.SG_UNAPAROLA = [
       board, R.campoBox, R.podio, R.piede ]);
     R.ruolo.className = "st-ruolo st-ruolo-classifica"; R.ruolo.textContent = "CLASSIFICA";
     coloriSchermo(R, ["#1b2a4a", "#0c1424"]);
-    RIVELA = R; t.mostra(R.radice);
+    RIVELA = R; t.mostra(R.radice); misuraPalco(R);
     var ordine = righe.slice().reverse(), j = 0;
     rianima(R.ticker, "via", "Si scoprono le quotazioni vere: dalla rosa che vale meno a quella che vale di più!");
     function avanti() {
@@ -57201,7 +57311,7 @@ window.SG_UNAPAROLA = [
   function fermaRivela(R) { if (!R) return; R.timer.forEach(function (x) { clearTimeout(x); }); R.timer = []; if (R.iv) { clearInterval(R.iv); R.iv = null; } if (R.tit) { clearInterval(R.tit); R.tit = null; } }
   function svelaRosa(R, r, ultima, poi) {
     R.campoNome.textContent = "La rosa di " + r.nome + " · " + r.crediti + " 💰 avanzati";
-    mostraMister(R, r);
+    allenatore(R, r, "giu");
     var posti = slotRosa(r.kit);
     R.slot.forEach(function (s, i) { riempiSlot(s, posti[i]); s.nodo.classList.remove("cerca"); });
     R.magliaImg.src = srcAv(cfgDi(r.nome, r.omino), {}); R.squadra.textContent = ""; R.nome.textContent = r.nome; R.prezzoN.textContent = "0"; R.chi.textContent = "valore della rosa";
@@ -57225,6 +57335,7 @@ window.SG_UNAPAROLA = [
           R.chi.textContent = r.pos + "° posto" + (r.pos === 1 ? "! 🏆" : "");
           rianima(R.ticker, "via", pari.length ? "Stesso valore di " + pari.map(function (o) { return o.nome; }).join(", ") + ": conta chi ha più crediti avanzati" : r.nome + ": " + r.totale + " punti di valore");
           if (ultima) FX.festa(); else FX.posto();
+          if (r.pos === 1) allenatore(R, r, "esulta", r.totale);   // (il primo: l'allenatore salta col valore della rosa sul cartellino)
           R.timer.push(setTimeout(poi, ultima ? 1700 : 1300));
         }
       }, 40);
@@ -59008,7 +59119,7 @@ window.SG_UNAPAROLA = [
       info: (a ? ru.nome + " all'asta · " : esito.tipo === "accollo" ? "Nessuno lo vuole · " : "Aggiudicato! · ") + postiPresi(st.giocatori),
       carta: { nome: carta.nome, squadra: carta.squadra, ruolo: carta.ruolo }, giroCarta: st.nCarta, prezzo: a ? a.offerta : esito.prezzo, base: !!a && a.leader === null,
       leader: a ? a.leader : esito.chiId, persone: persone, io: null, giro: a ? a.giro : null, resta: a ? a.scadenza - Date.now() : 0, durata: a ? a.durata : FANTA_RILANCIO_MS, puoPassare: !!a,
-      budget: FANTA_BUDGET, grosso: 5,
+      budget: FANTA_BUDGET, grosso: 5, piedeAlto: "loc",
       esito: esito || null,
       avviso: a ? avvisoFanta(eleggN === 2 && carteRuolo === 2, ultimaChiamata(st.mazzo, carta), carta.ruolo) : "",
       nota: !a ? "" : a.leader === null ? "Scegli il salto e tocca il tuo avatar: +1 lo prende a " + a.offerta + ". Se nessuno lo vuole torna in fondo al mazzo." : "Scegli il salto e tocca il tuo avatar per rilanciare (chi ha l'offerta può rialzare).",

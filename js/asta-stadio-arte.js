@@ -2,7 +2,7 @@
    L'ASTA, scena 2: LO STADIO del fantacalcio, di sera.
    - SGAstaArte.stadio()     sfondo a tutto schermo (viewBox 400×800, "slice": si taglia ai lati, le cose importanti stanno tra x 40 e 360)
    - SGAstaArte.seggiolino() il seggiolino di plastica blu visto di fronte, nel sistema dell'avatar (200×264): va DIETRO l'avatar seduto
-   - SGAstaArte.campo()      mezzo campo visto dall'alto (300×300, si stira: è pensato per un rettangolo di circa 360×250)
+   - SGAstaArte.campo(rap)   mezzo campo visto dall'alto (300×300, si stira: è pensato per un rettangolo con larghezza / altezza = rap, di partenza 1,44)
    Solo stringhe SVG: niente filtri, niente testo, niente Math.random (le trame usano un caso fisso col seme). Id col prefisso "ast".
    ========================================================= */
 (function () {
@@ -276,14 +276,18 @@
   // =========================================================
   //  IL CAMPO: mezzo campo visto dall'alto (300×300, preserveAspectRatio none). Misure vere in metri (campo 68 di larghezza,
   //  mezzo campo 52,5: area di rigore 40,32 × 16,5, area piccola 18,32 × 5,5, dischetto a 11 m, cerchi di 9,15 m, porta 7,32 m).
-  //  Le scale X e Y sono diverse apposta: stirato in circa 360×250 il campo torna con le proporzioni giuste, i cerchi tondi
-  //  e le linee tutte dello stesso spessore (gli archi sono strisce piene, non bordi).
+  //  Le scale X e Y sono diverse apposta: stirato nel rettangolo di proporzioni `rap` (larghezza / altezza, di partenza 1,44,
+  //  circa 360×250) il campo torna con le proporzioni giuste, i cerchi tondi e le linee tutte dello stesso spessore (gli archi
+  //  sono strisce piene, non bordi). La porta resta in basso; in un rettangolo più alto si vede anche un pezzo dell'altra metà.
   // =========================================================
-  A.campo = function () {
-    if (pronti.campo) return pronti.campo;
-    var p = "astC", SX = 250 / 68, SY = 278 / 52.5, LW = .5, r = rnd(1898), d = "", s = "", i, a, b;
+  A.campo = function (rap) {
+    rap = Math.max(.6, Math.min(2.2, +rap || 1.44));
+    var chiave = "campo" + rap.toFixed(2);
+    if (pronti[chiave]) return pronti[chiave];
+    var p = "astC", SX = 250 / 68, SY = SX * rap, LW = .5, r = rnd(1898), d = "", s = "", i, a, b;
     function X(m) { return 150 + m * SX; }
-    function Y(m) { return 6 + m * SY; }
+    function Y(m) { return 284 - (52.5 - m) * SY; }
+    var mSu = Math.min(0, 52.5 - 290 / SY);   // fin dove arrivano le linee laterali (oltre il bordo in alto)
     function rettH(x0, x1, ym) { return "M" + q(X(x0) - LW * SX / 2, Y(ym) - LW * SY / 2) + " H" + n1(X(x1) + LW * SX / 2) + " v" + n1(LW * SY) + " H" + n1(X(x0) - LW * SX / 2) + " Z "; }
     function rettV(xm, y0, y1) { return "M" + q(X(xm) - LW * SX / 2, Y(y0) - LW * SY / 2) + " h" + n1(LW * SX) + " V" + n1(Y(y1) + LW * SY / 2) + " h" + n1(-LW * SX) + " Z "; }
     function arco(cx, cy, R, a0, a1) {   // un arco di cerchio (angoli in gradi, 90 = verso il basso) come striscia piena
@@ -304,12 +308,13 @@
       rad(p + "l", .5, .4, .55, [[0, "#f4ffd8", .1], [1, "#f4ffd8", 0]]) + rad(p + "v", .5, .46, .72, [[.5, "#06140a", 0], [1, "#06140a", .42]]);
     s += "<rect width='300' height='300' fill='url(#" + p + "t)'/><rect width='300' height='300' fill='url(#" + p + "l)'/>";
     // le linee bianche
-    var L = rettH(-34, 34, 0) + rettV(-34, 0, 52.5) + rettV(34, 0, 52.5) + rettH(-34, 34, 52.5) +
+    var L = rettH(-34, 34, 0) + rettV(-34, mSu, 52.5) + rettV(34, mSu, 52.5) + rettH(-34, 34, 52.5) +
       rettH(-20.16, 20.16, 36) + rettV(-20.16, 36, 52.5) + rettV(20.16, 36, 52.5) +
       rettH(-9.16, 9.16, 47) + rettV(-9.16, 47, 52.5) + rettV(9.16, 47, 52.5) +
-      arco(0, 0, 9.15, 0, 180) + arco(0, 41.5, 9.15, -143.05, -36.95) + arco(-34, 52.5, 1, -90, 0) + arco(34, 52.5, 1, -180, -90);
+      arco(0, 0, 9.15, 0, 180) + arco(0, 0, 9.15, 180, 360) +   // (il cerchio di centrocampo intero: quello che esce dal disegno non si vede)
+      arco(0, 41.5, 9.15, -143.05, -36.95) + arco(-34, 52.5, 1, -90, 0) + arco(34, 52.5, 1, -180, -90);
     s += "<path d='" + L + "' fill='#f6faf2' opacity='.92'/>" +
-      "<ellipse cx='150' cy='" + n1(Y(41.5)) + "' rx='" + n1(.42 * SX) + "' ry='" + n1(.42 * SY) + "' fill='#f6faf2'/><ellipse cx='150' cy='6' rx='" + n1(.5 * SX) + "' ry='" + n1(.5 * SY) + "' fill='#f6faf2'/>";
+      "<ellipse cx='150' cy='" + n1(Y(41.5)) + "' rx='" + n1(.42 * SX) + "' ry='" + n1(.42 * SY) + "' fill='#f6faf2'/><ellipse cx='150' cy='" + n1(Y(0)) + "' rx='" + n1(.5 * SX) + "' ry='" + n1(.5 * SY) + "' fill='#f6faf2'/>";
     // la porta: la rete fino a 2 m dietro la linea, la traversa vista dall'alto (con la sua ombra), i pali
     var gx = 3.66, g0 = Y(52.5), g1 = Y(54.6), rete = "M" + q(X(-gx), g0) + " L" + q(X(gx), g0) + " L" + q(X(gx + .25), g1) + " L" + q(X(-gx - .25), g1) + " Z";
     s += "<path d='" + rete + "' fill='#1d4a24' opacity='.45'/><path d='" + rete + "' fill='url(#" + p + "r)'/>" +
@@ -325,6 +330,6 @@
         "<ellipse cx='" + n1(fx) + "' cy='" + n1(fy) + "' rx='1' ry='1.25' fill='#fff' stroke='" + LINEA + "' stroke-width='.5'/>";
     });
     s += "<rect width='300' height='300' fill='url(#" + p + "v)'/>";
-    return (pronti.campo = svg("0 0 300 300", " preserveAspectRatio='none'", "<defs>" + d + "</defs>" + s));
+    return (pronti[chiave] = svg("0 0 300 300", " preserveAspectRatio='none'", "<defs>" + d + "</defs>" + s));
   };
 })();
