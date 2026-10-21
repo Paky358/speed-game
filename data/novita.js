@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 249,
+    data: "21 ottobre 2026",
+    titolo: "⚽ La giornata: i tuoi calciatori si riconoscono subito",
+    descrizione: [
+      "🎨 Ognuno ha il suo colore: sul campo i tuoi calciatori hanno la tua faccina dentro la maglia della squadra e il nome su un'etichetta del tuo colore.",
+      "👟 In classifica la tua riga si accende quando hai calciatori in campo e dice chi sono.",
+      "📋 Tocca la tua riga (o quella di un amico) per vedere i 5 calciatori con il voto e i bonus di adesso.",
+      "🧤 Il portiere e la porta in alto non escono più dal campo."
+    ]
+  },
+  {
     v: 248,
     data: "21 ottobre 2026",
     titolo: "⚽ La giornata dopo l'asta: con calma, e con le pagelle",

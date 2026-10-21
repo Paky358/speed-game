@@ -512,6 +512,12 @@
     ".st-gio-ev{min-height:1.15em;font-size:.82rem;white-space:nowrap;overflow:hidden;}",
     ".st-gio-pt{flex:none;min-width:60px;text-align:right;font-size:1.3rem;font-weight:900;color:#ffe066;font-variant-numeric:tabular-nums;}",
     ".st-gio-pt.batte{animation:stPal .3s ease-out;}",
+    ".st-gio-riga{border-left:5px solid var(--pc,#ffe066);cursor:pointer;}.st-gio-riga .st-gio-nome,.st-gio-riga.mio .st-gio-nome{color:var(--pc,#fff);}",
+    ".st-gio-riga .st-gio-faccia{box-shadow:0 0 0 2.5px var(--pc,transparent);}",
+    ".st-gio-riga.incampo{box-shadow:inset 0 0 0 2px var(--pc),0 0 14px var(--pc);}",
+    ".st-gio-sotto{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;}.st-gio-sotto .st-gio-ev{flex:none;}",
+    ".st-gio-in{flex:1;min-width:0;font-size:.74rem;font-weight:800;color:var(--pc,#fff);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.st-gio-tab.stretta .st-gio-in{display:none;}",
+    ".st-pag.live{pointer-events:auto;cursor:pointer;}.st-pag-nota{flex:none;text-align:center;font-size:.72rem;font-weight:700;opacity:.7;}",
     ".st-podio{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:8px 12px 0;}",
     ".st-gradini{display:flex;align-items:flex-end;justify-content:center;gap:6px;}",
     ".st-gradino{display:flex;flex-direction:column;align-items:center;width:31%;max-width:130px;animation:stSale .6s cubic-bezier(.2,1.3,.4,1) both;}",
@@ -2345,6 +2351,7 @@
   var TEMPI_AZ = {   // [annuncio, pausa, azione, esito] in millisecondi
     gol: [2000, 500, 4200, 2400], occ: [2000, 500, 4200, 2200], aut: [2000, 500, 4200, 2400], rig: [2200, 500, 4000, 2400],
     amm: [1600, 400, 2900, 2000], esp: [1600, 400, 2900, 2200], inv: [1300, 300, 1700, 1800] };
+  var COLORI_PERSONE = ["#ffd43b", "#4dabf7", "#f783ac", "#69db7c", "#ff922b", "#b197fc", "#3bc9db", "#e9ecef"];   // il colore di ognuno (in classifica e sul campo)
   var DURATA_GIORNATA = 150000;   // (tutti i momenti insieme: se sono di più, saltano prima le occasioni mancate, poi si va un po' più svelti)
   var SQ_FEMM = { Juventus: 1, Lazio: 1, Roma: 1, Fiorentina: 1, Atalanta: 1, Udinese: 1, Inter: 1 };
   function conArt(sq, di) {   // "l'Inter", "la Roma", "il Milan" (di: "dell'Inter", "della Roma", "del Milan")
@@ -2382,14 +2389,15 @@
     R.az = R.az || campoAzioni(el, R.azBox);
     R.az.misura();
     svuotaNodo(R.gioTab);
-    R.gioTab.style.height = (H * n) + "px"; R.gioTab.style.setProperty("--gh", H + "px"); R.gioTab.classList.toggle("stretta", H < 44); R.gioH = H; R.gr = {}; R.facce = {}; R.busti = {};
+    R.gioTab.style.height = (H * n) + "px"; R.gioTab.style.setProperty("--gh", H + "px"); R.gioTab.classList.toggle("stretta", H < 44); R.gioH = H; R.gr = {}; R.facce = {}; R.busti = {}; R.colP = {};
     righe.slice().sort(function (a, b) { return (a.posV || a.pos) - (b.posV || b.pos); }).forEach(function (r, i) {
-      var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true });
-      var nodo = el("div", { class: "st-gio-riga" + (R.opz.mio != null && r.id === R.opz.mio ? " mio" : ""), style: "height:" + (H - 4) + "px;transform:translateY(" + (i * H) + "px)" }, [
-        el("img", { class: "st-gio-faccia", src: src, alt: "" }), el("div", { class: "st-gio-nomi" }, [ el("span", { class: "st-gio-nome", text: r.nome }), ev ]), pt ]);
+      var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), inC = el("span", { class: "st-gio-in" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true }), pc = COLORI_PERSONE[i % COLORI_PERSONE.length];
+      var nodo = el("div", { class: "st-gio-riga" + (R.opz.mio != null && r.id === R.opz.mio ? " mio" : ""), style: "--pc:" + pc + ";height:" + (H - 4) + "px;transform:translateY(" + (i * H) + "px)", onclick: function () { schedaLive(R, R.gr[r.id]); } }, [
+        el("img", { class: "st-gio-faccia", src: src, alt: "" }), el("div", { class: "st-gio-nomi" }, [ el("span", { class: "st-gio-nome", text: r.nome }), el("div", { class: "st-gio-sotto" }, [ ev, inC ]) ]), pt ]);
+      R.colP[r.id] = pc;
       R.gioTab.appendChild(nodo);
       // vv: il voto di adesso di ogni calciatore (tutti partono da 6), bon: i suoi bonus e malus, ic: le loro icone
-      R.gr[r.id] = { r: r, nodo: nodo, pt: pt, ev: ev, ord: i, vv: r.kit.map(function () { return 6; }), bon: r.kit.map(function () { return 0; }), ic: r.kit.map(function () { return ""; }) };
+      R.gr[r.id] = { r: r, nodo: nodo, pt: pt, ev: ev, inC: inC, ord: i, vv: r.kit.map(function () { return 6; }), bon: r.kit.map(function () { return 0; }), ic: r.kit.map(function () { return ""; }) };
       var img = new Image(); img.src = src; R.facce[r.id] = img; R.busti[r.id] = src;   // (la faccina sul campo, accanto al nome dei suoi calciatori)
     });
     R.pag.style.top = R.azBox.offsetTop + "px";   // (le pagelle coprono il campo e la classifica)
@@ -2418,7 +2426,7 @@
       if (!x.focus) { risultatoGiornata(R, x); orologio(R, x.m); R.timer.push(setTimeout(prossimo, 350)); return; }
       momentoSerieA(R, x, i, prossimo);
     }
-    avvisoCampo(R, 50, ["⚽ FISCHIO D'INIZIO!", "tutti i vostri calciatori partono da 6"]);
+    avvisoCampo(R, 50, ["⚽ FISCHIO D'INIZIO!", "tutti i vostri calciatori partono da 6", "tocca la tua riga per vedere i tuoi"]);
     R.timer.push(setTimeout(function () { if (!vivoRivela(R)) return; viaAvviso(R); R.timer.push(setTimeout(prossimo, 600)); }, 2400));
   }
   // la barra sopra il campo: il minuto e la partita del momento (o una scritta)
@@ -2455,8 +2463,8 @@
     if (coloriVicini(col[P.c][0], col[P.f][0])) col[P.f] = ["#f4f4f4", col[P.f][0]];   // (maglie simili: chi è in trasferta gioca in bianco)
     // i vostri calciatori di queste due squadre (chi è stato espulso prima non c'è più)
     var noti = [];
-    R.righe.forEach(function (r) { r.kit.forEach(function (c) { var k = chiaveCalc(c); if ((c.squadra === P.c || c.squadra === P.f) && !(R.fuori && R.fuori[k] < e.m)) noti.push({ k: k, nome: nomeCampo(c.nome), faccia: R.facce[r.id], ruolo: c.ruolo, sq: c.squadra, r: r }); }); });
-    function tag(k) { var q = noti.filter(function (y) { return y.k === k; })[0]; if (!q) return null; q.usato = true; return { nome: q.nome, faccia: q.faccia }; }
+    R.righe.forEach(function (r) { r.kit.forEach(function (c) { var k = chiaveCalc(c); if ((c.squadra === P.c || c.squadra === P.f) && !(R.fuori && R.fuori[k] < e.m)) noti.push({ k: k, nome: nomeCampo(c.nome), faccia: R.facce[r.id], pc: R.colP[r.id], ruolo: c.ruolo, sq: c.squadra, r: r }); }); });
+    function tag(k) { var q = noti.filter(function (y) { return y.k === k; })[0]; if (!q) return null; q.usato = true; return { nome: q.nome, faccia: q.faccia, pc: q.pc }; }
     function portiere(sq) { var q = noti.filter(function (y) { return y.sq === sq && y.ruolo === "P" && !y.usato; })[0]; return q ? tag(q.k) : null; }
     var et, ann, mg = sqA, att = col[sqA], dif = col[sqB];
     if (t === "gol" || t === "occ") { et = { tira: e.chi ? tag(e.chi) : null, passa: e.ass ? tag(e.ass) : null, para: portiere(sqB) }; ann = ["⚡ AZIONE PERICOLOSA", "per " + conArt(sqA)]; }
@@ -2466,8 +2474,8 @@
     else { et = { para: tag(chiaveCalc(x.chi[0].c)) }; ann = ["🔒 PORTA INVIOLATA", "finisce " + P.c + " " + e.r[0] + "-" + e.r[1] + " " + P.f]; att = col[sqB]; dif = col[sqA]; }
     var esito = t === "rig" ? (e.t === "rig" ? "gol" : e.t === "rigP" ? "parata" : "fuori") : t === "occ" ? e.esito : "gol";
     var sc = copioneAzione(t, esito, att, dif, et, (e.m + n) % 2 === 1);
-    sc.noti = noti.filter(function (y) { return !y.usato; }).map(function (y) { return { col: col[y.sq], nome: y.nome, faccia: y.faccia, ruolo: y.ruolo }; });
-    barraPartita(R, x);
+    sc.noti = noti.filter(function (y) { return !y.usato; }).map(function (y) { return { col: col[y.sq], nome: y.nome, faccia: y.faccia, pc: y.pc, ruolo: y.ruolo }; });
+    barraPartita(R, x); segnaInCampo(R, noti);
     R.az.fermo(sc);
     var pos = R.az.lontano(sc);   // (le scritte stanno nella metà campo lontana dall'azione)
     avvisoCampo(R, pos, ann, maglia(mg)); FX.tic(0.3);
@@ -2477,7 +2485,7 @@
       R.timer.push(setTimeout(function () {
         if (!vivoRivela(R)) return;
         R.az.gioca(sc, Math.round(T[2] * v), function () { dunqueSerieA(R, x, t, esito, sqA, pos); }, function () {
-          R.timer.push(setTimeout(function () { if (!vivoRivela(R)) return; viaAvviso(R); R.timer.push(setTimeout(poi, 450)); }, Math.round(T[3] * v)));
+          R.timer.push(setTimeout(function () { if (!vivoRivela(R)) return; viaAvviso(R); segnaInCampo(R, []); R.timer.push(setTimeout(poi, 450)); }, Math.round(T[3] * v)));
         });
       }, Math.round(T[1] * v)));
     }, Math.round(T[0] * v)));
@@ -2510,10 +2518,37 @@
     else if (chi.length) FX.tic(chi.some(function (r) { return somma[r.id] > 0; }) ? 0.8 : 0.1);
     ordinaGiornata(R, perTotale);
   }
+  function segnaInCampo(R, noti) {   // in classifica: chi ha calciatori in campo in questo momento (la riga si accende e dice chi)
+    listaGio(R).forEach(function (g) {
+      var miei = noti.filter(function (y) { return y.r === g.r; }).map(function (y) { return y.nome; });
+      g.inC.textContent = miei.length ? "👟 in campo: " + miei.join(", ") : "";
+      g.nodo.classList.toggle("incampo", miei.length > 0);
+    });
+  }
+  // toccando una riga della classifica: i 5 calciatori di quella rosa coi voti e i bonus di adesso (si chiude da sola, o toccandola)
+  function schedaLive(R, g) {
+    if (!vivoRivela(R) || R.fase !== "giornata" || R.pagFissa || !g) return;
+    var pag = R.pag, el = R.el, r = g.r, tok = (R.pagTok || 0) + 1; R.pagTok = tok;
+    svuotaNodo(pag); pag.className = "st-pag uno live";
+    pag.appendChild(el("div", { class: "st-pag-tit", text: "📋 I calciatori di " + r.nome + " · adesso" }));
+    pag.appendChild(el("div", { class: "st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome, style: "color:" + R.colP[r.id] }), el("b", { class: "st-pf-tot", text: numFanta(totGio(g)) }) ]));
+    r.kit.forEach(function (cp, k) {
+      pag.appendChild(el("div", { class: "st-pf on" }, [ el("span", { class: "as-rb as-rb-" + cp.ruolo, text: (FANTA_RUOLI[cp.ruolo] || {}).breve || "" }),
+        el("div", { class: "st-pf-nome" }, [ el("b", { text: nomeCampo(cp.nome) }), el("small", { text: cp.squadra + (g.ic[k] ? " · " + g.ic[k] : "") }) ]),
+        el("div", { class: "st-pf-v " + classeVoto(g.vv[k]) }, [ el("small", { text: "voto" }), el("b", { text: numFanta(g.vv[k]) }) ]),
+        el("div", { class: "st-pf-fv" }, [ el("small", { text: "fantavoto" }), el("b", { text: numFanta(g.vv[k] + g.bon[k]) }) ]) ]));
+    });
+    pag.appendChild(el("div", { class: "st-pag-nota", text: "tocca per chiudere" }));
+    pag.onclick = function () { chiudiLive(R, tok); };
+    void pag.offsetWidth; pag.classList.add("on");
+    R.timer.push(setTimeout(function () { chiudiLive(R, tok); }, 6000));
+  }
+  function chiudiLive(R, tok) { if (R.pagTok !== tok || R.pagFissa) return; R.pag.classList.remove("on"); R.pag.onclick = null; }
+  function pagFissa(R) { R.pagFissa = true; R.pagTok = (R.pagTok || 0) + 1; R.pag.onclick = null; R.pag.classList.remove("on"); segnaInCampo(R, []); }   // (intervallo e fischio finale: le pagelle le mostra il gioco)
   // ⏸️ fine primo tempo: le pagelle di tutti, coi voti di adesso (tutti erano partiti da 6) e i bonus e malus presi finora
   function intervallo(R, poi) {
     if (!vivoRivela(R)) return;
-    R.az.fermo(null); R.risN.forEach(function (q) { q.nodo.classList.remove("ora"); });
+    R.az.fermo(null); R.risN.forEach(function (q) { q.nodo.classList.remove("ora"); }); pagFissa(R);
     barraTesto(R, "45'", "⏸️ Fine primo tempo");
     avvisoCampo(R, 50, ["⏸️ FINE PRIMO TEMPO", "arrivano le pagelle"]); FX.round();
     R.timer.push(setTimeout(function () {
@@ -2522,6 +2557,7 @@
       listaGio(R).forEach(function (g) { g.r.gio.cal.forEach(function (c, k) { g.vv[k] = c.v1 != null ? c.v1 : 6; }); g.pt.textContent = numFanta(totGio(g)); });
       ordinaGiornata(R, perTotale);
       pagelle(R, "📋 Le pagelle del primo tempo", function () {
+        R.pagFissa = false;
         barraTesto(R, "46'", "▶️ Secondo tempo");
         avvisoCampo(R, 50, ["▶️ SI RIPARTE!", "secondo tempo"]);
         R.timer.push(setTimeout(function () { if (!vivoRivela(R)) return; viaAvviso(R); R.timer.push(setTimeout(poi, 500)); }, 1600));
@@ -2545,7 +2581,7 @@
             el("small", { text: b ? g.ic[kk] + " " + numFanta(vv + b) : "" }) ]);
         });
         pag.appendChild(el("div", { class: "st-pag-p", style: "animation-delay:" + (j * 0.15) + "s" }, [
-          el("div", { class: "st-pag-testa" }, [ el("img", { src: R.busti[g.r.id], alt: "" }), el("span", { text: g.r.nome }), el("b", { text: numFanta(totGio(g)) }) ]),
+          el("div", { class: "st-pag-testa" }, [ el("img", { src: R.busti[g.r.id], alt: "" }), el("span", { text: g.r.nome, style: "color:" + R.colP[g.r.id] }), el("b", { text: numFanta(totGio(g)) }) ]),
           el("div", { class: "st-pag-voti" }, voti) ]));
       });
       void pag.offsetWidth; pag.classList.add("on");
@@ -2560,7 +2596,7 @@
   function copioneAzione(tipo, esito, att, dif, et, specchio) {
     var sc = { tipo: tipo, colA: att, colD: dif, verso: specchio ? -1 : 1, attori: [], palla: null, scritte: [], rete: null, carta: null, dunque: 0.8 };   // (verso −1: si attacca la porta di sinistra)
     function P(l) { return l.map(function (k) { return [k[0], specchio ? 1 - k[1] : k[1], k[2]]; }); }
-    function attore(col, chi, pts) { sc.attori.push({ col: col, nome: chi ? chi.nome : "", faccia: chi ? chi.faccia || null : null, pts: P(pts) }); }
+    function attore(col, chi, pts) { sc.attori.push({ col: col, nome: chi ? chi.nome : "", faccia: chi ? chi.faccia || null : null, pc: chi ? chi.pc || null : null, pts: P(pts) }); }
     var fine = esito === "palo" ? [[.8, .565, .945], [.9, .62, .8], [1, .66, .74]] : esito === "fuori" ? [[.8, .66, .97], [1, .7, 1.02]] :
       esito === "parata" ? [[.8, .47, .9], [1, .47, .9]] : [[.8, .545, .955], [1, .55, .965]];
     if (tipo === "gol" || tipo === "occ" || tipo === "aut") {
@@ -2615,7 +2651,10 @@
     function campoIntero(w, h, d) {   // il campo disegnato una volta su una tela a parte (misure vere: 105 × 68 m)
       var c = document.createElement("canvas"); c.width = Math.round(w * d); c.height = Math.round(h * d);
       var g = c.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
-      if (A.vert) { g.translate(w, 0); g.rotate(Math.PI / 2); var sw = w; w = h; h = sw; }   // (in verticale: lo stesso campo, girato)
+      if (A.vert) {   // (in verticale: lo stesso campo, girato, con un po' di margine sopra e sotto per le porte e i portieri)
+        g.fillStyle = "#357f3c"; g.fillRect(0, 0, w, h);
+        g.translate(w, 0); g.rotate(Math.PI / 2); var sw = w; w = h; h = sw; g.translate(w * 0.04, 0); g.scale(0.92, 1);
+      }
       var x0 = w * 0.03, x1 = w * 0.97, y0 = h * 0.06, y1 = h * 0.94, L = x1 - x0, H = y1 - y0, mx = L / 105, my = H / 68, i;
       g.fillStyle = "#357f3c"; g.fillRect(0, 0, w, h);
       for (i = 0; i < 14; i++) if (i % 2) { g.fillStyle = "#3d8f44"; g.fillRect(x0 + L * i / 14, y0, L / 14, H); }   // le strisce del taglio
@@ -2636,7 +2675,7 @@
     }
     // dal mezzo campo del copione (hx di traverso, hy verso la porta) al campo intero (X lungo il campo, Y di traverso), 0-1
     function pieno(sc, hx, hy) { var X = 0.5 + hy * 0.496, Y = 0.08 + hx * 0.84; return [sc.verso < 0 ? 1 - X : X, Y]; }
-    function scr(X, Y) { return A.vert ? [(1 - Y) * A.w, X * A.h] : [X * A.w, Y * A.h]; }   // dal campo (X lungo, Y di traverso) allo schermo
+    function scr(X, Y) { return A.vert ? [(1 - Y) * A.w, (0.04 + X * 0.92) * A.h] : [X * A.w, Y * A.h]; }   // dal campo (X lungo, Y di traverso) allo schermo
     A.lontano = function (sc) { return A.vert ? (sc.verso > 0 ? 18 : 82) : 24; };   // dove vanno le scritte: nella metà campo lontana dall'azione (in %)
     function lungo(pts, p) {   // dove si trova lungo la strada al tempo p (tra un punto e l'altro, partenza e arrivo dolci)
       if (!pts || !pts.length) return null;
@@ -2663,17 +2702,24 @@
           var da = { P: 0, D: 1, C: 5, A: 8 }[nt.ruolo] || 0, a = { P: 0, D: 4, C: 7, A: 10 }[nt.ruolo] || 0, o = null, i;
           for (i = da; i <= a && !o; i++) if (!posti[i].via && !posti[i].nome) o = posti[i];
           for (i = 1; i < posti.length && !o && nt.ruolo !== "P"; i++) if (!posti[i].via && !posti[i].nome) o = posti[i];
-          if (o) { o.nome = nt.nome; o.faccia = nt.faccia; }
+          if (o) { o.nome = nt.nome; o.faccia = nt.faccia; o.pc = nt.pc; }
         });
-        posti.forEach(function (o, i) { if (!o.via) out.push({ col: q[0], x: o.x, y: o.y, k: i * 1.7 + (q[0] === sc.colA ? 0 : 0.9), nome: o.nome || "", faccia: o.faccia || null }); });
+        posti.forEach(function (o, i) { if (!o.via) out.push({ col: q[0], x: o.x, y: o.y, k: i * 1.7 + (q[0] === sc.colA ? 0 : 0.9), nome: o.nome || "", faccia: o.faccia || null, pc: o.pc || null }); });
       });
       return out;
     }
-    function faccina(img, x, y, rr) {   // la faccina di chi ha comprato il calciatore, in un tondo
+    function vostro(x, y, R1, col, img, pc) {   // un vostro calciatore: la faccina di chi l'ha comprato dentro la maglia della squadra, con l'alone del suo colore
+      ctx.beginPath(); ctx.arc(x, y + R1 * 0.25, R1, 0, Math.PI * 2); ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, R1, 0, Math.PI * 2); ctx.fillStyle = pc || "#ffe066"; ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, R1 * 0.84, 0, Math.PI * 2); ctx.fillStyle = col[0]; ctx.fill(); ctx.lineWidth = Math.max(1.5, R1 * 0.12); ctx.strokeStyle = col[1]; ctx.stroke();
       if (!img || !img.complete || !img.naturalWidth) return;
-      ctx.save(); ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill(); ctx.clip();
-      ctx.drawImage(img, x - rr, y - rr * 1.02, rr * 2, rr * 2); ctx.restore();
-      ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.lineWidth = 1.5; ctx.strokeStyle = "#ffe066"; ctx.stroke();
+      var rf = R1 * 0.6; ctx.save(); ctx.beginPath(); ctx.arc(x, y, rf, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill(); ctx.clip();
+      ctx.drawImage(img, x - rf, y - rf * 1.02, rf * 2, rf * 2); ctx.restore();
+    }
+    function pillola(x, y, w, h, col) {   // l'etichetta tonda del nome
+      var k = h / 2; ctx.beginPath(); ctx.moveTo(x + k, y); ctx.lineTo(x + w - k, y); ctx.arc(x + w - k, y + k, k, -Math.PI / 2, Math.PI / 2);
+      ctx.lineTo(x + k, y + h); ctx.arc(x + k, y + k, k, Math.PI / 2, Math.PI * 1.5); ctx.closePath();
+      ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.stroke();
     }
     function scritta(testo, x, y, fs, col) {
       ctx.font = "900 " + fs + "px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.lineWidth = Math.max(3, fs * 0.18); ctx.strokeStyle = "rgba(0,0,0,.8)";
@@ -2694,29 +2740,31 @@
         var q = Math.max(0, 1 - (p - sc.rete) * 3), g1 = scr(sc.verso < 0 ? 0 : 0.97, 0.43), g2 = scr(sc.verso < 0 ? 0.03 : 1, 0.57);
         ctx.fillStyle = "rgba(255,255,255," + (0.3 + 0.5 * q).toFixed(2) + ")"; ctx.fillRect(Math.min(g1[0], g2[0]), Math.min(g1[1], g2[1]), Math.abs(g2[0] - g1[0]), Math.abs(g2[1] - g1[1]));
       }
-      var nomi = [];
+      var vostri = [], carte = [], RV = r * 1.75;   // (i vostri: più grandi, con la faccina)
       (sc.folla || []).forEach(function (o) {   // gli altri: seguono un po' il pallone (e respirano)
         var bx = sc.verso < 0 ? 1 - o.x : o.x, x = bx + (palla[0] - bx) * 0.1 + Math.sin(p * 6 + o.k) * 0.006, y = o.y + (palla[1] - o.y) * 0.12 + Math.cos(p * 5 + o.k) * 0.008;
-        var sp = scr(x, y), rr = o.nome ? r * 1.15 : r;
-        pallino(sp[0], sp[1], rr, o.col);
-        if (o.nome) nomi.push({ a: o, x: sp[0], y: sp[1] - rr * 1.6 });
+        var sp = scr(x, y);
+        if (o.faccia) vostri.push({ a: o, x: sp[0], y: sp[1] }); else pallino(sp[0], sp[1], r, o.col);
       });
       sc.attori.forEach(function (a, i) {
-        var pos = lungo(a.pts, p), f = pieno(sc, pos[1], pos[2]), s = scr(f[0], f[1]), x = s[0], y = s[1], rr = r * (a.nome ? 1.2 : 1);
-        pallino(x, y, rr, a.col);
-        if (a.nome) nomi.push({ a: a, x: x, y: y - rr * 1.6 });
-        if (sc.carta && sc.carta.chi === i && p >= sc.carta.t) {   // il cartellino alzato sopra il calciatore
-          var k = Math.min(1, (p - sc.carta.t) * 6), cw = r * 1.3 * k, ch = r * 1.8 * k;
-          ctx.fillStyle = sc.carta.col; ctx.fillRect(x + r, y - r * 3.2, cw, ch); ctx.lineWidth = 1.5; ctx.strokeStyle = "#1b1b1b"; ctx.strokeRect(x + r, y - r * 3.2, cw, ch);
-        }
+        var pos = lungo(a.pts, p), f = pieno(sc, pos[1], pos[2]), s = scr(f[0], f[1]), x = s[0], y = s[1];
+        if (a.faccia) vostri.push({ a: a, x: x, y: y }); else pallino(x, y, r, a.col);
+        if (sc.carta && sc.carta.chi === i && p >= sc.carta.t) carte.push({ x: x, y: y, rr: a.faccia ? RV : r, k: Math.min(1, (p - sc.carta.t) * 6) });
+      });
+      vostri.forEach(function (v) { vostro(v.x, v.y, RV, v.a.col, v.a.faccia, v.a.pc); });
+      carte.forEach(function (c) {   // il cartellino alzato sopra il calciatore
+        var cw = r * 1.3 * c.k, ch = r * 1.8 * c.k, cx = c.x + c.rr * 0.6, cy = c.y - c.rr - ch * 0.5;
+        ctx.fillStyle = sc.carta.col; ctx.fillRect(cx, cy, cw, ch); ctx.lineWidth = 1.5; ctx.strokeStyle = "#1b1b1b"; ctx.strokeRect(cx, cy, cw, ch);
       });
       if (pb) { var sb = scr(palla[0], palla[1]); ctx.beginPath(); ctx.arc(sb[0], sb[1], Math.max(2.5, r * 0.5), 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = "#1b1b1b"; ctx.stroke(); }
-      nomi.forEach(function (n) {   // i nomi sopra a tutto (la faccina di chi l'ha comprato accanto)
-        var fs = Math.round(Math.max(8, Math.min(11, Math.min(w, h) * 0.034)));   // (nomi piccoli: chi segue il calcio li riconosce)
-        ctx.font = "900 " + fs + "px system-ui,sans-serif"; var lw = ctx.measureText(n.a.nome).width, tutto = lw + (n.a.faccia ? fs * 1.3 : 0);
-        var cx = Math.max(tutto / 2 + 4, Math.min(w - tutto / 2 - 4, n.x));   // (vicino al bordo il nome resta dentro)
-        scritta(n.a.nome, cx + (n.a.faccia ? fs * 0.6 : 0), n.y, fs, n.a.faccia ? "#ffe066" : "#fff");
-        if (n.a.faccia) faccina(n.a.faccia, cx - lw / 2 - fs * 0.15, n.y - fs * 0.35, fs * 0.62);
+      var fs = Math.round(Math.max(8, Math.min(11, Math.min(w, h) * 0.034)));   // (nomi piccoli: chi segue il calcio li riconosce)
+      ctx.font = "900 " + fs + "px system-ui,sans-serif"; ctx.textAlign = "center";
+      vostri.forEach(function (v) {   // i nomi sopra a tutto, su un'etichetta del colore di chi li ha comprati
+        var lw = ctx.measureText(v.a.nome).width, bw = lw + fs * 0.9, bh = fs * 1.5;
+        var ly = v.y - RV - bh / 2 - 1; if (ly - bh / 2 < 2) ly = v.y + RV + bh / 2 + 1;   // (vicino al bordo di sopra: sotto la faccina)
+        var cx = Math.max(bw / 2 + 2, Math.min(w - bw / 2 - 2, v.x));   // (vicino ai lati il nome resta dentro)
+        pillola(cx - bw / 2, ly - bh / 2, bw, bh, v.a.pc || "#ffe066");
+        ctx.fillStyle = "#14171f"; ctx.textBaseline = "middle"; ctx.fillText(v.a.nome, cx, ly + 0.5); ctx.textBaseline = "alphabetic";
       });
       sc.scritte.forEach(function (s) {   // GOL!, PARATO!… che entrano grandi
         if (p < s.t) return;
@@ -2750,7 +2798,7 @@
   }
   function fischioFinale(R) {   // 90': le pagelle vere, una rosa alla volta, da chi ha fatto meno a chi ha fatto di più; poi il podio
     if (!vivoRivela(R)) return;
-    R.az.fermo(null); R.risN.forEach(function (q) { q.nodo.classList.remove("ora"); });
+    R.az.fermo(null); R.risN.forEach(function (q) { q.nodo.classList.remove("ora"); }); pagFissa(R);
     barraTesto(R, "90'", "🏁 Fischio finale");
     avvisoCampo(R, 50, ["🏁 FISCHIO FINALE!", "arrivano i voti in pagella"]); FX.round();
     var ordine = listaGio(R).sort(function (a, b) { return (b.r.pos - a.r.pos) || (b.ord - a.ord); }), j = 0, pag = R.pag, el = R.el;
@@ -2770,7 +2818,7 @@
       var tot = el("b", { class: "st-pf-tot", text: "0" }), righe = [];
       svuotaNodo(pag); pag.className = "st-pag uno";
       pag.appendChild(el("div", { class: "st-pag-tit", text: "📋 La pagella" }));
-      pag.appendChild(el("div", { class: "st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome }), tot ]));
+      pag.appendChild(el("div", { class: "st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome, style: "color:" + R.colP[r.id] }), tot ]));
       r.gio.cal.forEach(function (c, kk) {
         var cp = r.kit[kk], ic = c.ev.map(function (e) { return EV_GIO[e.t] || ""; }).join("");
         var riga = el("div", { class: "st-pf" }, [ el("span", { class: "as-rb as-rb-" + cp.ruolo, text: (FANTA_RUOLI[cp.ruolo] || {}).breve || "" }),
