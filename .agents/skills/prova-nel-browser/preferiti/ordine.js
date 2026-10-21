@@ -11,8 +11,9 @@
 // po3: 🏆 la serata a squadre: fine partita con «🏆 Rossi 0 – 1 Blu», la scelta della rivincita solo all'host («Stessi capi»
 //      tiene i capi, «🔀 Squadre a caso» rifà le squadre e azzera il conto), nella seconda partita nessuna parola della prima;
 //      misure della fine a 360x640 e 412x915.
-// po4: 🤖 contro il Bot in 3: «🤖 Siete in 3: giocate contro il Bot» in saletta, il Bot nei Blu (non è in classifica), dopo il
-//      vostro turno scopre da solo una sua parola, chi ricarica ritrova tutto, «🎉 Avete battuto …»; misure della saletta.
+// po4: 🤖 contro il Bot in 3: «🤖 Siete in 3: giocate contro il Bot» in saletta («Voi contro il Bot (🤖 …)»), il Bot nei Blu
+//      (non è in classifica), dopo il vostro turno scopre da solo una sua parola, chi ricarica ritrova tutto, «🎉 Avete
+//      battuto …»; misure della saletta.
 // po5: 🤖 contro il Bot, l'host sparisce durante il turno del Bot: l'amico che porta avanti la partita fa giocare il Bot.
 // po6: nella Sala in 3: la partita parte già «contro il Bot», la riga «📜» lo dice, fino alla fine e Rivincita.
 // po7: i mazzi (dal 21 ott 2026 solo il Classico e «🌶️ Serata», spento di partenza; via i mazzi a tema): un mazzo a tema
@@ -308,8 +309,9 @@
     if (!await W.aspetta(function () { return vm(C).vsBot; }, 3000)) no("il tasto non accende «contro il Bot»");
     var v = vm(C), bot = v.players.filter(function (p) { return p.bot; })[0];
     if (!bot || bot.team !== 1 || v.players.some(function (p) { return !p.bot && p.team !== 0; })) no("squadre sbagliate contro il Bot: " + JSON.stringify(v.players));
-    if (!await W.aspetta(function () { return /Voi contro 🤖 .+ \(Bot\)/.test(T(W.finestra("Sara"))) && /Voi contro/.test(T(P)); }, 3000)) no("Sara o Paky non vedono «Voi contro 🤖 … (Bot)»");
-    nota(N, "saletta: contro " + bot.nome + " (Bot), tutti nei Rossi");
+    // (dal 21 ott 2026, ordine2/fine.js: nei menu sempre «Bot», il nome fisso tra parentesi: «Voi contro il Bot (🤖 Matt)»)
+    if (!await W.aspetta(function () { return /Voi contro il Bot \(🤖 .+\)/.test(T(W.finestra("Sara"))) && /Voi contro/.test(T(P)); }, 3000)) no("Sara o Paky non vedono «Voi contro il Bot (🤖 …)»");
+    nota(N, "saletta: contro il Bot (🤖 " + bot.nome + "), tutti nei Rossi");
     nota(N, "misure saletta: " + await misura("Sara", ".sl-go, .or-squadre, .or-squadre button", "la saletta contro il Bot"));
     await capoLuca(X); await comincia(X);
     v = vm(C);
