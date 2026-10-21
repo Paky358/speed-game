@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 243,
+    data: "20 ottobre 2026",
+    titolo: "Gioco nuovo: 🍹 Da dove viene?",
+    descrizione: [
+      "📸 Esce la foto vera di un piatto o di un drink, spesso da paesi lontanissimi: discutete e date una risposta sola. Da che paese viene?",
+      "🧭 Avete 3 tentativi: dopo ogni errore il gioco vi dice quanto siete lontani e dove andare, da 🔥 Fuoco! a ❄️ Lontanissimo, con la freccia (es. «🥶 Freddo · 6.200 km ↙️»).",
+      "🧂 Gli indizi arrivano a poco a poco: prima gli ingredienti, dopo il primo errore come si prepara, dopo il secondo il nome. Alla fine la scheda col paese, la bandiera e una curiosità.",
+      "🏆 3 punti al primo tentativo, 2 al secondo, 1 al terzo. «🤝 Tutti in squadra» per fare più punti possibile, oppure «⚔️ Due squadre» sullo stesso piatto.",
+      "📱 Online ognuno dal suo telefono (anche nella Sala della serata): a ogni piatto un capitano scrive la risposta e gli altri vedono cosa scrive. Oppure un telefono solo in mezzo al tavolo.",
+      "🍽️ 247 schede in quattro menù: 🍹 Drink, 🍜 Piatti, 🍰 Dolci e 🌮 Street food, da tutti i continenti. Nel ⚙️ scegliete il menù e quante portate (5, 8 o 10)."
+    ]
+  },
+  {
     v: 242,
     data: "20 ottobre 2026",
     titolo: "Stessa Lunghezza d'Onda parte in 🎯 Classico",
