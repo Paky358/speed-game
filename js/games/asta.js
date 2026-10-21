@@ -2560,7 +2560,7 @@
       });
       if (pb) { ctx.beginPath(); ctx.arc(palla[0] * w, palla[1] * h, Math.max(2.5, r * 0.5), 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = "#1b1b1b"; ctx.stroke(); }
       nomi.forEach(function (n) {   // i nomi sopra a tutto (la faccina di chi l'ha comprato accanto)
-        var fs = Math.round(Math.max(10, Math.min(14, h * 0.05)));
+        var fs = Math.round(Math.max(8, Math.min(11, h * 0.036)));   // (nomi piccoli: chi segue il calcio li riconosce)
         ctx.font = "900 " + fs + "px system-ui,sans-serif"; var lw = ctx.measureText(n.a.nome).width, tutto = lw + (n.a.faccia ? fs * 1.3 : 0);
         var cx = Math.max(tutto / 2 + 4, Math.min(w - tutto / 2 - 4, n.x));   // (vicino al bordo il nome resta dentro)
         scritta(n.a.nome, cx + (n.a.faccia ? fs * 0.6 : 0), n.y, fs, n.a.faccia ? "#ffe066" : "#fff");
