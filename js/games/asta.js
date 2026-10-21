@@ -2380,10 +2380,10 @@
   // il Napoli, fino al tiro non si sa chi segna. Sotto la classifica dal vivo: tutti partono da 6 in pagella, poi bonus e
   // malus; a fine primo tempo le pagelle di tutti, al fischio finale le pagelle vere, da chi ha fatto meno a chi ha fatto di più
   var TEMPI_AZ = {   // [annuncio, pausa, azione, esito] in millisecondi
-    gol: [2000, 500, 4200, 2400], ann: [2000, 500, 4200, 2600], occ: [2000, 500, 4200, 2200], aut: [2000, 500, 4200, 2400], rig: [2200, 500, 4000, 2400],
-    amm: [1600, 400, 2900, 2000], esp: [1600, 400, 2900, 2200], inv: [1300, 300, 1700, 1800] };
+    gol: [1800, 300, 4200, 900], ann: [1800, 300, 4200, 1500], occ: [1800, 300, 4200, 700], aut: [1800, 300, 4200, 900], rig: [2000, 300, 4000, 900],
+    amm: [1500, 300, 2900, 800], esp: [1500, 300, 2900, 900], inv: [1100, 200, 1700, 700] };   // (l'esito si vede già durante l'esultanza: dopo resta poco)
   var COLORI_PERSONE = ["#ffd43b", "#4dabf7", "#f783ac", "#69db7c", "#ff922b", "#b197fc", "#3bc9db", "#e9ecef"];   // il colore di ognuno (in classifica e sul campo)
-  var DURATA_GIORNATA = 150000;   // (tutti i momenti insieme: se sono di più, saltano prima le occasioni mancate, poi si va un po' più svelti)
+  var DURATA_GIORNATA = 120000;   // (tutti i momenti insieme: se sono di più, saltano prima le occasioni mancate, poi si va un po' più svelti)
   var SQ_FEMM = { Juventus: 1, Lazio: 1, Roma: 1, Fiorentina: 1, Atalanta: 1, Udinese: 1, Inter: 1 };
   function conArt(sq, di) {   // "l'Inter", "la Roma", "il Milan" (di: "dell'Inter", "della Roma", "del Milan")
     var voc = /^[AEIOU]/.test(sq), f = SQ_FEMM[sq];
@@ -2459,7 +2459,7 @@
       momentoSerieA(R, x, i, prossimo);
     }
     avvisoCampo(R, 50, ["⚽ FISCHIO D'INIZIO!", "tutti i vostri calciatori partono da 6", "tocca la tua riga per vedere i tuoi"]);
-    R.timer.push(setTimeout(function () { if (!vivoRivela(R)) return; viaAvviso(R); R.timer.push(setTimeout(prossimo, 600)); }, 2400));
+    R.timer.push(setTimeout(function () { if (!vivoRivela(R)) return; viaAvviso(R); R.timer.push(setTimeout(prossimo, 400)); }, 2000));
   }
   // la barra sopra il campo: il minuto e la partita del momento (o una scritta)
   function orologio(R, m) { R.barMin.textContent = minTxt(m); }
@@ -2559,7 +2559,7 @@
     }
     passi.push({ sc: sc, dur: T[2], dunque: function () { dunqueSerieA(R, x, t, esito, sqA, pos, seme); } });
     if (t === "ann") {
-      passi.push({ ms: 1300, resta: true });
+      passi.push({ ms: 900, resta: true });
       passi.push({ avviso: ["📺 IL VAR CONTROLLA…", "un attimo di attesa"], ms: 2600 });
       passi.push({ avviso: ["❌ GOL ANNULLATO!", { fuorigioco: "per fuorigioco", fallo: "c'era un fallo in attacco", mano: "per un tocco di mano" }[e.perche] || "dal VAR", "niente punti"], ms: T[3], resta: true });
     } else passi.push({ ms: T[3], resta: true });   // (l'esito resta un po')
@@ -2627,9 +2627,9 @@
         if (!vivoRivela(R)) return;
         avvisoCampo(R, 50, [q ? "⚽ " + nomeCampo(q.c.nome) + " (" + q.c.squadra + ")" : "⚽ Che gol!", q ? "di " + q.r.nome : "", frase(FRASI_GOL[e.v || (e.t === "rig" ? "rig" : "cross")], semeDi(x))]);
         if (q) { FX.posto(); vibra(25); }
-        R.timer.push(setTimeout(function () { if (!vivoRivela(R)) return; viaAvviso(R); R.risN.forEach(function (z) { z.nodo.classList.remove("ora"); }); R.timer.push(setTimeout(poi, 500)); }, 3000));
+        R.timer.push(setTimeout(function () { if (!vivoRivela(R)) return; viaAvviso(R); R.risN.forEach(function (z) { z.nodo.classList.remove("ora"); }); R.timer.push(setTimeout(poi, 400)); }, 2200));
       });
-    }, 1900));
+    }, 1400));
   }
   function segnaInCampo(R, noti) {   // in classifica: chi ha calciatori in campo in questo momento (la riga si accende e dice chi)
     listaGio(R).forEach(function (g) {
@@ -2673,9 +2673,9 @@
         R.pagFissa = false;
         barraTesto(R, "46'", "▶️ Secondo tempo");
         avvisoCampo(R, 50, ["▶️ SI RIPARTE!", "secondo tempo"]);
-        R.timer.push(setTimeout(function () { if (!vivoRivela(R)) return; viaAvviso(R); R.timer.push(setTimeout(poi, 500)); }, 1600));
+        R.timer.push(setTimeout(function () { if (!vivoRivela(R)) return; viaAvviso(R); R.timer.push(setTimeout(poi, 400)); }, 1100));
       });
-    }, 1900));
+    }, 1500));
   }
   function classeVoto(v) { return v >= 7 ? "v7" : v >= 6.5 ? "v65" : v >= 6 ? "v6" : v >= 5.5 ? "v55" : "v5"; }
   function pagelle(R, titolo, poi) {   // tutte le rose in pagina (a gruppi, se non ci stanno): ogni calciatore col suo voto
@@ -2698,7 +2698,7 @@
           el("div", { class: "st-pag-voti" }, voti) ]));
       });
       void pag.offsetWidth; pag.classList.add("on");
-      R.timer.push(setTimeout(mostra, 4500 + 1500 * pg.length));   // (con calma: c'è da leggere)
+      R.timer.push(setTimeout(mostra, 3500 + 1200 * pg.length));   // (con calma: c'è da leggere)
     }
     mostra();
   }
@@ -3213,7 +3213,7 @@
     R.timer.push(setTimeout(function () {   // (prima il gol della giornata, poi le pagelle)
       if (!vivoRivela(R)) return; viaAvviso(R);
       golDellaGiornata(R, function () { barraTesto(R, "90'", "🏁 Fischio finale"); R.az.fermo(null); R.timer.push(setTimeout(prossima, 300)); });
-    }, 2200));
+    }, 1700));
     function prossima() {
       if (!vivoRivela(R)) return;
       if (j >= ordine.length) {
@@ -3245,14 +3245,14 @@
           r.gio.cal.forEach(function (c, kk) { g.vv[kk] = c.v; g.bon[kk] = c.fv - c.v; }); g.pt.textContent = numFanta(r.gio.punti);
           pag.firstChild.textContent = "📋 La pagella · " + r.pos + "° posto" + (r.pos === 1 ? " 🏆" : "");
           if (ultima) { FX.posto(); vibra(30); } else FX.tic(0.9);
-          R.timer.push(setTimeout(prossima, 2000));
+          R.timer.push(setTimeout(prossima, 1500));
           return;
         }
         var c = r.gio.cal[k]; righe[k].classList.add("on"); somma += c.fv; tot.textContent = numFanta(somma); rianima(tot, "batte");
         FX.tic(0.3 + k * 0.12);
-        k++; R.timer.push(setTimeout(scopri, 750));
+        k++; R.timer.push(setTimeout(scopri, 560));
       }
-      R.timer.push(setTimeout(scopri, 700));
+      R.timer.push(setTimeout(scopri, 500));
     }
   }
   function podioRivela(R) {   // il podio: i primi tre sui gradini (il primo con le braccia alzate), sotto gli altri

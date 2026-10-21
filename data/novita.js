@@ -17,7 +17,8 @@ window.SG_NOVITA = [
       "⚽ Tanti modi di segnare: cross e colpo di testa, calcio d'angolo, uno-due, contropiede (scarta anche il portiere), pallonetto, tiro da fuori, slalom, punizione sopra la barriera, tap-in sulla respinta. Il pallone si alza davvero: lo vedi dall'ombra a terra.",
       "😱 Colpi di scena: rigore parato e ribattuta, gol annullato dal VAR, rigore assegnato dal VAR, rigore da ripetere, palo e dentro, deviazioni, salvataggi sulla linea, traverse, secondo giallo, gialli per simulazione e proteste, rosso per fallo da ultimo uomo.",
       "🌟 Ogni tanto le rarità: rovesciata, gol da centrocampo, gol direttamente dal calcio d'angolo, rigore a cucchiaio, il portiere che segna di testa all'ultimo minuto. Si vedono da vicino e al rallentatore.",
-      "🎙️ Frasi sempre diverse, il recupero (90'+3), «DOPPIETTA!» e «TRIPLETTA!», e al fischio finale «🎬 Il gol della giornata» rivisto al rallentatore."
+      "🎙️ Frasi sempre diverse, il recupero (90'+3), «DOPPIETTA!» e «TRIPLETTA!», e al fischio finale «🎬 Il gol della giornata» rivisto al rallentatore.",
+      "⏱️ Più svelta: dopo un gol la scritta resta meno, meno attese tra un momento e l'altro, pagelle e gol della giornata più rapidi."
     ]
   },
   {
