@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 244,
+    data: "21 ottobre 2026",
+    titolo: "⚽ Mini asta Fantacalcio: la formazione in grande",
+    descrizione: [
+      "🏟️ Al centro dello stadio ora c'è il campo grande con la formazione: maglie molto più grandi e il nome di ogni calciatore sui colori della sua squadra, con accanto quanto è stato pagato.",
+      "🧑‍💼 Il tuo avatar sta in piedi a bordo campo come l'allenatore: quando fai un'offerta alza il cartellino col prezzo, accanto alla sua squadra. Se qualcuno rilancia, in campo entra lui con la sua formazione.",
+      "👕 Dove andrebbe il calciatore all'asta lo vedi subito: la sua maglia in trasparenza nel posto libero. Quando è aggiudicato, la maglia vola dal maxischermo al suo posto e l'allenatore salta di gioia.",
+      "🪑 Tutti gli avatar stanno nella panchina sotto il campo, coi crediti e i posti che mancano: lì tocchi il tuo per offrire, come prima.",
+      "🏆 Anche alla fine la rosa di ognuno si scopre sul campo grande, col valore vero sopra ogni maglia."
+    ]
+  },
+  {
     v: 243,
     data: "20 ottobre 2026",
     titolo: "Gioco nuovo: 🍹 Da dove viene?",
