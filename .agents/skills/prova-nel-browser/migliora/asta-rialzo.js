@@ -281,8 +281,8 @@
     if (!await W.aspetta(function () { return (vm(C).asta || {}).offerta === 2; }, 3000)) no("il primo rialzo non arriva");
     if (vm(C).asta.giro <= g0 || vm(C).asta.resta < 6500 || vm(C).asta.durata !== 8000) no("il tempo non riparte pieno (giro " + vm(C).asta.giro + ", resta " + vm(C).asta.resta + ", durata " + vm(C).asta.durata + ")");
     await W.aspetta(function () { return tasto(G, /Rialzo: 3/); }, 3000); await W.dorme(600);
-    persDi(G, "Giulia").click();
-    if (!await W.aspetta(function () { return (vm(C).asta || {}).offerta === 3 && vm(C).asta.leaderId === nG; }, 3000)) no("il secondo rialzo (avatar) non arriva");
+    tasto(G, /Rialzo: 3/).click();   // (dal 21 ott online non c'è più la panchina da toccare: si offre coi tasti)
+    if (!await W.aspetta(function () { return (vm(C).asta || {}).offerta === 3 && vm(C).asta.leaderId === nG; }, 3000)) no("il secondo rialzo (tasto) non arriva");
     note.push("1→2→3 da Giulia, tempo pieno (8 s)");
     W.reteDi("Giulia").invia({ t: "rilancia", n: vm(C).asta.nCarta, prezzo: 3 }); await W.dorme(600);
     if (vm(C).asta.offerta !== 3 || /Troppo tardi/.test(T(G))) no("il messaggio doppio conta o dà «Troppo tardi»");

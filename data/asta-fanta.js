@@ -16,11 +16,11 @@ window.SG_FANTA_CALCIATORI = {
     B: [
       "Caprile (Cagliari)", "Mandas (Lazio)", "De Gea (Fiorentina)",
       "Skorupski (Bologna)", "Falcone (Lecce)", "Okoye (Udinese)",
-      "Sanchez Ro. (Como)", "Milinkovic-Savic V. (Napoli)", "Meret (Napoli)",
+      "Milinkovic-Savic V. (Napoli)", "Meret (Napoli)",
       "Corvi (Parma)", "Provedel (Inter)"
     ],
     C: [
-      "Perri (Torino)", "Bijlow (Genoa)", "Daffara (Parma)", "Muric (Sassuolo)",
+      "Perri (Torino)", "Bijlow (Genoa)", "Muric (Sassuolo)",
       "Palmisani (Frosinone)", "Stankovic F. (Venezia)", "Thiam (Monza)"
     ]
   },

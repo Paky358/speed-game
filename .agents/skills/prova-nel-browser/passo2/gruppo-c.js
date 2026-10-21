@@ -199,6 +199,7 @@
         if (vm(C).fase !== "fine") no("il Fantacalcio non arriva alla classifica (fase " + vm(C).fase + ")");
         await W.dorme(600);
         umani.forEach(function (n) { W.clicca(W.finestra(n), /Salta/); });
+        await W.dorme(500); umani.forEach(function (n) { W.clicca(W.finestra(n), /Salta/); });   // (il secondo «Salta»: dalla ⚽ giornata al podio)
       } },
     sipero: { nome: "Sì... però", quattro: true,
       seduti: function (v) { return (v.giocatori || []).map(function (g) { return g.nome; }); },
