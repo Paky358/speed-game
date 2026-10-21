@@ -9,6 +9,29 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 250,
+    data: "22 ottobre 2026",
+    titolo: "⚽ La giornata: gli omini in campo e tante azioni nuove",
+    descrizione: [
+      "🏃 Al posto dei cerchietti ci sono gli omini in piedi, con le maglie vere (le righe di Inter, Milan, Juve…), e la telecamera segue l'azione da vicino. I tuoi calciatori hanno la tua faccina come testa.",
+      "⚽ Tanti modi di segnare: cross e colpo di testa, calcio d'angolo, uno-due, contropiede (scarta anche il portiere), pallonetto, tiro da fuori, slalom, punizione sopra la barriera, tap-in sulla respinta. Il pallone si alza davvero: lo vedi dall'ombra a terra.",
+      "😱 Colpi di scena: rigore parato e ribattuta, gol annullato dal VAR, rigore assegnato dal VAR, rigore da ripetere, palo e dentro, deviazioni, salvataggi sulla linea, traverse, secondo giallo, gialli per simulazione e proteste, rosso per fallo da ultimo uomo.",
+      "🌟 Ogni tanto le rarità: rovesciata, gol da centrocampo, gol direttamente dal calcio d'angolo, rigore a cucchiaio, il portiere che segna di testa all'ultimo minuto. Si vedono da vicino e al rallentatore.",
+      "🎙️ Frasi sempre diverse, il recupero (90'+3), «DOPPIETTA!» e «TRIPLETTA!», e al fischio finale «🎬 Il gol della giornata» rivisto al rallentatore."
+    ]
+  },
+  {
+    v: 249,
+    data: "21 ottobre 2026",
+    titolo: "⚽ La giornata: i tuoi calciatori si riconoscono subito",
+    descrizione: [
+      "🎨 Ognuno ha il suo colore: sul campo i tuoi calciatori hanno la tua faccina dentro la maglia della squadra e il nome su un'etichetta del tuo colore.",
+      "👟 In classifica la tua riga si accende quando hai calciatori in campo e dice chi sono.",
+      "📋 Tocca la tua riga (o quella di un amico) per vedere i 5 calciatori con il voto e i bonus di adesso.",
+      "🧤 Il portiere e la porta in alto non escono più dal campo."
+    ]
+  },
+  {
     v: 248,
     data: "21 ottobre 2026",
     titolo: "⚽ La giornata dopo l'asta: con calma, e con le pagelle",
