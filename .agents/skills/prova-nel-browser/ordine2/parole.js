@@ -8,10 +8,13 @@
 //       PIZZERIA) stanno tutte in SG_ORDINE_SORELLE; ogni sorella esiste scritta uguale nella stessa lista; il gioco
 //       (__ORDINE.sorelle) le legge tutte; via le parole tolte (ESQUIMESE, CAPELLO, SEGA nel Classico, AMICIZIA…) e dentro
 //       quelle nuove (ARCO, PEDALÒ, PUNIZIONE, COPIONE…); 2.000 tabelloni fatti come li fa il gioco: pieni e mai due sorelle.
+//       (revisione del 21 ott: ci sono anche le sorelle DORSO/SCHIENA, PELLICOLA/FILM, BOMBER/MARCATORE, ORECCHIO/ORECCHINO
+//       e, nel 🌶️ Serata, FARFALLONE/CASANOVA/PLAYBOY, MARPIONE/PROVOLONE, LIKE/CUORICINO)
 // o2p2: online in 4: un tabellone vero del Classico (25 parole del Classico, nessuna coppia di sorelle, nessuna radice doppia)
 //       e uno del 🌶️ Serata (tutte e 25 del Serata).
 // o2p3: le parole nuove più lunghe (SALVAGENTE, FORMAZIONE, PROMOZIONE, CHIOCCIOLA…) messe sul tabellone come «parole
-//       vostre»: a 360x640 e 412x915, sul telefono di chi indovina, ogni parola sta nella sua casella e la pagina non scorre.
+//       vostre»: a 360x640 e 412x915, sul telefono di chi indovina, ogni parola sta nella sua casella e la pagina non scorre
+//       (e le parole misurate sono almeno 20: se il tabellone cambia classi la prova dice NO invece di passare a vuoto).
 // Profili finti, mai account veri.
 (function () {
   "use strict";
@@ -116,7 +119,7 @@
       if (s.scrollWidth > b.clientWidth + 1 || s.offsetHeight > b.clientHeight + 1) out.push("«" + s.textContent + "» non ci sta nella casella");
     });
     fs.sort(function (a, b) { return a[0] - b[0]; });
-    return { out: out, piccole: fs.slice(0, 3).map(function (x) { return x[1] + " " + x[0].toFixed(1) + "px"; }).join(", ") };
+    return { out: out, n: fs.length, piccole: fs.slice(0, 3).map(function (x) { return x[1] + " " + x[0].toFixed(1) + "px"; }).join(", ") };
   }
   COPIONE.o2p = { stanza: stanza, comincia: comincia, indovina: indovina, calmo: calmo, misura: misura, stanno: stanno, LUNGHE: LUNGHE };
 
@@ -140,6 +143,10 @@
     var nuove = ["ARCO", "PALLA", "PEDALÒ", "PORTO", "CANALE", "CORRENTE", "PUNIZIONE", "BOMBER", "COPIONE", "SMORFIA", "MARSUPIO", "RISERVA"].filter(function (x) { return C.indexOf(x) < 0; });
     if (nuove.length) no("nel Classico mancano: " + nuove.join(", "));
     if (M.serata.indexOf("SEGA") < 0) no("SEGA non è nel 🌶️ Serata");
+    // (revisione) i sinonimi veri nati coi mazzi a tema e quelli del 🌶️ Serata sfuggiti al primo giro
+    var devono = [["DORSO", "SCHIENA"], ["PELLICOLA", "FILM"], ["BOMBER", "MARCATORE"], ["ORECCHIO", "ORECCHINO"],
+      ["FARFALLONE", "CASANOVA"], ["FARFALLONE", "PLAYBOY"], ["MARPIONE", "PROVOLONE"], ["LIKE", "CUORICINO"]].filter(function (p) { return !sor[chiave(p[0], p[1])]; });
+    if (devono.length) no("mancano le sorelle " + devono.map(function (p) { return p.join("/"); }).join(", "));
     // il gioco legge tutte le coppie
     var gs = O.sorelle ? O.sorelle() : null;
     if (!gs) no("il gioco non legge le sorelle (__ORDINE.sorelle)");
@@ -205,6 +212,7 @@
       await W.dorme(300);
       var r = stanno(nome);
       r.out.forEach(function (x) { no(nome + " a " + M[k].join("x") + ": " + x); });
+      if (r.n < 20) no(nome + " a " + M[k].join("x") + ": misurate solo " + r.n + " parole (il tabellone è cambiato? cerco .or-tab .or-carta .or-w)");
       N.push(M[k].join("x") + ": tutte dentro (le più piccole: " + r.piccole + ")");
     }
     N.unshift(su.length + " parole lunghe sul tabellone di " + nome);
