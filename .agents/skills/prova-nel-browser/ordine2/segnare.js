@@ -31,6 +31,11 @@
 // o2s5: le misure a 360x640 e 412x915 (chi indovina con tre segni, la riga degli indizi aperti e il tasto «👆 Gira»; il
 //       capo; l'altra squadra): niente scorre, niente esce, il ruolo sta tra ‹ e la musica senza toccarli, «👆 Gira …» ci
 //       sta, le faccine piccole non coprono le parole corte.
+// o2s6 (revisione del 21 ott 2026): gli indizi aperti quando si recupera una parola vecchia col tentativo in più: «🔴 A 2 · 1
+//       trovata» sotto l'indizio B 1; trovata la parola di B resta; col tentativo in più (l'altra di A) A si chiude e al giro
+//       dopo non c'è più. (Prima le parole in più restavano a B e A restava «aperto» per sempre.)
+// Revisione: quando il Blu deve sbagliare apposta (o2s2, o2s5, o2s6) gira una parola di nessuno e, se era la parola d'oro
+//       (la squadra continua), un'altra (aiuto sbaglia).
 // Profili finti, mai account veri.
 (function () {
   "use strict";
@@ -111,6 +116,18 @@
   }
   // le parole ancora coperte di un colore (dalla chiave sul telefono del capo)
   function coperteDi(C, chiave, col) { var v = vm(C); return chiave.map(function (c, i) { return c === col && !v.tab[i].g ? i : -1; }).filter(function (i) { return i >= 0; }); }
+  // chi (della squadra k) gira una parola di nessuno per passare il turno; se è la parola d'oro (segreta anche ai capi) la
+  // squadra continua: allora ne gira un'altra (prima si girava solo la prima di nessuno, e una volta su 7 la prova falliva)
+  async function sbaglia(C, chiave, chi, k) {
+    var neutre = coperteDi(C, chiave, "n");
+    for (var j = 0; j < neutre.length; j++) {
+      var i = neutre[j];
+      W.reteDi(chi).invia({ t: "gira", i: i });
+      if (!await W.aspetta(function () { var v = vm(C); return v.tab[i].g && !v.sospeso; }, 7000)) no(chi + " non riesce a girare " + vm(C).tab[i].w);
+      if (vm(C).turno !== k) return;
+    }
+    no(chi + " ha girato tutte le parole di nessuno e il turno non passa");
+  }
   // apre la stanza con gli amici, sistema squadre e capi e comincia. sq = { nome: squadra }, capi = [nomeRossi, nomeBlu]
   async function partita(amici, sq, capi, opzTel) {
     var P = await W.apriTel("Paky", Object.assign({ x: 0 }, opzTel || {}));
@@ -273,8 +290,7 @@
     // tocca ai Rossi (se comincia il Blu, Marco sbaglia apposta)
     if (vm(C).turno === 1) {
       await indizio(C, "Giulia", 1);
-      var sb = coperteDi(C, chiave, "n")[0];
-      W.reteDi("Marco").invia({ t: "gira", i: sb });
+      await sbaglia(C, chiave, "Marco", 1);
       if (!await W.aspetta(function () { return vm(C).turno === 0 && vm(C).passo === "indizio"; }, 8000)) no("non tocca ai Rossi");
     }
     await indizio(C, "Luca", 3);
@@ -467,6 +483,47 @@
     return N.join(" · ");
   } });
 
+  // ---------------- o2s6 ----------------
+  // gli indizi aperti quando la squadra recupera una parola vecchia col tentativo in più (revisione del 21 ott 2026)
+  function apertiDi(nome) { var w = W.finestra(nome), x = w && w.document.querySelector(".or-aperti"); return x ? x.textContent : ""; }
+  COPIONE.aggiungi("o2s6", { nome: "Parola d'ordine: indizi aperti, la parola vecchia recuperata col tentativo in più chiude l'indizio vecchio", fai: async function () {
+    var N = [], amici = ["Giulia", "Luca", "Sara", "Marco"];
+    W.__nomiO2 = ["Paky"].concat(amici);
+    var X = await partita(amici, { Luca: 0, Sara: 0, Giulia: 1, Marco: 1 }, ["Luca", "Giulia"]), C = X.C, chiave = chiaveDa(W.finestra("Luca")), usati = [];
+    async function bluSbaglia() {
+      await indizio(C, "Giulia", 1, usati);
+      await sbaglia(C, chiave, "Marco", 1);
+      if (!await W.aspetta(function () { return vm(C).turno === 0 && vm(C).passo === "indizio"; }, 8000)) no("non tocca ai Rossi");
+    }
+    async function giraRossa() {
+      var i = coperteDi(C, chiave, 0)[0];
+      W.reteDi("Sara").invia({ t: "gira", i: i });
+      if (!await W.aspetta(function () { return vm(C).tab[i].g && !vm(C).sospeso; }, 7000)) no("Sara non gira " + vm(C).tab[i].w);
+    }
+    if (vm(C).turno === 1) await bluSbaglia();
+    // A 2: una trovata, poi «passo»
+    var A = await indizio(C, "Luca", 2, usati);
+    await giraRossa();
+    W.reteDi("Sara").invia({ t: "passo" });
+    if (!await W.aspetta(function () { return vm(C).turno === 1 && vm(C).passo === "indizio"; }, 5000)) no("non passa al Blu");
+    await bluSbaglia();
+    // B 1: sotto l'indizio «A 2 · 1 trovata»; una parola (per B), poi il tentativo in più recupera l'altra di A
+    var B = await indizio(C, "Luca", 1, usati), riga = "🔴 " + A + " 2 · 1 trovata";
+    if (!await W.aspetta(function () { return W.__nomiO2.every(function (n) { return apertiDi(n).indexOf(riga) >= 0; }); }, 4000)) no("con l'indizio " + B + " sotto si legge «" + apertiDi("Paky") + "» invece di «" + riga + "»");
+    await giraRossa();
+    if (!await W.aspetta(function () { return apertiDi("Paky").indexOf(riga) >= 0; }, 3000)) no("trovata la parola di " + B + ", l'indizio " + A + " è cambiato: «" + apertiDi("Paky") + "»");
+    await giraRossa();   // (il tentativo in più: per noi recupera la seconda di A; finiti i tentativi il turno passa)
+    if (!await W.aspetta(function () { return vm(C).turno === 1; }, 5000)) no("finiti i tentativi il turno non passa");
+    await bluSbaglia();
+    // C 1: l'indizio A è chiuso (2 su 2), B anche: sotto l'indizio niente
+    var C3 = await indizio(C, "Luca", 1, usati);
+    await W.dorme(600);
+    W.__nomiO2.forEach(function (n) { var a = apertiDi(n); if (a.indexOf(A + " ") >= 0 || a.indexOf(B + " ") >= 0) no(n + ": con l'indizio " + C3 + " sotto si legge ancora «" + a + "»"); });
+    nota(N, "«" + riga + "» con " + B + "; trovata quella di " + B + " e col tentativo in più l'altra: con " + C3 + " niente più indizi aperti");
+    senzaErrori();
+    return N.join(" · ");
+  } });
+
   // ---------------- o2s5 ----------------
   // le misure di un telefono a una grandezza: "" = tutto a posto, se no cosa non va
   async function misuraTel(nome, L, H, cose) {
@@ -509,7 +566,7 @@
     var X = await partita(amici, { Luca: 0, Sara: 0, Giulia: 1, Marco: 1, Anna: 1 }, ["Luca", "Giulia"]), C = X.C, chiave = chiaveDa(W.finestra("Luca"));
     if (vm(C).turno === 1) {   // (se comincia il Blu: Marco sbaglia apposta)
       await indizio(C, "Giulia", 1);
-      W.reteDi("Marco").invia({ t: "gira", i: coperteDi(C, chiave, "n")[0] });
+      await sbaglia(C, chiave, "Marco", 1);
       if (!await W.aspetta(function () { return vm(C).turno === 0 && vm(C).passo === "indizio"; }, 8000)) no("non tocca ai Rossi");
     }
     // primo indizio dei Rossi: una trovata, poi si passa; il Blu sbaglia; secondo indizio dei Rossi → la riga degli indizi aperti
@@ -519,7 +576,7 @@
     W.reteDi("Sara").invia({ t: "passo" });
     if (!await W.aspetta(function () { return vm(C).turno === 1 && vm(C).passo === "indizio"; }, 5000)) no("non passa al Blu");
     await indizio(C, "Giulia", 1);
-    W.reteDi("Marco").invia({ t: "gira", i: coperteDi(C, chiave, "n")[0] });
+    await sbaglia(C, chiave, "Marco", 1);
     if (!await W.aspetta(function () { return vm(C).turno === 0 && vm(C).passo === "indizio"; }, 8000)) no("non tornano i Rossi");
     await indizio(C, "Luca", 2, [p1]);
     // due segni sulla stessa parola (Sara e Paky) e i segni di Paky su altre due

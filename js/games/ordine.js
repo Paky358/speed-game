@@ -1498,13 +1498,19 @@
   }
   // gli indizi vecchi della squadra di turno che hanno ancora parole da trovare («🔴 MARE 2 · 1 trovata»): col tentativo in
   // più si recupera senza cercare nella chat. Si contano dalla chat della partita (le parole della squadra girate dopo
-  // quell'indizio, prima del successivo); l'indizio di adesso no (è scritto grande), e nemmeno gli ∞
+  // quell'indizio, prima del successivo); l'indizio di adesso no (è scritto grande), e nemmeno gli ∞.
+  // Le parole giuste in più di un indizio (oltre il suo numero: il tentativo in più) vanno all'indizio vecchio ancora aperto
+  // più recente: è proprio il recupero («MARE 2 · 1 trovata», poi SOLE 1 e col tentativo in più l'altra di MARE: MARE è chiuso)
   function indiziAperti(vm) {
     if (vm.fase !== "gioco" || vm.passo !== "indovina" || !vm.indizio) return [];
     var k = vm.turno, l = [], cur = null;
     (vm.log || []).forEach(function (e) {
       if (e.t === "ind") { cur = e.k === k ? { p: e.p, n: e.num, ok: 0 } : null; if (cur) l.push(cur); }
-      else if (e.t === "gira" && cur && e.k === k && e.c === k) cur.ok++;
+      else if (e.t === "gira" && cur && e.k === k && e.c === k) {
+        var dove = cur;
+        if (cur.n > 0 && cur.ok >= cur.n) for (var j = l.length - 2; j >= 0; j--) if (l[j].n > 0 && l[j].ok < l[j].n) { dove = l[j]; break; }
+        dove.ok++;
+      }
     });
     l.pop();   // (l'ultimo è l'indizio di adesso)
     return l.filter(function (x) { return x.n > 0 && x.ok < x.n; }).reverse().slice(0, 3);
