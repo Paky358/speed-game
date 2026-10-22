@@ -214,7 +214,7 @@
   // caselle alte almeno 44 px a 360x640, scritte più grandi sui telefoni lunghi (fino a 17 px), mai sotto 9, nessuna parola a
   // capo. All'inizio la striscia dice grande «COMINCIANO I …» col segno della squadra. Dopo qualche mossa: i segni ▲ ● ■ e il
   // teschio nel DOM (caselle girate, chiave del capo, pannelli, chat), la nera del capo a righe scure come nella proposta C,
-  // le girate spente per il capo; la striscia mostra le ultime 2 righe intere, un tocco la apre sopra il tabellone (scesa fino
+  // le girate del capo piene con la ✓; la striscia mostra le ultime 2 righe intere, un tocco la apre sopra il tabellone (scesa fino
   // all'ultima riga), il tocco sulla riga di una parola la chiude e illumina la casella, un altro tocco la richiude.
   COPIONE.aggiungi("o2t1", { nome: "Parola d'ordine: tabellone grande (misure), stile C coi segni nel DOM, chat a striscia che si apre", fai: async function () {
     var N = [];
@@ -272,9 +272,11 @@
     // (revisione del 22 ott 2026: la nera del capo come nella proposta C, a righe scure; niente più cornice gialla e nera)
     var nera = carte(wL)[chiave.indexOf("x")], bg = wL.getComputedStyle(nera).backgroundImage;
     if (!/repeating-linear-gradient/.test(bg) || !/46, 46, 46/.test(bg) || /252, 196, 25/.test(bg)) no("la nera del capo non è a righe scure come nella proposta C (" + bg.slice(0, 80) + ")");
-    if (!wL.document.querySelector(".or-tab.capo")) no("per il capo il tabellone non è «capo» (girate spente)");
+    if (!wL.document.querySelector(".or-tab.capo")) no("per il capo il tabellone non è «capo» (girate con la ✓)");
+    // (22 ott 2026, il proprietario: «i colori per il capo sono un po' troppo spenti»: le girate del capo restano piene, con la ✓)
     var gir = [].filter.call(carte(wL), function (b) { return b.classList.contains("g"); })[0];
-    if (gir && +wL.getComputedStyle(gir).opacity > 0.7) no("per il capo le girate non sono spente (" + wL.getComputedStyle(gir).opacity + ")");
+    if (gir && +wL.getComputedStyle(gir).opacity < 0.95) no("per il capo le girate sono ancora sbiadite (" + wL.getComputedStyle(gir).opacity + ")");
+    if (gir && !/✓/.test(wL.getComputedStyle(gir, ":after").content)) no("per il capo le girate non hanno la ✓");
     if (wP.document.querySelector(".or-tab.capo")) no("per chi indovina il tabellone è «capo»");
     [0, 1].forEach(function (k) { if (!wP.document.querySelector(".or-pan.s" + k + " .or-pan-nome .or-sg[data-s='" + k + "'] svg")) no("il pannello " + k + " non ha il suo segno"); });
     if (!wP.document.querySelector(".or-chat .or-l-w.c" + k0 + " .or-sg svg")) no("nella chat le parole girate non hanno il segno");
@@ -283,7 +285,7 @@
     if (!css) no("non trovo lo stile del gioco");
     if (/\[style\*=/.test(css)) no("nello stile ci sono ancora selettori [style*=…]");
     if (/filter:|backdrop-filter|mask:|-webkit-mask|clip-path/.test(css)) no("nello stile del gioco ci sono filtri, mask o clip-path");
-    nota(N, "segni nel DOM su caselle girate, chiave del capo, pannelli e chat; la nera del capo a righe scure (proposta C); girate spente per il capo");
+    nota(N, "segni nel DOM su caselle girate, chiave del capo, pannelli e chat; la nera del capo a righe scure (proposta C); girate del capo piene con la ✓");
     // la chat chiusa: le ultime 2 righe intere (le altre nascoste); un tocco la apre
     var log = wP.document.querySelector(".or-log"), viste = [].filter.call(log.querySelectorAll(".or-l"), function (r) { return r.getClientRects().length; });
     if (viste.length !== 2) no("la chat chiusa mostra " + viste.length + " righe invece di 2");
