@@ -57,7 +57,7 @@
     tempo: function () { return 30; },
     pubblico: function (st) {
       var p = st.prod || {};
-      return { prod: { e: p.e, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat },
+      return { prod: { e: p.e, f: p.f || null, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat },
         arrivi: Object.keys(st.trovati).sort(function (a, b) { return st.trovati[a] - st.trovati[b]; }).map(function (id) { return { id: id, ms: st.trovati[id] }; }),
         prove: st.prove };
     },
@@ -159,7 +159,7 @@
       var conta = A.contachilometri(prod.prezzo || 0, { grande: true });
       var righe = el("div", { class: "pz-righe" + (((riv.arrivi || []).length + (riv.altri || []).length) > 4 ? " due" : "") }), banner = el("div", { class: "pz-sotto" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🔼🔽 Più o meno" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ el("span", { class: "e", text: prod.e || "🎁" }), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ A.Z.figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
       A.sch.appendChild(conta.el); A.sch.appendChild(righe); A.sch.appendChild(banner);
       A.ST.FX.rullo(1.1); await A.dorme(1300); if (!A.vivo()) return;
       await conta.via(260); if (!A.vivo()) return;

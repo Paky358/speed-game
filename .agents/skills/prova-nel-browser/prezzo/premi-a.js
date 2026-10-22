@@ -140,8 +140,8 @@
     al.mossa(st, "b", { i: 7, v: 5 }, P); al.mossa(st, "b", { i: 0, v: -3 }, P);   // mosse cattive
     if (!P._fatti.a || !P._fatti.b || !P._fatti.c || P._fatti.d) no("Alpinista: «fatto» solo per chi ha scritto i 3 prezzi: " + JSON.stringify(P._fatti));
     var r = al.fine(st, P), g = {}; r.riv.g.forEach(function (x) { g[x.id] = x; });
-    if (g.a.tot !== 0 || r.punti.a !== 700) no("Alpinista: tutto preciso = 0 passi e 500 + 200: " + JSON.stringify(g.a) + " " + r.punti.a);
-    if (g.b.giu || g.b.tot < 6 || g.b.tot > 12 || r.punti.b !== 500 - 15 * g.b.tot) no("Alpinista: +12,5% = circa 3 passi a prodotto: " + JSON.stringify(g.b) + " punti " + r.punti.b);
+    if (g.a.tot !== 0 || r.punti.a !== 750) no("Alpinista: tutto preciso = 0 passi e 550 + 200: " + JSON.stringify(g.a) + " " + r.punti.a);
+    if (g.b.giu || g.b.tot < 6 || g.b.tot > 12 || r.punti.b !== 550 - 15 * g.b.tot) no("Alpinista: +12,5% = circa 3 passi a prodotto: " + JSON.stringify(g.b) + " punti " + r.punti.b);
     if (!g.c.giu || r.punti.c !== 0 || g.c.p[0] !== 25) no("Alpinista: prezzo doppio = 25 passi e giù dal burrone: " + JSON.stringify(g.c));
     if (!g.d.giu || r.punti.d !== 0) no("Alpinista: chi non scrive i prezzi cade: " + JSON.stringify(g.d));
     if (!r.carrello.a || r.carrello.a.length !== 3) no("Alpinista: chi resta più in basso si porta a casa i 3 premi");
@@ -179,7 +179,7 @@
     or.mossa(s2, "c", { l: [0, 1, 2, 3, 9], fine: 1 }, Po2);
     if (!Po2._fatti.a || Po2._fatti.b || Po2._fatti.c) no("Ordine: «fatto» solo con «✅ Fatto!» e un ordine valido: " + JSON.stringify(Po2._fatti));
     var r2 = or.fine(s2, Po2);
-    if (r2.punti.a !== 500 || r2.punti.b !== 240 || r2.punti.c !== 0 || r2.punti.d !== 0) no("Ordine: punti (500, 240, 0, 0): " + JSON.stringify(r2.punti));
+    if (r2.punti.a !== 450 || r2.punti.b !== 210 || r2.punti.c !== 0 || r2.punti.d !== 0) no("Ordine: punti (450, 210, 0, 0): " + JSON.stringify(r2.punti));
     if (!r2.carrello.a || r2.carrello.a[0].prezzo !== s2.prod[giusto[4]].prezzo) no("Ordine: chi fa buca in uno si porta a casa il più caro");
     if (!or.privatoDi(s2, "b", Po2) || or.privatoDi(s2, "b", Po2).f || or.privatoDi(s2, "d", Po2)) no("Ordine: segreti per chi ricarica");
     var dur2 = or.durata(r2.riv, Po2);

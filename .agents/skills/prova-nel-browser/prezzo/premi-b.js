@@ -3,7 +3,7 @@
 // In ogni partita escono SOLO questi due giochi a premi (gli altri si tolgono dal telefono che tiene la partita), quindi
 // in 📺 ⚡ Veloce (2 Offerte) chi vince la prima Offerta sceglie tra i due e la seconda volta esce l'altro.
 //
-// pzb1: le regole senza grafica (i 10 prezzi sempre dello stesso salto, il primo sopra fuori dal margine, i punti 400/250/150/50,
+// pzb1: le regole senza grafica (i 10 prezzi sempre dello stesso salto, il primo sopra fuori dal margine, i punti 600/450/350/250/150 e un gradino prima 200, due 100,
 //       i prezzi sbagliati dell'«Occhio al prezzo», la caduta del Plinko, fine() con gettoni non lasciati, il Bot).
 // pzb2: «🤖 Contro il Bot» (3 Bot), 📺 ⚡ Veloce: partita intera; i Bot si fermano e lasciano i gettoni.
 // pzb3: sullo stesso telefono in 3: «È troppo!» tutti insieme (un bottone a testa), Plinko a turno con domande diverse.
@@ -114,20 +114,21 @@
     var fermi = ids.filter(function (id) { return v.riv0.tocchi[id] >= 0; });
     if (!fermi.length) no("«È troppo!»: non si è fermato nessuno (" + JSON.stringify(v.riv0.tocchi) + ")");
     ids.forEach(function (id) {
-      var i2 = v.riv0.tocchi[id], atteso = i2 < 0 || i2 < st.j ? 0 : [400, 250, 150][i2 - st.j] || 50;
+      var i2 = v.riv0.tocchi[id], atteso = i2 < 0 ? 0 : i2 < st.j ? [200, 100][st.j - i2 - 1] || 0 : [600, 450, 350, 250][i2 - st.j] || 150;
       if ((v.punti[id] || 0) !== atteso) no("«È troppo!»: " + id + " fermo al " + (i2 + 1) + "° (giusto il " + (st.j + 1) + "°) ha " + v.punti[id] + " punti invece di " + atteso);
     });
     return "✋ fermi " + fermi.length + "/" + ids.length + " (giusto il " + (st.j + 1) + "°: " + ids.map(function (id) { return v.riv0.tocchi[id] + 1; }).join(",") + ")";
   }
   function controllaPlinko(v, quanti) {
     if (!v || !v.riv) no("«Plinko» non è uscito (o non è arrivato alla rivelazione)");
-    var riv = v.riv0, ids = riv.ids || [], CASE = [10, 50, 100, 0, 500, 0, 100, 50, 10];
+    var riv = v.riv0, ids = riv.ids || [], CASE = [10, 25, 50, 0, 200, 0, 50, 25, 10];
     if (quanti && ids.length !== quanti) no("Plinko: " + ids.length + " giocatori invece di " + quanti);
     var tot = {}, auto = 0;
     (riv.gett || []).forEach(function (x) { tot[x.id] = (tot[x.id] || 0) + CASE[x.b]; if (x.auto) auto++; if (x.s.length !== 12) no("Plinko: percorso di " + x.s.length + " file"); });
     ids.forEach(function (id) {
       var n = (riv.gett || []).filter(function (x) { return x.id === id; }).length;
       if (n !== riv.gettoni[id] || n !== 1 + ((v.st.giusti || {})[id] || 0)) no("Plinko: " + id + " ha " + n + " gettoni (ne aveva vinti " + riv.gettoni[id] + ")");
+      tot[id] = (tot[id] || 0) + 50 * ((v.st.giusti || {})[id] || 0);   // +50 per ogni prezzo indovinato
       if ((v.punti[id] || 0) !== (tot[id] || 0)) no("Plinko: punti di " + id + " " + v.punti[id] + " invece di " + tot[id]);
     });
     var risposte = ids.filter(function (id) { return ((v.st.risp || {})[id] || []).length === 3; }).length;
@@ -152,13 +153,13 @@
       }
     });
     if (Object.keys(js).length < 6) no("il primo sopra non cambia posto: " + Object.keys(js));
-    if (B.puntiTroppo(3, 3) !== 400 || B.puntiTroppo(4, 3) !== 250 || B.puntiTroppo(5, 3) !== 150 || B.puntiTroppo(9, 3) !== 50 || B.puntiTroppo(2, 3) || B.puntiTroppo(-1, 3)) no("punti di «È troppo!»");
+    if (B.puntiTroppo(3, 3) !== 600 || B.puntiTroppo(4, 3) !== 450 || B.puntiTroppo(5, 3) !== 350 || B.puntiTroppo(6, 3) !== 250 || B.puntiTroppo(9, 3) !== 150 || B.puntiTroppo(2, 3) !== 200 || B.puntiTroppo(1, 3) !== 100 || B.puntiTroppo(0, 3) || B.puntiTroppo(-1, 3)) no("punti di «È troppo!»");
     prods.filter(function (p) { return p.prezzo >= 1 && p.prezzo < 100; }).forEach(function (p) {
       for (var k = 0; k < 8; k++) { var f = B.finto(p.prezzo, Math.random), dd = Math.abs(f - p.prezzo) / p.prezzo; if (!(f > 0) || dd < 0.17 || dd > 0.8) no("prezzo sbagliato poco credibile: " + p.prezzo + " → " + f); }
     });
-    // la caduta: dal centro il 500 esce più o meno una volta su quattro, dai lati poche volte (3%)
+    // la caduta: dal centro il 200 (la casella di mezzo) esce più o meno una volta su quattro, dai lati poche volte (3%)
     var c = 0, l = 0; for (var i = 0; i < 4000; i++) { if (B.cade(4, Math.random).b === 4) c++; if (B.cade(0, Math.random).b === 4) l++; }
-    if (c < 700 || c > 1150 || l > 250) no("la caduta del Plinko: 500 dal centro " + c + "/4000, dal lato " + l);
+    if (c < 700 || c > 1150 || l > 250) no("la caduta del Plinko: casella di mezzo dal centro " + c + "/4000, dal lato " + l);
     var p = B.cade(8, Math.random), q = B.percorso(8, p.s); if (q[12] / 2 !== p.b || q.some(function (x) { return x < 0 || x > 16; })) no("percorso e casella non tornano");
     // il gioco a premi da solo, con un P finto (host)
     var fP = function (ids) { var priv = [], fatti = {}; return { ids: ids, n: ids.length, modo: "online", locale: false, rnd: Math.random, nome: function (x) { return x; },
@@ -179,7 +180,7 @@
     if (JSON.stringify(gt.pubblico(s2, P2)).indexOf('"prezzo"') >= 0) no("«È troppo!»: nella foto c'è il prezzo vero");
     gt.mossa(s2, "a", { i: s2.j }, P2); gt.mossa(s2, "a", { i: 0 }, P2); gt.mossa(s2, "b", { i: s2.j - 1 }, P2); gt.mossa(s2, "c", { i: 99 }, P2);
     var f2 = gt.fine(s2, P2);
-    if (f2.punti.a !== 400 || f2.punti.b || f2.punti.c || f2.punti.d || !f2.carrello.a) no("«È troppo!»: punti " + JSON.stringify(f2.punti));
+    if (f2.punti.a !== 600 || f2.punti.b !== 200 || f2.punti.c || f2.punti.d || !f2.carrello.a || f2.carrello.b) no("«È troppo!»: punti " + JSON.stringify(f2.punti));
     // stesso telefono, tutti insieme: un messaggio coi tocchi di tutti
     var P3 = fP(["a", "b", "c"]); P3.modo = "telefono"; P3.locale = true; var s3 = gt.prepara(P3);
     if (!s3.insieme) no("«È troppo!» sullo stesso telefono in 3: non è «tutti insieme»");
@@ -192,7 +193,7 @@
     if (!(bd > bf)) no("il Bot difficile non è più bravo del facile: " + bd + " / " + bf);
     var mb = L.plinko.bot(st, { id: "c", livello: "medio" }, P);
     if (mb.some(function (x) { return x.ms > 32000; }) || mb.filter(function (x) { return x.m.x != null; }).length < 1) no("Plinko, mosse del Bot: " + JSON.stringify(mb));
-    return cari.length + " cose sopra i 2.000 € · Bot al momento giusto: difficile " + bd + "/300, facile " + bf + "/300 · 500 dal centro " + Math.round(c / 40) + "%";
+    return cari.length + " cose sopra i 2.000 € · Bot al momento giusto: difficile " + bd + "/300, facile " + bf + "/300 · casella di mezzo dal centro " + Math.round(c / 40) + "%";
   } });
 
   // ===================== pzb2: contro il Bot =====================

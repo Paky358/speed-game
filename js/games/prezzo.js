@@ -32,8 +32,13 @@
   // (scegli e intro: il tempo per leggere le regole dei giochi a premi, anche per chi non li conosce)
   var T = { prodotto: 4800, offri: 20000, rifai: 12000, sopra: 4400, scegli: 15000, intro: 10000, punti: 10000, vetOffri: 30000, giro: 15000, decidi: 10000 };
   var TL = { offri: 25000, vetOffri: 35000, giro: 20000, decidi: 15000, scegli: 15000 };
-  var SCALA = [300, 150, 75], SCALA_V = [900, 450, 225];
-  var BONUS_GIUSTO = 500, BONUS_TUTTO = 1500, BONUS_CENTO = 1000;
+  // I punti (22 ott 2026, rifatti con decine di migliaia di puntate simulate: .agents/skills/prova-nel-browser/prezzo/simulazione). Prima la
+  // fortuna e la Vetrina pesavano troppo (CENTO +1.000, giro bonus +1.000/+500, Vetrina ×3 e VINCI TUTTO +1.500 entro il 5%):
+  // chi era primo dopo le manche vinceva una volta su due e un CENTO cambiava il vincitore una volta su quattro.
+  // Ora la Ruota (quasi tutta fortuna) dà 200 a chi vince e +300 per CENTO, la Vetrina una volta e mezza un'Offerta e VINCI
+  // TUTTO è più raro (entro il 3%): scelti tra 50 combinazioni provate (.agents/skills/prova-nel-browser/prezzo/simulazione/cerca.js).
+  var SCALA = [300, 150, 75], SCALA_R = [200, 100, 50], SCALA_V = [450, 225, 110];
+  var BONUS_GIUSTO = 500, BONUS_TUTTO = 1000, TUTTO_PCT = 0.03, BONUS_CENTO = 300, GIRO_100 = 300, GIRO_VERDE = 150;
   var N_OGG = { veloce: 6, puntata: 10, lunga: 15 }, N_GIRI = { veloce: 2, puntata: 3, lunga: 4 };
   // i passi della rivelazione (li usa l'host per sapere quanto aspettare e la regia per andare a tempo)
   var RV = { cam: 650, rullo: 1300, cifra: 280, dopoConta: 450, riga: 420, banner: 2000, cattivo: 2500, leggii: 2700 };
@@ -87,7 +92,7 @@
     }
     return e;
   }
-  // La Ruota del 100: g = { id: { v1, v2 } }. Vince chi va più vicino a 100 senza superarlo; 100 esatto +1.000
+  // La Ruota del 100: g = { id: { v1, v2 } }. Vince chi va più vicino a 100 senza superarlo; 100 esatto +300 (BONUS_CENTO)
   function esitoRuota(g, ids) {
     var righe = ids.map(function (id) {
       var x = g[id] || {}, tot = (x.v1 || 0) + (x.v2 || 0);
@@ -95,11 +100,11 @@
     });
     var cand = righe.filter(function (r) { return !r.out && r.tot > 0; }).map(function (r) { return { id: r.id, d: 100 - r.tot }; });
     var pos = posizioni(cand), n = ids.length;
-    righe.forEach(function (r) { r.pos = pos[r.id] || 0; r.punti = r.pos ? puntiPos(r.pos, n, SCALA) : 0; if (r.cento) r.punti += BONUS_CENTO; });
+    righe.forEach(function (r) { r.pos = pos[r.id] || 0; r.punti = r.pos ? puntiPos(r.pos, n, SCALA_R) : 0; if (r.cento) r.punti += BONUS_CENTO; });
     righe.sort(function (a, b) { return (a.out - b.out) || (b.tot - a.tot); });
     return { righe: righe, vince: righe.filter(function (r) { return r.pos === 1; }).map(function (r) { return r.id; }), cento: righe.filter(function (r) { return r.cento; }).map(function (r) { return r.id; }) };
   }
-  function puntiBonus(b) { return b === 100 ? 1000 : (b === 5 || b === 15) ? 500 : 0; }
+  function puntiBonus(b) { return b === 100 ? GIRO_100 : (b === 5 || b === 15) ? GIRO_VERDE : 0; }
   // la puntata: l'ordine dei passi. nPremi = quanti giochi a premi ci sono (0 = niente giochi a premi)
   function piano(formato, durata, nPremi) {
     var p = ["apertura"], i;
@@ -132,8 +137,18 @@
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
 
   // ---------------- i prodotti ----------------
-  function prodotti() { var d = window.SG_PREZZO || {}; return (d.prodotti || []).filter(function (p) { return p && p.id && p.nome && +p.prezzo > 0 && Z().CAT[p.cat]; }); }
-  function vetrine() { var d = window.SG_PREZZO || {}; return (d.vetrine || []).filter(function (v) { return v && v.titolo && v.pezzi && v.pezzi.length >= 2 && v.pezzi.every(function (x) { return x && x.nome && +x.prezzo > 0; }); }); }
+  // la foto vera (data/prezzo-foto.js: id → "percorso su Commons|larghezza"; i pezzi delle vetrine sono "idVetrina#n")
+  function conFoto(o, id) { if (o && o.f === undefined) o.f = (window.SG_PREZZO_FOTO || {})[id] || null; return o; }
+  // i prodotti senza una foto controllata restano, con l'emoji, finché il proprietario non manda la foto (deciso il 23 ott 2026)
+  function prodotti() {
+    var d = window.SG_PREZZO || {};
+    return (d.prodotti || []).filter(function (p) { return p && p.id && p.nome && +p.prezzo > 0 && Z().CAT[p.cat]; }).map(function (p) { return conFoto(p, p.id); });
+  }
+  function vetrine() {
+    var d = window.SG_PREZZO || {};
+    return (d.vetrine || []).filter(function (v) { return v && v.titolo && v.pezzi && v.pezzi.length >= 2 && v.pezzi.every(function (x) { return x && x.nome && +x.prezzo > 0; }); })
+      .map(function (v) { v.pezzi.forEach(function (x, i) { conFoto(x, (v.id || v.titolo) + "#" + i); }); return v; });
+  }
   function annoDati() { return (window.SG_PREZZO || {}).anno || 2026; }
   var CH_VISTI = "sg-prezzo-visti", CH_VETR = "sg-prezzo-vetrine";
   function leggiLS(k) { try { var v = JSON.parse(localStorage.getItem(k) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
@@ -170,7 +185,7 @@
     scriviLS(CH_VETR, viste.filter(function (x) { return x !== k; }).concat([k]).slice(-40));
     return copia(v);
   }
-  function pubProd(p) { return p ? { id: p.id, e: p.e, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat, cent: Z().conCent(p.prezzo) } : null; }
+  function pubProd(p) { return p ? { id: p.id, e: p.e, f: p.f || null, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat, cent: Z().conCent(p.prezzo) } : null; }
 
   // ---------------- i giochi a premi registrati ----------------
   function premi() { return window.SG_PREZZO_PREMI || {}; }
@@ -324,7 +339,7 @@
         o.ruota = { g: gr, esito: s === "riv" || s === "rivb" || s === "bonus" ? H.ruota.esito : null, esitoB: s === "rivb" ? H.ruota.esitoB : null, indizio: H.ruota.indizio || null };
       }
       if (f === "vetrina" && H.vet) {
-        o.vet = { titolo: H.vet.v.titolo, e: H.vet.v.e || "🛍️", pezzi: H.vet.v.pezzi.map(function (x) { return { e: x.e, nome: x.nome, desc: x.desc || "", dove: x.dove || "" }; }),
+        o.vet = { titolo: H.vet.v.titolo, e: H.vet.v.e || "🛍️", pezzi: H.vet.v.pezzi.map(function (x) { return { e: x.e, f: x.f || null, nome: x.nome, desc: x.desc || "", dove: x.dove || "" }; }),
           fatti: Object.keys(H.vet.off).concat(Object.keys(H.vpassati || {})) };
         if (s === "riv") o.vet.esito = H.vet.esito;
       }
@@ -403,7 +418,7 @@
       H.arrivi = [];
     }
     function aggiungiPunti(id, n) { var p = pById(id); if (!p || !n) return; p.punti += n; H.ultimo[id] = (H.ultimo[id] || 0) + n; }
-    function nelCarrello(id, cosa) { var p = pById(id); if (p && cosa) p.carrello.push({ e: cosa.e || "🎁", nome: cosa.nome, prezzo: tondo2(cosa.prezzo) }); }
+    function nelCarrello(id, cosa) { var p = pById(id); if (p && cosa) p.carrello.push({ e: cosa.e || "🎁", f: cosa.f || null, nome: cosa.nome, prezzo: tondo2(cosa.prezzo) }); }
 
     // ---------- L'OFFERTA (anche ogni oggetto di «Solo il prezzo») ----------
     function nuovaOfferta() {
@@ -683,7 +698,7 @@
       var pezzi = H.vet.v.pezzi, tot = tondo2(pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0));
       var e = esitoOfferta(tot, H.vet.off, { senzaSforare: true, pct: 0.03, scala: SCALA_V, bonus: 0, n: presenti().length });
       e.tutti = [];
-      e.righe.forEach(function (r) { if (!r.sopra && r.v >= tot * 0.95) { r.tutto = true; r.punti += BONUS_TUTTO; e.tutti.push(r.id); } });
+      e.righe.forEach(function (r) { if (!r.sopra && r.v >= tot * (1 - TUTTO_PCT)) { r.tutto = true; r.punti += BONUS_TUTTO; e.tutti.push(r.id); } });
       e.ordine = e.righe.slice().sort(function (a, b) { return (b.sopra - a.sopra) || (b.d - a.d); }).map(function (r) { return r.id; });   // dalla più lontana alla più vicina
       e.prezzi = pezzi.map(function (x) { return x.prezzo; });
       e.righe.forEach(function (r) { aggiungiPunti(r.id, r.punti); });
@@ -692,7 +707,7 @@
       if (e.tutti.length) {
         var v2 = pescaVetrina([H.vet.v.id || H.vet.v.titolo]);
         if (v2) {
-          e.seconda = { titolo: v2.titolo, e: v2.e || "🛍️", pezzi: v2.pezzi.map(function (x) { return { e: x.e, nome: x.nome, prezzo: x.prezzo }; }), tot: tondo2(v2.pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0)) };
+          e.seconda = { titolo: v2.titolo, e: v2.e || "🛍️", pezzi: v2.pezzi.map(function (x) { return { e: x.e, f: x.f || null, nome: x.nome, prezzo: x.prezzo }; }), tot: tondo2(v2.pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0)) };
           e.tutti.forEach(function (id) { v2.pezzi.forEach(function (x) { nelCarrello(id, x); }); });
         }
       }
@@ -965,6 +980,14 @@
   }
   function nomi(lista) { return lista.length < 2 ? lista.join("") : lista.slice(0, -1).join(", ") + " e " + lista[lista.length - 1]; }
 
+  // le foto si scaricano appena il prodotto è nella foto della partita (mentre il sipario è ancora chiuso)
+  // (grande per la scheda, piccola per le righe, la rivelazione e il carrello: sono due misure diverse)
+  function precaricaFoto(vm) {
+    if (vm.prod) { Z().precarica(vm.prod, 500); Z().precarica(vm.prod, 330); }
+    if (vm.vet && vm.vet.pezzi) vm.vet.pezzi.forEach(function (x) { Z().precarica(x, 330); });
+    var pp = vm.premio && vm.premio.pub && vm.premio.pub.prod;
+    if (pp) (Array.isArray(pp) ? pp : [pp]).forEach(function (x) { Z().precarica(x, 500); Z().precarica(x, 330); });
+  }
   function disegnaVM(t, vm, cb) {
     Z().stile();
     if (vm.fase === "lobby") { if (R) { try { R.pan.giu(); } catch (e) {} } R = null; return lobbyP(t, vm, cb); }
@@ -972,6 +995,7 @@
     else if (!R.S.vivo() && !R.fineFatta) return;   // il core ha portato via il gioco: la regia si ferma
     R.vm = vm; R.cb = cb; R.vmTs = Date.now();
     if (R.fineFatta) return;
+    precaricaFoto(vm);
     sincronizzaLeggii(R);
     leggii(R);
     if (R.kFatto === vm.k) aggiornaFase(R);
@@ -1079,7 +1103,7 @@
     if (testo == null) testo = vm.formato === "solo" ? "🏷️ Oggetto " + vm.iOff + " di " + vm.nOff : "🏷️ L'Offerta · " + vm.iOff + " di " + vm.nOff;
     return el("div", { class: "pz-testa" }, [ el("span", { text: testo }), vm.doppio && vm.fase === "offerta" ? el("span", { class: "x2", text: "🔥 ×2" }) : null ]);
   }
-  function miniProd(el, p) { return el("div", { class: "pz-miniprod" }, [ el("span", { class: "e", text: p.e || "🎁" }), el("span", { class: "n", text: p.nome }) ]); }
+  function miniProd(el, p) { return el("div", { class: "pz-miniprod" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome }) ]); }
   function testaPan(R, chi, testo, tb) {
     var el = R.t.el;
     return el("div", { class: "pz-pan-testa" }, [ chi ? fac(el, chi) : null, el("span", { class: "tx", text: testo }), tb ? tb.el : null ]);
@@ -1702,7 +1726,7 @@
   // ---------------- LA VETRINA FINALE ----------------
   function pezzoVet(el, x, prezzo) {
     var tag = Z().cartellino(el, prezzo != null ? E(prezzo) : "? €");
-    var n = el("div", { class: "pz-vp" }, [ el("span", { class: "e", text: x.e || "🎁" }), el("div", { class: "t" }, [ el("b", { text: x.nome }), x.desc ? el("small", { text: x.desc + (x.dove ? " · " + x.dove : "") }) : null ]), tag ]);
+    var n = el("div", { class: "pz-vp" }, [ Z().figura(el, x, "e"), el("div", { class: "t" }, [ el("b", { text: x.nome }), x.desc ? el("small", { text: x.desc + (x.dove ? " · " + x.dove : "") }) : null ]), tag ]);
     n._tag = tag; return n;
   }
   async function fVetMostra(R) {
@@ -1800,7 +1824,7 @@
     ST.pubblico(S, vince.length ? "ovazione" : "ohh");
     vince.forEach(function (id) { var i2 = idxDi(vm, id); if (i2 >= 0) ST.faccia(S, i2, "evviva"); });
     await ST.dorme(RVET.banner); if (!vivoK(R, k)) return;
-    // «VINCI TUTTO!»: entro il 5% senza superare, si vince anche la seconda vetrina
+    // «VINCI TUTTO!»: vicinissimo (entro il 3%, TUTTO_PCT), si vince anche la seconda vetrina
     if (e.tutti && e.tutti.length) {
       ST.vuota(extra);
       extra.appendChild(el("div", { class: "pz-tutto", text: "⭐ VINCI TUTTO! ⭐" }));
@@ -1832,7 +1856,7 @@
       if (!x.c.length) cosa = [ el("b", { text: x.p.id === R.cb.myId ? "Tu" : x.p.nome }), el("span", { text: "🧽" }), el("small", { text: "una spugna, premio di consolazione" }) ];
       else {
         var raggr = []; x.c.forEach(function (c) { var g = raggr.filter(function (y) { return y.nome === c.nome; })[0]; if (g) g.n++; else raggr.push({ e: c.e, nome: c.nome, n: 1 }); });
-        cosa = [ el("b", { text: x.p.id === R.cb.myId ? "Tu" : x.p.nome }), el("span", { text: x.c.map(function (c) { return c.e; }).slice(0, 12).join("") }),
+        cosa = [ el("b", { text: x.p.id === R.cb.myId ? "Tu" : x.p.nome }), el("span", { class: "figs" }, x.c.slice(0, 12).map(function (c) { return Z().figura(el, c, "e"); })),
           el("small", { text: raggr.map(function (g) { return quanti(g.n) + g.nome; }).join(", ") }) ];
       }
       box.appendChild(el("div", { class: "pz-car" }, [ fac(el, x.p, x.c.length ? "esulta" : "triste"), el("div", { class: "cosa" }, cosa), el("span", { class: "tot", text: x.c.length ? E(Math.round(x.tot)) : "" }) ]));
@@ -1980,8 +2004,8 @@
       "Se <b>sforate tutti</b>, si rifà una volta sola, tutti sotto l'offerta più bassa.",
       "Punti: <b>300</b> al primo, <b>150</b> al secondo, <b>75</b> al terzo (con almeno 4 giocatori). <b>PREZZO GIUSTO!</b> (praticamente preciso): <b>+500</b>.",
       "Chi vince l'Offerta sceglie il <b>gioco a premi</b>, e si gioca tutti insieme.",
-      "🎡 <b>La Ruota del 100</b>: girate tutti, poi decidete in segreto se girare ancora (si somma). Vince chi va più vicino a 100 senza superarlo. 100 esatto: <b>+1.000</b> e il giro bonus. Chi vince la Ruota ha un <b>indizio</b> sulla Vetrina.",
-      "🛍️ <b>La Vetrina finale</b>: tanti premi insieme, offerta segreta sul totale. Punti ×3 e, se ci vai vicinissimo (entro il 5% senza superare), <b>VINCI TUTTO!</b> (+1.500).",
+      "🎡 <b>La Ruota del 100</b>: girate tutti, poi decidete in segreto se girare ancora (si somma). Vince chi va più vicino a 100 senza superarlo: <b>200</b> al primo, 100 al secondo, 50 al terzo (con almeno 4 giocatori). 100 esatto: <b>+300</b> e il giro bonus (100 ancora +300, uno spicchio verde +150). Chi vince la Ruota ha un <b>indizio</b> sulla Vetrina.",
+      "🛍️ <b>La Vetrina finale</b>: tanti premi insieme, offerta segreta sul totale. Punti: <b>450</b> al primo, 225 al secondo, 110 al terzo (con almeno 4 giocatori) e, se ci vai vicinissimo (entro il 3%), <b>VINCI TUTTO!</b> (+1.000).",
       "🎯 <b>Solo il prezzo</b>: esce un oggetto, 20 secondi, vince chi va più vicino (sopra o sotto, a meno che chi ospita scelga «Senza sforare»). Preciso: +500. <b>L'ultimo oggetto vale doppio.</b>",
       "Alla fine il <b>carrello</b>: cosa vi portate a casa (euro finti, solo per ridere). Vince chi ha più punti.",
       "<b>Sullo stesso telefono</b> si gioca a turno: con le offerte segrete vi passate il telefono."

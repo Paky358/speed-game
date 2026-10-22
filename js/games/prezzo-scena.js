@@ -138,14 +138,46 @@
     }
   };
 
+  // ---------------- la foto vera del prodotto (Wikimedia Commons) ----------------
+  // p.f = "percorso su Commons|larghezza dell'originale" (es. "9/9b/Nutella_ak.jpg|1514"): lo mette prezzo.js da
+  // data/prezzo-foto.js (foto scelte e controllate a occhio il 22-23 ott 2026). Le misure di Wikimedia sono fisse (330 e 500
+  // vanno bene, 480 no): se l'originale è più stretto si prende l'originale.
+  var COMMONS = "https://upload.wikimedia.org/wikipedia/commons/";
+  function urlFoto(f, px) {
+    if (!f) return null;
+    // le foto fatte dal proprietario stanno nel sito: "loc:carte/prezzo/<id>.jpg" (piccole, già della misura giusta; per i pezzi
+    // delle vetrine il # dell'id diventa - nel nome del file, se no l'indirizzo si spezza)
+    if (/^loc:carte\/prezzo\/[\w.\-]+\.(jpg|jpeg|png|webp)$/i.test(f)) return String(f).slice(4);
+    var s = String(f).split("|"), path = s[0], w = +s[1] || 0, nome = path.split("/").pop();
+    if (!/^[0-9a-f]\/[0-9a-f]{2}\/./.test(path)) return null;
+    var enc = path.split("/").map(encodeURIComponent).join("/");
+    return w && w <= px ? COMMONS + enc : COMMONS + "thumb/" + enc + "/" + px + "px-" + encodeURIComponent(nome);
+  }
+  var CARICATE = {};
+  // si scarica prima (sotto il sipario), così quando si apre la foto c'è già
+  function precarica(p, px) { var u = p && urlFoto(p.f, px || 500); if (u && !CARICATE[u]) { CARICATE[u] = new Image(); CARICATE[u].src = u; } }
+  // la foto dentro un contenitore con la classe cls; se non c'è o non si carica, l'emoji (col contenitore clsEmo)
+  function figura(el, p, cls, px, clsEmo) {
+    p = p || {};
+    var u = urlFoto(p.f, px || 330), box = el("span", { class: cls || "" });
+    function emoji() { box.className = clsEmo || cls || ""; box.textContent = p.e || "🎁"; }
+    if (!u) { emoji(); return box; }
+    var im = document.createElement("img");
+    im.alt = ""; im.draggable = false; im.decoding = "async";
+    im.onerror = emoji;
+    im.src = u;
+    box.classList.add("pz-conf"); box.appendChild(im);
+    return box;
+  }
+
   // ---------------- la scheda del prodotto ----------------
-  // prod = { e, nome, desc, dove, cat, prezzo? }; opz = { piccola, conPrezzo, cur, senzaCat }
+  // prod = { e, f, nome, desc, dove, cat, prezzo? }; opz = { piccola, conPrezzo, cur, senzaCat }
   function scheda(el, prod, opz) {
     opz = opz || {}; prod = prod || {};
     var c = CAT[prod.cat] || null;
     var box = el("div", { class: "pz-scheda" + (opz.piccola ? " piccola" : "") + (opz.cls ? " " + opz.cls : "") });
     if (c && !opz.senzaCat) { var ch = el("span", { class: "pz-cat", text: c.ic + " " + (opz.piccola ? c.corto : c.nome) }); ch.style.setProperty("--cc", c.col); box.appendChild(ch); }
-    box.appendChild(el("div", { class: "pz-emo", text: prod.e || "🎁" }));
+    box.appendChild(figura(el, prod, "pz-foto", 500, "pz-emo"));
     box.appendChild(el("div", { class: "pz-nome", text: prod.nome || "" }));
     if (prod.desc && !opz.senzaDesc) box.appendChild(el("div", { class: "pz-desc", text: prod.desc }));
     if (prod.dove) box.appendChild(el("div", { class: "pz-dove", text: "📍 " + prod.dove }));
@@ -457,6 +489,13 @@
       ".pz-scheda.piccola .pz-emo{font-size:30px;width:auto;height:auto;background:none}.pz-scheda.piccola .pz-nome{font-size:16px}.pz-scheda.piccola .pz-cat{display:none}",
       ".pz-scheda.piccola .pz-desc{display:none}.pz-scheda.piccola .pz-dove{width:100%;font-size:11.5px}",
       ".pz-scheda.media .pz-emo{font-size:40px}.pz-scheda.media .pz-desc{font-size:12.5px}.pz-scheda.media .pz-nome{font-size:17px}",
+      // la foto vera: nella scheda alta quanto lo schermo permette, nelle righe grande come l'emoji che c'era (1,3 em)
+      ".pz-foto{height:clamp(62px,calc(var(--alt,640px) * .15),140px);max-width:100%;display:flex;align-items:center;justify-content:center}",
+      ".pz-foto img{max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.28);background:#fff}",
+      ".pz-scheda.piccola .pz-foto{height:46px}.pz-scheda.media .pz-foto{height:clamp(54px,calc(var(--alt,640px) * .1),90px)}",
+      "@media (max-height:700px){.st-vista.pz-con-pan .pz-sip .pz-foto{height:66px}}",
+      ".pz-conf:not(.pz-foto){display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;flex:0 0 auto;vertical-align:middle}",
+      ".pz-conf:not(.pz-foto) img{width:100%;height:100%;object-fit:cover;border-radius:22%;background:#fff}",
       // il cartellino del prezzo
       ".pz-tag{position:relative;display:inline-flex;align-items:center;gap:6px;padding:4px 12px 4px 20px;border-radius:5px 14px 14px 5px;background:linear-gradient(#ffe98a,#fcc419);color:#3b2a00;font-weight:900;font-size:17px;box-shadow:0 3px 10px rgba(0,0,0,.35);white-space:nowrap}",
       ".pz-tag:before{content:'';position:absolute;left:7px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#2a1d6e}",
@@ -617,6 +656,7 @@
     fmtN: fmtN, fmtE: fmtE, tondo2: tondo2, passo: passo, margine: margine, arrotonda: arrotonda, conCent: conCent,
     CAT: CAT, ORDINE_CAT: ORDINE_CAT, FX: FX, vibra: vibra,
     scheda: scheda, cartellino: cartellino, sipario: sipario, contachilometri: contachilometri, durataConta: durataConta,
+    urlFoto: urlFoto, precarica: precarica, figura: figura,
     barraTempo: barraTempo, pannello: pannello, tastierino: tastierino,
     SPICCHI: SPICCHI, ruota: ruota, coloreSpicchio: coloreSpicchio,
     stile: stile

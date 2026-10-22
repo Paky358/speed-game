@@ -81,7 +81,7 @@
     var cand = righe.filter(function (r) { return r.tot > 0 && r.tot <= 100; });
     righe.forEach(function (r) {
       var ok = cand.indexOf(r) >= 0, pos = ok ? 1 + cand.filter(function (q) { return q.tot > r.tot; }).length : 0;
-      out[r.id] = (pos === 1 ? 300 : pos === 2 ? 150 : pos === 3 && ids.length >= 4 ? 75 : 0) + (r.tot === 100 ? 1000 : 0);
+      out[r.id] = (pos === 1 ? 200 : pos === 2 ? 100 : pos === 3 && ids.length >= 4 ? 50 : 0) + (r.tot === 100 ? 300 : 0);
     });
     return out;
   }
@@ -126,14 +126,14 @@
       if (H.fase === "ruota" && H.sotto === "rivb" && H.ruota && H.ruota.esitoB) {
         visti[chiave] = 1; conti.bonus++;
         var suoB = {}, mioB = {};
-        H.ruota.esitoB.righe.forEach(function (r) { suoB[r.id] = r.punti; mioB[r.id] = r.b === 100 ? 1000 : (r.b === 5 || r.b === 15) ? 500 : 0; });
+        H.ruota.esitoB.righe.forEach(function (r) { suoB[r.id] = r.punti; mioB[r.id] = r.b === 100 ? 300 : (r.b === 5 || r.b === 15) ? 150 : 0; });
         confronta("Giro bonus", mioB, suoB); aggiungi(suoB);
       }
       if (H.fase === "vetrina" && H.sotto === "riv" && H.vet && H.vet.esito) {
         visti[chiave] = 1; conti.vetrina++;
         var tot = r2(H.vet.v.pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0));
-        var mioV = mieOfferte(tot, H.vet.off, true, 1, pres, [900, 450, 225], 0, 0.03), mg = marg(tot, 0.03);
-        Object.keys(H.vet.off).forEach(function (k) { var v = H.vet.off[k]; if (v <= tot + mg + 1e-9 && v >= tot * 0.95) { mioV[k] += 1500; conti.tutto++; } });
+        var mioV = mieOfferte(tot, H.vet.off, true, 1, pres, [450, 225, 110], 0, 0.03), mg = marg(tot, 0.03);
+        Object.keys(H.vet.off).forEach(function (k) { var v = H.vet.off[k]; if (v <= tot + mg + 1e-9 && v >= tot * 0.97) { mioV[k] += 1000; conti.tutto++; } });
         var suoV = {}; H.vet.esito.righe.forEach(function (r) { suoV[r.id] = r.punti; });
         confronta("Vetrina (" + tot + ")", mioV, suoV); aggiungi(suoV);
         log.push("V " + tot + " ← " + JSON.stringify(H.vet.off) + " " + JSON.stringify(suoV));
