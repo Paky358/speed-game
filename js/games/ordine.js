@@ -959,7 +959,8 @@
       if (H.fase !== "gioco") return;
       var k = H.turno, capo = pById(H.capo[k]);
       if (H.sospeso) return;   // c'è una parola in sospeso: i bot aspettano
-      if (H.passo === "indizio") { if (capo && capo.bot) tBot = setTimeout(function () { botIndizio(k); }, 1800); return; }
+      // (il Bot capo dà l'indizio a presentazione finita: prima lo dava a 1,8 s, sopra lo studio della presentazione)
+      if (H.passo === "indizio") { if (capo && capo.bot) tBot = setTimeout(function () { botIndizio(k); }, Math.max(1800, (H.presFino || 0) - Date.now() + 1800)); return; }
       var umani = membri(k).filter(function (p) { return !p.bot && p.id !== H.capo[k]; });
       var bot = membri(k).filter(function (p) { return p.bot && p.id !== H.capo[k]; })[0];
       if (umani.length || !bot) return;   // se in squadra indovini tu, il bot ti lascia fare
@@ -1443,7 +1444,12 @@
   function posCartello(ui) {
     try {
       var sch = ui.indZona && ui.indZona.offsetParent; if (!sch) return;
-      var y = sch.offsetTop + ui.indZona.offsetTop + ui.indZona.offsetHeight / 2 + (sch.offsetParent ? sch.offsetParent.offsetTop || 0 : 0);
+      var su = sch.offsetTop + (sch.offsetParent ? sch.offsetParent.offsetTop || 0 : 0);
+      var y = su + ui.indZona.offsetTop + ui.indZona.offsetHeight / 2;
+      // (revisione del 22 ott 2026) una scritta alta (a 360 px va su due righe, o l'indizio con la faccia) sale un po', sopra le
+      // squadre: non deve coprire le caselle della prima riga
+      var h = ui.cart.offsetHeight, tabTop = su + ui.tab.offsetTop;
+      if (h && ui.tab.offsetHeight && y + h / 2 > tabTop - 3) y = Math.max(h / 2 + 4, tabTop - 3 - h / 2);
       ui.cart.style.setProperty("--or-cart-y", Math.round(y) + "px");
     } catch (e) {}
   }
@@ -1467,6 +1473,10 @@
   // e l'indizio sulla fascia del colore della squadra col numero dorato, per un secondo e mezzo; poi resta lì sotto, nell'indizio
   function cartelloIndizio(ui, vm, e) {
     var sq = SQ[e.k] || SQ[0];
+    // (revisione del 22 ott 2026) un indizio dato mentre c'è ancora la presentazione la taglia: si legge sul tabellone, non
+    // sopra lo studio. E «💭 … pensava a» del turno di prima se ne va (anche se doveva ancora uscire): non copre l'indizio nuovo
+    if (ui.inPres) saltaPresentazione(ui);
+    clearTimeout(ui.tPens); clearTimeout(ui.tPens2); if (ui.pensEl) ui.pensEl.classList.remove("su");
     cartello(ui, fascia(ui, e.k, e.p, e.num), "👑 " + e.nome + (vm.vsBot ? "" : " · capo dei " + sq.nome), sq.col, 1500, facDi(vm, e.id, "esulta"), "ind");
     suona("indizio");
   }
@@ -2054,6 +2064,9 @@
       vm.attesa ? vm.attesa.k + "/" + vm.attesa.chi + (vm.attesa.scad ? "/s" : "") : "", r.prossimo, cb.sonoHost && puoChiudere(vm), !!cb.sonoHost, !!vm.cosa,
       (vm.titoli || []).length, vm.sospeso && vm.sospeso.id === BOT_ID ? "b" : ""].join("|");   // (sonoHost: l'amico che prende il posto dell'host ha i tasti giusti)
     if (ks !== ui.kSotto) { ui.kSotto = ks; disegnaSotto(ui, vm, cb, r); }
+    // (il campo dell'indizio non c'è più, o non è più quello in cui scrivo: il tabellone torna come prima. Un campo tolto dalla
+    // pagina mentre ci scrivevo non sempre dice «blur»)
+    if (ui.scrive) { var ae = document.activeElement; if (!(ae && ae.classList && ae.classList.contains("or-input") && ui.sotto.contains(ae))) scrive(ui, false); }
     if (r.intendo) aggiornaSel(ui, vm);
     if (r.indovino) aggiornaGira(ui, vm, cb);
     aggiornaRuolo(ui, vm, r);
@@ -2166,6 +2179,11 @@
   }
   // chi guarda soltanto (link con guarda=1): in basso la targhetta del core "👀 Guardi · 😂 · ✕": faccine e uscita le dà lei
   function conTarga(t) { return !!(t && t.guarda && !t.eliminazione); }
+  // il capo sta scrivendo l'indizio (il campo ha il cursore): .or-scrive sullo schermo (vedi lo stile)
+  function scrive(ui, si) {
+    si = !!si; if (ui.scrive === si || !ui.S || !ui.S.vista) return;
+    ui.scrive = si; ui.S.vista.classList.toggle("or-scrive", si);
+  }
   function disegnaSotto(ui, vm, cb, r) {
     var el = ui.el, box = ui.sotto;
     while (box.firstChild) box.removeChild(box.firstChild);
@@ -2265,6 +2283,10 @@
         numeri.appendChild(b);
       });
       input.addEventListener("input", function () { errore.textContent = ""; });
+      // (revisione del 22 ott 2026) mentre il capo scrive, sul telefono la tastiera si prende mezzo schermo: il tabellone, che
+      // serve proprio adesso, prende il posto della chat e delle faccine (a 360x640 senza questo le caselle sparivano: 4 px)
+      input.addEventListener("focus", function () { scrive(ui, true); });
+      input.addEventListener("blur", function () { scrive(ui, false); });
       function manda() {
         var err = erroreIndizio(input.value, vm.tab);
         if (err) { errore.textContent = err; return; }
@@ -2457,7 +2479,6 @@
     var P1 = "radial-gradient(circle,rgba(255,255,255,.14) 0,rgba(255,255,255,.14) 1.2px,rgba(255,255,255,0) 1.8px) 0 0/9px 9px,radial-gradient(circle,rgba(255,255,255,.14) 0,rgba(255,255,255,.14) 1.2px,rgba(255,255,255,0) 1.8px) 4.5px 4.5px/9px 9px";
     var Q2 = "linear-gradient(90deg,rgba(255,255,255,.1) 50%,rgba(255,255,255,0) 50%) 0 0/10px 10px,linear-gradient(rgba(255,255,255,.1) 50%,rgba(255,255,255,0) 50%) 0 0/10px 10px";
     var F0 = R0 + ",linear-gradient(160deg,#ef4545,#cb2525)", F1 = P1 + ",linear-gradient(160deg,#2a8be4,#166abd)", F2 = Q2 + ",linear-gradient(160deg,#38b051,#26883a)";
-    var TESCHIO = "#1d1d1d", PERICOLO = "repeating-linear-gradient(135deg,#fcc419 0,#fcc419 5px,#1f1f1f 5px,#1f1f1f 10px)";
     st.textContent = [
       // ---- i segni delle squadre (nel DOM: <span class="or-sg"><svg>): prendono il colore della scritta ----
       ".or-sg{display:inline-block;flex:none;width:.8em;height:.8em;line-height:0;vertical-align:-.06em}.or-sg:empty{display:none}.or-sg svg{display:block;width:100%;height:100%}",
@@ -2527,12 +2548,11 @@
       ".or-carta.chiave.c2,.or-carta.svelata.c2{color:#1c6a2f;background:linear-gradient(90deg,rgba(47,158,68,.07) 50%,rgba(47,158,68,0) 50%) 0 0/10px 10px,linear-gradient(rgba(47,158,68,.07) 50%,rgba(47,158,68,0) 50%) 0 0/10px 10px,linear-gradient(180deg,#effcf1,#cbefd2);box-shadow:inset 0 -4px 0 #2f9e44,0 0 0 1px rgba(47,158,68,.25),0 1px 1px rgba(70,55,20,.1),0 3px 5px -2px rgba(70,55,20,.25)}",
       ".or-carta.chiave.cn,.or-carta.svelata.cn{color:#4a4536;background:linear-gradient(180deg,#fffdf8,#f2ecde);box-shadow:inset 0 -4px 0 #d6ccb4,0 0 0 1px rgba(70,55,20,.12),0 1px 1px rgba(70,55,20,.1),0 3px 5px -2px rgba(70,55,20,.25)}",
       ".or-carta.chiave.c0>.or-sg,.or-carta.svelata.c0>.or-sg{color:#e03131}.or-carta.chiave.c1>.or-sg,.or-carta.svelata.c1>.or-sg{color:#1c7ed6}.or-carta.chiave.c2>.or-sg,.or-carta.svelata.c2>.or-sg{color:#2f9e44}",
-      // la parola NERA coperta (vista del capo, e a fine partita): nera, col teschio, nella cornice a strisce gialle e nere del
-      // cartello di pericolo (due pezzi sotto la parola: le strisce e il nero dentro)
-      ".or-carta.chiave.cx,.or-carta.svelata.cx{color:#fff;text-shadow:0 1px 1px #000;background:" + TESCHIO + ";box-shadow:0 0 0 1px #000,0 3px 6px -2px rgba(0,0,0,.5)}",
-      ".or-carta.chiave.cx:before,.or-carta.svelata.cx:before{content:'';position:absolute;left:0;top:0;right:0;bottom:0;border-radius:12px;background:" + PERICOLO + ";pointer-events:none}",
-      ".or-carta.chiave.cx:after,.or-carta.svelata.cx:after{content:'';position:absolute;left:4px;top:4px;right:4px;bottom:4px;border-radius:8px;background:radial-gradient(110% 90% at 30% 15%,#3b3b3b,#141414 70%);pointer-events:none}",
-      ".or-carta.chiave.cx>.or-sg,.or-carta.svelata.cx>.or-sg{top:6px;left:6px;width:12px;height:12px;color:#fcc419}",
+      // la parola NERA coperta (vista del capo, e a fine partita): a righe scure col teschio bianco, com'è nella proposta C scelta
+      // dal proprietario. (Revisione del 22 ott 2026: per qualche ora era nella cornice a strisce gialle e nere, che nella
+      // proposta C non c'era, e le parole lunghe ci finivano sopra: CAVATAPPI e ASTRONAVE a 360 px)
+      ".or-carta.chiave.cx,.or-carta.svelata.cx{color:#fff;text-shadow:0 1px 1px #000;background:repeating-linear-gradient(135deg,#2e2e2e 0,#2e2e2e 5px,#1d1d1d 5px,#1d1d1d 10px);box-shadow:inset 0 -4px 0 #000,0 0 0 1px #000,0 3px 6px -2px rgba(0,0,0,.5)}",
+      ".or-carta.chiave.cx>.or-sg,.or-carta.svelata.cx>.or-sg{color:#fff}",
       // le girate: colore pieno e il disegno della squadra, schiacciate nel vassoio (scritta bianca con un'ombra: si legge)
       ".or-carta.g{color:#fff;padding-bottom:2px;text-shadow:0 1px 2px rgba(0,0,0,.4);box-shadow:inset 0 2px 3px rgba(0,0,0,.2),inset 0 0 0 1px rgba(0,0,0,.08)}",
       ".or-carta.g>.or-sg{color:#fff}",
@@ -2545,7 +2565,7 @@
       // il capo, a partita in corso: le girate un po' spente, così risaltano le coperte ancora da trovare
       ".or-tab.capo .or-carta.g{opacity:.6}",
       // (caselle basse, es. a fine partita sui telefoni piccoli: il segno più piccolo e più nell'angolo, non tocca la parola)
-      ".or-tab.basse .or-carta>.or-sg{top:2px;left:2px;width:7px;height:7px}.or-tab.basse .or-carta>.or-sg[data-s=x],.or-tab.basse .or-carta>.or-sg[data-s=oro]{top:2px;left:2px;width:9px;height:9px}.or-tab.basse .or-carta.chiave.cx>.or-sg,.or-tab.basse .or-carta.svelata.cx>.or-sg{top:5px;left:5px;width:8px;height:8px}.or-tab.basse .or-carta.chiave.cx:before,.or-tab.basse .or-carta.svelata.cx:before{border-radius:10px}.or-tab.basse .or-carta.chiave.cx:after,.or-tab.basse .or-carta.svelata.cx:after{left:3px;top:3px;right:3px;bottom:3px}",
+      ".or-tab.basse .or-carta>.or-sg{top:2px;left:2px;width:7px;height:7px}.or-tab.basse .or-carta>.or-sg[data-s=x],.or-tab.basse .or-carta>.or-sg[data-s=oro]{top:2px;left:2px;width:9px;height:9px}",
       // la carta appena girata: si gira (si schiaccia e torna: solo transform e opacità)
       ".or-carta.appena{animation:orGira .45s ease-out}",
       "@keyframes orGira{0%{transform:scale(1.08,.12);opacity:.4}55%{transform:scale(1.06);opacity:1}100%{transform:none}}",
@@ -2603,6 +2623,9 @@
       ".or-studio .or-err{color:#ffa8a8}",
       ".or-studio .or-toast{bottom:calc(var(--or-barra,110px) + 8px)}",
       ".or-sotto .or-faccine{flex:none}",
+      // il capo che scrive l'indizio (revisione del 22 ott 2026): la tastiera si prende mezzo schermo, e il tabellone prende il
+      // posto della chat, delle faccine delle squadre, della scritta «Tocca a te» e di «pensava a» (la clessidra resta)
+      ".or-scrive .or-chat,.or-scrive .or-facce,.or-scrive .or-ind-stato,.or-scrive .or-pens{display:none}.or-scrive .or-ind{min-height:0}",
       // ---- a fine partita (21 ott 2026): il tabellone svelato sta TUTTO sopra la barra (p4): le righe si abbassano quanto serve,
       // la chat sui telefoni bassi lascia il posto ----
       "@media(max-height:760px){.or-fine-v .or-chat{display:none}.or-fine-v .or-facce{display:none}.or-fine-v .or-ind{min-height:0}.or-fine-v .or-fine-tit{font-size:.86rem;line-height:1.15}}",   // (sui telefoni bassi, a fine partita, anche le faccine delle squadre lasciano il posto: nella Sala le caselle da 26 a 33 px)
