@@ -11,9 +11,12 @@ window.SG_NOVITA = [
   {
     v: 255,
     data: "22 ottobre 2026",
-    titolo: "📈 Mini asta Fantacalcio: quotazioni aggiornate e attaccanti al loro posto",
+    titolo: "📈 Mini asta Fantacalcio: rigoristi, battitori, angoli e quotazioni di oggi",
     descrizione: [
       "📈 Le quotazioni di tutti i calciatori dell'asta sono quelle di oggi del listone 2026/27 di Fantacalcio.it: a fine asta il valore delle rose è quello vero di adesso.",
+      "🎯 Sul tabellone dell'asta si vede chi tira i rigori (anche il 2° e il 3° rigorista), chi batte le punizioni (🦶 BATTITORE) e chi batte gli angoli (🚩 ANGOLI), presi da questa stagione e controllati su più siti: solo calciatori che giocano davvero.",
+      "⚽ Nella giornata dopo l'asta i gol su punizione li segna chi le batte davvero e gli assist sui calci d'angolo li fa chi li batte: comprarli conviene.",
+      "😤 «Entrata dura» non vuol dire più per forza giallo: circa una volta su due è un'entrata pulita (👏 prende solo il pallone) e il voto sale di mezzo punto.",
       "⚽ Nella giornata dopo l'asta i tuoi attaccanti non stanno più in difesa mentre la loro squadra attacca: se i posti davanti sono presi da chi fa l'azione, si mettono in un posto libero più avanti o a centrocampo."
     ]
   },
