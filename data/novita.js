@@ -16,7 +16,11 @@ window.SG_NOVITA = [
       "🧤 Parate, pali, traverse e salvataggi sulla linea si vedono al rallentatore e da più vicino: si capisce cosa succede.",
       "📋 Le pagelle finali escono più piano e poi aspettano: chi tiene la partita (o chi ha il telefono) va avanti con «Avanti ▶», gli amici leggono «⏳ Aspettiamo Paky…» e vanno avanti con lui. Lo stesso alle pagelle del primo tempo.",
       "⚡ Niente più pause col campo vuoto: i risultati delle partite dove nessuno ha giocatori si aggiornano in alto mentre guardi le azioni.",
-      "🏃 Più fluida: durante i rilanci e negli ultimi secondi dell'asta il telefono fa meno fatica."
+      "🏃 Più fluida: durante i rilanci e negli ultimi secondi dell'asta il telefono fa meno fatica.",
+      "🤝 Online le pagelle restano allineate anche tra telefoni grandi e piccoli; se chi tiene la partita salta al podio, esce o ricarica, gli amici vanno avanti da soli col loro «Avanti ▶».",
+      "👆 Toccare la tua riga per vedere i tuoi calciatori funziona sempre (prima, dopo la prima volta, non rispondeva più).",
+      "⚽ Più realismo: chi è espulso non segna più; ogni tanto anche contro i vostri portieri arriva un tiro che non entra (così «azione pericolosa» non vuol dire per forza gol); la ribattuta del rigore si vede subito dopo la parata; «🃏 POKER!» per 4 gol.",
+      "🎬 Sistemate tante piccole cose nelle scene: la rovesciata, i tuffi del portiere, il «palo e dentro», il pallonetto, l'autogol dal calcio d'angolo, l'orologio del recupero, le scritte lunghe sui telefoni stretti."
     ]
   },
   {
