@@ -207,6 +207,7 @@
       if (h.attesa && h.attesa.fino) h.attesa.fino = Math.max(ora(h.attesa.fino), adesso + 10000);
       if (h.cless && h.cless.fino) h.cless.fino = Math.max(ora(h.cless.fino), adesso + 10000);
       if (h.indDa) h.indDa = ora(h.indDa);   // (quando il capo ha cominciato a pensare: per i titoli di fine partita)
+      if (h.presFino) h.presFino = ora(h.presFino);   // (fino a quando c'è la presentazione: la clessidra aspetta)
       h.rivedi = null;   // (fino al 21 ott 2026 «Cosa intendevi?» aveva un conto che bloccava la fine: non c'è più)
       h.st = h.st || {};   // 🎭 i numeri di ognuno per i titoli scherzosi
       h.ind = h.ind || [];   // 🤔 gli indizi con le parole pensate dai capi (sono nella partita ricordata: non si perdono)
@@ -389,6 +390,7 @@
         bid: H.bid, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
         storia: H.storia.slice(-8), log: (H.log || []).slice(-40), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r,
         hostId: H.hostId, sospeso: H.sospeso || null, guarda: (H.guarda || []).slice(),
+        pres: H.fase === "gioco" ? H.pres || null : null,   // 🎬 la presentazione di questa partita (intera, solo i capi nuovi, niente)
         // 🤔 le parole pensate dai capi: MAI durante la partita (nemmeno all'altro capo), solo a partita finita
         intendi: !!H.intendi, cosa: fine ? H.cosa || null : null,
         // a partita finita: come è finita (💣 chi ha girato la parola nera…), i 🎭 titoli scherzosi (uno a testa, li decido io),
@@ -588,6 +590,14 @@
       H.st = {}; H.titoli = null; H.fineCome = null; H.punti = null; H.indDa = Date.now();
       H.msg = "Cominciano i " + SQ[primo].nome + "!";
       H.log = []; H.logN = 0; scrivi({ t: "via", k: primo });
+      // 🎬 la presentazione (p10): intera solo alla prima partita di questa stanza; alla rivincita solo i capi nuovi, o niente se
+      // i capi sono gli stessi. Il primo indizio aspetta che finisca: la clessidra parte quando il tabellone si vede (p13)
+      H.nPart = (H.nPart || 0) + 1;
+      var nuovi = [];
+      for (var kq = 0; kq < H.nsq; kq++) if (!(H.vsBot && kq === 1) && H.capiPrima && H.capiPrima[kq] !== H.capo[kq]) nuovi.push(kq);
+      H.pres = H.nPart === 1 ? { t: "tutta" } : nuovi.length ? { t: "capi", k: nuovi } : null;
+      H.capiPrima = H.capo.slice();
+      H.presFino = Date.now() + durataPres(H.pres, H.nsq, H.vsBot);
       H.fase = "gioco"; chiaveHost = null;
       mandaChiavi(); controllaTurno(); bd();
     }
@@ -596,13 +606,14 @@
     // 🎬 Show: la suspense lunga solo sulle parole che contano (la prima di ogni indizio, l'ultimo tentativo, l'ultima parola che
     // manca per vincere); sulle altre un attimo, così quando la squadra è sicura il ritmo non cala. ⚡ Veloce: sempre un attimo.
     // (Non dipende MAI dal colore della parola: una suspense lunga non deve far capire niente)
-    var SOSPENSE_MS = 2300, SOSPENSE_BREVE = 800, SOSPENSE_VELOCE = 650, tSosp = null;
+    var SOSPENSE_MS = 2300, SOSPENSE_BREVE = 800, SOSPENSE_VELOCE = 650, SOSPENSE_BOT = 450, tSosp = null;
     function sospendi(i, id) {
       var c = H.tab[i]; if (!c || c.g || H.sospeso) return;
       H.nSosp = (H.nSosp || 0) + 1;
       var lungo = H.ritmo !== "veloce" && (H.girate === 0 || (H.tentativi > 0 && H.tentativi < 99 && H.tentativi === 1) || resto(H.turno) === 1);
       if (id === BOT_ID) lungo = H.ritmo !== "veloce" && resto(1) <= 2;   // 🤖 il Bot: suspense solo quando sta per vincere
-      var ms = lungo ? SOSPENSE_MS : H.ritmo === "veloce" ? SOSPENSE_VELOCE : SOSPENSE_BREVE;
+      // (🤖 il Bot scopre la sua parola in circa un secondo, col tabellone in vista: p14)
+      var ms = lungo ? SOSPENSE_MS : id === BOT_ID ? SOSPENSE_BOT : H.ritmo === "veloce" ? SOSPENSE_VELOCE : SOSPENSE_BREVE;
       H.sospeso = { i: i, id: id, k: H.turno, n: H.nSosp, lungo: lungo ? 1 : 0 };   // gli altri segni restano: si può continuare con quelle
       bd();
       clearTimeout(tSosp); tSosp = setTimeout(rivela, ms);
@@ -676,7 +687,8 @@
       var ok = I.pensate.filter(function (i) { return I.tocchi.some(function (x) { return x.i === i; }); });
       scrivi({ t: "pens", k: I.k, id: I.id, nome: I.nome, p: I.p, ok: ok.map(function (i) { return H.tab[i].w; }), nasc: I.pensate.length - ok.length });
     }
-    // 🤖 il turno del Bot (contro il Bot): un attimo, poi scopre una sua parola a caso
+    // 🤖 il turno del Bot (contro il Bot): un attimo (si legge «✋ Passate · Tocca a Matt»), poi scopre una sua parola a caso:
+    // in tutto circa un secondo, col tabellone sempre in vista (fino al 22 ott 2026 erano 8 secondi a ogni giro: p14)
     var tBotSq = null;
     function turnoBot() {
       clearTimeout(tBotSq); tBotSq = null;
@@ -687,7 +699,7 @@
         var sue = []; H.tab.forEach(function (c, i) { if (c.c === 1 && !c.g) sue.push(i); });
         if (!sue.length) return fine(1);
         sospendi(sue[Math.floor(Math.random() * sue.length)], BOT_ID);
-      }, H.ritmo === "veloce" ? 1200 : 2200);
+      }, H.ritmo === "veloce" ? 450 : 650);
     }
     function fineTurno() {
       pensavaA();
@@ -758,6 +770,11 @@
       clearTimeout(tCless); tCless = null;
       var p = H.passo, sec = p === "indizio" ? H.tempo : p === "indovina" ? H.tempoInd : 0;
       if (!sec || H.fase !== "gioco") { H.cless = null; return; }
+      // 🎬 durante la presentazione il tabellone non si vede: la clessidra parte dopo, quando torna in vista (p13)
+      if (H.presFino && Date.now() < H.presFino - 50 && !H.cless) {
+        tCless = setTimeout(function () { tCless = null; if (!spento() && H.fase === "gioco" && !H.cless) { oraClessidra(); bd(); } }, H.presFino - Date.now() + 30);
+        return;
+      }
       var doppio = H.storia.length === (p === "indizio" ? 0 : 1);
       var key = H.turno + "|" + H.nTurni + "|" + p;
       if (!H.cless || H.cless.key !== key) H.cless = { key: key, p: p, doppio: doppio, fino: Date.now() + sec * (doppio ? 2 : 1) * 1000 };
@@ -942,13 +959,13 @@
       if (H.fase !== "gioco") return;
       var k = H.turno, capo = pById(H.capo[k]);
       if (H.sospeso) return;   // c'è una parola in sospeso: i bot aspettano
-      if (H.passo === "indizio") { if (capo && capo.bot) tBot = setTimeout(function () { botIndizio(k); }, 2600); return; }   // prima la telecamera passa dal capo
+      if (H.passo === "indizio") { if (capo && capo.bot) tBot = setTimeout(function () { botIndizio(k); }, 1800); return; }
       var umani = membri(k).filter(function (p) { return !p.bot && p.id !== H.capo[k]; });
       var bot = membri(k).filter(function (p) { return p.bot && p.id !== H.capo[k]; })[0];
       if (umani.length || !bot) return;   // se in squadra indovini tu, il bot ti lascia fare
       var segnate = H.prop[bot.id] || [];
       if (segnate.length) tBot = setTimeout(function () { azione(bot.id, { t: "gira", i: segnate[segnate.length - 1] }); }, 1000);
-      else tBot = setTimeout(function () { botScegli(k, bot.id); }, H.girate ? 1800 : 3600);   // dopo l'indizio, prima la vignetta del capo
+      else tBot = setTimeout(function () { botScegli(k, bot.id); }, H.girate ? 1800 : 2400);   // dopo l'indizio, prima la scritta grande dell'indizio
     }
     function botIndizio(k) {
       if (H.fase !== "gioco" || H.turno !== k || H.passo !== "indizio") return;
@@ -1080,6 +1097,48 @@
   // =========================================================
   //  DISEGNO (uguale per host e ospiti): saletta, tabellone, fine
   // =========================================================
+  // 🎬 quanto dura la presentazione d'inizio partita (la sa anche l'host: la clessidra del primo indizio aspetta che finisca).
+  // Intera (solo la prima partita della stanza): lo studio, poi ogni squadra al suo bancone (contro il Bot: voi e il Bot);
+  // «capi»: alla rivincita solo i capi nuovi, uno per uno
+  function durataPres(pres, nsq, vsBot) {
+    if (!pres || !pres.t) return 0;
+    if (pres.t === "capi") return 400 + 1000 * (pres.k || []).length + 100;
+    return 600 + 650 * (vsBot ? 2 : nsq) + 400 + 100;
+  }
+  // i SEGNI delle squadre, nel DOM (non trucchi del CSS): ▲ Rossi, ● Blu, ■ Verdi, il teschio della parola nera e la stella della
+  // parola d'oro. Prendono il colore della scritta (currentColor): le girate si distinguono anche senza vedere bene i colori
+  // (a 3 squadre ci sono insieme il rosso e il verde). Sulle caselle, sui pannelli delle squadre, sull'indizio e nella chat
+  var SEGNI = {
+    0: ["0 0 12 12", "<path d='M6 1.6L10.7 10.2H1.3z' stroke='currentColor' stroke-width='1.4' stroke-linejoin='round'/>"],
+    1: ["0 0 12 12", "<circle cx='6' cy='6' r='5'/>"],
+    2: ["0 0 12 12", "<rect x='1.3' y='1.3' width='9.4' height='9.4' rx='1.6'/>"],
+    x: ["0 0 24 24", "<path fill-rule='evenodd' d='M12 2.2C6.7 2.2 3.3 5.8 3.3 10.5c0 2.7 1.2 4.7 3.1 5.9V19c0 .9.7 1.6 1.6 1.6h8c.9 0 1.6-.7 1.6-1.6v-2.6c1.9-1.2 3.1-3.2 3.1-5.9C20.7 5.8 17.3 2.2 12 2.2zM8.7 9a2.4 2.4 0 1 1 0 4.8a2.4 2.4 0 1 1 0-4.8zM15.3 9a2.4 2.4 0 1 1 0 4.8a2.4 2.4 0 1 1 0-4.8zM12 14.3l1.5 2.5h-3zM10.1 18h1v2.7h-1zM12.9 18h1v2.7h-1z'/>"],
+    oro: ["0 0 24 24", "<path d='M12 1.8l3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.6l-6.2 3.3L7 14 2 9.1l6.9-1z' stroke='#a86b00' stroke-width='1.8' stroke-linejoin='round'/>"]
+  };
+  var segniFatti = {};
+  function svgSegno(k) {
+    var s = SEGNI[k]; if (!s) return null;
+    if (!segniFatti[k]) {
+      var d = document.createElement("span");
+      d.innerHTML = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + s[0] + "' fill='currentColor' aria-hidden='true' focusable='false'>" + s[1] + "</svg>";
+      segniFatti[k] = d.firstChild;
+    }
+    return segniFatti[k].cloneNode(true);
+  }
+  // il segno della squadra k ("x" = la nera, "oro" = la parola d'oro) in uno <span class="or-sg">; vuoto se non c'è
+  function segno(k, cls) {
+    var sp = document.createElement("span"), s = svgSegno(k);
+    sp.className = "or-sg" + (cls ? " " + cls : "");
+    if (s) { sp.appendChild(s); sp.setAttribute("data-s", String(k)); }
+    return sp;
+  }
+  // cambia il segno dentro uno <span class="or-sg"> già messo (le caselle: il colore si scopre a metà partita)
+  function metteSegno(sp, k) {
+    var att = sp.getAttribute("data-s"), vuole = k == null || !SEGNI[k] ? null : String(k);
+    if (att === vuole || (!att && !vuole)) return;
+    while (sp.firstChild) sp.removeChild(sp.firstChild);
+    if (vuole) { sp.appendChild(svgSegno(k)); sp.setAttribute("data-s", vuole); } else sp.removeAttribute("data-s");
+  }
   var UI = null;   // la schermata di gioco si costruisce UNA volta per tabellone e poi si aggiorna a pezzi
   function disegna(t, vm, cb) {
     if (vm.fase === "lobby" || !vm.tab) { UI = null; return lobby(t, vm, cb); }
@@ -1143,19 +1202,27 @@
     var umani = vm.players.filter(function (p) { return !p.bot; }), presenti = umani.filter(function (p) { return !p.via; }).length;
     var serie = testoSerie(vm);
     if (serie) box.appendChild(el("div", { class: "or-serie", text: serie }));   // 🏆 com'è andata finora stasera
+    // (22 ott 2026, p17: a 360x640 l'host vede tutte le squadre senza scorrere: una riga per squadra col suo segno, i nomi di
+    // fila, «Vengo qui» in fondo alla riga; «👑 Faccio io il capo» e «🔀 Squadre a caso» insieme in una riga sotto)
     for (var k = 0; k < vm.nsq; k++) (function (k) {
       var mem = vm.players.filter(function (p) { return p.team === k; });
       if (vm.vsBot && k === 1) return;   // (🤖 l'avversario sta nella testa della vostra squadra: «Voi contro Matt (Bot)»)
-      box.appendChild(el("div", { class: "or-sq", style: "--c:" + SQ[k].col }, [
-        el("div", { class: "or-sq-testa" }, [
-          el("b", { text: SQ[k].em + " " + (vm.vsBot ? "Voi contro il Bot (🤖 " + nomeBot(vm) + ")" : SQ[k].nome) }),
-          io && io.team !== k && !vm.vsBot ? el("button", { class: "btn btn-fantasma btn-piccolo", text: "Vengo qui", onclick: function () { cb.manda({ t: "squadra", s: k }); } }) : null ]),
-        el("div", { class: "or-sq-membri" }, mem.length ? mem.map(function (p) {
-          return el("span", { class: "or-membro" + (p.id === cb.myId ? " tu" : ""), text: (vm.capo[k] === p.id ? "👑 " : "") + p.nome + (p.id === cb.myId ? " (tu)" : "") });
-        }) : [ el("span", { class: "or-vuota", text: "Nessuno: servono almeno 2" }) ]),
-        io && io.team === k && vm.capo[k] !== cb.myId ? el("button", { class: "btn btn-fantasma btn-piccolo", text: "👑 Faccio io il capo", onclick: function () { cb.manda({ t: "capo" }); } }) : null ]));
+      mem.sort(function (a, b) { return (b.id === vm.capo[k]) - (a.id === vm.capo[k]); });   // il capo per primo
+      var nomi = el("span", { class: "or-sq-membri" }), mia = !!io && io.team === k;
+      mem.forEach(function (p, j) {
+        if (j) nomi.appendChild(document.createTextNode(" · "));
+        nomi.appendChild(el("span", { class: "or-membro" + (p.id === cb.myId ? " tu" : ""), text: (vm.capo[k] === p.id ? "👑 " : "") + p.nome + (p.id === cb.myId ? " (tu)" : "") }));
+      });
+      if (!mem.length) nomi.appendChild(el("span", { class: "or-vuota", text: "Nessuno: servono almeno 2" }));
+      box.appendChild(el("div", { class: "or-sq s" + k + (mia ? " mia" : ""), style: "--c:" + SQ[k].col }, [
+        el("b", { class: "or-sq-nome" }, [ segno(k), document.createTextNode(vm.vsBot ? "Voi contro il Bot (🤖 " + nomeBot(vm) + ")" : SQ[k].nome) ]),
+        nomi,
+        io && !mia && !vm.vsBot ? el("button", { class: "or-sq-b", text: "Vengo qui", onclick: function () { cb.manda({ t: "squadra", s: k }); } }) : null ]));
     })(k);
-    if (cb.sonoHost && !vm.vsBot) box.appendChild(el("button", { class: "btn btn-fantasma btn-piccolo", text: "🔀 Squadre a caso", onclick: function () { cb.manda({ t: "mischia" }); } }));
+    var tastiSq = el("div", { class: "or-sq-tasti" });
+    if (io && io.team >= 0 && vm.capo[io.team] !== cb.myId && !(vm.vsBot && io.team !== 0)) tastiSq.appendChild(el("button", { class: "or-sq-b", text: "👑 Faccio io il capo", onclick: function () { cb.manda({ t: "capo" }); } }));
+    if (cb.sonoHost && !vm.vsBot) tastiSq.appendChild(el("button", { class: "or-sq-b", text: "🔀 Squadre a caso", onclick: function () { cb.manda({ t: "mischia" }); } }));
+    if (tastiSq.firstChild) box.appendChild(tastiSq);
     // 🤖 in pochi: un tocco e si gioca contro il Bot (e se arrivano gli amici, un tocco e si torna alle squadre)
     if (cb.sonoHost && !vm.vsBot && vm.nsq === 2 && presenti >= 2 && presenti < MIN)
       box.appendChild(el("button", { class: "btn btn-primario btn-piccolo or-vsbot", text: "🤖 Siete in " + presenti + ": giocate contro il Bot", onclick: function () { cb.manda({ t: "vsbot", si: 1 }); } }));
@@ -1174,12 +1241,16 @@
     // (la frase finisce col punto, ma non dopo «Cosa intendevi?»: niente «?.»)
     var coda = info.length ? " " + info.join(" · ") + (/[?!]$/.test(info[info.length - 1]) ? "" : ".") : "";
     nota += coda;
+    // a squadre, pronti a partire: la nota dell'host dice solo quello che la riga «📜 Si gioca così» non dice già (le parole
+    // vostre e di chi), così le squadre ci stanno tutte senza scorrere (p17). Agli amici e contro il Bot com'era
+    var notaOk = vm.vsBot ? "Tutti insieme contro il Bot: dopo ogni vostro turno scopre da solo una sua parola. Il capo ha la 👑." + coda
+      : cb.sonoHost ? info.filter(function (x) { return /^📝|Ritmo veloce/.test(x); }).join(" · ") : "Ognuno sceglie la sua squadra; il capo ha la 👑." + coda;
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: min,
       vuoti: Math.max(0, min - umani.length),   // solo i posti che mancano per cominciare
       giocatori: umani.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.hostId ? p.id === vm.hostId : i === 0, tu: p.id === cb.myId }; }),
       extra: [ box ], puoComincia: ok,
       spettatore: !cb.sonoHost && !io && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi" : null,   // nella Sala: non scelto, guarda
-      nota: ok ? (vm.vsBot ? "Tutti insieme contro il Bot: dopo ogni vostro turno scopre da solo una sua parola. Il capo ha la 👑." : "Ognuno sceglie la sua squadra; il capo ha la 👑.") + coda : nota, testoComincia: "Comincia ▶",
+      nota: ok ? notaOk : nota, testoComincia: "Comincia ▶",
       attesa: "Scegli la tua squadra e aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   // Lo schermo di gioco nello STUDIO TV (come gli altri giochi di Quiz & parole):
@@ -1236,6 +1307,7 @@
   // la regia: le scene della telecamera una dopo l'altra, senza accavallarsi (se ne arrivano troppe, le vecchie si saltano)
   function scena(ui, passi, subito) {   // subito = taglia la scena in corso (es. la suspense di una parola, la fine)
     if (subito) {
+      ui.inPres = false;   // (una presentazione tagliata non c'è più: un tocco dopo non deve tagliare altro)
       (ui.tScena || []).forEach(clearTimeout); ui.tScena = []; ui.coda = []; ui.inScena = false; if (ui.vignetta) ui.vignetta.classList.remove("su");
       try { ST.viaTerzo(ui.S); } catch (e) {}   // (una presentazione tagliata a metà non lascia la scritta «Il capo dei Blu» sopra tutto)
     }
@@ -1252,6 +1324,9 @@
   }
   function scenaSospeso(ui, vm, s) {   // chi gira la parola la dice: vignetta sopra la sua testa al bancone; poi la casella trema e il pubblico fa "ooooh"
     var S = ui.S, B = ui.banchi[s.k], parola = (vm.tab[s.i] || {}).w || "", passi = [];
+    // 🤖 il Bot: la sua casella trema un attimo sul tabellone (niente telecamera: p14); solo quando sta per vincere va sul suo
+    // podio e la dice lui
+    if (s.id === BOT_ID && !s.lungo) { scena(ui, [[0, function () { ST.suSchermo(S, 250); }], [250, function () {}]], true); return; }
     if (s.id === BOT_ID) {   // 🤖 il Bot dal suo podio dice la parola che scopre
       scena(ui, [[0, function () { ST.suLeggio(S, s.k, 450); ST.faccia(S, s.k, "pensa"); }],
         [450, function () { fumettoCapo(ui, s.k, "🤖 " + parola + "!"); suona("indizio"); }],
@@ -1283,24 +1358,9 @@
     passi.push([300, function () {}]);
     scena(ui, passi, true);
   }
-  function scenaTurno(ui, k) {   // tocca a una squadra: un attimo sul suo capo che ci pensa, poi il tabellone
-    var S = ui.S;
-    scena(ui, [[0, function () { ST.suLeggio(S, k, 650); ST.faccia(S, k, "pensa"); }],
-      [1350, function () { ST.faccia(S, k, null); ST.suSchermo(S, 650); }], [650, function () {}]]);
-  }
-  function scenaIndizio(ui, k, testo, n) {   // il capo dà l'indizio: telecamera su di lui, l'indizio esce dalla vignetta, poi il tabellone
-    var S = ui.S;
-    scena(ui, [[0, function () { ST.suLeggio(S, k, 650); }],
-      [650, function () {
-        var p = S.posti[k] || S.posti[0], V = ui.vignetta;
-        V.style.left = p.cx + "px"; V.style.top = (p.top + p.w * 0.04) + "px"; V.style.fontSize = (p.w * 0.13).toFixed(1) + "px";
-        while (V.firstChild) V.removeChild(V.firstChild);
-        V.appendChild(document.createTextNode(testo)); V.appendChild(ui.el("span", { class: "n", text: n === 0 ? "∞" : String(n) }));
-        V.style.setProperty("--c", SQ[k] ? SQ[k].col : "#1f1f1f");
-        V.classList.add("su"); ST.faccia(S, k, "esulta"); suona("indizio");
-      }],
-      [1900, function () { ui.vignetta.classList.remove("su"); ST.faccia(S, k, null); ST.suSchermo(S, 650); }], [650, function () {}]]);
-  }
+  // (fino al 22 ott 2026 c'erano anche scenaTurno, la telecamera sul capo che pensa a ogni cambio di turno, e scenaIndizio,
+  // la telecamera sul podio del capo che dà l'indizio: il tabellone spariva 2-5 secondi a ogni turno. Ora il tabellone resta
+  // sempre in vista: il capo che pensa è nell'indizio, l'indizio esce grande sopra il tabellone: cartelloIndizio)
   // chi vince: coriandoli, applausi e telecamera sul bancone della squadra (tutti contenti), poi il tabellone svelato e, sopra,
   // il mio titolo scherzoso per un attimo. dopo = viene dopo un'altra scena (l'esplosione della parola nera): non la taglia
   function scenaFine(ui, k, dopo) {
@@ -1354,30 +1414,66 @@
     V.appendChild(document.createTextNode(testo)); V.style.setProperty("--c", SQ[k] ? SQ[k].col : "#1f1f1f");
     V.classList.remove("su"); void V.offsetWidth; V.classList.add("su");
   }
-  // 📢 la scritta grande sopra il tabellone, per un secondo e mezzo: cosa è appena successo e a chi tocca
-  // («😬 BOCCA era dei Blu!» / «Tocca ai Blu»). Non prende i tocchi e se ne va da sola (si muovono solo opacità e transform)
-  function cartello(ui, grande, piccolo, col, ms) {
+  // 📢 la scritta grande, per un secondo e mezzo: cosa è appena successo e a chi tocca («😬 BOCCA era dei Blu!» / «Tocca ai
+  // Blu»), con la faccia di chi conta (il capo che si arrabbia, chi esulta: le reazioni dello studio senza portare via il
+  // tabellone). Sta sopra l'indizio e le squadre, non sopra le caselle: il tabellone resta leggibile. Non prende i tocchi e se
+  // ne va da sola (si muovono solo opacità e transform). grande: un testo o un pezzo già fatto (la fascia dell'indizio);
+  // fac = { id, nome, f } la faccia (f = l'espressione dello studio: "arrabbiato", "esploso", "esulta"…); cls = "ind" per l'indizio
+  function cartello(ui, grande, piccolo, col, ms, fac, cls) {
     if (!ui.S.vivo()) return;
-    if (!ui.cart) { ui.cartB = ui.el("b"); ui.cartS = ui.el("small"); ui.cart = ui.el("div", { class: "or-cart" }, [ ui.cartB, ui.cartS ]); ui.S.vista.appendChild(ui.cart); }
+    if (!ui.cart) {
+      ui.cartF = ui.el("span", { class: "or-cart-f" }); ui.cartB = ui.el("b"); ui.cartS = ui.el("small");
+      // (prima la scritta grande e poi la piccola, anche nel testo; per l'indizio la piccola va sopra solo a vedersi: order)
+      ui.cart = ui.el("div", { class: "or-cart" }, [ ui.cartF, ui.el("div", { class: "or-cart-tx" }, [ ui.cartB, ui.cartS ]) ]); ui.S.vista.appendChild(ui.cart);
+    }
     var C = ui.cart;
-    ui.cartB.textContent = grande || ""; ui.cartS.textContent = piccolo || ""; ui.cartS.style.display = piccolo ? "" : "none";
+    while (ui.cartB.firstChild) ui.cartB.removeChild(ui.cartB.firstChild);
+    if (grande && grande.nodeType) ui.cartB.appendChild(grande); else ui.cartB.textContent = grande || "";
+    ui.cartS.textContent = piccolo || ""; ui.cartS.style.display = piccolo ? "" : "none";
+    while (ui.cartF.firstChild) ui.cartF.removeChild(ui.cartF.firstChild);
+    var src = fac ? srcAvatarBanco(ui, fac.id, fac.nome, fac.f) : "";
+    if (src) ui.cartF.appendChild(ui.el("img", { src: src, alt: "" }));
+    C.className = "or-cart" + (src ? " con-f" : "") + (cls ? " " + cls : "");
     C.style.setProperty("--c", col || "#fff");
-    C.classList.remove("su"); void C.offsetWidth; C.classList.add("su");
+    posCartello(ui);
+    void C.offsetWidth; C.classList.add("su");
     clearTimeout(ui.tCart); ui.tCart = setTimeout(function () { C.classList.remove("su"); }, ms || 1500);
   }
+  // la scritta grande sta a metà dell'indizio (tra le squadre e il tabellone): sul maxischermo la vista e lo schermo coincidono
+  function posCartello(ui) {
+    try {
+      var sch = ui.indZona && ui.indZona.offsetParent; if (!sch) return;
+      var y = sch.offsetTop + ui.indZona.offsetTop + ui.indZona.offsetHeight / 2 + (sch.offsetParent ? sch.offsetParent.offsetTop || 0 : 0);
+      ui.cart.style.setProperty("--or-cart-y", Math.round(y) + "px");
+    } catch (e) {}
+  }
+  // la faccia per la scritta grande: chi ha girato, o il capo di una squadra
+  function facDi(vm, id, f) { var p = trova(vm, id); return p ? { id: id, nome: p.nome, f: f || null } : null; }
   // la scritta di una mossa (dalla riga nuova della chat): solo quando cambia qualcosa che non si vede da sé
   function cartelloMossa(ui, vm, e) {
-    var col = SQ[e.k] ? SQ[e.k].col : "#fff", dopo = e.dopo != null ? toccaA(vm, e.dopo) : "";
-    if (e.t === "passo") return cartello(ui, vm.vsBot ? "✋ Passate" : "✋ I " + SQ[e.k].nome + " passano", dopo, col);
+    var col = SQ[e.k] ? SQ[e.k].col : "#fff", dopo = e.dopo != null ? toccaA(vm, e.dopo) : "", capo = vm.capo[e.k];
+    if (e.t === "passo") return cartello(ui, vm.vsBot ? "✋ Passate" : "✋ I " + SQ[e.k].nome + " passano", dopo, col, 0, facDi(vm, e.id));
     if (e.t === "sis" && e.ban) return cartello(ui, e.ban[0], e.ban[1], SQ[e.k] ? SQ[e.k].col : "#fff");
     if (e.t !== "gira") return;
     if (vm.fase === "fine" && e.c !== "x") return;   // (l'ultima parola che chiude la partita: lo dice la fine, in alto)
-    if (e.id === BOT_ID && vm.vsBot) return cartello(ui, "🤖 " + nomeBot(vm) + " scopre " + e.w, e.r != null ? (e.r === 1 ? "Gliene manca una!" : "Gliene mancano " + e.r) : "", SQ[1].col);
-    if (e.oro) return cartello(ui, "⭐ " + e.w + ": la parola d'oro!", vm.vsBot ? "Continuate a indovinare" : "I " + SQ[e.k].nome + " continuano", "#fcc419");
-    if (e.c === "x") return cartello(ui, "💣 " + e.w + ": la parola nera!", vm.fase === "fine" ? "" : (vm.vsBot ? "" : "I " + SQ[e.k].nome + " sono fuori · ") + dopo, "#e03131");
-    if (e.c === e.k) { if (e.fin) cartello(ui, "✅ " + e.w + ": giusta!", "Finiti i tentativi · " + dopo, col); return; }
-    if (e.c === "n") return cartello(ui, "😐 " + e.w + ": di nessuno", dopo, "#a39c88");
-    if (SQ[e.c]) return cartello(ui, "😬 " + e.w + " era " + (vm.vsBot && e.c === 1 ? "di " + nomeBot(vm) : "dei " + SQ[e.c].nome) + "!", dopo, SQ[e.c].col);
+    if (e.id === BOT_ID && vm.vsBot) return cartello(ui, "🤖 " + nomeBot(vm) + " scopre " + e.w, e.r != null ? (e.r === 1 ? "Gliene manca una!" : "Gliene mancano " + e.r) : "", SQ[1].col, 0, facDi(vm, BOT_ID, "esulta"));
+    if (e.oro) return cartello(ui, "⭐ " + e.w + ": la parola d'oro!", vm.vsBot ? "Continuate a indovinare" : "I " + SQ[e.k].nome + " continuano", "#fcc419", 0, facDi(vm, e.id, "esulta"));
+    if (e.c === "x") return cartello(ui, "💣 " + e.w + ": la parola nera!", vm.fase === "fine" ? "" : (vm.vsBot ? "" : "I " + SQ[e.k].nome + " sono fuori · ") + dopo, "#e03131", 0, facDi(vm, capo, "esploso"));
+    if (e.c === e.k) { if (e.fin) cartello(ui, "✅ " + e.w + ": giusta!", "Finiti i tentativi · " + dopo, col, 0, facDi(vm, e.id, "esulta")); return; }
+    if (e.c === "n") return cartello(ui, "😐 " + e.w + ": di nessuno", dopo, "#a39c88", 0, facDi(vm, capo, "triste"));
+    if (SQ[e.c]) return cartello(ui, "😬 " + e.w + " era " + (vm.vsBot && e.c === 1 ? "di " + nomeBot(vm) : "dei " + SQ[e.c].nome) + "!", dopo, SQ[e.c].col, 0, facDi(vm, capo, "arrabbiato"));
+  }
+  // 👑 l'indizio appena dato esce grande sopra il tabellone (la telecamera non va più sul podio del capo: p9): la faccia del capo
+  // e l'indizio sulla fascia del colore della squadra col numero dorato, per un secondo e mezzo; poi resta lì sotto, nell'indizio
+  function cartelloIndizio(ui, vm, e) {
+    var sq = SQ[e.k] || SQ[0];
+    cartello(ui, fascia(ui, e.k, e.p, e.num), "👑 " + e.nome + (vm.vsBot ? "" : " · capo dei " + sq.nome), sq.col, 1500, facDi(vm, e.id, "esulta"), "ind");
+    suona("indizio");
+  }
+  // la fascia dell'indizio: del colore (e col disegno) della squadra, col segno, la parola e il numero dorato
+  function fascia(ui, k, parola, n) {
+    var L = String(parola).length;
+    return ui.el("span", { class: "or-fascia s" + k + (L > 14 ? " lunga" : L > 10 ? " media" : "") }, [ segno(k), ui.el("span", { class: "or-fascia-w", text: parola }), ui.el("span", { class: "n", text: n === 0 ? "∞" : String(n) }) ]);
   }
   // 🎭 a fine partita, dopo la festa: il mio titolo scherzoso, grande per un attimo («🎯 Il cecchino · 5 parole giuste girate»)
   function mioTitolo(ui) {
@@ -1386,71 +1482,98 @@
     var x = (vm.titoli || []).filter(function (q) { return q && q.id === ui.cb.myId; })[0];
     if (x) cartello(ui, x.icona + " " + x.titolo, "Il tuo titolo: " + x.dett, "#fcc419", 2600);
   }
-  // 💭 a fine turno, sopra il tabellone: «Paky pensava a: ONDA ✓ SALE ✓ +1 🤫» con la battuta dello studio (dopo la reazione
-  // della squadra; a fine partita no: lì c'è «🤔 Cosa intendevi?» con tutto)
+  // 💭 a fine turno, al posto dell'indizio (tra le squadre e il tabellone: non copre più la prima riga di parole né i punteggi,
+  // p11): «Paky pensava a: ONDA ✓ SALE ✓ +1 🤫» con la battuta dello studio, dopo la scritta grande della mossa (contro il Bot
+  // dopo che il Bot ha scoperto la sua parola); a fine partita no: lì c'è «🤔 Cosa intendevi?» con tutto
   function mostraPensava(ui, e) {
     if (!ui.vm || ui.vm.fase !== "gioco") return;
     var el = ui.el, ok = e.ok || [], n = e.nasc || 0, sq = SQ[e.k] || SQ[0];
     var battuta = !ok.length ? "🤫 Nessuna trovata: si scopre a fine partita!" : !n ? (ok.length >= 2 ? "🧠 Sintonia perfetta!" : "🧠 Proprio quella!") : "🤝 Quasi! " + (n === 1 ? "Una resta segreta" : n + " restano segrete") + " fino alla fine";
-    if (!ui.pensEl) { ui.pensEl = el("div", { class: "or-pens" }); ui.S.vista.appendChild(ui.pensEl); }
-    var P = ui.pensEl;
-    clearTimeout(ui.tPens); clearTimeout(ui.tPens2);
-    ui.tPens = setTimeout(function () {
+    if (!ui.pensEl || ui.pensEl.parentNode !== ui.indZona) { ui.pensEl = el("div", { class: "or-pens" }); ui.indZona.appendChild(ui.pensEl); }
+    var P = ui.pensEl, giri = 0;
+    clearTimeout(ui.tPens); clearTimeout(ui.tPens2); P.classList.remove("su");   // (quello di prima, se c'è ancora, se ne va)
+    function mostra() {
       if (!ui.S.vivo() || !ui.vm || ui.vm.fase !== "gioco") return;
+      // (mai insieme alla scritta grande di una mossa, né mentre il Bot sta per scoprire la sua parola: si aspetta un attimo)
+      if (giri++ < 16 && ((ui.cart && ui.cart.classList.contains("su")) || (ui.vm.vsBot && ui.vm.passo === "bot"))) { ui.tPens = setTimeout(mostra, 250); return; }
       while (P.firstChild) P.removeChild(P.firstChild);
       P.style.setProperty("--c", sq.col);
-      P.appendChild(el("div", { class: "or-pens-tit" }, [ faccia(ui, e.id, e.nome), el("b", { text: "💭 " + e.nome + " pensava a:" }) ]));
-      P.appendChild(el("div", { class: "or-pens-w" }, ok.map(function (w) { return el("span", { class: "or-pens-c", text: w + " ✓" }); })
-        .concat(n ? [ el("span", { class: "or-pens-c segreta", text: (ok.length ? "+" : "") + n + " 🤫" }) ] : [])));
-      P.appendChild(el("div", { class: "or-pens-bat", text: battuta }));
+      var chips = ok.map(function (w) { return el("span", { class: "or-pens-c s" + e.k }, [ segno(e.k), document.createTextNode(w + " ✓") ]); });
+      var segr = n ? el("span", { class: "or-pens-c segreta", text: (ok.length ? "+" : "") + n + " 🤫" }) : null;
+      var tit = el("div", { class: "or-pens-tit" }, [ faccia(ui, e.id, e.nome), el("b", { text: "💭 " + e.nome + " pensava a:" }) ].concat(chips).concat(segr ? [ segr ] : []));
+      var bat = el("div", { class: "or-pens-bat", text: battuta });
+      P.appendChild(tit); P.appendChild(bat);
+      // sta tutto al posto dell'indizio (mai sopra il tabellone o i punteggi): se non ci sta, prima via la battuta, poi le
+      // parole in più diventano «+2»
+      var alto = ui.indZona.offsetHeight + 1;
+      if (P.offsetHeight > alto) bat.style.display = "none";
+      var tolte = 0;
+      while (P.offsetHeight > alto && chips.length > 1) { tit.removeChild(chips.pop()); tolte++; }
+      if (tolte) { var piu = el("span", { class: "or-pens-c s" + e.k, text: "+" + tolte + " ✓" }); if (segr) tit.insertBefore(piu, segr); else tit.appendChild(piu); }
       P.classList.add("su"); suona(ok.length && !n ? "giusta" : "indizio");
       if (ok.length && !n) { var io = trova(ui.vm, ui.cb.myId); if (io && io.team === e.k) try { if (navigator.vibrate) navigator.vibrate(30); } catch (x) {} }   // sintonia perfetta: un colpetto alla squadra
       ui.tPens2 = setTimeout(function () { P.classList.remove("su"); }, ui.veloce ? 2600 : 3600);
-    }, ui.veloce ? 700 : 1500);
-  }
-  // una parola girata. Giusta (o d'oro): la telecamera va sul bancone della squadra, che esulta col braccio alzato.
-  // Sbagliata: la telecamera va sul capo, che si arrabbia (con la parola nera esplode). Poi si torna al tabellone.
-  function reazione(ui, vm, e) {
-    var S = ui.S, giusta = e.oro || e.c === e.k, nera = e.c === "x", B = ui.banchi[e.k];
-    // una parola giusta ma il turno continua: si resta sul tabellone (lampo e applauso), così il ritmo non cala;
-    // la scena intera solo per l'ultima del turno, la parola d'oro e gli sbagli
-    if (giusta && !e.oro && vm.fase === "gioco" && vm.turno === e.k && vm.passo === "indovina") return;
-    if (giusta) {
-      scena(ui, [[0, function () { ST.faccia(S, e.k, "esulta"); festaBanco(ui, e.k, true); suBanco(ui, e.k, 550); }],
-        [1700, function () { ST.faccia(S, e.k, null); festaBanco(ui, e.k, false); ST.suSchermo(S, 550); }], [550, function () {}]]);
-      return;
     }
-    scena(ui, [[0, function () {
-        if (B && e.id !== ui.vm.capo[e.k]) { B.facce = {}; B.facce[e.id] = nera ? "esploso" : "triste"; aggiornaBanchi(ui, ui.vm); }
-        ST.suLeggio(S, e.k, 550); ST.faccia(S, e.k, nera ? "esploso" : "arrabbiato");
-      }],
-      [600, function () { fumettoCapo(ui, e.k, nera ? "💣 Noooo!" : ["💢 Ma no!", "💢 Uffa!", "💢 Nooo!", "💢 Ma dai!"][Math.floor(Math.random() * 4)]); }],
-      [1300, function () { ui.vignetta.classList.remove("su"); ST.faccia(S, e.k, null); if (B) { B.facce = {}; aggiornaBanchi(ui, ui.vm); } ST.suSchermo(S, 550); }],
-      [550, function () {}]]);
+    ui.tPens = setTimeout(mostra, ui.veloce ? 900 : 1500);
   }
-  // all'inizio della partita: tutto lo studio, poi ogni squadra al suo bancone (esultano), poi i capi sui podi,
-  // uno per uno; dopo, la telecamera va sul capo che comincia (scenaTurno)
-  function presentazione(ui) {
-    var S = ui.S, vm = ui.vm, passi = [[0, function () { ST.largo(S, 0); }], [1100, function () {}]];
-    ui.banchi.forEach(function (B, k) {
-      var nomi = (vm.players || []).filter(function (p) { return p.team === k && p.id !== vm.capo[k] && !p.via; }).map(function (p) { return p.nome; });
-      if (!nomi.length) return;
-      passi.push([0, function () { festaBanco(ui, k, true); suBanco(ui, k, 700); ST.terzo(S, null, "I " + SQ[k].nome + "!", nomi.join(" · "), "👥"); ST.FX.applauso("piano"); }]);
-      passi.push([1800, function () { festaBanco(ui, k, false); }]);
-    });
-    for (var k = 0; k < vm.nsq; k++) (function (k) {
-      var capo = trova(vm, vm.capo[k]); if (!capo) return;
-      passi.push([0, function () { ST.suLeggio(S, k, 700); ST.faccia(S, k, "esulta"); if (vm.vsBot && k === 1) ST.terzo(S, k, capo.nome, trova(vm, ui.cb.myId) ? "Il vostro avversario (Bot)" : "L'avversario (Bot)", "🤖"); else ST.terzo(S, k, capo.nome, "Il capo dei " + SQ[k].nome, "👑"); }]);
-      passi.push([1600, function () { ST.faccia(S, k, null); }]);
-    })(k);
-    passi.push([0, function () { ST.viaTerzo(S); }], [100, function () {}]);
+  // (fino al 22 ott 2026 c'era anche «reazione»: a ogni parola sbagliata la telecamera andava sul capo che si arrabbiava e a
+  // ogni ultima parola giusta sul bancone che esultava, 2-5 secondi senza tabellone. Ora le facce sono nella scritta grande)
+  // 🎬 all'inizio della partita (p10). Intera (solo la prima partita della stanza): tutto lo studio con le squadre che
+  // esultano, poi ogni squadra al suo bancone col nome del capo (contro il Bot: voi, poi il Bot sul suo podio), poi il
+  // tabellone: circa 2 secondi e mezzo (3 a tre squadre). «capi» (alla rivincita): solo i capi nuovi sui loro podi, un secondo a testa.
+  // Dura quanto dice durataPres (l'host ci conta per la clessidra). Un tocco la salta: saltaPresentazione
+  function presentazione(ui, pres) {
+    var S = ui.S, vm = ui.vm, passi = [];
+    function nomiDi(k) {
+      var capo = trova(vm, vm.capo[k]), altri = (vm.players || []).filter(function (p) { return p.team === k && p.id !== vm.capo[k] && !p.via; }).map(function (p) { return p.nome; });
+      return (capo ? ["👑 " + capo.nome] : []).concat(altri).join(" · ");
+    }
+    if (pres.t === "capi") {
+      (pres.k || []).forEach(function (k, j) {
+        var capo = trova(vm, vm.capo[k]); if (!capo) return;
+        passi.push([j ? 1000 : 0, function () { ST.suLeggio(S, k, 400); ST.faccia(S, k, "esulta"); ST.terzo(S, k, capo.nome, "Il capo dei " + SQ[k].nome, "👑"); }]);
+      });
+      if (!passi.length) return;
+      passi.push([1000, function () { (pres.k || []).forEach(function (k) { ST.faccia(S, k, null); }); ST.viaTerzo(S); ST.suSchermo(S, 400); }], [400, function () { ui.inPres = false; }]);
+    } else {
+      passi.push([0, function () {
+        ST.largo(S, 0); ST.FX.applauso("piano");
+        ui.banchi.forEach(function (B, k) { festaBanco(ui, k, true); });
+        for (var k = 0; k < vm.nsq; k++) ST.faccia(S, k, "esulta");
+        ST.terzo(S, null, "Parola d'ordine", vm.vsBot ? "Voi contro il Bot" : vm.nsq === 3 ? "Rossi, Blu e Verdi" : "Rossi contro Blu", "🕵️");
+      }]);
+      var squadre = vm.vsBot ? [0, 1] : [0, 1, 2].slice(0, vm.nsq);
+      squadre.forEach(function (k, j) {
+        passi.push([j ? 650 : 600, function () {
+          if (vm.vsBot && k === 1) { var bot = trova(vm, BOT_ID); ST.suLeggio(S, 1, 350); ST.terzo(S, 1, bot ? bot.nome : "Bot", trova(vm, ui.cb.myId) ? "Il vostro avversario (Bot)" : "L'avversario (Bot)", "🤖"); return; }
+          suBanco(ui, k, 350); ST.terzo(S, null, vm.vsBot ? "Voi!" : "I " + SQ[k].nome + "!", nomiDi(k), vm.vsBot ? "👥" : SQ[k].em);
+        }]);
+      });
+      passi.push([650, function () {
+        ST.viaTerzo(S); ST.suSchermo(S, 400);
+        ui.banchi.forEach(function (B, k) { festaBanco(ui, k, false); });
+        for (var k = 0; k < vm.nsq; k++) ST.faccia(S, k, null);
+      }], [400, function () { ui.inPres = false; }]);
+    }
     scena(ui, passi, true);
+    ui.inPres = true;
+  }
+  // un tocco durante la presentazione la salta (solo su questo telefono): subito il tabellone
+  function saltaPresentazione(ui) {
+    if (!ui.inPres) return;
+    ui.inPres = false;
+    var S = ui.S, vm = ui.vm;
+    scena(ui, [[0, function () {
+      ST.viaTerzo(S); ST.suSchermo(S, 300);
+      ui.banchi.forEach(function (B, k) { festaBanco(ui, k, false); });
+      for (var k = 0; k < (vm ? vm.nsq : 0); k++) ST.faccia(S, k, null);
+    }], [300, function () {}]], true);
   }
   function creaSchermo(t, vm, cb) {
     stile(); ST = window.SGStudio;
     var el = t.el;
     var ui = { t: t, el: el, bid: vm.bid, cb: cb, vm: vm, carte: [], kSotto: "", pan: [], ultimaN: vm.ultima ? vm.ultima.n : 0, facce: {}, logN: 0,
-      nsq: vm.nsq, banchi: [], coda: [], inScena: false, avviato: false, turnoVisto: null, veloce: vm.ritmo === "veloce" };
+      nsq: vm.nsq, banchi: [], coda: [], inScena: false, avviato: false, veloce: vm.ritmo === "veloce" };
     var capi = capiDi(ui, vm, cb);
     ui.kCapi = capi.k;
     if (window.__ORDINE) window.__ORDINE.ui = ui;   // (per le prove)
@@ -1462,25 +1585,39 @@
     // il tabellone finisce sopra la barra dei tasti anche quando la barra cresce da sola (es. «👥 Avete giocato con» che arriva dopo)
     try { if (window.ResizeObserver && S.barraEl) new ResizeObserver(function () { if (S.barraEl.offsetHeight) S.vista.style.setProperty("--or-barra", (S.barraEl.offsetHeight + 6) + "px"); }).observe(S.barraEl); } catch (e) {}
     for (var k = 0; k < vm.nsq; k++) ST.testoLeggio(S, k, nomeSq(vm, k).toUpperCase());
-    // il maxischermo: squadre con le faccine, indizio, tabellone, chat
+    // il maxischermo (stile «C · Moderna e chiara», 22 ott 2026): squadre con le faccine, indizio, il TABELLONE che prende tutto
+    // lo spazio libero, e sotto la chat in una striscia di 2 righe (si apre toccandola)
     var pannelli = el("div", { class: "or-pannelli" });
     for (k = 0; k < vm.nsq; k++) {
       var P = { n: el("b", { class: "or-pan-n" }), facce: el("div", { class: "or-facce" }), kf: "" };
-      P.el = el("div", { class: "or-pan", style: "--c:" + SQ[k].col }, [ el("div", { class: "or-pan-testa" }, [ el("span", { text: (vm.vsBot && k === 1 ? "🤖 " : "") + nomeSq(vm, k) }), P.n ]), P.facce ]);
+      P.el = el("div", { class: "or-pan s" + k, style: "--c:" + SQ[k].col }, [ el("div", { class: "or-pan-testa" }, [
+        el("span", { class: "or-pan-nome" }, [ segno(k), document.createTextNode((vm.vsBot && k === 1 ? "🤖 " : "") + nomeSq(vm, k)) ]), P.n ]), P.facce ]);
       ui.pan.push(P); pannelli.appendChild(P.el);
     }
     ui.ind = el("div", { class: "or-ind" });
+    ui.indZona = el("div", { class: "or-ind-zona" }, [ ui.ind ]);   // (sopra l'indizio, per un attimo, «💭 Luca pensava a…»)
     ui.tab = el("div", { class: "or-tab" + (vm.tab.length <= 20 ? " venti" : "") });
     vm.tab.forEach(function (c, i) {
-      var w = el("span", { class: "or-w", text: c.w }), pr = el("span", { class: "or-pr" });   // pr = le faccine di chi l'ha segnata (sul bordo)
-      var b = el("button", { class: "or-carta" }, [ w, pr ]);
-      var L = c.w.length; w.style.fontSize = L <= 6 ? "clamp(10px,3.1vw,14px)" : L <= 8 ? "clamp(9px,2.7vw,13px)" : "clamp(8px,2.3vw,11.5px)";   // (poi adattaScritte la misura giusta)
+      var piu = /\s/.test(c.w);   // (le parole vostre con lo spazio, «ZIO GINO», vanno a capo solo lì)
+      var w = el("span", { class: "or-w" + (piu ? " piu" : ""), text: c.w }), pr = el("span", { class: "or-pr" }), sg = segno(null);   // pr = le faccine di chi l'ha segnata (sul bordo); sg = il segno della squadra
+      var b = el("button", { class: "or-carta" }, [ sg, w, pr ]);
       b.addEventListener("click", function () { tocca(ui, i); });
-      ui.carte.push({ b: b, pr: pr, w: w, parola: c.w, cls: "" }); ui.tab.appendChild(b);
+      ui.carte.push({ b: b, pr: pr, w: w, sg: sg, parola: c.w, cls: "" }); ui.tab.appendChild(b);
     });
     ui.log = el("div", { class: "or-log" });
+    ui.chat = el("div", { class: "or-chat" }, [ ui.log ]);
+    // la chat: chiusa è una striscia con le ultime 2 righe; un tocco la apre sopra il tabellone (tutta, scorre), un altro la
+    // chiude. Aperta, toccando la riga di una parola girata si chiude e la casella si illumina sul tabellone
+    ui.log.addEventListener("click", function (ev) {
+      if (!ui.chatAperta) { apriChat(ui, true); return; }
+      var riga = ev.target && ev.target.closest ? ev.target.closest(".or-l") : null, parole = riga && riga._parole;
+      apriChat(ui, false);
+      if (parole && parole.length) lampoParole(ui, parole);
+    });
     ST.vuota(S.sch);
-    S.sch.appendChild(el("div", { class: "or-sch" }, [ pannelli, ui.ind, ui.tab, ui.log ]));
+    S.sch.appendChild(el("div", { class: "or-sch" }, [ pannelli, ui.indZona, ui.tab, ui.chat ]));
+    // le scritte delle caselle si rimisurano quando il tabellone cambia misura (la barra in basso cresce o cala)
+    try { if (window.ResizeObserver) { ui.roTab = new ResizeObserver(function () { if (!ui.S.vivo()) { ui.roTab.disconnect(); return; } adattaScritte(ui); }); ui.roTab.observe(ui.tab); } } catch (e) {}
     // i banconi delle squadre e la vignetta del capo, nello studio
     ui.banchiEl = el("div", { class: "or-banchi" }); S.mondo.appendChild(ui.banchiEl);
     for (k = 0; k < vm.nsq; k++) {
@@ -1513,24 +1650,55 @@
     // all'inizio di una partita uno sguardo a tutto lo studio, poi il tabellone
     ST.suSchermo(S, 0);
     adattaScritte(ui); setTimeout(function () { adattaScritte(ui); }, 80);   // (appena lo schermo ha le sue misure)
-    if ((vm.log || []).length <= 1 && vm.fase === "gioco") presentazione(ui);   // all'inizio: si presentano tutti
+    // 🎬 la presentazione (p10): intera solo alla prima partita della stanza, alla rivincita solo i capi nuovi (o niente);
+    // un tocco sullo schermo la salta (solo per chi tocca)
+    if ((vm.log || []).length <= 1 && vm.fase === "gioco" && vm.pres && vm.pres.t) presentazione(ui, vm.pres);
+    S.vista.addEventListener("pointerdown", function () { if (ui.inPres) saltaPresentazione(ui); }, { passive: true });
     return ui;
   }
-  // la scritta di ogni casella: la più grande che ci sta (misurata davvero), da 9 a 14,5 px
+  // la scritta di ogni casella: la più grande che ci sta in larghezza (misurata davvero) e in proporzione all'altezza della
+  // casella (sui telefoni lunghi fino a 17 px), mai sotto i 9 px. Una parola che a 9 px non ci sta si STRINGE (scaleX): mai a
+  // capo a metà (TRANSFORME/RS, CATAMARAN/O: p3). Niente margine ai lati dentro le carte: IPPOPOTAMO e MATRIMONIO su una riga
   var misuratore = null;
   function adattaScritte(ui) {
     if (!ui.carte || !ui.carte.length) return;
-    var w0 = ui.carte[0].b.clientWidth - 6; if (w0 <= 0) return;
+    var b0 = ui.carte[0].b, L = b0.clientWidth, H = b0.clientHeight; if (L <= 0 || H <= 0) return;
+    // (caselle basse: il segno della squadra più piccolo e più nell'angolo, così non tocca la parola)
+    var basse = H < 46; if (ui.basse !== basse) { ui.basse = basse; ui.tab.classList.toggle("basse", basse); }
+    var cs = getComputedStyle(ui.carte[0].w), font = (cs.fontWeight || "800") + " 100px " + cs.fontFamily, chiave = L + "x" + H + "|" + font;
+    if (ui.misureScritte === chiave) return;   // (le stesse misure di prima: niente da rifare)
+    ui.misureScritte = chiave;
     if (!misuratore) misuratore = document.createElement("canvas").getContext("2d");
-    var cs = getComputedStyle(ui.carte[0].w);
-    misuratore.font = "800 100px " + cs.fontFamily;
+    misuratore.font = font;
+    var spazio = L - 3, max = Math.max(11, Math.min(17, H * 0.27)), alto = H - 9;
     ui.carte.forEach(function (C) {
-      var largo = 0;
-      String(C.parola).split(" ").forEach(function (p) { largo = Math.max(largo, misuratore.measureText(p).width * 0.98 / 100); });   // (lettere un po' strette)
-      var fs = Math.max(9, Math.min(14.5, (C.b.clientWidth - 6) / (largo || 1)));
-      C.w.style.fontSize = fs.toFixed(1) + "px";
+      var pezzi = String(C.parola).split(" "), largo = 0;
+      // (la larghezza di 1 px di scritta, con lo spazio tra le lettere di .or-w: -0,02em a lettera)
+      pezzi.forEach(function (p) { largo = Math.max(largo, misuratore.measureText(p).width / 100 - 0.02 * p.length); });
+      var fs = Math.min(max, spazio / (largo || 1));
+      if (pezzi.length > 1) fs = Math.min(fs, alto / (pezzi.length * 1.1));
+      var stringi = 1;
+      if (fs < 9) { stringi = Math.max(0.6, fs / 9); fs = 9; }
+      var tx = fs.toFixed(1) + "px", tr = stringi < 0.995 ? "scaleX(" + stringi.toFixed(3) + ")" : "";
+      if (C.w.style.fontSize !== tx) C.w.style.fontSize = tx;
+      if (C.w.style.transform !== tr) C.w.style.transform = tr;
     });
   }
+  // la chat si apre (sopra il tabellone, dall'alto del tabellone fino alla barra) o si chiude (la striscia con le ultime 2 righe)
+  function apriChat(ui, si) {
+    si = !!si;
+    if (ui.chatAperta === si && ui.chat.classList.contains("aperta") === si) return;
+    ui.chatAperta = si;
+    if (si) altezzaChat(ui);
+    ui.chat.classList.toggle("aperta", si);
+    giuChat(ui);
+  }
+  function altezzaChat(ui) {   // la chat aperta va dall'alto del tabellone fino alla barra (anche se intanto la barra cambia)
+    var h = Math.max(ui.chat.offsetHeight, ui.chat.offsetTop + ui.chat.offsetHeight - ui.tab.offsetTop) + "px";
+    if (ui.chat.style.getPropertyValue("--or-chat-h") !== h) ui.chat.style.setProperty("--or-chat-h", h);
+  }
+  // la chat scende sempre fino all'ultima riga (p7): chiusa lo fa da sola (le righe stanno in fondo), aperta la porto giù io
+  function giuChat(ui) { if (ui.log) ui.log.scrollTop = ui.log.scrollHeight; }
   // un conto alla rovescia che si aggiorna da solo (ms = quanto manca adesso)
   function conto(ui, nome, ms) {
     var c = ui.conti[nome];
@@ -1699,6 +1867,11 @@
     var src = srcFaccia(ui, id);
     return ui.el("span", { class: "or-f" + (cls ? " " + cls : "") }, [ src ? ui.el("img", { src: src, alt: nome || "" }) : ui.el("b", { text: String(nome || "?").charAt(0).toUpperCase() }) ]);
   }
+  // la faccina con un'espressione dello studio («pensa», «esulta»…): la stessa del podio e dei banconi
+  function facciaEspr(ui, id, nome, f, cls) {
+    var src = srcAvatarBanco(ui, id, nome, f);
+    return ui.el("span", { class: "or-f espr" + (cls ? " " + cls : "") }, [ src ? ui.el("img", { src: src, alt: nome || "" }) : ui.el("b", { text: String(nome || "?").charAt(0).toUpperCase() }) ]);
+  }
   // le faccine sulle caselle segnate: si vede chi vorrebbe girare la parola. Piccole, sul bordo in alto della casella (non
   // coprono le lettere); l'avatar vero come immagine fatta col DOM (prima era scritta a mano e si rompeva: p1, 21 ott 2026)
   function testaAvatar(ui, id, nome, team) {
@@ -1707,14 +1880,18 @@
       src ? ui.el("img", { src: src, alt: "" }) : ui.el("b", { text: String(nome || "?").charAt(0).toUpperCase() }) ]);
   }
   // una riga della chat della partita
+  // (le righe con una parola girata hanno _parole: toccandole, a chat aperta, la loro casella si illumina sul tabellone)
   function rigaLog(ui, vm, e) {
     var el = ui.el, col = SQ[e.k] ? SQ[e.k].col : "#888";
-    if (e.t === "via") return el("div", { class: "or-l sis" }, [ el("span", { text: vm.vsBot ? "Cominciate voi" : "Cominciano i " + SQ[e.k].nome }) ]);
+    // (finché è l'unica riga, nella striscia della chat diventa grande: «▲ COMINCIANO I ROSSI»)
+    if (e.t === "via") return el("div", { class: "or-l sis via", style: "--c:" + col }, [ segno(e.k), el("span", { text: vm.vsBot ? "Cominciate voi" : "Cominciano i " + SQ[e.k].nome }) ]);
     if (e.t === "fine") return el("div", { class: "or-l sis fine" }, [ el("span", { text: e.testo || "🎉 Vincono i " + SQ[e.k].nome + "!" }) ]);
     if (e.t === "pens") {   // 💭 a fine turno: le parole a cui pensava il capo (quelle trovate; le altre restano segrete)
-      return el("div", { class: "or-l or-l-pens" + ((e.ok || []).length ? " tocca" : ""), onclick: function () { lampoParole(ui, e.ok || []); } }, [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome", style: "color:" + col, text: e.nome }), el("span", { class: "or-l-txt", text: "💭 pensava a" }) ]
-        .concat((e.ok || []).map(function (w) { return el("span", { class: "or-l-w c" + e.k, text: w + " ✓" }); }))
+      var rp = el("div", { class: "or-l or-l-pens" + ((e.ok || []).length ? " tocca" : "") }, [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome", style: "color:" + col, text: e.nome }), el("span", { class: "or-l-txt", text: "💭 pensava a" }) ]
+        .concat((e.ok || []).map(function (w) { return el("span", { class: "or-l-w c" + e.k }, [ segno(e.k), document.createTextNode(w + " ✓") ]); }))
         .concat(e.nasc ? [ el("span", { class: "or-l-nasc", text: (e.ok && e.ok.length ? "+" : "") + e.nasc + " 🤫" }) ] : []));
+      rp._parole = e.ok || [];
+      return rp;
     }
     if (e.t === "sis") return el("div", { class: "or-l sis" }, [ el("span", { text: e.testo || "" }) ]);   // avvisi: capo nuovo, turno saltato, tempo scaduto, riepilogo
     var testa = [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome", style: "color:" + col, text: e.nome }) ];
@@ -1722,8 +1899,11 @@
     if (e.t === "passo") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "passa" }) ]));
     var esito = e.oro ? "⭐ d'oro: si continua!" : e.c === "x" ? "💣 la parola nera!" : e.c === e.k ? (e.fin ? "✓ · finiti i tentativi" : "✓") : e.c === "n" ? "di nessuno" :
       vm.vsBot && e.c === 1 ? "era di " + nomeBot(vm) : "era dei " + SQ[e.c].nome;   // (contro il Bot i Blu non ci sono: c'è lui)
-    // (una parola girata: toccando la riga la sua casella si illumina sul tabellone)
-    return el("div", { class: "or-l tocca", onclick: function () { lampoParole(ui, [e.w]); } }, testa.concat([ el("span", { class: "or-l-w c" + e.c + (e.oro ? " oro" : ""), text: e.w }), el("span", { class: "or-l-esito" + (e.c === e.k && !e.oro ? " ok" : ""), text: esito }) ]));
+    // (una parola girata: toccando la riga, a chat aperta, la sua casella si illumina sul tabellone; la parola col segno)
+    var rg = el("div", { class: "or-l tocca" }, testa.concat([ el("span", { class: "or-l-w c" + e.c + (e.oro ? " oro" : "") }, [ segno(e.oro ? "oro" : e.c === "n" ? null : e.c), document.createTextNode(e.w) ]),
+      el("span", { class: "or-l-esito" + (e.c === e.k && !e.oro ? " ok" : ""), text: esito }) ]));
+    rg._parole = [e.w];
+    return rg;
   }
   function aggiorna(ui, vm, cb) {
     var S = ui.S, r = ruolo(vm, cb), key = vm.fase === "gioco" && r.capo ? cb.chiave() : null, fine = vm.fase === "fine";
@@ -1752,9 +1932,10 @@
     // ---- l'indizio, grande ----
     var ki;
     ui.veloce = vm.ritmo === "veloce";
+    var capoT = !fine && vm.turno >= 0 ? trova(vm, vm.capo[vm.turno]) : null;
     if (fine) ki = "f|" + vm.vince + "|" + JSON.stringify(vm.fineCome || null) + "|" + testoSerie(vm) + "|" + JSON.stringify(vm.punti || null) + "|" + (r.io ? r.team : "g");
-    else if (vm.passo === "bot") ki = "b|" + vm.turno;
-    else if (vm.passo === "indizio") ki = "a|" + vm.turno + "|" + (r.mioTurno && r.capo) + "|" + !!vm.cless + "|" + (vm.cless ? vm.cless.doppio : "");
+    else if (vm.passo === "bot") ki = "b|" + vm.turno + "|" + nAvatar(cb.omini && cb.omini());
+    else if (vm.passo === "indizio") ki = "a|" + vm.turno + "|" + (r.mioTurno && r.capo) + "|" + !!vm.cless + "|" + (vm.cless ? vm.cless.doppio : "") + "|" + (capoT ? capoT.id + (capoT.via ? "-" : "") : "") + "|" + nAvatar(cb.omini && cb.omini());
     else ki = "i|" + vm.turno + "|" + vm.indizio.parola + "|" + vm.indizio.n + "|" + vm.tentativi + "|" + !!vm.cless + "|" + (vm.cless ? vm.cless.doppio : "");
     if (ui.kInd !== ki) {
       ui.kInd = ki; var el = ui.el, I = ui.ind;
@@ -1767,15 +1948,17 @@
         var sotto = [testoPunti(vm.punti), testoSerie(vm)].filter(Boolean).join(" · ");
         if (sotto) I.appendChild(el("div", { class: "or-ind-tent or-fine-sotto", text: sotto }));
       }
-      else if (vm.passo === "bot") I.appendChild(el("div", { class: "or-ind-stato", text: "🤖 " + nomeBot(vm) + " scopre una sua parola…" }));
+      else if (vm.passo === "bot") I.appendChild(el("div", { class: "or-ind-stato" }, [ faccia(ui, BOT_ID, nomeBot(vm)), el("span", { text: "🤖 " + nomeBot(vm) + " scopre una sua parola…" }) ]));
       else if (vm.passo === "indizio") {
-        I.appendChild(el("div", { class: "or-ind-stato", text: r.mioTurno && r.capo ? "👑 Tocca a te: dai l'indizio" : "Il capo dei " + SQ[vm.turno].nome + " pensa all'indizio…" }));
+        // il capo di turno che pensa (la sua faccia: lo studio, ma sul tabellone. Fino al 22 ott la telecamera andava sul suo podio)
+        I.appendChild(el("div", { class: "or-ind-stato" }, (capoT ? [ facciaEspr(ui, capoT.id, capoT.nome, "pensa", capoT.via ? "via" : "") ] : [])
+          .concat([ el("span", { text: r.mioTurno && r.capo ? "👑 Tocca a te: dai l'indizio" : "Il capo dei " + SQ[vm.turno].nome + " pensa all'indizio…" }) ])));
         if (vm.cless) I.appendChild(el("div", { class: "or-ind-tent" }, [ cl() ]));
       }
       else {
-        I.appendChild(el("small", { text: "INDIZIO DEI " + SQ[vm.turno].nome.toUpperCase() }));
-        I.appendChild(el("b", {}, [ document.createTextNode(vm.indizio.parola), el("span", { class: "n", text: vm.indizio.n === 0 ? "∞" : String(vm.indizio.n) }) ]));
-        I.appendChild(el("div", { class: "or-ind-tent" }, [ document.createTextNode(vm.tentativi >= 99 ? "tentativi liberi" : "ancora " + vm.tentativi + (vm.tentativi === 1 ? " tentativo" : " tentativi")) ].concat(vm.cless ? [ document.createTextNode(" · "), cl() ] : [])));
+        // l'indizio sulla fascia del colore della squadra, col numero dorato; sotto di chi è, i tentativi e la clessidra
+        I.appendChild(fascia(ui, vm.turno, vm.indizio.parola, vm.indizio.n));
+        I.appendChild(el("div", { class: "or-ind-tent" }, [ el("small", { text: "INDIZIO DEI " + SQ[vm.turno].nome.toUpperCase() }), document.createTextNode(" · " + (vm.tentativi >= 99 ? "tentativi liberi" : "ancora " + vm.tentativi + (vm.tentativi === 1 ? " tentativo" : " tentativi"))) ].concat(vm.cless ? [ document.createTextNode(" · "), cl() ] : [])));
         // gli indizi vecchi della squadra con parole ancora da trovare (cambiano solo con l'indizio: stanno in questa chiave)
         var ap = indiziAperti(vm), sq = SQ[vm.turno];
         if (ap.length) I.appendChild(el("div", { class: "or-aperti" }, ap.map(function (x) {
@@ -1792,8 +1975,13 @@
     Object.keys(vm.prop || {}).forEach(function (id) { if (id === cb.myId && r.indovino) return; [].concat(vm.prop[id]).forEach(function (i) { (chi[i] = chi[i] || []).push(id); }); });
     mie.forEach(function (i) { (chi[i] = chi[i] || []).push(cb.myId); });
     var sel = r.intendo ? selDi(vm) : null;   // 🤔 le parole che sto segnando come "intese"
+    // (il capo, a partita in corso: le girate un po' spente, così risaltano le coperte ancora da trovare)
+    var tabCls = "or-tab" + (vm.tab.length <= 20 ? " venti" : "") + (key && !fine ? " capo" : "") + (ui.basse ? " basse" : "");
+    if (ui.tab.className !== tabCls) ui.tab.className = tabCls;
     vm.tab.forEach(function (c, i) {
       var C = ui.carte[i], col = c.c != null ? c.c : (key ? key[i] : null);
+      // il segno della squadra nell'angolo (girate, chiave del capo, fine partita): ▲ ● ■, il teschio, la stella d'oro
+      metteSegno(C.sg, c.oro ? "oro" : col === "n" ? null : col);
       var cls = "or-carta" + (c.g ? " g" : "") + (col != null ? " c" + col : "") + (!c.g && key ? " chiave" : "") + (fine && !c.g ? " svelata" : "") + (c.oro ? " oro" : "") + (vm.sospeso && vm.sospeso.i === i && !c.g ? " sospesa" : "") +
         (r.indovino && !c.g && !vm.sospeso ? " attiva" : "") + (mie.indexOf(i) >= 0 ? " mia" : "") +
         (sel && col === r.team && !c.g ? " attiva" : "") + (sel && sel.indexOf(i) >= 0 ? " pensata" : "");
@@ -1827,7 +2015,7 @@
       if (ui.logOm != null && ui.logN) {
         while (ui.log.firstChild) ui.log.removeChild(ui.log.firstChild);
         (vm.log || []).forEach(function (e) { if (e.n <= ui.logN) ui.log.appendChild(rigaLog(ui, vm, e)); });
-        ui.log.scrollTop = ui.log.scrollHeight;
+        giuChat(ui);
       }
       ui.logOm = nOm;
     }
@@ -1836,11 +2024,11 @@
       nuove.forEach(function (e) {
         ui.log.appendChild(rigaLog(ui, vm, e)); ui.logN = e.n;
         if (!ui.avviato) return;   // aprendo lo schermo a partita iniziata (es. rientro) non si rifanno le scene vecchie
-        var neraFine = vm.fase === "fine" && vm.fineCome && vm.fineCome.t === "nera";   // 💣 la partita finisce con la parola nera
-        if (e.t === "ind") scenaIndizio(ui, e.k, e.p, e.num);
-        else if (e.t === "gira") { if (!(neraFine && e.c === "x")) reazione(ui, vm, e); cartelloMossa(ui, vm, e); }
-        else if (e.t === "passo" || (e.t === "sis" && e.ban)) cartelloMossa(ui, vm, e);
+        // (il tabellone resta in vista: niente telecamera sul podio del capo né sul bancone; le facce stanno nella scritta grande)
+        if (e.t === "ind") cartelloIndizio(ui, vm, e);
+        else if (e.t === "gira" || e.t === "passo" || (e.t === "sis" && e.ban)) cartelloMossa(ui, vm, e);
         else if (e.t === "fine") {
+          var neraFine = vm.fineCome && vm.fineCome.t === "nera";   // 💣 la partita finisce con la parola nera
           ui.finita = true; ui.fineOra = Date.now();
           if (neraFine) scenaNera(ui, vm.fineCome.k, vm.fineCome.id);   // prima l'esplosione (un secondo e mezzo), poi la festa
           scenaFine(ui, e.k, neraFine);
@@ -1849,13 +2037,14 @@
         else if (e.t === "pens") mostraPensava(ui, e);
       });
       while (ui.log.children.length > 60) ui.log.removeChild(ui.log.firstChild);
-      ui.log.scrollTop = ui.log.scrollHeight;
+      giuChat(ui);
     }
-    // tocca a una squadra nuova: un attimo sul suo capo
-    if (vm.fase === "gioco" && vm.passo === "indizio" && ui.turnoVisto !== vm.turno + "|" + vm.storia.length) {
-      var primaVolta = ui.turnoVisto === null; ui.turnoVisto = vm.turno + "|" + vm.storia.length;
-      if (!primaVolta || (vm.log || []).length <= 1) { var tc = trova(vm, vm.capo[vm.turno]); if (tc && !tc.via) scenaTurno(ui, vm.turno); }
-    }
+    // la striscia della chat: finché c'è solo «Cominciano i Rossi», grande col colore e il segno della squadra
+    ui.log.classList.toggle("solo", ui.log.children.length <= 1);
+    // la chat aperta si chiude da sola quando cambia il turno o finisce la partita (il tabellone torna in vista)
+    var kt = vm.fase + "|" + vm.turno + "|" + vm.passo;
+    if (ui.kTurnoChat !== kt) { ui.kTurnoChat = kt; if (ui.chatAperta) apriChat(ui, false); }
+    if (ui.chatAperta) altezzaChat(ui);
     ui.avviato = true;
     // ---- in basso: cosa posso fare io (si ricostruisce solo se cambia il mio ruolo o la fase) ----
     // (mentre il capo segna le parole che intendeva, la sua barra resta quella: niente lampeggi a ogni parola girata)
@@ -2066,7 +2255,7 @@
     if (vm.passo === "bot") { stato("🤖 Tocca a " + nomeBot(vm) + ": scopre una sua parola…" + (r.capo ? " Intanto pensa al prossimo indizio." : "")); faccine(); return fineServizio(); }
     if (!r.mioTurno) { stato("Tocca ai " + SQ[vm.turno].nome + "…" + (r.capo ? " Intanto pensa al prossimo indizio." : "")); faccine(); return fineServizio(); }
     if (vm.passo === "indizio") {
-      if (!r.capo) { stato("Il vostro capo sta pensando all'indizio…"); return fineServizio(); }
+      if (!r.capo) { stato("Il vostro capo sta pensando all'indizio…"); faccine(); return fineServizio(); }
       var input = el("input", { type: "text", class: "or-input", placeholder: "Una parola sola", maxlength: "20", autocomplete: "off", autocapitalize: "characters" });
       var numeri = el("div", { class: "or-numeri" }), scelto = { n: 1 }, errore = el("div", { class: "or-err" });
       [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(function (n) {
@@ -2087,7 +2276,7 @@
       box.appendChild(numeri); box.appendChild(errore);
       return fineServizio();
     }
-    if (r.capo) { stato("La tua squadra sta cercando… Tu non puoi aiutarli!"); return fineServizio(); }
+    if (r.capo) { stato("La tua squadra sta cercando… Tu non puoi aiutarli!"); faccine(); return fineServizio(); }   // (le faccine: la barra resta alta uguale, il tabellone non cambia misura)
     // chi indovina: un tocco segna (o toglie il segno), «👆 Gira MARE» scopre la parola segnata più di recente,
     // «✋ Basta così, passo» vuole un secondo tocco («Sicuri? ✋ Passo», torna normale dopo 3 s). La riga e i tasti poi li
     // aggiorna aggiornaGira (niente barra rifatta a ogni segno o parola girata)
@@ -2262,99 +2451,161 @@
   function stile() {
     if (cssFatto) return; cssFatto = true;
     var st = document.createElement("style");
+    // i disegni delle squadre (stile «C · Moderna e chiara», scelto dal proprietario il 22 ott 2026): Rossi a righe, Blu a
+    // puntini (leggeri, sotto la scritta bianca), Verdi a quadretti. Solo sfondi: niente filtri, blur, mask o clip-path
+    var R0 = "repeating-linear-gradient(135deg,rgba(255,255,255,.13) 0,rgba(255,255,255,.13) 4px,rgba(255,255,255,0) 4px,rgba(255,255,255,0) 10px)";
+    var P1 = "radial-gradient(circle,rgba(255,255,255,.14) 0,rgba(255,255,255,.14) 1.2px,rgba(255,255,255,0) 1.8px) 0 0/9px 9px,radial-gradient(circle,rgba(255,255,255,.14) 0,rgba(255,255,255,.14) 1.2px,rgba(255,255,255,0) 1.8px) 4.5px 4.5px/9px 9px";
+    var Q2 = "linear-gradient(90deg,rgba(255,255,255,.1) 50%,rgba(255,255,255,0) 50%) 0 0/10px 10px,linear-gradient(rgba(255,255,255,.1) 50%,rgba(255,255,255,0) 50%) 0 0/10px 10px";
+    var F0 = R0 + ",linear-gradient(160deg,#ef4545,#cb2525)", F1 = P1 + ",linear-gradient(160deg,#2a8be4,#166abd)", F2 = Q2 + ",linear-gradient(160deg,#38b051,#26883a)";
+    var TESCHIO = "#1d1d1d", PERICOLO = "repeating-linear-gradient(135deg,#fcc419 0,#fcc419 5px,#1f1f1f 5px,#1f1f1f 10px)";
     st.textContent = [
-      // ---- lo schermo di gioco: stile "pulito e moderno" (chiaro, tessere bianche, colori pieni) ----
-      ".schermata.or-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#f7f5ef}",
-      ".schermata.or-piena>.testa,.schermata.or-piena>.piede{display:none}",
-      ".schermata.or-piena>.contenuto{height:100%;margin:0;padding:0}",
-      ".or-scena{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;gap:7px;padding:calc(8px + env(safe-area-inset-top)) 9px calc(9px + env(safe-area-inset-bottom));overflow:hidden;color:#1f1f1f;background:#f7f5ef;user-select:none;-webkit-user-select:none}",
-      // in alto: le squadre con le faccine
-      ".or-alto{display:flex;gap:7px;align-items:stretch;flex:none}",
-      ".or-esci{width:34px;height:34px;flex:none;align-self:center;border-radius:50%;border:0;background:#ebe7da;color:#1f1f1f;font:inherit;font-size:1.2rem;font-weight:900;cursor:pointer}",
-      ".or-pannelli{flex:1;display:flex;gap:6px;min-width:0}",
-      ".or-pan{flex:1;min-width:0;border-radius:14px;padding:5px 7px 7px;background:#fff;box-shadow:0 0 0 1px #ebe7da;display:flex;flex-direction:column;gap:4px;transition:background .25s}",
-      ".or-pan-testa{display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-weight:900;font-size:.78rem;color:var(--c)}",
+      // ---- i segni delle squadre (nel DOM: <span class="or-sg"><svg>): prendono il colore della scritta ----
+      ".or-sg{display:inline-block;flex:none;width:.8em;height:.8em;line-height:0;vertical-align:-.06em}.or-sg:empty{display:none}.or-sg svg{display:block;width:100%;height:100%}",
+      // ---- il maxischermo: carta chiara con una luce dall'alto; i tasti nella barra scura in basso ----
+      ".or-studio .st-sch-in{padding:calc(46px + env(safe-area-inset-top)) 8px var(--or-barra,110px)!important;background:radial-gradient(120% 55% at 50% 0%,#fffdf8 0%,#f6f2e8 55%,#efe9dc 100%)}",
+      ".or-sch{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;color:#1f1f1f}",
+      // ---- in alto le squadre: il nome col segno, quante parole mancano, le faccine (il capo con la corona) ----
+      ".or-pannelli{flex:none;display:flex;gap:6px;min-width:0}",
+      ".or-pan{flex:1;min-width:0;border-radius:16px;padding:5px 8px 6px;background:linear-gradient(180deg,#fff,#fbf9f3);box-shadow:0 0 0 1px rgba(70,55,20,.08),0 1px 1px rgba(70,55,20,.06),0 4px 10px -3px rgba(70,55,20,.18);display:flex;flex-direction:column;gap:3px}",
+      ".or-pan-testa{display:flex;justify-content:space-between;align-items:center;gap:4px;font-weight:900;font-size:.8rem;color:var(--c)}",
+      ".or-pan-nome{display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".or-pan-n{font-size:1.3rem;line-height:1}",
-      ".or-pan.turno,.or-pan.vince{background:var(--c);box-shadow:none}.or-pan.turno .or-pan-testa,.or-pan.vince .or-pan-testa{color:#fff}",
+      ".or-pan.turno,.or-pan.vince{box-shadow:0 0 0 1px rgba(0,0,0,.06),0 6px 14px -4px rgba(0,0,0,.35)}.or-pan.turno .or-pan-testa,.or-pan.vince .or-pan-testa{color:#fff}",
+      ".or-pan.s0.turno,.or-pan.s0.vince{background:" + F0 + "}.or-pan.s1.turno,.or-pan.s1.vince{background:" + F1 + "}.or-pan.s2.turno,.or-pan.s2.vince{background:" + F2 + "}",
       ".or-pan.fuori{opacity:.4}",
-      ".or-facce{display:flex;flex-wrap:wrap;gap:4px;min-height:26px;align-items:center}",
+      // (le faccine un po' una sopra l'altra: in 12 a 3 squadre stanno su una riga)
+      ".or-facce{display:flex;flex-wrap:nowrap;align-items:center;min-height:34px;padding-top:8px;box-sizing:border-box;min-width:0;overflow:hidden}.or-facce .or-f+.or-f{margin-left:-5px}",
       ".or-f{position:relative;flex:none;width:26px;height:26px;border-radius:50%;background:#f1efe8;box-shadow:0 0 0 2px #fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#6b6658}",
       ".or-f img{width:100%;height:100%;border-radius:50%;display:block}",
-      ".or-f.capo{margin-top:6px}.or-f.capo:after{content:'👑';position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:11px;line-height:1}",
+      ".or-f.capo:after{content:'👑';position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:10px;line-height:1}",
       ".or-f.via{opacity:.35}",
       ".or-f.tu{box-shadow:0 0 0 2px #1f1f1f}",
-      // l'indizio, grande al centro
-      ".or-ind{flex:none;text-align:center;min-height:44px;display:flex;flex-direction:column;justify-content:center}",
-      ".or-ind small{font-size:.6rem;letter-spacing:.14em;color:#8a8576;font-weight:800}",
-      ".or-ind b{font-size:1.4rem;font-weight:900;line-height:1.1;color:var(--c)}",
-      ".or-ind b .n{display:inline-block;margin-left:7px;min-width:24px;border-radius:8px;background:#1f1f1f;color:#fff;font-size:1rem;padding:1px 6px;vertical-align:3px}",
-      ".or-ind-tent{font-size:.7rem;color:#8a8576;font-weight:700}",
-      ".or-ind-stato{font-weight:900;font-size:1rem;color:var(--c)}",
-      // il tabellone: caselle basse, non stirate
-      ".or-tab{flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:clamp(38px,6.4vh,52px);gap:4px}.or-tab.venti{grid-auto-rows:clamp(44px,7.6vh,60px)}",
+      // ---- l'indizio: sulla fascia del colore (e col disegno) della squadra, col numero dorato; sotto, di chi è e i tentativi.
+      // (nello stesso posto per un attimo «💭 Luca pensava a…», e sopra la scritta grande delle mosse) ----
+      ".or-ind-zona{position:relative;flex:none}",
+      ".or-ind{min-height:52px;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px}",
+      ".or-fascia{display:inline-flex;align-items:center;gap:7px;max-width:100%;box-sizing:border-box;padding:3px 5px 3px 11px;border-radius:12px;color:#fff;background:#1f1f1f;box-shadow:0 2px 0 rgba(0,0,0,.12),0 4px 10px -4px rgba(0,0,0,.35)}",
+      ".or-fascia.s0{background:" + F0 + "}.or-fascia.s1{background:" + F1 + "}.or-fascia.s2{background:" + F2 + "}",
+      ".or-fascia .or-sg{width:.62em;height:.62em;font-size:1.45rem}",
+      ".or-fascia-w{min-width:0;font-size:1.45rem;font-weight:900;letter-spacing:.02em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 1px rgba(0,0,0,.28)}",
+      ".or-fascia.media .or-fascia-w{font-size:1.2rem}.or-fascia.lunga .or-fascia-w{font-size:1rem}",
+      ".or-fascia .n{flex:none;min-width:27px;box-sizing:border-box;padding:1px 7px;border-radius:9px;background:linear-gradient(180deg,#ffe066,#fab005);color:#5c3d00;font-size:1.1rem;font-weight:900;line-height:1.3;text-align:center;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:inset 0 -2px 0 rgba(160,100,0,.35),0 1px 2px rgba(0,0,0,.25)}",
+      ".or-ind-tent{font-size:.7rem;color:#8a8576;font-weight:800;line-height:1.25}.or-ind-tent small{font-size:inherit;letter-spacing:.08em}",
+      ".or-ind-stato{display:flex;align-items:center;justify-content:center;gap:7px;font-weight:900;font-size:1rem;line-height:1.2;color:var(--c)}",
+      ".or-ind-stato .or-f{width:30px;height:30px;box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--c)}",
+      ".or-fine-tit{font-size:.95rem;line-height:1.2}.or-fine-sotto{color:#6b6658;font-size:.76rem;font-weight:800;margin-top:1px}",
       ".or-conto{font-variant-numeric:tabular-nums;font-weight:900}.or-cless{color:#e67700;font-size:.8rem}",
-      ".or-carta{position:relative;min-width:0;min-height:0;border:0;border-radius:10px;padding:2px;background:#fff;color:#2b2b2b;font:inherit;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:default;-webkit-tap-highlight-color:transparent;touch-action:manipulation;overflow:hidden;box-shadow:0 1px 0 #e4e0d4,0 0 0 1px #ebe7da}",
-      ".or-w{display:block;max-width:100%;line-height:1.05;letter-spacing:-.02em;overflow-wrap:anywhere;text-align:center}",
+      // ⏳ la clessidra: gli ultimi 10 secondi rossa e col battito (solo transform). (Le cifre sono un <b> dentro l'indizio:
+      // prendono il colore della clessidra, così negli ultimi 10 secondi diventano rosse davvero: p12)
+      ".or-cless.rosso{color:#e03131;display:inline-block;animation:orBatti 1s ease-in-out infinite}@keyframes orBatti{50%{transform:scale(1.15)}}",
+      ".or-ind .or-cless .or-conto{color:inherit;font-size:inherit;line-height:inherit}",
+      // gli indizi vecchi ancora aperti, sotto quello di adesso
+      ".or-aperti{display:flex;justify-content:center;gap:5px;max-width:100%;min-width:0;overflow:hidden;white-space:nowrap}",
+      ".or-aperto{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:.68rem;font-weight:800;color:#6b6658;background:#ebe7da;border-radius:999px;padding:1px 8px}",
+      // ---- IL TABELLONE: prende tutto lo spazio libero (p2); il vassoio, e sopra le carte ----
+      ".or-tab{flex:1 1 0;min-height:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:5px 4px;margin:0 -4px;padding:5px 4px;border-radius:16px;background:linear-gradient(180deg,#e8e2d2,#e2dbc8);box-shadow:inset 0 1px 3px rgba(70,55,20,.22),0 1px 0 rgba(255,255,255,.9)}",
+      ".or-tab.venti{grid-template-rows:repeat(4,minmax(0,1fr))}",
+      // la carta coperta: bianca, un filo di spessore sotto, ombra morbida; niente margine ai lati (le parole lunghe su una riga)
+      ".or-carta{position:relative;min-width:0;min-height:0;margin:0;border:0;border-radius:12px;padding:2px 0 5px;color:#211e18;font:inherit;font-weight:800;display:flex;align-items:center;justify-content:center;overflow:visible;cursor:default;-webkit-tap-highlight-color:transparent;touch-action:manipulation;text-shadow:0 1px 0 rgba(255,255,255,.8);background:linear-gradient(180deg,#fff 0%,#fdfbf7 60%,#f8f4ea 100%);box-shadow:inset 0 -3px 0 #ebe4d2,0 0 0 1px rgba(70,55,20,.09),0 1px 1px rgba(70,55,20,.08),0 2px 4px -1px rgba(70,55,20,.16)}",
+      // la parola: mai a capo a metà (se non ci sta si stringe: adattaScritte); a capo solo tra due parole («ZIO GINO»)
+      ".or-w{position:relative;z-index:1;display:block;flex:none;line-height:1.05;letter-spacing:-.02em;white-space:nowrap;text-align:center;transform-origin:50% 50%}",
+      ".or-w.piu{white-space:normal;overflow-wrap:normal;word-break:keep-all;max-width:100%}",
       ".or-carta.attiva{cursor:pointer}.or-carta.attiva:active{transform:scale(.96)}",
-      ".or-carta.mia{box-shadow:0 0 0 2.5px #1f1f1f}",
-      // le faccine di chi ha segnato la parola: piccole, a cavallo del bordo in alto a destra (non coprono le lettere; non
-      // prendono i tocchi). Per questo la casella non taglia quello che esce (overflow visibile)
-      ".or-tab .or-carta{overflow:visible}",
-      ".or-pr{position:absolute;top:-6px;right:2px;z-index:3;display:flex;pointer-events:none}",
-      ".or-av{flex:none;width:17px;height:17px;margin-left:-5px;border-radius:50%;overflow:hidden;background:var(--c);display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:900;line-height:1;box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px var(--c)}.or-av:first-child{margin-left:0}.or-av img{width:100%;height:100%;display:block}",
+      // la mia (segnata da me): il bordo scuro
+      ".or-carta.mia{box-shadow:inset 0 -3px 0 #ebe4d2,0 0 0 2.5px #1f1f1f,0 4px 8px -2px rgba(0,0,0,.35);z-index:1}",
+      // il segno della squadra nell'angolo in alto a sinistra (girate, chiave del capo, fine partita)
+      ".or-carta>.or-sg{position:absolute;top:4px;left:4px;z-index:2;width:10px;height:10px;pointer-events:none}",
+      ".or-carta>.or-sg[data-s=x]{top:3px;left:3px;width:13px;height:13px}.or-carta>.or-sg[data-s=oro]{top:3px;left:3px;width:12px;height:12px;color:#fff8db}",
+      // le faccine di chi ha segnato la parola: tonde, a cavallo del bordo in alto a destra (non coprono le lettere; non prendono
+      // i tocchi). Per questo la casella non taglia quello che esce (overflow visibile)
+      ".or-pr{position:absolute;top:-7px;right:-2px;z-index:3;display:flex;flex-direction:row-reverse;pointer-events:none}",
+      ".or-av{flex:none;width:18px;height:18px;border-radius:50%;overflow:hidden;background:var(--c);display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:900;line-height:1;box-shadow:0 0 0 1.5px var(--c),0 0 0 3px #fff,0 2px 4px 1px rgba(0,0,0,.25)}.or-av+.or-av{margin-right:-5px}.or-av img{width:100%;height:100%;display:block}",
       ".or-av.piu{background:#1f1f1f;font-size:8px;letter-spacing:-.04em;box-shadow:0 0 0 1.5px #fff}",
+      // la chiave del capo (e la fine partita): coperte col colore chiaro, il bordo spesso della squadra e il suo disegno accennato
+      ".or-carta.chiave.c0,.or-carta.svelata.c0{color:#a51d1d;background:repeating-linear-gradient(135deg,rgba(224,49,49,.08) 0,rgba(224,49,49,.08) 4px,rgba(224,49,49,0) 4px,rgba(224,49,49,0) 10px),linear-gradient(180deg,#fff1f1,#ffd3d3);box-shadow:inset 0 -4px 0 #e03131,0 0 0 1px rgba(224,49,49,.25),0 1px 1px rgba(70,55,20,.1),0 3px 5px -2px rgba(70,55,20,.25)}",
+      ".or-carta.chiave.c1,.or-carta.svelata.c1{color:#0e4f94;background:radial-gradient(circle,rgba(28,126,214,.12) 0,rgba(28,126,214,.12) 1.4px,rgba(28,126,214,0) 2px) 0 0/9px 9px,radial-gradient(circle,rgba(28,126,214,.12) 0,rgba(28,126,214,.12) 1.4px,rgba(28,126,214,0) 2px) 4.5px 4.5px/9px 9px,linear-gradient(180deg,#eff7ff,#cde5fc);box-shadow:inset 0 -4px 0 #1c7ed6,0 0 0 1px rgba(28,126,214,.25),0 1px 1px rgba(70,55,20,.1),0 3px 5px -2px rgba(70,55,20,.25)}",
+      ".or-carta.chiave.c2,.or-carta.svelata.c2{color:#1c6a2f;background:linear-gradient(90deg,rgba(47,158,68,.07) 50%,rgba(47,158,68,0) 50%) 0 0/10px 10px,linear-gradient(rgba(47,158,68,.07) 50%,rgba(47,158,68,0) 50%) 0 0/10px 10px,linear-gradient(180deg,#effcf1,#cbefd2);box-shadow:inset 0 -4px 0 #2f9e44,0 0 0 1px rgba(47,158,68,.25),0 1px 1px rgba(70,55,20,.1),0 3px 5px -2px rgba(70,55,20,.25)}",
+      ".or-carta.chiave.cn,.or-carta.svelata.cn{color:#4a4536;background:linear-gradient(180deg,#fffdf8,#f2ecde);box-shadow:inset 0 -4px 0 #d6ccb4,0 0 0 1px rgba(70,55,20,.12),0 1px 1px rgba(70,55,20,.1),0 3px 5px -2px rgba(70,55,20,.25)}",
+      ".or-carta.chiave.c0>.or-sg,.or-carta.svelata.c0>.or-sg{color:#e03131}.or-carta.chiave.c1>.or-sg,.or-carta.svelata.c1>.or-sg{color:#1c7ed6}.or-carta.chiave.c2>.or-sg,.or-carta.svelata.c2>.or-sg{color:#2f9e44}",
+      // la parola NERA coperta (vista del capo, e a fine partita): nera, col teschio, nella cornice a strisce gialle e nere del
+      // cartello di pericolo (due pezzi sotto la parola: le strisce e il nero dentro)
+      ".or-carta.chiave.cx,.or-carta.svelata.cx{color:#fff;text-shadow:0 1px 1px #000;background:" + TESCHIO + ";box-shadow:0 0 0 1px #000,0 3px 6px -2px rgba(0,0,0,.5)}",
+      ".or-carta.chiave.cx:before,.or-carta.svelata.cx:before{content:'';position:absolute;left:0;top:0;right:0;bottom:0;border-radius:12px;background:" + PERICOLO + ";pointer-events:none}",
+      ".or-carta.chiave.cx:after,.or-carta.svelata.cx:after{content:'';position:absolute;left:4px;top:4px;right:4px;bottom:4px;border-radius:8px;background:radial-gradient(110% 90% at 30% 15%,#3b3b3b,#141414 70%);pointer-events:none}",
+      ".or-carta.chiave.cx>.or-sg,.or-carta.svelata.cx>.or-sg{top:6px;left:6px;width:12px;height:12px;color:#fcc419}",
+      // le girate: colore pieno e il disegno della squadra, schiacciate nel vassoio (scritta bianca con un'ombra: si legge)
+      ".or-carta.g{color:#fff;padding-bottom:2px;text-shadow:0 1px 2px rgba(0,0,0,.4);box-shadow:inset 0 2px 3px rgba(0,0,0,.2),inset 0 0 0 1px rgba(0,0,0,.08)}",
+      ".or-carta.g>.or-sg{color:#fff}",
+      ".or-carta.g.c0{background:" + F0 + "}.or-carta.g.c1{background:" + F1 + "}.or-carta.g.c2{background:" + F2 + "}",
+      ".or-carta.g.cn{background:#e0d9c6;color:#a59d87;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:inset 0 2px 4px rgba(70,55,20,.22)}",
+      ".or-carta.g.cx{color:#fff;background:radial-gradient(110% 90% at 30% 15%,#3b3b3b,#0f0f0f 70%);box-shadow:0 0 0 2.5px #e03131,0 0 12px 1px rgba(224,49,49,.55)}.or-carta.g.cx>.or-sg{color:#ff6b6b}",
+      // la parola d'oro: oro con un riflesso e la stella (girata), oro chiaro a fine partita
+      ".or-carta.g.oro{color:#5a3b00;text-shadow:0 1px 0 rgba(255,255,255,.55);background:linear-gradient(115deg,rgba(255,255,255,0) 32%,rgba(255,255,255,.5) 46%,rgba(255,255,255,0) 60%),linear-gradient(160deg,#ffe066,#f5a800);box-shadow:inset 0 0 0 1px rgba(150,95,0,.3),0 0 0 2px #fff3bf,0 3px 8px -2px rgba(160,100,0,.5)}",
+      ".or-carta.svelata.oro{color:#7a5200;background:linear-gradient(180deg,#fffbe6,#ffe88a);box-shadow:inset 0 -4px 0 #f0a800,0 0 0 1px rgba(240,168,0,.4),0 1px 1px rgba(70,55,20,.1),0 3px 5px -2px rgba(70,55,20,.25)}",
+      // il capo, a partita in corso: le girate un po' spente, così risaltano le coperte ancora da trovare
+      ".or-tab.capo .or-carta.g{opacity:.6}",
+      // (caselle basse, es. a fine partita sui telefoni piccoli: il segno più piccolo e più nell'angolo, non tocca la parola)
+      ".or-tab.basse .or-carta>.or-sg{top:2px;left:2px;width:7px;height:7px}.or-tab.basse .or-carta>.or-sg[data-s=x],.or-tab.basse .or-carta>.or-sg[data-s=oro]{top:2px;left:2px;width:9px;height:9px}.or-tab.basse .or-carta.chiave.cx>.or-sg,.or-tab.basse .or-carta.svelata.cx>.or-sg{top:5px;left:5px;width:8px;height:8px}.or-tab.basse .or-carta.chiave.cx:before,.or-tab.basse .or-carta.svelata.cx:before{border-radius:10px}.or-tab.basse .or-carta.chiave.cx:after,.or-tab.basse .or-carta.svelata.cx:after{left:3px;top:3px;right:3px;bottom:3px}",
+      // la carta appena girata: si gira (si schiaccia e torna: solo transform e opacità)
+      ".or-carta.appena{animation:orGira .45s ease-out}",
+      "@keyframes orGira{0%{transform:scale(1.08,.12);opacity:.4}55%{transform:scale(1.06);opacity:1}100%{transform:none}}",
+      // la casella scelta trema finché non si scopre (solo transform)
+      ".or-carta.sospesa{animation:orTrema .14s linear infinite;box-shadow:0 0 0 3px #fcc419;z-index:2}",
+      "@keyframes orTrema{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-1.5px,.5px) rotate(-1.5deg)}50%{transform:translate(1px,-1px) rotate(1deg)}75%{transform:translate(1.5px,.5px) rotate(1.5deg)}}",
       // tocco una riga della chat con una parola: la sua casella si illumina un attimo (si muove solo l'opacità)
-      ".or-lampo{position:absolute;inset:-3px;border-radius:12px;background:rgba(252,196,25,.28);box-shadow:0 0 0 3px #fcc419,0 0 12px 2px rgba(252,196,25,.85);pointer-events:none;z-index:4;opacity:0;animation:orLampo 1.6s ease-out}",
+      ".or-lampo{position:absolute;left:-3px;top:-3px;right:-3px;bottom:-3px;border-radius:14px;background:rgba(252,196,25,.28);box-shadow:0 0 0 3px #fcc419,0 0 12px 2px rgba(252,196,25,.85);pointer-events:none;z-index:4;opacity:0;animation:orLampo 1.6s ease-out}",
       "@keyframes orLampo{0%,30%,62%{opacity:1}15%,46%{opacity:.45}100%{opacity:0}}",
-      ".or-l.tocca{cursor:pointer;-webkit-tap-highlight-color:transparent}",
-      // il mio ruolo, in alto tra ‹ e la musica (sparisce quando la telecamera va sui podi: lì c'è «IN ONDA»)
+      // ---- la chat: chiusa è una striscia con le ultime 2 righe (scende sempre fino all'ultima: le righe stanno in fondo), un
+      // tocco la apre sopra il tabellone (scorre), un altro la chiude ----
+      ".or-chat{flex:none;position:relative;z-index:6;height:52px}",
+      ".or-log{position:absolute;left:0;right:0;bottom:0;height:100%;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:7px 9px 5px;border-radius:14px;background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1px rgba(70,55,20,.1),inset 0 1px 2px rgba(70,55,20,.06);cursor:pointer;-webkit-tap-highlight-color:transparent}",
+      ".or-log:before{content:'';position:absolute;top:3px;left:50%;width:26px;height:3px;margin-left:-13px;border-radius:2px;background:rgba(70,55,20,.22)}",   // (la maniglia: si apre)
+      ".or-chat.aperta .or-log{left:-4px;right:-4px;height:var(--or-chat-h,300px);justify-content:flex-start;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-top:12px;background:#fffdf8;box-shadow:0 -8px 24px rgba(30,20,60,.25),inset 0 0 0 1px rgba(70,55,20,.12)}",
+      ".or-chat.aperta .or-l.tocca{cursor:pointer}",
+      ".or-l{flex:none;display:flex;align-items:center;gap:5px;font-size:.78rem;line-height:1.2;min-width:0}",
+      ".or-chat:not(.aperta) .or-l{flex-wrap:nowrap;white-space:nowrap;overflow:hidden}.or-chat:not(.aperta) .or-l:not(:nth-last-child(-n+2)){display:none}",   // (chiusa: solo le ultime 2 righe, intere)
+      ".or-l .or-f{width:19px;height:19px;box-shadow:none}",
+      ".or-l-nome{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34%}",
+      ".or-l-txt{color:#8a8576;font-weight:700}",
+      ".or-l-ind{font-weight:900;background:#1f1f1f;color:#fff;border-radius:7px;padding:1px 7px;letter-spacing:.02em;white-space:nowrap}",
+      ".or-l-w{display:inline-flex;align-items:center;gap:3px;font-weight:900;border-radius:6px;padding:1px 6px;background:#e9e4d6;color:#6b6658;white-space:nowrap}.or-l-w .or-sg{width:.7em;height:.7em}",
+      ".or-l-w.c0{background:" + F0 + ";color:#fff}.or-l-w.c1{background:" + F1 + ";color:#fff}.or-l-w.c2{background:" + F2 + ";color:#fff}.or-l-w.cx{background:#1f1f1f;color:#fff}.or-l-w.cx .or-sg{color:#ff6b6b}.or-l-w.oro{background:linear-gradient(160deg,#ffe066,#f5a800);color:#5c3d00}",
+      ".or-l-esito{color:#8a8576;font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.or-l-esito.ok{color:#2f9e44;font-weight:900;font-size:.88rem}",
+      ".or-l.sis{justify-content:center;color:#8a8576;font-weight:800;font-size:.72rem}.or-l.sis span{min-width:0;overflow:hidden;text-overflow:ellipsis}.or-l.fine{color:#1f1f1f;font-size:.9rem}",
+      ".or-l.via{color:var(--c)}.or-l.via .or-sg{width:.8em;height:.8em}",
+      // (finché è l'unica riga: «▲ COMINCIANO I ROSSI», grande col colore e il segno della squadra, in mezzo alla striscia)
+      ".or-log.solo{justify-content:center}.or-log.solo .or-l.via{font-size:1.02rem;font-weight:900;letter-spacing:.07em;text-transform:uppercase;gap:7px}",
+      ".or-l-pens{row-gap:3px}.or-chat.aperta .or-l-pens{flex-wrap:wrap}.or-l-nasc{font-weight:800;color:#8a8576;font-size:.72rem}",
+      // ---- il mio ruolo, in alto tra ‹ e la musica (sparisce quando la telecamera va sui podi: lì c'è «IN ONDA») ----
       ".or-ruolo{position:absolute;left:50%;top:calc(13px + env(safe-area-inset-top));transform:translateX(-50%);z-index:25;max-width:calc(100% - 104px);box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.74rem;font-weight:900;line-height:1.2;color:#fff;background:rgba(0,0,0,.5);border-radius:999px;padding:4px 11px;pointer-events:none;box-shadow:inset 0 0 0 2px var(--c,transparent);transition:opacity .3s}",
       ".or-ruolo:empty{display:none}.st-rec.on~.or-ruolo{opacity:0}",
-      // gli indizi vecchi ancora aperti, sotto quello di adesso
-      ".or-aperti{display:flex;justify-content:center;gap:5px;margin-top:3px;min-width:0;overflow:hidden;white-space:nowrap}",
-      ".or-aperto{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:.68rem;font-weight:800;color:#6b6658;background:#ebe7da;border-radius:999px;padding:2px 8px}",
+      // ---- in fondo: i tasti (nella barra scura dello studio) ----
+      ".or-sotto{flex:none;display:flex;flex-direction:column;gap:6px}",
+      ".or-studio .or-sotto{min-height:74px;justify-content:center}",   // (sempre almeno così: il tabellone non cambia misura a ogni turno)
+      ".or-stato{text-align:center;font-weight:800;font-size:.85rem;line-height:1.3;padding:2px 0;color:#6b6658}",
+      ".or-riga{display:flex;gap:6px}.or-riga.or-fine{flex-direction:column;align-items:stretch}",
+      ".or-btn{flex:1;min-height:46px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.92rem;color:#fff;background:#1f1f1f;cursor:pointer;touch-action:manipulation}.or-btn.chiaro{background:#ebe7da;color:#1f1f1f}.or-btn.corto{flex:0 0 auto;padding:0 18px}.or-btn:disabled{opacity:.3}",
       // chi indovina: «👆 Gira MARE» grande e «✋ Basta così, passo» (con la conferma «Sicuri?»)
       ".or-btn.or-gira{flex:1 1 auto;min-width:0;padding:0 10px}.or-gira .tx{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".or-btn.or-passo{flex:0 0 36%;padding:0 6px;font-size:.8rem;line-height:1.1}",
       ".or-studio .or-btn.or-gira.pronto:not(:disabled){background:#fcc419;color:#1f1f1f}",
       ".or-studio .or-btn.or-passo.sicuri{background:#e03131;color:#fff}",
-      // la chiave del capo: le parole ancora coperte con il colore chiaro e una riga sotto
-      ".or-carta.chiave.c0{background:#ffe3e3;box-shadow:inset 0 -4px #fa5252}.or-carta.chiave.c1{background:#e7f5ff;box-shadow:inset 0 -4px #339af0}.or-carta.chiave.c2{background:#ebfbee;box-shadow:inset 0 -4px #40c057}",
-      ".or-carta.chiave.cn{background:#f4efe2}.or-carta.chiave.cx{background:#1f1f1f;color:#fff}",
-      // le parole girate: colori pieni
-      ".or-carta.g{color:#fff;box-shadow:none}",
-      ".or-carta.g.c0{background:#fa5252}.or-carta.g.c1{background:#339af0}.or-carta.g.c2{background:#40c057}.or-carta.g.cn{background:#e9e4d6;color:#a39c88}.or-carta.g.cx{background:#1f1f1f;box-shadow:0 0 0 2px #fa5252}",
-      // fine partita: si vede di chi era ogni parola che nessuno aveva girato
-      ".or-carta.svelata.c0{background:#ffe3e3}.or-carta.svelata.c1{background:#e7f5ff}.or-carta.svelata.c2{background:#ebfbee}.or-carta.svelata.cn{background:#f4efe2}.or-carta.svelata.cx{background:#1f1f1f;color:#fff}",
-      // la parola d'oro (girata, o svelata a fine partita)
-      ".or-carta.g.oro{background:#fcc419;color:#5c3d00}.or-carta.g.oro:before{content:'⭐';position:absolute;top:1px;left:3px;font-size:10px}",
-      ".or-carta.svelata.oro{background:#fff3bf}",
-      ".or-carta.appena{animation:orGira .45s ease-out}",
-      "@keyframes orGira{0%{transform:scale(1.12)}100%{transform:none}}",
-      // al centro: la chat della partita (indizi e parole girate)
-      ".or-log{flex:1 1 auto;min-height:56px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#fff;border-radius:14px;box-shadow:0 0 0 1px #ebe7da;padding:7px 9px;display:flex;flex-direction:column;gap:5px}",
-      ".or-l{display:flex;align-items:center;gap:6px;font-size:.8rem;line-height:1.2;min-width:0}",
-      ".or-l .or-f{width:22px;height:22px;box-shadow:none}",
-      ".or-l-nome{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34%}",
-      ".or-l-txt{color:#8a8576;font-weight:700}",
-      ".or-l-ind{font-weight:900;background:#1f1f1f;color:#fff;border-radius:7px;padding:2px 8px;letter-spacing:.02em}",
-      ".or-l-w{font-weight:900;border-radius:6px;padding:2px 7px;background:#e9e4d6;color:#6b6658}",
-      ".or-l-w.c0{background:#fa5252;color:#fff}.or-l-w.c1{background:#339af0;color:#fff}.or-l-w.c2{background:#40c057;color:#fff}.or-l-w.cx{background:#1f1f1f;color:#fff}.or-l-w.oro{background:#fcc419;color:#5c3d00}",
-      ".or-l-esito{color:#8a8576;font-size:.74rem;font-weight:700}.or-l-esito.ok{color:#2f9e44;font-weight:900;font-size:.9rem}",
-      ".or-l.sis{justify-content:center;color:#8a8576;font-weight:800;font-size:.74rem}.or-l.fine{color:#1f1f1f;font-size:.92rem}",
-      // in fondo: i tasti
-      ".or-sotto{flex:none;display:flex;flex-direction:column;gap:6px}",
-      ".or-stato{text-align:center;font-weight:800;font-size:.85rem;line-height:1.3;padding:2px 0;color:#6b6658}",
-      ".or-riga{display:flex;gap:6px}.or-riga.or-fine{flex-direction:column;align-items:stretch}",
-      ".or-fine-v .or-log{min-height:0}@media(max-height:760px){.or-fine-v .or-log{display:none}}",
-      // ---- a fine partita (21 ott 2026): il tabellone svelato sta TUTTO sopra la barra (p4). Le righe si abbassano quanto
-      // serve (al massimo come durante la partita); la chat cede il posto per prima ----
-      ".or-fine-v .or-sch .or-tab,.or-fine-v .or-sch .or-tab.venti{flex:0 1 auto;min-height:0;grid-auto-rows:minmax(0,clamp(38px,6.4vh,52px))}",
-      ".or-fine-v .or-sch .or-tab.venti{grid-auto-rows:minmax(0,clamp(44px,7.6vh,60px))}",
-      ".or-fine-v .or-log{flex:1 1 0}",
-      ".or-fine-tit{font-size:.95rem;line-height:1.2}.or-fine-sotto{color:#6b6658;font-size:.76rem;font-weight:800;margin-top:1px}",
-      // la barra di fine: com'è andata per me, i tasti piccoli (titolo, cosa intendevi, foto), poi i tasti di fine del core
-      ".or-studio .st-barra{background:linear-gradient(rgba(7,4,26,.88),rgba(7,4,26,.96) 40%)}",   // (niente scritte chiare su fondo chiaro: p18)
+      ".or-input{flex:1;min-width:0;height:46px;border:1.5px solid #e4e0d4;border-radius:14px;padding:0 14px;font:inherit;font-size:1.05rem;font-weight:800;text-transform:uppercase;color:#1f1f1f;background:#fff}",
+      ".or-numeri{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}",
+      ".or-num{height:36px;border:0;border-radius:10px;font:inherit;font-weight:900;font-size:1rem;color:#1f1f1f;background:#ebe7da;cursor:pointer;touch-action:manipulation}.or-num.on{background:#1f1f1f;color:#fff}",
+      ".or-err{min-height:1.1em;text-align:center;font-size:.8rem;font-weight:800;color:#e03131}",
+      ".or-toast{position:absolute;left:50%;bottom:calc(118px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:88%;text-align:center;background:#1f1f1f;color:#fff;border-radius:999px;padding:8px 14px;font-weight:800;font-size:.82rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:5}.or-toast.su{opacity:1}",
+      ".or-studio .st-barra{gap:6px;padding:10px 10px calc(10px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0;background:linear-gradient(rgba(7,4,26,.88),rgba(7,4,26,.96) 40%);box-shadow:0 -4px 14px rgba(30,20,60,.18)}",   // (scura per tutta la partita: niente scritte chiare su fondo chiaro, p18)
+      ".or-studio.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}",   // chi guarda: il posto della targhetta
+      ".or-studio .or-btn{background:#fff;color:#1f1f1f}.or-studio .or-btn.chiaro{background:rgba(255,255,255,.18);color:#fff}",
+      ".or-studio .or-stato{color:#e6e9ff}",
+      ".or-studio .or-num{background:rgba(255,255,255,.18);color:#fff}.or-studio .or-num.on{background:#fff;color:#1f1f1f}",
+      ".or-studio .or-err{color:#ffa8a8}",
+      ".or-studio .or-toast{bottom:calc(var(--or-barra,110px) + 8px)}",
+      ".or-sotto .or-faccine{flex:none}",
+      // ---- a fine partita (21 ott 2026): il tabellone svelato sta TUTTO sopra la barra (p4): le righe si abbassano quanto serve,
+      // la chat sui telefoni bassi lascia il posto ----
+      "@media(max-height:760px){.or-fine-v .or-chat{display:none}.or-fine-v .or-facce{display:none}.or-fine-v .or-ind{min-height:0}.or-fine-v .or-fine-tit{font-size:.86rem;line-height:1.15}}",   // (sui telefoni bassi, a fine partita, anche le faccine delle squadre lasciano il posto: nella Sala le caselle da 26 a 33 px)
       ".or-studio .or-stato.or-fine-stato{color:#fff;font-size:.9rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".or-chips{display:flex;gap:6px;min-width:0}",
       ".or-chip{flex:1 1 auto;min-width:0;min-height:34px;border:0;border-radius:999px;padding:3px 8px;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-weight:900;font-size:.78rem;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;touch-action:manipulation}",
@@ -2362,37 +2613,26 @@
       ".or-fine-v .or-sotto .or-faccine .sl-fa{height:30px;font-size:1.2rem}",
       ".or-fine-v .or-riv-modo .or-rm{min-height:30px}",
       ".or-studio .st-barra .fine-tasti .btn{min-height:46px;padding-top:6px;padding-bottom:6px}",
-      // 📢 la scritta grande di una mossa, sopra il tabellone per un secondo e mezzo (non prende i tocchi)
-      ".or-cart{position:absolute;left:50%;top:44%;z-index:9;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;padding:12px 18px 13px;border-radius:18px;background:rgba(20,14,48,.93);color:#fff;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4),inset 0 0 0 3px var(--c,#fff);opacity:0;transform:translate(-50%,-50%) scale(.9);pointer-events:none;transition:opacity .2s,transform .25s cubic-bezier(.3,1.5,.5,1)}",
+      // 📢 la scritta grande di una mossa (o dell'indizio appena dato): sopra l'indizio, tra le squadre e il tabellone, per un
+      // secondo e mezzo, con la faccia di chi conta. Non prende i tocchi (si muovono solo opacità e transform)
+      ".or-cart{position:absolute;left:50%;top:var(--or-cart-y,30%);z-index:9;display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100% - 24px);box-sizing:border-box;padding:10px 18px 11px;border-radius:18px;background:#171036;color:#fff;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4),inset 0 0 0 3px var(--c,#fff);opacity:0;transform:translate(-50%,-50%) scale(.9);pointer-events:none;transition:opacity .2s,transform .25s cubic-bezier(.3,1.5,.5,1)}",
       ".or-cart.su{opacity:1;transform:translate(-50%,-50%)}",
-      ".or-cart b{display:block;font-size:1.3rem;font-weight:900;line-height:1.15;overflow-wrap:anywhere}.or-cart small{display:block;margin-top:4px;font-size:.88rem;font-weight:800;opacity:.85}",
-      // 🎭 la scheda dei titoli (stessa scheda di «Cosa intendevi?»)
-      ".or-tit-lista{gap:6px}.or-tit{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:14px;background:#fff;box-shadow:inset 4px 0 var(--c,#888)}",
-      ".or-tit.mio{background:#fff3bf;box-shadow:inset 4px 0 var(--c,#888),0 0 0 2px #fcc419}",
-      ".or-tit .or-f{width:34px;height:34px;box-shadow:none}.or-tit-tx{min-width:0;display:flex;flex-direction:column;line-height:1.2}",
-      ".or-tit-tx b{font-size:.95rem;font-weight:900}.or-tit-nome{font-size:.8rem;font-weight:900;color:#6b6658}.or-tit-tx small{font-size:.74rem;font-weight:700;color:#8a8576}",
-      ".or-sotto .or-faccine{flex:none}",
-      ".or-btn{flex:1;min-height:46px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.92rem;color:#fff;background:#1f1f1f;cursor:pointer;touch-action:manipulation}.or-btn.chiaro{background:#ebe7da;color:#1f1f1f}.or-btn.corto{flex:0 0 auto;padding:0 18px}.or-btn:disabled{opacity:.3}",
-      ".or-input{flex:1;min-width:0;height:46px;border:1.5px solid #e4e0d4;border-radius:14px;padding:0 14px;font:inherit;font-size:1.05rem;font-weight:800;text-transform:uppercase;color:#1f1f1f;background:#fff}",
-      ".or-numeri{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}",
-      ".or-num{height:36px;border:0;border-radius:10px;font:inherit;font-weight:900;font-size:1rem;color:#1f1f1f;background:#ebe7da;cursor:pointer;touch-action:manipulation}.or-num.on{background:#1f1f1f;color:#fff}",
-      ".or-err{min-height:1.1em;text-align:center;font-size:.8rem;font-weight:800;color:#e03131}",
-      ".or-toast{position:absolute;left:50%;bottom:calc(118px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:88%;text-align:center;background:#1f1f1f;color:#fff;border-radius:999px;padding:8px 14px;font-weight:800;font-size:.82rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:5}.or-toast.su{opacity:1}",
-      // ---- nello studio: il tabellone sta sul maxischermo (chiaro), i tasti nella barra in basso ----
-      ".or-studio .st-sch-in{padding:calc(46px + env(safe-area-inset-top)) 8px var(--or-barra,110px)!important;background:#f7f5ef}",
-      ".or-sch{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;color:#1f1f1f}",
-      ".or-sch .or-pannelli{flex:none}.or-sch .or-ind{min-height:40px}",
-      ".or-studio .st-barra{gap:6px;padding:10px 10px calc(10px + env(safe-area-inset-bottom))}",
-      ".or-studio.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}",   // chi guarda: il posto della targhetta
-      ".or-studio .or-btn{background:#fff;color:#1f1f1f}.or-studio .or-btn.chiaro{background:rgba(255,255,255,.18);color:#fff}",
-      ".or-studio .or-stato{color:#e6e9ff}",
-      ".or-studio .or-num{background:rgba(255,255,255,.18);color:#fff}.or-studio .or-num.on{background:#fff;color:#1f1f1f}",
-      ".or-studio .or-err{color:#ffa8a8}",
-      ".or-studio .or-toast{bottom:calc(var(--or-barra,110px) + 8px)}",
-      // la casella scelta trema finché non si scopre (solo transform)
-      ".or-carta.sospesa{animation:orTrema .14s linear infinite;box-shadow:0 0 0 3px #fcc419;z-index:2}",
-      "@keyframes orTrema{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-1.5px,.5px) rotate(-1.5deg)}50%{transform:translate(1px,-1px) rotate(1deg)}75%{transform:translate(1.5px,.5px) rotate(1.5deg)}}",
-      // i banconi delle squadre, in basso nello studio: tutti i giocatori dietro un bancone unico
+      ".or-cart.con-f{padding-left:10px;text-align:left}",
+      ".or-cart-f{display:none;flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.14);box-shadow:0 0 0 2.5px var(--c,#fff)}.or-cart.con-f .or-cart-f{display:block}.or-cart-f img{width:100%;height:100%;display:block}",
+      ".or-cart-tx{min-width:0;display:flex;flex-direction:column}",
+      ".or-cart b{display:block;order:1;font-size:1.25rem;font-weight:900;line-height:1.15;overflow-wrap:break-word}.or-cart small{display:block;order:2;margin-top:3px;font-size:.86rem;font-weight:800;opacity:.85}",
+      // (l'indizio appena dato: la fascia grande, sopra «👑 Luca · capo dei Rossi»)
+      ".or-cart.ind{padding:9px 14px 10px 10px;background:#fffdf8;color:#1f1f1f;box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 0 0 2px var(--c,#1f1f1f)}",
+      ".or-cart.ind small{order:0;margin:0 0 4px;color:#6b6658;opacity:1}.or-cart.ind .or-fascia .or-fascia-w{font-size:1.7rem}.or-cart.ind .or-fascia.media .or-fascia-w{font-size:1.4rem}.or-cart.ind .or-fascia.lunga .or-fascia-w{font-size:1.15rem}",
+      ".or-cart.ind .or-fascia .n{font-size:1.3rem}",
+      // 💭 a fine turno, al posto dell'indizio (non copre le parole né i punteggi): le parole a cui pensava il capo
+      ".or-pens{position:absolute;left:0;right:0;top:0;min-height:100%;box-sizing:border-box;z-index:6;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;padding:4px 10px;border-radius:14px;background:#fff;color:#1f1f1f;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.18),inset 0 -3px var(--c,#1f1f1f);opacity:0;transform:scale(.97);pointer-events:none;transition:opacity .25s,transform .25s}",
+      ".or-pens.su{opacity:1;transform:none}",
+      ".or-pens-tit{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 5px;font-size:.84rem;line-height:1.2}.or-pens-tit .or-f{width:22px;height:22px;box-shadow:none}",
+      ".or-pens-c{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:999px;font-weight:900;font-size:.82rem;background:var(--c,#1f1f1f);color:#fff}.or-pens-c .or-sg{width:.7em;height:.7em}",
+      ".or-pens-c.s0{background:" + F0 + "}.or-pens-c.s1{background:" + F1 + "}.or-pens-c.s2{background:" + F2 + "}.or-pens-c.segreta{background:#ebe7da;color:#6b6658}",
+      ".or-pens-bat{font-weight:900;font-size:.76rem;color:#6b6658}",
+      // ---- nello studio: i banconi delle squadre, in basso, con tutti i giocatori dietro ----
       ".or-banchi{left:0;top:0;width:0;height:0}",
       ".or-banco{position:absolute;display:flex;flex-direction:column}",
       ".or-banco-gente{flex:1 1 auto;min-height:0;display:flex;justify-content:center;align-items:flex-end;gap:3%;padding:0 4%}",
@@ -2405,18 +2645,22 @@
       ".or-banco-fronte{flex:0 0 38%;position:relative;border-radius:.7em .7em .35em .35em;background:linear-gradient(#36268a,#1b1152 55%,#0d0730);border-top:.45em solid #d8d2ff;display:flex;align-items:center;justify-content:center;box-shadow:0 .4em 1em rgba(0,0,0,.45)}",
       ".or-banco-fronte:after{content:'';position:absolute;left:5%;right:5%;bottom:.35em;height:.4em;border-radius:.3em;background:var(--c);box-shadow:0 0 .9em var(--c)}",
       ".or-banco-fronte span{font-weight:900;color:#fff;font-size:2em;letter-spacing:.08em;text-shadow:0 .08em 0 rgba(0,0,0,.45)}",
-      // la vignetta: l'indizio del capo, o la parola che dice chi la gira
+      // la vignetta: la parola che dice chi la gira (suspense lunga), il Bot che sta per vincere, il capo che esplode a fine partita
       ".or-vignetta{position:absolute;z-index:8;transform:translate(-50%,-110%) scale(.3);transform-origin:50% 100%;opacity:0;pointer-events:none;background:#fff;color:#1f1f1f;border-radius:1em;padding:.35em .75em;font-weight:900;white-space:nowrap;box-shadow:0 .3em 1em rgba(0,0,0,.4),0 0 0 .15em var(--c,#1f1f1f);transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .2s}",
       ".or-vignetta.su{opacity:1;transform:translate(-50%,-110%) scale(1)}",
       ".or-vignetta:after{content:'';position:absolute;left:50%;bottom:-.55em;margin-left:-.55em;border:.55em solid transparent;border-bottom:0;border-top-color:#fff}",
       ".or-vignetta .n{display:inline-block;margin-left:.35em;border-radius:.4em;background:#1f1f1f;color:#fff;padding:0 .35em}",
-      // ---- saletta (nello stile scuro dell'app): le squadre ----
-      ".or-squadre{display:flex;flex-direction:column;gap:8px;margin:6px 0}",
-      ".or-sq{border-radius:14px;padding:8px 10px;background:rgba(255,255,255,.06);box-shadow:inset 4px 0 var(--c)}",
-      ".or-sq-testa{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}",
-      ".or-sq-membri{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}",
-      ".or-membro{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:800;font-size:.85rem}.or-membro.tu{box-shadow:inset 0 0 0 2px var(--c)}",
+      // ---- saletta (nello stile scuro dell'app): una riga per squadra (a 360x640 l'host le vede tutte senza scorrere, p17) ----
+      ".or-squadre{display:flex;flex-direction:column;gap:4px;margin:2px 0}",
+      ".or-sq{display:flex;align-items:center;gap:6px;min-height:28px;box-sizing:border-box;border-radius:12px;padding:3px 5px 3px 9px;background:rgba(255,255,255,.06);box-shadow:inset 4px 0 var(--c)}",
+      ".or-sq.mia{background:rgba(255,255,255,.12)}",
+      ".or-sq-nome{flex:none;display:flex;align-items:center;gap:4px;font-weight:900;font-size:.86rem;color:#fff}.or-sq-nome .or-sg{color:var(--c)}",
+      ".or-sq.s1 .or-sq-nome .or-sg{color:#4dabf7}.or-sq.s0 .or-sq-nome .or-sg{color:#ff6b6b}.or-sq.s2 .or-sq-nome .or-sg{color:#69db7c}",   // (più chiari sul fondo scuro)
+      ".or-sq-membri{flex:1 1 auto;min-width:0;font-size:.78rem;font-weight:700;line-height:1.3;color:rgba(255,255,255,.75)}",
+      ".or-membro{color:#fff;font-weight:800}.or-membro.tu{text-decoration:underline;text-decoration-color:var(--c);text-decoration-thickness:2px;text-underline-offset:3px}",
       ".or-vuota{font-size:.8rem;opacity:.7}",
+      ".or-sq-b{flex:none;min-height:26px;border:0;border-radius:999px;padding:2px 9px;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:.72rem;font-weight:900;white-space:nowrap;cursor:pointer;touch-action:manipulation}",
+      ".or-sq-tasti{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}",
       // ---- le tue parole nelle impostazioni: una alla volta, ognuna con la sua ✕ ----
       ".or-aggiungi{display:flex;gap:6px;align-items:center}.or-aggiungi .link-campo{flex:1;min-width:0;margin:0}",
       ".or-esito{min-height:1.2em;margin:4px 0 0}",
@@ -2426,8 +2670,8 @@
       ".or-x{width:24px;height:24px;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font:inherit;font-size:.75rem;font-weight:900;cursor:pointer;touch-action:manipulation}",
       ".or-lista-tasti{display:flex;gap:6px;margin-top:8px}",
       ".or-copia{display:block;width:100%;box-sizing:border-box;margin:8px 0 0;font-size:.85rem;resize:none}",
-      // ---- 🤔 «Cosa intendevi?»: il capo segna le parole che intendeva (bordo arancio e 🤔 sulla casella) ----
-      ".or-carta.pensata{outline:3px solid #f59f00;outline-offset:-3px;z-index:1}.or-carta.pensata:after{content:'🤔';position:absolute;top:1px;left:3px;font-size:11px;line-height:1}",
+      // ---- 🤔 «Cosa intendevi?»: il capo segna le parole che intendeva (bordo arancio e 🤔 sulla casella, a destra: a sinistra c'è il segno) ----
+      ".or-carta.pensata{outline:3px solid #f59f00;outline-offset:-3px;z-index:1}.or-carta.pensata:after{content:'🤔';position:absolute;top:2px;right:3px;font-size:11px;line-height:1;z-index:2}",
       // a fine partita: un indizio alla volta, sopra il tabellone (si muovono solo opacità e transform)
       ".or-riv{position:absolute;left:8px;right:8px;top:calc(46px + env(safe-area-inset-top));bottom:var(--or-barra,110px);z-index:7;display:flex;flex-direction:column;gap:8px;padding:10px 10px 12px;border-radius:18px;background:#f7f5ef;color:#1f1f1f;box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0;visibility:hidden;transform:translateY(12px) scale(.97);pointer-events:none;transition:opacity .25s,transform .25s,visibility 0s .25s;overflow:hidden}",
       ".or-riv.su{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity .25s,transform .25s}",
@@ -2450,24 +2694,13 @@
       ".or-riv-esito{margin-top:8px;text-align:center;font-weight:900;font-size:1rem}",
       ".or-riv-leg{text-align:center;font-size:.7rem;font-weight:700;color:#8a8576}",
       ".or-riv-premio{flex:none;border-radius:14px;padding:8px 10px;background:#1f1f1f;color:#fff;font-weight:900;font-size:.8rem;line-height:1.3;text-align:center}",
-      ".or-mini{margin-left:8px;border:0;border-radius:999px;padding:3px 10px;background:rgba(255,255,255,.2);color:#fff;font:inherit;font-size:.78rem;font-weight:900;cursor:pointer;vertical-align:1px;touch-action:manipulation}",
-      ".or-quanti{margin-left:8px;font-size:.8rem;opacity:.65}.or-conto-av{font-size:.78rem;opacity:.85;padding:0}",
-      // ⏳ la clessidra: gli ultimi 10 secondi rossa e col battito (solo transform)
-      ".or-cless.rosso{color:#e03131;display:inline-block;animation:orBatti 1s ease-in-out infinite}@keyframes orBatti{50%{transform:scale(1.15)}}",
-      // (le cifre della clessidra sono un <b> dentro l'indizio: prendono il colore della clessidra, non quello della squadra
-      // di «.or-ind b», così negli ultimi 10 secondi diventano rosse davvero: p12)
-      ".or-ind .or-cless .or-conto{color:inherit;font-size:inherit;line-height:inherit}",
-      // 💭 a fine turno: le parole a cui pensava il capo (si muovono solo opacità e transform)
-      ".or-pens{position:absolute;left:14px;right:14px;top:calc(104px + env(safe-area-inset-top));z-index:6;padding:9px 12px 10px;border-radius:16px;background:#fff;color:#1f1f1f;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.35),inset 0 -4px var(--c,#1f1f1f);opacity:0;transform:translateY(-8px) scale(.97);pointer-events:none;transition:opacity .25s,transform .25s}",
-      ".or-pens.su{opacity:1;transform:none}",
-      ".or-pens-tit{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.9rem}.or-pens-tit .or-f{width:24px;height:24px;box-shadow:none}",
-      ".or-pens-w{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin:6px 0 5px}",
-      ".or-pens-c{padding:4px 10px;border-radius:999px;font-weight:900;font-size:.9rem;background:var(--c,#1f1f1f);color:#fff}.or-pens-c.segreta{background:#ebe7da;color:#6b6658}",
-      ".or-pens-bat{font-weight:900;font-size:.85rem;color:#6b6658}",
-      ".or-l-pens{flex-wrap:wrap;row-gap:3px}.or-l-nasc{font-weight:800;color:#8a8576;font-size:.74rem}",
+      // 🎭 la scheda dei titoli (stessa scheda di «Cosa intendevi?»)
+      ".or-tit-lista{gap:6px}.or-tit{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:14px;background:#fff;box-shadow:inset 4px 0 var(--c,#888)}",
+      ".or-tit.mio{background:#fff3bf;box-shadow:inset 4px 0 var(--c,#888),0 0 0 2px #fcc419}",
+      ".or-tit .or-f{width:34px;height:34px;box-shadow:none}.or-tit-tx{min-width:0;display:flex;flex-direction:column;line-height:1.2}",
+      ".or-tit-tx b{font-size:.95rem;font-weight:900}.or-tit-nome{font-size:.8rem;font-weight:900;color:#6b6658}.or-tit-tx small{font-size:.74rem;font-weight:700;color:#8a8576}",
       // 🏆 la serata a squadre e 🤖 contro il Bot (saletta), la scelta della rivincita (fine partita)
-      ".or-serie{text-align:center;font-weight:900;font-size:1rem;padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.1)}",
-      ".or-serie-fine{display:block;margin-top:2px;font-weight:900;color:#fff}",
+      ".or-serie{text-align:center;font-weight:900;font-size:.92rem;padding:5px 10px;border-radius:12px;background:rgba(255,255,255,.1)}",
       ".or-vsbot{align-self:stretch}",
       ".or-riv-modo{display:flex;gap:5px;align-items:center}.or-rm-et{flex:none;font-size:.72rem;font-weight:800;color:#e6e9ff;opacity:.85}",
       ".or-rm{flex:1;min-width:0;min-height:32px;border:0;border-radius:10px;padding:2px 4px;font:inherit;font-weight:800;font-size:.72rem;line-height:1.1;background:rgba(255,255,255,.14);color:#fff;cursor:pointer;touch-action:manipulation}.or-rm.on{background:#fff;color:#1f1f1f}",

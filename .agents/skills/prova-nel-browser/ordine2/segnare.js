@@ -268,11 +268,15 @@
       if (!ap || ap.indexOf(riga) < 0) no(W.__nomiO2[q] + ": sotto l'indizio «" + (ap || "niente") + "» invece di «" + riga + "»");
     }
     nota(N, "indizi aperti su 4 telefoni: «" + riga + "»");
-    // la chat: tocco la riga della parola girata, la casella si illumina
+    // la chat: tocco la riga della parola girata, la casella si illumina. (Dal 22 ott 2026 la chat è una striscia con le
+    // ultime 2 righe: un tocco la apre sopra il tabellone, e il tocco sulla riga la richiude e illumina la casella: ordine2/tabellone.js)
     var wP = W.finestra("Paky"), parolaC = vm(C).tab[primo.c].w;
+    wP.document.querySelector(".or-log").click();
+    if (!wP.document.querySelector(".or-chat.aperta")) no("un tocco sulla striscia della chat non la apre");
     var rigaChat = [].filter.call(wP.document.querySelectorAll(".or-log .or-l.tocca"), function (r) { return r.querySelector(".or-l-w") && r.querySelector(".or-l-w").textContent === parolaC; })[0];
     if (!rigaChat) no("nella chat di Paky non trovo la riga di " + parolaC);
     rigaChat.click();
+    if (wP.document.querySelector(".or-chat.aperta")) no("toccando la riga la chat non si chiude");
     if (!carta(wP, primo.c).querySelector(".or-lampo")) no("toccando la riga di " + parolaC + " la casella non si illumina");
     if ([].some.call(carte(wP), function (b, i) { return i !== primo.c && b.querySelector(".or-lampo"); })) no("si illumina una casella sbagliata");
     await W.dorme(1900);
