@@ -4,15 +4,17 @@
 //
 // or1: online in 4 (Luca e Giulia capi): dopo l'indizio solo il capo vede «🤔 Quali parole intendevi?»; parole degli altri e
 //      troppe parole rifiutate, «✅ Fatto · 2/2»; le parole pensate MAI nella foto né nei messaggi dell'host durante la partita;
-//      il capo ricarica e la riga non torna; a fine partita «🤔 Cosa intendevi?» su tutti i telefoni (‹ › un indizio alla volta,
-//      ✅ / 🍀 / ❌, premio «🧠 Più in sintonia»), «⏩ Avanti 0 su 3» → «✅ Avanti 1 su 3», chi ricarica la ritrova, con più di metà
-//      si va ai tasti di fine; «🤔 Rivedi» la riapre; misure a 360x640 e 412x915 (riga del capo e schermata di fine).
+//      il capo ricarica e la riga non torna; a fine partita (dal 21 ott 2026, vedi ordine2/fine.js) i tasti di fine SUBITO, la
+//      scheda «🤔 Cosa intendevi?» NON si apre da sola: si apre col tasto piccolo «🤔 Cosa intendevi?» (‹ › un indizio alla
+//      volta, ✅ / 🍀 / ❌, premio «🧠 Più in sintonia»), ✕ la chiude, chi ricarica ha di nuovo il tasto; misure a 360x640 e
+//      412x915 (riga del capo e scheda di fine). (Fino al 21 ott c'erano il conto e «⏩ Avanti» a maggioranza: tolti.)
 // or2: l'host sparisce dopo che il capo ha detto cosa intendeva: l'amico che porta avanti la partita ha ancora le parole pensate
-//      (a fine partita ci sono), e l'«Avanti» conta solo chi è rimasto.
-// or3: nella Sala: «Cosa intendevi?», poi i tasti di fine comuni (Rivincita) e la Rivincita riparte pulita; con la regola spenta
-//      (⚙️ «🤔 Cosa intendevi?: No») niente riga e niente schermata; la riga «📜 Si gioca così» la dice.
-// or4: «🧪 Prova da solo» (IL PAPPONE): tu capo coi Bot, il Bot capo dice anche lui cosa intendeva, schermata a fine prova,
-//      «⏩ Avanti 0 su 1» e poi i tasti della prova.
+//      (a fine partita ci sono).
+// or3: nella Sala: a fine partita subito i tasti di fine comuni (Rivincita, Cambia gioco), «🤔 Cosa intendevi?» col tasto, il
+//      tabellone svelato tutto sopra la barra a 360x640, e la Rivincita riparte pulita; con la regola spenta (⚙️ «🤔 Cosa
+//      intendevi?: No») niente riga, niente scheda e niente tasto; la riga «📜 Si gioca così» la dice.
+// or4: «🧪 Prova da solo» (IL PAPPONE): tu capo coi Bot, il Bot capo dice anche lui cosa intendeva; a fine prova subito i tasti
+//      della prova, la scheda col tasto «🤔 Cosa intendevi?», 4 titoli scherzosi (uno a testa, anche ai bot).
 // or5: squadre fisse, chi indovina per il capo si spegne mentre il capo può ancora segnare: «⏳ aspettiamo Sara» su tutti senza
 //      errori, lei torna, il capo segna e «Fatto», a fine partita l'indizio c'è.
 // lu1: «📝 Le nostre scale» nelle regole della saletta: righe giuste e sbagliate, doppioni (anche girati), salvate sul profilo e sul
@@ -135,7 +137,7 @@
   // un capo (dal suo telefono) tocca le sue parole sul tabellone e «Fatto»
   function caselleDi(w, team) { return [].filter.call(carte(w), function (b) { return b.classList.contains("c" + team) && !b.classList.contains("g"); }); }
 
-  COPIONE.aggiungi("or1", { nome: "Parola d'ordine: «🤔 Cosa intendevi?» online in 4 (capo, segreti, ricarica, fine, Avanti a maggioranza, misure)", fai: async function () {
+  COPIONE.aggiungi("or1", { nome: "Parola d'ordine: «🤔 Cosa intendevi?» online in 4 (capo, segreti, ricarica, fine col tasto, misure)", fai: async function () {
     var N = [], X = await stanzaOrdine(["Giulia", "Luca", "Sara"]), C = X.C, P = X.P;
     if (!vm(C).intendi) no("la regola «Cosa intendevi?» non è accesa di base");
     if (!/Cosa intendevi/.test(T(P))) no("la saletta non dice «🤔 Cosa intendevi?»");
@@ -199,11 +201,18 @@
     var e1 = v.cosa.l[0];
     if (e1.p !== "ZIGOMAR" || e1.pen.length !== 2 || e1.pen.filter(function (x) { return x.ok; }).length !== 1) no("primo indizio sbagliato: " + JSON.stringify(e1));
     if (v.cosa.l[1].pen.length !== 1) no("il secondo capo ha più parole pensate del permesso: " + JSON.stringify(v.cosa.l[1].pen));
-    if (!v.rivedi || v.rivedi.servono !== 3) no("«Avanti»: servono " + (v.rivedi && v.rivedi.servono) + " invece di 3");
-    // la schermata su tutti i telefoni (dopo la festa)
-    var tutti = await W.aspetta(function () { return X.nomi.every(function (n) { var r = W.finestra(n).document.querySelector(".or-riv.su"); return r && /pensava/.test(r.textContent); }); }, 7000);
-    if (!tutti) no("«🤔 Cosa intendevi?» non compare su tutti: " + X.nomi.map(function (n) { return n + ":" + !!W.finestra(n).document.querySelector(".or-riv.su"); }).join(" "));
-    var R = P.document.querySelector(".or-riv");
+    if (v.rivedi) no("a fine partita c'è ancora il conto di «Cosa intendevi?» (rivedi)");
+    // (dal 21 ott 2026, ordine2/fine.js) la scheda NON si apre da sola e non blocca niente: i tasti di fine ci sono subito e su
+    // ogni telefono c'è il tasto piccolo «🤔 Cosa intendevi?», che apre la scheda sopra il tabellone svelato
+    await W.dorme(4500);   // (la festa di chi vince)
+    if (!/Nuova partita|Rivincita/.test(T(P))) no("a fine partita Paky non ha subito i tasti di fine («" + T(P).slice(-120) + "»)");
+    X.nomi.forEach(function (n) {
+      if (W.finestra(n).document.querySelector(".or-riv.su")) no(n + ": «Cosa intendevi?» si è aperta da sola");
+      if (!bottone(W.finestra(n), /Cosa intendevi/, ".or-chip")) no(n + " non ha il tasto «🤔 Cosa intendevi?»");
+    });
+    tocca(P, bottone(P, /Cosa intendevi/, ".or-chip")); await W.dorme(400);
+    var R = P.document.querySelector(".or-riv.su");
+    if (!R || !/pensava/.test(R.textContent)) no("il tasto «🤔 Cosa intendevi?» non apre la scheda");
     if (!/1 di 2/.test(R.textContent)) no("la schermata non dice «1 di 2»");
     if (R.textContent.indexOf(parolePensate[0]) < 0 || R.textContent.indexOf("ZIGOMAR") < 0) no("la prima pagina non ha l'indizio e le parole pensate («" + R.textContent.slice(0, 160) + "»)");
     if (!/✅/.test(R.textContent) || !/Più in sintonia/.test(R.textContent)) no("mancano ✅ o il premio «🧠 Più in sintonia»");
@@ -213,34 +222,21 @@
     if (!/2 di 2/.test(R.textContent) || R.textContent.indexOf("PLUTONIO") < 0) no("› non porta al secondo indizio");
     if (!/💣/.test(R.textContent)) no("la parola nera toccata non ha 💣");
     nota(N, "fine: «" + R.querySelector(".or-riv-premio").textContent + "»");
-    // le misure della schermata
+    // ✕ la chiude, il tasto la riapre
+    R.querySelector(".or-riv-x").click(); await W.dorme(300);
+    if (P.document.querySelector(".or-riv.su")) no("✕ non chiude la scheda");
+    // le misure della scheda (aperta col tasto)
+    var wS0 = W.finestra("Sara"); tocca(wS0, bottone(wS0, /Cosa intendevi/, ".or-chip")); await W.dorme(300);
+    if (!wS0.document.querySelector(".or-riv.su")) no("Sara: il tasto non apre la scheda");
     nota(N, "misure fine: " + await misura("Sara", ".or-riv, .or-riv button, .or-sotto button, .or-riv-premio", "«Cosa intendevi?»"));
-    // «⏩ Avanti» a maggioranza (servono 3 su 4)
-    var bP = bottone(P, /Avanti/, ".or-sotto button");
-    if (!bP || !/0 su 3/.test(bP.textContent)) no("Paky non ha «⏩ Avanti 0 su 3» («" + (bP && bP.textContent) + "»)");
-    if (!/Si va avanti tra/.test(T(P))) no("manca il conto «Si va avanti tra…»");
-    tocca(P, bP); await W.dorme(300);
-    if (!/✅ Avanti/.test(bP.textContent) || !/1 su 3/.test(bP.textContent) || !bP.disabled) no("dopo il tocco Paky ha «" + bP.textContent + "»");
-    var bG = bottone(W.finestra("Giulia"), /Avanti/, ".or-sotto button");
-    if (!await W.aspetta(function () { return /1 su 3/.test(bG.textContent); }, 2000)) no("Giulia non vede «1 su 3» («" + bG.textContent + "»)");
-    tocca(W.finestra("Giulia"), bG); await W.dorme(300);
-    // Sara ricarica: ritrova la schermata subito
+    // Sara ricarica: niente scheda da sola, il tasto c'è e la riapre
     await W.ricarica("Sara");
-    var wS = await W.aspetta(function () { var w = W.finestra("Sara"); return w && w.document.querySelector(".or-riv.su") && bottone(w, /Avanti/, ".or-sotto button") ? w : null; }, 12000);
-    if (!wS) no("Sara dopo la ricarica non ritrova «Cosa intendevi?» («" + T(W.finestra("Sara")).slice(-120) + "»)");
-    if (!/2 su 3/.test(bottone(wS, /Avanti/, ".or-sotto button").textContent)) no("Sara ricaricata non vede «2 su 3»");
-    if (vm(C).rivedi == null) no("con 2 su 3 la schermata si è già chiusa");
-    tocca(wS, bottone(wS, /Avanti/, ".or-sotto button"));
-    if (!await W.aspetta(function () { return !vm(C).rivedi; }, 3000)) no("con 3 su 4 non si va avanti");
-    if (!await W.aspetta(function () { return !P.document.querySelector(".or-riv.su") && /Nuova partita|Rivincita/.test(T(P)); }, 3000)) no("dopo «Avanti» Paky non ha i tasti di fine («" + T(P).slice(-120) + "»)");
-    // «🤔 Rivedi» la riapre, ✕ la chiude
-    var riv = bottone(P, /Rivedi/);
-    if (!riv) no("a fine partita non c'è «🤔 Rivedi»");
-    riv.click(); await W.dorme(300);
-    if (!P.document.querySelector(".or-riv.su")) no("«🤔 Rivedi» non riapre la schermata");
-    P.document.querySelector(".or-riv-x").click(); await W.dorme(300);
-    if (P.document.querySelector(".or-riv.su")) no("✕ non chiude la schermata");
-    nota(N, "Avanti 1 → 2 → (Sara ricarica) 3 su 3: tasti di fine; «🤔 Rivedi» riapre");
+    var wS = await W.aspetta(function () { var w = W.finestra("Sara"); return w && bottone(w, /Cosa intendevi/, ".or-chip") ? w : null; }, 12000);
+    if (!wS) no("Sara dopo la ricarica non ha il tasto «🤔 Cosa intendevi?» («" + T(W.finestra("Sara")).slice(-120) + "»)");
+    if (wS.document.querySelector(".or-riv.su")) no("dopo la ricarica la scheda si apre da sola");
+    tocca(wS, bottone(wS, /Cosa intendevi/, ".or-chip")); await W.dorme(300);
+    if (!wS.document.querySelector(".or-riv.su")) no("dopo la ricarica il tasto non apre la scheda");
+    nota(N, "niente scheda da sola, tasti di fine subito; il tasto «🤔 Cosa intendevi?» la apre (anche dopo la ricarica), ✕ la chiude");
     senzaErrori();
     return N.join(" · ");
   } });
@@ -296,12 +292,12 @@
     if (v.fase !== "fine") no("la partita col nuovo host non finisce (" + v.fase + "/" + v.passo + ")");
     var e = v.cosa && v.cosa.l.filter(function (x) { return x.p === "ZIGOMAR"; })[0];
     if (!e || e.pen.length !== 2) no("col nuovo host (" + nHost + ") le parole pensate prima del cambio si sono perse: " + JSON.stringify(v.cosa));
-    if (v.rivedi && v.rivedi.servono !== 3) no("«Avanti» col nuovo host: servono " + v.rivedi.servono + " invece di 3 (4 presenti)");
+    if (v.rivedi) no("a fine partita col nuovo host c'è ancora il conto di «Cosa intendevi?»");
     senzaErrori();
-    return "subentra " + nHost + "; a fine partita ZIGOMAR ha ancora le 2 parole pensate (" + e.pen.map(function (x) { return x.w + (x.ok ? "✅" : ""); }).join(", ") + "), Avanti su " + (v.rivedi ? v.rivedi.servono : "?");
+    return "subentra " + nHost + "; a fine partita ZIGOMAR ha ancora le 2 parole pensate (" + e.pen.map(function (x) { return x.w + (x.ok ? "✅" : ""); }).join(", ") + ")";
   } });
 
-  COPIONE.aggiungi("or3", { nome: "Parola d'ordine nella Sala: «Cosa intendevi?», poi Rivincita; regola spenta = niente riga", fai: async function () {
+  COPIONE.aggiungi("or3", { nome: "Parola d'ordine nella Sala: tasti di fine subito, «Cosa intendevi?» col tasto, Rivincita; regola spenta = niente riga", fai: async function () {
     var N = [];
     var P = await W.apriTel("Paky", { x: 0, salaSempre: true, g4: true });
     var S = await A.apriSalaNuova("Paky");
@@ -326,15 +322,23 @@
     tocca(wC, caselleDi(wC, vm(C).turno)[0]); await W.dorme(150); tocca(wC, bottone(wC, /Fatto/));
     var key = chiaveDa(wC); await gira(X, indovinoDi(X).id, key.indexOf("x"));
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 6000)) no("non finisce");
-    if (!await W.aspetta(function () { return X.nomi.every(function (n) { return W.finestra(n).document.querySelector(".or-riv.su"); }); }, 7000)) no("nella Sala la schermata non compare a tutti");
-    if (/Rivincita|Cambia gioco/.test(T(P).slice(-200)) && P.document.querySelector(".or-riv.su")) {
-      // (i tasti di fine arrivano dopo «Avanti»)
-      var tf = [].filter.call(P.document.querySelectorAll(".or-sotto button"), function (b) { return /Rivincita|Cambia gioco/.test(b.textContent); });
-      if (tf.length) no("i tasti di fine ci sono già durante «Cosa intendevi?»");
-    }
-    X.nomi.forEach(function (n) { var b = bottone(W.finestra(n), /Avanti/, ".or-sotto button"); if (b) tocca(W.finestra(n), b); });
-    if (!await W.aspetta(function () { return !vm(C).rivedi && /Rivincita/.test(T(P)); }, 5000)) no("dopo «Avanti» nella Sala non ci sono i tasti di fine («" + T(P).slice(-150) + "»)");
-    nota(N, "nella Sala: schermata a tutti, poi i tasti di fine del core");
+    // (dal 21 ott 2026, ordine2/fine.js) i tasti di fine del core SUBITO; «🤔 Cosa intendevi?» è un tasto piccolo che apre la scheda
+    if (!await W.aspetta(function () { return /Rivincita/.test(T(P)) && /Cambia gioco/.test(T(P)); }, 2000)) no("nella Sala i tasti di fine non arrivano subito («" + T(P).slice(-150) + "»)");
+    await W.dorme(4500);
+    if (X.nomi.some(function (n) { return W.finestra(n).document.querySelector(".or-riv.su"); })) no("nella Sala «Cosa intendevi?» si apre da sola");
+    if (!X.nomi.every(function (n) { return bottone(W.finestra(n), /Cosa intendevi/, ".or-chip"); })) no("nella Sala non tutti hanno il tasto «🤔 Cosa intendevi?»");
+    var wG3 = W.finestra("Giulia"); tocca(wG3, bottone(wG3, /Cosa intendevi/, ".or-chip")); await W.dorme(300);
+    if (!wG3.document.querySelector(".or-riv.su")) no("nella Sala il tasto non apre la scheda");
+    // il tabellone svelato tutto sopra la barra anche nella Sala (con «🏆 Serata» e «🎮 Cambia gioco»), a 360x640
+    var fP = document.getElementById("tel-Paky"); fP.style.width = "360px"; fP.style.height = "640px"; P.dispatchEvent(new P.Event("resize"));
+    await W.dorme(1200); P.dispatchEvent(new P.Event("resize")); await W.dorme(500);
+    var bt = P.document.querySelector(".st-barra").getBoundingClientRect().top, basso = 0;
+    [].forEach.call(carte(P), function (b) { basso = Math.max(basso, b.getBoundingClientRect().bottom); });
+    var alt = carte(P)[0].getBoundingClientRect().height;
+    fP.style.height = "740px"; P.dispatchEvent(new P.Event("resize"));
+    if (basso > bt + 1) no("nella Sala a 360x640 la barra copre il tabellone (" + Math.round(basso) + " / " + Math.round(bt) + ")");
+    if (alt < 26) no("nella Sala a 360x640 le caselle sono alte " + Math.round(alt) + " px");
+    nota(N, "nella Sala: tasti di fine subito, «🤔 Cosa intendevi?» col tasto, tabellone sopra la barra a 360x640 (caselle " + Math.round(alt) + " px)");
     // la Rivincita: tutti di nuovo in saletta, niente «Cosa intendevi?» vecchio
     W.clicca(P, /Rivincita/);
     if (!await W.aspetta(function () { return vm(C).fase === "lobby"; }, 12000)) no("la Rivincita non torna in saletta (" + vm(C).fase + ")");
@@ -356,7 +360,7 @@
     key = chiaveDa(W.finestra(nCapo)); await gira(X, indovinoDi(X).id, key.indexOf("x"));
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 6000)) no("non finisce (2)");
     await W.dorme(3800);
-    if (vm(C).cosa || P.document.querySelector(".or-riv.su")) no("con la regola spenta c'è «Cosa intendevi?»");
+    if (vm(C).cosa || P.document.querySelector(".or-riv.su") || bottone(P, /Cosa intendevi/, ".or-chip")) no("con la regola spenta c'è «Cosa intendevi?»");
     if (!/Rivincita/.test(T(P))) no("con la regola spenta i tasti di fine non arrivano subito");
     nota(N, "regola spenta: niente riga, niente schermata");
     senzaErrori();
@@ -374,10 +378,11 @@
     var fino = Date.now() + 240000, mie = 0, giri = 0;
     while (Date.now() < fino) {
       var tt = T(w);
-      if (w.document.querySelector(".or-riv.su")) break;
+      if (w.__ORDINE.ui && w.__ORDINE.ui.vm && w.__ORDINE.ui.vm.fase === "fine") break;
       if (/Tocca a te: dai l'indizio/.test(tt) && w.document.querySelector(".or-input")) {
         var inp = w.document.querySelector(".or-input"); scrivi(w, inp, "ZIGOMAR" + "ABCDEFG"[giri % 7]); giri++;
-        tocca(w, bottone(w, /Invia/)); await W.dorme(500);
+        // (dal 22 ott 2026 nessun numero è già scelto: prima il numero, poi «Invia»)
+        tocca(w, w.document.querySelector(".or-num[data-n='1']")); tocca(w, bottone(w, /^Invia$/)); await W.dorme(500);
       } else if (/Quali parole intendevi/.test(tt)) {
         var team = 0, cs = caselleDi(w, team);
         if (cs[0]) { cs[0].click(); await W.dorme(100); }
@@ -385,14 +390,16 @@
       }
       await W.dorme(400);
     }
-    if (!await W.aspetta(function () { return w.document.querySelector(".or-riv.su"); }, 8000)) no("a fine prova niente «Cosa intendevi?» («" + T(w).slice(-160) + "»)");
-    var R = w.document.querySelector(".or-riv"), n = (R.querySelector(".or-riv-num") || {}).textContent;
-    var b = bottone(w, /Avanti/, ".or-sotto button");
-    if (!b || !/0 su 1/.test(b.textContent)) no("nella prova il tasto è «" + (b && b.textContent) + "» invece di «⏩ Avanti 0 su 1»");
-    tocca(w, b);
-    if (!await W.aspetta(function () { return !w.document.querySelector(".or-riv.su") && /Nuova partita/.test(T(w)); }, 4000)) no("dopo «Avanti» la prova non ha i suoi tasti («" + T(w).slice(-120) + "»)");
+    // (dal 21 ott 2026) a fine prova subito i tasti della prova; «🤔 Cosa intendevi?» è un tasto piccolo che apre la scheda
+    if (!await W.aspetta(function () { return /Nuova partita/.test(T(w)) && bottone(w, /Cosa intendevi/, ".or-chip"); }, 8000)) no("a fine prova niente tasti o niente «🤔 Cosa intendevi?» («" + T(w).slice(-160) + "»)");
+    if (w.document.querySelector(".or-riv.su")) no("a fine prova la scheda si apre da sola");
+    tocca(w, bottone(w, /Cosa intendevi/, ".or-chip")); await W.dorme(300);
+    var R = w.document.querySelector(".or-riv.su"), n = R && (R.querySelector(".or-riv-num") || {}).textContent;
+    if (!R) no("nella prova il tasto non apre la scheda");
+    var tit = (w.__ORDINE.ui.vm.titoli || []);
+    if (tit.length !== 4) no("nella prova i titoli sono " + tit.length + " invece di 4 (uno a testa, anche ai bot)");
     senzaErrori();
-    return "prova fino alla fine: " + mie + " indizi miei con le parole pensate, schermata «" + n + "», poi «↻ Nuova partita»";
+    return "prova fino alla fine: " + mie + " indizi miei con le parole pensate, «↻ Nuova partita» subito, scheda «" + n + "» col tasto, 4 titoli";
   } });
 
   // =========================================================

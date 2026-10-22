@@ -12,6 +12,8 @@
 // Il gioco: finché core.js ha ancora HOST_DI_RISERVA = { ordine: 1 } (lo svuota p5-z, correzione 5-8), riaprendo la stanza
 // l'host rientrerebbe da ospite: allora le prove usano una COPIA di ordine.js con id "ordine5" (provaOnline), che il core
 // tratta come tratterà "ordine" dopo la 5-8. Quando la riga non c'è più si usa Parola d'ordine vera.
+// 21 ott 2026 («Segnare e girare»): ritoccare una parola segnata ora toglie il segno; per girarla c'è il tasto «👆 Gira …»
+// (aiuto giraCarta, usato nella 580 e nella 581 al posto del secondo tocco sulla carta).
 // Profili finti, mai account veri.
 (function () {
   "use strict";
@@ -37,7 +39,7 @@
   function chiDi(v, nome) { return ((v.players || []).filter(function (p) { return p.nome === nome; }))[0] || null; }
   function parole(v) { return (v.tab || []).map(function (c) { return c.w; }).join(","); }
   function inSaletta(w) { return !!(w && w.document.querySelector(".saletta-schermo")); }
-  function chiusa(w) { return !!(w && /La stanza è chiusa|chiusa dall'host|Problema di collegamento/.test(T(w))); }
+  function chiusa(w) { return !!(w && /La stanza è chiusa|chiusa dall'host|Problema di collegamento|non è più tornato|Non riesco a entrare/.test(T(w))); }   // (22 ott 2026: le frasi nuove di chi resta fuori, c19)
   // qualcuno legge la pillola re mentre si aspetta ms? "" = nessuno
   async function senza(nomi, re, ms) {
     var fine = Date.now() + ms;
@@ -109,6 +111,13 @@
     if (!b) no(nome + " non può toccare la carta " + i + " («" + T(w).slice(0, 80) + "»)");
     b.click();
   }
+  // gira la parola i col tasto «👆 Gira …» (dal 21 ott 2026 ritoccare una parola segnata toglie il segno: per girare c'è il tasto)
+  async function giraCarta(nome, i, C) {
+    var w = W.finestra(nome), parola = (vm(C).tab || [])[i] ? vm(C).tab[i].w : "";
+    var b = await W.aspetta(function () { var x = w.document.querySelector(".or-gira"); return x && !x.disabled && x.textContent.indexOf(parola) >= 0 && x; }, 5000);
+    if (!b) no(nome + " non ha «👆 Gira " + parola + "» («" + T(w).slice(-80) + "»)");
+    b.click();
+  }
   // il capo dà l'indizio «QUOKKA 2» dal suo schermo (campo e «Invia»: vale per chi tiene la partita e per gli altri)
   async function indizioDa(capo, C) {
     var w = W.finestra(capo), inp = await W.aspetta(function () { return w.document.querySelector(".or-input"); }, 5000);
@@ -166,7 +175,7 @@
     if (!await W.aspetta(function () { var P = W.finestra("Paky"); return !inSaletta(P) && P.document.querySelector(".or-carta"); }, 6000)) no("Paky non vede il tabellone («" + T(W.finestra("Paky")).slice(0, 60) + "»)");
     // si va avanti con Paky dentro: la parola segnata si gira, oppure i Rossi giocano (indizio di Luca, Paky segna)
     if (i >= 0) {
-      await toccaCarta("Sara", i);
+      await giraCarta("Sara", i, C);
       if (!await W.aspetta(function () { return vm(C).tab[i].g; }, 6000)) no("la parola segnata da Sara non si gira");
       mossa += ", poi la gira";
     } else {
@@ -208,7 +217,7 @@
     if (!(vm(C).players || []).every(function (p) { return !p.via; })) no("qualcuno è rimasto «via»: " + JSON.stringify(vm(C).players.map(function (p) { return p.nome + (p.via ? "(via)" : ""); })));
     // si va avanti: chi aveva segnato la parola la gira
     if (i >= 0) {
-      await toccaCarta(r.indovino, i);   // (secondo tocco sulla parola già segnata: si gira)
+      await giraCarta(r.indovino, i, C);   // (il segno di prima è rimasto: «👆 Gira …» la gira)
       if (!await W.aspetta(function () { return vm(C).tab[i].g; }, 6000)) no("la parola segnata non si gira dopo la ripresa");
     }
     if (W.erroriTel().length) no("errori: " + W.erroriTel().slice(0, 3).join(" | "));

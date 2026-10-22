@@ -9,6 +9,35 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 253,
+    data: "22 ottobre 2026",
+    titolo: "🕵️ Parola d'ordine tutta nuova",
+    descrizione: [
+      "🎨 Tabellone nuovo, più grande e sempre in vista: carte chiare, e le parole girate prendono il colore e il disegno della squadra (▲ righe i Rossi, ● puntini i Blu, ■ quadretti i Verdi), così si distinguono anche per chi confonde i colori. La parola nera ha il teschio. La chat è una striscia sotto il tabellone: toccala per aprirla.",
+      "👆 Come su Codenames: un tocco segna una parola, un altro tocco toglie il segno, e per girarla c'è il tasto «👆 Gira». In alto c'è sempre scritto il tuo ruolo («Sei nei Rossi · indovini tu», «Sei il capo dei Blu»).",
+      "✍️ L'indizio: il numero lo sceglie il capo (nessuno è già acceso) e mentre scrive può toccare le sue parole, così il numero si mette da solo. Vale anche un nome fino a 3 parole (SAN GENNARO, NEW YORK) e c'è lo «0» («nessuna delle nostre c'entra»). Se l'indizio somiglia a una parola del tabellone (CANESTRO con CANE) il gioco ti chiede se è un'altra parola; ASTRONAVE con NAVE sul tabellone invece non vale.",
+      "🏁 Fine partita: subito il tabellone svelato e la rivincita pronta. Ognuno ha il suo titolo scherzoso (💣 L'artificiere, 🎯 Il cecchino, 🧠 Il telepate…) e c'è 📸 la foto della partita da mandare nel gruppo. Durante la partita ogni mossa si spiega con una scritta grande («😬 BOCCA era dei Blu!», «⭐ la parola d'oro!»).",
+      "📚 Parole: via i mazzi a tema, ora c'è un mazzo solo di 1.539 parole tutte da giocare (con le migliori dei temi: PUNIZIONE, BOMBER, SMORFIA, COPIONE…) e il 🌶️ Serata con 251. Due parole troppo simili non escono mai insieme e una parola non torna per 30 giorni.",
+      "🚪 Se il capo esce dalla partita apposta, i compagni possono fare subito il capo (se va solo su WhatsApp lo aspettate come sempre). A 3 squadre, dopo la parola nera ne arriva una nuova: il pericolo resta fino alla fine. Chi apre la partita può lasciarla a un amico, e toccando la clessidra la ferma per tutti.",
+      "🤖 Contro il Bot: il Bot scopre la sua parola in un attimo e, se vincete, fate tanti punti quante parole gli mancavano."
+    ]
+  },
+  {
+    v: 252,
+    data: "23 ottobre 2026",
+    titolo: "⚽ La giornata: parate al rallentatore e pagelle con calma",
+    descrizione: [
+      "🧤 Parate, pali, traverse e salvataggi sulla linea si vedono al rallentatore e da più vicino: si capisce cosa succede.",
+      "📋 Le pagelle finali escono più piano e poi aspettano: chi tiene la partita (o chi ha il telefono) va avanti con «Avanti ▶», gli amici leggono «⏳ Aspettiamo Paky…» e vanno avanti con lui. Lo stesso alle pagelle del primo tempo.",
+      "⚡ Niente più pause col campo vuoto: i risultati delle partite dove nessuno ha giocatori si aggiornano in alto mentre guardi le azioni.",
+      "🏃 Più fluida: durante i rilanci e negli ultimi secondi dell'asta il telefono fa meno fatica.",
+      "🤝 Online le pagelle restano allineate anche tra telefoni grandi e piccoli; se chi tiene la partita salta al podio, esce o ricarica, gli amici vanno avanti da soli col loro «Avanti ▶».",
+      "👆 Toccare la tua riga per vedere i tuoi calciatori funziona sempre (prima, dopo la prima volta, non rispondeva più).",
+      "⚽ Più realismo: chi è espulso non segna più; ogni tanto anche contro i vostri portieri arriva un tiro che non entra (così «azione pericolosa» non vuol dire per forza gol); la ribattuta del rigore si vede subito dopo la parata; «🃏 POKER!» per 4 gol.",
+      "🎬 Sistemate tante piccole cose nelle scene: la rovesciata, i tuffi del portiere, il «palo e dentro», il pallonetto, l'autogol dal calcio d'angolo, l'orologio del recupero, le scritte lunghe sui telefoni stretti."
+    ]
+  },
+  {
     v: 251,
     data: "22 ottobre 2026",
     titolo: "⚽ La giornata: i suoni dello stadio e il tasto ⏩",

@@ -10,7 +10,7 @@
 //   targhetta non copre la barra in basso. Si gioca fino alla fine (a copione); a fine partita ancora niente uscite doppie;
 //   Paky "Nuova partita" → Bea in meno di 5 s è nella saletta, tra i giocatori, senza toccare niente.
 // 698 Parola d'ordine: Marco arriva a partita cominciata → entra subito nella squadra più piccola e legge «🎉 Sei dentro!
-//     Giochi dal prossimo turno».
+//     Giochi già da adesso» (fino al 22 ott 2026 «dal prossimo turno», che non era vero).
 // 699 Taboo: la saletta dell'host con le squadre (6 giocatori) a 360x640 e 412x915 non scorre.
 // Regole corte per fare presto (solo sui telefoni con opz.g5imp, solo l'host le legge): Linea del tempo 1 carta, Taboo 60 s
 // e 1 giro (l'orologio di taboo.js dell'host salta avanti a fine turno), Patata 10 secondi. Profili finti, mai account veri.
@@ -289,15 +289,16 @@
   }
   GRUPPO.forEach(function (gid, k) { aggiungi(694 + k, scenario(gid)); });
 
-  // 698. Parola d'ordine: chi arriva a metà entra subito nella squadra più piccola, "dal prossimo turno"
-  aggiungi(698, { nome: "Parola d'ordine: Marco arriva a partita cominciata → squadra più piccola e «🎉 Sei dentro! Giochi dal prossimo turno»", fai: async function () {
+  // 698. Parola d'ordine: chi arriva a metà entra subito nella squadra più piccola e gioca già da adesso (dal 22 ott 2026:
+  //      ritardatari "subito"; prima la pillola diceva «dal prossimo turno», ma Marco poteva già giocare: c20)
+  aggiungi(698, { nome: "Parola d'ordine: Marco arriva a partita cominciata → squadra più piccola e «🎉 Sei dentro! Giochi già da adesso»", fai: async function () {
     var X = await apriPartita("ordine"), C = X.C;
     if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 8000)) no("la partita non comincia");
     var conta = function (v) { var n = [0, 0, 0]; (v.players || []).forEach(function (p) { if (p.team >= 0) n[p.team]++; }); return n; };
     var prima = conta(vm(C));
     var M = await tel("Marco", { hash: "gioco=ordine&stanza=" + C, x: 600 }), visti = "";
-    var ok = await W.aspetta(function () { var p = pill(M); if (/Sei dentro! Giochi dal prossimo turno/.test(p)) visti = p; return visti; }, 10000, 100);
-    if (!ok) no("Marco non legge «🎉 Sei dentro! Giochi dal prossimo turno» (" + pill(M) + ")");
+    var ok = await W.aspetta(function () { var p = pill(M); if (/Sei dentro! Giochi già da adesso/.test(p)) visti = p; return visti; }, 10000, 100);
+    if (!ok) no("Marco non legge «🎉 Sei dentro! Giochi già da adesso» (" + pill(M) + ")");
     var idM = A.mioId("Marco"), pm = (vm(C).players || []).filter(function (p) { return p.id === idM; })[0];
     if (!pm) no("Marco non è tra i giocatori");
     var piccola = prima.slice(0, vm(C).nsq || 2).indexOf(Math.min.apply(null, prima.slice(0, vm(C).nsq || 2)));
