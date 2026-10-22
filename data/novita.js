@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 253,
+    data: "22 ottobre 2026",
+    titolo: "🕵️ Parola d'ordine tutta nuova",
+    descrizione: [
+      "🎨 Tabellone nuovo, più grande e sempre in vista: carte chiare, e le parole girate prendono il colore e il disegno della squadra (▲ righe i Rossi, ● puntini i Blu, ■ quadretti i Verdi), così si distinguono anche per chi confonde i colori. La parola nera ha il teschio. La chat è una striscia sotto il tabellone: toccala per aprirla.",
+      "👆 Come su Codenames: un tocco segna una parola, un altro tocco toglie il segno, e per girarla c'è il tasto «👆 Gira». In alto c'è sempre scritto il tuo ruolo («Sei nei Rossi · indovini tu», «Sei il capo dei Blu»).",
+      "✍️ L'indizio: il numero lo sceglie il capo (nessuno è già acceso) e mentre scrive può toccare le sue parole, così il numero si mette da solo. Vale anche un nome fino a 3 parole (SAN GENNARO, NEW YORK) e c'è lo «0» («nessuna delle nostre c'entra»). Se l'indizio somiglia a una parola del tabellone (CANESTRO con CANE) il gioco ti chiede se è un'altra parola; ASTRONAVE con NAVE sul tabellone invece non vale.",
+      "🏁 Fine partita: subito il tabellone svelato e la rivincita pronta. Ognuno ha il suo titolo scherzoso (💣 L'artificiere, 🎯 Il cecchino, 🧠 Il telepate…) e c'è 📸 la foto della partita da mandare nel gruppo. Durante la partita ogni mossa si spiega con una scritta grande («😬 BOCCA era dei Blu!», «⭐ la parola d'oro!»).",
+      "📚 Parole: via i mazzi a tema, ora c'è un mazzo solo di 1.539 parole tutte da giocare (con le migliori dei temi: PUNIZIONE, BOMBER, SMORFIA, COPIONE…) e il 🌶️ Serata con 251. Due parole troppo simili non escono mai insieme e una parola non torna per 30 giorni.",
+      "🚪 Se il capo esce dalla partita apposta, i compagni possono fare subito il capo (se va solo su WhatsApp lo aspettate come sempre). A 3 squadre, dopo la parola nera ne arriva una nuova: il pericolo resta fino alla fine. Chi apre la partita può lasciarla a un amico, e toccando la clessidra la ferma per tutti.",
+      "🤖 Contro il Bot: il Bot scopre la sua parola in un attimo e, se vincete, fate tanti punti quante parole gli mancavano."
+    ]
+  },
+  {
     v: 252,
     data: "23 ottobre 2026",
     titolo: "⚽ La giornata: parate al rallentatore e pagelle con calma",
