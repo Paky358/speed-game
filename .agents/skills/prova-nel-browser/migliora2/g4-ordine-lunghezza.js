@@ -381,7 +381,8 @@
       if (w.__ORDINE.ui && w.__ORDINE.ui.vm && w.__ORDINE.ui.vm.fase === "fine") break;
       if (/Tocca a te: dai l'indizio/.test(tt) && w.document.querySelector(".or-input")) {
         var inp = w.document.querySelector(".or-input"); scrivi(w, inp, "ZIGOMAR" + "ABCDEFG"[giri % 7]); giri++;
-        tocca(w, bottone(w, /Invia/)); await W.dorme(500);
+        // (dal 22 ott 2026 nessun numero è già scelto: prima il numero, poi «Invia»)
+        tocca(w, w.document.querySelector(".or-num[data-n='1']")); tocca(w, bottone(w, /^Invia$/)); await W.dorme(500);
       } else if (/Quali parole intendevi/.test(tt)) {
         var team = 0, cs = caselleDi(w, team);
         if (cs[0]) { cs[0].click(); await W.dorme(100); }

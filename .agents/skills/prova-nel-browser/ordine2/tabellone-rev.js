@@ -176,6 +176,7 @@
       // l'indizio scritto nel campo e mandato con «Invia»: lo schermo torna com'era
       var p = ["QUOKKA", "ZEFIRO", "GNOMO", "YETI", "FIORDO"].filter(function (x) { return !w.__ORDINE.erroreIndizio(x, vm(C).tab); })[0];
       inp.value = p; inp.dispatchEvent(new w.Event("input", { bubbles: true }));
+      w.document.querySelector(".or-num[data-n='2']").click();   // (dal 22 ott 2026 nessun numero è già scelto)
       if (!W.clicca(w, /^Invia$/)) no("niente «Invia»");
       if (!await W.aspetta(function () { return vm(C).passo === "indovina" && vm(C).indizio && vm(C).indizio.parola === p; }, 6000)) no("l'indizio " + p + " non arriva");
       if (!await W.aspetta(function () { return !w.document.querySelector(".or-scrive"); }, 3000)) no("mandato l'indizio lo schermo resta «or-scrive»");

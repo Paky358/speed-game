@@ -1,7 +1,8 @@
 /* =========================================================
    PAROLA D'ORDINE — il gioco delle spie a parole, ognuno dal suo telefono.
    2 o 3 squadre (o in 2-3 contro il Bot), 25 parole sul tabellone. Il capo di ogni squadra vede di chi è ogni parola
-   (e qual è la parola NERA) e dà un indizio di una parola sola più un numero.
+   (e qual è la parola NERA) e dà un indizio (una parola, o un nome fino a 3 parole) più un numero (anche 0 o ∞); mentre lo
+   scrive può segnare di nascosto le sue parole a cui pensa (il numero si mette da solo).
    La squadra segna le parole (un tocco mette il segno, sulla casella compare la faccina di chi l'ha segnata; un altro tocco
    lo toglie) e le gira col tasto «👆 Gira MARE» (la parola segnata da me più di recente), come su codenames.game.
    Vince la squadra che gira per prima tutte le sue parole; chi gira la parola nera perde
@@ -56,6 +57,11 @@
   function nomeMazzo(id) { id = mazzoDa(id); for (var i = 0; i < MAZZI.length; i++) if (MAZZI[i][0] === id) return MAZZI[i][1]; return "Classico"; }
   function tempoDa(x) { x = +x; return x === 60 || x === 90 || x === 120 ? x : 0; }   // ⏳ secondi per l'indizio (0 = senza tempo)
   function mmss(ms) { var s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
+  // il numero dell'indizio: 1-9, «∞» (n = 0: tentativi liberi) e dal 22 ott 2026 lo «0» vero della regola ufficiale (n = 0 con
+  // z = 1: «nessuna nostra parola c'entra», tentativi liberi come con ∞). Lo «0» viaggia come n = 0 più z: un telefono col gioco
+  // di prima lo prende per un ∞ (stessi tentativi), e le partite ricordate prima di oggi restano uguali
+  function numTx(n, z) { return n === 0 ? (z ? "0" : "∞") : String(n); }
+  function forza(n, z) { return n === 0 ? (z ? 0 : 99) : n; }   // (🎲 «Il temerario»: ∞ è il più audace, 0 il meno)
   var PARTITE_SALVATE = {};
   function salvaProgressiOrdine(idPartita, giocatoreId, progressi, players, spettatore) {
     try {
@@ -146,34 +152,251 @@
     });
     return out.slice(0, MAX_LISTA);
   }
-  // un indizio è buono se è UNA parola e non è (quasi) una parola ancora coperta sul tabellone
-  function erroreIndizio(parola, tab) {
-    var p = String(parola || "").trim();
-    if (!p) return "Scrivi l'indizio.";
-    if (/\s/.test(p)) return "Una parola sola, senza spazi.";
-    if (!/^[A-Za-zÀ-ÖØ-öø-ÿ]+$/.test(p)) return "Solo lettere, niente numeri o simboli.";
-    if (p.length < 2) return "Troppo corto.";
-    var n = norm(p), r = radice(p), err = "";
-    // MARE → MAREA, GATTO → GATTINO: la parola corta all'inizio di quella lunga (CORSO con ORSO invece va bene)
-    function simile(a, b) {
-      var corta = a.length <= b.length ? a : b, lunga = a.length <= b.length ? b : a;
-      if (corta.length >= 4 && lunga.indexOf(corta) === 0) return true;
-      var rc = radice(corta);
-      return rc.length >= 4 && lunga.length - corta.length >= 2 && lunga.indexOf(rc) === 0 && lunga.length - rc.length <= 4;
-    }
-    (tab || []).forEach(function (c) {
-      if (err || c.g) return;
-      var m = norm(c.w);
-      // le parole con lo spazio o l'apostrofo ("ZIO GINO"): vale anche ogni pezzo
-      var pezzi = [m].concat(String(c.w).split(/[\s']+/).map(norm).filter(function (x) { return x.length >= 2 && x !== m; }));
-      pezzi.forEach(function (x) {
-        if (err) return;
-        if (x === n || radice(x) === r) err = "«" + c.w + "» è sul tabellone: non vale!";
-        else if (simile(x, n)) err = "Assomiglia troppo a «" + c.w + "», che è sul tabellone.";
-      });
-    });
-    return err;
+  // ---------------- IL CONTROLLO DEGLI INDIZI (22 ott 2026, decisioni del proprietario) ----------------
+  // NON VALE (blocco): la stessa parola, il plurale e il femminile (anche ATTRICE, PRINCIPESSA), una doppia cambiata (GATO/GATTO),
+  // gli accenti strani (MÂRE), le forme della lista (UOMO/UOMINI, CANE/CAGNOLINO, NAPOLI/NAPOLETANO), una vocale in più
+  // (MAREA/MARE) e le parole COMPOSTE
+  // che finiscono con una del tabellone (ASTRONAVE/NAVE, GIRASOLE/SOLE, AUTOSTRADA/STRADA).
+  // SOLO AVVISO (il capo tocca di nuovo Invia): la parola del tabellone o la sua radice all'inizio dell'indizio (CANE/CANESTRO,
+  // MARE/MARESCIALLO, MARTE/MARTELLO, GATTO/GATTINO: il gioco non sa distinguere GATTINO da PULCINO con PULCE) e le coppie di
+  // parole diverse quasi uguali (CASA/CASO, PORTA/PORTO, CASA/CASSA, PAPA/PAPÀ).
+  // Nomi di più parole: fino a 3 pezzi con lo spazio o l'apostrofo (SAN GENNARO, NEW YORK, DEL PIERO, L'AQUILA), ognuno
+  // controllato come una parola. Le parole già girate non bloccano niente. Le prove: ordine2/indizio.js (o2i1, con 280 esempi)
+  // tutti gli accenti e i segni via (À, Â, Ä, Ç, Ñ…), poi solo A-Z
+  function normI(w) {
+    var s = String(w || "").toUpperCase();
+    try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
+    return s.replace(/[^A-Z]/g, "");
   }
+  function radiceN(n) {   // (come radice, ma di una parola già normalizzata)
+    if (n.length < 3) return n;
+    var r = n.replace(/[AEIOU]$/, "");
+    if (r.length >= 4 && /I$/.test(r)) r = r.slice(0, -1);   // OCCHIO → OCCHI → OCCH
+    return r.replace(/([CG])H$/, "$1");                        // OCHE → OCH → OC
+  }
+  function schiaccia(n) { return n.replace(/(.)\1+/g, "$1"); }   // GATTO → GATO, PIZZA → PIZA
+  function vocaleFinale(n) { return /[AEIOU]$/.test(n); }
+  // il testo dell'indizio com'è scritto, in ordine: maiuscolo, gli apostrofi tutti uguali (anche quelli storti dell'iPhone),
+  // uno spazio solo tra le parole e niente spazi attorno all'apostrofo («L' AQUILA» → «L'AQUILA»)
+  function pulisciIndizio(p) {
+    return String(p || "").replace(/[\u2018\u2019\u02bc\u00b4`]/g, "'").replace(/\s+/g, " ").replace(/ ?' ?/g, "'").trim().toUpperCase();
+  }
+  // i plurali possibili di una parola (normalizzata): CASA → CASE, CASO → CASI, BANCA → BANCHE, AMICO → AMICI/AMICHI, OLIO → OLI
+  function plurali(w) {
+    var l = [];
+    if (/[CG]A$/.test(w)) l.push(w.slice(0, -1) + "HE");
+    else if (/[CG]IA$/.test(w)) l.push(w.slice(0, -2) + "E", w.slice(0, -1) + "E");
+    else if (/A$/.test(w)) l.push(w.slice(0, -1) + "E");
+    if (/[CG]O$/.test(w)) l.push(w.slice(0, -1) + "HI");
+    if (/IO$/.test(w)) l.push(w.slice(0, -1));
+    else if (/[OE]$/.test(w)) l.push(w.slice(0, -1) + "I");
+    return l;
+  }
+  // le forme che non cominciano come la parola (plurali strani, chi abita in una città o in un paese, i diminutivi che
+  // cambiano): valgono come la parola stessa (UOMO/UOMINI, CANE/CAGNOLINO, NAPOLI/NAPOLETANO). Già senza accenti
+  var IRREGOLARI = {
+    UOMO: "UOMINI OMINO OMINI OMETTO OMONE", DIO: "DEI DEA DEE", BUE: "BUOI", MILLE: "MILA", TEMPIO: "TEMPLI",
+    CANE: "CAGNA CAGNE CAGNOLINO CAGNOLINA CAGNOLINI CAGNOLINE CAGNOLONE CAGNETTO CAGNACCIO", MOGLIE: "MOGLI", ALA: "ALI", ARMA: "ARMI",
+    ORECCHIO: "ORECCHIE", UOVO: "UOVA", LENZUOLO: "LENZUOLA", PAIO: "PAIA",
+    NAPOLI: "NAPOLETANO NAPOLETANA NAPOLETANI NAPOLETANE PARTENOPEO PARTENOPEA PARTENOPEI PARTENOPEE", ROMA: "ROMANO ROMANA ROMANI ROMANE",
+    FIRENZE: "FIORENTINO FIORENTINA FIORENTINI FIORENTINE", VENEZIA: "VENEZIANO VENEZIANA VENEZIANI VENEZIANE", TORINO: "TORINESE TORINESI",
+    MILANO: "MILANESE MILANESI", PARIGI: "PARIGINO PARIGINA PARIGINI PARIGINE", LONDRA: "LONDINESE LONDINESI", BERLINO: "BERLINESE BERLINESI",
+    MADRID: "MADRILENO MADRILENA MADRILENI MADRILENE", AMERICA: "AMERICANO AMERICANA AMERICANI AMERICANE",
+    EGITTO: "EGIZIO EGIZIA EGIZI EGIZIE EGIZIANO EGIZIANA EGIZIANI EGIZIANE", INDIA: "INDIANO INDIANA INDIANI INDIANE",
+    SPAGNA: "SPAGNOLO SPAGNOLA SPAGNOLI SPAGNOLE", FRANCIA: "FRANCESE FRANCESI", BRASILE: "BRASILIANO BRASILIANA BRASILIANI BRASILIANE",
+    CANADA: "CANADESE CANADESI", MESSICO: "MESSICANO MESSICANA MESSICANI MESSICANE", AUSTRALIA: "AUSTRALIANO AUSTRALIANA AUSTRALIANI AUSTRALIANE",
+    GIAPPONE: "GIAPPONESE GIAPPONESI", OLANDA: "OLANDESE OLANDESI", CAPRI: "CAPRESE CAPRESI", MONACO: "MONEGASCO MONEGASCA MONEGASCHI MONEGASCHE",
+    ATENE: "ATENIESE ATENIESI", BOLOGNA: "BOLOGNESE BOLOGNESI", CINA: "CINESE CINESI", CUBA: "CUBANO CUBANA CUBANI CUBANE",
+    GERMANIA: "TEDESCO TEDESCA TEDESCHI TEDESCHE GERMANICO GERMANICA", IRLANDA: "IRLANDESE IRLANDESI", ISLANDA: "ISLANDESE ISLANDESI",
+    MAROCCO: "MAROCCHINO MAROCCHINA MAROCCHINI MAROCCHINE", PALERMO: "PALERMITANO PALERMITANA PALERMITANI PALERMITANE",
+    PECHINO: "PECHINESE PECHINESI", PERU: "PERUVIANO PERUVIANA PERUVIANI PERUVIANE", PISA: "PISANO PISANA PISANI PISANE",
+    RUSSIA: "RUSSO RUSSA RUSSI RUSSE", SVIZZERA: "SVIZZERO SVIZZERI", SVEZIA: "SVEDESE SVEDESI", VERONA: "VERONESE VERONESI",
+    GENOVA: "GENOVESE GENOVESI", TURCHIA: "TURCO TURCA TURCHI TURCHE", VIENNA: "VIENNESE VIENNESI",
+    GIAMAICA: "GIAMAICANO GIAMAICANA GIAMAICANI GIAMAICANE", PARMA: "PARMENSE PARMENSI", COMO: "COMASCO COMASCA COMASCHI COMASCHE",
+    BARI: "BARESE BARESI", TIBET: "TIBETANO TIBETANA TIBETANI TIBETANE", GRECIA: "GRECO GRECA GRECI GRECHE",
+    ITALIA: "ITALIANO ITALIANA ITALIANI ITALIANE", INGHILTERRA: "INGLESE INGLESI", SARDEGNA: "SARDO SARDA SARDI SARDE",
+    SICILIA: "SICILIANO SICILIANA SICILIANI SICILIANE", PORTOGALLO: "PORTOGHESE PORTOGHESI", EUROPA: "EUROPEO EUROPEA EUROPEI EUROPEE",
+    AFRICA: "AFRICANO AFRICANA AFRICANI AFRICANE", ASIA: "ASIATICO ASIATICA ASIATICI ASIATICHE",
+    // (22 ott 2026, revisione) le parole che perdono la U (UOVO/OVETTO, RUOTA/ROTELLA, SCUOLA/SCOLARO) e altri abitanti
+    RUOTA: "ROTELLA ROTELLE ROTINA ROTINE", FUOCO: "FOCHERELLO FOCHERELLI", SCUOLA: "SCOLARO SCOLARA SCOLARI SCOLARESCA SCOLASTICO SCOLASTICA",
+    PADOVA: "PADOVANO PADOVANA PADOVANI PADOVANE", TRIESTE: "TRIESTINO TRIESTINA TRIESTINI TRIESTINE", CATANIA: "CATANESE CATANESI",
+    CAGLIARI: "CAGLIARITANO CAGLIARITANA CAGLIARITANI CAGLIARITANE", SALERNO: "SALERNITANO SALERNITANA SALERNITANI SALERNITANE",
+    LECCE: "LECCESE LECCESI", BERGAMO: "BERGAMASCO BERGAMASCA BERGAMASCHI BERGAMASCHE", BRESCIA: "BRESCIANO BRESCIANA BRESCIANI BRESCIANE",
+    MANTOVA: "MANTOVANO MANTOVANA MANTOVANI MANTOVANE", MODENA: "MODENESE MODENESI", FERRARA: "FERRARESE FERRARESI", RIMINI: "RIMINESE RIMINESI",
+    PERUGIA: "PERUGINO PERUGINA PERUGINI PERUGINE", ANCONA: "ANCONETANO ANCONETANA ANCONETANI ANCONETANE", PESCARA: "PESCARESE PESCARESI",
+    SIENA: "SENESE SENESI", AREZZO: "ARETINO ARETINA ARETINI ARETINE", LIVORNO: "LIVORNESE LIVORNESI", LUCCA: "LUCCHESE LUCCHESI",
+    TRENTO: "TRENTINO TRENTINA TRENTINI TRENTINE", TARANTO: "TARANTINO TARANTINA TARANTINI TARANTINE", MESSINA: "MESSINESE MESSINESI",
+    SIRACUSA: "SIRACUSANO SIRACUSANA SIRACUSANI SIRACUSANE", AMALFI: "AMALFITANO AMALFITANA AMALFITANI AMALFITANE",
+    SORRENTO: "SORRENTINO SORRENTINA SORRENTINI SORRENTINE", ISCHIA: "ISCHITANO ISCHITANA ISCHITANI ISCHITANE", CASERTA: "CASERTANO CASERTANA CASERTANI CASERTANE",
+    TOSCANA: "TOSCANO TOSCANI TOSCANE", LOMBARDIA: "LOMBARDO LOMBARDA LOMBARDI LOMBARDE", PIEMONTE: "PIEMONTESE PIEMONTESI",
+    CALABRIA: "CALABRESE CALABRESI", PUGLIA: "PUGLIESE PUGLIESI", LIGURIA: "LIGURE LIGURI", ABRUZZO: "ABRUZZESE ABRUZZESI",
+    MARCHE: "MARCHIGIANO MARCHIGIANA MARCHIGIANI MARCHIGIANE", UMBRIA: "UMBRO UMBRA UMBRI UMBRE", LAZIO: "LAZIALE LAZIALI",
+    FRIULI: "FRIULANO FRIULANA FRIULANI FRIULANE", BASILICATA: "LUCANO LUCANA LUCANI LUCANE", MOLISE: "MOLISANO MOLISANA MOLISANI MOLISANE",
+    ARGENTINA: "ARGENTINO ARGENTINI ARGENTINE", DANIMARCA: "DANESE DANESI", NORVEGIA: "NORVEGESE NORVEGESI", FINLANDIA: "FINLANDESE FINLANDESI",
+    POLONIA: "POLACCO POLACCA POLACCHI POLACCHE", AUSTRIA: "AUSTRIACO AUSTRIACA AUSTRIACI AUSTRIACHE", UNGHERIA: "UNGHERESE UNGHERESI",
+    CROAZIA: "CROATO CROATA CROATI CROATE", ALBANIA: "ALBANESE ALBANESI", ROMANIA: "RUMENO RUMENA RUMENI RUMENE ROMENO ROMENA ROMENI ROMENE",
+    SCOZIA: "SCOZZESE SCOZZESI", GALLES: "GALLESE GALLESI", ISRAELE: "ISRAELIANO ISRAELIANA ISRAELIANI ISRAELIANE",
+    IRAN: "IRANIANO IRANIANA IRANIANI IRANIANE", CILE: "CILENO CILENA CILENI CILENE", COLOMBIA: "COLOMBIANO COLOMBIANA COLOMBIANI COLOMBIANE",
+    COREA: "COREANO COREANA COREANI COREANE", TUNISIA: "TUNISINO TUNISINA TUNISINI TUNISINE", ALGERIA: "ALGERINO ALGERINA ALGERINI ALGERINE",
+    MALTA: "MALTESE MALTESI", CIPRO: "CIPRIOTA CIPRIOTI CIPRIOTE", PRAGA: "PRAGHESE PRAGHESI", LISBONA: "LISBONESE LISBONESI"
+  };
+  IRREGOLARI.DUCA = "DUCHESSA DUCHESSE"; IRREGOLARI.PAPA = "PAPESSA PAPESSE"; IRREGOLARI.OSTE = "OSTESSA OSTESSE"; IRREGOLARI.ABATE = "BADESSA BADESSE";
+  IRREGOLARI.POETA = "POETESSA POETESSE"; IRREGOLARI.PROFETA = "PROFETESSA PROFETESSE";
+  IRREGOLARI.UOVO += " OVETTO OVETTI"; IRREGOLARI.SVIZZERA += " ELVETICO ELVETICA ELVETICI ELVETICHE";
+  var IRR = {};
+  Object.keys(IRREGOLARI).forEach(function (k) { IRREGOLARI[k].split(" ").forEach(function (v) { (IRR[k] = IRR[k] || {})[v] = 1; (IRR[v] = IRR[v] || {})[k] = 1; }); });
+  // parole DIVERSE che si scrivono quasi uguali (cambia l'ultima vocale): niente blocco, solo l'avviso «è un'altra parola?».
+  // Valgono anche i loro plurali (CASA/CASI, CASO/CASE)
+  var DIVERSE = ("PIANTA/PIANTO POSTA/POSTO CASA/CASO PALO/PALA COLLO/COLLA COLLA/COLLE COLLO/COLLE CALCIO/CALCE PORTA/PORTO MODA/MODO " +
+    "PASTA/PASTO MENTA/MENTE MENTA/MENTO MENTE/MENTO VELA/VELO TEMPO/TEMPIO TEMPO/TEMPIA TEMPIO/TEMPIA FOGLIO/FOGLIA PUNTO/PUNTA " +
+    "BUSTO/BUSTA BOCCA/BOCCE BOCCA/BOCCIA PERA/PERU PERU/PERO TRATTORE/TRATTORIA BANCO/BANCA COLPO/COLPA MANICO/MANICA CORSA/CORSO " +
+    "CORSA/CORSIA CORSO/CORSIA CONTO/CONTE RAZZO/RAZZA CUBA/CUBO MAZZA/MAZZO SALE/SALA FINE/FINO PIANO/PIANA TORTA/TORTO PALO/PALIO " +
+    "PALA/PALIO MARCA/MARCIA ORA/ORO MORA/MORO MOSTRA/MOSTRO BUCA/BUCO FILA/FILO PANNA/PANNO TESTA/TESTO FOCA/FOCE MASSA/MASSO " +
+    "TUBA/TUBO BOTTE/BOTTA CERCHIO/CERCHIA SCALA/SCALO PIZZA/PIZZO VISTA/VISTO BOLLA/BOLLO VOLTO/VOLTA TELA/TELO PEZZO/PEZZA " +
+    "GRANO/GRANA MANTO/MANTA COLLETTO/COLLETTA BAR/BARA BAR/BARI BARI/BARA SET/SETA TRAM/TRAMA CERA/CERO FIERA/FIERO NOTA/NOTO " +
+    "TAPPA/TAPPO COSTA/COSTO RAME/RAMO CAMICIA/CAMICE CAVO/CAVA CAVO/CAVIA PALMA/PALMO VITE/VITA SCOPA/SCOPO LIBRO/LIBRA SOLE/SOLO " +
+    "CORTE/CORTO PARTE/PARTO TASSA/TASSO MANGO/MANGA LIMA/LIMO ASSE/ASSO LEGA/LEGO DUE/DUO ANGOLO/ANGOLA ASTA/ASTI ASTA/ASTIO " +
+    "ATLANTE/ATLANTA BARBA/BARBIE BATTERIA/BATTERI BRACCIO/BRACCO BRASILE/BRASILIA CAMPANA/CAMPANIA CAPRA/CAPRI CARBONE/CARBONIA " +
+    "CARTELLO/CARTELLA CASSETTO/CASSETTA CERVO/CERVIA COLOMBA/COLOMBIA COPPA/COPPIA CORNETTO/CORNETTA CORRIERE/CORRIERA CROCE/CROCO " +
+    "FALCO/FALCE FANTE/FANTA FARAONE/FARAONA FATA/FATO FUSO/FUSA GAMBA/GAMBIA GRANITO/GRANITA IMPERO/IMPERIA LACCIO/LACCA " +
+    "LANCIA/LANCIO LATTE/LATTA LENTE/LENTO LENTE/LENTA LIBERO/LIBERIA LOTTO/LOTTA LUCE/LUCIA MINA/MINI MOLO/MOLE NASO/NASA " +
+    "ORCO/ORCA ORCO/ORCIO PAGELLA/PAGELLO PANCIA/PANCA PARMIGIANO/PARMIGIANA PARTITA/PARTITO PEDALE/PEDALO PESCA/PESCE PESCE/PESCO " +
+    "RAMO/RAMA REGGIA/REGGIO RICCIO/RICCO ROTTA/ROTTO SCHERMO/SCHERMA SERIE/SERA SOFFITTA/SOFFITTO SPILLA/SPILLO STORIA/STORE " +
+    "SVEGLIA/SVEGLIO TAGLIA/TAGLIO TANGO/TANGA TOGA/TOGO TORCIA/TORCHIO TUTA/TUTU BUFALA/BUFALO MULO/MULE " +
+    // (e quelle che cambiano solo per una doppia ma sono parole vere e diverse: CASA/CASSA non è una doppia sbagliata)
+    "CASA/CASSA PRESA/PRESSA FARO/FARRO POLO/POLLO LATINA/LATTINA SERA/SERRA ROSA/ROSSA NOTE/NOTTE TONO/TONNO RENE/RENNE PALA/PALLA " +
+    "LOTO/LOTTO FALO/FALLO CAPELLO/CAPPELLO NONO/NONNO CARO/CARRO FATO/FATTO PENA/PENNA COPIA/COPPIA SETE/SETTE MOLA/MOLLA TUFO/TUFFO " +
+    "SONO/SONNO CAMINO/CAMMINO PAPA/PAPPA NANA/NANNA STELA/STELLA COLA/COLLA TUTA/TUTTA MOTO/MOTTO ANO/ANNO DITA/DITTA ROCA/ROCCA PACO/PACCO " +
+    "CANE/CANNA BACO/BACCO SETA/SETTA CASETTA/CASSETTA SERATA/SERRATA MOLE/MOLLE RISA/RISSA PEPE/PEPPE LUCA/LUCCA VALE/VALLE").split(" ");
+  var DIV = {};
+  DIVERSE.forEach(function (c) {
+    var p = c.split("/"), a = p[0], b = p[1];
+    [[a, b]].concat(plurali(b).map(function (x) { return [a, x]; }), plurali(a).map(function (x) { return [x, b]; })).forEach(function (q) {
+      if (q[0] !== q[1]) DIV[q[0] + "/" + q[1]] = DIV[q[1] + "/" + q[0]] = 1;
+    });
+  });
+  // il primo pezzo delle parole composte (ASTRO-NAVE, GIRA-SOLE, CAVA-TAPPI, AUTO-STRADA, PESCE-CANE): se la parola del tabellone
+  // è il secondo pezzo, l'indizio non vale. Se davanti c'è altro (STRUMENTO non è STRU + MENTA, TOPOLINO non è TOPO + LINO) è
+  // solo un avviso: tante parole finiscono come una del tabellone per caso (-MENTO, -INO, -AZIONE…)
+  var TESTE = ("ASTRO AUTO AERO AGRI AGRO ALTO ANTI APRI ARCI ARCO ASCIUGA ASPIRA ATTACCA BAGNA BANCA BANCO BARO BASSO BATTI BENE BIANCA " +
+    "BIANCO BIO BUCA CACCIA CACIO CALZA CAPO CAPOD CAPRI CASSA CAVA CENTI CENTO CERCA CINE CODI COLA CONTA CONTRO COPRI CRONO " +
+    "CRUCI DOPPIO ELETTRO ETILO EXTRA FANTA FERMA FERR FICCA FINI FOTO FRANCO FUORI GIACCA GIRA GONIO GRAN GRATTA IDRO IGRO INFRA IPER " +
+    "LANCIA LAVA LUCIDA LUSTRA MACRO MAPPA MARCIA MAXI MEGA MELO MEZZA MEZZO MICRO MILLE MINI MONO MONTE MOTO MULTI NERO " +
+    "OLTRE PALLA PAPPA PARA PASSA PESCE PETTI PIEGA POGGIA POLI PORCO PORTA PORTO POSA PUNGI QUADRI RADIO REGGI RETRO ROMPI SALTIM " +
+    "SALVA SCACCIA SCALDA SCHIACCIA SCHIUMA SCIOGLI SCOLA SEGGIO SEGNA SEMI SOPRA SOTTO SPACCA SPARGI SPAZZA SPREMI STRA STROZZA " +
+    "STUZZICA SUPER TACHI TAGLIA TASSA TELE TENNIS TERMO TERRA TERRE TIRA TOSA TOSTA TOTO TRITA VIDEO").split(" ");
+  var TESTA = {}; TESTE.forEach(function (w) { TESTA[w] = 1; });
+  // la parola del tabellone (o la sua radice) all'INIZIO dell'altra: CANE/CANESTRO, MARE/MARESCIALLO, GATTO/GATTINO, CASA/CASETTA.
+  // "uno" = c'è una vocale sola in più (MARE/MAREA): è quasi la stessa parola. Con una consonante in più (BOXE/BOXER, META/METAL)
+  // di solito è un'altra parola: solo l'avviso
+  var SUFF =/^(H?ETT|H?IN[OAIE]|ON[EAIC]|H?ELL|UCC|ACC|OTT|OLIN|ICIN|ICELL|UPOL|ERELL|UZZ|AR[EIOA]|AL[EI]|IC[OAIH]|OS[OAIE]|IAN|AI[OA]|IER|IST|ERI|ATOR|ATRIC)/;
+  function iniziaCon(a, b) {
+    var corta = a.length <= b.length ? a : b, lunga = a.length <= b.length ? b : a;
+    if (corta === lunga) return "";
+    if (corta.length >= 4 && lunga.indexOf(corta) === 0) return lunga.length - corta.length === 1 && vocaleFinale(corta) && vocaleFinale(lunga) ? "uno" : "si";
+    var rc = radiceN(corta);
+    if (rc.length >= 4 && lunga.indexOf(rc) === 0 && lunga.length - rc.length >= 2) return "si";
+    // radice di 3 lettere (CASA, LAGO, SOLE): solo coi diminutivi e le parole fatte da lei (CASETTA, LAGHETTO, SOLARE)
+    if (rc.length === 3 && vocaleFinale(corta) && lunga.indexOf(rc) === 0 && lunga.length - rc.length >= 3 && SUFF.test(lunga.slice(3))) return "si";
+    return "";
+  }
+  // la parola del tabellone (o il suo plurale) alla FINE dell'altra, dopo il primo pezzo di una parola composta: ASTRONAVE,
+  // GIRASOLE, CAVATAPPI, AUTOSTRADE. Se davanti c'è altro è un caso (STRUMENTO e MENTA, TOPOLINO e LINO): niente
+  function finisceCon(a, b) {
+    var corta = a.length <= b.length ? a : b, lunga = a.length <= b.length ? b : a;
+    if (corta.length < 4 || corta === lunga) return false;
+    var prove = [corta].concat(plurali(corta)), rc = radiceN(corta), i, k;
+    for (k = 0; k < prove.length; k++) {
+      i = lunga.length - prove[k].length;
+      if (i >= 2 && lunga.slice(i) === prove[k] && TESTA[lunga.slice(0, i)]) return true;
+    }
+    if (rc.length >= 4 && rc !== corta) {   // col plurale delle parole lunghe: CAVATAPPI (TAPP + I), PORTACHIAVI (CHIAV + I)
+      i = lunga.lastIndexOf(rc);
+      // (non se la fine è un'altra parola: PASSAPORTO finisce con PORTO, non con PORTA)
+      if (i >= 2 && /^H?[AEIO]$/.test(lunga.slice(i + rc.length)) && TESTA[lunga.slice(0, i)] && !DIV[corta + "/" + lunga.slice(i)]) return true;
+    }
+    return false;
+  }
+  // il femminile che cambia la fine (vale anche al plurale): ATTORE/ATTRICE, PITTORE/PITTRICE, PRINCIPE/PRINCIPESSA,
+  // LEONE/LEONESSA, STUDENTE/STUDENTESSA (solo dalle parole in -E: PROMO/PROMESSA, COMMA/COMMESSA no; POETA/POETESSA nella lista)
+  function femminile(a, b) {
+    function f(base, fem) {
+      var t = base.match(/^(..+)TOR[EI]$/), r;
+      if (t && fem.replace(/TRIC[EI]$/, "") === t[1] && /TRIC[EI]$/.test(fem)) return true;
+      if (base.length < 4 || !/E$/.test(base)) return false;
+      r = radiceN(base);
+      return r.length >= 4 && fem.indexOf(r) === 0 && /^H?ESS[AE]$/.test(fem.slice(r.length));   // (RIMA/RIMESSA no: le corte stanno nella lista)
+    }
+    return f(a, b) || f(b, a);
+  }
+  // parole diverse che cambiano solo per l'accento: niente blocco, solo l'avviso (le altre con l'accento sono la stessa parola:
+  // CAFFÈ/CAFFE, PERÙ/PERU, MÂRE/MARE)
+  var ACCENTO = { "PAPA|PAPÀ": 1, "COMO|COMÒ": 1, "META|METÀ": 1, "PERO|PERÒ": 1 };
+  function conAccento(w) { return String(w).toUpperCase().replace(/Á/g, "À").replace(/É/g, "È").replace(/Í/g, "Ì").replace(/Ó/g, "Ò").replace(/Ú/g, "Ù"); }
+  function soloAccento(a, b) { a = conAccento(a); b = conAccento(b); return a !== b && !!(ACCENTO[a + "|" + b] || ACCENTO[b + "|" + a]); }
+  // un pezzo dell'indizio (u) contro una parola (o un pezzo di parola) del tabellone (m). tutto = tutti i controlli; se no solo
+  // «è la stessa?». Restituisce null o { b: tipo } (blocca) o { d: 1 } (avviso)
+  function confronta(u, m, tutto) {
+    if (u === m) return { b: "stessa" };
+    if (!tutto || u.length < 3 || m.length < 3) return null;
+    if (IRR[m] && IRR[m][u]) return { b: "forma" };
+    if (femminile(u, m)) return { b: "forma" };
+    if (DIV[m + "/" + u]) return { d: 1 };
+    if (schiaccia(m) === schiaccia(u)) return { b: "doppia" };
+    if (vocaleFinale(m) && vocaleFinale(u) && radiceN(m) === radiceN(u)) return { b: "forma" };
+    if (finisceCon(u, m)) return { b: u.length > m.length ? "contiene" : "dentro" };
+    var ini = iniziaCon(u, m);
+    if (ini === "uno") return { b: "quasi" };
+    if (ini) return { d: 1 };
+    return null;
+  }
+  var MAX_IND = 24;   // lettere (con spazi e apostrofi) di un indizio: SAN GIOVANNI ROTONDO ci sta
+  function controllaIndizio(parola, tab) {
+    var p = pulisciIndizio(parola);
+    if (!p) return { blocca: "Scrivi l'indizio." };
+    if (/[0-9]/.test(p)) return { blocca: "Scrivi i numeri in lettere (OTTO)." };
+    if (!/^[A-ZÀ-ÖØ-Þ' ]+$/.test(p) || /^'|'$/.test(p)) return { blocca: "Solo lettere, niente simboli." };
+    var pezziP = p.split(/[ ']+/).filter(Boolean);
+    if (pezziP.length > 3) return { blocca: "Al massimo 3 parole, solo per i nomi (SAN GENNARO)." };
+    if (p.length > MAX_IND) return { blocca: "Troppo lungo: al massimo " + MAX_IND + " lettere." };
+    var n = normI(p);
+    if (n.length < 2) return { blocca: "Troppo corto." };
+    // i pezzi dell'indizio: tutto attaccato (MA RE = MARE) e, se sono più parole, ognuna (KING KONG: KONG)
+    var unita = [{ n: n, tutto: pezziP.length === 1 }];
+    if (pezziP.length > 1) pezziP.forEach(function (x) { var nx = normI(x); if (nx.length >= 2) unita.push({ n: nx, tutto: nx.length >= 3, pezzo: 1 }); });
+    var blocca = "", dubbio = "";
+    (tab || []).forEach(function (c) {
+      if (blocca || !c || c.g) return;   // (le parole già girate non bloccano niente)
+      var w = String(c.w).toUpperCase(), m = normI(w);
+      var pezziM = w.split(/[\s']+/).map(normI).filter(function (x) { return x.length >= 2 && x !== m; });
+      var tutteM = [{ n: m }].concat(pezziM.map(function (x) { return { n: x, pezzo: 1 }; }));
+      for (var i = 0; i < unita.length && !blocca; i++) {
+        for (var j = 0; j < tutteM.length && !blocca; j++) {
+          var U = unita[i], M = tutteM[j], e = confronta(U.n, M.n, U.tutto && (!M.pezzo || M.n.length >= 3));
+          if (!e) continue;
+          if (e.b === "stessa" && !U.pezzo && !M.pezzo && soloAccento(p, w)) e = { d: 1 };   // (PAPÀ con PAPA: un'altra parola)
+          if (e.d) { if (!dubbio) dubbio = "«" + p + "» somiglia a «" + w + "», che è sul tabellone: è un'altra parola?"; continue; }
+          blocca = testoBlocco(e.b, p, w, U, M);
+        }
+      }
+    });
+    if (blocca) return { blocca: blocca };
+    if (dubbio) return { dubbio: dubbio };
+    return {};
+  }
+  function testoBlocco(tipo, p, w, U, M) {
+    var nv = "è sul tabellone: non vale!";
+    if (M.pezzo) return "«" + p + "» " + (U.n === M.n ? "è dentro" : "somiglia troppo a") + " «" + w + "», che " + nv;
+    if (U.pezzo) return "«" + p + "» contiene «" + w + "», che " + nv;
+    if (tipo === "stessa") return p === w ? "«" + w + "» " + nv : "«" + p + "» è come «" + w + "», che " + nv;
+    if (tipo === "forma") return "«" + p + "» è un'altra forma di «" + w + "», che " + nv;
+    if (tipo === "doppia") return "«" + p + "» è quasi «" + w + "» (cambia una doppia), che " + nv;
+    if (tipo === "quasi") return "«" + p + "» è quasi uguale a «" + w + "», che " + nv;
+    if (tipo === "contiene") return "«" + p + "» contiene «" + w + "», che " + nv;
+    if (tipo === "dentro") return "«" + p + "» è dentro «" + w + "», che " + nv;
+    return "«" + w + "» " + nv;
+  }
+  function erroreIndizio(parola, tab) { return controllaIndizio(parola, tab).blocca || ""; }
 
   // =========================================================
   //  HOST: tiene la partita vera e manda a tutti la "foto" (vm)
@@ -387,7 +610,7 @@
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, team: p.team, via: !!p.via, bot: p.bot ? 1 : undefined, omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }),
         capo: H.capo.slice(0, H.nsq),
         tab: H.tab ? H.tab.map(function (c) { return { w: c.w, g: c.g, c: (c.g || fine) ? c.c : null, oro: (c.g || fine) && c.oro ? 1 : 0 }; }) : null, oro: H.oro,
-        bid: H.bid, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
+        bid: H.bid, nt: H.nTurni || 0, turno: H.turno, passo: H.passo, indizio: H.indizio, tentativi: H.tentativi, girate: H.girate, prop: H.prop,
         storia: H.storia.slice(-8), log: (H.log || []).slice(-40), fuori: H.fuori.slice(), vince: H.vince, classifica: H.classifica, msg: H.msg, ultima: H.ultima, resto: r,
         hostId: H.hostId, sospeso: H.sospeso || null, guarda: (H.guarda || []).slice(),
         pres: H.fase === "gioco" ? H.pres || null : null,   // 🎬 la presentazione di questa partita (intera, solo i capi nuovi, niente)
@@ -419,9 +642,10 @@
     function chiave() { return H.tab ? H.tab.map(function (c) { return c.c; }) : null; }
     function mandaChiave(id) {
       if (!id || id === BOT_ID || H.fase !== "gioco") return;
-      if (id === IO) { chiaveHost = { bid: H.bid, col: chiave() }; return; }
       // int = gli indizi di questo capo per cui ha già detto (o saltato) le parole che intendeva: chi rientra non se lo vede richiedere
+      // (anche l'host che fa il capo e ricarica la pagina, o il vice capo che prende la partita: c17)
       var int = []; (H.ind || []).forEach(function (I, x) { if (I.id === id && I.pensate) int.push(x); });
+      if (id === IO) { chiaveHost = { bid: H.bid, col: chiave() }; int.forEach(function (x) { INTESI[H.bid + "|" + x] = 1; }); return; }
       privato(id, { t: "chiave", bid: H.bid, col: chiave(), int: int });
     }
     function mandaChiavi() { for (var k = 0; k < H.nsq; k++) mandaChiave(H.capo[k]); }
@@ -484,7 +708,9 @@
           if (!l.length) return;
           I.pensate = l;
         }
-        ricorda(); return;   // (la foto non cambia: le parole pensate non ci vanno, ma la partita da ricordare sì)
+        // (nella foto solo «ha già risposto», mai quali: così il capo che ricarica, o il vice, non se lo vede richiedere)
+        if (H.indizio && H.indizio.x === Math.floor(+m.x)) H.indizio.pen = 1;
+        ricorda(); return;
       }
       var miaSquadra = p.team === H.turno, sonoCapo = H.capo[p.team] === id;
       if (m.t === "capo") {   // a partita iniziata: solo se il capo della squadra non c'è più e la squadra l'ha aspettato 3 minuti
@@ -497,21 +723,34 @@
       if (m.t === "indizio") {
         if (!miaSquadra || !sonoCapo || H.passo !== "indizio") return;
         var n = Math.floor(+m.n); if (!(n >= 0 && n <= 9)) return;
+        var zero = n === 0 && !!m.z ? 1 : 0;   // «0»: nessuna parola della squadra c'entra (tentativi liberi come con ∞)
         var err = erroreIndizio(m.parola, H.tab);
         if (err) { privato(id, { t: "avviso", testo: err }); return; }
-        var parola = String(m.parola).trim().toUpperCase();
+        var parola = pulisciIndizio(m.parola);
         H.ind = H.ind || [];
         H.indizio = { parola: parola, n: n, k: H.turno, id: id, nome: p.nome, giuste: 0, x: H.ind.length };
-        H.ind.push({ k: H.turno, p: parola, n: n, id: id, nome: p.nome, tocchi: [], pensate: null });
+        if (zero) H.indizio.z = 1;
+        var I = { k: H.turno, p: parola, n: n, id: id, nome: p.nome, tocchi: [], pensate: null };
+        if (zero) I.z = 1;
+        // 🤔 le parole a cui pensava, segnate dal capo MENTRE scriveva (le tiene solo l'host, come sempre: si scoprono a fine turno
+        // quelle trovate e a fine partita tutte). Con lo «0» non ce ne sono. Se non ne ha segnate, gliele chiede dopo come prima
+        if (zero) I.pensate = [];
+        else if (H.intendi && m.l) {
+          var lp = [];
+          [].concat(m.l).forEach(function (i) { i = Math.floor(+i); if (H.tab[i] && H.tab[i].c === H.turno && !H.tab[i].g && lp.indexOf(i) < 0 && lp.length < 9) lp.push(i); });
+          if (lp.length) I.pensate = lp;
+        }
+        if (I.pensate) H.indizio.pen = 1;   // (nella foto solo «non chiedergliele», mai quali)
+        H.ind.push(I);
         H.cless = null; clearTimeout(tCless);
         progresso(id).indizi++;
         // 🎭 quanto ci ha pensato il capo (il primo indizio della partita no: c'è la presentazione)
         var sI = stat(id); sI.indizi++;
         if (H.storia.length && H.indDa && !H.attesa) { sI.tInd += Math.max(0, Math.min(600000, Date.now() - H.indDa)); sI.nInd++; }
-        if (!sI.osa || (n === 0 ? 99 : n) > (sI.osa.n === 0 ? 99 : sI.osa.n)) sI.osa = { p: parola, n: n };   // 🎲 l'indizio più audace
+        if (!sI.osa || forza(n, zero) > forza(sI.osa.n, sI.osa.z)) sI.osa = { p: parola, n: n, z: zero || undefined };   // 🎲 l'indizio più audace
         H.tentativi = n === 0 ? 99 : n + 1; H.girate = 0; H.passo = "indovina"; H.prop = {}; H.msg = "";
-        H.storia.push({ k: H.turno, parola: parola, n: n }); oraClessidra();   // ⏳ (se accesa) la clessidra di chi indovina
-        scrivi({ t: "ind", k: H.turno, id: id, nome: p.nome, p: parola, num: n });
+        H.storia.push({ k: H.turno, parola: parola, n: n, z: zero || undefined }); oraClessidra();   // ⏳ (se accesa) la clessidra di chi indovina
+        scrivi({ t: "ind", k: H.turno, id: id, nome: p.nome, p: parola, num: n, z: zero || undefined });
         bd(); return;
       }
       if (!miaSquadra || sonoCapo || H.passo !== "indovina" || H.sospeso) return;   // mentre una parola è in sospeso non si tocca niente
@@ -643,7 +882,7 @@
       }
       if (c.c === k && H.indizio) {   // per il riepilogo finale: l'indizio che ha fatto trovare più parole
         H.indizio.giuste = (H.indizio.giuste || 0) + 1;
-        if (!H.migliore || H.indizio.giuste > H.migliore.giuste) H.migliore = { nome: H.indizio.nome, p: H.indizio.parola, n: H.indizio.n, giuste: H.indizio.giuste };
+        if (!H.migliore || H.indizio.giuste > H.migliore.giuste) H.migliore = { nome: H.indizio.nome, p: H.indizio.parola, n: H.indizio.n, z: H.indizio.z, giuste: H.indizio.giuste };
       }
       H.ultima = { i: i, k: k, c: c.c, oro: c.oro ? 1 : 0, n: ++H.nGirate };
       var chi = p ? p.nome : SQ[k].nome;
@@ -823,7 +1062,7 @@
       // la scritta di come è finita (uguale per tutti nella chat; in alto ognuno la legge per sé: «Avete battuto…»)
       H.msg = titoloFine(!!H.vsBot, bot ? bot.nome : "Bot", H.fineCome, k, null); scrivi({ t: "fine", k: k, testo: H.msg });
       // il riepilogo nella chat: il miglior indizio, chi ha trovato più parole, la parola nera
-      if (H.migliore && H.migliore.giuste >= 2) scrivi({ t: "sis", testo: "🏅 Miglior indizio: " + H.migliore.p + " " + (H.migliore.n === 0 ? "∞" : H.migliore.n) + " di " + H.migliore.nome + " (" + H.migliore.giuste + " parole)" });
+      if (H.migliore && H.migliore.giuste >= 2) scrivi({ t: "sis", testo: "🏅 Miglior indizio: " + H.migliore.p + " " + numTx(H.migliore.n, H.migliore.z) + " di " + H.migliore.nome + " (" + H.migliore.giuste + " parole)" });
       var top = null;
       H.players.forEach(function (p) {
         if (H.vsBot && p.id === BOT_ID) return;   // 🤖 (il Bot scopre una sua parola a ogni turno: non è una gara con voi)
@@ -858,7 +1097,7 @@
         function w(i) { return (H.tab[i] || {}).w || "?"; }
         var toccata = function (i) { return I.tocchi.some(function (x) { return x.i === i; }); };
         var trovate = I.pensate.filter(toccata).length;
-        l.push({ k: I.k, p: I.p, n: I.n, nome: I.nome,
+        l.push({ k: I.k, p: I.p, n: I.n, z: I.z, nome: I.nome,
           pen: I.pensate.map(function (i) { return { w: w(i), ok: toccata(i) ? 1 : 0 }; }),
           toc: I.tocchi.map(function (x) { return { w: w(x.i), c: x.c, oro: x.oro, pen: I.pensate.indexOf(x.i) >= 0 ? 1 : 0 }; }) });
         var s = per[I.k] || (per[I.k] = { k: I.k, t: 0, p: 0, nomi: [] });
@@ -903,11 +1142,11 @@
       // (la parola nera dal tabellone: a 3 squadre la nera non chiude la partita, e fineCome.w è l'ultima parola girata)
       prova("💣", "L'artificiere", function (x) { return x.s.nera ? 1 : null; }, 1, function () { return "ha girato " + (((H.tab || []).filter(function (c) { return c.c === "x"; })[0] || {}).w || "") + ", la parola nera"; });
       prova("🍀", "Il fortunato", function (x) { return x.s.oro || null; }, 1, function (v, x) { return "ha trovato " + (x.s.oroW || "") + ", la parola d'oro"; });
-      prova("🧠", "Il telepate", function (x) { return x.best || null; }, 2, function (v, x) { return "«" + x.bestI.p + " " + (x.bestI.n === 0 ? "∞" : x.bestI.n) + "»: " + v + " parole trovate"; });
+      prova("🧠", "Il telepate", function (x) { return x.best || null; }, 2, function (v, x) { return "«" + x.bestI.p + " " + numTx(x.bestI.n, x.bestI.z) + "»: " + v + " parole trovate"; });
       prova("🎯", "Il cecchino", function (x) { return x.s.giuste || null; }, 2, function (v) { return v + " parole giuste girate"; });
       if (capiT >= 2) prova("🐌", "Il filosofo", media, 30000, function (v) { return "in media " + mmss(v) + " per un indizio"; });
       prova("⚡", "Il fulmine", media, 25000, function (v) { return "in media " + mmss(v) + " per un indizio"; }, false);
-      prova("🎲", "Il temerario", function (x) { return x.s.osa ? (x.s.osa.n === 0 ? 99 : x.s.osa.n) : null; }, 4, function (v, x) { return "ha osato «" + x.s.osa.p + " " + (x.s.osa.n === 0 ? "∞" : x.s.osa.n) + "»"; });
+      prova("🎲", "Il temerario", function (x) { return x.s.osa ? forza(x.s.osa.n, x.s.osa.z) : null; }, 4, function (v, x) { return "ha osato «" + x.s.osa.p + " " + numTx(x.s.osa.n, x.s.osa.z) + "»"; });
       prova("🎁", "Il generoso", function (x) { return x.s.regali || null; }, 1, function (v) { return v === 1 ? "ha regalato una parola " + (H.vsBot ? "a " + nomeBot : "agli avversari") : "ha regalato " + v + " parole " + (H.vsBot ? "a " + nomeBot : "agli avversari"); });
       prova("🧭", "L'esploratore", function (x) { return x.s.neutre || null; }, 2, function (v) { return v + " parole di nessuno girate"; });
       prova("🗣️", "Il consigliere", function (x) { return x.s.segni || null; }, 4, function (v) { return v + " parole segnate ai compagni"; });
@@ -971,14 +1210,11 @@
     function botIndizio(k) {
       if (H.fase !== "gioco" || H.turno !== k || H.passo !== "indizio") return;
       var lista = mescola(PAROLE_BOT), parola = "BOH";
-      for (var i = 0; i < lista.length; i++) if (!erroreIndizio(lista[i], H.tab)) { parola = lista[i]; break; }
-      azione(H.capo[k], { t: "indizio", parola: parola, n: Math.random() < 0.5 ? 1 : 2 });
-      // 🤔 anche il capo bot dice (di nascosto) quali parole intendeva: a caso tra le sue, così a fine prova c'è «Cosa intendevi?»
-      var I = H.indizio && H.indizio.k === k ? (H.ind || [])[H.indizio.x] : null;
-      if (I && H.intendi && !I.pensate) {
-        var sue = []; H.tab.forEach(function (c, i) { if (c.c === k && !c.g) sue.push(i); });
-        azione(H.capo[k], { t: "intendo", x: H.indizio.x, l: mescola(sue).slice(0, I.n || 2) });
-      }
+      for (var i = 0; i < lista.length; i++) { var cI = controllaIndizio(lista[i], H.tab); if (!cI.blocca && !cI.dubbio) { parola = lista[i]; break; } }
+      // 🤔 anche il capo bot segna (di nascosto) le parole a cui pensa mentre «scrive», come i capi veri: a caso tra le sue, così a
+      // fine prova c'è «Cosa intendevi?»
+      var n = Math.random() < 0.5 ? 1 : 2, sue = []; H.tab.forEach(function (c, i) { if (c.c === k && !c.g) sue.push(i); });
+      azione(H.capo[k], { t: "indizio", parola: parola, n: n, l: mescola(sue).slice(0, n) });
     }
     function botScegli(k, id) {
       if (H.fase !== "gioco" || H.turno !== k || H.passo !== "indovina") return;
@@ -1477,13 +1713,13 @@
     // sopra lo studio. E «💭 … pensava a» del turno di prima se ne va (anche se doveva ancora uscire): non copre l'indizio nuovo
     if (ui.inPres) saltaPresentazione(ui);
     clearTimeout(ui.tPens); clearTimeout(ui.tPens2); if (ui.pensEl) ui.pensEl.classList.remove("su");
-    cartello(ui, fascia(ui, e.k, e.p, e.num), "👑 " + e.nome + (vm.vsBot ? "" : " · capo dei " + sq.nome), sq.col, 1500, facDi(vm, e.id, "esulta"), "ind");
+    cartello(ui, fascia(ui, e.k, e.p, e.num, e.z), "👑 " + e.nome + (vm.vsBot ? "" : " · capo dei " + sq.nome), sq.col, 1500, facDi(vm, e.id, "esulta"), "ind");
     suona("indizio");
   }
   // la fascia dell'indizio: del colore (e col disegno) della squadra, col segno, la parola e il numero dorato
-  function fascia(ui, k, parola, n) {
+  function fascia(ui, k, parola, n, z) {
     var L = String(parola).length;
-    return ui.el("span", { class: "or-fascia s" + k + (L > 14 ? " lunga" : L > 10 ? " media" : "") }, [ segno(k), ui.el("span", { class: "or-fascia-w", text: parola }), ui.el("span", { class: "n", text: n === 0 ? "∞" : String(n) }) ]);
+    return ui.el("span", { class: "or-fascia s" + k + (L > 18 ? " lunghissima" : L > 14 ? " lunga" : L > 10 ? " media" : "") }, [ segno(k), ui.el("span", { class: "or-fascia-w", text: parola }), ui.el("span", { class: "n", text: numTx(n, z) }) ]);
   }
   // 🎭 a fine partita, dopo la festa: il mio titolo scherzoso, grande per un attimo («🎯 Il cecchino · 5 parole giuste girate»)
   function mioTitolo(ui) {
@@ -1612,6 +1848,7 @@
       var w = el("span", { class: "or-w" + (piu ? " piu" : ""), text: c.w }), pr = el("span", { class: "or-pr" }), sg = segno(null);   // pr = le faccine di chi l'ha segnata (sul bordo); sg = il segno della squadra
       var b = el("button", { class: "or-carta" }, [ sg, w, pr ]);
       b.addEventListener("click", function () { tocca(ui, i); });
+      b.addEventListener("mousedown", function (e) { if (ui.scrive) e.preventDefault(); });   // (il capo che scrive: la tastiera resta aperta)
       ui.carte.push({ b: b, pr: pr, w: w, sg: sg, parola: c.w, cls: "" }); ui.tab.appendChild(b);
     });
     ui.log = el("div", { class: "or-log" });
@@ -1724,13 +1961,16 @@
     // altri = in squadra c'è ancora qualcuno oltre a me che può indovinare (se no fare il capo non serve)
     var altri = team >= 0 && vm.players.some(function (p) { return p.team === team && !p.via && p.id !== cb.myId && p.id !== vm.capo[team]; });
     var prossimo = (vm.prossimi || []).some(function (p) { return p.id === cb.myId; });
-    // 🤔 io capo ho appena dato l'indizio: posso dire (di nascosto) quali parole intendevo, finché la squadra cerca
+    // 🤔 io capo ho appena dato l'indizio: posso dire (di nascosto) quali parole intendevo, finché la squadra cerca (se non le ho
+    // già segnate mentre scrivevo: ind.pen)
     var ind = vm.indizio, intendo = vm.fase === "gioco" && !!vm.intendi && capo && team === vm.turno && vm.passo === "indovina" &&
-      !!ind && ind.id === cb.myId && ind.x != null && !INTESI[vm.bid + "|" + ind.x];
+      !!ind && ind.id === cb.myId && ind.x != null && !ind.pen && !INTESI[vm.bid + "|" + ind.x];
     // 👑 posso fare io il capo: solo se la mia squadra l'ha aspettato 3 minuti e non è tornato
     var prendi = capoVia && altri && !!vm.attesa && vm.attesa.k === team && !!vm.attesa.capo && !!vm.attesa.scad;
+    // ✍️ tocca a me dare l'indizio (turno = il mio turno di capo; scrivo = c'è il campo: se manca qualcuno si aspetta e il campo non c'è)
+    var turnoInd = vm.fase === "gioco" && capo && team === vm.turno && vm.passo === "indizio" && vm.fuori.indexOf(team) < 0;
     return { io: io, team: team, capo: capo, capoVia: capoVia, altri: altri, prendi: prendi, prossimo: prossimo, mioTurno: vm.fase === "gioco" && team === vm.turno,
-      indovino: vm.fase === "gioco" && team === vm.turno && !capo && vm.passo === "indovina", intendo: intendo };
+      indovino: vm.fase === "gioco" && team === vm.turno && !capo && vm.passo === "indovina", intendo: intendo, turnoInd: turnoInd, scrivo: turnoInd && !vm.attesa };
   }
   // 🤔 le parole che il capo sta segnando come "intese" (solo sul suo telefono, finché non tocca «Fatto»)
   var INTESI = {}, SEL = { k: "", l: [] };
@@ -1738,6 +1978,21 @@
   function maxSel(vm) { return vm.indizio && vm.indizio.n > 0 ? vm.indizio.n : 9; }
   function tocca(ui, i) {
     var vm = ui.vm, r = ruolo(vm, ui.cb), c = vm.tab[i];
+    // ✍️ il capo che scrive l'indizio segna le SUE parole a cui pensa (come su codenames.game): le vede solo lui, il numero si
+    // mette da solo (3 segnate = 3) e dopo l'invio non gli si chiede più «Quali parole intendevi?»
+    if (r.scrivo && c && ui.bozza) {
+      var B = ui.bozza, chK = ui.cb.chiave(), colK = chK ? chK[i] : null, jj = B.segnate.indexOf(i);
+      if (jj < 0 && c.g) { avviso("Quella è già girata: segna quelle ancora coperte"); return; }
+      if (jj < 0 && colK !== r.team) { avviso("Segna solo le parole dei " + SQ[r.team].nome + " (i segni li vedi solo tu)"); return; }
+      if (jj >= 0) B.segnate.splice(jj, 1);
+      else if (B.segnate.length >= 9) { avviso("Al massimo 9 parole"); return; }
+      else B.segnate.push(i);
+      // il numero segue le parole segnate, finché il capo non ne sceglie uno lui (∞ resta ∞; lo «0» con delle parole non ha senso)
+      if (B.n === 0 || B.n == null || B.auto) { B.n = B.segnate.length || null; B.auto = !!B.segnate.length; }
+      if (B.msg && B.msg.c === "manca") B.msg = null;   // (il numero adesso c'è)
+      aggiorna(ui, vm, ui.cb); aggiornaScrivi(ui);   // (cambiano solo il bordo delle caselle, il numero e la riga d'aiuto)
+      return;
+    }
     if (r.intendo && c) {
       var key = ui.cb.chiave(), col = c.c != null ? c.c : key ? key[i] : null;
       if (col !== r.team) { avviso("Tocca le parole della tua squadra (" + SQ[r.team].nome + ")"); return; }
@@ -1815,7 +2070,7 @@
     else if (vm.sospeso) return;
     else if (vm.passo === "bot") tx = "Ora tocca a " + nomeBot(vm) + " (Bot)";
     else if (!r.mioTurno) tx = "Ora tocca ai " + SQ[vm.turno].nome;
-    else if (r.capo) tx = vm.passo === "indizio" ? "Prima l'indizio: scrivilo qui sotto" : "Sei il capo: indovinano i tuoi compagni";
+    else if (r.capo) tx = vm.passo === "indizio" ? (vm.attesa ? "Si aspetta chi manca: poi scrivi l'indizio" : "Prima l'indizio: scrivilo qui sotto") : "Sei il capo: indovinano i tuoi compagni";
     else if (vm.passo === "indizio") tx = "Aspetta l'indizio del tuo capo";
     if (tx) avviso(tx);
   }
@@ -1905,7 +2160,7 @@
     }
     if (e.t === "sis") return el("div", { class: "or-l sis" }, [ el("span", { text: e.testo || "" }) ]);   // avvisi: capo nuovo, turno saltato, tempo scaduto, riepilogo
     var testa = [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome", style: "color:" + col, text: e.nome }) ];
-    if (e.t === "ind") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "👑" }), el("span", { class: "or-l-ind", text: e.p + " " + (e.num === 0 ? "∞" : e.num) }) ]));
+    if (e.t === "ind") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "👑" }), el("span", { class: "or-l-ind" + (String(e.p).length > 12 ? " lungo" : ""), text: e.p + " " + numTx(e.num, e.z) }) ]));
     if (e.t === "passo") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "passa" }) ]));
     var esito = e.oro ? "⭐ d'oro: si continua!" : e.c === "x" ? "💣 la parola nera!" : e.c === e.k ? (e.fin ? "✓ · finiti i tentativi" : "✓") : e.c === "n" ? "di nessuno" :
       vm.vsBot && e.c === 1 ? "era di " + nomeBot(vm) : "era dei " + SQ[e.c].nome;   // (contro il Bot i Blu non ci sono: c'è lui)
@@ -1946,7 +2201,7 @@
     if (fine) ki = "f|" + vm.vince + "|" + JSON.stringify(vm.fineCome || null) + "|" + testoSerie(vm) + "|" + JSON.stringify(vm.punti || null) + "|" + (r.io ? r.team : "g");
     else if (vm.passo === "bot") ki = "b|" + vm.turno + "|" + nAvatar(cb.omini && cb.omini());
     else if (vm.passo === "indizio") ki = "a|" + vm.turno + "|" + (r.mioTurno && r.capo) + "|" + !!vm.cless + "|" + (vm.cless ? vm.cless.doppio : "") + "|" + (capoT ? capoT.id + (capoT.via ? "-" : "") : "") + "|" + nAvatar(cb.omini && cb.omini());
-    else ki = "i|" + vm.turno + "|" + vm.indizio.parola + "|" + vm.indizio.n + "|" + vm.tentativi + "|" + !!vm.cless + "|" + (vm.cless ? vm.cless.doppio : "");
+    else ki = "i|" + vm.turno + "|" + vm.indizio.parola + "|" + vm.indizio.n + "|" + (vm.indizio.z ? "z" : "") + "|" + vm.tentativi + "|" + !!vm.cless + "|" + (vm.cless ? vm.cless.doppio : "") + "|" + (r.team === vm.turno);
     if (ui.kInd !== ki) {
       ui.kInd = ki; var el = ui.el, I = ui.ind;
       while (I.firstChild) I.removeChild(I.firstChild);
@@ -1967,8 +2222,11 @@
       }
       else {
         // l'indizio sulla fascia del colore della squadra, col numero dorato; sotto di chi è, i tentativi e la clessidra
-        I.appendChild(fascia(ui, vm.turno, vm.indizio.parola, vm.indizio.n));
-        I.appendChild(el("div", { class: "or-ind-tent" }, [ el("small", { text: "INDIZIO DEI " + SQ[vm.turno].nome.toUpperCase() }), document.createTextNode(" · " + (vm.tentativi >= 99 ? "tentativi liberi" : "ancora " + vm.tentativi + (vm.tentativi === 1 ? " tentativo" : " tentativi"))) ].concat(vm.cless ? [ document.createTextNode(" · "), cl() ] : [])));
+        I.appendChild(fascia(ui, vm.turno, vm.indizio.parola, vm.indizio.n, vm.indizio.z));
+        // (lo «0» si spiega da solo, al posto di «INDIZIO DEI ROSSI»: «0: nessuna nostra parola c'entra, tentativi liberi»)
+        var testaT = vm.indizio.z ? [ document.createTextNode("0: nessuna " + (r.team === vm.turno ? "nostra" : "loro") + " parola c'entra, tentativi liberi") ]
+          : [ el("small", { text: "INDIZIO DEI " + SQ[vm.turno].nome.toUpperCase() }), document.createTextNode(" · " + (vm.tentativi >= 99 ? "tentativi liberi" : "ancora " + vm.tentativi + (vm.tentativi === 1 ? " tentativo" : " tentativi"))) ];
+        I.appendChild(el("div", { class: "or-ind-tent" + (vm.indizio.z ? " zero" : "") }, testaT.concat(vm.cless ? [ document.createTextNode(" · "), cl() ] : [])));
         // gli indizi vecchi della squadra con parole ancora da trovare (cambiano solo con l'indizio: stanno in questa chiave)
         var ap = indiziAperti(vm), sq = SQ[vm.turno];
         if (ap.length) I.appendChild(el("div", { class: "or-aperti" }, ap.map(function (x) {
@@ -1984,7 +2242,11 @@
     var mie = r.indovino ? mieSegnate(ui, vm, cb.myId) : [], chi = {};
     Object.keys(vm.prop || {}).forEach(function (id) { if (id === cb.myId && r.indovino) return; [].concat(vm.prop[id]).forEach(function (i) { (chi[i] = chi[i] || []).push(id); }); });
     mie.forEach(function (i) { (chi[i] = chi[i] || []).push(cb.myId); });
-    var sel = r.intendo ? selDi(vm) : null;   // 🤔 le parole che sto segnando come "intese"
+    // ✍️ la bozza dell'indizio (testo, numero, parole segnate) vale per il mio turno di capo: finito il turno, via
+    if (!r.turnoInd || (ui.bozza && ui.bozza.k !== chiaveBozza(vm))) ui.bozza = null;
+    if (!r.scrivo && ui.aiutoF) chiudiAiuto(ui);
+    // 🤔 le parole che sto segnando come "intese" (dopo l'indizio, o mentre lo scrivo)
+    var sel = r.intendo ? selDi(vm) : r.turnoInd && ui.bozza ? ui.bozza.segnate : null;
     // (il capo, a partita in corso: le girate un po' spente, così risaltano le coperte ancora da trovare)
     var tabCls = "or-tab" + (vm.tab.length <= 20 ? " venti" : "") + (key && !fine ? " capo" : "") + (ui.basse ? " basse" : "");
     if (ui.tab.className !== tabCls) ui.tab.className = tabCls;
@@ -1994,7 +2256,7 @@
       metteSegno(C.sg, c.oro ? "oro" : col === "n" ? null : col);
       var cls = "or-carta" + (c.g ? " g" : "") + (col != null ? " c" + col : "") + (!c.g && key ? " chiave" : "") + (fine && !c.g ? " svelata" : "") + (c.oro ? " oro" : "") + (vm.sospeso && vm.sospeso.i === i && !c.g ? " sospesa" : "") +
         (r.indovino && !c.g && !vm.sospeso ? " attiva" : "") + (mie.indexOf(i) >= 0 ? " mia" : "") +
-        (sel && col === r.team && !c.g ? " attiva" : "") + (sel && sel.indexOf(i) >= 0 ? " pensata" : "");
+        (sel && (r.scrivo || r.intendo) && col === r.team && !c.g ? " attiva" : "") + (sel && sel.indexOf(i) >= 0 ? " pensata" : "");
       if (C.cls !== cls) { C.b.className = cls; C.cls = cls; }
       var l = c.g ? [] : chi[i] || [];
       var kp = l.join(",") + "|" + nAvatar(cb.omini && cb.omini());   // si ridisegna anche quando arrivano gli avatar
@@ -2062,7 +2324,7 @@
       // (chi indovina: la parola in sospeso e le parole girate cambiano solo il tasto «👆 Gira» e la riga d'aiuto, aggiornaGira)
       : [vm.fase, vm.passo, vm.turno, r.team, r.capo, r.indovino ? "" : vm.girate > 0, vm.fuori.join(""), r.indovino ? "" : !!vm.sospeso, r.prendi,
       vm.attesa ? vm.attesa.k + "/" + vm.attesa.chi + (vm.attesa.scad ? "/s" : "") : "", r.prossimo, cb.sonoHost && puoChiudere(vm), !!cb.sonoHost, !!vm.cosa,
-      (vm.titoli || []).length, vm.sospeso && vm.sospeso.id === BOT_ID ? "b" : ""].join("|");   // (sonoHost: l'amico che prende il posto dell'host ha i tasti giusti)
+      (vm.titoli || []).length, vm.sospeso && vm.sospeso.id === BOT_ID ? "b" : "", r.turnoInd ? chiaveBozza(vm) : ""].join("|");   // (sonoHost: l'amico che prende il posto dell'host ha i tasti giusti; chiaveBozza: un turno di capo nuovo, il campo si rifà vuoto)
     if (ks !== ui.kSotto) { ui.kSotto = ks; disegnaSotto(ui, vm, cb, r); }
     // (il campo dell'indizio non c'è più, o non è più quello in cui scrivo: il tabellone torna come prima. Un campo tolto dalla
     // pagina mentre ci scrivevo non sempre dice «blur»)
@@ -2072,6 +2334,7 @@
     aggiornaRuolo(ui, vm, r);
     fogliFine(ui, vm);
     S.vista.classList.toggle("or-fine-v", vm.fase === "fine");   // (a fine partita la barra è alta: la chat lascia il posto al tabellone)
+    S.vista.classList.toggle("or-capo-ind", !!r.scrivo);   // (il capo che dà l'indizio: la sua barra è più alta, «Tocca a te» si stringe)
     S.vista.style.setProperty("--or-barra", (S.barraEl.offsetHeight + 6) + "px");   // il tabellone sul maxischermo finisce sopra la barra dei tasti
   }
   // 🤔 il tasto «Fatto» del capo dice quante parole ha segnato
@@ -2152,7 +2415,7 @@
     while (B.firstChild) B.removeChild(B.firstChild);
     R.num.textContent = (R.i + 1) + " di " + R.c.l.length;
     R.prec.disabled = R.i === 0; R.succ.disabled = R.i === R.c.l.length - 1;
-    B.appendChild(el("div", { class: "or-riv-ind", style: "--c:" + sq.col }, [ el("span", { text: sq.em }), el("b", { text: e.p }), el("span", { class: "n", text: e.n === 0 ? "∞" : String(e.n) }) ]));
+    B.appendChild(el("div", { class: "or-riv-ind", style: "--c:" + sq.col }, [ el("span", { text: sq.em }), el("b", { text: e.p }), el("span", { class: "n", text: numTx(e.n, e.z) }) ]));
     B.appendChild(el("div", { class: "or-riv-et", text: "👑 " + e.nome + " pensava:" }));
     B.appendChild(el("div", { class: "or-riv-w" }, e.pen.map(function (x) { return el("span", { class: "or-riv-c " + (x.ok ? "si" : "manca"), text: x.w + (x.ok ? " ✅" : "") }); })));
     B.appendChild(el("div", { class: "or-riv-et", text: "La squadra ha toccato:" }));
@@ -2179,6 +2442,116 @@
   }
   // chi guarda soltanto (link con guarda=1): in basso la targhetta del core "👀 Guardi · 😂 · ✕": faccine e uscita le dà lei
   function conTarga(t) { return !!(t && t.guarda && !t.eliminazione); }
+  // ✍️ L'INDIZIO DEL CAPO (22 ott 2026). Dall'alto: la riga d'aiuto (o l'errore, o l'avviso «è un'altra parola?»), i numeri su due
+  // file (1-6; 7 8 9 0 ∞) e il campo con «Invia». I numeri stanno SOPRA il campo: con la tastiera aperta il telefono fa vedere il
+  // campo sopra la tastiera, e i numeri subito sopra si vedono (sotto finivano coperti, c2). Nessun numero già scelto: «Invia»
+  // è spento con «Scegli il numero» finché il capo non ne tocca uno (o non segna delle parole: il numero si mette da solo).
+  // L'Invio della tastiera chiude la tastiera; manda l'indizio solo se il numero c'è e l'indizio vale.
+  // Tutto quello che il capo ha fatto sta nella «bozza» (ui.bozza): se la barra si rifà, o se intanto si aspetta qualcuno,
+  // testo, numero e parole segnate tornano come erano (c3)
+  var INF = "inf";
+  // (la bozza vale per un turno di capo: partita e numero del turno. Se il telefono si perde delle foto, es. è rimasto in
+  // tasca per due turni, al turno nuovo il campo riparte vuoto e non con le parole segnate due turni fa)
+  function chiaveBozza(vm) { return vm.bid + "|" + (vm.nt || 0); }
+  function bozzaDi(ui, vm) {
+    if (!ui.bozza || ui.bozza.k !== chiaveBozza(vm)) ui.bozza = { k: chiaveBozza(vm), testo: "", n: null, auto: false, segnate: [], conferma: "", msg: null };
+    return ui.bozza;
+  }
+  function creaScrivi(ui, vm, cb) {
+    var el = ui.el, B = bozzaDi(ui, vm), X = ui.scr = { k: B.k, nums: [] };
+    // (i tocchi sui numeri, su «Invia» e sulle caselle non tolgono il cursore dal campo: la tastiera resta aperta)
+    function tieniTastiera(b) { b.addEventListener("mousedown", function (e) { if (ui.scrive) e.preventDefault(); }); return b; }
+    X.input = el("input", { type: "text", class: "or-input", placeholder: "Il tuo indizio", maxlength: "24", autocomplete: "off",
+      autocorrect: "off", autocapitalize: "characters", spellcheck: "false", enterkeyhint: "done" });
+    X.input.value = B.testo;
+    X.tx = el("span", { class: "tx" });
+    X.msg = el("div", { class: "or-scr-msg" }, [ X.tx ]);
+    X.numeri = el("div", { class: "or-numeri" });
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, INF].forEach(function (n) {
+      var b = tieniTastiera(el("button", { class: "or-num" + (n === INF ? " inf" : n === 0 ? " zero" : ""), "data-n": String(n), text: n === INF ? "∞" : String(n), onclick: function () {
+        var B = ui.bozza; if (!B) return;
+        B.n = n; B.auto = false; if (B.msg && B.msg.c === "manca") B.msg = null;   // (l'avviso «è un'altra parola?» resta: è sulla parola)
+        if (n === 0 && B.segnate.length) { B.segnate = []; if (ui.vm) aggiorna(ui, ui.vm, ui.cb); }   // (lo «0»: nessuna nostra parola c'entra)
+        aggiornaScrivi(ui);
+      } }));
+      X.nums.push(b); X.numeri.appendChild(b);
+    });
+    X.numeri.appendChild(tieniTastiera(el("button", { class: "or-num or-aiuto-b", "aria-label": "Come si dà l'indizio", text: "?", onclick: function () { apriAiuto(ui); } })));
+    X.invia = tieniTastiera(el("button", { class: "or-btn or-invia", onclick: function () { mandaIndizio(ui, false); } }));
+    X.input.addEventListener("input", function () {
+      var B = ui.bozza; if (!B) return;
+      B.testo = X.input.value; B.msg = null;
+      if (B.conferma && B.conferma !== pulisciIndizio(B.testo)) B.conferma = "";
+      aggiornaScrivi(ui);
+    });
+    // (revisione del 22 ott 2026) mentre il capo scrive, sul telefono la tastiera si prende mezzo schermo: il tabellone, che
+    // serve proprio adesso, prende il posto della chat e delle faccine (a 360x640 senza questo le caselle sparivano: 4 px)
+    X.input.addEventListener("focus", function () { scrive(ui, true); chiudiAiuto(ui); });
+    X.input.addEventListener("blur", function () { scrive(ui, false); });
+    X.input.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.keyCode === 13) { e.preventDefault(); mandaIndizio(ui, true); } });
+    X.el = el("div", { class: "or-scr" }, [ X.msg, X.numeri, el("div", { class: "or-riga" }, [ X.input, X.invia ]) ]);
+    aggiornaScrivi(ui);
+  }
+  // quello che dice la riga d'aiuto, quale numero è acceso e cosa dice «Invia» (cambia solo quello che serve)
+  function aggiornaScrivi(ui) {
+    var X = ui.scr, B = ui.bozza, vm = ui.vm; if (!X || !B || !vm) return;
+    X.nums.forEach(function (b) { var on = String(B.n) === b.getAttribute("data-n"); if (b.classList.contains("on") !== on) b.classList.toggle("on", on); });
+    var testo = pulisciIndizio(B.testo), msg = B.msg, cls = msg ? msg.c : "";
+    if (!msg) {
+      var nomi = B.segnate.map(function (i) { return vm.tab[i] ? vm.tab[i].w : ""; }).filter(Boolean);
+      msg = { t: B.n === 0 ? "0 = nessuna vostra parola c'entra · tentativi liberi"
+        : B.n === INF ? "∞ = tentativi liberi, anche per gli indizi di prima"
+        : nomi.length ? "🤔 Pensi a: " + nomi.join(", ")
+        : "👆 Segna le parole a cui pensi: il numero viene da sé" };
+    }
+    if (X.tx.textContent !== msg.t) X.tx.textContent = msg.t;
+    var mc = "or-scr-msg" + (cls ? " " + cls : ""); if (X.msg.className !== mc) X.msg.className = mc;
+    var pronto = B.n != null, conf = !!B.conferma && B.conferma === testo;
+    var it = !pronto ? "Scegli il numero" : conf ? "Sì, invia" : "Invia";
+    if (X.invia.textContent !== it) X.invia.textContent = it;
+    // (spento a vedersi ma si tocca lo stesso: dice «Scegli il numero qui sopra»)
+    if (X.invia.getAttribute("aria-disabled") !== String(!pronto)) X.invia.setAttribute("aria-disabled", String(!pronto));
+    X.invia.classList.toggle("conferma", pronto && conf);
+    X.invia.classList.toggle("manca", !pronto);
+  }
+  // «Invia» (o l'Invio della tastiera: daTastiera). L'indizio parte solo col numero scelto e se vale; se somiglia a una parola del
+  // tabellone ma può essere un'altra (CANESTRO con CANE) ci vuole un secondo tocco su «Sì, invia» (l'Invio della tastiera la
+  // chiude e basta: non conferma mai)
+  function mandaIndizio(ui, daTastiera) {
+    var X = ui.scr, B = ui.bozza, vm = ui.vm; if (!X || !B || !vm) return;
+    var r = ruolo(vm, ui.cb); if (!r.scrivo) return;
+    B.testo = X.input.value;
+    var testo = pulisciIndizio(B.testo), c = controllaIndizio(testo, vm.tab);
+    function chiudi() { try { X.input.blur(); } catch (e) {} }
+    if (c.blocca) { B.msg = { t: "⛔ " + c.blocca, c: "err" }; aggiornaScrivi(ui); if (daTastiera) chiudi(); return; }
+    if (B.n == null) { B.msg = { t: "👆 Scegli il numero qui sopra: quante parole vostre c'entrano", c: "manca" }; aggiornaScrivi(ui); if (daTastiera) chiudi(); return; }
+    if (c.dubbio && B.conferma !== testo) {
+      B.conferma = testo;
+      B.msg = { t: "⚠️ " + c.dubbio, c: "dub" }; aggiornaScrivi(ui);   // (il tasto diventa «Sì, invia», giallo: dice lui cosa fare)
+      if (daTastiera) chiudi();
+      return;
+    }
+    if (c.dubbio && daTastiera) { chiudi(); return; }   // (già avvisato: si conferma col tocco, non con l'Invio)
+    var m = { t: "indizio", parola: testo, n: B.n === INF ? 0 : B.n };
+    if (B.n === 0) m.z = 1;
+    else if (vm.intendi && B.segnate.length) m.l = B.segnate.filter(function (i) { return vm.tab[i] && !vm.tab[i].g; });
+    ui.cb.manda(m);
+    chiudi();
+  }
+  // ❔ come si dà l'indizio: una scheda piccola sopra la barra (un tocco la chiude), con gli esempi
+  function apriAiuto(ui) {
+    if (ui.aiutoF && ui.aiutoF.parentNode) { chiudiAiuto(ui); return; }
+    var el = ui.el;
+    ui.aiutoF = el("div", { class: "or-aiuto", onclick: function () { chiudiAiuto(ui); } }, [
+      el("b", { text: "👑 Come si dà l'indizio" }),
+      el("div", { text: "Una parola e un numero: quante parole vostre c'entrano. Vanno bene i nomi fino a 3 parole (SAN GENNARO, NEW YORK)." }),
+      el("div", { text: "Niente MAREA se c'è MARE · niente GATTI se c'è GATTO · niente ASTRONAVE se c'è NAVE." }),
+      el("div", { text: "CANESTRO con CANE: il gioco ti chiede se è un'altra parola." }),
+      el("div", { text: "I numeri in lettere (OTTO). 0 = nessuna vostra parola c'entra · ∞ = tentativi liberi." }),
+      el("div", { text: "Tocca le tue parole sul tabellone: le vedi solo tu e il numero si mette da solo." }) ]);
+    ui.S.vista.appendChild(ui.aiutoF);
+  }
+  function chiudiAiuto(ui) { if (ui.aiutoF && ui.aiutoF.parentNode) ui.aiutoF.parentNode.removeChild(ui.aiutoF); ui.aiutoF = null; }
   // il capo sta scrivendo l'indizio (il campo ha il cursore): .or-scrive sullo schermo (vedi lo stile)
   function scrive(ui, si) {
     si = !!si; if (ui.scrive === si || !ui.S || !ui.S.vista) return;
@@ -2186,7 +2559,10 @@
   }
   function disegnaSotto(ui, vm, cb, r) {
     var el = ui.el, box = ui.sotto;
-    while (box.firstChild) box.removeChild(box.firstChild);
+    // (c3) il campo dell'indizio che il capo sta scrivendo NON si rifà: resta lì com'è (testo, numero, tastiera aperta) anche se
+    // intanto qualcuno esce o rientra e cambiano gli altri tasti della barra
+    var tieni = r.scrivo && ui.scr && ui.scr.el.parentNode === box && ui.scr.k === chiaveBozza(vm) ? ui.scr.el : null;
+    [].slice.call(box.childNodes).forEach(function (x) { if (x !== tieni) box.removeChild(x); });
     function stato(tx) { var d = el("div", { class: "or-stato", text: tx }); box.appendChild(d); return d; }
     // la fila delle faccine (online), dove si aspetta: il turno degli altri, la squadra fuori, la fine
     function faccine() { if (conTarga(ui.t)) return; var f = ui.t.faccine ? ui.t.faccine() : null; if (f) { f.classList.add("or-faccine"); box.appendChild(f); } }
@@ -2274,28 +2650,7 @@
     if (!r.mioTurno) { stato("Tocca ai " + SQ[vm.turno].nome + "…" + (r.capo ? " Intanto pensa al prossimo indizio." : "")); faccine(); return fineServizio(); }
     if (vm.passo === "indizio") {
       if (!r.capo) { stato("Il vostro capo sta pensando all'indizio…"); faccine(); return fineServizio(); }
-      var input = el("input", { type: "text", class: "or-input", placeholder: "Una parola sola", maxlength: "20", autocomplete: "off", autocapitalize: "characters" });
-      var numeri = el("div", { class: "or-numeri" }), scelto = { n: 1 }, errore = el("div", { class: "or-err" });
-      [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(function (n) {
-        var b = el("button", { class: "or-num" + (n === 1 ? " on" : ""), text: n === 0 ? "∞" : String(n), onclick: function () {
-          scelto.n = n; [].forEach.call(numeri.children, function (x) { x.classList.remove("on"); }); b.classList.add("on");
-        } });
-        numeri.appendChild(b);
-      });
-      input.addEventListener("input", function () { errore.textContent = ""; });
-      // (revisione del 22 ott 2026) mentre il capo scrive, sul telefono la tastiera si prende mezzo schermo: il tabellone, che
-      // serve proprio adesso, prende il posto della chat e delle faccine (a 360x640 senza questo le caselle sparivano: 4 px)
-      input.addEventListener("focus", function () { scrive(ui, true); });
-      input.addEventListener("blur", function () { scrive(ui, false); });
-      function manda() {
-        var err = erroreIndizio(input.value, vm.tab);
-        if (err) { errore.textContent = err; return; }
-        cb.manda({ t: "indizio", parola: input.value.trim(), n: scelto.n });
-        input.blur();
-      }
-      input.addEventListener("keydown", function (e) { if (e.key === "Enter") manda(); });
-      box.appendChild(el("div", { class: "or-riga" }, [ input, el("button", { class: "or-btn corto", text: "Invia", onclick: manda }) ]));
-      box.appendChild(numeri); box.appendChild(errore);
+      if (tieni) aggiornaScrivi(ui); else { creaScrivi(ui, vm, cb); box.appendChild(ui.scr.el); }
       return fineServizio();
     }
     if (r.capo) { stato("La tua squadra sta cercando… Tu non puoi aiutarli!"); faccine(); return fineServizio(); }   // (le faccine: la barra resta alta uguale, il tabellone non cambia misura)
@@ -2347,10 +2702,10 @@
     });
     if (!best) {   // tutti in sintonia: l'indizio con più parole pensate (e trovate)
       var top = null; ((vm.cosa && vm.cosa.l) || []).forEach(function (e) { if (e.pen.length >= 2 && (!top || e.pen.length > top.pen.length)) top = e; });
-      return top ? "🧠 «" + top.p + " " + (top.n === 0 ? "∞" : top.n) + "»: " + top.nome + " pensava a " + top.pen.length + " parole, trovate tutte!" : "";
+      return top ? "🧠 «" + top.p + " " + numTx(top.n, top.z) + "»: " + top.nome + " pensava a " + top.pen.length + " parole, trovate tutte!" : "";
     }
     var e = best.e, nomi = function (l) { return l.length === 1 ? l[0] : l.slice(0, -1).join(", ") + " e " + l[l.length - 1]; };
-    var tx = "🤔 «" + e.p + " " + (e.n === 0 ? "∞" : e.n) + "»: " + e.nome + " pensava a " + nomi(e.pen.map(function (x) { return x.w; }));
+    var tx = "🤔 «" + e.p + " " + numTx(e.n, e.z) + "»: " + e.nome + " pensava a " + nomi(e.pen.map(function (x) { return x.w; }));
     // («anche» se qualcuna di quelle pensate l'hanno trovata: se no sembra che abbiano girato solo quelle)
     if (best.fuori.length) tx += (e.pen.some(function (x) { return x.ok; }) ? ", la squadra ha girato anche " : ", la squadra ha girato ") + nomi(best.fuori.slice(0, 3).map(function (t) { return t.w + (t.c === "x" ? " 💣" : ""); }));
     return tx;
@@ -2394,7 +2749,7 @@
       // il miglior indizio e il «pensava a» più buffo
       x.textAlign = "left"; x.font = "800 30px " + F;
       var M = vm.migliore;
-      if (M && M.giuste >= 2) { x.fillStyle = "#fff"; x.fillText(cortoF(x, "🏅 Miglior indizio: «" + M.p + " " + (M.n === 0 ? "∞" : M.n) + "» di " + M.nome + " · " + M.giuste + " parole", W - 100), 50, y); y += 46; }
+      if (M && M.giuste >= 2) { x.fillStyle = "#fff"; x.fillText(cortoF(x, "🏅 Miglior indizio: «" + M.p + " " + numTx(M.n, M.z) + "» di " + M.nome + " · " + M.giuste + " parole", W - 100), 50, y); y += 46; }
       var buffo = pensavaBuffo(vm);
       if (buffo) { x.fillStyle = "#e6e9ff"; x.font = "700 28px " + F; righeF(x, buffo, W - 100, 2).forEach(function (r) { x.fillText(r, 50, y); y += 40; }); y += 6; }
       // i titoli scherzosi: due colonne, uno a testa
@@ -2509,9 +2864,9 @@
       ".or-fascia.s0{background:" + F0 + "}.or-fascia.s1{background:" + F1 + "}.or-fascia.s2{background:" + F2 + "}",
       ".or-fascia .or-sg{width:.62em;height:.62em;font-size:1.45rem}",
       ".or-fascia-w{min-width:0;font-size:1.45rem;font-weight:900;letter-spacing:.02em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 1px rgba(0,0,0,.28)}",
-      ".or-fascia.media .or-fascia-w{font-size:1.2rem}.or-fascia.lunga .or-fascia-w{font-size:1rem}",
+      ".or-fascia.media .or-fascia-w{font-size:1.2rem}.or-fascia.lunga .or-fascia-w{font-size:1rem}.or-fascia.lunghissima .or-fascia-w{font-size:.86rem}",
       ".or-fascia .n{flex:none;min-width:27px;box-sizing:border-box;padding:1px 7px;border-radius:9px;background:linear-gradient(180deg,#ffe066,#fab005);color:#5c3d00;font-size:1.1rem;font-weight:900;line-height:1.3;text-align:center;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:inset 0 -2px 0 rgba(160,100,0,.35),0 1px 2px rgba(0,0,0,.25)}",
-      ".or-ind-tent{font-size:.7rem;color:#8a8576;font-weight:800;line-height:1.25}.or-ind-tent small{font-size:inherit;letter-spacing:.08em}",
+      ".or-ind-tent{font-size:.7rem;color:#8a8576;font-weight:800;line-height:1.25}.or-ind-tent small{font-size:inherit;letter-spacing:.08em}.or-ind-tent.zero{color:#6b6658;font-weight:900}",
       ".or-ind-stato{display:flex;align-items:center;justify-content:center;gap:7px;font-weight:900;font-size:1rem;line-height:1.2;color:var(--c)}",
       ".or-ind-stato .or-f{width:30px;height:30px;box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--c)}",
       ".or-fine-tit{font-size:.95rem;line-height:1.2}.or-fine-sotto{color:#6b6658;font-size:.76rem;font-weight:800;margin-top:1px}",
@@ -2587,7 +2942,7 @@
       ".or-l .or-f{width:19px;height:19px;box-shadow:none}",
       ".or-l-nome{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34%}",
       ".or-l-txt{color:#8a8576;font-weight:700}",
-      ".or-l-ind{font-weight:900;background:#1f1f1f;color:#fff;border-radius:7px;padding:1px 7px;letter-spacing:.02em;white-space:nowrap}",
+      ".or-l-ind{font-weight:900;background:#1f1f1f;color:#fff;border-radius:7px;padding:1px 7px;letter-spacing:.02em;white-space:nowrap}.or-l-ind.lungo{font-size:.7rem;letter-spacing:0}",
       ".or-l-w{display:inline-flex;align-items:center;gap:3px;font-weight:900;border-radius:6px;padding:1px 6px;background:#e9e4d6;color:#6b6658;white-space:nowrap}.or-l-w .or-sg{width:.7em;height:.7em}",
       ".or-l-w.c0{background:" + F0 + ";color:#fff}.or-l-w.c1{background:" + F1 + ";color:#fff}.or-l-w.c2{background:" + F2 + ";color:#fff}.or-l-w.cx{background:#1f1f1f;color:#fff}.or-l-w.cx .or-sg{color:#ff6b6b}.or-l-w.oro{background:linear-gradient(160deg,#ffe066,#f5a800);color:#5c3d00}",
       ".or-l-esito{color:#8a8576;font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.or-l-esito.ok{color:#2f9e44;font-weight:900;font-size:.88rem}",
@@ -2611,21 +2966,37 @@
       ".or-studio .or-btn.or-gira.pronto:not(:disabled){background:#fcc419;color:#1f1f1f}",
       ".or-studio .or-btn.or-passo.sicuri{background:#e03131;color:#fff}",
       ".or-input{flex:1;min-width:0;height:46px;border:1.5px solid #e4e0d4;border-radius:14px;padding:0 14px;font:inherit;font-size:1.05rem;font-weight:800;text-transform:uppercase;color:#1f1f1f;background:#fff}",
-      ".or-numeri{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}",
-      ".or-num{height:36px;border:0;border-radius:10px;font:inherit;font-weight:900;font-size:1rem;color:#1f1f1f;background:#ebe7da;cursor:pointer;touch-action:manipulation}.or-num.on{background:#1f1f1f;color:#fff}",
-      ".or-err{min-height:1.1em;text-align:center;font-size:.8rem;font-weight:800;color:#e03131}",
+      // ✍️ il capo che dà l'indizio (22 ott 2026): la riga d'aiuto, i numeri su due file SOPRA il campo (si vedono anche con la
+      // tastiera aperta), «Invia» spento con «Scegli il numero» finché il numero non c'è
+      ".or-scr{display:flex;flex-direction:column;gap:5px}",
+      ".or-scr-msg{display:flex;align-items:center;min-height:16px}",
+      ".or-scr-msg .tx{flex:1;min-width:0;text-align:center;font-size:.74rem;font-weight:800;line-height:1.2;color:#6b6658;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".or-scr-msg.err .tx,.or-scr-msg.dub .tx{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}",
+      ".or-scrive .or-scr-msg:not(.err):not(.dub):not(.manca){display:none}",
+      ".or-numeri{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}",
+      ".or-num{height:37px;border:0;border-radius:11px;padding:0;font:inherit;font-weight:900;font-size:1.15rem;line-height:1;color:#1f1f1f;background:#ebe7da;cursor:pointer;touch-action:manipulation}.or-num.on{background:#1f1f1f;color:#fff}",
+      "@media(min-height:760px){.or-num{height:42px;font-size:1.25rem}}.or-num.inf{font-size:1.35rem}.or-num.or-aiuto-b{font-size:.95rem;background:transparent;box-shadow:inset 0 0 0 1.5px #ebe7da}",
+      ".or-scr .or-input,.or-scr .or-btn{height:44px;min-height:44px}",
+      ".or-btn.or-invia{flex:0 0 auto;min-width:92px;padding:0 14px}",
+      ".or-btn.or-invia.manca{width:104px;min-width:0;padding:0 8px;font-size:.74rem;line-height:1.1;opacity:.45}",
+      ".or-aiuto{position:absolute;left:10px;right:10px;bottom:calc(var(--or-barra,110px) + 6px);z-index:8;display:flex;flex-direction:column;gap:5px;padding:12px 14px;border-radius:16px;background:#171036;color:#e6e9ff;font-size:.8rem;font-weight:700;line-height:1.35;box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 0 2px rgba(255,255,255,.2)}.or-aiuto b{color:#fff;font-size:.9rem}",
       ".or-toast{position:absolute;left:50%;bottom:calc(118px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:88%;text-align:center;background:#1f1f1f;color:#fff;border-radius:999px;padding:8px 14px;font-weight:800;font-size:.82rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:5}.or-toast.su{opacity:1}",
       ".or-studio .st-barra{gap:6px;padding:10px 10px calc(10px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0;background:linear-gradient(rgba(7,4,26,.88),rgba(7,4,26,.96) 40%);box-shadow:0 -4px 14px rgba(30,20,60,.18)}",   // (scura per tutta la partita: niente scritte chiare su fondo chiaro, p18)
       ".or-studio.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}",   // chi guarda: il posto della targhetta
       ".or-studio .or-btn{background:#fff;color:#1f1f1f}.or-studio .or-btn.chiaro{background:rgba(255,255,255,.18);color:#fff}",
       ".or-studio .or-stato{color:#e6e9ff}",
       ".or-studio .or-num{background:rgba(255,255,255,.18);color:#fff}.or-studio .or-num.on{background:#fff;color:#1f1f1f}",
-      ".or-studio .or-err{color:#ffa8a8}",
+      ".or-studio .or-scr-msg .tx{color:#e6e9ff}.or-studio .or-scr-msg.err .tx{color:#ffa8a8}.or-studio .or-scr-msg.dub .tx,.or-studio .or-scr-msg.manca .tx{color:#ffe066}",
+      ".or-studio .or-num.or-aiuto-b{background:transparent;color:#e6e9ff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}",
+      ".or-studio .or-btn.or-invia.conferma{background:#fcc419;color:#1f1f1f}",
       ".or-studio .or-toast{bottom:calc(var(--or-barra,110px) + 8px)}",
       ".or-sotto .or-faccine{flex:none}",
       // il capo che scrive l'indizio (revisione del 22 ott 2026): la tastiera si prende mezzo schermo, e il tabellone prende il
       // posto della chat, delle faccine delle squadre, della scritta «Tocca a te» e di «pensava a» (la clessidra resta)
       ".or-scrive .or-chat,.or-scrive .or-facce,.or-scrive .or-ind-stato,.or-scrive .or-pens{display:none}.or-scrive .or-ind{min-height:0}",
+      // (22 ott 2026) il capo che dà l'indizio ha la barra coi numeri su due file: «👑 Tocca a te» resta ma senza spazio vuoto
+      // attorno, così le caselle restano alte almeno 44 px anche a 360x640
+      ".or-capo-ind .or-ind{min-height:0}",
       // ---- a fine partita (21 ott 2026): il tabellone svelato sta TUTTO sopra la barra (p4): le righe si abbassano quanto serve,
       // la chat sui telefoni bassi lascia il posto ----
       "@media(max-height:760px){.or-fine-v .or-chat{display:none}.or-fine-v .or-facce{display:none}.or-fine-v .or-ind{min-height:0}.or-fine-v .or-fine-tit{font-size:.86rem;line-height:1.15}}",   // (sui telefoni bassi, a fine partita, anche le faccine delle squadre lasciano il posto: nella Sala le caselle da 26 a 33 px)
@@ -2646,7 +3017,8 @@
       ".or-cart b{display:block;order:1;font-size:1.25rem;font-weight:900;line-height:1.15;overflow-wrap:break-word}.or-cart small{display:block;order:2;margin-top:3px;font-size:.86rem;font-weight:800;opacity:.85}",
       // (l'indizio appena dato: la fascia grande, sopra «👑 Luca · capo dei Rossi»)
       ".or-cart.ind{padding:9px 14px 10px 10px;background:#fffdf8;color:#1f1f1f;box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 0 0 2px var(--c,#1f1f1f)}",
-      ".or-cart.ind small{order:0;margin:0 0 4px;color:#6b6658;opacity:1}.or-cart.ind .or-fascia .or-fascia-w{font-size:1.7rem}.or-cart.ind .or-fascia.media .or-fascia-w{font-size:1.4rem}.or-cart.ind .or-fascia.lunga .or-fascia-w{font-size:1.15rem}",
+      ".or-cart.ind small{order:0;margin:0 0 4px;color:#6b6658;opacity:1}.or-cart.ind .or-fascia .or-fascia-w{font-size:1.7rem}.or-cart.ind .or-fascia.media .or-fascia-w{font-size:1.4rem}.or-cart.ind .or-fascia.lunga .or-fascia-w{font-size:1.15rem}.or-cart.ind .or-fascia.lunghissima .or-fascia-w{font-size:.98rem}",
+      ".or-cart.ind .or-fascia.lunga .or-fascia-w,.or-cart.ind .or-fascia.lunghissima .or-fascia-w{white-space:normal;overflow-wrap:anywhere;text-overflow:clip;line-height:1.1}",   // (i nomi lunghi nella scritta grande vanno a capo tra una parola e l'altra: mai tagliati)
       ".or-cart.ind .or-fascia .n{font-size:1.3rem}",
       // 💭 a fine turno, al posto dell'indizio (non copre le parole né i punteggi): le parole a cui pensava il capo
       ".or-pens{position:absolute;left:0;right:0;top:0;min-height:100%;box-sizing:border-box;z-index:6;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;padding:4px 10px;border-radius:14px;background:#fff;color:#1f1f1f;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.18),inset 0 -3px var(--c,#1f1f1f);opacity:0;transform:scale(.97);pointer-events:none;transition:opacity .25s,transform .25s}",
@@ -2695,6 +3067,7 @@
       ".or-copia{display:block;width:100%;box-sizing:border-box;margin:8px 0 0;font-size:.85rem;resize:none}",
       // ---- 🤔 «Cosa intendevi?»: il capo segna le parole che intendeva (bordo arancio e 🤔 sulla casella, a destra: a sinistra c'è il segno) ----
       ".or-carta.pensata{outline:3px solid #f59f00;outline-offset:-3px;z-index:1}.or-carta.pensata:after{content:'🤔';position:absolute;top:2px;right:3px;font-size:11px;line-height:1;z-index:2}",
+      ".or-tab.basse .or-carta.pensata:after{top:-5px;right:-4px;font-size:10px}",   // (caselle basse, es. con la tastiera aperta: il 🤔 sull'angolo, fuori dalla parola)
       // a fine partita: un indizio alla volta, sopra il tabellone (si muovono solo opacità e transform)
       ".or-riv{position:absolute;left:8px;right:8px;top:calc(46px + env(safe-area-inset-top));bottom:var(--or-barra,110px);z-index:7;display:flex;flex-direction:column;gap:8px;padding:10px 10px 12px;border-radius:18px;background:#f7f5ef;color:#1f1f1f;box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0;visibility:hidden;transform:translateY(12px) scale(.97);pointer-events:none;transition:opacity .25s,transform .25s,visibility 0s .25s;overflow:hidden}",
       ".or-riv.su{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity .25s,transform .25s}",
@@ -2734,7 +3107,7 @@
 
   SG.registra({
     id: ID, nome: "Parola d'ordine", icona: "🕵️",
-    descrizione: "Il capo dà un indizio di una parola sola, la squadra trova le sue parole sul tabellone. Occhio alla parola nera! A 2 o 3 squadre, o in pochi contro il Bot, ognuno dal suo telefono.",
+    descrizione: "Il capo dà un indizio (una parola, o un nome come SAN GENNARO), la squadra trova le sue parole sul tabellone. Occhio alla parola nera! A 2 o 3 squadre, o in pochi contro il Bot, ognuno dal suo telefono.",
     giocatoriMin: 2, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 2–12 giocatori",   // (in 2-3 si gioca contro il Bot)
     postiOnline: MAX,   // posti online (12)
     ritardatari: "turno",   // chi arriva a partita cominciata entra subito nella squadra più piccola e gioca dal prossimo turno
@@ -2744,15 +3117,16 @@
     riprende: true, riserva: true,
     regole: [
       "Si gioca a <b>2 o 3 squadre</b>. Sul tabellone ci sono 25 parole (o 20, se l'host sceglie così): alcune sono di una squadra, alcune di nessuno e una è la <b>parola nera</b>.",
-      "Solo il <b>capo</b> di ogni squadra (👑) vede di chi è ogni parola. Nel suo turno dà un <b>indizio di una parola sola</b> e un numero: quante parole sue c'entrano (es. «Caldo, 2»).",
+      "Solo il <b>capo</b> di ogni squadra (👑) vede di chi è ogni parola. Nel suo turno dà un <b>indizio di una parola</b> (o un nome fino a 3 parole: SAN GENNARO, NEW YORK) e un numero: quante parole sue c'entrano (es. «Caldo, 2»). Mentre scrive può toccare le sue parole a cui pensa (le vede solo lui): il numero si mette da solo.",
       "La squadra ne discute: tocca una parola per <b>segnarla</b> (sulla casella compare la tua faccina; un altro tocco toglie il segno) e la giri col tasto <b>«👆 Gira»</b>, una alla volta. Si possono girare fino al numero dell'indizio <b>più una</b>. Se giri una parola di un'altra squadra o di nessuno, il turno passa; «✋ Basta così» (con un secondo tocco per sicurezza) lo passa quando volete.",
       "Chi gira la <b>parola nera</b> perde (a 3 squadre esce dalla partita). Vince la squadra che trova per prima tutte le sue parole.",
-      "L'indizio non può essere una parola del tabellone e nemmeno quasi uguale: niente plurali e niente parole che cominciano come lei (niente <b>MAREA</b> se c'è MARE, niente <b>GATTINI</b> se c'è GATTO). I numeri si scrivono in lettere (OTTO). Il capo può dare anche «∞»: tentativi liberi.",
+      "✍️ <b>L'indizio</b>: una parola, o un nome fino a 3 parole (SAN GENNARO, NEW YORK, L'AQUILA). Non vale una parola del tabellone né una sua forma: niente <b>MAREA</b> se c'è MARE, niente <b>GATTI</b> se c'è GATTO, niente <b>CAGNOLINO</b> se c'è CANE, niente <b>ASTRONAVE</b> se c'è NAVE (le parole composte che finiscono con una del tabellone). Se somiglia a una parola del tabellone ma è un'altra parola (<b>CANESTRO</b> con CANE, CASO con CASA) il gioco chiede «è un'altra parola?» e il capo conferma toccando di nuovo Invia. I numeri si scrivono in lettere (OTTO).",
+      "🔢 <b>Il numero</b>: da 1 a 9, quante parole della squadra c'entrano. Il capo può dare anche «<b>0</b>» (nessuna parola della squadra c'entra: serve a tenerla lontana da una parola) o «<b>∞</b>»: con tutti e due i tentativi sono liberi.",
       "🤖 <b>In 2 o 3? Contro il Bot.</b> Siete tutti nella stessa squadra (uno fa il capo, gli altri indovinano) e dall'altra parte c'è un Bot: dopo ogni vostro turno scopre da solo una sua parola. Trovate tutte le vostre prima che lui finisca le sue!",
       "⏳ <b>Clessidre</b> (se l'host le accende): il capo ha 90 secondi o 2 minuti per l'indizio, la squadra 1 o 2 minuti per indovinare. Il primo indizio della partita ha il <b>tempo doppio</b>; negli ultimi 10 secondi la clessidra diventa rossa. Allo zero il turno passa. Se il capo esce (WhatsApp, telefono bloccato…) la sua squadra lo aspetta; se dopo 3 minuti non è tornato, un compagno può prendere il suo posto (👑 Faccio io il capo).",
       "🎬 <b>Ritmo</b>: con «Show» la suspense lunga c'è sulle parole che contano (la prima di ogni indizio, l'ultimo tentativo, l'ultima parola che manca); con «⚡ Veloce» si scopre tutto in un attimo.",
       "⭐ <b>Parola d'oro</b> (se l'host la lascia accesa): tra le parole di nessuno una è d'oro, e non lo sa nessuno, nemmeno i capi. Chi la gira non perde il turno: la squadra continua a indovinare con lo stesso indizio, senza consumare un tentativo.",
-      "🤔 <b>Cosa intendevi?</b> (se l'host lo lascia acceso): dopo l'indizio il capo può toccare, di nascosto, le parole che intendeva (o «Salta»). A fine turno si vede «💭 Paky pensava a…» con le parole già trovate (le altre restano segrete). A fine partita, col tasto «🤔 Cosa intendevi?», si rivedono gli indizi uno per uno («Paky pensava: ONDA, SALE · la squadra ha toccato: ONDA ✅, PESCE ❌») e la squadra che ha trovato più parole pensate vince il premio <b>🧠 Più in sintonia</b>.",
+      "🤔 <b>Cosa intendevi?</b> (se l'host lo lascia acceso): le parole che il capo tocca mentre scrive l'indizio restano segrete (se non le tocca, dopo l'indizio il gioco gliele chiede, o «Salta»). A fine turno si vede «💭 Paky pensava a…» con le parole già trovate (le altre restano segrete). A fine partita, col tasto «🤔 Cosa intendevi?», si rivedono gli indizi uno per uno («Paky pensava: ONDA, SALE · la squadra ha toccato: ONDA ✅, PESCE ❌») e la squadra che ha trovato più parole pensate vince il premio <b>🧠 Più in sintonia</b>.",
       "🎭 A fine partita ognuno ha il suo <b>titolo scherzoso</b> (non sono trofei): 💣 l'artificiere, 🎯 il cecchino, 🧠 il telepate, 🐌 il filosofo… e con <b>📸 Foto</b> mandate nel gruppo il tabellone svelato coi titoli. Contro il Bot, se vincete, fate tanti <b>punti</b> quante parole gli mancavano.",
       "📝 <b>Le parole vostre</b>: ognuno porta le parole del suo profilo (i nomi degli amici, i posti, le battute del gruppo) e finiscono sul tabellone insieme a quelle del mazzo: 5, 10, metà o tutte, lo sceglie l'host. Le parole del mazzo non si ripetono: prima escono tutte quelle che non avete ancora visto (il telefono di chi apre la partita se le ricorda per 30 giorni).",
       "🏆 Tra una partita e l'altra si tiene il conto della serata («Rossi 2 – 1 Blu»); alla rivincita l'host sceglie se cambiare capo, tenere gli stessi capi o rifare le squadre a caso."
@@ -2803,7 +3177,7 @@
       chips("⏳ Tempo per l'indizio", [[0, "Senza"], [90, "90 secondi"], [120, "2 minuti"]], "tempo", "Se il capo non dà l'indizio in tempo, il turno passa all'altra squadra. Il primo indizio della partita ha il tempo doppio.");
       chips("⏳ Tempo per indovinare", [[0, "Senza"], [60, "1 minuto"], [120, "2 minuti"]], "tempoInd", "Dopo l'indizio la squadra ha questo tempo per girare le parole (doppio al primo indizio), poi il turno passa.");
       chips("⭐ Parola d'oro", [[true, "Sì"], [false, "No"]], "oro", "Una parola di nessuno è d'oro, e non lo sa nessuno: chi la gira continua a indovinare con lo stesso indizio.");
-      chips("🤔 Cosa intendevi?", [[true, "Sì"], [false, "No"]], "intendi", "Dopo l'indizio il capo può segnare di nascosto le parole che intendeva: a fine partita si scopre chi era più in sintonia.");
+      chips("🤔 Cosa intendevi?", [[true, "Sì"], [false, "No"]], "intendi", "Il capo segna di nascosto le parole a cui pensa (mentre scrive l'indizio, o subito dopo): a fine partita si scopre chi era più in sintonia.");
       // 📝 le TUE parole: restano salvate sul profilo. Si scrivono di fila ("Peppe, Ibiza, Kebab"), così gli amici se le passano;
       // dopo si vedono una alla volta, ognuna con la sua ✕
       var lista = leggiGruppo(window.SG && SG.listaProfilo ? SG.listaProfilo("ordine") : []);
@@ -2876,5 +3250,7 @@
     }
   });
   window.__ORDINE = { erroreIndizio: erroreIndizio, leggiGruppo: leggiGruppo, radice: radice, mazzoDa: mazzoDa, sorelle: sorelle, MAZZI: MAZZI, MEMORIA: MEMORIA,
-    titoloFine: titoloFine, testoPunti: testoPunti, fotoPartita: fotoPartita, pensavaBuffo: pensavaBuffo };
+    titoloFine: titoloFine, testoPunti: testoPunti, fotoPartita: fotoPartita, pensavaBuffo: pensavaBuffo,
+    controllaIndizio: controllaIndizio, pulisciIndizio: pulisciIndizio, numTx: numTx,
+    aggiorna: function (ui, vm) { ui.vm = vm; aggiorna(ui, vm, ui.cb); } };   // (per le prove: una foto finta, es. un turno nuovo)
 })();
