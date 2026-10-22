@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 254,
+    data: "22 ottobre 2026",
+    titolo: "⚽ La giornata: punteggi in alto e calciatori più veri",
+    descrizione: [
+      "📊 In alto i punteggi di ognuno a quadrettini (faccina, nome e punti) e sotto il campo i risultati delle partite: il campo è più grande e resta in verticale anche quando siete in tanti.",
+      "📣 Negli annunci la squadra che attacca si legge in grande, sul colore della sua maglia («PER L'INTER»): non la confondi più con l'altra squadra dove magari hai i tuoi calciatori.",
+      "🏃 Corrono senza scatti e le gambe vanno a tempo coi passi; si vede il calcio col piede e il colpo di testa caricato; la scivolata entra coi piedi avanti.",
+      "🤕 Chi si tuffa o cade finisce davvero a terra e poi si rialza; chi segna corre a esultare con le braccia al cielo e due saltelli, e la telecamera lo segue.",
+      "🧤 Il portiere aspetta il tiro a gambe larghe, coi guanti; la barriera salta ognuno a modo suo e il pallone le passa sopra; l'arbitro alza il cartellino con un braccio solo, più grande e prima.",
+      "⚽ Il pallone vola alto quanto deve, lascia la scia nei tiri, in rete gonfia il fondo e fa un rimbalzino; il rallentatore entra ed esce piano; rigori, angoli e punizioni partono senza attese.",
+      "↔️ Anche col campo in orizzontale i tuffi e le cadute si vedono giusti (prima uno si capovolgeva)."
+    ]
+  },
+  {
     v: 253,
     data: "22 ottobre 2026",
     titolo: "🕵️ Parola d'ordine tutta nuova",
