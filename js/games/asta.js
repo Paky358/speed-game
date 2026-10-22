@@ -377,8 +377,8 @@
     ".st-ticker.via{animation:stTicker .35s ease-out;}",
     "@keyframes stTicker{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}",
     ".st-ticker.conta{color:#fff;background:#c92a2a;font-size:.95rem;text-align:center;}",
-    ".st-stadio.ultimi .st-board{animation:stBordo .5s ease-in-out infinite alternate;}",
-    "@keyframes stBordo{from{box-shadow:0 0 0 2px #0b0c0f,0 14px 30px rgba(0,0,0,.6)}to{box-shadow:0 0 0 3px #ff6b6b,0 14px 30px rgba(0,0,0,.6)}}",
+    ".st-board{position:relative;}.st-stadio.ultimi .st-board::after{content:\"\";position:absolute;inset:0;border-radius:12px;box-shadow:0 0 0 3px #ff6b6b;pointer-events:none;animation:stBordo .5s ease-in-out infinite alternate;}",   // (il bordo rosso degli ultimi secondi: si accende e si spegne con la sola trasparenza, senza ridisegnare il maxischermo)
+    "@keyframes stBordo{from{opacity:0}to{opacity:1}}",
     // il palco (la classifica finale delle rose): il campo grande con la formazione e, a bordo campo, l'avatar in piedi (l'allenatore).
     // Le misure delle maglie (--mg) e dell'allenatore (--all) le mette misuraPalco, dalla grandezza vera del campo
     ".st-palco{flex:1 1 0;min-height:calc(var(--alt,100dvh)*.37);display:flex;flex-direction:column;margin:6px 8px 0;}",
@@ -488,6 +488,7 @@
     ".st-pv-num{display:flex;align-items:stretch;justify-content:center;width:100%;margin-top:2px;}.st-pv-c{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;}",
     ".st-pv-c+.st-pv-c{border-left:1.5px solid rgba(255,255,255,.28);}.st-pv .st-pv-c b{font-size:1.08rem;line-height:1.05;}.st-pv .st-pv-c.fv b{color:#ffe066;}",
     ".st-pv .st-pv-c small{min-height:0;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.03em;}.st-pv-ic{min-height:1.05em;font-style:normal;font-size:.62rem;line-height:1.3;}",
+    ".st-pag-attesa{flex:none;margin:auto auto 6px;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.1);font-weight:800;font-size:.92rem;text-align:center;}",
     ".st-pag.on{opacity:1;}.st-pag-tit{flex:none;text-align:center;font-weight:900;font-size:.95rem;color:#ffe066;}",
     ".st-pag-p{flex:none;display:flex;flex-direction:column;gap:3px;animation:stSale .5s cubic-bezier(.2,1.3,.4,1) both;}",
     ".st-pag-testa{display:flex;align-items:center;gap:7px;font-weight:900;font-size:.88rem;}.st-pag-testa img{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.16);}",
@@ -1418,7 +1419,13 @@
     return (BANDITORE = c);
   }
   function trova(lista, id) { if (id == null) return null; for (var i = 0; i < (lista || []).length; i++) if (lista[i].id === id) return lista[i]; return null; }
-  function rianima(n, cls, testo) { if (testo != null) n.textContent = testo; n.classList.remove(cls); void n.offsetWidth; n.classList.add(cls); }
+  // fa ripartire un'animazione: la classe si toglie subito e torna due fotogrammi dopo (così l'animazione riparte da capo) senza
+  // costringere il telefono a ricalcolare tutta la pagina a ogni rilancio (era il punto più pesante dell'asta)
+  function rianima(n, cls, testo) {
+    if (testo != null) n.textContent = testo;
+    n.classList.remove(cls); var tok = n.__rianima = (n.__rianima || 0) + 1;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { if (n.__rianima === tok) n.classList.add(cls); }); });
+  }
   function svuotaNodo(n) { while (n.firstChild) n.removeChild(n.firstChild); }
 
   // ---- pezzi in comune tra la sala e lo stadio ----
@@ -2443,7 +2450,7 @@
   // il Napoli, fino al tiro non si sa chi segna. Sotto la classifica dal vivo: tutti partono da 6 in pagella, poi bonus e
   // malus; a fine primo tempo le pagelle di tutti, al fischio finale le pagelle vere, da chi ha fatto meno a chi ha fatto di più
   var TEMPI_AZ = {   // [annuncio, pausa, azione, esito] in millisecondi
-    gol: [1800, 300, 4200, 900], ann: [1800, 300, 4200, 1500], occ: [1800, 300, 4200, 700], aut: [1800, 300, 4200, 900], rig: [2000, 300, 4000, 900],
+    gol: [1800, 300, 4200, 900], ann: [1800, 300, 4200, 1500], occ: [1800, 300, 4200, 1400], aut: [1800, 300, 4200, 900], rig: [2000, 300, 4000, 1300],
     amm: [1500, 300, 2900, 800], esp: [1500, 300, 2900, 900], inv: [1100, 200, 1700, 700] };   // (l'esito si vede già durante l'esultanza: dopo resta poco)
   var COLORI_PERSONE = ["#ffd43b", "#4dabf7", "#f783ac", "#69db7c", "#ff922b", "#b197fc", "#3bc9db", "#e9ecef"];   // il colore di ognuno (in classifica e sul campo)
   var DURATA_GIORNATA = 120000;   // (tutti i momenti insieme: se sono di più, saltano prima le occasioni mancate, poi si va un po' più svelti)
@@ -2507,19 +2514,27 @@
       if (chi[pi + "|-1"]) lista.push({ P: P, p: pi, e: { m: 90, t: "inv", s: null, r: [P.gc, P.gf] }, chi: chi[pi + "|-1"], m: 99, focus: true });   // (dopo il recupero)
     });
     lista.sort(function (a, b) { return a.m - b.m; });
-    function durata() { var d = 0; lista.forEach(function (x) { if (x.intervallo) return; if (!x.focus) d += 350; else tempiAz(x.e.t).forEach(function (v) { d += v; }); }); return d; }
+    function durata() { var d = 0; lista.forEach(function (x) { if (x.intervallo || !x.focus) return; tempiAz(x.e.t).forEach(function (v) { d += v; }); }); return d; }   // (i gol degli altri non prendono tempo)
     while (durata() > DURATA_GIORNATA) {
       var os = lista.filter(function (x) { return x.focus && x.e.t === "occ"; }); if (!os.length) break;
       lista.splice(lista.indexOf(os[Math.floor(os.length / 2)]), 1);
     }
     R.gioVel = Math.max(0.72, Math.min(1, DURATA_GIORNATA / Math.max(1, durata())));
     var i = 0;
+    // i gol delle partite dove nessuno di voi ha giocatori non fermano niente: i loro risultati si aggiornano in alto mentre si guarda
+    // l'azione dopo (quelli della stessa partita dell'azione subito, così il risultato nella barra è già giusto); all'intervallo e al
+    // fischio finale quelli che restano tutti insieme
+    function aggiorna(y) { if (vivoRivela(R)) risultatoGiornata(R, y); }
     function prossimo() {
       if (!vivoRivela(R)) return;
-      if (i >= lista.length) return fischioFinale(R);
+      var muti = [];
+      while (i < lista.length && !lista[i].intervallo && !lista[i].focus) muti.push(lista[i++]);
+      if (i >= lista.length) { muti.forEach(aggiorna); return fischioFinale(R); }
       var x = lista[i++];
-      if (x.intervallo) return intervallo(R, prossimo);
-      if (!x.focus) { risultatoGiornata(R, x); orologio(R, x.m); R.timer.push(setTimeout(prossimo, tv(R, 350))); return; }
+      if (x.intervallo) { muti.forEach(aggiorna); return intervallo(R, prossimo); }
+      muti.filter(function (y) { return y.p === x.p; }).forEach(aggiorna);
+      var altri = muti.filter(function (y) { return y.p !== x.p; }), passo = Math.min(700, 3600 / Math.max(1, altri.length));
+      altri.forEach(function (y, k) { R.timer.push(setTimeout(function () { aggiorna(y); }, tv(R, 900 + k * passo))); });
       momentoSerieA(R, x, i, prossimo);
     }
     avvisoCampo(R, 50, ["⚽ FISCHIO D'INIZIO!", "tutti i vostri calciatori partono da 6", "tocca la tua riga per vedere i tuoi"]); SUONI.fischio(1, true);
@@ -2741,9 +2756,31 @@
       });
     }, tv(R, 1500)));
   }
+  // ⏯️ un passo delle pagelle che aspetta chi tiene la partita (sullo stesso telefono: chi ha il telefono). Lui ha «Avanti ▶» (col
+  // conto: a zero si va avanti da soli, così non resta mai ferma); online gli altri leggono «⏳ Aspettiamo Paky…» e vanno avanti quando
+  // va avanti lui (R.opz.passi, dalla foto dell'host), o da soli se l'host sparisce. quale: "int" (l'intervallo) o "fin" (il fischio finale);
+  // n: il numero di questo passo (1, 2, 3…); vai(): cosa fare dopo
+  function passoCapo(R, nodo, quale, n, secondi, vai) {
+    var capo = R.opz.capo !== false, mio = (R.passoTok = (R.passoTok || 0) + 1), resta = secondi + (capo ? 0 : 10), fatto = false, t0 = Date.now(), ultimo = t0;
+    function avanti(daMe) { if (fatto || mio !== R.passoTok) return; fatto = true; R.passoTok++; if (daMe && capo && R.opz.onPasso) R.opz.onPasso(quale, n); vai(); }
+    if (capo) {
+      var b = R.el("button", { class: "btn st-pag-av", text: "Avanti ▶ (" + resta + ")", onclick: function () { avanti(true); } });
+      nodo.appendChild(b);
+      (function conta() { R.timer.push(setTimeout(function () { if (fatto || mio !== R.passoTok || !vivoRivela(R)) return; resta--; b.textContent = "Avanti ▶ (" + resta + ")"; if (resta <= 0) avanti(true); else conta(); }, 1000)); })();
+      return;
+    }
+    var chi = R.opz.nomeCapo || "chi tiene la partita", w = R.el("div", { class: "st-pag-attesa", text: "⏳ Aspettiamo " + chi + "… (" + resta + ")" });
+    nodo.appendChild(w);
+    (function guarda() { R.timer.push(setTimeout(function () {
+      if (fatto || mio !== R.passoTok || !vivoRivela(R)) return;
+      if (((R.opz.passi || {})[quale] || 0) >= n && Date.now() - t0 > 1500) return avanti(false);   // (è andato avanti lui: dopo un attimo per leggere)
+      if (Date.now() - ultimo >= 1000) { ultimo += 1000; resta--; w.textContent = "⏳ Aspettiamo " + chi + "… (" + Math.max(0, resta) + ")"; if (resta <= 0) return avanti(false); }
+      guarda();
+    }, 250)); })();
+  }
   function classeVoto(v) { return v >= 7 ? "v7" : v >= 6.5 ? "v65" : v >= 6 ? "v6" : v >= 5.5 ? "v55" : "v5"; }
   function pagelle(R, titolo, poi) {   // tutte le rose in pagina (a gruppi, se non ci stanno): ogni calciatore col suo voto
-    var gs = listaGio(R).sort(perTotale), pag = R.pag, el = R.el, per = Math.max(2, Math.floor((pag.clientHeight - 96) / 102)), pagine = [], k = 0, giro = 0;
+    var gs = listaGio(R).sort(perTotale), pag = R.pag, el = R.el, per = Math.max(2, Math.floor((pag.clientHeight - 96) / 102)), pagine = [], k = 0;
     per = Math.ceil(gs.length / Math.ceil(gs.length / per));   // (gruppi pari: 4 e 4, non 7 e 1)
     for (var i = 0; i < gs.length; i += per) pagine.push(gs.slice(i, i + per));
     function mostra() {
@@ -2763,11 +2800,9 @@
           el("div", { class: "st-pag-testa" }, [ el("img", { src: R.busti[g.r.id], alt: "" }), el("span", { text: g.r.nome, style: "color:" + R.colP[g.r.id] }), el("b", { text: numFanta(totGio(g)) }) ]),
           el("div", { class: "st-pag-voti" }, voti) ]));
       });
-      // «Avanti ▶»: si va avanti quando vuoi tu (al massimo dopo 25 secondi, così non resta mai ferma)
-      var mio = ++giro, resta = 25, av = el("button", { class: "btn st-pag-av", text: "Avanti ▶ (" + resta + ")", onclick: function () { if (mio === giro) { giro++; mostra(); } } });
-      pag.appendChild(av);
+      // «Avanti ▶» di chi tiene la partita (al massimo dopo 25 secondi si va avanti da soli)
+      passoCapo(R, pag, "int", k, 25, mostra);
       void pag.offsetWidth; pag.classList.add("on");
-      (function conta() { R.timer.push(setTimeout(function () { if (mio !== giro || !vivoRivela(R)) return; resta--; av.textContent = "Avanti ▶ (" + resta + ")"; if (resta <= 0) { giro++; mostra(); } else conta(); }, 1000)); })();
     }
     mostra();
   }
@@ -2796,6 +2831,8 @@
       a.pts.push([t + 0.03, u[1], u[2]]); a.pts.push([Math.min(1, t + 0.3), 0.5 + dx * 0.36, 0.88]); a.pose.push([t + 0.03, { braccia: 1 }]);
     }
     var por = att("pD", et.para, [[0, 0.5, 0.935]]);
+    // il rallentatore (e la telecamera un po' più vicina) da poco prima del tiro a poco dopo: parate, pali, salvataggi si capiscono
+    function rallenta(t0, t1) { sc.lento = [Math.max(0, t0 - 0.04), Math.min(1, t1), 0.36]; sc.zoomFine = Math.max(sc.zoomFine || 0, 0.35); sc.tz = Math.max(0.15, t0 - 0.16); }
     // il tiro: dal punto da (alto z0) al momento t0 verso la porta; come finisce lo dicono esito e fin; torna quando arriva
     function tiro(t0, da, z0, q) {
       q = q || {};
@@ -2818,6 +2855,7 @@
         palla([[t0 + 0.13, 0.5, 0.86, 1.7], [t0 + 0.25, 0.5, GL, 1.0], [t0 + 0.3, 0.5, NET, 0.4], [1, 0.5, NET, 0]]);
         tuffa(lt, 1, t0 + 0.08); sc.rete = t0 + 0.25; scritta(t0 + 0.25, "CUCCHIAIO!"); return (sc.dunque = t0 + 0.25);
       }
+      if (es === "parata" || es === "palo" || es === "traversa" || es === "linea") rallenta(t0, tA + 0.14);
       if (es === "parata") {
         palla([[tA - 0.01, 0.5 + lt * 0.048, 0.935, zq], [tA + 0.13, 0.5 + lt * 0.26, 1.0, 0.6], [1, 0.5 + lt * 0.3, 1.02, 0]]);
         tuffa(lt, 1, tA - 0.01); scritta(tA, "PARATA!", "#69db7c"); return (sc.dunque = tA);
@@ -2897,7 +2935,7 @@
         att("D", null, [[0, 0.5, 0.6], [0.5, 0.52, 0.7]]);
         muovi(por, 0.3, 0.5, 0.93); muovi(por, 0.5, 0.53, 0.84); posa(por, 0.48, {}); posa(por, 0.55, { salto: 0.5, braccia: 1 }); posa(por, 0.64, {});
         if (esito === "gol") { palla([[0.6, 0.52, 0.85, 4.2], [0.7, 0.51, GL, 1.6], [0.74, 0.505, NET, 0.5], [1, 0.505, NET, 0]]); sc.rete = 0.7; scritta(0.7, "GOL!"); tg = sc.dunque = 0.7; }
-        else if (esito === "parata") { palla([[0.56, 0.535, 0.815, 2.6], [0.68, 0.62, 0.9, 1], [1, 0.75, 0.97, 0]]); scritta(0.56, "PARATA!", "#69db7c"); tg = sc.dunque = 0.56; }
+        else if (esito === "parata") { rallenta(0.5, 0.68); palla([[0.56, 0.535, 0.815, 2.6], [0.68, 0.62, 0.9, 1], [1, 0.75, 0.97, 0]]); scritta(0.56, "PARATA!", "#69db7c"); tg = sc.dunque = 0.56; }
         else if (esito === "traversa" || esito === "palo") { palla([[0.6, 0.52, 0.85, 4.2], [0.7, 0.51, GL, 2.44], [0.8, 0.52, 0.85, 1], [1, 0.55, 0.78, 0]]); scritta(0.7, esito === "palo" ? "PALO!" : "TRAVERSA!", "#fff"); tg = sc.dunque = 0.7; }
         else { palla([[0.6, 0.52, 0.85, 4.6], [0.7, 0.51, GL, 3.4], [0.8, 0.5, 1.02, 2.6], [1, 0.5, 1.04, 0]]); scritta(0.7, esito === "alto" ? "ALTO!" : "FUORI!", "#fff"); tg = sc.dunque = 0.7; }
       } else if (v === "slalom") {
@@ -2952,7 +2990,7 @@
         sc.palla.splice(sc.palla.length - 2, 2);   // (il pallone resta in area)
         palla([[0.6, 0.42, 0.85, 0], [0.7, 0.42, 0.85, 0], [0.78, 0.46, 0.93, 0.4], [1, 0.3, 0.98, 0]]);
         muovi(tira, 0.68, 0.43, 0.84); posa(por, 0.7, { tuffo: -0.3 }); posa(por, 0.77, { tuffo: -1, salto: 0.3, braccia: 1 });
-        scritta(0.78, "PARA ANCHE QUELLA!", "#69db7c"); sc.dunque = 0.78;
+        scritta(0.78, "PARA ANCHE QUELLA!", "#69db7c"); sc.dunque = 0.78; rallenta(0.42, 0.86);
       }
       if (esito === "gol" || esito === "cucchiaio") { festa(tira, tg + 0.05); sc.gol = true; }
       if (esito === "cucchiaio") { sc.zoomFine = 0.4; sc.tz = 0.35; sc.lento = [0.42, 0.72, 0.4]; }
@@ -3324,25 +3362,28 @@
           el("div", { class: "st-pf-fv" }, [ el("small", { text: "fantavoto" }), el("b", { text: numFanta(c.fv) }) ]) ]);
         pag.appendChild(riga); righe.push(riga);
       });
-      pag.appendChild(el("button", { class: "btn st-pag-av", text: "Avanti ▶", onclick: function () {   // (tutta la pagella subito, poi la prossima)
+      var capo = R.opz.capo !== false, idx = j, svela = capo ? el("button", { class: "btn st-pag-av", text: "Mostra tutta ▶", onclick: function () {   // (tutta la pagella subito)
         if (mia !== R.carta) return;
         while (k < righe.length) { righe[k].classList.add("on"); somma += r.gio.cal[k].fv; k++; } tot.textContent = numFanta(somma); scopri();
-      } }));
+      } }) : null;
+      if (svela) pag.appendChild(svela);
       void pag.offsetWidth; pag.classList.add("on");
+      if (!capo && ((R.opz.passi || {}).fin || 0) >= idx) { while (k < righe.length) { righe[k].classList.add("on"); somma += r.gio.cal[k].fv; k++; } tot.textContent = numFanta(somma); }
       function scopri() {   // un calciatore alla volta: il voto, il fantavoto, il totale che sale
         if (!vivoRivela(R) || mia !== R.carta) return;
         if (k >= righe.length) {
           r.gio.cal.forEach(function (c, kk) { g.vv[kk] = c.v; g.bon[kk] = c.fv - c.v; }); g.pt.textContent = numFanta(r.gio.punti);
           pag.firstChild.textContent = "📋 La pagella · " + r.pos + "° posto" + (r.pos === 1 ? " 🏆" : "");
           if (ultima) { FX.posto(); vibra(30); } else FX.tic(0.9);
-          R.carta++; R.timer.push(setTimeout(prossima, tv(R, 1500)));
+          R.carta++; if (svela && svela.parentNode) svela.parentNode.removeChild(svela);
+          passoCapo(R, pag, "fin", idx, 20, prossima);   // (ora si guarda con calma: avanti quando lo dice chi tiene la partita)
           return;
         }
         var c = r.gio.cal[k]; righe[k].classList.add("on"); somma += c.fv; tot.textContent = numFanta(somma); rianima(tot, "batte");
         FX.tic(0.3 + k * 0.12);
-        k++; R.timer.push(setTimeout(scopri, tv(R, 560)));
+        k++; R.timer.push(setTimeout(scopri, tv(R, 900)));
       }
-      R.timer.push(setTimeout(scopri, tv(R, 500)));
+      R.timer.push(setTimeout(scopri, tv(R, 800)));
     }
   }
   function podioRivela(R) {   // il podio: i primi tre sui gradini (il primo con le braccia alzate), sotto gli altri
@@ -5377,7 +5418,7 @@
     }
     function nuovaInLobby() {
       stopTo();
-      st.iniziata = false; st.fase = "lobby"; st.mazzo = []; st.asta = null; st.esito = null; st.classifica = null; st.serieA = null; st.scadenza = null; st.giriVuoti = 0;
+      st.iniziata = false; st.fase = "lobby"; st.mazzo = []; st.asta = null; st.esito = null; st.classifica = null; st.serieA = null; st.passi = null; st.scadenza = null; st.giriVuoti = 0;
       st.giocatori = st.giocatori.filter(function (g) { return !g.via; });   // chi non c'è più esce dalla stanza
       st.giocatori.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });   // (chi tiene la partita è il primo: in saletta ha la corona)
       st.giocatori.forEach(function (g) { g.crediti = FANTA_BUDGET; g.kit = []; g.conta = { P: 0, D: 0, C: 0, A: 0 }; g.stelle = 0; g.asteVinte = 0; g.st = statNuove(); });
@@ -5388,6 +5429,7 @@
       myId: IO, sonoHost: true,
       onComincia: comincia, onNuova: nuovaInLobby,
       onRilancia: function (x) { rilanciaO(IO, x); }, onPassa: function (x) { passaO(IO, x); },
+      onPasso: function (quale, n) { st.passi = st.passi || {}; if ((st.passi[quale] || 0) < n) { st.passi[quale] = n; invia(); } },   // (le pagelle: sono andato avanti)
       onEsci: function () { stopTo(); clearTimeout(tAttesi); if (t.ricorda) t.ricorda(null); TM.smetti(); cb._uscito = true; fermaTutto(); rete.chiudi(); t.esci(); }
     };
     function disegna() { if (!st.morto && !cb._uscito) disegnaFantaVM(t, vmFanta(st), cb); }
@@ -5415,7 +5457,8 @@
       restano: st.mazzo ? st.mazzo.length : 0, presi: postiPresi(st.giocatori),
       classifica: st.classifica || null,
       serieA: st.fase === "fine" ? (st.serieA || null) : null,   // ⚽ la giornata di Serie A finta (la vedono tutti uguale)
-      titoli: st.fase === "fine" ? (st.titoli || []) : null
+      titoli: st.fase === "fine" ? (st.titoli || []) : null,
+      passi: st.fase === "fine" ? (st.passi || {}) : null   // ⏯️ fin dove è arrivato chi tiene la partita nelle pagelle (gli altri lo aspettano)
     };
   }
 
@@ -5427,6 +5470,7 @@
       salvaTrofeiAsta(t, vm, cb.myId, true);
       var io = trova(vm.giocatori, cb.myId);
       return rivelaFanta(t, vm.classifica || [], { chiave: "ro|" + (vm.codice || "") + "|" + vm.sessione, titoli: vm.titoli || [], mio: io ? io.id : null, serieA: vm.serieA || null,
+        capo: !!cb.sonoHost, onPasso: cb.onPasso || null, passi: vm.passi || {}, nomeCapo: ((vm.giocatori || [])[0] || {}).nome || "",
         foto: function () { fotoRose(vm.classifica || [], io ? io.nome : null); },   // 📸 la mia rosa (chi guarda: tutte)
         onEsci: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },
         bottoni: function () {

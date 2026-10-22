@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 252,
+    data: "23 ottobre 2026",
+    titolo: "⚽ La giornata: parate al rallentatore e pagelle con calma",
+    descrizione: [
+      "🧤 Parate, pali, traverse e salvataggi sulla linea si vedono al rallentatore e da più vicino: si capisce cosa succede.",
+      "📋 Le pagelle finali escono più piano e poi aspettano: chi tiene la partita (o chi ha il telefono) va avanti con «Avanti ▶», gli amici leggono «⏳ Aspettiamo Paky…» e vanno avanti con lui. Lo stesso alle pagelle del primo tempo.",
+      "⚡ Niente più pause col campo vuoto: i risultati delle partite dove nessuno ha giocatori si aggiornano in alto mentre guardi le azioni.",
+      "🏃 Più fluida: durante i rilanci e negli ultimi secondi dell'asta il telefono fa meno fatica."
+    ]
+  },
+  {
     v: 251,
     data: "22 ottobre 2026",
     titolo: "⚽ La giornata: i suoni dello stadio e il tasto ⏩",
