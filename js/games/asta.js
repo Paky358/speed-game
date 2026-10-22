@@ -3341,7 +3341,18 @@
     }
     function kitDiSq(sc, sq) { return sq === "A" ? sc.kA : sq === "D" ? sc.kD : sq === "pA" ? sc.pA : sq === "pD" ? sc.pD : ARBITRO; }
     // gli altri 22 meno chi c'entra: la formazione delle due squadre (si tolgono i posti più vicini a chi fa l'azione); i vostri che non
-    // c'entrano vanno al posto del loro ruolo (0 portiere, 1-4 difesa, 5-7 centrocampo, 8-10 attacco)
+    // c'entrano vanno al posto del loro ruolo (0 portiere, 1-4 difesa, 5-7 centrocampo, 8-10 attacco). Se i posti del suo ruolo li ha
+    // presi chi fa l'azione, un attaccante va in un posto libero più avanti o a centrocampo, MAI in difesa (22 ott, il proprietario:
+    // «il mio Thuram sta proprio in difesa mentre l'Inter attacca»)
+    var ORDINE_POSTI = { P: [0], D: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], C: [5, 6, 7, 8, 9, 10, "su", 1, 2, 3, 4], A: [8, 9, 10, "su", 5, 6, 7] };
+    function postoNuovo(occ, xs) {   // un posto nella zona xs (lungo il campo), il più lontano da tutti quelli che ci sono già
+      var best = null, bd = -1;
+      xs.forEach(function (x) { [0.18, 0.3, 0.42, 0.58, 0.7, 0.82].forEach(function (y) {
+        var d = 9; occ.forEach(function (p) { d = Math.min(d, Math.pow(p[0] - x, 2) + Math.pow(p[1] - y, 2) * 0.5); });
+        if (d > bd) { bd = d; best = { x: x, y: y }; }
+      }); });
+      return best;
+    }
     function comparse(sc) {
       var rig = sc.tipo === "rig" || sc.v === "ribattuta", out = [];
       [["A", rig ? BASE_RIG_ATT : BASE_ATT], ["D", rig ? BASE_RIG_DIF : BASE_DIF]].forEach(function (q) {
@@ -3355,9 +3366,14 @@
         });
         (sc.noti || []).forEach(function (nt) {
           if (nt.sq !== q[0]) return;
-          var da = { P: 0, D: 1, C: 5, A: 8 }[nt.ruolo] || 0, a = { P: 0, D: 4, C: 7, A: 10 }[nt.ruolo] || 0, o = null, i;
-          for (i = da; i <= a && !o; i++) if (!posti[i].via && !posti[i].nome) o = posti[i];
-          for (i = 1; i < posti.length && !o && nt.ruolo !== "P"; i++) if (!posti[i].via && !posti[i].nome) o = posti[i];
+          var ord = ORDINE_POSTI[nt.ruolo] || [0], o = null, i;
+          for (i = 0; i < ord.length && !o; i++) {
+            if (ord[i] === "su") {   // (i posti del suo ruolo sono presi: uno nuovo più avanti, lontano da tutti)
+              var occ = posti.filter(function (z) { return !z.via; }).map(function (z) { return [z.x, z.y]; });
+              sc.attori.forEach(function (a) { [a.pts[0], a.pts[a.pts.length - 1]].forEach(function (pt) { occ.push(pieno({ verso: 1 }, pt[1], pt[2])); }); });
+              var nu = postoNuovo(occ, q[0] === "A" ? [0.6, 0.64, 0.68] : [0.5, 0.54, 0.58]); if (nu) { posti.push(nu); o = nu; }
+            } else if (posti[ord[i]] && !posti[ord[i]].via && !posti[ord[i]].nome) o = posti[ord[i]];
+          }
           if (o) { o.nome = nt.nome; o.faccia = nt.faccia; o.pc = nt.pc; }
         });
         posti.forEach(function (o, i) { if (!o.via) out.push({ sq: i === 0 ? "p" + q[0] : q[0], x: o.x, y: o.y, k: i * 1.7 + (q[0] === "A" ? 0 : 0.9), nome: o.nome || "", faccia: o.faccia || null, pc: o.pc || null, n: i + (q[0] === "A" ? 0 : 11) }); });

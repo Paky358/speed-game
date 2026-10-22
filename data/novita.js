@@ -11,9 +11,10 @@ window.SG_NOVITA = [
   {
     v: 255,
     data: "22 ottobre 2026",
-    titolo: "📈 Mini asta Fantacalcio: quotazioni aggiornate",
+    titolo: "📈 Mini asta Fantacalcio: quotazioni aggiornate e attaccanti al loro posto",
     descrizione: [
-      "📈 Le quotazioni di tutti i calciatori dell'asta sono quelle di oggi del listone 2026/27 di Fantacalcio.it: a fine asta il valore delle rose è quello vero di adesso."
+      "📈 Le quotazioni di tutti i calciatori dell'asta sono quelle di oggi del listone 2026/27 di Fantacalcio.it: a fine asta il valore delle rose è quello vero di adesso.",
+      "⚽ Nella giornata dopo l'asta i tuoi attaccanti non stanno più in difesa mentre la loro squadra attacca: se i posti davanti sono presi da chi fa l'azione, si mettono in un posto libero più avanti o a centrocampo."
     ]
   },
   {
