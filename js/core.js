@@ -7164,7 +7164,7 @@
     var D = S.duello && S.duello.stanza === gs.stanza ? S.duello : null;
     if (D) return "Guardali in diretta quando vuoi: alla fine si torna qui.";
     var modo = modoInCorso(S, gs), g = giocoDa(gs.gioco);
-    if (modo === "entra") return "✋ Puoi entrare subito: giochi " + (g && g.ritardatari === "mano" ? "dalla prossima mano" : "dal prossimo turno") + ".";
+    if (modo === "entra") return g && g.ritardatari === "subito" ? "✋ Puoi entrare: giochi subito." : "✋ Puoi entrare subito: giochi " + (g && g.ritardatari === "mano" ? "dalla prossima mano" : "dal prossimo turno") + ".";
     if (modo === "due") return "Giocano in due: guardali in diretta quando vuoi.";
     if (modo === "scelti") return "Giocano quelli scelti da " + (S.nomeHost || "l'host") + ": guardali quando vuoi.";
     return "Alla prossima partita entri da solo: non devi toccare niente.";
@@ -7174,7 +7174,7 @@
     if (aDue(g)) return "due";
     if (S.sc && S.sc.stanza === gs.stanza && S.sc.ids.indexOf(mio) < 0) return "scelti";
     var r = g && g.ritardatari;
-    return (r === "turno" || r === "mano") && gs.fase === "gioco" ? "entra" : "guarda";
+    return (r === "turno" || r === "mano" || r === "subito") && gs.fase === "gioco" ? "entra" : "guarda";
   }
   function boxInCorso(gs, tipo) {
     var S0 = salaG, D = S0.duello && S0.duello.stanza === gs.stanza ? S0.duello : null, mio = mioIdSala(S0);
@@ -7188,7 +7188,7 @@
       var nm = S0.sc.ids.map(function (id) { var x = (S0.membri || []).filter(function (m) { return m.id === id; })[0]; return x ? x.nome : "?"; });
       testa = "⚔️ " + nm[0] + " e " + nm[1] + " giocano " + aGioco(nome) + punto;
     } else testa = "🎮 Si gioca " + aGioco(nome) + punto;
-    var quando = g && g.ritardatari === "mano" ? "dalla prossima mano" : "dal prossimo turno";
+    var quando = g && g.ritardatari === "mano" ? "dalla prossima mano" : g && g.ritardatari === "subito" ? "subito" : "dal prossimo turno";
     var sotto = modo === "guarda" ? "entri alla prossima partita" : (modo === "due" ? "giocano in due: tu guardi"
       : (modo === "scelti" ? "gioca chi ha scelto " + (S0.nomeHost || "l'host") : ""));
     var k = gs.stanza + "|" + modo;
@@ -8863,9 +8863,13 @@
     if (!SV.host || !id || SV.sala || SV.dentro[id] || SV.fuori[id]) return;   // (chi gioca, o chi è stato fatto uscire: niente)
     var nome = String((m && m.n) || "").replace(/\s+/g, " ").trim().slice(0, 16) || "Pubblico";
     var nuovo = !SV.pubblico[id] || SV.pubblico[id].n !== nome;
+    var arriva = !SV.pubblico[id];
     SV.pubblico[id] = { n: nome, t: Date.now() };
     if (!SV.tPub) SV.tPub = setInterval(function () { pulisciPubblico(SV); }, PUB_GIRO);   // (il timer c'è solo se qualcuno guarda)
     if (nuovo) { svRiassunto(SV); aggiornaPubblico(SV); }
+    // (22 ott 2026) il gioco dell'host lo sa, se vuole: cb.onGuarda(id, nome) quando arriva uno che guarda soltanto (anche dopo
+    // una ricarica dell'host), così gli manda quello che chi gioca riceve entrando (es. gli avatar: Parola d'ordine)
+    if (arriva && SV.onGuardo) try { SV.onGuardo(id, nome); } catch (e) { setTimeout(function () { throw e; }, 0); }
   }
   function pulisciPubblico(SV) {
     var ora = Date.now(), via = 0;
@@ -10340,6 +10344,7 @@
       var io = profiloAttivo(); if (io && io.nome) { nomi.__io = String(io.nome).trim().slice(0, 16); conPr.__io = 1; }   // il nome dell'host è suo
       // la saletta viva di questa stanza: chi è dentro, chi è pronto, chi si ricollega, chi è stato fatto uscire, la porta
       var SV = nuovoSV(true, "", sala); SV.nomi = nomi; SV.porta = portaSeme;
+      if (!sala && cb.onGuarda) SV.onGuardo = function (id, n) { cb.onGuarda(id, n); };   // (chi guarda soltanto: vedi svGuardo)
       Object.keys(nomi).forEach(function (k) { if (k !== "__io") SV.dentro[k] = 1; });   // stanza riaperta: chi c'era rientra anche con la porta chiusa
       var onMsg = cb.onMsg, onAddio = cb.onAddio;
       SV.addio = function (id) { if (onAddio) onAddio.call(cb, id); };
@@ -10681,8 +10686,9 @@
     var guardi = inSaletta && U.o && U.o._rete === R.h && titoloSaletta(U, senzaTuFalso(U.o.giocatori || [], st), st) === false && (U.statoTit === "guardi" || U.statoTit === "spett");
     var fuori = !R.guarda && st.entrato && Date.now() - st.entrato > 2500 && !st.dentro && st.vivo && !st.ferma && !inSaletta;
     // chi arriva tardi: la pillola dice la verità secondo il gioco (g.ritardatari): "turno"/"mano" = entra dal prossimo
-    // turno o dalla prossima mano; "partita" (di partenza) = guarda ed entra alla prossima partita
-    var rit = R.P.g.ritardatari, dal = rit === "turno" ? "dal prossimo turno" : (rit === "mano" ? "dalla prossima mano" : null);
+    // turno o dalla prossima mano; "subito" = gioca già da adesso (Parola d'ordine: entra nella squadra più piccola);
+    // "partita" (di partenza) = guarda ed entra alla prossima partita
+    var rit = R.P.g.ritardatari, dal = rit === "turno" ? "dal prossimo turno" : (rit === "mano" ? "dalla prossima mano" : (rit === "subito" ? "già da adesso" : null));
     var txF = aDue(R.P.g) ? "👀 Giocano in due: tu guardi" : (dal ? "✋ Partita in corso: giochi " + dal : "👀 Partita in corso: la guardi ed entri alla prossima");
     pillola("prossima", fuori ? txF : null, "grigia");
     if (fuori) R.tardi = true;
@@ -10900,7 +10906,8 @@
       // ---- chi guarda e chi arriva tardi (Passo 6) ----
       // true: questo telefono guarda soltanto (niente nome da chiedere, niente "join": lo toglie il core, niente mosse, niente trofei)
       guarda: !!lp.guarda,
-      // quando entra chi arriva a partita cominciata: "turno" (dal prossimo turno), "mano" (dalla prossima mano), "partita" (guarda ed entra alla prossima)
+      // quando entra chi arriva a partita cominciata: "turno" (dal prossimo turno), "mano" (dalla prossima mano), "subito" (gioca già
+      // da adesso), "partita" (guarda ed entra alla prossima)
       ritardatari: g.ritardatari || "partita",
       // (solo l'host di un gioco della mia Sala) a che punto è la partita, in una riga corta per chi è fuori: "Round 3 di 5".
       // Al massimo ogni 3 secondi (l'ultimo testo vince); la Sala lo mostra nel riquadro "🎮 Si gioca a Balla · round 3 di 5"

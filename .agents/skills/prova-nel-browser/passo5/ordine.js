@@ -39,7 +39,7 @@
   function chiDi(v, nome) { return ((v.players || []).filter(function (p) { return p.nome === nome; }))[0] || null; }
   function parole(v) { return (v.tab || []).map(function (c) { return c.w; }).join(","); }
   function inSaletta(w) { return !!(w && w.document.querySelector(".saletta-schermo")); }
-  function chiusa(w) { return !!(w && /La stanza è chiusa|chiusa dall'host|Problema di collegamento/.test(T(w))); }
+  function chiusa(w) { return !!(w && /La stanza è chiusa|chiusa dall'host|Problema di collegamento|non è più tornato|Non riesco a entrare/.test(T(w))); }   // (22 ott 2026: le frasi nuove di chi resta fuori, c19)
   // qualcuno legge la pillola re mentre si aspetta ms? "" = nessuno
   async function senza(nomi, re, ms) {
     var fine = Date.now() + ms;
