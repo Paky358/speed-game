@@ -145,6 +145,9 @@
   var COMMONS = "https://upload.wikimedia.org/wikipedia/commons/";
   function urlFoto(f, px) {
     if (!f) return null;
+    // le foto fatte dal proprietario stanno nel sito: "loc:carte/prezzo/<id>.jpg" (piccole, già della misura giusta; per i pezzi
+    // delle vetrine il # dell'id diventa - nel nome del file, se no l'indirizzo si spezza)
+    if (/^loc:carte\/prezzo\/[\w.\-]+\.(jpg|jpeg|png|webp)$/i.test(f)) return String(f).slice(4);
     var s = String(f).split("|"), path = s[0], w = +s[1] || 0, nome = path.split("/").pop();
     if (!/^[0-9a-f]\/[0-9a-f]{2}\/./.test(path)) return null;
     var enc = path.split("/").map(encodeURIComponent).join("/");

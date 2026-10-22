@@ -139,11 +139,10 @@
   // ---------------- i prodotti ----------------
   // la foto vera (data/prezzo-foto.js: id → "percorso su Commons|larghezza"; i pezzi delle vetrine sono "idVetrina#n")
   function conFoto(o, id) { if (o && o.f === undefined) o.f = (window.SG_PREZZO_FOTO || {})[id] || null; return o; }
-  // un prodotto senza una foto controllata non esce (le emoji restano solo se le foto non si caricano per la rete)
+  // i prodotti senza una foto controllata restano, con l'emoji, finché il proprietario non manda la foto (deciso il 23 ott 2026)
   function prodotti() {
-    var d = window.SG_PREZZO || {}, soloConFoto = !!window.SG_PREZZO_FOTO;
-    return (d.prodotti || []).filter(function (p) { return p && p.id && p.nome && +p.prezzo > 0 && Z().CAT[p.cat]; })
-      .map(function (p) { return conFoto(p, p.id); }).filter(function (p) { return !soloConFoto || p.f; });
+    var d = window.SG_PREZZO || {};
+    return (d.prodotti || []).filter(function (p) { return p && p.id && p.nome && +p.prezzo > 0 && Z().CAT[p.cat]; }).map(function (p) { return conFoto(p, p.id); });
   }
   function vetrine() {
     var d = window.SG_PREZZO || {};
@@ -982,11 +981,12 @@
   function nomi(lista) { return lista.length < 2 ? lista.join("") : lista.slice(0, -1).join(", ") + " e " + lista[lista.length - 1]; }
 
   // le foto si scaricano appena il prodotto è nella foto della partita (mentre il sipario è ancora chiuso)
+  // (grande per la scheda, piccola per le righe, la rivelazione e il carrello: sono due misure diverse)
   function precaricaFoto(vm) {
-    if (vm.prod) Z().precarica(vm.prod, 500);
+    if (vm.prod) { Z().precarica(vm.prod, 500); Z().precarica(vm.prod, 330); }
     if (vm.vet && vm.vet.pezzi) vm.vet.pezzi.forEach(function (x) { Z().precarica(x, 330); });
     var pp = vm.premio && vm.premio.pub && vm.premio.pub.prod;
-    if (pp) (Array.isArray(pp) ? pp : [pp]).forEach(function (x) { Z().precarica(x, 500); });
+    if (pp) (Array.isArray(pp) ? pp : [pp]).forEach(function (x) { Z().precarica(x, 500); Z().precarica(x, 330); });
   }
   function disegnaVM(t, vm, cb) {
     Z().stile();
@@ -2004,8 +2004,8 @@
       "Se <b>sforate tutti</b>, si rifà una volta sola, tutti sotto l'offerta più bassa.",
       "Punti: <b>300</b> al primo, <b>150</b> al secondo, <b>75</b> al terzo (con almeno 4 giocatori). <b>PREZZO GIUSTO!</b> (praticamente preciso): <b>+500</b>.",
       "Chi vince l'Offerta sceglie il <b>gioco a premi</b>, e si gioca tutti insieme.",
-      "🎡 <b>La Ruota del 100</b>: girate tutti, poi decidete in segreto se girare ancora (si somma). Vince chi va più vicino a 100 senza superarlo: <b>200</b> al primo, 100 al secondo, 50 al terzo. 100 esatto: <b>+300</b> e il giro bonus (100 ancora +300, uno spicchio verde +150). Chi vince la Ruota ha un <b>indizio</b> sulla Vetrina.",
-      "🛍️ <b>La Vetrina finale</b>: tanti premi insieme, offerta segreta sul totale. Punti: <b>450</b> al primo, 225 al secondo, 110 al terzo e, se ci vai vicinissimo (entro il 3%), <b>VINCI TUTTO!</b> (+1.000).",
+      "🎡 <b>La Ruota del 100</b>: girate tutti, poi decidete in segreto se girare ancora (si somma). Vince chi va più vicino a 100 senza superarlo: <b>200</b> al primo, 100 al secondo, 50 al terzo (con almeno 4 giocatori). 100 esatto: <b>+300</b> e il giro bonus (100 ancora +300, uno spicchio verde +150). Chi vince la Ruota ha un <b>indizio</b> sulla Vetrina.",
+      "🛍️ <b>La Vetrina finale</b>: tanti premi insieme, offerta segreta sul totale. Punti: <b>450</b> al primo, 225 al secondo, 110 al terzo (con almeno 4 giocatori) e, se ci vai vicinissimo (entro il 3%), <b>VINCI TUTTO!</b> (+1.000).",
       "🎯 <b>Solo il prezzo</b>: esce un oggetto, 20 secondi, vince chi va più vicino (sopra o sotto, a meno che chi ospita scelga «Senza sforare»). Preciso: +500. <b>L'ultimo oggetto vale doppio.</b>",
       "Alla fine il <b>carrello</b>: cosa vi portate a casa (euro finti, solo per ridere). Vince chi ha più punti.",
       "<b>Sullo stesso telefono</b> si gioca a turno: con le offerte segrete vi passate il telefono."

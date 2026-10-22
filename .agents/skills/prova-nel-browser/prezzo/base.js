@@ -15,7 +15,7 @@
 // pz9: online nella Sala con 8 telefoni, 📺 Come in TV ⚡ Veloce (8 leggii, Ruota e Vetrina in 8).
 // pz10: «🤖 Contro il Bot» con un secondo gioco a premi finto: chi vince l'Offerta sceglie tra due.
 // pz11: «🤖 Contro il Bot» parte in due tocchi (gioco → Contro il Bot, niente impostazioni) con le regole di partenza.
-// pz13: le foto vere (data/prezzo-foto.js): scritte bene, ogni prodotto che esce ha la sua, la scheda e la Vetrina le mostrano.
+// pz13: le foto vere (data/prezzo-foto.js): scritte bene, quasi tutti i prodotti ne hanno una (gli altri l'emoji), la scheda e la Vetrina le mostrano.
 // pz12: la Ruota del 100 si gira anche in su (la striscia sale) e il mio numero sul maxischermo resta «—» finché la ruota
 //       gira: compare solo quando si ferma, col pannello della ruota ancora aperto.
 // (pz8 a una misura sola: W.__pz8misure = [[360, 640]])
@@ -550,10 +550,10 @@
     var ids = {}; w.SG_PREZZO.prodotti.forEach(function (p) { ids[p.id] = 1; }); w.SG_PREZZO.vetrine.forEach(function (v) { v.pezzi.forEach(function (x, i) { ids[v.id + "#" + i] = 1; }); });
     Object.keys(F).forEach(function (k) {
       if (!ids[k]) no("nelle foto c'è «" + k + "», che non è un prodotto né un pezzo di vetrina");
-      if (!/^[0-9a-f]\/[0-9a-f]{2}\/[^|/]+\|\d+$/.test(F[k])) no("foto scritta male per " + k + ": " + F[k]);
+      if (!/^[0-9a-f]\/[0-9a-f]{2}\/[^|/]+\|\d+$/.test(F[k]) && !/^loc:carte\/prezzo\/[\w.\-]+\.(jpg|jpeg|png|webp)$/i.test(F[k])) no("foto scritta male per " + k + ": " + F[k]);
     });
-    var L = P.prodotti(); if (L.length < 400) no("prodotti con la foto: solo " + L.length);
-    if (L.some(function (p) { return !p.f; })) no("esce un prodotto senza foto");
+    var L = P.prodotti(), conF = L.filter(function (p) { return p.f; }).length;
+    if (conF < 450) no("prodotti con la foto: solo " + conF + " su " + L.length);   // (quelli senza foto restano con l'emoji)
     var u = Z.urlFoto("9/9b/Nutella_ak.jpg|1514", 500), u2 = Z.urlFoto("0/02/Stilles_Mineralwasser.jpg|298", 500);
     if (u !== "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Nutella_ak.jpg/500px-Nutella_ak.jpg" || u2 !== "https://upload.wikimedia.org/wikipedia/commons/0/02/Stilles_Mineralwasser.jpg") no("indirizzi delle foto: " + u + " / " + u2);
     // nella scheda dell'Offerta: la foto del prodotto giusto (o l'emoji se la rete non la dà), mai vuota
@@ -570,7 +570,7 @@
     var righe = [].slice.call(w.document.querySelectorAll(".pz-vp")), conFoto = righe.filter(function (r) { return r.querySelector(".pz-conf img"); }).length;
     if (!righe.length) no("la Vetrina non ha righe");
     if (!await giocaTutti(["Paky"], function () { return H().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("la partita non finisce");
-    return L.length + " prodotti con la foto · " + Object.keys(F).length + " foto · scheda " + (caricata ? "con la foto caricata" : im ? "con la foto (non ancora caricata)" : "con l'emoji (rete)") + " · Vetrina " + conFoto + "/" + righe.length + " righe con la foto" + errori();
+    return conF + " prodotti su " + L.length + " con la foto · " + Object.keys(F).length + " foto · scheda " + (caricata ? "con la foto caricata" : im ? "con la foto (non ancora caricata)" : "con l'emoji (rete)") + " · Vetrina " + conFoto + "/" + righe.length + " righe con la foto" + errori();
   } });
 
   W.PZ = { agisci: agisci, giocaTutti: giocaTutti, spiaFasi: spiaFasi, controllaVista: controllaVista, contrBot: contrBot, stessoTelefono: stessoTelefono, salaPrezzo: salaPrezzo, conSpia: conSpia, senzaSpia: senzaSpia };

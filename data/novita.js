@@ -11,8 +11,9 @@ window.SG_NOVITA = [
   {
     v: 256,
     data: "22 ottobre 2026",
-    titolo: "Il Prezzo è Giusto: punti più giusti ⚖️",
+    titolo: "Il Prezzo è Giusto: le foto vere e punti più giusti 📸⚖️",
     descrizione: [
+      "📸 Al posto dei disegnini ora vedi la FOTO VERA di quello che devi prezzare: la Nutella, la Vespa, la Fiat Pandina, la pastiera, il Colosseo… Quasi 600 foto, scelte e controllate una per una (niente cartellini col prezzo!). Le trovi nella scheda dell'Offerta, nei giochi a premi, nelle righe della Vetrina e nel carrello finale.",
       "⚖️ Abbiamo giocato decine di migliaia di puntate finte per sistemare i punti: ora chi conosce meglio i prezzi vince più spesso, e la fortuna fa festa ma non decide la partita da sola. Chi è primo dopo le manche vince circa 2 volte su 3: il finale può ancora ribaltare tutto, ma non quasi sempre.",
       "🎡 La Ruota del 100: 200 punti a chi ci va più vicino (100 al secondo, 50 al terzo). CENTO vale +300, e nel giro bonus il 100 dà altri +300, gli spicchi verdi +150. Prima un CENTO fortunato valeva +1.000 e poteva cancellare tre manche giocate bene.",
       "🛍️ La Vetrina finale: 450 punti al più vicino (225 al secondo, 110 al terzo). «VINCI TUTTO!» vale +1.000 ed è più difficile: devi arrivare entro il 3% del totale.",
