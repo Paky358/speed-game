@@ -15,6 +15,7 @@
 // pz9: online nella Sala con 8 telefoni, 📺 Come in TV ⚡ Veloce (8 leggii, Ruota e Vetrina in 8).
 // pz10: «🤖 Contro il Bot» con un secondo gioco a premi finto: chi vince l'Offerta sceglie tra due.
 // pz11: «🤖 Contro il Bot» parte in due tocchi (gioco → Contro il Bot, niente impostazioni) con le regole di partenza.
+// pz13: le foto vere (data/prezzo-foto.js): scritte bene, ogni prodotto che esce ha la sua, la scheda e la Vetrina le mostrano.
 // pz12: la Ruota del 100 si gira anche in su (la striscia sale) e il mio numero sul maxischermo resta «—» finché la ruota
 //       gira: compare solo quando si ferma, col pannello della ruota ancora aperto.
 // (pz8 a una misura sola: W.__pz8misure = [[360, 640]])
@@ -195,8 +196,8 @@
     // Ruota del 100
     var er = P.esitoRuota({ a: { v1: 60, v2: 40 }, b: { v1: 95 }, c: { v1: 70, v2: 35 }, d: { v1: 20, v2: 60 } }, ["a", "b", "c", "d"]);
     var rr = {}; er.righe.forEach(function (x) { rr[x.id] = x; });
-    if (!rr.a.cento || rr.a.punti !== 1300 || rr.b.punti !== 150 || !rr.c.out || rr.c.punti || rr.d.punti !== 75) no("Ruota: " + JSON.stringify(er.righe));
-    if (P.puntiBonus(100) !== 1000 || P.puntiBonus(5) !== 500 || P.puntiBonus(15) !== 500 || P.puntiBonus(50)) no("giro bonus");
+    if (!rr.a.cento || rr.a.punti !== 500 || rr.b.punti !== 100 || !rr.c.out || rr.c.punti || rr.d.punti !== 50) no("Ruota: " + JSON.stringify(er.righe));
+    if (P.puntiBonus(100) !== 300 || P.puntiBonus(5) !== 150 || P.puntiBonus(15) !== 150 || P.puntiBonus(50)) no("giro bonus");
     // il piano delle puntate
     var conta = function (p, x) { return p.filter(function (y) { return y === x; }).length; };
     var pv = P.piano("tv", "veloce", 1), pp = P.piano("tv", "puntata", 1), pl = P.piano("tv", "lunga", 1), p0 = P.piano("tv", "puntata", 0);
@@ -538,6 +539,38 @@
     if (v1 !== 100 && nota.indexOf(String(v1)) < 0) no("sotto la ruota ferma non c'è " + v1 + " («" + nota + "»)");
     if (!await giocaTutti(["Paky"], function () { return H().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("la partita non finisce (fase " + H().fase + "." + H().sotto + ")");
     return "ruota girata in su (striscia " + Math.round(y1) + " → " + Math.round(y2) + " px), «—» finché gira, poi " + v1 + " a ruota ferma; partita finita" + errori();
+  } });
+
+  // ===================== pz13: le foto vere dei prodotti (data/prezzo-foto.js) =====================
+  // (22-23 ott: al posto delle emoji le foto di Wikimedia Commons, scelte a occhio; un prodotto senza foto non esce)
+  COPIONE.aggiungi("pz13", { nome: "Prezzo: le foto vere dei prodotti e delle vetrine", fai: async function () {
+    var w = await contrBot({ formato: "tv", durata: "veloce", offerte: "vista", liv: "facile", nBot: 1 });
+    var H = function () { return w.__prezzoH; }, F = w.SG_PREZZO_FOTO, P = w.__prezzo, Z = w.SGPrezzoScena;
+    if (!F) no("data/prezzo-foto.js non è caricato");
+    var ids = {}; w.SG_PREZZO.prodotti.forEach(function (p) { ids[p.id] = 1; }); w.SG_PREZZO.vetrine.forEach(function (v) { v.pezzi.forEach(function (x, i) { ids[v.id + "#" + i] = 1; }); });
+    Object.keys(F).forEach(function (k) {
+      if (!ids[k]) no("nelle foto c'è «" + k + "», che non è un prodotto né un pezzo di vetrina");
+      if (!/^[0-9a-f]\/[0-9a-f]{2}\/[^|/]+\|\d+$/.test(F[k])) no("foto scritta male per " + k + ": " + F[k]);
+    });
+    var L = P.prodotti(); if (L.length < 400) no("prodotti con la foto: solo " + L.length);
+    if (L.some(function (p) { return !p.f; })) no("esce un prodotto senza foto");
+    var u = Z.urlFoto("9/9b/Nutella_ak.jpg|1514", 500), u2 = Z.urlFoto("0/02/Stilles_Mineralwasser.jpg|298", 500);
+    if (u !== "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Nutella_ak.jpg/500px-Nutella_ak.jpg" || u2 !== "https://upload.wikimedia.org/wikipedia/commons/0/02/Stilles_Mineralwasser.jpg") no("indirizzi delle foto: " + u + " / " + u2);
+    // nella scheda dell'Offerta: la foto del prodotto giusto (o l'emoji se la rete non la dà), mai vuota
+    if (!await giocaTutti(["Paky"], function () { return H().fase === "offerta" && H().sotto === "offri"; }, { ms: 60000 })) no("non si arriva all'Offerta");
+    await W.dorme(1500);
+    var im = w.document.querySelector(".pz-scheda .pz-foto img"), emo = w.document.querySelector(".pz-scheda .pz-emo");
+    var atteso = Z.urlFoto(H().prod.f, 500);
+    if (!im && !emo) no("nella scheda non c'è né la foto né l'emoji");
+    if (im && im.getAttribute("src") !== atteso) no("la scheda mostra " + im.getAttribute("src") + " invece di " + atteso);
+    var caricata = im && im.complete && im.naturalWidth > 0;
+    // la Vetrina: ogni pezzo con la sua foto piccola (330)
+    if (!await giocaTutti(["Paky"], function () { return H().fase === "vetrina" && H().sotto === "offri"; }, { ms: 300000 })) no("non si arriva alla Vetrina");
+    await W.dorme(1200);
+    var righe = [].slice.call(w.document.querySelectorAll(".pz-vp")), conFoto = righe.filter(function (r) { return r.querySelector(".pz-conf img"); }).length;
+    if (!righe.length) no("la Vetrina non ha righe");
+    if (!await giocaTutti(["Paky"], function () { return H().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("la partita non finisce");
+    return L.length + " prodotti con la foto · " + Object.keys(F).length + " foto · scheda " + (caricata ? "con la foto caricata" : im ? "con la foto (non ancora caricata)" : "con l'emoji (rete)") + " · Vetrina " + conFoto + "/" + righe.length + " righe con la foto" + errori();
   } });
 
   W.PZ = { agisci: agisci, giocaTutti: giocaTutti, spiaFasi: spiaFasi, controllaVista: controllaVista, contrBot: contrBot, stessoTelefono: stessoTelefono, salaPrezzo: salaPrezzo, conSpia: conSpia, senzaSpia: senzaSpia };

@@ -7,12 +7,13 @@
    🧗 L'ALPINISTA (Cliff Hangers): 3 prodotti piccoli (sotto i 100 €), uno dopo l'altro, 45 secondi in tutto.
       L'errore di ogni prezzo in percentuale diventa passi: 1 passo ogni 4% (massimo 25 a prodotto; un passo di
       prezzo di differenza non conta). La montagna ha 25 passi: oltre, giù dal burrone!
-      Punti: 500 − 15 × passi (minimo 100), in vetta senza un passo +200, caduto 0.
+      Punti: 550 − 15 × passi (minimo 100), in vetta senza un passo +200, caduto 0 (22 ott 2026: da 500 a 550, così
+      i 5 giochi a premi valgono in media uguale, circa 300 a testa; simulazioni in .agents/skills/prova-nel-browser/prezzo/simulazione).
       Rivelazione: tutti gli avatar salgono insieme, prodotto per prodotto, con la musichetta tirolese.
    📊 METTILI IN ORDINE (Hole in One): 5 prodotti (della stessa categoria se si può, prezzi distanti almeno il 15%),
       in colonna: si tocca un prodotto e poi un altro per scambiarli, dal meno caro (in alto) al più caro. 30 secondi.
-      L'ordine che si vede quando scade il tempo vale (chi non ha toccato niente: 0). Punti: 80 a posto giusto, tutti
-      giusti +100. Rivelazione: la fila giusta coi prezzi e una pallina da minigolf per ognuno, più vicina alla buca
+      L'ordine che si vede quando scade il tempo vale (chi non ha toccato niente: 0). Punti: 70 a posto giusto, tutti
+      giusti +100 (22 ott 2026: da 80 a 70, per la stessa media degli altri giochi a premi). Rivelazione: la fila giusta coi prezzi e una pallina da minigolf per ognuno, più vicina alla buca
       quanti più posti giusti. Tutti e 5: «⛳ Buca in uno!».
    Classi col prefisso pza- (stile in fondo al file).
    ========================================================= */
@@ -31,7 +32,7 @@
     var e = ERR[liv] || 0.25, g = Math.max(-2.5, Math.min(2.5, gauss(P.rnd)));
     return Math.max(P.passo(prezzo), P.arrotonda(prezzo * Math.exp(g * e * 0.85 * (molt || 1)), prezzo));
   }
-  function pubProd(p) { p = p || {}; return { e: p.e, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat, cent: (+p.prezzo || 0) < 20 }; }
+  function pubProd(p) { p = p || {}; return { e: p.e, f: p.f || null, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat, cent: (+p.prezzo || 0) < 20 }; }
   // tocco subito col pointerdown (su iPhone il click a volte non arriva); il click resta per mouse e tastiera
   function premi(b, fn) {
     var ultimo = 0;
@@ -92,7 +93,7 @@
   // =====================================================================
   // 🧗 L'ALPINISTA
   // =====================================================================
-  var ALP = { vetta: 25, pct: 4, sec: 45, passoMs: 140, quadro: 2000, riga: 230, tabella: 2300 };
+  var ALP = { vetta: 25, pct: 4, sec: 45, passoMs: 140, quadro: 2000, riga: 230, tabella: 2300, base: 550, perPasso: 15, min: 100, vettaPiena: 200 };
   function passiAlp(v, prezzo, passo) {
     if (v == null || !(v > 0)) return ALP.vetta;
     var d = Math.abs(v - prezzo);
@@ -152,7 +153,7 @@
       P.ids.forEach(function (id) {
         var r = st.r[id] || [], p = st.prod.map(function (x, i) { return passiAlp(r[i], x.prezzo, P.passo(x.prezzo)); });
         var tot = p.reduce(function (a, b) { return a + b; }, 0), giu = tot > ALP.vetta;
-        var pt = giu ? 0 : Math.max(100, 500 - 15 * tot) + (tot === 0 ? 200 : 0);
+        var pt = giu ? 0 : Math.max(ALP.min, ALP.base - ALP.perPasso * tot) + (tot === 0 ? ALP.vettaPiena : 0);
         punti[id] = pt;
         g.push({ id: id, v: st.prod.map(function (x, i) { return r[i] != null ? r[i] : null; }), p: p, tot: tot, giu: giu, pt: pt, ms: st.ms[id] || 0 });
       });
@@ -178,7 +179,7 @@
       var testa = el("div", { class: "pz-testa", text: "🧗 L'Alpinista" });
       var cur = el("div", { class: "pza-cur" }), tre = el("div", { class: "pza-tre" }), ch = el("div");
       A.sch.appendChild(testa); A.sch.appendChild(cur); A.sch.appendChild(tre); A.sch.appendChild(ch);
-      var dots = prod.map(function (p, i) { var d = el("span", { class: "pza-dot" }, [ el("b", { text: String(i + 1) }), el("span", { text: p.e || "🎁" }) ]); tre.appendChild(d); return d; });
+      var dots = prod.map(function (p, i) { var d = el("span", { class: "pza-dot" }, [ el("b", { text: String(i + 1) }), Z().figura(el, p, "") ]); tre.appendChild(d); return d; });
       function stato(id) { var n = ((A.pub || {}).n || {})[id] || 0; return { tx: n >= prod.length ? "✅" : n + "/" + prod.length, ok: n >= prod.length }; }
       chips(A, ch, pub, stato);
       function tutti() {
@@ -254,7 +255,7 @@
       function prodotto(i) {
         var p = prod[i] || {}, conta = A.contachilometri(p.prezzo || 0, {});
         svuota(rv);
-        rv.appendChild(el("div", { class: "pz-miniprod" }, [ el("span", { class: "e", text: p.e || "🎁" }), el("span", { class: "n", text: p.nome || "" }) ]));
+        rv.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }) ]));
         rv.appendChild(conta.el);
         return conta;
       }
@@ -389,7 +390,7 @@
   // =====================================================================
   // 📊 METTILI IN ORDINE
   // =====================================================================
-  var ORD = { n: 5, sec: 30, aPosto: 80, tutti: 100, distanza: 1.15, ventaglio: 12 };
+  var ORD = { n: 5, sec: 30, aPosto: 70, tutti: 100, distanza: 1.15, ventaglio: 12 };
   function giustoOrd(prod) { return prod.map(function (p, i) { return i; }).sort(function (a, b) { return prod[a].prezzo - prod[b].prezzo; }); }
   function contaGiusti(l, giusto) { var n = 0; for (var i = 0; i < giusto.length; i++) if (l && l[i] === giusto[i]) n++; return n; }
   function permutazione(l, n) {
@@ -471,7 +472,7 @@
       function tutti(l) {
         svuota(cur);
         var g = el("div", { class: "pza-cinque" });
-        (l || pub.start || []).forEach(function (j) { var p = prod[j] || {}; g.appendChild(el("div", { class: "pza-c5" }, [ el("span", { class: "e", text: p.e || "🎁" }), el("span", { class: "n", text: p.nome || "" }) ])); });
+        (l || pub.start || []).forEach(function (j) { var p = prod[j] || {}; g.appendChild(el("div", { class: "pza-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }) ])); });
         cur.appendChild(g);
         cur.appendChild(el("div", { class: "pz-sotto", text: "👆 Tocca un prodotto e poi un altro per scambiarli" }));
       }
@@ -486,11 +487,11 @@
     pannello: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], l = (pub.start || prod.map(function (p, i) { return i; })).slice();
       var sel = -1, chiuso = false, toInvio = null, mosso = false;
-      var lista = el("div", { class: "pza-ord" }), righe = [];
+      var lista = el("div", { class: "pza-ord" }), righe = [], figs = [];
       function legame() { var L = LEGAMI.ord; return L && L.vivo() ? L : null; }
       l.forEach(function (j, pos) {
         var nb = el("span", { class: "nb" }, [ el("b", { text: String(pos + 1) }), pos === 0 ? el("small", { text: "meno caro" }) : pos === l.length - 1 ? el("small", { text: "più caro" }) : null ]);
-        var b = el("button", { class: "pza-or", type: "button" }, [ nb, el("span", { class: "e" }), el("span", { class: "n" }) ]);
+        var b = el("button", { class: "pza-or", type: "button" }, [ nb, el("span", { class: "fs", style: "display:contents" }), el("span", { class: "n" }) ]);
         premi(b, function () { tocca(pos); });
         righe.push(b); lista.appendChild(b); disegna(pos);
       });
@@ -498,7 +499,12 @@
       premi(ok, function () { if (chiuso) return; A.vibra(12); manda(true); blocca("✅ Fatto!"); });
       A.pan.appendChild(lista); A.pan.appendChild(ok);
       var L0 = legame(); if (L0) L0.tutti(l);   // (sullo stesso telefono: si riparte dai 5 prodotti, non da quello toccato da chi c'era prima)
-      function disegna(pos) { var p = prod[l[pos]] || {}; righe[pos].querySelector(".e").textContent = p.e || "🎁"; righe[pos].querySelector(".n").textContent = p.nome || ""; }
+      // la foto di ogni prodotto si fa una volta sola e si sposta da una riga all'altra (niente foto che si ricaricano)
+      function disegna(pos) {
+        var p = prod[l[pos]] || {}, r = righe[pos], posto = r.querySelector(".fs"), f = figs[l[pos]] || (figs[l[pos]] = Z().figura(el, p, "e"));
+        if (posto.firstChild !== f) { posto.textContent = ""; posto.appendChild(f); }
+        r.querySelector(".n").textContent = p.nome || "";
+      }
       function scivola(r, d) { r.style.transition = "none"; r.style.transform = "translateY(" + d + "px)"; void r.offsetWidth; r.style.transition = ""; r.style.transform = ""; }
       function tocca(pos) {
         if (chiuso) return;
@@ -540,7 +546,7 @@
       A.sch.appendChild(testa); A.sch.appendChild(fila); A.sch.appendChild(golf); A.sch.appendChild(banner);
       var tags = giusto.map(function (j, pos) {
         var p = prod[j] || {}, tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0));
-        var c = el("div", { class: "pza-fc" }, [ el("b", { class: "nb", text: String(pos + 1) }), el("span", { class: "e", text: p.e || "🎁" }), el("span", { class: "n", text: p.nome || "" }), tag ]);
+        var c = el("div", { class: "pza-fc" }, [ el("b", { class: "nb", text: String(pos + 1) }), Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), tag ]);
         c.style.animationDelay = (pos * 0.07) + "s"; fila.appendChild(c); return tag;
       });
       // le corsie del minigolf (una per giocatore)

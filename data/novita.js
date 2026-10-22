@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 256,
+    data: "22 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: punti più giusti ⚖️",
+    descrizione: [
+      "⚖️ Abbiamo giocato decine di migliaia di puntate finte per sistemare i punti: ora chi conosce meglio i prezzi vince più spesso, e la fortuna fa festa ma non decide la partita da sola. Chi è primo dopo le manche vince circa 2 volte su 3: il finale può ancora ribaltare tutto, ma non quasi sempre.",
+      "🎡 La Ruota del 100: 200 punti a chi ci va più vicino (100 al secondo, 50 al terzo). CENTO vale +300, e nel giro bonus il 100 dà altri +300, gli spicchi verdi +150. Prima un CENTO fortunato valeva +1.000 e poteva cancellare tre manche giocate bene.",
+      "🛍️ La Vetrina finale: 450 punti al più vicino (225 al secondo, 110 al terzo). «VINCI TUTTO!» vale +1.000 ed è più difficile: devi arrivare entro il 3% del totale.",
+      "🎁 I giochi a premi valgono tutti più o meno uguale, così chi vince l'Offerta sceglie quello che gli piace, non quello che regala più punti. 🧗 L'Alpinista: 550 meno 15 per ogni passo. 📊 Mettili in ordine: 70 per ogni posto giusto (+100 se sono tutti giusti). ✋ È troppo!: fermarsi al primo prezzo sopra vale 600, poi 450, 350, 250, 150; un prezzo troppo presto 200, due 100.",
+      "🟡 Plinko: ogni prezzo indovinato in «Occhio al prezzo» vale +50 punti e un gettone; le caselle sono 10 · 25 · 50 · 0 · 200 · 0 · 50 · 25 · 10. Prima la casella da 500 regalava tanti punti per pura fortuna."
+    ]
+  },
+  {
     v: 255,
     data: "22 ottobre 2026",
     titolo: "📈 Mini asta Fantacalcio: rigoristi, battitori, angoli e quotazioni di oggi",

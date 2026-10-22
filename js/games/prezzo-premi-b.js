@@ -5,17 +5,21 @@
 
    ✋ È TROPPO! (That's Too Much)
      Una cosa cara (sopra i 2.000 €). Sul telefono scorrono 10 prezzi che salgono (uno ogni 1,6 s): si tocca «✋ È TROPPO!»
-     appena il prezzo SUPERA quello vero. Il primo prezzo sopra vale 400, uno dopo 250, due dopo 150, più tardi 50;
-     troppo presto o mai 0. I 10 prezzi li fa il gioco (dal 50% al 155% del vero, a passi tondi, il vero tra il 3° e l'8°).
+     appena il prezzo SUPERA quello vero. Il primo prezzo sopra vale 600, uno dopo 450, due dopo 350, tre dopo 250, più
+     tardi 150; un prezzo prima (troppo presto) 200, due prima 100, prima ancora o mai 0. (22 ott 2026: prima 400/250/150/50
+     e troppo presto 0: in media dava 100 punti a testa contro i circa 300 degli altri giochi a premi; ora circa 240.)
+     I 10 prezzi li fa il gioco (dal 50% al 155% del vero, a passi tondi, il vero tra il 3° e l'8°).
      Rete: nella foto la lista dei prezzi (mai il vero); ogni telefono li fa scorrere da sé con l'orologio del pannello
      (A.fine), e il tocco manda il NUMERO del prezzo che si vedeva: il ritardo della rete non conta.
      Sullo stesso telefono: da 2 a 4 tutti insieme, un bottone a testa (il pannello del primo turno manda i tocchi di tutti
      con { tutti, ord }); da 5 in su a turno, ognuno vede scorrere gli stessi prezzi da capo.
    🟡 PLINKO
      Prima i gettoni («Occhio al prezzo»): 3 cose piccole, per ognuna due prezzi, si tocca quello giusto (6 s l'una):
-     1 gettone + 1 per ogni risposta giusta. Poi si sceglie dove lasciarli (9 posti) e «Lascia!». L'host fa cadere tutti i
-     gettoni tra i chiodini (12 file) e manda i percorsi nella rivelazione: tutti vedono la stessa caduta, tutti i gettoni
-     insieme. Caselle 10 · 50 · 100 · 0 · 500 · 0 · 100 · 50 · 10. Sullo stesso telefono ognuno ha le sue 3 domande.
+     1 gettone + 1 per ogni risposta giusta, e ogni risposta giusta vale anche +50. Poi si sceglie dove lasciarli (9 posti)
+     e «Lascia!». L'host fa cadere tutti i gettoni tra i chiodini (12 file) e manda i percorsi nella rivelazione: tutti
+     vedono la stessa caduta, tutti i gettoni insieme. Caselle 10 · 25 · 50 · 0 · 200 · 0 · 50 · 25 · 10. Sullo stesso
+     telefono ognuno ha le sue 3 domande. (22 ott 2026: prima 10 · 50 · 100 · 0 · 500 e niente +50: in media 480 punti a testa,
+     quasi tutti per fortuna; ora circa 320 come gli altri giochi a premi, e indovinare i prezzi conta di più.)
    Stile: classi col prefisso pzb- (più quelle pz- di prezzo-scena.js).
    ========================================================= */
 (function () {
@@ -151,7 +155,7 @@
   // =====================================================================
   //                          ✋ È TROPPO!
   // =====================================================================
-  var TR = { N: 10, PASSO: 1600, LEAD: 3000, SEC: 20, PUNTI: [400, 250, 150], DOPO: 50 };
+  var TR = { N: 10, PASSO: 1600, LEAD: 3000, SEC: 20, PUNTI: [600, 450, 350, 250], DOPO: 150, PRIMA: [200, 100] };
   var CLK = null;   // l'orologio dei prezzi su questo telefono: { s, inizio } (lo mette il pannello, il maxischermo lo legge)
   // una foto nuova dice da quanto scorrono i prezzi: se siamo indietro (la prima foto era vecchia, per chi ricarica) ci si rimette in pari.
   // (una foto vecchia può solo farci andare indietro: si tiene sempre la stima più avanti)
@@ -184,8 +188,10 @@
     }
     return { scala: [0.55, 0.65, 0.75, 0.85, 0.95, 1.05, 1.15, 1.25, 1.35, 1.45].map(function (f) { return tondo2(prezzo * f); }), j: 5 };
   }
+  // i = dove si è fermato (-1 = mai), j = il primo prezzo sopra quello vero
   function puntiTroppo(i, j) {
-    if (i == null || i < 0 || i < j) return 0;
+    if (i == null || i < 0) return 0;
+    if (i < j) return TR.PRIMA[j - i - 1] || 0;
     var d = i - j; return d < TR.PUNTI.length ? TR.PUNTI[d] : TR.DOPO;
   }
   // i tempi della rivelazione (li usano durata e rivela)
@@ -211,7 +217,7 @@
     pubblico: function (st) {
       var p = st.prod || {};
       return { s: st.s, sec: TR.SEC, insieme: !!st.insieme, scala: st.scala, pass: st.t0 ? Date.now() - st.t0 : 0,
-        prod: { e: p.e, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat },
+        prod: { e: p.e, f: p.f || null, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat },
         fermi: st.ordine.slice() };
     },
     mossa: function (st, id, m, P) {
@@ -398,7 +404,7 @@
       var mai = ids.filter(function (id) { return !(tocchi[id] >= 0); });
       var banner = el("div", { class: "pz-sotto", text: "Dove vi siete fermati…" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "✋ È troppo!" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ el("span", { class: "e", text: prod.e || "🎁" }), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
       var contaBox = el("div", { style: "min-height:52px;display:flex;align-items:center" }, [ conta.el ]);
       conta.el.style.visibility = "hidden";
       A.sch.appendChild(contaBox);
@@ -429,8 +435,8 @@
       righe.forEach(function (x, q) {
         var chi = su(q); if (!chi.length) return;
         var pt = puntiTroppo(q, j);
-        facce(A, x.fc, chi, pt ? "esulta" : "triste", 5);
-        x.r.appendChild(el("span", { class: "pt" + (pt ? "" : " zero"), text: pt ? "+" + A.fmtN(pt) : q < j ? "🙈 presto" : "0" }));
+        facce(A, x.fc, chi, pt && q >= j ? "esulta" : "triste", 5);
+        x.r.appendChild(el("span", { class: "pt" + (pt ? "" : " zero"), text: q < j ? "🙈 " + (pt ? "+" + A.fmtN(pt) : "presto") : pt ? "+" + A.fmtN(pt) : "0" }));
       });
       if (mai.length) facce(A, maiBox.querySelector(".fc"), mai, "triste", 6);
       await A.dorme(RT.dopo); if (!A.vivo()) return;
@@ -459,7 +465,7 @@
   // =====================================================================
   //                             🟡 PLINKO
   // =====================================================================
-  var PL = { CASE: [10, 50, 100, 0, 500, 0, 100, 50, 10], FILE: 12, Q: 3, QSEC: 6, SEC: 32, ONDA: 1100 };
+  var PL = { CASE: [10, 25, 50, 0, 200, 0, 50, 25, 10], TOP: 200, GIUSTA: 50, FILE: 12, Q: 3, QSEC: 6, SEC: 32, ONDA: 1100 };
   // un prezzo sbagliato che sembra vero: stesso tipo di numero (6,99 → 4,99; 29 → 39; 15 → 20), dal 18% al 60% lontano
   function comeIlVero(v, p) {
     if (p >= 10 && Math.abs(p - Math.round(p)) < 1e-9) {
@@ -484,7 +490,7 @@
     return l.map(function (p) { var f = finto(p.prezzo, P.rnd), ok = P.rnd() < 0.5 ? 0 : 1; return { p: p, opz: ok ? [f, p.prezzo] : [p.prezzo, f], ok: ok }; });
   }
   function domDi(st, id) { return st.dom ? st.dom[id] || st.comuni : st.comuni; }
-  function pubQ(d) { var p = d.p; return { e: p.e, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat, opz: d.opz }; }
+  function pubQ(d) { var p = d.p; return { e: p.e, f: p.f || null, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat, opz: d.opz }; }
   // la caduta: posizioni in mezze caselle (0..16, le caselle sono i pari), a ogni fila ±1, coi rimbalzi sulle pareti
   function cade(x, rnd) {
     var p = 2 * x, s = "";
@@ -531,7 +537,7 @@
       }
     }
     // le caselle in fondo
-    var colC = { 500: ["#fcc419", "#3b2a00"], 0: ["#c92a2a", "#fff"], 100: ["#2f9e44", "#fff"], 50: ["#1971c2", "#fff"], 10: ["#6741d9", "#fff"] };
+    var colC = { 200: ["#fcc419", "#3b2a00"], 0: ["#c92a2a", "#fff"], 50: ["#2f9e44", "#fff"], 25: ["#1971c2", "#fff"], 10: ["#6741d9", "#fff"] };
     var fs = Math.max(9, Math.min(g.sw * 0.36, g.bh * 0.5, 16));
     for (var k = 0; k < 9; k++) {
       var v = PL.CASE[k], cc = colC[v] || ["#444", "#fff"], x0 = k * g.sw;
@@ -583,7 +589,7 @@
 
   PREMI.plinko = {
     nome: "Plinko", icona: "🟡", ordine: 5,
-    regola: "Indovina 3 prezzi per vincere gettoni, poi lasciali cadere: in mezzo c'è il 500!",
+    regola: "Ogni prezzo indovinato vale +50 e un gettone. Poi lasciali cadere: in mezzo c'è il 200!",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -630,7 +636,7 @@
       P.ids.forEach(function (id) {
         var g = 1 + (st.giusti[id] || 0), l = (st.lanci[id] || []).slice(0, g);
         while (l.length < g) l.push(l.length ? l[l.length - 1] : 3 + Math.floor(rnd() * 3));   // quelli non lasciati: li lascia il caso
-        gettoni[id] = g; punti[id] = 0;
+        gettoni[id] = g; punti[id] = PL.GIUSTA * (st.giusti[id] || 0);   // ogni prezzo indovinato: +50 (e un gettone)
         l.forEach(function (x, k) { var c = cade(x, rnd); punti[id] += PL.CASE[c.b]; gett.push({ id: id, k: k, x: x, s: c.s, b: c.b, auto: k >= (st.lanci[id] || []).length ? 1 : 0 }); });
       });
       // chi fa più punti si porta a casa una delle cose dell'«Occhio al prezzo»
@@ -765,7 +771,7 @@
         if (m.s >= 0 && S.ui.bs[m.s]) S.ui.bs[m.s].classList.add(m.ok ? "giusto" : "sbagliato");
         if (!m.ok && giusto >= 0) S.ui.bs[giusto].classList.add("era");
         if (m.ok) {
-          S.ui.nota.textContent = "✅ Giusto! +1 gettone 🟡"; A.FX.cassa();
+          S.ui.nota.textContent = "✅ Giusto! +" + PL.GIUSTA + " e un gettone 🟡"; A.FX.cassa();
           var nuovo = S.ui.gf.children[S.g - 1]; if (nuovo) { nuovo.className = "on nuovo"; }
         } else { S.ui.nota.textContent = (m.s < 0 ? "⏰ Tempo! " : "❌ No! ") + "Era " + A.fmtE(m.prezzo); A.FX.toc(240); }
         var q = S.q;
@@ -840,10 +846,10 @@
       var box = el("div", { class: "pzb-pl-board" }), chips = el("div", { class: "pzb-pl-chips" }), banner = el("div", { class: "pz-sotto", text: "Tutti i gettoni cadono insieme!" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🟡 Plinko" }));
       A.sch.appendChild(box); A.sch.appendChild(chips); A.sch.appendChild(banner);
-      var tot = {}, ch = {};
+      var tot = {}, ch = {}, giusti = riv.giusti || {};
       ids.forEach(function (id) {
-        tot[id] = 0;
-        var v = el("span", { class: "v", text: "0" }), c = el("div", { class: "pzb-pl-ch" }, [ A.fac(id), v ]);
+        tot[id] = PL.GIUSTA * (giusti[id] || 0);   // i +50 dei prezzi indovinati ci sono già prima della caduta
+        var v = el("span", { class: "v", text: A.fmtN(tot[id]) }), c = el("div", { class: "pzb-pl-ch" }, [ A.fac(id), v ]);
         c.style.setProperty("--c", colore(A, id)); ch[id] = { el: c, v: v }; chips.appendChild(c);
       });
       var T = tavola(A, box); await T.pronto; if (!A.vivo()) return;
@@ -859,20 +865,20 @@
       // i lampi delle caselle
       var lampi = PL.CASE.map(function (v, k) { var f = el("div", { class: "pzb-flash" }); f.style.left = (k * g.sw) + "px"; f.style.width = g.sw + "px"; f.style.height = (g.bh * 2.2) + "px"; T.inn.appendChild(f); return f; });
       await A.dorme(RP.intro); if (!A.vivo()) return;
-      var ultimoClic = 0, inCasella = {}, cinquecento = 0, me = A.io;
+      var ultimoClic = 0, inCasella = {}, centro = 0, me = A.io;
       function clic() { var t = Date.now(); if (t - ultimoClic < 45) return; ultimoClic = t; A.FX.clic(0.55); }
       function atterra(x) {
         if (!A.vivo()) return;
         var v = PL.CASE[x.b], f = lampi[x.b];
         f.classList.remove("on"); void f.offsetWidth; f.classList.add("on");
-        var p = el("div", { class: "pzb-piu" + (v === 500 ? " oro" : v === 0 ? " zero" : ""), text: v ? "+" + A.fmtN(v) : "0" });
+        var p = el("div", { class: "pzb-piu" + (v === PL.TOP ? " oro" : v === 0 ? " zero" : ""), text: v ? "+" + A.fmtN(v) : "0" });
         p.style.left = g.X(2 * x.b) + "px"; p.style.top = (g.H - g.bh - g.d) + "px"; T.inn.appendChild(p);
         setTimeout(function () { if (p.parentNode) p.parentNode.removeChild(p); }, 1300);
         tot[x.id] += v;
         var c = ch[x.id]; if (c) { c.v.textContent = A.fmtN(tot[x.id]); c.el.classList.remove("cambia"); void c.el.offsetWidth; c.el.classList.add("cambia"); }
-        if (v === 500) {
-          A.FX.din(); cinquecento++;
-          if (cinquecento === 1) { A.ST.pubblico(A.S, "ovazione"); A.ST.coriandoli(); }
+        if (v === PL.TOP) {
+          A.FX.din(); centro++;
+          if (centro === 1) { A.ST.pubblico(A.S, "ovazione"); A.ST.coriandoli(); }
           if (x.id === me || A.locale === "telefono") A.vibra([30, 40, 70]);
         } else if (v === 0 && (x.b === 3 || x.b === 5)) { if (Math.random() < 0.6) A.ST.pubblico(A.S, "ohh"); A.FX.toc(220); }
         else A.FX.toc(600 + v * 2);
@@ -908,9 +914,9 @@
       var primi = ids.filter(function (id) { return mx > 0 && (punti[id] != null ? punti[id] : tot[id]) === mx; });
       primi.forEach(function (id) { if (ch[id]) ch[id].el.classList.add("primo"); });
       if (mx > 0) {
-        banner.className = "pz-banner pzb-ban-s" + (mx >= 500 ? " oro" : "");
+        banner.className = "pz-banner pzb-ban-s" + (centro ? " oro" : "");
         banner.textContent = "🏆 " + elenco(A, primi) + ": " + A.fmtN(mx) + " punti!";
-        if (!cinquecento) A.ST.pubblico(A.S, "applauso");
+        if (!centro) A.ST.pubblico(A.S, "applauso");
       } else {
         banner.className = "pz-banner no pzb-ban-s"; banner.textContent = "😱 Tutti a zero!";
         A.FX.trombone(); A.ST.pubblico(A.S, "ohh");
