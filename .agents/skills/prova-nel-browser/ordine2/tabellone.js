@@ -274,8 +274,11 @@
     if (!/repeating-linear-gradient/.test(bg) || !/46, 46, 46/.test(bg) || /252, 196, 25/.test(bg)) no("la nera del capo non è a righe scure come nella proposta C (" + bg.slice(0, 80) + ")");
     if (!wL.document.querySelector(".or-tab.capo")) no("per il capo il tabellone non è «capo» (girate con la ✓)");
     // (22 ott 2026, il proprietario: «i colori per il capo sono un po' troppo spenti»: le girate del capo restano piene, con la ✓)
+    // (la girata appena girata ha l'animazione orGira, che parte da opacity .4: con la scheda nascosta resta ferma lì, quindi
+    // l'opacità si misura su una girata che non è «appena»)
     var gir = [].filter.call(carte(wL), function (b) { return b.classList.contains("g"); })[0];
-    if (gir && +wL.getComputedStyle(gir).opacity < 0.95) no("per il capo le girate sono ancora sbiadite (" + wL.getComputedStyle(gir).opacity + ")");
+    var girFerma = [].filter.call(carte(wL), function (b) { return b.classList.contains("g") && !b.classList.contains("appena"); })[0];
+    if (girFerma && +wL.getComputedStyle(girFerma).opacity < 0.95) no("per il capo le girate sono ancora sbiadite (" + wL.getComputedStyle(girFerma).opacity + ")");
     if (gir && !/✓/.test(wL.getComputedStyle(gir, ":after").content)) no("per il capo le girate non hanno la ✓");
     if (wP.document.querySelector(".or-tab.capo")) no("per chi indovina il tabellone è «capo»");
     [0, 1].forEach(function (k) { if (!wP.document.querySelector(".or-pan.s" + k + " .or-pan-nome .or-sg[data-s='" + k + "'] svg")) no("il pannello " + k + " non ha il suo segno"); });
