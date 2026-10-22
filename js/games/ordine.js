@@ -160,7 +160,7 @@
   // SOLO AVVISO (il capo tocca di nuovo Invia): la parola del tabellone o la sua radice all'inizio dell'indizio (CANE/CANESTRO,
   // MARE/MARESCIALLO, MARTE/MARTELLO, GATTO/GATTINO: il gioco non sa distinguere GATTINO da PULCINO con PULCE) e le coppie di
   // parole diverse quasi uguali (CASA/CASO, PORTA/PORTO, CASA/CASSA, PAPA/PAPÀ).
-  // Nomi di più parole: fino a 3 pezzi con lo spazio o l'apostrofo (SAN GENNARO, NEW YORK, DEL PIERO, L'AQUILA), ognuno
+  // Nomi di più parole: fino a 3 pezzi con lo spazio, l'apostrofo o il trattino (SAN GENNARO, NEW YORK, L'AQUILA, COCA-COLA), ognuno
   // controllato come una parola. Le parole già girate non bloccano niente. Le prove: ordine2/indizio.js (o2i1, con 280 esempi)
   // tutti gli accenti e i segni via (À, Â, Ä, Ç, Ñ…), poi solo A-Z
   function normI(w) {
@@ -177,9 +177,12 @@
   function schiaccia(n) { return n.replace(/(.)\1+/g, "$1"); }   // GATTO → GATO, PIZZA → PIZA
   function vocaleFinale(n) { return /[AEIOU]$/.test(n); }
   // il testo dell'indizio com'è scritto, in ordine: maiuscolo, gli apostrofi tutti uguali (anche quelli storti dell'iPhone),
-  // uno spazio solo tra le parole e niente spazi attorno all'apostrofo («L' AQUILA» → «L'AQUILA»)
+  // uno spazio solo tra le parole e niente spazi attorno all'apostrofo («L' AQUILA» → «L'AQUILA») e al trattino (revisione del
+  // 22 ott 2026: i nomi col trattino, COCA-COLA, SPIDER-MAN, HIP-HOP, sono nomi di più parole come SAN GENNARO; vale anche il
+  // trattino lungo che certe tastiere mettono da sole)
   function pulisciIndizio(p) {
-    return String(p || "").replace(/[\u2018\u2019\u02bc\u00b4`]/g, "'").replace(/\s+/g, " ").replace(/ ?' ?/g, "'").trim().toUpperCase();
+    return String(p || "").replace(/[\u2018\u2019\u02bc\u00b4`]/g, "'").replace(/[\u2010-\u2015\u2212]/g, "-").replace(/\s+/g, " ")
+      .replace(/ ?' ?/g, "'").replace(/ ?- ?/g, "-").trim().toUpperCase();
   }
   // i plurali possibili di una parola (normalizzata): CASA → CASE, CASO → CASI, BANCA → BANCHE, AMICO → AMICI/AMICHI, OLIO → OLI
   function plurali(w) {
@@ -276,9 +279,13 @@
     });
   });
   // il primo pezzo delle parole composte (ASTRO-NAVE, GIRA-SOLE, CAVA-TAPPI, AUTO-STRADA, PESCE-CANE): se la parola del tabellone
-  // è il secondo pezzo, l'indizio non vale. Se davanti c'è altro (STRUMENTO non è STRU + MENTA, TOPOLINO non è TOPO + LINO) è
-  // solo un avviso: tante parole finiscono come una del tabellone per caso (-MENTO, -INO, -AZIONE…)
+  // è il secondo pezzo, l'indizio non vale. Se davanti c'è altro (STRUMENTO non è STRU + MENTA, TOPOLINO non è TOPO + LINO) passa:
+  // tante parole finiscono come una del tabellone per caso (PERCORSO e ORSO, CONVENTO e VENTO, -INO, -AZIONE…), e nemmeno l'avviso
+  // (sarebbero centinaia). Per questo i primi pezzi veri vanno TUTTI qui: chi ne trova uno che manca lo aggiunge
+  // (revisione del 22 ott 2026: LUNGO-MARE, MAL-TEMPO, CENTRO-CAMPO, ACQUA-VITE, MADRE-LINGUA, CAVOL-FIORE, DOPO-BARBA…)
   var TESTE = ("ASTRO AUTO AERO AGRI AGRO ALTO ANTI APRI ARCI ARCO ASCIUGA ASPIRA ATTACCA BAGNA BANCA BANCO BARO BASSO BATTI BENE BIANCA " +
+    "LUNGO CENTRO ACQUA MADRE BUON BUONA MAL MALA GIRO CAVOL PIANO NORD GUARDA CANTA CARICA TEMPERA MANGIA PELA TERGI AFFILA " +
+    "TORCI GRILLO RAGNA OSSO ECO ULTRA ALZA PUNTA ACCHIAPPA ACCENDI BAGNO SPARTI PALCO DOPO SENZA VOLTA MANO AVAN " +
     "BIANCO BIO BUCA CACCIA CACIO CALZA CAPO CAPOD CAPRI CASSA CAVA CENTI CENTO CERCA CINE CODI COLA CONTA CONTRO COPRI CRONO " +
     "CRUCI DOPPIO ELETTRO ETILO EXTRA FANTA FERMA FERR FICCA FINI FOTO FRANCO FUORI GIACCA GIRA GONIO GRAN GRATTA IDRO IGRO INFRA IPER " +
     "LANCIA LAVA LUCIDA LUSTRA MACRO MAPPA MARCIA MAXI MEGA MELO MEZZA MEZZO MICRO MILLE MINI MONO MONTE MOTO MULTI NERO " +
@@ -355,8 +362,8 @@
     var p = pulisciIndizio(parola);
     if (!p) return { blocca: "Scrivi l'indizio." };
     if (/[0-9]/.test(p)) return { blocca: "Scrivi i numeri in lettere (OTTO)." };
-    if (!/^[A-ZÀ-ÖØ-Þ' ]+$/.test(p) || /^'|'$/.test(p)) return { blocca: "Solo lettere, niente simboli." };
-    var pezziP = p.split(/[ ']+/).filter(Boolean);
+    if (!/^[A-ZÀ-ÖØ-Þ' -]+$/.test(p) || /^['-]|['-]$/.test(p)) return { blocca: "Solo lettere, niente simboli." };
+    var pezziP = p.split(/[ '-]+/).filter(Boolean);
     if (pezziP.length > 3) return { blocca: "Al massimo 3 parole, solo per i nomi (SAN GENNARO)." };
     if (p.length > MAX_IND) return { blocca: "Troppo lungo: al massimo " + MAX_IND + " lettere." };
     var n = normI(p);
