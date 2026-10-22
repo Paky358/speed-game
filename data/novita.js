@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 255,
+    data: "22 ottobre 2026",
+    titolo: "📈 Mini asta Fantacalcio: quotazioni aggiornate",
+    descrizione: [
+      "📈 Le quotazioni di tutti i calciatori dell'asta sono quelle di oggi del listone 2026/27 di Fantacalcio.it: a fine asta il valore delle rose è quello vero di adesso."
+    ]
+  },
+  {
     v: 254,
     data: "22 ottobre 2026",
     titolo: "⚽ La giornata: punteggi in alto e calciatori più veri",
