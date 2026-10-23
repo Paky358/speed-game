@@ -25,6 +25,8 @@
   // ---------------- il giocatore automatico di tutto ----------------
   async function ag(nome, opz) {
     var f = false;
+    try { if (W.PZN) f = await W.PZN.agisciN(nome, opz); } catch (e) {}   // i giochi a premi del file c (prezzo/premi-c.js, se caricato)
+    if (f) return true;
     try { f = await W.PZB.agisciB(nome, opz); } catch (e) {}
     if (f) return true;
     try { return await W.PZA.agisci(nome, opz); } catch (e) { return false; }

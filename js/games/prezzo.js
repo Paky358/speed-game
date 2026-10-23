@@ -327,6 +327,7 @@
           fatti: Object.keys(H.premio.fatti) };
         if (s === "gioca" && g && g.pubblico) { try { o.premio.pub = g.pubblico(H.premio.st, apiPremio()); } catch (e) { o.premio.pub = {}; } }
         if (s === "riv") { o.premio.riv = H.premio.riv; o.premio.punti = H.premio.punti; }
+        if (s === "intro") { o.avanti = H.avanti.slice(); o.servono = servono(); }
       }
       if (f === "punti") {
         o.avanti = H.avanti.slice(); o.servono = servono(); o.dopo = H.piano[H.ip + 1] || "";
@@ -530,6 +531,7 @@
       var st = null;
       try { st = g.prepara(apiPremio()); } catch (e) { try { console.error("[prezzo] prepara " + tipo, e); } catch (x) {} return prossimo(); }
       H.premio = { tipo: tipo, st: st, fatti: {}, riv: null, punti: null, da: da || null, sec: 30 };
+      H.avanti = [];   // (la regola si salta con «⏩ Avanti», come le classifiche: 23 ott 2026)
       vai("premio", "intro", T.intro, giocaPremio);
     }
     function giocaPremio() {
@@ -735,11 +737,11 @@
         if (s === "bonus" && modo !== "telefono" && conta.every(function (p) { return !x(p.id).cento || x(p.id).b != null; })) return dopo(RU_FERMA, rivBonus);
       }
       if (f === "vetrina" && s === "offri" && pres.every(function (p) { return H.vet.off[p.id] != null || H.vpassati[p.id]; })) return dopo(pausa, chiudiVetrina);
-      if (f === "punti" && H.avanti.length >= servono()) return oltre();
+      if ((f === "punti" || (f === "premio" && s === "intro")) && H.avanti.length >= servono()) return oltre();
     }
     // «⏩ Avanti» sulle classifiche: si parte subito se lo tocca più di metà (sullo stesso telefono e col Bot basta il tuo)
     function avanti(id) {
-      if (H.fase !== "punti") return;
+      if (H.fase !== "punti" && !(H.fase === "premio" && H.sotto === "intro")) return;
       if (!online) return oltre();
       var p = pById(id); if (!p || p.via || p.bot || H.avanti.indexOf(id) >= 0) return;
       H.avanti.push(id);
@@ -747,6 +749,7 @@
       bd();
     }
     function oltre() {
+      if (H.fase === "premio" && H.sotto === "intro") { ferma(); return giocaPremio(); }
       if (H.fase !== "punti") return;
       // (il respiro dopo una ripresa dura almeno RESPIRO anche se toccano tutti «Avanti»: intanto gli amici rientrano)
       if (H.respiro) { var resta = H.respiro.fino - Date.now(); return resta > 50 ? dopo(resta, finisciRespiro) : finisciRespiro(); }
@@ -1419,10 +1422,8 @@
     schermo(R, [ el("div", { class: "pz-testa", text: "🎁 Gioco a premi" + (vm.nPremio > 1 ? " · " + vm.iPremio + " di " + vm.nPremio : "") }),
       el("div", { class: "pz-intro" }, [ el("span", { class: "i", text: pr.icona }), el("b", { text: pr.nome }), el("p", { text: pr.regola }) ]),
       el("div", { class: "pz-sotto", text: (pr.da ? "Scelto da " + (pr.da === R.cb.myId ? "te" : nomeDi(vm, pr.da)) + " · " : "") + "si gioca tutti insieme!" }) ]);
-    // quanto manca per leggere la regola: «Si comincia tra 7…» (in basso, come sulle classifiche)
-    var conto = el("p", { class: "pz-attesa" }), sec = Math.max(1, Math.round(((vm.restaMs || T.intro) - (Date.now() - R.vmTs)) / 1000));
-    ST.barra(S, [ conto, R.t.faccine() ]);
-    R.t.contoAvanti(conto, sec, null, "pz|" + vm.sessione + "|" + k, "Si comincia tra ");
+    // quanto manca per leggere la regola: «Si comincia tra 7…» e «⏩ Avanti» (si parte appena lo tocca più di metà; col Bot basta il tuo)
+    barraAvanti(R, k, T.intro, "Si comincia tra ");
     Z().FX.tada(); ST.pubblico(S, "applauso");
   }
   // gli aiuti per i giochi a premi su ogni telefono (vedi interfaccia in js/games/prezzo-premi-piu.js)
@@ -1520,8 +1521,8 @@
     barraAvanti(R, k);
   }
   // in basso: «Si va avanti tra 8…» e «⏩ Avanti» (si parte subito se lo tocca più di metà)
-  function barraAvanti(R, k) {
-    var vm = R.vm, el = R.t.el, sec = Math.max(1, Math.round(((vm.restaMs || T.punti) - (Date.now() - R.vmTs)) / 1000)), chiave = "pz|" + vm.sessione + "|" + k;
+  function barraAvanti(R, k, tempo, testoConto) {
+    var vm = R.vm, el = R.t.el, sec = Math.max(1, Math.round(((vm.restaMs || tempo || T.punti) - (Date.now() - R.vmTs)) / 1000)), chiave = "pz|" + vm.sessione + "|" + k;
     var conto = el("p", { class: "pz-attesa" }), me = mio(R), b = null;
     if (R.cb.locale || me) {
       b = el("button", { class: "btn btn-primario pz-avanti", type: "button" }, [ el("span", { class: "tx", text: R.cb.locale ? "Avanti ▶" : "⏩ Avanti" }), R.cb.locale ? null : el("span", { class: "quanti" }) ]);
@@ -1529,11 +1530,11 @@
     }
     R.bAvanti = b; R.kAvanti = chiave;
     ST.barra(R.S, [ conto, b, R.t.faccine() ]);
-    R.t.contoAvanti(conto, sec, null, chiave);
+    R.t.contoAvanti(conto, sec, null, chiave, testoConto);
     aggiornaAvanti(R);
   }
   function aggiornaAvanti(R) {
-    var b = R.bAvanti, vm = R.vm; if (!b || !b.isConnected || vm.fase !== "punti" || R.cb.locale) return;
+    var b = R.bAvanti, vm = R.vm; if (!b || !b.isConnected || !(vm.fase === "punti" || (vm.fase === "premio" && vm.sotto === "intro")) || R.cb.locale) return;
     var l = vm.avanti || [], mio1 = l.indexOf(R.cb.myId) >= 0 || R.avantiMio === R.kAvanti, n = l.length + (mio1 && l.indexOf(R.cb.myId) < 0 ? 1 : 0);
     var q = b.querySelector(".quanti"), tx = n + " su " + (vm.servono || 1);
     if (q && q.textContent !== tx) q.textContent = tx;
@@ -1543,39 +1544,114 @@
 
   // ---------------- LA RUOTA DEL 100 ----------------
   function altRuota() { var h = (window.innerHeight || 640); return Math.max(48, Math.min(66, Math.round(h * 0.085))); }
+  // Il maxischermo della Ruota (23 ott 2026, il proprietario: «tutti possano vedere le ruote di tutti mentre girano in tempo
+  // reale», «4 per ogni schermata come le rose della mini asta»): ogni giocatore ha la sua ruota piccola che gira dal vivo
+  // quando lui spinge; il suo numero si vede (anche sul leggio) solo quando la ruota si è fermata. In 5 o più: pagine da 4,
+  // con le frecce, e la pagina va da sola su chi sta girando. Chi si è fermato guarda girare quelle degli altri.
+  var RUOTE_PAG = 4;
+  function altMini() { var h = (window.innerHeight || 640); return Math.max(20, Math.min(30, Math.round(h * 0.036))); }
   function schRuota(R) {
     var vm = R.vm, el = R.t.el, key = "ruota|" + vm.nRuota;
     if (R.schKey === key && R.schRu && R.schRu.box.isConnected) return R.schRu;
     var grid = el("div", { class: "pz-rgriglia" }), nota = el("div", { class: "pz-sotto" });
-    var box = schermo(R, [ el("div", { class: "pz-testa", text: "🎡 La Ruota del 100" + (vm.ruoteTot > 1 ? " · " + vm.nRuota + " di " + vm.ruoteTot : "") }),
-      el("div", { class: "pz-titolo", text: "Più vicino a 100, senza superarlo!" }), grid, nota ]);
-    R.schKey = key; R.schRu = { box: box, grid: grid, nota: nota, celle: {} };
-    return R.schRu;
+    var U = { grid: grid, nota: nota, celle: {}, ordine: [], pagina: 0 };
+    var indietro = el("button", { type: "button", text: "◀" }), avanti = el("button", { type: "button", text: "▶" }), quali = el("span");
+    var pag = el("div", { class: "pz-rpag" }, [ indietro, quali, avanti ]); pag.hidden = true;
+    indietro.addEventListener("click", function () { vaiPagina(U, U.pagina - 1, true); });
+    avanti.addEventListener("click", function () { vaiPagina(U, U.pagina + 1, true); });
+    U.pag = pag; U.quali = quali;
+    U.box = schermo(R, [ el("div", { class: "pz-testa", text: "🎡 La Ruota del 100" + (vm.ruoteTot > 1 ? " · " + vm.nRuota + " di " + vm.ruoteTot : "") }),
+      el("div", { class: "pz-titolo", text: "Più vicino a 100, senza superarlo!" }), grid, pag, nota ]);
+    R.schKey = key; R.schRu = U;
+    return U;
   }
-  function testoRuota(x, mostraSi) {
-    if (!x || x.v1 == null) return "—";
-    var tot = (x.v1 || 0) + (x.v2 || 0);
-    if (x.v2 != null) return x.v1 + " + " + x.v2 + " = " + (tot > 100 ? "💥" + tot : tot);
-    return String(x.v1) + (x.si === false && mostraSi ? " ✋" : x.si === true && mostraSi ? " 🎡" : x.si === "?" ? " ✅" : "");
+  // le pagine da 4 ruote (manuale: la pagina resta lì per un po' anche se gira qualcun altro)
+  function vaiPagina(U, n, aMano) {
+    var tot = Math.max(1, Math.ceil(U.ordine.length / RUOTE_PAG));
+    U.pagina = (n + tot) % tot;
+    if (aMano) U.aMano = Date.now();
+    U.ordine.forEach(function (id, i) { var C = U.celle[id]; if (C) C.c.hidden = Math.floor(i / RUOTE_PAG) !== U.pagina; });
+    U.pag.hidden = tot < 2;
+    var da = U.pagina * RUOTE_PAG + 1, a = Math.min(U.ordine.length, da + RUOTE_PAG - 1);
+    U.quali.textContent = "Ruote " + da + "-" + a + " di " + U.ordine.length;
   }
-  // il numero di chi sta girando su QUESTO telefono si vede solo quando la sua ruota si ferma (fino ad allora resta quello di prima)
+  function cartaRuota(R, p) {
+    var el = R.t.el, ru = Z().ruota(el, { alt: altMini(), mini: true });
+    var val = el("span", { class: "val", text: "—" }), st = el("span", { class: "st" });
+    var c = el("div", { class: "pz-rcard" }, [ ru.el, el("div", { class: "info" }, [ el("div", { class: "chi" }, [ fac(el, p), el("span", { class: "nm", text: p.id === R.cb.myId ? "Tu" : p.nome }) ]), val, st ]) ]);
+    return { c: c, ru: ru, val: val, st: st, visto: {}, gira: null };
+  }
+  // la ruota grande di questo telefono sta girando per quel numero (lo si scopre quando si ferma lei)
+  function ruotaGrande(R, id, campo) { var RU = R.ruotaUI; return RU && RU.chi === id && RU.campo === campo ? RU : null; }
+  // il numero che si vede di id: solo quello delle ruote già ferme
   function vistaRuota(R, id) {
-    var x = R.vm.ruota && R.vm.ruota.g[id], RU = R.ruotaUI;
-    if (!x || !RU || RU.chi !== id || RU.fermo || x[RU.campo] == null) return x;
+    var x = R.vm.ruota && R.vm.ruota.g[id], C = R.schRu && R.schRu.celle[id];
+    if (!x) return x;
     var y = {}; for (var k in x) y[k] = x[k];
-    y[RU.campo] = null; return y;
+    ["v1", "v2", "b"].forEach(function (f) { if (y[f] != null && (C ? C.visto[f] == null : (ruotaGrande(R, id, f) && !R.ruotaUI.fermo))) y[f] = null; });
+    return y;
+  }
+  function statoCarta(C, x, s, gira) {
+    var v = C.visto, tot = (v.v1 || 0) + (v.v2 || 0);
+    if (gira) return "🎡 Gira…";
+    if (v.b != null) return "🎁 Bonus " + v.b + (puntiBonus(v.b) ? ": +" + N(puntiBonus(v.b)) : "");
+    if (v.v1 == null) return s === "giro1" || s === "turni" ? "👆 Deve girare" : "";
+    if (tot > 100) return "💥 Sballato!";
+    if (tot === 100) return x.cento && s === "bonus" ? "🎁 Giro bonus…" : "💯 CENTO!";
+    if (s === "decidi") return x.si != null ? "✅ Ha deciso" : "🤔 Ci pensa…";
+    if (v.v2 != null) return "Totale " + tot;
+    if (x.si === false) return "✋ Si ferma";
+    if (x.si === true) return "🎡 Gira ancora…";
+    return s === "giro1" ? "Aspetta gli altri" : "";
   }
   function aggiornaRuota(R) {
-    var vm = R.vm, U = R.schRu, el = R.t.el; if (!vm.ruota) return;
+    var vm = R.vm, U = R.schRu; if (!vm.ruota) return;
     if (U && U.grid.isConnected) {
-      vm.players.forEach(function (p) {
-        if (p.via || !vm.ruota.g[p.id]) return;
-        var c = U.celle[p.id], x = vistaRuota(R, p.id);
-        if (!c) { c = U.celle[p.id] = el("div", { class: "pz-rg" }, [ fac(el, p), el("span", { class: "nm", text: p.id === R.cb.myId ? "Tu" : p.nome }), el("span", { class: "val" }) ]); U.grid.appendChild(c); }
-        var tx = testoRuota(x, vm.sotto !== "decidi"), v = c.querySelector(".val"); if (v.textContent !== tx) v.textContent = tx;
-        var tot = (x.v1 || 0) + (x.v2 || 0); c.classList.toggle("fuori", tot > 100); c.classList.toggle("cento", tot === 100);
+      var lista = vm.players.filter(function (p) { return !p.via && vm.ruota.g[p.id]; });
+      lista.forEach(function (p) {
+        var C = U.celle[p.id], x = vm.ruota.g[p.id];
+        if (!C) {
+          C = U.celle[p.id] = cartaRuota(R, p); U.ordine.push(p.id); U.grid.appendChild(C.c);
+          // i numeri che c'erano già (chi arriva a metà o ricarica): si vedono subito, senza girare
+          ["v1", "v2", "b"].forEach(function (f) { if (x[f] != null && !ruotaGrande(R, p.id, f)) C.visto[f] = x[f]; });
+          var ult = C.visto.b != null ? C.visto.b : C.visto.v2 != null ? C.visto.v2 : C.visto.v1;
+          if (ult != null) C.ru.mostra(ult);
+          vaiPagina(U, U.pagina);
+        }
+        // un numero nuovo: la ruota piccola gira e si ferma lì; solo allora si vede (la mia la scopre la ruota grande)
+        if (!C.gira) {
+          var f = ["v1", "v2", "b"].filter(function (q) { return x[q] != null && C.visto[q] == null; })[0], RG = f && ruotaGrande(R, p.id, f);
+          if (f && RG && RG.fermo) { C.visto[f] = x[f]; C.ru.mostra(x[f]); }
+          else if (f && !RG) {
+            C.gira = f; C.c.classList.add("gira");
+            var i = U.ordine.indexOf(p.id), pg = Math.floor(i / RUOTE_PAG);
+            var occupata = U.ordine.some(function (id, j) { return Math.floor(j / RUOTE_PAG) === U.pagina && U.celle[id] && U.celle[id].gira && id !== p.id; });
+            if (pg !== U.pagina && !occupata && !(U.aMano && Date.now() - U.aMano < 6000)) vaiPagina(U, pg);
+            (function (C, f, val) {
+              C.ru.arriva(val).then(function () {
+                C.gira = null; C.visto[f] = val; C.c.classList.remove("gira");
+                if (!R.S.vivo()) return;   // (uscito intanto: niente suoni sulla home)
+                var v = C.visto, tot = f === "b" ? 0 : (v.v1 || 0) + (v.v2 || 0);
+                if ((f === "b" && val === 100) || (f !== "b" && tot === 100)) { Z().FX.cento(); fumetto(R.S, "CENTO! CENTO! CENTO!"); ST.pubblico(R.S, "ovazione"); }
+                else if (f !== "b" && tot > 100) ST.pubblico(R.S, "ohh");
+                else Z().FX.toc(640);
+                if (R.vm.fase === "ruota") { aggiornaRuota(R); leggii(R); }
+              });
+            })(C, f, x[f]);
+          }
+        }
+        // (la mia la sta girando la ruota grande del pannello: anche la mia carta dice «Gira…»)
+        var RU0 = R.ruotaUI, grande = !!(RU0 && RU0.chi === p.id && RU0.mandato && !RU0.fermo), gira = !!C.gira || grande;
+        var v = C.visto, tot = (v.v1 || 0) + (v.v2 || 0);
+        var tx = v.v1 == null ? (gira ? "…" : "—") : v.v2 != null ? v.v1 + " + " + v.v2 : String(v.v1);
+        if (C.val.textContent !== tx) C.val.textContent = tx;
+        var st = statoCarta(C, x, vm.sotto, gira); if (C.st.textContent !== st) C.st.textContent = st;
+        C.c.classList.toggle("gira", gira);
+        // (prima del primo giro la ruota piccola mostra «?»: ferma su una casella sembrerebbe un numero già uscito)
+        C.c.classList.toggle("nuova", v.v1 == null && !C.gira);
+        C.c.classList.toggle("fuori", tot > 100); C.c.classList.toggle("cento", tot === 100);
       });
-      var s = vm.sotto, tx2 = s === "giro1" ? "👇 Tutti girano insieme!" : s === "decidi" ? "🤔 Giro ancora o mi fermo? Si decide in segreto" : s === "giro2" ? "🎡 Chi ha detto «ancora» gira di nuovo" : s === "bonus" ? "🎁 Giro bonus per chi ha fatto 100!" : s === "turni" ? "A turno, come in TV" : "";
+      var s = vm.sotto, tx2 = s === "giro1" ? "👇 Tutti girano insieme: guardate le ruote!" : s === "decidi" ? "🤔 Giro ancora o mi fermo? Si decide in segreto" : s === "giro2" ? "🎡 Chi ha detto «ancora» gira di nuovo" : s === "bonus" ? "🎁 Giro bonus per chi ha fatto 100!" : s === "turni" ? "A turno, come in TV" : "";
       if (U.nota.textContent !== tx2) U.nota.textContent = tx2;
     }
     // la mia ruota: il numero dell'host è arrivato, frena e si ferma lì
@@ -1919,6 +1995,7 @@
     }
     else if (f === "scegli") aggiornaScelta(R);
     else if (f === "premio" && s === "gioca") aggiornaPremio(R);
+    else if (f === "premio" && s === "intro") aggiornaAvanti(R);
     else if (f === "punti") aggiornaAvanti(R);
     else if (f === "ruota") aggiornaRuota(R);
     else if (f === "vetrina" && s === "offri") aggiornaVet(R);

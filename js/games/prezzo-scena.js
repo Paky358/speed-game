@@ -270,7 +270,7 @@
     function premi(b, fn) {
       var ultimo = 0;
       b.addEventListener("pointerdown", function (e) { if (e.pointerType === "mouse" && e.button) return; e.preventDefault(); ultimo = Date.now(); fn(); });
-      b.addEventListener("click", function () { if (Date.now() - ultimo > 500) fn(); });
+      b.addEventListener("click", function () { if (ultimo && Date.now() - ultimo < 5000) { ultimo = 0; return; } fn(); });   // (il click dopo un tocco non conta, anche se il dito è restato giù a lungo)
     }
     function intero() { return buf.split(",")[0]; }
     function aggiungi(ch) {
@@ -359,7 +359,8 @@
     var H = opz.alt || 62, N = SPICCHI.length * GIRI_STRISCIA;
     var str = el("div", { class: "pz-rstr" });
     for (var i = 0; i < N; i++) { var v = SPICCHI[i % SPICCHI.length]; str.appendChild(el("div", { class: "pz-rcel " + coloreSpicchio(v), text: String(v) })); }
-    var fin = el("div", { class: "pz-ruota" }, [ str, el("div", { class: "luce" }), el("div", { class: "freccia" }) ]);
+    // opz.mini: la ruota piccola di un amico sul maxischermo (senza clic, gira più a lungo prima di fermarsi)
+    var fin = el("div", { class: "pz-ruota" + (opz.mini ? " mini" : "") }, [ str, el("div", { class: "luce" }), el("div", { class: "freccia" }) ]);
     fin.style.setProperty("--h", H + "px");
     var pos = SPICCHI.length * (GIRI_STRISCIA - 2), attiva = false, stato = "fermo", vel = 0, verso = -1, target = null, piano = null, ultimoInt = Math.round(pos), ultimoClic = 0, raf = null, fineCb = null;
     // pos = quale casella sta davanti alla freccia (con la virgola): pos più piccolo = la striscia scende (verso -1), più grande = sale (+1)
@@ -367,7 +368,7 @@
       var y = -(pos * H) + H;   // la freccia sta sulla seconda casella dall'alto (si vedono 3 caselle)
       str.style.transform = "translate3d(0," + y.toFixed(1) + "px,0)";
       var k = Math.round(pos);
-      if (k !== ultimoInt) { ultimoInt = k; var ora = performance.now(); if (ora - ultimoClic > 40) { ultimoClic = ora; FX.clic(Math.min(1, Math.abs(vel) / 14 + 0.25)); } }
+      if (k !== ultimoInt) { ultimoInt = k; var ora = performance.now(); if (!opz.mini && ora - ultimoClic > 40) { ultimoClic = ora; FX.clic(Math.min(1, Math.abs(vel) / 14 + 0.25)); } }
     }
     function valoreA(p) { var k = ((Math.round(p) % SPICCHI.length) + SPICCHI.length) % SPICCHI.length; return SPICCHI[k]; }
     // (la striscia si ripete ogni 20 caselle: si salta avanti o indietro di giri interi, la ruota resta uguale.
@@ -435,10 +436,10 @@
     }
     function pianifica() {
       var j = SPICCHI.indexOf(target); if (j < 0) j = 0;
-      var minimo = vel * (0.9 + Math.random() * 0.5) / 2 + 2;   // almeno un bel pezzo di giro prima di fermarsi
+      var minimo = vel * (0.9 + Math.random() * 0.5) / 2 + 2 + (opz.mini ? 14 : 0);   // almeno un bel pezzo di giro prima di fermarsi (la piccola un po' di più: si guarda)
       var p0 = pos, fine = verso < 0 ? Math.floor(p0 - minimo) : Math.ceil(p0 + minimo);
       while ((((fine % SPICCHI.length) + SPICCHI.length) % SPICCHI.length) !== j) fine += verso;
-      var L = Math.abs(fine - p0), T = Math.max(700, Math.min(5200, 2 * L / vel * 1000));
+      var L = Math.abs(fine - p0), T = Math.max(700, Math.min(opz.mini ? 3600 : 5200, 2 * L / vel * 1000));
       if (verso < 0 ? fine < 2 : fine > N - 3) { normalizza(verso > 0); return pianifica(); }
       piano = { t0: performance.now(), p0: p0, L: L, T: T };
     }
@@ -629,6 +630,18 @@
       ".pz-ruota.debole,.pz-scuoti{animation:pzScuoti .4s}",
       "@keyframes pzScuoti{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}",
       ".pz-rgriglia{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;max-width:420px}",
+      // le ruote di tutti, dal vivo (4 per schermata): la ruota piccola a sinistra, chi è e il suo numero a destra
+      ".pz-ruota.mini{flex:0 0 auto;width:calc(var(--h) * 2);border-radius:10px;box-shadow:inset 0 0 0 2px #ffd43b;cursor:default}",
+      ".pz-ruota.mini .pz-rcel{border-bottom-width:1px}.pz-ruota.mini .freccia{margin-top:-7px;border-width:7px;border-right-width:11px}",
+      ".pz-rcard{display:flex;align-items:center;gap:6px;padding:4px;border-radius:12px;background:rgba(255,255,255,.09);text-align:left;min-width:0}",
+      ".pz-rcard.nuova .pz-ruota.mini .pz-rstr{opacity:.15}.pz-rcard.nuova .pz-ruota.mini::after{content:\"?\";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:900 calc(var(--h) * 1.1)/1 system-ui,sans-serif;color:#ffe066;pointer-events:none}",
+      ".pz-rcard[hidden]{display:none}.pz-rcard .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}",
+      ".pz-rcard .chi{display:flex;align-items:center;gap:4px;min-width:0}.pz-rcard .fac{width:22px;height:22px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.14);flex:0 0 auto}.pz-rcard .fac svg{width:100%;height:100%;display:block}",
+      ".pz-rcard .nm{min-width:0;font-size:12.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".pz-rcard .val{font-weight:900;font-size:17px;color:#ffe066;white-space:nowrap;font-variant-numeric:tabular-nums}.pz-rcard .st{font-size:11px;font-weight:800;color:#cdd6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".pz-rcard.gira{box-shadow:0 0 0 2px #6ff0a6}.pz-rcard.fuori{background:rgba(255,93,108,.2)}.pz-rcard.fuori .val{color:#ffb3bb}.pz-rcard.cento{background:rgba(255,212,59,.3);box-shadow:0 0 0 2px #ffd43b}",
+      ".pz-rpag{display:flex;align-items:center;justify-content:center;gap:10px;font-size:12px;font-weight:800;color:#cdd6ff}.pz-rpag[hidden]{display:none}",
+      ".pz-rpag button{border:0;border-radius:99px;width:30px;height:26px;font:900 14px/1 system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.16);cursor:pointer;touch-action:manipulation}",
       ".pz-rg{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;border-radius:12px;background:rgba(255,255,255,.09);text-align:left;font-weight:800;min-width:0}",
       ".pz-rg .fac{width:28px;height:28px}.pz-rg .nm{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".pz-rg .val{font-weight:900;font-size:16px;color:#ffe066;white-space:nowrap}.pz-rg.fuori{background:rgba(255,93,108,.2)}.pz-rg.fuori .val{color:#ffb3bb}",

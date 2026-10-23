@@ -37,7 +37,7 @@
   function premi(b, fn) {
     var ultimo = 0;
     b.addEventListener("pointerdown", function (e) { if (e.pointerType === "mouse" && e.button) return; e.preventDefault(); ultimo = Date.now(); fn(); });
-    b.addEventListener("click", function () { if (Date.now() - ultimo > 500) fn(); });
+    b.addEventListener("click", function () { if (ultimo && Date.now() - ultimo < 5000) { ultimo = 0; return; } fn(); });   // (il click dopo un tocco non conta, anche se il dito è restato giù a lungo)
   }
   function svuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
   function eTu(A, id) { return A.nome(id) === "Tu"; }
