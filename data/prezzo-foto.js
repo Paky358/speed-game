@@ -892,4 +892,383 @@ window.SG_PREZZO_FOTO = {
   "a6-v-dolomiti#2": "d/d8/Hotel_Mezdi_Seiser_Alm.jpg|6276",   // Una settimana in hotel sulle Dolomiti
   "a6-v-dolomiti#3": "1/15/RS_122.jpg|2000",   // Una notte in rifugio
   "a6-v-dolomiti#4": "a/a6/TrekkingPolesCarbonWoman.jpg|1200",   // Bastoncini da trekking
+  // ---- i prodotti nuovi (data/prezzo-7.js, 23 ott 2026): scelte dal nome da aiutanti Sonnet e guardate tutte a occhio ----
+  "a7-pomodori-pelati-mutti-400-g": "0/03/Peeling_tomatoes-01.jpg|1741",   // Pomodori pelati Mutti, 400 g
+  "a7-penne-rigate-de-cecco-n-41-500-g": "0/0b/Pennelisce_closeup.png|2932",   // Penne rigate De Cecco n.41, 500 g
+  "a7-riso-carnaroli-gallo-1-kg": "3/33/Carnaroli.jpg|3285",   // Riso Carnaroli Gallo, 1 kg
+  "a7-corn-flakes-kellogg-s-375-g": "9/9c/Photo_cornflakes.jpg|5184",   // Corn Flakes Kellogg's, 375 g
+  "a7-philadelphia-original-150-g": "f/f7/Philly_cream_cheese.jpg|2700",   // Philadelphia Original, 150 g
+  "a7-estathe-al-limone-1-5-litri": "e/ef/Iced_Tea_from_flickr.jpg|3744",   // Estathé al limone, 1,5 litri
+  "a7-maionese-calve-225-ml": "8/87/Mayonnaise_Jar_550x900.JPG|550",   // Maionese Calvè, 225 ml
+  "a7-kinder-bueno-3-barrette": "a/a1/Kinder_Bueno_-_4_halfed.jpg|3576",   // Kinder Bueno, 3 barrette
+  "a7-pesto-alla-genovese-barilla-190-g": "c/c9/BasilPesto.JPG|2760",   // Pesto alla genovese Barilla, 190 g
+  "a7-ketchup-heinz-400-ml": "d/d3/Heinz_Tomato_Ketchup,_Canada_(front),_2026-02-19.jpg|3536",   // Ketchup Heinz, 400 ml
+  "a7-birra-moretti-6-bottiglie-da-33-cl": "a/a9/Birra_Moretti_beer_bottle.jpg|1536",   // Birra Moretti, 6 bottiglie da 33 cl
+  "a7-mascarpone-granarolo-250-g": "2/26/Mascarpone_2.jpg|5472",   // Mascarpone Granarolo, 250 g
+  "a7-ricotta-fresca-granarolo-250-g": "d/da/Ricotta_fresca.jpg|3840",   // Ricotta fresca Granarolo, 250 g
+  "a7-burro-250-g": "3/3c/Block_of_butter_in_butter_dish.jpg|3024",   // Burro, 250 g
+  "a7-wurstel-wudy-grill-3-pezzi": "8/8b/Wiener_Wuerstchen_(fcm).jpg|2700",   // Wurstel Aia Wudy Grill, 3 pezzi (250 g)
+  "a7-pan-bauletto-mulino-bianco-400-g": "3/39/Breadindia.jpg|640",   // Pan Bauletto Mulino Bianco, 400 g
+  "a7-yogurt-activia-bianco-4-vasetti": "7/7a/Yasuda_yogurt_150ml.jpg|640",   // Yogurt Activia bianco, 4 vasetti
+  "a7-prosecco-doc-brut-75-cl": "c/ce/Prosecco_di_Conegliano_bottle_and_glass.jpg|2406",   // Prosecco DOC brut, 75 cl
+  "a7-olio-di-semi-di-girasole-1-litro": "3/33/Bottle_1_liter_Sunflower_refined_oil.jpg|1200",   // Olio di semi di girasole, 1 litro
+  "a7-tavoletta-milka-al-latte-100-g": "9/90/Milka_Alpine_Milk_Chocolate_bar_100g.jpg|2960",   // Tavoletta Milka al latte, 90 g
+  "a7-orsetti-d-oro-haribo-175-g": "3/3e/Haribo_Goldbears_(3549536631).jpg|3648",   // Orsetti d'oro Haribo, 175 g
+  "a7-petto-di-pollo-a-fette-400-g": "3/31/Fresh_Raw_Chicken_Parts_on_Display.jpg|2048",   // Petto di pollo a fette, 400 g
+  "a7-gnocchetti-di-patate-rana-500-g": "e/e7/Gnocchi_di_patate_con_sugo_di_pomodoro_e_con_gorgonzola.jpg|4032",   // Gnocchetti di patate Rana, 500 g
+  "a7-cornetto-algida-classico-6-gelati": "f/fb/Cornetto_Algida_Ice_Cream.jpg|612",   // Cornetto Algida classico, 6 gelati
+  "a7-patate-2-kg": "a/ab/Patates.jpg|2864",   // Patate, 2 kg
+  "a7-cipolle-dorate-1-kg": "a/a1/Yellow_onions_vegetables.jpg|1280",   // Cipolle dorate, 1 kg
+  "a7-uva-bianca-1-kg": "5/5f/Grapes_(2).jpg|2724",   // Uva bianca, 1 kg
+  "a7-castagne-1-kg": "f/fb/Chestnuts_roasted.jpg|1280",   // Castagne, 1 kg
+  "a7-zucca-1-kg": "c/cd/Fruits_and_Vegetables_(20161021-AMS-LSC-0146).jpg|4710",   // Zucca, 1 kg
+  "a7-cozze-1-kg": "4/45/CornishMussels.JPG|2500",   // Cozze, 1 kg
+  "a7-fagioli-cannellini-in-scatola-400-g": "e/ef/White_kidney_beans🫘.jpg|3000",   // Fagioli cannellini in scatola, 400 g
+  "a7-limoni-1-kg": "e/e4/P1030323.JPG|1280",   // Limoni, 1 kg
+  "a7-insalata-mista-in-busta-150-g": "8/85/New_Lettuce_(6193662526).jpg|4106",   // Insalata mista in busta, 150 g
+  "a7-pomodori-ramati-1-kg": "b/be/Grape_tomatoes_on_the_vine_at_Ljubljana_Central_Market.JPG|4592",   // Pomodori ramati, 1 kg
+  "a7-pane-1-kg": "7/7b/Assorted_bread.jpg|709",   // Pane, 1 kg
+  "a7-salsiccia-di-maiale-500-g": "d/d8/Salsiccia_Italian_pork_sausage.jpg|3888",   // Salsiccia di maiale, 500 g
+  "a7-ananas-uno-intero": "e/eb/Fresh_whole_pineapples.jpg|1816",   // Ananas, uno intero
+  "a7-zucchine-1-kg": "a/ac/Zucchini_in_basket_2021_G1.jpg|4100",   // Zucchine, 1 kg
+  "a7-filetto-di-salmone-1-kg": "2/24/Raw_salmon_fillets.jpg|2816",   // Filetto di salmone, 1 kg
+  "a7-gamberi-rossi-di-mazara-1-kg": "c/ca/Fish4525_-_Flickr_-_NOAA_Photo_Library.jpg|2896",   // Gamberi rossi di Mazara, 1 kg
+  "a7-filetto-di-manzo-1-kg": "1/12/Beef_tenderloin.jpg|148",   // Filetto di manzo, 1 kg
+  "a7-orata-1-kg": "d/d6/Sparus_aurata_-_Goldbrasse_167478208.jpg|2048",   // Orata, 1 kg
+  "a7-funghi-porcini-freschi-1-kg": "3/34/Boletus_edulis_IT.jpg|3072",   // Funghi porcini freschi, 1 kg
+  "a7-chianti-classico-75-cl": "0/00/Chianti_Classico_example_bottle_-_Annata_type.jpg|3385",   // Chianti Classico, 75 cl
+  "a7-cosciotto-d-agnello-1-kg": "8/83/Roast_lamb_leg.jpg|2736",   // Cosciotto d'agnello, 1 kg
+  "a7-polpo-fresco-1-kg": "9/9f/Octopus_vulgaris_2.jpg|3332",   // Polpo fresco, 1 kg
+  "a7-aperol-spritz-al-caffe-florian": "5/59/Aperol_Spritz_2014a.jpg|3000",   // Aperol Spritz al Caffè Florian
+  "a7-acqua-minerale-al-caffe-florian": "c/c5/Venedig_Caffè_Florian_Eingang-20110312-RM-185109.jpg|3456",   // Acqua minerale al Caffè Florian
+  "a7-caffe-al-tavolo-in-piazzetta": "0/08/LA_Piazzetta.JPG|3840",   // Caffè al tavolo in Piazzetta
+  "a7-pizza-marinara": "1/11/Pizza_marinara.jpg|2848",   // Pizza marinara
+  "a7-tajarin-al-tartufo-bianco": "5/54/2016_1129_Turin_Tajarin_al_Castelmagno.jpg|3456",   // Tajarin al tartufo bianco
+  "a7-aperitivo-con-buffet": "d/d7/Aperitivo_al_bar.jpg|7200",   // Aperitivo con buffet
+  "a7-cocktail-in-un-rooftop": "8/80/15-09-26-RalfR-WLC-0084.jpg|2368",   // Cocktail in un rooftop
+  "a7-pizza-a-portafoglio": "a/a3/Eq_it-na_pizza-margherita_sep2005_sml.jpg|1024",   // Pizza a portafoglio
+  "a7-orzo-in-tazza-grande": "4/4b/Caffè_d'orzo_(89397).jpg|3000",   // Orzo in tazza grande
+  "a7-marocchino": "c/c2/Marocchino_(26440403402).jpg|1080",   // Marocchino
+  "a7-cioccolata-calda-con-panna": "9/92/Hot_chocolate_with_whipped_cream_and_dried_berries_(Vegan,_KETO,_LCHF,_Low_Carb,_Gluten_free,_FIT)_-_52774784724.jpg|2659",   // Cioccolata calda con panna
+  "a7-bicerin": "8/86/2016_1128_Turin_Bicerin_01.jpg|3072",   // Bicerin
+  "a7-un-ombra-di-vino": "4/42/\"_05_-_ITALY_-_un_bacaro_a_Venezia_Osteria_appetizers_restaurant_in_Venice_wine_enoteca.jpg|2910",   // Un'ombra di vino
+  "a7-cicchetto-di-baccala-mantecato": "b/bc/\"_13_-_ITALY_-_Cicchetti_Venetian_cuisine_appetizers_restaurant_(_not_are_tapas_are_ciccheti_of_Venice)_in_this_pics_Baccalà_mantecato_(Cod).jpg|3264",   // Cicchetto di baccalà mantecato
+  "a7-pasticciotto-leccese": "8/82/Pasticciotto.jpg|3256",   // Pasticciotto leccese
+  "a7-baba": "1/10/BabaRum.jpg|3434",   // Babà
+  "a7-maritozzo-con-la-panna": "d/db/Maritozzo_con_panna.jpg|3000",   // Maritozzo con la panna
+  "a7-panino-con-la-milza": "e/e3/Pani_ca_meusa.jpg|3968",   // Panino con la milza
+  "a7-panino-con-la-mortadella": "f/f7/Marjolaine_2016_20.jpg|1920",   // Panino con la mortadella
+  "a7-olive-all-ascolana": "1/10/Olive_all'ascolana.jpg|1000",   // Olive all'ascolana
+  "a7-crodino": "4/48/Bottle_of_Crodino.JPG|1296",   // Crodino
+  "a7-coca-cola-in-bottiglietta": "e/ef/Coca-Cola_glass_bottle.jpg|3024",   // Coca-Cola in bottiglietta
+  "a7-affogato-al-caffe": "7/7a/Espresso_Affogato.JPG|2248",   // Affogato al caffè
+  "a7-parmigiana-di-melanzane": "7/72/Parmigiana_di_melanzane.jpg|4272",   // Parmigiana di melanzane
+  "a7-pasta-alla-norma": "e/e4/Pasta_alla_Norma_-_Wiki_Loves_Sicilia.jpg|3820",   // Pasta alla Norma
+  "a7-cacio-e-pepe": "0/0d/Spaghetti_cacio_e_pepe_(creamy_as_it_should_be).jpg|3008",   // Cacio e pepe
+  "a7-risotto-alla-milanese": "8/83/Risotto_alla_Milanese.JPG|3648",   // Risotto alla milanese
+  "a7-pizzoccheri-della-valtellina": "9/9f/Pizzoccheri.jpg|3072",   // Pizzoccheri della Valtellina
+  "a7-pappardelle-al-cinghiale": "0/0b/Pappardelle_al_cinghiale_(cropped).jpg|2607",   // Pappardelle al cinghiale
+  "a7-tagliata-di-manzo-con-rucola": "5/56/Tagliata_with_Rosemary.jpg|6000",   // Tagliata di manzo con rucola
+  "a7-sei-ostriche": "d/d2/Oysters_served_on_ice,_with_lemon_and_parsley.jpg|2592",   // Sei ostriche
+  "a7-poke-bowl-al-salmone": "5/55/Salmon_Poke_Bowl_(S)_with_Spicy_mayo_sauce_-_Kitokito.jpg|4032",   // Poke bowl al salmone
+  "a7-il-coperto": "7/77/Lyon_Restaurant_Table_setting_20110421.jpg|3264",   // Il coperto
+  "a7-bottiglia-di-prosecco": "c/ce/Prosecco_di_Conegliano_bottle_and_glass.jpg|2406",   // Bottiglia di prosecco
+  "a7-menu-degustazione-stellato": "5/59/Thana_Fine_Dining_plate.jpg|240",   // Menù degustazione stellato
+  "a7-dieci-pizze-margherita": "d/d4/Margherita_Originale.JPG|2048",   // Dieci pizze margherita
+  "a7-pizza-al-taglio": "9/98/Pizze_al_taglio_and_Peroni_at_Alice.jpg|4032",   // Pizza al taglio
+  "a7-fetta-di-torta-della-nonna": "0/02/Torta_della_Nonna.jpg|3000",   // Fetta di torta della nonna
+  "a7-calice-di-franciacorta": "1/1a/Franciacorta_milledi.jpg|1639",   // Calice di Franciacorta
+  "a7-menu-bambini": "a/a7/Cotoletta_e_patate_al_forno.jpg|516",   // Menù bambini
+  "a7-frullato-di-frutta-fresca": "e/eb/Strawberry_and_lemon_smoothie_(14430283996).jpg|1000",   // Frullato di frutta fresca
+  "a7-crepe-alla-nutella": "3/3a/Crêpes_con_la_Nutella.JPG|4320",   // Crêpe alla Nutella
+  "a7-aragosta-alla-catalana": "5/5c/Capo_Gallo_Aragosta.jpg|640",   // Aragosta alla catalana
+  "a7-bottiglia-di-champagne": "3/3a/Salon_Champagne_and_glass.JPG|1936",   // Bottiglia di champagne
+  "a7-caffe-in-autogrill": "a/a5/Tazzina_di_caffè_a_Ventimiglia.jpg|2970",   // Caffè in autogrill
+  "a7-pizza-gourmet": "5/57/Neapolitan_pizza_at_Trappica_(48701940197).jpg|3024",   // Pizza gourmet
+  "a7-tortellini-in-brodo": "a/ab/Tortellini_in_brodo_Bologna.jpg|1024",   // Tortellini in brodo
+  "a7-cena-di-pesce-per-sei": "a/ae/Plateau_van_zeevruchten.jpg|2029",   // Cena di pesce per sei
+  "a7-spazzola-lavapiatti-con-dispenser": "a/a2/Dish-washing_brush_with_integrated_soap_dispenser.jpg|3168",   // Spazzola lavapiatti con dispenser
+  "a7-colla-istantanea-attak-3-g": "7/79/Super_glue.jpg|1424",   // Colla istantanea Attak, 3 g
+  "a7-metro-a-nastro-da-5-metri": "0/03/Tape_Measure_25'_Klein_Tools.jpg|1000",   // Metro a nastro da 5 metri
+  "a7-levapelucchi-elettrico": "e/e9/Unix_fabric_shaver.jpg|4752",   // Levapelucchi ricaricabile
+  "a7-multipresa-a-5-prese": "f/fa/Tricklestar_Plug_Strip.jpg|4032",   // Multipresa a 5 prese
+  "a7-tavolino-ikea-lack-55x55-cm": "1/15/IKEA_Lack.jpg|1050",   // Tavolino IKEA Lack, 55x55 cm
+  "a7-bilancia-da-cucina-ikea-3-kg": "4/4f/Escali_digital_kitchen_scale.jpg|8160",   // Bilancia da cucina IKEA, 3 kg
+  "a7-martello-da-carpentiere": "7/7b/Hammer2.jpg|565",   // Martello da carpentiere
+  "a7-set-di-6-bicchieri-di-vetro": "4/4b/Jewelry_pair_rock_glasses_01.jpg|369",   // Set di 6 bicchieri di vetro
+  "a7-tavolino-vassoio-ikea-gladom": "d/d2/Tvtable.jpg|350",   // Tavolino vassoio IKEA Gladom
+  "a7-sedia-pieghevole-da-giardino": "6/6a/Folding_Chair_Lifetime.jpg|401",   // Sedia pieghevole da giardino
+  "a7-set-di-pentole-ikea-365": "1/13/All-Clad_Copper_Core_pots.jpeg|2000",   // Set di pentole IKEA 365+
+  "a7-piastra-a-induzione-portatile-ikea": "7/79/Eupa_TSI-IH1880.jpg|1600",   // Piastra a induzione portatile IKEA
+  "a7-stendibiancheria-a-torre": "8/84/Clotheshorse.jpg|1094",   // Stendibiancheria a torre
+  "a7-sgabello-da-bar-regolabile": "5/51/Barhocker_(fcm).jpg|1465",   // Sgabello da bar regolabile
+  "a7-macchina-lavazza-a-modo-mio": "5/52/Lavazza_A_modo_Mio_coffe_machine.png|1920",   // Macchina Lavazza A Modo Mio
+  "a7-scopa-elettrica-senza-fili": "8/8a/Dyson_V6_cordless_stick_vacuum.jpg|5472",   // Scopa elettrica senza fili Rowenta X-Force 8.80
+  "a7-friggitrice-ad-aria-digitale-4-litri": "d/d3/Air_Fryer_2020.jpg|4032",   // Friggitrice ad aria digitale, 4 litri
+  "a7-piumino-matrimoniale-quattro-stagioni": "b/b2/La_cama_deshecha_(2724466831).jpg|3072",   // Piumino matrimoniale quattro stagioni
+  "a7-letto-ikea-neiden-160x200-cm": "6/60/Lotte_Heaven._(2185651031).jpg|2496",   // Letto IKEA Neiden, 160x200 cm
+  "a7-trapano-avvitatore-a-batteria": "7/77/Panasonic_Cordless_Drill_&_Driver_EY1DD2,_Ottobrunn_(20250410-P1046293).jpg|3888",   // Trapano avvitatore a batteria
+  "a7-forno-elettrico-da-25-litri": "e/e4/Hamilton_Beach_Easy_Reach_Sure-Crisp_Toaster_Oven_-_05.jpg|5184",   // Forno elettrico da 25 litri
+  "a7-impastatrice-planetaria-da-5-litri": "e/e2/2012.09.24.154927_KitchenAid_Rheingauer_Straße_Eltville.jpg|1920",   // Impastatrice planetaria Ariete Gourmet, 5,2 litri
+  "a7-topper-in-memory-foam": "4/48/MemoryFoam-fast.jpg|1136",   // Topper in memory foam
+  "a7-materasso-ikea-afjall-90x200-cm": "b/bb/Shifman_Mattress_Set.JPG|4828",   // Materasso IKEA Åfjäll, 90x200 cm
+  "a7-ventilatore-da-soffitto-con-luce": "7/76/Ceiling_fan_with_lamp.jpg|4128",   // Ventilatore da soffitto con luce
+  "a7-tavolo-da-giardino-110x71-cm": "c/c2/Green_metal_chairs_with_round_table_in_a_garden,_Germany.jpeg|2669",   // Tavolo da giardino, 110x71 cm
+  "a7-idropulitrice-karcher-k-2": "6/63/KARCHER_5_85.jpg|964",   // Idropulitrice Kärcher K 2 Power Control
+  "a7-ferro-con-caldaia-braun-carestyle-5": "c/ca/Teal_and_white_electric_steam_iron_-_side_view.jpg|1466",   // Ferro con caldaia Braun CareStyle 5
+  "a7-sedia-da-ufficio-ikea-markus": "4/46/Ikea_MARKUS_Swivel_Chair_(19548745588).jpg|3648",   // Sedia da ufficio IKEA Markus
+  "a7-poltrona-ikea-strandmon": "b/b5/Easy_chair,_probably_Boston,_Massachusetts,_1760-1780,_mahogany,_soft_maple,_reproduction_wool_upholstery_-_Winterthur_Museum_-_DSC01384.JPG|3573",   // Poltrona IKEA Strandmon, Nordvalla grigio scuro
+  "a7-divano-ikea-ektorp-a-3-posti": "4/46/A_brown_sofa_(2005-03-03).jpg|2048",   // Divano IKEA Ektorp a 3 posti
+  "a7-lavasciuga-candy-8-5-kg": "4/42/Samsung_WD90N740NOA,_IFA_2018.jpg|2400",   // Lavasciuga Candy GWD 485SB6-S, 8+5 kg
+  "a7-letto-ikea-malm-con-contenitore": "6/60/Lotte_Heaven._(2185651031).jpg|2496",   // Letto IKEA Malm con contenitore
+  "a7-congelatore-verticale-whirlpool": "4/44/Openfreezer.jpg|2112",   // Congelatore verticale Whirlpool
+  "a7-camera-da-letto-ikea-idanas": "f/fb/Berlin_Villa_Borsig_Tegel_asv2019-08_img09.jpg|7508",   // Camera da letto IKEA Idanäs
+  "a7-asciugatrice-bosch-serie-8": "1/1c/Modern_front_load_tumble_dryer.JPG|2155",   // Asciugatrice Bosch Serie 8
+  "a7-frigorifero-side-by-side": "7/7b/Open_refrigerator_with_food_at_night.jpg|3465",   // Frigorifero side by side
+  "a7-divano-ikea-jattebo-3-5-posti": "2/2a/Chaise_longue_sofa_2.jpg|2770",   // Divano IKEA Jättebo, 3,5 posti
+  "a7-cavo-usb-c-da-1-metro": "c/c3/USB-C_cable_2017_A.jpg|3872",   // Cavo USB-C da 1 metro
+  "a7-pellicola-in-vetro-per-smartphone": "9/94/Screen_protector.png|352",   // Pellicola in vetro per smartphone
+  "a7-presa-smart-wi-fi": "3/34/Smart_plug_adapter_front_view_with_power_button.jpg|1459",   // Presa smart Wi-Fi
+  "a7-auricolari-bluetooth-economici": "4/46/MS-TW21NVの画像_2.jpg|2775",   // Auricolari Bluetooth economici
+  "a7-tappetino-xxl-per-mouse": "2/2a/HP_mouse_and_mousepad_20060803.jpg|1280",   // Tappetino XXL per mouse
+  "a7-cellulare-a-tasti": "1/1e/Nokia_130.jpg|1523",   // Cellulare a tasti
+  "a7-mouse-da-gioco-logitech-g502-hero": "4/42/G502_Hero.jpg|3024",   // Mouse da gioco Logitech G502 HERO
+  "a7-cuffie-da-gaming-con-microfono": "2/27/Plantronics_headset.jpg|1456",   // Cuffie da gaming con microfono
+  "a7-router-wi-fi-6": "6/63/TP-Link_AX1500_Wi-Fi_6_Router_Front.jpg|1280",   // Router Wi-Fi 6
+  "a7-mouse-logitech-mx-master-3s": "d/d4/Logitech_MX_Master_3S_HS12.jpg|6000",   // Mouse Logitech MX Master 3S
+  "a7-tastiera-logitech-mx-keys-s": "7/78/Logitech_MX_Keys_YR0073_Wireless_Keyboard.jpg|3877",   // Tastiera Logitech MX Keys S
+  "a7-samsung-galaxy-a17": "6/67/Samsung_Galaxy_A17_5G_2026_(4).jpg|3024",   // Samsung Galaxy A17 4G, 128 GB
+  "a7-tablet-lenovo-idea-tab-11": "c/c5/Lenovo_Tab_M10_FHD_Plus_(2026).jpg|4080",   // Tablet Lenovo Idea Tab 11", Wi-Fi 256 GB
+  "a7-samsung-galaxy-tab-a11-128-gb": "d/d5/Samsung_Galaxy_Tab_A11_Gray.png|389",   // Samsung Galaxy Tab A11+, 128 GB
+  "a7-drone-dji-neo-2": "7/74/DJI_DN1A0626_Neo_(FA3PEWAH34)_(1-18-2025).jpg|2490",   // Drone DJI Neo 2
+  "a7-volante-logitech-driving-force": "e/ed/Logitech_G29_steering_wheel.jpg|4608",   // Volante Logitech G29 Driving Force
+  "a7-xbox-series-s-512-gb": "5/54/Xbox_Series_S_with_controller.jpg|2101",   // Xbox Series S, 512 GB
+  "a7-redmi-note-17-pro-max-256-gb": "3/3d/Redmi_Note_10_Pro_Back.jpg|3471",   // Redmi Note 17 Pro Max, 256 GB
+  "a7-portatile-hp-15-pollici-ryzen-5": "4/4f/Laptop_(Pixi).png|757",   // Portatile HP 15 pollici, Intel Core 5
+  "a7-airpods-max": "7/7e/Apple_airpods_max_1.jpg|3005",   // AirPods Max 2
+  "a7-tv-da-65-pollici-4k": "e/e2/LG_smart_TV.jpg|1700",   // TV Xiaomi F Pro da 65 pollici 4K
+  "a7-drone-dji-mini-5-pro": "9/9b/2024_Dron_DJI_Mini_4_Pro_(18).jpg|5232",   // Drone DJI Mini 5 Pro
+  "a7-xbox-series-x-1-tb": "1/12/Xbox_Series_X_2.jpg|4200",   // Xbox Series X, 1 TB
+  "a7-ipad-air-da-11-pollici": "7/7a/IPad_Air_2020_(51012790753).jpg|4919",   // iPad Air da 11 pollici
+  "a7-macbook-pro-16-pollici-chip-m5-pro": "9/91/MacBook_Pro_16_(M1_Pro,_2021)_-_Wikipedia.jpg|4032",   // MacBook Pro 16 pollici, chip M5 Pro
+  "a7-citroen-c3-aircross-puretech-100": "7/76/Citroën_C3_Aircross_(2024)_DSC_9300.jpg|5105",   // Citroën C3 Aircross PureTech 100
+  "a7-dacia-jogger": "2/29/2023_Dacia_Jogger_DSC_7288.jpg|4278",   // Dacia Jogger Eco-G 120
+  "a7-suzuki-swift-hybrid-1-2": "3/3d/Suzuki_Swift_(2024)_hybrid_DSC_6076.jpg|4038",   // Suzuki Swift Hybrid 1.2
+  "a7-peugeot-208-turbo-100-style": "c/c6/Peugeot_208_PureTech_130_EAT8_Allure_GT-Line_(II)_–_f_17102021.jpg|4554",   // Peugeot 208 Turbo 100 Style
+  "a7-mini-cooper-c-3-porte": "c/c4/Mini_Hatch_(J01)_Ditzingen_Mobil_IMG_9772_(cropped).jpg|4079",   // MINI Cooper C 3 porte
+  "a7-kia-sportage": "5/5d/2025_Kia_Sportage_S_front_only.jpg|4705",   // Kia Sportage
+  "a7-mercedes-classe-a-180": "5/5a/2019_Mercedes_Benz_A-Class_Hatchback_A_200_(44).jpg|4000",   // Mercedes Classe A 180
+  "a7-ford-mustang-fastback-5-0-v8-gt": "1/1f/2019_Ford_Mustang_GT_5.0_facelift.jpg|3969",   // Ford Mustang Fastback 5.0 V8 GT
+  "a7-mercedes-classe-g": "3/38/Mercedes-Benz_W463_G_350_BlueTEC_01.jpg|3400",   // Mercedes Classe G
+  "a7-maserati-granturismo": "0/00/Maserati_GranTurismo_Trofeo_1X7A0828.jpg|5844",   // Maserati GranTurismo
+  "a7-aston-martin-db12": "c/ca/Aston_Martin_DB12_1X7A1921.jpg|5411",   // Aston Martin DB12
+  "a7-honda-sh-mode-125": "0/0f/Honda_SH_Mode_125.jpg|1797",   // Honda SH Mode 125
+  "a7-honda-pcx-125": "6/67/2019_Honda_PCX_125.jpg|1536",   // Honda PCX 125
+  "a7-yamaha-nmax-125": "7/73/Yamaha_NMAX_125_2025.jpg|1440",   // Yamaha NMAX 125
+  "a7-honda-cb125r": "2/21/Honda_CB125R.jpg|4020",   // Honda CB125R
+  "a7-piaggio-beverly-310": "b/b1/Piaggio_Beverly_200.jpg|3093",   // Piaggio Beverly 310
+  "a7-honda-forza-350": "0/0f/Honda_Forza_350_2025.jpg|1440",   // Honda Forza 350
+  "a7-aprilia-rs-457": "a/ad/Aprilia_RS_457.jpg|3965",   // Aprilia RS 457
+  "a7-honda-cb750-hornet": "8/87/2023_Honda_CB750_Hornet.jpg|4608",   // Honda CB750 Hornet
+  "a7-kawasaki-z900": "b/bc/Kawasaki_Z900,_green.jpg|3957",   // Kawasaki Z900
+  "a7-bmw-s-1000-rr": "7/79/BMW_S1000_RR_Studio.JPG|4131",   // BMW S 1000 RR
+  "a7-ducati-multistrada-v4-s": "5/53/Ducati_Multistrada_V4_S_'25.jpg|4032",   // Ducati Multistrada V4 S
+  "a7-honda-gold-wing": "7/7d/Honda_Gold_Wing_GL_1800_(SC79_-_2018).jpg|1800",   // Honda Gold Wing
+  "a7-giant-newtour-e-1-lst": "c/c6/A_mountain_bike_styled_e-bike,_Cyclotricity_Stealth.jpg|3264",   // Giant NewTour E+ 1 LST
+  "a7-giant-tcr-advanced-sl-0": "6/66/Look_795_30th_Anniversary_Dura-Ace_9100-Mavic_Custom_Build_(30636542393).jpg|4819",   // Giant TCR Advanced SL 0
+  "a7-un-litro-di-benzina-al-self": "c/c0/SPBU_Pertamina_2022.jpg|4928",   // Un litro di benzina al self
+  "a7-un-litro-di-gasolio-al-self": "c/c0/SPBU_Pertamina_2022.jpg|4928",   // Un litro di gasolio al self
+  "a7-museo-lamborghini": "8/84/Museo_Lamborghini_(Sant'Agata_Bolognese,_Bologna,_Italy)_004.jpg|4000",   // Museo Lamborghini
+  "a7-traforo-del-frejus-solo-andata": "7/7b/Frejus_Road_Tunnel_Bardonecchia_portal_2.jpg|2560",   // Traforo del Frejus, solo andata
+  "a7-seggiolino-auto-chicco-gro-up-i-size": "e/ec/Volvo_child_safety_seat.jpg|1391",   // Seggiolino auto Chicco Gro-Up i-Size
+  "a7-casco-agv-pista-gp-rr": "e/e0/Valentino_Rossi's_AGV_helmets.jpg|1024",   // Casco AGV Pista GP RR
+  "a7-giant-talon-20": "2/23/DL_110707_MDE_221.jpg|800",   // Giant Talon 20
+  "a7-giant-talon": "9/96/Hardtail-mountain-bike.jpg|907",   // Giant Talon 3
+  "a7-camera-d-aria-per-bici-da-corsa": "0/01/Barum_bicycle_inner_tube.jpg|4608",   // Camera d'aria Decathlon per bici da corsa
+  "a7-lavaggio-dell-auto-al-self": "1/1f/'Car_Wash_Bergwerff'_Gorinchem_(18466972783).jpg|3091",   // Lavaggio dell'auto al self
+  "a7-pastiglie-dei-freni-davanti": "9/92/Brake_pad.jpg|3996",   // Pastiglie dei freni davanti
+  "a7-bracciale-in-acciaio-con-cristalli-azzur": "d/de/Bracelet_(jewelry).jpg|734",   // Bracciale in acciaio con cristalli azzurri
+  "a7-felpa-girocollo-relaxed-fit": "c/ca/HK_SKD_TKO_將軍澳_Tseung_Kwan_O_坑口_Hang_Hau_東港城_East_Point_City_mall_shop_GU_Clothing_Store_秋季服裝_Autumn_fall_fashion_green_September_2022_Px3.jpg|4000",   // Felpa girocollo relaxed fit
+  "a7-casio-f-91w": "9/96/Casio_F-91W_5051.jpg|3393",   // Casio F-91W
+  "a7-costume-parigamba-da-uomo": "2/20/Speedo_zwembroek-1.jpg|1280",   // Costume parigamba da uomo
+  "a7-jeans-chino-straight-fit": "3/3e/Chino_pants.jpg|1200",   // Jeans chino straight fit
+  "a7-portachiavi-mimi": "a/a5/Key_chain_4.jpg|3120",   // Portachiavi Mimì
+  "a7-collana-punto-luce-in-argento": "d/de/Silver_necklace_with_a_Chai_Hamsa_pendant,_March_2024_11.jpg|4000",   // Collana Punto Luce in argento
+  "a7-costume-boxer-formentera": "2/20/Speedo_zwembroek-1.jpg|1280",   // Costume boxer Formentera
+  "a7-bomber-effetto-pelle": "4/42/B-17_Bomber_Pilot_Flight_Jacket.jpeg|241",   // Bomber effetto pelle
+  "a7-zaino-carpisa-roadmate-go": "d/d7/Rucksack1.jpg|1458",   // Zaino Carpisa Roadmate go
+  "a7-trolley-rigido-carpisa-wander-go": "c/c0/Suitcase1.jpg|1267",   // Trolley rigido Carpisa Wander go
+  "a7-nike-windrunner": "9/9d/Windbreaker_Jacket,_Hood_Outside_Transparency.png|1208",   // Nike Windrunner
+  "a7-adidas-stan-smith": "2/28/Adidas_Stan_Smiths_sneaker.jpg|2560",   // adidas Stan Smith
+  "a7-cintura-reversibile-emporio-armani": "1/17/Leather_belt_&_buckle.jpg|2288",   // Cintura reversibile Emporio Armani
+  "a7-adidas-samba-og": "f/fa/Adidas_Samba_OG.jpg|4000",   // adidas Samba OG
+  "a7-jeans-diesel-d-strukt": "3/3e/Levi's_501_raw_jeans.jpg|2740",   // Jeans Diesel D-Strukt
+  "a7-on-cloudtilt": "8/89/On_Clouds_running_shoes.jpg|1502",   // On Cloudtilt
+  "a7-occhiali-da-sole-emporio-armani": "8/85/American_Optical_Original_Pilot_Aviator_sunglasses.jpg|5184",   // Occhiali da sole Emporio Armani
+  "a7-nike-air-max-plus": "e/e4/Air_Max_Plus_Tuned.jpg|1800",   // Nike Air Max Plus
+  "a7-piumino-nike-windrunner-down": "4/4a/OutDoor_2018,_Friedrichshafen_(1X7A0285).jpg|4480",   // Piumino Nike Windrunner Down
+  "a7-orologio-emporio-armani-archetipo": "c/c3/Crown_and_chronograph_pushers_of_a_Montblanc_Timewalker_wristwatch_V2.jpg|3024",   // Orologio Emporio Armani Archetipo
+  "a7-sneakers-in-canvas-emporio-armani": "a/a1/Oca-low-washed-black-contrast-thread-canvas-sneaker.png|1500",   // Sneakers in canvas Emporio Armani
+  "a7-fede-in-oro-giallo-18-carati-3-2-mm": "d/df/Gold_wedding_ring.jpg|4032",   // Fede in oro giallo 18 carati, 3,2 mm
+  "a7-maglione-in-seta-e-cashmere-emporio-arma": "e/ea/Jersei-coll-alt.jpg|678",   // Maglione in seta e cashmere Emporio Armani
+  "a7-emporio-armani-sea-explorer-automatico": "1/16/Seiko_Automatic_Diver's_200m.jpg|3648",   // Emporio Armani Sea Explorer automatico
+  "a7-valentino-rockstud-decollete-100-mm": "8/82/Rockstud_leather_caged_pumps_on_feet_(20240531202508).jpg|5049",   // Valentino Rockstud, décolleté 100 mm
+  "a7-caban-emporio-armani-in-lana-tweed": "2/22/US_Navy_p_coat_wiki.jpg|288",   // Caban Emporio Armani in lana pied-de-poule
+  "a7-cartier-tank-must-quarzo": "d/df/Cartier_Tank.jpg|2726",   // Cartier Tank Must, quarzo
+  "a7-cartier-love-bracciale-medio": "f/fa/Cartier_love_collection_re_launched.jpg|155",   // Cartier LOVE, bracciale medio
+  "a7-tank-louis-cartier-oro-giallo": "d/df/Cartier_Tank.jpg|2726",   // Tank Louis Cartier, oro giallo, modello piccolo
+  "a7-bus-a-roma-biglietto-da-100-minuti": "a/ab/ATAC_Iveco_Bus_Urbanway_(230).jpg|3900",   // Bus a Roma, biglietto da 100 minuti
+  "a7-biglietto-della-metro-di-parigi": "0/01/Pont_de_Bir-Hakeim,_may_2025.jpg|3000",   // Biglietto della metro di Parigi
+  "a7-ingresso-alla-basilica-di-san-marco": "6/61/Venezia_Basilica_di_San_Marco_Fassade_2.jpg|4574",   // Ingresso alla Basilica di San Marco
+  "a7-traghetto-napoli-capri-nave-lenta": "3/33/Capri_coastline.jpg|3072",   // Traghetto Napoli-Capri, nave lenta
+  "a7-treno-dall-aeroporto-di-parigi-al-centro": "f/f1/RER-B_at_Charles_de_Gaulle.jpg|2816",   // Treno dall'aeroporto di Parigi al centro
+  "a7-seggiovia-del-monte-solaro-andata-e-rito": "4/47/Monte_Solaro_Chairlift_索拉羅山纜車_-_panoramio.jpg|3264",   // Seggiovia del Monte Solaro, andata e ritorno
+  "a7-teatro-antico-di-taormina": "6/6d/Teatro_Antico_di_Taormina_(44895386195).jpg|5920",   // Teatro Antico di Taormina
+  "a7-salita-al-campanile-di-san-marco": "8/8c/Campanile_of_St._Mark's_Basilica_-_remote_view.jpg|5889",   // Salita al Campanile di San Marco
+  "a7-salita-alla-cupola-di-san-pietro-a-piedi": "0/03/Dome_of_St._Peter_in_the_afternoon.JPG|6016",   // Salita alla Cupola di San Pietro, a piedi
+  "a7-giro-delle-due-isole-borromee-da-stresa": "e/e4/GolfoBorromeoFeb202026.jpg|8064",   // Giro delle due Isole Borromee da Stresa
+  "a7-villa-d-este": "9/9e/Villa_Deste_park_Rometta_2011_2.jpg|3000",   // Villa d'Este
+  "a7-museo-del-prado": "6/68/Museo_del_Prado_2016_(25185969599).jpg|4045",   // Museo del Prado
+  "a7-scavi-di-ercolano": "b/b7/Herculaneum_007.jpg|3456",   // Scavi di Ercolano
+  "a7-museo-d-orsay": "9/9c/Pont_Royal_and_Musée_d'Orsay,_Paris_10_July_2020.jpg|5626",   // Museo d'Orsay
+  "a7-casa-di-anne-frank": "c/cb/Amsterdam_(NL),_Anne-Frank-Huis_--_2015_--_7185.jpg|4073",   // Casa di Anne Frank
+  "a7-grotte-di-frasassi": "4/45/L'interno_delle_grotte_di_Frasassi.jpg|4000",   // Grotte di Frasassi
+  "a7-castel-sant-angelo": "7/73/0_Pont_et_château_Sant'Angelo_-_Rome_(1).JPG|3888",   // Castel Sant'Angelo
+  "a7-galleria-borghese": "5/5d/Galleria_borghese_facade.jpg|4378",   // Galleria Borghese
+  "a7-alilaguna-dall-aeroporto-a-venezia": "d/d4/Alilaguna_boat_in_Venice.jpg|4896",   // Alilaguna dall'aeroporto a Venezia
+  "a7-palazzo-vecchio": "b/b3/Piazza_della_signoria,_palazzo_vecchio,_veduta_01.jpg|4040",   // Palazzo Vecchio
+  "a7-giornata-alle-isole-borromee": "e/e4/GolfoBorromeoFeb202026.jpg|8064",   // Giornata alle Isole Borromee
+  "a7-giro-sulla-senna-in-battello": "1/1f/Bateau_mouche_jnl_4.jpg|1200",   // Giro sulla Senna in battello
+  "a7-reggia-di-venaria": "3/30/La_Reggia_della_Venaria_Reale.jpg|4000",   // Reggia di Venaria
+  "a7-torre-di-arnolfo-a-palazzo-vecchio": "f/fe/Torre_di_arnolfo,_palazzo_vecchio.JPG|1200",   // Torre di Arnolfo a Palazzo Vecchio
+  "a7-ombrellone-e-due-lettini-a-jesolo": "0/00/Aerial_image_of_Lido_di_Jesolo_(view_from_the_southwest).jpg|5400",   // Ombrellone e due lettini a Jesolo
+  "a7-battello-da-como-a-bellagio-andata-e-rit": "9/98/Bellagio_and_Lake_Como_ferry.jpg|4943",   // Battello da Como a Bellagio, andata e ritorno
+  "a7-sagrada-familia": "7/74/Sagrada_Familia_March_2015-10a.jpg|6249",   // Sagrada Família
+  "a7-cabinovia-dell-alpe-di-siusi-andata-e-ri": "e/e1/Mont_de_Seuc_Fabian_2012_017_01.JPG|7360",   // Cabinovia dell'Alpe di Siusi, andata e ritorno
+  "a7-skipass-di-un-giorno-a-livigno": "c/ca/Livigno_sera.jpg|6720",   // Skipass di un giorno a Livigno
+  "a7-firenze-card-72-ore": "c/c7/Cattedrale_di_Santa_Maria_del_Fiore_–_Il_Duomo_di_Firenze.jpg|3872",   // Firenze Card, 72 ore
+  "a7-disneyland-paris-biglietto-flessibile": "f/f1/Disneyland_Park_05,_Paris_22_August_2013.jpg|3872",   // Disneyland Paris, biglietto flessibile
+  "a7-notte-in-un-hotel-3-stelle-a-roma": "e/e1/Bed_in_hotel_room_6.jpg|4048",   // Notte in un hotel 3 stelle a Roma
+  "a7-interrail-global-pass-4-giorni-in-un-mes": "d/dc/09.05.22_Trelleborg_Centralstation_X61_037,_X61_057_and_X61_047_(52093968846).jpg|5827",   // Interrail Global Pass, 4 giorni in un mese
+  "a7-crociera-di-7-notti-nel-mediterraneo": "e/ec/Legend_of_the_Seas.png|2048",   // Crociera di 7 notti nel Mediterraneo
+  "a7-una-settimana-alle-maldive": "8/82/MaldivesBungalows.jpg|3024",   // Una settimana alle Maldive
+  "a7-safari-di-una-settimana-in-kenya": "1/17/Masai_Mara_at_Sunset.jpg|2400",   // Safari di una settimana in Kenya
+  "a7-biglietto-del-vaporetto-per-7-giorni": "7/75/Venezia_Vaporetto_ACTV43_R01.jpg|4462",   // Biglietto del vaporetto per 7 giorni
+  "a7-traghetto-in-gondola-sul-canal-grande": "a/a5/Traghetto_San_Tomà_Venice.JPG|4000",   // Traghetto in gondola sul Canal Grande
+  "a7-weekend-a-barcellona-per-due": "a/a6/Evening_light_over_Barcelona.jpg|5995",   // Weekend a Barcellona per due
+  "a7-settimana-in-un-villaggio-turistico-in-c": "b/b7/Beach_in_Tropea_-_Calabria_-_Italy_-_July_17th_2013_-_01.jpg|4006",   // Settimana in un villaggio turistico in Calabria
+  "a7-settimana-a-sharm-el-sheikh-tutto-compre": "f/f5/Gold_Beach_at_Ras_Um_Sid_Bay.jpg|4871",   // Settimana a Sharm el-Sheikh, tutto compreso
+  "a7-volo-roma-londra-con-una-low-cost": "8/8c/EI-HGR_Boeing_737-8-200Max_Ryanair_Stansted_18.7.21.jpg|4178",   // Volo Roma-Londra con una low cost
+  "a7-una-notte-in-agriturismo-in-toscana": "f/f7/Acquanegra_sul_Chiese-Oasi_Le_Bine.JPG|3770",   // Una notte in agriturismo in Toscana
+  "a7-una-notte-in-b-b-a-napoli": "f/fe/Room_at_Bed_&_Breakfast_Karu.jpg|4608",   // Una notte in B&B a Napoli
+  "a7-auto-a-noleggio-per-una-settimana-in-sic": "d/d2/2018_Fiat_Panda_Easy_1.2.jpg|4206",   // Auto a noleggio per una settimana in Sicilia
+  "a7-una-notte-in-campeggio-con-la-tenda": "7/73/Tent_camping_along_the_Sulayr_trail_in_La_Taha,_Sierra_Nevada_National_Park_(DSCF5147).jpg|4667",   // Una notte in campeggio con la tenda
+  "a7-bici-a-noleggio-per-un-giorno": "7/79/Munich_-_Bicycles_for_rental_-_9524.jpg|4326",   // Bici a noleggio per un giorno
+  "a7-una-notte-in-un-hotel-di-lusso-a-venezia": "a/af/Palazzo_Pisani_Gritti_(Venice).jpg|7360",   // Una notte in un hotel di lusso a Venezia
+  "a7-popcorn-medi-al-cinema": "e/e2/Cinema_popcorn_bucket.jpg|2964",   // Popcorn medi al cinema
+  "a7-biglietto-del-cinema-in-imax": "a/a9/BFI_London_IMAX_at_night.jpg|1600",   // Biglietto del cinema in IMAX
+  "a7-biglietto-in-curva-serie-b": "5/52/Stadio_Luigi_Ferraris_di_Genova_con_il_quartiere_Marassi_(cropped).jpg|3162",   // Biglietto in curva, Serie B
+  "a7-spettacolo-comico-a-teatro": "7/75/Auditorium_at_Maxim_in_May_2024.jpg|4608",   // Spettacolo comico a teatro
+  "a7-parco-natura-viva-percorso-a-piedi": "1/11/ITALY_-_Tigre_Siberiana_-_Parco_Natura_Viva_-_Verona_3.JPG|4000",   // Parco Natura Viva, percorso a piedi
+  "a7-cinecitta-world": "a/a6/Altair_cinecitta_world.jpg|3072",   // Cinecittà World
+  "a7-bioparco-di-roma": "f/f8/Ingresso_bioparco_2.JPG|2048",   // Bioparco di Roma
+  "a7-ingresso-in-piscina": "c/c3/Swimming_Pool_lanes_and_starting_blocks.jpg|4448",   // Ingresso in piscina
+  "a7-una-partita-a-bowling": "9/90/Sunset_Lanes_bowling_alley_-_Beaverton,_OR_(2015).jpg|4736",   // Una partita a bowling
+  "a7-giro-in-go-kart": "9/9b/Клас_60.jpg|4512",   // Giro in go-kart
+  "a7-parco-avventura-percorso-adulti": "a/ad/Haltern_am_See,_Kletterwald_Haltern_--_2016_--_2559.jpg|5472",   // Parco avventura, percorso adulti
+  "a7-lezione-di-surf-di-gruppo": "6/69/Italian_surfer_2.JPG|2209",   // Lezione di surf di gruppo
+  "a7-lezione-di-equitazione": "7/72/Riding_School,_North_Hoggs_Park_-_geograph.org.uk_-_131268.jpg|640",   // Lezione di equitazione
+  "a7-campo-da-tennis-per-un-ora": "a/a1/Empty_clay_tennis_court_in_Melbourne_Australia_looking_down_the_middle.jpg|4606",   // Campo da tennis per un'ora
+  "a7-ingresso-giornaliero-alle-terme": "0/02/Terme_di_Saturnia_-_Cascate_del_Mulino-0518.jpg|5184",   // Ingresso giornaliero alle terme
+  "a7-pista-di-pattinaggio-con-noleggio": "7/7e/Empty_Skating_Rink_at_Bryant_Park.jpg|5712",   // Pista di pattinaggio con noleggio
+  "a7-battesimo-del-mare-in-immersione": "2/29/Underwater_photograph_of_a_recreational_scuba_diver_in_Playa_del_Carmen_2006.jpg|691",   // Battesimo del mare in immersione
+  "a7-pallone-da-calcio-adidas": "2/25/Al-Rihla_(cropped).jpg|2541",   // Pallone da calcio Adidas
+  "a7-pallone-da-basket-spalding": "0/09/SPALDING_NBA_OFFICIAL_GAME_BALL_8.jpg|980",   // Pallone da basket Spalding
+  "a7-racchetta-da-padel-di-fascia-media": "7/7d/Padel_rackets_and_balls.jpg|6000",   // Racchetta da padel di fascia media
+  "a7-scarpe-da-corsa-nike-pegasus": "c/c0/Nike_Zoom_Pegasus_38_running_shoe.jpg|3539",   // Scarpe da corsa Nike Pegasus 42
+  "a7-mountain-bike-di-base": "9/96/Orbea_Occam_2020.jpg|6472",   // Mountain bike di base
+  "a7-tavola-da-sup-gonfiabile": "8/84/Inflatable_Stand_Up_Paddle_board.png|617",   // Tavola da SUP gonfiabile
+  "a7-zaino-da-trekking-50-litri": "d/d7/Rucksack1.jpg|1458",   // Zaino da trekking, 50 litri
+  "a7-tavolo-da-ping-pong-da-interno": "c/c9/Table_Tennis_racquet_and_ball_on_table_with_the_net_-_side_view.jpg|4624",   // Tavolo da ping pong da interno
+  "a7-risiko-edizione-classica": "4/48/UK_Risk_Pieces_'80s.jpg|3264",   // Risiko! edizione classica
+  "a7-monopoly-edizione-classica": "7/78/Monopoly_board_on_white_bg.jpg|1463",   // Monopoly edizione classica
+  "a7-mazzo-di-carte-uno": "7/72/Uno_Old_Deck.jpg|640",   // Mazzo di carte Uno
+  "a7-cubo-di-rubik-3x3": "6/61/Rubiks_cube_solved.jpg|600",   // Cubo di Rubik 3x3
+  "a7-flauto-dolce-yamaha": "7/7e/Yamaha_Soprano_(Descant)_Recorder.jpg|3024",   // Flauto dolce Yamaha
+  "a7-armonica-hohner-special-20": "c/c0/Special20.JPG|4592",   // Armonica Hohner Special 20
+  "a7-ukulele-soprano": "d/db/Soprano_ukulele_from_China,_made_of_laminated_mahogany_wood.jpg|5184",   // Ukulele soprano
+  "a7-tastiera-casio-a-61-tasti": "b/bf/YamahaKeyboard-2.jpg|1527",   // Tastiera Casio a 61 tasti
+  "a7-chitarra-acustica-yamaha-f310": "2/2d/Yamaha_F310.jpg|3096",   // Chitarra acustica Yamaha F310
+  "a7-pianoforte-digitale-yamaha-p-145": "e/e8/Yamaha_P-125_20190713a.jpg|4352",   // Pianoforte digitale Yamaha P-145
+  "a7-pianoforte-digitale-roland-fp-30x": "9/9d/Digital-piano-423.jpg|1400",   // Pianoforte digitale Roland FP-30X
+  "a7-sassofono-contralto-yamaha": "5/5c/Yamaha_YAS-25_Alto_Saxophone_20080502.jpg|3072",   // Sassofono contralto Yamaha
+  "a7-cajon": "7/72/MAUGEIN_CAJON_01.jpg|2604",   // Cajón
+  "a7-nintendo-switch-online-12-mesi": "7/76/Nintendo-Switch-Console-Docked-wJoyConRB.jpg|4900",   // Nintendo Switch Online, 12 mesi
+  "a7-violino-da-studio": "1/1b/Violin_VL100.png|700",   // Violino da studio
+  "a7-chitarra-elettrica-fender-stratocaster-p": "6/63/Fender_Stratocaster_004-2.jpg|1432",   // Chitarra elettrica Fender Stratocaster Player II
+  "a7-lezione-di-tennis-privata": "4/4a/Tennis_Racquets_and_Balls_on_a_Clay_Court.jpg|3246",   // Lezione di tennis privata
+  "a7-marca-da-bollo": "4/47/Marca_da_bollo_adesiva.jpg|1564",   // Marca da bollo
+  "a7-lettera-con-posta-ordinaria": "0/0a/Daschle_letter.jpg|400",   // Lettera con posta ordinaria
+  "a7-raccomandata-ordinaria": "e/ee/Registered_envelope_of_Kenya_and_Uganda_1930.jpg|1637",   // Raccomandata ordinaria
+  "a7-libro-spedito-con-le-poste": "c/c0/Parcelfromamazon.jpeg|3333",   // Libro spedito con le Poste
+  "a7-contrassegno-sul-pacco": "d/d3/Verpackung_(34).jpg|3261",   // Contrassegno sul pacco
+  "a7-biglietto-bit-di-roma": "3/38/ATAC_ticket_machine_(bus).jpg|3072",   // Biglietto BIT di Roma
+  "a7-biglietto-roma-24-ore": "2/2e/Inaugurazione_metro_B1.jpg|2592",   // Biglietto Roma 24 ore
+  "a7-abbonamento-annuale-atac": "a/ab/ATAC_Iveco_Bus_Urbanway_(230).jpg|3900",   // Abbonamento annuale ATAC
+  "a7-tassa-rifiuti-a-cremona": "0/08/Cremona_Cattedrale_di_Santa_Maria_Assunta_Torrazzo_Vista_sul_la_Piazza_Sant'Antonio_Maria_Zaccaria_1.jpg|4560",   // Tassa rifiuti a Cremona
+  "a7-tassa-rifiuti-a-catania": "2/2b/Elephant_fountain,_Catania.jpg|4752",   // Tassa rifiuti a Catania
+  "a7-acqua-di-casa-un-anno": "7/73/Wasserhahn.jpg|2272",   // Acqua di casa, un anno
+  "a7-fibra-iliad-un-mese": "c/c1/Optical_fiber_connectors-optical_patch_cable-01ASD.jpg|2130",   // Fibra Iliad, un mese
+  "a7-libri-per-la-prima-superiore": "e/e6/Japanese_textbooks.jpg|640",   // Libri e dizionari per la prima superiore
+  "a7-ticket-del-pronto-soccorso": "2/2f/FEMA_-_18140_-_Photograph_by_Jocelyn_Augustino_taken_on_10-29-2005_in_Florida.jpg|4288",   // Ticket del pronto soccorso
+  "a7-ticket-massimo-di-una-ricetta": "7/79/Tessera_Sanitaria_Italia-Fronte.jpg|4364",   // Ticket massimo di una ricetta
+  "a7-apparecchio-fisso-per-i-denti": "e/e1/Orthobraces_-_dental_braces_lower_upper_jaw.jpg|2110",   // Apparecchio fisso per i denti
+  "a7-sterilizzare-una-gatta": "d/d1/Kitten_supported_on_a_towel-covered_examination_table_in_Newark,_New_Jersey.jpg|3024",   // Sterilizzare una gatta
+  "a7-visita-dal-dermatologo": "6/65/IDS-1100_Dermatoscope.jpg|2048",   // Visita dal dermatologo
+  "a7-batteria-nuova-per-iphone-17": "5/56/Black_iPhone_17.jpg|4160",   // Batteria nuova per iPhone 17
+  "a7-schermo-rotto-di-iphone-17": "6/6d/Smartphone_cracked_screen.jpg|1920",   // Schermo rotto di iPhone 17
+  "a7-elettricista-a-casa": "5/5d/US_wiring_basement-panel.jpg|1536",   // Elettricista a casa
+  "a7-taglio-di-capelli-per-bambini": "0/03/Leather_belt_bag_with_various_tools_of_a_hairdresser_for_quick_access.jpg|2736",   // Taglio di capelli per bambini
+  "a7-pedicure-estetico": "b/b6/Pedicure_with_blue_nail_colour.jpg|768",   // Pedicure estetico
+  "a7-massaggio-rilassante-un-ora": "1/1d/USMC-100831-M-2664B-015.jpg|3456",   // Massaggio rilassante, un'ora
+  "a7-lezione-di-chitarra": "6/6e/Classical_Guitar_two_views2.png|1051",   // Lezione di chitarra
+  "a7-suole-nuove-alle-scarpe": "7/7a/Capri_-_7224.jpg|4368",   // Suole nuove alle scarpe
+  "a7-lavaggio-a-secco-di-un-abito": "3/3b/Dry_cleaned_clothes_(Unsplash).jpg|7003",   // Lavaggio a secco di un abito
+  "a7-personal-trainer-un-ora": "7/7c/Dumbells_and_free_weights_in_a_gym.jpg|4041",   // Personal trainer, un'ora
+  "a7-zeppola-di-san-giuseppe": "b/b8/Zeppole_di_San_Giuseppe.jpg|960",   // Zeppola di San Giuseppe
+  "a7-pani-ca-meusa": "e/e3/Pani_ca_meusa.jpg|3968",   // Pani ca' meusa
+  "a7-pasta-di-gragnano-igp-500-g": "e/e9/Spaghetti_di_Gragnano_e_colatura_di_alici.jpg|2800",   // Pasta di Gragnano IGP, 500 g
+  "a7-pomodori-san-marzano-dop-400-g": "5/5e/TomateSanMarzano.jpg|2448",   // Pomodori San Marzano DOP, 400 g
+  "a7-cioccolato-di-modica-igp-100-g": "9/98/Cioccolato_di_Modica.jpg|5472",   // Cioccolato di Modica IGP, 100 g
+  "a7-cantucci-di-prato-igp-250-g": "1/15/I_cantuccini.jpg|3244",   // Cantucci di Prato IGP, 250 g
+  "a7-caldarroste-un-cartoccio": "f/fb/Chestnuts_roasted.jpg|1280",   // Caldarroste, un cartoccio
+  "a7-pane-di-altamura-dop-1-kg": "7/77/Pane-di-altamura-dop-official.jpg|5616",   // Pane di Altamura DOP, 1 kg
+  "a7-mazzo-di-carte-napoletane": "c/c4/Carte_napoletane_al_completo.jpg|3507",   // Mazzo di carte napoletane
+  "a7-nduja-di-spilinga-200-g": "0/04/'Nduja.JPG|3888",   // 'Nduja di Spilinga, 200 g
+  "a7-cocomero-intero-8-kg": "6/6f/Whole_Watermelon.jpg|3120",   // Cocomero intero, 8 kg
+  "a7-lenticchie-di-castelluccio-igp-500-g": "6/6e/Lenticchie_z01.jpg|800",   // Lenticchie di Castelluccio IGP, 500 g
+  "a7-stella-di-natale-in-vaso": "e/e1/Weihnachtsstern_-_groß.jpg|980",   // Stella di Natale in vaso
+  "a7-ricciarelli-di-siena-igp-250-g": "9/97/Ricciarelli_from_Siena-2.jpg|2048",   // Ricciarelli di Siena IGP, 250 g
+  "a7-giardino-di-boboli": "7/7e/Jardín_de_Bóboli,_Florencia,_Italia,_2022-09-19,_DD_26.jpg|7850",   // Giardino di Boboli
+  "a7-panforte-di-siena-450-g": "8/85/Panforte,_Firenze.jpg|4000",   // Panforte di Siena, 450 g
+  "a7-zafferano-dell-aquila-dop-1-g": "6/68/Saffron_-_premium_spice.jpg|4000",   // Zafferano dell'Aquila DOP, 1 g
+  "a7-toast-al-caffe-florian": "7/72/Ham_&_cheese_toasted_sandwich_-_Potatoast_2026-05-02.jpg|8160",   // Toast al Caffè Florian
+  "a7-palazzo-pitti": "3/30/Palazzo_Pitti_(Florence)_-_Facade_20150811.jpg|5184",   // Palazzo Pitti
+  "a7-caffettiera-napoletana-3-tazze": "d/dd/Neapolitan_flip_coffee_pot.jpg|600",   // Caffettiera napoletana, 3 tazze
+  "a7-gallerie-dell-accademia": "1/1c/Accademia_(Venice).jpg|3171",   // Gallerie dell'Accademia
+  "a7-pastore-del-presepe-napoletano": "b/bd/Campania_Caserta8_tango7174.jpg|1088",   // Pastore del presepe napoletano
+  "a7-bottarga-di-muggine-100-g": "3/36/\"_12_-_ITALY_-_Bottarga_di_Muggine_(Sardegna,_ITALIA)_P.A.T._(_botargo_of_Flathead_mullet_).JPG|2585",   // Bottarga di muggine, 100 g
+  "a7-maschera-veneziana-di-cartapesta": "2/2a/Venice_Paper_Mache_Mask_shop.jpg|5472",   // Maschera veneziana di cartapesta
+  "a7-uffizi-con-il-corridoio-vasariano": "f/f9/Vasari_corridor_and_Ponte_Vecchio_seen_from_the_Uffizi.jpg|4911",   // Uffizi con il Corridoio Vasariano
+  "a7-lardo-di-colonnata-igp-1-kg": "f/fa/Lardo_di_Colonnata.JPG|800",   // Lardo di Colonnata IGP, 1 kg
+  "a7-colazione-al-caffe-florian": "3/3e/Venice,_Piazza_San_Marco,_Caffè_Florian_3.jpg|5804",   // Colazione al Caffè Florian
+  "a7-piatto-di-ceramica-di-deruta": "0/0a/Deruta,_bacile_con_san_francesco_che_riceve_le_stimmate,_1531.jpg|1760",   // Piatto di ceramica di Deruta
+  "a7-corso-di-pasta-fresca-a-bologna": "4/42/Tortellini_Bolognesi.jpg|2592",   // Corso di pasta fresca a Bologna
+  "a7-una-notte-in-un-trullo": "6/66/Trulli_in_Alberobello_2015.jpg|5096",   // Una notte in un trullo
+  "a7-sassicaia-75-cl": "3/38/2003_Bolgheri_Sassicaia.jpg|2432",   // Sassicaia, 75 cl
+  "a7-una-forma-intera-di-grana-padano": "0/03/Grana_Padano_DOP_Riserva.jpg|1181",   // Una forma intera di Grana Padano
+  "a7-penna-stilografica-aurora-optima": "3/37/Optima_(6792731676).jpg|4272",   // Penna stilografica Aurora Optima
+  "a7-cucciolo-di-lagotto-romagnolo": "4/4f/Lagotto_Romagnolo_puppies_-_Allevamento_Valle_dei_Medici.jpg|3000",   // Cucciolo di Lagotto Romagnolo
+  "a7-vespa-50-special-d-epoca": "4/40/Vespa_Special_PIA.jpg|2736",   // Vespa 50 Special d'epoca
+  "a7-una-gondola-nuova": "2/20/Gondole_Venezia.JPG|2605",   // Una gondola nuova
 };

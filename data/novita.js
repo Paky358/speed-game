@@ -11,8 +11,10 @@ window.SG_NOVITA = [
   {
     v: 260,
     data: "23 ottobre 2026",
-    titolo: "Il Prezzo è Giusto: 72 vetrine nuove 🛍️",
+    titolo: "Il Prezzo è Giusto: quasi il doppio dei prodotti e 72 vetrine nuove 🛍️",
     descrizione: [
+      "🏷️ I prodotti da indovinare passano da 499 a 953, una cinquantina in più per ogni categoria: dalla Philadelphia al polpo fresco, dallo spritz al Caffè Florian alla tagliata a Firenze, dalla Kawasaki Z900 al Cartier Tank, dall'abbonamento ATAC alla zeppola di San Giuseppe. Ora si possono fare tante partite prima di rivedere le stesse cose.",
+      "🔍 I prezzi sono quelli veri di oggi: cercati su internet e poi ricontrollati UNO PER UNO da un secondo controllo severo (prezzo pieno da scaffale, mai quello in offerta). Le curiosità che escono col prezzo sono state verificate.",
       "🛍️ Le vetrine passano da 28 a 100: la luna di miele alle Maldive, il pizzaiolo di casa, Natale a New York, il pianista, la Cinquecento d'epoca, il Carnevale di Rio, la vita in campagna, Harry Potter a Londra e tante altre. Così la Vetrina finale (e la misteriosa!) non si ripetono più dopo poche partite.",
       "🏷️ Ogni vetrina ha il suo premio grosso, qualche premio medio e quello piccolo e simpatico, con la descrizione e il prezzo vero di oggi (i premi più cari e di marca ricontrollati su internet).",
       "📸 Anche i premi nuovi hanno la loro foto vera, scelta e controllata una per una."
