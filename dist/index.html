@@ -47457,6 +47457,17 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 259,
+    data: "23 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: si guarda e si entra a puntata in corso 👀",
+    descrizione: [
+      "🎁 Vetrina misteriosa: alla fine si scoprono solo le vetrine che qualcuno ha scelto. Se tutti tengono la prima, la misteriosa resta un mistero (e potrà uscire in un'altra partita); se tutti prendono la misteriosa, si scopre solo quella. Tutte e due solo se sono state scelte entrambe.",
+      "👀 Il Prezzo è Giusto si può guardare senza entrare, come gli altri giochi: «👀 Guarda» nella Sala o il link per guardare. Vedi tutta la puntata, con le faccine e il ✕ nella targhetta in basso, senza scrivere il nome e senza togliere il posto a nessuno.",
+      "▶ Chi arriva a puntata cominciata tocca «Entra» nella Sala e gioca dal prossimo oggetto (o dalla Ruota, o dalla Vetrina), partendo da 0 punti. Nel frattempo guarda.",
+      "📍 Nel riquadro della Sala chi non gioca legge a che punto è la puntata: «L'Offerta 2 di 3», «Gioco a premi: L'Alpinista», «La Ruota del 100», «La Vetrina finale»…"
+    ]
+  },
+  {
     v: 258,
     data: "23 ottobre 2026",
     titolo: "Il Prezzo è Giusto: la Vetrina misteriosa 🎁 e schermi più pieni",
@@ -96323,7 +96334,9 @@ window.SG_UNAPAROLA = [
       "@media (max-height:700px){.st-vista.pz-con-pan .pz-sip .pz-emo{font-size:36px;height:1.15em}}",
       ".pz-sch{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;justify-content:safe center;gap:10px;text-align:center;padding:2px 2px 0;overflow:hidden}",
       // (riempi in prezzo.js: sui telefoni alti tutto si ingrandisce finché lo spazio c'è)
-      ".pz-sch.riempi>*{zoom:var(--pz-z,1)}.pz-sch.riempi.alto{padding-top:40px}",   // (in alto i tasti tondi: il titolo resta sotto)
+      ".pz-sch.riempi>*{zoom:var(--pz-z,1)}.pz-sch.riempi.alto{padding-top:40px}",
+      // (chi guarda soltanto: la barra in basso lascia il posto alla targhetta del core, come nella Balla)
+      ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",   // (in alto i tasti tondi: il titolo resta sotto)
       // (la scritta grande in basso, «E per voi…», non copre la lista: le si lascia il suo spazio)
       ".pz-sch.con-terzo{padding-bottom:clamp(70px,calc(var(--alt,640px) * .19),160px)}",
       ".pz-testa{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;margin:0 40px;font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#ffe066}",
@@ -96742,13 +96755,15 @@ window.SG_UNAPAROLA = [
     }
     return { pesca: pesca };
   }
-  function pescaVetrina(escludi) {
+  // nonSegnare: la vetrina misteriosa, che conta come «già uscita» solo se qualcuno la scopre (segnaVista)
+  function pescaVetrina(escludi, nonSegnare) {
     var tutte = vetrine().filter(function (v) { return !escludi || escludi.indexOf(v.id || v.titolo) < 0; }); if (!tutte.length) return null;
     var viste = leggiLS(CH_VETR), nuove = tutte.filter(function (v) { return viste.indexOf(v.id || v.titolo) < 0; });
-    var v = mescola(nuove.length ? nuove : tutte)[0], k = v.id || v.titolo;
-    scriviLS(CH_VETR, viste.filter(function (x) { return x !== k; }).concat([k]).slice(-40));
+    var v = mescola(nuove.length ? nuove : tutte)[0];
+    if (!nonSegnare) segnaVista(v);
     return copia(v);
   }
+  function segnaVista(v) { var k = v.id || v.titolo; scriviLS(CH_VETR, leggiLS(CH_VETR).filter(function (x) { return x !== k; }).concat([k]).slice(-40)); }
   function pubProd(p) { return p ? { id: p.id, e: p.e, f: p.f || null, nome: p.nome, desc: p.desc || "", dove: p.dove || "", cat: p.cat, cent: Z().conCent(p.prezzo) } : null; }
 
   // ---------------- i giochi a premi registrati ----------------
@@ -96817,9 +96832,21 @@ window.SG_UNAPAROLA = [
     function vai(fase, sotto, ms, poi) {
       H.fase = fase; H.sotto = sotto || null; H.k++; H.scadenza = ms ? Date.now() + ms : 0;
       bd();
+      if (online && t.aCheSiamo) t.aCheSiamo(aCheSiamo());
       if (ms && poi) dopo(ms, poi); else clearTimeout(to);
     }
 
+    // una riga per la Sala: a che punto è la puntata (al massimo 40 lettere)
+    function aCheSiamo() {
+      var f = H.fase;
+      if (f === "offerta") return (H.imp.formato === "solo" ? "🏷️ Oggetto " : "🏷️ L'Offerta ") + (H.iOff || 1) + " di " + (H.nOff || 1);
+      if (f === "scegli" || f === "premio") return "🎁 Gioco a premi" + (f === "premio" && H.premio ? ": " + infoPremio(H.premio.tipo).nome : "");
+      if (f === "ruota") return "🎡 La Ruota del 100";
+      if (f === "vetrina") return "🛍️ La Vetrina finale";
+      if (f === "punti") return "🏁 Classifica";
+      if (f === "carrello" || f === "fine") return "🏆 Fine della puntata";
+      return "📺 Si comincia";
+    }
     // "⚙️ Regole" nella saletta
     t.onRegole = function (im) { if (H.fase !== "lobby") return; var old = H.imp; H.imp = leggiImp(im, modo); if (!online) H.imp.nBot = old.nBot; bd(); };
 
@@ -96908,7 +96935,7 @@ window.SG_UNAPAROLA = [
           fatti: Object.keys(H.vet.off).concat(Object.keys(H.vpassati || {})) };
         if (H.vet.b && (s === "mostra" || s === "scegli")) { o.vet.mist = 1; o.vet.bFoto = H.vet.b.pezzi.map(function (x) { return { f: x.f || null }; }); }   // (le foto si scaricano già, ma senza nomi)
         if (s === "scegli") o.vet.sFatti = Object.keys(H.vet.sc);
-        if (H.vet.b && (s === "offri" || s === "riv")) { var B = H.vet.b; o.vet.b = { titolo: B.titolo, e: B.e || "🎁", pezzi: B.pezzi.map(function (x) { return { e: x.e, f: x.f || null, nome: x.nome, desc: x.desc || "", dove: x.dove || "" }; }) }; o.vet.sc = copia(H.vet.sc); }
+        if (H.vet.b && (s === "offri" || (s === "riv" && H.vet.esito && H.vet.esito.prezziB))) { var B = H.vet.b; o.vet.b = { titolo: B.titolo, e: B.e || "🎁", pezzi: B.pezzi.map(function (x) { return { e: x.e, f: x.f || null, nome: x.nome, desc: x.desc || "", dove: x.dove || "" }; }) }; o.vet.sc = copia(H.vet.sc); }
         if (s === "riv") o.vet.esito = H.vet.esito;
       }
       if (f === "carrello" || f === "fine") { o.carrello = {}; H.players.forEach(function (p) { o.carrello[p.id] = p.carrello; }); }
@@ -97237,7 +97264,7 @@ window.SG_UNAPAROLA = [
     function nuovaVetrina() {
       entranoNuovi();
       var v = pescaVetrina(); if (!v) return prossimo();
-      H.vet = { v: v, b: pescaVetrina([v.id || v.titolo]) || null, sc: {}, off: {}, esito: null }; H.vpassati = {};
+      H.vet = { v: v, b: pescaVetrina([v.id || v.titolo], true) || null, sc: {}, off: {}, esito: null }; H.vpassati = {};
       vai("vetrina", "mostra", durVetMostra(v.pezzi.length, !!H.vet.b), dopoMostra);
     }
     function dopoMostra() { return H.vet.b && modo !== "telefono" ? scegliVetrina() : apriVetrina(); }
@@ -97300,8 +97327,14 @@ window.SG_UNAPAROLA = [
       ferma();
       var A = H.vet.v, B = H.vet.b;
       var e = esitoVetrina(H.vet.off, H.vet.sc, totale(A), B ? totale(B) : 0, presenti().length);
+      // (23 ott 2026, il proprietario: «non ha senso far vedere tutte e due le vetrine, solo se sono state scelte entrambe»):
+      // si scoprono solo le vetrine che qualcuno ha preso; una misteriosa che nessuno ha preso resta un mistero e non si
+      // «brucia» (potrà uscire in un'altra partita), tranne quando un VINCI TUTTO la vince come premio
+      var scelte = Object.keys(H.vet.sc).map(function (id) { return H.vet.sc[id]; });
+      e.usaA = !B || !scelte.length || scelte.some(function (w) { return w !== "b"; });
+      e.usaB = !!B && scelte.some(function (w) { return w === "b"; });
       e.prezzi = A.pezzi.map(function (x) { return x.prezzo; });
-      if (B) e.prezziB = B.pezzi.map(function (x) { return x.prezzo; });
+      if (B && (e.usaB || e.tutti.length)) { e.prezziB = B.pezzi.map(function (x) { return x.prezzo; }); segnaVista(B); }
       e.righe.forEach(function (r) { aggiungiPunti(r.id, r.punti); });
       e.vince.forEach(function (id) { vetDi(id).pezzi.forEach(function (x) { nelCarrello(id, x); }); });
       // VINCI TUTTO: anche l'altra vetrina (senza la misteriosa: una seconda pescata adesso)
@@ -97512,9 +97545,9 @@ window.SG_UNAPAROLA = [
   function durVetMostra(n, mist) { return 700 + 900 + n * RVET.pezzo + 1500 + (mist ? RVET.mist : 0); }
   // (con la misteriosa: prima i prezzi della vetrina vista, poi «…e la misteriosa era» coi suoi pezzi e i suoi prezzi)
   function durVetRiv(e) {
-    var nB = e.prezziB ? e.prezziB.length : 0;
-    return RV.cam + RV.rullo + e.prezzi.length * RVET.prezzo + Z().durataConta(e.prezzo, RVET.cifra) + 400 +
-      (nB ? RVET.mist + nB * (RVET.pezzoB + RVET.prezzo) + Z().durataConta(e.totB, RVET.cifra) + 400 + RVET.riass + 900 : 0) +   // (+900: i telefoni non restano indietro)
+    var nA = e.usaA === false ? 0 : e.prezzi.length, nB = e.prezziB && e.usaB !== false ? e.prezziB.length : 0;
+    return RV.cam + (nA ? RV.rullo + nA * RVET.prezzo + Z().durataConta(e.prezzo, RVET.cifra) + 400 : 0) +
+      (nB ? RVET.mist + nB * (RVET.pezzoB + RVET.prezzo) + Z().durataConta(e.totB, RVET.cifra) + 400 + (nA ? RVET.riass : 0) + 900 : 0) +   // (+900: i telefoni non restano indietro)
       e.righe.length * RVET.riga + RVET.banner + (e.tutti && e.tutti.length ? RVET.tutto : 0) + RV.leggii + 700;
   }
   function durRuotaRiv(e) { return RV.cam + 400 + e.righe.length * RRU.riga + (e.cento.length ? RRU.cento : 0) + RRU.banner + RV.leggii + 600; }
@@ -97531,6 +97564,7 @@ window.SG_UNAPAROLA = [
       onAvanti: function () { if (G.rete && G.vm) G.rete.invia({ t: "avanti", k: G.vm.k }); },
       onEsci: function (giaChiesto) {
         function via() { if (G.rete) G.rete.chiudi(); t.esci(); }
+        if (t.guarda && giaChiesto !== true) return t.conferma("Smetti di guardare?", null, "Esci", via);   // (chi guarda soltanto: non lascia un posto)
         if (giaChiesto !== true && G.vm && G.vm.fase !== "lobby" && G.vm.fase !== "fine") return t.conferma("Uscire dalla partita?", null, "Esci", via);
         via();
       } };
@@ -97578,6 +97612,9 @@ window.SG_UNAPAROLA = [
   function nomeDi(vm, id) { var p = gDi(vm, id); return p ? p.nome : "?"; }
   function fac(el, g, faccia) { return el("span", { class: "fac", html: ST.avatarDi(g || { nome: "?" }, faccia) }); }
   function mio(R) { var p = gDi(R.vm, R.cb.myId); return p && !p.via ? p : null; }
+  // chi guarda soltanto ha la targhetta del core con le faccine e l'uscita: il gioco non mette le sue (sarebbero doppie)
+  function conTarga(t) { return !!(t && t.guarda && !t.eliminazione); }
+  function faccine(R) { return conTarga(R.t) ? null : R.t.faccine(); }
   function vivoK(R, k) { return R.S.vivo() && R.vm.k === k && !R.fineFatta; }
   function medaglia(p) { return ["🥇", "🥈", "🥉"][p - 1] || p + "°"; }
   // «Vince Luca», «Vinci tu», «Vincono Luca e Sara», «Vincete tu e Sara»
@@ -97623,6 +97660,7 @@ window.SG_UNAPAROLA = [
     var X = { t: t, cb: cb, S: S, vm: vm, vmTs: Date.now(), pan: Z().pannello(S), kFatto: null, ui: {}, mie: {}, usciti: {}, attese: [],
       ids: vm.players.map(function (p) { return p.id; }).join("|") };
     vm.players.forEach(function (p, i) { ST.puntiLeggio(S, i, p.punti, 0); });
+    if (conTarga(t)) S.vista.classList.add("st-con-targa");   // chi guarda soltanto: in basso la targhetta del core («👀 Guardi · 😂 · ✕»)
     return X;
   }
   // chi è arrivato a partita cominciata entra: i leggii si rifanno (succede solo all'inizio di un oggetto)
@@ -97699,10 +97737,11 @@ window.SG_UNAPAROLA = [
     // i secondi che mancano (niente attesa senza tempo): una barretta muta sotto la riga
     var resta = vm.restaMs ? vm.restaMs - (Date.now() - R.vmTs) : 0, tb = null;
     if (R.cb.locale !== "telefono" && resta > 1500 && vm.fase !== "punti") tb = Z().barraTempo(el, Date.now() + resta, null, { muto: true, cls: "mini" });
-    ST.barra(R.S, [ el("p", { class: "pz-attesa", text: testo }), tb ? tb.el : null, R.t.faccine() ]);
+    ST.barra(R.S, [ el("p", { class: "pz-attesa", text: testo }), tb ? tb.el : null, faccine(R) ]);
   }
   function guardaTesto(R) {
     var vm = R.vm, id = R.cb.myId;
+    if (R.t.guarda) return "👀 Guardi la puntata";
     if ((vm.guarda || []).indexOf(id) >= 0) return "👀 Questa volta guardi: gioca chi è stato scelto.";
     if ((vm.arrivi || []).some(function (a) { return a.id === id; })) return "👋 Ci sei! Entri al prossimo oggetto.";
     return "👀 Stai guardando: alla prossima partita giochi anche tu.";
@@ -97792,7 +97831,7 @@ window.SG_UNAPAROLA = [
       vuoti: Math.max(0, MIN_ON - vm.players.length),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),
       extra: [t.el("p", { class: "modulo-nota", style: "margin:0;font-size:14px;line-height:1.45", text: riga })],
-      spettatore: guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX_ON ? "👀 La stanza è piena: guardi la partita" : false,
+      spettatore: t.guarda ? "👀 Guardi soltanto" : guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX_ON ? "👀 La stanza è piena: guardi la partita" : false,
       attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
@@ -98186,7 +98225,7 @@ window.SG_UNAPAROLA = [
       b.addEventListener("click", function () { if (b.disabled) return; R.avantiMio = chiave; b.disabled = true; aggiornaAvanti(R); Z().vibra(10); R.cb.onAvanti(); });
     }
     R.bAvanti = b; R.kAvanti = chiave;
-    ST.barra(R.S, [ conto, b, R.t.faccine() ]);
+    ST.barra(R.S, [ conto, b, faccine(R) ]);
     R.t.contoAvanti(conto, sec, null, chiave, testoConto);
     aggiornaAvanti(R);
   }
@@ -98599,12 +98638,14 @@ window.SG_UNAPAROLA = [
     var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k, e = V && V.esito; if (!e) return;
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
     await ST.suSchermo(S, RV.cam); if (!vivoK(R, k)) return;
-    var B = e.prezziB && V.b ? V.b : null, me = R.cb.myId, perId = {}; e.righe.forEach(function (r) { perId[r.id] = r; });
+    // si scoprono solo le vetrine scelte da qualcuno (B c'è anche se la misteriosa la vince solo un VINCI TUTTO)
+    var B = e.prezziB && V.b ? V.b : null, usaA = e.usaA !== false, usaB = !!B && e.usaB !== false, due = usaA && usaB;
+    var me = R.cb.myId, perId = {}; e.righe.forEach(function (r) { perId[r.id] = r; });
     // (le offerte, il cartello e «VINCI TUTTO» si preparano subito, nascosti, e si mettono sotto quando servono: così
     //  riempi sa lo spazio che prenderanno; con la misteriosa prima ci sono solo le vetrine)
     var nodiR = e.ordine.map(function (id) {
       var r = perId[id], p = gDi(vm, r.id) || { nome: "?" };
-      var n = el("div", { class: "pz-riga " + (r.sopra ? "sopra" : r.tutto ? "giusto" : r.pos === 1 ? "vince" : "sotto") }, [ fac(el, p), el("span", { class: "nm", text: (B ? (r.w === "b" ? "🎁 " : V.e + " ") : "") + (r.id === me ? "Tu" : p.nome) }), el("span", { class: "v", text: E(r.v) }),
+      var n = el("div", { class: "pz-riga " + (r.sopra ? "sopra" : r.tutto ? "giusto" : r.pos === 1 ? "vince" : "sotto") }, [ fac(el, p), el("span", { class: "nm", text: (due ? (r.w === "b" ? "🎁 " : V.e + " ") : "") + (r.id === me ? "Tu" : p.nome) }), el("span", { class: "v", text: E(r.v) }),
         el("span", { class: "bd", text: e.righe.length > 4 ? (r.sopra ? "❌" : r.tutto ? "⭐" : r.pos ? r.pos + "°" : "") : r.sopra ? "SFORATO" : r.tutto ? "⭐ TUTTO" : r.pos ? r.pos + "°" : "" }) ]);
       if (r.punti) n.appendChild(el("span", { class: "pt", text: "+" + N(r.punti) }));
       return n;
@@ -98614,7 +98655,7 @@ window.SG_UNAPAROLA = [
       tutto = nascondi(el("div", {}, [ el("div", { class: "pz-tutto", text: "⭐ VINCI TUTTO! ⭐" }) ]));
       // «VINCI TUTTO!» porta a casa anche l'altra vetrina
       if (B) e.tutti.slice(0, 3).forEach(function (id) {
-        var altra = perId[id] && perId[id].w === "b" ? { e: V.e, titolo: V.titolo, tot: e.prezzo } : { e: "🎁", titolo: B.titolo, tot: e.totB };
+        var altra = perId[id] && perId[id].w === "b" ? { e: V.e, titolo: V.titolo, tot: e.prezzo } : { e: (usaB ? "" : "la vetrina misteriosa ") + "🎁", titolo: B.titolo, tot: e.totB };
         tutto.appendChild(el("div", { class: "pz-sotto", text: (e.vince.indexOf(id) >= 0 ? chiPorta([id], me, vm) + " a casa anche " + altra.e + " «" + altra.titolo + "» (" + E(altra.tot) + ")" :
           chiPorta([id], me, vm) + " a casa tutte e due le vetrine (" + E(Math.round(e.prezzo + e.totB)) + ")") }));
       });
@@ -98625,7 +98666,7 @@ window.SG_UNAPAROLA = [
     function sotto() { nodiR.forEach(function (n) { righe.appendChild(n); }); banner.style.display = ""; extra.style.display = ""; }
     banner.style.display = "none"; extra.style.display = "none";
     schermo(R, [ box, righe, banner, extra ], "riv");
-    if (!B) sotto();   // (una vetrina sola: le offerte sotto la lista, come sempre)
+    if (!due) sotto();   // (una vetrina sola da scoprire: le offerte sotto la lista, come sempre)
     // una vetrina: i suoi pezzi, i prezzi che saltano fuori uno alla volta e il totale che gira (la misteriosa: prima i pezzi)
     async function svela(X, prezzi, tot, mist) {
       ST.vuota(box);
@@ -98641,17 +98682,19 @@ window.SG_UNAPAROLA = [
       ST.pubblico(S, "piano"); await ST.dorme(400);
       return vivoK(R, k);
     }
-    if (!await svela(V, e.prezzi, e.prezzo, false)) return;
-    if (B) {
-      ST.terzo(S, null, "…e la vetrina misteriosa era", B.titolo, "🎁"); Z().FX.tada(); fumetto(S, "Ooooh! 🎁");
+    if (usaA && !await svela(V, e.prezzi, e.prezzo, false)) return;
+    if (usaB) {
+      ST.terzo(S, null, usaA ? "…e la vetrina misteriosa era" : "🎁 La vetrina misteriosa era", B.titolo, "🎁"); Z().FX.tada(); fumetto(S, "Ooooh! 🎁");
       await ST.dorme(RVET.mist); if (!vivoK(R, k)) return;
       ST.viaTerzo(S);
       if (!await svela(B, e.prezziB, e.totB, true)) return;
-      // le due vetrine in breve; nelle offerte l'emoji della prima = chi l'ha tenuta, 🎁 = chi ha preso la misteriosa
-      ST.vuota(box);
-      box.appendChild(el("div", { class: "pz-due" }, [ rigaTotVet(el, V.e, V.titolo, e.prezzo), rigaTotVet(el, "🎁", B.titolo, e.totB) ]));
-      sotto(); riempi(R);
-      await ST.dorme(RVET.riass); if (!vivoK(R, k)) return;
+      // tutte e due scelte: le due vetrine in breve; nelle offerte l'emoji della prima = chi l'ha tenuta, 🎁 = la misteriosa
+      if (due) {
+        ST.vuota(box);
+        box.appendChild(el("div", { class: "pz-due" }, [ rigaTotVet(el, V.e, V.titolo, e.prezzo), rigaTotVet(el, "🎁", B.titolo, e.totB) ]));
+        sotto(); riempi(R);
+        await ST.dorme(RVET.riass); if (!vivoK(R, k)) return;
+      }
     }
     // le offerte: dalla più lontana alla più vicina
     for (var q = 0; q < nodiR.length; q++) {
@@ -98739,14 +98782,15 @@ window.SG_UNAPAROLA = [
         el("span", { class: "punti", text: N(r.punti) }) ]));
     });
     s._contenuto.appendChild(ol);
-    var fa = t.faccine(); if (fa) { fa.classList.add("fine-faccine"); s._contenuto.appendChild(fa); }
+    var targa = conTarga(t), fa = targa ? null : t.faccine(); if (fa) { fa.classList.add("fine-faccine"); s._contenuto.appendChild(fa); }
     var haGiocato = cb.sonoHost || clas.some(function (r) { return r.id === cb.myId; });
-    if (!haGiocato) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Questa partita l'hai guardata." }));
+    if (!haGiocato) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: targa ? "👀 Hai guardato: se l'host fa un'altra partita, entri anche tu." : "Questa partita l'hai guardata." }));
+    if (targa) s._piede.style.paddingBottom = "calc(62px + env(safe-area-inset-bottom))";   // (il posto della targhetta in basso)
     // I TASTI DI FINE LI METTE IL CORE (Rivincita col 3-2-1, Cambia gioco, Ci sto): solo se torna false i tasti di sempre
     if (!t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
       if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
       else s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
-      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+      if (!targa) s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));   // (chi guarda: c'è il ✕ della targhetta)
     }
     t.mostra(s);
   }
@@ -98841,6 +98885,9 @@ window.SG_UNAPAROLA = [
     postiOnline: MAX_ON,   // fino a 8 nello studio: nella Sala, se siete di più, l'host sceglie chi gioca
     riprende: true,   // online: se l'host ricarica o riapre l'app, la partita riprende da dove era (t.ripresa)
     riserva: true,    // online: se l'host sparisce del tutto, un amico porta avanti la partita (gioco lungo, da 2 a 8, non a due né in tempo reale)
+    // (23 ott 2026) chi arriva a partita cominciata entra all'inizio del prossimo oggetto, della Ruota o della Vetrina, con 0
+    // punti (H.arrivi, col suo id nella foto); chi vuole solo guardare («👀 Guarda» nella Sala, link con &guarda=1) guarda
+    ritardatari: "turno",
     modi: [
       { modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Da 2 a 8, a turno", amici: true, min: 2 },
       // diretto: si parte subito (due tocchi dalla home) con le regole di partenza di impostazioni(): 📺 Come in TV, Puntata,
