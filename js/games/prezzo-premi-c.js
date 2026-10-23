@@ -30,7 +30,7 @@
   function premi(b, fn) {
     var ultimo = 0;
     b.addEventListener("pointerdown", function (e) { if (e.pointerType === "mouse" && e.button) return; e.preventDefault(); ultimo = Date.now(); fn(); });
-    b.addEventListener("click", function () { if (ultimo && Date.now() - ultimo < 5000) { ultimo = 0; return; } fn(); });   // (il click dopo un tocco non conta, anche se il dito è restato giù a lungo)
+    b.addEventListener("click", function () { if (ultimo) { ultimo = 0; return; } fn(); });   // (il click dopo un tocco non conta, anche se il dito è restato giù a lungo)
   }
   function svuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
   function eTu(A, id) { return A.nome(id) === "Tu"; }
@@ -448,7 +448,7 @@
       ".pzc-c5 .e{font-size:clamp(24px,calc(var(--alt,640px) * .045),36px);line-height:1.1}",
       ".pzc-c5 .n{font-size:10px;font-weight:800;line-height:1.12;color:#e8ebff;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}",
       ".pzc-cinque.riv .pzc-c5{background:linear-gradient(#ffffff,#f3efff)}.pzc-cinque.riv .pzc-c5 .n{color:#1d1b3a}",
-      ".pzc-c5 .pz-tag{font-size:11px;padding:2px 5px 2px 11px;max-width:100%;box-sizing:border-box;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pzc-c5 .pz-tag.su{opacity:1;transform:none}",
+      ".pzc-c5 .pz-tag{font-size:11px;padding:2px 5px 2px 11px;max-width:100%;box-sizing:border-box;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pzc-c5 .pz-tag:before{left:4px;width:4px;height:4px;margin-top:-2px}.pzc-c5 .pz-tag.su{opacity:1;transform:none}",
       ".pzc-nota{margin-bottom:4px}",
       ".pzc-spesa{display:flex;flex-direction:column;gap:4px}",
       ".pzc-sr{display:flex;align-items:center;gap:8px;height:clamp(36px,calc(var(--alt,640px) * .058),46px);padding:0 6px 0 4px;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",

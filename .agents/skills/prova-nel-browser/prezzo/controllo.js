@@ -133,12 +133,19 @@
       }
       if (H.fase === "vetrina" && H.sotto === "riv" && H.vet && H.vet.esito) {
         visti[chiave] = 1; conti.vetrina++;
-        var tot = r2(H.vet.v.pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0));
-        var mioV = mieOfferte(tot, H.vet.off, true, 1, pres, [450, 225, 110], 0, 0.03), mg = marg(tot, 0.03);
-        Object.keys(H.vet.off).forEach(function (k) { var v = H.vet.off[k]; if (v <= tot + mg + 1e-9 && v >= tot * 0.97) { mioV[k] += 1000; conti.tutto++; } });
+        // (con la Vetrina misteriosa ognuno ha la sua: classifica per quanto ci si avvicina in percentuale)
+        var sommaV = function (V) { return r2(V.pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0)); };
+        var tot = sommaV(H.vet.v), totB = H.vet.b ? sommaV(H.vet.b) : 0, sc = H.vet.sc || {}, mioV = {};
+        var rV = Object.keys(H.vet.off).map(function (id) { var t = sc[id] === "b" && totB ? totB : tot, v = r2(H.vet.off[id]); if (sc[id] === "b") conti.mist = (conti.mist || 0) + 1; return { id: id, t: t, v: v, d: Math.abs(v - t) / t, sopra: v > t + marg(t, 0.03) + 1e-9 }; });
+        var candV = rV.filter(function (r) { return !r.sopra; });
+        rV.forEach(function (r) {
+          var pos = r.sopra ? 0 : 1 + candV.filter(function (q) { return q.d < r.d - 1e-9; }).length;
+          mioV[r.id] = pos === 1 ? 450 : pos === 2 ? 225 : pos === 3 && pres >= 4 ? 110 : 0;
+          if (!r.sopra && r.v >= r.t * 0.97) { mioV[r.id] += 1000; conti.tutto++; }
+        });
         var suoV = {}; H.vet.esito.righe.forEach(function (r) { suoV[r.id] = r.punti; });
         confronta("Vetrina (" + tot + ")", mioV, suoV); aggiungi(suoV);
-        log.push("V " + tot + " ← " + JSON.stringify(H.vet.off) + " " + JSON.stringify(suoV));
+        log.push("V " + tot + (totB ? " / 🎁 " + totB : "") + " ← " + JSON.stringify(H.vet.off) + " " + JSON.stringify(sc) + " " + JSON.stringify(suoV));
       }
       if (H.fase === "fine" && H.classifica) {
         visti[chiave] = 1;

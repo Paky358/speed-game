@@ -30,8 +30,8 @@
   var MIN_ON = 2, MAX_ON = 8;
   // i tempi (ms). Online (e contro il Bot) per tutti insieme; sullo stesso telefono (TL) a testa
   // (scegli e intro: il tempo per leggere le regole dei giochi a premi, anche per chi non li conosce)
-  var T = { prodotto: 4800, offri: 20000, rifai: 12000, sopra: 4400, scegli: 15000, intro: 10000, punti: 10000, vetOffri: 30000, giro: 15000, decidi: 10000 };
-  var TL = { offri: 25000, vetOffri: 35000, giro: 20000, decidi: 15000, scegli: 15000 };
+  var T = { prodotto: 4800, offri: 20000, rifai: 12000, sopra: 4400, scegli: 15000, intro: 10000, punti: 10000, vetScegli: 12000, vetOffri: 30000, giro: 15000, decidi: 10000 };
+  var TL = { offri: 25000, vetScegli: 15000, vetOffri: 35000, giro: 20000, decidi: 15000, scegli: 15000 };
   // I punti (22 ott 2026, rifatti con decine di migliaia di puntate simulate: .agents/skills/prova-nel-browser/prezzo/simulazione). Prima la
   // fortuna e la Vetrina pesavano troppo (CENTO +1.000, giro bonus +1.000/+500, Vetrina ×3 e VINCI TUTTO +1.500 entro il 5%):
   // chi era primo dopo le manche vinceva una volta su due e un CENTO cambiava il vincitore una volta su quattro.
@@ -42,7 +42,7 @@
   var N_OGG = { veloce: 6, puntata: 10, lunga: 15 }, N_GIRI = { veloce: 2, puntata: 3, lunga: 4 };
   // i passi della rivelazione (li usa l'host per sapere quanto aspettare e la regia per andare a tempo)
   var RV = { cam: 650, rullo: 1300, cifra: 280, dopoConta: 450, riga: 420, banner: 2000, cattivo: 2500, leggii: 2700 };
-  var RVET = { pezzo: 2300, prezzo: 850, cifra: 240, riga: 600, banner: 2100, tutto: 3900 };
+  var RVET = { pezzo: 2300, prezzo: 850, cifra: 240, riga: 600, banner: 2100, tutto: 3900, mist: 1700, pezzoB: 450, riass: 900 };
   var RRU = { riga: 650, cento: 2700, banner: 2100 };
   var RU_FERMA = 6500;   // dopo l'ultima spinta della Ruota: la ruota frena (fino a ~5,5 s) e il numero resta un attimo
 
@@ -91,6 +91,27 @@
       });
     }
     return e;
+  }
+  // La Vetrina finale, anche con la misteriosa: off = { id: valore }, sc = { id: "a" | "b" } (la vetrina di ognuno: «a» quella
+  // vista da tutti, «b» la misteriosa), totA e totB i loro totali, n quanti giocano. Le vetrine sono diverse, quindi vince chi
+  // si avvicina di più IN PERCENTUALE senza superare (fino al 3% sopra vale ancora): con una vetrina sola è la stessa classifica
+  // di sempre. Entro il 3% «VINCI TUTTO!» (+1.000).
+  function esitoVetrina(off, sc, totA, totB, n) {
+    var ids = Object.keys(off || {});
+    var righe = ids.map(function (id) {
+      var w = sc && sc[id] === "b" && totB > 0 ? "b" : "a", tot = w === "b" ? totB : totA, v = tondo2(off[id]);
+      return { id: id, w: w, tot: tot, v: v, d: Math.abs(v - tot) / tot, sopra: v > tot + Z().margine(tot, 0.03) + 1e-9 };
+    });
+    var cand = righe.filter(function (r) { return !r.sopra; }), pos = posizioni(cand), tutti = [];
+    righe.forEach(function (r) {
+      r.pos = pos[r.id] || 0;
+      r.punti = r.pos ? puntiPos(r.pos, n || ids.length, SCALA_V) : 0;
+      if (!r.sopra && r.v >= r.tot * (1 - TUTTO_PCT)) { r.tutto = true; r.punti += BONUS_TUTTO; tutti.push(r.id); }
+    });
+    righe.sort(function (a, b) { return a.d - b.d; });
+    return { prezzo: totA, totB: totB, righe: righe, vince: righe.filter(function (r) { return r.pos === 1; }).map(function (r) { return r.id; }), tutti: tutti,
+      tuttiSopra: !!(righe.length && !cand.length), nessuno: !righe.length,
+      ordine: righe.slice().sort(function (a, b) { return (b.sopra - a.sopra) || (b.d - a.d); }).map(function (r) { return r.id; }) };   // dalla più lontana alla più vicina
   }
   // La Ruota del 100: g = { id: { v1, v2 } }. Vince chi va più vicino a 100 senza superarlo; 100 esatto +300 (BONUS_CENTO)
   function esitoRuota(g, ids) {
@@ -342,6 +363,9 @@
       if (f === "vetrina" && H.vet) {
         o.vet = { titolo: H.vet.v.titolo, e: H.vet.v.e || "🛍️", pezzi: H.vet.v.pezzi.map(function (x) { return { e: x.e, f: x.f || null, nome: x.nome, desc: x.desc || "", dove: x.dove || "" }; }),
           fatti: Object.keys(H.vet.off).concat(Object.keys(H.vpassati || {})) };
+        if (H.vet.b && (s === "mostra" || s === "scegli")) { o.vet.mist = 1; o.vet.bFoto = H.vet.b.pezzi.map(function (x) { return { f: x.f || null }; }); }   // (le foto si scaricano già, ma senza nomi)
+        if (s === "scegli") o.vet.sFatti = Object.keys(H.vet.sc);
+        if (H.vet.b && (s === "offri" || s === "riv")) { var B = H.vet.b; o.vet.b = { titolo: B.titolo, e: B.e || "🎁", pezzi: B.pezzi.map(function (x) { return { e: x.e, f: x.f || null, nome: x.nome, desc: x.desc || "", dove: x.dove || "" }; }) }; o.vet.sc = copia(H.vet.sc); }
         if (s === "riv") o.vet.esito = H.vet.esito;
       }
       if (f === "carrello" || f === "fine") { o.carrello = {}; H.players.forEach(function (p) { o.carrello[p.id] = p.carrello; }); }
@@ -381,7 +405,7 @@
       if (f === "offerta" && s === "offri" && H.off[id] != null) privato(id, { t: "priv", k: "mia", v: H.off[id], kk: H.k });
       if (f === "premio" && s === "gioca" && H.premio) { var g = premioDi(H.premio.tipo); if (g && g.privatoDi) try { var m = g.privatoDi(H.premio.st, id, apiPremio()); if (m) privato(id, { t: "priv", k: "premio", m: m, kk: H.k }); } catch (e) {} }
       if (f === "vetrina" && H.vet && H.vet.off[id] != null) privato(id, { t: "priv", k: "miaV", v: H.vet.off[id], kk: H.k });
-      if (f === "vetrina" && s === "offri" && H.indizio && H.indizio.id === id) mandaIndizio();
+      if (f === "vetrina" && s === "offri" && H.indizio && (H.indizio.ids || []).indexOf(id) >= 0) mandaIndizio(id);
       if (f === "ruota" && s === "decidi" && H.ruota && H.ruota.g[id] && H.ruota.g[id].si != null) privato(id, { t: "priv", k: "miaR", si: H.ruota.g[id].si, kk: H.k });
     }
 
@@ -602,8 +626,9 @@
       H.ruota.esito = e;
       e.righe.forEach(function (r) { aggiungiPunti(r.id, r.punti); });
       e.cento.forEach(function (id) { H.ruota.g[id].cento = true; });
-      // l'indizio per la Vetrina va a chi vince la Ruota (con due Ruote, solo la seconda)
-      if (e.vince.length && H.nRuota >= H.ruoteTot) { H.indizio = { id: e.vince[Math.floor(Math.random() * e.vince.length)] }; H.ruota.indizio = H.indizio.id; }
+      // l'indizio per la Vetrina va a chi vince la Ruota (con due Ruote, solo la seconda); a pari merito a tutti (23 ott 2026, il
+      // proprietario: «se due persone fanno 100… l'indizio lo dà solamente ad una persona»)
+      if (e.vince.length && H.nRuota >= H.ruoteTot) { H.indizio = { ids: e.vince.slice(), x: {} }; H.ruota.indizio = e.vince.slice(); }
       vai("ruota", "riv", durRuotaRiv(e), dopoRivRuota);
     }
     function dopoRivRuota() { if (H.ruota && H.ruota.esito && H.ruota.esito.cento.length) giroBonus(); else prossimo(); }
@@ -660,36 +685,69 @@
     }
 
     // ---------- LA VETRINA FINALE ----------
+    // La Vetrina misteriosa (23 ott 2026; in «OK, il prezzo è giusto!» il primo in classifica poteva tenere la vetrina vista o
+    // scambiarla con una misteriosa; il proprietario ha scelto «scelgono tutti, in segreto»): tutti vedono la prima vetrina,
+    // poi ognuno decide in segreto se tenerla («a») o prendere la misteriosa («b»), che scopre solo dopo aver scelto; ognuno
+    // offre sulla sua (esitoVetrina: classifica in percentuale) e «VINCI TUTTO!» porta a casa anche l'altra. Chi non sceglie in
+    // tempo tiene la prima. Sullo stesso telefono si sceglie al proprio turno, prima di offrire. Senza una seconda vetrina
+    // (non dovrebbe succedere) si gioca come prima, tutti sulla stessa.
     function nuovaVetrina() {
       entranoNuovi();
       var v = pescaVetrina(); if (!v) return prossimo();
-      H.vet = { v: v, off: {}, esito: null }; H.vpassati = {};
-      if (H.indizio) { var ord = v.pezzi.map(function (x, i) { return i; }).sort(function (a, b) { return v.pezzi[b].prezzo - v.pezzi[a].prezzo; }); H.indizio.i = ord[Math.floor(Math.random() * Math.min(2, ord.length))]; }
-      vai("vetrina", "mostra", durVetMostra(v.pezzi.length), apriVetrina);
+      H.vet = { v: v, b: pescaVetrina([v.id || v.titolo]) || null, sc: {}, off: {}, esito: null }; H.vpassati = {};
+      vai("vetrina", "mostra", durVetMostra(v.pezzi.length, !!H.vet.b), dopoMostra);
     }
+    function dopoMostra() { return H.vet.b && modo !== "telefono" ? scegliVetrina() : apriVetrina(); }
+    function scegliVetrina() {
+      vai("vetrina", "scegli", T.vetScegli, apriVetrina);
+      if (modo === "bot") bots().forEach(function (b) { botDopo(1500 + Math.random() * 5500, function () { sceltaVet(b.id, Math.random() < 0.4); }); });
+    }
+    function sceltaVet(id, mist) {
+      var p = pById(id), s = H.sotto;
+      if (H.fase !== "vetrina" || !H.vet || !H.vet.b || !p || p.via || H.vet.sc[id]) return;
+      if (s !== "scegli" && !(s === "offri" && modo === "telefono")) return;
+      H.vet.sc[id] = mist ? "b" : "a";
+      if (s === "offri") preparaIndizio(id);   // (sullo stesso telefono si sceglie al proprio turno: l'indizio arriva adesso)
+      bd(); controlla();
+    }
+    function vetDi(id) { return H.vet.b && H.vet.sc[id] === "b" ? H.vet.b : H.vet.v; }
+    function totale(V) { return tondo2(V.pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0)); }
+    // l'indizio di chi ha vinto la Ruota: il prezzo di uno dei due pezzi più cari della vetrina che ha scelto (uno a testa)
+    function preparaIndizio(soloPer) {
+      if (!H.indizio || !H.indizio.ids) return;
+      H.indizio.ids.forEach(function (id) {
+        if (soloPer && id !== soloPer) return;
+        var V = vetDi(id), ord = V.pezzi.map(function (x, i) { return i; }).sort(function (a, b) { return V.pezzi[b].prezzo - V.pezzi[a].prezzo; });
+        H.indizio.x[id] = { w: H.vet.b && H.vet.sc[id] === "b" ? "b" : "a", i: ord[Math.floor(Math.random() * Math.min(2, ord.length))] };
+        mandaIndizio(id);
+      });
+    }
+    function indizioDi(id) { return H.indizio && H.indizio.x && H.indizio.x[id] || null; }
     function apriVetrina() {
+      if (modo !== "telefono") presenti().forEach(function (p) { if (!H.vet.sc[p.id]) H.vet.sc[p.id] = "a"; });   // non ha scelto: tiene la prima
       vai("vetrina", "offri", modo === "telefono" ? 0 : T.vetOffri, chiudiVetrina);
-      mandaIndizio();
+      if (H.indizio) { H.indizio.x = {}; if (modo !== "telefono" || !H.vet.b) preparaIndizio(); }
       if (modo === "bot") bots().forEach(function (b) {
         botDopo(4000 + Math.random() * (T.vetOffri - 9000), function () {
           if (H.fase !== "vetrina" || H.sotto !== "offri") return;
           var tot = 0;
-          H.vet.v.pezzi.forEach(function (x, i) { tot += (H.indizio && H.indizio.id === b.id && H.indizio.i === i) ? x.prezzo : stimaBot(x.prezzo, H.imp.liv, false); });
+          vetDi(b.id).pezzi.forEach(function (x, i) { tot += (indizioDi(b.id) && indizioDi(b.id).i === i) ? x.prezzo : stimaBot(x.prezzo, H.imp.liv, false); });
           // (un'idea sbagliata sul totale, uguale per tutti i pezzi: se no gli errori si compensano e il Bot fa «VINCI TUTTO» troppo spesso)
           tot *= Math.exp(Math.max(-2.5, Math.min(2.5, gauss())) * (ERR[H.imp.liv] || 0.25) * 0.7);
           offVetrina(b.id, Z().arrotonda(tot * (1 - (ERR[H.imp.liv] || 0.25) * 0.25), tot));
         });
       });
     }
-    function mandaIndizio() {
-      if (!H.indizio || H.indizio.i == null || !H.vet) return;
-      var x = H.vet.v.pezzi[H.indizio.i]; if (!x) return;
-      privato(H.indizio.id, { t: "priv", k: "indizio", i: H.indizio.i, e: x.e, nome: x.nome, prezzo: x.prezzo, kk: H.k });
+    function mandaIndizio(id) {
+      var I = indizioDi(id); if (!I || I.i == null || !H.vet) return;
+      var x = vetDi(id).pezzi[I.i]; if (!x) return;
+      privato(id, { t: "priv", k: "indizio", i: I.i, e: x.e, nome: x.nome, prezzo: x.prezzo, kk: H.k });
     }
     function offVetrina(id, v) {
       var p = pById(id);
       if (H.fase !== "vetrina" || H.sotto !== "offri" || !p || p.via || H.vet.off[id] != null) return;
       v = Math.round(+v); if (!(v > 0 && v < 1e7)) return;
+      if (H.vet.b && !H.vet.sc[id]) H.vet.sc[id] = "a";
       H.vet.off[id] = v; delete H.vpassati[id];
       privato(id, { t: "priv", k: "miaV", v: v, kk: H.k });
       bd(); controlla();
@@ -697,16 +755,19 @@
     function chiudiVetrina() {
       if (H.fase !== "vetrina" || H.sotto !== "offri") return;
       ferma();
-      var pezzi = H.vet.v.pezzi, tot = tondo2(pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0));
-      var e = esitoOfferta(tot, H.vet.off, { senzaSforare: true, pct: 0.03, scala: SCALA_V, bonus: 0, n: presenti().length });
-      e.tutti = [];
-      e.righe.forEach(function (r) { if (!r.sopra && r.v >= tot * (1 - TUTTO_PCT)) { r.tutto = true; r.punti += BONUS_TUTTO; e.tutti.push(r.id); } });
-      e.ordine = e.righe.slice().sort(function (a, b) { return (b.sopra - a.sopra) || (b.d - a.d); }).map(function (r) { return r.id; });   // dalla più lontana alla più vicina
-      e.prezzi = pezzi.map(function (x) { return x.prezzo; });
+      var A = H.vet.v, B = H.vet.b;
+      var e = esitoVetrina(H.vet.off, H.vet.sc, totale(A), B ? totale(B) : 0, presenti().length);
+      e.prezzi = A.pezzi.map(function (x) { return x.prezzo; });
+      if (B) e.prezziB = B.pezzi.map(function (x) { return x.prezzo; });
       e.righe.forEach(function (r) { aggiungiPunti(r.id, r.punti); });
-      e.vince.forEach(function (id) { pezzi.forEach(function (x) { nelCarrello(id, x); }); });
-      // VINCI TUTTO: anche la seconda vetrina
-      if (e.tutti.length) {
+      e.vince.forEach(function (id) { vetDi(id).pezzi.forEach(function (x) { nelCarrello(id, x); }); });
+      // VINCI TUTTO: anche l'altra vetrina (senza la misteriosa: una seconda pescata adesso)
+      if (e.tutti.length && B) e.tutti.forEach(function (id) {
+        var mia = vetDi(id);
+        if (e.vince.indexOf(id) < 0) mia.pezzi.forEach(function (x) { nelCarrello(id, x); });   // (nel 3% ma non il primo: anche la sua)
+        (mia === B ? A : B).pezzi.forEach(function (x) { nelCarrello(id, x); });
+      });
+      else if (e.tutti.length) {
         var v2 = pescaVetrina([H.vet.v.id || H.vet.v.titolo]);
         if (v2) {
           e.seconda = { titolo: v2.titolo, e: v2.e || "🛍️", pezzi: v2.pezzi.map(function (x) { return { e: x.e, f: x.f || null, nome: x.nome, prezzo: x.prezzo }; }), tot: tondo2(v2.pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0)) };
@@ -714,7 +775,7 @@
         }
       }
       H.vet.esito = e;
-      vai("vetrina", "riv", durVetRiv(e, pezzi.length), prossimo);
+      vai("vetrina", "riv", durVetRiv(e), prossimo);
     }
 
     // ---------- chi ha finito: si va avanti senza aspettare il tempo ----------
@@ -736,6 +797,7 @@
         // (sullo stesso telefono la ruota la chiude la regia quando l'ultimo ha visto fermarsi la sua: «finiti»)
         if (s === "bonus" && modo !== "telefono" && conta.every(function (p) { return !x(p.id).cento || x(p.id).b != null; })) return dopo(RU_FERMA, rivBonus);
       }
+      if (f === "vetrina" && s === "scegli" && pres.every(function (p) { return H.vet.sc[p.id]; })) return dopo(pausa, apriVetrina);
       if (f === "vetrina" && s === "offri" && pres.every(function (p) { return H.vet.off[p.id] != null || H.vpassati[p.id]; })) return dopo(pausa, chiudiVetrina);
       if ((f === "punti" || (f === "premio" && s === "intro")) && H.avanti.length >= servono()) return oltre();
     }
@@ -790,7 +852,7 @@
         return respiro(s === "bonus" ? "bonus" : "ruota");
       }
       if (f === "vetrina" && H.vet) {
-        if (s === "riv" && H.vet.esito) return vai("vetrina", "riv", durVetRiv(H.vet.esito, H.vet.v.pezzi.length), prossimo);
+        if (s === "riv" && H.vet.esito) return vai("vetrina", "riv", durVetRiv(H.vet.esito), prossimo);
         return respiro("vetrina");
       }
       respiro("prossimo");
@@ -816,8 +878,8 @@
       if (poi === "ruota") { H.nRuota = Math.max(0, (H.nRuota || 1) - 1); return nuovaRuota(); }
       if (poi === "bonus" && H.ruota) { presenti().forEach(function (p) { var x = H.ruota.g[p.id]; if (x && x.cento) x.b = null; }); H.ruota.esitoB = null; return giroBonus(); }
       if (poi === "vetrina" && H.vet) {
-        H.vet.off = {}; H.vet.esito = null; H.vpassati = {};
-        return vai("vetrina", "mostra", durVetMostra(H.vet.v.pezzi.length), apriVetrina);
+        H.vet.off = {}; H.vet.sc = {}; H.vet.esito = null; H.vpassati = {};
+        return vai("vetrina", "mostra", durVetMostra(H.vet.v.pezzi.length, !!H.vet.b), dopoMostra);
       }
       prossimo();
     }
@@ -827,7 +889,7 @@
       var f = H.fase, s = H.sotto, p = pById(id); if (!p) return;
       if (f === "offerta" && s === "offri") { if (H.off[id] == null) { H.passati[id] = 1; bd(); controlla(); } return; }
       if (f === "premio" && s === "gioca" && H.premio) { H.premio.fatti[id] = 1; bd(); controlla(); return; }
-      if (f === "vetrina" && s === "offri") { if (H.vet.off[id] == null) { H.vpassati[id] = 1; bd(); controlla(); } return; }
+      if (f === "vetrina" && s === "offri") { if (H.vet.off[id] == null) { if (H.vet.b && !H.vet.sc[id]) { H.vet.sc[id] = "a"; preparaIndizio(id); } H.vpassati[id] = 1; bd(); controlla(); } return; }
       if (f === "scegli" && H.scelta) return scegli(H.scelta.chi, H.scelta.opz[0]);
       if (f === "ruota" && H.ruota) {
         var x = H.ruota.g[id]; if (!x) return;
@@ -849,6 +911,7 @@
       if (m.t === "spinta") return spinta(id, m.f);
       if (m.t === "ancora") return ancora(id, m.si);
       if (m.t === "vetrina") return offVetrina(id, m.v);
+      if (m.t === "vscelta") return sceltaVet(id, !!m.b);
       if (m.t === "passa") return passa(id);
       if (m.t === "finiti") return finiti();
     }
@@ -903,8 +966,14 @@
 
   // durate dei passi (le usano l'host per aspettare e la regia per andare a tempo)
   function durRivela(e) { return RV.cam + RV.rullo + Z().durataConta(e.prezzo, RV.cifra) + RV.dopoConta + e.righe.length * RV.riga + RV.banner + (e.cattivo ? RV.cattivo : 0) + RV.leggii + 700; }
-  function durVetMostra(n) { return 700 + 900 + n * RVET.pezzo + 1500; }
-  function durVetRiv(e, nPezzi) { return RV.cam + RV.rullo + nPezzi * RVET.prezzo + Z().durataConta(e.prezzo, RVET.cifra) + 400 + e.righe.length * RVET.riga + RVET.banner + (e.tutti && e.tutti.length ? RVET.tutto : 0) + RV.leggii + 700; }
+  function durVetMostra(n, mist) { return 700 + 900 + n * RVET.pezzo + 1500 + (mist ? RVET.mist : 0); }
+  // (con la misteriosa: prima i prezzi della vetrina vista, poi «…e la misteriosa era» coi suoi pezzi e i suoi prezzi)
+  function durVetRiv(e) {
+    var nB = e.prezziB ? e.prezziB.length : 0;
+    return RV.cam + RV.rullo + e.prezzi.length * RVET.prezzo + Z().durataConta(e.prezzo, RVET.cifra) + 400 +
+      (nB ? RVET.mist + nB * (RVET.pezzoB + RVET.prezzo) + Z().durataConta(e.totB, RVET.cifra) + 400 + RVET.riass + 900 : 0) +   // (+900: i telefoni non restano indietro)
+      e.righe.length * RVET.riga + RVET.banner + (e.tutti && e.tutti.length ? RVET.tutto : 0) + RV.leggii + 700;
+  }
   function durRuotaRiv(e) { return RV.cam + 400 + e.righe.length * RRU.riga + (e.cento.length ? RRU.cento : 0) + RRU.banner + RV.leggii + 600; }
   function durCarrello(n) { return 700 + 900 + n * 900 + 2800; }
 
@@ -988,6 +1057,7 @@
   function precaricaFoto(vm) {
     if (vm.prod) { Z().precarica(vm.prod, 500); Z().precarica(vm.prod, 330); }
     if (vm.vet && vm.vet.pezzi) vm.vet.pezzi.forEach(function (x) { Z().precarica(x, 330); });
+    if (vm.vet) (vm.vet.bFoto || (vm.vet.b || {}).pezzi || []).forEach(function (x) { Z().precarica(x, 330); });
     var pp = vm.premio && vm.premio.pub && vm.premio.pub.prod;
     if (pp) (Array.isArray(pp) ? pp : [pp]).forEach(function (x) { Z().precarica(x, 500); Z().precarica(x, 330); });
   }
@@ -1029,7 +1099,7 @@
       if (R.usciti[p.id]) { delete R.usciti[p.id]; ST.fuori(S, i, false); }
       if (p.forse) return ST.testoLeggio(S, i, "📶 …");
       if (f === "offerta" && s === "offri") { var v = (vm.off || {})[p.id], ok = v != null || (vm.offFatti || []).indexOf(p.id) >= 0; return ST.testoLeggio(S, i, v != null ? E(v) : ok ? "✅" : (vm.passati || []).indexOf(p.id) >= 0 ? "😶" : "🤔"); }
-      if (f === "vetrina" && s === "offri") return ST.testoLeggio(S, i, (vm.vet.fatti || []).indexOf(p.id) >= 0 ? "✅" : "🤔");
+      if (f === "vetrina" && (s === "offri" || s === "scegli")) return ST.testoLeggio(S, i, ((s === "scegli" ? vm.vet.sFatti : vm.vet.fatti) || []).indexOf(p.id) >= 0 ? "✅" : "🤔");
       if (f === "premio" && s === "gioca") return ST.testoLeggio(S, i, ((vm.premio || {}).fatti || []).indexOf(p.id) >= 0 ? "✅" : "🎮");
       if (f === "ruota" && !fermi && vm.ruota) {
         var x = vistaRuota(R, p.id); if (!x) return ST.puntiLeggio(S, i, p.punti, 0);
@@ -1066,7 +1136,7 @@
       else if (f === "premio") await (s === "intro" ? fIntro : s === "gioca" ? fGioca : fPremioRiv)(R);
       else if (f === "punti") await fPunti(R);
       else if (f === "ruota") await fRuota(R);
-      else if (f === "vetrina") await (s === "mostra" ? fVetMostra : s === "offri" ? fVetOffri : fVetRiv)(R);
+      else if (f === "vetrina") await (s === "mostra" ? fVetMostra : s === "scegli" ? fVetScegli : s === "offri" ? fVetOffri : fVetRiv)(R);
       else if (f === "carrello") await fCarrello(R);
       else if (f === "fine") await fFine(R);
     } catch (e) { try { console.error("[prezzo] passo " + f + "/" + s, e); } catch (x) {} }
@@ -1098,8 +1168,48 @@
   // il maxischermo: si svuota e si riempie (una volta per passo)
   function schermo(R, nodi, cls) {
     ST.fermaTimer(R.S); ST.vuota(R.S.sch); R.schKey = null;
+    if (R.oss) { R.oss.disconnect(); R.oss = null; }
     var box = R.t.el("div", { class: "pz-sch" + (cls ? " " + cls : "") }, nodi);
     R.S.sch.appendChild(box); return box;
+  }
+  // Riempire lo schermo (23 ott 2026, il proprietario: «ci sono tanti spazi vuoti», «le immagini un po' più grandi»): le
+  // schermate sono fatte per i telefoni piccoli; su quelli alti foto, scritte e righe si ingrandiscono finché lo spazio c'è.
+  // Si prova dalla misura più grande alla più piccola e si tiene la prima che ci sta tutta (in alto e di lato); «stretta»
+  // (la lista della Vetrina) all'ultimo passa a «fitta». Si rifà quando il pannello in basso sale o scende e quando qualcosa
+  // dentro cambia misura. Quello che compare dopo deve essere già al suo posto, nascosto: se no a metà schermata tutto si
+  // rimpicciolirebbe di colpo.
+  var ZOOM = [1.5, 1.38, 1.26, 1.15, 1.06, 1], LARGO_MIN = 250;
+  function riempi(R, stretta) {
+    var sch = R.S.sch.querySelector(".pz-sch"); if (!sch) return;
+    function ci() { return sch.scrollHeight <= sch.clientHeight + 1 && sch.scrollWidth <= sch.clientWidth + 1; }
+    function prova() {
+      if (!sch.isConnected) return;
+      if (stretta) stretta.classList.remove("fitta");
+      // (mai più largo di così: le righe devono avere posto per i nomi; nella vista larga dello studio non si ingrandisce)
+      var max = Math.max(1, sch.clientWidth / LARGO_MIN);
+      // («alto»: ingrandita, la schermata arriva fino in cima e lascia posto ai tasti tondi; alla misura normale com'era prima)
+      for (var i = 0; i < ZOOM.length; i++) { if (ZOOM[i] > max + 0.001) continue; sch.classList.toggle("alto", ZOOM[i] > 1); sch.style.setProperty("--pz-z", ZOOM[i]); if (ci()) return; }
+      if (stretta) stretta.classList.add("fitta");
+    }
+    sch.classList.add("riempi"); prova();
+    if (R.oss) R.oss.disconnect(); R.oss = null;
+    // (la misura si rifà al fotogramma dopo, mai dentro l'avviso del browser: se no «ResizeObserver loop»)
+    if (window.ResizeObserver) {
+      var misura = function () { return sch.clientHeight + "x" + sch.clientWidth + "|" + [].map.call(sch.children, function (c) { return c.offsetHeight; }).join(","); };
+      var ult = misura(), pend = false;
+      R.oss = new ResizeObserver(function () {
+        if (pend) return; pend = true;
+        requestAnimationFrame(function () { pend = false; if (!sch.isConnected) return; var m = misura(); if (m === ult) return; prova(); ult = misura(); });
+      });
+      R.oss.observe(sch); [].forEach.call(sch.children, function (c) { R.oss.observe(c); });
+    }
+  }
+  // nascosto ma al suo posto (per riempi): si scopre dopo, con l'animazione d'entrata
+  function nascondi(n) { n.style.visibility = "hidden"; n.style.animation = "none"; return n; }
+  function scopri(n) {
+    n.style.visibility = ""; n.style.animation = "";
+    [].forEach.call(n.querySelectorAll("*"), function (c) { if (!c.getAttribute("style") && getComputedStyle(c).animationName !== "none") { c.style.animation = "none"; void c.offsetWidth; c.removeAttribute("style"); } });
+    return n;
   }
   function testa(R, testo) {
     var vm = R.vm, el = R.t.el;
@@ -1329,40 +1439,43 @@
     await ST.suSchermo(S, RV.cam); if (!vivoK(R, k)) return;
     var sforareOk = vm.formato === "solo" && !vm.sforare;
     var conta = Z().contachilometri(el, e.prezzo, { grande: true });
-    var righe = el("div", { class: "pz-righe" + (e.righe.length > 4 ? " due" : "") }), banner = el("div", { class: "pz-sotto" });
+    var giusti = e.giusti || [], vince = e.vince || [], me = R.cb.myId;
+    var banner = nascondi(giusti.length ? el("div", { class: "pz-banner oro", text: "🎯 PREZZO GIUSTO!" }) : vince.length ? el("div", { class: "pz-banner", text: "🏆 " + chiVince(vince, me, vm) + "!" }) :
+      !e.nessuno ? el("div", { class: "pz-banner no", text: "😱 Sforato da tutti: niente punti" }) : el("div", { class: "pz-sotto" }));
+    var righe = el("div", { class: "pz-righe" + (e.righe.length > 4 ? " due" : "") });
     var nodi = e.righe.map(function (r) { return rigaOfferta(el, R, r, sforareOk, e.righe.length > 4); });
     nodi.forEach(function (n) { righe.appendChild(n); });
     if (!nodi.length) righe.appendChild(el("div", { class: "pz-sotto", text: "😶 Nessuno ha fatto un'offerta" }));
     var cur = el("div");
+    if (e.cur) cur.appendChild(nascondi(el("div", { class: "pz-curiosita", text: "💡 " + e.cur })));
     schermo(R, [ testa(R), miniProd(el, vm.prod), conta.el, el("div", { class: "pz-anno", text: "prezzo medio in Italia, " + (vm.anno || 2026) }), righe, banner, cur ], "riv");
+    riempi(R);
     ST.FX.rullo(1.2); await ST.dorme(RV.rullo); if (!vivoK(R, k)) return;
     await conta.via(RV.cifra); if (!vivoK(R, k)) return;
     ST.pubblico(S, e.wow ? "ovazione" : "piano"); if (e.wow) fumetto(S, "Cosaaa?! 😱");
     await ST.dorme(RV.dopoConta);
-    var me = R.cb.myId;
     for (var q = 0; q < nodi.length; q++) {
       if (!vivoK(R, k)) return;
       nodi[q].classList.add("su"); Z().FX.toc(520 + q * 50);
       await ST.dorme(RV.riga);
     }
     // chi vince: PREZZO GIUSTO!, oppure il più vicino
-    var giusti = e.giusti || [], vince = e.vince || [];
     nodi.forEach(function (n) { var r = n._r; if (r.pos === 1) n.classList.add("vince"); if (r.punti) n.appendChild(el("span", { class: "pt", text: "+" + N(r.punti) })); });
     if (giusti.length) {
-      banner.className = "pz-banner oro"; banner.textContent = "🎯 PREZZO GIUSTO!";
+      scopri(banner);
       Z().FX.din(); ST.pubblico(S, "ovazione"); ST.coriandoli(); ST.lampo(S);
       if (giusti.indexOf(me) >= 0) Z().vibra([30, 40, 70]);
       giusti.forEach(function (id) { var i = idxDi(vm, id); if (i >= 0) ST.faccia(S, i, "evviva"); });
     } else if (vince.length) {
-      banner.className = "pz-banner"; banner.textContent = "🏆 " + chiVince(vince, me, vm) + "!";
+      scopri(banner);
       ST.pubblico(S, "applauso");
       vince.forEach(function (id) { var i = idxDi(vm, id); if (i >= 0) ST.faccia(S, i, "esulta"); });
     } else if (!e.nessuno) {
-      banner.className = "pz-banner no"; banner.textContent = "😱 Sforato da tutti: niente punti";
+      scopri(banner);
       Z().FX.trombone(); ST.pubblico(S, "ohh");
     }
     if (me && e.righe.some(function (r) { return r.id === me && r.sopra && !sforareOk; })) Z().vibra([20, 40, 20]);
-    if (e.cur) cur.appendChild(el("div", { class: "pz-curiosita", text: "💡 " + e.cur }));
+    if (cur.firstChild) scopri(cur.firstChild);
     await ST.dorme(RV.banner); if (!vivoK(R, k)) return;
     // «😈 Che cattiveria!»: il «+1 €» fischiato dal pubblico
     if (e.cattivo) {
@@ -1518,6 +1631,7 @@
     });
     var dopo = vm.dopo === "vetrina" ? "Poi: 🛍️ la Vetrina finale!" : vm.dopo === "ruota" ? "Poi: 🎡 la Ruota del 100!" : vm.dopo === "carrello" ? "Poi: 🛒 cosa vi portate a casa" : vm.dopo === "oggetto" && vm.iOff + 1 === vm.nOff && vm.formato === "solo" ? "Poi: 🔥 l'ultimo oggetto, vale doppio!" : "";
     schermo(R, [ el("div", { class: "pz-testa", text: vm.rip ? "🔁 Si riprende! · Classifica" : "🏁 Classifica" + (vm.formato === "solo" ? " dopo " + vm.iOff + " oggetti" : "") }), box, dopo ? el("div", { class: "pz-sotto", text: dopo }) : null ]);
+    riempi(R);
     barraAvanti(R, k);
   }
   // in basso: «Si va avanti tra 8…» e «⏩ Avanti» (si parte subito se lo tocca più di metà)
@@ -1792,7 +1906,8 @@
       banner.className = vince.length ? "pz-banner" : "pz-banner no";
       banner.textContent = vince.length ? "🏆 " + chiVince(vince, me, vm) + " la Ruota!" : "😱 Sballati tutti!";
       if (vince.length) ST.pubblico(S, "applauso"); else ST.pubblico(S, "ohh");
-      if (vm.ruota.indizio) cento.appendChild(el("div", { class: "pz-sotto", text: "🔎 " + (vm.ruota.indizio === me ? "Avrai" : nomeDi(vm, vm.ruota.indizio) + " avrà") + " un indizio sulla Vetrina!" }));
+      var li = [].concat(vm.ruota.indizio || []), ioI = li.indexOf(me) >= 0, altriI = li.filter(function (id) { return id !== me; }).map(function (id) { return nomeDi(vm, id); });
+      if (li.length) cento.appendChild(el("div", { class: "pz-sotto", text: "🔎 " + (ioI ? (altriI.length ? "Tu e " + nomi(altriI) + " avrete" : "Avrai") : nomi(altriI) + (altriI.length > 1 ? " avranno" : " avrà")) + " un indizio sulla Vetrina!" }));
       if (e.cento && e.cento.length) cento.appendChild(el("div", { class: "pz-sotto", text: "🎁 Chi ha fatto 100 fa il giro bonus!" }));
     } else banner.className = "pz-sotto";
     await ST.dorme(RRU.banner); if (!vivoK(R, k)) return;
@@ -1809,34 +1924,93 @@
     var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k; if (!V) return;
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
     await ST.suSchermo(S, 700); if (!vivoK(R, k)) return;
-    var lista = el("div", { class: "pz-vet" + (V.pezzi.length > 3 ? " fitta" : "") });
-    schermo(R, [ el("div", { class: "pz-testa", text: "🛍️ La Vetrina finale" }), el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista ]);
+    // (tutti i pezzi, e il pacco della misteriosa, già al loro posto ma nascosti: così riempi sa quanto spazio c'è)
+    var lista = el("div", { class: "pz-vet" }), nodi = V.pezzi.map(function (x) { return lista.appendChild(nascondi(pezzoVet(el, x, null))); });
+    var pacco = V.mist ? nascondi(el("div", { class: "pz-mist" }, [ el("span", { class: "i", text: "🎁" }), el("div", {}, [ el("b", { text: "…e c'è una vetrina misteriosa!" }), el("small", { text: "Nessuno sa cosa c'è dentro" }) ]) ])) : null;
+    schermo(R, [ el("div", { class: "pz-testa", text: "🛍️ La Vetrina finale" }), el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista, pacco ], "con-terzo");
+    riempi(R, lista);
     ST.terzo(S, null, "E per voi…", V.titolo, "🛍️"); Z().FX.tada();
     await ST.dorme(900);
     for (var i = 0; i < V.pezzi.length; i++) {
       if (!vivoK(R, k)) return;
-      lista.appendChild(pezzoVet(el, V.pezzi[i], null));
+      scopri(nodi[i]);
       ST.terzo(S, null, (i === 0 ? "E per voi… " : i === V.pezzi.length - 1 ? "…e per finire " : "…ma non è finita! ") + (V.pezzi[i].e || ""), V.pezzi[i].nome, "🛍️");
       ST.pubblico(S, i === V.pezzi.length - 1 ? "applauso" : "piano"); fumetto(S, "Ooooh! 😮");
       await ST.dorme(RVET.pezzo);
     }
+    // (con la misteriosa: si annuncia che ce n'è un'altra, che nessuno ha visto)
+    if (pacco && vivoK(R, k)) {
+      scopri(pacco);
+      ST.terzo(S, null, "…ma attenzione: c'è anche", "una vetrina misteriosa!", "🎁"); Z().FX.tada(); fumetto(S, "Uuuuh! 🎁");
+      await ST.dorme(RVET.mist);
+    }
     ST.viaTerzo(S);
+  }
+  // la scelta in segreto (Vetrina misteriosa): sul maxischermo la vetrina vista e il pacco misterioso, nel pannello i due tasti
+  async function fVetScegli(R) {
+    var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k; if (!V) return;
+    await ST.suSchermo(S, 300); if (!vivoK(R, k)) return;
+    var lista = el("div", { class: "pz-vet" }), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : "") });
+    V.pezzi.forEach(function (x) { var n = pezzoVet(el, x, null); n.style.animation = "none"; lista.appendChild(n); });
+    var mist = el("div", { class: "pz-mist" }, [ el("span", { class: "i", text: "🎁" }), el("div", {}, [ el("b", { text: "La vetrina misteriosa" }), el("small", { text: "La scopre solo chi la prende" }) ]) ]);
+    schermo(R, [ el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista, mist, el("div", { class: "pz-sotto", text: "Tieni questa o prendi la misteriosa? Si sceglie in segreto" }), fatti ]);
+    R.ui.vetFatti = fatti; aggiornaVet(R);
+    riempi(R, lista);
+    var me = mio(R); if (!me) return attesa(R, guardaTesto(R));
+    var gia = R.mie["s" + k];
+    if (gia != null || (V.sFatti || []).indexOf(me.id) >= 0) return attesa(R, testoScelta(gia));
+    apriSceltaVet(R, me, R.vmTs + Math.max(0, (vm.restaMs || 0) - 500), function (m) {
+      R.mie["s" + k] = m; R.cb.mossa({ t: "vscelta", k: k, b: m }, me.id);
+      clearTimeout(R.toAttesa); R.toAttesa = setTimeout(function () { if (vivoK(R, k)) attesa(R, testoScelta(m)); }, 700);
+    });
+  }
+  function testoScelta(m) { return m == null ? "✅ Hai scelto · aspettiamo gli altri…" : m ? "🎁 Hai preso la misteriosa! Aspettiamo gli altri…" : "🛍️ Tieni questa vetrina · aspettiamo gli altri…"; }
+  // «Tengo questa» o «La misteriosa» (fatto(true) = la misteriosa). Allo scadere: online decide chi tiene la partita (tiene la
+  // prima), sullo stesso telefono si tiene la prima e si va a offrire
+  function apriSceltaVet(R, chi, fine, fatto) {
+    var el = R.t.el, V = R.vm.vet, finito = false;
+    function vota(m) {
+      if (finito) return; finito = true; bott.forEach(function (b) { b.disabled = true; }); (m ? b2 : b1).classList.add("sel"); Z().vibra(12);
+      if (R.tempoPan === tb) { tb.ferma(); R.tempoPan = null; }
+      fatto(m);
+    }
+    var b1 = el("button", { class: "pz-sc", type: "button" }, [ el("span", { class: "i", text: V.e || "🛍️" }), el("b", { text: "Tengo questa" }), el("small", { text: "«" + V.titolo + "»" }) ]);
+    var b2 = el("button", { class: "pz-sc mist", type: "button" }, [ el("span", { class: "i", text: "🎁" }), el("b", { text: "La misteriosa" }), el("small", { text: "La scopri solo dopo" }) ]);
+    var bott = [b1, b2];
+    b1.addEventListener("click", function () { vota(false); }); b2.addEventListener("click", function () { vota(true); });
+    var tb = Z().barraTempo(el, fine, function () { if (R.cb.locale === "telefono") vota(false); else bott.forEach(function (b) { b.disabled = true; }); });
+    R.tempoPan = tb;
+    R.pan.metti([ testaPan(R, chi, (R.cb.locale === "telefono" ? chi.nome + ": " : "") + "🎁 Tieni o cambi?", tb), el("div", { class: "pz-scelte" }, bott) ]).su();
+  }
+  // la vetrina sul maxischermo: "a" quella vista da tutti, "b" la misteriosa (nuova: i pezzi della misteriosa saltano fuori uno dopo l'altro)
+  function mostraVetrina(R, box, w, nuova) {
+    var el = R.t.el, V = R.vm.vet, X = w === "b" && V.b ? V.b : V, lista = el("div", { class: "pz-vet" });
+    if (!box || !box.isConnected) return;
+    ST.vuota(box);
+    box.appendChild(el("div", { class: "pz-vtit" + (X !== V ? " mist" : ""), text: (X !== V ? "🎁 " : "") + X.e + " " + X.titolo }));
+    box.appendChild(lista);
+    X.pezzi.forEach(function (x, i) { var n = pezzoVet(el, x, null); if (X !== V && nuova) n.style.animationDelay = (0.3 + i * 0.3) + "s"; else n.style.animation = "none"; lista.appendChild(n); });
+    riempi(R, lista);
+    if (X !== V && nuova) { Z().FX.tada(); fumetto(R.S, "Ecco la misteriosa! 🎁"); }
   }
   async function fVetOffri(R) {
     var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k; if (!V) return;
     await ST.suSchermo(S, 300); if (!vivoK(R, k)) return;
-    var lista = el("div", { class: "pz-vet fitta" }), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : "") });
-    V.pezzi.forEach(function (x) { lista.appendChild(pezzoVet(el, x, null)); });
-    schermo(R, [ el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista, el("div", { class: "pz-sotto", text: "Quanto vale TUTTA la vetrina? Offerte segrete" }), fatti ]);
-    R.ui.vetFatti = fatti; aggiornaVet(R);
-    if (R.cb.locale === "telefono") return turniVetrina(R, k);
-    var me = mio(R); if (!me) return attesa(R, guardaTesto(R));
+    var box = el("div", { class: "pz-vbox" }), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : "") });
+    schermo(R, [ box, el("div", { class: "pz-sotto", text: V.b ? "Quanto vale TUTTA la tua vetrina? Offerte segrete" : "Quanto vale TUTTA la vetrina? Offerte segrete" }), fatti ]);
+    R.ui.vetFatti = fatti; R.ui.vetBox = box; aggiornaVet(R);
+    if (R.cb.locale === "telefono") { mostraVetrina(R, box, "a", false); return turniVetrina(R, k); }
+    var me = mio(R);
+    mostraVetrina(R, box, me && V.b && (V.sc || {})[me.id] === "b" ? "b" : "a", true);
+    // (aveva toccato «La misteriosa» proprio allo scadere: per chi tiene la partita era già tardi)
+    if (me && V.b && R.mie["s" + (k - 1)] === true && (V.sc || {})[me.id] !== "b") fumetto(S, "⏰ Troppo tardi: tieni la prima vetrina");
+    if (!me) return attesa(R, guardaTesto(R));
     var gia = R.mie["v" + k];
     if (gia != null || (V.fatti || []).indexOf(me.id) >= 0) return attesa(R, gia != null ? "✅ Hai offerto " + E(gia) + " per la vetrina" : "✅ Hai fatto la tua offerta");
     apriVetrina(R, me, R.vmTs + (vm.restaMs || 0), null);
   }
   function rigaIndizio(R, chiId) {
-    var I = R.indizio; if (!I || I.kk == null || (I.per != null && I.per !== chiId)) return null;
+    var I = (R.indizi || {})[chiId]; if (!I || I.kk == null || I.kk !== R.vm.k) return null;
     return R.t.el("div", { class: "pz-indizio", text: "🔎 Il tuo indizio (hai vinto la Ruota): " + (I.e || "") + " " + I.nome + " costa " + E(I.prezzo) });
   }
   function apriVetrina(R, chi, fine, allaFine) {
@@ -1854,13 +2028,22 @@
       if (!vivoK(R, k)) return;
       if ((R.vm.vet.fatti || []).indexOf(p.id) >= 0) continue;
       await turno(R, k, p, "Passa il telefono a " + p.nome, function () {
-        apriVetrina(R, p, Date.now() + TL.vetOffri, function () { R.cb.mossa({ t: "passa", k: k }, p.id); });
+        // (con la misteriosa: prima si sceglie, poi si offre sulla vetrina scelta)
+        var V = R.vm.vet, gia = (V.sc || {})[p.id];
+        function offri(w) {
+          mostraVetrina(R, R.ui.vetBox, w, w === "b");
+          apriVetrina(R, p, Date.now() + TL.vetOffri, function () { R.cb.mossa({ t: "passa", k: k }, p.id); });
+        }
+        if (!V.b || gia) return offri(gia || "a");
+        mostraVetrina(R, R.ui.vetBox, "a", false);
+        apriSceltaVet(R, p, Date.now() + TL.vetScegli, function (m) { R.cb.mossa({ t: "vscelta", k: k, b: m }, p.id); setTimeout(function () { if (vivoK(R, k)) offri(m ? "b" : "a"); }, 450); });
       }, function (vm2) { return ((vm2.vet || {}).fatti || []).indexOf(p.id) >= 0; });
+      if (vivoK(R, k)) mostraVetrina(R, R.ui.vetBox, "a", false);   // (il prossimo non vede la vetrina di chi ha appena offerto)
     }
   }
   function aggiornaVet(R) {
     var vm = R.vm, el = R.t.el, box = R.ui.vetFatti; if (!box || !box.isConnected || !vm.vet) return;
-    var fatti = vm.vet.fatti || [], tx = vm.players.filter(function (p) { return !p.via; }).map(function (p) { return p.id + (fatti.indexOf(p.id) >= 0 ? "1" : "0"); }).join("|");
+    var fatti = (vm.sotto === "scegli" ? vm.vet.sFatti : vm.vet.fatti) || [], tx = vm.players.filter(function (p) { return !p.via; }).map(function (p) { return p.id + (fatti.indexOf(p.id) >= 0 ? "1" : "0"); }).join("|");
     if (R.ui.vetK === tx) return; R.ui.vetK = tx;
     ST.vuota(box);
     vm.players.forEach(function (p) {
@@ -1873,38 +2056,73 @@
     var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k, e = V && V.esito; if (!e) return;
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
     await ST.suSchermo(S, RV.cam); if (!vivoK(R, k)) return;
-    var lista = el("div", { class: "pz-vet fitta" }), nodiP = V.pezzi.map(function (x, i) { return pezzoVet(el, x, e.prezzi[i]); });
-    nodiP.forEach(function (n) { n.style.animation = "none"; lista.appendChild(n); });
-    var conta = Z().contachilometri(el, e.prezzo, {});
-    var totRiga = el("div", { class: "pz-tot" }, [ el("span", { text: "Totale" }), conta.el ]);
-    var righe = el("div", { class: "pz-righe" + (e.righe.length > 4 ? " due" : "") }), banner = el("div", { class: "pz-sotto" }), extra = el("div");
-    schermo(R, [ el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista, totRiga, righe, banner, extra ], "riv");
-    ST.FX.rullo(1.2); await ST.dorme(RV.rullo); if (!vivoK(R, k)) return;
-    for (var i = 0; i < nodiP.length; i++) { nodiP[i]._tag.classList.add("su"); Z().FX.toc(600 + i * 80); await ST.dorme(RVET.prezzo); if (!vivoK(R, k)) return; }
-    await conta.via(RVET.cifra); if (!vivoK(R, k)) return;
-    ST.pubblico(S, "piano"); await ST.dorme(400);
-    // le offerte: dalla più lontana alla più vicina
-    var me = R.cb.myId, perId = {}; e.righe.forEach(function (r) { perId[r.id] = r; });
-    for (var q = 0; q < e.ordine.length; q++) {
-      if (!vivoK(R, k)) return;
-      var r = perId[e.ordine[q]], p = gDi(vm, r.id) || { nome: "?" };
-      var n = el("div", { class: "pz-riga su " + (r.sopra ? "sopra" : r.tutto ? "giusto" : r.pos === 1 ? "vince" : "sotto") }, [ fac(el, p), el("span", { class: "nm", text: r.id === me ? "Tu" : p.nome }), el("span", { class: "v", text: E(r.v) }),
+    var B = e.prezziB && V.b ? V.b : null, me = R.cb.myId, perId = {}; e.righe.forEach(function (r) { perId[r.id] = r; });
+    // (le offerte, il cartello e «VINCI TUTTO» si preparano subito, nascosti, e si mettono sotto quando servono: così
+    //  riempi sa lo spazio che prenderanno; con la misteriosa prima ci sono solo le vetrine)
+    var nodiR = e.ordine.map(function (id) {
+      var r = perId[id], p = gDi(vm, r.id) || { nome: "?" };
+      var n = el("div", { class: "pz-riga " + (r.sopra ? "sopra" : r.tutto ? "giusto" : r.pos === 1 ? "vince" : "sotto") }, [ fac(el, p), el("span", { class: "nm", text: (B ? (r.w === "b" ? "🎁 " : V.e + " ") : "") + (r.id === me ? "Tu" : p.nome) }), el("span", { class: "v", text: E(r.v) }),
         el("span", { class: "bd", text: e.righe.length > 4 ? (r.sopra ? "❌" : r.tutto ? "⭐" : r.pos ? r.pos + "°" : "") : r.sopra ? "SFORATO" : r.tutto ? "⭐ TUTTO" : r.pos ? r.pos + "°" : "" }) ]);
       if (r.punti) n.appendChild(el("span", { class: "pt", text: "+" + N(r.punti) }));
-      righe.appendChild(n); Z().FX.toc(520 + q * 50);
+      return n;
+    });
+    var tutto = null;
+    if (e.tutti && e.tutti.length) {
+      tutto = nascondi(el("div", {}, [ el("div", { class: "pz-tutto", text: "⭐ VINCI TUTTO! ⭐" }) ]));
+      // «VINCI TUTTO!» porta a casa anche l'altra vetrina
+      if (B) e.tutti.slice(0, 3).forEach(function (id) {
+        var altra = perId[id] && perId[id].w === "b" ? { e: V.e, titolo: V.titolo, tot: e.prezzo } : { e: "🎁", titolo: B.titolo, tot: e.totB };
+        tutto.appendChild(el("div", { class: "pz-sotto", text: (e.vince.indexOf(id) >= 0 ? chiPorta([id], me, vm) + " a casa anche " + altra.e + " «" + altra.titolo + "» (" + E(altra.tot) + ")" :
+          chiPorta([id], me, vm) + " a casa tutte e due le vetrine (" + E(Math.round(e.prezzo + e.totB)) + ")") }));
+      });
+      else if (e.seconda) tutto.appendChild(el("div", { class: "pz-sotto", text: chiPorta(e.tutti, me, vm) + " a casa anche " + e.seconda.e + " «" + e.seconda.titolo + "» (" + E(e.seconda.tot) + ")" }));
+    }
+    var box = el("div", { class: "pz-vbox" }), righe = el("div", { class: "pz-righe" + (e.righe.length > 4 ? " due" : "") });
+    var vince = e.vince || [], banner = nascondi(el("div", { class: vince.length ? "pz-banner" : "pz-banner no", text: vince.length ? "🏆 " + chiVince(vince, me, vm) + " la Vetrina!" : "😱 Sforato da tutti!" })), extra = el("div", {}, [ tutto ]);
+    function sotto() { nodiR.forEach(function (n) { righe.appendChild(n); }); banner.style.display = ""; extra.style.display = ""; }
+    banner.style.display = "none"; extra.style.display = "none";
+    schermo(R, [ box, righe, banner, extra ], "riv");
+    if (!B) sotto();   // (una vetrina sola: le offerte sotto la lista, come sempre)
+    // una vetrina: i suoi pezzi, i prezzi che saltano fuori uno alla volta e il totale che gira (la misteriosa: prima i pezzi)
+    async function svela(X, prezzi, tot, mist) {
+      ST.vuota(box);
+      var lista = el("div", { class: "pz-vet" }), nodi = X.pezzi.map(function (x, i) { return lista.appendChild(mist ? nascondi(pezzoVet(el, x, prezzi[i])) : pezzoVet(el, x, prezzi[i])); }), conta = Z().contachilometri(el, tot, {});
+      box.appendChild(el("div", { class: "pz-vtit" + (mist ? " mist" : ""), text: (mist ? "🎁 " : "") + X.e + " " + X.titolo }));
+      box.appendChild(lista);
+      box.appendChild(el("div", { class: "pz-tot" }, [ el("span", { text: "Totale" }), conta.el ]));
+      riempi(R, lista);
+      if (mist) { for (var j = 0; j < nodi.length; j++) { scopri(nodi[j]); Z().FX.toc(500 + j * 60); await ST.dorme(RVET.pezzoB); if (!vivoK(R, k)) return false; } }
+      else { nodi.forEach(function (n) { n.style.animation = "none"; }); ST.FX.rullo(1.2); await ST.dorme(RV.rullo); if (!vivoK(R, k)) return false; }
+      for (var i = 0; i < nodi.length; i++) { nodi[i]._tag.classList.add("su"); Z().FX.toc(600 + i * 80); await ST.dorme(RVET.prezzo); if (!vivoK(R, k)) return false; }
+      await conta.via(RVET.cifra); if (!vivoK(R, k)) return false;
+      ST.pubblico(S, "piano"); await ST.dorme(400);
+      return vivoK(R, k);
+    }
+    if (!await svela(V, e.prezzi, e.prezzo, false)) return;
+    if (B) {
+      ST.terzo(S, null, "…e la vetrina misteriosa era", B.titolo, "🎁"); Z().FX.tada(); fumetto(S, "Ooooh! 🎁");
+      await ST.dorme(RVET.mist); if (!vivoK(R, k)) return;
+      ST.viaTerzo(S);
+      if (!await svela(B, e.prezziB, e.totB, true)) return;
+      // le due vetrine in breve; nelle offerte l'emoji della prima = chi l'ha tenuta, 🎁 = chi ha preso la misteriosa
+      ST.vuota(box);
+      box.appendChild(el("div", { class: "pz-due" }, [ rigaTotVet(el, V.e, V.titolo, e.prezzo), rigaTotVet(el, "🎁", B.titolo, e.totB) ]));
+      sotto(); riempi(R);
+      await ST.dorme(RVET.riass); if (!vivoK(R, k)) return;
+    }
+    // le offerte: dalla più lontana alla più vicina
+    for (var q = 0; q < nodiR.length; q++) {
+      if (!vivoK(R, k)) return;
+      nodiR[q].classList.add("su"); Z().FX.toc(520 + q * 50);
       await ST.dorme(RVET.riga);
     }
-    var vince = e.vince || [];
-    banner.className = vince.length ? "pz-banner" : "pz-banner no";
-    banner.textContent = vince.length ? "🏆 " + chiVince(vince, me, vm) + " la Vetrina!" : "😱 Sforato da tutti!";
+    scopri(banner);
     ST.pubblico(S, vince.length ? "ovazione" : "ohh");
     vince.forEach(function (id) { var i2 = idxDi(vm, id); if (i2 >= 0) ST.faccia(S, i2, "evviva"); });
     await ST.dorme(RVET.banner); if (!vivoK(R, k)) return;
-    // «VINCI TUTTO!»: vicinissimo (entro il 3%, TUTTO_PCT), si vince anche la seconda vetrina
-    if (e.tutti && e.tutti.length) {
-      ST.vuota(extra);
-      extra.appendChild(el("div", { class: "pz-tutto", text: "⭐ VINCI TUTTO! ⭐" }));
-      if (e.seconda) extra.appendChild(el("div", { class: "pz-sotto", text: chiPorta(e.tutti, me, vm) + " a casa anche " + e.seconda.e + " «" + e.seconda.titolo + "» (" + E(e.seconda.tot) + ")" }));
+    // «VINCI TUTTO!»: vicinissimo (entro il 3%, TUTTO_PCT)
+    if (tutto) {
+      scopri(tutto);
       ST.coriandoli(); ST.FX.fanfara(); ST.lampo(S); ST.pubblico(S, "ovazione");
       if (e.tutti.indexOf(me) >= 0) Z().vibra([80, 40, 160]);
       await ST.dorme(RVET.tutto); if (!vivoK(R, k)) return;
@@ -1912,6 +2130,8 @@
     var d = {}; e.righe.forEach(function (r) { if (r.punti) d[r.id] = r.punti; });
     await leggiiDelta(R, k, d);
   }
+
+  function rigaTotVet(el, icona, titolo, tot) { return el("div", { class: "pz-vt" }, [ el("span", { class: "i", text: icona }), el("span", { class: "t", text: titolo }), el("b", { text: E(tot) }) ]); }
 
   // ---------------- IL CARRELLO DEI PREMI ----------------
   function quanti(n) { return n === 1 ? "" : ["", "", "due ", "tre ", "quattro ", "cinque "][n] || n + " "; }
@@ -1925,18 +2145,22 @@
     }).sort(function (a, b) { return b.tot - a.tot; });
     var box = el("div", { class: "pz-cars" + (lista.length > 5 ? " due" : "") });
     schermo(R, [ el("div", { class: "pz-testa", text: "🛒 Cosa vi portate a casa" }), box, el("div", { class: "pz-anno", text: "(euro finti, solo per ridere: la classifica vera è quella dei punti)" }) ]);
-    await ST.dorme(900);
-    for (var q = 0; q < lista.length; q++) {
-      if (!vivoK(R, k)) return;
-      var x = lista[q], cosa;
+    var righe = lista.map(function (x) {
+      var cosa;
       if (!x.c.length) cosa = [ el("b", { text: x.p.id === R.cb.myId ? "Tu" : x.p.nome }), el("span", { text: "🧽" }), el("small", { text: "una spugna, premio di consolazione" }) ];
       else {
         var raggr = []; x.c.forEach(function (c) { var g = raggr.filter(function (y) { return y.nome === c.nome; })[0]; if (g) g.n++; else raggr.push({ e: c.e, nome: c.nome, n: 1 }); });
         cosa = [ el("b", { text: x.p.id === R.cb.myId ? "Tu" : x.p.nome }), el("span", { class: "figs" }, x.c.slice(0, 12).map(function (c) { return Z().figura(el, c, "e"); })),
           el("small", { text: raggr.map(function (g) { return quanti(g.n) + g.nome; }).join(", ") }) ];
       }
-      box.appendChild(el("div", { class: "pz-car" }, [ fac(el, x.p, x.c.length ? "esulta" : "triste"), el("div", { class: "cosa" }, cosa), el("span", { class: "tot", text: x.c.length ? E(Math.round(x.tot)) : "" }) ]));
-      if (x.c.length) Z().FX.cassa(); else ST.pubblico(S, "piano");
+      return box.appendChild(nascondi(el("div", { class: "pz-car" }, [ fac(el, x.p, x.c.length ? "esulta" : "triste"), el("div", { class: "cosa" }, cosa), el("span", { class: "tot", text: x.c.length ? E(Math.round(x.tot)) : "" }) ])));
+    });
+    riempi(R);
+    await ST.dorme(900);
+    for (var q = 0; q < lista.length; q++) {
+      if (!vivoK(R, k)) return;
+      scopri(righe[q]);
+      if (lista[q].c.length) Z().FX.cassa(); else ST.pubblico(S, "piano");
       await ST.dorme(900);
     }
     ST.pubblico(S, "applauso");
@@ -1998,7 +2222,7 @@
     else if (f === "premio" && s === "intro") aggiornaAvanti(R);
     else if (f === "punti") aggiornaAvanti(R);
     else if (f === "ruota") aggiornaRuota(R);
-    else if (f === "vetrina" && s === "offri") aggiornaVet(R);
+    else if (f === "vetrina" && (s === "offri" || s === "scegli")) aggiornaVet(R);
   }
   // i messaggi solo per questo telefono
   function privatoR(m) {
@@ -2027,7 +2251,13 @@
       if (R.premioPan && R.premioPan.privato && (m.per == null || m.per === R.premioChi)) try { R.premioPan.privato(m.m); } catch (e) {}
       return;
     }
-    if (m.k === "indizio") { R.indizio = m; return; }
+    if (m.k === "indizio") {
+      (R.indizi = R.indizi || {})[m.per] = m;   // (sullo stesso telefono ne arrivano anche due)
+      if (R.tast && R.tast.el && R.vetChi === m.per && R.tastChi === m.per && R.vm.fase === "vetrina" && !R.tast.el.querySelector(".pz-indizio")) {
+        var ri = rigaIndizio(R, m.per); if (ri) { R.tast.el.insertBefore(ri, R.tast.el.firstChild); if (R.pan.aperto()) R.pan.su(); }
+      }
+      return;
+    }
     if (m.k === "miaR") { R.mie["r" + m.kk] = m.si; return; }
   }
 
@@ -2082,7 +2312,7 @@
       "Punti: <b>300</b> al primo, <b>150</b> al secondo, <b>75</b> al terzo (con almeno 4 giocatori). <b>PREZZO GIUSTO!</b> (praticamente preciso): <b>+500</b>.",
       "Chi vince l'Offerta sceglie il <b>gioco a premi</b>, e si gioca tutti insieme.",
       "🎡 <b>La Ruota del 100</b>: girate tutti, poi decidete in segreto se girare ancora (si somma). Vince chi va più vicino a 100 senza superarlo: <b>200</b> al primo, 100 al secondo, 50 al terzo (con almeno 4 giocatori). 100 esatto: <b>+300</b> e il giro bonus (100 ancora +300, uno spicchio verde +150). Chi vince la Ruota ha un <b>indizio</b> sulla Vetrina.",
-      "🛍️ <b>La Vetrina finale</b>: tanti premi insieme, offerta segreta sul totale. Punti: <b>450</b> al primo, 225 al secondo, 110 al terzo (con almeno 4 giocatori) e, se ci vai vicinissimo (entro il 3%), <b>VINCI TUTTO!</b> (+1.000).",
+      "🛍️ <b>La Vetrina finale</b>: tanti premi insieme. Poi ognuno sceglie in segreto: <b>la tengo</b> o prendo la <b>🎁 vetrina misteriosa</b> (la scopri solo dopo averla scelta). Offerta segreta sul totale della tua: vince chi ci va più vicino (in percentuale) senza superarlo. Punti: <b>450</b> al primo, 225 al secondo, 110 al terzo (con almeno 4 giocatori) e, se ci vai vicinissimo (entro il 3%), <b>VINCI TUTTO!</b> (+1.000) e ti porti a casa anche l'altra vetrina.",
       "🎯 <b>Solo il prezzo</b>: esce un oggetto, 20 secondi, vince chi va più vicino (sopra o sotto, a meno che chi ospita scelga «Senza sforare»). Preciso: +500. <b>L'ultimo oggetto vale doppio.</b>",
       "Alla fine il <b>carrello</b>: cosa vi portate a casa (euro finti, solo per ridere). Vince chi ha più punti.",
       "<b>Sullo stesso telefono</b> si gioca a turno: con le offerte segrete vi passate il telefono."
@@ -2155,5 +2385,5 @@
   });
 
   // per le prove: le regole senza grafica
-  window.__prezzo = { esitoOfferta: esitoOfferta, esitoRuota: esitoRuota, piano: piano, posizioni: posizioni, puntiPos: puntiPos, stimaBot: stimaBot, leggiImp: leggiImp, prodotti: prodotti, vetrine: vetrine, puntiBonus: puntiBonus };
+  window.__prezzo = { esitoOfferta: esitoOfferta, esitoVetrina: esitoVetrina, esitoRuota: esitoRuota, piano: piano, posizioni: posizioni, puntiPos: puntiPos, stimaBot: stimaBot, leggiImp: leggiImp, prodotti: prodotti, vetrine: vetrine, puntiBonus: puntiBonus };
 })();

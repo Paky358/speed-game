@@ -76,6 +76,7 @@
   // un passo del giocatore automatico su un telefono: fa quello che c'è da fare (true se ha fatto qualcosa)
   async function agisci(nome, opz) {
     opz = opz || {};
+    if (opz.salta && opz.salta(nome)) return false;   // (una prova vuole che questo telefono aspetti)
     var w = W.finestra(nome); if (!w || !w.document) return false;
     var d = w.document, H = Hdi(opz.host);
     // sullo stesso telefono: «📱 Sono Luca, tocca a me ▶»
@@ -90,7 +91,8 @@
         var p = H.premio.st.prod.prezzo, k = (STATO[nome] = STATO[nome] || {}), n = (k[H.k] = (k[H.k] || 0) + 1);
         return scrivi(w, n === 1 ? p * (opz.bravo ? 1 : 0.6) : n === 2 ? p * 1.5 : p);
       }
-      if (ok && /Offro per tutto/.test(ok.textContent) && H.vet) { var tot = H.vet.v.pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0); return scrivi(w, tot * (0.9 + Math.random() * 0.08)); }
+      // (la Vetrina di questo telefono: quella sul maxischermo, rosa se è la misteriosa)
+      if (ok && /Offro per tutto/.test(ok.textContent) && H.vet) { var VV = d.querySelector(".pz-vtit.mist") && H.vet.b ? H.vet.b : H.vet.v, tot = VV.pezzi.reduce(function (a, x) { return a + x.prezzo; }, 0); return scrivi(w, tot * (0.9 + Math.random() * 0.08)); }
       if (ok && /Offro!|Già preso|Sotto i/.test(ok.textContent) && H.prod) {
         var pr = H.prod.prezzo, v = opz.offerta ? opz.offerta(pr, H) : pr * (0.72 + Math.random() * 0.26);
         if (H.limite != null && v >= H.limite) v = H.limite * 0.7;
@@ -101,7 +103,9 @@
       if (pan.querySelector(".pz-ruota.attiva")) return spingi(w);
       var sc = [].filter.call(pan.querySelectorAll(".pz-sc"), function (b) { return !b.disabled; });
       if (sc.length) {
-        if (/E adesso\?/.test(titolo)) { var m = /Hai fatto (\d+)/.exec(titolo), v1 = m ? +m[1] : 50; sc[v1 < 55 ? 0 : 1].click(); return true; }
+        // la Vetrina misteriosa: opz.mist = true / false / function (nome), se no a caso
+        if (/Tieni o cambi/.test(titolo)) { var mm = typeof opz.mist === "function" ? opz.mist(nome) : opz.mist; sc[(mm == null ? Math.random() < 0.5 : mm) ? 1 : 0].click(); return true; }
+        if (/E adesso\?/.test(titolo)) { var m =/Hai fatto (\d+)/.exec(titolo), v1 = m ? +m[1] : 50; sc[v1 < 55 ? 0 : 1].click(); return true; }
         sc[0].click(); return true;
       }
     }
@@ -231,7 +235,7 @@
     spia.ferma();
     var viste = spia.viste.join(" → ");
     if (!ok) no("la partita col Bot non arriva alla fine (fase " + w.__prezzoH.fase + "." + w.__prezzoH.sotto + "; viste " + viste + ")");
-    ["apertura", "offerta.prodotto", "offerta.offri", "offerta.rivela", "premio.gioca", "premio.riv", "punti", "ruota.giro1", "ruota.decidi", "ruota.riv", "vetrina.mostra", "vetrina.offri", "vetrina.riv", "carrello", "fine"].forEach(function (f) {
+    ["apertura", "offerta.prodotto", "offerta.offri", "offerta.rivela", "premio.gioca", "premio.riv", "punti", "ruota.giro1", "ruota.decidi", "ruota.riv", "vetrina.mostra", "vetrina.scegli", "vetrina.offri", "vetrina.riv", "carrello", "fine"].forEach(function (f) {
       if (spia.viste.indexOf(f) < 0) no("la puntata non è passata da «" + f + "» (" + viste + ")");
     });
     var H = w.__prezzoH;
@@ -269,7 +273,8 @@
     var H = w.__prezzoH;
     if (H.players.length !== 3) no("giocatori: " + H.players.map(function (p) { return p.nome; }));
     var spia = spiaFasi("Paky"); W.__pzTurni = [];
-    var ok = await giocaTutti(["Paky"], function () { return w.__prezzoH.fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 480000 });
+    // (10 minuti: dal 23 ott sullo stesso telefono ognuno sceglie anche la vetrina, al suo turno)
+    var ok = await giocaTutti(["Paky"], function () { return w.__prezzoH.fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 600000 });
     spia.ferma();
     var passaggi = W.__pzTurni.length, chi = {}; W.__pzTurni.forEach(function (x) { var m = /Sono (\S+)/.exec(x); if (m) chi[m[1]] = 1; });
     if (Object.keys(chi).length !== 3) no("il telefono non è passato a tutti e tre: " + Object.keys(chi).join(", "));
@@ -321,7 +326,9 @@
       if (!ricaricato) note.push("(niente ricarica: la seconda offerta non è arrivata)");
       if (!cattivo) note.push("(il «+1 €» cattivo non è uscito in questa partita)");
       // fine: i tasti del core
-      await W.dorme(9000);
+      var t0f = Date.now();
+      await W.aspetta(function () { var x = A.tastiFineDi(P); return x && x.some(function (y) { return /Rivincita/.test(y); }); }, 40000);
+      note.push("(fine dopo " + Math.round((Date.now() - t0f) / 100) / 10 + " s)");
       var tf = A.tastiFineDi(P);
       if (!tf || !tf.some(function (x) { return /Rivincita/.test(x); })) no("l'host non ha «↻ Rivincita» a fine partita (" + JSON.stringify(tf) + " · " + T(P).slice(0, 120) + ")");
       var L = W.finestra("Luca");
@@ -685,6 +692,112 @@
       var onl = Date.now() - t0;
       if (!await giocaTutti(["Paky", "Luca", "Sara"], function () { return vm(C).fase === "fine"; }, { ms: 360000 })) no("online la partita non finisce");
       return "col Bot «Avanti» salta la regola in " + bot + " ms · online in 3: 1 tocco non basta (Luca legge «" + qL.replace(/\s+/g, " ").trim() + "»), col 2° si parte in " + onl + " ms" + errori();
+    } finally { senzaSpia(); }
+  } });
+
+  // ===================== pz17: la Vetrina misteriosa col Bot (e il conto in percentuale) =====================
+  // (23 ott, il proprietario sceglie «scelgono tutti, in segreto»: ognuno tiene la vetrina vista o prende la misteriosa)
+  function titVet(w, sel) { var t = w.document.querySelector(sel || ".pz-vtit"); return t ? { mist: t.classList.contains("mist"), testo: t.textContent } : null; }
+  function pezziSch(w) { return [].map.call(w.document.querySelectorAll(".pz-sch .pz-vp .t b"), function (b) { return b.textContent; }); }
+  COPIONE.aggiungi("pz17", { nome: "Prezzo: la Vetrina misteriosa col Bot (Paky prende la misteriosa) e il conto in percentuale", fai: async function () {
+    var w = await contrBot({ formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 3 }), H = function () { return w.__prezzoH; };
+    // le regole, senza grafica: due vetrine diverse, vince chi si avvicina di più in percentuale
+    var ev = w.__prezzo.esitoVetrina({ p: 950, l: 19800, s: 1060, t: 30000 }, { p: "a", l: "b", s: "a", t: "b" }, 1000, 20000, 4), pt = {};
+    ev.righe.forEach(function (r) { pt[r.id] = r.punti; });
+    if (pt.l !== 1450 || pt.p !== 225 || pt.s !== 0 || pt.t !== 0) no("il conto della Vetrina in percentuale non torna: " + JSON.stringify(pt) + " (attesi l 1.450, p 225, s 0, t 0)");
+    if (ev.tutti.join() !== "l" || ev.vince.join() !== "l") no("VINCI TUTTO / chi vince: " + ev.tutti + " / " + ev.vince);
+    var vistaSc = null, vistaOff = null, vmSc = null;
+    var ok = await giocaTutti(["Paky"], function () {
+      var h = H();
+      if (h.fase === "vetrina" && h.sotto === "scegli" && !vistaSc && w.document.querySelector(".pz-pan.su .pz-sc")) {
+        vmSc = { b: !!(h.vet && h.vet.b), mist: !!w.document.querySelector(".pz-sch .pz-mist"), tasti: [].map.call(w.document.querySelectorAll(".pz-pan.su .pz-sc b"), function (b) { return b.textContent; }) };
+        vistaSc = pezziSch(w);
+      }
+      if (h.fase === "vetrina" && h.sotto === "offri" && !vistaOff && w.document.querySelector(".pz-pan.su .pz-ok")) vistaOff = { t: titVet(w), pezzi: pezziSch(w), sc: JSON.parse(JSON.stringify(h.vet.sc)) };
+      return h.fase === "fine" && !w.document.querySelector(".st-vista");
+    }, { ms: 400000, mist: true });
+    if (!ok) no("la partita non finisce (fase " + H().fase + "." + H().sotto + ")");
+    if (!vmSc) no("non si è vista la scelta «Tieni o cambi?»");
+    if (!vmSc.b || !vmSc.mist) no("alla scelta manca la vetrina misteriosa (" + JSON.stringify(vmSc) + ")");
+    if (vmSc.tasti.join("|") !== "Tengo questa|La misteriosa") no("i tasti della scelta: " + vmSc.tasti.join("|"));
+    var h = H(), B = h.vet.b, A = h.vet.v, nb = B.pezzi.map(function (x) { return x.nome; });
+    if (vistaSc.some(function (n) { return nb.indexOf(n) >= 0 && A.pezzi.every(function (x) { return x.nome !== n; }); })) no("mentre si sceglie si vedono già i pezzi della misteriosa");
+    if (!vistaOff) no("non si è arrivati a offrire sulla Vetrina");
+    else {
+      var io = h.players.filter(function (p) { return !p.bot; })[0].id;
+      if (vistaOff.sc[io] !== "b") no("Paky ha preso la misteriosa ma per chi tiene la partita ha «" + vistaOff.sc[io] + "»");
+      if (!vistaOff.t || !vistaOff.t.mist) no("Paky offre ma sul maxischermo non c'è la misteriosa (" + JSON.stringify(vistaOff.t) + ")");
+      if (vistaOff.pezzi.join("|") !== nb.join("|")) no("sul maxischermo di Paky i pezzi non sono quelli della misteriosa: " + vistaOff.pezzi.join(", ") + " invece di " + nb.join(", "));
+    }
+    var e = h.vet.esito, rP = e.righe.filter(function (r) { return r.id === io; })[0];
+    if (!e.prezziB || !rP || rP.w !== "b") no("nella rivelazione Paky non risulta sulla misteriosa (" + JSON.stringify(rP) + ")");
+    var car = (h.players.filter(function (p) { return p.id === io; })[0] || {}).carrello || [];
+    if (rP && rP.pos === 1 && !B.pezzi.every(function (x) { return car.some(function (c) { return c.nome === x.nome; }); })) no("Paky ha vinto la misteriosa ma nel carrello non ci sono i suoi pezzi");
+    var bot = e.righe.filter(function (r) { return r.id !== io; }).map(function (r) { return r.w; }).join("");
+    return "conto in percentuale ok · scelta: " + vmSc.tasti.join(" / ") + " · Paky sulla misteriosa «" + B.titolo + "» (" + rP.v + " su " + rP.tot + ", " + (rP.pos ? rP.pos + "°" : rP.sopra ? "sforato" : "-") + ", +" + rP.punti + ") · i Bot: " + bot + errori();
+  } });
+
+  // ===================== pz18: la Vetrina misteriosa online in 2, con chi ricarica =====================
+  COPIONE.aggiungi("pz18", { nome: "Prezzo online in 2: Vetrina misteriosa, Paky tiene e Luca cambia; Luca ricarica mentre offre", fai: async function () {
+    conSpia();
+    try {
+      var X = await salaPrezzo(["Luca"], { formato: "tv", durata: "veloce", offerte: "vista" }), C = X.C, P = X.P, note = [];
+      var segreto = null, offP = null, offL = null, ric = false, dopoRic = null;
+      var ok = await giocaTutti(["Paky", "Luca"], function () { return vm(C).fase === "fine"; }, { ms: 420000,
+        mist: function (n) { return n === "Luca"; },
+        // Luca non offre sulla Vetrina finché non ha ricaricato la pagina (così ricarica a metà offerta)
+        salta: function (n) { var h = P.__prezzoH; return n === "Luca" && !ric && h && h.fase === "vetrina" && h.sotto === "offri"; },
+        ognuno: async function () {
+          var h = P.__prezzoH, L = W.finestra("Luca");
+          if (!h || h.fase !== "vetrina") return;
+          // mentre si sceglie: Paky ha scelto, Luca non sa cosa (vede solo che ha scelto)
+          if (h.sotto === "scegli" && h.vet.sc[h.players[0].id] && !segreto) { var v = vm(C).vet || {}; segreto = { b: !!v.b, sc: !!v.sc, sFatti: (v.sFatti || []).length }; }
+          if (h.sotto === "offri") {
+            // (la vetrina di chi offre sta nel riquadro .pz-vbox: prima si vede ancora un attimo la schermata della scelta)
+            if (!offP && P.document.querySelector(".pz-vbox .pz-vtit")) offP = titVet(P, ".pz-vbox .pz-vtit");
+            if (!offL && L && L.document.querySelector(".pz-vbox .pz-vtit")) offL = titVet(L, ".pz-vbox .pz-vtit");
+            if (!ric && offL && L.document.querySelector(".pz-pan.su .pz-ok")) {
+              ric = true;
+              var w2 = await W.ricarica("Luca");
+              if (!await W.aspetta(function () { return w2.document.querySelector(".pz-vbox .pz-vtit"); }, 12000)) note.push("Luca dopo la ricarica non vede la vetrina");
+              dopoRic = titVet(w2, ".pz-vbox .pz-vtit");
+            }
+          }
+        } });
+      if (!ok) no("la partita online non finisce (fase " + vm(C).fase + "." + vm(C).sotto + ")");
+      var h = P.__prezzoH, sc = h.vet.sc, ids = h.players.map(function (p) { return p.id; });
+      if (!segreto) no("non si è visto il momento della scelta");
+      else if (segreto.b || segreto.sc) no("mentre si sceglie la foto della partita dice già la misteriosa o le scelte (" + JSON.stringify(segreto) + ")");
+      var wP = sc[ids[0]], wL = sc[ids[1]];
+      if (wP !== "a" || wL !== "b") no("le scelte non sono quelle fatte: Paky " + wP + ", Luca " + wL + " (attese a e b)");
+      if (offP && !!offP.mist !== (wP === "b")) no("sul telefono di Paky la vetrina non è la sua (" + JSON.stringify(offP) + ", scelta " + wP + ")");
+      if (offL && !!offL.mist !== (wL === "b")) no("sul telefono di Luca la vetrina non è la sua (" + JSON.stringify(offL) + ", scelta " + wL + ")");
+      if (dopoRic && !!dopoRic.mist !== (wL === "b")) no("Luca dopo la ricarica vede l'altra vetrina (" + JSON.stringify(dopoRic) + ", scelta " + wL + ")");
+      if (!ric) note.push("(Luca non ha ricaricato: non è arrivato a offrire)");
+      return "scelte: Paky " + wP + ", Luca " + wL + " · mentre si sceglie la foto non dice niente · Luca ricarica e ritrova la sua vetrina " + (dopoRic ? "(" + dopoRic.testo + ")" : "") + (note.length ? " · " + note.join(" ") : "") + errori();
+    } finally { senzaSpia(); }
+  } });
+
+  // ===================== pz19: a pari merito alla Ruota l'indizio va a tutti =====================
+  // (23 ott, il proprietario: «se due persone fanno 100 alla ruota finale, l'indizio lo dà solamente ad una persona»)
+  COPIONE.aggiungi("pz19", { nome: "Prezzo online in 2: tutti e due fanno 100 alla Ruota e tutti e due hanno l'indizio sulla Vetrina", fai: async function () {
+    conSpia();
+    try {
+      var X = await salaPrezzo(["Luca"], { formato: "tv", durata: "veloce", offerte: "vista" }), C = X.C, P = X.P;
+      var cento = false, visti = {};
+      var ok = await giocaTutti(["Paky", "Luca"], function () { return vm(C).fase === "fine"; }, { ms: 420000,
+        ognuno: async function () {
+          var h = P.__prezzoH; if (!h) return;
+          // alla decisione della Ruota: tutti e due a 100 (la prova forza il pari merito)
+          if (h.fase === "ruota" && h.sotto === "decidi" && !cento) { cento = true; h.players.forEach(function (p) { var x = h.ruota.g[p.id]; if (x) { x.v1 = 100; x.si = false; } }); }
+          if (h.fase === "vetrina" && h.sotto === "offri") ["Paky", "Luca"].forEach(function (n) { var w = W.finestra(n), r = w && w.document.querySelector(".pz-pan.su .pz-indizio"); if (r) visti[n] = r.textContent; });
+        } });
+      if (!ok) no("la partita non finisce (fase " + vm(C).fase + "." + vm(C).sotto + ")");
+      var h = P.__prezzoH, ids = (h.indizio || {}).ids || [];
+      if (ids.length !== 2) no("l'indizio è andato a " + ids.length + " giocatori invece che a tutti e due (" + JSON.stringify(h.indizio) + ")");
+      if (!visti.Paky) no("Paky (chi tiene la partita) non ha visto il suo indizio");
+      if (!visti.Luca) no("Luca (ospite) non ha visto il suo indizio");
+      return "indizio a tutti e due · Paky: «" + visti.Paky + "» · Luca: «" + visti.Luca + "»" + errori();
     } finally { senzaSpia(); }
   } });
 
