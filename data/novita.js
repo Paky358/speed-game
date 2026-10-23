@@ -9,6 +9,21 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 258,
+    data: "23 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: la Vetrina misteriosa 🎁 e schermi più pieni",
+    descrizione: [
+      "📱 Niente più spazi vuoti: sui telefoni alti le schermate si allargano da sole. Foto, scritte e righe diventano più grandi finché c'è posto (la Vetrina, la classifica, il prezzo svelato, il carrello finale), e la foto del prodotto dietro il sipario è più grande. Sui telefoni piccoli resta tutto come prima.",
+      "📝 I premi della Vetrina hanno la loro descrizione («Dalla vestizione al taglio della torta, con l'album»…), come i prodotti dell'Offerta.",
+      "🔎 Se alla Ruota del 100 vincete in due a pari merito, l'indizio sulla Vetrina arriva a tutti e due, non più a uno solo a caso.",
+      "🎁 Nella Vetrina finale ora c'è anche la VETRINA MISTERIOSA, come in «OK, il prezzo è giusto!» di una volta. Dopo aver visto la vetrina, ognuno sceglie in segreto: «Tengo questa» oppure «La misteriosa», che scopri solo dopo averla presa.",
+      "🤔 Prendi quella che sai prezzare meglio: se nella vetrina c'è una barca e non hai idea di quanto costi, cambia! Poi offri sul totale della tua vetrina.",
+      "📏 Le vetrine sono diverse, quindi vince chi ci va più vicino in percentuale, sempre senza superare il prezzo. Punti come prima: 450 al primo, 225 al secondo, 110 al terzo.",
+      "⭐ VINCI TUTTO (entro il 3%) vale +1.000 e ti porti a casa anche l'altra vetrina.",
+      "🎬 Alla fine si scoprono i prezzi della prima vetrina, poi «…e la vetrina misteriosa era…» con i suoi pezzi e i suoi prezzi. Nelle offerte di tutti vedi chi aveva preso la misteriosa (🎁)."
+    ]
+  },
+  {
     v: 257,
     data: "23 ottobre 2026",
     titolo: "Il Prezzo è Giusto: due giochi a premi nuovi e la Ruota dal vivo 🛒🔐🎡",

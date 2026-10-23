@@ -270,7 +270,7 @@
     function premi(b, fn) {
       var ultimo = 0;
       b.addEventListener("pointerdown", function (e) { if (e.pointerType === "mouse" && e.button) return; e.preventDefault(); ultimo = Date.now(); fn(); });
-      b.addEventListener("click", function () { if (ultimo && Date.now() - ultimo < 5000) { ultimo = 0; return; } fn(); });   // (il click dopo un tocco non conta, anche se il dito è restato giù a lungo)
+      b.addEventListener("click", function () { if (ultimo) { ultimo = 0; return; } fn(); });   // (il click dopo un tocco non conta, anche se il dito è restato giù a lungo)
     }
     function intero() { return buf.split(",")[0]; }
     function aggiungi(ch) {
@@ -470,6 +470,10 @@
       ".st-vista.pz-con-pan .pz-tab.fitto .pz-och .nm{display:none}.st-vista.pz-con-pan .pz-tab.fitto .pz-och{padding-right:8px}",
       "@media (max-height:700px){.st-vista.pz-con-pan .pz-sip .pz-emo{font-size:36px;height:1.15em}}",
       ".pz-sch{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;justify-content:safe center;gap:10px;text-align:center;padding:2px 2px 0;overflow:hidden}",
+      // (riempi in prezzo.js: sui telefoni alti tutto si ingrandisce finché lo spazio c'è)
+      ".pz-sch.riempi>*{zoom:var(--pz-z,1)}.pz-sch.riempi.alto{padding-top:40px}",   // (in alto i tasti tondi: il titolo resta sotto)
+      // (la scritta grande in basso, «E per voi…», non copre la lista: le si lascia il suo spazio)
+      ".pz-sch.con-terzo{padding-bottom:clamp(70px,calc(var(--alt,640px) * .19),160px)}",
       ".pz-testa{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;margin:0 40px;font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#ffe066}",
       ".pz-testa .x2{background:#ff3ea5;color:#fff;border-radius:99px;padding:2px 9px;letter-spacing:.04em;animation:pzPulsa 1s ease-in-out infinite}",
       ".pz-titolo{font-size:22px;font-weight:900;color:#fff;line-height:1.15}",
@@ -495,6 +499,8 @@
       ".pz-foto img{max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.28);background:#fff}",
       ".pz-scheda.piccola .pz-foto{height:46px}.pz-scheda.media .pz-foto{height:clamp(54px,calc(var(--alt,640px) * .1),90px)}",
       "@media (max-height:700px){.st-vista.pz-con-pan .pz-sip .pz-foto{height:66px}}",
+      // (prima di offrire il pannello è giù: la foto del prodotto più grande, sui telefoni alti fino a 230 px)
+      ".st-vista:not(.pz-con-pan) .pz-sip .pz-foto{height:clamp(62px,calc(var(--alt,640px) * .26),230px)}",
       ".pz-conf:not(.pz-foto){display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;flex:0 0 auto;vertical-align:middle}",
       ".pz-conf:not(.pz-foto) img{width:100%;height:100%;object-fit:cover;border-radius:22%;background:#fff}",
       // il cartellino del prezzo
@@ -601,7 +607,7 @@
       ".pz-clas.due .pz-cl{padding:3px 6px 3px 3px;gap:5px}.pz-clas.due .pz-cl .fac{width:26px;height:26px}.pz-clas.due .pz-cl .nm{font-size:13px}.pz-clas.due .pz-cl .pt{font-size:13px}.pz-clas.due .pz-cl .pi{min-width:0;font-size:11px}.pz-clas.due .pz-cl .pos{width:20px}",
       ".pz-car{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 4px;border-radius:14px;background:rgba(255,255,255,.08);text-align:left;animation:pzSu .45s both;width:100%;max-width:420px;box-sizing:border-box}",
       ".pz-car .fac{width:34px;height:34px}.pz-car .cosa{flex:1;min-width:0;display:flex;flex-direction:column}",
-      ".pz-car .cosa b{font-size:14px}.pz-car .cosa span{font-size:20px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pz-car .cosa small{font-size:11.5px;color:#cdd6ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".pz-car .cosa b{font-size:14px}.pz-car .cosa span{font-size:26px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pz-car .cosa small{font-size:11.5px;color:#cdd6ff;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}",
       ".pz-car .tot{font-weight:900;color:#ffe066;font-size:15px;white-space:nowrap}",
       ".pz-cars{display:flex;flex-direction:column;gap:6px;width:100%;align-items:center}.pz-cars.due{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px}",
       ".pz-cars.due .pz-car{padding:3px 6px 3px 3px;gap:5px}.pz-cars.due .pz-car .fac{width:26px;height:26px}.pz-cars.due .pz-car .cosa span{font-size:16px}.pz-cars.due .pz-car .tot{font-size:12px}",
@@ -654,6 +660,13 @@
       ".pz-vp .pz-tag{font-size:14px;padding:3px 9px 3px 16px;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pz-vp .pz-tag.su{opacity:1;transform:none}",
       ".pz-vet.fitta .pz-vp{padding:3px 8px}.pz-vet.fitta .pz-vp .e{font-size:22px}.pz-vet.fitta .pz-vp .t small{display:none}",
       ".pz-vtit{font-size:22px;font-weight:900;color:#ffe066}",
+      // la Vetrina misteriosa: il pacco, il titolo rosa della misteriosa, le due vetrine in breve nella rivelazione
+      ".pz-vbox{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:420px}.pz-vtit.mist{color:#ff9bd2}",
+      ".pz-mist{display:flex;align-items:center;gap:10px;width:100%;max-width:420px;padding:6px 12px;border-radius:14px;border:2px dashed #ff9bd2;background:rgba(255,62,165,.14);text-align:left;animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both}",
+      ".pz-mist .i{font-size:30px;flex:0 0 auto}.pz-mist b{display:block;font-size:15px;color:#ffd1ea}.pz-mist small{font-size:11.5px;font-weight:700;color:#e9c7ff}",
+      ".pz-due{display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px}",
+      ".pz-vt{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:14px;background:rgba(255,255,255,.1);animation:pzPop .4s both}.pz-vt .i{font-size:22px}.pz-vt .t{flex:1;min-width:0;text-align:left;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pz-vt b{font-size:17px;color:#ffe066;white-space:nowrap}",
+      ".pz-sc.mist{background:linear-gradient(#ffe3f3,#ffb8de)}.pz-sc.mist.sel{background:linear-gradient(#ffe98a,#fcc419)}",
       ".pz-tot{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:900;color:#fff}",
       ".pz-indizio{font-size:14px;font-weight:800;color:#3b2a00;background:#ffe066;border-radius:12px;padding:5px 10px;line-height:1.3}",
       ".pz-tutto{font-size:32px;font-weight:900;color:#ffe066;text-shadow:0 0 22px rgba(255,212,59,.8),0 3px 0 #a85c00;animation:pzPulsa .5s ease-in-out 4}",
