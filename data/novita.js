@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 257,
+    data: "23 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: due giochi a premi nuovi e la Ruota dal vivo 🛒🔐🎡",
+    descrizione: [
+      "🛒 Nuovo gioco a premi, La Spesa (come nel programma): 5 prodotti del supermercato senza prezzo. Scegli quanti pezzi di ognuno mettere nel carrello per spendere tra 20 e 22 €. Dentro la fascia 600 punti, poco fuori un po' meno; alla cassa i carrelli di tutti corrono sulla stessa pista verso il totale.",
+      "🔐 Nuovo gioco a premi, La Cassaforte: le cifre del prezzo di un premio sono mescolate. Toccale per scambiarle e rimettile in ordine: 60 punti per ogni cifra al posto giusto e +400 se la cassaforte si apre.",
+      "🎡 La Ruota del 100 si guarda dal vivo: sul maxischermo c'è la ruota di ognuno e gira davvero mentre lui spinge, anche quella dei tuoi amici. Il numero si vede solo quando la ruota si ferma (prima lo vedevi subito, e la sorpresa spariva). Chi si ferma guarda girare quelle degli altri invece di aspettare davanti a uno schermo fermo.",
+      "👀 Fino a 4 ruote per schermata; in 5 o più si cambia pagina con le frecce, e la pagina va da sola su chi sta girando.",
+      "⏩ Le regole dei giochi a premi non ti tengono più fermo: c'è «Avanti». Col Bot e sullo stesso telefono basta un tocco; online si parte quando lo tocca più della metà di chi gioca (in 2 tutti e due, in 3 ne bastano due, in 4 o 5 tre). Se nessuno lo tocca, si parte da soli come prima."
+    ]
+  },
+  {
     v: 256,
     data: "22 ottobre 2026",
     titolo: "Il Prezzo è Giusto: le foto vere e punti più giusti 📸⚖️",

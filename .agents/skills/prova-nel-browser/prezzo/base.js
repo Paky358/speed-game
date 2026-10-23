@@ -403,7 +403,7 @@
     if (pan && pan.offsetHeight > h * 0.66) guai.push("pannello alto " + pan.offsetHeight + " su " + h);
     var sch = d.querySelector(".st-sch-in .pz-sch");
     if (sch && !d.querySelector(".st-mondo.st-quieto")) return guai;   // (la telecamera non è sul maxischermo)
-    if (sch) [].forEach.call(sch.querySelectorAll(".pz-scheda,.pz-riga,.pz-cl,.pz-car,.pz-vp,.pz-och,.pz-rg,.pz-conta,.pz-banner,.pz-gioco,.pz-intro,.pz-testa"), function (e) {
+    if (sch) [].forEach.call(sch.querySelectorAll(".pz-scheda,.pz-riga,.pz-cl,.pz-car,.pz-vp,.pz-och,.pz-rg,.pz-rcard,.pz-rpag,.pz-conta,.pz-banner,.pz-gioco,.pz-intro,.pz-testa"), function (e) {
       var r = e.getBoundingClientRect(); if (!r.height) return;
       if (r.bottom > basso + 2) guai.push((e.className.split(" ")[0]) + " sotto il pannello (" + Math.round(r.bottom) + ">" + Math.round(basso) + ")");
       if (r.left < -1 || r.right > w.innerWidth + 1) guai.push((e.className.split(" ")[0]) + " esce di lato");
@@ -525,20 +525,21 @@
     if (!/su o giù/.test(nota0)) no("sotto la ruota non c'è «Trascina la ruota su o giù» («" + nota0 + "»)");
     var io = H().players.filter(function (p) { return !p.bot; })[0].id, str = r.querySelector(".pz-rstr");
     var yDi = function () { var m = /,\s*(-?[\d.]+)px/.exec(str.style.transform); return m ? +m[1] : 0; };
-    var cella = function () { var c = [].filter.call(w.document.querySelectorAll(".pz-rg"), function (x) { return (x.querySelector(".nm") || {}).textContent === "Tu"; })[0]; return c ? (c.querySelector(".val") || {}).textContent : null; };
+    var cella = function () { var c = [].filter.call(w.document.querySelectorAll(".pz-rcard"), function (x) { return (x.querySelector(".nm") || {}).textContent === "Tu"; })[0]; return c ? (c.querySelector(".val") || {}).textContent : null; };
     await spingiSu(w);
     await W.dorme(120); var y1 = yDi(); await W.dorme(120); var y2 = yDi();
     if (!(y2 < y1)) no("spinta in su: la striscia non sale (" + y1 + " → " + y2 + ")");
     if (!await W.aspetta(function () { var x = H().ruota.g[io]; return x && x.v1 != null; }, 4000)) no("la spinta in su non arriva (niente numero)");
     var v1 = H().ruota.g[io].v1;
-    if (cella() !== "—") no("mentre la ruota gira, sul maxischermo c'è già «" + cella() + "» (il numero è " + v1 + ")");
+    var vistoGira = cella();
+    if (!/^[—…]$/.test(cella() || "")) no("mentre la ruota gira, sul maxischermo c'è già «" + cella() + "» (il numero è " + v1 + ")");
     if (!await W.aspetta(function () { return /^\d+/.test(cella() || ""); }, 9000)) no("la ruota non si ferma o il numero non arriva sul maxischermo");
     if (!w.document.querySelector(".pz-pan.su .pz-ruota")) no("il pannello della ruota si è chiuso prima che la ruota si fermasse");
     if (parseInt(cella(), 10) !== v1) no("sul maxischermo " + cella() + " invece di " + v1);
     var nota = (w.document.querySelector(".pz-pan.su .pz-nota") || {}).textContent || "";
     if (v1 !== 100 && nota.indexOf(String(v1)) < 0) no("sotto la ruota ferma non c'è " + v1 + " («" + nota + "»)");
     if (!await giocaTutti(["Paky"], function () { return H().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("la partita non finisce (fase " + H().fase + "." + H().sotto + ")");
-    return "ruota girata in su (striscia " + Math.round(y1) + " → " + Math.round(y2) + " px), «—» finché gira, poi " + v1 + " a ruota ferma; partita finita" + errori();
+    return "ruota girata in su (striscia " + Math.round(y1) + " → " + Math.round(y2) + " px), «" + vistoGira + "» finché gira, poi " + v1 + " a ruota ferma; partita finita" + errori();
   } });
 
   // ===================== pz13: le foto vere dei prodotti (data/prezzo-foto.js) =====================
@@ -571,6 +572,120 @@
     if (!righe.length) no("la Vetrina non ha righe");
     if (!await giocaTutti(["Paky"], function () { return H().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("la partita non finisce");
     return conF + " prodotti su " + L.length + " con la foto · " + Object.keys(F).length + " foto · scheda " + (caricata ? "con la foto caricata" : im ? "con la foto (non ancora caricata)" : "con l'emoji (rete)") + " · Vetrina " + conFoto + "/" + righe.length + " righe con la foto" + errori();
+  } });
+
+  // ===================== pz14: la Ruota online, le ruote degli altri dal vivo =====================
+  // (23 ott, il proprietario: «appena la mia fidanzata girava io vedevo già quanto aveva fatto», «mi fermavo a 80 e aspettavo
+  // 10-15 secondi su uno schermo»: ora ognuno ha la sua ruota piccola sul maxischermo, il numero si vede quando si ferma)
+  function cartaDi(w, nome) { return [].filter.call(w.document.querySelectorAll(".pz-rcard"), function (c) { return (c.querySelector(".nm") || {}).textContent === nome; })[0] || null; }
+  function valCarta(c) { return c ? (c.querySelector(".val") || {}).textContent : null; }
+  COPIONE.aggiungi("pz14", { nome: "Prezzo online in 2: alla Ruota il numero dell'altro si vede solo quando la sua ruota si ferma, e chi si ferma guarda le altre girare", fai: async function () {
+    conSpia();
+    try {
+      var X = await salaPrezzo(["Luca"], { formato: "tv", durata: "veloce", offerte: "vista" }), C = X.C, P = X.P, note = [];
+      var H = function () { return P.__prezzoH; };
+      var g1 = null, g2 = null, sottoPrima = null;
+      async function gioca2(nome, opz) {
+        var w = W.finestra(nome), h = H();
+        // alla Ruota: Paky si ferma, Luca gira ancora (se non ha già fatto 100)
+        if (h && h.fase === "ruota" && h.sotto === "decidi" && w) {
+          var b = [].filter.call(w.document.querySelectorAll(".pz-pan.su .pz-sc"), function (x) { return !x.disabled && new RegExp(nome === "Paky" ? "Mi fermo" : "Giro ancora").test(x.textContent); })[0];
+          if (b) { b.click(); return true; }
+        }
+        return agisci(nome, opz);
+      }
+      var fino = Date.now() + 420000, idL = null;
+      while (Date.now() < fino && vm(C).fase !== "fine") {
+        var h = H();
+        if (h && h.fase === "ruota") {
+          idL = idL || (h.players.filter(function (p) { return p.nome === "Luca"; })[0] || {}).id;
+          var x = h.ruota.g[idL] || {}, c = cartaDi(P, "Luca");
+          // il numero di Luca è arrivato all'host: sul telefono di Paky la sua ruota gira e il numero non c'è ancora
+          if (h.sotto === "giro1" && x.v1 != null && !g1) {
+            g1 = { v: x.v1, t: Date.now(), subito: valCarta(c), gira: !!(c && c.classList.contains("gira")) };
+            await W.aspetta(function () { return valCarta(cartaDi(P, "Luca")) === String(g1.v); }, 7000);
+            g1.dopo = Date.now() - g1.t; g1.fine = valCarta(cartaDi(P, "Luca"));
+          }
+          if (h.sotto === "giro2" && x.v2 != null && !g2) {
+            g2 = { v: x.v2, t: Date.now(), subito: valCarta(c), gira: !!(c && c.classList.contains("gira")), panPaky: !!P.document.querySelector(".pz-pan.su .pz-ruota"),
+              vista: !!(c && c.getBoundingClientRect().height > 0) };
+            await W.aspetta(function () { return valCarta(cartaDi(P, "Luca")) === x.v1 + " + " + g2.v; }, 7000);
+            g2.dopo = Date.now() - g2.t; g2.fine = valCarta(cartaDi(P, "Luca"));
+          }
+        }
+        for (var i = 0; i < 2; i++) { try { await gioca2(["Paky", "Luca"][i], {}); } catch (e) {} }
+        await W.dorme(150);
+      }
+      if (vm(C).fase !== "fine") no("la partita in 2 non finisce (fase " + vm(C).fase + "." + vm(C).sotto + ")");
+      if (!g1) no("alla Ruota Luca non ha girato");
+      if (/^\d/.test(g1.subito || "")) no("appena Luca gira, sul telefono di Paky c'è già il suo numero («" + g1.subito + "», il numero è " + g1.v + ")");
+      if (!g1.gira) note.push("(la ruota di Luca non risultava in giro al primo controllo)");
+      if (g1.fine !== String(g1.v) || g1.dopo < 1200) no("il numero di Luca doveva arrivare a ruota ferma, dopo un po': «" + g1.fine + "» dopo " + g1.dopo + " ms (numero " + g1.v + ")");
+      if (g2) {
+        if (g2.panPaky) no("Paky si era fermato ma ha ancora la ruota nel pannello");
+        if (!g2.vista) no("Paky si era fermato e non vede la ruota di Luca");
+        if (/\+/.test(g2.subito || "")) no("il secondo giro di Luca si vede prima che la ruota si fermi («" + g2.subito + "»)");
+        if (g2.dopo < 1200) no("il secondo numero di Luca è arrivato troppo presto (" + g2.dopo + " ms)");
+      } else note.push("(Luca non ha fatto il secondo giro: aveva " + (g1 && g1.v) + ")");
+      return "1° giro di Luca: «" + g1.subito + "» mentre gira, " + g1.fine + " dopo " + g1.dopo + " ms" + (g2 ? " · 2° giro: Paky fermo guarda, «" + g2.subito + "» mentre gira, «" + g2.fine + "» dopo " + g2.dopo + " ms" : "") + (note.length ? " · " + note.join(" ") : "") + errori();
+    } finally { senzaSpia(); }
+  } });
+
+  // ===================== pz15: la Ruota in 6: 4 ruote per schermata =====================
+  COPIONE.aggiungi("pz15", { nome: "Prezzo: la Ruota in 6 col Bot, 4 ruote per schermata con le frecce", fai: async function () {
+    var w = await contrBot({ formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 5 });
+    var Hh = function () { return w.__prezzoH; }, visto = null, cambi = 0, ultimaPag = null;
+    if (!await giocaTutti(["Paky"], function () { return Hh().fase === "ruota" && w.document.querySelectorAll(".pz-rcard").length === 6; }, { ms: 300000 })) no("non si arriva alla Ruota con 6 ruote");
+    var fino = Date.now() + 25000;
+    while (Date.now() < fino && Hh().fase === "ruota") {
+      var vis = [].filter.call(w.document.querySelectorAll(".pz-rcard"), function (c) { return !c.hidden; }).map(function (c) { return c.querySelector(".nm").textContent; });
+      if (!visto) visto = vis.length;
+      var k = vis.join("|"); if (ultimaPag !== null && k !== ultimaPag) cambi++; ultimaPag = k;
+      if (vis.length > 4) no("si vedono " + vis.length + " ruote insieme (al massimo 4)");
+      await agisci("Paky", {});
+      await W.dorme(150);
+    }
+    var pag = w.document.querySelector(".pz-rpag");
+    if (!pag || pag.hidden) no("con 6 ruote non ci sono le frecce delle pagine");
+    // le frecce: un tocco su ▶ e si vedono le altre
+    var prima = [].filter.call(w.document.querySelectorAll(".pz-rcard"), function (c) { return !c.hidden; }).map(function (c) { return c.querySelector(".nm").textContent; }).join("|");
+    var frecce = pag ? pag.querySelectorAll("button") : []; if (frecce[1]) frecce[1].click();
+    await W.dorme(200);
+    var dopo = [].filter.call(w.document.querySelectorAll(".pz-rcard"), function (c) { return !c.hidden; }).map(function (c) { return c.querySelector(".nm").textContent; }).join("|");
+    if (Hh().fase === "ruota" && prima === dopo) no("toccando ▶ non cambiano le ruote");
+    var guai = controllaVista(w); if (guai.length) no("alla Ruota in 6: " + guai.join(" | "));
+    if (!await giocaTutti(["Paky"], function () { return Hh().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("la partita non finisce");
+    return visto + " ruote alla volta su 6 · la pagina è cambiata " + cambi + " volte · frecce ok" + errori();
+  } });
+
+  // ===================== pz16: la regola di un gioco a premi si salta con «Avanti» =====================
+  // (23 ott, il proprietario: «non voglio i secondi obbligatori per leggere le regole», «se la maggioranza per eccesso preme
+  // avanti si va avanti»: col Bot e sullo stesso telefono basta un tocco, online la metà più uno di chi gioca)
+  function avantiDi(w) { return w.document.querySelector(".st-barra.on .pz-avanti"); }
+  COPIONE.aggiungi("pz16", { nome: "Prezzo: la regola di un gioco a premi si salta con «Avanti» (col Bot un tocco, online in 3 ne servono 2)", fai: async function () {
+    var w = await contrBot({ formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 1 }), H = function () { return w.__prezzoH; };
+    if (!await giocaTutti(["Paky"], function () { return H().fase === "premio" && H().sotto === "intro" && avantiDi(w); }, { ms: 240000, passo: 200, avanti: false })) no("col Bot sulla regola del gioco a premi non c'è «Avanti»");
+    var t0 = Date.now(); avantiDi(w).click();
+    if (!await W.aspetta(function () { return H().sotto !== "intro"; }, 2000)) no("col Bot, toccando «Avanti» la regola resta");
+    var bot = Date.now() - t0;
+    if (!await giocaTutti(["Paky"], function () { return H().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("col Bot la partita non finisce");
+    conSpia();
+    try {
+      var X = await salaPrezzo(["Luca", "Sara"], { formato: "tv", durata: "veloce", offerte: "vista" }), C = X.C, P = X.P, L = W.finestra("Luca");
+      if (!await giocaTutti(["Paky", "Luca", "Sara"], function () { return vm(C).fase === "premio" && vm(C).sotto === "intro" && avantiDi(P) && avantiDi(L); }, { ms: 300000, passo: 250, avanti: false })) no("online sulla regola del gioco a premi non c'è «Avanti»");
+      var k = P.__prezzoH.k;
+      avantiDi(P).click();
+      await W.dorme(900);
+      var h = P.__prezzoH, qL = ((avantiDi(L) || {}).textContent || "");
+      if (h.sotto !== "intro" || h.k !== k) no("online in 3 è bastato un «Avanti» su 3 per saltare la regola");
+      if (!/1 su 2/.test(qL)) no("sul telefono di Luca il tasto non dice «1 su 2» («" + qL + "»)");
+      if (!(avantiDi(P) || {}).disabled) no("dopo «Avanti» il tasto di Paky si può ancora toccare");
+      t0 = Date.now(); avantiDi(L).click();
+      if (!await W.aspetta(function () { return P.__prezzoH.k !== k; }, 3000)) no("online, col secondo «Avanti» su 3 la regola resta");
+      var onl = Date.now() - t0;
+      if (!await giocaTutti(["Paky", "Luca", "Sara"], function () { return vm(C).fase === "fine"; }, { ms: 360000 })) no("online la partita non finisce");
+      return "col Bot «Avanti» salta la regola in " + bot + " ms · online in 3: 1 tocco non basta (Luca legge «" + qL.replace(/\s+/g, " ").trim() + "»), col 2° si parte in " + onl + " ms" + errori();
+    } finally { senzaSpia(); }
   } });
 
   W.PZ = { agisci: agisci, giocaTutti: giocaTutti, spiaFasi: spiaFasi, controllaVista: controllaVista, contrBot: contrBot, stessoTelefono: stessoTelefono, salaPrezzo: salaPrezzo, conSpia: conSpia, senzaSpia: senzaSpia };

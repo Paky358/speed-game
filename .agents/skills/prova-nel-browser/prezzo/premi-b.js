@@ -14,7 +14,7 @@
 // pzb7: le misure a 360x640 e 412x915 (Bot in 6) mentre si gioca e nella rivelazione.
 // pzb8: Plinko col Bot: a ogni domanda si tocca il prezzo sbagliato e, dopo l'esito, anche l'altro → non conta, le 3 domande
 //       vanno avanti e si lasciano i gettoni (20 ott: prima la domanda dopo restava bloccata).
-// pzb9: «Più o meno» col Bot: la regola resta circa 10 s con «Si comincia tra…»; dopo un prezzo sbagliato il tastierino è vuoto
+// pzb9: «Più o meno» col Bot: la regola resta circa 10 s con «Si comincia tra…» se nessuno tocca «Avanti»; dopo un prezzo sbagliato il tastierino è vuoto
 //       (il prezzo provato resta nelle chip) e si riscrive da capo; poi il prezzo giusto viene preso.
 (function () {
   "use strict";
@@ -388,7 +388,7 @@
       var h = H();
       if (h.fase === "premio" && h.sotto === "intro") { if (!intro) intro = { t0: Date.now(), conto: false }; if (/Si comincia tra/.test(T(w))) intro.conto = true; }
       return h.fase === "premio" && h.sotto === "gioca" && w.document.querySelector(".pz-pan.su .pz-ok");
-    }, { ms: 240000, passo: 200 });
+    }, { ms: 240000, passo: 200, avanti: false });
     if (!ok) no("non si arriva a «Più o meno»");
     if (!intro) no("la regola del gioco a premi non si è vista");
     var durIntro = Date.now() - intro.t0;
