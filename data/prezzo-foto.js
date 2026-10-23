@@ -586,4 +586,310 @@ window.SG_PREZZO_FOTO = {
   "a4-v-collezionista#1": "3/3b/Moonwatch_(24023224706).jpg|3456",   // Omega Speedmaster Moonwatch
   "a4-v-collezionista#2": "6/6f/Studio_Display_(2022).jpg|3495",   // Apple Studio Display XDR
   "a4-v-collezionista#3": "f/f2/Tamagotchi_0124_ubt.jpeg|900",   // Tamagotchi
+  // ---- le vetrine nuove (data/prezzo-5.js e prezzo-6.js, 23 ott 2026): scelte a occhio come le altre ----
+  "a5-v-maldive#0": "8/82/MaldivesBungalows.jpg|3024",   // Una settimana in villa sull'acqua
+  "a5-v-maldive#1": "4/48/Cathay_Pacific_-_A330-300_-_Business_Class_(8108289508).jpg|4608",   // Due voli in business per Malé
+  "a5-v-maldive#2": "3/30/Dharavandhoo_Thila_-_Manata_Black_Pearl.JPG|1029",   // Immersione con le mante
+  "a5-v-maldive#3": "b/bd/LRP_sunscreen_bottle.jpg|1872",   // Crema solare SPF 50
+  "a5-v-laurea#1": "9/9d/ForbysIbizaTown_03.jpg|1280",   // Viaggio a Ibiza con gli amici
+  "a5-v-laurea#2": "3/30/Corona_alloro_laurea.JPG|6000",   // Tre copie della tesi rilegate
+  "a5-v-laurea#3": "6/60/LaurelwreathDK.JPG|1704",   // Corona d'alloro
+  "a5-v-laurea#4": "e/e8/Confetti_rossi.jpg|1024",   // Confetti rossi, un chilo
+  "a5-v-prima-casa#0": "2/2f/IKEA_store,_IKEA_kitchen,_Interior_design,_Rostov-on-Don,_Russia.jpg|6000",   // Cucina IKEA completa
+  "a5-v-prima-casa#1": "a/a7/Legal_Contract_&_Signature_-_Warm_Tones.jpg|6000",   // Il rogito dal notaio
+  "a5-v-prima-casa#2": "6/60/Lotte_Heaven._(2185651031).jpg|2496",   // Letto matrimoniale col materasso
+  "a5-v-prima-casa#3": "d/db/Zerbino_format.jpg|2187",   // Zerbino «Benvenuti»
+  "a5-v-camper#0": "a/ae/White_Fiat_Ducato_Campervan_2006.jpg|2918",   // Camper a noleggio, due settimane
+  "a5-v-camper#2": "3/3f/WaynePump-sm.jpg|720",   // Il pieno del camper
+  "a5-v-camper#3": "f/f9/Camping_breakfast_table.JPG|2448",   // Tavolino e sedie pieghevoli
+  "a5-v-camper#4": "6/6e/Camping-987707_960_720(1).jpg|960",   // Una notte in campeggio
+  "a5-v-crociera#0": "6/66/Icon_of_the_Seas_Puerto_Rico_2025_(cropped).jpg|4947",   // Sette notti in crociera, per due
+  "a5-v-crociera#1": "8/80/15-09-26-RalfR-WLC-0084.jpg|2368",   // Pacchetto bevande per due
+  "a5-v-crociera#2": "a/a7/The_Acropolis_of_Athens_viewed_from_the_Hill_of_the_Muses_(14220794964).jpg|4928",   // Escursione ad Atene
+  "a5-v-crociera#3": "a/ae/Jacques-louis_david,_marte_disarmato_da_venere,_1824,_picture_frame.png|2111",   // Foto della cena di gala
+  "a5-v-pizzaiolo#0": "e/eb/Fernbrake.jpg|940",   // Forno a legna da giardino
+  "a5-v-pizzaiolo#1": "6/6e/Punch_Neapolitan_Pizza_(2257039638).jpg|2800",   // Corso da pizzaiolo
+  "a5-v-pizzaiolo#2": "6/69/Pizza_peel,_930544_002.jpg|8688",   // Pala per pizza
+  "a5-v-pizzaiolo#3": "b/b4/Piles_of_Flour.jpg|3024",   // Farina per pizza, 25 kg
+  "a5-v-pizzaiolo#4": "d/d5/Mozzarella_di_bufala2.jpg|4160",   // Mozzarella di bufala, 1 kg
+  "a5-v-caffe#0": "5/59/Rocket_silver_metal_espresso_machine_on_table.jpg|1200",   // Macchina espresso La Marzocco
+  "a5-v-caffe#2": "c/c5/Roasted_coffee_beans.jpg|1600",   // Caffè in grani, 1 kg
+  "a5-v-caffe#3": "4/4f/Moka_Express_Bialetti.png|1126",   // Moka Bialetti da 3 tazze
+  "a5-v-eolie#0": "3/39/Thor_8.0,_Interboot_2023,_Friedrichshafen_(P1120662).jpg|4608",   // Gommone con motore da 40 cavalli
+  "a5-v-eolie#1": "c/c6/Chiesa_San_Giuseppe_(Lipari)_04.jpg|4986",   // Ormeggio per una settimana
+  "a5-v-eolie#2": "1/1d/Universal_Life_Jacket.JPG|499",   // Quattro giubbotti salvagente
+  "a5-v-eolie#3": "6/6e/Lipari._Colazione_da_'Dolci_Tentazioni'_(01297).JPG|6000",   // Granita alla mandorla
+  "a5-v-vela#0": "c/cf/Dufor_520_GL.jpg|5152",   // Barca a vela con skipper
+  "a5-v-vela#1": "c/c9/Sailing_club_and_school_Sutton_Bingham_reservoir_-_geograph.org.uk_-_942140.jpg|640",   // Corso di vela
+  "a5-v-vela#3": "4/4e/Fala-Sailor-Cap-1943.jpg|750",   // Cappellino da marinaio
+  "a5-v-giardino#0": "3/3e/Husqvarna_automower_430X.jpg|4032",   // Robot tagliaerba Husqvarna
+  "a5-v-giardino#1": "1/1a/The_Small_Greenhouse,_Quarry_Bank_Mill_Upper_Garden_-_geograph.org.uk_-_3000457.jpg|640",   // Serra da giardino
+  "a5-v-giardino#2": "e/e7/Phaseolus_vulgaris_seed.jpg|252",   // Semi per l'orto, 30 bustine
+  "a5-v-giardino#3": "6/6b/Regadera,_jardín_del_molino,_Sierra_de_San_Felipe,_Setúbal,_Portugal,_2012-05-11,_DD_01.JPG|4085",   // Annaffiatoio di latta
+  "a5-v-palestra#0": "1/1f/Treadmill_from_Viking_Sport,_front.jpg|2952",   // Tapis roulant per casa
+  "a5-v-palestra#1": "8/84/Health_club_in_Gothenburg_Sweden_in_March_2025.jpg|4000",   // Un anno in palestra
+  "a5-v-palestra#2": "e/e3/TwoDumbbells.JPG|573",   // Dieci lezioni col personal trainer
+  "a5-v-palestra#3": "4/40/Fitness_digital_scale_weight_loss_(33837094584).jpg|5616",   // Bilancia smart
+  "a5-v-palestra#4": "1/1b/Osaka_protein_shaker.jpg|600",   // Shaker per le proteine
+  "a5-v-ciclista#0": "9/9c/Current_F10_prices_make_this_the_bike_to_buy_right_now._If_you’ve_always_wanted_a_Pinarello_Dogma,_talk_to_us._You_are_closer_to_your_dream_bike_than_you_think._-pinarello_-pinarellof10_-pinarellodogma_-f10endofdiscussion_-baaw.jpg|640",   // Bici da corsa Bianchi in carbonio
+  "a5-v-ciclista#1": "f/f1/Garmin_Edge_1040_Solar_07.jpg|2268",   // Ciclocomputer Garmin Edge
+  "a5-v-ciclista#2": "6/60/Cycling_bib_shorts_front.jpg|3024",   // Maglia e salopette
+  "a5-v-ciclista#3": "b/b8/Tour_de_France_Femmes_2025_-_Tour_cyclosportive_-_La_Chambre.JPG|2048",   // Iscrizione a una granfondo
+  "a5-v-ciclista#4": "0/07/Multi-use_water_bottle.JPG|1024",   // Borraccia
+  "a5-v-maratona#0": "7/72/Verrazano_Bridge2.jpg|2224",   // Viaggio con il pettorale
+  "a5-v-maratona#1": "3/36/Forerunner_945_Music.jpg|2064",   // Orologio Garmin Forerunner
+  "a5-v-maratona#2": "8/8b/Asics_Gel-Cumulus_22.jpg|4668",   // Scarpe da corsa in carbonio
+  "a5-v-maratona#3": "3/3e/PXL_20211208_195048218(6970).jpg|2268",   // Gel energetici, 10 bustine
+  "a5-v-golf#0": "3/3d/Golf_course,_Italy_-_20070620.jpg|1024",   // Un anno al golf club
+  "a5-v-golf#1": "c/cc/Golf_bag_and_clubs.jpg|4608",   // Sacca con le mazze
+  "a5-v-golf#2": "b/b0/Riverwalk_Golf_Club_Driving_range.jpg|2560",   // Dieci ore col maestro
+  "a5-v-golf#3": "b/ba/Golf_balls_kallerna.JPG|2500",   // Palline da golf, 12
+  "a5-v-tennis#0": "4/4a/Tennis_Racquets_and_Balls_on_a_Clay_Court.jpg|3246",   // Un anno di lezioni di tennis
+  "a5-v-tennis#1": "7/76/Il_Centrale_(108607831).jpeg|2048",   // Due biglietti per gli Internazionali
+  "a5-v-tennis#2": "5/59/Tennis_racket_and_ball.JPG|2816",   // Racchetta Babolat Pure Drive
+  "a5-v-tennis#3": "2/28/Cmglee_tennis_balls.jpg|3072",   // Tubo di palline
+  "a5-v-roma#0": "3/34/Roma_Via_Veneto.jpg|1024",   // Tre notti in una suite in via Veneto
+  "a5-v-roma#1": "b/b8/PerthVespa.jpg|2272",   // Tour in Vespa per Roma
+  "a5-v-roma#2": "d/de/Colosseo_2020.jpg|12051",   // Biglietto del Colosseo
+  "a5-v-roma#3": "5/5b/Vatican_Museums_Spiral_Staircase_2012.jpg|4336",   // Biglietto dei Musei Vaticani
+  "a5-v-roma#4": "b/bb/Supplì_al_telefono.jpg|1000",   // Supplì
+  "a5-v-venezia#0": "5/5b/Palazzo_Genovese_facciata_Canal_Grande_Venezia.jpg|7360",   // Tre notti di lusso sul Canal Grande
+  "a5-v-venezia#1": "f/f4/Venice_Gondola_Grand_Canal.jpg|2580",   // Giro in gondola
+  "a5-v-venezia#2": "c/ca/Venice_Carnival_-_Masked_Lovers_(2010).jpg|3504",   // Maschera fatta a mano
+  "a5-v-venezia#3": "6/66/Bellini_cocktail_in_a_flute-glass.png|600",   // Bellini all'Harry's Bar
+  "a5-v-venezia#4": "7/75/Venezia_Vaporetto_ACTV43_R01.jpg|4462",   // Vaporetto per 24 ore
+  "a5-v-firenze#0": "a/a3/Leather_handbag_by_Les_cuirs_d'Agathe_(DSC07738).jpg|4426",   // Borsa di pelle fatta a mano
+  "a5-v-firenze#1": "1/12/Bistecca_alla_fiorentina-01.jpg|875",   // Bistecca alla fiorentina
+  "a5-v-firenze#2": "d/d7/Florence,_Italy_-_panoramio_(125).jpg|3456",   // Biglietto degli Uffizi
+  "a5-v-firenze#3": "4/49/Villa_Castellani_Empoli.jpg|1200",   // Una settimana in villa nel Chianti
+  "a5-v-firenze#4": "1/1c/Lampredotto_sandwich.JPG|2648",   // Panino col lampredotto
+  "a5-v-sicilia#0": "5/5b/Aerial_image_of_the_coast_of_Taormina_(view_from_the_southeast).jpg|5568",   // Villa con piscina a Taormina
+  "a5-v-sicilia#1": "f/ff/1992_Agrigento_street_Fiat_500_Sicily_Sicilia_Italy.jpg|2344",   // Auto a noleggio, due settimane
+  "a5-v-sicilia#2": "e/ea/NAS_Sigonella_Backed_by_Mount_Etna_(6473839).jpg|5834",   // Escursione sull'Etna in fuoristrada
+  "a5-v-sicilia#3": "4/4b/16.11.95_Between_Messina_&_Villa_San_Giovanni_mv_\"Scilla\"_(12788799193).jpg|1506",   // Traghetto sullo Stretto
+  "a5-v-sicilia#4": "1/14/Cannolo_siciliano_with_chocolate_squares.jpg|800",   // Cannolo siciliano
+  "a5-v-napoli#0": "3/3d/Amalfi_Coast_(Italy,_October_2020)_-_75_(50558355441).jpg|5445",   // Una settimana in Costiera Amalfitana
+  "a5-v-napoli#1": "7/71/Stadio_Maradona_Serie_A.jpg|3561",   // Biglietto per vedere il Napoli
+  "a5-v-napoli#2": "c/c1/Aliscafo_in_velocità.jpg|3896",   // Gita a Capri in aliscafo
+  "a5-v-napoli#3": "f/fd/CornicelloCharm.jpg|853",   // Corno portafortuna
+  "a5-v-napoli#4": "5/57/Neapolitan_pizza_at_Trappica_(48701940197).jpg|3024",   // Pizza margherita
+  "a5-v-sardegna#0": "7/76/Costa_Smeralda_veduta_panoramica_2.png|1920",   // Villa in Costa Smeralda
+  "a5-v-sardegna#1": "b/bd/DFDS_Transmanche_Ferry_loading_at_Newhaven_Harbour.jpg|4096",   // Traghetto con l'auto
+  "a5-v-sardegna#2": "2/2c/Strand_in_Borsh.jpg|600",   // Ombrellone in prima fila
+  "a5-v-sardegna#3": "8/8c/SeadasCA.jpg|899",   // Seadas col miele
+  "a5-v-giappone#0": "c/ca/Airplane_on_the_bridge,_Haneda_airport_-_Sep_11,_2010.jpg|4155",   // Due voli per Tokyo
+  "a5-v-giappone#1": "2/27/Tamatsukuri_onsen_yado02s3648.jpg|4592",   // Notte in un ryokan
+  "a5-v-giappone#2": "3/35/Mount_Fuji_and_Bullet_Train_view_location.jpg|4032",   // Japan Rail Pass di 7 giorni
+  "a5-v-giappone#3": "f/f0/Shoyu_ramen,_at_Kasukabe_Station_(2014.05.05)_2.jpg|3264",   // Ciotola di ramen
+  "a5-v-new-york#0": "4/47/New_york_times_square-terabass.jpg|3904",   // Cinque notti a Manhattan
+  "a5-v-new-york#1": "3/3c/Cathay_Pacific_Boeing_777-200;_B-HNL@HKG.jpg|3038",   // Volo per New York
+  "a5-v-new-york#2": "c/cd/Various_Pictures_from_New_York_City_-_September,_2025.jpg|4000",   // Biglietto per un musical
+  "a5-v-new-york#3": "c/c7/Empire_State_Building_from_the_Top_of_the_Rock.jpg|756",   // Salita sull'Empire State Building
+  "a5-v-new-york#4": "b/b1/Hot_dog_with_mustard.png|2562",   // Hot dog dal carretto
+  "a5-v-pianista#0": "0/0b/Yamaha_U1.jpg|1024",   // Pianoforte verticale Yamaha
+  "a5-v-pianista#1": "f/f2/Piano-keyboard.jpg|800",   // Un anno di lezioni di pianoforte
+  "a5-v-pianista#2": "5/5b/Fortepian_Calisia_M-280.jpg|4608",   // Panchetta regolabile
+  "a5-v-pianista#3": "1/18/Metronomes_101.jpgsubstantially_substrate_supply_surface_switch.jpg|1200",   // Metronomo
+  "a5-v-dj#0": "2/2f/DJM_350.jpg|1923",   // Console Pioneer DJ
+  "a5-v-dj#1": "0/0e/Electrodynamic-loudspeaker.png|524",   // Due casse attive
+  "a5-v-dj#2": "0/00/Słuchawki_referencyjne_K-701_firmy_AKG.jpg|1881",   // Cuffie da DJ
+  "a5-v-dj#3": "6/62/Disco_ball.jpg|223",   // Palla stroboscopica
+  "a5-v-streamer#0": "0/04/MSI-Gaming-PC_2024-09-30.png|3840",   // PC da gaming
+  "a5-v-streamer#1": "f/fc/Shure_SM7.jpg|3024",   // Microfono Shure SM7B
+  "a5-v-streamer#2": "0/0c/Logicool_StreamCam_(cropped).jpg|2300",   // Webcam 4K
+  "a5-v-streamer#3": "d/de/Ring_light_in_Torp_shopping_mall,_Uddevalla.jpg|3247",   // Luce ad anello
+  "a5-v-cinema#0": "c/cb/Leica_Cine_Compact_1_4K-Projector.jpg|5000",   // Proiettore 4K
+  "a5-v-cinema#1": "b/b5/Home_Theater.jpg|6000",   // Impianto audio 5.1
+  "a5-v-cinema#2": "2/2f/Sala_de_cine.jpg|4128",   // Telo motorizzato da 120 pollici
+  "a5-v-cinema#3": "e/e2/LG_smart_TV.jpg|1700",   // Un anno di Netflix Premium
+  "a5-v-cinema#4": "9/99/Popcorn_Pumper_1.JPG|763",   // Macchina per i popcorn
+  "a5-v-lettore#0": "d/df/Interior_of_Bibliothèque_Mazarine_003.JPG|2848",   // Libreria a muro su misura
+  "a5-v-lettore#1": "b/b5/Easy_chair,_probably_Boston,_Massachusetts,_1760-1780,_mahogany,_soft_maple,_reproduction_wool_upholstery_-_Winterthur_Museum_-_DSC01384.JPG|3573",   // Poltrona da lettura
+  "a5-v-lettore#2": "4/45/2023_Amazon_Kindle_Paperwhite_(2).jpg|3955",   // Kindle Paperwhite
+  "a5-v-lettore#3": "7/76/Bookmark_-_DPLA_-_7d3502bb67b3bcf1c200c73a297e8eeb.jpg|3044",   // Segnalibro in pelle
+  "a5-v-chef#0": "8/8b/Tournedos_Rossini_with_Truffle_Madeira_Sauce.jpg|4000",   // Cena per due in un tre stelle
+  "a5-v-chef#1": "f/f8/Nakiri.jpg|6000",   // Set di coltelli giapponesi
+  "a5-v-chef#2": "7/75/Tuber_magnatum.jpg|3072",   // Tartufo bianco d'Alba, 50 g
+  "a5-v-chef#3": "1/1c/Preparing_Sushi_with_Chef_Eviatar_Churi_in_4Chef_Culinary_School_kitchen,_Israel.jpg|2657",   // Corso di cucina con uno chef
+  "a5-v-sommelier#0": "5/58/Mindful_wine_tasting_-_February_2023_-_Sarah_Stierch_02.jpg|4032",   // Corso da sommelier, primo livello
+  "a5-v-sommelier#1": "5/5c/Brunello_di_Montalcino,_Tuscany,_Italy_(5867744955).jpg|3456",   // Sei bottiglie di Brunello di Montalcino
+  "a5-v-sommelier#2": "7/76/Dom_Perignon_1999.jpg|1875",   // Champagne Dom Pérignon
+  "a5-v-sommelier#4": "8/8f/Kellnermesser_p1000026.jpg|1902",   // Cavatappi da sommelier
+  "a5-v-gelato#0": "d/d6/Gelato_ice_cream.jpg|5248",   // Corso da gelatiere
+  "a5-v-gelato#1": "3/35/EismaschineBoku_(cropped).JPG|1495",   // Gelatiera col compressore
+  "a5-v-gelato#2": "1/12/Ice_cream_push_cart_at_indoor_event_venue_California.jpg|2258",   // Carretto dei gelati d'epoca
+  "a5-v-gelato#3": "d/da/Strawberry_ice_cream_cone_(5076899310).jpg|524",   // Un cono da tre gusti
+  "a5-v-nonna#0": "7/78/Thermomix_2014.jpg|1180",   // Bimby TM7
+  "a5-v-nonna#1": "4/42/Red_KitchenAid_Artisan.jpg|2351",   // Planetaria KitchenAid
+  "a5-v-nonna#2": "0/04/Pierogi,_Gniezno,_Polonia1.jpg|3421",   // Spianatoia e mattarello
+  "a5-v-nonna#3": "4/42/Tortellini_Bolognesi.jpg|2592",   // Tortellini fatti a mano, 1 kg
+  "a5-v-pulizie#1": "4/4e/Vorwerk_Folletto_VK136.jpg|450",   // Folletto Vorwerk
+  "a5-v-pulizie#2": "f/f5/Roomba_original.jpg|800",   // Robot aspirapolvere
+  "a5-v-pulizie#3": "b/b0/BroomsforSale.jpg|948",   // Scopa di saggina
+  "a5-v-bucato#0": "a/a1/Whirlpool_Cabrio_Dryer.jpg|2268",   // Asciugatrice a pompa di calore
+  "a5-v-bucato#1": "e/ec/LG_드럼세탁기와_식기세척기,_영국서_물사용_효율_최우수_제품_수상.jpg|770",   // Lavatrice da 9 kg
+  "a5-v-bucato#2": "9/9f/Electric_steam_iron.jpg|4301",   // Ferro da stiro con caldaia
+  "a5-v-bucato#3": "6/6b/Mini_Clothespins_-_Flickr_-_places_lost.jpg|1920",   // Mollette, 50 pezzi
+  "a5-v-casa-smart#0": "a/a1/Three_Surveillance_cameras.jpg|1815",   // Impianto d'allarme con le telecamere
+  "a5-v-casa-smart#1": "0/05/Nest_Diamond_Thermostat.jpg|768",   // Termostato smart
+  "a5-v-casa-smart#2": "8/88/Nest_Yale_(cropped).jpg|1590",   // Serratura smart
+  "a5-v-casa-smart#3": "e/e6/Amazon_Echo_Plus_02.jpg|5184",   // Altoparlante Amazon Echo
+  "a5-v-casa-smart#4": "1/11/Las_Vegas_Convention_Center_Loop.jpeg|5358",   // Lampadine smart, 4 pezzi
+  "a5-v-bagno#0": "7/7e/EFTA00000038_-_Modern_bathroom_featuring_a_white_sink_cabinets_and_a_glass_shower_enclosure_with_tiled_floor.jpg|768",   // Rifare il bagno
+  "a5-v-bagno#1": "6/6f/Ducha_largando_agua.jpg|4032",   // Box doccia in cristallo
+  "a5-v-bagno#2": "a/a2/Bademantel.JPG|306",   // Accappatoio morbido
+  "a5-v-bagno#3": "8/85/Yellow_Rubber_Duck.jpg|4080",   // Paperella di gomma
+  "a6-v-cane#0": "7/71/Dog_food_in_a_bowl.jpg|2096",   // Un anno di crocchette buone
+  "a6-v-cane#1": "a/a0/Military_Working_Dog_Training_in_Germany_(6056710).jpg|10800",   // Corso di educazione cinofila
+  "a6-v-cane#2": "4/4a/Pet_Microchip_Injection_and_Scanner_(17400108206).jpg|3264",   // Vaccini e microchip
+  "a6-v-cane#3": "7/7e/Cindy_(25582240224).jpg|5472",   // Recinto e casetta in giardino
+  "a6-v-cane#4": "9/94/DSC09611a_Search_and_Rescue_Dog,_Austrian_Red_Cross_Perchtoldsdorf,_2024-10.jpg|3195",   // Guinzaglio e collare
+  "a6-v-gatto#0": "3/39/Gastrointestinal_Haiball_cat_dry_food_(Royal_Canin).jpg|4032",   // Un anno di cibo umido
+  "a6-v-gatto#1": "f/f7/Japanese_litter_box.jpg|3216",   // Lettiera autopulente
+  "a6-v-gatto#2": "4/43/Lotus-Espresso-Full-Final-window-a.jpg|2336",   // Albero tiragraffi gigante
+  "a6-v-gatto#3": "1/1a/Mindy_Mouse_cat_toy.jpg|400",   // Topolino giocattolo
+  "a6-v-gatto#4": "d/d1/Surgery_performed_on_a_domestic_cat.jpg|5184",   // Un anno di veterinario
+  "a6-v-acquario#0": "a/a8/Amaterske_akvarium.jpg|1885",   // Acquario da 300 litri
+  "a6-v-acquario#1": "9/97/Neonsalmler_Paracheirodon_innesi.jpg|3000",   // Venti pesci tropicali
+  "a6-v-acquario#2": "e/e7/58g_aquascape.jpg|550",   // Piante e sassi per il fondo
+  "a6-v-cavallo#0": "7/73/Horse_stable_-_Middletown.jpg|3548",   // Un anno di pensione per un cavallo
+  "a6-v-cavallo#1": "c/c5/Showjumping.JPG|2272",   // Venti lezioni di equitazione
+  "a6-v-cavallo#2": "b/b4/Fieldboots.jpg|1500",   // Stivali da equitazione e casco
+  "a6-v-cavallo#3": "f/f0/Sardined_Carrots.jpg|4032",   // Un sacco di carote
+  "a6-v-sposa#0": "3/36/Bride_north_america.jpg|426",   // Abito da sposa
+  "a6-v-sposa#1": "c/ce/Fede_nuziale_Classica.jpg|939",   // Due fedi nuziali in oro
+  "a6-v-sposa#2": "b/bc/Cosmetics.JPG|640",   // Trucco e acconciatura
+  "a6-v-sposa#3": "0/06/Wedding_bouquet_white_roses.jpg|958",   // Bouquet della sposa
+  "a6-v-sposa#4": "6/6e/Uncooked_ST25_rice_on_bamboo_surface.jpg|2633",   // Riso da lanciare, 1 kg
+  "a6-v-nubilato#0": "e/ef/SF_maig_2_cropped.jpg|1227",   // Voli e due notti per sei amiche
+  "a6-v-nubilato#1": "a/a2/Flamenco_en_el_Palacio_Andaluz,_Sevilla,_España,_2015-12-06,_DD_02.JPG|6211",   // Spettacolo di flamenco, per sei
+  "a6-v-nubilato#2": "9/93/WIN_t-shirt.JPG|1665",   // Sei magliette uguali
+  "a6-v-nubilato#3": "d/d8/Évrard_e_frédéric_bapst,_diadema_della_duchessa_d'anguoleme,_smeraldi,_diamanti,_oro_e_argento,_parigi_1819-20.jpg|2452",   // Coroncina col velo
+  "a6-v-halloween#0": "1/17/Castelul_Bran2.jpg|3791",   // Viaggio in Transilvania, per due
+  "a6-v-halloween#1": "a/a5/Entrance_of_Gardaland.jpg|500",   // Gardaland Magic Halloween
+  "a6-v-halloween#3": "9/90/Colorful_candy.jpg|3088",   // Caramelle, 2 kg
+  "a6-v-halloween#4": "5/53/Balle-à-leunettes_10.jpg|708",   // Zucca gigante
+  "a6-v-carnevale#0": "4/4b/Desfile_Portela_2014_(906185).jpg|4256",   // Viaggio al Carnevale di Rio, per due
+  "a6-v-carnevale#1": "e/e4/SAND_Maurice_Masques_et_bouffons_01.jpg|579",   // Costume da Arlecchino
+  "a6-v-carnevale#2": "9/9a/Carnevaleviareggio.jpg|360",   // Biglietto per i corsi mascherati
+  "a6-v-carnevale#3": "7/79/Faworki_(close-up).jpg|1152",   // Un vassoio di chiacchiere
+  "a6-v-carnevale#4": "1/19/Confetti_au_Moma.jpg|867",   // Coriandoli e stelle filanti
+  "a6-v-capodanno#0": "a/a6/Ormont-Dessus,_Vers-L'Eglise,_route_de_Brison_2.jpg|4560",   // Tre notti in baita
+  "a6-v-capodanno#1": "1/11/Hanabi_in_Adachi-ku1.jpg|2468",   // Cenone di Capodanno per due
+  "a6-v-capodanno#2": "1/1a/Franciacorta_milledi.jpg|1639",   // Franciacorta
+  "a6-v-capodanno#3": "0/0c/Cotechino-Servito-Polenta-Lenticchie.jpg|1435",   // Cotechino e lenticchie
+  "a6-v-pasqua#0": "f/f7/Acquanegra_sul_Chiese-Oasi_Le_Bine.JPG|3770",   // Pranzo di Pasqua in agriturismo
+  "a6-v-pasqua#1": "6/6a/Grilling_sausages_empanadas_barbecue_charcoal.jpg|1000",   // Grigliata di Pasquetta per dieci
+  "a6-v-pasqua#2": "e/ec/Easter_egg_with_foil.jpg|1739",   // Uovo di cioccolato gigante
+  "a6-v-pasqua#3": "e/ee/Colomba_pasquale,_edizione_2013_-_ND0_4662_(8564331585).jpg|5184",   // Colomba artigianale
+  "a6-v-pasqua#4": "2/2b/Sevilla_Cathedral_-_Southeast.jpg|3900",   // Settimana Santa a Siviglia, per due
+  "a6-v-ferragosto#0": "6/68/La_costa_di_Riccione.jpg|1920",   // Una settimana a Riccione
+  "a6-v-ferragosto#1": "2/2c/Strand_in_Borsh.jpg|600",   // Ombrellone per tutta l'estate
+  "a6-v-ferragosto#2": "2/2f/DFC_1862_Two_colorful_inflatable_pool_floats_-_a_pink_flamingo_and_a_green_turtle_-_resting_on_the_sandy_shore_as_gentle_waves_lap_nearby.jpg|5568",   // Materassino a fenicottero
+  "a6-v-ferragosto#3": "5/50/Pedalo_with_slide.jpg|1600",   // Pedalò per un'ora
+  "a6-v-ferragosto#4": "4/40/Watermelons.jpg|1061",   // Anguria
+  "a6-v-san-valentino#0": "a/ae/Promise_ring_in_casket.JPG|1200",   // Anello con diamante
+  "a6-v-san-valentino#1": "f/fb/DZ6_2628_Cozy_candlelit_dinner_for_two_elegant_Thai_restaurant_setting_with_twinkling_lights_and_a_delicate_orchid_centerpiece.jpg|6048",   // Cena romantica per due
+  "a6-v-san-valentino#2": "6/64/BEAUTIFUL_RED_ROSES.jpg|2448",   // Dodici rose rosse
+  "a6-v-san-valentino#3": "a/a6/Baci_perugina.jpg|2400",   // Scatola di Baci Perugina
+  "a6-v-mamma#0": "e/e2/Dyson_Supersonic_Hair_Dryer_1_2017-01-28.jpg|3024",   // Asciugacapelli Dyson Supersonic
+  "a6-v-mamma#1": "0/0c/Charm_Bracelet_made_by_SF_Bay_Area_Silver_Clay_Group.jpg|3072",   // Bracciale Pandora con ciondoli
+  "a6-v-mamma#2": "8/8b/Medicinal_spa_of_Harkány.jpg|400",   // Una giornata alle terme
+  "a6-v-mamma#3": "7/79/Orchid_in_pot.jpg|2810",   // Orchidea in vaso
+  "a6-v-mamma#4": "a/a8/Tour_Eiffel_Wikimedia_Commons.jpg|2900",   // Weekend a Parigi, per due
+  "a6-v-scuola#0": "c/ca/Keyboard_with_tablet.jpg|4576",   // Tablet per la scuola
+  "a6-v-scuola#1": "e/e6/Japanese_textbooks.jpg|640",   // I libri delle medie, un anno
+  "a6-v-scuola#2": "d/d7/Rucksack1.jpg|1458",   // Zaino della scuola
+  "a6-v-scuola#3": "7/79/English-English_dictionaries_and_thesaurus_books.JPG|3510",   // Un anno di lezioni d'inglese
+  "a6-v-festa-bimbi#0": "2/21/Balloon_vendor.JPG|2560",   // Animatore per tre ore
+  "a6-v-festa-bimbi#1": "8/8e/Jumping_castle.jpg|1600",   // Castello gonfiabile
+  "a6-v-festa-bimbi#2": "e/e3/Torta_di_compleanno_-_Birthday_cakes_of_Italy_-_fruit_Meringue_Whipped_cream_from_traditional_pastry_of_Milan.jpg|3241",   // Torta per 30 bambini
+  "a6-v-festa-bimbi#3": "7/70/Sleeping_Beauty_Castle_Disneyland_Anaheim_2013.jpg|2172",   // Weekend a Disneyland Paris, per quattro
+  "a6-v-festa-bimbi#4": "2/2e/Italy_-_birthday_cake_with_candles_5.jpg|2625",   // Candeline magiche
+  "a6-v-elettrico#0": "a/ab/Tesla_Model_3_(2023)_Autofrühling_Ulm_IMG_9282.jpg|5156",   // Tesla Model 3
+  "a6-v-elettrico#1": "e/ed/Solar_panels_in_Brussels_-_P060781-269644.jpg|4000",   // Pannelli solari sul tetto
+  "a6-v-elettrico#2": "7/7c/TeslaV2DualCable.jpg|1474",   // Wallbox in garage
+  "a6-v-elettrico#3": "7/7c/2015_Kłodzko,_ul._Dusznicka,_myjnia_samochodowa_02.jpg|4680",   // Lavaggio a mano
+  "a6-v-cinquecento#0": "a/a1/1970_Fiat_500_L_--_2011_DC_1.jpg|2178",   // Fiat 500 d'epoca restaurata
+  "a6-v-cinquecento#1": "7/79/Fotografía_de_taller.jpg|4032",   // Tagliando dal meccanico
+  "a6-v-cinquecento#2": "f/ff/Covered_car_in_foch.jpg|4608",   // Telo copriauto
+  "a6-v-scooter#0": "a/a7/2023_Piaggio_Liberty_S_125_ABS.jpg|1438",   // Piaggio Liberty 125
+  "a6-v-scooter#1": "a/a7/Xiaomi_M365_blanche.jpg|3024",   // Monopattino elettrico
+  "a6-v-scooter#2": "6/6e/Open-face_helmet_kallerna.JPG|2814",   // Casco jet
+  "a6-v-scooter#3": "6/6a/City_bike_locked_with_a_U-lock,_with_wheels_secured_by_a_steel_cable._Tomaszów_Mazowiecki,_Poland.jpg|4096",   // Antifurto ad arco
+  "a6-v-fuoristrada#0": "1/13/2019_Suzuki_Jimny_SZ5_4X4_Automatic_1.5.jpg|2724",   // Suzuki Jimny
+  "a6-v-fuoristrada#1": "4/47/Toyota_hilux_with_roof_tents.jpg|2299",   // Tenda da tetto
+  "a6-v-fuoristrada#3": "d/db/LED_headlamp_(1).jpg|1412",   // Torcia frontale
+  "a6-v-campeggio#0": "c/c8/Caravan.jpg|813",   // Roulotte usata
+  "a6-v-campeggio#1": "a/a5/Large_family_camping_tent.jpg|4640",   // Tenda per quattro
+  "a6-v-campeggio#2": "2/2e/Mummy_bag.jpg|1536",   // Due sacchi a pelo
+  "a6-v-campeggio#3": "7/75/Portable_stove.jpg|320",   // Fornellino da campeggio
+  "a6-v-campeggio#4": "0/0e/Enbrighten_LED_Camping_Lantern.jpg|2284",   // Lanterna
+  "a6-v-surf#0": "6/69/Italian_surfer_2.JPG|2209",   // Una settimana di surf camp
+  "a6-v-surf#1": "e/e8/Waikiki_Beach_(15077335153).jpg|4435",   // Tavola da surf
+  "a6-v-surf#2": "7/73/Wetsuit_a.jpg|508",   // Muta da surf
+  "a6-v-surf#3": "9/9c/Randy_carrasco_qs_wax_comb.jpg|655",   // Cera per la tavola
+  "a6-v-sub#0": "8/8b/Gulf_of_Eilat_(Red_Sea)_coral_reefs.jpg|984",   // Una settimana di immersioni nel Mar Rosso
+  "a6-v-sub#1": "2/29/Underwater_photograph_of_a_recreational_scuba_diver_in_Playa_del_Carmen_2006.jpg|691",   // Brevetto da sub
+  "a6-v-sub#2": "2/2b/Dive_computer_logbook.jpg|1944",   // Computer subacqueo
+  "a6-v-sub#3": "8/85/Diving_half_mask_with_bifocal_lenses_P5180288.JPG|3648",   // Maschera e boccaglio
+  "a6-v-pittore#1": "e/ef/Foldable_table_easel_in_Tuntorp_1.jpg|2570",   // Cavalletto da studio
+  "a6-v-pittore#2": "b/bc/Various_colors_of_oil_paint_tubes_4.jpg|3880",   // Colori a olio professionali
+  "a6-v-pittore#4": "6/66/Louvre_Museum_Wikimedia_Commons.jpg|6740",   // Viaggio a Parigi coi musei, per due
+  "a6-v-stelle#0": "d/d3/Aurora_borealis_over_Eielson_Air_Force_Base,_Alaska.jpg|3008",   // Viaggio in Lapponia
+  "a6-v-stelle#1": "b/b2/Celestron_EdgeHD_with_solar_filter.jpg|1657",   // Telescopio Celestron
+  "a6-v-stelle#2": "f/f3/Consul_10x40.jpg|1741",   // Binocolo
+  "a6-v-stelle#3": "9/90/Custer_Astronomical_Observatory_-_Southold_New_York_USA_-_Dome_and_Radio_Telescope.jpg|5184",   // Una notte all'osservatorio
+  "a6-v-stelle#4": "5/5d/Barritt-Serviss_Star_and_Planet_Finder.png|2000",   // Mappa del cielo
+  "a6-v-mugello#0": "b/bb/Hyodo_leather_suit_(9546192593).jpg|2448",   // Tuta in pelle da moto
+  "a6-v-mugello#1": "c/cf/Motorcycle_helmet_crashed_chin_bar.jpg|1493",   // Casco integrale da pista
+  "a6-v-mugello#2": "f/f9/Mugello_circuit_gare_in_corso.jpg|3984",   // Tribuna al Mugello
+  "a6-v-mugello#3": "9/9f/RacingFlagsJune2007.jpg|1115",   // Bandiera del pilota
+  "a6-v-erasmus#0": "0/03/Fantoft_room_03.jpg|800",   // Stanza per cinque mesi
+  "a6-v-erasmus#2": "f/fd/Ryanair,_EI-DYZ,_Boeing_737-8AS_(49585974527).jpg|1200",   // Volo low cost
+  "a6-v-erasmus#3": "c/c0/Suitcase1.jpg|1267",   // Valigia grande
+  "a6-v-erasmus#4": "e/ed/01_Paella_Valenciana_original.jpg|1600",   // Paella per due
+  "a6-v-sanremo#0": "7/72/Teatro_Ariston_Sanremo.jpg|5400",   // Biglietto per la finale del Festival
+  "a6-v-sanremo#1": "8/8a/Sanremo_Casino_3.jpg|5400",   // Una notte a Sanremo
+  "a6-v-sanremo#3": "f/f4/Various-microphones.JPG|1672",   // Microfono da karaoke
+  "a6-v-sanremo#4": "a/ac/Detail_of_a_Victor_Stiebel_evening_dress,_late_1950s.jpg|1074",   // Abito da sera da red carpet
+  "a6-v-concerto#0": "1/17/Stadio_Meazza_2021_3.jpg|4728",   // Una notte a Milano
+  "a6-v-concerto#1": "9/92/FS_Trenitalia_ETR400_15_(50832499597).jpg|3783",   // Frecciarossa per Milano
+  "a6-v-concerto#2": "a/a7/Dülmen,_Dülmener_Sommer,_Open-Air-Konzert,_\"Bounce\"_--_2018_--_0051.jpg|6720",   // Pacchetto VIP per due
+  "a6-v-concerto#3": "6/61/EPMD_Business_as_Usual_(shirt).jpg|445",   // Maglietta del tour
+  "a6-v-concerto#4": "7/7b/Po'Boy_Preservation_Festival_Hot_Sausage_Sandwich.jpg|640",   // Panino con la salamella
+  "a6-v-terme#0": "5/50/Sauna_2.jpg|334",   // Sauna finlandese per casa
+  "a6-v-terme#1": "1/1e/Grand_Hotel_Orologio_ad_Abano_Terme,_vista_di_tre_quarti.jpg|3961",   // Due notti in un resort termale
+  "a6-v-terme#3": "f/f2/Slippers.jpg|1280",   // Ciabatte da spa
+  "a6-v-stipendio#0": "f/fd/IPhone_17_Pro_(2025-12-28).jpg|4032",   // iPhone 17 Pro
+  "a6-v-stipendio#1": "b/b9/AirPods_Pro_3_with_case.jpg|695",   // AirPods Pro
+  "a6-v-stipendio#2": "6/62/Barbieri_-_ViaSophia25668.jpg|2320",   // Cena fuori coi genitori
+  "a6-v-stipendio#3": "e/e2/Sparschwein_Haspa02.jpg|1061",   // Porcellino salvadanaio
+  "a6-v-trasloco#0": "0/08/1979_Fiat_130NT_truck,_The_Van_From_Snowy_River_Removals_(2010-07-05).jpg|1422",   // Ditta di traslochi
+  "a6-v-trasloco#1": "5/50/Europäisch-Kurzhaar-Kater_Nikita_2013-12-17_auf_Stapel_aus_Umzugskartons.jpg|2736",   // Trenta scatoloni
+  "a6-v-trasloco#2": "a/a3/Eq_it-na_pizza-margherita_sep2005_sml.jpg|1024",   // Pizza per chi aiuta
+  "a6-v-trasloco#3": "2/25/Sticky_tape.jpg|713",   // Nastro adesivo da pacchi
+  "a6-v-campagna#0": "a/a4/Motocoltivatore_Goldoni.jpg|4160",   // Motocoltivatore
+  "a6-v-campagna#1": "a/ae/-2019-05-21_Chicken_coop,_Trimingham_(3).JPG|5152",   // Pollaio in legno
+  "a6-v-campagna#2": "8/84/Male_and_female_chicken_sitting_together.jpg|959",   // Sei galline ovaiole
+  "a6-v-campagna#3": "7/76/Sievi_Boots_(2).jpg|1337",   // Stivali di gomma
+  "a6-v-sushi#0": "6/60/Sushi_platter.jpg|1614",   // Cena omakase per due
+  "a6-v-sushi#1": "7/75/Yanagiba_(front).jpg|6000",   // Coltello da sushi
+  "a6-v-sushi#2": "a/ac/Osaka_Castle_Nishinomaru_Garden_April_2005.JPG|1280",   // Una settimana a Osaka, per due
+  "a6-v-sushi#3": "2/29/Short-grain_rice_(japonica).jpg|5184",   // Riso per sushi, 5 kg
+  "a6-v-sushi#4": "4/4d/Western_Han_Lacquered_Wood_Chopsticks_(10095334314).jpg|5184",   // Bacchette laccate
+  "a6-v-lucca#0": "1/1b/Magic_Armor_Link_TP_001.jpg|2448",   // Costume da cosplay
+  "a6-v-lucca#1": "d/d4/Wacom_graphics_tablet_and_pen.png|1490",   // Tavoletta grafica
+  "a6-v-lucca#2": "1/1a/Lucca_Comics_2009_-_04.jpg|3264",   // Biglietto per tutti i giorni
+  "a6-v-lucca#3": "3/30/MuseoFerrocarrilSLP19.JPG|6016",   // Fumetto autografato
+  "a6-v-lucca#4": "d/d6/Downtown_San_Diego_021.jpg|4912",   // Viaggio al Comic-Con di San Diego, per due
+  "a6-v-harry-potter#0": "d/d5/King's_Cross_station,_August_2014.jpg|1280",   // Tre notti a Londra
+  "a6-v-harry-potter#2": "b/bc/Virgin_atlantic_b747-400_lady_penelope_arp.jpg|2847",   // Due voli per Londra
+  "a6-v-harry-potter#3": "c/c8/Hogwarts_Express_(46637633634).jpg|1536",   // Visita agli studi di Harry Potter
+  "a6-v-harry-potter#4": "c/cf/Tiwi_dance_wand_CAC.JPG|1588",   // Bacchetta magica
+  "a6-v-dolomiti#0": "c/c2/Via_ferrata_Strobel_in_Italy.jpg|640",   // Guida alpina per un giorno
+  "a6-v-dolomiti#1": "c/cc/Alt-Berg_Defenders_8528.jpg|3000",   // Scarponi da trekking
+  "a6-v-dolomiti#2": "d/d8/Hotel_Mezdi_Seiser_Alm.jpg|6276",   // Una settimana in hotel sulle Dolomiti
+  "a6-v-dolomiti#3": "1/15/RS_122.jpg|2000",   // Una notte in rifugio
+  "a6-v-dolomiti#4": "a/a6/TrekkingPolesCarbonWoman.jpg|1200",   // Bastoncini da trekking
 };

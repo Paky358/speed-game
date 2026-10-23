@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 260,
+    data: "23 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: 72 vetrine nuove 🛍️",
+    descrizione: [
+      "🛍️ Le vetrine passano da 28 a 100: la luna di miele alle Maldive, il pizzaiolo di casa, Natale a New York, il pianista, la Cinquecento d'epoca, il Carnevale di Rio, la vita in campagna, Harry Potter a Londra e tante altre. Così la Vetrina finale (e la misteriosa!) non si ripetono più dopo poche partite.",
+      "🏷️ Ogni vetrina ha il suo premio grosso, qualche premio medio e quello piccolo e simpatico, con la descrizione e il prezzo vero di oggi (i premi più cari e di marca ricontrollati su internet).",
+      "📸 Anche i premi nuovi hanno la loro foto vera, scelta e controllata una per una."
+    ]
+  },
+  {
     v: 259,
     data: "23 ottobre 2026",
     titolo: "Il Prezzo è Giusto: si guarda e si entra a puntata in corso 👀",
