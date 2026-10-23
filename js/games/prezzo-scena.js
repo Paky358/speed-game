@@ -471,7 +471,9 @@
       "@media (max-height:700px){.st-vista.pz-con-pan .pz-sip .pz-emo{font-size:36px;height:1.15em}}",
       ".pz-sch{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;justify-content:safe center;gap:10px;text-align:center;padding:2px 2px 0;overflow:hidden}",
       // (riempi in prezzo.js: sui telefoni alti tutto si ingrandisce finché lo spazio c'è)
-      ".pz-sch.riempi>*{zoom:var(--pz-z,1)}.pz-sch.riempi.alto{padding-top:40px}",   // (in alto i tasti tondi: il titolo resta sotto)
+      ".pz-sch.riempi>*{zoom:var(--pz-z,1)}.pz-sch.riempi.alto{padding-top:40px}",
+      // (chi guarda soltanto: la barra in basso lascia il posto alla targhetta del core, come nella Balla)
+      ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",   // (in alto i tasti tondi: il titolo resta sotto)
       // (la scritta grande in basso, «E per voi…», non copre la lista: le si lascia il suo spazio)
       ".pz-sch.con-terzo{padding-bottom:clamp(70px,calc(var(--alt,640px) * .19),160px)}",
       ".pz-testa{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;margin:0 40px;font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#ffe066}",

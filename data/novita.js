@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 259,
+    data: "23 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: si guarda e si entra a puntata in corso 👀",
+    descrizione: [
+      "🎁 Vetrina misteriosa: alla fine si scoprono solo le vetrine che qualcuno ha scelto. Se tutti tengono la prima, la misteriosa resta un mistero (e potrà uscire in un'altra partita); se tutti prendono la misteriosa, si scopre solo quella. Tutte e due solo se sono state scelte entrambe.",
+      "👀 Il Prezzo è Giusto si può guardare senza entrare, come gli altri giochi: «👀 Guarda» nella Sala o il link per guardare. Vedi tutta la puntata, con le faccine e il ✕ nella targhetta in basso, senza scrivere il nome e senza togliere il posto a nessuno.",
+      "▶ Chi arriva a puntata cominciata tocca «Entra» nella Sala e gioca dal prossimo oggetto (o dalla Ruota, o dalla Vetrina), partendo da 0 punti. Nel frattempo guarda.",
+      "📍 Nel riquadro della Sala chi non gioca legge a che punto è la puntata: «L'Offerta 2 di 3», «Gioco a premi: L'Alpinista», «La Ruota del 100», «La Vetrina finale»…"
+    ]
+  },
+  {
     v: 258,
     data: "23 ottobre 2026",
     titolo: "Il Prezzo è Giusto: la Vetrina misteriosa 🎁 e schermi più pieni",

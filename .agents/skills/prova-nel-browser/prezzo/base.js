@@ -801,5 +801,86 @@
     } finally { senzaSpia(); }
   } });
 
+  // ===================== pz20: chi guarda soltanto e chi arriva tardi (Passo 6) =====================
+  // (23 ott, punto 5: il Prezzo dichiara ritardatari "turno" e fa guardare chi apre «👀 Guarda» / il link con &guarda=1)
+  COPIONE.aggiungi("pz20", { nome: "Prezzo online in 2: Bea guarda soltanto (targhetta, niente nome, fuori dalla foto), Sara arriva tardi ed entra al prossimo oggetto", fai: async function () {
+    conSpia();
+    try {
+      var X = await salaPrezzo(["Luca"], { formato: "tv", durata: "veloce", offerte: "vista" }), C = X.C, P = X.P, note = [], righe = [];
+      // la riga «a che punto siamo» che chi tiene la partita manda alla Sala
+      var tP = P.__tP; if (tP && tP.aCheSiamo) { var vero = tP.aCheSiamo; tP.aCheSiamo = function (x) { if (righe[righe.length - 1] !== x) righe.push(x); return vero.apply(this, arguments); }; } else note.push("(niente spia di aCheSiamo)");
+      if (!await giocaTutti(["Paky", "Luca"], function () { return vm(C).fase === "offerta" && vm(C).sotto === "offri"; }, { ms: 120000 })) no("la partita non arriva alla prima offerta");
+      var B = await W.apriTel("Bea", { hash: "gioco=prezzo&stanza=" + C + "&guarda=1", x: 560 });
+      var chip = await W.aspetta(function () { return B.document.querySelector(".sg-guardo"); }, 8000);
+      if (!chip) no("Bea non ha la targhetta di chi guarda («" + T(B).slice(0, 80) + "»)");
+      if (!await W.aspetta(function () { return B.document.querySelector(".st-vista"); }, 10000)) no("Bea non vede lo studio («" + T(B).slice(0, 80) + "»)");
+      await W.dorme(1500);
+      if (/Il tuo nome|Come ti chiami/.test(T(B))) no("a Bea si chiede il nome");
+      if (!B.document.querySelector(".st-vista.st-con-targa")) no("lo studio di Bea non lascia il posto alla targhetta");
+      var idB = W.reteDi("Bea") && W.reteDi("Bea").mioId; idB = idB || null;
+      var v0 = vm(C), dentroB = function () { var v = vm(C); return (v.players || []).concat(v.arrivi || []).some(function (p) { return /Bea/.test(p.nome); }); };
+      if (dentroB()) no("Bea è finita tra i giocatori o tra chi entra");
+      // Sara arriva tardi col link normale: entra al prossimo oggetto
+      var S2 = await W.apriTel("Sara", { hash: "gioco=prezzo&stanza=" + C, x: 750 });
+      var arrivata = await W.aspetta(function () { return (vm(C).arrivi || []).some(function (a) { return a.nome === "Sara"; }) || (vm(C).players || []).some(function (p) { return p.nome === "Sara"; }); }, 15000);
+      if (!arrivata) no("Sara non risulta arrivata (né tra chi entra né tra i giocatori)");
+      var fino = Date.now() + 420000, saraGioca = false, bfacc = 0, barraB = false;
+      while (Date.now() < fino && vm(C).fase !== "fine") {
+        for (var i = 0; i < 3; i++) { try { await agisci(["Paky", "Luca", "Sara"][i], {}); } catch (e) {} }
+        if ((vm(C).players || []).some(function (p) { return p.nome === "Sara"; })) saraGioca = true;
+        if (B.document.querySelector(".st-barra.on .sl-faccine")) bfacc++;
+        if (B.document.querySelector(".st-barra.on")) barraB = true;
+        if (dentroB()) no("Bea è entrata in partita mentre guardava");
+        if (B.document.querySelector(".pz-pan.su .pz-k, .pz-pan.su .pz-sc")) no("Bea ha dei tasti per giocare");
+        await W.dorme(300);
+      }
+      if (vm(C).fase !== "fine") no("la partita non finisce (fase " + vm(C).fase + "." + vm(C).sotto + ")");
+      if (!saraGioca) no("Sara non è mai entrata in partita");
+      if (bfacc) no("Bea ha la fila delle faccine del gioco oltre alla targhetta (" + bfacc + " volte)");
+      // la fine di Bea: i tasti del core, niente «🏠 Esci» del gioco, la frase di chi ha guardato
+      if (!await W.aspetta(function () { return /Hai guardato/.test(T(B)); }, 30000)) no("a fine partita Bea non legge «Hai guardato» («" + T(B).slice(0, 120) + "»)");
+      if ([].some.call(B.document.querySelectorAll("button"), function (b) { return /🏠 Esci/.test(b.textContent); })) no("Bea ha «🏠 Esci» del gioco oltre al ✕ della targhetta");
+      if (!righe.length) no("chi tiene la partita non dice mai a che punto siamo");
+      return "Bea guarda con la targhetta, fuori dalla foto, senza tasti né faccine doppie" + (barraB ? " (ha la barra in basso)" : "") + " · Sara entra al prossimo oggetto · a che punto siamo: " + righe.slice(0, 6).join(" → ") + (note.length ? " · " + note.join(" ") : "") + errori();
+    } finally { senzaSpia(); }
+  } });
+
+  // ===================== pz21: si scoprono solo le vetrine scelte =====================
+  // (23 ott, il proprietario: «non ha senso che mi fai vedere anche la vetrina misteriosa e il suo valore… solo se sono state
+  // scelte almeno entrambe»; e la misteriosa non scelta non si «brucia»: può uscire in un'altra partita)
+  async function soloVetrina(mist) {
+    var w = await contrBot({ formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 2 }), H = function () { return w.__prezzoH; };
+    // subito alla Vetrina (la prova salta il resto della puntata)
+    if (!await W.aspetta(function () { return H() && H().piano; }, 8000)) no("la partita col Bot non parte");
+    H().piano = ["apertura", "vetrina", "carrello", "fine"]; H().ip = 0;
+    var titoli = {}, bTit = null, bId = null, segnati = null, rivVista = false;
+    var ok = await giocaTutti(["Paky"], function () {
+      var h = H();
+      // i Bot scelgono come la prova vuole (prima che scelgano da soli)
+      if (h.fase === "vetrina" && h.sotto === "scegli" && h.vet && h.vet.b) { bTit = h.vet.b.titolo; bId = h.vet.b.id || h.vet.b.titolo; h.players.forEach(function (p) { if (p.bot && !h.vet.sc[p.id]) h.vet.sc[p.id] = mist ? "b" : "a"; }); }
+      if (h.fase === "vetrina" && h.sotto === "riv") { rivVista = true; [].forEach.call(w.document.querySelectorAll(".pz-sch .pz-vtit, .pz-sch .pz-vt .t"), function (t) { titoli[(t.classList.contains("mist") ? "🎁" : "") + t.textContent] = 1; }); }
+      if (h.fase === "carrello" && segnati == null) { try { segnati = JSON.parse(w.localStorage.getItem("sg-prezzo-vetrine") || "[]"); } catch (e) { segnati = []; } }
+      return h.fase === "fine" && !w.document.querySelector(".st-vista");
+    }, { ms: 240000, mist: !!mist, passo: 250 });
+    if (!ok) no("la partita non finisce (fase " + H().fase + "." + H().sotto + ")");
+    if (!rivVista) no("non si è vista la rivelazione della Vetrina");
+    return { w: w, H: H(), titoli: Object.keys(titoli), bTit: bTit, bId: bId, segnati: segnati || [] };
+  }
+  COPIONE.aggiungi("pz21", { nome: "Prezzo: alla fine si scoprono solo le vetrine scelte (tutti la prima, poi tutti la misteriosa)", fai: async function () {
+    // 1) tutti tengono la prima: la misteriosa non si vede, il suo valore nemmeno, e non risulta «già uscita»
+    var a = await soloVetrina(false), eA = a.H.vet.esito;
+    if (!a.bTit) no("nella prima partita non c'era la vetrina misteriosa");
+    if (a.titoli.some(function (t) { return t.indexOf(a.bTit) >= 0; }) && !(eA.tutti || []).length) no("tutti hanno tenuto la prima ma nella rivelazione si vede la misteriosa «" + a.bTit + "» (" + a.titoli.join(" | ") + ")");
+    if (eA.usaB) no("tutti hanno tenuto la prima ma per la partita la misteriosa è «usata»");
+    if (a.segnati.indexOf(a.bId) >= 0 && !(eA.tutti || []).length) no("la misteriosa non scelta risulta già uscita su questo telefono (" + a.bId + ")");
+    // 2) tutti prendono la misteriosa: si scopre solo quella
+    var b = await soloVetrina(true), eB = b.H.vet.esito, vTit = b.H.vet.v.titolo;
+    if (eB.usaA) no("tutti hanno preso la misteriosa ma per la partita la prima è «usata»");
+    if (!b.titoli.some(function (t) { return t.indexOf("🎁") === 0 && t.indexOf(b.bTit) >= 0; })) no("tutti hanno preso la misteriosa ma non si scopre («" + b.titoli.join(" | ") + "»)");
+    if (b.titoli.some(function (t) { return t.indexOf("🎁") !== 0 && t.indexOf(vTit) >= 0; }) && !(eB.tutti || []).length) no("tutti hanno preso la misteriosa ma si scoprono anche i prezzi della prima («" + vTit + "»)");
+    if (b.segnati.indexOf(b.bId) < 0) no("la misteriosa scoperta non risulta uscita (" + b.bId + ")");
+    return "tutti la prima: «" + a.titoli.join(" | ") + "», la misteriosa «" + a.bTit + "» resta un mistero e non si brucia · tutti la misteriosa: «" + b.titoli.join(" | ") + "»" + errori();
+  } });
+
   W.PZ = { agisci: agisci, giocaTutti: giocaTutti, spiaFasi: spiaFasi, controllaVista: controllaVista, contrBot: contrBot, stessoTelefono: stessoTelefono, salaPrezzo: salaPrezzo, conSpia: conSpia, senzaSpia: senzaSpia };
 })();
