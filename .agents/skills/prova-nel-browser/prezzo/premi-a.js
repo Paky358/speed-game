@@ -391,7 +391,13 @@
       if (r.left < -1 || r.right > ww + 1) guai.push(e.className.split(" ")[0] + " esce di lato");
     });
     if (pan) [].forEach.call(pan.querySelectorAll(".pza-or,.pza-fatto,.pz-ok"), function (e) { var r = e.getBoundingClientRect(); if (r.height && r.bottom > h + 1) guai.push(e.className.split(" ")[0] + " fuori dallo schermo in basso"); });
-    if (pan && pan.querySelector(".pza-or") && pan.offsetHeight > h * 0.6) guai.push("pannello di Mettili in ordine alto " + pan.offsetHeight + " su " + h);
+    // (24 ott 2026: i prodotti, con la descrizione, stanno solo nel pannello: può essere alto fino all'80%, sopra niente doppioni)
+    if (pan && pan.querySelector(".pza-or")) {
+      guai = guai.filter(function (g) { return !/^pannello alto/.test(g); });
+      if (pan.getBoundingClientRect().top < 50) guai.push("il pannello di Mettili in ordine copre i tasti in alto (" + Math.round(pan.getBoundingClientRect().top) + ")");
+      if (sch && [].some.call(sch.querySelectorAll(".pza-lista .pz-te"), function (t) { return t.getBoundingClientRect().height > 0; })) guai.push("i prodotti si vedono due volte (sopra e nel pannello)");
+      if (![].every.call(pan.querySelectorAll(".pza-or"), function (r) { var ds = r.querySelector(".ds"); return !ds || ds.hidden || ds.getBoundingClientRect().height > 0; })) guai.push("nel pannello manca la descrizione");
+    }
     return guai;
   }
   COPIONE.aggiungi("pa7", { nome: "Premi A: le misure a 360x640 e 412x915 (Bot in 6) nei due giochi a premi", fai: async function () {

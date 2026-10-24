@@ -244,12 +244,14 @@
     }
     g.adatta = function (forza) {
       if (!g.isConnected || !n) return;
-      var W = g.clientWidth, H = g.clientHeight; if (!W || !H) return;
+      // le scritte che si possono togliere quando lo spazio non basta (data-sacr: 1 = la prima che va via), di nuovo al loro posto
+      var sch = g.closest ? g.closest(".pz-sch") : null, sacr = sch ? [].slice.call(sch.querySelectorAll("[data-sacr]")).sort(function (a, b) { return (+a.dataset.sacr || 9) - (+b.dataset.sacr || 9); }) : [];
+      var W = g.clientWidth, H = g.clientHeight;
+      // (i riquadri nascosti, come nella Spesa mentre si gioca: le scritte tornano tutte)
+      if (!W || !H) { sacr.forEach(function (x) { x.style.display = ""; }); ult = ""; return; }
       var chiave = W + "x" + H; if (chiave === ult && !forza) return;
       // (l'emoji dei prodotti senza foto torna alla misura di partenza, se no falsa le prove)
       g.tessere.forEach(function (t) { var fo = t.querySelector(".fo"); if (fo) fo.style.fontSize = ""; });
-      // le scritte che si possono togliere quando lo spazio non basta (data-sacr: 1 = la prima che va via), di nuovo al loro posto
-      var sch = g.closest ? g.closest(".pz-sch") : null, sacr = sch ? [].slice.call(sch.querySelectorAll("[data-sacr]")).sort(function (a, b) { return (+a.dataset.sacr || 9) - (+b.dataset.sacr || 9); }) : [];
       sacr.forEach(function (x) { x.style.display = ""; });
       function cerca() {
         var best = null;

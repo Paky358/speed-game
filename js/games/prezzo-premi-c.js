@@ -134,7 +134,8 @@
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
-      var fila = A.tessere(prod, { fermo: true }), ch = el("div", { "data-sacr": "3" });
+      // (i riquadri si vedono a chi guarda e a chi ha finito: mentre il pannello è su, i prodotti stanno lì, una volta sola)
+      var fila = A.tessere(prod, { fermo: true, cls: "pzc-lista" }), ch = el("div", { "data-sacr": "3" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🛒 La Spesa" }));
       A.sch.appendChild(el("div", { class: "pzc-fascia", "data-sacr": "2" }, [ el("span", { text: "Spendi tra" }), el("b", { text: A.fmtE(pub.min || SP.min) + " e " + A.fmtE(pub.max || SP.max) }) ]));
       A.sch.appendChild(fila);
@@ -153,7 +154,7 @@
         var n = el("b", { class: "pzc-q", text: "0" });
         var meno = el("button", { class: "pzc-pm", type: "button", text: "−" }), piu = el("button", { class: "pzc-pm piu", type: "button", text: "+" });
         premi(meno, function () { cambia(i, -1); }); premi(piu, function () { cambia(i, +1); });
-        var r = el("div", { class: "pzc-sr" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), meno, n, piu ]);
+        var r = el("div", { class: "pzc-sr" }, [ Z().figura(el, p, "e"), el("span", { class: "tx" }, [ el("b", { class: "n", text: p.nome || "" }), p.desc ? el("small", { text: p.desc }) : null ]), meno, n, piu ]);
         righe.push({ r: r, n: n, meno: meno, piu: piu }); lista.appendChild(r);
       });
       var ok = el("button", { class: "pz-ok pzc-fatto", type: "button", text: "✅ Fatto!" });
@@ -444,9 +445,14 @@
       ".pzc-fascia{display:flex;align-items:baseline;gap:8px;font-weight:800;color:#cdd6ff;font-size:14px}.pzc-fascia b{font-size:22px;font-weight:900;color:#69f0ae}",
       ".pzc-nota{margin-bottom:4px}",
       ".pzc-spesa{display:flex;flex-direction:column;gap:4px}",
-      ".pzc-sr{display:flex;align-items:center;gap:8px;height:clamp(36px,calc(var(--alt,640px) * .058),46px);padding:0 6px 0 4px;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
+      ".st-vista.pz-con-pan .pz-sch .pzc-lista{display:none}",
+      // mentre si gioca il pannello sale fin sotto il titolo: sopra niente nomi né scritte, le righe si dividono tutto lo spazio
+      ".pz-pan.su:has(.pzc-spesa){top:calc(56px + env(safe-area-inset-top))}.st-vista.pz-con-pan:has(.pzc-spesa) .pz-sch [data-sacr]{display:none}",
+      ".pz-pan:has(.pzc-spesa) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pzc-spesa{flex:1 1 0;min-height:0}.pz-pan .pzc-spesa .pzc-sr{flex:1 1 auto}.pz-pan .pzc-spesa .pzc-pm{width:clamp(36px,calc(var(--alt,640px) * .052),48px);height:clamp(32px,calc(var(--alt,640px) * .047),44px);font-size:clamp(20px,calc(var(--alt,640px) * .03),26px)}",
+      ".pzc-sr{display:flex;align-items:center;gap:8px;min-height:clamp(40px,calc(var(--alt,640px) * .062),52px);padding:4px 6px 4px 4px;box-sizing:border-box;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
       ".pzc-sr.preso{background:linear-gradient(#fff6c7,#ffe98a)}",
-      ".pzc-sr .e{flex:0 0 auto;font-size:24px;line-height:1}.pzc-sr .n{flex:1;min-width:0;font-weight:800;font-size:13px;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}",
+      ".pzc-sr .e{flex:0 0 auto;font-size:clamp(31px,calc(var(--alt,640px) * .072),64px);line-height:1}",   // (sui telefoni alti le righe crescono: lo spazio sopra resta poco)
+      ".pzc-sr .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;text-align:left;overflow-wrap:break-word}.pzc-sr .tx .n{font-weight:800;font-size:clamp(14px,calc(var(--alt,640px) * .022),19px);line-height:1.15}.pzc-sr .tx small{font-size:clamp(12px,calc(var(--alt,640px) * .0175),15.5px);font-weight:600;color:#4c4a66;line-height:1.2}",
       ".pzc-pm{flex:0 0 auto;width:36px;height:32px;border:0;border-radius:10px;font:900 20px/1 system-ui,sans-serif;color:#fff;background:#7048e8;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}",
       ".pzc-pm.piu{background:#2f9e44}.pzc-pm:disabled{opacity:.35}",
       ".pzc-q{flex:0 0 22px;text-align:center;font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}",

@@ -59,7 +59,9 @@
     return out;
   }
   // punti per posto: 1° e 2° sempre, il 3° solo con almeno 4 giocatori
-  function puntiPos(pos, n, scala) { return pos === 1 ? scala[0] : pos === 2 ? scala[1] : (pos === 3 && n >= 4) ? scala[2] : 0; }
+  // (24 ott 2026, il proprietario: «quando perdo una manche leggo +… sul mio personaggio, ma non capisco perché se ho perso»: in due
+  //  il secondo è chi ha perso; il secondo posto vale da 3 giocatori in su, il terzo da 4)
+  function puntiPos(pos, n, scala) { return pos === 1 ? scala[0] : (pos === 2 && n >= 3) ? scala[1] : (pos === 3 && n >= 4) ? scala[2] : 0; }
   // L'Offerta (e la Vetrina): off = { id: valore }.
   // o = { senzaSforare (chi supera oltre il margine non vale), pct (margine: 2%, la Vetrina 3%), scala, bonus (PREZZO GIUSTO),
   //       molt (l'ultimo oggetto vale doppio), ordine (chi ha offerto prima: serve al «+1 €»), n (quanti giocano) }
