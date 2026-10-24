@@ -47457,6 +47457,16 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 265,
+    data: "24 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: una lista sola, e in due chi perde non prende punti 🛒",
+    descrizione: [
+      "🛒 Nella Spesa e in Mettili in ordine i prodotti non si vedono più due volte (sopra e poi di nuovo sotto): c'è una lista sola, larga, con la foto, il nome e la descrizione, dove si gioca. Sopra restano le cose da sapere («Spendi tra 20 € e 22 €», chi ha finito).",
+      "📱 Sui telefoni alti le righe sono più grandi, con le foto e le scritte più grandi.",
+      "🏷️ In due, chi perde l'Offerta, la Ruota o la Vetrina non prende più punti: prima il secondo posto valeva sempre qualcosa, e in due il secondo è chi ha perso. Da tre giocatori in su il secondo prende ancora i suoi punti, come prima."
+    ]
+  },
+  {
     v: 264,
     data: "24 ottobre 2026",
     titolo: "Il Prezzo è Giusto: ricontrollati i prezzi di prima 🔍",
@@ -95735,12 +95745,13 @@ window.SG_UNAPAROLA = [
 
     // ---------------- ogni telefono ----------------
     // il maxischermo: i 5 prodotti in riquadri con la descrizione, nell'ordine che hai adesso (1 = il meno caro), quello
-    // toccato illuminato; sotto chi ha finito. (24 ott 2026, il proprietario: per leggere le descrizioni bisognava toccarli
-    // uno per uno e si finiva per spostarli)
+    // toccato illuminato; sotto chi ha finito. Mentre il pannello è su i riquadri si nascondono: i prodotti, con la
+    // descrizione, stanno nelle righe del pannello, una volta sola (24 ott 2026, il proprietario: «non fare che stanno
+    // sopra e sotto le cose… così abbiamo tutto più largo»). Li vede chi guarda e chi ha finito.
     schermo: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
       var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" }), ch = el("div", { "data-sacr": "2" });
-      var g = A.tessere(prod, { num: true, fermo: true });
+      var g = A.tessere(prod, { num: true, fermo: true, cls: "pza-lista" });
       A.sch.appendChild(testa); A.sch.appendChild(g); A.sch.appendChild(el("div", { class: "pz-sotto pza-aiuto", text: "1 = il meno caro · " + prod.length + " = il più caro", "data-sacr": "1" })); A.sch.appendChild(ch);
       function stato(id) { var f = ((A.pub || {}).fatti || []).indexOf(id) >= 0; return { tx: f ? "✅" : "…", ok: f }; }
       chips(A, ch, pub, stato);
@@ -95757,7 +95768,7 @@ window.SG_UNAPAROLA = [
       function legame() { var L = LEGAMI.ord; return L && L.vivo() ? L : null; }
       l.forEach(function (j, pos) {
         var nb = el("span", { class: "nb" }, [ el("b", { text: String(pos + 1) }), pos === 0 ? el("small", { text: "meno caro" }) : pos === l.length - 1 ? el("small", { text: "più caro" }) : null ]);
-        var b = el("button", { class: "pza-or", type: "button" }, [ nb, el("span", { class: "fs", style: "display:contents" }), el("span", { class: "n" }) ]);
+        var b = el("button", { class: "pza-or", type: "button" }, [ nb, el("span", { class: "fs", style: "display:contents" }), el("span", { class: "tx" }, [ el("b", { class: "n" }), el("small", { class: "ds" }) ]) ]);
         premi(b, function () { tocca(pos); });
         righe.push(b); lista.appendChild(b); disegna(pos);
       });
@@ -95770,6 +95781,7 @@ window.SG_UNAPAROLA = [
         var p = prod[l[pos]] || {}, r = righe[pos], posto = r.querySelector(".fs"), f = figs[l[pos]] || (figs[l[pos]] = Z().figura(el, p, "e"));
         if (posto.firstChild !== f) { posto.textContent = ""; posto.appendChild(f); }
         r.querySelector(".n").textContent = p.nome || "";
+        var ds = r.querySelector(".ds"); ds.textContent = p.desc || ""; ds.hidden = !p.desc;
       }
       function scivola(r, d) { r.style.transition = "none"; r.style.transform = "translateY(" + d + "px)"; void r.offsetWidth; r.style.transition = ""; r.style.transform = ""; }
       function tocca(pos) {
@@ -95903,10 +95915,15 @@ window.SG_UNAPAROLA = [
       ".pza-scuoti{animation:pzScuoti .4s}",
       // mettili in ordine: il pannello
       ".pza-ord{display:flex;flex-direction:column;gap:5px}",
-      ".pza-or{position:relative;display:flex;align-items:center;gap:8px;height:clamp(36px,calc(var(--alt,640px) * .06),50px);padding:0 10px 0 4px;border:0;border-radius:12px;font:inherit;text-align:left;color:#1d1b3a;background:linear-gradient(#fff,#ece6ff);box-shadow:inset 0 -3px 0 rgba(90,74,154,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .28s cubic-bezier(.3,1.3,.5,1),box-shadow .15s;will-change:transform}",
+      ".st-vista.pz-con-pan .pz-sch .pza-lista,.st-vista.pz-con-pan .pz-sch .pza-aiuto{display:none}",
+      // mentre si gioca il pannello sale fin sotto il titolo: sopra niente nomi, le righe si dividono tutto lo spazio
+      ".pz-pan.su:has(.pza-ord){top:calc(56px + env(safe-area-inset-top))}.st-vista.pz-con-pan:has(.pza-ord) .pz-sch [data-sacr]{display:none}",
+      ".pz-pan:has(.pza-ord) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pza-ord{flex:1 1 0;min-height:0}.pz-pan .pza-ord .pza-or{flex:1 1 auto}",
+      ".pza-or{position:relative;display:flex;align-items:center;gap:8px;min-height:clamp(40px,calc(var(--alt,640px) * .062),52px);padding:4px 10px 4px 4px;box-sizing:border-box;border:0;border-radius:12px;font:inherit;text-align:left;color:#1d1b3a;background:linear-gradient(#fff,#ece6ff);box-shadow:inset 0 -3px 0 rgba(90,74,154,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .28s cubic-bezier(.3,1.3,.5,1),box-shadow .15s;will-change:transform}",
       ".pza-or .nb{flex:0 0 46px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#5a4a9a}.pza-or .nb b{font-size:17px}.pza-or .nb small{font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;margin-top:2px}",
-      ".pza-or .e{flex:0 0 auto;font-size:24px;line-height:1}",
-      ".pza-or .n{flex:1;min-width:0;font-weight:800;font-size:14px;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}",
+      ".pza-or .e{flex:0 0 auto;font-size:clamp(31px,calc(var(--alt,640px) * .085),72px);line-height:1}",   // (sui telefoni alti le righe crescono)
+      ".pza-or .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;overflow-wrap:break-word}.pza-or .n{font-weight:800;font-size:clamp(14px,calc(var(--alt,640px) * .022),19px);line-height:1.15}",
+      ".pza-or .ds{font-size:clamp(12px,calc(var(--alt,640px) * .0175),15.5px);font-weight:600;color:#4c4a66;line-height:1.2}.pza-or.sel .ds{color:#5c3c00}",
       ".pza-or.sel{background:linear-gradient(#ffe98a,#fcc419);box-shadow:0 0 0 3px #fff,0 4px 14px rgba(252,196,25,.5);z-index:2}",
       ".pza-ord.chiuso .pza-or{opacity:.6;cursor:default}",
       ".pza-fatto{width:100%;height:clamp(40px,calc(var(--alt,640px) * .066),52px)}",
@@ -96999,7 +97016,8 @@ window.SG_UNAPAROLA = [
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
-      var fila = A.tessere(prod, { fermo: true }), ch = el("div", { "data-sacr": "3" });
+      // (i riquadri si vedono a chi guarda e a chi ha finito: mentre il pannello è su, i prodotti stanno lì, una volta sola)
+      var fila = A.tessere(prod, { fermo: true, cls: "pzc-lista" }), ch = el("div", { "data-sacr": "3" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🛒 La Spesa" }));
       A.sch.appendChild(el("div", { class: "pzc-fascia", "data-sacr": "2" }, [ el("span", { text: "Spendi tra" }), el("b", { text: A.fmtE(pub.min || SP.min) + " e " + A.fmtE(pub.max || SP.max) }) ]));
       A.sch.appendChild(fila);
@@ -97018,7 +97036,7 @@ window.SG_UNAPAROLA = [
         var n = el("b", { class: "pzc-q", text: "0" });
         var meno = el("button", { class: "pzc-pm", type: "button", text: "−" }), piu = el("button", { class: "pzc-pm piu", type: "button", text: "+" });
         premi(meno, function () { cambia(i, -1); }); premi(piu, function () { cambia(i, +1); });
-        var r = el("div", { class: "pzc-sr" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), meno, n, piu ]);
+        var r = el("div", { class: "pzc-sr" }, [ Z().figura(el, p, "e"), el("span", { class: "tx" }, [ el("b", { class: "n", text: p.nome || "" }), p.desc ? el("small", { text: p.desc }) : null ]), meno, n, piu ]);
         righe.push({ r: r, n: n, meno: meno, piu: piu }); lista.appendChild(r);
       });
       var ok = el("button", { class: "pz-ok pzc-fatto", type: "button", text: "✅ Fatto!" });
@@ -97309,9 +97327,14 @@ window.SG_UNAPAROLA = [
       ".pzc-fascia{display:flex;align-items:baseline;gap:8px;font-weight:800;color:#cdd6ff;font-size:14px}.pzc-fascia b{font-size:22px;font-weight:900;color:#69f0ae}",
       ".pzc-nota{margin-bottom:4px}",
       ".pzc-spesa{display:flex;flex-direction:column;gap:4px}",
-      ".pzc-sr{display:flex;align-items:center;gap:8px;height:clamp(36px,calc(var(--alt,640px) * .058),46px);padding:0 6px 0 4px;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
+      ".st-vista.pz-con-pan .pz-sch .pzc-lista{display:none}",
+      // mentre si gioca il pannello sale fin sotto il titolo: sopra niente nomi né scritte, le righe si dividono tutto lo spazio
+      ".pz-pan.su:has(.pzc-spesa){top:calc(56px + env(safe-area-inset-top))}.st-vista.pz-con-pan:has(.pzc-spesa) .pz-sch [data-sacr]{display:none}",
+      ".pz-pan:has(.pzc-spesa) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pzc-spesa{flex:1 1 0;min-height:0}.pz-pan .pzc-spesa .pzc-sr{flex:1 1 auto}.pz-pan .pzc-spesa .pzc-pm{width:clamp(36px,calc(var(--alt,640px) * .052),48px);height:clamp(32px,calc(var(--alt,640px) * .047),44px);font-size:clamp(20px,calc(var(--alt,640px) * .03),26px)}",
+      ".pzc-sr{display:flex;align-items:center;gap:8px;min-height:clamp(40px,calc(var(--alt,640px) * .062),52px);padding:4px 6px 4px 4px;box-sizing:border-box;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
       ".pzc-sr.preso{background:linear-gradient(#fff6c7,#ffe98a)}",
-      ".pzc-sr .e{flex:0 0 auto;font-size:24px;line-height:1}.pzc-sr .n{flex:1;min-width:0;font-weight:800;font-size:13px;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}",
+      ".pzc-sr .e{flex:0 0 auto;font-size:clamp(31px,calc(var(--alt,640px) * .072),64px);line-height:1}",   // (sui telefoni alti le righe crescono: lo spazio sopra resta poco)
+      ".pzc-sr .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;text-align:left;overflow-wrap:break-word}.pzc-sr .tx .n{font-weight:800;font-size:clamp(14px,calc(var(--alt,640px) * .022),19px);line-height:1.15}.pzc-sr .tx small{font-size:clamp(12px,calc(var(--alt,640px) * .0175),15.5px);font-weight:600;color:#4c4a66;line-height:1.2}",
       ".pzc-pm{flex:0 0 auto;width:36px;height:32px;border:0;border-radius:10px;font:900 20px/1 system-ui,sans-serif;color:#fff;background:#7048e8;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}",
       ".pzc-pm.piu{background:#2f9e44}.pzc-pm:disabled{opacity:.35}",
       ".pzc-q{flex:0 0 22px;text-align:center;font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}",
@@ -98906,12 +98929,14 @@ window.SG_UNAPAROLA = [
     }
     g.adatta = function (forza) {
       if (!g.isConnected || !n) return;
-      var W = g.clientWidth, H = g.clientHeight; if (!W || !H) return;
+      // le scritte che si possono togliere quando lo spazio non basta (data-sacr: 1 = la prima che va via), di nuovo al loro posto
+      var sch = g.closest ? g.closest(".pz-sch") : null, sacr = sch ? [].slice.call(sch.querySelectorAll("[data-sacr]")).sort(function (a, b) { return (+a.dataset.sacr || 9) - (+b.dataset.sacr || 9); }) : [];
+      var W = g.clientWidth, H = g.clientHeight;
+      // (i riquadri nascosti, come nella Spesa mentre si gioca: le scritte tornano tutte)
+      if (!W || !H) { sacr.forEach(function (x) { x.style.display = ""; }); ult = ""; return; }
       var chiave = W + "x" + H; if (chiave === ult && !forza) return;
       // (l'emoji dei prodotti senza foto torna alla misura di partenza, se no falsa le prove)
       g.tessere.forEach(function (t) { var fo = t.querySelector(".fo"); if (fo) fo.style.fontSize = ""; });
-      // le scritte che si possono togliere quando lo spazio non basta (data-sacr: 1 = la prima che va via), di nuovo al loro posto
-      var sch = g.closest ? g.closest(".pz-sch") : null, sacr = sch ? [].slice.call(sch.querySelectorAll("[data-sacr]")).sort(function (a, b) { return (+a.dataset.sacr || 9) - (+b.dataset.sacr || 9); }) : [];
       sacr.forEach(function (x) { x.style.display = ""; });
       function cerca() {
         var best = null;
@@ -99558,7 +99583,9 @@ window.SG_UNAPAROLA = [
     return out;
   }
   // punti per posto: 1° e 2° sempre, il 3° solo con almeno 4 giocatori
-  function puntiPos(pos, n, scala) { return pos === 1 ? scala[0] : pos === 2 ? scala[1] : (pos === 3 && n >= 4) ? scala[2] : 0; }
+  // (24 ott 2026, il proprietario: «quando perdo una manche leggo +… sul mio personaggio, ma non capisco perché se ho perso»: in due
+  //  il secondo è chi ha perso; il secondo posto vale da 3 giocatori in su, il terzo da 4)
+  function puntiPos(pos, n, scala) { return pos === 1 ? scala[0] : (pos === 2 && n >= 3) ? scala[1] : (pos === 3 && n >= 4) ? scala[2] : 0; }
   // L'Offerta (e la Vetrina): off = { id: valore }.
   // o = { senzaSforare (chi supera oltre il margine non vale), pct (margine: 2%, la Vetrina 3%), scala, bonus (PREZZO GIUSTO),
   //       molt (l'ultimo oggetto vale doppio), ordine (chi ha offerto prima: serve al «+1 €»), n (quanti giocano) }
