@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 264,
+    data: "24 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: ricontrollati i prezzi di prima 🔍",
+    descrizione: [
+      "🔍 I prodotti e le vetrine che c'erano dall'inizio sono stati ricontrollati uno per uno coi prezzi veri di oggi (prezzo pieno da scaffale, mai quello in offerta): 89 corretti. Per esempio l'olio extravergine (10,99 €), il Roma Pass di 72 ore (62,90 €), il MacBook Air (1.249 €), la Renault Clio nuova (18.900 €) e il prosciutto di Parma intero (290 €).",
+      "🆕 Alcuni modelli che non si vendono più sono diventati quelli di oggi: AirPods 5, Phon Dyson Supersonic Nural, casco Nolan N20-2 Visor. Lo champagne e il Brunello della spesa ora si comprano al supermercato, come dice la categoria.",
+      "🗑️ Tolti due prodotti senza un prezzo unico credibile: la calcolatrice tascabile «senza marca» e la tenda al Twiga."
+    ]
+  },
+  {
     v: 263,
     data: "24 ottobre 2026",
     titolo: "Il Prezzo è Giusto online: l'ultimo tocco conta sempre ⏱️",

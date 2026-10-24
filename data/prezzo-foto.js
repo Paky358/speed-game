@@ -206,7 +206,6 @@ window.SG_PREZZO_FOTO = {
   "a2-stufa-pellet": "c/c3/Stufa_a_pellet_Palazzetti.jpg|1704",   // Stufa a pellet
   "a2-bimby": "5/54/Vorwerk_Bimby_3300.jpg|3000",   // Bimby
   "a2-pile-bottone": "c/c7/Coin-cells.jpg|511",   // Pile a bottone, 2 pezzi
-  "a2-calcolatrice": "f/f7/Citizen_SLD-100NR_calculator.jpg|2517",   // Calcolatrice tascabile
   "a2-pile-aa": "7/71/Duracell_AA_batteries.JPG|2272",   // Pile stilo, 4 pezzi
   "a2-caricatore-usb": "c/c9/USB_power_adapter_for_Apple_iPod,_Model_A1205,_by_Foxlink_Technology_Ltd-1048.jpg|3971",   // Caricatore USB da muro
   "a2-netflix": "f/fb/Netflix_button_remote_(40062279010).jpg|5184",   // Netflix per un mese

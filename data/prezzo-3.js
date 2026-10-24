@@ -12,7 +12,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-monopattino-sharing", cat: "motori", e: "🛴", nome: "Monopattino in sharing", desc: "Dieci minuti di corsa, sblocco compreso", dove: "in città", prezzo: 3.5 },   // ricerca: 1 di sblocco + 0,25/min
   { id: "a3-area-c", cat: "motori", e: "🚦", nome: "Ingresso in Area C", desc: "Un giorno in auto dentro la cerchia dei Bastioni", dove: "a Milano", prezzo: 7.5, cur: "Si paga dal lunedì al venerdì, dalle 7:30 alle 19:30" },
   { id: "a3-eicma", cat: "motori", e: "🏍️", nome: "Biglietto per l'EICMA", desc: "Il salone della moto, un giorno", dove: "a Milano, a novembre", prezzo: 20 },   // ricerca: 20 (dubbio, forse 22 in cassa)
-  { id: "a3-museo-ferrari", cat: "motori", e: "🏎️", nome: "Museo Ferrari", desc: "Biglietto intero per un adulto", dove: "a Maranello", prezzo: 27 },   // ricerca: 27 nel 2024 (dubbio: forse un po' di più)
+  { id: "a3-museo-ferrari", cat: "motori", e: "🏎️", nome: "Museo Ferrari", desc: "Biglietto intero per un adulto, nella bassa stagione (da ottobre ad aprile)", dove: "a Maranello", prezzo: 27 },   // 24 ott 2026: Il prezzo cambia con la stagione: va precisata nella descrizione.
   { id: "a3-vignetta-svizzera", cat: "motori", e: "🇨🇭", nome: "Vignetta svizzera", desc: "Il bollino per guidare un anno sulle autostrade svizzere", prezzo: 43, cur: "Costa 40 franchi; chi guida senza paga 200 franchi di multa" },
   { id: "a3-deposito-gomme", cat: "motori", e: "📦", nome: "Deposito delle gomme", desc: "Il gommista tiene le tue gomme invernali per l'estate", dove: "dal gommista", prezzo: 45 },   // ricerca: 40-50
   { id: "a3-autostrada-mi-rm", cat: "motori", e: "🛣️", nome: "Autostrada Milano-Roma", desc: "Il pedaggio in auto, tutto il viaggio in autostrada", prezzo: 46 },   // ricerca: 45,60
@@ -27,8 +27,8 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-corso-guida-sicura", cat: "motori", e: "🚨", nome: "Corso di guida sicura", desc: "Una giornata in pista con l'istruttore, con la tua auto", dove: "in un centro ACI", prezzo: 400 },   // ricerca: circa 400 (dubbio)
   { id: "a3-monopattino-xiaomi", cat: "motori", e: "🛴", nome: "Monopattino elettrico Xiaomi", desc: "L'Electric Scooter 5, quello che si vede in ogni città", prezzo: 400 },   // ricerca: circa 400 (dubbio, forse 450)
   { id: "a3-rc-auto", cat: "motori", e: "📄", nome: "Assicurazione dell'auto", desc: "RC auto per un anno, la media di tutta Italia", prezzo: 420 },   // ricerca: media IVASS 422
-  { id: "a3-brompton", cat: "motori", e: "🚲", nome: "Bici pieghevole Brompton", desc: "Quella inglese che si chiude in un attimo", prezzo: 1749, cur: "Si piega in circa 20 secondi e sta sotto la scrivania" },
-  { id: "a3-kymco-agility", cat: "motori", e: "🛵", nome: "Kymco Agility 125", desc: "Scooter a ruote alte, nuovo, versione base", dove: "dal concessionario", prezzo: 2590 },
+  { id: "a3-brompton", cat: "motori", e: "🚲", nome: "Bici pieghevole Brompton C Line", desc: "Quella inglese che si chiude in un attimo", prezzo: 1899, cur: "Si piega in circa 20 secondi e sta sotto la scrivania" },   // 24 ott 2026: listino C Line da 1.899 €
+  { id: "a3-kymco-agility", cat: "motori", e: "🛵", nome: "Kymco Agility 125", desc: "Scooter a ruote alte da 16 pollici, nuovo, versione base R16+", dove: "dal concessionario", prezzo: 2290 },   // 24 ott 2026: La versione base a ruote alte è la R16+ a 2.290 €; 2.590 era il vecchio listino della S.
   { id: "a3-liberty-125", cat: "motori", e: "🛵", nome: "Piaggio Liberty 125", desc: "Lo scooter a ruote alte della Piaggio, nuovo", dove: "dal concessionario", prezzo: 3050 },
   { id: "a3-sh-125", cat: "motori", e: "🛵", nome: "Honda SH 125", desc: "Lo scooter che si vede a ogni semaforo, nuovo", dove: "dal concessionario", prezzo: 4090, cur: "Da anni è lo scooter più venduto in Italia" },
   { id: "a3-vespa-primavera-50", cat: "motori", e: "🛵", nome: "Vespa Primavera 50", desc: "La Vespa piccola, quella che si guida a 14 anni", dove: "dal concessionario", prezzo: 4199 },
@@ -43,7 +43,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-ducati-scrambler", cat: "motori", e: "🏍️", nome: "Ducati Scrambler Icon", desc: "La Ducati più facile da guidare, nuova", dove: "dal concessionario", prezzo: 11000 },   // ricerca: 10.890
   { id: "a3-yamaha-tmax", cat: "motori", e: "🛵", nome: "Yamaha TMAX", desc: "Il maxi scooter da 560 cc, nuovo", dove: "dal concessionario", prezzo: 13499 },
   { id: "a3-dacia-sandero", cat: "motori", e: "🚗", nome: "Dacia Sandero Streetway", desc: "L'utilitaria cinque porte, versione base", dove: "dal concessionario", prezzo: 14800 },
-  { id: "a3-ligier-js50", cat: "motori", e: "🚙", nome: "Minicar Ligier JS50", desc: "La macchinetta dei ragazzi di 14 anni, nuova", dove: "dal concessionario", prezzo: 14990, cur: "Costa più di una Dacia Sandero nuova", wow: 1 },
+  { id: "a3-ligier-js50", cat: "motori", e: "🚙", nome: "Minicar Ligier JS50", desc: "La macchinetta dei ragazzi di 14 anni, nuova", dove: "dal concessionario", prezzo: 14990, cur: "Costa quasi quanto una Dacia Sandero nuova: circa 15.000 euro", wow: 1 },   // 24 ott 2026: Il prezzo va bene; la frase 'costa piu di una Sandero' non e piu vera.
   { id: "a3-honda-africa-twin", cat: "motori", e: "🏍️", nome: "Honda Africa Twin", desc: "La moto da viaggio per strada e sterrato, nuova", dove: "dal concessionario", prezzo: 15490 },
   { id: "a3-fiat-pandina", cat: "motori", e: "🚗", nome: "Fiat Pandina", desc: "La Panda ibrida di sempre, versione base", dove: "dal concessionario", prezzo: 15950, cur: "È l'auto più venduta in Italia" },
   { id: "a3-fiat-500-hybrid", cat: "motori", e: "🚗", nome: "Fiat 500 Hybrid", desc: "La nuova 500 a benzina fatta a Torino, versione base", dove: "dal concessionario", prezzo: 19900 },
@@ -65,16 +65,16 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-museo-egizio", cat: "viaggi", e: "🏺", nome: "Museo Egizio", desc: "Ingresso intero: mummie, sarcofagi e gatti sacri", dove: "a Torino", prezzo: 18 },
   { id: "a3-reggia-caserta", cat: "viaggi", e: "🏰", nome: "Reggia di Caserta", desc: "Parco e appartamenti reali, ingresso intero", prezzo: 18 },
   { id: "a3-musei-vaticani", cat: "viaggi", e: "⛪", nome: "Musei Vaticani", desc: "Ingresso intero, con la Cappella Sistina", dove: "a Roma", prezzo: 20 },
-  { id: "a3-scavi-pompei", cat: "viaggi", e: "🏛️", nome: "Scavi di Pompei", desc: "Biglietto intero (le scarpe comode le porti tu)", prezzo: 20 },   // ricerca: 20 (forse 22 col Pompei+)
+  { id: "a3-scavi-pompei", cat: "viaggi", e: "🏛️", nome: "Scavi di Pompei", desc: "Biglietto intero «Pompei Express»: solo la città antica (le scarpe comode le porti tu)", prezzo: 20 },   // 24 ott 2026: Esistono due interi (20 e 25 €): la descrizione deve dire quale.
   { id: "a3-david", cat: "viaggi", e: "🗿", nome: "Il David di Michelangelo", desc: "Ingresso alla Galleria dell'Accademia", dove: "a Firenze", prezzo: 20, cur: "Da febbraio 2026 costa 4 € in più di prima" },
   { id: "a3-torre-pisa", cat: "viaggi", e: "🗼", nome: "Salita sulla Torre di Pisa", desc: "Quasi 300 scalini, a orario fisso, un adulto", prezzo: 20 },   // ricerca: 20 + eventuale prevendita
   { id: "a3-uffizi", cat: "viaggi", e: "🖼️", nome: "Biglietto degli Uffizi", desc: "Ingresso intero, in alta stagione", dove: "a Firenze", prezzo: 25 },
   { id: "a3-cupola-brunelleschi", cat: "viaggi", e: "⛪", nome: "Cupola del Brunelleschi", desc: "Il biglietto per salire in cima e vedere il Duomo", dove: "a Firenze", prezzo: 30 },   // ricerca: Brunelleschi Pass 30
-  { id: "a3-palazzo-ducale", cat: "viaggi", e: "🏯", nome: "Palazzo Ducale", desc: "Ingresso intero, col Ponte dei Sospiri", dove: "a Venezia", prezzo: 30 },   // ricerca: 30 dal 2023 (dubbio per il 2026)
+  { id: "a3-palazzo-ducale", cat: "viaggi", e: "🏯", nome: "Palazzo Ducale", desc: "Ingresso intero, col Ponte dei Sospiri", dove: "a Venezia", prezzo: 35 },   // 24 ott 2026: Il biglietto comprende anche Correr e Museo Archeologico.
   { id: "a3-cinque-terre-card", cat: "viaggi", e: "🚃", nome: "Cinque Terre Card col treno", desc: "Treni e sentieri per un giorno, un adulto", dove: "in un weekend d'estate", prezzo: 33 },   // ricerca: 32,50
   { id: "a3-esta-usa", cat: "viaggi", e: "🇺🇸", nome: "ESTA per gli Stati Uniti", desc: "Il permesso online per entrare negli USA da turista", prezzo: 35, cur: "Fino a settembre 2025 costava 21 dollari, poi 40" },   // 40 dollari
   { id: "a3-vaporetto-24-ore", cat: "viaggi", e: "🚤", nome: "Vaporetto per 24 ore", desc: "Tutte le corse che vuoi per un giorno intero", dove: "a Venezia", prezzo: 25 },
-  { id: "a3-roma-pass", cat: "viaggi", e: "🎟️", nome: "Roma Pass 72 ore", desc: "Due musei a scelta e autobus e metro per tre giorni", dove: "a Roma", prezzo: 53 },   // ricerca: 53 (rivenditore)
+  { id: "a3-roma-pass", cat: "viaggi", e: "🎟️", nome: "Roma Pass 72 ore", desc: "Due musei a scelta e autobus e metro per tre giorni", dove: "a Roma", prezzo: 62.9 },   // 24 ott 2026: Il prezzo ufficiale 2026 è 62,90 €, non 53 (un blog riportava ancora 53).
   { id: "a3-taxi-fiumicino", cat: "viaggi", e: "🚕", nome: "Taxi da Fiumicino a Roma", desc: "Dall'aeroporto al centro, dentro le Mura", prezzo: 55, cur: "La tariffa è fissa: il tassametro non conta" },
   { id: "a3-check-in-aeroporto", cat: "viaggi", e: "🛫", nome: "Check-in al banco Ryanair", desc: "La carta d'imbarco fatta in aeroporto invece che sull'app", prezzo: 55, cur: "Con l'app è gratis", wow: 1 },
   { id: "a3-skyway", cat: "viaggi", e: "🚠", nome: "Skyway Monte Bianco", desc: "Funivia andata e ritorno fino a Punta Helbronner", dove: "a Courmayeur, d'estate", prezzo: 62 },   // ricerca: 55-61 negli anni scorsi (dubbio)
@@ -84,10 +84,10 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-ombrellone-rimini", cat: "viaggi", e: "⛱️", nome: "Ombrellone a Rimini", desc: "Ombrellone e due lettini per una settimana", dove: "a Rimini, ad agosto", prezzo: 160 },
   { id: "a3-taxi-acqueo", cat: "viaggi", e: "🚤", nome: "Taxi acqueo dall'aeroporto", desc: "Motoscafo tutto per voi fino a San Marco", dove: "a Venezia", prezzo: 170 },   // ricerca: 150-200 (dubbio)
   { id: "a3-gommone", cat: "viaggi", e: "🚤", nome: "Gommone senza patente", desc: "Noleggio per una giornata, fino a sei persone", dove: "in Sardegna, d'estate", prezzo: 200 },   // ricerca: 130-220 (dubbio)
-  { id: "a3-ombrellone-alassio", cat: "viaggi", e: "⛱️", nome: "Ombrellone in prima fila", desc: "Ombrellone e due lettini per una settimana", dove: "ad Alassio, ad agosto", prezzo: 370, cur: "Alassio è la spiaggia più cara d'Italia (indagine 2026)" },
+  { id: "a3-ombrellone-alassio", cat: "viaggi", e: "⛱️", nome: "Ombrellone in prima fila", desc: "Ombrellone e due lettini per una settimana", dove: "ad Alassio, ad agosto", prezzo: 370 },   // 24 ott 2026: Prezzo plausibile (prima fila ad agosto tra 350 e 420 a settimana).
   { id: "a3-interrail", cat: "viaggi", e: "🎒", nome: "Interrail per un mese", desc: "Treni in tutta Europa per 30 giorni, seconda classe", prezzo: 695 },   // ricerca: 696
   { id: "a3-vacanza-due", cat: "viaggi", e: "🧳", nome: "Una settimana di vacanza", desc: "In due, in Italia, viaggio e albergo compresi", dove: "la media del 2026", prezzo: 1050 },   // ricerca: Altroconsumo 2026
-  { id: "a3-settimana-rimini", cat: "viaggi", e: "🏨", nome: "Settimana a Rimini", desc: "Hotel tre stelle per una famiglia di quattro", dove: "a Ferragosto", prezzo: 1150, cur: "La stessa settimana a Milano Marittima costa circa la metà in più" },   // ricerca: 1.030 nel 2025 + aumenti (dubbio)
+  { id: "a3-settimana-rimini", cat: "viaggi", e: "🏨", nome: "Settimana a Rimini", desc: "Hotel tre stelle con colazione, per una famiglia di quattro", dove: "a Ferragosto", prezzo: 1150 },   // 24 ott 2026: testo precisato, prezzo non cambiato
 
   // ---------- 🎟️ SPORT, SVAGO E SPETTACOLI ----------
   { id: "a3-cinema", cat: "svago", e: "🎬", nome: "Biglietto del cinema", desc: "Un film normale, non in 3D, un adulto", dove: "la media italiana", prezzo: 7.3 },   // ricerca: 7,26
@@ -102,7 +102,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-lucca-comics", cat: "svago", e: "🦸", nome: "Lucca Comics", desc: "Biglietto per un giorno della fiera dei fumetti", dove: "a Lucca, a fine ottobre", prezzo: 30 },   // ricerca: 26,50-34,50 (dubbio)
   { id: "a3-juventus-museum", cat: "svago", e: "🦓", nome: "Juventus Museum e stadio", desc: "Museo e giro guidato dello stadio, alla cassa", dove: "a Torino", prezzo: 30 },
   { id: "a3-aquafan", cat: "svago", e: "🌊", nome: "Aquafan", desc: "Il parco acquatico, ingresso di un giorno", dove: "a Riccione", prezzo: 32 },
-  { id: "a3-padel", cat: "svago", e: "🎾", nome: "Campo da padel per un'ora", desc: "Il campo per quattro amici, la sera", dove: "a Milano", prezzo: 36 },   // ricerca: 30-40
+  { id: "a3-padel", cat: "svago", e: "🎾", nome: "Campo da padel per un'ora", desc: "Il campo per quattro amici, la sera", dove: "a Milano", prezzo: 42 },   // 24 ott 2026: 36 è basso per la sera a Milano, ma 48 è troppo alto: l'ora serale vale circa 40-44 €.
   { id: "a3-magicland", cat: "svago", e: "🎢", nome: "Magicland", desc: "Il parco divertimenti vicino a Roma, alla cassa", prezzo: 39.9 },
   { id: "a3-rafting", cat: "svago", e: "🚣", nome: "Discesa in rafting", desc: "Due ore sul fiume col gommone e la guida, a persona", dove: "in Trentino", prezzo: 40 },   // ricerca: 30-50
   { id: "a3-leolandia", cat: "svago", e: "🦁", nome: "Leolandia", desc: "Il parco dei bambini, ingresso intero alla cassa", dove: "vicino a Bergamo", prezzo: 47.5 },
@@ -119,7 +119,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-mongolfiera", cat: "svago", e: "🎈", nome: "Volo in mongolfiera", desc: "Un'ora in volo con altri passeggeri, a persona", dove: "in Toscana", prezzo: 250 },   // ricerca: 220-270
   { id: "a3-dazn", cat: "svago", e: "📺", nome: "DAZN per un anno", desc: "Tutta la Serie A in streaming, pagata in una volta", prezzo: 379 },
   { id: "a3-abbonamento-curva", cat: "svago", e: "🏟️", nome: "Abbonamento in curva", desc: "Tutte le partite in casa dell'Inter, curva Nord", dove: "a San Siro", prezzo: 399 },
-  { id: "a3-hospitality-mugello", cat: "svago", e: "🏍️", nome: "Hospitality al Mugello", desc: "La gara della MotoGP dalla terrazza, col pranzo", dove: "la domenica del Gran Premio", prezzo: 630 },   // ricerca: listino del circuito 2026
+  { id: "a3-hospitality-mugello", cat: "svago", e: "🏍️", nome: "Rooftop Lounge al Mugello", desc: "La gara della MotoGP dal primo piano sui box, col pranzo a buffet e il bar aperto", dove: "la domenica del Gran Premio", prezzo: 910 },   // 24 ott 2026: Il prezzo della domenica è 870-910 €, non 630 € (630 non esiste: il sabato è 660-690).
   { id: "a3-calciobalilla", cat: "svago", e: "⚽", nome: "Calciobalilla Garlando", desc: "Quello da bar, con le aste che rientrano", prezzo: 580 },   // ricerca: 540-620 (dubbio)
 
   // ---------- 🇮🇹 CURIOSITÀ: LUOGHI, MONUMENTI E SPORT ----------
@@ -127,29 +127,28 @@ window.SG_PREZZO.prodotti.push(
   { id: "a3-pantheon", cat: "curiosita", e: "🏛️", nome: "Biglietto del Pantheon", desc: "Ingresso intero per vedere il buco nel tetto", dove: "a Roma", prezzo: 5, cur: "Fino al 2023 si entrava gratis" },
   { id: "a3-colosseo", cat: "curiosita", e: "🏟️", nome: "Biglietto del Colosseo", desc: "Ingresso intero, con il Foro Romano e il Palatino", dove: "a Roma", prezzo: 18, cur: "La prima domenica del mese si entra gratis" },
   { id: "a3-gardaland", cat: "curiosita", e: "🎢", nome: "Biglietto di Gardaland", desc: "Ingresso di un giorno, comprato alla cassa", prezzo: 59, cur: "Comprato online con qualche giorno d'anticipo costa molto meno" },
-  { id: "a3-skipass-cortina", cat: "curiosita", e: "🎿", nome: "Skipass di un giorno", desc: "Dolomiti Superski, un adulto, in alta stagione", dove: "a Cortina, a Natale", prezzo: 89, cur: "Un anno prima costava 86 €" },
+  { id: "a3-skipass-cortina", cat: "curiosita", e: "🎿", nome: "Skipass di un giorno", desc: "Dolomiti Superski, un adulto, in alta stagione", dove: "a Cortina, a Natale", prezzo: 89, cur: "Lo stesso skipass vale in tutti e 12 i comprensori sciistici delle Dolomiti" },   // 24 ott 2026: 89 € coerente con il pacchetto da 10 giorni.
   { id: "a3-giro-gondola", cat: "curiosita", e: "🛶", nome: "Giro in gondola", desc: "Mezz'ora tra i canali, fino a cinque persone, di giorno", dove: "a Venezia", prezzo: 90, cur: "Di sera lo stesso giro costa di più" },
   { id: "a3-finale-internazionali", cat: "curiosita", e: "🎾", nome: "Finale degli Internazionali", desc: "Il tennis maschile sul Centrale, nei posti più lontani", dove: "a Roma, a maggio", prezzo: 590, wow: 1 },   // ricerca: 587,90
-  { id: "a3-twiga", cat: "curiosita", e: "🏖️", nome: "Tenda in spiaggia al Twiga", desc: "Una tenda col divano per un giorno, sul lido di Briatore", dove: "in Versilia, ad agosto", prezzo: 600, wow: 1 },
   { id: "a3-finale-sanremo", cat: "curiosita", e: "🎙️", nome: "Finale di Sanremo", desc: "Una poltrona in platea all'Ariston, la sera della finale", prezzo: 875, wow: 1 },
   { id: "a3-tribuna-monza", cat: "curiosita", e: "🏎️", nome: "Tribuna centrale a Monza", desc: "Posto davanti ai box, la domenica del Gran Premio", prezzo: 985 },   // ricerca: 984 (dato forse di un anno fa, dubbio)
   { id: "a3-elicottero-capri", cat: "curiosita", e: "🚁", nome: "Elicottero Napoli-Capri", desc: "Elicottero privato tutto per voi, solo andata", prezzo: 1900, wow: 1 },
-  { id: "a3-prima-scala", cat: "curiosita", e: "🎻", nome: "La Prima della Scala", desc: "Una poltrona in platea la sera della prima", dove: "a Milano, il 7 dicembre", prezzo: 3200, cur: "La Prima è sempre il 7 dicembre, giorno di Sant'Ambrogio", wow: 1 },
+  { id: "a3-prima-scala", cat: "curiosita", e: "🎻", nome: "La Prima della Scala", desc: "Una poltrona in platea la sera della prima", dove: "a Milano, il 7 dicembre", prezzo: 3500, cur: "La Prima è sempre il 7 dicembre, giorno di Sant'Ambrogio", wow: 1 },   // 24 ott 2026: Un'altra fonte parla di 3.300 e il listino ufficiale non risulta pubblicato (serata esaurita all'11 ottobre).
   { id: "a3-luna-di-miele", cat: "curiosita", e: "💍", nome: "Luna di miele all'estero", desc: "Quanto spende in media una coppia italiana per il viaggio", prezzo: 6750 }
 );
 
 window.SG_PREZZO.vetrine.push(
   { id: "a3-v-estate-vespa", titolo: "L'estate in Vespa", e: "🛵", pezzi: [
-    { e: "🛵", nome: "Vespa Primavera 125", desc: "Nuova, color azzurro mare", dove: "dal concessionario", prezzo: 5350 },
+    { e: "🛵", nome: "Vespa Primavera 125", desc: "Nuova, la Vespa 125 di città, in versione blu", dove: "dal concessionario", prezzo: 5350 },   // 24 ott 2026: Il prezzo di 5.350 € è confermato.
     { e: "⛑️", nome: "Casco Nolan N21 Visor", desc: "Il casco jet col visierino, dello stesso colore", prezzo: 200 },
-    { e: "⛱️", nome: "Ombrellone a Rimini", desc: "Ombrellone e due lettini per una settimana", dove: "ad agosto", prezzo: 160 },
+    { e: "⛱️", nome: "Ombrellone a Rimini", desc: "Ombrellone e due lettini per una settimana, in pieno agosto", dove: "in uno stabilimento balneare", prezzo: 160 },   // 24 ott 2026: Il prezzo di 160 € resta giusto (158 € trovato).
     { e: "⛽", nome: "Il pieno della Vespa", desc: "Otto litri di benzina per partire", prezzo: 16 }
   ] },
   { id: "a3-v-neve-cortina", titolo: "Neve a Cortina", e: "⛷️", pezzi: [
     { e: "🚙", nome: "Alfa Romeo Junior", desc: "Il SUV compatto per salire in montagna", dove: "dal concessionario", prezzo: 31000 },
     { e: "🎿", nome: "Skipass di un giorno", desc: "Dolomiti Superski, in alta stagione", prezzo: 89 },
     { e: "⛷️", nome: "Lezione di sci privata", desc: "Un'ora col maestro, solo per te", prezzo: 60 },
-    { e: "🎿", nome: "Noleggio sci e scarponi", desc: "Sci, scarponi e casco per un giorno", prezzo: 24 }
+    { e: "🎿", nome: "Noleggio sci e scarponi", desc: "Sci, scarponi e casco per un giorno", prezzo: 55 }   // 24 ott 2026: 24 è il prezzo di città, a Cortina un giorno di sci, scarponi e casco costa 51-65 €.
   ] },
   { id: "a3-v-gran-premio", titolo: "Gran Premio a Monza", e: "🏁", pezzi: [
     { e: "🏍️", nome: "Ducati Panigale V4", desc: "La superbike rossa, nuova", prezzo: 28500 },
@@ -172,8 +171,8 @@ window.SG_PREZZO.vetrine.push(
   ] },
   { id: "a3-v-moto-sogno", titolo: "In moto fino in Svizzera", e: "🏍️", pezzi: [
     { e: "🏍️", nome: "Honda Africa Twin", desc: "La moto da viaggio per strada e sterrato", dove: "dal concessionario", prezzo: 15490 },
-    { e: "⛑️", nome: "Casco Nolan N21 Visor", desc: "Il casco jet col visierino", prezzo: 200 },
-    { e: "⛰️", nome: "Traforo del Monte Bianco", desc: "Solo andata, per fare il giro lungo", prezzo: 55 },
+    { e: "⛑️", nome: "Casco Nolan N20-2 Visor", desc: "Il casco jet col visierino", prezzo: 209.99 },   // 24 ott 2026: Il Nolan N21 Visor non è più a catalogo: il casco jet col visierino oggi è il N20-2 Visor.
+    { e: "⛰️", nome: "Traforo del Monte Bianco", desc: "Solo andata, per fare il giro lungo", prezzo: 37.3 },   // 24 ott 2026: Per la moto la corsa semplice costa 37,30 €: 55 € era l'auto, 40 € della proposta è vicino ma non esatto.
     { e: "🇨🇭", nome: "Vignetta svizzera", desc: "Il bollino per le autostrade svizzere", prezzo: 43 },
     { e: "🏍️", nome: "Biglietto per l'EICMA", desc: "Il salone della moto, dove è nato il sogno", prezzo: 20 }
   ] },
