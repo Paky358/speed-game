@@ -47457,6 +47457,17 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 262,
+    data: "24 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: oggetti grandi, sempre con la descrizione 🖼️",
+    descrizione: [
+      "🖼️ Gli oggetti ora sono riquadri grandi, con la foto, il nome e la descrizione, e riempiono tutto lo schermo invece di righe basse e lunghe. Sui telefoni alti le foto diventano più grandi, su quelli piccoli i riquadri si stringono, ma la descrizione resta sempre intera.",
+      "🛍️ Nella Vetrina finale la descrizione c'è sempre, anche mentre scrivi la tua offerta: così sai che l'ombrellone a Rimini è per una settimana intera.",
+      "📊 In Mettili in ordine i cinque prodotti stanno tutti sopra, con la descrizione, nell'ordine in cui li hai messi tu (1 = il meno caro). Quello che tocchi si illumina: non serve più toccarli uno per uno per leggere cosa sono.",
+      "🛒 La Spesa, ✅ La Prova del 5, 🧹 Togli la cifra, ✋ È troppo!, 🟡 Plinko e 🧗 L'Alpinista: anche lì ogni oggetto ha la sua descrizione, e la ritrovi quando si scoprono i prezzi."
+    ]
+  },
+  {
     v: 261,
     data: "24 ottobre 2026",
     titolo: "Il Prezzo è Giusto: 4 giochi a premi nuovi 🎲🎯✅🧹",
@@ -95422,21 +95433,20 @@ window.SG_UNAPAROLA = [
     schermo: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
       var testa = el("div", { class: "pz-testa", text: "🧗 L'Alpinista" });
-      var cur = el("div", { class: "pza-cur" }), tre = el("div", { class: "pza-tre" }), ch = el("div");
+      var cur = el("div", { class: "pza-cur" }), tre = el("div", { class: "pza-tre" }), ch = el("div", { "data-sacr": "2" });
       A.sch.appendChild(testa); A.sch.appendChild(cur); A.sch.appendChild(tre); A.sch.appendChild(ch);
       var dots = prod.map(function (p, i) { var d = el("span", { class: "pza-dot" }, [ el("b", { text: String(i + 1) }), Z().figura(el, p, "") ]); tre.appendChild(d); return d; });
       function stato(id) { var n = ((A.pub || {}).n || {})[id] || 0; return { tx: n >= prod.length ? "✅" : n + "/" + prod.length, ok: n >= prod.length }; }
       chips(A, ch, pub, stato);
       function tutti() {
         svuota(cur); testa.textContent = "🧗 L'Alpinista";
-        var g = el("div", { class: "pza-tutti" });
-        prod.forEach(function (p) { g.appendChild(A.scheda(p, { piccola: true })); });
-        cur.appendChild(g); tre.hidden = true;
+        var g = A.tessere(prod, { num: true, fermo: true });
+        cur.appendChild(g); cur.classList.add("pieno"); tre.hidden = true; g.adatta();
       }
       function mostra(i, mie) {
         i = Math.max(0, Math.min(prod.length - 1, i));
         testa.textContent = "🧗 L'Alpinista · " + (i + 1) + " di " + prod.length;
-        svuota(cur); var s = A.scheda(prod[i], { cls: "media" }); s.classList.add("pza-entra"); cur.appendChild(s);
+        svuota(cur); cur.classList.remove("pieno"); var s = A.scheda(prod[i], { cls: "media" }); s.classList.add("pza-entra"); cur.appendChild(s);
         tre.hidden = false;
         dots.forEach(function (d, j) { d.classList.toggle("ok", !!(mie && mie[j] != null)); d.classList.toggle("ora", j === i); });
       }
@@ -95500,11 +95510,12 @@ window.SG_UNAPAROLA = [
       function prodotto(i) {
         var p = prod[i] || {}, conta = A.contachilometri(p.prezzo || 0, {});
         svuota(rv);
-        rv.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }) ]));
+        rv.appendChild(A.miniprod(p));
         rv.appendChild(conta.el);
         return conta;
       }
-      var conta0 = prodotto(0);
+      var altaRv = 0; prod.forEach(function (p, i) { prodotto(i); altaRv = Math.max(altaRv, rv.offsetHeight); });
+      var conta0 = prodotto(0); if (altaRv) rv.style.minHeight = altaRv + "px";
       g.forEach(function (x) {
         var v = el("span", { class: "v", text: "…" }), ps = el("b", { class: "pza-ps" }), c = el("span", { class: "pz-och aspetta" }, [ A.fac(x.id), v, ps ]);
         voci[x.id] = { c: c, v: v, ps: ps }; chipsBox.appendChild(c);
@@ -95707,25 +95718,19 @@ window.SG_UNAPAROLA = [
     },
 
     // ---------------- ogni telefono ----------------
-    // il maxischermo: il prodotto che hai toccato (con la descrizione), oppure tutti e 5; sotto chi ha finito
+    // il maxischermo: i 5 prodotti in riquadri con la descrizione, nell'ordine che hai adesso (1 = il meno caro), quello
+    // toccato illuminato; sotto chi ha finito. (24 ott 2026, il proprietario: per leggere le descrizioni bisognava toccarli
+    // uno per uno e si finiva per spostarli)
     schermo: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
-      var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" }), cur = el("div", { class: "pza-cur" }), ch = el("div");
-      A.sch.appendChild(testa); A.sch.appendChild(cur); A.sch.appendChild(ch);
+      var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" }), ch = el("div", { "data-sacr": "2" });
+      var g = A.tessere(prod, { num: true, fermo: true });
+      A.sch.appendChild(testa); A.sch.appendChild(g); A.sch.appendChild(el("div", { class: "pz-sotto pza-aiuto", text: "1 = il meno caro · " + prod.length + " = il più caro", "data-sacr": "1" })); A.sch.appendChild(ch);
       function stato(id) { var f = ((A.pub || {}).fatti || []).indexOf(id) >= 0; return { tx: f ? "✅" : "…", ok: f }; }
       chips(A, ch, pub, stato);
-      function tutti(l) {
-        svuota(cur);
-        var g = el("div", { class: "pza-cinque" });
-        (l || pub.start || []).forEach(function (j) { var p = prod[j] || {}; g.appendChild(el("div", { class: "pza-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }) ])); });
-        cur.appendChild(g);
-        cur.appendChild(el("div", { class: "pz-sotto", text: "👆 Tocca un prodotto e poi un altro per scambiarli" }));
-      }
-      function mostra(j) {
-        if (!prod[j]) return tutti();
-        svuota(cur); var s = A.scheda(prod[j], { cls: "media" }); s.classList.add("pza-entra"); cur.appendChild(s);
-      }
-      tutti();
+      function mostra(j) { g.tessere.forEach(function (t, i) { t.classList.toggle("sel", i === j); }); }
+      function tutti(l) { g.ordina(l || pub.start || prod.map(function (p, i) { return i; })); mostra(-1); }
+      tutti(); g.adatta();
       LEGAMI.ord = { vivo: function () { return testa.isConnected; }, mostra: mostra, tutti: tutti };
       return { aggiorna: function (p) { A.pub = p; aggChips(A, ch, stato); } };
     },
@@ -95754,13 +95759,13 @@ window.SG_UNAPAROLA = [
       function tocca(pos) {
         if (chiuso) return;
         if (sel < 0) { sel = pos; righe[pos].classList.add("sel"); A.vibra(8); A.FX.toc(700); var L = legame(); if (L) L.mostra(l[pos]); return; }
-        if (sel === pos) { righe[pos].classList.remove("sel"); sel = -1; return; }
+        if (sel === pos) { righe[pos].classList.remove("sel"); sel = -1; var L1 = legame(); if (L1) L1.mostra(-1); return; }
         var a = sel; sel = -1; righe[a].classList.remove("sel");
         var ya = righe[a].offsetTop, yb = righe[pos].offsetTop;
         var x = l[a]; l[a] = l[pos]; l[pos] = x; disegna(a); disegna(pos);
         scivola(righe[a], yb - ya); scivola(righe[pos], ya - yb);
         A.vibra(10); A.FX.toc(990); mosso = true;
-        var L2 = legame(); if (L2) L2.mostra(l[pos]);
+        var L2 = legame(); if (L2) L2.tutti(l);
         clearTimeout(toInvio);
         var resta = (A.fine || 0) - Date.now();
         if (resta > 0 && resta < 4000) manda(false); else toInvio = setTimeout(function () { manda(false); }, 1000);
@@ -95772,12 +95777,13 @@ window.SG_UNAPAROLA = [
       }
       function blocca(tx) {
         chiuso = true; ok.disabled = true; ok.textContent = tx; lista.classList.add("chiuso");
-        if (sel >= 0) { righe[sel].classList.remove("sel"); sel = -1; }
+        if (sel >= 0) { righe[sel].classList.remove("sel"); sel = -1; var L4 = legame(); if (L4) L4.mostra(-1); }
       }
       return {
         privato: function (m) {
           if (!m || !permutazione(m.l, prod.length) || chiuso) return;
           l = m.l.slice(); mosso = true; righe.forEach(function (r, pos) { disegna(pos); });
+          var L3 = legame(); if (L3) L3.tutti(l);
           if (m.f) blocca("✅ Fatto!");
         },
         // il tempo è finito: vale l'ordine che si vede (se hai toccato qualcosa)
@@ -95787,13 +95793,10 @@ window.SG_UNAPAROLA = [
     rivela: async function (A) {
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], giusto = riv.giusto || [], g = riv.g || [];
       var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" });
-      var fila = el("div", { class: "pza-fila" }), golf = el("div", { class: "pza-golf" }), banner = el("div", { class: "pz-sotto pza-bn", text: "Dal meno caro al più caro…" });
+      var fila = A.tessere(giusto.map(function (j) { return prod[j] || {}; }), { num: true, extra: function (p, pos, t) { t._tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0)); return t._tag; } });
+      var golf = el("div", { class: "pza-golf" }), banner = el("div", { class: "pz-sotto pza-bn", text: "Dal meno caro al più caro…" });
       A.sch.appendChild(testa); A.sch.appendChild(fila); A.sch.appendChild(golf); A.sch.appendChild(banner);
-      var tags = giusto.map(function (j, pos) {
-        var p = prod[j] || {}, tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0));
-        var c = el("div", { class: "pza-fc" }, [ el("b", { class: "nb", text: String(pos + 1) }), Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), tag ]);
-        c.style.animationDelay = (pos * 0.07) + "s"; fila.appendChild(c); return tag;
-      });
+      var tags = fila.tessere.map(function (t, pos) { t.style.animationDelay = (pos * 0.07) + "s"; return t._tag; });
       // le corsie del minigolf (una per giocatore)
       var corsie = g.map(function (x, j) {
         var palla = el("span", { class: "pza-palla" }), lab = el("span", { class: "pza-lab" });
@@ -95804,6 +95807,7 @@ window.SG_UNAPAROLA = [
         return { x: x, r: r, palla: palla, trk: trk, lab: lab };
       });
       golf.classList.toggle("fitto", g.length > 5);
+      fila.adatta();
       A.ST.FX.rullo(0.9);
       await A.dorme(TORD.prima); if (!A.vivo()) return;
       for (var i = 0; i < tags.length; i++) {
@@ -95859,8 +95863,8 @@ window.SG_UNAPAROLA = [
     s.textContent = [
       ".pza-pop{animation:pzPop .35s cubic-bezier(.3,1.6,.5,1)}",
       ".pza-entra{animation:pzaEntra .35s cubic-bezier(.3,1.4,.5,1) both}@keyframes pzaEntra{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}",
-      ".pza-cur{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;min-height:0}",
-      ".pza-tutti{display:flex;flex-direction:column;align-items:center;gap:5px;width:100%}",
+      ".pza-cur{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;min-height:0}.pza-cur.pieno{flex:1 1 0}",
+      ".pza-aiuto{flex:0 0 auto;font-size:12px;color:#9aa5d8}",
       ".pza-tre{display:flex;gap:8px;justify-content:center}.pza-tre[hidden]{display:none}",
       ".pza-dot{display:flex;align-items:center;gap:4px;padding:2px 9px 2px 3px;border-radius:99px;background:rgba(255,255,255,.12);font-size:18px;transition:transform .2s}",
       ".pza-dot b{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.2);font-size:12px;display:flex;align-items:center;justify-content:center}",
@@ -95890,18 +95894,6 @@ window.SG_UNAPAROLA = [
       ".pza-or.sel{background:linear-gradient(#ffe98a,#fcc419);box-shadow:0 0 0 3px #fff,0 4px 14px rgba(252,196,25,.5);z-index:2}",
       ".pza-ord.chiuso .pza-or{opacity:.6;cursor:default}",
       ".pza-fatto{width:100%;height:clamp(40px,calc(var(--alt,640px) * .066),52px)}",
-      // mettili in ordine: il maxischermo
-      ".pza-cinque{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:100%;max-width:420px}",
-      ".pza-c5{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 3px;border-radius:12px;background:rgba(255,255,255,.1)}",
-      ".pza-c5 .e{font-size:28px;line-height:1.1}.pza-c5 .n{font-size:10.5px;font-weight:800;line-height:1.15;color:#e8ebff;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}",
-      // la rivelazione: la fila giusta
-      ".pza-fila{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;width:100%;max-width:440px}",
-      ".pza-fc{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px 5px;border-radius:12px;background:linear-gradient(#ffffff,#f3efff);color:#1d1b3a;animation:pzPop .4s cubic-bezier(.3,1.6,.5,1) both}",
-      ".pza-fc .nb{position:absolute;left:3px;top:2px;font-size:10px;color:#7048e8}",
-      ".pza-fc .e{font-size:clamp(24px,calc(var(--alt,640px) * .05),42px);line-height:1.15}",
-      ".pza-fc .n{font-size:10px;font-weight:800;line-height:1.1;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.2em;word-break:break-word}",
-      ".pza-fc .pz-tag{font-size:11px;padding:2px 5px 2px 11px;max-width:100%;box-sizing:border-box;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pza-fc .pz-tag:before{left:4px;width:4px;height:4px;margin-top:-2px}",
-      ".pza-fc .pz-tag.su{opacity:1;transform:none}",
       // il minigolf
       ".pza-golf{display:flex;flex-direction:column;gap:4px;width:100%;max-width:440px;opacity:0;transform:translateY(12px);transition:opacity .3s,transform .35s}.pza-golf.su{opacity:1;transform:none}",
       ".pza-lane{position:relative;display:flex;align-items:center;gap:6px;height:clamp(26px,calc(var(--alt,640px) * .05),40px);padding:0 6px 0 2px;border-radius:12px;background:rgba(255,255,255,.08)}",
@@ -95916,7 +95908,7 @@ window.SG_UNAPAROLA = [
       ".pza-lane.buca{background:rgba(255,212,59,.3);box-shadow:0 0 0 2px #ffd43b}.pza-lane.bene{background:rgba(55,212,126,.2)}.pza-lane.male .pza-lab{color:#ffb3bb}",
       ".pza-lane .pt{flex:0 0 auto;font-size:11px;font-weight:900;color:#04321c;background:#6ff0a6;border-radius:99px;padding:0 6px;animation:pzPop .35s both}",
       ".pza-golf.fitto{gap:3px}.pza-golf.fitto .pza-lane{height:clamp(22px,calc(var(--alt,640px) * .04),34px)}.pza-golf.fitto .pza-lane .fac{width:18px;height:18px}.pza-golf.fitto .pza-lane .nm{font-size:11.5px;flex-basis:56px}",
-      "@media (prefers-reduced-motion:reduce){.pza-entra,.pza-fc,.pza-aah{animation:none}}"
+      "@media (prefers-reduced-motion:reduce){.pza-entra,.pza-aah{animation:none}}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -96330,7 +96322,7 @@ window.SG_UNAPAROLA = [
       var mai = ids.filter(function (id) { return !(tocchi[id] >= 0); });
       var banner = el("div", { class: "pz-sotto", text: "Dove vi siete fermati…" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "✋ È troppo!" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(A.miniprod(prod));
       var contaBox = el("div", { style: "min-height:52px;display:flex;align-items:center" }, [ conta.el ]);
       conta.el.style.visibility = "hidden";
       A.sch.appendChild(contaBox);
@@ -96991,14 +96983,14 @@ window.SG_UNAPAROLA = [
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
-      var fila = el("div", { class: "pzc-cinque" }), ch = el("div");
-      prod.forEach(function (p) { fila.appendChild(el("div", { class: "pzc-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }) ])); });
+      var fila = A.tessere(prod, { fermo: true }), ch = el("div", { "data-sacr": "3" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🛒 La Spesa" }));
-      A.sch.appendChild(el("div", { class: "pzc-fascia" }, [ el("span", { text: "Spendi tra" }), el("b", { text: A.fmtE(pub.min || SP.min) + " e " + A.fmtE(pub.max || SP.max) }) ]));
+      A.sch.appendChild(el("div", { class: "pzc-fascia", "data-sacr": "2" }, [ el("span", { text: "Spendi tra" }), el("b", { text: A.fmtE(pub.min || SP.min) + " e " + A.fmtE(pub.max || SP.max) }) ]));
       A.sch.appendChild(fila);
-      A.sch.appendChild(el("div", { class: "pz-sotto", text: "🙈 I prezzi non si vedono: chi li conosce meglio?" }));
+      A.sch.appendChild(el("div", { class: "pz-sotto", text: "🙈 I prezzi non si vedono: chi li conosce meglio?", "data-sacr": "1" }));
       A.sch.appendChild(ch);
       chips(A, ch, pub.fatti || []);
+      fila.adatta();
       return { aggiorna: function (p) { A.pub = p; aggChips(A, ch, (p && p.fatti) || []); } };
     },
     pannello: function (A) {
@@ -97051,16 +97043,12 @@ window.SG_UNAPAROLA = [
     rivela: async function (A) {
       stile();
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], g = riv.g || [], min = riv.min || SP.min, max = riv.max || SP.max;
-      var fila = el("div", { class: "pzc-cinque riv" }), corsie = el("div", { class: "pzc-corsie" + (g.length > 5 ? " fitto" : "") });
+      var fila = A.tessere(prod, { extra: function (p, i, t) { t._tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0)); return t._tag; } }), corsie = el("div", { class: "pzc-corsie" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pzc-bn", text: "I prezzi veri…" });
       A.sch.classList.add("pzb-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🛒 La Spesa" }));
       A.sch.appendChild(fila); A.sch.appendChild(corsie); A.sch.appendChild(banner);
-      var tags = prod.map(function (p) {
-        var tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0));
-        fila.appendChild(el("div", { class: "pzc-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), tag ]));
-        return tag;
-      });
+      var tags = fila.tessere.map(function (t) { return t._tag; });
       // le corsie: da 0 € a un po' più del carrello più caro (almeno 30 €), con la fascia verde
       var alto = Math.min(60, Math.max(30, Math.ceil(Math.max.apply(null, g.map(function (x) { return x.T; }).concat([0])) * 1.08)));
       var righe = g.map(function (x, j) {
@@ -97072,6 +97060,7 @@ window.SG_UNAPAROLA = [
         corsie.appendChild(r);
         return { x: x, r: r, carr: carr, trk: trk, lab: lab };
       });
+      fila.adatta();
       A.ST.FX.rullo(0.9);
       await A.dorme(TS.prima); if (!A.vivo()) return;
       for (var i = 0; i < tags.length; i++) { tags[i].classList.add("su"); A.FX.toc(560 + i * 90); await A.dorme(TS.prezzo); if (!A.vivo()) return; }
@@ -97250,7 +97239,7 @@ window.SG_UNAPAROLA = [
       var conta = A.contachilometri(+vero || 0, {}), righe = el("div", { class: "pzc-casse" + (g.length > 5 ? " fitto" : "") }), banner = el("div", { class: "pz-sotto pzc-bn", text: "Le combinazioni…" });
       A.sch.classList.add("pzb-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🔐 La Cassaforte" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(A.miniprod(prod));
       var cbox = el("div", { style: "min-height:44px;display:flex;align-items:center" }, [ conta.el ]); conta.el.style.visibility = "hidden";
       A.sch.appendChild(cbox); A.sch.appendChild(righe); A.sch.appendChild(banner);
       var rr = g.map(function (x) {
@@ -97302,12 +97291,6 @@ window.SG_UNAPAROLA = [
       ".pz-sch.pzb-fitto{gap:6px}",
       ".pzc-fatto{display:block;width:100%;margin-top:4px}",   // (il tasto «Fatto» / «Apri!» a tutta larghezza, come nei giochi a premi d ed e)   // (anche se nessun gioco del file b è ancora partito)
       ".pzc-fascia{display:flex;align-items:baseline;gap:8px;font-weight:800;color:#cdd6ff;font-size:14px}.pzc-fascia b{font-size:22px;font-weight:900;color:#69f0ae}",
-      ".pzc-cinque{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:100%;max-width:440px}",
-      ".pzc-c5{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px;border-radius:12px;background:rgba(255,255,255,.1)}",
-      ".pzc-c5 .e{font-size:clamp(24px,calc(var(--alt,640px) * .045),36px);line-height:1.1}",
-      ".pzc-c5 .n{font-size:10px;font-weight:800;line-height:1.12;color:#e8ebff;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}",
-      ".pzc-cinque.riv .pzc-c5{background:linear-gradient(#ffffff,#f3efff)}.pzc-cinque.riv .pzc-c5 .n{color:#1d1b3a}",
-      ".pzc-c5 .pz-tag{font-size:11px;padding:2px 5px 2px 11px;max-width:100%;box-sizing:border-box;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pzc-c5 .pz-tag:before{left:4px;width:4px;height:4px;margin-top:-2px}.pzc-c5 .pz-tag.su{opacity:1;transform:none}",
       ".pzc-nota{margin-bottom:4px}",
       ".pzc-spesa{display:flex;flex-direction:column;gap:4px}",
       ".pzc-sr{display:flex;align-items:center;gap:8px;height:clamp(36px,calc(var(--alt,640px) * .058),46px);padding:0 6px 0 4px;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
@@ -97595,7 +97578,7 @@ window.SG_UNAPAROLA = [
       var fila = rigaDadi(el, dd, true), righe = el("div", { class: "pzd-righe" + (g.length > 5 ? " fitto" : "") }), banner = el("div", { class: "pz-sotto pzd-bn", text: "Le cifre vere…" });
       A.sch.classList.add("pzb-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🎲 Il Gioco dei Dadi" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(A.miniprod(prod));
       A.sch.appendChild(fila.el); A.sch.appendChild(righe); A.sch.appendChild(banner);
       var rr = g.map(function (x) {
         var chs = dd.map(function (d, i) { var c = x.s && x.s[i]; return el("span", { class: "pzd-ch " + (c || "vuota"), text: c ? SIMB[c] : "–" }); });
@@ -97788,7 +97771,7 @@ window.SG_UNAPAROLA = [
       var banner = el("div", { class: "pz-sotto pzd-bn", text: "Le finestrelle di tutti…" });
       A.sch.classList.add("pzb-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🎯 Il Mirino" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(A.miniprod(prod));
       A.sch.appendChild(el("div", { class: "pzd-rv" + (g.length > 5 ? " fitto" : "") }, [ etichette(A, a, b), el("div", { class: "pzd-rtrk" }, [ cols, frec ]) ]));
       A.sch.appendChild(el("div", { class: "pzd-rfw" + (g.length > 5 ? " fitto" : "") }, [ el("span"), facce ]));
       A.sch.appendChild(banner);
@@ -98092,13 +98075,13 @@ window.SG_UNAPAROLA = [
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], tag = pub.tag || [];
-      var fila = el("div", { class: "pze-cinque" }), ch = el("div");
-      prod.forEach(function (p, i) { fila.appendChild(el("div", { class: "pze-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), cartello(A, tag[i]) ])); });
+      var fila = A.tessere(prod, { tcls: "pze-c5", extra: function (p, i) { return cartello(A, tag[i]); } }), ch = el("div", { "data-sacr": "2" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "✅ La Prova del 5" }));
       A.sch.appendChild(fila);
-      A.sch.appendChild(el("div", { class: "pz-sotto", text: "Il cartellino è giusto o sbagliato? Quanti sono giusti non si sa!" }));
+      A.sch.appendChild(el("div", { class: "pz-sotto", text: "Il cartellino è giusto o sbagliato? Quanti sono giusti non si sa!", "data-sacr": "1" }));
       A.sch.appendChild(ch);
       chips(A, ch, pub.fatti || []);
+      fila.adatta();
       return { aggiorna: function (p) { A.pub = p; aggChips(A, ch, (p && p.fatti) || []); } };
     },
     pannello: function (A) {
@@ -98153,21 +98136,17 @@ window.SG_UNAPAROLA = [
     rivela: async function (A) {
       stile();
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], tag = riv.tag || [], ok = riv.ok || [], g = riv.g || [], n = prod.length;
-      var fila = el("div", { class: "pze-cinque riv" }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
+      var fila = A.tessere(prod, { tcls: "pze-c5", extra: function (p, i) { return [ cartello(A, tag[i]), el("span", { class: "pze-es", text: ok[i] ? "✓ giusto" : "era " + A.fmtE(p.prezzo || 0) }) ]; } }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pze-bn", text: "Giriamo i cartellini…" });
       A.sch.classList.add("pze-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "✅ La Prova del 5" }));
       A.sch.appendChild(fila); A.sch.appendChild(gente); A.sch.appendChild(banner);
-      var carte = prod.map(function (p, i) {
-        var es = el("span", { class: "pze-es", text: ok[i] ? "✓ giusto" : "era " + A.fmtE(p.prezzo || 0) });
-        var c = el("div", { class: "pze-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), cartello(A, tag[i]), es ]);
-        fila.appendChild(c);
-        return c;
-      });
+      var carte = fila.tessere;
       var righe = g.map(function (x) {
         var q = rigaGente(A, x, prod.map(function (p, i) { var v = x.s ? x.s[i] : null; return v === 1 ? "✓" : v === 0 ? "✗" : "·"; }));
         gente.appendChild(q.r); return q;
       });
+      fila.adatta();
       A.ST.FX.rullo(0.9);
       await A.dorme(TP.prima); if (!A.vivo()) return;
       for (var i = 0; i < n; i++) {
@@ -98297,13 +98276,13 @@ window.SG_UNAPAROLA = [
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], S = pub.S || [];
-      var fila = el("div", { class: "pze-tre" }), ch = el("div");
-      prod.forEach(function (p, k) { fila.appendChild(el("div", { class: "pze-c3" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), numero(A, S[k] || "") ])); });
+      var fila = A.tessere(prod, { tcls: "pze-c3", extra: function (p, k) { return numero(A, S[k] || ""); } }), ch = el("div", { "data-sacr": "2" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🧹 Togli la cifra" }));
       A.sch.appendChild(fila);
-      A.sch.appendChild(el("div", { class: "pz-sotto", text: "In ogni prezzo c'è una cifra di troppo: quale?" }));
+      A.sch.appendChild(el("div", { class: "pz-sotto", text: "In ogni prezzo c'è una cifra di troppo: quale?", "data-sacr": "1" }));
       A.sch.appendChild(ch);
       chips(A, ch, pub.fatti || []);
+      fila.adatta();
       return { aggiorna: function (p) { A.pub = p; aggChips(A, ch, (p && p.fatti) || []); } };
     },
     pannello: function (A) {
@@ -98364,19 +98343,17 @@ window.SG_UNAPAROLA = [
     rivela: async function (A) {
       stile();
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], vero = riv.vero || [], S = riv.S || [], J = riv.j || [], g = riv.g || [];
-      var fila = el("div", { class: "pze-tre riv" }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
+      var sovs = [], fila = A.tessere(prod, { tcls: "pze-c3", extra: function (p, k) {
+        var num = numero(A, S[k] || ""), tag = A.Z.cartellino(el, A.fmtE(+vero[k] || 0)); sovs[k] = { num: num, sov: el("span", { class: "pze-sov" }, [ num, tag ]) }; return sovs[k].sov;
+      } }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pze-bn", text: "Via le cifre di troppo…" });
       A.sch.classList.add("pze-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🧹 Togli la cifra" }));
       A.sch.appendChild(fila); A.sch.appendChild(gente); A.sch.appendChild(banner);
       // il numero con la cifra in più e, sotto (nello stesso posto, ancora nascosto), il cartellino col prezzo vero
-      var carte = prod.map(function (p, k) {
-        var num = numero(A, S[k] || ""), tag = A.Z.cartellino(el, A.fmtE(+vero[k] || 0)), sov = el("span", { class: "pze-sov" }, [ num, tag ]);
-        var cc = el("div", { class: "pze-c3" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), sov ]);
-        fila.appendChild(cc);
-        return { c: cc, num: num, sov: sov };
-      });
+      var carte = fila.tessere.map(function (t, k) { return { c: t, num: sovs[k].num, sov: sovs[k].sov }; });
       var righe = g.map(function (x) { var q = rigaGente(A, x, prod.map(function (p, k) { return x.c && x.c[k] != null ? "?" : "·"; })); gente.appendChild(q.r); return q; });
+      fila.adatta();
       A.ST.FX.rullo(0.9);
       await A.dorme(TT.prima); if (!A.vivo()) return;
       for (var k = 0; k < carte.length; k++) {
@@ -98426,19 +98403,10 @@ window.SG_UNAPAROLA = [
     var s = document.createElement("style"); s.id = "sg-pze-css";
     s.textContent = [
       ".pz-sch.pze-fitto{gap:6px}",
-      // le carte dei prodotti sul maxischermo (5 della Prova, 3 di Togli la cifra)
-      ".pze-cinque{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:100%;max-width:440px}",
-      ".pze-tre{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%;max-width:440px}",
-      ".pze-c5,.pze-c3{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px;border-radius:12px;background:rgba(255,255,255,.1);min-width:0}",
-      ".pze-c5 .e{font-size:clamp(24px,calc(var(--alt,640px) * .045),36px);line-height:1.1}",
-      ".pze-c3 .e{font-size:clamp(30px,calc(var(--alt,640px) * .06),46px);line-height:1.1}",
-      ".pze-c5 .n,.pze-c3 .n{font-size:10px;font-weight:800;line-height:1.12;color:#e8ebff;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}",
-      ".pze-c3 .n{font-size:11px}",
-      ".pze-c5 .pz-tag{font-size:11px;padding:2px 5px 2px 11px;max-width:100%;box-sizing:border-box;transition:background .3s}.pze-c5 .pz-tag:before{left:4px;width:4px;height:4px;margin-top:-2px}",
-      ".pze-c5 .pz-tag.lungo{font-size:9.5px;padding-left:9px}",
-      ".pze-cinque.riv .pze-c5,.pze-tre.riv .pze-c3{background:linear-gradient(#ffffff,#f3efff)}.pze-cinque.riv .n,.pze-tre.riv .n{color:#1d1b3a}",
+      // i riquadri dei prodotti sul maxischermo (5 della Prova, 3 di Togli la cifra): il cartellino si vede subito
+      ".pz-te.pze-c5 .pz-tag{font-size:14px;padding:3px 9px 3px 16px;opacity:1;transform:none;transition:background .3s}",
       // la Prova del 5: girati, verde o rosso col prezzo vero (già al suo posto, nascosto)
-      ".pze-es{font-size:10px;font-weight:900;line-height:1.1;white-space:nowrap;opacity:0;transform:scale(.5);transition:opacity .25s,transform .35s cubic-bezier(.3,1.6,.5,1)}",
+      ".pze-es{font-size:12px;font-weight:900;line-height:1.1;white-space:nowrap;opacity:0;transform:scale(.5);transition:opacity .25s,transform .35s cubic-bezier(.3,1.6,.5,1)}",
       ".pze-c5.giusto .pz-tag{background:linear-gradient(#b2f2bb,#51cf66);color:#06361a}.pze-c5.giusto .pze-es{opacity:1;transform:none;color:#2b8a3e}",
       ".pze-c5.falso .pz-tag{background:linear-gradient(#ffc9c9,#ff6b6b);color:#5c0011;text-decoration:line-through}.pze-c5.falso .pze-es{opacity:1;transform:none;color:#c92a2a}",
       ".pze-c5.giusto,.pze-c5.falso{animation:pzeGira .45s ease-out}@keyframes pzeGira{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:none}}",
@@ -98525,7 +98493,10 @@ window.SG_UNAPAROLA = [
              partita, dalle categorie scelte), passo(p), margine(p, pct), arrotonda(v, p), fmtE(v), tondo2(v), privato(id, msg), fatto(id)
    A (telefono): el, ST (lo studio), S, Z (window.SGPrezzoScena: scheda, tastierino, contachilometri, FX…), sch, pan, pub, riv, punti,
              io, locale, fine (ora della fine del tempo), giocatori [{ id, nome, omino }], nome(id), fac(id, faccia), invia(m),
-             dorme(ms), vivo(), fmtE, fmtN, FX, vibra, scheda(prod, opz), contachilometri(v, opz), tastierino(opz)
+             dorme(ms), vivo(), fmtE, fmtN, FX, vibra, scheda(prod, opz), contachilometri(v, opz), tastierino(opz),
+             tessere(prods, opz) (i riquadri che riempiono lo schermo: vedi prezzo-scena.js; poi .adatta()), miniprod(prod)
+   La descrizione dei prodotti si vede SEMPRE (24 ott 2026, il proprietario: «la descrizione secondo me è obbligatoria»):
+   più prodotti insieme → tessere; uno solo → scheda (anche «piccola» ha la descrizione) o miniprod nelle rivelazioni.
    ========================================================= */
 (function () {
   "use strict";
@@ -98650,7 +98621,7 @@ window.SG_UNAPAROLA = [
       var conta = A.contachilometri(prod.prezzo || 0, { grande: true });
       var righe = el("div", { class: "pz-righe" + (((riv.arrivi || []).length + (riv.altri || []).length) > 4 ? " due" : "") }), banner = el("div", { class: "pz-sotto" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🔼🔽 Più o meno" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ A.Z.figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(A.miniprod(prod));
       A.sch.appendChild(conta.el); A.sch.appendChild(righe); A.sch.appendChild(banner);
       A.ST.FX.rullo(1.1); await A.dorme(1300); if (!A.vivo()) return;
       await conta.via(260); if (!A.vivo()) return;
@@ -98861,6 +98832,126 @@ window.SG_UNAPAROLA = [
     return box;
   }
   function cartellino(el, testo, cls) { return el("span", { class: "pz-tag" + (cls ? " " + cls : ""), text: testo }); }
+  // il nome e, sotto, la descrizione (nelle rivelazioni di un prodotto solo)
+  function miniprod(el, p) {
+    p = p || {}; var sotto = [p.desc, p.dove].filter(Boolean).join(" · ");
+    return el("div", { class: "pz-miniprod" }, [ figura(el, p, "e"), el("span", { class: "tx" }, [ el("span", { class: "n", text: p.nome || "" }), sotto ? el("small", { text: sotto }) : null ]) ]);
+  }
+
+  // ---------------- i riquadri dei prodotti ----------------
+  // (24 ott 2026, il proprietario: «rettangolini che prendono tutto lo schermo», «la descrizione secondo me è obbligatoria»)
+  // Ogni prodotto è un riquadro con la foto, il nome e SEMPRE la descrizione. I riquadri si dividono tutto lo spazio che
+  // resta sullo schermo, in una o due colonne; a ogni cambio di misura si sceglie la forma con la foto più grande in cui
+  // le scritte ci stanno tutte: foto sopra (g, v0, v1), foto di lato (o0, o1), foto piccola (t0, t1, t2). Mai una
+  // descrizione tagliata o nascosta. Quello che compare dopo (prezzi, segni) va messo subito nel riquadro, nascosto.
+  // prods = [{ e, f, nome, desc, dove, cls }]; opz = { cls (del contenitore), tcls (di ogni riquadro), num (1, 2, 3… in
+  // un angolo), fermo (senza l'animazione d'entrata), extra: function (p, i, riquadro) → nodo o [nodi] (sotto le scritte) }.
+  // Il contenitore ha .tessere (i riquadri, nell'ordine dei prodotti), .adatta() (da chiamare appena è nella pagina:
+  // dopo si rifà da solo quando cambia misura) e .ordina(l) (l[posto] = indice del prodotto: li sposta senza rifarli).
+  var FORME = ["g", "v0", "v1", "o0", "o1", "t0", "t1", "t2", "t3"], BONUS = { g: 16, v0: 10, v1: 4, o0: 10, o1: 4, t0: 0, t1: -6, t2: -12, t3: -30 };
+  function tessere(el, prods, opz) {
+    opz = opz || {}; prods = prods || [];
+    var base = "pz-tes" + (opz.cls ? " " + opz.cls : "") + (opz.fermo ? " fermo" : "");
+    var g = el("div", { class: base }), n = prods.length, posti = prods.map(function (p, i) { return i; }), ult = "";
+    g.tessere = prods.map(function (p, i) {
+      p = p || {};
+      var sotto = [p.desc, p.dove].filter(Boolean).join(" · "), fo = figura(el, p, "fo", 500, "fo emo"), im = fo.querySelector("img");
+      // (la foto non arriva: al suo posto l'emoji, e si rifà la misura)
+      if (im) { im.addEventListener("error", function () { setTimeout(function () { g.adatta(true); }, 0); }); im.addEventListener("load", function () { if (ult) copri(); }); }
+      var t = el("div", { class: "pz-te" + (opz.tcls ? " " + opz.tcls : "") + (p.cls ? " " + p.cls : "") }, [
+        fo,
+        el("div", { class: "tx" }, [ el("b", { text: p.nome || "" }), sotto ? el("small", { text: sotto }) : null ])
+      ]);
+      if (opz.num) t.appendChild(el("span", { class: "nb", text: String(i + 1) }));
+      var ex = opz.extra ? opz.extra(p, i, t) : null;
+      if (ex) { t._ex = el("div", { class: "ex" }, [].concat(ex)); t.appendChild(t._ex); }
+      g.appendChild(t); return t;
+    });
+    function metti(c, f) {
+      g.className = base + " " + f.charAt(0) + " " + f + " c" + c;
+      g.style.setProperty("--cols", c);
+      g.style.gridTemplateRows = "repeat(" + Math.ceil(n / c) + ",minmax(0,1fr))";
+      // (in due colonne, se sono dispari, l'ultimo prende tutta la riga e ha la foto di lato)
+      posti.forEach(function (j, pos) { g.tessere[j].classList.toggle("largo", c === 2 && n % 2 === 1 && pos === n - 1); });
+      // il cartellino (o il prezzo da giudicare) a destra solo nelle righe a tutta larghezza; se no sotto le scritte, che restano larghe
+      var aDestra = c === 1 && (f.charAt(0) === "o" || f.charAt(0) === "t");
+      g.tessere.forEach(function (t) { if (!t._ex) return; var dove = aDestra ? t : t.querySelector(".tx"); if (t._ex.parentNode !== dove) dove.appendChild(t._ex); });
+    }
+    function ciStanno() { return g.tessere.every(function (t) { return t.scrollHeight <= t.clientHeight + 1 && t.scrollWidth <= t.clientWidth + 1; }); }
+    // quanto è grande la foto (una foto 4:3 dentro lo spazio della foto), nel riquadro più sacrificato
+    function foto(f) {
+      if (f.charAt(0) === "t") return f === "t0" ? 30 : f === "t3" ? 0 : 20;
+      var m = Infinity;
+      g.tessere.forEach(function (t) {
+        var fo = t.querySelector(".fo"), w = fo ? fo.clientWidth : 0, h = fo ? fo.clientHeight : 0;
+        m = Math.min(m, w < 30 || h < 30 ? -1 : Math.sqrt(w / h > 4 / 3 ? h * h * 4 / 3 : w * w * 3 / 4));
+      });
+      return m;
+    }
+    g.adatta = function (forza) {
+      if (!g.isConnected || !n) return;
+      var W = g.clientWidth, H = g.clientHeight; if (!W || !H) return;
+      var chiave = W + "x" + H; if (chiave === ult && !forza) return;
+      // (l'emoji dei prodotti senza foto torna alla misura di partenza, se no falsa le prove)
+      g.tessere.forEach(function (t) { var fo = t.querySelector(".fo"); if (fo) fo.style.fontSize = ""; });
+      // le scritte che si possono togliere quando lo spazio non basta (data-sacr: 1 = la prima che va via), di nuovo al loro posto
+      var sch = g.closest ? g.closest(".pz-sch") : null, sacr = sch ? [].slice.call(sch.querySelectorAll("[data-sacr]")).sort(function (a, b) { return (+a.dataset.sacr || 9) - (+b.dataset.sacr || 9); }) : [];
+      sacr.forEach(function (x) { x.style.display = ""; });
+      function cerca() {
+        var best = null;
+        (n === 1 ? [1] : [2, 1]).forEach(function (c) {
+          FORME.forEach(function (f) {
+            metti(c, f); if (!ciStanno()) return;
+            var s = foto(f); if (s < 0) return;
+            s += BONUS[f] + (c === 2 && n >= 3 ? 12 : 0);
+            if (!best || s > best.s) best = { c: c, f: f, s: s };
+          });
+        });
+        return best;
+      }
+      var best = cerca(), primo = best, via = 0;
+      // (con le scritte più piccole, o senza che ci stia niente: prima via gli aiuti e chi ha finito, che sono già nel pannello)
+      while (via < sacr.length && (!best || best.f === "t2" || best.f === "t3")) { sacr[via++].style.display = "none"; best = cerca() || best; }
+      if (via && primo && best && best.f === primo.f && best.c === primo.c) { sacr.forEach(function (x) { x.style.display = ""; }); best = cerca(); }
+      // (non ci sta niente: la forma più piccola, e i riquadri crescono quanto serve; lo spazio scorre, ma niente si taglia)
+      if (!best) best = { c: 1, f: "t3", scorre: true };
+      metti(best.c, best.f); g.classList.toggle("scorre", !!best.scorre); ult = g.clientWidth + "x" + g.clientHeight;
+      // l'emoji (prodotti senza foto) grande quanto il suo posto
+      g.tessere.forEach(function (t) {
+        var fo = t.querySelector(".fo.emo"); if (!fo) return;
+        fo.style.fontSize = best.f.charAt(0) === "t" ? "" : Math.max(22, Math.min(90, fo.clientHeight * 0.72, fo.clientWidth * 0.6)) + "px";
+      });
+      copri();
+    };
+    // la foto riempie tutto il suo spazio quando ha quasi la stessa forma (si taglia appena un bordo), se no si vede intera
+    function copri() {
+      var piccola = g.classList.contains("t");
+      g.tessere.forEach(function (t) {
+        var fo = t.querySelector(".fo"), im = fo && fo.querySelector("img"); if (!fo) return;
+        var r = im && im.naturalWidth && fo.clientHeight ? (fo.clientWidth / fo.clientHeight) / (im.naturalWidth / im.naturalHeight) : 0;
+        fo.classList.toggle("copre", !piccola && r > 0.78 && r < 1.3);
+      });
+    }
+    g.ordina = function (l) {
+      if (!l || l.length !== n) return;
+      posti = l.slice();
+      posti.forEach(function (j, pos) { var t = g.tessere[j]; t.style.order = String(pos); var nb = t.querySelector(".nb"); if (nb) nb.textContent = String(pos + 1); });
+      if (ult) {
+        var c = g.classList.contains("c2") ? 2 : 1; posti.forEach(function (j, pos) { g.tessere[j].classList.toggle("largo", c === 2 && n % 2 === 1 && pos === n - 1); });
+        // (l'ultimo, largo, ora è un altro: se non ci sta più si rifà la forma; se ci sta niente cambia, niente salti)
+        if (!ciStanno()) g.adatta(true);
+      }
+    };
+    // (si rifà al fotogramma dopo, mai dentro l'avviso del browser: se no «ResizeObserver loop»)
+    if (window.ResizeObserver) {
+      var pend = false, oss = new ResizeObserver(function () {
+        if (pend) return; pend = true;
+        requestAnimationFrame(function () { pend = false; if (!g.isConnected) { oss.disconnect(); return; } g.adatta(); });
+      });
+      oss.observe(g);
+    }
+    return g;
+  }
 
   // ---------------- il sipario «Apriti, sesamo!» ----------------
   function sipario(el, dentro) {
@@ -99150,7 +99241,7 @@ window.SG_UNAPAROLA = [
       // (chi guarda soltanto: la barra in basso lascia il posto alla targhetta del core, come nella Balla)
       ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",   // (in alto i tasti tondi: il titolo resta sotto)
       // (la scritta grande in basso, «E per voi…», non copre la lista: le si lascia il suo spazio)
-      ".pz-sch.con-terzo{padding-bottom:clamp(70px,calc(var(--alt,640px) * .19),160px)}",
+      ".pz-sch.con-terzo{padding-bottom:calc(170px + env(safe-area-inset-bottom))}",   // (la scritta in basso dello studio sta a 104 px dal fondo ed è alta circa 58: i riquadri si fermano sopra)
       ".pz-testa{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;margin:0 40px;font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#ffe066}",
       ".pz-testa .x2{background:#ff3ea5;color:#fff;border-radius:99px;padding:2px 9px;letter-spacing:.04em;animation:pzPulsa 1s ease-in-out infinite}",
       ".pz-titolo{font-size:22px;font-weight:900;color:#fff;line-height:1.15}",
@@ -99169,7 +99260,7 @@ window.SG_UNAPAROLA = [
       ".pz-scheda .pz-tag{margin-top:4px}",
       ".pz-scheda.piccola{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:2px 8px;padding:6px 10px;border-radius:14px;width:min(360px,96%)}",
       ".pz-scheda.piccola .pz-emo{font-size:30px;width:auto;height:auto;background:none}.pz-scheda.piccola .pz-nome{font-size:16px}.pz-scheda.piccola .pz-cat{display:none}",
-      ".pz-scheda.piccola .pz-desc{display:none}.pz-scheda.piccola .pz-dove{width:100%;font-size:11.5px}",
+      ".pz-scheda.piccola .pz-desc{width:100%;font-size:12px;line-height:1.22}.pz-scheda.piccola .pz-dove{width:100%;font-size:11.5px}",
       ".pz-scheda.media .pz-emo{font-size:40px}.pz-scheda.media .pz-desc{font-size:12.5px}.pz-scheda.media .pz-nome{font-size:17px}",
       // la foto vera: nella scheda alta quanto lo schermo permette, nelle righe grande come l'emoji che c'era (1,3 em)
       ".pz-foto{height:clamp(62px,calc(var(--alt,640px) * .15),140px);max-width:100%;display:flex;align-items:center;justify-content:center}",
@@ -99178,8 +99269,8 @@ window.SG_UNAPAROLA = [
       "@media (max-height:700px){.st-vista.pz-con-pan .pz-sip .pz-foto{height:66px}}",
       // (prima di offrire il pannello è giù: la foto del prodotto più grande, sui telefoni alti fino a 230 px)
       ".st-vista:not(.pz-con-pan) .pz-sip .pz-foto{height:clamp(62px,calc(var(--alt,640px) * .26),230px)}",
-      ".pz-conf:not(.pz-foto){display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;flex:0 0 auto;vertical-align:middle}",
-      ".pz-conf:not(.pz-foto) img{width:100%;height:100%;object-fit:cover;border-radius:22%;background:#fff}",
+      ".pz-conf:not(.pz-foto):not(.fo){display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;flex:0 0 auto;vertical-align:middle}",
+      ".pz-conf:not(.pz-foto):not(.fo) img{width:100%;height:100%;object-fit:cover;border-radius:22%;background:#fff}",
       // il cartellino del prezzo
       ".pz-tag{position:relative;display:inline-flex;align-items:center;gap:6px;padding:4px 12px 4px 20px;border-radius:5px 14px 14px 5px;background:linear-gradient(#ffe98a,#fcc419);color:#3b2a00;font-weight:900;font-size:17px;box-shadow:0 3px 10px rgba(0,0,0,.35);white-space:nowrap}",
       ".pz-tag:before{content:'';position:absolute;left:7px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#2a1d6e}",
@@ -99270,7 +99361,8 @@ window.SG_UNAPAROLA = [
       ".pz-banner{font-size:24px;font-weight:900;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4);animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both}",
       ".pz-banner.oro{color:#ffe066;font-size:30px}.pz-banner.no{color:#ffb3bb}",
       ".pz-miniprod{display:flex;align-items:center;justify-content:center;gap:8px;max-width:100%;font-weight:900;font-size:16px;color:#fff}",
-      ".pz-miniprod .e{font-size:28px}.pz-miniprod .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".pz-miniprod .e{font-size:28px}.pz-miniprod .tx{display:flex;flex-direction:column;min-width:0;text-align:left}.pz-miniprod .n{overflow-wrap:anywhere}",
+      ".pz-miniprod .tx small{font-size:12px;font-weight:700;color:#cdd6ff;line-height:1.2}",
       ".pz-curiosita{max-width:420px;font-size:13px;font-weight:700;color:#3b2a00;background:#fff3bf;border-radius:12px;padding:5px 10px;line-height:1.3;animation:pzSu .4s both}",
       ".pz-anno{font-size:11px;font-weight:700;color:#9aa5d8;letter-spacing:.04em}",
       // la classifica (riepilogo) e il carrello
@@ -99330,27 +99422,49 @@ window.SG_UNAPAROLA = [
       ".pz-rg .val{font-weight:900;font-size:16px;color:#ffe066;white-space:nowrap}.pz-rg.fuori{background:rgba(255,93,108,.2)}.pz-rg.fuori .val{color:#ffb3bb}",
       ".pz-rg.cento{background:rgba(255,212,59,.3);box-shadow:0 0 0 2px #ffd43b}.pz-rg.vince{box-shadow:0 0 0 2px #37d47e;background:rgba(55,212,126,.25)}",
       ".pz-big100{font-size:44px;font-weight:900;color:#ff3ea5;text-shadow:0 0 18px rgba(255,62,165,.7),0 3px 0 #000;animation:pzPulsa .45s ease-in-out 3}",
-      // la vetrina
-      ".pz-vet{display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px}",
-      ".pz-vp{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:14px;background:linear-gradient(#ffffff,#f3efff);color:#1d1b3a;text-align:left;animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both}",
-      ".pz-vp .e{font-size:30px;flex:0 0 auto}.pz-vp .t{flex:1;min-width:0;display:flex;flex-direction:column}.pz-vp .t b{font-size:15px;line-height:1.15}.pz-vp .t small{font-size:11.5px;color:#4c4a66;font-weight:600;line-height:1.2}",
-      ".pz-vp .pz-tag{font-size:14px;padding:3px 9px 3px 16px;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pz-vp .pz-tag.su{opacity:1;transform:none}",
-      ".pz-vet.fitta .pz-vp{padding:3px 8px}.pz-vet.fitta .pz-vp .e{font-size:22px}.pz-vet.fitta .pz-vp .t small{display:none}",
-      ".pz-vtit{font-size:22px;font-weight:900;color:#ffe066}",
+      // i riquadri dei prodotti (tessere): la misura delle scritte la sceglie la forma (g, v0… t2)
+      ".pz-tes{flex:1 1 0;min-height:0;width:100%;max-width:480px;display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));gap:6px;--fn:15px;--fd:12px}",
+      ".pz-te{position:relative;min-width:0;min-height:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 7px;border-radius:14px;background:linear-gradient(#ffffff,#f3efff);color:#1d1b3a;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 -3px 0 rgba(90,74,154,.16);animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both;transition:background .2s,box-shadow .2s}",
+      ".pz-tes.fermo .pz-te{animation:none}",
+      ".pz-te .fo{flex:1 1 0;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;line-height:1;font-size:40px}",
+      ".pz-te .fo img{display:block;max-width:100%;max-height:100%;border-radius:9px;box-shadow:0 2px 8px rgba(0,0,0,.22);background:#fff}.pz-te .fo.copre img{width:100%;height:100%;object-fit:cover}",
+      ".pz-te .tx{flex:0 0 auto;min-width:0;max-width:100%;display:flex;flex-direction:column;gap:1px;overflow-wrap:break-word;hyphens:auto}",
+      ".pz-te .tx b{font-size:var(--fn);font-weight:900;line-height:1.15}.pz-te .tx small{font-size:var(--fd);font-weight:600;color:#4c4a66;line-height:1.22}",
+      ".pz-te .ex{flex:0 0 auto;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;max-width:100%}",
+      ".pz-te .nb{position:absolute;left:4px;top:4px;z-index:1;min-width:20px;height:20px;padding:0 4px;box-sizing:border-box;border-radius:99px;background:#5a4a9a;color:#fff;font-size:12px;font-weight:900;line-height:20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.3)}",
+      ".pz-te.sel{background:linear-gradient(#ffe98a,#fcc419);box-shadow:0 0 0 3px #fff,0 4px 14px rgba(252,196,25,.5)}",
+      ".pz-tes.g{--fn:18px;--fd:14px}.pz-tes.v0,.pz-tes.o0{--fn:15.5px;--fd:12.5px}.pz-tes.v1,.pz-tes.o1,.pz-tes.t0{--fn:13.5px;--fd:11.5px}.pz-tes.t1{--fn:12.5px;--fd:10.5px}.pz-tes.t2{--fn:11.5px;--fd:10px;gap:4px}",
+      // (foto di lato: nelle forme «o» e nell'ultimo riquadro largo)
+      ".pz-tes.c2 .pz-te.largo{grid-column:1/-1}.pz-tes.o .pz-te,.pz-te.largo{flex-direction:row;text-align:left;gap:8px;padding:5px 8px 5px 5px}",
+      ".pz-tes.o .pz-te .fo,.pz-te.largo .fo{flex:0 0 auto;width:auto;height:100%;aspect-ratio:4/3;max-width:42%}.pz-tes.o .pz-te .tx,.pz-te.largo .tx{flex:1 1 0}",
+      // (foto piccola: nelle forme «t», il numero prima della foto)
+      ".pz-tes.t .pz-te{flex-direction:row;text-align:left;gap:6px;padding:4px 7px 4px 5px}.pz-tes.t .pz-te .tx{flex:1 1 0}",
+      ".pz-tes.t .pz-te .fo{flex:0 0 auto;width:40px;height:40px;aspect-ratio:auto;max-width:none;font-size:30px}.pz-tes.t .pz-te .fo img{width:100%;height:100%;object-fit:cover;border-radius:22%}",
+      ".pz-tes.t .pz-te .nb{position:static;flex:0 0 auto;order:-1}",
+      ".pz-tes.t1 .pz-te .fo{width:32px;height:32px;font-size:25px}.pz-tes.t2 .pz-te{padding:3px 6px 3px 4px}.pz-tes.t2 .pz-te .fo{width:24px;height:24px;font-size:19px}",
+      ".pz-tes.t3{--fn:11px;--fd:10px;gap:3px}.pz-tes.t3 .pz-te{padding:2px 6px}.pz-tes.t3 .pz-te .fo{display:none}",
+      // (il cartellino sotto le scritte: nelle forme con la foto di lato si allinea a sinistra)
+      ".pz-te .tx .ex{margin-top:3px}.pz-tes.o .tx .ex,.pz-tes.t .tx .ex,.pz-te.largo .tx .ex{justify-content:flex-start}",
+      // (l'ultima rete: niente ci sta neanche piccolo → i riquadri crescono e lo spazio scorre)
+      ".pz-tes.scorre{grid-template-rows:none!important;grid-auto-rows:auto;overflow-y:auto;align-content:start}.pz-tes.scorre .pz-te{overflow:visible}",
+      // la vetrina (il pacco della misteriosa è un riquadro anche lui)
+      ".pz-te .pz-tag{font-size:14px;padding:3px 9px 3px 16px;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pz-te .pz-tag.su{opacity:1;transform:none}",
+      ".pz-te.mist{background:rgba(255,62,165,.14);border:2px dashed #ff9bd2;box-shadow:none;color:#ffd1ea}.pz-te.mist .tx small{color:#e9c7ff;font-weight:700}",
+      ".pz-vtit{font-size:22px;font-weight:900;color:#ffe066;padding:0 40px;line-height:1.15}",
       // la Vetrina misteriosa: il pacco, il titolo rosa della misteriosa, le due vetrine in breve nella rivelazione
-      ".pz-vbox{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:420px}.pz-vtit.mist{color:#ff9bd2}",
+      ".pz-vbox{flex:1 1 0;min-height:0;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:480px}.pz-vtit.mist{color:#ff9bd2}",
       ".pz-mist{display:flex;align-items:center;gap:10px;width:100%;max-width:420px;padding:6px 12px;border-radius:14px;border:2px dashed #ff9bd2;background:rgba(255,62,165,.14);text-align:left;animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both}",
       ".pz-mist .i{font-size:30px;flex:0 0 auto}.pz-mist b{display:block;font-size:15px;color:#ffd1ea}.pz-mist small{font-size:11.5px;font-weight:700;color:#e9c7ff}",
       ".pz-due{display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px}",
       ".pz-vt{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:14px;background:rgba(255,255,255,.1);animation:pzPop .4s both}.pz-vt .i{font-size:22px}.pz-vt .t{flex:1;min-width:0;text-align:left;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pz-vt b{font-size:17px;color:#ffe066;white-space:nowrap}",
       ".pz-sc.mist{background:linear-gradient(#ffe3f3,#ffb8de)}.pz-sc.mist.sel{background:linear-gradient(#ffe98a,#fcc419)}",
       ".pz-tot{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:900;color:#fff}",
-      ".pz-indizio{font-size:14px;font-weight:800;color:#3b2a00;background:#ffe066;border-radius:12px;padding:5px 10px;line-height:1.3}",
+      ".pz-indizio{font-size:14px;font-weight:800;color:#3b2a00;background:#ffe066;border-radius:12px;padding:5px 10px;line-height:1.3}.pz-indizio small{display:block;font-size:12px;font-weight:600}",
       ".pz-tutto{font-size:32px;font-weight:900;color:#ffe066;text-shadow:0 0 22px rgba(255,212,59,.8),0 3px 0 #a85c00;animation:pzPulsa .5s ease-in-out 4}",
       // ⏩ Avanti
       ".pz-avanti{display:flex;align-items:center;justify-content:center;gap:10px}.pz-avanti .quanti{font-size:14px;font-weight:800;background:rgba(255,255,255,.22);border-radius:99px;padding:2px 10px}",
       ".pz-attesa{margin:0;text-align:center;font-weight:800;color:#cdd6ff}",
-      "@media (prefers-reduced-motion:reduce){.pz-och,.pz-cl,.pz-car,.pz-vp,.pz-gioco,.pz-intro,.pz-banner{animation:none}}"
+      "@media (prefers-reduced-motion:reduce){.pz-och,.pz-cl,.pz-car,.pz-te,.pz-gioco,.pz-intro,.pz-banner{animation:none}}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -99359,7 +99473,7 @@ window.SG_UNAPAROLA = [
     fmtN: fmtN, fmtE: fmtE, tondo2: tondo2, passo: passo, margine: margine, arrotonda: arrotonda, conCent: conCent,
     CAT: CAT, ORDINE_CAT: ORDINE_CAT, FX: FX, vibra: vibra,
     scheda: scheda, cartellino: cartellino, sipario: sipario, contachilometri: contachilometri, durataConta: durataConta,
-    urlFoto: urlFoto, precarica: precarica, figura: figura,
+    urlFoto: urlFoto, precarica: precarica, figura: figura, miniprod: miniprod, tessere: tessere,
     barraTempo: barraTempo, pannello: pannello, tastierino: tastierino,
     SPICCHI: SPICCHI, ruota: ruota, coloreSpicchio: coloreSpicchio,
     stile: stile
@@ -100123,7 +100237,7 @@ window.SG_UNAPAROLA = [
     function mandaIndizio(id) {
       var I = indizioDi(id); if (!I || I.i == null || !H.vet) return;
       var x = vetDi(id).pezzi[I.i]; if (!x) return;
-      privato(id, { t: "priv", k: "indizio", i: I.i, e: x.e, nome: x.nome, prezzo: x.prezzo, kk: H.k });
+      privato(id, { t: "priv", k: "indizio", i: I.i, e: x.e, nome: x.nome, desc: [x.desc, x.dove].filter(Boolean).join(" · "), prezzo: x.prezzo, kk: H.k });
     }
     function offVetrina(id, v) {
       var p = pById(id);
@@ -100445,11 +100559,11 @@ window.SG_UNAPAROLA = [
   function nomi(lista) { return lista.length < 2 ? lista.join("") : lista.slice(0, -1).join(", ") + " e " + lista[lista.length - 1]; }
 
   // le foto si scaricano appena il prodotto è nella foto della partita (mentre il sipario è ancora chiuso)
-  // (grande per la scheda, piccola per le righe, la rivelazione e il carrello: sono due misure diverse)
+  // (grande per la scheda e i riquadri, piccola per le righe e il carrello: sono due misure diverse)
   function precaricaFoto(vm) {
     if (vm.prod) { Z().precarica(vm.prod, 500); Z().precarica(vm.prod, 330); }
-    if (vm.vet && vm.vet.pezzi) vm.vet.pezzi.forEach(function (x) { Z().precarica(x, 330); });
-    if (vm.vet) (vm.vet.bFoto || (vm.vet.b || {}).pezzi || []).forEach(function (x) { Z().precarica(x, 330); });
+    if (vm.vet && vm.vet.pezzi) vm.vet.pezzi.forEach(function (x) { Z().precarica(x, 500); Z().precarica(x, 330); });
+    if (vm.vet) (vm.vet.bFoto || (vm.vet.b || {}).pezzi || []).forEach(function (x) { Z().precarica(x, 500); Z().precarica(x, 330); });
     var pp = vm.premio && vm.premio.pub && vm.premio.pub.prod;
     if (pp) (Array.isArray(pp) ? pp : [pp]).forEach(function (x) { Z().precarica(x, 500); Z().precarica(x, 330); });
   }
@@ -100610,7 +100724,7 @@ window.SG_UNAPAROLA = [
     if (testo == null) testo = vm.formato === "solo" ? "🏷️ Oggetto " + vm.iOff + " di " + vm.nOff : "🏷️ L'Offerta · " + vm.iOff + " di " + vm.nOff;
     return el("div", { class: "pz-testa" }, [ el("span", { text: testo }), vm.doppio && vm.fase === "offerta" ? el("span", { class: "x2", text: "🔥 ×2" }) : null ]);
   }
-  function miniProd(el, p) { return el("div", { class: "pz-miniprod" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome }) ]); }
+  function miniProd(el, p) { return Z().miniprod(el, p); }
   function testaPan(R, chi, testo, tb) {
     var el = R.t.el;
     return el("div", { class: "pz-pan-testa" }, [ chi ? fac(el, chi) : null, el("span", { class: "tx", text: testo }), tb ? tb.el : null ]);
@@ -100948,6 +101062,7 @@ window.SG_UNAPAROLA = [
       invia: function (m) { m = m || {}; if (m.ms == null) m.ms = Date.now() - t0; R.cb.mossa({ t: "premio", k: k, m: m }, o.io); },
       dorme: ST.dorme, vivo: function () { return vivoK(R, k); },
       fmtE: Z().fmtE, fmtN: Z().fmtN, FX: Z().FX, vibra: Z().vibra, scheda: function (p, opz) { return Z().scheda(R.t.el, p, opz); },
+      tessere: function (prods, opz) { return Z().tessere(R.t.el, prods, opz); }, miniprod: function (p) { return Z().miniprod(R.t.el, p); },
       contachilometri: function (v, opz) { return Z().contachilometri(R.t.el, v, opz); },
       tastierino: function (opz) { return Z().tastierino(R.t.el, opz); }
     };
@@ -101309,20 +101424,25 @@ window.SG_UNAPAROLA = [
   }
 
   // ---------------- LA VETRINA FINALE ----------------
-  function pezzoVet(el, x, prezzo) {
-    var tag = Z().cartellino(el, prezzo != null ? E(prezzo) : "? €");
-    var n = el("div", { class: "pz-vp" }, [ Z().figura(el, x, "e"), el("div", { class: "t" }, [ el("b", { text: x.nome }), x.desc ? el("small", { text: x.desc + (x.dove ? " · " + x.dove : "") }) : null ]), tag ]);
-    n._tag = tag; return n;
+  // i pezzi della vetrina in riquadri grandi, sempre con la descrizione (24 ott 2026, il proprietario: «la descrizione
+  // secondo me è obbligatoria», es. l'ombrellone a Rimini è per una settimana intera). prezzi: i cartellini, nascosti
+  // finché non si scoprono (riquadro._tag); pacco: [titolo, sotto] = un riquadro in più per la vetrina misteriosa
+  function vetrinaTes(el, X, prezzi, pacco, fermo) {
+    var lista = X.pezzi.concat(pacco ? [ { e: "🎁", nome: pacco[0], desc: pacco[1], cls: "mist" } ] : []);
+    return Z().tessere(el, lista, { cls: "pz-vet", fermo: !!fermo, extra: prezzi ? function (p, i, t) {
+      if (i >= X.pezzi.length) return null;
+      t._tag = Z().cartellino(el, prezzi[i] != null ? E(prezzi[i]) : "? €"); return t._tag;
+    } : null });
   }
   async function fVetMostra(R) {
     var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k; if (!V) return;
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
     await ST.suSchermo(S, 700); if (!vivoK(R, k)) return;
-    // (tutti i pezzi, e il pacco della misteriosa, già al loro posto ma nascosti: così riempi sa quanto spazio c'è)
-    var lista = el("div", { class: "pz-vet" }), nodi = V.pezzi.map(function (x) { return lista.appendChild(nascondi(pezzoVet(el, x, null))); });
-    var pacco = V.mist ? nascondi(el("div", { class: "pz-mist" }, [ el("span", { class: "i", text: "🎁" }), el("div", {}, [ el("b", { text: "…e c'è una vetrina misteriosa!" }), el("small", { text: "Nessuno sa cosa c'è dentro" }) ]) ])) : null;
-    schermo(R, [ el("div", { class: "pz-testa", text: "🛍️ La Vetrina finale" }), el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista, pacco ], "con-terzo");
-    riempi(R, lista);
+    // (tutti i pezzi, e il pacco della misteriosa, già al loro posto ma nascosti: così i riquadri sanno quanto spazio c'è)
+    var lista = vetrinaTes(el, V, null, V.mist ? ["…e c'è una vetrina misteriosa!", "Nessuno sa cosa c'è dentro"] : null), nodi = lista.tessere.map(nascondi);
+    var pacco = V.mist ? nodi.pop() : null;
+    schermo(R, [ el("div", { class: "pz-testa", text: "🛍️ La Vetrina finale" }), el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista ], "con-terzo");
+    lista.adatta();
     ST.terzo(S, null, "E per voi…", V.titolo, "🛍️"); Z().FX.tada();
     await ST.dorme(900);
     for (var i = 0; i < V.pezzi.length; i++) {
@@ -101344,12 +101464,10 @@ window.SG_UNAPAROLA = [
   async function fVetScegli(R) {
     var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k; if (!V) return;
     await ST.suSchermo(S, 300); if (!vivoK(R, k)) return;
-    var lista = el("div", { class: "pz-vet" }), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : "") });
-    V.pezzi.forEach(function (x) { var n = pezzoVet(el, x, null); n.style.animation = "none"; lista.appendChild(n); });
-    var mist = el("div", { class: "pz-mist" }, [ el("span", { class: "i", text: "🎁" }), el("div", {}, [ el("b", { text: "La vetrina misteriosa" }), el("small", { text: "La scopre solo chi la prende" }) ]) ]);
-    schermo(R, [ el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista, mist, el("div", { class: "pz-sotto", text: "Tieni questa o prendi la misteriosa? Si sceglie in segreto" }), fatti ]);
+    var lista = vetrinaTes(el, V, null, ["La vetrina misteriosa", "La scopre solo chi la prende"], true), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : ""), "data-sacr": "2" });
+    schermo(R, [ el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista, el("div", { class: "pz-sotto", text: "Tieni questa o prendi la misteriosa? Si sceglie in segreto", "data-sacr": "1" }), fatti ]);
     R.ui.vetFatti = fatti; aggiornaVet(R);
-    riempi(R, lista);
+    lista.adatta();
     var me = mio(R); if (!me) return attesa(R, guardaTesto(R));
     var gia = R.mie["s" + k];
     if (gia != null || (V.sFatti || []).indexOf(me.id) >= 0) return attesa(R, testoScelta(gia));
@@ -101378,20 +101496,20 @@ window.SG_UNAPAROLA = [
   }
   // la vetrina sul maxischermo: "a" quella vista da tutti, "b" la misteriosa (nuova: i pezzi della misteriosa saltano fuori uno dopo l'altro)
   function mostraVetrina(R, box, w, nuova) {
-    var el = R.t.el, V = R.vm.vet, X = w === "b" && V.b ? V.b : V, lista = el("div", { class: "pz-vet" });
+    var el = R.t.el, V = R.vm.vet, X = w === "b" && V.b ? V.b : V, entra = X !== V && nuova, lista = vetrinaTes(el, X, null, null, !entra);
     if (!box || !box.isConnected) return;
     ST.vuota(box);
     box.appendChild(el("div", { class: "pz-vtit" + (X !== V ? " mist" : ""), text: (X !== V ? "🎁 " : "") + X.e + " " + X.titolo }));
     box.appendChild(lista);
-    X.pezzi.forEach(function (x, i) { var n = pezzoVet(el, x, null); if (X !== V && nuova) n.style.animationDelay = (0.3 + i * 0.3) + "s"; else n.style.animation = "none"; lista.appendChild(n); });
-    riempi(R, lista);
+    if (entra) lista.tessere.forEach(function (t, i) { t.style.animationDelay = (0.3 + i * 0.3) + "s"; });
+    lista.adatta();
     if (X !== V && nuova) { Z().FX.tada(); fumetto(R.S, "Ecco la misteriosa! 🎁"); }
   }
   async function fVetOffri(R) {
     var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k; if (!V) return;
     await ST.suSchermo(S, 300); if (!vivoK(R, k)) return;
-    var box = el("div", { class: "pz-vbox" }), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : "") });
-    schermo(R, [ box, el("div", { class: "pz-sotto", text: V.b ? "Quanto vale TUTTA la tua vetrina? Offerte segrete" : "Quanto vale TUTTA la vetrina? Offerte segrete" }), fatti ]);
+    var box = el("div", { class: "pz-vbox" }), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : ""), "data-sacr": "2" });
+    schermo(R, [ box, el("div", { class: "pz-sotto", text: V.b ? "Quanto vale TUTTA la tua vetrina? Offerte segrete" : "Quanto vale TUTTA la vetrina? Offerte segrete", "data-sacr": "1" }), fatti ]);
     R.ui.vetFatti = fatti; R.ui.vetBox = box; aggiornaVet(R);
     if (R.cb.locale === "telefono") { mostraVetrina(R, box, "a", false); return turniVetrina(R, k); }
     var me = mio(R);
@@ -101405,7 +101523,7 @@ window.SG_UNAPAROLA = [
   }
   function rigaIndizio(R, chiId) {
     var I = (R.indizi || {})[chiId]; if (!I || I.kk == null || I.kk !== R.vm.k) return null;
-    return R.t.el("div", { class: "pz-indizio", text: "🔎 Il tuo indizio (hai vinto la Ruota): " + (I.e || "") + " " + I.nome + " costa " + E(I.prezzo) });
+    return R.t.el("div", { class: "pz-indizio" }, [ R.t.el("span", { text: "🔎 Il tuo indizio (hai vinto la Ruota): " + (I.e || "") + " " + I.nome + " costa " + E(I.prezzo) }), I.desc ? R.t.el("small", { text: I.desc }) : null ]);
   }
   function apriVetrina(R, chi, fine, allaFine) {
     var k = R.vm.k;
@@ -101482,13 +101600,15 @@ window.SG_UNAPAROLA = [
     // una vetrina: i suoi pezzi, i prezzi che saltano fuori uno alla volta e il totale che gira (la misteriosa: prima i pezzi)
     async function svela(X, prezzi, tot, mist) {
       ST.vuota(box);
-      var lista = el("div", { class: "pz-vet" }), nodi = X.pezzi.map(function (x, i) { return lista.appendChild(mist ? nascondi(pezzoVet(el, x, prezzi[i])) : pezzoVet(el, x, prezzi[i])); }), conta = Z().contachilometri(el, tot, {});
+      var lista = vetrinaTes(el, X, prezzi, null, !mist), nodi = lista.tessere, conta = Z().contachilometri(el, tot, {});
+      if (mist) nodi.forEach(nascondi);
+      box.style.flex = "";
       box.appendChild(el("div", { class: "pz-vtit" + (mist ? " mist" : ""), text: (mist ? "🎁 " : "") + X.e + " " + X.titolo }));
       box.appendChild(lista);
       box.appendChild(el("div", { class: "pz-tot" }, [ el("span", { text: "Totale" }), conta.el ]));
-      riempi(R, lista);
+      lista.adatta();
       if (mist) { for (var j = 0; j < nodi.length; j++) { scopri(nodi[j]); Z().FX.toc(500 + j * 60); await ST.dorme(RVET.pezzoB); if (!vivoK(R, k)) return false; } }
-      else { nodi.forEach(function (n) { n.style.animation = "none"; }); ST.FX.rullo(1.2); await ST.dorme(RV.rullo); if (!vivoK(R, k)) return false; }
+      else { ST.FX.rullo(1.2); await ST.dorme(RV.rullo); if (!vivoK(R, k)) return false; }
       for (var i = 0; i < nodi.length; i++) { nodi[i]._tag.classList.add("su"); Z().FX.toc(600 + i * 80); await ST.dorme(RVET.prezzo); if (!vivoK(R, k)) return false; }
       await conta.via(RVET.cifra); if (!vivoK(R, k)) return false;
       ST.pubblico(S, "piano"); await ST.dorme(400);
@@ -101502,7 +101622,7 @@ window.SG_UNAPAROLA = [
       if (!await svela(B, e.prezziB, e.totB, true)) return;
       // tutte e due scelte: le due vetrine in breve; nelle offerte l'emoji della prima = chi l'ha tenuta, 🎁 = la misteriosa
       if (due) {
-        ST.vuota(box);
+        ST.vuota(box); box.style.flex = "0 0 auto";
         box.appendChild(el("div", { class: "pz-due" }, [ rigaTotVet(el, V.e, V.titolo, e.prezzo), rigaTotVet(el, "🎁", B.titolo, e.totB) ]));
         sotto(); riempi(R);
         await ST.dorme(RVET.riass); if (!vivoK(R, k)) return;
