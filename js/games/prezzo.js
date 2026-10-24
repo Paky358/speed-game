@@ -755,7 +755,7 @@
     function mandaIndizio(id) {
       var I = indizioDi(id); if (!I || I.i == null || !H.vet) return;
       var x = vetDi(id).pezzi[I.i]; if (!x) return;
-      privato(id, { t: "priv", k: "indizio", i: I.i, e: x.e, nome: x.nome, prezzo: x.prezzo, kk: H.k });
+      privato(id, { t: "priv", k: "indizio", i: I.i, e: x.e, nome: x.nome, desc: [x.desc, x.dove].filter(Boolean).join(" · "), prezzo: x.prezzo, kk: H.k });
     }
     function offVetrina(id, v) {
       var p = pById(id);
@@ -1077,11 +1077,11 @@
   function nomi(lista) { return lista.length < 2 ? lista.join("") : lista.slice(0, -1).join(", ") + " e " + lista[lista.length - 1]; }
 
   // le foto si scaricano appena il prodotto è nella foto della partita (mentre il sipario è ancora chiuso)
-  // (grande per la scheda, piccola per le righe, la rivelazione e il carrello: sono due misure diverse)
+  // (grande per la scheda e i riquadri, piccola per le righe e il carrello: sono due misure diverse)
   function precaricaFoto(vm) {
     if (vm.prod) { Z().precarica(vm.prod, 500); Z().precarica(vm.prod, 330); }
-    if (vm.vet && vm.vet.pezzi) vm.vet.pezzi.forEach(function (x) { Z().precarica(x, 330); });
-    if (vm.vet) (vm.vet.bFoto || (vm.vet.b || {}).pezzi || []).forEach(function (x) { Z().precarica(x, 330); });
+    if (vm.vet && vm.vet.pezzi) vm.vet.pezzi.forEach(function (x) { Z().precarica(x, 500); Z().precarica(x, 330); });
+    if (vm.vet) (vm.vet.bFoto || (vm.vet.b || {}).pezzi || []).forEach(function (x) { Z().precarica(x, 500); Z().precarica(x, 330); });
     var pp = vm.premio && vm.premio.pub && vm.premio.pub.prod;
     if (pp) (Array.isArray(pp) ? pp : [pp]).forEach(function (x) { Z().precarica(x, 500); Z().precarica(x, 330); });
   }
@@ -1242,7 +1242,7 @@
     if (testo == null) testo = vm.formato === "solo" ? "🏷️ Oggetto " + vm.iOff + " di " + vm.nOff : "🏷️ L'Offerta · " + vm.iOff + " di " + vm.nOff;
     return el("div", { class: "pz-testa" }, [ el("span", { text: testo }), vm.doppio && vm.fase === "offerta" ? el("span", { class: "x2", text: "🔥 ×2" }) : null ]);
   }
-  function miniProd(el, p) { return el("div", { class: "pz-miniprod" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome }) ]); }
+  function miniProd(el, p) { return Z().miniprod(el, p); }
   function testaPan(R, chi, testo, tb) {
     var el = R.t.el;
     return el("div", { class: "pz-pan-testa" }, [ chi ? fac(el, chi) : null, el("span", { class: "tx", text: testo }), tb ? tb.el : null ]);
@@ -1580,6 +1580,7 @@
       invia: function (m) { m = m || {}; if (m.ms == null) m.ms = Date.now() - t0; R.cb.mossa({ t: "premio", k: k, m: m }, o.io); },
       dorme: ST.dorme, vivo: function () { return vivoK(R, k); },
       fmtE: Z().fmtE, fmtN: Z().fmtN, FX: Z().FX, vibra: Z().vibra, scheda: function (p, opz) { return Z().scheda(R.t.el, p, opz); },
+      tessere: function (prods, opz) { return Z().tessere(R.t.el, prods, opz); }, miniprod: function (p) { return Z().miniprod(R.t.el, p); },
       contachilometri: function (v, opz) { return Z().contachilometri(R.t.el, v, opz); },
       tastierino: function (opz) { return Z().tastierino(R.t.el, opz); }
     };
@@ -1941,20 +1942,25 @@
   }
 
   // ---------------- LA VETRINA FINALE ----------------
-  function pezzoVet(el, x, prezzo) {
-    var tag = Z().cartellino(el, prezzo != null ? E(prezzo) : "? €");
-    var n = el("div", { class: "pz-vp" }, [ Z().figura(el, x, "e"), el("div", { class: "t" }, [ el("b", { text: x.nome }), x.desc ? el("small", { text: x.desc + (x.dove ? " · " + x.dove : "") }) : null ]), tag ]);
-    n._tag = tag; return n;
+  // i pezzi della vetrina in riquadri grandi, sempre con la descrizione (24 ott 2026, il proprietario: «la descrizione
+  // secondo me è obbligatoria», es. l'ombrellone a Rimini è per una settimana intera). prezzi: i cartellini, nascosti
+  // finché non si scoprono (riquadro._tag); pacco: [titolo, sotto] = un riquadro in più per la vetrina misteriosa
+  function vetrinaTes(el, X, prezzi, pacco, fermo) {
+    var lista = X.pezzi.concat(pacco ? [ { e: "🎁", nome: pacco[0], desc: pacco[1], cls: "mist" } ] : []);
+    return Z().tessere(el, lista, { cls: "pz-vet", fermo: !!fermo, extra: prezzi ? function (p, i, t) {
+      if (i >= X.pezzi.length) return null;
+      t._tag = Z().cartellino(el, prezzi[i] != null ? E(prezzi[i]) : "? €"); return t._tag;
+    } : null });
   }
   async function fVetMostra(R) {
     var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k; if (!V) return;
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
     await ST.suSchermo(S, 700); if (!vivoK(R, k)) return;
-    // (tutti i pezzi, e il pacco della misteriosa, già al loro posto ma nascosti: così riempi sa quanto spazio c'è)
-    var lista = el("div", { class: "pz-vet" }), nodi = V.pezzi.map(function (x) { return lista.appendChild(nascondi(pezzoVet(el, x, null))); });
-    var pacco = V.mist ? nascondi(el("div", { class: "pz-mist" }, [ el("span", { class: "i", text: "🎁" }), el("div", {}, [ el("b", { text: "…e c'è una vetrina misteriosa!" }), el("small", { text: "Nessuno sa cosa c'è dentro" }) ]) ])) : null;
-    schermo(R, [ el("div", { class: "pz-testa", text: "🛍️ La Vetrina finale" }), el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista, pacco ], "con-terzo");
-    riempi(R, lista);
+    // (tutti i pezzi, e il pacco della misteriosa, già al loro posto ma nascosti: così i riquadri sanno quanto spazio c'è)
+    var lista = vetrinaTes(el, V, null, V.mist ? ["…e c'è una vetrina misteriosa!", "Nessuno sa cosa c'è dentro"] : null), nodi = lista.tessere.map(nascondi);
+    var pacco = V.mist ? nodi.pop() : null;
+    schermo(R, [ el("div", { class: "pz-testa", text: "🛍️ La Vetrina finale" }), el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista ], "con-terzo");
+    lista.adatta();
     ST.terzo(S, null, "E per voi…", V.titolo, "🛍️"); Z().FX.tada();
     await ST.dorme(900);
     for (var i = 0; i < V.pezzi.length; i++) {
@@ -1976,12 +1982,10 @@
   async function fVetScegli(R) {
     var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k; if (!V) return;
     await ST.suSchermo(S, 300); if (!vivoK(R, k)) return;
-    var lista = el("div", { class: "pz-vet" }), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : "") });
-    V.pezzi.forEach(function (x) { var n = pezzoVet(el, x, null); n.style.animation = "none"; lista.appendChild(n); });
-    var mist = el("div", { class: "pz-mist" }, [ el("span", { class: "i", text: "🎁" }), el("div", {}, [ el("b", { text: "La vetrina misteriosa" }), el("small", { text: "La scopre solo chi la prende" }) ]) ]);
-    schermo(R, [ el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista, mist, el("div", { class: "pz-sotto", text: "Tieni questa o prendi la misteriosa? Si sceglie in segreto" }), fatti ]);
+    var lista = vetrinaTes(el, V, null, ["La vetrina misteriosa", "La scopre solo chi la prende"], true), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : ""), "data-sacr": "2" });
+    schermo(R, [ el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista, el("div", { class: "pz-sotto", text: "Tieni questa o prendi la misteriosa? Si sceglie in segreto", "data-sacr": "1" }), fatti ]);
     R.ui.vetFatti = fatti; aggiornaVet(R);
-    riempi(R, lista);
+    lista.adatta();
     var me = mio(R); if (!me) return attesa(R, guardaTesto(R));
     var gia = R.mie["s" + k];
     if (gia != null || (V.sFatti || []).indexOf(me.id) >= 0) return attesa(R, testoScelta(gia));
@@ -2010,20 +2014,20 @@
   }
   // la vetrina sul maxischermo: "a" quella vista da tutti, "b" la misteriosa (nuova: i pezzi della misteriosa saltano fuori uno dopo l'altro)
   function mostraVetrina(R, box, w, nuova) {
-    var el = R.t.el, V = R.vm.vet, X = w === "b" && V.b ? V.b : V, lista = el("div", { class: "pz-vet" });
+    var el = R.t.el, V = R.vm.vet, X = w === "b" && V.b ? V.b : V, entra = X !== V && nuova, lista = vetrinaTes(el, X, null, null, !entra);
     if (!box || !box.isConnected) return;
     ST.vuota(box);
     box.appendChild(el("div", { class: "pz-vtit" + (X !== V ? " mist" : ""), text: (X !== V ? "🎁 " : "") + X.e + " " + X.titolo }));
     box.appendChild(lista);
-    X.pezzi.forEach(function (x, i) { var n = pezzoVet(el, x, null); if (X !== V && nuova) n.style.animationDelay = (0.3 + i * 0.3) + "s"; else n.style.animation = "none"; lista.appendChild(n); });
-    riempi(R, lista);
+    if (entra) lista.tessere.forEach(function (t, i) { t.style.animationDelay = (0.3 + i * 0.3) + "s"; });
+    lista.adatta();
     if (X !== V && nuova) { Z().FX.tada(); fumetto(R.S, "Ecco la misteriosa! 🎁"); }
   }
   async function fVetOffri(R) {
     var S = R.S, vm = R.vm, el = R.t.el, V = vm.vet, k = vm.k; if (!V) return;
     await ST.suSchermo(S, 300); if (!vivoK(R, k)) return;
-    var box = el("div", { class: "pz-vbox" }), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : "") });
-    schermo(R, [ box, el("div", { class: "pz-sotto", text: V.b ? "Quanto vale TUTTA la tua vetrina? Offerte segrete" : "Quanto vale TUTTA la vetrina? Offerte segrete" }), fatti ]);
+    var box = el("div", { class: "pz-vbox" }), fatti = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : ""), "data-sacr": "2" });
+    schermo(R, [ box, el("div", { class: "pz-sotto", text: V.b ? "Quanto vale TUTTA la tua vetrina? Offerte segrete" : "Quanto vale TUTTA la vetrina? Offerte segrete", "data-sacr": "1" }), fatti ]);
     R.ui.vetFatti = fatti; R.ui.vetBox = box; aggiornaVet(R);
     if (R.cb.locale === "telefono") { mostraVetrina(R, box, "a", false); return turniVetrina(R, k); }
     var me = mio(R);
@@ -2037,7 +2041,7 @@
   }
   function rigaIndizio(R, chiId) {
     var I = (R.indizi || {})[chiId]; if (!I || I.kk == null || I.kk !== R.vm.k) return null;
-    return R.t.el("div", { class: "pz-indizio", text: "🔎 Il tuo indizio (hai vinto la Ruota): " + (I.e || "") + " " + I.nome + " costa " + E(I.prezzo) });
+    return R.t.el("div", { class: "pz-indizio" }, [ R.t.el("span", { text: "🔎 Il tuo indizio (hai vinto la Ruota): " + (I.e || "") + " " + I.nome + " costa " + E(I.prezzo) }), I.desc ? R.t.el("small", { text: I.desc }) : null ]);
   }
   function apriVetrina(R, chi, fine, allaFine) {
     var k = R.vm.k;
@@ -2114,13 +2118,15 @@
     // una vetrina: i suoi pezzi, i prezzi che saltano fuori uno alla volta e il totale che gira (la misteriosa: prima i pezzi)
     async function svela(X, prezzi, tot, mist) {
       ST.vuota(box);
-      var lista = el("div", { class: "pz-vet" }), nodi = X.pezzi.map(function (x, i) { return lista.appendChild(mist ? nascondi(pezzoVet(el, x, prezzi[i])) : pezzoVet(el, x, prezzi[i])); }), conta = Z().contachilometri(el, tot, {});
+      var lista = vetrinaTes(el, X, prezzi, null, !mist), nodi = lista.tessere, conta = Z().contachilometri(el, tot, {});
+      if (mist) nodi.forEach(nascondi);
+      box.style.flex = "";
       box.appendChild(el("div", { class: "pz-vtit" + (mist ? " mist" : ""), text: (mist ? "🎁 " : "") + X.e + " " + X.titolo }));
       box.appendChild(lista);
       box.appendChild(el("div", { class: "pz-tot" }, [ el("span", { text: "Totale" }), conta.el ]));
-      riempi(R, lista);
+      lista.adatta();
       if (mist) { for (var j = 0; j < nodi.length; j++) { scopri(nodi[j]); Z().FX.toc(500 + j * 60); await ST.dorme(RVET.pezzoB); if (!vivoK(R, k)) return false; } }
-      else { nodi.forEach(function (n) { n.style.animation = "none"; }); ST.FX.rullo(1.2); await ST.dorme(RV.rullo); if (!vivoK(R, k)) return false; }
+      else { ST.FX.rullo(1.2); await ST.dorme(RV.rullo); if (!vivoK(R, k)) return false; }
       for (var i = 0; i < nodi.length; i++) { nodi[i]._tag.classList.add("su"); Z().FX.toc(600 + i * 80); await ST.dorme(RVET.prezzo); if (!vivoK(R, k)) return false; }
       await conta.via(RVET.cifra); if (!vivoK(R, k)) return false;
       ST.pubblico(S, "piano"); await ST.dorme(400);
@@ -2134,7 +2140,7 @@
       if (!await svela(B, e.prezziB, e.totB, true)) return;
       // tutte e due scelte: le due vetrine in breve; nelle offerte l'emoji della prima = chi l'ha tenuta, 🎁 = la misteriosa
       if (due) {
-        ST.vuota(box);
+        ST.vuota(box); box.style.flex = "0 0 auto";
         box.appendChild(el("div", { class: "pz-due" }, [ rigaTotVet(el, V.e, V.titolo, e.prezzo), rigaTotVet(el, "🎁", B.titolo, e.totB) ]));
         sotto(); riempi(R);
         await ST.dorme(RVET.riass); if (!vivoK(R, k)) return;

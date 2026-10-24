@@ -303,7 +303,7 @@
   function guaiMiei(w) {
     var d = w.document, h = w.innerHeight, ww = w.innerWidth, guai = PZ.controllaVista(w);
     var pan = d.querySelector(".pz-pan.su"), basso = h - (pan ? pan.offsetHeight : 0), sch = d.querySelector(".st-sch-in .pz-sch");
-    if (sch && d.querySelector(".st-mondo.st-quieto")) [].forEach.call(sch.querySelectorAll(".pze-cinque,.pze-tre,.pze-c5,.pze-c3,.pze-num,.pze-gente,.pze-g,.pze-bn,.pz-tab,.pz-tag"), function (e) {
+    if (sch && d.querySelector(".st-mondo.st-quieto")) [].forEach.call(sch.querySelectorAll(".pz-te,.pze-num,.pze-gente,.pze-g,.pze-bn,.pz-tab,.pz-tag"), function (e) {
       var r = e.getBoundingClientRect(); if (!r.height) return;
       if (r.bottom > basso + 2) guai.push(e.className.split(" ")[0] + " sotto il pannello (" + Math.round(r.bottom) + ">" + Math.round(basso) + ")");
       var sr = sch.getBoundingClientRect(); if (r.top < sr.top - 1) guai.push(e.className.split(" ")[0] + " tagliato in alto");

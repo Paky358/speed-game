@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 262,
+    data: "24 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: oggetti grandi, sempre con la descrizione 🖼️",
+    descrizione: [
+      "🖼️ Gli oggetti ora sono riquadri grandi, con la foto, il nome e la descrizione, e riempiono tutto lo schermo invece di righe basse e lunghe. Sui telefoni alti le foto diventano più grandi, su quelli piccoli i riquadri si stringono, ma la descrizione resta sempre intera.",
+      "🛍️ Nella Vetrina finale la descrizione c'è sempre, anche mentre scrivi la tua offerta: così sai che l'ombrellone a Rimini è per una settimana intera.",
+      "📊 In Mettili in ordine i cinque prodotti stanno tutti sopra, con la descrizione, nell'ordine in cui li hai messi tu (1 = il meno caro). Quello che tocchi si illumina: non serve più toccarli uno per uno per leggere cosa sono.",
+      "🛒 La Spesa, ✅ La Prova del 5, 🧹 Togli la cifra, ✋ È troppo!, 🟡 Plinko e 🧗 L'Alpinista: anche lì ogni oggetto ha la sua descrizione, e la ritrovi quando si scoprono i prezzi."
+    ]
+  },
+  {
     v: 261,
     data: "24 ottobre 2026",
     titolo: "Il Prezzo è Giusto: 4 giochi a premi nuovi 🎲🎯✅🧹",

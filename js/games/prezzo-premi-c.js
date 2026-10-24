@@ -134,14 +134,14 @@
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
-      var fila = el("div", { class: "pzc-cinque" }), ch = el("div");
-      prod.forEach(function (p) { fila.appendChild(el("div", { class: "pzc-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }) ])); });
+      var fila = A.tessere(prod, { fermo: true }), ch = el("div", { "data-sacr": "3" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🛒 La Spesa" }));
-      A.sch.appendChild(el("div", { class: "pzc-fascia" }, [ el("span", { text: "Spendi tra" }), el("b", { text: A.fmtE(pub.min || SP.min) + " e " + A.fmtE(pub.max || SP.max) }) ]));
+      A.sch.appendChild(el("div", { class: "pzc-fascia", "data-sacr": "2" }, [ el("span", { text: "Spendi tra" }), el("b", { text: A.fmtE(pub.min || SP.min) + " e " + A.fmtE(pub.max || SP.max) }) ]));
       A.sch.appendChild(fila);
-      A.sch.appendChild(el("div", { class: "pz-sotto", text: "🙈 I prezzi non si vedono: chi li conosce meglio?" }));
+      A.sch.appendChild(el("div", { class: "pz-sotto", text: "🙈 I prezzi non si vedono: chi li conosce meglio?", "data-sacr": "1" }));
       A.sch.appendChild(ch);
       chips(A, ch, pub.fatti || []);
+      fila.adatta();
       return { aggiorna: function (p) { A.pub = p; aggChips(A, ch, (p && p.fatti) || []); } };
     },
     pannello: function (A) {
@@ -194,16 +194,12 @@
     rivela: async function (A) {
       stile();
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], g = riv.g || [], min = riv.min || SP.min, max = riv.max || SP.max;
-      var fila = el("div", { class: "pzc-cinque riv" }), corsie = el("div", { class: "pzc-corsie" + (g.length > 5 ? " fitto" : "") });
+      var fila = A.tessere(prod, { extra: function (p, i, t) { t._tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0)); return t._tag; } }), corsie = el("div", { class: "pzc-corsie" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pzc-bn", text: "I prezzi veri…" });
       A.sch.classList.add("pzb-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🛒 La Spesa" }));
       A.sch.appendChild(fila); A.sch.appendChild(corsie); A.sch.appendChild(banner);
-      var tags = prod.map(function (p) {
-        var tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0));
-        fila.appendChild(el("div", { class: "pzc-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), tag ]));
-        return tag;
-      });
+      var tags = fila.tessere.map(function (t) { return t._tag; });
       // le corsie: da 0 € a un po' più del carrello più caro (almeno 30 €), con la fascia verde
       var alto = Math.min(60, Math.max(30, Math.ceil(Math.max.apply(null, g.map(function (x) { return x.T; }).concat([0])) * 1.08)));
       var righe = g.map(function (x, j) {
@@ -215,6 +211,7 @@
         corsie.appendChild(r);
         return { x: x, r: r, carr: carr, trk: trk, lab: lab };
       });
+      fila.adatta();
       A.ST.FX.rullo(0.9);
       await A.dorme(TS.prima); if (!A.vivo()) return;
       for (var i = 0; i < tags.length; i++) { tags[i].classList.add("su"); A.FX.toc(560 + i * 90); await A.dorme(TS.prezzo); if (!A.vivo()) return; }
@@ -393,7 +390,7 @@
       var conta = A.contachilometri(+vero || 0, {}), righe = el("div", { class: "pzc-casse" + (g.length > 5 ? " fitto" : "") }), banner = el("div", { class: "pz-sotto pzc-bn", text: "Le combinazioni…" });
       A.sch.classList.add("pzb-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🔐 La Cassaforte" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(A.miniprod(prod));
       var cbox = el("div", { style: "min-height:44px;display:flex;align-items:center" }, [ conta.el ]); conta.el.style.visibility = "hidden";
       A.sch.appendChild(cbox); A.sch.appendChild(righe); A.sch.appendChild(banner);
       var rr = g.map(function (x) {
@@ -445,12 +442,6 @@
       ".pz-sch.pzb-fitto{gap:6px}",
       ".pzc-fatto{display:block;width:100%;margin-top:4px}",   // (il tasto «Fatto» / «Apri!» a tutta larghezza, come nei giochi a premi d ed e)   // (anche se nessun gioco del file b è ancora partito)
       ".pzc-fascia{display:flex;align-items:baseline;gap:8px;font-weight:800;color:#cdd6ff;font-size:14px}.pzc-fascia b{font-size:22px;font-weight:900;color:#69f0ae}",
-      ".pzc-cinque{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:100%;max-width:440px}",
-      ".pzc-c5{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px;border-radius:12px;background:rgba(255,255,255,.1)}",
-      ".pzc-c5 .e{font-size:clamp(24px,calc(var(--alt,640px) * .045),36px);line-height:1.1}",
-      ".pzc-c5 .n{font-size:10px;font-weight:800;line-height:1.12;color:#e8ebff;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}",
-      ".pzc-cinque.riv .pzc-c5{background:linear-gradient(#ffffff,#f3efff)}.pzc-cinque.riv .pzc-c5 .n{color:#1d1b3a}",
-      ".pzc-c5 .pz-tag{font-size:11px;padding:2px 5px 2px 11px;max-width:100%;box-sizing:border-box;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pzc-c5 .pz-tag:before{left:4px;width:4px;height:4px;margin-top:-2px}.pzc-c5 .pz-tag.su{opacity:1;transform:none}",
       ".pzc-nota{margin-bottom:4px}",
       ".pzc-spesa{display:flex;flex-direction:column;gap:4px}",
       ".pzc-sr{display:flex;align-items:center;gap:8px;height:clamp(36px,calc(var(--alt,640px) * .058),46px);padding:0 6px 0 4px;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",

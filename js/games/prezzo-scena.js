@@ -186,6 +186,126 @@
     return box;
   }
   function cartellino(el, testo, cls) { return el("span", { class: "pz-tag" + (cls ? " " + cls : ""), text: testo }); }
+  // il nome e, sotto, la descrizione (nelle rivelazioni di un prodotto solo)
+  function miniprod(el, p) {
+    p = p || {}; var sotto = [p.desc, p.dove].filter(Boolean).join(" · ");
+    return el("div", { class: "pz-miniprod" }, [ figura(el, p, "e"), el("span", { class: "tx" }, [ el("span", { class: "n", text: p.nome || "" }), sotto ? el("small", { text: sotto }) : null ]) ]);
+  }
+
+  // ---------------- i riquadri dei prodotti ----------------
+  // (24 ott 2026, il proprietario: «rettangolini che prendono tutto lo schermo», «la descrizione secondo me è obbligatoria»)
+  // Ogni prodotto è un riquadro con la foto, il nome e SEMPRE la descrizione. I riquadri si dividono tutto lo spazio che
+  // resta sullo schermo, in una o due colonne; a ogni cambio di misura si sceglie la forma con la foto più grande in cui
+  // le scritte ci stanno tutte: foto sopra (g, v0, v1), foto di lato (o0, o1), foto piccola (t0, t1, t2). Mai una
+  // descrizione tagliata o nascosta. Quello che compare dopo (prezzi, segni) va messo subito nel riquadro, nascosto.
+  // prods = [{ e, f, nome, desc, dove, cls }]; opz = { cls (del contenitore), tcls (di ogni riquadro), num (1, 2, 3… in
+  // un angolo), fermo (senza l'animazione d'entrata), extra: function (p, i, riquadro) → nodo o [nodi] (sotto le scritte) }.
+  // Il contenitore ha .tessere (i riquadri, nell'ordine dei prodotti), .adatta() (da chiamare appena è nella pagina:
+  // dopo si rifà da solo quando cambia misura) e .ordina(l) (l[posto] = indice del prodotto: li sposta senza rifarli).
+  var FORME = ["g", "v0", "v1", "o0", "o1", "t0", "t1", "t2", "t3"], BONUS = { g: 16, v0: 10, v1: 4, o0: 10, o1: 4, t0: 0, t1: -6, t2: -12, t3: -30 };
+  function tessere(el, prods, opz) {
+    opz = opz || {}; prods = prods || [];
+    var base = "pz-tes" + (opz.cls ? " " + opz.cls : "") + (opz.fermo ? " fermo" : "");
+    var g = el("div", { class: base }), n = prods.length, posti = prods.map(function (p, i) { return i; }), ult = "";
+    g.tessere = prods.map(function (p, i) {
+      p = p || {};
+      var sotto = [p.desc, p.dove].filter(Boolean).join(" · "), fo = figura(el, p, "fo", 500, "fo emo"), im = fo.querySelector("img");
+      // (la foto non arriva: al suo posto l'emoji, e si rifà la misura)
+      if (im) { im.addEventListener("error", function () { setTimeout(function () { g.adatta(true); }, 0); }); im.addEventListener("load", function () { if (ult) copri(); }); }
+      var t = el("div", { class: "pz-te" + (opz.tcls ? " " + opz.tcls : "") + (p.cls ? " " + p.cls : "") }, [
+        fo,
+        el("div", { class: "tx" }, [ el("b", { text: p.nome || "" }), sotto ? el("small", { text: sotto }) : null ])
+      ]);
+      if (opz.num) t.appendChild(el("span", { class: "nb", text: String(i + 1) }));
+      var ex = opz.extra ? opz.extra(p, i, t) : null;
+      if (ex) { t._ex = el("div", { class: "ex" }, [].concat(ex)); t.appendChild(t._ex); }
+      g.appendChild(t); return t;
+    });
+    function metti(c, f) {
+      g.className = base + " " + f.charAt(0) + " " + f + " c" + c;
+      g.style.setProperty("--cols", c);
+      g.style.gridTemplateRows = "repeat(" + Math.ceil(n / c) + ",minmax(0,1fr))";
+      // (in due colonne, se sono dispari, l'ultimo prende tutta la riga e ha la foto di lato)
+      posti.forEach(function (j, pos) { g.tessere[j].classList.toggle("largo", c === 2 && n % 2 === 1 && pos === n - 1); });
+      // il cartellino (o il prezzo da giudicare) a destra solo nelle righe a tutta larghezza; se no sotto le scritte, che restano larghe
+      var aDestra = c === 1 && (f.charAt(0) === "o" || f.charAt(0) === "t");
+      g.tessere.forEach(function (t) { if (!t._ex) return; var dove = aDestra ? t : t.querySelector(".tx"); if (t._ex.parentNode !== dove) dove.appendChild(t._ex); });
+    }
+    function ciStanno() { return g.tessere.every(function (t) { return t.scrollHeight <= t.clientHeight + 1 && t.scrollWidth <= t.clientWidth + 1; }); }
+    // quanto è grande la foto (una foto 4:3 dentro lo spazio della foto), nel riquadro più sacrificato
+    function foto(f) {
+      if (f.charAt(0) === "t") return f === "t0" ? 30 : f === "t3" ? 0 : 20;
+      var m = Infinity;
+      g.tessere.forEach(function (t) {
+        var fo = t.querySelector(".fo"), w = fo ? fo.clientWidth : 0, h = fo ? fo.clientHeight : 0;
+        m = Math.min(m, w < 30 || h < 30 ? -1 : Math.sqrt(w / h > 4 / 3 ? h * h * 4 / 3 : w * w * 3 / 4));
+      });
+      return m;
+    }
+    g.adatta = function (forza) {
+      if (!g.isConnected || !n) return;
+      var W = g.clientWidth, H = g.clientHeight; if (!W || !H) return;
+      var chiave = W + "x" + H; if (chiave === ult && !forza) return;
+      // (l'emoji dei prodotti senza foto torna alla misura di partenza, se no falsa le prove)
+      g.tessere.forEach(function (t) { var fo = t.querySelector(".fo"); if (fo) fo.style.fontSize = ""; });
+      // le scritte che si possono togliere quando lo spazio non basta (data-sacr: 1 = la prima che va via), di nuovo al loro posto
+      var sch = g.closest ? g.closest(".pz-sch") : null, sacr = sch ? [].slice.call(sch.querySelectorAll("[data-sacr]")).sort(function (a, b) { return (+a.dataset.sacr || 9) - (+b.dataset.sacr || 9); }) : [];
+      sacr.forEach(function (x) { x.style.display = ""; });
+      function cerca() {
+        var best = null;
+        (n === 1 ? [1] : [2, 1]).forEach(function (c) {
+          FORME.forEach(function (f) {
+            metti(c, f); if (!ciStanno()) return;
+            var s = foto(f); if (s < 0) return;
+            s += BONUS[f] + (c === 2 && n >= 3 ? 12 : 0);
+            if (!best || s > best.s) best = { c: c, f: f, s: s };
+          });
+        });
+        return best;
+      }
+      var best = cerca(), primo = best, via = 0;
+      // (con le scritte più piccole, o senza che ci stia niente: prima via gli aiuti e chi ha finito, che sono già nel pannello)
+      while (via < sacr.length && (!best || best.f === "t2" || best.f === "t3")) { sacr[via++].style.display = "none"; best = cerca() || best; }
+      if (via && primo && best && best.f === primo.f && best.c === primo.c) { sacr.forEach(function (x) { x.style.display = ""; }); best = cerca(); }
+      // (non ci sta niente: la forma più piccola, e i riquadri crescono quanto serve; lo spazio scorre, ma niente si taglia)
+      if (!best) best = { c: 1, f: "t3", scorre: true };
+      metti(best.c, best.f); g.classList.toggle("scorre", !!best.scorre); ult = g.clientWidth + "x" + g.clientHeight;
+      // l'emoji (prodotti senza foto) grande quanto il suo posto
+      g.tessere.forEach(function (t) {
+        var fo = t.querySelector(".fo.emo"); if (!fo) return;
+        fo.style.fontSize = best.f.charAt(0) === "t" ? "" : Math.max(22, Math.min(90, fo.clientHeight * 0.72, fo.clientWidth * 0.6)) + "px";
+      });
+      copri();
+    };
+    // la foto riempie tutto il suo spazio quando ha quasi la stessa forma (si taglia appena un bordo), se no si vede intera
+    function copri() {
+      var piccola = g.classList.contains("t");
+      g.tessere.forEach(function (t) {
+        var fo = t.querySelector(".fo"), im = fo && fo.querySelector("img"); if (!fo) return;
+        var r = im && im.naturalWidth && fo.clientHeight ? (fo.clientWidth / fo.clientHeight) / (im.naturalWidth / im.naturalHeight) : 0;
+        fo.classList.toggle("copre", !piccola && r > 0.78 && r < 1.3);
+      });
+    }
+    g.ordina = function (l) {
+      if (!l || l.length !== n) return;
+      posti = l.slice();
+      posti.forEach(function (j, pos) { var t = g.tessere[j]; t.style.order = String(pos); var nb = t.querySelector(".nb"); if (nb) nb.textContent = String(pos + 1); });
+      if (ult) {
+        var c = g.classList.contains("c2") ? 2 : 1; posti.forEach(function (j, pos) { g.tessere[j].classList.toggle("largo", c === 2 && n % 2 === 1 && pos === n - 1); });
+        // (l'ultimo, largo, ora è un altro: se non ci sta più si rifà la forma; se ci sta niente cambia, niente salti)
+        if (!ciStanno()) g.adatta(true);
+      }
+    };
+    // (si rifà al fotogramma dopo, mai dentro l'avviso del browser: se no «ResizeObserver loop»)
+    if (window.ResizeObserver) {
+      var pend = false, oss = new ResizeObserver(function () {
+        if (pend) return; pend = true;
+        requestAnimationFrame(function () { pend = false; if (!g.isConnected) { oss.disconnect(); return; } g.adatta(); });
+      });
+      oss.observe(g);
+    }
+    return g;
+  }
 
   // ---------------- il sipario «Apriti, sesamo!» ----------------
   function sipario(el, dentro) {
@@ -475,7 +595,7 @@
       // (chi guarda soltanto: la barra in basso lascia il posto alla targhetta del core, come nella Balla)
       ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",   // (in alto i tasti tondi: il titolo resta sotto)
       // (la scritta grande in basso, «E per voi…», non copre la lista: le si lascia il suo spazio)
-      ".pz-sch.con-terzo{padding-bottom:clamp(70px,calc(var(--alt,640px) * .19),160px)}",
+      ".pz-sch.con-terzo{padding-bottom:calc(170px + env(safe-area-inset-bottom))}",   // (la scritta in basso dello studio sta a 104 px dal fondo ed è alta circa 58: i riquadri si fermano sopra)
       ".pz-testa{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;margin:0 40px;font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#ffe066}",
       ".pz-testa .x2{background:#ff3ea5;color:#fff;border-radius:99px;padding:2px 9px;letter-spacing:.04em;animation:pzPulsa 1s ease-in-out infinite}",
       ".pz-titolo{font-size:22px;font-weight:900;color:#fff;line-height:1.15}",
@@ -494,7 +614,7 @@
       ".pz-scheda .pz-tag{margin-top:4px}",
       ".pz-scheda.piccola{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:2px 8px;padding:6px 10px;border-radius:14px;width:min(360px,96%)}",
       ".pz-scheda.piccola .pz-emo{font-size:30px;width:auto;height:auto;background:none}.pz-scheda.piccola .pz-nome{font-size:16px}.pz-scheda.piccola .pz-cat{display:none}",
-      ".pz-scheda.piccola .pz-desc{display:none}.pz-scheda.piccola .pz-dove{width:100%;font-size:11.5px}",
+      ".pz-scheda.piccola .pz-desc{width:100%;font-size:12px;line-height:1.22}.pz-scheda.piccola .pz-dove{width:100%;font-size:11.5px}",
       ".pz-scheda.media .pz-emo{font-size:40px}.pz-scheda.media .pz-desc{font-size:12.5px}.pz-scheda.media .pz-nome{font-size:17px}",
       // la foto vera: nella scheda alta quanto lo schermo permette, nelle righe grande come l'emoji che c'era (1,3 em)
       ".pz-foto{height:clamp(62px,calc(var(--alt,640px) * .15),140px);max-width:100%;display:flex;align-items:center;justify-content:center}",
@@ -503,8 +623,8 @@
       "@media (max-height:700px){.st-vista.pz-con-pan .pz-sip .pz-foto{height:66px}}",
       // (prima di offrire il pannello è giù: la foto del prodotto più grande, sui telefoni alti fino a 230 px)
       ".st-vista:not(.pz-con-pan) .pz-sip .pz-foto{height:clamp(62px,calc(var(--alt,640px) * .26),230px)}",
-      ".pz-conf:not(.pz-foto){display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;flex:0 0 auto;vertical-align:middle}",
-      ".pz-conf:not(.pz-foto) img{width:100%;height:100%;object-fit:cover;border-radius:22%;background:#fff}",
+      ".pz-conf:not(.pz-foto):not(.fo){display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;flex:0 0 auto;vertical-align:middle}",
+      ".pz-conf:not(.pz-foto):not(.fo) img{width:100%;height:100%;object-fit:cover;border-radius:22%;background:#fff}",
       // il cartellino del prezzo
       ".pz-tag{position:relative;display:inline-flex;align-items:center;gap:6px;padding:4px 12px 4px 20px;border-radius:5px 14px 14px 5px;background:linear-gradient(#ffe98a,#fcc419);color:#3b2a00;font-weight:900;font-size:17px;box-shadow:0 3px 10px rgba(0,0,0,.35);white-space:nowrap}",
       ".pz-tag:before{content:'';position:absolute;left:7px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#2a1d6e}",
@@ -595,7 +715,8 @@
       ".pz-banner{font-size:24px;font-weight:900;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4);animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both}",
       ".pz-banner.oro{color:#ffe066;font-size:30px}.pz-banner.no{color:#ffb3bb}",
       ".pz-miniprod{display:flex;align-items:center;justify-content:center;gap:8px;max-width:100%;font-weight:900;font-size:16px;color:#fff}",
-      ".pz-miniprod .e{font-size:28px}.pz-miniprod .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".pz-miniprod .e{font-size:28px}.pz-miniprod .tx{display:flex;flex-direction:column;min-width:0;text-align:left}.pz-miniprod .n{overflow-wrap:anywhere}",
+      ".pz-miniprod .tx small{font-size:12px;font-weight:700;color:#cdd6ff;line-height:1.2}",
       ".pz-curiosita{max-width:420px;font-size:13px;font-weight:700;color:#3b2a00;background:#fff3bf;border-radius:12px;padding:5px 10px;line-height:1.3;animation:pzSu .4s both}",
       ".pz-anno{font-size:11px;font-weight:700;color:#9aa5d8;letter-spacing:.04em}",
       // la classifica (riepilogo) e il carrello
@@ -655,27 +776,49 @@
       ".pz-rg .val{font-weight:900;font-size:16px;color:#ffe066;white-space:nowrap}.pz-rg.fuori{background:rgba(255,93,108,.2)}.pz-rg.fuori .val{color:#ffb3bb}",
       ".pz-rg.cento{background:rgba(255,212,59,.3);box-shadow:0 0 0 2px #ffd43b}.pz-rg.vince{box-shadow:0 0 0 2px #37d47e;background:rgba(55,212,126,.25)}",
       ".pz-big100{font-size:44px;font-weight:900;color:#ff3ea5;text-shadow:0 0 18px rgba(255,62,165,.7),0 3px 0 #000;animation:pzPulsa .45s ease-in-out 3}",
-      // la vetrina
-      ".pz-vet{display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px}",
-      ".pz-vp{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:14px;background:linear-gradient(#ffffff,#f3efff);color:#1d1b3a;text-align:left;animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both}",
-      ".pz-vp .e{font-size:30px;flex:0 0 auto}.pz-vp .t{flex:1;min-width:0;display:flex;flex-direction:column}.pz-vp .t b{font-size:15px;line-height:1.15}.pz-vp .t small{font-size:11.5px;color:#4c4a66;font-weight:600;line-height:1.2}",
-      ".pz-vp .pz-tag{font-size:14px;padding:3px 9px 3px 16px;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pz-vp .pz-tag.su{opacity:1;transform:none}",
-      ".pz-vet.fitta .pz-vp{padding:3px 8px}.pz-vet.fitta .pz-vp .e{font-size:22px}.pz-vet.fitta .pz-vp .t small{display:none}",
-      ".pz-vtit{font-size:22px;font-weight:900;color:#ffe066}",
+      // i riquadri dei prodotti (tessere): la misura delle scritte la sceglie la forma (g, v0… t2)
+      ".pz-tes{flex:1 1 0;min-height:0;width:100%;max-width:480px;display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));gap:6px;--fn:15px;--fd:12px}",
+      ".pz-te{position:relative;min-width:0;min-height:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 7px;border-radius:14px;background:linear-gradient(#ffffff,#f3efff);color:#1d1b3a;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 -3px 0 rgba(90,74,154,.16);animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both;transition:background .2s,box-shadow .2s}",
+      ".pz-tes.fermo .pz-te{animation:none}",
+      ".pz-te .fo{flex:1 1 0;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;line-height:1;font-size:40px}",
+      ".pz-te .fo img{display:block;max-width:100%;max-height:100%;border-radius:9px;box-shadow:0 2px 8px rgba(0,0,0,.22);background:#fff}.pz-te .fo.copre img{width:100%;height:100%;object-fit:cover}",
+      ".pz-te .tx{flex:0 0 auto;min-width:0;max-width:100%;display:flex;flex-direction:column;gap:1px;overflow-wrap:break-word;hyphens:auto}",
+      ".pz-te .tx b{font-size:var(--fn);font-weight:900;line-height:1.15}.pz-te .tx small{font-size:var(--fd);font-weight:600;color:#4c4a66;line-height:1.22}",
+      ".pz-te .ex{flex:0 0 auto;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;max-width:100%}",
+      ".pz-te .nb{position:absolute;left:4px;top:4px;z-index:1;min-width:20px;height:20px;padding:0 4px;box-sizing:border-box;border-radius:99px;background:#5a4a9a;color:#fff;font-size:12px;font-weight:900;line-height:20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.3)}",
+      ".pz-te.sel{background:linear-gradient(#ffe98a,#fcc419);box-shadow:0 0 0 3px #fff,0 4px 14px rgba(252,196,25,.5)}",
+      ".pz-tes.g{--fn:18px;--fd:14px}.pz-tes.v0,.pz-tes.o0{--fn:15.5px;--fd:12.5px}.pz-tes.v1,.pz-tes.o1,.pz-tes.t0{--fn:13.5px;--fd:11.5px}.pz-tes.t1{--fn:12.5px;--fd:10.5px}.pz-tes.t2{--fn:11.5px;--fd:10px;gap:4px}",
+      // (foto di lato: nelle forme «o» e nell'ultimo riquadro largo)
+      ".pz-tes.c2 .pz-te.largo{grid-column:1/-1}.pz-tes.o .pz-te,.pz-te.largo{flex-direction:row;text-align:left;gap:8px;padding:5px 8px 5px 5px}",
+      ".pz-tes.o .pz-te .fo,.pz-te.largo .fo{flex:0 0 auto;width:auto;height:100%;aspect-ratio:4/3;max-width:42%}.pz-tes.o .pz-te .tx,.pz-te.largo .tx{flex:1 1 0}",
+      // (foto piccola: nelle forme «t», il numero prima della foto)
+      ".pz-tes.t .pz-te{flex-direction:row;text-align:left;gap:6px;padding:4px 7px 4px 5px}.pz-tes.t .pz-te .tx{flex:1 1 0}",
+      ".pz-tes.t .pz-te .fo{flex:0 0 auto;width:40px;height:40px;aspect-ratio:auto;max-width:none;font-size:30px}.pz-tes.t .pz-te .fo img{width:100%;height:100%;object-fit:cover;border-radius:22%}",
+      ".pz-tes.t .pz-te .nb{position:static;flex:0 0 auto;order:-1}",
+      ".pz-tes.t1 .pz-te .fo{width:32px;height:32px;font-size:25px}.pz-tes.t2 .pz-te{padding:3px 6px 3px 4px}.pz-tes.t2 .pz-te .fo{width:24px;height:24px;font-size:19px}",
+      ".pz-tes.t3{--fn:11px;--fd:10px;gap:3px}.pz-tes.t3 .pz-te{padding:2px 6px}.pz-tes.t3 .pz-te .fo{display:none}",
+      // (il cartellino sotto le scritte: nelle forme con la foto di lato si allinea a sinistra)
+      ".pz-te .tx .ex{margin-top:3px}.pz-tes.o .tx .ex,.pz-tes.t .tx .ex,.pz-te.largo .tx .ex{justify-content:flex-start}",
+      // (l'ultima rete: niente ci sta neanche piccolo → i riquadri crescono e lo spazio scorre)
+      ".pz-tes.scorre{grid-template-rows:none!important;grid-auto-rows:auto;overflow-y:auto;align-content:start}.pz-tes.scorre .pz-te{overflow:visible}",
+      // la vetrina (il pacco della misteriosa è un riquadro anche lui)
+      ".pz-te .pz-tag{font-size:14px;padding:3px 9px 3px 16px;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pz-te .pz-tag.su{opacity:1;transform:none}",
+      ".pz-te.mist{background:rgba(255,62,165,.14);border:2px dashed #ff9bd2;box-shadow:none;color:#ffd1ea}.pz-te.mist .tx small{color:#e9c7ff;font-weight:700}",
+      ".pz-vtit{font-size:22px;font-weight:900;color:#ffe066;padding:0 40px;line-height:1.15}",
       // la Vetrina misteriosa: il pacco, il titolo rosa della misteriosa, le due vetrine in breve nella rivelazione
-      ".pz-vbox{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:420px}.pz-vtit.mist{color:#ff9bd2}",
+      ".pz-vbox{flex:1 1 0;min-height:0;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:480px}.pz-vtit.mist{color:#ff9bd2}",
       ".pz-mist{display:flex;align-items:center;gap:10px;width:100%;max-width:420px;padding:6px 12px;border-radius:14px;border:2px dashed #ff9bd2;background:rgba(255,62,165,.14);text-align:left;animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both}",
       ".pz-mist .i{font-size:30px;flex:0 0 auto}.pz-mist b{display:block;font-size:15px;color:#ffd1ea}.pz-mist small{font-size:11.5px;font-weight:700;color:#e9c7ff}",
       ".pz-due{display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px}",
       ".pz-vt{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:14px;background:rgba(255,255,255,.1);animation:pzPop .4s both}.pz-vt .i{font-size:22px}.pz-vt .t{flex:1;min-width:0;text-align:left;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pz-vt b{font-size:17px;color:#ffe066;white-space:nowrap}",
       ".pz-sc.mist{background:linear-gradient(#ffe3f3,#ffb8de)}.pz-sc.mist.sel{background:linear-gradient(#ffe98a,#fcc419)}",
       ".pz-tot{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:900;color:#fff}",
-      ".pz-indizio{font-size:14px;font-weight:800;color:#3b2a00;background:#ffe066;border-radius:12px;padding:5px 10px;line-height:1.3}",
+      ".pz-indizio{font-size:14px;font-weight:800;color:#3b2a00;background:#ffe066;border-radius:12px;padding:5px 10px;line-height:1.3}.pz-indizio small{display:block;font-size:12px;font-weight:600}",
       ".pz-tutto{font-size:32px;font-weight:900;color:#ffe066;text-shadow:0 0 22px rgba(255,212,59,.8),0 3px 0 #a85c00;animation:pzPulsa .5s ease-in-out 4}",
       // ⏩ Avanti
       ".pz-avanti{display:flex;align-items:center;justify-content:center;gap:10px}.pz-avanti .quanti{font-size:14px;font-weight:800;background:rgba(255,255,255,.22);border-radius:99px;padding:2px 10px}",
       ".pz-attesa{margin:0;text-align:center;font-weight:800;color:#cdd6ff}",
-      "@media (prefers-reduced-motion:reduce){.pz-och,.pz-cl,.pz-car,.pz-vp,.pz-gioco,.pz-intro,.pz-banner{animation:none}}"
+      "@media (prefers-reduced-motion:reduce){.pz-och,.pz-cl,.pz-car,.pz-te,.pz-gioco,.pz-intro,.pz-banner{animation:none}}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -684,7 +827,7 @@
     fmtN: fmtN, fmtE: fmtE, tondo2: tondo2, passo: passo, margine: margine, arrotonda: arrotonda, conCent: conCent,
     CAT: CAT, ORDINE_CAT: ORDINE_CAT, FX: FX, vibra: vibra,
     scheda: scheda, cartellino: cartellino, sipario: sipario, contachilometri: contachilometri, durataConta: durataConta,
-    urlFoto: urlFoto, precarica: precarica, figura: figura,
+    urlFoto: urlFoto, precarica: precarica, figura: figura, miniprod: miniprod, tessere: tessere,
     barraTempo: barraTempo, pannello: pannello, tastierino: tastierino,
     SPICCHI: SPICCHI, ruota: ruota, coloreSpicchio: coloreSpicchio,
     stile: stile

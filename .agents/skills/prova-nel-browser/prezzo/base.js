@@ -410,11 +410,14 @@
     if (pan && pan.offsetHeight > h * 0.66) guai.push("pannello alto " + pan.offsetHeight + " su " + h);
     var sch = d.querySelector(".st-sch-in .pz-sch");
     if (sch && !d.querySelector(".st-mondo.st-quieto")) return guai;   // (la telecamera non è sul maxischermo)
-    if (sch) [].forEach.call(sch.querySelectorAll(".pz-scheda,.pz-riga,.pz-cl,.pz-car,.pz-vp,.pz-och,.pz-rg,.pz-rcard,.pz-rpag,.pz-conta,.pz-banner,.pz-gioco,.pz-intro,.pz-testa"), function (e) {
+    if (sch) [].forEach.call(sch.querySelectorAll(".pz-scheda,.pz-riga,.pz-cl,.pz-car,.pz-te,.pz-och,.pz-rg,.pz-rcard,.pz-rpag,.pz-conta,.pz-banner,.pz-gioco,.pz-intro,.pz-testa"), function (e) {
       var r = e.getBoundingClientRect(); if (!r.height) return;
       if (r.bottom > basso + 2) guai.push((e.className.split(" ")[0]) + " sotto il pannello (" + Math.round(r.bottom) + ">" + Math.round(basso) + ")");
       if (r.left < -1 || r.right > w.innerWidth + 1) guai.push((e.className.split(" ")[0]) + " esce di lato");
     });
+    // (24 ott: la descrizione sempre intera nei riquadri dei prodotti)
+    if (sch) [].forEach.call(sch.querySelectorAll(".pz-te"), function (t) { if (t.clientHeight && (t.scrollHeight > t.clientHeight + 1 || t.scrollWidth > t.clientWidth + 1)) guai.push("riquadro tagliato: " + ((t.querySelector(".tx b") || {}).textContent || "?")); });
+    if (sch && sch.querySelector(".pz-tes.scorre")) guai.push("riquadri troppo stretti: lo spazio scorre");
     return guai;
   }
   COPIONE.aggiungi("pz8", { nome: "Prezzo: le misure a 360x640 e 412x915 (Bot in 6, 📺 ⚡ Veloce)", fai: async function () {
@@ -575,7 +578,7 @@
     // la Vetrina: ogni pezzo con la sua foto piccola (330)
     if (!await giocaTutti(["Paky"], function () { return H().fase === "vetrina" && H().sotto === "offri"; }, { ms: 300000 })) no("non si arriva alla Vetrina");
     await W.dorme(1200);
-    var righe = [].slice.call(w.document.querySelectorAll(".pz-vp")), conFoto = righe.filter(function (r) { return r.querySelector(".pz-conf img"); }).length;
+    var righe = [].slice.call(w.document.querySelectorAll(".pz-sch .pz-te:not(.mist)")), conFoto = righe.filter(function (r) { return r.querySelector(".pz-conf img"); }).length;
     if (!righe.length) no("la Vetrina non ha righe");
     if (!await giocaTutti(["Paky"], function () { return H().fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 300000 })) no("la partita non finisce");
     return conF + " prodotti su " + L.length + " con la foto · " + Object.keys(F).length + " foto · scheda " + (caricata ? "con la foto caricata" : im ? "con la foto (non ancora caricata)" : "con l'emoji (rete)") + " · Vetrina " + conFoto + "/" + righe.length + " righe con la foto" + errori();
@@ -698,7 +701,7 @@
   // ===================== pz17: la Vetrina misteriosa col Bot (e il conto in percentuale) =====================
   // (23 ott, il proprietario sceglie «scelgono tutti, in segreto»: ognuno tiene la vetrina vista o prende la misteriosa)
   function titVet(w, sel) { var t = w.document.querySelector(sel || ".pz-vtit"); return t ? { mist: t.classList.contains("mist"), testo: t.textContent } : null; }
-  function pezziSch(w) { return [].map.call(w.document.querySelectorAll(".pz-sch .pz-vp .t b"), function (b) { return b.textContent; }); }
+  function pezziSch(w) { return [].map.call(w.document.querySelectorAll(".pz-sch .pz-te:not(.mist) .tx b"), function (b) { return b.textContent; }); }
   COPIONE.aggiungi("pz17", { nome: "Prezzo: la Vetrina misteriosa col Bot (Paky prende la misteriosa) e il conto in percentuale", fai: async function () {
     var w = await contrBot({ formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 3 }), H = function () { return w.__prezzoH; };
     // le regole, senza grafica: due vetrine diverse, vince chi si avvicina di più in percentuale
@@ -710,7 +713,7 @@
     var ok = await giocaTutti(["Paky"], function () {
       var h = H();
       if (h.fase === "vetrina" && h.sotto === "scegli" && !vistaSc && w.document.querySelector(".pz-pan.su .pz-sc")) {
-        vmSc = { b: !!(h.vet && h.vet.b), mist: !!w.document.querySelector(".pz-sch .pz-mist"), tasti: [].map.call(w.document.querySelectorAll(".pz-pan.su .pz-sc b"), function (b) { return b.textContent; }) };
+        vmSc = { b: !!(h.vet && h.vet.b), mist: !!w.document.querySelector(".pz-sch .pz-te.mist"), tasti: [].map.call(w.document.querySelectorAll(".pz-pan.su .pz-sc b"), function (b) { return b.textContent; }) };
         vistaSc = pezziSch(w);
       }
       if (h.fase === "vetrina" && h.sotto === "offri" && !vistaOff && w.document.querySelector(".pz-pan.su .pz-ok")) vistaOff = { t: titVet(w), pezzi: pezziSch(w), sc: JSON.parse(JSON.stringify(h.vet.sc)) };

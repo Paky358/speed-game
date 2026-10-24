@@ -404,7 +404,7 @@
       var mai = ids.filter(function (id) { return !(tocchi[id] >= 0); });
       var banner = el("div", { class: "pz-sotto", text: "Dove vi siete fermati…" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "✋ È troppo!" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(A.miniprod(prod));
       var contaBox = el("div", { style: "min-height:52px;display:flex;align-items:center" }, [ conta.el ]);
       conta.el.style.visibility = "hidden";
       A.sch.appendChild(contaBox);
