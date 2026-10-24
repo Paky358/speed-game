@@ -1092,6 +1092,8 @@
     else if (!R.S.vivo() && !R.fineFatta) return;   // il core ha portato via il gioco: la regia si ferma
     R.vm = vm; R.cb = cb; R.vmTs = Date.now();
     if (R.fineFatta) return;
+    stimaFine(R, vm);
+    window.__prezzoR = R;   // (per le prove: il tempo del telefono)
     precaricaFoto(vm);
     sincronizzaLeggii(R);
     leggii(R);
@@ -1099,6 +1101,28 @@
     R.attese = R.attese.filter(function (a) { try { if (a.cond(vm)) { a.ok(vm); return false; } } catch (e) {} return true; });
     regiaTick(R);
   }
+  // ---------------- il tempo sul telefono (24 ott 2026, il proprietario: un tocco all'ultimissimo istante può non arrivare) ----------------
+  // Online il tempo del telefono finisce ANTICIPO ms prima di quello di chi tiene la partita: la mossa dell'ultimo istante
+  // (e quella che il pannello manda da solo allo scadere) fa in tempo ad arrivare. E della fine si tiene la stima più corta
+  // tra le foto dello stesso passo: una foto vecchia (come quella trattenuta che riceve per prima chi ricarica) crede che
+  // manchi più tempo; quando arriva quella nuova, la barra già aperta si accorcia.
+  var ANTICIPO = 1000;
+  function stimaFine(R, vm) {
+    if (!vm.restaMs) return;
+    var f = R.vmTs + vm.restaMs, s = R.stima;
+    if (!s || s.k !== vm.k) { R.stima = { k: vm.k, f: f }; return; }
+    if (f >= s.f - 150) return;
+    var d = s.f - f; s.f = f;
+    if (R.cb.locale) return;
+    [R.tempoPan, R.tempoAttesa].forEach(function (tb) { if (tb && tb._k === vm.k && !tb.finito()) tb.allunga(tb.fine() - d); });
+  }
+  // quando finisce il tempo di questo passo sul telefono
+  function fineVM(R) {
+    var vm = R.vm, f = R.stima && R.stima.k === vm.k ? R.stima.f : R.vmTs + (vm.restaMs || 0);
+    return f - (R.cb.locale ? 0 : ANTICIPO);
+  }
+  // la barra del pannello, legata al passo in cui si apre (solo quella si accorcia)
+  function barraDi(R, tb) { tb._k = R.vm.k; return tb; }
   function nuovaRegia(t, vm, cb) {
     var S = ST.crea(t, vm.players.map(function (p) { return { nome: p.nome, omino: p.omino }; }), { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(true); }, titolo: NOME, logo: LOGO });
     var X = { t: t, cb: cb, S: S, vm: vm, vmTs: Date.now(), pan: Z().pannello(S), kFatto: null, ui: {}, mie: {}, usciti: {}, attese: [],
@@ -1179,8 +1203,9 @@
   function attesa(R, testo) {
     var el = R.t.el, vm = R.vm; R.pan.giu();
     // i secondi che mancano (niente attesa senza tempo): una barretta muta sotto la riga
-    var resta = vm.restaMs ? vm.restaMs - (Date.now() - R.vmTs) : 0, tb = null;
-    if (R.cb.locale !== "telefono" && resta > 1500 && vm.fase !== "punti") tb = Z().barraTempo(el, Date.now() + resta, null, { muto: true, cls: "mini" });
+    var resta = vm.restaMs ? fineVM(R) - Date.now() : 0, tb = null;   // (la stessa fine della barra del pannello: dopo un tocco il conto continua uguale)
+    if (R.cb.locale !== "telefono" && resta > 1500 && vm.fase !== "punti") tb = barraDi(R, Z().barraTempo(el, Date.now() + resta, null, { muto: true, cls: "mini" }));
+    R.tempoAttesa = tb;
     ST.barra(R.S, [ el("p", { class: "pz-attesa", text: testo }), tb ? tb.el : null, faccine(R) ]);
   }
   function guardaTesto(R) {
@@ -1384,7 +1409,7 @@
     if (!me) return attesa(R, guardaTesto(R));
     var gia = offertaDi(R, me.id);
     if (gia != null) return attesa(R, gia === true ? "✅ Hai fatto la tua offerta · aspettiamo gli altri…" : "✅ Hai offerto " + E(gia) + " · aspettiamo gli altri…");
-    pannelloOfferta(R, me, R.vmTs + (vm.restaMs || 0), function (v) { R.cb.mossa({ t: "offerta", k: vm.k, v: v }); }, {});
+    pannelloOfferta(R, me, fineVM(R), function (v) { R.cb.mossa({ t: "offerta", k: vm.k, v: v }); }, {});
   }
   function listaOfferte(R, mioId) { var off = R.vm.off || {}; return Object.keys(off).map(function (id) { return { nome: id === mioId ? "Tu" : nomeDi(R.vm, id), v: off[id], mia: id === mioId }; }); }
   // il tastierino nel pannello: per l'Offerta e per la Vetrina (opz.vetrina)
@@ -1405,7 +1430,7 @@
     });
     R.tast = tast; R.tastChi = chi.id; R.tastK = k;
     var tb = Z().barraTempo(el, fine, function () { if (R.tast === tast) tast.blocca("⏰ Tempo scaduto"); if (opz.allaFine) opz.allaFine(); });
-    R.tempoPan = tb;
+    R.tempoPan = barraDi(R, tb);
     var tit = opz.titolo || (R.cb.locale === "telefono" ? chi.nome + ", il tuo prezzo" : opz.vetrina ? "🛍️ Il totale" : "🏷️ Il tuo prezzo");
     R.pan.metti([ testaPan(R, chi, tit, tb), tast.el ]).su();
     return tast;
@@ -1531,7 +1556,7 @@
     if (sc.fatta) return;
     var tocca = R.cb.locale === "telefono" || io;
     if (!tocca) return attesa(R, (chi.bot ? "🤖 " : "") + chi.nome + " sta scegliendo…");
-    var fine = R.cb.locale === "telefono" ? Date.now() + TL.scegli : R.vmTs + (vm.restaMs || 0);
+    var fine = R.cb.locale === "telefono" ? Date.now() + TL.scegli : fineVM(R);
     var bottoni = sc.opz.map(function (o) {
       var b = el("button", { class: "pz-sc", type: "button" }, [ el("span", { class: "i", text: o.icona }), el("b", { text: o.nome }), el("small", { text: o.regola }) ]);
       b.addEventListener("click", function () {
@@ -1541,8 +1566,8 @@
       });
       return b;
     });
-    var tb = Z().barraTempo(el, fine, function () { if (R.cb.locale === "telefono") R.cb.mossa({ t: "passa", k: k }, sc.chi); });
-    R.tempoPan = tb;
+    var tb = Z().barraTempo(el, fine, function () { if (R.cb.locale === "telefono") R.cb.mossa({ t: "passa", k: k }, sc.chi); else bottoni.forEach(function (b) { b.disabled = true; }); });
+    R.tempoPan = barraDi(R, tb);
     R.pan.metti([ testaPan(R, chi, R.cb.locale === "telefono" ? chi.nome + ", scegli tu!" : "🎁 Scegli tu!", tb), el("div", { class: "pz-scelte" }, bottoni) ]).su();
   }
   function aggiornaScelta(R) {
@@ -1596,15 +1621,17 @@
     var me = mio(R);
     if (!me) return attesa(R, guardaTesto(R));
     if ((pr.fatti || []).indexOf(me.id) >= 0) return attesa(R, "✅ Fatto! Aspettiamo gli altri…");
-    apriPremio(R, g, me, R.vmTs + (vm.restaMs || 0), null);
+    apriPremio(R, g, me, fineVM(R), null);
   }
   function apriPremio(R, g, chi, fine, allaFine) {
     var vm = R.vm, el = R.t.el, pr = vm.premio, cont = el("div", { class: "pz-premio-pan" });
     var tb = Z().barraTempo(el, fine, function () { if (R.premioPan && R.premioPan.tempo) try { R.premioPan.tempo(); } catch (e) {} if (allaFine) allaFine(); });
-    R.tempoPan = tb;
+    R.tempoPan = barraDi(R, tb);
     R.pan.metti([ testaPan(R, chi, (R.cb.locale === "telefono" ? chi.nome + " · " : "") + pr.icona + " " + pr.nome, tb), cont ]).su();
     var P = {};
-    try { P = (g.pannello && g.pannello(apiTel(R, { pan: cont, io: chi.id, fine: fine }))) || {}; } catch (e) { try { console.error("[prezzo] pannello", e); } catch (x) {} }
+    // (al gioco la fine vera di chi tiene la partita: È troppo! e il Mirino ci regolano i prezzi che scorrono e la finestrella;
+    //  la barra, e con lei il «tempo scaduto» del pannello, finisce ANTICIPO prima)
+    try { P = (g.pannello && g.pannello(apiTel(R, { pan: cont, io: chi.id, fine: fine + (R.cb.locale ? 0 : ANTICIPO) }))) || {}; } catch (e) { try { console.error("[prezzo] pannello", e); } catch (x) {} }
     R.premioPan = P; R.premioChi = chi.id;
     var pv = R.premioPriv && R.premioPriv.k === vm.k ? R.premioPriv.l.filter(function (m) { return m.per == null || m.per === chi.id; }) : [];
     pv.forEach(function (m) { if (P.privato) try { P.privato(m.m); } catch (e) {} });
@@ -1821,7 +1848,7 @@
     RU.ru.attiva(true);
     var mx = (R.vm.ruota.g || {})[chi.id]; if (mx && mx.v1 != null && campo !== "v1") RU.ru.mostra(campo === "b" ? 100 : mx.v1);
     RU.tb = Z().barraTempo(el, fine, function () { RU.ru.attiva(false); if (allaFine) allaFine(); });
-    R.tempoPan = RU.tb;
+    R.tempoPan = barraDi(R, RU.tb);
     var tit = campo === "v1" ? "🎡 Il tuo giro" : campo === "v2" ? "🎡 Secondo giro: hai " + (mx ? mx.v1 : "") : "🎁 Giro bonus";
     R.pan.metti([ testaPan(R, chi, (R.cb.locale === "telefono" ? chi.nome + " · " : "") + tit, RU.tb), RU.ru.el, nota ]).su();
     R.ruotaUI = RU;
@@ -1840,7 +1867,7 @@
     var bott = [b1, b2];
     b1.addEventListener("click", function () { vota(true); }); b2.addEventListener("click", function () { vota(false); });
     var tb = Z().barraTempo(el, fine, function () { bott.forEach(function (b) { b.disabled = true; }); if (allaFine) allaFine(); });
-    R.tempoPan = tb;
+    R.tempoPan = barraDi(R, tb);
     R.pan.metti([ testaPan(R, chi, (R.cb.locale === "telefono" ? chi.nome + ": " : "") + "Hai fatto " + x.v1 + ". E adesso?", tb), el("div", { class: "pz-scelte" }, bott) ]).su();
   }
   async function fRuota(R) {
@@ -1852,7 +1879,7 @@
     if (s === "giro1" || s === "turni") { ST.pubblico(S, "applauso"); }
     if (R.cb.locale === "telefono") return turniRuota(R, k);
     var me = mio(R); if (!me || !vm.ruota.g[me.id]) return attesa(R, guardaTesto(R));
-    var x = vm.ruota.g[me.id], fine = R.vmTs + (vm.restaMs || 0);
+    var x = vm.ruota.g[me.id], fine = fineVM(R);
     if (s === "giro1") { if (x.v1 == null) apriRuota(R, me, "v1", fine); else attesa(R, "🎡 Hai fatto " + x.v1 + " · aspettiamo gli altri…"); }
     else if (s === "decidi") {
       if (x.v1 >= 100) attesa(R, "💯 Hai fatto 100! Ti fermi lì");
@@ -1989,7 +2016,7 @@
     var me = mio(R); if (!me) return attesa(R, guardaTesto(R));
     var gia = R.mie["s" + k];
     if (gia != null || (V.sFatti || []).indexOf(me.id) >= 0) return attesa(R, testoScelta(gia));
-    apriSceltaVet(R, me, R.vmTs + Math.max(0, (vm.restaMs || 0) - 500), function (m) {
+    apriSceltaVet(R, me, fineVM(R) - (R.cb.locale ? 500 : 0), function (m) {   // (col Bot i tasti si spengono mezzo secondo prima, come sempre)
       R.mie["s" + k] = m; R.cb.mossa({ t: "vscelta", k: k, b: m }, me.id);
       clearTimeout(R.toAttesa); R.toAttesa = setTimeout(function () { if (vivoK(R, k)) attesa(R, testoScelta(m)); }, 700);
     });
@@ -2009,7 +2036,7 @@
     var bott = [b1, b2];
     b1.addEventListener("click", function () { vota(false); }); b2.addEventListener("click", function () { vota(true); });
     var tb = Z().barraTempo(el, fine, function () { if (R.cb.locale === "telefono") vota(false); else bott.forEach(function (b) { b.disabled = true; }); });
-    R.tempoPan = tb;
+    R.tempoPan = barraDi(R, tb);
     R.pan.metti([ testaPan(R, chi, (R.cb.locale === "telefono" ? chi.nome + ": " : "") + "🎁 Tieni o cambi?", tb), el("div", { class: "pz-scelte" }, bott) ]).su();
   }
   // la vetrina sul maxischermo: "a" quella vista da tutti, "b" la misteriosa (nuova: i pezzi della misteriosa saltano fuori uno dopo l'altro)
@@ -2037,7 +2064,7 @@
     if (!me) return attesa(R, guardaTesto(R));
     var gia = R.mie["v" + k];
     if (gia != null || (V.fatti || []).indexOf(me.id) >= 0) return attesa(R, gia != null ? "✅ Hai offerto " + E(gia) + " per la vetrina" : "✅ Hai fatto la tua offerta");
-    apriVetrina(R, me, R.vmTs + (vm.restaMs || 0), null);
+    apriVetrina(R, me, fineVM(R), null);
   }
   function rigaIndizio(R, chiId) {
     var I = (R.indizi || {})[chiId]; if (!I || I.kk == null || I.kk !== R.vm.k) return null;

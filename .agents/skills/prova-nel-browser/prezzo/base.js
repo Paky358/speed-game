@@ -885,5 +885,66 @@
     return "tutti la prima: «" + a.titoli.join(" | ") + "», la misteriosa «" + a.bTit + "» resta un mistero e non si brucia · tutti la misteriosa: «" + b.titoli.join(" | ") + "»" + errori();
   } });
 
+  // ===================== pz22: il tempo online con la rete lenta =====================
+  // (24 ott 2026, il proprietario: un tocco all'ultimissimo istante online può non arrivare; chi ricarica vedeva la barra del
+  //  tempo un po' indietro). Ogni messaggio ci mette 300 ms ad arrivare (BR.ritardo).
+  COPIONE.aggiungi("pz22", { nome: "Prezzo online in 2 con la rete lenta (300 ms): l'offerta dell'ultimo istante conta; chi ricarica ritrova il tempo giusto", fai: async function () {
+    conSpia();
+    var rit0 = W.BR.ritardo; W.BR.ritardo = 300;
+    try {
+      var X = await salaPrezzo(["Luca"], { formato: "solo", durata: "veloce", offerte: "segrete" }), C = X.C, P = X.P;
+      var idL = null, p1 = null, p2 = null, k1 = null, inCorso = false;
+      function H() { return P.__prezzoH; }
+      var ok = await giocaTutti(["Paky", "Luca"], function () { return (p1 && p2) || vm(C).fase === "fine"; }, { ms: 300000,
+        // (Luca offre solo quando lo dice la prova)
+        salta: function (n) { var h = H(); return n === "Luca" && h && h.fase === "offerta" && h.sotto === "offri" && !(p1 && p2); },
+        ognuno: async function () {
+          var h = H(), L = W.finestra("Luca"); if (!h || !L || inCorso) return;
+          if (h.fase !== "offerta" || h.sotto !== "offri") return;
+          idL = idL || (h.players.filter(function (p) { return p.nome === "Luca"; })[0] || {}).id;
+          var R = L.__prezzoR;
+          // 1) Luca offre 150 ms prima che finisca la SUA barra: con la rete lenta deve arrivare in tempo
+          if (!p1 && R && R.tempoPan && R.vm && R.vm.k === h.k && L.document.querySelector(".pz-pan.su .pz-ok")) {
+            inCorso = true; k1 = h.k;
+            var sc = h.scadenza, fineL = R.tempoPan.fine();
+            while (Date.now() < fineL - 150) await W.dorme(15);
+            var mandata = scrivi(L, 123), t = Date.now();
+            await W.aspetta(function () { return H().k !== k1; }, 10000);
+            p1 = { anticipo: sc - fineL, mandata: mandata, presa: !!(H().off && H().off[idL] != null), primaDellaFine: sc - t };
+            inCorso = false; return;
+          }
+          // 2) all'oggetto dopo, quando l'ultima foto della stanza è vecchia di qualche secondo, Luca ricarica
+          if (p1 && !p2 && h.k !== k1 && h.scadenza - Date.now() < 11000) {
+            inCorso = true;
+            // (la foto trattenuta della stanza, che chi ricarica riceve per prima, la facciamo vecchia di 8 secondi: crede che
+            //  manchi più tempo, come succede quando nessuno tocca niente per un po'; poi arriva quella nuova dell'host)
+            var vecchie = 0;
+            [0, 1].forEach(function (n) {
+              var u = W.ufficio(n), tp = "seratagiochi/v1/" + C + "/stato", r = u && u.retained && u.retained[tp], o = null;
+              try { o = JSON.parse(r); } catch (e) {}
+              var x = o && (o.vm || o);
+              if (x && x.restaMs) { x.restaMs += 8000; u.retained[tp] = JSON.stringify(o); vecchie++; }
+            });
+            var sc2 = h.scadenza, w2 = await W.ricarica("Luca");
+            var R2 = await W.aspetta(function () { var r = w2.__prezzoR; return r && r.tempoPan && w2.document.querySelector(".pz-pan.su .pz-ok") ? r : null; }, 12000);
+            if (!R2) { p2 = { niente: true }; inCorso = false; return; }
+            var f0 = R2.tempoPan.fine();
+            await W.dorme(2500);
+            p2 = { prima: f0 - (sc2 - 1000), dopo: R2.tempoPan.fine() - (sc2 - 1000), vecchie: vecchie };
+            inCorso = false;
+          }
+        } });
+      if (!ok) no("la prova non arriva in fondo (fase " + vm(C).fase + "." + vm(C).sotto + ")");
+      if (!p1) no("Luca non è arrivato a offrire all'ultimo istante");
+      if (!p1.mandata) no("l'offerta dell'ultimo istante non è partita (il pannello era già chiuso?)");
+      if (!p1.presa) no("l'offerta mandata 150 ms prima della fine della barra di Luca NON è arrivata (la sua barra finiva " + p1.anticipo + " ms prima di quella dell'host)");
+      if (p1.anticipo < 300) no("la barra di Luca finisce solo " + p1.anticipo + " ms prima di quella dell'host");
+      if (!p2 || p2.niente) no("dopo la ricarica Luca non ha il pannello col tempo");
+      if (!p2.vecchie) no("non ho trovato la foto trattenuta della stanza da invecchiare");
+      if (Math.abs(p2.dopo) > 800) no("dopo la ricarica la barra di Luca è fuori di " + Math.round(p2.dopo) + " ms (prima della foto nuova " + Math.round(p2.prima) + ")");
+      return "rete a 300 ms: la barra di Luca finisce " + p1.anticipo + " ms prima dell'host e l'offerta dell'ultimo istante arriva (mandata " + p1.primaDellaFine + " ms prima della chiusura) · dopo la ricarica la barra era fuori di " + Math.round(p2.prima) + " ms, poi " + Math.round(p2.dopo) + " ms" + errori();
+    } finally { W.BR.ritardo = rit0; senzaSpia(); }
+  } });
+
   W.PZ = { agisci: agisci, giocaTutti: giocaTutti, spiaFasi: spiaFasi, controllaVista: controllaVista, contrBot: contrBot, stessoTelefono: stessoTelefono, salaPrezzo: salaPrezzo, conSpia: conSpia, senzaSpia: senzaSpia };
 })();

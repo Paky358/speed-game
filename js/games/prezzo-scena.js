@@ -353,7 +353,8 @@
       if (resta <= 0 && !finito) { finito = true; clearInterval(id); if (onFine) onFine(); }
     }
     segna(); id = setInterval(segna, 200);
-    return { el: riga, ferma: function () { finito = true; clearInterval(id); }, allunga: function (f) { fine = f; tot = Math.max(tot, fine - Date.now()); finito = false; clearInterval(id); id = setInterval(segna, 200); segna(); } };
+    return { el: riga, ferma: function () { finito = true; clearInterval(id); }, allunga: function (f) { fine = f; tot = Math.max(tot, fine - Date.now()); finito = false; clearInterval(id); id = setInterval(segna, 200); segna(); },
+      fine: function () { return fine; }, finito: function () { return finito; } };
   }
 
   // ---------------- il pannello che sale dal basso (sopra lo studio) ----------------

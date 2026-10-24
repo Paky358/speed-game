@@ -9,14 +9,14 @@ window.SG_PREZZO = window.SG_PREZZO || { anno: 2026, prodotti: [], vetrine: [] }
 
 window.SG_PREZZO.prodotti.push(
   // ---------- 🛵 AUTO NUOVE (listini 2026, versione base) ----------
-  { id: "a4-renault-clio", cat: "motori", e: "🚗", nome: "Renault Clio", desc: "La Clio nuova, cinque porte, versione base", dove: "dal concessionario", prezzo: 16500 },   // patentati.it 2026: da 16.600
+  { id: "a4-renault-clio", cat: "motori", e: "🚗", nome: "Renault Clio", desc: "La Clio nuova, cinque porte, versione base TCe 115 CV", dove: "dal concessionario", prezzo: 18900 },   // 24 ott 2026: La Clio nuova parte da 18.900 €, non 16.500 (prezzo della generazione vecchia).
   { id: "a4-dacia-spring", cat: "motori", e: "🔌", nome: "Dacia Spring", desc: "La piccola elettrica della Dacia, nuova", dove: "dal concessionario", prezzo: 18000 },   // patentati.it 2026: da 17.900
   { id: "a4-dacia-duster", cat: "motori", e: "🚙", nome: "Dacia Duster", desc: "Il SUV della Dacia, nuovo, versione base", dove: "dal concessionario", prezzo: 20000 },   // patentati.it 2026: da 19.900
   { id: "a4-fiat-grande-panda", cat: "motori", e: "🚗", nome: "Fiat Grande Panda ibrida", desc: "La Panda nuova, quella più grande, versione base", dove: "dal concessionario", prezzo: 20500, cur: "Si fa in Serbia, a Kragujevac, ma il nome è un omaggio alla Panda del 1980" },   // patentati.it 2026: Hybrid da 20.400
   { id: "a4-toyota-aygo-x", cat: "motori", e: "🚗", nome: "Toyota Aygo X", desc: "La citycar della Toyota, nuova, versione base", dove: "dal concessionario", prezzo: 21000 },   // patentati.it 2026: da 20.850
   { id: "a4-vw-polo", cat: "motori", e: "🚗", nome: "Volkswagen Polo", desc: "L'utilitaria tedesca, nuova, versione base", dove: "dal concessionario", prezzo: 22000 },   // patentati.it 2026: da 22.250
   { id: "a4-lancia-ypsilon", cat: "motori", e: "🚗", nome: "Lancia Ypsilon ibrida", desc: "La Ypsilon nuova, versione base", dove: "dal concessionario", prezzo: 25000 },   // patentati.it 2026: Ibrida da 25.200
-  { id: "a4-renault-5", cat: "motori", e: "🔌", nome: "Renault 5 elettrica", desc: "La «R5» rifatta da capo, a batteria, versione base", dove: "dal concessionario", prezzo: 25000, cur: "La prima Renault 5 uscì nel 1972" },   // patentati.it 2026: da 24.950
+  { id: "a4-renault-5", cat: "motori", e: "🔌", nome: "Renault 5 elettrica", desc: "La «R5» rifatta da capo, a batteria, versione base (Evolution)", dove: "dal concessionario", prezzo: 28150, cur: "La prima Renault 5 uscì nel 1972" },   // 24 ott 2026: La Five da 24.900 € non è più in listino.
   { id: "a4-fiat-600", cat: "motori", e: "🚙", nome: "Fiat 600 Hybrid", desc: "Il SUV piccolo della Fiat, nuovo, versione base", dove: "dal concessionario", prezzo: 26000 },   // patentati.it 2026: da 25.900
   { id: "a4-vw-golf", cat: "motori", e: "🚗", nome: "Volkswagen Golf", desc: "La Golf nuova, versione base a benzina", dove: "dal concessionario", prezzo: 31500, cur: "Dal 1974 ne hanno costruite più di 35 milioni" },   // patentati.it 2026: da 31.350
   { id: "a4-vw-t-roc", cat: "motori", e: "🚙", nome: "Volkswagen T-Roc", desc: "Il SUV compatto della Volkswagen, versione base", dove: "dal concessionario", prezzo: 34500 },   // patentati.it 2026: da 34.300
@@ -31,19 +31,19 @@ window.SG_PREZZO.prodotti.push(
   // ---------- 🏍️ MOTO E BICI (listini 2026) ----------
   { id: "a4-harley-nightster", cat: "motori", e: "🏍️", nome: "Harley-Davidson Nightster", desc: "La Sportster col motore da 975 cc, nuova", dove: "dal concessionario", prezzo: 11500, cur: "Nel 2026 il listino è sceso di 4.400 €" },   // InMoto e MotorBox 2026: 11.500 (prima 15.900)
   { id: "a4-ducati-monster", cat: "motori", e: "🏍️", nome: "Ducati Monster", desc: "La naked di Borgo Panigale, nuova, versione base", dove: "dal concessionario", prezzo: 13000, cur: "Il primo Monster è del 1993" },   // inSella 2026: 12.890
-  { id: "a4-pinarello-dogma", cat: "motori", e: "🚴", nome: "Pinarello Dogma F", desc: "La bici da corsa dei campioni, col cambio elettronico", dove: "nel negozio di bici", prezzo: 15000, wow: 1, cur: "Le Pinarello si fanno a Treviso dal 1952" },   // 2026 Dura-Ace Di2: 14.500-16.400 nei negozi
+  { id: "a4-pinarello-dogma", cat: "motori", e: "🚴", nome: "Pinarello Dogma F", desc: "La bici da corsa dei campioni, col cambio elettronico", dove: "nel negozio di bici", prezzo: 15000, wow: 1, cur: "Pinarello nasce a Treviso nel 1952" },   // 24 ott 2026: 'Si fanno a Treviso' non e confermato (molti telai Pinarello sono prodotti in Asia): meglio dire solo dove e n
   { id: "a4-bmw-r12-ninet", cat: "motori", e: "🏍️", nome: "BMW R 12 nineT", desc: "La BMW classica col motore boxer, nuova", dove: "dal concessionario", prezzo: 19000 },   // MotorBox, listino BMW 2026 chiavi in mano: 18.950
   { id: "a4-bmw-r1300gs", cat: "motori", e: "🏍️", nome: "BMW R 1300 GS", desc: "La maxi enduro tedesca dei grandi viaggi, versione base", dove: "dal concessionario", prezzo: 21500 },   // MotorBox, listino BMW 2026 chiavi in mano: 21.500
 
   // ---------- 👟 OROLOGI ----------
-  { id: "a4-omega-moonwatch", cat: "vestiti", e: "⌚", nome: "Omega Speedmaster Moonwatch", desc: "L'orologio andato sulla Luna, in acciaio", dove: "in boutique", prezzo: 8900, cur: "Era al polso di Buzz Aldrin sulla Luna nel 1969" },   // omegawatches.com/it-it: 8.900
+  { id: "a4-omega-moonwatch", cat: "vestiti", e: "⌚", nome: "Omega Speedmaster Moonwatch", desc: "L'orologio andato sulla Luna, in acciaio, col vetro Hesalite", dove: "in boutique", prezzo: 7900, cur: "Era al polso di Buzz Aldrin sulla Luna nel 1969" },   // 24 ott 2026: 8.900 € è la versione col vetro zaffiro.
   { id: "a4-rolex-submariner", cat: "vestiti", e: "⌚", nome: "Rolex Submariner Date", desc: "L'orologio da sub, acciaio e quadrante nero", dove: "dal rivenditore autorizzato", prezzo: 11000, wow: 1, cur: "Trovarlo in negozio è un'impresa: spesso c'è la lista d'attesa" },   // Wristler, gennaio 2026 (UE): 11.100
 
   // ---------- 📱 TECNOLOGIA DI FASCIA ALTA ----------
   { id: "a4-galaxy-fold8", cat: "tech", e: "📱", nome: "Samsung Galaxy Z Fold8", desc: "Il telefono che si apre come un libro, 256 GB", prezzo: 2099 },   // tuttoandroid e telefonino.net, set 2026: listino 2.099
   { id: "a4-dji-mavic", cat: "tech", e: "🚁", nome: "Drone DJI Mavic 4 Pro", desc: "Con tre batterie, la borsa e il radiocomando", prezzo: 2750 },   // Macitynet: Fly More Combo 2.729 (Unieuro: consigliato 2.729)
   { id: "a4-studio-display", cat: "tech", e: "🖥️", nome: "Apple Studio Display XDR", desc: "Lo schermo da 27 pollici, col piede regolabile", dove: "all'Apple Store", prezzo: 3499, wow: 1, cur: "Il computer non c'è: è solo lo schermo" },   // Apple Italia, marzo 2026: 3.499
-  { id: "a4-leica-q3", cat: "tech", e: "📷", nome: "Fotocamera Leica Q3", desc: "La compatta tedesca col bollino rosso, obiettivo fisso", prezzo: 5950, wow: 1 },   // Leica Italia: 5.950 (TechRadar: 5.980)
+  { id: "a4-leica-q3", cat: "tech", e: "📷", nome: "Fotocamera Leica Q3", desc: "La compatta tedesca col bollino rosso, obiettivo fisso", prezzo: 6550, wow: 1 },   // 24 ott 2026: 5.950 era il prezzo di lancio del 2023; oggi il listino italiano è 6.550 €.
 
   // ---------- 🇮🇹 CASE, AFFITTI E UNIVERSITÀ ----------
   { id: "a4-stanza-milano", cat: "curiosita", e: "🛏️", nome: "Stanza singola in affitto", desc: "In un appartamento con altri studenti, per un mese", dove: "a Milano", prezzo: 700 },   // QuiFinanza 2026: 640-730
@@ -91,11 +91,11 @@ window.SG_PREZZO.vetrine.push(
     { e: "🏆", nome: "Finale di Champions League", desc: "Un posto in prima categoria", dove: "a Budapest", prezzo: 950 },
     { e: "👕", nome: "Maglia della Nazionale", desc: "Quella identica ai giocatori", prezzo: 150 },
     { e: "⌚", nome: "Rolex Submariner Date", desc: "Per guardare quanto manca al fischio finale", prezzo: 11000 },
-    { e: "🧣", nome: "Sciarpa della squadra", desc: "Quella ufficiale, da sventolare allo stadio", prezzo: 20 }
+    { e: "🧣", nome: "Sciarpa della squadra", desc: "Quella ufficiale, da sventolare allo stadio", prezzo: 25 }   // 24 ott 2026: 20 è troppo basso per una sciarpa ufficiale di club (circa 25 €).
   ] },
   { id: "a4-v-collezionista", titolo: "Il collezionista", e: "🧱", pezzi: [
     { e: "🚢", nome: "LEGO Titanic", desc: "Il set da 9.090 pezzi, da montare con calma", prezzo: 679.99 },
-    { e: "⌚", nome: "Omega Speedmaster Moonwatch", desc: "L'orologio andato sulla Luna", prezzo: 8900 },
+    { e: "⌚", nome: "Omega Speedmaster Moonwatch Professional", desc: "Con il vetro zaffiro e il bracciale in acciaio, come quello andato sulla Luna", prezzo: 8900 },   // 24 ott 2026: Il prezzo 8.900 è giusto per la versione con vetro zaffiro; senza il dettaglio sul vetro i giocatori potrebber
     { e: "🖥️", nome: "Apple Studio Display XDR", desc: "Lo schermo da 27 pollici per guardarli tutti", prezzo: 3499 },
     { e: "🥚", nome: "Tamagotchi", desc: "L'ovetto originale, da tenere ancora nella scatola", prezzo: 22 }
   ] }

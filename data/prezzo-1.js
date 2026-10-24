@@ -9,11 +9,11 @@ window.SG_PREZZO.prodotti.push(
   { id: "a1-nutella-750", cat: "spesa", e: "🍫", nome: "Nutella, 750 g", desc: "Il barattolo grande di vetro", dove: "al supermercato", prezzo: 6.99 },   // stima: scaffale 6,49-7,49
   { id: "a1-spaghetti-barilla", cat: "spesa", e: "🍝", nome: "Spaghetti Barilla n.5, 500 g", desc: "Il pacco blu di sempre", dove: "al supermercato", prezzo: 1.29 },
   { id: "a1-latte-fresco", cat: "spesa", e: "🥛", nome: "Latte fresco intero, 1 litro", desc: "Di marca, in bottiglia, dal banco frigo", dove: "al supermercato", prezzo: 1.85 },
-  { id: "a1-uova-6", cat: "spesa", e: "🥚", nome: "Sei uova grandi", desc: "Da galline allevate a terra", dove: "al supermercato", prezzo: 2.5, cur: "Nel 2025 le uova sono aumentate di quasi un quarto in un anno" },
-  { id: "a1-olio-evo", cat: "spesa", e: "🫒", nome: "Olio extravergine, 1 litro", desc: "Italiano al 100%, bottiglia di una marca nota", dove: "al supermercato", prezzo: 8.9, cur: "Nel 2019 un litro di extravergine costava in media meno di 4 €" },   // stima: 9,5 nel 2024, in calo nel 2026
-  { id: "a1-caffe-moka", cat: "spesa", e: "☕", nome: "Caffè per moka, 250 g", desc: "Lavazza Qualità Rossa, il pacchetto rosso", dove: "al supermercato", prezzo: 5.29 },
-  { id: "a1-passata-mutti", cat: "spesa", e: "🍅", nome: "Passata di pomodoro, 700 g", desc: "Mutti, nella bottiglia di vetro", dove: "al supermercato", prezzo: 1.69 },
-  { id: "a1-mozzarella-bufala", cat: "spesa", e: "🧀", nome: "Mozzarella di bufala, 250 g", desc: "Campana DOP, in busta col suo latte", dove: "al supermercato", prezzo: 3.9 },
+  { id: "a1-uova-6", cat: "spesa", e: "🥚", nome: "Sei uova grandi", desc: "Da galline allevate a terra", dove: "al supermercato", prezzo: 2.5, cur: "Una gallina ovaiola fa circa 300 uova all'anno" },   // 24 ott 2026: Il prezzo di 2,50 € va bene.
+  { id: "a1-olio-evo", cat: "spesa", e: "🫒", nome: "Olio extravergine, 1 litro", desc: "Italiano al 100%, bottiglia di una marca nota", dove: "al supermercato", prezzo: 10.99, cur: "Nel 2019 un litro di extravergine costava in media meno di 4 €" },   // 24 ott 2026: 8,90 è un prezzo da offerta: a scaffale pieno una marca nota 100% italiana sta intorno a 10-11 €.
+  { id: "a1-caffe-moka", cat: "spesa", e: "☕", nome: "Caffè per moka, 250 g", desc: "Lavazza Qualità Rossa, il pacchetto rosso", dove: "al supermercato", prezzo: 5.99 },   // 24 ott 2026: Il caffè è rincarato: 5,29 € è sotto il prezzo pieno di scaffale.
+  { id: "a1-passata-mutti", cat: "spesa", e: "🍅", nome: "Passata di pomodoro, 700 g", desc: "Mutti, nella bottiglia di vetro", dove: "al supermercato", prezzo: 1.89 },   // 24 ott 2026: 1,69 è troppo basso (sembra un prezzo in offerta).
+  { id: "a1-mozzarella-bufala", cat: "spesa", e: "🧀", nome: "Mozzarella di bufala, 250 g", desc: "Campana DOP, in busta col suo latte", dove: "al supermercato", prezzo: 4.49 },   // 24 ott 2026: 3,90 è troppo basso, 4,90 troppo alto: il prezzo pieno del 250 g DOP nelle grandi catene è 4,49-4,50.
   { id: "a1-coca-cola", cat: "spesa", e: "🥤", nome: "Coca-Cola, 1,5 litri", desc: "La bottiglia grande della pizza del sabato sera", dove: "al supermercato", prezzo: 1.99 },
   { id: "a1-acqua-6", cat: "spesa", e: "💧", nome: "Acqua naturale, 6 bottiglie", desc: "Sei bottiglie da 1,5 litri di una marca nota", dove: "al supermercato", prezzo: 2.7 },
   { id: "a1-banane", cat: "spesa", e: "🍌", nome: "Banane, 1 kg", desc: "Gialle, quelle col bollino", dove: "al supermercato", prezzo: 1.99 },
@@ -23,7 +23,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a1-lievito", cat: "spesa", e: "🍞", nome: "Lievito di birra fresco", desc: "Il cubetto da 25 g, dal banco frigo", dove: "al supermercato", prezzo: 0.3, wow: 1 },
   { id: "a1-peroni-66", cat: "spesa", e: "🍺", nome: "Birra Peroni, 66 cl", desc: "La bottiglia grande, da frigo", dove: "al supermercato", prezzo: 1.49 },
   { id: "a1-tonno-rio", cat: "spesa", e: "🐟", nome: "Tonno Rio Mare, 3 scatolette", desc: "All'olio d'oliva, da 80 g l'una", dove: "al supermercato", prezzo: 5.99 },
-  { id: "a1-pan-di-stelle", cat: "spesa", e: "🍪", nome: "Biscotti Pan di Stelle, 350 g", desc: "Quelli con le stelline di zucchero", dove: "al supermercato", prezzo: 2.99 },
+  { id: "a1-pan-di-stelle", cat: "spesa", e: "🍪", nome: "Biscotti Pan di Stelle, 350 g", desc: "Quelli con le stelline di zucchero", dove: "al supermercato", prezzo: 2.65 },   // 24 ott 2026: 2,99 è alto, ma 2,39 è troppo basso: a scaffale pieno il 350 g sta a 2,65 (7,57 €/kg).
   { id: "a1-tortellini", cat: "spesa", e: "🥟", nome: "Tortellini freschi, 250 g", desc: "Al prosciutto crudo, dal banco frigo", dove: "al supermercato", prezzo: 3.7 },
   { id: "a1-crudo-parma", cat: "spesa", e: "🥓", nome: "Prosciutto di Parma, 100 g", desc: "Stagionato 18 mesi, affettato al banco", dove: "al supermercato", prezzo: 4 },
   { id: "a1-mortadella", cat: "spesa", e: "🍖", nome: "Mortadella Bologna, 100 g", desc: "IGP, affettata sottile al banco", dove: "al supermercato", prezzo: 2.2 },
@@ -36,22 +36,22 @@ window.SG_PREZZO.prodotti.push(
   { id: "a1-patatine", cat: "spesa", e: "🥔", nome: "Patatine San Carlo, 180 g", desc: "Le classiche, nel sacchetto grande", dove: "al supermercato", prezzo: 2.79 },
   { id: "a1-magnum", cat: "spesa", e: "🍦", nome: "Magnum Classic, 4 gelati", desc: "La scatola del banco surgelati", dove: "al supermercato", prezzo: 4.99 },
   { id: "a1-pollo-intero", cat: "spesa", e: "🍗", nome: "Pollo intero, 1,5 kg", desc: "Da cuocere al forno con le patate", dove: "al supermercato", prezzo: 7.5 },
-  { id: "a1-parmigiano-kg", cat: "spesa", e: "🧀", nome: "Parmigiano Reggiano, 1 kg", desc: "Stagionato 24 mesi, al banco", dove: "al supermercato", prezzo: 24, cur: "Per una forma da 40 kg servono circa 550 litri di latte" },   // controllo 16 ott: Esselunga 23 €/kg, Coop 27,50 €/kg
+  { id: "a1-parmigiano-kg", cat: "spesa", e: "🧀", nome: "Parmigiano Reggiano, 1 kg", desc: "Stagionato 24 mesi, al banco", dove: "al supermercato", prezzo: 26.9, cur: "Per una forma da 40 kg servono circa 550 litri di latte" },   // 24 ott 2026: 24 € al kg è circa 10-15% sotto lo scaffale.
   { id: "a1-pecorino-kg", cat: "spesa", e: "🧀", nome: "Pecorino Romano, 1 kg", desc: "DOP, un bel pezzo al banco", dove: "al supermercato", prezzo: 19 },
   { id: "a1-macinato-kg", cat: "spesa", e: "🥩", nome: "Carne macinata, 1 kg", desc: "Di manzo, per il ragù della domenica", dove: "al banco della macelleria", prezzo: 14 },
-  { id: "a1-fiorentina-kg", cat: "spesa", e: "🥩", nome: "Bistecca alla fiorentina, 1 kg", desc: "Con l'osso, alta tre dita, da cuocere a casa", dove: "in macelleria", prezzo: 35 },
-  { id: "a1-treccia-bufala", cat: "spesa", e: "🧀", nome: "Treccia di bufala, 1 kg", desc: "Fresca di giornata", dove: "al caseificio, in Campania", prezzo: 15 },
-  { id: "a1-pistacchi-bronte", cat: "spesa", e: "🥜", nome: "Pistacchi di Bronte, 1 kg", desc: "DOP, già sgusciati", dove: "in Sicilia, dal produttore", prezzo: 65, wow: 1, cur: "Il pistacchio di Bronte si raccoglie solo un anno sì e uno no" },
+  { id: "a1-fiorentina-kg", cat: "spesa", e: "🥩", nome: "Bistecca alla fiorentina, 1 kg", desc: "Con l'osso, alta tre dita, da cuocere a casa", dove: "al supermercato", prezzo: 29.9 },   // 24 ott 2026: Prodotto della spesa: va comprato al supermercato (banco carne), dove una fiorentina con osso sta tra 25 e 32 
+  { id: "a1-treccia-bufala", cat: "spesa", e: "🧀", nome: "Treccia di bufala, 1 kg", desc: "Fresca di giornata", dove: "al mercato, in Campania", prezzo: 15 },   // 24 ott 2026: Un «caseificio» non è un supermercato né un mercato: dove riscritto.
+  { id: "a1-pistacchi-bronte", cat: "spesa", e: "🥜", nome: "Pistacchi di Bronte, 1 kg", desc: "DOP, già sgusciati", dove: "al mercato, in Sicilia", prezzo: 65, wow: 1, cur: "Il pistacchio di Bronte si raccoglie solo un anno sì e uno no" },   // 24 ott 2026: Il «dal produttore» non torna con la categoria spesa.
   { id: "a1-ferrero-30", cat: "spesa", e: "🍫", nome: "Ferrero Rocher, 30 praline", desc: "La confezione grande da regalo", dove: "al supermercato, a Natale", prezzo: 12.9 },
-  { id: "a1-moet", cat: "spesa", e: "🍾", nome: "Champagne Moët & Chandon", desc: "Brut Impérial, bottiglia da 75 cl", dove: "in enoteca", prezzo: 49 },
+  { id: "a1-moet", cat: "spesa", e: "🍾", nome: "Champagne Moët & Chandon", desc: "Brut Impérial, bottiglia da 75 cl", dove: "al supermercato", prezzo: 49 },   // 24 ott 2026: Categoria spesa: si compra al supermercato, non in enoteca.
   { id: "a1-ferrari-brut", cat: "spesa", e: "🥂", nome: "Spumante Ferrari Brut, 75 cl", desc: "Il Trentodoc dei brindisi (non l'auto!)", dove: "al supermercato", prezzo: 24 },
   { id: "a1-aperol", cat: "spesa", e: "🍊", nome: "Aperol, 1 litro", desc: "La bottiglia per fare lo spritz a casa", dove: "al supermercato", prezzo: 15.9 },
-  { id: "a1-brunello", cat: "spesa", e: "🍷", nome: "Brunello di Montalcino, 75 cl", desc: "Una bottiglia di annata recente", dove: "in enoteca", prezzo: 35 },
+  { id: "a1-brunello", cat: "spesa", e: "🍷", nome: "Brunello di Montalcino, 75 cl", desc: "Una bottiglia di annata recente", dove: "al supermercato", prezzo: 35 },   // 24 ott 2026: Per la categoria spesa il «dove» non può essere l'enoteca.
   { id: "a1-montenegro", cat: "spesa", e: "🥃", nome: "Amaro Montenegro, 70 cl", desc: "La bottiglia da tenere in credenza", dove: "al supermercato", prezzo: 14 },
   { id: "a1-cassa-peroni", cat: "spesa", e: "🍻", nome: "Cassa di 24 birre Peroni", desc: "Bottigliette da 33 cl, per la partita", dove: "al supermercato", prezzo: 19.9 },
   { id: "a1-carbonara-4", cat: "spesa", e: "🍳", nome: "Spesa per la carbonara per 4", desc: "Guanciale, pecorino, 4 uova, 500 g di spaghetti", dove: "al supermercato", prezzo: 11 },
   { id: "a1-detersivo", cat: "spesa", e: "🧴", nome: "Detersivo per lavatrice", desc: "Liquido, di marca, per 40 lavaggi", dove: "al supermercato", prezzo: 10 },
-  { id: "a1-prosciutto-intero", cat: "spesa", e: "🍖", nome: "Prosciutto di Parma intero", desc: "Con l'osso, circa 10 kg, da affettare a casa", dove: "dal salumificio", prezzo: 200, wow: 1 },
+  { id: "a1-prosciutto-intero", cat: "spesa", e: "🍖", nome: "Prosciutto di Parma intero", desc: "Con l'osso, circa 10 kg, da affettare a casa", dove: "in salumeria", prezzo: 290, wow: 1 },   // 24 ott 2026: 200 € è troppo poco: un Parma DOP intero con osso da circa 10 kg costa 267-308 €.
 
   // ---------- ☕ BAR, PIZZERIA E RISTORANTI ----------
   { id: "a1-caffe-milano", cat: "bar", e: "☕", nome: "Caffè al banco", desc: "Un espresso in piedi, senza brioche", dove: "in un bar di Milano", prezzo: 1.25, cur: "Milano è sotto la media italiana (1,29 €): la città più cara è Bolzano, 1,51 €" },   // Assoutenti/Mimit 2026: Milano 1,27
@@ -59,14 +59,14 @@ window.SG_PREZZO.prodotti.push(
   { id: "a1-cornetto", cat: "bar", e: "🥐", nome: "Cornetto alla marmellata", desc: "Al banco, appena sfornato", dove: "in un bar di città", prezzo: 1.4 },
   { id: "a1-spritz-venezia", cat: "bar", e: "🍹", nome: "Spritz al bacaro", desc: "Con Aperol o Select, e l'oliva infilzata", dove: "a Venezia", prezzo: 3.5, wow: 1, cur: "A Padova nel 2025 i bar si sono messi d'accordo: mai più di 4 € a spritz" },
   { id: "a1-spritz-milano", cat: "bar", e: "🍹", nome: "Spritz all'aperitivo", desc: "Con le patatine e le olive", dove: "in un bar di Milano", prezzo: 9 },
-  { id: "a1-margherita-napoli", cat: "bar", e: "🍕", nome: "Pizza margherita", desc: "Seduti al tavolo, in una pizzeria storica", dove: "a Napoli", prezzo: 6, cur: "La stessa margherita, nella stessa pizzeria aperta a Milano, costa circa 10 €" },
+  { id: "a1-margherita-napoli", cat: "bar", e: "🍕", nome: "Pizza margherita", desc: "Seduti al tavolo, in una pizzeria storica", dove: "a Napoli", prezzo: 6, cur: "Si racconta che la margherita sia nata a Napoli nel 1889, in onore della regina Margherita di Savoia" },   // 24 ott 2026: Confermo la sostituzione della curiosità: la frase su Milano a 10 € non è verificabile, mentre la storia della
   { id: "a1-suppli", cat: "bar", e: "🍙", nome: "Supplì al telefono", desc: "Riso, ragù e mozzarella filante, fritto", dove: "in una friggitoria di Roma", prezzo: 2.5 },
-  { id: "a1-arancina", cat: "bar", e: "🍙", nome: "Arancina al ragù", desc: "Quella tonda, appena fritta", dove: "in rosticceria, a Palermo", prezzo: 2.5, cur: "A Palermo si dice «arancina», a Catania «arancino»" },
+  { id: "a1-arancina", cat: "bar", e: "🍙", nome: "Arancina al ragù", desc: "Quella tonda, appena fritta", dove: "in rosticceria, a Palermo", prezzo: 3, cur: "A Palermo si dice «arancina», a Catania «arancino»" },   // 24 ott 2026: Nelle rosticcerie di Palermo oggi si è sui 3 €.
   { id: "a1-piadina", cat: "bar", e: "🌯", nome: "Piadina crudo e squacquerone", desc: "Con la rucola, piegata in due", dove: "in un chiosco in Romagna", prezzo: 7 },
   { id: "a1-cono-gelato", cat: "bar", e: "🍦", nome: "Cono con due gusti", desc: "Gelato artigianale, senza panna", dove: "in gelateria", prezzo: 3 },
   { id: "a1-lampredotto", cat: "bar", e: "🥪", nome: "Panino col lampredotto", desc: "Bagnato nel brodo, con la salsa verde", dove: "da un chiosco di Firenze", prezzo: 5.5 },
   { id: "a1-focaccia", cat: "bar", e: "🍞", nome: "Un pezzo di focaccia", desc: "Quella unta e salata, da colazione", dove: "in un forno di Genova", prezzo: 2 },
-  { id: "a1-cannolo", cat: "bar", e: "🍰", nome: "Cannolo siciliano", desc: "Riempito al momento con la ricotta", dove: "in pasticceria, a Palermo", prezzo: 3 },
+  { id: "a1-cannolo", cat: "bar", e: "🍰", nome: "Cannolo siciliano", desc: "Riempito al momento con la ricotta", dove: "in pasticceria, a Palermo", prezzo: 3.5 },   // 24 ott 2026: A Palermo in una pasticceria vera costa circa 3,50 €, non 3.
   { id: "a1-sfogliatella", cat: "bar", e: "🥐", nome: "Sfogliatella riccia", desc: "Calda, appena uscita dal forno", dove: "a Napoli", prezzo: 2 },
   { id: "a1-spremuta", cat: "bar", e: "🍊", nome: "Spremuta d'arancia", desc: "Un bicchiere, spremuta al momento", dove: "al bar", prezzo: 3.5 },
   { id: "a1-granita-brioche", cat: "bar", e: "🍧", nome: "Granita con la brioche", desc: "Alla mandorla, con la brioche col tuppo", dove: "in un bar di Catania", prezzo: 4.5 },
@@ -84,7 +84,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a1-arrosticini", cat: "bar", e: "🍢", nome: "Dieci arrosticini", desc: "Spiedini di pecora cotti alla brace", dove: "in Abruzzo", prezzo: 10 },
   { id: "a1-negroni", cat: "bar", e: "🍸", nome: "Negroni", desc: "Il cocktail rosso, con la scorza d'arancia", dove: "in un cocktail bar di Milano", prezzo: 12 },
   { id: "a1-colazione-4", cat: "bar", e: "🥐", nome: "Colazione per quattro", desc: "Quattro cappuccini e quattro cornetti al banco", dove: "in un bar di città", prezzo: 12 },
-  { id: "a1-orecchiette", cat: "bar", e: "🍝", nome: "Orecchiette alle cime di rapa", desc: "Un piatto, in trattoria", dove: "a Bari", prezzo: 12 },
+  { id: "a1-orecchiette", cat: "bar", e: "🍝", nome: "Orecchiette alle cime di rapa", desc: "Un piatto, in trattoria", dove: "a Bari", prezzo: 10 },   // 24 ott 2026: 12 è il massimo della forbice, la media in trattoria è circa 10.
   { id: "a1-carbonara-roma", cat: "bar", e: "🍝", nome: "Spaghetti alla carbonara", desc: "Un piatto, col guanciale croccante", dove: "in una trattoria di Roma", prezzo: 14 },
   { id: "a1-tagliatelle", cat: "bar", e: "🍝", nome: "Tagliatelle al ragù", desc: "Un piatto di pasta fatta a mano", dove: "in una trattoria di Bologna", prezzo: 13 },
   { id: "a1-menu-pranzo", cat: "bar", e: "🍽️", nome: "Menù del giorno a pranzo", desc: "Primo, secondo, acqua e caffè", dove: "in una trattoria di città", prezzo: 14 },
@@ -96,7 +96,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a1-gelato-kg", cat: "bar", e: "🍨", nome: "Vaschetta di gelato, 1 kg", desc: "Quattro gusti, da portare a casa", dove: "in gelateria", prezzo: 24 },
   { id: "a1-cacciucco", cat: "bar", e: "🍲", nome: "Cacciucco", desc: "La zuppa di pesce col pane abbrustolito", dove: "a Livorno", prezzo: 25 },
   { id: "a1-sushi-ayce", cat: "bar", e: "🍣", nome: "Sushi «mangia quanto vuoi»", desc: "A cena, bevande escluse", dove: "in un sushi di città", prezzo: 27.9 },
-  { id: "a1-cotoletta", cat: "bar", e: "🍖", nome: "Cotoletta alla milanese", desc: "Quella con l'osso, alta, fritta nel burro", dove: "in un ristorante di Milano", prezzo: 28 },
+  { id: "a1-cotoletta", cat: "bar", e: "🍖", nome: "Cotoletta alla milanese", desc: "Quella con l'osso, alta, fritta nel burro", dove: "in un ristorante di Milano", prezzo: 32 },   // 24 ott 2026: La cotoletta con l'osso a Milano oggi sta tra 30 e 35 €: 28 è troppo poco.
   { id: "a1-brunch", cat: "bar", e: "🥞", nome: "Brunch della domenica", desc: "A buffet, dolce e salato, caffè compreso", dove: "in un locale di Milano", prezzo: 28 },
   { id: "a1-agriturismo", cat: "bar", e: "🐓", nome: "Pranzo in agriturismo", desc: "Menù fisso della domenica, vino compreso", dove: "in Toscana, a persona", prezzo: 32 },
   { id: "a1-torta-compleanno", cat: "bar", e: "🎂", nome: "Torta di compleanno per 12", desc: "Pan di Spagna e crema, con la scritta", dove: "in pasticceria", prezzo: 40 },
@@ -110,24 +110,24 @@ window.SG_PREZZO.prodotti.push(
   // ---------- 🧾 SERVIZI E BOLLETTE ----------
   { id: "a1-bagno-venezia", cat: "servizi", e: "🚻", nome: "Bagno pubblico", desc: "Un ingresso, in centro", dove: "a Venezia", prezzo: 1.5, wow: 1 },
   { id: "a1-asciugatrice", cat: "servizi", e: "🌀", nome: "Asciugatrice a gettone", desc: "Venti minuti di asciugatura", dove: "in lavanderia self-service", prezzo: 2 },
-  { id: "a1-metro-milano", cat: "servizi", e: "🚇", nome: "Biglietto della metro", desc: "Corsa singola, vale 90 minuti", dove: "a Milano", prezzo: 2.2, cur: "Fino al 2023 costava 2 €. Dal 2026 non esiste più il biglietto di carta" },
+  { id: "a1-metro-milano", cat: "servizi", e: "🚇", nome: "Biglietto della metro", desc: "Corsa singola, vale 90 minuti", dove: "a Milano", prezzo: 2.2, cur: "Vale 90 minuti e si paga anche con la carta contactless o col telefono, direttamente ai tornelli" },   // 24 ott 2026: Prezzo esatto.
   { id: "a1-chiave", cat: "servizi", e: "🔑", nome: "Copia di una chiave", desc: "Chiave semplice di casa, non blindata", dove: "dalla ferramenta", prezzo: 3.5 },
   { id: "a1-camicia", cat: "servizi", e: "👔", nome: "Camicia lavata e stirata", desc: "Riconsegnata sulla gruccia", dove: "in lavanderia", prezzo: 3.5 },
   { id: "a1-lavatrice-gettone", cat: "servizi", e: "🧺", nome: "Lavatrice a gettone, 8 kg", desc: "Un lavaggio, detersivo compreso", dove: "in lavanderia self-service", prezzo: 4 },
-  { id: "a1-babysitter", cat: "servizi", e: "👶", nome: "Un'ora di babysitter", desc: "Per un bambino, di sera", dove: "media italiana", prezzo: 9.5, cur: "Nel 2022 la media era 8,30 € l'ora; a Milano oggi si arriva a 10-12 €" },
+  { id: "a1-babysitter", cat: "servizi", e: "👶", nome: "Un'ora di babysitter", desc: "Per un bambino, di sera", dove: "media italiana", prezzo: 9.5, cur: "A Milano oggi si arriva a 10-12 € l'ora" },   // 24 ott 2026: Tolto «nel 2022 la media era 8,30 €»: non confermato.
   { id: "a1-dog-sitter", cat: "servizi", e: "🐕", nome: "Passeggiata col dog sitter", desc: "Un'ora al parco con il cane", dove: "in città", prezzo: 12 },
   { id: "a1-orlo", cat: "servizi", e: "🧵", nome: "Orlo ai pantaloni", desc: "Accorciare un paio di jeans", dove: "dalla sarta sotto casa", prezzo: 10 },
-  { id: "a1-spotify", cat: "servizi", e: "🎧", nome: "Spotify Premium per un mese", desc: "Abbonamento per una persona", prezzo: 11.99, cur: "Nel 2023 costava 9,99 € al mese" },
+  { id: "a1-spotify", cat: "servizi", e: "🎧", nome: "Spotify Premium per un mese", desc: "Abbonamento per una persona", prezzo: 11.99, cur: "Nel 2022 costava ancora 9,99 euro al mese" },   // 24 ott 2026: Il prezzo va bene; nel 2023 e gia salito a 10,99, quindi 'nel 2023 costava 9,99' era impreciso.
   { id: "a1-cappotto", cat: "servizi", e: "🧥", nome: "Lavaggio di un cappotto", desc: "A secco, pronto in tre giorni", dove: "in lavanderia", prezzo: 15 },
   { id: "a1-ripetizioni", cat: "servizi", e: "📚", nome: "Un'ora di ripetizioni", desc: "Matematica, con uno studente universitario", prezzo: 15 },
   { id: "a1-pacco-giu", cat: "servizi", e: "📦", nome: "Il pacco da giù, 20 kg", desc: "Dalla mamma in Puglia fino a Milano, col corriere", prezzo: 18 },
-  { id: "a1-pacco-5kg", cat: "servizi", e: "📦", nome: "Spedire un pacco di 5 kg", desc: "In Italia, consegna in 3-4 giorni", dove: "all'ufficio postale", prezzo: 11 },
-  { id: "a1-barbiere", cat: "servizi", e: "💈", nome: "Taglio dal barbiere", desc: "Taglio uomo, senza barba", dove: "media italiana", prezzo: 20, cur: "A Trieste, la città più cara, si arriva quasi a 30 €" },
+  { id: "a1-pacco-5kg", cat: "servizi", e: "📦", nome: "Spedire un pacco di 5 kg", desc: "In Italia, consegna in circa 5 giorni lavorativi", dove: "all'ufficio postale", prezzo: 12.2 },   // 24 ott 2026: Un pacco di esattamente 5 kg può cadere anche nella fascia da 14,30 €.
+  { id: "a1-barbiere", cat: "servizi", e: "💈", nome: "Taglio dal barbiere", desc: "Taglio uomo, senza barba", dove: "media italiana", prezzo: 20 },   // 24 ott 2026: Il prezzo di 20 € resta plausibile.
   { id: "a1-carta-identita", cat: "servizi", e: "📇", nome: "Carta d'identità elettronica", desc: "Quella col chip, nuova o rinnovata", dove: "in Comune", prezzo: 22 },
   { id: "a1-piumone", cat: "servizi", e: "🛏️", nome: "Lavaggio del piumone", desc: "Matrimoniale, d'oca", dove: "in lavanderia", prezzo: 22 },
-  { id: "a1-ceretta", cat: "servizi", e: "🦵", nome: "Ceretta alle gambe", desc: "Gambe intere", dove: "dall'estetista", prezzo: 25 },
+  { id: "a1-ceretta", cat: "servizi", e: "🦵", nome: "Ceretta alle gambe", desc: "Gambe intere", dove: "dall'estetista", prezzo: 30 },   // 24 ott 2026: 25 è nella parte bassa della fascia 25-40 €; 30 è il valore centrale e coincide con un listino reale.
   { id: "a1-manicure", cat: "servizi", e: "💅", nome: "Manicure semipermanente", desc: "Lo smalto che dura tre settimane", dove: "dall'estetista", prezzo: 28 },
-  { id: "a1-taglio-piega", cat: "servizi", e: "💇", nome: "Taglio e piega", desc: "Capelli lunghi fino alle spalle", dove: "dal parrucchiere", prezzo: 38 },
+  { id: "a1-taglio-piega", cat: "servizi", e: "💇", nome: "Taglio e piega", desc: "Capelli lunghi fino alle spalle", dove: "dal parrucchiere", prezzo: 45 },   // 24 ott 2026: Stima, non trovata una fonte online: taglio e piega donna con capelli lunghi di solito 40-50 €.
   { id: "a1-abbonamento-mezzi", cat: "servizi", e: "🎫", nome: "Abbonamento mensile ai mezzi", desc: "Metro, tram e bus per un mese", dove: "a Milano", prezzo: 39 },
   { id: "a1-toelettatura", cat: "servizi", e: "🐩", nome: "Toelettatura del cane", desc: "Bagno e taglio, cane di taglia media", prezzo: 45 },
   { id: "a1-lezione-guida", cat: "servizi", e: "🚗", nome: "Una lezione di guida", desc: "Un'ora in macchina con l'istruttore", dove: "in autoscuola", prezzo: 50 },
@@ -137,7 +137,7 @@ window.SG_PREZZO.prodotti.push(
   { id: "a1-tatuaggio", cat: "servizi", e: "✒️", nome: "Un piccolo tatuaggio", desc: "Una scritta sul polso, in uno studio", prezzo: 80 },
   { id: "a1-idraulico", cat: "servizi", e: "🔧", nome: "Idraulico a casa", desc: "Uscita e un'ora di lavoro per un rubinetto", dove: "in un giorno feriale", prezzo: 90, wow: 1 },
   { id: "a1-canone-rai", cat: "servizi", e: "📺", nome: "Canone RAI per un anno", desc: "Quello che arriva nella bolletta della luce", prezzo: 90 },
-  { id: "a1-caldaia", cat: "servizi", e: "🔥", nome: "Controllo della caldaia", desc: "Pulizia di ogni anno e bollino", prezzo: 100 },
+  { id: "a1-caldaia", cat: "servizi", e: "🔥", nome: "Controllo della caldaia", desc: "Pulizia di ogni anno e bollino", prezzo: 120 },   // 24 ott 2026: Pulizia annuale con bollino costa in genere 110-150 €: 100 è un po' basso, 120 è più centrale.
   { id: "a1-accordatura", cat: "servizi", e: "🎹", nome: "Accordare il pianoforte", desc: "Un pianoforte verticale, a domicilio", prezzo: 100 },
   { id: "a1-spazzacamino", cat: "servizi", e: "🧹", nome: "Lo spazzacamino", desc: "Pulizia della canna fumaria del camino", prezzo: 100, wow: 1, cur: "Il mestiere esiste ancora: camini e stufe vanno puliti con regolarità" },
   { id: "a1-divano", cat: "servizi", e: "🛋️", nome: "Pulizia del divano", desc: "A domicilio, tre posti in tessuto", prezzo: 100 },
@@ -159,8 +159,8 @@ window.SG_PREZZO.prodotti.push(
   { id: "a1-mimosa", cat: "curiosita", e: "🌼", nome: "Mazzetto di mimosa", desc: "Per la Festa della donna, l'8 marzo", dove: "dal fioraio", prezzo: 5 },
   { id: "a1-struffoli", cat: "curiosita", e: "🍯", nome: "Struffoli, vassoio da 500 g", desc: "Palline di pasta fritta col miele e i confettini", dove: "a Natale, a Napoli", prezzo: 12 },
   { id: "a1-zampone", cat: "curiosita", e: "🐷", nome: "Zampone, 1 kg", desc: "Di Modena IGP, già cotto, per il cenone", dove: "a dicembre", prezzo: 12 },
-  { id: "a1-confetti", cat: "curiosita", e: "🍬", nome: "Confetti alla mandorla, 1 kg", desc: "Quelli bianchi delle bomboniere", dove: "a Sulmona", prezzo: 20 },
-  { id: "a1-chiacchiere", cat: "curiosita", e: "🎭", nome: "Chiacchiere, 1 kg", desc: "Le frappe fritte con lo zucchero a velo", dove: "in pasticceria, a Carnevale", prezzo: 25 },
+  { id: "a1-confetti", cat: "curiosita", e: "🍬", nome: "Confetti alla mandorla, 1 kg", desc: "Quelli bianchi delle bomboniere", dove: "a Sulmona", prezzo: 28 },   // 24 ott 2026: 20 è troppo basso: i bianchi alla mandorla di Sulmona costano 22-32 €/kg, la media è circa 28.
+  { id: "a1-chiacchiere", cat: "curiosita", e: "🎭", nome: "Chiacchiere, 1 kg", desc: "Le frappe fritte con lo zucchero a velo", dove: "in pasticceria, a Carnevale", prezzo: 29 },   // 24 ott 2026: 25 € è sotto la media delle pasticcerie.
   { id: "a1-pastiera", cat: "curiosita", e: "🥧", nome: "Pastiera napoletana, 1 kg", desc: "Intera, col grano e i fiori d'arancio", dove: "in pasticceria, a Pasqua", prezzo: 28 },
   { id: "a1-torrone", cat: "curiosita", e: "🍫", nome: "Torrone, 1 kg", desc: "Morbido, alle mandorle, in un pezzo solo", dove: "alla fiera, a Natale", prezzo: 30 },
   { id: "a1-corona-alloro", cat: "curiosita", e: "🌿", nome: "Corona d'alloro", desc: "Quella da mettere in testa il giorno della laurea", dove: "dal fioraio", prezzo: 30 },
@@ -180,7 +180,7 @@ window.SG_PREZZO.vetrine.push(
   { id: "a1-v-matrimonio-puglia", titolo: "Matrimonio in Puglia", e: "💒", pezzi: [
     { e: "📸", nome: "Fotografo per tutto il giorno", desc: "Dalla vestizione al taglio della torta, con l'album", prezzo: 2500 },
     { e: "🎂", nome: "Torta nuziale a tre piani", desc: "Per 100 invitati, con i fiori di zucchero", prezzo: 600 },
-    { e: "🚘", nome: "Auto d'epoca con autista", desc: "Una cabriolet anni '60 con i nastri bianchi", prezzo: 500 },
+    { e: "🚘", nome: "Auto d'epoca con autista", desc: "Una cabriolet anni '60 con i nastri bianchi", prezzo: 400 },   // 24 ott 2026: Il tipico è 300-450 €; 500 € solo per le auto più grandi.
     { e: "🧀", nome: "Caciocavallo, 2 kg", desc: "Il regalo dello zio, appeso con lo spago", prezzo: 40 }
   ] },
   { id: "a1-v-natale-famiglia", titolo: "Natale in famiglia", e: "🎄", pezzi: [
