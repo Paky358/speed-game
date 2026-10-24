@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 263,
+    data: "24 ottobre 2026",
+    titolo: "Il Prezzo è Giusto online: l'ultimo tocco conta sempre ⏱️",
+    descrizione: [
+      "⏱️ Online, la barra del tempo sul tuo telefono finisce un attimo prima: così l'offerta o la mossa fatta all'ultimissimo istante arriva in tempo anche con la rete lenta (prima poteva andare persa).",
+      "🔄 Chi ricarica la pagina a metà ritrova subito il tempo giusto: prima la sua barra poteva restare indietro rispetto a quella degli altri."
+    ]
+  },
+  {
     v: 262,
     data: "24 ottobre 2026",
     titolo: "Il Prezzo è Giusto: oggetti grandi, sempre con la descrizione 🖼️",
