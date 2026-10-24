@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 265,
+    data: "24 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: una lista sola, e in due chi perde non prende punti 🛒",
+    descrizione: [
+      "🛒 Nella Spesa e in Mettili in ordine i prodotti non si vedono più due volte (sopra e poi di nuovo sotto): c'è una lista sola, larga, con la foto, il nome e la descrizione, dove si gioca. Sopra restano le cose da sapere («Spendi tra 20 € e 22 €», chi ha finito).",
+      "📱 Sui telefoni alti le righe sono più grandi, con le foto e le scritte più grandi.",
+      "🏷️ In due, chi perde l'Offerta, la Ruota o la Vetrina non prende più punti: prima il secondo posto valeva sempre qualcosa, e in due il secondo è chi ha perso. Da tre giocatori in su il secondo prende ancora i suoi punti, come prima."
+    ]
+  },
+  {
     v: 264,
     data: "24 ottobre 2026",
     titolo: "Il Prezzo è Giusto: ricontrollati i prezzi di prima 🔍",

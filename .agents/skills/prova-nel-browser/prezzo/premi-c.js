@@ -282,7 +282,16 @@
       if (r.left < -1 || r.right > ww + 1) guai.push(e.className.split(" ")[0] + " esce di lato");
     });
     if (pan) [].forEach.call(pan.querySelectorAll(".pzc-sr,.pzc-fatto,.pzc-cifra,.pzc-dial"), function (e) { var r = e.getBoundingClientRect(); if (r.height && (r.bottom > h + 1 || r.right > ww + 1 || r.left < -1)) guai.push(e.className.split(" ")[0] + " fuori dallo schermo"); });
-    if (pan && (pan.querySelector(".pzc-sr") || pan.querySelector(".pzc-cifra")) && pan.offsetHeight > h * 0.62) guai.push("pannello alto " + pan.offsetHeight + " su " + h);
+    // (24 ott 2026: nella Spesa i prodotti stanno solo nel pannello, col più e il meno; sopra restano «Spendi tra» e chi ha
+    //  finito: il pannello può essere alto fino all'80%, purché «Spendi tra» si veda sopra)
+    if (pan && pan.querySelector(".pzc-sr")) {
+      guai = guai.filter(function (g) { return !/^pannello alto/.test(g); });
+      // (25 ott: mentre si gioca il pannello sale fin sotto il titolo e «Spendi tra» sta nel pannello)
+      if (pan.getBoundingClientRect().top < 50) guai.push("il pannello della Spesa copre i tasti in alto (" + Math.round(pan.getBoundingClientRect().top) + ")");
+      var no2 = pan.querySelector(".pzc-nota"); if (!no2 || !no2.getBoundingClientRect().height) guai.push("«Spendi tra» non si vede nel pannello");
+      if (sch && [].some.call(sch.querySelectorAll(".pzc-lista .pz-te"), function (t) { return t.getBoundingClientRect().height > 0; })) guai.push("i prodotti si vedono due volte (sopra e nel pannello)");
+    }
+    if (pan && pan.querySelector(".pzc-cifra") && pan.offsetHeight > h * 0.62) guai.push("pannello alto " + pan.offsetHeight + " su " + h);
     return guai;
   }
   COPIONE.aggiungi("pn5", { nome: "Premi C: le misure a 360x640, 412x915 e 360x780 (Bot in 6) nella Spesa e nella Cassaforte", fai: async function () {

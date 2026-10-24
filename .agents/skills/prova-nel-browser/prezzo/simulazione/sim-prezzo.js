@@ -16,7 +16,9 @@ function passo(p) { p = +p || 0; return p < 2 ? 0.05 : p < 20 ? 0.1 : p < 100 ? 
 function margine(p, pct) { return Math.max((+p || 0) * (pct == null ? 0.02 : pct), passo(p)); }
 function arrotonda(v, p) { var s = passo(p == null ? v : p); return tondo2(Math.round(v / s) * s); }
 function posizioni(lista) { var out = {}; lista.forEach(function (x) { out[x.id] = 1 + lista.filter(function (y) { return y.d < x.d - 1e-9; }).length; }); return out; }
-function puntiPos(pos, n, scala) { return pos === 1 ? scala[0] : pos === 2 ? scala[1] : (pos === 3 && n >= 4) ? scala[2] : 0; }
+// (24 ott 2026, il proprietario: «quando perdo una manche leggo +… sul mio personaggio, ma non capisco perché se ho perso»: in due
+//  il secondo è chi ha perso; il secondo posto vale da 3 giocatori in su, il terzo da 4)
+function puntiPos(pos, n, scala) { return pos === 1 ? scala[0] : (pos === 2 && n >= 3) ? scala[1] : (pos === 3 && n >= 4) ? scala[2] : 0; }
 function rnd() { return Math.random(); }
 function gauss() { var u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
 function mescola(a) { var b = a.slice(); for (var i = b.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = b[i]; b[i] = b[j]; b[j] = x; } return b; }

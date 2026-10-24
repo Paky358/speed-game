@@ -77,7 +77,7 @@
     var cand = righe.filter(function (r) { return !(senza && r.sopra); });
     righe.forEach(function (r) {
       var ok = cand.indexOf(r) >= 0, pos = ok ? 1 + cand.filter(function (q) { return q.d < r.d - 1e-9; }).length : 0;
-      var p = pos === 1 ? scala[0] : pos === 2 ? scala[1] : pos === 3 && n >= 4 ? scala[2] : 0;
+      var p = pos === 1 ? scala[0] : pos === 2 && n >= 3 ? scala[1] : pos === 3 && n >= 4 ? scala[2] : 0;   // (25 ott: in 2 chi perde non prende punti)
       out[r.id] = p * molt + (r.giusto && pos ? bonus * molt : 0);
     });
     return out;
@@ -87,7 +87,7 @@
     var cand = righe.filter(function (r) { return r.tot > 0 && r.tot <= 100; });
     righe.forEach(function (r) {
       var ok = cand.indexOf(r) >= 0, pos = ok ? 1 + cand.filter(function (q) { return q.tot > r.tot; }).length : 0;
-      out[r.id] = (pos === 1 ? 200 : pos === 2 ? 100 : pos === 3 && ids.length >= 4 ? 50 : 0) + (r.tot === 100 ? 300 : 0);
+      out[r.id] = (pos === 1 ? 200 : pos === 2 && ids.length >= 3 ? 100 : pos === 3 && ids.length >= 4 ? 50 : 0) + (r.tot === 100 ? 300 : 0);
     });
     return out;
   }
@@ -144,7 +144,7 @@
         var candV = rV.filter(function (r) { return !r.sopra; });
         rV.forEach(function (r) {
           var pos = r.sopra ? 0 : 1 + candV.filter(function (q) { return q.d < r.d - 1e-9; }).length;
-          mioV[r.id] = pos === 1 ? 450 : pos === 2 ? 225 : pos === 3 && pres >= 4 ? 110 : 0;
+          mioV[r.id] = pos === 1 ? 450 : pos === 2 && pres >= 3 ? 225 : pos === 3 && pres >= 4 ? 110 : 0;
           if (!r.sopra && r.v >= r.t * 0.97) { mioV[r.id] += 1000; conti.tutto++; }
         });
         var suoV = {}; H.vet.esito.righe.forEach(function (r) { suoV[r.id] = r.punti; });

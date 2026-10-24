@@ -463,12 +463,13 @@
 
     // ---------------- ogni telefono ----------------
     // il maxischermo: i 5 prodotti in riquadri con la descrizione, nell'ordine che hai adesso (1 = il meno caro), quello
-    // toccato illuminato; sotto chi ha finito. (24 ott 2026, il proprietario: per leggere le descrizioni bisognava toccarli
-    // uno per uno e si finiva per spostarli)
+    // toccato illuminato; sotto chi ha finito. Mentre il pannello è su i riquadri si nascondono: i prodotti, con la
+    // descrizione, stanno nelle righe del pannello, una volta sola (24 ott 2026, il proprietario: «non fare che stanno
+    // sopra e sotto le cose… così abbiamo tutto più largo»). Li vede chi guarda e chi ha finito.
     schermo: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
       var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" }), ch = el("div", { "data-sacr": "2" });
-      var g = A.tessere(prod, { num: true, fermo: true });
+      var g = A.tessere(prod, { num: true, fermo: true, cls: "pza-lista" });
       A.sch.appendChild(testa); A.sch.appendChild(g); A.sch.appendChild(el("div", { class: "pz-sotto pza-aiuto", text: "1 = il meno caro · " + prod.length + " = il più caro", "data-sacr": "1" })); A.sch.appendChild(ch);
       function stato(id) { var f = ((A.pub || {}).fatti || []).indexOf(id) >= 0; return { tx: f ? "✅" : "…", ok: f }; }
       chips(A, ch, pub, stato);
@@ -485,7 +486,7 @@
       function legame() { var L = LEGAMI.ord; return L && L.vivo() ? L : null; }
       l.forEach(function (j, pos) {
         var nb = el("span", { class: "nb" }, [ el("b", { text: String(pos + 1) }), pos === 0 ? el("small", { text: "meno caro" }) : pos === l.length - 1 ? el("small", { text: "più caro" }) : null ]);
-        var b = el("button", { class: "pza-or", type: "button" }, [ nb, el("span", { class: "fs", style: "display:contents" }), el("span", { class: "n" }) ]);
+        var b = el("button", { class: "pza-or", type: "button" }, [ nb, el("span", { class: "fs", style: "display:contents" }), el("span", { class: "tx" }, [ el("b", { class: "n" }), el("small", { class: "ds" }) ]) ]);
         premi(b, function () { tocca(pos); });
         righe.push(b); lista.appendChild(b); disegna(pos);
       });
@@ -498,6 +499,7 @@
         var p = prod[l[pos]] || {}, r = righe[pos], posto = r.querySelector(".fs"), f = figs[l[pos]] || (figs[l[pos]] = Z().figura(el, p, "e"));
         if (posto.firstChild !== f) { posto.textContent = ""; posto.appendChild(f); }
         r.querySelector(".n").textContent = p.nome || "";
+        var ds = r.querySelector(".ds"); ds.textContent = p.desc || ""; ds.hidden = !p.desc;
       }
       function scivola(r, d) { r.style.transition = "none"; r.style.transform = "translateY(" + d + "px)"; void r.offsetWidth; r.style.transition = ""; r.style.transform = ""; }
       function tocca(pos) {
@@ -631,10 +633,15 @@
       ".pza-scuoti{animation:pzScuoti .4s}",
       // mettili in ordine: il pannello
       ".pza-ord{display:flex;flex-direction:column;gap:5px}",
-      ".pza-or{position:relative;display:flex;align-items:center;gap:8px;height:clamp(36px,calc(var(--alt,640px) * .06),50px);padding:0 10px 0 4px;border:0;border-radius:12px;font:inherit;text-align:left;color:#1d1b3a;background:linear-gradient(#fff,#ece6ff);box-shadow:inset 0 -3px 0 rgba(90,74,154,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .28s cubic-bezier(.3,1.3,.5,1),box-shadow .15s;will-change:transform}",
+      ".st-vista.pz-con-pan .pz-sch .pza-lista,.st-vista.pz-con-pan .pz-sch .pza-aiuto{display:none}",
+      // mentre si gioca il pannello sale fin sotto il titolo: sopra niente nomi, le righe si dividono tutto lo spazio
+      ".pz-pan.su:has(.pza-ord){top:calc(56px + env(safe-area-inset-top))}.st-vista.pz-con-pan:has(.pza-ord) .pz-sch [data-sacr]{display:none}",
+      ".pz-pan:has(.pza-ord) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pza-ord{flex:1 1 0;min-height:0}.pz-pan .pza-ord .pza-or{flex:1 1 auto}",
+      ".pza-or{position:relative;display:flex;align-items:center;gap:8px;min-height:clamp(40px,calc(var(--alt,640px) * .062),52px);padding:4px 10px 4px 4px;box-sizing:border-box;border:0;border-radius:12px;font:inherit;text-align:left;color:#1d1b3a;background:linear-gradient(#fff,#ece6ff);box-shadow:inset 0 -3px 0 rgba(90,74,154,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .28s cubic-bezier(.3,1.3,.5,1),box-shadow .15s;will-change:transform}",
       ".pza-or .nb{flex:0 0 46px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#5a4a9a}.pza-or .nb b{font-size:17px}.pza-or .nb small{font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;margin-top:2px}",
-      ".pza-or .e{flex:0 0 auto;font-size:24px;line-height:1}",
-      ".pza-or .n{flex:1;min-width:0;font-weight:800;font-size:14px;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}",
+      ".pza-or .e{flex:0 0 auto;font-size:clamp(31px,calc(var(--alt,640px) * .085),72px);line-height:1}",   // (sui telefoni alti le righe crescono)
+      ".pza-or .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;overflow-wrap:break-word}.pza-or .n{font-weight:800;font-size:clamp(14px,calc(var(--alt,640px) * .022),19px);line-height:1.15}",
+      ".pza-or .ds{font-size:clamp(12px,calc(var(--alt,640px) * .0175),15.5px);font-weight:600;color:#4c4a66;line-height:1.2}.pza-or.sel .ds{color:#5c3c00}",
       ".pza-or.sel{background:linear-gradient(#ffe98a,#fcc419);box-shadow:0 0 0 3px #fff,0 4px 14px rgba(252,196,25,.5);z-index:2}",
       ".pza-ord.chiuso .pza-or{opacity:.6;cursor:default}",
       ".pza-fatto{width:100%;height:clamp(40px,calc(var(--alt,640px) * .066),52px)}",
