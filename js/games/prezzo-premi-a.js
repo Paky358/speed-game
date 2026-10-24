@@ -177,21 +177,20 @@
     schermo: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
       var testa = el("div", { class: "pz-testa", text: "🧗 L'Alpinista" });
-      var cur = el("div", { class: "pza-cur" }), tre = el("div", { class: "pza-tre" }), ch = el("div");
+      var cur = el("div", { class: "pza-cur" }), tre = el("div", { class: "pza-tre" }), ch = el("div", { "data-sacr": "2" });
       A.sch.appendChild(testa); A.sch.appendChild(cur); A.sch.appendChild(tre); A.sch.appendChild(ch);
       var dots = prod.map(function (p, i) { var d = el("span", { class: "pza-dot" }, [ el("b", { text: String(i + 1) }), Z().figura(el, p, "") ]); tre.appendChild(d); return d; });
       function stato(id) { var n = ((A.pub || {}).n || {})[id] || 0; return { tx: n >= prod.length ? "✅" : n + "/" + prod.length, ok: n >= prod.length }; }
       chips(A, ch, pub, stato);
       function tutti() {
         svuota(cur); testa.textContent = "🧗 L'Alpinista";
-        var g = el("div", { class: "pza-tutti" });
-        prod.forEach(function (p) { g.appendChild(A.scheda(p, { piccola: true })); });
-        cur.appendChild(g); tre.hidden = true;
+        var g = A.tessere(prod, { num: true, fermo: true });
+        cur.appendChild(g); cur.classList.add("pieno"); tre.hidden = true; g.adatta();
       }
       function mostra(i, mie) {
         i = Math.max(0, Math.min(prod.length - 1, i));
         testa.textContent = "🧗 L'Alpinista · " + (i + 1) + " di " + prod.length;
-        svuota(cur); var s = A.scheda(prod[i], { cls: "media" }); s.classList.add("pza-entra"); cur.appendChild(s);
+        svuota(cur); cur.classList.remove("pieno"); var s = A.scheda(prod[i], { cls: "media" }); s.classList.add("pza-entra"); cur.appendChild(s);
         tre.hidden = false;
         dots.forEach(function (d, j) { d.classList.toggle("ok", !!(mie && mie[j] != null)); d.classList.toggle("ora", j === i); });
       }
@@ -255,11 +254,12 @@
       function prodotto(i) {
         var p = prod[i] || {}, conta = A.contachilometri(p.prezzo || 0, {});
         svuota(rv);
-        rv.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }) ]));
+        rv.appendChild(A.miniprod(p));
         rv.appendChild(conta.el);
         return conta;
       }
-      var conta0 = prodotto(0);
+      var altaRv = 0; prod.forEach(function (p, i) { prodotto(i); altaRv = Math.max(altaRv, rv.offsetHeight); });
+      var conta0 = prodotto(0); if (altaRv) rv.style.minHeight = altaRv + "px";
       g.forEach(function (x) {
         var v = el("span", { class: "v", text: "…" }), ps = el("b", { class: "pza-ps" }), c = el("span", { class: "pz-och aspetta" }, [ A.fac(x.id), v, ps ]);
         voci[x.id] = { c: c, v: v, ps: ps }; chipsBox.appendChild(c);
@@ -462,25 +462,19 @@
     },
 
     // ---------------- ogni telefono ----------------
-    // il maxischermo: il prodotto che hai toccato (con la descrizione), oppure tutti e 5; sotto chi ha finito
+    // il maxischermo: i 5 prodotti in riquadri con la descrizione, nell'ordine che hai adesso (1 = il meno caro), quello
+    // toccato illuminato; sotto chi ha finito. (24 ott 2026, il proprietario: per leggere le descrizioni bisognava toccarli
+    // uno per uno e si finiva per spostarli)
     schermo: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
-      var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" }), cur = el("div", { class: "pza-cur" }), ch = el("div");
-      A.sch.appendChild(testa); A.sch.appendChild(cur); A.sch.appendChild(ch);
+      var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" }), ch = el("div", { "data-sacr": "2" });
+      var g = A.tessere(prod, { num: true, fermo: true });
+      A.sch.appendChild(testa); A.sch.appendChild(g); A.sch.appendChild(el("div", { class: "pz-sotto pza-aiuto", text: "1 = il meno caro · " + prod.length + " = il più caro", "data-sacr": "1" })); A.sch.appendChild(ch);
       function stato(id) { var f = ((A.pub || {}).fatti || []).indexOf(id) >= 0; return { tx: f ? "✅" : "…", ok: f }; }
       chips(A, ch, pub, stato);
-      function tutti(l) {
-        svuota(cur);
-        var g = el("div", { class: "pza-cinque" });
-        (l || pub.start || []).forEach(function (j) { var p = prod[j] || {}; g.appendChild(el("div", { class: "pza-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }) ])); });
-        cur.appendChild(g);
-        cur.appendChild(el("div", { class: "pz-sotto", text: "👆 Tocca un prodotto e poi un altro per scambiarli" }));
-      }
-      function mostra(j) {
-        if (!prod[j]) return tutti();
-        svuota(cur); var s = A.scheda(prod[j], { cls: "media" }); s.classList.add("pza-entra"); cur.appendChild(s);
-      }
-      tutti();
+      function mostra(j) { g.tessere.forEach(function (t, i) { t.classList.toggle("sel", i === j); }); }
+      function tutti(l) { g.ordina(l || pub.start || prod.map(function (p, i) { return i; })); mostra(-1); }
+      tutti(); g.adatta();
       LEGAMI.ord = { vivo: function () { return testa.isConnected; }, mostra: mostra, tutti: tutti };
       return { aggiorna: function (p) { A.pub = p; aggChips(A, ch, stato); } };
     },
@@ -509,13 +503,13 @@
       function tocca(pos) {
         if (chiuso) return;
         if (sel < 0) { sel = pos; righe[pos].classList.add("sel"); A.vibra(8); A.FX.toc(700); var L = legame(); if (L) L.mostra(l[pos]); return; }
-        if (sel === pos) { righe[pos].classList.remove("sel"); sel = -1; return; }
+        if (sel === pos) { righe[pos].classList.remove("sel"); sel = -1; var L1 = legame(); if (L1) L1.mostra(-1); return; }
         var a = sel; sel = -1; righe[a].classList.remove("sel");
         var ya = righe[a].offsetTop, yb = righe[pos].offsetTop;
         var x = l[a]; l[a] = l[pos]; l[pos] = x; disegna(a); disegna(pos);
         scivola(righe[a], yb - ya); scivola(righe[pos], ya - yb);
         A.vibra(10); A.FX.toc(990); mosso = true;
-        var L2 = legame(); if (L2) L2.mostra(l[pos]);
+        var L2 = legame(); if (L2) L2.tutti(l);
         clearTimeout(toInvio);
         var resta = (A.fine || 0) - Date.now();
         if (resta > 0 && resta < 4000) manda(false); else toInvio = setTimeout(function () { manda(false); }, 1000);
@@ -527,12 +521,13 @@
       }
       function blocca(tx) {
         chiuso = true; ok.disabled = true; ok.textContent = tx; lista.classList.add("chiuso");
-        if (sel >= 0) { righe[sel].classList.remove("sel"); sel = -1; }
+        if (sel >= 0) { righe[sel].classList.remove("sel"); sel = -1; var L4 = legame(); if (L4) L4.mostra(-1); }
       }
       return {
         privato: function (m) {
           if (!m || !permutazione(m.l, prod.length) || chiuso) return;
           l = m.l.slice(); mosso = true; righe.forEach(function (r, pos) { disegna(pos); });
+          var L3 = legame(); if (L3) L3.tutti(l);
           if (m.f) blocca("✅ Fatto!");
         },
         // il tempo è finito: vale l'ordine che si vede (se hai toccato qualcosa)
@@ -542,13 +537,10 @@
     rivela: async function (A) {
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], giusto = riv.giusto || [], g = riv.g || [];
       var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" });
-      var fila = el("div", { class: "pza-fila" }), golf = el("div", { class: "pza-golf" }), banner = el("div", { class: "pz-sotto pza-bn", text: "Dal meno caro al più caro…" });
+      var fila = A.tessere(giusto.map(function (j) { return prod[j] || {}; }), { num: true, extra: function (p, pos, t) { t._tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0)); return t._tag; } });
+      var golf = el("div", { class: "pza-golf" }), banner = el("div", { class: "pz-sotto pza-bn", text: "Dal meno caro al più caro…" });
       A.sch.appendChild(testa); A.sch.appendChild(fila); A.sch.appendChild(golf); A.sch.appendChild(banner);
-      var tags = giusto.map(function (j, pos) {
-        var p = prod[j] || {}, tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0));
-        var c = el("div", { class: "pza-fc" }, [ el("b", { class: "nb", text: String(pos + 1) }), Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), tag ]);
-        c.style.animationDelay = (pos * 0.07) + "s"; fila.appendChild(c); return tag;
-      });
+      var tags = fila.tessere.map(function (t, pos) { t.style.animationDelay = (pos * 0.07) + "s"; return t._tag; });
       // le corsie del minigolf (una per giocatore)
       var corsie = g.map(function (x, j) {
         var palla = el("span", { class: "pza-palla" }), lab = el("span", { class: "pza-lab" });
@@ -559,6 +551,7 @@
         return { x: x, r: r, palla: palla, trk: trk, lab: lab };
       });
       golf.classList.toggle("fitto", g.length > 5);
+      fila.adatta();
       A.ST.FX.rullo(0.9);
       await A.dorme(TORD.prima); if (!A.vivo()) return;
       for (var i = 0; i < tags.length; i++) {
@@ -614,8 +607,8 @@
     s.textContent = [
       ".pza-pop{animation:pzPop .35s cubic-bezier(.3,1.6,.5,1)}",
       ".pza-entra{animation:pzaEntra .35s cubic-bezier(.3,1.4,.5,1) both}@keyframes pzaEntra{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}",
-      ".pza-cur{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;min-height:0}",
-      ".pza-tutti{display:flex;flex-direction:column;align-items:center;gap:5px;width:100%}",
+      ".pza-cur{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;min-height:0}.pza-cur.pieno{flex:1 1 0}",
+      ".pza-aiuto{flex:0 0 auto;font-size:12px;color:#9aa5d8}",
       ".pza-tre{display:flex;gap:8px;justify-content:center}.pza-tre[hidden]{display:none}",
       ".pza-dot{display:flex;align-items:center;gap:4px;padding:2px 9px 2px 3px;border-radius:99px;background:rgba(255,255,255,.12);font-size:18px;transition:transform .2s}",
       ".pza-dot b{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.2);font-size:12px;display:flex;align-items:center;justify-content:center}",
@@ -645,18 +638,6 @@
       ".pza-or.sel{background:linear-gradient(#ffe98a,#fcc419);box-shadow:0 0 0 3px #fff,0 4px 14px rgba(252,196,25,.5);z-index:2}",
       ".pza-ord.chiuso .pza-or{opacity:.6;cursor:default}",
       ".pza-fatto{width:100%;height:clamp(40px,calc(var(--alt,640px) * .066),52px)}",
-      // mettili in ordine: il maxischermo
-      ".pza-cinque{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:100%;max-width:420px}",
-      ".pza-c5{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 3px;border-radius:12px;background:rgba(255,255,255,.1)}",
-      ".pza-c5 .e{font-size:28px;line-height:1.1}.pza-c5 .n{font-size:10.5px;font-weight:800;line-height:1.15;color:#e8ebff;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}",
-      // la rivelazione: la fila giusta
-      ".pza-fila{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;width:100%;max-width:440px}",
-      ".pza-fc{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px 5px;border-radius:12px;background:linear-gradient(#ffffff,#f3efff);color:#1d1b3a;animation:pzPop .4s cubic-bezier(.3,1.6,.5,1) both}",
-      ".pza-fc .nb{position:absolute;left:3px;top:2px;font-size:10px;color:#7048e8}",
-      ".pza-fc .e{font-size:clamp(24px,calc(var(--alt,640px) * .05),42px);line-height:1.15}",
-      ".pza-fc .n{font-size:10px;font-weight:800;line-height:1.1;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.2em;word-break:break-word}",
-      ".pza-fc .pz-tag{font-size:11px;padding:2px 5px 2px 11px;max-width:100%;box-sizing:border-box;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pza-fc .pz-tag:before{left:4px;width:4px;height:4px;margin-top:-2px}",
-      ".pza-fc .pz-tag.su{opacity:1;transform:none}",
       // il minigolf
       ".pza-golf{display:flex;flex-direction:column;gap:4px;width:100%;max-width:440px;opacity:0;transform:translateY(12px);transition:opacity .3s,transform .35s}.pza-golf.su{opacity:1;transform:none}",
       ".pza-lane{position:relative;display:flex;align-items:center;gap:6px;height:clamp(26px,calc(var(--alt,640px) * .05),40px);padding:0 6px 0 2px;border-radius:12px;background:rgba(255,255,255,.08)}",
@@ -671,7 +652,7 @@
       ".pza-lane.buca{background:rgba(255,212,59,.3);box-shadow:0 0 0 2px #ffd43b}.pza-lane.bene{background:rgba(55,212,126,.2)}.pza-lane.male .pza-lab{color:#ffb3bb}",
       ".pza-lane .pt{flex:0 0 auto;font-size:11px;font-weight:900;color:#04321c;background:#6ff0a6;border-radius:99px;padding:0 6px;animation:pzPop .35s both}",
       ".pza-golf.fitto{gap:3px}.pza-golf.fitto .pza-lane{height:clamp(22px,calc(var(--alt,640px) * .04),34px)}.pza-golf.fitto .pza-lane .fac{width:18px;height:18px}.pza-golf.fitto .pza-lane .nm{font-size:11.5px;flex-basis:56px}",
-      "@media (prefers-reduced-motion:reduce){.pza-entra,.pza-fc,.pza-aah{animation:none}}"
+      "@media (prefers-reduced-motion:reduce){.pza-entra,.pza-aah{animation:none}}"
     ].join("");
     document.head.appendChild(s);
   }

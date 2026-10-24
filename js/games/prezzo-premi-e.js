@@ -171,13 +171,13 @@
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], tag = pub.tag || [];
-      var fila = el("div", { class: "pze-cinque" }), ch = el("div");
-      prod.forEach(function (p, i) { fila.appendChild(el("div", { class: "pze-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), cartello(A, tag[i]) ])); });
+      var fila = A.tessere(prod, { tcls: "pze-c5", extra: function (p, i) { return cartello(A, tag[i]); } }), ch = el("div", { "data-sacr": "2" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "✅ La Prova del 5" }));
       A.sch.appendChild(fila);
-      A.sch.appendChild(el("div", { class: "pz-sotto", text: "Il cartellino è giusto o sbagliato? Quanti sono giusti non si sa!" }));
+      A.sch.appendChild(el("div", { class: "pz-sotto", text: "Il cartellino è giusto o sbagliato? Quanti sono giusti non si sa!", "data-sacr": "1" }));
       A.sch.appendChild(ch);
       chips(A, ch, pub.fatti || []);
+      fila.adatta();
       return { aggiorna: function (p) { A.pub = p; aggChips(A, ch, (p && p.fatti) || []); } };
     },
     pannello: function (A) {
@@ -232,21 +232,17 @@
     rivela: async function (A) {
       stile();
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], tag = riv.tag || [], ok = riv.ok || [], g = riv.g || [], n = prod.length;
-      var fila = el("div", { class: "pze-cinque riv" }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
+      var fila = A.tessere(prod, { tcls: "pze-c5", extra: function (p, i) { return [ cartello(A, tag[i]), el("span", { class: "pze-es", text: ok[i] ? "✓ giusto" : "era " + A.fmtE(p.prezzo || 0) }) ]; } }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pze-bn", text: "Giriamo i cartellini…" });
       A.sch.classList.add("pze-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "✅ La Prova del 5" }));
       A.sch.appendChild(fila); A.sch.appendChild(gente); A.sch.appendChild(banner);
-      var carte = prod.map(function (p, i) {
-        var es = el("span", { class: "pze-es", text: ok[i] ? "✓ giusto" : "era " + A.fmtE(p.prezzo || 0) });
-        var c = el("div", { class: "pze-c5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), cartello(A, tag[i]), es ]);
-        fila.appendChild(c);
-        return c;
-      });
+      var carte = fila.tessere;
       var righe = g.map(function (x) {
         var q = rigaGente(A, x, prod.map(function (p, i) { var v = x.s ? x.s[i] : null; return v === 1 ? "✓" : v === 0 ? "✗" : "·"; }));
         gente.appendChild(q.r); return q;
       });
+      fila.adatta();
       A.ST.FX.rullo(0.9);
       await A.dorme(TP.prima); if (!A.vivo()) return;
       for (var i = 0; i < n; i++) {
@@ -376,13 +372,13 @@
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], S = pub.S || [];
-      var fila = el("div", { class: "pze-tre" }), ch = el("div");
-      prod.forEach(function (p, k) { fila.appendChild(el("div", { class: "pze-c3" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), numero(A, S[k] || "") ])); });
+      var fila = A.tessere(prod, { tcls: "pze-c3", extra: function (p, k) { return numero(A, S[k] || ""); } }), ch = el("div", { "data-sacr": "2" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🧹 Togli la cifra" }));
       A.sch.appendChild(fila);
-      A.sch.appendChild(el("div", { class: "pz-sotto", text: "In ogni prezzo c'è una cifra di troppo: quale?" }));
+      A.sch.appendChild(el("div", { class: "pz-sotto", text: "In ogni prezzo c'è una cifra di troppo: quale?", "data-sacr": "1" }));
       A.sch.appendChild(ch);
       chips(A, ch, pub.fatti || []);
+      fila.adatta();
       return { aggiorna: function (p) { A.pub = p; aggChips(A, ch, (p && p.fatti) || []); } };
     },
     pannello: function (A) {
@@ -443,19 +439,17 @@
     rivela: async function (A) {
       stile();
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], vero = riv.vero || [], S = riv.S || [], J = riv.j || [], g = riv.g || [];
-      var fila = el("div", { class: "pze-tre riv" }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
+      var sovs = [], fila = A.tessere(prod, { tcls: "pze-c3", extra: function (p, k) {
+        var num = numero(A, S[k] || ""), tag = A.Z.cartellino(el, A.fmtE(+vero[k] || 0)); sovs[k] = { num: num, sov: el("span", { class: "pze-sov" }, [ num, tag ]) }; return sovs[k].sov;
+      } }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pze-bn", text: "Via le cifre di troppo…" });
       A.sch.classList.add("pze-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🧹 Togli la cifra" }));
       A.sch.appendChild(fila); A.sch.appendChild(gente); A.sch.appendChild(banner);
       // il numero con la cifra in più e, sotto (nello stesso posto, ancora nascosto), il cartellino col prezzo vero
-      var carte = prod.map(function (p, k) {
-        var num = numero(A, S[k] || ""), tag = A.Z.cartellino(el, A.fmtE(+vero[k] || 0)), sov = el("span", { class: "pze-sov" }, [ num, tag ]);
-        var cc = el("div", { class: "pze-c3" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), sov ]);
-        fila.appendChild(cc);
-        return { c: cc, num: num, sov: sov };
-      });
+      var carte = fila.tessere.map(function (t, k) { return { c: t, num: sovs[k].num, sov: sovs[k].sov }; });
       var righe = g.map(function (x) { var q = rigaGente(A, x, prod.map(function (p, k) { return x.c && x.c[k] != null ? "?" : "·"; })); gente.appendChild(q.r); return q; });
+      fila.adatta();
       A.ST.FX.rullo(0.9);
       await A.dorme(TT.prima); if (!A.vivo()) return;
       for (var k = 0; k < carte.length; k++) {
@@ -505,19 +499,10 @@
     var s = document.createElement("style"); s.id = "sg-pze-css";
     s.textContent = [
       ".pz-sch.pze-fitto{gap:6px}",
-      // le carte dei prodotti sul maxischermo (5 della Prova, 3 di Togli la cifra)
-      ".pze-cinque{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:100%;max-width:440px}",
-      ".pze-tre{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%;max-width:440px}",
-      ".pze-c5,.pze-c3{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px;border-radius:12px;background:rgba(255,255,255,.1);min-width:0}",
-      ".pze-c5 .e{font-size:clamp(24px,calc(var(--alt,640px) * .045),36px);line-height:1.1}",
-      ".pze-c3 .e{font-size:clamp(30px,calc(var(--alt,640px) * .06),46px);line-height:1.1}",
-      ".pze-c5 .n,.pze-c3 .n{font-size:10px;font-weight:800;line-height:1.12;color:#e8ebff;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}",
-      ".pze-c3 .n{font-size:11px}",
-      ".pze-c5 .pz-tag{font-size:11px;padding:2px 5px 2px 11px;max-width:100%;box-sizing:border-box;transition:background .3s}.pze-c5 .pz-tag:before{left:4px;width:4px;height:4px;margin-top:-2px}",
-      ".pze-c5 .pz-tag.lungo{font-size:9.5px;padding-left:9px}",
-      ".pze-cinque.riv .pze-c5,.pze-tre.riv .pze-c3{background:linear-gradient(#ffffff,#f3efff)}.pze-cinque.riv .n,.pze-tre.riv .n{color:#1d1b3a}",
+      // i riquadri dei prodotti sul maxischermo (5 della Prova, 3 di Togli la cifra): il cartellino si vede subito
+      ".pz-te.pze-c5 .pz-tag{font-size:14px;padding:3px 9px 3px 16px;opacity:1;transform:none;transition:background .3s}",
       // la Prova del 5: girati, verde o rosso col prezzo vero (già al suo posto, nascosto)
-      ".pze-es{font-size:10px;font-weight:900;line-height:1.1;white-space:nowrap;opacity:0;transform:scale(.5);transition:opacity .25s,transform .35s cubic-bezier(.3,1.6,.5,1)}",
+      ".pze-es{font-size:12px;font-weight:900;line-height:1.1;white-space:nowrap;opacity:0;transform:scale(.5);transition:opacity .25s,transform .35s cubic-bezier(.3,1.6,.5,1)}",
       ".pze-c5.giusto .pz-tag{background:linear-gradient(#b2f2bb,#51cf66);color:#06361a}.pze-c5.giusto .pze-es{opacity:1;transform:none;color:#2b8a3e}",
       ".pze-c5.falso .pz-tag{background:linear-gradient(#ffc9c9,#ff6b6b);color:#5c0011;text-decoration:line-through}.pze-c5.falso .pze-es{opacity:1;transform:none;color:#c92a2a}",
       ".pze-c5.giusto,.pze-c5.falso{animation:pzeGira .45s ease-out}@keyframes pzeGira{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:none}}",

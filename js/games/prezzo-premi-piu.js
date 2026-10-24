@@ -34,7 +34,10 @@
              partita, dalle categorie scelte), passo(p), margine(p, pct), arrotonda(v, p), fmtE(v), tondo2(v), privato(id, msg), fatto(id)
    A (telefono): el, ST (lo studio), S, Z (window.SGPrezzoScena: scheda, tastierino, contachilometri, FX…), sch, pan, pub, riv, punti,
              io, locale, fine (ora della fine del tempo), giocatori [{ id, nome, omino }], nome(id), fac(id, faccia), invia(m),
-             dorme(ms), vivo(), fmtE, fmtN, FX, vibra, scheda(prod, opz), contachilometri(v, opz), tastierino(opz)
+             dorme(ms), vivo(), fmtE, fmtN, FX, vibra, scheda(prod, opz), contachilometri(v, opz), tastierino(opz),
+             tessere(prods, opz) (i riquadri che riempiono lo schermo: vedi prezzo-scena.js; poi .adatta()), miniprod(prod)
+   La descrizione dei prodotti si vede SEMPRE (24 ott 2026, il proprietario: «la descrizione secondo me è obbligatoria»):
+   più prodotti insieme → tessere; uno solo → scheda (anche «piccola» ha la descrizione) o miniprod nelle rivelazioni.
    ========================================================= */
 (function () {
   "use strict";
@@ -159,7 +162,7 @@
       var conta = A.contachilometri(prod.prezzo || 0, { grande: true });
       var righe = el("div", { class: "pz-righe" + (((riv.arrivi || []).length + (riv.altri || []).length) > 4 ? " due" : "") }), banner = el("div", { class: "pz-sotto" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🔼🔽 Più o meno" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ A.Z.figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(A.miniprod(prod));
       A.sch.appendChild(conta.el); A.sch.appendChild(righe); A.sch.appendChild(banner);
       A.ST.FX.rullo(1.1); await A.dorme(1300); if (!A.vivo()) return;
       await conta.via(260); if (!A.vivo()) return;

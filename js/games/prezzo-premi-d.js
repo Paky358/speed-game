@@ -242,7 +242,7 @@
       var fila = rigaDadi(el, dd, true), righe = el("div", { class: "pzd-righe" + (g.length > 5 ? " fitto" : "") }), banner = el("div", { class: "pz-sotto pzd-bn", text: "Le cifre vere…" });
       A.sch.classList.add("pzb-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🎲 Il Gioco dei Dadi" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(A.miniprod(prod));
       A.sch.appendChild(fila.el); A.sch.appendChild(righe); A.sch.appendChild(banner);
       var rr = g.map(function (x) {
         var chs = dd.map(function (d, i) { var c = x.s && x.s[i]; return el("span", { class: "pzd-ch " + (c || "vuota"), text: c ? SIMB[c] : "–" }); });
@@ -435,7 +435,7 @@
       var banner = el("div", { class: "pz-sotto pzd-bn", text: "Le finestrelle di tutti…" });
       A.sch.classList.add("pzb-fitto");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🎯 Il Mirino" }));
-      A.sch.appendChild(el("div", { class: "pz-miniprod" }, [ Z().figura(el, prod, "e"), el("span", { class: "n", text: prod.nome || "" }) ]));
+      A.sch.appendChild(A.miniprod(prod));
       A.sch.appendChild(el("div", { class: "pzd-rv" + (g.length > 5 ? " fitto" : "") }, [ etichette(A, a, b), el("div", { class: "pzd-rtrk" }, [ cols, frec ]) ]));
       A.sch.appendChild(el("div", { class: "pzd-rfw" + (g.length > 5 ? " fitto" : "") }, [ el("span"), facce ]));
       A.sch.appendChild(banner);
