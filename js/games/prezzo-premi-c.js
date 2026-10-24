@@ -35,7 +35,8 @@
   function svuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
   function eTu(A, id) { return A.nome(id) === "Tu"; }
   function mioTelefono(A, id) { return A.locale === "telefono" || id === A.io; }
-  function elenco(A, ids) { var n = ids.map(function (id) { return A.nome(id); }); return n.length < 2 ? n.join("") : n.slice(0, -1).join(", ") + " e " + n[n.length - 1]; }
+  // («Tutte giuste per te e Luca», mai «per Tu e Luca»)
+  function elenco(A, ids) { var n = ids.map(function (id) { var x = A.nome(id); return x === "Tu" && ids.length > 1 ? "te" : x; }); return n.length < 2 ? n.join("") : n.slice(0, -1).join(", ") + " e " + n[n.length - 1]; }
   // le chip di chi ha finito, sotto il maxischermo (si aggiorna solo il segno che cambia: niente lampeggio)
   function chips(A, box, fatti) {
     svuota(box); box.className = "pz-tab" + (A.giocatori.length > 4 ? " fitto" : "");
@@ -441,7 +442,8 @@
     var s = document.createElement("style"); s.id = "sg-pzc-css";
     s.textContent = [
       // La Spesa: la fascia, i 5 prodotti, le righe coi − e +, le corsie della rivelazione
-      ".pz-sch.pzb-fitto{gap:6px}",   // (anche se nessun gioco del file b è ancora partito)
+      ".pz-sch.pzb-fitto{gap:6px}",
+      ".pzc-fatto{display:block;width:100%;margin-top:4px}",   // (il tasto «Fatto» / «Apri!» a tutta larghezza, come nei giochi a premi d ed e)   // (anche se nessun gioco del file b è ancora partito)
       ".pzc-fascia{display:flex;align-items:baseline;gap:8px;font-weight:800;color:#cdd6ff;font-size:14px}.pzc-fascia b{font-size:22px;font-weight:900;color:#69f0ae}",
       ".pzc-cinque{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:100%;max-width:440px}",
       ".pzc-c5{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px;border-radius:12px;background:rgba(255,255,255,.1)}",

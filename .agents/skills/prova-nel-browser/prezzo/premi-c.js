@@ -262,6 +262,7 @@
       if (!lSara) note.push("(Sara non ha ricaricato: la Cassaforte non è uscita?)");
       if (okLuca === false || okSara === false) no(note.join(" · "));
       await W.dorme(9000);
+      await W.aspetta(function () { var x = A.tastiFineDi(P); return x && x.some(function (y) { return /Rivincita/.test(y); }); }, 40000);   // (i tasti di fine arrivano dopo qualche secondo)
       var tf = A.tastiFineDi(P);
       if (!tf || !tf.some(function (x) { return /Rivincita/.test(x); })) no("a fine partita l'host non ha «↻ Rivincita» (" + JSON.stringify(tf) + ")");
       var cl = vm(C).classifica || [];

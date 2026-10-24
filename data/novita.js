@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 261,
+    data: "24 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: 4 giochi a premi nuovi 🎲🎯✅🧹",
+    descrizione: [
+      "🎲 Il Gioco dei Dadi (dalla versione italiana): un dado per ogni cifra del prezzo. Per ognuna dici se la cifra vera è più alta, uguale o più bassa del dado. La prima cifra vale di più!",
+      "🎯 Il Mirino: una finestrella sale lungo la scala dei prezzi. Tocca «Stop!» quando pensi che il prezzo ci sia dentro: dentro vale 600, vicino qualcosa di meno.",
+      "✅ La Prova del 5 (dalla versione italiana): cinque prodotti col cartellino. Per ognuno dici se il prezzo è giusto o sbagliato, ma quanti sono giusti non si sa!",
+      "🧹 Togli la cifra: in tre prezzi c'è una cifra di troppo (mai la prima né l'ultima). Toccala e vedi subito che prezzo viene fuori.",
+      "🎁 Ora i giochi a premi sono 11: chi vince l'Offerta sceglie tra due, e si gioca tutti insieme, ognuno dal suo telefono."
+    ]
+  },
+  {
     v: 260,
     data: "23 ottobre 2026",
     titolo: "Il Prezzo è Giusto: quasi il doppio dei prodotti e 72 vetrine nuove 🛍️",
