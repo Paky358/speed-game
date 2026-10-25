@@ -125,6 +125,7 @@
   PREMI.prova5 = {
     nome: "La Prova del 5", icona: "✅", ordine: 10,
     regola: "Cinque cartellini: per ognuno, il prezzo è giusto o sbagliato? Quanti sono giusti non si sa!",
+    spiega: "Cinque prodotti col cartellino: per ognuno dì se il prezzo è ✓ giusto o ✗ sbagliato (quanti sono giusti non si sa). 3 indovinati 200 punti, 4 indovinati 400, tutti e 5 700.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
     _P5: P5, _falso: cartellinoFalso,   // (per la simulazione e le prove)
 
@@ -171,7 +172,7 @@
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], tag = pub.tag || [];
-      var fila = A.tessere(prod, { tcls: "pze-c5", extra: function (p, i) { return cartello(A, tag[i]); } }), ch = el("div", { "data-sacr": "2" });
+      var fila = A.tessere(prod, { tcls: "pze-c5", cls: "pze-tes", extra: function (p, i) { return cartello(A, tag[i]); } }), ch = el("div", { "data-sacr": "2" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "✅ La Prova del 5" }));
       A.sch.appendChild(fila);
       A.sch.appendChild(el("div", { class: "pz-sotto", text: "Il cartellino è giusto o sbagliato? Quanti sono giusti non si sa!", "data-sacr": "1" }));
@@ -187,7 +188,7 @@
       prod.forEach(function (p, i) {
         var si = el("button", { class: "pze-gs si", type: "button", text: "✓", "aria-label": "Giusto" }), no = el("button", { class: "pze-gs no", type: "button", text: "✗", "aria-label": "Sbagliato" });
         premi(si, function () { segna(i, 1); }); premi(no, function () { segna(i, 0); });
-        var r = el("div", { class: "pze-r5" }, [ Z().figura(el, p, "e"), el("span", { class: "n", text: p.nome || "" }), cartello(A, tag[i]), si, no ]);
+        var r = el("div", { class: "pze-r5" }, [ Z().figura(el, p, "e"), el("span", { class: "tx" }, [ el("b", { class: "n", text: p.nome || "" }), p.desc ? el("small", { text: p.desc }) : null, el("span", { class: "cart" }, [ cartello(A, tag[i]) ]) ]), si, no ]);
         righe.push({ r: r, si: si, no: no }); lista.appendChild(r);
       });
       var ok = el("button", { class: "pz-ok pze-fatto", type: "button" });
@@ -319,6 +320,7 @@
   PREMI.togli = {
     nome: "Togli la cifra", icona: "🧹", ordine: 11,
     regola: "In ogni prezzo c'è una cifra di troppo (mai la prima né l'ultima): toccala e toglila!",
+    spiega: "In ogni prezzo c'è una cifra in più (mai la prima né l'ultima): toccala per toglierla. 120 punti per ogni prezzo giusto, +300 se li fai giusti tutti e tre.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
     _TG: TG, _strizza: strizza, _togliA: togliA, _verosimile: verosimile,   // (per la simulazione e le prove)
 
@@ -372,7 +374,7 @@
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], S = pub.S || [];
-      var fila = A.tessere(prod, { tcls: "pze-c3", extra: function (p, k) { return numero(A, S[k] || ""); } }), ch = el("div", { "data-sacr": "2" });
+      var fila = A.tessere(prod, { tcls: "pze-c3", cls: "pze-tes", extra: function (p, k) { return numero(A, S[k] || ""); } }), ch = el("div", { "data-sacr": "2" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🧹 Togli la cifra" }));
       A.sch.appendChild(fila);
       A.sch.appendChild(el("div", { class: "pz-sotto", text: "In ogni prezzo c'è una cifra di troppo: quale?", "data-sacr": "1" }));
@@ -394,7 +396,7 @@
           tasti[i] = b; fila.appendChild(b);
         });
         var ant = el("b", { class: "pze-ant", text: "" });
-        var r = el("div", { class: "pze-r3" }, [ Z().figura(el, p, "e"), fila, ant ]);
+        var r = el("div", { class: "pze-r3" }, [ el("div", { class: "su" }, [ Z().figura(el, p, "e"), el("span", { class: "tx" }, [ el("b", { class: "n", text: p.nome || "" }), p.desc ? el("small", { text: p.desc }) : null ]) ]), el("div", { class: "giu" }, [ fila, ant ]) ]);
         righe.push({ r: r, tasti: tasti, ant: ant, s: s }); lista.appendChild(r);
       });
       var ok = el("button", { class: "pz-ok pze-fatto", type: "button" });
@@ -510,11 +512,17 @@
       ".pze-nota{margin-bottom:2px}",
       ".pze-lista{display:flex;flex-direction:column;gap:4px}",
       ".pze-lista.chiuso{opacity:.75}",
-      ".pze-r5{display:flex;align-items:center;gap:6px;height:clamp(38px,calc(var(--alt,640px) * .06),48px);padding:0 4px 0 4px;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
+      // mentre si gioca il pannello sale fin sotto il titolo e i prodotti stanno solo lì, una volta sola (sopra niente doppioni né nomi)
+      ".st-vista.pz-con-pan .pz-sch .pze-tes,.st-vista.pz-con-pan:has(.pze-lista) .pz-sch [data-sacr]{display:none}",
+      ".pz-pan.su:has(.pze-lista){top:calc(56px + env(safe-area-inset-top))}",
+      ".pz-pan:has(.pze-lista) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pze-lista{flex:1 1 0;min-height:0}.pz-pan .pze-lista .pze-r5,.pz-pan .pze-lista .pze-r3{flex:1 1 auto}",
+      ".pze-r5{display:flex;align-items:center;gap:8px;min-height:clamp(44px,calc(var(--alt,640px) * .068),56px);box-sizing:border-box;padding:4px 6px 4px 4px;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
       ".pze-r5.si{background:linear-gradient(#ebfbee,#b2f2bb)}.pze-r5.no{background:linear-gradient(#fff5f5,#ffc9c9)}",
-      ".pze-r5 .e,.pze-r3 .e{flex:0 0 auto;font-size:24px;line-height:1}",
-      ".pze-r5 .n{flex:1;min-width:0;font-weight:800;font-size:12.5px;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}",
-      ".pze-r5 .pz-tag{flex:0 0 auto;font-size:13px;padding:2px 7px 2px 13px;box-shadow:0 2px 5px rgba(0,0,0,.25)}.pze-r5 .pz-tag:before{left:5px;width:4px;height:4px;margin-top:-2px}",
+      ".pze-r5 .e,.pze-r3 .e{flex:0 0 auto;font-size:clamp(31px,calc(var(--alt,640px) * .065),58px);line-height:1}",
+      ".pze-r5 .tx,.pze-r3 .tx{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;overflow-wrap:break-word}",
+      ".pze-r5 .n,.pze-r3 .n{font-weight:800;font-size:clamp(13.5px,calc(var(--alt,640px) * .021),18px);line-height:1.15}.pze-r5 .tx small,.pze-r3 .tx small{font-size:clamp(11.5px,calc(var(--alt,640px) * .017),15px);font-weight:600;color:#4c4a66;line-height:1.2}",
+      ".pze-r5 .cart{margin-top:3px}",
+      ".pze-r5 .pz-tag{flex:0 0 auto;font-size:clamp(14px,calc(var(--alt,640px) * .022),18px);padding:2px 8px 2px 14px;box-shadow:0 2px 5px rgba(0,0,0,.25)}.pze-r5 .pz-tag:before{left:5px;width:4px;height:4px;margin-top:-2px}",
       ".pze-gs{flex:0 0 auto;width:38px;height:32px;border:0;border-radius:10px;font:900 20px/1 system-ui,sans-serif;color:#5a4a9a;background:#ddd6fb;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}",
       ".pze-gs.si.on{background:#2f9e44;color:#fff}.pze-gs.no.on{background:#e03131;color:#fff}.pze-gs:disabled{cursor:default}",
       ".pze-fatto{display:block;width:100%;margin-top:4px}",
@@ -527,8 +535,11 @@
       ".pze-sov .pz-tag{font-size:13px;padding:2px 8px 2px 14px;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pze-sov .pz-tag:before{left:5px;width:4px;height:4px;margin-top:-2px}",
       ".pze-sov.fatto .pze-num{opacity:0;transition:opacity .25s}.pze-sov.fatto .pz-tag{opacity:1;transform:none}",
       ".pze-c3.luce{box-shadow:0 0 0 3px #ffd43b,0 0 18px rgba(255,212,59,.5)}",
-      ".pze-r3{display:flex;align-items:center;gap:6px;padding:4px 6px 4px 4px;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
+      ".pze-r3{display:flex;flex-direction:column;justify-content:center;gap:5px;padding:5px 8px 6px 5px;box-sizing:border-box;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
       ".pze-r3.preso{background:linear-gradient(#fff6c7,#ffe98a)}",
+      ".pze-r3 .su{display:flex;align-items:center;gap:8px;min-width:0}.pze-r3 .giu{display:flex;align-items:center;gap:6px}",
+      // (nel pannello alto le righe di Togli la cifra hanno posto: foto, cifre e prezzo più grandi)
+      ".pz-pan .pze-lista .pze-r3 .e{font-size:clamp(31px,calc(var(--alt,640px) * .085),72px)}.pz-pan .pze-lista .pze-t{width:clamp(28px,10vw,46px);height:clamp(36px,calc(var(--alt,640px) * .075),64px);font-size:clamp(20px,calc(var(--alt,640px) * .04),34px)}.pz-pan .pze-lista .pze-ant{font-size:clamp(14px,calc(var(--alt,640px) * .024),20px)}",
       ".pze-tiles{display:flex;gap:3px;flex:0 0 auto}",
       ".pze-t{flex:0 0 auto;width:clamp(28px,8.4vw,40px);height:clamp(36px,calc(var(--alt,640px) * .064),50px);box-sizing:border-box;border:0;border-radius:9px;padding:0;display:inline-flex;align-items:center;justify-content:center;font:900 clamp(20px,calc(var(--alt,640px) * .036),28px)/1 system-ui,sans-serif;color:#ffd43b;background:linear-gradient(#2a1f66,#0b0724);box-shadow:inset 0 -3px 0 rgba(0,0,0,.4),0 0 0 2px #ffd43b66;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums}",
       ".pze-t.fisso{color:#9aa3d6;background:#3b3566;box-shadow:inset 0 -3px 0 rgba(0,0,0,.3);cursor:default}",

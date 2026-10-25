@@ -623,6 +623,16 @@
       ".pz-foto{height:clamp(62px,calc(var(--alt,640px) * .15),140px);max-width:100%;display:flex;align-items:center;justify-content:center}",
       ".pz-foto img{max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.28);background:#fff}",
       ".pz-scheda.piccola .pz-foto{height:46px}.pz-scheda.media .pz-foto{height:clamp(54px,calc(var(--alt,640px) * .1),90px)}",
+      // la scheda grande (25 ott 2026, i giochi a premi con un prodotto solo): prende tutto lo spazio libero dello schermo e la
+      // foto cresce con lei; nome e descrizione più grandi. Se lo spazio è poco la foto si stringe, le scritte restano intere.
+      ".pz-sch .pz-scheda.grande{flex:1 1 auto;min-height:0;width:min(420px,94%);justify-content:center;gap:4px}",
+      ".pz-scheda.grande .pz-foto{flex:1 1 0;min-height:56px;height:auto;width:100%}.pz-scheda.grande .pz-foto img{max-height:100%;max-width:100%}",
+      ".pz-scheda.grande .pz-emo{flex:1 1 0;min-height:56px;height:auto;width:100%;background:none;font-size:clamp(48px,calc(var(--alt,640px) * .1),96px)}",
+      ".pz-scheda.grande .pz-nome{font-size:clamp(17px,calc(var(--alt,640px) * .026),23px)}.pz-scheda.grande .pz-desc{font-size:clamp(13px,calc(var(--alt,640px) * .019),16.5px)}.pz-scheda.grande .pz-dove{font-size:clamp(12.5px,calc(var(--alt,640px) * .017),15px)}",
+      ".pz-scheda.grande .pz-cat,.pz-scheda.grande .pz-nome,.pz-scheda.grande .pz-desc,.pz-scheda.grande .pz-dove{flex:0 0 auto}",
+      // (25 ott 2026, il proprietario: «non mettiamo mai sopra e sotto le cose»: quello che il pannello mostra già, sopra si
+      //  vede solo quando il pannello è giù — per chi guarda e per chi ha finito)
+      ".st-vista.pz-con-pan .pz-sch .pz-solo-giu{display:none}",
       "@media (max-height:700px){.st-vista.pz-con-pan .pz-sip .pz-foto{height:66px}}",
       // (prima di offrire il pannello è giù: la foto del prodotto più grande, sui telefoni alti fino a 230 px)
       ".st-vista:not(.pz-con-pan) .pz-sip .pz-foto{height:clamp(62px,calc(var(--alt,640px) * .26),230px)}",
@@ -746,6 +756,15 @@
       ".pz-gioco{flex:1;max-width:170px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;border-radius:16px;background:rgba(255,255,255,.1);animation:pzPop .45s both}",
       ".pz-gioco .i{font-size:34px}.pz-gioco b{font-size:16px}.pz-gioco small{font-size:12px;color:#cdd6ff;line-height:1.25}",
       ".pz-gioco.sel{background:rgba(255,212,59,.25);box-shadow:0 0 0 2px #ffd43b}.pz-gioco.via{opacity:.35}",
+      // la scelta del gioco a premi (25 ott 2026): una volta sola, con la spiegazione chiara. Chi sceglie: i due giochi grandi nel
+      // pannello che sale fin sotto il titolo; chi aspetta: gli stessi due sul maxischermo, uno sotto l'altro
+      ".pz-giochi{flex-direction:column;max-width:440px}.pz-gioco{max-width:none;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;row-gap:2px;align-items:center;text-align:left;padding:10px 14px}",
+      ".pz-gioco .i{grid-row:1/3;font-size:40px}.pz-gioco b{font-size:18px;color:#ffe066}.pz-gioco small{font-size:13px;font-weight:600}",
+      ".pz-pan.su:has(.pz-giochi-pan){top:calc(56px + env(safe-area-inset-top))}",
+      ".pz-scelte.pz-giochi-pan{flex:1 1 0;min-height:0;grid-template-columns:minmax(0,1fr);grid-auto-rows:minmax(0,1fr);gap:10px}",
+      ".pz-sc.pz-scgioco{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:14px;row-gap:4px;align-content:center;align-items:center;text-align:left;min-height:0;padding:12px 16px}",
+      ".pz-sc.pz-scgioco .i{grid-row:1/3;font-size:clamp(40px,calc(var(--alt,640px) * .07),64px)}.pz-sc.pz-scgioco b{font-size:clamp(19px,calc(var(--alt,640px) * .03),26px)}",
+      ".pz-sc.pz-scgioco small{font-size:clamp(13.5px,calc(var(--alt,640px) * .02),17px);font-weight:600;line-height:1.3}",
       ".pz-intro{display:flex;flex-direction:column;align-items:center;gap:8px;animation:pzPop .5s cubic-bezier(.3,1.6,.5,1) both}",
       ".pz-intro .i{font-size:64px;line-height:1}.pz-intro b{font-size:28px;color:#ffe066}.pz-intro p{margin:0;max-width:330px;font-size:16px;font-weight:700;color:#e8ebff;line-height:1.35}",
       // la ruota del 100

@@ -121,6 +121,7 @@
   PREMI.alpinista = {
     nome: "L'Alpinista", icona: "🧗", ordine: 2,
     regola: "Scrivi 3 prezzi: più sbagli, più sali. Oltre la vetta cadi dal burrone!",
+    spiega: "Scrivi il prezzo di 3 prodotti, uno dopo l'altro. Ogni errore fa salire l'alpinista: se supera la vetta cade e fai 0. Più resta in basso, più punti: fino a 550, +200 se li indovini tutti e tre.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -190,7 +191,7 @@
       function mostra(i, mie) {
         i = Math.max(0, Math.min(prod.length - 1, i));
         testa.textContent = "🧗 L'Alpinista · " + (i + 1) + " di " + prod.length;
-        svuota(cur); cur.classList.remove("pieno"); var s = A.scheda(prod[i], { cls: "media" }); s.classList.add("pza-entra"); cur.appendChild(s);
+        svuota(cur); cur.classList.add("pieno"); var s = A.scheda(prod[i], { cls: "media grande" }); s.classList.add("pza-entra"); cur.appendChild(s);
         tre.hidden = false;
         dots.forEach(function (d, j) { d.classList.toggle("ok", !!(mie && mie[j] != null)); d.classList.toggle("ora", j === i); });
       }
@@ -404,6 +405,7 @@
   PREMI.ordine = {
     nome: "Mettili in ordine", icona: "📊", ordine: 3,
     regola: "Tocca due prodotti per scambiarli: dal meno caro in alto al più caro in basso.",
+    spiega: "Metti 5 prodotti in fila, dal meno caro in alto al più caro in basso: tocca due prodotti per scambiarli di posto. 70 punti per ogni prodotto al posto giusto, +100 se sono tutti giusti.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------

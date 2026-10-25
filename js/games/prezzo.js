@@ -215,7 +215,7 @@
   // ---------------- i giochi a premi registrati ----------------
   function premi() { return window.SG_PREZZO_PREMI || {}; }
   function premioDi(tipo) { var g = premi()[tipo]; return g && typeof g.prepara === "function" && typeof g.fine === "function" ? g : null; }
-  function infoPremio(tipo) { var g = premioDi(tipo) || {}; return { tipo: tipo, nome: g.nome || tipo, icona: g.icona || "🎁", regola: g.regola || "" }; }
+  function infoPremio(tipo) { var g = premioDi(tipo) || {}; return { tipo: tipo, nome: g.nome || tipo, icona: g.icona || "🎁", regola: g.regola || "", spiega: g.spiega || g.regola || "" }; }
 
   // ---------------- le impostazioni ----------------
   function leggiImp(imp, modo) {
@@ -360,7 +360,7 @@
       if (f === "scegli" && H.scelta) o.scelta = { chi: H.scelta.chi, opz: H.scelta.opz.map(infoPremio), fatta: H.scelta.fatta };
       if (f === "premio" && H.premio) {
         var g = premioDi(H.premio.tipo), inf = infoPremio(H.premio.tipo);
-        o.premio = { tipo: H.premio.tipo, nome: inf.nome, icona: inf.icona, regola: inf.regola, da: H.premio.da || null, sec: H.premio.sec || 0,
+        o.premio = { tipo: H.premio.tipo, nome: inf.nome, icona: inf.icona, regola: inf.regola, spiega: inf.spiega, da: H.premio.da || null, sec: H.premio.sec || 0,
           fatti: Object.keys(H.premio.fatti) };
         if (s === "gioca" && g && g.pubblico) { try { o.premio.pub = g.pubblico(H.premio.st, apiPremio()); } catch (e) { o.premio.pub = {}; } }
         if (s === "riv") { o.premio.riv = H.premio.riv; o.premio.punti = H.premio.punti; }
@@ -1548,11 +1548,13 @@
     var S = R.S, vm = R.vm, el = R.t.el, sc = vm.scelta, k = vm.k; if (!sc) return;
     var chi = gDi(vm, sc.chi) || { nome: "?" }, io = sc.chi === R.cb.myId, ic = idxDi(vm, sc.chi);
     await ST.suSchermo(S, 600); if (!vivoK(R, k)) return;
-    var carte = sc.opz.map(function (o) { var c = el("div", { class: "pz-gioco" }, [ el("span", { class: "i", text: o.icona }), el("b", { text: o.nome }), el("small", { text: o.regola }) ]); c._tipo = o.tipo; return c; });
+    // (25 ott 2026, il proprietario: «abbiamo la scritta sopra con i due giochi, ma per cliccarli devi cliccare sotto»: chi sceglie
+    //  li vede una volta sola, grandi e da toccare nel pannello; sul maxischermo li vede chi aspetta, e dopo la scelta tutti)
+    var carte = sc.opz.map(function (o) { var c = el("div", { class: "pz-gioco" }, [ el("span", { class: "i", text: o.icona }), el("b", { text: o.nome }), el("small", { text: o.spiega || o.regola }) ]); c._tipo = o.tipo; return c; });
     R.ui.carte = carte;
     schermo(R, [ el("div", { class: "pz-testa", text: "🎁 Gioco a premi" }),
       el("div", { class: "pz-titolo", text: io ? "Hai vinto l'Offerta: scegli tu!" : chi.nome + " sceglie il gioco a premi" }),
-      el("div", { class: "pz-giochi" }, carte), el("div", { class: "pz-sotto", text: "Poi si gioca tutti insieme" }) ]);
+      el("div", { class: "pz-giochi pz-solo-giu" }, carte), el("div", { class: "pz-sotto pz-solo-giu", text: "Poi si gioca tutti insieme" }) ]);
     if (ic >= 0) { ST.accendiSolo(S, ic); ST.faccia(S, ic, "pensa"); }
     aggiornaScelta(R);
     if (sc.fatta) return;
@@ -1560,7 +1562,7 @@
     if (!tocca) return attesa(R, (chi.bot ? "🤖 " : "") + chi.nome + " sta scegliendo…");
     var fine = R.cb.locale === "telefono" ? Date.now() + TL.scegli : fineVM(R);
     var bottoni = sc.opz.map(function (o) {
-      var b = el("button", { class: "pz-sc", type: "button" }, [ el("span", { class: "i", text: o.icona }), el("b", { text: o.nome }), el("small", { text: o.regola }) ]);
+      var b = el("button", { class: "pz-sc pz-scgioco", type: "button" }, [ el("span", { class: "i", text: o.icona }), el("b", { text: o.nome }), el("small", { text: o.spiega || o.regola }) ]);
       b.addEventListener("click", function () {
         if (b.disabled) return;
         bottoni.forEach(function (x) { x.disabled = true; }); b.classList.add("sel"); Z().vibra(12);
@@ -1570,7 +1572,7 @@
     });
     var tb = Z().barraTempo(el, fine, function () { if (R.cb.locale === "telefono") R.cb.mossa({ t: "passa", k: k }, sc.chi); else bottoni.forEach(function (b) { b.disabled = true; }); });
     R.tempoPan = barraDi(R, tb);
-    R.pan.metti([ testaPan(R, chi, R.cb.locale === "telefono" ? chi.nome + ", scegli tu!" : "🎁 Scegli tu!", tb), el("div", { class: "pz-scelte" }, bottoni) ]).su();
+    R.pan.metti([ testaPan(R, chi, R.cb.locale === "telefono" ? chi.nome + ", scegli tu!" : "🎁 Scegli tu!", tb), el("div", { class: "pz-scelte pz-giochi-pan" }, bottoni) ]).su();
   }
   function aggiornaScelta(R) {
     var sc = R.vm.scelta; if (!sc || !sc.fatta || !R.ui.carte || R.ui.sceltaVista) return;
@@ -1586,7 +1588,7 @@
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
     await ST.suSchermo(S, 600); if (!vivoK(R, k)) return;
     schermo(R, [ el("div", { class: "pz-testa", text: "🎁 Gioco a premi" + (vm.nPremio > 1 ? " · " + vm.iPremio + " di " + vm.nPremio : "") }),
-      el("div", { class: "pz-intro" }, [ el("span", { class: "i", text: pr.icona }), el("b", { text: pr.nome }), el("p", { text: pr.regola }) ]),
+      el("div", { class: "pz-intro" }, [ el("span", { class: "i", text: pr.icona }), el("b", { text: pr.nome }), el("p", { text: pr.spiega || pr.regola }) ]),
       el("div", { class: "pz-sotto", text: (pr.da ? "Scelto da " + (pr.da === R.cb.myId ? "te" : nomeDi(vm, pr.da)) + " · " : "") + "si gioca tutti insieme!" }) ]);
     // quanto manca per leggere la regola: «Si comincia tra 7…» e «⏩ Avanti» (si parte appena lo tocca più di metà; col Bot basta il tuo)
     barraAvanti(R, k, T.intro, "Si comincia tra ");

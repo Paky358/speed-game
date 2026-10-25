@@ -407,7 +407,9 @@
     if (d.scrollingElement.scrollHeight > h + 2) guai.push("la pagina scorre (" + d.scrollingElement.scrollHeight + ")");
     var pan = d.querySelector(".pz-pan.su"), barra = d.querySelector(".st-barra.on");
     var basso = h - (pan ? pan.offsetHeight : 0);
-    if (pan && pan.offsetHeight > h * 0.66) guai.push("pannello alto " + pan.offsetHeight + " su " + h);
+    // (25 ott 2026: i pannelli coi prodotti o coi giochi da scegliere salgono apposta fin sotto il titolo: basta che non coprano i tasti in alto)
+    if (pan && pan.querySelector(".pz-giochi-pan,.pzc-spesa,.pza-ord,.pze-lista")) { if (pan.getBoundingClientRect().top < 50) guai.push("il pannello copre i tasti in alto"); }
+    else if (pan && pan.offsetHeight > h * 0.66) guai.push("pannello alto " + pan.offsetHeight + " su " + h);
     var sch = d.querySelector(".st-sch-in .pz-sch");
     if (sch && !d.querySelector(".st-mondo.st-quieto")) return guai;   // (la telecamera non è sul maxischermo)
     if (sch) [].forEach.call(sch.querySelectorAll(".pz-scheda,.pz-riga,.pz-cl,.pz-car,.pz-te,.pz-och,.pz-rg,.pz-rcard,.pz-rpag,.pz-conta,.pz-banner,.pz-gioco,.pz-intro,.pz-testa"), function (e) {

@@ -135,6 +135,7 @@
   PREMI.dadi = {
     nome: "Il Gioco dei Dadi", icona: "🎲", ordine: 8,
     regola: "Un dado per ogni cifra del prezzo: la cifra vera è più alta, uguale o più bassa?",
+    spiega: "Ogni cifra del prezzo ha il suo dado: per ognuna dì se la cifra vera è ⬆️ più alta, = uguale o ⬇️ più bassa del dado. La prima cifra vale 200 punti, le altre 60, +150 se le indovini tutte.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -177,9 +178,10 @@
       stile();
       var el = A.el, pub = A.pub || {}, dd = pub.dadi || [], ch = el("div"), fila = rigaDadi(el, dd, false);
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🎲 Il Gioco dei Dadi" }));
-      A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media" }));
+      A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
+      fila.el.classList.add("pz-solo-giu");   // (mentre si gioca i dadi stanno nel pannello: sopra non si ripetono)
       A.sch.appendChild(fila.el);
-      A.sch.appendChild(el("div", { class: "pz-sotto pzd-sotto pzd-sd", text: "Ogni cifra del prezzo: ⬆️ più alta, = uguale o ⬇️ più bassa del suo dado?" }));
+      A.sch.appendChild(el("div", { class: "pz-sotto pzd-sotto pzd-sd pz-solo-giu", text: "Ogni cifra del prezzo: ⬆️ più alta, = uguale o ⬇️ più bassa del suo dado?" }));
       A.sch.appendChild(ch);
       chips(A, ch, pub.fatti || []);
       rotola(A, fila.dadi, dd);
@@ -327,6 +329,7 @@
   PREMI.mirino = {
     nome: "Il Mirino", icona: "🎯", ordine: 9,
     regola: "La finestrella sale sulla scala dei prezzi: fermala quando c'è dentro il prezzo giusto!",
+    spiega: "Una finestrella sale sulla scala dei prezzi: tocca «Stop!» quando il prezzo vero ci sta dentro. Dentro 600 punti, appena fuori 350, più lontano meno.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -374,9 +377,9 @@
       stile();
       var el = A.el, pub = A.pub || {}, ch = el("div");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🎯 Il Mirino" }));
-      A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media" }));
-      A.sch.appendChild(el("div", { class: "pzd-tra" }, [ el("span", { text: "📏 Il prezzo è tra" }), el("b", { text: A.fmtE(pub.a || 0) + " e " + A.fmtE(pub.b || 0) }) ]));
-      A.sch.appendChild(el("div", { class: "pz-sotto pzd-sotto", text: "🎯 La finestrella sale: fermala quando c'è dentro il prezzo!" }));
+      A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
+      A.sch.appendChild(el("div", { class: "pzd-tra pz-solo-giu" }, [ el("span", { text: "📏 Il prezzo è tra" }), el("b", { text: A.fmtE(pub.a || 0) + " e " + A.fmtE(pub.b || 0) }) ]));
+      A.sch.appendChild(el("div", { class: "pz-sotto pzd-sotto pz-solo-giu", text: "🎯 La finestrella sale: fermala quando c'è dentro il prezzo!" }));
       A.sch.appendChild(ch);
       chips(A, ch, pub.fatti || []);
       return { aggiorna: function (p) { A.pub = p; aggChips(A, ch, (p && p.fatti) || []); } };
