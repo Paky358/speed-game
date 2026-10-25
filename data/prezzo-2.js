@@ -208,7 +208,7 @@ window.SG_PREZZO.vetrine.push(
     { e: "🚪", nome: "Armadio IKEA Pax", desc: "Bianco, 3 metri, con ante, cassetti e luci", prezzo: 900 },
     { e: "🧥", nome: "Cappotto da sartoria", desc: "Di lana, fatto su misura da un sarto", prezzo: 1800 },
     { e: "🤵", nome: "Abito da uomo su misura", desc: "Giacca e pantaloni, tre prove dal sarto", prezzo: 1500 },
-    { e: "👠", nome: "Décolleté col tacco", desc: "Di pelle nera, di una marca italiana", prezzo: 350 },
+    { e: "👠", nome: "Décolleté Pollini Aurora", desc: "Di pelle nera, col tacco da 7,5 cm, fatte in Italia", prezzo: 330 },   // 24 ott 2026: listino pollini.com 330 €
     { e: "🪝", nome: "Grucce di legno, 10", desc: "Per appendere bene i vestiti nuovi", prezzo: 15 }
   ] },
   { id: "a2-v-nonno", titolo: "Il nonno in pensione", e: "👴", pezzi: [
@@ -235,7 +235,7 @@ window.SG_PREZZO.vetrine.push(
   { id: "a2-v-salotto", titolo: "Il salotto nuovo", e: "🛋️", pezzi: [
     { e: "🛋️", nome: "Divano in pelle", desc: "Tre posti, morbido, dal mobilificio", prezzo: 2200 },
     { e: "🔊", nome: "Soundbar col subwoofer", desc: "Per sentire i film come al cinema", prezzo: 400 },
-    { e: "💡", nome: "Lampada da terra", desc: "Di design, accanto al divano", prezzo: 400 },
+    { e: "💡", nome: "Lampada Artemide Tolomeo", desc: "Da terra, col braccio che si muove, per leggere sul divano", prezzo: 555 },   // 24 ott 2026: listino 555 € (quattro rivenditori italiani)
     { e: "🪵", nome: "Tavolino da salotto", desc: "Di legno massello, basso", prezzo: 250 },
     { e: "🪴", nome: "Ficus in vaso grande", desc: "Alto un metro e mezzo, da appartamento", prezzo: 60 }
   ] }
