@@ -35,6 +35,7 @@
     var s = document.createElement("style"); s.id = "sg-pzb-css";
     s.textContent = [
       ".pz-sch.pzb-fitto{gap:6px}",
+      ".pz-pan .pzb-tr-disp{display:none}",   // (25 ott: il prezzo che scorre si vede in grande sul maxischermo, nel pannello solo il tasto)
       // ✋ È troppo! — il maxischermo
       ".pzb-tr-big{display:flex;flex-direction:column;align-items:center;gap:3px}",
       ".pzb-tr-n{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#cdd6ff;min-height:15px}",
@@ -204,6 +205,7 @@
   PREMI.troppo = {
     nome: "È troppo!", icona: "✋", ordine: 4,
     regola: "I prezzi salgono: tocca «È TROPPO!» appena superano quello vero. Né prima, né tardi!",
+    spiega: "Il prezzo sale da solo, un passo alla volta: tocca «È troppo!» appena supera il prezzo vero. Subito dopo vale 600 punti, poi 450, 350… Se tocchi prima che lo superi, prendi poco.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -270,7 +272,7 @@
       for (var k = 0; k < TR.N; k++) { var ti = el("i"); t.push(ti); tacche.appendChild(ti); }
       var fermi = el("div", { class: "pz-tab fitto" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "✋ È troppo!" }));
-      A.sch.appendChild(A.scheda(pub.prod || {}, { piccola: true }));
+      A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
       A.sch.appendChild(el("div", { class: "pzb-tr-big" }, [ nN, nP ]));
       A.sch.appendChild(tacche);
       A.sch.appendChild(fermi);
@@ -590,6 +592,7 @@
   PREMI.plinko = {
     nome: "Plinko", icona: "🟡", ordine: 5,
     regola: "Ogni prezzo indovinato vale +50 e un gettone. Poi lasciali cadere: in mezzo c'è il 200!",
+    spiega: "Tre domande: dei due prezzi, qual è quello giusto? Ogni risposta giusta vale 50 punti e un gettone. Poi lasci cadere i gettoni nel Plinko: la casella in mezzo vale 200!",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------

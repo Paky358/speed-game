@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 266,
+    data: "25 ottobre 2026",
+    titolo: "Il Prezzo è Giusto: una schermata sola, grande e pulita 🖼️",
+    descrizione: [
+      "✅ La Prova del 5 e 🧹 Togli la cifra come la Spesa: i prodotti non si vedono più sopra e poi di nuovo sotto. C'è una lista sola, che arriva fin sotto il titolo, con la foto, il nome, la descrizione e il cartellino o le cifre da toccare.",
+      "🖼️ Nei giochi con un oggetto solo (È troppo!, Più o meno, La Cassaforte, Il Gioco dei Dadi, Il Mirino, L'Alpinista) la scheda del prodotto è grande e riempie lo schermo: foto più grande, nome e descrizione più grandi.",
+      "🧹 Mentre giochi, sopra non si ripete più quello che hai già sotto: niente cifre mescolate doppie nella Cassaforte, niente dadi doppi, niente prezzo doppio in È troppo!. Chi guarda, e tu dopo «Fatto», vedete tutto come prima.",
+      "📸 51 foto vere in più (1.312 in tutto): ora solo 81 oggetti su più di mille hanno ancora l'emoji. Due premi della Vetrina sono diventati precisi: le décolleté Pollini Aurora e la lampada Artemide Tolomeo."
+    ]
+  },
+  {
     v: 265,
     data: "24 ottobre 2026",
     titolo: "Il Prezzo è Giusto: una lista sola, e in due chi perde non prende punti 🛒",

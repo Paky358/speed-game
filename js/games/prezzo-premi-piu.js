@@ -50,6 +50,7 @@
   PREMI.piuomeno = {
     nome: "Più o meno", icona: "🔼🔽", ordine: 1,
     regola: "Scrivi un prezzo: il telefono ti dice ⬆️ più su o ⬇️ più giù. Chi lo trova per primo vince!",
+    spiega: "Scrivi un prezzo: ti diciamo se quello vero è ⬆️ più su o ⬇️ più giù, e riprovi. Chi lo trova prima vince: 400 punti al primo, 300 al secondo, 250 al terzo, 200 agli altri che lo trovano.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -115,7 +116,7 @@
       var lista = el("div", { class: "pz-righe" + (A.giocatori.length > 4 ? " due" : "") });
       var titolo = el("div", { class: "pz-sotto", text: "🏁 Chi l'ha trovato" });
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🔼🔽 Più o meno" }));
-      A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media" }));
+      A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
       A.sch.appendChild(titolo);
       A.sch.appendChild(lista);
       var visti = {};

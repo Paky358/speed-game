@@ -104,7 +104,7 @@
     Object.keys(sp.visti).forEach(function (k) {
       var v = sp.visti[k]; if (!v.sotto.riv) return;
       if (!v.punti) no(k + ": niente punti alla fine");
-      Object.keys(v.punti).forEach(function (id) { var p = v.punti[id]; if (!(p >= 0 && p <= 700)) no(k + ": punti strani per " + id + ": " + p); });
+      Object.keys(v.punti).forEach(function (id) { var p = v.punti[id]; if (!(p >= 0 && p <= 750)) no(k + ": punti strani per " + id + ": " + p); /* (al massimo 750: Alpinista perfetto, 550 + 200 della vetta piena) */ });
     });
     return Object.keys(t).map(function (x) { return x + "×" + t[x]; }).join(", ");
   }

@@ -90,6 +90,7 @@
   PREMI.spesa = {
     nome: "La Spesa", icona: "🛒", ordine: 6,
     regola: "Senza vedere i prezzi, riempi il carrello per spendere tra 20 e 22 €!",
+    spiega: "Cinque prodotti del supermercato, senza prezzo: riempi il carrello col più e il meno per spendere tra 20 e 22 €. Dentro la fascia 600 punti, poco fuori 350, più lontano meno.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -273,6 +274,7 @@
   PREMI.cassaforte = {
     nome: "La Cassaforte", icona: "🔐", ordine: 7,
     regola: "Le cifre del prezzo sono mescolate: rimettile in ordine e la cassaforte si apre!",
+    spiega: "Le cifre di un prezzo sono mescolate: tocca due cifre per scambiarle e rimettile in ordine. 60 punti per ogni cifra al posto giusto, +400 se la cassaforte si apre.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -330,9 +332,9 @@
       stile();
       var el = A.el, pub = A.pub || {}, ch = el("div");
       A.sch.appendChild(el("div", { class: "pz-testa", text: "🔐 La Cassaforte" }));
-      A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media" }));
-      A.sch.appendChild(el("div", { class: "pzc-mix" }, conPunto((pub.mix || []).join("")).map(function (c) { return el("span", { class: c === "." ? "pt" : "c", text: c }); }).concat([ el("span", { class: "eu", text: "€" }) ])));
-      A.sch.appendChild(el("div", { class: "pz-sotto", text: "🔢 Le cifre del prezzo sono mescolate: rimettile in ordine!" }));
+      A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
+      A.sch.appendChild(el("div", { class: "pzc-mix pz-solo-giu" }, conPunto((pub.mix || []).join("")).map(function (c) { return el("span", { class: c === "." ? "pt" : "c", text: c }); }).concat([ el("span", { class: "eu", text: "€" }) ])));
+      A.sch.appendChild(el("div", { class: "pz-sotto pz-solo-giu", text: "🔢 Le cifre del prezzo sono mescolate: rimettile in ordine!" }));
       A.sch.appendChild(ch);
       chips(A, ch, pub.fatti || []);
       return { aggiorna: function (p) { A.pub = p; aggChips(A, ch, (p && p.fatti) || []); } };

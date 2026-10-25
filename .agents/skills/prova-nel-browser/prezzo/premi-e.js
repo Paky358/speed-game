@@ -316,7 +316,13 @@
     });
     if (pan) [].forEach.call(pan.querySelectorAll(".pze-r5,.pze-r3,.pze-fatto,.pze-t,.pze-gs,.pze-ant"), function (e) { var r = e.getBoundingClientRect(); if (r.height && (r.bottom > h + 1 || r.right > ww + 1 || r.left < -1)) guai.push(e.className.split(" ")[0] + " fuori dallo schermo"); });
     if (pan) [].forEach.call(pan.querySelectorAll(".pze-r5,.pze-r3"), function (e) { if (e.scrollWidth > e.clientWidth + 1) guai.push(e.className.split(" ")[0] + " troppo stretta (" + e.scrollWidth + ">" + e.clientWidth + ")"); });
-    if (pan && (pan.querySelector(".pze-r5") || pan.querySelector(".pze-r3")) && pan.offsetHeight > h * 0.62) guai.push("pannello alto " + pan.offsetHeight + " su " + h);
+    // (25 ott 2026: mentre si gioca i prodotti stanno solo nel pannello, che sale fin sotto il titolo: sopra niente doppioni)
+    if (pan && (pan.querySelector(".pze-r5") || pan.querySelector(".pze-r3"))) {
+      guai = guai.filter(function (g) { return !/^pannello alto/.test(g); });
+      if (pan.getBoundingClientRect().top < 50) guai.push("il pannello copre i tasti in alto (" + Math.round(pan.getBoundingClientRect().top) + ")");
+      if (sch && [].some.call(sch.querySelectorAll(".pze-tes .pz-te"), function (t) { return t.getBoundingClientRect().height > 0; })) guai.push("i prodotti si vedono due volte (sopra e nel pannello)");
+      [].forEach.call(pan.querySelectorAll(".pze-r5,.pze-r3"), function (r) { var tx = r.querySelector(".tx"); if (!tx || tx.scrollWidth > tx.clientWidth + 1) guai.push("riga del pannello stretta"); });
+    }
     return guai;
   }
   COPIONE.aggiungi("pe5", { nome: "Premi E: le misure a 360x640, 412x915 e 360x780 (Bot in 6) nella Prova del 5 e in Togli la cifra", fai: async function () {
