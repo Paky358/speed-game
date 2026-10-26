@@ -158,13 +158,20 @@
 
     var contenuto = el("div", { class: "contenuto" });
     var piede = el("div", { class: "piede" });
-    var s = el("div", { class: "schermata" }, [testa, contenuto, piede]);
+    var s = el("div", { class: "schermata oro" }, [testa, contenuto, piede]);   // (🤍 Bianco e oro: le schermate del core sono chiare, vedi js/stile.js)
     s._contenuto = contenuto; s._piede = piede;
     return s;
   }
 
+  // 🤍 le schermate del mondo (città, casa, casinò, negozio, bacheca, edifici) hanno i loro disegni: restano come sono
+  var SCENE_MONDO = /\b(citta-vista|casino-sale|casa-vista|ne-vista|nb-vista|edificio|carica-extra|pe-vista|sv-vista|gd-vista)\b/;
   function mostra(schermo) {
     svuota(app);
+    // 🤍 Bianco e oro: ogni schermata del core è chiara (anche quelle fatte a mano), tranne quelle dei giochi e del mondo
+    if (window.SGStile) {
+      if (!schermo._gioco && !SCENE_MONDO.test(schermo.className || "")) SGStile.marca(schermo);
+      SGStile.aggiorna(schermo);
+    }
     app.appendChild(schermo);
     window.scrollTo(0, 0);
   }
@@ -10817,10 +10824,14 @@
         if (!o.titolo) o = Object.assign({}, o, { icona: null, sotto: null });
         var s = schermata(o);
         if (!o.titolo) s.classList.add("senza-testa");
+        // 🤍 il gioco resta col suo stile finché non lo si converte: tema: "oro" in SG.registra (tutto chiaro),
+        // oppure t.schermata({ chiara: true }) per una schermata sola (classifica, schermate di servizio)
+        if (g.tema !== "oro" && !o.chiara) { s.classList.remove("oro"); s._gioco = true; }
         return s;
       },
       mostra: function (s) {
         if (!viva()) return;
+        if (s && g.tema !== "oro" && !(s.classList && s.classList.contains("oro"))) s._gioco = true;   // (🤍 una schermata del gioco: mostra() non la fa chiara)
         if (salaCtx && salaCtx.tabellone) salaCtx.tabellone(s);   // torneo a eliminazione: tasto 🏆 Tabellone
         if (salaCtx && salaCtx.angolo) salaCtx.angolo(s);   // chi guarda il duello della Sala: "👥 Sala" in alto
         if (lp.stanza && !lp.guarda) dadoNelleSchermate(s, g, lp.stanza);   // chi entra senza profilo: il benvenuto, l'avatar e il 🎲

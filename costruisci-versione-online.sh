@@ -67,6 +67,7 @@ VER=$(md5sum "$EXTRA" | cut -c1-10)
   cat js/pesca.js   # la pesca al laghetto
   cat js/scavi.js   # gli scavi antichi
   echo ''
+  cat js/stile.js   # 🤍 Bianco e oro: schermate chiare del core e simboli puliti al posto delle emoji
   cat js/core.js
   echo ''
   cat js/net.js
