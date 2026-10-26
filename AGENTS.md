@@ -28,6 +28,10 @@ Una web app di party game da telefono (tanti giochi, uno per file), in JavaScrip
 - Ogni novità visibile va scritta in cima a `data/novita.js` (numero `v` +1), con parole per chi gioca.
 - Messaggi di commit in italiano, dicendo cosa cambia per chi gioca.
 
+## 🧠 Il Cervello e il suo registro (dal 26 ott 2026)
+- La chat «🧠 Cervello» tiene il quadro di tutto il progetto in `docs/cervello.md`: limiti di consumo e regola del momento, cosa è online e cosa no, le chat aperte, la lista di tutte le cose da fare, il diario delle chat. Prima di cominciare un lavoro grande, guardare lì i limiti e la lista.
+- **Quando una chat finisce un lavoro, salva o pubblica, scrive una riga nel diario di docs/cervello.md; i limiti e la lista delle cose da fare stanno lì.** La riga va in cima al diario (formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`) e si mette nello stesso commit dei propri file. Le altre parti del registro le aggiorna solo il Cervello.
+
 ## Due computer (PC fisso e portatile)
 Il proprietario lavora con Claude da due computer, tenuti allineati da GitHub. Quando il PC fisso è acceso gli scrive anche dal portatile (Remote Control): il lavoro allora resta sul PC fisso.
 - Si lavora sul ramo **`lavori-in-corso`**, mai direttamente su `master` (che è il sito online). Se il ramo manca, crealo da `master`.
