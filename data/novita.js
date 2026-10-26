@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 269,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: 🔄 cambia carta",
+    descrizione: [
+      "🔄 Ti è uscita una carta di cui non sai niente? Una volta a partita, al tuo turno, tocchi «🔄 Cambia» sulla carta e ne peschi un'altra, col tempo che riparte. Gli altri vedono «🔄 Paky cambia carta!».",
+      "Vale quando si gioca a turno (sullo stesso telefono e online); in «⚡ Tutti insieme» la carta è la stessa per tutti e non si cambia."
+    ]
+  },
+  {
     v: 268,
     data: "26 ottobre 2026",
     titolo: "La Linea del tempo: 📆 scegli l'epoca",

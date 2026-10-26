@@ -34,6 +34,10 @@
 //      ‹ › per aggiustare, le maniglie non si scavalcano, l'avviso con pochissime carte; carte tutte negli anni scelti.
 // tp7: «📆 Epoca» online dal ⚙️ della saletta: «Scegli tu» (la riga delle regole dice «📆 dall'anno 0 al 1800»), poi
 //      «Il Novecento»: la partita intera ha solo carte del Novecento.
+// tp8: «🔄 Cambia carta» sullo stesso telefono in 2: al primo turno ognuno cambia (carta nuova, il tasto sparisce e non torna),
+//      il cambio non costa un turno, misure col tasto.
+// tp9: «🔄 Cambia carta» online: Giulia a messaggio (la seconda volta non vale, Paky vede «Giulia cambia carta!»), Giulia
+//      non può cambiare la carta di Paky, Paky col tasto (carta nuova sul suo telefono), la carta giudicata è quella nuova.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T, vm = A.vm;
@@ -813,5 +817,105 @@
     note.push(Object.keys(titoli).length + " carte, tutte del Novecento");
     senzaErrori();
     return note.join("; ");
+  } });
+
+  // =================== tp8, tp9: «🔄 Cambia carta» (26 ott 2026) ===================
+  COPIONE.aggiungi("tp8", { nome: "Linea del tempo sullo stesso telefono: 🔄 Cambia carta una volta a testa, carta nuova, il tasto sparisce", fai: async function () {
+    var P = await W.apriTel("Paky", { x: 0 }), usato = {}, turni = 0, kOld = "", note = [], fino = Date.now() + 300000;
+    await localeTl(P, ["Paky", "Giulia"], false);
+    function stato() { var s = P.document.querySelector(".st-sch-in .tl-stato"); return s ? s.textContent : ""; }
+    while (Date.now() < fino) {
+      if (/Classifica finale/.test(T(P))) break;
+      if (W.clicca(P, /tocca a me/)) { await W.dorme(300); continue; }
+      if (W.clicca(P, /Nessuno la ruba/)) { await W.dorme(300); continue; }
+      var mT = /Tocca a te, (\S+)!/.exec(stato()), mano = P.document.querySelector(".st-sch-in .tl-mano .tit"), slots = P.document.querySelectorAll(".st-sch-in .tl-slot");
+      if (mT && mano && slots.length && P.document.querySelector(".tl-conferma") && kOld !== mano.textContent) {
+        var chi = mT[1], tit = mano.textContent, bc = P.document.querySelector(".st-sch-in .tl-mano .cambia");
+        if (!usato[chi]) {
+          if (!bc) no(chi + " al primo turno non ha «🔄 Cambia»");
+          else {
+            var m = await misure(P, "Paky"); if (m) no("col tasto «🔄 Cambia»: " + m);
+            bc.click(); usato[chi] = tit;
+            if (!await W.aspetta(function () { var t2 = P.document.querySelector(".st-sch-in .tl-mano .tit"); return t2 && t2.textContent !== tit && P.document.querySelector(".tl-conferma"); }, 6000)) no(chi + ": dopo «🔄 Cambia» la carta resta la stessa");
+            if (P.document.querySelector(".st-sch-in .tl-mano .cambia")) no(chi + ": dopo il cambio il tasto «🔄 Cambia» c'è ancora");
+            note.push(chi + " cambia «" + tit.slice(0, 30) + "»");
+            continue;
+          }
+        } else if (bc) no(chi + " ha già cambiato ma ha ancora «🔄 Cambia»");
+        kOld = mano.textContent;
+        var Y = annoDi(P, mano.textContent), anni = [].map.call(P.document.querySelectorAll(".st-sch-in .tl-asse > .tl-ev .anno"), function (a) { var t = a.textContent; return /a\.C\./.test(t) ? -parseInt(t, 10) : parseInt(t, 10); });
+        slots[gapOk(anni.map(function (a) { return { anno: a }; }), Y)].click(); await W.dorme(120);
+        if (!W.clicca(P, /Mettila qui/, ".tl-conferma")) no("non riesco a confermare");
+        turni++; await W.dorme(300); continue;
+      }
+      await W.dorme(250);
+    }
+    if (!/Classifica finale/.test(T(P))) no("la partita non finisce («" + T(P).slice(0, 160) + "»)");
+    if (turni !== 6) no("i turni sono " + turni + " (il cambio non deve costare un turno)");
+    if (Object.keys(usato).length !== 2) no("hanno cambiato carta: " + Object.keys(usato).join(", "));
+    senzaErrori();
+    return turni + " turni; " + note.join(", ");
+  } });
+
+  COPIONE.aggiungi("tp9", { nome: "Linea del tempo online: 🔄 Cambia carta (a messaggio e col tasto), una volta sola, solo al proprio turno, gli altri lo vedono", fai: async function () {
+    var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo"), note = [];
+    await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185 });
+    if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 2; }, 10000)) no("nella saletta non arrivano in 2");
+    await regola(P, async function (f) { var meno = f.querySelector(".stepper button"); meno.click(); meno.click(); });
+    if (!await W.aspetta(function () { return W.clicca(P, /Comincia/, ".sl-go"); }, 5000)) no("Paky non trova «Comincia»");
+    var gG = null, fatto = { giulia: false, paky: false, fuoriTurno: false }, kV = "", fino = Date.now() + 300000;
+    while (Date.now() < fino && vm(C).fase !== "fine") {
+      var v = vm(C), k = v.fase + "|" + v.n + "|" + (v.carta && v.carta.titolo);
+      if (k === kV) { await W.dorme(250); continue; }
+      kV = k; gG = gG || idDi(C, "Giulia");
+      if (v.fase === "turno") {
+        if (!v.cambiOn) no("a turno la foto dice che non si può cambiare carta");
+        var tit = v.carta.titolo;
+        if (v.turnoId !== "host") {
+          if (!fatto.giulia) {
+            manda("Giulia", C, { t: "cambia" });
+            if (!await W.aspetta(function () { return vm(C).carta && vm(C).carta.titolo !== tit; }, 5000)) no("Giulia manda «cambia» ma la carta resta la stessa");
+            var t2 = vm(C).carta.titolo;
+            if (!gDi(C, gG).cambio || vm(C).cambi !== 1) no("dopo il cambio la foto non lo dice (cambio " + gDi(C, gG).cambio + ", cambi " + vm(C).cambi + ")");
+            if (!await W.aspetta(function () { return /Giulia cambia carta/.test(T(P)); }, 5000)) no("Paky non vede «🔄 Giulia cambia carta!»");
+            manda("Giulia", C, { t: "cambia" }); await W.dorme(600);
+            if (vm(C).carta.titolo !== t2) no("Giulia ha cambiato carta due volte");
+            fatto.giulia = true; note.push("Giulia cambia (a messaggio), la seconda volta no"); kV = ""; continue;
+          }
+          var Yg = annoDi(P, v.carta.titolo); manda("Giulia", C, { t: "scelta", gap: gapOk(v.linea, Yg) });
+        } else {
+          if (!fatto.fuoriTurno) {   // Giulia prova a cambiare la carta di Paky: non vale
+            manda("Giulia", C, { t: "cambia" }); await W.dorme(600);
+            if (vm(C).carta.titolo !== tit) no("Giulia ha cambiato la carta di Paky");
+            fatto.fuoriTurno = true;
+          }
+          if (!await W.aspetta(function () { return P.document.querySelectorAll(".tl-slot").length === v.linea.length + 1; }, 12000)) no("Paky non vede i posti");
+          var bc = P.document.querySelector(".st-sch-in .tl-mano .cambia");
+          if (!fatto.paky) {
+            if (!bc) no("Paky al suo turno non ha «🔄 Cambia»");
+            else {
+              bc.click();
+              if (!await W.aspetta(function () { return vm(C).carta && vm(C).carta.titolo !== tit; }, 5000)) no("Paky tocca «🔄 Cambia» ma la carta resta la stessa");
+              if (!await W.aspetta(function () { var t3 = P.document.querySelector(".st-sch-in .tl-mano .tit"); return t3 && t3.textContent === vm(C).carta.titolo && !P.document.querySelector(".st-sch-in .tl-mano .cambia"); }, 6000)) no("sul telefono di Paky non c'è la carta nuova (o c'è ancora «🔄 Cambia»)");
+              fatto.paky = true; note.push("Paky cambia col tasto"); kV = ""; continue;
+            }
+          } else if (bc) no("Paky ha già cambiato ma ha ancora «🔄 Cambia»");
+          var Yp = annoDi(P, vm(C).carta.titolo), lin = vm(C).linea;
+          if (!await W.aspetta(function () { return P.document.querySelectorAll(".tl-slot").length === lin.length + 1; }, 8000)) no("Paky non vede i posti della carta nuova");
+          P.document.querySelectorAll(".tl-slot")[gapOk(lin, Yp)].click(); await W.dorme(150); W.clicca(P, /Mettila qui/, ".tl-conferma");
+        }
+        continue;
+      }
+      if (v.fase === "votazione") { if (v.turnoId === "host") manda("Giulia", C, { t: "ruba", gap: null }); else await W.aspetta(function () { return W.clicca(P, /👍 Passo/); }, 12000); continue; }
+      if (v.fase === "esito") {
+        if (!v.esito.giusto) no("turno di " + v.esito.nome + ": la carta messa al posto giusto risulta sbagliata (la carta cambiata non è quella giudicata?)");
+        await W.aspetta(function () { return W.clicca(P, /Avanti/, ".st-barra button"); }, 25000); continue;
+      }
+      await W.dorme(250);
+    }
+    if (vm(C).fase !== "fine") no("non finisce (fase " + vm(C).fase + ")");
+    Object.keys(fatto).forEach(function (x) { if (!fatto[x]) no("non è successo: " + x); });
+    senzaErrori();
+    return note.join("; ") + "; classifica " + (vm(C).classifica || []).map(function (r) { return r.nome + " " + r.punti; }).join(", ");
   } });
 })();
