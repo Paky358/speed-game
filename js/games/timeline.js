@@ -307,9 +307,21 @@
     ".tl-vinci .sl{flex:1;min-width:0;height:34px;margin:0;accent-color:#ffca3a;cursor:pointer}",
     ".tl-vinci-tt{font-size:.8rem;font-weight:700;color:var(--testo-tenue);margin-top:6px}",
     ".tl-nasc[hidden]{display:none!important}",   // (le righe che col modo nuovo non servono: anche quelle con un display loro, es. il − / +)
-    // chi guarda: la fila degli avatar di chi gioca ancora (si tocca per vedere la sua linea)
-    ".tl-spia{margin-bottom:6px}.tl-spia .tl-gv{justify-content:flex-start}",
+    // chi guarda: la fila degli avatar di chi gioca ancora (si tocca per vedere la sua linea). Barra bassa: UNA riga di avatar che
+    // scorre di lato (niente barra visibile), sotto la nota e il conto su una riga, poi le faccine: la linea che si guarda resta grande
+    ".tl-spia{margin:0;padding:0;border:0;border-radius:0;background:none;display:flex;flex-direction:column;gap:4px}",
+    ".tl-spia .gr{position:relative;display:flex;flex-wrap:nowrap;justify-content:flex-start;gap:6px;overflow-x:auto;padding:2px;scrollbar-width:none}",
+    ".tl-spia .gr::-webkit-scrollbar{display:none}",
+    ".tl-spia .tl-gv{justify-content:flex-start;max-width:none;font-size:.75rem;padding:1px 8px 1px 1px;gap:4px}",
+    ".tl-spia .tl-gv .av{width:22px;height:22px}",
+    ".tl-spia .tl-gv .nm{max-width:9ch}",
+    ".tl-spia .tl-gv .v{font-size:.9rem}",
     ".tl-spia .tl-gv.attivo .nm{color:var(--accento)}",
+    ".tl-spia .info{display:flex;align-items:center;gap:8px;font-size:.72rem;line-height:1.15;font-weight:800;color:var(--testo-tenue)}",
+    ".tl-spia .nota{flex:1 1 0;min-width:0}",
+    ".tl-spia .conta{flex:0 1 auto;max-width:42%;margin:0;text-align:right}",
+    ".st-barra:has(.tl-spia){padding:6px 12px calc(8px + env(safe-area-inset-bottom));gap:4px}",
+    ".st-barra:has(.tl-spia) .sl-faccine .sl-fa{height:30px;font-size:1.25rem}",
     // il risultato: «📍 Andava …» e chi è arrivato in fondo
     ".tl-esito-t .tl-andava{font-size:.82rem;font-weight:800;color:#ffe3a0;max-width:36ch;animation:tlPop .4s ease 1.45s both}",
     ".tl-tutti .d.fin{color:var(--accento)}",
@@ -567,11 +579,19 @@
   function carteTx(n) { return n === 1 ? "1 carta" : fmtN(n) + " carte"; }
   // "🥇", "🥈", "🥉", "4°"
   function medaglia(pos) { return MEDAGLIE[pos - 1] || pos + "°"; }
-  // sul display del leggio: le carte messe bene, o la medaglia di chi ha finito
+  // "🥇 1°", "🥈 2°", "4°" (il numero una volta sola)
+  function postoL(pos) { return MEDAGLIE[pos - 1] ? MEDAGLIE[pos - 1] + " " + pos + "°" : pos + "°"; }
+  // le carte messe bene da leggere: mai più di quelle per vincere. Chi è arrivato a vinci e non ha ancora finito è nello spareggio
+  // (lì si va oltre): per lui «10/10 ⚔️»
+  function okVista(ok, vinci) { return Math.min(ok || 0, vinci); }
+  function inSparL(g, vinci) { return !(g.fin > 0) && (g.ok || 0) >= vinci; }
+  function contaL(g, vinci) { return fmtN(okVista(g.ok, vinci)) + "/" + vinci + (inSparL(g, vinci) ? " ⚔️" : ""); }
+  function suL(g, vinci) { return fmtN(okVista(g.ok, vinci)) + " su " + vinci + (inSparL(g, vinci) ? " ⚔️" : ""); }
+  // sul display del leggio: le carte messe bene (mai più di vinci, S.vinciL), o la medaglia di chi ha finito
   function leggioL(S, i, g, delta) {
     if (!S.L[i]) return;
-    if (g.fin > 0) ST.testoLeggio(S, i, medaglia(g.fin) + " " + g.fin + "°");
-    else puntiLeggio(S, i, g.ok || 0, delta || 0);
+    if (g.fin > 0) ST.testoLeggio(S, i, postoL(g.fin));
+    else puntiLeggio(S, i, S.vinciL ? okVista(g.ok, S.vinciL) : g.ok || 0, delta || 0);
   }
   function leggiiL(S, giocatori) { giocatori.forEach(function (g, i) { leggioL(S, i, g, 0); }); }
   // "Paky, Giulia e Luca"
@@ -583,7 +603,7 @@
     Object.keys(perPosto).sort(function (a, b) { return a - b; }).forEach(function (p) {
       var l = perPosto[p], nm = nomiDi(giocatori, l); p = +p;
       if (p === 1) out.push(["🏆 " + nm + (l.length > 1 ? " vincono!" : " vince!"), es.spar && es.spar.tipo === "vinto" ? "Spareggio vinto!" : "Primo a " + carteTx(vinci) + "!", "🏆", l.length === 1 ? l[0] : null]);
-      else out.push([medaglia(p) + " " + p + "° posto: " + nm, l.length > 1 ? "Pari merito" : "Ha finito!", medaglia(p), l.length === 1 ? l[0] : null]);
+      else out.push([postoL(p) + " posto: " + nm, l.length > 1 ? "Pari merito" : "Ha finito!", medaglia(p), l.length === 1 ? l[0] : null]);
     });
     var sp = es.spar;
     if (sp && sp.tipo === "inizia") out.push(["⚔️ Spareggio!", nomiDi(giocatori, sp.ids) + " a " + carteTx(vinci) + ": la prossima carta la giocano solo loro", "⚔️", null]);
@@ -998,7 +1018,8 @@
     barra(S, nodi);
     var misura = function () {
       var h = S.barraEl.offsetHeight;
-      if (h > 120) { S.vista.style.setProperty("--tl-barra", (h - 8) + "px"); S.vista.classList.add("tl-alta"); }
+      // (la barra di chi guarda è bassa, ma il suo posto preciso glielo lascia lo stesso: la linea che guarda resta più alta che si può)
+      if (h > 120 || S.barraEl.querySelector(".tl-spia")) { S.vista.style.setProperty("--tl-barra", (h - 8) + "px"); S.vista.classList.add("tl-alta"); }
       else S.vista.classList.remove("tl-alta");
     };
     misura(); setTimeout(misura, 60);
@@ -1071,10 +1092,11 @@
   // Online niente "Cambia gioco" e "La sala" (portano alle schermate dello stesso telefono): l'host ha "Nuova partita
   // (stessi amici)", gli altri aspettano l'host; tutti hanno la fila delle faccine.
   var notaFine = null, NOTA_CHIUSA = "🚪 L'host ha chiuso la stanza.";
-  // opz.linee: «🧍 Ognuno la sua linea» (sotto il nome le carte messe bene, non i punti)
+  // opz.linee: «🧍 Ognuno la sua linea» (sotto il nome le carte messe bene, non i punti; opz.vinci: mai più di quelle per vincere)
   function schermataFine(t, classifica, rigioca, opz) {
     var el = t.el; opz = opz || {};
-    function pt(r, corto) { return opz.linee ? (corto ? fmtN(r.punti) + " 🃏" : (r.fin ? "🏁 " : "") + carteTx(r.punti)) : (corto ? fmtN(r.punti) : fmtN(r.punti) + " punti"); }
+    function carteL(r) { return opz.vinci ? okVista(r.punti, opz.vinci) : r.punti; }
+    function pt(r, corto) { return opz.linee ? (corto ? fmtN(carteL(r)) + " 🃏" : (r.fin ? "🏁 " : "") + carteTx(carteL(r))) : (corto ? fmtN(r.punti) : fmtN(r.punti) + " punti"); }
     var esci = opz.esci || t.esci;
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: gioco.nome });
     s.classList.add("tl-fine");
@@ -1706,6 +1728,7 @@
     if (prof) stato.giocatori.forEach(function (g, i) { if (stato._io < 0 && g.nome === prof.nome) stato._io = i; });
     stato._T = stato._io >= 0 ? creaTraccia({ online: false, carte: vinci, tutteCat: tutteLeCategorie(imp) }) : null;
     stato.S = creaStudio(t, stato.giocatori, { io: -1, esci: t.esci, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo });
+    stato.S.vinciL = vinci;   // (i leggii non leggono mai più carte di quelle per vincere)
     leggiiL(stato.S, stato.giocatori);
     apertura(stato.S).then(function () { cartaTel(t, stato); });
   }
@@ -1713,7 +1736,7 @@
   function hudL(giocatori, vinci, meId) {
     return giocatori.map(function (g) {
       return { id: g.id, nome: g.nome, omino: g.omino || null, via: !!g.via, _me: g.id === meId, punti: g.fin > 0 ? 1000 - g.fin : (g.ok || 0),
-        testo: g.fin > 0 ? medaglia(g.fin) : fmtN(g.ok || 0) + "/" + vinci };
+        testo: g.fin > 0 ? medaglia(g.fin) : contaL(g, vinci) };
     });
   }
   async function cartaTel(t, stato) {
@@ -1769,10 +1792,10 @@
     var vinc = -1; stato.giocatori.forEach(function (g, i) { if (vinc < 0 && cl[0] && g.id === cl[0].id) vinc = i; });
     if (stato.S && stato.S.vivo()) await ST.finale(stato.S, vinc, finaleL(cl, stato.vinci));
     if (stato.S && !stato.S.vivo()) return;
-    schermataFine(t, cl, function () { partenzaTelefono(t); }, { linee: true });
+    schermataFine(t, cl, function () { partenzaTelefono(t); }, { linee: true, vinci: stato.vinci });
   }
   // sotto "… vince!": "Primo a 10 carte!" (o le carte, se è finito il mazzo)
-  function finaleL(cl, vinci) { return cl[0] && cl[0].fin === 1 ? "Primo a " + carteTx(vinci) + "!" : carteTx(cl[0] ? cl[0].punti : 0) + " messe bene"; }
+  function finaleL(cl, vinci) { return cl[0] && cl[0].fin === 1 ? "Primo a " + carteTx(vinci) + "!" : carteTx(okVista(cl[0] ? cl[0].punti : 0, vinci)) + " messe bene"; }
   // il risultato: la carta si gira e svela l'anno; per me (myId) se è entrata nella mia linea o dove andava; poi tutti in fila con
   // le carte messe bene ("7/10"). V = { esitoL, giocatori, lin, vinci }
   function nodoEsitoL(el, V, myId) {
@@ -1780,7 +1803,8 @@
     ris.forEach(function (r) { if (r.id === myId) mio = r; });
     var molti = ris.length > 6, lin = myId != null && V.lin ? V.lin[myId] || [] : [];
     function gDi(id) { return V.giocatori.filter(function (g) { return g.id === id; })[0] || null; }
-    var verd = mio ? (mio.giusto ? "✅ Giusta! Ne hai " + fmtN(mio.ok) + " su " + V.vinci : mio.scelto ? "❌ Sbagliata: per te va via" : "⏰ Tempo scaduto: va via") : "📅 " + annoTesto(es.anno);
+    var gMio = mio ? gDi(mio.id) : null;
+    var verd = mio ? (mio.giusto ? "✅ Giusta! Ne hai " + (gMio ? suL(gMio, V.vinci) : fmtN(okVista(mio.ok, V.vinci)) + " su " + V.vinci) : mio.scelto ? "❌ Sbagliata: per te va via" : "⏰ Tempo scaduto: va via") : "📅 " + annoTesto(es.anno);
     // sbagliata: dove andava nella MIA linea (che è rimasta com'era) e di quanto ho sbagliato
     var andava = null;
     if (mio && !mio.giusto && lin.length) {
@@ -1809,7 +1833,7 @@
       ul.appendChild(el("li", { class: r.giusto ? "si" : "no" }, [
         el("span", { class: "av", html: avatarDi(g, r.giusto ? "esulta" : null) }),
         el("span", { class: "nm", text: (r.giusto ? "✅ " : r.scelto ? "❌ " : "⏰ ") + g.nome + (r.id === myId ? " (tu)" : "") }),
-        el("span", { class: "d" + (g.fin > 0 ? " fin" : ""), text: g.fin > 0 ? medaglia(g.fin) + " " + fmtN(r.ok) : fmtN(r.ok) + "/" + V.vinci })
+        el("span", { class: "d" + (g.fin > 0 ? " fin" : ""), text: g.fin > 0 ? medaglia(g.fin) + " " + fmtN(okVista(r.ok, V.vinci)) : contaL(g, V.vinci) })
       ]));
     });
     box.appendChild(ul);
@@ -1840,7 +1864,8 @@
       var gira = function (x) {
         cartello(S, x.i, "gira", x.r.giusto);
         var f = S.L[x.i] && S.L[x.i].cart && S.L[x.i].cart.querySelector(".f.r"); if (f) f.textContent = x.r.giusto ? "✅" : x.r.scelto ? "❌" : "⏰";
-        faccia(S, x.i, x.r.giusto ? "esulta" : "triste"); puntiLeggio(S, x.i, x.r.ok, x.r.giusto ? 1 : 0);
+        // (nello spareggio il leggio resta a vinci: niente «+1» che non si vede)
+        faccia(S, x.i, x.r.giusto ? "esulta" : "triste"); puntiLeggio(S, x.i, okVista(x.r.ok, V.vinci), x.r.giusto && x.r.ok <= V.vinci ? 1 : 0);
       };
       if (S.file === 1) {
         for (var k = 0; k < gir.length; k++) { if (!S.vivo()) return; gira(gir[k]); await dorme(300); }
@@ -2389,6 +2414,8 @@
     // "⏩ Avanti": se lo toccano tutti quelli che hanno giocato la carta (collegati), si va avanti subito
     function avantiL(id) {
       if (st.fase !== "lEsito") return;
+      // l'host che non ha giocato questa carta (ha finito, o guarda) può sempre andare avanti: come negli altri modi, il suo tasto salta l'attesa
+      if (id === IO && st.esitoL && !st.esitoL.risultati.some(function (r) { return r.id === IO; })) return prossimoL();
       var g = gDi(id); if (!g || g.via || st.avanti[id]) return;
       st.avanti[id] = true; bd(); verificaAvantiL();
     }
@@ -2478,7 +2505,8 @@
     // uno scollegato si è rifatto vivo: se la partita aspettava lui, riparte
     function torna(g) {
       g.via = false;
-      if (st.fase === "attesa") iniziaTurno(); else bd();
+      // («🧍 Ognuno la sua linea»: se si aspettava chi gioca la carta, riparte solo se è tornato uno di loro; chi guarda no)
+      if (st.fase === "attesa" && (!st.linee || giocanoL(st).indexOf(g) >= 0)) iniziaTurno(); else bd();
     }
     function finisci() {
       clearTo(); st.fase = "fine"; st.scadenza = null; st.durata = null;
@@ -2639,7 +2667,7 @@
       setTimeout(function () {
         if (!REG || !REG.S.vivo()) return;
         var i = idxDi(S.vm, S.myId); if (i < 0) return;
-        var sotto = vm.linee ? (io.fin ? "Hai finito: " + medaglia(io.fin) + " " + io.fin + "° posto" : "Hai " + carteTx(io.ok || 0) + " su " + vm.vinci)
+        var sotto = vm.linee ? (io.fin ? "Hai finito: " + postoL(io.fin) + " posto" : "Hai " + carteTx(okVista(io.ok, vm.vinci)) + " su " + vm.vinci + (inSparL(io, vm.vinci) ? " ⚔️" : ""))
           : vm.insieme ? (io.restano === 1 ? "Manca 1 carta" : "Mancano " + io.restano + " carte")
           : io.restano > 0 ? (io.restano === 1 ? "Ti resta 1 carta" : "Ti restano " + io.restano + " carte") : "Hai finito le carte: ora puoi rubare";
         terzo(REG.S, i, "Bentornato, " + io.nome + "!", sotto, "👋");
@@ -2735,6 +2763,7 @@
       REG = { t: t, cb: cb, vm: vm, ids: ids, codice: vm.codice, partita: vm.partita };
       REG.S = creaStudio(t, vm.giocatori, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo });
       if (conTarga(t)) REG.S.vista.classList.add("st-con-targa");   // (il posto della targhetta di chi guarda)
+      if (vm.linee) REG.S.vinciL = vm.vinci;   // (i leggii non leggono mai più carte di quelle per vincere)
       if (vm.linee) leggiiL(REG.S, vm.giocatori); else vm.giocatori.forEach(function (g, i) { puntiLeggio(REG.S, i, g.punti, 0); });
     } else if (REG.ids !== ids && REG.S.vivo()) {   // i giocatori sono cambiati: rifaccio i leggii
       REG.ids = ids; REG.S.impostaGiocatori(vm.giocatori, idxDi(vm, cb.myId));
@@ -2777,8 +2806,8 @@
       // i tasti di fine comuni: all'host e a chi ha giocato (chi ha solo guardato tiene i suoi)
       var tf = cb.sonoHost ? { host: true, nuova: cb.onNuova, esci: cb.onEsci } : (io >= 0 || conTarga(R.t) ? { host: false, esci: cb.onEsci } : null);   // (chi guarda col link: se c'è, la fine del core)
       schermataFine(R.t, cl, cb.sonoHost ? cb.onNuova : null, cb.sonoHost
-        ? { online: true, testoRigioca: "↻ Nuova partita (stessi amici)", esci: cb.onEsci, tf: tf, linee: !!vm.linee }
-        : { online: true, esci: cb.onEsci, tf: tf, linee: !!vm.linee, chiusa: !!cb.chiusa, nota: cb.chiusa ? NOTA_CHIUSA
+        ? { online: true, testoRigioca: "↻ Nuova partita (stessi amici)", esci: cb.onEsci, tf: tf, linee: !!vm.linee, vinci: vm.vinci }
+        : { online: true, esci: cb.onEsci, tf: tf, linee: !!vm.linee, vinci: vm.vinci, chiusa: !!cb.chiusa, nota: cb.chiusa ? NOTA_CHIUSA
           : io >= 0 ? "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta."
           : (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta hai guardato." : conTarga(R.t) ? "👀 Hai guardato: se l'host fa un'altra partita, entri anche tu." : "⏳ Aspetta l'host: alla prossima partita giochi anche tu." });
       return true;
@@ -3154,8 +3183,8 @@
       schermoGioco(S, { giocatori: giocHUD(vm, cb.myId), turnoId: R.spiaId, stato: "👀", sotto: "…", rimMs: vm._fino ? vm._fino - Date.now() : null, totMs: TEMPO_T * 1000,
         carta: vm.carta, linea: [], chiave: "vm-spia|" + n });
       R.spiaZ = S.sch.querySelector(".tl-scroll"); R.spiaTx = S.sch.querySelector(".tl-stato span"); R.spiaSm = S.sch.querySelector(".tl-stato small");
-      R.spiaChip = {};
-      var gr = el("div", { class: "gr" });
+      R.spiaChip = {}; R.spiaVisto = null;
+      var gr = el("div", { class: "gr" });   // (una riga sola: se sono tanti scorre di lato)
       gi.forEach(function (g) {
         var seg = el("span", { class: "v", text: "🤔" });
         var b = el("button", { class: "tl-gv", type: "button", "data-id": g.id, onclick: function () {
@@ -3166,11 +3195,11 @@
         } }, [ el("span", { class: "av", html: avatarDi(g) }), el("span", { class: "nm", text: g.nome }), seg ]);
         R.spiaChip[g.id] = { b: b, seg: seg }; gr.appendChild(b);
       });
-      // (una riga sola sopra gli avatar: perché guardo e cosa si fa)
-      var nota = me && me.fin ? "🏁 Hai finito! Tocca un avatar e guarda la sua linea (niente suggerimenti 🤫)"
-        : me && vm.spar ? "⚔️ Lo spareggio lo giocano loro: tocca un avatar e guarda la sua linea" : testoFuori(vm, cb.myId);
-      R.contaT = el("p", { class: "tl-attesa", text: testoContaL(vm) });
-      barraTL(S, [ el("div", { class: "tl-gvoto tl-spia" + (gi.length > 4 ? " molti" : "") }, [ el("div", { class: "tt", text: nota }), gr ]), R.contaT, faccineDi(R.t) ]);
+      // (sotto gli avatar, su una riga: perché guardo e a che punto sono, corti)
+      var nota = me && me.fin ? "🏁 Hai finito! Guarda gli altri 🤫"
+        : me && vm.spar ? "⚔️ Spareggio: lo giocano loro, guarda 🤫" : testoFuori(vm, cb.myId);
+      R.contaT = el("p", { class: "tl-attesa conta", text: testoContaL(vm) });
+      barraTL(S, [ el("div", { class: "tl-gvoto tl-spia" }, [ gr, el("div", { class: "info" }, [ el("div", { class: "nota", text: nota }), R.contaT ]) ]), faccineDi(R.t) ]);
     }
     aggiornaSpia(R, vm);
   }
@@ -3184,11 +3213,16 @@
       var c = R.spiaChip[k], ha = vm.hannoScelto.indexOf(k) >= 0, cl = "tl-gv" + (k === id ? " attivo" : ha ? " si" : ""), sg = ha ? "✅" : "🤔";
       if (c.b.className !== cl) c.b.className = cl;
       if (c.seg.textContent !== sg) c.seg.textContent = sg;
+      // la fila scorre di lato: l'avatar che si guarda resta in vista (si sposta solo la fila, mai la pagina)
+      if (k === id && R.spiaVisto !== id) {
+        R.spiaVisto = id; var fila = c.b.parentNode, da = c.b.offsetLeft, a = da + c.b.offsetWidth;
+        if (fila && (da < fila.scrollLeft || a > fila.scrollLeft + fila.clientWidth)) fila.scrollLeft = Math.max(0, da - (fila.clientWidth - c.b.offsetWidth) / 2);
+      }
     });
     var tc = testoContaL(vm); if (R.contaT && R.contaT.textContent !== tc) R.contaT.textContent = tc;
     [].forEach.call(S.sch.querySelectorAll(".tl-hud .tl-pl"), function (p) { p.classList.toggle("turno", p.getAttribute("data-id") === id); });
     var lin = linDi(vm, id), gap = typeof mosse[id] === "number" ? mosse[id] : null, ha = vm.hannoScelto.indexOf(id) >= 0;
-    var tx = "👀 La linea di " + g.nome, sm = ha ? (gap != null ? "✅ Ha scelto: l'ha messa qui" : "✅ Ha scelto") : "🤔 Sta scegliendo… (" + fmtN(g.ok || 0) + " su " + vm.vinci + ")";
+    var tx = "👀 La linea di " + g.nome, sm = ha ? (gap != null ? "✅ Ha scelto: l'ha messa qui" : "✅ Ha scelto") : "🤔 Sta scegliendo… (" + suL(g, vm.vinci) + ")";
     if (R.spiaTx && R.spiaTx.textContent !== tx) R.spiaTx.textContent = tx;
     if (R.spiaSm && R.spiaSm.textContent !== sm) R.spiaSm.textContent = sm;
     // la linea si rifà solo se cambia chi guardo o dove l'ha messa
@@ -3286,7 +3320,7 @@
     var sec = vm._fino ? Math.max(1, Math.round((vm._fino - Date.now()) / 1000)) : 10;
     var p = el("p", { class: "tl-attesa" }), nodi = [];
     R.avBtn = null;
-    if (io >= 0 && (!chi || chi.indexOf(cb.myId) >= 0)) {
+    if ((io >= 0 && (!chi || chi.indexOf(cb.myId) >= 0)) || (chi && cb.sonoHost)) {   // («🧍 Ognuno la sua linea»: l'host ha sempre il tasto)
       R.avTxt = el("span", { text: "⏩ Avanti" });
       R.avBtn = el("button", { class: "btn btn-primario", onclick: function () {
         if (R.avMio === n) return;

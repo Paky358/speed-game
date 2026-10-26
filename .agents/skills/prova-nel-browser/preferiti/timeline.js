@@ -47,6 +47,8 @@
 //      finito guarda le linee degli altri): tp13 partita intera in 3, tp14 spareggio a due (tp14b in 4: gli altri continuano;
 //      tp14c spareggio a tre, chi sbaglia esce), tp15 sullo stesso telefono in 2, tp16 l'host ricarica (a metà carta e sul
 //      risultato). La descrizione completa è sopra la tp13.
+// tp17 (26 ott 2026): in 10, chi ha finito guarda gli altri 9 con la barra in basso compatta (una riga di avatar che scorre di lato).
+//      tp13 e tp14 controllano anche: «Avanti» dell'host che ha già finito (salta l'attesa) e i contatori dello spareggio («5/5 ⚔️»).
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T, vm = A.vm;
@@ -90,7 +92,8 @@
     if (!b) no("nel ⚙️ non trovo " + re); b.click(); return b;
   }
   // un telefono a misura: la pagina non scorre, i tasti in basso dentro lo schermo, la linea si vede ancora
-  async function misura(w, nome, larg, alt) {
+  // (extra(w, d, tag): un controllo in più sulla pagina a misura, torna il testo dell'errore o "")
+  async function misura(w, nome, larg, alt, extra) {
     var f = document.getElementById("tel-" + nome), d = w.document;
     // (con la finestra del browser nascosta transizioni e animazioni restano ferme a metà: per misurare si saltano alla fine)
     var ferma = d.createElement("style"); ferma.textContent = "*,*:before,*:after{animation-duration:0s!important;animation-delay:0s!important;transition:none!important}";
@@ -98,14 +101,16 @@
     f.style.width = larg + "px"; f.style.height = alt + "px";
     void d.documentElement.offsetHeight; w.dispatchEvent(new w.Event("resize"));
     await W.dorme(700);
-    try { return misuraOra(w, d, nome, larg, alt); } finally { ferma.remove(); }
+    try { return misuraOra(w, d, nome, larg, alt) || (extra ? extra(w, d, nome + " " + larg + "x" + alt + ": ") : ""); } finally { ferma.remove(); }
   }
   function misuraOra(w, d, nome, larg, alt) {
     var tag = nome + " " + larg + "x" + alt + ": ";
     if (d.documentElement.scrollHeight > alt + 1) return tag + "la pagina scorre (" + d.documentElement.scrollHeight + ")";
     if (d.documentElement.scrollWidth > larg + 1) return tag + "la pagina scorre di lato (" + d.documentElement.scrollWidth + ")";
     var tasti = d.querySelectorAll(".st-barra.on button, .st-barra.on input");
-    for (var i = 0; i < tasti.length; i++) { var r = tasti[i].getBoundingClientRect(); if (r.width && (r.bottom > alt + 1 || r.right > larg + 1 || r.left < -1)) return tag + "«" + (tasti[i].textContent || tasti[i].className) + "» esce dallo schermo"; }
+    for (var i = 0; i < tasti.length; i++) {
+      var r = tasti[i].getBoundingClientRect(), inFila = !!tasti[i].closest(".tl-spia .gr");   // (gli avatar di chi guarda: la fila scorre di lato, quelli fuori vista sono giusti)
+      if (r.width && (r.bottom > alt + 1 || (!inFila && (r.right > larg + 1 || r.left < -1)))) return tag + "«" + (tasti[i].textContent || tasti[i].className) + "» esce dallo schermo"; }
     var sc = d.querySelector(".st-sch-in .tl-scroll");
     if (sc && sc.getBoundingClientRect().height < 50) return tag + "la linea del tempo non si vede più (" + Math.round(sc.getBoundingClientRect().height) + " px)";
     var es = d.querySelector(".st-sch-in .tl-esito");
@@ -113,7 +118,7 @@
     return "";
   }
   function rimetti(w, nome) { var f = document.getElementById("tel-" + nome); f.style.width = "360px"; f.style.height = "740px"; w.dispatchEvent(new w.Event("resize")); }
-  async function misure(w, nome) { var m = await misura(w, nome, 360, 640) || await misura(w, nome, 412, 915); rimetti(w, nome); await W.dorme(300); return m; }
+  async function misure(w, nome, extra) { var m = await misura(w, nome, 360, 640, extra) || await misura(w, nome, 412, 915, extra); rimetti(w, nome); await W.dorme(300); return m; }
   // scrive l'anno nel selettore (come col dito: tocca la casella, scrive, esce)
   function scriviAnno(w, Y) {
     var inp = w.document.querySelector(".st-barra .tl-anno .v"); if (!inp) return false;
@@ -1095,6 +1100,34 @@
     return { chi: (figli[i].querySelector(".chi") || {}).textContent || "", posto: figli.slice(0, i).filter(function (x) { return x.classList.contains("tl-ev"); }).length };
   }
   function chipSpia(w) { return [].slice.call(w.document.querySelectorAll(".st-barra.on .tl-spia .tl-gv")); }
+  // la barra in basso di chi guarda è compatta (26 ott 2026): UNA riga di avatar che scorre di lato (senza barra visibile), la linea che si
+  // guarda resta alta almeno minLinea px. Si usa come extra di misure(w, nome, extra): torna il testo dell'errore o ""; dati = dove scrivere
+  function barraCompatta(quanti, minLinea, dati) {
+    return function (w, d, tag) {
+      var sc = d.querySelector(".st-sch-in .tl-scroll"), barra = d.querySelector(".st-barra.on"), gr = d.querySelector(".st-barra.on .tl-spia .gr");
+      if (!sc || !barra || !gr) return tag + "non trovo la barra di chi guarda o la linea";
+      var chips = [].slice.call(gr.querySelectorAll(".tl-gv"));
+      if (chips.length !== quanti) return tag + "gli avatar sono " + chips.length + " invece di " + quanti;
+      var tops = chips.map(function (c) { return Math.round(c.getBoundingClientRect().top); });
+      if (Math.max.apply(null, tops) - Math.min.apply(null, tops) > 2) return tag + "gli avatar non stanno su una riga sola (" + tops.join(",") + ")";
+      var cs = w.getComputedStyle(gr);
+      if (cs.flexWrap !== "nowrap" || cs.overflowX !== "auto") return tag + "la fila non è «nowrap + scorre di lato» (" + cs.flexWrap + ", " + cs.overflowX + ")";
+      if (gr.offsetHeight !== gr.clientHeight) return tag + "sotto la fila degli avatar si vede una barra di scorrimento (" + (gr.offsetHeight - gr.clientHeight) + " px)";
+      var h = Math.round(sc.getBoundingClientRect().height), hb = Math.round(barra.getBoundingClientRect().height);
+      if (dati) dati.push(tag + "barra " + hb + " px, linea " + h + " px, avatar " + chips.length + (gr.scrollWidth > gr.clientWidth ? " (scorre di lato)" : ""));
+      // (dove va l'altezza: i pezzi dello schermo sopra la linea e i pezzi della barra)
+      var pezzi = function (el) { return [].map.call(el.children, function (c) { return (c.className || c.tagName).toString().split(" ")[0] + ":" + Math.round(c.getBoundingClientRect().height); }).join(" "); };
+      var dove = "schermo[" + pezzi(d.querySelector(".st-sch-in")) + "] barra[" + pezzi(barra) + " | " + pezzi(barra.querySelector(".tl-spia")) + "]";
+      if (dati && !dati.__pezzi) { dati.__pezzi = true; dati.push(dove); }
+      // (una carta in mano più alta del solito, con la foto o il titolo lungo, toglie spazio alla linea per conto suo: non è colpa della barra, si conta 110 px)
+      var mano = d.querySelector(".st-sch-in .tl-mano"), mh = mano ? Math.round(mano.getBoundingClientRect().height) : 0, eff = h + Math.max(0, mh - 110);
+      if (dati) dati.push("(carta in mano " + mh + " px, linea con la carta «normale» " + eff + " px)");
+      if (eff < minLinea) return tag + "la linea che si guarda è alta solo " + h + " px (con la carta in mano di " + mh + " px; con una carta normale " + eff + ", almeno " + minLinea + "; la barra in basso è alta " + hb + " px) " + dove;
+      if (quanti >= 6 && gr.scrollWidth <= gr.clientWidth) return tag + "con " + quanti + " avatar la fila non scorre di lato";
+      return "";
+    };
+  }
+  function hudDi(w) { return [].map.call(w.document.querySelectorAll(".st-sch-in .tl-hud .tl-pl .p"), function (p) { return p.textContent; }).join(" "); }
   // le regole del modo nuovo dal ⚙️ della saletta: «🧍 Ognuno la sua linea» e la lineetta (le righe che non servono spariscono)
   async function regolaLinee(P, vinci) {
     await regola(P, async function (f) {
@@ -1275,7 +1308,7 @@
   function posDi(l, nome) { var r = (l || []).filter(function (x) { return x.nome === nome; })[0]; return r ? r.pos : null; }
 
   COPIONE.aggiungi("tp13", { nome: "Linea del tempo online in 3, «🧍 Ognuno la sua linea» a 5 carte: partita intera, linee diverse, mai le mosse nella foto, chi ha finito guarda le linee degli altri, classifica, misure", fai: async function () {
-    var Z = await stanzaLinee(["Paky", "Giulia", "Luca"], 5), C = Z.C, P = Z.P, G = W.finestra("Giulia"), note = [], visto = { spia: false, misScelta: false, misEsito: false };
+    var Z = await stanzaLinee(["Paky", "Giulia", "Luca"], 5), C = Z.C, P = Z.P, G = W.finestra("Giulia"), note = [], note4 = [], visto = { spia: false, misScelta: false, misEsito: false, avantiHost: false };
     // Paky sempre giusta (finisce alla carta 5), Giulia sbaglia la 2 (finisce alla 6), Luca sbaglia quasi sempre
     var ctx = await partitaLinee(C, ["Paky", "Giulia", "Luca"], 5, function (nome, c) {
       if (nome === "Paky") return true;
@@ -1300,7 +1333,7 @@
         var sel = att.getAttribute("data-id");
         if (!await W.aspetta(function () { return lineaVista(P) === titoli(v.lin[sel]); }, 5000)) no("Paky guarda " + nomeDi(C, sel) + " ma vede «" + lineaVista(P) + "» invece di «" + titoli(v.lin[sel]) + "»");
         if (tentVisto(P)) no("prima che scelga, sulla linea guardata c'è già una carta messa");
-        var m4 = await misure(P, "Paky"); if (m4) no("mentre guarda: " + m4);
+        var m4 = await misure(P, "Paky", barraCompatta(gi.length, 260, note4)); if (m4) no("mentre guarda: " + m4);
         chipSpia(P).filter(function (b) { return b.getAttribute("data-id") === idL; })[0].click();
         if (!await W.aspetta(function () { return lineaVista(P) === titoli(v.lin[idL]) && /linea di Luca/.test(T(P)); }, 4000)) no("toccato Luca, Paky vede «" + lineaVista(P) + "»");
         // Luca sceglie: Paky vede dove l'ha messa (Giulia no: gioca)
@@ -1314,6 +1347,16 @@
         // (la mossa di Luca la rimanda anche partitaLinee: vale la prima)
       },
       esito: async function (v, ctx) {
+        // Paky ha già finito e non gioca questa carta: il suo «Avanti» c'è e salta l'attesa (come negli altri modi), senza aspettare gli altri
+        if (!visto.avantiHost && v.giocatori.some(function (g) { return g.id === "host" && g.fin; }) && !(v.esitoL.risultati || []).some(function (r) { return r.id === "host"; })) {
+          if (!await W.aspetta(function () { return bottone(P, /Avanti/); }, 25000)) no("Paky, che ha già finito, sul risultato della carta " + ctx.carte + " non ha il tasto «Avanti» («" + T(P).slice(-200) + "»)");
+          var n0 = v.n;
+          if (vm(C).n !== n0 || vm(C).fase !== "lEsito") no("il conto è finito prima che Paky potesse toccare «Avanti» (fase " + vm(C).fase + ")");
+          if (!W.clicca(P, /Avanti/, ".st-barra button")) no("Paky non riesce a toccare «Avanti»");
+          if (!await W.aspetta(function () { return vm(C).fase !== "lEsito" || vm(C).n !== n0; }, 4000)) no("l'«Avanti» di Paky, che ha già finito, non salta l'attesa (gli altri non l'hanno toccato)");
+          visto.avantiHost = true; note.push("l'Avanti di Paky (ha già finito) salta l'attesa");
+          return "rifai";
+        }
         if (visto.misEsito) return;
         if (!await W.aspetta(function () { return bottone(G, /Avanti/); }, 15000)) no("Giulia non arriva al risultato");
         if (!/Giusta!|Sbagliata|Tempo scaduto/.test(T(G))) no("Giulia non legge com'è andata («" + T(G).slice(0, 200) + "»)");
@@ -1322,17 +1365,18 @@
       }
     });
     if (!visto.spia) no("Paky non ha mai guardato le linee degli altri · " + ctx.storia.join(" "));
+    if (!visto.avantiHost) no("l'«Avanti» di Paky, che aveva già finito, non è mai stato provato · " + ctx.storia.join(" "));
     // (qui guarda solo l'host, che lo sa già: il messaggio «spia» non serve. Lo prova la tp14, dove guarda Luca)
     if (ctx.spie) no("il messaggio «spia» è partito " + ctx.spie + " volte, ma guardava solo l'host");
     var r = risultatoDi(P);
     if (!r || posDi(r, "Paky") !== 1 || posDi(r, "Giulia") !== 2 || posDi(r, "Luca") !== 3) no("t.risultato dice " + JSON.stringify(r));
     if (!await W.aspetta(function () { return /Classifica finale/.test(T(G)) && /5 carte/.test(T(G)); }, 30000)) no("Giulia non vede la classifica con le carte («" + T(G).slice(0, 200) + "»)");
-    return ctx.carte + " carte: " + ctx.storia.join(" ") + "; " + note.join(", ") + "; foto controllate " + ctx.foto + " (mai le mosse); risultato " + r.map(function (x) { return x.nome + " " + x.pos + "°"; }).join(", ");
+    return ctx.carte + " carte: " + ctx.storia.join(" ") + "; " + note.join(", ") + "; barra di chi guarda: " + note4.join(" / ") + "; foto controllate " + ctx.foto + " (mai le mosse); risultato " + r.map(function (x) { return x.nome + " " + x.pos + "°"; }).join(", ");
   } });
 
   COPIONE.aggiungi("tp14", { nome: "Linea del tempo online in 3, «Ognuno la sua linea» a 5 carte: spareggio tra Paky e Giulia (ancora, ancora, vince chi la mette giusta da solo), Luca guarda le loro linee", fai: async function () {
-    var Z = await stanzaLinee(["Paky", "Giulia", "Luca"], 5), C = Z.C, P = Z.P, L = W.finestra("Luca"), note = [], fatto = { guarda: false, ignorata: false, annuncio: false };
-    var linLuca = null;
+    var Z = await stanzaLinee(["Paky", "Giulia", "Luca"], 5), C = Z.C, P = Z.P, L = W.finestra("Luca"), note = [], fatto = { guarda: false, ignorata: false, annuncio: false, conta: false, verdetto: null };
+    var linLuca = null, note4 = [];
     // Paky e Giulia sempre giuste fino a 5 (spareggio); poi carta 6 giuste tutti e due, carta 7 sbagliate tutti e due, carta 8 vince Giulia
     var ctx = await partitaLinee(C, ["Paky", "Giulia", "Luca"], 5, function (nome, c) {
       if (nome === "Luca") return false;
@@ -1354,6 +1398,10 @@
         // Luca guarda: la fila coi due dello spareggio
         if (!await W.aspetta(function () { return chipSpia(L).length === 2; }, 12000)) no("durante lo spareggio Luca non vede la fila coi due avatar («" + T(L).slice(-200) + "»)");
         if (!/spareggio/i.test(T(L))) no("Luca non legge «spareggio» («" + T(L).slice(-200) + "»)");
+        // i contatori in alto non vanno oltre il traguardo (5): chi è nello spareggio legge «5/5 ⚔️», mai «6/5» (anche Luca che guarda)
+        if (!await W.aspetta(function () { return /5\/5 ⚔️/.test(hudDi(P)) && /5\/5 ⚔️/.test(hudDi(L)); }, 12000)) no("nello spareggio la barra in alto non dice «5/5 ⚔️» (Paky «" + hudDi(P) + "», Luca «" + hudDi(L) + "»)");
+        [["Paky", P], ["Luca", L]].forEach(function (x) { var o = hudDi(x[1]).match(/\d+\/5/g) || []; o.forEach(function (c) { if (parseInt(c, 10) > 5) no("nello spareggio la barra in alto di " + x[0] + " dice «" + c + "» (" + hudDi(x[1]) + ")"); }); });
+        fatto.conta = true;
         // tocca Paky (la sua linea), poi Giulia (la sua linea, niente carta: non ha ancora scelto)
         var idG = idDi(C, "Giulia");
         chipSpia(L).filter(function (b) { return b.getAttribute("data-id") === "host"; })[0].click();
@@ -1369,7 +1417,7 @@
         var tP = P.document.querySelector(".st-sch-in .tl-ev.tent .chi");
         if (tP && /Giulia/.test(tP.textContent)) no("Paky, che gioca lo spareggio, vede dove l'ha messa Giulia");
         if (!fatto.guarda) {
-          var m = await misure(L, "Luca"); if (m) no("Luca che guarda lo spareggio: " + m);
+          var m = await misure(L, "Luca", barraCompatta(2, 260, note4)); if (m) no("Luca che guarda lo spareggio: " + m);
           // Luca ricarica la pagina: ritrova la fila e, toccata Giulia, dove l'ha messa (lo chiede all'host: «spiami»)
           L = await W.ricarica("Luca");
           if (!await W.aspetta(function () { return chipSpia(L).length === 2; }, 15000)) no("dopo la ricarica Luca non ritrova la fila («" + T(L).slice(-200) + "»)");
@@ -1380,17 +1428,26 @@
       },
       esito: async function (v, ctx) {
         var es = v.esitoL;
+        // dopo una carta giusta nello spareggio il risultato di Paky dice «Ne hai 5 su 5 ⚔️», mai «6 su 5»
+        if (es.spar && es.spar.tipo === "ancora" && es.spar.tutti) {
+          if (!await W.aspetta(function () { return bottone(P, /Avanti/); }, 20000)) no("Paky non arriva al risultato della carta " + ctx.carte);
+          var mm = T(P).match(/Ne hai (\d+) su 5( ⚔️)?/);
+          if (!mm) no("il risultato di Paky nello spareggio non dice «Ne hai … su 5» («" + T(P).slice(0, 200) + "»)");
+          if (+mm[1] > 5 || !mm[2]) no("il risultato di Paky nello spareggio dice «" + mm[0] + "» invece di «Ne hai 5 su 5 ⚔️»");
+          fatto.verdetto = mm[0];
+        }
         if (es.spar && es.spar.tipo === "inizia" && !await W.aspetta(function () { return /Spareggio/.test(T(L)); }, 15000)) no("all'inizio dello spareggio Luca non legge «⚔️ Spareggio!»");
         if (es.spar && es.spar.tipo === "ancora") note.push("ancora (" + (es.spar.tutti ? "tutti giusti" : "tutti sbagliati") + ")");
       }
     });
     if (!fatto.ignorata) no("lo spareggio non c'è mai stato · " + ctx.storia.join(" "));
     if (!fatto.guarda) no("Luca non ha mai visto dove l'ha messa Giulia · " + ctx.storia.join(" "));
+    if (!fatto.conta || !fatto.verdetto) no("i contatori dello spareggio non sono stati controllati: " + JSON.stringify(fatto) + " · " + ctx.storia.join(" "));
     if (note.length !== 2) no("gli «ancora» dello spareggio sono " + note.length + " · " + ctx.storia.join(" "));
     if (!ctx.spie) no("il messaggio «spia» per Luca non è mai partito");
     var r = risultatoDi(P);
     if (!r || posDi(r, "Giulia") !== 1 || posDi(r, "Paky") !== 2 || posDi(r, "Luca") !== 3) no("t.risultato dice " + JSON.stringify(r));
-    return ctx.carte + " carte: " + ctx.storia.join(" ") + "; " + note.join(", ") + "; Luca guarda lo spareggio (spia mandata " + ctx.spie + " volte, mai a chi gioca); risultato " + r.map(function (x) { return x.nome + " " + x.pos + "°"; }).join(", ");
+    return ctx.carte + " carte: " + ctx.storia.join(" ") + "; " + note.join(", ") + "; contatori nello spareggio «5/5 ⚔️», Paky legge «" + fatto.verdetto + "»; barra di Luca: " + note4.join(" / ") + "; Luca guarda lo spareggio (spia mandata " + ctx.spie + " volte, mai a chi gioca); risultato " + r.map(function (x) { return x.nome + " " + x.pos + "°"; }).join(", ");
   } });
 
   COPIONE.aggiungi("tp14b", { nome: "Linea del tempo online in 4, «Ognuno la sua linea» a 5 carte: lo spareggio a due finisce e gli altri continuano fino al terzo posto", fai: async function () {
@@ -1625,5 +1682,30 @@
     if (!await W.aspetta(function () { return /Nuova partita|Rivincita/.test(T(W.finestra("Giulia"))); }, 25000)) no("Giulia non vede la classifica coi tasti dell'host");
     senzaErrori();
     return note.join("; ") + "; " + storia.join(" ") + "; classifica " + cl.map(function (r) { return r.nome + " " + r.pos + "° (" + r.punti + ")"; }).join(", ");
+  } });
+
+  // tp17: tanti giocatori. 10 telefoni (Paky e 9 amici), «Ognuno la sua linea» a 5 carte: appena Paky ha finito guarda gli altri 9 e la barra in
+  // basso è compatta (UNA riga di avatar che scorre di lato, senza barra visibile; nota e conto su poche righe, faccine basse): a 360x640 la linea
+  // che guarda resta alta almeno 260 px (prima, con 10 giocatori, la barra era alta quasi 300 px e la linea si riduceva a una carta e mezza)
+  COPIONE.aggiungi("tp17", { nome: "Linea del tempo online in 10, «Ognuno la sua linea»: chi ha finito guarda gli altri 9 con la barra in basso compatta (una riga di avatar che scorre di lato) e la linea resta alta almeno 260 px a 360x640", fai: async function () {
+    var nomi = ["Paky", "Giulia", "Luca", "Bea", "Sara", "Teo", "Ugo", "Vera", "Zoe", "Nino"], dati = [], fatto = false;
+    var Z = await stanzaLinee(nomi, 5), C = Z.C, P = Z.P;
+    // Paky sempre giusta (finisce alla carta 5), Giulia sbaglia la 2 (finisce alla 6), Luca la 3 (alla 7): podio in 3, gli altri non finiscono
+    var ctx = await partitaLinee(C, nomi, 5, function (nome, c) {
+      if (nome === "Paky") return true;
+      if (nome === "Giulia") return c !== 2;
+      if (nome === "Luca") return c !== 3;
+      return false;
+    }, {
+      prima: async function (v) {
+        if (fatto || !v.giocatori.some(function (g) { return g.id === "host" && g.fin; })) return;
+        var gi = v.giocatori.filter(function (g) { return !g.fin; });
+        if (!await W.aspetta(function () { return chipSpia(P).length === gi.length; }, 12000)) no("Paky ha finito ma non vede la fila con " + gi.length + " avatar (" + chipSpia(P).length + ", «" + T(P).slice(-200) + "»)");
+        var m = await misure(P, "Paky", barraCompatta(gi.length, 260, dati)); if (m) no("con " + nomi.length + " giocatori, mentre Paky guarda: " + m);
+        fatto = true;
+      }
+    });
+    if (!fatto) no("Paky non ha mai guardato gli altri · " + ctx.storia.join(" "));
+    return ctx.carte + " carte in " + nomi.length + "; " + dati.join(" / ") + "; " + ctx.storia.join(" ");
   } });
 })();
