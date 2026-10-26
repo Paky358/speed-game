@@ -6,7 +6,10 @@ lì: i file di lavoro (elenco.json, parte*.json, proposte.json, candidati.json, 
 loro e non vanno in git (fogli.js cerca le miniature in mini/ accanto a sé).
 
 Fatto il 26 ott 2026: **Storia e Invenzioni** (441 carte → 433 con la foto), **Videogiochi e Vita all'italiana** (329 → 281:
-per molti videogiochi non esistono foto libere, e restano con l'emoji). Restano da fare le 6 categorie con persone vive.
+per molti videogiochi non esistono foto libere, e restano con l'emoji); poi, col sì del proprietario («possiamo mettere le
+foto di cantanti o film»), **Cinema e TV** (386 su 396), **Musica e Rap** (364 su 375), **Calcio e Sport** (378 su 379).
+In tutto 1.842 foto su 1.924 carte. Per film, dischi e serie: la persona (attore, regista, cantante, conduttore), il posto o
+un oggetto famoso, MAI locandine, copertine o fotogrammi (protetti: non ci sono su Commons).
 
 1. `node esporta.js storia,invenzioni 4` → elenco.json e parte1..4.json (le carte, divise per gli aiutanti).
 2. Aiutanti Sonnet (solo lettura, un workflow con 4): per ogni carta 1-3 pagine di Wikipedia («it:…»/«en:…») la cui foto
@@ -23,4 +26,4 @@ Cosa si scarta (deciso il 26 ott): l'anno scritto in grande (frontespizi, cartig
 darebbe la risposta), una foto moderna che inganna (il fax moderno per il fax del 1843, i sacchi di cemento per il 1824),
 un'altra cosa, loghi, schermate illeggibili, schemi e grafici, persone qualsiasi, l'attacco alle Torri Gemelle in fiamme
 (troppo pesante per una serata: al suo posto le Torri intatte). Ritratti di personaggi famosi, quadri, monumenti e oggetti: sì.
-Per le categorie con persone vive (Rap, Calcio, Sport, Cinema, TV, Musica) chiedere prima al proprietario.
+Scartate anche: foto di concerto troppo buie, ritratti disegnati, figurine e magliette o pannelli con l'anno.

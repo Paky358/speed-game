@@ -13,9 +13,9 @@ window.SG_NOVITA = [
     data: "26 ottobre 2026",
     titolo: "La Linea del tempo: le foto vere sulle carte 📸",
     descrizione: [
-      "📸 Le carte di Storia, Invenzioni e scoperte, Videogiochi e Vita all'italiana hanno la loro foto vera: il quadro di Annibale con gli elefanti, la stele di Rosetta, il primo Game Boy, la moka, la Vespa… 714 foto, guardate una per una.",
+      "📸 Quasi tutte le carte hanno la loro foto vera, in tutte le categorie: il quadro di Annibale con gli elefanti, la stele di Rosetta, il primo Game Boy, la moka, Fellini e Audrey Hepburn, Modugno e Sfera Ebbasta, Maradona e Valentino Rossi… 1.842 foto, guardate una per una.",
       "La foto si vede sulla carta che devi piazzare e, più piccola, sulle carte della linea. Nessuna foto ti dice l'anno: quelle con la data scritta sono state scartate.",
-      "Le altre categorie per ora restano come prima; se la rete è lenta e la foto non arriva, la carta resta solo scritta."
+      "Per film, canzoni e serie la foto è di chi le ha fatte (attori, registi, cantanti, conduttori) o del posto, mai la locandina o la copertina. Se la rete è lenta e la foto non arriva, la carta resta solo scritta."
     ]
   },
   {
