@@ -922,18 +922,20 @@
   } });
 
   // =================== tp10: le foto vere sulle carte (26 ott 2026) ===================
-  COPIONE.aggiungi("tp10", { nome: "Linea del tempo sullo stesso telefono, solo Storia e Invenzioni: le foto vere sulla carta in mano e sulla linea, si caricano, misure, foto che non arriva = carta senza foto", fai: async function () {
+  COPIONE.aggiungi("tp10", { nome: "Linea del tempo sullo stesso telefono, solo Storia e Invenzioni: le foto vere sulla carta in mano e sulla linea, si caricano, misure, foto che non arriva = carta senza foto (opz.cat: altre categorie)", fai: async function (opz) {
+    var CAT = new RegExp((opz && opz.cat) || "Storia|Invenzioni");
     var P = await W.apriTel("Paky", { x: 0 }), viste = 0, conFoto = 0, rotta = false, fino = Date.now() + 260000, kOld = "", turni = 0, linea = 0;
     var F = P.SG_TL_FOTO || {};
     if (Object.keys(F).length < 100) no("le foto nel gioco sono solo " + Object.keys(F).length);
     await localeTl(P, ["Paky", "Giulia"], false, { prima: async function () {
-      [].forEach.call(P.document.querySelectorAll(".cat-chip"), function (c) { if (!/Storia|Invenzioni/.test(c.textContent) && c.classList.contains("attiva")) c.click(); });
+      [].forEach.call(P.document.querySelectorAll(".cat-chip"), function (c) { if (!CAT.test(c.textContent) && c.classList.contains("attiva")) c.click(); });
       await W.dorme(100);
       var att = [].map.call(P.document.querySelectorAll(".cat-chip.attiva"), function (c) { return c.textContent; });
       if (att.length !== 2) no("le categorie accese sono " + att.join(", "));
     } });
     function stato() { var s = P.document.querySelector(".st-sch-in .tl-stato"); return s ? s.textContent : ""; }
-    function foto(tit) { return F["storia|" + tit] || F["invenzioni|" + tit]; }
+    var TIT = {}; Object.keys(F).forEach(function (k) { TIT[k.split("|").slice(1).join("|")] = 1; });
+    function foto(tit) { return TIT[tit]; }
     while (Date.now() < fino) {
       if (/Classifica finale/.test(T(P))) break;
       if (W.clicca(P, /tocca a me/)) { await W.dorme(300); continue; }

@@ -20,7 +20,7 @@ var testa = "/* =========================================================\n" +
   "   «La linea del tempo» — LE FOTO VERE delle carte (da Wikimedia Commons, foto libere).\n" +
   "   \"categoria|titolo della carta\" → \"percorso su Commons|larghezza dell'originale\".\n" +
   "   Il gioco le chiede a upload.wikimedia.org a 330 px (urlFoto in js/games/timeline.js); una carta senza foto resta com'era.\n" +
-  "   Scelte il 26 ott 2026 (prima Storia e Invenzioni): pagine di Wikipedia e ricerca su Commons proposte da aiutanti Sonnet,\n" +
+  "   Scelte il 26 ott 2026 (Storia, Invenzioni, Videogiochi e Vita all'italiana): pagine di Wikipedia e ricerca su Commons proposte da aiutanti Sonnet,\n" +
   "   scelta dal nome del file, poi TUTTE guardate a occhio. Scartate: l'anno scritto in grande (darebbe la risposta), un'altra\n" +
   "   cosa, loghi, mappe e grafici, persone qualsiasi. Programmi e passi: .agents/skills/prova-nel-browser/timeline-foto/LEGGIMI.md\n" +
   "   ========================================================= */\n";

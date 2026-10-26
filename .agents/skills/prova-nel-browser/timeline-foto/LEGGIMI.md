@@ -5,7 +5,8 @@ Programmi Node (solo sul PC fisso, fuori dal gioco). Si COPIANO in una cartella 
 lì: i file di lavoro (elenco.json, parte*.json, proposte.json, candidati.json, scelte.json, mini/, fogli/) nascono accanto a
 loro e non vanno in git (fogli.js cerca le miniature in mini/ accanto a sé).
 
-Fatto il 26 ott 2026: **Storia e Invenzioni** (441 carte → 433 con la foto). Restano da fare le altre 8 categorie.
+Fatto il 26 ott 2026: **Storia e Invenzioni** (441 carte → 433 con la foto), **Videogiochi e Vita all'italiana** (329 → 281:
+per molti videogiochi non esistono foto libere, e restano con l'emoji). Restano da fare le 6 categorie con persone vive.
 
 1. `node esporta.js storia,invenzioni 4` → elenco.json e parte1..4.json (le carte, divise per gli aiutanti).
 2. Aiutanti Sonnet (solo lettura, un workflow con 4): per ogni carta 1-3 pagine di Wikipedia («it:…»/«en:…») la cui foto
