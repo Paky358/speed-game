@@ -9,6 +9,66 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 272,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: 🧍 Ognuno la sua linea",
+    descrizione: [
+      "🧍 Un modo nuovo, ispirato a Hitster: ognuno ha la sua linea e parte con una carta sua. A ogni giro esce la stessa carta per tutti e ognuno la mette nella SUA linea, in segreto: se è giusta resta, se è sbagliata va via.",
+      "🏁 Vince chi arriva per primo a 10 carte messe bene (nelle regole si sceglie da 5 a 15 con una lineetta). Se si arriva primi insieme c'è lo ⚔️ spareggio: giocano solo loro e tutti gli altri guardano.",
+      "👀 Si va avanti fino al podio: chi ha finito tocca gli avatar degli altri e guarda la loro linea e dove mettono la carta.",
+      "Si gioca online, tutti insieme, e anche sullo stesso telefono passandoselo a ogni carta."
+    ]
+  },
+  {
+    v: 271,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: chi arriva tardi entra al giro dopo",
+    descrizione: [
+      "✋ Online, se un amico arriva a partita cominciata non deve più guardare fino alla fine: entra al giro dopo, con 0 punti e le carte che restano agli altri (in «⚡ Tutti insieme» dalla carta dopo). Intanto legge «✋ Entri al prossimo giro».",
+      "Nella Sala chi è fuori vede a che punto è la partita («Giro 2 di 5», «Carta 3 di 10»)."
+    ]
+  },
+  {
+    v: 270,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: le foto vere sulle carte 📸",
+    descrizione: [
+      "📸 Quasi tutte le carte hanno la loro foto vera, in tutte le categorie: il quadro di Annibale con gli elefanti, la stele di Rosetta, il primo Game Boy, la moka, Fellini e Audrey Hepburn, Modugno e Sfera Ebbasta, Maradona e Valentino Rossi… 1.842 foto, guardate una per una.",
+      "La foto si vede sulla carta che devi piazzare e, più piccola, sulle carte della linea. Nessuna foto ti dice l'anno: quelle con la data scritta sono state scartate.",
+      "Per film, canzoni e serie la foto è di chi le ha fatte (attori, registi, cantanti, conduttori) o del posto, mai la locandina o la copertina. Se la rete è lenta e la foto non arriva, la carta resta solo scritta."
+    ]
+  },
+  {
+    v: 269,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: 🔄 cambia carta",
+    descrizione: [
+      "🔄 Ti è uscita una carta di cui non sai niente? Una volta a partita, al tuo turno, tocchi «🔄 Cambia» sulla carta e ne peschi un'altra, col tempo che riparte. Gli altri vedono «🔄 Paky cambia carta!».",
+      "Vale quando si gioca a turno (sullo stesso telefono e online); in «⚡ Tutti insieme» la carta è la stessa per tutti e non si cambia."
+    ]
+  },
+  {
+    v: 268,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: 📆 scegli l'epoca",
+    descrizione: [
+      "📆 Prima di cominciare scegli gli anni delle carte: «Tutta la storia», «Prima del 1900», «Il Novecento» o «Dal 1980 a oggi». Accanto a ogni scelta vedi quante carte ci sono, con le categorie che hai scelto.",
+      "✏️ «Scegli tu gli anni»: trascini le due maniglie su una linea (per esempio dal 476 al 1800) e con ‹ › aggiusti l'anno. Se negli anni scelti ci sono troppo poche carte, te lo dice.",
+      "Online la sceglie chi apre la stanza nel ⚙️, e gli amici la leggono nella riga delle regole («📆 il Novecento»)."
+    ]
+  },
+  {
+    v: 267,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: ✋ Rubala, come in Hitster",
+    descrizione: [
+      "✋ Niente più 👍 e 👎: quando un amico mette la carta, se pensi che abbia sbagliato tocchi il posto dove va davvero e la rubi. Se aveva sbagliato e tu hai indovinato il posto prendi 100 punti e la carta entra nella linea; se no perdi 50 punti. Chi non è sicuro tocca «👍 Passo» e non rischia niente.",
+      "🤫 Online si ruba in segreto: chi ha rubato e dove si scopre solo quando la carta si gira. Se in due scegliete lo stesso posto e avete ragione, prendete 100 punti tutti e due: nessuna gara a chi tocca prima.",
+      "📱 Sullo stesso telefono si ruba tutti insieme (chi vuole tocca il suo avatar e poi il posto) o uno alla volta, passandosi il telefono. 🔥 Sull'ultima carta di ognuno anche i furti valgono doppio.",
+      "Il vecchio «Rubala con l'anno», con l'anno esatto e i gettoni, non c'è più: lo sostituisce questa regola."
+    ]
+  },
+  {
     v: 266,
     data: "25 ottobre 2026",
     titolo: "Il Prezzo è Giusto: una schermata sola, grande e pulita 🖼️",

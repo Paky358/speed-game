@@ -18,9 +18,10 @@
 //      all'host (un amico che manda la scelta non conta); misure a 360x640.
 // ctp1 Linea del tempo online in 6 (parte ⚡ Tutti insieme): partita intera coi tasti; doppio tocco sul posto; uno spento a
 //      metà, uno che ricarica, Nino che arriva tardi e guarda; ⏩ Avanti di tutti; misure a 360x640.
-// ctp2 Linea del tempo a turno in 4 con ✋ Rubala: furti coi tasti, gettoni che finiscono (il terzo furto non si può), chi è
-//      di turno non può rubarsi la carta, l'anno del furto mai sul broker prima del risultato, chi è di turno spento (il turno
-//      passa), misure a 360x640.
+// ctp2 Linea del tempo a turno in 4 con ✋ Rubala (dal 26 ott 2026, come in Hitster): furti coi tasti, in due sullo stesso
+//      posto (tutti e due +100), furti sbagliati (−50), doppio tocco su «Rubala» e chi cambia idea (vale la prima), chi gioca
+//      non può rubarsi la carta né toccare il suo posto, i posti dei furti mai sul broker prima del risultato, chi gioca
+//      spento (il turno passa), classifica = conto a parte, misure a 360x640.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T;
@@ -586,12 +587,18 @@
     return x.join(" · ") + " · " + Math.round((Date.now() - t0) / 1000) + " s";
   } });
 
-  COPIONE.aggiungi("ctp2", { nome: "Controllo Linea del tempo a turno in 4 con ✋ Rubala coi tasti: furti, gettoni finiti, chi gioca non ruba, anno segreto sul broker, chi gioca spento, misure", fai: async function () {
+  // ✋ Rubala (dal 26 ott 2026): il posto giusto toccato da chi pensa che chi gioca sbagli, in segreto e anche in tanti
+  function giustoTl(linea, g, Y) { return (g === 0 || linea[g - 1].anno <= Y) && (g === linea.length || Y <= linea[g].anno); }
+  function postoTl(linea, Y, escludi, giusto) {
+    for (var g = 0; g <= linea.length; g++) if (g !== escludi && giustoTl(linea, g, Y) === giusto) return g;
+    return -1;
+  }
+  COPIONE.aggiungi("ctp2", { nome: "Controllo Linea del tempo a turno in 4 con ✋ Rubala coi tasti: furti in tanti sullo stesso posto, doppio tocco, chi gioca non ruba, posti segreti sul broker, chi gioca spento, misure", fai: async function () {
     var NOMI = ["Paky", "Giulia", "Luca", "Sara"], x = [], mis = [], t0 = Date.now();
-    var o = await tlStanza({ gara: "turno", rubala: true, carte: 4 }, NOMI), P = o.P, C = o.C;
-    if (vm(C).insieme || !vm(C).rubala) no("la saletta non è a turno con ✋ Rubala (" + vm(C).insieme + ", " + vm(C).rubala + ")");
+    var o = await tlStanza({ gara: "turno", carte: 3 }, NOMI), P = o.P, C = o.C;
+    if (vm(C).insieme) no("la saletta non è a turno");
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 5000)) no("niente «Comincia»");
-    var F = { furti: 0, presa: 0, persi: 0, finiti: false, spento: false, mis: false, turni: 0 }, fino = Date.now() + 720000, fatti = {}, viaT = {};
+    var F = { furti: 0, presa: 0, persi: 0, insieme: 0, doppio: false, spento: false, mis: false, turni: 0 }, fino = Date.now() + 720000, fatti = {}, viaT = {}, punti = {};
     while (Date.now() < fino && vm(C).fase !== "fine") {
       var v = vm(C);
       if (v.fase === "turno" && !fatti["t" + v.n]) {
@@ -606,60 +613,66 @@
           continue;
         }
         // sbaglia apposta un turno su due (così si può rubare)
-        var sbaglia = F.turni % 2 === 1 && gapKo(v.linea, Y) >= 0;
-        var err = await piazza(w, sbaglia ? gapKo(v.linea, Y) : gapOk(v.linea, Y), sbaglia ? null : Y);
+        var sbaglia = F.turni % 2 === 1 && gapKo(v.linea, Y) >= 0, gap = sbaglia ? gapKo(v.linea, Y) : gapOk(v.linea, Y);
+        var err = await piazza(w, gap, sbaglia ? null : Y);
         if (err) no(chi + " al turno " + F.turni + ": " + err);
-        fatti["s" + v.n] = { sbaglia: sbaglia, Y: Y, chi: chi };
+        fatti["s" + v.n] = { sbaglia: sbaglia, Y: Y, chi: chi, gap: gap, linea: v.linea.slice() };
         continue;
       }
       if (v.fase === "votazione" && !fatti["v" + v.n]) {
         fatti["v" + v.n] = 1;
-        var info = fatti["s" + v.n] || { Y: annoDi(P, v.carta.titolo), chi: nTl(C, v.turnoId) }, Y2 = info.Y, gioca = info.chi;
-        // chi gioca prova a votare/rubare la sua carta a messaggio: non conta
-        if (gioca !== "Paky") { W.reteDi(gioca).invia({ t: "voto", n: v.n, d: true, ruba: Y2 }); await W.dorme(300); if ((vm(C).rubano || []).indexOf(v.turnoId) >= 0) no(gioca + " ruba la sua stessa carta"); }
-        var dalV = Date.now();
+        var info = fatti["s" + v.n];
+        if (!info) { await W.dorme(250); continue; }
+        var Y2 = info.Y, gioca = info.chi, dalV = Date.now(), dec = {};
+        // chi gioca prova a rubarsi la carta a messaggio: non conta
+        if (gioca !== "Paky") { W.reteDi(gioca).invia({ t: "ruba", n: v.n, gap: postoTl(info.linea, Y2, info.gap, true) >= 0 ? postoTl(info.linea, Y2, info.gap, true) : 0 }); await W.dorme(300); if ((vm(C).hannoVotato || []).indexOf(v.turnoId) >= 0) no(gioca + " ruba la sua stessa carta"); }
         for (var k = 0; k < NOMI.length; k++) {
           var n = NOMI[k]; if (n === gioca || viaT[n]) continue;
           if (vm(C).fase !== "votazione" || vm(C).n !== v.n) break;
           var wv = W.finestra(n);
-          await W.aspetta(function () { return bott(wv, ".st-barra button", /Giusto/); }, 8000);
-          var gg = gTl(C, n);
-          // Giulia ruba sempre con l'anno sbagliato (finché ha gettoni); Luca ruba con l'anno giusto quando chi gioca ha sbagliato
-          var vuoleRubare = (n === "Giulia") || (n === "Luca" && info.sbaglia);
-          if (vuoleRubare) {
-            var br = bott(wv, ".st-barra button", /Rubala con l'anno/);
-            var dis = qa(wv, ".st-barra button.tl-ruba").filter(function (b) { return b.disabled; })[0];
-            if (gg.gettoni <= 0) {
-              if (br) no(n + " ha 0 gettoni ma «✋ Rubala» è acceso");
-              if (dis && !F.finiti) { F.finiti = true; x.push(n + ": «" + dis.textContent + "»"); }
-              // a messaggio, senza gettoni: non deve rubare
-              W.reteDi(n).invia({ t: "voto", n: v.n, d: false, ruba: Y2 }); await W.dorme(300);
-              if ((vm(C).rubano || []).indexOf(gg.id) >= 0) no(n + " ruba senza gettoni");
-              continue;
-            }
-            if (!br) { no(n + " (gettoni " + gg.gettoni + ") non ha «✋ Rubala con l'anno»"); continue; }
-            br.click(); await W.dorme(200);
-            if (!F.mis) { F.mis = true; mis = mis.concat(await misura(n, "rubala aperto", [".st-barra.on button", ".st-barra.on input"])); }
-            var an = vm(C).anni || [-3000, 2026], anno = n === "Giulia" ? (Y2 + 7 <= an[1] ? Y2 + 7 : Y2 - 7) : Y2;
-            scriviAnno(wv, anno); await W.dorme(150);
-            var bR = await W.aspetta(function () { return bott(wv, ".st-barra button", /Rubala! \(/); }, 2000);
-            if (!bR) { no(n + ": dopo l'anno niente «✋ Rubala! (…)»"); continue; }
-            bR.click(); F.furti++;
-            await W.aspetta(function () { return (vm(C).rubano || []).indexOf(gg.id) >= 0; }, 3000);
-          } else {
-            var bv = bott(wv, ".st-barra button", k % 2 ? /Giusto/ : /No/); if (bv) bv.click();
-          }
+          if (!await W.aspetta(function () { return bott(wv, ".st-barra button", /👍 Passo/); }, 8000)) { no(n + " non ha «👍 Passo» («" + T(wv).replace(/\s+/g, " ").slice(-140) + "»)"); continue; }
+          var sl = qa(wv, ".st-sch-in .tl-slot");
+          if (sl.length !== info.linea.length) no(n + " vede " + sl.length + " posti invece di " + info.linea.length + " (il posto di chi gioca si può toccare)");
+          // Giulia e Luca rubano il posto giusto quando chi gioca sbaglia (in due sullo stesso posto); Giulia ruba male quando ha ragione; Sara e Paky passano
+          var d = -1;
+          if (info.sbaglia && (n === "Giulia" || n === "Luca")) d = postoTl(info.linea, Y2, info.gap, true);
+          else if (!info.sbaglia && n === "Giulia") d = postoTl(info.linea, Y2, info.gap, false);
+          if (d >= 0) {
+            sl[d < info.gap ? d : d - 1].click(); await W.dorme(150);
+            if (!F.mis) { F.mis = true; mis = mis.concat(await misura(n, "rubando", [".st-barra.on button"])); }
+            var bR = await W.aspetta(function () { return bott(wv, ".st-barra button", /Rubala: va qui/); }, 2000);
+            if (!bR) { no(n + ": dopo il posto niente «✋ Rubala: va qui!»"); continue; }
+            // doppio tocco veloce (Luca): conta una volta sola
+            bR.click(); if (n === "Luca" && !F.doppio) { bR.click(); F.doppio = true; x.push("Luca tocca due volte «Rubala»"); }
+            F.furti++;
+          } else { var bp = bott(wv, ".st-barra button", /👍 Passo/); if (bp) bp.click(); }
+          dec[n] = d;
+          await W.aspetta(function () { return (vm(C).hannoVotato || []).indexOf(idTl(n)) >= 0 || vm(C).fase !== "votazione"; }, 4000);
+          // cambia idea a messaggio dopo aver deciso: vale la prima
+          if (n === "Giulia") W.reteDi(n).invia({ t: "ruba", n: v.n, gap: null });
         }
-        // l'anno dei furti non deve passare nelle foto prima del risultato
+        // i posti dei furti non devono passare sul broker prima del risultato
         await W.aspetta(function () { return vm(C).fase !== "votazione" || vm(C).n !== v.n; }, 35000);
-        broker(C, dalV).forEach(function (m) { if (/"t":"vm"/.test(m.p) && /"fase":"votazione"/.test(m.p) && /"rube"/.test(m.p)) no("l'anno di chi ruba è nella foto durante il voto"); });
-        var e = vm(C).esito;
-        if (e && e.rubate) e.rubate.forEach(function (r) { if (r.esito === "presa") F.presa++; if (r.esito === "perso") F.persi++; });
+        broker(C, dalV).forEach(function (m) {
+          if (/"t":"vm"/.test(m.p) && /"fase":"votazione"/.test(m.p) && (/"voti":/.test(m.p) || /"esito":\{/.test(m.p))) no("durante il furto la foto ha i posti di chi ruba o il risultato");
+        });
+        fatti["d" + v.n] = dec;
         continue;
       }
       if (v.fase === "esito" && !fatti["e" + v.n]) {
         fatti["e" + v.n] = 1;
-        (vm(C).giocatori || []).forEach(function (g) { if (g.gettoni < 0 || g.gettoni > 3) no(g.nome + " ha " + g.gettoni + " gettoni"); });
+        var es = v.esito || {}, inf = fatti["s" + v.n], dc = fatti["d" + v.n] || {}, molt = es.doppio ? 2 : 1, ladri = 0;
+        if (inf) Object.keys(dc).forEach(function (nm) {
+          var dd = dc[nm], id = idTl(nm), r = (es.voti || []).filter(function (q2) { return q2.id === id; })[0];
+          if (dd < 0) { if (r) no(nm + " ha passato ma nell'esito ruba"); return; }
+          var presa = inf.sbaglia && giustoTl(inf.linea, dd, inf.Y), att = (presa ? 100 : -50) * molt;
+          if (!r) no(nm + " ha rubato ma nell'esito non c'è");
+          else if (r.delta !== att) no(nm + ": il furto vale " + r.delta + " invece di " + att);
+          if (presa) { ladri++; F.presa++; } else F.persi++;
+        });
+        if (ladri > 1) F.insieme++;
+        (es.voti || []).forEach(function (r) { punti[r.id] = (punti[r.id] || 0) + r.delta; });
+        punti[v.turnoId] = (punti[v.turnoId] || 0) + es.delta + (es.bonusAnno || 0);
         var chiE = nTl(C, v.turnoId), wE = W.finestra(chiE), ba = await W.aspetta(function () { return vm(C).fase !== "esito" || bott(wE, ".st-barra button", /Avanti/); }, 15000);
         if (ba && ba.click) ba.click();
         await W.aspetta(function () { return vm(C).fase !== "esito" || vm(C).n !== v.n; }, 20000);
@@ -668,10 +681,10 @@
       await W.dorme(250);
     }
     if (vm(C).fase !== "fine") no("la partita non finisce (fase " + vm(C).fase + ")");
-    if (!F.presa) no("nessun furto riuscito (furti " + F.furti + ")");
-    if (!F.finiti) no("i gettoni di Giulia non sono mai finiti");
+    if (!F.presa || !F.insieme || !F.persi) no("non sono successi tutti i furti: " + JSON.stringify(F));
     var Fi = vm(C);
-    x.push("furti " + F.furti + ": " + F.presa + " presi, " + F.persi + " persi");
+    (Fi.classifica || []).forEach(function (r) { if (r.punti !== (punti[r.id] || 0)) no(r.nome + " ha " + r.punti + " punti invece di " + (punti[r.id] || 0)); });
+    x.push("furti " + F.furti + ": " + F.presa + " presi (" + F.insieme + " volte in due), " + F.persi + " sbagliati");
     x.push("classifica: " + (Fi.classifica || []).map(function (r) { return r.nome + " " + r.punti; }).join(", "));
     if (mis.length) no(mis.join(" / "));
     senzaErrori();
