@@ -1198,7 +1198,7 @@
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono, uno alla volta", amici: true }],
     giocatoriMax: MAX_GIOCATORI,
     postiOnline: MAX_GIOCATORI,   // posti online (10)
-    ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
+    ritardatari: "turno",   // chi arriva a partita cominciata entra al giro dopo (⚡ tutti insieme: alla carta dopo), con 0 punti
     // le regole in una riga, per la saletta: "5 carte a testa · Storia, Cinema" (o "· tutte le categorie")
     riassunto: function (imp) {
       imp = imp || {};
@@ -1574,6 +1574,7 @@
       // «📸 I nostri ricordi» in saletta: quanti e di chi (i fatti e gli anni restano sull'host)
       ricordiOn: st.ricordiOn !== false, nRic: contaRicordi(st), ricDa: daChiRicordi(st),
       guarda: (st.guarda || []).slice(),   // nella Sala: chi questa volta guarda soltanto
+      prossimi: (st.prossimi || []).map(function (x) { return { id: x.id, nome: x.nome }; }),   // chi entra al giro dopo (con l'id: sa di essere dentro)
       // "⚡ Tutti insieme": la carta numero giro (di carte); chi ha già scelto (SOLO gli id: dove l'ha messa resta segreto
       // fino al risultato), il risultato di tutti e chi ha già toccato "⏩ Avanti"
       insieme: insiemeOra(st), giro: st.giro || 0, hannoScelto: Object.keys(st.mosse || {}),
@@ -1645,7 +1646,8 @@
       annoDetto: null, doppio: false,
       ricordi: {}, ricNomi: {}, ricPool: [],   // i ricordi di chi è entrato (per id) e quelli entrati nel mazzo di questa partita
       giocatori: [{ id: IO, nome: nomeHost, restano: carte, punti: 0, omino: mioAvatar(nomeHost) }],
-      guarda: []   // nella Sala: chi non è stato scelto per giocare (guarda soltanto; con l'id, così sa di essere entrato)
+      guarda: [],   // nella Sala: chi non è stato scelto per giocare (guarda soltanto; con l'id, così sa di essere entrato)
+      prossimi: []   // chi è arrivato a partita cominciata: { id, nome, omino }, entra all'inizio del giro dopo (non si salva: rimanda il join)
     };
     st.ricordi[IO] = mieiRicordi(); st.ricNomi[IO] = nomeHost;
     // i ricordi che arrivano da un amico: puliti e al massimo 12 (al massimo 16 amici li portano)
@@ -1680,6 +1682,7 @@
       onAddio: function (id) {
         if (!st.iniziata && st.ricordi[id]) { delete st.ricordi[id]; delete st.ricNomi[id]; }   // (in saletta i suoi ricordi se ne vanno con lui)
         var kG = st.guarda.indexOf(id); if (kG >= 0) { st.guarda.splice(kG, 1); bd(); return; }
+        var kP = st.prossimi.map(function (x) { return x.id; }).indexOf(id); if (kP >= 0) { st.prossimi.splice(kP, 1); bd(); return; }
         var g = gDi(id); if (!g) { if (!st.iniziata) bd(); return; }
         // nella saletta si toglie e basta; a partita iniziata resta al suo posto (grigio): se torna riprende con punti e carte
         if (!st.iniziata) { st.giocatori.splice(indexById(st, id), 1); bd(); return; }
@@ -1706,8 +1709,14 @@
             st.giocatori.push({ id: id, nome: nomeJ, restano: st.carte, punti: 0, omino: avatarValido(m.omino) });
             bd(); return;
           }
-          // partita già cominciata: guarda (la foto la riceve come tutti) ed entra alla prossima. Niente messaggio col suo
-          // codice, se no il collegamento lo crede "dentro" e non gli dice "👀 Partita in corso: entri alla prossima"
+          // partita già cominciata: aspetta in «prossimi» (il suo id nella foto: sa di essere dentro) ed entra all'inizio del
+          // giro dopo (⚡ tutti insieme: alla carta dopo), con 0 punti e le carte che restano agli altri. MAI subito tra i
+          // giocatori: a metà giro cambierebbe a chi tocca
+          if (st.iniziata && st.giocatori.length + st.prossimi.length < MAX_GIOCATORI) {
+            if (!st.prossimi.some(function (x) { return x.id === id; })) st.prossimi.push({ id: id, nome: nomeJ, omino: avatarValido(m.omino) });
+            bd(); return;
+          }
+          // (stanza piena a partita cominciata: guarda e basta)
           if (st.iniziata) { if (!visti[id]) { visti[id] = 1; invia(); } return; }
           rete.inviaVeloce({ t: "pieno", to: id, vm: vmDa(st) });   // stanza piena: glielo dico una volta sola
           return;
@@ -1796,12 +1805,27 @@
       st.fase = "apertura"; st.scadenza = null; st.durata = null; bd();
       clearTo(); st._to = setTimeout(iniziaTurno, durataApertura(st.giocatori.length));
     }
+    // chi aspettava in «prossimi» entra, con 0 punti e le carte che restano agli altri (così la partita non si allunga)
+    function entrano(restano) {
+      var entrati = false;
+      st.prossimi.forEach(function (x) {
+        if (gDi(x.id) || st.giocatori.length >= MAX_GIOCATORI || !(restano > 0)) return;
+        st.giocatori.push({ id: x.id, nome: x.nome, restano: restano, punti: 0, omino: x.omino || null, cambio: false });
+        entrati = true;
+      });
+      st.prossimi = [];
+      return entrati;
+    }
     // qualcuno ha ancora carte (anche se adesso è scollegato)?
     function restanoCarte() { return st.giocatori.some(function (g) { return g.restano > 0; }); }
     function iniziaTurno() {
       clearTo();
       if (st.insieme) return iniziaCarta();
       if (!restanoCarte() || st.mazzo.length === 0) return finisci();
+      // all'inizio di un giro (tocca di nuovo al primo) chi aspettava entra, con le carte che restano agli altri: gioca dopo di loro
+      var resta = 0; st.giocatori.forEach(function (g) { if (!g.via && g.restano > resta) resta = g.restano; });
+      if (st.turno % st.giocatori.length === 0 && st.prossimi.length && entrano(resta)) st.turno = 0;
+      if (t.aCheSiamo) t.aCheSiamo("Giro " + Math.max(1, st.carte - resta + 1) + " di " + st.carte);   // (nella Sala, per chi è fuori)
       // chi ha ancora carte è tutto scollegato: non si chiude la partita, si aspetta che torni (l'host può chiuderla)
       // (se non torna entro 90 secondi, la partita finisce lì con i punti fatti)
       if (attivi(st) === 0) {
@@ -1825,7 +1849,9 @@
     function iniziaCarta() {
       clearTo();
       if (st.giro >= st.carte || st.mazzo.length === 0) return finisci();
+      if (st.prossimi.length) entrano(st.carte - st.giro);   // (⚡ ogni carta è un giro: chi aspettava entra con le carte che restano)
       st.n++; st.giro++;
+      if (t.aCheSiamo) t.aCheSiamo("Carta " + st.giro + " di " + st.carte);
       st.carta = st.mazzo.pop(); segnaVista(st.carta); precaricaFoto(st.carta); precaricaFoto(st.mazzo[st.mazzo.length - 1]);
       st.mosse = {}; st.avanti = {}; st.esitoT = null; st.scelta = null; st.voti = {}; st.esito = null;
       st.fase = "tutti"; st.inizio = Date.now() + INTRO_T;   // il tempo (e la gara a chi è più veloce) parte dopo "Carta 3 di 10"
@@ -1985,6 +2011,7 @@
     function nuova() {
       clearTo();
       st.giocatori = st.giocatori.filter(function (g) { return !g.via; });
+      entrano(1);   // (chi aspettava il giro dopo gioca la partita nuova)
       // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
       if (!gDi(IO)) { st.guarda = st.guarda.filter(function (x) { return x !== IO; }); st.giocatori.push({ id: IO, nome: nomeHost, restano: 0, punti: 0, omino: mioAvatar(nomeHost) }); }
       st.giocatori.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
@@ -2170,6 +2197,11 @@
   var REG = null;
   // chi guarda soltanto (link con guarda=1): in basso c'è la targhetta del core "👀 Guardi · 😂 · ✕" (le faccine e l'uscita
   // le dà lei: niente fila delle faccine né "🏠 Esci" del gioco, e la barra lascia il suo posto)
+  // chi non gioca questa carta: aspetta il giro dopo (vm.prossimi), guarda nella Sala, o guarda fino alla prossima partita
+  function testoFuori(vm, myId) {
+    if ((vm.prossimi || []).some(function (x) { return x.id === myId; })) return vm.insieme ? "✋ Entri dalla prossima carta: intanto guarda!" : "✋ Entri al prossimo giro: intanto guarda!";
+    return (vm.guarda || []).indexOf(myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: alla prossima partita giochi anche tu!";
+  }
   function conTarga(t) { return !!(t && t.guarda && !t.eliminazione); }
   function faccineDi(t) { return conTarga(t) || !t.faccine ? null : t.faccine(); }
   function idxDi(vm, id) { for (var i = 0; i < vm.giocatori.length; i++) if (vm.giocatori[i].id === id) return i; return -1; }
@@ -2387,7 +2419,7 @@
         conf.textContent = testoConf();
       } : null });
     if (conf) barraTL(S, [sel, conf]);
-    else barraTL(S, [ el("p", { class: "tl-attesa", text: io < 0 ? ((vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: alla prossima partita giochi anche tu!")
+    else barraTL(S, [ el("p", { class: "tl-attesa", text: io < 0 ? testoFuori(vm, cb.myId)
       : (vm.carta && vm.carta.autore === cb.myId ? "📸 È un tuo ricordo: guardali sudare!" : "✋ Guarda bene la linea: se sbaglia, puoi rubargliela!") }), faccineDi(R.t) ]);
   }
   // «✋ Rubala» online: chi gioca ha scelto il posto; gli altri toccano il posto giusto e «✋ Rubala: va qui!», o «👍 Passo».
@@ -2433,7 +2465,7 @@
     o.stato = mioTurno ? "✋ Te la rubano?" : guardo ? "✋ Si ruba…" : mioRicordo ? "📸 È il tuo ricordo" : mio != null && mio >= 0 ? "✋ Hai provato a rubarla" : mio === -1 ? "👍 Hai passato" : "✅ Hai deciso";
     o.sotto = mioTurno ? "Gli altri decidono se rubartela…" : nomeT + " l'ha messa qui";
     schermoGioco(S, o);
-    barraTL(S, [ el("p", { class: "tl-attesa", text: mioTurno ? "🤞 Se hai sbagliato, chi indovina il posto te la ruba!" : (guardo ? "👀 Stai guardando: gli altri decidono se rubare la carta di " + nomeT + "."
+    barraTL(S, [ el("p", { class: "tl-attesa", text: mioTurno ? "🤞 Se hai sbagliato, chi indovina il posto te la ruba!" : (guardo ? ((vm.prossimi || []).some(function (x) { return x.id === cb.myId; }) ? testoFuori(vm, cb.myId) : "👀 Stai guardando: gli altri decidono se rubare la carta di " + nomeT + ".")
       : mioRicordo ? "📸 L'hai scritto tu: questa volta non rubi." : mio != null && mio >= 0 ? "✋ Secondo te va «" + primaMinuscola(etichettaSlot(vm.linea, mio)) + "». Aspetta gli altri…"
       : "Aspetta gli altri…") }), faccineDi(R.t) ]);
     largo(S, 900);
@@ -2461,7 +2493,7 @@
     if (io < 0) {
       o.sotto = "Tutti piazzano questa carta…";
       schermoGioco(S, o);
-      barraTL(S, [ R.contaT, el("p", { class: "tl-attesa", text: (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: alla prossima partita giochi anche tu!" }), faccineDi(R.t) ]);
+      barraTL(S, [ R.contaT, el("p", { class: "tl-attesa", text: testoFuori(vm, cb.myId) }), faccineDi(R.t) ]);
       return;
     }
     // il mio ricordo: lo giocano gli altri, io guardo

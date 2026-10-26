@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 271,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: chi arriva tardi entra al giro dopo",
+    descrizione: [
+      "✋ Online, se un amico arriva a partita cominciata non deve più guardare fino alla fine: entra al giro dopo, con 0 punti e le carte che restano agli altri (in «⚡ Tutti insieme» dalla carta dopo). Intanto legge «✋ Entri al prossimo giro».",
+      "Nella Sala chi è fuori vede a che punto è la partita («Giro 2 di 5», «Carta 3 di 10»)."
+    ]
+  },
+  {
     v: 270,
     data: "26 ottobre 2026",
     titolo: "La Linea del tempo: le foto vere sulle carte 📸",

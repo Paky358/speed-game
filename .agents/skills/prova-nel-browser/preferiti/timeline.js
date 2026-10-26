@@ -40,6 +40,9 @@
 //      non può cambiare la carta di Paky, Paky col tasto (carta nuova sul suo telefono), la carta giudicata è quella nuova.
 // tp10: le foto vere (solo Storia e Invenzioni): la foto sulla carta in mano e la miniatura sulla linea per le carte che la
 //      hanno (e mai per quelle senza), si caricano da Wikimedia, misure, la foto che non arriva si toglie.
+// tp11: online a turno in 2, Nino arriva a metà del primo giro: aspetta in «prossimi» («✋ Entri al prossimo giro»), entra
+//      all'inizio del giro dopo con 0 punti e le carte che restano agli altri, gioca i suoi turni, è nella classifica.
+// tp12: lo stesso con «⚡ Tutti insieme»: Nino arriva alla carta 2 ed entra dalla carta 3 con 8 carte.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T, vm = A.vm;
@@ -977,5 +980,90 @@
     if (conFoto < 3) no("solo " + conFoto + " carte su " + viste + " avevano la foto");
     senzaErrori();
     return turni + " turni; foto sulla carta in mano " + conFoto + " su " + viste + "; miniature viste sulla linea " + linea + "; foto che non arriva tolta: " + rotta + "; misure ok";
+  } });
+  // =================== tp11, tp12: chi arriva tardi entra al giro dopo (26 ott 2026) ===================
+  // gioca da sola una partita online coi messaggi (scelta giusta, nessuno ruba); a metà arriva Nino: aspetta in «prossimi»,
+  // legge «✋ Entri al …», ed entra all'inizio del giro dopo (a turno) o alla carta dopo (⚡ tutti insieme) con 0 punti
+  async function partitaConRitardatario(gara, nomi, quando) {
+    var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo"), note = [];
+    for (var i = 1; i < nomi.length; i++) await W.apriTel(nomi[i], { hash: "gioco=timeline&stanza=" + C, x: 185 * i });
+    if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === nomi.length; }, 10000)) no("nella saletta non arrivano in " + nomi.length);
+    await regola(P, async function (f) {
+      chipIn(f, gara === "insieme" ? /Tutti insieme/ : /^🎯?\s*A turno/);
+      var meno = f.querySelector(".stepper button"); if (gara !== "insieme") { meno.click(); meno.click(); }
+    });
+    if (!await W.aspetta(function () { return W.clicca(P, /Comincia/, ".sl-go"); }, 5000)) no("Paky non trova «Comincia»");
+    var kV = "", fino = Date.now() + 360000, nino = null, entrato = null, prima = null, turniNino = 0, giusteNino = 0;
+    while (Date.now() < fino && vm(C).fase !== "fine") {
+      var v = vm(C), k = v.fase + "|" + v.n;
+      if (!nino && quando(v)) {
+        // arriva Nino: aspetta (nella foto il suo id in «prossimi»), mai tra i giocatori a metà giro
+        nino = await W.apriTel("Nino", { hash: "gioco=timeline&stanza=" + C, x: 185 * nomi.length });
+        if (!await W.aspetta(function () { return (vm(C).prossimi || []).some(function (x) { return x.nome === "Nino"; }); }, 15000)) no("Nino non è in «prossimi» (" + JSON.stringify(vm(C).prossimi) + ")");
+        var re = gara === "insieme" ? /Entri dalla prossima carta/ : /Entri al prossimo giro/;
+        if (!await W.aspetta(function () { return re.test(T(W.finestra("Nino"))); }, 15000)) no("Nino non legge «" + re.source + "» («" + T(W.finestra("Nino")).slice(-160) + "»)");
+        prima = { n: vm(C).n, giro: vm(C).giro, restano: Math.max.apply(null, vm(C).giocatori.map(function (g) { return g.restano; })) };
+        note.push("Nino arriva alla foto " + prima.n);
+      }
+      if (nino && !entrato && (vm(C).giocatori || []).some(function (g) { return g.nome === "Nino"; })) {
+        var g = (vm(C).giocatori || []).filter(function (x) { return x.nome === "Nino"; })[0], v2 = vm(C);
+        entrato = { n: v2.n, restano: g.restano, punti: g.punti };
+        if (g.punti !== 0) no("Nino entra con " + g.punti + " punti");
+        if ((v2.prossimi || []).length) no("Nino entrato ma ancora in «prossimi»");
+        if (gara !== "insieme" && v2.fase === "turno" && v2.turnoId !== idDi(C, "Paky")) no("Nino è entrato a metà giro (tocca a " + v2.turnoNome + ")");
+        note.push("entra alla foto " + v2.n + " con " + g.restano + " carte");
+      }
+      if (k === kV) { await W.dorme(200); continue; }
+      kV = k;
+      if (v.fase === "turno") {
+        var Y = annoDi(P, v.carta.titolo), ok = gapOk(v.linea, Y), chi = v.turnoNome;
+        if (chi === "Nino") turniNino++;
+        if (chi === "Paky") {
+          if (!await W.aspetta(function () { return P.document.querySelectorAll(".tl-slot").length === v.linea.length + 1; }, 12000)) no("Paky non vede i posti");
+          P.document.querySelectorAll(".tl-slot")[ok].click(); await W.dorme(150); W.clicca(P, /Mettila qui/, ".tl-conferma");
+        } else manda(chi, C, { t: "scelta", gap: ok });
+        continue;
+      }
+      if (v.fase === "votazione") {
+        (v.giocatori || []).forEach(function (g) { if (g.id !== v.turnoId && g.nome !== "Paky") manda(g.nome, C, { t: "ruba", gap: null }); });
+        if (v.turnoNome !== "Paky") await W.aspetta(function () { return W.clicca(P, /👍 Passo/); }, 12000);
+        continue;
+      }
+      if (v.fase === "tutti") {
+        var Y2 = annoDi(P, v.carta.titolo), ok2 = gapOk(v.linea, Y2);
+        (v.giocatori || []).forEach(function (g) { if (g.nome !== "Paky") manda(g.nome, C, { t: "posa", gap: ok2 }); });
+        if (await W.aspetta(function () { return P.document.querySelectorAll(".tl-slot").length === v.linea.length + 1; }, 12000)) {
+          P.document.querySelectorAll(".tl-slot")[ok2].click(); await W.dorme(150); W.clicca(P, /Mettila qui/, ".tl-conferma");
+        }
+        continue;
+      }
+      if (v.fase === "esito") { if (v.turnoNome === "Nino" && v.esito && v.esito.giusto) giusteNino++; await W.aspetta(function () { return W.clicca(P, /Avanti/, ".st-barra button"); }, 25000); continue; }
+      if (v.fase === "tEsito") {
+        (v.esitoT.risultati || []).forEach(function (r) { if (r.giusto && (vm(C).giocatori || []).some(function (g) { return g.id === r.id && g.nome === "Nino"; })) giusteNino++; });
+        (v.giocatori || []).forEach(function (g) { if (g.nome !== "Paky") manda(g.nome, C, { t: "avanti" }); });
+        W.clicca(P, /Avanti/, ".st-barra button"); continue;
+      }
+      await W.dorme(200);
+    }
+    if (vm(C).fase !== "fine") no("non finisce (fase " + vm(C).fase + ") · " + note.join(" · "));
+    if (!entrato) no("Nino non è mai entrato · " + note.join(" · "));
+    var cl = vm(C).classifica || [], rn = cl.filter(function (r) { return r.nome === "Nino"; })[0];
+    if (!rn) no("Nino non è nella classifica finale");
+    senzaErrori();
+    return { note: note, entrato: entrato, prima: prima, turniNino: turniNino, giusteNino: giusteNino, cl: cl, C: C };
+  }
+
+  COPIONE.aggiungi("tp11", { nome: "Linea del tempo online a turno: chi arriva a metà partita aspetta ed entra all'inizio del giro dopo, con 0 punti e le carte che restano", fai: async function () {
+    // Nino arriva quando tocca a Giulia nel primo giro (a metà giro)
+    var r = await partitaConRitardatario("turno", ["Paky", "Giulia"], function (v) { return v.fase === "turno" && v.turnoNome === "Giulia" && v.giocatori.some(function (g) { return g.nome === "Giulia" && g.restano === 3; }); });
+    if (r.entrato.restano !== r.prima.restano - 1) no("Nino entra con " + r.entrato.restano + " carte invece di " + (r.prima.restano - 1) + " (quelle che restano agli altri)");
+    if (r.turniNino !== r.entrato.restano) no("Nino ha giocato " + r.turniNino + " turni invece di " + r.entrato.restano);
+    return r.note.join("; ") + "; Nino gioca " + r.turniNino + " turni; classifica " + r.cl.map(function (x) { return x.nome + " " + x.punti; }).join(", ");
+  } });
+
+  COPIONE.aggiungi("tp12", { nome: "Linea del tempo online ⚡ Tutti insieme: chi arriva a metà carta entra dalla carta dopo, con 0 punti e le carte che restano", fai: async function () {
+    var r = await partitaConRitardatario("insieme", ["Paky", "Giulia"], function (v) { return v.fase === "tutti" && v.giro === 2; });
+    if (r.entrato.restano !== 10 - 2) no("Nino entra con " + r.entrato.restano + " carte invece di 8");
+    return r.note.join("; ") + "; Nino ha messo giuste " + r.giusteNino + " carte; classifica " + r.cl.map(function (x) { return x.nome + " " + x.punti; }).join(", ");
   } });
 })();
