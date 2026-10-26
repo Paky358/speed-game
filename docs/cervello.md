@@ -87,6 +87,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande. «Dopo mer» = dopo che la
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
 
+- 26 ott 17:30 · Linea del tempo · PUBBLICATO · Rubala, Epoca, Cambia carta, 1.842 foto, ritardatari, Ognuno la sua linea (v267-v272) · 83b9c3b. Resta: «🤖 Gioca col Bot» (proposta una chat nuova), la decisione sulla carta sbagliata nella linea
 - 26 ott 16:55 · Cervello · salvato · nato il registro del Cervello e la regola del diario nelle istruzioni del progetto
 - 26 ott 16:27 · Linea del tempo · salvato (non online) · Ognuno la sua linea: 5 ritocchi dopo la revisione (v272) · a4941aa
 - 26 ott 15:48 · Linea del tempo · salvato (non online) · 🧍 Ognuno la sua linea (v272) · 044b9b2
