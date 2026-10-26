@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 270,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: le foto vere sulle carte 📸",
+    descrizione: [
+      "📸 Le carte di Storia e di Invenzioni e scoperte hanno la loro foto vera: il quadro di Annibale con gli elefanti, la stele di Rosetta, il primo iPhone, la pecora Dolly… 433 foto, guardate una per una.",
+      "La foto si vede sulla carta che devi piazzare e, più piccola, sulle carte della linea. Nessuna foto ti dice l'anno: quelle con la data scritta sono state scartate.",
+      "Le altre categorie per ora restano come prima; se la rete è lenta e la foto non arriva, la carta resta solo scritta."
+    ]
+  },
+  {
     v: 269,
     data: "26 ottobre 2026",
     titolo: "La Linea del tempo: 🔄 cambia carta",

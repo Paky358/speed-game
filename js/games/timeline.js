@@ -104,6 +104,11 @@
     ".tl-mano .testa{display:flex;justify-content:space-between;align-items:center;gap:8px;position:relative}",
     ".tl-mano .cat{font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
     ".tl-mano .anno{flex:0 0 auto;background:rgba(0,0,0,.28);border-radius:99px;padding:2px 10px;font-weight:900;font-size:.85rem;letter-spacing:.12em}",
+    // le foto vere: sulla carta in mano un quadrato a sinistra, sulle carte della linea una miniatura a destra
+    ".tl-mano.con-foto{padding-left:98px;min-height:100px}",
+    ".tl-mano.con-foto.con-cambia .cat .cn{display:none}",   // (foto e «🔄 Cambia» insieme: della categoria resta l'icona)
+    ".tl-mano .ft{position:absolute;left:12px;top:12px;width:74px;height:calc(100% - 24px);object-fit:cover;border-radius:12px;background:rgba(0,0,0,.22);box-shadow:0 2px 8px rgba(0,0,0,.35);z-index:1}",
+    ".tl-ev .card .ft{float:right;width:46px;height:46px;margin:0 0 3px 8px;object-fit:cover;border-radius:9px;background:rgba(0,0,0,.22)}",
     // «🔄 Cambia carta» (una volta a partita): il tasto sulla carta, accanto ai ????; la luce che passa non lo copre
     ".tl-mano:after{pointer-events:none}",
     ".tl-mano .cambia{flex:0 0 auto;margin-left:auto;position:relative;z-index:1;border:0;border-radius:99px;padding:4px 11px;background:rgba(255,255,255,.24);color:#fff;font:inherit;font-weight:900;font-size:.78rem;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}",
@@ -634,12 +639,35 @@
   function chiaveCarta(carta) { return carta ? carta.titolo : ""; }
 
   // La carta da piazzare
+  // ---- Le foto vere delle carte (data/linea-foto.js: da Wikimedia Commons, foto libere guardate a occhio, 26 ott 2026) ----
+  // "cat|titolo" → "percorso su Commons|larghezza dell'originale". Una misura sola (330 px, una di quelle fisse di Wikimedia):
+  // la stessa foto serve alla carta in mano e alla linea, e il telefono la scarica una volta. Senza foto la carta resta com'era
+  var COMMONS = "https://upload.wikimedia.org/wikipedia/commons/", FOTO_PX = 330, PRESE = {};
+  function urlFoto(ev) {
+    var f = ev && ev.titolo && (window.SG_TL_FOTO || {})[(ev._cat || ev.cat || "") + "|" + ev.titolo];
+    if (!f) return null;
+    var s = String(f).split("|"), path = s[0], w = +s[1] || 0, nome = path.split("/").pop();
+    if (!/^[0-9a-f]\/[0-9a-f]{2}\/./.test(path)) return null;
+    var enc = path.split("/").map(encodeURIComponent).join("/");
+    return w && w <= FOTO_PX ? COMMONS + enc : COMMONS + "thumb/" + enc + "/" + FOTO_PX + "px-" + encodeURIComponent(nome);
+  }
+  // si scarica prima (la carta di adesso e quella dopo), così quando la carta compare la foto c'è già
+  function precaricaFoto(ev) { var u = urlFoto(ev); if (u && !PRESE[u]) { PRESE[u] = new Image(); PRESE[u].src = u; } }
+  // la foto (o niente); se non arriva si toglie e la carta resta solo scritta
+  function nodoFoto(el, ev, cls) {
+    var u = urlFoto(ev); if (!u) return null;
+    var im = el("img", { class: cls, alt: "", draggable: "false", decoding: "async" });
+    im.onerror = function () { var p = im.parentNode; if (p) { p.removeChild(im); p.classList.remove("con-foto"); } };
+    im.src = u;
+    return im;
+  }
   // cambia: la funzione del tasto «🔄 Cambia» (una volta a partita, al proprio turno), o niente
   function nodoCartaMano(el, carta, occhiello, cambia) {
-    var cat = carta._cat || carta.cat, ic = infoCat(cat);
-    return el("div", { class: "tl-mano", style: stileCat(cat) }, [
+    var cat = carta._cat || carta.cat, ic = infoCat(cat), ft = nodoFoto(el, { cat: cat, titolo: carta.titolo }, "ft");
+    return el("div", { class: "tl-mano" + (ft ? " con-foto" : "") + (cambia ? " con-cambia" : ""), style: stileCat(cat) }, [
+      ft,
       el("div", { class: "fil", text: ic.icona }),
-      el("div", { class: "testa" }, [ el("span", { class: "cat", text: ic.icona + " " + ic.nome }),
+      el("div", { class: "testa" }, [ el("span", { class: "cat" }, [ ic.icona, el("span", { class: "cn", text: " " + ic.nome }) ]),
         cambia ? el("button", { class: "cambia", type: "button", text: "🔄 Cambia", "aria-label": "Cambia carta (una volta a partita)",
           onclick: function (e) { e.currentTarget.disabled = true; cambia(); } }) : null,
         el("span", { class: "anno", text: "????" }) ]),
@@ -654,6 +682,7 @@
       el("span", { class: "anno", text: tent ? "?" : annoTesto(ev.anno) }),
       el("span", { class: "punto" }),
       el("div", { class: "card" }, [
+        nodoFoto(el, ev, "ft"),
         el("div", { class: "tit" }, [ el("span", { class: "ic", text: ic.icona }), el("span", { text: ev.titolo }) ]),
         (!tent && ev.fatto) ? el("div", { class: "desc", text: ev.fatto }) : null,
         chi ? el("div", { class: "chi", text: chi }) : null
@@ -1405,6 +1434,7 @@
     var N = stato.giocatori.length, gi = stato.turno % N, g = stato.giocatori[gi], uno = N === 1;
     var carta = stato.carta = stato.mazzo.pop();
     segnaVista(carta);
+    precaricaFoto(carta); precaricaFoto(stato.mazzo[stato.mazzo.length - 1]);   // (le foto vere: già pronte quando servono)
     // 🔥 l'ultima carta di ognuno vale doppio (anche per chi la ruba)
     var doppio = g.restano === 1 && stato.carte > 1, molt = doppio ? 2 : 1;
     // 1) stacco su chi gioca (e il telefono passa a lui)
@@ -1421,7 +1451,7 @@
         anno: stato.anno, anni: stato.anni, doppio: doppio, cambia: !g.cambio && stato.mazzo.length > 0 });
       if (!scelta.cambia || !S.vivo()) break;
       g.cambio = true; stato.mazzo.unshift(carta);
-      carta = stato.carta = stato.mazzo.pop(); segnaVista(carta);
+      carta = stato.carta = stato.mazzo.pop(); segnaVista(carta); precaricaFoto(carta);
       terzo(S, null, "🔄 Carta cambiata!", "Ecco la carta nuova", "🔄"); await dorme(1100); viaTerzo(S);
       if (!S.vivo()) return;
     }
@@ -1773,7 +1803,7 @@
       saltaFiniti(st);
       st.n++;
       evitaAutore(st.mazzo, corr().id);   // (il tuo ricordo non lo giochi tu)
-      st.carta = st.mazzo.pop(); segnaVista(st.carta);
+      st.carta = st.mazzo.pop(); segnaVista(st.carta); precaricaFoto(st.carta); precaricaFoto(st.mazzo[st.mazzo.length - 1]);
       st.scelta = null; st.voti = {}; st.esito = null; st.fase = "turno"; st.annoDetto = null; st.cambi = 0;
       st.doppio = corr().restano === 1 && st.carte > 1;   // 🔥 l'ultima carta di ognuno vale doppio
       // il tempo parte dopo lo stacco della telecamera su chi gioca; tempo scaduto = niente scelta
@@ -1787,7 +1817,7 @@
       clearTo();
       if (st.giro >= st.carte || st.mazzo.length === 0) return finisci();
       st.n++; st.giro++;
-      st.carta = st.mazzo.pop(); segnaVista(st.carta);
+      st.carta = st.mazzo.pop(); segnaVista(st.carta); precaricaFoto(st.carta); precaricaFoto(st.mazzo[st.mazzo.length - 1]);
       st.mosse = {}; st.avanti = {}; st.esitoT = null; st.scelta = null; st.voti = {}; st.esito = null;
       st.fase = "tutti"; st.inizio = Date.now() + INTRO_T;   // il tempo (e la gara a chi è più veloce) parte dopo "Carta 3 di 10"
       var n = st.n;
@@ -1870,7 +1900,7 @@
       var g = gDi(id); if (!g || g.cambio || !st.mazzo.length) return;
       g.cambio = true; st.mazzo.unshift(st.carta);
       evitaAutore(st.mazzo, id);   // (il tuo ricordo non lo giochi tu)
-      st.carta = st.mazzo.pop(); segnaVista(st.carta); st.cambi = (st.cambi || 0) + 1;
+      st.carta = st.mazzo.pop(); segnaVista(st.carta); precaricaFoto(st.carta); st.cambi = (st.cambi || 0) + 1;
       var n = st.n;
       arma(TEMPO * 1000, function () { if (st.n === n && st.fase === "turno") scelta(corr().id, null); });
       bd();
@@ -2169,6 +2199,7 @@
   async function regiaPasso(R) {
     var vm = R.vm, S = R.S, cb = R.cb, el = R.t.el;
     if (!S.vivo()) return false;
+    if (vm.carta) precaricaFoto(vm.carta);   // (la foto vera si scarica mentre la telecamera fa lo stacco)
     var io = idxDi(vm, cb.myId), gi = idxDi(vm, vm.turnoId), mioTurno = gi >= 0 && gi === io;
     var kT = (vm.turnoId || "") + "|" + chiaveCarta(vm.carta) + "|" + (vm.n || 0), nomeT = vm.turnoNome || "";
     if (vm.fase === "apertura") {

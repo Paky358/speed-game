@@ -38,6 +38,8 @@
 //      il cambio non costa un turno, misure col tasto.
 // tp9: «🔄 Cambia carta» online: Giulia a messaggio (la seconda volta non vale, Paky vede «Giulia cambia carta!»), Giulia
 //      non può cambiare la carta di Paky, Paky col tasto (carta nuova sul suo telefono), la carta giudicata è quella nuova.
+// tp10: le foto vere (solo Storia e Invenzioni): la foto sulla carta in mano e la miniatura sulla linea per le carte che la
+//      hanno (e mai per quelle senza), si caricano da Wikimedia, misure, la foto che non arriva si toglie.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T, vm = A.vm;
@@ -917,5 +919,61 @@
     Object.keys(fatto).forEach(function (x) { if (!fatto[x]) no("non è successo: " + x); });
     senzaErrori();
     return note.join("; ") + "; classifica " + (vm(C).classifica || []).map(function (r) { return r.nome + " " + r.punti; }).join(", ");
+  } });
+
+  // =================== tp10: le foto vere sulle carte (26 ott 2026) ===================
+  COPIONE.aggiungi("tp10", { nome: "Linea del tempo sullo stesso telefono, solo Storia e Invenzioni: le foto vere sulla carta in mano e sulla linea, si caricano, misure, foto che non arriva = carta senza foto", fai: async function () {
+    var P = await W.apriTel("Paky", { x: 0 }), viste = 0, conFoto = 0, rotta = false, fino = Date.now() + 260000, kOld = "", turni = 0, linea = 0;
+    var F = P.SG_TL_FOTO || {};
+    if (Object.keys(F).length < 100) no("le foto nel gioco sono solo " + Object.keys(F).length);
+    await localeTl(P, ["Paky", "Giulia"], false, { prima: async function () {
+      [].forEach.call(P.document.querySelectorAll(".cat-chip"), function (c) { if (!/Storia|Invenzioni/.test(c.textContent) && c.classList.contains("attiva")) c.click(); });
+      await W.dorme(100);
+      var att = [].map.call(P.document.querySelectorAll(".cat-chip.attiva"), function (c) { return c.textContent; });
+      if (att.length !== 2) no("le categorie accese sono " + att.join(", "));
+    } });
+    function stato() { var s = P.document.querySelector(".st-sch-in .tl-stato"); return s ? s.textContent : ""; }
+    function foto(tit) { return F["storia|" + tit] || F["invenzioni|" + tit]; }
+    while (Date.now() < fino) {
+      if (/Classifica finale/.test(T(P))) break;
+      if (W.clicca(P, /tocca a me/)) { await W.dorme(300); continue; }
+      if (W.clicca(P, /Nessuno la ruba/)) { await W.dorme(300); continue; }
+      var mano = P.document.querySelector(".st-sch-in .tl-mano"), tit = mano && mano.querySelector(".tit"), slots = P.document.querySelectorAll(".st-sch-in .tl-slot");
+      if (/Tocca a te/.test(stato()) && tit && slots.length && P.document.querySelector(".tl-conferma") && kOld !== tit.textContent) {
+        kOld = tit.textContent; viste++;
+        var im = mano.querySelector("img.ft");
+        if (foto(tit.textContent)) {
+          conFoto++;
+          if (!im || !mano.classList.contains("con-foto")) no("«" + tit.textContent + "» ha la foto ma la carta non la mostra");
+          else {
+            if (!/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\//.test(im.src)) no("la foto viene da " + im.src.slice(0, 60));
+            if (!await W.aspetta(function () { return im.complete && im.naturalWidth > 0; }, 15000)) no("la foto di «" + tit.textContent + "» non si carica (" + im.src.slice(-70) + ")");
+            if (conFoto === 1) { var m = await misure(P, "Paky"); if (m) no("con la foto: " + m); }
+            // la foto che non arriva (rete, Wikimedia giù): si toglie e la carta resta solo scritta
+            if (conFoto === 2 && !rotta) {
+              rotta = true; im.dispatchEvent(new P.Event("error"));
+              if (mano.querySelector("img.ft") || mano.classList.contains("con-foto")) no("la foto che non arriva resta sulla carta");
+            }
+          }
+        } else if (im) no("«" + tit.textContent + "» non ha foto ma la carta ne mostra una");
+        // sulla linea: le carte con la foto hanno la miniatura
+        [].forEach.call(P.document.querySelectorAll(".st-sch-in .tl-asse > .tl-ev:not(.tent)"), function (ev) {
+          var t = ev.querySelector(".tit span:last-child"); if (!t) return;
+          var ha = !!ev.querySelector(".card img.ft");
+          if (foto(t.textContent) && !ha) no("sulla linea «" + t.textContent + "» non ha la miniatura");
+          if (!foto(t.textContent) && ha) no("sulla linea «" + t.textContent + "» ha una miniatura che non è sua");
+          if (ha) linea++;
+        });
+        var Y = annoDi(P, tit.textContent), anni = [].map.call(P.document.querySelectorAll(".st-sch-in .tl-asse > .tl-ev .anno"), function (a) { var t2 = a.textContent; return /a\.C\./.test(t2) ? -parseInt(t2, 10) : parseInt(t2, 10); });
+        slots[gapOk(anni.map(function (a) { return { anno: a }; }), Y)].click(); await W.dorme(120);
+        if (!W.clicca(P, /Mettila qui/, ".tl-conferma")) no("non riesco a confermare");
+        turni++; await W.dorme(300); continue;
+      }
+      await W.dorme(250);
+    }
+    if (!/Classifica finale/.test(T(P))) no("la partita non finisce");
+    if (conFoto < 3) no("solo " + conFoto + " carte su " + viste + " avevano la foto");
+    senzaErrori();
+    return turni + " turni; foto sulla carta in mano " + conFoto + " su " + viste + "; miniature viste sulla linea " + linea + "; foto che non arriva tolta: " + rotta + "; misure ok";
   } });
 })();
