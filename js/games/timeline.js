@@ -107,7 +107,7 @@
     // le foto vere: sulla carta in mano un quadrato a sinistra, sulle carte della linea una miniatura a destra
     ".tl-mano.con-foto{padding-left:98px;min-height:100px}",
     ".tl-mano.con-foto.con-cambia .cat .cn{display:none}",   // (foto e «🔄 Cambia» insieme: della categoria resta l'icona)
-    ".tl-mano .ft{position:absolute;left:12px;top:12px;width:74px;height:calc(100% - 24px);object-fit:cover;border-radius:12px;background:rgba(0,0,0,.22);box-shadow:0 2px 8px rgba(0,0,0,.35);z-index:1}",
+    ".tl-mano .ft{position:absolute;left:12px;top:12px;width:74px;height:74px;object-fit:cover;border-radius:12px;background:rgba(0,0,0,.22);box-shadow:0 2px 8px rgba(0,0,0,.35);z-index:1}",
     ".tl-ev .card .ft{float:right;width:46px;height:46px;margin:0 0 3px 8px;object-fit:cover;border-radius:9px;background:rgba(0,0,0,.22)}",
     // «🔄 Cambia carta» (una volta a partita): il tasto sulla carta, accanto ai ????; la luce che passa non lo copre
     ".tl-mano:after{pointer-events:none}",
@@ -280,7 +280,7 @@
     // «📆 Epoca» nelle impostazioni: le scelte in due colonne (l'ultima, "Scegli tu", larga) e la linea con due maniglie
     ".tl-ep-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}",
     ".tl-ep-chips .modo-chip{gap:8px;padding:10px;min-height:0}.tl-ep-chips .modo-chip .mi{font-size:1.4rem}.tl-ep-chips .modo-chip .mt{font-size:.95rem}.tl-ep-chips .modo-chip .ms{font-size:.78rem}",
-    ".tl-ep-chips .modo-chip:last-child{grid-column:1/-1}",
+    ".tl-ep-chips .modo-chip:last-child{grid-column:1/-1}.tl-ep-chips .modo-chip .ms.poche{color:var(--rosso);font-weight:800}",
     ".tl-ep{margin-top:10px;padding:12px 14px 10px;border-radius:16px;background:var(--carta)}",
     ".tl-ep-righe{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}",
     ".tl-ep-val{display:flex;align-items:center;gap:5px}.tl-ep-val .n{min-width:1.9em;font-size:.85rem;font-weight:700;color:var(--testo-tenue)}",
@@ -350,12 +350,18 @@
     return EPOCHE[imp.epoca] || [null, null];
   }
   function nellEpoca(lim, anno) { return (lim[0] == null || anno >= lim[0]) && (lim[1] == null || anno <= lim[1]); }
+  // l'epoca che vale davvero: con meno di EPOCA_MIN carte (con queste categorie) non conta, e lo dicono anche le regole
+  function epocaAttiva(imp) {
+    var lim = limitiEpoca(imp);
+    if (lim[0] == null && lim[1] == null) return lim;
+    return contaCarte(imp && imp.categorie, lim) >= EPOCA_MIN ? lim : [null, null];
+  }
   // "dal 1980 a oggi", "dal 452 a.C. al 1800", "prima del 1900", "il Novecento" (per la riga delle regole)
   function testoEpoca(imp) {
-    var lim = limitiEpoca(imp);
+    var lim = epocaAttiva(imp);
     if (lim[0] == null && lim[1] == null) return "";
     if (imp.epoca === "900") return "il Novecento";
-    if (lim[0] == null) return "prima del " + annoTesto(lim[1] + 1);
+    if (lim[0] == null) return imp.epoca === "antica" ? "prima del 1900" : "fino al " + annoTesto(lim[1]);
     return (lim[0] === 0 ? "dall'anno 0" : "dal " + annoTesto(lim[0])) + (lim[1] == null ? " a oggi" : " al " + annoTesto(lim[1]));
   }
   function pescaDati(imp) {
@@ -366,8 +372,8 @@
     var d = []; attive.forEach(function (c) { (c.eventi || []).forEach(function (e) {
       var x = {}; for (var k in e) x[k] = e[k]; x._cat = c.id; d.push(x);   // la carta ricorda la sua categoria (trofei)
     }); });
-    var lim = limitiEpoca(imp);
-    if (lim[0] != null || lim[1] != null) { var f = d.filter(function (e) { return nellEpoca(lim, e.anno); }); if (f.length >= EPOCA_MIN) d = f; }
+    var lim = epocaAttiva(imp);
+    if (lim[0] != null || lim[1] != null) d = d.filter(function (e) { return nellEpoca(lim, e.anno); });
     return d;
   }
   // quante carte ci sono con queste categorie in questi anni (per le impostazioni)
@@ -382,7 +388,8 @@
   // trofeo "tutte e 5 le categorie": le 5 storiche (le categorie nuove non lo rendono più difficile)
   var CINQUE = ["storia", "invenzioni", "calcio", "rap", "cinema"];
   function tutteLeCategorie(imp) {
-    var scelte = imp && imp.categorie;
+    var scelte = imp && imp.categorie, e = epocaAttiva(imp);
+    if (e[0] != null || e[1] != null) return false;   // (con un'epoca le categorie non sono più tutte intere)
     return !scelte || CINQUE.every(function (id) { return scelte.indexOf(id) >= 0; });
   }
   function quanteCategorie(imp) {
@@ -1295,8 +1302,10 @@
       box.appendChild(epChips); box.appendChild(pista);
       function contaEpoca() {
         EPOCHE_SCELTE.forEach(function (o) {
-          var tx = o[0] === "mia" ? "Muovi tu la linea degli anni" : fmtN(contaCarte(dove.categorie, EPOCHE[o[0]])) + " carte";
+          var n = o[0] === "mia" ? null : contaCarte(dove.categorie, EPOCHE[o[0]]), poche = n != null && n < EPOCA_MIN && o[0] !== "tutta";
+          var tx = n == null ? "Muovi tu la linea degli anni" : poche ? "⚠️ " + fmtN(n) + (n === 1 ? " carta" : " carte") + ": si gioca con tutte" : fmtN(n) + (n === 1 ? " carta" : " carte");
           if (epMs[o[0]].textContent !== tx) epMs[o[0]].textContent = tx;
+          epMs[o[0]].classList.toggle("poche", poche);
         });
         pista.aggiorna();
       }
@@ -1406,7 +1415,7 @@
     // «📸 I nostri ricordi» scritti su questo telefono, sparsi tra le carte
     // (anche i ricordi stanno negli anni scelti: «📆 Epoca»)
     if (imp.ricordi !== "no") mazzo = mescolaRicordi(mazzo, mieiRicordi().map(function (s) { return cartaRicordo(s, null, null); })
-      .filter(function (c) { return nellEpoca(limitiEpoca(imp), c.anno); }), carte * t.giocatori.length);
+      .filter(function (c) { return nellEpoca(epocaAttiva(imp), c.anno); }), carte * t.giocatori.length);
     var stato = {
       mazzo: mazzo, linea: linea, turno: 0, carta: null, voti: imp.voti || "insieme", carte: carte,
       anno: imp.anno !== false, anni: anniDi(mazzo.concat(linea)),
@@ -1452,8 +1461,8 @@
       if (!scelta.cambia || !S.vivo()) break;
       g.cambio = true; stato.mazzo.unshift(carta);
       carta = stato.carta = stato.mazzo.pop(); segnaVista(carta); precaricaFoto(carta);
-      terzo(S, null, "🔄 Carta cambiata!", "Ecco la carta nuova", "🔄"); await dorme(1100); viaTerzo(S);
-      if (!S.vivo()) return;
+      terzo(S, null, "🔄 Carta cambiata!", "Ecco la carta nuova", "🔄");
+      setTimeout(function () { if (S.vivo()) viaTerzo(S); }, 1300);   // (intanto la carta nuova è già sul maxischermo)
     }
     var gap = scelta.gap, detto = scelta.anno;
     stato._nuovo = null;
@@ -1561,7 +1570,7 @@
       // le regole nuove: l'anno (📅), l'ultima carta doppia, gli anni della partita
       annoOn: !!st.annoOn, doppio: !!st.doppio, anni: st.anni || null,
       // «🔄 Cambia carta» (una volta a partita, solo a turno): cambi = quante volte è cambiata la carta in questo turno
-      cambiOn: !insiemeOra(st), cambi: st.cambi || 0,
+      cambiOn: !insiemeOra(st) && st.mazzo.length > 0, cambi: st.cambi || 0,
       // «📸 I nostri ricordi» in saletta: quanti e di chi (i fatti e gli anni restano sull'host)
       ricordiOn: st.ricordiOn !== false, nRic: contaRicordi(st), ricDa: daChiRicordi(st),
       guarda: (st.guarda || []).slice(),   // nella Sala: chi questa volta guarda soltanto
@@ -1776,7 +1785,7 @@
           var nome = (gDi(id) || {}).nome || st.ricNomi[id] || "un amico";
           st.ricordi[id].forEach(function (s) {
             var c = cartaRicordo(s, id, nome), k = c.titolo.toLowerCase();
-            if (!giaR[k] && nellEpoca(limitiEpoca(imp), c.anno)) { giaR[k] = 1; st.ricPool.push(c); }   // (negli anni scelti: «📆 Epoca»)
+            if (!giaR[k] && nellEpoca(epocaAttiva(imp), c.anno)) { giaR[k] = 1; st.ricPool.push(c); }   // (negli anni scelti: «📆 Epoca»)
           });
         });
         if (st.ricPool.length) st.mazzo = mescolaRicordi(st.mazzo, st.ricPool, st.insieme ? st.carte : st.carte * st.giocatori.length);
