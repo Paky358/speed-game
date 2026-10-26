@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 268,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: 📆 scegli l'epoca",
+    descrizione: [
+      "📆 Prima di cominciare scegli gli anni delle carte: «Tutta la storia», «Prima del 1900», «Il Novecento» o «Dal 1980 a oggi». Accanto a ogni scelta vedi quante carte ci sono, con le categorie che hai scelto.",
+      "✏️ «Scegli tu gli anni»: trascini le due maniglie su una linea (per esempio dal 476 al 1800) e con ‹ › aggiusti l'anno. Se negli anni scelti ci sono troppo poche carte, te lo dice.",
+      "Online la sceglie chi apre la stanza nel ⚙️, e gli amici la leggono nella riga delle regole («📆 il Novecento»)."
+    ]
+  },
+  {
     v: 267,
     data: "26 ottobre 2026",
     titolo: "La Linea del tempo: ✋ Rubala, come in Hitster",

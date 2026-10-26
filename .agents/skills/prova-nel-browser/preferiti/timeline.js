@@ -29,6 +29,11 @@
 //      (niente tasti per rubare), tempo scaduto (carta girata con l'anno), fino alla fine senza errori.
 // tp5: Sullo stesso telefono in 3, ✋ «Uno alla volta»: ci si passa il telefono, si ruba in segreto (chi viene dopo non vede
 //      i furti di prima), in due sullo stesso posto, «✋ In 2 vogliono rubarla!», classifica finale = conto a parte.
+// tp6: «📆 Epoca» sullo stesso telefono: 5 scelte (di partenza «Tutta la storia»), il conto delle carte segue le categorie,
+//      «Dal 1980 a oggi» = carte tutte dal 1980; poi «Scegli tu gli anni»: le maniglie trascinate col dito (dal 1500 al 1800),
+//      ‹ › per aggiustare, le maniglie non si scavalcano, l'avviso con pochissime carte; carte tutte negli anni scelti.
+// tp7: «📆 Epoca» online dal ⚙️ della saletta: «Scegli tu» (la riga delle regole dice «📆 dall'anno 0 al 1800»), poi
+//      «Il Novecento»: la partita intera ha solo carte del Novecento.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T, vm = A.vm;
@@ -474,6 +479,7 @@
           W.clicca(P, /Fatto/, ".tl-ric-velo button"); await W.dorme(200);
           if (!/1 tuo/.test(T(P))) no("dopo il ricordo il tasto non dice «1 tuo»");
         }
+        if (opz.prima) await opz.prima();   // (le altre scelte delle impostazioni, prima di cominciare)
         var b = [].find.call(P.document.querySelectorAll(".schermata .piede button"), function (x) { return /Comincia|Gioca|Inizia|▶/.test(x.textContent) && !x.disabled; });
         if (!b) no("non trovo il tasto per cominciare"); b.click(); await W.dorme(400); return;
       }
@@ -696,5 +702,116 @@
     NOMI.forEach(function (n) { if (fine[n] !== punti[n]) no(n + " ha " + fine[n] + " punti invece di " + punti[n] + " (" + JSON.stringify(fine) + ")"); });
     senzaErrori();
     return "9 turni, furti " + JSON.stringify(conta) + "; classifica " + JSON.stringify(fine);
+  } });
+
+  // =================== tp6, tp7: «📆 Epoca» (26 ott 2026) ===================
+  // la posizione di un anno sulla linea da muovere (la stessa scala del gioco: 0-12% prima di Cristo, 12-27% fino al 1500,
+  // 27-45% fino al 1900, il resto dal 1900 a oggi)
+  function posAnno(y) {
+    var ora = new Date().getFullYear(), S = [[-3500, 0, 0, 0.12], [0, 1500, 0.12, 0.27], [1500, 1900, 0.27, 0.45], [1900, ora, 0.45, 1]];
+    for (var i = 0; i < S.length; i++) { var s = S[i]; if (y <= s[1] || i === S.length - 1) return s[2] + (y - s[0]) / (s[1] - s[0]) * (s[3] - s[2]); }
+  }
+  // il dito sulla linea: giù dove sta, poi si sposta fino a «a» e si alza
+  async function trascina(w, pista, da, a) {
+    var r = pista.getBoundingClientRect();
+    function dito(tipo, p) { pista.dispatchEvent(new w.PointerEvent(tipo, { bubbles: true, cancelable: true, pointerId: 7, isPrimary: true, clientX: r.left + p * r.width, clientY: r.top + 22 })); }
+    dito("pointerdown", da); for (var k = 1; k <= 6; k++) { dito("pointermove", da + (a - da) * k / 6); await W.dorme(20); } dito("pointerup", a);
+    await W.dorme(80);
+  }
+  function valoriEpoca(box) { return [].map.call(box.querySelectorAll(".tl-ep-val"), function (v) { return v.textContent.replace(/[‹›]/g, " ").replace(/\s+/g, " ").trim(); }); }
+  function chipEpoca(box, re) { var c = [].find.call(box.querySelectorAll(".tl-ep-chips .modo-chip"), function (x) { return re.test(x.textContent); }); if (!c) no("non trovo la scelta d'epoca " + re); return c; }
+  function anniFuori(w, titoli, lo, hi) { return titoli.filter(function (t) { var y = annoDi(w, t); return y == null || y < lo || y > hi; }).map(function (t) { return t + " (" + annoDi(w, t) + ")"; }); }
+
+  COPIONE.aggiungi("tp6", { nome: "Linea del tempo sullo stesso telefono: 📆 Epoca («Dal 1980 a oggi», poi «Scegli tu gli anni» con la linea e ‹ ›, poche carte)", fai: async function () {
+    var P = await W.apriTel("Paky", { x: 0 }), note = [];
+    // 1) «Dal 1980 a oggi»: il conto delle carte cambia con le categorie, la linea degli anni resta nascosta
+    await localeTl(P, ["Paky", "Giulia"], false, { prima: async function () {
+      var d = P.document, chips = d.querySelectorAll(".tl-ep-chips .modo-chip");
+      if (chips.length !== 5) no("le scelte dell'epoca sono " + chips.length);
+      var att = d.querySelector(".tl-ep-chips .modo-chip.attiva"); if (!att || !/Tutta la storia/.test(att.textContent)) no("di partenza l'epoca non è «Tutta la storia»");
+      var c80 = chipEpoca(d, /Dal 1980/), n80 = function () { return parseInt(c80.querySelector(".ms").textContent.replace(/\./g, ""), 10); }, prima = n80();
+      if (!(prima > 900 && prima < 1300)) no("«Dal 1980 a oggi» dice " + prima + " carte");
+      var rap = [].find.call(d.querySelectorAll(".cat-chip"), function (x) { return /Rap/.test(x.textContent); });
+      rap.click(); await W.dorme(80); var senza = n80(); rap.click(); await W.dorme(80);
+      if (!(senza < prima) || n80() !== prima) no("il conto delle carte non segue le categorie (" + prima + " → " + senza + " → " + n80() + ")");
+      c80.click(); await W.dorme(80);
+      if (!d.querySelector(".tl-ep").hidden) no("la linea degli anni si vede anche senza «Scegli tu»");
+      note.push("dal 1980: " + prima + " carte (senza Rap " + senza + ")");
+    } });
+    var t1 = [], n1 = await partitaLocale(P, t1), f1 = anniFuori(P, t1, 1980, 3000);
+    if (f1.length) no("con «Dal 1980 a oggi» escono carte di prima: " + f1.join(" | "));
+    note.push(n1 + " turni, carte tutte dal 1980");
+    // 2) «Scegli tu gli anni»: la maniglia di destra trascinata al 1800, quella di sinistra al 1500, ‹ › per aggiustare
+    if (!await W.aspetta(function () { return W.clicca(P, /Home/); }, 5000)) no("dalla classifica non trovo «Home»");
+    await W.dorme(600);
+    await localeTl(P, ["Paky", "Giulia"], false, { prima: async function () {
+      var d = P.document; chipEpoca(d, /Scegli tu/).click(); await W.dorme(100);
+      var ep = d.querySelector(".tl-ep"); if (!ep || ep.hidden) no("«Scegli tu gli anni» non apre la linea");
+      if (valoriEpoca(ep).join(" | ") !== "Dal 3500 a.C. | a oggi") no("la linea parte da «" + valoriEpoca(ep).join(" | ") + "»");
+      var pista = ep.querySelector(".tl-ep-pista");
+      await trascina(P, pista, 1, posAnno(1800));
+      await trascina(P, pista, 0, posAnno(1500));
+      if (valoriEpoca(ep).join(" | ") !== "Dal 1500 | al 1800") no("dopo il dito la linea dice «" + valoriEpoca(ep).join(" | ") + "»");
+      var meno = ep.querySelectorAll(".tl-ep-val .pa")[0], piu = ep.querySelectorAll(".tl-ep-val .pa")[1];
+      meno.click(); await W.dorme(50);
+      if (!/Dal 1490/.test(valoriEpoca(ep)[0])) no("‹ non va al 1490 («" + valoriEpoca(ep)[0] + "»)");
+      piu.click(); await W.dorme(50);
+      var nC = parseInt((ep.querySelector(".tl-ep-conta").textContent.match(/[\d.]+/) || ["0"])[0].replace(/\./g, ""), 10);
+      if (!(nC >= 30 && nC < 400) || ep.querySelector(".tl-ep-conta.poche")) no("tra il 1500 e il 1800 il conto dice «" + ep.querySelector(".tl-ep-conta").textContent + "»");
+      // le maniglie non si scavalcano, e con pochissime carte c'è l'avviso
+      await trascina(P, pista, posAnno(1500), posAnno(1950));
+      if (valoriEpoca(ep).join(" | ") !== "Dal 1800 | al 1800") no("le maniglie si scavalcano («" + valoriEpoca(ep).join(" | ") + "»)");
+      if (!ep.querySelector(".tl-ep-conta.poche") || !/allarga/.test(ep.querySelector(".tl-ep-conta").textContent)) no("con un anno solo non c'è l'avviso «allarga gli anni» («" + ep.querySelector(".tl-ep-conta").textContent + "»)");
+      await trascina(P, pista, posAnno(1800) - 0.002, posAnno(1500));
+      if (valoriEpoca(ep).join(" | ") !== "Dal 1500 | al 1800") no("rimessa a posto la linea dice «" + valoriEpoca(ep).join(" | ") + "»");
+      note.push("dal 1500 al 1800: " + nC + " carte");
+    } });
+    var t2 = [], n2 = await partitaLocale(P, t2), f2 = anniFuori(P, t2, 1500, 1800);
+    if (f2.length) no("con «dal 1500 al 1800» escono carte fuori: " + f2.join(" | "));
+    note.push(n2 + " turni, carte tutte tra il 1500 e il 1800");
+    senzaErrori();
+    return note.join("; ");
+  } });
+
+  COPIONE.aggiungi("tp7", { nome: "Linea del tempo online: 📆 Epoca dal ⚙️ della saletta (Scegli tu, poi Il Novecento), la riga delle regole, carte negli anni", fai: async function () {
+    var Z = await sala("La linea del tempo", ["Giulia"]);
+    var C = await A.lanciaDallaSala("Paky", Z.S, "La linea del tempo"), P = W.finestra("Paky"), G = W.finestra("Giulia"), note = [];
+    if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 2; }, 10000)) no("nella saletta non arrivano in 2");
+    if (/📆/.test(A.regoleDi(G))) no("di partenza la riga delle regole dice già un'epoca («" + A.regoleDi(G) + "»)");
+    await regola(P, async function (f) {
+      chipEpoca(f, /Scegli tu/).click(); await W.dorme(100);
+      var ep = f.querySelector(".tl-ep"); if (!ep || ep.hidden) no("nel ⚙️ «Scegli tu gli anni» non apre la linea");
+      await trascina(P, ep.querySelector(".tl-ep-pista"), 1, posAnno(1800));
+      await trascina(P, ep.querySelector(".tl-ep-pista"), 0, posAnno(0));
+    });
+    if (!await W.aspetta(function () { return /📆 dall'anno 0 al 1800/.test(A.regoleDi(G)); }, 5000)) no("Giulia legge «" + A.regoleDi(G) + "» (manca «📆 dall'anno 0 al 1800»)");
+    note.push("Giulia legge «" + (A.regoleDi(G).match(/📆[^·]*/) || [""])[0].trim() + "»");
+    await regola(P, async function (f) { chipEpoca(f, /Novecento/).click(); var meno = f.querySelector(".stepper button"); meno.click(); meno.click(); });
+    if (!await W.aspetta(function () { return /📆 il Novecento/.test(A.regoleDi(G)) && /3 carte a testa/.test(A.regoleDi(G)); }, 5000)) no("Giulia legge «" + A.regoleDi(G) + "»");
+    if (!await W.aspetta(function () { return W.clicca(P, /Comincia/, ".sl-go"); }, 5000)) no("Paky non trova «Comincia»");
+    var titoli = {}, kV = "", fino = Date.now() + 300000;
+    while (Date.now() < fino && vm(C).fase !== "fine") {
+      var v = vm(C), k = v.fase + "|" + v.n;
+      (v.linea || []).forEach(function (e) { titoli[e.titolo] = e.anno; });
+      if (k === kV) { await W.dorme(250); continue; }
+      kV = k;
+      if (v.fase === "turno") {
+        var Y = annoDi(P, v.carta.titolo), ok = gapOk(v.linea, Y); titoli[v.carta.titolo] = Y;
+        if (v.turnoId === "host") {
+          if (!await W.aspetta(function () { return P.document.querySelectorAll(".tl-slot").length === v.linea.length + 1; }, 12000)) no("Paky non vede i posti");
+          P.document.querySelectorAll(".tl-slot")[ok].click(); await W.dorme(150); W.clicca(P, /Mettila qui/, ".tl-conferma");
+        } else manda("Giulia", C, { t: "scelta", gap: ok });
+        continue;
+      }
+      if (v.fase === "votazione") { if (v.turnoId === "host") manda("Giulia", C, { t: "ruba", gap: null }); else await W.aspetta(function () { return W.clicca(P, /👍 Passo/); }, 12000); continue; }
+      if (v.fase === "esito") { await W.aspetta(function () { return W.clicca(P, /Avanti/, ".st-barra button"); }, 25000); continue; }
+      await W.dorme(250);
+    }
+    if (vm(C).fase !== "fine") no("non finisce (fase " + vm(C).fase + ")");
+    var fuori = Object.keys(titoli).filter(function (t) { return titoli[t] < 1900 || titoli[t] > 1999; });
+    if (fuori.length) no("con «Il Novecento» escono carte fuori: " + fuori.map(function (t) { return t + " (" + titoli[t] + ")"; }).join(" | "));
+    note.push(Object.keys(titoli).length + " carte, tutte del Novecento");
+    senzaErrori();
+    return note.join("; ");
   } });
 })();
