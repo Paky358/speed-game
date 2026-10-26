@@ -346,7 +346,7 @@
       if (k !== k0) {
         k0 = k;
         if (v.fase === "turno") { if (v.turnoId === "host") await hostPiazza(P); else { var h = W.reteDi("Giulia"); h.invia({ t: "scelta", gap: 0, n: v.n }); } }
-        if (v.fase === "votazione") { if (v.turnoId === "host") W.reteDi("Giulia").invia({ t: "voto", d: true, n: v.n }); else W.clicca(P, /Giusto/); }
+        if (v.fase === "votazione") { if (v.turnoId === "host") W.reteDi("Giulia").invia({ t: "voto", d: true, n: v.n }); else W.clicca(P, /Passo|Giusto/); }
         if (v.fase === "esito") { turni++; await W.dorme(6000); if (v.turnoId === "host") W.clicca(P, /Avanti/); else W.reteDi("Giulia").invia({ t: "avanti", n: v.n }); }
       }
       await W.dorme(400);

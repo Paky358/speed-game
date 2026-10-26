@@ -1,27 +1,34 @@
 // PROVE della Linea del tempo "preferita" (16 ott 2026): anno svelato quando si sbaglia («Sbagliato di 12 anni!» e
 // «📍 Andava qui»), posti con gli anni («Tra il 1982 e il 1994»), carte già viste che non tornano, «✨ Decide il gioco»
 // (da 5 in su ⚡ tutti insieme), risultato più corto e «⏩ Avanti» di tutti, 🔥 ultima carta doppia anche a turno,
-// «📅 Dimmi l'anno», «✋ Rubala con l'anno» (regola spenta di partenza, 2 gettoni), «📸 I nostri ricordi».
+// «📅 Dimmi l'anno», «📸 I nostri ricordi», e dal 26 ott 2026 «✋ Rubala» come in Hitster al posto dei voti 👍/👎 (chi pensa
+// che chi gioca sbagli tocca il posto giusto, in segreto e anche in tanti sullo stesso posto: presa +100, sbagliata −50,
+// «👍 Passo» 0).
 // Uso (dopo copione-prova.js): await COPIONE.carica("preferiti/timeline.js"); window.__run = COPIONE.prova("tp1")
 // Gli scenari durano 2-5 minuti: lanciali senza aspettarli e poi leggi COPIONE.esiti (o await window.__run).
 //
-// tp1: Sala in 3 a turno, 3 carte a testa, «✋ Rubala» accesa dal ⚙️ (la riga «📜 Si gioca così» lo dice). Ogni turno
-//      controllato col conto dei punti fatto a parte: l'host piazza dal suo telefono (posto con gli anni, l'anno scritto
-//      nel selettore: esatto +100), sbaglia apposta (carta girata con l'anno vero, «Sbagliato di…», «Andava qui»), ruba
-//      dal suo telefono con l'anno esatto; gli amici rubano giusto (la carta entra nella linea per chi ruba) e sbagliato
-//      (−1 gettone), l'anno esatto al proprio turno ridà un gettone; l'ultima carta di ognuno vale doppio; nella foto mai
-//      l'anno della carta, mai gli anni detti né quelli dei furti prima del risultato; misure 360x640 e 412x915 col
-//      selettore dell'anno e con «✋ Rubala» aperto; classifica finale = conto a parte.
+// tp1: Sala in 3 a turno, 3 carte a testa (nel ⚙️ niente più «Rubala con l'anno»). Ogni turno controllato col conto dei
+//      punti fatto a parte: l'host piazza dal suo telefono (posto con gli anni, l'anno scritto nel selettore: esatto +100),
+//      sbaglia apposta (carta girata con l'anno vero, «Sbagliato di…», «Andava qui»), ruba coi tasti (il posto di chi gioca
+//      non si tocca, «📍 L'ha messa qui Giulia», «✋ Secondo te va qui») e passa; gli amici rubano giusto (la carta entra
+//      nella linea), in due sullo stesso posto (tutti e due +100, «Rubata da Giulia e Luca»), sbagliato (−50), passano, un
+//      telefono con l'app di prima manda 👎 (= passo), chi cambia idea (vale la prima), chi gioca prova a rubarsi la carta
+//      (non conta); l'ultima carta di ognuno vale doppio anche per chi ruba; nella foto mai l'anno della carta, mai gli
+//      anni detti, mai chi ruba e dove prima del risultato; misure 360x640 e 412x915 col selettore dell'anno e rubando;
+//      classifica finale = conto a parte.
 // tp2: Sala in 5 senza toccare le regole: si parte «⚡ Tutti insieme» con 10 carte (5 a testa → 10 in tutto). «📸 I nostri
 //      ricordi»: 2 di Giulia dal profilo, 1 scritto da Luca nel foglio della saletta (anche a 360x640); nella foto solo
 //      quanti e di chi; i ricordi escono tutti nelle 10 carte, chi l'ha scritto non lo gioca («È un tuo ricordo»); il bonus
 //      dell'anno va solo al più vicino; «⏩ Avanti» parte subito solo quando lo toccano tutti; senza tocchi il risultato
 //      dura circa 15 s (in 5: 9 s di rivelazione + 5,5 da leggere + 1 per gli anni); misure; classifica = conto a parte.
 // tp3: Sullo stesso telefono in 2, 3 carte a testa: ricordi scritti dal ⚙️, posti con gli anni, selettore dell'anno,
-//      carta sbagliata girata con l'anno; poi «Rigioca»: nessuna carta della prima partita torna nella seconda.
-// tp4: A turno in 3 con «✋ Rubala» (stanza di un gioco solo): Giulia ruba e ricarica la pagina (ritrova il voto fatto), l'host ricarica
-//      durante il voto (stessa carta rigiocata, furti azzerati, gettoni salvi), un amico arriva a partita cominciata e guarda
-//      (niente tasti per votare), tempo scaduto (carta girata con l'anno), fino alla fine senza errori.
+//      carta sbagliata girata con l'anno, ✋ tutti insieme (posto toccato senza avatar = avviso, avatar acceso, il posto dice
+//      chi ruba, presa e furto sbagliato); poi «Rigioca»: nessuna carta della prima partita torna nella seconda.
+// tp4: A turno in 3 (stanza di un gioco solo): Giulia ruba e ricarica la pagina (ritrova la decisione presa), l'host ricarica
+//      durante il furto (stessa carta rigiocata, furti azzerati), un amico arriva a partita cominciata e guarda
+//      (niente tasti per rubare), tempo scaduto (carta girata con l'anno), fino alla fine senza errori.
+// tp5: Sullo stesso telefono in 3, ✋ «Uno alla volta»: ci si passa il telefono, si ruba in segreto (chi viene dopo non vede
+//      i furti di prima), in due sullo stesso posto, «✋ In 2 vogliono rubarla!», classifica finale = conto a parte.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T, vm = A.vm;
@@ -117,7 +124,6 @@
     await W.aspetta(function () { return (vm(C).giocatori || []).length === 2; }, 10000);
     function grande() { var f = document.getElementById("tel-Paky"); f.style.width = (larg || 360) + "px"; f.style.height = (alt || 640) + "px"; f.style.transform = "none"; f.style.zIndex = 99; P.dispatchEvent(new P.Event("resize")); }
     if (cosa === "ricordi") { grande(); await W.dorme(400); W.clicca(P, /I nostri ricordi/, ".tl-ric-btn"); return C; }
-    await regola(P, async function (f) { chipIn(f, /^✋?\s*Accesa/); });
     W.clicca(P, /Comincia/, ".sl-go");
     var fino = Date.now() + 90000;
     while (Date.now() < fino) {
@@ -130,38 +136,61 @@
         grande();
         if (cosa === "scelta") { scriviAnno(P, Y2); return C; }
         W.clicca(P, /Mettila qui/, ".tl-conferma"); await W.dorme(300);
-        manda("Giulia", C, { t: "voto", d: true });
+        manda("Giulia", C, { t: "ruba", gap: null });
         await W.aspetta(function () { return P.document.querySelector(".st-sch-in .tl-esito"); }, 15000); await W.dorme(1200); P.setTimeout = function () { return 0; }; return C;   // (la regia si ferma lì: la foto resta)
       }
       if (v.fase === "votazione" && v.turnoId !== "host" && cosa === "ruba") {
-        if (await W.aspetta(function () { return W.clicca(P, /Rubala con l'anno/); }, 12000)) { grande(); await W.dorme(500); return C; }
+        // ✋ Paky tocca un posto per rubarla (il fantasma rosso «✋ Secondo te va qui»)
+        if (await W.aspetta(function () { return bottone(P, /👍 Passo/); }, 12000)) { var s0 = P.document.querySelector(".st-sch-in .tl-slot"); if (s0) s0.click(); grande(); await W.dorme(500); return C; }
       }
-      if (v.fase === "votazione" && v.turnoId === "host") manda("Giulia", C, { t: "voto", d: true });
+      if (v.fase === "votazione" && v.turnoId === "host") manda("Giulia", C, { t: "ruba", gap: null });
       if (v.fase === "esito") W.clicca(P, /Avanti/, ".st-barra button");
       await W.dorme(300);
     }
     return C;
   };
 
-  // =================== tp1: a turno con Rubala e l'anno ===================
-  COPIONE.aggiungi("tp1", { nome: "Linea del tempo a turno in 3: anno svelato, posti con gli anni, Dimmi l'anno, ✋ Rubala, ultima carta doppia", fai: async function () {
+  // ---- ✋ Rubala (dal 26 ott 2026, come in Hitster, al posto dei voti 👍/👎) ----
+  function giustoIn(linea, g, Y) { return (g === 0 || linea[g - 1].anno <= Y) && (g === linea.length || Y <= linea[g].anno); }
+  // un posto da rubare (né quello di chi gioca): giusto, o sbagliato (−1 se non c'è)
+  function postoGiusto(linea, Y, escludi) { for (var g = 0; g <= linea.length; g++) if (g !== escludi && giustoIn(linea, g, Y)) return g; return -1; }
+  function postoSbagliato(linea, Y, escludi) { for (var g = linea.length; g >= 0; g--) if (g !== escludi && !giustoIn(linea, g, Y)) return g; return -1; }
+  function bottone(w, re, ancheSpento) { return [].filter.call(w.document.querySelectorAll(".st-barra button"), function (b) { return re.test(b.textContent) && (ancheSpento || !b.disabled); })[0] || null; }
+  // ruba coi tasti: il posto di chi gioca non si tocca (lì c'è la sua carta, «📍 L'ha messa qui …»), poi «✋ Rubala: va qui!»
+  async function rubaTasti(w, linea, gap, tent, chiGioca, primaDi) {
+    if (!await W.aspetta(function () { return bottone(w, /👍 Passo/); }, 12000)) return "non trova «👍 Passo» («" + T(w).slice(-160) + "»)";
+    var sl = w.document.querySelectorAll(".st-sch-in .tl-slot");
+    if (sl.length !== linea.length) return "vede " + sl.length + " posti invece di " + linea.length + " (quello di chi gioca non si tocca)";
+    var ch = w.document.querySelector(".st-sch-in .tl-asse > .tl-ev.tent .chi");
+    if (!ch || ch.textContent.indexOf(chiGioca) < 0) return "la carta di chi gioca non dice «📍 L'ha messa qui " + chiGioca + "» (" + (ch && ch.textContent) + ")";
+    var br = bottone(w, /Tocca il posto/, true);
+    if (!br || !br.disabled) return "«✋ Rubala» si può toccare prima di scegliere il posto";
+    sl[gap < tent ? gap : gap - 1].click(); await W.dorme(150);
+    if (primaDi) await primaDi();
+    var b = bottone(w, /Rubala: va qui/);
+    if (!b) return "dopo il posto non c'è «✋ Rubala: va qui!»";
+    b.click(); return "";
+  }
+  async function passaTasti(w) { var b = await W.aspetta(function () { return bottone(w, /👍 Passo/); }, 12000); if (!b) return "non trova «👍 Passo»"; b.click(); return ""; }
+
+  // =================== tp1: a turno con ✋ Rubala e l'anno ===================
+  COPIONE.aggiungi("tp1", { nome: "Linea del tempo a turno in 3: ✋ Rubala (posto giusto, in tanti sullo stesso, in segreto), Passo, anno svelato, Dimmi l'anno, ultima carta doppia", fai: async function () {
     var Z = await sala("La linea del tempo", ["Giulia", "Luca"]);
     var C = await A.lanciaDallaSala("Paky", Z.S, "La linea del tempo"), P = W.finestra("Paky"), G = W.finestra("Giulia");
     if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3; }, 10000)) no("nella saletta non arrivano in 3");
     if (!await W.aspetta(function () { return /da 5 in su ⚡ tutti insieme/.test(A.regoleDi(G)); }, 6000)) no("di partenza Giulia legge «" + A.regoleDi(G) + "» (manca «da 5 in su ⚡ tutti insieme»)");
-    if (/Rubala/.test(A.regoleDi(G))) no("«✋ Rubala» è accesa di partenza");
     if (vm(C).insieme) no("in 3 la saletta dice «insieme»");
     await regola(P, async function (f) {
       var att = [].filter.call(f.querySelectorAll(".modo-chip.attiva"), function (x) { return /Decide il gioco/.test(x.textContent); });
       if (!att.length) no("nel ⚙️ «✨ Decide il gioco» non è la scelta di partenza");
-      chipIn(f, /^✋?\s*Accesa/);
+      if (/Rubala con l'anno/.test(f.textContent)) no("nel ⚙️ c'è ancora «✋ Rubala con l'anno»");
       var meno = f.querySelector(".stepper button"); meno.click(); meno.click();
     });
-    if (!await W.aspetta(function () { return /3 carte a testa/.test(A.regoleDi(G)) && /✋ Rubala/.test(A.regoleDi(G)) && /📅 l'anno/.test(A.regoleDi(G)); }, 5000)) no("Giulia legge «" + A.regoleDi(G) + "»");
+    if (!await W.aspetta(function () { return /3 carte a testa/.test(A.regoleDi(G)) && /📅 l'anno/.test(A.regoleDi(G)); }, 5000)) no("Giulia legge «" + A.regoleDi(G) + "»");
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/, ".sl-go"); }, 5000)) no("Paky non trova «Comincia»");
-    var punti = {}, visti = {}, note = [], kVisto = "", turni = 0, misurato = { scelta: false, ruba: false, esito: false };
-    var turnoDi = {}, piano = null, fino = Date.now() + 420000;
-    var gL = idDi(C, "Luca"), gett = {};
+    var ID = { Paky: "host", Giulia: idDi(C, "Giulia"), Luca: idDi(C, "Luca") }, ORD = ["Paky", "Giulia", "Luca"];
+    var punti = {}, visti = {}, kVisto = "", turni = 0, misurato = { scelta: false, ruba: false, esito: false };
+    var turnoDi = {}, piano = null, fino = Date.now() + 480000, conta = { prese: 0, insieme: 0, perse: 0, passo: 0 };
     while (Date.now() < fino && vm(C).fase !== "fine") {
       var v = vm(C), k = v.fase + "|" + v.n;
       if (k === kVisto) { await W.dorme(200); continue; }
@@ -171,16 +200,19 @@
       if (v.fase === "turno") {
         var chi = v.turnoId, nChi = v.turnoNome, Y = annoDi(P, v.carta.titolo);
         if (Y == null) no("non trovo l'anno di «" + v.carta.titolo + "»");
-        if (/"anno":\s*-?\d+,\s*"titolo":\s*"[^"]*",\s*"cat"/.test(JSON.stringify(v.carta)) || v.carta.anno != null) no("nella foto c'è l'anno della carta in gioco");
+        if (v.carta.anno != null) no("nella foto c'è l'anno della carta in gioco");
         turnoDi[chi] = (turnoDi[chi] || 0) + 1;
         var giro = turnoDi[chi], g0 = gDi(C, chi);
         if (!!v.doppio !== (g0.restano === 1)) no("turno " + nChi + " " + giro + ": doppio = " + v.doppio + " con " + g0.restano + " carte");
-        var ok = gapOk(v.linea, Y), ko = gapKo(v.linea, Y);
-        piano = { chi: chi, Y: Y, linea: v.linea.slice(), n: v.n, giro: giro };
+        var ok = gapOk(v.linea, Y), ko = gapKo(v.linea, Y), sbaglia, an = null;
+        // Paky: giusta con l'anno esatto, sbagliata apposta, giusta. Giulia: sbagliata, giusta con l'anno +1, sbagliata. Luca: giusta, sbagliata, giusta con l'anno esatto
+        if (nChi === "Paky") { sbaglia = giro === 2; an = giro === 1 ? Y : null; }
+        else if (nChi === "Giulia") { sbaglia = giro !== 2; an = giro === 2 ? Y + 1 : null; }
+        else { sbaglia = giro === 2; an = giro === 3 ? Y : null; }
+        if (sbaglia && ko < 0) sbaglia = false;
+        var gap = sbaglia ? ko : ok;
+        piano = { chi: chi, nome: nChi, Y: Y, linea: v.linea.slice(), n: v.n, giro: giro, gap: gap, giusto: !sbaglia, anno: an };
         if (chi === "host") {
-          // Paky dal suo telefono: giro 1 giusto con l'anno esatto, giro 2 sbagliato apposta, giro 3 giusto senza anno
-          var sbaglia = giro === 2 && ko >= 0;
-          var gap = sbaglia ? ko : ok;
           if (!await W.aspetta(function () { return P.document.querySelectorAll(".tl-slot").length === v.linea.length + 1; }, 12000)) no("Paky non vede i posti");
           var lab = P.document.querySelectorAll(".tl-slot .lab")[gap].textContent;
           if (lab !== etAttesa(v.linea, gap)) no("il posto " + gap + " dice «" + lab + "» invece di «" + etAttesa(v.linea, gap) + "»");
@@ -188,57 +220,60 @@
           if (!selA || !selA.classList.contains("spento")) no("il selettore dell'anno non è spento prima di scegliere il posto");
           P.document.querySelectorAll(".tl-slot")[gap].click(); await W.dorme(200);
           if (P.document.querySelector(".st-barra .tl-anno.spento")) no("dopo il posto il selettore dell'anno resta spento");
-          if (giro === 1) {
-            if (!scriviAnno(P, Y)) no("non trovo la casella dell'anno");
+          if (an != null) {
+            if (!scriviAnno(P, an)) no("non trovo la casella dell'anno");
             await W.dorme(150);
             var cf = P.document.querySelector(".tl-conferma");
-            if (!cf || cf.textContent.indexOf(annoTx(Y)) < 0) no("il tasto dice «" + (cf && cf.textContent) + "» invece dell'anno " + annoTx(Y));
+            if (!cf || cf.textContent.indexOf(annoTx(an)) < 0) no("il tasto dice «" + (cf && cf.textContent) + "» invece dell'anno " + annoTx(an));
             if (!misurato.scelta) { var m1 = await misure(P, "Paky"); if (m1) no(m1); misurato.scelta = true; }
           }
-          piano.anno = giro === 1 ? Y : null; piano.giusto = !sbaglia;
           if (!W.clicca(P, /Mettila qui/, ".tl-conferma")) no("Paky non riesce a confermare");
-        } else {
-          // Giulia: giro 1 sbagliato (Luca ruba con l'anno esatto), giro 2 giusto con l'anno +1, giro 3 sbagliato (Paky ruba dal telefono, Luca sbaglia l'anno)
-          // Luca: giro 1 giusto senza anno, giro 2 sbagliato (nessuno ruba), giro 3 giusto con l'anno esatto (gettone indietro)
-          var nome = nomeDi(C, chi), sb, an = null;
-          if (nome === "Giulia") { sb = giro !== 2; an = giro === 2 ? Y + 1 : null; }
-          else { sb = giro === 2; an = giro === 3 ? Y : null; }
-          if (sb && ko < 0) sb = false;
-          piano.giusto = !sb; piano.anno = an;
-          manda(nome, C, { t: "scelta", gap: sb ? ko : ok, anno: an });
-        }
+        } else manda(nChi, C, { t: "scelta", gap: gap, anno: an });
         await W.dorme(300);
         continue;
       }
       if (v.fase === "votazione" && piano && piano.n === v.n) {
-        if (/"(annoDetto|detto|ruba|mosse)"\s*:/.test(js)) no("nella foto ci sono anni segreti (" + js.match(/"(annoDetto|detto|ruba|mosse)"\s*:[^,]*/)[0] + ")");
-        var tur = nomeDi(C, piano.chi);
-        // i voti degli amici
-        ["Giulia", "Luca"].forEach(function (n) {
-          if (n === tur) return;
-          var m = { t: "voto", d: piano.giusto };
-          if (tur === "Giulia" && n === "Luca" && piano.giro === 1) { m = { t: "voto", d: false, ruba: piano.Y }; piano.ladro = "Luca"; }
-          if (tur === "Giulia" && n === "Luca" && piano.giro === 3) { m = { t: "voto", d: false, ruba: piano.Y + 7 }; }
-          if (tur === "Luca" && piano.giro === 2) m = { t: "voto", d: true };   // Giulia sbaglia il voto
-          manda(n, C, m);
-        });
-        if (tur !== "Paky") {
-          // Paky vota dal telefono; al terzo turno di Giulia ruba con l'anno esatto
-          if (tur === "Giulia" && piano.giro === 3 && !piano.giusto) {
-            if (!await W.aspetta(function () { return W.clicca(P, /Rubala con l'anno/); }, 12000)) no("Paky non trova «✋ Rubala con l'anno» («" + T(P).slice(-160) + "»)");
-            await W.dorme(250);
-            if (!/la carta è tua/.test(T(P))) no("aperto «Rubala» non spiega la regola");
-            if (!misurato.ruba) { var m2 = await misure(P, "Paky"); if (m2) no("con «Rubala» aperto: " + m2); misurato.ruba = true; }
-            if (!scriviAnno(P, piano.Y)) no("in «Rubala» non trovo la casella dell'anno");
-            await W.dorme(150);
-            if (!W.clicca(P, /✋ Rubala!/)) no("Paky non riesce a toccare «✋ Rubala!»");
-            if (!piano.ladro) piano.ladro = "Paky";
-            await W.dorme(600);
-            var v2 = vm(C);
-            if ((v2.rubano || []).indexOf("host") < 0 && v2.fase === "votazione") no("nella foto non si vede che Paky ruba");
-            if (JSON.stringify(v2).indexOf(String(piano.Y)) >= 0 && v2.fase === "votazione") note.push("(l'anno " + piano.Y + " compare nella foto per caso: controlla)");
-          } else if (!await W.aspetta(function () { return W.clicca(P, piano.giusto ? /👍 Giusto/ : /👎 No/); }, 12000)) no("Paky non riesce a votare");
+        // in segreto: nella foto chi ha deciso (gli id) e basta, niente posti dei furti, niente anni detti, niente risultato
+        if (/"(annoDetto|detto|mosse|voti|rube)"\s*:/.test(js)) no("nella foto ci sono segreti (" + js.match(/"(annoDetto|detto|mosse|voti|rube)"\s*:[^,]*/)[0] + ")");
+        if (v.esito) no("durante il furto la foto ha già il risultato");
+        if (v.scelta !== piano.gap) no("la foto dice il posto " + v.scelta + " invece di " + piano.gap);
+        var pg = postoGiusto(piano.linea, piano.Y, piano.gap), ps = postoSbagliato(piano.linea, piano.Y, piano.gap), dec = {};
+        if (piano.nome === "Paky") {
+          if (piano.giro === 1) { dec.Giulia = -1; dec.Luca = ps; }
+          else if (piano.giro === 2) { dec.Giulia = pg; dec.Luca = pg; }   // in due sullo stesso posto
+          else { dec.Giulia = "vecchio"; dec.Luca = -1; }                 // (un telefono con l'app di prima: 👎 = passo)
+        } else if (piano.nome === "Giulia") {
+          if (piano.giro === 1) { dec.Paky = pg; dec.Luca = ps; }
+          else if (piano.giro === 2) { dec.Paky = -1; dec.Luca = ps; }
+          else { dec.Paky = -1; dec.Luca = -1; }
+        } else {
+          if (piano.giro === 1) { dec.Giulia = -1; dec.Paky = ps; }
+          else if (piano.giro === 2) { dec.Giulia = pg; dec.Paky = -1; }
+          else { dec.Giulia = ps; dec.Paky = -1; }
         }
+        // chi gioca prova a rubarsi la carta a messaggio: non conta
+        if (piano.nome !== "Paky") { manda(piano.nome, C, { t: "ruba", gap: pg >= 0 ? pg : 0 }); await W.dorme(250); if ((vm(C).hannoVotato || []).indexOf(piano.chi) >= 0) no(piano.nome + " ha rubato la sua stessa carta"); }
+        // gli amici a messaggio; Luca al primo turno di Paky cambia idea subito dopo: vale la prima
+        ["Giulia", "Luca"].forEach(function (n) {
+          if (!(n in dec)) return;
+          var d = dec[n];
+          manda(n, C, d === "vecchio" ? { t: "voto", d: false } : { t: "ruba", gap: d >= 0 ? d : null });
+          if (n === "Luca" && piano.nome === "Paky" && piano.giro === 1) manda(n, C, { t: "ruba", gap: null });
+        });
+        // Paky coi tasti
+        if ("Paky" in dec) {
+          var e;
+          if (dec.Paky >= 0) {
+            e = await rubaTasti(P, piano.linea, dec.Paky, piano.gap, piano.nome, misurato.ruba ? null : async function () {
+              var sel = P.document.querySelector(".st-sch-in .tl-slot.sel .fant.ruba");
+              if (!sel || !/Secondo te va qui/.test(sel.textContent)) no("il posto scelto per rubare non mostra «✋ Secondo te va qui»");
+              var m2 = await misure(P, "Paky"); if (m2) no("rubando: " + m2); misurato.ruba = true;
+            });
+            if (!e && !await W.aspetta(function () { return /Secondo te va «/.test(T(P)); }, 4000)) no("dopo il furto Paky non legge «Secondo te va «…»»");
+          } else e = await passaTasti(P);
+          if (e) no("Paky (turno " + piano.nome + " " + piano.giro + "): " + e);
+        }
+        piano.dec = dec;
         await W.dorme(300);
         continue;
       }
@@ -249,7 +284,7 @@
         if (!!es.giusto !== !!piano.giusto) no("turno " + turni + ": giusto = " + es.giusto + ", atteso " + piano.giusto);
         if (Math.abs(es.delta) !== 100 * molt) no("turno " + turni + ": delta " + es.delta + " con doppio " + es.doppio);
         if (!es.giusto) {
-          var errA = errAtteso(piano.linea, gapKo(piano.linea, piano.Y), piano.Y);
+          var errA = errAtteso(piano.linea, piano.gap, piano.Y);
           if (es.errore !== errA) no("sbagliato di " + es.errore + " anni, atteso " + errA);
           if (!es.prima && !es.dopo) no("manca «dove andava»");
         }
@@ -257,37 +292,51 @@
           var bAtt = (piano.anno === piano.Y ? 100 : Math.abs(piano.anno - piano.Y) <= 2 ? 30 : 0) * molt;
           if (es.bonusAnno !== bAtt) no("bonus dell'anno " + es.bonusAnno + " invece di " + bAtt);
         }
-        if (piano.ladro && !es.giusto) {
-          if (es.ladro !== piano.ladro) no("la carta doveva rubarla " + piano.ladro + " (ladro: " + es.ladro + ")");
-          if (!v.linea.some(function (x) { return x.titolo === es.titolo; })) no("la carta rubata non è entrata nella linea");
-        }
+        // ✋ i furti: +100 a chi indovina il posto quando chi gioca sbaglia (anche in tanti), −50 agli altri; chi passa 0
+        var dec2 = piano.dec || {}, att = {}, passano = [], ladri = [];
+        ORD.forEach(function (n) {
+          if (!(n in dec2)) return;
+          var d = dec2[n];
+          if (typeof d !== "number" || d < 0) { passano.push(ID[n]); conta.passo++; return; }
+          var presa = !piano.giusto && giustoIn(piano.linea, d, piano.Y);
+          att[ID[n]] = (presa ? 100 : -50) * molt;
+          if (presa) { ladri.push(n); conta.prese++; } else conta.perse++;
+        });
+        if (ladri.length > 1) conta.insieme++;
+        (es.voti || []).forEach(function (x) {
+          if (att[x.id] == null) no("turno " + turni + ": nell'esito c'è un furto di " + x.id + " che non ha rubato");
+          else if (x.delta !== att[x.id]) no("turno " + turni + ": il furto di " + x.id + " vale " + x.delta + " invece di " + att[x.id]);
+          delete att[x.id];
+        });
+        Object.keys(att).forEach(function (id) { no("turno " + turni + ": manca il furto di " + id); });
+        passano.forEach(function (id) { if ((es.passo || []).indexOf(id) < 0) no("turno " + turni + ": " + id + " ha passato ma l'esito non lo dice"); });
+        var ladroAtt = ladri.length ? (ladri.length === 1 ? ladri[0] : ladri.slice(0, -1).join(", ") + " e " + ladri[ladri.length - 1]) : null;
+        if ((es.ladro || null) !== ladroAtt) no("turno " + turni + ": la carta la ruba «" + es.ladro + "» invece di «" + ladroAtt + "»");
+        var dentro = v.linea.some(function (x) { return x.titolo === es.titolo; });
+        if ((es.giusto || ladri.length) && !dentro) no("turno " + turni + ": la carta " + (ladri.length ? "rubata" : "giusta") + " non è entrata nella linea");
+        if (!es.giusto && !ladri.length && dentro) no("turno " + turni + ": la carta sbagliata e non rubata è entrata nella linea");
         contaEsito(punti, v);
-        visti[turni] = (es.giusto ? "✅" : "❌") + (es.ladro ? "✋" + es.ladro : "") + (es.bonusAnno ? "📅+" + es.bonusAnno : "") + (es.doppio ? "🔥" : "");
-        // sul telefono di Giulia: la carta girata con l'anno vero e «Andava qui»
-        if (!es.giusto && !es.ladro) {
+        visti[turni] = (es.giusto ? "✅" : "❌") + (es.ladro ? "✋" + es.ladro : "") + ((es.voti || []).some(function (x) { return !x.giusto; }) ? "✋❌" : "") + (es.bonusAnno ? "📅+" + es.bonusAnno : "") + (es.doppio ? "🔥" : "");
+        // sul telefono di Giulia
+        if (ladri.length) { if (!await W.aspetta(function () { return /Rubata da/.test(T(G)); }, 9000)) no("Giulia non legge «Rubata da»"); }
+        else if (!es.giusto) {
           var re = es.errore <= 3 ? /Per un pelo/ : /Sbagliato di/;
           if (!await W.aspetta(function () { return re.test(T(G)) && /Andava qui/i.test(T(G)) && T(G).indexOf(annoTx(piano.Y)) >= 0; }, 9000)) no("Giulia non vede l'anno vero, «" + re.source + "» e «Andava qui» («" + T(G).slice(0, 200) + "»)");
           if (!misurato.esito) { var m3 = await misure(G, "Giulia"); if (m3) no("sul risultato sbagliato: " + m3); misurato.esito = true; }
         }
-        if (es.ladro && !await W.aspetta(function () { return /Rubata da/.test(T(G)); }, 9000)) no("Giulia non legge «Rubata da»");
-        // gettoni: −1 per ogni furto andato male, +1 (massimo 3) a chi dice l'anno esatto al suo turno
-        (es.rubate || []).forEach(function (x) { if (x.esito === "perso") gett[x.id] = (gett[x.id] == null ? 2 : gett[x.id]) - 1; });
-        if (es.giusto && es.detto === es.anno) gett[v.turnoId] = Math.min(3, (gett[v.turnoId] == null ? 2 : gett[v.turnoId]) + 1);
-        (v.giocatori || []).forEach(function (g) { var att = gett[g.id] == null ? 2 : gett[g.id]; if (g.gettoni !== att) no(g.nome + " ha " + g.gettoni + " gettoni invece di " + att); });
-        var gtL = (gDi(C, gL) || {}).gettoni;
+        if ((es.voti || []).some(function (x) { return !x.giusto; }) && !await W.aspetta(function () { return /Volevano rubarla|Posto sbagliato/.test(T(G)); }, 9000)) no("Giulia non legge chi ha provato a rubarla senza riuscirci");
         piano = null;
-        // avanti: l'host tocca «Avanti» appena c'è
         await W.aspetta(function () { return W.clicca(P, /Avanti/, ".st-barra button"); }, 25000);
-        note.push("Luca " + gtL + "🪙");
         continue;
       }
       await W.dorme(200);
     }
     if (vm(C).fase !== "fine") no("non finisce (fase " + vm(C).fase + ") · " + JSON.stringify(visti));
     if (turni !== 9) no("i turni sono " + turni);
+    if (!conta.prese || !conta.insieme || !conta.perse) no("non sono successi tutti i furti: " + JSON.stringify(conta));
     confrontaClassifica(C, punti);
     senzaErrori();
-    return "9 turni " + Object.keys(visti).map(function (k) { return visti[k]; }).join(" ") + "; gettoni di Luca " + note.join(" ") +
+    return "9 turni " + Object.keys(visti).map(function (k) { return visti[k]; }).join(" ") + "; furti " + JSON.stringify(conta) +
       "; classifica " + (vm(C).classifica || []).map(function (r) { return r.nome + " " + r.punti; }).join(", ") + "; misure ok";
   } });
 
@@ -401,7 +450,8 @@
   } });
 
   // =================== tp3: sullo stesso telefono ===================
-  async function localeTl(P, nomi, conRicordo) {
+  async function localeTl(P, nomi, conRicordo, opz) {
+    opz = opz || {};
     var tess = await W.aspetta(function () { return A.tessera(P, "La linea del tempo"); }, 6000); if (!tess) no("non trovo la tessera");
     tess.click(); await W.dorme(400);
     if (!W.clicca(P, /Su questo telefono/, ".modo-grande")) no("non c'è «Su questo telefono»");
@@ -413,6 +463,8 @@
     for (var k = 0; k < 6; k++) {
       if (P.document.querySelector(".stepper")) {
         var meno = P.document.querySelector(".stepper button"); meno.click(); meno.click();
+        if (/Come votano/i.test(T(P)) || !/Rubare la carta/i.test(T(P))) no("nelle impostazioni non c'è «✋ Rubare la carta»");
+        if (opz.uno) { var cu = [].find.call(P.document.querySelectorAll(".modo-chip"), function (x) { return /Uno alla volta/.test(x.textContent); }); if (!cu) no("non trovo «Uno alla volta»"); else cu.click(); }
         if (conRicordo) {
           if (!W.clicca(P, /I nostri ricordi/, ".tl-ric-btn")) no("nelle impostazioni non c'è «📸 I nostri ricordi»");
           await W.dorme(250);
@@ -430,7 +482,7 @@
     }
   }
   async function partitaLocale(P, titoli) {
-    var fino = Date.now() + 260000, turni = 0, sbagliate = 0, kOld = "";
+    var fino = Date.now() + 260000, turni = 0, sbagliate = 0, kOld = "", fatti = {};
     while (Date.now() < fino) {
       if (/Classifica finale/.test(T(P))) return turni;
       if (W.clicca(P, /tocca a me/)) { await W.dorme(300); continue; }
@@ -448,13 +500,35 @@
         if (!sbaglia) { if (!scriviAnno(P, Y)) no("sullo stesso telefono non c'è il selettore dell'anno"); await W.dorme(100); }
         if (!W.clicca(P, /Mettila qui/, ".tl-conferma")) no("non riesco a confermare");
         turni++;
-        // il voto (tutti insieme: tocco l'avatar dell'altro una volta, poi ✅)
-        if (await W.aspetta(function () { return P.document.querySelector(".tl-gv"); }, 3000)) { P.document.querySelector(".tl-gv").click(); await W.dorme(100); W.clicca(P, /Fatto|votato tutti/); }
-        if (sbaglia) {
+        // ✋ si ruba tutti insieme: l'avatar dell'altro e poi il posto. La prima sbagliata la ruba giusta, la seconda giusta la ruba male
+        var tent = sbaglia ? ko : ok, rubo = null;
+        if (await W.aspetta(function () { return P.document.querySelector(".tl-gv"); }, 3000)) {
+          if (sbaglia && !fatti.presa) { rubo = postoGiusto(lin, Y, tent); fatti.presa = true; }
+          else if (!sbaglia && turni >= 3 && !fatti.persa) { rubo = postoSbagliato(lin, Y, tent); if (rubo < 0) rubo = null; else fatti.persa = true; }
+          if (rubo != null) {
+            var sl2 = P.document.querySelectorAll(".st-sch-in .tl-slot"), dov = sl2[rubo < tent ? rubo : rubo - 1];
+            if (sl2.length !== lin.length) no("rubando si vedono " + sl2.length + " posti invece di " + lin.length);
+            dov.click(); await W.dorme(120);
+            if (!/Prima tocca il tuo avatar/.test(T(P))) no("toccato il posto senza avatar non c'è l'avviso");
+            P.document.querySelector(".tl-gv").click(); await W.dorme(120);
+            if (!P.document.querySelector(".tl-gv.attivo")) no("l'avatar toccato non si accende");
+            dov.click(); await W.dorme(120);
+            if (!/✋ (Giulia|Paky)/.test(dov.querySelector(".lab").textContent)) no("il posto non dice chi ruba («" + dov.querySelector(".lab").textContent + "»)");
+            if (!P.document.querySelector(".tl-gv.ruba")) no("l'avatar di chi ruba non diventa rosso");
+            if (!fatti.misRuba) { fatti.misRuba = true; var mr = await misure(P, "Paky"); if (mr) no("rubando tutti insieme: " + mr); }
+            if (!W.clicca(P, /Fatto: 1 la ruba/)) no("non trovo «✅ Fatto: 1 la ruba»");
+          } else if (!W.clicca(P, /Nessuno la ruba/)) no("non trovo «Nessuno la ruba: avanti»");
+        }
+        if (sbaglia && rubo != null) {
+          if (!await W.aspetta(function () { return /Rubata da/.test(T(P)) && T(P).indexOf(annoTx(Y)) >= 0; }, 12000)) no("rubata: non vedo «Rubata da» e l'anno («" + T(P).slice(0, 200) + "»)");
+        } else if (sbaglia) {
           sbagliate++;
           if (!await W.aspetta(function () { return /Sbagliato di|Per un pelo/.test(T(P)) && /Andava qui/i.test(T(P)) && T(P).indexOf(annoTx(Y)) >= 0; }, 10000)) no("sbagliata: non vedo l'anno vero e «Andava qui» («" + T(P).slice(0, 200) + "»)");
           if (sbagliate === 1) { var m = await misure(P, "Paky"); if (m) no("sul risultato sbagliato: " + m); }
-        } else if (!await W.aspetta(function () { return /Esatto!/.test(T(P)) && /🎯/.test(T(P)); }, 10000)) no("giusta con l'anno esatto: non vedo «🎯 Esatto!» («" + T(P).slice(0, 200) + "»)");
+        } else {
+          if (!await W.aspetta(function () { return /Esatto!/.test(T(P)) && /🎯/.test(T(P)); }, 10000)) no("giusta con l'anno esatto: non vedo «🎯 Esatto!» («" + T(P).slice(0, 200) + "»)");
+          if (rubo != null && !/Volevano rubarla/.test(T(P))) no("il furto sbagliato non si legge («Volevano rubarla»)");
+        }
         continue;
       }
       await W.dorme(250);
@@ -480,14 +554,14 @@
   } });
 
   // =================== tp4: rientri, ripresa, chi guarda, tempo scaduto ===================
-  COPIONE.aggiungi("tp4", { nome: "Linea del tempo a turno con ✋ Rubala: chi ruba ricarica, l'host ricarica nel voto, chi guarda, tempo scaduto", fai: async function () {
+  COPIONE.aggiungi("tp4", { nome: "Linea del tempo a turno con ✋ Rubala: chi ruba ricarica, l'host ricarica nel furto, chi guarda, tempo scaduto", fai: async function () {
     // (la stanza di un gioco solo, col link: in questo ramo la Sala riporta tutti nella Sala quando l'host ricarica)
     var P = await W.apriTel("Paky", { x: 0 }), C = await W.apriStanza(P, "La linea del tempo");
     await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185 });
     await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370 });
     if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3; }, 10000)) no("nella saletta non arrivano in 3");
-    await regola(P, async function (f) { chipIn(f, /^✋?\s*Accesa/); var meno = f.querySelector(".stepper button"); meno.click(); meno.click(); });
-    if (!await W.aspetta(function () { return vm(C).rubala && vm(C).carte === 3; }, 5000)) no("le regole (✋ Rubala, 3 carte) non arrivano");
+    await regola(P, async function (f) { var meno = f.querySelector(".stepper button"); meno.click(); meno.click(); });
+    if (!await W.aspetta(function () { return vm(C).carte === 3; }, 5000)) no("le regole (3 carte) non arrivano");
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/, ".sl-go"); }, 5000)) no("Paky non trova «Comincia»");
     var fatto = { ricaricaG: false, ricaricaH: false, guarda: false, scaduto: false }, kV = "", note = [], fino = Date.now() + 420000;
     while (Date.now() < fino && vm(C).fase !== "fine") {
@@ -515,39 +589,38 @@
       if (v.fase === "votazione") {
         var tur = nomeDi(C, v.turnoId), Yv = annoDi(P, v.carta.titolo);
         if (tur !== "Giulia" && !fatto.ricaricaG) {
-          // Giulia ruba (anno sbagliato) e ricarica la pagina: ritrova il voto fatto
-          manda("Giulia", C, { t: "voto", d: false, ruba: Yv + 3 });
+          // Giulia ruba (un posto qualsiasi, non quello di chi gioca) e ricarica la pagina: ritrova la decisione presa
+          manda("Giulia", C, { t: "ruba", gap: v.scelta === 0 ? 1 : 0 });
           await W.dorme(500);
-          if ((vm(C).rubano || []).indexOf(idDi(C, "Giulia")) < 0) no("la foto non dice che Giulia ruba");
+          if ((vm(C).hannoVotato || []).indexOf(idDi(C, "Giulia")) < 0) no("la foto non dice che Giulia ha deciso");
           var G = await W.ricarica("Giulia");
-          if (!await W.aspetta(function () { return /Hai votato|Aspetta gli altri|provato a rubarla/.test(T(W.finestra("Giulia"))); }, 15000)) no("Giulia dopo la ricarica non ritrova il voto («" + T(W.finestra("Giulia")).slice(0, 160) + "»)");
-          if (W.finestra("Giulia").document.querySelector(".tl-ruba")) no("dopo la ricarica Giulia può rubare di nuovo");
-          fatto.ricaricaG = true; note.push("Giulia ricarica dopo il furto: voto ritrovato");
+          if (!await W.aspetta(function () { return /Hai deciso|Aspetta gli altri/.test(T(W.finestra("Giulia"))); }, 15000)) no("Giulia dopo la ricarica non ritrova la decisione («" + T(W.finestra("Giulia")).slice(0, 160) + "»)");
+          if (bottone(W.finestra("Giulia"), /👍 Passo|Rubala/, true)) no("dopo la ricarica Giulia può rubare di nuovo");
+          fatto.ricaricaG = true; note.push("Giulia ricarica dopo il furto: decisione ritrovata");
           void G;
         }
         if (fatto.ricaricaG && !fatto.ricaricaH && tur === "Giulia") {
-          // l'host ricarica durante il voto, dopo che Luca ha rubato: la stessa carta si rigioca, furti azzerati, gettoni salvi
-          var gtPrima = (gDi(C, idDi(C, "Giulia")) || {}).gettoni, tit = v.carta.titolo;
-          manda("Luca", C, { t: "voto", d: false, ruba: Yv });
+          // l'host ricarica durante il furto, dopo che Luca ha rubato: la stessa carta si rigioca, furti azzerati
+          var tit = v.carta.titolo, pgL = postoGiusto(v.linea, Yv, v.scelta);
+          manda("Luca", C, { t: "ruba", gap: pgL >= 0 ? pgL : (v.scelta === 0 ? 1 : 0) });
           await W.dorme(400);
           P = await W.ricarica("Paky");
           if (!await W.aspetta(function () { return vm(C).fase === "ripresa"; }, 15000)) no("dopo la ricarica dell'host niente «Partita ripresa»");
           if (!await W.aspetta(function () { return vm(C).fase === "turno"; }, 15000)) no("dopo la ripresa il turno non riparte");
           if (vm(C).carta.titolo !== tit) no("dopo la ripresa la carta è un'altra");
-          if ((vm(C).rubano || []).length) no("dopo la ripresa i furti non sono azzerati");
-          if ((gDi(C, idDi(C, "Giulia")) || {}).gettoni !== gtPrima) no("dopo la ripresa i gettoni di Giulia sono cambiati");
-          fatto.ricaricaH = true; note.push("host ricarica nel voto: stessa carta, furti azzerati, gettoni " + gtPrima);
+          if ((vm(C).hannoVotato || []).length) no("dopo la ripresa i furti non sono azzerati");
+          fatto.ricaricaH = true; note.push("host ricarica nel furto: stessa carta, furti azzerati");
           kV = ""; continue;
         }
         if (fatto.ricaricaH && !fatto.guarda) {
-          // un amico arriva a partita cominciata: guarda (niente tasti per votare)
+          // un amico arriva a partita cominciata: guarda (niente tasti per rubare)
           var N = await W.apriTel("Nino", { hash: "gioco=timeline&stanza=" + C, x: 555 });
           if (!await W.aspetta(function () { return /Stai guardando/.test(T(W.finestra("Nino"))); }, 15000)) no("Nino non legge «Stai guardando» («" + T(W.finestra("Nino")).slice(0, 160) + "»)");
-          if (W.finestra("Nino").document.querySelector(".tl-vota, .tl-ruba")) no("Nino che guarda ha i tasti per votare");
+          if (W.finestra("Nino").document.querySelector(".tl-vota") || bottone(W.finestra("Nino"), /👍 Passo|Rubala/, true)) no("Nino che guarda ha i tasti per rubare");
           fatto.guarda = true; note.push("Nino guarda"); void N;
         }
-        ["Giulia", "Luca"].forEach(function (n) { if (n !== tur) manda(n, C, { t: "voto", d: true }); });
-        if (tur !== "Paky") await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /👍 Giusto/); }, 12000);
+        ["Giulia", "Luca"].forEach(function (n) { if (n !== tur) manda(n, C, { t: "ruba", gap: null }); });
+        if (tur !== "Paky") await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /👍 Passo/); }, 12000);
         continue;
       }
       if (v.fase === "esito") { await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /Avanti/, ".st-barra button"); }, 25000); continue; }
@@ -557,5 +630,71 @@
     Object.keys(fatto).forEach(function (x) { if (!fatto[x]) no("non è successo: " + x + " · " + note.join(" · ")); });
     senzaErrori();
     return note.join("; ") + "; classifica " + (vm(C).classifica || []).map(function (r) { return r.nome + " " + r.punti; }).join(", ");
+  } });
+
+  // =================== tp5: sullo stesso telefono in 3, ✋ uno alla volta ===================
+  COPIONE.aggiungi("tp5", { nome: "Linea del tempo sullo stesso telefono in 3, ✋ uno alla volta: si passa il telefono, si ruba in segreto, in due sullo stesso posto", fai: async function () {
+    var P = await W.apriTel("Paky", { x: 0 }), NOMI = ["Paky", "Giulia", "Luca"];
+    await localeTl(P, NOMI, false, { uno: true });
+    var punti = { Paky: 0, Giulia: 0, Luca: 0 }, cur = null, turni = 0, fino = Date.now() + 420000;
+    var conta = { insieme: 0, presa: 0, persa: 0, passo: 0, segreto: 0 };
+    function stato() { var s = P.document.querySelector(".st-sch-in .tl-stato"); return s ? s.textContent : ""; }
+    while (Date.now() < fino) {
+      if (/Classifica finale/.test(T(P))) break;
+      if (W.clicca(P, /📱 Sono /)) { await W.dorme(300); continue; }
+      // 1) chi gioca mette la carta (una sbagliata e una giusta, a turno)
+      var conf = P.document.querySelector(".st-barra .tl-conferma"), slots = P.document.querySelectorAll(".st-sch-in .tl-slot"), mano = P.document.querySelector(".st-sch-in .tl-mano .tit");
+      var mT = /Tocca a te, (\S+)!/.exec(stato());
+      if (conf && slots.length && mano && mT && (!cur || cur.tit !== mano.textContent)) {
+        var tit = mano.textContent, Y = annoDi(P, tit);
+        if (Y == null) no("non trovo l'anno di «" + tit + "»");
+        var anni = [].map.call(P.document.querySelectorAll(".st-sch-in .tl-asse > .tl-ev .anno"), function (a) { var t = a.textContent; return /a\.C\./.test(t) ? -parseInt(t, 10) : parseInt(t, 10); });
+        var lin = anni.map(function (a) { return { anno: a }; }), ok = gapOk(lin, Y), ko = gapKo(lin, Y), sb = turni % 2 === 0 && ko >= 0;
+        cur = { tit: tit, Y: Y, lin: lin, gap: sb ? ko : ok, giusto: !sb, chi: mT[1], dec: {}, doppio: /vale doppio/.test(stato()) };
+        slots[cur.gap].click(); await W.dorme(120);
+        if (!W.clicca(P, /Mettila qui/, ".tl-conferma")) no("non riesco a confermare");
+        punti[cur.chi] += (cur.giusto ? 100 : -100) * (cur.doppio ? 2 : 1);
+        turni++; await W.dorme(300); continue;
+      }
+      // 2) chi ruba, in segreto: «Giulia, la rubi?»
+      var mR = /(\S+), la rubi\?/.exec(stato());
+      if (mR && cur && !(mR[1] in cur.dec) && bottone(P, /👍 Passo/)) {
+        var chiR = mR[1], labs = [].map.call(P.document.querySelectorAll(".st-sch-in .tl-slot .lab"), function (l) { return l.textContent; }).join(" ");
+        if (P.document.querySelector(".st-sch-in .tl-slot.ha") || /✋ (Paky|Giulia|Luca)/.test(labs)) no("chi ruba dopo vede i furti di prima (" + labs + ")");
+        if (Object.keys(cur.dec).length) conta.segreto++;
+        var pg = postoGiusto(cur.lin, cur.Y, cur.gap), ps = postoSbagliato(cur.lin, cur.Y, cur.gap), nDec = Object.keys(cur.dec).length, d = -1;
+        // carta sbagliata: la prima volta la rubano tutti e due sullo stesso posto, poi uno solo; carta giusta: uno ruba male (una volta)
+        if (!cur.giusto) d = (conta.insieme === 0 || nDec === 0) ? pg : -1;
+        else if (nDec === 0 && ps >= 0 && !conta.persa) d = ps;
+        var e = d >= 0 ? await rubaTasti(P, cur.lin, d, cur.gap, cur.chi) : await passaTasti(P);
+        if (e) no(chiR + ": " + e);
+        cur.dec[chiR] = d;
+        var molt = cur.doppio ? 2 : 1;
+        if (d >= 0) { var presa = !cur.giusto && giustoIn(cur.lin, d, cur.Y); punti[chiR] += (presa ? 100 : -50) * molt; if (presa) conta.presa++; else conta.persa++; }
+        else conta.passo++;
+        // decidono tutti e due: «✋ In 2 vogliono rubarla!» e «Rubata da Giulia e Luca»
+        if (Object.keys(cur.dec).length === 2) {
+          var rub = Object.keys(cur.dec).filter(function (n) { return cur.dec[n] >= 0; }), ladri = rub.filter(function (n) { return !cur.giusto && giustoIn(cur.lin, cur.dec[n], cur.Y); });
+          if (rub.length === 2 && !await W.aspetta(function () { return /In 2 vogliono rubarla/.test(T(P)); }, 6000)) no("non si legge «✋ In 2 vogliono rubarla!»");
+          if (rub.length === 1 && !await W.aspetta(function () { return /Qualcuno vuole rubarla/.test(T(P)); }, 6000)) no("non si legge «✋ Qualcuno vuole rubarla!»");
+          if (ladri.length === 2) { if (!await W.aspetta(function () { return /Rubata da \S+ e \S+/.test(T(P)); }, 12000)) no("non si legge «Rubata da … e …» («" + T(P).slice(0, 160) + "»)"); else conta.insieme++; }
+          else if (ladri.length === 1 && !await W.aspetta(function () { return /Rubata da/.test(T(P)); }, 12000)) no("non si legge «Rubata da»");
+        }
+        await W.dorme(300); continue;
+      }
+      await W.dorme(250);
+    }
+    if (!/Classifica finale/.test(T(P))) no("la partita non finisce («" + T(P).slice(0, 160) + "»)");
+    if (turni !== 9) no("i turni sono " + turni);
+    if (!conta.insieme || !conta.presa || !conta.persa || !conta.segreto) no("non è successo tutto: " + JSON.stringify(conta));
+    // la classifica finale (sul podio) = il conto a parte
+    var fine = {};
+    [].forEach.call(P.document.querySelectorAll(".tl-gradino, .tl-riga"), function (r) {
+      var nm = r.querySelector(".nm"), pt = r.querySelector(".pt"); if (!nm || !pt) return;
+      fine[nm.textContent] = parseInt(pt.textContent.replace(/\./g, "").replace("−", "-"), 10);
+    });
+    NOMI.forEach(function (n) { if (fine[n] !== punti[n]) no(n + " ha " + fine[n] + " punti invece di " + punti[n] + " (" + JSON.stringify(fine) + ")"); });
+    senzaErrori();
+    return "9 turni, furti " + JSON.stringify(conta) + "; classifica " + JSON.stringify(fine);
   } });
 })();

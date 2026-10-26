@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 267,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: ✋ Rubala, come in Hitster",
+    descrizione: [
+      "✋ Niente più 👍 e 👎: quando un amico mette la carta, se pensi che abbia sbagliato tocchi il posto dove va davvero e la rubi. Se aveva sbagliato e tu hai indovinato il posto prendi 100 punti e la carta entra nella linea; se no perdi 50 punti. Chi non è sicuro tocca «👍 Passo» e non rischia niente.",
+      "🤫 Online si ruba in segreto: chi ha rubato e dove si scopre solo quando la carta si gira. Se in due scegliete lo stesso posto e avete ragione, prendete 100 punti tutti e due: nessuna gara a chi tocca prima.",
+      "📱 Sullo stesso telefono si ruba tutti insieme (chi vuole tocca il suo avatar e poi il posto) o uno alla volta, passandosi il telefono. 🔥 Sull'ultima carta di ognuno anche i furti valgono doppio.",
+      "Il vecchio «Rubala con l'anno», con l'anno esatto e i gettoni, non c'è più: lo sostituisce questa regola."
+    ]
+  },
+  {
     v: 266,
     data: "25 ottobre 2026",
     titolo: "Il Prezzo è Giusto: una schermata sola, grande e pulita 🖼️",
