@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 272,
+    data: "26 ottobre 2026",
+    titolo: "La Linea del tempo: 🧍 Ognuno la sua linea",
+    descrizione: [
+      "🧍 Un modo nuovo, ispirato a Hitster: ognuno ha la sua linea e parte con una carta sua. A ogni giro esce la stessa carta per tutti e ognuno la mette nella SUA linea, in segreto: se è giusta resta, se è sbagliata va via.",
+      "🏁 Vince chi arriva per primo a 10 carte messe bene (nelle regole si sceglie da 5 a 15 con una lineetta). Se si arriva primi insieme c'è lo ⚔️ spareggio: giocano solo loro e tutti gli altri guardano.",
+      "👀 Si va avanti fino al podio: chi ha finito tocca gli avatar degli altri e guarda la loro linea e dove mettono la carta.",
+      "Si gioca online, tutti insieme, e anche sullo stesso telefono passandoselo a ogni carta."
+    ]
+  },
+  {
     v: 271,
     data: "26 ottobre 2026",
     titolo: "La Linea del tempo: chi arriva tardi entra al giro dopo",
