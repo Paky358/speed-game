@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 273,
+    data: "26 ottobre 2026",
+    titolo: "L'Impostore: blocca pure il telefono 📱",
+    descrizione: [
+      "Online, chi legge la parola e poi blocca il telefono mentre si parla resta in partita: accanto al suo nome compare 📱. Prima, se lo facevano in tanti, dopo 20 secondi la partita finiva da sola per tutti.",
+      "Quando si scrivono gli indizi o si vota, il gioco aspetta chi ha il telefono bloccato: sugli altri telefoni si legge «⏳ Aspettiamo Giulia 📱» (ditelo a voce: un telefono bloccato non si può svegliare). Il voto dura al massimo un minuto e mezzo e si chiude appena hanno votato tutti.",
+      "Riaprendo il telefono si ritrova subito la propria parola. Esce dalla partita solo chi tocca «Esci», o chi non si fa vedere per una mano intera."
+    ]
+  },
+  {
     v: 272,
     data: "26 ottobre 2026",
     titolo: "La Linea del tempo: 🧍 Ognuno la sua linea",
