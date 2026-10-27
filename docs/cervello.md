@@ -91,6 +91,8 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande. «Dopo mer» = dopo che la
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
 
+- 27 ott 02:32 · 🎨 Stile (cloud) · PUBBLICATO · lo stile «🤍 Bianco e oro» online (v274) insieme a L'Impostore col telefono bloccato (v273, della chat dell'Impostore, già provato) · master 42018da. Le partite dei giochi restano scure: la fase 3 (giochi uno per uno, elenco in docs/stile/fase3-giochi.md) aspetta il via del proprietario
+
 - 27 ott 01:38 · 🎨 Stile (cloud) · salvato sul ramo `grafica-luxury` (su GitHub dal 27 ott 02:30, dopo aver installato l'app di Claude anche sull'account Paky358; non online) · fase 2: lo stile «Bianco e oro» scelto dal proprietario applicato a home, profilo, trofei, statistiche, classifica e amici, novità, codice, Sala, «Come giocate?», impostazioni, saletta, fogli, conferme, avvisi, editor dell'avatar, tornei e «Chi gioca?»; colori in un punto solo (variabili --o-*), titoli col carattere elegante dentro l'app, simboli dorati al posto delle emoji nei tasti; le partite dei giochi restano come prima. Prove copione 24-46, 50, 51, 55, 76, 90, 96 OK; 12 giochi aperti e giocati. Fase 3 (elenco dei giochi da convertire) in docs/stile/fase3-giochi.md · (questo salvataggio)
 
 - 26 ott 22:11 · 🎨 Stile (cloud) · salvato sul ramo `grafica-luxury` (non online) · fase 1: 4 direzioni di stile disegnate (Notte di lusso, Chiaro editoriale, Vetro e metallo, Bianco e oro) per home, saletta e colori dentro ai giochi, confronto in docs/stile/confronto.png; l'app non è cambiata. Aspetta la scelta del proprietario · (questo salvataggio)
