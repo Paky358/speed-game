@@ -833,7 +833,7 @@
   function riquadroBonus(el, dopo, compatto) {
     var box = el("div", { style: "background:var(--carta,#1b1836);border-radius:14px;text-align:center;box-shadow:var(--ombra,0 6px 16px rgba(0,0,0,.3));" + (compatto ? "padding:7px 10px;margin-bottom:0" : "padding:12px;margin-bottom:12px") });
     var saldo = SGNube.monete ? SGNube.monete() : 0;   // le fiches sono le Speed Coins del profilo
-    var testoSaldo = el("div", { style: "color:var(--accento,#ffe58a);font-weight:800;" + (compatto ? "font-size:.95rem;margin-bottom:5px" : "font-size:1.1rem;margin-bottom:8px"), html: "🪙 Hai <b>" + fmt(saldo) + "</b> monete" });
+    var testoSaldo = el("div", { style: "color:var(--bj-saldo,#ffe58a);font-weight:800;" + (compatto ? "font-size:.95rem;margin-bottom:5px" : "font-size:1.1rem;margin-bottom:8px"), html: "🪙 Hai <b>" + fmt(saldo) + "</b> monete" });
     var b = el("button", { class: "btn btn-primario", style: "margin:0" + (compatto ? ";min-height:0;padding:8px 12px;font-size:.92rem" : "") });
     function agg() {
       if (SGNube.puoRitirareBonus()) { b.disabled = false; b.textContent = "🎡 Gira la ruota del giorno: monete o XP"; }

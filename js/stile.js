@@ -100,8 +100,8 @@
     "📲": "telefono", "📱": "telefono", "⬆️": "su", "↩️": "torna", "↩": "torna", "🆕": "nuovo", "🏙️": "citta", "🏙": "citta",
     "💡": "lampadina", "🐞": "insetto", "🧩": "pezzo", "🎯": "bersaglio", "⭐": "stella", "🌟": "stella", "🏅": "medaglia", "🥇": "medaglia:#b48a3a", "🥈": "medaglia:#8d969f", "🥉": "medaglia:#a5673a",
     "🤝": "stretta", "🎁": "regalo", "🃏": "carte", "⚡": "fulmine", "🪑": "sedia", "⚖️": "bilancia", "🚀": "razzo", "🌍": "globo",
-    "🔔": "campana", "▶": "gioca", "▶️": "gioca", "⌄": "giu", "⌃": "alto", "❤️": "cuore", "🍻": "calice", "🥂": "calice", "💰": "sacchetto",
-    "😴": "sonno", "🧠": "libro", "📚": "libro", "🎤": "microfono", "🎬": "ciak", "🎵": "nota", "🎶": "nota", "🔊": "nota", "🔇": "muto", "🕐": "orologio", "🔥": "fulmine", "🧍": "persona", "📊": "segnale", "🏛️": "citta",
+    "🔔": "campana", "▶": "gioca", "▶️": "gioca", "⌄": "giu", "⌃": "alto", "❤️": "cuore", "💰": "sacchetto",
+    "😴": "sonno", "🧠": "libro", "📚": "libro", "🎤": "microfono", "🎬": "ciak", "🎵": "nota", "🎶": "nota", "🔊": "nota", "🔇": "muto", "🕐": "orologio", "🧍": "persona", "📊": "segnale", "🏛️": "citta",
     "🟢": "#pallino:#2f9e44", "🟡": "#pallino:#d4a017", "🔴": "#pallino:#d64545"
   };
   // un emoji in testa al testo (con le sue varianti), poi uno spazio o la fine
@@ -125,10 +125,14 @@
     document.head.appendChild(st);
   }
 
+  // le emoji che sono «contenuto» e non tasti restano emoji colorate: icone dei trofei, faccine, l'emoji di una compagnia,
+  // la tessera di un gioco senza foto, l'avatar di chi non ne ha uno
+  var CONTENUTO = ".tr-ico, .at-ico, .sl-fa, .sl-faccine, .sl-faccia, .sl-bolle, .sg-fa-volante, .sg-fa-volanti, .faccina, .faccine, .cmp-em, .tessera .icona .emoji, .sg-guardo-fa, .sl-emo, .cg-emo";
   // avvolge l'emoji iniziale di un nodo di testo (solo quelle che hanno un simbolo)
   function avvolgi(t) {
     var p = t.parentNode;
     if (!p || p.nodeType !== 1 || (p.classList && p.classList.contains("emo"))) return;
+    if (p.closest && p.closest(CONTENUTO)) return;
     if (/^(SCRIPT|STYLE|TEXTAREA|INPUT|OPTION|svg|text|tspan)$/i.test(p.nodeName)) return;
     var m = RE.exec(t.nodeValue); if (!m) return;
     var e = m[2]; if (!MAPPA[e] && !MAPPA[e.replace(/️$/, "")]) return;
@@ -161,6 +165,7 @@
     var l = inCoda; inCoda = [];
     l.forEach(function (n) {
       var el = n.nodeType === 1 ? n : n.parentNode;
+      if (n._pulito) { n._pulito = false; return; }   // (appena pulita da marca: non si ripassa)
       if (!el || !el.closest || !el.closest(".oro")) return;
       if (n.nodeType === 3) { if (RE.test(n.nodeValue)) avvolgi(n); } else pulisci(n);
     });
@@ -168,14 +173,21 @@
   function osserva() {
     if (!window.MutationObserver || osserva.fatto) return; osserva.fatto = true;
     new MutationObserver(function (rec) {
+      // durante una partita (schermata del gioco, niente finestre chiare sopra) non si guarda niente: solo le finestre nuove sul body
+      var b = document.body, attivo = !!(b && (b.classList.contains("tema-oro") || b.querySelector(":scope > .oro")));
       for (var i = 0; i < rec.length; i++) {
         var r = rec[i];
+        if (r.target === b && r.type === "childList") {
+          for (var j0 = 0; j0 < r.addedNodes.length; j0++) { var a0 = r.addedNodes[j0]; if (a0.nodeType === 1) { sopra(a0); if (a0.classList.contains("oro")) { inCoda.push(a0); attivo = true; } } }
+          continue;
+        }
+        if (!attivo) continue;
         if (r.type === "characterData") inCoda.push(r.target);
-        else for (var j = 0; j < r.addedNodes.length; j++) { var a = r.addedNodes[j]; if (a.nodeType === 1 || a.nodeType === 3) { if (r.target === document.body) sopra(a); inCoda.push(a); } }
-        if (r.type === "attributes" && r.target.classList && r.target.classList.contains("oro")) inCoda.push(r.target);
+        else if (r.type === "attributes") { if (r.target.classList && r.target.classList.contains("oro") && !/(^|\s)oro(\s|$)/.test(r.oldValue || "")) inCoda.push(r.target); }   // (solo quando diventa .oro)
+        else for (var j = 0; j < r.addedNodes.length; j++) { var a = r.addedNodes[j]; if (a.nodeType === 1 || a.nodeType === 3) inCoda.push(a); }
       }
       if (inCoda.length && !previsto) { previsto = true; (window.queueMicrotask || function (f) { Promise.resolve().then(f); })(lavora); }
-    }).observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class"] });
+    }).observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeOldValue: true, attributeFilter: ["class"] });
   }
 
   // il tema della pagina: fondo avorio dietro le schermate .oro, e il colore della barra del telefono
@@ -189,7 +201,7 @@
 
   window.SGStile = {
     // la schermata del core prende lo stile chiaro (e la pagina dietro diventa avorio)
-    marca: function (s) { if (s && s.classList) { s.classList.add("oro"); pulisci(s); } return s; },
+    marca: function (s) { if (s && s.classList) { s.classList.add("oro"); pulisci(s); s._pulito = true; } return s; },
     // da chiamare dopo ogni cambio di schermata: chiaro se la schermata in vista è .oro
     aggiorna: function (s) { tema(!!(s && s.classList && s.classList.contains("oro"))); },
     pulisci: pulisci,
