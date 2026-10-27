@@ -10827,6 +10827,7 @@
         // 🤍 il gioco resta col suo stile finché non lo si converte: tema: "oro" in SG.registra (tutto chiaro),
         // oppure t.schermata({ chiara: true }) per una schermata sola (classifica, schermate di servizio);
         // in un gioco chiaro, t.schermata({ scura: true }) (o la classe "sg-scura") tiene scura una schermata (un tavolo, un campo)
+        s.classList.add("g-" + g.id);   // (il «cartellino» del gioco: le sue regole di stile valgono solo qui, es. .oro.g-tris)
         if (o.scura) s.classList.add("sg-scura");
         if (o.scura || (g.tema !== "oro" && !o.chiara)) { s.classList.remove("oro"); s._gioco = true; }
         else s.classList.add("sg-dal-gioco");   // (schermata chiara del gioco: le sue emoji restano emoji, vedi js/stile.js)
@@ -10836,6 +10837,7 @@
         if (!viva()) return;
         // (🤍 una schermata del gioco: mostra() non la fa chiara, tranne nei giochi convertiti (tema: "oro") o se il gioco l'ha già fatta .oro)
         if (s && s.classList) {
+          s.classList.add("g-" + g.id);
           if (!s.classList.contains("sg-scura") && (g.tema === "oro" || s.classList.contains("oro"))) s.classList.add("oro", "sg-dal-gioco");
           else { s.classList.remove("oro"); s._gioco = true; }
         }
