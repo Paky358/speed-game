@@ -192,7 +192,7 @@
   }
 
   // il tema della pagina: fondo avorio dietro le schermate .oro, e il colore della barra del telefono
-  var META_CHIARO = "#faf6ee", META_SCURO = null;
+  var META_CHIARO = "#fcfbf9", META_SCURO = null;
   function tema(chiaro) {
     var b = document.body; if (!b) return;
     b.classList.toggle("tema-oro", !!chiaro);

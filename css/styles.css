@@ -2353,29 +2353,29 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
    ▶ I COLORI SI CAMBIANO SOLO QUI (--o-*): tutto il resto li usa.
    ========================================================= */
 :root{
-  --o-fondo:#faf6ee;        /* avorio caldo: il fondo della pagina */
-  --o-fondo-2:#f3ecdd;      /* avorio più scuro: fasce, riquadri incassati */
-  --o-carta:#fffdf9;        /* le carte, le tessere, i tasti chiari */
-  --o-carta-2:#f6efe1;      /* carta toccata / scelta */
-  --o-filo:#ebdfc4;         /* bordi sottili */
-  --o-filo-oro:#d9c28c;     /* bordi dorati */
-  --o-testo:#221c12;        /* testo scuro (16:1 sull'avorio) */
-  --o-tenue:#6c624f;        /* testo secondario (5,9:1) */
-  --o-oro:#b48a3a;          /* l'oro: filetti, simboli, dettagli */
-  --o-oro-testo:#8a6a22;    /* l'oro per le scritte piccole (5:1) */
-  --o-oro-chiaro:#e6cf98;
-  --o-tasto:linear-gradient(180deg,#dcbd74,#bf9748);   /* il tasto principale: oro pieno */
-  --o-tasto-testo:#251b06;  /* la scritta sul tasto d'oro (7,7:1) */
-  --o-scuro:#221c12;        /* pillole scure (la categoria scelta, il tu) */
-  --o-scuro-testo:#f3e2b3;
+  --o-fondo:#fcfbf9;        /* bianco caldo appena accennato: il fondo della pagina */
+  --o-fondo-2:#f4f2ee;      /* un filo più scuro: fasce, riquadri incassati */
+  --o-carta:#ffffff;        /* le carte, le tessere, i tasti chiari */
+  --o-carta-2:#f6f4ef;      /* carta toccata / scelta */
+  --o-filo:#e9e4d8;         /* bordi sottili */
+  --o-filo-oro:#e2c56a;     /* bordi dorati */
+  --o-testo:#1e1b16;        /* testo scuro (16:1 sull'avorio) */
+  --o-tenue:#6b665c;        /* testo secondario (5,9:1) */
+  --o-oro:#bd931a;          /* l'oro: filetti, simboli, dettagli */
+  --o-oro-testo:#87680c;    /* l'oro per le scritte piccole (5:1) */
+  --o-oro-chiaro:#ecd283;
+  --o-tasto:linear-gradient(180deg,#efca4c,#cf9f1e);   /* il tasto principale: oro pieno */
+  --o-tasto-testo:#1e190d;  /* la scritta sul tasto d'oro (7,7:1) */
+  --o-scuro:#1e1b16;        /* pillole scure (la categoria scelta, il tu) */
+  --o-scuro-testo:#efd88f;
   --o-verde:#2e7d4f;        /* sì, pronto, dentro (scritta bianca 5:1) */
   --o-verde-tenue:#e8f3ec;  /* fondo di «pronto», «tutti pronti» */
   --o-ambra:#8f5200;        /* avvisi («attenzione», porta chiusa): 5,3:1 */
-  --o-crema:#fbf3e2;        /* riquadri dorati chiari (serata, consigli) */
-  --o-carta-viva:#fffaf0;   /* la carta della scelta attiva */
+  --o-crema:#fbf6e3;        /* riquadri dorati chiari (serata, consigli) */
+  --o-carta-viva:#fffbec;   /* la carta della scelta attiva */
   --o-rosso:#b8433a;        /* no, esci, errori (scritta bianca 5,4:1) */
-  --o-ombra:0 1px 2px rgba(80,60,20,.06), 0 6px 18px rgba(110,80,20,.08);
-  --o-ombra-alta:0 2px 6px rgba(80,60,20,.08), 0 16px 40px rgba(80,60,20,.16);
+  --o-ombra:0 1px 2px rgba(62,55,42,.06), 0 6px 18px rgba(88,76,54,.08);
+  --o-ombra-alta:0 2px 6px rgba(62,55,42,.08), 0 16px 40px rgba(62,55,42,.16);
   --o-tit:"SG Titoli", "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --o-raggio:18px;
 }
@@ -2394,7 +2394,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 }
 .schermata.oro{ background:transparent; }
 /* la pagina dietro le schermate .oro: avorio, senza il nido d'ape */
-html body.tema-oro{ background:radial-gradient(120% 50% at 50% -8%, #fffefb 0%, var(--o-fondo) 62%, #f5eedf 100%) fixed, var(--o-fondo); color:var(--o-testo); }
+html body.tema-oro{ background:radial-gradient(130% 60% at 50% -10%, #ffffff 0%, var(--o-fondo) 55%, #f7f6f2 100%) fixed, var(--o-fondo); color:var(--o-testo); }
 html body.tema-oro::before{ display:none; }
 
 /* ---- i simboli puliti al posto delle emoji (js/stile.js) ---- */
@@ -2420,20 +2420,20 @@ html body.tema-oro::before{ display:none; }
 .oro .btn{ background:var(--o-carta); color:var(--o-testo); font-weight:650; letter-spacing:.005em;
   box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); border-radius:16px; }
 .oro .btn-primario{ background:var(--o-tasto); color:var(--o-tasto-testo); font-weight:700;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(120,85,20,.25), 0 8px 18px rgba(150,110,30,.24); }
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(120,85,20,.25), 0 8px 18px rgba(167,123,13,.24); }
 .oro .btn-verde{ background:var(--o-verde); color:#fff; box-shadow:0 8px 18px rgba(46,125,79,.22); }
 .oro .btn-rosso{ background:var(--o-rosso); color:#fff; box-shadow:0 8px 18px rgba(184,67,58,.2); }
 .oro .btn-fantasma{ background:transparent; color:var(--o-oro-testo); box-shadow:none; font-weight:650; }   /* (tasto leggero: la scritta oro dice che si tocca) */
 .oro .btn:disabled{ opacity:.45; }
-.oro :is(.btn-primario, .btn-verde, .btn-rosso):disabled{ opacity:1; background:var(--o-fondo-2); color:#8a7f69; box-shadow:inset 0 0 0 1px var(--o-filo); }   /* (spento: avorio, non oro sbiadito) */
+.oro :is(.btn-primario, .btn-verde, .btn-rosso):disabled{ opacity:1; background:var(--o-fondo-2); color:#8f8364; box-shadow:inset 0 0 0 1px var(--o-filo); }   /* (spento: avorio, non oro sbiadito) */
 @media (hover:hover){ .oro .btn:hover{ filter:brightness(1.02); } }
 .oro .testa .btn-fantasma.btn-piccolo{ color:var(--o-testo); font-size:1.6rem; font-weight:400; padding:6px 12px 8px; }
 
 /* ---- campi, contatori, scelte ---- */
 .oro :is(.giocatore-riga input, .sala-riga input, .link-campo, .modulo-testo, input[type=text], input[type=search], input[type=number], textarea, select){
-  background:var(--o-carta); color:var(--o-testo); border:1px solid var(--o-filo-oro); box-shadow:inset 0 1px 2px rgba(80,60,20,.05); }
-.oro :is(.giocatore-riga input, .sala-riga input, .link-campo, .modulo-testo, input, textarea):focus{ outline:none; border-color:var(--o-oro); box-shadow:0 0 0 3px rgba(180,138,58,.18); }
-.oro ::placeholder{ color:#a89c84; }
+  background:var(--o-carta); color:var(--o-testo); border:1px solid var(--o-filo-oro); box-shadow:inset 0 1px 2px rgba(62,55,42,.05); }
+.oro :is(.giocatore-riga input, .sala-riga input, .link-campo, .modulo-testo, input, textarea):focus{ outline:none; border-color:var(--o-oro); box-shadow:0 0 0 3px rgba(197,151,41,.18); }
+.oro ::placeholder{ color:#ada07f; }
 .oro .togli{ background:var(--o-carta); color:var(--o-rosso); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .stepper{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .stepper button{ background:var(--o-carta-2); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
@@ -2447,16 +2447,16 @@ html body.tema-oro::before{ display:none; }
   -webkit-backdrop-filter:none; backdrop-filter:none; font-weight:650; border-radius:999px; }
 .oro .cat-tab:active{ box-shadow:none; }
 .oro .cat-tab .ci{ filter:none; }
-.oro .cat-tab.attiva{ background:var(--o-scuro); color:var(--o-scuro-testo); border-color:var(--o-scuro); box-shadow:0 6px 14px rgba(34,28,18,.18); }
+.oro .cat-tab.attiva{ background:var(--o-scuro); color:var(--o-scuro-testo); border-color:var(--o-scuro); box-shadow:0 6px 14px rgba(30,27,22,.18); }
 
 /* ---- tessere dei giochi (home, edifici, scegli il gioco) ---- */
 .oro .tessera{ background:var(--o-carta); color:var(--o-testo); border:1px solid var(--o-filo); box-shadow:var(--o-ombra); }
 .oro :is(.home, .edificio) .tessera, .oro.home .tessera{ background:var(--o-carta); border:1px solid var(--o-filo); border-radius:20px;
   box-shadow:var(--o-ombra); }
-.oro.home .tessera:active, .oro .tessera:active{ transform:scale(.985); box-shadow:0 1px 2px rgba(80,60,20,.08); }
+.oro.home .tessera:active, .oro .tessera:active{ transform:scale(.985); box-shadow:0 1px 2px rgba(62,55,42,.08); }
 @media (hover:hover){ .oro .tessera:hover{ transform:translateY(-2px); box-shadow:var(--o-ombra-alta); } }
 .oro .tessera .icona{ background:var(--o-fondo-2); box-shadow:none; filter:none; }
-.oro.home .tessera .icona{ background:linear-gradient(160deg,#f4ead6,#e9dcbf); box-shadow:inset 0 -1px 0 var(--o-filo); }
+.oro.home .tessera .icona{ background:linear-gradient(160deg,#ece7de,#ddd8cb); box-shadow:inset 0 -1px 0 var(--o-filo); }
 .oro .tessera .icona .illustr{ box-shadow:none; }
 .oro .tessera .info h2{ font-family:var(--o-tit); font-weight:700; font-size:1.32rem; line-height:1.02; letter-spacing:.005em; color:var(--o-testo); }
 .oro .tessera .info p{ color:var(--o-tenue); }
@@ -2482,7 +2482,7 @@ html body.tema-oro::before{ display:none; }
 .oro .home-profilo .home-novita.home-citta{ background:var(--o-carta); box-shadow:var(--o-ombra); border:1px solid var(--o-filo); }
 .oro .home-citta > span{ color:var(--o-testo); font-weight:650; letter-spacing:0; }
 .oro .home-citta span.emo{ display:inline-block; min-height:0; padding:0; border-radius:0; margin-right:6px; }
-.oro .chip-omino{ background:radial-gradient(circle at 50% 35%, #fff, #f1e5c9); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
+.oro .chip-omino{ background:radial-gradient(circle at 50% 35%, #fff, #e6e1d4); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
 .oro .azione{ background:transparent; color:var(--o-tenue); box-shadow:inset 0 0 0 1px var(--o-filo); }
 @media (hover:hover){ .oro .azione:hover{ color:var(--o-testo); background:var(--o-carta); } }
 .oro .pallino{ background:var(--o-rosso); box-shadow:0 0 0 3px rgba(184,67,58,.18); }
@@ -2491,7 +2491,7 @@ html body.tema-oro::before{ display:none; }
 .oro .classifica li{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo), var(--o-ombra); }
 .oro .classifica .pos{ font-family:var(--o-tit); color:var(--o-oro-testo); }
 .oro .classifica .punti{ color:var(--o-tenue); }
-.oro .classifica li.vincitore{ background:linear-gradient(180deg,#fff8e6,#f6e7c2); color:var(--o-testo); box-shadow:inset 0 0 0 1.5px var(--o-oro), 0 8px 20px rgba(150,110,30,.16); }
+.oro .classifica li.vincitore{ background:linear-gradient(180deg,#f7f5f0,#e8e1d0); color:var(--o-testo); box-shadow:inset 0 0 0 1.5px var(--o-oro), 0 8px 20px rgba(167,123,13,.16); }
 .oro .classifica li.vincitore .punti{ color:var(--o-oro-testo); }
 .oro .novita-card{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo), var(--o-ombra); }
 .oro .novita-data{ color:var(--o-oro-testo); letter-spacing:.12em; font-weight:700; }
@@ -2509,20 +2509,20 @@ html body.tema-oro::before{ display:none; }
 .oro .passa .grande{ font-family:var(--o-tit); font-size:2.1rem; font-weight:700; }
 
 /* ---- la finestra di conferma (anche sopra i giochi) ---- */
-.conferma-sfondo.oro{ background:rgba(40,30,12,.42); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
-.oro .conferma-box{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), 0 24px 60px rgba(40,30,12,.3); }
+.conferma-sfondo.oro{ background:rgba(34,28,18,.42); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.oro .conferma-box{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), 0 24px 60px rgba(34,28,18,.3); }
 .oro .conferma-domanda{ font-family:var(--o-tit); font-size:1.5rem; font-weight:700; line-height:1.1; }
 .oro .conferma-nota{ color:var(--o-rosso); }
 
 /* ---- «Come giocate?»: le scelte grandi ---- */
 .oro .modo-grande{ color:var(--o-testo); background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo), var(--o-ombra); border-radius:20px; }
-.oro .modo-grande.online{ background:linear-gradient(180deg,var(--o-carta-viva),#f8eedb); box-shadow:inset 0 0 0 1.5px var(--o-oro), 0 10px 24px rgba(150,110,30,.14); }
+.oro .modo-grande.online{ background:linear-gradient(180deg,var(--o-carta-viva),#f0ece3); box-shadow:inset 0 0 0 1.5px var(--o-oro), 0 10px 24px rgba(167,123,13,.14); }
 .oro .mg-ico{ filter:none; color:var(--o-oro); font-size:2rem; width:46px; }
 .oro .mg-tit{ font-family:var(--o-tit); font-size:1.45rem; font-weight:700; line-height:1.05; }
 .oro .mg-sotto{ color:var(--o-tenue); opacity:1; }
 .oro .mg-freccia{ color:var(--o-oro); opacity:.9; font-weight:300; }
 .oro .mg-ultimo{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:none; letter-spacing:.06em; }
-.oro .modo-avatar svg{ filter:drop-shadow(0 8px 10px rgba(80,60,20,.18)); }
+.oro .modo-avatar svg{ filter:drop-shadow(0 8px 10px rgba(62,55,42,.18)); }
 
 /* ---- home: la riga online e il codice ---- */
 .oro .home-online .ho-codice{ color:var(--o-testo); border:0; background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); }
@@ -2531,7 +2531,7 @@ html body.tema-oro::before{ display:none; }
 .oro .home-rientra-x{ background:var(--o-carta); color:var(--o-tenue); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .codice4-caselle span{ color:var(--o-testo); background:var(--o-carta); border:1px solid var(--o-filo-oro); font-family:var(--o-tit); font-weight:700; font-size:2.5rem; box-shadow:var(--o-ombra); }
 .oro .codice4-caselle span.piena{ border-color:var(--o-oro); }
-.oro .codice4-caselle span.attiva{ border-color:var(--o-oro); box-shadow:0 0 0 3px rgba(180,138,58,.18), var(--o-ombra); }
+.oro .codice4-caselle span.attiva{ border-color:var(--o-oro); box-shadow:0 0 0 3px rgba(197,151,41,.18), var(--o-ombra); }
 .oro .codice4-caselle span.attiva::after{ background:var(--o-oro); }
 .oro .codice4-avviso{ color:var(--o-rosso); }
 
@@ -2540,41 +2540,41 @@ html body.tema-oro::before{ display:none; }
 .oro .sl-cod small{ color:var(--o-tenue); opacity:1; letter-spacing:.2em; font-weight:700; }
 .oro .sl-cod b{ font-family:var(--o-tit); font-weight:700; color:var(--o-testo); }
 .oro .sl-cod small::before{ background:var(--o-verde); box-shadow:0 0 0 3px rgba(46,125,79,.15); }
-.oro .sl-cod.apre small::before{ background:#c99a1e; box-shadow:0 0 0 3px rgba(201,154,30,.18); }
+.oro .sl-cod.apre small::before{ background:#e1b006; box-shadow:0 0 0 3px rgba(225,176,6,.18); }
 .oro .sl-cod.chiusa small::before{ background:none; box-shadow:none; }
 .oro .sl-stanza{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra-alta); }
 .oro .sl-stanza::before, .oro .sl-stanza::after{ content:""; position:absolute; left:11%; right:11%; top:15%; bottom:-2px; z-index:0; pointer-events:none;
-  border:1px solid rgba(180,138,58,.5); border-bottom:0; border-radius:999px 999px 0 0 / 46% 46% 0 0; }
-.oro .sl-stanza::after{ left:14.5%; right:14.5%; top:18%; border-color:rgba(180,138,58,.26); }
-.oro .sl-muro{ background:radial-gradient(55% 42% at 50% 30%, #fff 0%, rgba(255,255,255,0) 70%), linear-gradient(180deg,#fffdf8,#f6eedc 78%); }
-.oro .sl-pavimento{ background:linear-gradient(180deg,#efe3c8,#e6d6b4); box-shadow:inset 0 1px 0 rgba(180,138,58,.45), inset 0 10px 18px rgba(120,90,30,.08); }
+  border:1px solid rgba(197,151,41,.5); border-bottom:0; border-radius:999px 999px 0 0 / 46% 46% 0 0; }
+.oro .sl-stanza::after{ left:14.5%; right:14.5%; top:18%; border-color:rgba(197,151,41,.26); }
+.oro .sl-muro{ background:radial-gradient(55% 42% at 50% 30%, #fff 0%, rgba(255,255,255,0) 70%), linear-gradient(180deg,#fdfdfc,#efebe3 78%); }
+.oro .sl-pavimento{ background:linear-gradient(180deg,#e4dfd3,#d8d1c2); box-shadow:inset 0 1px 0 rgba(197,151,41,.45), inset 0 10px 18px rgba(120,90,30,.08); }
 .oro :is(.sl-finestra, .sl-pianta, .sl-quadro, .sl-orologio, .sl-tappeto, .sl-divano){ display:none; }
 .oro .sl-insegna{ background:none; box-shadow:none; text-shadow:none; animation:none; color:var(--o-oro-testo); font-family:var(--o-tit); font-weight:700;
   font-size:.9rem; letter-spacing:.32em; top:14px; padding:4px 10px; }
 .oro .sl-conta{ background:var(--o-carta); color:var(--o-tenue); box-shadow:inset 0 0 0 1px var(--o-filo); font-weight:700; }
 .oro .sl-suono{ background:var(--o-carta); color:var(--o-oro); box-shadow:inset 0 0 0 1px var(--o-filo); }
-.oro .sl-fig svg{ filter:drop-shadow(0 6px 6px rgba(80,60,20,.2)); }
-.oro .sl-nome{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), 0 2px 6px rgba(80,60,20,.1); font-weight:700; }
-.oro .sl-nome.tu{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 2px 6px rgba(34,28,18,.22); }
+.oro .sl-fig svg{ filter:drop-shadow(0 6px 6px rgba(62,55,42,.2)); }
+.oro .sl-nome{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), 0 2px 6px rgba(62,55,42,.1); font-weight:700; }
+.oro .sl-nome.tu{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 2px 6px rgba(30,27,22,.22); }
 .oro .sl-nome.pronto{ background:var(--o-verde); color:#fff; box-shadow:0 2px 6px rgba(46,125,79,.25); }
 .oro .sl-nome.tu.pronto{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:inset 0 0 0 2px #4cae73; }
 .oro .sl-nome.forse{ background:#eef3f8; color:#2c4a66; box-shadow:inset 0 0 0 1px #b8cde0; }
-.oro .sl-nome.atteso{ background:rgba(255,253,249,.7); color:var(--o-tenue); box-shadow:inset 0 0 0 1px var(--o-filo); }
+.oro .sl-nome.atteso{ background:rgba(254,253,252,.7); color:var(--o-tenue); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .sl-ricollega{ color:#2c6aa0; }
 .oro .sl-anello{ background:radial-gradient(closest-side, rgba(76,174,115,.55), rgba(76,174,115,.22) 50%, rgba(76,174,115,0)); }
 .oro .sl-bollo{ background:var(--o-verde); box-shadow:0 2px 6px rgba(46,125,79,.3), inset 0 0 0 2px #fff; }
 .oro .sl-av.forse .sl-bollo{ background:#2c6aa0; }
-.oro .sl-sagoma{ border-color:rgba(180,138,58,.55); background:rgba(255,253,249,.5); }
-.oro .sl-fumetto{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), 0 6px 14px rgba(80,60,20,.16); font-weight:700; }
+.oro .sl-sagoma{ border-color:rgba(197,151,41,.55); background:rgba(254,253,252,.5); }
+.oro .sl-fumetto{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), 0 6px 14px rgba(62,55,42,.16); font-weight:700; }
 .oro .sl-fumetto::after{ border-top-color:var(--o-carta); }
 .oro .sl-fumetto.va{ background:var(--o-fondo-2); } .oro .sl-fumetto.va::after{ border-top-color:var(--o-fondo-2); }
-.oro .sl-faccia{ text-shadow:0 4px 8px rgba(80,60,20,.25); }
+.oro .sl-faccia{ text-shadow:0 4px 8px rgba(62,55,42,.25); }
 .oro .sl-faccine{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .sl-fa-carica{ background:var(--o-oro); }
 .oro .sl-chip{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .sl-chip.tutti{ background:var(--o-verde-tenue); color:var(--o-verde); box-shadow:inset 0 0 0 1px #9fceb1; }
 .oro .sl-pallini i{ background:var(--o-filo); } .oro .sl-pallini i.si{ background:var(--o-verde); }
-.oro .sl-go.invita::after{ box-shadow:0 0 0 3px rgba(180,138,58,.6), 0 0 22px rgba(220,189,116,.65); }
+.oro .sl-go.invita::after{ box-shadow:0 0 0 3px rgba(197,151,41,.6), 0 0 22px rgba(235,202,101,.65); }
 .oro .sl-pronto.fatto{ background:var(--o-verde-tenue); color:var(--o-verde); box-shadow:inset 0 0 0 1.5px #7fbf98; }
 .oro .sl-attesa{ background:var(--o-carta); box-shadow:inset 0 0 0 1px #9fceb1, var(--o-ombra); }
 .oro .sl-att-tit{ color:var(--o-verde); font-family:var(--o-tit); font-size:1.4rem; font-weight:700; }
@@ -2583,16 +2583,16 @@ html body.tema-oro::before{ display:none; }
 .oro .sl-incorso{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); }
 .oro .sl-porta{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro.saletta-schermo.porta-chiusa > .testa .sotto{ color:var(--o-ambra); }
-.oro.saletta-schermo.porta-chiusa .sl-porta{ background:#fbefdc; color:var(--o-ambra); box-shadow:inset 0 0 0 1px #e2b97a; }
+.oro.saletta-schermo.porta-chiusa .sl-porta{ background:#f2ede5; color:var(--o-ambra); box-shadow:inset 0 0 0 1px #f1c36b; }
 .oro.saletta-schermo .sl-tasti .sl-regole{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); }
 .oro .sl-regole-riga{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo-oro); color:var(--o-testo); }
 .oro .sl-rr-et{ color:var(--o-oro-testo); }
 .oro .sl-rr-cambiate{ background:var(--o-scuro); color:var(--o-scuro-testo); }
 .oro .sl-come{ background:var(--o-fondo-2); }
 .oro .sl-consiglio-comp{ background:var(--o-crema); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
-.oro .sl-benvenuto{ background:radial-gradient(120% 85% at 50% 0%, #fff8e6, var(--o-carta) 70%); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
+.oro .sl-benvenuto{ background:radial-gradient(120% 85% at 50% 0%, #f7f5f0, var(--o-carta) 70%); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
 .oro .sl-benv-tit{ font-family:var(--o-tit); font-size:1.55rem; font-weight:700; }
-.oro .sl-anteprima svg{ filter:drop-shadow(0 6px 8px rgba(80,60,20,.18)); }
+.oro .sl-anteprima svg{ filter:drop-shadow(0 6px 8px rgba(62,55,42,.18)); }
 .oro .sl-dado{ background:var(--o-carta-2); color:var(--o-oro); }
 .oro .sl-guardano{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .sl-menu{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra-alta); }
@@ -2605,14 +2605,14 @@ html body.tema-oro::before{ display:none; }
 .oro .sl-tc-freccia{ color:var(--o-oro); }
 
 /* ---- i fogli che salgono dal basso (regole, ⚙️ della Sala, inviti) ---- */
-.sl-velo.oro{ background:rgba(40,30,12,.38); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
-.oro .sl-foglio{ background:var(--o-fondo); color:var(--o-testo); box-shadow:0 -14px 40px rgba(40,30,12,.22); }
+.sl-velo.oro{ background:rgba(34,28,18,.38); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.oro .sl-foglio{ background:var(--o-fondo); color:var(--o-testo); box-shadow:0 -14px 40px rgba(34,28,18,.22); }
 .oro .sl-foglio-testa{ font-family:var(--o-tit); font-size:1.5rem; font-weight:700; }
 .oro .sl-foglio-x{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .sl-viva-opz{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo); }
-.oro .sl-interruttore input{ background:#e2d7c0; }
+.oro .sl-interruttore input{ background:#d9d4c9; }
 .oro .sl-interruttore input:checked{ background:var(--o-verde); }
-.oro .sl-interruttore input::after{ box-shadow:0 1px 3px rgba(60,40,10,.3); }
+.oro .sl-interruttore input::after{ box-shadow:0 1px 3px rgba(49,38,21,.3); }
 .oro .comp-fatta-link{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo); }
 
 /* ---- fine partita uguale per tutti ---- */
@@ -2621,7 +2621,7 @@ html body.tema-oro::before{ display:none; }
 .oro .fine-tasti .ft-punti{ background:var(--o-crema); color:var(--o-oro-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
 
 /* ---- 3-2-1-Via! (su tutti i telefoni) ---- */
-.sl-via.oro{ background:radial-gradient(circle at 50% 48%, rgba(255,253,248,.82), rgba(243,236,221,.95)); }
+.sl-via.oro{ background:radial-gradient(circle at 50% 48%, rgba(253,253,252,.82), rgba(237,234,227,.95)); }
 .oro .sl-via-num{ font-family:var(--o-tit); font-weight:700; color:var(--o-testo); -webkit-text-stroke:0; text-shadow:0 10px 30px rgba(120,90,30,.18); }
 .oro .sl-via-num.n3, .oro .sl-via-num.n2, .oro .sl-via-num.n1{ color:var(--o-testo); }
 .oro .sl-via-num.via{ color:var(--o-oro-testo); font-style:italic; }
@@ -2630,32 +2630,32 @@ html body.tema-oro::before{ display:none; }
 .oro .sl-via-tit{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); font-weight:700; }
 
 /* ---- avvisi in alto e pillole della rete ---- */
-.oro .sg-pillola{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 8px 22px rgba(34,28,18,.25); }
+.oro .sg-pillola{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 8px 22px rgba(30,27,22,.25); }
 .oro .sg-pillola.verde{ background:var(--o-verde); color:#fff; }
 .oro .sg-pillola.blu{ background:#2c5f8a; color:#fff; }
-.oro .sg-pillola.grigia{ background:#6c624f; color:#fff; }
-.avviso-trofeo.oro{ color:var(--o-testo); background:linear-gradient(180deg,#fffdf8,#f6ecd6); border:1px solid var(--o-filo-oro); box-shadow:0 14px 34px rgba(80,60,20,.22); }
+.oro .sg-pillola.grigia{ background:#70654b; color:#fff; }
+.avviso-trofeo.oro{ color:var(--o-testo); background:linear-gradient(180deg,#fdfdfc,#ede9df); border:1px solid var(--o-filo-oro); box-shadow:0 14px 34px rgba(62,55,42,.22); }
 .avviso-trofeo.oro .at-su{ color:var(--o-oro-testo); }
 .avviso-trofeo.oro .at-gioco{ color:var(--o-tenue); }
-.sg-ferma.oro{ background:rgba(250,246,238,.97); color:var(--o-testo); }
+.sg-ferma.oro{ background:rgba(247,246,243,.97); color:var(--o-testo); }
 .sg-ferma.oro h2{ font-family:var(--o-tit); font-size:1.8rem; }
 .sg-guardo.oro, .oro .sg-guardo{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra-alta); }
 .oro .sg-fa-volante{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo), var(--o-ombra); }
 
 /* ---- editor dell'avatar e palco del profilo ---- */
-.oro .omino-palco{ background:radial-gradient(ellipse at 50% 30%, #fff, #f3e9d3 75%); border:1px solid var(--o-filo-oro); box-shadow:var(--o-ombra); }
-.oro .omino-palco.editor{ background:radial-gradient(ellipse 70% 60% at 50% 0%, #fffefa, transparent 75%), linear-gradient(180deg,#fbf6ec,#efe3c9); border:1px solid var(--o-filo-oro); box-shadow:var(--o-ombra-alta); }
+.oro .omino-palco{ background:radial-gradient(ellipse at 50% 30%, #fff, #eae6dc 75%); border:1px solid var(--o-filo-oro); box-shadow:var(--o-ombra); }
+.oro .omino-palco.editor{ background:radial-gradient(ellipse 70% 60% at 50% 0%, #fefefd, transparent 75%), linear-gradient(180deg,#f6f5f3,#e5dfd3); border:1px solid var(--o-filo-oro); box-shadow:var(--o-ombra-alta); }
 .oro .om-faro{ background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,0) 88%); }
-.oro .om-pedana{ background:radial-gradient(ellipse at 50% 42%, rgba(180,138,58,.38), rgba(180,138,58,.12) 55%, transparent 72%); box-shadow:inset 0 0 0 1px rgba(180,138,58,.3); }
-.oro .om-figura svg{ filter:drop-shadow(0 6px 8px rgba(80,60,20,.2)); }
-.oro .om-targa{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 2px 6px rgba(34,28,18,.25); }
-.oro :is(.om-freccia, .om-stella, .om-azione.caso, .om-indietro, .om-azione.annulla){ background:rgba(255,253,249,.92); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), 0 2px 6px rgba(80,60,20,.1); }
+.oro .om-pedana{ background:radial-gradient(ellipse at 50% 42%, rgba(197,151,41,.38), rgba(197,151,41,.12) 55%, transparent 72%); box-shadow:inset 0 0 0 1px rgba(197,151,41,.3); }
+.oro .om-figura svg{ filter:drop-shadow(0 6px 8px rgba(62,55,42,.2)); }
+.oro .om-targa{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 2px 6px rgba(30,27,22,.25); }
+.oro :is(.om-freccia, .om-stella, .om-azione.caso, .om-indietro, .om-azione.annulla){ background:rgba(254,253,252,.92); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), 0 2px 6px rgba(62,55,42,.1); }
 .oro .om-stella.on{ background:var(--o-scuro); color:var(--o-scuro-testo); }
-.oro .om-azione.salva{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 6px 14px rgba(150,110,30,.25); }
-.oro .om-puntini i{ background:rgba(34,28,18,.18); } .oro .om-puntini i.on{ background:var(--o-oro); } .oro .om-puntini i.pr{ box-shadow:0 0 0 2px var(--o-oro); }
+.oro .om-azione.salva{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 6px 14px rgba(167,123,13,.25); }
+.oro .om-puntini i{ background:rgba(30,27,22,.18); } .oro .om-puntini i.on{ background:var(--o-oro); } .oro .om-puntini i.pr{ box-shadow:0 0 0 2px var(--o-oro); }
 .oro .om-opz{ background:var(--o-carta); border:1px solid var(--o-filo); }
-.oro .om-opz.attiva{ border-color:var(--o-oro); background:var(--o-carta-viva); box-shadow:0 0 0 2px rgba(180,138,58,.25); }
-.oro .om-colore{ box-shadow:inset 0 -3px 6px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35), 0 0 0 1px rgba(80,60,20,.12); }
+.oro .om-opz.attiva{ border-color:var(--o-oro); background:var(--o-carta-viva); box-shadow:0 0 0 2px rgba(197,151,41,.25); }
+.oro .om-colore{ box-shadow:inset 0 -3px 6px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35), 0 0 0 1px rgba(62,55,42,.12); }
 .oro .om-colore.attiva{ box-shadow:0 0 0 3px var(--o-carta), 0 0 0 4.5px var(--o-oro); }
 .oro .om-libero.attiva{ box-shadow:0 0 0 3px var(--o-carta), 0 0 0 4.5px var(--o-oro); }
 .oro .om-nome, .oro.editor-avatar .om-nome{ color:var(--o-tenue); }
@@ -2667,8 +2667,8 @@ html body.tema-oro::before{ display:none; }
 .oro .om-sub{ background:var(--o-carta); color:var(--o-tenue); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .om-sub.attiva{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:none; }
 .oro.editor-avatar .omino-pannello .etichetta{ color:var(--o-testo); border-left-color:var(--o-oro); font-family:var(--o-tit); font-size:1.35rem; font-weight:700; }
-.oro.editor-avatar .piede{ background:linear-gradient(180deg, rgba(250,246,238,.2), rgba(250,246,238,.97) 40%); border-top:1px solid var(--o-filo); }
-.oro .om-maniglia{ color:var(--o-tenue); } .oro .om-maniglia::before{ background:rgba(34,28,18,.2); }
+.oro.editor-avatar .piede{ background:linear-gradient(180deg, rgba(247,246,243,.2), rgba(247,246,243,.97) 40%); border-top:1px solid var(--o-filo); }
+.oro .om-maniglia{ color:var(--o-tenue); } .oro .om-maniglia::before{ background:rgba(30,27,22,.2); }
 
 /* =========================================================
    🤍 BIANCO E ORO — ZONA A · Trofei e profilo
@@ -2680,9 +2680,9 @@ html body.tema-oro::before{ display:none; }
 
 /* ---- i metalli dei trofei: riconoscibili ma sobri e chiari (tessera, bordo, tinta del simbolo) ---- */
 .oro{
-  --o-m-bronzo-a:#f6e4cc;   --o-m-bronzo-b:#e6c299;   --o-m-bronzo-f:#c9996a;   --o-m-bronzo-i:#7a4a21;
+  --o-m-bronzo-a:#eae2d8;   --o-m-bronzo-b:#f1c88e;   --o-m-bronzo-f:#d69f5d;   --o-m-bronzo-i:#7a4a21;
   --o-m-argento-a:#f6f8fa;  --o-m-argento-b:#d9dee4;  --o-m-argento-f:#b6bfc9;  --o-m-argento-i:#4d5966;
-  --o-m-oro-a:#faeec9;      --o-m-oro-b:#ead08a;      --o-m-oro-f:#c9a24e;      --o-m-oro-i:#6a4d0e;
+  --o-m-oro-a:#ede7d6;      --o-m-oro-b:#f7dc7d;      --o-m-oro-f:#dab03d;      --o-m-oro-i:#6a4d0e;
   --o-m-diamante-a:#eaf7fb; --o-m-diamante-b:#c3e7f3; --o-m-diamante-f:#8fcbe0; --o-m-diamante-i:#1d6683;
   --o-m-platino-a:#f2f3fa;  --o-m-platino-b:#d6daee;  --o-m-platino-f:#aeb7d9;  --o-m-platino-i:#3c4a7b;
 }
@@ -2781,20 +2781,20 @@ html body.tema-oro::before{ display:none; }
 .oro .st-fuoco-testo small{ color:var(--o-tenue); }
 
 /* ---- schermate del profilo: Benvenuto, Entra, Bentornato, Serve internet ---- */
-.oro .bp-logo{ filter:drop-shadow(0 3px 8px rgba(180,138,58,.3)); }
+.oro .bp-logo{ filter:drop-shadow(0 3px 8px rgba(197,151,41,.3)); }
 .oro .bp-testa h1{ font-weight:700; letter-spacing:.005em; font-size:1.6rem; line-height:1.1; }
 .oro .bp-sotto{ color:var(--o-tenue); }
 .oro .bp-invito{ color:var(--o-testo); background:var(--o-carta-2); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
 .oro .bp-avviso{ color:var(--o-tenue); }
 .oro .bp-rete-ico{ --emo-tinta:var(--o-oro); }
 /* l'avatar subito dopo il profilo: il saluto e «Fatto» */
-.oro .om-benv{ color:var(--o-scuro-testo); background:var(--o-scuro); box-shadow:inset 0 0 0 1.5px var(--o-oro), 0 4px 10px rgba(34,28,18,.2); }
-.oro.editor-avatar .om-azione.salva.fatto{ box-shadow:0 0 0 3px rgba(180,138,58,.28), 0 6px 14px rgba(150,110,30,.25); }
+.oro .om-benv{ color:var(--o-scuro-testo); background:var(--o-scuro); box-shadow:inset 0 0 0 1.5px var(--o-oro), 0 4px 10px rgba(30,27,22,.2); }
+.oro.editor-avatar .om-azione.salva.fatto{ box-shadow:0 0 0 3px rgba(197,151,41,.28), 0 6px 14px rgba(167,123,13,.25); }
 
 /* ---- il primo avatar: lui o lei → il look → Fatto ---- */
 .oro .pa-forma{ color:var(--o-testo); background:var(--o-carta); border:1.5px solid var(--o-filo); box-shadow:var(--o-ombra); }
 .oro .pa-forma b{ font-family:var(--o-tit); font-weight:700; font-size:1.3rem; }
-.oro .pa-fig svg, .oro .pa-palco svg{ filter:drop-shadow(0 6px 8px rgba(80,60,20,.18)); }
+.oro .pa-fig svg, .oro .pa-palco svg{ filter:drop-shadow(0 6px 8px rgba(62,55,42,.18)); }
 .oro .pa-mini-btn{ color:var(--o-testo); background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); }
 .oro .pa-look{ color:var(--o-testo); background:var(--o-carta); border-color:var(--o-filo); box-shadow:var(--o-ombra); }
 .oro .pa-look.attiva{ border-color:var(--o-oro); background:var(--o-carta-2); box-shadow:0 0 0 1px var(--o-oro), var(--o-ombra); }
@@ -2813,7 +2813,7 @@ html body.tema-oro::before{ display:none; }
 
 /* ---- 🧩 Ordine dei giochi (solo IL PAPPONE) ---- */
 .oro .og-riga{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo), var(--o-ombra); }
-.oro .og-riga.og-preso{ background:var(--o-carta-2); box-shadow:0 10px 24px rgba(80,60,20,.22), 0 0 0 2px var(--o-oro); }
+.oro .og-riga.og-preso{ background:var(--o-carta-2); box-shadow:0 10px 24px rgba(62,55,42,.22), 0 0 0 2px var(--o-oro); }
 .oro .og-riga.og-mosso::after{ box-shadow:inset 0 0 0 2px var(--o-oro); }
 .oro .og-maniglia{ color:var(--o-tenue); }
 .oro .og-riga.og-preso .og-maniglia{ color:var(--o-oro); }
@@ -2872,7 +2872,7 @@ html body.tema-oro::before{ display:none; }
 .oro .am-num b{ color:var(--o-oro-testo); }
 .oro .am-num span{ color:var(--o-tenue); }
 .oro .am-togli{ background:var(--o-carta-2); color:var(--o-tenue); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
-.oro .am-piu{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 4px 10px rgba(150,110,30,.22); }
+.oro .am-piu{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 4px 10px rgba(167,123,13,.22); }
 .oro .am-piu.si{ background:var(--o-verde); color:#fff; box-shadow:0 4px 10px rgba(46,125,79,.22); }
 .oro .am-piu .emo{ --emo-tinta:currentColor; }
 .oro .am-stato{ color:var(--o-oro); }
@@ -2892,7 +2892,7 @@ html body.tema-oro::before{ display:none; }
 .oro .cmp-av{ background:var(--o-carta-2); box-shadow:0 0 0 2px var(--o-carta), 0 0 0 3px var(--o-filo-oro); }
 .oro .cmp-tutte{ background:transparent; color:var(--o-oro-testo); font-weight:700; }
 /* «Online con «Quelli del giovedì»» in «Come giocate?»: come «Online», con un filo d'oro in più */
-.oro .modo-grande.compagnia{ background:linear-gradient(180deg,var(--o-carta-viva),#f8eedb); color:var(--o-testo); box-shadow:inset 0 0 0 1.5px var(--o-oro), 0 10px 24px rgba(150,110,30,.14); }
+.oro .modo-grande.compagnia{ background:linear-gradient(180deg,var(--o-carta-viva),#f0ece3); color:var(--o-testo); box-shadow:inset 0 0 0 1.5px var(--o-oro), 0 10px 24px rgba(167,123,13,.14); }
 
 /* «Le tue compagnie» (la lista) */
 .oro .cmp-g-voce{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo), var(--o-ombra); }
@@ -2904,8 +2904,8 @@ html body.tema-oro::before{ display:none; }
 /* il foglio «Nome della compagnia» (nome ed emoji) */
 .oro .cmp-foglio{ background:var(--o-fondo); color:var(--o-testo); }
 .oro .cmp-f-x{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo); }
-.oro .cmp-campo{ background:var(--o-carta); color:var(--o-testo); border:1px solid var(--o-filo-oro); box-shadow:inset 0 1px 2px rgba(80,60,20,.05); }
-.oro .cmp-campo:focus{ outline:none; border-color:var(--o-oro); box-shadow:0 0 0 3px rgba(180,138,58,.18); }
+.oro .cmp-campo{ background:var(--o-carta); color:var(--o-testo); border:1px solid var(--o-filo-oro); box-shadow:inset 0 1px 2px rgba(62,55,42,.05); }
+.oro .cmp-campo:focus{ outline:none; border-color:var(--o-oro); box-shadow:0 0 0 3px rgba(197,151,41,.18); }
 .oro .cmp-e{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .cmp-e.su{ border-color:var(--o-oro); background:var(--o-carta-viva); box-shadow:none; }
 
@@ -2938,7 +2938,7 @@ html body.tema-oro::before{ display:none; }
 .oro .ao-r2{ color:var(--o-tenue); opacity:1; }
 .oro .ao-entra{ background:var(--o-verde); color:#fff; }
 .oro .ao-no{ background:var(--o-fondo-2); color:var(--o-tenue); box-shadow:inset 0 0 0 1px var(--o-filo); }
-.ao-mini.oro{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:0 6px 16px rgba(110,80,20,.3), 0 0 0 3px var(--o-carta); }
+.ao-mini.oro{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:0 6px 16px rgba(88,76,54,.3), 0 0 0 3px var(--o-carta); }
 .ao-mini.oro .emo{ --emo-tinta:currentColor; }
 .oro .ao-av{ background:var(--o-carta-2); color:var(--o-testo); border-color:var(--o-carta); box-shadow:0 0 0 1px var(--o-filo-oro); }
 
@@ -2955,19 +2955,19 @@ html body.tema-oro::before{ display:none; }
    4) LA RUOTA DEL GIORNO (e la ruota di «Scegliamo insieme»: stesse classi)
    Il disco con gli spicchi è disegnato su canvas dal JavaScript: i suoi colori restano com'erano.
    --------------------------------------------------------- */
-.rg-velo.oro{ background:rgba(40,30,12,.42); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.rg-velo.oro{ background:rgba(34,28,18,.42); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
 .oro .rg-scheda{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra-alta); }
 .oro .rg-titolo{ font-family:var(--o-tit); font-size:1.6rem; font-weight:700; line-height:1.05; color:var(--o-testo); letter-spacing:.005em; }
 .oro .rg-sotto{ color:var(--o-tenue); opacity:1; }
 .oro .rg-bordo{ background:linear-gradient(160deg, var(--o-oro-chiaro) 0%, var(--o-oro) 50%, var(--o-filo-oro) 100%);
-  box-shadow:0 10px 24px rgba(110,80,20,.28), inset 0 0 0 2px rgba(255,255,255,.5), inset 0 0 10px rgba(110,80,20,.22); }
+  box-shadow:0 10px 24px rgba(88,76,54,.28), inset 0 0 0 2px rgba(255,255,255,.5), inset 0 0 10px rgba(88,76,54,.22); }
 .oro .rg-l1, .oro .rg-l2{ fill:var(--o-carta); }
-.oro .rg-freccia{ border-top-color:var(--o-rosso); filter:drop-shadow(0 3px 2px rgba(80,60,20,.35)); }
-.oro .rg-gira, .oro .sgs-perno{ border:4px solid var(--o-carta); background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:0 6px 16px rgba(110,80,20,.35); letter-spacing:.06em; }
+.oro .rg-freccia{ border-top-color:var(--o-rosso); filter:drop-shadow(0 3px 2px rgba(62,55,42,.35)); }
+.oro .rg-gira, .oro .sgs-perno{ border:4px solid var(--o-carta); background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:0 6px 16px rgba(88,76,54,.35); letter-spacing:.06em; }
 .oro .rg-gira .emo, .oro .sgs-perno .emo{ --emo-tinta:currentColor; }
 .rg-velo.oro.ferma .rg-gira{ background:var(--o-carta-2); color:var(--o-tenue); border-color:var(--o-carta); }
 .oro .rg-esito b{ color:var(--o-oro-testo); text-shadow:none; }
-.rg-velo.oro.top .rg-esito b{ color:var(--o-oro-testo); text-shadow:0 1px 0 rgba(255,255,255,.6), 0 4px 14px rgba(180,138,58,.4); }
+.rg-velo.oro.top .rg-esito b{ color:var(--o-oro-testo); text-shadow:0 1px 0 rgba(255,255,255,.6), 0 4px 14px rgba(197,151,41,.4); }
 .oro .rg-esito span{ color:var(--o-tenue); opacity:1; }
 
 /* ---------------------------------------------------------
@@ -2977,7 +2977,7 @@ html body.tema-oro::before{ display:none; }
 .oro .sl-proposta{ background:var(--o-carta); border-color:var(--o-filo-oro); box-shadow:var(--o-ombra); }
 .oro .sl-prop-tx b{ color:var(--o-testo); }
 .oro .sl-prop-tx small{ color:var(--o-tenue); }
-.oro .tessera .tess-voto{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 2px 6px rgba(34,28,18,.28); }
+.oro .tessera .tess-voto{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 2px 6px rgba(30,27,22,.28); }
 .oro .tessera .tess-voto .emo{ --emo-tinta:currentColor; }
 .oro .tessera.proposta{ border-color:var(--o-oro); box-shadow:0 0 0 1px var(--o-oro), var(--o-ombra); }
 .oro.sala-sceglie .piede:has(.sl-si-vota){ background:linear-gradient(to top, var(--o-fondo) 72%, transparent); }
@@ -2991,7 +2991,7 @@ html body.tema-oro::before{ display:none; }
 .oro .sgs-voto, .sgs-voto.oro{ color:var(--o-testo); }
 .oro .sgs-titolo{ font-family:var(--o-tit); font-size:1.6rem; font-weight:700; line-height:1.05; color:var(--o-testo); }
 .oro .sgs-sotto{ color:var(--o-tenue); opacity:1; }
-.oro .sgs-conto{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 4px 10px rgba(34,28,18,.2); }
+.oro .sgs-conto{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 4px 10px rgba(30,27,22,.2); }
 .oro .sgs-conto small{ opacity:.85; }
 .oro .sgs-conto.poco{ background:var(--o-rosso); color:#fff; }
 .oro .sgs-tessera{ color:var(--o-testo); border:1.5px solid var(--o-filo-oro); background:var(--o-carta); box-shadow:var(--o-ombra); }
@@ -3003,7 +3003,7 @@ html body.tema-oro::before{ display:none; }
 .oro .sgs-riga{ color:var(--o-tenue); opacity:1; }
 .oro .sgs-faccia{ background:var(--o-carta-2); color:var(--o-testo); border-color:var(--o-carta); box-shadow:0 0 0 1px var(--o-filo-oro); }
 .oro .sgs-piu{ color:var(--o-testo); }
-.oro .sgs-mio{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 2px 6px rgba(34,28,18,.28); }
+.oro .sgs-mio{ background:var(--o-scuro); color:var(--o-scuro-testo); box-shadow:0 2px 6px rgba(30,27,22,.28); }
 .oro .sgs-mio .emo{ --emo-tinta:currentColor; }
 .oro .sgs-attesa{ color:var(--o-tenue); opacity:1; }
 
@@ -3034,7 +3034,7 @@ html body.tema-oro::before{ display:none; }
 .oro .tb-n.vince::before{ content:"✓ "; font-weight:900; }
 .oro .tb-n.perde{ opacity:1; color:var(--o-tenue); }
 .oro .tb-stato{ opacity:1; color:var(--o-tenue); }
-.oro .tb-guarda{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 6px rgba(150,110,30,.2); }
+.oro .tb-guarda{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 6px rgba(167,123,13,.2); }
 .oro .tb-decidi{ background:var(--o-carta); color:var(--o-tenue); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
 .oro .tb-prima{ opacity:1; color:var(--o-tenue); }
 .oro .tb-prima b{ color:var(--o-testo); }
@@ -3077,7 +3077,7 @@ html body.tema-oro::before{ display:none; }
 
 /* «🏆 Fate il torneino in 5»: tasto d'oro come gli altri primari */
 .oro .sl-torneino{ background:var(--o-tasto); color:var(--o-tasto-testo); font-weight:700;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(120,85,20,.25), 0 8px 18px rgba(150,110,30,.24); }
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(120,85,20,.25), 0 8px 18px rgba(167,123,13,.24); }
 
 /* i simboli a linea dentro i tasti d'oro prendono il colore della scritta (non l'oro, che sull'oro non si vede) */
 .oro :is(.sl-torneino, .tb-guarda, .sl-elim-guarda, .cg-segno, .tn-spunta) .emo{ --emo-tinta:currentColor; }
@@ -3091,7 +3091,7 @@ html body.tema-oro::before{ display:none; }
 .oro .tn-ico{ color:var(--o-oro); }
 .oro .tn-testo b{ font-family:var(--o-tit); font-size:1.28rem; font-weight:700; line-height:1.05; }
 .oro .tn-testo small{ color:var(--o-tenue); }
-.oro .tn-spunta{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:0 2px 6px rgba(150,110,30,.25); }
+.oro .tn-spunta{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:0 2px 6px rgba(167,123,13,.25); }
 .oro .tn-nota{ color:var(--o-tenue); }
 .oro .tn-opz .etichetta{ color:var(--o-tenue); color:color-mix(in srgb, var(--o-oro-testo) 75%, var(--o-testo)); }
 
@@ -3100,8 +3100,8 @@ html body.tema-oro::before{ display:none; }
    --------------------------------------------------------- */
 .oro .cg-av{ background:radial-gradient(circle at 50% 35%, var(--o-carta), var(--o-carta-2)); box-shadow:inset 0 0 0 2px var(--o-filo-oro); }
 .oro .cg-nome{ color:var(--o-tenue); }
-.oro .cg-segno{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:0 0 0 2px var(--o-carta), 0 2px 6px rgba(150,110,30,.3); }
-.oro .cg-chi.scelto .cg-av{ box-shadow:0 0 0 3px var(--o-oro), 0 6px 14px rgba(150,110,30,.22); }
+.oro .cg-segno{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:0 0 0 2px var(--o-carta), 0 2px 6px rgba(167,123,13,.3); }
+.oro .cg-chi.scelto .cg-av{ box-shadow:0 0 0 3px var(--o-oro), 0 6px 14px rgba(167,123,13,.22); }
 .oro .cg-chi.scelto .cg-nome{ color:var(--o-testo); }
 .oro .cg-guardano{ color:var(--o-testo); }
 
@@ -3123,7 +3123,7 @@ html body.tema-oro::before{ display:none; }
 .oro .sl-inc-testo small{ opacity:1; color:var(--o-tenue); }
 
 /* il conto che va avanti da solo («Avanti ▶ 12»): una pastiglia chiara dentro il tasto */
-.oro .conto-avanti{ background:rgba(255,253,249,.5); box-shadow:inset 0 0 0 1px rgba(120,85,20,.22); }
+.oro .conto-avanti{ background:rgba(254,253,252,.5); box-shadow:inset 0 0 0 1px rgba(120,85,20,.22); }
 .oro .btn:not(.btn-primario):not(.btn-verde):not(.btn-rosso) .conto-avanti{ background:var(--o-fondo-2); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
 .oro :is(.btn-verde, .btn-rosso) .conto-avanti{ background:rgba(0,0,0,.2); box-shadow:none; }
 
@@ -3155,7 +3155,7 @@ html body.tema-oro::before{ display:none; }
 .oro .sl-coda{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1.5px var(--o-filo-oro), var(--o-ombra); }
 .oro .sl-coda-conto{ color:var(--o-oro-testo); }
 .oro .sl-coda-rec .sl-coda-tx{ color:var(--o-oro-testo); }
-.sl-resta-salta.oro{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 8px 18px rgba(150,110,30,.28); }
+.sl-resta-salta.oro{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 8px 18px rgba(167,123,13,.28); }
 
 /* ---- 🤍 i pezzi dei giochi che compaiono nelle schermate chiare (impostazioni, saletta, fogli) ---- */
 /* =========================================================
@@ -3206,7 +3206,7 @@ html body.tema-oro::before{ display:none; }
 .oro .tb-squad-lista b{ color:var(--o-testo); }
 .oro .tb-scelta.tu{ outline-color:var(--o-scuro); }          /* (il giallo sparirebbe sull'avorio) */
 .oro .tb-entra-sq{ color:var(--o-tenue); opacity:1; border-color:var(--o-oro); background:var(--o-carta); }
-.oro .tb-casuale{ box-shadow:inset 0 0 0 1px rgba(120,85,20,.25), 0 2px 6px rgba(150,110,30,.18); }
+.oro .tb-casuale{ box-shadow:inset 0 0 0 1px rgba(120,85,20,.25), 0 2px 6px rgba(167,123,13,.18); }
 
 /* ---------------------------------------------------------
    L'IMPOSTORE (js/games/impostore.js): «Altre scelte» nelle impostazioni
@@ -3236,7 +3236,7 @@ html body.tema-oro::before{ display:none; }
 /* il binario (era bianco trasparente), la parte scelta in oro, le maniglie piene con il bordo d'oro */
 .oro .tl-ep-pista:before{ background:var(--o-filo-oro); }
 .oro .tl-ep-pieno{ background:var(--o-oro); }
-.oro .tl-ep-man{ background:var(--o-carta); border-color:var(--o-oro); box-shadow:0 0 0 1px rgba(255,255,255,.9), 0 2px 6px rgba(80,60,20,.3); }
+.oro .tl-ep-man{ background:var(--o-carta); border-color:var(--o-oro); box-shadow:0 0 0 1px rgba(255,255,255,.9), 0 2px 6px rgba(62,55,42,.3); }
 .oro .tl-ep-conta.poche{ color:var(--o-rosso); }
 
 /* «🏁 Carte per vincere» (Ognuno la sua linea): numero grande + lineetta */
@@ -3246,15 +3246,15 @@ html body.tema-oro::before{ display:none; }
 .oro .tl-vinci .sl{ accent-color:var(--o-oro); -webkit-appearance:none; appearance:none; background:transparent; }
 .oro .tl-vinci .sl::-webkit-slider-runnable-track{ height:6px; border-radius:6px; background:var(--o-filo-oro); }
 .oro .tl-vinci .sl::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; box-sizing:border-box; width:26px; height:26px; margin-top:-10px; border-radius:50%;
-  background:var(--o-carta); border:4px solid var(--o-oro); box-shadow:0 0 0 1px rgba(255,255,255,.9), 0 2px 6px rgba(80,60,20,.3); }
+  background:var(--o-carta); border:4px solid var(--o-oro); box-shadow:0 0 0 1px rgba(255,255,255,.9), 0 2px 6px rgba(62,55,42,.3); }
 /* (il bagliore «rettangolo» che il core dà a ogni campo in focus qui stonava: il segno del focus va sul pallino) */
 .oro .tl-vinci .sl:focus{ box-shadow:none; border-color:transparent; }
-.oro .tl-vinci .sl:focus::-webkit-slider-thumb{ box-shadow:0 0 0 4px rgba(180,138,58,.28), 0 2px 6px rgba(80,60,20,.3); }
-.oro .tl-vinci .sl:focus::-moz-range-thumb{ box-shadow:0 0 0 4px rgba(180,138,58,.28), 0 2px 6px rgba(80,60,20,.3); }
+.oro .tl-vinci .sl:focus::-webkit-slider-thumb{ box-shadow:0 0 0 4px rgba(197,151,41,.28), 0 2px 6px rgba(62,55,42,.3); }
+.oro .tl-vinci .sl:focus::-moz-range-thumb{ box-shadow:0 0 0 4px rgba(197,151,41,.28), 0 2px 6px rgba(62,55,42,.3); }
 .oro .tl-vinci .sl::-moz-range-track{ height:6px; border-radius:6px; background:var(--o-filo-oro); }
 .oro .tl-vinci .sl::-moz-range-progress{ height:6px; border-radius:6px; background:var(--o-oro); }
 .oro .tl-vinci .sl::-moz-range-thumb{ box-sizing:border-box; width:26px; height:26px; border-radius:50%; background:var(--o-carta); border:4px solid var(--o-oro);
-  box-shadow:0 0 0 1px rgba(255,255,255,.9), 0 2px 6px rgba(80,60,20,.3); }
+  box-shadow:0 0 0 1px rgba(255,255,255,.9), 0 2px 6px rgba(62,55,42,.3); }
 
 /* «📸 I nostri ricordi»: il tasto in saletta e nelle impostazioni (era solo una scritta) */
 .oro .btn.tl-ric-btn{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); }
@@ -3317,8 +3317,8 @@ html body.tema-oro::before{ display:none; }
 .oro .pk-bot-riga .btn.btn-fantasma{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); }
 
 /* saletta, avvisi arancio «Senza fiches: …» e «Siete troppi per questa variante»: colore scritto nello style="" (poker.js righe 1274 e 1283),
-   #ffa94d dava 1,8:1 sull'avorio. !important SOLO per questo colore inline. Marrone-ambra: 5,3:1 anche sull'avorio più scuro in basso */
-.oro .modulo-nota[style*="#ffa94d"]{ color:var(--o-ambra) !important; font-weight:650; }
+   #ffb24d dava 1,8:1 sull'avorio. !important SOLO per questo colore inline. Marrone-ambra: 5,3:1 anche sull'avorio più scuro in basso */
+.oro .modulo-nota[style*="#ffb24d"]{ color:var(--o-ambra) !important; font-weight:650; }
 
 /* ---------------------------------------------------------
    🃏 BLACK JACK e POKER: riquadro «🪙 Hai … monete» + ruota del giorno
@@ -3345,15 +3345,15 @@ html body.tema-oro::before{ display:none; }
 
 /* Scopone, impostazioni: «⏸️ Hai una partita a metà»: fondo giallo e bordo giallo acceso scritti nello style="" (scopone.js riga 100) →
    la carta dorata del core (.sl-torneo-corto). !important SOLO per fondo e bordo inline */
-.oro .modulo-nota[style*="rgba(255,212,59,.14)"]{ background:var(--o-crema) !important; border-color:var(--o-filo-oro) !important; color:var(--o-testo); }
+.oro .modulo-nota[style*="rgba(255,216,59,.14)"]{ background:var(--o-crema) !important; border-color:var(--o-filo-oro) !important; color:var(--o-testo); }
 
 /* ---------------------------------------------------------
    🎯 PALLA MATTA (js/games/pallamatta.js): saletta, «Il tuo aiutante:» + 4 poteri
    (il nome del potere era #ffe066 e i tondi bianchi al 10%: sull'avorio sparivano)
    --------------------------------------------------------- */
 .oro .pm-aiu-et{ color:var(--o-tenue); }
-.oro .pm-aiu{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo-oro), 0 1px 2px rgba(80,60,20,.1); }
-.oro .pm-aiu.attiva{ background:var(--o-carta-viva); box-shadow:inset 0 0 0 2.5px var(--o-oro), 0 0 0 3px rgba(180,138,58,.18); }
+.oro .pm-aiu{ background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo-oro), 0 1px 2px rgba(62,55,42,.1); }
+.oro .pm-aiu.attiva{ background:var(--o-carta-viva); box-shadow:inset 0 0 0 2.5px var(--o-oro), 0 0 0 3px rgba(197,151,41,.18); }
 .oro .pm-pot-nome{ color:var(--o-oro-testo); }
 
 /* ---------------------------------------------------------
@@ -3391,7 +3391,7 @@ html body.tema-oro::before{ display:none; }
       Le righe e l'avviso hanno il colore nello style="" del gioco: qui serve !important (solo colore di fondo e testo). */
 .oro div[style*="flex-direction:column"] > div[style*="background:rgba(255,255,255,.06)"]{
   background:var(--o-carta) !important; color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
-.oro p.modulo-nota[style*="#ffd43b"]{ color:var(--o-ambra) !important; font-weight:700; }   /* (il giallo chiaro sparirebbe sull'avorio) */
+.oro p.modulo-nota[style*="#ffd83b"]{ color:var(--o-ambra) !important; font-weight:700; }   /* (il giallo chiaro sparirebbe sull'avorio) */
 
 /* ---------------------------------------------------------
    SCARABOCCHIO (js/games/scarabocchio.js): «📝 Le nostre parole» nelle impostazioni e nel foglio Regole
@@ -3417,7 +3417,7 @@ html body.tema-oro::before{ display:none; }
 .oro .dd-sqriga.sqA{ background:#fdeceb; box-shadow:inset 4px 0 #e0525b, inset 0 0 0 1px rgba(224,82,91,.28); }
 .oro .dd-sqriga.sqB{ background:#e9f1fb; box-shadow:inset 4px 0 #3b82d6, inset 0 0 0 1px rgba(59,130,214,.28); }
 .oro .dd-sqchip{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
-.oro .dd-sqchip.io{ background:var(--o-scuro); color:var(--o-scuro-testo); outline:0; box-shadow:0 2px 6px rgba(34,28,18,.22); }   /* (il giallo sparirebbe sull'avorio: il «tu» è la pillola scura di sempre) */
+.oro .dd-sqchip.io{ background:var(--o-scuro); color:var(--o-scuro-testo); outline:0; box-shadow:0 2px 6px rgba(30,27,22,.22); }   /* (il giallo sparirebbe sull'avorio: il «tu» è la pillola scura di sempre) */
 .oro .dd-mischia{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); }
 
 /* ---------------------------------------------------------
@@ -3426,7 +3426,7 @@ html body.tema-oro::before{ display:none; }
    --------------------------------------------------------- */
 .oro .lu-squad-lista{ background:var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo); }
 .oro .lu-scelta.tu{ outline-color:var(--o-scuro); }   /* (il giallo sparirebbe sull'avorio) */
-.oro .lu-casuale{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 2px 6px rgba(150,110,30,.22); }
+.oro .lu-casuale{ background:var(--o-tasto); color:var(--o-tasto-testo); box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 2px 6px rgba(167,123,13,.22); }
 .oro .lu-sq-nota{ color:var(--o-tenue); opacity:1; }
 .oro .lu-entra-sq{ color:var(--o-tenue); opacity:1; border-color:var(--o-oro); background:var(--o-carta); }
 /* 2) impostazioni e foglio Regole: «📝 Le nostre scale» */
@@ -3440,7 +3440,7 @@ html body.tema-oro::before{ display:none; }
       qui serve !important (solo il colore di fondo)
    --------------------------------------------------------- */
 .oro .sl-extra div[style*="background:rgba(255,255,255,.06)"]{ background:var(--o-carta) !important; color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo); }
-.oro .sl-extra div[style*="background:rgba(255,202,58,.18)"]{ background:var(--o-crema) !important; color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
+.oro .sl-extra div[style*="background:rgba(255,212,58,.18)"]{ background:var(--o-crema) !important; color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
 /* 2) impostazioni e foglio Regole: i due interruttori a tutta riga («Collisioni», «Mirino») sembravano solo una scritta */
 .oro .btn-fantasma[style*="width:100%"]{ background:var(--o-carta); color:var(--o-testo); font-weight:650; box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); }
 
