@@ -64,7 +64,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande. «Dopo mer» = dopo che la
 
 | # | Cosa | Gioco | Chi la fa | Grandezza | Quando |
 |---|---|---|---|---|---|
-| 1 | **Pubblicare la Linea del tempo** (v267-v272: Rubala, Epoca, Cambia carta, foto, ritardatari, Ognuno la sua linea), dopo una prova del proprietario | Linea del tempo | chat Linea del tempo | 🟢 | subito |
+| 1 | ✅ FATTO 26 ott 17:30: Linea del tempo pubblicata (v267-v272). Restano «🤖 Gioca col Bot» (chat nuova proposta) e la carta sbagliata | Linea del tempo | chat Linea del tempo | 🟢 | fatto |
 | 2 | **Prova coi telefoni veri** in una serata con gli amici (2 iPhone + 2 Android se si può): Ognuno la sua linea con tanta gente, la giornata dell'Asta (quanti rigori e azioni), Prezzo online, Parola d'ordine, inviti ad app chiusa su iPhone, Chi vince resta, chi perde la rete e torna. Segnare cosa non va e passarlo alla chat del gioco | tutti | il proprietario, poi le chat dei giochi | 🟢 (costa zero) | appena c'è una serata |
 | 3 | 🎵 **La musica**: «Sarabanda» + modo Heardle. **Prima** provare dal telefono che le anteprime da 30 secondi di iTunes si sentano (prova piccola) | gioco nuovo | chat nuova «Musica» | prova 🟢, gioco 🔴 | prova anche prima di mer; gioco dopo mer |
 | 4 | 🔒 **La copia per il vice solo ai vice**: oggi la copia della partita (con le carte e i segreti) va a tutta la stanza sul collegamento pubblico; deve andare solo ai vice. Con lei: l'host che riapre guarda la stanza solo 0,4 secondi (con la rete lenta torna in home) | tutti i giochi online | chat nuova «Rete» (aiutante Opus: è delicato) | 🟡 | dopo mer |
@@ -80,6 +80,10 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande. «Dopo mer» = dopo che la
 | 14 | Prima di un lancio pubblico: nomi nuovi per i giochi con marchi (Taboo, Ruota della Fortuna, Il Prezzo è Giusto…), immagini nuove di Black Jack e Poker (il dorso delle carte somiglia a una marca), quotazioni del fanta nostre, diritti di foto e musica | vari | da decidere | 🔴 | solo se si lancia |
 | 15 | La casa diventa la vetrina dei successi (trofei e cose vinte) | casa | da decidere | 🔴 | futuro |
 | 16 | Pulizia: togliere le copie di lavoro vecchie già unite (SG-giochi, SG-saletta, SG-unione), chiedendo prima; archiviare le chat finite (PARTY GAME, speed 2) | — | Cervello | 🟢 | quando vuole |
+| 17 | **Home personale** (consiglio dell'amico esperto, 26 ott): l'account ricorda i giochi che giochi di più e li mette in alto da solo; ⭐ giochi preferiti sempre in alto; trascinare le tessere per metterle dove si vuole (drag & drop). Oggi solo IL PAPPONE può riordinare, e l'ordine vale per tutti: va fatto per ogni giocatore, salvato nel suo profilo | home | chat nuova «Home» | 🟡 | dopo mer |
+| 18 | **Grafica più seria / di lusso** (amico, 26 ott): meno cartoon e grafichine, più stile app elegante alla Apple. Attenzione: cambia l'anima dell'app (oggi è allegra da party game) → **decide il proprietario**. Consiglio: prima una prova su home e profilo, non tutto insieme | tutta l'app | grafico + chat nuova «Stile» | 🔴 | dopo mer, dopo la decisione |
+| 19 | **Nome vero e dominio** (amico, 26 ott): scegliere un nome serio legato al gioco (non per forza a te; «SPD» come sigla piace, ispirazione tipo «Archives»), poi comprare il dominio (circa 5 € l'anno su Aruba) per avere un link serio invece di paky358.github.io. Metodo: farsi dare ~500 idee di nome da un Sonnet con indirizzo «serietà Apple/aziende», leggerle tutte e tenere la decina buona. Si lega al punto 14 (nomi con marchi) | tutta l'app | Cervello (idee) + proprietario sceglie | 🟢 | le idee anche subito, costano poco |
+| 20 | **Varietà delle parole** (amico: «L'Impostore non ripete mai le parole, gli altri sì dopo una cinquantina»): è il nostro punto forte, da difendere in TUTTI i giochi con liste (memoria delle parole uscite, liste larghe). Controllare che L'Impostore ricordi le uscite; e che la spia non sappia di esserlo (l'amico lo ha apprezzato) | tutti i giochi con parole | Cervello controlla (lettura), poi chat del gioco | 🟢 | dopo mer |
 
 ---
 
@@ -87,6 +91,13 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande. «Dopo mer» = dopo che la
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
 
+- 27 ott 01:38 · 🎨 Stile (cloud) · salvato sul ramo `grafica-luxury` (su GitHub dal 27 ott 02:30, dopo aver installato l'app di Claude anche sull'account Paky358; non online) · fase 2: lo stile «Bianco e oro» scelto dal proprietario applicato a home, profilo, trofei, statistiche, classifica e amici, novità, codice, Sala, «Come giocate?», impostazioni, saletta, fogli, conferme, avvisi, editor dell'avatar, tornei e «Chi gioca?»; colori in un punto solo (variabili --o-*), titoli col carattere elegante dentro l'app, simboli dorati al posto delle emoji nei tasti; le partite dei giochi restano come prima. Prove copione 24-46, 50, 51, 55, 76, 90, 96 OK; 12 giochi aperti e giocati. Fase 3 (elenco dei giochi da convertire) in docs/stile/fase3-giochi.md · (questo salvataggio)
+
+- 26 ott 22:11 · 🎨 Stile (cloud) · salvato sul ramo `grafica-luxury` (non online) · fase 1: 4 direzioni di stile disegnate (Notte di lusso, Chiaro editoriale, Vetro e metallo, Bianco e oro) per home, saletta e colori dentro ai giochi, confronto in docs/stile/confronto.png; l'app non è cambiata. Aspetta la scelta del proprietario · (questo salvataggio)
+
+- 26 ott 20:55 · L'Impostore · salvato (non online) · chi blocca il telefono online resta in partita (📱) e il voto lo aspetta: prima, se lo facevano in tanti, la partita finiva da sola dopo 20 s (v273); prove 5ib1-5ib5 nuove + 5im1-5im4, imp1-imp6, el1-el7, cg1 OK · (questo salvataggio). In sospeso: 518 coppie nuove in 10 temi aspettano il sì del proprietario; i 250 USD di crediti cloud (scadono il 5 nov) non consumano il limite settimanale; il piano è Max (lo dice l'app, non Pro)
+
+- 26 ott 17:30 · Linea del tempo · PUBBLICATO · Rubala, Epoca, Cambia carta, 1.842 foto, ritardatari, Ognuno la sua linea (v267-v272) · 83b9c3b. Resta: «🤖 Gioca col Bot» (proposta una chat nuova), la decisione sulla carta sbagliata nella linea
 - 26 ott 16:55 · Cervello · salvato · nato il registro del Cervello e la regola del diario nelle istruzioni del progetto
 - 26 ott 16:27 · Linea del tempo · salvato (non online) · Ognuno la sua linea: 5 ritocchi dopo la revisione (v272) · a4941aa
 - 26 ott 15:48 · Linea del tempo · salvato (non online) · 🧍 Ognuno la sua linea (v272) · 044b9b2

@@ -9,6 +9,27 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 274,
+    data: "27 ottobre 2026",
+    titolo: "SPeeD GAME si veste di bianco e oro ✨",
+    descrizione: [
+      "L'app ha un aspetto nuovo, più elegante: fondo avorio, scritte scure e ben leggibili, tasti e dettagli in oro, titoli con un carattere da invito.",
+      "Sono nel nuovo stile la prima schermata, il profilo, i trofei, la classifica, la Sala della serata, «Come giocate?», le impostazioni dei giochi e la saletta d'attesa: gli avatar ora aspettano in una sala chiara con un arco dorato.",
+      "Sui tasti, al posto delle emoji, ci sono simboli dorati puliti; nelle scelte dei giochi, nei trofei e nelle faccine le emoji restano colorate.",
+      "Le partite per ora restano come prima: arriveranno anche loro nel nuovo stile, un gioco alla volta."
+    ]
+  },
+  {
+    v: 273,
+    data: "26 ottobre 2026",
+    titolo: "L'Impostore: blocca pure il telefono 📱",
+    descrizione: [
+      "Online, chi legge la parola e poi blocca il telefono mentre si parla resta in partita: accanto al suo nome compare 📱. Prima, se lo facevano in tanti, dopo 20 secondi la partita finiva da sola per tutti.",
+      "Quando si scrivono gli indizi o si vota, il gioco aspetta chi ha il telefono bloccato: sugli altri telefoni si legge «⏳ Aspettiamo Giulia 📱» (ditelo a voce: un telefono bloccato non si può svegliare). Il voto dura al massimo un minuto e mezzo e si chiude appena hanno votato tutti.",
+      "Riaprendo il telefono si ritrova subito la propria parola. Esce dalla partita solo chi tocca «Esci», o chi non si fa vedere per una mano intera."
+    ]
+  },
+  {
     v: 272,
     data: "26 ottobre 2026",
     titolo: "La Linea del tempo: 🧍 Ognuno la sua linea",

@@ -57,22 +57,24 @@
     W.spegni(X);
     var resto = nomi.filter(function (n) { return n !== X; });
     resto.forEach(function (n) { scrivi(W.finestra(n), "ind" + n.slice(0, 3)); });
-    // dopo 20 s il core dice addio a X: gli indizi si chiudono senza aspettare i 55 s
-    var v = await aspettaPasso(C, "discuti", 40000);
+    // dopo 20 s il core dice addio a X: ha il telefono bloccato (📱, dal 26 ott 2026 resta in partita) e gli indizi lo
+    // aspettano 55 + 50 s, poi si chiudono da soli
+    var v = await aspettaPasso(C, "discuti", 115000);
     if (!v) no("con " + X + " spento gli indizi non si chiudono (" + vm(C).passo + ")");
     var px = (v.players || []).filter(function (p) { return p.nome === X; })[0];
-    if (!px || !px.via) no(X + " non risulta uscito");
+    if (!px || !px.dorme || px.via) no(X + " non risulta col telefono bloccato (📱): " + JSON.stringify(px));
     for (var k = 0; k < resto.length; k++) await pronto(W.finestra(resto[k]));
     if (!await aspettaPasso(C, "voto", 6000)) no("«🗳️ Votiamo» non porta al voto");
     var G = W.finestra(resto[1]);
     if (!await W.aspetta(function () { return bottoniVoto(G).indexOf(X) >= 0; }, 3000)) no(X + " (uscito) non si può votare: " + bottoniVoto(G).join(","));
     resto.forEach(function (n) { if (!vota(W.finestra(n), X)) no(n + " non riesce a votare " + X); });
+    // (il voto aspetta anche lui, che ha il telefono bloccato: 40 + 50 s)
     if (X === imp) {
-      v = await aspettaPasso(C, "esito", 20000);
+      v = await aspettaPasso(C, "esito", 110000);
       if (!v) no("l'impostore uscito e votato fuori: la mano non finisce (" + vm(C).passo + ")");
       if (v.esito.vince !== "cit") no("dovrebbero vincere i cittadini: " + v.esito.vince);
     } else {
-      v = await aspettaPasso(C, "fuori", 15000);
+      v = await aspettaPasso(C, "fuori", 110000);
       if (!v) no(X + " votato fuori: non si svela (" + vm(C).passo + ")");
       if (nomeDi(C, v.ultimoFuori.id) !== X || v.ultimoFuori.ruolo !== "cit") no("ultimoFuori: " + JSON.stringify(v.ultimoFuori));
     }

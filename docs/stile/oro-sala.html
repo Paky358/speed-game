@@ -1,0 +1,81 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=390"><title>4 · Bianco e oro</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap"><style>
+*{box-sizing:border-box}html,body{margin:0}
+body{width:390px;height:844px;overflow:hidden;font-family:-apple-system,"SF Pro Text","Inter",system-ui,sans-serif;color:var(--testo);-webkit-font-smoothing:antialiased}
+.sch{height:844px;padding:50px 18px 20px;display:flex;flex-direction:column;gap:13px;position:relative}
+.stato{position:absolute;top:14px;left:28px;right:28px;display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.i{flex:0 0 auto;display:block}
+.top{text-align:center}.logo{line-height:1.05}
+.btn{display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:var(--rb);font-weight:600;font-size:16px;width:100%;color:var(--testo);border:0}
+.btn-p{color:var(--acc-t)}
+.riga{display:flex;gap:10px}.riga>*{flex:1}
+.chip{display:flex;align-items:center;gap:12px;padding:8px 14px 8px 8px;border-radius:999px;font-size:14px}
+.chip .faccia{width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--surf2);flex:0 0 auto;box-shadow:0 0 0 1px var(--bordo)}
+.chip .faccia svg{width:100%;height:100%;display:block}
+.chip .chi{flex:1}.chip .chi b{font-weight:600;font-size:15px}
+.liv{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--tenue);margin-top:3px}
+.liv .barra{width:74px;height:4px;border-radius:9px;background:var(--surf2);overflow:hidden}.liv .barra i{display:block;width:35%;height:100%;background:var(--acc)}
+.monete{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--acc)}
+.icone{display:flex;gap:8px}.icone a{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0 8px;border-radius:var(--rb);font-size:11px;font-weight:500}
+.icone a span{color:var(--tenue)}
+.tabs{display:flex;gap:7px;overflow:hidden}.tab{padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.griglia{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px;flex:1;min-height:0}
+.tess .foto{background-size:cover;background-position:center}
+.tess .t{padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px}
+.tess h2{margin:0;font-size:15px;font-weight:700;line-height:1.08}
+.tess p{margin:0;font-size:12px;color:var(--tenue);line-height:1.3}
+.tess .meta{font-size:11.5px;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:5px}
+.notte .tess p{color:#cfc9b8}
+.bar{display:flex;align-items:center;gap:12px}.bar h1{margin:0;font-family:var(--tit);font-size:24px;font-weight:700;line-height:1}.bar small{display:block;color:var(--tenue);font-size:12.5px;margin-top:3px}
+.sala-top{display:flex;gap:10px;align-items:stretch}
+.cod{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 18px;border-radius:var(--rb)}
+.cod small{font-size:9.5px;letter-spacing:.24em;color:var(--tenue);font-weight:600}.cod b{font-size:25px;letter-spacing:.16em;margin-right:-.16em;line-height:1.1}
+.stanza{flex:1;min-height:0;border-radius:var(--r);position:relative;overflow:hidden}
+.arco{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke-width:1}
+.ins{position:absolute;top:22px;left:0;right:0;text-align:center;font-size:12.5px;font-weight:700;text-transform:uppercase}
+.conta{position:absolute;left:14px;top:14px;font-size:11.5px;color:var(--tenue);display:none}
+.sotto-ins{position:absolute;top:46px;left:0;right:0;text-align:center;font-size:12px;color:var(--tenue);display:flex;justify-content:center;align-items:center;gap:6px}
+.sotto-ins i{width:7px;height:7px;border-radius:50%;background:#34c759;display:block}
+.gente{position:absolute;left:0;right:0;bottom:22px;height:76%}
+.pers{position:absolute;width:96px;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%)}
+.pers .fig{width:104px;position:relative;z-index:1}.pers .fig svg{width:100%;height:auto;display:block;overflow:visible}
+.pers .pedana{position:absolute;bottom:20px;width:110px;height:26px;border-radius:50%}
+.nomina{z-index:2;margin-top:-6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.nomina .ok{width:15px;height:15px;border-radius:50%;background:#2fb344;color:#fff;display:flex;align-items:center;justify-content:center}
+.nomina em{font-style:normal;color:var(--acc);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.oro .nomina em{color:var(--acc-forte)}
+.classif{display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:var(--rb);font-size:14px;font-weight:600}
+.classif .chev{margin-left:auto;color:var(--tenue)}
+.nota{text-align:center;font-size:12.5px;color:var(--tenue);margin:0}
+:root{--bg:#faf6ee;--surf:#fffdf9;--surf2:#f3ebda;--bordo:#d9c48f;--bordo2:#ebdfc2;--testo:#211b11;--tenue:#6c624f;
+      --acc:#b48a3a;--acc-forte:#8a6a22;--acc-t:#251b06;--ombra:0 8px 24px rgba(110,80,20,.10);--r:20px;--rb:16px;--tit:"Cormorant Garamond",Georgia,serif}
+    body{background:radial-gradient(90% 38% at 50% -6%,#fff 0%,var(--bg) 72%)}
+    .logo{font-family:var(--tit);font-weight:700;font-size:40px;letter-spacing:.05em}.logo b{color:var(--acc);font-weight:700}
+    .logo-sotto{display:flex;align-items:center;gap:10px;justify-content:center;color:var(--acc-forte);font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;margin-top:2px}
+    .logo-sotto:before,.logo-sotto:after{content:"";height:1px;width:40px;background:linear-gradient(90deg,transparent,var(--acc))}.logo-sotto:after{transform:scaleX(-1)}
+    .btn-p{background:linear-gradient(180deg,#dcbd74,#bf9748);color:var(--acc-t);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 8px 18px rgba(150,110,30,.26)}
+    .btn-s{background:var(--surf);border:1px solid var(--bordo);box-shadow:var(--ombra)}
+    .chip{background:var(--surf);border:1px solid var(--bordo2);box-shadow:var(--ombra)} .icone a{background:var(--surf);border:1px solid var(--bordo2);color:var(--acc-forte)}
+    .tab{border:1px solid var(--bordo2);color:var(--tenue);background:var(--surf)} .tab.on{background:var(--testo);color:#f3e2b3;border-color:var(--testo)}
+    .tess{border-radius:var(--r);overflow:hidden;background:var(--surf);border:1px solid var(--bordo2);box-shadow:var(--ombra);display:flex;flex-direction:column}
+    .tess .foto{flex:1;min-height:0;box-shadow:inset 0 -1px 0 var(--bordo2)}
+    .tess h2{font-family:var(--tit);font-size:20.5px;font-weight:700}.tess .meta{color:var(--acc-forte)}
+    .stanza{background:radial-gradient(60% 46% at 50% 28%,#fff,transparent 75%),linear-gradient(180deg,#fffcf5,#f1e7d2);border:1px solid var(--bordo);box-shadow:var(--ombra)}
+    .arco{stroke:rgba(180,138,58,.55)} .ins{font-family:var(--tit);color:var(--acc-forte);letter-spacing:.32em;font-weight:700} .pedana{background:radial-gradient(closest-side,rgba(180,138,58,.30),transparent)}
+    .cod{background:var(--surf);border:1px solid var(--bordo)} .cod b{font-family:var(--tit);font-weight:700}
+    .nomina{background:var(--surf);border:1px solid var(--bordo2)}</style></head><body><div class="sch oro">
+ <div class="stato"><span>9:41</span><span>●●● 100%</span></div>
+ <div class="bar"><span><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></span><div><h1>Sala online</h1><small>Un link per tutti i giochi</small></div></div>
+ <div class="sala-top"><div class="cod"><small>SALA</small><b>KFRT</b></div><div class="btn btn-p"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 14v5h14v-5"/></svg>Invita gli amici</div></div>
+ <div class="stanza">
+  <svg class="arco" viewBox="0 0 354 420" preserveAspectRatio="none"><path d="M40 420V150a137 120 0 0 1 274 0v270"/><path d="M52 420V152a125 110 0 0 1 250 0v268" opacity=".5"/></svg>
+  <div class="ins">Sala d'attesa</div><div class="sotto-ins"><i></i>5 amici · 3 pronti</div>
+  <div class="gente"><div class="pers" style="left:50%;bottom:40%"><div class="pedana"></div><div class="fig" data-om="Paky"></div><div class="nomina"><span class="ok"><svg class="i" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>Paky <em>host</em></div></div><div class="pers" style="left:22%;bottom:44%"><div class="pedana"></div><div class="fig" data-om="Giulia"></div><div class="nomina"><span class="ok"><svg class="i" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>Giulia</div></div><div class="pers" style="left:78%;bottom:44%"><div class="pedana"></div><div class="fig" data-om="Luca"></div><div class="nomina"><span class="ok"><svg class="i" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>Luca</div></div><div class="pers" style="left:34%;bottom:4%"><div class="pedana"></div><div class="fig" data-om="Marta"></div><div class="nomina">Marta</div></div><div class="pers" style="left:66%;bottom:4%"><div class="pedana"></div><div class="fig" data-om="Sara"></div><div class="nomina">Sara</div></div></div>
+ </div>
+ <div class="classif chip"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4c0 3 1 4 4 4M16 6h4c0 3-1 4-4 4M12 13v4M8 20h8"/></svg>Classifica della serata<span class="chev"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span></div>
+ <div class="riga"><div class="btn btn-s" style="flex:0 0 58px"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></div><div class="btn btn-p"><svg class="i" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5l11 7-11 7z"/></svg>Scegli il primo gioco</div></div>
+ <p class="nota">Il gioco parte da solo sul telefono di tutti.</p>
+</div><script src="../../js/omino.js"></script><script>
+document.querySelectorAll("[data-om]").forEach(function (el) {
+  el.innerHTML = SGOmino.svg(SGOmino.casuale(el.dataset.om), el.dataset.viso ? { viso: true } : {});
+});</script></body></html>

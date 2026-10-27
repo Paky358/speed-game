@@ -158,13 +158,20 @@
 
     var contenuto = el("div", { class: "contenuto" });
     var piede = el("div", { class: "piede" });
-    var s = el("div", { class: "schermata" }, [testa, contenuto, piede]);
+    var s = el("div", { class: "schermata oro" }, [testa, contenuto, piede]);   // (🤍 Bianco e oro: le schermate del core sono chiare, vedi js/stile.js)
     s._contenuto = contenuto; s._piede = piede;
     return s;
   }
 
+  // 🤍 le schermate del mondo (città, casa, casinò, negozio, bacheca, edifici) hanno i loro disegni: restano come sono
+  var SCENE_MONDO = /\b(citta-vista|casino-sale|casa-vista|ne-vista|nb-vista|edificio|carica-extra|pe-vista|sv-vista|gd-vista)\b/;
   function mostra(schermo) {
     svuota(app);
+    // 🤍 Bianco e oro: ogni schermata del core è chiara (anche quelle fatte a mano), tranne quelle dei giochi e del mondo
+    if (window.SGStile) {
+      if (!schermo._gioco && !SCENE_MONDO.test(schermo.className || "")) SGStile.marca(schermo);
+      SGStile.aggiorna(schermo);
+    }
     app.appendChild(schermo);
     window.scrollTo(0, 0);
   }
@@ -4487,7 +4494,7 @@
     var io0 = profiloAttivo();
     var chiGioca = (conAmici || torn) ? nomiGruppo() : (inSala ? ((sala && sala.membri) || []).map(function (m) { return m.nome; }) : [(io0 && io0.nome) || nomiGruppo()[0] || "Giocatore 1"]);
     if (typeof g.impostazioni === "function") {
-      box = el("div");
+      box = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
       g.impostazioni(box, impostazioni, { el: el, torneo: torn, sala: inSala, modo: modo, giocatori: chiGioca.slice() });
       if (modo) impostazioni.modo = modo;   // il modo l'avete scelto prima: qui non si cambia
       s._contenuto.appendChild(box);
@@ -5926,7 +5933,7 @@
     if (!R) {
       var imp = {}, box = null;
       if (typeof g.impostazioni === "function") {
-        box = el("div");
+        box = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
         try { g.impostazioni(box, imp, { el: el, sala: true, modo: "online", giocatori: sala.membri.map(function (m) { return m.nome; }) }); }
         catch (e) { setTimeout(function () { throw e; }, 0); }   // (si gioca lo stesso; l'errore resta in console)
       }
@@ -6730,7 +6737,7 @@
     }
     var imp = {}, box = null;
     if (typeof g.impostazioni === "function") {
-      box = el("div");
+      box = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
       try { g.impostazioni(box, imp, { el: el, sala: true, modo: "online", giocatori: sala.membri.map(function (m) { return m.nome; }) }); }
       catch (e) { setTimeout(function () { throw e; }, 0); }
     }
@@ -7670,7 +7677,7 @@
       sala._regoleBox = null;
       if (!gbox && g.impostazioni) {
         if (!E.torneino) imp = {};   // (il torneino riaperto dopo una ricarica tiene le regole che aveva)
-        gbox = el("div", {});
+        gbox = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
         g.impostazioni(gbox, imp, { el: el, sala: true, modo: "online", giocatori: sala.membri.map(function (m) { return m.nome; }) });
       }
       delete imp.scelti; imp.modo = "online"; E.imp = imp;
@@ -9589,7 +9596,7 @@
   function schermataRegole(g, indietro) {
     var s = schermata({ icona: g.icona, titolo: "Come si gioca", sotto: g.nome, indietro: indietro });
     var righe = g.regole || ["(regole non ancora scritte)"];
-    var box = el("div");
+    var box = el("div", { class: "sg-dal-gioco" });   // (🤍 le regole del gioco: le sue emoji restano emoji)
     righe.forEach(function (r) {
       box.appendChild(el("p", { class: "", html: r, style: "font-size:1.05rem; line-height:1.5; margin:0 0 14px" }));
     });
@@ -10817,10 +10824,14 @@
         if (!o.titolo) o = Object.assign({}, o, { icona: null, sotto: null });
         var s = schermata(o);
         if (!o.titolo) s.classList.add("senza-testa");
+        // 🤍 il gioco resta col suo stile finché non lo si converte: tema: "oro" in SG.registra (tutto chiaro),
+        // oppure t.schermata({ chiara: true }) per una schermata sola (classifica, schermate di servizio)
+        if (g.tema !== "oro" && !o.chiara) { s.classList.remove("oro"); s._gioco = true; }
         return s;
       },
       mostra: function (s) {
         if (!viva()) return;
+        if (s && g.tema !== "oro" && !(s.classList && s.classList.contains("oro"))) s._gioco = true;   // (🤍 una schermata del gioco: mostra() non la fa chiara)
         if (salaCtx && salaCtx.tabellone) salaCtx.tabellone(s);   // torneo a eliminazione: tasto 🏆 Tabellone
         if (salaCtx && salaCtx.angolo) salaCtx.angolo(s);   // chi guarda il duello della Sala: "👥 Sala" in alto
         if (lp.stanza && !lp.guarda) dadoNelleSchermate(s, g, lp.stanza);   // chi entra senza profilo: il benvenuto, l'avatar e il 🎲
@@ -11047,7 +11058,7 @@
     }
     var imp = {}, box = null;
     if (typeof g.impostazioni === "function") {
-      box = el("div");
+      box = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
       try { g.impostazioni(box, imp, { el: el, modo: "online", giocatori: [mioNome] }); } catch (e) {}
     }
     Object.keys(o.imp || {}).forEach(function (k) { imp[k] = o.imp[k]; });   // le regole scelte prima (il foglio ⚙️ mostra le scelte di partenza)

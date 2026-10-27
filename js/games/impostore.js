@@ -30,6 +30,9 @@
   // online: quanti giocano e i tempi (in secondi) di ogni momento della mano
   var MIN_ON = 3, MAX_ON = 10;
   var T_INDIZIO = 45, T_LEGGI = 10, T_VOTO = 40, T_ULTIMA = 25, T_ESITO = 20, T_LIBERO = 300, T_FUORI = 12, T_BALLO = 15;
+  // 📱 chi ha bloccato il telefono (si parla tanto: lo fanno tutti) resta in partita; se finito il tempo manca ancora il suo
+  // indizio o il suo voto, lo si aspetta una volta questi secondi in più (26 ott 2026)
+  var T_DORME = 50;
 
   function rnd(n) { return Math.floor(Math.random() * n); }
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = rnd(i + 1), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
@@ -997,7 +1000,9 @@
     function eFuori(id) { return H.elim && H.fase === "gioco" && H.passo !== "esito" && H.fuori.some(function (f) { return f.id === id; }); }
     function vivi() { return H.players.filter(function (p) { return !H.fuori.some(function (f) { return f.id === p.id; }); }); }   // ancora dentro (anche chi è sparito un attimo)
     function attivi() { return presenti().filter(function (p) { return !eFuori(p.id); }); }
-    function servono() { return Math.floor(attivi().length / 2) + 1; }
+    // per «🗳️ Votiamo» / «⏩ Avanti» basta più di metà di chi ha il telefono acceso (e di chi l'ha toccato prima di bloccarlo)
+    function contano() { return attivi().filter(function (p) { return !p.dorme || H.pronti.indexOf(p.id) >= 0; }); }
+    function servono() { return Math.floor(contano().length / 2) + 1; }
     function guardaId(id) { return H.guarda.some(function (x) { return x.id === id; }); }
     function chiave() { return H.partita + "|" + H.mano + "|" + H.passo + "|" + H.giro + "|" + H.turno + (H.ballo ? "b" : ""); }
     function catDi(id) { return H.cats.filter(function (c) { return c.id === id; })[0] || null; }
@@ -1007,16 +1012,23 @@
     // "⚙️ Regole" nella saletta: l'host cambia le impostazioni quando vuole
     t.onRegole = function (im) { if (H.fase !== "lobby") return; H.R = regoleDa(im); bd(); };
 
-    // chi se ne va (uscito apposta, sparito da più di 20 secondi o, dopo una ripresa, non tornato in tempo)
-    function addio(id) {
+    // chi se ne va (uscito apposta, sparito da più di 20 secondi o, dopo una ripresa, non tornato in tempo: sparito = true)
+    function addio(id, sparito) {
       delete attesi[id];
       if (guardaId(id)) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
       if (H.tardi.indexOf(id) >= 0) { H.tardi.splice(H.tardi.indexOf(id), 1); return; }
       var p = pById(id); if (!p || (p.via && H.fase !== "lobby")) return;
+      var bloccato = sparito || p.forse;   // sparito senza salutare (schermo bloccato, app in secondo piano), non uscito apposta
       p.forse = false;
       // nella saletta si toglie e basta (i posti degli altri restano come sono)
       if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
-      p.via = true;   // a partita iniziata resta in classifica, ma non gioca più (se torna riprende il suo posto)
+      // 📱 a partita iniziata chi ha bloccato il telefono resta in partita col suo ruolo: lo si aspetta (prima, 20 secondi dopo
+      // era fuori e con meno di 3 rimasti la partita finiva per tutti). Esce solo chi tocca «Esci» o chi dorme due mani di fila
+      if (bloccato && H.fase === "gioco") {
+        if (!p.dorme) { p.dorme = true; p.dormeMano = H.partita + "|" + H.mano; }
+        controlla(); bd(); return;
+      }
+      p.via = true; p.dorme = false;   // a partita iniziata resta in classifica, ma non gioca più (se torna riprende il suo posto)
       if (H.fase === "gioco" && presenti().length < MIN_ON) return fine();
       controlla(); bd();
     }
@@ -1034,6 +1046,8 @@
       onAddio: addio,
       onMsg: function (id, m) {
         if (!m || !m.t) return;
+        var ds = pById(id);
+        if (ds && ds.dorme) { ds.dorme = false; if (m.t !== "join") { controlla(); bd(); } }   // 📱 ha riaperto il telefono
         if (m.t === "join") {
           delete attesi[id];   // (dopo una ripresa: è tornato)
           var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
@@ -1110,7 +1124,7 @@
         spoglio: H.spoglio,
         ultima: u ? { chi: u.chi, scelte: u.scelte, scelto: u.scelto, giusto: u.giusto, parola: u.scelto != null && u.svela && H.seg ? H.seg.parola : null } : null,
         esito: H.esito, classifica: H.classifica,
-        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, piu: p.piu || 0, via: !!p.via, forse: !!p.forse, fuori: eFuori(p.id) || undefined,
+        players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, piu: p.piu || 0, via: !!p.via, forse: !!p.forse, dorme: !!p.dorme || undefined, fuori: eFuori(p.id) || undefined,
           omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }),
         guarda: H.guarda };
     }
@@ -1181,8 +1195,18 @@
       controlla(); bd();
     }
     // gli indizi del giro si svelano tutti insieme (anche "—" per chi non ha scritto). A eliminazione: uno a testa per ogni giro
+    // 📱 il tempo è finito ma chi ha bloccato il telefono non ha ancora scritto o votato: lo si aspetta UNA volta T_DORME
+    // secondi in più (sui telefoni accesi «⏳ Aspettiamo Giulia 📱»; appena ci sono tutti si chiude subito)
+    function aspettaChiDorme(fn) {
+      if (H.attesa === chiave()) return false;
+      var manca = attivi().some(function (p) { return p.dorme && (H.passo === "voto" ? H.voti[p.id] == null : H.ordine.indexOf(p.id) >= 0 && H.cor[p.id] == null); });
+      if (!manca) return false;
+      H.attesa = chiave(); scade(T_DORME); dopo(T_DORME * 1000, fn); bd();
+      return true;
+    }
     function chiudiIndizi() {
       if (H.passo !== "indizi") return;
+      if (aspettaChiDorme(chiudiIndizi)) return;
       H.players.forEach(function (p) {
         if (H.ordine.indexOf(p.id) < 0 && H.cor[p.id] == null) return;
         if (eFuori(p.id)) return;
@@ -1210,6 +1234,7 @@
     }
     function chiudiVoto() {
       if (H.passo !== "voto") return;
+      if (aspettaChiDorme(chiudiVoto)) return;
       var n = H.players.length;
       H.vv = H.players.map(function (p) { return H.voti[p.id] != null ? iDi(H.voti[p.id]) : null; });
       H.V = contaVoti(n, H.vv);
@@ -1302,7 +1327,7 @@
       if (chi == null) chi = H.seg.imp;
       H.ultima = { chi: chi, scelte: scelteUltima(H.cats, H.seg.cat, H.seg.parola, H.seg.simile), scelto: null, giusto: null };
       H.passo = "ultima"; H.giro = 0;
-      var q = pById(chi), sec = q && !q.via ? T_ULTIMA : 4;   // (se è uscito, si aspetta poco)
+      var q = pById(chi), sec = q && !q.via ? T_ULTIMA + (q.dorme ? T_DORME : 0) : 4;   // (se è uscito, si aspetta poco; 📱 se ha il telefono bloccato, di più)
       scade(sec); dopo(sec * 1000, function () { indovina(chi, null, true); }); bd();
     }
     function indovina(id, w, scaduto) {
@@ -1354,6 +1379,11 @@
     function avantiEsito() {
       if (H.fase !== "gioco" || H.passo !== "esito") return;
       if (H.mano >= H.R.mani) return fine();
+      // 📱 chi ha il telefono bloccato da prima di questa mano (non si è visto per una mano intera) non riceve la parola nuova:
+      // è come uscito, e se torna rientra. Chi l'ha bloccato in questa mano invece gioca anche la prossima
+      var ora = H.partita + "|" + H.mano;
+      H.players.forEach(function (p) { if (p.dorme && p.dormeMano !== ora) { p.dorme = false; p.via = true; } });
+      if (presenti().length < MIN_ON) return fine();
       nuovaMano();
     }
     // qualcuno ha finito (o è uscito): se ci sono tutti si va avanti senza aspettare il tempo
@@ -1382,7 +1412,7 @@
       ferma(); H.fase = "lobby"; H.passo = null; H.mano = 0; H.classifica = null; H.tardi = [];
       H.seg = H.V = H.vv = H.spoglio = H.ultima = H.esito = null; H.ordine = []; H.ind = {}; H.cor = {}; H.voti = {}; H.pronti = []; H.scadenza = 0;
       H.elim = false; H.turno = 0; H.fuori = []; H.pari = 0; H.ballo = null; H.ultimoFuori = null; H.dec = null;
-      H.players = presenti();
+      H.players = presenti().filter(function (p) { return !p.dorme; });   // (📱 chi ha il telefono bloccato rientra col suo join)
       // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
       if (!pById(IO)) {
         var g0 = H.guarda.filter(function (x) { return x.id === IO; })[0];
@@ -1399,7 +1429,7 @@
     // (gli amici intanto rientrano). I punti si danno solo a fine mano (chiudiMano): una mano già chiusa resta chiusa,
     // e sulla classifica finale si resta lì (t.risultato l'aveva già dato chi teneva la partita)
     function riprendi() {
-      tAttesi = setTimeout(function () { tAttesi = null; if (!uscito) Object.keys(attesi).forEach(addio); }, 15000);
+      tAttesi = setTimeout(function () { tAttesi = null; if (!uscito) Object.keys(attesi).forEach(function (id) { addio(id, true); }); }, 15000);   // (📱 forse ha solo il telefono bloccato)
       // i trofei di questa mano li avevo già contati prima di ricaricare
       if (!R0.daRiserva && H.passo === "esito") MEM.fatti[H.codice + "|" + chiave()] = 1;
       if (H.fase !== "gioco") { H.scadenza = 0; return bd(); }
@@ -1689,13 +1719,19 @@
     return { nodo: box, agg: function (v) {
       tutti.forEach(function (id) {
         var p = trova(v, id) || {}, x = righe[id];
-        setTx(x.segno, x.f ? "🚪" : p.via ? "🚪" : p.forse ? "📶" : correnti ? ((v.scritto || []).indexOf(id) >= 0 ? "✅" : "✍️") : "");
+        setTx(x.segno, x.f ? "🚪" : p.via ? "🚪" : correnti && (v.scritto || []).indexOf(id) >= 0 ? "✅" : p.dorme ? "📱" : p.forse ? "📶" : correnti ? "✍️" : "");
         x.r.classList.toggle("via", !!p.via);
       });
     } };
   }
   // quanti giocano davvero in questo momento (presenti e, a eliminazione, non fuori)
   function attiviVm(v) { return presentiVm(v).filter(function (p) { return !p.fuori; }); }
+  // 📱 «⏳ Aspettiamo Giulia e Luca 📱»: chi ha il telefono bloccato e non ha ancora fatto (fatti = gli id che hanno fatto)
+  function aspettiamo(v, fatti, myId) {
+    var l = attiviVm(v).filter(function (p) { return p.dorme && p.id !== myId && (fatti || []).indexOf(p.id) < 0; }).map(function (p) { return p.nome; });
+    if (!l.length) return "";
+    return " · ⏳ Aspettiamo " + (l.length > 1 ? l.slice(0, -1).join(", ") + " e " + l[l.length - 1] : l[0]) + " 📱";
+  }
   // "In gioco: 🕵️ 1 impostore · 🎭 1 spia" (a eliminazione anche quanti sono ancora dentro)
   function testoRuoli(vm) {
     var n = vm.nImp || 1, s = "In gioco: 🕵️ " + n + (n > 1 ? " impostori" : " impostore") + (vm.conSpia ? " · 🎭 1 spia" + (vm.spiaNonSa ? " (che non lo sa!)" : "") : "");
@@ -1749,7 +1785,7 @@
     zonaScrivi();
     return { zona: zonaScrivi, agg: function (v) {
       lista.agg(v);
-      setTx(conto, "✍️ " + (v.scritto || []).length + " su " + attiviVm(v).length + " hanno scritto");
+      setTx(conto, "✍️ " + (v.scritto || []).length + " su " + attiviVm(v).length + " hanno scritto" + aspettiamo(v, v.scritto, cb.myId));
       // l'indizio non è arrivato all'host (rete saltata): lo rimando
       var mio = cb.mio.ind;
       if (mio && mio.k === k && (v.scritto || []).indexOf(cb.myId) < 0 && Date.now() - mio.quando > 3000) { mio.quando = Date.now(); cb.onIndizio(mio.testo); }
@@ -1812,7 +1848,7 @@
       var mio = cb.mio.voto && cb.mio.voto.k === k ? cb.mio.voto : null;
       cand.forEach(function (id) { var p = trova(v, id) || {}; bot[id].classList.toggle("scelto", !!mio && mio.chi === id); bot[id].classList.toggle("via", !!p.via); });
       var n = (v.votato || []).length, tot = attiviVm(v).length;
-      setTx(conto, (mio ? "Hai votato " + (trova(v, mio.chi) || {}).nome + " · " : "") + "✅ " + n + " su " + tot + " hanno votato");
+      setTx(conto, (mio ? "Hai votato " + (trova(v, mio.chi) || {}).nome + " · " : "") + "✅ " + n + " su " + tot + " hanno votato" + aspettiamo(v, v.votato, cb.myId));
       // il voto non è arrivato all'host (rete saltata): lo rimando
       if (mio && (v.votato || []).indexOf(cb.myId) < 0 && Date.now() - mio.quando > 3000) { mio.quando = Date.now(); cb.onVoto(mio.chi); }
     }

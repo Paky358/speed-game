@@ -248,15 +248,20 @@
     await pronto(P); await pronto(W.finestra("Giulia")); await pronto(W.finestra("Sara"));
     v = await W.aspetta(function () { var x = vm(C); return x.mano === 2 && x.passo === "indizi" ? x : null; }, 4000);
     if (!v) no("«⏩ Avanti» da 3 su 4 non fa partire la mano 2 (" + vm(C).mano + " " + vm(C).passo + ")");
-    // mano 2: Sara si spegne più di 20 s; gli altri scrivono, il giro si chiude da solo a tempo (o subito: lei è "via")
+    // mano 2: Sara si spegne più di 20 s (📱 telefono bloccato: resta in partita, dal 26 ott 2026); gli altri scrivono e il giro
+    // la aspetta; Sara riaccende, ritrova la sua carta e scrive: il giro si chiude
     W.spegni("Sara");
-    await W.aspetta(function () { var p = (vm(C).players || []).filter(function (x) { return x.nome === "Sara"; })[0]; return p && p.via; }, 26000);
-    if (!(vm(C).players || []).filter(function (x) { return x.nome === "Sara"; })[0].via) no("Sara spenta non risulta uscita dopo 20 s");
-    v = await giroIndizi(C, ["Paky", "Giulia", "Luca"]);
+    await W.aspetta(function () { var p = (vm(C).players || []).filter(function (x) { return x.nome === "Sara"; })[0]; return p && p.dorme; }, 26000);
+    var ps = (vm(C).players || []).filter(function (x) { return x.nome === "Sara"; })[0];
+    if (!ps.dorme || ps.via) no("Sara spenta dopo 20 s non ha 📱 (o è uscita): " + JSON.stringify(ps));
+    ["Paky", "Giulia", "Luca"].forEach(function (n) { scrivi(W.finestra(n), "indizio" + n.slice(0, 3) + "1"); });
+    await W.dorme(3000);
+    if (vm(C).passo !== "indizi") no("il giro di indizi si è chiuso senza aspettare Sara (📱)");
+    if (!/Aspettiamo Sara/.test(T(P))) no("Paky non legge «⏳ Aspettiamo Sara 📱»");
     W.riaccendi("Sara");
-    if (!await W.aspetta(function () { var p = (vm(C).players || []).filter(function (x) { return x.nome === "Sara"; })[0]; return p && !p.via; }, 10000)) no("Sara riaccesa non torna in partita");
+    if (!await W.aspetta(function () { var p = (vm(C).players || []).filter(function (x) { return x.nome === "Sara"; })[0]; return p && !p.via && !p.dorme; }, 10000)) no("Sara riaccesa non torna in partita");
     if (!await W.aspetta(function () { return ruoloDi(W.finestra("Sara")); }, 6000)) no("Sara tornata non ha la sua carta della mano 2");
-    if (vm(C).passo === "indizi") v = await giroIndizi(C, nomi);
+    while (vm(C).passo === "indizi") v = await giroIndizi(C, nomi);   // (Sara scrive il suo; poi c'è ancora il 2° giro)
     v = await aspettaPasso(C, "discuti", 6000); if (!v) no("mano 2: niente discussione");
     await pronto(P); await pronto(W.finestra("Giulia")); await pronto(W.finestra("Luca"));
     v = await aspettaPasso(C, "voto", 4000); if (!v) no("mano 2: niente voto");

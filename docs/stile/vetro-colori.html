@@ -1,0 +1,70 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=390"><title>3 · Vetro e metallo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"><style>
+*{box-sizing:border-box}html,body{margin:0}
+body{width:390px;height:auto;font-family:-apple-system,"SF Pro Text","Inter",system-ui,sans-serif;color:var(--testo);-webkit-font-smoothing:antialiased}
+.sch{height:844px;padding:50px 18px 20px;display:flex;flex-direction:column;gap:13px;position:relative}
+.stato{position:absolute;top:14px;left:28px;right:28px;display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.i{flex:0 0 auto;display:block}
+.top{text-align:center}.logo{line-height:1.05}
+.btn{display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;border-radius:var(--rb);font-weight:600;font-size:16px;width:100%;color:var(--testo);border:0}
+.btn-p{color:var(--acc-t)}
+.riga{display:flex;gap:10px}.riga>*{flex:1}
+.chip{display:flex;align-items:center;gap:12px;padding:8px 14px 8px 8px;border-radius:999px;font-size:14px}
+.chip .faccia{width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--surf2);flex:0 0 auto;box-shadow:0 0 0 1px var(--bordo)}
+.chip .faccia svg{width:100%;height:100%;display:block}
+.chip .chi{flex:1}.chip .chi b{font-weight:600;font-size:15px}
+.liv{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--tenue);margin-top:3px}
+.liv .barra{width:74px;height:4px;border-radius:9px;background:var(--surf2);overflow:hidden}.liv .barra i{display:block;width:35%;height:100%;background:var(--acc)}
+.monete{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--acc)}
+.icone{display:flex;gap:8px}.icone a{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0 8px;border-radius:var(--rb);font-size:11px;font-weight:500}
+.icone a span{color:var(--tenue)}
+.tabs{display:flex;gap:7px;overflow:hidden}.tab{padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.griglia{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px;flex:1;min-height:0}
+.tess .foto{background-size:cover;background-position:center}
+.tess .t{padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px}
+.tess h2{margin:0;font-size:15px;font-weight:700;line-height:1.08}
+.tess p{margin:0;font-size:12px;color:var(--tenue);line-height:1.3}
+.tess .meta{font-size:11.5px;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:5px}
+.notte .tess p{color:#cfc9b8}
+.bar{display:flex;align-items:center;gap:12px}.bar h1{margin:0;font-family:var(--tit);font-size:24px;font-weight:700;line-height:1}.bar small{display:block;color:var(--tenue);font-size:12.5px;margin-top:3px}
+.sala-top{display:flex;gap:10px;align-items:stretch}
+.cod{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 18px;border-radius:var(--rb)}
+.cod small{font-size:9.5px;letter-spacing:.24em;color:var(--tenue);font-weight:600}.cod b{font-size:25px;letter-spacing:.16em;margin-right:-.16em;line-height:1.1}
+.stanza{flex:1;min-height:0;border-radius:var(--r);position:relative;overflow:hidden}
+.arco{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke-width:1}
+.ins{position:absolute;top:22px;left:0;right:0;text-align:center;font-size:12.5px;font-weight:700;text-transform:uppercase}
+.conta{position:absolute;left:14px;top:14px;font-size:11.5px;color:var(--tenue);display:none}
+.sotto-ins{position:absolute;top:46px;left:0;right:0;text-align:center;font-size:12px;color:var(--tenue);display:flex;justify-content:center;align-items:center;gap:6px}
+.sotto-ins i{width:7px;height:7px;border-radius:50%;background:#34c759;display:block}
+.gente{position:absolute;left:0;right:0;bottom:22px;height:76%}
+.pers{position:absolute;width:96px;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%)}
+.pers .fig{width:104px;position:relative;z-index:1}.pers .fig svg{width:100%;height:auto;display:block;overflow:visible}
+.pers .pedana{position:absolute;bottom:20px;width:110px;height:26px;border-radius:50%}
+.nomina{z-index:2;margin-top:-6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.nomina .ok{width:15px;height:15px;border-radius:50%;background:#2fb344;color:#fff;display:flex;align-items:center;justify-content:center}
+.nomina em{font-style:normal;color:var(--acc);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.oro .nomina em{color:var(--acc-forte)}
+.classif{display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:var(--rb);font-size:14px;font-weight:600}
+.classif .chev{margin-left:auto;color:var(--tenue)}
+.nota{text-align:center;font-size:12.5px;color:var(--tenue);margin:0}
+:root{--bg:#0a0d12;--surf:rgba(255,255,255,.07);--surf2:rgba(255,255,255,.11);--bordo:rgba(255,255,255,.15);--testo:#eef2f6;--tenue:#94a0ad;
+      --acc:#8fd3ff;--acc-t:#0b1117;--ombra:0 10px 34px rgba(0,0,0,.45);--r:24px;--rb:18px;--tit:"Inter",-apple-system,system-ui,sans-serif}
+    body{background:radial-gradient(55% 35% at 10% 2%,rgba(143,211,255,.22),transparent 70%),radial-gradient(60% 40% at 95% 45%,rgba(170,180,200,.16),transparent 70%),linear-gradient(180deg,#121921,#090c10)}
+    .logo{font-weight:700;font-size:34px;letter-spacing:-.03em;background:linear-gradient(180deg,#fff 30%,#8e9aa7);-webkit-background-clip:text;color:transparent}
+    .btn-p{background:linear-gradient(180deg,#f4f7fa,#b9c4cf);color:var(--acc-t);box-shadow:inset 0 1px 0 #fff,0 8px 22px rgba(0,0,0,.35)}
+    .btn-s,.chip,.icone a,.tab{background:var(--surf);border:1px solid var(--bordo);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+    .icone a{color:var(--testo)} .tab{color:var(--tenue)} .tab.on{background:#e9eef3;color:#0b1117}
+    .tess{display:flex;flex-direction:column;border-radius:var(--r);padding:7px;background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.04));border:1px solid var(--bordo);backdrop-filter:blur(16px)}
+    .tess .foto{border-radius:17px;flex:1;min-height:0}.tess .meta{color:var(--acc)}
+    .stanza{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.02));border:1px solid var(--bordo)}
+    .arco{stroke:rgba(255,255,255,.2)} .ins{color:var(--tenue);letter-spacing:.34em;font-weight:600} .pedana{background:radial-gradient(closest-side,rgba(143,211,255,.3),transparent)}
+    .cod{background:var(--surf);border:1px solid var(--bordo)}
+    .nomina{background:rgba(255,255,255,.12);border:1px solid var(--bordo);backdrop-filter:blur(10px)}</style></head><body><div class="sch vetro" style="height:auto;padding-top:22px">
+ <div class="bar"><div><h1>Dentro ai giochi</h1><small>Squadre, giocatori e punti sul fondo di questo stile</small></div></div>
+ <div class="riga"><div class="btn" style="background:#e03131;color:#fff;min-height:64px;flex-direction:column;gap:0">Rossi<small style="font-size:10.5px;opacity:.9;font-weight:500">testo 4.5:1</small></div><div class="btn" style="background:#1c7ed6;color:#fff;min-height:64px;flex-direction:column;gap:0">Blu<small style="font-size:10.5px;opacity:.9;font-weight:500">testo 4.2:1</small></div><div class="btn" style="background:#2f9e44;color:#fff;min-height:64px;flex-direction:column;gap:0">Verdi<small style="font-size:10.5px;opacity:.9;font-weight:500">testo 3.4:1</small></div></div>
+ <div class="chip" style="border-radius:var(--rb);padding:8px 14px 8px 8px"><div class="faccia" data-om="Paky" data-viso="1" style="box-shadow:0 0 0 2.5px #e8590c"></div><div class="chi"><b>Paky</b><div class="liv" style="color:#e8590c;font-weight:600">● il suo colore · 4.6:1 sul fondo</div></div><b style="font-size:18px">2.450</b></div><div class="chip" style="border-radius:var(--rb);padding:8px 14px 8px 8px"><div class="faccia" data-om="Giulia" data-viso="1" style="box-shadow:0 0 0 2.5px #7048e8"></div><div class="chi"><b>Giulia</b><div class="liv" style="color:#7048e8;font-weight:600">● il suo colore · 3.0:1 sul fondo</div></div><b style="font-size:18px">1.250</b></div><div class="chip" style="border-radius:var(--rb);padding:8px 14px 8px 8px"><div class="faccia" data-om="Luca" data-viso="1" style="box-shadow:0 0 0 2.5px #0ca678"></div><div class="chi"><b>Luca</b><div class="liv" style="color:#0ca678;font-weight:600">● il suo colore · 5.3:1 sul fondo</div></div><b style="font-size:18px">980</b></div><div class="chip" style="border-radius:var(--rb);padding:8px 14px 8px 8px"><div class="faccia" data-om="Marta" data-viso="1" style="box-shadow:0 0 0 2.5px #d6336c"></div><div class="chi"><b>Marta</b><div class="liv" style="color:#d6336c;font-weight:600">● il suo colore · 3.6:1 sul fondo</div></div><b style="font-size:18px">640</b></div>
+ <div class="riga"><div class="btn btn-s">Esci</div><div class="btn btn-p">Rivincita</div></div>
+</div><script src="../../js/omino.js"></script><script>
+document.querySelectorAll("[data-om]").forEach(function (el) {
+  el.innerHTML = SGOmino.svg(SGOmino.casuale(el.dataset.om), el.dataset.viso ? { viso: true } : {});
+});</script></body></html>
