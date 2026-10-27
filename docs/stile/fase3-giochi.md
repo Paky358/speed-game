@@ -9,7 +9,11 @@ Scritto il 26 ott 2026 dalla chat «🎨 Stile», dopo la fase 2 (home, profilo,
 - oppure `t.schermata({ chiara: true })` → solo quella schermata (es. la classifica finale, «Entro nella partita…», gli errori).
 - I colori stanno tutti in un punto solo: le variabili `--o-*` in fondo a `css/styles.css` (sezione «BIANCO E ORO»).
 
-## Il pezzo grosso in comune: lo studio TV
+## Lo studio TV: resta com'è (deciso dal proprietario il 27 ott 2026)
+
+Vista la proposta «studio in Bianco e oro» (docs/stile/proposte/studio.html) il proprietario ha detto: «non modificare lo studio, tutto oro non mi piace». Lo studio non si tocca; nei suoi 7 giochi diventa chiara solo la cornice. Sotto la nota di prima, per memoria.
+
+### (nota di prima)
 Sette giochi usano lo stesso studio da game show scuro (`js/studio.js`): **La Balla Colossale, Nomi Cose e Città, Parola d'ordine, La Patata Bollente, Il Prezzo è Giusto, La Ruota della Fortuna, La Linea del tempo**. Rifarlo una volta in versione «studio elegante» (avorio, legno chiaro, luci calde, oro) cambia sette giochi insieme. Lavoro: **grande** (circa una giornata di lavoro di un aiutante), ma vale per sette.
 
 ## I giochi, da quello che stona di più
