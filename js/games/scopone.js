@@ -60,6 +60,7 @@
     id: ID,
     nome: "Scopone",
     icona: "🃏",
+    tema: "oro",   // 🤍 Bianco e oro: impostazioni, riepiloghi e schermate di servizio chiari; il tavolo resta una stanza vera (schermata «scura»)
     descrizione: "Lo scopone in quattro, a coppie: tu e il tuo compagno contro due avversari. Scientifico o classico, contro i Bot o online, ognuno dal suo telefono (i posti vuoti li fanno i Bot).",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i Bot)
     postiOnline: 4,   // 4 al tavolo: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
@@ -97,7 +98,7 @@
       var bSci, bCla;
       // c'è una partita lasciata a metà? lo diciamo subito (si riprende toccando Comincia)
       var prof = !online && window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo(), sosp = online ? null : leggiSalvata(prof && prof.nome ? String(prof.nome).trim().slice(0, 16) : undefined);
-      if (sosp) box.appendChild(el("p", { class: "modulo-nota", style: "margin:0 0 10px;padding:8px 10px;border-radius:10px;background:rgba(255,212,59,.14);border:1.5px solid rgba(255,212,59,.5)",
+      if (sosp) box.appendChild(el("p", { class: "modulo-nota", style: "margin:0 0 10px;padding:8px 10px;border-radius:10px;background:var(--o-crema);border:1.5px solid var(--o-filo-oro)",
         html: "⏸️ Hai una partita a metà (<b>Noi " + sosp.st.punti.noi + " — " + sosp.st.punti.loro + " Loro</b>): tocca <b>Comincia</b> per riprenderla o per farne una nuova." }));
       function selV(v) { dove.variante = v; bSci.className = "modo-chip" + (v === "scientifico" ? " attiva" : ""); bCla.className = "modo-chip" + (v === "classico" ? " attiva" : ""); }
       bSci = el("button", { class: "modo-chip attiva", onclick: function () { selV("scientifico"); } }, [
@@ -153,7 +154,7 @@
       var p = sv.st.punti, s2 = t.schermata({ icona: "🃏", titolo: "Partita in sospeso", sotto: "Scopone " + (sv.st.variante === "classico" ? "classico" : "scientifico"), indietro: t.esci });
       s2._contenuto.appendChild(t.el("p", { style: "text-align:center;font-size:1.05rem;line-height:1.5", text: "Avevi lasciato una partita a metà. Vuoi riprenderla?" }));
       s2._contenuto.appendChild(t.el("div", { style: "text-align:center;font-size:1.4rem;font-weight:800;margin:10px 0",
-        html: "Noi <span style='color:#69db7c'>" + p.noi + "</span> — " + p.loro + " Loro <span class='tenue' style='font-size:.9rem'>(" + C().testoTraguardo(sv.st.traguardo) + ")</span>" }));
+        html: "Noi <span style='color:var(--o-verde)'>" + p.noi + "</span> — " + p.loro + " Loro <span class='tenue' style='font-size:.9rem'>(" + C().testoTraguardo(sv.st.traguardo) + ")</span>" }));
       s2._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "▶ Riprendi la partita", onclick: function () { localeScopone(t, sv.st.variante, sv.diff || "medio", sv.aiuto !== false, sv.st); } }));
       s2._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🔄 Nuova partita", onclick: nuova }));
       t.mostra(s2);
@@ -1291,14 +1292,14 @@
       ".sc-avv-carte .sc-dorso{transition:transform .25s ease}",
       ".sc-fumetto.sp-dx{transform-origin:100% 100%}",
       ".sc-fumetto.sp-dx::after{left:auto;right:-6px;border:7px solid transparent;border-left-color:#fff;border-right:0}",
-      ".sc-fumetto.scopa.sp-dx::after{border-left-color:#ffc21a}",
+      ".sc-fumetto.scopa.sp-dx::after{border-left-color:var(--o-oro)}",
       ".sc-fumetto.sp-frase{font-size:.95rem}",
       // online: chi guarda tocca la riga sotto la mano per vedere le carte di un altro
       ".sc-prese.sp-guardo{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}",
-      ".sp-tocca{display:inline-block;background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400;font-weight:900;border-radius:999px;padding:1px 10px;margin-right:6px;animation:spPulsa 1.2s ease-in-out infinite}",
+      ".sp-tocca{display:inline-block;background:var(--o-tasto);color:var(--o-tasto-testo);font-weight:900;border-radius:999px;padding:1px 10px;margin-right:6px;animation:spPulsa 1.2s ease-in-out infinite}",
       "@keyframes spPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}",
       // online: un avviso che passa (uscito, tornato, coppie sorteggiate…)
-      ".sp-avviso{position:absolute;left:50%;top:44px;transform:translateX(-50%);z-index:9;max-width:92%;text-align:center;background:rgba(10,18,50,.92);border:1.5px solid #ffd43b;color:#fff;font-weight:800;font-size:.85rem;padding:6px 12px;border-radius:12px;pointer-events:none;animation:spAvviso 3.6s ease forwards}",
+      ".sp-avviso{position:absolute;left:50%;top:44px;transform:translateX(-50%);z-index:9;max-width:92%;text-align:center;background:var(--o-carta);border:1.5px solid var(--o-oro);color:var(--o-testo);font-weight:800;font-size:.85rem;padding:6px 12px;border-radius:12px;pointer-events:none;animation:spAvviso 3.6s ease forwards}",
       "@keyframes spAvviso{0%{opacity:0;transform:translate(-50%,-8px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-8px)}}",
       ".sp-avanti{display:flex;flex-direction:column;align-items:center;gap:4px}",
       ".sp-avanti .btn{margin:0}",
@@ -1308,14 +1309,14 @@
       ".sp-stretto .sp-avs{display:none}.sp-stretto .sp-storico{margin-top:3px}",
       ".sp-scambia{margin:0 0 6px!important;min-height:0!important;padding:7px 12px!important;font-size:.9rem!important}",
       // 🤫 il tasto vicino alla mano e il pannellino delle frasi
-      ".sp-psst{position:absolute;right:8px;bottom:calc(5px + env(safe-area-inset-bottom));z-index:7;margin:0;min-height:0;height:28px;padding:0 10px;border-radius:999px;border:1.5px solid rgba(255,255,255,.4);background:rgba(10,18,50,.8);color:#fff;font-weight:900;font-size:.85rem;line-height:1;cursor:pointer}",
+      ".sp-psst{position:absolute;right:8px;bottom:calc(5px + env(safe-area-inset-bottom));z-index:7;margin:0;min-height:0;height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--o-filo-oro);background:var(--o-carta);color:var(--o-testo);font-weight:900;font-size:.85rem;line-height:1;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.3)}",
       ".sp-psst[disabled]{opacity:.4;cursor:default}",
-      ".sp-psst-pan{position:absolute;left:8px;right:8px;bottom:100%;margin-bottom:6px;z-index:8;background:rgba(10,18,50,.97);border:1.5px solid #ffd43b;border-radius:14px;padding:8px;box-shadow:0 6px 18px rgba(0,0,0,.45);animation:spPan .18s ease-out}",
+      ".sp-psst-pan{position:absolute;left:8px;right:8px;bottom:100%;margin-bottom:6px;z-index:8;background:var(--o-carta);border:1.5px solid var(--o-oro);border-radius:14px;padding:8px;box-shadow:0 6px 18px rgba(0,0,0,.4);animation:spPan .18s ease-out}",
       "@keyframes spPan{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}",
-      ".sp-psst-tit{font-size:.8rem;font-weight:800;text-align:center;margin:0 26px 6px;color:#fff}",
+      ".sp-psst-tit{font-size:.8rem;font-weight:800;text-align:center;margin:0 26px 6px;color:var(--o-testo)}",
       ".sp-psst-gr{display:grid;grid-template-columns:1fr 1fr;gap:6px}",
-      ".sp-psst-f{margin:0;min-height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-weight:800;font-size:.82rem;padding:4px 6px;line-height:1.15;cursor:pointer}",
-      ".sp-psst-x{position:absolute;top:3px;right:4px;margin:0;min-height:0;background:none;border:0;color:#fff;font-size:1.05rem;padding:3px 8px;cursor:pointer}",
+      ".sp-psst-f{margin:0;min-height:38px;border-radius:10px;border:1px solid var(--o-filo-oro);background:var(--o-carta-2);color:var(--o-testo);font-weight:800;font-size:.82rem;padding:4px 6px;line-height:1.15;cursor:pointer}",
+      ".sp-psst-x{position:absolute;top:3px;right:4px;margin:0;min-height:0;background:none;border:0;color:var(--o-tenue);font-size:1.05rem;padding:3px 8px;cursor:pointer}",
       // fine mano: tabella Noi / Loro
       ".sp-tab{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:4px;font-size:.95rem}",
       ".sp-tab > div{padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);text-align:center}",
@@ -1323,6 +1324,12 @@
       ".sp-tab > div.th{background:none;font-weight:800;color:rgba(255,255,255,.75);padding:2px 8px;line-height:1.15}",
       ".sp-tab > div.ok{background:rgba(105,219,124,.18);font-weight:800}",
       ".sp-tab > div.tot{background:rgba(255,212,59,.14);font-weight:800}",
+      ".g-scopone.oro .sp-tab > div{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".g-scopone.oro .sp-tab > div.th{background:none;box-shadow:none;color:var(--o-tenue)}",
+      ".g-scopone.oro .sp-tab > div.ok{background:var(--o-verde-tenue);color:var(--o-verde);box-shadow:inset 0 0 0 1px var(--o-verde)}",
+      ".g-scopone.oro .sp-tab > div.tot{background:var(--o-crema);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".g-scopone.oro .sp-tot{font-family:var(--o-tit);font-weight:700;font-variant-numeric:lining-nums}",
+      ".g-scopone .sp-ult{background:var(--o-crema);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
       ".sp-avs{display:flex;justify-content:center;gap:10px;margin:2px 0 6px}",
       ".sp-avs > div{width:78px}",
       ".sp-avs svg{display:block;width:100%;height:auto}",
@@ -1427,7 +1434,7 @@
       if (mont && mont.cont && document.body.contains(mont.s)) {
         mont.cont.replaceChild(box, mont.box); mont.piede.innerHTML = "";
       } else {
-        var s = t.schermata({ indietro: function () { cb.onIndietro(); } });
+        var s = t.schermata({ scura: true, indietro: function () { cb.onIndietro(); } });   // (scura: la stanza col tavolo vero)
         s.classList.add("sc-piena");   // stanza da bordo a bordo
         s._contenuto.appendChild(box); t.mostra(s); schermo = s;
         mont = { s: s, cont: s._contenuto, piede: s._piede };
@@ -1458,8 +1465,8 @@
       mont.guardo = guardo;
       var mioTurno = (!guardo && st.turno === 0 && st.fase === "gioco" && !st.presa && !st.resto);
       var testoPunti = guardo   // chi guarda: i nomi delle coppie (da che parte sta lui non conta)
-        ? corto(st.nomi[0]) + "+" + corto(st.nomi[2]) + " <b style='color:#69db7c'>" + st.punti.noi + "</b> — <b>" + st.punti.loro + "</b> " + corto(st.nomi[1]) + "+" + corto(st.nomi[3])
-        : "Noi <b style='color:#69db7c'>" + st.punti.noi + "</b> — Loro <b>" + st.punti.loro + "</b> <span class='tenue' style='font-weight:600'>(" + C().testoTraguardo(st.traguardo) + ")</span>";
+        ? corto(st.nomi[0]) + "+" + corto(st.nomi[2]) + " <b style='color:var(--o-verde)'>" + st.punti.noi + "</b> — <b>" + st.punti.loro + "</b> " + corto(st.nomi[1]) + "+" + corto(st.nomi[3])
+        : "Noi <b style='color:var(--o-verde)'>" + st.punti.noi + "</b> — Loro <b>" + st.punti.loro + "</b> <span class='tenue' style='font-weight:600'>(" + C().testoTraguardo(st.traguardo) + ")</span>";
       if (mont.testoPunti !== testoPunti) { mont.testoPunti = testoPunti; mont.punti.innerHTML = testoPunti; }
 
       // --- i tre posti: faccia, fumetto, targa di turno, carte in mano, ultima carta giocata ---
@@ -1575,7 +1582,7 @@
       if (mont.aiutoTesto !== testo) {
         mont.aiutoTesto = testo;
         mont.aiutoEl.textContent = testo; mont.aiutoEl.style.display = testo ? "" : "none";
-        mont.aiutoEl.style.borderColor = giallo ? "#ffd43b" : ""; mont.aiutoEl.style.fontSize = giallo ? "1.1rem" : "";
+        mont.aiutoEl.style.borderColor = giallo ? "var(--o-oro)" : ""; mont.aiutoEl.style.fontSize = giallo ? "1.1rem" : "";
       }
       // --- online: un avviso che passa (uscito, tornato, coppie sorteggiate, chi ci pensa troppo) ---
       if (st.avviso && st.avviso.n !== mont.avvisoN) {
@@ -1595,7 +1602,7 @@
       });
       var mie = st.prese[0].concat(st.prese[2]), scNoi = st.scope[0] + st.scope[2], preseTxt;
       if (guardo) preseTxt = "👀 Guardi le carte di <b>" + st.nomi[0] + "</b>" + (turno0 ? " · è il suo turno" : "") + " · 🔄 cambia";
-      else preseTxt = (mioTurno && opz.online ? "<span class='sp-tocca'>👉 Tocca a te!</span>" : "") + "prese coppia: <b>" + mie.length + "</b>" + (trova(mie, "D7") ? " · 7💰" : "") + (scNoi ? " · scope " + scNoi : "") + (mioTurno && !opz.online ? " · <b style='color:#ffd43b'>tocca a te</b>" : "");
+      else preseTxt = (mioTurno && opz.online ? "<span class='sp-tocca'>👉 Tocca a te!</span>" : "") + "prese coppia: <b>" + mie.length + "</b>" + (trova(mie, "D7") ? " · 7💰" : "") + (scNoi ? " · scope " + scNoi : "") + (mioTurno && !opz.online ? " · <b style='color:var(--o-oro-chiaro)'>tocca a te</b>" : "");
       if (mont.preseTxt !== preseTxt) { mont.preseTxt = preseTxt; mont.preseEl.innerHTML = preseTxt; mont.preseEl.classList.toggle("sp-guardo", guardo); }
       // 🤫 il tasto dei messaggi al compagno (solo online, chi gioca, e se il compagno non è un Bot) e il pannellino delle frasi
       var resto = st.psstResto, vedi = !guardo && resto != null && resto >= 0 && st.fase === "gioco";
@@ -1672,13 +1679,13 @@
         if (mvp.length) {
           C0.appendChild(el("div", { class: "sp-mvp" }, mvp.map(function (x, i) {
             var nome = x.s === 0 && !guardo ? "Tu" : st.nomi[x.s];
-            return el("div", {}, [ el("span", { style: "color:" + (squadra(x.s) === "noi" ? "#69db7c" : "#ff8787"), text: "🏅 " + nome }), document.createTextNode(": " + x.testo) ]);
+            return el("div", {}, [ el("span", { style: "color:" + (squadra(x.s) === "noi" ? "var(--o-verde)" : "var(--o-rosso)"), text: "🏅 " + nome }), document.createTextNode(": " + x.testo) ]);
           })));
           if (!guardo && mvp.some(function (x) { return x.s === 0; })) vibra(30);   // la medaglia è tua: breve
         }
         var tot = r.tot || st.punti;
         C0.appendChild(el("div", { class: "sp-tot", style: "text-align:center;font-size:1.35rem;font-weight:800;margin-top:8px",
-          html: (guardo ? "" : "Noi ") + "<span style='color:#ffd43b'>" + tot.noi + "</span> — " + tot.loro + (guardo ? "" : " Loro") + " <span class='tenue' style='font-size:.85rem;font-weight:600'>(" + C().testoTraguardo(st.traguardo) + ")</span>" }));
+          html: (guardo ? "" : "Noi ") + "<span style='color:var(--o-oro-testo)'>" + tot.noi + "</span> — " + tot.loro + (guardo ? "" : " Loro") + " <span class='tenue' style='font-size:.85rem;font-weight:600'>(" + C().testoTraguardo(st.traguardo) + ")</span>" }));
       }
       if (finale && st.storico && st.storico.length) C0.appendChild(el("div", { class: "sp-storico", text: "👫 " + st.storico.join(" · ") }));   // 👫 lo storico delle coppie di oggi
       if (finale) {
@@ -1747,7 +1754,7 @@
       if (t.contoAvanti) t.contoAvanti(nodo, A.resta || PAUSA_MANO, opz.sonoHost ? function () { cb.onAvanti(); } : null, kC);
     }
     function coriandoli(s) {
-      var strato = el("div", { class: "sp-cori" }), col = ["#ffd43b", "#69db7c", "#4dabf7", "#ff6b6b", "#f783ac", "#fff"];
+      var strato = el("div", { class: "sp-cori" }), col = ["var(--o-oro)", "var(--o-oro-chiaro)", "var(--o-filo-oro)", "var(--o-oro-testo)", "var(--o-scuro)"];   // 🤍 sobri: pezzetti d'oro
       for (var i = 0; i < 40; i++) {
         var c = el("i", {}); c.style.left = Math.round(Math.random() * 100) + "%"; c.style.background = col[i % col.length];
         c.style.animationDelay = (Math.random() * 0.9).toFixed(2) + "s"; c.style.animationDuration = (2 + Math.random() * 1.4).toFixed(2) + "s";

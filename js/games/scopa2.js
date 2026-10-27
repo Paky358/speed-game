@@ -423,24 +423,28 @@
     if (document.getElementById("s2-stile")) return;
     var st = document.createElement("style"); st.id = "s2-stile";
     st.textContent = [
-      ".s2-tocca{display:inline-block;background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400;font-weight:900;border-radius:999px;padding:1px 10px;margin-right:6px;animation:s2Pulsa 1.2s ease-in-out infinite}",
+      ".s2-tocca{display:inline-block;background:var(--o-tasto);color:var(--o-tasto-testo);font-weight:900;border-radius:999px;padding:1px 10px;margin-right:6px;animation:s2Pulsa 1.2s ease-in-out infinite}",
       "@keyframes s2Pulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}",
-      ".s2-avviso{position:absolute;left:50%;top:44px;transform:translateX(-50%);z-index:9;max-width:92%;text-align:center;background:rgba(10,18,50,.92);border:1.5px solid #ffd43b;color:#fff;font-weight:800;font-size:.85rem;padding:6px 12px;border-radius:12px;pointer-events:none;animation:s2Avviso 3.2s ease forwards}",
+      ".s2-avviso{position:absolute;left:50%;top:44px;transform:translateX(-50%);z-index:9;max-width:92%;text-align:center;background:var(--o-carta);border:1.5px solid var(--o-oro);color:var(--o-testo);font-weight:800;font-size:.85rem;padding:6px 12px;border-radius:12px;pointer-events:none;animation:s2Avviso 3.2s ease forwards}",
       "@keyframes s2Avviso{0%{opacity:0;transform:translate(-50%,-8px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-8px)}}",
       ".s2-riga{opacity:0;animation:s2Entra .35s ease-out forwards}",
       "@keyframes s2Entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}",
       // 🤫 il tasto vicino alla mano, il pannellino delle frasi e il fumetto lungo che non esce dallo schermo
-      ".s2-psst{position:absolute;right:8px;bottom:calc(5px + env(safe-area-inset-bottom));z-index:7;margin:0;min-height:0;height:28px;padding:0 10px;border-radius:999px;border:1.5px solid rgba(255,255,255,.4);background:rgba(10,18,50,.8);color:#fff;font-weight:900;font-size:.85rem;line-height:1;cursor:pointer}",
+      ".s2-psst{position:absolute;right:8px;bottom:calc(5px + env(safe-area-inset-bottom));z-index:7;margin:0;min-height:0;height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--o-filo-oro);background:var(--o-carta);color:var(--o-testo);font-weight:900;font-size:.85rem;line-height:1;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.3)}",
       ".s2-psst[disabled]{opacity:.4;cursor:default}",
-      ".s2-psst-pan{position:absolute;left:8px;right:8px;bottom:100%;margin-bottom:6px;z-index:8;background:rgba(10,18,50,.97);border:1.5px solid #ffd43b;border-radius:14px;padding:8px;box-shadow:0 6px 18px rgba(0,0,0,.45);animation:s2Pan .18s ease-out}",
+      ".s2-psst-pan{position:absolute;left:8px;right:8px;bottom:100%;margin-bottom:6px;z-index:8;background:var(--o-carta);border:1.5px solid var(--o-oro);border-radius:14px;padding:8px;box-shadow:0 6px 18px rgba(0,0,0,.4);animation:s2Pan .18s ease-out}",
       "@keyframes s2Pan{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}",
-      ".s2-psst-tit{font-size:.8rem;font-weight:800;text-align:center;margin:0 26px 6px;color:#fff}",
+      ".s2-psst-tit{font-size:.8rem;font-weight:800;text-align:center;margin:0 26px 6px;color:var(--o-testo)}",
       ".s2-psst-gr{display:grid;grid-template-columns:1fr 1fr;gap:6px}",
-      ".s2-psst-f{margin:0;min-height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-weight:800;font-size:.82rem;padding:4px 6px;line-height:1.15;cursor:pointer}",
-      ".s2-psst-x{position:absolute;top:3px;right:4px;margin:0;min-height:0;background:none;border:0;color:#fff;font-size:1.05rem;padding:3px 8px;cursor:pointer}",
+      ".s2-psst-f{margin:0;min-height:38px;border-radius:10px;border:1px solid var(--o-filo-oro);background:var(--o-carta-2);color:var(--o-testo);font-weight:800;font-size:.82rem;padding:4px 6px;line-height:1.15;cursor:pointer}",
+      ".s2-psst-x{position:absolute;top:3px;right:4px;margin:0;min-height:0;background:none;border:0;color:var(--o-tenue);font-size:1.05rem;padding:3px 8px;cursor:pointer}",
       ".sc-fumetto.s2-dx{transform-origin:100% 100%}",
       ".sc-fumetto.s2-dx::after{left:auto;right:-6px;border:7px solid transparent;border-left-color:#fff;border-right:0}",
       ".s2-mvp{text-align:center;font-size:.8rem;font-weight:700;margin-top:6px;line-height:1.35}",
+      // 🤍 le righe del riepilogo (schermata chiara): carte avorio col filo, la riga del totale in crema d'oro
+      ".g-scopa2v2.oro .s2-voce{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".g-scopa2v2.oro .s2-linea{background:var(--o-filo-oro)}",
+      ".g-scopa2v2.oro .s2-tot{font-family:var(--o-tit);font-weight:700;color:var(--o-testo);font-variant-numeric:lining-nums}",
       ".schermata.s2-fissa{flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0}",   // il riepilogo sta nello schermo: se è lungo scorre solo il centro, i tasti restano a vista
       ".schermata.s2-fissa>.contenuto{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}",
       "@media (max-height:700px){.s2-fissa .s2-riga{margin-bottom:3px!important;padding-top:3px!important;padding-bottom:3px!important}.s2-fissa .s2-mvp{margin-top:3px}}",
@@ -449,16 +453,16 @@
       ".s2-avanti p{margin:0;text-align:center;font-weight:800}",
       ".btn.s2-fatto,.btn.s2-fatto[disabled]{opacity:.8;cursor:default}",
       ".s2-festa{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}",
-      ".s2-festa span{position:absolute;top:-30px;font-size:1.4rem;animation:s2Cade linear forwards}",
+      ".s2-festa i{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;animation:s2Cade linear forwards}",
       "@keyframes s2Cade{to{transform:translateY(110vh) rotate(540deg);opacity:.9}}"
     ].join("");
     document.head.appendChild(st);
   }
   function coriandoli() {
     var f = document.createElement("div"); f.className = "s2-festa";
-    var simboli = ["🎉", "🎊", "✨", "🃏", "🏆"];
-    for (var i = 0; i < 28; i++) {
-      var s = document.createElement("span"); s.textContent = simboli[i % simboli.length];
+    var col = ["var(--o-oro)", "var(--o-oro-chiaro)", "var(--o-filo-oro)", "var(--o-oro-testo)", "var(--o-scuro)"];   // 🤍 sobri: pezzetti d'oro, niente emoji
+    for (var i = 0; i < 36; i++) {
+      var s = document.createElement("i"); s.style.background = col[i % col.length];
       s.style.left = Math.round(Math.random() * 96) + "%";
       s.style.animationDuration = (1.8 + Math.random() * 1.6).toFixed(2) + "s";
       s.style.animationDelay = (Math.random() * 0.9).toFixed(2) + "s";
@@ -560,7 +564,7 @@
     var cont;
     if (mont && mont.cont && document.body.contains(mont.box)) { mont.cont.replaceChild(box, mont.box); cont = mont.cont; }
     else {
-      var s = t.schermata({ indietro: function () { t.conferma(cb.guarda ? "Smetti di guardare?" : "Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); } });   // (la finestra dell'app)
+      var s = t.schermata({ scura: true, indietro: function () { t.conferma(cb.guarda ? "Smetti di guardare?" : "Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); } });   // (la finestra dell'app; scura: la stanza col tavolo vero)
       s.classList.add("sc-piena");   // stanza da bordo a bordo
       if (cb.targa) s.classList.add("sc-con-targa");   // chi guarda soltanto: sotto, il posto per la targhetta del core (la stanza si misura da sola)
       s._contenuto.appendChild(box); t.mostra(s);
@@ -578,8 +582,8 @@
     var mioTurno = !vm.spett && (vm.turno === io && vm.fase === "gioco" && !vm.presa);
     // (chi guarda, vm.spett: le squadre coi nomi, la prima è quella di chi sta in basso)
     var sqP = vm.spett && vm.squadre ? function (a) { return escH(a.filter(Boolean).map(function (n) { return String(n).slice(0, 8); }).join("+")); } : null;
-    var testoPunti = (sqP ? sqP(vm.squadre.mia) + " <b style='color:#69db7c'>" + vm.punti.mia + "</b> — <b>" + vm.punti.altra + "</b> " + sqP(vm.squadre.altra)
-      : "Noi <b style='color:#69db7c'>" + vm.punti.mia + "</b> — Loro <b>" + vm.punti.altra + "</b>") + " <span class='tenue' style='font-weight:600'>(" + C().testoTraguardo(vm.traguardo) + ")</span>";
+    var testoPunti = (sqP ? sqP(vm.squadre.mia) + " <b style='color:var(--o-verde)'>" + vm.punti.mia + "</b> — <b>" + vm.punti.altra + "</b> " + sqP(vm.squadre.altra)
+      : "Noi <b style='color:var(--o-verde)'>" + vm.punti.mia + "</b> — Loro <b>" + vm.punti.altra + "</b>") + " <span class='tenue' style='font-weight:600'>(" + C().testoTraguardo(vm.traguardo) + ")</span>";
     if (mont.punti.innerHTML !== testoPunti) mont.punti.innerHTML = testoPunti;
 
     // gli avatar: cambio il disegno solo di chi cambia espressione (o direzione dello sguardo)
@@ -682,7 +686,7 @@
     if (testoAiuto) {
       if (!mont.aiuto) { mont.aiuto = el("div", { class: "sc-aiuto" }); R.scena.appendChild(mont.aiuto); }
       if (mont.aiuto.textContent !== testoAiuto) mont.aiuto.textContent = testoAiuto;
-      var scopaStile = testoAiuto === "SCOPA! 🧹" ? "border-color:#ffd43b;font-size:1.1rem" : "";
+      var scopaStile = testoAiuto === "SCOPA! 🧹" ? "border-color:var(--o-oro);font-size:1.1rem" : "";
       if (mont.aiuto.getAttribute("style") !== scopaStile) mont.aiuto.setAttribute("style", scopaStile);
     } else if (mont.aiuto) { mont.aiuto.parentNode.removeChild(mont.aiuto); mont.aiuto = null; }
     // avviso di passaggio (un amico è uscito o è tornato)
@@ -745,15 +749,15 @@
     s.classList.add("s2-fissa");   // (alta come lo schermo: «⏩ Avanti» e i tasti di fine sempre a vista)
     var nRiga = 0;
     function riga(nome, a, b, vinc, sotto) {
-      var d = el("div", { class: "s2-riga", style: "padding:5px 8px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:5px;animation-delay:" + (nRiga++ * 0.22).toFixed(2) + "s" }, [
+      var d = el("div", { class: "s2-riga s2-voce", style: "padding:5px 8px;border-radius:8px;margin-bottom:5px;animation-delay:" + (nRiga++ * 0.22).toFixed(2) + "s" }, [
         el("div", { style: "display:flex;justify-content:space-between" }, [
-          el("span", { text: nome }), el("span", { html: "<b style='color:" + (vinc === "mia" ? "#69db7c" : "inherit") + "'>" + a + "</b> — <b style='color:" + (vinc === "altra" ? "#69db7c" : "inherit") + "'>" + b + "</b>" })]),
+          el("span", { text: nome }), el("span", { html: "<b style='color:" + (vinc === "mia" ? "var(--o-verde)" : "inherit") + "'>" + a + "</b> — <b style='color:" + (vinc === "altra" ? "var(--o-verde)" : "inherit") + "'>" + b + "</b>" })]),
         sotto ? el("div", { class: "tenue", style: "font-size:.75rem;margin-top:2px", text: sotto }) : null ]);
       return d;
     }
     if (r) {
       s._contenuto.appendChild(el("div", { class: "tenue", style: "text-align:center;margin-bottom:6px;font-weight:700",
-        html: "<span style='color:#69db7c'>" + esc(nomiMvp(sq.mia, mvp[0])) + "</span> — <span style='color:#ff8787'>" + esc(nomiMvp(sq.altra, mvp[1])) + "</span>" }));
+        html: "<span style='color:var(--o-verde)'>" + esc(nomiMvp(sq.mia, mvp[0])) + "</span> — <span style='color:var(--o-rosso)'>" + esc(nomiMvp(sq.altra, mvp[1])) + "</span>" }));
       if (vm.resti && vm.resti.n && vm.resti.nome)
         s._contenuto.appendChild(el("div", { class: "tenue", style: "text-align:center;font-size:.8rem;margin-bottom:6px",
           text: (vm.resti.n === 1 ? "L'ultima carta rimasta sul tavolo va" : "Le " + vm.resti.n + " carte rimaste sul tavolo vanno") + " a " + vm.resti.nome + " (ha preso per ultimo)." }));
@@ -766,19 +770,19 @@
       // 🏅 Il migliore in campo di ogni coppia: "🏅 Luca: 2 scope e il settebello" (a pari, nessuna medaglia)
       var righeMvp = [0, 1].filter(function (i) { return mvp[i]; }).map(function (i) {
         var x = mvp[i], nome = x.io && !cb.multi ? "Tu" : x.nome;
-        return "<span style='color:" + (i === 0 ? "#69db7c" : "#ff8787") + "'>🏅 " + esc(nome) + "</span>: " + esc(x.testo);
+        return "<span style='color:" + (i === 0 ? "var(--o-verde)" : "var(--o-rosso)") + "'>🏅 " + esc(nome) + "</span>: " + esc(x.testo);
       });
       if (righeMvp.length) {
         var dMvp = nRiga++ * 0.22;
         s._contenuto.appendChild(el("div", { class: "s2-riga s2-mvp", style: "animation-delay:" + dMvp.toFixed(2) + "s", html: righeMvp.join("<br>") }));
         if (!cb.multi && ((mvp[0] && mvp[0].io) || (mvp[1] && mvp[1].io))) setTimeout(function () { vibra(30); }, Math.round(dMvp * 1000) + 200);   // la medaglia è tua: breve
       }
-      var linea = el("div", { class: "s2-riga", style: "height:1px;background:rgba(255,255,255,.15);margin:8px 0;animation-delay:" + (nRiga * 0.22).toFixed(2) + "s" });
+      var linea = el("div", { class: "s2-riga s2-linea", style: "height:1px;margin:8px 0;animation-delay:" + (nRiga * 0.22).toFixed(2) + "s" });
       s._contenuto.appendChild(linea);
       s._contenuto.appendChild(riga("Punti mano", r.punti[0], r.punti[1], null));
       var conNomi = cb.multi || vm.spett;   // (sullo stesso telefono e per chi guarda: i nomi)
-      s._contenuto.appendChild(el("div", { class: "s2-riga", style: "text-align:center;font-size:" + (conNomi ? "1.05rem" : "1.3rem") + ";font-weight:800;margin-top:8px;animation-delay:" + (nRiga * 0.22 + 0.1).toFixed(2) + "s",
-        html: (conNomi ? escH(nomiSq(sq.mia)) : "Noi") + " <span style='color:#ffd43b'>" + r.tot[0] + "</span> — " + r.tot[1] + " " + (conNomi ? escH(nomiSq(sq.altra)) : "Loro") }));   // sullo stesso telefono "noi" non vuol dire niente: i nomi
+      s._contenuto.appendChild(el("div", { class: "s2-riga s2-tot", style: "text-align:center;font-size:" + (conNomi ? "1.05rem" : "1.3rem") + ";font-weight:800;margin-top:8px;animation-delay:" + (nRiga * 0.22 + 0.1).toFixed(2) + "s",
+        html: (conNomi ? escH(nomiSq(sq.mia)) : "Noi") + " <span style='color:var(--o-oro-testo)'>" + r.tot[0] + "</span> — " + r.tot[1] + " " + (conNomi ? escH(nomiSq(sq.altra)) : "Loro") }));   // sullo stesso telefono "noi" non vuol dire niente: i nomi
       // una notina per ogni voce che compare
       var note = []; for (var i = 0; i < nRiga; i++) note.push([520 + i * 40, i * 0.22]);
       if (!vm.spett) suonoNote(note, 0.06);   // (chi guarda: niente suoni suoi)
@@ -1378,6 +1382,7 @@
     id: "scopa2v2",
     nome: "Scopa 2 vs 2",
     icona: "🃏",
+    tema: "oro",   // 🤍 Bianco e oro: impostazioni, riepiloghi e schermate di servizio chiari; il tavolo resta una stanza vera (schermata «scura»)
     descrizione: "La Scopa a squadre, in quattro al tavolo: tu e il tuo compagno contro due. Contro i Bot o online, ognuno dal suo telefono (i posti vuoti li fanno i Bot).",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 1–4 giocatori",   // (i posti liberi li prendono i bot)
     postiOnline: 4,   // 4 al tavolo: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
