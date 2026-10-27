@@ -662,7 +662,7 @@
     ".bjr-nome{border-radius:9px;text-align:center;line-height:1.2;padding:1px 7px}.bjr-nome .ff{color:#ffe58a;font-size:.92em}.bjr-nome.via{opacity:.45}",
     ".bjr-fval{position:absolute;transform:translate(-50%,-100%);background:rgba(0,0,0,.72);color:#ffe58a;border:1px solid rgba(255,229,138,.5);border-radius:8px;padding:0 5px;font-size:.62rem;font-weight:900;white-space:nowrap;transition:opacity .3s}",
     ".bjr-bolla{position:absolute;transform:translate(-50%,-100%);background:#fff;color:#12233a;font-weight:900;font-size:.72rem;padding:3px 8px;border-radius:11px;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.45);animation:bjrPop .25s cubic-bezier(.3,1.6,.5,1)}",
-    ".bjr-bolla.oro{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400}.bjr-bolla.rossa{background:#ff8a8a;color:#3a0009}",
+    ".bjr-bolla.bj-doro{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400}.bjr-bolla.rossa{background:#ff8a8a;color:#3a0009}",
     "@keyframes bjrPop{from{transform:translate(-50%,-100%) scale(.3);opacity:0}}",
     ".bjr-matt{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;pointer-events:auto}",
     ".bjr-matt .bj-av{width:58px;height:58px;margin:0}.bjr-matt.turno .bj-av,.bjr-matt.turno .bjr-matt-nome{border-color:#ffd45e}",
@@ -672,7 +672,7 @@
     // dopo "Dividi": un mazzetto per mano, quello che si gioca illuminato
     ".bjr-cc.cascata.divise{display:flex;align-items:flex-end;gap:9px}.bjr-mn{position:relative;flex:none;border-radius:5px;transform-style:preserve-3d}.bjr-mn.on{box-shadow:0 0 0 2px #ffd45e,0 0 12px rgba(255,212,94,.7)}",
     ".bjr-fum{position:absolute;max-width:150px;background:#fff;color:#12233a;font-weight:900;border-radius:13px;padding:5px 10px;font-size:.8rem;line-height:1.15;box-shadow:0 4px 12px rgba(0,0,0,.4);transform:translateY(-100%);animation:bjFum .26s cubic-bezier(.3,1.6,.5,1)}",
-    ".bjr-fum.oro{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400}",
+    ".bjr-fum.bj-doro{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400}",
     "@keyframes bjFum{from{transform:translateY(-100%) scale(.3);opacity:0}}",
     // apertura: Bot ci guarda, poi la telecamera passa su ognuno
     ".bjr-intro{position:absolute;inset:0;z-index:8;overflow:hidden;background:radial-gradient(70% 55% at 50% 10%,rgba(255,214,140,.45),rgba(255,214,140,0) 70%),linear-gradient(#4a2c22,#1f130e);transition:opacity .6s,transform .6s cubic-bezier(.5,0,.75,0)}",
@@ -740,13 +740,71 @@
     ".bj-podio{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 12px 70px;background:rgba(6,22,13,.84);animation:bjrPopD .35s ease}",
     ".bj-podio h3{margin:0 0 6px;color:#ffe066;font-size:1.3rem;text-shadow:0 2px 10px rgba(0,0,0,.6)}",
     ".bj-pr{display:flex;align-items:center;gap:8px;width:100%;max-width:330px;background:rgba(255,255,255,.08);border-radius:10px;padding:3px 10px;font-weight:800}",
-    ".bj-pr.oro{background:linear-gradient(90deg,rgba(255,214,90,.35),rgba(255,214,90,.08));border:1px solid rgba(255,214,90,.6)}",
+    ".bj-pr.bj-doro{background:linear-gradient(90deg,rgba(255,214,90,.35),rgba(255,214,90,.08));border:1px solid rgba(255,214,90,.6)}",
     ".bj-pr .md{width:26px;text-align:center}.bj-pr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}",
     ".bj-pr .nt{white-space:nowrap}.bj-pr .nt.piu{color:#7dffa8}.bj-pr .nt.meno{color:#ff9d8a}.bj-pr .ff{color:#ffe58a;font-size:.8em;white-space:nowrap}",
     ".bj-podio.fitto{gap:2px}.bj-podio.fitto .bj-pr{padding:1px 8px;font-size:.8rem}",
     // chi guarda col link: in basso c'è la targhetta del core "👀 Guardi · 😂 · ✕" (il tavolo le lascia il posto)
     ".bj-wrap.bj-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom))}",
-    ".bj-hfa{display:flex;justify-content:center;margin-top:2px}"
+    ".bj-hfa{display:flex;justify-content:center;margin-top:2px}",
+    // ---- 🤍 BIANCO E ORO sul tavolo: il panno, il legno e le carte restano; tasti, scritte, avvisi e classifica prendono
+    //      l'oro sobrio (--o-oro, --o-oro-chiaro) e l'avorio (--o-carta) al posto di giallo acceso, blu, verde e rosso saturi ----
+    // la scritta sulla parete (di chi è il turno) e il tempo che resta
+    ".bj-wrap .bj-turno{color:var(--o-carta);font-family:var(--o-tit);font-weight:700;font-size:1.45rem;letter-spacing:.01em;text-shadow:0 2px 8px rgba(0,0,0,.6)}",
+    ".bj-wrap .bj-turno small{color:var(--o-oro-chiaro);opacity:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;font-weight:700}",
+    ".bj-wrap .bj-tempo{background:var(--o-scuro);color:var(--o-scuro-testo);border:1px solid var(--o-oro)}",
+    ".bj-wrap .bj-tempo.urge{background:var(--o-rosso);color:#fff;border-color:#fff}",
+    // la puntata e i tasti di sotto: oro pieno per l'azione principale, avorio per «Stai» e «Tutto», filo d'oro per le altre
+    ".bj-wrap .bj-punta-val{color:var(--o-oro-chiaro);font-weight:800;font-size:1.9rem}",   // (i numeri restano nel carattere normale: nel corsivo elegante «100» sembra «IOO»)
+    // il tavolo è un oggetto di gioco: resta col suo materiale, con un filo d'oro sottile e un'ombra morbida attorno
+    ".bj-wrap .bj-sala{box-shadow:inset 0 0 44px rgba(0,0,0,.55),0 0 0 1px rgba(226,197,106,.6),0 6px 18px rgba(0,0,0,.35)}",
+    ".bj-wrap .bj-btn{font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 10px rgba(0,0,0,.3)}",
+    ".bj-wrap .bj-b-carta,.bj-wrap .bj-b-si{background:var(--o-tasto);color:var(--o-tasto-testo)}",
+    ".bj-wrap .bj-b-stai{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),0 4px 10px rgba(0,0,0,.3)}",
+    ".bj-wrap .bj-b-radd,.bj-wrap .bj-b-dividi{background:rgba(255,255,255,.07);color:var(--o-oro-chiaro);box-shadow:inset 0 0 0 1.5px var(--o-oro)}",
+    ".bj-wrap .bj-b-no{background:rgba(255,255,255,.07);color:var(--o-carta);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}",
+    ".bj-wrap .bj-sbtn{background:rgba(255,255,255,.08);color:var(--o-carta);font-weight:800;box-shadow:inset 0 0 0 1px rgba(236,210,131,.5)}",
+    // il consiglio della mossa giusta: due anelli (avorio e oro) e un'ombra morbida, non più un bagliore giallo
+    ".bj-wrap .bj-btn.bj-cons{box-shadow:0 0 0 2px var(--o-fondo),0 0 0 4px var(--o-oro),0 0 14px rgba(236,210,131,.55)}",
+    // scritte dorate: l'oro chiaro del tema al posto del giallo acceso
+    ".bj-wrap .bj-hfiches,.bj-wrap .bj-seat .fi,.bj-wrap .bj-hmini,.bj-wrap .bj-esiti,.bj-wrap .bjr-nome .ff,.bj-wrap .bjr-matt-nome b,.bj-wrap .bjr-fval{color:var(--o-oro-chiaro)}",
+    ".bj-wrap .bjr-matt-nome b.bust{color:#f0a79e}",
+    ".bj-wrap .bjr-fval{border-color:rgba(236,210,131,.5)}",
+    ".bj-wrap .bj-esiti b{color:var(--o-carta)}",
+    ".bj-wrap .bjr-nome .piu,.bj-wrap .bj-nome .piu,.bj-wrap .bj-esiti .piu,.bj-wrap .bj-pr .nt.piu{color:#9fdcb5}",
+    ".bj-wrap .bjr-nome .meno,.bj-wrap .bj-nome .meno,.bj-wrap .bj-esiti .meno,.bj-wrap .bj-pr .nt.meno{color:#f0a79e}",
+    // i nomi sopra le teste e il croupier: nero caldo col filo d'oro (la persona di turno ha il filo pieno)
+    ".bj-wrap .bjr-nome,.bj-wrap .bj-nome,.bj-wrap .bjr-matt-nome,.bj-wrap .bjr-presenta{background:rgba(22,18,12,.82);border-color:rgba(236,210,131,.28)}",
+    ".bj-wrap .bjr-nome.attivo,.bj-wrap .bj-nome.attivo,.bj-wrap .bjr-matt.turno .bjr-matt-nome{border-color:var(--o-oro);box-shadow:0 0 0 1px var(--o-oro),0 2px 8px rgba(0,0,0,.4)}",
+    ".bj-wrap .bjr-presenta{border-color:var(--o-oro)}",
+    ".bj-wrap .bjr-matt.turno .bj-av{border-color:var(--o-oro)}",
+    ".bj-wrap .bj-av{background:radial-gradient(circle at 50% 35%,#2f8a5c,#12452d);border-color:rgba(236,210,131,.45)}",
+    ".bj-wrap .bjr-gioc.attivo svg{filter:drop-shadow(0 0 6px rgba(226,197,106,.7))}",
+    ".bj-wrap .bj-seat.attivo,.bj-wrap .bj-mano.attiva{border-color:var(--o-oro)}",
+    ".bj-wrap .bjr-mn.on{box-shadow:0 0 0 2px var(--o-oro),0 0 8px rgba(226,197,106,.5)}",
+    // punti accanto alle carte
+    ".bj-wrap .bj-pt.win,.bj-wrap .bj-badge.win,.bj-wrap .bjr-punti.win{background:var(--o-verde);color:#fff}",
+    ".bj-wrap .bj-pt.bust,.bj-wrap .bj-badge.bust,.bj-wrap .bjr-punti.bust{background:var(--o-rosso);color:#fff}",
+    // le nuvolette: avorio con la scritta scura; quella dorata (Black Jack!) in oro pieno
+    ".bj-wrap .bj-bolla,.bj-wrap .bjr-bolla,.bj-wrap .bjr-fum,.bj-wrap .bjr-intro .benv{background:var(--o-carta);color:var(--o-testo)}",
+    ".bj-wrap .bj-bolla::after{border-top-color:var(--o-carta)}",
+    ".bj-wrap .bjr-bolla.bj-doro,.bj-wrap .bjr-fum.bj-doro{background:var(--o-tasto);color:var(--o-tasto-testo)}",
+    ".bj-wrap .bjr-bolla.rossa{background:var(--o-rosso);color:#fff}",
+    // «Ti alzi dal tavolo?»: la finestra chiara del resto dell'app (Resto oro, Mi alzo rosso)
+    ".bj-wrap .bj-dlg-box{background:var(--o-carta);color:var(--o-testo);border:1px solid var(--o-filo-oro);box-shadow:var(--o-ombra-alta)}",
+    ".bj-wrap .bj-dlg-box b{font-family:var(--o-tit);font-weight:700;font-size:1.4rem}",
+    ".bj-wrap .bj-dlg-box p{color:var(--o-tenue)}",
+    ".bj-wrap .bj-dlg .bj-b-no{background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 6px 14px rgba(167,123,13,.25)}",
+    ".bj-wrap .bj-dlg .bj-b-stai{background:var(--o-rosso);color:#fff;box-shadow:0 6px 14px rgba(184,67,58,.25)}",
+    // la classifica sul tavolo: titolo avorio e righe bianche col filo d'oro (la prima in crema con l'oro pieno)
+    ".bj-wrap .bj-podio{background:rgba(8,26,17,.84)}",
+    ".bj-wrap .bj-podio h3{color:var(--o-carta);font-family:var(--o-tit);font-weight:700;font-size:1.7rem;text-shadow:none}",
+    ".bj-wrap .bj-pr{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),0 4px 12px rgba(0,0,0,.25)}",
+    ".bj-wrap .bj-pr.bj-doro{background:var(--o-carta-viva);border:0;box-shadow:inset 0 0 0 2px var(--o-oro),0 6px 16px rgba(0,0,0,.3)}",
+    ".bj-wrap .bj-pr .ff{color:var(--o-oro-testo)}",
+    ".bj-wrap .bj-pr .nt.piu{color:var(--o-verde)}.bj-wrap .bj-pr .nt.meno{color:var(--o-rosso)}",
+    // schermate di servizio (Tavolo chiuso, Ops): il messaggio chiaro e centrato
+    ".oro.g-blackjack .as-msg{text-align:center;color:var(--o-tenue);font-weight:700;font-size:1.05rem}"
   ].join("");
 
   function iniettaCSS() {
@@ -945,7 +1003,7 @@
     iniettaCSS();
     var el = t.el;
     var s = t.schermata({
-      titolo: "🃏 Black Jack", sotto: drv.sotto || "Banco: Bot",
+      titolo: "🃏 Black Jack", sotto: drv.sotto || "Banco: Bot", scura: true,   // (il tavolo verde resta scuro: solo tasti, scritte e avvisi hanno l'oro)
       indietro: function () { chiediUscita(); }
     });
     var wrap = el("div", { class: "bj-wrap" + (t.guarda ? " bj-targa" : "") });
@@ -1312,12 +1370,12 @@
         var hn = hud.lastChild; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 " + nomeBanco(vm)));
         if (pB) hn.appendChild(el("b", { class: /Sball/.test(pB) ? "bust" : "", text: pB }));
         if (fumEl) fumEl.remove(); fumEl = null;
-        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " oro" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
+        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " bj-doro" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
       }
       // la nuvoletta della mossa sopra la testa di chi l'ha detta
       [].forEach.call(R.sopra.querySelectorAll(".bjr-bolla"), function (b) { if (!bolla || +b.dataset.id !== bollaId) b.remove(); });
       if (bolla && R.seg[bolla.seat] && !R.sopra.querySelector(".bjr-bolla")) {
-        var sb = R.seg[bolla.seat], tb = bolla.testo, tipo = /sball/i.test(tb) ? " rossa" : (/black|21/i.test(tb) ? " oro" : "");
+        var sb = R.seg[bolla.seat], tb = bolla.testo, tipo = /sball/i.test(tb) ? " rossa" : (/black|21/i.test(tb) ? " bj-doro" : "");
         R.sopra.appendChild(el("div", { class: "bjr-bolla" + tipo, "data-id": bollaId, style: "left:" + Math.round(sb.x) + "px;top:" + Math.max(20, sb.testa - 16) + "px", text: tb }));
       }
       // in grande sulla parete: chi sta giocando
@@ -1366,7 +1424,7 @@
       podio = el("div", { class: "bj-podio" + (N > 6 ? " fitto" : ""), "data-k": kp }, [ el("h3", { text: vm.uguali ? "🏆 Classifica del torneo" : "🏁 Classifica" }) ]);
       vm.classifica.forEach(function (r) {
         var n = r.netto;
-        podio.appendChild(el("div", { class: "bj-pr" + (r.pos === 1 && n > 0 ? " oro" : "") }, [
+        podio.appendChild(el("div", { class: "bj-pr" + (r.pos === 1 && n > 0 ? " bj-doro" : "") }, [
           el("span", { class: "md", text: N > 1 ? (md[r.pos - 1] || r.pos + "°") : "🃏" }),
           el("span", { class: "nm", text: r.nome + (drv.mioIdx && r.i === mioIdx() && N > 1 ? " ⭐" : "") }),
           el("span", { class: "nt " + (n > 0 ? "piu" : (n < 0 ? "meno" : "")), text: n ? (n > 0 ? "+" : "−") + fmt(Math.abs(n)) : "pari" }),
@@ -2251,6 +2309,7 @@
 
   // il tavolo è chiuso (o non c'è posto): chi era seduto vede com'è finita
   function finaleBJ(t, titolo, classifica, vm, mioSeat) {
+    iniettaCSS();
     document.body.classList.remove("bj-verde");
     var el = t.el, s = t.schermata({ icona: "🃏", titolo: "Tavolo chiuso", sotto: "Black Jack online" });
     s._contenuto.appendChild(el("p", { class: "as-msg", text: titolo }));
@@ -2276,6 +2335,7 @@
   }
 
   function erroreBJ(t, testo) {
+    iniettaCSS();
     document.body.classList.remove("bj-verde");
     var el = t.el, s = t.schermata({ icona: "⚠️", titolo: "Ops", sotto: "Black Jack online" });
     s._contenuto.appendChild(el("p", { class: "as-msg", text: testo }));
@@ -2291,6 +2351,7 @@
     descrizione: "Il 21 contro il banco: punta le monete, chiedi carta o stai, raddoppia e dividi. Carte francesi vere, 6 mazzi. Da 1 a 10 giocatori.",
     giocatoriMin: 1, giocatoriMax: 10, difficolta: 2,
     postiOnline: 10,   // posti al tavolo online
+    tema: "oro",   // 🤍 Bianco e oro: schermate di servizio e classifica chiare; il tavolo resta un tavolo vero (schermata scura, vedi tavoloBJ)
     ritardatari: "mano",   // chi arriva a partita cominciata si siede subito e gioca dalla prossima mano (con le sue monete)
     riprende: true,    // se l'host ricarica la pagina, la mano continua da dove era (stesse carte, puntate e fiches)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
