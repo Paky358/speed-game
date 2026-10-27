@@ -67,7 +67,7 @@
   ],
   [
    "«Sala d'attesa» e «5 amici · 3 pronti»",
-   4.8,
+   6.7,
    "5 amici · 3 pronti"
   ],
   [
@@ -124,8 +124,8 @@
   ],
   [
    "Filtri (anche quello scelto)",
-   1.6,
-   "Minigiochi"
+   13,
+   "Carte"
   ],
   [
    "Etichetta della categoria sulla foto",
@@ -164,7 +164,7 @@
   ],
   [
    "«Sala d'attesa» e «5 amici · 3 pronti»",
-   5,
+   6,
    "5 amici · 3 pronti"
   ],
   [
@@ -261,8 +261,8 @@
   ],
   [
    "«Sala d'attesa» e «5 amici · 3 pronti»",
-   3.8,
-   "5 amici · 3 pronti"
+   7.3,
+   "SALA D'ATTESA"
   ],
   [
    "Nomi degli amici",
@@ -287,103 +287,6 @@
   [
    "Nota in fondo",
    6.9,
-   "Il gioco parte da solo sul telefono di tutti."
-  ]
- ],
- "oggi": [
-  [
-   "Nome e monete (riquadro del profilo)",
-   5.2,
-   "1.250"
-  ],
-  [
-   "«Livello 3» (scritta piccola)",
-   7.5,
-   "Livello 3"
-  ],
-  [
-   "Nomi dei 4 tasti in alto",
-   17.1,
-   "Novità"
-  ],
-  [
-   "Tasto principale «Gioca online»",
-   8.3,
-   "Gioca online"
-  ],
-  [
-   "Tasto «Ho un codice»",
-   17.1,
-   "Ho un codice"
-  ],
-  [
-   "Filtri (anche quello scelto)",
-   3.6,
-   "Minigiochi"
-  ],
-  [
-   "Etichetta della categoria sulla foto",
-   99,
-   ""
-  ],
-  [
-   "Titoli delle tessere",
-   17.1,
-   "L'Asta"
-  ],
-  [
-   "Righe sotto i titoli",
-   5.7,
-   "Compra all'asta i pezzi migliori."
-  ],
-  [
-   "«Giocatori» nel colore della categoria",
-   5.2,
-   "2–10 giocatori"
-  ],
-  [
-   "Titolo e sottotitolo",
-   5.5,
-   "Un link per tutti i giochi"
-  ],
-  [
-   "Codice della Sala",
-   5.7,
-   "SALA"
-  ],
-  [
-   "Tasto «Invita gli amici»",
-   17.1,
-   "Invita gli amici"
-  ],
-  [
-   "«Sala d'attesa» e «5 amici · 3 pronti»",
-   3.6,
-   "SALA D'ATTESA"
-  ],
-  [
-   "Nomi degli amici",
-   17.1,
-   "Paky"
-  ],
-  [
-   "«Host»",
-   5.2,
-   "host"
-  ],
-  [
-   "Classifica della serata",
-   17.1,
-   "Classifica della serata"
-  ],
-  [
-   "Tasto principale «Scegli il primo gioco»",
-   8.3,
-   "Scegli il primo gioco"
-  ],
-  [
-   "Nota in fondo",
-   5.2,
    "Il gioco parte da solo sul telefono di tutti."
   ]
  ]

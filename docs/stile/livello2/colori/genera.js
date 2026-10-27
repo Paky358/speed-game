@@ -203,8 +203,9 @@ const T = {
     .c .badge{display:flex;top:12px;left:12px;background:rgba(36,10,44,.72);color:#fff;border:1px solid rgba(255,226,210,.22)}.c .badge i{background:var(--c)}
     .c .bar h1{font-family:var(--tit);font-weight:800;font-size:24px;letter-spacing:-.02em}
     .c .cod small{color:var(--tenue)}.c .cod b{font-family:var(--tit);font-weight:800}
-    .c .stanza{background:radial-gradient(60% 46% at 50% 0%,rgba(255,170,100,.34),transparent 72%),radial-gradient(70% 30% at 50% 100%,rgba(255,110,140,.16),transparent 72%),linear-gradient(180deg,rgba(255,255,255,.09),rgba(30,6,40,.30));border:1px solid var(--bordo)}
+    .c .stanza{background:radial-gradient(60% 46% at 50% 0%,rgba(255,170,100,.30),transparent 72%),radial-gradient(70% 30% at 50% 100%,rgba(255,110,140,.16),transparent 72%),linear-gradient(180deg,rgba(255,255,255,.09),rgba(30,6,40,.30));border:1px solid var(--bordo)}
     .c .arco{stroke:rgba(255,226,210,.22)} .c .ins{font-family:var(--tit);color:#fff;letter-spacing:.3em;font-weight:800}
+    .c .sotto-ins{color:#fff1f4}
     .c .pedana{background:radial-gradient(closest-side,color-mix(in srgb,var(--pc) 55%,transparent),transparent)}
     .c .nomina{background:rgba(36,10,44,.86);color:#fff;border:1.5px solid var(--pc)}.c .nomina em{color:#ffb38a}
     .c .classif .i{color:#ffd166}
@@ -293,7 +294,7 @@ function sala(k) {
  <div class="bar"><span>${ic("back", 22, 2)}</span><div><h1>Sala online</h1><small>Un link per tutti i giochi</small></div></div>
  <div class="sala-top"><div class="cod"><small>SALA</small><b>KFRT</b></div><div class="btn btn-t">${em ? "<span>📤</span>" : ic("send", 18)}Invita gli amici</div></div>
  <div class="stanza">
-  <svg class="arco" viewBox="0 0 354 420" preserveAspectRatio="none"><path d="M40 420V150a137 120 0 0 1 274 0v270"/><path d="M52 420V152a125 110 0 0 1 250 0v268" opacity=".5"/></svg>
+  <svg class="arco" viewBox="0 0 354 420" preserveAspectRatio="none"><path d="M40 420V182a137 120 0 0 1 274 0v238"/><path d="M52 420V184a125 110 0 0 1 250 0v236" opacity=".5"/></svg>
   <div class="pavimento"></div><div class="ins">SALA D'ATTESA</div><div class="sotto-ins"><i></i>5 amici · 3 pronti</div>
   ${AMICI.map((n, i) => `<div class="pers ${POSTI[i][1]}" style="left:${POSTI[i][0]}%;--pc:${t.pers[i]}"><div class="pedana"></div><div class="fig" data-om="${n}"></div><div class="nomina">${i < 3 ? `<span class="ok">${ic("check", 10, 3.2)}</span>` : ""}<span class="nm">${n}</span>${i === 0 ? ` <em>${em ? "👑 host" : "host"}</em>` : ""}</div></div>`).join("")}
  </div>

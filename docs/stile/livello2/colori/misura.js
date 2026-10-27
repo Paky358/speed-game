@@ -33,7 +33,7 @@ const VOCI = {
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const out = {};
-  for (const k of ["a", "b", "c", "oggi"]) {
+  for (const k of ["a", "b", "c"]) {
     out[k] = [];
     for (const t of ["home", "sala"]) {
       await p.goto(U + k + "-" + t + ".html", { waitUntil: "networkidle" });
@@ -47,7 +47,10 @@ const VOCI = {
             if (!n.textContent.trim()) continue;
             const r = document.createRange(); r.selectNodeContents(n);
             const col = getComputedStyle(n.parentElement).color;
-            for (const q of r.getClientRects()) pezzi.push({ x: q.left, y: q.top, w: q.width, h: q.height, col, testo: n.textContent.trim() });
+            // si misura solo la parte che si vede: dentro lo schermo e dentro i contenitori che tagliano (i filtri che escono a destra)
+            let L = 0, T = 0, R = innerWidth, B = innerHeight;
+            for (let a = n.parentElement; a; a = a.parentElement) if (getComputedStyle(a).overflow !== "visible") { const z = a.getBoundingClientRect(); L = Math.max(L, z.left); T = Math.max(T, z.top); R = Math.min(R, z.right); B = Math.min(B, z.bottom); }
+            for (const q of r.getClientRects()) { const x = Math.max(q.left, L), y = Math.max(q.top, T), x2 = Math.min(q.right, R), y2 = Math.min(q.bottom, B); if (x2 - x > 4 && y2 - y > 4) pezzi.push({ x, y, w: x2 - x, h: y2 - y, col, testo: n.textContent.trim() }); }
           }
         });
         return { nome, pezzi };
