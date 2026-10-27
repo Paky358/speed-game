@@ -373,6 +373,7 @@
         // (il laghetto riscrive in alto i miei chili subito dopo: con un altro obiettivo ci rimetto il valore giusto prima che si veda)
         if (window.Promise) Promise.resolve().then(sistemaTesta);
       } } });
+      stile(); UI.classList.add("sg-scura");   // 🤍 il laghetto è una scena disegnata: resta scuro, con la sua cornice dorata (vedi stile())
       t.mostra(UI); UI._monta(); vista = "lago";
       var ai = UI.querySelector(".pe-aiuto"), o0 = ob(vm.obiettivo);   // il primo aiuto dice l'obiettivo della gara
       if (ai && o0 !== "kg") ai.textContent = "Tieni premuto per lanciare: " + OBIETTIVI[o0].frase + "!";
@@ -515,7 +516,23 @@
       ".gp-guarda li span:last-child{font-weight:800}",
       ".schermata.gp-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom))}",   // (chi guarda col link: il posto della targhetta del core)
       ".gp-piede2{display:flex;gap:8px}.gp-piede2>.btn{flex:1;min-width:0}",
-      ".gp-fin.tanti .gp-av{width:40px;height:52px}.gp-fin.tanti .gp-gr.p1 .gp-av{width:50px;height:64px}"
+      ".gp-fin.tanti .gp-av{width:40px;height:52px}.gp-fin.tanti .gp-gr.p1 .gp-av{width:50px;height:64px}",
+      // 🤍 BIANCO E ORO: i pezzi della classifica e delle schermate di servizio (solo colori, bordi e ombre)
+      ".oro.g-garapesca .gp-nm{color:var(--o-testo)}",
+      ".oro.g-garapesca .gp-kg{color:var(--o-tenue);opacity:1}",
+      ".oro.g-garapesca .gp-gradino{background:linear-gradient(180deg,var(--o-carta),var(--o-carta-2));box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);color:var(--o-oro-testo)}",
+      ".oro.g-garapesca .gp-gr.p1 .gp-gradino{background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 8px 18px rgba(167,123,13,.24)}",
+      ".oro.g-garapesca .gp-resto li{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra)}",
+      ".oro.g-garapesca .gp-resto li span:first-child{color:var(--o-oro-testo);font-weight:800}",
+      ".oro.g-garapesca .gp-premio{background:var(--o-carta);color:var(--o-testo);border-radius:14px;box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-garapesca .gp-premio small{color:var(--o-tenue);opacity:1}",
+      ".oro.g-garapesca .gp-guarda-tempo{font-family:var(--o-tit);font-weight:700;font-size:2rem;color:var(--o-testo);font-variant-numeric:lining-nums tabular-nums}",
+      ".oro.g-garapesca .gp-guarda li span:last-child{color:var(--o-oro-testo)}",
+      // 🤍 il laghetto (scena disegnata, resta scuro) incorniciato: filo dorato sottile e ombra morbida su un fondo avorio
+      "html body:has(.schermata.pe-in-gara.g-garapesca){background:radial-gradient(130% 60% at 50% -10%,#fff 0%,var(--o-fondo) 55%,#f7f6f2 100%) fixed,var(--o-fondo)}",
+      "html body:has(.schermata.pe-in-gara.g-garapesca)::before{display:none}",
+      ".schermata.pe-vista.pe-in-gara.g-garapesca{margin:8px;width:auto;height:calc(var(--alt,100dvh) - 16px);border-radius:22px;box-shadow:0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta)}",
+      ".pe-in-gara.g-garapesca .pe-cl.tu,.pe-in-gara.g-garapesca .pe-avviso{background:var(--o-oro-chiaro);color:var(--o-tasto-testo)}"
     ].join("\n");
     document.head.appendChild(st);
   }
@@ -592,6 +609,7 @@
 
   SG.registra({
     id: ID, nome: "Gara di pesca", icona: "🎣",
+    tema: "oro",   // 🤍 Bianco e oro: saletta, classifica e schermate di servizio chiare; il laghetto resta scuro (sg-scura), incorniciato
     descrizione: "Tutti nello stesso laghetto, ognuno dal suo telefono: in pochi minuti vince chi pesca più chili!",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
     postiOnline: MAX,   // posti online (8 pescatori)

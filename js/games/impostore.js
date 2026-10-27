@@ -211,6 +211,7 @@
     id: "impostore",
     nome: "L'Impostore",
     icona: "🕵️",
+    tema: "oro",   // 🤍 Bianco e oro: tutte le schermate chiare (lo stile sta in fondo al file)
     descrizione: "Tutti hanno la stessa parola, tranne l'impostore (e forse una spia). Scoprite chi bluffa prima che la faccia franca.",
     giocatoriMin: 3,
     giocatoriMax: 10,
@@ -371,6 +372,7 @@
     },
 
     avvia: function (t) {
+      stile();   // (le classi di colore servono anche alle schermate sullo stesso telefono)
       var cats = categorie();
       if (!cats.length) return niente(t);
       if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);   // entrato da un invito (o dalla Sala)
@@ -463,18 +465,19 @@
     var s = t.schermata({ icona: "🤫", titolo: st.g[i].nome, sotto: "Solo tu puoi guardare", indietro: uscita(t) });
     s._contenuto.style.cssText = "display:flex;flex-direction:column";
     var STRATO = "position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px;text-align:center;transition:opacity .12s";
-    var coperta = el("div", { style: STRATO }, [
-      el("div", { style: "font-size:3.2rem", text: "👆" }),
-      el("div", { style: "font-size:1.3rem;font-weight:800", text: "Tieni premuto qui per vedere" }),
-      el("div", { class: "modulo-nota", style: "margin:0", text: "Quando lasci il dito si nasconde" })
+    // 🤍 la carta: il dorso è scuro con un filo d'oro, il fronte (la parola) è avorio con la cornice dorata
+    var coperta = el("div", { class: "im-rl-dorso", style: STRATO }, [
+      el("div", { class: "im-rl-dito", text: "👆" }),
+      el("div", { class: "im-rl-dt", text: "Tieni premuto qui per vedere" }),
+      el("div", { class: "im-rl-dn", text: "Quando lasci il dito si nasconde" })
     ]);
-    var dentro = el("div", { style: STRATO + ";opacity:0" }, [
-      el("div", { class: "modulo-nota", style: "margin:0;font-weight:700", text: info.su }),
-      el("div", { style: "font-size:" + (info.grande.length > 16 ? "1.7rem" : "2.3rem") + ";font-weight:900;line-height:1.15;overflow-wrap:anywhere", text: info.grande }),
-      el("div", { class: "modulo-nota", style: "margin:0", text: info.giu }),
-      info.socio ? el("div", { style: "margin-top:4px;font-weight:800;font-size:1.05rem", text: info.socio }) : null
+    var dentro = el("div", { class: "im-rl-fronte", style: STRATO + ";opacity:0" }, [
+      el("div", { class: "im-rl-su", text: info.su }),
+      el("div", { class: "im-rl-parola", style: "font-size:" + (info.grande.length > 16 ? "1.9rem" : "2.7rem") + ";overflow-wrap:anywhere", text: info.grande }),
+      el("div", { class: "im-rl-giu", text: info.giu }),
+      info.socio ? el("div", { class: "im-rl-socio", text: info.socio }) : null
     ]);
-    var carta = el("div", { style: "position:relative;flex:1;min-height:220px;border-radius:22px;background:var(--carta);box-shadow:var(--ombra);" +
+    var carta = el("div", { class: "im-rl-carta", style: "position:relative;flex:1;min-height:220px;border-radius:22px;" +
       "-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;cursor:pointer;overflow:hidden" }, [coperta, dentro]);
     s._contenuto.appendChild(carta);
 
@@ -512,12 +515,11 @@
     s._contenuto.appendChild(el("div", { style: "text-align:center" }, [
       el("div", { class: "modulo-nota", style: "margin:0 0 10px;font-weight:700", text: "In gioco: " + ruoli }),
       el("p", { class: "modulo-nota", style: "margin:0", text: "Inizia" }),
-      el("div", { style: "font-size:2.1rem;font-weight:900;overflow-wrap:anywhere", text: st.g[giroIdx[0]].nome })
+      el("div", { class: "im-inizia-l", style: "font-size:2.4rem;overflow-wrap:anywhere", text: st.g[giroIdx[0]].nome })
     ]));
     var giro = el("div", { style: "display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:12px 0" });
     giroIdx.forEach(function (ix, k) {
-      giro.appendChild(el("span", { style: "padding:5px 10px;border-radius:999px;font-size:.9rem;font-weight:700;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" +
-        (k === 0 ? "background:var(--accento);color:#241f00" : "background:var(--carta)"), text: (k + 1) + ". " + st.g[ix].nome }));
+      giro.appendChild(el("span", { class: "im-pill" + (k === 0 ? " primo" : ""), style: "padding:5px 10px;border-radius:999px;font-size:.9rem;font-weight:700;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", text: (k + 1) + ". " + st.g[ix].nome }));
     });
     s._contenuto.appendChild(giro);
     if (elim && st.fuori.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin:0 0 10px;font-weight:700",
@@ -533,7 +535,7 @@
   function orologio(t, sec) {
     var el = t.el, fine = 0, timer = null, ultimo = -1;
     function mmss(x) { return Math.floor(x / 60) + ":" + ("0" + (x % 60)).slice(-2); }
-    var b = el("button", { class: "btn", style: "font-size:1.4rem;font-weight:900;font-variant-numeric:tabular-nums", text: "⏱️ Avvia il tempo · " + mmss(sec) });
+    var b = el("button", { class: "btn im-orol", style: "font-size:1.4rem;font-weight:900;font-variant-numeric:tabular-nums", text: "⏱️ Avvia il tempo · " + mmss(sec) });
     b.addEventListener("click", function () {
       if (timer) return;
       fine = Date.now() + sec * 1000; tic(880);
@@ -546,7 +548,7 @@
       if (resta === ultimo) return;   // la scritta cambia solo quando cambia il secondo
       ultimo = resta;
       if (resta > 0 && resta <= 5) tic(700);
-      if (resta === 0) { clearInterval(timer); b.style.background = "var(--rosso)"; b.style.color = "#3a0009"; fanfara(false); }
+      if (resta === 0) { clearInterval(timer); b.classList.add("scaduto"); fanfara(false); }
     }
     return b;
   }
@@ -580,8 +582,8 @@
     var s = t.schermata({ icona: "📮", titolo: "Lo spoglio", sotto: "Quanti voti ha preso ognuno", indietro: uscita(t) });
     var griglia = el("div", { style: "display:grid;gap:6px;grid-template-columns:" + (n > 6 ? "1fr 1fr" : "1fr") });
     var bolle = st.g.map(function (gg, k) {
-      var bolla = el("span", { style: "min-width:34px;text-align:center;padding:2px 8px;border-radius:999px;background:var(--carta-2);font-weight:900;transition:transform .2s", text: "·" });
-      var riga = el("div", { style: "display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:12px;background:var(--carta);border:2px solid transparent" }, [
+      var bolla = el("span", { class: "im-bolla", style: "min-width:34px", text: "·" });
+      var riga = el("div", { class: "im-sp-r", style: "padding:7px 10px" }, [
         el("span", { style: "font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", text: gg.nome }), bolla ]);
       griglia.appendChild(riga);
       return { bolla: bolla, riga: riga };
@@ -589,7 +591,7 @@
     s._contenuto.appendChild(griglia);
     var verdetto = el("div", { style: "text-align:center;margin-top:14px;opacity:0;transform:scale(.9);transition:opacity .3s, transform .3s" });
     var esito1 = el("div", { class: "modulo-nota", style: "margin:0;font-weight:700" });
-    var esito2 = el("div", { style: "font-size:1.6rem;font-weight:900;line-height:1.2;margin-top:4px;opacity:0;transform:translateY(8px);transition:opacity .35s, transform .35s" });
+    var esito2 = el("div", { class: "im-v2l", style: "line-height:1.2;margin-top:4px;opacity:0;transform:translateY(8px);transition:opacity .35s, transform .35s" });
     verdetto.appendChild(esito1); verdetto.appendChild(esito2);
     s._contenuto.appendChild(verdetto);
     var avanti = tasto(t, "Avanti ▶", "btn-primario", function () {
@@ -610,7 +612,7 @@
       passi = 450 + k * 330;
     });
     dopo(passi + 500, function () {
-      V.piu.forEach(function (k) { bolle[k].riga.style.borderColor = "var(--accento)"; });
+      V.piu.forEach(function (k) { bolle[k].riga.classList.add("piu"); });
       if (V.accusato < 0) {
         esito1.textContent = V.piu.length ? "Pareggio nei voti!" : "Nessun voto";
         esito2.textContent = "🤝 Nessuno viene accusato";
@@ -646,16 +648,16 @@
     avanti.style.visibility = "hidden";
     var scelto = false;
     var bottoni = scelte.map(function (w) {
-      var b = tasto(t, w, "", function () {
+      var b = tasto(t, w, "im-scl", function () {
         if (scelto) return; scelto = true;
         st.indovinato = w === st.parola;
         // a eliminazione, se resta dentro un altro impostore la parola NON si svela (la saprebbe anche lui)
         var svela = !elim || st.indovinato || !!fineElim(viviL(st), st.imps);
         bottoni.forEach(function (x) {
           x.disabled = true;
-          if (x._w === st.parola && svela) { x.style.background = "var(--verde)"; x.style.color = "#04321c"; x.disabled = false; }
+          if (x._w === st.parola && svela) { x.classList.add("giusta"); x.disabled = false; }
         });
-        if (!st.indovinato) { b.style.background = "var(--rosso)"; b.style.color = "#3a0009"; b.disabled = false; }
+        if (!st.indovinato) { b.classList.add("sbagliata"); b.disabled = false; }
         esito1.textContent = st.indovinato ? (elim ? (st.imps.length > 1 ? "🎯 Indovinata! Vincono gli impostori!" : "🎯 Indovinata! Vince l'impostore!") : "🎯 Indovinata! Si salva!") : "❌ Sbagliato!" + (svela ? " La parola era " + st.parola : " La parola resta segreta");
         fanfara(st.indovinato);
         avanti.style.visibility = "visible"; avanti.sveglia();
@@ -719,12 +721,12 @@
 
     // chi era chi e le parole, in due righe
     var svela = [
-      el("div", { style: "font-size:1.25rem;font-weight:900;overflow-wrap:anywhere", text: "🕵️ " + st.g[st.impostore].nome +
+      el("div", { class: "chi", style: "overflow-wrap:anywhere", text: "🕵️ " + st.g[st.impostore].nome +
         (st.spia >= 0 ? "   🎭 " + st.g[st.spia].nome : "") }),
       el("div", { class: "modulo-nota", style: "margin:2px 0 0;font-size:.95rem" }, [ "Parola: ", el("b", { style: "color:var(--testo)", text: st.parola }),
         (st.spia >= 0 || st.aiuto === "simile") ? (st.spia >= 0 ? " · la spia aveva " : " · l'impostore aveva ") + st.simile : null ])
     ];
-    s._contenuto.appendChild(el("div", { style: "text-align:center;padding:8px 10px;border-radius:16px;background:var(--carta);margin-bottom:8px" }, svela));
+    s._contenuto.appendChild(el("div", { class: "im-svela", style: "margin-bottom:8px" }, svela));
 
     // una riga a testa: chi ha votato chi e i punti presi
     var lista = el("div", { style: "display:flex;flex-direction:column;gap:" + (n > 6 ? "3px" : "4px") });
@@ -732,8 +734,8 @@
       var segno = k === st.impostore ? "🕵️" : k === st.spia ? "🎭" : "";
       var voto = gg.voto == null ? "" : "→ " + st.g[gg.voto].nome +
         (k === st.impostore ? "" : gg.voto === st.impostore ? " ✅" : gg.voto === st.spia ? " 🎭" : " ❌");
-      lista.appendChild(el("div", { style: "display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) auto" + (R.mani > 1 ? " auto" : "") +
-        ";gap:8px;align-items:center;padding:" + (n > 6 ? "3px" : "7px") + " 10px;border-radius:10px;background:rgba(255,255,255,.05);font-size:" + (n > 6 ? ".9rem" : "1rem") }, [
+      lista.appendChild(el("div", { class: "im-es-r", style: "grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) auto" + (R.mani > 1 ? " auto" : "") +
+        ";padding:" + (n > 6 ? "3px" : "7px") + " 10px;font-size:" + (n > 6 ? ".9rem" : "1rem") }, [
         el("span", { style: "font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", text: (segno ? segno + " " : "") + gg.nome }),
         el("span", { class: "modulo-nota", style: "margin:0;font-size:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", text: voto }),
         el("span", { style: "font-weight:900;color:" + (gg.piu ? "var(--verde)" : "var(--testo-tenue)"), text: "+" + gg.piu }),
@@ -801,15 +803,15 @@
     var griglia = el("div", { style: "display:grid;gap:6px;grid-template-columns:" + (cand.length > 6 ? "1fr 1fr" : "1fr") });
     var bolle = {};
     cand.forEach(function (k) {
-      var bolla = el("span", { style: "min-width:34px;text-align:center;padding:2px 8px;border-radius:999px;background:var(--carta-2);font-weight:900;transition:transform .2s", text: "·" });
-      var riga = el("div", { style: "display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:12px;background:var(--carta);border:2px solid transparent" }, [
+      var bolla = el("span", { class: "im-bolla", style: "min-width:34px", text: "·" });
+      var riga = el("div", { class: "im-sp-r", style: "padding:7px 10px" }, [
         el("span", { style: "font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", text: st.g[k].nome }), bolla ]);
       griglia.appendChild(riga); bolle[k] = { bolla: bolla, riga: riga };
     });
     s._contenuto.appendChild(griglia);
     var verdetto = el("div", { style: "text-align:center;margin-top:14px;opacity:0;transform:scale(.9);transition:opacity .3s, transform .3s" });
     var esito1 = el("div", { class: "modulo-nota", style: "margin:0;font-weight:700" });
-    var esito2 = el("div", { style: "font-size:1.5rem;font-weight:900;line-height:1.2;margin-top:4px;opacity:0;transform:translateY(8px);transition:opacity .35s, transform .35s;overflow-wrap:anywhere" });
+    var esito2 = el("div", { class: "im-v2l", style: "line-height:1.2;margin-top:4px;opacity:0;transform:translateY(8px);transition:opacity .35s, transform .35s;overflow-wrap:anywhere" });
     verdetto.appendChild(esito1); verdetto.appendChild(esito2);
     s._contenuto.appendChild(verdetto);
     var testi = testiSpoglioE(dec, V, function (k) { return st.g[k].nome; });
@@ -824,7 +826,7 @@
       dopo(passi, function () { bolle[k].bolla.textContent = V.conte[k]; bolle[k].bolla.style.transform = "scale(1.35)"; setTimeout(function () { bolle[k].bolla.style.transform = ""; }, 200); tic(500 + V.conte[k] * 90); });
     });
     dopo(passi + 500, function () {
-      (dec.acc >= 0 ? [dec.acc] : dec.ballo || V.piu).forEach(function (k) { if (bolle[k]) bolle[k].riga.style.borderColor = "var(--accento)"; });
+      (dec.acc >= 0 ? [dec.acc] : dec.ballo || V.piu).forEach(function (k) { if (bolle[k]) bolle[k].riga.classList.add("piu"); });
       esito1.textContent = testi.v1; esito2.textContent = testi.v2;
       verdetto.style.opacity = "1"; verdetto.style.transform = "none";
       rullo();
@@ -895,16 +897,16 @@
     var s = t.schermata({ icona: te.icona, titolo: te.titolo, sotto: te.sotto + (R.mani > 1 ? " · mano " + st.mano + " di " + R.mani : ""), indietro: uscita(t) });
     if (ultimo != null) s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:900;font-size:1.15rem;margin-bottom:6px;overflow-wrap:anywhere",
       text: fraseRuolo(st.g[ultimo].nome, ruoloL(st, ultimo), st.imps.length) }));
-    s._contenuto.appendChild(el("div", { style: "text-align:center;padding:8px 10px;border-radius:16px;background:var(--carta);margin-bottom:8px" }, [
-      el("div", { style: "font-size:1.15rem;font-weight:900;overflow-wrap:anywhere", text: "🕵️ " + st.imps.map(function (i) { return st.g[i].nome; }).join(" e ") + (st.spia >= 0 ? "   🎭 " + st.g[st.spia].nome : "") }),
+    s._contenuto.appendChild(el("div", { class: "im-svela", style: "margin-bottom:8px" }, [
+      el("div", { class: "chi", style: "overflow-wrap:anywhere", text: "🕵️ " + st.imps.map(function (i) { return st.g[i].nome; }).join(" e ") + (st.spia >= 0 ? "   🎭 " + st.g[st.spia].nome : "") }),
       el("div", { class: "modulo-nota", style: "margin:2px 0 0;font-size:.95rem" }, [ "Parola: ", el("b", { style: "color:var(--testo)", text: st.parola }),
         (st.spia >= 0 || st.aiuto === "simile") ? (st.spia >= 0 ? " · la spia aveva " : " · l'impostore aveva ") + st.simile : null ])
     ]));
     var lista = el("div", { style: "display:flex;flex-direction:column;gap:" + (n > 6 ? "3px" : "4px") });
     st.g.forEach(function (gg, k) {
       var f = st.fuori.filter(function (x) { return x.i === k; })[0], r = ruoloL(st, k);
-      lista.appendChild(el("div", { style: "display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto" + (R.mani > 1 ? " auto" : "") +
-        ";gap:8px;align-items:center;padding:" + (n > 6 ? "3px" : "7px") + " 10px;border-radius:10px;background:rgba(255,255,255,.05);font-size:" + (n > 6 ? ".9rem" : "1rem") }, [
+      lista.appendChild(el("div", { class: "im-es-r", style: "grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto" + (R.mani > 1 ? " auto" : "") +
+        ";padding:" + (n > 6 ? "3px" : "7px") + " 10px;font-size:" + (n > 6 ? ".9rem" : "1rem") }, [
         el("span", { style: "font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", text: (r !== "cit" ? iconaRuolo(r) + " " : "") + gg.nome }),
         el("span", { class: "modulo-nota", style: "margin:0;font-size:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", text: f ? "🚪 fuori al " + f.turno + "° giro" : "🏁 fino alla fine" }),
         el("span", { style: "font-weight:900;color:" + (gg.piu ? "var(--verde)" : "var(--testo-tenue)"), text: "+" + gg.piu }),
@@ -2132,10 +2134,10 @@
       ".schermata.im-piena>.contenuto{height:100%;margin:0;padding:0}",
       ".im-scena{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));overflow:hidden}",
       ".im-barra{display:flex;align-items:center;gap:8px;font-weight:800;flex:none}",
-      ".im-esci{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1.3rem;font-weight:900;cursor:pointer}",
+      ".im-esci{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);font:inherit;font-size:1.3rem;font-weight:900;cursor:pointer}",
       ".im-stato{flex:1;min-width:0;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".im-tempo{flex:none;font-variant-numeric:tabular-nums;font-weight:900;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.12)}",
-      ".im-tempo.poco{background:var(--rosso);color:#3a0009}.im-tempo:empty{display:none}",
+      ".im-tempo{flex:none;font-variant-numeric:tabular-nums;font-weight:900;padding:4px 10px;border-radius:999px;background:var(--o-scuro);color:var(--o-scuro-testo)}",
+      ".im-tempo.poco{background:var(--o-rosso);color:#fff}.im-tempo:empty{display:none}",
       // la carta segreta (tieni premuto)
       ".im-carta{position:relative;flex:none;height:46px;border-radius:16px;background:var(--carta);box-shadow:var(--ombra);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;cursor:pointer;overflow:hidden}",
       ".im-carta.grande{height:clamp(110px,22vh,180px);border-radius:22px}.im-carta[hidden]{display:none}",
@@ -2151,15 +2153,15 @@
       ".im-corpo{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:8px;overflow:hidden}",
       ".im-tit{display:flex;flex-direction:column;gap:2px;text-align:center;flex:none}.im-tit b{font-size:1.12rem;line-height:1.2}.im-tit small{font-size:.84rem;opacity:.8;line-height:1.25}",
       ".im-scrivi{display:flex;gap:8px;flex:none}",
-      ".im-input{flex:1;min-width:0;height:48px;box-sizing:border-box;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(0,0,0,.18);color:inherit;font:inherit;font-size:1.1rem;font-weight:700;padding:0 12px}",
-      ".im-input:focus{outline:none;border-color:var(--accento)}",
+      ".im-input{flex:1;min-width:0;height:48px;box-sizing:border-box;border-radius:14px;border:1.5px solid var(--o-filo-oro);background:var(--o-carta);color:var(--o-testo);font:inherit;font-size:1.1rem;font-weight:700;padding:0 12px}",
+      ".im-input:focus{outline:none;border-color:var(--o-oro);box-shadow:0 0 0 3px rgba(197,151,41,.18)}",
       ".btn.im-invia{width:auto;margin:0;flex:none;padding:0 18px;min-height:48px}",
-      ".im-fatto{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:0 6px 0 12px;border-radius:14px;background:rgba(55,212,126,.16);font-weight:800;overflow:hidden}",
+      ".im-fatto{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:0 6px 0 12px;border-radius:14px;background:var(--o-verde-tenue);box-shadow:inset 0 0 0 1px rgba(46,125,79,.28);font-weight:800;overflow:hidden}",
       ".im-fatto span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".im-cambia{flex:none;border:0;border-radius:10px;padding:8px 10px;background:rgba(255,255,255,.14);color:inherit;font:inherit;font-weight:800;cursor:pointer}",
+      ".im-cambia{flex:none;border:0;border-radius:10px;padding:8px 10px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro);color:inherit;font:inherit;font-weight:800;cursor:pointer}",
       ".im-lista{display:grid;gap:5px;align-content:start;min-height:0;overflow:hidden}.im-lista.fitta{grid-template-columns:1fr 1fr;gap:4px}",
-      ".im-riga{display:flex;align-items:center;gap:4px 8px;padding:5px 10px;border-radius:12px;background:rgba(255,255,255,.07);min-width:0}",
-      ".im-lista.fitta .im-riga{flex-wrap:wrap;padding:4px 7px;font-size:.88rem;gap:2px 5px}.im-lista.fitta .im-nome{flex:1;max-width:none}.im-lista.fitta .im-ind{order:3;flex:1 1 100%}.im-lista.fitta .im-ind:empty{display:none}.im-riga.via{opacity:.45}.im-riga.io{box-shadow:inset 0 0 0 2px rgba(255,202,58,.45)}",
+      ".im-riga{display:flex;align-items:center;gap:4px 8px;padding:5px 10px;border-radius:12px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo);min-width:0}",
+      ".im-lista.fitta .im-riga{flex-wrap:wrap;padding:4px 7px;font-size:.88rem;gap:2px 5px}.im-lista.fitta .im-nome{flex:1;max-width:none}.im-lista.fitta .im-ind{order:3;flex:1 1 100%}.im-lista.fitta .im-ind:empty{display:none}.im-riga.via{opacity:.45}.im-riga.io{background:var(--o-carta-viva);box-shadow:inset 0 0 0 1.5px var(--o-oro)}",
       ".im-nome{flex:none;max-width:42%;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".im-ind{flex:1;min-width:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:.88rem;line-height:1.25;overflow-wrap:anywhere}",
       ".im-lista.fitta .im-ind{font-size:.78rem}",
@@ -2174,7 +2176,7 @@
       ".im-inizia{text-align:center;flex:none}.im-inizia small{opacity:.8}.im-inizia b{display:block;font-size:1.8rem;font-weight:900;overflow-wrap:anywhere;line-height:1.1}",
       ".im-ordine{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;flex:none}",
       ".im-ordine span{padding:4px 10px;border-radius:999px;background:var(--carta);font-weight:700;font-size:.88rem;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".im-ordine span.primo{background:var(--accento);color:#241f00}",
+      ".im-ordine span.primo{background:var(--o-scuro);color:var(--o-scuro-testo)}",
       // il voto
       ".im-voti{display:grid;gap:6px;align-content:start;min-height:0}.im-voti.due{grid-template-columns:1fr 1fr}",
       ".im-vb{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;min-height:48px;min-width:0;padding:5px 10px;border-radius:14px;border:2px solid transparent;background:var(--carta);color:inherit;font:inherit;text-align:left;cursor:pointer}",
@@ -2193,18 +2195,18 @@
       ".im-scelte{display:grid;grid-template-columns:1fr 1fr;gap:8px}",
       ".im-sc{min-height:52px;border-radius:14px;border:2px solid transparent;background:var(--carta);color:inherit;font:inherit;font-weight:800;font-size:1rem;padding:8px;overflow-wrap:anywhere;line-height:1.15;cursor:pointer}",
       ".im-sc:disabled{cursor:default;color:inherit}.im-sc.mia{border-color:var(--accento)}",
-      ".im-sc.giusta{background:var(--verde);color:#04321c}.im-sc.sbagliata{background:var(--rosso);color:#3a0009}",
+      ".im-sc.giusta,.im-scl.giusta{background:var(--o-verde);color:#fff;border-color:var(--o-verde)}.im-sc.sbagliata,.im-scl.sbagliata{background:var(--o-rosso);color:#fff;border-color:var(--o-rosso)}",
       ".im-ris{text-align:center;font-size:1.25rem;font-weight:900;min-height:1.4em;flex:none}",
       // fine mano
       ".im-testa{text-align:center;flex:none;line-height:1.15}.im-testa .ic{font-size:1.9rem;display:block}.im-testa b{display:block;font-size:1.25rem}.im-testa small{opacity:.8;font-size:.85rem}",
       ".im-svela{text-align:center;padding:6px 10px;border-radius:14px;background:var(--carta);flex:none}",
       ".im-svela .chi{font-size:1.08rem;font-weight:900;overflow-wrap:anywhere}.im-svela .par{font-size:.9rem;opacity:.92}",
       ".im-es{display:flex;flex-direction:column;gap:3px;min-height:0;overflow:hidden}",
-      ".im-es-r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) auto 2.6ch;gap:8px;align-items:center;padding:5px 10px;border-radius:10px;background:rgba(255,255,255,.06);font-size:.94rem}",
-      ".im-es.fitta .im-es-r{padding:2px 8px;font-size:.85rem}.im-es-r.io{box-shadow:inset 0 0 0 2px rgba(255,202,58,.45)}",
+      ".im-es-r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) auto 2.6ch;gap:8px;align-items:center;padding:5px 10px;border-radius:10px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo);font-size:.94rem}",
+      ".im-es.fitta .im-es-r{padding:2px 8px;font-size:.85rem}.im-es-r.io{background:var(--o-carta-viva);box-shadow:inset 0 0 0 1.5px var(--o-oro)}",
       ".im-es-r span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.im-es-r .nm{font-weight:800}.im-es-r .vo{opacity:.85}",
       ".im-es-r .pi{font-weight:900;color:var(--verde)}.im-es-r .pi.zero{color:var(--testo-tenue)}.im-es-r .tot{font-weight:900;text-align:right}",
-      ".im-avviso{position:absolute;left:12px;right:12px;top:42%;text-align:center;font-weight:900;font-size:1.2rem;color:#ffa94d;opacity:0;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,.5)}",
+      ".im-avviso{position:absolute;left:12px;right:12px;top:42%;text-align:center;font-weight:900;font-size:1.05rem;width:fit-content;max-width:calc(100% - 24px);margin:0 auto;padding:10px 18px;border-radius:999px;background:var(--o-scuro);color:var(--o-scuro-testo);box-shadow:var(--o-ombra-alta);opacity:0;pointer-events:none}",
       ".im-avviso.su{animation:imAvviso 1.8s ease}",
       "@keyframes imAvviso{0%{opacity:0;transform:scale(.8)}15%{opacity:1;transform:scale(1.05)}80%{opacity:1}100%{opacity:0}}",
       // 👥 l'altro impostore sulla carta (anche piccola) e 🔪 a eliminazione: chi è fuori, il ruolo svelato in grande
@@ -2214,11 +2216,69 @@
       ".im-fuori{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;min-height:0}",
       ".im-riv{text-align:center;flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 12px;border-radius:22px;background:var(--carta);box-shadow:var(--ombra);animation:imRiv .45s ease both}",
       ".im-riv .ic{font-size:3.4rem;line-height:1}.im-riv b{font-size:1.65rem;font-weight:900;line-height:1.15;overflow-wrap:anywhere}.im-riv small{font-size:.92rem;opacity:.85;line-height:1.25}",
-      ".im-riv.imp{box-shadow:inset 0 0 0 3px var(--rosso),var(--ombra)}.im-riv.spia{box-shadow:inset 0 0 0 3px var(--accento),var(--ombra)}.im-riv.cit{box-shadow:inset 0 0 0 3px var(--verde),var(--ombra)}",
+      ".im-riv.imp{box-shadow:inset 0 0 0 2px var(--o-rosso),var(--ombra)}.im-riv.spia{box-shadow:inset 0 0 0 2px var(--o-oro),var(--ombra)}.im-riv.cit{box-shadow:inset 0 0 0 2px var(--o-verde),var(--ombra)}",
       ".im-riv.piccolo{padding:8px 10px;gap:2px}.im-riv.piccolo .ic{font-size:2rem}.im-riv.piccolo b{font-size:1.25rem}.im-riv.piccolo small{font-size:.84rem}",
       "@keyframes imRiv{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}",
       ".im-resta{text-align:center;display:flex;flex-direction:column;gap:2px;flex:none}.im-resta b{font-size:1.1rem}.im-resta span{font-size:.88rem;opacity:.85}",
       ".im-ultimo{margin:0;text-align:center;font-weight:900;font-size:1.02rem;flex:none;overflow-wrap:anywhere}",
+      // =====================================================================================================
+      // 🤍 BIANCO E ORO (tutte le regole sotto .oro.g-impostore: valgono solo nelle schermate chiare di questo gioco)
+      // La carta della parola: il dorso è scuro con un filo d'oro (come il dorso di una carta da gioco), il fronte
+      // è avorio con la doppia cornice dorata e la parola in carattere elegante. Solo colori, bordi, ombre, caratteri.
+      // =====================================================================================================
+      ".oro.g-impostore .im-carta,.oro.g-impostore .im-rl-carta{background:var(--o-scuro);color:var(--o-scuro-testo);box-shadow:var(--o-ombra-alta)}",
+      ".oro.g-impostore .im-c-coperta,.oro.g-impostore .im-rl-dorso{color:var(--o-scuro-testo)}",
+      ".oro.g-impostore .im-c-coperta::before,.oro.g-impostore .im-rl-dorso::before{content:\"\";position:absolute;inset:5px;border-radius:12px;border:1px solid rgba(236,210,131,.5);pointer-events:none}",
+      ".oro.g-impostore .im-carta.grande .im-c-coperta::before,.oro.g-impostore .im-rl-dorso::before{inset:8px;border-radius:15px}",
+      ".oro.g-impostore .im-c-tx,.oro.g-impostore .im-rl-dt{font-family:var(--o-tit);font-weight:700;letter-spacing:.01em}",
+      ".oro.g-impostore .im-carta.grande .im-c-tx{font-size:1.45rem}.oro.g-impostore .im-rl-dt{font-size:1.7rem;font-weight:700}",
+      ".oro.g-impostore .im-rl-dito{font-size:3rem}.oro.g-impostore .im-rl-dn{font-size:.9rem;color:rgba(236,210,131,.8)}",
+      ".oro.g-impostore .im-c-dentro,.oro.g-impostore .im-rl-fronte{background:var(--o-carta);color:var(--o-testo);",
+      "box-shadow:inset 0 0 0 1.5px var(--o-filo-oro),inset 0 0 0 6px var(--o-carta),inset 0 0 0 7px var(--o-filo-oro);border-radius:inherit}",
+      ".oro.g-impostore .im-c-su,.oro.g-impostore .im-c-giu,.oro.g-impostore .im-rl-su,.oro.g-impostore .im-rl-giu{color:var(--o-tenue);opacity:1;font-size:.82rem;line-height:1.25;font-weight:650}",
+      ".oro.g-impostore .im-rl-su,.oro.g-impostore .im-rl-giu{font-size:.95rem}",
+      ".oro.g-impostore .im-c-grande,.oro.g-impostore .im-rl-parola{font-family:var(--o-tit);font-weight:700;letter-spacing:.005em;color:var(--o-testo)}",
+      ".oro.g-impostore .im-c-grande{font-size:1.6rem;line-height:1.05}.oro.g-impostore .im-carta.grande .im-c-grande{font-size:2.5rem}.oro.g-impostore .im-carta.grande .im-c-grande.lunga{font-size:1.85rem}",
+      ".oro.g-impostore .im-rl-parola::after{content:\"\";display:block;width:44px;height:1px;background:var(--o-oro);margin:12px auto 0}",
+      ".oro.g-impostore.senza-testa>.testa .btn-piccolo{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-impostore .im-c-socio,.oro.g-impostore .im-rl-socio{color:var(--o-oro-testo);font-weight:800}.oro.g-impostore .im-rl-socio{margin-top:4px;font-size:1.05rem}",
+      // la barra in alto e i titoli dei momenti
+      ".oro.g-impostore .im-stato{color:var(--o-testo);font-weight:800}",
+      ".oro.g-impostore .im-tit b,.oro.g-impostore .im-testa b,.oro.g-impostore .im-resta b{font-family:var(--o-tit);font-weight:700;letter-spacing:.005em;color:var(--o-testo)}",
+      ".oro.g-impostore .im-tit b{font-size:1.5rem;line-height:1.05}.oro.g-impostore .im-testa b{font-size:1.65rem;line-height:1.05}",
+      ".oro.g-impostore .im-tit small,.oro.g-impostore .im-testa small,.oro.g-impostore .im-resta span,.oro.g-impostore .im-riv small{color:var(--o-tenue);opacity:1}",
+      ".oro.g-impostore .im-conto,.oro.g-impostore .im-ruoli{color:var(--o-tenue);opacity:1}",
+      ".oro.g-impostore .im-pronto .quanti{opacity:.75}",
+      // righe, pillole, voti
+      ".oro.g-impostore .im-nome{color:var(--o-testo)}.oro.g-impostore .im-ind{color:var(--o-testo)}",
+      ".oro.g-impostore .im-w.ultimo{color:var(--o-oro-testo)}",
+      ".oro.g-impostore .im-riga.fuori,.oro.g-impostore .im-riga.via{background:var(--o-fondo-2)}",
+      ".oro.g-impostore .im-ordine span,.oro.g-impostore .im-pill{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".oro.g-impostore .im-ordine span.primo,.oro.g-impostore .im-pill.primo{background:var(--o-scuro);color:var(--o-scuro-testo);box-shadow:none}",
+      ".oro.g-impostore .im-inizia small{color:var(--o-tenue);opacity:1}",
+      ".oro.g-impostore .im-inizia b,.oro.g-impostore .im-inizia-l{font-family:var(--o-tit);font-weight:700;color:var(--o-testo)}",
+      ".oro.g-impostore .im-inizia b{font-size:2.3rem}",
+      ".oro.g-impostore .im-vb,.oro.g-impostore .im-sc,.oro.g-impostore .im-scl{background:var(--o-carta);color:var(--o-testo);border:1.5px solid var(--o-filo-oro);box-shadow:var(--o-ombra)}",
+      ".oro.g-impostore .im-vb small{color:var(--o-tenue);opacity:1}",
+      ".oro.g-impostore .im-vb.scelto,.oro.g-impostore .im-sc.mia{background:var(--o-carta-viva);border-color:var(--o-oro);box-shadow:0 0 0 1px var(--o-oro),var(--o-ombra)}",
+      ".oro.g-impostore .im-vb:disabled,.oro.g-impostore .im-sc:disabled{color:var(--o-testo)}",
+      ".oro.g-impostore .im-sc.giusta,.oro.g-impostore .im-scl.giusta{background:var(--o-verde);color:#fff;border-color:var(--o-verde);box-shadow:none}",
+      ".oro.g-impostore .im-sc.sbagliata,.oro.g-impostore .im-scl.sbagliata{background:var(--o-rosso);color:#fff;border-color:var(--o-rosso);box-shadow:none}",
+      // lo spoglio
+      ".oro.g-impostore .im-sp-r{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra)}",
+      ".oro.g-impostore .im-sp-r.piu{background:var(--o-carta-viva);border-color:var(--o-oro);box-shadow:0 0 0 1px var(--o-oro),var(--o-ombra)}",
+      ".oro.g-impostore .im-bolla{background:var(--o-fondo-2);color:var(--o-testo);font-weight:800;font-variant-numeric:lining-nums tabular-nums;box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".oro.g-impostore .im-verdetto .v1{color:var(--o-tenue);opacity:1}",
+      ".oro.g-impostore .im-verdetto .v2,.oro.g-impostore .im-v2l{font-family:var(--o-tit);font-weight:700;font-size:1.9rem;color:var(--o-testo)}",
+      // fine mano e chi è uscito
+      ".oro.g-impostore .im-svela{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);border-radius:16px;padding:8px 12px}",
+      ".oro.g-impostore .im-svela .chi{font-family:var(--o-tit);font-weight:700;font-size:1.3rem}.oro.g-impostore .im-svela .par{color:var(--o-tenue);opacity:1}",
+      ".oro.g-impostore .im-es-r .vo{color:var(--o-tenue);opacity:1}.oro.g-impostore .im-es-r .pi{color:var(--o-verde)}.oro.g-impostore .im-es-r .pi.zero{color:var(--o-tenue)}",
+      ".oro.g-impostore .im-es-r .tot{font-weight:900}",
+      ".oro.g-impostore .im-riv{background:var(--o-carta)}",
+      ".oro.g-impostore .im-ris{font-family:var(--o-tit);font-weight:700;font-size:1.45rem}",
+      // l'orologio sullo stesso telefono
+      ".oro.g-impostore .im-orol.scaduto{background:var(--o-rosso);color:#fff;box-shadow:none}",
       // schermi alti: righe più comode
       "@media (min-height:780px){.im-es-r{padding:8px 12px;font-size:1rem}.im-es.fitta .im-es-r{padding:5px 10px;font-size:.92rem}.im-riga{padding:8px 12px}.im-sp-r{padding:9px 12px}.im-vb{min-height:56px}.im-lista.fitta .im-riga{padding:6px 8px}}"
     ].join("");
