@@ -778,7 +778,7 @@
     ui.img.src = url;
   }
   function coriandoli(ui) {
-    var el = ui.t.el, col = ["#ff6b6b", "#ffd43b", "#69db7c", "#4dabf7", "#da77f2", "#ffa94d"];
+    var el = ui.t.el, col = ["var(--o-oro)", "var(--o-filo-oro)", "var(--o-oro-chiaro)", "var(--o-verde)", "var(--o-scuro)", "var(--o-rosso)"];   // (oro, verde e rosso del tema: niente colori da luna park)
     ui.t.svuota(ui.festa);
     for (var i = 0; i < 28; i++) {
       var c = el("i", { class: "dd-cor" });
@@ -826,6 +826,9 @@
     if (vm.turnoSq) info = nomeSq(vm.turnoSq) + " · " + info;
     setTx(ui.info, info);
     setTx(ui.tab, testoTab(vm));
+    // a due squadre la cornice della foto prende il colore della squadra di turno (sullo stesso telefono) o la mia (online)
+    var sqc = vm.stile === "due" ? (vm.turnoSq || (mia ? mia.id : null)) : null;
+    ui.sc.classList.toggle("dd-sqA", sqc === "A"); ui.sc.classList.toggle("dd-sqB", sqc === "B");
     if (vm.pre && vm.pre !== ui.preUrl) { ui.preUrl = vm.pre; try { (new Image()).src = vm.pre; } catch (e) {} }
     // la foto: si vede durante il gioco e la scheda; mentre arriva, la scritta (mai un'emoji al posto della foto)
     if (vm.passo === "gioca" || vm.passo === "svela") mettiFoto(ui, vm.foto, "📷 Arriva la foto…");
@@ -1292,13 +1295,67 @@
       // fine partita: la fila delle portate
       ".dd-fila{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin:2px 0 8px}",
       ".dd-pt{font-size:.85rem;font-weight:900;background:rgba(0,0,0,.08);border-radius:999px;padding:3px 8px}.dd-pt.si{background:rgba(47,158,68,.22)}.dd-pt.chi{background:none}",
-      "@media (max-height:680px){.dd-indizi{font-size:.76rem;padding:6px 9px}.dd-slot{height:44px}.dd-chips{height:62px}.dd-input{height:42px}.dd-cose,.dd-curio{font-size:.76rem}.dd-band{font-size:1.6rem}}"
+      "@media (max-height:680px){.dd-indizi{font-size:.76rem;padding:6px 9px}.dd-slot{height:44px}.dd-chips{height:62px}.dd-input{height:42px}.dd-cose,.dd-curio{font-size:.76rem}.dd-band{font-size:1.6rem}}",
+      // ---------------------------------------------------------
+      // 🤍 BIANCO E ORO: la partita. Avorio al posto del verde petrolio; la foto del piatto è la protagonista,
+      // con una cornice sottile (bordo bianco + filo d'oro) e un'ombra morbida. Solo colori, bordi e ombre.
+      // Le regole stanno sotto .oro e il cartellino del gioco: valgono solo qui. Colori solo con le variabili --o-*
+      // (le sole eccezioni sono «del gioco»: rosso e blu delle squadre, i gradi caldo/freddo, scuriti per il fondo chiaro).
+      // ---------------------------------------------------------
+      ".oro.g-dadoveviene.dd-piena{background:transparent;color:var(--o-testo)}",
+      ".oro.g-dadoveviene .dd-scena{color:var(--o-testo)}",
+      ".oro.g-dadoveviene .dd-esci{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-info{color:var(--o-testo);opacity:1;font-weight:700}",
+      ".oro.g-dadoveviene .dd-tab{background:var(--o-scuro);color:var(--o-scuro-testo);font-weight:800;box-shadow:0 4px 10px rgba(30,27,22,.16)}",
+      // la foto
+      ".oro.g-dadoveviene .dd-foto{background:var(--o-fondo-2);box-shadow:0 0 0 3px var(--o-carta),0 0 0 4px var(--o-filo-oro),var(--o-ombra-alta)}",
+      ".oro.g-dadoveviene .dd-sqA .dd-foto{box-shadow:0 0 0 3px var(--o-carta),0 0 0 5px #e0525b,var(--o-ombra-alta)}",
+      ".oro.g-dadoveviene .dd-sqB .dd-foto{box-shadow:0 0 0 3px var(--o-carta),0 0 0 5px #3b82d6,var(--o-ombra-alta)}",
+      ".oro.g-dadoveviene .dd-fmsg{color:var(--o-tenue);opacity:1}",
+      ".oro.g-dadoveviene .dd-banner{background:var(--o-scuro);color:var(--o-scuro-testo);box-shadow:var(--o-ombra-alta)}",
+      // indizi e tentativi
+      ".oro.g-dadoveviene .dd-indizi{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-ind.n{color:var(--o-oro-testo)}",
+      ".oro.g-dadoveviene .dd-chi{color:var(--o-testo)}",
+      ".oro.g-dadoveviene .dd-slot{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-slot span{opacity:1;color:var(--o-tenue)}",
+      ".oro.g-dadoveviene .dd-slot.vuoto{opacity:1;background:transparent;border:1.5px dashed var(--o-filo-oro);box-shadow:none}",
+      ".oro.g-dadoveviene .dd-slot.vuoto b{color:var(--o-tenue)}",
+      ".oro.g-dadoveviene .dd-slot.si{background:var(--o-verde);color:#fff;box-shadow:0 6px 14px rgba(46,125,79,.24)}",
+      ".oro.g-dadoveviene .dd-slot.si span{color:#fff;opacity:.95}",
+      ".oro.g-dadoveviene .dd-slot.no{background:var(--o-carta-2)}",
+      // i gradi (fuoco, caldo, tiepido, freddo, lontanissimo): un anello del colore, scurito per stare bene sul bianco
+      ".oro.g-dadoveviene .dd-slot.g0{box-shadow:inset 0 0 0 2px #c93b3b,var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-slot.g1{box-shadow:inset 0 0 0 2px #c2570c,var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-slot.g2{box-shadow:inset 0 0 0 2px #a8820a,var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-slot.g3{box-shadow:inset 0 0 0 2px #3a78b8,var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-slot.g4{box-shadow:inset 0 0 0 2px #6b7f99,var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-altre,.oro.g-dadoveviene .dd-conto,.oro.g-dadoveviene .dd-attesa,.oro.g-dadoveviene .dd-hint{color:var(--o-tenue);opacity:1}",
+      ".oro.g-dadoveviene .dd-bozza{background:var(--o-fondo-2);color:var(--o-testo)}",
+      // il campo della risposta
+      ".oro.g-dadoveviene .dd-chip{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-chip.sel{background:var(--o-carta-viva);color:var(--o-testo);box-shadow:inset 0 0 0 2px var(--o-oro),var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-input{background:var(--o-carta);color:var(--o-testo);border:1px solid var(--o-filo-oro);box-shadow:inset 0 1px 2px rgba(62,55,42,.05)}",
+      // la scheda della rivelazione
+      ".oro.g-dadoveviene .dd-scheda{background:var(--o-crema);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-dadoveviene .dd-paese{font-family:var(--o-tit);font-size:1.3rem;font-weight:700}",
+      ".oro.g-dadoveviene .testa h1{font-variant-numeric:lining-nums;font-feature-settings:\"lnum\" 1}",   // («13 punti su 24»: le cifre tutte alla stessa altezza)
+      ".oro.g-dadoveviene .dd-nome{color:var(--o-oro-testo)}",
+      ".oro.g-dadoveviene .dd-curio{opacity:1;color:var(--o-tenue)}",
+      // l'avviso sopra la foto («Giusto!», «Caldo!»): una fascia scura elegante, mai scritte gialle
+      ".oro.g-dadoveviene .dd-avviso{background:var(--o-scuro);color:var(--o-scuro-testo);text-shadow:none;border-radius:14px;padding:9px 14px;font-size:1.08rem;box-shadow:var(--o-ombra-alta)}",
+      ".oro.g-dadoveviene .dd-avviso.si{color:#b9e6c7;font-family:var(--o-tit);font-size:1.5rem;padding:5px 14px}.oro.g-dadoveviene .dd-avviso.no{color:#f3d2cd}",
+      // fine partita: la fila delle portate
+      ".oro.g-dadoveviene .dd-pt{background:var(--o-fondo-2);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".oro.g-dadoveviene .dd-pt.si{background:var(--o-verde-tenue);box-shadow:inset 0 0 0 1px var(--o-verde)}",
+      ".oro.g-dadoveviene .dd-pt.chi{background:none;box-shadow:none}"
     ].join("");
     document.head.appendChild(st);
   }
 
   SG.registra({
     id: ID, nome: "Da dove viene?", icona: "🍹",
+    tema: "oro",   // 🤍 Bianco e oro: tutte le schermate chiare (la foto del piatto è la protagonista)
     descrizione: "Esce la foto di un piatto o di un drink da tutto il mondo: da che paese viene? Tre tentativi, con distanza e direzione.",
     giocatoriMin: 1, giocatoriMax: MAX, difficolta: 2,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Un telefono in mezzo al tavolo: si discute e si risponde insieme", amici: true, min: 1 }],

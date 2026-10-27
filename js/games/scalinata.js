@@ -29,7 +29,8 @@
   // quanti sulla scala: "misura" = 4 (i Bot ai posti liberi) o tutti quelli che giocano, fino a 8; "piccola" = sempre 4; "grande" = sempre 8
   function postiPer(scala, umani) { return scala === "piccola" ? 4 : scala === "grande" ? MAX_POSTI : Math.max(4, Math.min(MAX_POSTI, umani)); }
   function scalaDa(imp) { var s = imp && imp.scala; return s === "piccola" || s === "grande" ? s : "misura"; }
-  var COLORI = ["#ff6b6b", "#4dabf7", "#51cf66", "#ffd43b", "#cc5de8", "#ff922b", "#20c997", "#f783ac"];
+  // i colori dei posti (rosso, blu, verde, ocra, viola, arancio, turchese, rosa): scuriti per il fondo chiaro (nomi almeno 4,5:1 sul bianco)
+  var COLORI = ["#c93b3b", "#1f6fc4", "#247a42", "#936900", "#9b3fc2", "#b3520a", "#0a7a67", "#c2357c"];
   // i bot: quelli del gruppo fisso (SG.bot: sempre gli stessi nomi e avatar in tutti i giochi), mai col nome di chi gioca
   function prendiBot(n, escludi) {
     var b = null;
@@ -206,7 +207,8 @@
     ]
   };
 
-  function coloreScelta(n) { return { 1: "#8ce99a", 2: "#c0eb75", 3: "#ffd43b", 4: "#ffc078", 5: "#ff922b", 6: "#ff8787" }[n] || "#ffd43b"; }
+  // i tasti dei numeri: dal verde chiaro (pochi gradini, prudente) al rosso chiaro (tanti, rischioso), in tinte morbide sul bianco e oro
+  function coloreScelta(n) { return { 1: "#dcefe3", 2: "#e7f0d2", 3: "#f6ebbd", 4: "#f7dfb9", 5: "#f6d2b5", 6: "#f1c7c1" }[n] || "#f6ebbd"; }
   function aCaso(sc) { sc = sc || SCELTE; return sc[Math.floor(Math.random() * sc.length)]; }
   // "1, 3 o 5" / "da 1 a 5"
   function testoNumeri(sc) { sc = sc || SCELTE; return sc.length === 3 ? sc.join(", ").replace(/, (\d+)$/, " o $1") : "da " + sc[0] + " a " + sc[sc.length - 1]; }
@@ -232,6 +234,7 @@
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
     ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     nome: "La Scalinata",
+    tema: "oro",   // 🤍 Bianco e oro: tutte le schermate chiare (la scala è una tavola avorio con i gradini dorati)
     icona: "🪜",
     descrizione: "Tutti sulla scala, fino a 8: scegli in segreto quanti gradini salire. Avanza solo chi sceglie un numero che nessun altro ha scelto. Primo in cima, vince.",
     giocatoriMin: 1,
@@ -489,7 +492,50 @@
       ".sc-tasti.molti .sc-tasto{height:86px;border-radius:14px;min-width:0}",
       ".sc-tasti.molti .sc-tasto b{font-size:2.1rem}",
       ".sc-tasti.molti .sc-tasto small{font-size:.6rem}",
-      ".sc-guarda-nota{margin:8px 0 0;padding:8px 12px;border-radius:12px;background:rgba(77,171,247,.14);font-weight:700;font-size:.9rem;line-height:1.35;text-align:center}"
+      ".sc-guarda-nota{margin:8px 0 0;padding:8px 12px;border-radius:12px;background:rgba(77,171,247,.14);font-weight:700;font-size:.9rem;line-height:1.35;text-align:center}",
+      // ---------------------------------------------------------
+      // 🤍 BIANCO E ORO: la scala è una tavola avorio con un filo d'oro e i gradini dorati; la cima a scacchi.
+      // Le regole stanno sotto .oro E il cartellino .g-scalinata (i prefissi .sc- sono anche delle Scope).
+      // Colori solo con le variabili --o-*; le uniche eccezioni sono «del gioco»: i colori dei posti (COLORI) e le tinte dei tasti.
+      // ---------------------------------------------------------
+      ".oro.g-scalinata.sc-piena{background:transparent}",
+      ".oro.g-scalinata .sc-scena{background:none;color:var(--o-testo)}",
+      ".oro.g-scalinata .sc-esci{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-scalinata .sc-round{font-family:var(--o-tit);font-weight:700;font-size:1.3rem;color:var(--o-testo);font-variant-numeric:lining-nums;font-feature-settings:\"lnum\" 1}",
+      ".oro.g-scalinata .sc-round small{font-family:var(--font);font-weight:600;font-size:.76rem;color:var(--o-tenue);opacity:1}",
+      ".oro.g-scalinata .sc-tempo{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-scalinata .sc-tempo.poco{color:var(--o-rosso);box-shadow:inset 0 0 0 1.5px var(--o-rosso)}",
+      ".oro.g-scalinata .sc-barra{background:var(--o-filo)}",
+      ".oro.g-scalinata .sc-barra i{background:var(--o-oro)}",
+      // la tavola con le corsie e i gradini
+      ".oro.g-scalinata .sc-scala{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta)}",
+      ".oro.g-scalinata .sc-righello span{color:var(--o-oro-testo);font-weight:800}",
+      ".oro.g-scalinata .sc-corsia.io{background:var(--o-crema);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".oro.g-scalinata .sc-gradini{background:repeating-linear-gradient(0deg,var(--o-filo-oro) 0,var(--o-filo-oro) 1.5px,var(--o-fondo-2) 1.5px,var(--o-fondo-2) calc(100% / " + TRAGUARDO + "))}",
+      ".oro.g-scalinata .sc-arrivo{background:repeating-linear-gradient(90deg,var(--o-carta) 0 6px,var(--o-scuro) 6px 12px);box-shadow:0 0 0 1px var(--o-filo-oro);opacity:1}",
+      // le scelte che si scoprono: bianco con filo d'oro; verde = avanza, grigio scuro = fermo, oro = in cima
+      ".oro.g-scalinata .sc-num{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-scalinata .sc-num.ok{background:var(--o-verde);color:#fff;box-shadow:0 3px 8px rgba(46,125,79,.28)}",
+      ".oro.g-scalinata .sc-num.no{background:var(--o-tenue);color:#fff;box-shadow:none}",
+      ".oro.g-scalinata .sc-num.re{background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:0 3px 8px rgba(167,123,13,.3)}",
+      ".oro.g-scalinata .sc-av .sc-pallino{border-color:var(--o-carta);box-shadow:var(--o-ombra)}",
+      ".oro.g-scalinata .sc-anello{box-shadow:0 0 0 2.5px var(--o-verde),0 0 0 5px rgba(46,125,79,.16)}",
+      ".oro.g-scalinata .sc-bonk{background:var(--o-rosso);color:#fff;box-shadow:var(--o-ombra)}",
+      ".oro.g-scalinata .sc-nome{text-shadow:none}",
+      ".oro.g-scalinata .sc-gr{color:var(--o-tenue)}",
+      // il commento e il pannello in basso
+      ".oro.g-scalinata .sc-voce{color:var(--o-testo)}",
+      ".oro.g-scalinata .sc-msg{color:var(--o-testo)}",
+      ".oro.g-scalinata .sc-msg small{opacity:1;color:var(--o-tenue)}",
+      ".oro.g-scalinata .sc-msg.piccolo{color:var(--o-ambra)}",
+      ".oro.g-scalinata .sc-auto{background:var(--o-filo)}",
+      ".oro.g-scalinata .sc-auto i{background:var(--o-oro)}",
+      // i tasti dei numeri: tinte morbide (verde prudente → rosso rischioso), filo d'oro, numero grande col carattere elegante
+      ".oro.g-scalinata .sc-tasto{color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-scalinata .sc-tasto b{font-family:var(--o-tit);font-weight:700;font-size:3rem;font-variant-numeric:lining-nums;font-feature-settings:\"lnum\" 1}",
+      ".oro.g-scalinata .sc-tasto small{opacity:.85;color:var(--o-testo);font-weight:650}",   // (la scritta «gradini» sulle tinte calde: almeno 4,5:1)
+      ".oro.g-scalinata .sc-tasto:active{transform:translateY(2px);box-shadow:inset 0 0 0 1.5px var(--o-oro)}",
+      ".oro.g-scalinata .sc-tasti.molti .sc-tasto b{font-size:2.5rem}"
     ].join("\n");
     var st = document.createElement("style"); st.id = "sc-stile"; st.textContent = css;
     document.head.appendChild(st);
