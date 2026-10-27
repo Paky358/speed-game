@@ -1283,7 +1283,7 @@
       } };
     if (t.nomeProfilo && t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();
     function chiediNome() {
-      var s = t.schermata({ icona: "🎡", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🎡", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1294,7 +1294,7 @@
     }
     function join() { S.ultimoJoin = Date.now(); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null }); }
     function collega() {
-      var s = t.schermata({ icona: GUARDA ? "👀" : "🎡", titolo: GUARDA ? "Guardo la partita…" : "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: GUARDA ? "👀" : "🎡", titolo: GUARDA ? "Guardo la partita…" : "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(s);
       S.rete = SGNet.entra(codice, {
@@ -2154,7 +2154,7 @@
     if (ui.annBtn.textContent !== tb) ui.annBtn.textContent = tb;
   }
   function finale(t, vm, cb) {
-    var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: "La Ruota della Fortuna" });
+    var s = t.schermata({ chiara: true, icona: "🏆", titolo: "Classifica finale", sotto: "La Ruota della Fortuna" });
     var ol = t.el("ol", { class: "classifica" }), med = ["🥇", "🥈", "🥉"];
     (vm.classifica || []).forEach(function (r) {
       ol.appendChild(t.el("li", { class: r.pos === 1 && !r.uscito ? "vincitore" : "", style: r.uscito ? "opacity:.55" : null }, [
@@ -2250,13 +2250,13 @@
     box.appendChild(corpo);
   }
   function errore(t, testo) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "La Ruota online funziona quando l'app è aperta dal sito pubblicato. Intanto puoi giocare contro i Bot o sullo stesso telefono." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
@@ -2361,6 +2361,10 @@
       ".ru-fin-box.vinto{background:rgba(255,212,59,.14);box-shadow:inset 0 0 0 1.5px rgba(255,212,59,.45)}",
       ".ru-fin-box small{opacity:.8}",
       ".ru-fac-fine{display:flex;justify-content:center;margin-top:10px}",
+      // 🤍 Bianco e oro: la classifica finale è una schermata chiara (lo studio con la ruota resta com'è)
+      ".oro.g-ruota .ru-fin-box{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra)}",
+      ".oro.g-ruota .ru-fin-box.vinto{background:var(--o-carta-viva);box-shadow:inset 0 0 0 1.5px var(--o-oro),var(--o-ombra)}",
+      ".oro.g-ruota .ru-fin-box small{color:var(--o-tenue);opacity:1}",
       // ❓ il Mistero: la scritta grande in mezzo allo studio (solo trasformazioni e trasparenza)
       ".ru-mist{position:absolute;left:50%;top:58%;z-index:22;width:86%;max-width:360px;padding:14px 12px 16px;border-radius:22px;text-align:center;color:#fff;pointer-events:none;background:radial-gradient(circle at 50% 30%,#3b3f9e,#1b1f5e);box-shadow:0 0 0 3px #ffd43b,0 10px 30px rgba(0,0,0,.6);opacity:0;transform:translate(-50%,-50%) scale(.4);transition:opacity .3s,transform .35s cubic-bezier(.3,1.5,.5,1)}",
       ".ru-mist.on{opacity:1;transform:translate(-50%,-50%) scale(1)}",

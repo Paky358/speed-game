@@ -325,6 +325,15 @@
     // il risultato: «📍 Andava …» e chi è arrivato in fondo
     ".tl-esito-t .tl-andava{font-size:.82rem;font-weight:800;color:#ffe3a0;max-width:36ch;animation:tlPop .4s ease 1.45s both}",
     ".tl-tutti .d.fin{color:var(--accento)}",
+    // 🤍 Bianco e oro: la classifica finale è una schermata chiara (la partita sul maxischermo resta scura)
+    ".oro.g-timeline .tl-gradino .fac,.oro.g-timeline .tl-riga .fac{background:var(--o-fondo-2)}",
+    ".oro.g-timeline .tl-gradino.p1 .fac{box-shadow:0 0 0 3px var(--o-oro),0 6px 18px rgba(167,123,13,.3)}",
+    ".oro.g-timeline .tl-gradino .nm{color:var(--o-testo)}",
+    ".oro.g-timeline .tl-gradino .pt{color:var(--o-tenue)}",
+    ".oro.g-timeline .tl-gradino.p1 .blocco{background:var(--o-tasto)}",
+    ".oro.g-timeline .tl-riga{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra)}",
+    ".oro.g-timeline .tl-riga .pos{font-family:var(--o-tit);font-variant-numeric:lining-nums;color:var(--o-oro-testo)}",
+    ".oro.g-timeline .tl-riga .pt{color:var(--o-oro-testo)}",
     "@media (prefers-reduced-motion:reduce){.tl-mano,.tl-mano:after{animation:none}}"
   ].join("");
   document.head.appendChild(stile);
@@ -1098,7 +1107,7 @@
     function carteL(r) { return opz.vinci ? okVista(r.punti, opz.vinci) : r.punti; }
     function pt(r, corto) { return opz.linee ? (corto ? fmtN(carteL(r)) + " 🃏" : (r.fin ? "🏁 " : "") + carteTx(carteL(r))) : (corto ? fmtN(r.punti) : fmtN(r.punti) + " punti"); }
     var esci = opz.esci || t.esci;
-    var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: gioco.nome });
+    var s = t.schermata({ chiara: true, icona: "🏆", titolo: "Classifica finale", sotto: gioco.nome });
     s.classList.add("tl-fine");
     if (classifica.length > 6) s.classList.add("molti");
     var podio = el("div", { class: "tl-podio" }), MED = ["🥇", "🥈", "🥉"];
@@ -2595,7 +2604,7 @@
     function disegna() { if (S.vm) { cb.myId = S.myId; disegnaVM(t, S.vm, cb); } }
     schermaNome();
     function schermaNome() {
-      var s = t.schermata({ icona: "🔗", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
@@ -2675,7 +2684,7 @@
       }, 400);
     }
     function schermaErr(txt) {
-      var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+      var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
       s._contenuto.appendChild(el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: function () { if (S.rete) S.rete.chiudi(); t.esci(); } }));
       t.mostra(s);
@@ -3381,14 +3390,14 @@
   }
 
   function schermataNoNet(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
       text: "La modalità \"ognuno dal suo telefono\" funziona quando il gioco è aperto dal sito pubblicato. Da un file locale o da un'anteprima non è disponibile: intanto usa \"Un telefono solo\"." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
   function schermataErrore(t, txt) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
     t.mostra(s);

@@ -1524,6 +1524,7 @@
 
   function ospite(t, codice) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
+    stile();   // (il CSS del gioco serve già alla schermata d'attesa di chi entra)
     var S = { rete: null, myId: null, nome: "", vm: null, tav: null, st: null, partita: -1, coda: null, tAtt: null, mira: { t: 0, to: null }, fineDi: null, att: null };
     // guardo soltanto (link con guarda=1): il tavolo come gli altri, senza tirare; in basso la targhetta del core («👀 Guardi · 😂 · ✕»)
     var GUARDA = !!t.guarda, TARGA = GUARDA && !t.eliminazione;
@@ -1537,7 +1538,7 @@
       } };
     if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
     function chiediNome() {
-      var s = t.schermata({ icona: "🔴", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🔴", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1566,7 +1567,7 @@
     function attesa(testo, faccine) {   // la schermata d'attesa: se è già lì cambio solo la scritta (niente lampeggio a ogni foto)
       var A = S.att;
       if (A && document.body.contains(A.s)) { if (A.p.textContent !== testo) A.p.textContent = testo; if (faccine) metti(A); return; }
-      var s = t.schermata({ icona: "🔴", titolo: "Palla Matta", sotto: "Stanza " + String(codice).toUpperCase(), indietro: cb.onEsci });
+      var s = t.schermata({ chiara: true, icona: "🔴", titolo: "Palla Matta", sotto: "Stanza " + String(codice).toUpperCase(), indietro: cb.onEsci });
       var p = t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: testo });
       s._contenuto.appendChild(t.el("div", { style: "text-align:center;margin-top:56px;font-size:3rem;line-height:1", text: "🔴" }));   // (nei giochi la testa non ha il titolo: lo metto qui)
       s._contenuto.appendChild(t.el("div", { style: "text-align:center;margin-top:8px;font-weight:900;font-size:1.2rem", text: "Palla Matta · stanza " + String(codice).toUpperCase() }));
@@ -1667,13 +1668,13 @@
     return f;
   }
   function errore(t, testo) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "L'online funziona quando l'app è aperta dal sito pubblicato." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
@@ -1720,6 +1721,8 @@
       ".pm-rig b{color:#ffe066}",
       ".pm-rec{margin-top:8px;font-weight:900;color:#8ce99a}",
       ".pm-tasti{display:flex;flex-direction:column;gap:8px;margin-top:14px}",
+      // 🤍 Bianco e oro: la schermata d'attesa di chi entra è chiara e non ha il titolo: il tasto «indietro» in alto è chiaro anche lui
+      ".oro.g-pallamatta.senza-testa > .testa .btn-piccolo{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
       // la schermata dei livelli
       ".pm-aiutanti{display:flex;align-items:center;gap:6px;margin:4px 0 12px;flex-wrap:wrap}",
       ".pm-aiu-et{font-weight:800;font-size:.85rem;color:var(--testo-tenue)}",

@@ -467,6 +467,13 @@
       // chi guarda soltanto: in basso il posto della targhetta del core ("👀 Guardi · 😂 · ✕")
       ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",
       ".nc-con-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
+      // 🤍 Bianco e oro: la classifica finale è una schermata chiara (il foglio, il tabellone e lo studio restano com'erano)
+      ".oro.g-nomicose .nc-cl{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra)}",
+      ".oro.g-nomicose .nc-cl.primo{background:var(--o-carta-viva);border:0;box-shadow:inset 0 0 0 1.5px var(--o-oro),var(--o-ombra)}",
+      ".oro.g-nomicose .nc-cl .fac{background:var(--o-fondo-2)}",
+      ".oro.g-nomicose .nc-cl .pos{font-family:var(--o-tit);font-variant-numeric:lining-nums;color:var(--o-oro-testo)}",
+      ".oro.g-nomicose .nc-cl .pt{color:var(--o-oro-testo)}",
+      ".oro.g-nomicose .nc-cl .pi{color:var(--o-verde)}",
       ".nc-lobby{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,.06);font-weight:700}",
       ".nc-lobby .fac{width:38px;height:38px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto}",
       ".nc-lobby .fac svg{width:100%;height:100%;display:block}",
@@ -928,14 +935,14 @@
   var GRAZIA = 2500;            // finito il tempo, aspetto i fogli che arrivano un po' in ritardo
   var TEMPO_VOTO = 90000;       // al massimo, per ogni categoria del tabellone
   function senzaReteN(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
       text: "La modalità \"ognuno dal suo telefono\" funziona quando il gioco è aperto dal sito pubblicato online. Da un file locale non è disponibile: intanto usa \"Un telefono solo\"." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
   function erroreN(t, txt) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
     t.mostra(s);
@@ -1271,7 +1278,7 @@
     function entra() { G.ultimoJoin = Date.now(); G.rete.invia({ t: "join", nome: G.nome, omino: ST.mioAvatar(G.nome) }); }
     schermaNome();
     function schermaNome() {
-      var s = t.schermata({ icona: "✍️", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "✍️", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       G.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(G.msg);
@@ -1658,7 +1665,7 @@
   function fineN(t, vm, cb, ordine, R) {
     var el = t.el, primi = ordine.filter(function (o) { return o.pos === 1; }).map(function (o) { return o.p.nome; });
     var titolo = vm.interrotta ? "Partita interrotta" : primi.length > 1 ? "Pareggio tra " + nomiInsieme(primi) + "!" : primi.length ? "Vince " + primi[0] + "!" : "Fine partita";
-    var s = t.schermata({ icona: vm.interrotta ? "👋" : primi.length > 1 ? "🤝" : "🏆", titolo: titolo, sotto: vm.interrotta ? "Sono usciti gli altri giocatori" : "Nomi, Cose e Città" });
+    var s = t.schermata({ chiara: true, icona: vm.interrotta ? "👋" : primi.length > 1 ? "🤝" : "🏆", titolo: titolo, sotto: vm.interrotta ? "Sono usciti gli altri giocatori" : "Nomi, Cose e Città" });
     var box = el("div", { style: "display:flex;flex-direction:column;gap:8px" });
     ordine.forEach(function (o) {
       var p = o.p;
