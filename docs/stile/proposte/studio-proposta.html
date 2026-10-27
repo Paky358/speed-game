@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390, initial-scale=1">
+<title>Studio TV · proposta Bianco e oro</title>
+<!--
+  DISEGNO DI PROVA (non è ancora l'app): come diventerebbe lo studio del game show in «Bianco e oro».
+  Stessa pianta dello studio vero (js/studio.js): maxischermo al centro con la sua cornice, due gradinate ai lati e una sotto,
+  due torri a led, i banconi dei concorrenti in basso, e la telecamera che inquadra una parte alla volta.
+  Si guarda a 390 × 844 (un telefono). Si sceglie l'inquadratura dopo il # dell'indirizzo:
+     #largo   tutto lo studio (la panoramica)         #leggio   un concorrente al suo bancone, acceso
+     #schermo  il maxischermo con una carta (chiaro)  #scuro    lo stesso, con lo schermo scuro
+     #pubblico la gradinata di sinistra               #finale   chi vince, coi coriandoli
+  I colori sono quelli dell'app (--o-* di css/styles.css); il «legno chiaro» è l'oro chiaro stemperato nel fondo.
+  Gli avatar sono quelli veri (js/omino.js).
+-->
+<style>
+@font-face{ font-family:"SG Titoli"; font-style:normal; font-weight:500 700; font-display:block; src:url(font/sg-titoli.woff2) format("woff2"); }
+:root{
+  --o-fondo:#fcfbf9; --o-fondo-2:#f4f2ee; --o-carta:#ffffff; --o-carta-2:#f6f4ef; --o-filo:#e9e4d8; --o-filo-oro:#e2c56a;
+  --o-testo:#1e1b16; --o-tenue:#6b665c; --o-oro:#bd931a; --o-oro-testo:#87680c; --o-oro-chiaro:#ecd283;
+  --o-tasto:linear-gradient(180deg,#efca4c,#cf9f1e); --o-tasto-testo:#1e190d; --o-scuro:#1e1b16; --o-scuro-testo:#efd88f;
+  --o-verde:#2e7d4f; --o-rosso:#b8433a; --o-crema:#fbf6e3; --o-carta-viva:#fffbec;
+  --o-ombra:0 1px 2px rgba(62,55,42,.06), 0 6px 18px rgba(88,76,54,.08);
+  --o-ombra-alta:0 2px 6px rgba(62,55,42,.08), 0 16px 40px rgba(62,55,42,.16);
+  --o-tit:"SG Titoli","Cormorant Garamond",Georgia,serif;
+  /* il legno chiaro: l'oro chiaro stemperato nel fondo (due variabili nuove, solo per lo studio) */
+  --legno:#f2ebdb; --legno-2:#e7dcc3; --legno-3:#d4c4a0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#d9d3c4}
+body{width:390px;height:844px;overflow:hidden;font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--o-testo);-webkit-font-smoothing:antialiased}
+
+/* ---------- la vista e la telecamera ---------- */
+#vista{position:relative;width:390px;height:844px;overflow:hidden;background:var(--o-fondo);user-select:none}
+#mondo{position:absolute;left:0;top:0;width:780px;height:1688px;transform-origin:0 0}
+#mondo>*{position:absolute}
+
+/* ---------- il muro: intonaco avorio al centro, doghe di legno chiaro ai lati ---------- */
+.muro{left:0;top:0;width:780px;height:1250px;background:
+  radial-gradient(52% 34% at 50% 15%, rgba(255,255,255,.95), rgba(255,255,255,0) 72%),
+  linear-gradient(180deg,#fdfcfa 0%,#f8f5ee 55%,#f1ece0 100%)}
+.doghe{top:30px;width:158px;height:1220px;background:
+  linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,0) 40%,rgba(120,85,30,.10)),
+  repeating-linear-gradient(90deg,var(--legno) 0 13px,var(--legno-2) 13px 14.5px,var(--legno) 14.5px 27px,var(--legno-3) 27px 28px)}
+.doghe.sx{left:0;box-shadow:inset -10px 0 18px -10px rgba(110,80,30,.35)}
+.doghe.dx{right:0;box-shadow:inset 10px 0 18px -10px rgba(110,80,30,.35)}
+.doghe:after{content:"";position:absolute;top:0;bottom:0;width:3px;background:linear-gradient(90deg,var(--o-oro-chiaro),var(--o-oro),var(--o-oro-chiaro))}
+.doghe.sx:after{right:0}.doghe.dx:after{left:0}
+
+/* l'arco dietro al maxischermo (al posto dell'arco al neon) */
+.arco{left:170px;top:10px;width:440px;height:1240px;border-radius:220px 220px 0 0 / 120px 120px 0 0;
+  background:linear-gradient(180deg,#ffffff 0%,#faf7f0 40%,#f3eee1 100%);
+  box-shadow:0 0 0 3px #d2a93a,0 0 0 5px rgba(255,255,255,.8),0 0 0 6px rgba(189,147,26,.45),0 0 60px rgba(226,197,106,.30)}
+
+/* ---------- il traliccio coi fari: barra dorata e fari caldi ---------- */
+.traliccio{left:0;top:0;width:780px;height:30px;background:
+  repeating-linear-gradient(60deg,transparent 0 11px,rgba(120,85,20,.28) 11px 12.5px),
+  repeating-linear-gradient(-60deg,transparent 0 11px,rgba(120,85,20,.28) 11px 12.5px),
+  linear-gradient(180deg,#f6e3a0,#d3aa3a 60%,#a98113);box-shadow:0 3px 8px rgba(88,76,54,.25)}
+.faro{top:14px;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:radial-gradient(circle at 38% 34%,#fff,#fff0b8 38%,#e0b53c 72%,#7f5f0c);
+  box-shadow:0 0 0 2px #a98113,0 0 22px 7px rgba(255,214,120,.6);z-index:3}
+.fascio{top:26px;width:172px;height:1150px;transform-origin:50% 0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,236,176,.60),rgba(255,236,176,.20) 45%,rgba(255,236,176,0));
+  clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);animation:fascio 6s ease-in-out infinite alternate}
+@keyframes fascio{from{transform:rotate(-9deg)}to{transform:rotate(9deg)}}
+
+/* ---------- le torri: due colonne avorio con i led d'oro che ballano ---------- */
+.torre{top:84px;width:140px;height:304px;border-radius:16px;background:linear-gradient(180deg,#ffffff,#f6f2e8);
+  box-shadow:0 0 0 2px var(--o-filo-oro),0 0 0 4px rgba(255,255,255,.8),var(--o-ombra-alta)}
+.torre .stelle{position:absolute;left:0;right:0;top:10px;text-align:center;font-size:17px;letter-spacing:.35em;color:var(--o-oro);text-indent:.35em}
+.torre .eq{position:absolute;left:8px;right:8px;top:44px;bottom:10px;display:flex;gap:3px}
+.torre .col{flex:1;position:relative;overflow:hidden;border-radius:2px;
+  background:repeating-linear-gradient(180deg,var(--o-fondo-2) 0 20px,transparent 20px 24.8px)}
+.torre .col i{position:absolute;left:0;right:0;bottom:0;height:100%;will-change:transform;animation:eq var(--d,1.2s) steps(11) var(--r,0s) infinite alternate;
+  background:repeating-linear-gradient(180deg,var(--c1,#efca4c) 0 20px,transparent 20px 24.8px);transform:translateY(var(--y,40%))}
+@keyframes eq{from{transform:translateY(var(--y0,70%))}to{transform:translateY(var(--y1,10%))}}
+
+/* ---------- il pavimento: parquet chiaro con il filetto d'oro ---------- */
+.pavimento{left:0;top:1250px;width:780px;height:438px;background:
+  radial-gradient(70% 26% at 50% 0,rgba(255,255,255,.65),rgba(255,255,255,0)),
+  repeating-linear-gradient(90deg,rgba(150,110,40,.0) 0 69px,rgba(150,110,40,.16) 69px 70.5px),
+  linear-gradient(180deg,#f0e7d2 0%,#e6d9bb 55%,#dccda8 100%)}
+.tappeto{left:70px;top:1395px;width:640px;height:230px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.62),rgba(255,255,255,.18) 78%,rgba(255,255,255,0));box-shadow:0 0 0 1.5px rgba(189,147,26,.32),0 0 0 8px rgba(255,255,255,.22),0 0 0 9px rgba(189,147,26,.18)}
+.filetto{left:0;top:1250px;width:780px;height:7px;background:linear-gradient(90deg,#ecd283,#bd931a 25%,#f4e2a0 50%,#bd931a 75%,#ecd283);box-shadow:0 2px 10px rgba(189,147,26,.55);z-index:2}
+
+/* ---------- le gradinate (il canvas del pubblico) ---------- */
+#folla{left:0;top:439px;width:780px;height:810px}
+.carto{z-index:4;margin:-34px 0 0 -23px;width:46px;transform-origin:50% 100%;animation:sventola var(--d,1.8s) ease-in-out var(--r,0s) infinite alternate}
+.carto b{display:block;background:var(--o-carta);color:var(--o-testo);border-radius:5px;font:700 11px/1.1 var(--o-tit);letter-spacing:.04em;text-align:center;padding:4px 2px 3px;
+  box-shadow:0 0 0 1px var(--o-filo-oro),0 3px 7px rgba(62,55,42,.25)}
+.carto:after{content:"";display:block;width:3px;height:12px;margin:0 auto;background:#b9954c}
+@keyframes sventola{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
+.scint{z-index:4;width:14px;height:14px;margin:-7px;background:radial-gradient(circle,#fff6cf 0 18%,#efca4c 19% 42%,rgba(239,202,76,0) 70%);
+  clip-path:polygon(50% 0,59% 41%,100% 50%,59% 59%,50% 100%,41% 59%,0 50%,41% 41%);animation:scint 2.4s ease-in-out var(--r,0s) infinite}
+@keyframes scint{0%,100%{opacity:.15;transform:scale(.5)}50%{opacity:1;transform:scale(1.1)}}
+.macchia{z-index:3;width:210px;height:210px;margin:-105px;border-radius:50%;background:radial-gradient(circle,rgba(255,226,150,.45),rgba(255,226,150,0) 68%);pointer-events:none}
+
+/* ---------- il maxischermo ---------- */
+.schermo{left:195px;top:51px;width:390px;height:844px;z-index:5}
+.cornice{position:absolute;inset:-16px;border-radius:26px;
+  background:linear-gradient(135deg,#f7e6a6 0%,#d6ad3c 28%,#a98113 52%,#e8c862 78%,#f7e6a6 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.55),inset 0 0 0 4px rgba(120,85,20,.28),0 0 0 1px rgba(120,85,20,.45),0 18px 44px rgba(88,76,54,.30)}
+.cornice:after{content:"";position:absolute;inset:14px;border-radius:14px;background:linear-gradient(160deg,#fffefb,#efe3bf);box-shadow:inset 0 0 0 1px rgba(120,85,20,.35)}
+.perla{position:absolute;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:radial-gradient(circle at 38% 34%,#fff,#fff0b8 45%,#d6ad3c);box-shadow:0 0 8px 2px rgba(255,223,130,.8)}
+.perla.s{background:radial-gradient(circle at 38% 34%,#e9d49a,#b58f23);box-shadow:none}
+.perla.b{animation:lamp .9s linear infinite alternate}.perla.b.s{animation:lampSp .9s linear infinite alternate}
+@keyframes lamp{0%,45%{opacity:1}55%,100%{opacity:.2}}
+@keyframes lampSp{0%,45%{opacity:.2}55%,100%{opacity:1}}
+.vetro{position:absolute;inset:0;border-radius:14px;overflow:hidden;
+  background:linear-gradient(180deg,#fffefc 0%,#fbf8ef 60%,#f6f0df 100%);
+  box-shadow:inset 0 0 0 1px var(--o-filo-oro),inset 0 0 50px rgba(226,197,106,.20)}
+.vetro:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(118deg,rgba(255,255,255,.75),rgba(255,255,255,0) 30%)}
+.dentro{position:absolute;inset:0;display:flex;flex-direction:column;padding:8px 12px 104px}
+
+/* sigla sul maxischermo */
+.sigla:before{content:"";position:absolute;left:50%;top:44%;width:150%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;background:repeating-conic-gradient(from 0deg,rgba(226,197,106,.16) 0 7deg,rgba(226,197,106,0) 7deg 15deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 62%);mask:radial-gradient(circle,#000 0,transparent 62%)}
+.sigla{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px}
+.sigla .st{font-size:24px;letter-spacing:.35em;text-indent:.35em;color:var(--o-oro)}
+.sigla .logo{font:700 52px/.98 var(--o-tit);letter-spacing:.015em;color:var(--o-testo)}
+.sigla .linea{width:96px;height:2px;background:linear-gradient(90deg,transparent,var(--o-oro),transparent)}
+.sigla .sotto{font-size:13px;font-weight:700;letter-spacing:.34em;text-indent:.34em;text-transform:uppercase;color:var(--o-oro-testo)}
+
+/* una carta della Linea del tempo sul maxischermo (il gioco poi si converte per conto suo: qui si vede come sta sul vetro chiaro) */
+.vetro{--v-testo:var(--o-testo);--v-tenue:var(--o-tenue);--v-carta:var(--o-carta);--v-filo:var(--o-filo-oro);--v-pill:var(--o-scuro);--v-pill-t:var(--o-scuro-testo);--v-oro:var(--o-oro)}
+.hud{display:flex;gap:6px;margin:0 42px;justify-content:center}
+.pill{display:flex;align-items:center;gap:5px;padding:3px 9px 3px 3px;border-radius:99px;background:var(--v-carta);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra);font-size:11px;font-weight:600;color:var(--v-tenue)}
+.pill.io{box-shadow:inset 0 0 0 1.5px var(--o-oro),var(--o-ombra);background:var(--o-carta-viva);color:var(--v-testo)}
+.pill .f{width:28px;height:28px;border-radius:50%;overflow:hidden;background:var(--o-fondo-2);flex:0 0 auto}
+.pill .f img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.pill b{display:block;font-size:15px;line-height:1;color:inherit;font-weight:800}
+.tocca{text-align:center;margin-top:9px}
+.tocca h3{margin:0;font:700 23px/1 var(--o-tit);color:var(--v-testo)}
+.tocca p{margin:3px 0 0;font-size:11.5px;font-weight:600;color:var(--v-tenue);letter-spacing:.02em}
+.barra-t{height:5px;border-radius:5px;background:var(--o-filo);margin:9px 0 10px;overflow:hidden}
+.barra-t i{display:block;height:100%;width:68%;border-radius:5px;background:linear-gradient(90deg,#efca4c,#cf9f1e)}
+.carta{position:relative;border-radius:18px;padding:12px 14px 14px;background:var(--v-carta);box-shadow:inset 0 0 0 1px var(--v-filo),var(--o-ombra)}
+.carta .riga{display:flex;align-items:center;gap:6px}
+.cat{display:inline-flex;align-items:center;gap:5px;background:var(--v-pill);color:var(--v-pill-t);border-radius:99px;padding:5px 11px;font-size:10.5px;font-weight:800;letter-spacing:.14em}
+.mini{margin-left:auto;font-size:11px;font-weight:700;color:var(--v-testo);padding:5px 10px;border-radius:99px;box-shadow:inset 0 0 0 1px var(--v-filo);background:var(--o-carta)}
+.anno{background:var(--v-pill);color:var(--v-pill-t);border-radius:99px;padding:5px 13px;font:700 14px/1 var(--o-tit);font-variant-numeric:lining-nums;letter-spacing:.12em}
+.carta h4{margin:11px 0 0;font:700 27px/1.04 var(--o-tit);color:var(--v-testo);padding-right:20px}
+.tl{position:relative;margin-top:16px;height:210px}
+.tl .asse{position:absolute;left:86px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,transparent,var(--o-oro) 12%,var(--o-oro) 88%,transparent);opacity:.85}
+.slot{position:absolute;left:68px;display:flex;align-items:center;gap:6px}
+.slot span.p{width:20px;height:20px;border-radius:50%;background:var(--v-carta);box-shadow:inset 0 0 0 1.5px var(--o-oro);display:grid;place-items:center;font:800 14px/1 system-ui;color:var(--o-oro-testo);flex:0 0 auto}
+.slot span.t{border:1.5px dashed var(--o-oro);border-radius:99px;padding:5px 12px;font-size:12.5px;font-weight:700;color:var(--o-oro-testo);background:rgba(255,251,236,.7)}
+.ev{position:absolute;left:0;top:70px;right:0;display:flex;align-items:center}
+.ev .y{width:62px;text-align:center;background:var(--v-pill);color:var(--v-pill-t);border-radius:99px;padding:6px 0;font:700 17px/1 var(--o-tit);font-variant-numeric:lining-nums;letter-spacing:.06em;margin-right:-4px;z-index:1}
+.ev .d{width:11px;height:11px;border-radius:50%;background:var(--o-oro);box-shadow:0 0 0 3px var(--v-carta),0 0 0 4px var(--o-oro);margin:0 12px 0 10px;flex:0 0 auto}
+.ev .c{flex:1;background:var(--v-carta);border-radius:12px;padding:8px 10px;box-shadow:inset 0 0 0 1px var(--v-filo),inset 3px 0 0 var(--o-oro);font-size:11.5px;line-height:1.3;color:var(--v-tenue)}
+.ev .c b{display:block;font:700 16px/1.1 var(--o-tit);color:var(--v-testo);margin-bottom:3px}
+.comandi{margin-top:auto;display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:6px}
+.comandi span{padding:9px 11px;border-radius:12px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro);font-size:12.5px;font-weight:700;color:var(--v-testo)}
+.comandi span.g{flex:1;text-align:center;color:var(--o-oro-testo)}
+.slider{height:4px;border-radius:4px;background:var(--o-filo);margin:6px 8px 0;position:relative}
+.slider:before{content:"";position:absolute;left:0;top:0;bottom:0;width:50%;background:linear-gradient(90deg,#efca4c,#cf9f1e);border-radius:4px}
+.slider:after{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;border-radius:50%;background:var(--o-carta);box-shadow:inset 0 0 0 2px var(--o-oro),var(--o-ombra)}
+
+/* versione «schermo scuro»: nero caldo con filetti d'oro (come uno schermo vero di lusso) */
+#vista.scuro .vetro{background:radial-gradient(130% 55% at 50% 0%,#3a3224 0%,#26211a 52%,#171410 100%);box-shadow:inset 0 0 0 1px rgba(226,197,106,.7),inset 0 0 60px rgba(0,0,0,.4);
+  --v-testo:#fbf4de;--v-tenue:#cdbf98;--v-carta:rgba(255,255,255,.07);--v-filo:rgba(226,197,106,.55);--v-pill:var(--o-oro-chiaro);--v-pill-t:#1e1b16;--v-oro:var(--o-oro-chiaro)}
+#vista.scuro .vetro:after{background:linear-gradient(118deg,rgba(255,255,255,.14),rgba(255,255,255,0) 32%)}
+#vista.scuro .sigla .logo{color:#fbf4de}#vista.scuro .sigla .sotto{color:var(--o-oro-chiaro)}#vista.scuro .sigla .st{color:var(--o-oro-chiaro)}
+#vista.scuro .pill{box-shadow:inset 0 0 0 1px rgba(226,197,106,.35)}#vista.scuro .pill.io{background:rgba(236,210,131,.14);box-shadow:inset 0 0 0 1.5px var(--o-oro-chiaro);color:#fbf4de}
+#vista.scuro .mini,#vista.scuro .comandi span{background:rgba(255,255,255,.07);color:#fbf4de}
+#vista.scuro .slot span.t{background:rgba(255,255,255,.05);color:var(--o-oro-chiaro);border-color:var(--o-oro-chiaro)}
+#vista.scuro .slot span.p{color:var(--o-oro-chiaro);box-shadow:inset 0 0 0 1.5px var(--o-oro-chiaro)}
+#vista.scuro .comandi span.g{color:var(--o-oro-chiaro)}
+#vista.scuro .ev .d{box-shadow:0 0 0 3px #26211a,0 0 0 4px var(--o-oro-chiaro);background:var(--o-oro-chiaro)}
+#vista.scuro .tl .asse{background:linear-gradient(180deg,transparent,var(--o-oro-chiaro) 12%,var(--o-oro-chiaro) 88%,transparent)}
+#vista.scuro .slider{background:rgba(255,255,255,.14)}#vista.scuro .slider:after{background:#26211a}
+#vista.scuro .barra-t{background:rgba(255,255,255,.14)}
+
+/* ---------- i banconi dei concorrenti (i «leggii») ---------- */
+.riflettore{z-index:5;left:-800px;top:-300px;width:2400px;height:2400px;pointer-events:none;background:radial-gradient(closest-side,rgba(40,34,24,0) 0,rgba(40,34,24,0) 12%,rgba(40,34,24,.34) 42%,rgba(40,34,24,.40) 100%)}
+.leg{z-index:6}
+#vista.spot .leg:not(.acceso){z-index:4}
+.leg .luce{position:absolute;left:50%;bottom:-17%;width:172%;height:480%;transform:translateX(-50%);opacity:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,244,205,.95),rgba(255,244,205,.55) 55%,rgba(255,244,205,0));clip-path:polygon(41% 0,59% 0,100% 100%,0 100%)}
+.leg .pozza{position:absolute;z-index:1;left:50%;bottom:-24%;width:180%;height:30%;transform:translateX(-50%);opacity:0;pointer-events:none;
+  background:radial-gradient(50% 50% at 50% 50%,rgba(255,236,170,.95),rgba(255,236,170,0))}
+.leg .alone{position:absolute;left:50%;top:0;width:96%;aspect-ratio:1;transform:translateX(-50%);opacity:0;pointer-events:none;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,232,160,.95),rgba(255,232,160,0) 70%)}
+.leg.acceso .luce,.leg.acceso .pozza{opacity:1}.leg.acceso .alone{opacity:1;transform:translateX(-50%) scale(1.12)}
+.leg .av{position:relative;z-index:2;width:74%;margin:0 auto;aspect-ratio:178/182}
+.leg .av img{width:100%;height:100%;display:block}
+.leg .tu{position:absolute;z-index:5;left:10%;top:6.1em;line-height:0}
+.leg .tu span{display:inline-block;background:var(--o-scuro);color:var(--o-scuro-testo);font:800 12.5px/1 "Inter",system-ui,sans-serif;letter-spacing:.06em;padding:7px 14px;border-radius:99px;box-shadow:0 0 0 1px rgba(236,210,131,.6)}
+.podio{position:relative;z-index:3;width:100%;height:6.82em;margin-top:-.9em}
+.piano{position:absolute;left:0;top:0;width:100%;height:1.1em;border-radius:.55em .55em .2em .2em;
+  background:linear-gradient(180deg,#ffffff 0%,#fbf7ea 45%,#ecdfb8 100%);box-shadow:0 0 0 .06em var(--o-filo-oro),0 .25em .45em rgba(62,55,42,.28)}
+.piano:after{content:"";position:absolute;left:8%;right:8%;top:.14em;height:.12em;border-radius:.1em;background:linear-gradient(90deg,transparent,rgba(189,147,26,.7),transparent)}
+.pulsante{position:absolute;z-index:4;right:13%;top:-.5em;width:1.15em;height:.62em;border-radius:.6em .6em .2em .2em;background:radial-gradient(circle at 40% 30%,#fff3c4,#e0b53c 55%,#8a6a10);box-shadow:0 0 0 .05em #8a6a10}
+.fronte{position:absolute;left:0;top:1.1em;width:100%;height:5.3em;clip-path:polygon(5% 0,95% 0,90.5% 100%,9.5% 100%);
+  background:linear-gradient(180deg,#ffffff 0%,#f9f5ea 55%,#eee5cf 100%)}
+.fronte:after{content:"";position:absolute;left:11%;right:11%;top:.28em;bottom:.45em;clip-path:polygon(0 0,100% 0,97% 100%,3% 100%);background:transparent;box-shadow:inset 0 0 0 .07em rgba(189,147,26,.55)}
+.corpo{position:absolute;left:0;top:1.1em;width:100%;height:5.3em;pointer-events:none}
+.perle{position:absolute;left:14%;right:14%;top:.45em;height:.4em;display:flex;justify-content:space-between;align-items:center}
+.perle i{width:.26em;height:.26em;border-radius:50%;background:radial-gradient(circle at 36% 32%,#fff,var(--col) 62%,color-mix(in srgb,var(--col) 60%,#000));box-shadow:0 0 .2em color-mix(in srgb,var(--col) 55%,transparent)}
+.nome{position:absolute;left:0;right:0;top:1.05em;text-align:center;line-height:0;white-space:nowrap}
+.nome span{display:inline-block;font:700 1.55em/1 var(--o-tit);color:var(--o-testo)}
+.display{position:absolute;left:50%;top:2.55em;width:7.2em;height:1.9em;margin-left:-3.6em;border-radius:.3em;background:var(--o-scuro);
+  box-shadow:inset 0 0 0 .07em rgba(236,210,131,.55),0 .12em .3em rgba(62,55,42,.25);display:flex;align-items:center;justify-content:center}
+.display span{display:block;color:var(--o-scuro-testo);font:700 1.7em/1 var(--o-tit);font-variant-numeric:lining-nums tabular-nums;letter-spacing:.06em}
+.striscia{position:absolute;left:9%;width:82%;top:5.3em;height:.42em;border-radius:.01em .01em .3em .3em;background:var(--col);box-shadow:0 .3em .7em color-mix(in srgb,var(--col) 40%,transparent)}
+.leg.acceso .striscia{background:linear-gradient(90deg,#ecd283,#d6ad3c,#ecd283);box-shadow:0 .3em 1em rgba(226,180,60,.75)}
+.leg.acceso .fronte{background:linear-gradient(180deg,#ffffff 0%,#fcf5dc 55%,#f3e5b4 100%)}
+.leg.acceso .piano{box-shadow:0 0 0 .08em var(--o-oro),0 0 1.4em .2em rgba(255,214,120,.8),0 .25em .45em rgba(62,55,42,.28)}
+
+/* ---------- sopra a tutto: i tasti, «IN ONDA», la striscia col nome, la barra ---------- */
+.tondo{position:absolute;top:8px;z-index:25;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.94);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);display:grid;place-items:center;padding:0}
+.tondo.sx{left:8px}.tondo.dx{right:8px}
+.tondo svg{width:18px;height:18px;stroke:var(--o-testo);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tondo.dx svg{stroke:var(--o-oro-testo);stroke-width:1.9}
+.onda{position:absolute;right:52px;top:12px;z-index:25;font-size:10.5px;font-weight:800;letter-spacing:.14em;color:var(--o-testo);background:rgba(255,255,255,.94);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);border-radius:99px;padding:5px 11px 5px 10px;display:none}
+.onda:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--o-rosso);margin-right:6px;vertical-align:0;animation:rec 1s steps(2) infinite}
+@keyframes rec{50%{opacity:.25}}
+.terzo{position:absolute;left:12px;bottom:calc(104px + 0px);z-index:22;display:none;align-items:center;gap:10px;max-width:calc(100% - 24px);padding:6px 20px 6px 6px;border-radius:99px;background:var(--o-carta);
+  box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta)}
+.terzo:before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--o-oro)}
+.terzo .fac{width:46px;height:46px;border-radius:50%;overflow:hidden;background:var(--o-fondo-2);flex:0 0 auto;box-shadow:0 0 0 2px var(--o-oro-chiaro)}
+.terzo .fac img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.terzo .tx{font:700 22px/1.05 var(--o-tit);color:var(--o-testo)}
+.terzo .tx small{display:block;font:600 11.5px/1.2 "Inter",system-ui,sans-serif;color:var(--o-tenue);letter-spacing:.03em;margin-top:2px}
+.barra{position:absolute;left:0;right:0;bottom:0;z-index:22;padding:12px 14px 14px;display:none}
+.btn-p{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:58px;border-radius:16px;border:0;font:700 17.6px "Inter",system-ui,sans-serif;color:var(--o-tasto-testo);background:var(--o-tasto);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(120,85,20,.25),0 8px 18px rgba(167,123,13,.24)}
+#vista.ha-terzo .terzo{display:flex}#vista.ha-onda .onda{display:block}#vista.ha-barra .barra{display:block}
+
+/* i coriandoli: oro, avorio e inchiostro (niente arcobaleno) */
+.coriandoli{position:absolute;inset:0;z-index:30;pointer-events:none;overflow:hidden;display:none}
+#vista.ha-coriandoli .coriandoli{display:block}
+.coriandoli i{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;animation:cade 2.6s cubic-bezier(.2,.6,.4,1) infinite;will-change:transform}
+@keyframes cade{from{transform:translate(0,-20px) rotate(0)}to{transform:translate(var(--dx),880px) rotate(var(--r))}}
+</style>
+</head>
+<body>
+<div id="vista"></div>
+<script src="../../../js/omino.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(s,r){return (r||document).querySelector(s);};
+  var VW=390, VH=844, W=780, H=1688;
+  var vista=$("#vista");
+  var hash=(location.hash||"#largo").slice(1);
+  if(hash==="scuro") vista.classList.add("scuro");
+
+  // generatore a caso ripetibile (la stessa foto ogni volta)
+  var seme=7; function rnd(){ seme=(seme*16807)%2147483647; return seme/2147483647; }
+
+  // ---------- gli avatar (quelli veri dell'app) ----------
+  var FACCE={esulta:{occhi:"felici",sopracc:"alzate",bocca:"sorrisone"}};
+  function svgDi(nome,faccia){
+    var cfg=SGOmino.casuale(nome), n;
+    if(faccia){ var c2={}; for(n in cfg) c2[n]=cfg[n]; for(n in FACCE[faccia]) c2[n]=FACCE[faccia][n]; cfg=c2; }
+    return SGOmino.svg(cfg,{busto:true});
+  }
+  function urlSvg(svg,w,h){ return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg.replace("<svg ","<svg width='"+w+"' height='"+h+"' ")); }
+
+  // ---------- il mondo ----------
+  var mondo=document.createElement("div"); mondo.id="mondo";
+  var scena=document.createElement("div"); scena.style.cssText="position:absolute;inset:0"; scena.appendChild(mondo); vista.appendChild(scena);
+  function pezzo(cls,css,html,dove){ var e=document.createElement("div"); e.className=cls; if(css) e.style.cssText=css; if(html) e.innerHTML=html; (dove||mondo).appendChild(e); return e; }
+
+  pezzo("muro");
+  pezzo("doghe sx"); pezzo("doghe dx");
+  pezzo("arco");
+  pezzo("pavimento"); pezzo("tappeto"); pezzo("filetto");
+
+  // i fari che girano: luce calda e morbida, dietro a tutto il resto
+  for(var f=0;f<4;f++){ var cx=W*(0.1+f*0.267); var e=pezzo("fascio","left:"+(cx-86)+"px;animation-delay:"+(-f*1.9)+"s;animation-duration:"+(5+(f%3))+"s"); }
+
+  // le torri: led d'oro che ballano
+  [23,617].forEach(function(x,k){
+    var t=pezzo("torre","left:"+x+"px"); t.innerHTML="<div class='stelle'>★★★</div>";
+    var eq=document.createElement("div"); eq.className="eq";
+    for(var b=0;b<7;b++){
+      var c=document.createElement("div"); c.className="col";
+      var i=document.createElement("i"); i.style.setProperty("--d",(0.7+rnd()*0.9).toFixed(2)+"s"); i.style.setProperty("--r",(-rnd()*2).toFixed(2)+"s");
+      i.style.setProperty("--y0",(40+rnd()*45).toFixed(0)+"%"); i.style.setProperty("--y1",(4+rnd()*30).toFixed(0)+"%");
+      i.style.setProperty("--c1",b%3===0?"#e0b53c":b%3===1?"#efca4c":"#cf9f1e");
+      c.appendChild(i); eq.appendChild(c);
+    }
+    t.appendChild(eq);
+  });
+
+  // il pubblico (canvas): gradinate di legno chiaro con mini avatar veri, più piccoli e più velati in fondo
+  var cv=document.createElement("canvas"); cv.id="folla"; mondo.appendChild(cv);
+  var PUBH=810, Q=2;
+  cv.width=W*Q; cv.height=PUBH*Q; cv.style.width=W+"px"; cv.style.height=PUBH+"px";
+  var nomiPub=[]; for(var i=0;i<22;i++) nomiPub.push("pubblico-"+i);
+  var pool=[];
+  function rettAlto(x,X,Y,w,h,r){ x.moveTo(X,Y+h); x.lineTo(X,Y+r); x.quadraticCurveTo(X,Y,X+r,Y); x.lineTo(X+w-r,Y); x.quadraticCurveTo(X+w,Y,X+w,Y+r); x.lineTo(X+w,Y+h); x.closePath(); }
+  function disegnaPubblico(){
+    var x=cv.getContext("2d"); x.setTransform(Q,0,0,Q,0,0); x.clearRect(0,0,W,PUBH);
+    var fondo=474, Z=[[11.7,0,163.8,PUBH],[604.5,0,163.8,PUBH],[11.7,fondo,757.2,PUBH-fondo]];
+    // gradoni
+    Z.forEach(function(z){
+      x.save(); x.beginPath(); rettAlto(x,z[0],z[1],z[2],z[3],18); x.clip();
+      var g=x.createLinearGradient(0,z[1],0,z[1]+z[3]); g.addColorStop(0,"#f6f0e1"); g.addColorStop(1,"#e8dec6"); x.fillStyle=g; x.fillRect(z[0],z[1],z[2],z[3]);
+      for(var y=z[1]+20;y<z[1]+z[3];y+=22){ x.fillStyle="rgba(120,85,30,.16)"; x.fillRect(z[0],y,z[2],2.5); x.fillStyle="rgba(255,255,255,.55)"; x.fillRect(z[0],y+2.5,z[2],1); }
+      x.restore();
+    });
+    // le persone: file a quinconce, più grandi verso il basso; più spazio tra l'una e l'altra (meno «folla», più eleganza)
+    var righe=[], y=2; while(y<PUBH-8){ var sz=24+14*(y/PUBH); righe.push({y:y,s:sz}); y+=sz*0.72; }
+    x.save(); x.beginPath(); Z.forEach(function(z){ rettAlto(x,z[0],z[1],z[2],z[3],18); }); x.clip();
+    righe.forEach(function(R,k){
+      var s=R.s, passo=s*0.97, off=(k%2)*passo/2;
+      Z.forEach(function(z,zi){
+        if(R.y<z[1]-s*0.2||R.y>z[1]+z[3]-s*0.35) return;
+        for(var px=z[0]-passo*0.4+off; px<z[0]+z[2]-s*0.3; px+=passo){
+          if(zi===2&&((px+s>Z[0][0]&&px<Z[0][0]+Z[0][2])||(px+s>Z[1][0]&&px<Z[1][0]+Z[1][2]))) continue;
+          var ss=s*(0.82+rnd()*0.18), jx=(rnd()-0.5)*s*0.18, jy=(rnd()-0.5)*s*0.1;
+          if(!pool.length) continue;
+          var im=pool[Math.floor(rnd()*pool.length)];
+          if(rnd()<0.5) x.drawImage(im,px+jx,R.y+jy,ss,ss*1.03);
+          else { x.save(); x.translate(px+jx+ss,R.y+jy); x.scale(-1,1); x.drawImage(im,0,0,ss,ss*1.03); x.restore(); }
+        }
+      });
+    });
+    // velo: in fondo (in alto) le persone si schiariscono verso il bianco caldo; luce calda sopra tutto
+    x.globalCompositeOperation="source-atop";
+    var v=x.createLinearGradient(0,0,0,PUBH); v.addColorStop(0,"rgba(255,254,250,.74)"); v.addColorStop(0.55,"rgba(255,254,250,.44)"); v.addColorStop(1,"rgba(255,254,250,.16)");
+    x.fillStyle=v; x.fillRect(0,0,W,PUBH);
+    x.fillStyle="rgba(236,210,131,.05)"; x.fillRect(0,0,W,PUBH);
+    x.globalCompositeOperation="source-over"; x.restore();
+    // bordo d'oro sottile attorno alle gradinate
+    x.strokeStyle="rgba(189,147,26,.75)"; x.lineWidth=1.6;
+    Z.forEach(function(z,zi){ x.beginPath(); rettAlto(x,z[0],z[1],z[2],z[3],18); x.stroke(); });
+  }
+  var attesi=nomiPub.length;
+  nomiPub.forEach(function(n){
+    var im=new Image();
+    im.onload=function(){ var c=document.createElement("canvas"); c.width=72; c.height=74; c.getContext("2d").drawImage(im,0,0,72,74); pool.push(c); if(--attesi===0) pronto(); };
+    im.onerror=function(){ if(--attesi===0) pronto(); };
+    im.src=urlSvg(svgDi(n),72,74);
+  });
+
+  // cose vive sulle gradinate: cartellini, scintille d'oro, macchie di luce calda
+  [["❤ BRAVI",60,560],["★★★",700,700],["WOW!",690,520],["FORZA!",110,830],["👏👏",720,900]].forEach(function(c,i){
+    var e=pezzo("carto","left:"+c[1]+"px;top:"+c[2]+"px;--d:"+(1.5+i*0.2)+"s;--r:"+(-i*0.4)+"s","<b>"+c[0]+"</b>"); e.style.zIndex=4;
+  });
+  for(var i=0;i<16;i++){ var lato=i%3; var px=lato===0?(30+rnd()*130):lato===1?(620+rnd()*130):(60+rnd()*650); var py=lato===2?(930+rnd()*300):(470+rnd()*680); pezzo("scint","left:"+px.toFixed(0)+"px;top:"+py.toFixed(0)+"px;--r:"+(-rnd()*2.4).toFixed(2)+"s"); }
+  [[92,720],[690,820],[390,1090]].forEach(function(p){ pezzo("macchia","left:"+p[0]+"px;top:"+p[1]+"px"); });
+
+  // traliccio e fari caldi
+  pezzo("traliccio");
+  for(var f=0;f<6;f++){ var fx=W*(0.07+f*0.172); pezzo("faro","left:"+fx+"px"); }
+
+  // il maxischermo
+  var R={x:195,y:51,w:390,h:844};
+  var sc=pezzo("schermo");
+  sc.innerHTML="<div class='cornice'></div>";
+  // perle lungo la cornice (due serie che si alternano)
+  (function(){
+    var x0=-8,y0=-8,x1=R.w+8,y1=R.h+8,d,p=[];
+    for(d=x0+10;d<x1-5;d+=20)p.push([d,y0]);for(d=y0+10;d<y1-5;d+=20)p.push([x1,d]);for(d=x1-10;d>x0+5;d-=20)p.push([d,y1]);for(d=y1-10;d>y0+5;d-=20)p.push([x0,d]);
+    p.forEach(function(q,k){ var a=document.createElement("i"); a.className="perla "+(k%2?"":"s"); a.style.left=q[0]+"px"; a.style.top=q[1]+"px"; sc.appendChild(a);
+      var b=document.createElement("i"); b.className="perla b "+(k%2?"s":""); b.style.left=q[0]+"px"; b.style.top=q[1]+"px"; sc.appendChild(b); });
+  })();
+  var vetro=document.createElement("div"); vetro.className="vetro"; sc.appendChild(vetro);
+  var dentro=document.createElement("div"); dentro.className="dentro"; vetro.appendChild(dentro);
+
+  var giocatori=[["Paky","#2f6fb5"],["Luca","#b8433a"],["Giulia","#2e7d4f"]];
+  function facciaImg(nome){ return '<img alt="" src="'+urlSvg(svgDi(nome),120,123)+'">'; }
+  function sigla(){
+    dentro.innerHTML="<div class='sigla'><div class='st'>★ ★ ★</div><div class='logo'>LA LINEA<br>DEL TEMPO</div><div class='linea'></div><div class='sotto'>il game show</div></div>";
+  }
+  function carta(){
+    dentro.innerHTML=
+      "<div class='hud'>"+giocatori.map(function(g,i){ return "<div class='pill"+(i===0?" io":"")+"'><span class='f'>"+facciaImg(g[0])+"</span><span>"+g[0]+"<b>0</b></span></div>"; }).join("")+"</div>"+
+      "<div class='tocca'><h3>Tocca a te, Paky!</h3><p>Dove va questa carta?</p></div>"+
+      "<div class='barra-t'><i></i></div>"+
+      "<div class='carta'><div class='riga'><span class='cat'>⚽ CALCIO</span><span class='mini'>🔄 Cambia</span><span class='anno'>????</span></div><h4>La Lazio conquista il suo primo scudetto</h4></div>"+
+      "<div class='tl'><div class='asse'></div>"+
+        "<div class='slot' style='top:2px'><span class='p'>+</span><span class='t'>Prima del 2005</span></div>"+
+        "<div class='ev'><span class='y'>2005</span><span class='d'></span><div class='c'><b>💡 Nasce YouTube</b>Chiunque può caricare un video: cambia per sempre il modo di guardare.</div></div>"+
+        "<div class='slot' style='top:150px'><span class='p'>+</span><span class='t'>Dopo il 2005</span></div></div>"+
+      "<div class='comandi'><span>−10</span><span>−1</span><span class='g'>📅 L'anno? (facoltativo)</span><span>+1</span><span>+10</span></div><div class='slider'></div>";
+  }
+  if(hash==="schermo"||hash==="scuro") carta(); else sigla();
+
+  // i banconi dei concorrenti
+  var VEDI={largo:1,leggio:1,finale:1,pubblico:1,schermo:1,scuro:1};
+  var posti=[]; (function(){ var n=3, sp=1.92*VW/n, w=Math.min(0.46*VW,sp*0.92); for(var i=0;i<n;i++) posti.push({cx:0.04*VW+sp*(i+0.5),top:1.36*VH,w:w}); })();
+  posti.forEach(function(p,i){
+    var g=giocatori[i], acceso=(hash==="leggio"||hash==="finale")&&i===0, esulta=hash==="finale"&&i===0;
+    var L=pezzo("leg"+(acceso?" acceso":""),"left:"+(p.cx-p.w/2)+"px;top:"+p.top+"px;width:"+p.w+"px;font-size:"+(p.w*0.1).toFixed(1)+"px;--col:"+g[1]);
+    var perle=""; for(var k=0;k<11;k++) perle+="<i></i>";
+    L.innerHTML="<div class='luce'></div><div class='pozza'></div><div class='alone'></div>"+
+      '<div class="av"><img alt="" src="'+urlSvg(svgDi(g[0],esulta?"esulta":null),178,182)+'"></div>'+
+      (i===0?"<div class='tu'><span>TU</span></div>":"")+
+      "<div class='podio'><div class='fronte'></div><div class='piano'></div><div class='pulsante'></div>"+
+      "<div class='corpo'><div class='perle'>"+perle+"</div><div class='nome'><span>"+g[0]+"</span></div><div class='display'><span>0</span></div><div class='striscia'></div></div></div>";
+  });
+
+  if(hash==="leggio"||hash==="finale"){ vista.classList.add("spot"); var rf=pezzo("riflettore"); rf.style.left=(posti[0].cx-1200)+"px"; rf.style.top=(posti[0].top+60-1200)+"px"; }
+
+  // ---------- la telecamera: come nello studio vero, un'inquadratura alla volta ----------
+  function cam(cx,cy,s){ mondo.style.transform="translate("+(VW/2-cx*s).toFixed(2)+"px,"+(VH/2-cy*s).toFixed(2)+"px) scale("+s+")"; }
+  var SHOT={
+    largo:[W/2,H/2,0.5],
+    schermo:[R.x+R.w/2,R.y+R.h/2,1], scuro:[R.x+R.w/2,R.y+R.h/2,1],
+    leggio:(function(){ var p=posti[0], w=Math.max(0.64*VW,p.w*1.5); return [p.cx,p.top+p.w*0.72,VW/w]; })(),
+    finale:(function(){ var p=posti[0], w=Math.max(0.64*VW,p.w*1.5); return [p.cx,p.top+p.w*0.72,VW/w]; })(),
+    pubblico:[214.5,514.6,0.909]
+  };
+  var s=SHOT[hash]||SHOT.largo; cam(s[0],s[1],s[2]);
+
+  // ---------- sopra a tutto ----------
+  var svgSx="<svg viewBox='0 0 24 24'><path d='M15 5l-7 7 7 7'/></svg>";
+  var svgNota="<svg viewBox='0 0 24 24'><path d='M9 18V6l10-2v12'/><circle cx='7' cy='18' r='2.4'/><circle cx='17' cy='16' r='2.4'/></svg>";
+  vista.insertAdjacentHTML("beforeend",
+    "<button class='tondo sx' aria-label='Esci'>"+svgSx+"</button><button class='tondo dx' aria-label='Musica'>"+svgNota+"</button>"+
+    "<div class='onda'>IN ONDA</div>"+
+    "<div class='terzo'><span class='fac'>"+facciaImg("Paky")+"</span><div class='tx'><span>Paky vince!</span><small>La linea del tempo</small></div></div>"+
+    "<div class='barra'><button class='btn-p'>"+(hash==="schermo"||hash==="scuro"?"⤵ Tocca dove va la carta":"📱 Sono Paky, tocca a me ▶")+"</button></div>"+
+    "<div class='coriandoli'></div>");
+  if(hash!=="finale") vista.classList.add("ha-onda");
+  if(hash==="largo"||hash==="leggio"||hash==="pubblico") vista.classList.add("ha-onda","ha-barra");
+  if(hash==="schermo"||hash==="scuro") vista.classList.add("ha-barra");
+  if(hash==="finale") vista.classList.add("ha-onda","ha-terzo","ha-coriandoli");
+  if(hash==="schermo"||hash==="scuro") vista.classList.remove("ha-onda");
+  // coriandoli d'oro, d'avorio e d'inchiostro
+  (function(){
+    var col=["#efca4c","#cf9f1e","#ecd283","#ffffff","#bd931a","#1e1b16","#f7e6a6","#ffffff"], c=$(".coriandoli");
+    for(var i=0;i<46;i++){ var p=document.createElement("i"); p.style.left=(rnd()*100)+"%"; p.style.background=col[i%col.length]; if(col[i%col.length]==="#ffffff") p.style.boxShadow="inset 0 0 0 1px #e2c56a";
+      p.style.setProperty("--dx",(rnd()*120-60)+"px"); p.style.setProperty("--r",(rnd()*720-360)+"deg"); p.style.animationDelay=(-rnd()*2.6)+"s"; c.appendChild(p); }
+  })();
+
+  function pronto(){ disegnaPubblico(); document.body.setAttribute("data-pronto","1"); }
+})();
+</script>
+</body>
+</html>

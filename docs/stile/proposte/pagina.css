@@ -1,0 +1,83 @@
+/* Le pagine di confronto (index, studio, scene) sono scritte nello stesso stile che propongono: Bianco e oro.
+   I colori sono quelli dell'app (--o-* di css/styles.css). */
+@font-face{ font-family:"SG Titoli"; font-style:normal; font-weight:500 700; font-display:swap; src:url(font/sg-titoli.woff2) format("woff2"); }
+:root{
+  --o-fondo:#fcfbf9; --o-fondo-2:#f4f2ee; --o-carta:#ffffff; --o-filo:#e9e4d8; --o-filo-oro:#e2c56a;
+  --o-testo:#1e1b16; --o-tenue:#6b665c; --o-oro:#bd931a; --o-oro-testo:#87680c; --o-oro-chiaro:#ecd283;
+  --o-tasto:linear-gradient(180deg,#efca4c,#cf9f1e); --o-tasto-testo:#1e190d; --o-scuro:#1e1b16; --o-scuro-testo:#efd88f;
+  --o-crema:#fbf6e3; --o-carta-viva:#fffbec; --o-verde:#2e7d4f;
+  --o-ombra:0 1px 2px rgba(62,55,42,.06), 0 6px 18px rgba(88,76,54,.08);
+  --o-ombra-alta:0 2px 6px rgba(62,55,42,.08), 0 16px 40px rgba(62,55,42,.16);
+  --o-tit:"SG Titoli","Cormorant Garamond",Georgia,serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:radial-gradient(130% 60% at 50% -10%,#fff 0%,var(--o-fondo) 55%,#f7f6f2 100%) fixed,var(--o-fondo);color:var(--o-testo);
+  font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.pag{max-width:980px;margin:0 auto;padding:22px 16px 70px}
+.su{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:6px}
+.su a{color:var(--o-oro-testo);font-weight:700;text-decoration:none}
+.su a:hover{text-decoration:underline}
+.sopra{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--o-oro-testo);margin:18px 0 4px}
+h1{font:700 clamp(34px,7vw,52px)/1.02 var(--o-tit);margin:0 0 10px;letter-spacing:.005em}
+h2{font:700 clamp(26px,5vw,34px)/1.08 var(--o-tit);margin:44px 0 6px}
+h2:after{content:"";display:block;width:54px;height:2px;margin-top:9px;background:linear-gradient(90deg,var(--o-oro),transparent)}
+h3{font:700 22px/1.15 var(--o-tit);margin:26px 0 4px}
+p{margin:6px 0 10px}
+.lead{font-size:17.5px;color:var(--o-tenue);max-width:720px}
+.tenue{color:var(--o-tenue)}
+a{color:var(--o-oro-testo)}
+
+/* le foto: a sinistra com'è oggi, a destra la proposta */
+.coppia{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0 4px;max-width:820px}
+.terna{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:12px 0 4px;max-width:1000px}
+figure{margin:0;min-width:0}
+figure .et{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;border-radius:99px;padding:4px 11px;margin-bottom:7px;
+  background:var(--o-carta);color:var(--o-tenue);box-shadow:inset 0 0 0 1px var(--o-filo)}
+figure.nuovo .et{background:var(--o-scuro);color:var(--o-scuro-testo);box-shadow:inset 0 0 0 1px rgba(236,210,131,.5)}
+figure a{display:block;line-height:0}
+figure img{width:100%;height:auto;display:block;border-radius:22px;box-shadow:0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta);background:var(--o-fondo-2)}
+.did{max-width:760px;margin:8px 0 0;font-size:15.5px}
+.did b{font-weight:700}
+
+/* riquadri di testo */
+.riq{background:var(--o-carta);border-radius:18px;padding:16px 18px;box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);margin:16px 0;max-width:820px}
+.riq.crema{background:var(--o-crema)}
+.riq h3{margin-top:0}
+.riq ul,.riq ol{margin:6px 0 4px;padding-left:20px}
+.riq li{margin:5px 0}
+.riq li b{font-weight:700}
+
+/* scelte da fare */
+.scelta{display:grid;grid-template-columns:34px 1fr;gap:12px;margin:14px 0;align-items:start}
+.scelta .n{width:34px;height:34px;border-radius:50%;background:var(--o-scuro);color:var(--o-scuro-testo);display:grid;place-items:center;font:700 17px/1 var(--o-tit)}
+.scelta p{margin:2px 0}
+.scelta .cons{display:inline-block;margin-top:4px;font-size:13.5px;font-weight:700;color:var(--o-oro-testo);background:var(--o-carta-viva);border-radius:99px;padding:3px 12px;box-shadow:inset 0 0 0 1px var(--o-filo-oro)}
+
+/* le otto scene */
+.scene{display:grid;gap:12px;margin:14px 0;max-width:860px}
+.sc{display:grid;grid-template-columns:96px 1fr;gap:14px;background:var(--o-carta);border-radius:20px;padding:12px;box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}
+.sc .foto{display:flex;gap:6px;align-items:flex-start}
+.sc .foto a{display:block;line-height:0;flex:1;min-width:0}
+.sc .foto img{width:100%;height:auto;display:block;border-radius:12px;box-shadow:0 0 0 1px var(--o-filo)}
+.sc h3{margin:0 0 4px;font-size:22px}
+.sc p{margin:4px 0;font-size:15px}
+.sc .lavoro{font-size:13px;color:var(--o-tenue)}
+.badge{display:inline-block;font-size:12.5px;font-weight:800;letter-spacing:.03em;border-radius:99px;padding:4px 12px;margin:2px 0 4px}
+.badge.tieni{background:var(--o-carta-viva);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1.5px var(--o-oro)}
+.badge.ritocca{background:var(--o-scuro);color:var(--o-scuro-testo);box-shadow:inset 0 0 0 1px rgba(236,210,131,.5)}
+.sc .vedi{font-size:13.5px;font-weight:700}
+@media (min-width:700px){ .sc{grid-template-columns:112px 1fr} .sc.due{grid-template-columns:190px 1fr} }
+.sc.due{grid-template-columns:150px 1fr}
+
+/* le due proposte nell'indice */
+.card{display:block;text-decoration:none;color:inherit;background:var(--o-carta);border-radius:24px;padding:18px;margin:16px 0;box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta);max-width:860px}
+.card h2{margin:2px 0 4px}
+.card .coppia{margin-top:14px}
+.card .vai{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-weight:700;color:var(--o-tasto-testo);background:var(--o-tasto);border-radius:14px;padding:11px 20px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(120,85,20,.25),0 8px 18px rgba(167,123,13,.24)}
+.piccolo{font-size:13.5px;color:var(--o-tenue)}
+details{max-width:820px;margin:26px 0 0;background:var(--o-fondo-2);border-radius:14px;padding:10px 16px}
+summary{cursor:pointer;font-weight:700;color:var(--o-oro-testo)}
+details p,details li{font-size:14px;color:var(--o-tenue)}
+code{font-family:ui-monospace,Consolas,monospace;font-size:13px;background:var(--o-carta);border-radius:6px;padding:1px 6px;box-shadow:inset 0 0 0 1px var(--o-filo)}

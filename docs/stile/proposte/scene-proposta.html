@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390, initial-scale=1">
+<title>Scene · proposte Bianco e oro</title>
+<!--
+  DISEGNI DI PROVA (non è ancora l'app): tre scene disegnate dei giochi, come potrebbero diventare in «Bianco e oro».
+  Si guarda a 390 × 844 (un telefono). Si sceglie la scena dopo il # dell'indirizzo:
+     #hockey      Glow Hockey: il campo diventa un tavolo da air hockey in lacca avorio, oro contro ebano
+     #horto       Horto Muso: la pista disegnata resta com'è (è la foto vera di oggi), incorniciata d'oro; cambiano solo i comandi
+     #lunghezza   Stessa Lunghezza d'Onda: il quadrante su carta avorio con la cornice d'oro, al posto del cielo viola
+  I colori sono quelli dell'app (--o-* di css/styles.css). Le cose «del gioco» (squadre, pallina) restano riconoscibili, ma scurite per il fondo chiaro.
+-->
+<style>
+@font-face{ font-family:"SG Titoli"; font-style:normal; font-weight:500 700; font-display:block; src:url(font/sg-titoli.woff2) format("woff2"); }
+:root{
+  --o-fondo:#fcfbf9; --o-fondo-2:#f4f2ee; --o-carta:#ffffff; --o-carta-2:#f6f4ef; --o-filo:#e9e4d8; --o-filo-oro:#e2c56a;
+  --o-testo:#1e1b16; --o-tenue:#6b665c; --o-oro:#bd931a; --o-oro-testo:#87680c; --o-oro-chiaro:#ecd283;
+  --o-tasto:linear-gradient(180deg,#efca4c,#cf9f1e); --o-tasto-testo:#1e190d; --o-scuro:#1e1b16; --o-scuro-testo:#efd88f;
+  --o-verde:#2e7d4f; --o-rosso:#b8433a; --o-crema:#fbf6e3; --o-carta-viva:#fffbec;
+  --o-ombra:0 1px 2px rgba(62,55,42,.06), 0 6px 18px rgba(88,76,54,.08);
+  --o-ombra-alta:0 2px 6px rgba(62,55,42,.08), 0 16px 40px rgba(62,55,42,.16);
+  --o-tit:"SG Titoli","Cormorant Garamond",Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--o-fondo)}
+body{width:390px;height:844px;overflow:hidden;position:relative;font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--o-testo);-webkit-font-smoothing:antialiased}
+.scena{position:absolute;inset:0;display:none}
+body.hockey #s-hockey,body.horto #s-horto,body.lunghezza #s-lunghezza{display:block}
+
+/* tasti tondi (uscita, musica) */
+.tondo{position:absolute;top:8px;z-index:25;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.94);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);display:grid;place-items:center;padding:0}
+.tondo.sx{left:8px}.tondo.dx{right:8px}
+.tondo svg{width:18px;height:18px;stroke:var(--o-testo);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tondo.dx svg{stroke:var(--o-oro-testo);stroke-width:1.9}
+.btn-p{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:58px;border-radius:16px;border:0;font:700 17.6px "Inter",system-ui,sans-serif;color:var(--o-tasto-testo);background:var(--o-tasto);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(120,85,20,.25),0 8px 18px rgba(167,123,13,.24)}
+.btn-p:disabled{background:var(--o-fondo-2);color:#8f8364;box-shadow:inset 0 0 0 1px var(--o-filo)}
+
+/* ============ 1 · GLOW HOCKEY: tavolo da air hockey in lacca avorio ============ */
+#s-hockey{background:var(--o-fondo)}
+.tavolo{position:absolute;inset:0;box-shadow:inset 0 0 46px rgba(88,76,54,.10);background:
+  radial-gradient(60% 34% at 50% 50%,rgba(255,255,255,.9),rgba(255,255,255,0) 70%),
+  radial-gradient(circle,rgba(189,147,26,.20) 1px,transparent 1.5px) 0 0/11px 11px,
+  linear-gradient(180deg,#fbf9f3,#fdfcf9 50%,#f9f6ee)}
+.bordo{position:absolute;background:linear-gradient(90deg,#f3dc8c,#d6ad3c 40%,#a98113);box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),0 2px 8px rgba(88,76,54,.25)}
+.bordo.eb{background:linear-gradient(90deg,#4a4334,#1e1b16 45%,#0f0d0a);box-shadow:inset 0 0 0 1px rgba(236,210,131,.55),0 2px 8px rgba(30,27,22,.35)}
+.centro-linea{position:absolute;left:16px;right:16px;top:421px;height:1.5px;background:linear-gradient(90deg,transparent,rgba(189,147,26,.7) 12%,rgba(189,147,26,.7) 88%,transparent)}
+.cerchio{position:absolute;border-radius:50%;border:1.5px solid rgba(189,147,26,.55)}
+.mazza{position:absolute;border-radius:50%;box-shadow:0 10px 14px -4px rgba(62,55,42,.42),0 2px 3px rgba(62,55,42,.3)}
+.mazza i{position:absolute;border-radius:50%}
+.mazza.oro{background:radial-gradient(circle at 36% 30%,#f7e29a,#d6ad3c 55%,#a98113)}
+.mazza.eb{background:radial-gradient(circle at 36% 30%,#4a4334,#1e1b16 58%,#0d0b08);box-shadow:0 10px 14px -4px rgba(30,27,22,.5),0 2px 3px rgba(30,27,22,.4),0 0 0 1.5px rgba(236,210,131,.6)}
+.mazza .a{inset:5%;background:#fffdf7;box-shadow:inset 0 0 0 1px rgba(189,147,26,.35)}
+.mazza .b{inset:26%;background:radial-gradient(circle at 36% 30%,#c79b25,#8a6a10)}
+.mazza.eb .b{background:radial-gradient(circle at 36% 30%,#4a4334,#1e1b16)}
+.mazza .c{inset:40%;background:radial-gradient(circle at 36% 30%,#fff3c4,#efca4c)}
+.mazza.eb .c{background:radial-gradient(circle at 36% 30%,#fff3c4,#efd88f)}
+.dischetto{position:absolute;border-radius:50%;background:radial-gradient(circle at 34% 28%,#f0a198,#b8433a 52%,#7a2620);box-shadow:0 7px 10px -3px rgba(62,55,42,.5),0 0 0 2px rgba(255,255,255,.75),0 0 0 3px rgba(184,67,58,.35)}
+.punti{position:absolute;right:34px;font:700 48px/1 var(--o-tit);font-variant-numeric:lining-nums;letter-spacing:.02em}
+
+/* ============ 2 · HORTO MUSO: la pista resta com'è, incorniciata ============ */
+#s-horto{background:linear-gradient(180deg,#fdfcfa,#f4f1e9)}
+.h-testa{position:absolute;left:0;right:0;top:0;height:70px}
+.h-mappa{position:absolute;left:52px;top:8px;width:128px;height:54px;border-radius:14px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}
+.h-mappa svg{position:absolute;inset:0;width:100%;height:100%}
+.h-posto{position:absolute;right:16px;top:6px;text-align:right;line-height:1}
+.h-posto b{display:block;font:700 40px/1 var(--o-tit);color:var(--o-testo);font-variant-numeric:lining-nums}
+.h-posto span{display:block;margin-top:2px;font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--o-oro-testo)}
+.h-cornice{position:absolute;left:12px;right:12px;top:76px;height:612px;border-radius:20px;padding:5px;
+  background:linear-gradient(135deg,#f7e6a6 0%,#d6ad3c 30%,#a98113 55%,#e8c862 80%,#f7e6a6 100%);box-shadow:0 14px 34px rgba(88,76,54,.28),inset 0 0 0 1px rgba(255,255,255,.5)}
+.h-cornice .dentro{position:relative;width:100%;height:100%;border-radius:15px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(120,85,20,.45)}
+.h-cornice img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.h-pannello{position:absolute;left:12px;right:12px;bottom:14px;height:140px;border-radius:20px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta);padding:14px 14px 12px}
+.h-pannello .t{display:flex;align-items:center;gap:8px;font:700 21px/1.1 var(--o-tit);color:var(--o-testo)}
+.h-barra{height:9px;border-radius:9px;background:var(--o-filo);margin:10px 0 12px;overflow:hidden}
+.h-barra i{display:block;height:100%;width:100%;border-radius:9px;background:linear-gradient(90deg,#efca4c,#cf9f1e)}
+
+/* ============ 3 · STESSA LUNGHEZZA D'ONDA: quadrante su carta avorio ============ */
+#s-lunghezza{background:
+  radial-gradient(90% 40% at 50% 62%,rgba(255,255,255,.95),rgba(255,255,255,0) 70%),
+  linear-gradient(180deg,#fdfcfa 0%,#f7f4ec 100%)}
+.l-hud{position:absolute;left:52px;right:10px;top:8px;height:42px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.l-hud .k{flex:0 0 118px;height:42px;border-radius:14px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);text-align:center;padding-top:5px;line-height:1}
+.l-hud .k small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--o-oro-testo)}
+.l-hud .k b{display:block;margin-top:3px;font:700 20px/1 var(--o-tit);font-variant-numeric:lining-nums}
+.l-hud .turno{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--o-tenue);text-align:center}
+.l-avviso{position:absolute;left:10px;right:10px;top:58px;border-radius:14px;padding:9px 14px;text-align:center;font-size:13.5px;font-weight:700;line-height:1.25;color:var(--o-testo);background:var(--o-crema);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}
+.l-frase{position:absolute;left:0;right:0;top:268px;text-align:center;font:700 25px/1.1 var(--o-tit);color:var(--o-testo)}
+.l-frase span{font-family:"Inter",system-ui,sans-serif;font-size:20px;margin-right:4px}
+.l-dial{position:absolute;left:10px;top:480px;width:370px;height:200px;filter:drop-shadow(0 12px 18px rgba(88,76,54,.20))}
+.l-sq{position:absolute;top:694px;height:34px;border-radius:12px;font-size:13px;font-weight:700;letter-spacing:.2em;display:flex;align-items:center;padding:0 14px}
+.l-sq.b{left:10px;width:181px;background:#e7eef7;color:#2f6fb5;box-shadow:inset 0 0 0 1px rgba(47,111,181,.35)}
+.l-sq.r{left:199px;width:181px;background:#f7e9e7;color:#b8433a;justify-content:flex-end;box-shadow:inset 0 0 0 1px rgba(184,67,58,.35)}
+.l-sp{position:absolute;left:10px;right:10px;height:48px;border-radius:14px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);overflow:hidden;
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;font:700 17px/1 var(--o-tit);color:var(--o-testo)}
+.l-sp em{font-style:normal;color:var(--o-oro);font:700 18px/1 "Inter",system-ui,sans-serif}
+.l-sp:after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,#2f6fb5,#8a5aa0 50%,#b8433a);opacity:.85}
+</style>
+</head>
+<body>
+<!-- 1 · Glow Hockey -->
+<div class="scena" id="s-hockey">
+  <div class="tavolo"></div>
+  <div class="bordo" style="left:0;top:0;width:15px;height:411px;border-radius:0 0 8px 0"></div>
+  <div class="bordo" style="right:0;top:0;width:15px;height:411px;border-radius:0 0 0 8px"></div>
+  <div class="bordo" style="left:0;top:0;width:112px;height:15px;border-radius:0 0 8px 0"></div>
+  <div class="bordo" style="right:0;top:0;width:112px;height:15px;border-radius:0 0 0 8px"></div>
+  <div class="bordo eb" style="left:0;top:433px;width:15px;height:411px;border-radius:8px 0 0 0"></div>
+  <div class="bordo eb" style="right:0;top:433px;width:15px;height:411px;border-radius:0 8px 0 0"></div>
+  <div class="bordo eb" style="left:0;bottom:0;width:112px;height:15px;border-radius:0 8px 0 0"></div>
+  <div class="bordo eb" style="right:0;bottom:0;width:112px;height:15px;border-radius:0 0 0 8px"></div>
+  <div class="cerchio" style="left:112px;top:-83px;width:166px;height:166px"></div>
+  <div class="cerchio" style="left:112px;top:761px;width:166px;height:166px"></div>
+  <div class="centro-linea"></div>
+  <div class="cerchio" style="left:137px;top:364px;width:116px;height:116px"></div>
+  <div class="mazza oro" style="left:161px;top:231px;width:72px;height:72px"><i class="a"></i><i class="b"></i><i class="c"></i></div>
+  <div class="mazza eb" style="left:159px;top:728px;width:72px;height:72px"><i class="a"></i><i class="b"></i><i class="c"></i></div>
+  <div class="dischetto" style="left:175px;top:401px;width:40px;height:40px"></div>
+  <div class="punti" style="top:366px;color:var(--o-oro-testo)">0</div>
+  <div class="punti" style="top:436px;color:var(--o-testo)">0</div>
+</div>
+
+<!-- 2 · Horto Muso -->
+<div class="scena" id="s-horto">
+  <div class="h-testa">
+    <div class="h-mappa"><svg viewBox="0 0 128 54"><path d="M26 14H84a14 14 0 0 1 0 28H26" fill="none" stroke="#e7d9b4" stroke-width="9" stroke-linecap="round"/><path d="M26 14H84a14 14 0 0 1 0 28H26" fill="none" stroke="#bd931a" stroke-width="1.5" stroke-dasharray="3 4" stroke-linecap="round"/><circle cx="26" cy="14" r="5" fill="#efca4c" stroke="#8a6a10" stroke-width="1.5"/><path d="M26 36v12" stroke="#1e1b16" stroke-width="2.5" stroke-dasharray="2 2"/></svg></div>
+    <div class="h-posto"><b>1°</b><span>mancano 1.000 m</span></div>
+  </div>
+  <div class="h-cornice"><div class="dentro"><img alt="" src="img/horto-pista.jpg"></div></div>
+  <div class="h-pannello">
+    <div class="t"><span style="font-size:20px">🐴</span><span>Tortellino · tocca a ritmo!</span></div>
+    <div class="h-barra"><i></i></div>
+    <button class="btn-p" disabled>🚦 Pronti…</button>
+  </div>
+</div>
+
+<!-- 3 · Stessa Lunghezza d'Onda -->
+<div class="scena" id="s-lunghezza">
+  <div class="l-hud">
+    <div class="k"><small>Tutti insieme</small><b>0</b></div>
+    <div class="turno">Turno 1/7</div>
+    <div class="k"><small>Su</small><b>28</b></div>
+  </div>
+  <div class="l-avviso">In 3 si gioca tutti insieme (a squadre servono almeno 4 persone)</div>
+  <div class="l-frase"><span>🤫</span>Gli altri non guardano!</div>
+  <svg class="l-dial" id="dial" viewBox="0 0 370 200"></svg>
+  <div class="l-sq b">• • •</div><div class="l-sq r">• • •</div>
+  <div class="l-sp" style="top:738px">Tormentone estivo <em>↔</em> Canzone d'autore</div>
+  <div class="l-sp" style="top:792px">Collega da incubo <em>↔</em> Collega perfetto</div>
+</div>
+
+<button class="tondo sx" aria-label="Esci"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+<button class="tondo dx" id="musica" aria-label="Musica"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2.4"/><circle cx="17" cy="16" r="2.4"/></svg></button>
+
+<script>
+(function(){
+  var h=(location.hash||"#hockey").slice(1); document.body.className=h;
+  if(h!=="hockey"){ document.getElementById("musica").style.display="none"; }
+  // il quadrante: carta avorio, cornice d'oro, tacche, stelline d'oro e il punto interrogativo
+  var cx=185, cy=185, R=178, svg=document.getElementById("dial"), s="";
+  function P(r,a){ var f=a*Math.PI/180; return [cx+r*Math.cos(f), cy-r*Math.sin(f)]; }
+  s+="<defs><radialGradient id='faccia' cx='50%' cy='100%' r='95%'><stop offset='0' stop-color='#ffffff'/><stop offset='.6' stop-color='#fbf8ef'/><stop offset='1' stop-color='#f1e9d2'/></radialGradient>"+
+     "<linearGradient id='oro' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#f7e6a6'/><stop offset='.35' stop-color='#d6ad3c'/><stop offset='.7' stop-color='#a98113'/><stop offset='1' stop-color='#e8c862'/></linearGradient>"+
+     "<radialGradient id='rubino' cx='36%' cy='30%' r='75%'><stop offset='0' stop-color='#f6b3aa'/><stop offset='.5' stop-color='#b8433a'/><stop offset='1' stop-color='#6f2320'/></radialGradient></defs>";
+  s+="<path d='M"+(cx-R)+" "+cy+"A"+R+" "+R+" 0 0 1 "+(cx+R)+" "+cy+"Z' fill='url(#faccia)'/>";
+  s+="<path d='M"+(cx-R)+" "+cy+"A"+R+" "+R+" 0 0 1 "+(cx+R)+" "+cy+"' fill='none' stroke='url(#oro)' stroke-width='6'/>";
+  s+="<path d='M"+(cx-R+7)+" "+cy+"A"+(R-7)+" "+(R-7)+" 0 0 1 "+(cx+R-7)+" "+cy+"' fill='none' stroke='#bd931a' stroke-opacity='.55' stroke-width='1'/>";
+  for(var a=0;a<=180;a+=7.5){ var maj=(a%45===0), p1=P(R-9,a), p2=P(R-9-(maj?11:6),a); s+="<line x1='"+p1[0].toFixed(1)+"' y1='"+p1[1].toFixed(1)+"' x2='"+p2[0].toFixed(1)+"' y2='"+p2[1].toFixed(1)+"' stroke='#bd931a' stroke-width='"+(maj?1.8:1)+"' stroke-opacity='"+(maj?.9:.6)+"'/>"; }
+  s+="<path d='M"+(cx-124)+" "+cy+"A124 124 0 0 1 "+(cx+124)+" "+cy+"' fill='none' stroke='#bd931a' stroke-opacity='.5' stroke-width='1.2' stroke-dasharray='3 6'/>";
+  var sd=5; function r(){ sd=(sd*16807)%2147483647; return sd/2147483647; }
+  for(var i=0;i<26;i++){ var rr=Math.sqrt(r())*118, aa=8+r()*164, p=P(rr,aa); if(p[1]>cy-12) continue; s+="<circle cx='"+p[0].toFixed(1)+"' cy='"+p[1].toFixed(1)+"' r='"+(1.1+r()*1.8).toFixed(1)+"' fill='"+(i%3?'#e2c56a':'#bd931a')+"' fill-opacity='"+(.55+r()*.4).toFixed(2)+"'/>"; }
+  s+="<text x='"+cx+"' y='"+(cy-46)+"' text-anchor='middle' font-family='SG Titoli,Cormorant Garamond,Georgia,serif' font-weight='700' font-size='84' fill='#bd931a' fill-opacity='.8'>?</text>";
+  s+="<line x1='"+(cx-R+4)+"' y1='"+cy+"' x2='"+(cx+R-4)+"' y2='"+cy+"' stroke='#bd931a' stroke-opacity='.65' stroke-width='1.5'/>";
+  s+="<circle cx='"+cx+"' cy='"+cy+"' r='17' fill='url(#rubino)' stroke='#fff' stroke-width='2'/><circle cx='"+(cx-5)+"' cy='"+(cy-6)+"' r='4' fill='#fff' fill-opacity='.7'/>";
+  svg.innerHTML=s;
+  document.body.setAttribute("data-pronto","1");
+})();
+</script>
+</body>
+</html>
