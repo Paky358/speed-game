@@ -125,9 +125,10 @@
     document.head.appendChild(st);
   }
 
-  // le emoji che sono «contenuto» e non tasti restano emoji colorate: icone dei trofei, faccine, l'emoji di una compagnia,
-  // la tessera di un gioco senza foto, l'avatar di chi non ne ha uno
-  var CONTENUTO = ".tr-ico, .at-ico, .sl-fa, .sl-faccine, .sl-faccia, .sl-bolle, .sg-fa-volante, .sg-fa-volanti, .faccina, .faccine, .cmp-em, .tessera .icona .emoji, .sg-guardo-fa, .sl-emo, .cg-emo";
+  // le emoji che sono «contenuto» e non tasti dell'app restano emoji colorate: tutto quello che disegna un gioco (impostazioni,
+  // regole, saletta, le sue scelte), icone dei trofei, faccine, l'emoji di una compagnia, la tessera di un gioco senza foto,
+  // l'avatar di chi non ne ha uno. Così in un gruppo di scelte non si mescolano emoji e simboli
+  var CONTENUTO = ".sg-dal-gioco, .sl-extra, .modo-chip, .cat-chip, .tr-ico, .at-ico, .sl-fa, .sl-faccine, .sl-faccia, .sl-bolle, .sg-fa-volante, .sg-fa-volanti, .faccina, .faccine, .cmp-em, .tessera .icona .emoji, .sg-guardo-fa, .sl-emo, .cg-emo";
   // avvolge l'emoji iniziale di un nodo di testo (solo quelle che hanno un simbolo)
   function avvolgi(t) {
     var p = t.parentNode;

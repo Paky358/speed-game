@@ -4494,7 +4494,7 @@
     var io0 = profiloAttivo();
     var chiGioca = (conAmici || torn) ? nomiGruppo() : (inSala ? ((sala && sala.membri) || []).map(function (m) { return m.nome; }) : [(io0 && io0.nome) || nomiGruppo()[0] || "Giocatore 1"]);
     if (typeof g.impostazioni === "function") {
-      box = el("div");
+      box = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
       g.impostazioni(box, impostazioni, { el: el, torneo: torn, sala: inSala, modo: modo, giocatori: chiGioca.slice() });
       if (modo) impostazioni.modo = modo;   // il modo l'avete scelto prima: qui non si cambia
       s._contenuto.appendChild(box);
@@ -5933,7 +5933,7 @@
     if (!R) {
       var imp = {}, box = null;
       if (typeof g.impostazioni === "function") {
-        box = el("div");
+        box = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
         try { g.impostazioni(box, imp, { el: el, sala: true, modo: "online", giocatori: sala.membri.map(function (m) { return m.nome; }) }); }
         catch (e) { setTimeout(function () { throw e; }, 0); }   // (si gioca lo stesso; l'errore resta in console)
       }
@@ -6737,7 +6737,7 @@
     }
     var imp = {}, box = null;
     if (typeof g.impostazioni === "function") {
-      box = el("div");
+      box = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
       try { g.impostazioni(box, imp, { el: el, sala: true, modo: "online", giocatori: sala.membri.map(function (m) { return m.nome; }) }); }
       catch (e) { setTimeout(function () { throw e; }, 0); }
     }
@@ -7677,7 +7677,7 @@
       sala._regoleBox = null;
       if (!gbox && g.impostazioni) {
         if (!E.torneino) imp = {};   // (il torneino riaperto dopo una ricarica tiene le regole che aveva)
-        gbox = el("div", {});
+        gbox = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
         g.impostazioni(gbox, imp, { el: el, sala: true, modo: "online", giocatori: sala.membri.map(function (m) { return m.nome; }) });
       }
       delete imp.scelti; imp.modo = "online"; E.imp = imp;
@@ -9596,7 +9596,7 @@
   function schermataRegole(g, indietro) {
     var s = schermata({ icona: g.icona, titolo: "Come si gioca", sotto: g.nome, indietro: indietro });
     var righe = g.regole || ["(regole non ancora scritte)"];
-    var box = el("div");
+    var box = el("div", { class: "sg-dal-gioco" });   // (🤍 le regole del gioco: le sue emoji restano emoji)
     righe.forEach(function (r) {
       box.appendChild(el("p", { class: "", html: r, style: "font-size:1.05rem; line-height:1.5; margin:0 0 14px" }));
     });
@@ -11058,7 +11058,7 @@
     }
     var imp = {}, box = null;
     if (typeof g.impostazioni === "function") {
-      box = el("div");
+      box = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
       try { g.impostazioni(box, imp, { el: el, modo: "online", giocatori: [mioNome] }); } catch (e) {}
     }
     Object.keys(o.imp || {}).forEach(function (k) { imp[k] = o.imp[k]; });   // le regole scelte prima (il foglio ⚙️ mostra le scelte di partenza)

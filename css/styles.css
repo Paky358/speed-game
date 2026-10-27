@@ -2423,8 +2423,9 @@ html body.tema-oro::before{ display:none; }
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(120,85,20,.25), 0 8px 18px rgba(150,110,30,.24); }
 .oro .btn-verde{ background:var(--o-verde); color:#fff; box-shadow:0 8px 18px rgba(46,125,79,.22); }
 .oro .btn-rosso{ background:var(--o-rosso); color:#fff; box-shadow:0 8px 18px rgba(184,67,58,.2); }
-.oro .btn-fantasma{ background:transparent; color:var(--o-tenue); box-shadow:none; font-weight:600; }
-.oro .btn:disabled{ opacity:.4; }
+.oro .btn-fantasma{ background:transparent; color:var(--o-oro-testo); box-shadow:none; font-weight:650; }   /* (tasto leggero: la scritta oro dice che si tocca) */
+.oro .btn:disabled{ opacity:.45; }
+.oro :is(.btn-primario, .btn-verde, .btn-rosso):disabled{ opacity:1; background:var(--o-fondo-2); color:#8a7f69; box-shadow:inset 0 0 0 1px var(--o-filo); }   /* (spento: avorio, non oro sbiadito) */
 @media (hover:hover){ .oro .btn:hover{ filter:brightness(1.02); } }
 .oro .testa .btn-fantasma.btn-piccolo{ color:var(--o-testo); font-size:1.6rem; font-weight:400; padding:6px 12px 8px; }
 
@@ -3184,6 +3185,7 @@ html body.tema-oro::before{ display:none; }
 .oro .or-sq.s2 .or-sq-nome .or-sg{ color:#257a38; }
 .oro .or-sq-membri{ color:var(--o-tenue); }
 .oro .or-membro{ color:var(--o-testo); }
+.oro .or-membro.tu{ text-decoration:none; background:var(--o-scuro); color:var(--o-scuro-testo); padding:0 7px; border-radius:999px; }   /* (il «tu» come la pillola scura delle altre salette: la sottolineatura rossa sembrava un errore) */
 .oro .or-vuota{ color:var(--o-tenue); opacity:1; }
 /* «Vengo qui», «👑 Faccio io il capo», «🔀 Squadre a caso» */
 .oro .or-sq-b{ background:var(--o-carta-2); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro); }
