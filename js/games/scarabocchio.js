@@ -167,7 +167,7 @@
   var ULTIMI_MS = 20000;                                       // quando ha indovinato più di metà del gruppo, restano 20 secondi
   var PAUSA_MSG = 700;                                         // al massimo un messaggio ogni 0,7 secondi a testa
   var SESSIONE = Math.random().toString(36).slice(2, 6);       // per i nomi dei tratti: chi ricarica la pagina non riusa quelli vecchi
-  var COL_GIOC = ["#ffd43b", "#74c0fc", "#ff8787", "#8ce99a", "#e599f7", "#ffa94d", "#66d9e8", "#fcc2d7", "#b197fc", "#d8f5a2"];
+  var COL_GIOC = ["#8a6500", "#1864ab", "#c92a2a", "#26773a", "#9c36b5", "#c2410c", "#0b7285", "#c2255c", "#5f3dc4", "#5c7a0b"];   // 🤍 oro, blu, rosso, verde, viola, arancio, petrolio, rosa, indaco, oliva: tutti leggibili sul fondo chiaro
   var PARTITE_SALVATE = Object.create(null);
   var GALLERIA = { id: null, lista: [] };                      // le miniature dei disegni di questa partita (le fa ogni telefono da sé)
 
@@ -402,7 +402,61 @@
       // schermi bassi: la classifica finale (con le faccine e la galleria) sta in uno schermo
       "@media (max-height:760px){.sb-podio{font-size:1.4rem;margin:0 0 2px}.sb-gal-tit{margin:8px 0 4px}.sb-gal button{width:66px}.sb-gal img{width:66px;height:80px}.sb-gal span{font-size:.66rem}}",
       "@keyframes sbPulsa{to{transform:scale(1.08)}}",
-      "@keyframes sbPop{0%{transform:translate(-50%,-50%) scale(.5);opacity:0}14%{transform:translate(-50%,-50%) scale(1.08);opacity:1}80%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-70%) scale(1);opacity:0}}"
+      "@keyframes sbPop{0%{transform:translate(-50%,-50%) scale(.5);opacity:0}14%{transform:translate(-50%,-50%) scale(1.08);opacity:1}80%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-70%) scale(1);opacity:0}}",
+      // ---------------------------------------------------------------------------------------------------------
+      // 🤍 BIANCO E ORO (tema: "oro"). Tutte le regole stanno sotto .oro.g-scarabocchio. Solo colori, bordi e ombre; i colori solo con
+      // le variabili --o-* (css/styles.css). Il foglio da disegno resta bianco, con un filo d'oro sottile e un'ombra morbida; i colori
+      // della matita (COLORI) e della gomma non si toccano.
+      // ---------------------------------------------------------------------------------------------------------
+      ".oro.g-scarabocchio.sb-piena{background:transparent}",
+      ".oro.g-scarabocchio .sb-scena{background:none}",
+      // la barra in alto: ‹ tondo bianco col filo d'oro, il tempo una pillola chiara (rossa negli ultimi 10 secondi), la parola in oro scuro
+      ".oro.g-scarabocchio .sb-esci{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);font-weight:700}",
+      ".oro.g-scarabocchio .sb-tempo{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);font-variant-numeric:lining-nums tabular-nums}",
+      ".oro.g-scarabocchio .sb-tempo.poco{background:var(--o-rosso);color:#fff;box-shadow:0 4px 12px rgba(184,67,58,.28)}",
+      ".oro.g-scarabocchio .sb-centro b{color:var(--o-oro-testo)}",
+      ".oro.g-scarabocchio .sb-giro{color:var(--o-tenue);opacity:1}",
+      ".oro.g-scarabocchio .sb-lettere i{border-bottom-color:var(--o-oro);color:var(--o-oro-testo)}",
+      ".oro.g-scarabocchio .sb-lettere small{color:var(--o-tenue);opacity:1}",
+      // il foglio da disegno: bianco, filo d'oro sottile, ombra morbida
+      ".oro.g-scarabocchio .sb-cv{box-shadow:0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta)}",
+      // sopra il foglio (scelta della parola, punti del turno): un velo avorio
+      ".oro.g-scarabocchio .sb-sopra{background:rgba(252,251,249,.95);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".oro.g-scarabocchio .sb-parola{font-family:var(--o-tit);font-weight:700;color:var(--o-oro-testo);font-size:clamp(1.8rem,9vw,2.6rem)}",
+      ".oro.g-scarabocchio .sb-scelte button{background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(120,85,20,.25),0 6px 14px rgba(167,123,13,.2)}",
+      ".oro.g-scarabocchio .sb-scelte button.nostra{background:var(--o-verde-tenue);color:var(--o-testo);box-shadow:inset 0 0 0 2px var(--o-verde)}",
+      ".oro.g-scarabocchio .sb-righe{color:var(--o-testo)}",
+      ".oro.g-scarabocchio .sb-righe b{color:var(--o-verde)}",
+      ".oro.g-scarabocchio .sb-fig,.oro.g-scarabocchio .sb-chip-fig{background:var(--o-carta-2);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      // chi gioca sotto il foglio: pillole chiare; chi disegna in oro, chi ha indovinato in verde
+      ".oro.g-scarabocchio .sb-chip{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra)}",
+      ".oro.g-scarabocchio .sb-chip.dis{background:var(--o-crema);box-shadow:inset 0 0 0 2px var(--o-oro)}",
+      ".oro.g-scarabocchio .sb-chip.ok{background:var(--o-verde-tenue);box-shadow:inset 0 0 0 2px var(--o-verde)}",
+      ".oro.g-scarabocchio .sb-chip-pt{color:var(--o-tenue);opacity:1}",
+      // gli strumenti: tasti bianchi col filo d'oro, quello scelto con il filo d'oro pieno
+      ".oro.g-scarabocchio .sb-col{border-color:rgba(62,55,42,.2)}",
+      ".oro.g-scarabocchio .sb-col.on{border-color:var(--o-oro);box-shadow:0 0 0 2px var(--o-carta),0 0 0 3.5px var(--o-oro)}",
+      ".oro.g-scarabocchio .sb-spess,.oro.g-scarabocchio .sb-str{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".oro.g-scarabocchio .sb-spess.on,.oro.g-scarabocchio .sb-gomma.on,.oro.g-scarabocchio .sb-secchio.on{background:var(--o-carta-viva);box-shadow:inset 0 0 0 2px var(--o-oro)}",
+      ".oro.g-scarabocchio .sb-spess i{box-shadow:0 0 0 1px var(--o-tenue)}",
+      // la chat
+      ".oro.g-scarabocchio .sb-msg.sys{color:var(--o-tenue)}",
+      ".oro.g-scarabocchio .sb-msg.ok{color:var(--o-verde)}",
+      ".oro.g-scarabocchio .sb-msg.quasi{color:var(--o-ambra)}",
+      ".oro.g-scarabocchio .sb-msg.sa{color:var(--o-verde)}",
+      ".oro.g-scarabocchio .sb-msg.sa b{color:var(--o-verde)!important}",
+      ".oro.g-scarabocchio .sb-scrivi,.oro.g-scarabocchio .sb-basso{background:var(--o-fondo-2);box-shadow:inset 0 1px 0 var(--o-filo)}",
+      ".oro.g-scarabocchio .sb-inp{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".oro.g-scarabocchio .sb-inp:focus{box-shadow:inset 0 0 0 1px var(--o-oro),0 0 0 3px rgba(197,151,41,.18)}",
+      ".oro.g-scarabocchio .sb-inp:disabled{background:var(--o-fondo-2);color:var(--o-tenue)}",
+      ".oro.g-scarabocchio .sb-inp:disabled::placeholder{color:var(--o-tenue)}",
+      ".oro.g-scarabocchio .sb-invia{background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 10px rgba(167,123,13,.22)}",
+      ".oro.g-scarabocchio .sb-evviva{background:var(--o-verde);color:#fff;box-shadow:var(--o-ombra-alta)}",
+      // la classifica finale e la galleria degli scarabocchi
+      ".oro.g-scarabocchio .sb-perche{color:var(--o-ambra)}",
+      ".oro.g-scarabocchio .sb-gal img{box-shadow:0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-scarabocchio.sb-grande{background:rgba(252,251,249,.96);color:var(--o-testo)}",
+      ".oro.g-scarabocchio.sb-grande img{box-shadow:0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta)}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -465,8 +519,8 @@
     });
     // l'icona del secchiello la disegno io (l'emoji 🪣 sui telefoni vecchi esce come un quadratino): la goccia ha il colore scelto
     var bSecchio = el("button", { class: "sb-str sb-secchio", "aria-label": "Secchiello: riempi una zona", onclick: function () { scelta.secchio = !scelta.secchio; aggStrumenti(); },
-      html: "<svg viewBox='0 0 24 24' width='24' height='24' aria-hidden='true'><path d='M10 3 17 10 10 17 3 10Z' fill='none' stroke='#fff' stroke-width='2' stroke-linejoin='round'/>" +
-        "<path d='M4.2 10.8h11.6L10 16.6z' fill='var(--c,#fcc419)'/><path d='M19.5 12.6c1.2 1.8 1.9 3 1.9 3.9a1.9 1.9 0 0 1-3.8 0c0-.9.7-2.1 1.9-3.9z' fill='var(--c,#fcc419)' stroke='#fff' stroke-width='.8'/></svg>" });
+      html: "<svg viewBox='0 0 24 24' width='24' height='24' aria-hidden='true'><path d='M10 3 17 10 10 17 3 10Z' fill='none' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/>" +
+        "<path d='M4.2 10.8h11.6L10 16.6z' fill='var(--c,#fcc419)'/><path d='M19.5 12.6c1.2 1.8 1.9 3 1.9 3.9a1.9 1.9 0 0 1-3.8 0c0-.9.7-2.1 1.9-3.9z' fill='var(--c,#fcc419)' stroke='currentColor' stroke-width='.8'/></svg>" });
     var bAnn = el("button", { class: "sb-str", "aria-label": "Annulla", text: "↶", onclick: annullaMio });
     var bPul = el("button", { class: "sb-str", "aria-label": "Cancella tutto", text: "🗑️", onclick: pulisciMio });
     bCol.forEach(function (b) { tavolozza.appendChild(b); });
@@ -680,7 +734,7 @@
       (vm.chat || []).forEach(function (m) {
         if (m.i <= ultimoMsg) return;
         ultimoMsg = m.i;
-        if (m.k === "msg") chat.appendChild(el("div", { class: "sb-msg" }, [el("b", { style: "color:" + (m.c || "#ffd43b"), text: m.n + ": " }), document.createTextNode(m.x)]));
+        if (m.k === "msg") chat.appendChild(el("div", { class: "sb-msg" }, [el("b", { style: "color:" + (m.c || "#8a6500"), text: m.n + ": " }), document.createTextNode(m.x)]));
         else riga1(m.x, m.k);
         if (avviata && m.k === "ok" && m.id !== io) FX.altri();
       });
@@ -890,7 +944,7 @@
       gal.forEach(function (g) {
         riga.appendChild(el("button", { "aria-label": g.parola, onclick: function () {
           try { navigator.vibrate && navigator.vibrate(10); } catch (e) {}
-          var o = el("div", { class: "sb-grande", onclick: function () { if (o.parentNode) o.parentNode.removeChild(o); } }, [
+          var o = el("div", { class: "sb-grande oro g-scarabocchio sg-dal-gioco", onclick: function () { if (o.parentNode) o.parentNode.removeChild(o); } }, [
             el("img", { src: g.img, alt: g.parola }), el("div", { text: g.parola.toUpperCase() + " · ✏️ " + g.nome }), el("p", { class: "modulo-nota", text: "Tocca per chiudere" }) ]);
           document.body.appendChild(o);
         } }, [el("img", { src: g.img, alt: g.parola }), el("span", { text: g.parola }), el("span", { style: "opacity:.7;font-weight:700", text: "✏️ " + g.nome })]));
@@ -1545,6 +1599,7 @@
 
   SG.registra({
     id: "scarabocchio",
+    tema: "oro",   // 🤍 Bianco e oro: tutto il gioco è chiaro (le regole di stile stanno in fondo allo stile, sotto .oro.g-scarabocchio)
     nome: "Scarabocchio",
     icona: "🎨",
     descrizione: "Uno disegna una parola segreta, gli altri la indovinano scrivendo in chat: prendi tanti punti quanti secondi mancano. Si gioca online, ognuno dal suo telefono. Da 2 a 10.",
