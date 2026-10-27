@@ -12,7 +12,8 @@
   "use strict";
 
   var COLS = 7, ROWS = 6, N = COLS * ROWS;
-  var CG = "#ffd43b", CB = "#f8f9fa";          // giallo, bianco
+  var CG = "#ffd43b", CB = "#f8f9fa";          // giallo, bianco (le pedine)
+  var TG = "#8f6a00", TB = "#556070";          // 🤍 gli stessi due colori per le SCRITTE sul fondo chiaro (4,8:1 e 6,2:1)
   var ORD = [3, 2, 4, 1, 5, 0, 6];              // colonne dal centro (per il bot)
   var ISTANZA = 0;                              // ogni partita aperta ha il suo numero (per i trofei)
 
@@ -30,7 +31,8 @@
   function altro(s) { return s === "G" ? "B" : "G"; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function colore(s) { return s === "G" ? CG : CB; }
-  function nomeCol(s, nome) { return "<span style='color:" + colore(s) + "'>" + esc(nome) + "</span>"; }
+  function nomeCol(s, nome) { return "<span style='color:" + (s === "G" ? TG : TB) + "'>" + esc(nome) + "</span>"; }
+  function pallino(s) { return "<i class='d4-pal " + (s === "G" ? "g" : "b") + "'></i>"; }   // la pedina, piccola, dentro il testo
 
   // ---- suoni (niente vibrazione: quella c'è solo quando tocchi tu per scegliere) ----
   // la pedina che cade e si incastra nel posto (un "tock" pieno + click di contatto + assestamento)
@@ -218,6 +220,7 @@
   // =========================================================
   SG.registra({
     id: "drop4",
+    tema: "oro",   // 🤍 Bianco e oro: tutto il gioco è chiaro
     nome: "Drop 4",
     icona: "🟡",
     descrizione: "Quattro in fila a gravità: fai cadere le pedine in colonna e allinea quattro dello stesso colore. Contro il Bot, in due o online.",
@@ -279,55 +282,76 @@
     var st = document.createElement("style");
     st.id = "sg-drop-css";
     st.textContent = [
+      // 🤍 Bianco e oro: tutto il gioco è chiaro (tema: "oro"). Colori solo con le variabili --o-* (css/styles.css);
+      // la tavola resta un oggetto blu scuro, incorniciata d'oro; pedine gialle e bianche come sempre
       ".schermata.d4-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden}",
       ".schermata.d4-piena>.testa,.schermata.d4-piena>.piede{display:none}",
       ".schermata.d4-piena>.contenuto{height:100%;margin:0;padding:0}",
-      ".d4-scena{--d4w:min(96vw,calc(var(--alt,100dvh) - 232px),540px);position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 8px calc(10px + env(safe-area-inset-bottom));overflow:hidden;user-select:none;-webkit-user-select:none}",
-      ".d4-esci{position:absolute;top:calc(8px + env(safe-area-inset-top));left:8px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1.3rem;font-weight:900;cursor:pointer;z-index:5}",
+      // il ‹ in alto a sinistra delle schermate d'attesa: bianco col filo d'oro (prima velo nero con la freccia bianca)
+      ".oro.g-drop4.senza-testa>.testa .btn-piccolo{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".d4-scena{--d4w:min(88vw,calc(var(--alt,100dvh) - 232px),500px);position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 8px calc(10px + env(safe-area-inset-bottom));overflow:hidden;user-select:none;-webkit-user-select:none}",
+      ".d4-esci{position:absolute;top:calc(8px + env(safe-area-inset-top));left:8px;width:38px;height:38px;border-radius:50%;border:0;background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);font:inherit;font-size:1.3rem;font-weight:900;cursor:pointer;z-index:5}",
       ".d4-gioc{width:var(--d4w);display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:0 34px;box-sizing:border-box}",
-      ".d4-g{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;opacity:.55;transform:scale(.9);transition:opacity .25s,transform .25s}",
+      ".d4-g{--av:54px;position:relative;flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;opacity:.55;transform:scale(.9);transition:opacity .25s,transform .25s}",
       ".d4-g.turno,.d4-g.vince{opacity:1;transform:scale(1)}",
       ".d4-g.via{opacity:.3}",
-      ".d4-av{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.1);border:3px solid;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;font-size:1.9rem;line-height:54px}",
+      ".d4-av{width:var(--av);height:var(--av);border-radius:50%;background:var(--o-carta-2);border:3px solid;box-shadow:var(--o-ombra);overflow:hidden;display:flex;align-items:flex-end;justify-content:center;font-size:1.9rem;line-height:var(--av)}",
       ".d4-av svg{width:100%;height:100%;display:block}",
-      ".d4-g.G .d4-av{border-color:" + CG + "}.d4-g.B .d4-av{border-color:" + CB + "}",
-      ".d4-g.vince .d4-av{box-shadow:0 0 0 3px #69db7c,0 0 16px #69db7c}",
-      ".d4-nome{font-weight:800;font-size:.88rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".d4-serie{flex:0 0 auto;font-weight:900;font-size:1.35rem;padding-bottom:16px;white-space:nowrap;opacity:.9}",
-      ".d4-stato{font-weight:800;font-size:1.12rem;min-height:1.45em;text-align:center;line-height:1.3}",
+      ".d4-g.G .d4-av{border-color:#b98200}.d4-g.B .d4-av{border-color:#7f8896}",
+      ".d4-g.vince .d4-av{box-shadow:0 0 0 2px var(--o-carta),0 0 0 4.5px var(--o-oro)}",
+      // la pedina di ognuno, piccola sull'angolo dell'avatar (il giallo da solo non si legge sul bianco)
+      ".d4-g::after{content:'';position:absolute;top:calc(var(--av) + 6px - 20px);left:calc(50% + (var(--av) + 6px) / 2 - 14px);width:20px;height:20px;border-radius:50%;box-shadow:0 0 0 2px var(--o-carta),0 1px 4px rgba(62,55,42,.35),inset 0 -2px 0 rgba(0,0,0,.14)}",
+      ".d4-g.G::after{background:radial-gradient(circle at 36% 30%,#fff6c4 0,#ffd43b 42%,#e8a800 100%)}",
+      ".d4-g.B::after{background:radial-gradient(circle at 36% 30%,#fff 0,#f1f3f5 45%,#c3c8cf 100%)}",
+      ".d4-nome{font-weight:800;font-size:.88rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--o-testo)}",
+      ".d4-serie{flex:0 0 auto;font-family:var(--o-tit);font-weight:700;font-size:2rem;font-variant-numeric:lining-nums tabular-nums;padding-bottom:12px;white-space:nowrap;color:var(--o-testo);filter:grayscale(1)}",   // (il 🆚 di prima della sfida diventa grigio: l'arancione stonava)
+      ".d4-stato{font-family:var(--o-tit);font-weight:700;font-size:1.5rem;min-height:1.3em;text-align:center;line-height:1.2;color:var(--o-testo)}",
       ".d4-stato.pop{animation:d4Pop .45s ease-out}",
+      // il pallino della pedina nel testo («Tocca a te ●»): una pedina vera, col filo, leggibile anche sul bianco
+      ".d4-pal{display:inline-block;width:.8em;height:.8em;border-radius:50%;vertical-align:-.06em;box-shadow:inset 0 -.1em 0 rgba(0,0,0,.14),0 0 0 1.5px rgba(62,55,42,.35)}",
+      ".d4-pal.g{background:radial-gradient(circle at 36% 30%,#fff6c4 0,#ffd43b 42%,#e8a800 100%)}",
+      ".d4-pal.b{background:radial-gradient(circle at 36% 30%,#fff 0,#f1f3f5 45%,#c3c8cf 100%)}",
       "@keyframes d4Pop{0%{transform:scale(.7);opacity:.3}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}",
       ".d4-area{width:var(--d4w);touch-action:none;cursor:pointer}",
       ".d4-mano{position:relative;width:100%;height:calc(var(--d4w) / 7)}",
-      ".d4-tav{position:relative;width:100%;aspect-ratio:7/6;border-radius:14px;overflow:hidden;background:#1b2340;box-shadow:0 8px 20px rgba(0,0,0,.4)}",
+      // la tavola: blu scuro, con la cornice d'oro e un passe-partout bianco
+      ".d4-tav{position:relative;width:100%;aspect-ratio:7/6;border-radius:14px;overflow:hidden;background:#0f1a3d;box-shadow:0 0 0 2px var(--o-oro),0 0 0 5px var(--o-carta),0 0 0 6px var(--o-filo-oro),var(--o-ombra-alta)}",
       ".d4-p{position:absolute;width:calc(100% / 7);height:calc(100% / 6);visibility:hidden;will-change:transform}",
       ".d4-mano .d4-p{height:100%;top:0}",
       ".d4-p.g,.d4-p.b{visibility:visible}",
       ".d4-p::before{content:'';position:absolute;inset:5%;border-radius:50%}",
       ".d4-p.g::before{background:radial-gradient(circle at 36% 30%,#fff6c4 0,#ffd43b 42%,#e8a800 100%);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),inset 0 0 0 5px rgba(0,0,0,.07)}",
       ".d4-p.b::before{background:radial-gradient(circle at 36% 30%,#fff 0,#f1f3f5 45%,#c3c8cf 100%);box-shadow:inset 0 -3px 0 rgba(0,0,0,.16),inset 0 0 0 5px rgba(0,0,0,.06)}",
-      ".d4-mano .d4-p{opacity:.9}",
+      ".d4-mano .d4-p{opacity:.95}",
+      // la pedina «in mano» sta sul fondo chiaro: ha bisogno di un filo attorno
+      ".d4-mano .d4-p.g::before{box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),inset 0 0 0 5px rgba(0,0,0,.07),0 0 0 1.5px rgba(120,90,0,.6)}",
+      ".d4-mano .d4-p.b::before{box-shadow:inset 0 -3px 0 rgba(0,0,0,.16),inset 0 0 0 5px rgba(0,0,0,.06),0 0 0 1.5px rgba(70,80,100,.6)}",
       ".d4-telaio{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}",
       ".d4-segni{position:absolute;inset:0;pointer-events:none}",
       ".d4-meta{position:absolute;width:calc(100% / 7);height:calc(100% / 6);display:none}",
       ".d4-meta::before{content:'';position:absolute;inset:12%;border-radius:50%;border:3px dashed currentColor;opacity:.75}",
       ".d4-anello{position:absolute;width:calc(100% / 7);height:calc(100% / 6);opacity:0;animation:d4Su .45s ease-out forwards}",
-      ".d4-anello::before{content:'';position:absolute;inset:4%;border-radius:50%;border:4px solid #69db7c;box-shadow:0 0 12px #69db7c,inset 0 0 8px #69db7c;animation:d4Pulsa .9s ease-in-out .45s infinite alternate}",
+      ".d4-anello::before{content:'';position:absolute;inset:4%;border-radius:50%;border:3.5px solid var(--o-oro-chiaro);box-shadow:0 0 0 1.5px rgba(30,27,22,.45);animation:d4Pulsa .9s ease-in-out .45s infinite alternate}",
       "@keyframes d4Su{0%{opacity:0;transform:scale(1.8)}100%{opacity:1;transform:scale(1)}}",
       "@keyframes d4Pulsa{0%{transform:scale(1)}100%{transform:scale(.86)}}",
       ".d4-piede{width:var(--d4w);min-height:52px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}",
       ".d4-piede .btn{flex:1 1 0;min-width:0;margin:0}",
       ".d4-piede .sl-faccine{flex:1 1 100%}",
-      ".d4-scena.con-fa{--d4w:min(96vw,calc(var(--alt,100dvh) - 290px),540px)}",
+      ".d4-scena.con-fa{--d4w:min(88vw,calc(var(--alt,100dvh) - 290px),500px)}",
       // chi guarda: in basso c'è la targhetta del core (alta 44 px + 10): la si lascia libera
-      ".d4-scena.con-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom));--d4w:min(96vw,calc(var(--alt,100dvh) - 282px),540px)}",
-      ".d4-scena.con-targa.con-fa{--d4w:min(96vw,calc(var(--alt,100dvh) - 340px),540px)}",
-      ".d4-nota{flex:1 1 100%;margin:0;text-align:center;font-weight:700;font-size:.92rem;color:var(--testo-tenue,#cdd6ff)}",      ".d4-chiedi{position:absolute;inset:0;z-index:20;background:rgba(10,14,40,.6);display:flex;align-items:center;justify-content:center;padding:20px}",
-      ".d4-chiedi-box{background:var(--carta,#34479a);border-radius:18px;padding:18px;max-width:320px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.45);text-align:center}",
-      ".d4-chiedi-box p{margin:0 0 14px;font-weight:800;font-size:1.1rem}",
+      ".d4-scena.con-targa{padding-bottom:calc(60px + env(safe-area-inset-bottom));--d4w:min(88vw,calc(var(--alt,100dvh) - 282px),500px)}",
+      ".d4-scena.con-targa.con-fa{--d4w:min(88vw,calc(var(--alt,100dvh) - 340px),500px)}",
+      ".d4-nota{flex:1 1 100%;margin:0;text-align:center;font-weight:700;font-size:.92rem;color:var(--o-tenue)}",
+      // «Uscire dalla partita?» sopra la tavola
+      ".d4-chiedi{position:absolute;inset:0;z-index:20;background:rgba(30,27,22,.42);display:flex;align-items:center;justify-content:center;padding:20px}",
+      ".d4-chiedi-box{background:var(--o-carta);border:1px solid var(--o-filo-oro);border-radius:var(--o-raggio);padding:18px;max-width:320px;width:100%;box-shadow:var(--o-ombra-alta);text-align:center}",
+      ".d4-chiedi-box p{margin:0 0 14px;font-family:var(--o-tit);font-weight:700;font-size:1.4rem}",
       ".d4-chiedi-tasti{display:flex;gap:8px}.d4-chiedi-tasti .btn{flex:1;margin:0}",
+      // il tasto 💬 (è del pezzo comune delle chiacchiere: qui prende il bianco e oro)
+      ".oro.g-drop4 .sgc-tasto{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-drop4 .sgc-tasto i{background:var(--o-oro)}",
       // telefoni alti: avatar e scritte più grandi, più aria tra i pezzi
-      "@media (min-height:800px){.d4-scena{gap:14px}.d4-av{width:72px;height:72px;line-height:72px;font-size:2.4rem}.d4-nome{font-size:1rem}.d4-serie{font-size:1.6rem}.d4-stato{font-size:1.3rem}}"
+      "@media (min-height:800px){.d4-scena{gap:14px}.d4-g{--av:72px}.d4-av{font-size:2.4rem}.d4-nome{font-size:1rem}.d4-serie{font-size:2.3rem}.d4-stato{font-size:1.7rem}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -339,9 +363,9 @@
       cerchi += "<circle cx='" + (c + 0.5) + "' cy='" + (r + 0.5) + "' r='.4'/>";
     }
     return "<svg class='d4-telaio' viewBox='0 0 7 6' preserveAspectRatio='none' aria-hidden='true'>" +
-      "<defs><linearGradient id='d4lg' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#6f7989'/><stop offset='1' stop-color='#4a525f'/></linearGradient></defs>" +
+      "<defs><linearGradient id='d4lg' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#34529f'/><stop offset='1' stop-color='#1f3a85'/></linearGradient></defs>" +
       "<path d='" + d + "' fill='url(#d4lg)' fill-rule='evenodd'/>" +
-      "<g fill='none' stroke='rgba(0,0,0,.45)' stroke-width='.05'>" + cerchi + "</g></svg>";
+      "<g fill='none' stroke='rgba(6,12,40,.6)' stroke-width='.05'>" + cerchi + "</g></svg>";
   }
   function posa(nodo, i) { nodo.style.left = ((i % COLS) * 100 / COLS) + "%"; nodo.style.top = (Math.floor(i / COLS) * 100 / ROWS) + "%"; }
   function avatarHtml(om) {
@@ -514,7 +538,7 @@
       return "🏆 Vince " + nomeCol(w, vm.nomi[w]) + "!";
     }
     if (vm.assente && vm.turno === "B") return "⏳ Aspettiamo " + nomeCol("B", vm.nomi.B) + "…";
-    if (mio && mio === vm.turno) return "Tocca a <b>te</b> " + nomeCol(mio, "●");
+    if (mio && mio === vm.turno) return "Tocca a <b>te</b> " + pallino(mio);
     if ((cb.bot || vm.bot) && vm.turno === "B") return "🤖 " + nomeCol("B", vm.nomi.B) + " sta pensando…";
     return "Tocca a " + nomeCol(vm.turno, vm.nomi[vm.turno]);
   }
@@ -1044,6 +1068,7 @@
       onEsci: function () { if (rete) rete.chiudi(); t.esci(); } };
     function attesa(txt) {
       if (scritta === txt) return; scritta = txt; ui = null;
+      stile();   // (lo stile del gioco serve anche qui: il ‹ in alto a sinistra)
       var s = t.schermata({ indietro: cb.onEsci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa", text: txt }));
       if (t.eliminazione && t.faccine) { var fa = t.faccine(); if (fa) s._piede.appendChild(fa); }   // (fuori dal torneo le faccine sono nella targhetta)

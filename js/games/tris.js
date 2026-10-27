@@ -13,7 +13,7 @@
   "use strict";
 
   var LINEE = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-  var CX = "#4dabf7", CO = "#ff6b6b";
+  var CX = "#1971c2", CO = "#c92a2a";   // 🤍 blu e rosso più scuri, per il fondo chiaro (4,9:1 e 5,3:1)
 
   function altro(s) { return s === "X" ? "O" : "X"; }
   function vuota() { return [null, null, null, null, null, null, null, null, null]; }
@@ -190,6 +190,7 @@
 
   SG.registra({
     id: "tris",
+    tema: "oro",   // 🤍 Bianco e oro: tutto il gioco è chiaro
     nome: "Tris",
     icona: "⭕",
     descrizione: "Il filetto classico: allinea tre simboli. Da solo contro il Bot, in due sullo stesso telefono o online. C'è anche il Tris che sparisce!",
@@ -253,40 +254,54 @@
     var st = document.createElement("style");
     st.id = "sg-tris-css";
     st.textContent = [
+      // 🤍 Bianco e oro: tutto il gioco è chiaro (tema: "oro"). Colori solo con le variabili --o-* (css/styles.css);
+      // X e O restano blu e rosso, ma scuri quanto basta per il fondo chiaro (CX/CO in cima al file)
       ".schermata.tr-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden}",
       ".schermata.tr-piena>.piede{display:none}",
       ".schermata.tr-piena>.contenuto{height:100%;margin:0;padding:0}",
-      ".tr-scena{--trw:min(92vw,calc(var(--alt,100dvh) - 290px),480px);position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));overflow:hidden;user-select:none;-webkit-user-select:none}",
+      // il ‹ in alto a sinistra: tasto bianco col filo d'oro (prima era un velo nero con la freccia bianca)
+      ".oro.g-tris.senza-testa>.testa .btn-piccolo{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".tr-scena{--trw:min(86vw,calc(var(--alt,100dvh) - 290px),460px);position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));overflow:hidden;user-select:none;-webkit-user-select:none}",
       ".tr-gioc{width:var(--trw);max-width:100%;display:flex;align-items:flex-start;justify-content:center;gap:4px;padding:0 34px;box-sizing:border-box}",
-      ".tr-g{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.5;transform:scale(.9);transition:opacity .25s,transform .25s;position:relative}",
+      ".tr-g{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.55;transform:scale(.9);transition:opacity .25s,transform .25s;position:relative}",
       ".tr-g.turno,.tr-g.vince{opacity:1;transform:scale(1)}",
       ".tr-avw{position:relative;width:56px;height:56px}",
-      ".tr-av{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:rgba(255,255,255,.1);border:3px solid;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.9rem;line-height:1}",
+      ".tr-av{width:100%;height:100%;box-sizing:border-box;border-radius:50%;background:var(--o-carta-2);border:2.5px solid;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.9rem;line-height:1;box-shadow:var(--o-ombra)}",
       ".tr-av svg{width:100%;height:100%;display:block;align-self:flex-end}",
       ".tr-g.X .tr-av{border-color:" + CX + "}.tr-g.O .tr-av{border-color:" + CO + "}",
-      ".tr-g.vince .tr-av{box-shadow:0 0 0 3px #69db7c,0 0 16px #69db7c}",
-      ".tr-sim{position:absolute;right:-5px;bottom:-3px;width:22px;height:22px;border-radius:50%;color:#fff;font-weight:900;font-size:.8rem;line-height:22px;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,.35)}",
+      ".tr-g.vince .tr-av{box-shadow:0 0 0 2px var(--o-carta),0 0 0 4.5px var(--o-oro)}",
+      ".tr-sim{position:absolute;right:-5px;bottom:-3px;width:22px;height:22px;border-radius:50%;color:#fff;font-weight:900;font-size:.8rem;line-height:22px;text-align:center;box-shadow:0 0 0 2px var(--o-carta),0 1px 4px rgba(62,55,42,.3)}",
       ".tr-g.X .tr-sim{background:" + CX + "}.tr-g.O .tr-sim{background:" + CO + "}",
-      ".tr-nome{font-weight:800;font-size:.86rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".tr-tu{font-size:.72rem;font-weight:700;opacity:.75;min-height:1.1em;line-height:1.1}",
-      ".tr-punti{flex:0 0 auto;align-self:center;font-weight:900;font-size:1.45rem;white-space:nowrap;margin-bottom:16px;font-variant-numeric:tabular-nums;text-align:center;line-height:1.1}",
-      ".tr-punti small{display:block;font-size:.66rem;font-weight:700;opacity:.7}",
-      ".tr-fumetto{position:absolute;top:60px;z-index:6;width:max-content;max-width:150px;background:#fff;color:#1d2440;font-weight:800;font-size:.8rem;line-height:1.25;padding:6px 9px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.35);opacity:0;transform:translateY(-4px) scale(.9);transition:opacity .2s,transform .2s;pointer-events:none;text-align:center;white-space:normal}",
+      ".tr-nome{font-weight:800;font-size:.86rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--o-testo)}",
+      ".tr-tu{font-size:.72rem;font-weight:700;color:var(--o-tenue);min-height:1.1em;line-height:1.1}",
+      ".tr-punti{flex:0 0 auto;align-self:center;font-family:var(--o-tit);font-weight:700;font-size:2rem;white-space:nowrap;margin-bottom:12px;font-variant-numeric:lining-nums tabular-nums;text-align:center;line-height:1.05;color:var(--o-testo)}",
+      ".tr-punti small{display:block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;font-size:.66rem;font-weight:700;color:var(--o-tenue);letter-spacing:.02em}",
+      ".tr-fumetto{position:absolute;top:60px;z-index:6;width:max-content;max-width:150px;background:var(--o-carta);color:var(--o-testo);border:1px solid var(--o-filo-oro);font-weight:800;font-size:.8rem;line-height:1.25;padding:6px 9px;border-radius:12px;box-shadow:var(--o-ombra-alta);opacity:0;transform:translateY(-4px) scale(.9);transition:opacity .2s,transform .2s;pointer-events:none;text-align:center;white-space:normal}",
       ".tr-g.X .tr-fumetto{left:0}.tr-g.O .tr-fumetto{right:0}",
       ".tr-fumetto.on{opacity:1;transform:none}",
-      ".tr-stato{font-weight:800;font-size:1.15rem;min-height:1.4em;text-align:center;line-height:1.3;padding:0 6px}",
+      ".tr-stato{font-family:var(--o-tit);font-weight:700;font-size:1.5rem;min-height:1.3em;text-align:center;line-height:1.2;padding:0 6px;color:var(--o-testo)}",
       ".tr-stato.pop{animation:trPop .45s ease-out}",
       "@keyframes trPop{0%{transform:scale(.7);opacity:.3}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}",
-      ".tr-griglia{--trc:#69db7c;position:relative;width:var(--trw);max-width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:3.5%}",
-      ".tr-griglia::after{content:'';position:absolute;inset:-6px;border-radius:22px;box-shadow:0 0 0 3px var(--trc),0 0 20px var(--trc);opacity:0;transition:opacity .3s;pointer-events:none}",
-      ".tr-griglia.tuo::after{opacity:.75;animation:trRespira 1.5s ease-in-out infinite alternate}",
-      "@keyframes trRespira{0%{opacity:.25}100%{opacity:.8}}",
-      ".tr-cella{position:relative;display:block;border:0;padding:0;margin:0;min-height:0;border-radius:16px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13);cursor:pointer;-webkit-tap-highlight-color:transparent;color:inherit;font:inherit;transition:transform .08s,background .2s}",
+      // la griglia: una carta bianca col filo d'oro; dentro, le quattro linee sottili del Tris (d'oro) disegnate dalle caselle
+      ".tr-griglia{--trc:var(--o-oro);position:relative;isolation:isolate;margin:8px 0;width:var(--trw);max-width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:3.5%}",
+      ".tr-griglia::before{content:'';position:absolute;inset:-10px;z-index:-1;border-radius:24px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta);pointer-events:none}",
+      // il filo del turno (tocca a te, o del colore di chi tocca sullo stesso telefono): sottile, niente bagliore
+      ".tr-griglia::after{content:'';position:absolute;inset:-10px;border-radius:24px;box-shadow:0 0 0 2px var(--trc);opacity:0;transition:opacity .3s;pointer-events:none}",
+      ".tr-griglia.tuo::after{opacity:.9;animation:trRespira 1.5s ease-in-out infinite alternate}",
+      "@keyframes trRespira{0%{opacity:.4}100%{opacity:1}}",
+      ".tr-cella{position:relative;display:block;border:0;padding:0;margin:0;min-height:0;border-radius:14px;background:transparent;box-shadow:none;cursor:pointer;-webkit-tap-highlight-color:transparent;color:inherit;font:inherit;transition:transform .08s,background .2s}",
       ".tr-cella:disabled{cursor:default;opacity:1;color:inherit}",
-      ".tr-cella:not(:disabled):active{transform:scale(.94)}",
-      ".tr-cella.vinc{background:rgba(105,219,124,.22);box-shadow:inset 0 0 0 2px #69db7c}",
+      ".tr-cella:not(:disabled):active{transform:scale(.94);background:var(--o-carta-viva)}",
+      "@media (hover:hover){.tr-cella:not(:disabled):hover{background:var(--o-carta-2)}}",
+      ".tr-cella.vinc{background:var(--o-carta-viva);box-shadow:inset 0 0 0 1.5px var(--o-filo-oro)}",
+      // le linee: ogni casella disegna un pezzo, nello spazio tra le caselle (gap = 11,29% di una casella: la metà è 5,645%)
+      ".tr-cella::before,.tr-cella::after{content:'';position:absolute;display:none;background:var(--o-oro);border-radius:2px;pointer-events:none}",
+      ".tr-cella:nth-child(3n+1)::before,.tr-cella:nth-child(3n+2)::before{display:block;left:calc(105.645% - 1px);top:0;width:2px;height:100%}",
+      ".tr-cella:nth-child(-n+6):nth-child(3n+1)::before,.tr-cella:nth-child(-n+6):nth-child(3n+2)::before{height:111.29%}",
+      ".tr-cella:nth-child(-n+6)::after{display:block;top:calc(105.645% - 1px);left:0;height:2px;width:100%}",
+      ".tr-cella:nth-child(-n+6):nth-child(3n+1)::after,.tr-cella:nth-child(-n+6):nth-child(3n+2)::after{width:111.29%}",
       ".tr-cella svg{position:absolute;left:13%;top:13%;width:74%;height:74%;overflow:visible;transition:opacity .25s}",
-      ".tr-cella .seg{fill:none;stroke-width:13;stroke-linecap:round}",
+      ".tr-cella .seg{fill:none;stroke-width:10;stroke-linecap:round}",
       ".tr-cella .seg.x{stroke:" + CX + "}.tr-cella .seg.o{stroke:" + CO + "}",
       ".tr-cella svg.nuovo .seg{stroke-dasharray:100;stroke-dashoffset:100;animation:trScrivi .28s ease-out forwards}",
       "@keyframes trScrivi{to{stroke-dashoffset:0}}",
@@ -295,21 +310,24 @@
       ".tr-cella svg.sparisce{animation:trVia .3s ease-in forwards}",
       "@keyframes trVia{to{opacity:0;transform:scale(.4)}}",
       ".tr-linea{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2}",
-      ".tr-linea line{stroke:#fff;stroke-width:9;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;opacity:.92}",
-      ".tr-linea.on line{animation:trScrivi .35s .15s ease-out forwards}",
+      ".tr-linea line{stroke:var(--o-oro);stroke-width:7;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;opacity:0}",   // (spenta: la linea di zero lunghezza con la punta tonda era un puntino)
+      ".tr-linea.on line{opacity:1;animation:trScrivi .35s .15s ease-out forwards}",
       ".tr-piede{width:var(--trw);max-width:100%;min-height:52px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}",
       ".tr-piede .btn{flex:1 1 0;min-width:0;margin:0}",
       ".tr-piede .sl-faccine{flex:1 1 100%}",
-      ".tr-scena.con-fa{--trw:min(92vw,calc(var(--alt,100dvh) - 350px),480px)}",
+      ".tr-scena.con-fa{--trw:min(86vw,calc(var(--alt,100dvh) - 350px),460px)}",
       // chi guarda: in basso c'è la targhetta del core (alta 44 px + 10): la si lascia libera
-      ".tr-scena.con-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom));--trw:min(92vw,calc(var(--alt,100dvh) - 340px),480px)}",
-      ".tr-scena.con-targa.con-fa{--trw:min(92vw,calc(var(--alt,100dvh) - 400px),480px)}",
-      ".tr-nota{flex:1 1 100%;margin:0;text-align:center;font-weight:700;font-size:.9rem;opacity:.85;line-height:1.3}",
+      ".tr-scena.con-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom));--trw:min(86vw,calc(var(--alt,100dvh) - 340px),460px)}",
+      ".tr-scena.con-targa.con-fa{--trw:min(86vw,calc(var(--alt,100dvh) - 400px),460px)}",
+      ".tr-nota{flex:1 1 100%;margin:0;text-align:center;font-weight:700;font-size:.9rem;color:var(--o-tenue);line-height:1.3}",
       ".tr-nota.corta{flex:1 1 0;min-width:0}",   // (accanto al tasto 💬)
       ".tr-cor{position:absolute;left:50%;top:45%;width:9px;height:14px;border-radius:2px;pointer-events:none;z-index:8;will-change:transform,opacity}",
-      ".tr-attesa{font-size:1.1rem;line-height:1.5;text-align:center;margin:auto 0}",
+      ".tr-attesa{font-size:1.1rem;line-height:1.5;text-align:center;margin:30vh 0 0}",
+      // il tasto 💬 (è del pezzo comune delle chiacchiere: qui prende il bianco e oro)
+      ".oro.g-tris .sgc-tasto{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-tris .sgc-tasto i{background:var(--o-oro)}",
       // telefoni alti: avatar e scritte più grandi
-      "@media (min-height:800px){.tr-scena{gap:14px}.tr-avw{width:70px;height:70px}.tr-av{font-size:2.4rem}.tr-fumetto{top:74px}.tr-nome{font-size:1rem}.tr-punti{font-size:1.7rem}.tr-stato{font-size:1.3rem}}"
+      "@media (min-height:800px){.tr-scena{gap:14px}.tr-avw{width:70px;height:70px}.tr-av{font-size:2.4rem}.tr-fumetto{top:74px}.tr-nome{font-size:1rem}.tr-punti{font-size:2.3rem}.tr-stato{font-size:1.7rem}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -563,7 +581,7 @@
   // coriandoli leggeri: pochi pezzetti che volano (solo transform e opacity)
   function coriandoli(ui, colore) {
     if (!ui.scena.animate) return;
-    var colori = [colore, "#ffd43b", "#69db7c", "#ffffff", "#da77f2"];
+    var colori = [colore, "var(--o-oro)", "var(--o-oro-chiaro)", "var(--o-scuro)", colore];   // 🤍 coriandoli sobri: il colore del vincitore, oro e inchiostro
     for (var k = 0; k < 22; k++) (function (k) {
       var p = document.createElement("div"); p.className = "tr-cor"; p.style.background = colori[k % colori.length];
       ui.scena.appendChild(p);
@@ -937,6 +955,7 @@
   // una scritta d'attesa semplice (chi guarda), rifatta solo se cambia
   function attesa(t, S, txt, onEsci) {
     if (S.scritta === txt) return; S.scritta = txt;
+    stile();   // (lo stile del gioco serve anche qui: il ‹ in alto a sinistra)
     var s = t.schermata({ indietro: onEsci });
     s._contenuto.appendChild(t.el("p", { class: "modulo-nota guarda-attesa tr-attesa", text: txt }));
     if (!t.linkParams || !t.linkParams.guarda) s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: onEsci }));
