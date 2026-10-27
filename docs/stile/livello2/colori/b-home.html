@@ -1,0 +1,94 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=390"><title>B · Colori pieni su chiaro</title>
+<style>
+@font-face{font-family:"Jakarta";src:url(font/jakarta.woff2) format("woff2");font-weight:200 800}
+*{box-sizing:border-box}html,body{margin:0}
+body{width:390px;height:844px;overflow:hidden;font-family:"Inter",-apple-system,system-ui,sans-serif;color:var(--testo);-webkit-font-smoothing:antialiased;background:#000}
+.sch{height:844px;padding:48px 18px 20px;display:flex;flex-direction:column;gap:12px;position:relative;color:var(--testo)}
+.stato{position:absolute;top:15px;left:30px;right:28px;display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.i{flex:0 0 auto;display:block}
+.top{text-align:center}.logo{line-height:1.05}
+.btn{display:flex;align-items:center;justify-content:center;gap:9px;min-height:52px;border-radius:var(--rb);font-weight:600;font-size:16px;width:100%;color:var(--testo);border:0}
+.btn-p{color:var(--acc-t)}
+.riga{display:flex;gap:10px}.riga>*{flex:1}
+.chip{display:flex;align-items:center;gap:12px;padding:8px 16px 8px 8px;border-radius:999px;font-size:14px}
+.chip .faccia{width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--surf2);flex:0 0 auto}
+.chip .faccia svg{width:100%;height:100%;display:block}
+.chip .chi{flex:1}.chip .chi b{font-weight:700;font-size:15.5px}
+.liv{display:flex;align-items:center;gap:8px;font-size:11.5px;margin-top:3px}
+.liv .barra{width:78px;height:5px;border-radius:9px;background:var(--surf2);overflow:hidden}.liv .barra i{display:block;width:38%;height:100%}
+.monete{display:flex;align-items:center;gap:5px;font-size:14px;font-weight:700}
+.icone{display:flex;gap:8px}.icone a{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 0 8px;border-radius:var(--rb);font-size:11px;font-weight:600;position:relative}
+.icone a .pal{position:absolute;top:7px;right:calc(50% - 22px);width:9px;height:9px;border-radius:50%;background:#ff3b5c;box-shadow:0 0 0 2px var(--anello,transparent)}
+.tabs{display:flex;gap:7px;overflow:hidden;margin-right:-18px}.tab{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.tab .d{display:none;width:7px;height:7px;border-radius:50%;background:var(--c)}.tab.on .d{display:none!important}
+.griglia{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px;flex:1;min-height:0}
+/* tessera: la foto ha sempre la stessa forma (quella vera, 800×544); il testo sta sotto e prende quello che resta */
+.tess{position:relative;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.tess .alone{display:none}
+.tess .foto{flex:0 0 auto;aspect-ratio:800/544;background-image:var(--img);background-size:var(--z) auto;background-position:var(--fx) var(--fy);background-repeat:no-repeat}
+.tess .t{flex:1;padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px;position:relative}
+.tess h2{margin:0;font-size:15px;font-weight:700;line-height:1.12}
+.tess p{margin:0;font-size:12px;color:var(--tenue);line-height:1.3}
+.tess .meta{font-size:11.5px;font-weight:700;margin-top:auto;display:flex;align-items:center;gap:5px}
+.badge{display:none;position:absolute;top:9px;left:9px;z-index:3;align-items:center;gap:6px;font-size:10.5px;font-weight:600;padding:4px 9px 4px 7px;border-radius:99px}
+.badge i{width:7px;height:7px;border-radius:50%;display:block}
+.bar{display:flex;align-items:center;gap:12px}.bar h1{margin:0;line-height:1}.bar small{display:block;color:var(--tenue);font-size:12.5px;margin-top:4px}
+.sala-top{display:flex;gap:10px;align-items:stretch}
+.cod{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 18px;border-radius:var(--rb)}
+.cod small{font-size:9.5px;letter-spacing:.24em;color:var(--tenue);font-weight:700}.cod b{font-size:25px;letter-spacing:.16em;margin-right:-.16em;line-height:1.1}
+.stanza{flex:1;min-height:0;border-radius:var(--r);position:relative;overflow:hidden}
+.arco{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke-width:1.2}
+.ins{position:absolute;top:22px;left:0;right:0;text-align:center;font-size:12.5px;font-weight:700;text-transform:uppercase}
+.sotto-ins{position:absolute;top:46px;left:0;right:0;text-align:center;font-size:12px;color:var(--tenue);display:flex;justify-content:center;align-items:center;gap:6px}
+.sotto-ins i{width:7px;height:7px;border-radius:50%;background:#34c759;display:block}
+/* gli amici: fila dietro alta (subito sotto «5 amici»), fila davanti in basso, con aria tra le due */
+.pavimento{position:absolute;left:0;right:0;top:246px;bottom:0;display:none}
+.pers{position:absolute;width:96px;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%)}
+.pers.dietro{top:82px}.pers.davanti{bottom:14px}
+.pers .fig{width:112px;position:relative;z-index:1}.pers .fig svg{width:100%;height:auto;display:block;overflow:visible}
+.pers.davanti .fig{width:136px}   /* chi sta davanti è più vicino: un poco più grande */
+.pers .pedana{position:absolute;bottom:18px;width:118px;height:28px;border-radius:50%}.pers.davanti .pedana{width:142px;height:32px}
+.nomina{z-index:2;margin-top:-6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.nomina .ok{width:15px;height:15px;border-radius:50%;background:#22a447;color:#fff;display:flex;align-items:center;justify-content:center}
+.nomina em{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.classif{display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:var(--rb);font-size:14px;font-weight:600}
+.classif .chev{margin-left:auto;opacity:.6}
+.nota{text-align:center;font-size:12.5px;color:var(--tenue);margin:0}
+.b{--testo:#0e1120;--tenue:#5a6074;--surf:#fff;--surf2:#eceef3;--bordo:#e1e4eb;--acc-t:#fff;--tit:"Inter Display","Inter",system-ui,sans-serif;--r:22px;--rb:16px}
+    .b.sch{background:radial-gradient(90% 30% at 50% -6%,#ffffff,transparent 70%),#f1f2f6}
+    .b .logo{font-family:var(--tit);font-weight:800;font-size:35px;letter-spacing:-.022em}
+    .b .logo-sotto{color:var(--tenue);font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;font-weight:600;margin-top:4px}
+    .b .chip,.b .icone a,.b .btn-s,.b .tab,.b .classif,.b .cod{background:#fff;border:1px solid var(--bordo);box-shadow:0 1px 2px rgba(16,20,40,.05),0 6px 16px rgba(16,20,40,.05)}
+    .b .chip .faccia{box-shadow:0 0 0 2px #fff,0 0 0 3.5px #1f5eff}
+    .b .lv{color:var(--tenue)}.b .liv .barra i{background:#1f5eff}
+    .b .monete{color:#0e1120}.b .monete .i{color:#d96c00}
+    .b .icone a .ico{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;background:linear-gradient(160deg,color-mix(in srgb,var(--ic) 80%,#fff),var(--ic) 70%);box-shadow:inset 0 -1px 0 rgba(0,0,0,.12)}
+    .b .icone a .lab{color:#2b3045}.b .icone a .pal{--anello:#fff}
+    .b .btn{font-weight:700}
+    .b .btn-p{background:#1f5eff;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 10px 22px -8px rgba(31,94,255,.65)}
+    .b .btn-t{background:#e6edff;color:#1747d1}
+    .b .tab{color:#2b3045}.b .tab .d{display:block}.b .tab.on{background:#0e1120;color:#fff;border-color:#0e1120}
+    /* tessere: foto a tutta larghezza in alto, sotto il colore della categoria (più chiaro in alto a sinistra) */
+    .b .tess{border-radius:var(--r);background:linear-gradient(165deg,color-mix(in srgb,var(--c) 92%,#fff),var(--c) 40%,color-mix(in srgb,var(--c) 86%,#000));box-shadow:0 14px 26px -16px var(--c),0 2px 4px rgba(16,20,40,.08)}
+    .b .tess .t{color:#fff}.b .tess h2{font-family:var(--tit);font-weight:800;font-size:16px;letter-spacing:-.015em}
+    .b .tess p{color:rgba(255,255,255,.92)}.b .tess .meta{color:#fff}
+    .b .badge{display:flex;background:#fff;color:var(--c);font-weight:700}.b .badge i{background:var(--c)}
+    .b .bar h1{font-family:var(--tit);font-weight:800;font-size:25px;letter-spacing:-.025em}
+    .b .cod b{font-family:var(--tit);font-weight:900;letter-spacing:.12em}
+    .b .stanza{background:radial-gradient(70% 40% at 50% 0%,#ffffff,transparent 75%),linear-gradient(180deg,#fbfbfd,#f3f4f8);border:1px solid var(--bordo);box-shadow:0 1px 2px rgba(16,20,40,.05),0 10px 26px rgba(16,20,40,.07)}
+    .b .arco{stroke:rgba(14,17,32,.09)} .b .ins{font-family:var(--tit);color:#0e1120;letter-spacing:.28em;font-weight:800}
+    .b .pedana{background:radial-gradient(closest-side,color-mix(in srgb,var(--pc) 30%,transparent),transparent)}
+    .b .nomina{background:#fff;color:#0e1120;box-shadow:0 0 0 1.5px color-mix(in srgb,var(--pc) 55%,#fff),0 2px 8px rgba(16,20,40,.12)}.b .nomina em{color:#1747d1}
+    .b .classif .i{color:#d96c00}
+    .b .pavimento{display:block;background:linear-gradient(180deg,rgba(14,17,32,.035),rgba(14,17,32,0) 80%);border-top:1px solid rgba(14,17,32,.05)}</style></head><body><div class="sch b">
+ <div class="stato"><span>9:41</span><span>●●● 100%</span></div>
+ <div class="top"><div class="logo">SPeeD <b>GAME</b></div><div class="logo-sotto">Party game</div></div>
+ <div class="chip"><div class="faccia" data-om="Paky" data-viso="1"></div><div class="chi"><b>Paky</b><div class="liv"><span class="lv">Livello 3</span><span class="barra"><i></i></span></div></div><div class="monete"><svg class="i" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/></svg>1.250</div></div>
+ <div class="icone"><a style="--ic:#e8245c"><span class="ico"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg></span><span class="lab">Novità</span><b class="pal"></b></a><a style="--ic:#1f5eff"><span class="ico"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l5-3v15M10 21V4l6 3v14M16 21v-9l3 1.5V21"/></svg></span><span class="lab">La città</span></a><a style="--ic:#d96c00"><span class="ico"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4c0 3 1 4 4 4M16 6h4c0 3-1 4-4 4M12 13v4M8 20h8"/></svg></span><span class="lab">Trofei</span></a><a style="--ic:#0a774f"><span class="ico"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span><span class="lab">Classifica</span></a></div>
+ <div class="riga"><div class="btn btn-p"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Gioca online</div><div class="btn btn-s"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3"/></svg>Ho un codice</div></div>
+ <div class="tabs"><div class="tab on" style="--c:transparent"><i class="d"></i>Tutti</div><div class="tab" style="--c:#0a774f"><i class="d"></i>Carte</div><div class="tab" style="--c:#0e7490"><i class="d"></i>1 contro 1</div><div class="tab" style="--c:#b81c70"><i class="d"></i>Festa</div><div class="tab" style="--c:#b5430b"><i class="d"></i>Minigiochi</div><div class="tab" style="--c:#6236d9"><i class="d"></i>Quiz & parole</div></div>
+ <div class="griglia"><div class="tess" style="--c:#b81c70;--img:url(../../../../carte/giochi/asta.jpg);--z:100%;--fx:50%;--fy:50%"><div class="alone"></div><div class="foto"></div><span class="badge"><i></i>Festa</span><div class="t"><h2>L'Asta</h2><p>Compra all'asta i pezzi migliori.</p><div class="meta"><svg class="i" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 5a3 3 0 0 1 0 6M18 14c2 .6 3 2.6 3 6"/></svg>2–10 giocatori</div></div></div><div class="tess" style="--c:#6236d9;--img:url(../../../../carte/giochi/timeline.jpg);--z:100%;--fx:50%;--fy:50%"><div class="alone"></div><div class="foto"></div><span class="badge"><i></i>Quiz & parole</span><div class="t"><h2>La linea del tempo</h2><p>Metti gli avvenimenti in ordine.</p><div class="meta"><svg class="i" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 5a3 3 0 0 1 0 6M18 14c2 .6 3 2.6 3 6"/></svg>1–10 giocatori</div></div></div><div class="tess" style="--c:#0e7490;--img:url(../../../../carte/giochi/navale.jpg);--z:112%;--fx:45%;--fy:80%"><div class="alone"></div><div class="foto"></div><span class="badge"><i></i>1 contro 1</span><div class="t"><h2>Battaglia Navale</h2><p>Sistema la flotta e affonda.</p><div class="meta"><svg class="i" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 5a3 3 0 0 1 0 6M18 14c2 .6 3 2.6 3 6"/></svg>2 giocatori</div></div></div><div class="tess" style="--c:#0a774f;--img:url(../../../../carte/giochi/poker.jpg);--z:118%;--fx:50%;--fy:88%"><div class="alone"></div><div class="foto"></div><span class="badge"><i></i>Carte</span><div class="t"><h2>Poker</h2><p>Texas Hold'em con le Speed Coins.</p><div class="meta"><svg class="i" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 5a3 3 0 0 1 0 6M18 14c2 .6 3 2.6 3 6"/></svg>2–8 giocatori</div></div></div></div>
+</div><script src="../../../../js/omino.js"></script><script>
+document.querySelectorAll("[data-om]").forEach(function (el) {
+  el.innerHTML = SGOmino.svg(SGOmino.casuale(el.dataset.om), el.dataset.viso ? { viso: true } : {});
+});</script></body></html>

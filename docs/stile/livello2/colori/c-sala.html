@@ -1,0 +1,99 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=390"><title>C · Gradienti caldi</title>
+<style>
+@font-face{font-family:"Jakarta";src:url(font/jakarta.woff2) format("woff2");font-weight:200 800}
+*{box-sizing:border-box}html,body{margin:0}
+body{width:390px;height:844px;overflow:hidden;font-family:"Inter",-apple-system,system-ui,sans-serif;color:var(--testo);-webkit-font-smoothing:antialiased;background:#000}
+.sch{height:844px;padding:48px 18px 20px;display:flex;flex-direction:column;gap:12px;position:relative;color:var(--testo)}
+.stato{position:absolute;top:15px;left:30px;right:28px;display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.i{flex:0 0 auto;display:block}
+.top{text-align:center}.logo{line-height:1.05}
+.btn{display:flex;align-items:center;justify-content:center;gap:9px;min-height:52px;border-radius:var(--rb);font-weight:600;font-size:16px;width:100%;color:var(--testo);border:0}
+.btn-p{color:var(--acc-t)}
+.riga{display:flex;gap:10px}.riga>*{flex:1}
+.chip{display:flex;align-items:center;gap:12px;padding:8px 16px 8px 8px;border-radius:999px;font-size:14px}
+.chip .faccia{width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--surf2);flex:0 0 auto}
+.chip .faccia svg{width:100%;height:100%;display:block}
+.chip .chi{flex:1}.chip .chi b{font-weight:700;font-size:15.5px}
+.liv{display:flex;align-items:center;gap:8px;font-size:11.5px;margin-top:3px}
+.liv .barra{width:78px;height:5px;border-radius:9px;background:var(--surf2);overflow:hidden}.liv .barra i{display:block;width:38%;height:100%}
+.monete{display:flex;align-items:center;gap:5px;font-size:14px;font-weight:700}
+.icone{display:flex;gap:8px}.icone a{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 0 8px;border-radius:var(--rb);font-size:11px;font-weight:600;position:relative}
+.icone a .pal{position:absolute;top:7px;right:calc(50% - 22px);width:9px;height:9px;border-radius:50%;background:#ff3b5c;box-shadow:0 0 0 2px var(--anello,transparent)}
+.tabs{display:flex;gap:7px;overflow:hidden;margin-right:-18px}.tab{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.tab .d{display:none;width:7px;height:7px;border-radius:50%;background:var(--c)}.tab.on .d{display:none!important}
+.griglia{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px;flex:1;min-height:0}
+/* tessera: la foto ha sempre la stessa forma (quella vera, 800×544); il testo sta sotto e prende quello che resta */
+.tess{position:relative;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.tess .alone{display:none}
+.tess .foto{flex:0 0 auto;aspect-ratio:800/544;background-image:var(--img);background-size:var(--z) auto;background-position:var(--fx) var(--fy);background-repeat:no-repeat}
+.tess .t{flex:1;padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px;position:relative}
+.tess h2{margin:0;font-size:15px;font-weight:700;line-height:1.12}
+.tess p{margin:0;font-size:12px;color:var(--tenue);line-height:1.3}
+.tess .meta{font-size:11.5px;font-weight:700;margin-top:auto;display:flex;align-items:center;gap:5px}
+.badge{display:none;position:absolute;top:9px;left:9px;z-index:3;align-items:center;gap:6px;font-size:10.5px;font-weight:600;padding:4px 9px 4px 7px;border-radius:99px}
+.badge i{width:7px;height:7px;border-radius:50%;display:block}
+.bar{display:flex;align-items:center;gap:12px}.bar h1{margin:0;line-height:1}.bar small{display:block;color:var(--tenue);font-size:12.5px;margin-top:4px}
+.sala-top{display:flex;gap:10px;align-items:stretch}
+.cod{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 18px;border-radius:var(--rb)}
+.cod small{font-size:9.5px;letter-spacing:.24em;color:var(--tenue);font-weight:700}.cod b{font-size:25px;letter-spacing:.16em;margin-right:-.16em;line-height:1.1}
+.stanza{flex:1;min-height:0;border-radius:var(--r);position:relative;overflow:hidden}
+.arco{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke-width:1.2}
+.ins{position:absolute;top:22px;left:0;right:0;text-align:center;font-size:12.5px;font-weight:700;text-transform:uppercase}
+.sotto-ins{position:absolute;top:46px;left:0;right:0;text-align:center;font-size:12px;color:var(--tenue);display:flex;justify-content:center;align-items:center;gap:6px}
+.sotto-ins i{width:7px;height:7px;border-radius:50%;background:#34c759;display:block}
+/* gli amici: fila dietro alta (subito sotto «5 amici»), fila davanti in basso, con aria tra le due */
+.pavimento{position:absolute;left:0;right:0;top:246px;bottom:0;display:none}
+.pers{position:absolute;width:96px;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%)}
+.pers.dietro{top:82px}.pers.davanti{bottom:14px}
+.pers .fig{width:112px;position:relative;z-index:1}.pers .fig svg{width:100%;height:auto;display:block;overflow:visible}
+.pers.davanti .fig{width:136px}   /* chi sta davanti è più vicino: un poco più grande */
+.pers .pedana{position:absolute;bottom:18px;width:118px;height:28px;border-radius:50%}.pers.davanti .pedana{width:142px;height:32px}
+.nomina{z-index:2;margin-top:-6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.nomina .ok{width:15px;height:15px;border-radius:50%;background:#22a447;color:#fff;display:flex;align-items:center;justify-content:center}
+.nomina em{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.classif{display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:var(--rb);font-size:14px;font-weight:600}
+.classif .chev{margin-left:auto;opacity:.6}
+.nota{text-align:center;font-size:12.5px;color:var(--tenue);margin:0}
+.c{--testo:#fff6f1;--tenue:#f0dbe6;--surf:rgba(255,255,255,.08);--surf2:rgba(255,255,255,.14);--bordo:rgba(255,226,210,.18);--acc-t:#2a0a18;--tit:"Jakarta","Inter",system-ui,sans-serif;--r:22px;--rb:16px}
+    .c.sch{background:radial-gradient(75% 30% at 100% -2%,rgba(255,128,64,.40),transparent 72%),radial-gradient(60% 26% at 0% 40%,rgba(255,70,140,.14),transparent 72%),radial-gradient(90% 26% at 50% 106%,rgba(255,120,90,.16),transparent 75%),linear-gradient(178deg,#22103f 0%,#351355 30%,#461760 62%,#4e1a62 100%)}
+    .c .logo{font-family:var(--tit);font-weight:800;font-size:35px;letter-spacing:-.025em}
+    .c .logo b{font-weight:800;background:linear-gradient(90deg,#ffc07a,#ff7a8a);-webkit-background-clip:text;color:transparent}
+    .c .logo-sotto{color:#ffd9c4;font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;font-weight:600;margin-top:3px}
+    .c .chip,.c .icone a,.c .btn-s,.c .btn-t,.c .tab,.c .classif,.c .cod{background:var(--surf);border:1px solid var(--bordo);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 22px -10px rgba(20,0,20,.5)}
+    .c .chip .faccia{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+    .c .lv{color:var(--tenue)}.c .liv .barra{background:rgba(255,255,255,.16)}.c .liv .barra i{background:linear-gradient(90deg,#ffb15c,#ff6a7a)}
+    .c .monete{color:#f5d48a}
+    .c .icone a .ico{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#2a0a30;background:radial-gradient(circle at 32% 28%,color-mix(in srgb,var(--ic) 65%,#fff),var(--ic) 64%);box-shadow:0 0 0 1px rgba(255,255,255,.14),0 6px 16px -4px color-mix(in srgb,var(--ic) 55%,transparent)}
+    .c .icone a .lab{color:#ffeef3}.c .icone a .pal{background:#fff;--anello:#351355}
+    .c .btn{font-weight:700}
+    .c .btn-p{background:linear-gradient(135deg,#ffad55,#ff5e72);color:#2a0a18;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 12px 26px -8px rgba(255,94,114,.7)}
+    .c .btn-t{border:1.5px solid rgba(255,150,110,.8);background:rgba(255,140,100,.12)}.c .btn-t .i{color:#ffad7a}
+    .c .tab{color:#ffeef3}.c .tab .d{display:block}.c .tab.on{background:#fff6f1;color:#3d1458;border-color:#fff6f1}
+    .c .tess{border-radius:var(--r);background:rgba(26,6,36,.40);border:1px solid var(--bordo);padding:5px;box-shadow:0 14px 30px -14px rgba(20,0,20,.7)}
+    .c .tess .foto{border-radius:17px}
+    .c .tess .t{padding:9px 8px 7px}.c .tess h2{font-family:var(--tit);font-weight:700;font-size:16px;letter-spacing:-.01em}
+    .c .tess p{color:var(--tenue)}.c .tess .meta{color:var(--c)}
+    .c .badge{display:flex;top:12px;left:12px;background:rgba(36,10,44,.72);color:#fff;border:1px solid rgba(255,226,210,.22)}.c .badge i{background:var(--c)}
+    .c .bar h1{font-family:var(--tit);font-weight:800;font-size:24px;letter-spacing:-.02em}
+    .c .cod small{color:var(--tenue)}.c .cod b{font-family:var(--tit);font-weight:800}
+    .c .stanza{background:radial-gradient(60% 46% at 50% 0%,rgba(255,170,100,.34),transparent 72%),radial-gradient(70% 30% at 50% 100%,rgba(255,110,140,.16),transparent 72%),linear-gradient(180deg,rgba(255,255,255,.09),rgba(30,6,40,.30));border:1px solid var(--bordo)}
+    .c .arco{stroke:rgba(255,226,210,.22)} .c .ins{font-family:var(--tit);color:#fff;letter-spacing:.3em;font-weight:800}
+    .c .pedana{background:radial-gradient(closest-side,color-mix(in srgb,var(--pc) 55%,transparent),transparent)}
+    .c .nomina{background:rgba(36,10,44,.86);color:#fff;border:1.5px solid var(--pc)}.c .nomina em{color:#ffb38a}
+    .c .classif .i{color:#ffd166}
+    .c .pavimento{display:block;background:linear-gradient(180deg,rgba(30,6,40,.22),rgba(30,6,40,.05));border-top:1px solid rgba(255,226,210,.08)}</style></head><body><div class="sch c">
+ <div class="stato"><span>9:41</span><span>●●● 100%</span></div>
+ <div class="bar"><span><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></span><div><h1>Sala online</h1><small>Un link per tutti i giochi</small></div></div>
+ <div class="sala-top"><div class="cod"><small>SALA</small><b>KFRT</b></div><div class="btn btn-t"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4M5 14v5h14v-5"/></svg>Invita gli amici</div></div>
+ <div class="stanza">
+  <svg class="arco" viewBox="0 0 354 420" preserveAspectRatio="none"><path d="M40 420V150a137 120 0 0 1 274 0v270"/><path d="M52 420V152a125 110 0 0 1 250 0v268" opacity=".5"/></svg>
+  <div class="pavimento"></div><div class="ins">SALA D'ATTESA</div><div class="sotto-ins"><i></i>5 amici · 3 pronti</div>
+  <div class="pers dietro" style="left:50%;--pc:#ff8a5c"><div class="pedana"></div><div class="fig" data-om="Paky"></div><div class="nomina"><span class="ok"><svg class="i" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span class="nm">Paky</span> <em>host</em></div></div><div class="pers dietro" style="left:19%;--pc:#6ee7d8"><div class="pedana"></div><div class="fig" data-om="Giulia"></div><div class="nomina"><span class="ok"><svg class="i" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span class="nm">Giulia</span></div></div><div class="pers dietro" style="left:81%;--pc:#ffd166"><div class="pedana"></div><div class="fig" data-om="Luca"></div><div class="nomina"><span class="ok"><svg class="i" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span class="nm">Luca</span></div></div><div class="pers davanti" style="left:31%;--pc:#a8e46f"><div class="pedana"></div><div class="fig" data-om="Marta"></div><div class="nomina"><span class="nm">Marta</span></div></div><div class="pers davanti" style="left:69%;--pc:#f2a5ff"><div class="pedana"></div><div class="fig" data-om="Sara"></div><div class="nomina"><span class="nm">Sara</span></div></div>
+ </div>
+ <div class="classif"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4c0 3 1 4 4 4M16 6h4c0 3-1 4-4 4M12 13v4M8 20h8"/></svg>Classifica della serata<span class="chev"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span></div>
+ <div class="riga"><div class="btn btn-s" style="flex:0 0 58px"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></div><div class="btn btn-p"><svg class="i" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg>Scegli il primo gioco</div></div>
+ <p class="nota">Il gioco parte da solo sul telefono di tutti.</p>
+</div><script src="../../../../js/omino.js"></script><script>
+document.querySelectorAll("[data-om]").forEach(function (el) {
+  el.innerHTML = SGOmino.svg(SGOmino.casuale(el.dataset.om), el.dataset.viso ? { viso: true } : {});
+});</script></body></html>
