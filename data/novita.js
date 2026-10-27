@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 274,
+    data: "27 ottobre 2026",
+    titolo: "SPeeD GAME si veste di bianco e oro ✨",
+    descrizione: [
+      "L'app ha un aspetto nuovo, più elegante: fondo avorio, scritte scure e ben leggibili, tasti e dettagli in oro, titoli con un carattere da invito.",
+      "Sono nel nuovo stile la prima schermata, il profilo, i trofei, la classifica, la Sala della serata, «Come giocate?», le impostazioni dei giochi e la saletta d'attesa: gli avatar ora aspettano in una sala chiara con un arco dorato.",
+      "Sui tasti, al posto delle emoji, ci sono simboli dorati puliti; nelle scelte dei giochi, nei trofei e nelle faccine le emoji restano colorate.",
+      "Le partite per ora restano come prima: arriveranno anche loro nel nuovo stile, un gioco alla volta."
+    ]
+  },
+  {
     v: 273,
     data: "26 ottobre 2026",
     titolo: "L'Impostore: blocca pure il telefono 📱",
