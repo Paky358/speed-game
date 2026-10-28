@@ -3139,7 +3139,7 @@
       var medaglia = pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : pos ? pos + "°" : "–";
       var l = x.liv || {};
       var dett = [["💠", l.platino], ["💎", l.diamante], ["🥇", l.oro], ["🥈", l.argento], ["🥉", l.bronzo]]
-        .filter(function (d) { return d[1]; }).map(function (d) { return d[0] + " " + d[1]; }).join("   ");
+        .filter(function (d) { return d[1]; }).map(function (d) { return d[0] + " " + d[1]; }).join("   ");   // (🌙 spazio che non va a capo: il metallo resta attaccato al suo numero)
       var rap = rapporto(x.uid), azione = null;
       if (conAzione) {
         if (rap === "amico") azione = el("span", { class: "am-stato", text: "👥" });
