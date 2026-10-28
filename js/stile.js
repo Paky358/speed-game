@@ -1,10 +1,12 @@
 // =========================================================
-//  SPeeD GAME — lo stile «Bianco e oro» (deciso dal proprietario il 26 ott 2026)
-//  - SGStile.marca(schermata): la schermata del core prende il tema chiaro (classe .oro)
+//  SPeeD GAME — lo stile dell'app: «🌙 Notte vivace» (deciso dal proprietario il 28 ott 2026, al posto
+//  del «Bianco e oro» del 26 ott; la classe .oro e le variabili --o-* hanno tenuto il nome di prima)
+//  - SGStile.marca(schermata): la schermata del core prende lo stile dell'app (classe .oro)
+//  - SGStile.aggiorna: il fondo della pagina e lo sfondo animato (js/sfondo.js) solo dietro le schermate del core
 //  - i simboli puliti: nelle schermate .oro l'emoji all'inizio di un testo (es. "🔗 Gioca online")
-//    si vede come un simbolo a linea dorato. Il testo resta identico (textContent uguale):
+//    si vede come un simbolo a linea colorato. Il testo resta identico (textContent uguale):
 //    l'emoji è solo avvolta in <span class="emo" data-e="🔗"> e nascosta dal CSS.
-//  I colori stanno in css/styles.css (sezione «Bianco e oro», variabili --o-*): qui solo i disegni.
+//  I colori stanno in css/styles.css (sezione «NOTTE VIVACE», variabili --o-* e --n-*): qui solo i disegni.
 // =========================================================
 (function () {
   "use strict";
@@ -155,7 +157,7 @@
     lista.forEach(avvolgi);
   }
 
-  // le finestre che il core mette sopra tutto (conferme, avvisi, fogli, 3-2-1, inviti): chiare anche sopra un gioco
+  // le finestre che il core mette sopra tutto (conferme, avvisi, fogli, 3-2-1, inviti): con lo stile dell'app anche sopra un gioco
   var SOPRA = /(^|\s)(conferma-sfondo|sg-pillole|sg-ferma|rg-velo|sl-velo|sl-resta-salta|avviso-trofeo|sl-via|sg-guardo|sg-guardo-fila|ao-invito|ao-mini|sgs-voto)(\s|$)/;
   function sopra(n) { if (n.nodeType === 1 && n.parentNode === document.body && SOPRA.test(n.className || "") && !n.classList.contains("oro")) n.classList.add("oro"); }
 
@@ -191,19 +193,20 @@
     }).observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeOldValue: true, attributeFilter: ["class"] });
   }
 
-  // il tema della pagina: fondo avorio dietro le schermate .oro, e il colore della barra del telefono
-  var META_CHIARO = "#faf6ee", META_SCURO = null;
+  // il tema della pagina: blu notte e sfondo animato dietro le schermate .oro, e il colore della barra del telefono
+  var META_CHIARO = "#0d1020", META_SCURO = null;
   function tema(chiaro) {
     var b = document.body; if (!b) return;
     b.classList.toggle("tema-oro", !!chiaro);
+    if (window.SGSfondo) SGSfondo.mostra(!!chiaro);   // 🌙 lo sfondo animato: solo dietro le schermate del core, mai dietro le partite
     var m = document.querySelector('meta[name="theme-color"]');
     if (m) { if (META_SCURO == null) META_SCURO = m.getAttribute("content") || "#0c1636"; m.setAttribute("content", chiaro ? META_CHIARO : META_SCURO); }
   }
 
   window.SGStile = {
-    // la schermata del core prende lo stile chiaro (e la pagina dietro diventa avorio)
+    // la schermata del core prende lo stile dell'app (e dietro la pagina diventa blu notte, con lo sfondo animato)
     marca: function (s) { if (s && s.classList) { s.classList.add("oro"); pulisci(s); s._pulito = true; } return s; },
-    // da chiamare dopo ogni cambio di schermata: chiaro se la schermata in vista è .oro
+    // da chiamare dopo ogni cambio di schermata: stile dell'app se la schermata in vista è .oro
     aggiorna: function (s) { tema(!!(s && s.classList && s.classList.contains("oro"))); },
     pulisci: pulisci,
     simboli: MAPPA,

@@ -95,6 +95,8 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
 
+- 28 ott 21:50 · 🌙 Notte vivace · salvato sul ramo `stile-notte` (non in lavori-in-corso, non online) · passo 1: sfondo animato dietro le schermate dell'app (tre luci morbide lampone, viola e ciano che si spostano piano, scintillii che si accendono e spengono, profondità quando si scorre; fermo dietro le partite, con l'app in secondo piano e con «riduci movimento») + home e saletta come nei disegni «a-home» e «a-sala»; colori del Bianco e oro sostituiti ovunque (le altre schermate sono già scure, da rifinire nel passo 2); carattere nuovo Plus Jakarta Sans dentro l'app. Misurato col computer rallentato ×4: 60 immagini al secondo, lo sfondo costa ~1 ms. Aspetta il parere del proprietario · (questo salvataggio)
+
 - 28 ott 20:45 · Cervello · salvato · il PC fisso ora ha 16 GB di RAM (2 × 8 GB Samsung, controllata dopo il riavvio vero): aggiornate le istruzioni del progetto e la procedura delle prove
 
 - 28 ott 15:40 · Cervello · salvato · registro aggiornato dopo l'azzeramento della settimana: lo stile Bianco e oro online, la fase 3 sul ramo `grafica-luxury`, la RAM nuova ancora da montare
