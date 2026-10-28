@@ -185,12 +185,15 @@
     // L'icona fa da "banner": mostra la foto carte/giochi/<id>.jpg se esiste,
     // altrimenti resta l'emoji del gioco (l'immagine si toglie da sola se manca).
     var icona = el("span", { class: "icona" }, [ el("span", { class: "emoji", text: g.icona || "🎲" }) ]);
-    if (!window.SG_FOTO || SG_FOTO[g.id]) {   // (la versione online sa già quali foto ci sono: non chiede quelle che mancano)
+    var conFoto = !window.SG_FOTO || SG_FOTO[g.id];
+    if (conFoto) {   // (la versione online sa già quali foto ci sono: non chiede quelle che mancano)
       var img = el("img", { class: "illustr", src: "carte/giochi/" + g.id + ".jpg", alt: "", loading: "lazy" });
       img.onerror = function () { if (img.parentNode) img.parentNode.removeChild(img); };
       icona.appendChild(img);
     }
-    return el("button", { class: "tessera", "data-gioco": g.id, onclick: onclick }, [
+    // 🌙 la categoria (il suo colore e la targhetta sulla foto) e la foto per il bagliore sotto le scritte
+    // (indirizzo intero: dentro una variabile del CSS un indirizzo corto si leggerebbe dalla cartella css/)
+    return el("button", { class: "tessera", "data-gioco": g.id, "data-cat": catDi(g) || "", style: conFoto ? "--img:url(" + new URL("carte/giochi/" + g.id + ".jpg", document.baseURI).href + ")" : null, onclick: onclick }, [
       icona,
       el("div", { class: "info" }, [
         el("h2", { text: g.nome }),
@@ -791,7 +794,7 @@
     if (tInstalla) rigaProfilo.appendChild(tInstalla);
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", html: '<svg viewBox="0 0 200 118" width="156" height="92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6bf"/><stop offset=".42" stop-color="#ffd23b"/><stop offset=".72" stop-color="#f6a70c"/><stop offset="1" stop-color="#c06a08"/></linearGradient><linearGradient id="sgBoltHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf0" stop-opacity=".95"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/></linearGradient><filter id="sgGlow" x="-70%" y="-70%" width="240%" height="240%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff9d2e" flood-opacity=".75"/><feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#ff7b16" flood-opacity=".4"/></filter><path id="sgB" d="M13 0 L2 20 L10 20 L7 36 L22 12 L13 12 L17 0 Z"/></defs><g filter="url(#sgGlow)" stroke="#8a5209" stroke-width="1.3" stroke-linejoin="round"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBolt)"/></g><g stroke="none"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBoltHi)"/></g></svg>' }),
-      el("h1", { class: "home-titolo", text: "SPeeD GAME" }),
+      el("h1", { class: "home-titolo", html: "SPeeD <b>GAME</b>" }),   // (🌙 «GAME» col lampone)
       rigaProfilo
     ]));
     // stavi giocando da ospite e la pagina si è ricaricata (o hai riaperto l'app)? Si rientra al proprio posto
@@ -832,8 +835,8 @@
     var fitta = !!(ieri || rec || s.querySelector(".home-comp") || (hao && !hao.hidden));
     if (fitta) s.classList.add("home-fitta");   // (più cose in alto: la home si stringe un po')
     stringiHome(s);
-    // (e «📲 Installa l'app» scende in fondo, vicino a Proposte e Bug: a 360x640 le categorie restano nel primo schermo)
-    if (fitta && tInstalla) { rigaProfilo.removeChild(tInstalla); tInstalla = null; }
+    // «📲 Installa l'app» sta sempre in fondo, vicino a Proposte e Bug (🌙 in alto restano i quattro tasti tondi: Novità, La città, Trofei, Classifica)
+    if (tInstalla) { rigaProfilo.removeChild(tInstalla); tInstalla = null; }
     // Barra delle categorie (sotto il profilo): "Tutti" + i gruppi. Cliccando si filtra
     // solo la griglia (senza rifare la schermata: niente lampeggio, non si torna in cima).
     var barra = el("div", { class: "cat-barra" });
@@ -860,7 +863,7 @@
     CATEGORIE.forEach(function (c) {
       // salto una categoria (tranne "Tutti") se per ora non ha giochi
       if (c.id !== "tutti" && !giochi.some(function (g) { return catDi(g) === c.id; })) return;
-      var chip = el("button", { class: "cat-tab" + (c.id === catAttiva ? " attiva" : ""), onclick: function () {
+      var chip = el("button", { class: "cat-tab" + (c.id === catAttiva ? " attiva" : ""), "data-cat": c.id, onclick: function () {
         catAttiva = c.id;
         [].forEach.call(barra.children, function (x) { x.className = "cat-tab"; });
         chip.className = "cat-tab attiva";
@@ -3136,7 +3139,7 @@
       var medaglia = pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : pos ? pos + "°" : "–";
       var l = x.liv || {};
       var dett = [["💠", l.platino], ["💎", l.diamante], ["🥇", l.oro], ["🥈", l.argento], ["🥉", l.bronzo]]
-        .filter(function (d) { return d[1]; }).map(function (d) { return d[0] + " " + d[1]; }).join("   ");
+        .filter(function (d) { return d[1]; }).map(function (d) { return d[0] + " " + d[1]; }).join("   ");   // (🌙 spazio che non va a capo: il metallo resta attaccato al suo numero)
       var rap = rapporto(x.uid), azione = null;
       if (conAzione) {
         if (rap === "amico") azione = el("span", { class: "am-stato", text: "👥" });

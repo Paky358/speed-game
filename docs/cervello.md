@@ -1,7 +1,7 @@
 # 🧠 Cervello di SPeeD GAME — il registro
 
 Lo tiene la chat «🧠 Cervello». Le altre chat ci scrivono solo una riga nel **🗒️ Diario** (in fondo) quando finiscono un lavoro, salvano o pubblicano.
-Ultimo aggiornamento: **26 ott 2026, 16:55** (ora italiana; dal 25 ott c'è l'ora solare).
+Ultimo aggiornamento: **28 ott 2026, 15:40** (ora italiana).
 
 ---
 
@@ -9,17 +9,16 @@ Ultimo aggiornamento: **26 ott 2026, 16:55** (ora italiana; dal 25 ott c'è l'or
 
 | Limite | Usato | Si azzera |
 |---|---|---|
-| Settimana (tutti i modelli) | **91%** | **mercoledì 28 ott alle 15:00** (prima del cambio dell'ora era alle 16) |
-| 5 ore | 7% | oggi 26 ott alle 20:50 |
-| Settimana Fable | 0% | mercoledì 28 ott alle 15:00 |
+| Settimana (tutti i modelli) | **0%** (azzerata oggi alle 15:00) | **mercoledì 4 nov alle 15:00** |
+| 5 ore | 2% | oggi 28 ott alle 20:30 |
+| Settimana Fable | 0% | mercoledì 4 nov alle 15:00 |
+| Crediti cloud | 250 USD il 26 ott sera, da ricontrollare | **scadono il 5 nov alle 08:59** |
 
-- L'app oggi scrive che il piano è **«Pro»** (la memoria diceva Max dall'11 ott): da controllare, perché con Pro lo stesso 9% vale molto meno lavoro.
-- Quanto costano i lavori (misurato): un modo nuovo di un gioco scritto da un aiutante Opus ≈ 4% della settimana; un giro di correzioni piccole ≈ 1%.
+- Il piano: lo strumento del Cervello dice «Pro», la chat dell'Impostore ha letto «Max» nell'app. Fa fede quello che si vede nelle impostazioni dell'app.
+- Crediti cloud: il 27 ott la chat Stile nel cloud si è fermata perché era finito il limite della settimana. Da guardare nella schermata «Utilizzo» se i 250 USD sono ancora tutti lì: se sì, il cloud ha consumato la settimana invece dei crediti.
+- Quanto costano i lavori (misurato): un modo nuovo di un gioco scritto da un aiutante Opus ≈ 4% della settimana; un giro di correzioni piccole ≈ 1%; la notte della chat Stile nel cloud (fase 2 + 16 giochi convertiti) ha portato la settimana dal 91% al 100%.
 
-**Regola del momento (fino a mercoledì 28 alle 15:00): settimana al 91%.**
-- Sì: pubblicare quello che è pronto, correzioni piccole dopo una prova, decisioni, ricerche brevi con un aiutante Haiku o Sonnet.
-- No: giochi nuovi, lavori grandi, aiutanti Opus, giri completi di prove, workflow.
-- Le chat lunghe costano di più a ogni messaggio: chiuderle e aprirne una nuova quando hanno finito un lavoro.
+**Regola del momento (settimana appena azzerata):** lavori grandi sì, ma la settimana deve bastare 7 giorni → **circa 14% al giorno**. Aiutanti Sonnet di base, Opus solo per il codice delicato (rete, motore di un gioco). Un lavoro grande alla volta. I lavori lunghi e separabili vanno nel cloud finché ci sono crediti (fino al 5 nov).
 
 Regole generali: sotto il 70% lavori grandi ok · 70-85% lavori medi, aiutanti Sonnet · 85-95% solo piccole cose · sopra il 95% fermi, tranne pubblicare.
 
@@ -27,19 +26,18 @@ Regole generali: sotto il 70% lavori grandi ok · 70-85% lavori medi, aiutanti S
 
 ## 2. 🌐 Cosa c'è online
 
-**Online adesso:** master `0553508` del 25 ott sera = **novità v266** (Il Prezzo è Giusto: una schermata sola in tutti i giochi a premi). Sito: https://paky358.github.io/speed-game/
+**Online adesso:** master `42018da` del 27 ott alle 01:32 = **novità v274**: lo stile «🤍 Bianco e oro» (home, profilo, trofei, classifiche, Sala, «Come giocate?», impostazioni, saletta, editor dell'avatar, finestre) + v273 L'Impostore con il telefono bloccato. Sito: https://paky358.github.io/speed-game/
 
-**Salvato su `lavori-in-corso` (su GitHub) ma NON online** — 12 salvataggi, tutti della Linea del tempo, novità v267-v272:
-- ✋ **Rubala** come in Hitster al posto dei voti 👍/👎 (v267)
-- 📆 **Scegli l'epoca**, anche con gli anni a scelta (v268)
-- 🔄 **Cambia carta**, una volta a partita (v269)
-- 📸 **Le foto vere** sulle carte: 1.842 su 1.924, tutte e 10 le categorie (v270)
-- ✋ **Chi arriva tardi** entra al giro dopo (v271)
-- 🧍 **Ognuno la sua linea** (v272) + ritocchi dopo la revisione (ultimo salvataggio `a4941aa`, 26 ott 16:27)
+**`lavori-in-corso`** = `b4be78e`: uguale al sito (c'è in più solo il registro).
 
-Gli altri giochi: tutto quello che è salvato è anche online.
+**Sul ramo `grafica-luxury` (su GitHub, NON in lavori-in-corso, NON online)** — 18 salvataggi della chat Stile del 27 ott, dalle 01:45 alle 12:36:
+- Bianco e oro più luminoso (fondo bianco pulito, oro più acceso).
+- **16 giochi convertiti interi al Bianco e oro**: Tris, Drop 4, L'Impostore, Gara di pesca, Taboo, Una parola sola, Sì... però, Scarabocchio, Da dove viene?, La Scalinata, Battaglia Navale, Black Jack, Poker (tavolo vero tenuto), Scopa, Scopa 2 vs 2, Scopone (tavolo vero tenuto). Nei 7 giochi dello studio TV diventa chiara solo la cornice.
+- Studio TV: proposta in Bianco e oro **scartata dal proprietario** («tutto oro non mi piace»): resta com'è.
+- **A metà, da rifinire:** proposte di avatar meno cartoon, colori dei menu, disegni del «livello successivo».
+- Oggi il ramo si unisce a lavori-in-corso senza conflitti, perché contiene già tutto il resto. Più si aspetta, più le chat dei giochi cambiano gli stessi file e diventa difficile unirli.
 
-Fuori da git: `.claude/launch.json` (il server di prova della chat della Linea del tempo). Nessun'altra modifica a metà nella cartella.
+Fuori da git: `.claude/launch.json` (il server di prova della chat della Linea del tempo).
 
 ---
 
@@ -47,49 +45,66 @@ Fuori da git: `.claude/launch.json` (il server di prova della chat della Linea d
 
 | Chat | Gioco | Ultima attività | Cosa sta facendo / in sospeso |
 |---|---|---|---|
-| 🧠 Cervello SPeeD GAME | tutto | 26 ott, ora | Registro, limiti, consigli. Non costruisce giochi. |
-| Miglioramenti timeline gioco | Linea del tempo | 26 ott 16:28 | Finito «Ognuno la sua linea». **Aspetta il proprietario**: provarlo o dire «pubblica» (v267-v272). Da decidere: la carta sbagliata messa comunque nella linea. Chat lunga (oltre 1.000 messaggi): dopo la pubblicazione conviene aprirne una nuova. |
-| speed 2 | chat generale | 26 ott 16:41 | Ha preparato il Cervello. Piena all'85% e col modello caro: **da archiviare** (lo consiglia lei stessa). |
-| il prezzo è giusto | Il Prezzo è Giusto | 25 ott 23:22 | Pubblicato v266, niente a metà. Restano cose piccole (vedi Da fare). |
-| mini asta fantacalcio | L'Asta / fantacalcio | 25 ott 23:43 | Niente a metà (online v255). Aspetta la prima serata vera con gli amici per tarare la giornata. |
-| codnames | Parola d'ordine | 22 ott 19:11 | Niente a metà (online v253 «Parola d'ordine tutta nuova»). |
-| Lezioni di programmazione SPeeD GAME | — | 23 ott 11:36 | Lezioni per il proprietario, non tocca il progetto. |
-| PARTY GAME | vecchia chat lunga (13-18 ott) | 18 ott 20:22 | Finita (passaggio di consegne del 18 ott). **Da archiviare.** |
+| 🧠 Cervello SPeeD GAME | tutto | 28 ott, ora | Registro, limiti, consigli. Non costruisce giochi. |
+| 🎨 Stile (cloud) | grafica di tutta l'app | 27 ott 12:36 | Fermata per il limite della settimana. Fase 2 pubblicata (v274); fase 3 sul ramo `grafica-luxury` (16 giochi) da provare e unire; avatar meno cartoon e colori dei menu a metà. Si riprende dalla sessione cloud (colonna a sinistra o claude.ai/code). |
+| IMPOSTORE | L'Impostore | 26 ott 20:56 | Telefono bloccato pubblicato (v273). **In sospeso:** 518 coppie di parole nuove in 10 temi aspettano il sì del proprietario; proposti la memoria delle parole per tutta la compagnia e la spia che non sa «in vetrina». |
+| Nome nuovo per SPeeD GAME | nome e dominio | 26 ott 18:12 | 100 idee + 10 migliori (preferiti: **Cerchia, Sodalis, Convivio**). I domini .it e .com secchi sono già presi: proposto «Cerchia Club», cerchia.app, cerchia.games. Aspetta che il proprietario scelga 3 preferiti. |
+| LINEA DEL TEMPO | Linea del tempo | 26 ott 17:26 | Pubblicato tutto (v267-v272). Restano «🤖 Gioca col Bot» (chat nuova) e la carta sbagliata nella linea. Chat lunghissima: per il Bot aprirne una nuova. |
+| Controllo skill nuove | — | gira adesso | Compito automatico ogni 3 giorni alle 10:00: propone skill nuove, non installa niente. |
+| speed 2 | chat generale | 26 ott 16:41 | Ha preparato il Cervello. **Da archiviare.** |
+| IL PREZZO è GIUSTO | Il Prezzo è Giusto | 25 ott 23:22 | Niente a metà (online v266). |
+| MINI ASTA FANTACALCIO | L'Asta | 25 ott 23:43 | Niente a metà (online v255). Aspetta la serata vera per tarare la giornata. |
+| PAROLA D ORDINE | Parola d'ordine | 22 ott 19:11 | Niente a metà (online v253). |
+| Lezioni di programmazione | — | 26 ott 18:42 | Lezioni per il proprietario, non tocca il progetto. |
+| PARTY GAME | vecchia chat lunga | 18 ott 20:22 | Finita. **Da archiviare.** |
 
 ---
 
 ## 4. 📋 Da fare (in ordine di importanza)
 
-Grandezza: 🟢 piccola · 🟡 media · 🔴 grande. «Dopo mer» = dopo che la settimana si azzera.
+Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 
 | # | Cosa | Gioco | Chi la fa | Grandezza | Quando |
 |---|---|---|---|---|---|
-| 1 | ✅ FATTO 26 ott 17:30: Linea del tempo pubblicata (v267-v272). Restano «🤖 Gioca col Bot» (chat nuova proposta) e la carta sbagliata | Linea del tempo | chat Linea del tempo | 🟢 | fatto |
-| 2 | **Prova coi telefoni veri** in una serata con gli amici (2 iPhone + 2 Android se si può): Ognuno la sua linea con tanta gente, la giornata dell'Asta (quanti rigori e azioni), Prezzo online, Parola d'ordine, inviti ad app chiusa su iPhone, Chi vince resta, chi perde la rete e torna. Segnare cosa non va e passarlo alla chat del gioco | tutti | il proprietario, poi le chat dei giochi | 🟢 (costa zero) | appena c'è una serata |
-| 3 | 🎵 **La musica**: «Sarabanda» + modo Heardle. **Prima** provare dal telefono che le anteprime da 30 secondi di iTunes si sentano (prova piccola) | gioco nuovo | chat nuova «Musica» | prova 🟢, gioco 🔴 | prova anche prima di mer; gioco dopo mer |
-| 4 | 🔒 **La copia per il vice solo ai vice**: oggi la copia della partita (con le carte e i segreti) va a tutta la stanza sul collegamento pubblico; deve andare solo ai vice. Con lei: l'host che riapre guarda la stanza solo 0,4 secondi (con la rete lenta torna in home) | tutti i giochi online | chat nuova «Rete» (aiutante Opus: è delicato) | 🟡 | dopo mer |
-| 5 | 👀 **«Chi arriva tardi» e «Guarda»** anche in Stessa Lunghezza d'Onda, Chi di Noi?, Scopone e L'Impostore | 4 giochi | chat nuova «Ritardatari» (o una per gioco) | 🟡 | dopo mer |
-| 6 | Stessa Lunghezza d'Onda, modo «🤔 Cosa ne pensi?»: solo parole davvero discutibili, una parola sola (niente scelta tra 3), punti alle opinioni che dividono (il Classico di partenza è già fatto) | Lunghezza d'Onda | chat nuova del gioco | 🟡 | dopo mer |
-| 7 | Immagini delle tessere della home che mancano: **Palla Matta, Una parola sola, Da dove viene?** (le fa il proprietario con Gemini o ChatGPT, Claude le sistema) | home | proprietario + Cervello o chat generale | 🟢 | quando vuole |
-| 8 | Decisione: nella Linea del tempo la carta sbagliata si mette lo stesso nella linea o si scarta come nell'originale? | Linea del tempo | proprietario → chat Linea del tempo | 🟢 | quando vuole |
-| 9 | Il Prezzo è Giusto: 81 prodotti ancora senza foto (le può mandare il proprietario), circa 120 prezzi vecchi non verificati, pezzi di vetrina troppo vaghi da precisare a mano | Prezzo | chat Prezzo (aiutanti Sonnet) | 🟡 | dopo mer |
-| 10 | L'Asta: decidere se aggiungere i battitori che non sono all'asta (Douglas Luiz, Milla, Ilic, Neres, Basic); aggiornare ogni tanto rigoristi e battitori (es. Kessié rientra a fine ottobre), sempre mostrando prima la lista | Asta | proprietario → chat Asta | 🟢 | quando vuole |
-| 11 | Una parola sola: prova coi telefoni veri e con 8-10 persone, chi guarda col link; confermare che va bene anche sullo stesso telefono | Una parola sola | chat nuova del gioco | 🟢 | dopo la serata di prova |
-| 12 | Prossimo gioco nuovo dopo la musica: probabile «📍 Dove siamo?» (un GeoGuessr nostro, senza Street View) — decide il proprietario | gioco nuovo | chat nuova | 🔴 | dopo la musica |
-| 13 | Trofei dei giochi nuovi (Una parola sola, Da dove viene?, Prezzo, Lunghezza d'Onda, Chi di Noi?, le rubate della Linea del tempo): la lista la dà il proprietario. Per ora lasciati perdere («ci concentriamo sui giochi») | vari | chat dei giochi | 🟡 | più avanti |
-| 14 | Prima di un lancio pubblico: nomi nuovi per i giochi con marchi (Taboo, Ruota della Fortuna, Il Prezzo è Giusto…), immagini nuove di Black Jack e Poker (il dorso delle carte somiglia a una marca), quotazioni del fanta nostre, diritti di foto e musica | vari | da decidere | 🔴 | solo se si lancia |
-| 15 | La casa diventa la vetrina dei successi (trofei e cose vinte) | casa | da decidere | 🔴 | futuro |
-| 16 | Pulizia: togliere le copie di lavoro vecchie già unite (SG-giochi, SG-saletta, SG-unione), chiedendo prima; archiviare le chat finite (PARTY GAME, speed 2) | — | Cervello | 🟢 | quando vuole |
-| 17 | **Home personale** (consiglio dell'amico esperto, 26 ott): l'account ricorda i giochi che giochi di più e li mette in alto da solo; ⭐ giochi preferiti sempre in alto; trascinare le tessere per metterle dove si vuole (drag & drop). Oggi solo IL PAPPONE può riordinare, e l'ordine vale per tutti: va fatto per ogni giocatore, salvato nel suo profilo | home | chat nuova «Home» | 🟡 | dopo mer |
-| 18 | **Grafica più seria / di lusso** (amico, 26 ott): meno cartoon e grafichine, più stile app elegante alla Apple. Attenzione: cambia l'anima dell'app (oggi è allegra da party game) → **decide il proprietario**. Consiglio: prima una prova su home e profilo, non tutto insieme | tutta l'app | grafico + chat nuova «Stile» | 🔴 | dopo mer, dopo la decisione |
-| 19 | **Nome vero e dominio** (amico, 26 ott): scegliere un nome serio legato al gioco (non per forza a te; «SPD» come sigla piace, ispirazione tipo «Archives»), poi comprare il dominio (circa 5 € l'anno su Aruba) per avere un link serio invece di paky358.github.io. Metodo: farsi dare ~500 idee di nome da un Sonnet con indirizzo «serietà Apple/aziende», leggerle tutte e tenere la decina buona. Si lega al punto 14 (nomi con marchi) | tutta l'app | Cervello (idee) + proprietario sceglie | 🟢 | le idee anche subito, costano poco |
-| 20 | **Varietà delle parole** (amico: «L'Impostore non ripete mai le parole, gli altri sì dopo una cinquantina»): è il nostro punto forte, da difendere in TUTTI i giochi con liste (memoria delle parole uscite, liste larghe). Controllare che L'Impostore ricordi le uscite; e che la spia non sappia di esserlo (l'amico lo ha apprezzato) | tutti i giochi con parole | Cervello controlla (lettura), poi chat del gioco | 🟢 | dopo mer |
+| 1 | ✅ FATTO 28 ott sera: **RAM nuova montata e controllata**: 2 × 8 GB Samsung, 16 GB (14,9 usabili, il resto va alla grafica del processore), vanno a 2.667 come le vecchie. Scritto 16 GB nelle istruzioni, nella procedura delle prove e nella memoria. Lo strumento delle prove usa ancora una scheda sola: si può alzare a 2, provando piano | PC | fatto | 🟢 | fatto |
+| 2 | 🎨 **Stile nuovo: il Bianco e oro è bocciato** (28 ott, il proprietario e l'amico esperto). Scegliere un colore acceso principale (pronte sul ramo: A «Notte vivace» lampone su blu notte, B «Colori pieni su chiaro», C «Gradienti caldi»; idee nuove del Cervello: «Rosso SPeeD», «Arancio festa», «Viola elettrico»), poi soprattutto **avatar meno cartoon** (4 strade pronte, consigliata B «3D morbido») e **scene dei giochi** (studio TV A-C). I 16 giochi in Bianco e oro del ramo NON si uniscono. **Scelto il 28 ott sera: A «🌙 Notte vivace» + sfondo animato con scintillii leggeri e profondità**; il Bianco e oro resta online fino al nuovo stile; avatar: **strada A «Mii rifinito»** (confermata) | tutta l'app | chat nuova «🌙 Notte vivace» per colori e sfondo, chat nuova «🧍 Avatar» per gli avatar (prompt dati dal Cervello il 28 ott) | 🔴 | questa settimana |
+| 3 | **Prova coi telefoni veri** in una serata con gli amici: lo stile nuovo, Ognuno la sua linea, la giornata dell'Asta, Prezzo online, Parola d'ordine, L'Impostore col telefono bloccato, inviti ad app chiusa su iPhone, Chi vince resta | tutti | proprietario, poi le chat dei giochi | 🟢 (costa zero) | appena c'è una serata |
+| 4 | 🎵 **La musica**: «Sarabanda» + modo Heardle. Prima provare dal telefono che le anteprime da 30 secondi di iTunes si sentano | gioco nuovo | chat nuova «Musica» | prova 🟢, gioco 🔴 | questa settimana |
+| 5 | 🔒 **La copia per il vice solo ai vice** (oggi la copia della partita, con carte e segreti, va a tutta la stanza sul collegamento pubblico) + l'host che riapre guarda la stanza solo 0,4 secondi | tutti i giochi online | chat nuova «Rete» (Opus) | 🟡 | questa settimana |
+| 6 | 🕵️ L'Impostore: dire sì o no alle 518 coppie nuove in 10 temi; poi memoria delle parole per tutta la compagnia e la spia che non sa «in vetrina» | Impostore | proprietario → chat IMPOSTORE | 🟢 decisione, 🟡 lavoro | quando vuole |
+| 7 | 👀 **«Chi arriva tardi» e «Guarda»** anche in Stessa Lunghezza d'Onda, Chi di Noi?, Scopone e L'Impostore | 4 giochi | chat nuova «Ritardatari» | 🟡 | questa settimana |
+| 8 | ✨ **Nome e dominio**: scegliere 3 preferiti tra le idee (Cerchia, Sodalis, Convivio…) e far controllare le varianti libere (.app, .games, «Club») | tutta l'app | proprietario → chat Nome | 🟢 | quando vuole |
+| 9 | **Home personale**: giochi più giocati in alto da soli, ⭐ preferiti, tessere da trascinare, per ogni giocatore (oggi solo IL PAPPONE riordina, e per tutti) | home | chat nuova «Home» | 🟡 | dopo lo stile |
+| 10 | Stessa Lunghezza d'Onda, «🤔 Cosa ne pensi?»: solo parole discutibili, una parola sola, punti alle opinioni che dividono | Lunghezza d'Onda | chat nuova del gioco | 🟡 | dopo |
+| 11 | 🎨 Stile, il resto: avatar meno cartoon e colori dei menu (a metà sul ramo); giochi ancora da convertire (Glow Hockey, Horto Muso, Palla Matta, Chi di Noi?, Palla a Pendolo, Calcio Biliardo, L'Asta, Lunghezza d'Onda: scene disegnate, si decide caso per caso). Lo studio TV resta com'è | vari | chat Stile | 🔴 | dopo la fase 3 |
+| 12 | Immagini delle tessere della home che mancano: **Palla Matta, Una parola sola, Da dove viene?** | home | proprietario + Cervello | 🟢 | quando vuole |
+| 13 | Linea del tempo: «🤖 Gioca col Bot»; decidere se la carta sbagliata si mette lo stesso nella linea | Linea del tempo | chat nuova della Linea | 🟡 | dopo |
+| 14 | Il Prezzo è Giusto: 81 prodotti senza foto, circa 120 prezzi vecchi non verificati, pezzi di vetrina vaghi | Prezzo | chat Prezzo (Sonnet) | 🟡 | dopo |
+| 15 | L'Asta: battitori che non sono all'asta (Douglas Luiz, Milla, Ilic, Neres, Basic); aggiornare rigoristi ogni tanto (Kessié rientra a fine ottobre), sempre mostrando prima la lista | Asta | proprietario → chat Asta | 🟢 | quando vuole |
+| 16 | Una parola sola: prova coi telefoni veri con 8-10 persone, chi guarda col link | Una parola sola | chat nuova del gioco | 🟢 | dopo la serata di prova |
+| 17 | Prossimo gioco nuovo dopo la musica: probabile «📍 Dove siamo?» (un GeoGuessr nostro) — decide il proprietario | gioco nuovo | chat nuova | 🔴 | dopo la musica |
+| 18 | Varietà delle parole in TUTTI i giochi con liste (memoria delle uscite, liste larghe): è il nostro punto forte | giochi con parole | Cervello controlla, poi chat dei giochi | 🟢 | dopo |
+| 19 | Trofei dei giochi nuovi: la lista la dà il proprietario. Per ora lasciati perdere | vari | chat dei giochi | 🟡 | più avanti |
+| 20 | Prima di un lancio pubblico: nomi nuovi per i giochi con marchi (Taboo, Ruota della Fortuna, Il Prezzo è Giusto…), immagini nuove di Black Jack e Poker, quotazioni del fanta nostre, diritti di foto e musica | vari | da decidere | 🔴 | solo se si lancia |
+| 21 | La casa diventa la vetrina dei successi | casa | da decidere | 🔴 | futuro |
+| 22 | Pulizia: copie di lavoro vecchie già unite (SG-giochi, SG-saletta, SG-unione) e rami vecchi dei trofei su GitHub, chiedendo prima; archiviare le chat finite (PARTY GAME, speed 2) | — | Cervello | 🟢 | quando vuole |
 
 ---
 
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+
+- 29 ott 00:30 · 🌙 Notte vivace · PUBBLICATO · lo stile «🌙 Notte vivace» online al posto del Bianco e oro (novità v275): blu notte, vetro scuro, lampone come colore guida, carattere Plus Jakarta Sans, sfondo animato con luci e scintillii dietro le schermate dell'app (mai dietro le partite), home e saletta come nei disegni, tutte le altre schermate dell'app sistemate; le partite dei giochi restano come prima. Elenco dei giochi da convertire in docs/stile/notte-giochi.md (passo 3); il proprietario ha scelto di partire dal gruppo B (schermate di servizio dei giochi). Versione online ricostruita e provata (home, saletta, sfondo, Tris: nessun errore) · master (questo salvataggio)
+
+- 28 ott 23:55 · 🌙 Notte vivace · salvato sul ramo `stile-notte` (non in lavori-in-corso, non online) · passo 2: tutte le altre schermate dell'app in Notte vivace (profilo, statistiche, editor e primo avatar, trofei coi metalli che si riconoscono, classifica e amici, novità, compagnie, inviti, Sala in tutti i suoi stati, «Chi gioca?», tornei, Chi vince resta, Scegliamo insieme, «Come giocate?», impostazioni dei giochi, finestre di conferma, pillole); fotografate e sistemate da 4 aiutanti Sonnet, unite e ricontrollate dalla chat. Prove: copione 24-46, 50, 51, 55, 76, 90, 96, 421 OK; 634 e 622 NO ma erano già NO prima (la Sala vista da chi è in coda in «Chi vince resta» a 360x640 sfora di 12-13 px: non dipende dallo stile, da sistemare a parte); 286 OK: tutti i 35 modi locali dei giochi partono · (questo salvataggio)
+
+- 28 ott 21:50 · 🌙 Notte vivace · salvato sul ramo `stile-notte` (non in lavori-in-corso, non online) · passo 1: sfondo animato dietro le schermate dell'app (tre luci morbide lampone, viola e ciano che si spostano piano, scintillii che si accendono e spengono, profondità quando si scorre; fermo dietro le partite, con l'app in secondo piano e con «riduci movimento») + home e saletta come nei disegni «a-home» e «a-sala»; colori del Bianco e oro sostituiti ovunque (le altre schermate sono già scure, da rifinire nel passo 2); carattere nuovo Plus Jakarta Sans dentro l'app. Misurato col computer rallentato ×4: 60 immagini al secondo, lo sfondo costa ~1 ms. Aspetta il parere del proprietario · (questo salvataggio)
+
+- 28 ott 20:45 · Cervello · salvato · il PC fisso ora ha 16 GB di RAM (2 × 8 GB Samsung, controllata dopo il riavvio vero): aggiornate le istruzioni del progetto e la procedura delle prove
+
+- 28 ott 15:40 · Cervello · salvato · registro aggiornato dopo l'azzeramento della settimana: lo stile Bianco e oro online, la fase 3 sul ramo `grafica-luxury`, la RAM nuova ancora da montare
+- 27 ott 02:32 · 🎨 Stile (cloud) · PUBBLICATO · lo stile «🤍 Bianco e oro» online (v274) insieme a L'Impostore col telefono bloccato (v273, della chat dell'Impostore, già provato) · master 42018da. Le partite dei giochi restano scure: la fase 3 (giochi uno per uno, elenco in docs/stile/fase3-giochi.md) aspetta il via del proprietario
 
 - 27 ott 01:38 · 🎨 Stile (cloud) · salvato sul ramo `grafica-luxury` (su GitHub dal 27 ott 02:30, dopo aver installato l'app di Claude anche sull'account Paky358; non online) · fase 2: lo stile «Bianco e oro» scelto dal proprietario applicato a home, profilo, trofei, statistiche, classifica e amici, novità, codice, Sala, «Come giocate?», impostazioni, saletta, fogli, conferme, avvisi, editor dell'avatar, tornei e «Chi gioca?»; colori in un punto solo (variabili --o-*), titoli col carattere elegante dentro l'app, simboli dorati al posto delle emoji nei tasti; le partite dei giochi restano come prima. Prove copione 24-46, 50, 51, 55, 76, 90, 96 OK; 12 giochi aperti e giocati. Fase 3 (elenco dei giochi da convertire) in docs/stile/fase3-giochi.md · (questo salvataggio)
 

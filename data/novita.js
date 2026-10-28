@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 275,
+    data: "29 ottobre 2026",
+    titolo: "SPeeD GAME si veste di notte 🌙",
+    descrizione: [
+      "L'app ha un aspetto tutto nuovo: blu notte, riquadri di vetro scuro e il lampone come colore dei tasti principali, con un carattere moderno e pulito.",
+      "Dietro le schermate c'è uno sfondo che si muove piano: luci morbide e qualche scintillio. Quando scorri si spostano un po', come se ci fosse profondità. Durante le partite si ferma, e se il telefono ha «riduci movimento» resta fermo.",
+      "La prima schermata è più ordinata: il tuo profilo col livello e le monete, quattro tasti tondi (Novità, La città, Trofei, Classifica), le categorie su una riga e le foto dei giochi grandi come locandine. «📲 Installa l'app» ora è in fondo, vicino a Proposte e Bug.",
+      "Nella saletta d'attesa ognuno ha il suo colore, sotto i piedi e sulla targhetta col nome.",
+      "Nei trofei bronzo, argento, oro, diamante e platino ora si riconoscono a colpo d'occhio.",
+      "Le partite per ora restano come prima: arriveranno nel nuovo stile un gioco alla volta."
+    ]
+  },
+  {
     v: 274,
     data: "27 ottobre 2026",
     titolo: "SPeeD GAME si veste di bianco e oro ✨",

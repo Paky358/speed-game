@@ -26,7 +26,7 @@ VER=$(md5sum "$EXTRA" | cut -c1-10)
   echo '<!doctype html>'
   echo '<meta charset="utf-8">'
   echo '<meta name="viewport" content="width=device-width, initial-scale=1">'
-  echo '<meta name="theme-color" content="#0c1636">'
+  echo '<meta name="theme-color" content="#0d1020">'
   echo '<title>SPeeD GAME</title>'
   # app installabile: icona sulla Home e niente barra dell'indirizzo
   echo '<link rel="manifest" href="app/manifest.webmanifest?v=2">'
@@ -67,7 +67,8 @@ VER=$(md5sum "$EXTRA" | cut -c1-10)
   cat js/pesca.js   # la pesca al laghetto
   cat js/scavi.js   # gli scavi antichi
   echo ''
-  cat js/stile.js   # 🤍 Bianco e oro: schermate chiare del core e simboli puliti al posto delle emoji
+  cat js/sfondo.js  # 🌙 Notte vivace: lo sfondo animato dietro le schermate del core (luci morbide e scintillii)
+  cat js/stile.js   # 🌙 Notte vivace: lo stile delle schermate del core e simboli puliti al posto delle emoji
   cat js/core.js
   echo ''
   cat js/net.js
