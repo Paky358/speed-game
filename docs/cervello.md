@@ -66,7 +66,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 
 | # | Cosa | Gioco | Chi la fa | Grandezza | Quando |
 |---|---|---|---|---|---|
-| 1 | 🧩 **Montare la RAM nuova** (2 × 8 GB Samsung DDR4-3200): il 28 ott Windows vede ancora solo le 2 banchette vecchie da 4 GB (Ramaxel 2666, 6,9 GB usabili) e il PC non si spegne dal 23 ott, quindi non sono ancora dentro. Poi il Cervello controlla e scrive 16 GB nelle istruzioni del progetto, nella procedura delle prove e nella memoria (oggi c'è scritto 8 GB) | PC | proprietario, poi Cervello | 🟢 | subito |
+| 1 | ✅ FATTO 28 ott sera: **RAM nuova montata e controllata**: 2 × 8 GB Samsung, 16 GB (14,9 usabili, il resto va alla grafica del processore), vanno a 2.667 come le vecchie. Scritto 16 GB nelle istruzioni, nella procedura delle prove e nella memoria. Lo strumento delle prove usa ancora una scheda sola: si può alzare a 2, provando piano | PC | fatto | 🟢 | fatto |
 | 2 | 🎨 **Stile, fase 3**: provare i 16 giochi convertiti del ramo `grafica-luxury`, poi unirli a lavori-in-corso e pubblicare. Prima si unisce, meno conflitti con le chat dei giochi | 16 giochi | chat Stile (cloud) o Cervello per l'unione | 🟡 | questa settimana, presto |
 | 3 | **Prova coi telefoni veri** in una serata con gli amici: lo stile nuovo, Ognuno la sua linea, la giornata dell'Asta, Prezzo online, Parola d'ordine, L'Impostore col telefono bloccato, inviti ad app chiusa su iPhone, Chi vince resta | tutti | proprietario, poi le chat dei giochi | 🟢 (costa zero) | appena c'è una serata |
 | 4 | 🎵 **La musica**: «Sarabanda» + modo Heardle. Prima provare dal telefono che le anteprime da 30 secondi di iTunes si sentano | gioco nuovo | chat nuova «Musica» | prova 🟢, gioco 🔴 | questa settimana |
@@ -94,6 +94,8 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+
+- 28 ott 20:45 · Cervello · salvato · il PC fisso ora ha 16 GB di RAM (2 × 8 GB Samsung, controllata dopo il riavvio vero): aggiornate le istruzioni del progetto e la procedura delle prove
 
 - 28 ott 15:40 · Cervello · salvato · registro aggiornato dopo l'azzeramento della settimana: lo stile Bianco e oro online, la fase 3 sul ramo `grafica-luxury`, la RAM nuova ancora da montare
 - 27 ott 02:32 · 🎨 Stile (cloud) · PUBBLICATO · lo stile «🤍 Bianco e oro» online (v274) insieme a L'Impostore col telefono bloccato (v273, della chat dell'Impostore, già provato) · master 42018da. Le partite dei giochi restano scure: la fase 3 (giochi uno per uno, elenco in docs/stile/fase3-giochi.md) aspetta il via del proprietario
