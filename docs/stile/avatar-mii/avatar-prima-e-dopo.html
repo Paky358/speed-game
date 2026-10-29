@@ -245,7 +245,15 @@ p b{color:var(--testo)}
   // stile rifinito, l'ultimo passaggio sul disegno finito: i contorni (il tratto attorno a una forma piena) diventano sottili e trasparenti,
   // così non si vede più la linea scura; i riflessi bianchi «da plastica» si attenuano. Le linee vere (ciocche, palpebre, bocche) restano.
   // Tra <!--k--> e <!--/k--> (gli occhiali) il tratto è la cosa stessa: lì si assottiglia appena, senza sparire.
+  // Tra <!--b--> e <!--/b--> (la bocca) non si tocca niente: il bordo delle labbra attorno ai denti È il labbro.
   function ripulisci(s) {
+    return s.split("<!--b-->").map(function (pz, i) {
+      if (!i) return pulisci(pz);
+      var j = pz.indexOf("<!--/b-->");
+      return pz.slice(0, j) + pulisci(pz.slice(j));
+    }).join("");
+  }
+  function pulisci(s) {
     return s.split("<!--k-->").map(function (pz, i) {
       if (!i) return contorni(pz);
       var j = pz.indexOf("<!--/k-->");
@@ -253,11 +261,12 @@ p b{color:var(--testo)}
     }).join("");
   }
   function montature(s) {
-    return s.replace(/stroke-width='([\d.]+)'/g, function (t, w) { return "stroke-width='" + (+w * 0.88).toFixed(2) + "'"; });
+    return s.replace(/stroke-width='([\d.]+)'/g, function (t, w) { return "stroke-width='" + (+w * 0.8).toFixed(2) + "'"; });
   }
   function contorni(s) {
     return s.replace(/<(path|ellipse|circle|rect|polygon)\b([^>]*?)(\/?)>/g, function (t, tag, at, ch) {
       var st = /\sstroke='([^']*)'/.exec(at), fi = /\sfill='([^']*)'/.exec(at), op = /\sopacity='([\d.]+)'/.exec(at);
+      op = op && +op[1] <= 0.6 ? op : null;   // un lucido è velato; il bianco pieno (fiori stampati, righe della tuta, fazzoletto) resta com'è
       function piano() { return "<" + tag + at.replace(op[0], " opacity='" + (+op[1] * 0.5).toFixed(2) + "'") + ch + ">"; }
       if (!st || st[1] === "none") {   // senza tratto: i lucidi (macchie bianche trasparenti) si attenuano
         return op && fi && (/^#fff(fff)?$/i.test(fi[1]) || /lu\)$/.test(fi[1])) ? piano() : t;
@@ -266,7 +275,8 @@ p b{color:var(--testo)}
       if (!fi || fi[1] === "none") return bianco && op ? piano() : t;   // una linea: solo i riflessi bianchi si attenuano
       if (fi[1] === st[1] || bianco) return t;   // forme ingrossate col loro stesso colore (sopracciglia, labbra) e cuciture bianche
       // un bordo chiaro (vestiti bianchi, grigi) si vede solo sulle cose chiare: lì resta un po' di più, se no sul fondo chiaro si perdono
-      var c = /^#[0-9a-f]{6}$/i.test(st[1]) ? rgb(st[1]) : null, chiaroB = c && (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255 > 0.5;
+      var c = /^#[0-9a-f]{6}$/i.test(st[1]) ? rgb(st[1]) : null, lum = c ? (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255 : 0.3, chiaroB = lum > 0.5;
+      if (lum < 0.15) return t;   // le cose quasi nere (vestiti neri, cappellini, microfoni): lì il bordo non si vede come una linea, ma tiene staccati tasche e pezzi
       var w = /\sstroke-width='([\d.]+)'/.exec(at), nw = (w ? +w[1] : 1) * (chiaroB ? 0.75 : 0.55);
       at = w ? at.replace(w[0], " stroke-width='" + nw.toFixed(2) + "'") : at + " stroke-width='" + nw.toFixed(2) + "'";
       if (!/stroke-opacity/.test(at)) at += " stroke-opacity='" + (chiaroB ? 0.85 : 0.55) + "'";
@@ -512,7 +522,8 @@ p b{color:var(--testo)}
     if (canna) c.mano = "nessuno";   // con la canna l'oggetto in mano non c'è
     function u(n) { return "url(#" + id + n + ")"; }
     var R = (opts.stile || STILE) === "rifinito";   // stile rifinito (vedi STILE)
-    function lv(n) { return R ? +(n * 0.7).toFixed(2) : n; }   // le linee del viso (naso, bocca): più sottili nel rifinito
+    var kLv = 0.85;   // il naso: linee appena più sottili nel rifinito; la bocca resta spessa come oggi (sottile spariva)
+    function lv(n) { return R ? +(n * kLv).toFixed(2) : n; }
     var P = col(OPZ.pelle, c.pelle), H = col(OPZ.colCap, c.colCap), M = col(OPZ.maglia, c.maglia),
         T = col(OPZ.pantaloni, c.pantaloni), I = col(OPZ.iride, c.iride), A = col(OPZ.colAcc, c.colAcc), S = col(OPZ.scarpe, c.scarpe);
     if (R) { M = vivo(M, 0.08); T = vivo(T, 0.06); A = vivo(A, 0.08); S = vivo(S, 0.06); H = vivo(H, 0.05); I = vivo(I, 0.08); }
@@ -539,9 +550,10 @@ p b{color:var(--testo)}
     function rad(n, cx, cy, r, st) { return "<radialGradient id='" + id + n + "' cx='" + cx + "' cy='" + cy + "' r='" + r + "'>" + stops(st) + "</radialGradient>"; }
     function lin(n, x2, y2, st) { return "<linearGradient id='" + id + n + "' x1='0' y1='0' x2='" + x2 + "' y2='" + y2 + "'>" + stops(st) + "</linearGradient>"; }
     // nel rifinito la luce è più morbida: meno salto tra chiaro e scuro (niente effetto plastica) e la pelle scende verso un rosato caldo
+    var cP = rgb(P), fP = Math.min(1, (0.299 * cP[0] + 0.587 * cP[1] + 0.114 * cP[2]) / 255 / 0.65);   // rifinito: sulle pelli scure la luce è più calda e più leggera (bianca sembrava cenere)
     var pelleBordo = R ? misto(tono(P, -0.2), "#c25a46", 0.16) : tono(P, -0.24), hChiaro = tono(H, R ? 0.28 : 0.38), hScuro = tono(H, R ? -0.34 : -0.4);
     o.push("<defs>",
-      R ? rad("p", 0.38, 0.3, 0.86, [[0, misto(tono(P, 0.16), "#fff4ea", 0.25)], [0.5, P], [0.86, tono(P, -0.07)], [1, pelleBordo]])
+      R ? rad("p", 0.38, 0.3, 0.86, [[0, misto(tono(P, 0.1 + 0.06 * fP), "#fff4ea", 0.25 * fP)], [0.5, P], [0.86, tono(P, -0.07)], [1, pelleBordo]])
         : rad("p", 0.36, 0.28, 0.85, [[0, tono(P, 0.25)], [0.45, P], [0.85, tono(P, -0.1)], [1, pelleBordo]]),
       lin("pl", 0.3, 1, [[0, tono(P, 0.06)], [1, pelleBordo]]),
       opts.spalle   // di spalle tutti i pezzi dei capelli (nuca, masse, code) hanno la stessa luce: niente cuciture tra un pezzo e l'altro
@@ -1542,7 +1554,7 @@ p b{color:var(--testo)}
     o.push("</g>");
 
     // guance (a scelta); nel rifinito tutti hanno appena un po' di colore sulle guance, come le persone vere
-    if (R && c.guance !== "leggere" && c.guance !== "rosse") o.push("<ellipse cx='70' cy='117' rx='12' ry='7.5' fill='" + u("g") + "' opacity='.2'/>", "<ellipse cx='130' cy='117' rx='12' ry='7.5' fill='" + u("g") + "' opacity='.2'/>");
+    if (R && c.guance !== "leggere" && c.guance !== "rosse") o.push("<ellipse cx='70' cy='117' rx='12' ry='7.5' fill='" + u("g") + "' opacity='.1'/>", "<ellipse cx='130' cy='117' rx='12' ry='7.5' fill='" + u("g") + "' opacity='.1'/>");
     if (c.guance === "leggere" || c.guance === "rosse" || c.guance === "lentiggini") {
       var og = c.guance === "rosse" ? 1 : (c.guance === "leggere" ? 0.55 : 0.35);
       o.push("<ellipse cx='70' cy='117' rx='13' ry='8.5' fill='" + u("g") + "' opacity='" + og + "'/>", "<ellipse cx='130' cy='117' rx='13' ry='8.5' fill='" + u("g") + "' opacity='" + og + "'/>");
@@ -1632,8 +1644,11 @@ p b{color:var(--testo)}
           : "<circle cx='" + (ex + (R ? 2.2 : 2.6)) + "' cy='" + (cy - (R ? 1.6 : 2.4)) + "' r='" + (R ? +((big ? 2.8 : 2.2) * 0.72).toFixed(2) : (big ? 2.8 : 2.2)) + "' fill='#fff'/>",
         "<circle cx='" + (ex - 2) + "' cy='" + (cy + 4.5) + "' r='" + (R ? 0.8 : 1.1) + "' fill='#fff' opacity='" + (R ? 0.55 : ".8") + "'/>",
         "<path d='M" + (ex - rx - 0.6) + "," + (cy + 1) + " Q" + ex + "," + (cy - 2 * ry) + " " + (ex + rx + 0.6) + "," + (cy + 1) + "' stroke='" + scuro + "' stroke-width='" + (c.occhi === "dolci" ? 3.4 : (donna ? 3 : 2.3)) + "' fill='none' stroke-linecap='round'/>");
-      // rifinito: la piega della palpebra sopra l'occhio (lo fa sembrare vero), tranne negli occhi socchiusi
-      if (R && !/^(furbi|assonnati)$/.test(c.occhi)) o.push("<path d='M" + (ex - rx * 0.82) + "," + (cy - ry * 0.98) + " Q" + ex + "," + (cy - ry * 1.62 - 1.5) + " " + (ex + rx * 0.95) + "," + (cy - ry * 0.9) + "' stroke='" + tono(P, -0.26) + "' stroke-width='1.2' opacity='.5' fill='none' stroke-linecap='round'/>");
+      // rifinito: la piega della palpebra appena sopra l'occhio (lo fa sembrare vero), tranne negli occhi socchiusi e in quelli grandi
+      // (lì finiva lontana dall'occhio e sulle pelli scure sembrava un secondo sopracciglio)
+      // è il pezzo centrale della riga della palpebra (da 0,15 a 0,85) spostato in su di 3: segue l'occhio
+      if (R && !big && !/^(furbi|assonnati)$/.test(c.occhi)) { var pL = 0.7 * (rx + 0.6), pH = 2 * ry + 1;
+        o.push("<path d='M" + +(ex - pL).toFixed(2) + "," + +(cy - 2 - 0.255 * pH).toFixed(2) + " Q" + ex + "," + +(cy - 2 - 0.745 * pH).toFixed(2) + " " + +(ex + pL).toFixed(2) + "," + +(cy - 2 - 0.255 * pH).toFixed(2) + "' stroke='" + tono(P, -0.26) + "' stroke-width='1.2' opacity='.35' fill='none' stroke-linecap='round'/>"); }
       if (LIN && LIN !== "matita") {   // riga sulla palpebra col colore scelto (+ codina)
         o.push("<path d='M" + (ex - rx - 0.4) + "," + (cy + 0.6) + " Q" + ex + "," + (cy - 2 * ry - 0.6) + " " + (ex + rx + 0.4) + "," + (cy + 0.6) + "' stroke='" + CE + "' stroke-width='" + (LIN === "sottile" ? 2.8 : (LIN === "grafico" ? 4.4 : 3.5)) + "' fill='none' stroke-linecap='round'/>");
         if (LIN === "alato") o.push("<path d='M" + (ex + s * (rx - 0.5)) + "," + (cy - 0.5) + " L" + (ex + s * (rx + 6)) + "," + (cy - 5) + "' stroke='" + CE + "' stroke-width='2.6' stroke-linecap='round'/>");
@@ -1696,7 +1711,6 @@ p b{color:var(--testo)}
     // naso
     var nas = tono(P, R ? -0.3 : -0.36);
     o.push("<g transform='translate(100,112) scale(" + kN + ") translate(-100,-112)'>");
-    if (R && !opts.hd) o.push("<ellipse cx='100' cy='118.6' rx='6.5' ry='2.4' fill='" + u("ao") + "' opacity='.42'/>");   // rifinito: l'ombra morbida sotto il naso (nell'anteprima grande c'è già, sfocata)
     if (c.naso === "tondo") o.push("<ellipse cx='100' cy='112.5' rx='6.5' ry='5' fill='" + tono(P, -0.07) + "' stroke='" + tono(P, -0.25) + "' stroke-width='.8'/>",
       "<ellipse cx='97.3' cy='115' rx='1.4' ry='1' fill='" + nas + "'/>", "<ellipse cx='102.7' cy='115' rx='1.4' ry='1' fill='" + nas + "'/>", "<circle cx='98' cy='110.5' r='1.8' fill='#fff' opacity='.45'/>");
     else if (c.naso === "punta") o.push("<path d='M100,102 Q107.5,113 98,117' stroke='" + nas + "' stroke-width='" + lv(2.3) + "' fill='none' stroke-linecap='round'/>", "<circle cx='101' cy='110' r='1.6' fill='#fff' opacity='.4'/>");
@@ -1735,10 +1749,10 @@ p b{color:var(--testo)}
 
     // bocca
     var lab = rossetto ? tono(CT, -0.15) : (donna ? "#c0485e" : "#8a3328"), dentro = "#5a1613";   // lei: labbra rosate anche senza rossetto
-    if (R && !rossetto) lab = misto(lab, tono(P, -0.35), 0.22);   // rifinito: le labbra prendono un po' del colore della pelle
+    kLv = 1;
     o.push("<g transform='translate(0," + yB + ")'>");   // bocca e baffi si spostano insieme
     if (opts.hd) o.push("<ellipse cx='100' cy='137' rx='8' ry='2.2' fill='" + tono(P, -0.6) + "' opacity='.18' filter='" + u("sf") + "'/>");
-    else if (R) o.push("<ellipse cx='100' cy='137.5' rx='7.5' ry='2.6' fill='" + u("ao") + "' opacity='.3'/>");   // rifinito: l'ombra sotto il labbro
+    if (R) o.push("<!--b-->");
     if (c.bocca === "sorrisone") o.push("<path d='M85,122 Q100,125 115,122 Q113,142 100,142 Q87,142 85,122 Z' fill='" + dentro + "' stroke='" + lab + "' stroke-width='1.3' stroke-linejoin='round'/>",
       "<path d='M87,123.3 Q100,126 113,123.3 L112,128.3 Q100,130.5 88,128.3 Z' fill='#fff'/>", "<ellipse cx='100' cy='137.5' rx='8' ry='3.6' fill='#ff6f73'/>");
     else if (c.bocca === "neutro") o.push("<path d='M90,128 Q100,130 110,128' stroke='" + lab + "' stroke-width='" + lv(3) + "' fill='none' stroke-linecap='round'/>",
@@ -1775,6 +1789,7 @@ p b{color:var(--testo)}
       "<path d='M84.5,121 Q85.5,123.5 88,123.5 M115.5,121 Q114.5,123.5 112,123.5' stroke='" + lab + "' stroke-width='1.3' fill='none' stroke-linecap='round'/>");
     if (ROS === "lucido" && !/^(o|sorrisone|risata|linguaccia)$/.test(c.bocca)) o.push("<ellipse cx='104.5' cy='128.2' rx='2.6' ry='1' fill='#fff' opacity='.6'/>", "<ellipse cx='95' cy='128.6' rx='1.2' ry='.6' fill='#fff' opacity='.45'/>");   // gloss
 
+    if (R) o.push("<!--/b-->");
     var dBaffi =(c.barba === "baffi" || c.barba === "baffipizzetto" || (conBarba && c.barba !== "collare")) ? BARBA.baffi : (c.barba === "baffoni" ? BARBA.baffoni : null);
     if (dBaffi) o.push("<path d='" + dBaffi + "' fill='" + u("h") + "' stroke='" + bH + "' stroke-width='1.1' stroke-linejoin='round'/>",
       "<path d='M88,119 Q93,116.5 98,119 M102,119 Q107,116.5 112,119' stroke='" + tono(H, 0.35) + "' stroke-width='1' opacity='.4' fill='none'/>");
