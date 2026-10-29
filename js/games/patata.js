@@ -449,6 +449,11 @@
       ".pt-cat{font-size:22px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#cdd6ff}",
       ".pt-catnome{font-size:44px;font-weight:900;line-height:1.08;color:var(--o-oro-testo);text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 6px}",
       ".pt-bombona{font-size:110px;line-height:1;will-change:transform;animation:ptPulsa .6s ease-in-out infinite alternate}",
+      ".pt-svg{display:block;width:1em;height:1em;overflow:visible}",
+      ".pt-alone{opacity:0;transform-box:fill-box;transform-origin:center;will-change:transform,opacity}",
+      ".poco .pt-alone{animation:ptAlone .5s ease-in-out infinite alternate}",
+      "@keyframes ptAlone{from{opacity:.25;transform:scale(.9)}to{opacity:1;transform:scale(1.12)}}",
+      ".pt-sc{transform-box:fill-box;transform-origin:center;will-change:transform,opacity;animation:ptScintilla .12s steps(2) infinite}",
       "@keyframes ptPulsa{from{transform:scale(.94)}to{transform:scale(1.06)}}",
       ".pt-conto{font-family:'Courier New',ui-monospace,monospace;font-size:150px;font-weight:900;line-height:.95;color:#fff;text-shadow:0 0 30px rgba(255,120,60,.6)}",
       ".pt-conto.poco{color:#ff5d6c;will-change:transform;animation:ptCuore .5s ease-out infinite}",
@@ -488,7 +493,6 @@
       ".pt-bomba-in{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;line-height:1;will-change:transform;animation:ptTrema .18s ease-in-out infinite alternate}",
       ".pt-bomba.corri .pt-bomba-in{animation-duration:.07s}",
       "@keyframes ptTrema{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}",
-      ".pt-miccia{position:absolute;right:6%;top:2%;width:24%;height:24%;border-radius:50%;background:radial-gradient(circle,#fff 0 25%,#ffd43b 45%,rgba(255,120,0,0) 70%);will-change:transform,opacity;animation:ptScintilla .12s steps(2) infinite}",
       "@keyframes ptScintilla{50%{transform:scale(1.6);opacity:.6}}",
       ".pt-boom{position:absolute;z-index:7;width:0;height:0;pointer-events:none}",
       ".pt-boom:before{content:'';position:absolute;left:-150px;top:-150px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#fff 0,#ffd43b 25%,#ff6b00 50%,rgba(255,60,0,0) 70%);will-change:transform,opacity;animation:ptOnda .8s ease-out forwards}",
@@ -880,7 +884,7 @@
     S.sch.appendChild(el("div", { class: "pt-sch" }, [
       el("div", { class: "pt-cat", text: "🗂️ categoria" }),
       el("div", { class: "pt-catnome", text: vm.categoria || "" }),
-      R.bombonaEl = el("div", { class: "pt-bombona", text: "💣" }),
+      R.bombonaEl = el("div", { class: "pt-bombona", html: bombaSvg() }),
       R.contoEl,
       el("div", { class: "pt-chi" }, [ el("span", { text: "Ha la bomba " }), R.chiEl ]),
       R.regolaEl
@@ -1084,7 +1088,8 @@
       var r = Math.max(0, R.cb.getRemaining()), hi = idxP(R.vm, R.vm.holder), txt = (r / 1000).toFixed(1);
       if (R.contoEl) { R.contoEl.textContent = txt; R.contoEl.classList.toggle("poco", r < 3000); }
       if (hi >= 0) ST.testoLeggio(S, hi, "💣 " + txt, r < 3000);
-      if (R.bomba) R.bomba.classList.toggle("corri", r < 3000);
+      if (R.bomba) { R.bomba.classList.toggle("corri", r < 3000); R.bomba.classList.toggle("poco", r < 3000); }
+      if (R.bombonaEl) R.bombonaEl.classList.toggle("poco", r < 3000);
       if (hi >= 0 && Date.now() >= R.vmTs + (R.vm.attesaMs || 0) && !R.toccaAttivo) { R.toccaAttivo = true; aggiornaGioco(R); }
     }, 100);
     R.toccaAttivo = Date.now() >= R.vmTs + (R.vm.attesaMs || 0);
@@ -1108,6 +1113,8 @@
         ultimoK = k;
         if (R.contoEl) R.contoEl.classList.toggle("poco", k === 2);
         if (R.bomba) R.bomba.classList.toggle("corri", k >= 1);
+        if (R.bomba) R.bomba.classList.toggle("poco", k === 2);
+        if (R.bombonaEl) R.bombonaEl.classList.toggle("poco", k === 2);
         if (R.bombonaEl) R.bombonaEl.style.animationDuration = [0.6, 0.38, 0.22][k] + "s";
       }
       if (hi >= 0 && Date.now() >= R.vmTs + (R.vm.attesaMs || 0) && !R.toccaAttivo) { R.toccaAttivo = true; aggiornaGioco(R); }
@@ -1122,9 +1129,28 @@
   }
 
   // ---- la bomba (sopra la testa di chi la tiene) ----
+  // disegnata sobria (al posto dell'emoji): sfera blu-notte con riflesso morbido, miccia, scintilla e, quando il tempo
+  // sta per finire (classe "poco" sul genitore), un alone lampone che pulsa. Misura = 1em, come l'emoji.
+  var nBombaSvg = 0;
+  function bombaSvg() {
+    var k = "ptb" + (++nBombaSvg);
+    return "<svg class='pt-svg' viewBox='4 14 86 86' aria-hidden='true' focusable='false'>" +
+      "<defs>" +
+      "<radialGradient id='" + k + "c' cx='38%' cy='32%' r='75%'><stop offset='0' stop-color='#4a5380'/><stop offset='.55' stop-color='#232a47'/><stop offset='1' stop-color='#0f1326'/></radialGradient>" +
+      "<radialGradient id='" + k + "r' cx='50%' cy='50%' r='50%'><stop offset='0' stop-color='#fff' stop-opacity='.55'/><stop offset='1' stop-color='#fff' stop-opacity='0'/></radialGradient>" +
+      "<radialGradient id='" + k + "h' cx='50%' cy='50%' r='50%'><stop offset='.55' stop-color='#e0225a' stop-opacity='.85'/><stop offset='1' stop-color='#e0225a' stop-opacity='0'/></radialGradient>" +
+      "</defs>" +
+      "<circle class='pt-alone' cx='47' cy='59' r='52' fill='url(#" + k + "h)'/>" +
+      "<circle cx='47' cy='59' r='34' fill='url(#" + k + "c)' stroke='#6c75a3' stroke-opacity='.55' stroke-width='1.4'/>" +
+      "<ellipse cx='35' cy='45' rx='13' ry='9' transform='rotate(-35 35 45)' fill='url(#" + k + "r)'/>" +
+      "<rect x='41' y='20' width='20' height='11' rx='3' transform='rotate(24 51 25)' fill='#2e3558' stroke='#6c75a3' stroke-opacity='.55' stroke-width='1.2'/>" +
+      "<path d='M56 21 C60 11 68 14 72 7' fill='none' stroke='#a6acc8' stroke-width='3.2' stroke-linecap='round'/>" +
+      "<g class='pt-sc'><circle cx='73' cy='7' r='9' fill='#ff9a4a' fill-opacity='.45'/><path d='M73 -3 L75 5 L83 7 L75 9 L73 17 L71 9 L63 7 L71 5 Z' fill='#ffd24a'/><circle cx='73' cy='7' r='3' fill='#fff'/></g>" +
+      "</svg>";
+  }
   function creaBomba(S) {
     var b = document.createElement("div"); b.className = "pt-bomba";
-    b.innerHTML = "<div class='pt-bomba-in'><span class='pt-em'>💣</span><i class='pt-miccia'></i></div>";
+    b.innerHTML = "<div class='pt-bomba-in'>" + bombaSvg() + "</div>";
     S.mondo.appendChild(b);
     return b;
   }

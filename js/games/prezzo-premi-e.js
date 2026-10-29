@@ -516,7 +516,7 @@
       ".st-vista.pz-con-pan .pz-sch .pze-tes,.st-vista.pz-con-pan:has(.pze-lista) .pz-sch [data-sacr]{display:none}",
       ".pz-pan.su:has(.pze-lista){top:calc(56px + env(safe-area-inset-top))}",
       ".pz-pan:has(.pze-lista) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pze-lista{flex:1 1 0;min-height:0}.pz-pan .pze-lista .pze-r5,.pz-pan .pze-lista .pze-r3{flex:1 1 auto}",
-      ".pze-r5{display:flex;align-items:center;gap:8px;min-height:clamp(44px,calc(var(--alt,640px) * .068),56px);box-sizing:border-box;padding:4px 6px 4px 4px;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
+      ".pze-r5{display:flex;align-items:center;gap:8px;min-height:clamp(44px,calc(var(--alt,640px) * .068),56px);box-sizing:border-box;padding:4px 6px 4px 4px;border-radius:12px;background:linear-gradient(#fff,#eceef8);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(14,18,44,.25)}",
       ".pze-r5.si{background:linear-gradient(#ebfbee,#b2f2bb)}.pze-r5.no{background:linear-gradient(#fff5f5,#ffc9c9)}",
       ".pze-r5 .e,.pze-r3 .e{flex:0 0 auto;font-size:clamp(31px,calc(var(--alt,640px) * .065),58px);line-height:1}",
       ".pze-r5 .tx,.pze-r3 .tx{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;overflow-wrap:break-word}",
@@ -535,7 +535,7 @@
       ".pze-sov .pz-tag{font-size:13px;padding:2px 8px 2px 14px;opacity:0;transform:scale(.4);transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .2s}.pze-sov .pz-tag:before{left:5px;width:4px;height:4px;margin-top:-2px}",
       ".pze-sov.fatto .pze-num{opacity:0;transition:opacity .25s}.pze-sov.fatto .pz-tag{opacity:1;transform:none}",
       ".pze-c3.luce{box-shadow:0 0 0 3px var(--o-oro),0 0 18px rgba(255,79,134,.5)}",
-      ".pze-r3{display:flex;flex-direction:column;justify-content:center;gap:5px;padding:5px 8px 6px 5px;box-sizing:border-box;border-radius:12px;background:linear-gradient(#fff,#ece6ff);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(90,74,154,.25)}",
+      ".pze-r3{display:flex;flex-direction:column;justify-content:center;gap:5px;padding:5px 8px 6px 5px;box-sizing:border-box;border-radius:12px;background:linear-gradient(#fff,#eceef8);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(14,18,44,.25)}",
       ".pze-r3.preso{background:linear-gradient(#ffe6ee,#ffc4d6)}",
       ".pze-r3 .su{display:flex;align-items:center;gap:8px;min-width:0}.pze-r3 .giu{display:flex;align-items:center;gap:6px}",
       // (nel pannello alto le righe di Togli la cifra hanno posto: foto, cifre e prezzo più grandi)

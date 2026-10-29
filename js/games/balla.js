@@ -1668,7 +1668,7 @@
       ".bc-buco{display:inline-block;min-width:5.5em;min-height:1.1em;padding:0 4px;border-bottom:3px solid #c92a2a;background:#ffe066;border-radius:3px 3px 0 0;vertical-align:baseline}",
       ".bc-buco.pieno{min-width:0;font-family:" + MANO + ";color:#1d2a5c;font-weight:700}",
       // il foglio segreto
-      ".bc-velo{position:absolute;inset:0;z-index:21;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(12px + env(safe-area-inset-top)) 12px 24px;background:rgba(10,12,24,.8);opacity:0;pointer-events:none;transition:opacity .25s}",
+      ".bc-velo{position:absolute;inset:0;z-index:21;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(12px + env(safe-area-inset-top)) 12px 24px;background:rgba(10,12,24,.9);opacity:0;pointer-events:none;transition:opacity .25s}",
       ".bc-velo.on{opacity:1;pointer-events:auto}",
       ".bc-carta{position:relative;margin:0 auto;max-width:460px;display:flex;flex-direction:column;gap:12px;animation:bcEntra .55s cubic-bezier(.2,1.2,.4,1) both}",
       ".bc-velo.via .bc-carta{animation:bcEsce .3s ease-in forwards}",

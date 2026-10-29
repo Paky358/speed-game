@@ -607,7 +607,7 @@
       "@keyframes pzPop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}",
       "@keyframes pzSu{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}",
       // la scheda del prodotto
-      ".pz-scheda{position:relative;width:min(340px,94%);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 14px 12px;border-radius:18px;background:linear-gradient(#ffffff,#f3efff);color:#1d1b3a;box-shadow:0 10px 26px rgba(0,0,0,.45),inset 0 -4px 0 rgba(90,74,154,.18)}",
+      ".pz-scheda{position:relative;width:min(340px,94%);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 14px 12px;border-radius:18px;background:linear-gradient(#ffffff,#f5f6fb);color:#1d1b3a;box-shadow:0 10px 26px rgba(0,0,0,.45),inset 0 -4px 0 rgba(14,18,44,.18)}",
       ".pz-cat{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--cc,#b0184f);border-radius:99px;padding:3px 10px}",
       ".pz-emo{font-size:clamp(40px,calc(var(--alt,640px) * .085),66px);line-height:1.15;width:1.6em;height:1.3em;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle,rgba(255,79,134,.55),rgba(255,79,134,0) 66%)}",
       ".pz-nome{font-size:19px;font-weight:900;line-height:1.15}",
@@ -749,7 +749,7 @@
       ".pz-cars.due .pz-car{padding:3px 6px 3px 3px;gap:5px}.pz-cars.due .pz-car .fac{width:26px;height:26px}.pz-cars.due .pz-car .cosa span{font-size:16px}.pz-cars.due .pz-car .tot{font-size:12px}",
       // le scelte grandi (il gioco a premi, giro ancora / mi fermo)
       ".pz-scelte{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}",
-      ".pz-sc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:96px;border:0;border-radius:16px;padding:8px;font:inherit;color:#1d1b3a;background:linear-gradient(#fff,#ece6ff);box-shadow:inset 0 -4px 0 rgba(90,74,154,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .1s}",
+      ".pz-sc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:96px;border:0;border-radius:16px;padding:8px;font:inherit;color:#1d1b3a;background:linear-gradient(#fff,#eceef8);box-shadow:inset 0 -4px 0 rgba(14,18,44,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .1s}",
       ".pz-sc:active{transform:scale(.96)}.pz-sc .i{font-size:30px;line-height:1}.pz-sc b{font-size:16px}.pz-sc small{font-size:11.5px;font-weight:700;color:#4c4a66;line-height:1.25}",
       ".pz-sc.sel{background:linear-gradient(#ffe6ee,#ffc4d6);box-shadow:0 0 0 3px #ff4f86}.pz-sc:disabled{opacity:.55}",
       ".pz-giochi{display:flex;gap:10px;justify-content:center;width:100%}",
@@ -800,7 +800,7 @@
       ".pz-big100{font-size:44px;font-weight:900;color:#ff3ea5;text-shadow:0 0 18px rgba(255,62,165,.7),0 3px 0 #000;animation:pzPulsa .45s ease-in-out 3}",
       // i riquadri dei prodotti (tessere): la misura delle scritte la sceglie la forma (g, v0… t2)
       ".pz-tes{flex:1 1 0;min-height:0;width:100%;max-width:480px;display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));gap:6px;--fn:15px;--fd:12px}",
-      ".pz-te{position:relative;min-width:0;min-height:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 7px;border-radius:14px;background:linear-gradient(#ffffff,#f3efff);color:#1d1b3a;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 -3px 0 rgba(90,74,154,.16);animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both;transition:background .2s,box-shadow .2s}",
+      ".pz-te{position:relative;min-width:0;min-height:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 7px;border-radius:14px;background:linear-gradient(#ffffff,#f5f6fb);color:#1d1b3a;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 -3px 0 rgba(14,18,44,.16);animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both;transition:background .2s,box-shadow .2s}",
       ".pz-tes.fermo .pz-te{animation:none}",
       ".pz-te .fo{flex:1 1 0;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;line-height:1;font-size:40px}",
       ".pz-te .fo img{display:block;max-width:100%;max-height:100%;border-radius:9px;box-shadow:0 2px 8px rgba(0,0,0,.22);background:#fff}.pz-te .fo.copre img{width:100%;height:100%;object-fit:cover}",
