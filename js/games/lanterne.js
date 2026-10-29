@@ -264,9 +264,9 @@ const VOCI = [
   { g:'Partita', k:'ombre', et:'Ombre', opz:[[0,'in base ai giocatori'],1,2,3] },
   { g:'Partita', k:'soli', et:'Ruoli da soli al massimo', opz:[0,1,2] },
   { g:'Partita', k:'ricarica', et:'Ricarica per eliminare', opz:[15,20,25,30,40], u:' s' },
-  { g:'Partita', k:'velocita', et:'Velocità', opz:[[0.8,'lenta'],[1,'normale'],[1.25,'veloce']] },
-  { g:'Partita', k:'vistaOspiti', et:'Vista degli ospiti', opz:[[4,'corta'],[6,'media'],[8,'lunga']] },
-  { g:'Partita', k:'vistaOmbre', et:'Vista delle ombre', opz:[[5,'corta'],[7,'media'],[9,'lunga']] },
+  { g:'Partita', k:'velocita', et:'Velocità', opz:[[0.8,'lenta'],[1,'normale'],[1.25,'veloce'],[1.5,'molto veloce'],[1.75,'velocissima']] },
+  { g:'Partita', k:'vistaOspiti', et:'Vista degli ospiti', opz:[[3,'cortissima'],[4,'corta'],[6,'media'],[8,'lunga'],[10,'lunghissima']] },
+  { g:'Partita', k:'vistaOmbre', et:'Vista delle ombre', opz:[[4,'cortissima'],[5,'corta'],[7,'media'],[9,'lunga'],[12,'lunghissima']] },
   { g:'Partita', k:'compiti', et:'Compiti a testa', opz:[[0,'in base ai giocatori'],3,4,5,6,8] },
   { g:'Partita', k:'compitiVisibili', et:'Compiti visibili (lampadario, orologio, forno, serra)', opz:[[true,'sì'],[false,'no']] },
   { g:'Riunioni', k:'discussione', et:'Tempo per parlare', opz:[0,15,30,45,60], u:' s' },
@@ -384,6 +384,7 @@ const BERSAGLIO = { veggente:'vivo', medico:'vivo', sceriffo:'vivo', segugio:'vi
 // dove si ripara ogni sabotaggio
 const STAZ_RIP = { luci:QUADRO, console:CONSOLE, chiusaA:CHIUSA_A, chiusaB:CHIUSA_B };
 const TOLL = 1.4;              // margine per chi è un po' in ritardo sulla rete
+const VEL_ANIMA = 1.7;  // le anime vanno più veloci: seguono meglio la partita
 const DUR_ATRIO = 20, DUR_SVELA = 6, DUR_ESITO = 7;
 const MAX_CHAT = 40;
 const FRASI_COMPITO = { luce:'accendere il lampadario', ingranaggio:"caricare l'orologio", fuoco:'sfornare i dolci', acqua:'annaffiare la serra' };
@@ -563,7 +564,7 @@ class Partita {
     const p=this.per(id); if(!p||p.bot||(this.fase!=='gioco'&&this.fase!=='atrio')||p.uscito) return;
     if(m.ep!==p.ep){ this.ritp(p); return; }
     const x=+m.x, y=+m.y; if(!isFinite(x)||!isFinite(y)) return;
-    const dt=Math.max(0.05, this.t-p.tPos), max=this.VEL*dt*1.6+8, d=Math.hypot(x-p.x,y-p.y);
+    const dt=Math.max(0.05, this.t-p.tPos), max=this.VEL*(p.fantasma?VEL_ANIMA:1)*dt*1.6+8, d=Math.hypot(x-p.x,y-p.y);
     if(d>max || x<T || y<T || x>(this.M.GW-1)*T || y>(this.M.GH-1)*T || (!p.fantasma && !libero(this.M,x,y))){ this.correggi(p); return; }
     if(p.bloccatoFine>this.t && d>4){ this.correggi(p); return; }
     if(p.rianima && Math.hypot(x-p.rianima.x, y-p.rianima.y)>0.6*T){ const pu=p.rianima.pulisci; p.rianima=null; this.priv(p); this.avviso(p, pu ? 'Ti sei mosso: la lanterna spenta è rimasta lì.' : 'Ti sei mosso: la lanterna non si è riaccesa.'); }
@@ -826,6 +827,8 @@ class Partita {
     // il bersaglio dell'Accusatore è uscito senza voto: l'Accusatore diventa Giullare
     this.gioc.filter(a=>a.ruolo==='accusatore'&&a.vivo&&a.bersaglio===v.id).forEach(a=>{ a.ruolo='giullare'; this.priv(a); this.avviso(a, 'Il tuo bersaglio è uscito: ora sei il Giullare. Fatti cacciare col voto!'); });
     this.priv(v); this.segna();
+    // chi viene spento vede chi è stato (se l'ombra era travestita, vede il travestimento)
+    if(v!==k && !v.bot) this.ev.privato(v.id, { t:'morte', da: modo==='normale' ? (this.travestito(k)||k.id) : k.id, modo });
     if(v!==k && modo!=='veterano'){
       this.avviso(v, "Hanno spento la tua lanterna. Ora sei un'anima: puoi ancora finire i compiti.", 'morte');
       if(modo==='normale') this.avviso(k, `Hai spento la lanterna di ${v.nome}.`, 'ombra');
@@ -1316,7 +1319,7 @@ class Partita {
   votiPer(id){ let n=0; for(const [chi,v] of this.riu.voti) if(v===id) n+=this.peso(chi); return n; }
   vota(p, su){
     const R=this.riu; if(this.fase!=='riunione'||!R||R.chiusa||!p.vivo||R.t<R.disc||R.voti.has(p.id)) return;
-    if(su!=='salta'){ const x=this.per(su); if(!x||!x.vivo||x===p) return; }
+    if(su!=='salta'){ const x=this.per(su); if(!x||!x.vivo) return; }   // (anche se stessi: si può sempre)
     R.voti.set(p.id, su); this.segna();
   }
   // quante ombre restano secondo chi gioca: se i ruoli si vedono quando uno esce lo sanno tutti, se no si parte dal numero iniziale
@@ -1405,7 +1408,8 @@ class Pittore {
     this.passi = {};
   }
   misura(){
-    const r = this.cv.getBoundingClientRect(), w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+    // (le misure del riquadro, non dello schermo: se il gioco è girato di lato restano giuste)
+    const w = Math.max(1, Math.round(this.cv.offsetWidth || this.cv.getBoundingClientRect().width)), h = Math.max(1, Math.round(this.cv.offsetHeight || this.cv.getBoundingClientRect().height));
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     if(w===this.w && h===this.h && dpr===this.DPR) return;
     this.w = w; this.h = h; this.DPR = dpr;
@@ -1752,6 +1756,8 @@ const VASI = { vino:{ col:'#7a1f33', nome:'Caraffa' }, piante:{ col:'#3d7fb0', n
 
 function el(tag, cls, testo){ const e=document.createElement(tag); if(cls) e.className=cls; if(testo!=null) e.textContent=testo; return e; }
 function scuoti(e){ e.classList.remove('lt-scuoti'); void e.offsetWidth; e.classList.add('lt-scuoti'); }
+// col gioco girato di lato (telefono in verticale) il dito si muove sullo schermo, la cosa nel gioco: giro lo spostamento
+function nelGioco(n, dx, dy){ return n.closest && n.closest('.lt-ruota') ? [dy, -dx] : [dx, dy]; }
 
 // box: dove disegnare; post: la postazione; fatto(): da chiamare quando il compito è riuscito
 function apriMinigioco(box, post, fatto){
@@ -1801,7 +1807,7 @@ function trascina(z, post, ok){
     const c=el('div','cosa',e); c.style.left='6%'; c.style.top=(8+i*30)+'%'; area.appendChild(c);
     let id=null, ox=0, oy=0, x0=0, y0=0;
     c.addEventListener('pointerdown',ev=>{ if(c.classList.contains('ok')) return; ev.preventDefault(); id=ev.pointerId; ox=ev.clientX; oy=ev.clientY; x0=0; y0=0; c.classList.add('su'); try{ c.setPointerCapture(id); }catch(_){} });
-    c.addEventListener('pointermove',ev=>{ if(ev.pointerId!==id) return; x0=ev.clientX-ox; y0=ev.clientY-oy; c.style.transform=`translate(${x0}px,${y0}px)`; });
+    c.addEventListener('pointermove',ev=>{ if(ev.pointerId!==id) return; [x0,y0]=nelGioco(c, ev.clientX-ox, ev.clientY-oy); c.style.transform=`translate(${x0}px,${y0}px)`; });
     const lascia=ev=>{
       if(ev.pointerId!==id) return; id=null; c.classList.remove('su');
       const r=c.getBoundingClientRect(), m=meta.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
@@ -1850,7 +1856,7 @@ var ID = "lanterne";
 var MIN = 4, MAX = 10;
 var RIEMPI = 6;   // in prova: con pochi amici la saletta si riempie da sola coi Bot fino a 6 (escono man mano che arriva gente)
 // Per ora Lanterne è in prova: la stanza la aprono solo questi account; tutti gli altri entrano solo se invitati.
-var AMMESSI = ["IL PAPPONE", "GAY"];
+var AMMESSI = ["IL PAPPONE", "GAY", "MARIO"];
 function nomeAccount() { try { var p = window.SGNube && SGNube.profilo && SGNube.profilo(); return String((p && p.nome) || "").trim().toUpperCase(); } catch (e) { return ""; } }
 function ammesso() { return AMMESSI.indexOf(nomeAccount()) >= 0; }
 var RITARDATARI = "partita";   // chi arriva a partita cominciata la guarda ed entra alla prossima
@@ -2100,7 +2106,7 @@ function ospite(t, codice) {
         if (m.t === "vm") { S.vm = m.vm; disegna(t, m.vm, cb); }
         else if (m.t === "pos") { if (UI) UI.posizioni(m.p); }
         else if (m.t === "priv") { if (UI) UI.privato(m.p); else PENDENTI.priv = m.p; }
-        else if (m.t === "tp" || m.t === "avviso") { if (UI) UI.messaggio(m); else conserva(m); }
+        else if (m.t === "tp" || m.t === "avviso" || m.t === "morte") { if (UI) UI.messaggio(m); else conserva(m); }
         else if (m.t === "av") (m.l || []).forEach(function (x) { avatarDi(x[0], avatarValido(x[1])); });
       },
       onChiuso: function (perche) { chiudiUI(); errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
@@ -2215,7 +2221,17 @@ function Vista(t, cb) {
   stile();
   var V = this; V.t = t; V.cb = cb; V.vivo = true;
   V.s = t.schermata({}); V.s.classList.add("lt-piena");
-  var sc = E("div", "lt-scena"); V.s._contenuto.appendChild(sc);
+  var sc = E("div", "lt-scena"); V.s._contenuto.appendChild(sc); V.sc = sc;
+  // sempre in orizzontale: col telefono in verticale la scena si gira di lato (si tiene il telefono girato)
+  V.ruota = function () {
+    var W = window.innerWidth, H = window.innerHeight, gira = H > W * 1.05;
+    V.girato = gira; sc.classList.toggle("lt-ruota", gira);
+    sc.style.width = gira ? H + "px" : ""; sc.style.height = gira ? W + "px" : "";
+    sc.style.transform = gira ? "translate(" + W + "px,0) rotate(90deg)" : "";
+  };
+  V.ruota(); window.addEventListener("resize", V.ruota); window.addEventListener("orientationchange", V.ruota);
+  // niente zoom col doppio tocco o col pizzico mentre si gioca
+  V.noZoom = function (e) { e.preventDefault(); }; document.addEventListener("gesturestart", V.noZoom);
   V.cv = E("canvas", "lt-cv"); sc.appendChild(V.cv); V.pit = new Pittore(V.cv);
   V.joyZona = E("div", "lt-joyzona"); V.joy = E("div", "lt-joy"); V.knob = E("div", "lt-knob"); V.joy.appendChild(V.knob); V.joyZona.appendChild(V.joy); sc.appendChild(V.joyZona);
   var sx = E("div", "lt-sx");
@@ -2272,12 +2288,14 @@ Vista.prototype.legaComandi = function () {
   var V = this, j = V.joyV;
   V.joyZona.addEventListener("pointerdown", function (e) {
     if (j.id !== null) return; j.id = e.pointerId; j.ox = e.clientX; j.oy = e.clientY;
-    var r = V.joyZona.getBoundingClientRect(); V.joy.style.left = (e.clientX - r.left) + "px"; V.joy.style.top = (e.clientY - r.top) + "px"; V.joy.classList.add("on");
+    var p = V.locale(e); V.joy.style.left = p.x + "px"; V.joy.style.top = p.y + "px"; V.joy.classList.add("on");
     try { V.joyZona.setPointerCapture(e.pointerId); } catch (_) {}
   });
   V.joyZona.addEventListener("pointermove", function (e) {
     if (e.pointerId !== j.id) return;
-    var dx = e.clientX - j.ox, dy = e.clientY - j.oy, d = Math.hypot(dx, dy), max = 50;
+    var dx = e.clientX - j.ox, dy = e.clientY - j.oy, max = 50;
+    if (V.girato) { var t0 = dx; dx = dy; dy = -t0; }   // gioco girato di lato: lo spostamento del dito va girato anche lui
+    var d = Math.hypot(dx, dy);
     if (d > max) { dx = dx / d * max; dy = dy / d * max; }
     j.x = d < 6 ? 0 : dx / max; j.y = d < 6 ? 0 : dy / max;
     V.knob.style.transform = "translate(" + dx + "px," + dy + "px)";
@@ -2294,7 +2312,17 @@ Vista.prototype.legaComandi = function () {
   };
   document.addEventListener("keydown", V.suGiu); document.addEventListener("keyup", V.suGiu);
 };
-Vista.prototype.slega = function () { if (this.suGiu) { document.removeEventListener("keydown", this.suGiu); document.removeEventListener("keyup", this.suGiu); } };
+Vista.prototype.slega = function () {
+  if (this.suGiu) { document.removeEventListener("keydown", this.suGiu); document.removeEventListener("keyup", this.suGiu); }
+  if (this.ruota) { window.removeEventListener("resize", this.ruota); window.removeEventListener("orientationchange", this.ruota); }
+  if (this.noZoom) document.removeEventListener("gesturestart", this.noZoom);
+};
+// un punto del dito dentro la scena (in pixel della scena, anche quando è girata di lato)
+Vista.prototype.locale = function (e) {
+  var sc = this.sc;
+  if (this.girato) return { x: e.clientY, y: window.innerWidth - e.clientX };
+  var r = sc.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top };
+};
 Vista.prototype.joyReset = function () { var j = this.joyV; j.id = null; j.x = 0; j.y = 0; this.joy.classList.remove("on"); this.joy.style.left = ""; this.joy.style.top = ""; this.knob.style.transform = ""; };
 
 // ----- quello che arriva dall'host -----
@@ -2346,6 +2374,7 @@ Vista.prototype.messaggio = function (m) {
     }
   }
   else if (m.t === "avviso") { this.avviso(m.testo, m.tipo); if (m.tipo === "morte") vibra(120); }
+  else if (m.t === "morte") this.scenaMorte(m);
   else if (m.t === "fx") this.effetto(m);
 };
 var DURATE = { urlo: 6, scudoRotto: 1.2, telecamera: 1, trasporto: 1, spegni: 1.2, sparo: 0.5, scudo: 1.2, lente: 1.2, fiuto: 1, ipnosi: 1, trasforma: 0.9, botola: 0.7, sparisce: 1, mangia: 1, gatto: 1.2, rianima: 1.6, campana: 1.2, compito: 2.6, bengala: 1.2, luci: 0.8 };
@@ -2384,7 +2413,8 @@ Vista.prototype.passo = function (dt) {
   V.effetti = V.effetti.filter(function (e) { return V.tempo - e.t0 < e.dur; });
   if (V.scossa > 0) V.scossa = Math.max(0, V.scossa - dt);
   V.dt = dt;
-  var puoMuovere = !V.guardo && pr && (g.fase === "gioco" || g.fase === "atrio") && !V.mg && !V.mappaAperta && !V.pannello && V.bloccFine <= performance.now();
+  var puoMuovere = !V.guardo && pr && (g.fase === "gioco" || g.fase === "atrio") && !V.mg && !V.pannello && V.bloccFine <= performance.now();
+  if (V.mappa && V.tempo - V.mappa.ultimo > 0.2) V.disegnaMappaViva();
   var mx = 0, my = 0;
   if (puoMuovere) {
     var k = V.tasti;
@@ -2403,7 +2433,7 @@ Vista.prototype.passo = function (dt) {
   me.muove = m > 0.05;
   var anima = !V.sonoVivo();
   if (me.muove) {
-    var vel = 3.4 * T * ((V.vm && V.vm.imp && V.vm.imp.velocita) || 1), vx = mx * vel * dt, vy = my * vel * dt, M = V.M;
+    var vel = 3.4 * T * ((V.vm && V.vm.imp && V.vm.imp.velocita) || 1) * (anima && g.mappa === "palazzo" ? VEL_ANIMA : 1), vx = mx * vel * dt, vy = my * vel * dt, M = V.M;
     if (anima && g.mappa === "palazzo") { me.x = Math.max(T, Math.min((M.GW - 1) * T, me.x + vx)); me.y = Math.max(T, Math.min((M.GH - 1) * T, me.y + vy)); }
     else { if (libero(M, me.x + vx, me.y)) me.x += vx; if (libero(M, me.x, me.y + vy)) me.y += vy; }
     me.dir = Math.atan2(my, mx);
@@ -2680,19 +2710,34 @@ Vista.prototype.apriCompito = function (post, fatto) {
   ch.addEventListener("click", chiudi);
   V.mg = apriMinigioco(corpo, post, function () { chiudi(); fatto(); });
 };
+// la mappa: un riquadro sopra il gioco che non ferma niente (ci si muove con la mappa aperta), si aggiorna da sola
+// e si chiude con la ✕ (o di nuovo col tasto Mappa)
 Vista.prototype.apriMappa = function () {
   var V = this; if (!V.g || V.g.mappa !== "palazzo" || V.mg) return;
-  V.mappaAperta = true; V.joyReset();
-  var box = E("div", "lt-pannello lt-mappa"), cv = E("canvas"); box.append(cv, E("p", "", "Bianco: tu · Oro: i tuoi compiti" + (V.squadra() === "ombre" ? " · Viola: botole" : "") + (V.g.buio ? " · Rosso: le luci" : "") + " · Tocca per chiudere"));
-  V.velo.textContent = ""; V.velo.appendChild(box); V.velo.hidden = false; V.veloTipo = "mappa";
-  var segni = V.compitiAperti().map(function (p) { return { x: centro(p.tx), y: centro(p.ty), col: "#e7b75c" }; });
-  if (V.g.buio) segni.push({ x: centro(QUADRO.tx), y: centro(QUADRO.ty), col: "#f05a6e", r: 7 });
-  if (V.squadra() === "ombre") ESTREMI.forEach(function (e) { segni.push({ x: centro(e.tx), y: centro(e.ty), col: "#a993e6", r: 4 }); });
+  if (V.mappa) return V.chiudiMappa();
+  var box = E("div", "lt-minimappa"), testa = E("div", "testa"), x = E("button", "lt-chiudi", "×"), cv = E("canvas"), leg = E("p", "leg", "");
+  x.type = "button"; x.setAttribute("aria-label", "Chiudi la mappa");
+  testa.append(E("b", "", "🗺️ Mappa del palazzo"), x); box.append(testa, cv, leg);
+  x.addEventListener("click", function (e) { e.stopPropagation(); V.chiudiMappa(); });
+  V.velo.parentNode.appendChild(box);
+  V.mappa = { box: box, cv: cv, leg: leg, ultimo: -9 };
+  V.mappaAperta = true; V.disegnaMappaViva();
+};
+Vista.prototype.chiudiMappa = function () { var V = this; if (!V.mappa) return; V.mappa.box.remove(); V.mappa = null; V.mappaAperta = false; V.aggVelo(); };
+Vista.prototype.disegnaMappaViva = function () {
+  var V = this, M = V.mappa; if (!M || !V.g) return;
+  M.ultimo = V.tempo;
+  var segni = V.compitiAperti().map(function (p) { return { x: centro(p.tx), y: centro(p.ty), col: "#e7b75c" }; }), leg = ["⚪ tu", "🟡 compiti"];
+  if (V.g.buio) { segni.push({ x: centro(QUADRO.tx), y: centro(QUADRO.ty), col: "#f05a6e", r: 7 }); leg.push("🔴 luci"); }
+  if (V.squadra() === "ombre") { ESTREMI.forEach(function (e) { segni.push({ x: centro(e.tx), y: centro(e.ty), col: "#a993e6", r: 4 }); }); leg.push("🟣 botole"); }
   segni.push({ x: centro(CAMPANA.tx), y: centro(CAMPANA.ty), col: "#d9a94a", r: 4 });
+  // il Segugio: il pallino di chi sta seguendo, finché dura la scia
+  var tr = V.priv && V.priv.traccia && V.tracciaFine > performance.now() ? V.priv.traccia[0] : null;
+  if (tr) { var q = V.altri().filter(function (p) { return p.id === tr; })[0]; if (q) { segni.push({ x: q.x, y: q.y, col: "#cba2ff", r: 7, bordo: true }); leg.push("🟣 " + ((V.cache[tr] || {}).nome || "la scia")); } }
   segni.push({ x: V.me.x, y: V.me.y, col: "#ffffff", r: 6, bordo: true });
-  var r = V.s.getBoundingClientRect();
-  disegnaMappa(cv, PALAZZO, segni, Math.min(r.width - 40, 900), r.height - 110);
-  box.addEventListener("click", function () { V.mappaAperta = false; V.velo.hidden = true; V.veloTipo = null; V.velo.textContent = ""; V.aggVelo(); });
+  var w = M.box.clientWidth - 16, h = Math.max(80, M.box.clientHeight - 58);
+  disegnaMappa(M.cv, PALAZZO, segni, w, h);
+  var t = leg.join(" · "); if (M.leg.textContent !== t) M.leg.textContent = t;
 };
 
 // i pannelli sopra il gioco: schermi delle telecamere, plastico, scambio del Trasportatore
@@ -2731,7 +2776,7 @@ Vista.prototype.disegnaSchermi = function () {
     if (i !== F.giro && sc.fatto === F.pagina) return;
     sc.fatto = F.pagina;
     var idx = F.pagina * 4 + i, nome = k[2] ? (TELECAMERE_BASE[idx] || {}).nome || "Telecamera" : "Sentinella " + (idx - TELECAMERE_BASE.length + 1);
-    sc.pit.disegna({ M: PALAZZO, palazzo: true, t: V.tempo, dt: 0.1, io: { x: k[0], y: k[1], mostra: false }, altri: gente, corpi: corpi, R: 6 * T, anima: false, neb: g.neb > 0,
+    sc.pit.disegna({ M: PALAZZO, palazzo: true, t: V.tempo, dt: 0.1, io: { x: k[0], y: k[1], mostra: false }, altri: gente, corpi: corpi, R: 16 * T, anima: false, neb: g.neb > 0,
       buio: false, miei: new Set(), freccia: null, botole: false, effetti: [], telecamere: [], scala: 0.5, cctv: nome,
       segui: k[2] && TELECAMERE_BASE[idx] ? { x: TELECAMERE_BASE[idx].vx, y: TELECAMERE_BASE[idx].vy } : null });
   });
@@ -2851,7 +2896,7 @@ Vista.prototype.apriIndovina = function (id) {
 // ----- i pannelli sopra la mappa: ruolo, riunione, esito, fine -----
 Vista.prototype.cambioFase = function () {
   var V = this, f = V.fase;
-  if (f !== "gioco" && f !== "atrio") { V.joyReset(); if (V.pannello) V.pannello.chiudi(); if (V.mg || V.mappaAperta) { V.mg = null; V.mappaAperta = false; V.velo.hidden = true; V.veloTipo = null; } }
+  if (f !== "gioco" && f !== "atrio") { V.joyReset(); if (V.pannello) V.pannello.chiudi(); V.chiudiMappa(); if (V.mg) { V.mg = null; V.velo.hidden = true; V.veloTipo = null; } }
   V.riuK = null;
 };
 Vista.prototype.aggVelo = function (soloTempi) {
@@ -2890,6 +2935,38 @@ Vista.prototype.aggVelo = function (soloTempi) {
   }
   if (V.veloTipo) { V.velo.hidden = true; V.velo.textContent = ""; V.veloTipo = null; }
 };
+// la scena della morte: chi ti ha spento (grande, a sinistra), la lanterna che si spegne, tu che cadi. Un tocco la chiude.
+Vista.prototype.scenaMorte = function (m) {
+  var V = this, sc = V.velo.parentNode, chi = (V.cache[m.da] || {}).nome || "Qualcuno", a = AVATAR[m.da], io = AVATAR[V.cb.myId];
+  var vecchia = sc.querySelector(".lt-morte"); if (vecchia) vecchia.remove();
+  var box = E("div", "lt-morte"), palco = E("div", "palco");
+  var k = a && a.img ? a.img.cloneNode() : E("div", "sagoma"); k.classList.add("killer");
+  var me = io && io.img ? io.img.cloneNode() : E("div", "sagoma"); me.classList.add("vittima");
+  var lan = E("div", "lanterna"); lan.append(E("i", "fiamma"), E("i", "fumo"), E("i", "fumo f2"));
+  palco.append(k, lan, me);
+  var testo = m.modo === "sceriffo" ? "Lo Sceriffo " + chi + " ti ha colpito" : m.modo === "veterano" ? chi + " era il Veterano in allerta" : m.modo === "veleno" ? "Il veleno di " + chi + " ha fatto effetto" : chi + " ti ha spento la lanterna";
+  box.append(palco, E("h2", "", testo), E("p", "", m.modo === "veterano" ? "L'hai toccato mentre era in allerta." : "Ora sei un'anima: puoi ancora finire i compiti."));
+  sc.appendChild(box); vibra([90, 60, 180]); SUONO.spegni();
+  var via = function () { if (!box.parentNode || box.classList.contains("via")) return; box.classList.add("via"); setTimeout(function () { box.remove(); }, 320); };
+  box.addEventListener("click", via); setTimeout(via, 3800);
+};
+// i tasti di una scheda in riunione (ak: "parla" | "vota" | "conf" | "mio" | "", più "|ind" per l'Indovino)
+Vista.prototype.tastiCarta = function (c, id, ak) {
+  var V = this, az = c.querySelector(".az"); az.textContent = "";
+  var tasto = function (cls, testo, fn) { var b = E("button", cls, testo); b.type = "button"; b.addEventListener("click", function (e) { e.stopPropagation(); fn(b); }); az.appendChild(b); return b; };
+  var tipo = ak.split("|")[0];
+  if (tipo === "parla") {
+    tasto("dubbio", "🔎 Sospetto", function (b) { V.manda("rapida", { tipo: "sospetto", id: id }); V.lampo(b); });
+    tasto("fido", "✅ Pulito", function (b) { V.manda("rapida", { tipo: "pulito", id: id }); V.lampo(b); });
+  } else if (tipo === "vota") {
+    tasto("vota", "🗳️ Vota", function () { V.conf = id; clearTimeout(V.confT); V.confT = setTimeout(function () { if (V.conf === id) { V.conf = null; V.riunione(); } }, 4000); vibra(15); V.riunione(); });
+  } else if (tipo === "conf") {
+    tasto("conf", "✓ Confermi?", function () { if (V.mioVoto) return; V.manda("voto", { su: id }); V.mioVoto = id; V.conf = null; clearTimeout(V.confT); vibra(40); V.riunione(); });
+  } else if (tipo === "mio") az.appendChild(E("span", "mio", "🗳️ Il tuo voto"));
+  if (ak.indexOf("|ind") >= 0) tasto("ind", "🔮", function () { V.apriIndovina(id); });
+};
+// un tasto premuto si accende un attimo (la frase è partita)
+Vista.prototype.lampo = function (b) { b.classList.remove("fatto"); void b.offsetWidth; b.classList.add("fatto"); vibra(15); };
 Vista.prototype.riunione = function (soloTempi) {
   var V = this, g = V.g, R = g.riu, ora = performance.now(), vivo = V.sonoVivo() && !V.guardo;
   var k = "riu|" + g.round + "|" + (V.vm.rip || 0);
@@ -2908,39 +2985,36 @@ Vista.prototype.riunione = function (soloTempi) {
     V.intro.hidden = false; vibra(80);
     (R && R.motivo === "corpo" ? SUONO.corpo : SUONO.campana)();
     clearTimeout(V.introT); V.introT = setTimeout(function () { V.intro.hidden = true; }, 2000);
-    var rapide = [["sospetto", "Sospetto"], ["pulito", "È pulito"], ["ero", "Io ero…"], ["salto", "Salto"]];
+    // sospetti, «pulito», voto e Indovino stanno sulle schede dei giocatori; qui sotto solo le frasi per sé e i tasti dei ruoli
+    var rapide = [["ero", "📍 Io ero…"], ["salto", "🤷 Non so"]];
     if (V.priv && V.priv.ruolo === "sindaco" && !V.priv.rivelato && vivo) rapide.unshift(["rivela", "👑 Rivelati"]);
-    if (V.priv && V.priv.ruolo === "indovino" && vivo) rapide.unshift(["indovina", "🔮 Indovina"]);
     if (V.priv && V.priv.ruolo === "imitatore" && !V.priv.imitato && vivo && g.g.some(function (q) { return !q[1] && !q[2]; })) rapide.unshift(["imita", "🎭 Imita"]);
     rapide.forEach(function (q) {
       var b = E("button", "", q[1]); b.type = "button"; b.dataset.k = q[0];
       b.addEventListener("click", function () {
         if (q[0] === "rivela") { V.manda("rivela"); b.remove(); return; }
-        if (q[0] === "indovina") { if (V.sel == null) return V.avviso("Prima tocca un nome."); return V.apriIndovina(V.sel); }
         if (q[0] === "imita") return V.apriImita(b);
-        if (q[0] === "sospetto" || q[0] === "pulito") { if (V.sel == null) return V.avviso("Prima tocca un nome."); V.manda("rapida", { tipo: q[0], id: V.sel }); } else V.manda("rapida", { tipo: q[0] });
+        V.manda("rapida", { tipo: q[0] }); V.lampo(b);
       });
       V.riuRap.appendChild(b);
     });
     V.riuForm = E("form", "scrivi"); var inp = E("input"); inp.type = "text"; inp.maxLength = 90; inp.placeholder = "Scrivi…"; var inv = E("button", "", "Invia"); inv.type = "submit"; V.riuForm.append(inp, inv); box.appendChild(V.riuForm);
     V.riuForm.addEventListener("submit", function (e) { e.preventDefault(); var tx = inp.value.trim(); if (!tx) return; V.manda("chat", { testo: tx }); inp.value = ""; inp.blur(); });
-    V.riuVoto = E("div", "voto"); V.btnVota = E("button", "btn btn-primario", "Vota"); V.btnSalta = E("button", "btn btn-fantasma", "Salta"); V.riuVoto.append(V.btnVota, V.btnSalta); box.appendChild(V.riuVoto);
-    V.btnVota.addEventListener("click", function () { if (V.sel == null) return; V.manda("voto", { su: V.sel }); V.mioVoto = V.sel; V.sel = null; V.riunione(); });
-    V.btnSalta.addEventListener("click", function () { V.manda("voto", { su: "salta" }); V.mioVoto = "salta"; V.sel = null; V.riunione(); });
+    V.riuVoto = E("div", "voto"); V.btnSalta = E("button", "btn btn-fantasma salta", "⏭️ Salto il voto"); V.riuVoto.append(V.btnSalta); box.appendChild(V.riuVoto);
+    V.btnSalta.addEventListener("click", function () { if (V.mioVoto) return; V.manda("voto", { su: "salta" }); V.mioVoto = "salta"; V.conf = null; vibra(25); V.riunione(); });
     V.riuNota = E("p", "nota", ""); box.appendChild(V.riuNota);
-    V.sel = null; V.mioVoto = null; V.carte = {}; V.nChat = 0; V.espK = null;
+    V.conf = null; V.mioVoto = null; V.carte = {}; V.nChat = 0; V.espK = null;
     g.g.forEach(function (q) {
-      var c = E("button", "carta"); c.type = "button"; var av = AVATAR[q[0]];
+      var c = E("div", "carta"); var av = AVATAR[q[0]];
       var fac = av && av.busto ? av.busto.cloneNode() : E("i", "pall", ""); if (!av) fac.style.background = (V.cache[q[0]] || {}).colore; fac.className = av ? "faccia" : "pall";
-      c.append(fac, E("span", "nm", (V.cache[q[0]] || {}).nome || "?"), E("span", "st", ""), E("span", "vt", ""));
-      c.addEventListener("click", function () { if (!vivo || V.mioVoto || !q[1] || q[0] === V.cb.myId || V.g.fase !== "riunione") return; V.sel = V.sel === q[0] ? null : q[0]; V.riunione(); });
+      c.append(fac, E("span", "nm", (V.cache[q[0]] || {}).nome || "?"), E("span", "st", ""), E("span", "vt", ""), E("div", "az"));
       V.carte[q[0]] = c; V.riuGrid.appendChild(c);
     });
   }
   // tempi
   var disc = Math.max(0, Math.ceil((V.discFine - ora) / 1000)), voto = Math.max(0, Math.ceil((V.votoFine - ora) / 1000));
   V.riuTimer.textContent = g.fase === "esito" ? "✓" : disc > 0 ? disc : voto;
-  if (g.fase === "riunione") V.riuNota.textContent = !vivo ? "Sei un'anima: guardi la riunione." : R && R.zittiti.indexOf(V.cb.myId) >= 0 ? "🤐 Sei stato zittito: in questa riunione non puoi scrivere." : disc > 0 ? "Si parla. Il voto si apre tra " + disc + "…" : (V.mioVoto ? "Hai votato." : "Votate!");
+  if (g.fase === "riunione") V.riuNota.textContent = !vivo ? "Sei un'anima: guardi la riunione." : R && R.zittiti.indexOf(V.cb.myId) >= 0 && disc > 0 ? "🤐 Sei stato zittito: non puoi parlare, ma puoi votare." : disc > 0 ? "Si parla: il voto si apre tra " + disc + " s" : V.mioVoto === "salta" ? "Hai saltato il voto." : V.mioVoto ? "Hai votato " + ((V.cache[V.mioVoto] || {}).nome || "") + "." : "Vota: tocca 🗳️ sotto chi vuoi cacciare.";
   if (soloTempi) return;
   if (R) {
     var da = (V.cache[R.da] || {}).nome || "?";
@@ -2953,14 +3027,21 @@ Vista.prototype.riunione = function (soloTempi) {
   var votati = R ? R.votati : [], zitt = R ? R.zittiti : [], esito = g.esito, sindaci = g.sindaci || [];
   var mioBers = V.priv && V.priv.ruolo === "accusatore" ? V.priv.bersaglio : null;
   var nVoto = 0, kEs = esito ? "es|" + g.round : null, nuovoEsito = kEs && V.kVoti !== kEs;
+  var zittitoIo = !!(R && zitt.indexOf(V.cb.myId) >= 0), indov = V.priv && V.priv.ruolo === "indovino" && vivo && V.priv.tentativi > 0;
   g.g.forEach(function (q) {
     var c = V.carte[q[0]]; if (!c) return;
-    c.classList.toggle("spento", !q[1]); c.classList.toggle("sel", V.sel === q[0]);
+    c.classList.toggle("spento", !q[1]); c.classList.toggle("mio-voto", V.mioVoto === q[0]); c.classList.toggle("votato", votati.indexOf(q[0]) >= 0);
+    // i tasti sulla scheda: mentre si parla «Sospetto» e «Pulito», quando si vota «Vota» (al secondo tocco «Confermi?»)
+    var altro = q[0] !== V.cb.myId, puo = vivo && !!q[1] && g.fase === "riunione";   // (votarsi da soli si può sempre)
+    var ak = !puo ? "" : disc > 0 ? (zittitoIo || !altro ? "" : "parla") : V.mioVoto ? (V.mioVoto === q[0] ? "mio" : "") : V.conf === q[0] ? "conf" : "vota";
+    if (puo && indov && altro) ak += "|ind";
+    if (c.dataset.ak !== ak) { c.dataset.ak = ak; V.tastiCarta(c, q[0], ak); }
     var nm = ((V.cache[q[0]] || {}).nome || "?") + (sindaci.indexOf(q[0]) >= 0 ? " 👑" : "") + (q[0] === mioBers ? " 🎯" : "");
     var nmE = c.querySelector(".nm"); if (nmE.textContent !== nm) nmE.textContent = nm;
     nmE.style.color = V.letti[q[0]] === "buono" ? "#8ee6a8" : V.letti[q[0]] === "cattivo" ? "#ff7a8a" : "";
-    var stt = !q[1] ? "spento" : zitt.indexOf(q[0]) >= 0 ? "🤐 zittito" : votati.indexOf(q[0]) >= 0 ? "ha votato" : "";
-    var st = c.querySelector(".st"); if (st.textContent !== stt) { st.textContent = stt; if (stt === "ha votato") { c.classList.remove("lt-batti"); void c.offsetWidth; c.classList.add("lt-batti"); } }
+    var stt = !q[1] ? "spento" : zitt.indexOf(q[0]) >= 0 ? "🤐 zittito" : "";
+    var st = c.querySelector(".st"); if (st.textContent !== stt) st.textContent = stt;
+    if (votati.indexOf(q[0]) >= 0 && !c.dataset.batti) { c.dataset.batti = "1"; c.classList.remove("lt-batti"); void c.offsetWidth; c.classList.add("lt-batti"); }
     if (!nuovoEsito) return;
     var vt = c.querySelector(".vt"); vt.textContent = "";
     // i voti compaiono uno alla volta
@@ -2971,8 +3052,8 @@ Vista.prototype.riunione = function (soloTempi) {
   var zittito = R && zitt.indexOf(V.cb.myId) >= 0;
   V.riuRap.hidden = V.riuForm.hidden = !vivo || g.fase !== "riunione" || zittito;
   V.riuVoto.hidden = !vivo || g.fase !== "riunione";
-  V.btnVota.disabled = !aperto || V.sel == null || !!V.mioVoto; V.btnSalta.disabled = !aperto || !!V.mioVoto;
-  V.btnVota.textContent = V.mioVoto ? "Hai votato" : V.sel != null ? "Vota " + ((V.cache[V.sel] || {}).nome || "") : "Tocca chi votare";
+  V.btnSalta.disabled = !aperto || !!V.mioVoto;
+  var ts = V.mioVoto === "salta" ? "✓ Hai saltato" : V.mioVoto ? "✓ Hai votato" : "⏭️ Salto il voto"; if (V.btnSalta.textContent !== ts) V.btnSalta.textContent = ts;
   if (esito && V.espK !== esito.titolo + "|" + g.round) {
     V.espK = esito.titolo + "|" + g.round;
     var box = V.velo.querySelector(".lt-riu"), salti = esito.voti.filter(function (x) { return x[1] === "salta"; }).length;
@@ -3048,6 +3129,21 @@ function stile() {
     ".lt-vaso{position:relative;width:110px;height:170px;border:3px solid rgba(241,232,214,.5);border-top:0;border-radius:0 0 18px 18px;overflow:hidden;background:rgba(13,16,32,.6)}.lt-vaso .liv{position:absolute;left:0;right:0;bottom:0;height:0}.lt-vaso .fascia{position:absolute;left:0;right:0;background:rgba(231,183,92,.35);border-top:2px solid #e7b75c;border-bottom:2px solid #e7b75c;z-index:1}",
     ".lt-quadri{display:grid;grid-template-columns:repeat(2,84px);gap:10px}.lt-quadri .q{width:84px;height:84px;border-radius:8px;border:5px solid #8a6538;background:#2b2f45;color:#f1e8d6;font-size:2.4rem;font-weight:700;display:grid;place-items:center}.lt-quadri .q span{transition:transform .2s var(--lt-ease)}.lt-quadri .q.ok{border-color:#e7b75c}",
     ".lt-scuoti{animation:ltScuoti .3s var(--lt-ease)}@keyframes ltScuoti{0%,100%{translate:0}25%{translate:-8px}50%{translate:7px}75%{translate:-4px}}",
+    ".lt-scena.lt-ruota{position:fixed;left:0;top:0;transform-origin:0 0;z-index:40}",
+    ".lt-scena,.lt-scena *,.lt-pc,.lt-pc *{touch-action:manipulation}.lt-scena .lt-joyzona,.lt-scena canvas{touch-action:none}",
+    ".lt-morte{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;text-align:center;background:radial-gradient(ellipse at center,rgba(70,10,22,.92),rgba(5,4,10,.97) 70%);animation:ltMorteEntra .25s var(--lt-ease) both}",
+    ".lt-morte.via{animation:ltMorteVia .3s var(--lt-ease) both}@keyframes ltMorteEntra{from{opacity:0}to{opacity:1}}@keyframes ltMorteVia{to{opacity:0}}",
+    ".lt-morte .palco{display:flex;align-items:flex-end;justify-content:center;gap:4%;width:100%;height:46%}",
+    ".lt-morte .killer,.lt-morte .vittima{height:100%;width:auto;max-width:34%;object-fit:contain}.lt-morte .sagoma{width:18%;max-width:120px;height:auto;aspect-ratio:1/2;border-radius:50% 50% 14% 14%/34% 34% 10% 10%;background:linear-gradient(#2a3150,#141a30)}",
+    ".lt-morte .killer{filter:drop-shadow(0 0 18px rgba(240,90,110,.75));animation:ltKiller .45s var(--lt-ease) .1s both}@keyframes ltKiller{from{opacity:0;transform:translateX(-40%) scale(.9)}to{opacity:1;transform:none}}",
+    ".lt-morte .vittima{transform-origin:50% 100%;animation:ltCade .7s cubic-bezier(.5,0,.75,0) 1.2s both}@keyframes ltCade{to{transform:rotate(84deg) translateY(10%);filter:grayscale(1) brightness(.55)}}",
+    ".lt-morte .lanterna{position:relative;width:13%;max-width:70px;aspect-ratio:3/4;margin-bottom:6%;border-radius:30% 30% 22% 22%;background:linear-gradient(#3a2d3d,#1c1722);box-shadow:inset 0 0 0 3px #e7b75c}",
+    ".lt-morte .fiamma{position:absolute;left:50%;top:22%;width:44%;height:52%;margin-left:-22%;border-radius:50% 50% 45% 45%;background:radial-gradient(ellipse at 50% 70%,#fff3c4,#ffb347 45%,#ff6a2a 80%);box-shadow:0 0 26px 10px rgba(255,170,70,.55);animation:ltSpegne .5s ease-in .8s both}@keyframes ltSpegne{to{transform:scale(.05);opacity:0;box-shadow:none}}",
+    ".lt-morte .fumo{position:absolute;left:44%;top:10%;width:14%;height:14%;border-radius:50%;background:rgba(200,200,215,.5);opacity:0;animation:ltFumo 1.4s ease-out 1.1s both}.lt-morte .fumo.f2{left:52%;animation-delay:1.3s}@keyframes ltFumo{0%{opacity:.7;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-260%) scale(2.6)}}",
+    ".lt-morte h2{margin:10px 0 0;font-size:1.45rem;font-weight:700;letter-spacing:-.02em;color:#ff9aa9;animation:ltKiller .4s var(--lt-ease) .5s both}.lt-morte p{margin:0;color:#c9bfb0;font-size:.9rem;animation:ltKiller .4s var(--lt-ease) .9s both}",
+    ".lt-minimappa{position:absolute;z-index:3;left:0;right:0;margin:0 auto;top:calc(8px + env(safe-area-inset-top));width:min(560px,calc(100% - 24px));height:min(58%,420px);display:flex;flex-direction:column;padding:6px 8px 6px;border-radius:14px;background:rgba(13,16,32,.86);border:1px solid rgba(231,183,92,.3);box-shadow:0 10px 30px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:ltSale .22s var(--lt-ease)}",
+    ".lt-minimappa .testa{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.82rem;color:#f6d999}.lt-minimappa .lt-chiudi{position:static;width:34px;height:34px;flex:none;font-size:1.3rem}",
+    ".lt-minimappa canvas{display:block;margin:2px auto 0;border-radius:8px;max-width:100%;flex:1 1 auto;min-height:0;object-fit:contain}.lt-minimappa .leg{margin:4px 0 0;font-size:.7rem;color:#b8b1a2;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
     ".lt-mappa{max-width:960px;text-align:center;padding:10px}.lt-mappa canvas{display:block;margin:0 auto;border-radius:10px;max-width:100%}.lt-mappa p{margin:8px 0 0;font-size:.78rem;color:#b8b1a2}",
     ".lt-riu{display:flex;flex-direction:column;gap:8px;height:100%;max-height:640px;padding:12px}",
     ".lt-riu .testa{display:flex;justify-content:space-between;align-items:center;gap:10px}.lt-riu h3{font-size:1rem}",
@@ -3057,7 +3153,15 @@ function stile() {
     ".lt-riu .carta .faccia,.lt-riu .carta .pall{grid-row:span 2;width:28px;height:28px;border-radius:50%;object-fit:cover;object-position:top;background:#242a45}",
     ".lt-riu .carta .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lt-riu .carta .st{font-size:.66rem;font-weight:600;color:#b8b1a2;min-height:.8rem}",
     ".lt-riu .carta .vt{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:3px}.lt-riu .carta .vt i{width:9px;height:9px;border-radius:50%;display:block}",
-    ".lt-riu .carta.sel{border-color:#e7b75c;background:rgba(231,183,92,.12)}.lt-riu .carta.spento{opacity:.38}",
+    ".lt-riu .carta.mio-voto{border-color:#e7b75c;background:rgba(231,183,92,.14)}.lt-riu .carta.spento{opacity:.38}.lt-riu .carta{position:relative}",
+    ".lt-riu .carta.votato::after{content:'✓';position:absolute;left:24px;top:1px;width:14px;height:14px;border-radius:50%;background:#5ad19a;color:#062314;font-size:10px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px #0d1020}",
+    ".lt-riu .carta .az{grid-column:1/-1;display:flex;gap:4px;margin-top:4px}.lt-riu .carta .az:empty{display:none}",
+    ".lt-riu .carta .az button{flex:1;min-width:0;font:inherit;font-size:.72rem;font-weight:700;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.16);border-radius:8px;padding:6px 2px;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease),background-color .2s var(--lt-ease),box-shadow .2s var(--lt-ease)}",
+    ".lt-riu .carta .az button:active{transform:scale(.94)}.lt-riu .carta .az button.fatto{animation:ltLampo .6s var(--lt-ease)}@keyframes ltLampo{0%{background:rgba(90,209,154,.45)}100%{background:#242a45}}",
+    ".lt-riu .carta .az .vota{background:linear-gradient(180deg,#e7b75c,#c9923a);color:#1d1508;border-color:transparent;font-size:.8rem;padding:7px 2px}",
+    ".lt-riu .carta .az .conf{background:#5ad19a;color:#062314;border-color:transparent;font-size:.8rem;padding:7px 2px;animation:ltConferma .9s var(--lt-ease) infinite}@keyframes ltConferma{50%{box-shadow:0 0 0 4px rgba(90,209,154,.25)}}",
+    ".lt-riu .carta .az .ind{flex:0 0 34px}.lt-riu .carta .az .mio{flex:1;text-align:center;font-size:.74rem;font-weight:700;color:#f6d999;padding:5px 0}",
+    ".lt-riu .voto .salta{font-size:.95rem}",
     ".lt-riu .chat{flex:1 1 auto;min-height:70px;overflow-y:auto;background:#0d1020;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:5px;font-size:.84rem;line-height:1.35;user-select:text;-webkit-user-select:text}",
     ".lt-riu .chat p{margin:0}.lt-riu .chat .sis{color:#b8b1a2;font-style:italic}",
     ".lt-riu .rapide{display:flex;gap:5px;flex-wrap:wrap}.lt-riu .rapide button{flex:1;font:inherit;font-weight:700;font-size:.76rem;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.16);border-radius:999px;padding:6px 8px}",
@@ -3108,6 +3212,40 @@ function stile() {
     ".lt-batti{animation:ltBatti .4s var(--lt-ease)}@keyframes ltBatti{50%{transform:scale(1.05);border-color:#e7b75c}}",
     ".lt-vince.vinto{box-shadow:0 0 70px rgba(231,183,92,.45)}.lt-vince.perso{box-shadow:0 0 70px rgba(208,80,106,.35)}.lt-vince h2{animation:ltColpo .6s var(--lt-ease) both}",
     "@media (max-height:700px){.lt-riu{gap:5px;padding:9px}.lt-riu .grid{grid-template-columns:repeat(3,1fr);gap:4px}.lt-riu .carta{grid-template-columns:22px minmax(0,1fr);font-size:.72rem;padding:3px 5px;column-gap:5px}.lt-riu .carta .faccia,.lt-riu .carta .pall{width:22px;height:22px}.lt-riu .carta .st{font-size:.58rem}.lt-riu .chat{min-height:56px;font-size:.8rem}.lt-riu .voto .btn{padding:8px}.lt-riu .timer{width:38px;height:38px}}",
+    // il «computer» delle regole (⚙️): schermo scuro del palazzo, schede, righe ‹ ›, griglia dei ruoli
+    ".lt-pc{--pc-e:cubic-bezier(.22,1,.36,1);position:relative;border-radius:16px;overflow:hidden;color:#f1e8d6;font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Text\",\"Helvetica Neue\",\"Inter\",system-ui,sans-serif;-webkit-font-smoothing:antialiased;background:linear-gradient(180deg,#151b33,#0b0f1e);border:1px solid rgba(231,183,92,.3);box-shadow:0 12px 32px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05)}",
+    ".lt-pc::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px)}",
+    ".lt-pc button{font:inherit;border:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--pc-e),background-color .2s var(--pc-e),color .2s var(--pc-e),opacity .2s var(--pc-e)}.lt-pc button:active{transform:scale(.95)}",
+    ".lt-pc-barra{display:flex;align-items:center;gap:6px;padding:6px 8px 6px 12px;background:rgba(231,183,92,.08);border-bottom:1px solid rgba(231,183,92,.16);font:600 11px ui-monospace,\"SF Mono\",Menlo,monospace;letter-spacing:.12em;color:#f6d999}",
+    ".lt-pc-barra i{width:8px;height:8px;border-radius:50%;background:#f05a6e;opacity:.8}.lt-pc-barra i:nth-child(2){background:#e7b75c}.lt-pc-barra i:nth-child(3){background:#5ad19a}.lt-pc-barra span{margin-left:6px}",
+    ".lt-pc-preset{display:flex;gap:4px;margin-left:auto;letter-spacing:0}",
+    ".lt-pc-preset button{height:28px;padding:0 10px;border-radius:8px;background:rgba(241,232,214,.07);color:#d9d1c1;font:600 12px -apple-system,BlinkMacSystemFont,\"SF Pro Text\",system-ui,sans-serif}.lt-pc-preset button.attiva{background:rgba(231,183,92,.2);color:#f6d999;box-shadow:inset 0 0 0 1px rgba(231,183,92,.5)}",
+    ".lt-pc-schede{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:6px 10px}",
+    ".lt-pc-schede button{display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 0;border-radius:10px;background:transparent;color:#a9a294}.lt-pc-schede b{font-size:17px;line-height:1.1}.lt-pc-schede span{font-size:10.5px;font-weight:600}",
+    ".lt-pc-schede button.attiva{background:rgba(231,183,92,.15);color:#f6d999;box-shadow:inset 0 0 0 1px rgba(231,183,92,.45)}",
+    ".lt-pc-corpo{padding:0 10px 6px;min-height:236px}",
+    ".lt-pc-pag{animation:ltPcEntra .22s var(--pc-e) both}@keyframes ltPcEntra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
+    ".lt-pc-riga{display:flex;align-items:center;gap:8px;min-height:37px;border-bottom:1px solid rgba(241,232,214,.06)}.lt-pc-riga:last-child{border-bottom:0}",
+    ".lt-pc-riga .et{flex:1;min-width:0;font-size:14px;font-weight:600;color:#ebe3d3;line-height:1.2}",
+    ".lt-pc-riga .ctr{display:flex;align-items:center;gap:3px;flex:none}",
+    ".lt-pc-riga .fr{width:30px;height:30px;border-radius:8px;background:rgba(241,232,214,.07);color:#f6d999;font-size:18px;font-weight:700;line-height:1}.lt-pc-riga .fr:disabled{opacity:.22;cursor:default}",
+    ".lt-pc-riga .val{min-width:96px;height:30px;padding:0 8px;border-radius:8px;background:rgba(231,183,92,.12);color:#f6d999;font:600 12.5px ui-monospace,\"SF Mono\",Menlo,monospace;white-space:nowrap}",
+    ".lt-pc .pop{animation:ltPcPop .2s var(--pc-e)}@keyframes ltPcPop{from{transform:scale(.88)}to{transform:none}}",
+    ".lt-pc-sq{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px}",
+    ".lt-pc-sq button{height:30px;border-radius:8px;background:rgba(241,232,214,.05);color:#a9a294;font-size:12px;font-weight:600}",
+    ".lt-pc-sq button.attiva{color:#f6d999;background:rgba(231,183,92,.16);box-shadow:inset 0 0 0 1px rgba(231,183,92,.45)}.lt-pc-sq button.ombre.attiva{color:#f6a3b2;background:rgba(208,80,106,.18);box-shadow:inset 0 0 0 1px rgba(208,80,106,.5)}.lt-pc-sq button.soli.attiva{color:#d6c8ff;background:rgba(169,147,230,.18);box-shadow:inset 0 0 0 1px rgba(169,147,230,.5)}",
+    ".lt-pc-ruoli{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}@media (max-width:370px){.lt-pc-ruoli{grid-template-columns:repeat(3,1fr)}}",
+    ".lt-pc-r{position:relative;height:37px;padding:3px 6px;border-radius:9px;overflow:hidden;text-align:left;background:rgba(241,232,214,.06);color:#f1e8d6;box-shadow:inset 0 0 0 1px rgba(241,232,214,.07)}",
+    ".lt-pc-r b{display:block;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lt-pc-r span{display:inline-block;font:600 11px ui-monospace,\"SF Mono\",Menlo,monospace;color:#f6d999}",
+    ".lt-pc-r i{position:absolute;left:0;bottom:0;height:3px;background:linear-gradient(90deg,#c9923a,#f6d999);transition:width .25s var(--pc-e)}.lt-pc-ruoli.ombre .lt-pc-r i{background:linear-gradient(90deg,#a8344c,#f08aa0)}.lt-pc-ruoli.soli .lt-pc-r i{background:linear-gradient(90deg,#7d68c4,#cbbcf6)}",
+    ".lt-pc-r.zero{opacity:.5}.lt-pc-r.zero span{color:#8c8577}",
+    ".lt-pc-tutti{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:12px;color:#a9a294}.lt-pc-tutti span{margin-right:2px}.lt-pc-tutti button{flex:1;height:28px;border-radius:8px;background:rgba(241,232,214,.06);color:#d9d1c1;font:600 11.5px ui-monospace,\"SF Mono\",Menlo,monospace}",
+    ".lt-pc-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px}",
+    ".lt-pc-pick button{height:28px;padding:0 3px;border-radius:8px;background:rgba(241,232,214,.05);color:#b8b1a2;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lt-pc-pick button.attiva{color:#f6d999;background:rgba(231,183,92,.16);box-shadow:inset 0 0 0 1px rgba(231,183,92,.45)}",
+    ".lt-pc-regole{border-top:1px solid rgba(231,183,92,.16);padding-top:2px}.lt-pc-nota{margin:4px 0 0;font-size:12px;line-height:1.35;color:#a9a294;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}",
+    ".lt-pc-stato{padding:7px 12px 8px;border-top:1px solid rgba(231,183,92,.14);font:500 11px/1.35 ui-monospace,\"SF Mono\",Menlo,monospace;color:#9fd8b0;background:rgba(0,0,0,.18)}.lt-pc-stato::after{content:'▍';margin-left:2px;animation:ltPcCursore 1s steps(1) infinite}@keyframes ltPcCursore{50%{opacity:0}}",
+    "@media (max-height:700px){.lt-pc-riga{min-height:36px}.lt-pc-corpo{min-height:220px}.lt-pc-schede button{padding:4px 0}.lt-pc-r{height:36px}}",
+    "@media (prefers-reduced-motion:reduce){.lt-pc *,.lt-pc *::after,.lt-pc::after{animation:none!important;transition:none!important}}",
     "@media (prefers-reduced-motion:reduce){.lt-scena *,.lt-scena *::before{animation-duration:.01ms!important;transition-duration:.01ms!important}}"
   ].join("");
   document.head.appendChild(st);
@@ -3116,33 +3254,91 @@ function stile() {
 // =========================================================
 //  LE REGOLE DELL'HOST (bottoni .modo-chip, come gli altri giochi)
 // =========================================================
+// ⚙️ Le regole della partita: il «computer» del palazzo, a schede. Ogni scheda sta in uno schermo: righe corte con ‹ ›,
+// i ruoli in una griglia (un tocco cambia la probabilità), i poteri ruolo per ruolo. Si ritrova la scheda di prima riaprendo.
+var SCHEDE = [["partita", "🎲", "Partita"], ["riunioni", "🔔", "Riunioni"], ["ruoli", "🎭", "Ruoli"], ["poteri", "✨", "Poteri"], ["sabotaggi", "🌑", "Sabotaggi"]];
+var SQUADRE = [["ospiti", "Ospiti"], ["ombre", "Ombre"], ["soli", "Da soli"], ["mod", "Modificatori"]];
+var PC = { scheda: "partita", squadra: "ospiti", gruppo: null };
 function impostazioni(box, dove, aiuti) {
-  var el = aiuti.el;
+  stile();
   var cur = pulisci(dove); Object.keys(cur).forEach(function (k) { dove[k] = cur[k]; });
-  function disegnaTutto() {
-    while (box.firstChild) box.removeChild(box.firstChild);
-    box.appendChild(el("div", { class: "etichetta", text: "Partenza veloce" }));
-    var pg = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(3,1fr)" });
-    [["classica", "Classica"], ["tanti", "Tanti ruoli"], ["caos", "Caos"]].forEach(function (p) {
-      pg.appendChild(el("button", { class: "modo-chip", style: "justify-content:center", onclick: function () { var v = conPreset(p[0]); Object.keys(v).forEach(function (k) { dove[k] = v[k]; }); disegnaTutto(); } }, [el("div", { class: "mt", text: p[1] })]));
-    });
-    box.appendChild(pg);
-    var gruppo = null;
-    VOCI.forEach(function (v) {
-      if (v.g !== gruppo) { gruppo = v.g; box.appendChild(el("div", { class: "etichetta", style: "margin-top:14px;font-weight:600", text: gruppo })); }
-      box.appendChild(el("div", { class: "etichetta", text: v.et }));
-      var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(" + Math.min(v.opz.length, 5) + ",1fr)" });
-      v.opz.forEach(function (o) {
-        var val = valoreOpz(o);
-        var b = el("button", { class: "modo-chip" + (leggi(dove, v.k) === val ? " attiva" : ""), style: "justify-content:center", onclick: function () {
-          scrivi(dove, v.k, val); [].forEach.call(g.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
-        } }, [el("div", { class: "mt", text: scrittaOpz(o, v.u) })]);
-        g.appendChild(b);
-      });
-      box.appendChild(g);
-    });
+  var perG = {}; VOCI.forEach(function (v) { (perG[v.g] = perG[v.g] || []).push(v); });
+  var POTERI = Object.keys(perG).filter(function (g) { return ["Partita", "Riunioni", "Probabilità dei ruoli", "Sabotaggi", "Modificatori"].indexOf(g) < 0; });
+  if (POTERI.indexOf(PC.gruppo) < 0) PC.gruppo = POTERI[0];
+  function idx(v) { var x = leggi(dove, v.k); for (var i = 0; i < v.opz.length; i++) if (valoreOpz(v.opz[i]) === x) return i; return 0; }
+  function pop(n) { n.classList.remove("pop"); void n.offsetWidth; n.classList.add("pop"); }
+  box.textContent = "";
+  var pc = E("div", "lt-pc"); box.appendChild(pc);
+  pc.setAttribute("data-regola", "");   // (così l'app sa che Lanterne ha delle regole: in saletta c'è «⚙️ Regole»)
+  var barra = E("div", "lt-pc-barra"), preset = E("div", "lt-pc-preset");
+  barra.append(E("i"), E("i"), E("i"), E("span", "", "REGOLE"), preset);   // in alto le partenze veloci, come i tasti di una finestra
+  var schede = E("div", "lt-pc-schede"), corpo = E("div", "lt-pc-corpo"), stato = E("div", "lt-pc-stato");
+  pc.append(barra, schede, corpo, stato);
+  function aggStato() {
+    stato.textContent = "> " + riassunto(pulisci(dove));
+    [].forEach.call(preset.children, function (b) { b.classList.toggle("attiva", JSON.stringify(conPreset(b.dataset.p)) === JSON.stringify(pulisci(dove))); });
   }
-  disegnaTutto();
+  [["classica", "Classica"], ["tanti", "Tanti"], ["caos", "Caos"]].forEach(function (p) {
+    var b = E("button", "", p[1]); b.type = "button"; b.dataset.p = p[0];
+    b.addEventListener("click", function () { var v = conPreset(p[0]); Object.keys(v).forEach(function (k) { dove[k] = v[k]; }); disegna(); aggStato(); });
+    preset.appendChild(b);
+  });
+  SCHEDE.forEach(function (sc) {
+    var b = E("button", sc[0] === PC.scheda ? "attiva" : ""); b.type = "button"; b.dataset.s = sc[0];
+    b.append(E("b", "", sc[1]), E("span", "", sc[2]));
+    b.addEventListener("click", function () { PC.scheda = sc[0]; [].forEach.call(schede.children, function (x) { x.classList.toggle("attiva", x === b); }); disegna(); });
+    schede.appendChild(b);
+  });
+  // una regola: nome a sinistra, ‹ valore › a destra (il valore si tocca anche da solo: passa al successivo)
+  function riga(v, et) {
+    var r = E("div", "lt-pc-riga"), c = E("div", "ctr"), meno = E("button", "fr", "‹"), val = E("button", "val"), piu = E("button", "fr", "›");
+    meno.type = val.type = piu.type = "button"; meno.setAttribute("aria-label", "meno"); piu.setAttribute("aria-label", "più");
+    function mostra() { var i = idx(v); val.textContent = scrittaOpz(v.opz[i], v.u); meno.disabled = i === 0; piu.disabled = i === v.opz.length - 1; }
+    function vai(d, giro) { var i = idx(v) + d; if (giro) i = (i + v.opz.length) % v.opz.length; if (i < 0 || i >= v.opz.length) return; scrivi(dove, v.k, valoreOpz(v.opz[i])); mostra(); pop(val); aggStato(); }
+    meno.addEventListener("click", function () { vai(-1); }); piu.addEventListener("click", function () { vai(1); }); val.addEventListener("click", function () { vai(1, true); });
+    c.append(meno, val, piu); r.append(E("span", "et", et || v.et.replace(/ \(.*\)$/, "")), c); mostra();
+    return r;
+  }
+  // un ruolo nella griglia: tocco = probabilità dopo (0 → 25 → 50 → 75 → 100 → 0); la barretta sotto dice quanto
+  function cella(v, nome) {
+    var b = E("button", "lt-pc-r"), n = E("b", "", nome), q = E("span"), bar = E("i"); b.type = "button"; b.append(n, q, bar);
+    function mostra() { var x = leggi(dove, v.k), mx = valoreOpz(v.opz[v.opz.length - 1]) || 100; q.textContent = scrittaOpz(v.opz[idx(v)], v.u); bar.style.width = Math.round(100 * x / mx) + "%"; b.classList.toggle("zero", !x); }
+    b.addEventListener("click", function () { var i = (idx(v) + 1) % v.opz.length; scrivi(dove, v.k, valoreOpz(v.opz[i])); mostra(); pop(q); aggStato(); });
+    mostra(); return b;
+  }
+  function disegna() {
+    corpo.textContent = "";
+    var dentro = E("div", "lt-pc-pag"); corpo.appendChild(dentro);
+    if (PC.scheda === "partita") perG["Partita"].forEach(function (v) { dentro.appendChild(riga(v)); });
+    else if (PC.scheda === "riunioni") perG["Riunioni"].forEach(function (v) { dentro.appendChild(riga(v)); });
+    else if (PC.scheda === "sabotaggi") (perG["Sabotaggi"] || []).forEach(function (v) { dentro.appendChild(riga(v)); });
+    else if (PC.scheda === "ruoli") {
+      var sq = E("div", "lt-pc-sq");
+      SQUADRE.forEach(function (x) { var b = E("button", x[0] + (x[0] === PC.squadra ? " attiva" : ""), x[1]); b.type = "button"; b.addEventListener("click", function () { PC.squadra = x[0]; disegna(); }); sq.appendChild(b); });
+      var gr = E("div", "lt-pc-ruoli " + PC.squadra), voci;
+      if (PC.squadra === "mod") voci = (perG["Modificatori"] || []).map(function (v) { var m = MODIFICATORI[v.k.split(".")[1]]; return [v, (m ? m.icona + " " : "") + v.et]; });
+      else voci = perG["Probabilità dei ruoli"].filter(function (v) { return RUOLI[v.k.slice(5)].squadra === PC.squadra; }).map(function (v) { return [v, v.et]; });
+      voci.forEach(function (x) { gr.appendChild(cella(x[0], x[1])); });
+      // tutti insieme: spenti, al minimo, a metà, sempre
+      var tutti = E("div", "lt-pc-tutti"); tutti.appendChild(E("span", "", "Tutti:"));
+      [0, 1, 2, -1].forEach(function (j) {
+        var o = voci.length ? voci[0][0].opz : [], val = o.length ? valoreOpz(o[j < 0 ? o.length - 1 : Math.min(j, o.length - 1)]) : 0;
+        var b = E("button", "", o.length ? scrittaOpz(o[j < 0 ? o.length - 1 : Math.min(j, o.length - 1)], voci[0][0].u) : ""); b.type = "button";
+        b.addEventListener("click", function () { voci.forEach(function (x) { scrivi(dove, x[0].k, val); }); disegna(); aggStato(); });
+        tutti.appendChild(b);
+      });
+      dentro.append(sq, gr, tutti);
+    } else if (PC.scheda === "poteri") {
+      var pick = E("div", "lt-pc-pick");
+      POTERI.forEach(function (g) { var nome = g.replace(/ \(.*\)$/, ""); var b = E("button", g === PC.gruppo ? "attiva" : "", nome); b.type = "button"; b.addEventListener("click", function () { PC.gruppo = g; disegna(); }); pick.appendChild(b); });
+      var regole = E("div", "lt-pc-regole");
+      perG[PC.gruppo].forEach(function (v) { regole.appendChild(riga(v)); });
+      var r = Object.keys(RUOLI).filter(function (k) { return RUOLI[k].nome === PC.gruppo; })[0];
+      if (r) regole.appendChild(E("p", "lt-pc-nota", RUOLI[r].desc));
+      dentro.append(pick, regole);
+    }
+  }
+  disegna(); aggStato();
 }
 
 if (window.LT_PROVA) window.LT_RUOLI = Object.keys(RUOLI).map(function (r) { return [r, RUOLI[r].nome + " (" + { ospiti: "ospite", ombre: "ombra", soli: "da solo" }[RUOLI[r].squadra] + ")"]; });
@@ -3158,7 +3354,7 @@ if (window.LT_PROVA) window.LT_RUOLI = Object.keys(RUOLI).map(function (r) { ret
 })();
 function soloAmmessi(t) {
   var s = t.schermata({ icona: "🏮", titolo: "Lanterne" });
-  s._contenuto.appendChild(t.el("p", { class: "modulo-nota", text: "Lanterne è ancora in prova: per ora la stanza la aprono solo " + AMMESSI.join(" e ") + ". Fatti invitare da loro: col link o col codice entri anche tu." }));
+  s._contenuto.appendChild(t.el("p", { class: "modulo-nota", text: "Lanterne è ancora in prova: per ora la stanza la aprono solo " + AMMESSI.slice(0, -1).join(", ") + " e " + AMMESSI[AMMESSI.length - 1] + ". Fatti invitare da loro: col link o col codice entri anche tu." }));
   s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Va bene", onclick: function () { t.esci(); } }));
   t.mostra(s);
 }
