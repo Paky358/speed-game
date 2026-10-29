@@ -333,6 +333,21 @@
         "font-weight:900;font-size:1.15rem;border-radius:16px;padding:6px 16px;border:2px solid #ffd43b;box-shadow:0 6px 18px rgba(0,0,0,.4);animation:hoGpVia .45s cubic-bezier(.3,1.5,.5,1);transition:opacity .4s}",
       ".ho-gp-via.doppi{background:linear-gradient(135deg,#c92a2a,#e8590c);border-color:#ffe066;font-size:1.25rem}",
       ".ho-gp-via.via{opacity:0}",
+      // 🌙 Notte vivace: podio e righe delle classifiche (le schermate chiare del gioco) coi colori dell'app
+      // (il disco dell'avatar e la corona d'oro del primo; i gradini sono i metalli dei trofei, scuri, col filo del loro colore)
+      ".oro .ho-gradino .fac,.oro .ho-riga .fac{background:radial-gradient(circle at 50% 35%,var(--o-carta-2),var(--o-carta-piena))}",
+      ".oro .ho-gradino.p1 .fac{box-shadow:0 0 0 3px var(--n-monete),0 0 24px color-mix(in srgb,var(--n-monete) 45%,transparent)}",
+      ".oro .ho-gradino .blocco{background:linear-gradient(180deg,var(--o-m-bronzo-b),var(--o-m-bronzo-a));box-shadow:inset 0 2px 0 var(--o-m-bronzo-f),inset 0 0 0 1px color-mix(in srgb,var(--o-m-bronzo-f) 35%,transparent)}",
+      ".oro .ho-gradino.p1 .blocco{background:linear-gradient(180deg,var(--o-m-oro-b),var(--o-m-oro-a));box-shadow:inset 0 2px 0 var(--o-m-oro-f),inset 0 0 0 1px color-mix(in srgb,var(--o-m-oro-f) 35%,transparent)}",
+      ".oro .ho-gradino.p2 .blocco{background:linear-gradient(180deg,var(--o-m-argento-b),var(--o-m-argento-a));box-shadow:inset 0 2px 0 var(--o-m-argento-f),inset 0 0 0 1px color-mix(in srgb,var(--o-m-argento-f) 35%,transparent)}",
+      ".oro .ho-gradino.p1 .blocco .emo{--emo-col:var(--o-m-oro-i)}",
+      ".oro .ho-gradino.p2 .blocco .emo{--emo-col:var(--o-m-argento-i)}",
+      ".oro .ho-gradino.p3 .blocco .emo{--emo-col:var(--o-m-bronzo-i)}",
+      // le righe: vetro sollevato come i riquadri dell'app; «tu» col filo lampone
+      ".oro .ho-riga{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06)}",
+      ".oro .ho-riga.mia{background:linear-gradient(180deg,var(--o-carta-viva),var(--o-crema)),var(--o-carta);border-color:color-mix(in srgb,var(--o-oro) 65%,transparent)}",
+      ".oro .ho-gp-piu{color:var(--o-verde)}",
+      ".oro .ho-gp-testa{opacity:1;color:var(--o-tenue)}",
       "@keyframes hoGpVia{from{transform:translate(-50%,0) scale(.4);opacity:0}}",
       "@media (prefers-reduced-motion:reduce){.ho-folla,.ho-nuv,.ho-polv b{animation:none}}"
     ].join("");
@@ -793,7 +808,7 @@
     var titolo = gp.finito ? (mio ? (mio.pos === 1 ? "Hai vinto il Gran Premio!" : "Gran Premio: " + mio.pos + "°") : "Gran Premio finito!")
       : "Gran Premio · corsa " + gp.corsa + " di " + gp.di;
     var sotto = gp.finito ? "Horto Muso · classifica a punti" : (gp.corsa + 1 >= gp.di ? "🔥 La prossima è l'ultima: punti doppi!" : "Prossima: corsa " + (gp.corsa + 1) + " di " + gp.di);
-    var s = t.schermata({ icona: gp.finito ? "🏆" : "🏁", titolo: titolo, sotto: sotto });
+    var s = t.schermata({ chiara: true, icona: gp.finito ? "🏆" : "🏁", titolo: titolo, sotto: sotto });
     s.classList.add("ho-gp-s");
     function faccia(r) { var cfg = (o.av && r.s >= 0 && o.av[r.s]) || facciaDi(r.nome); return busto(cfg); }
     function riga(r) {
@@ -876,7 +891,7 @@
   function renderFine(t, ord, nomi, io, cn, cb) {
     assicuraStile();
     var el = t.el, guardo = io == null || io < 0, mioPosto = guardo ? 0 : ord.indexOf(io) + 1, vinto = mioPosto === 1;
-    var s = t.schermata({ icona: guardo ? "🏁" : vinto ? "🏆" : "🏁", titolo: guardo ? "Classifica della corsa" : vinto ? "Hai vinto!" : "Arrivato " + mioPosto + "°", sotto: "Horto Muso" });
+    var s = t.schermata({ chiara: true, icona: guardo ? "🏁" : vinto ? "🏆" : "🏁", titolo: guardo ? "Classifica della corsa" : vinto ? "Hai vinto!" : "Arrivato " + mioPosto + "°", sotto: "Horto Muso" });
     function faccia(idx) { return busto(ultimiAv[idx] || facciaDi(nomi[idx])); }
     var podio = el("div", { class: "ho-podio" });
     [1, 0, 2].forEach(function (p) {
@@ -1335,7 +1350,7 @@
     function esci() { chiudiCorsa(); if (S.rete) S.rete.chiudi(); t.esci(); }
     function mioCav() { var b = S.buf[S.buf.length - 1]; return b && S.mySeat >= 0 ? b.cav[S.mySeat] : null; }
     function schermaNome() {
-      var s = t.schermata({ icona: "🐎", titolo: "Entra nella corsa", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🐎", titolo: "Entra nella corsa", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1438,12 +1453,12 @@
       renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, fuori: m.fuori, guarda: GUARDA }, { onEsci: esci });
     }
     function attesa() {   // finché non arriva la saletta dall'host
-      var s = t.schermata({ icona: GUARDA ? "👀" : "🐎", titolo: GUARDA ? "👀 Guardo la corsa…" : "⏳ Sto entrando…", sotto: "Horto Muso · stanza " + String(codice).toUpperCase(), indietro: esci });
+      var s = t.schermata({ chiara: true, icona: GUARDA ? "👀" : "🐎", titolo: GUARDA ? "👀 Guardo la corsa…" : "⏳ Sto entrando…", sotto: "Horto Muso · stanza " + String(codice).toUpperCase(), indietro: esci });
       s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(s);
     }
     function schermaAspetta(pieno, guardi) {
-      var s = t.schermata({ icona: "🐎", titolo: guardi ? "👀 Questa volta guardi" : pieno ? "La corsa è piena" : "👀 Corsa già partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: esci });
+      var s = t.schermata({ chiara: true, icona: "🐎", titolo: guardi ? "👀 Questa volta guardi" : pieno ? "La corsa è piena" : "👀 Corsa già partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: esci });
       s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px",
         text: guardi ? "Corrono gli amici scelti: alla prossima corsa la guardi dall'inizio! 🐎" : pieno ? "Ci sono già 8 cavalli: entri appena si libera un posto." : "Entri alla prossima corsa! 🐎" }));
       var f = t.faccine && t.faccine(); if (f) { f.style.margin = "16px auto 0"; f.style.maxWidth = "320px"; s._contenuto.appendChild(f); }   // si aspetta: le faccine
@@ -1465,13 +1480,13 @@
   }
 
   function errore(t, txt) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
       text: "La modalità online funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile: intanto corri contro i bot." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));

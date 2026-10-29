@@ -726,7 +726,7 @@
       ".pz-riga .pt{position:absolute;right:6px;top:-9px;font-size:12px;font-weight:900;color:#04321c;background:#6ff0a6;border-radius:99px;padding:0 6px;animation:pzPop .35s both}",
       ".pz-righe.due .pz-riga .nm{font-size:12.5px}.pz-righe.due .pz-riga .v{font-size:13px}.pz-righe.due .pz-riga .fac{width:22px;height:22px}.pz-righe.due .pz-riga .bd{font-size:9.5px;padding:1px 5px}",
       ".pz-banner{font-size:24px;font-weight:900;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4);animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both}",
-      ".pz-banner.oro{color:#ffe066;font-size:30px}.pz-banner.no{color:#ffb3bb}",
+      ".pz-banner.oro{color:#ffe066;font-size:30px;font-family:inherit}.pz-banner.no{color:#ffb3bb}",
       ".pz-miniprod{display:flex;align-items:center;justify-content:center;gap:8px;max-width:100%;font-weight:900;font-size:16px;color:#fff}",
       ".pz-miniprod .e{font-size:28px}.pz-miniprod .tx{display:flex;flex-direction:column;min-width:0;text-align:left}.pz-miniprod .n{overflow-wrap:anywhere}",
       ".pz-miniprod .tx small{font-size:12px;font-weight:700;color:#cdd6ff;line-height:1.2}",

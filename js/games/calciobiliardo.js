@@ -970,7 +970,7 @@
     stile();
     var tu = d.mia, vinto = tu != null && d.vincitore === tu;
     var tit = tu == null ? "Ha vinto " + d.nomi[d.vincitore] + "!" : (vinto ? "Hai vinto!" : "Ha vinto " + d.nomi[d.vincitore]);
-    var s = t.schermata({ icona: vinto || tu == null ? "🏆" : "⚽", titolo: tit });
+    var s = t.schermata({ chiara: true, icona: vinto || tu == null ? "🏆" : "⚽", titolo: tit });
     s._contenuto.appendChild(t.el("div", { class: "cb-fine" }, [
       t.el("div", { class: "cb-fine-riga" }, [ t.el("span", { style: "color:" + GIALLO, text: d.nomi[0] }), t.el("b", { html: "<span style='color:" + GIALLO + "'>" + d.gol[0] + "</span> : <span style='color:" + BLU + "'>" + d.gol[1] + "</span>" }), t.el("span", { style: "color:" + BLU, text: d.nomi[1] }) ])
     ]));
@@ -1222,7 +1222,7 @@
       } };
     if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
     function chiediNome() {
-      var s = t.schermata({ icona: "⚽", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "⚽", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1286,7 +1286,7 @@
     }
   }
   function attesaSchermo(t, testo, codice, fa) {
-    var s = t.schermata({ icona: "⚽", titolo: testo, sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "⚽", titolo: testo, sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
     if (fa) s._piede.appendChild(fa);
     t.mostra(s);
@@ -1375,13 +1375,13 @@
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function errore(t, testo) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Online funziona quando l'app è aperta dal sito pubblicato." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
@@ -1453,7 +1453,10 @@
       ".cb-fine{text-align:center;margin:18px 0 8px}",
       ".cb-fine-riga{display:flex;align-items:center;justify-content:center;gap:14px;font-weight:900;font-size:1.05rem}",
       ".cb-fine-riga b{font-size:2.6rem;color:#fff}",
-      ".cb-fine-rig{text-align:center;font-weight:800;color:#ffcc1f;margin:0 0 8px}"
+      ".cb-fine-rig{text-align:center;font-weight:800;color:#ffcc1f;margin:0 0 8px}",
+      // 🌙 Notte vivace: il blu della squadra sul fondo notte ha poco contrasto con la scritta piccola: i nomi crescono un po'
+      // (diventano «scritta grande», che si legge bene anche così) e ognuno tiene il colore della sua squadra
+      ".oro .cb-fine-riga>span{font-size:1.2rem;letter-spacing:-.01em}"
     ].join("");
     document.head.appendChild(st);
   }

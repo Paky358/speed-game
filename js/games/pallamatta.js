@@ -1537,7 +1537,7 @@
       } };
     if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
     function chiediNome() {
-      var s = t.schermata({ icona: "🔴", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🔴", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1566,9 +1566,9 @@
     function attesa(testo, faccine) {   // la schermata d'attesa: se è già lì cambio solo la scritta (niente lampeggio a ogni foto)
       var A = S.att;
       if (A && document.body.contains(A.s)) { if (A.p.textContent !== testo) A.p.textContent = testo; if (faccine) metti(A); return; }
-      var s = t.schermata({ icona: "🔴", titolo: "Palla Matta", sotto: "Stanza " + String(codice).toUpperCase(), indietro: cb.onEsci });
+      var s = t.schermata({ chiara: true, icona: "🔴", titolo: "Palla Matta", sotto: "Stanza " + String(codice).toUpperCase(), indietro: cb.onEsci });
       var p = t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: testo });
-      s._contenuto.appendChild(t.el("div", { style: "text-align:center;margin-top:56px;font-size:3rem;line-height:1", text: "🔴" }));   // (nei giochi la testa non ha il titolo: lo metto qui)
+      s._contenuto.appendChild(t.el("div", { class: "sg-dal-gioco", style: "text-align:center;margin-top:56px;font-size:3rem;line-height:1", text: "🔴" }));   // (nei giochi la testa non ha il titolo: lo metto qui)
       s._contenuto.appendChild(t.el("div", { style: "text-align:center;margin-top:8px;font-weight:900;font-size:1.2rem", text: "Palla Matta · stanza " + String(codice).toUpperCase() }));
       s._contenuto.appendChild(p); S.att = { s: s, p: p };
       if (faccine) metti(S.att);
@@ -1667,13 +1667,13 @@
     return f;
   }
   function errore(t, testo) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "L'online funziona quando l'app è aperta dal sito pubblicato." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);

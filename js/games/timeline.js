@@ -325,6 +325,20 @@
     // il risultato: «📍 Andava …» e chi è arrivato in fondo
     ".tl-esito-t .tl-andava{font-size:.82rem;font-weight:800;color:#ffe3a0;max-width:36ch;animation:tlPop .4s ease 1.45s both}",
     ".tl-tutti .d.fin{color:var(--accento)}",
+    // 🌙 Notte vivace: la classifica finale è una schermata vestita come l'app (la partita sul maxischermo resta com'è):
+    // podio coi metalli dei trofei (oro, argento, bronzo) e righe di vetro, solo con i colori dell'app
+    ".oro.tl-fine .tl-gradino .fac,.oro.tl-fine .tl-riga .fac{background:var(--o-fondo-2)}",
+    ".oro.tl-fine .tl-gradino.p1 .fac{box-shadow:0 0 0 3px var(--o-m-oro-i),0 0 26px color-mix(in srgb,var(--o-m-oro-i) 45%,transparent)}",
+    ".oro.tl-fine .tl-gradino .blocco{box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}",
+    ".oro.tl-fine .tl-gradino.p1 .blocco{background:linear-gradient(180deg,var(--o-m-oro-b),var(--o-m-oro-a));box-shadow:inset 0 0 0 1.5px var(--o-m-oro-f),inset 0 1px 0 rgba(255,255,255,.12)}",
+    ".oro.tl-fine .tl-gradino.p2 .blocco{background:linear-gradient(180deg,var(--o-m-argento-b),var(--o-m-argento-a));box-shadow:inset 0 0 0 1.5px var(--o-m-argento-f),inset 0 1px 0 rgba(255,255,255,.12)}",
+    ".oro.tl-fine .tl-gradino.p3 .blocco{background:linear-gradient(180deg,var(--o-m-bronzo-b),var(--o-m-bronzo-a));box-shadow:inset 0 0 0 1.5px var(--o-m-bronzo-f),inset 0 1px 0 rgba(255,255,255,.12)}",
+    ".oro.tl-fine .tl-gradino.p1 .blocco .emo{--emo-col:var(--o-m-oro-i)}",
+    ".oro.tl-fine .tl-gradino.p2 .blocco .emo{--emo-col:var(--o-m-argento-i)}",
+    ".oro.tl-fine .tl-gradino.p3 .blocco .emo{--emo-col:var(--o-m-bronzo-i)}",
+    // (con tanti giocatori i gradini sono bassi: il simbolo della medaglia ci sta intero)
+    ".oro.tl-fine.molti .tl-gradino .blocco{padding-top:3px;font-size:1.3rem}",
+    ".oro.tl-fine .tl-riga{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06),0 10px 24px -14px rgba(0,0,0,.8)}",
     "@media (prefers-reduced-motion:reduce){.tl-mano,.tl-mano:after{animation:none}}"
   ].join("");
   document.head.appendChild(stile);
@@ -1098,7 +1112,7 @@
     function carteL(r) { return opz.vinci ? okVista(r.punti, opz.vinci) : r.punti; }
     function pt(r, corto) { return opz.linee ? (corto ? fmtN(carteL(r)) + " 🃏" : (r.fin ? "🏁 " : "") + carteTx(carteL(r))) : (corto ? fmtN(r.punti) : fmtN(r.punti) + " punti"); }
     var esci = opz.esci || t.esci;
-    var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: gioco.nome });
+    var s = t.schermata({ chiara: true, icona: "🏆", titolo: "Classifica finale", sotto: gioco.nome });
     s.classList.add("tl-fine");
     if (classifica.length > 6) s.classList.add("molti");
     var podio = el("div", { class: "tl-podio" }), MED = ["🥇", "🥈", "🥉"];
@@ -2595,7 +2609,7 @@
     function disegna() { if (S.vm) { cb.myId = S.myId; disegnaVM(t, S.vm, cb); } }
     schermaNome();
     function schermaNome() {
-      var s = t.schermata({ icona: "🔗", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
@@ -2675,7 +2689,7 @@
       }, 400);
     }
     function schermaErr(txt) {
-      var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+      var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
       s._contenuto.appendChild(el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: function () { if (S.rete) S.rete.chiudi(); t.esci(); } }));
       t.mostra(s);
@@ -3381,14 +3395,14 @@
   }
 
   function schermataNoNet(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
       text: "La modalità \"ognuno dal suo telefono\" funziona quando il gioco è aperto dal sito pubblicato. Da un file locale o da un'anteprima non è disponibile: intanto usa \"Un telefono solo\"." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
   function schermataErrore(t, txt) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
     t.mostra(s);

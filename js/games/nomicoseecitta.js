@@ -459,6 +459,18 @@
       ".nc-cl .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".nc-cl .pt{font-weight:900;color:#ffe066}",
       ".nc-cl .pi{font-size:12px;font-weight:800;color:#6ff0a6;margin-left:4px}",
+      // 🌙 Notte vivace: la classifica FINALE è una schermata dell'app (.oro): stesso vetro e stesso filo d'oro della classifica della Sala.
+      // La classifica del giro, dentro lo studio, non è .oro e resta com'era.
+      ".oro .nc-cl{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06),0 10px 24px -14px rgba(0,0,0,.8)}",
+      ".oro .nc-cl.primo{border:0;background:radial-gradient(120% 160% at 0% 0%,color-mix(in srgb,var(--n-monete) 13%,transparent),color-mix(in srgb,var(--n-monete) 0%,transparent) 58%),linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1.5px var(--n-monete),inset 0 1px 0 rgba(255,255,255,.08),0 12px 26px -12px color-mix(in srgb,var(--n-monete) 50%,transparent)}",
+      ".oro .nc-cl .fac{background:var(--o-fondo-2)}",
+      ".oro .nc-cl .pos{font-family:var(--o-tit);color:var(--o-oro-testo)}",
+      ".oro .nc-cl .pos .emo[data-e='🥇']{--emo-col:var(--n-monete)}",
+      ".oro .nc-cl .pos .emo[data-e='🥈']{--emo-col:var(--o-m-argento-i)}",
+      ".oro .nc-cl .pos .emo[data-e='🥉']{--emo-col:var(--o-m-bronzo-i)}",
+      ".oro .nc-cl .pt{color:var(--o-tenue)}",
+      ".oro .nc-cl.primo .pt{color:var(--n-monete)}",
+      ".oro .nc-cl .pi{color:var(--o-verde)}",
       // online: il mio voto (ognuno vota dal suo telefono), le attese, la lobby
       ".nc-mio{flex:0 0 auto;border:0;border-radius:99px;height:34px;padding:0 12px;font:inherit;font-size:14px;font-weight:900;cursor:pointer;white-space:nowrap}",
       ".nc-mio.si{background:#2ecc71;color:#08210f}",
@@ -928,14 +940,14 @@
   var GRAZIA = 2500;            // finito il tempo, aspetto i fogli che arrivano un po' in ritardo
   var TEMPO_VOTO = 90000;       // al massimo, per ogni categoria del tabellone
   function senzaReteN(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
       text: "La modalità \"ognuno dal suo telefono\" funziona quando il gioco è aperto dal sito pubblicato online. Da un file locale non è disponibile: intanto usa \"Un telefono solo\"." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
   function erroreN(t, txt) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
     t.mostra(s);
@@ -1271,7 +1283,7 @@
     function entra() { G.ultimoJoin = Date.now(); G.rete.invia({ t: "join", nome: G.nome, omino: ST.mioAvatar(G.nome) }); }
     schermaNome();
     function schermaNome() {
-      var s = t.schermata({ icona: "✍️", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "✍️", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       G.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(G.msg);
@@ -1658,7 +1670,7 @@
   function fineN(t, vm, cb, ordine, R) {
     var el = t.el, primi = ordine.filter(function (o) { return o.pos === 1; }).map(function (o) { return o.p.nome; });
     var titolo = vm.interrotta ? "Partita interrotta" : primi.length > 1 ? "Pareggio tra " + nomiInsieme(primi) + "!" : primi.length ? "Vince " + primi[0] + "!" : "Fine partita";
-    var s = t.schermata({ icona: vm.interrotta ? "👋" : primi.length > 1 ? "🤝" : "🏆", titolo: titolo, sotto: vm.interrotta ? "Sono usciti gli altri giocatori" : "Nomi, Cose e Città" });
+    var s = t.schermata({ chiara: true, icona: vm.interrotta ? "👋" : primi.length > 1 ? "🤝" : "🏆", titolo: titolo, sotto: vm.interrotta ? "Sono usciti gli altri giocatori" : "Nomi, Cose e Città" });
     var box = el("div", { style: "display:flex;flex-direction:column;gap:8px" });
     ordine.forEach(function (o) {
       var p = o.p;

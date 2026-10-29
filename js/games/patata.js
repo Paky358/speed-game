@@ -525,7 +525,22 @@
       ".pt-corta .pt-podio{margin:2px 0 8px}.pt-corta .pt-gradino .fac{width:50px;height:50px}.pt-corta .pt-gradino.p1 .fac{width:62px;height:62px}",
       ".pt-corta .pt-gradino .blocco{font-size:1.2rem;padding-top:3px}.pt-corta .pt-gradino.p1 .blocco{height:44px}.pt-corta .pt-gradino.p2 .blocco{height:32px}.pt-corta .pt-gradino.p3 .blocco{height:24px}",
       ".pt-corta .pt-righe{gap:4px!important}.pt-corta .pt-riga{padding:3px 10px 3px 4px;gap:8px}.pt-corta .pt-riga .fac{width:28px;height:28px}",
-      ".pt-due .pt-righe{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.pt-due .pt-riga{gap:5px;padding:3px 6px 3px 3px}.pt-due .pt-riga .pos{width:auto}.pt-due .pt-riga .et{display:none}"
+      ".pt-due .pt-righe{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.pt-due .pt-riga{gap:5px;padding:3px 6px 3px 3px}.pt-due .pt-riga .pos{width:auto}.pt-due .pt-riga .et{display:none}",
+      // 🌙 Notte vivace: la classifica finale è una schermata dell'app (lo studio con la patata resta com'è).
+      // Avatar su un disco di vetro scuro; il primo ha il filo d'oro dei trofei (monete) invece del giallo acceso
+      ".oro .pt-gradino .fac,.oro .pt-riga .fac{background:radial-gradient(circle at 50% 35%,var(--o-carta-2),var(--o-carta-piena));box-shadow:0 0 0 1px var(--o-filo-oro)}",
+      ".oro .pt-gradino.p1 .fac{box-shadow:0 0 0 3px var(--n-monete),0 6px 22px -4px color-mix(in srgb,var(--n-monete) 55%,transparent)}",
+      // i gradini: i metalli dei trofei come nel resto dell'app (tessera scura, filo e simbolo del colore del metallo)
+      ".oro .pt-gradino.p1 .blocco{background:linear-gradient(180deg,var(--o-m-oro-b),var(--o-m-oro-a));box-shadow:inset 0 0 0 1.5px var(--o-m-oro-f),inset 0 1px 0 rgba(255,255,255,.12)}",
+      ".oro .pt-gradino.p2 .blocco{background:linear-gradient(180deg,var(--o-m-argento-b),var(--o-m-argento-a));box-shadow:inset 0 0 0 1.5px var(--o-m-argento-f),inset 0 1px 0 rgba(255,255,255,.12)}",
+      ".oro .pt-gradino.p3 .blocco{background:linear-gradient(180deg,var(--o-m-bronzo-b),var(--o-m-bronzo-a));box-shadow:inset 0 0 0 1.5px var(--o-m-bronzo-f),inset 0 1px 0 rgba(255,255,255,.12)}",
+      ".oro .pt-gradino.p1 .blocco .emo{--emo-col:var(--o-m-oro-i)}.oro .pt-gradino.p2 .blocco .emo{--emo-col:var(--o-m-argento-i)}.oro .pt-gradino.p3 .blocco .emo{--emo-col:var(--o-m-bronzo-i)}",
+      // le righe: vetro sollevato come la classifica dell'app; il primo con il filo d'oro e l'alone
+      ".oro .pt-riga{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06),0 10px 24px -14px rgba(0,0,0,.8)}",
+      ".oro .pt-riga.primo{border:0;background:radial-gradient(120% 160% at 0% 0%,color-mix(in srgb,var(--n-monete) 13%,transparent),color-mix(in srgb,var(--n-monete) 0%,transparent) 58%),linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1.5px var(--n-monete),inset 0 1px 0 rgba(255,255,255,.08),0 12px 26px -12px color-mix(in srgb,var(--n-monete) 50%,transparent)}",
+      ".oro .pt-riga .pos{font-family:var(--o-tit);font-variant-numeric:lining-nums;color:var(--o-oro-testo)}",
+      ".oro .pt-riga.primo .pos,.oro .pt-riga.primo .et{color:var(--n-monete);--emo-tinta:var(--n-monete)}",
+      ".oro .pt-riga .et{color:var(--o-tenue);opacity:1}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -715,7 +730,7 @@
     }
     schermaNome();
     function schermaNome() {
-      var s = t.schermata({ icona: "💣", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "💣", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
@@ -750,13 +765,13 @@
   }
 
   function erroreP(t, txt) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaReteP(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
       text: "La modalità \"ognuno dal suo telefono\" funziona quando il gioco è aperto dal sito pubblicato online. Da un file locale non è disponibile: intanto usa \"Un telefono solo\"." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
@@ -1180,7 +1195,7 @@
     var risultato = cl.map(function (p) { return { nome: p.nome, pos: p.pos }; });
     // sullo stesso telefono: gli XP (e le statistiche) a fine partita; nel torneo ci pensa "Avanti"
     if (cb.locale && !cb.torneo && t.risultato && cb._detto !== vm.partitaId) { cb._detto = vm.partitaId; t.risultato(risultato); }
-    var sf = t.schermata({ icona: "🏆", titolo: "Vince " + (vm.vincitore ? vm.vincitore.nome : "") + "!", sotto: "La Patata Bollente" });
+    var sf = t.schermata({ chiara: true, icona: "🏆", titolo: "Vince " + (vm.vincitore ? vm.vincitore.nome : "") + "!", sotto: "La Patata Bollente" });
     var ultimoEsploso = -1; cl.forEach(function (p, i) { if (i > 0 && !p.via) ultimoEsploso = i; });
     var podio = el("div", { class: "pt-podio" });
     [1, 0, 2].forEach(function (k) {

@@ -89,6 +89,9 @@
     ciak: '<path d="M4 9.5h16V20H4zM4 9.5 5.5 4.5l14.5 2-1 3M9 5l2.5 4M14 5.8l2.5 3.7"/>',
     nota: '<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>',
     muto: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4zM16 9.5l5 5M21 9.5l-5 5"/>',
+    avviso: '<path d="M12 4 21 19.5H3z"/><path d="M12 10v4.5M12 17h.01"/>',
+    etichetta: '<path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1 1 0 0 1 0 1.4l-7.3 7.3a1 1 0 0 1-1.4 0z"/><circle cx="8" cy="8" r="1.4"/>',
+    quadro: '<rect x="3.5" y="5" width="17" height="14" rx="1.8"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17.5 5-5 3.5 3.5 2.5-2.5 4.5 4.5"/>',
   };
   // emoji → disegno (+ colore fisso per i pallini di stato)
   var MAPPA = {
@@ -100,10 +103,11 @@
     "📶": "segnale", "🔗": "link", "🤖": "bot", "📖": "libro", "✕": "chiudi", "👋": "saluto", "✨": "stelline",
     "⏭": "avanti", "⏭️": "avanti", "⏩": "avanti", "🪙": "moneta", "💾": "salva", "👆": "tocca", "🎲": "dado", "⏱️": "cronometro", "⏱": "cronometro",
     "📲": "telefono", "📱": "telefono", "⬆️": "su", "↩️": "torna", "↩": "torna", "🆕": "nuovo", "🏙️": "citta", "🏙": "citta",
-    "💡": "lampadina", "🐞": "insetto", "🧩": "pezzo", "🎯": "bersaglio", "⭐": "stella", "🌟": "stella", "🏅": "medaglia", "🥇": "medaglia:#b48a3a", "🥈": "medaglia:#8d969f", "🥉": "medaglia:#a5673a",
+    "💡": "lampadina", "🐞": "insetto", "🧩": "pezzo", "🎯": "bersaglio", "⭐": "stella", "🌟": "stella", "🏅": "medaglia", "🥇": "medaglia:var(--o-m-oro-f)", "🥈": "medaglia:var(--o-m-argento-f)", "🥉": "medaglia:var(--o-m-bronzo-f)",
     "🤝": "stretta", "🎁": "regalo", "🃏": "carte", "⚡": "fulmine", "🪑": "sedia", "⚖️": "bilancia", "🚀": "razzo", "🌍": "globo",
     "🔔": "campana", "▶": "gioca", "▶️": "gioca", "⌄": "giu", "⌃": "alto", "❤️": "cuore", "💰": "sacchetto",
     "😴": "sonno", "🧠": "libro", "📚": "libro", "🎤": "microfono", "🎬": "ciak", "🎵": "nota", "🎶": "nota", "🔊": "nota", "🔇": "muto", "🕐": "orologio", "🧍": "persona", "📊": "segnale", "🏛️": "citta",
+    "⚠️": "avviso", "⚠": "avviso", "🏷️": "etichetta", "🏷": "etichetta", "🖼️": "quadro", "🖼": "quadro", "✍️": "matita", "✍": "matita",
     "🟢": "#pallino:#2f9e44", "🟡": "#pallino:#d4a017", "🔴": "#pallino:#d64545"
   };
   // un emoji in testa al testo (con le sue varianti), poi uno spazio o la fine
@@ -130,7 +134,7 @@
   // le emoji che sono «contenuto» e non tasti dell'app restano emoji colorate: tutto quello che disegna un gioco (impostazioni,
   // regole, saletta, le sue scelte), icone dei trofei, faccine, l'emoji di una compagnia, la tessera di un gioco senza foto,
   // l'avatar di chi non ne ha uno. Così in un gruppo di scelte non si mescolano emoji e simboli
-  var CONTENUTO = ".sg-dal-gioco, .cmp-e, .sl-extra, .modo-chip, .cat-chip, .tr-ico, .at-ico, .sl-fa, .sl-faccine, .sl-faccia, .sl-bolle, .sg-fa-volante, .sg-fa-volanti, .faccina, .faccine, .cmp-em, .tessera .icona .emoji, .sg-guardo-fa, .sl-emo, .cg-emo";
+  var CONTENUTO = ".sg-dal-gioco, .cmp-e, .sl-rr-testo, .sl-reg-tutto, .as-kit .riga .em, .as-scen .e, .as-tit .t, .sl-extra, .modo-chip, .cat-chip, .tr-ico, .at-ico, .sl-fa, .sl-faccine, .sl-faccia, .sl-bolle, .sg-fa-volante, .sg-fa-volanti, .faccina, .faccine, .cmp-em, .tessera .icona .emoji, .sg-guardo-fa, .sl-emo, .cg-emo";
   // avvolge l'emoji iniziale di un nodo di testo (solo quelle che hanno un simbolo)
   function avvolgi(t) {
     var p = t.parentNode;

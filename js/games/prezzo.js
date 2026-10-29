@@ -1016,7 +1016,7 @@
       } };
     if (t.nomeProfilo()) { G.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
     function chiediNome() {
-      var s = t.schermata({ icona: "🏷️", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🏷️", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1026,7 +1026,7 @@
       t.mostra(s);
     }
     function collega() {
-      var s = t.schermata({ icona: "🏷️", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🏷️", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(s);
       G.rete = SGNet.entra(codice, {
@@ -2252,7 +2252,7 @@
     // sullo stesso telefono e col Bot: la fine del core (Serata a punti, rivincita)
     if (cb.locale) return t.fine(clas.map(function (r) { var x = { nome: r.nome, punti: r.punti, pos: r.pos }; if (r.bot) x.bot = true; return x; }));
     var titolo = !primi.length ? "Fine partita" : primi.length === 1 ? "Vince " + primi[0].nome + "!" : "Pareggio!";
-    var s = t.schermata({ icona: "🏆", titolo: titolo, sotto: NOME });
+    var s = t.schermata({ chiara: true, icona: "🏆", titolo: titolo, sotto: NOME });
     var fitta = clas.length > 6 || clas.length * 64 + 300 > (window.innerHeight || 640);
     var ol = el("ol", { class: "classifica" + (fitta ? " fitta" : "") }), med = medaglieDi(clas.map(function (r) { return r.pos; })), car = vm.carrello || {};
     clas.forEach(function (r, i) {
@@ -2331,26 +2331,26 @@
 
   // ---------------- schermate di servizio ----------------
   function errore(t, testo) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function erroreRete(t, testo, riprova) {
-    var s = t.schermata({ icona: "📶", titolo: "Niente rete?", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "📶", titolo: "Niente rete?", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo + " Controlla la connessione e riprova." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Riprova", onclick: riprova }));
     s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Online si gioca quando l'app è aperta dal sito pubblicato. Intanto potete giocare «Su questo telefono» o «Contro il Bot»." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
   function niente(t) {
-    var s = t.schermata({ icona: "🏷️", titolo: "Mancano i prodotti", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🏷️", titolo: "Mancano i prodotti", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { text: "I prodotti del gioco non sono stati caricati." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);

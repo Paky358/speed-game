@@ -245,7 +245,7 @@
   function sommaTot(tot, d) { tot.trovate += d.trovata; tot.ingannati += d.ingannati; tot.cascato += d.cascato; tot.perfette += d.perfetta; tot.risate = (tot.risate || 0) + (d.risate || 0); tot.ori = (tot.ori || 0) + (d.ori || 0); }
 
   function niente(t) {
-    var s = t.schermata({ icona: "🤥", titolo: "Mancano le notizie", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🤥", titolo: "Mancano le notizie", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { text: "Le notizie del gioco non sono state caricate." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
@@ -910,13 +910,13 @@
 
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Online si gioca quando l'app è aperta dal sito pubblicato. Intanto potete giocare \"Su questo telefono\"." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
   function errore(t, testo) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
@@ -1247,7 +1247,7 @@
       } };
     if (t.nomeProfilo()) { G.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
     function chiediNome() {
-      var s = t.schermata({ icona: "🤥", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🤥", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1257,7 +1257,7 @@
       t.mostra(s);
     }
     function collega() {
-      var s = t.schermata({ icona: "🤥", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🤥", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(s);
       G.rete = SGNet.entra(codice, {
@@ -1596,13 +1596,13 @@
     if (primi.length === 1) await ST.finale(S, idxDi(vm, primi[0].id), primi[0].punti + " punti");
     else await granFinale(S, vm.players, primi.map(function (r) { return vm.players[idxDi(vm, r.id)] || r; }));
     var titolo = !primi.length ? "Fine partita" : primi.length === 1 ? "Vince " + primi[0].nome + "!" : "Pareggio!";
-    var s = t.schermata({ icona: "🏆", titolo: titolo, sotto: "La Balla Colossale" });
+    var s = t.schermata({ chiara: true, icona: "🏆", titolo: titolo, sotto: "La Balla Colossale" });
     var box = el("div", { style: "display:flex;flex-direction:column;gap:8px" });
     clas.forEach(function (r) {
       var p = vm.players[idxDi(vm, r.id)] || r;
       box.appendChild(el("div", { class: "bc-cl" + (r.pos === 1 ? " primo" : "") }, [
         el("span", { class: "pos", text: medaglia(r.pos) }), fac(el, p), el("span", { class: "nm", text: r.nome + (r.id === cb.myId ? " (tu)" : "") + (r.via ? " (uscito)" : "") }),
-        el("span", { class: "pt", text: r.punti + " punti" }) ]));
+        el("span", { class: "pt", text: r.punti + (r.punti === 1 ? " punto" : " punti") }) ]));
     });
     s._contenuto.appendChild(box);
     // i tasti di fine comuni (all'host e a chi ha giocato), se li disegna il core: allora niente tasti nostri né "Aspetta l'host"
@@ -1758,6 +1758,12 @@
       ".bc-cl .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".bc-cl .pt{font-weight:900;color:#ffe066}",
       ".bc-cl .pi{font-size:12px;font-weight:800;color:#6ff0a6;margin-left:4px}",
+      // la classifica finale è una schermata dell'app (Notte vivace, classe .oro): righe di vetro sollevato, il primo col filo d'oro
+      // (la classifica dopo ogni round, nello studio, resta com'è: lì non c'è .oro)
+      ".oro .bc-cl{border:1px solid var(--o-filo);background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 24px -14px rgba(0,0,0,.8)}",
+      ".oro .bc-cl.primo{border-color:color-mix(in srgb,var(--n-monete) 60%,transparent)}",
+      ".oro .bc-cl .fac{background:radial-gradient(circle at 50% 35%,var(--o-carta-2),var(--o-carta-piena));box-shadow:0 0 0 1px var(--o-filo-oro)}",
+      ".oro .bc-cl .pt{color:var(--n-monete)}",
       // «Parliamo di te»: un foglietto giallo al posto del ritaglio di giornale; il foglio della verità
       ".bc-ritaglio.amici{background:linear-gradient(transparent 0 0),repeating-linear-gradient(0deg,rgba(60,90,200,.10) 0 1px,transparent 1px 26px),#fff4a8;font-family:system-ui,sans-serif;transform:rotate(1.2deg)}",
       ".bc-ritaglio.amici:before,.bc-ritaglio.amici:after{display:none}",
@@ -1782,7 +1788,7 @@
       ".bc-coppa{font-size:56px;line-height:1;animation:bcPop .5s cubic-bezier(.3,1.6,.5,1) both}",
       ".bc-big.oro{background:linear-gradient(135deg,#fff8d6,#ffe066);box-shadow:0 0 0 4px #f59f00,0 14px 30px rgba(0,0,0,.45);padding:16px 16px 18px}",
       ".bc-big.oro .tx{font-size:26px}",
-      ".bc-premio.oro{background:#ffd43b;color:#3b2a00}",
+      ".bc-premio.oro{background:#ffd43b;color:#3b2a00;font-family:inherit}",
       // «⏩ Avanti» sulla classifica del round
       ".bc-avanti{display:flex;align-items:center;justify-content:center;gap:10px}.bc-avanti .quanti{font-size:14px;font-weight:800;background:rgba(255,255,255,.22);border-radius:99px;padding:2px 10px}",
       "@media (prefers-reduced-motion:reduce){.bc-carta,.bc-big,.bc-votante,.bc-timbro.on,.bc-cl,.bc-ign,.bc-ride,.bc-vola,.bc-coppa{animation:none}.bc-timbro.on{transform:rotate(12deg);opacity:1}}"
