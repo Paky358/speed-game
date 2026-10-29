@@ -10,9 +10,14 @@ cd "$(dirname "$0")"
 mkdir -p dist
 OUT=dist/index.html
 EXTRA=dist/extra.js
+# 🏙️ la città (casa, casinò, circolo, scavi): se in js/core.js c'è «var CITTA_VISIBILE = false» la versione online non la contiene
+# (nessuno la scarica: niente extra.js e niente citta.js, casino.js, casa.js, scavi.js). La pesca resta: serve alla Gara di pesca.
+CITTA=si; grep -q "var CITTA_VISIBILE = false" js/core.js && CITTA=no
 
 # I disegni della casa nuova (come The Sims), del casinò e della città a piedi: un file a parte, scaricato solo da chi li usa
 # (così l'app si apre più in fretta). Il nome porta un pezzo dell'impronta del contenuto: cambia a ogni versione e il telefono non usa quella vecchia.
+rm -f "$EXTRA"
+if [ "$CITTA" = si ]; then
 {
   cat js/giardino-arte.js   # i disegni del giardino
   cat js/mobili-arte.js     # i mobili visti dall'alto (casa come The Sims)
@@ -21,6 +26,7 @@ EXTRA=dist/extra.js
   cat js/giardino.js        # il motore: casa e giardino, casinò, città a piedi
 } > "$EXTRA"
 VER=$(md5sum "$EXTRA" | cut -c1-10)
+fi
 
 {
   echo '<!doctype html>'
@@ -41,7 +47,7 @@ VER=$(md5sum "$EXTRA" | cut -c1-10)
   cat css/styles.css
   echo '</style>'
   echo '<div id="app"></div>'
-  echo "<script>window.SG_EXTRA = 'extra.js?v=$VER';</script>"
+  [ "$CITTA" = si ] && echo "<script>window.SG_EXTRA = 'extra.js?v=$VER';</script>"
   # le foto dei giochi che ci sono davvero (carte/giochi/<id>.jpg): la home chiede solo quelle
   echo "<script>window.SG_FOTO = {$(for f in carte/giochi/*.jpg; do [ -e "$f" ] && printf '"%s":1,' "$(basename "$f" .jpg)"; done)};</script>"
   # caselle di posta del sito (Netlify le riconosce alla pubblicazione)
@@ -59,13 +65,15 @@ VER=$(md5sum "$EXTRA" | cut -c1-10)
   echo ''
   cat js/omino.js
   echo ''
+  if [ "$CITTA" = si ]; then
   cat js/citta.js   # la città nuova (anteprima coi lavori in corso)
   echo ''
   cat js/casino.js  # il Casinò dentro: una sala per ogni gioco di carte
   cat js/casa.js    # la casa: tre stanze da arredare
   echo ''
-  cat js/pesca.js   # la pesca al laghetto
-  cat js/scavi.js   # gli scavi antichi
+  fi
+  cat js/pesca.js   # la pesca al laghetto (serve anche alla Gara di pesca)
+  [ "$CITTA" = si ] && cat js/scavi.js   # gli scavi antichi
   echo ''
   cat js/sfondo.js  # 🌙 Notte vivace: lo sfondo animato dietro le schermate del core (luci morbide e scintillii)
   cat js/stile.js   # 🌙 Notte vivace: lo stile delle schermate del core e simboli puliti al posto delle emoji
@@ -104,5 +112,5 @@ if [ -d parole ]; then rm -rf dist/parole && cp -r parole dist/parole; fi
 # Suoni registrati (es. lo stadio di Calcio Biliardo): file a parte, scaricati solo quando servono
 if [ -d suoni ]; then rm -rf dist/suoni && cp -r suoni dist/suoni; fi
 
-echo "Creato $EXTRA ($VER)"
+if [ "$CITTA" = si ]; then echo "Creato $EXTRA ($VER)"; fi
 echo "Creato $OUT"

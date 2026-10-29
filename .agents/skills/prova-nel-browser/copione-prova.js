@@ -4045,7 +4045,7 @@
   }
   // dalla home al profilo
   async function apriProfilo(w) {
-    var ch = await W.aspetta(function () { return w.document.querySelector(".profilo-chip, .citta-io"); }, 4000);
+    var ch = await W.aspetta(function () { return w.document.querySelector(".profilo-chip, .citta-io, .menu-sotto .ms-io"); }, 4000);   // (📱 col menu sotto il profilo è il suo ultimo tasto)
     if (!ch) no("non trovo il profilo nella home («" + T(w).slice(0, 60) + "»)");
     ch.click();
     if (!await W.aspetta(function () { return /Il tuo profilo/.test(T(w)) && /Esci dal profilo/.test(T(w)); }, 4000)) no("non si apre il profilo («" + T(w).slice(0, 60) + "»)");

@@ -167,6 +167,7 @@
   var SCENE_MONDO = /\b(citta-vista|casino-sale|casa-vista|ne-vista|nb-vista|edificio|carica-extra|pe-vista|sv-vista|gd-vista)\b/;
   function mostra(schermo) {
     svuota(app);
+    if (schermo._menu && HOME_MENU_SOTTO && !schermo.querySelector(".menu-sotto")) menuSotto(schermo, schermo._menu);   // 📱 il menu sotto (prima di marca: i simboli si fanno anche nel menu)
     // 🤍 Bianco e oro: ogni schermata del core è chiara (anche quelle fatte a mano), tranne quelle dei giochi e del mondo
     if (window.SGStile) {
       if (!schermo._gioco && !SCENE_MONDO.test(schermo.className || "")) SGStile.marca(schermo);
@@ -180,8 +181,31 @@
   //  SCHERMATE COMUNI
   // =========================================================
 
+  // le tessere della home: "righe" (una per riga, foto piccola a sinistra) o "due" (due per riga, foto sopra)
+  var HOME_TESSERE = "due";
+  var HOME_MENU_SOTTO = true;   // la home col menu in basso (Giochi · Novità · Trofei · Classifica · Profilo) e la testata corta; false = come prima
+  // il menu sotto: lo mette mostra() sulle schermate che hanno s._menu ("giochi", "novita", "trofei", "classifica", "profilo")
+  function menuSotto(s, quale) {
+    var io = profiloAttivo();
+    function tab(id, testo, fai, cls, figli) {
+      var b = el("button", { class: "ms-tab" + (cls ? " " + cls : "") + (id === quale ? " attiva" : ""), "aria-current": id === quale ? "page" : null,
+        onclick: function () { if (id === quale) window.scrollTo({ top: 0, behavior: "smooth" }); else fai(); } }, figli || [ el("span", { text: testo }) ]);
+      return b;
+    }
+    s.classList.add("con-menu");
+    s.appendChild(el("nav", { class: "menu-sotto" }, [
+      tab("giochi", "🎮 Giochi", schermataHome),
+      (window.SG_NOVITA || []).length ? tab("novita", "🆕 Novità", novitaLista, null, [ el("span", { text: "🆕 Novità" }), novitaTutteViste() ? null : el("span", { class: "pallino" }) ]) : null,
+      tab("trofei", "🏆 Trofei", schermataSfide),
+      tab("classifica", "👥 Classifica", function () { schermataAmici(); }, "home-amici", [ el("span", { text: "👥 Classifica" }), cacheRich && cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]),
+      tab("profilo", "Profilo", function () { schermataAccesso(schermataHome); }, "ms-io", [
+        io && io.omino && window.SGOmino ? el("span", { class: "ms-faccia", html: SGOmino.svg(io.omino, { busto: true }) }) : el("span", { class: "ms-faccia sg-dal-gioco", text: (io && io.emoji) || "👤" }),
+        el("small", { text: "Profilo" }) ])
+    ]));
+  }
   // una tessera-gioco, usata sia in home sia in "cambia gioco"
-  function tesseraGioco(g, onclick) {
+  // compatta (la home, dal 29 ott 2026): niente descrizione, solo foto, nome, categoria e giocatori (il proprietario: «la gente si scoccia di scorrere»)
+  function tesseraGioco(g, onclick, compatta) {
     // L'icona fa da "banner": mostra la foto carte/giochi/<id>.jpg se esiste,
     // altrimenti resta l'emoji del gioco (l'immagine si toglie da sola se manca).
     var icona = el("span", { class: "icona" }, [ el("span", { class: "emoji", text: g.icona || "🎲" }) ]);
@@ -195,7 +219,11 @@
     // (indirizzo intero: dentro una variabile del CSS un indirizzo corto si leggerebbe dalla cartella css/)
     return el("button", { class: "tessera", "data-gioco": g.id, "data-cat": catDi(g) || "", style: conFoto ? "--img:url(" + new URL("carte/giochi/" + g.id + ".jpg", document.baseURI).href + ")" : null, onclick: onclick }, [
       icona,
-      el("div", { class: "info" }, [
+      el("div", { class: "info" }, compatta ? [
+        catDi(g) ? el("span", { class: "tess-cat", text: (CATEGORIE.filter(function (c) { return c.id === catDi(g); })[0] || {}).nome || "" }) : null,
+        el("h2", { text: g.nome }),
+        el("div", { class: "meta", text: rangeGiocatori(g) })
+      ] : [
         el("h2", { text: g.nome }),
         el("p", { text: g.descrizione || "" }),
         el("div", { class: "meta", text: rangeGiocatori(g) })
@@ -778,7 +806,7 @@
       rigaProfilo.appendChild(bNov);
     }
     // la città: accanto a Novità; gli edifici portano ai giochi della loro categoria
-    if (window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: schermataCitta }, [ el("span", { text: "🏙️ La città" }) ]));
+    if (CITTA_VISIBILE && window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: schermataCitta }, [ el("span", { text: "🏙️ La città" }) ]));
     rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
     rigaProfilo.appendChild(el("button", { class: "home-novita home-amici", onclick: function () { schermataAmici(); } }, [ el("span", { text: "👥 Classifica" }), cacheRich && cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]));
     setTimeout(function () { aggiornaRichieste(); }, 0);   // richieste di amicizia nuove? pallino sul tasto
@@ -792,10 +820,18 @@
     }
     var tInstalla = giaApp ? null : el("button", { class: "home-novita", onclick: installa }, [ el("span", { text: "📲 Installa l'app" }) ]);
     if (tInstalla) rigaProfilo.appendChild(tInstalla);
+    // 📱 il menu sotto (HOME_MENU_SOTTO, proposta del 29 ott 2026: «tenere il menu sotto come le app moderne»): in alto solo il titolo
+    // e le monete, in basso Giochi · Novità · Trofei · Classifica · Profilo, sempre sotto il pollice; la home lascia più posto ai giochi
+    var testaCorta = null;
+    if (HOME_MENU_SOTTO) {
+      s.classList.add("home-menu-sotto");
+      testaCorta = prog ? el("button", { class: "ms-monete", "aria-label": "Il tuo profilo e le Speed Coins", onclick: function () { schermataAccesso(schermataHome); } }, [ el("span", { text: "🪙 " + cifre(prog.coins) }) ]) : null;
+      s._menu = "giochi";
+    }
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", html: '<svg viewBox="0 0 200 118" width="156" height="92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6bf"/><stop offset=".42" stop-color="#ffd23b"/><stop offset=".72" stop-color="#f6a70c"/><stop offset="1" stop-color="#c06a08"/></linearGradient><linearGradient id="sgBoltHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf0" stop-opacity=".95"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/></linearGradient><filter id="sgGlow" x="-70%" y="-70%" width="240%" height="240%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff9d2e" flood-opacity=".75"/><feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#ff7b16" flood-opacity=".4"/></filter><path id="sgB" d="M13 0 L2 20 L10 20 L7 36 L22 12 L13 12 L17 0 Z"/></defs><g filter="url(#sgGlow)" stroke="#8a5209" stroke-width="1.3" stroke-linejoin="round"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBolt)"/></g><g stroke="none"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBoltHi)"/></g></svg>' }),
       el("h1", { class: "home-titolo", html: "SPeeD <b>GAME</b>" }),   // (🌙 «GAME» col lampone)
-      rigaProfilo
+      HOME_MENU_SOTTO ? testaCorta : rigaProfilo
     ]));
     // stavi giocando da ospite e la pagina si è ricaricata (o hai riaperto l'app)? Si rientra al proprio posto
     // (rStanza: non "rientro", che è il ritorno all'edificio della città e qui sopra si azzera)
@@ -840,12 +876,11 @@
     // Barra delle categorie (sotto il profilo): "Tutti" + i gruppi. Cliccando si filtra
     // solo la griglia (senza rifare la schermata: niente lampeggio, non si torna in cima).
     var barra = el("div", { class: "cat-barra" });
-    var griglia = el("div", { class: "griglia-giochi" });
+    var griglia = el("div", { class: "griglia-giochi compatta tess-" + HOME_TESSERE });
     var presto = el("div", { class: "tessera presto" }, [
       el("span", { class: "icona", text: "➕" }),
       el("div", { class: "info" }, [
-        el("h2", { text: "Altri giochi in arrivo" }),
-        el("p", { text: "Uno alla volta, fatto bene." })
+        el("h2", { text: "Altri giochi in arrivo" })
       ])
     ]);
     var padrone = eProprietario();   // (solo IL PAPPONE: tenendo premuta una tessera si apre «🧩 Ordine dei giochi»)
@@ -853,7 +888,7 @@
       griglia.innerHTML = "";
       giochi.forEach(function (g) {
         if (catAttiva === "tutti" || catDi(g) === catAttiva) {
-          var tess = tesseraGioco(g, function () { apriGioco(g); });
+          var tess = tesseraGioco(g, function () { apriGioco(g); }, true);
           if (padrone) tienPremuto(tess, schermataOrdineGiochi);
           griglia.appendChild(tess);
         }
@@ -1163,7 +1198,11 @@
   // ---- i disegni della casa nuova, del casinò e della città a piedi: nella versione online stanno in un file a parte (extra.js),
   //      scaricato solo da chi li usa (così l'app si apre più in fretta per tutti); nella cartella di lavoro ci sono già ----
   var attesaExtra = null;
-  function serveExtra() { return !window.SGGiardino && !!window.SG_EXTRA && (GIARDINO_PRONTO || CITTA_A_PIEDI || eProprietario()); }
+  // 🏙️ la città (con casa, casinò, circolo e scavi) per ora è spenta per tutti (29 ott 2026, il proprietario: «rimuoviamo la città
+  // visibile per adesso, non farla scaricare a nessuno»): niente tasto in home, niente disegni scaricati. true = torna com'era
+  // (costruisci-versione-online.sh guarda questa riga: con false la versione online non contiene i file della città)
+  var CITTA_VISIBILE = false;
+  function serveExtra() { return CITTA_VISIBILE && !window.SGGiardino && !!window.SG_EXTRA && (GIARDINO_PRONTO || CITTA_A_PIEDI || eProprietario()); }
   function caricaExtra(poi, attesa) {
     if (window.SGGiardino || !window.SG_EXTRA) { if (poi) poi(); return; }
     if (attesa) mostra(el("div", { class: "schermata carica-extra" }, [ el("div", { class: "ce-ico", text: attesa }), el("p", { text: "Un attimo…" }) ]));
@@ -2244,7 +2283,7 @@
   function novitaLista() {
     var visto = 0;
     try { visto = Number(localStorage.getItem(CHIAVE_NOVITA)) || 0; } catch (e) {}
-    var s = schermata({ icona: "🆕", titolo: "Novità", sotto: "Cosa è stato aggiunto", indietro: tornaHome });
+    var s = schermata({ icona: "🆕", titolo: "Novità", sotto: "Cosa è stato aggiunto", indietro: tornaHome }); s._menu = "novita";
     var tutte = window.SG_NOVITA || [], messe = 0;
     function altre(quante) {   // a gruppi: sono tante, e tutte insieme sui telefoni lo scorrimento rallenta
       var vecchio = s._contenuto.querySelector(".novita-altre"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
@@ -2902,7 +2941,7 @@
 
   // schermata principale: l'elenco di TUTTI i giochi, ognuno coi suoi trofei dentro
   function schermataSfide() {
-    var s = schermata({ icona: "🏆", titolo: "Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: tornaHome });
+    var s = schermata({ icona: "🏆", titolo: "Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: tornaHome }); s._menu = "trofei";
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     if (!prof) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per registrare i progressi e sbloccare i trofei: i dati ti seguono su ogni telefono." }));
@@ -3116,7 +3155,7 @@
   function schermataAmici(scheda) {
     scheda = scheda || "generale";
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
-    var s = schermata({ icona: "👥", titolo: "Classifica e amici", sotto: "Chi ha più trofei", indietro: tornaHome });
+    var s = schermata({ icona: "👥", titolo: "Classifica e amici", sotto: "Chi ha più trofei", indietro: tornaHome }); s._menu = "classifica";
     if (!prof) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per entrare in classifica, aggiungere amici e confrontare i trofei." }));
       s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👤 Crea / accedi al profilo", onclick: function () { schermataAccesso(function () { schermataAmici(scheda); }); } }));
@@ -3287,7 +3326,7 @@
     torna = torna || "generale";
     var s = schermata({ titolo: x.nome, sotto: "🏆 " + (x.trofei || 0) + " trofei", indietro: function () { schermataAmici(torna); } });
     s._contenuto.appendChild(el("div", { class: "am-grande" }, [ faccina(x, "am-fac-grande") ]));
-    if (!x.io && window.SGCasa) s._contenuto.appendChild(el("button", { class: "btn btn-primario am-casa", text: "🏠 Vai a casa sua", onclick: function () { schermataCasaAmico(x, torna); } }));
+    if (!x.io && CITTA_VISIBILE && window.SGCasa) s._contenuto.appendChild(el("button", { class: "btn btn-primario am-casa", text: "🏠 Vai a casa sua", onclick: function () { schermataCasaAmico(x, torna); } }));
     var l = x.liv || {};
     function cella(cls, ico, nome, f) {
       return el("div", { class: "sm-liv " + cls }, [ el("div", { class: "sm-ico", text: ico }), el("div", { class: "sm-num", html: "<b>" + (f || 0) + "</b>" }), el("div", { class: "sm-nome", text: nome }) ]);
@@ -4104,6 +4143,7 @@
     var p = SGNube.profilo();
     if (p) {   // già dentro: mostra il profilo, le statistiche e il tasto esci
       var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: function () { (dopo || schermataHome)(); } });   // dalla città si torna in città
+      if (!dopo || dopo === schermataHome) sp._menu = "profilo";   // 📱 aperto dalla home o dal menu: col menu sotto
       if (window.SGOmino) sp._contenuto.appendChild(el("div", { class: "omino-profilo" }, [
         el("div", { class: "omino-palco" + (p.omino ? "" : " vuoto"), html: SGOmino.svg(p.omino || SGOmino.casuale(p.nome)) }),
         el("button", { class: "btn " + (p.omino ? "btn-fantasma" : "btn-primario"), text: p.omino ? "✏️ Modifica il tuo avatar" : "🧍 Crea il tuo avatar",
