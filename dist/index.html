@@ -46703,17 +46703,6 @@ window.SG_NOVITA = [
     ]
   },
   {
-    v: 277,
-    data: "29 ottobre 2026",
-    titolo: "Lanterne: chi spegne le luci? 🏮",
-    descrizione: [
-      "Nuovo gioco online da 4 a 10: una notte di festa in un palazzo. Gli ospiti fanno i compiti con dei minigiochi, le ombre spengono le lanterne di nascosto.",
-      "Chi trova una lanterna spenta chiama la riunione: si parla in chat e si vota chi cacciare.",
-      "35 ruoli (Sceriffo, Medico, Veggente, Giullare, Indovino, Burattinaio…), sabotaggi, botole e telecamere. Le regole si cambiano dalla saletta.",
-      "Se siete in pochi aggiungete i Bot: ricordano chi hanno visto e in riunione dicono la loro."
-    ]
-  },
-  {
     v: 276,
     data: "29 ottobre 2026",
     titolo: "Anche le partite si vestono di notte 🌙",
@@ -81864,6 +81853,11 @@ function quadri(z, post, ok){
 
 var ID = "lanterne";
 var MIN = 4, MAX = 10;
+var RIEMPI = 6;   // in prova: con pochi amici la saletta si riempie da sola coi Bot fino a 6 (escono man mano che arriva gente)
+// Per ora Lanterne è in prova: la stanza la aprono solo questi account; tutti gli altri entrano solo se invitati.
+var AMMESSI = ["IL PAPPONE", "GAY"];
+function nomeAccount() { try { var p = window.SGNube && SGNube.profilo && SGNube.profilo(); return String((p && p.nome) || "").trim().toUpperCase(); } catch (e) { return ""; } }
+function ammesso() { return AMMESSI.indexOf(nomeAccount()) >= 0; }
 var RITARDATARI = "partita";   // chi arriva a partita cominciata la guarda ed entra alla prossima
 var COLORI = ["#d64550","#f0a23b","#2fa36b","#4a74de","#9b59c9","#ff7f6b","#9cbf8a","#1f9a9a","#e8c547","#b9a6f0"];
 function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
@@ -81938,6 +81932,15 @@ function host(t) {
   }
   function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
   function presenti() { return H.players.filter(function (p) { return !p.via; }); }
+  // i Bot automatici: finché l'host non tocca i tasti dei Bot, la saletta sta a RIEMPI posti (le persone prendono il posto dei Bot)
+  if (H.auto == null) H.auto = true;
+  function riempi() {
+    if (!H.auto || H.fase !== "lobby") return;
+    var umani = H.players.filter(function (p) { return !p.bot; }).length, voluti = Math.max(0, Math.min(MAX - umani, RIEMPI - umani));
+    var bot = H.players.filter(function (p) { return p.bot; }).length;
+    while (bot < voluti) { aggiungiBot(true); bot++; }
+    while (bot > voluti) { togliBot(true); bot--; }
+  }
 
   t.onRegole = function (im) { if (H.fase !== "lobby") return; H.imp = pulisci(im); bd(); };
 
@@ -81951,7 +81954,7 @@ function host(t) {
       if (H.guarda.some(function (x) { return x.id === id; })) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
       var p = pById(id); if (!p) return;
       p.forse = false;
-      if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
+      if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); riempi(); bd(); return; }
       p.via = true; viaDa[id] = Date.now(); bd();   // resta in partita: se torna entro un minuto e mezzo riprende il suo posto
     },
     onMsg: function (id, m) {
@@ -81959,7 +81962,8 @@ function host(t) {
       if (m.t === "join") {
         var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
         if (!p && !t.puoSedersi(id, nome)) { if (!H.guarda.some(function (x) { return x.id === id; })) H.guarda.push({ id: id, nome: nome }); bd(); return; }
-        if (!p && H.fase === "lobby" && H.players.length < MAX) H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino) });
+        if (!p && H.fase === "lobby" && H.players.length >= MAX && H.auto) togliBot(true);   // un Bot automatico lascia il posto
+        if (!p && H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino) }); riempi(); }
         if (p) { p.forse = false; if (p.via && H.fase !== "lobby") { p.via = false; delete viaDa[id]; } if (!p.omino) p.omino = avatarValido(m.omino); }
         bd();
         if (p && P) {
@@ -81979,7 +81983,7 @@ function host(t) {
   if (riprendo && rete.codice) H.codice = rete.codice;
 
   function vm() {
-    var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, rip: H.rip, tiene: IO, imp: H.imp,
+    var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, rip: H.rip, tiene: IO, imp: H.imp, auto: !!H.auto,
       players: H.players.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" || p.bot ? (p.omino || null) : undefined }; }),
       guarda: H.guarda, classifica: H.classifica, fine: H.fine };
     if (P && H.fase === "gioco") v.g = P.foto();
@@ -82043,17 +82047,18 @@ function host(t) {
     H.fase = "fine"; bd();
     if (t.risultato) t.risultato(H.classifica.map(function (r) { var x = { nome: r.nome, pos: r.pos }; if (r.bot) x.bot = true; return x; }));
   }
-  function nuova() { if (H.fase !== "fine") return; P = null; H.fase = "lobby"; H.classifica = null; H.fine = null; H.players = presenti(); bd(); }
+  function nuova() { if (H.fase !== "fine") return; P = null; H.fase = "lobby"; H.classifica = null; H.fine = null; H.players = presenti(); riempi(); bd(); }
   t.onRivincita = nuova;
-  function aggiungiBot() {
+  function aggiungiBot(da) {
     if (H.fase !== "lobby" || H.players.length >= MAX) return;
+    if (da !== true) H.auto = false;   // l'host ha deciso lui: da qui i Bot li gestisce a mano
     var usati = H.players.map(function (p) { return p.nome; }), b = null;
     try { b = SG.bot && SG.bot.prendi ? SG.bot.prendi(1, { escludi: usati })[0] : null; } catch (e) {}
     var n = H.players.filter(function (p) { return p.bot; }).length + 1;
     H.players.push({ id: "bot-" + Date.now().toString(36) + n, nome: b ? b.nome : "Bot " + n, omino: b ? avatarValido(b.omino) : null, bot: true });
     bd();
   }
-  function togliBot() { for (var i = H.players.length - 1; i >= 0; i--) if (H.players[i].bot) { H.players.splice(i, 1); bd(); return; } }
+  function togliBot(da) { if (da !== true) H.auto = false; for (var i = H.players.length - 1; i >= 0; i--) if (H.players[i].bot) { H.players.splice(i, 1); bd(); return; } }
 
   var cbHost = { sonoHost: true, myId: IO, onComincia: comincia, onNuova: nuova, onBot: aggiungiBot, onTogliBot: togliBot,
     onVia: function () { if (P) P.via(); },
@@ -82063,6 +82068,7 @@ function host(t) {
       if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla home.", "Chiudi", via);
       via();
     } };
+  if (!riprendo) riempi();
   bd();
   if (P) mandaPrivati(true);
 }
@@ -82147,6 +82153,7 @@ function lobby(t, vm, cb) {
       nb ? t.el("button", { class: "btn btn-fantasma", text: "Togli un Bot", onclick: cb.onTogliBot }) : null ].filter(Boolean)));
   }
   if (vm.players.length < MIN) extra.push(t.el("p", { class: "modulo-nota", text: "Servono almeno " + MIN + " giocatori (anche Bot)." }));
+  else if (vm.auto && vm.players.some(function (p) { return p.bot; })) extra.push(t.el("p", { class: "modulo-nota", text: "🤖 I Bot riempiono i posti fino a " + RIEMPI + ": ognuno lascia il posto a un amico che arriva." }));
   if (guardano.length) extra.push(t.el("p", { class: "modulo-nota", text: "👀 Guardano: " + guardano.map(function (p) { return p.id === cb.myId ? "tu" : p.nome; }).join(", ") }));
   t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
     vuoti: Math.max(0, MIN - vm.players.length),
@@ -83145,6 +83152,21 @@ function impostazioni(box, dove, aiuti) {
 
 if (window.LT_PROVA) window.LT_RUOLI = Object.keys(RUOLI).map(function (r) { return [r, RUOLI[r].nome + " (" + { ospiti: "ospite", ombre: "ombra", soli: "da solo" }[RUOLI[r].squadra] + ")"]; });
 
+// In prova: la tessera di Lanterne (home, categorie, Sala) si vede solo con gli account AMMESSI; per gli altri è nascosta.
+// Il gioco resta registrato per tutti, così chi viene invitato (link, codice, Sala) entra lo stesso.
+(function () {
+  var st = document.createElement("style");
+  st.textContent = 'html:not(.lt-ammesso) [data-gioco="' + ID + '"]{display:none!important}';
+  (document.head || document.documentElement).appendChild(st);
+  function aggiorna() { document.documentElement.classList.toggle("lt-ammesso", !!(window.LT_PROVA || ammesso())); }
+  aggiorna(); setInterval(aggiorna, 1500);
+})();
+function soloAmmessi(t) {
+  var s = t.schermata({ icona: "🏮", titolo: "Lanterne" });
+  s._contenuto.appendChild(t.el("p", { class: "modulo-nota", text: "Lanterne è ancora in prova: per ora la stanza la aprono solo " + AMMESSI.join(" e ") + ". Fatti invitare da loro: col link o col codice entri anche tu." }));
+  s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Va bene", onclick: function () { t.esci(); } }));
+  t.mostra(s);
+}
 SG.registra({
   id: ID, nome: "Lanterne", icona: "🏮",
   descrizione: "Una notte al palazzo: gli ospiti fanno i compiti, le ombre spengono le lanterne. Scoprite chi sono e votatele fuori.",
@@ -83163,6 +83185,7 @@ SG.registra({
   impostazioni: impostazioni,
   avvia: function (t) {
     if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);
+    if (!window.LT_PROVA && !ammesso() && !(t.ripresa && t.ripresa.stato)) return soloAmmessi(t);
     return host(t);
   }
 });
