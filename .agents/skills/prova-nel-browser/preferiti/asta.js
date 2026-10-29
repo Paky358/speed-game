@@ -50,7 +50,7 @@
         d.set(v);
         var reg = v.registra;
         v.registra = function (g) {
-          if (g && g.id === "asta") {
+          if (g && (g.id === "asta" || g.id === "astafanta")) {   // (dal 29 ott 2026 la Mini Asta Fantacalcio è un gioco a sé, con lo stesso motore)
             var av = g.avvia;
             g.avvia = function (t) {
               w.__t = t;
@@ -103,17 +103,21 @@
   }
   async function caricaGioco() {
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), g = {};
-    new Function("SG", src)({ registra: function (x) { Object.assign(g, x); }, bot: W.SG && SG.bot });
+    new Function("SG", src)({ registra: function (x) { if (x.id === "asta") Object.assign(g, x); }, bot: W.SG && SG.bot });   // (L'Asta: la Mini Asta Fantacalcio si registra dopo)
     return g;
   }
   var mk = function (tag, a, figli) { var e = document.createElement(tag); a = a || {}; Object.keys(a).forEach(function (k) { if (k === "text") e.textContent = a[k]; else if (k === "class") e.className = a[k]; else if (k === "style") e.style.cssText = a[k]; else if (k === "onclick") e.onclick = a[k]; else if (k === "hidden") e.hidden = true; else if (k === "html") e.innerHTML = a[k]; else e.setAttribute(k, a[k]); }); (figli || []).forEach(function (f) { if (f) e.appendChild(f); }); return e; };
   function chipBox(box, re) { return [].find.call(box.querySelectorAll(".modo-chip"), function (b) { return re.test(b.textContent); }); }
 
+  // la tessera del gioco delle regole: dal 29 ott 2026 il fantacalcio è la «Mini Asta Fantacalcio» (le prove pg1 e pg2 partono
+  // ancora dall'Asta col formato del fanta e col link «gioco=asta»: così si prova anche che le regole e i link di prima aprono il fanta)
+  function tesseraDi(imp) { return imp && imp.formato === "fanta" ? "Mini Asta Fantacalcio" : "L'Asta"; }
+  function idDiImp(imp) { return imp && imp.formato === "fanta" ? "astafanta" : "asta"; }
   // stesso telefono: dalla home fino al gioco (nomi e regole della prova)
   async function partitaLocale(imp, nomi, prima) {
     var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; if (prima) prima(w); } });
     senzaAnimazioni(P); spiaFoto(P);
-    var tess = await W.aspetta(function () { return A.tessera(P, "L'Asta"); }, 6000);
+    var tess = await W.aspetta(function () { return A.tessera(P, tesseraDi(imp)); }, 6000);
     if (!tess) no("non trovo la tessera dell'Asta");
     tess.click(); await W.dorme(400);
     if (!W.clicca(P, /Su questo telefono/, ".modo-grande")) no("non c'è «Su questo telefono»");
@@ -136,7 +140,7 @@
     var r0 = g.riassunto({ crediti: 15 }), r1 = g.riassunto({ crediti: 15, round: "normali" }), r2 = g.riassunto({ formato: "fanta" });
     if (!/🎭 round ✉️ 📦 🎁/.test(r0) || !/🔨 round tutti normali/.test(r1) || !/rilanci \+1 \+2 \+5/.test(r2)) no("riassunti: «" + r0 + "» / «" + r1 + "» / «" + r2 + "»");
     var reg = g.regole.join(" ");
-    [/<b>\+1<\/b> o <b>\+3<\/b>/, /busta chiusa/, /lotto doppio/, /pacco a sorpresa/, /carta-scenario/, /rialzare da solo/, /titoli scherzosi/, /<b>\+5<\/b>/].forEach(function (re) { if (!re.test(reg)) no("le regole non dicono " + re); });
+    [/<b>\+1<\/b> o <b>\+3<\/b>/, /busta chiusa/, /lotto doppio/, /pacco a sorpresa/, /carta-scenario/, /rialzare da solo/, /titoli scherzosi/].forEach(function (re) { if (!re.test(reg)) no("le regole non dicono " + re); });
     var tieni = localStorage.getItem("sg_asta_formato"); localStorage.removeItem("sg_asta_formato");
     try {
       var box = document.createElement("div"), dove = {};
@@ -144,8 +148,9 @@
       if (dove.round !== "misti" || !/attiva/.test(chipBox(box, /Tutti diversi/).className)) no("di base i round non sono «Tutti diversi»: " + dove.round);
       chipBox(box, /Tutti normali/).click(); if (dove.round !== "normali") no("«Tutti normali» non si accende");
       var wrap = chipBox(box, /Tutti normali/).parentNode.parentNode;
-      chipBox(box, /Mini asta Fantacalcio/).click(); if (!wrap.hidden) no("nel Fantacalcio «🎭 I round» si vede ancora");
-      chipBox(box, /Temi classici/).click(); if (wrap.hidden) no("tornando ai temi «🎭 I round» non si vede");
+      // (dal 29 ott 2026 niente «Modalità»: il fantacalcio è la Mini Asta Fantacalcio, un gioco a sé; le sue impostazioni le prova dv1)
+      if (chipBox(box, /Mini asta Fantacalcio/) || chipBox(box, /Temi classici/)) no("nelle impostazioni dell'Asta c'è ancora la scelta tra temi e fantacalcio");
+      if (wrap.hidden) no("«🎭 I round» non si vede");
       var box2 = document.createElement("div"); g.impostazioni(box2, dove, { el: mk, modo: "online" });
       if (dove.round !== "normali" || !/attiva/.test(chipBox(box2, /Tutti normali/).className)) no("riaprendo il ⚙️ i round tornano «Tutti diversi»");
     } finally { if (tieni == null) localStorage.removeItem("sg_asta_formato"); else localStorage.setItem("sg_asta_formato", tieni); }
@@ -320,13 +325,13 @@
 
   // ===================================================================== pa3 (online temi)
   async function telefoniOnline(imp, nomi, guardano) {
-    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; } }), C = await W.apriStanza(P, "L'Asta");
+    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; } }), C = await W.apriStanza(P, tesseraDi(imp));
     senzaAnimazioni(P); spiaFoto(P);
-    for (var i = 1; i < nomi.length; i++) { var w = await W.apriTel(nomi[i], { hash: "gioco=asta&stanza=" + C, x: 185 * i }); senzaAnimazioni(w); spiaFoto(w); }
+    for (var i = 1; i < nomi.length; i++) { var w = await W.apriTel(nomi[i], { hash: "gioco=" + idDiImp(imp) + "&stanza=" + C, x: 185 * i }); senzaAnimazioni(w); spiaFoto(w); }
     if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === nomi.length; }, 12000)) no("non sono entrati in " + nomi.length + " (" + (vm(C).giocatori || []).length + ")");
     W.clicca(P, /Comincia/);
     if (!await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 8000)) no("la partita non comincia");
-    for (var j = 0; j < (guardano || []).length; j++) { var g = await W.apriTel(guardano[j], { hash: "gioco=asta&stanza=" + C, x: 185 * (nomi.length + j) }); senzaAnimazioni(g); }
+    for (var j = 0; j < (guardano || []).length; j++) { var g = await W.apriTel(guardano[j], { hash: "gioco=" + idDiImp(imp) + "&stanza=" + C, x: 185 * (nomi.length + j) }); senzaAnimazioni(g); }
     return { P: P, C: C };
   }
   function idDi(nome) { return nome === "Paky" ? "host" : A.mioId(nome); }
@@ -513,7 +518,15 @@
     var F = vm(C);
     if (!F.titoli) no("nella foto di fine non ci sono i titoli");
     var L = W.finestra("Luca");
-    await W.aspetta(function () { return bott(L, ".sa-testa .sa-tasto", /📸 Foto/) || (W.clicca(L, /Salta/), false); }, 15000);   // (un «Salta» per la ⚽ giornata, uno per il podio)
+    // online «Salta» e ⏩ li tocca solo chi tiene la partita (29 ott 2026: la giornata uguale su tutti i telefoni): Paky salta le rose,
+    // accende il ⏩ e manda avanti le pagelle; Luca arriva al podio con lui (e lì ha «📸 Foto»)
+    await W.aspetta(function () { return W.clicca(P, /Salta/); }, 10000);
+    var finoP = Date.now() + 240000, velFatto = false;
+    while (Date.now() < finoP && !bott(L, ".sa-testa .sa-tasto", /📸 Foto/)) {
+      var bv = q(P, ".st-bar-vel"); if (!velFatto && bv && visibile(bv)) { velFatto = true; if (!bv.classList.contains("on")) bv.click(); }
+      var avP = bott(P, ".st-pag-av", /Avanti|Mostra tutta/); if (avP && !avP.disabled) avP.click();
+      await W.dorme(400);
+    }
     if (!await W.aspetta(function () { return bott(L, ".sa-testa .sa-tasto", /📸 Foto/); }, 6000)) no("sul podio di Luca non c'è «📸 Foto»");
     bott(L, ".sa-testa .sa-tasto", /📸 Foto/).click(); x.push(await fotoFatta(L, "della rosa di Luca"));
     if ((F.titoli || []).length) { var tk = await W.aspetta(function () { var t = (q(L, ".st-ticker") || {}).textContent || ""; return /^(💎|🎯|💸|🧊|🤡|🔥|🛍️|🚀|📣|⚽) /.test(t) && t; }, 9000); if (!tk) no("i titoli non girano sul maxischermo"); else x.push("ticker «" + tk + "»"); }

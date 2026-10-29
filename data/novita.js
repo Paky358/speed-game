@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 282,
+    data: "29 ottobre 2026",
+    titolo: "L'Asta e la Mini Asta Fantacalcio: due giochi ⚽🔨",
+    descrizione: [
+      "La Mini Asta Fantacalcio ha la sua tessera nella prima schermata, con la sua foto: si apre subito, senza passare dall'Asta. L'Asta resta quella coi temi. Trofei e statistiche di prima restano tutti, e le partite del fantacalcio contano ancora per i trofei dell'Asta.",
+      "Online la giornata dopo l'asta si vede su tutti i telefoni nello stesso istante, anche su quello di chi tiene la partita: nessuno vede come va a finire prima degli altri. Regge anche con la rete lenta, con gli iPhone e con chi ricarica la pagina.",
+      "Online il ⏩ e «Salta» li tocca chi tiene la partita, e valgono per tutti.",
+      "Il maxischermo dello stadio ha scritte pulite, col carattere dell'app: calciatore, squadra, rigoristi, battitori e prezzo si leggono bene anche sui telefoni piccoli.",
+      "La giornata è vestita di notte: riquadri di vetro scuro, il minuto e «Avanti ▶» color lampone. Campo, spalti e calciatori sono quelli di sempre."
+    ]
+  },
+  {
     v: 281,
     data: "29 ottobre 2026",
     titolo: "Stessa Lunghezza d'Onda: la ruota nuova 📡",

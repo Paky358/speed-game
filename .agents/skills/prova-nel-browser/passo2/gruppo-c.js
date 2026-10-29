@@ -18,7 +18,7 @@
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, vm = A.vm, no = A.no, T = A.T;
-  var GRUPPO = ["blackjack", "poker", "asta", "sipero", "scarabocchio", "garapesca"];
+  var GRUPPO = ["blackjack", "poker", "asta", "astafanta", "sipero", "scarabocchio", "garapesca"];
 
   // ---- la "spia" dei giochi del gruppo C (solo con apriTel(nome, { fintiC: true })) ----
   // w.__tfFinto = true: t.tastiFine disegna tasti finti; w.__scelti = ["Paky", …]: si siede solo chi è in lista;
@@ -330,7 +330,10 @@
   COPIONE.aggiungi(221, { nome: "Black Jack dalla Sala: chi guarda, fine della serie, serie nuova", fai: function () { return partitaDallaSala("blackjack"); } });
   COPIONE.aggiungi(222, { nome: "Poker dalla Sala: chi guarda, classifica, di nuovo in saletta", fai: function () { return partitaDallaSala("poker"); } });
   COPIONE.aggiungi(223, { nome: "L'Asta coi temi dalla Sala: chi guarda, voto e classifica, di nuovo in saletta", fai: function () { return partitaDallaSala("asta"); } });
-  COPIONE.aggiungi("223f", { nome: "L'Asta Fantacalcio dalla Sala: chi guarda, podio, di nuovo in saletta", fai: function () { return partitaDallaSala("astaFanta"); } });
+  COPIONE.aggiungi("223f", { nome: "L'Asta Fantacalcio dalla Sala (dalla tessera dell'Asta con le regole del fanta, come le regole ricordate da prima): chi guarda, podio, di nuovo in saletta", fai: function () { return partitaDallaSala("astaFanta"); } });
+  // 223g (29 ott 2026): la Mini Asta Fantacalcio è un gioco a sé: la stessa prova dalla sua tessera, senza regole imposte
+  G.astaFanta2 = Object.assign({}, G.astaFanta, { nome: "Mini Asta Fantacalcio", imp: null });
+  COPIONE.aggiungi("223g", { nome: "Mini Asta Fantacalcio dalla Sala (la sua tessera): chi guarda, podio, di nuovo in saletta", fai: function () { return partitaDallaSala("astaFanta2"); } });
   COPIONE.aggiungi(224, { nome: "Sì... però dalla Sala (in 4): chi guarda, classifica, di nuovo in saletta", fai: function () { return partitaDallaSala("sipero"); } });
   COPIONE.aggiungi(225, { nome: "Scarabocchio dalla Sala: chi guarda, classifica, di nuovo in saletta", fai: function () { return partitaDallaSala("scarabocchio"); } });
   COPIONE.aggiungi(226, { nome: "Gara di pesca dalla Sala: chi guarda, classifica, di nuovo in saletta", fai: function () { return partitaDallaSala("garapesca"); } });
