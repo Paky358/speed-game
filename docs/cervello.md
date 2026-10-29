@@ -68,7 +68,7 @@ Fuori da git: `.claude/launch.json` (il server di prova della chat della Linea d
 | Chat | Gioco | Ultima attività | Cosa sta facendo / in sospeso |
 |---|---|---|---|
 | 🧠 Cervello SPeeD GAME | tutto | 29 ott, ora | Registro, limiti, consigli. Non costruisce giochi. |
-| 🌙 Notte vivace 2 | il resto dello stile (#11) | 29 ott 15:20, **non partita** | Il proprietario l'ha avviata ma la copia a parte non si è creata: **disco quasi pieno** (4 GB liberi, l'app ne vuole almeno 5,4: #27). Si riprova dalla sua chat quando c'è spazio. |
+| 🌙 Notte vivace 2 | il resto dello stile (#11) | 29 ott 15:40, **lavora** | Partita su D: la copia a parte `D:SG-notte2` (ramo `stile-notte-2`) l'ha creata il Cervello, perché su C non c'è spazio per le copie dell'app (#27). Ragionamento medio. Non pubblica: a fine lavoro manda le foto prima/dopo. |
 | 🏠 Home compatta | prima schermata | 29 ott 14:30, **finita** | Tessere senza descrizione due per riga, menu in basso, città spenta: online v279 (pubblicata dal Cervello insieme alla v278). |
 | 🌙 Notte vivace | stile di tutta l'app | 29 ott 10:51, **finita** | Tutto il suo lavoro è online (v275, v276 e le sue 5 proposte in v278, messe nei giochi dal Cervello con 5 aiutanti). Il resto dello stile va alla chat nuova «🌙 Notte vivace 2» (#11). Chat molto lunga: non riprenderla. |
 | 🧍 Avatar Mii rifinito | avatar «Mii rifinito» | 29 ott 06:23, **finita** | Online per tutti dalla v278. Il proprietario avrebbe preferito il «3D morbido» (#24). |
