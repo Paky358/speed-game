@@ -9,8 +9,8 @@ Ultimo aggiornamento: **29 ott 2026, 12:35** (ora italiana).
 
 | Limite | Usato | Si azzera |
 |---|---|---|
-| Settimana (tutti i modelli) | **24%** (29 ott 10:50; azzerata il 28 ott alle 15:00) | **mercoledì 4 nov alle 15:00** |
-| 5 ore | 33% | 29 ott alle 11:30 |
+| Settimana (tutti i modelli) | **24%** (29 ott 12:35; azzerata il 28 ott alle 15:00) | **mercoledì 4 nov alle 15:00** |
+| 5 ore | 2% | 29 ott alle 16:40 |
 | Settimana Fable | 0% | mercoledì 4 nov alle 15:00 |
 | Crediti cloud | 250 USD il 26 ott sera, da ricontrollare | **scadono il 5 nov alle 08:59** |
 
@@ -28,9 +28,9 @@ Regole generali: sotto il 70% lavori grandi ok · 70-85% lavori medi, aiutanti S
 
 ## 2. 🌐 Cosa c'è online
 
-**Online adesso:** master del 29 ott alle 12:35 = **novità v276**: i giochi col vestito della notte (tutti tranne Parola d'ordine e le scene grandi) + gli avatar «Mii rifinito» accesi SOLO per IL PAPPONE (per tutti gli altri identici a prima). Prima, v275 (29 ott 00:30): lo stile «🌙 Notte vivace» per le schermate dell'app (blu notte, vetro scuro, lampone come colore guida, sfondo animato dietro le schermate dell'app, mai dietro le partite). Sito: https://paky358.github.io/speed-game/
+**Online adesso:** master `b55faa7` del 29 ott alle 12:35 = **novità v276** (controllato sul sito): i giochi col vestito della notte (tutti tranne Parola d'ordine e le scene grandi) + gli avatar «Mii rifinito» accesi SOLO per IL PAPPONE (per tutti gli altri identici a prima). Prima, v275 (29 ott 00:30): lo stile «🌙 Notte vivace» per le schermate dell'app (blu notte, vetro scuro, lampone come colore guida, sfondo animato dietro le schermate dell'app, mai dietro le partite). Sito: https://paky358.github.io/speed-game/
 
-**`lavori-in-corso`** = uguale al sito.
+**`lavori-in-corso`** = `5a41ee5`: uguale al sito (in più solo il registro).
 
 **Unito e pubblicato il 29 ott (v276), lavoro della notte:** i rami `stile-notte` (fino a `e54d20e`) e `avatar-mii` (fino a `efef25d`) sono dentro `lavori-in-corso` e `master`; le copie `SG-notte` e `SG-avatar` si possono togliere con la pulizia (#22).
 - **`stile-notte`**: tutti i giochi col vestito della notte tranne Parola d'ordine e le scene grandi.
