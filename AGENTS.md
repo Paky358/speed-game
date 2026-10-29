@@ -26,6 +26,7 @@ Una web app di party game da telefono (tanti giochi, uno per file), in JavaScrip
 ## Pubblicare = mettere su `master`
 - `bash costruisci-versione-online.sh` crea `dist/index.html` (un file unico). Ogni push su `master` fa partire la pubblicazione su GitHub Pages: https://paky358.github.io/speed-game/
 - Quindi **mettere qualcosa su `master` vuol dire metterlo online per tutti**: fallo solo quando il proprietario lo chiede ("pubblica").
+- **Eccezione: Lanterne** (il gioco di Mario De Viva, amico del proprietario, che ha l'accesso al progetto su GitHub): la chat di Mario può pubblicare da sola i cambi di Lanterne (il proprietario, 29 ott 2026: «Sì, da solo»). Chi pubblica dopo prima unisce `origin/master` nel suo ramo (git non lascia sovrascrivere: se il push viene rifiutato, si unisce e si riprova) e tiene i cambi di Mario.
 - Ogni novità visibile va scritta in cima a `data/novita.js` (numero `v` +1), con parole per chi gioca.
 - Messaggi di commit in italiano, dicendo cosa cambia per chi gioca.
 
