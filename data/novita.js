@@ -31,7 +31,8 @@ window.SG_NOVITA = [
       "Sì però: accanto al Giudice c'è l'avatar giusto.",
       "Tris: il fumetto del Bot non copre più il nome. Ruota della Fortuna: mentre risolvi la scritta non tocca più il nome sul leggio. Calcio Biliardo: sui telefoni piccoli il tasto dei suoni non copre l'avversario. Palla Matta: il numero delle palline si legge anche sopra la luna.",
       "Nei menu si dice sempre «Contro il Bot» (Scopa, Tris, Drop 4 e Calcio Biliardo dicevano «Contro il computer»).",
-      "Sui telefoni piccoli la saletta e la Sala con «Chi vince resta» stanno tutte nello schermo."
+      "Sui telefoni piccoli la saletta e la Sala con «Chi vince resta» stanno tutte nello schermo.",
+      "Nella Sala online il gioco si sceglie come nella prima schermata: due per riga, con le stesse tessere."
     ]
   },
   {
