@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Avatar · quanto si leggono gli occhi</title></head>
+<body style="background:#0d1020;color:#a6acc8;font:12px system-ui">
+<script src="../../../js/omino.js"></script>
+<script src="dati.js"></script>
+<script>
+// Quanto si leggono gli occhi nelle faccine piccole: si disegna la faccina a 28, 32 e 40 px su un fondo blu notte,
+// e nella zona degli occhi si misura il contrasto (differenza di luce tra i punti più chiari e più scuri, su 255).
+// Più alto = occhi che si vedono di più. MISURA.prova() torna la media e i casi peggiori, oggi e nel disegno nuovo.
+var MISURA = (function () {
+  var O = SGOmino;
+  function cfgs() {
+    var l = BOT_PARTENZA.map(function (b) { return [b.nome, b.omino]; });
+    ["Paky", "Luca", "Giulia", "Marco", "Sara", "Ciro", "Marta", "Gianni", "Chiara", "Totò", "Ilaria", "Davide", "Noemi", "Kevin", "Asia", "Salvo", "Bea", "Enzo", "Lucia", "Pino", "Vale", "Ahmed", "Lin", "Rita", "Nino", "Ada", "Ugo", "Eva", "Leo", "Zoe", "Ivo", "Mia"].forEach(function (n) { l.push([n, O.casuale(n)]); });
+    return l;
+  }
+  function img(svg) { return new Promise(function (ok) { var i = new Image(); i.onload = function () { ok(i); }; i.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); }); }
+  // la zona degli occhi nel disegno (testa scalata 0,85 attorno a 100,150), dentro l'inquadratura della faccina
+  var kT = 0.85, vb = [100 - 89 * kT, 150 - 156 * kT, 178 * kT, 182 * kT], ZX = [72, 128], ZY = [94, 118];
+  async function uno(cfg, stile, px, dpr) {   // dpr: i punti dello schermo per ogni pixel (3 = un telefono di oggi)
+    dpr = dpr || 1;
+    var c = document.createElement("canvas"); c.width = px * dpr; c.height = Math.round(px * 182 / 178) * dpr;
+    var g = c.getContext("2d"); g.fillStyle = "#1b2140"; g.fillRect(0, 0, c.width, c.height);
+    var im = await img(O.svg(cfg, { busto: true, stile: stile }));
+    g.imageSmoothingQuality = "high"; g.drawImage(im, 0, 0, c.width, c.height);
+    var x0 = Math.floor((ZX[0] - vb[0]) / vb[2] * c.width), x1 = Math.ceil((ZX[1] - vb[0]) / vb[2] * c.width);
+    var y0 = Math.floor((ZY[0] - vb[1]) / vb[3] * c.height), y1 = Math.ceil((ZY[1] - vb[1]) / vb[3] * c.height);
+    var d = g.getImageData(x0, y0, x1 - x0, y1 - y0).data, L = [];
+    for (var i = 0; i < d.length; i += 4) L.push(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+    L.sort(function (a, b) { return a - b; });
+    var n = Math.max(1, Math.round(L.length * 0.08)), scuri = 0, chiari = 0;
+    for (var k = 0; k < n; k++) { scuri += L[k]; chiari += L[L.length - 1 - k]; }
+    return (chiari - scuri) / n;
+  }
+  async function prova(misure, opz) {   // opz.senzaOcchiali: si misurano solo gli occhi (senza montature)
+    misure = misure || [28, 32, 40]; opz = opz || {};
+    var out = {}, tutti = cfgs().map(function (x) { var c = O.norm(x[1]); if (opz.senzaOcchiali && c.occhiali !== "nessuno") { c.occhiali = "nessuno"; return [x[0] + "*", c]; } return [x[0], c]; });
+    for (var m = 0; m < misure.length; m++) {
+      var px = misure[m], righe = [];
+      for (var i = 0; i < tutti.length; i++) {
+        var a = await uno(tutti[i][1], "classico", px, opz.dpr), b = await uno(tutti[i][1], "rifinito", px, opz.dpr);
+        righe.push({ chi: tutti[i][0], oggi: Math.round(a), nuovo: Math.round(b), diff: Math.round(b - a) });
+      }
+      righe.sort(function (p, q) { return p.diff - q.diff; });
+      var mo = 0, mn = 0; righe.forEach(function (r) { mo += r.oggi; mn += r.nuovo; });
+      out[px + "px"] = { mediaOggi: Math.round(mo / righe.length), mediaNuovo: Math.round(mn / righe.length), peggiori: righe.slice(0, 6), sotto: righe.filter(function (r) { return r.diff < -8; }).length };
+    }
+    return out;
+  }
+  return { prova: prova, uno: uno, cfgs: cfgs };
+})();
+</script></body></html>

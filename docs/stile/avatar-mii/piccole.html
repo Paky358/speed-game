@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Avatar · faccine piccole</title>
+<style>
+body{margin:0;padding:8px;background:#0d1020;color:#a6acc8;font:11px system-ui}
+.r{display:flex;align-items:center;gap:6px;margin:4px 0}
+.r b{width:52px;color:#f4f5fb;font-weight:600}
+.r svg{border-radius:50%;background:#1b2140;display:block}
+.chiaro{background:#f4f1ec}.chiaro .r svg{background:#e8e2d8}
+</style></head><body>
+<script src="../../../js/omino.js"></script>
+<script src="dati.js"></script>
+<script>
+// Le faccine piccole (28, 32, 40 px), oggi e nuovo, per guardarle a occhio. ?n=Enzo,Vale,bot3 (bot0…bot7 = i Bot) &chiaro=1
+var Q = new URLSearchParams(location.search), O = SGOmino;
+if (Q.get("chiaro")) document.body.className = "chiaro";
+var nomi = (Q.get("n") || "Enzo,Vale,Ahmed,Davide,Zoe,Rosa,Gianni,bot3,bot1,Marta,Paky,Luca").split(",");
+[28, 32, 40].forEach(function (px) {
+  ["classico", "rifinito"].forEach(function (st) {
+    var r = document.createElement("div"); r.className = "r";
+    r.innerHTML = "<b>" + px + " " + (st === "rifinito" ? "nuovo" : "oggi") + "</b>" + nomi.map(function (n) {
+      var c = /^bot[0-9]$/.test(n) ? BOT_PARTENZA[+n.slice(3)].omino : O.casuale(n);
+      return O.svg(c, { busto: true, px: px, stile: st });
+    }).join("");
+    document.body.appendChild(r);
+  });
+});
+</script></body></html>
