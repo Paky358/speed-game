@@ -14,7 +14,10 @@ function crea(d){
   const { GW, GH } = d, N = GW*GH;
   const PAV = new Int8Array(N).fill(-2);   // -2 fuori, -1 corridoio, >=0 stanza
   const MURO = new Uint8Array(N), SOL = new Uint8Array(N), BORDO = new Uint8Array(N), ACQUA = new Uint8Array(N);
-  d.stanze.forEach((s,i)=>{ for(let y=s.y;y<s.y+s.h;y++) for(let x=s.x;x<s.x+s.w;x++) PAV[y*GW+x]=i; });
+  // una stanza è il suo rettangolo, più le «parti» (nicchie, absidi, moli), meno i «tagli» (angoli e rientri)
+  const segna=(r,v)=>{ for(let y=r.y;y<r.y+r.h;y++) for(let x=r.x;x<r.x+r.w;x++) PAV[y*GW+x]=v; };
+  d.stanze.forEach((s,i)=>{ segna(s,i); (s.parti||[]).forEach(r=>segna(r,i)); });
+  d.stanze.forEach(s=>(s.tagli||[]).forEach(r=>segna(r,-2)));
   d.corridoi.forEach(([x0,y0,w,h])=>{ for(let y=y0;y<y0+h;y++) for(let x=x0;x<x0+w;x++) if(PAV[y*GW+x]===-2) PAV[y*GW+x]=-1; });
   d.acqua.forEach(([x0,y0,w,h])=>{ for(let y=y0;y<Math.min(GH,y0+h);y++) for(let x=x0;x<Math.min(GW,x0+w);x++) if(PAV[y*GW+x]===-2) ACQUA[y*GW+x]=1; });
   for(let i=0;i<N;i++){ MURO[i] = (PAV[i]===-2 && !ACQUA[i]) ? 1 : 0; SOL[i] = PAV[i]===-2 ? 1 : 0; }
@@ -31,20 +34,34 @@ function crea(d){
 const PALAZZO = crea({
   nome:'Palazzo Velmare', GW:72, GH:50,
   stanze:[
-    { nome:'Biblioteca', in:'in Biblioteca', x:3, y:3, w:12, h:8, c1:'#3b3029', c2:'#41352d' },
-    { nome:'Salone delle feste', in:'nel Salone', x:26, y:3, w:18, h:9, c1:'#4a3236', c2:'#52393d' },
-    { nome:"Torre dell'orologio", in:'nella Torre', x:56, y:3, w:9, h:7, c1:'#33363f', c2:'#3a3d47' },
-    { nome:'Cortile', in:'nel Cortile', x:27, y:18, w:18, h:12, c1:'#3a3f3a', c2:'#414741' },
-    { nome:'Cappella', in:'in Cappella', x:3, y:15, w:8, h:6, c1:'#2f3046', c2:'#35364d' },
-    { nome:'Sala della musica', in:'nella Sala della musica', x:3, y:24, w:8, h:6, c1:'#3f2f3a', c2:'#463440' },
-    { nome:'Cucine', in:'nelle Cucine', x:16, y:15, w:9, h:9, c1:'#463b2c', c2:'#4d4131' },
-    { nome:'Cantina', in:'in Cantina', x:3, y:36, w:12, h:9, c1:'#2f2a30', c2:'#353036' },
-    { nome:'Lavanderia', in:'in Lavanderia', x:17, y:38, w:8, h:6, c1:'#2e3a3f', c2:'#344247' },
-    { nome:'Galleria dei ritratti', in:'nella Galleria', x:28, y:35, w:14, h:6, c1:'#3d3346', c2:'#44394e' },
-    { nome:'Sorveglianza', in:'in Sorveglianza', x:48, y:19, w:8, h:5, c1:'#253038', c2:'#2a363f' },
-    { nome:'Serra', in:'nella Serra', x:58, y:14, w:11, h:11, c1:'#2c3f33', c2:'#314638' },
-    { nome:'Sala del telegrafo', in:'nella Sala del telegrafo', x:60, y:31, w:8, h:5, c1:'#38332a', c2:'#3f3930' },
-    { nome:'Molo', in:'sul Molo', x:46, y:38, w:20, h:7, c1:'#4a3b2b', c2:'#55442f', assi:true },
+    { nome:'Biblioteca', in:'in Biblioteca', x:3, y:3, w:12, h:8, c1:'#3b3029', c2:'#41352d',
+      parti:[{x:6,y:2,w:3,h:1}], tagli:[{x:12,y:3,w:3,h:2}] },                     // nicchia di lettura a nord, angolo rientrato a est
+    { nome:'Salone delle feste', in:'nel Salone', x:26, y:3, w:18, h:9, c1:'#4a3236', c2:'#52393d',
+      parti:[{x:31,y:2,w:10,h:1}], tagli:[{x:26,y:3,w:2,h:2},{x:42,y:3,w:2,h:2},{x:26,y:10,w:2,h:2},{x:42,y:10,w:2,h:2}] },   // angoli smussati, nicchia dell'orchestra
+    { nome:"Torre dell'orologio", in:'nella Torre', x:56, y:3, w:9, h:7, c1:'#33363f', c2:'#3a3d47',
+      parti:[{x:59,y:2,w:3,h:1}], tagli:[{x:56,y:3,w:1,h:1},{x:64,y:3,w:1,h:1}] },  // la nicchia del quadrante
+    { nome:'Cortile', in:'nel Cortile', x:27, y:18, w:18, h:12, c1:'#3a3f3a', c2:'#414741',
+      tagli:[{x:27,y:28,w:2,h:2},{x:43,y:28,w:2,h:2}] },
+    { nome:'Cappella', in:'in Cappella', x:3, y:15, w:8, h:6, c1:'#2f3046', c2:'#35364d',
+      parti:[{x:5,y:13,w:4,h:2}], tagli:[{x:3,y:20,w:1,h:1},{x:10,y:20,w:1,h:1}] },   // l'abside con l'altare
+    { nome:'Sala della musica', in:'nella Sala della musica', x:3, y:24, w:8, h:6, c1:'#3f2f3a', c2:'#463440',
+      parti:[{x:1,y:25,w:2,h:4}], tagli:[{x:3,y:24,w:1,h:1},{x:10,y:24,w:1,h:1},{x:3,y:29,w:1,h:1},{x:10,y:29,w:1,h:1}] },   // bovindo a ovest
+    { nome:'Cucine', in:'nelle Cucine', x:16, y:15, w:9, h:9, c1:'#463b2c', c2:'#4d4131',
+      parti:[{x:17,y:24,w:4,h:2}], tagli:[{x:16,y:15,w:2,h:2}] },                   // la dispensa a sud
+    { nome:'Cantina', in:'in Cantina', x:3, y:36, w:12, h:9, c1:'#2f2a30', c2:'#353036',
+      parti:[{x:5,y:45,w:5,h:2}], tagli:[{x:3,y:36,w:2,h:2}] },                    // la grotta dei vini
+    { nome:'Lavanderia', in:'in Lavanderia', x:17, y:38, w:8, h:6, c1:'#2e3a3f', c2:'#344247',
+      parti:[{x:19,y:44,w:4,h:2}], tagli:[{x:17,y:38,w:2,h:1}] },                   // il cortiletto per stendere
+    { nome:'Galleria dei ritratti', in:'nella Galleria', x:28, y:35, w:14, h:6, c1:'#3d3346', c2:'#44394e',
+      tagli:[{x:28,y:35,w:1,h:1},{x:41,y:35,w:1,h:1},{x:41,y:40,w:1,h:1}] },
+    { nome:'Sorveglianza', in:'in Sorveglianza', x:48, y:19, w:8, h:5, c1:'#253038', c2:'#2a363f',
+      tagli:[{x:48,y:23,w:1,h:1}] },
+    { nome:'Serra', in:'nella Serra', x:58, y:14, w:11, h:11, c1:'#2c3f33', c2:'#314638',
+      parti:[{x:69,y:17,w:2,h:5}], tagli:[{x:58,y:14,w:1,h:1},{x:68,y:14,w:1,h:1},{x:58,y:24,w:1,h:1},{x:68,y:24,w:1,h:1}] },   // la veranda di vetro a est
+    { nome:'Sala del telegrafo', in:'nella Sala del telegrafo', x:60, y:31, w:8, h:5, c1:'#38332a', c2:'#3f3930',
+      tagli:[{x:66,y:31,w:2,h:1}] },
+    { nome:'Molo', in:'sul Molo', x:46, y:38, w:20, h:7, c1:'#4a3b2b', c2:'#55442f', assi:true,
+      parti:[{x:57,y:45,w:2,h:3}], tagli:[{x:64,y:38,w:2,h:1}] },                   // il pontile della barca
   ],
   corridoi:[
     [15,6,11,2],   // Biblioteca - Salone
@@ -64,22 +81,41 @@ const PALAZZO = crea({
     [15,40,2,2],   // Cantina - Lavanderia
   ],
   acqua:[[44,45,28,5],[66,36,6,14]],
+  // i mobili: ognuno è un oggetto a sé (tipo, posto, misure), anche per il nascondino che verrà
   ostacoli:[
     {x:34,y:22,w:4,h:4,t:'fontana'},
-    {x:4,y:4,w:4,h:1,t:'scaffale'},{x:9,y:4,w:4,h:1,t:'scaffale'},{x:4,y:7,w:3,h:1,t:'scaffale'},{x:9,y:7,w:3,h:1,t:'scaffale'},
+    {x:30,y:21,w:1,h:1,t:'albero'},{x:41,y:21,w:1,h:1,t:'albero'},{x:30,y:26,w:1,h:1,t:'albero'},{x:41,y:26,w:1,h:1,t:'albero'},
+    {x:31,y:28,w:2,h:1,t:'panchina'},{x:38,y:28,w:2,h:1,t:'panchina'},
+    {x:4,y:4,w:4,h:1,t:'scaffale'},{x:9,y:4,w:3,h:1,t:'scaffale'},{x:4,y:7,w:3,h:1,t:'scaffale'},{x:9,y:7,w:3,h:1,t:'scaffale'},
+    {x:7,y:2,w:1,h:1,t:'poltrona'},
     {x:28,y:5,w:3,h:2,t:'tavolo'},{x:39,y:5,w:3,h:2,t:'tavolo'},{x:28,y:8,w:3,h:2,t:'tavolo'},{x:39,y:8,w:3,h:2,t:'tavolo'},
+    {x:32,y:2,w:1,h:1,t:'candelabro'},{x:35,y:2,w:1,h:1,t:'arpa'},{x:39,y:2,w:1,h:1,t:'candelabro'},
     {x:59,y:4,w:3,h:3,t:'ingranaggio'},{x:62,y:5,w:2,h:2,t:'plastico'},
-    {x:5,y:15,w:4,h:1,t:'altare'},{x:4,y:18,w:2,h:1,t:'panca'},{x:7,y:18,w:2,h:1,t:'panca'},
-    {x:4,y:25,w:3,h:2,t:'piano'},
+    {x:5,y:13,w:4,h:1,t:'altare'},{x:4,y:18,w:2,h:1,t:'panca'},{x:8,y:18,w:2,h:1,t:'panca'},
+    {x:3,y:15,w:1,h:1,t:'candelabro'},{x:10,y:15,w:1,h:1,t:'candelabro'},
+    {x:4,y:25,w:3,h:2,t:'piano'},{x:1,y:26,w:1,h:1,t:'arpa'},
     {x:17,y:17,w:6,h:1,t:'banco'},{x:21,y:21,w:2,h:2,t:'forno'},
+    {x:17,y:25,w:2,h:1,t:'sacchi'},{x:19,y:25,w:2,h:1,t:'dispensa'},
     {x:4,y:38,w:2,h:2,t:'botte'},{x:4,y:42,w:2,h:2,t:'botte'},{x:9,y:42,w:2,h:2,t:'botte'},
-    {x:20,y:38,w:4,h:1,t:'stendino'},{x:18,y:42,w:2,h:1,t:'tinozza'},
+    {x:6,y:46,w:3,h:1,t:'rastrelliera'},
+    {x:20,y:38,w:4,h:1,t:'stendino'},{x:18,y:42,w:2,h:1,t:'tinozza'},{x:19,y:45,w:4,h:1,t:'stendino'},
     {x:30,y:36,w:2,h:1,t:'piedistallo'},{x:38,y:36,w:2,h:1,t:'piedistallo'},
-    {x:49,y:19,w:5,h:1,t:'console'},
+    {x:31,y:40,w:2,h:1,t:'piedistallo'},{x:36,y:40,w:1,h:1,t:'cavalletto'},
+    {x:49,y:19,w:5,h:1,t:'console'},{x:48,y:19,w:1,h:1,t:'armadietto'},{x:55,y:19,w:1,h:1,t:'armadietto'},
     {x:60,y:16,w:3,h:3,t:'aiuola'},{x:65,y:16,w:3,h:3,t:'aiuola'},{x:62,y:21,w:3,h:2,t:'aiuola'},
+    {x:70,y:17,w:1,h:1,t:'albero'},{x:70,y:21,w:1,h:1,t:'albero'},
     {x:60,y:31,w:3,h:1,t:'telegrafo'},   // nell'angolo: la porta dalla Serra (x 63-64) resta libera
-    {x:49,y:40,w:2,h:2,t:'cassa'},{x:56,y:42,w:3,h:2,t:'cassa'},
+    {x:66,y:32,w:2,h:1,t:'baule'},
+    {x:49,y:40,w:2,h:2,t:'cassa'},{x:56,y:42,w:3,h:2,t:'cassa'},{x:60,y:40,w:2,h:2,t:'cassa'},{x:63,y:42,w:2,h:2,t:'botte'},
   ],
+});
+// la barca ormeggiata a est del pontile (si muove col mare, non si cammina): centro e dove è legata la cima
+PALAZZO.barca = { x:60.7*T, y:46.3*T, cima:[59*T - 2, 45.5*T] };
+// dove scrivere il nome di una stanza: il centro del rettangolo, o la casella della stanza più vicina se lì c'è un taglio
+PALAZZO.stanze.forEach((st,i)=>{
+  let cx=Math.floor(st.x+st.w/2), cy=Math.floor(st.y+st.h/2), best=null, bd=1e9;
+  for(let y=st.y;y<st.y+st.h;y++) for(let x=st.x;x<st.x+st.w;x++){ if(PALAZZO.PAV[y*PALAZZO.GW+x]!==i) continue; const d=(x-cx)**2+(y-cy)**2; if(d<bd){ bd=d; best=[x,y]; } }
+  st.lx=best[0]+0.5; st.ly=best[1]+0.5;
 });
 
 // Sala d'attesa: dove si aspetta che l'host faccia partire la partita
@@ -91,24 +127,25 @@ const ATRIO = crea({
     {x:6,y:5,w:1,h:1,t:'pilastro'},{x:19,y:5,w:1,h:1,t:'pilastro'},{x:6,y:10,w:1,h:1,t:'pilastro'},{x:19,y:10,w:1,h:1,t:'pilastro'},
     {x:10,y:2,w:6,h:1,t:'panca'},
     {x:12,y:6,w:2,h:1,t:'computer'},   // il computer della saletta: l'host ci sceglie le regole e fa partire la partita
+    {x:2,y:2,w:1,h:1,t:'albero'},{x:23,y:2,w:1,h:1,t:'albero'},{x:2,y:13,w:1,h:1,t:'albero'},{x:23,y:13,w:1,h:1,t:'albero'},
   ],
 });
 ATRIO.centro = { x:13*T, y:10*T };
 const COMPUTER = { tx:13, ty:7 };   // dove ci si mette per usarlo (davanti alla scrivania)
 
 const POSTAZIONI = [
-  { id:'libri',      nome:'Riordina i libri',      tx:11, ty:9,  gioco:'sequenza' },
+  { id:'libri',      nome:'Riordina i libri',      tx:10, ty:8,  gioco:'sequenza' },
   { id:'lampadario', nome:'Accendi il lampadario', tx:35, ty:4,  gioco:'tieni', visibile:'luce' },
-  { id:'orologio',   nome:"Carica l'orologio",     tx:57, ty:8,  gioco:'leva', visibile:'ingranaggio' },
-  { id:'dolci',      nome:'Sforna i dolci',        tx:19, ty:22, gioco:'trascina', visibile:'fuoco' },
-  { id:'vino',       nome:'Travasa il vino',       tx:7,  ty:40, gioco:'versa' },
-  { id:'piante',     nome:'Annaffia le piante',    tx:67, ty:23, gioco:'versa', visibile:'acqua' },
-  { id:'barca',      nome:'Carica la barca',       tx:64, ty:39, gioco:'trascina' },
-  { id:'quadri',     nome:'Raddrizza i quadri',    tx:40, ty:39, gioco:'quadri' },
-  { id:'candele',    nome:'Accendi le candele',    tx:9,  ty:16, gioco:'tieni' },
-  { id:'pianoforte', nome:'Accorda il pianoforte', tx:8,  ty:25, gioco:'sequenza' },
-  { id:'bucato',     nome:'Stendi il bucato',      tx:22, ty:40, gioco:'trascina' },
-  { id:'telegramma', nome:'Trasmetti il telegramma', tx:66, ty:33, gioco:'leva' },
+  { id:'orologio',   nome:"Carica l'orologio",     tx:60, ty:7,  gioco:'leva', visibile:'ingranaggio' },
+  { id:'dolci',      nome:'Sforna i dolci',        tx:21, ty:23, gioco:'trascina', visibile:'fuoco' },
+  { id:'vino',       nome:'Travasa il vino',       tx:6,  ty:39, gioco:'versa' },
+  { id:'piante',     nome:'Annaffia le piante',    tx:65, ty:22, gioco:'versa', visibile:'acqua' },
+  { id:'barca',      nome:'Carica la barca',       tx:58, ty:46, gioco:'trascina' },
+  { id:'quadri',     nome:'Raddrizza i quadri',    tx:37, ty:35, gioco:'quadri' },
+  { id:'candele',    nome:'Accendi le candele',    tx:7,  ty:14, gioco:'tieni' },
+  { id:'pianoforte', nome:'Accorda il pianoforte', tx:7,  ty:25, gioco:'sequenza' },
+  { id:'bucato',     nome:'Stendi il bucato',      tx:21, ty:39, gioco:'trascina' },
+  { id:'telegramma', nome:'Trasmetti il telegramma', tx:60, ty:32, gioco:'leva' },
 ];
 const CAMPANA = { tx:29, ty:19 };
 // la Sorveglianza: dal monitor si guardano le telecamere fisse e quelle della Sentinella
@@ -118,7 +155,7 @@ const PLASTICO = { tx:62, ty:7 };
 const TELECAMERE_BASE = [
   { nome:'Cortile', x:28*T, y:18.6*T, vx:33*T, vy:21.5*T },
   { nome:'Corridoio ovest', x:12.9*T, y:22*T, vx:13*T, vy:22*T },
-  { nome:'Salone delle feste', x:27*T, y:3.6*T, vx:32*T, vy:7*T },
+  { nome:'Salone delle feste', x:28.4*T, y:3.6*T, vx:33*T, vy:7*T },
   { nome:'Molo', x:46.6*T, y:38.6*T, vx:52*T, vy:41*T },
 ];
 const QUADRO = { id:'quadro', tx:23, ty:43, nome:'Ripara il quadro delle luci', gioco:'tieni' };
@@ -130,7 +167,7 @@ const CONSOLE = { id:'console', tx:62, ty:32, nome:'Ripara il telegrafo', gioco:
 const BOTOLE = [
   [[5,9],[9,20],[4,28]],      // Biblioteca, Cappella, Sala della musica
   [[13,43],[24,43]],          // Cantina, Lavanderia
-  [[23,16],[43,28],[29,39]],  // Cucine, Cortile, Galleria
+  [[23,16],[41,28],[29,39]],  // Cucine, Cortile, Galleria
   [[64,9],[68,15],[55,23]],   // Torre, Serra, Sorveglianza
   [[67,35],[47,43]],          // Sala del telegrafo, Molo
 ];
@@ -272,7 +309,7 @@ const IMP_BASE = {
   avvoltoio:{ quanti:2 },
   indovino:{ quanti:2, perRiunione:2, sbaglia:'muore' },
   frenesia:{ attiva:true, secondi:45 },
-  fantasmi:{ attivi:true, custode:50, medium:50, ricarica:30 },
+  fantasmi:{ attivi:true, custode:50, medium:50, ricarica:45 },
 };
 
 // Ogni voce: un gruppo di bottoni nella schermata delle regole. opz = valori, oppure [valore, scritta].
@@ -349,7 +386,7 @@ const VOCI = [
   { g:'Fantasmi', k:'fantasmi.attivi', et:'Ruoli dei fantasmi', opz:[[true,'sì'],[false,'no']] },
   { g:'Fantasmi', k:'fantasmi.custode', et:'Custode (scudo da fantasma)', opz:[0,25,50,75,100], u:'%' },
   { g:'Fantasmi', k:'fantasmi.medium', et:'Medium (foto da fantasma)', opz:[0,25,50,75,100], u:'%' },
-  { g:'Fantasmi', k:'fantasmi.ricarica', et:'Ricarica dei poteri', opz:[20,30,45], u:' s' },
+  { g:'Fantasmi', k:'fantasmi.ricarica', et:'Ricarica dei poteri', opz:[20,30,45,60], u:' s' },
 ];
 
 const PRESET = {
@@ -874,7 +911,8 @@ class Partita {
     this.priv(v); this.segna();
     // un ospite spento può diventare un fantasma col suo potere (Custode o Medium)
     if(v.squadra==='ospiti' && !v.fantasmaRuolo && this.imp.fantasmi && this.imp.fantasmi.attivi){
-      const F=this.imp.fantasmi, r = rnd()*100<F.custode ? 'custode' : rnd()*100<F.medium ? 'medium' : null;
+      // al massimo un Custode e un Medium per partita: più scudi insieme lasciavano un'ombra sola senza speranza
+      const F=this.imp.fantasmi, ha=x=>this.gioc.some(g=>g.fantasmaRuolo===x), r = !ha('custode') && rnd()*100<F.custode ? 'custode' : !ha('medium') && rnd()*100<F.medium ? 'medium' : null;
       if(r){ v.fantasmaRuolo=r; v.cdF=8; v.morte={ da: k!==v ? (modo==='normale' ? (this.travestito(k)||k.id) : k.id) : null, st:this.stanzaIdx(v), x:Math.round(v.x), y:Math.round(v.y) };
         if(r==='medium') v.foto=this.nuovaFoto(v);
         this.avviso(v, `Da fantasma sei il ${FANTASMI[r].nome}: ${FANTASMI[r].desc}`); }
@@ -1764,7 +1802,7 @@ function terraCortile(c, st, M){
   c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 1.5; [2.75*T - 6, 2.75*T + 6].forEach(r => { c.beginPath(); c.arc(cx, cy, r, 0, 7); c.stroke(); });
   [[st.x, st.y], [st.x + st.w, st.y], [st.x, st.y + st.h], [st.x + st.w, st.y + st.h]].forEach(([a, b]) => { const g = c.createRadialGradient(a*T, b*T, 0, a*T, b*T, 2.5*T); g.addColorStop(0, 'rgba(70,110,60,.32)'); g.addColorStop(1, 'rgba(70,110,60,0)'); c.fillStyle = g; c.fillRect(a*T - 2.5*T, b*T - 2.5*T, 5*T, 5*T); });
 }
-function terraCappella(c, st){ passatoia(c, (st.x + st.w/2 - 0.5)*T - 12, (st.y + 1)*T, 24, (st.h - 1)*T, false); }
+function terraCappella(c, st){ const ab = (st.parti || [])[0]; passatoia(c, (st.x + st.w/2)*T - 12, (ab ? ab.y + 1 : st.y)*T, 24, (st.y + st.h - (ab ? ab.y + 1 : st.y))*T, false); }
 function terraMusica(c, st){ tappetoTondo(c, (st.x + st.w*0.62)*T, (st.y + st.h*0.62)*T, 2.3*T, 1.6*T, { fondo:'#17403a', bordo:'#3a2a1c', oro:'#c9a35a' }); fogli(c, (st.x + st.w - 2)*T, (st.y + st.h - 1.2)*T, 2, 11); }
 function terraCucine(c, st, M){
   const o = M.ostacoli.find(q => q.t === 'banco' && q.x >= st.x && q.x < st.x + st.w && q.y >= st.y && q.y < st.y + st.h);
@@ -1793,15 +1831,32 @@ function terraSerra(c, st){
 function sasso(c, x, y, q){ c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(x + 1, y + 1.5, 9, 6, q, 0, 7); c.fill(); c.fillStyle = tinta('#8a8476', q*0.2 - 0.1); c.beginPath(); c.ellipse(x, y, 9, 6, q, 0, 7); c.fill(); c.fillStyle = 'rgba(255,255,255,.1)'; c.beginPath(); c.ellipse(x - 2, y - 2, 4, 2.4, q, 0, 7); c.fill(); }
 function terraTelegrafo(c, st){ tappeto(c, (st.x + 3.2)*T, (st.y + 2.1)*T, 3.4*T, 2.2*T, { fondo:'#4a4a2a', bordo:'#2a2418', oro:'#a88a52' }); fogli(c, (st.x + 2)*T, (st.y + st.h - 1)*T, 4, 23); }
 function terraMolo(c, st, M){
-  const { GW, PAV } = M, acqua = (x, y) => y >= 0 && x >= 0 && x < GW && y < M.GH && PAV[y*GW + x] === -2 && M.ACQUA[y*GW + x];
-  for(let x = st.x; x < st.x + st.w; x++) if(acqua(x, st.y + st.h)){ c.fillStyle = '#2e241a'; c.fillRect(x*T, (st.y + st.h)*T - 5, T, 5); c.fillStyle = 'rgba(255,230,190,.08)'; c.fillRect(x*T, (st.y + st.h)*T - 5, T, 1); }
-  for(let y = st.y; y < st.y + st.h; y++) if(acqua(st.x + st.w, y)){ c.fillStyle = '#2e241a'; c.fillRect((st.x + st.w)*T - 5, y*T, 5, T); }
-  for(let x = st.x + 2; x < st.x + st.w - 1; x += 5){ if(!acqua(x, st.y + st.h)) continue; const bx = (x + 0.5)*T, by = (st.y + st.h)*T - 9;
+  const { GW, GH, PAV, ACQUA } = M, k = M.stanze.indexOf(st), acqua = (x, y) => x >= 0 && y >= 0 && x < GW && y < GH && ACQUA[y*GW + x] && PAV[y*GW + x] === -2;
+  const caselle = [];
+  for(let y = 0; y < GH; y++) for(let x = 0; x < GW; x++) if(PAV[y*GW + x] === k) caselle.push([x, y]);
+  // la trave del bordo dove le assi finiscono sull'acqua
+  caselle.forEach(([x, y]) => {
+    c.fillStyle = '#2e241a';
+    if(acqua(x, y + 1)){ c.fillRect(x*T, (y + 1)*T - 5, T, 5); c.fillStyle = 'rgba(255,230,190,.08)'; c.fillRect(x*T, (y + 1)*T - 5, T, 1); c.fillStyle = '#2e241a'; }
+    if(acqua(x + 1, y)) c.fillRect((x + 1)*T - 5, y*T, 5, T);
+    if(acqua(x - 1, y)) c.fillRect(x*T, y*T, 5, T);
+  });
+  // i pali agli angoli che danno sull'acqua
+  caselle.forEach(([x, y]) => {
+    [[-1, 1, 4, T - 4], [1, 1, T - 4, T - 4]].forEach(([dx, dy, px, py]) => {
+      if(!acqua(x + dx, y) || !acqua(x, y + dy)) return;
+      c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.arc(x*T + px + 1, y*T + py + 1.5, 4.5, 0, 7); c.fill();
+      c.fillStyle = '#3e3022'; c.beginPath(); c.arc(x*T + px, y*T + py, 4.2, 0, 7); c.fill(); c.fillStyle = '#5a4632'; c.beginPath(); c.arc(x*T + px - 0.8, y*T + py - 0.8, 2.4, 0, 7); c.fill();
+    });
+  });
+  // bitte e cime lungo il bordo sud
+  caselle.filter(([x, y]) => acqua(x, y + 1) && !acqua(x - 1, y) && !acqua(x + 1, y) && x % 5 === 2).forEach(([x, y]) => {
+    const bx = (x + 0.5)*T, by = (y + 1)*T - 9;
     c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.ellipse(bx + 1, by + 3, 6, 3, 0, 0, 7); c.fill();
     c.fillStyle = '#26262c'; c.fillRect(bx - 4.5, by - 7, 9, 8); c.beginPath(); c.ellipse(bx, by + 1, 4.5, 2, 0, 0, Math.PI); c.fill();
     c.fillStyle = '#3e3e46'; c.beginPath(); c.ellipse(bx, by - 7, 5.5, 2.5, 0, 0, 7); c.fill();
-    if(fisso(x, 1, 6) < 0.6){ c.strokeStyle = '#b8a07a'; c.lineWidth = 1.4; for(let k = 0; k < 3; k++){ c.beginPath(); c.ellipse(bx - 15, by - 2, 7 - k*2, 3.5 - k, 0, 0, 7); c.stroke(); } c.beginPath(); c.moveTo(bx - 8, by - 2); c.quadraticCurveTo(bx - 4, by - 8, bx - 3, by - 6); c.stroke(); }
-  }
+    if(fisso(x, 1, 6) < 0.6){ c.strokeStyle = '#b8a07a'; c.lineWidth = 1.4; for(let q = 0; q < 3; q++){ c.beginPath(); c.ellipse(bx - 15, by - 2, 7 - q*2, 3.5 - q, 0, 0, 7); c.stroke(); } c.beginPath(); c.moveTo(bx - 8, by - 2); c.quadraticCurveTo(bx - 4, by - 8, bx - 3, by - 6); c.stroke(); }
+  });
 }
 function terraAtrio(c, st){ tappetoTondo(c, (st.x + st.w/2)*T, (st.y + st.h*0.66)*T, 4.6*T, 2.7*T, { fondo:'#3c2552', bordo:'#1f1630', oro:'#d4af62' }); }
 function terraCorridoio(c, r){
@@ -1830,7 +1885,19 @@ function prepara(M){
     const tc = f.st.torce;
     if(tc && f.x1 - f.x0 >= 3) for(let k = f.x0 + tc[1]; k < f.x1 - 1; k += tc[0]){ f.torce.push(k); torce.push({ x:(k + 0.5)*T, y:(f.y + 1)*T - Math.min(f.h*0.62, f.h - 9) - 2 }); }
   });
-  M._ar = { facce, torce };
+  // il mare: le righe d'acqua, le rive (dove l'acqua tocca assi o pietra) e quanto è profonda ogni casella
+  const acqua = (x, y) => x >= 0 && y >= 0 && x < GW && y < GH && ACQUA[y*GW + x] && PAV[y*GW + x] === -2;
+  const acque = [], rive = [], prof = new Float32Array(GW*GH);
+  for(let y = 0; y < GH; y++){ let a = -1; for(let x = 0; x <= GW; x++){ const w = x < GW && acqua(x, y); if(w && a < 0) a = x; if(!w && a >= 0){ acque.push([y, a, x]); a = -1; } } }
+  for(let y = 0; y < GH; y++) for(let x = 0; x < GW; x++){
+    if(!acqua(x, y)) continue;
+    let d = 6; for(let r = 1; r <= 5 && d === 6; r++) for(let dy = -r; dy <= r; dy++) for(let dx = -r; dx <= r; dx++){ const xx = x + dx, yy = y + dy; if(xx < 0 || yy < 0 || xx >= GW || yy >= GH) continue; if(!acqua(xx, yy)){ d = Math.min(d, r); } }
+    prof[y*GW + x] = d;
+    [[0, -1], [0, 1], [-1, 0], [1, 0]].forEach(([dx, dy]) => { const xx = x + dx, yy = y + dy; if(xx < 0 || yy < 0 || xx >= GW || yy >= GH || acqua(xx, yy)) return;
+      if(dy) rive.push({ x1:x*T, x2:(x + 1)*T, y1:(dy < 0 ? y : y + 1)*T, y2:(dy < 0 ? y : y + 1)*T, nx:0, ny:-dy });
+      else rive.push({ x1:(dx < 0 ? x : x + 1)*T, x2:(dx < 0 ? x : x + 1)*T, y1:y*T, y2:(y + 1)*T, nx:-dx, ny:0 }); });
+  }
+  M._ar = { facce, torce, acque, rive, prof };
   return M._ar;
 }
 function zoccolo(c, g, col, fregio){
@@ -2111,8 +2178,16 @@ function cima(c, X, Y, tx, ty){
   c.fillStyle = '#1d1824'; c.fillRect(X, Y, T, T);
   c.fillStyle = 'rgba(255,255,255,.025)'; c.fillRect(X + fisso(tx, ty, 1)*T*0.6, Y + fisso(tx, ty, 2)*T*0.6, T*0.4, T*0.3);
 }
-function acquaFerma(c, X, Y, tx, ty){
-  c.fillStyle = '#0f2738'; c.fillRect(X, Y, T, T);
+const BASSA = [48, 92, 112], FONDA = [10, 28, 44];
+function acquaFerma(c, X, Y, tx, ty, M){
+  const { GW, GH } = M, P = prepara(M).prof, d = (x, y) => x < 0 || y < 0 || x >= GW || y >= GH ? 6 : (P[y*GW + x] || 0);
+  // la profondità agli angoli della casella (media delle quattro intorno), poi 4×4 quadretti sfumati
+  const ang = [[0, 0], [1, 0], [0, 1], [1, 1]].map(([a, b]) => (d(tx + a - 1, ty + b - 1) + d(tx + a, ty + b - 1) + d(tx + a - 1, ty + b) + d(tx + a, ty + b))/4);
+  for(let j = 0; j < 4; j++) for(let i = 0; i < 4; i++){
+    const u = (i + 0.5)/4, v = (j + 0.5)/4, q = Math.min(1, ((ang[0]*(1 - u) + ang[1]*u)*(1 - v) + (ang[2]*(1 - u) + ang[3]*u)*v)/4.5);
+    c.fillStyle = 'rgb(' + Math.round(BASSA[0] + (FONDA[0] - BASSA[0])*q) + ',' + Math.round(BASSA[1] + (FONDA[1] - BASSA[1])*q) + ',' + Math.round(BASSA[2] + (FONDA[2] - BASSA[2])*q) + ')';
+    c.fillRect(X + i*8, Y + j*8, 8.4, 8.4);
+  }
   c.fillStyle = 'rgba(120,170,210,.06)'; for(let k = 0; k < 3; k++) c.fillRect(X + fisso(tx, ty, k)*T*0.7, Y + 4 + k*9 + fisso(tx, ty, k + 5)*4, 6 + fisso(tx, ty, k + 9)*10, 1.2);
 }
 function disegnaPezzo(c, M, A, i, j, res){
@@ -2122,11 +2197,15 @@ function disegnaPezzo(c, M, A, i, j, res){
   c.fillStyle = '#090b16'; c.fillRect(X0, Y0, L, L);
   for(let ty = ya; ty < yb; ty++) for(let tx = xa; tx < xb; tx++){
     const k = ty*GW + tx, p = PAV[k], X = tx*T, Y = ty*T;
-    if(p === -2){ if(ACQUA[k]) acquaFerma(c, X, Y, tx, ty); else if(BORDO[k]) cima(c, X, Y, tx, ty); continue; }
+    if(p === -2){ if(ACQUA[k]) acquaFerma(c, X, Y, tx, ty, M); else if(BORDO[k]) cima(c, X, Y, tx, ty); continue; }
     const st = stileDi(M, p); (PAVIMENTI[st.pav] || PAVIMENTI.semplice)(c, X, Y, tx, ty, st);
   }
   const tocca = (x, y, w, h, m) => !(x - m > x0 + PEZZO || x + w + m < x0 || y - m > y0 + PEZZO || y + h + m < y0);
-  M.stanze.forEach((st, k) => { const s = stileDi(M, k); if(s.terra && tocca(st.x, st.y, st.w, st.h, 1)){ c.save(); c.beginPath(); c.rect(st.x*T, st.y*T, st.w*T, st.h*T); c.clip(); s.terra(c, st, M); c.restore(); } });
+  M.stanze.forEach((st, k) => { const s = stileDi(M, k); if(!s.terra || ![st].concat(st.parti || []).some(r => tocca(r.x, r.y, r.w, r.h, 1))) return;
+    // i decori a terra restano dentro le caselle della stanza (rettangolo, parti, meno i tagli)
+    c.save(); c.beginPath();
+    for(let y = Math.max(0, y0 - 1); y < Math.min(GH, y0 + PEZZO + 1); y++){ let a = -1; for(let x = Math.max(0, x0 - 1); x <= Math.min(GW, x0 + PEZZO + 1); x++){ const dentro = x < GW && PAV[y*GW + x] === k; if(dentro && a < 0) a = x; if(!dentro && a >= 0){ c.rect(a*T, y*T, (x - a)*T, T); a = -1; } } if(a >= 0) c.rect(a*T, y*T, (Math.min(GW, x0 + PEZZO + 1) - a)*T, T); }
+    c.clip(); s.terra(c, st, M); c.restore(); });
   M.corridoi.forEach(r => { if(tocca(r[0], r[1], r[2], r[3], 1)) terraCorridoio(c, r); });
   // ombre morbide ai piedi dei muri (quattro sfumature fatte una volta, spostate casella per casella)
   const sf = (x0, y0, x1, y1, a) => { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, 'rgba(0,0,0,' + a + ')'); g.addColorStop(1, 'rgba(0,0,0,0)'); return g; };
@@ -2569,6 +2648,120 @@ const MOBILI = {
     cubo(c, 2, y + 1, w - 4, dd - 2, 72, '#e8e1ef', '#cfc6da', 64);
     c.fillStyle = 'rgba(212,175,98,.6)'; c.fillRect(2, y + dd - 1 - 66, w - 4, 1);
   } },
+  poltrona: { h:34, base:(w, d) => [2, d*0.25, w - 4, d*0.7], fermo(c, w, d, o, r){
+    const col = '#6e2430';
+    c.fillStyle = '#1a1210'; [[6, 27], [w - 8, 27]].forEach(([a, b]) => c.fillRect(a, b - 3, 2, 4));
+    c.fillStyle = tinta(col, -0.35); c.beginPath(); c.moveTo(5, 10); c.lineTo(5, -12); c.quadraticCurveTo(w/2, -22, w - 5, -12); c.lineTo(w - 5, 10); c.fill();
+    c.fillStyle = col; c.beginPath(); c.moveTo(7, 10); c.lineTo(7, -10); c.quadraticCurveTo(w/2, -18, w - 7, -10); c.lineTo(w - 7, 10); c.fill();
+    c.fillStyle = 'rgba(0,0,0,.35)'; [[w/2 - 5, -8], [w/2 + 5, -8], [w/2, -2], [w/2 - 5, 4], [w/2 + 5, 4]].forEach(([a, b]) => { c.beginPath(); c.arc(a, b, 0.9, 0, 7); c.fill(); });
+    cubo(c, 6, 10, w - 12, 15, 11, tinta(col, 0.12), tinta(col, -0.2));
+    cubo(c, 2, 6, 6, 20, 16, tinta(col, 0.05), tinta(col, -0.28)); cubo(c, w - 8, 6, 6, 20, 16, tinta(col, 0.05), tinta(col, -0.28));
+    c.fillStyle = 'rgba(255,230,200,.12)'; c.fillRect(8, -8, 3, 14);
+  } },
+  candelabro: { h:62, tondo:true, base:(w, d) => [8, d*0.45, w - 16, d*0.4], fermo(c, w, d, o, r){
+    const cx = w/2, cy = d*0.65;
+    c.fillStyle = '#6e5426'; c.beginPath(); c.ellipse(cx, cy, 8, 3.5, 0, 0, 7); c.fill(); c.fillStyle = '#a07a32'; c.beginPath(); c.ellipse(cx, cy - 1.5, 6, 2.5, 0, 0, 7); c.fill();
+    const g = c.createLinearGradient(cx - 2, 0, cx + 2, 0); g.addColorStop(0, '#8a6a2a'); g.addColorStop(0.5, '#e2c47a'); g.addColorStop(1, '#7a5a22');
+    c.fillStyle = g; c.fillRect(cx - 1.5, cy - 50, 3, 49); c.beginPath(); c.ellipse(cx, cy - 20, 3.2, 1.6, 0, 0, 7); c.fill();
+    c.strokeStyle = '#c9a35a'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(cx - 11, cy - 46); c.quadraticCurveTo(cx, cy - 36, cx + 11, cy - 46); c.stroke();
+    [-11, -5.5, 0, 5.5, 11].forEach(a => { const yy = cy - (a === 0 ? 50 : 44 - Math.abs(a)*0.2); c.fillStyle = '#a07a32'; c.fillRect(cx + a - 2, yy, 4, 1.6); c.fillStyle = '#efe6d0'; c.fillRect(cx + a - 1, yy - 5, 2, 5); });
+  }, vivo(c, w, d, o, t){ const cx = w/2, cy = d*0.65; [-11, -5.5, 0, 5.5, 11].forEach((a, i) => fiamma(c, cx + a, cy - (a === 0 ? 50 : 44 - Math.abs(a)*0.2) - 6, t, i + o.x*3)); } },
+  arpa: { h:58, base:(w, d) => [5, d*0.45, w - 10, d*0.45], fermo(c, w, d, o, r){
+    const cy = d*0.72, sb = x => cy - 6 - (x - 9)/16*34;
+    cubo(c, 5, cy - 8, 22, 8, 5, '#6a4428', '#4a2e1a');
+    c.strokeStyle = 'rgba(240,230,210,.7)'; c.lineWidth = 0.5; c.beginPath();
+    for(let x = 11; x < 25; x += 1.5){ const top = cy - 52 + (x - 8)*0.55 + Math.sin((x - 8)/16*Math.PI)*-4; c.moveTo(x, top); c.lineTo(x, sb(x)); }
+    c.stroke();
+    c.strokeStyle = '#8a5a32'; c.lineWidth = 4; c.lineCap = 'round'; c.beginPath(); c.moveTo(9, cy - 6); c.lineTo(25, cy - 40); c.stroke();
+    c.strokeStyle = '#c9a35a'; c.lineWidth = 3; c.beginPath(); c.moveTo(8, cy - 5); c.lineTo(8, cy - 52); c.stroke();
+    c.lineWidth = 2.5; c.beginPath(); c.moveTo(8, cy - 52); c.bezierCurveTo(14, cy - 58, 20, cy - 40, 25, cy - 41); c.stroke(); c.lineCap = 'butt';
+    c.fillStyle = '#e2c47a'; c.beginPath(); c.arc(8, cy - 54, 2.2, 0, 7); c.fill();
+  } },
+  sacchi: { h:28, base:(w, d) => [2, d*0.3, w - 4, d*0.6], fermo(c, w, d, o, r){
+    const sacco = (x, y, sw, sh, col) => {
+      c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(x + sw/2, y, sw/2 + 2, 3, 0, 0, 7); c.fill();
+      c.fillStyle = col; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x - 3, y - sh*0.55, x + sw*0.22, y - sh); c.lineTo(x + sw*0.78, y - sh); c.quadraticCurveTo(x + sw + 3, y - sh*0.55, x + sw, y); c.closePath(); c.fill();
+      c.fillStyle = 'rgba(0,0,0,.14)'; c.beginPath(); c.moveTo(x + sw*0.62, y); c.quadraticCurveTo(x + sw + 3, y - sh*0.55, x + sw*0.78, y - sh); c.lineTo(x + sw, y); c.fill();
+      c.fillStyle = tinta(col, -0.12); c.beginPath(); c.moveTo(x + sw*0.3, y - sh); c.lineTo(x + sw*0.36, y - sh - 5); c.lineTo(x + sw*0.64, y - sh - 5); c.lineTo(x + sw*0.7, y - sh); c.fill();
+      c.fillStyle = '#6a4a2a'; c.fillRect(x + sw*0.3, y - sh - 1, sw*0.4, 1.4);
+      c.strokeStyle = 'rgba(140,70,50,.55)'; c.lineWidth = 0.9; c.beginPath(); c.arc(x + sw/2, y - sh*0.45, sw*0.16, 0, 7); c.stroke(); c.beginPath(); c.moveTo(x + sw*0.36, y - sh*0.45); c.lineTo(x + sw*0.64, y - sh*0.45); c.stroke();
+    };
+    sacco(4, d - 3, 18, 20, '#d8cba8'); sacco(24, d - 6, 17, 22, '#cfc09a'); sacco(43, d - 3, 17, 18, '#ddd2b4');
+  } },
+  dispensa: { h:50, base:(w, d) => [0, d*0.3, w, d*0.7], fermo(c, w, d, o, r){
+    const y0 = d*0.3, dd = d - y0 - 1, h = 46, fy = y0 + dd - h, ty = y0 - h;
+    c.fillStyle = '#3a2618'; c.fillRect(1, fy, w - 2, h); c.fillStyle = '#5e4028'; c.fillRect(1, ty, w - 2, dd);
+    const top = fy + 3, rh = (h - 7)/3;
+    for(let k = 0; k < 3; k++){
+      const y1 = top + (k + 1)*rh; c.fillStyle = '#1a120c'; c.fillRect(4, top + k*rh + 1, w - 8, rh - 2);
+      for(let x = 6, q = 0; x < w - 8; q++){
+        const tipo = r(k*20 + q);
+        if(tipo < 0.4){ const jw = 6; c.fillStyle = 'rgba(200,215,220,.55)'; c.fillRect(x, y1 - 10, jw, 9); c.fillStyle = ['#c9a35a', '#8a3a2a', '#e8dfc8', '#5a7a3a', '#c45a3a'][(r(k*20 + q + 50)*5)|0]; c.fillRect(x + 0.8, y1 - 7, jw - 1.6, 5.5); c.fillStyle = '#7a5a3a'; c.fillRect(x - 0.3, y1 - 11, jw + 0.6, 1.8); x += jw + 2; }
+        else if(tipo < 0.65){ c.fillStyle = '#2a4a2a'; c.fillRect(x + 1, y1 - 12, 3.2, 11); c.fillRect(x + 1.8, y1 - 15, 1.6, 3); c.fillStyle = 'rgba(255,255,255,.25)'; c.fillRect(x + 1.4, y1 - 11, 0.8, 7); x += 6; }
+        else if(tipo < 0.85){ c.fillStyle = '#e3b04a'; c.beginPath(); c.ellipse(x + 5, y1 - 4, 5, 3.4, 0, 0, 7); c.fill(); c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(x, y1 - 4, 10, 1); x += 12; }
+        else { c.fillStyle = '#c9b48a'; c.beginPath(); c.ellipse(x + 4, y1 - 4.5, 4, 4.5, 0, 0, 7); c.fill(); x += 9; }
+      }
+      c.fillStyle = '#6b4a2e'; c.fillRect(3, y1 - 1.5, w - 6, 2);
+    }
+    c.fillStyle = '#4e321e'; c.fillRect(1, fy, 3, h); c.fillRect(w - 4, fy, 3, h);
+    c.fillStyle = '#b06a3a'; c.beginPath(); c.arc(12, ty + dd/2, 4.5, 0, 7); c.fill(); c.fillStyle = '#d8cba8'; c.fillRect(w - 20, ty + 4, 12, 7);
+  } },
+  rastrelliera: { h:46, base:(w, d) => [0, d*0.3, w, d*0.7], fermo(c, w, d, o, r){
+    const y0 = d*0.3, dd = d - y0 - 1, h = 42, fy = y0 + dd - h, ty = y0 - h;
+    c.fillStyle = '#2e1e14'; c.fillRect(1, fy, w - 2, h); c.fillStyle = '#4e3220'; c.fillRect(1, ty, w - 2, dd);
+    const nx = Math.floor((w - 8)/7), ny = 5;
+    for(let j = 0; j < ny; j++) for(let i = 0; i < nx; i++){
+      const bx = 4 + 3.5 + i*7 + (j & 1)*3.5, by = fy + 5 + j*7.6; if(bx > w - 6) continue;
+      const q = r(j*40 + i);
+      c.fillStyle = q < 0.12 ? '#0e0a08' : (q < 0.6 ? '#22401f' : '#3a1a14'); c.beginPath(); c.arc(bx, by, 2.8, 0, 7); c.fill();
+      if(q >= 0.12){ c.fillStyle = 'rgba(255,255,255,.22)'; c.beginPath(); c.arc(bx - 0.9, by - 0.9, 0.9, 0, 7); c.fill(); }
+    }
+    c.strokeStyle = '#5a3a24'; c.lineWidth = 1.4; c.beginPath();
+    for(let x = -h; x < w; x += 10){ c.moveTo(x, fy + h); c.lineTo(x + h, fy); c.moveTo(x + h, fy + h); c.lineTo(x, fy); }
+    c.save(); c.beginPath(); c.rect(1, fy, w - 2, h); c.clip(); c.stroke(); c.restore();
+    c.fillStyle = '#5a3a24'; c.fillRect(1, fy, w - 2, 3); c.fillRect(1, fy + h - 3, w - 2, 3); c.fillRect(1, fy, 3, h); c.fillRect(w - 4, fy, 3, h);
+  } },
+  albero: { h:74, tondo:true, base:(w, d) => [4, d*0.45, w - 8, d*0.45], fermo(c, w, d, o, r){
+    const cx = w/2, cy = d*0.72;
+    cilindro(c, cx, cy, 10, 4.5, 13, '#5a3a24', '#b0623c');
+    c.fillStyle = '#3a2416'; c.beginPath(); c.ellipse(cx, cy - 13, 8.5, 3.5, 0, 0, 7); c.fill();
+    c.fillStyle = '#5a3e26'; c.beginPath(); c.moveTo(cx - 2.5, cy - 13); c.lineTo(cx - 1.2, cy - 40); c.lineTo(cx + 1.2, cy - 40); c.lineTo(cx + 2.5, cy - 13); c.fill();
+    const blob = (x, y, R, col) => { c.fillStyle = col; c.beginPath(); c.arc(cx + x, cy + y, R, 0, 7); c.fill(); };
+    blob(0, -44, 16, 'rgba(0,0,0,.25)');
+    [[-8, -46, 10, '#24451f'], [8, -46, 10, '#24451f'], [0, -52, 11, '#2c5427'], [-5, -40, 9, '#2f5a2a'], [6, -41, 9, '#2f5a2a'], [-6, -55, 8, '#386a31'], [5, -56, 8, '#3d7034'], [0, -47, 9, '#356530']].forEach(([x, y, R, col]) => blob(x, y, R, col));
+    c.fillStyle = 'rgba(210,255,180,.13)'; [[-6, -57, 4], [3, -58, 3.5], [-9, -49, 3]].forEach(([x, y, R]) => { c.beginPath(); c.arc(cx + x, cy + y, R, 0, 7); c.fill(); });
+  } },
+  panchina: { h:20, base:(w, d) => [2, d*0.3, w - 4, d*0.55], fermo(c, w, d, o, r){
+    cubo(c, 7, 12, 8, 10, 8, '#6e6a60', '#5e5a52'); cubo(c, w - 15, 12, 8, 10, 8, '#6e6a60', '#5e5a52');
+    cubo(c, 2, 10, w - 4, 13, 13, '#a39e90', '#8a8578', 8);
+    c.fillStyle = 'rgba(255,255,255,.08)'; c.fillRect(4, -2, w - 8, 1.2);
+    c.fillStyle = 'rgba(60,90,50,.4)'; c.beginPath(); c.ellipse(w - 9, 21, 5, 1.6, 0, 0, 7); c.fill();
+  } },
+  armadietto: { h:44, base:(w, d) => [2, d*0.3, w - 4, d*0.65], fermo(c, w, d, o, r){
+    cubo(c, 3, 9, w - 6, 18, 38, '#525c66', '#3c454e');
+    const fy = 9 + 18 - 38;
+    for(let k = 0; k < 3; k++){ const y = fy + 2 + k*12; c.fillStyle = 'rgba(0,0,0,.28)'; c.fillRect(5, y, w - 10, 10.5); c.fillStyle = 'rgba(255,255,255,.08)'; c.fillRect(5, y, w - 10, 1); c.fillStyle = '#b8bec6'; c.fillRect(w/2 - 4, y + 4, 8, 1.6); c.fillStyle = '#e8e0d0'; c.fillRect(w/2 - 3, y + 1.6, 6, 2); }
+    c.fillStyle = '#e3d8bc'; c.fillRect(7, 9 - 38 + 3, 12, 8); c.fillStyle = '#d0c4a2'; c.fillRect(8, 9 - 38 + 1.5, 12, 8);
+  } },
+  cavalletto: { h:56, base:(w, d) => [5, d*0.5, w - 10, d*0.4], fermo(c, w, d, o, r){
+    const cx = w/2, cy = d*0.75;
+    c.strokeStyle = '#5a3e26'; c.lineWidth = 2; c.beginPath(); c.moveTo(cx, cy - 52); c.lineTo(cx + 1, cy - 8); c.stroke();
+    c.strokeStyle = '#7a5a36'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(cx - 1, cy - 52); c.lineTo(cx - 10, cy); c.moveTo(cx + 1, cy - 52); c.lineTo(cx + 10, cy); c.stroke();
+    c.fillStyle = 'rgba(0,0,0,.3)'; c.fillRect(cx - 11, cy - 46, 24, 26);
+    c.fillStyle = '#efe8d8'; c.fillRect(cx - 12, cy - 47, 24, 25);
+    const g = c.createLinearGradient(0, cy - 46, 0, cy - 30); g.addColorStop(0, '#5a7aa0'); g.addColorStop(1, '#c9b48a'); c.fillStyle = g; c.fillRect(cx - 11, cy - 46, 22, 14);
+    c.fillStyle = '#4f7a4a'; c.beginPath(); c.moveTo(cx - 11, cy - 23); c.lineTo(cx - 11, cy - 32); c.quadraticCurveTo(cx - 2, cy - 38, cx + 6, cy - 31); c.lineTo(cx + 6, cy - 23); c.fill();
+    c.fillStyle = '#7a5a36'; c.fillRect(cx - 14, cy - 22, 28, 2.4);
+    c.fillStyle = '#c9a888'; c.beginPath(); c.ellipse(cx + 12, cy - 2, 6, 3, 0.3, 0, 7); c.fill(); [['#c43a3a', 10, -3], ['#3a5aa8', 13, -1], ['#e3b04a', 15, -3]].forEach(([col, a, b]) => { c.fillStyle = col; c.beginPath(); c.arc(cx + a, cy + b, 1.1, 0, 7); c.fill(); });
+  } },
+  baule: { h:26, base:(w, d) => [3, d*0.3, w - 6, d*0.6], fermo(c, w, d, o, r){
+    const x = 4, y = 8, ww = w - 8, dd = d - 12, h = 18, fy = y + dd - h;
+    cubo(c, x, y, ww, dd, h, '#7a5030', '#5e3c22');
+    c.fillStyle = 'rgba(255,230,190,.12)'; c.fillRect(x, y - h, ww, 3);
+    c.fillStyle = '#3a2a1a'; [0.22, 0.78].forEach(q => { c.fillRect(x + ww*q - 2, y - h, 4, dd + h); });
+    c.fillStyle = '#b8914e'; [[x, fy], [x + ww - 3, fy], [x, y + dd - 3], [x + ww - 3, y + dd - 3]].forEach(([a, b]) => c.fillRect(a, b, 3, 3));
+    c.fillRect(x + ww/2 - 3, fy + 1, 6, 6); c.fillStyle = '#2a1a10'; c.fillRect(x + ww/2 - 0.8, fy + 3, 1.6, 3);
+  } },
 };
 // la figurina di un mobile (una tela per mobile e risoluzione)
 function figurina(M, o, k, res){
@@ -2601,6 +2794,87 @@ function torceVive(c, M, t, x0, y0, x1, y1){
   }
 }
 
+// ── Il mare vivo: onde che scorrono, luccichii, schiuma sulle rive, cerchi d'acqua, la barca che dondola ──
+function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
+  const A = prepara(M); if(!A.acque.length) return;
+  // le onde: due linee per riga d'acqua, la cresta chiara e il cavo scuro, che scorrono piano
+  for(const [ty, a, b] of A.acque){
+    if((ty + 1)*T < y0 || ty*T > y1) continue;
+    const xa = Math.max(a*T, Math.floor(x0/8)*8), xb = Math.min(b*T, x1); if(xb <= xa) continue;
+    for(let k = 0; k < 2; k++){
+      const yb = ty*T + 9 + k*15;
+      c.lineWidth = 1.4; c.strokeStyle = 'rgba(8,20,32,.4)'; c.beginPath();
+      for(let x = xa; x <= xb; x += 8){ const y = yb + 2 + Math.sin(x*0.05 + t*1.3 + ty*1.7 + k*2.1)*2.4 + Math.sin(x*0.13 - t*2.1 + k)*1; if(x === xa) c.moveTo(x, y); else c.lineTo(x, y); }
+      c.stroke();
+      c.lineWidth = 1; c.strokeStyle = 'rgba(160,205,235,.16)'; c.beginPath();
+      for(let x = xa; x <= xb; x += 8){ const y = yb + Math.sin(x*0.05 + t*1.3 + ty*1.7 + k*2.1)*2.4 + Math.sin(x*0.13 - t*2.1 + k)*1; if(x === xa) c.moveTo(x, y); else c.lineTo(x, y); }
+      c.stroke();
+    }
+  }
+  // luccichii della luna: ogni casella ha il suo, che si accende di rado
+  const tx0 = Math.max(0, Math.floor(x0/T)), tx1 = Math.min(M.GW - 1, Math.floor(x1/T)), ty0 = Math.max(0, Math.floor(y0/T)), ty1 = Math.min(M.GH - 1, Math.floor(y1/T));
+  for(let ty = ty0; ty <= ty1; ty++) for(let tx = tx0; tx <= tx1; tx++){
+    const k = ty*M.GW + tx; if(!M.ACQUA[k] || M.PAV[k] !== -2) continue;
+    for(let q = 0; q < 2; q++){
+      const b = Math.sin(t*(1.1 + fisso(tx, ty, 70 + q)) + fisso(tx, ty, 71 + q)*40); if(b < 0.9) continue;
+      const a = (b - 0.9)*10, x = tx*T + fisso(tx, ty, 72 + q)*T, y = ty*T + fisso(tx, ty, 73 + q)*T + Math.sin(t + q)*1.5;
+      c.fillStyle = 'rgba(235,245,255,' + (0.75*a).toFixed(3) + ')'; c.fillRect(x - 2.5, y, 5, 1.2); c.fillRect(x - 0.6, y - 1, 1.2, 3.2);
+    }
+  }
+  // la schiuma che lambisce le rive: due righe tratteggiate che scorrono in versi opposti
+  const riva = (off, w, alfa, dash, vel) => {
+    c.lineWidth = w; c.lineCap = 'round'; c.strokeStyle = 'rgba(225,240,250,' + alfa + ')'; c.setLineDash(dash); c.lineDashOffset = -t*vel; c.beginPath();
+    for(const r of A.rive){
+      if(Math.max(r.x1, r.x2) < x0 || Math.min(r.x1, r.x2) > x1 || Math.max(r.y1, r.y2) < y0 || Math.min(r.y1, r.y2) > y1) continue;
+      const o = off + Math.sin(t*2.2 + (r.x1 + r.y1)*0.05)*1.6;
+      c.moveTo(r.x1 + r.nx*o, r.y1 + r.ny*o); c.lineTo(r.x2 + r.nx*o, r.y2 + r.ny*o);
+    }
+    c.stroke();
+  };
+  riva(3, 2.2, 0.32, [7, 5, 3, 6], 9); riva(7.5, 1.4, 0.16, [2, 11], -6); c.setLineDash([]); c.lineDashOffset = 0; c.lineCap = 'butt';
+  // i cerchi d'acqua (passi sul bordo, la barca, i pali)
+  for(let i = onde.length - 1; i >= 0; i--){
+    const o = onde[i], f = (t - o.t0)/1.6;
+    if(f >= 1 || f < 0){ onde.splice(i, 1); continue; }
+    c.strokeStyle = 'rgba(200,230,250,' + (0.45*(1 - f)).toFixed(3) + ')'; c.lineWidth = 1.3;
+    c.beginPath(); c.ellipse(o.x, o.y, 3 + f*(o.r || 18), (3 + f*(o.r || 18))*0.42, 0, 0, 7); c.stroke();
+    if(f > 0.25){ const g = f - 0.25; c.beginPath(); c.ellipse(o.x, o.y, 2 + g*(o.r || 18)*0.8, (2 + g*(o.r || 18)*0.8)*0.42, 0, 0, 7); c.stroke(); }
+  }
+  // la barca ormeggiata al pontile
+  const B = M.barca; if(!B || B.x + 80 < x0 || B.x - 80 > x1 || B.y + 40 < y0 || B.y - 50 > y1) return;
+  const bob = Math.sin(t*1.25)*1.6, roll = Math.sin(t*0.95 + 0.6)*0.03, f = barca(res || 2);
+  c.fillStyle = 'rgba(4,12,20,.45)'; c.beginPath(); c.ellipse(B.x, B.y + 8, 52, 14, roll, 0, 7); c.fill();
+  c.strokeStyle = 'rgba(180,165,130,.9)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(B.cima[0], B.cima[1]); c.quadraticCurveTo((B.cima[0] + B.x - 44)/2, B.y + 10 + bob, B.x - 44, B.y - 6 + bob); c.stroke();
+  c.save(); c.translate(B.x, B.y + bob); c.rotate(roll); if(f.cv) c.drawImage(f.cv, f.ox, f.oy, f.w, f.h);
+  const fl = 0.8 + 0.2*Math.sin(t*9); c.fillStyle = 'rgba(255,200,110,' + (0.25*fl).toFixed(3) + ')'; c.beginPath(); c.arc(-36, -21, 9, 0, 7); c.fill(); c.fillStyle = 'rgba(255,226,150,.95)'; c.beginPath(); c.ellipse(-36, -21, 1.4, 2.4*fl, 0, 0, 7); c.fill();
+  c.restore();
+  if(!B.ultima || t - B.ultima > 1.3){ B.ultima = t; onde.push({ x:B.x + (Math.random() < 0.5 ? -40 : 44), y:B.y + 8 + Math.random()*4, t0:t, r:16 }); }
+}
+// la barca: scafo con la fiancata, assi, panche, remi, una cima e la lanterna a poppa (tela fatta una volta)
+function barca(res){
+  res = Math.min(3, Math.ceil(res*10)/10);
+  return prendi('B|' + res, () => {
+    const W = 120, H = 70, ox = -60, oy = -40, cv = document.createElement('canvas'); cv.width = Math.ceil(W*res); cv.height = Math.ceil(H*res);
+    const c = cv.getContext('2d'); c.setTransform(res, 0, 0, res, -ox*res, -oy*res);
+    const L = 92, Bm = 30, sx = -46, sy = -22;   // lo scafo visto da sopra: poppa a sinistra, prua a destra
+    const forma = new Path2D(); forma.moveTo(sx + 6, sy); forma.lineTo(sx + L*0.62, sy); forma.quadraticCurveTo(sx + L*0.95, sy + 2, sx + L, sy + Bm/2); forma.quadraticCurveTo(sx + L*0.95, sy + Bm - 2, sx + L*0.62, sy + Bm); forma.lineTo(sx + 6, sy + Bm); forma.quadraticCurveTo(sx, sy + Bm/2, sx + 6, sy); forma.closePath();
+    for(let z = 11; z > 0; z--){ c.save(); c.translate(0, z); c.fillStyle = tinta('#5a3a22', -0.35 + 0.3*(11 - z)/11); c.fill(forma); c.restore(); }
+    c.save(); c.translate(0, 11); c.fillStyle = 'rgba(30,60,70,.55)'; c.fill(forma); c.restore();
+    c.save(); c.translate(0, 8); c.fillStyle = '#e8e0d0'; c.globalAlpha = 0.5; c.fill(forma); c.restore(); c.globalAlpha = 1;
+    c.fillStyle = '#8a6a44'; c.fill(forma);
+    c.save(); c.clip(forma);
+    c.fillStyle = '#a07a50'; c.fillRect(sx, sy + 3, L, Bm - 6);
+    c.strokeStyle = 'rgba(60,36,20,.45)'; c.lineWidth = 0.8; for(let k = 1; k < 5; k++){ c.beginPath(); c.moveTo(sx, sy + 3 + k*(Bm - 6)/5); c.lineTo(sx + L, sy + 3 + k*(Bm - 6)/5); c.stroke(); }
+    c.restore();
+    c.strokeStyle = '#4a2e1a'; c.lineWidth = 3; c.stroke(forma); c.strokeStyle = 'rgba(255,230,190,.25)'; c.lineWidth = 1; c.stroke(forma);
+    [[sx + 22, 6], [sx + 46, 7], [sx + 70, 5]].forEach(([x, w]) => { c.fillStyle = '#6b4a2e'; c.fillRect(x - w/2, sy + 2, w, Bm - 4); c.fillStyle = 'rgba(255,230,190,.15)'; c.fillRect(x - w/2, sy + 2, 1, Bm - 4); });
+    c.save(); c.translate(sx + 50, sy + Bm/2); c.rotate(-0.12); c.fillStyle = '#c9a874'; c.fillRect(-36, -9, 70, 2.2); c.fillRect(30, -12, 10, 8); c.rotate(0.22); c.fillRect(-34, 7, 66, 2.2); c.fillRect(28, 5, 10, 8); c.restore();
+    c.strokeStyle = '#b8a07a'; c.lineWidth = 1.3; for(let k = 0; k < 3; k++){ c.beginPath(); c.ellipse(sx + L - 18, sy + Bm/2, 6 - k*1.8, 4 - k*1.2, 0, 0, 7); c.stroke(); }
+    c.fillStyle = '#2a2420'; c.fillRect(sx + 7, sy + 1, 6, 4); c.fillStyle = '#3a3020'; c.fillRect(sx + 7, -27, 6, 9); c.fillStyle = 'rgba(246,217,153,.9)'; c.fillRect(sx + 8.5, -25.5, 3, 6); c.fillStyle = '#2a2420'; c.fillRect(sx + 6.5, -28, 7, 2);
+    return { cv, px:cv.width*cv.height, ox, oy, w:W, h:H };
+  });
+}
+
 // ===== disegno.js =====
 // Il disegno della mappa, degli avatar, della luce delle lanterne e degli effetti (uguale su tutti i telefoni).
 
@@ -2616,7 +2890,7 @@ class Pittore {
     this.cam = { x:0, y:0 }; this.DPR = 1; this.SCALA = 1; this.w = 0; this.h = 0;
     this.parti = [];        // particelle nel mondo (polvere dei passi, fumo, scintille)
     this.polvere = Array.from({length:26}, ()=>({ x:Math.random(), y:Math.random(), v:0.2+Math.random()*0.5, f:Math.random()*6 }));
-    this.passi = {};
+    this.passi = {}; this.onde = []; this.ondaDi = {};
   }
   misura(){
     // (le misure del riquadro, non dello schermo: se il gioco è girato di lato restano giuste)
@@ -2659,16 +2933,12 @@ class Pittore {
       let e=pezzo(M,i,j,res,true);
       if(!e && (spesa<6 || !nuovi)){ const a=performance.now(); e=pezzo(M,i,j,res); e.nuovo=false; nuovi++; spesa+=performance.now()-a; }
       const dx=Math.round((i*L-cx)*s), dy=Math.round((j*L-cy)*s), dw=Math.round(((i+1)*L-cx)*s)-dx, dh=Math.round(((j+1)*L-cy)*s)-dy;
-      if(e) c.drawImage(e.cv, dx, dy, dw, dh); else this.abbozzo(M, i, j, dx, dy, dw/(PEZZO*T));
+      if(e) c.drawImage(e.cv, dx, dy, dw+1, dh+1); else this.abbozzo(M, i, j, dx, dy, dw/(PEZZO*T));   // +1: nessuna riga tra un pezzo e l'altro
     }
     c.setTransform(s,0,0,s,-cx*s,-cy*s);
     const tx0=Math.max(0,Math.floor(cx/T)-1), ty0=Math.max(0,Math.floor(cy/T)-1), tx1=Math.min(M.GW-1,Math.ceil((cx+W/s)/T)+1), ty1=Math.min(M.GH-1,Math.ceil((cy+H/s)/T)+1);
-    // solo l'acqua e le torce si muovono
-    c.strokeStyle='rgba(140,190,230,.12)'; c.lineWidth=1.5;
-    for(let ty=ty0;ty<=ty1;ty++) for(let tx=tx0;tx<=tx1;tx++){
-      if(!M.ACQUA[ty*M.GW+tx]) continue;
-      const X=tx*T, Y=ty*T, o=Math.sin(t*1.5+tx*0.7+ty)*4; c.beginPath(); c.moveTo(X+4,Y+T/2+o); c.lineTo(X+T-4,Y+T/2+o); c.stroke();
-    }
+    // solo il mare e le torce si muovono
+    mareVivo(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+T, this.onde, res);
     torceVive(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+2*T);
     const vx0=cx-3*T, vy0=cy-3*T, vx1=cx+W/s+3*T, vy1=cy+H/s+3*T;
     if(S.palazzo){
@@ -2705,7 +2975,10 @@ class Pittore {
     for(const q of scena){
       if(q.o){ disegnaMobile(c, M, q.o, q.k, res, t, S.effetti, this); continue; }
       const p=q.p;
-      if(p.muove && !p.fantasma){ const k=this.passi[p.id]||0; if(t-k>0.22){ this.passi[p.id]=t; this.sparpaglia('polvere', p.x+(Math.random()-0.5)*8, p.y+T*0.36, 2, { v:12, vita:0.5, r:2.5 }); } }
+      if(p.muove && !p.fantasma){ const k=this.passi[p.id]||0; if(t-k>0.22){ this.passi[p.id]=t; this.sparpaglia('polvere', p.x+(Math.random()-0.5)*8, p.y+T*0.36, 2, { v:12, vita:0.5, r:2.5 }); }
+        // sul bordo del molo i passi fanno cerchi nell'acqua
+        if(t-(this.ondaDi[p.id]||0)>0.5 && this.onde.length<24){ const px=Math.floor(p.x/T), py=Math.floor((p.y+T*0.36)/T);
+          for(const [dx,dy] of [[0,1],[1,0],[-1,0],[0,-1]]){ const n=(py+dy)*M.GW+px+dx; if(px+dx>=0 && px+dx<M.GW && py+dy>=0 && py+dy<M.GH && M.ACQUA[n] && M.PAV[n]===-2){ this.ondaDi[p.id]=t; this.onde.push({ x:(px+dx+0.5)*T-dx*10+(Math.random()-0.5)*10, y:(py+dy+0.5)*T-dy*12+(Math.random()-0.5)*6, t0:t, r:20 }); break; } } } }
       const grigio=S.neb && p!==io;
       if(S.segnati && S.segnati.indexOf(p.id)>=0 && !grigio){ const g=c.createRadialGradient(p.x,p.y-T*0.4,0,p.x,p.y-T*0.4,T*1.2); g.addColorStop(0,`rgba(${ROSSO},${0.45+0.2*Math.sin(t*6)})`); g.addColorStop(1,`rgba(${ROSSO},0)`); c.fillStyle=g; c.fillRect(p.x-T*1.2,p.y-T*1.6,T*2.4,T*2.4); }
       if(S.traccia && p.id===S.traccia){ c.strokeStyle=`rgba(${ORO},.8)`; c.lineWidth=2; c.setLineDash([4,4]); this.ell(p.x,p.y+T*0.3,T*0.55,T*0.22); c.stroke(); c.setLineDash([]); }
@@ -2928,7 +3201,7 @@ function disegnaMappa(cv, M, segni, maxW, maxH, sopra){
   const m=cv.getContext('2d'); m.setTransform(dpr*sc,0,0,dpr*sc,0,0); m.fillStyle='#0b0d18'; m.fillRect(0,0,M.GW*T,M.GH*T);
   for(let y=0;y<M.GH;y++) for(let x=0;x<M.GW;x++){ const i=y*M.GW+x, p=M.PAV[i]; if(p===-2){ if(M.ACQUA[i]){ m.fillStyle='#132c40'; m.fillRect(x*T,y*T,T+.5,T+.5); } continue; } m.fillStyle = p===-1 ? CORR2 : M.stanze[p].c2; m.fillRect(x*T,y*T,T+.5,T+.5); }
   m.font=`600 ${11/sc}px ${FONT}`; m.textAlign='center'; m.fillStyle='rgba(241,232,214,.85)';
-  for(const s of M.stanze){ const lw=m.measureText(s.nome).width/2+3/sc; m.fillText(s.nome, Math.max(lw, Math.min(M.GW*T-lw, (s.x+s.w/2)*T)), (s.y+s.h/2)*T); }
+  for(const s of M.stanze){ const lw=m.measureText(s.nome).width/2+3/sc; m.fillText(s.nome, Math.max(lw, Math.min(M.GW*T-lw, (s.lx!=null?s.lx:s.x+s.w/2)*T)), (s.ly!=null?s.ly:s.y+s.h/2)*T); }
   for(const g of segni){ m.fillStyle=g.col; m.beginPath(); m.arc(g.x,g.y,(g.r||5)/sc,0,Math.PI*2); m.fill(); if(g.bordo){ m.strokeStyle='#0b0d18'; m.lineWidth=2/sc; m.stroke(); } }
   if(sopra) sopra(m, sc);
 }
@@ -2942,9 +3215,62 @@ const ISTRUZIONI = {
   leva: 'Ferma la lancetta dentro la zona dorata.',
   trascina: 'Trascina le tre cose dentro il riquadro.',
   versa: 'Tieni premuto per versare. Lascia quando arrivi alla fascia dorata.',
-  quadri: 'Tocca i quadri per girarli: tutte le frecce in su.',
+  quadri: 'Tocca i quadri per girarli: il cielo in alto.',
 };
-const COSE = { dolci:['🧁','🍰','🥐'], barca:['📦','🛢️','🎁'], bucato:['👕','🧦','👗'] };
+// le cose da trascinare, disegnate (niente emoji): 64×64, ombra a terra e luce da sinistra
+const svg = d => '<svg viewBox="0 0 64 64" aria-hidden="true">' + d + '</svg>';
+const OMBRA = (rx, cy) => '<ellipse cx="32" cy="' + (cy || 57) + '" rx="' + rx + '" ry="3.5" fill="rgba(0,0,0,.35)"/>';
+const DISEGNI = {
+  pasticcino: svg('<defs><linearGradient id="lt-d1" x1="0" x2="1"><stop offset="0" stop-color="#b03a58"/><stop offset=".45" stop-color="#f08aa2"/><stop offset="1" stop-color="#9a2e4a"/></linearGradient><radialGradient id="lt-d2" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#e2c9aa"/></radialGradient></defs>'
+    + OMBRA(16) + '<path d="M14 34h36l-5 22H19z" fill="url(#lt-d1)"/><path d="M20 34l2 22M26 34l1 22M32 34v22M38 34l-1 22M44 34l-2 22" stroke="rgba(80,16,34,.45)" stroke-width="1.5"/>'
+    + '<path d="M12 35c0-5 4-8 8-8 0-6 6-9 12-9s12 3 12 9c4 0 8 3 8 8z" fill="url(#lt-d2)"/><path d="M17 31c5 2 10 2 15 0s10-2 15 0M22 23c4 1.6 8 1.6 12 0" stroke="#d6b994" stroke-width="1.5" fill="none"/>'
+    + '<g stroke-width="2" stroke-linecap="round"><path d="M20 28l2-1" stroke="#e3b04a"/><path d="M40 27l2 1" stroke="#4a9ad8"/><path d="M28 21l1 1.6" stroke="#5ab07a"/><path d="M36 22l2-.6" stroke="#e3b04a"/></g>'
+    + '<path d="M33 10c1-3 3-5 6-6" stroke="#4a6a2a" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="32.5" cy="14.5" r="5" fill="#c4202e"/><circle cx="31" cy="13" r="1.6" fill="#ff9a9a"/>'),
+  torta: svg('<defs><linearGradient id="lt-d3" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f6dc8a"/><stop offset="1" stop-color="#d8a84a"/></linearGradient></defs>'
+    + OMBRA(24, 56) + '<path d="M6 32L54 36V54L6 48z" fill="url(#lt-d3)"/><path d="M6 37.5L54 42M6 43L54 48" stroke="#fff3df" stroke-width="2.6"/><path d="M6 37.5L54 42M6 43L54 48" stroke="#d04a5a" stroke-width=".9" opacity=".7"/>'
+    + '<path d="M54 36l4-12v18l-4 12z" fill="#ead9c2"/><path d="M6 32L44 18l14 6-4 12z" fill="#fbe9ef"/><path d="M6 32L54 36" stroke="#f3cdd9" stroke-width="2"/>'
+    + '<path d="M14 33q1 4 2 0M26 34q1 5 2 0M40 35q1 4 2 0" stroke="#fbe9ef" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
+    + '<path d="M40 22c-3-5 2-8 5-5 3-3 8 0 5 5-2 4-5 6-5 6s-3-2-5-6z" fill="#d42a3a"/><path d="M42 17l3 2 3-2-3-2z" fill="#4f8a3a"/><circle cx="43" cy="21" r=".8" fill="#ffd0a0"/><circle cx="47" cy="22" r=".8" fill="#ffd0a0"/>'),
+  cornetto: svg('<defs><linearGradient id="lt-d4" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f0b860"/><stop offset=".6" stop-color="#c6782e"/><stop offset="1" stop-color="#8a4a1a"/></linearGradient></defs>'
+    + OMBRA(24, 50) + '<path d="M5 42c1-13 14-22 27-22s26 9 27 22c-4 3-9 1-11-2-4 4-10 6-16 6s-12-2-16-6c-2 3-7 5-11 2z" fill="url(#lt-d4)"/>'
+    + '<path d="M19 25c2.5 6 2.5 13 0 20M32 21v24M45 25c-2.5 6-2.5 13 0 20" stroke="rgba(110,50,14,.5)" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
+    + '<path d="M13 31c4-5 10-7 15-7M36 24c5 0 10 2 14 6" stroke="rgba(255,236,190,.55)" stroke-width="2" fill="none" stroke-linecap="round"/>'),
+  cassa: svg(OMBRA(24) + '<path d="M8 24h42v32H8z" fill="#9a6e3e"/><path d="M8 24l8-8h42l-8 8z" fill="#c69a68"/><path d="M50 24l8-8v32l-8 8z" fill="#74502c"/>'
+    + '<path d="M8 34.5h42M8 45h42M16 16l-8 8M24 16h0M26 20h28" stroke="#6b4a26" stroke-width="1.4"/><path d="M20 16l-4 4M36 16l-4 4" stroke="#8a6438" stroke-width="1.2"/>'
+    + '<path d="M8 24h42v32H8z" fill="none" stroke="#5a3c1c" stroke-width="3.2"/><path d="M10 54L48 26" stroke="#5a3c1c" stroke-width="3.2"/><path d="M50 24l8-8v32l-8 8z" fill="none" stroke="#4a3016" stroke-width="2"/>'
+    + '<path d="M22 31h10M22 34h6" stroke="rgba(40,24,10,.5)" stroke-width="1.4"/>'),
+  botte: svg('<defs><linearGradient id="lt-d5" x1="0" x2="1"><stop offset="0" stop-color="#3a2414"/><stop offset=".32" stop-color="#9a6a3a"/><stop offset=".6" stop-color="#7a4c28"/><stop offset="1" stop-color="#2e1c10"/></linearGradient></defs>'
+    + OMBRA(19, 58) + '<path d="M15 14c-5 14-5 28 0 42h34c5-14 5-28 0-42z" fill="url(#lt-d5)"/>'
+    + '<path d="M22 14c-2 14-2 28 0 42M32 14v42M42 14c2 14 2 28 0 42" stroke="rgba(30,16,8,.45)" stroke-width="1.2" fill="none"/>'
+    + '<path d="M13 23q19 5 38 0M12 47q20 5 40 0" stroke="#2a2a30" stroke-width="3.6" fill="none"/><path d="M13 22q19 5 38 0" stroke="rgba(220,220,230,.3)" stroke-width="1" fill="none"/>'
+    + '<ellipse cx="32" cy="14" rx="17" ry="5" fill="#8a5a32" stroke="#3a2414" stroke-width="2"/><path d="M19 14h26M21 12h22M21 16h22" stroke="rgba(40,20,10,.35)" stroke-width=".9"/><circle cx="38" cy="14" r="1.6" fill="#2a1810"/>'
+    + '<rect x="30" y="38" width="4" height="6" rx="1" fill="#c9a35a"/><rect x="28" y="43" width="8" height="2" rx="1" fill="#c9a35a"/>'),
+  sacco: svg('<defs><radialGradient id="lt-d6" cx=".38" cy=".4" r=".75"><stop offset="0" stop-color="#e6d6ae"/><stop offset="1" stop-color="#a8946a"/></radialGradient></defs>'
+    + OMBRA(20) + '<path d="M14 56c-7-14-3-28 8-36h20c11 8 15 22 8 36z" fill="url(#lt-d6)"/><path d="M23 21l2-9h14l2 9z" fill="#c4b088"/>'
+    + '<path d="M22 18h20" stroke="#6a4a2a" stroke-width="2.6" stroke-linecap="round"/><path d="M41 18c4 1 6 4 5 7" stroke="#6a4a2a" stroke-width="1.8" fill="none"/>'
+    + '<path d="M18 30q14 3 28 0M16 40q16 3 32 0M17 50q15 3 30 0" stroke="rgba(110,90,50,.3)" stroke-width="1" fill="none" stroke-dasharray="2 2"/>'
+    + '<circle cx="32" cy="40" r="6.5" fill="none" stroke="#8a3a2a" stroke-width="1.6"/><path d="M27 40h10" stroke="#8a3a2a" stroke-width="1.6"/>'),
+  camicia: svg('<defs><linearGradient id="lt-d7" x1="0" x2="1"><stop offset="0" stop-color="#3a5fbd"/><stop offset=".5" stop-color="#6a90ee"/><stop offset="1" stop-color="#3456ad"/></linearGradient></defs>'
+    + OMBRA(16, 60) + '<path d="M22 8L8 16l5 12 7-3v31h24V25l7 3 5-12L42 8c-2 4-6 6-10 6s-8-2-10-6z" fill="url(#lt-d7)"/>'
+    + '<path d="M8 16l5 12 7-3M56 16l-5 12-7-3" stroke="rgba(0,0,0,.18)" stroke-width="1.4" fill="none"/>'
+    + '<path d="M22 8c2 4 6 6 10 6s8-2 10-6l-3-1.4c-1.4 3-4 4.4-7 4.4s-5.6-1.4-7-4.4z" fill="#f2f0ea"/><path d="M32 14v42" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>'
+    + '<g fill="#f2f0ea"><circle cx="32" cy="21" r="1.1"/><circle cx="32" cy="29" r="1.1"/><circle cx="32" cy="37" r="1.1"/><circle cx="32" cy="45" r="1.1"/></g><rect x="36.5" y="24" width="6" height="6" rx="1" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1"/>'
+    + '<rect x="27" y="2" width="10" height="4" rx="1" fill="#c9a874"/>'),
+  calzini: svg('<g transform="rotate(-6 22 30)"><path d="M14 6h12v28c0 6 2 9 8 10 6 1 6 10-2 11H20c-6 0-8-4-8-11z" fill="#ece5d6"/><path d="M14 11h12M14 17h12M14 23h12" stroke="#c9443f" stroke-width="3"/><path d="M12 47c0 5 2 8 8 8h6c-1-5-3-8-7-8z" fill="#c9443f" opacity=".85"/></g>'
+    + '<g transform="rotate(6 42 30)"><path d="M34 6h12v28c0 6 2 9 8 10 6 1 6 10-2 11H40c-6 0-8-4-8-11z" fill="#3a5aa8"/><path d="M34 11h12M34 17h12M34 23h12" stroke="#e3b04a" stroke-width="3"/><path d="M32 47c0 5 2 8 8 8h6c-1-5-3-8-7-8z" fill="#22386e"/></g>'
+    + '<rect x="18" y="2" width="8" height="4" rx="1" fill="#c9a874"/><rect x="38" y="2" width="8" height="4" rx="1" fill="#c9a874"/>'),
+  vestito: svg('<defs><linearGradient id="lt-d8" x1="0" x2="1"><stop offset="0" stop-color="#1f6a46"/><stop offset=".5" stop-color="#3aa572"/><stop offset="1" stop-color="#1a5a3c"/></linearGradient></defs>'
+    + OMBRA(22, 60) + '<path d="M24 6h3l3 8h4l3-8h3l-1 10 3 10-2 3 13 29H11l13-29-2-3 3-10z" fill="url(#lt-d8)"/>'
+    + '<path d="M22 27h20" stroke="#e3b04a" stroke-width="3"/><path d="M27 31l-6 26M32 31v26M37 31l6 26" stroke="rgba(0,0,0,.18)" stroke-width="1.2"/>'
+    + '<path d="M11 58h42" stroke="rgba(255,255,255,.35)" stroke-width="1.6"/><rect x="27" y="1" width="10" height="4" rx="1" fill="#c9a874"/>'),
+};
+const COSE = { dolci:['pasticcino','torta','cornetto'], barca:['cassa','botte','sacco'], bucato:['camicia','calzini','vestito'] };
+// dove vanno le cose: un vassoio d'argento, l'interno della barca, la corda dello stendino
+const SFONDI = {
+  dolci: '<svg class="sfondo" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="50" cy="58" rx="46" ry="36" fill="#8a8f98"/><ellipse cx="50" cy="56" rx="42" ry="32" fill="#c6cbd2"/><ellipse cx="50" cy="56" rx="36" ry="26" fill="none" stroke="#9aa0a8" stroke-width="1.5"/><ellipse cx="38" cy="44" rx="14" ry="6" fill="rgba(255,255,255,.35)"/></svg>',
+  barca: '<svg class="sfondo" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M8 20h70q20 2 20 30t-20 30H8q-6-30 0-60z" fill="#5a3a22"/><path d="M14 26h62q16 2 16 24t-16 24H14q-4-24 0-48z" fill="#a07a50"/><path d="M14 38h76M14 50h80M14 62h76" stroke="rgba(60,36,20,.4)" stroke-width="1.2"/><path d="M40 26v48M68 26v48" stroke="#6b4a2e" stroke-width="5"/></svg>',
+  bucato: '<svg class="sfondo" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M4 10v86M96 10v86" stroke="#7a6448" stroke-width="4"/><path d="M4 14q46 10 92 0" stroke="#cfc4b0" stroke-width="1.6" fill="none"/></svg>',
+};
 const META = { dolci:'Vassoio', barca:'Barca', bucato:'Stendino' };
 const VASI = { vino:{ col:'#7a1f33', nome:'Caraffa' }, piante:{ col:'#3d7fb0', nome:'Annaffiatoio' } };
 
@@ -2995,10 +3321,10 @@ function leva(z, post, ok){
 }
 function trascina(z, post, ok){
   const cose=COSE[post.id]||COSE.dolci;
-  z.innerHTML='<div class="lt-tr"><div class="meta"><span>'+(META[post.id]||'Vassoio')+'</span></div></div>';
+  z.innerHTML='<div class="lt-tr"><div class="meta">'+(SFONDI[post.id]||SFONDI.dolci)+'<span>'+(META[post.id]||'Vassoio')+'</span></div></div>';
   const area=z.querySelector('.lt-tr'), meta=area.querySelector('.meta'); let dentro=0;
   cose.forEach((e,i)=>{
-    const c=el('div','cosa',e); c.style.left='6%'; c.style.top=(8+i*30)+'%'; area.appendChild(c);
+    const c=el('div','cosa'); c.innerHTML=DISEGNI[e]; c.style.left='5%'; c.style.top=(4+i*31)+'%'; area.appendChild(c);
     let id=null, ox=0, oy=0, x0=0, y0=0;
     c.addEventListener('pointerdown',ev=>{ if(c.classList.contains('ok')) return; ev.preventDefault(); id=ev.pointerId; ox=ev.clientX; oy=ev.clientY; x0=0; y0=0; c.classList.add('su'); try{ c.setPointerCapture(id); }catch(_){} });
     c.addEventListener('pointermove',ev=>{ if(ev.pointerId!==id) return; [x0,y0]=nelGioco(c, ev.clientX-ox, ev.clientY-oy); c.style.transform=`translate(${x0}px,${y0}px)`; });
@@ -3027,11 +3353,19 @@ function versa(z, post, ok){
   b.addEventListener('pointerup',lascia); b.addEventListener('pointercancel',lascia); b.addEventListener('lostpointercapture',lascia);
   return dt=>{ if(giu){ l+=dt*0.42; if(l>1.02){ l=0; giu=false; b.classList.remove('giu'); scuoti(vaso); } } liv.style.height=(Math.min(1,l)*100)+'%'; };
 }
+// quattro quadretti diversi, ognuno col suo cielo: si capisce da solo qual è il verso giusto
+const QUADRETTI = [['#5a7ab0','#e8c9a0','#4f7a4a','#f6e3a0'], ['#2a3a6a','#7a6aa0','#3a5a46','#f2f0e0'], ['#8ab0d0','#f0e0c0','#6a8a4a','#fff2b0'], ['#c06a4a','#f0c080','#5a4a3a','#ffe0a0']].map((c, i) =>
+  '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lt-q' + i + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[1] + '"/></linearGradient></defs>'
+  + '<rect x="1" y="1" width="62" height="62" rx="3" fill="#b8914e"/><rect x="5" y="5" width="54" height="54" fill="#5a4420"/><rect x="7" y="7" width="50" height="50" fill="url(#lt-q' + i + ')"/>'
+  + '<circle cx="' + (40 - i*4) + '" cy="19" r="' + (i === 1 ? 4 : 6) + '" fill="' + c[3] + '"/>' + (i === 1 ? '<g fill="#fff"><circle cx="16" cy="14" r=".9"/><circle cx="26" cy="22" r=".7"/><circle cx="50" cy="12" r=".8"/></g>' : '')
+  + '<path d="M7 42q12-10 25-3t25-6v24H7z" fill="' + c[2] + '"/><path d="M7 50q18-6 50 0v7H7z" fill="rgba(0,0,0,.25)"/>'
+  + (i === 2 ? '<path d="M18 42l5-12 5 12z" fill="#2a4a2a"/><rect x="22" y="42" width="2" height="4" fill="#3a2a1a"/>' : i === 3 ? '<path d="M38 44h12v-8l-6-5-6 5z" fill="#e8dcc0"/><rect x="42" y="39" width="3" height="5" fill="#5a3a22"/>' : '')
+  + '<rect x="1" y="1" width="62" height="62" rx="3" fill="none" stroke="rgba(255,240,200,.35)" stroke-width="1"/></svg>');
 function quadri(z, post, ok){
   const g=el('div','lt-quadri'); z.appendChild(g);
   const giri=[0,0,0,0].map(()=>1+Math.floor(Math.random()*3));
   giri.forEach((k,i)=>{
-    const q=el('button','q'); q.type='button'; const f=el('span','',  '↑'); q.appendChild(f); f.style.transform=`rotate(${k*90}deg)`;
+    const q=el('button','q'); q.type='button'; const f=el('span'); f.innerHTML=QUADRETTI[i%4]; q.appendChild(f); f.style.transform=`rotate(${k*90}deg)`;
     let ang=k*90;
     q.addEventListener('pointerdown',e=>{ e.preventDefault(); if(!giri.some(x=>x)) return; giri[i]=(giri[i]+1)%4; ang+=90; f.style.transform=`rotate(${ang}deg)`; q.classList.toggle('ok', giri[i]===0); if(!giri.some(x=>x)) ok(); });
     g.appendChild(q);
@@ -3445,6 +3779,9 @@ var ICONE = {
   lanterna: '<path d="M9 4h6M10 4V2.5h4V4M7 7h10l-1 12H8z"/><path d="M12 10c1.4 1.4 1.4 3.6 0 5-1.4-1.4-1.4-3.6 0-5z"/>',
   corona: '<path d="M4 18h16M5 17l-1-9 4.5 4L12 6l3.5 6L20 8l-1 9"/>',
   bersaglio: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6"/>',
+  buio: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  antenna: '<path d="M12 12v9M8 21h8"/><circle cx="12" cy="10" r="2"/><path d="M8.5 6.5a5 5 0 0 0 0 7M15.5 6.5a5 5 0 0 1 0 7M5.5 3.5a9 9 0 0 0 0 13M18.5 3.5a9 9 0 0 1 0 13"/>',
+  onda: '<path d="M2 9c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 14c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 19c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/>',
   gira: '<rect x="8" y="4" width="8" height="16" rx="2"/><path d="M3.5 9.5A9 9 0 0 1 7 5M20.5 14.5A9 9 0 0 1 17 19"/><path d="M3 6.5l.5 3 3-.5M21 17.5l-.5-3-3 .5"/>'
 };
 function icona(n) { return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + (ICONE[n] || "") + "</svg>"; }
@@ -3812,8 +4149,9 @@ function disegnaFoto(cv, f) {
     }
   } else {
     var st = f.st >= 0 ? PALAZZO.stanze[f.st] : null, px = st ? (st.x + 1 + r() * Math.max(1, st.w - 2)) * T : f.x + (r() - 0.5) * 4 * T, py = st ? (st.y + 1 + r() * Math.max(1, st.h - 2)) * T : f.y + (r() - 0.5) * 4 * T;
+    if (st && PALAZZO.PAV[Math.floor(py / T) * PALAZZO.GW + Math.floor(px / T)] !== f.st) { px = st.lx * T; py = st.ly * T; }   // la stanza ha un angolo tagliato lì
     var pit = new Pittore(cv);
-    pit.disegna({ M: PALAZZO, palazzo: true, t: 0, dt: 0, io: { x: px, y: py, mostra: false }, altri: [], corpi: [], R: 9 * T, anima: true, neb: false, buio: false, miei: new Set(), freccia: null, botole: false, effetti: [], telecamere: [], scala: 0.55 + r() * 0.25 });
+    for (var k = 0; k < 30; k++) pit.disegna({ M: PALAZZO, palazzo: true, t: 0, dt: 0, io: { x: px, y: py, mostra: false }, altri: [], corpi: [], R: 9 * T, anima: true, neb: false, buio: false, miei: new Set(), freccia: null, botole: false, effetti: [], telecamere: [], scala: 0.55 + r() * 0.25 });
     fine();
   }
 }
@@ -4286,9 +4624,9 @@ Vista.prototype.apriSabota = function () {
   var V = this, imp = (V.vm && V.vm.imp && V.vm.imp.sabotaggi) || {}, box = E("div", "lt-pannello lt-scambio");
   box.append(E("h3", "", "Che sabotaggio?"), E("p", "", "Uno alla volta. Gli ospiti vedono subito dove ripararlo."));
   var gr = E("div", "griglia sab");
-  [["buio", "Buio", "Gli ospiti vedono pochissimo finché non riparano il quadro delle luci in Lavanderia."], ["interferenza", "📡 Interferenza", "Si spengono telecamere, plastico e frecce dei compiti, finché non riparano il telegrafo (Sala del telegrafo)."], ["acqua", "🌊 Acqua alta", "Il palazzo si allaga: se non chiudono le due chiuse (Molo e Cantina) in tempo, vincete voi."]].forEach(function (x) {
+  [["buio", "Buio", "Gli ospiti vedono pochissimo finché non riparano il quadro delle luci in Lavanderia."], ["interferenza", "Interferenza", "Si spengono telecamere, plastico e frecce dei compiti, finché non riparano il telegrafo (Sala del telegrafo)."], ["acqua", "Acqua alta", "Il palazzo si allaga: se non chiudono le due chiuse (Molo e Cantina) in tempo, vincete voi."]].forEach(function (x) {
     if ((x[0] === "acqua" && imp.acquaSi === false) || (x[0] === "interferenza" && imp.interferenzaSi === false)) return;
-    var b = E("button", "", ""); b.type = "button"; b.append(E("b", "", x[1]), E("small", "", x[2]));
+    var b = E("button", "", ""), tit = E("b"); b.type = "button"; tit.innerHTML = icona({ buio: "buio", interferenza: "antenna", acqua: "onda" }[x[0]]) + "<span>" + x[1] + "</span>"; b.append(tit, E("small", "", x[2]));
     b.addEventListener("click", function () { V.manda("sabota", { tipo: x[0] }); if (V.pannello) V.pannello.chiudi(); });
     gr.appendChild(b);
   });
@@ -4359,7 +4697,7 @@ Vista.prototype.aggVelo = function (soloTempi) {
         var fila = E("div", "lt-alleati"); V.priv.compagni.forEach(function (id) { var a = AVATAR[id]; if (a && a.busto) fila.appendChild(a.busto.cloneNode()); }); if (fila.firstChild) box.appendChild(fila);
       } else if (V.priv.ruolo === "accusatore" && V.priv.bersaglio) box.appendChild(E("p", "lt-comp", "Il tuo bersaglio: " + ((V.cache[V.priv.bersaglio] || {}).nome || "?") + "."));
       else box.appendChild(E("p", "lt-comp", "Attento: tra voi ci sono delle ombre."));
-      if (V.priv.mod && MODIFICATORI[V.priv.mod]) { var md = MODIFICATORI[V.priv.mod]; box.appendChild(E("p", "lt-mod", md.icona + " Modificatore: " + md.nome + ". " + md.desc)); }
+      if (V.priv.mod && MODIFICATORI[V.priv.mod]) { var md = MODIFICATORI[V.priv.mod]; box.appendChild(E("p", "lt-mod", "Modificatore: " + md.nome + ". " + md.desc)); }
       SUONO.ruolo();
       V.svelaConto = E("p", "lt-conto", ""); box.appendChild(V.svelaConto);
       V.velo.textContent = ""; V.velo.appendChild(box); V.velo.hidden = false; V.veloTipo = "svela";
@@ -4613,9 +4951,9 @@ function stile() {
     ".lt-leva{position:relative;width:100%;max-width:320px;height:44px;border-radius:10px;background:#0d1020;overflow:hidden}.lt-leva .zona{position:absolute;top:0;bottom:0;background:rgba(231,183,92,.32);border-left:2px solid #e7b75c;border-right:2px solid #e7b75c}.lt-leva .ago{position:absolute;top:4px;bottom:4px;width:6px;margin-left:-3px;border-radius:3px;background:#f1e8d6}",
     ".lt-btn{font:inherit;font-weight:600;color:#1d1508;background:#e7b75c;border:0;border-radius:12px;padding:12px 26px;touch-action:none;transition:transform .16s var(--lt-ease)}.lt-btn.giu,.lt-btn:active{transform:scale(.96)}",
     ".lt-tr{position:relative;width:100%;max-width:320px;height:200px;border-radius:12px;background:#0d1020}.lt-tr .meta{position:absolute;right:8px;top:8px;bottom:8px;width:44%;border:2px dashed rgba(231,183,92,.6);border-radius:10px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;padding:6px;box-sizing:border-box}.lt-tr .meta span{width:100%;font-size:.7rem;color:#b8b1a2;text-transform:uppercase;font-weight:600}",
-    ".lt-tr .cosa{position:absolute;font-size:2.2rem;line-height:1;touch-action:none;cursor:grab}.lt-tr .cosa.su{z-index:2;transform-origin:center}.lt-tr .meta .cosa{position:static;font-size:1.8rem}",
+    ".lt-tr .cosa{position:absolute;width:54px;height:54px;touch-action:none;cursor:grab;z-index:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}.lt-tr .cosa svg{display:block;width:100%;height:100%;pointer-events:none}.lt-tr .cosa.su{z-index:3;transform-origin:center}.lt-tr .meta .cosa{position:relative;width:40px;height:40px}.lt-tr .meta .sfondo{position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);z-index:0;pointer-events:none}.lt-tr .meta span{position:relative;z-index:1}",
     ".lt-vaso{position:relative;width:110px;height:170px;border:3px solid rgba(241,232,214,.5);border-top:0;border-radius:0 0 18px 18px;overflow:hidden;background:rgba(13,16,32,.6)}.lt-vaso .liv{position:absolute;left:0;right:0;bottom:0;height:0}.lt-vaso .fascia{position:absolute;left:0;right:0;background:rgba(231,183,92,.35);border-top:2px solid #e7b75c;border-bottom:2px solid #e7b75c;z-index:1}",
-    ".lt-quadri{display:grid;grid-template-columns:repeat(2,84px);gap:10px}.lt-quadri .q{width:84px;height:84px;border-radius:8px;border:5px solid #8a6538;background:#2b2f45;color:#f1e8d6;font-size:2.4rem;font-weight:700;display:grid;place-items:center}.lt-quadri .q span{transition:transform .2s var(--lt-ease)}.lt-quadri .q.ok{border-color:#e7b75c}",
+    ".lt-quadri{display:grid;grid-template-columns:repeat(2,84px);gap:10px}.lt-quadri .q{width:84px;height:84px;border-radius:6px;border:0;padding:0;background:transparent;display:grid;place-items:center;transition:box-shadow .2s var(--lt-ease)}.lt-quadri .q span{display:block;width:78px;height:78px;transition:transform .2s var(--lt-ease)}.lt-quadri .q svg{display:block;width:100%;height:100%}.lt-quadri .q.ok{box-shadow:0 0 0 3px #e7b75c,0 0 18px rgba(231,183,92,.45)}",
     ".lt-scuoti{animation:ltScuoti .3s var(--lt-ease)}@keyframes ltScuoti{0%,100%{translate:0}25%{translate:-8px}50%{translate:7px}75%{translate:-4px}}",
     ".lt-scena.lt-ruota{transform-origin:0 0}",
     ".lt-scena,.lt-scena *,.lt-pc,.lt-pc *{touch-action:manipulation}.lt-scena .lt-joyzona,.lt-scena canvas{touch-action:none}",
@@ -4676,7 +5014,7 @@ function stile() {
     ".lt-fermo{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;font-size:3.2rem;font-weight:700;letter-spacing:.08em;color:#ffd0d8;text-shadow:0 0 24px rgba(208,80,106,.8);background:radial-gradient(circle,rgba(90,20,35,.15),rgba(90,20,35,.55));animation:ltPulsa .8s var(--lt-ease) infinite alternate}",
     ".lt-fermo small{font-size:.9rem;letter-spacing:0;font-weight:700}",
     ".lt-registro{list-style:none;margin:0;padding:5px 8px;background:rgba(13,16,32,.78);border-radius:8px;font-size:.72rem;line-height:1.35;display:grid;gap:1px}.lt-registro .entra{color:#8ee6a8}.lt-registro .esce{color:#ffb3a1}",
-    ".lt-scambio .griglia.sab{grid-template-columns:1fr}.lt-scambio .griglia.sab button{display:grid;gap:3px;text-align:left;padding:10px 12px}.lt-scambio .griglia.sab small{font-weight:500;color:#b8b1a2;font-size:.76rem}",
+    ".lt-scambio .griglia.sab{grid-template-columns:1fr}.lt-scambio .griglia.sab button{display:grid;gap:3px;text-align:left;padding:10px 12px}.lt-scambio .griglia.sab b{display:flex;align-items:center;gap:8px}.lt-scambio .griglia.sab b svg{width:20px;height:20px;flex:none;color:#f0a0ae}.lt-scambio .griglia.sab small{font-weight:500;color:#b8b1a2;font-size:.76rem}",
     ".lt-info.urgente{color:#ffd0d8;background:rgba(120,25,45,.85);animation:ltPulsa .5s var(--lt-ease) infinite alternate}",
     ".lt-indov{position:absolute;inset:0;border-radius:16px;background:rgba(13,16,32,.97);padding:14px;display:flex;flex-direction:column;gap:8px;z-index:2;animation:ltSale .22s var(--lt-ease)}",
     ".lt-indov h3{font-size:1.05rem}.lt-indov p{margin:0;font-size:.8rem;color:#b8b1a2}",
