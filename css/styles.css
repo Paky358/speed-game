@@ -325,13 +325,13 @@ img{ max-width:100%; }
   /* leggero alone elettrico blu-bianco attorno a tutto il nome */
   filter:drop-shadow(0 0 1px rgba(220,235,255,.9)) drop-shadow(0 0 5px rgba(90,170,255,.55)) drop-shadow(0 0 12px rgba(77,171,247,.3)); }
 .home-sotto{ margin:8px 0 0; font-size:1.1rem; color:var(--testo-tenue); }
-:is(.home, .edificio) .griglia-giochi{ display:flex; flex-direction:column; gap:14px; }
-:is(.home, .edificio) .tessera{ padding:16px; }
-:is(.home, .edificio) .tessera .icona{ width:60px; height:60px; font-size:2.1rem; }
-:is(.home, .edificio) .tessera .info h2{ font-size:1.3rem; }
-:is(.home, .edificio) .tessera .info p{ font-size:1.02rem; line-height:1.3; }
-:is(.home, .edificio) .tessera .info .meta{ font-size:.95rem; margin-top:6px; }
-:is(.home, .edificio) .tessera:not(.presto)::after{ font-size:2rem; }
+:is(.home, .edificio, .scelta-giochi) .griglia-giochi{ display:flex; flex-direction:column; gap:14px; }
+:is(.home, .edificio, .scelta-giochi) .tessera{ padding:16px; }
+:is(.home, .edificio, .scelta-giochi) .tessera .icona{ width:60px; height:60px; font-size:2.1rem; }
+:is(.home, .edificio, .scelta-giochi) .tessera .info h2{ font-size:1.3rem; }
+:is(.home, .edificio, .scelta-giochi) .tessera .info p{ font-size:1.02rem; line-height:1.3; }
+:is(.home, .edificio, .scelta-giochi) .tessera .info .meta{ font-size:.95rem; margin-top:6px; }
+:is(.home, .edificio, .scelta-giochi) .tessera:not(.presto)::after{ font-size:2rem; }
 .home .piede{ margin-top:18px; }
 
 /* =========================================================
@@ -404,8 +404,8 @@ body::before{
 }
 
 /* --- Card dei giochi: rialzate, impilate, illustrazione in alto --- */
-:is(.home, .edificio) .griglia-giochi{ display:grid; grid-template-columns:repeat(2,1fr); gap:15px; align-items:start; }
-:is(.home, .edificio) .tessera{
+:is(.home, .edificio, .scelta-giochi) .griglia-giochi{ display:grid; grid-template-columns:repeat(2,1fr); gap:15px; align-items:start; }
+:is(.home, .edificio, .scelta-giochi) .tessera{
   flex-direction:column; align-items:stretch; gap:0; text-align:left;
   padding:0; overflow:hidden; border-radius:20px;
   background:linear-gradient(180deg,#33438f,#212e66);
@@ -417,11 +417,11 @@ body::before{
     0 22px 34px rgba(0,0,0,.28);
   transition:transform .08s ease, box-shadow .15s ease;
 }
-:is(.home, .edificio) .tessera:active{ transform:translateY(2px); box-shadow:
+:is(.home, .edificio, .scelta-giochi) .tessera:active{ transform:translateY(2px); box-shadow:
     inset 0 1px 0 rgba(255,255,255,.12), 0 3px 0 #151f47, 0 8px 16px rgba(0,0,0,.4); }
-@media (hover:hover){ :is(.home, .edificio) .tessera:hover{ transform:translateY(-3px); box-shadow:
+@media (hover:hover){ :is(.home, .edificio, .scelta-giochi) .tessera:hover{ transform:translateY(-3px); box-shadow:
     inset 0 1px 0 rgba(255,255,255,.16), 0 7px 0 #151f47, 0 16px 28px rgba(0,0,0,.46), 0 26px 40px rgba(0,0,0,.3); } }
-:is(.home, .edificio) .tessera .icona{
+:is(.home, .edificio, .scelta-giochi) .tessera .icona{
   width:100%; height:118px; margin:0; border-radius:0; flex:0 0 auto;
   display:flex; align-items:center; justify-content:center; font-size:3.1rem;
   background:linear-gradient(150deg,#5a6cd0 0%,#3b4a9c 55%,#33418c 100%);
@@ -431,19 +431,19 @@ body::before{
 /* Foto realistica del gioco (se presente): riempie il banner, l'emoji resta sotto come ripiego */
 .tessera .icona{ position:relative; overflow:hidden; }
 .tessera .icona .illustr{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
-:is(.home, .edificio) .tessera .icona .illustr{ box-shadow:inset 0 -10px 20px rgba(0,0,0,.28); }
-:is(.home, .edificio) .tessera .info{ flex:1; display:flex; flex-direction:column; gap:5px; padding:12px 13px 13px; }
-:is(.home, .edificio) .tessera .info h2{ font-size:1.1rem; font-weight:800; line-height:1.12; }
-:is(.home, .edificio) .tessera .info p{ font-size:.85rem; line-height:1.28; color:var(--testo-tenue);
+:is(.home, .edificio, .scelta-giochi) .tessera .icona .illustr{ box-shadow:inset 0 -10px 20px rgba(0,0,0,.28); }
+:is(.home, .edificio, .scelta-giochi) .tessera .info{ flex:1; display:flex; flex-direction:column; gap:5px; padding:12px 13px 13px; }
+:is(.home, .edificio, .scelta-giochi) .tessera .info h2{ font-size:1.1rem; font-weight:800; line-height:1.12; }
+:is(.home, .edificio, .scelta-giochi) .tessera .info p{ font-size:.85rem; line-height:1.28; color:var(--testo-tenue);
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-:is(.home, .edificio) .tessera .info .meta{ margin-top:auto; padding-top:4px; font-size:.82rem; font-weight:800; color:#ffd76a; }
-:is(.home, .edificio) .tessera:not(.presto)::after{ display:none; }
-:is(.home, .edificio) .tessera.presto{ justify-content:center; align-items:center; min-height:150px; }
-:is(.home, .edificio) .tessera.presto .icona{ height:auto; background:none; box-shadow:none; filter:none; font-size:2.4rem; padding-top:14px; }
-:is(.home, .edificio) .tessera.presto .info{ flex:0; text-align:center; padding-top:0; }
+:is(.home, .edificio, .scelta-giochi) .tessera .info .meta{ margin-top:auto; padding-top:4px; font-size:.82rem; font-weight:800; color:#ffd76a; }
+:is(.home, .edificio, .scelta-giochi) .tessera:not(.presto)::after{ display:none; }
+:is(.home, .edificio, .scelta-giochi) .tessera.presto{ justify-content:center; align-items:center; min-height:150px; }
+:is(.home, .edificio, .scelta-giochi) .tessera.presto .icona{ height:auto; background:none; box-shadow:none; filter:none; font-size:2.4rem; padding-top:14px; }
+:is(.home, .edificio, .scelta-giochi) .tessera.presto .info{ flex:0; text-align:center; padding-top:0; }
 
 /* --- Piccoli schermi: card a colonna singola se molto stretto --- */
-@media (max-width:340px){ :is(.home, .edificio) .griglia-giochi{ grid-template-columns:1fr; } }
+@media (max-width:340px){ :is(.home, .edificio, .scelta-giochi) .griglia-giochi{ grid-template-columns:1fr; } }
 
 /* --- Sfide e Trofei (stile PlayStation) --- */
 .sfide-sommario{ text-align:center; font-size:1.05rem; margin-bottom:12px; color:var(--testo);
@@ -2461,12 +2461,12 @@ html body.tema-oro::before{ display:none; }
 
 /* ---- tessere dei giochi (home, edifici, scegli il gioco) ---- */
 .oro .tessera{ background:var(--o-carta); color:var(--o-testo); border:1px solid var(--o-filo); box-shadow:var(--o-ombra); }
-.oro.home .tessera{ background:var(--o-carta); border:1px solid var(--o-filo); border-radius:20px;
+.oro:is(.home, .scelta-giochi) .tessera{ background:var(--o-carta); border:1px solid var(--o-filo); border-radius:20px;
   box-shadow:var(--o-ombra); }
-.oro.home .tessera:active, .oro .tessera:active{ transform:scale(.985); box-shadow:0 1px 2px rgba(0,0,0,.2); }
+.oro:is(.home, .scelta-giochi) .tessera:active, .oro .tessera:active{ transform:scale(.985); box-shadow:0 1px 2px rgba(0,0,0,.2); }
 @media (hover:hover){ .oro .tessera:hover{ transform:translateY(-2px); box-shadow:var(--o-ombra-alta); } }
 .oro .tessera .icona{ background:var(--o-fondo-2); box-shadow:none; filter:none; }
-.oro.home .tessera .icona{ background:linear-gradient(160deg,#252c4a,#151a2e); box-shadow:none; }
+.oro:is(.home, .scelta-giochi) .tessera .icona{ background:linear-gradient(160deg,#252c4a,#151a2e); box-shadow:none; }
 .oro .tessera .icona .illustr{ box-shadow:none; }
 .oro .tessera .info h2{ font-family:var(--o-tit); font-weight:700; font-size:1.32rem; line-height:1.02; letter-spacing:.005em; color:var(--o-testo); }
 .oro .tessera .info p{ color:var(--o-tenue); }
@@ -3551,65 +3551,65 @@ html body.tema-oro::before{ display:none; }
 
 /* ---- le tessere dei giochi: la foto come una locandina, sotto un bagliore dei suoi colori; la categoria sulla foto ---- */
 /* (il filo di luce sul bordo è un «outline»: si disegna sopra la foto senza bisogno di un altro pezzo) */
-.oro.home .tessera{ border:0; border-radius:22px; background:#0b0e1c; isolation:isolate;
+.oro:is(.home, .scelta-giochi) .tessera{ border:0; border-radius:22px; background:#0b0e1c; isolation:isolate;
   outline:1px solid rgba(255,255,255,.1); outline-offset:-1px; box-shadow:0 14px 30px -12px rgba(0,0,0,.75); }
-.oro.home .tessera .icona{ height:auto; aspect-ratio:800/544; background:linear-gradient(160deg,#252c4a,#151a2e);
+.oro:is(.home, .scelta-giochi) .tessera .icona{ height:auto; aspect-ratio:800/544; background:linear-gradient(160deg,#252c4a,#151a2e);
   box-shadow:none; z-index:1;
   -webkit-mask-image:linear-gradient(180deg,#000 76%,transparent 100%); mask-image:linear-gradient(180deg,#000 76%,transparent 100%); }
-.oro.home .tessera .icona .illustr{ box-shadow:none; }
-.oro.home .tessera .info{ position:relative; z-index:1; margin-top:-12px; padding:12px 13px 13px; gap:4px;
+.oro:is(.home, .scelta-giochi) .tessera .icona .illustr{ box-shadow:none; }
+.oro:is(.home, .scelta-giochi) .tessera .info{ position:relative; z-index:1; margin-top:-12px; padding:12px 13px 13px; gap:4px;
   background:linear-gradient(180deg, rgba(9,11,23,0), rgba(9,11,23,.38) 40%, rgba(9,11,23,.55)); }
 /* il bagliore: la stessa foto, sfocata e scura, dietro la foto e le scritte (solo se il gioco ha la foto; la foto ci sfuma dentro) */
-.oro.home .tessera[style*="--img"]::before{ content:""; position:absolute; z-index:0; inset:-34px; pointer-events:none;
+.oro:is(.home, .scelta-giochi) .tessera[style*="--img"]::before{ content:""; position:absolute; z-index:0; inset:-34px; pointer-events:none;
   background:var(--img) 50% 85%/cover no-repeat; filter:blur(22px) saturate(1.6) brightness(.5); }
-.oro.home .tessera .info h2{ font-family:var(--o-tit); font-weight:700; font-size:1.05rem; letter-spacing:-.01em; line-height:1.14; color:#fff; }
-.oro.home .tessera .info p{ font-size:.8rem; line-height:1.32; color:#d3d7ea; }
-.oro.home .tessera .info .meta{ color:var(--c, var(--o-oro-testo)); font-weight:700; font-size:.78rem; }
+.oro:is(.home, .scelta-giochi) .tessera .info h2{ font-family:var(--o-tit); font-weight:700; font-size:1.05rem; letter-spacing:-.01em; line-height:1.14; color:#fff; }
+.oro:is(.home, .scelta-giochi) .tessera .info p{ font-size:.8rem; line-height:1.32; color:#d3d7ea; }
+.oro:is(.home, .scelta-giochi) .tessera .info .meta{ color:var(--c, var(--o-oro-testo)); font-weight:700; font-size:.78rem; }
 .oro .tessera .info .meta .emo{ --emo-tinta:currentColor; }
 /* la targhetta della categoria, in alto a sinistra sulla foto */
-.oro.home .tessera[data-cat]:not([data-cat=""])::after{ display:flex; position:absolute; z-index:4; top:9px; left:9px; margin:0; padding:3px 9px 3px 21px;
+.oro:is(.home, .scelta-giochi) .tessera[data-cat]:not([data-cat=""])::after{ display:flex; position:absolute; z-index:4; top:9px; left:9px; margin:0; padding:3px 9px 3px 21px;
   border-radius:99px; font-size:.68rem; font-weight:600; line-height:1.4; color:#fff; letter-spacing:0; opacity:1;
   background:radial-gradient(circle at 11px 50%, var(--c) 0 3.5px, transparent 4px), rgba(9,11,22,.74);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.14); }
-.oro.home .tessera[data-cat="carte"]::after{ content:"Carte"; }
-.oro.home .tessera[data-cat="sfida"]::after{ content:"1 contro 1"; }
-.oro.home .tessera[data-cat="festa"]::after{ content:"Festa"; }
-.oro.home .tessera[data-cat="mini"]::after{ content:"Minigiochi"; }
-.oro.home .tessera[data-cat="parole"]::after{ content:"Quiz & parole"; }
-.oro.home .tessera:active{ transform:scale(.985); }
+.oro:is(.home, .scelta-giochi) .tessera[data-cat="carte"]::after{ content:"Carte"; }
+.oro:is(.home, .scelta-giochi) .tessera[data-cat="sfida"]::after{ content:"1 contro 1"; }
+.oro:is(.home, .scelta-giochi) .tessera[data-cat="festa"]::after{ content:"Festa"; }
+.oro:is(.home, .scelta-giochi) .tessera[data-cat="mini"]::after{ content:"Minigiochi"; }
+.oro:is(.home, .scelta-giochi) .tessera[data-cat="parole"]::after{ content:"Quiz & parole"; }
+.oro:is(.home, .scelta-giochi) .tessera:active{ transform:scale(.985); }
 .oro .tessera.presto{ background:transparent; box-shadow:none; border:1px dashed rgba(255,255,255,.16); }
 .oro .tessera.presto .icona{ -webkit-mask-image:none; mask-image:none; aspect-ratio:auto; background:none; }
 
 /* ---- la home compatta (29 ott 2026, il proprietario: «la gente si scoccia di scorrere»): niente descrizione, solo foto, nome,
    categoria e giocatori. Due modi (HOME_TESSERE in core.js): «righe» = una per riga con la foto piccola a sinistra; «due» = due per riga ---- */
-.oro.home .griglia-giochi.compatta .tess-cat{ display:flex; align-items:center; gap:6px; font-size:.7rem; font-weight:600; line-height:1.2; color:#dfe2f2; }
-.oro.home .griglia-giochi.compatta .tess-cat::before{ content:""; width:7px; height:7px; flex:0 0 auto; border-radius:50%; background:var(--c); }
-.oro.home .griglia-giochi.compatta .tessera.presto{ min-height:0; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.compatta .tess-cat{ display:flex; align-items:center; gap:6px; font-size:.7rem; font-weight:600; line-height:1.2; color:#dfe2f2; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.compatta .tess-cat::before{ content:""; width:7px; height:7px; flex:0 0 auto; border-radius:50%; background:var(--c); }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.compatta .tessera.presto{ min-height:0; }
 /* righe */
-.oro.home .griglia-giochi.tess-righe{ display:grid; grid-template-columns:1fr; gap:9px; }
-.oro.home .griglia-giochi.tess-righe .tessera{ flex-direction:row; align-items:center; gap:13px; padding:7px; min-height:76px; border-radius:18px; }
-.oro.home .griglia-giochi.tess-righe .tessera .icona{ width:100px; flex:0 0 100px; height:auto; aspect-ratio:800/544; border-radius:12px; font-size:1.9rem;
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe{ display:grid; grid-template-columns:1fr; gap:9px; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe .tessera{ flex-direction:row; align-items:center; gap:13px; padding:7px; min-height:76px; border-radius:18px; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe .tessera .icona{ width:100px; flex:0 0 100px; height:auto; aspect-ratio:800/544; border-radius:12px; font-size:1.9rem;
   -webkit-mask-image:none; mask-image:none; }
-.oro.home .griglia-giochi.tess-righe .tessera .info{ flex:1; min-width:0; margin:0; padding:0; gap:3px; background:none; }
-.oro.home .griglia-giochi.tess-righe .tessera .info h2{ font-size:1.08rem; line-height:1.15; overflow-wrap:anywhere; }
-.oro.home .griglia-giochi.tess-righe .tessera[style*="--img"]::before{ background-position:50% 50%; filter:blur(26px) saturate(1.5) brightness(.42); }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe .tessera .info{ flex:1; min-width:0; margin:0; padding:0; gap:3px; background:none; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe .tessera .info h2{ font-size:1.08rem; line-height:1.15; overflow-wrap:anywhere; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe .tessera[style*="--img"]::before{ background-position:50% 50%; filter:blur(26px) saturate(1.5) brightness(.42); }
 /* la targhetta della categoria lascia il posto alla freccia: la categoria è scritta sopra il nome */
-.oro.home .griglia-giochi.tess-righe .tessera[data-cat]::after{ content:"›"; display:block; position:static; flex:0 0 auto; margin:0 4px 0 -4px; padding:0;
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe .tessera[data-cat]::after{ content:"›"; display:block; position:static; flex:0 0 auto; margin:0 4px 0 -4px; padding:0;
   background:none; box-shadow:none; font-size:1.7rem; font-weight:400; line-height:1; color:rgba(255,255,255,.4); }
-.oro.home .griglia-giochi.tess-righe .tessera.presto{ min-height:52px; justify-content:center; padding:6px 12px; }
-.oro.home .griglia-giochi.tess-righe .tessera.presto .icona{ width:auto; flex:0 0 auto; aspect-ratio:auto; font-size:1.3rem; padding:0; }
-.oro.home .griglia-giochi.tess-righe .tessera.presto .info{ flex:0 1 auto; }
-.oro.home .griglia-giochi.tess-righe .tessera.presto .info h2{ font-size:.95rem; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe .tessera.presto{ min-height:52px; justify-content:center; padding:6px 12px; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe .tessera.presto .icona{ width:auto; flex:0 0 auto; aspect-ratio:auto; font-size:1.3rem; padding:0; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe .tessera.presto .info{ flex:0 1 auto; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-righe .tessera.presto .info h2{ font-size:.95rem; }
 /* due per riga */
-.oro.home .griglia-giochi.tess-due{ display:grid; grid-template-columns:repeat(2,1fr); gap:11px; align-items:stretch; }
-.oro.home .griglia-giochi.tess-due .tessera .icona{ aspect-ratio:16/10; }
-.oro.home .griglia-giochi.tess-due .tessera .info{ padding:9px 12px 11px; gap:3px; }
-.oro.home .griglia-giochi.tess-due .tessera .info h2{ font-size:1.02rem; }
-.oro.home .griglia-giochi.tess-due .tess-cat{ display:none; }   /* (la categoria è la targhetta sulla foto) */
-.oro.home .griglia-giochi.tess-due .tessera.presto{ grid-column:1 / -1; flex-direction:row; justify-content:center; gap:8px; padding:12px; }
-.oro.home .griglia-giochi.tess-due .tessera.presto .icona{ width:auto; aspect-ratio:auto; font-size:1.3rem; padding:0; }
-.oro.home .griglia-giochi.tess-due .tessera.presto .info{ flex:0 1 auto; padding:0; }
-.oro.home .griglia-giochi.tess-due .tessera.presto .info h2{ font-size:.95rem; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-due{ display:grid; grid-template-columns:repeat(2,1fr); gap:11px; align-items:stretch; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-due .tessera .icona{ aspect-ratio:16/10; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-due .tessera .info{ padding:9px 12px 11px; gap:3px; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-due .tessera .info h2{ font-size:1.02rem; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-due .tess-cat{ display:none; }   /* (la categoria è la targhetta sulla foto) */
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-due .tessera.presto{ grid-column:1 / -1; flex-direction:row; justify-content:center; gap:8px; padding:12px; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-due .tessera.presto .icona{ width:auto; aspect-ratio:auto; font-size:1.3rem; padding:0; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-due .tessera.presto .info{ flex:0 1 auto; padding:0; }
+.oro:is(.home, .scelta-giochi) .griglia-giochi.tess-due .tessera.presto .info h2{ font-size:.95rem; }
 
 /* ---- in fondo: Proposte, Bug, Serata a punti, Installa l'app ---- */
 .oro .azione{ background:var(--o-carta); color:var(--o-tenue); box-shadow:inset 0 0 0 1px var(--o-filo); }
@@ -4076,3 +4076,11 @@ html body.tema-oro::before{ display:none; }
 .oro .menu-sotto .ms-faccia{ display:block; width:26px; height:26px; margin-bottom:1px; border-radius:50%; overflow:hidden; background:var(--o-carta-piena); box-shadow:0 0 0 1.5px var(--o-filo); line-height:28px; text-align:center; font-size:1rem; }
 .oro .menu-sotto .ms-faccia svg{ display:block; width:100%; height:100%; }
 .oro .menu-sotto .pallino{ position:absolute; top:7px; left:calc(50% + 8px); width:9px; height:9px; margin:0; border-radius:50%; background:#ff5c8a; box-shadow:0 0 0 2px #0d1020; }
+
+/* ---- 📱 la scelta del gioco nella Sala e nel torneo (29 ott 2026): le stesse tessere della home, due per riga (.scelta-giochi);
+   quello che serve solo lì (posti, punti del torneo) sta dentro la tessera, piccolo; il voto è un bollino sulla foto ---- */
+.oro.scelta-giochi .tessera .info :is(.tess-adue, .tess-punti){ margin:0; font-size:.72rem; font-weight:600; line-height:1.25; }
+.oro.scelta-giochi .tessera .info .tess-punti{ color:#ffd76a; }
+.oro.scelta-giochi .tessera .info .tess-punti .emo{ --emo-tinta:currentColor; }
+.oro.scelta-giochi .tessera .tess-voto{ top:8px; right:8px; z-index:5; }
+.oro.scelta-giochi .griglia-giochi .tessera.proposta{ border:3px solid #ffc247; }   /* (il bordo: un contorno «outline» resterebbe sotto la foto) */
