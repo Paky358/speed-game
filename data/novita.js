@@ -9,7 +9,7 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 278,
+    v: 279,
     data: "29 ottobre 2026",
     titolo: "Una prima schermata più comoda 📱",
     descrizione: [
@@ -20,7 +20,7 @@ window.SG_NOVITA = [
     ]
   },
   {
-    v: 277,
+    v: 278,
     data: "29 ottobre 2026",
     titolo: "Avatar nuovi per tutti e altri cinque giochi di notte 🌙",
     descrizione: [
@@ -30,6 +30,17 @@ window.SG_NOVITA = [
       "In Chi di Noi? le scene e le carte stanno in cornici di vetro scuro, e la carta che scegli si accende.",
       "L'Asta coi temi si fa in una sala di sera, con la luce calda sul banco; chi ha l'offerta più alta si riconosce dal lampone. Lo stadio del fantacalcio resta com'era.",
       "Parola d'ordine ha il tavolo blu notte e le carte color crema; le carte girate hanno i colori e i disegni delle squadre di sempre, e la nera il teschio."
+    ]
+  },
+  {
+    v: 277,
+    data: "29 ottobre 2026",
+    titolo: "Lanterne: chi spegne le luci? 🏮",
+    descrizione: [
+      "Nuovo gioco online da 4 a 10: una notte di festa in un palazzo. Gli ospiti fanno i compiti con dei minigiochi, le ombre spengono le lanterne di nascosto.",
+      "Chi trova una lanterna spenta chiama la riunione: si parla in chat e si vota chi cacciare.",
+      "35 ruoli (Sceriffo, Medico, Veggente, Giullare, Indovino, Burattinaio…), sabotaggi, botole e telecamere. Le regole si cambiano dalla saletta.",
+      "Se siete in pochi aggiungete i Bot: ricordano chi hanno visto e in riunione dicono la loro."
     ]
   },
   {
