@@ -1,7 +1,7 @@
 ﻿# 🧠 Cervello di SPeeD GAME — il registro
 
 Lo tiene la chat «🧠 Cervello». Le altre chat ci scrivono solo una riga nel **🗒️ Diario** (in fondo) quando finiscono un lavoro, salvano o pubblicano.
-Ultimo aggiornamento: **29 ott 2026, 15:25** (ora italiana).
+Ultimo aggiornamento: **29 ott 2026, 19:10** (ora italiana).
 
 ---
 
@@ -28,7 +28,7 @@ Regole generali: sotto il 70% lavori grandi ok · 70-85% lavori medi, aiutanti S
 
 ## 2. 🌐 Cosa c'è online
 
-**Online adesso:** master `ff73096` del 29 ott alle 15:10 (controllato sul sito) = **novità v278 + v279** (e Lanterne in prova):
+**Online adesso:** master del 29 ott alle 19:10 = **novità v280** (chat «🌙 Notte vivace 2»: Chi di Noi? blu notte, schede di fine di Parola d'ordine scure, riquadri dello stadio del fanta, i 6 difetti piccoli, «Contro il Bot» ovunque; più la scelta del gioco nella Sala due per riga della chat «🏠 Home compatta») + **v281** (chat «STESSA LUNGHEZZA D'ONDA»: ruota nuova, «Tutti insieme» online, chi arriva tardi, 155 scale nuove) + Lanterne di Mario in prova. Prima (15:10, `ff73096`): **novità v278 + v279** (e Lanterne in prova):
 - **Lanterne** (chat di Mario De Viva, l'amico del proprietario): il gioco nuovo «🏮 Lanterne» (alla Among Us, online da 4 a 10, 35 ruoli, Bot), pubblicato da Mario stesso direttamente su master (14:46, poi 14:56). **In prova**: la tessera la vedono solo gli account IL PAPPONE e «gay» (di Mario), solo loro aprono la stanza; chi è invitato (link, codice, Sala) entra lo stesso; la saletta si riempie di Bot fino a 6. La sua novità v277 è stata tolta. La serata vera con 4+ telefoni non c'è ancora stata (#25).
 - **v279** (chat «🏠 Home compatta», ramo `home-compatta`): prima schermata con le tessere dei giochi senza descrizione, due per riga; menu in basso (Giochi · Novità · Trofei · Classifica · Profilo); **città spenta per tutti** (`CITTA_VISIBILE = false`: la versione online non contiene città, casa, casinò, circolo e scavi, ~3 MB in meno; spariscono per ora anche la Ruota del giorno e le sfide del giorno; la Gara di pesca va come prima). Chiesto dal proprietario («rimuoviamo anche la città visibile per adesso»).
 - **v278**: avatar «Mii rifinito» **per tutti** (`AVATAR_NUOVO = "tutti"`) e le cinque proposte approvate dal proprietario sulle foto («li ho visti e vanno bene»): Horto Muso di sera, Palla a Pendolo di notte, Chi di Noi? con scene e carte in vetro scuro (fondo viola ancora), sala dei temi dell'Asta di sera (banco marrone, stadio del fanta com'era), Parola d'ordine col tavolo blu notte e le carte crema. Fatte da 5 aiutanti (uno per gioco) + un revisore; nel Pendolo l'alone della palla è un gradiente (non una sfocatura a ogni fotogramma).
@@ -128,6 +128,8 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+
+- 29 ott 19:10 · Cervello · PUBBLICATO (master `2c486ae`, controllato sul sito) · uniti `stile-notte-2` (v280), `home-compatta` (Sala due per riga, riga nella v280) e `lunghezza-2` (v281; era v280 anche lei: rinumerata) e i cambi di Lanterne di Mario; prove 286, saletta e Sala 24-55, 60, 76, 90, 96, 421, 353, Chi di Noi? 400-410, Parola d'ordine o2t1, o2t6, o2f1, 264, ordine dei giochi og1-og5, nov1, Asta ar1-ar2, Scegliamo insieme 623-628, 634: 45 OK, 1 NO (o2t5, la presentazione di Parola d'ordine: era NO anche prima); le prove di Lunghezza d'Onda le aveva fatte la sua chat
 
 - 29 ott 23:00 · 🌙 Notte vivace 2 · salvato sul ramo `stile-notte-2` (copia `D:SG-notte2`), NON online · #11 «tutto tranne lo studio» (novità v280): Chi di Noi? blu notte (voci, carta della battuta, foglio, classifica in vetro scuro) e «Chi ha scritto cosa?» che restava VUOTO (le righe non venivano mai aggiunte: guasto vero, anche online); i 6 difetti (Calcio Biliardo, Tris, Ruota, Asta e Sì però con l'avatar del profilo sullo stesso telefono, «Contro il Bot» anche in Tris, Drop 4, Calcio Biliardo); giro di controllo (partite in diretta, fine di ogni gioco, vista dell'amico, giornata del fanta): scuri «🤔 Cosa intendevi?» e «🎭 Titoli» di Parola d'ordine, «Salta»/«Foto» dello stadio, fumetto del banditore a destra sui telefoni bassi, palline di Palla Matta sopra la luna; prove o2t6, 634/622, og5 ora OK; o2t5 resta NO solo sul tempo (7,4 s invece di 6 coi telefoni finti, già così prima); resta l'emoji 🔄 blu su «Rivincita» in Tris, Drop 4 e Navale (le prove cercano quel testo). Prove OK: 286, og5, 634, 622, o2t1, o2t6, pa1, pa2, 802, 803, cbb1, g7r1, 400, 403, 5cn1, 46, 51, 55. Prima di unire: unire `origin/master` nel ramo (Lanterne e altre chat pubblicano) · foto: pagina «Notte vivace 2»
 
