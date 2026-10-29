@@ -1096,7 +1096,7 @@
       } };
     if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
     function chiediNome() {
-      var s = t.schermata({ icona: "📡", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "📡", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1121,7 +1121,7 @@
       if (!S.rete) senzaRete(t);
     }
     function attesa() {
-      var s = t.schermata({ icona: "📡", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "📡", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(s);
     }
@@ -1699,7 +1699,7 @@
     stile();
     var f = vm.fine || {}, cl = f.classifica || [], fac = t.faccine(), sq = f.formula === "squadre";
     var titolo = sq ? (f.vinc < 0 ? "Pareggio!" : "Vince la Squadra " + SQ[f.vinc] + "!") : "Classifica finale";
-    var s = t.schermata({ icona: sq ? (f.vinc < 0 ? "🤝" : "🏆") : "🏆", titolo: titolo });
+    var s = t.schermata({ chiara: true, icona: sq ? (f.vinc < 0 ? "🤝" : "🏆") : "🏆", titolo: titolo });
     if (sq) s._contenuto.appendChild(t.el("div", { class: "lu-fin-sq" }, [0, 1].map(function (q) {
       return t.el("div", { class: (q ? "b" : "a") + (f.vinc === q ? " vince" : "") }, [t.el("span", { text: "Squadra " + SQ[q] }), t.el("b", { text: fmtN((f.sqPunti || [0, 0])[q]) })]);
     })));
@@ -1748,20 +1748,20 @@
     try { SGNube.salvaProgressi(null, ID, incr, [], []); } catch (e) {}
   }
   function errore(t, testo) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function erroreRete(t, testo, riprova) {
-    var s = t.schermata({ icona: "📶", titolo: "Niente rete?", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "📶", titolo: "Niente rete?", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo + " Controlla la connessione e riprova." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Riprova", onclick: riprova }));
     s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Online si gioca quando l'app è aperta dal sito pubblicato. Sullo stesso telefono funziona sempre." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
@@ -1786,7 +1786,7 @@
     turno();
 
     function mostraSquadre() {
-      var s = t.schermata({ icona: "👥", titolo: "Le squadre", sotto: "Si vince a " + imp.traguardo + " punti", indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "👥", titolo: "Le squadre", sotto: "Si vince a " + imp.traguardo + " punti", indietro: t.esci });
       var box = t.el("div", { class: "lu-fin-sq lu-sq-loc" });
       function disegnaSq() {
         svuota(box);
@@ -2077,6 +2077,9 @@
       ".lu-fin-sq{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 8px}.lu-fin-sq>div{border-radius:14px;padding:6px;text-align:center;background:var(--carta,rgba(255,255,255,.08))}.lu-fin-sq>div.a{box-shadow:inset 0 -4px #e64980}.lu-fin-sq>div.b{box-shadow:inset 0 -4px #4263eb}",
       ".lu-fin-sq span{display:block;font-weight:800;font-size:14px;opacity:.85}.lu-fin-sq b{display:block;font-size:30px;font-weight:1000;line-height:1.1}.lu-fin-sq small{display:block;font-weight:700;font-size:14px;margin-top:4px}.lu-fin-sq>div.vince{outline:3px solid #ffd43b;outline-offset:-3px}",
       ".lu-premi{display:flex;flex-direction:column;gap:4px;margin:0 0 8px}.lu-premi div{border-radius:12px;padding:5px 10px;background:rgba(255,212,59,.16);font-weight:800;font-size:13.5px;line-height:1.25}",
+      // 🌙 Notte vivace: «Le squadre» e la classifica finale sono schermate dell'app (.oro): riquadri di vetro, i premi di vetro (non più giallo-marrone) e la squadra che vince col filo d'oro dell'app
+      ".oro .lu-fin-sq>div{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta)}.oro .lu-fin-sq>div.vince{outline-color:var(--n-monete)}",
+      ".oro .lu-premi div{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo)}",
       // 📝 le nostre scale: la firma sopra la scala, la carta col 📝 (Classico), l'elenco nelle regole
       ".lu-firma{position:absolute;left:50%;top:-9px;transform:translateX(-50%);padding:1px 8px;border-radius:999px;background:#ffd43b;color:#3b2a00;font-size:10.5px;font-weight:900;line-height:1.5;white-space:nowrap;opacity:0;pointer-events:none;visibility:hidden;transition:opacity .3s,visibility .3s;box-shadow:0 2px 6px #0006;z-index:1}.lu-firma.vis{opacity:1;visibility:visible}",
       ".lu-carta.nostra{box-shadow:0 0 0 2.5px #ffd43b,0 4px 0 #0005}.lu-carta.nostra i{opacity:1}",
@@ -2088,7 +2091,36 @@
       // «⏩ Avanti» a maggioranza nella rivelazione
       ".lu-quanti{margin-left:8px;font-size:.78em;opacity:.7}.lu-btn.fatto:disabled{opacity:.8}",
       ".lu.scrive .lu-testa,.lu.scrive .lu-gente,.lu.scrive .lu-fondo,.lu.scrive .lu-parola.pensa{display:none}.lu.scrive .lu-dial{min-height:80px}",
-      "@media(max-height:700px){.lu{gap:5px}.lu-testa{min-height:34px}.lu-av{width:34px;height:34px}.lu-btn{min-height:44px}.lu-btn.piccolo{min-height:36px}.lu-btn.parola{min-height:40px}.lu-carta{min-height:42px}.lu-gente{max-height:48px}.lu-p{padding:1px 7px 1px 1px}.lu-p img{width:18px;height:18px}.lu-est{min-height:30px}.lu-fondo{min-height:36px}}"
+      "@media(max-height:700px){.lu{gap:5px}.lu-testa{min-height:34px}.lu-av{width:34px;height:34px}.lu-btn{min-height:44px}.lu-btn.piccolo{min-height:36px}.lu-btn.parola{min-height:40px}.lu-carta{min-height:42px}.lu-gente{max-height:48px}.lu-p{padding:1px 7px 1px 1px}.lu-p img{width:18px;height:18px}.lu-est{min-height:30px}.lu-fondo{min-height:36px}}",
+      // 🌙 Notte vivace: fondo blu notte dell'app, riquadri e tasti di vetro scuro; il quadrante resta com'è
+      ".schermata.lu-piena{background:var(--o-fondo)}",
+      ".lu{background:radial-gradient(120% 65% at 50% 42%,#1d2346 0%,#131833 46%,var(--o-fondo) 100%)}",
+      ".lu-esci,.lu-frasi-b{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06);color:var(--o-testo)}",
+      ".lu-box{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06)}",
+      ".lu-box.a.sq{box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 -3px #f06595}.lu-box.b.sq{box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 -3px #5c7cfa}",
+      ".lu-box.mia{outline-color:var(--o-oro)}.lu-box.tocca{background:var(--o-carta-viva)}",
+      ".lu-av{background:var(--o-carta-piena);box-shadow:0 0 0 2px var(--o-oro),0 0 14px rgba(255,79,134,.35)}",
+      ".lu-est{color:var(--o-testo)}",
+      ".lu-est.sx{background:linear-gradient(90deg,rgba(79,216,255,.2),rgba(79,216,255,0) 70%),var(--o-carta-piena);box-shadow:inset 0 0 0 1px rgba(79,216,255,.5)}",
+      ".lu-est.dx{background:linear-gradient(270deg,rgba(255,154,74,.2),rgba(255,154,74,0) 70%),var(--o-carta-piena);box-shadow:inset 0 0 0 1px rgba(255,154,74,.5)}",
+      ".lu-est.ok{box-shadow:0 0 0 3px #69db7c,0 0 20px #69db7c}.lu-est.no{box-shadow:0 0 0 3px #ff6b6b;opacity:.75}",
+      ".lu-carta{border:1.5px solid transparent;background:linear-gradient(var(--o-carta-piena),var(--o-carta-piena)) padding-box,linear-gradient(90deg,#4fd8ff 0%,#b39bff 50%,#ff9a4a 100%) border-box;color:var(--o-testo);box-shadow:0 8px 18px -10px rgba(0,0,0,.75)}",
+      ".lu-carta.nostra{box-shadow:0 0 0 2px var(--o-oro),0 8px 18px -10px rgba(0,0,0,.75)}",
+      ".lu-firma{background:var(--o-carta-piena);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1px var(--o-oro),0 2px 6px #0006}",
+      ".lu-btn{background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:0 8px 18px rgba(214,24,80,.3)}",
+      ".lu-btn:active{transform:translateY(1px);box-shadow:0 4px 10px rgba(214,24,80,.3)}",
+      ".lu-btn.giallo,.lu-btn.viola,.lu-btn.blu,.lu-btn.aran,.lu-btn.grigio{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),inset 0 1px 0 rgba(255,255,255,.06)}",
+      ".lu-btn.giallo{color:var(--o-oro-testo)}.lu-btn.viola{box-shadow:inset 0 0 0 1px rgba(179,155,255,.6)}.lu-btn.blu{box-shadow:inset 0 0 0 1px rgba(79,216,255,.55)}.lu-btn.aran{box-shadow:inset 0 0 0 1px rgba(255,154,74,.6)}",
+      ".lu-btn:disabled{opacity:.4;box-shadow:none}",
+      ".lu-p{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo)}.lu-p.a{box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 -2px #f06595}.lu-p.b{box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 -2px #5c7cfa}.lu-p.tu{outline-color:var(--o-oro)}",
+      ".lu-mk b{background:var(--o-carta-piena);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1px var(--o-oro)}",
+      ".lu-pop.buono{background:var(--o-carta-piena);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1.5px var(--o-oro),0 10px 30px #0008}",
+      ".lu-banner{background:var(--o-carta-piena);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1px var(--o-oro),0 8px 20px #0007}",
+      ".lu-casuale{background:var(--o-carta-piena);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1px var(--o-oro)}",
+      ".lu-scelta.tu{outline-color:var(--o-oro)}",
+      ".lu-frasi{background:var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo-oro),0 10px 30px #0009}",
+      // scritte grandi della rivelazione: bianco su colore pieno almeno 4,5:1
+      ".lu-pop.centro{background:#e0225a}.lu-pop.tele{background:linear-gradient(90deg,#6f45e8,#e0225a)}"
     ].join("");
     document.head.appendChild(st);
   }

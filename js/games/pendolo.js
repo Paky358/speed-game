@@ -353,7 +353,13 @@
       ".pd-stat > div{background:rgba(255,255,255,.07);border-radius:12px;padding:10px 4px;text-align:center}" +
       ".pd-stat b{display:block;font-size:1.35rem;line-height:1.2}" +
       ".pd-stat small{display:block;opacity:.75;font-size:.76rem;margin-top:2px}" +
-      ".pd-record{text-align:center;font-weight:800;margin-top:12px;color:#ffd43b}";
+      ".pd-record{text-align:center;font-weight:800;margin-top:12px;color:#ffd43b}" +
+      // 🌙 Notte vivace: la schermata finale è una schermata dell'app (il campo con la trave resta com'è):
+      // i tre numeri su vetro sollevato, scritte chiare e il record in lampone invece del giallo acceso
+      ".oro .pd-stat > div{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06),0 10px 24px -14px rgba(0,0,0,.8)}" +
+      ".oro .pd-stat b{font-family:var(--o-tit);font-weight:800;letter-spacing:-.01em;color:var(--o-testo)}" +
+      ".oro .pd-stat small{color:var(--o-tenue);opacity:1}" +
+      ".oro .pd-record{color:var(--o-oro-testo)}";
     document.head.appendChild(st);
   }
   // ◀ ▶ come un'unica zona: il pollice può scivolare da un tasto all'altro senza fermarsi
@@ -642,7 +648,7 @@
   function schermataFine(t, o) {
     assicuraStilePendolo();
     if (o.vinto && !o.guarda) fanfara();
-    var r = t.schermata({ icona: o.icona || (o.vinto ? "🏆" : "💦"), titolo: o.titolo || (o.vinto ? "Hai vinto!" : "Hai perso"), sotto: "Palla a Pendolo" });
+    var r = t.schermata({ chiara: true, icona: o.icona || (o.vinto ? "🏆" : "💦"), titolo: o.titolo || (o.vinto ? "Hai vinto!" : "Hai perso"), sotto: "Palla a Pendolo" });
     r._contenuto.appendChild(t.el("p", { style: "text-align:center;font-size:1.1rem;line-height:1.5;margin-top:10px", text: o.frase }));
     if (o.stat && o.stat.length) r._contenuto.appendChild(t.el("div", { class: "pd-stat" }, o.stat.map(function (x) { return t.el("div", {}, [t.el("b", { text: String(x[0]) }), t.el("small", { text: x[1] })]); })));
     if (o.record) r._contenuto.appendChild(t.el("p", { class: "pd-record", text: o.record }));
@@ -846,7 +852,7 @@
       if (lanc && lanc !== "host") attesiRip[lanc] = 1;
       rete.invia(msgRiparte());   // (trattenuto: chi rientra lo vede subito)
       assicuraStilePendolo();
-      var s0 = t.schermata({ icona: "🎯", titolo: "🔁 Si riparte da capo", sotto: "Palla a Pendolo" });
+      var s0 = t.schermata({ chiara: true, icona: "🎯", titolo: "🔁 Si riparte da capo", sotto: "Palla a Pendolo" });
       s0._contenuto.appendChild(t.el("p", { style: "text-align:center;font-size:1.05rem;line-height:1.5;margin-top:16px", text: "La partita è ripresa: stessi ruoli, si ricomincia la manche." }));
       var b = t.el("button", { class: "btn btn-primario", text: "▶ Via! ", onclick: function () { if (fase === "ripresa") inizia(); } });
       s0._piede.appendChild(b);
@@ -962,7 +968,7 @@
     var GUARDA = !!t.guarda, TARGA = GUARDA && !t.eliminazione;
     schermaNome();
     function schermaNome() {
-      var s = t.schermata({ icona: GUARDA ? "👀" : "🎯", titolo: GUARDA ? "Guardi la partita" : "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: GUARDA ? "👀" : "🎯", titolo: GUARDA ? "Guardi la partita" : "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" }); s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
       var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -983,7 +989,7 @@
           else if (m.t === "riparte") {   // l'host ha ripreso la partita (aveva ricaricato): stessi ruoli, la manche si rifà da capo
             fermaGiro(); if (S.ref) { S.ref.rimuovi(); S.ref = null; } S.buf = []; S.fase = "riparte";
             if (S.ripS && document.body.contains(S.ripS)) return;   // (già sullo schermo: arriva due volte, trattenuto e per me)
-            var sR = t.schermata({ icona: "🎯", titolo: "🔁 Si riparte da capo", sotto: "Palla a Pendolo" }), pR = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:12px" });
+            var sR = t.schermata({ chiara: true, icona: "🎯", titolo: "🔁 Si riparte da capo", sotto: "Palla a Pendolo" }), pR = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:12px" });
             sR._contenuto.appendChild(el("p", { style: "text-align:center;font-size:1.05rem;line-height:1.5;margin-top:16px", text: "L'host è tornato: stessi ruoli, si ricomincia la manche." }));
             sR._contenuto.appendChild(pR);
             sR._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } }));
@@ -1077,7 +1083,7 @@
       { onLancio: function () { if (S.rete) S.rete.invia({ t: "vuoiLanciare" }); },
         onTrave: function () { if (S.rete) S.rete.invia({ t: "vuoiTrave" }); }, onEsci: function () { fermaGiro(); if (S.rete) S.rete.chiudi(); t.esci(); } }); }
     function attesa() { if (S.ref) return;
-      var s = t.schermata({ icona: "🎯", titolo: "Palla a Pendolo · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+      var s = t.schermata({ chiara: true, icona: "🎯", titolo: "Palla a Pendolo · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
       S.msg2 = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegato ✅ — sto entrando nella stanza…" }); s._contenuto.appendChild(S.msg2); t.mostra(s); }
   }
 
@@ -1141,10 +1147,10 @@
       attesa: vm.guarda ? "Guardi la partita: si comincia tra poco! 🎯" : ioAtt ? "Aspetta che l'host cominci: per questa partita guardi. 👀" : "Aspetta che l'host cominci: sotto puoi chiedere di lanciare tu! 🎯", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
-  function errore(t, txt) { var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+  function errore(t, txt) { var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci })); t.mostra(s); }
-  function senzaRete(t) { var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+  function senzaRete(t) { var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "L'online funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile: intanto gioca da solo contro i bot." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci })); t.mostra(s); }
 

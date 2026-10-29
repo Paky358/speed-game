@@ -628,7 +628,12 @@
     ".as-tit .d{font-size:.68rem;font-weight:700;color:var(--testo-tenue);line-height:1.2;}",
     ".as-foto{display:flex;gap:6px;justify-content:center;margin:6px 0 2px;}.as-foto .btn{margin:0;flex:1;max-width:320px;}",
     ".as-foto-riga{align-items:center;margin:0;}.as-foto-riga .btn{flex:none;width:auto;min-height:40px;padding:6px 14px;font-size:.92rem;border-radius:999px;}",
-    ".as-voti-da{font-size:.72rem;font-weight:800;color:var(--accento);margin:-4px 0 4px;}"
+    ".as-voti-da{font-size:.72rem;font-weight:800;color:var(--accento);margin:-4px 0 4px;}",
+    // 🌙 Notte vivace: le schermate di servizio (classifica finale, fasce svelate, titoli) hanno la classe .oro: qui i pezzi del gioco coi colori dell'app
+    ".oro .as-scen{background:var(--o-carta-viva);border:1px solid var(--o-filo-oro);box-shadow:var(--o-ombra);}",   // (lo scenario: era viola)
+    ".oro .as-scen small{color:var(--o-oro-testo);}",
+    ".oro .as-tit{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo);}",   // (i titoli scherzosi: vetro come il resto, non viola)
+    ".oro .tier-A{background:linear-gradient(135deg,var(--o-m-oro-i),var(--n-monete));color:var(--o-m-oro-a);}"   // (la fascia A resta d'oro: col lampone diventava salmone)
   ].join("");
   document.head.appendChild(stile);
 
@@ -1221,8 +1226,8 @@
   }
 
   function niente(t, msg) {
-    var s = t.schermata({ icona: "🔨", titolo: "L'Asta", indietro: t.esci });
-    s._contenuto.appendChild(t.el("p", { text: msg, style: "font-size:1.05rem" }));
+    var s = t.schermata({ chiara: true, icona: "🔨", titolo: "L'Asta", indietro: t.esci });
+    s._contenuto.appendChild(t.el("p", { text: msg, style: "font-size:1.05rem;margin-top:44px" }));   // (senza titolo: sotto il ‹ in alto a sinistra)
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
@@ -3984,7 +3989,7 @@
   }
   // (stesso telefono, fantacalcio) dopo il podio: i titoli scherzosi e la foto delle rose, poi la classifica
   function titoliFanta(t, st, righe) {
-    var el = t.el, s = t.schermata({ icona: "🏅", titolo: "I titoli della serata", sotto: "Non sono trofei: sono sfottò" });
+    var el = t.el, s = t.schermata({ chiara: true, icona: "🏅", titolo: "I titoli della serata", sotto: "Non sono trofei: sono sfottò" });
     s.classList.add("as-fissa");
     var tit = nodoTitoli(el, st.titoli);
     if (tit) s._contenuto.appendChild(tit);
@@ -4014,7 +4019,7 @@
 
   function svelaFasce(t, st) {
     var el = t.el;
-    var s = t.schermata({ icona: "🃏", titolo: "Fasce svelate!", sotto: "Ecco il vero valore delle carte" });
+    var s = t.schermata({ chiara: true, icona: "🃏", titolo: "Fasce svelate!", sotto: "Ecco il vero valore delle carte" });
     s.classList.add("as-fissa");
     var tit = nodoTitoli(el, st.titoli);
     if (tit) s._contenuto.appendChild(tit);
@@ -4836,7 +4841,7 @@
 
     schermaNome();
     function schermaNome() {
-      var s = t.schermata({ icona: "🔨", titolo: "Entra all'asta", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🔨", titolo: "Entra all'asta", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
@@ -4882,13 +4887,13 @@
   }
 
   function erroreSchermo(t, txt) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
       text: "La modalità \"ognuno dal suo telefono\" funziona quando il gioco è aperto dal sito pubblicato online. Da un file locale non è disponibile: intanto usa \"Un telefono solo\"." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
@@ -5231,7 +5236,7 @@
     var el = t.el;
     salvaTrofeiAsta(t, vm, cb && cb.myId, true);
     var etichetta = vm.formato === "fanta" ? "Mini asta Fantacalcio" : ("L'Asta · " + (vm.temaNome || ""));
-    var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: etichetta });
+    var s = t.schermata({ chiara: true, icona: "🏆", titolo: "Classifica finale", sotto: etichetta });
     s.classList.add("as-fissa");   // (alta come lo schermo: "Nuova partita" si vede sempre, le fasce svelate scorrono nel centro)
     if (vm.scenario) { var sc = nodoScenario(el, vm.scenario, false); sc.style.marginTop = "2px"; s._contenuto.appendChild(sc); }
     var ol = el("ol", { class: "classifica" + ((vm.classifica || []).length > 5 ? " fitta" : "") });   // (da 6 in su su due colonne: si vede tutta)

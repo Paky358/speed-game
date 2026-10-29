@@ -1266,12 +1266,13 @@
     return cfg && window.SGOmino ? SGOmino.svg(cfg, { busto: true }) : "<div style='font-size:1.6rem;line-height:46px'>🙂</div>";
   }
   function lobby(t, vm, cb) {
+    stile();   // (gli stili dei pezzi della saletta: la riga «Bot al tavolo» − + e il box delle fiches si dispongono giusti fin dalla prima volta)
     var el = t.el, extra = [], umani = vm.players.filter(function (p) { return !p.bot; }).length;
     extra.push(el("p", { class: "modulo-nota", text: vm.torneo
       ? "🏆 Torneo della serata · " + NOME_VAR[vm.variante] + ": tutti partono con " + fmtN(vm.torneo.fiches) + " fiches finte, i bui salgono ogni " + vm.torneo.ogni + " mani e chi resta senza fiches esce." +
         (vm.torneo.bomba ? " 💣 Una mano ogni " + vm.torneo.bomba + " è una Mano bomba." : "") + " Le Speed Coins non si toccano."
       : NOME_VAR[vm.variante] + " · da 2 a " + MAX[vm.variante] + " giocatori. Ognuno si siede con le sue Speed Coins, che al tavolo diventano fiches (al massimo " + fmtN(BUYIN) + ")." }));
-    if (vm.players.length > MAX[vm.variante]) extra.push(el("p", { class: "modulo-nota", style: "color:#ffa94d", text: "Siete troppi per questa variante: togli qualche Bot." }));
+    if (vm.players.length > MAX[vm.variante]) extra.push(el("p", { class: "modulo-nota pk-ambra", text: "Siete troppi per questa variante: togli qualche Bot." }));
     if (cb.sonoHost) {
       var nb = vm.players.length - umani;
       extra.push(el("div", { class: "pk-bot-riga" }, [
@@ -1280,7 +1281,7 @@
         el("button", { class: "btn btn-fantasma btn-piccolo", text: "+", disabled: vm.players.length < MAX[vm.variante] ? null : "disabled", onclick: function () { cb.onBot(true); } }) ]));
       // l'host vede chi non ha fiches (non entra nelle mani finché non si risiede)
       var senza = vm.players.filter(function (p) { return !p.bot && p.stack < GRANDE; }).map(function (p) { return p.id === cb.myId ? "tu" : p.nome; });
-      if (senza.length) extra.push(el("p", { class: "modulo-nota", style: "color:#ffa94d", text: "Senza fiches: " + senza.join(", ") + ". Non giocano finché non si siedono con delle monete." }));
+      if (senza.length) extra.push(el("p", { class: "modulo-nota pk-ambra", text: "Senza fiches: " + senza.join(", ") + ". Non giocano finché non si siedono con delle monete." }));
     }
     var io = null; vm.players.forEach(function (p) { if (p.id === cb.myId) io = p; });
     if (io && !vm.torneo) extra.push(fichesBox(t, cb, io, true));   // (nel torneo le fiches sono uguali per tutti: lo dice già la riga sopra)
@@ -1917,7 +1918,90 @@
       ".pk-guida{position:absolute;inset:0;z-index:8;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px}",
       ".pk-g-foglio{width:100%;max-width:380px;background:#14301f;border:2px solid #6b3e1f;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:5px}",
       ".pk-g-titolo{font-weight:900;text-align:center;margin-bottom:2px}.pk-g-riga{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:.78rem}",
-      ".pk-g-carte{display:flex;gap:2px}.pk-g-carte .pk-cartina{font-size:.72rem}.pk-g-nota{font-size:.72rem;opacity:.8;text-align:center;margin-top:4px;line-height:1.3}"
+      ".pk-g-carte{display:flex;gap:2px}.pk-g-carte .pk-cartina{font-size:.72rem}.pk-g-nota{font-size:.72rem;opacity:.8;text-align:center;margin-top:4px;line-height:1.3}",
+
+      // =====================================================================================================
+      // 🌙 NOTTE VIVACE. Il tavolo vero (feltro verde, bordo di legno, carte) resta com'è; la cornice, la barra,
+      // i tasti, le nuvolette, gli avvisi, i cartellini e il foglio delle combinazioni usano i colori --o-* del tema.
+      // Tutte le regole cominciano con .oro (la schermata col vestito dell'app) e vincono per specificità su quelle di sopra.
+      // Solo colori, bordi, ombre: nessuna misura e nessuna animazione cambia.
+      // =====================================================================================================
+      ".schermata.oro.pk-piena{background:transparent}",
+      ".oro .pk-scena{color:var(--o-testo);background:transparent}",
+      // la barra in alto
+      ".oro .pk-tastino{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro .pk-info{color:var(--o-testo);opacity:1}",
+      // il feltro: legno vero, un filo chiaro fuori e un'ombra morbida
+      ".oro .pk-feltro{box-shadow:inset 0 0 0 6px #6b3e1f,inset 0 0 0 9px #3d220f,0 0 0 1px var(--o-filo-oro),0 10px 26px rgba(0,0,0,.5)}",
+      ".oro .pk-centro{color:var(--o-testo)}",
+      // il piatto e il messaggio al centro stanno su una targhetta scura (il feltro è chiaro in mezzo: senza, la scritta non si legge)
+      ".oro .pk-piatto{color:var(--n-monete)}",
+      ".oro .pk-piatto:not(:empty){background:rgba(9,11,22,.62);border-radius:999px;padding:0 10px}",
+      ".oro .pk-piatto.bomba{color:var(--o-oro-chiaro);text-shadow:none}",
+      ".oro .pk-msg{color:var(--o-testo)}",
+      ".oro .pk-msg:not(:empty){background:rgba(9,11,22,.62);border-radius:10px;padding:1px 8px}",
+      // chi è seduto: l'avatar col suo anello, nome e fiches su un cartellino scuro (si legge sul verde e sul blu notte)
+      ".oro .pk-av{background:var(--o-carta-2);box-shadow:0 0 0 2px var(--o-carta-piena),0 0 0 3px var(--o-filo-oro),0 2px 6px rgba(0,0,0,.4)}",
+      ".oro .pk-posto.turno .pk-av{box-shadow:0 0 0 2px var(--o-carta-piena),0 0 0 5px var(--o-oro),0 3px 8px rgba(0,0,0,.4)}",
+      ".oro .pk-posto.fuori{opacity:1}",   // (chi ha lasciato non diventa trasparente: si vedrebbe il feltro attraverso il cartellino; l'avatar si fa grigio)
+      ".oro .pk-av{transition:filter .2s}",
+      ".oro .pk-posto.fuori .pk-av{filter:grayscale(.9) brightness(.96)}",
+      ".oro .pk-posto.fuori .pk-nome,.oro .pk-posto.fuori .pk-stack{color:var(--o-tenue)}",
+      ".oro .pk-posto.vince .pk-av{box-shadow:0 0 0 2px var(--o-carta-piena),0 0 0 5px var(--n-monete),0 3px 8px rgba(0,0,0,.4)}",   // (chi vince: anello d'oro; chi ha il turno: lampone)
+      ".oro .pk-d{box-shadow:0 0 0 1.5px var(--o-oro),0 1px 3px rgba(0,0,0,.4)}",
+      ".oro .pk-nome{box-sizing:border-box;width:100%;max-width:none;margin-top:3px;padding:0 3px;text-align:center;background:var(--o-carta-piena);color:var(--o-testo);border:1px solid var(--o-filo-oro);border-bottom:0;border-radius:9px 9px 0 0}",
+      ".oro .pk-stack{box-sizing:border-box;width:100%;padding:0 3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--o-carta-piena);color:var(--n-monete);border:1px solid var(--o-filo-oro);border-top-color:var(--o-filo);border-radius:0 0 9px 9px}",
+      // la mossa di ognuno: pillola chiara con la scritta scura (si legge ovunque); chi vince la ha d'oro
+      ".oro .pk-az{margin-top:3px;color:var(--o-scuro-testo)}",
+      ".oro .pk-az:not(:empty){background:var(--o-scuro);padding:0 7px;border-radius:999px}",
+      ".oro .pk-az.punta{color:var(--o-scuro-testo)}.oro .pk-az.punta:before{background:var(--o-oro);border-color:var(--o-scuro-testo)}",
+      ".oro .pk-az.vinto{color:var(--o-scuro-testo)}.oro .pk-az.vinto:not(:empty){background:var(--n-monete)}",
+      ".oro .pk-cartina{box-shadow:0 0 0 1px var(--o-filo-oro)}.oro .pk-cartina.conta{box-shadow:0 0 0 2px var(--n-monete)}",
+      ".oro .pk-cs.conta{box-shadow:0 0 0 2px var(--n-monete),0 4px 10px rgba(0,0,0,.4)}",
+      // le mie carte e la mia riga
+      ".oro .pk-mio-info{color:var(--o-testo)}",
+      ".oro .pk-mano-nome{color:var(--o-oro-testo)}",
+      ".oro .pk-carta{filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}",
+      ".oro .pk-carta.conta{filter:drop-shadow(0 4px 6px rgba(255,194,71,.6))}",
+      // i tasti: Lascia e Passa/Chiama in vetro scuro, Punta e conferme in lampone pieno
+      ".oro .pk-btn{background:var(--o-carta);color:var(--o-testo);font-weight:700;box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro .pk-btn.lascia{color:var(--o-rosso-testo)}",
+      ".oro .pk-btn.punta,.oro .pk-btn.ok{background:var(--o-tasto);color:var(--o-tasto-testo);font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(0,0,0,.25),0 8px 18px rgba(224,34,90,.43)}",
+      ".oro .pk-btn.piccolo{background:var(--o-carta-2);color:var(--o-testo);font-weight:700;box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".oro .pk-slider{accent-color:var(--o-oro)}",
+      ".oro .pk-stato{color:var(--o-tenue);opacity:1}",
+      ".oro .pk-rialzo-tot{color:var(--o-oro-testo);font-family:var(--o-tit);font-size:1.15rem;font-weight:700}",
+      // il tempo per decidere
+      ".oro .pk-tempo{background:var(--o-filo)}.oro .pk-tempo i{background:var(--o-oro)}",
+      ".oro .pk-tempo.piccolo{background:rgba(255,255,255,.4)}",
+      // le fiches che volano dal piatto: lampone col bordo chiaro
+      ".oro .pk-volo{background:var(--o-oro);border-color:var(--o-testo)}",
+      // la nuvoletta con l'ultima mossa: vetro scuro PIENO (sopra il feltro deve restare leggibile), il colore della mossa solo come filo e velo
+      ".oro .pk-nuv{background:var(--o-carta-piena);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro .pk-nuv.chiama{background:linear-gradient(var(--o-verde-tenue),var(--o-verde-tenue)),var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-verde),var(--o-ombra)}",
+      ".oro .pk-nuv.punta{background:linear-gradient(var(--o-crema),var(--o-crema)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--o-oro),var(--o-ombra)}",
+      ".oro .pk-nuv.lascia{background:var(--o-fondo-2);color:var(--o-tenue);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra)}",
+      ".oro .pk-nuv.cambia{background:linear-gradient(var(--o-carta-2),var(--o-carta-2)),var(--o-carta-piena)}",
+      // le percentuali all'all-in: cartellino scuro col filo lampone, quello di chi è in testa in lampone pieno
+      ".oro .pk-perc-n{background:var(--o-carta-piena);border:2px solid var(--o-oro);color:var(--o-oro-testo);box-shadow:var(--o-ombra)}",
+      ".oro .pk-perc-n small{color:var(--o-tenue);opacity:1}",
+      ".oro .pk-perc.top .pk-perc-n{background:var(--o-tasto);color:var(--o-tasto-testo);border-color:var(--o-testo);box-shadow:0 4px 12px rgba(224,34,90,.5)}.oro .pk-perc.top .pk-perc-n small{color:var(--o-tasto-testo)}",
+      ".oro .pk-perc.zero .pk-perc-n{opacity:.7;border-color:var(--o-filo);color:var(--o-tenue)}",
+      // «Fai vedere!» (bluff), «Mano bomba», «Salgono i bui»
+      ".oro .pk-bluff{background:var(--o-carta-piena);color:var(--o-testo);border:2px solid var(--o-verde);box-shadow:var(--o-ombra-alta)}",
+      ".oro .pk-bluff.si{border-color:var(--o-rosso-testo)}",
+      ".oro .pk-bluff-t{color:var(--o-verde);text-shadow:none;font-family:var(--o-tit);font-weight:700}.oro .pk-bluff.si .pk-bluff-t{color:var(--o-rosso-testo)}",
+      ".oro .pk-bluff-c .pk-cs{box-shadow:0 0 0 1px var(--o-filo-oro),0 2px 4px rgba(0,0,0,.35)}",
+      ".oro .pk-bomba{background:linear-gradient(var(--o-crema),var(--o-crema)),var(--o-carta-piena);color:var(--o-testo);border:2px solid var(--o-ambra);box-shadow:var(--o-ombra-alta)}",
+      ".oro .pk-bomba-t{color:var(--o-ambra);text-shadow:none;font-family:var(--o-tit);font-weight:700}",
+      ".oro .pk-avviso{background:var(--o-scuro);color:var(--o-scuro-testo);box-shadow:var(--o-ombra-alta)}",
+      // il foglio delle combinazioni
+      ".oro .pk-guida{background:rgba(9,11,22,.66)}",
+      ".oro .pk-g-foglio{background:var(--o-carta-piena);color:var(--o-testo);border:1px solid var(--o-filo-oro);box-shadow:var(--o-ombra-alta)}",
+      ".oro .pk-g-titolo{font-family:var(--o-tit);font-size:1.3rem;font-weight:700}",
+      ".oro .pk-g-nota{opacity:1;color:var(--o-tenue)}",
+      // saletta: gli avvisi «Senza fiches…» e «Siete troppi…»
+      ".oro .modulo-nota.pk-ambra{color:var(--o-ambra);font-weight:650}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -1925,7 +2009,7 @@
   function ogniBomba(b) { return +b === 5 ? 5 : +b === 10 ? 10 : 0; }   // «💣 Mano bomba»: una ogni 5 o 10 mani del torneo, 0 = mai
 
   SG.registra({
-    id: ID, nome: "Poker", icona: "♠️",
+    id: ID, nome: "Poker", icona: "♠️", tema: "oro",   // 🤍 Bianco e oro: tutto chiaro, il tavolo (feltro, legno, carte) resta quello vero
     descrizione: "Texas Hold'em o Poker all'italiana con le carte francesi, contro i Bot o online. Si gioca con le tue Speed Coins.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 3, etichettaGiocatori: "👥 2–10 giocatori",
     postiOnline: 10,   // posti online (all'italiana il tavolo ne fa sedere 6: la regola resta del gioco)

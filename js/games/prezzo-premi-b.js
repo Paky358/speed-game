@@ -38,15 +38,15 @@
       ".pz-pan .pzb-tr-disp{display:none}",   // (25 ott: il prezzo che scorre si vede in grande sul maxischermo, nel pannello solo il tasto)
       // ✋ È troppo! — il maxischermo
       ".pzb-tr-big{display:flex;flex-direction:column;align-items:center;gap:3px}",
-      ".pzb-tr-n{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#cdd6ff;min-height:15px}",
-      ".pzb-tr-p{display:inline-flex;align-items:center;justify-content:center;min-width:62%;padding:6px 18px;border-radius:10px 22px 22px 10px;background:linear-gradient(#ffe98a,#fcc419);color:#3b2a00;",
+      ".pzb-tr-n{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--o-tenue);min-height:15px}",
+      ".pzb-tr-p{display:inline-flex;align-items:center;justify-content:center;min-width:62%;padding:6px 18px;border-radius:10px 22px 22px 10px;background:var(--o-tasto);color:#fff;",
         "font-weight:900;font-size:clamp(30px,calc(var(--alt,640px) * .062),48px);line-height:1.1;font-variant-numeric:tabular-nums;box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 -4px 0 rgba(0,0,0,.15);white-space:nowrap}",
-      ".pzb-tr-p.attesa{background:linear-gradient(#3d3570,#272152);color:#ffe066}.pzb-tr-p.fine{background:linear-gradient(#ffc9c9,#ff8787);color:#5c0011}",
+      ".pzb-tr-p.attesa{background:linear-gradient(#232944,#181c33);color:var(--o-oro-testo)}.pzb-tr-p.fine{background:linear-gradient(#ffc9c9,#ff8787);color:#5c0011}",
       ".pzb-tr-p.gira{animation:pzbGira .32s cubic-bezier(.3,1.5,.5,1)}",
       "@keyframes pzbGira{from{transform:scaleY(.15) translateY(-8px);opacity:.2}to{transform:none;opacity:1}}",
       ".pzb-tr-tacche{display:flex;gap:3px;width:min(300px,86%)}",
       ".pzb-tr-tacche i{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.16);transition:background .2s}",
-      ".pzb-tr-tacche i.on{background:#ffd43b}.pzb-tr-tacche i.ora{background:#fff;box-shadow:0 0 8px #fff}",
+      ".pzb-tr-tacche i.on{background:var(--o-oro)}.pzb-tr-tacche i.ora{background:#fff;box-shadow:0 0 8px #fff}",
       // ✋ È troppo! — il pannello
       ".pzb-tr-pan{display:flex;flex-direction:column;gap:8px}",
       ".pzb-tr-disp{display:flex;align-items:center;justify-content:space-between;gap:8px;height:clamp(44px,calc(var(--alt,640px) * .075),60px);padding:0 14px;border-radius:14px;background:#05030f;box-shadow:inset 0 0 0 2px rgba(255,224,102,.35)}",
@@ -59,7 +59,7 @@
       ".pzb-tr-btn:active{transform:scale(.96)}",
       ".pzb-tr-btn.vivo{animation:pzbBatte 1.6s ease-in-out infinite}",
       "@keyframes pzbBatte{0%,100%{transform:none}12%{transform:scale(1.035)}24%{transform:none}}",
-      ".pzb-tr-btn.attesa{background:linear-gradient(#5a4f8f,#3a3170);box-shadow:inset 0 -6px 0 rgba(0,0,0,.25);font-size:24px}",
+      ".pzb-tr-btn.attesa{background:linear-gradient(#2f3763,#222849);box-shadow:inset 0 -6px 0 rgba(0,0,0,.25);font-size:24px}",
       ".pzb-tr-btn.fatto{background:linear-gradient(#69db7c,#2b8a3e);font-size:24px;animation:none}.pzb-tr-btn.niente{background:linear-gradient(#868e96,#495057);font-size:22px;animation:none}",
       // tutti insieme sullo stesso telefono: un bottone a testa
       ".pzb-tr-griglia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}",
@@ -68,26 +68,26 @@
       ".pzb-tr-bt:active{transform:scale(.95)}.pzb-tr-bt b{font-size:20px;font-weight:900}.pzb-tr-bt .chi{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:900;max-width:100%}",
       ".pzb-tr-bt .chi .fac{width:24px;height:24px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.2);flex:0 0 auto}.pzb-tr-bt .chi .fac svg{width:100%;height:100%;display:block}",
       ".pzb-tr-bt .chi span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".pzb-tr-bt.fatto{background:linear-gradient(#69db7c,#2b8a3e)}.pzb-tr-bt.attesa{background:linear-gradient(#5a4f8f,#3a3170)}.pzb-tr-bt.niente{background:linear-gradient(#868e96,#495057)}",
+      ".pzb-tr-bt.fatto{background:linear-gradient(#69db7c,#2b8a3e)}.pzb-tr-bt.attesa{background:linear-gradient(#2f3763,#222849)}.pzb-tr-bt.niente{background:linear-gradient(#868e96,#495057)}",
       ".pzb-tr-griglia.tre .pzb-tr-bt:last-child{grid-column:span 2}",
       // ✋ È troppo! — la rivelazione: la scala dei 10 prezzi
       ".pzb-scala{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:repeat(5,auto);grid-auto-flow:column;gap:4px 6px;width:100%;max-width:440px}",
       ".pzb-rg{position:relative;display:flex;align-items:center;gap:5px;height:clamp(24px,calc(var(--alt,640px) * .043),32px);padding:0 6px 0 4px;border-radius:10px;background:rgba(255,255,255,.09);text-align:left;animation:pzSu .35s both;transition:background .25s,box-shadow .25s,opacity .25s}",
       ".pzb-rg .n{flex:0 0 auto;width:17px;height:17px;border-radius:50%;background:rgba(255,255,255,.16);font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center}",
-      ".pzb-rg .v{flex:0 0 auto;font-weight:900;font-size:13.5px;color:#ffe066;white-space:nowrap;font-variant-numeric:tabular-nums}",
+      ".pzb-rg .v{flex:0 0 auto;font-weight:900;font-size:13.5px;color:var(--o-oro-testo);white-space:nowrap;font-variant-numeric:tabular-nums}",
       ".pzb-rg .fc{flex:1;min-width:0;display:flex;justify-content:flex-end;align-items:center;overflow:hidden}",
-      ".pzb-rg .fc .fac{width:22px;height:22px;margin-left:-7px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.18);box-shadow:0 0 0 2px #1a1150;flex:0 0 auto}.pzb-rg .fc .fac svg{width:100%;height:100%;display:block}",
+      ".pzb-rg .fc .fac{width:22px;height:22px;margin-left:-7px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.18);box-shadow:0 0 0 2px #151a2e;flex:0 0 auto}.pzb-rg .fc .fac svg{width:100%;height:100%;display:block}",
       ".pzb-rg .fc .piu{font-size:11px;font-weight:900;margin-left:3px;color:#fff}",
       ".pzb-rg.sotto{opacity:.62}.pzb-rg.sotto .v{color:#b2f2bb}",
-      ".pzb-rg.primo{background:rgba(255,212,59,.32);box-shadow:0 0 0 2px #ffd43b;opacity:1}.pzb-rg.primo .n{background:#ffd43b;color:#3b2a00}",
-      ".pzb-rg.sopra{background:rgba(255,93,108,.2)}.pzb-rg.sopra .v{color:#ffb3bb}",
-      ".pzb-rg .pt{position:absolute;right:4px;top:-8px;font-size:11px;font-weight:900;color:#04321c;background:#6ff0a6;border-radius:99px;padding:0 5px;animation:pzPop .35s both}",
+      ".pzb-rg.primo{background:rgba(255,79,134,.32);box-shadow:0 0 0 2px var(--o-oro);opacity:1}.pzb-rg.primo .n{background:var(--n-lampone);color:#fff}",
+      ".pzb-rg.sopra{background:rgba(255,93,108,.2)}.pzb-rg.sopra .v{color:var(--o-rosso-testo)}",
+      ".pzb-rg .pt{position:absolute;right:4px;top:-8px;font-size:11px;font-weight:900;color:var(--o-verde-testo);background:var(--o-verde);border-radius:99px;padding:0 5px;animation:pzPop .35s both}",
       ".pzb-rg .pt.zero{background:#ff8787;color:#fff}",
-      ".pzb-mai{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:#cdd6ff}.pzb-mai .fc{display:flex}.pzb-mai .fac{width:22px;height:22px;margin-left:-6px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.14)}.pzb-mai .fac svg{width:100%;height:100%;display:block}",
+      ".pzb-mai{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:var(--o-tenue)}.pzb-mai .fc{display:flex}.pzb-mai .fac{width:22px;height:22px;margin-left:-6px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.14)}.pzb-mai .fac svg{width:100%;height:100%;display:block}",
       ".pzb-ban-s{font-size:clamp(17px,calc(var(--alt,640px) * .032),24px)}",
       // 🟡 Plinko — la parete coi chiodini
       ".pzb-pl-board{position:relative;flex:1 1 0;min-height:0;width:100%;display:flex;justify-content:center;align-items:center;overflow:hidden}",
-      ".pzb-pl-in{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 0 0 3px #ffd43b,0 8px 24px rgba(0,0,0,.45)}",
+      ".pzb-pl-in{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 0 0 3px var(--o-oro),0 8px 24px rgba(0,0,0,.45)}",
       ".pzb-pl-in canvas{position:absolute;left:0;top:0;display:block}",
       ".pzb-tok{position:absolute;left:0;top:0;border-radius:50%;overflow:hidden;background:var(--c,#ffd43b);box-shadow:0 0 0 2.5px var(--c,#ffd43b),0 3px 6px rgba(0,0,0,.45);will-change:transform}",
       ".pzb-tok img{position:absolute;left:-8%;top:-2%;width:116%;height:116%;display:block}",
@@ -97,26 +97,26 @@
       ".pzb-flash.on{animation:pzbFlash .7s ease-out}",
       "@keyframes pzbFlash{0%{opacity:1}100%{opacity:0}}",
       ".pzb-piu{position:absolute;font-weight:900;font-size:15px;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.6);pointer-events:none;white-space:nowrap;animation:pzbSale 1.2s ease-out both}",
-      ".pzb-piu.oro{color:#ffe066;font-size:20px}.pzb-piu.zero{color:#ff8787}",
+      ".pzb-piu.oro{color:var(--o-oro-testo);font-size:20px}.pzb-piu.zero{color:#ff8787}",
       "@keyframes pzbSale{0%{transform:translate(-50%,0) scale(.6);opacity:0}15%{transform:translate(-50%,-10px) scale(1.15);opacity:1}100%{transform:translate(-50%,-46px) scale(1);opacity:0}}",
       ".pzb-pl-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 6px;max-width:100%}",
       ".pzb-pl-ch{display:flex;align-items:center;gap:4px;border-radius:99px;padding:2px 8px 2px 2px;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 2px var(--c,transparent);font-weight:900;font-size:12.5px;white-space:nowrap}",
       ".pzb-pl-ch .fac{width:22px;height:22px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.14);flex:0 0 auto}.pzb-pl-ch .fac svg{width:100%;height:100%;display:block}",
-      ".pzb-pl-ch .v{color:#ffe066}.pzb-pl-ch.primo{background:rgba(255,212,59,.3)}.pzb-pl-ch.cambia .v{animation:pzPop .3s}",
+      ".pzb-pl-ch .v{color:var(--o-oro-testo)}.pzb-pl-ch.primo{background:rgba(255,79,134,.3)}.pzb-pl-ch.cambia .v{animation:pzPop .3s}",
       // 🟡 Plinko — il pannello
       ".pzb-pl-pan{display:flex;flex-direction:column;gap:7px}",
       ".pzb-pl-pan .pz-nota,.pzb-tr-pan .pz-nota{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}.pzb-pl-pan .pz-nota.forte{font-size:15px}",
-      ".pzb-qtesta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900;font-size:14px;color:#ffe066}",
+      ".pzb-qtesta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900;font-size:14px;color:var(--o-oro-testo)}",
       ".pzb-gett{display:flex;gap:2px;font-size:17px;line-height:1}.pzb-gett i{font-style:normal;opacity:.3}.pzb-gett i.on{opacity:1}.pzb-gett i.nuovo{animation:pzPop .4s both}",
-      ".pzb-qbar{height:6px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden}.pzb-qbar i{display:block;height:100%;background:#ffd43b;transform-origin:0 50%}",
+      ".pzb-qbar{height:6px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden}.pzb-qbar i{display:block;height:100%;background:var(--o-oro);transform-origin:0 50%}",
       ".pzb-opz{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}",
       ".pzb-op{min-height:clamp(70px,calc(var(--alt,640px) * .12),96px)}.pzb-op b{font-size:clamp(22px,calc(var(--alt,640px) * .04),30px)}",
       ".pzb-op.giusto{background:linear-gradient(#b2f2bb,#37b24d);box-shadow:0 0 0 3px #fff}.pzb-op.sbagliato{background:linear-gradient(#ffc9c9,#fa5252);color:#fff}.pzb-op.era{box-shadow:0 0 0 3px #69db7c}",
       ".pzb-mini{position:relative;display:flex;flex-direction:column;gap:3px}",
       ".pzb-zone{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:2px}",
-      ".pzb-z{position:relative;height:clamp(36px,calc(var(--alt,640px) * .062),48px);border:0;border-radius:10px;padding:0;font:inherit;font-size:17px;color:#fff;background:linear-gradient(#5b46c4,#3a2a96);box-shadow:inset 0 -3px 0 rgba(0,0,0,.3);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}",
-      ".pzb-z.sel{background:linear-gradient(#ffe98a,#fcc419);color:#3b2a00;box-shadow:0 0 0 2px #fff}",
-      ".pzb-z .k{position:absolute;right:1px;top:-6px;min-width:15px;height:15px;border-radius:8px;background:#37d47e;color:#04321c;font-size:10px;font-weight:900;line-height:15px}",
+      ".pzb-z{position:relative;height:clamp(36px,calc(var(--alt,640px) * .062),48px);border:0;border-radius:10px;padding:0;font:inherit;font-size:17px;color:#fff;background:linear-gradient(#2f3763,#222849);box-shadow:inset 0 -3px 0 rgba(0,0,0,.3);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}",
+      ".pzb-z.sel{background:linear-gradient(#ffe6ee,#ffc4d6);color:#3a0b1a;box-shadow:0 0 0 2px #ff4f86}",
+      ".pzb-z .k{position:absolute;right:1px;top:-6px;min-width:15px;height:15px;border-radius:8px;background:var(--o-verde);color:var(--o-verde-testo);font-size:10px;font-weight:900;line-height:15px}",
       ".pzb-mini-tav{position:relative;height:clamp(64px,calc(var(--alt,640px) * .11),104px);border-radius:10px;overflow:hidden;background:#140d3a}",
       ".pzb-mini-tav canvas{position:absolute;left:0;top:0}"
     ].join("");
@@ -524,11 +524,11 @@
     var c = cv.getContext("2d"); if (!c) return null;
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     var g = geo(W, H), gr = c.createLinearGradient(0, 0, 0, H);
-    gr.addColorStop(0, "#241a6b"); gr.addColorStop(1, "#0d0830");
+    gr.addColorStop(0, "#1c2140"); gr.addColorStop(1, "#0b0e1c");
     c.fillStyle = gr; c.fillRect(0, 0, W, H);
     // luci di fondo
     var rg = c.createRadialGradient(W / 2, H * 0.62, 4, W / 2, H * 0.62, W * 0.55);
-    rg.addColorStop(0, "rgba(255,212,59,.16)"); rg.addColorStop(1, "rgba(255,212,59,0)");
+    rg.addColorStop(0, "rgba(255,79,134,.16)"); rg.addColorStop(1, "rgba(255,79,134,0)");
     c.fillStyle = rg; c.fillRect(0, 0, W, H);
     // i chiodini
     for (var r = 0; r < PL.FILE; r++) {

@@ -28,7 +28,7 @@
   var E_URTO = 0.82, E_MURO = 0.72;                            // urti più morbidi del biliardo
   var MAX_SEC = 8;                                             // un tiro dura al massimo 8 secondi
   var TEMPO = 30;                                              // online: secondi per tirare
-  var GIALLO = "#ffcc1f", BLU = "#2f7dff", NOTTE = "#0d1533";   // le due squadre: gialli (sotto) e blu (sopra)
+  var GIALLO = "#ffd24a", BLU = "#4fd8ff", NOTTE = "#0d1020";   // le due squadre: gialli (sotto) e blu (sopra)
   function colore(q) { return q === 0 ? GIALLO : BLU; }
   // ---- faccine e frasi durante la partita (il pezzo comune è in scopa.js: window.SGChiacchiere) ----
   function CH() { return window.SGChiacchiere || null; }
@@ -570,12 +570,12 @@
   function sfondo(ui) {
     var c = document.createElement("canvas"); c.width = ui.cv.width; c.height = ui.cv.height;
     var g = c.getContext("2d"); g.setTransform(ui.dpr, 0, 0, ui.dpr, 0, 0);
-    var S = ui.S, ox = ui.ox, oy = ui.oy, B = Math.max(4, 0.022 * S), fw = W * S, fh = L * S, pw = PORTA * S, pd = FONDO * S, px = ox + PL * S;
+    var S = ui.S, ox = ui.ox, oy = ui.oy, B = Math.max(2.5, 0.012 * S), fw = W * S, fh = L * S, pw = PORTA * S, pd = FONDO * S, px = ox + PL * S;
     var qSu = ui.o.flip ? 0 : 1;   // la squadra che difende la porta in alto (la porta ha il suo colore)
     // bordo luminoso: giallo da una parte, blu dall'altra
     var gb = g.createLinearGradient(0, oy - pd, 0, oy + fh + pd);
-    gb.addColorStop(0, colore(qSu)); gb.addColorStop(0.5, "#ffffff"); gb.addColorStop(1, colore(1 - qSu));
-    g.shadowColor = "rgba(0,0,0,.45)"; g.shadowBlur = 18;
+    gb.addColorStop(0, colore(qSu)); gb.addColorStop(0.5, "#b6bdd8"); gb.addColorStop(1, colore(1 - qSu));
+    g.shadowColor = "rgba(0,0,0,.5)"; g.shadowBlur = 14;
     g.fillStyle = gb; tondoRett(g, ox - B, oy - B, fw + 2 * B, fh + 2 * B, 14); g.fill();
     g.shadowBlur = 0;
     tondoRett(g, px - B, oy - pd - B, pw + 2 * B, pd + B + 4, 8); g.fill();
@@ -625,13 +625,13 @@
       g.fillStyle = "rgba(0,0,0,.28)"; g.beginPath(); g.arc(x + r * 0.12, y + r * 0.2, r, 0, Math.PI * 2); g.fill();
       g.fillStyle = NOTTE; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
       var gd = g.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.1, x, y, r * 0.86);
-      gd.addColorStop(0, "#ffffff"); gd.addColorStop(0.28, colore(q)); gd.addColorStop(1, q === 0 ? "#d99a00" : "#1c4fc4");
+      gd.addColorStop(0, q === 0 ? "#fff1c4" : "#d6f6ff"); gd.addColorStop(0.3, colore(q)); gd.addColorStop(1, q === 0 ? "#c98f1c" : "#1f9bc0");
       g.fillStyle = gd; g.beginPath(); g.arc(x, y, r * 0.84, 0, Math.PI * 2); g.fill();
       if (faccia) {   // l'attaccante ha la faccia di chi gioca
         g.save(); g.beginPath(); g.arc(x, y, r * 0.8, 0, Math.PI * 2); g.clip();
         var fw = r * 1.75; try { g.drawImage(faccia, x - fw / 2, y - fw * 0.52, fw, fw * 1.022); } catch (e) {}
         g.restore();
-      } else fulmine(g, x, y, r * 0.5, q === 0 ? NOTTE : "#ffffff");
+      } else fulmine(g, x, y, r * 0.5, NOTTE);
       return c;
     }
     var dischi = [disco(0, null), disco(1, null)];
@@ -970,7 +970,7 @@
     stile();
     var tu = d.mia, vinto = tu != null && d.vincitore === tu;
     var tit = tu == null ? "Ha vinto " + d.nomi[d.vincitore] + "!" : (vinto ? "Hai vinto!" : "Ha vinto " + d.nomi[d.vincitore]);
-    var s = t.schermata({ icona: vinto || tu == null ? "🏆" : "⚽", titolo: tit });
+    var s = t.schermata({ chiara: true, icona: vinto || tu == null ? "🏆" : "⚽", titolo: tit });
     s._contenuto.appendChild(t.el("div", { class: "cb-fine" }, [
       t.el("div", { class: "cb-fine-riga" }, [ t.el("span", { style: "color:" + GIALLO, text: d.nomi[0] }), t.el("b", { html: "<span style='color:" + GIALLO + "'>" + d.gol[0] + "</span> : <span style='color:" + BLU + "'>" + d.gol[1] + "</span>" }), t.el("span", { style: "color:" + BLU, text: d.nomi[1] }) ])
     ]));
@@ -1222,7 +1222,7 @@
       } };
     if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
     function chiediNome() {
-      var s = t.schermata({ icona: "⚽", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "⚽", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1286,7 +1286,7 @@
     }
   }
   function attesaSchermo(t, testo, codice, fa) {
-    var s = t.schermata({ icona: "⚽", titolo: testo, sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "⚽", titolo: testo, sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
     if (fa) s._piede.appendChild(fa);
     t.mostra(s);
@@ -1375,13 +1375,13 @@
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   function errore(t, testo) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Online funziona quando l'app è aperta dal sito pubblicato." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
@@ -1392,25 +1392,25 @@
     if (cssFatto) return; cssFatto = true;
     var st = document.createElement("style");
     st.textContent = [
-      ".schermata.cb-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:radial-gradient(120% 75% at 50% 50%,#1c2d6e 0%,#0d1533 72%)}",
+      ".schermata.cb-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:radial-gradient(120% 75% at 50% 50%,#1b2142 0%,#0d1020 72%)}",
       ".schermata.cb-piena>.testa,.schermata.cb-piena>.piede{display:none}",
       ".schermata.cb-piena>.contenuto{height:100%;margin:0;padding:0}",
       ".cb-scena{position:relative;height:var(--alt,100dvh);overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}",
       ".cb-campo{position:absolute;inset:0;width:100%;height:100%;touch-action:none}",
       // il tasto per uscire: piccolo, nell'angolo (come negli altri giochi)
-      ".cb-esci{position:absolute;top:calc(10px + env(safe-area-inset-top));left:10px;z-index:3;width:36px;height:36px;border:0;border-radius:12px;padding:0 0 3px;cursor:pointer;font:inherit;font-size:1.4rem;font-weight:900;line-height:1;color:#fff;background:rgba(255,255,255,.14)}",
-      ".cb-audio{position:absolute;top:calc(10px + env(safe-area-inset-top));left:52px;z-index:3;width:36px;height:36px;border:0;border-radius:12px;padding:0;cursor:pointer;font:inherit;font-size:1.05rem;line-height:1;background:rgba(255,255,255,.14)}",
+      ".cb-esci{position:absolute;top:calc(10px + env(safe-area-inset-top));left:10px;z-index:3;width:36px;height:36px;border:0;border-radius:12px;padding:0 0 3px;cursor:pointer;font:inherit;font-size:1.4rem;font-weight:900;line-height:1;color:#fff;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro),inset 0 1px 0 rgba(255,255,255,.06)}",
+      ".cb-audio{position:absolute;top:calc(10px + env(safe-area-inset-top));left:52px;z-index:3;width:36px;height:36px;border:0;border-radius:12px;padding:0;cursor:pointer;font:inherit;font-size:1.05rem;line-height:1;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro),inset 0 1px 0 rgba(255,255,255,.06)}",
       ".cb-scena .cb-chiac{position:absolute;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:3}",   // il tasto 💬
       // chi guarda il torneo: il 😂 e la fila delle faccine del core (sopra la targhetta in basso)
-      ".cb-fa{width:38px;height:38px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:1.15rem;line-height:1;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3);-webkit-tap-highlight-color:transparent}",
-      ".cb-fila{position:absolute;left:50%;bottom:calc(58px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:5;width:min(340px,calc(100% - 24px));border-radius:999px;background:rgba(12,16,44,.92);box-shadow:0 6px 16px rgba(0,0,0,.4)}",
+      ".cb-fa{width:38px;height:38px;padding:0;border:0;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);color:#fff;font-size:1.15rem;line-height:1;cursor:pointer;box-shadow:inset 0 0 0 1px var(--o-filo-oro),0 2px 6px rgba(0,0,0,.3);-webkit-tap-highlight-color:transparent}",
+      ".cb-fila{position:absolute;left:50%;bottom:calc(58px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:5;width:min(340px,calc(100% - 24px));border-radius:999px;background:var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo-oro),0 6px 16px rgba(0,0,0,.4)}",
       // chi guarda soltanto: in basso c'è la targhetta del core (alta 44 px + 10): la targhetta della squadra sale sopra
       ".cb-scena.con-targa .cb-targa.giu{bottom:calc(64px + env(safe-area-inset-bottom))}",
       // l'orologio della partita a tempo (in alto a destra; nel torneo scende sotto il tasto 🏆)
-      ".cb-orologio{position:absolute;top:calc(10px + env(safe-area-inset-top));right:10px;z-index:3;height:36px;padding:0 10px;border-radius:12px;display:flex;align-items:center;font-weight:900;font-size:.95rem;color:#fff;background:rgba(8,13,36,.82);box-shadow:0 0 0 2px rgba(255,255,255,.12);pointer-events:none}",
+      ".cb-orologio{position:absolute;top:calc(10px + env(safe-area-inset-top));right:10px;z-index:3;height:36px;padding:0 10px;border-radius:12px;display:flex;align-items:center;font-weight:900;font-size:.95rem;color:#fff;background:var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo-oro);pointer-events:none}",
       ".cb-orologio[hidden]{display:none}",
       ".cb-orologio.sotto{top:calc(50px + env(safe-area-inset-top))}",
-      ".cb-orologio.ultimi{color:#ffcc1f;box-shadow:0 0 0 2px #ffcc1f,0 0 14px 2px rgba(255,204,31,.6);animation:cbBatte 1s ease infinite}",
+      ".cb-orologio.ultimi{color:var(--o-ambra);box-shadow:0 0 0 2px var(--o-ambra),0 0 14px 2px rgba(255,181,71,.55);animation:cbBatte 1s ease infinite}",
       "@keyframes cbBatte{50%{transform:scale(1.08)}}",
       // l'orologio girato per chi sta in alto (in due sullo stesso telefono): nel suo angolo in alto a destra
       ".cb-orologio.girato{top:auto;right:auto;bottom:calc(10px + env(safe-area-inset-bottom));left:10px;transform:rotate(180deg)}",
@@ -1420,7 +1420,7 @@
       ".cb-scena.tempo .cb-targa.su,.cb-scena.tempo.ruota .cb-targa{max-width:calc(100% - 196px)}",
       // la targhetta di ognuno: avatar piccolo, nome, messaggio e i suoi gol
       ".cb-targa{position:absolute;left:50%;transform:translateX(-50%);max-width:calc(100% - 112px);display:flex;align-items:center;gap:8px;padding:3px 4px 3px 3px;border-radius:999px;pointer-events:none;",
-      "background:rgba(8,13,36,.82);box-shadow:0 0 0 2px rgba(255,255,255,.12);transition:box-shadow .25s}",
+      "background:var(--o-carta-piena);box-shadow:0 0 0 1px var(--o-filo-oro);transition:box-shadow .25s}",
       ".cb-targa.giu{bottom:calc(10px + env(safe-area-inset-bottom))}",
       ".cb-targa.su{top:calc(10px + env(safe-area-inset-top))}",
       ".cb-targa.ruota{transform:translateX(-50%) rotate(180deg)}",
@@ -1431,7 +1431,7 @@
       ".cb-nome{font-weight:900;font-size:.8rem;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".cb-msg{font-weight:800;font-size:.68rem;line-height:1.2;color:var(--sq);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".cb-msg:empty{display:none}",
-      ".cb-golnum{flex:none;min-width:1.5em;padding:0 8px;border-radius:999px;text-align:center;font-weight:900;font-size:1.35rem;line-height:30px;color:#0d1533;background:var(--sq)}",
+      ".cb-golnum{flex:none;min-width:1.5em;padding:0 8px;border-radius:999px;text-align:center;font-weight:900;font-size:1.35rem;line-height:30px;color:#0d1020;background:var(--sq)}",
       // l'esultanza: l'avatar che salta, la scritta e i coriandoli (solo transform e opacity)
       ".cb-festa{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0}",
       ".cb-festa.su{animation:cbFesta 1.9s ease forwards}",
@@ -1442,18 +1442,21 @@
       ".cb-festa-blocco.girata{transform:rotate(180deg)}",
       ".cb-festa.doppia .cb-festa-av{width:84px;height:86px}",
       ".cb-festa.doppia .cb-festa-txt{font-size:clamp(2rem,10vw,3.4rem)}",
-      ".cb-festa-sotto{font-weight:900;font-size:1.3rem;color:#fff;text-shadow:0 3px 0 #0d1533;animation:cbScritta .5s cubic-bezier(.2,1.6,.4,1)}",
+      ".cb-festa-sotto{font-weight:900;font-size:1.3rem;color:#fff;text-shadow:0 3px 0 #0d1020;animation:cbScritta .5s cubic-bezier(.2,1.6,.4,1)}",
       ".cb-festa-av{width:120px;height:122px;border-radius:50%;overflow:hidden;background:radial-gradient(circle,rgba(255,255,255,.35),rgba(255,255,255,0) 70%);animation:cbSalta .5s ease-in-out 3 alternate}",
       ".cb-festa-av svg{width:100%;height:100%;display:block}",
       "@keyframes cbSalta{from{transform:translateY(0) scale(1)}to{transform:translateY(-26px) scale(1.06)}}",
-      ".cb-festa-txt{font-weight:900;font-size:clamp(2.4rem,13vw,4.4rem);line-height:1.15;text-align:center;animation:cbScritta .5s cubic-bezier(.2,1.6,.4,1)}",
+      ".cb-festa-txt{font-weight:900;font-size:clamp(2.4rem,13vw,4.4rem);line-height:1.15;text-align:center;animation:cbScritta .5s cubic-bezier(.2,1.6,.4,1);-webkit-text-stroke:6px #0d1020;paint-order:stroke fill}",
       "@keyframes cbScritta{from{transform:scale(.4)}to{transform:scale(1)}}",
       ".cb-cor{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;opacity:0;animation:cbCade 1.6s ease-in forwards}",
       "@keyframes cbCade{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),105vh) rotate(var(--rot))}}",
       ".cb-fine{text-align:center;margin:18px 0 8px}",
       ".cb-fine-riga{display:flex;align-items:center;justify-content:center;gap:14px;font-weight:900;font-size:1.05rem}",
       ".cb-fine-riga b{font-size:2.6rem;color:#fff}",
-      ".cb-fine-rig{text-align:center;font-weight:800;color:#ffcc1f;margin:0 0 8px}"
+      ".cb-fine-rig{text-align:center;font-weight:800;color:var(--o-oro-testo);margin:0 0 8px}",
+      // 🌙 Notte vivace: il blu della squadra sul fondo notte ha poco contrasto con la scritta piccola: i nomi crescono un po'
+      // (diventano «scritta grande», che si legge bene anche così) e ognuno tiene il colore della sua squadra
+      ".oro .cb-fine-riga>span{font-size:1.2rem;letter-spacing:-.01em}"
     ].join("");
     document.head.appendChild(st);
   }
