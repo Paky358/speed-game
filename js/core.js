@@ -7259,7 +7259,7 @@
       testa = "⚔️ " + nm[0] + " e " + nm[1] + " giocano " + aGioco(nome) + punto;
     } else testa = "🎮 Si gioca " + aGioco(nome) + punto;
     var quando = g && g.ritardatari === "mano" ? "dalla prossima mano" : g && g.ritardatari === "subito" ? "subito" : "dal prossimo turno";
-    var sotto = modo === "guarda" ? "entri alla prossima partita" : (modo === "due" ? "giocano in due: tu guardi"
+    var sotto = modo === "guarda" ? "entri alla prossima partita" : (modo === "due" ? (S0.resta ? "" : "giocano in due: tu guardi")   /* (con «Chi vince resta» lo dice già la riga della coda: a 360x640 la Sala scorreva) */
       : (modo === "scelti" ? "gioca chi ha scelto " + (S0.nomeHost || "l'host") : ""));
     var k = gs.stanza + "|" + modo;
     var B = S0._inCorso;
