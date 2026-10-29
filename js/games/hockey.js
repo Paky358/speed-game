@@ -44,7 +44,7 @@
   // ---------- aspetto del campo: tutto qui, così in futuro si cambiano skin e campi ----------
   // "io" = la racchetta di chi guarda (sempre in basso), "avv" = l'avversario (in alto)
   var TEMA = {
-    sfondo: "#05070d", linee: "rgba(255,255,255,.22)",
+    sfondo: "#0d1020", linee: "rgba(255,255,255,.22)",
     bordoAlto: "#ffd23b", bordoBasso: "#3d8bff",
     io:  { fuori: "#3d8bff", scuro: "#0f2f6b" },
     avv: { fuori: "#ffd23b", scuro: "#6b4f00" },
@@ -149,7 +149,7 @@
       avvia: function () { giocando = true; if (on) parti(); },
       ferma: function () { giocando = false; ferma(); },
       bottone: function (el) {   // tasto 🎵/🔇 in alto a destra sul campo
-        var b = el("button", { title: "Musica", text: on ? "🎵" : "🔇", style: "position:absolute;top:calc(6px + env(safe-area-inset-top));right:8px;z-index:31;width:40px;height:40px;border-radius:12px;border:0;background:rgba(0,0,0,.35);font-size:1.2rem;cursor:pointer" });
+        var b = el("button", { title: "Musica", text: on ? "🎵" : "🔇", style: "position:absolute;top:calc(6px + env(safe-area-inset-top));right:8px;z-index:31;width:40px;height:40px;border-radius:12px;border:0;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06);font-size:1.2rem;cursor:pointer" });   // (🌙 vetro scuro dell'app)
         b.addEventListener("click", function () {
           on = !on; try { localStorage.setItem("sg-musica-hockey", on ? "on" : "off"); } catch (e) {}
           b.textContent = on ? "🎵" : "🔇"; if (giocando) { if (on) parti(); else ferma(); }
@@ -895,7 +895,7 @@
       var el = t.el;
       if (tipo === "fine") {
         var vinto = st.vincitore === 1;
-        var sf = t.schermata({ icona: (due || vinto) ? "🏆" : "🤖", titolo: due ? ("Vince " + nomeDi(st.vincitore) + "!") : (vinto ? "Hai vinto!" : "Ha vinto " + nomeDi(2)),
+        var sf = t.schermata({ chiara: true, icona: (due || vinto) ? "🏆" : "🤖", titolo: due ? ("Vince " + nomeDi(st.vincitore) + "!") : (vinto ? "Hai vinto!" : "Ha vinto " + nomeDi(2)),
           sotto: "Glow Hockey · " + (due ? "in due" : "🤖 " + nomeDi(2) + " (" + D.nome + ")") });
         // punteggio grande, coi colori delle due racchette
         var lato = function (nome, gol, col) {
@@ -1010,7 +1010,7 @@
       vista = tipo; stop();
       var el = t.el;
       if (tipo === "lobby") {
-        var s = t.schermata({ icona: "🏒", titolo: "Glow Hockey · Lobby", sotto: "Ognuno dal suo telefono", indietro: function () { rete.chiudi(); t.esci(); } });
+        var s = t.schermata({ chiara: true, icona: "🏒", titolo: "Glow Hockey · Lobby", sotto: "Ognuno dal suo telefono", indietro: function () { rete.chiudi(); t.esci(); } });
         s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
         s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (st.codice || "…").toUpperCase() }));
         if (st.codice && st.codice !== "…") {
@@ -1019,13 +1019,13 @@
           s._contenuto.appendChild(el("button", { class: "btn btn-fantasma", html: "🔗 Copia il link da mandare", onclick: function () { campo.focus(); campo.select(); try { navigator.clipboard.writeText(link); } catch (e) {} } }));
           s._contenuto.appendChild(campo);
         }
-        s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (st.pronta ? "#69db7c" : "#ffd43b"), text: st.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
+        s._contenuto.appendChild(el("div", { style: "margin:8px 0 2px;font-size:.9rem;font-weight:700;color:" + (st.pronta ? "var(--o-verde, #69db7c)" : "var(--o-ambra, #ffd43b)"), text: st.pronta ? "🟢 Stanza pronta — manda il codice" : "🟡 Sto aprendo la stanza…" }));
         s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:10px", text: st.avvId ? "✅ Avversario collegato!" : "In attesa dell'avversario…" }));
         var b = el("button", { class: "btn btn-primario", text: "Comincia ▶", onclick: comincia }); if (!st.avvId) b.setAttribute("disabled", "disabled");
         s._piede.appendChild(b);
         t.mostra(s);
       } else if (tipo === "fine") {
-        var sf = t.schermata({ icona: "🏆", titolo: st.vincitore === 1 ? "Hai vinto!" : "Ha vinto l'avversario", sotto: "Glow Hockey" });
+        var sf = t.schermata({ chiara: true, icona: "🏆", titolo: st.vincitore === 1 ? "Hai vinto!" : "Ha vinto l'avversario", sotto: "Glow Hockey" });
         sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: st.s1 + " — " + st.s2 }));
         sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.fase = "lobby"; render(); } }));
         sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: function () { rete.chiudi(); t.esci(); } }));
@@ -1117,13 +1117,13 @@
         t.risultato(vintoIo ? [io, lui] : [lui, io]);
       }
       if (tipo === "attesa") {
-        var s = t.schermata({ icona: "🏒", titolo: "Glow Hockey · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+        var s = t.schermata({ chiara: true, icona: "🏒", titolo: "Glow Hockey · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
         var dentro = (S.collegato || S.vm);
         if (dentro) {
-          s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:#69db7c;margin-bottom:2px", text: "✅ Sei nella stanza" }));
+          s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:var(--o-verde, #69db7c);margin-bottom:2px", text: "✅ Sei nella stanza" }));
           s._contenuto.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Chi c'è" }));
           [["🟡", "Avversario (host)", false], ["🔵", "Tu", true]].forEach(function (p) {
-            s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (p[2] ? "rgba(255,202,58,.16)" : "rgba(255,255,255,.06)") }, [
+            s._contenuto.appendChild(el("div", { style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:" + (p[2] ? "var(--o-carta-viva, rgba(255,202,58,.16))" : "var(--o-carta, rgba(255,255,255,.06))") }, [
               el("span", { text: p[0] }), el("span", { style: "flex:1;font-weight:700", text: p[1] })
             ]));
           });
@@ -1134,7 +1134,7 @@
         t.mostra(s);
       } else if (tipo === "fine") {
         var vinto = S.vm && S.vm.vincitore === 2;
-        var sf = t.schermata({ icona: "🏆", titolo: vinto ? "Hai vinto!" : "Ha vinto l'avversario", sotto: "Glow Hockey" });
+        var sf = t.schermata({ chiara: true, icona: "🏆", titolo: vinto ? "Hai vinto!" : "Ha vinto l'avversario", sotto: "Glow Hockey" });
         sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: (S.vm ? S.vm.s2 : 0) + " — " + (S.vm ? S.vm.s1 : 0) }));
         sf._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
         t.mostra(sf);
@@ -1153,13 +1153,13 @@
   }
 
   function erroreHK(t, txt) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaReteHK(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Glow Hockey si gioca online, ognuno dal suo telefono: funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);

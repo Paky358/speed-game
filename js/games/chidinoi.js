@@ -1171,7 +1171,7 @@
       } };
     if (t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();   // col profilo si entra da soli
     function chiediNome() {
-      var s = t.schermata({ icona: "🫵", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🫵", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1206,7 +1206,7 @@
       if (!S.rete) senzaRete(t);
     }
     function attesa() {
-      var s = t.schermata({ icona: "🫵", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🫵", titolo: "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(mio(s));
     }
@@ -2287,7 +2287,7 @@
     var F = vm.fine || {}, cl = F.classifica || [], io = cb.myId, el = t.el;
     // le domande uscite: anche gli amici se le segnano (telefono e profilo), così la prossima volta sono nuove
     if (!cb.sonoHost && F.ids && SEGNATI !== vm.pid) { SEGNATI = vm.pid; segnaVisti(F.ids.filter(function (x) { return /^([a-z]{3}-[a-z]\d+|fin-\d+)$/.test(x); })); }
-    var s = t.schermata({});
+    var s = t.schermata({ chiara: true });
     s.classList.add("cn-fine-s");
     var med = medaglie(cl.map(function (r) { return r.pos; }));
     var podio = el("div", { class: "cn-podio" });
@@ -2306,7 +2306,7 @@
       s._contenuto.appendChild(ol);
     }
     if (cl.some(function (r) { return r.id === io; }) && F.figurine && F.figurine[io]) {
-      s._contenuto.appendChild(t.el("button", { class: "btn btn-primario cn-fig-btn", text: "🖼️ La mia figurina", onclick: function () { figurina(t, vm, io); } }));
+      s._contenuto.appendChild(t.el("button", { class: "btn cn-fig-btn", text: "🖼️ La mia figurina", onclick: function () { figurina(t, vm, io); } }));
     } else s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin:8px 0", text: "Questa partita l'hai guardata." }));
     var fac = t.faccine();
     if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
@@ -2349,7 +2349,7 @@
       chiudi2();
     });
     function mostraFig() {
-      var velo = t.el("div", { class: "cn-fig-velo" });
+      var velo = t.el("div", { class: "cn-fig-velo oro" });   // (come la fine da cui si apre: stile dell'app)
       var im = t.el("img", { class: "cn-fig-img", alt: "La mia figurina", src: cv.toDataURL("image/png") });
       var bSalva = t.el("button", { class: "btn btn-primario", text: "📤 Salva o manda", onclick: function () { salva(); } });
       var bChiudi = t.el("button", { class: "btn btn-fantasma", text: "Chiudi", onclick: function () { if (velo.parentNode) velo.parentNode.removeChild(velo); } });
@@ -2371,20 +2371,20 @@
   }
 
   function errore(t, testo) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function erroreRete(t, testo, riprova) {
-    var s = t.schermata({ icona: "📶", titolo: "Niente rete?", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "📶", titolo: "Niente rete?", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo + " Controlla la connessione e riprova." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Riprova", onclick: riprova }));
     s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Questo gioco si gioca online: funziona quando l'app è aperta dal sito pubblicato." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
@@ -2573,6 +2573,17 @@
       ".cn-fig-velo{position:fixed;inset:0;z-index:9999;background:rgba(8,4,24,.92);display:flex;align-items:center;justify-content:center;padding:12px}",
       ".cn-fig-box{display:flex;flex-direction:column;gap:10px;align-items:center;max-height:100%;width:100%;max-width:420px}",
       ".cn-fig-img{max-width:100%;max-height:calc(var(--alt,100dvh) - 110px);border-radius:14px}.cn-fig-tasti{display:flex;gap:8px;width:100%}.cn-fig-tasti .btn{flex:1;margin:0}",
+      // 🌙 Notte vivace: il podio della fine (la schermata è vestita come l'app, .oro): i metalli dei trofei, colori dalle variabili dell'app
+      ".oro .cn-gradino .f{background:var(--o-carta-2);border-color:var(--o-testo)}",
+      ".oro .cn-gradino.g1 .f{border-color:var(--n-monete);box-shadow:0 0 18px -2px var(--n-monete)}",
+      ".oro .cn-gradino.tu .n{color:var(--n-monete)}.oro .cn-gradino .pt{opacity:1;color:var(--o-tenue)}",
+      ".oro .cn-gradino .base{display:flex;align-items:center;justify-content:center;padding-top:0;font-size:17px}",
+      // il foglio della figurina che si apre dalla fine: velo scuro dell'app (il disegno della figurina resta com'è)
+      ".oro.cn-fig-velo{background:rgba(9,11,22,.92)}",
+      // (i gradini: tessera scura, filo e simbolo del colore del metallo, come i trofei)
+      ".oro .cn-gradino.g1 .base{background:linear-gradient(var(--o-m-oro-b),var(--o-m-oro-a));box-shadow:inset 0 0 0 1.5px var(--o-m-oro-f),inset 0 1px 0 rgba(255,255,255,.12)}.oro .cn-gradino.g1 .base .emo{--emo-col:var(--o-m-oro-i)}",
+      ".oro .cn-gradino.g2 .base{background:linear-gradient(var(--o-m-argento-b),var(--o-m-argento-a));box-shadow:inset 0 0 0 1.5px var(--o-m-argento-f),inset 0 1px 0 rgba(255,255,255,.12)}.oro .cn-gradino.g2 .base .emo{--emo-col:var(--o-m-argento-i)}",
+      ".oro .cn-gradino.g3 .base{background:linear-gradient(var(--o-m-bronzo-b),var(--o-m-bronzo-a));box-shadow:inset 0 0 0 1.5px var(--o-m-bronzo-f),inset 0 1px 0 rgba(255,255,255,.12)}.oro .cn-gradino.g3 .base .emo{--emo-col:var(--o-m-bronzo-i)}",
       "@keyframes cnEntra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}",
       "@keyframes cnPop{0%{opacity:0;transform:scale(.6)}70%{opacity:1;transform:scale(1.08)}100%{opacity:1;transform:none}}",
       "@keyframes cnBoing{40%{transform:scale(1.35)}100%{transform:none}}",

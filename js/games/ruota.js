@@ -100,7 +100,8 @@
     return (Array.isArray(l) ? l : []).map(function (x) { return x && controllaFrase(x.c, x.f); }).filter(function (x) { return x && x.ok; }).slice(0, NOSTRE_MAX).map(function (x) { return { c: x.c, f: x.f }; });
   }
   function salvaNostre(l) { try { localStorage.setItem(NOSTRE_KEY, JSON.stringify(l.slice(0, NOSTRE_MAX))); } catch (e) {} }
-  var COLORI = ["#e03131", "#f08c00", "#fab005", "#2f9e44", "#1971c2", "#9c36b5"];
+  var COLORI = ["#d81c57", "#d4621c", "#e3a21a", "#17936a", "#1783b3", "#6644cc"];   // notte: lampone, arancio, oro, verde notte, ciano, viola (spicchi un po' più profondi del cartone di prima)
+  var COLORI_TESTO = { "#e3a21a": "#1a1226" };   // sull'oro la scritta è scura (sennò non si legge)
   var ACC = { "À": "A", "È": "E", "É": "E", "Ì": "I", "Ò": "O", "Ù": "U" };
   var FRASI_RISERVA = [
     { c: "Proverbi", f: "CHI DORME NON PIGLIA PESCI" }, { c: "Proverbi", f: "TRA IL DIRE E IL FARE C'È DI MEZZO IL MARE" },
@@ -1283,7 +1284,7 @@
       } };
     if (t.nomeProfilo && t.nomeProfilo()) { S.nome = t.nomeProfilo(); collega(); } else chiediNome();
     function chiediNome() {
-      var s = t.schermata({ icona: "🎡", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "🎡", titolo: "Entra nella partita", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       var input = t.el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       s._contenuto.appendChild(input);
       s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: function () {
@@ -1294,7 +1295,7 @@
     }
     function join() { S.ultimoJoin = Date.now(); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null }); }
     function collega() {
-      var s = t.schermata({ icona: GUARDA ? "👀" : "🎡", titolo: GUARDA ? "Guardo la partita…" : "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: GUARDA ? "👀" : "🎡", titolo: GUARDA ? "Guardo la partita…" : "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(s);
       S.rete = SGNet.entra(codice, {
@@ -1429,7 +1430,7 @@
     ui.scriviR = el("div", { class: "ru-scrivi-riga" }, [ ui.scriviNota, ui.scriviBtn ]);
     ui.scriviR.hidden = true;
     ui.ruota = el("div", { class: "ru-ruota-sch" }, [ ui.canvas,
-      el("div", { class: "ru-freccia", html: "<svg viewBox='0 0 10 10'><polygon points='0,0 10,0 5,10' fill='#ffd43b' stroke='#a85c00' stroke-width='.6'/></svg>" }),
+      el("div", { class: "ru-freccia", html: "<svg viewBox='0 0 10 10'><polygon points='0,0 10,0 5,10' fill='#ffc247' stroke='#7a4a00' stroke-width='.6'/></svg>" }),
       el("div", { class: "ru-centro" }), ui.oro = el("div", { class: "ru-oro" }) ]);
     // la frase lampo sul maxischermo: la campanella
     ui.campana = el("div", { class: "ru-campana", text: "🔔" });
@@ -1471,20 +1472,32 @@
   }
   // la ruota disegnata una volta sola; poi si fa girare tutta (transform), senza ridisegnarla
   function disegnaRuota(cv, spicchi) {
-    var c = cv.getContext("2d"), Rr = 220, passo = Math.PI * 2 / spicchi.length;
+    var c = cv.getContext("2d"), Rr = 220, Rs = Rr - 15, passo = Math.PI * 2 / spicchi.length, k;
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height);   // (si ridisegna quando arriva o si apre il Mistero)
     c.translate(Rr, Rr);
+    // il bordo: anello blu notte con le lampadine calde, filo d'oro fuori
+    c.beginPath(); c.arc(0, 0, Rr - 1, 0, Math.PI * 2); c.fillStyle = "#171230"; c.fill();
+    c.beginPath(); c.arc(0, 0, Rr - 2, 0, Math.PI * 2); c.lineWidth = 3; c.strokeStyle = "#ffc247"; c.stroke();
+    var lamp = Math.max(24, spicchi.length * 2);
+    for (k = 0; k < lamp; k++) {
+      var al = -Math.PI / 2 + (k + 0.5) * Math.PI * 2 / lamp, lx = Math.cos(al) * (Rr - 8.5), ly = Math.sin(al) * (Rr - 8.5);
+      c.beginPath(); c.arc(lx, ly, 6.5, 0, Math.PI * 2); c.fillStyle = "rgba(255,194,71,.18)"; c.fill();
+      c.beginPath(); c.arc(lx, ly, 3.1, 0, Math.PI * 2); c.fillStyle = k % 2 ? "#ffe3a1" : "#ffc247"; c.fill();
+    }
     spicchi.forEach(function (sp, i) {
-      var a0 = -Math.PI / 2 + i * passo, a1 = a0 + passo;
-      c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, Rr - 4, a0, a1); c.closePath();
-      c.fillStyle = sp.s === "bancarotta" ? "#111" : sp.s === "passa" ? "#f1f3f5" : sp.s === "jolly" ? "#7048e8" : sp.s === "express" ? "#d6336c" : sp.s === "mistero" ? "#1b1f5e" : COLORI[i % COLORI.length];
-      c.fill(); c.strokeStyle = "rgba(255,255,255,.85)"; c.lineWidth = 2; c.stroke();
+      var a0 = -Math.PI / 2 + i * passo, a1 = a0 + passo, col = sp.s === "bancarotta" ? "#08080f" : sp.s === "passa" ? "#eceffa" : sp.s === "jolly" ? "#7a3fe0" : sp.s === "express" ? "#a0126b" : sp.s === "mistero" ? "#12153a" : COLORI[i % COLORI.length];
+      c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, Rs, a0, a1); c.closePath();
+      c.fillStyle = col; c.fill();
+      // luce morbida: più scuro vicino al perno, pieno verso il bordo
+      var g = c.createRadialGradient(0, 0, 10, 0, 0, Rs); g.addColorStop(0, "rgba(8,8,20,.5)"); g.addColorStop(.6, "rgba(8,8,20,.08)"); g.addColorStop(1, "rgba(8,8,20,0)");
+      c.fillStyle = g; c.fill();
+      c.strokeStyle = "rgba(255,255,255,.3)"; c.lineWidth = 2; c.stroke();
       c.save(); c.rotate(a0 + passo / 2); c.textAlign = "right"; c.textBaseline = "middle";
-      c.fillStyle = sp.s === "passa" ? "#222" : sp.s === "express" ? "#fff3bf" : sp.s === "mistero" ? "#ffd43b" : "#fff"; c.font = "900 " + (sp.s ? 19 : 26) + "px system-ui, sans-serif";
-      c.fillText(sp.s === "bancarotta" ? "BANCAROTTA" : sp.s === "passa" ? "PASSA" : sp.s === "jolly" ? "JOLLY" : sp.s === "express" ? "EXPRESS" : sp.s === "mistero" ? "? MISTERO ?" : fmtN(sp.v), Rr - 16, 0);
+      c.fillStyle = sp.s === "passa" ? "#1b1f3a" : sp.s === "express" ? "#ffe9a8" : sp.s === "mistero" ? "#ffc247" : sp.s === "bancarotta" ? "#ff8ea8" : (COLORI_TESTO[col] || "#fff"); c.font = "900 " + (sp.s ? 19 : 26) + "px system-ui, sans-serif";
+      c.fillText(sp.s === "bancarotta" ? "BANCAROTTA" : sp.s === "passa" ? "PASSA" : sp.s === "jolly" ? "JOLLY" : sp.s === "express" ? "EXPRESS" : sp.s === "mistero" ? "? MISTERO ?" : fmtN(sp.v), Rs - 12, 0);
       c.restore();
     });
-    c.beginPath(); c.arc(0, 0, Rr - 3, 0, Math.PI * 2); c.lineWidth = 6; c.strokeStyle = "#ffd43b"; c.stroke();
+    c.beginPath(); c.arc(0, 0, Rs, 0, Math.PI * 2); c.lineWidth = 3; c.strokeStyle = "rgba(255,194,71,.85)"; c.stroke();
   }
 
   // ---- la telecamera: la parte di studio che si vede sta tra il tabellone (sopra) e la barra dei tasti (sotto) ----
@@ -2154,7 +2167,8 @@
     if (ui.annBtn.textContent !== tb) ui.annBtn.textContent = tb;
   }
   function finale(t, vm, cb) {
-    var s = t.schermata({ icona: "🏆", titolo: "Classifica finale", sotto: "La Ruota della Fortuna" });
+    stile();   // (chi arriva proprio alla fine non ha mai aperto lo studio: il riquadro della finale ha bisogno delle regole di stile)
+    var s = t.schermata({ chiara: true, icona: "🏆", titolo: "Classifica finale", sotto: "La Ruota della Fortuna" });
     var ol = t.el("ol", { class: "classifica" }), med = ["🥇", "🥈", "🥉"];
     (vm.classifica || []).forEach(function (r) {
       ol.appendChild(t.el("li", { class: r.pos === 1 && !r.uscito ? "vincitore" : "", style: r.uscito ? "opacity:.55" : null }, [
@@ -2250,13 +2264,13 @@
     box.appendChild(corpo);
   }
   function errore(t, testo) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: testo }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaRete(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "La Ruota online funziona quando l'app è aperta dal sito pubblicato. Intanto puoi giocare contro i Bot o sullo stesso telefono." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
@@ -2269,7 +2283,7 @@
       // il tabellone: in alto, fisso sopra lo studio (sotto ai tasti ‹ e 🎵 dello studio)
       ".ru-sopra{position:absolute;left:8px;right:8px;top:calc(48px + env(safe-area-inset-top));z-index:21;display:flex;flex-direction:column;gap:4px;pointer-events:none;transition:opacity .5s}",
       ".ru-sopra.via{opacity:0}",
-      ".ru-cat{text-align:center;font-weight:900;font-size:.82rem;letter-spacing:.05em;color:#ffe066;text-shadow:0 2px 4px rgba(0,0,0,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".ru-cat{text-align:center;font-weight:900;font-size:.82rem;letter-spacing:.05em;color:var(--o-oro-testo);text-shadow:0 0 6px rgba(13,16,32,.95),0 2px 4px rgba(0,0,0,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".ru-tab{position:relative;display:grid;grid-template-columns:repeat(12,1fr);gap:3px;padding:5px;border-radius:12px;background:#0b5e3c;box-shadow:inset 0 0 0 3px #12804f,0 6px 18px rgba(0,0,0,.55)}",
       // i round speciali colorano la cornice del tabellone (una luce che pulsa: solo trasparenza)
       ".ru-tab:after{content:'';position:absolute;inset:-4px;border-radius:15px;pointer-events:none;opacity:0;transition:opacity .4s}",
@@ -2313,9 +2327,9 @@
       // la ruota sul maxischermo (senza il margine che lo studio lascia per la barra)
       ".ru-studio .st-sch-in{padding:0!important}",
       ".ru-ruota-sch{position:absolute;left:3%;right:3%;top:50%;aspect-ratio:1;transform:translateY(-50%)}",
-      ".ru-disco{display:block;width:100%;height:100%;border-radius:50%;box-shadow:0 8px 24px rgba(0,0,0,.5);will-change:transform}",
+      ".ru-disco{display:block;width:100%;height:100%;border-radius:50%;box-shadow:0 8px 28px rgba(0,0,0,.55),0 0 34px rgba(255,194,71,.16);will-change:transform}",
       ".ru-freccia{position:absolute;left:50%;top:-5%;width:12%;height:12%;transform:translateX(-50%)}.ru-freccia svg{display:block;width:100%;height:100%}",
-      ".ru-centro{position:absolute;left:50%;top:50%;width:18%;height:18%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3bf,#f59f00);box-shadow:0 2px 6px rgba(0,0,0,.5)}",
+      ".ru-centro{position:absolute;left:50%;top:50%;width:18%;height:18%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#e0a020 70%,#a86d00);box-shadow:0 0 0 3px #171230,0 3px 8px rgba(0,0,0,.6)}",
       // i quadri del maxischermo (la campanella della frase lampo, le buste della finale): nel quadrato al centro, come la ruota
       ".ru-quadro{position:absolute;left:4%;right:4%;top:50%;aspect-ratio:1;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;color:#fff}",
       ".ru-campana{font-size:110px;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));transform-origin:50% 12%}",
@@ -2342,25 +2356,31 @@
       ".ru-riga{display:flex;gap:6px}",
       ".ru-btn{flex:1;min-height:48px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.88rem;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}",
       ".ru-btn:disabled{opacity:.35}",
-      ".ru-btn.gira{background:#e8590c}.ru-btn.vocale{background:#1c7ed6}.ru-btn.risolvi{background:#2f9e44}.ru-btn.annulla{background:#495057}",
-      ".ru-btn.express{background:linear-gradient(135deg,#d6336c,#a61e4d);box-shadow:0 0 0 2px #ffd8e4 inset}",
+      ".ru-btn.gira{background:var(--o-tasto);color:var(--o-tasto-testo)}.ru-btn.vocale{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--n-sfida)}.ru-btn.risolvi{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--o-verde)}.ru-btn.annulla{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".ru-btn.express{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px #d6338f}",
       ".ru-btn.busta{background:linear-gradient(160deg,#fff4d6,#f2d48a);color:#7a4b00;min-height:52px;font-size:.95rem;padding:0}",
-      ".ru-btn.prenoto{background:#e03131;min-height:56px;font-size:1.05rem;color:#14113a;letter-spacing:.02em}",
-      ".ru-btn.prenoto.grande{min-height:72px;font-size:1.45rem;color:#fff;border-radius:999px;background:radial-gradient(circle at 50% 30%,#ff6b6b,#c92a2a);box-shadow:0 6px 0 #7a1010,0 0 0 3px #ffc9c9 inset}",
-      ".ru-btn.prenoto.grande:active{transform:translateY(4px);box-shadow:0 2px 0 #7a1010,0 0 0 3px #ffc9c9 inset}",
+      ".ru-btn.prenoto{background:var(--o-tasto);min-height:56px;font-size:1.05rem;color:var(--o-tasto-testo);letter-spacing:.02em}",
+      ".ru-btn.prenoto.grande{min-height:72px;font-size:1.45rem;color:#fff;border-radius:999px;background:var(--o-tasto);box-shadow:0 6px 0 #7a0f33,0 0 0 2px rgba(255,255,255,.28) inset}",
+      ".ru-btn.prenoto.grande:active{transform:translateY(4px);box-shadow:0 2px 0 #7a0f33,0 0 0 2px rgba(255,255,255,.28) inset}",
       ".ru-prenoti{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ru-prenoti .ru-btn{min-height:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}",
       ".ru-prenoti.quattro .ru-btn{min-height:54px}",
       ".ru-lettere{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.ru-lettere.vocali{grid-template-columns:repeat(5,1fr)}",
-      ".ru-btn.lettera{min-height:38px;background:#f8f9fa;color:#14113a;font-size:1.02rem}.ru-btn.lettera:disabled{opacity:.25}",
-      ".ru-btn.lettera.voc{background:#d0ebff}",
-      ".ru-btn.lettera.scelta{background:#ffd43b;box-shadow:0 0 0 2px #fff inset}",
-      ".ru-btn.canc{background:#ffc9c9;color:#c92a2a}",
+      ".ru-btn.lettera{min-height:38px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo-oro);color:var(--o-testo);font-size:1.02rem}.ru-btn.lettera:disabled{opacity:.25}",
+      ".ru-btn.lettera.voc{box-shadow:inset 0 0 0 1.5px var(--n-sfida)}",
+      ".ru-btn.lettera.scelta{background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:0 0 0 2px #fff inset}",
+      ".ru-btn.canc{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--o-rosso);color:var(--o-rosso-testo)}",
       ".ru-bot-riga{display:flex;align-items:center;gap:8px;justify-content:center;font-weight:800}",
       // la classifica: com'è andata la finale e le faccine
       ".ru-fin-box{display:flex;flex-direction:column;gap:3px;margin-top:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.07);text-align:center;line-height:1.3}",
       ".ru-fin-box.vinto{background:rgba(255,212,59,.14);box-shadow:inset 0 0 0 1.5px rgba(255,212,59,.45)}",
       ".ru-fin-box small{opacity:.8}",
       ".ru-fac-fine{display:flex;justify-content:center;margin-top:10px}",
+      // 🌙 Notte vivace: la classifica finale è una schermata dell'app (lo studio con la ruota resta com'è).
+      // Il riquadro «com'è andata la finale» è vetro scuro; se la finale è vinta ha il filo d'oro come il primo della classifica
+      // (la sfumatura gialla sul blu notte veniva marrone)
+      ".oro .ru-fin-box{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06),0 10px 24px -14px rgba(0,0,0,.8)}",
+      ".oro .ru-fin-box.vinto{background:radial-gradient(120% 160% at 0% 0%,color-mix(in srgb,var(--n-monete) 13%,transparent),color-mix(in srgb,var(--n-monete) 0%,transparent) 58%),linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1.5px var(--n-monete),inset 0 1px 0 rgba(255,255,255,.08),0 12px 26px -12px color-mix(in srgb,var(--n-monete) 50%,transparent)}",
+      ".oro .ru-fin-box small{color:var(--o-tenue);opacity:1}",
       // ❓ il Mistero: la scritta grande in mezzo allo studio (solo trasformazioni e trasparenza)
       ".ru-mist{position:absolute;left:50%;top:58%;z-index:22;width:86%;max-width:360px;padding:14px 12px 16px;border-radius:22px;text-align:center;color:#fff;pointer-events:none;background:radial-gradient(circle at 50% 30%,#3b3f9e,#1b1f5e);box-shadow:0 0 0 3px #ffd43b,0 10px 30px rgba(0,0,0,.6);opacity:0;transform:translate(-50%,-50%) scale(.4);transition:opacity .3s,transform .35s cubic-bezier(.3,1.5,.5,1)}",
       ".ru-mist.on{opacity:1;transform:translate(-50%,-50%) scale(1)}",
@@ -2374,13 +2394,13 @@
       "@keyframes ruRivela{from{transform:translate(-50%,-50%) scale(.6)}to{transform:translate(-50%,-50%) scale(1)}}",
       ".ru-btn.mistero{background:linear-gradient(135deg,#3b3f9e,#1b1f5e);box-shadow:0 0 0 2px #ffd43b inset;color:#ffd43b}",
       // «⏩ Avanti» sul riepilogo (il mio tocco resta «✅ Avanti») e il conto
-      ".ru-btn.avanti{background:#7048e8}.ru-btn.avanti:disabled{opacity:.85;background:#5f3dc4}.ru-btn.avanti .quanti{font-weight:800;opacity:.9}",
+      ".ru-btn.avanti{background:var(--o-tasto)}.ru-btn.avanti:disabled{opacity:.85;background:var(--o-tasto)}.ru-btn.avanti .quanti{font-weight:800;opacity:.9}",
       ".ru-conto{text-align:center;font-size:.8rem;font-weight:800;opacity:.85;min-height:1.2em}",
       // ✍️ chi guarda: scrivere una frase
       ".ru-scrivi-riga{display:flex;align-items:center;gap:8px;margin-top:2px}.ru-scrivi-riga[hidden]{display:none}",
       ".ru-scrivi-nota{flex:1;font-size:.76rem;font-weight:700;line-height:1.2;color:#e7ecff;opacity:.9}",
-      ".ru-btn.scrivi{flex:0 0 auto;min-height:40px;padding:0 12px;background:#0b7285;font-size:.82rem}.ru-btn.scrivi[hidden]{display:none}",
-      ".ru-form{position:absolute;left:8px;right:8px;top:calc(48px + env(safe-area-inset-top));z-index:30;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:#1b1f5e;box-shadow:0 0 0 2px #ffd43b,0 12px 30px rgba(0,0,0,.7);color:#fff;opacity:0;transform:translateY(-12px);pointer-events:none;transition:opacity .25s,transform .25s}",
+      ".ru-btn.scrivi{flex:0 0 auto;min-height:40px;padding:0 12px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--n-sfida);font-size:.82rem}.ru-btn.scrivi[hidden]{display:none}",
+      ".ru-form{position:absolute;left:8px;right:8px;top:calc(48px + env(safe-area-inset-top));z-index:30;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:var(--o-carta-piena);box-shadow:0 0 0 2px var(--o-oro),0 12px 30px rgba(0,0,0,.7);color:#fff;opacity:0;transform:translateY(-12px);pointer-events:none;transition:opacity .25s,transform .25s}",
       ".ru-form.on{opacity:1;transform:none;pointer-events:auto}",
       ".ru-f-in{width:100%;box-sizing:border-box;min-height:44px;padding:0 12px;border-radius:12px;border:0;font:inherit;font-size:16px;font-weight:700;color:#14113a;background:#fff}",
       ".ru-f-in.maiu{text-transform:uppercase}",

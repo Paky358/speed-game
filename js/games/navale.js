@@ -370,7 +370,45 @@
       ".nav-guarda-lato .nav-sub{min-height:0;margin:2px 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".nav-board.nav-g{width:100%;grid-template-columns:9px repeat(10,1fr);gap:1px;padding:3px}",
       ".nav-g .nav-c{font-size:.55rem;border-radius:2px}",
-      ".nav-g .nav-lab{font-size:.45rem}"
+      ".nav-g .nav-lab{font-size:.45rem}",
+      // ---- 🤍 BIANCO E ORO: pagina e scritte chiare; i due mari restano blu, come oggetti incorniciati da un filo d'oro ----
+      ".oro.g-navale .nav-stato,.oro.g-navale .nav-tit{font-family:var(--o-tit);font-weight:700;color:var(--o-testo);letter-spacing:.005em}",
+      ".oro.g-navale .nav-stato{font-size:1.3rem;line-height:1.1}",
+      ".oro.g-navale .nav-tit{font-size:1.4rem;line-height:1.1}",
+      ".oro.g-navale .nav-sub,.oro.g-navale .nav-leg{color:var(--o-tenue)}",
+      ".oro.g-navale .nav-pt{color:var(--o-tenue)}",
+      ".oro.g-navale .nav-rete{color:var(--o-ambra);font-weight:650}",
+      // il tempo per sparare: binario avorio e riempimento che va dal rosso all'oro
+      ".oro.g-navale .nav-tempo{background:var(--o-fondo-2);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".oro.g-navale .nav-tempo>i{background:linear-gradient(90deg,var(--o-rosso),var(--o-oro))}",
+      // i mari: blu pieno, filo d'oro sottile e ombra morbida
+      ".oro.g-navale .nav-board{background:#0f3350;border-radius:14px;box-shadow:0 0 0 1.5px var(--o-oro),var(--o-ombra-alta)}",
+      ".oro.g-navale .nav-board.nav-mini,.oro.g-navale .nav-board.nav-g{box-shadow:0 0 0 1px var(--o-oro),var(--o-ombra)}",
+      ".oro.g-navale .nav-lab{color:rgba(196,224,246,.85)}",
+      ".oro.g-navale .nav-c.mira{background:#c9a227;box-shadow:inset 0 0 0 2px var(--o-oro-chiaro)}",
+      ".oro.g-navale .nav-c.ult::after{border-color:var(--o-oro-chiaro)}",
+      // l'avviso grande sul campo: pillola scura (se è per te) o rossa (se è contro di te)
+      ".oro.g-navale .nav-avviso{background:var(--o-scuro);color:var(--o-scuro-testo);box-shadow:0 0 0 1px var(--o-oro),var(--o-ombra-alta)}",
+      ".oro.g-navale .nav-avviso.contro{background:var(--o-rosso);color:#fff;box-shadow:var(--o-ombra-alta)}",
+      // il tasto ‹ in alto a sinistra (senza titolo): chiaro col filo d'oro, non il grigio scuro di prima
+      ".oro.g-navale.senza-testa>.testa .btn-piccolo{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      // la flotta: pillole chiare, la nave in uso con filo d'oro, quelle messe in verde tenue
+      ".oro.g-navale .nav-nave{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".oro.g-navale .nav-nave.fatta{background:var(--o-verde-tenue);box-shadow:inset 0 0 0 1px var(--o-verde)}",
+      ".oro.g-navale .nav-nave.corr{background:var(--o-carta-viva);box-shadow:inset 0 0 0 1.5px var(--o-oro)}",
+      ".oro.g-navale .nav-boat{background:linear-gradient(180deg,#b9c4d1,#6d7887);box-shadow:0 0 0 1px #7a8696,inset 0 1px 0 rgba(255,255,255,.5)}",
+      ".oro.g-navale .nav-boat.giu{background:var(--o-rosso);box-shadow:0 0 0 1px var(--o-rosso)}",
+      // Gira / A caso / Togli: tasti chiari col filo d'oro (erano solo una scritta)
+      ".oro.g-navale .nav-tasti .btn{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      ".oro.g-navale .nav-pann .sgc-tasto{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      // il foglio delle faccine e frasi (💬, sta sulla pagina, fuori dalla schermata): avorio col filo d'oro, mentre si gioca a Battaglia Navale
+      "body:has(.oro.g-navale) .sgc-velo{background:rgba(9,11,22,.55)}",
+      "body:has(.oro.g-navale) .sgc-foglio{background:var(--o-carta-piena);color:var(--o-testo);border:1px solid var(--o-filo-oro);box-shadow:var(--o-ombra-alta)}",
+      "body:has(.oro.g-navale) :is(.sgc-fac button,.sgc-frasi button,.sgc-x){background:var(--o-fondo-2);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      // fine partita
+      ".oro.g-navale .nav-esito{font-family:var(--o-tit);font-size:1.6rem;color:var(--o-testo)}",
+      // chi guarda: il campo di chi spara si accende col filo d'oro
+      ".oro.g-navale .nav-guarda-lato.bersaglio{box-shadow:0 0 0 2px var(--o-oro)}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -434,6 +472,7 @@
     descrizione: "La battaglia navale classica: sistemi la tua flotta e affondi quella dell'avversario. Contro il Bot o online, uno contro uno.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 2, etichettaGiocatori: "👥 1–2 giocatori",   // (sullo stesso telefono: contro il Bot; online in due)
     postiOnline: 2,   // online si gioca in due: gli altri guardano
+    tema: "oro",   // 🤍 Bianco e oro: il contorno è chiaro; solo i due mari restano blu, incorniciati d'oro (vedi in fondo a stile())
     riprende: true,   // se l'host ricarica la pagina, la battaglia riprende con le stesse navi e gli stessi colpi (t.ripresa)
     ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "Giochi da solo contro il Bot" }],

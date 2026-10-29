@@ -402,7 +402,92 @@
       ".sp-verdetto.cs{--sqc:#c98a00}",
       ".sp-giocate{display:flex;flex-direction:column;gap:4px;margin:0 auto;max-width:440px;width:100%}",
       ".sp-rovina{display:grid;grid-template-columns:1fr auto 1fr;gap:4px 8px;align-items:center;font-size:.85rem;font-weight:700}",
-      ".sp-rovina span:nth-child(3n+2){text-align:center}"
+      ".sp-rovina span:nth-child(3n+2){text-align:center}",
+      // ---------------------------------------------------------------------------------------------------------
+      // 🤍 BIANCO E ORO (tema: "oro"). Tutte le regole stanno sotto .oro.g-sipero: i prefissi .sp-* sono condivisi con lo Scopone.
+      // Solo colori, bordi e ombre; i colori solo con le variabili --o-* (css/styles.css). Le squadre restano rosso e blu, scuri
+      // quanto basta per il fondo chiaro (testo piccolo almeno 4,5:1); Bonus verde, Malus rosso, la carta bianca col filo d'oro.
+      // ---------------------------------------------------------------------------------------------------------
+      // 🌙 Notte vivace: --sp-rosso/--sp-blu = i colori delle squadre come scritta e filo (chiari, si leggono sul fondo scuro);
+      // --sp-rosso-f/--sp-blu-f = gli stessi come fondo pieno con la scritta bianca (cartello del verdetto); Bonus e Malus = tinta su vetro pieno (stesso colore ovunque)
+      ".oro.g-sipero{--sp-rosso:#ff8787;--sp-blu:#74c0fc;--sp-rosso-f:#c92a2a;--sp-blu-f:#1864ab;--sp-bonus:linear-gradient(rgba(52,209,122,.16),rgba(52,209,122,.16)),var(--o-carta-piena);--sp-malus:linear-gradient(rgba(214,60,74,.18),rgba(214,60,74,.18)),var(--o-carta-piena)}",
+      // la barra in alto: ‹ tondo bianco col filo d'oro, il titolo della fase col carattere elegante, il giudice una pillola crema
+      ".oro.g-sipero .sp-esci{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);font-weight:700}",
+      ".oro.g-sipero .sp-fase b{font-family:var(--o-tit);font-size:1.2rem;font-weight:700;letter-spacing:.005em;color:var(--o-testo)}",
+      ".oro.g-sipero .sp-fase small{color:var(--o-tenue)}",
+      ".oro.g-sipero .sp-giudice{background:var(--o-crema);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      // il ‹ delle schermate col titolo nascosto (Mettete il telefono al centro, ecc.): era un velo nero con la freccia bianca
+      ".oro.g-sipero.senza-testa>.testa .btn-piccolo{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra)}",
+      // il tavolo: due carte bianche (o una, in «Ognuno per sé»); a chi tocca il filo prende il colore della squadra, chi vince il filo d'oro
+      ".oro.g-sipero .sp-col{background:var(--o-carta);border-color:var(--o-filo);box-shadow:var(--o-ombra)}",
+      ".oro.g-sipero .sp-col.c0{--sq:var(--sp-rosso)}.oro.g-sipero .sp-col.c1{--sq:var(--sp-blu)}.oro.g-sipero .sp-col.cs{--sq:var(--o-oro-testo)}",      ".oro.g-sipero .sp-col.mia{background:var(--o-carta-viva)}",
+      ".oro.g-sipero .sp-col.turno{border-color:var(--sq)}",
+      ".oro.g-sipero .sp-col.vince{border-color:var(--o-oro);background:var(--o-carta-viva);box-shadow:0 0 0 1px var(--o-oro),var(--o-ombra-alta)}",
+      // le carte piccole sul tavolo: Bonus verde chiaro col filetto verde, Malus rosso chiaro col filetto rosso, la carta bianca col filo d'oro
+      ".oro.g-sipero .sp-mini{color:var(--o-testo);background:var(--o-carta-2)}",
+      ".oro.g-sipero .sp-mini.b{background:var(--sp-bonus);box-shadow:inset 3px 0 0 var(--o-verde)}",
+      ".oro.g-sipero .sp-mini.m{background:var(--sp-malus);box-shadow:inset 3px 0 0 var(--o-rosso)}",
+      ".oro.g-sipero .sp-mini.b.scritta{box-shadow:inset 0 0 0 1.5px var(--o-oro),inset 4px 0 0 var(--o-verde)}",
+      ".oro.g-sipero .sp-mini.m.scritta{box-shadow:inset 0 0 0 1.5px var(--o-oro),inset 4px 0 0 var(--o-rosso)}",
+      ".oro.g-sipero .sp-firma,.oro.g-sipero .sp-fc{color:var(--o-oro-testo)}",
+      // la mano: carte chiare col filetto a sinistra (verde Bonus, rosso Malus); scelta = filo d'oro e un filo di luce in più
+      ".oro.g-sipero .sp-carta{color:var(--o-testo);padding-left:13px;border-color:var(--o-filo)}",
+      ".oro.g-sipero .sp-carta.b{background:var(--sp-bonus);box-shadow:inset 5px 0 0 var(--o-verde),var(--o-ombra)}",
+      ".oro.g-sipero .sp-carta.m{background:var(--sp-malus);box-shadow:inset 5px 0 0 var(--o-rosso),var(--o-ombra)}",
+      ".oro.g-sipero .sp-carta.su{border-color:var(--o-oro)}",
+      ".oro.g-sipero .sp-carta.b.su{box-shadow:inset 5px 0 0 var(--o-verde),0 0 0 1px var(--o-oro),var(--o-ombra-alta)}",
+      ".oro.g-sipero .sp-carta.m.su{box-shadow:inset 5px 0 0 var(--o-rosso),0 0 0 1px var(--o-oro),var(--o-ombra-alta)}",
+      ".oro.g-sipero .sp-carta.scritta{border:2px dashed var(--o-oro)}",
+      ".oro.g-sipero .sp-n{background:var(--o-tasto);color:var(--o-tasto-testo)}",
+      ".oro.g-sipero .sp-altre{border-color:var(--o-filo-oro);background:var(--o-carta);color:var(--o-oro-testo)}",
+      ".oro.g-sipero .btn.sp-scrivi-b{background:var(--o-crema);color:var(--o-oro-testo);border:2px dashed var(--o-oro);box-shadow:none}",
+      // il verdetto: la squadra vincente in rosso o blu pieno, «Ognuno per sé» in oro; il fondo è un velo avorio, non nero
+      ".oro.g-sipero .sp-verdetto{background:rgba(13,16,32,.78)}",
+      ".oro.g-sipero .sp-verdetto.c0{--sqc:var(--sp-rosso-f)}.oro.g-sipero .sp-verdetto.c1{--sqc:var(--sp-blu-f)}",
+      ".oro.g-sipero .sp-verdetto.cs .sp-vtesto{background:var(--o-tasto);color:var(--o-tasto-testo)}",
+      ".oro.g-sipero .sp-vtesto{font-family:var(--o-tit);font-weight:700;font-size:1.7rem;box-shadow:var(--o-ombra-alta)}",
+      // i due tasti del voto: vetro (come tutti i tasti secondari) col filo del colore della squadra e una tinta leggera
+      ".oro.g-sipero .btn.sp-vota{color:var(--o-testo)}",
+      ".oro.g-sipero .btn.sp-vota.c0:not(.btn-primario):not(.btn-verde):not(.btn-rosso):not(.btn-fantasma){background:linear-gradient(rgba(255,135,135,.14),rgba(255,135,135,.14)),var(--o-carta-piena);box-shadow:inset 0 0 0 2px var(--sp-rosso),0 10px 24px -14px rgba(0,0,0,.8)}",
+      ".oro.g-sipero .btn.sp-vota.c1:not(.btn-primario):not(.btn-verde):not(.btn-rosso):not(.btn-fantasma){background:linear-gradient(rgba(116,192,252,.14),rgba(116,192,252,.14)),var(--o-carta-piena);box-shadow:inset 0 0 0 2px var(--sp-blu),0 10px 24px -14px rgba(0,0,0,.8)}",
+      // il conto alla rovescia dell'arringa e la classifica corta
+      ".oro.g-sipero .sp-timer-bar{background:var(--o-fondo-2);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".oro.g-sipero .sp-timer-fill{background:var(--o-oro)}",
+      ".oro.g-sipero .sp-timer-n{color:var(--o-testo)}",
+      ".oro.g-sipero .sp-timer.finito .sp-timer-n{color:var(--o-rosso-testo)}",
+      ".oro.g-sipero .sp-classi span{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".oro.g-sipero .sp-classi span.primo{background:var(--o-crema);box-shadow:inset 0 0 0 1px var(--o-oro)}",
+      ".oro.g-sipero .sp-classi span.tu{background:var(--o-scuro);color:var(--o-scuro-testo);box-shadow:none}",
+      // la lente per leggere una carta in grande e il foglio «✍️ Scrivi tu»
+      ".oro.g-sipero.sp-lente{background:rgba(6,8,18,.74)}",
+      ".oro.g-sipero .sp-lente-box{background:var(--o-carta-piena);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta)}",
+      ".oro.g-sipero .sp-lente-tit{font-family:var(--o-tit);font-weight:700;font-size:1.3rem}",
+      ".oro.g-sipero .sp-lente-r{color:var(--o-testo);background:var(--o-carta-2)}",
+      ".oro.g-sipero .sp-lente-r.b{background:var(--sp-bonus);box-shadow:inset 4px 0 0 var(--o-verde)}",
+      ".oro.g-sipero .sp-lente-r.m{background:var(--sp-malus);box-shadow:inset 4px 0 0 var(--o-rosso)}",
+      ".oro.g-sipero .sp-lente-r.b.scritta{box-shadow:inset 0 0 0 2px var(--o-oro),inset 5px 0 0 var(--o-verde)}",
+      ".oro.g-sipero .sp-lente-r.m.scritta{box-shadow:inset 0 0 0 2px var(--o-oro),inset 5px 0 0 var(--o-rosso)}",
+      ".oro.g-sipero .sp-scrivi textarea{border:1px solid var(--o-filo-oro);background:var(--o-fondo-2);color:var(--o-testo);box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}",
+      ".oro.g-sipero .sp-scrivi textarea:focus{outline:none;border-color:var(--o-oro);box-shadow:0 0 0 3px rgba(255,79,134,.22)}",
+      ".oro.g-sipero .sp-scrivi textarea::placeholder{color:var(--o-tenue);opacity:1}",
+      ".oro.g-sipero .sp-scrivi .sp-chis button{border:1px solid var(--o-filo);background:var(--o-carta);color:var(--o-tenue)}",
+      ".oro.g-sipero .sp-scrivi .sp-chis button.attiva{border-color:var(--o-oro);background:var(--o-carta-viva);color:var(--o-testo)}",
+      // la schermata del round (stesso telefono): giudice, due squadre, chi rovina chi
+      ".oro.g-sipero .sp-giudbox{background:var(--o-crema);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".oro.g-sipero .sp-sqbox{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra)}",
+      ".oro.g-sipero .sp-sqbox.c0{--sq:var(--sp-rosso)}.oro.g-sipero .sp-sqbox.c1{--sq:var(--sp-blu)}",
+      ".oro.g-sipero .sp-chi span.sp-pers{background:var(--o-carta-2);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".oro.g-sipero .sp-av{background:var(--o-carta-2);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".oro.g-sipero .sp-avviso{background:var(--o-crema);color:var(--o-ambra)}",
+      // «Ognuno per sé»: chi ha già giocato e le schede da sfogliare
+      ".oro.g-sipero .sp-stato>span{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".oro.g-sipero .sp-stato>span.ok{background:var(--o-verde-tenue);box-shadow:inset 0 0 0 1px var(--o-verde)}",
+      ".oro.g-sipero .sp-tab button{background:var(--o-carta);color:var(--o-tenue);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".oro.g-sipero .sp-tab button.attiva{border-color:var(--o-oro);background:var(--o-carta-viva);color:var(--o-testo);box-shadow:none}",
+      ".oro.g-sipero .sp-tab button.vince{background:var(--o-oro-chiaro);color:var(--o-scuro-testo);box-shadow:none}",
+      // la saletta online: chi sceglie giudice e squadre (i tasti 🟥 🟦 ⚖️ 👀) col lampone al posto dell'oro di prima
+      ".oro.g-sipero .sp-ruoli button{background:var(--o-carta-2);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".oro.g-sipero .sp-ruoli button.attiva{border-color:var(--o-oro);background:var(--o-carta-viva);box-shadow:none}"
     ].join("\n");
     document.head.appendChild(st);
     // girando il telefono le carte si rimisurano
@@ -428,7 +513,7 @@
     voci.forEach(function (v) { box.appendChild(el("div", { class: "sp-lente-r " + (v.tipo === "bonus" ? "b" : "m") + (v.di ? " scritta" : "") }, testoVoce(el, v))); });
     function chiudi() { if (Date.now() - aperta < 350) return; if (velo.parentNode) velo.parentNode.removeChild(velo); }
     box.appendChild(el("button", { class: "btn btn-primario", text: "Chiudi", onclick: chiudi }));
-    var velo = el("div", { class: "sp-lente", onclick: function (e) { if (e.target === velo) chiudi(); } }, [box]);
+    var velo = el("div", { class: "sp-lente oro g-sipero sg-dal-gioco", onclick: function (e) { if (e.target === velo) chiudi(); } }, [box]);
     document.body.appendChild(velo);
   }
   function chiudiLente() { var l = document.querySelector(".sp-lente"); if (l && l.parentNode) l.parentNode.removeChild(l); }
@@ -609,7 +694,7 @@
 
   // il verdetto: martelletto, cartello della squadra e coriandoli
   function verdetto(ui, k, testo, vinto) {
-    var el = ui.t.el, colori = ["#ffca3a", "#ff6b6b", "#4dabf7", "#51cf66", "#cc5de8"];
+    var el = ui.t.el, colori = ["var(--o-oro)", "var(--o-oro-chiaro)", "var(--o-scuro)", "var(--n-mini)", "var(--o-oro-testo)"];   // (🌙 pezzetti accesi: lampone, arancio, bianco, giallo)
     vibra(vinto ? [30, 40, 30, 40, 60] : 25);   // il verdetto è un momento che conta (di più per chi ha vinto)
     var nodo = el("div", { class: "sp-verdetto c" + k }, [el("div", { class: "sp-martello", text: "🔨" }), el("div", { class: "sp-vtesto", text: testo })]);
     for (var i = 0; i < 22; i++) {
@@ -665,7 +750,7 @@
     function chiudi() { if (velo.parentNode) velo.parentNode.removeChild(velo); }
     ok.addEventListener("click", function () { var s = pulisciScritta(area.value); if (!s || ok.disabled) return; chiudi(); o.onOk(s, chi); });
     box.appendChild(el("div", { class: "sp-due" }, [el("button", { class: "btn btn-fantasma", text: "Annulla", onclick: chiudi }), ok]));
-    var velo = el("div", { class: "sp-lente", onclick: function (e) { if (e.target === velo) chiudi(); } }, [box]);
+    var velo = el("div", { class: "sp-lente oro g-sipero sg-dal-gioco", onclick: function (e) { if (e.target === velo) chiudi(); } }, [box]);
     document.body.appendChild(velo);
     setTimeout(function () { try { area.focus(); } catch (e) {} }, 60);
   }
@@ -676,6 +761,7 @@
   // =========================================================
   SG.registra({
     id: "sipero",
+    tema: "oro",   // 🤍 Bianco e oro: tutto il gioco è chiaro (le regole di stile stanno in fondo allo stile, sotto .oro.g-sipero)
     nome: "Sì... però",
     icona: "🤨",
     descrizione: "Costruite lo scenario di vita migliore (a squadre o ognuno per sé) e rovinate quello degli altri a colpi di Malus. Il giudice decide chi vince.",
@@ -1042,7 +1128,7 @@
       rov.appendChild(el("span", { text: "💥→" }));
       rov.appendChild(el("span", { class: "sp-chi" }, [persona(t, R.bers[id])]));
     });
-    box.appendChild(el("div", { class: "sp-sqbox cs", style: "--sq:#ffca3a" }, [el("b", { text: "🙋 Ognuno per sé · chi rovina chi" }), rov]));
+    box.appendChild(el("div", { class: "sp-sqbox cs", style: "--sq:var(--o-oro-testo)" }, [el("b", { text: "🙋 Ognuno per sé · chi rovina chi" }), rov]));
     box.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: "Passatevi il telefono: prima ognuno sceglie in segreto 2 Bonus per il suo scenario, poi 1 Malus per lo scenario del vicino." }));
     s._contenuto.appendChild(box);
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Via ▶", onclick: function () { turnoSolo(t, st, 0); } }));

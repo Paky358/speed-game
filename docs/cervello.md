@@ -1,7 +1,7 @@
-# 🧠 Cervello di SPeeD GAME — il registro
+﻿# 🧠 Cervello di SPeeD GAME — il registro
 
 Lo tiene la chat «🧠 Cervello». Le altre chat ci scrivono solo una riga nel **🗒️ Diario** (in fondo) quando finiscono un lavoro, salvano o pubblicano.
-Ultimo aggiornamento: **28 ott 2026, 15:40** (ora italiana).
+Ultimo aggiornamento: **29 ott 2026, 12:35** (ora italiana).
 
 ---
 
@@ -9,16 +9,18 @@ Ultimo aggiornamento: **28 ott 2026, 15:40** (ora italiana).
 
 | Limite | Usato | Si azzera |
 |---|---|---|
-| Settimana (tutti i modelli) | **0%** (azzerata oggi alle 15:00) | **mercoledì 4 nov alle 15:00** |
-| 5 ore | 2% | oggi 28 ott alle 20:30 |
+| Settimana (tutti i modelli) | **24%** (29 ott 10:50; azzerata il 28 ott alle 15:00) | **mercoledì 4 nov alle 15:00** |
+| 5 ore | 33% | 29 ott alle 11:30 |
 | Settimana Fable | 0% | mercoledì 4 nov alle 15:00 |
 | Crediti cloud | 250 USD il 26 ott sera, da ricontrollare | **scadono il 5 nov alle 08:59** |
 
 - Il piano: lo strumento del Cervello dice «Pro», la chat dell'Impostore ha letto «Max» nell'app. Fa fede quello che si vede nelle impostazioni dell'app.
 - Crediti cloud: il 27 ott la chat Stile nel cloud si è fermata perché era finito il limite della settimana. Da guardare nella schermata «Utilizzo» se i 250 USD sono ancora tutti lì: se sì, il cloud ha consumato la settimana invece dei crediti.
-- Quanto costano i lavori (misurato): un modo nuovo di un gioco scritto da un aiutante Opus ≈ 4% della settimana; un giro di correzioni piccole ≈ 1%; la notte della chat Stile nel cloud (fase 2 + 16 giochi convertiti) ha portato la settimana dal 91% al 100%.
+- Quanto costano i lavori (misurato): un modo nuovo di un gioco scritto da un aiutante Opus ≈ 4% della settimana; un giro di correzioni piccole ≈ 1%; la notte della chat Stile nel cloud (fase 2 + 16 giochi convertiti) ha portato la settimana dal 91% al 100%; la notte del 29 ott (chat Notte vivace + chat Avatar insieme, 02:25-10:50) dal 10% al 24%: ~2,5% all'ora con tutte e due a ragionamento «molto alto», ~1% all'ora dopo averlo abbassato (colori medio, avatar alto).
 
 **Regola del momento (settimana appena azzerata):** lavori grandi sì, ma la settimana deve bastare 7 giorni → **circa 14% al giorno**. Aiutanti Sonnet di base, Opus solo per il codice delicato (rete, motore di un gioco). Un lavoro grande alla volta. I lavori lunghi e separabili vanno nel cloud finché ci sono crediti (fino al 5 nov).
+
+**Il ragionamento delle chat lo regola il Cervello** (il proprietario, 29 ott notte: «vai di medio per i colori, regolati tu anche per queste cose»): medio per i lavori ripetitivi (colori, liste, controlli), alto per disegno e codice delicato, il massimo solo se serve davvero. Dal 29 ott 04:55: chat Notte vivace su medio, chat Avatar su alto (prima tutte e due «molto alto»: ~2,5% della settimana all'ora in due). Quella notte lo stop è stato alzato dal 25% al 35% («se serve vai oltre il 25»).
 
 Regole generali: sotto il 70% lavori grandi ok · 70-85% lavori medi, aiutanti Sonnet · 85-95% solo piccole cose · sopra il 95% fermi, tranne pubblicare.
 
@@ -26,16 +28,32 @@ Regole generali: sotto il 70% lavori grandi ok · 70-85% lavori medi, aiutanti S
 
 ## 2. 🌐 Cosa c'è online
 
-**Online adesso:** master `42018da` del 27 ott alle 01:32 = **novità v274**: lo stile «🤍 Bianco e oro» (home, profilo, trofei, classifiche, Sala, «Come giocate?», impostazioni, saletta, editor dell'avatar, finestre) + v273 L'Impostore con il telefono bloccato. Sito: https://paky358.github.io/speed-game/
+**Online adesso:** master del 29 ott alle 12:35 = **novità v276**: i giochi col vestito della notte (tutti tranne Parola d'ordine e le scene grandi) + gli avatar «Mii rifinito» accesi SOLO per IL PAPPONE (per tutti gli altri identici a prima). Prima, v275 (29 ott 00:30): lo stile «🌙 Notte vivace» per le schermate dell'app (blu notte, vetro scuro, lampone come colore guida, sfondo animato dietro le schermate dell'app, mai dietro le partite). Sito: https://paky358.github.io/speed-game/
 
-**`lavori-in-corso`** = `b4be78e`: uguale al sito (c'è in più solo il registro).
+**`lavori-in-corso`** = uguale al sito.
 
-**Sul ramo `grafica-luxury` (su GitHub, NON in lavori-in-corso, NON online)** — 18 salvataggi della chat Stile del 27 ott, dalle 01:45 alle 12:36:
+**Unito e pubblicato il 29 ott (v276), lavoro della notte:** i rami `stile-notte` (fino a `e54d20e`) e `avatar-mii` (fino a `efef25d`) sono dentro `lavori-in-corso` e `master`; le copie `SG-notte` e `SG-avatar` si possono togliere con la pulizia (#22).
+- **`stile-notte`**: tutti i giochi col vestito della notte tranne Parola d'ordine e le scene grandi.
+  - Le schermate di contorno di 15 giochi.
+  - I 16 giochi ripresi da `grafica-luxury`, coi colori ritoccati per il fondo scuro: X e O del Tris, «VS» di Drop 4, nomi della Scalinata; le linee del Tris sono bianche.
+  - La stanza di Scopa, Scopa 2 vs 2 e Scopone di sera.
+  - Lo studio TV: pannelli e tasti lampone e vetro; la ruota della Ruota coi colori della notte; la bomba della Patata disegnata, con la luce lampone negli ultimi secondi; Balla, Nomi Cose e Città, i giochi a premi del Prezzo.
+  - Glow Hockey, Calcio Biliardo, i capitoli di Palla Matta, Stessa Lunghezza d'Onda, la carta in mano della Linea del tempo.
+  - Prove: 286 (tutti i 35 modi), Sala, rivincita, chi guarda, chi arriva tardi, pn/pd/pe del Prezzo.
+  - **Proposte da guardare**, senza toccare i giochi: Horto di sera, Pendolo di notte, Chi di Noi? scuro, sala dell'Asta, Parola d'ordine con le carte crema. Pagina privata del proprietario: https://claude.ai/artifact/TXUJNhm3WAFP8iW6687nfF
+- **`avatar-mii`**: avatar «Mii rifinito».
+  - Disegno nuovo e faccine piccole leggibili come oggi.
+  - Controllato in ogni posto dove compaiono gli avatar e corretto (pelli scure, bocca, palpebra, occhiali, vestiti neri e bianchi).
+  - **Interruttore acceso solo per IL PAPPONE** (nel suo profilo «🧍 Avatar nuovi» li spegne e riaccende); per gli altri resta identico (provato su 20.636 disegni); prova 286 OK col nuovo acceso per tutti. Accenderlo per tutti = cambiare una parola in core.js e pubblicare: decide il proprietario.
+  - Riassunto e foto in `docs/stile/avatar-mii/`.
+  - Il proprietario, 29 ott: «per gli avatar preferivo 3D morbido… per ora restiamo così, sennò è troppo lavoro» (vedi #24).
+
+**Sul ramo `grafica-luxury` (su GitHub, NON in lavori-in-corso, NON online, Bianco e oro BOCCIATO il 28 ott: NON si unisce)** — 18 salvataggi della chat Stile del 27 ott, dalle 01:45 alle 12:36:
 - Bianco e oro più luminoso (fondo bianco pulito, oro più acceso).
 - **16 giochi convertiti interi al Bianco e oro**: Tris, Drop 4, L'Impostore, Gara di pesca, Taboo, Una parola sola, Sì... però, Scarabocchio, Da dove viene?, La Scalinata, Battaglia Navale, Black Jack, Poker (tavolo vero tenuto), Scopa, Scopa 2 vs 2, Scopone (tavolo vero tenuto). Nei 7 giochi dello studio TV diventa chiara solo la cornice.
 - Studio TV: proposta in Bianco e oro **scartata dal proprietario** («tutto oro non mi piace»): resta com'è.
 - **A metà, da rifinire:** proposte di avatar meno cartoon, colori dei menu, disegni del «livello successivo».
-- Oggi il ramo si unisce a lavori-in-corso senza conflitti, perché contiene già tutto il resto. Più si aspetta, più le chat dei giochi cambiano gli stessi file e diventa difficile unirli.
+- Resta solo come archivio di idee (le proposte di avatar e di studio TV in docs/stile/livello2/).
 
 Fuori da git: `.claude/launch.json` (il server di prova della chat della Linea del tempo).
 
@@ -45,8 +63,10 @@ Fuori da git: `.claude/launch.json` (il server di prova della chat della Linea d
 
 | Chat | Gioco | Ultima attività | Cosa sta facendo / in sospeso |
 |---|---|---|---|
-| 🧠 Cervello SPeeD GAME | tutto | 28 ott, ora | Registro, limiti, consigli. Non costruisce giochi. |
-| 🎨 Stile (cloud) | grafica di tutta l'app | 27 ott 12:36 | Fermata per il limite della settimana. Fase 2 pubblicata (v274); fase 3 sul ramo `grafica-luxury` (16 giochi) da provare e unire; avatar meno cartoon e colori dei menu a metà. Si riprende dalla sessione cloud (colonna a sinistra o claude.ai/code). |
+| 🧠 Cervello SPeeD GAME | tutto | 29 ott, ora | Registro, limiti, consigli. Non costruisce giochi. |
+| 🌙 Notte vivace | stile di tutta l'app | 29 ott 10:51, **finita** | Tutto il suo lavoro è online (v275 e v276, pubblicata dal Cervello). Restano le 5 proposte da guardare (Parola d'ordine, scene grandi) e il pubblico/sala/podi dello studio: vedi #11. Chat molto lunga: per il lavoro dopo aprirne una nuova. |
+| 🧍 Avatar Mii rifinito | avatar «Mii rifinito» | 29 ott 06:23, **finita** | Online dal 29 ott (v276) acceso solo per IL PAPPONE. Restano da decidere: accenderlo per tutti, 4 piccole cose lasciate com'erano; il proprietario avrebbe preferito il «3D morbido» (#24). |
+| 🎨 Stile (cloud) | grafica di tutta l'app | 27 ott 12:36 | Ferma. Il suo Bianco e oro è stato bocciato e sostituito dalla Notte vivace: non va ripresa. |
 | IMPOSTORE | L'Impostore | 26 ott 20:56 | Telefono bloccato pubblicato (v273). **In sospeso:** 518 coppie di parole nuove in 10 temi aspettano il sì del proprietario; proposti la memoria delle parole per tutta la compagnia e la spia che non sa «in vetrina». |
 | Nome nuovo per SPeeD GAME | nome e dominio | 26 ott 18:12 | 100 idee + 10 migliori (preferiti: **Cerchia, Sodalis, Convivio**). I domini .it e .com secchi sono già presi: proposto «Cerchia Club», cerchia.app, cerchia.games. Aspetta che il proprietario scelga 3 preferiti. |
 | LINEA DEL TEMPO | Linea del tempo | 26 ott 17:26 | Pubblicato tutto (v267-v272). Restano «🤖 Gioca col Bot» (chat nuova) e la carta sbagliata nella linea. Chat lunghissima: per il Bot aprirne una nuova. |
@@ -67,7 +87,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 | # | Cosa | Gioco | Chi la fa | Grandezza | Quando |
 |---|---|---|---|---|---|
 | 1 | ✅ FATTO 28 ott sera: **RAM nuova montata e controllata**: 2 × 8 GB Samsung, 16 GB (14,9 usabili, il resto va alla grafica del processore), vanno a 2.667 come le vecchie. Scritto 16 GB nelle istruzioni, nella procedura delle prove e nella memoria. Lo strumento delle prove usa ancora una scheda sola: si può alzare a 2, provando piano | PC | fatto | 🟢 | fatto |
-| 2 | 🎨 **Stile nuovo: il Bianco e oro è bocciato** (28 ott, il proprietario e l'amico esperto). Scegliere un colore acceso principale (pronte sul ramo: A «Notte vivace» lampone su blu notte, B «Colori pieni su chiaro», C «Gradienti caldi»; idee nuove del Cervello: «Rosso SPeeD», «Arancio festa», «Viola elettrico»), poi soprattutto **avatar meno cartoon** (4 strade pronte, consigliata B «3D morbido») e **scene dei giochi** (studio TV A-C). I 16 giochi in Bianco e oro del ramo NON si uniscono. **Scelto il 28 ott sera: A «🌙 Notte vivace» + sfondo animato con scintillii leggeri e profondità**; il Bianco e oro resta online fino al nuovo stile; avatar: **strada A «Mii rifinito»** (confermata) | tutta l'app | chat nuova «🌙 Notte vivace» per colori e sfondo, chat nuova «🧍 Avatar» per gli avatar (prompt dati dal Cervello il 28 ott) | 🔴 | questa settimana |
+| 2 | 🎨 **Stile nuovo: il Bianco e oro è bocciato** (28 ott, il proprietario e l'amico esperto). Scegliere un colore acceso principale (pronte sul ramo: A «Notte vivace» lampone su blu notte, B «Colori pieni su chiaro», C «Gradienti caldi»; idee nuove del Cervello: «Rosso SPeeD», «Arancio festa», «Viola elettrico»), poi soprattutto **avatar meno cartoon** (4 strade pronte, consigliata B «3D morbido») e **scene dei giochi** (studio TV A-C). I 16 giochi in Bianco e oro del ramo NON si uniscono. **Scelto il 28 ott sera: A «🌙 Notte vivace» + sfondo animato con scintillii leggeri e profondità** → ✅ **ONLINE il 29 ott (v275)** per le schermate dell'app. **Notte del 29 ott: i giochi (tutti tranne Parola d'ordine e le scene grandi) e gli avatar «Mii rifinito» (solo per IL PAPPONE)** → ✅ **ONLINE il 29 ott (v276)**. Resta: guardare le 5 proposte delle scene grandi (#11) e decidere se accendere gli avatar nuovi per tutti | tutta l'app | proprietario | 🟢 decisione | quando vuole |
 | 3 | **Prova coi telefoni veri** in una serata con gli amici: lo stile nuovo, Ognuno la sua linea, la giornata dell'Asta, Prezzo online, Parola d'ordine, L'Impostore col telefono bloccato, inviti ad app chiusa su iPhone, Chi vince resta | tutti | proprietario, poi le chat dei giochi | 🟢 (costa zero) | appena c'è una serata |
 | 4 | 🎵 **La musica**: «Sarabanda» + modo Heardle. Prima provare dal telefono che le anteprime da 30 secondi di iTunes si sentano | gioco nuovo | chat nuova «Musica» | prova 🟢, gioco 🔴 | questa settimana |
 | 5 | 🔒 **La copia per il vice solo ai vice** (oggi la copia della partita, con carte e segreti, va a tutta la stanza sul collegamento pubblico) + l'host che riapre guarda la stanza solo 0,4 secondi | tutti i giochi online | chat nuova «Rete» (Opus) | 🟡 | questa settimana |
@@ -76,7 +96,9 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 | 8 | ✨ **Nome e dominio**: scegliere 3 preferiti tra le idee (Cerchia, Sodalis, Convivio…) e far controllare le varianti libere (.app, .games, «Club») | tutta l'app | proprietario → chat Nome | 🟢 | quando vuole |
 | 9 | **Home personale**: giochi più giocati in alto da soli, ⭐ preferiti, tessere da trascinare, per ogni giocatore (oggi solo IL PAPPONE riordina, e per tutti) | home | chat nuova «Home» | 🟡 | dopo lo stile |
 | 10 | Stessa Lunghezza d'Onda, «🤔 Cosa ne pensi?»: solo parole discutibili, una parola sola, punti alle opinioni che dividono | Lunghezza d'Onda | chat nuova del gioco | 🟡 | dopo |
-| 11 | 🎨 Stile, il resto: avatar meno cartoon e colori dei menu (a metà sul ramo); giochi ancora da convertire (Glow Hockey, Horto Muso, Palla Matta, Chi di Noi?, Palla a Pendolo, Calcio Biliardo, L'Asta, Lunghezza d'Onda: scene disegnate, si decide caso per caso). Lo studio TV resta com'è | vari | chat Stile | 🔴 | dopo la fase 3 |
+| 11 | 🎨 Stile, il resto (dopo la notte del 29 ott): **Parola d'ordine** scura (proposta con le carte crema pronta: decide il proprietario, lo stile chiaro l'aveva scelto lui il 22 ott); **pubblico, sala e podi dello studio TV** coi nuovi avatar; **scene grandi** (Horto Muso di sera, Palla a Pendolo di notte, Chi di Noi?, sala dell'Asta) secondo le proposte che sceglie il proprietario. Difetti notati di notte, non di colore e c'erano già prima: in Calcio Biliardo, sui telefoni piccoli, il tasto dell'audio copre l'avversario; nel Tris il fumetto del Bot copre per un attimo il nome; nella Ruota, mentre si scrive la soluzione, una scritta tocca il nome sul leggio | vari | chat nuova dello stile | 🔴 | quando il proprietario ha guardato le proposte |
+| 24 | 🧍 **Avatar «3D morbido»** (strada B, tipo Memoji: volumi tondi, luce dall'alto, testa meno grande; era la consigliata, prove sul ramo `grafica-luxury` in docs/stile/livello2/avatar/). Il proprietario, 29 ott: «preferivo 3D morbido… per ora restiamo così, sennò è troppo lavoro». Si riprende SOLO se lo chiede lui | avatar | chat nuova «Avatar» | 🔴 | se lo chiede |
+| 23 | 🐞 Errori visti dalla chat Avatar: **L'Asta**, sullo stesso telefono l'avatar di IL PAPPONE è diverso da quello del profilo; **Sì però**, accanto al Giudice c'è l'avatar sbagliato; **Scopa**, c'è scritto «Contro il computer» invece di «Bot» | Asta, Sì però, Scopa | chat dei giochi o una chat «Ritocchi» | 🟢 | quando vuole |
 | 12 | Immagini delle tessere della home che mancano: **Palla Matta, Una parola sola, Da dove viene?** | home | proprietario + Cervello | 🟢 | quando vuole |
 | 13 | Linea del tempo: «🤖 Gioca col Bot»; decidere se la carta sbagliata si mette lo stesso nella linea | Linea del tempo | chat nuova della Linea | 🟡 | dopo |
 | 14 | Il Prezzo è Giusto: 81 prodotti senza foto, circa 120 prezzi vecchi non verificati, pezzi di vetrina vaghi | Prezzo | chat Prezzo (Sonnet) | 🟡 | dopo |
@@ -95,7 +117,35 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
 
-- 29 ott 00:30 · 🌙 Notte vivace · PUBBLICATO · lo stile «🌙 Notte vivace» online al posto del Bianco e oro (novità v275): blu notte, vetro scuro, lampone come colore guida, carattere Plus Jakarta Sans, sfondo animato con luci e scintillii dietro le schermate dell'app (mai dietro le partite), home e saletta come nei disegni, tutte le altre schermate dell'app sistemate; le partite dei giochi restano come prima. Elenco dei giochi da convertire in docs/stile/notte-giochi.md (passo 3); il proprietario ha scelto di partire dal gruppo B (schermate di servizio dei giochi). Versione online ricostruita e provata (home, saletta, sfondo, Tris: nessun errore) · master (questo salvataggio)
+- 29 ott 12:35 · Cervello · PUBBLICATO · i giochi col vestito della notte (tutti tranne Parola d'ordine e le scene grandi) e gli avatar «Mii rifinito» accesi solo per IL PAPPONE (novità v276), chiesto dal proprietario («pubblica tutto»): uniti i rami `stile-notte` e `avatar-mii` in lavori-in-corso (solo il diario del registro da mettere in ordine). Prove del copione 286 (35 modi), 24-46, 50, 51, 55, 76, 90, 96, 421: 51 e 421 (353) NO a 360x640, i tasti di fine del Tris uscivano di 7-10 px (scritte più grandi e margine della griglia del Tris nuovo) → ritocco solo per i telefoni bassi in tris.js, rifatte 51, 353, 421, 46, 33, 286 Tris: tutte OK. Versione online costruita, si apre senza errori. Il proprietario: «per gli avatar preferivo 3D morbido… per ora restiamo così» (#24) · master (questo salvataggio)
+
+- 29 ott 10:55 · Cervello · salvato · notte guidata finita: la chat Notte vivace (ramo `stile-notte`, fino a `e54d20e`) e la chat Avatar (ramo `avatar-mii`, fino a `efef25d`) hanno finito tutte le loro liste; niente online; la settimana è passata dal 10% al 24%. I due rami si uniscono facilmente (solo il diario del registro va sistemato a mano). Aspettano che il proprietario guardi e dica «pubblica»
+
+- 29 ott 10:51 · 🌙 Notte vivace · salvato sul ramo `stile-notte` (solo questa riga: nessun gioco cambiato) · proposte da far vedere al proprietario, in foto prima/dopo nella pagina https://claude.ai/artifact/TXUJNhm3WAFP8iW6687nfF: Horto Muso di sera, Palla a Pendolo di notte, Chi di Noi? con scene e carte in vetro scuro, sala dell'Asta scurita (solo temi), Parola d'ordine scura con le carte crema; le regole proposte stanno nelle cartelle di lavoro della chat; server di prova spento; la chat si ferma qui · commit sotto
+
+- 29 ott 10:49 · 🌙 Notte vivace · salvato sul ramo `stile-notte` (non online) · secondo giro sullo studio TV: la ruota vera della Ruota nei colori della notte; nella Patata la bomba disegnata (sfera blu notte con miccia) e la luce lampone che pulsa quando manca poco (la schermata finale del ramo grafica-luxury NON presa: era nel Bianco e oro, quella scura c'era già); Balla con il velo più scuro mentre si scrive; Prezzo con tessere e schede senza i fili lilla; Nomi Cose Città con STOP, Vale/No e bollini scuri; pubblico, sala e podi non toccati; prove 286 (35 modi), pn1-5, pd1-5, pe1-5, 213, 672, 692 OK · commit sotto
+
+- 29 ott 09:10 · 🌙 Notte vivace · salvato sul ramo `stile-notte` (non in lavori-in-corso, non online) · finito il piano della notte: gruppo C (studio TV: pannelli, tasti e scritte coi colori della notte; Balla, Nomi Cose Città, Patata, Ruota, Prezzo con tutti i giochi a premi, Linea del tempo con la carta in mano in vetro) e i piccoli (Glow Hockey, Calcio Biliardo, capitoli di Palla Matta, Stessa Lunghezza d'Onda); Parola d'ordine lasciata com'era; prove 286 (35 modi), 212, 213, 671, 672, 692, 284, 285, 289 OK; restano Parola d'ordine, gruppo D e le scene grandi · commit sotto
+
+- 29 ott 07:30 · 🌙 Notte vivace · salvato sul ramo `stile-notte` (non in lavori-in-corso, non online) · gruppo A: i 16 giochi già convertiti (Black Jack, Da dove viene?, Drop 4, Gara di pesca, L'Impostore, Battaglia Navale, Poker, Scalinata, Scarabocchio, Scopa, Scopa 2 contro 2, Scopone, Sì però, Taboo, Tris, Una parola sola) ripresi dal ramo grafica-luxury e ritoccati per il fondo scuro (X e O del Tris luminose, «VS» del Drop 4, nomi della Scalinata, carta dell'Impostore, Taboo…); gruppo E: la stanza di Scopa, Scopa 2 contro 2 e Scopone ha le pareti blu notte con la luce calda sul tavolo (legno e panno restano); prove 201f-204f, 211, 214, 221, 222, 224-226, 234f OK · commit sotto
+
+- 29 ott 06:23 · 🧍 Avatar · salvato sul ramo `avatar-mii` (non online) · lavoro della notte FINITO (pezzi 1-4): riassunto per il proprietario in docs/stile/avatar-mii/riassunto-notte.md con le foto prima/dopo (foto/7 e foto/8); da decidere: accenderlo per tutti, 4 piccole cose lasciate così, 3 cose notate in altri giochi · avatar-mii
+
+- 29 ott 05:36 · 🧍 Avatar · salvato sul ramo `avatar-mii` (non online) · lavoro della notte, pezzo 2: il disegno nuovo guardato in ogni posto dell'app (4 aiutanti Sonnet: home, profilo, editor, Bot, classifica, Sala, salette, Black Jack, Scopa, L'Asta, Horto Muso, pesca, Ruota, Balla, Sì però, Chi di Noi?) e corretto: tolte le macchioline grigie sotto naso e mento, bocca rossa e spessa come oggi (anche il labbro attorno ai denti), vestiti neri col loro bordo (tasche, microfono), bianchi pieni (fiori, righe, fazzoletto), piega della palpebra più vicina all'occhio e mai negli occhi grandi, guance più leggere, occhiali più fini, luce più calda sulle pelli scure; ricontrollato da 3 aiutanti Sonnet; prova 286 (35 modi di gioco) OK col disegno nuovo acceso per tutti; il disegno di oggi resta identico (20.636 disegni) · avatar-mii
+
+- 29 ott 02:58 · 🌙 Notte vivace · salvato sul ramo `stile-notte` (non in lavori-in-corso, non online) · gruppo B: le schermate di servizio di 15 giochi (entrare da un link, attese, «Ops», «Niente rete?», «Serve il sito pubblicato», classifiche e podi finali) vestite come l'app; podi coi metalli dei trofei, simboli nuovi per ⚠️ 🏷️ 🖼️ ✍️ e medaglie coi colori dei metalli; le partite restano com'erano (anche la scelta dei livelli di Palla Matta, il foto-finish di Horto Muso e l'introduzione del fantacalcio). Fatto da 15 aiutanti Sonnet, ricontrollato da 6 (4 ritocchi). Prove 286 (35 modi), 205f, 212, 213, 215, 216, 223, 223f, 231f, 232f, 233f, 235f, 236f, 400, 284, pz2, pz4 tutte OK. Da guardare per la chat di Parola d'ordine: la sua targhetta della parola d'oro usa anche lei la classe «oro» e prende il carattere dell'app
+
+- 29 ott 02:51 · 🧍 Avatar · salvato sul ramo `avatar-mii` (non online) · lavoro della notte, pezzo 3: l'interruttore degli avatar nuovi solo per IL PAPPONE (AVATAR_NUOVO in core.js: "nessuno" / "proprietario" / "tutti"; nel suo profilo il tasto «🧍 Avatar nuovi» per spegnerli e riaccenderli). Provato nell'app vera coi telefoni finti contro la cartella principale: un amico qualunque e IL PAPPONE coi nuovi spenti vedono avatar IDENTICI a oggi (home, profilo, editor, 8 Bot); IL PAPPONE di partenza vede il disegno nuovo · (questo salvataggio)
+
+- 29 ott 02:33 · 🧍 Avatar · salvato sul ramo `avatar-mii` (non online) · lavoro della notte, pezzo 1: le faccine piccole del disegno nuovo si leggono come oggi (misurato il contrasto degli occhi a 28, 32 e 40 px su 40 avatar: sul telefono 151-163 contro 153-164 di oggi); occhi aperti appena più piccoli, chiusi e felici grandi come oggi, palpebre e sopracciglia come oggi, montature appena più fini; strumenti di misura in docs/stile/avatar-mii (misura.html, piccole.html) · (questo salvataggio)
+
+- 29 ott 02:30 · Cervello · salvato · notte guidata dal Cervello (chiesto dal proprietario): mandate alle chat Notte vivace e Avatar le liste dei pezzi della notte, controllo ogni 20 minuti che le fa passare al pezzo dopo, stop se la settimana arriva al 25%, niente pubblicazione; resoconto alle 08:45
+
+- 29 ott 01:50 · 🧍 Avatar · salvato sul ramo `avatar-mii` (copia `SG-avatar`; non in lavori-in-corso, non online) · passo 1 della strada A «Mii rifinito»: il disegno nuovo degli avatar c'è ma è SPENTO per tutti (si accende con l'interruttore dello stile; quello di oggi resta identico, controllato su 20.636 disegni); pagina di confronto prima/dopo in docs/stile/avatar-mii/ (look pronti, 8 Bot, 20 a caso, lui e lei in 10 pose, faccina grande e piccola, fondo blu notte e chiaro) e catalogo di tutti i pezzi. Aspetta il parere del proprietario · (questo salvataggio)
+
+- 29 ott 01:15 · Cervello · salvato · registro aggiornato: Notte vivace online (v275), le copie di lavoro di Notte vivace e Avatar, la chat Avatar può partire insieme alla Notte vivace
+
+- 29 ott 00:48 · 🌙 Notte vivace · PUBBLICATO · lo stile «🌙 Notte vivace» online al posto del Bianco e oro (novità v275): blu notte, vetro scuro, lampone come colore guida, carattere Plus Jakarta Sans, sfondo animato con luci e scintillii dietro le schermate dell'app (mai dietro le partite), home e saletta come nei disegni, tutte le altre schermate dell'app sistemate; le partite dei giochi restano come prima. Elenco dei giochi da convertire in docs/stile/notte-giochi.md (passo 3); il proprietario ha scelto di partire dal gruppo B (schermate di servizio dei giochi). Versione online ricostruita e provata (home, saletta, sfondo, Tris: nessun errore) · master (questo salvataggio)
 
 - 28 ott 23:55 · 🌙 Notte vivace · salvato sul ramo `stile-notte` (non in lavori-in-corso, non online) · passo 2: tutte le altre schermate dell'app in Notte vivace (profilo, statistiche, editor e primo avatar, trofei coi metalli che si riconoscono, classifica e amici, novità, compagnie, inviti, Sala in tutti i suoi stati, «Chi gioca?», tornei, Chi vince resta, Scegliamo insieme, «Come giocate?», impostazioni dei giochi, finestre di conferma, pillole); fotografate e sistemate da 4 aiutanti Sonnet, unite e ricontrollate dalla chat. Prove: copione 24-46, 50, 51, 55, 76, 90, 96, 421 OK; 634 e 622 NO ma erano già NO prima (la Sala vista da chi è in coda in «Chi vince resta» a 360x640 sfora di 12-13 px: non dipende dallo stile, da sistemare a parte); 286 OK: tutti i 35 modi locali dei giochi partono · (questo salvataggio)
 

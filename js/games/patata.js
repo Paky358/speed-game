@@ -447,8 +447,13 @@
       // maxischermo durante il gioco (si vede da lontano: scritte grandi)
       ".pt-sch{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:10px 6px}",
       ".pt-cat{font-size:22px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#cdd6ff}",
-      ".pt-catnome{font-size:44px;font-weight:900;line-height:1.08;color:#ffe066;text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 6px}",
+      ".pt-catnome{font-size:44px;font-weight:900;line-height:1.08;color:var(--o-oro-testo);text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 6px}",
       ".pt-bombona{font-size:110px;line-height:1;will-change:transform;animation:ptPulsa .6s ease-in-out infinite alternate}",
+      ".pt-svg{display:block;width:1em;height:1em;overflow:visible}",
+      ".pt-alone{opacity:0;transform-box:fill-box;transform-origin:center;will-change:transform,opacity}",
+      ".poco .pt-alone{animation:ptAlone .5s ease-in-out infinite alternate}",
+      "@keyframes ptAlone{from{opacity:.25;transform:scale(.9)}to{opacity:1;transform:scale(1.12)}}",
+      ".pt-sc{transform-box:fill-box;transform-origin:center;will-change:transform,opacity;animation:ptScintilla .12s steps(2) infinite}",
       "@keyframes ptPulsa{from{transform:scale(.94)}to{transform:scale(1.06)}}",
       ".pt-conto{font-family:'Courier New',ui-monospace,monospace;font-size:150px;font-weight:900;line-height:.95;color:#fff;text-shadow:0 0 30px rgba(255,120,60,.6)}",
       ".pt-conto.poco{color:#ff5d6c;will-change:transform;animation:ptCuore .5s ease-out infinite}",
@@ -464,7 +469,7 @@
       ".schermata.pt-con-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
       ".pt-indietro b{display:block;font-size:1.15rem}",
       ".pt-chi{font-size:34px;font-weight:800;color:#fff}",
-      ".pt-chi b{color:#ffd43b}",
+      ".pt-chi b{color:var(--o-oro-testo)}",
       ".pt-regola{font-size:22px;font-weight:700;color:#cdd6ff;opacity:.85}",
       ".pt-boomtxt{font-size:96px;font-weight:900;color:#ff5d6c;text-shadow:0 6px 0 rgba(0,0,0,.35);animation:ptEsce .45s cubic-bezier(.3,1.5,.5,1) both}",
       // voto della categoria (si vede da vicino)
@@ -475,20 +480,19 @@
         "background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));box-shadow:0 6px 16px rgba(0,0,0,.3)}",
       ".pt-catbtn small{font-size:13px;font-weight:700;opacity:.8}",
       ".pt-catbtn.sorpresa{background:linear-gradient(135deg,rgba(160,107,255,.42),rgba(255,62,165,.2))}",
-      ".pt-rullo{width:100%;max-width:380px;border-radius:20px;background:linear-gradient(#2a1f6e,#140c3e);box-shadow:0 0 0 3px #ffd43b,0 10px 26px rgba(0,0,0,.45)}",
-      ".pt-rullo .st-cella{padding:0 14px;font-size:34px;font-weight:900;line-height:1.1;color:#ffe066;text-shadow:0 3px 0 rgba(0,0,0,.35)}",
+      ".pt-rullo{width:100%;max-width:380px;border-radius:20px;background:var(--o-carta-piena);box-shadow:0 0 0 2px var(--o-oro),0 10px 26px rgba(0,0,0,.45)}",
+      ".pt-rullo .st-cella{padding:0 14px;font-size:34px;font-weight:900;line-height:1.1;color:var(--o-oro-testo);text-shadow:0 3px 0 rgba(0,0,0,.35)}",
       ".pt-rullo.fermo{animation:ptClac .5s cubic-bezier(.3,1.6,.5,1)}",
       "@keyframes ptClac{0%{transform:none}35%{transform:scale(1.08)}100%{transform:none}}",
-      ".pt-catbtn.scelta{border-color:#ffd43b;background:linear-gradient(135deg,rgba(255,212,59,.32),rgba(255,212,59,.08))}",
+      ".pt-catbtn.scelta{border-color:var(--o-oro);background:var(--o-carta-viva)}",
       ".pt-rivela{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}",
-      ".pt-catgrande{font-size:40px;font-weight:900;color:#ffe066;text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 10px;animation:ptEsce .5s cubic-bezier(.3,1.5,.5,1) both}",
+      ".pt-catgrande{font-size:40px;font-weight:900;color:var(--o-oro-testo);text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 10px;animation:ptEsce .5s cubic-bezier(.3,1.5,.5,1) both}",
       "@keyframes ptEsce{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}",
       // la bomba sopra la testa (trema, la miccia sfavilla) e l'esplosione
       ".pt-bomba{position:absolute;left:0;top:0;z-index:6;pointer-events:none;opacity:0;transition:opacity .25s;will-change:transform}",
       ".pt-bomba-in{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;line-height:1;will-change:transform;animation:ptTrema .18s ease-in-out infinite alternate}",
       ".pt-bomba.corri .pt-bomba-in{animation-duration:.07s}",
       "@keyframes ptTrema{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}",
-      ".pt-miccia{position:absolute;right:6%;top:2%;width:24%;height:24%;border-radius:50%;background:radial-gradient(circle,#fff 0 25%,#ffd43b 45%,rgba(255,120,0,0) 70%);will-change:transform,opacity;animation:ptScintilla .12s steps(2) infinite}",
       "@keyframes ptScintilla{50%{transform:scale(1.6);opacity:.6}}",
       ".pt-boom{position:absolute;z-index:7;width:0;height:0;pointer-events:none}",
       ".pt-boom:before{content:'';position:absolute;left:-150px;top:-150px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#fff 0,#ffd43b 25%,#ff6b00 50%,rgba(255,60,0,0) 70%);will-change:transform,opacity;animation:ptOnda .8s ease-out forwards}",
@@ -501,7 +505,7 @@
       "@keyframes ptFumo{0%{transform:translate(0,0) scale(.3);opacity:0}20%{opacity:1}100%{transform:translate(var(--fx),var(--fy)) scale(2.2);opacity:0}}",
       // barra sotto
       ".pt-hint{font-size:.98rem}",
-      ".pt-indietro{width:100%;padding:12px;border-radius:14px;border:2px solid #ffa94d;background:rgba(255,169,77,.18);color:#ffd8a8;font:inherit;font-weight:700;cursor:pointer}",
+      ".pt-indietro{width:100%;padding:12px;border-radius:14px;border:2px solid var(--o-ambra);background:rgba(255,181,71,.14);color:var(--o-testo);font:inherit;font-weight:700;cursor:pointer}",
       // lobby e classifica con gli avatar
       ".pt-lobby{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,.06);font-weight:700}",
       ".pt-lobby .fac,.pt-riga .fac{width:38px;height:38px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto}",
@@ -525,7 +529,22 @@
       ".pt-corta .pt-podio{margin:2px 0 8px}.pt-corta .pt-gradino .fac{width:50px;height:50px}.pt-corta .pt-gradino.p1 .fac{width:62px;height:62px}",
       ".pt-corta .pt-gradino .blocco{font-size:1.2rem;padding-top:3px}.pt-corta .pt-gradino.p1 .blocco{height:44px}.pt-corta .pt-gradino.p2 .blocco{height:32px}.pt-corta .pt-gradino.p3 .blocco{height:24px}",
       ".pt-corta .pt-righe{gap:4px!important}.pt-corta .pt-riga{padding:3px 10px 3px 4px;gap:8px}.pt-corta .pt-riga .fac{width:28px;height:28px}",
-      ".pt-due .pt-righe{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.pt-due .pt-riga{gap:5px;padding:3px 6px 3px 3px}.pt-due .pt-riga .pos{width:auto}.pt-due .pt-riga .et{display:none}"
+      ".pt-due .pt-righe{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.pt-due .pt-riga{gap:5px;padding:3px 6px 3px 3px}.pt-due .pt-riga .pos{width:auto}.pt-due .pt-riga .et{display:none}",
+      // 🌙 Notte vivace: la classifica finale è una schermata dell'app (lo studio con la patata resta com'è).
+      // Avatar su un disco di vetro scuro; il primo ha il filo d'oro dei trofei (monete) invece del giallo acceso
+      ".oro .pt-gradino .fac,.oro .pt-riga .fac{background:radial-gradient(circle at 50% 35%,var(--o-carta-2),var(--o-carta-piena));box-shadow:0 0 0 1px var(--o-filo-oro)}",
+      ".oro .pt-gradino.p1 .fac{box-shadow:0 0 0 3px var(--n-monete),0 6px 22px -4px color-mix(in srgb,var(--n-monete) 55%,transparent)}",
+      // i gradini: i metalli dei trofei come nel resto dell'app (tessera scura, filo e simbolo del colore del metallo)
+      ".oro .pt-gradino.p1 .blocco{background:linear-gradient(180deg,var(--o-m-oro-b),var(--o-m-oro-a));box-shadow:inset 0 0 0 1.5px var(--o-m-oro-f),inset 0 1px 0 rgba(255,255,255,.12)}",
+      ".oro .pt-gradino.p2 .blocco{background:linear-gradient(180deg,var(--o-m-argento-b),var(--o-m-argento-a));box-shadow:inset 0 0 0 1.5px var(--o-m-argento-f),inset 0 1px 0 rgba(255,255,255,.12)}",
+      ".oro .pt-gradino.p3 .blocco{background:linear-gradient(180deg,var(--o-m-bronzo-b),var(--o-m-bronzo-a));box-shadow:inset 0 0 0 1.5px var(--o-m-bronzo-f),inset 0 1px 0 rgba(255,255,255,.12)}",
+      ".oro .pt-gradino.p1 .blocco .emo{--emo-col:var(--o-m-oro-i)}.oro .pt-gradino.p2 .blocco .emo{--emo-col:var(--o-m-argento-i)}.oro .pt-gradino.p3 .blocco .emo{--emo-col:var(--o-m-bronzo-i)}",
+      // le righe: vetro sollevato come la classifica dell'app; il primo con il filo d'oro e l'alone
+      ".oro .pt-riga{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06),0 10px 24px -14px rgba(0,0,0,.8)}",
+      ".oro .pt-riga.primo{border:0;background:radial-gradient(120% 160% at 0% 0%,color-mix(in srgb,var(--n-monete) 13%,transparent),color-mix(in srgb,var(--n-monete) 0%,transparent) 58%),linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1.5px var(--n-monete),inset 0 1px 0 rgba(255,255,255,.08),0 12px 26px -12px color-mix(in srgb,var(--n-monete) 50%,transparent)}",
+      ".oro .pt-riga .pos{font-family:var(--o-tit);font-variant-numeric:lining-nums;color:var(--o-oro-testo)}",
+      ".oro .pt-riga.primo .pos,.oro .pt-riga.primo .et{color:var(--n-monete);--emo-tinta:var(--n-monete)}",
+      ".oro .pt-riga .et{color:var(--o-tenue);opacity:1}"
     ].join("");
     document.head.appendChild(s);
   }
@@ -715,7 +734,7 @@
     }
     schermaNome();
     function schermaNome() {
-      var s = t.schermata({ icona: "💣", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
+      var s = t.schermata({ chiara: true, icona: "💣", titolo: "Entra nella partita", sotto: "Stanza " + codice.toUpperCase(), indietro: t.esci });
       var input = el("input", { type: "text", placeholder: "Il tuo nome", maxlength: "16", class: "link-campo" });
       S.msg = el("div", { class: "link-avviso" });
       s._contenuto.appendChild(input); s._contenuto.appendChild(S.msg);
@@ -750,13 +769,13 @@
   }
 
   function erroreP(t, txt) {
-    var s = t.schermata({ icona: "⚠️", titolo: "Ops" });
+    var s = t.schermata({ chiara: true, icona: "⚠️", titolo: "Ops" });
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci }));
     t.mostra(s);
   }
   function senzaReteP(t) {
-    var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
+    var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
       text: "La modalità \"ognuno dal suo telefono\" funziona quando il gioco è aperto dal sito pubblicato online. Da un file locale non è disponibile: intanto usa \"Un telefono solo\"." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
@@ -865,7 +884,7 @@
     S.sch.appendChild(el("div", { class: "pt-sch" }, [
       el("div", { class: "pt-cat", text: "🗂️ categoria" }),
       el("div", { class: "pt-catnome", text: vm.categoria || "" }),
-      R.bombonaEl = el("div", { class: "pt-bombona", text: "💣" }),
+      R.bombonaEl = el("div", { class: "pt-bombona", html: bombaSvg() }),
       R.contoEl,
       el("div", { class: "pt-chi" }, [ el("span", { text: "Ha la bomba " }), R.chiEl ]),
       R.regolaEl
@@ -1069,7 +1088,8 @@
       var r = Math.max(0, R.cb.getRemaining()), hi = idxP(R.vm, R.vm.holder), txt = (r / 1000).toFixed(1);
       if (R.contoEl) { R.contoEl.textContent = txt; R.contoEl.classList.toggle("poco", r < 3000); }
       if (hi >= 0) ST.testoLeggio(S, hi, "💣 " + txt, r < 3000);
-      if (R.bomba) R.bomba.classList.toggle("corri", r < 3000);
+      if (R.bomba) { R.bomba.classList.toggle("corri", r < 3000); R.bomba.classList.toggle("poco", r < 3000); }
+      if (R.bombonaEl) R.bombonaEl.classList.toggle("poco", r < 3000);
       if (hi >= 0 && Date.now() >= R.vmTs + (R.vm.attesaMs || 0) && !R.toccaAttivo) { R.toccaAttivo = true; aggiornaGioco(R); }
     }, 100);
     R.toccaAttivo = Date.now() >= R.vmTs + (R.vm.attesaMs || 0);
@@ -1093,6 +1113,8 @@
         ultimoK = k;
         if (R.contoEl) R.contoEl.classList.toggle("poco", k === 2);
         if (R.bomba) R.bomba.classList.toggle("corri", k >= 1);
+        if (R.bomba) R.bomba.classList.toggle("poco", k === 2);
+        if (R.bombonaEl) R.bombonaEl.classList.toggle("poco", k === 2);
         if (R.bombonaEl) R.bombonaEl.style.animationDuration = [0.6, 0.38, 0.22][k] + "s";
       }
       if (hi >= 0 && Date.now() >= R.vmTs + (R.vm.attesaMs || 0) && !R.toccaAttivo) { R.toccaAttivo = true; aggiornaGioco(R); }
@@ -1107,9 +1129,28 @@
   }
 
   // ---- la bomba (sopra la testa di chi la tiene) ----
+  // disegnata sobria (al posto dell'emoji): sfera blu-notte con riflesso morbido, miccia, scintilla e, quando il tempo
+  // sta per finire (classe "poco" sul genitore), un alone lampone che pulsa. Misura = 1em, come l'emoji.
+  var nBombaSvg = 0;
+  function bombaSvg() {
+    var k = "ptb" + (++nBombaSvg);
+    return "<svg class='pt-svg' viewBox='4 14 86 86' aria-hidden='true' focusable='false'>" +
+      "<defs>" +
+      "<radialGradient id='" + k + "c' cx='38%' cy='32%' r='75%'><stop offset='0' stop-color='#4a5380'/><stop offset='.55' stop-color='#232a47'/><stop offset='1' stop-color='#0f1326'/></radialGradient>" +
+      "<radialGradient id='" + k + "r' cx='50%' cy='50%' r='50%'><stop offset='0' stop-color='#fff' stop-opacity='.55'/><stop offset='1' stop-color='#fff' stop-opacity='0'/></radialGradient>" +
+      "<radialGradient id='" + k + "h' cx='50%' cy='50%' r='50%'><stop offset='.55' stop-color='#e0225a' stop-opacity='.85'/><stop offset='1' stop-color='#e0225a' stop-opacity='0'/></radialGradient>" +
+      "</defs>" +
+      "<circle class='pt-alone' cx='47' cy='59' r='52' fill='url(#" + k + "h)'/>" +
+      "<circle cx='47' cy='59' r='34' fill='url(#" + k + "c)' stroke='#6c75a3' stroke-opacity='.55' stroke-width='1.4'/>" +
+      "<ellipse cx='35' cy='45' rx='13' ry='9' transform='rotate(-35 35 45)' fill='url(#" + k + "r)'/>" +
+      "<rect x='41' y='20' width='20' height='11' rx='3' transform='rotate(24 51 25)' fill='#2e3558' stroke='#6c75a3' stroke-opacity='.55' stroke-width='1.2'/>" +
+      "<path d='M56 21 C60 11 68 14 72 7' fill='none' stroke='#a6acc8' stroke-width='3.2' stroke-linecap='round'/>" +
+      "<g class='pt-sc'><circle cx='73' cy='7' r='9' fill='#ff9a4a' fill-opacity='.45'/><path d='M73 -3 L75 5 L83 7 L75 9 L73 17 L71 9 L63 7 L71 5 Z' fill='#ffd24a'/><circle cx='73' cy='7' r='3' fill='#fff'/></g>" +
+      "</svg>";
+  }
   function creaBomba(S) {
     var b = document.createElement("div"); b.className = "pt-bomba";
-    b.innerHTML = "<div class='pt-bomba-in'><span class='pt-em'>💣</span><i class='pt-miccia'></i></div>";
+    b.innerHTML = "<div class='pt-bomba-in'>" + bombaSvg() + "</div>";
     S.mondo.appendChild(b);
     return b;
   }
@@ -1180,7 +1221,7 @@
     var risultato = cl.map(function (p) { return { nome: p.nome, pos: p.pos }; });
     // sullo stesso telefono: gli XP (e le statistiche) a fine partita; nel torneo ci pensa "Avanti"
     if (cb.locale && !cb.torneo && t.risultato && cb._detto !== vm.partitaId) { cb._detto = vm.partitaId; t.risultato(risultato); }
-    var sf = t.schermata({ icona: "🏆", titolo: "Vince " + (vm.vincitore ? vm.vincitore.nome : "") + "!", sotto: "La Patata Bollente" });
+    var sf = t.schermata({ chiara: true, icona: "🏆", titolo: "Vince " + (vm.vincitore ? vm.vincitore.nome : "") + "!", sotto: "La Patata Bollente" });
     var ultimoEsploso = -1; cl.forEach(function (p, i) { if (i > 0 && !p.via) ultimoEsploso = i; });
     var podio = el("div", { class: "pt-podio" });
     [1, 0, 2].forEach(function (k) {
