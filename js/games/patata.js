@@ -447,7 +447,7 @@
       // maxischermo durante il gioco (si vede da lontano: scritte grandi)
       ".pt-sch{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:10px 6px}",
       ".pt-cat{font-size:22px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#cdd6ff}",
-      ".pt-catnome{font-size:44px;font-weight:900;line-height:1.08;color:#ffe066;text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 6px}",
+      ".pt-catnome{font-size:44px;font-weight:900;line-height:1.08;color:var(--o-oro-testo);text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 6px}",
       ".pt-bombona{font-size:110px;line-height:1;will-change:transform;animation:ptPulsa .6s ease-in-out infinite alternate}",
       "@keyframes ptPulsa{from{transform:scale(.94)}to{transform:scale(1.06)}}",
       ".pt-conto{font-family:'Courier New',ui-monospace,monospace;font-size:150px;font-weight:900;line-height:.95;color:#fff;text-shadow:0 0 30px rgba(255,120,60,.6)}",
@@ -464,7 +464,7 @@
       ".schermata.pt-con-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
       ".pt-indietro b{display:block;font-size:1.15rem}",
       ".pt-chi{font-size:34px;font-weight:800;color:#fff}",
-      ".pt-chi b{color:#ffd43b}",
+      ".pt-chi b{color:var(--o-oro-testo)}",
       ".pt-regola{font-size:22px;font-weight:700;color:#cdd6ff;opacity:.85}",
       ".pt-boomtxt{font-size:96px;font-weight:900;color:#ff5d6c;text-shadow:0 6px 0 rgba(0,0,0,.35);animation:ptEsce .45s cubic-bezier(.3,1.5,.5,1) both}",
       // voto della categoria (si vede da vicino)
@@ -475,13 +475,13 @@
         "background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));box-shadow:0 6px 16px rgba(0,0,0,.3)}",
       ".pt-catbtn small{font-size:13px;font-weight:700;opacity:.8}",
       ".pt-catbtn.sorpresa{background:linear-gradient(135deg,rgba(160,107,255,.42),rgba(255,62,165,.2))}",
-      ".pt-rullo{width:100%;max-width:380px;border-radius:20px;background:linear-gradient(#2a1f6e,#140c3e);box-shadow:0 0 0 3px #ffd43b,0 10px 26px rgba(0,0,0,.45)}",
-      ".pt-rullo .st-cella{padding:0 14px;font-size:34px;font-weight:900;line-height:1.1;color:#ffe066;text-shadow:0 3px 0 rgba(0,0,0,.35)}",
+      ".pt-rullo{width:100%;max-width:380px;border-radius:20px;background:var(--o-carta-piena);box-shadow:0 0 0 2px var(--o-oro),0 10px 26px rgba(0,0,0,.45)}",
+      ".pt-rullo .st-cella{padding:0 14px;font-size:34px;font-weight:900;line-height:1.1;color:var(--o-oro-testo);text-shadow:0 3px 0 rgba(0,0,0,.35)}",
       ".pt-rullo.fermo{animation:ptClac .5s cubic-bezier(.3,1.6,.5,1)}",
       "@keyframes ptClac{0%{transform:none}35%{transform:scale(1.08)}100%{transform:none}}",
-      ".pt-catbtn.scelta{border-color:#ffd43b;background:linear-gradient(135deg,rgba(255,212,59,.32),rgba(255,212,59,.08))}",
+      ".pt-catbtn.scelta{border-color:var(--o-oro);background:var(--o-carta-viva)}",
       ".pt-rivela{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}",
-      ".pt-catgrande{font-size:40px;font-weight:900;color:#ffe066;text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 10px;animation:ptEsce .5s cubic-bezier(.3,1.5,.5,1) both}",
+      ".pt-catgrande{font-size:40px;font-weight:900;color:var(--o-oro-testo);text-shadow:0 4px 0 rgba(0,0,0,.35);padding:0 10px;animation:ptEsce .5s cubic-bezier(.3,1.5,.5,1) both}",
       "@keyframes ptEsce{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}",
       // la bomba sopra la testa (trema, la miccia sfavilla) e l'esplosione
       ".pt-bomba{position:absolute;left:0;top:0;z-index:6;pointer-events:none;opacity:0;transition:opacity .25s;will-change:transform}",
@@ -501,7 +501,7 @@
       "@keyframes ptFumo{0%{transform:translate(0,0) scale(.3);opacity:0}20%{opacity:1}100%{transform:translate(var(--fx),var(--fy)) scale(2.2);opacity:0}}",
       // barra sotto
       ".pt-hint{font-size:.98rem}",
-      ".pt-indietro{width:100%;padding:12px;border-radius:14px;border:2px solid #ffa94d;background:rgba(255,169,77,.18);color:#ffd8a8;font:inherit;font-weight:700;cursor:pointer}",
+      ".pt-indietro{width:100%;padding:12px;border-radius:14px;border:2px solid var(--o-ambra);background:rgba(255,181,71,.14);color:var(--o-testo);font:inherit;font-weight:700;cursor:pointer}",
       // lobby e classifica con gli avatar
       ".pt-lobby{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,.06);font-weight:700}",
       ".pt-lobby .fac,.pt-riga .fac{width:38px;height:38px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.1);flex:0 0 auto}",

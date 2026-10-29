@@ -11,6 +11,15 @@ Dove c'è «3 → 1» vuol dire: oggi 3, dopo la cosa da fare (di solito l'union
 
 ---
 
+## ✅ Fatto la notte del 29 ott 2026 (ramo stile-notte, non online)
+
+- **Gruppo B** (schermate di servizio di 15 giochi): fatto.
+- **Gruppo A** (i 16 giochi del ramo grafica-luxury): ripresi e ritoccati per il fondo scuro; prove 201f-204f, 211, 214, 221, 222, 224-226, 234f OK.
+- **Gruppo C** (studio TV): pannelli, tasti e scritte dello studio coi colori della notte (in studio.js, `.st-vista` rimappa le variabili vecchie) e ritocchi gioco per gioco in Balla, Nomi Cose Città, Patata, Ruota, Prezzo (tutti i giochi a premi) e Linea del tempo. Restano gli oggetti di scena (tabellone della Ruota, giornale della Balla, foglio di Nomi Cose, prezzo a led).
+- **Gruppo E** (stanza di Scopa, Scopa 2 contro 2, Scopone): pareti blu notte con la luce calda sul tavolo; legno e panno restano.
+- **Piccoli**: Glow Hockey (fondo notte e tasto della musica in vetro), Calcio Biliardo (fondo notte, cornice sottile ciano e gialla, «GOL!» col contorno), capitoli di Palla Matta (vetro col filo del colore del capitolo), Stessa Lunghezza d'Onda (fondo notte, tasti della scala in vetro), carta in mano della Linea del tempo (vetro col filo della categoria).
+- **Restano**: Parola d'ordine, gruppo D (sala, pubblico, podi dello studio: aspetta gli avatar), le scene grandi (Horto Muso, Palla a Pendolo, Chi di Noi?, la sala dell'Asta).
+
 ## La scoperta più importante (cambia tutto il piano)
 
 **Sul ramo `grafica-luxury` ci sono già 16 giochi convertiti** (Black Jack, Da dove viene?, Drop 4, Gara di pesca, L'Impostore, Battaglia Navale, Poker, La Scalinata, Scarabocchio, Scopa, Scopa 2 vs 2, Scopone, Sì... però, Taboo, Tris, Una parola sola). Quella conversione usa solo le variabili `--o-*`, che nella copia Notte sono già scure: quindi **venuti fuori scuri e col lampone da soli**.

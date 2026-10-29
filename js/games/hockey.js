@@ -44,7 +44,7 @@
   // ---------- aspetto del campo: tutto qui, così in futuro si cambiano skin e campi ----------
   // "io" = la racchetta di chi guarda (sempre in basso), "avv" = l'avversario (in alto)
   var TEMA = {
-    sfondo: "#05070d", linee: "rgba(255,255,255,.22)",
+    sfondo: "#0d1020", linee: "rgba(255,255,255,.22)",
     bordoAlto: "#ffd23b", bordoBasso: "#3d8bff",
     io:  { fuori: "#3d8bff", scuro: "#0f2f6b" },
     avv: { fuori: "#ffd23b", scuro: "#6b4f00" },
@@ -149,7 +149,7 @@
       avvia: function () { giocando = true; if (on) parti(); },
       ferma: function () { giocando = false; ferma(); },
       bottone: function (el) {   // tasto 🎵/🔇 in alto a destra sul campo
-        var b = el("button", { title: "Musica", text: on ? "🎵" : "🔇", style: "position:absolute;top:calc(6px + env(safe-area-inset-top));right:8px;z-index:31;width:40px;height:40px;border-radius:12px;border:0;background:rgba(0,0,0,.35);font-size:1.2rem;cursor:pointer" });
+        var b = el("button", { title: "Musica", text: on ? "🎵" : "🔇", style: "position:absolute;top:calc(6px + env(safe-area-inset-top));right:8px;z-index:31;width:40px;height:40px;border-radius:12px;border:0;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06);font-size:1.2rem;cursor:pointer" });   // (🌙 vetro scuro dell'app)
         b.addEventListener("click", function () {
           on = !on; try { localStorage.setItem("sg-musica-hockey", on ? "on" : "off"); } catch (e) {}
           b.textContent = on ? "🎵" : "🔇"; if (giocando) { if (on) parti(); else ferma(); }

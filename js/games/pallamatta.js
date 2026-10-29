@@ -1771,7 +1771,18 @@
       ".pm-tasti .pm-piccolo{min-height:0;padding:7px 12px;font-size:.85rem;opacity:.85}",
       // i capitoli nuovi
       ".pm-cap-dolci{background:linear-gradient(90deg,#c2255c,#f06595)}", ".pm-lv-dolci{background:linear-gradient(180deg,#f06595,#a61e4d)}",
-      ".pm-cap-festa{background:linear-gradient(90deg,#5f3dc4,#e8590c)}", ".pm-lv-festa{background:linear-gradient(180deg,#7048e8,#3b1d8f)}"
+      ".pm-cap-festa{background:linear-gradient(90deg,#5f3dc4,#e8590c)}", ".pm-lv-festa{background:linear-gradient(180deg,#7048e8,#3b1d8f)}",
+      // 🌙 Notte vivace: capitoli e livelli in vetro scuro, con un filo e un bagliore del colore del capitolo
+      ".pm-cap-spazio{--cc:#b39bff;--cr:179,155,255}.pm-cap-natura{--cc:#3ee0a8;--cr:62,224,168}.pm-cap-mare{--cc:#4fd8ff;--cr:79,216,255}.pm-cap-dolci{--cc:#ff6d97;--cr:255,109,151}.pm-cap-festa{--cc:#ffd24a;--cr:255,210,74}",
+      ".pm-lv-spazio{--cc:#b39bff;--cr:179,155,255}.pm-lv-natura{--cc:#3ee0a8;--cr:62,224,168}.pm-lv-mare{--cc:#4fd8ff;--cr:79,216,255}.pm-lv-dolci{--cc:#ff6d97;--cr:255,109,151}.pm-lv-festa{--cc:#ffd24a;--cr:255,210,74}",
+      ".pm-cap{color:var(--o-testo);background:linear-gradient(90deg,rgba(var(--cr),.34),rgba(var(--cr),.04) 80%),linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px rgba(var(--cr),.5),inset 0 1px 0 rgba(255,255,255,.06),0 0 22px -10px rgba(var(--cr),.7)}",
+      ".pm-cap small{color:var(--n-monete)}",
+      ".pm-lv{color:var(--o-testo);background:linear-gradient(180deg,rgba(var(--cr),.24),rgba(var(--cr),.05)),linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px rgba(var(--cr),.38),inset 0 1px 0 rgba(255,255,255,.07),0 8px 18px -12px rgba(0,0,0,.8)}",
+      ".pm-lv b{color:var(--o-testo)}.pm-lv-stelle{color:var(--n-monete)}.pm-lv small{color:var(--o-tenue)}",
+      ".pm-lv.chiuso{opacity:.6}",
+      ".pm-lv.fatto{box-shadow:inset 0 0 0 1.5px var(--n-monete),0 0 16px -6px rgba(255,194,71,.6),0 8px 18px -12px rgba(0,0,0,.8)}",
+      ".pm-aiu{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}.pm-aiu.attiva{background:var(--o-carta-viva);box-shadow:inset 0 0 0 2px var(--o-oro)}.pm-pot-nome{color:var(--o-testo)}",
+      ".pm-msg-chiuso{color:var(--o-testo);background:var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-oro),0 6px 16px rgba(0,0,0,.45)}"
     ].join("");
     document.head.appendChild(st);
   }

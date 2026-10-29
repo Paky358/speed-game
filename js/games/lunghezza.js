@@ -2091,7 +2091,36 @@
       // «⏩ Avanti» a maggioranza nella rivelazione
       ".lu-quanti{margin-left:8px;font-size:.78em;opacity:.7}.lu-btn.fatto:disabled{opacity:.8}",
       ".lu.scrive .lu-testa,.lu.scrive .lu-gente,.lu.scrive .lu-fondo,.lu.scrive .lu-parola.pensa{display:none}.lu.scrive .lu-dial{min-height:80px}",
-      "@media(max-height:700px){.lu{gap:5px}.lu-testa{min-height:34px}.lu-av{width:34px;height:34px}.lu-btn{min-height:44px}.lu-btn.piccolo{min-height:36px}.lu-btn.parola{min-height:40px}.lu-carta{min-height:42px}.lu-gente{max-height:48px}.lu-p{padding:1px 7px 1px 1px}.lu-p img{width:18px;height:18px}.lu-est{min-height:30px}.lu-fondo{min-height:36px}}"
+      "@media(max-height:700px){.lu{gap:5px}.lu-testa{min-height:34px}.lu-av{width:34px;height:34px}.lu-btn{min-height:44px}.lu-btn.piccolo{min-height:36px}.lu-btn.parola{min-height:40px}.lu-carta{min-height:42px}.lu-gente{max-height:48px}.lu-p{padding:1px 7px 1px 1px}.lu-p img{width:18px;height:18px}.lu-est{min-height:30px}.lu-fondo{min-height:36px}}",
+      // 🌙 Notte vivace: fondo blu notte dell'app, riquadri e tasti di vetro scuro; il quadrante resta com'è
+      ".schermata.lu-piena{background:var(--o-fondo)}",
+      ".lu{background:radial-gradient(120% 65% at 50% 42%,#1d2346 0%,#131833 46%,var(--o-fondo) 100%)}",
+      ".lu-esci,.lu-frasi-b{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06);color:var(--o-testo)}",
+      ".lu-box{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06)}",
+      ".lu-box.a.sq{box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 -3px #f06595}.lu-box.b.sq{box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 -3px #5c7cfa}",
+      ".lu-box.mia{outline-color:var(--o-oro)}.lu-box.tocca{background:var(--o-carta-viva)}",
+      ".lu-av{background:var(--o-carta-piena);box-shadow:0 0 0 2px var(--o-oro),0 0 14px rgba(255,79,134,.35)}",
+      ".lu-est{color:var(--o-testo)}",
+      ".lu-est.sx{background:linear-gradient(90deg,rgba(79,216,255,.2),rgba(79,216,255,0) 70%),var(--o-carta-piena);box-shadow:inset 0 0 0 1px rgba(79,216,255,.5)}",
+      ".lu-est.dx{background:linear-gradient(270deg,rgba(255,154,74,.2),rgba(255,154,74,0) 70%),var(--o-carta-piena);box-shadow:inset 0 0 0 1px rgba(255,154,74,.5)}",
+      ".lu-est.ok{box-shadow:0 0 0 3px #69db7c,0 0 20px #69db7c}.lu-est.no{box-shadow:0 0 0 3px #ff6b6b;opacity:.75}",
+      ".lu-carta{border:1.5px solid transparent;background:linear-gradient(var(--o-carta-piena),var(--o-carta-piena)) padding-box,linear-gradient(90deg,#4fd8ff 0%,#b39bff 50%,#ff9a4a 100%) border-box;color:var(--o-testo);box-shadow:0 8px 18px -10px rgba(0,0,0,.75)}",
+      ".lu-carta.nostra{box-shadow:0 0 0 2px var(--o-oro),0 8px 18px -10px rgba(0,0,0,.75)}",
+      ".lu-firma{background:var(--o-carta-piena);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1px var(--o-oro),0 2px 6px #0006}",
+      ".lu-btn{background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:0 8px 18px rgba(214,24,80,.3)}",
+      ".lu-btn:active{transform:translateY(1px);box-shadow:0 4px 10px rgba(214,24,80,.3)}",
+      ".lu-btn.giallo,.lu-btn.viola,.lu-btn.blu,.lu-btn.aran,.lu-btn.grigio{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),inset 0 1px 0 rgba(255,255,255,.06)}",
+      ".lu-btn.giallo{color:var(--o-oro-testo)}.lu-btn.viola{box-shadow:inset 0 0 0 1px rgba(179,155,255,.6)}.lu-btn.blu{box-shadow:inset 0 0 0 1px rgba(79,216,255,.55)}.lu-btn.aran{box-shadow:inset 0 0 0 1px rgba(255,154,74,.6)}",
+      ".lu-btn:disabled{opacity:.4;box-shadow:none}",
+      ".lu-p{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo)}.lu-p.a{box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 -2px #f06595}.lu-p.b{box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 -2px #5c7cfa}.lu-p.tu{outline-color:var(--o-oro)}",
+      ".lu-mk b{background:var(--o-carta-piena);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1px var(--o-oro)}",
+      ".lu-pop.buono{background:var(--o-carta-piena);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1.5px var(--o-oro),0 10px 30px #0008}",
+      ".lu-banner{background:var(--o-carta-piena);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1px var(--o-oro),0 8px 20px #0007}",
+      ".lu-casuale{background:var(--o-carta-piena);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1px var(--o-oro)}",
+      ".lu-scelta.tu{outline-color:var(--o-oro)}",
+      ".lu-frasi{background:var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo-oro),0 10px 30px #0009}",
+      // scritte grandi della rivelazione: bianco su colore pieno almeno 4,5:1
+      ".lu-pop.centro{background:#e0225a}.lu-pop.tele{background:linear-gradient(90deg,#6f45e8,#e0225a)}"
     ].join("");
     document.head.appendChild(st);
   }

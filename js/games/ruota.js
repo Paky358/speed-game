@@ -2270,7 +2270,7 @@
       // il tabellone: in alto, fisso sopra lo studio (sotto ai tasti ‹ e 🎵 dello studio)
       ".ru-sopra{position:absolute;left:8px;right:8px;top:calc(48px + env(safe-area-inset-top));z-index:21;display:flex;flex-direction:column;gap:4px;pointer-events:none;transition:opacity .5s}",
       ".ru-sopra.via{opacity:0}",
-      ".ru-cat{text-align:center;font-weight:900;font-size:.82rem;letter-spacing:.05em;color:#ffe066;text-shadow:0 2px 4px rgba(0,0,0,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".ru-cat{text-align:center;font-weight:900;font-size:.82rem;letter-spacing:.05em;color:var(--o-oro-testo);text-shadow:0 0 6px rgba(13,16,32,.95),0 2px 4px rgba(0,0,0,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".ru-tab{position:relative;display:grid;grid-template-columns:repeat(12,1fr);gap:3px;padding:5px;border-radius:12px;background:#0b5e3c;box-shadow:inset 0 0 0 3px #12804f,0 6px 18px rgba(0,0,0,.55)}",
       // i round speciali colorano la cornice del tabellone (una luce che pulsa: solo trasparenza)
       ".ru-tab:after{content:'';position:absolute;inset:-4px;border-radius:15px;pointer-events:none;opacity:0;transition:opacity .4s}",
@@ -2343,7 +2343,7 @@
       ".ru-riga{display:flex;gap:6px}",
       ".ru-btn{flex:1;min-height:48px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.88rem;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}",
       ".ru-btn:disabled{opacity:.35}",
-      ".ru-btn.gira{background:#e8590c}.ru-btn.vocale{background:#1c7ed6}.ru-btn.risolvi{background:#2f9e44}.ru-btn.annulla{background:#495057}",
+      ".ru-btn.gira{background:var(--o-tasto);color:var(--o-tasto-testo)}.ru-btn.vocale{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--n-sfida)}.ru-btn.risolvi{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--o-verde)}.ru-btn.annulla{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo)}",
       ".ru-btn.express{background:linear-gradient(135deg,#d6336c,#a61e4d);box-shadow:0 0 0 2px #ffd8e4 inset}",
       ".ru-btn.busta{background:linear-gradient(160deg,#fff4d6,#f2d48a);color:#7a4b00;min-height:52px;font-size:.95rem;padding:0}",
       ".ru-btn.prenoto{background:#e03131;min-height:56px;font-size:1.05rem;color:#14113a;letter-spacing:.02em}",
@@ -2381,13 +2381,13 @@
       "@keyframes ruRivela{from{transform:translate(-50%,-50%) scale(.6)}to{transform:translate(-50%,-50%) scale(1)}}",
       ".ru-btn.mistero{background:linear-gradient(135deg,#3b3f9e,#1b1f5e);box-shadow:0 0 0 2px #ffd43b inset;color:#ffd43b}",
       // «⏩ Avanti» sul riepilogo (il mio tocco resta «✅ Avanti») e il conto
-      ".ru-btn.avanti{background:#7048e8}.ru-btn.avanti:disabled{opacity:.85;background:#5f3dc4}.ru-btn.avanti .quanti{font-weight:800;opacity:.9}",
+      ".ru-btn.avanti{background:var(--o-tasto)}.ru-btn.avanti:disabled{opacity:.85;background:var(--o-tasto)}.ru-btn.avanti .quanti{font-weight:800;opacity:.9}",
       ".ru-conto{text-align:center;font-size:.8rem;font-weight:800;opacity:.85;min-height:1.2em}",
       // ✍️ chi guarda: scrivere una frase
       ".ru-scrivi-riga{display:flex;align-items:center;gap:8px;margin-top:2px}.ru-scrivi-riga[hidden]{display:none}",
       ".ru-scrivi-nota{flex:1;font-size:.76rem;font-weight:700;line-height:1.2;color:#e7ecff;opacity:.9}",
-      ".ru-btn.scrivi{flex:0 0 auto;min-height:40px;padding:0 12px;background:#0b7285;font-size:.82rem}.ru-btn.scrivi[hidden]{display:none}",
-      ".ru-form{position:absolute;left:8px;right:8px;top:calc(48px + env(safe-area-inset-top));z-index:30;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:#1b1f5e;box-shadow:0 0 0 2px #ffd43b,0 12px 30px rgba(0,0,0,.7);color:#fff;opacity:0;transform:translateY(-12px);pointer-events:none;transition:opacity .25s,transform .25s}",
+      ".ru-btn.scrivi{flex:0 0 auto;min-height:40px;padding:0 12px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--n-sfida);font-size:.82rem}.ru-btn.scrivi[hidden]{display:none}",
+      ".ru-form{position:absolute;left:8px;right:8px;top:calc(48px + env(safe-area-inset-top));z-index:30;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:var(--o-carta-piena);box-shadow:0 0 0 2px var(--o-oro),0 12px 30px rgba(0,0,0,.7);color:#fff;opacity:0;transform:translateY(-12px);pointer-events:none;transition:opacity .25s,transform .25s}",
       ".ru-form.on{opacity:1;transform:none;pointer-events:auto}",
       ".ru-f-in{width:100%;box-sizing:border-box;min-height:44px;padding:0 12px;border-radius:12px;border:0;font:inherit;font-size:16px;font-weight:700;color:#14113a;background:#fff}",
       ".ru-f-in.maiu{text-transform:uppercase}",

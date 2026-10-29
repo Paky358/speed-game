@@ -242,7 +242,7 @@
         clearTimeout(toMax); toMax = setTimeout(aggiornaConta, 2600);
         // anche in basso sullo schermo, dove si sta toccando
         var v = document.getElementById("nc-max");
-        if (!v) { v = el("div", { id: "nc-max", style: "position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:50;max-width:88%;text-align:center;background:#ff5d6c;color:#2a0006;font-weight:800;padding:9px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none" }); document.body.appendChild(v); }
+        if (!v) { v = el("div", { id: "nc-max", style: "position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:50;max-width:88%;text-align:center;background:var(--o-rosso);color:#fff;font-weight:800;padding:9px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none" }); document.body.appendChild(v); }
         v.textContent = testo; clearTimeout(avvisoMax.to);
         avvisoMax.to = setTimeout(function () { if (v.parentNode) v.parentNode.removeChild(v); }, 2600);
       }
@@ -383,16 +383,16 @@
     s.textContent = [
       // estrazione della lettera
       ".nc-estr{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}",
-      ".nc-giro{font-size:18px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#cdd6ff}",
-      ".nc-slot{width:210px;height:230px;border-radius:30px;display:flex;align-items:center;justify-content:center;font-size:170px;font-weight:900;line-height:1;color:#241f00;",
-        "background:linear-gradient(#fff6c9,#ffca3a 55%,#e0a90a);box-shadow:0 12px 30px rgba(0,0,0,.45),inset 0 -8px 0 rgba(0,0,0,.15)}",
+      ".nc-giro{font-size:18px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--o-oro-testo)}",
+      ".nc-slot{width:210px;height:230px;border-radius:30px;display:flex;align-items:center;justify-content:center;font-size:170px;font-weight:900;line-height:1;color:var(--o-tasto-testo);",
+        "background:var(--o-tasto);box-shadow:0 12px 30px rgba(0,0,0,.45),inset 0 -8px 0 rgba(0,0,0,.15),inset 0 0 0 1px rgba(255,255,255,.18)}",
       ".nc-slot.fermo{animation:ncClac .5s cubic-bezier(.3,1.6,.5,1)}",
       "@keyframes ncClac{0%{transform:none}35%{transform:scale(1.1)}100%{transform:none}}",
       ".nc-sotto{font-size:22px;font-weight:800}",
       ".nc-cats{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:94%}",
       ".nc-cats span{background:rgba(255,255,255,.1);border-radius:99px;padding:5px 11px;font-weight:800;font-size:15px}",
       // il maxischermo mentre si scrive (si vede anche da lontano)
-      ".nc-grande{font-size:210px;font-weight:900;line-height:1;color:#ffd43b;text-shadow:0 8px 0 rgba(0,0,0,.35)}",
+      ".nc-grande{font-size:210px;font-weight:900;line-height:1;color:var(--o-oro-testo);text-shadow:0 8px 0 rgba(0,0,0,.35)}",
       ".nc-chi{font-size:34px;font-weight:900}",
       ".nc-fatti{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:96%}",
       ".nc-fatti span{display:flex;align-items:center;gap:6px;font-size:22px;font-weight:800;background:rgba(255,255,255,.1);border-radius:99px;padding:4px 12px 4px 4px}",
@@ -401,7 +401,7 @@
       ".nc-fatti .fac{width:36px;height:36px}",
       ".nc-fatti .fac svg,.nc-tab-su .fac svg,.nc-cl .fac svg,.nc-chi2 .fac svg{width:100%;height:100%;display:block}",
       // il foglio (la telecamera ci entra dentro)
-      ".nc-foglio{position:absolute;inset:0;z-index:21;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(12px + env(safe-area-inset-top)) 12px 120px;background:rgba(7,4,26,.6);opacity:0;pointer-events:none;transition:opacity .25s}",
+      ".nc-foglio{position:absolute;inset:0;z-index:21;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(12px + env(safe-area-inset-top)) 12px 120px;background:rgba(10,12,24,.72);opacity:0;pointer-events:none;transition:opacity .25s}",
       ".nc-foglio.on{opacity:1;pointer-events:auto}",
     ".nc-conf-testo{color:#fff;font-weight:800;text-align:center;font-size:1.02rem;text-shadow:0 2px 6px rgba(0,0,0,.6)}.nc-conf-riga{display:flex;gap:8px}.nc-conf-riga .btn{flex:1;min-width:0;margin:0}",
       ".nc-carta{position:relative;margin:0 auto;max-width:460px;border-radius:6px 6px 12px 12px;padding:16px 14px 20px 46px;color:#1d2a5c;",
@@ -428,37 +428,37 @@
       // il tabellone (maxischermo, da vicino)
       ".nc-tab{flex:1;min-height:0;display:flex;flex-direction:column}",
       ".nc-tab-testa{text-align:center;margin:2px 0 8px}",
-      ".nc-tab-testa small{display:block;font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#cdd6ff}",
-      ".nc-tab-cat{font-size:24px;font-weight:900;color:#ffe066}",
+      ".nc-tab-testa small{display:block;font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--o-tenue)}",
+      ".nc-tab-cat{font-size:24px;font-weight:900;color:var(--o-oro-testo)}",
       ".nc-tab-righe{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:8px;padding-bottom:10px;perspective:600px}",
       ".nc-tab-riga{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:8px 10px;animation:ncGiraRiga .5s ease both}",
       "@keyframes ncGiraRiga{from{transform:rotateX(90deg);opacity:0}to{transform:none;opacity:1}}",
       ".nc-tab-su{display:flex;align-items:center;gap:8px}",
       ".nc-tab-su .fac{width:34px;height:34px}",
       ".nc-tab-su .chi{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15}",
-      ".nc-tab-su .nm{font-size:12px;font-weight:800;color:#cdd6ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".nc-tab-su .nm{font-size:12px;font-weight:800;color:var(--o-tenue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".nc-tab-su .parola{font-family:" + MANO + ";font-size:21px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       // con tanti giocatori le righe si stringono (si vede tutto senza scorrere)
       ".nc-tab-righe.tanti{gap:4px;padding-bottom:2px}.nc-tab-righe.tanti .nc-tab-riga{padding:3px 8px}.nc-tab-righe.tanti .nc-tab-su .fac{width:28px;height:28px}.nc-tab-righe.tanti .chi{line-height:1.08}.nc-tab-righe.tanti .nm{font-size:11px}",
       ".nc-tab-righe.tanti .parola{font-size:17px}.nc-tab-righe.tanti .nc-tg,.nc-tab-righe.tanti .nc-piu,.nc-tab-righe.tanti .nc-mio{height:30px}",
       ".nc-tab-su .parola.vuota{color:rgba(255,255,255,.35);font-family:inherit;font-size:14px}",
       ".nc-esito{flex:0 0 auto;font-size:12px;font-weight:900;padding:3px 8px;border-radius:99px;background:rgba(255,93,108,.22);color:#ff8d98}",
-      ".nc-esito.si{background:#37d47e;color:#04321c}",
-      ".nc-esito.doppia{background:#ffd43b;color:#3a2a00}",
+      ".nc-esito.si{background:var(--o-verde);color:var(--o-verde-testo)}",
+      ".nc-esito.doppia{background:var(--n-monete);color:#3a2a00}",
       ".nc-voti{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}",
       ".nc-voti button{border:0;border-radius:99px;padding:6px 10px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.12);color:#fff;opacity:.85}",
-      ".nc-voti button.on{background:#2ecc71;color:#08210f;opacity:1}",
-      ".nc-voti button.tutti{background:rgba(255,212,59,.2);color:#ffe066}",
+      ".nc-voti button.on{background:var(--o-verde);color:var(--o-verde-testo);opacity:1}",
+      ".nc-voti button.tutti{background:rgba(224,34,90,.2);color:var(--o-oro-testo)}",
       // classifica del giro (maxischermo)
       ".nc-clas{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px}",
       ".nc-clas h2{margin:0 0 6px;text-align:center;font-size:26px}",
       ".nc-cl{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;border-radius:14px;background:rgba(255,255,255,.07);animation:ncGiraRiga .45s ease both}",
-      ".nc-cl.primo{background:rgba(255,212,59,.18);border:1px solid rgba(255,212,59,.5)}",
+      ".nc-cl.primo{background:color-mix(in srgb,var(--n-monete) 18%,transparent);border:1px solid color-mix(in srgb,var(--n-monete) 50%,transparent)}",
       ".nc-cl .pos{width:28px;text-align:center;font-weight:900}",
       ".nc-cl .fac{width:40px;height:40px}",
       ".nc-cl .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".nc-cl .pt{font-weight:900;color:#ffe066}",
-      ".nc-cl .pi{font-size:12px;font-weight:800;color:#6ff0a6;margin-left:4px}",
+      ".nc-cl .pt{font-weight:900;color:var(--n-monete)}",
+      ".nc-cl .pi{font-size:12px;font-weight:800;color:var(--o-verde);margin-left:4px}",
       // 🌙 Notte vivace: la classifica FINALE è una schermata dell'app (.oro): stesso vetro e stesso filo d'oro della classifica della Sala.
       // La classifica del giro, dentro lo studio, non è .oro e resta com'era.
       ".oro .nc-cl{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06),0 10px 24px -14px rgba(0,0,0,.8)}",
@@ -473,9 +473,9 @@
       ".oro .nc-cl .pi{color:var(--o-verde)}",
       // online: il mio voto (ognuno vota dal suo telefono), le attese, la lobby
       ".nc-mio{flex:0 0 auto;border:0;border-radius:99px;height:34px;padding:0 12px;font:inherit;font-size:14px;font-weight:900;cursor:pointer;white-space:nowrap}",
-      ".nc-mio.si{background:#2ecc71;color:#08210f}",
-      ".nc-mio.no{background:#ff5d6c;color:#2a0006}",
-      ".nc-attesa{margin:0;text-align:center;font-weight:800;color:#cdd6ff}",
+      ".nc-mio.si{background:var(--o-verde);color:var(--o-verde-testo)}",
+      ".nc-mio.no{background:var(--o-rosso);color:#fff}",
+      ".nc-attesa{margin:0;text-align:center;font-weight:800;color:var(--o-tenue)}",
       // chi guarda soltanto: in basso il posto della targhetta del core ("👀 Guardi · 😂 · ✕")
       ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",
       ".nc-con-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
@@ -490,12 +490,12 @@
       "@keyframes ncConto{0%{transform:scale(1.6);opacity:0}25%{transform:scale(1);opacity:1}80%{opacity:1}100%{transform:scale(.9);opacity:.15}}",
       // un telefono solo: un tasto per parola (vale / non vale) e ⋯ per i voti di ognuno
       ".nc-tg{flex:0 0 auto;border:0;border-radius:99px;min-width:44px;height:34px;padding:0 10px;font:inherit;font-size:17px;font-weight:900;cursor:pointer}",
-      ".nc-tg.si{background:#2ecc71;color:#08210f}",
-      ".nc-tg.no{background:#ff5d6c;color:#2a0006}",
+      ".nc-tg.si{background:var(--o-verde);color:var(--o-verde-testo)}",
+      ".nc-tg.no{background:var(--o-rosso);color:#fff}",
       ".nc-piu{flex:0 0 auto;border:0;border-radius:99px;width:34px;height:34px;font:inherit;font-size:16px;font-weight:900;cursor:pointer;background:rgba(255,255,255,.12);color:#fff}",
       ".nc-voti[hidden]{display:none}",
       // ✋ STOP: il tasto (si accende quando tutte le caselle sono piene con la lettera giusta) e la scritta grande in alto
-      ".nc-stop-btn{background:linear-gradient(135deg,#ff6b6b,#e03131)!important;color:#fff!important;font-weight:900;letter-spacing:.04em}",
+      ".nc-stop-btn{background:linear-gradient(180deg,#d63c4a,#b02a37)!important;color:#fff!important;font-weight:900;letter-spacing:.04em}",
       ".nc-stop-btn.grande{font-size:1.25rem;padding-top:14px;padding-bottom:14px;animation:ncStopPulsa .7s ease-in-out infinite alternate}",
       ".nc-stop-btn:disabled{background:rgba(255,255,255,.14)!important;color:rgba(255,255,255,.75)!important;opacity:1}",
       "@keyframes ncStopPulsa{to{transform:scale(1.04)}}",
@@ -509,7 +509,7 @@
       ".nc-con-stop .nc-conto{display:none}",
       // chi guarda senza giocare
       ".nc-guardi{position:absolute;left:50%;top:calc(8px + env(safe-area-inset-top));transform:translateX(-50%);z-index:22;max-width:92%;text-align:center;",
-        "background:rgba(7,4,26,.78);color:#ffe066;font-weight:800;font-size:13px;padding:6px 12px;border-radius:99px;pointer-events:none}"
+        "background:var(--o-carta-piena);color:var(--o-oro-testo);font-weight:800;font-size:13px;padding:6px 12px;border-radius:99px;pointer-events:none}"
     ].join("");
     document.head.appendChild(s);
   }
