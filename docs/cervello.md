@@ -99,6 +99,8 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
 
+- 29 ott 02:33 · 🧍 Avatar · salvato sul ramo `avatar-mii` (non online) · lavoro della notte, pezzo 1: le faccine piccole del disegno nuovo si leggono come oggi (misurato il contrasto degli occhi a 28, 32 e 40 px su 40 avatar: sul telefono 151-163 contro 153-164 di oggi); occhi aperti appena più piccoli, chiusi e felici grandi come oggi, palpebre e sopracciglia come oggi, montature appena più fini; strumenti di misura in docs/stile/avatar-mii (misura.html, piccole.html) · (questo salvataggio)
+
 - 29 ott 01:50 · 🧍 Avatar · salvato sul ramo `avatar-mii` (copia `SG-avatar`; non in lavori-in-corso, non online) · passo 1 della strada A «Mii rifinito»: il disegno nuovo degli avatar c'è ma è SPENTO per tutti (si accende con l'interruttore dello stile; quello di oggi resta identico, controllato su 20.636 disegni); pagina di confronto prima/dopo in docs/stile/avatar-mii/ (look pronti, 8 Bot, 20 a caso, lui e lei in 10 pose, faccina grande e piccola, fondo blu notte e chiaro) e catalogo di tutti i pezzi. Aspetta il parere del proprietario · (questo salvataggio)
 
 - 29 ott 01:15 · Cervello · salvato · registro aggiornato: Notte vivace online (v275), le copie di lavoro di Notte vivace e Avatar, la chat Avatar può partire insieme alla Notte vivace

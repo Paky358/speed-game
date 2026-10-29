@@ -253,7 +253,7 @@ p b{color:var(--testo)}
     }).join("");
   }
   function montature(s) {
-    return s.replace(/stroke-width='([\d.]+)'/g, function (t, w) { return "stroke-width='" + (+w * 0.72).toFixed(2) + "'"; });
+    return s.replace(/stroke-width='([\d.]+)'/g, function (t, w) { return "stroke-width='" + (+w * 0.88).toFixed(2) + "'"; });
   }
   function contorni(s) {
     return s.replace(/<(path|ellipse|circle|rect|polygon)\b([^>]*?)(\/?)>/g, function (t, tag, at, ch) {
@@ -513,7 +513,6 @@ p b{color:var(--testo)}
     function u(n) { return "url(#" + id + n + ")"; }
     var R = (opts.stile || STILE) === "rifinito";   // stile rifinito (vedi STILE)
     function lv(n) { return R ? +(n * 0.7).toFixed(2) : n; }   // le linee del viso (naso, bocca): più sottili nel rifinito
-    function lo(n) { return R ? +(n * 0.92).toFixed(2) : n; }   // palpebre e ciglia: appena più sottili (in piccolo gli occhi devono leggersi)
     var P = col(OPZ.pelle, c.pelle), H = col(OPZ.colCap, c.colCap), M = col(OPZ.maglia, c.maglia),
         T = col(OPZ.pantaloni, c.pantaloni), I = col(OPZ.iride, c.iride), A = col(OPZ.colAcc, c.colAcc), S = col(OPZ.scarpe, c.scarpe);
     if (R) { M = vivo(M, 0.08); T = vivo(T, 0.06); A = vivo(A, 0.08); S = vivo(S, 0.06); H = vivo(H, 0.05); I = vivo(I, 0.08); }
@@ -554,7 +553,7 @@ p b{color:var(--testo)}
       lin("t", 0.3, 1, R ? [[0, tono(T, 0.14)], [0.5, T], [1, tono(T, -0.3)]] : [[0, tono(T, 0.2)], [0.5, T], [1, tono(T, -0.38)]]),
       R ? rad("i", 0.5, 0.36, 0.66, [[0, tono(I, 0.42)], [0.5, I], [0.86, tono(I, -0.32)], [1, tono(I, -0.62)]])   // l'iride: chiara sotto la pupilla, l'anello scuro attorno
         : rad("i", 0.5, 0.42, 0.62, [[0, tono(I, 0.5)], [0.55, I], [1, tono(I, -0.55)]]),
-      R ? lin("sc", 0, 1, [[0, misto("#efe6e0", P, 0.12)], [0.4, "#fdfcfb"], [1, "#f5f1ee"]])   // il bianco dell'occhio: in alto l'ombra della palpebra
+      R ? lin("sc", 0, 1, [[0, "#e6ddd6"], [0.4, "#ffffff"], [1, "#f5f1ee"]])   // il bianco dell'occhio: in alto l'ombra della palpebra
         : lin("sc", 0, 1, [[0, "#d8cfc8"], [0.38, "#ffffff"], [1, "#f1ece8"]]),
       rad("g", 0.5, 0.5, 0.5, [[0, "#ff4f5e", 0.6], [1, "#ff4f5e", 0]]),
       rad("ao", 0.5, 0.5, 0.5, [[0, "#000", 0.38], [1, "#000", 0]]),
@@ -1576,8 +1575,8 @@ p b{color:var(--testo)}
     var scuro = "#2a1a12";
     // regolazioni fini stile Mii: grandezza/distanza/altezza occhi, altezza sopracciglia, naso, bocca
     function reg(k) { var v = +c[k] || 0; return Math.max(-2, Math.min(2, v)); }
-    // rifinito: occhi più piccoli (e le sopracciglia un filo più giù, per non lasciare la fronte vuota)
-    var kE = (1 + 0.08 * reg("occG")) * (donna ? 1.06 : 1) * (R ? 0.9 : 1), dE = 2.6 * reg("occD"), yE = -2.6 * reg("occA"), yS = yE - 2.4 * reg("soprA") + (R ? 1.6 : 0),
+    // rifinito: occhi aperti più piccoli (vedi kO) e le sopracciglia un filo più giù, per non lasciare la fronte vuota
+    var kE = (1 + 0.08 * reg("occG")) * (donna ? 1.06 : 1), dE = 2.6 * reg("occD"), yE = -2.6 * reg("occA"), yS = yE - 2.4 * reg("soprA") + (R ? 1.6 : 0),
         kN = 1 + 0.15 * reg("nasoG"), yB = -2.6 * reg("boccaA");
     // trucco: ogni pezzo per conto suo, col suo colore
     var OMB = c.ombretto !== "nessuno" ? c.ombretto : null, LIN = c.eyeliner !== "nessuno" ? c.eyeliner : null,
@@ -1588,7 +1587,8 @@ p b{color:var(--testo)}
     o.push("<g class='om-occhi'>");   // gruppo a parte: nell'editor sbatte le palpebre
     [80, 120].forEach(function (ex) {
       var s = ex < 100 ? -1 : 1;
-      o.push("<g transform='translate(" + (ex + s * dE) + "," + (100 + yE) + ") scale(" + kE + ") translate(" + (-ex) + ",-100)'>");
+      var chiuso = /^(felici|chiusi|puntini)$/.test(c.occhi) || (c.occhi === "occhiolino" && ex === 120), kO = R && !chiuso ? kE * 0.97 : kE;   // gli occhi chiusi e a puntino restano grandi come oggi: in piccolo sono solo una riga
+      o.push("<g transform='translate(" + (ex + s * dE) + "," + (100 + yE) + ") scale(" + kO + ") translate(" + (-ex) + ",-100)'>");
       // ombretto: macchia di colore sulla palpebra (l'occhio ci viene disegnato sopra, resta la parte fino al sopracciglio)
       if (OMB) o.push("<ellipse cx='" + (ex + s * 0.5) + "' cy='94' rx='12.5' ry='9' fill='" + CO + "' opacity='" + (OMB === "intenso" ? 0.9 : (OMB === "sfumato" ? 0.4 : 0.55)) + "'/>");
       if (OMB === "sfumato") o.push("<ellipse cx='" + (ex + s * 5) + "' cy='91' rx='15' ry='9' transform='rotate(" + (s * -18) + " " + ex + " 95)' fill='" + u("tr") + "'/>");   // sfumato verso la tempia
@@ -1604,19 +1604,19 @@ p b{color:var(--testo)}
       }
       // occhi chiusi (anche l'occhio destro dell'occhiolino): una curva rilassata all'ingiù
       if (c.occhi === "chiusi" || (c.occhi === "occhiolino" && ex === 120)) {
-        o.push("<path d='M" + (ex - 8.5) + ",99 Q" + ex + ",106 " + (ex + 8.5) + ",99' stroke='" + scuro + "' stroke-width='" + lo(2.8) + "' fill='none' stroke-linecap='round'/>");
-        if (donna) o.push("<path d='M" + (ex + s * 8) + ",100 L" + (ex + s * 11.5) + ",102.5' stroke='" + scuro + "' stroke-width='" + lo(1.8) + "' stroke-linecap='round'/>");
+        o.push("<path d='M" + (ex - 8.5) + ",99 Q" + ex + ",106 " + (ex + 8.5) + ",99' stroke='" + scuro + "' stroke-width='2.8' fill='none' stroke-linecap='round'/>");
+        if (donna) o.push("<path d='M" + (ex + s * 8) + ",100 L" + (ex + s * 11.5) + ",102.5' stroke='" + scuro + "' stroke-width='" + (1.8) + "' stroke-linecap='round'/>");
         o.push("</g>");
         return;
       }
       if (c.occhi === "felici") {
         o.push("<path d='M" + (ex - 8.5) + ",103 Q" + ex + ",92 " + (ex + 8.5) + ",103 Q" + ex + ",96 " + (ex - 8.5) + ",103 Z' fill='" + scuro + "' stroke='" + scuro + "' stroke-width='1.6' stroke-linejoin='round'/>");
-        if (donna) o.push("<path d='M" + (ex + s * 8) + ",101 L" + (ex + s * 12) + ",98' stroke='" + scuro + "' stroke-width='" + lo(2) + "' stroke-linecap='round'/>");
+        if (donna) o.push("<path d='M" + (ex + s * 8) + ",101 L" + (ex + s * 12) + ",98' stroke='" + scuro + "' stroke-width='" + (2) + "' stroke-linecap='round'/>");
         o.push("</g>");
         return;
       }
       var felino = c.occhi === "felini", big = c.occhi === "grandi" || c.occhi === "ciglia", mand = c.occhi === "mandorla" || felino,
-          rx = big ? 10 : (mand ? 9.5 : 8), ry = big ? 12 : (mand ? 7 : 10), ri = (big ? 7.2 : (mand ? 5.3 : 5.8)) * (R ? 1.1 : 1), cy = 100;   // rifinito: l'iride riempie di più l'occhio, come negli occhi veri
+          rx = big ? 10 : (mand ? 9.5 : 8), ry = big ? 12 : (mand ? 7 : 10), ri = (big ? 7.2 : (mand ? 5.3 : 5.8)) * (R && !big ? 1.06 : 1), cy = 100;   // rifinito: l'iride riempie di più l'occhio, come negli occhi veri
       var giro = mand ? s * -9 : (c.occhi === "tristi" ? s * 12 : 0);   // mandorla: angolo esterno all'insù; tristi: all'ingiù
       if (giro) o.push("<g transform='rotate(" + giro + " " + ex + " 100)'>");
       o.push("<clipPath id='" + id + "e" + ex + "'><ellipse cx='" + ex + "' cy='" + cy + "' rx='" + rx + "' ry='" + ry + "'/></clipPath>",
@@ -1625,13 +1625,13 @@ p b{color:var(--testo)}
         "<circle cx='" + (ex + s * 0.5) + "' cy='" + (cy + 1.5) + "' r='" + ri + "' fill='" + u("i") + "' stroke='" + tono(I, -0.6) + "' stroke-width='.9'/>",
         felino ? "<ellipse cx='" + (ex + s * 0.5) + "' cy='" + (cy + 1) + "' rx='" + (ri * 0.2) + "' ry='" + (ri * 0.95) + "' fill='#0c0c0e'/>"   // pupilla a fessura
                : "<circle cx='" + (ex + s * 0.5) + "' cy='" + (cy + 1.5) + "' r='" + (R ? +(ri * 0.47).toFixed(2) : ri * 0.48) + "' fill='#0c0c0e'/>",
-        "<ellipse cx='" + ex + "' cy='" + (cy - ry + 1) + "' rx='" + rx + "' ry='" + (R ? 4 : 3.5) + "' fill='#000' opacity='" + (R ? 0.15 : ".12") + "'/>",   // l'ombra della palpebra sull'occhio
+        "<ellipse cx='" + ex + "' cy='" + (cy - ry + 1) + "' rx='" + rx + "' ry='" + (R ? 4 : 3.5) + "' fill='#000' opacity='" + (R ? 0.11 : ".12") + "'/>",   // l'ombra della palpebra sull'occhio
         "</g>",
         c.occhi === "stelline"   // luccicanti: il riflesso è una stellina
           ? "<path d='M" + (ex + 2.6) + "," + (cy - 7.4) + " Q" + (ex + 3.2) + "," + (cy - 3) + " " + (ex + 7.6) + "," + (cy - 2.4) + " Q" + (ex + 3.2) + "," + (cy - 1.8) + " " + (ex + 2.6) + "," + (cy + 2.6) + " Q" + (ex + 2) + "," + (cy - 1.8) + " " + (ex - 2.4) + "," + (cy - 2.4) + " Q" + (ex + 2) + "," + (cy - 3) + " " + (ex + 2.6) + "," + (cy - 7.4) + " Z' fill='#fff'/>"
           : "<circle cx='" + (ex + (R ? 2.2 : 2.6)) + "' cy='" + (cy - (R ? 1.6 : 2.4)) + "' r='" + (R ? +((big ? 2.8 : 2.2) * 0.72).toFixed(2) : (big ? 2.8 : 2.2)) + "' fill='#fff'/>",
         "<circle cx='" + (ex - 2) + "' cy='" + (cy + 4.5) + "' r='" + (R ? 0.8 : 1.1) + "' fill='#fff' opacity='" + (R ? 0.55 : ".8") + "'/>",
-        "<path d='M" + (ex - rx - 0.6) + "," + (cy + 1) + " Q" + ex + "," + (cy - 2 * ry) + " " + (ex + rx + 0.6) + "," + (cy + 1) + "' stroke='" + scuro + "' stroke-width='" + lo(c.occhi === "dolci" ? 3.4 : (donna ? 3 : 2.3)) + "' fill='none' stroke-linecap='round'/>");
+        "<path d='M" + (ex - rx - 0.6) + "," + (cy + 1) + " Q" + ex + "," + (cy - 2 * ry) + " " + (ex + rx + 0.6) + "," + (cy + 1) + "' stroke='" + scuro + "' stroke-width='" + (c.occhi === "dolci" ? 3.4 : (donna ? 3 : 2.3)) + "' fill='none' stroke-linecap='round'/>");
       // rifinito: la piega della palpebra sopra l'occhio (lo fa sembrare vero), tranne negli occhi socchiusi
       if (R && !/^(furbi|assonnati)$/.test(c.occhi)) o.push("<path d='M" + (ex - rx * 0.82) + "," + (cy - ry * 0.98) + " Q" + ex + "," + (cy - ry * 1.62 - 1.5) + " " + (ex + rx * 0.95) + "," + (cy - ry * 0.9) + "' stroke='" + tono(P, -0.26) + "' stroke-width='1.2' opacity='.5' fill='none' stroke-linecap='round'/>");
       if (LIN && LIN !== "matita") {   // riga sulla palpebra col colore scelto (+ codina)
@@ -1645,25 +1645,25 @@ p b{color:var(--testo)}
       // senza mascara: lei ha tre ciglia piegate verso l'esterno, sull'angolo dell'occhio (lui solo con gli occhi "dolci")
       if (!cig && (donna || c.occhi === "dolci")) (donna ? [[0.5, 3.4], [0.74, 4.4], [0.94, 4.8]] : [[0.7, 3.4], [0.92, 4]]).forEach(function (p) {
         var px = ex + s * rx * p[0], py = cy - ry * Math.sqrt(Math.max(0, 1 - p[0] * p[0])) + 0.3, L = p[1];
-        o.push("<path d='M" + px.toFixed(1) + "," + py.toFixed(1) + " q" + (s * L * 0.35).toFixed(1) + "," + (-L * 0.62).toFixed(1) + " " + (s * L * 0.95).toFixed(1) + "," + (-L * 0.58).toFixed(1) + "' stroke='" + scuro + "' stroke-width='" + lo(donna ? 2.1 : 1.8) + "' fill='none' stroke-linecap='round'/>");
+        o.push("<path d='M" + px.toFixed(1) + "," + py.toFixed(1) + " q" + (s * L * 0.35).toFixed(1) + "," + (-L * 0.62).toFixed(1) + " " + (s * L * 0.95).toFixed(1) + "," + (-L * 0.58).toFixed(1) + "' stroke='" + scuro + "' stroke-width='" + (donna ? 2.1 : 1.8) + "' fill='none' stroke-linecap='round'/>");
       });
       if (cig) { var nC = cig[0], lC = cig[1], wC = cig[2];
         for (var kc = 0; kc < nC; kc++) {   // dal centro verso l'angolo esterno, sempre più lunghe
           var tc = kc / (nC - 1), fx = 0.08 + 0.88 * tc, pxc = ex + s * rx * fx, pyc = cy - ry * Math.sqrt(Math.max(0, 1 - fx * fx)) + 0.3, lk = lC * (0.62 + 0.38 * tc), vx = 0.25 + 0.7 * tc;   // più verso l'angolo, più lunghe e piegate in fuori
-          o.push("<path d='M" + pxc.toFixed(1) + "," + pyc.toFixed(1) + " q" + (s * lk * vx * 0.35).toFixed(1) + "," + (-lk * 0.72).toFixed(1) + " " + (s * lk * vx).toFixed(1) + "," + (-lk * (0.86 - 0.3 * tc)).toFixed(1) + "' stroke='" + cig[3] + "' stroke-width='" + lo(wC) + "' fill='none' stroke-linecap='round'/>");
+          o.push("<path d='M" + pxc.toFixed(1) + "," + pyc.toFixed(1) + " q" + (s * lk * vx * 0.35).toFixed(1) + "," + (-lk * 0.72).toFixed(1) + " " + (s * lk * vx).toFixed(1) + "," + (-lk * (0.86 - 0.3 * tc)).toFixed(1) + "' stroke='" + cig[3] + "' stroke-width='" + (wC) + "' fill='none' stroke-linecap='round'/>");
         }
       }
       if (c.occhi === "furbi") o.push("<path d='M" + (ex - rx - 1) + "," + (cy + 1) + " Q" + ex + "," + (cy - 2 * ry) + " " + (ex + rx + 1) + "," + (cy + 1) + " Z' fill='" + u("p") + "'/>",
-        "<path d='M" + (ex - rx - 1) + "," + (cy + 1) + " L" + (ex + rx + 1) + "," + cy + "' stroke='" + scuro + "' stroke-width='" + lo(2.8) + "' stroke-linecap='round'/>");
+        "<path d='M" + (ex - rx - 1) + "," + (cy + 1) + " L" + (ex + rx + 1) + "," + cy + "' stroke='" + scuro + "' stroke-width='" + (2.8) + "' stroke-linecap='round'/>");
       else if (c.occhi === "assonnati") o.push("<path d='M" + (ex - rx - 1) + "," + (cy + 0.5) + " Q" + ex + "," + (cy - 2 * ry) + " " + (ex + rx + 1) + "," + (cy + 0.5) + " L" + (ex + rx + 1) + "," + (cy - 1) + " Q" + ex + "," + (cy + 2.5) + " " + (ex - rx - 1) + "," + (cy - 1) + " Z' fill='" + u("p") + "'/>",
-        "<path d='M" + (ex - rx - 1) + "," + (cy - 1) + " Q" + ex + "," + (cy + 2.5) + " " + (ex + rx + 1) + "," + (cy - 1) + "' stroke='" + scuro + "' stroke-width='" + lo(2.4) + "' fill='none' stroke-linecap='round'/>");
+        "<path d='M" + (ex - rx - 1) + "," + (cy - 1) + " Q" + ex + "," + (cy + 2.5) + " " + (ex + rx + 1) + "," + (cy - 1) + "' stroke='" + scuro + "' stroke-width='" + (2.4) + "' fill='none' stroke-linecap='round'/>");
       else o.push("<path d='M" + (ex - rx + 1.5) + "," + (cy + ry - 1.5) + " Q" + ex + "," + (cy + ry + 2.5) + " " + (ex + rx - 1.5) + "," + (cy + ry - 1.5) + "' stroke='" + tono(P, -0.4) + "' stroke-width='1.1' opacity='.45' fill='none' stroke-linecap='round'/>");
       if (c.occhi === "ciglia") [0, 1, 2].forEach(function (k) {   // ciglia lunghe sulla palpebra, verso l'esterno
         var dx = rx - 1.5 - k * 3.2, px = ex + s * dx, py = cy - ry * Math.sqrt(Math.max(0, 1 - (dx / rx) * (dx / rx)));   // punto sul bordo alto dell'occhio
-        o.push("<path d='M" + px.toFixed(1) + "," + py.toFixed(1) + " l" + (s * 4.5) + ",-" + (4.5 - k * 0.6) + "' stroke='" + scuro + "' stroke-width='" + lo(1.9) + "' stroke-linecap='round'/>");
+        o.push("<path d='M" + px.toFixed(1) + "," + py.toFixed(1) + " l" + (s * 4.5) + ",-" + (4.5 - k * 0.6) + "' stroke='" + scuro + "' stroke-width='" + (1.9) + "' stroke-linecap='round'/>");
       });
       if (c.occhi === "tristi") o.push("<path d='M" + (ex - rx - 1) + "," + (cy - 3) + " Q" + ex + "," + (cy - ry - 3) + " " + (ex + rx + 1) + "," + (cy - 3) + " L" + (ex + rx + 1) + "," + (cy - ry - 6) + " L" + (ex - rx - 1) + "," + (cy - ry - 6) + " Z' fill='" + u("p") + "'/>",
-        "<path d='M" + (ex - rx - 1) + "," + (cy - 3) + " Q" + ex + "," + (cy - ry - 3) + " " + (ex + rx + 1) + "," + (cy - 3) + "' stroke='" + scuro + "' stroke-width='" + lo(2.4) + "' fill='none' stroke-linecap='round'/>");   // palpebra un po' calata
+        "<path d='M" + (ex - rx - 1) + "," + (cy - 3) + " Q" + ex + "," + (cy - ry - 3) + " " + (ex + rx + 1) + "," + (cy - 3) + "' stroke='" + scuro + "' stroke-width='" + (2.4) + "' fill='none' stroke-linecap='round'/>");   // palpebra un po' calata
       if (giro) o.push("</g>");
       if (c.segno === "occhiaie") o.push("<path d='M" + (ex - 8) + "," + (cy + ry + 1.5) + " Q" + ex + "," + (cy + ry + 6) + " " + (ex + 8) + "," + (cy + ry + 1.5) + "' stroke='#7a5a8a' stroke-width='2.2' opacity='.35' fill='none' stroke-linecap='round'/>");
       o.push("</g>");
@@ -1671,7 +1671,7 @@ p b{color:var(--testo)}
     o.push("</g>");
     // sopracciglia a forma (più spesse verso il naso, sottili verso l'esterno)
     var colS = tipo === "calvo" ? "#4b2f1d" : tono(H, -0.25);
-    if (R) colS = misto(colS, P, 0.12);   // rifinito: il pelo si fonde un poco con la pelle (meno «disegnate col pennarello»)
+    if (R) colS = misto(colS, P, 0.05);   // rifinito: il pelo si fonde appena con la pelle (in piccolo le sopracciglia aiutano a leggere la faccia)
     o.push("<g transform='translate(0," + yS + ")'>");
     [80, 120].forEach(function (ex) {
       var s = ex < 100 ? -1 : 1, est = ex + s * 11, int = ex - s * 9, t = c.sopracc, yE, yI, cyb, sp;
@@ -1687,7 +1687,7 @@ p b{color:var(--testo)}
       else if (t === "arrabbiate") { yE = 78; yI = 88; cyb = 82; sp = 4.8; }
       else { yE = 85; yI = 83; cyb = 77.5; sp = 4.2; }
       if (donna) { sp *= 0.72; cyb -= 1.5; } else sp *= 1.15;   // lei: sopracciglia sottili e più arcuate; lui: più folte
-      if (R) sp *= 0.86;
+      if (R) sp *= 0.93;
       o.push("<path transform='translate(" + (s * dE) + ",0)' d='M" + est + "," + yE + " Q" + ex + "," + cyb + " " + int + "," + yI + " L" + int + "," + (yI + sp) + " Q" + ex + "," + (cyb + sp * 0.85) + " " + est + "," + (yE + sp * 0.35) + " Z' fill='" + colS + "' stroke='" + colS + "' stroke-width='.9' stroke-linejoin='round'/>");
       if (t === "tagliate" && s < 0) o.push("<path d='M" + (ex - 4 - dE) + ",76 L" + (ex - 6 - dE) + ",90' stroke='" + P + "' stroke-width='2.2' stroke-linecap='round'/>");   // il taglio nel sopracciglio
     });
