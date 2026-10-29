@@ -20,6 +20,8 @@ Ultimo aggiornamento: **29 ott 2026, 02:30** (ora italiana).
 
 **Regola del momento (settimana appena azzerata):** lavori grandi sì, ma la settimana deve bastare 7 giorni → **circa 14% al giorno**. Aiutanti Sonnet di base, Opus solo per il codice delicato (rete, motore di un gioco). Un lavoro grande alla volta. I lavori lunghi e separabili vanno nel cloud finché ci sono crediti (fino al 5 nov).
 
+**Il ragionamento delle chat lo regola il Cervello** (il proprietario, 29 ott notte: «vai di medio per i colori, regolati tu anche per queste cose»): medio per i lavori ripetitivi (colori, liste, controlli), alto per disegno e codice delicato, il massimo solo se serve davvero. Dal 29 ott 04:55: chat Notte vivace su medio, chat Avatar su alto (prima tutte e due «molto alto»: ~2,5% della settimana all'ora in due). Quella notte lo stop è stato alzato dal 25% al 35% («se serve vai oltre il 25»).
+
 Regole generali: sotto il 70% lavori grandi ok · 70-85% lavori medi, aiutanti Sonnet · 85-95% solo piccole cose · sopra il 95% fermi, tranne pubblicare.
 
 ---
