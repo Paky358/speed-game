@@ -14,6 +14,7 @@ NOME ESATTO DEL FILE PER OGNI GIOCO  (tutto minuscolo, .jpg)
   ordine.jpg      -> Parola d'ordine
   balla.jpg       -> La Balla Colossale
   asta.jpg        -> L'Asta
+  astafanta.jpg   -> Mini Asta Fantacalcio
   nomicose.jpg    -> Nomi, Cose e Citta'
   impostore.jpg   -> L'Impostore
   sipero.jpg      -> Si'... pero'
