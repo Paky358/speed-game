@@ -77,7 +77,7 @@ const PALAZZO = crea({
     {x:30,y:36,w:2,h:1,t:'piedistallo'},{x:38,y:36,w:2,h:1,t:'piedistallo'},
     {x:49,y:19,w:5,h:1,t:'console'},
     {x:60,y:16,w:3,h:3,t:'aiuola'},{x:65,y:16,w:3,h:3,t:'aiuola'},{x:62,y:21,w:3,h:2,t:'aiuola'},
-    {x:61,y:31,w:4,h:1,t:'telegrafo'},
+    {x:60,y:31,w:3,h:1,t:'telegrafo'},   // nell'angolo: la porta dalla Serra (x 63-64) resta libera
     {x:49,y:40,w:2,h:2,t:'cassa'},{x:56,y:42,w:3,h:2,t:'cassa'},
   ],
 });
@@ -2510,7 +2510,7 @@ Vista.prototype.meta = function () {
   var ap = V.compitiAperti(); if (!ap.length) return null;
   ap.sort(function (a, b) { return Math.hypot(centro(a.tx) - me.x, centro(a.ty) - me.y) - Math.hypot(centro(b.tx) - me.x, centro(b.ty) - me.y); });
   var p = ap[0], st = stanzaDi(PALAZZO, { x: centro(p.tx), y: centro(p.ty) });
-  return { x: centro(p.tx), y: centro(p.ty), col: "#e7b75c", testo: (V.priv.finti ? "Fingi: " : "Prossimo: ") + p.nome + " · " + st.nome, post: p };
+  return { x: centro(p.tx), y: centro(p.ty), col: "#e7b75c", testo: (V.squadra() === "ombre" ? "Fingi (stacci accanto): " : V.priv.finti ? "Fingi: " : "Prossimo: ") + p.nome + " · " + st.nome, post: p };
 };
 Vista.prototype.disegnaScena = function () {
   var V = this, g = V.g, io = V.me; if (!g) return;
@@ -2542,7 +2542,8 @@ Vista.prototype.vicinoUsa = function () {
   if (g.interf && crew && d(CONSOLE.tx, CONSOLE.ty) < R_USA) return { tipo: "ripara", cosa: "console", post: CONSOLE };
   if (g.acqua && crew && !g.acqua[1] && d(CHIUSA_A.tx, CHIUSA_A.ty) < R_USA) return { tipo: "ripara", cosa: "chiusaA", post: CHIUSA_A };
   if (g.acqua && crew && !g.acqua[2] && d(CHIUSA_B.tx, CHIUSA_B.ty) < R_USA) return { tipo: "ripara", cosa: "chiusaB", post: CHIUSA_B };
-  var ap = V.compitiAperti(); for (var i = 0; i < ap.length; i++) if (d(ap[i].tx, ap[i].ty) < R_USA) return { tipo: "compito", post: ap[i] };
+  // le ombre vedono i compiti per fingere (ci stanno accanto), ma non li possono fare
+  if (V.squadra() !== "ombre") { var ap = V.compitiAperti(); for (var i = 0; i < ap.length; i++) if (d(ap[i].tx, ap[i].ty) < R_USA) return { tipo: "compito", post: ap[i] }; }
   if (d(MONITOR.tx, MONITOR.ty) < R_USA) return { tipo: "telecamere" };
   if (d(PLASTICO.tx, PLASTICO.ty) < R_USA) return { tipo: "plastico" };
   if (V.sonoVivo() && V.priv && V.priv.campane > 0 && d(CAMPANA.tx, CAMPANA.ty) < R_USA) return { tipo: "campana" };
