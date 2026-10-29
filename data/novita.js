@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 277,
+    data: "29 ottobre 2026",
+    titolo: "Avatar nuovi per tutti e altri cinque giochi di notte 🌙",
+    descrizione: [
+      "Gli avatar hanno un aspetto nuovo, più curato: niente contorni neri, occhi più veri, luce morbida e colori un po' più vivi. Ognuno resta la stessa persona di prima, con i suoi vestiti e i suoi accessori.",
+      "Horto Muso si corre di sera: cielo blu notte con la luna, tribuna coi fari accesi e prato verde scuro. Il tasto FRUSTA! è lampone.",
+      "Palla a Pendolo si gioca di notte: cielo stellato, la luna che si specchia nel mare, la palla che brilla e il mirino azzurro.",
+      "In Chi di Noi? le scene e le carte stanno in cornici di vetro scuro, e la carta che scegli si accende.",
+      "L'Asta coi temi si fa in una sala di sera, con la luce calda sul banco; chi ha l'offerta più alta si riconosce dal lampone. Lo stadio del fantacalcio resta com'era.",
+      "Parola d'ordine ha il tavolo blu notte e le carte color crema; le carte girate hanno i colori e i disegni delle squadre di sempre, e la nera il teschio."
+    ]
+  },
+  {
     v: 276,
     data: "29 ottobre 2026",
     titolo: "Anche le partite si vestono di notte 🌙",

@@ -2343,17 +2343,18 @@
   function rigaLog(ui, vm, e) {
     var el = ui.el, col = SQ[e.k] ? SQ[e.k].col : "#888";
     // (finché è l'unica riga, nella striscia della chat diventa grande: «▲ COMINCIANO I ROSSI»)
-    if (e.t === "via") return el("div", { class: "or-l sis via", style: "--c:" + col }, [ segno(e.k), el("span", { text: vm.vsBot ? "Cominciate voi" : "Cominciano i " + SQ[e.k].nome }) ]);
+    if (e.t === "via") return el("div", { class: "or-l sis via k" + e.k, style: "--c:" + col }, [ segno(e.k), el("span", { text: vm.vsBot ? "Cominciate voi" : "Cominciano i " + SQ[e.k].nome }) ]);
     if (e.t === "fine") return el("div", { class: "or-l sis fine" }, [ el("span", { text: e.testo || "🎉 Vincono i " + SQ[e.k].nome + "!" }) ]);
     if (e.t === "pens") {   // 💭 a fine turno: le parole a cui pensava il capo (quelle trovate; le altre restano segrete)
-      var rp = el("div", { class: "or-l or-l-pens" + ((e.ok || []).length ? " tocca" : "") }, [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome", style: "color:" + col, text: e.nome }), el("span", { class: "or-l-txt", text: "💭 pensava a" }) ]
+      var rp = el("div", { class: "or-l or-l-pens" + ((e.ok || []).length ? " tocca" : "") }, [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome k" + e.k, style: "--c:" + col, text: e.nome }), el("span", { class: "or-l-txt", text: "💭 pensava a" }) ]
         .concat((e.ok || []).map(function (w) { return el("span", { class: "or-l-w c" + e.k }, [ segno(e.k), document.createTextNode(w + " ✓") ]); }))
         .concat(e.nasc ? [ el("span", { class: "or-l-nasc", text: (e.ok && e.ok.length ? "+" : "") + e.nasc + " 🤫" }) ] : []));
       rp._parole = e.ok || [];
       return rp;
     }
     if (e.t === "sis") return el("div", { class: "or-l sis" }, [ el("span", { text: e.testo || "" }) ]);   // avvisi: capo nuovo, turno saltato, tempo scaduto, riepilogo
-    var testa = [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome", style: "color:" + col, text: e.nome }) ];
+    // (il nome col colore della squadra: --c e la classe k0/k1/k2, così sul tavolo blu notte prende la versione chiara)
+    var testa = [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome k" + e.k, style: "--c:" + col, text: e.nome }) ];
     if (e.t === "ind") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "👑" }), el("span", { class: "or-l-ind" + (String(e.p).length > 12 ? " lungo" : ""), text: e.p + " " + numTx(e.num, e.z) }) ]));
     if (e.t === "passo") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "passa" }) ]));
     var esito = e.oro ? "⭐ d'oro: si continua!" : e.c === "x" ? "💣 la parola nera!" : e.c === e.k ? (e.fin ? "✓ · finiti i tentativi" : "✓") : e.c === "n" ? "di nessuno" :
@@ -3079,8 +3080,10 @@
     st.textContent = [
       // ---- i segni delle squadre (nel DOM: <span class="or-sg"><svg>): prendono il colore della scritta ----
       ".or-sg{display:inline-block;flex:none;width:.8em;height:.8em;line-height:0;vertical-align:-.06em}.or-sg:empty{display:none}.or-sg svg{display:block;width:100%;height:100%}",
-      // ---- il maxischermo: carta chiara con una luce dall'alto; i tasti nella barra scura in basso ----
-      ".or-studio .st-sch-in{padding:calc(46px + env(safe-area-inset-top)) 8px var(--or-barra,110px)!important;background:radial-gradient(120% 55% at 50% 0%,#fffdf8 0%,#f6f2e8 55%,#efe9dc 100%)}",
+      // ---- il maxischermo (🌙 Notte vivace, 29 ott 2026): il tavolo blu notte con due luci morbide (lampone in alto a
+      // sinistra, viola in basso a destra); i tasti nella barra scura in basso. I colori della notte sono in fondo (cerca «🌙») ----
+      ".or-studio .st-sch-in{padding:calc(46px + env(safe-area-inset-top)) 8px var(--or-barra,110px)!important;" +
+        "background:radial-gradient(70% 40% at 12% 0%,rgba(224,34,90,.2),rgba(224,34,90,0) 70%),radial-gradient(80% 45% at 100% 100%,rgba(120,80,255,.18),rgba(120,80,255,0) 70%),linear-gradient(180deg,#151a34 0%,#0f1328 55%,var(--o-fondo,#0d1020) 100%)}",
       ".or-sch{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;color:#1f1f1f}",
       // ---- in alto le squadre: il nome col segno, quante parole mancano, le faccine (il capo con la corona) ----
       ".or-pannelli{flex:none;display:flex;gap:6px;min-width:0}",
@@ -3191,7 +3194,7 @@
       ".or-l{flex:none;display:flex;align-items:center;gap:5px;font-size:.78rem;line-height:1.2;min-width:0}",
       ".or-chat:not(.aperta) .or-l{flex-wrap:nowrap;white-space:nowrap;overflow:hidden}.or-chat:not(.aperta) .or-l:not(:nth-last-child(-n+2)){display:none}",   // (chiusa: solo le ultime 2 righe, intere)
       ".or-l .or-f{width:19px;height:19px;box-shadow:none}",
-      ".or-l-nome{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34%}",
+      ".or-l-nome{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34%;color:var(--c,#888)}",
       ".or-l-txt{color:#8a8576;font-weight:700}",
       ".or-l-ind{font-weight:900;background:#1f1f1f;color:#fff;border-radius:7px;padding:1px 7px;letter-spacing:.02em;white-space:nowrap}.or-l-ind.lungo{font-size:.7rem;letter-spacing:0}",
       ".or-l-w{display:inline-flex;align-items:center;gap:3px;font-weight:900;border-radius:6px;padding:1px 6px;background:#e9e4d6;color:#6b6658;white-space:nowrap}.or-l-w .or-sg{width:.7em;height:.7em}",
@@ -3351,7 +3354,76 @@
       ".or-vsbot{align-self:stretch}",
       ".or-riv-modo{display:flex;gap:5px;align-items:center}.or-rm-et{flex:none;font-size:.72rem;font-weight:800;color:#e6e9ff;opacity:.85}",
       ".or-rm{flex:1;min-width:0;min-height:32px;border:0;border-radius:10px;padding:2px 4px;font:inherit;font-weight:800;font-size:.72rem;line-height:1.1;background:rgba(255,255,255,.14);color:#fff;cursor:pointer;touch-action:manipulation}.or-rm.on{background:#fff;color:#1f1f1f}",
-      "@media(max-height:700px){.or-riv{gap:5px;padding:8px 8px 9px}.or-riv-fr{width:36px;height:36px}.or-riv-ind{padding:5px}.or-riv-ind b{font-size:1.25rem}.or-riv-c{padding:4px 9px;font-size:.8rem}}"
+      "@media(max-height:700px){.or-riv{gap:5px;padding:8px 8px 9px}.or-riv-fr{width:36px;height:36px}.or-riv-ind{padding:5px}.or-riv-ind b{font-size:1.25rem}.or-riv-c{padding:4px 9px;font-size:.8rem}}",
+      // ==== 🌙 NOTTE VIVACE (29 ott 2026, proposta «tavolo notte, carte crema» approvata dal proprietario): tavolo blu notte,
+      // carte color crema con la parola scura; le girate tengono colori e disegni delle squadre (▲ righe Rossi, ● puntini Blu,
+      // ■ quadretti Verdi), la nera il teschio. Solo colori, ombre e sfondi (nessuna misura cambia, niente filtri). Vale solo
+      // dentro .or-studio (la partita): saletta e schermate dell'app non cambiano. Colori dell'app (--o-*) dove sono gli stessi ====
+      ".or-studio{--on-carta:#f3ead6;--on-carta-2:#eadfc4;--on-carta-bordo:#d6c7a0;--on-inchiostro:#241c10;--on-testo:var(--o-testo,#f4f5fb);--on-sec:var(--o-tenue,#a6acc8);--on-filo:rgba(255,255,255,.12);--on-vetro:rgba(255,255,255,.07);--on-r:#ff6b6b;--on-b:#74c0fc;--on-v:#69db7c}",
+      ".or-studio .or-sch{color:var(--on-testo)}",
+      // le squadre in alto: vetro scuro; quella di turno (e quella che vince) si accende col suo colore e il suo disegno
+      ".or-studio .or-pan{background:var(--on-vetro);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px var(--on-filo),0 8px 18px -8px rgba(0,0,0,.6)}",
+      ".or-studio .or-pan.s0 .or-pan-testa{color:var(--on-r)}.or-studio .or-pan.s1 .or-pan-testa{color:var(--on-b)}.or-studio .or-pan.s2 .or-pan-testa{color:var(--on-v)}",
+      ".or-studio .or-pan.turno .or-pan-testa,.or-studio .or-pan.vince .or-pan-testa{color:#fff}",
+      ".or-studio .or-pan.turno,.or-studio .or-pan.vince{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(255,255,255,.18),0 8px 20px -6px rgba(0,0,0,.65)}",
+      ".or-studio .or-pan.fuori{opacity:.5}",
+      ".or-studio .or-f{background:#2a3050;color:var(--on-sec);box-shadow:0 0 0 2px var(--on-carta)}.or-studio .or-f.tu{box-shadow:0 0 0 2px var(--n-lampone,#e0225a)}",
+      ".or-studio .or-av{box-shadow:0 0 0 1.5px var(--c),0 0 0 3px var(--on-carta),0 2px 4px 1px rgba(0,0,0,.4)}.or-studio .or-av.piu{background:#2a3050;box-shadow:0 0 0 1.5px var(--on-carta)}",
+      // l'indizio e le scritte sotto (la fine partita: «Vincono i Rossi» in bianco, il colore pieno sul blu notte non si legge)
+      ".or-studio .or-ind-tent{color:var(--on-sec)}.or-studio .or-ind-tent.zero{color:var(--on-testo)}",
+      ".or-studio .or-ind-stato{color:var(--on-testo)}.or-studio .or-ind-stato .or-f{box-shadow:0 0 0 2px var(--on-carta),0 0 0 3.5px var(--c)}",
+      ".or-studio .or-fine-sotto{color:var(--on-sec)}",
+      ".or-studio .or-cless{color:#ffb84d}.or-studio .or-cless.rosso{color:#ff6b6b}.or-studio .or-cless.tocca{background:rgba(255,184,77,.16)}.or-studio .or-cless.ferma{color:var(--on-sec)}.or-studio .or-cless.ferma.tocca{background:rgba(255,255,255,.1)}",
+      ".or-studio .or-aperto{color:var(--on-sec);background:rgba(255,255,255,.09)}",
+      // il tabellone: un vassoio di vetro scuro con un filo di luce sopra
+      ".or-studio .or-tab{background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.035));box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.07),0 14px 30px -14px rgba(0,0,0,.7)}",
+      // le carte crema: parola scura (14:1), un filo di spessore sotto, ombra morbida che le stacca dal tavolo
+      ".or-studio .or-carta:not(.g):not(.chiave):not(.svelata){color:var(--on-inchiostro);text-shadow:0 1px 0 rgba(255,255,255,.55);background:linear-gradient(180deg,#faf3e1 0%,var(--on-carta) 58%,var(--on-carta-2) 100%);box-shadow:inset 0 -3px 0 var(--on-carta-bordo),0 0 0 1px rgba(0,0,0,.28),0 6px 10px -4px rgba(0,0,0,.6)}",
+      // la mia (segnata da me): il bordo bianco con un alone; quella che sta per girarsi: l'anello giallo (vince sul bordo bianco)
+      ".or-studio .or-carta.mia:not(.g):not(.chiave):not(.svelata){box-shadow:inset 0 -3px 0 var(--on-carta-bordo),0 0 0 2.5px #fff,0 0 14px 2px rgba(255,255,255,.35),0 6px 10px -4px rgba(0,0,0,.6)}",
+      ".or-studio .or-tab .or-carta.sospesa:not(.g):not(.chiave):not(.svelata){box-shadow:inset 0 -3px 0 var(--on-carta-bordo),0 0 0 3px #ffd24a,0 0 16px 3px rgba(255,210,74,.55)}",
+      // le girate: restano coi colori e i disegni delle squadre; sul tavolo scuro un alone del loro colore
+      ".or-studio .or-carta.g{box-shadow:inset 0 2px 3px rgba(0,0,0,.25),inset 0 0 0 1px rgba(255,255,255,.12),0 0 14px -2px var(--sq,transparent)}",
+      ".or-studio .or-carta.g.c0{--sq:rgba(239,69,69,.45)}.or-studio .or-carta.g.c1{--sq:rgba(42,139,228,.45)}.or-studio .or-carta.g.c2{--sq:rgba(56,176,81,.45)}",
+      // la parola di nessuno girata: spenta e scura, non si confonde con quelle crema ancora da scoprire (5:1)
+      ".or-studio .or-carta.g.cn{background:linear-gradient(180deg,#2a3050,#222844);color:#98a0c4;text-shadow:none;box-shadow:inset 0 2px 4px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.06)}",
+      ".or-studio .or-tab.capo .or-carta.g.cn:not(.oro):after{color:#98a0c4}",
+      // la parola d'oro girata (è «di nessuno»: va dopo la regola qui sopra): oro col riflesso e la stella, come prima
+      ".or-studio .or-carta.g.oro{color:#5a3b00;text-shadow:0 1px 0 rgba(255,255,255,.55);background:linear-gradient(115deg,rgba(255,255,255,0) 32%,rgba(255,255,255,.5) 46%,rgba(255,255,255,0) 60%),linear-gradient(160deg,#ffe066,#f5a800);box-shadow:inset 0 0 0 1px rgba(150,95,0,.3),0 0 0 2px #fff3bf,0 0 14px -2px rgba(255,200,40,.55)}",
+      // la nera girata: nera con l'anello rosso e il teschio
+      ".or-studio .or-carta.g.cx{background:radial-gradient(110% 90% at 30% 15%,#2c2c3a,#08080d 70%);box-shadow:0 0 0 2.5px #ff4d6d,0 0 16px 2px rgba(255,77,109,.6)}",
+      // la mappa del capo (e la fine partita): carte crema tinte col colore della squadra, il filo spesso sotto e il disegno;
+      // la nera scura col bordo chiaro; l'oro (solo a fine partita) oro chiaro
+      ".or-studio .or-carta.chiave.c0,.or-studio .or-carta.svelata.c0{color:#6e1010;background:repeating-linear-gradient(135deg,rgba(224,49,49,.2) 0,rgba(224,49,49,.2) 4px,rgba(224,49,49,0) 4px,rgba(224,49,49,0) 10px),linear-gradient(180deg,#fbd4c8,#f1a99a);box-shadow:inset 0 -5px 0 #e03131,0 0 0 1px rgba(0,0,0,.3),0 6px 10px -4px rgba(0,0,0,.6)}",
+      ".or-studio .or-carta.chiave.c1,.or-studio .or-carta.svelata.c1{color:#0a3568;background:radial-gradient(circle,rgba(28,126,214,.24) 0,rgba(28,126,214,.24) 1.4px,rgba(28,126,214,0) 2px) 0 0/9px 9px,radial-gradient(circle,rgba(28,126,214,.24) 0,rgba(28,126,214,.24) 1.4px,rgba(28,126,214,0) 2px) 4.5px 4.5px/9px 9px,linear-gradient(180deg,#d3e4f7,#a4c5ea);box-shadow:inset 0 -5px 0 #1c7ed6,0 0 0 1px rgba(0,0,0,.3),0 6px 10px -4px rgba(0,0,0,.6)}",
+      ".or-studio .or-carta.chiave.c2,.or-studio .or-carta.svelata.c2{color:#0f4a1f;background:linear-gradient(90deg,rgba(47,158,68,.17) 50%,rgba(47,158,68,0) 50%) 0 0/10px 10px,linear-gradient(rgba(47,158,68,.17) 50%,rgba(47,158,68,0) 50%) 0 0/10px 10px,linear-gradient(180deg,#d6efd2,#a6d6a4);box-shadow:inset 0 -5px 0 #2f9e44,0 0 0 1px rgba(0,0,0,.3),0 6px 10px -4px rgba(0,0,0,.6)}",
+      ".or-studio .or-carta.chiave.cn,.or-studio .or-carta.svelata.cn{color:#5e5338;background:linear-gradient(180deg,#efe5cc,#e2d5b5);box-shadow:inset 0 -4px 0 #cbbb92,0 0 0 1px rgba(0,0,0,.28),0 6px 10px -4px rgba(0,0,0,.6)}",
+      ".or-studio .or-carta.chiave.cx,.or-studio .or-carta.svelata.cx{color:#fff;text-shadow:0 1px 1px #000;background:repeating-linear-gradient(135deg,#2e2e3c 0,#2e2e3c 5px,#1a1a24 5px,#1a1a24 10px);box-shadow:inset 0 -4px 0 #000,0 0 0 2px rgba(255,255,255,.55),0 0 14px 1px rgba(255,77,109,.35)}",
+      ".or-studio .or-carta.svelata.oro{color:#6a4700;background:linear-gradient(180deg,#fff3c4,#f9d86a);box-shadow:inset 0 -4px 0 #e8a000,0 0 0 1px rgba(0,0,0,.28),0 6px 10px -4px rgba(0,0,0,.6)}",
+      // la chat: una striscia di vetro scuro; aperta, vetro pieno. Le parole girate in crema (com'è nella foto approvata),
+      // la nera nera, l'oro oro
+      ".or-studio .or-log{background:rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px var(--on-filo)}.or-studio .or-log:before{background:rgba(255,255,255,.28)}",
+      ".or-studio .or-chat.aperta .or-log{background:var(--o-carta-piena,#151a2e);box-shadow:0 -10px 28px rgba(0,0,0,.6),inset 0 0 0 1px var(--on-filo)}",
+      ".or-studio .or-l-txt{color:var(--on-sec)}.or-studio .or-l-ind{background:rgba(255,255,255,.14);color:#fff}",
+      ".or-studio .or-l-w{background:var(--on-carta);color:var(--on-inchiostro)}.or-studio .or-l-w.cx{background:#08080d;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}.or-studio .or-l-w.oro{background:linear-gradient(160deg,#ffe066,#f5a800);color:#5c3d00}",
+      ".or-studio .or-l-esito,.or-studio .or-l-nasc,.or-studio .or-l.sis{color:var(--on-sec)}.or-studio .or-l-esito.ok{color:var(--on-v)}.or-studio .or-l.fine{color:var(--on-testo)}",
+      // i nomi nella chat e «Cominciano i Rossi» col colore della squadra: sul blu notte le versioni chiare (5:1 e più)
+      ".or-studio .or-l-nome.k0,.or-studio .or-l.via.k0{color:var(--on-r)}.or-studio .or-l-nome.k1,.or-studio .or-l.via.k1{color:var(--on-b)}.or-studio .or-l-nome.k2,.or-studio .or-l.via.k2{color:var(--on-v)}",
+      // la barra dei tasti: vetro scuro; UN solo tasto lampone pieno (quello che serve adesso), gli altri vetro
+      ".or-studio .st-barra{background:linear-gradient(rgba(13,16,32,.9),rgba(13,16,32,.98) 40%);box-shadow:0 -1px 0 rgba(255,255,255,.1),0 -10px 24px rgba(0,0,0,.35)}",
+      ".or-studio .or-btn{background:rgba(255,255,255,.1);color:var(--on-testo);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px var(--on-filo)}.or-studio .or-btn.chiaro{background:rgba(255,255,255,.07);color:var(--on-testo)}",
+      ".or-studio .or-btn.or-gira.pronto:not(:disabled),.or-studio .or-btn.or-invia:not(.manca),.or-studio .or-btn.or-invia.conferma{background:var(--o-tasto,#e0225a);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 6px 16px -6px rgba(224,34,90,.7)}",
+      ".or-studio .or-btn.or-passo.sicuri{background:var(--o-rosso,#d63c4a);color:#fff}",
+      ".or-studio .or-stato{color:var(--on-sec)}",
+      ".or-studio .or-input{background:rgba(255,255,255,.08);color:var(--on-testo);border:1.5px solid rgba(255,255,255,.2)}.or-studio .or-input::placeholder{color:rgba(166,172,200,.7)}",
+      ".or-studio .or-num{background:rgba(255,255,255,.1);color:var(--on-testo);box-shadow:inset 0 0 0 1px var(--on-filo)}.or-studio .or-num.on{background:var(--on-carta);color:var(--on-inchiostro);box-shadow:none}",
+      ".or-studio .or-chip{background:rgba(255,255,255,.1)}.or-studio .or-chip.mio{background:rgba(252,196,25,.22)}.or-studio .or-chip.on{background:var(--on-carta);color:var(--on-inchiostro)}",
+      ".or-studio .or-toast{background:var(--o-carta-piena,#151a2e);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 8px 22px rgba(0,0,0,.5)}",
+      // le scritte che compaiono sul tavolo (l'indizio, la mossa, «pensava a») e il fumetto: vetro scuro pieno col bordo della squadra
+      ".or-studio .or-cart{background:#161b32;box-shadow:0 12px 32px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 3px var(--c,#fff)}",
+      ".or-studio .or-cart.ind{background:#1a1f38;color:var(--on-testo);box-shadow:0 12px 32px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 2px var(--c,#fff)}.or-studio .or-cart.ind small{color:var(--on-sec)}",
+      ".or-studio .or-pens{background:#1a1f38;color:var(--on-testo);box-shadow:0 8px 22px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -3px var(--c,#fff)}.or-studio .or-pens-bat{color:var(--on-sec)}.or-studio .or-pens-c.segreta{background:rgba(255,255,255,.14);color:var(--on-testo)}",
+      ".or-studio .or-vignetta{background:var(--on-carta);color:var(--on-inchiostro);box-shadow:0 .3em 1em rgba(0,0,0,.55),0 0 0 .15em var(--c,#fff)}.or-studio .or-vignetta:after{border-top-color:var(--on-carta)}.or-studio .or-vignetta .n{background:var(--on-inchiostro);color:var(--on-carta)}"
     ].join("");
     document.head.appendChild(st);
   }

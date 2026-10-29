@@ -24,7 +24,10 @@
   var PARTITE_SALVATE = {};
   // il mirino di chi lancia lo vede anche chi è sulla trave? (regola; di solito no)
   function vuoiMirino() { try { return localStorage.getItem("sg-pendolo-mirino-trave") === "1"; } catch (e) { return false; } }
-  var COLSEAT = ["#ff6b6b", "#4dabf7", "#51cf66"];
+  // i colori dei tre posti sulla trave (🌙 Notte vivace: lampone chiaro, ciano, verde acqua: restano ben diversi)
+  var CIANO = "#4fd8ff", COLSEAT = ["#ff5c8a", CIANO, "#3ee0a8"];
+  // i tratti ciano brillano un po' (mirino, il bordo del posto ciano): una luce morbida attorno, solo nel canvas
+  function luceCiano(ctx, col) { if (col === CIANO) { ctx.shadowColor = CIANO; ctx.shadowBlur = 10; } else ctx.shadowBlur = 0; }
   // bravura dei bot. Sulla trave: nota = quanto spesso si accorgono del lancio, rea = prontezza (s), corsa = velocità di fuga,
   // jErr = errore nel tempo del salto, cammina = passo. Chi lancia: lCd = pausa tra i lanci, aimErr = errore di mira,
   // anticipo = quanto prevede dove vai, umano = quanto preferisce mirare alle persone, finta = finte, giroBot = durata del giro.
@@ -340,15 +343,20 @@
     if (document.getElementById("sg-pendolo-css")) return;
     var st = document.createElement("style"); st.id = "sg-pendolo-css";
     st.textContent = ".schermata.pd-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden}" +
-      ".pd-campo{position:relative;width:100%;height:var(--alt,100dvh);overflow:hidden;background:#0a3f61}" +
+      // 🌙 Notte vivace (29 ott 2026, proposta approvata dal proprietario): il campo è di notte (i colori del canvas
+      // stanno in sfondo() e render()), i comandi su vetro scuro, il tasto principale lampone come nell'app
+      ".pd-campo{position:relative;width:100%;height:var(--alt,100dvh);overflow:hidden;background:#080b1e}" +
       ".pd-campo canvas{position:absolute;inset:0;display:block;touch-action:none}" +
       ".pd-comandi{position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;padding:0 10px;pointer-events:none}" +
       ".pd-comandi > div{display:flex;gap:8px;pointer-events:auto;touch-action:none}" +
-      ".pd-tasto{width:64px;height:64px;border-radius:18px;border:2px solid rgba(255,255,255,.35);background:rgba(8,20,48,.55);color:#fff;font:inherit;font-size:1.5rem;font-weight:900;touch-action:none;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);transition:transform .08s,background .08s}" +
-      ".pd-tasto.on,.pd-tasto:active{transform:scale(.94);background:rgba(255,255,255,.3)}" +
-      ".pd-tasto.grande{width:auto;min-width:118px;padding:0 16px;font-size:1.05rem;background:linear-gradient(180deg,#ffe57e,#f4b011);color:#3a2500;border-color:#fff2b0}" +
-      ".pd-tasto:disabled{opacity:.4}" +
-      ".pd-guarda{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(4,18,28,.72);color:#fff;padding:9px 16px;border-radius:16px;font-weight:800;white-space:nowrap;pointer-events:none}" +
+      ".pd-tasto{width:64px;height:64px;border-radius:20px;border:0;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0)),rgba(21,26,46,.82);color:var(--o-testo,#f4f5fb);font:inherit;font-size:1.5rem;font-weight:800;touch-action:none;cursor:pointer;" +
+        "box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12),0 10px 22px -10px rgba(0,0,0,.9);transition:transform .08s,background .08s}" +
+      ".pd-tasto.on,.pd-tasto:active{transform:scale(.94);background:linear-gradient(180deg,rgba(79,216,255,.28),rgba(79,216,255,.1)),rgba(21,26,46,.9);box-shadow:inset 0 0 0 1px rgba(79,216,255,.7),0 0 18px -2px rgba(79,216,255,.55)}" +
+      ".pd-tasto.grande{width:auto;min-width:124px;padding:0 18px;font-size:1.05rem;letter-spacing:.02em;background:var(--o-tasto,linear-gradient(180deg,#e0225a,#c8174f));color:var(--o-tasto-testo,#fff);" +
+        "box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 10px 26px -6px rgba(224,34,90,.75),0 0 22px -4px rgba(224,34,90,.6)}" +
+      ".pd-tasto.grande:active{transform:scale(.95)}" +
+      ".pd-tasto:disabled{opacity:.4;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}" +
+      ".pd-guarda{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(21,26,46,.85);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);color:#fff;padding:9px 16px;border-radius:16px;font-weight:800;white-space:nowrap;pointer-events:none}" +
       ".pd-stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}" +
       ".pd-stat > div{background:rgba(255,255,255,.07);border-radius:12px;padding:10px 4px;text-align:center}" +
       ".pd-stat b{display:block;font-size:1.35rem;line-height:1.2}" +
@@ -446,32 +454,51 @@
     var c = document.createElement("canvas"), d = Math.min(2, dpr); c.width = Math.round(W * d); c.height = Math.round(H * d);
     var g = c.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
     var beamY = H * 0.44, waterY = H * 0.56, oriz = H * 0.31;
-    var cielo = g.createLinearGradient(0, 0, 0, oriz); cielo.addColorStop(0, "#6cc4ec"); cielo.addColorStop(1, "#d3f0fb");
+    // 🌙 Notte vivace: cielo blu notte che sfuma nel viola, nuvole appena accennate, tribuna scura con le lucine,
+    // acqua blu profondo, trave arancio; poi stelle, luna, il suo riflesso e la luce calda sotto la trave (tutto fermo)
+    var cielo = g.createLinearGradient(0, 0, 0, oriz); cielo.addColorStop(0, "#0d1020"); cielo.addColorStop(1, "#4a1d5c");
     g.fillStyle = cielo; g.fillRect(0, 0, W, oriz);
-    g.fillStyle = "rgba(255,255,255,.85)";   // nuvole
+    g.fillStyle = "rgba(130,120,210,.20)";   // nuvole
     [[0.18, 0.11, 1], [0.72, 0.08, 0.8], [0.9, 0.17, 0.6]].forEach(function (n) { var x = n[0] * W, y = n[1] * H, k = n[2] * W * 0.06;
       g.beginPath(); g.ellipse(x, y, k * 1.6, k * 0.6, 0, 0, 7); g.ellipse(x - k * 0.7, y + k * 0.1, k, k * 0.5, 0, 0, 7); g.ellipse(x + k * 0.8, y + k * 0.15, k * 0.9, k * 0.45, 0, 0, 7); g.fill(); });
     // la tribuna col pubblico, sulla riva lontana
     var tTop = oriz - H * 0.085;
-    g.fillStyle = "#e8eef3"; g.fillRect(0, tTop, W, oriz - tTop);
+    g.fillStyle = "#151a2e"; g.fillRect(0, tTop, W, oriz - tTop);
     var seme = 7; function rnd() { seme = (seme * 9301 + 49297) % 233280; return seme / 233280; }
-    var colori = ["#ff6b6b", "#ffd43b", "#4dabf7", "#51cf66", "#f783ac", "#ff922b", "#845ef7", "#ffffff"];
+    var colori = ["#ff5c8a", "#ffc247", "#4fd8ff", "#3ee0a8", "#ff8fc0", "#ff9a4a", "#b39bff", "#d7dcff"];
     for (var r = 0; r < 3; r++) { var y = tTop + 6 + r * (H * 0.025), passoX = Math.max(7, W / 46);
-      g.fillStyle = "rgba(0,0,0,.08)"; g.fillRect(0, y + 4, W, 2);
+      g.fillStyle = "rgba(0,0,0,.3)"; g.fillRect(0, y + 4, W, 2);
       for (var x = passoX / 2 + (r % 2) * passoX / 2; x < W; x += passoX) { g.fillStyle = colori[(rnd() * colori.length) | 0]; g.beginPath(); g.arc(x, y + 2 - rnd() * 2, 2.6, 0, 7); g.fill(); } }
-    g.fillStyle = "#ff6b6b"; g.fillRect(0, tTop - 5, W, 5);
-    for (var b = 0; b < W; b += 26) { g.fillStyle = (b / 26) % 2 ? "#ffd43b" : "#4dabf7"; g.beginPath(); g.moveTo(b, tTop); g.lineTo(b + 13, tTop + 9); g.lineTo(b + 26, tTop); g.fill(); }   // bandierine
-    // acqua: lontana chiara, vicina scura
-    var acqua = g.createLinearGradient(0, oriz, 0, H); acqua.addColorStop(0, "#5fc0e6"); acqua.addColorStop(0.3, "#2b95cc"); acqua.addColorStop(1, "#0a3f61");
+    g.fillStyle = "#ff5c8a"; g.fillRect(0, tTop - 5, W, 5);
+    for (var b = 0; b < W; b += 26) { g.fillStyle = (b / 26) % 2 ? "#ffc247" : "#4fd8ff"; g.beginPath(); g.moveTo(b, tTop); g.lineTo(b + 13, tTop + 9); g.lineTo(b + 26, tTop); g.fill(); }   // bandierine
+    // acqua: lontana più chiara, vicina scura
+    var acqua = g.createLinearGradient(0, oriz, 0, H); acqua.addColorStop(0, "#2c3f9c"); acqua.addColorStop(0.3, "#18276a"); acqua.addColorStop(1, "#080b1e");
     g.fillStyle = acqua; g.fillRect(0, oriz, W, H - oriz);
-    g.fillStyle = "rgba(255,255,255,.35)"; g.fillRect(0, oriz, W, 2);
+    g.fillStyle = "rgba(79,216,255,.6)"; g.fillRect(0, oriz, W, 2);
     // trave con i due pali
     var h = 13, nearW = W * 0.92, farOff = (W - nearW) / 2;
-    g.strokeStyle = "rgba(60,30,10,.55)"; g.lineWidth = 7;
+    g.strokeStyle = "rgba(8,10,28,.75)"; g.lineWidth = 7;
     [0.2, 0.8].forEach(function (u) { var px = farOff + nearW * u; g.beginPath(); g.moveTo(px, beamY + h); g.lineTo(px, waterY + 6); g.stroke(); });
-    g.fillStyle = "#b5793a"; g.beginPath(); g.moveTo(farOff, beamY); g.lineTo(W - farOff, beamY); g.lineTo(W - farOff + 9, beamY + h); g.lineTo(farOff - 9, beamY + h); g.closePath(); g.fill();
-    g.fillStyle = "#8a5522"; g.fillRect(farOff - 9, beamY + h, nearW + 18, 4);
-    g.strokeStyle = "rgba(255,255,255,.18)"; g.lineWidth = 1; g.beginPath(); g.moveTo(farOff + 4, beamY + 4); g.lineTo(W - farOff - 4, beamY + 4); g.stroke();
+    g.fillStyle = "#e0914a"; g.beginPath(); g.moveTo(farOff, beamY); g.lineTo(W - farOff, beamY); g.lineTo(W - farOff + 9, beamY + h); g.lineTo(farOff - 9, beamY + h); g.closePath(); g.fill();
+    g.fillStyle = "#8a3350"; g.fillRect(farOff - 9, beamY + h, nearW + 18, 4);
+    g.strokeStyle = "rgba(79,216,255,.24)"; g.lineWidth = 1; g.beginPath(); g.moveTo(farOff + 4, beamY + 4); g.lineTo(W - farOff - 4, beamY + 4); g.stroke();
+    // le stelle (sempre le stesse: seme fisso; ognuna con la sua luce, ferme)
+    var sm = 11; function rnd2() { sm = (sm * 9301 + 49297) % 233280; return sm / 233280; }
+    g.fillStyle = "#f4f5fb";
+    for (var si = 0; si < 46; si++) { var sx = rnd2(), sy = rnd2() * 0.24, sr = 0.6 + rnd2() * 1.3, sf = rnd2() * 6;
+      g.globalAlpha = 0.45 + 0.45 * Math.sin(sf); g.beginPath(); g.arc(sx * W, sy * H + 36, sr, 0, 7); g.fill(); }
+    g.globalAlpha = 1;
+    // la luna con l'alone
+    var mx = W * 0.85, my = H * 0.115, mr = Math.min(W * 0.05, 24);
+    var al = g.createRadialGradient(mx, my, mr * 0.8, mx, my, mr * 4.2); al.addColorStop(0, "rgba(255,226,170,.35)"); al.addColorStop(1, "rgba(255,226,170,0)");
+    g.fillStyle = al; g.beginPath(); g.arc(mx, my, mr * 4.2, 0, 7); g.fill();
+    g.fillStyle = "#fff0cf"; g.beginPath(); g.arc(mx, my, mr, 0, 7); g.fill();
+    // il riflesso della luna sull'acqua
+    var rl = g.createLinearGradient(0, waterY, 0, H); rl.addColorStop(0, "rgba(255,226,170,.16)"); rl.addColorStop(0.45, "rgba(255,226,170,0)");
+    g.fillStyle = rl; g.beginPath(); g.moveTo(mx - mr * 0.6, oriz); g.lineTo(mx + mr * 0.6, oriz); g.lineTo(mx + mr * 1.6, H * 0.8); g.lineTo(mx - mr * 1.6, H * 0.8); g.fill();
+    // la luce calda sotto la trave, sopra l'acqua
+    var lc = g.createLinearGradient(0, beamY - 10, 0, beamY + 70); lc.addColorStop(0, "rgba(255,170,90,.30)"); lc.addColorStop(1, "rgba(255,170,90,0)");
+    g.fillStyle = lc; g.fillRect(0, beamY - 10, W, 80);
     return c;
   }
   function lanciatoreBmp(ref) {   // chi lancia di spalle, disegnato una volta
@@ -514,16 +541,20 @@
     if (ref.bLancia) { var offL = !!(S.sw || S.rp || S.f !== "gioco"); if (ref.bLancia.disabled !== offL) ref.bLancia.disabled = offL; }
     // il mondo (col piccolo scossone quando qualcuno cade)
     ctx.save();
-    if (ref.shake > 0) { ref.shake -= dt; var k = Math.max(0, ref.shake) * 22; ctx.fillStyle = "#0a3f61"; ctx.fillRect(0, 0, W, H); ctx.translate((Math.random() - 0.5) * k, (Math.random() - 0.5) * k); }
+    if (ref.shake > 0) { ref.shake -= dt; var k = Math.max(0, ref.shake) * 22; ctx.fillStyle = "#080b1e"; ctx.fillRect(0, 0, W, H); ctx.translate((Math.random() - 0.5) * k, (Math.random() - 0.5) * k); }
     ctx.drawImage(ref.bg, 0, 0, W, H);
-    ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(79,216,255,.24)"; ctx.lineWidth = 2;
     for (var kw = 0; kw < 3; kw++) { var yy = waterY + 16 + kw * 24; ctx.beginPath();
       for (var x = 0; x <= W; x += 14) ctx.lineTo(x, yy + Math.sin(x * 0.05 + ora * 0.002 + kw) * 4); ctx.stroke(); }
     // geometria palla (calcolata prima: serve per lo z-order e per l'ombra)
     var p = S.p, bx = ballXf(S.ba, p) * W, by = handsY + (beamY - handsY) * p, r = H * 0.085 * (1 - 0.5 * (p > 1 ? 1 : p)), sc = 1 - Math.min(1, p) * 0.6;
     function disegnaPalla() {
-      ctx.strokeStyle = "rgba(30,20,10,.6)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, handsY); ctx.lineTo(bx, by); ctx.stroke();
-      var gg = ctx.createRadialGradient(bx - r * 0.3, by - r * 0.3, r * 0.2, bx, by, r); gg.addColorStop(0, "#ff8f6b"); gg.addColorStop(1, "#c0392b");
+      ctx.strokeStyle = "rgba(244,245,251,.6)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, handsY); ctx.lineTo(bx, by); ctx.stroke();
+      var gg = ctx.createRadialGradient(bx - r * 0.3, by - r * 0.3, r * 0.2, bx, by, r); gg.addColorStop(0, "#ff7aa2"); gg.addColorStop(1, "#e0225a");
+      // la palla lampone che brilla: l'alone è un gradiente (una sfocatura del canvas a ogni fotogramma pesa sui telefoni lenti)
+      var ra = r + Math.max(14, r * 0.6), al = ctx.createRadialGradient(bx, by, r * 0.85, bx, by, ra);
+      al.addColorStop(0, "rgba(224,34,90,.5)"); al.addColorStop(1, "rgba(224,34,90,0)");
+      ctx.fillStyle = al; ctx.beginPath(); ctx.arc(bx, by, ra, 0, 7); ctx.fill();
       ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(bx, by, r, 0, 7); ctx.fill();
       ctx.fillStyle = "rgba(255,255,255,.4)"; ctx.beginPath(); ctx.arc(bx - r * 0.3, by - r * 0.3, r * 0.25, 0, 7); ctx.fill();
     }
@@ -531,11 +562,11 @@
     ctx.fillStyle = "rgba(0,0,0," + (0.28 * (1 - Math.min(1, p) * 0.6)) + ")"; ctx.beginPath(); ctx.ellipse(bx, waterY + 8, r * 0.9 * sc + 6, r * 0.32 * sc + 3, 0, 0, 7); ctx.fill();
     // dove arriva la palla lanciata (la zona che colpisce)
     if (S.sw && S.f === "gioco") { var zx = beamXf(S.ba) * W;
-      ctx.fillStyle = "rgba(255,60,60," + (0.22 + 0.12 * Math.sin(ora * 0.02)).toFixed(3) + ")"; ctx.beginPath(); ctx.ellipse(zx, beamY + 6, HITF * W, 6, 0, 0, 7); ctx.fill(); }
+      ctx.fillStyle = "rgba(224,34,90," + (0.22 + 0.12 * Math.sin(ora * 0.02)).toFixed(3) + ")"; ctx.beginPath(); ctx.ellipse(zx, beamY + 6, HITF * W, 6, 0, 0, 7); ctx.fill(); }
     // mirino: chi lancia lo vede sempre; chi è sulla trave solo se la regola lo dice
-    if (S.f === "gioco" && (ref.ruolo === "lanciatore" || ref.mirino)) { var mx = beamXf(S.ai) * W, my = beamY + 7; ctx.strokeStyle = "rgba(255,70,70,.9)"; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(mx - 9, my); ctx.lineTo(mx + 9, my); ctx.moveTo(mx, my - 9); ctx.lineTo(mx, my + 9); ctx.stroke();
-      ctx.fillStyle = "rgba(255,70,70,.22)"; ctx.beginPath(); ctx.arc(mx, my, 6, 0, 7); ctx.fill(); }
+    if (S.f === "gioco" && (ref.ruolo === "lanciatore" || ref.mirino)) { var mx = beamXf(S.ai) * W, my = beamY + 7; ctx.strokeStyle = CIANO; ctx.lineWidth = 2; luceCiano(ctx, CIANO);   // il mirino ciano che brilla
+      ctx.beginPath(); ctx.moveTo(mx - 9, my); ctx.lineTo(mx + 9, my); ctx.moveTo(mx, my - 9); ctx.lineTo(mx, my + 9); ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.fillStyle = "rgba(79,216,255,.28)"; ctx.beginPath(); ctx.arc(mx, my, 6, 0, 7); ctx.fill(); }
     if (p > 1.0) disegnaPalla();   // palla OLTRE la trave: disegnala DIETRO i personaggi
     // personaggi sulla trave
     var tag = [];
@@ -554,7 +585,7 @@
       if (v.cd > 0) {   // barretta di ricarica del salto (sopra il nome)
         var bw = W * 0.12, byy = ty - 17, pr = clamp(1 - v.cd / JCD, 0, 1);
         ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(v.x - bw / 2, byy, bw, 5);
-        ctx.fillStyle = "#ffd43b"; ctx.fillRect(v.x - bw / 2, byy, bw * pr, 5);
+        ctx.fillStyle = "#ffc247"; ctx.fillRect(v.x - bw / 2, byy, bw * pr, 5);
       }
       var fu = ref.fumetti[v.c]; if (fu) { fu.t -= dt; if (fu.t <= 0) delete ref.fumetti[v.c]; else fumetto(ctx, v.x, ty - (v.cd > 0 ? 34 : 24), fu.testo, Math.min(1, fu.t / 0.3)); }
     });
@@ -567,7 +598,7 @@
       fumetto(ctx, fa.x + (fa.vx > 0 ? 1 : -1) * hA * 0.5, fa.y - hA * 1.05, fa.grido, 1); }
     for (var q2 = ref.splashes.length - 1; q2 >= 0; q2--) { var sp = ref.splashes[q2]; sp.r += W * 0.20 * dt; sp.a -= dt * 1.6;
       if (sp.a <= 0) ref.splashes.splice(q2, 1); else { ctx.strokeStyle = "rgba(255,255,255," + sp.a.toFixed(3) + ")"; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(sp.x, sp.y, sp.r, sp.r * 0.35, 0, 0, 7); ctx.stroke(); } }
-    ctx.fillStyle = "rgba(220,245,255,.9)";
+    ctx.fillStyle = "rgba(140,232,255,.95)";
     for (var gi = ref.gocce.length - 1; gi >= 0; gi--) { var go = ref.gocce[gi]; go.t -= dt; go.vy += H * 1.6 * dt; go.x += go.vx * dt; go.y += go.vy * dt;
       if (go.t <= 0 || (go.vy > 0 && go.y > waterY + 6)) { ref.gocce.splice(gi, 1); continue; } ctx.beginPath(); ctx.arc(go.x, go.y, 2.6, 0, 7); ctx.fill(); }
     if (p <= 1.0) disegnaPalla();   // palla davanti/alla trave: DAVANTI ai personaggi
@@ -575,13 +606,13 @@
     var rT = Math.min(W * 0.075, H * 0.05);
     if (ref.lb) ctx.drawImage(ref.lb.c, ref.lb.x, ref.lb.y, ref.lb.w, ref.lb.h);
     else { ctx.fillStyle = "#3a4150"; ctx.beginPath(); ctx.arc(cx, H * 0.92, H * 0.05, 0, 7); ctx.fill(); }
-    targhetta(ctx, cx, H * 0.84 - rT * 1.6, ref.ruolo === "lanciatore" ? "TU" : (ref.lancNome || "Bot"), "#ffd43b", ref.ruolo === "lanciatore");
+    targhetta(ctx, cx, H * 0.84 - rT * 1.6, ref.ruolo === "lanciatore" ? "TU" : (ref.lancNome || "Bot"), "#ffc247", ref.ruolo === "lanciatore");
     ctx.restore();
     // scritte che salgono (+1, DOPPIETTA!)
     for (var ti = ref.testi.length - 1; ti >= 0; ti--) { var tx = ref.testi[ti]; tx.t -= dt; tx.y -= (tx.grande ? 18 : 40) * dt;
       if (tx.t <= 0) { ref.testi.splice(ti, 1); continue; }
       ctx.save(); ctx.globalAlpha = Math.min(1, tx.t / 0.4); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.font = tx.grande ? "900 30px system-ui" : "900 22px system-ui"; ctx.lineWidth = 5; ctx.strokeStyle = "rgba(4,18,28,.8)"; ctx.fillStyle = tx.grande ? "#ffd43b" : "#fff";
+      ctx.font = tx.grande ? "900 30px system-ui" : "900 22px system-ui"; ctx.lineWidth = 5; ctx.strokeStyle = "rgba(8,10,28,.9)"; ctx.fillStyle = tx.grande ? "#ffc247" : "#fff";
       ctx.strokeText(tx.testo, tx.x, tx.y); ctx.fillText(tx.testo, tx.x, tx.y); ctx.restore(); }
     // aiuto nei primi secondi
     var tA = (ora - ref.t0) / 1000;
@@ -600,9 +631,11 @@
     }
     // HUD
     var nv = vivi(S.c);
-    ctx.fillStyle = "rgba(4,18,28,.5)"; ctx.fillRect(0, 0, W, 34);
+    if (!ref.gh) { ref.gh = ctx.createLinearGradient(0, 0, 0, 34); ref.gh.addColorStop(0, "rgba(21,26,46,.92)"); ref.gh.addColorStop(1, "rgba(21,26,46,.72)"); }   // vetro scuro
+    ctx.fillStyle = ref.gh; ctx.fillRect(0, 0, W, 34);
+    ctx.fillStyle = "rgba(224,34,90,.75)"; ctx.fillRect(0, 33, W, 1.5);   // con un filo di lampone sotto
     ctx.font = "bold 18px system-ui"; ctx.textBaseline = "middle";
-    ctx.fillStyle = S.tm <= 5 && S.f === "gioco" ? "#ffb3b3" : "#fff";
+    ctx.fillStyle = S.tm <= 5 && S.f === "gioco" ? "#ff8fa8" : "#fff";
     ctx.textAlign = "left"; ctx.fillText("⏱️ " + Math.ceil(S.tm) + "s", 58, 17);   // a sinistra c'è il tasto indietro
     ctx.fillStyle = "#fff"; ctx.textAlign = "right"; ctx.fillText((ref.ruolo === "lanciatore" ? "🎯 Da buttare giù: " : "🏃 In piedi: ") + nv, W - 12, 17); ctx.textAlign = "left";
   }
@@ -622,8 +655,8 @@
   function targhetta(ctx, x, y, testo, col, mio) {
     ctx.save(); ctx.font = "bold 12px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     var w = ctx.measureText(testo).width + 16, h = 20;
-    ctx.fillStyle = mio ? "#ffd43b" : "rgba(10,18,50,.82)"; ctx.strokeStyle = col; ctx.lineWidth = 2;
-    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x - w / 2, y - h / 2, w, h, 10); else ctx.rect(x - w / 2, y - h / 2, w, h); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = mio ? "#ffc247" : "rgba(13,16,32,.88)"; ctx.strokeStyle = col; ctx.lineWidth = 2; luceCiano(ctx, col);
+    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x - w / 2, y - h / 2, w, h, 10); else ctx.rect(x - w / 2, y - h / 2, w, h); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
     ctx.fillStyle = mio ? "#3a2500" : "#fff"; ctx.fillText(testo, x, y + 0.5);
     ctx.restore();
   }
@@ -638,7 +671,7 @@
   function botDis(ctx, x, y, col, sc, rot) {
     ctx.save(); ctx.translate(x, y); if (rot) ctx.rotate(rot); ctx.scale(sc, sc);
     ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.beginPath(); ctx.ellipse(0, 4, 15, 6, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, -13, 14, 17, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = col; luceCiano(ctx, col); ctx.beginPath(); ctx.ellipse(0, -13, 14, 17, 0, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
     ctx.fillStyle = "#ffe0c2"; ctx.beginPath(); ctx.arc(0, -32, 9, 0, 7); ctx.fill();
     ctx.fillStyle = "#222"; ctx.fillRect(-5, -34, 3, 3); ctx.fillRect(3, -34, 3, 3);
     ctx.restore();
@@ -1167,7 +1200,7 @@
     ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     regole: [
       "Sei di spalle: davanti una <b>trave sull'acqua</b> con dei personaggi. La palla appesa oscilla <b>in profondità</b>.",
-      "<b>Lanciatore</b>: miri di lato (◀ ▶ o trascini) e premi <b>LANCIA</b>. Il lancio è <b>sempre uguale</b>: il <b>mirino rosso</b> mostra dove arriverà. Mira dove <b>andranno</b>, non dove sono!",
+      "<b>Lanciatore</b>: miri di lato (◀ ▶ o trascini) e premi <b>LANCIA</b>. Il lancio è <b>sempre uguale</b>: il <b>mirino</b> mostra dove arriverà. Mira dove <b>andranno</b>, non dove sono!",
       "La palla colpisce <b>all'andata e al ritorno</b>: chi è sotto e non è in aria finisce in acqua.",
       "<b>Sulla trave</b>: scappi <b>◀ ▶</b> o <b>SALTI</b> quando arriva la palla. Dopo un salto serve un attimo prima di saltare di nuovo.",
       "Vince il <b>lanciatore</b> se li butta giù <b>tutti</b> entro il tempo; altrimenti vince <b>chi resta</b> sulla trave.",

@@ -1235,10 +1235,10 @@
   var PROPRIETARIO = "IL PAPPONE";
   function eProprietario() { var io = profiloAttivo(); return String((io && io.nome) || "").trim().toUpperCase() === PROPRIETARIO; }
   // 🧍 GLI AVATAR NUOVI «Mii rifinito» (29 ott 2026): lo stesso avatar di ognuno, disegnato senza contorni scuri e con occhi più veri
-  // (lo stile "rifinito" di SGOmino). Per ora lo vede SOLO IL PAPPONE sul suo telefono, per provarlo nell'app vera (tutti gli avatar,
-  // anche quelli degli amici); dal suo profilo lo spegne e lo riaccende («🧍 Avatar nuovi», si ricorda in sg-avatar-stile).
+  // (lo stile "rifinito" di SGOmino). Dal 29 ott 2026 pomeriggio lo vedono TUTTI (il proprietario li ha guardati: «vanno bene»);
+  // con "proprietario" lo vedrebbe solo IL PAPPONE, che dal suo profilo lo spegne e lo riaccende («🧍 Avatar nuovi», sg-avatar-stile).
   // AVATAR_NUOVO: "nessuno" = spento per tutti · "proprietario" = solo lui · "tutti" = per tutti.
-  var AVATAR_NUOVO = "proprietario";
+  var AVATAR_NUOVO = "tutti";
   function avatarNuoviSpenti() { try { return localStorage.getItem("sg-avatar-stile") === "classico"; } catch (e) { return false; } }
   function stileAvatar() {
     if (!window.SGOmino || !SGOmino.stile) return;
@@ -11179,7 +11179,7 @@
       } catch (e) { setTimeout(function () { throw e; }, 0); }
       if (daLink && linkParams.k) chiaveDi(linkParams.sala || linkParams.gruppo || linkParams.stanza, false, linkParams.k);   // 🔑 la chiave delle foto: solo in questa scheda
       if (window.SGNube && SGNube.onCambio) SGNube.onCambio(ricordaProfilo);   // questo telefono ricorda l'ultimo profilo usato
-      if (window.SGNube && SGNube.onCambio) SGNube.onCambio(stileAvatar);   // gli avatar nuovi: solo sul telefono del proprietario (vedi AVATAR_NUOVO)
+      if (window.SGNube && SGNube.onCambio) SGNube.onCambio(stileAvatar);   // gli avatar nuovi: per tutti, o solo per il proprietario (vedi AVATAR_NUOVO)
       stileAvatar();
       // gli amici online (Passo 6): col profilo pronto si accende la presenza; profilo cambiato o uscito: si ferma o riparte
       if (window.SGNube && SGNube.onCambio && window.SGAmiciOnline) SGNube.onCambio(function () { amiciAvvia(); });

@@ -32,7 +32,7 @@
     await W.dorme(500);
     // le faccine del tavolo (img con alt = nome): ci sono i tre bot fissi, coi loro avatar (gli id dei disegni cambiano a ogni disegno: si tolgono)
     var senzaId = function (s) { return s.replace(/om[0-9a-z]+_/g, "om_"); };
-    var facce = {}; [].forEach.call(P.document.querySelectorAll(".or-f img[alt]"), function (i) { facce[i.alt] = senzaId(decodeURIComponent(i.src.split(",").slice(1).join(","))); });
+    var facce = {}; [].forEach.call(P.document.querySelectorAll(".or-f:not(.espr) img[alt]"), function (i) { facce[i.alt] = senzaId(decodeURIComponent(i.src.split(",").slice(1).join(","))); });
     attesi.forEach(function (b) {
       if (!facce[b.nome]) no(b.nome + " (bot fisso) non è al tavolo (ci sono: " + Object.keys(facce).join(", ") + ")");
       if (facce[b.nome] !== senzaId(P.SGOmino.svg(b.omino, { busto: true }))) no("al tavolo " + b.nome + " non ha il suo avatar fisso");
