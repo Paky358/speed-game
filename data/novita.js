@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 281,
+    data: "29 ottobre 2026",
+    titolo: "Stessa Lunghezza d'Onda: la ruota nuova 📡",
+    descrizione: [
+      "La mezza ruota è diventata un apparecchio vero, grande quanto lo schermo: sopra il quadrante con i lumini sul bordo, sotto la scala e la parola del sensitivo. Mentre il sensitivo pensa, sulla tendina gira un radar.",
+      "🥁 La rivelazione è più emozionante: rullo di tamburi, i lumini si accendono uno dopo l'altro, poi la tendina gira via. Il telefono vibra coi punti: tre colpi per un centro, un colpo lungo se è fuori.",
+      "🤝 «Tutti insieme» anche online: una lancetta sola, tutti contro il gioco, e alla fine il voto alla compagnia. Ognuno fa il sensitivo una volta per giro.",
+      "✋ Chi arriva a partita cominciata entra dal turno dopo con 0 punti e fa anche lui il sensitivo. Nella Sala c'è anche «👀 Guarda», per guardare senza giocare.",
+      "155 scale nuove, scritte per noi (per esempio «Scarpetta vietata ↔ Scarpetta obbligatoria» o «Al tavolo dei bambini ↔ A capotavola»). In tutto sono più di 700. Le carte già uscite non tornano per molte partite."
+    ]
+  },
+  {
     v: 280,
     data: "29 ottobre 2026",
     titolo: "Chi di Noi? di notte e tanti ritocchi 🌙",
