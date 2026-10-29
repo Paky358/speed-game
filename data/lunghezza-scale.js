@@ -51,7 +51,18 @@
         "Faccenda sopportabile|Faccenda da incubo|-",
         "Si fa senza pensarci|Ci vuole coraggio|ag",
         "Da fare con calma|Da fare di corsa|ac",
-        "Cosa da bambini|Cosa da grandi|cbplosaextv"
+        "Cosa da bambini|Cosa da grandi|cbplosaextv",
+        // 29 ott 2026: scale nuove
+        "Nessuno protesta|Il vicino bussa|aeot",
+        "Capita solo a me|Capita a tutti|ael",
+        "Si compra al mercato|Si compra al super|cbo",
+        "Da fare prima del caffè|Da fare dopo il caffè|a",
+        "Piccola gioia|Piccolo fastidio|*",
+        "Proposito di un giorno|Abitudine per sempre|ag",
+        "Lo dimentico sempre|Non lo dimentico mai|ota",
+        "Si festeggia in grande|Passa in silenzio|ea",
+        "Mi alzo al primo suono|Rimando la sveglia|-",
+        "Pulisco per gli ospiti|Pulisco ogni giorno|-"
       ] },
 
       { id: "cibo", nome: "Cibo e cucina", icona: "🍝", scale: [
@@ -90,7 +101,17 @@
         "Cibo per consolarsi|Cibo per festeggiare|cb",
         "Facile da mangiare|Ci si sporca tutti|c",
         "Non lo ordina nessuno|Si ordina sempre|cb",
-        "Fa venire sete|Disseta|-"
+        "Fa venire sete|Disseta|-",
+        // 29 ott 2026: scale nuove
+        "Scarpetta vietata|Scarpetta obbligatoria|c",
+        "Mi pento di averlo preso|Tutti lo invidiano|cb",
+        "Si fa con gli avanzi|Si compra apposta|c",
+        "Ketchup ci sta|Ketchup è un delitto|c",
+        "Una pentola sola|Cucina distrutta|c",
+        "Il pane non serve|Serve tanto pane|c",
+        "Smetto quando voglio|Non riesco a smettere|cbaj",
+        "Molto al dente|Molto cotto|-",
+        "Dopo mi addormento|Dopo ho energia|cb"
       ] },
 
       { id: "italia", nome: "Italia e italiani", icona: "🇮🇹", scale: [
@@ -126,7 +147,18 @@
         "Lo sanno tutti|Non lo sa nessuno|-",
         "Brutto ricordo da scuola|Bel ricordo da scuola|-",
         "Si dice al Nord|Si dice al Sud|-",
-        "Si dice in italiano|Si dice in inglese|-"
+        "Si dice in italiano|Si dice in inglese|-",
+        // 29 ott 2026: scale nuove
+        "Si risolve con un caffè|Servono gli avvocati|ae",
+        "Chiuso per ferie|Aperto sempre|lm",
+        "Ferma tutta l'Italia|Passa quasi inosservato|vsegfx",
+        "Parla con le mani|Parla a mani ferme|fxmn",
+        "Ti conoscono tutti|Nessuno ti conosce|lp",
+        "Cena alle sette|Cena alle dieci|lpe",
+        "Per la nonna fa male|Per la nonna fa bene|cbaot",
+        "Orrore per gli italiani|Piace agli italiani|cbsa",
+        "Colazione italiana|Colazione americana|cb",
+        "Ce l'hanno tutti in casa|Non ce l'ha nessuno|otcj"
       ] },
 
       { id: "persone", nome: "Persone e caratteri", icona: "🧑", scale: [
@@ -165,7 +197,18 @@
         "Distratto|Attentissimo|fxnm",
         "Permaloso|Si fa una risata|fx",
         "Dorme pochissimo|Dormiglione|fxn",
-        "Nome da persona seria|Nome da simpaticone|-"
+        "Nome da persona seria|Nome da simpaticone|-",
+        // 29 ott 2026: scale nuove
+        "Parla solo di sé|Chiede sempre di te|fxmn",
+        "Ride di tutto|Non ride mai|fxmn",
+        "Pensa prima di parlare|Parla prima di pensare|fxmn",
+        "Le spara grosse|Dice le cose come stanno|fxmn",
+        "Guida a 30 all'ora|Guida come un pilota|fxm",
+        "Va dritto al punto|Gira intorno al discorso|fxmn",
+        "Parla sottovoce|Parla a squarciagola|fxmn",
+        "Regalo sempre sbagliato|Regalo sempre azzeccato|fxm",
+        "Tiene i segreti|Spiffera tutto|fxmn",
+        "Si fa i fatti suoi|Un vero impiccione|fxmn"
       ] },
 
       { id: "musica", nome: "Musica e TV", icona: "🎤", scale: [
@@ -202,7 +245,18 @@
         "Da guardare cenando|Meglio a stomaco vuoto|sv",
         "Concorrente da quiz|Concorrente da reality|fxm",
         "Lo canticchiano tutti|Non lo canta nessuno|-",
-        "Canzone da ninna nanna|Canzone da sveglia|-"
+        "Canzone da ninna nanna|Canzone da sveglia|-",
+        // 29 ott 2026: scale nuove
+        "Mai sentita in radio|Passa in radio ogni ora|-",
+        "Cover più bella|Originale insuperabile|-",
+        "Suoneria discreta|Suoneria imbarazzante|-",
+        "Stonatissimo|Voce d'angelo|fxmn",
+        "Si dimentica subito|Si commenta al bar|vsegfxa",
+        "Già visto mille volte|Una novità assoluta|sv",
+        "Voce come tante|Voce inconfondibile|fxm",
+        "Fa ridere con le smorfie|Fa ridere con le parole|fxsvn",
+        "Sa di anni Ottanta|Sa di oggi|osvta",
+        "Intro lunghissima|Subito il ritornello|-"
       ] },
 
       { id: "cinema", nome: "Cinema e serie", icona: "🎬", scale: [
@@ -239,7 +293,18 @@
         "Da guardare coi popcorn|Da guardare coi fazzoletti|s",
         "Cartone per piccoli|Cartone per grandi|-",
         "Titolo bruttissimo|Titolo bellissimo|-",
-        "Primo a morire nell'horror|Sopravvive all'horror|fxnm"
+        "Primo a morire nell'horror|Sopravvive all'horror|fxnm",
+        // 29 ott 2026: scale nuove
+        "Spoiler ammesso|Spoiler è un crimine|sv",
+        "Doppiato in italiano|In lingua originale|sv",
+        "Posti sempre liberi|Prenotare in anticipo|slev",
+        "Il libro batte il film|Il film batte il libro|s",
+        "Finisce troppo presto|Non finisce più|sv",
+        "Eroe perfetto|Antieroe pasticcione|x",
+        "Spengo appena finisce|Guardo i titoli di coda|sv",
+        "Tifo per il cattivo|Tifo per l'eroe|svx",
+        "Non voglio che finisca|Finalmente è finito|sv",
+        "Aspettative zero|Aspettative altissime|*"
       ] },
 
       { id: "sport", nome: "Sport", icona: "🏆", scale: [
@@ -276,7 +341,18 @@
         "Da serata tra amici|Da pomeriggio coi nonni|gj",
         "Tifo silenzioso|Tifo da stadio|ge",
         "Perdere fa ridere|Perdere fa piangere|gj",
-        "Campione di simpatia|Campione di antipatia|-"
+        "Campione di simpatia|Campione di antipatia|-",
+        // 29 ott 2026: scale nuove
+        "Arbitro invisibile|Arbitro protagonista|gj",
+        "Allenarsi è un piacere|Allenarsi è una tortura|ga",
+        "Si gioca in tuta|Si gioca in smoking|gj",
+        "Conta partecipare|Conta solo vincere|gja",
+        "Sport di una volta|Moda del momento|gj",
+        "Stringe i denti|Si butta a terra|fxn",
+        "Contro il tempo|Contro un avversario|gja",
+        "Una sola maglia|Gira tutte le squadre|f",
+        "Anche con la pancetta|Serve un fisico perfetto|gaj",
+        "Vince chi difende|Vince chi attacca|gj"
       ] },
 
       { id: "lavoro", nome: "Lavoro e scuola", icona: "💼", scale: [
@@ -313,7 +389,18 @@
         "Divisa bruttissima|Divisa bellissima|m",
         "Lo vedo spesso|Meglio non vederlo mai|m",
         "Solo per un giorno|Per tutta la vita|m",
-        "Domanda facile all'esame|Domanda da bocciatura|-"
+        "Domanda facile all'esame|Domanda da bocciatura|-",
+        // 29 ott 2026: scale nuove
+        "Stacca in orario|Risponde anche di notte|m",
+        "Posto fisso|Lavoro sempre diverso|m",
+        "Niente pause|Pausa caffè sacra|mael",
+        "Lo lasci in ufficio|Ti segue a casa|ma",
+        "Pochi compiti|Compiti a non finire|-",
+        "Ultimo banco|Prima fila|fxmn",
+        "Fa copiare tutti|Fa la spia|fxmn",
+        "Meglio non scriverlo|Fa bene al curriculum|ma",
+        "Clienti furiosi|Clienti riconoscenti|m",
+        "Si studia a memoria|Si studia ragionando|-"
       ] },
 
       { id: "amore", nome: "Amore e amicizia", icona: "❤️", scale: [
@@ -349,7 +436,18 @@
         "Non fa ingelosire nessuno|Fa ingelosire tutti|fxam",
         "Soprannome tenero|Soprannome terribile|-",
         "Si perdona subito|Non si perdona mai|-",
-        "Amicizia a distanza|Amici inseparabili|-"
+        "Amicizia a distanza|Amici inseparabili|-",
+        // 29 ott 2026: scale nuove
+        "Coppia che posta tutto|Coppia che non posta mai|-",
+        "Sempre appiccicati|Ognuno i suoi spazi|-",
+        "Si innamora ogni giorno|Single convinto|fxmn",
+        "Sorpresa tremenda|Sorpresa meravigliosa|eaocbl",
+        "Ex da evitare|Ex rimasti amici|-",
+        "Ti dà sempre ragione|Ti dice la verità|fxmn",
+        "Basta uno sguardo|Serve spiegare tutto|-",
+        "Innamorato a parole|Innamorato coi fatti|-",
+        "Matrimonio in grande|Solo due testimoni|-",
+        "Passa senza avvisare|Avvisa tre giorni prima|fxmn"
       ] },
 
       { id: "viaggi", nome: "Viaggi e luoghi", icona: "✈️", scale: [
@@ -386,7 +484,18 @@
         "Si dorme benissimo|Non si dorme mai|p",
         "Da cena romantica|Da pizza tra amici|p",
         "Ci porterei la suocera|Mai con la suocera|ple",
-        "Mezzo di trasporto comodo|Mezzo di trasporto scomodo|-"
+        "Mezzo di trasporto comodo|Mezzo di trasporto scomodo|-",
+        // 29 ott 2026: scale nuove
+        "Valigia all'ultimo|Valigia pronta da giorni|-",
+        "Camera sul parcheggio|Camera con vista|pl",
+        "Basta l'italiano|Serve il traduttore|p",
+        "Caffè imbevibile|Caffè buono come a casa|pl",
+        "Mare piatto|Mare mosso|pl",
+        "Sabbia fine|Sassi e scogli|pl",
+        "In aeroporto presto|In aeroporto di corsa|-",
+        "In treno dormo|In treno attacco bottone|-",
+        "Di sera è un deserto|Di sera è in festa|pl",
+        "Treni puntuali|Treni sempre in ritardo|pl"
       ] },
 
       { id: "natura", nome: "Animali e natura", icona: "🐾", scale: [
@@ -423,7 +532,15 @@
         "Lo vedo sempre|Mai visto dal vivo|n",
         "Si coltiva sul balcone|Serve un campo enorme|-",
         "Mangia pochissimo|Mangia senza sosta|n",
-        "Natura addomesticata|Natura selvaggia|-"
+        "Natura addomesticata|Natura selvaggia|-",
+        // 29 ott 2026: scale nuove
+        "Animale da branco|Animale solitario|n",
+        "Fa le fusa|Ringhia sempre|n",
+        "Mangia solo erba|Mangia solo carne|n",
+        "Sa di primavera|Sa d'autunno|cbpleoa",
+        "Bello con la pioggia|Rovinato dalla pioggia|alepcbg",
+        "Con la neve è una favola|Con la neve è il caos|pl",
+        "Pollice verde|Pollice nero|fxmn"
       ] },
 
       { id: "tecno", nome: "Tecnologia", icona: "📱", scale: [
@@ -460,7 +577,18 @@
         "Lo presto volentieri|Non lo presto mai|ot",
         "Cambia ogni anno|Uguale da sempre|ot",
         "Ti rovina la giornata|Ti salva la giornata|*",
-        "Messaggio vocale corto|Vocale da 10 minuti|-"
+        "Messaggio vocale corto|Vocale da 10 minuti|-",
+        // 29 ott 2026: scale nuove
+        "Scrivo con due dita|Scrivo a dieci dita|-",
+        "Sempre carico|Sempre quasi scarico|-",
+        "Risponde subito|Visualizza e sparisce|fxmn",
+        "Lo voglio su carta|Lo voglio digitale|ota",
+        "Lo chiedo a Google|Lo chiedo a un amico|-",
+        "Meme geniale|Meme incomprensibile|-",
+        "Notifiche tutte accese|Notifiche tutte spente|-",
+        "Menu di carta|Menu col QR code|-",
+        "Rispondo a tutti|Ignoro i numeri strani|-",
+        "Telefono con poche app|Telefono pieno di app|-"
       ] },
 
       { id: "soldi", nome: "Soldi", icona: "💰", scale: [
@@ -496,7 +624,18 @@
         "Non so quanto costa|Lo so al centesimo|cbot",
         "Spesa quotidiana|Spesa della vita|otpe",
         "Spesa da nascondere|Spesa da vantarsi|otae",
-        "Si paga da solo|Lo pagano i genitori|-"
+        "Si paga da solo|Lo pagano i genitori|-",
+        // 29 ott 2026: scale nuove
+        "Si paga con la paghetta|Si paga con il mutuo|ot",
+        "Pago tutto subito|Pago a rate|ot",
+        "Perde valore subito|Vale ogni anno di più|ot",
+        "Compro solo l'essenziale|Esco col carrello pieno|l",
+        "Dimentica il portafoglio|Offre il caffè a tutti|fxmn",
+        "Pago con le lacrime|Pago col sorriso|cbotape",
+        "Sotto il materasso|Tutto in banca|-",
+        "Mi fa sentire povero|Mi fa sentire ricco|ocbtalpe",
+        "Prezzo fisso|Si tratta sempre|otl",
+        "Pago di tasca mia|Paga l'azienda|cbaple"
       ] },
 
       { id: "sensi", nome: "Sensazioni e gusti", icona: "👃", scale: [
@@ -534,7 +673,18 @@
         "Mi calma|Mi fa arrabbiare|*",
         "Odore di pulito|Odore di chiuso|-",
         "Sa di plastica|Sa di buono|-",
-        "Trasparente|Scurissimo|-"
+        "Trasparente|Scurissimo|-",
+        // 29 ott 2026: scale nuove
+        "Silenzio imbarazzante|Silenzio che riposa|-",
+        "Opaco|Luccicante|otxn",
+        "Si scioglie in bocca|Si mastica per ore|c",
+        "Voce acuta|Voce profonda|fxmn",
+        "Senza bollicine|Pieno di bollicine|bc",
+        "Bello da lontano|Bello da vicino|plfxno",
+        "Colore pastello|Colore fluo|ox",
+        "Friabile|Gommoso|c",
+        "Sapore che sparisce|Sapore che resta|cb",
+        "Più piccolo del ricordo|Più grande del ricordo|lpoe"
       ] },
 
       { id: "assurde", nome: "Domande assurde e divertenti", icona: "🤪", scale: [
@@ -575,7 +725,18 @@
         "Ridicolo|Epico|*",
         "Cosa da robot|Cosa da umani|atmgjsev",
         "Succede ogni giorno|Una volta ogni secolo|-",
-        "Dovrebbe essere vietato|Dovrebbe essere obbligatorio|acbgjot"
+        "Dovrebbe essere vietato|Dovrebbe essere obbligatorio|acbgjot",
+        // 29 ott 2026: scale nuove
+        "Perde a nascondino|Vince a nascondino|fxnm",
+        "Suona da gelato|Suona da farmaco|-",
+        "Personaggio del tutorial|Boss finale|fxnm",
+        "Mangia di tutto|Solo pasta in bianco|fxnm",
+        "Sulla scatola del tonno|Sulle banconote|fxn",
+        "Fa paura ai mostri|Ha paura dei mostri|fxnos",
+        "Non c'entra con me|Sono proprio io|*",
+        "Parola buffa|Parola seria|-",
+        "Battute che gelano|Battute che fanno ridere|fxnm",
+        "Al tavolo dei bambini|A capotavola|fxnm"
       ] },
 
       { id: "adulti", nome: "Serata tra adulti (pulita)", icona: "🍷", scale: [
@@ -612,7 +773,17 @@
         "Invitato al matrimonio|Mai al matrimonio|fxm",
         "Lo faccio per dovere|Lo faccio per piacere|aeg",
         "Pensiero da lunedì mattina|Pensiero da venerdì sera|-",
-        "Da raccontare domani|Da dimenticare domani|aeg"
+        "Da raccontare domani|Da dimenticare domani|aeg",
+        // 29 ott 2026: scale nuove
+        "Genitore severo|Genitore amicone|fxmn",
+        "Lo organizza sempre uno|Lo organizzano tutti|aegj",
+        "Recupero in un'ora|Recupero in tre giorni|aegj",
+        "Primo a salutare|Ultimo ad andare via|fxmn",
+        "Ai matrimoni piango|Ai matrimoni sbadiglio|-",
+        "Da monovolume|Da cabriolet|otale",
+        "Auguri a voce|Auguri con una faccina|-",
+        "Addetto all'insalata|Capo della griglia|fxmn",
+        "Serata di chiacchiere|Serata di giochi|ae"
       ] }
     ]
   };

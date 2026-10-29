@@ -31,6 +31,8 @@
   function norm(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim(); }
   function pulisci(s) { return String(s || "").replace(/\s+/g, " ").trim().slice(0, 30); }
   function vibra(ms) { try { if (navigator.vibrate) navigator.vibrate(ms || 10); } catch (e) {} }
+  // la rivelazione si sente in mano: centro (e telepatia) tre colpi, 3 e 2 un colpo, fuori un colpo lungo. Brevi, mai a raffica
+  function vibraEsito(pt, tele) { vibra(tele || pt === 4 ? [40, 60, 40] : pt === 3 ? 35 : pt === 2 ? 22 : 80); }
   function nuovoId() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9); }
   function tx(n, s) { s = s == null ? "" : String(s); if (n && n.textContent !== s) n.textContent = s; }
   function puntiDi(lan, bers) { var d = Math.abs(lan - bers); return d <= FASCE[0] ? 4 : d <= FASCE[1] ? 3 : d <= FASCE[2] ? 2 : 0; }
@@ -143,7 +145,7 @@
       if (!c.length) return null;
       var nuove = c.filter(function (s) { return M.recS.indexOf(s.k) < 0; });
       var s = caso(nuove.length ? nuove : c);
-      M.usateS[s.k] = 1; M.recS.push(s.k);
+      M.usateS[s.k] = 1; M.recS.push(s.k); M.salva();
       return s;
     };
     // n parole adatte alla scala, di tipi diversi quando si può
@@ -160,10 +162,10 @@
         if (out.length === prima) break;
         giro++;
       }
-      out.forEach(function (w) { M.usateP[w] = 1; M.recP.push(w); });
+      out.forEach(function (w) { M.usateP[w] = 1; M.recP.push(w); }); M.salva();
       return out;
     };
-    M.salva = function () { scriviLS(LS_SC, M.recS, 200); scriviLS(LS_PA, M.recP, 300); };
+    M.salva = function () { scriviLS(LS_SC, M.recS, 450); scriviLS(LS_PA, M.recP, 600); };
     return M;
   }
   // il mazzo in breve (per la ripresa: scale e parole già uscite in questa partita) e il mazzo rifatto da lì
@@ -211,8 +213,8 @@
       };
       if (tipo === "tamburo") {   // rullo che accelera, poi il colpo
         var tt = 0, passo = 0.12;
-        while (tt < 0.6) { nota(95 + Math.random() * 40, tt, 0.06, "square", 0.045); tt += passo; passo = Math.max(0.032, passo * 0.8); }
-        nota(70, 0.62, 0.4, "sine", 0.16);
+        while (tt < 0.72) { nota(95 + Math.random() * 40, tt, 0.06, "square", 0.02 + tt * 0.05); tt += passo; passo = Math.max(0.03, passo * 0.82); }
+        nota(70, 0.75, 0.45, "sine", 0.17);
       } else if (tipo === "centro") { [[523, 0], [659, 0.12], [784, 0.24], [1047, 0.36]].forEach(function (n) { nota(n[0], n[1], n[1] > 0.3 ? 0.55 : 0.14, "triangle", 0.12); }); }
       else if (tipo === "tele") { [[784, 0], [988, 0.1], [1175, 0.2], [1568, 0.3]].forEach(function (n) { nota(n[0], n[1], 0.5, "sine", 0.1); }); }
       else if (tipo === "buono") { nota(660, 0, 0.12, "triangle", 0.1); nota(880, 0.12, 0.3, "triangle", 0.1); }
@@ -238,53 +240,71 @@
   //  IL QUADRANTE (SVG fatto una volta; si muovono solo rotazioni e opacità)
   // =========================================================
   var SVG_Q = null;
+  // la mezza ruota: la parte di sopra di un disco (come l'apparecchio del gioco vero). viewBox -4 0 208 104, perno in 100,104;
+  // la ghiera (r 96-104) coi lumini, la faccia (r 94,5) coi colori delle due scale, il bersaglio, la tendina e la lancetta.
+  // La metà di sotto del disco è un riquadro vero (.lu-corpo), con la scala e la parola.
   function svgQuadrante() {
     function pt(r, a) { var x = a * Math.PI / 180; return (100 + r * Math.sin(x)).toFixed(2) + "," + (104 - r * Math.cos(x)).toFixed(2); }
+    function xy(r, a) { return pt(r, a).split(","); }
     function spicchio(r, a1, a2) { return "M100,104 L" + pt(r, a1) + " A" + r + "," + r + " 0 0 1 " + pt(r, a2) + " Z"; }
+    function arco(r, a1, a2) { return "M" + pt(r, a1) + " A" + r + "," + r + " 0 0 1 " + pt(r, a2); }
     var bande = [[-18, -10.8, 2], [-10.8, -3.6, 3], [-3.6, 3.6, 4], [3.6, 10.8, 3], [10.8, 18, 2]];
-    var col = { 2: "#ffe066", 3: "#ffa94d", 4: "#ff4d6d" };
-    var s = ["<svg viewBox='0 0 200 112' preserveAspectRatio='xMidYMax meet' aria-hidden='true'>",
+    var col = { 2: "#ffd24a", 3: "#ff9a4a", 4: "#e0225a" };
+    var s = ["<svg viewBox='-4 0 208 104' preserveAspectRatio='none' aria-hidden='true'>",
       "<defs>",
-      "<linearGradient id='luFaccia' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='#2f86e0'/><stop offset='.5' stop-color='#7357e0'/><stop offset='1' stop-color='#f0782a'/></linearGradient>",
-      "<radialGradient id='luLuce' cx='.5' cy='1' r='1'><stop offset='0' stop-color='#fff' stop-opacity='.22'/><stop offset='.55' stop-color='#fff' stop-opacity='.04'/><stop offset='1' stop-color='#fff' stop-opacity='0'/></radialGradient>",
-      "<linearGradient id='luTenda' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#33287e'/><stop offset='1' stop-color='#160f43'/></linearGradient>",
-      "<radialGradient id='luPerno' cx='.35' cy='.35' r='.8'><stop offset='0' stop-color='#ffd6e0'/><stop offset='.45' stop-color='#ff2d55'/><stop offset='1' stop-color='#7a0d27'/></radialGradient>",
+      "<linearGradient id='luFaccia' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='#1590d8'/><stop offset='.5' stop-color='#6a46dc'/><stop offset='1' stop-color='#f5722e'/></linearGradient>",
+      "<radialGradient id='luLuce' cx='.5' cy='1' r='1'><stop offset='0' stop-color='#fff' stop-opacity='.26'/><stop offset='.5' stop-color='#fff' stop-opacity='.05'/><stop offset='1' stop-color='#fff' stop-opacity='0'/></radialGradient>",
+      "<linearGradient id='luVetro' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#fff' stop-opacity='.16'/><stop offset='.45' stop-color='#fff' stop-opacity='0'/></linearGradient>",
+      "<radialGradient id='luTenda' cx='.5' cy='1' r='1'><stop offset='0' stop-color='#283166'/><stop offset='.6' stop-color='#161b3d'/><stop offset='1' stop-color='#0c0f25'/></radialGradient>",
+      "<linearGradient id='luGhiera' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#46508a'/><stop offset='.6' stop-color='#2b3260'/><stop offset='1' stop-color='#262d58'/></linearGradient>",
       "</defs>",
-      "<path d='M0.5,104 A99.5,99.5 0 0 1 199.5,104 Z' fill='#221a5e' stroke='#9d8cff' stroke-width='1.1'/>"];
+      // la ghiera
+      "<path d='M-4,104 A104,104 0 0 1 204,104 L196,104 A96,96 0 0 0 4,104 Z' fill='url(#luGhiera)'/>",
+      "<path d='" + arco(103.4, -90, 90) + "' fill='none' stroke='#fff' stroke-opacity='.2' stroke-width='.7'/>",
+      "<path d='" + arco(96.3, -90, 90) + "' fill='none' stroke='#ff4f86' stroke-opacity='.6' stroke-width='.8'/>"];
+    // i lumini della ghiera (si accendono nella rivelazione)
+    for (var k = 0; k < 18; k++) { var p0 = xy(100.1, -85 + k * 10); s.push("<circle class='lu-led' style='--i:" + k + "' cx='" + p0[0] + "' cy='" + p0[1] + "' r='1.35'/>"); }
+    // la faccia coi colori delle due scale, la luce dal perno e le tacche
+    s.push("<path d='M5.5,104 A94.5,94.5 0 0 1 194.5,104 Z' fill='url(#luFaccia)'/>",
+      "<path d='M5.5,104 A94.5,94.5 0 0 1 194.5,104 Z' fill='url(#luLuce)'/>");
     for (var v = 0; v <= 100; v += 5) {
-      var a = -90 + v * 1.8, lungo = v % 25 === 0;
-      s.push("<line x1='" + pt(95.5, a).split(",")[0] + "' y1='" + pt(95.5, a).split(",")[1] + "' x2='" + pt(lungo ? 99 : 97.8, a).split(",")[0] + "' y2='" + pt(lungo ? 99 : 97.8, a).split(",")[1] + "' stroke='#d0c7ff' stroke-width='" + (lungo ? 1.1 : 0.6) + "' opacity='.8'/>");
+      var a = -90 + v * 1.8, lungo = v % 25 === 0, q1 = xy(lungo ? 86.5 : 89.5, a), q2 = xy(93.5, a);
+      s.push("<line x1='" + q1[0] + "' y1='" + q1[1] + "' x2='" + q2[0] + "' y2='" + q2[1] + "' stroke='#fff' stroke-opacity='" + (lungo ? ".55" : ".3") + "' stroke-width='" + (lungo ? 1 : 0.6) + "' stroke-linecap='round'/>");
     }
-    s.push("<path d='M6,104 A94,94 0 0 1 194,104 Z' fill='url(#luFaccia)'/>",
-      "<path d='M6,104 A94,94 0 0 1 194,104 Z' fill='url(#luLuce)'/>",
-      "<path d='M30,104 A70,70 0 0 1 170,104' fill='none' stroke='#fff' stroke-opacity='.13' stroke-width='.7'/>",
-      "<path d='M54,104 A46,46 0 0 1 146,104' fill='none' stroke='#fff' stroke-opacity='.13' stroke-width='.7'/>",
-      "<g class='lu-g-bers' style='visibility:hidden'>");
-    bande.forEach(function (b) { s.push("<path d='" + spicchio(93.6, b[0], b[1]) + "' fill='" + col[b[2]] + "' stroke='#fff' stroke-opacity='.75' stroke-width='.5'/>"); });
-    bande.forEach(function (b) { var m = (b[0] + b[1]) / 2; s.push("<text x='100' y='22' transform='rotate(" + m + " 100 104)' text-anchor='middle' dominant-baseline='middle' font-size='8.5' font-weight='900' fill='#3a0f2c'>" + b[2] + "</text>"); });
+    s.push("<path d='" + arco(70, -90, 90) + "' fill='none' stroke='#fff' stroke-opacity='.12' stroke-width='.6'/>",
+      "<path d='" + arco(46, -90, 90) + "' fill='none' stroke='#fff' stroke-opacity='.12' stroke-width='.6'/>",
+      "<g class='lu-g-bers' style='visibility:hidden'>",
+      "<path class='lu-alone' d='" + spicchio(94.5, -21, 21) + "' fill='#fff' opacity='.16'/>");
+    bande.forEach(function (b) { s.push("<path d='" + spicchio(94.5, b[0], b[1]) + "' fill='" + col[b[2]] + "' stroke='#fff' stroke-opacity='.85' stroke-width='.6' stroke-linejoin='round'/>"); });
+    s.push("<path d='" + spicchio(94.5, -18, 18) + "' fill='url(#luVetro)'/>");
+    bande.forEach(function (b) { var m = (b[0] + b[1]) / 2; s.push("<text x='100' y='20' transform='rotate(" + m + " 100 104)' text-anchor='middle' dominant-baseline='middle' font-size='8.5' font-weight='900' fill='" + (b[2] === 4 ? "#fff" : "#3a1530") + "'>" + b[2] + "</text>"); });
     s.push("</g>", "<g class='lu-g-tenda'><g class='lu-tenda-in'>",
-      "<path d='M4.4,104 A95.6,95.6 0 0 1 195.6,104 Z' fill='url(#luTenda)' stroke='#9d8cff' stroke-width='.9'/>");
+      "<path d='M4.6,104 A95.4,95.4 0 0 1 195.4,104 Z' fill='url(#luTenda)' stroke='#b39bff' stroke-opacity='.5' stroke-width='.8'/>");
     // le stelline della tendina (sempre le stesse)
     var h = 7;
-    for (var i = 0; i < 34; i++) {
-      h = (h * 9301 + 49297) % 233280; var r = 14 + (h / 233280) * 76;
+    for (var i = 0; i < 40; i++) {
+      h = (h * 9301 + 49297) % 233280; var r = 34 + (h / 233280) * 57;
       h = (h * 9301 + 49297) % 233280; var an = -84 + (h / 233280) * 168;
-      h = (h * 9301 + 49297) % 233280; var rr = 0.35 + (h / 233280) * 0.9;
-      var p = pt(r, an).split(",");
-      s.push("<circle cx='" + p[0] + "' cy='" + p[1] + "' r='" + rr.toFixed(2) + "' fill='#fff' opacity='" + (0.35 + rr / 2).toFixed(2) + "'/>");
+      h = (h * 9301 + 49297) % 233280; var rr = 0.3 + (h / 233280) * 0.85;
+      var p = xy(r, an);
+      s.push("<circle cx='" + p[0] + "' cy='" + p[1] + "' r='" + rr.toFixed(2) + "' fill='#fff' opacity='" + (0.3 + rr / 2).toFixed(2) + "'/>");
     }
-    s.push("<path d='M28,104 A72,72 0 0 1 172,104' fill='none' stroke='#9d8cff' stroke-opacity='.35' stroke-width='.6' stroke-dasharray='2 3'/>",
-      "<text x='100' y='70' text-anchor='middle' font-size='26' font-weight='900' fill='#9d8cff' opacity='.55'>?</text>",
+    // in mezzo le onde (il segno del gioco)
+    s.push("<path d='" + arco(72, -90, 90) + "' fill='none' stroke='#b39bff' stroke-opacity='.3' stroke-width='.6' stroke-dasharray='2 3'/>",
+      "<path d='" + arco(15, -42, 42) + "' fill='none' stroke='#b39bff' stroke-opacity='.75' stroke-width='2.6' stroke-linecap='round'/>",
+      "<path d='" + arco(24, -42, 42) + "' fill='none' stroke='#b39bff' stroke-opacity='.5' stroke-width='2.6' stroke-linecap='round'/>",
+      "<path d='" + arco(33, -42, 42) + "' fill='none' stroke='#b39bff' stroke-opacity='.28' stroke-width='2.6' stroke-linecap='round'/>",
+      "<path d='M5,104 A95,95 0 0 1 195,104 Z' fill='url(#luVetro)'/>",
       "</g></g>",
+      // la lancetta: affusolata, con l'ombra e il filo di luce
       "<g class='lu-g-lan' style='opacity:0'><g class='lu-lan-in'>",
-      "<line x1='100' y1='104' x2='100' y2='16' stroke='#fff' stroke-opacity='.9' stroke-width='5' stroke-linecap='round'/>",
-      "<line x1='100' y1='104' x2='100' y2='16' stroke='#ff2d55' stroke-width='2.8' stroke-linecap='round'/>",
-      "<path d='M100,7.5 L95,18.5 L105,18.5 Z' fill='#ff2d55' stroke='#fff' stroke-width='.9' stroke-linejoin='round'/>",
+      "<path d='M97.2,104 L99.3,16 L100.7,16 L102.8,104 Z' fill='#000' opacity='.35' transform='translate(1.4 1.6)'/>",
+      "<path d='M96.6,104 L99.1,15 L100.9,15 L103.4,104 Z' fill='#fff' opacity='.28'/>",
+      "<path d='M97.6,104 L99.4,16 L100.6,16 L102.4,104 Z' fill='#e0225a'/>",
+      "<line x1='100' y1='100' x2='100' y2='20' stroke='#fff' stroke-opacity='.6' stroke-width='.55'/>",
+      "<path d='M100,5.5 L94.8,17.5 L105.2,17.5 Z' fill='#ff3d73' stroke='#fff' stroke-width='.9' stroke-linejoin='round'/>",
       "</g></g>",
-      "<rect x='-5' y='104.3' width='210' height='12' fill='#18123f'/>",
-      "<line x1='0' y1='104.5' x2='200' y2='104.5' stroke='#9d8cff' stroke-width='.9'/>",
-      "<circle cx='100' cy='104' r='8.6' fill='url(#luPerno)' stroke='#fff' stroke-width='1'/>",
-      "<circle cx='97.6' cy='101.6' r='2' fill='#fff' opacity='.75'/>",
+      "<line x1='5.5' y1='103.6' x2='194.5' y2='103.6' stroke='#ff4f86' stroke-opacity='.55' stroke-width='.8'/>",
       "</svg>");
     return s.join("");
   }
@@ -296,25 +316,23 @@
     var svg = wrap.querySelector("svg");
     var gB = svg.querySelector(".lu-g-bers"), gT = svg.querySelector(".lu-g-tenda"), gTi = svg.querySelector(".lu-tenda-in");
     var gL = svg.querySelector(".lu-g-lan"), gLi = svg.querySelector(".lu-lan-in");
+    var radar = t.el("div", { class: "lu-radar" }), corpo = t.el("div", { class: "lu-corpo" }), perno = t.el("div", { class: "lu-perno" });
     var sopra = t.el("div", { class: "lu-sopra" }), tag = t.el("div", { class: "lu-tag" }), pop = t.el("div", { class: "lu-pop" });
-    sopra.appendChild(tag); sopra.appendChild(pop); wrap.appendChild(sopra);
-    var Q = { nodo: wrap, v: 50, b: null, modo: null, fn: null, giu: false, mk: {}, tagTx: "", tenda: "chiusa", ultimo: 50, lanVis: false };
+    wrap.appendChild(radar); wrap.appendChild(corpo);
+    sopra.appendChild(perno); sopra.appendChild(tag); sopra.appendChild(pop); wrap.appendChild(sopra);
+    var Q = { nodo: wrap, corpo: corpo, v: 50, b: null, modo: null, fn: null, giu: false, mk: {}, tagTx: "", tenda: "chiusa", ultimo: 50, lanVis: false };
     var G = null;
-    function geo() {
-      if (G && G.w) return G;
-      var w = wrap.clientWidth, h = wrap.clientHeight, s = Math.min((w || 300) / 200, (h || 170) / 112);
-      G = { w: w, s: s, ox: ((w || 300) - 200 * s) / 2, oy: (h || 170) - 112 * s };
-      return G;
-    }
+    function geo() { if (!G || !G.w) Q.misura(); return G || { w: 0, s: 1, ox: 0, oy: 0 }; }
     function punto(v, r) { var g = geo(), a = (-90 + v * 1.8) * Math.PI / 180; return { x: g.ox + (100 + r * Math.sin(a)) * g.s, y: g.oy + (104 - r * Math.cos(a)) * g.s }; }
     function rot(v) { return "rotate(" + (v * 1.8 - 90).toFixed(2) + "deg)"; }
     function sposta(n, p, sc) { n.style.transform = "translate(" + p.x.toFixed(1) + "px," + p.y.toFixed(1) + "px) translate(-50%,-50%)" + (sc != null ? " scale(" + sc + ")" : ""); }
     function posTag() { if (Q.tagTx) sposta(tag, punto(Q.v, 62)); }
     Q.lan = function (v, liscia) { Q.v = v; gL.classList.toggle("liscia", !!liscia); gL.style.transform = rot(v); posTag(); };
-    Q.vediLan = function (si) { if (Q.lanVis === !!si) return; Q.lanVis = !!si; gL.style.opacity = si ? "1" : "0"; if (!si) Q.tag(null); };
+    Q.vediLan = function (si) { if (Q.lanVis === !!si) return; Q.lanVis = !!si; gL.style.opacity = si ? "1" : "0"; wrap.classList.toggle("con-lan", !!si); if (!si) Q.tag(null); };
     Q.bers = function (v) { Q.b = v; if (v == null) { gB.style.visibility = "hidden"; return; } gB.style.visibility = ""; gB.style.transform = rot(v); };
     // la tendina: "chiusa" (copre il bersaglio), "sbircia" (trasparente: il sensitivo), "aperta" (girata via)
     Q.tendina = function (stato, anim) {
+      wrap.classList.toggle("coperta", stato === "chiusa");
       if (Q.tenda === stato) return;
       Q.tenda = stato;
       if (!anim) gT.classList.add("subito");
@@ -324,6 +342,13 @@
     };
     Q.trema = function () { gTi.classList.remove("trema"); void gTi.getBoundingClientRect(); gTi.classList.add("trema"); };
     Q.vergogna = function () { gLi.classList.remove("vergogna"); void gLi.getBoundingClientRect(); gLi.classList.add("vergogna"); };
+    // i lumini della ghiera: "rullo" (si accendono uno dopo l'altro), poi l'esito (4, 3, 2, 0: colore e lampeggio), null = spenti
+    Q.lumini = function (stato) {
+      wrap.classList.remove("rullo", "e4", "e3", "e2", "e0");
+      if (stato == null) return;
+      void wrap.offsetWidth;
+      wrap.classList.add(stato === "rullo" ? "rullo" : "e" + stato);
+    };
     Q.tag = function (testo) { testo = testo || ""; if (testo !== Q.tagTx) { Q.tagTx = testo; tag.textContent = testo; tag.classList.toggle("vis", !!testo); } posTag(); };
     // gli avatar sul bordo del quadrante (ognuno per sé)
     function posMk(m) { sposta(m, punto(m._v, m._r), m._sc); }
@@ -364,10 +389,10 @@
       void pop.offsetWidth; pop.className = "lu-pop vis" + (cls ? " " + cls : "");
     };
     Q.coriandoli = function () {
-      var colori = ["#ff2d55", "#ffd43b", "#69db7c", "#4dabf7", "#b197fc", "#ff922b"];
-      for (var i = 0; i < 18; i++) {
+      var colori = ["#e0225a", "#ffd24a", "#3ee0a8", "#4fd8ff", "#b39bff", "#ff9a4a"];
+      for (var i = 0; i < 22; i++) {
         var c = t.el("span", { class: "lu-cor" });
-        var an = Math.random() * Math.PI, d = 70 + Math.random() * 90;
+        var an = Math.random() * Math.PI, d = 70 + Math.random() * 100;
         c.style.background = colori[i % colori.length];
         c.style.setProperty("--dx", (Math.cos(an) * d * (Math.random() < 0.5 ? -1 : 1)).toFixed(0) + "px");
         c.style.setProperty("--dy", (-Math.sin(an) * d - 20).toFixed(0) + "px");
@@ -401,12 +426,31 @@
     wrap.addEventListener("pointerup", su); wrap.addEventListener("pointercancel", su); wrap.addEventListener("lostpointercapture", su);
     Q.trascina = function (modo, fn) { Q.modo = modo; Q.fn = modo ? fn : null; wrap.classList.toggle("tocca", !!modo); if (!modo) Q.giu = false; };
     Q.lascia = function () { Q.giu = false; };   // (un altro ha preso la lancetta: il mio dito non la muove più)
+    // le misure: il disco è il più grande possibile (largo quanto lo schermo, se c'è posto); la metà di sotto si schiaccia
+    // (mezza ellisse) quando lo spazio è poco, e lo spazio in più va sopra e sotto, a metà
     Q.misura = function () {
-      G = null;
-      // il quadrante non è mai più alto del necessario: lo spazio in più va intorno alla parola
-      var mh = Math.round(wrap.clientWidth * 0.56) + 6;
-      if (wrap.clientWidth && wrap._mh !== mh) { wrap._mh = mh; wrap.style.maxHeight = mh + "px"; G = null; }
-      posTag(); Object.keys(Q.mk).forEach(function (k) { posMk(Q.mk[k]); }); };
+      var CW = wrap.clientWidth, CH = wrap.clientHeight;
+      if (!CW || !CH) { G = null; return; }
+      var scrive = !!(wrap.parentNode && wrap.parentNode.classList.contains("scrive"));
+      var testa = scrive ? 6 : 24, minC = scrive ? 46 : 92;
+      var D = Math.max(120, Math.min(CW, 2 * (CH - testa - minC)));
+      var hC = Math.max(minC, Math.min(D * 0.5, CH - testa - D / 2));
+      var top = testa + Math.max(0, (CH - testa - D / 2 - hC) / 2), left = (CW - D) / 2, s = D / 208;
+      var k = [CW, CH, scrive].join("|");
+      G = { w: CW, s: s, ox: left + 4 * s, oy: top };
+      if (k !== Q._k) {
+        Q._k = k;
+        svg.style.cssText = "left:" + left.toFixed(1) + "px;top:" + top.toFixed(1) + "px;width:" + D.toFixed(1) + "px;height:" + (D / 2).toFixed(1) + "px";
+        corpo.style.cssText = "left:" + left.toFixed(1) + "px;top:" + (top + D / 2 - 0.5).toFixed(1) + "px;width:" + D.toFixed(1) + "px;height:" + hC.toFixed(1) + "px;--gh:" + (8 * s).toFixed(1) + "px;--pe:" + (21 * s).toFixed(1) + "px";
+        var rr = 93 * s; radar.style.cssText = "left:" + (left + 104 * s - rr).toFixed(1) + "px;top:" + (top + 104 * s - rr).toFixed(1) + "px;width:" + (2 * rr).toFixed(1) + "px;height:" + (2 * rr).toFixed(1) + "px";
+        perno.style.width = perno.style.height = (17 * s).toFixed(1) + "px";
+        pop.style.top = Math.max(top - 2, 34).toFixed(1) + "px";
+        sopra.style.setProperty("--cy", (top + D * 0.42).toFixed(1) + "px");
+        wrap.style.setProperty("--dy", (top + D / 2).toFixed(1) + "px"); wrap.style.setProperty("--dr", (D * 0.95).toFixed(1) + "px");
+      }
+      sposta(perno, punto(50, 0));
+      posTag(); Object.keys(Q.mk).forEach(function (k2) { posMk(Q.mk[k2]); });
+    };
     if (window.ResizeObserver) {
       var ro = new ResizeObserver(function () { if (!document.body.contains(wrap)) { ro.disconnect(); return; } Q.misura(); });
       ro.observe(wrap);
@@ -440,11 +484,13 @@
     ui.sx = el("div", { class: "lu-est sx vuoto" }); ui.dx = el("div", { class: "lu-est dx vuoto" });
     ui.firma = el("div", { class: "lu-firma", text: "📝 della compagnia" });   // la scala l'ha scritta il vostro gruppo
     var estremi = el("div", { class: "lu-estremi" }, [ui.sx, ui.dx, ui.firma]);
+    // la scala e la parola stanno nella metà di sotto del disco (sotto i due capi della mezza ruota)
+    ui.Q.corpo.appendChild(estremi); ui.Q.corpo.appendChild(ui.parola);
     ui.gente = el("div", { class: "lu-gente" });
     ui.pan = el("div", { class: "lu-pan" });
     ui.fondo = el("div", { class: "lu-fondo" });
     ui.banner = el("div", { class: "lu-banner" });
-    ui.root = el("div", { class: "lu" }, [barra, testa, ui.parola, ui.Q.nodo, estremi, ui.gente, ui.pan, ui.fondo, ui.banner]);
+    ui.root = el("div", { class: "lu" }, [barra, testa, ui.Q.nodo, ui.gente, ui.pan, ui.fondo, ui.banner]);
     s._contenuto.appendChild(ui.root);
     return ui;
   }
@@ -1278,7 +1324,7 @@
       var primo = ui.kTurno == null;
       ui.kTurno = kT; ui.kRiv = null; ui.lastN = 0; ui.confV = null; ui.drag = false; ui.scrivo = false; ui.toccato = false; ui.inviato = null; ui.mioLan = 50;
       ui.lanP = {}; ui.bloccP = []; ui.manoVista = null; ui.anim = false; clearTimeout(ui.tLan); ui.tLan = null;
-      Q.togli(); Q.pop(null); Q.tag(null); Q.trascina(null); Q.lan(50, false);
+      Q.togli(); Q.pop(null); Q.tag(null); Q.trascina(null); Q.lan(50, false); Q.lumini(null);
       ui.sx.classList.remove("ok", "no"); ui.dx.classList.remove("ok", "no");
       if (Q.tenda === "aperta" && !primo) {
         Q.tendina("chiusa", true);
@@ -1646,6 +1692,7 @@
     if (vm.formula === "squadre") { Q.vediLan(true); Q.lan(R.lan, true); } else Q.vediLan(false);
     function esito() {
       if (vm.formula === "squadre") {
+        Q.lumini(R.tele ? 4 : R.pt); if (!subito) vibraEsito(R.pt, R.tele);
         if (R.tele) { Q.pop("🧠 TELEPATIA!", "tele"); Q.coriandoli(); suono("tele"); }
         else if (R.pt === 4) { Q.pop("🎯 CENTRO! +4", "centro"); Q.coriandoli(); suono("centro"); }
         else if (R.pt) { Q.pop("+" + R.pt, "buono"); suono("buono"); }
@@ -1665,17 +1712,24 @@
           Q.vola(id, v, srcAvatar(ui.omini[id], p ? p.nome : "?"), { r: 101 + sopra * 17, cls: (ultimo && pt ? "re " : "") + (pt === 4 ? "ok" : ""), testo: (id === ui.cb.myId ? "Tu " : "") + (pt ? "+" + pt : "0") }, subito ? 10 : 30 + i * 300);
         });
         var c = ids.some(function (id) { return (R.pts || {})[id] === 4; });
-        if (!subito) setTimeout(function () { if (ui.kRiv !== k) return; if (c) { Q.coriandoli(); suono("centro"); } else if (ids.length && !ids.some(function (id) { return (R.pts || {})[id]; })) suono("fuori"); else if (ids.length) suono("buono"); }, 30 + ids.length * 300);
+        var meglio = ids.reduce(function (m, id) { return Math.max(m, (R.pts || {})[id] || 0); }, 0), mio = (R.pts || {})[ui.cb.myId];
+        var luci = function () { Q.lumini(c ? 4 : meglio >= 3 ? 3 : meglio ? 2 : 0); };
+        if (subito) luci();
+        else setTimeout(function () {
+          if (ui.kRiv !== k) return;
+          luci(); if (mio != null) vibraEsito(mio);   // (vibra coi miei punti: chi guarda no)
+          if (c) { Q.coriandoli(); suono("centro"); } else if (ids.length && !meglio) suono("fuori"); else if (ids.length) suono("buono");
+        }, 30 + ids.length * 300);
       }
       mostraEsito();
     }
     if (subito) { Q.tendina("aperta", false); esito(); ui.anim = false; mettiPunti(ui, vm, r); return; }
     ui.anim = true;
     Q.tendina("chiusa", false);
-    suono("tamburo"); Q.trema();
-    dopo(600, function () { Q.tendina("aperta", true); });
-    dopo(1850, esito);
-    dopo(2700, function () { ui.anim = false; contaPunti(ui, ui.vm, ruolo(ui, ui.vm)); });
+    suono("tamburo"); Q.trema(); Q.lumini("rullo");
+    dopo(750, function () { Q.tendina("aperta", true); });
+    dopo(2000, esito);
+    dopo(2850, function () { ui.anim = false; contaPunti(ui, ui.vm, ruolo(ui, ui.vm)); });
   }
   // i punti in alto che contano fino al nuovo valore
   function contaPunti(ui, vm, r) {
@@ -1961,9 +2015,10 @@
       righe.forEach(function (x) { esito.appendChild(t.el(x[0] === "b" ? "b" : "span", { text: x[1] })); });
       p.appendChild(esito);
       // l'animazione: tamburo, la tendina che gira, il cartello dei punti
-      Q.bers(T.bers); suono("tamburo"); Q.trema();
-      setTimeout(function () { Q.tendina("aperta", true); }, 600);
+      Q.bers(T.bers); suono("tamburo"); Q.trema(); Q.lumini("rullo");
+      setTimeout(function () { Q.tendina("aperta", true); }, 750);
       setTimeout(function () {
+        Q.lumini(tele ? 4 : pt); vibraEsito(pt, tele);
         if (tele) { Q.pop("🧠 TELEPATIA!", "tele"); Q.coriandoli(); suono("tele"); }
         else if (pt === 4) { Q.pop("🎯 CENTRO! +4", "centro"); Q.coriandoli(); suono("centro"); }
         else if (pt) { Q.pop("+" + pt, "buono"); suono("buono"); }
@@ -1975,7 +2030,7 @@
           if (L.formula === "squadre" && !L.stessa) L.sqTurno = 1 - L.sqTurno;
           turno();
         }));
-      }, 1850);
+      }, 2000);
     }
     function finePartita() {
       L.mazzo.salva();   // le scale e le parole uscite non tornano subito nella prossima partita
@@ -2028,7 +2083,19 @@
       ".lu-av{flex:none;width:40px;height:40px;border-radius:50%;overflow:hidden;background:linear-gradient(#7048e8,#4c2fb0);box-shadow:0 0 0 2px #b197fc,0 0 14px #845ef788}.lu-av img{width:100%;height:100%;object-fit:cover;object-position:50% 6%}",
       ".lu-chi{min-width:0;display:flex;flex-direction:column;line-height:1.18}.lu-chi b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lu-chi span{font-size:13px;font-weight:700;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".lu-parola{flex:none;margin:auto 0;text-align:center;font-weight:1000;font-size:clamp(22px,8vw,34px);line-height:1.12;min-height:1.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 14px #b197fcaa}.lu-parola.media{font-size:clamp(18px,6vw,27px)}.lu-parola.lunga{font-size:clamp(15px,4.7vw,21px)}.lu-parola.pensa{font-size:clamp(14px,4.3vw,18px);font-weight:800;opacity:.85;text-shadow:none;line-height:1.5}",
-      ".lu-dial{flex:1 1 auto;min-height:96px;position:relative;touch-action:none}.lu-dial>svg{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}.lu-dial.tocca{cursor:pointer}",
+      ".lu-dial{flex:1 1 auto;min-height:200px;position:relative;touch-action:none;background:radial-gradient(var(--dr,300px) var(--dr,300px) at 50% var(--dy,50%),rgba(122,84,255,.2) 0%,rgba(224,34,90,.08) 45%,rgba(224,34,90,0) 70%)}.lu-dial>svg{position:absolute;left:0;top:0;width:100%;height:50%;overflow:visible}.lu-dial.tocca{cursor:pointer}",
+      // la metà di sotto del disco: la stessa ghiera, a mezza ellisse quando lo spazio è poco
+      ".lu-corpo{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;gap:2px;padding:5px 9px 8px;border:var(--gh,8px) solid transparent;border-top:0;border-radius:0 0 50% 50%/0 0 100% 100%;background:radial-gradient(130% 100% at 50% 0%,#222a5c 0%,#151a39 55%,#0d1025 100%) padding-box,linear-gradient(180deg,#262d58,#1a1f42 60%,#141836) border-box;box-shadow:0 0 0 .7px rgba(255,255,255,.14),0 26px 44px -22px rgba(0,0,0,.95),inset 0 0 0 1px rgba(255,79,134,.5),inset 0 -14px 30px rgba(0,0,0,.4)}",
+      ".lu-corpo .lu-estremi{column-gap:var(--pe,22px)}",
+      ".lu-corpo .lu-parola{flex:1 1 auto;min-height:0;margin:0;padding:0 7%;display:flex;align-items:center;justify-content:center;white-space:normal;overflow:hidden}",
+      ".lu-perno{position:absolute;left:0;top:0;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#ffe1ea 0,#ff4f86 28%,#c0164a 66%,#5c0a22 100%);box-shadow:0 0 0 2px rgba(255,255,255,.92),0 0 0 4px rgba(13,16,32,.85),0 0 18px rgba(255,61,115,.75),0 4px 10px rgba(0,0,0,.6)}",
+      // il radar che gira sulla tendina chiusa mentre il sensitivo pensa (solo transform/opacity)
+      ".lu-radar{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .4s;background:conic-gradient(from -16deg,rgba(179,155,255,0) 0deg,rgba(179,155,255,.09) 14deg,rgba(255,255,255,.26) 15.5deg,rgba(179,155,255,0) 16deg);transform:rotate(-72deg)}",
+      ".lu-dial.coperta:not(.con-lan) .lu-radar{opacity:1;animation:luRadar 4.8s ease-in-out infinite alternate}@keyframes luRadar{from{transform:rotate(-72deg)}to{transform:rotate(72deg)}}",
+      // i lumini della ghiera: spenti, il rullo che li accende uno dopo l altro, poi il colore dell esito
+      ".lu-led{fill:#ffe3ec;opacity:.2}.lu-dial.rullo .lu-led{animation:luLed .9s ease-out both;animation-delay:calc(var(--i) * 34ms)}@keyframes luLed{0%{opacity:.2}30%{opacity:1}100%{opacity:.8}}",
+      ".lu-dial.e4 .lu-led{fill:#ff3d73;animation:luLedB .32s ease-in-out 6 alternate both}.lu-dial.e3 .lu-led,.lu-dial.e2 .lu-led{fill:#ffd24a;animation:luLedB .4s ease-in-out 2 alternate both}.lu-dial.e0 .lu-led{opacity:.08}@keyframes luLedB{from{opacity:.35}to{opacity:1}}",
+      ".lu-dial.e4 .lu-alone,.lu-dial.e3 .lu-alone,.lu-dial.e2 .lu-alone{animation:luAlone .45s ease-in-out 4 alternate}@keyframes luAlone{from{opacity:.16}to{opacity:.55}}",
       ".lu-g-lan,.lu-g-bers,.lu-g-tenda,.lu-lan-in,.lu-tenda-in{transform-box:view-box;transform-origin:100px 104px}",
       ".lu-g-lan{transition:opacity .25s}.lu-g-lan.liscia{transition:transform .14s linear,opacity .25s}",
       ".lu-g-tenda{transition:transform 1.25s cubic-bezier(.55,-.25,.3,1.2),opacity .3s}.lu-g-tenda.sbircia{opacity:.3}.lu-g-tenda.aperta{transform:rotate(180deg)}.lu-g-tenda.subito{transition:none}",
@@ -2042,7 +2109,7 @@
       ".lu-pop{position:absolute;left:50%;top:0;z-index:2;transform:translate(-50%,-80%) scale(.6);opacity:0;padding:7px 16px;border-radius:18px;background:#fff;color:#2b1d6b;font-weight:1000;font-size:clamp(20px,6.5vw,30px);white-space:nowrap;box-shadow:0 10px 30px #0008}",
       ".lu-pop.vis{animation:luPop .5s cubic-bezier(.3,1.6,.5,1) forwards}.lu-pop.centro{background:#ff2d55;color:#fff}.lu-pop.buono{background:#ffd43b;color:#3b2a00}.lu-pop.fuori{background:#495057;color:#fff}.lu-pop.tele{background:linear-gradient(90deg,#845ef7,#ff2d55);color:#fff}.lu-pop.piccolo{font-size:clamp(15px,4.6vw,19px)}",
       "@keyframes luPop{to{transform:translate(-50%,-80%) scale(1);opacity:1}}",
-      ".lu-cor{position:absolute;left:50%;top:62%;width:8px;height:12px;border-radius:2px;opacity:0;animation:luCor 1.4s cubic-bezier(.2,.7,.4,1) forwards}@keyframes luCor{0%{transform:translate(-50%,-50%) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}",
+      ".lu-cor{position:absolute;left:50%;top:var(--cy,62%);width:8px;height:12px;border-radius:2px;opacity:0;animation:luCor 1.4s cubic-bezier(.2,.7,.4,1) forwards}@keyframes luCor{0%{transform:translate(-50%,-50%) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}",
       ".lu-estremi{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:8px}",
       ".lu-est{min-height:34px;display:flex;align-items:center;border-radius:12px;padding:4px 10px;font-weight:900;font-size:clamp(13px,4vw,17px);line-height:1.12;transition:box-shadow .3s,opacity .3s}",
       ".lu-est.sx{background:linear-gradient(90deg,#1971c2,#3b5bdb);justify-content:flex-start;text-align:left}.lu-est.dx{background:linear-gradient(90deg,#e8590c,#f76707);justify-content:flex-end;text-align:right}",
