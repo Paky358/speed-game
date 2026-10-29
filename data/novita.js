@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 277,
+    data: "29 ottobre 2026",
+    titolo: "Lanterne: chi spegne le luci? 🏮",
+    descrizione: [
+      "Nuovo gioco online da 4 a 10: una notte di festa in un palazzo. Gli ospiti fanno i compiti con dei minigiochi, le ombre spengono le lanterne di nascosto.",
+      "Chi trova una lanterna spenta chiama la riunione: si parla in chat e si vota chi cacciare.",
+      "35 ruoli (Sceriffo, Medico, Veggente, Giullare, Indovino, Burattinaio…), sabotaggi, botole e telecamere. Le regole si cambiano dalla saletta.",
+      "Se siete in pochi aggiungete i Bot: ricordano chi hanno visto e in riunione dicono la loro."
+    ]
+  },
+  {
     v: 276,
     data: "29 ottobre 2026",
     titolo: "Anche le partite si vestono di notte 🌙",
