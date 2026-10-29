@@ -2056,11 +2056,11 @@ function host(t) {
       players: H.players.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot, via: !!p.via, omino: p.bot ? p.omino : undefined }; }),
       salvata: P && H.fase === "gioco" ? P.salva() : null });
   }
-  var ultimaFoto = 0, fotoDopo = null;
+  var ultimaFoto = 0, fotoDopo = null, ricordaT = 0, ricordaFase = null;   // (lo stato per la ripresa si salva ogni 2 s, e a ogni cambio di fase)
   function bd() {
     if (fotoDopo) { clearTimeout(fotoDopo); fotoDopo = null; }
     ultimaFoto = Date.now();
-    var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegna(t, v, cbHost);
+    var v = vm(); rete.invia({ t: "vm", vm: v }); if (H.fase !== ricordaFase || ultimaFoto - ricordaT > 2000) { ricordaFase = H.fase; ricordaT = ultimaFoto; ricorda(); } disegna(t, v, cbHost);
   }
   function mandaPrivati(tutti) {
     if (!P) return;
@@ -2164,7 +2164,7 @@ function ospite(t, codice) {
         if (!m || !m.t) return;
         if (m.to && m.to !== S.myId) return;
         if (m.t === "vm") { S.vm = m.vm; disegna(t, m.vm, cb); }
-        else if (m.t === "pos") { if (UI) UI.posizioni(m.p); }
+        else if (m.t === "pos") { if (UI) UI.posizioni(m.p, m.s); }
         else if (m.t === "priv") { if (UI) UI.privato(m.p); else PENDENTI.priv = m.p; }
         else if (m.t === "tp" || m.t === "avviso" || m.t === "morte" || m.t === "bolla") { if (UI) UI.messaggio(m); else conserva(m); }
         else if (m.t === "av") (m.l || []).forEach(function (x) { avatarDi(x[0], avatarValido(x[1])); });
@@ -2314,6 +2314,7 @@ function Vista(t, cb) {
   V.ruota = function () {
     var W = window.innerWidth, H = window.innerHeight, gira = V.oriz && H > W * 1.05;
     V.girato = gira; sc.classList.toggle("lt-ruota", gira);
+    var lw = gira ? H : W, lh = gira ? W : H; sc.classList.toggle("oriz", lw > lh * 1.05);   // schermo largo: riunione e pannelli si dispongono di lato
     sc.style.width = gira ? H + "px" : ""; sc.style.height = gira ? W + "px" : "";
     sc.style.transform = gira ? "translate(" + W + "px,0) rotate(90deg)" : "";
   };
@@ -2445,9 +2446,21 @@ Vista.prototype.foto = function (vm) {
   V.aggVelo(); V.aggHud();
 };
 Vista.prototype.posDi = function (id) { var B = this.buf; if (!B.length) return null; var l = B[B.length - 1].p; for (var i = 0; i < l.length; i++) if (l[i][0] === id) return l[i]; return null; };
-Vista.prototype.posizioni = function (p) {
-  var B = this.buf, ora = performance.now(); B.push({ rt: ora, p: p });
-  while (B.length > 2 && ora - B[0].rt > 1500) B.shift();
+// le posizioni degli altri: ogni pacchetto porta il battito dell'host (s, uno ogni 50 ms), così si sa quando è partito anche se
+// la rete li consegna a raffica. Si riproducono con un piccolo ritardo che si adatta alla rete (quello che serve al 90% dei pacchetti).
+Vista.prototype.posizioni = function (p, s) {
+  var V = this, B = V.buf, ora = performance.now(), ht;
+  if (s == null) { ht = ora; V.offMin = 0; V.ritardo = 60; }   // (sul telefono dell'host: niente rete)
+  else {
+    ht = s * 50;
+    if (B.length && ht <= B[B.length - 1].ht) { if (ht < B[B.length - 1].ht - 2000) { B.length = 0; V.offs = []; } else return; }   // vecchio, o l'host è ripartito
+    var off = ora - ht; V.offs = V.offs || []; V.offs.push(off); if (V.offs.length > 60) V.offs.shift();
+    var m = Infinity; for (var i = 0; i < V.offs.length; i++) if (V.offs[i] < m) m = V.offs[i];
+    var d = V.offs.map(function (o) { return o - m; }).sort(function (a, b) { return a - b; });
+    V.offMin = m; V.ritardo = Math.max(70, Math.min(350, d[Math.floor(d.length * 0.9)] + 35));
+  }
+  B.push({ ht: ht, p: p });
+  while (B.length > 2 && B[B.length - 1].ht - B[0].ht > 2000) B.shift();
   if (!this.me.ok) { var mio = this.posDi(this.cb.myId); if (mio) { this.me.x = mio[1]; this.me.y = mio[2]; this.me.ok = true; } }
 };
 Vista.prototype.privato = function (pr) {
@@ -2574,15 +2587,17 @@ Vista.prototype.passo = function (dt) {
 Vista.prototype.sonoVivo = function () { var g = this.g; if (!g) return false; for (var i = 0; i < g.g.length; i++) if (g.g[i][0] === this.cb.myId) return !!g.g[i][1]; return false; };
 Vista.prototype.altri = function () {
   var B = this.buf, V = this; if (!B.length) return [];
-  var quando = performance.now() - 110, a = B[0], b = null;
-  for (var i = 0; i < B.length; i++) { if (B[i].rt <= quando) a = B[i]; else { b = B[i]; break; } }
-  var f = b && b.rt > a.rt ? Math.max(0, Math.min(1, (quando - a.rt) / (b.rt - a.rt))) : 0;
+  // il momento da mostrare, nell'orologio dell'host; se il pacchetto dopo non è ancora arrivato si prolunga il moto (al massimo 250 ms)
+  var quando = performance.now() - (V.offMin || 0) - (V.ritardo || 110), a = B[0], b = null, f = 0;
+  for (var i = 0; i < B.length; i++) { if (B[i].ht <= quando) a = B[i]; else { b = B[i]; break; } }
+  if (b && b.ht > a.ht) f = Math.max(0, Math.min(1, (quando - a.ht) / (b.ht - a.ht)));
+  else if (!b && B.length > 1) { var a0 = B[B.length - 2]; b = a; a = a0; f = 1 + Math.min(250, quando - b.ht) / Math.max(1, b.ht - a.ht); }
   var mb = {}; if (b) b.p.forEach(function (q) { mb[q[0]] = q; });
   var out = [], comp = V.priv && V.priv.compagni || [];
   a.p.forEach(function (q) {
     if (q[0] === V.cb.myId && !V.guardo) return;
     var r = mb[q[0]], x = q[1], y = q[2];
-    if (r && f) { x += (r[1] - x) * f; y += (r[2] - y) * f; }
+    if (r && f) { var ff = f > 1 && !(r[4] & 1) ? 1 : f; x += (r[1] - x) * ff; y += (r[2] - y) * ff; if (Math.hypot(r[1] - q[1], r[2] - q[2]) > 4 * T) { x = r[1]; y = r[2]; } }
     var come = q[5] || q[0];   // il Trasformista si vede con la faccia di un altro
     var c = V.cache[come] || {}, av = AVATAR[come];
     var lt = V.letti[q[0]];
@@ -2805,8 +2820,11 @@ Vista.prototype.aggHud = function () {
     else if (pr && pr.squadra === "ospiti") testo = "Compiti finiti: tieni d'occhio gli altri";
     if (g.neb > 0 && !rosso) testo = "Nebbia: nessuno si riconosce";
   }
-  if (V.guida.textContent !== testo) V.guida.textContent = testo;
-  V.guida.hidden = !testo; V.guida.classList.toggle("rosso", rosso);
+  // la scritta in basso: compare quando cambia, resta 2 secondi e svanisce (la freccia resta). Gli allarmi (rosso) restano.
+  var oraG = performance.now();
+  if (V.guida.textContent !== testo) { V.guida.textContent = testo; V.guidaFine = oraG + 2200; }
+  var mostraG = !!testo && (rosso || oraG < V.guidaFine);
+  V.guida.hidden = !testo; V.guida.classList.toggle("rosso", rosso); V.guida.classList.toggle("via", !mostraG);
   // «Via ▶» dell'host nell'atrio
   var kv = g.fase === "atrio" ? "atrio|" + (V.vm.partita || 0) + "|" + (V.vm.rip || 0) : null;
   if (kv !== V.kVia) {
@@ -3253,6 +3271,13 @@ function stile() {
     ".lt-chip[data-squadra=ombre]{background:rgba(208,80,106,.16);color:#f2a7b6;border-color:rgba(208,80,106,.5)}.lt-chip[data-squadra=soli]{background:rgba(169,147,230,.16);color:#d5c9f7;border-color:rgba(169,147,230,.5)}",
     ".lt-barra{width:100%;display:grid;gap:3px;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b8b1a2}",
     ".lt-barra .tr{height:7px;border-radius:4px;background:rgba(241,232,214,.12);overflow:hidden}.lt-barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,#c9923a,#f6d999);transition:width .3s var(--lt-ease)}",
+    ".lt-scena.oriz .lt-velo{padding:8px max(10px,env(safe-area-inset-right)) 8px max(10px,env(safe-area-inset-left))}",
+    ".lt-scena.oriz .lt-riu{display:grid;width:min(100%,940px);max-width:none;height:100%;max-height:none;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto auto auto;grid-template-areas:'t t' 'g c' 'g r' 'g s' 'g v' 'g n';column-gap:12px;row-gap:6px;padding:10px 12px}",
+    ".lt-scena.oriz .lt-riu .testa{grid-area:t}.lt-scena.oriz .lt-riu .grid{grid-area:g;min-height:0;overflow-y:auto;align-content:start;grid-template-columns:repeat(2,minmax(0,1fr))}.lt-scena.oriz .lt-riu .chat{grid-area:c;min-height:0}.lt-scena.oriz .lt-riu .rapide{grid-area:r}.lt-scena.oriz .lt-riu .scrivi{grid-area:s}.lt-scena.oriz .lt-riu .voto{grid-area:v}.lt-scena.oriz .lt-riu .nota{grid-area:n}",
+    ".lt-scena.oriz .lt-riu .carta{grid-template-columns:26px minmax(0,1fr) auto;column-gap:6px;padding:3px 6px}.lt-scena.oriz .lt-riu .carta .faccia,.lt-scena.oriz .lt-riu .carta .pall{width:26px;height:26px}",
+    ".lt-scena.oriz .lt-riu .carta .az{grid-column:3;grid-row:1/span 2;margin-top:0;align-self:center}.lt-scena.oriz .lt-riu .carta .vt{grid-column:2/-1}",
+    ".lt-scena.oriz .lt-riu .carta .az .dubbio span,.lt-scena.oriz .lt-riu .carta .az .fido span{display:none}.lt-scena.oriz .lt-riu .carta .az button{padding:6px 7px;flex:none}.lt-scena.oriz .lt-riu .carta .az .mio{padding:0 4px;font-size:.68rem}",
+    ".lt-scena.oriz .lt-minimappa{height:min(78%,420px)}",
     ".lt-ibtn{flex:none;width:26px;height:26px;margin-left:6px;border-radius:50%;border:1.5px solid rgba(246,217,153,.65);background:rgba(25,29,49,.85);color:#f6d999;font:700 italic 14px Georgia,'Times New Roman',serif;line-height:1;cursor:pointer;display:grid;place-items:center}.lt-chip{cursor:pointer}",
     ".lt-infor{max-width:420px;padding:14px 16px}.lt-infor .testa{display:flex;align-items:center;gap:10px;margin-bottom:6px}.lt-infor h3{margin:0;flex:1;font-size:1.25rem;color:#f6d999}.lt-infor .sq{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(231,183,92,.16);color:#f6d999}",
     ".lt-infor.ombre .sq{background:rgba(208,80,106,.2);color:#f6a3b2}.lt-infor.ombre h3{color:#f08aa0}.lt-infor.soli .sq{background:rgba(169,147,230,.2);color:#d6c8ff}.lt-infor.soli h3{color:#cbbcf6}.lt-infor .lt-chiudi{position:static}",
@@ -3277,6 +3302,7 @@ function stile() {
     ".lt-botola .esci{left:50%;top:50%;transform:translate(-50%,-50%);width:74px;height:74px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#4a3a6e,#241a3a);border:2px solid rgba(203,162,255,.7);color:#f1e8ff;font-weight:700;font-size:.9rem;box-shadow:0 0 0 6px rgba(203,162,255,.12),0 8px 22px rgba(0,0,0,.5)}",
     ".lt-nomestanza{position:absolute;left:0;right:0;top:30%;z-index:2;text-align:center;pointer-events:none;font-weight:700;font-size:clamp(1.6rem,6vmin,2.6rem);letter-spacing:.14em;text-transform:uppercase;color:rgba(246,217,153,.55);text-shadow:0 1px 0 rgba(255,236,190,.35),0 3px 0 rgba(90,60,20,.45),0 10px 24px rgba(0,0,0,.55);opacity:0;perspective:600px}",
     ".lt-nomestanza.su{animation:ltNomeStanza 1.6s var(--lt-ease) both}@keyframes ltNomeStanza{0%{opacity:0;transform:translateY(10px) rotateX(55deg) scale(.92)}18%{opacity:1;transform:none}70%{opacity:.9;transform:none}100%{opacity:0;transform:translateY(-8px) scale(1.03)}}",
+    ".lt-guida{transition:opacity .35s var(--lt-ease),transform .35s var(--lt-ease)}.lt-guida.via{opacity:0;transform:translateX(-50%) translateY(6px);pointer-events:none}",
     ".lt-guida.rosso{color:#ffd0d8;background:rgba(120,25,45,.85);border-color:rgba(240,90,110,.7);animation:ltPulsa 1.2s var(--lt-ease) infinite alternate}",
     "@keyframes ltPulsa{from{opacity:.7}to{opacity:1}}",
     ".lt-via{position:absolute;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%)}.lt-vai{width:auto;min-width:160px;margin:0}",
