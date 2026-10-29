@@ -633,7 +633,45 @@
     ".oro .as-scen{background:var(--o-carta-viva);border:1px solid var(--o-filo-oro);box-shadow:var(--o-ombra);}",   // (lo scenario: era viola)
     ".oro .as-scen small{color:var(--o-oro-testo);}",
     ".oro .as-tit{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo);}",   // (i titoli scherzosi: vetro come il resto, non viola)
-    ".oro .tier-A{background:linear-gradient(135deg,var(--o-m-oro-i),var(--n-monete));color:var(--o-m-oro-a);}"   // (la fascia A resta d'oro: col lampone diventava salmone)
+    ".oro .tier-A{background:linear-gradient(135deg,var(--o-m-oro-i),var(--n-monete));color:var(--o-m-oro-a);}",   // (la fascia A resta d'oro: col lampone diventava salmone)
+    // 🌙 Notte vivace: SOLO la sala dei temi (.sa-sala senza lo stadio del fantacalcio, che resta com'era). Gli avatar, le sedie e il banditore non cambiano; il banco resta marrone. Niente animazioni nuove.
+    ".sa-sala:not(.st-stadio){background:var(--o-fondo);}",
+    ".sa-sala:not(.st-stadio) .sa-sfondo{filter:grayscale(.8) brightness(1.1) contrast(1.12);}",   // (lo sfondo è fermo: il filtro si calcola una volta sola)
+    ".sa-sala:not(.st-stadio)::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(60% 26% at 50% 17%,rgba(255,200,130,.30),transparent 72%),radial-gradient(54% 20% at 22% 97%,rgba(255,178,96,.40),transparent 72%),radial-gradient(76% 34% at 50% 62%,rgba(255,196,130,.15),transparent 76%),linear-gradient(180deg,rgba(14,20,74,.58) 0%,rgba(44,58,190,.46) 34%,rgba(18,24,92,.48) 68%,rgba(10,12,34,.76) 100%);}",
+    ".sa-sala:not(.st-stadio)::after{background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 46%,rgba(4,6,16,.62) 100%);}",
+    ".sa-sala:not(.st-stadio) .sa-tasto{background:rgba(21,26,46,.82);color:var(--o-testo);font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 0 1px rgba(255,255,255,.14),0 6px 16px rgba(0,0,0,.45);}",
+    ".sa-sala:not(.st-stadio) .sa-info{color:var(--o-testo);font-weight:700;letter-spacing:.02em;}",
+    ".sa-sala:not(.st-stadio) .sa-pannello{gap:10px;padding:9px;border-radius:20px;border:1px solid rgba(255,255,255,.16);background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 46%),rgba(21,26,46,.84);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 18px 36px -12px rgba(0,0,0,.8),0 0 0 1px rgba(0,0,0,.35);}",
+    ".sa-sala:not(.st-stadio) .sa-lotto{background:rgba(255,255,255,.06);color:var(--o-testo);border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.09);}",
+    ".sa-sala:not(.st-stadio) .sa-carta-in .nm{font-weight:800;}",
+    ".sa-sala:not(.st-stadio) .sa-sotto{color:var(--o-tenue);opacity:1;font-weight:600;}",
+    ".sa-sala:not(.st-stadio) .sa-prezzo small{color:var(--o-tenue);font-weight:800;}",
+    ".sa-sala:not(.st-stadio) .sa-prezzo b{color:var(--n-monete);text-shadow:0 0 18px rgba(255,194,71,.35);}",
+    ".sa-sala:not(.st-stadio) .sa-prezzo span{margin-top:3px;padding:2px 10px;border-radius:99px;background:var(--n-lampone);color:#fff;font-weight:800;font-size:.72rem;opacity:1;box-shadow:0 4px 12px rgba(224,34,90,.45);}",
+    ".sa-sala:not(.st-stadio) .sa-avviso{background:rgba(21,26,46,.88);color:var(--n-monete);box-shadow:inset 0 0 0 1px rgba(255,194,71,.45);}",
+    ".sa-sala:not(.st-stadio) .sa-tempo{background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);}",
+    ".sa-sala:not(.st-stadio) .sa-tempo i{background:linear-gradient(90deg,var(--n-lampone),var(--o-oro-chiaro));}",
+    ".sa-sala.ultimi:not(.st-stadio) .sa-tempo i{background:var(--o-oro);}",
+    ".sa-sala:not(.st-stadio) .sa-paletta span{border-color:var(--n-lampone);color:var(--n-lampone);box-shadow:0 4px 12px rgba(0,0,0,.5),0 0 0 3px rgba(224,34,90,.25);}",
+    ".sa-sala:not(.st-stadio) .sa-nuvola{background:var(--n-lampone);color:#fff;box-shadow:0 6px 14px rgba(224,34,90,.5);}",
+    ".sa-sala:not(.st-stadio) .sa-num{background:rgba(21,26,46,.92);color:var(--o-testo);box-shadow:0 0 0 1px rgba(255,255,255,.22),0 2px 5px rgba(0,0,0,.5);}",
+    ".sa-sala:not(.st-stadio) .sa-pers b{font-weight:700;letter-spacing:.01em;}",
+    ".sa-sala:not(.st-stadio) .sa-pers small{color:#d6d9ea;opacity:1;font-weight:600;}",
+    ".sa-sala:not(.st-stadio) .sa-pers.guida b{padding:1px 9px;border-radius:99px;background:var(--n-lampone);color:#fff;text-shadow:none;box-shadow:0 4px 12px rgba(224,34,90,.45);}",
+    ".sa-sala:not(.st-stadio) .sa-pers.guida .sa-num{background:var(--n-lampone);color:#fff;}",
+    ".sa-sala:not(.st-stadio) .sa-pers.mio b{color:#fff;}",
+    ".sa-sala:not(.st-stadio) .sa-pers.mio .sa-num{background:var(--o-testo);color:var(--o-fondo);}",
+    ".sa-sala:not(.st-stadio) .sa-pers.puo .sa-figura::before{background:radial-gradient(ellipse,rgba(255,170,90,.75),rgba(255,170,90,0) 70%);}",
+    ".sa-sala:not(.st-stadio) .sa-passo{background:rgba(21,26,46,.82);color:var(--o-testo);font-weight:700;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}",
+    ".sa-sala:not(.st-stadio) .sa-bolla{background:var(--o-carta-piena);color:var(--o-testo);font-weight:700;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 8px 20px rgba(0,0,0,.55);}",
+    ".sa-sala:not(.st-stadio) .sa-bolla::after{border-top-color:var(--o-carta-piena);}",
+    ".sa-sala:not(.st-stadio) .sa-bolla.conta{background:var(--n-lampone);color:#fff;box-shadow:0 8px 20px rgba(224,34,90,.5);}",
+    ".sa-sala:not(.st-stadio) .sa-bolla.conta::after{border-top-color:var(--n-lampone);}",
+    ".sa-sala:not(.st-stadio) .sa-nota{color:#d6d9ea;opacity:1;font-weight:600;}",
+    ".sa-sala:not(.st-stadio) .as-sel span{color:var(--o-testo);font-weight:700;}",
+    ".sa-sala:not(.st-stadio) .as-sel button{background:rgba(21,26,46,.84);color:var(--o-testo);font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}",
+    ".sa-sala:not(.st-stadio) .as-sel button.on{background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 8px 18px rgba(224,34,90,.45);}",
+    ".sa-sala:not(.st-stadio) .sa-aggiudicato{background:var(--n-lampone);border-color:var(--o-testo);}"
   ].join("");
   document.head.appendChild(stile);
 

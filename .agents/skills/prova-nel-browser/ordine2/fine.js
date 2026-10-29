@@ -251,7 +251,8 @@
     // la scritta di fine si legge: bianca su fondo scuro
     var sfP = wP.document.querySelector(".or-fine-stato"), colS = wP.getComputedStyle(sfP).color, bgB = wP.getComputedStyle(wP.document.querySelector(".st-barra")).backgroundImage;
     if (colS !== "rgb(255, 255, 255)") no("la scritta di fine è «" + colS + "»");
-    if (bgB.indexOf("rgba(7, 4, 26, 0.88)") < 0) no("la barra non ha il fondo scuro in alto (" + bgB + ")");
+    // (29 ott 2026, 🌙 Notte vivace: la barra è blu notte, rgba(13,16,32,.9) in alto)
+    if (bgB.indexOf("rgba(13, 16, 32, 0.9)") < 0) no("la barra non ha il fondo scuro in alto (" + bgB + ")");
     // le misure
     await W.aspetta(function () { return calmo(wP) && !cart(wP); }, 9000);
     var mis = [];
@@ -430,8 +431,9 @@
     I.appendChild(prova);
     var bs = prova.querySelectorAll("b"), c0 = wG.getComputedStyle(bs[0]).color, c1 = wG.getComputedStyle(bs[1]).color;
     prova.remove();
-    if (c1 !== "rgb(224, 49, 49)") no("negli ultimi 10 secondi le cifre sono «" + c1 + "» invece di rosse");
-    if (c0 !== "rgb(230, 119, 0)") no("prima degli ultimi 10 secondi le cifre sono «" + c0 + "»");
+    // (29 ott 2026, 🌙 Notte vivace: sul tavolo blu notte l'ambra #ffb84d e il rosso chiaro #ff6b6b)
+    if (c1 !== "rgb(255, 107, 107)") no("negli ultimi 10 secondi le cifre sono «" + c1 + "» invece di rosse");
+    if (c0 !== "rgb(255, 184, 77)") no("prima degli ultimi 10 secondi le cifre sono «" + c0 + "»");
     nota(N, "clessidra: cifre " + c0 + " → " + c1 + " negli ultimi 10 s");
     // fine veloce: chi è di turno gira la nera
     var chiave = await W.aspetta(function () { var c = chiaveDa(W.finestra("Luca")); return c.length && c.every(function (x) { return x != null; }) && c; }, 6000);

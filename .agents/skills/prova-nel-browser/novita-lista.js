@@ -6,7 +6,7 @@
   COPIONE.aggiungi("nov1", { nome: "Menu «🆕 Novità»: la lista semplice, non la bacheca", fai: async function () {
     await W.apriTel("Paky", { x: 0 });
     var P = W.finestra("Paky");
-    var b = await W.aspetta(function () { return P.document.querySelector(".home-novita"); }, 10000);
+    var b = await W.aspetta(function () { return P.document.querySelector(".home-novita") || [].find.call(P.document.querySelectorAll(".menu-sotto .ms-tab"), function (t) { return /Novità/.test(t.textContent); }); }, 10000);   // (📱 o nel menu sotto)
     if (!b) no("in home non c'è il tasto «🆕 Novità»");
     b.click();
     var card = await W.aspetta(function () { return P.document.querySelectorAll(".novita-card").length; }, 5000);

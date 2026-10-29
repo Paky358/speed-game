@@ -28,7 +28,8 @@
     var b = w.document.querySelectorAll(".or-tab .or-carta")[i]; if (!b) no(chi + ": non trovo la nera");
     if (!/(^|\s)cx(\s|$)/.test(b.className) || b.classList.contains("g")) no(chi + ": la nera non è coperta col suo colore (" + b.className + ")");
     var cs = w.getComputedStyle(b), bg = cs.backgroundImage;
-    if (!/46, 46, 46/.test(bg) || !/29, 29, 29/.test(bg)) no(chi + ": la nera non è a righe scure come nella proposta C (" + bg.slice(0, 90) + ")");
+    // (29 ott 2026, 🌙 Notte vivace: le righe scure sono #2e2e3c/#1a1a24, un filo più blu, come nella foto approvata)
+    if (!/46, 46, 60/.test(bg) || !/26, 26, 36/.test(bg)) no(chi + ": la nera non è a righe scure come nella proposta C (" + bg.slice(0, 90) + ")");
     if (/252, 196, 25/.test(bg + cs.boxShadow)) no(chi + ": la nera ha ancora il giallo");
     ["::before", "::after"].forEach(function (pe) {
       var c = w.getComputedStyle(b, pe).content;

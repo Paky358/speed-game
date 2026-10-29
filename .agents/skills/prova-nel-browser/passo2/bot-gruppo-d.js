@@ -32,14 +32,15 @@
     await W.dorme(500);
     // le faccine del tavolo (img con alt = nome): ci sono i tre bot fissi, coi loro avatar (gli id dei disegni cambiano a ogni disegno: si tolgono)
     var senzaId = function (s) { return s.replace(/om[0-9a-z]+_/g, "om_"); };
-    var facce = {}; [].forEach.call(P.document.querySelectorAll(".or-f img[alt]"), function (i) { facce[i.alt] = senzaId(decodeURIComponent(i.src.split(",").slice(1).join(","))); });
+    var facce = {}; [].forEach.call(P.document.querySelectorAll(".or-f:not(.espr) img[alt]"), function (i) { facce[i.alt] = senzaId(decodeURIComponent(i.src.split(",").slice(1).join(","))); });
     attesi.forEach(function (b) {
       if (!facce[b.nome]) no(b.nome + " (bot fisso) non è al tavolo (ci sono: " + Object.keys(facce).join(", ") + ")");
       if (facce[b.nome] !== senzaId(P.SGOmino.svg(b.omino, { busto: true }))) no("al tavolo " + b.nome + " non ha il suo avatar fisso");
     });
     if (Object.keys(facce).some(function (n) { return n === "Bot"; })) no("al tavolo c'è ancora un bot che si chiama «Bot»");
     // i bot capi danno l'indizio da soli (si comincia con l'indizio di un bot)
-    if (!await W.aspetta(function () { return /INDIZIO DEI \S+ [A-ZÀ-Ù]{3,}\s?[0-9∞]/.test(T(P)); }, 8000)) no("il bot capo non dà l'indizio («" + T(P).slice(0, 120) + "»)");
+    // (l'indizio sta prima della scritta «INDIZIO DEI ROSSI · ancora N tentativi»: «ANTICO 1 INDIZIO DEI ROSSI…»)
+    if (!await W.aspetta(function () { return /[A-ZÀ-Ù]{3,}\s?[0-9∞]\s*INDIZIO DEI \S+|INDIZIO DEI \S+ [A-ZÀ-Ù]{3,}\s?[0-9∞]/.test(T(P)); }, 8000)) no("il bot capo non dà l'indizio («" + T(P).slice(0, 120) + "»)");
     var mis = await A.misuraSchermata(P, "IL PAPPONE", 360, 640);
     var f = document.getElementById("tel-IL PAPPONE"); f.style.width = "360px"; f.style.height = "740px";
     if (mis) no("il tavolo della prova: " + mis);

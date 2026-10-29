@@ -230,7 +230,8 @@
       var cs = w.getComputedStyle(via);
       if (cs.textTransform !== "uppercase" || parseFloat(cs.fontSize) < 15) no(n + ": «" + via.textContent + "» non è grande (" + cs.textTransform + ", " + cs.fontSize + ")");
       var sg = via.querySelector(".or-sg[data-s='" + k0 + "'] svg"); if (!sg) no(n + ": «Cominciano…» senza il segno della squadra");
-      if (w.getComputedStyle(via).color !== (k0 ? "rgb(28, 126, 214)" : "rgb(224, 49, 49)")) no(n + ": «Cominciano…» non ha il colore della squadra (" + cs.color + ")");
+      // (29 ott 2026, 🌙 Notte vivace: sul tavolo blu notte il colore della squadra nella versione chiara, #74c0fc / #ff6b6b)
+      if (w.getComputedStyle(via).color !== (k0 ? "rgb(116, 192, 252)" : "rgb(255, 107, 107)")) no(n + ": «Cominciano…» non ha il colore della squadra (" + cs.color + ")");
     });
     nota(N, "all'inizio «" + wP.document.querySelector(".or-l.via").textContent.toUpperCase() + "» grande col segno");
     // le misure del tabellone a inizio partita
@@ -271,7 +272,7 @@
     });
     // (revisione del 22 ott 2026: la nera del capo come nella proposta C, a righe scure; niente più cornice gialla e nera)
     var nera = carte(wL)[chiave.indexOf("x")], bg = wL.getComputedStyle(nera).backgroundImage;
-    if (!/repeating-linear-gradient/.test(bg) || !/46, 46, 46/.test(bg) || /252, 196, 25/.test(bg)) no("la nera del capo non è a righe scure come nella proposta C (" + bg.slice(0, 80) + ")");
+    if (!/repeating-linear-gradient/.test(bg) || !/46, 46, 60/.test(bg) || /252, 196, 25/.test(bg)) no("la nera del capo non è a righe scure come nella proposta C (" + bg.slice(0, 80) + ")");
     if (!wL.document.querySelector(".or-tab.capo")) no("per il capo il tabellone non è «capo» (girate con la ✓)");
     // (22 ott 2026, il proprietario: «i colori per il capo sono un po' troppo spenti»: le girate del capo restano piene, con la ✓)
     // (la girata appena girata ha l'animazione orGira, che parte da opacity .4: con la scheda nascosta resta ferma lì, quindi
