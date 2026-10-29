@@ -205,7 +205,7 @@ const RUOLI = {
   ipnotista:     { nome:'Ipnotista',     squadra:'ombre',  abil:'Ipnotizza', desc:'Blocchi chi ti sta vicino per qualche secondo: non può muoversi.' },
   avvelenatore:  { nome:'Avvelenatore',  squadra:'ombre',  desc:'Non spegni subito: avveleni. La lanterna si spegne qualche secondo dopo, quando sei già lontano.' },
   giullare:      { nome:'Giullare',      squadra:'soli',   desc:"Giochi da solo: vinci se ti cacciano col voto. Vedi lontano come le ombre, ma hai la frenesia: non puoi restare troppo nella stessa stanza." },
-  indovino:      { nome:'Indovino',      squadra:'soli',   abil:'Osserva',   desc:'Giochi da solo. Osserva qualcuno: alla riunione scopri tre ruoli possibili, e uno è il suo. In riunione indovini il ruolo: se ci prendi, cade e nessuno sa chi è stato. Indovinane abbastanza e vinci tu.' },
+  indovino:      { nome:'Indovino',      squadra:'soli',   desc:'Giochi da solo. In riunione indovini il ruolo di qualcuno, scegliendolo tra tutti i ruoli del gioco: se ci prendi, cade e nessuno sa chi è stato; se sbagli, cadi tu. Indovinane abbastanza e vinci tu.' },
   sopravvissuto: { nome:'Sopravvissuto', squadra:'soli',   desc:'Giochi da solo: vinci se arrivi vivo alla fine, chiunque vinca. Hai la frenesia: non puoi restare troppo nella stessa stanza.' },
   accusatore:    { nome:'Accusatore',    squadra:'soli',   desc:'Giochi da solo: hai un bersaglio. Vinci se lo cacciano col voto.' },
   avvoltoio:     { nome:'Avvoltoio',     squadra:'soli',   abil:'Mangia',    desc:'Giochi da solo: fai sparire le lanterne spente. Se ne mangi abbastanza, vinci tu.' },
@@ -253,7 +253,7 @@ const IMP_BASE = {
   portiere:{ ricarica:30 },
   sabotaggi:{ ricarica:45, acqua:60, interferenza:60, acquaSi:true, interferenzaSi:true },
   avvoltoio:{ quanti:2 },
-  indovino:{ quanti:2, perRiunione:2, sbaglia:'niente', ricarica:30 },
+  indovino:{ quanti:2, perRiunione:2, sbaglia:'muore' },
   frenesia:{ attiva:true, secondi:45 },
 };
 
@@ -326,7 +326,6 @@ const VOCI = [
   { g:'Indovino', k:'indovino.quanti', et:'Ruoli da indovinare per vincere', opz:[2,3,4] },
   { g:'Indovino', k:'indovino.perRiunione', et:'Tentativi per riunione', opz:[1,2,3] },
   { g:'Indovino', k:'indovino.sbaglia', et:'Se sbaglia', opz:[['muore','cade lui'],['niente','non succede niente']] },
-  { g:'Indovino', k:'indovino.ricarica', et:'Ricarica per osservare', opz:[20,30,45], u:' s' },
   { g:'Frenesia (Giullare e Sopravvissuto)', k:'frenesia.attiva', et:'Frenesia', opz:[[true,'sì'],[false,'no']] },
   { g:'Frenesia (Giullare e Sopravvissuto)', k:'frenesia.secondi', et:'Secondi nella stessa stanza', opz:[30,45,60,90], u:' s' },
 ];
@@ -381,7 +380,7 @@ const elenco = n => n.length<2 ? (n[0]||'') : n.slice(0,-1).join(', ')+' e '+n[n
 const R_USA = 1.5*T, R_SPEGNI = 1.45*T, R_ABIL = 1.8*T, R_SEGNALA = 2.6*T;
 // a cosa punta l'abilità di ogni ruolo: una persona viva, un corpo, nessuno
 const BERSAGLIO = { veggente:'vivo', medico:'vivo', sceriffo:'vivo', segugio:'vivo', silenziatore:'vivo', trasformista:'mutaforma', ipnotista:'vivo',
-  rianimatore:'corpo', spazzino:'corpo', avvoltoio:'corpo', campanaro:'nessuno', bengala:'nessuno', nebbia:'nessuno', sentinella:'nessuno', ingegnere:'nessuno', veterano:'nessuno', spia:'nessuno', trasportatore:'due', bracconiere:'nessuno', burattinaio:'vivo', portiere:'stanza', indovino:'vivo' };
+  rianimatore:'corpo', spazzino:'corpo', avvoltoio:'corpo', campanaro:'nessuno', bengala:'nessuno', nebbia:'nessuno', sentinella:'nessuno', ingegnere:'nessuno', veterano:'nessuno', spia:'nessuno', trasportatore:'due', bracconiere:'nessuno', burattinaio:'vivo', portiere:'stanza' };
 // dove si ripara ogni sabotaggio
 const STAZ_RIP = { luci:QUADRO, console:CONSOLE, chiusaA:CHIUSA_A, chiusaB:CHIUSA_B };
 const TOLL = 1.4;              // margine per chi è un po' in ritardo sulla rete
@@ -514,7 +513,7 @@ class Partita {
       vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati, quanti:this.imp.avvoltoio.quanti, usiRian:p.usiRian, usiBeng:p.usiBeng, campVolte:p.campVolte,
       bloccato: sec(p.bloccatoFine), traccia: p.traccia && p.traccia.fine>this.t ? [p.traccia.id, sec(p.traccia.fine)] : null,
       rianima: p.rianima ? sec(p.rianima.fine) : 0, travestito: this.travestito(p), rivelato:p.rivelato,
-      indovinati:p.indovinati, quantiInd:this.imp.indovino.quanti, tentativi:p.tentativi, indizio:p.indizio||null, frenesia: this.haFrenesia(p) && this.M===PALAZZO ? sec(p.frenDa+this.imp.frenesia.secondi) : 0,
+      indovinati:p.indovinati, quantiInd:this.imp.indovino.quanti, tentativi:p.tentativi, frenesia: this.haFrenesia(p) && this.M===PALAZZO ? sec(p.frenDa+this.imp.frenesia.secondi) : 0,
       camDisp:this.camDisp(p), camPiazzate:p.camPiazzate, usiVet:p.usiVet, allerta:sec(p.allertaFine), letti:Object.entries(p.letti), usiTra:p.usiTra, schermo:sec(p.schermoFine), campione:p.campione,
       controllo: p.controllo ? (q=>[p.controllo.v, sec(p.controllo.fine), q?Math.round(q.x):0, q?Math.round(q.y):0])(this.per(p.controllo.v)) : null, controllato: !!p.controllatoDa,
       portineria: p.portineria ? { st:p.portineria.st, log:p.portineria.log.slice(-8).map(([id,e,t])=>[id,e,Math.round(this.t-t)]) } : null, mod:p.mod, trappola: p.trappola ? [Math.round(p.trappola.x), Math.round(p.trappola.y), p.trappola.ids.length, this.imp.bracconiere.quanti] : null, trapRuoli:p.trapRuoli, imitato:p.imitato, imita:p.imita };
@@ -535,7 +534,7 @@ class Partita {
       cam:this.telecamere.filter(c=>!c.base).map(c=>[Math.round(c.x), Math.round(c.y), c.nome, c.da]),
       gioc:this.gioc.map(p=>({ id:p.id, nome:p.nome, bot:p.bot, ruolo:p.ruolo, vivo:p.vivo, uscito:p.uscito, campane:p.campane, vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati,
         usiRian:p.usiRian, usiBeng:p.usiBeng, campVolte:p.campVolte, rivelato:p.rivelato, camPiazzate:p.camPiazzate, usiVet:p.usiVet, usiTra:p.usiTra, mod:p.mod, imitato:p.imitato, imita:p.imita,
-        indovinati:p.indovinati, indizio:p.indizio||null, osservato:p.osservato||null, letti:p.letti, protettoDa:p.protettoDa, zittito:p.zittito, segnato:p.segnato, campione:p.campione, trapRuoli:p.trapRuoli,
+        indovinati:p.indovinati, letti:p.letti, protettoDa:p.protettoDa, zittito:p.zittito, segnato:p.segnato, campione:p.campione, trapRuoli:p.trapRuoli,
         compiti:p.compiti.map(c=>[c.post.id, c.fatto?1:0, c.extra?1:0]) })) };
   }
   // si riparte dal palazzo, tutti alla fontana, con ruoli, compiti ed eliminati di prima
@@ -548,7 +547,7 @@ class Partita {
     s.gioc.forEach(g=>{
       const p=P.per(g.id); p.ruolo=RUOLI[g.ruolo]?g.ruolo:'ospite'; P.preparaRuolo(p);
       p.vivo=!!g.vivo; p.fantasma=!g.vivo; p.uscito=!!g.uscito; p.campane=g.campane|0; p.cd=18; p.cdA=10;
-      ['vite','bersaglio','mangiati','usiRian','usiBeng','campVolte','rivelato','camPiazzate','usiVet','usiTra','mod','imitato','imita','indovinati','indizio','osservato','letti','protettoDa','zittito','segnato','campione','trapRuoli'].forEach(k=>{ if(g[k]!=null) p[k]=g[k]; });
+      ['vite','bersaglio','mangiati','usiRian','usiBeng','campVolte','rivelato','camPiazzate','usiVet','usiTra','mod','imitato','imita','indovinati','letti','protettoDa','zittito','segnato','campione','trapRuoli'].forEach(k=>{ if(g[k]!=null) p[k]=g[k]; });
       p.mod = g.mod || null;
       p.compiti=(g.compiti||[]).map(([id,f,x])=>({ post:POSTAZIONI.find(q=>q.id===id), fatto:!!f, finto:p.squadra!=='ospiti', extra:!!x })).filter(c=>c.post);
     });
@@ -676,11 +675,6 @@ class Partita {
           if(v.protettoDa!=null){ this.rompiScudo(v, p); return; }
           this.spegni(p, v, 'sceriffo'); this.avviso(p, `Colpito: ${v.nome} era ${RUOLI[v.ruolo].nome}.`);
         } else { this.avviso(p, `${v.nome} è dei buoni: cadi tu.`, 'morte'); this.spegni(p, p, 'sceriffo'); }
-        return;
-      case 'indovino':
-        if(p.cdA>0 || v===p) return;
-        p.osservato=v.id; p.cdA=this.imp.indovino.ricarica; this.priv(p);
-        this.avviso(p, `Osservi ${v.nome}: alla riunione saprai tre ruoli possibili.`); this.fx('lente', v.x, v.y, { solo:p.id });
         return;
       case 'segugio':
         if(p.cdA>0 || v===p) return;
@@ -1100,7 +1094,7 @@ class Partita {
     if(b.ruolo==='bracconiere' && b.cdA<=0 && !b.trappola && rnd()<.05) this.abilita(b,null);
     if(b.ruolo==='trasportatore' && b.usiTra>0 && b.cdA<=0 && rnd()<.02){ const v=this.gioc.filter(q=>q.vivo); if(v.length>2){ mescola(v); this.abilita(b, v[0].id, v[1].id); } }
     if(b.ruolo==='segugio' && b.cdA<=0 && rnd()<.15){ const p=this.bersaglio(b,R_ABIL,chiunque); if(p) this.abilita(b,p.id); }
-    if(b.ruolo==='indovino' && b.cdA<=0 && !b.osservato && rnd()<.2){ const p=this.bersaglio(b,R_ABIL,q=>!(b.indizio&&b.indizio.id===q.id)); if(p) this.abilita(b,p.id); }
+
     if(b.ruolo==='bengala' && b.usiBeng>0 && this.buio && rnd()<.3) this.abilita(b,null);
     if(b.ruolo==='campanaro' && b.campVolte>0 && b.mem.testimone && rnd()<.5){ this.abilita(b,null); return; }
     if(b.ruolo==='sceriffo' && b.cdA<=0){
@@ -1176,12 +1170,7 @@ class Partita {
     this.gioc.forEach(p=>{ if(p.controllo) this.fineControllo(p); p.ripara=null; });
     this.gioc.forEach(p=>{ p.path=[]; p.meta=null; p.attesa=0; p.azione=null; p.muove=false; p.veleno=null; p.rianima=null; p.aspetto=null; p.bloccatoFine=0;
       p.tentativi = p.ruolo==='indovino' ? this.imp.indovino.perRiunione : 0; p.osserva=false; this.priv(p); });
-    // l'Indovino riceve l'indizio su chi ha osservato: il ruolo vero e due a caso tra quelli che possono uscire, mescolati
-    for(const p of this.gioc){ if(p.ruolo!=='indovino'||!p.vivo||!p.osservato) continue; const v=this.per(p.osservato); p.osservato=null; if(!v||!v.vivo) continue;
-      const pool=Object.keys(RUOLI).filter(r=>r!==v.ruolo && (r==='ospite'||r==='ombra'||(this.imp.prob[r]||0)>0));
-      p.indizio={ id:v.id, ruoli:mescola([v.ruolo, ...mescola(pool).slice(0,2)]) }; this.priv(p);
-      this.avviso(p, `🔮 ${v.nome} è uno di questi: ${elenco(p.indizio.ruoli.map(r=>RUOLI[r].nome))}.`); }
-    for(const b of this.gioc.filter(q=>q.bot&&q.vivo&&q.ruolo==='indovino')) if(b.indizio || rnd()<.5) R.coda.push({ t:3+rnd()*Math.max(4,R.disc), chi:b, az:()=>this.indovinaBot(b) });
+    for(const b of this.gioc.filter(q=>q.bot&&q.vivo&&q.ruolo==='indovino')) if(rnd()<.6) R.coda.push({ t:3+rnd()*Math.max(4,R.disc), chi:b, az:()=>this.indovinaBot(b) });
     R.coda.sort((a,b)=>a.t-b.t);
     this.segna();
   }
@@ -1310,21 +1299,11 @@ class Partita {
     // chi ha detto in pubblico il suo ruolo (il Sindaco che si rivela, chi racconta cosa ha letto) è il primo da provare
     const dich=cand.filter(q=>this.dichiarati[q.id] && !(b.provati||[]).includes(q.id));
     if(dich.length){ const q=pick(dich); (b.provati=b.provati||[]).push(q.id); this.indovina(b, q.id, this.dichiarati[q.id]); return; }
-    // con l'indizio: scarta i ruoli che non tornano con quello che sa (chi ha fatto un compito visibile non è un'ombra) e prova
-    const I=b.indizio, q=I && this.per(I.id);
-    if(q && q.vivo && I.ruoli.length){
-      const pulito=(b.sosp[q.id]||0)<=-20, sporco=(b.sosp[q.id]||0)>=50;
-      let scelte=I.ruoli.filter(r=>!(pulito && RUOLI[r].squadra==='ombre') && !(sporco && RUOLI[r].squadra==='ospiti'));
-      if(!scelte.length) scelte=I.ruoli.slice();
-      const r=pick(scelte); I.ruoli=I.ruoli.filter(x=>x!==r);
-      this.indovina(b, q.id, r);
-      if(this.fase==='riunione' && b.vivo && b.tentativi>0 && I.ruoli.length && this.per(I.id).vivo && this.imp.indovino.sbaglia==='niente') this.indovinaBot(b);
-      return;
-    }
+    // senza un ruolo detto in pubblico tira a indovinare solo se sbagliare non costa, o se di qualcuno è quasi sicuro
     cand.sort((x,y)=>(b.sosp[y.id]||0)-(b.sosp[x.id]||0));
-    const forte=cand[0], sos=b.sosp[forte.id]||0;
-    if(sos>=60) this.indovina(b, forte.id, 'ombra');
-    else if(rnd()<.6) this.indovina(b, pick(cand).id, 'ospite');
+    const forte=cand[0], sos=b.sosp[forte.id]||0, gratis=this.imp.indovino.sbaglia!=='muore';
+    if(sos>=60 && (gratis || rnd()<.5)) this.indovina(b, forte.id, 'ombra');
+    else if(gratis && rnd()<.6) this.indovina(b, pick(cand).id, 'ospite');
   }
   peso(id){ const p=this.per(id); if(!p) return 1; return (p.ruolo==='sindaco' && p.rivelato ? 2 : 1) + (p.mod==='ago' ? 0.01 : 0); }
   imita(p, id){
@@ -2840,14 +2819,13 @@ Vista.prototype.apriImita = function (bottone) {
 Vista.prototype.apriIndovina = function (id) {
   var V = this, box = V.velo.querySelector(".lt-riu"); if (!box || !V.priv) return;
   var vecchio = box.querySelector(".lt-indov"); if (vecchio) vecchio.remove();
-  var imp = (V.vm && V.vm.imp) || {}, prob = imp.prob || {};
-  var ruoli = Object.keys(RUOLI).filter(function (r) { return r === "ospite" || r === "ombra" || (prob[r] || 0) > 0; });
+  // si sceglie tra tutti i ruoli del gioco, anche quelli spenti nelle regole
+  var imp = (V.vm && V.vm.imp) || {}, cade = !imp.indovino || imp.indovino.sbaglia !== "niente";
+  var ruoli = Object.keys(RUOLI);
   var p = E("div", "lt-indov");
-  var ind = V.priv.indizio && V.priv.indizio.id === id ? V.priv.indizio.ruoli : null;
-  p.append(E("h3", "", "Che ruolo ha " + ((V.cache[id] || {}).nome || "?") + "?"), E("p", "", "Tentativi rimasti in questa riunione: " + V.priv.tentativi));
-  if (ind) { p.appendChild(E("p", "indizio", "🔮 Hai osservato questa persona: è uno dei tre ruoli in oro.")); ruoli.sort(function (a, b) { return (ind.indexOf(b) >= 0) - (ind.indexOf(a) >= 0); }); }
+  p.append(E("h3", "", "Che ruolo ha " + ((V.cache[id] || {}).nome || "?") + "?"), E("p", "", "Tentativi rimasti in questa riunione: " + V.priv.tentativi + (cade ? " · se sbagli, cadi tu" : "")));
   var gr = E("div", "griglia");
-  ruoli.forEach(function (r) { var b = E("button", RUOLI[r].squadra + (ind && ind.indexOf(r) >= 0 ? " indizio" : ""), RUOLI[r].nome); b.type = "button"; b.addEventListener("click", function () { V.manda("indovina", { id: id, ruolo: r }); p.remove(); }); gr.appendChild(b); });
+  ruoli.forEach(function (r) { var b = E("button", RUOLI[r].squadra, RUOLI[r].nome); b.type = "button"; b.addEventListener("click", function () { V.manda("indovina", { id: id, ruolo: r }); p.remove(); }); gr.appendChild(b); });
   var no = E("button", "annulla", "Annulla"); no.type = "button"; no.addEventListener("click", function () { p.remove(); });
   p.append(gr, no); box.appendChild(p);
 };
@@ -3095,7 +3073,6 @@ function stile() {
     ".lt-indov .griglia{flex:1 1 auto;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;align-content:start}",
     ".lt-indov .griglia button{font:inherit;font-weight:700;font-size:.74rem;color:#f1e8d6;background:#242a45;border:1px solid rgba(231,183,92,.35);border-radius:9px;padding:9px 4px}",
     ".lt-indov .griglia button.ombre{border-color:rgba(208,80,106,.6)}.lt-indov .griglia button.soli{border-color:rgba(169,147,230,.6)}",
-    ".lt-indov .griglia button.indizio{border-color:#e7b75c;box-shadow:0 0 0 1px #e7b75c inset;color:#f6d999}.lt-indov p.indizio{color:#f6d999}",
     ".lt-indov .annulla{font:inherit;font-weight:700;color:#f1e8d6;background:transparent;border:1px solid rgba(241,232,214,.3);border-radius:10px;padding:9px}",
     ".lt-intro{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;pointer-events:none;background:radial-gradient(circle,rgba(13,16,32,.55),rgba(9,11,22,.92));animation:ltIntro 2s var(--lt-ease) both}",
     ".lt-intro.corpo{background:radial-gradient(circle,rgba(90,20,35,.6),rgba(9,11,22,.94))}",
