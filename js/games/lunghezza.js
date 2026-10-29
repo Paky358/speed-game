@@ -37,6 +37,12 @@
   function tx(n, s) { s = s == null ? "" : String(s); if (n && n.textContent !== s) n.textContent = s; }
   function puntiDi(lan, bers) { var d = Math.abs(lan - bers); return d <= FASCE[0] ? 4 : d <= FASCE[1] ? 3 : d <= FASCE[2] ? 2 : 0; }
   function testoPunti(n) { return n === 1 ? "1 punto" : fmtN(n) + " punti"; }
+  // 🤝 tutti insieme: il voto alla compagnia (sullo stesso telefono in 7 turni: 22, 16 e 10 punti su 28)
+  function votoCompagnia(tot, max) {
+    var q = max ? tot / max : 0;
+    return q >= 0.78 ? "🔮 Telepatia!" : q >= 0.57 ? "🧠 Ci capiamo al volo" : q >= 0.35 ? "📶 C'è campo" : "📻 Fuori frequenza";
+  }
+  function bravi(tot, max) { return max > 0 && tot / max >= 0.57; }
   // dove sta un punto della scala, detto a parole (frase fissa, senza accordi da sbagliare): "tutto verso «Sopravvalutato»"
   function doveSta(v, scala) {
     if (!scala) return "";
@@ -554,7 +560,8 @@
       sens: null, sensSq: -1, modo: "cosa", passo: null, sub: null, scala: null, parola: null, seg: null, bers: null, bozza: 50,
       lan: 50, lanN: 0, mano: null, manoT: 0, conferme: [], lanConf: 50, lanP: {}, toccati: {}, bloccati: [], lanPsporco: false, lanPultimo: 0,
       voti: {}, primo: null, scadenza: 0, pausa: false, restaPausa: 0, avviso: null, avvN: 0, rivela: null,
-      spareggio: 0, stessa: false, inRimonta: false, stat: {}, storia: [], fine: null, mazzo: null, segFirma: null, ultFrase: {}, manoNo: {} };
+      spareggio: 0, stessa: false, inRimonta: false, stat: {}, storia: [], fine: null, mazzo: null, segFirma: null, ultFrase: {}, manoNo: {},
+      prossimi: [] };   // ✋ chi è arrivato a partita cominciata ed entra dal turno dopo: { id, nome, omino }
     var rete = null, tic = null;
     // ----- la partita di prima (t.ripresa): l'host ha ricaricato la pagina o riaperto l'app, oppure (t.ripresa.daRiserva)
     // l'host è sparito e la porta avanti questo telefono. Gli altri non si danno per usciti: si aspettano ("attesi") e
@@ -565,7 +572,8 @@
       H = R0.stato;
       H.pronta = false; H.codice = H.codice || "…"; H.rip = (H.rip || 0) + 1;
       H.mazzo = rifaiMazzo(H.imp, H.mz); delete H.mz;
-      H.guarda = H.guarda || []; H.pronti = []; H.conferme = []; H.mano = null; H.manoT = 0; H.manoNo = {}; H.ultFrase = {};
+      H.guarda = H.guarda || []; H.prossimi = []; H.pronti = []; H.conferme = [];   // (chi aspettava il turno dopo rimanda il join da solo)
+      H.mano = null; H.manoT = 0; H.manoNo = {}; H.ultFrase = {};
       H.lanP = H.lanP || {}; H.toccati = H.toccati || {}; H.bloccati = H.bloccati || []; H.voti = H.voti || {}; H.stat = H.stat || {}; H.storia = H.storia || [];
       H.lanPsporco = false; H.lanPultimo = 0; H.segFirma = null;
       H.scadenza = H.scadenza ? R0.ora(H.scadenza) : 0; H.respiroFino = 0;
@@ -582,6 +590,32 @@
     function membri(s) { return H.players.filter(function (p) { return p.sq === s; }); }
     function presentiSq(s) { return membri(s).filter(function (p) { return !p.via; }); }
     function inGuarda(id) { return H.guarda.some(function (x) { return x.id === id; }); }
+    function inProssimi(id) { return H.prossimi.some(function (x) { return x.id === id; }); }
+    // ✋ all'inizio di un turno chi aspettava entra, con 0 punti: a squadre nella squadra più piccola; ognuno per sé e tutti
+    // insieme fa anche il sensitivo, una volta in ognuno dei giri che restano (in fondo al giro)
+    function entrano() {
+      var nuovi = [];
+      H.prossimi.forEach(function (x) {
+        if (pById(x.id) || presenti().length >= MAX) return;
+        var sq = presentiSq(0).length <= presentiSq(1).length ? 0 : 1;
+        H.players.push({ id: x.id, nome: x.nome, omino: x.omino || null, sq: sq, punti: 0 });
+        nuovi.push(x.id);
+      });
+      H.prossimi = [];
+      if (!nuovi.length) return false;
+      if (H.fase === "gioco" && H.formula !== "squadre" && H.ordine.length) {
+        var len = H.ordine.length, fatti = [], resto = [];
+        for (var k = 0; k < H.turniTot; k++) (k < H.idx ? fatti : resto).push(H.ordine[k % len]);
+        // i giri che restano: il pezzo del giro di adesso, poi giri interi; il nuovo arrivato va in fondo a ognuno
+        var primo = (len - H.idx % len) % len || len, seq = [], i = 0, pezzo = primo;
+        while (i < resto.length) { seq = seq.concat(resto.slice(i, i + pezzo)); i += pezzo; seq = seq.concat(nuovi); pezzo = len; }
+        if (!resto.length) seq = nuovi.slice();
+        H.ordine = fatti.concat(seq); H.turniTot = H.ordine.length;   // (H.idx resta: i turni già fatti restano contati)
+      }
+      avvisa("👋 " + nuovi.map(nomeDi).join(", ") + (nuovi.length === 1 ? " entra in partita!" : " entrano in partita!"));
+      return true;
+    }
+    function comune() { return H.formula === "squadre" || H.formula === "insieme"; }   // una lancetta sola (a squadre: quella della squadra)
     function st(id) { return H.stat[id] || (H.stat[id] = { centri: 0, turniSensitivo: 0, scommesseGiuste: 0, centriDati: 0, ptDati: 0, nDati: 0 }); }
     function indovini() {   // chi indovina adesso (presenti)
       if (!H.sens) return [];
@@ -614,6 +648,7 @@
       },
       onTornato: function (id) { var p = pById(id); if (!p || !p.forse) return; p.forse = false; if (H.pausa && !H.respiro && id === H.sens) riprendi(); bd(); },
       onAddio: uscito,
+      onGuarda: function () { bd(true); },   // 👀 arriva uno che guarda soltanto: la foto con gli avatar
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         if (m.t === "join") {
@@ -626,17 +661,22 @@
             if (H.pausa && !H.respiro && id === H.sens) riprendi();
             bd(true); mandaSegreto(true);
             // ognuno per sé: chi ricarica mentre indovina ritrova la sua lancetta dove l'aveva messa
-            if (H.fase === "gioco" && H.passo === "indovina" && H.formula !== "squadre" && H.toccati[id] && H.lanP[id] != null) privato(id, { t: "tuaLan", v: H.lanP[id], k: chiaveTurno() });
+            if (H.fase === "gioco" && H.passo === "indovina" && H.formula === "solo" && H.toccati[id] && H.lanP[id] != null) privato(id, { t: "tuaLan", v: H.lanP[id], k: chiaveTurno() });
             return;
           }
-          if (inGuarda(id)) { bd(true); return; }
+          if (inGuarda(id) || inProssimi(id)) { bd(true); return; }
           // nella Sala gioca solo chi è stato scelto: gli altri entrano e guardano (col loro id nella foto)
           if (!t.puoSedersi(id, nome)) { H.guarda.push({ id: id, nome: nome }); bd(true); return; }
           if (H.fase === "lobby" && H.players.length < MAX) {
             H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), sq: membri(0).length <= membri(1).length ? 0 : 1, punti: 0 });
             bd(); return;
           }
-          // partita cominciata (o stanza piena): guarda ed entra alla prossima
+          // ✋ partita cominciata: entra dal turno dopo, con 0 punti (ritardatari "turno")
+          if (H.fase === "gioco" && presenti().length + H.prossimi.length < MAX) {
+            H.prossimi.push({ id: id, nome: nome, omino: avatarValido(m.omino) });
+            bd(true); return;
+          }
+          // a fine partita (o stanza piena): guarda ed entra alla prossima
           H.guarda.push({ id: id, nome: nome, omino: avatarValido(m.omino), tardi: H.fase !== "lobby" });
           bd(true); return;
         }
@@ -650,6 +690,7 @@
     function uscito(id) {
       delete attesi[id];
       if (inGuarda(id)) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
+      if (inProssimi(id)) { H.prossimi = H.prossimi.filter(function (x) { return x.id !== id; }); bd(); return; }
       var p = pById(id); if (!p) return;
       p.forse = false;
       if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
@@ -668,7 +709,7 @@
       if (H.passo === "sceglie" && (!sp || sp.via)) return saltaTurno("🚪 " + (sp ? sp.nome : "Il sensitivo") + " è uscito: tocca al prossimo");
       if (H.passo === "indovina") {
         if (!indovini().length) return chiudiIndovina();
-        if (H.formula === "squadre") { H.conferme = H.conferme.filter(function (x) { var q = pById(x); return q && !q.via; }); if (H.conferme.length && H.conferme.length >= serveOk()) return chiudiIndovina(); }
+        if (comune()) { H.conferme = H.conferme.filter(function (x) { var q = pById(x); return q && !q.via; }); if (H.conferme.length && H.conferme.length >= serveOk()) return chiudiIndovina(); }
         else if (indovini().every(function (x) { return H.bloccati.indexOf(x) >= 0; })) return chiudiIndovina();
       }
       if (H.passo === "scommette") { var sc = scommettitori(); if (!sc.length || sc.every(function (x) { return H.voti[x]; })) return rivela(); }
@@ -686,7 +727,8 @@
         formula: H.fase === "lobby" ? H.imp.formula : H.formula, traguardo: H.imp.traguardo, tempo: H.imp.tempo,
         players: H.players.map(function (p) { var x = { id: p.id, nome: p.nome, sq: p.sq, punti: p.punti, via: !!p.via, forse: !!p.forse }; if (om) x.omino = p.omino || null; return x; }),
         guarda: H.guarda.map(function (g) { return { id: g.id, nome: g.nome }; }),
-        sqPunti: H.sqPunti.slice(), turno: H.turno, turniTot: H.turniTot, spareggio: H.spareggio,
+        prossimi: H.prossimi.map(function (x) { return { id: x.id, nome: x.nome }; }),   // (con gli id: chi aspetta sa di essere dentro)
+        sqPunti: H.sqPunti.slice(), tot: H.tot || 0, giocati: H.giocati || 0, turno: H.turno, turniTot: H.turniTot, spareggio: H.spareggio,
         sens: H.sens, sensSq: H.sensSq, modo: H.modo, passo: H.passo, sub: H.sub, scala: H.scala, scalaN: !!H.scalaN, parola: H.parola,
         pronti: H.passo === "rivela" ? prontiVeri() : [], servonoAv: H.passo === "rivela" ? servonoAv() : 0,   // «⏩ Avanti» a maggioranza
         lan: H.lan, lanN: H.lanN, mano: H.mano, conferme: H.conferme.slice(), serve: H.fase === "gioco" ? serveOk() : 0, bloccati: H.bloccati.slice(),
@@ -789,16 +831,16 @@
       if (H.fase !== "lobby" || presenti().length < MIN) return;
       var n = H.players.length;
       H.avviso = null;
-      H.formula = H.imp.formula === "solo" || n < 4 ? "solo" : "squadre";
+      H.formula = H.imp.formula === "insieme" ? "insieme" : H.imp.formula === "solo" || n < 4 ? "solo" : "squadre";
       if (H.imp.formula === "squadre" && n < 4) avvisa("In " + n + " si gioca ognuno per sé: ognuno la sua lancetta!");
       if (H.formula === "squadre" && (membri(0).length < 2 || membri(1).length < 2)) distribuisci(H.players);
       H.fase = "gioco"; H.partita++; H.pid = nuovoId();
-      H.sqPunti = [0, 0]; H.turno = 0; H.stat = {}; H.storia = []; H.spareggio = 0; H.stessa = false; H.inRimonta = false; H.fine = null;
+      H.sqPunti = [0, 0]; H.tot = 0; H.giocati = 0; H.turno = 0; H.stat = {}; H.storia = []; H.spareggio = 0; H.stessa = false; H.inRimonta = false; H.fine = null;
       H.players.forEach(function (p) { p.punti = 0; });
       // il primo sensitivo è a sorte (non sempre l'host), poi si va in giro
       var giro0 = Math.floor(Math.random() * H.players.length);
       H.ordine = H.players.map(function (p) { return p.id; }); H.ordine = H.ordine.slice(giro0).concat(H.ordine.slice(0, giro0)); H.idx = 0;
-      H.turniTot = H.formula === "solo" ? H.ordine.length * H.imp.giri : 0;
+      H.turniTot = H.formula !== "squadre" ? H.ordine.length * H.imp.giri : 0;
       H.punt = [Math.floor(Math.random() * 8), Math.floor(Math.random() * 8)]; H.sqTurno = Math.random() < 0.5 ? 0 : 1;
       H.mazzo = creaMazzo(H.imp);
       if (!tic) tic = setInterval(orologio, 200);
@@ -825,6 +867,7 @@
       return true;
     }
     function nuovoTurno() {
+      entrano();
       if (!controllaGente()) return;
       var p = prossimoSens();
       if (!p) return fine();
@@ -851,6 +894,7 @@
       }
       st(p.id).turniSensitivo++;
       if (p.forse) pausa();
+      if (t.aCheSiamo) t.aCheSiamo(H.formula === "squadre" ? "Turno " + H.turno + " · A " + H.sqPunti[0] + " – B " + H.sqPunti[1] : "Turno " + H.turno + " di " + H.turniTot);
       bd(true);
     }
     function vaiIndovina() {
@@ -911,7 +955,7 @@
       }
       if (H.passo === "indovina") {
         if (indovini().indexOf(id) < 0) return;
-        if (H.formula === "squadre") {
+        if (comune()) {
           if (m.t === "lan") return muoviLan(id, valore(m.v));
           if (m.t === "lascio") { if (H.mano === id) { H.mano = null; bd(); } return; }
           if (m.t === "ok") {
@@ -983,6 +1027,15 @@
         H.storia.push({ nome: R.nome, modo: H.modo, parola: H.parola, scala: H.scala, bers: H.bers, err: Math.abs(H.lan - H.bers) });
         var a = H.sqPunti[0], b = H.sqPunti[1], tr = H.imp.traguardo;
         R.ultimo = H.spareggio === 1 || (!H.spareggio && (a >= tr || b >= tr) && a !== b);
+      } else if (H.formula === "insieme") {
+        // 🤝 tutti insieme: i punti sono di tutti
+        var pi = puntiDi(H.lan, H.bers);
+        R.lan = H.lan; R.pt = pi; R.tele = Math.abs(H.lan - H.bers) < 0.5;
+        H.tot = (H.tot || 0) + pi; H.giocati = (H.giocati || 0) + 1; R.tot = H.tot; R.max = H.giocati * 4;
+        if (pi === 4) { indovini().forEach(function (id) { st(id).centri++; }); st(H.sens).centriDati++; }
+        st(H.sens).ptDati += pi; st(H.sens).nDati++;
+        H.storia.push({ nome: R.nome, modo: H.modo, parola: H.parola, scala: H.scala, bers: H.bers, err: Math.abs(H.lan - H.bers) });
+        R.ultimo = H.idx >= H.turniTot;
       } else {
         var pts = {}, lanP = {}, somma = 0, n = 0, errS = 0, centro = false;
         indovini().forEach(function (id) {
@@ -1006,7 +1059,7 @@
     function saltaTurno(testo) {
       if (H.passo === "sceglie" && H.sub === "scala" && H.seg && H.seg.due) H.seg.due.forEach(function (s) { H.mazzo.libera(s); });   // (le scale vostre non giocate tornano)
       H.pronti = [];
-      H.passo = "rivela"; H.rivela = { saltato: testo, ultimo: H.formula === "solo" && H.idx >= H.turniTot };
+      H.passo = "rivela"; H.rivela = { saltato: testo, ultimo: H.formula !== "squadre" && H.idx >= H.turniTot };
       H.scadenza = Date.now() + T_SALTA * 1000; H.pausa = false; H.mano = null;
       bd();
     }
@@ -1061,7 +1114,7 @@
       if (mg) x.push("🧠 Mente gemella: " + mg.nome + ", il sensitivo più chiaro");
       H.storia.forEach(function (s) { if (s.modo === "cosa" && s.err >= 25 && (!op || s.err > op.err)) op = s; });
       if (op) x.push("😱 L'opinione più strana. Per " + op.nome + ": " + op.parola + " → " + doveSta(op.bers, op.scala));
-      if (x.length < 3 && ff && (!mg || ff.nome !== mg.nome)) x.push("📻 Fuori frequenza: " + ff.nome + " (detto con affetto)");
+      if (x.length < 3 && ff && H.formula !== "insieme" && (!mg || ff.nome !== mg.nome)) x.push("📻 Fuori frequenza: " + ff.nome + " (detto con affetto)");
       return x.slice(0, 3);
     }
     function fine() {
@@ -1072,6 +1125,8 @@
         var primi = vinc < 0 ? H.players.length : membri(vinc).length;
         cl = H.players.map(function (p) { return { id: p.id, nome: p.nome, sq: p.sq, punti: H.sqPunti[p.sq], pos: (vinc < 0 || p.sq === vinc) ? 1 : primi + 1 }; })
           .sort(function (a, b) { return a.pos - b.pos || a.sq - b.sq; });
+      } else if (H.formula === "insieme") {
+        cl = H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: H.tot || 0, pos: 1 }; });   // (si gioca insieme: tutti primi)
       } else {
         var ord = H.players.slice().sort(function (a, b) { return b.punti - a.punti; });
         cl = ord.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, pos: 1 + ord.filter(function (q) { return q.punti > p.punti; }).length }; });
@@ -1080,9 +1135,9 @@
       H.players.forEach(function (p) {
         var s = st(p.id), r = cl.filter(function (x) { return x.id === p.id; })[0];
         stat[p.id] = { centri: s.centri, turniSensitivo: s.turniSensitivo, scommesseGiuste: s.scommesseGiuste, centriDati: s.centriDati,
-          vittorie: r && r.pos === 1 && !(H.formula === "squadre" && vinc < 0) ? 1 : 0 };
+          vittorie: H.formula === "insieme" ? (bravi(H.tot || 0, (H.giocati || 0) * 4) ? 1 : 0) : r && r.pos === 1 && !(H.formula === "squadre" && vinc < 0) ? 1 : 0 };
       });
-      H.fine = { formula: H.formula, vinc: vinc, sqPunti: H.sqPunti.slice(), classifica: cl, premi: premi(), stat: stat };
+      H.fine = { formula: H.formula, vinc: vinc, sqPunti: H.sqPunti.slice(), tot: H.tot || 0, max: (H.giocati || 0) * 4, classifica: cl, premi: premi(), stat: stat };
       H.fase = "fine"; H.passo = null; H.sens = null;
       if (H.mazzo) H.mazzo.salva();
       bd(true);
@@ -1094,7 +1149,7 @@
       if (H.fase !== "fine") return;
       clearTimeout(tAttesi); tAttesi = null; clearTimeout(tResp); tResp = null; attesi = {};
       H.fase = "lobby"; H.passo = null; H.fine = null; H.sens = null; H.scadenza = 0; H.avviso = null; H.respiro = false; H.respiroFino = 0; H.pausa = false;
-      H.players = presenti(); H.players.forEach(function (p) { p.punti = 0; p.forse = false; });
+      H.players = presenti(); entrano(); H.avviso = null; H.players.forEach(function (p) { p.punti = 0; p.forse = false; });
       // chi tiene la partita è il primo (in saletta ha la corona); se l'ha presa guardando (host di riserva), si siede
       if (!pById(IO)) { H.guarda = H.guarda.filter(function (g) { return g.id !== IO; }); H.players.unshift({ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), sq: 0, punti: 0 }); }
       H.players.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
@@ -1137,6 +1192,7 @@
       sposta: function (id, s) { if (id === S.myId && S.rete) S.rete.invia({ t: "squadra", s: s }); },
       onEsci: function () {
         function via() { if (S.rete) S.rete.chiudi(); t.esci(); }
+        if (t.guarda) return t.conferma("Smetti di guardare?", null, "Esci", via);   // (chi guarda soltanto non lascia un posto)
         if (S.vm && S.vm.fase === "gioco") return t.conferma("Uscire dalla partita?", null, "Esci", via);
         via();
       } };
@@ -1256,7 +1312,7 @@
       vuoti: Math.max(0, MIN - n),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),   // (la corona a chi tiene la partita)
       extra: extra, puoComincia: !piccola, nota: cb.sonoHost ? nota : undefined,
-      spettatore: guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && n >= MAX ? "👀 La stanza è piena: guardi la partita" : false,
+      spettatore: t.guarda ? "👀 Guardi soltanto" : guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && n >= MAX ? "👀 La stanza è piena: guardi la partita" : false,
       attesa: guardo ? "Si parte quando l'host dà il via: tu guardi la partita." : (squadre && n >= 4 ? "Scegli la tua squadra. Si parte quando l'host dà il via!" : "Aspetta che l'host cominci!"),
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
@@ -1268,7 +1324,9 @@
     ui.drag = false; ui.lastN = 0; ui.inviato = null; ui.ultInvio = 0; ui.anim = false; ui.lanP = {}; ui.bloccP = [];
     ui.manoVista = null; ui.kGente = ""; ui.avvN = null; ui.bozza = 50; ui.kBozza = null; ui.scrivo = false; ui.toccato = false; ui.mioLan = 50;
     // in fondo: le faccine (il mio avatar le fa sui telefoni di tutti) e le frasi veloci
-    ui.fac = t.faccine();
+    ui.targa = !!t.guarda && !t.eliminazione;
+    ui.fac = ui.targa ? null : t.faccine();
+    if (ui.targa) ui.root.classList.add("lu-targa");
     ui.bFrasi = t.el("button", { class: "lu-frasi-b", type: "button", "aria-label": "Frasi veloci", text: "💬", onclick: function () { apriFrasi(ui); } });
     ui.muto = t.el("div", { class: "lu-muto", text: "🤐 Muto come un pesce: non puoi aiutarli!" });
     if (ui.fac) ui.fondo.appendChild(ui.fac);
@@ -1283,7 +1341,7 @@
       // la targhetta "✋ Luca" sparisce se la lancetta è ferma da un po'
       if (ui.manoVista && Date.now() - ui.manoVista > 1700 && !v.mano) { ui.manoVista = null; ui.Q.tag(null); }
       // la lancetta comune: a dito staccato, se il mio telefono la mostra in un posto diverso dall'ultimo che ha deciso l'host, torna lì
-      if (v.formula === "squadre" && v.passo === "indovina" && !ui.drag && ui.confV != null && Date.now() - (ui.suT || 0) > 600 && Math.abs(ui.Q.v - ui.confV) > 0.25) ui.Q.lan(ui.confV, true);
+      if (v.formula !== "solo" && v.passo === "indovina" && !ui.drag && ui.confV != null && Date.now() - (ui.suT || 0) > 600 && Math.abs(ui.Q.v - ui.confV) > 0.25) ui.Q.lan(ui.confV, true);
     }, 250);
     return ui;
   }
@@ -1305,13 +1363,15 @@
   function gioc(vm, id) { var l = (vm && vm.players) || []; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
   // chi sono in questo turno
   function ruolo(ui, vm) {
-    var myId = ui.cb.myId, io = gioc(vm, myId), guardo = !io || io.via, sq = vm.formula === "squadre";
+    // sq = una lancetta sola (a squadre o 🤝 tutti insieme); team = a squadre
+    var myId = ui.cb.myId, io = gioc(vm, myId), guardo = !io || io.via, team = vm.formula === "squadre", ins = vm.formula === "insieme", sq = team || ins;
     var sensIo = !guardo && vm.sens === myId;
-    var indovino = !guardo && !sensIo && !!vm.sens && (!sq || io.sq === vm.sensSq);
-    var scommetto = sq && !guardo && !sensIo && io.sq !== vm.sensSq;
+    var indovino = !guardo && !sensIo && !!vm.sens && (!team || io.sq === vm.sensSq);
+    var scommetto = team && !guardo && !sensIo && io.sq !== vm.sensSq;
     var bloccato = (vm.bloccati || []).indexOf(myId) >= 0;
+    var aspetto = (vm.prossimi || []).some(function (p) { return p.id === myId; });   // ✋ entro dal turno dopo
     var attivo = (vm.passo === "sceglie" && sensIo) || (vm.passo === "indovina" && indovino && !bloccato) || (vm.passo === "scommette" && scommetto);
-    return { io: io, guardo: guardo, sq: sq, sensIo: sensIo, indovino: indovino, scommetto: scommetto, bloccato: bloccato, attivo: attivo };
+    return { io: io, guardo: guardo, aspetto: aspetto, sq: sq, team: team, ins: ins, sensIo: sensIo, indovino: indovino, scommetto: scommetto, bloccato: bloccato, attivo: attivo };
   }
   function aggiorna(ui, vm, cb) {
     var t = ui.t, Q = ui.Q, r = ruolo(ui, vm), kT = vm.partita + "|" + vm.turno;
@@ -1337,7 +1397,7 @@
     tx(ui.turnoTx, (r.guardo ? "👀 " : "") + turnoTesto);
     // ---- il sensitivo e la parola ----
     mettiAvatar(ui, sens ? ui.omini[sens.id] : null, sens ? sens.nome : "?");
-    tx(ui.chi, sens ? "🔮 " + (r.sensIo ? "Tu sei il sensitivo" : sens.nome) + (r.sq ? " · Squadra " + SQ[vm.sensSq] : "") : "");
+    tx(ui.chi, sens ? "🔮 " + (r.sensIo ? "Tu sei il sensitivo" : sens.nome) + (r.team ? " · Squadra " + SQ[vm.sensSq] : "") : "");
     tx(ui.sotto, sottotitolo(vm, r, sens));
     if (vm.parola) mettiParola(ui, vm.parola, false);
     else if (vm.passo === "sceglie") mettiParola(ui, r.sensIo ? (vm.modo === "classico" ? (vm.sub === "scala" ? "🤫 Solo tu vedi il bersaglio" : "✍️ Scrivi il tuo indizio") : "🤔 Scegli la parola") : "🔮 " + (sens ? sens.nome : "") + " sta pensando…", true);
@@ -1407,7 +1467,7 @@
     }
     if (vm.passo === "indovina") {
       if (r.sensIo) return "Guarda gli altri cercare il tuo bersaglio…";
-      if (r.sq) return r.indovino ? "Muovete la lancetta: dove l'ha messo " + nome + "?" : "👀 La Squadra " + SQ[vm.sensSq] + " sta decidendo";
+      if (r.sq) return r.indovino ? "Muovete la lancetta: dove l'ha messo " + nome + "?" : r.ins ? "👀 Gli altri cercano il bersaglio" : "👀 La Squadra " + SQ[vm.sensSq] + " sta decidendo";
       return r.indovino ? (r.bloccato ? "🔒 Bloccata! Aspetta gli altri" : "Muovi la tua lancetta: dove l'ha messo " + nome + "?") : "👀 Gli altri cercano il bersaglio";
     }
     if (vm.passo === "scommette") return r.scommetto ? "⬅️ Più a sinistra o più a destra? ➡️" : "La Squadra " + SQ[1 - vm.sensSq] + " scommette…";
@@ -1423,10 +1483,17 @@
       tx(ui.bT, "Squadra B" + (my && my.sq === 1 && !r.guardo ? " · tu" : "")); tx(ui.bN, fmtN(vm.sqPunti[1]));
       return;
     }
+    if (vm.formula === "insieme") {
+      ui.a.className = "lu-box a ins"; ui.b.className = "lu-box b";
+      tx(ui.aT, "🤝 Tutti insieme"); tx(ui.aN, fmtN(vm.tot || 0));
+      tx(ui.bT, "Su"); tx(ui.bN, fmtN((vm.turniTot || 0) * 4));
+      return;
+    }
     var ord = vm.players.slice().sort(function (a, b) { return b.punti - a.punti; }), primo = ord[0];
     ui.a.className = "lu-box a"; ui.b.className = "lu-box b";
     tx(ui.aT, "In testa"); tx(ui.aN, primo ? primo.nome.split(" ")[0] + " " + fmtN(primo.punti) : "");
     if (my && !r.guardo) { tx(ui.bT, "Tu · " + (1 + ord.filter(function (q) { return q.punti > my.punti; }).length) + "°"); tx(ui.bN, fmtN(my.punti)); }
+    else if (r.aspetto) { tx(ui.bT, "Entri tra poco"); tx(ui.bN, "✋"); }
     else { tx(ui.bT, "Guardi"); tx(ui.bN, "👀"); }
   }
   function mettiGente(ui, vm, r) {
@@ -1439,6 +1506,9 @@
         else if (vm.passo === "scommette" && p.sq !== vm.sensSq) { var vo = (vm.voti || {})[p.id]; badge = vo === "sx" ? "⬅️" : vo === "dx" ? "➡️" : "🤔"; if (vo) cls += " si"; }
         else if (vm.passo === "indovina" || vm.passo === "scommette") { if (vm.passo === "indovina" && p.sq !== vm.sensSq) return; if (vm.passo === "scommette" && p.sq === vm.sensSq) return; }
         if (p.id === vm.sens) { if (vm.passo === "indovina" || vm.passo === "scommette") return; badge = "🔮"; }
+      } else if (vm.formula === "insieme") {
+        if (p.id === vm.sens) badge = "🔮";
+        else if (vm.passo === "indovina") { if ((vm.conferme || []).indexOf(p.id) >= 0) { badge = "✅"; cls = "si"; } else if (vm.mano === p.id) badge = "✋"; }
       } else {
         if (p.id === vm.sens) badge = "🔮";
         else if (vm.passo === "indovina" && (vm.bloccati || []).indexOf(p.id) >= 0) { badge = "🔒"; cls = "si"; }
@@ -1618,7 +1688,7 @@
       } else if (tipo === "attesa") {
         ui.pan.appendChild(el("div", { class: "lu-nota", text: vm.scala ? "Intanto guardate la scala: preparatevi a discutere!" : "Il sensitivo sta scegliendo la scala…" }));
       } else if (tipo === "guarda") {
-        var tg = r.sensIo ? (r.sq ? "Guarda la tua squadra cercare il bersaglio 🍿" : "Guarda dove mettono la lancetta gli altri 🍿") : r.guardo ? "👀 Guardi la partita: entri alla prossima." :
+        var tg = r.sensIo ? (r.sq ? (r.ins ? "Guarda gli altri cercare il bersaglio 🍿" : "Guarda la tua squadra cercare il bersaglio 🍿") : "Guarda dove mettono la lancetta gli altri 🍿") : r.aspetto ? "✋ Entri dal prossimo turno, con 0 punti: intanto guarda!" : r.guardo ? (ui.t.guarda ? "👀 Guardi la partita" : "👀 Guardi la partita: entri alla prossima.") :
           vm.passo === "scommette" ? "Aspettate la scommessa della Squadra " + SQ[1 - vm.sensSq] + "…" :
           r.scommetto ? "Guardate la lancetta: tra poco scommettete voi, più a sinistra o più a destra!" : "Guarda la lancetta degli altri…";
         ui.pan.appendChild(el("div", { class: "lu-nota", text: tg }));
@@ -1666,6 +1736,9 @@
       righe.push(["b", R.tele ? "🧠 TELEPATIA! +4 alla Squadra " + SQ[R.sq] : R.pt === 4 ? "🎯 Centro! +4 alla Squadra " + SQ[R.sq] : R.pt ? "+" + R.pt + " alla Squadra " + SQ[R.sq] : "Fuori! Nessun punto alla Squadra " + SQ[R.sq]]);
       if (R.scom) righe.push(["s", (R.scom.lato === "sx" ? "⬅️" : "➡️") + " La Squadra " + SQ[R.scom.sq] + (R.scom.giusta ? " aveva ragione: +1" : " ha sbagliato la scommessa") + (R.scom.pari ? " (pari: valeva il primo voto)" : "")]);
       if (R.rimonta) righe.push(["b", "🔁 Centro e siete ancora dietro: RIGIOCATE!"]);
+    } else if (vm.formula === "insieme") {
+      righe.push(["b", R.tele ? "🧠 TELEPATIA! +4 per tutti" : R.pt === 4 ? "🎯 Centro! +4 per tutti" : R.pt ? "+" + R.pt + " per tutti" : "Fuori! Nessun punto"]);
+      righe.push(["s", "In tutto: " + testoPunti(R.tot || 0) + " su " + fmtN(R.max || 0)]);
     } else {
       var pts = R.pts || {}, ids = Object.keys(R.lanP || {});
       var best = ids.slice().sort(function (a, b) { return Math.abs(R.lanP[a] - R.bers) - Math.abs(R.lanP[b] - R.bers); })[0];
@@ -1689,9 +1762,9 @@
     function mostraEsito() { var e = ui.panEl && ui.panEl.esito; if (e) e.classList.add("vis"); }
     if (R.saltato) { Q.vediLan(false); Q.tendina("chiusa", true); Q.pop("⏭️ Turno saltato", "piccolo"); dopo(subito ? 0 : 300, mostraEsito); return; }
     Q.bers(R.bers);
-    if (vm.formula === "squadre") { Q.vediLan(true); Q.lan(R.lan, true); } else Q.vediLan(false);
+    if (vm.formula !== "solo") { Q.vediLan(true); Q.lan(R.lan, true); } else Q.vediLan(false);
     function esito() {
-      if (vm.formula === "squadre") {
+      if (vm.formula !== "solo") {
         Q.lumini(R.tele ? 4 : R.pt); if (!subito) vibraEsito(R.pt, R.tele);
         if (R.tele) { Q.pop("🧠 TELEPATIA!", "tele"); Q.coriandoli(); suono("tele"); }
         else if (R.pt === 4) { Q.pop("🎯 CENTRO! +4", "centro"); Q.coriandoli(); suono("centro"); }
@@ -1735,8 +1808,8 @@
   function contaPunti(ui, vm, r) {
     var da = [Number(String(ui.aN.textContent).replace(/\D/g, "")) || 0, Number(String(ui.bN.textContent).replace(/\D/g, "")) || 0];
     mettiPunti(ui, vm, r);
-    if (vm.formula !== "squadre") return;
-    var a = [vm.sqPunti[0], vm.sqPunti[1]], n = [ui.aN, ui.bN];
+    if (vm.formula === "solo") return;
+    var a = vm.formula === "insieme" ? [vm.tot || 0, (vm.turniTot || 0) * 4] : [vm.sqPunti[0], vm.sqPunti[1]], n = [ui.aN, ui.bN];
     [0, 1].forEach(function (i) {
       if (a[i] <= da[i]) return;
       var v = da[i]; n[i].textContent = fmtN(v); n[i].parentNode.classList.add("sale");
@@ -1751,14 +1824,17 @@
   }
   function finale(t, vm, cb) {
     stile();
-    var f = vm.fine || {}, cl = f.classifica || [], fac = t.faccine(), sq = f.formula === "squadre";
-    var titolo = sq ? (f.vinc < 0 ? "Pareggio!" : "Vince la Squadra " + SQ[f.vinc] + "!") : "Classifica finale";
-    var s = t.schermata({ chiara: true, icona: sq ? (f.vinc < 0 ? "🤝" : "🏆") : "🏆", titolo: titolo });
+    var f = vm.fine || {}, cl = f.classifica || [], targa = !!t.guarda && !t.eliminazione, fac = targa ? null : t.faccine(), sq = f.formula === "squadre";
+    var ins = f.formula === "insieme";
+    var titolo = sq ? (f.vinc < 0 ? "Pareggio!" : "Vince la Squadra " + SQ[f.vinc] + "!") : ins ? votoCompagnia(f.tot || 0, f.max || 0) : "Classifica finale";
+    var s = t.schermata({ chiara: true, icona: sq ? (f.vinc < 0 ? "🤝" : "🏆") : ins ? "🤝" : "🏆", titolo: titolo });
+    if (ins) s._contenuto.appendChild(t.el("div", { class: "lu-fin-sq lu-fin-ins" }, [t.el("div", { class: bravi(f.tot || 0, f.max || 0) ? "vince" : "" }, [
+      t.el("span", { text: "Il voto alla compagnia" }), t.el("b", { text: fmtN(f.tot || 0) + " su " + fmtN(f.max || 0) }), t.el("small", { text: "Tutti insieme: la squadra siete voi" })])]));
     if (sq) s._contenuto.appendChild(t.el("div", { class: "lu-fin-sq" }, [0, 1].map(function (q) {
       return t.el("div", { class: (q ? "b" : "a") + (f.vinc === q ? " vince" : "") }, [t.el("span", { text: "Squadra " + SQ[q] }), t.el("b", { text: fmtN((f.sqPunti || [0, 0])[q]) })]);
     })));
     if (f.premi && f.premi.length) s._contenuto.appendChild(t.el("div", { class: "lu-premi" }, f.premi.map(function (p) { return t.el("div", { text: p }); })));
-    var extra = (f.premi || []).length * 34 + (sq ? 70 : 0);
+    var extra = (f.premi || []).length * 34 + (sq || ins ? 70 : 0);
     var fitta = cl.length > 6 || cl.length * 66 + 300 + extra + (fac ? 56 : 0) > (window.innerHeight || 640);
     var ol = t.el("ol", { class: "classifica" + (fitta ? " fitta" : "") }), med = medaglie(cl.map(function (r) { return r.pos; }));
     cl.forEach(function (r, i) {
@@ -2044,7 +2120,7 @@
         return t.fine(cl);
       }
       // tutti insieme: il voto alla compagnia, poi la classifica (tutti primi: si gioca insieme)
-      var ui = L.ui, p = pan(), voto = L.tot >= 22 ? "🔮 Telepatia!" : L.tot >= 16 ? "🧠 Ci capiamo al volo" : L.tot >= 10 ? "📶 C'è campo" : "📻 Fuori frequenza";
+      var ui = L.ui, p = pan(), voto = votoCompagnia(L.tot, TURNI_INSIEME * 4);
       ui.Q.pop(voto, "tele");
       tx(ui.parola, testoPunti(L.tot) + " su " + (TURNI_INSIEME * 4)); ui.parola.className = "lu-parola";
       tx(ui.sotto, "Il voto alla compagnia");
@@ -2142,7 +2218,7 @@
       ".lu-entra-sq{border:1.5px dashed currentColor;border-radius:999px;padding:3px 9px;background:transparent;font:inherit;font-size:12px;font-weight:850;line-height:1.25;color:inherit;opacity:.75}",
       ".lu-casuale{flex:none;border:0;border-radius:999px;padding:5px 11px;background:#ffd43b;color:#332500;font:inherit;font-size:13px;font-weight:950}.lu-sq-nota{min-width:0;font-size:12px;font-weight:700;line-height:1.25;opacity:.75}",
       ".lu-fin-sq{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 8px}.lu-fin-sq>div{border-radius:14px;padding:6px;text-align:center;background:var(--carta,rgba(255,255,255,.08))}.lu-fin-sq>div.a{box-shadow:inset 0 -4px #e64980}.lu-fin-sq>div.b{box-shadow:inset 0 -4px #4263eb}",
-      ".lu-fin-sq span{display:block;font-weight:800;font-size:14px;opacity:.85}.lu-fin-sq b{display:block;font-size:30px;font-weight:1000;line-height:1.1}.lu-fin-sq small{display:block;font-weight:700;font-size:14px;margin-top:4px}.lu-fin-sq>div.vince{outline:3px solid #ffd43b;outline-offset:-3px}",
+      ".lu-fin-sq.lu-fin-ins{grid-template-columns:1fr}.lu-fin-sq span{display:block;font-weight:800;font-size:14px;opacity:.85}.lu-fin-sq b{display:block;font-size:30px;font-weight:1000;line-height:1.1}.lu-fin-sq small{display:block;font-weight:700;font-size:14px;margin-top:4px}.lu-fin-sq>div.vince{outline:3px solid #ffd43b;outline-offset:-3px}",
       ".lu-premi{display:flex;flex-direction:column;gap:4px;margin:0 0 8px}.lu-premi div{border-radius:12px;padding:5px 10px;background:rgba(255,212,59,.16);font-weight:800;font-size:13.5px;line-height:1.25}",
       // 🌙 Notte vivace: «Le squadre» e la classifica finale sono schermate dell'app (.oro): riquadri di vetro, i premi di vetro (non più giallo-marrone) e la squadra che vince col filo d'oro dell'app
       ".oro .lu-fin-sq>div{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta)}.oro .lu-fin-sq>div.vince{outline-color:var(--n-monete)}",
@@ -2157,6 +2233,7 @@
       ".lu-nx{flex:none;width:24px;height:24px;border:0;border-radius:50%;background:rgba(127,127,127,.3);color:inherit;font:inherit;font-size:.75rem;font-weight:900;cursor:pointer;touch-action:manipulation}",
       // «⏩ Avanti» a maggioranza nella rivelazione
       ".lu-quanti{margin-left:8px;font-size:.78em;opacity:.7}.lu-btn.fatto:disabled{opacity:.8}",
+      ".lu.lu-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom))}.lu.lu-targa .lu-fondo{display:none}",
       ".lu.scrive .lu-testa,.lu.scrive .lu-gente,.lu.scrive .lu-fondo,.lu.scrive .lu-parola.pensa{display:none}.lu.scrive .lu-dial{min-height:80px}",
       "@media(max-height:700px){.lu{gap:5px}.lu-testa{min-height:34px}.lu-av{width:34px;height:34px}.lu-btn{min-height:44px}.lu-btn.piccolo{min-height:36px}.lu-btn.parola{min-height:40px}.lu-carta{min-height:42px}.lu-gente{max-height:48px}.lu-p{padding:1px 7px 1px 1px}.lu-p img{width:18px;height:18px}.lu-est{min-height:30px}.lu-fondo{min-height:36px}}",
       // 🌙 Notte vivace: fondo blu notte dell'app, riquadri e tasti di vetro scuro; il quadrante resta com'è
@@ -2200,10 +2277,12 @@
     postiOnline: MAX,
     riprende: true,   // online: se l'host ricarica o riapre l'app, la partita riprende da dove era (t.ripresa)
     riserva: true,    // online: se l'host sparisce del tutto, un amico porta avanti la partita (gioco lungo, da 2 a 16, non a due né in tempo reale)
+    ritardatari: "turno",   // ✋ chi arriva a partita cominciata entra dal turno dopo, con 0 punti (👀 «Guarda» della Sala: guarda soltanto)
     riassunto: function (imp) {
       var i = impNorm(imp), tutti = tuttiTemi().length;
       var dom = { cosa: "Cosa ne pensi?", classico: "Classico", misto: "Misto" }[i.domande];
-      var form = i.formula === "squadre" ? "a squadre fino a " + i.traguardo : i.formula === "insieme" ? "tutti insieme" : "ognuno per sé, " + (i.giri === 1 ? "1 giro" : i.giri + " giri");
+      var giri = i.giri === 1 ? "1 giro" : i.giri + " giri";
+      var form = i.formula === "squadre" ? "a squadre fino a " + i.traguardo : i.formula === "insieme" ? "tutti insieme" + (!imp || imp.modo !== "telefono" ? ", " + giri : "") : "ognuno per sé, " + giri;
       var temi = i.temi.length >= tutti ? "tutti i temi" : i.temi.length + " temi";
       var n = i.nostre.length, nostre = n && i.nostreModo !== "no" ? " · 📝 " + fmtN(n) + (n === 1 ? " scala vostra" : " scale vostre") + (i.nostreModo === "solo" ? " (solo quelle)" : " (mescolate)") : "";
       return dom + " · " + form + (!imp || imp.modo !== "telefono" ? " · " + i.tempo + " s" : "") + " · " + temi + (i.famosi ? "" : " · senza famosi") + nostre;
@@ -2214,7 +2293,8 @@
       "Gli altri spostano la <b>lancetta</b> dove credono che sia il bersaglio: <b>4 punti</b> al centro, poi <b>3</b> e <b>2</b>. Il sensitivo non può aiutare!",
       "<b>A squadre</b>: la squadra del sensitivo muove una lancetta comune e conferma con «Ci siamo»; l'altra squadra scommette se il bersaglio è <b>più a sinistra o più a destra</b> (+1). Centro ma ancora dietro? Si rigioca!",
       "<b>Ognuno per sé</b> (anche in meno di 4): ognuno ha la sua lancetta; il sensitivo prende la media dei punti degli altri.",
-      "<b>Sullo stesso telefono</b>: il telefono sta in mezzo al tavolo. A squadre, oppure <b>tutti insieme</b> contro il gioco per 7 turni.",
+      "<b>🤝 Tutti insieme</b>: una lancetta sola, tutti contro il gioco. Alla fine il <b>voto alla compagnia</b>: quanto siete sulla stessa lunghezza d'onda? Online ognuno fa il sensitivo una volta per giro; sullo stesso telefono si giocano 7 turni.",
+      "<b>Sullo stesso telefono</b>: il telefono sta in mezzo al tavolo. A squadre oppure tutti insieme.",
       "📝 <b>Le nostre scale</b>: nelle regole (⚙️) l'host scrive le scale del vostro gruppo, una per riga (es. <b>Pizza al ristorante ↔ Pizza a casa</b>). Restano sul suo profilo e si giocano <b>mescolate</b> a quelle del gioco (circa un turno su 3), oppure <b>solo quelle</b>. In partita hanno la firma «📝 della compagnia» e non si ripetono.",
       "Online, dopo la rivelazione si va avanti da soli col conto, oppure subito se più di metà di chi gioca tocca <b>«⏩ Avanti»</b>."
     ],
@@ -2222,11 +2302,11 @@
       var el = aiuti.el, loc = !!aiuti.modo && aiuti.modo !== "online";
       var i0 = impNorm(dove);
       dove.domande = i0.domande; dove.traguardo = i0.traguardo; dove.giri = i0.giri; dove.tempo = i0.tempo; dove.temi = i0.temi.slice(); dove.famosi = i0.famosi;
-      dove.formula = loc ? (dove.formula === "insieme" ? "insieme" : "squadre") : (dove.formula === "solo" ? "solo" : "squadre");
+      dove.formula = loc ? (dove.formula === "insieme" ? "insieme" : "squadre") : (dove.formula === "solo" || dove.formula === "insieme" ? dove.formula : "squadre");
       var grTr = null, grGi = null;
       function visibili() {
         if (grTr) grTr.hidden = dove.formula !== "squadre";
-        if (grGi) grGi.hidden = dove.formula !== "solo";
+        if (grGi) grGi.hidden = dove.formula === "squadre";
       }
       function gruppo(etichetta, voci, prop, conSotto) {
         var w = el("div", {});
@@ -2244,7 +2324,7 @@
       gruppo("Che domande", [["cosa", "🤔 Cosa ne pensi?", "Esce una parola: il sensitivo decide dove sta"], ["classico", "🎯 Classico", "Bersaglio a caso: il sensitivo inventa la parola"], ["misto", "🔀 Misto", "Un turno per modo"]], "domande", true);
       gruppo("Come si gioca", loc
         ? [["squadre", "👥 Due squadre", "Da 4 in su, con la scommessa"], ["insieme", "🤝 Tutti insieme", "Contro il gioco: 7 turni e il voto alla compagnia"]]
-        : [["squadre", "👥 Due squadre", "Da 4 in su (in meno: ognuno per sé)"], ["solo", "🙋 Ognuno per sé", "Ognuno la sua lancetta"]], "formula", true);
+        : [["squadre", "👥 Due squadre", "Da 4 in su (in meno: ognuno per sé)"], ["solo", "🙋 Ognuno per sé", "Ognuno la sua lancetta"], ["insieme", "🤝 Tutti insieme", "Una lancetta sola, tutti contro il gioco"]], "formula", true);
       grTr = gruppo("Si vince a", [[7, "7 punti"], [10, "10 punti"], [15, "15 punti"]], "traguardo");
       if (!loc) grGi = gruppo("Giri (ognuno fa il sensitivo)", [[1, "1 giro"], [2, "2 giri"], [3, "3 giri"]], "giri");
       if (!loc) gruppo("Tempo per indovinare", [[45, "45 s"], [60, "60 s"], [90, "90 s"], [120, "120 s"]], "tempo");
