@@ -3164,6 +3164,7 @@ function soloAmmessi(t) {
 }
 SG.registra({
   id: ID, nome: "Lanterne", icona: "🏮",
+  senzaSala: true,   // una stanza solo di Lanterne, col suo link (…#gioco=lanterne&stanza=CODICE): mai la Sala generica
   descrizione: "Una notte al palazzo: gli ospiti fanno i compiti, le ombre spengono le lanterne. Scoprite chi sono e votatele fuori.",
   giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 2,
   modi: [], soloOnline: true,
