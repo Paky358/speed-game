@@ -1,7 +1,7 @@
-# 🧠 Cervello di SPeeD GAME — il registro
+﻿# 🧠 Cervello di SPeeD GAME — il registro
 
 Lo tiene la chat «🧠 Cervello». Le altre chat ci scrivono solo una riga nel **🗒️ Diario** (in fondo) quando finiscono un lavoro, salvano o pubblicano.
-Ultimo aggiornamento: **29 ott 2026, 01:15** (ora italiana).
+Ultimo aggiornamento: **29 ott 2026, 02:30** (ora italiana).
 
 ---
 
@@ -9,8 +9,8 @@ Ultimo aggiornamento: **29 ott 2026, 01:15** (ora italiana).
 
 | Limite | Usato | Si azzera |
 |---|---|---|
-| Settimana (tutti i modelli) | **7%** (29 ott 01:15; azzerata il 28 ott alle 15:00) | **mercoledì 4 nov alle 15:00** |
-| 5 ore | 47% | 29 ott alle 01:30 |
+| Settimana (tutti i modelli) | **10%** (29 ott 02:25; azzerata il 28 ott alle 15:00) | **mercoledì 4 nov alle 15:00** |
+| 5 ore | 17% | 29 ott alle 06:30 |
 | Settimana Fable | 0% | mercoledì 4 nov alle 15:00 |
 | Crediti cloud | 250 USD il 26 ott sera, da ricontrollare | **scadono il 5 nov alle 08:59** |
 
@@ -48,8 +48,8 @@ Fuori da git: `.claude/launch.json` (il server di prova della chat della Linea d
 | Chat | Gioco | Ultima attività | Cosa sta facendo / in sospeso |
 |---|---|---|---|
 | 🧠 Cervello SPeeD GAME | tutto | 29 ott, ora | Registro, limiti, consigli. Non costruisce giochi. |
-| 🌙 Notte vivace | stile di tutta l'app | 29 ott 01:05, al lavoro | Pubblicato lo stile nuovo (v275). Ora le schermate di servizio dei giochi (gruppo B), nella sua copia `SG-notte`. |
-| 🧍 Avatar | avatar «Mii rifinito» | da aprire | Prompt pronto (28 ott). Lavora in `SG-avatar`, ramo `avatar-mii`, partendo dallo stile Notte vivace già online. Può andare insieme alla Notte vivace (PC con 16 GB, prove nel browser in fila una alla volta). |
+| 🌙 Notte vivace | stile di tutta l'app | 29 ott 02:25, al lavoro di notte | Pubblicato lo stile nuovo (v275). **Notte 29 ott** (lista mandata dal Cervello, il proprietario ha detto sì al gruppo A): B schermate di servizio → A i 16 giochi da `grafica-luxury` + ritocchi → C studio TV → E tavolo della Scopa → piccoli (Hockey, Calcio Biliardo, Palla Matta, Lunghezza d'Onda, carta della Linea) → riassunto. NON stanotte: Parola d'ordine, gruppo D, scene grandi. Copia `SG-notte`, ramo `stile-notte`, niente online. |
+| 🧍 Avatar Mii rifinito | avatar «Mii rifinito» | 29 ott 02:25, al lavoro di notte | Passo 1 salvato sul ramo `avatar-mii` (disegno nuovo pronto ma spento, pagina di confronto); il proprietario: «Mi piace, vai avanti». **Notte 29 ott:** faccine piccole leggibili → disegno nuovo controllato dappertutto → interruttore solo per IL PAPPONE pronto ma non online → riassunto. Copia `SG-avatar`, niente online. |
 | 🎨 Stile (cloud) | grafica di tutta l'app | 27 ott 12:36 | Ferma. Il suo Bianco e oro è stato bocciato e sostituito dalla Notte vivace: non va ripresa. |
 | IMPOSTORE | L'Impostore | 26 ott 20:56 | Telefono bloccato pubblicato (v273). **In sospeso:** 518 coppie di parole nuove in 10 temi aspettano il sì del proprietario; proposti la memoria delle parole per tutta la compagnia e la spia che non sa «in vetrina». |
 | Nome nuovo per SPeeD GAME | nome e dominio | 26 ott 18:12 | 100 idee + 10 migliori (preferiti: **Cerchia, Sodalis, Convivio**). I domini .it e .com secchi sono già presi: proposto «Cerchia Club», cerchia.app, cerchia.games. Aspetta che il proprietario scelga 3 preferiti. |
@@ -98,6 +98,8 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+
+- 29 ott 02:30 · Cervello · salvato · notte guidata dal Cervello (chiesto dal proprietario): mandate alle chat Notte vivace e Avatar le liste dei pezzi della notte, controllo ogni 20 minuti che le fa passare al pezzo dopo, stop se la settimana arriva al 25%, niente pubblicazione; resoconto alle 08:45
 
 - 29 ott 01:15 · Cervello · salvato · registro aggiornato: Notte vivace online (v275), le copie di lavoro di Notte vivace e Avatar, la chat Avatar può partire insieme alla Notte vivace
 
