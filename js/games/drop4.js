@@ -230,7 +230,7 @@
     ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
     // la riga «📜 Si gioca così» della saletta
     riassunto: function (imp) { var p = imp && imp.primo; return "Comincia " + (p === "ospite" ? "chi entra" : p === "caso" ? "chi capita, a sorte" : "chi apre la stanza"); },
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "Giochi da solo" },
       { modo: "telefono", icona: "📱", nome: "In due su questo telefono", sotto: "Vi passate il telefono a ogni mossa", amici: true }],
     regole: [
       "Griglia di <b>7 colonne × 6 righe</b>. Si gioca a turni: <b>Giallo</b> contro <b>Bianco</b>.",

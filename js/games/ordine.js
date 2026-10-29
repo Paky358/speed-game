@@ -3423,7 +3423,19 @@
       ".or-studio .or-cart{background:#161b32;box-shadow:0 12px 32px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 3px var(--c,#fff)}",
       ".or-studio .or-cart.ind{background:#1a1f38;color:var(--on-testo);box-shadow:0 12px 32px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 2px var(--c,#fff)}.or-studio .or-cart.ind small{color:var(--on-sec)}",
       ".or-studio .or-pens{background:#1a1f38;color:var(--on-testo);box-shadow:0 8px 22px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -3px var(--c,#fff)}.or-studio .or-pens-bat{color:var(--on-sec)}.or-studio .or-pens-c.segreta{background:rgba(255,255,255,.14);color:var(--on-testo)}",
-      ".or-studio .or-vignetta{background:var(--on-carta);color:var(--on-inchiostro);box-shadow:0 .3em 1em rgba(0,0,0,.55),0 0 0 .15em var(--c,#fff)}.or-studio .or-vignetta:after{border-top-color:var(--on-carta)}.or-studio .or-vignetta .n{background:var(--on-inchiostro);color:var(--on-carta)}"
+      ".or-studio .or-vignetta{background:var(--on-carta);color:var(--on-inchiostro);box-shadow:0 .3em 1em rgba(0,0,0,.55),0 0 0 .15em var(--c,#fff)}.or-studio .or-vignetta:after{border-top-color:var(--on-carta)}.or-studio .or-vignetta .n{background:var(--on-inchiostro);color:var(--on-carta)}",
+      // 🌙 le schede di fine partita «🤔 Cosa intendevi?» e «🎭 Titoli» (erano chiare): vetro pieno scuro; le parole restano carte crema o coi colori delle squadre
+      ".or-studio .or-riv{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0)),var(--o-carta-piena,#151a2e);color:var(--on-testo);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.08),0 18px 40px -12px rgba(0,0,0,.85)}",
+      ".or-studio .or-riv-fr{background:rgba(255,255,255,.1);color:var(--on-testo);box-shadow:inset 0 0 0 1px var(--on-filo)}.or-studio .or-riv-x{background:rgba(255,255,255,.1);color:var(--on-testo)}",
+      ".or-studio .or-riv-num,.or-studio .or-riv-et,.or-studio .or-riv-vuoto,.or-studio .or-riv-leg{color:var(--on-sec)}.or-studio .or-riv-esito{color:var(--on-testo)}",
+      ".or-studio .or-riv-ind{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--on-filo),inset 0 -4px var(--c)}.or-studio .or-riv-ind b{color:var(--on-testo)}.or-studio .or-riv-ind .n{background:var(--on-carta);color:var(--on-inchiostro)}",
+      ".or-studio .or-riv-c{background:var(--on-carta);color:var(--on-inchiostro);box-shadow:0 0 0 1.5px var(--on-carta-bordo)}",
+      ".or-studio .or-riv-c.manca{background:transparent;color:var(--on-sec);border-color:rgba(255,255,255,.3)}",
+      ".or-studio .or-riv-c.t.cx{background:#08080d;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}",
+      ".or-studio .or-riv-premio{background:rgba(255,194,71,.12);color:var(--on-testo);box-shadow:inset 0 0 0 1px rgba(255,194,71,.45)}",
+      ".or-studio .or-tit{background:rgba(255,255,255,.06);box-shadow:inset 4px 0 var(--c,#888),inset 0 0 0 1px var(--on-filo)}",
+      ".or-studio .or-tit.mio{background:var(--o-carta-viva,rgba(224,34,90,.16));box-shadow:inset 4px 0 var(--c,#888),0 0 0 2px var(--n-monete,#ffc247)}",
+      ".or-studio .or-tit-nome,.or-studio .or-tit-tx small{color:var(--on-sec)}"
     ].join("");
     document.head.appendChild(st);
   }

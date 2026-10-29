@@ -2743,7 +2743,7 @@
     { gioco: "ruota", livello: "bronzo",   icona: "🅰️", nome: "Una Vocale alla Volta",desc: "Scopri 3 vocali comprate in modalità Sfida",                  stat: "vocaliIndovinate",              meta: 3 },
     { gioco: "ruota", livello: "bronzo",   icona: "🔤", nome: "Consonante Fortunata",desc: "Indovina 10 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 10 },
     { gioco: "ruota", livello: "bronzo",   icona: "💡", nome: "La Frase è Mia",       desc: "Risolvi una frase in modalità Sfida",                         stat: "frasiRisolte",                  meta: 1 },
-    { gioco: "ruota", livello: "bronzo",   icona: "🏅", nome: "Vittoria in Sfida",    desc: "Vinci una partita contro il computer Medio o Difficile, oppure contro persone", stat: "vittorieSfida", meta: 1 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🏅", nome: "Vittoria in Sfida",    desc: "Vinci una partita contro il Bot Medio o Difficile, oppure contro persone", stat: "vittorieSfida", meta: 1 },
     { gioco: "ruota", livello: "bronzo",   icona: "🎤", nome: "Al Microfono",         desc: "Concludi la tua prima partita",                              stat: "partite",                       meta: 1 },
     { gioco: "ruota", livello: "argento",  icona: "🔟", nome: "Dieci Puntate",        desc: "Concludi 10 partite",                                         stat: "partite",                       meta: 10 },
     { gioco: "ruota", livello: "argento",  icona: "🧩", nome: "Frasi Svelate",        desc: "Risolvi 10 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 10 },
@@ -7261,7 +7261,7 @@
       testa = "⚔️ " + nm[0] + " e " + nm[1] + " giocano " + aGioco(nome) + punto;
     } else testa = "🎮 Si gioca " + aGioco(nome) + punto;
     var quando = g && g.ritardatari === "mano" ? "dalla prossima mano" : g && g.ritardatari === "subito" ? "subito" : "dal prossimo turno";
-    var sotto = modo === "guarda" ? "entri alla prossima partita" : (modo === "due" ? "giocano in due: tu guardi"
+    var sotto = modo === "guarda" ? "entri alla prossima partita" : (modo === "due" ? (S0.resta ? "" : "giocano in due: tu guardi")   /* (con «Chi vince resta» lo dice già la riga della coda: a 360x640 la Sala scorreva) */
       : (modo === "scelti" ? "gioca chi ha scelto " + (S0.nomeHost || "l'host") : ""));
     var k = gs.stanza + "|" + modo;
     var B = S0._inCorso;

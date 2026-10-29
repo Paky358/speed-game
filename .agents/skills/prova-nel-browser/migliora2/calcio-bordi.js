@@ -15,7 +15,7 @@
     var tess = await W.aspetta(function () { return A.tessera(w, "Calcio Biliardo"); }, 6000);
     if (!tess) no("non trovo la tessera del Calcio Biliardo");
     tess.click(); await W.dorme(450);
-    if (!W.clicca(w, /Contro il computer/, ".modo-grande")) no("in «Come giocate?» non c'è «Contro il computer»");
+    if (!W.clicca(w, /Contro il Bot/, ".modo-grande")) no("in «Come giocate?» non c'è «Contro il Bot»");
     await W.dorme(450);
     W.clicca(w, /Comincia|Gioca|Avanti/); await W.dorme(900);
   }

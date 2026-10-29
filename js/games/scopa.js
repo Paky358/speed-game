@@ -2702,7 +2702,7 @@
     postiOnline: 2,   // online si gioca in due: gli altri guardano
     riprende: true,   // se l'host ricarica la pagina, la smazzata continua dalla stessa mano (t.ripresa)
     ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "Giochi da solo" },
       { modo: "bot3", icona: "🃏", nome: "In tre contro due Bot", sotto: "Ognuno per sé: tu e due Bot" }],
     regole: [
       "Si gioca <b>in due</b> (o <b>in tre</b>, ognuno per sé) con le 40 carte napoletane. Tre carte in mano a testa, quattro sul tavolo.",

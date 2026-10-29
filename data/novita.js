@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 280,
+    data: "29 ottobre 2026",
+    titolo: "Chi di Noi? di notte e tanti ritocchi 🌙",
+    descrizione: [
+      "Chi di Noi? è blu notte come il resto dell'app: battute, voti e classifica in vetro scuro. E dopo il voto delle battute «Chi ha scritto cosa?» mostra di nuovo chi le ha scritte.",
+      "Parola d'ordine: a fine partita «🤔 Cosa intendevi?» e «🎭 Titoli» sono scuri come il tavolo.",
+      "L'Asta: sullo stesso telefono giochi col tuo avatar vero; sui telefoni piccoli il fumetto del banditore non copre più «passo»; nello stadio del fanta «Salta» e «Foto» sono in vetro scuro.",
+      "Sì però: accanto al Giudice c'è l'avatar giusto.",
+      "Tris: il fumetto del Bot non copre più il nome. Ruota della Fortuna: mentre risolvi la scritta non tocca più il nome sul leggio. Calcio Biliardo: sui telefoni piccoli il tasto dei suoni non copre l'avversario. Palla Matta: il numero delle palline si legge anche sopra la luna.",
+      "Nei menu si dice sempre «Contro il Bot» (Scopa, Tris, Drop 4 e Calcio Biliardo dicevano «Contro il computer»).",
+      "Sui telefoni piccoli la saletta e la Sala con «Chi vince resta» stanno tutte nello schermo."
+    ]
+  },
+  {
     v: 279,
     data: "29 ottobre 2026",
     titolo: "Una prima schermata più comoda 📱",

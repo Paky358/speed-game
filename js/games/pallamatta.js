@@ -1705,6 +1705,8 @@
       "@keyframes pmPop{0%{transform:scale(1)}40%{transform:scale(1.5)}100%{transform:scale(1)}}",
       ".pm-pot{flex:none;height:32px;padding:0 8px;border-radius:12px;display:flex;align-items:center;font-weight:900;font-size:.95rem;color:#fff;background:rgba(140,233,154,.18);box-shadow:inset 0 0 0 1.5px rgba(140,233,154,.5)}",
       ".pm-palle{flex:none;height:32px;padding:0 9px;border-radius:12px;display:flex;align-items:center;font-weight:900;font-size:.95rem;color:#fff;background:rgba(255,255,255,.14)}",
+      // le palline rimaste in vetro pieno: nello spazio la luna dello sfondo ci passava sotto e il numero non si leggeva
+      ".pm-palle{background:var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
       ".pm-avviso{position:absolute;left:50%;top:calc(76px + env(safe-area-inset-top));z-index:4;transform:translateX(-50%);padding:8px 14px;width:max-content;max-width:calc(100% - 24px);box-sizing:border-box;border-radius:16px;white-space:normal;text-align:center;line-height:1.25;font-weight:900;font-size:.9rem;color:#1a1440;background:#ffe066;box-shadow:0 6px 16px rgba(0,0,0,.35);opacity:0;pointer-events:none}",
       ".pm-avviso.su{animation:pmAvviso 2.2s ease forwards}",
       "@keyframes pmAvviso{0%{opacity:0;transform:translate(-50%,-8px) scale(.9)}12%{opacity:1;transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0}}",

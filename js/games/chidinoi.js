@@ -1881,6 +1881,7 @@
         var r = t.el("div", { class: "cn-voce rivela" + ((E.vinc || []).indexOf(k) >= 0 ? " vince" : "") + (mia === k ? " sel" : "") }, [t.el("span", { text: "«" + ((E.testi || {})[k] || "") + "»" }), chi, voti]);
         r.style.order = String(ordine.length - idx);   // la più votata in cima
         r.style.opacity = "0";
+        lista.appendChild(r);   // (mancava: «Chi ha scritto cosa?» restava vuoto)
         u.dopo(q(cur), function () { r.style.opacity = ""; r.classList.add("su"); if (!tardi) suono(ultimo ? "evviva" : "pop"); });
         cur += 500;
         Object.keys(E.scelte || {}).forEach(function (id) { if (E.scelte[id] === k) { atterra(u, voti, id, q(cur), mia === k, id === vm.prot ? " re" : (E.jolly || []).indexOf(id) >= 0 ? " jolly" : ""); cur += 420; } });
@@ -2398,10 +2399,10 @@
     if (cssFatto) return; cssFatto = true;
     var st = document.createElement("style");
     st.textContent = [
-      ".schermata.cn-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#140c33}",
+      ".schermata.cn-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:var(--o-fondo)}",
       ".schermata.cn-piena>.testa,.schermata.cn-piena>.piede{display:none}",
       ".schermata.cn-piena>.contenuto{height:100%;margin:0;padding:0}",
-      ".cn{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(120% 70% at 50% -10%,#5a2ca0 0%,#2a1458 45%,#120a2e 100%);color:#fff;user-select:none;-webkit-user-select:none;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}",
+      ".cn{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(120% 70% at 50% -10%,#232a52 0%,#141936 45%,var(--o-fondo) 100%);color:var(--o-testo);user-select:none;-webkit-user-select:none;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}",
       ".cn button{font-family:inherit}",
       ".cn-barra{flex:none;height:44px;display:flex;align-items:center;gap:6px;padding:4px 8px}",
       ".cn-esci,.cn-coppa{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:1.15rem;font-weight:900;cursor:pointer;padding:0}",
@@ -2604,6 +2605,18 @@
       ".cn-btn.vai:disabled{background:var(--o-carta);color:var(--o-tenue);box-shadow:none;border:1px solid var(--o-filo);opacity:1}",
       ".cn-btn.jolly{background:var(--o-carta);border:1px solid var(--o-filo-oro);color:var(--o-testo)}",
       ".cn-btn.jolly.on{background:var(--o-carta-viva);border-color:var(--o-oro);color:var(--o-testo);transform:none}",
+      // 🌙 Notte vivace 2: il fondo blu notte (era viola) e quello che restava chiaro nel voto e nello svelamento (voci, carta della battuta, foglio dove si scrive, classifica)
+      ".cn-vt-carta{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0)),var(--o-carta-piena);color:var(--o-testo);border:1px solid var(--o-filo-oro);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),var(--o-ombra-alta);transform:none}",
+      ".cn-voce{background:var(--o-carta-piena);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo),inset 0 1px 0 rgba(255,255,255,.06)}.cn-voce>i{color:var(--o-tenue)}",
+      ".cn-voce.sel{background:var(--o-carta-viva);box-shadow:0 0 0 2px var(--o-oro),0 10px 22px -12px rgba(224,34,90,.6)}",
+      ".cn-voce .aut{color:var(--o-tenue)}.cn-voce .aut b{color:var(--o-testo)}.cn-voce .aut.casa{color:var(--n-monete)}",
+      ".cn-voce.rivela.vince{background:var(--o-carta-viva);box-shadow:0 0 0 2px var(--n-monete),0 10px 22px -12px rgba(255,194,71,.5)}",
+      ".cn-scr-box{background:var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}.cn-campo{color:var(--o-testo)}.cn-campo::placeholder{color:var(--o-tenue)}.cn-conta{color:var(--o-tenue)}",
+      ".cn-class-box{background:var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra-alta)}",
+      ".cn-riga{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo)}.cn-riga.tu{background:var(--o-carta-viva);box-shadow:inset 0 0 0 2px var(--o-oro)}",
+      ".cn-riga .pt small,.cn-riga .fr{color:var(--o-verde)}",
+      ".cn-prossima{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".cn-esci,.cn-coppa{background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo);color:var(--o-testo)}",
       "@keyframes cnEntra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}",
       "@keyframes cnPop{0%{opacity:0;transform:scale(.6)}70%{opacity:1;transform:scale(1.08)}100%{opacity:1;transform:none}}",
       "@keyframes cnBoing{40%{transform:scale(1.35)}100%{transform:none}}",

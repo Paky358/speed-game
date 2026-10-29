@@ -2106,6 +2106,7 @@
       });
       tast.appendChild(btn("lettera canc", "⌫", function () { cancellaLettera(ui); }));
       ui.azioni.appendChild(tast);
+      ui.azioni.appendChild(ui.rsStato);   // la scritta va sotto la tastiera: sopra toccava il nome sul leggio
       if (f !== "ftempo") ui.annBtn = btn("annulla", "↩ Indietro", function () {
         var vuoto = !ui.scritto.some(function (x) { return x; });
         ui.scritto = []; ui.cur = 0; cb.onAzione("annulla", vuoto ? "vuoto" : "");
