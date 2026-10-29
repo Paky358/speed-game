@@ -5656,7 +5656,7 @@
       el("button", { class: "btn btn-fantasma btn-piccolo", type: "button", text: "Scelgo io", onclick: function () { salaScegliGioco({ scelgoIo: true }); } })
     ]));
     var griglia = el("div", { class: "griglia-giochi" });
-    var lista = giochi.filter(giocoOnline);
+    var lista = giochi.filter(function (g) { return giocoOnline(g) && !g.senzaSala; });   // (i giochi senzaSala hanno una stanza loro)
     if (sel) lista = sel.map(giocoDa).concat(lista.filter(function (g) { return sel.indexOf(g.id) < 0; }));   // (i proposti in cima)
     lista.forEach(function (g) {
       // (con la Sala sempre accesa niente schermata delle impostazioni: si va dritti nella saletta, le regole stanno nel ⚙️)
@@ -8020,8 +8020,9 @@
     var io = profiloAttivo(), mioNome = String((io && io.nome) || "").trim().toUpperCase();
     // soloPer: un modo che vede solo un account (es. "Prova da solo" per il proprietario, IL PAPPONE)
     var m = (g && g.modi) ? g.modi.filter(function (x) { return !x.soloPer || x.soloPer === mioNome; }) : [];
-    if (giocoOnline(g)) m.push(salaSempre() ? modoOnlineSala() : MODO_ONLINE);
-    var mc = giocoOnline(g) && salaSempre() ? modoCompagnia() : null;   // subito dopo "Online": la Compagnia usata più di recente
+    var conSala = salaSempre() && !(g && g.senzaSala);   // (senzaSala in SG.registra: il gioco apre una stanza sua, col suo link, mai la Sala)
+    if (giocoOnline(g)) m.push(conSala ? modoOnlineSala() : MODO_ONLINE);
+    var mc = giocoOnline(g) && conSala ? modoCompagnia() : null;   // subito dopo "Online": la Compagnia usata più di recente
     if (mc) m.push(mc);
     if (g && GIOCHI_ELIMINAZIONE[g.id]) m.push(MODO_ELIMINAZIONE);
     return m;
@@ -8089,7 +8090,7 @@
   function sceltoModo(g, m) {
     if (m.modo === "codice") return entraConCodice(function () { schermataModo(g); });   // invitato: si entra nella stanza di un altro
     if (m.modo === "eliminazione") return creaSala({ eliminazione: g.id });   // un link solo, coppie sorteggiate, chi vince va avanti
-    if (m.modo === "online" && salaSempre()) return apriOnlineSala(g);   // online = la Sala della serata
+    if (m.modo === "online" && salaSempre() && !g.senzaSala) return apriOnlineSala(g);   // online = la Sala della serata
     if (m.modo === "compagnia") return giocaInCompagnia(g, m.comp);   // online nella Sala della Compagnia
     if (m.amici) return schermataSala(g, { modo: m.modo });   // sullo stesso telefono: prima gli amici, poi le impostazioni
     schermataPreGioco(g, { modo: m.modo });                  // contro il computer / online: subito le impostazioni
