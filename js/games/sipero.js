@@ -714,8 +714,12 @@
     });
     return box;
   }
+  // sullo stesso telefono chi ha il nome del profilo gioca col suo avatar vero (gli altri ne hanno uno a caso, sempre uguale per nome)
+  function ominoProfilo(nome) {
+    try { var p = window.SGNube && SGNube.disponibile() && SGNube.profilo(); return p && p.omino && String(p.nome || "").trim().toLowerCase() === String(nome || "").trim().toLowerCase() ? p.omino : null; } catch (e) { return null; }
+  }
   function avatarHtml(nome, omino) {
-    var cfg = omino || (window.SGOmino && SGOmino.casuale ? SGOmino.casuale(nome) : null);
+    var cfg = omino || ominoProfilo(nome) || (window.SGOmino && SGOmino.casuale ? SGOmino.casuale(nome) : null);
     try { return cfg && window.SGOmino ? SGOmino.svg(cfg) : ""; } catch (e) { return ""; }
   }
   function avatar(t, nome, omino) { return t.el("span", { class: "sp-av", html: avatarHtml(nome, omino) }); }

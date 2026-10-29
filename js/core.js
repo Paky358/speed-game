@@ -2743,7 +2743,7 @@
     { gioco: "ruota", livello: "bronzo",   icona: "🅰️", nome: "Una Vocale alla Volta",desc: "Scopri 3 vocali comprate in modalità Sfida",                  stat: "vocaliIndovinate",              meta: 3 },
     { gioco: "ruota", livello: "bronzo",   icona: "🔤", nome: "Consonante Fortunata",desc: "Indovina 10 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 10 },
     { gioco: "ruota", livello: "bronzo",   icona: "💡", nome: "La Frase è Mia",       desc: "Risolvi una frase in modalità Sfida",                         stat: "frasiRisolte",                  meta: 1 },
-    { gioco: "ruota", livello: "bronzo",   icona: "🏅", nome: "Vittoria in Sfida",    desc: "Vinci una partita contro il computer Medio o Difficile, oppure contro persone", stat: "vittorieSfida", meta: 1 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🏅", nome: "Vittoria in Sfida",    desc: "Vinci una partita contro il Bot Medio o Difficile, oppure contro persone", stat: "vittorieSfida", meta: 1 },
     { gioco: "ruota", livello: "bronzo",   icona: "🎤", nome: "Al Microfono",         desc: "Concludi la tua prima partita",                              stat: "partite",                       meta: 1 },
     { gioco: "ruota", livello: "argento",  icona: "🔟", nome: "Dieci Puntate",        desc: "Concludi 10 partite",                                         stat: "partite",                       meta: 10 },
     { gioco: "ruota", livello: "argento",  icona: "🧩", nome: "Frasi Svelate",        desc: "Risolvi 10 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 10 },

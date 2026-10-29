@@ -1220,7 +1220,7 @@
         tema: tema, crediti: crediti, sessione: nuovaSessione(), roundIdx: 0, chooserPtr: 0, tavolo: [], senzaCarta: [], asta: null,
         tipi: tipiPartita(t.impostazioni), salto: 1,   // 🎭 i round diversi; di quanto rilancia chi tocca il suo avatar
         malPiano: t.impostazioni && t.impostazioni.maledetta ? pianoMaledetta(t.giocatori.length) : null,   // 🧨 la carta maledetta (regola dell'host)
-        giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0, asteVinte: 0, st: statNuove() }; })
+        giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0, asteVinte: 0, st: statNuove(), omino: ominoLocale(t, n) }; })
       };
       iniziaRound(t, st);
   }
@@ -1432,6 +1432,8 @@
     Monza: ["#d7141f", "#f4f4f4"], Genoa: ["#ae1e2e", "#0a2240"], Lecce: ["#f2d200", "#d9001a"], Frosinone: ["#ffd400", "#0b46a6"]
   };
   function coloriSquadra(sq) { return COLORI_SQUADRE[sq] || null; }
+  // sullo stesso telefono: chi ha il nome del profilo gioca col suo avatar vero (gli altri ne hanno uno a caso, sempre uguale per nome)
+  function ominoLocale(t, n) { var io = t.nomeProfilo ? String(t.nomeProfilo() || "").trim().toLowerCase() : ""; return io && String(n || "").trim().toLowerCase() === io && t.mioOmino ? t.mioOmino(n) : null; }
   function cfgDi(nome, omino) { return omino || (window.SGOmino ? SGOmino.casuale(nome || "Giocatore") : null); }
   function srcSvg(k, fn) {   // un disegno SVG come immagine (fatto una volta e tenuto da parte)
     if (CACHE_AV[k] !== undefined) return CACHE_AV[k];
@@ -5414,7 +5416,7 @@
   function avviaFanta(t) {
     var st = {
       formato: "fanta", sessione: nuovaSessione(), asta: null, giriVuoti: 0, salto: 1, giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
-      giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove() }; })
+      giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove(), omino: ominoLocale(t, n) }; })
     };
     st.mazzo = costruisciMazzoFanta(st.giocatori.length);
     introFanta(t, st);
