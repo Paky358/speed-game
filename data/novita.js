@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 276,
+    data: "29 ottobre 2026",
+    titolo: "Anche le partite si vestono di notte 🌙",
+    descrizione: [
+      "Quasi tutti i giochi ora hanno lo stile dell'app: fondo blu notte, riquadri di vetro scuro e tasti lampone, dalla prima mossa alla classifica finale.",
+      "Scopa, Scopa 2 contro 2 e Scopone si giocano in una stanza di sera, con le pareti blu notte e una luce calda sul tavolo.",
+      "Nello studio TV (Balla Colossale, Nomi Cose e Città, Patata Bollente, Ruota della Fortuna, Il Prezzo è Giusto) pannelli, tasti e scritte hanno i colori della notte. La ruota della Ruota ha i colori nuovi e nella Patata c'è una bomba vera con la miccia, che si illumina quando manca poco.",
+      "Le attese, gli avvisi e i podi di fine partita sono uguali in tutti i giochi, con le medaglie nei colori dei trofei.",
+      "Parola d'ordine per ora resta com'era: arriverà più avanti."
+    ]
+  },
+  {
     v: 275,
     data: "29 ottobre 2026",
     titolo: "SPeeD GAME si veste di notte 🌙",

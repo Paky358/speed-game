@@ -330,6 +330,8 @@
       "body:has(.oro.g-tris) .sgc-velo{background:rgba(9,11,22,.55)}",
       "body:has(.oro.g-tris) .sgc-foglio{background:var(--o-carta-piena);color:var(--o-testo);border:1px solid var(--o-filo-oro);box-shadow:var(--o-ombra-alta)}",
       "body:has(.oro.g-tris) :is(.sgc-fac button,.sgc-frasi button,.sgc-x){background:var(--o-fondo-2);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      // telefoni bassi (360x640): punti e scritta un po' più piccoli, così i tasti di fine partita restano nello schermo
+      "@media (max-height:700px){.tr-griglia{margin:2px 0}.tr-punti{font-size:1.6rem;margin-bottom:8px}.tr-stato{font-size:1.25rem}}",
       // telefoni alti: avatar e scritte più grandi
       "@media (min-height:800px){.tr-scena{gap:14px}.tr-avw{width:70px;height:70px}.tr-av{font-size:2.4rem}.tr-fumetto{top:74px}.tr-nome{font-size:1rem}.tr-punti{font-size:2.3rem}.tr-stato{font-size:1.7rem}}"
     ].join("");
