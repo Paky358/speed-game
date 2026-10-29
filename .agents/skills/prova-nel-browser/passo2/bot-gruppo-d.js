@@ -39,7 +39,8 @@
     });
     if (Object.keys(facce).some(function (n) { return n === "Bot"; })) no("al tavolo c'è ancora un bot che si chiama «Bot»");
     // i bot capi danno l'indizio da soli (si comincia con l'indizio di un bot)
-    if (!await W.aspetta(function () { return /INDIZIO DEI \S+ [A-ZÀ-Ù]{3,}\s?[0-9∞]/.test(T(P)); }, 8000)) no("il bot capo non dà l'indizio («" + T(P).slice(0, 120) + "»)");
+    // (l'indizio sta prima della scritta «INDIZIO DEI ROSSI · ancora N tentativi»: «ANTICO 1 INDIZIO DEI ROSSI…»)
+    if (!await W.aspetta(function () { return /[A-ZÀ-Ù]{3,}\s?[0-9∞]\s*INDIZIO DEI \S+|INDIZIO DEI \S+ [A-ZÀ-Ù]{3,}\s?[0-9∞]/.test(T(P)); }, 8000)) no("il bot capo non dà l'indizio («" + T(P).slice(0, 120) + "»)");
     var mis = await A.misuraSchermata(P, "IL PAPPONE", 360, 640);
     var f = document.getElementById("tel-IL PAPPONE"); f.style.width = "360px"; f.style.height = "740px";
     if (mis) no("il tavolo della prova: " + mis);

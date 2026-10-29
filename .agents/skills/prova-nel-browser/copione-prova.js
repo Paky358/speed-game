@@ -1465,7 +1465,9 @@
       // chi ha già il profilo (il telefono lo ricorda), senza rete: entra lo stesso, col suo nome
       var R = await W.apriTel("Rita", { x: 185, profilo: false, offline: true, prima: function (w) { w.localStorage.setItem("sg-ultimo-profilo", JSON.stringify({ nome: "Rita", omino: null })); } });
       if (!await W.aspetta(function () { return home(R); }, 3000)) no("chi ha il profilo, senza rete, non entra («" + T(R).slice(0, 60) + "»)");
-      if (!/Rita/.test(T(R))) no("senza rete nella home non c'è il suo nome");
+      // (dal 29 ott, v278, la home non scrive più il nome: c'è la sua faccina nel menu in basso. Senza rete il Profilo
+      //  chiede di accedere, ma si gioca col nome e l'avatar ricordati: basta che la home ci sia, col tasto del profilo)
+      if (!/Rita/.test(T(R)) && !R.document.querySelector(".ms-io")) no("senza rete nella home non c'è né il suo nome né il tasto del profilo");
       return "«Serve internet» (" + mis + "), Riprova, avviso se la rete cade; Rita senza rete entra lo stesso";
     } },
 
