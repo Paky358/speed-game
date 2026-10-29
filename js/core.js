@@ -1234,6 +1234,16 @@
   // la commessa del negozio: la disegna il proprietario con l'editor degli avatar, e la vedono tutti uguale
   var PROPRIETARIO = "IL PAPPONE";
   function eProprietario() { var io = profiloAttivo(); return String((io && io.nome) || "").trim().toUpperCase() === PROPRIETARIO; }
+  // 🧍 GLI AVATAR NUOVI «Mii rifinito» (29 ott 2026): lo stesso avatar di ognuno, disegnato senza contorni scuri e con occhi più veri
+  // (lo stile "rifinito" di SGOmino). Per ora lo vede SOLO IL PAPPONE sul suo telefono, per provarlo nell'app vera (tutti gli avatar,
+  // anche quelli degli amici); dal suo profilo lo spegne e lo riaccende («🧍 Avatar nuovi», si ricorda in sg-avatar-stile).
+  // AVATAR_NUOVO: "nessuno" = spento per tutti · "proprietario" = solo lui · "tutti" = per tutti.
+  var AVATAR_NUOVO = "proprietario";
+  function avatarNuoviSpenti() { try { return localStorage.getItem("sg-avatar-stile") === "classico"; } catch (e) { return false; } }
+  function stileAvatar() {
+    if (!window.SGOmino || !SGOmino.stile) return;
+    SGOmino.stile(AVATAR_NUOVO === "tutti" || (AVATAR_NUOVO === "proprietario" && eProprietario() && !avatarNuoviSpenti()) ? "rifinito" : "classico");
+  }
   function commessaSalvata() { try { return JSON.parse(localStorage.getItem("sg-commessa") || "null"); } catch (e) { return null; } }
   function modificaCommessa(cfg, daStanza) {
     var bozza = { nome: "Commessa", omino: cfg, omini: null }, prima = JSON.stringify(cfg);
@@ -4114,6 +4124,16 @@
       if (eProprietario() && window.SGOmino) sp._contenuto.appendChild(el("button", { class: "st-tasto st-bot", onclick: function () { schermataBot(function () { schermataAccessoCloud(dopo); }); } }, [
         el("span", { class: "st-tasto-ico", text: "🤖" }),
         el("span", { class: "st-tasto-testo" }, [ el("b", { text: "I Bot" }), el("small", { text: "Avatar, nomi e livelli dei bot di tutti i giochi" }) ]),
+        el("span", { class: "st-tasto-va", text: "›" })
+      ]));
+      // solo il proprietario, finché gli avatar nuovi li prova lui: si spengono e si riaccendono (l'app si riapre, così ogni gioco li ridisegna)
+      if (AVATAR_NUOVO === "proprietario" && eProprietario() && window.SGOmino) sp._contenuto.appendChild(el("button", { class: "st-tasto st-avnuovi", onclick: function () {
+        try { localStorage.setItem("sg-avatar-stile", avatarNuoviSpenti() ? "rifinito" : "classico"); } catch (e) {}
+        location.reload();
+      } }, [
+        el("span", { class: "st-tasto-ico", text: "🧍" }),
+        el("span", { class: "st-tasto-testo" }, [ el("b", { text: avatarNuoviSpenti() ? "Avatar nuovi: spenti" : "Avatar nuovi: accesi" }),
+          el("small", { text: avatarNuoviSpenti() ? "Tocca per vedere il disegno nuovo («Mii rifinito»). Lo vedi solo tu" : "Il disegno nuovo («Mii rifinito»): lo vedi solo tu. Tocca per tornare a quello di oggi" }) ]),
         el("span", { class: "st-tasto-va", text: "›" })
       ]));
       sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () {
@@ -11150,6 +11170,8 @@
       } catch (e) { setTimeout(function () { throw e; }, 0); }
       if (daLink && linkParams.k) chiaveDi(linkParams.sala || linkParams.gruppo || linkParams.stanza, false, linkParams.k);   // 🔑 la chiave delle foto: solo in questa scheda
       if (window.SGNube && SGNube.onCambio) SGNube.onCambio(ricordaProfilo);   // questo telefono ricorda l'ultimo profilo usato
+      if (window.SGNube && SGNube.onCambio) SGNube.onCambio(stileAvatar);   // gli avatar nuovi: solo sul telefono del proprietario (vedi AVATAR_NUOVO)
+      stileAvatar();
       // gli amici online (Passo 6): col profilo pronto si accende la presenza; profilo cambiato o uscito: si ferma o riparte
       if (window.SGNube && SGNube.onCambio && window.SGAmiciOnline) SGNube.onCambio(function () { amiciAvvia(); });
       // PROFILO OBBLIGATORIO: prima di tutto (home, gioco, stanza o Sala del link) c'è il profilo con l'avatar;
@@ -11159,6 +11181,7 @@
         garantisciProfilo(vai, { daLink: !!(daLink || ls0), invito: invitoDi(ls0) });
       }
       function vai() {
+        stileAvatar();   // (il profilo ora c'è di sicuro, anche se appena creato)
         caricaBot();   // i bot come li ha fatti il proprietario (in sottofondo: intanto valgono gli ultimi visti)
         caricaOrdine();   // e l'ordine dei giochi (stessa lettura della sua scheda; la home aperta si rimette in fila da sola)
         amiciAvvia();   // il pallino verde degli amici e i loro inviti (solo col profilo)
