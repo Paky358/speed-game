@@ -9,6 +9,33 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 281,
+    data: "29 ottobre 2026",
+    titolo: "Stessa Lunghezza d'Onda: la ruota nuova 📡",
+    descrizione: [
+      "La mezza ruota è diventata un apparecchio vero, grande quanto lo schermo: sopra il quadrante con i lumini sul bordo, sotto la scala e la parola del sensitivo. Mentre il sensitivo pensa, sulla tendina gira un radar.",
+      "🥁 La rivelazione è più emozionante: rullo di tamburi, i lumini si accendono uno dopo l'altro, poi la tendina gira via. Il telefono vibra coi punti: tre colpi per un centro, un colpo lungo se è fuori.",
+      "🤝 «Tutti insieme» anche online: una lancetta sola, tutti contro il gioco, e alla fine il voto alla compagnia. Ognuno fa il sensitivo una volta per giro.",
+      "✋ Chi arriva a partita cominciata entra dal turno dopo con 0 punti e fa anche lui il sensitivo. Nella Sala c'è anche «👀 Guarda», per guardare senza giocare.",
+      "155 scale nuove, scritte per noi (per esempio «Scarpetta vietata ↔ Scarpetta obbligatoria» o «Al tavolo dei bambini ↔ A capotavola»). In tutto sono più di 700. Le carte già uscite non tornano per molte partite."
+    ]
+  },
+  {
+    v: 280,
+    data: "29 ottobre 2026",
+    titolo: "Chi di Noi? di notte e tanti ritocchi 🌙",
+    descrizione: [
+      "Chi di Noi? è blu notte come il resto dell'app: battute, voti e classifica in vetro scuro. E dopo il voto delle battute «Chi ha scritto cosa?» mostra di nuovo chi le ha scritte.",
+      "Parola d'ordine: a fine partita «🤔 Cosa intendevi?» e «🎭 Titoli» sono scuri come il tavolo.",
+      "L'Asta: sullo stesso telefono giochi col tuo avatar vero; sui telefoni piccoli il fumetto del banditore non copre più «passo»; nello stadio del fanta «Salta» e «Foto» sono in vetro scuro.",
+      "Sì però: accanto al Giudice c'è l'avatar giusto.",
+      "Tris: il fumetto del Bot non copre più il nome. Ruota della Fortuna: mentre risolvi la scritta non tocca più il nome sul leggio. Calcio Biliardo: sui telefoni piccoli il tasto dei suoni non copre l'avversario. Palla Matta: il numero delle palline si legge anche sopra la luna.",
+      "Nei menu si dice sempre «Contro il Bot» (Scopa, Tris, Drop 4 e Calcio Biliardo dicevano «Contro il computer»).",
+      "Sui telefoni piccoli la saletta e la Sala con «Chi vince resta» stanno tutte nello schermo.",
+      "Nella Sala online il gioco si sceglie come nella prima schermata: due per riga, con le stesse tessere."
+    ]
+  },
+  {
     v: 279,
     data: "29 ottobre 2026",
     titolo: "Una prima schermata più comoda 📱",

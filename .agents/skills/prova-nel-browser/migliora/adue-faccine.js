@@ -141,7 +141,7 @@
   // 802. Scopa a due contro il Bot
   COPIONE.aggiungi(802, { nome: "Scopa a due contro il Bot: 💬, il Bot risponde, partita fino alla fine", fai: async function () {
     var P = await W.apriTel("Paky", { x: 0 });
-    await avviaLocale(P, "Scopa", /Contro il computer/, function (w) { W.clicca(w, /^Una mano$/); });
+    await avviaLocale(P, "Scopa", /Contro il Bot/, function (w) { W.clicca(w, /^Una mano$/); });
     if (!await W.aspetta(function () { return P.document.querySelector(".sc-mensola1 .sc-carta"); }, 6000)) no("il tavolo a due non c'è");
     if (!tasto(P)) no("non c'è il tasto 💬");
     var e1 = await misura(P, "Paky", 360, 640, ".sc-mensola"); if (e1) no(e1);
@@ -158,11 +158,11 @@
   // 803. Tris, Drop 4, Battaglia Navale, Calcio Biliardo contro il Bot
   COPIONE.aggiungi(803, { nome: "Tris, Drop 4, Navale, Calcio Biliardo contro il Bot: 💬 e risposta del Bot, a misura", fai: async function (opz) {
     var GIOCHI = [
-      { id: "tris", nome: "Tris", modo: /Contro il computer/, tavolo: ".tr-griglia", mio: ".tr-g.X", suo: ".tr-g.O", frase: "p1", re: /Bella mossa!/ },
-      { id: "drop4", nome: "Drop 4", modo: /Contro il computer/, tavolo: ".d4-tav", mio: ".d4-g.G", suo: ".d4-g.B", frase: "p2", re: /Ti blocco!/ },
+      { id: "tris", nome: "Tris", modo: /Contro il Bot/, tavolo: ".tr-griglia", mio: ".tr-g.X", suo: ".tr-g.O", frase: "p1", re: /Bella mossa!/ },
+      { id: "drop4", nome: "Drop 4", modo: /Contro il Bot/, tavolo: ".d4-tav", mio: ".d4-g.G", suo: ".d4-g.B", frase: "p2", re: /Ti blocco!/ },
       { id: "navale", nome: "Battaglia Navale", modo: /Contro il Bot/, tavolo: ".nav-pann", mio: ".nav-mini", suo: ".nav-wrap .nav-board", frase: "p0", re: /Acqua!/,
         prima: async function (w) { W.clicca(w, /A caso/); await W.dorme(200); W.clicca(w, /Pronto, si combatte/); await W.dorme(900); } },
-      { id: "calciobiliardo", nome: "Calcio Biliardo", modo: /Contro il computer/, tavolo: ".cb-campo", mio: ".cb-targa.giu", suo: ".cb-targa.su", frase: "p0", re: /Che gol!/ }
+      { id: "calciobiliardo", nome: "Calcio Biliardo", modo: /Contro il Bot/, tavolo: ".cb-campo", mio: ".cb-targa.giu", suo: ".cb-targa.su", frase: "p0", re: /Che gol!/ }
     ].filter(function (g) { return !opz || !opz.solo || opz.solo.indexOf(g.id) >= 0; });
     var fatti = [];
     for (var i = 0; i < GIOCHI.length; i++) {
@@ -505,10 +505,10 @@
   //      Calcio Biliardo contro il Bot; «Resta» lascia la partita com'è, il sì porta fuori
   COPIONE.aggiungi(811, { nome: "Uscire a metà partita: la finestra dell'app, «Resta» e poi «Esci» (Tris, Scopa, Scopa in tre, Calcio Biliardo)", fai: async function () {
     var GIOCHI = [
-      { nome: "Tris", modo: /Contro il computer/, tavolo: ".tr-griglia" },
-      { nome: "Scopa", modo: /Contro il computer/, tavolo: ".sc-mensola1" },
+      { nome: "Tris", modo: /Contro il Bot/, tavolo: ".tr-griglia" },
+      { nome: "Scopa", modo: /Contro il Bot/, tavolo: ".sc-mensola1" },
       { nome: "Scopa", modo: /In tre contro due Bot/, tavolo: ".sc-targa4" },
-      { nome: "Calcio Biliardo", modo: /Contro il computer/, tavolo: ".cb-campo" }
+      { nome: "Calcio Biliardo", modo: /Contro il Bot/, tavolo: ".cb-campo" }
     ], fatti = [];
     clearInterval(W.__autoConferma); W.__autoConferma = null; W.__siFermo = true;   // (le conferme qui le tocco io)
     try {

@@ -2743,7 +2743,7 @@
     { gioco: "ruota", livello: "bronzo",   icona: "🅰️", nome: "Una Vocale alla Volta",desc: "Scopri 3 vocali comprate in modalità Sfida",                  stat: "vocaliIndovinate",              meta: 3 },
     { gioco: "ruota", livello: "bronzo",   icona: "🔤", nome: "Consonante Fortunata",desc: "Indovina 10 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 10 },
     { gioco: "ruota", livello: "bronzo",   icona: "💡", nome: "La Frase è Mia",       desc: "Risolvi una frase in modalità Sfida",                         stat: "frasiRisolte",                  meta: 1 },
-    { gioco: "ruota", livello: "bronzo",   icona: "🏅", nome: "Vittoria in Sfida",    desc: "Vinci una partita contro il computer Medio o Difficile, oppure contro persone", stat: "vittorieSfida", meta: 1 },
+    { gioco: "ruota", livello: "bronzo",   icona: "🏅", nome: "Vittoria in Sfida",    desc: "Vinci una partita contro il Bot Medio o Difficile, oppure contro persone", stat: "vittorieSfida", meta: 1 },
     { gioco: "ruota", livello: "bronzo",   icona: "🎤", nome: "Al Microfono",         desc: "Concludi la tua prima partita",                              stat: "partite",                       meta: 1 },
     { gioco: "ruota", livello: "argento",  icona: "🔟", nome: "Dieci Puntate",        desc: "Concludi 10 partite",                                         stat: "partite",                       meta: 10 },
     { gioco: "ruota", livello: "argento",  icona: "🧩", nome: "Frasi Svelate",        desc: "Risolvi 10 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 10 },
@@ -2980,7 +2980,7 @@
         el("span", { class: "sg-frecc", text: plat ? "💠" : "›" })
       ]));
     });
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: schermataHome }));
+    if (!HOME_MENU_SOTTO) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: schermataHome }));   // (📱 col menu sotto è un doppione)
     mostra(s);
   }
   // schermata di un singolo gioco: platino in cima + trofei per livello
@@ -4584,8 +4584,9 @@
   function schermataScegliGioco() {
     var s = schermata({ icona: "🎮", titolo: "Cambia gioco", sotto: "Stessi partecipanti",
       indietro: function () { schermataSala(null); } });
-    var griglia = el("div", { class: "griglia-giochi" });
-    giochi.forEach(function (g) { if (!g.soloOnline) griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g); })); });
+    s.classList.add("scelta-giochi");   // (📱 le tessere come in home: due per riga, senza descrizione)
+    var griglia = el("div", { class: "griglia-giochi compatta tess-due" });
+    giochi.forEach(function (g) { if (!g.soloOnline) griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g); }, true)); });
     s._contenuto.appendChild(griglia);
     mostra(s);
   }
@@ -5637,7 +5638,7 @@
     var s = schermata({ icona: sel ? "🗳️" : "🎮", titolo: sel ? "Proponi 3 giochi" : (T ? "Quale gioco?" : "Scegli un gioco"),
       sotto: T ? "Parte per tutti · più è difficile, più punti vale" : (sel ? "Poi votate tutti e decide la ruota" : "Parte per tutta la sala"),
       indietro: function () { if (sala && sala.sceglie) { sala.sceglie = false; sala._bcast(); } disegnaSalaHost(); } });   // (gli amici non leggono più "Paky sceglie…")
-    s.classList.add("sala-sceglie");
+    s.classList.add("sala-sceglie", "scelta-giochi");   // (📱 le tessere come in home: due per riga, senza descrizione)
     function segna() {
       Object.keys(tessere).forEach(function (id) { tessere[id].classList.toggle("proposta", sel.indexOf(id) >= 0); });
       var tx = "🗳️ Si vota! (" + sel.length + ")";
@@ -5655,12 +5656,13 @@
       el("span", { class: "sl-prop-tx" }, [ el("b", { text: "🗳️ Proponi 3 giochi" }), el("small", { text: "tocca per cambiarli" }) ]),
       el("button", { class: "btn btn-fantasma btn-piccolo", type: "button", text: "Scelgo io", onclick: function () { salaScegliGioco({ scelgoIo: true }); } })
     ]));
-    var griglia = el("div", { class: "griglia-giochi" });
+    var griglia = el("div", { class: "griglia-giochi compatta tess-due" });
     var lista = giochi.filter(function (g) { return giocoOnline(g) && !g.senzaSala; });   // (i giochi senzaSala hanno una stanza loro)
     if (sel) lista = sel.map(giocoDa).concat(lista.filter(function (g) { return sel.indexOf(g.id) < 0; }));   // (i proposti in cima)
     lista.forEach(function (g) {
       // (con la Sala sempre accesa niente schermata delle impostazioni: si va dritti nella saletta, le regole stanno nel ⚙️)
-      var tess = tesseraGioco(g, function () { if (sel) return tocca(g.id); if (salaSempre()) salaPreparaGioco(g); else schermataPreGioco(g, { sala: true }); });
+      var tess = tesseraGioco(g, function () { if (sel) return tocca(g.id); if (salaSempre()) salaPreparaGioco(g); else schermataPreGioco(g, { sala: true }); }, true);
+      if (T) tess.querySelector(".info").appendChild(rigaPuntiTorneo(g));
       // quanti giocano, detto prima di sceglierlo: i giochi a due (gli altri guardano), i posti contati, chi manca
       var et = etichettaPosti(g, sala ? sala.membri.length : 1);
       if (et) tess.querySelector(".info").appendChild(el("div", { class: "tess-adue" + (et.c ? " " + et.c : ""), text: et.t }));
@@ -7259,7 +7261,7 @@
       testa = "⚔️ " + nm[0] + " e " + nm[1] + " giocano " + aGioco(nome) + punto;
     } else testa = "🎮 Si gioca " + aGioco(nome) + punto;
     var quando = g && g.ritardatari === "mano" ? "dalla prossima mano" : g && g.ritardatari === "subito" ? "subito" : "dal prossimo turno";
-    var sotto = modo === "guarda" ? "entri alla prossima partita" : (modo === "due" ? "giocano in due: tu guardi"
+    var sotto = modo === "guarda" ? "entri alla prossima partita" : (modo === "due" ? (S0.resta ? "" : "giocano in due: tu guardi")   /* (con «Chi vince resta» lo dice già la riga della coda: a 360x640 la Sala scorreva) */
       : (modo === "scelti" ? "gioca chi ha scelto " + (S0.nomeHost || "l'host") : ""));
     var k = gs.stanza + "|" + modo;
     var B = S0._inCorso;
@@ -9746,6 +9748,8 @@
 
   function pesoGioco(g) { var d = g && g.difficolta; return (d === 1 || d === 3) ? d : 2; }
   function nomeDifficolta(d) { return d === 3 ? "Difficile" : d === 1 ? "Facile" : "Media"; }
+  // dentro la tessera, nella scelta del gioco del torneo: quanto vale ("🏅 Difficile · 300 al 1°")
+  function rigaPuntiTorneo(g) { var d = pesoGioco(g); return el("div", { class: "tess-punti", text: "🏅 " + nomeDifficolta(d) + " · " + cifre(CURVA_TORNEO[0] * d) + " al 1°" }); }
 
   function puntiDaClassifica(g, classifica) {
     var peso = pesoGioco(g);
@@ -9844,7 +9848,8 @@
   function torneoScegliGioco() {
     var s = schermata({ icona: "🎮", titolo: "Quale gioco?", sotto: "Più è difficile, più punti vale",
       indietro: schermataTorneoHub });
-    var griglia = el("div", { class: "griglia-giochi" }), n = torneo.giocatori.length, tolti = 0;
+    s.classList.add("scelta-giochi");   // (📱 le tessere come in home: due per riga, senza descrizione)
+    var griglia = el("div", { class: "griglia-giochi compatta tess-due" }), n = torneo.giocatori.length, tolti = 0;
     // sullo stesso telefono: niente giochi solo online, e solo i giochi dove giocate TUTTI (in 3 niente giochi a due:
     // giocherebbero solo i primi due della lista e gli altri resterebbero senza punti)
     giochi.forEach(function (g) {
@@ -9852,7 +9857,9 @@
       if ((g.giocatoriMax || 10) < n || (g.giocatoriMin || 1) > n) { tolti++; return; }
       // (i giochi a due, postiOnline: 2: nel torneo si fa una partita sola, es. il Tris "chi vince resta" vale solo fuori dal torneo)
       if (g.postiOnline && g.postiOnline < n) { tolti++; return; }
-      griglia.appendChild(tesseraGioco(g, function () { schermataPreGioco(g, { torneo: true }); }));
+      var tess = tesseraGioco(g, function () { schermataPreGioco(g, { torneo: true }); }, true);
+      tess.querySelector(".info").appendChild(rigaPuntiTorneo(g));
+      griglia.appendChild(tess);
     });
     if (tolti) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Qui trovi i giochi dove giocate tutti e " + n + " insieme." }));
     s._contenuto.appendChild(griglia);

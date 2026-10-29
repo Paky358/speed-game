@@ -14,6 +14,9 @@
 // 287: 6 telefoni ognuno per sé, Classico: uno spento senza bloccare (dopo 20 s esce e il turno si chiude), lancette degli altri a chi ha bloccato.
 // 288: 6 a squadre, escono in tre uno dopo l'altro: squadre rifatte, poi ognuno per sé, fino alla fine.
 // 289: misure ognuno per sé con 6 telefoni (avatar sul bordo) e la classifica finale.
+// 290: 🤝 tutti insieme online in 4 (una lancetta sola per tutti, punti di gruppo, il voto alla compagnia, tutti primi).
+// 291: ✋ chi arriva tardi (ognuno per sé in 3): Sara apre il link a partita cominciata → «prossimi», entra dal turno dopo
+//      con 0 punti e fa anche lei il sensitivo; 👀 Bea col link guarda=1: mai tra i giocatori, targhetta del core, niente faccine del gioco.
 // Ogni scenario dura più di 45 s: lancialo senza aspettarlo (window.__run = COPIONE.prova(n)) e poi leggi COPIONE.esiti.
 (function () {
   "use strict";
@@ -23,9 +26,9 @@
   // ---- aiuti ----
   // il dito sul quadrante di un telefono: v da 0 a 100 (su: false = il dito resta giù)
   async function trascina(w, v, su) {
-    var d = w.document.querySelector(".lu-dial"); if (!d) return false;
-    var r = d.getBoundingClientRect(), s = Math.min(r.width / 200, r.height / 112), ox = (r.width - 200 * s) / 2, oy = r.height - 112 * s;
-    var px = r.left + ox + 100 * s, py = r.top + oy + 104 * s, a = (-90 + v * 1.8) * Math.PI / 180, R = 80 * s;
+    var d = w.document.querySelector(".lu-dial"), g = d && d.querySelector("svg"); if (!g) return false;
+    var r = g.getBoundingClientRect(), s = r.width / 208;
+    var px = r.left + 104 * s, py = r.top + 104 * s, a = (-90 + v * 1.8) * Math.PI / 180, R = 80 * s;
     var o = { bubbles: true, cancelable: true, pointerId: 1, clientX: px + R * Math.sin(a), clientY: py - R * Math.cos(a), isPrimary: true };
     if (su !== "muovi") d.dispatchEvent(new w.PointerEvent("pointerdown", o));
     await W.dorme(20); d.dispatchEvent(new w.PointerEvent("pointermove", o));
@@ -39,7 +42,7 @@
   // un turno giocato da tutti (opz: { scrivo, indizio, saltaPiazza })
   async function giocaPasso(C, opz) {
     opz = opz || {};
-    var v = vm(C), sq = v.formula === "squadre", wS = tel(C, v.sens), P = W.finestra("Paky");
+    var v = vm(C), team = v.formula === "squadre", sq = team || v.formula === "insieme", wS = tel(C, v.sens), P = W.finestra("Paky");
     if (v.fase !== "gioco") return false;
     if (v.passo === "sceglie" && !v.pausa && wS) {
       if (v.modo === "classico") {
@@ -59,7 +62,7 @@
       }
     }
     if (v.passo === "indovina") {
-      var gioc = v.players.filter(function (p) { return !p.via && p.id !== v.sens && (!sq || p.sq === v.sensSq); });
+      var gioc = v.players.filter(function (p) { return !p.via && p.id !== v.sens && (!team || p.sq === v.sensSq); });
       if (sq) {
         var w1 = tel(C, gioc[0].id); await trascina(w1, caso(10, 90)); await W.dorme(250);
         for (var i = 0; i < gioc.length && vm(C).passo === "indovina"; i++) { var wi = tel(C, gioc[i].id); if (wi && !/Non ancora/.test(T(wi))) tocca(wi, /Ci siamo/); await W.dorme(150); }
@@ -338,7 +341,7 @@
     return "Classico con 2 scale, indizio vietato rifiutato, due dita: la tiene " + gioc[0].nome + ", conferme spente allo spostamento, " + opp.nome + " spento 20 s → via e poi rientra, sensitivo uscito → turno saltato";
   } });
 
-  COPIONE.aggiungi(283, { nome: "Lunghezza d'Onda: chi arriva tardi guarda ed entra alla Rivincita; Misto con «La scelgo io»", fai: async function () {
+  COPIONE.aggiungi(283, { nome: "Lunghezza d'Onda: chi arriva tardi e tocca «👀 Guarda» nella Sala guarda ed entra alla Rivincita; Misto con «La scelgo io»", fai: async function () {
     var Z = await salaECominci(["Giulia", "Luca"]), C = Z.C, P = W.finestra("Paky");
     await regola(P, /Misto/);
     await regola(P, /^1 giro$/);
@@ -349,8 +352,11 @@
     var M = await W.apriTel("Marco", { hash: "sala=" + Z.S, x: 185 * 3, salaSempre: true });
     await W.dorme(2500);
     if (/Guarda/.test(T(M))) W.clicca(M, /Guarda/);
-    var guarda = await W.aspetta(function () { return ids(C, "guarda").length === 1; }, 12000);
-    if (!guarda) no("Marco non è tra chi guarda («" + T(M).slice(0, 150) + "»)");
+    // (dal 29 ott Lunghezza dichiara i ritardatari: «👀 Guarda» della Sala guarda soltanto, col core, e l'host non lo vede)
+    var guarda = await W.aspetta(function () { return M.document.querySelector(".sg-guardo") && M.document.querySelector(".lu-dial svg"); }, 12000);
+    if (!guarda) no("Marco non guarda la partita («" + T(M).slice(0, 150) + "»)");
+    var idM = A.mioId("Marco");
+    if ((vm(C).prossimi || []).some(function (x) { return x.id === idM; })) no("Marco è tra i «prossimi» (ha toccato «Guarda»)");
     if (ids(C, "players").length !== 3) no("Marco ha preso un posto");
     await W.aspetta(function () { return M.document.querySelector(".lu"); }, 6000);
     if (M.document.querySelector(".lu") && M.document.querySelectorAll(".lu-pan .lu-btn").length) no("Marco ha dei tasti");
@@ -666,4 +672,81 @@
     if (prob.length) no(prob.slice(0, 6).join(" | "));
     return "misurati " + Object.keys(visti).join(", ") + " e la fine su 6 telefoni: tutto a misura";
   } });
+
+  // ---- 290: 🤝 tutti insieme online ----
+  COPIONE.aggiungi(290, { nome: "Lunghezza d'Onda: 🤝 tutti insieme online in 4 (lancetta sola, punti di gruppo, voto alla compagnia)", fai: async function () {
+    var nomi = ["Paky", "Giulia", "Luca", "Sara"];
+    var Z = await salaECominci(nomi.slice(1)), C = Z.C, P = W.finestra("Paky");
+    await regola(P, /Tutti insieme/); await regola(P, /^1 giro$/);
+    if (!await W.aspetta(function () { return /tutti insieme, 1 giro/.test(A.regoleDi(W.finestra("Giulia"))); }, 5000)) no("Giulia legge le regole «" + A.regoleDi(W.finestra("Giulia")) + "»");
+    await comincia(C);
+    var v = vm(C);
+    if (v.formula !== "insieme") no("non si gioca tutti insieme (" + v.formula + ")");
+    if (v.turniTot !== 4) no("i turni sono " + v.turniTot + " (in 4 con 1 giro: 4)");
+    // in alto il totale di tutti
+    if (!await W.aspetta(function () { return /Tutti insieme/.test(T(W.finestra("Luca"))); }, 4000)) no("Luca non legge «🤝 Tutti insieme» in alto");
+    // fino a «indovina»: tutti tranne il sensitivo hanno «Ci siamo» e muovono la stessa lancetta
+    await fino(C, function (x) { return x.passo === "indovina"; }, 30000) || await W.aspetta(function () { return vm(C).passo === "indovina"; }, 20000);
+    v = vm(C);
+    if (v.passo !== "indovina") no("non si arriva a indovinare (" + v.passo + ")");
+    var altri = v.players.filter(function (p) { return p.id !== v.sens; });
+    if (!await W.aspetta(function () { return altri.every(function (p) { return /Ci siamo/.test(T(W.finestra(p.nome))); }); }, 4000)) no("non tutti quelli che indovinano hanno «Ci siamo»");
+    if (/Più a sinistra/.test(T(W.finestra(altri[0].nome)))) no("c'è la scommessa");
+    var wA = W.finestra(altri[0].nome), wB = W.finestra(altri[1].nome);
+    await trascina(wA, 20); await W.dorme(600);
+    if (Math.abs(vm(C).lan - 20) > 3) no("la lancetta comune non va dove l'ha messa " + altri[0].nome + " (" + vm(C).lan + ")");
+    // giocata fino alla fine
+    if (!await finoAllaFine(C, 150000, { veloce: true })) no("la partita non finisce");
+    var f = vm(C).fine || {};
+    if (f.formula !== "insieme") no("la fine non è «tutti insieme»");
+    if (f.max !== 16) no("il massimo è " + f.max + " (4 turni: 16)");
+    if (!(f.classifica || []).every(function (r) { return r.pos === 1 && r.punti === f.tot; })) no("in classifica non sono tutti primi coi punti di tutti");
+    if (!await W.aspetta(function () { return /Il voto alla compagnia/.test(T(W.finestra("Sara"))) && / su 16/.test(T(W.finestra("Sara"))); }, 5000)) no("Sara non vede il voto alla compagnia");
+    senzaErrori();
+    var esito = "in 4: " + f.tot + " su " + f.max + " («" + votoDi(f) + "»)";
+    return esito + ", lancetta comune e classifica ok";
+  } });
+  // ---- 291: chi arriva tardi e chi guarda ----
+  COPIONE.aggiungi(291, { nome: "Lunghezza d'Onda: ✋ chi arriva tardi entra dal turno dopo (0 punti, fa il sensitivo) e 👀 chi guarda col link", fai: async function () {
+    var Z = await salaECominci(["Giulia", "Luca"]), C = Z.C, P = W.finestra("Paky");
+    await regola(P, /Ognuno per sé/); await regola(P, /^1 giro$/);
+    await comincia(C);
+    var v = vm(C);
+    if (v.turniTot !== 3) no("i turni sono " + v.turniTot);
+    // Sara arriva mentre il primo sensitivo sceglie
+    var S = await W.apriTel("Sara", { hash: "gioco=lunghezza&stanza=" + C, salaSempre: true });
+    var idS = await W.aspetta(function () { return A.mioId("Sara"); }, 8000);
+    if (!idS) no("Sara non si collega");
+    if (!await W.aspetta(function () { return (vm(C).prossimi || []).some(function (x) { return x.id === idS; }); }, 8000)) no("Sara non è tra i «prossimi» (" + JSON.stringify(vm(C).prossimi) + ")");
+    if (ids(C, "players").indexOf(idS) >= 0) no("Sara è subito tra i giocatori");
+    if (!await W.aspetta(function () { return /Entri tra poco/.test(T(S)); }, 6000)) no("Sara non legge «Entri tra poco» («" + T(S).slice(0, 160) + "»)");
+    // Bea guarda soltanto
+    var B = await W.apriTel("Bea", { hash: "gioco=lunghezza&stanza=" + C + "&guarda=1", salaSempre: true });
+    if (!await W.aspetta(function () { return B.document.querySelector(".sg-guardo"); }, 8000)) no("Bea non ha la targhetta del core");
+    if (!await W.aspetta(function () { return B.document.querySelector(".lu-dial svg"); }, 8000)) no("Bea non vede la ruota");
+    var idB = A.mioId("Bea");
+    if (B.document.querySelector(".lu-fondo .sl-faccine") && B.document.querySelector(".lu-fondo").offsetParent) no("Bea ha anche le faccine del gioco");
+    // il turno 1 fino alla fine: Sara non c'è ancora
+    var t1 = vm(C).turno;
+    await fino(C, function (x) { return x.turno > t1 && x.passo === "sceglie"; }, 60000);
+    v = vm(C);
+    var pS = (v.players || []).filter(function (p) { return p.id === idS; })[0];
+    if (!pS) no("al turno 2 Sara non è tra i giocatori");
+    else if (pS.punti !== 0) no("Sara entra con " + pS.punti + " punti");
+    if (v.turniTot !== 4) no("con Sara i turni dovevano diventare 4 (sono " + v.turniTot + ")");
+    if ((v.prossimi || []).length) no("al turno 2 ci sono ancora «prossimi»");
+    if (ids(C, "players").indexOf(idB) >= 0 || (v.prossimi || []).some(function (x) { return x.id === idB; })) no("Bea è entrata in partita");
+    // fino alla fine: Sara fa il sensitivo una volta
+    var sensS = false, fino2 = Date.now() + 150000;
+    while (Date.now() < fino2 && vm(C).fase === "gioco") { if (vm(C).sens === idS) sensS = true; await giocaPasso(C, { veloce: true }); }
+    if (vm(C).fase !== "fine") no("la partita non finisce");
+    if (!sensS) no("Sara non ha mai fatto il sensitivo");
+    var cl = (vm(C).fine || {}).classifica || [];
+    if (!cl.some(function (r) { return r.id === idS; })) no("Sara non è in classifica");
+    if (cl.some(function (r) { return r.id === idB; })) no("Bea è in classifica");
+    if (!await W.aspetta(function () { return /l'hai guardata/.test(T(B)); }, 6000)) no("a fine partita Bea non legge «Questa partita l'hai guardata»");
+    senzaErrori();
+    return "Sara: prossimi → dentro al turno 2 con 0 punti, sensitivo una volta, in classifica; Bea guarda col link (targhetta, mai in partita)";
+  } });
+  function votoDi(f) { var q = f.max ? f.tot / f.max : 0; return q >= 0.78 ? "Telepatia" : q >= 0.57 ? "Ci capiamo al volo" : q >= 0.35 ? "C'è campo" : "Fuori frequenza"; }
 })();

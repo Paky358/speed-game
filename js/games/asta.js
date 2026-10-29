@@ -640,6 +640,8 @@
     ".sa-sala:not(.st-stadio)::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(60% 26% at 50% 17%,rgba(255,200,130,.30),transparent 72%),radial-gradient(54% 20% at 22% 97%,rgba(255,178,96,.40),transparent 72%),radial-gradient(76% 34% at 50% 62%,rgba(255,196,130,.15),transparent 76%),linear-gradient(180deg,rgba(14,20,74,.58) 0%,rgba(44,58,190,.46) 34%,rgba(18,24,92,.48) 68%,rgba(10,12,34,.76) 100%);}",
     ".sa-sala:not(.st-stadio)::after{background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 46%,rgba(4,6,16,.62) 100%);}",
     ".sa-sala:not(.st-stadio) .sa-tasto{background:rgba(21,26,46,.82);color:var(--o-testo);font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 0 1px rgba(255,255,255,.14),0 6px 16px rgba(0,0,0,.45);}",
+    // 🌙 nello stadio del fanta i tasti in alto («Salta ⏭», «📸 Foto») in vetro scuro come quelli della sala (erano bianchi); campo e spalti restano
+    ".st-stadio .sa-tasto{background:rgba(21,26,46,.82);color:var(--o-testo);font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 0 1px rgba(255,255,255,.14),0 6px 16px rgba(0,0,0,.45);}",
     ".sa-sala:not(.st-stadio) .sa-info{color:var(--o-testo);font-weight:700;letter-spacing:.02em;}",
     ".sa-sala:not(.st-stadio) .sa-pannello{gap:10px;padding:9px;border-radius:20px;border:1px solid rgba(255,255,255,.16);background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 46%),rgba(21,26,46,.84);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 18px 36px -12px rgba(0,0,0,.8),0 0 0 1px rgba(0,0,0,.35);}",
     ".sa-sala:not(.st-stadio) .sa-lotto{background:rgba(255,255,255,.06);color:var(--o-testo);border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.09);}",
@@ -667,6 +669,8 @@
     ".sa-sala:not(.st-stadio) .sa-bolla::after{border-top-color:var(--o-carta-piena);}",
     ".sa-sala:not(.st-stadio) .sa-bolla.conta{background:var(--n-lampone);color:#fff;box-shadow:0 8px 20px rgba(224,34,90,.5);}",
     ".sa-sala:not(.st-stadio) .sa-bolla.conta::after{border-top-color:var(--n-lampone);}",
+    // sui telefoni bassi il fumetto del banditore va a destra della sua testa, nello spazio libero sopra la scritta d aiuto: sopra la testa copriva il «passo» di chi siede davanti a sinistra
+    "@media (max-height:700px){.sa-sala:not(.st-stadio) .sa-bolla{left:94%;bottom:auto;top:8%}.sa-sala:not(.st-stadio) .sa-bolla::after,.sa-sala:not(.st-stadio) .sa-bolla.conta::after{left:-7px;top:50%;bottom:auto;margin-top:-7px;border:7px solid transparent;border-left:0;border-right-color:var(--o-carta-piena)}.sa-sala:not(.st-stadio) .sa-bolla.conta::after{border-right-color:var(--n-lampone)}}",
     ".sa-sala:not(.st-stadio) .sa-nota{color:#d6d9ea;opacity:1;font-weight:600;}",
     ".sa-sala:not(.st-stadio) .as-sel span{color:var(--o-testo);font-weight:700;}",
     ".sa-sala:not(.st-stadio) .as-sel button{background:rgba(21,26,46,.84);color:var(--o-testo);font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}",
@@ -1220,7 +1224,7 @@
         tema: tema, crediti: crediti, sessione: nuovaSessione(), roundIdx: 0, chooserPtr: 0, tavolo: [], senzaCarta: [], asta: null,
         tipi: tipiPartita(t.impostazioni), salto: 1,   // 🎭 i round diversi; di quanto rilancia chi tocca il suo avatar
         malPiano: t.impostazioni && t.impostazioni.maledetta ? pianoMaledetta(t.giocatori.length) : null,   // 🧨 la carta maledetta (regola dell'host)
-        giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0, asteVinte: 0, st: statNuove() }; })
+        giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0, asteVinte: 0, st: statNuove(), omino: ominoLocale(t, n) }; })
       };
       iniziaRound(t, st);
   }
@@ -1432,6 +1436,8 @@
     Monza: ["#d7141f", "#f4f4f4"], Genoa: ["#ae1e2e", "#0a2240"], Lecce: ["#f2d200", "#d9001a"], Frosinone: ["#ffd400", "#0b46a6"]
   };
   function coloriSquadra(sq) { return COLORI_SQUADRE[sq] || null; }
+  // sullo stesso telefono: chi ha il nome del profilo gioca col suo avatar vero (gli altri ne hanno uno a caso, sempre uguale per nome)
+  function ominoLocale(t, n) { var io = t.nomeProfilo ? String(t.nomeProfilo() || "").trim().toLowerCase() : ""; return io && String(n || "").trim().toLowerCase() === io && t.mioOmino ? t.mioOmino(n) : null; }
   function cfgDi(nome, omino) { return omino || (window.SGOmino ? SGOmino.casuale(nome || "Giocatore") : null); }
   function srcSvg(k, fn) {   // un disegno SVG come immagine (fatto una volta e tenuto da parte)
     if (CACHE_AV[k] !== undefined) return CACHE_AV[k];
@@ -5414,7 +5420,7 @@
   function avviaFanta(t) {
     var st = {
       formato: "fanta", sessione: nuovaSessione(), asta: null, giriVuoti: 0, salto: 1, giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
-      giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove() }; })
+      giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove(), omino: ominoLocale(t, n) }; })
     };
     st.mazzo = costruisciMazzoFanta(st.giocatori.length);
     introFanta(t, st);

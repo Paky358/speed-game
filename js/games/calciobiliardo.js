@@ -307,7 +307,7 @@
     var el = t.el, s = t.schermata({}); s.classList.add("cb-piena");
     var ui = { t: t, cb: cb, o: o, st: null, anim: null, mira: null, scelta: null, zoom: 1, turno: 0, fase: "mira", puoi: false, mie: [], solo: null,
       eventoVisto: null, scadenza: null, fineTempo: null, testo: { giu: "", su: "" }, facce: [null, null], avviso: null, stDopo: null };
-    var scena = el("div", { class: "cb-scena" + (o.ruota ? " ruota" : "") + (o.targa ? " con-targa" : "") });
+    var scena = el("div", { class: "cb-scena" + (o.ruota ? " ruota" : "") + (o.targa ? " con-targa" : "") + (o.muto ? "" : " con-audio") });
     ui.basso = o.targa ? 54 : 0;   // (il posto della targhetta di chi guarda, sotto la targhetta in basso)
     if (window.__CB) window.__CB.ui = ui;   // (per le prove: la mira col dito)
     ui.cv = el("canvas", { class: "cb-campo" }); ui.ctx = ui.cv.getContext("2d");
@@ -1418,6 +1418,8 @@
       "@keyframes cbBatte2{0%,100%{transform:rotate(180deg)}50%{transform:rotate(180deg) scale(1.08)}}",
       // con l'orologio le targhette lasciano posto ai lati
       ".cb-scena.tempo .cb-targa.su,.cb-scena.tempo.ruota .cb-targa{max-width:calc(100% - 196px)}",
+      // col tasto dei suoni accanto a «‹» la targhetta in alto lascia libero anche il suo posto (sui telefoni stretti lo copriva)
+      ".cb-scena.con-audio .cb-targa.su{max-width:calc(100% - 196px)}",
       // la targhetta di ognuno: avatar piccolo, nome, messaggio e i suoi gol
       ".cb-targa{position:absolute;left:50%;transform:translateX(-50%);max-width:calc(100% - 112px);display:flex;align-items:center;gap:8px;padding:3px 4px 3px 3px;border-radius:999px;pointer-events:none;",
       "background:var(--o-carta-piena);box-shadow:0 0 0 1px var(--o-filo-oro);transition:box-shadow .25s}",
@@ -1468,7 +1470,7 @@
     postiOnline: 2,   // online si gioca in due: gli altri guardano
     riprende: true,   // se l'host ricarica la pagina, la partita riprende (stessi gol; un tiro a metà si rifà)
     ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "Giochi da solo" },
       { modo: "telefono", icona: "📱", nome: "In due su questo telefono", sotto: "Uno per lato, il telefono in mezzo", amici: true }],
     regole: [
       "Ognuno ha <b>5 calciatori</b>. A turno se ne tira <b>uno</b>: toccalo, tira indietro il dito come una <b>fionda</b> e lascia. Più tiri indietro, più forte parte.",

@@ -198,7 +198,7 @@
     postiOnline: 2,   // online si gioca in due: gli altri guardano
     riprende: true,   // se l'host ricarica la pagina, la partita riprende dalla stessa mossa (t.ripresa)
     ritardatari: "partita",   // chi arriva a partita cominciata la guarda ed entra alla prossima
-    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il computer", sotto: "Giochi da solo contro il Bot" },
+    modi: [{ modo: "bot", icona: "🤖", nome: "Contro il Bot", sotto: "Giochi da solo" },
       { modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "In due (o di più: chi vince resta)", amici: true }],
     regole: [
       "A turno si mette il proprio simbolo (<b>X</b> o <b>O</b>) in una casella libera della griglia 3×3.",
@@ -279,6 +279,8 @@
       ".tr-fumetto{position:absolute;top:60px;z-index:6;width:max-content;max-width:150px;background:var(--o-carta-piena);color:var(--o-testo);border:1px solid var(--o-filo-oro);font-weight:800;font-size:.8rem;line-height:1.25;padding:6px 9px;border-radius:12px;box-shadow:var(--o-ombra-alta);opacity:0;transform:translateY(-4px) scale(.9);transition:opacity .2s,transform .2s;pointer-events:none;text-align:center;white-space:normal}",
       ".tr-g.X .tr-fumetto{left:0}.tr-g.O .tr-fumetto{right:0}",
       ".tr-fumetto.on{opacity:1;transform:none}",
+      // il fumetto sta sopra l'avatar (sotto copriva per un attimo il nome di chi parla)
+      ".tr-g .tr-fumetto,.tr-g .tr-fumetto.on{top:auto;bottom:calc(100% + 4px)}",
       ".tr-stato{font-family:var(--o-tit);font-weight:700;font-size:1.5rem;min-height:1.3em;text-align:center;line-height:1.2;padding:0 6px;color:var(--o-testo)}",
       ".tr-stato.pop{animation:trPop .45s ease-out}",
       "@keyframes trPop{0%{transform:scale(.7);opacity:.3}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}",
