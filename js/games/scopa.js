@@ -173,7 +173,7 @@
       stile();
       if (ancora._sgc && ancora._sgc.parentNode) ancora._sgc.parentNode.removeChild(ancora._sgc);
       var b = document.createElement("div");
-      b.className = "sgc-bolla" + (x.f ? " fa" : "") + (o.sotto ? " giu" : "");
+      b.className = "sgc-bolla" + (x.f ? " fa" : "") + (o.sotto ? " giu" : "") + (gioco === "scopa" ? " sgc-oro" : "");
       if (o.nome) { var sm = document.createElement("small"); sm.textContent = o.nome; b.appendChild(sm); }
       b.appendChild(document.createTextNode(x.f || x.t));
       b.style.visibility = "hidden";
@@ -231,7 +231,7 @@
       if (document.querySelector(".sgc-velo")) return;
       function bt(cls, testo, fn) { var x = document.createElement("button"); x.type = "button"; if (cls) x.className = cls; x.textContent = testo; x.addEventListener("click", fn); return x; }
       var velo = document.createElement("div"), f = document.createElement("div"), testa = document.createElement("div"), tit = document.createElement("b");
-      velo.className = "sgc-velo"; f.className = "sgc-foglio"; testa.className = "sgc-testa";
+      velo.className = "sgc-velo"; f.className = "sgc-foglio" + (o.gioco === "scopa" ? " sgc-oro" : ""); testa.className = "sgc-testa";   // (🤍 il foglio della Scopa in avorio e oro; gli altri giochi lo tengono com'era)
       f.setAttribute("role", "dialog");
       tit.textContent = o.soloFaccine ? "Faccine" : "💬 Di' qualcosa";
       testa.appendChild(tit); testa.appendChild(bt("sgc-x", "✕", chiudi));
@@ -659,6 +659,74 @@
     var A = (availW != null ? availW : Math.min(window.innerWidth || 375, 600) - 46);
     return Math.max(26, Math.min(cap || 70, Math.floor((A - (maxN - 1) * gap) / maxN)));
   }
+  // 🤍 BIANCO E ORO — la stanza col tavolo vero resta com'è; barra, targhe, fumetti, avvisi e riepiloghi diventano avorio e oro.
+  // Tutto sotto i cartellini dei tre giochi (.g-scopa, .g-scopa2v2, .g-scopone): La Scalinata e Sì però hanno classi con lo stesso prefisso (.sc-, .sp-).
+  // I colori sono SOLO le variabili --o-* di css/styles.css (le squadre restano riconoscibili: avversari rosso, tu e compagno verde).
+  function stileOro() {
+    var G = ":is(.g-scopa,.g-scopa2v2,.g-scopone)", GO = G + ".oro", OMB = "0 3px 8px rgba(0,0,0,.3)";
+    function r(sels, body) { return sels.split("|").map(function (x) { return G + " " + x.trim(); }).join(",") + "{" + body + "}"; }     // la stanza (schermata scura)
+    function ro(sels, body) { return sels.split("|").map(function (x) { return GO + " " + x.trim(); }).join(",") + "{" + body + "}"; }   // i riepiloghi (schermata chiara)
+    return [
+      // 🌙 la stanza di notte: pareti blu notte con la luce calda della lampada sul tavolo; tavolo, panno e mensola restano di legno
+      r(".sc-scena", "background:radial-gradient(70% 50% at 50% 0%,rgba(255,196,130,.3),rgba(255,196,130,0) 70%),radial-gradient(90% 60% at 50% 100%,rgba(255,79,134,.1),rgba(255,79,134,0) 70%),linear-gradient(#262c55 0%,#181d3a 55%,#0e1124 100%)"),
+      r(".sc-quadro", "border-color:#3a3150;opacity:.85"),
+      r(".sc-quadro[style*='left:16px']", "background:linear-gradient(135deg,#2b2f6b,#6f5bd0 60%,#ff8fb1)!important"),
+      r(".sc-quadro[style*='right:16px']", "background:linear-gradient(135deg,#123a5a,#2fa6c9 60%,#ffd28a)!important"),
+      // la barra in alto: punti, mazzo, 💬, 🎵 e il tasto «‹»
+      r(".sc-testata > div:first-child | .sc-mazzino", "background:var(--o-carta);color:var(--o-testo);border:1px solid var(--o-filo-oro);box-shadow:" + OMB),
+      r(".sc-testata > div:first-child .tenue", "color:var(--o-tenue)"),
+      r(".sc-mazzino.ultima", "color:var(--o-oro-testo);border-color:var(--o-oro)"),
+      r(".sc-musica | .sgc-tasto", "background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)," + OMB),
+      r(".sgc-tasto i", "background:var(--o-oro)"),
+      G + ".schermata.senza-testa > .testa .btn-piccolo{background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)," + OMB + "}",
+      // le targhe dei giocatori: avorio col filo della squadra (avversari rosso, tu e il compagno verde); di turno, un anello d'oro
+      r(".sc-targa | .sc-scena .sc-targa | .sc-targa4", "background:var(--o-carta);color:var(--o-testo);border:2px solid var(--o-rosso);box-shadow:" + OMB),
+      r(".sc-targa4.mia", "border-color:var(--o-verde)"),
+      r(".sc-targa.turno | .sc-scena .sc-targa.turno | .sc-targa4.turno", "border-color:var(--o-rosso);box-shadow:0 0 0 3px var(--o-oro-chiaro),0 0 14px rgba(255,154,74,.7)," + OMB),
+      r(".sc-targa4.mia.turno", "border-color:var(--o-verde)"),
+      r(".sc-targa .sc-nome | .sc-targa4 .sc-nome", "color:var(--o-testo)"),
+      r(".sc-targa-sc", "color:var(--o-oro-testo)"),
+      r(".sc-num", "background:var(--o-scuro);color:var(--o-scuro-testo)"),
+      // i fumetti, la scritta grande sul tavolo, l'aiuto e gli avvisi che passano
+      r(".sc-fumetto", "background:var(--o-carta-piena);color:var(--o-testo);box-shadow:0 0 0 1.5px var(--o-oro-chiaro),0 4px 12px rgba(0,0,0,.35)"),   // (🌙 vetro pieno: i fumetti passano anche sopra le carte bianche)
+      r(".sc-fumetto::after", "border-right-color:var(--o-carta-piena)"),
+      r(".sc-fumetto.s2-dx::after | .sc-fumetto.sp-dx::after", "border-right-color:transparent;border-left-color:var(--o-carta-piena)"),
+      r(".sc-fumetto.scopa", "background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:0 0 0 1.5px var(--o-oro),0 4px 12px rgba(0,0,0,.35)"),
+      r(".sc-fumetto.scopa::after", "border-right-color:var(--o-oro)"),
+      r(".sc-fumetto.scopa.s2-dx::after | .sc-fumetto.scopa.sp-dx::after", "border-right-color:transparent;border-left-color:var(--o-oro)"),
+      r(".sc-banner", "background:var(--o-carta-piena);color:var(--o-testo);border:2px solid var(--o-oro);box-shadow:0 6px 18px rgba(0,0,0,.4)"),
+      r(".sc-banner.scopa", "background:var(--o-tasto);color:var(--o-tasto-testo);border-color:var(--o-oro-chiaro)"),
+      r(".sc3-avviso | .s2-avviso | .sp-avviso", "background:var(--o-carta-piena);color:var(--o-testo);border:1.5px solid var(--o-oro);box-shadow:" + OMB),
+      // l'aiuto in basso: filo verde («prendi così»), giallo quando è una scopa (come prima: il gioco mette il giallo con style)
+      r(".sc-aiuto", "background:var(--o-carta-piena);color:var(--o-testo);border:1.5px solid var(--n-carte);box-shadow:" + OMB),
+      r(".sc-avviso-sf", "background:rgba(6,8,18,.7)"),
+      r(".sc-avviso", "background:var(--o-carta-piena);color:var(--o-testo);border:1px solid var(--o-filo-oro);box-shadow:var(--o-ombra-alta)"),
+      // la mano sulla mensola di legno: il tuo turno è un filo d'oro, «Tocca a te!» una pillola d'oro, la carta scelta un contorno d'oro
+      r(".sc-mensola1.tuo", "box-shadow:inset 0 2px 8px rgba(255,255,255,.07),0 -3px 0 var(--o-oro),0 -8px 18px rgba(255,79,134,.4)"),
+      r(".sc-tocca | .s2-tocca | .sp-tocca", "background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:0 2px 6px rgba(0,0,0,.3)"),
+      r(".sc-prese", "color:var(--o-testo)"),   // (🌙 sulla mensola di legno: chiaro, il «crema» di prima ora è una tinta lampone quasi trasparente)
+      r(".sc-carta.sel", "outline-color:var(--o-oro-chiaro)"),
+      r(".sc-carta.presel", "outline-color:var(--n-sfida)"),   // (la carta scelta per la presa resta azzurra, diversa da quella in mano)
+      // il foglio delle faccine e le nuvolette (solo Scopa: gli altri giochi che le usano restano com'erano)
+      ".sgc-velo:has(.sgc-oro){background:rgba(6,8,18,.55)}",
+      ".sgc-foglio.sgc-oro{background:var(--o-carta-piena);color:var(--o-testo);border:1px solid var(--o-filo-oro);box-shadow:var(--o-ombra-alta)}",
+      ".sgc-foglio.sgc-oro .sgc-testa{color:var(--o-testo)}",
+      ".sgc-foglio.sgc-oro .sgc-x{background:var(--o-fondo-2);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".sgc-foglio.sgc-oro .sgc-fac button,.sgc-foglio.sgc-oro .sgc-frasi button{background:var(--o-carta-2);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".sgc-bolla.sgc-oro{background:var(--o-carta-piena);color:var(--o-testo);box-shadow:0 0 0 1.5px var(--o-oro-chiaro),0 4px 14px rgba(0,0,0,.4)}",
+      ".sgc-bolla.sgc-oro::after{border-top-color:var(--o-carta-piena)}",   // (🌙 la punta del fumetto era bianca)
+      ".sgc-bolla.sgc-oro.giu::after{border-top-color:transparent;border-bottom-color:var(--o-carta-piena)}",
+      // i riepiloghi di fine smazzata e fine partita (schermate chiare)
+      ro(".sc-rg", "background:var(--o-carta);color:var(--o-testo);border-radius:12px;box-shadow:inset 0 0 0 1px var(--o-filo)"),
+      ro(".sc-rg.testa", "background:none;box-shadow:none;color:var(--o-testo)"),
+      ro(".sc-rg .vinto", "color:var(--o-verde)"),
+      ro(".sc-rg .manca", "opacity:1;color:var(--o-tenue)"),
+      ro(".sc-piu", "background:var(--o-verde);color:var(--o-verde-testo)"),
+      ro(".sc-rg.tot", "background:var(--o-crema);box-shadow:inset 0 0 0 1px var(--o-filo-oro);font-family:var(--o-tit);font-variant-numeric:lining-nums"),
+      ro(".sc-barra", "background:var(--o-fondo-2);box-shadow:inset 0 0 0 1px var(--o-filo)"),
+      ro(".sc-detto", "color:var(--o-tenue)")
+    ];
+  }
   function assicuraStile() {
     if (document.getElementById("sg-scopa-css")) return;
     var st = document.createElement("style");
@@ -794,7 +862,7 @@
       ".sc3-avviso{position:absolute;left:50%;top:44px;transform:translateX(-50%);z-index:9;max-width:92%;text-align:center;background:rgba(10,18,50,.92);border:1.5px solid #ffd43b;color:#fff;font-weight:800;font-size:.85rem;padding:6px 12px;border-radius:12px;pointer-events:none;animation:sc3Avviso 3.2s ease forwards}",
       "@keyframes sc3Avviso{0%{opacity:0;transform:translate(-50%,-8px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-8px)}}",
       "@keyframes scRiga{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}"
-    ].join("");
+    ].concat(stileOro()).join("");
     document.head.appendChild(st);
   }
   function cartaEl(el, carta, w, extra, onclick) {
@@ -1111,7 +1179,7 @@
     m.fa = null;
     if (Mi.sotto && Mi.fila && t.faccine) { var fa = t.faccine(); if (fa) { fa.style.margin = "6px 8px 0"; box.appendChild(fa); m.fa = fa; } }
     else if (Mi.sotto && !Mi.fila) { m.fa = el("div", { class: "sc-posto-targa", style: "flex:0 0 auto;height:" + Mi.sotto + "px" }); box.appendChild(m.fa); }
-    var s = t.schermata({ indietro: function () { if (cb.guarda) cb.onEsci(); else chiediEsci(t, cb.onEsci); } });
+    var s = t.schermata({ scura: true, indietro: function () { if (cb.guarda) cb.onEsci(); else chiediEsci(t, cb.onEsci); } });   // (scura: la stanza col tavolo vero)
     s.classList.add("sc-piena");   // stanza da bordo a bordo
     s._contenuto.appendChild(box);
     m.s = s;
@@ -1408,7 +1476,7 @@
     if (vecchio && vecchio._k === k) return;
     if (vecchio) vecchio.remove();
     if (!k) return;
-    var el = C._el, box = el("div", { class: "sc-avviso" }, [el("p", { text: C.avviso.testo })]);
+    var el = C._el, box = el("div", { class: "sc-avviso oro" }, [el("p", { text: C.avviso.testo })]);   // (oro: il tasto dentro è quello d'oro)
     if (C.avviso.tasto) box.appendChild(el("button", { class: "btn btn-primario", text: C.avviso.tasto, onclick: C.avviso.onTasto }));
     var sf = el("div", { class: "sc-avviso-sf" }, [box]); sf._k = k;
     s.appendChild(sf);
@@ -1449,7 +1517,7 @@
       riga("Totale", tt, fine && !pari ? (vm.vincitoreIo ? "io" : "opp") : null, "tot", ["", ""]);
       var barre = [];
       if (vm.traguardo) {   // la strada verso il traguardo
-        var bb = [0, 1].map(function (i) { var b = el("b", { style: "transform:scaleX(0);background:" + (i ? "#ff8787" : "#69db7c") }); barre.push([b, Math.min(1, tt[i] / vm.traguardo)]); return el("div", { class: "sc-barra" }, [b]); });
+        var bb = [0, 1].map(function (i) { var b = el("b", { style: "transform:scaleX(0);background:" + (i ? "var(--o-rosso)" : "var(--o-verde)") }); barre.push([b, Math.min(1, tt[i] / vm.traguardo)]); return el("div", { class: "sc-barra" }, [b]); });
         cont.appendChild(el("div", { class: "sc-rg", style: "animation-delay:" + (n++ * 0.2).toFixed(2) + "s;font-size:.8rem" }, [el("span", { text: "Verso " + vm.traguardo }), bb[0], bb[1]]));
       }
       // Bot dice la sua
@@ -1934,7 +2002,7 @@
     var cont, vecchio = S3.m;
     if (vecchio && vecchio.C === C && vecchio.cont && document.body.contains(vecchio.box)) { vecchio.cont.replaceChild(box, vecchio.box); cont = vecchio.cont; }
     else {
-      var s = t.schermata({ indietro: function () { if (C._guarda) cb.onEsci(); else chiediEsci(t, cb.onEsci); } });
+      var s = t.schermata({ scura: true, indietro: function () { if (C._guarda) cb.onEsci(); else chiediEsci(t, cb.onEsci); } });   // (scura: la stanza col tavolo vero)
       s.classList.add("sc-piena");   // stanza da bordo a bordo
       if (C._guarda && t.guarda && !t.eliminazione) s.classList.add("sc-con-targa");   // (il posto della targhetta di chi guarda)
       s._contenuto.appendChild(box); t.mostra(s);
@@ -2042,7 +2110,7 @@
     else if (S3.rifK === chiaveMano && Date.now() < (S3.rifFino || 0)) testo = "👑 Tre Re in tavola: si rimescola!";
     if (testo) {
       if (m.aiuto.textContent !== testo) m.aiuto.textContent = testo;
-      var stile = forte ? "border-color:#ffd43b;font-size:1.1rem" : "";
+      var stile = forte ? "border-color:var(--n-mini);font-size:1.1rem" : "";
       if ((m.aiuto.getAttribute("style") || "") !== stile) m.aiuto.setAttribute("style", stile);
       m.aiuto.hidden = false;
     } else m.aiuto.hidden = true;
@@ -2075,7 +2143,7 @@
     var tTxt = vm.guarda ? "Tocca a " + corto(vm.nomi[io], 14) : "Tocca a te!";
     if (m.tocca.textContent !== tTxt) m.tocca.textContent = tTxt;
     var prTxt = (vm.guarda ? esc(corto(vm.nomi[io], 12)) + " · prese" : "le tue prese") + " <b>" + vm.prese[io] + "</b>" + (vm.sette === io ? " · 7💰" : "") +
-      (vm.scope[io] ? " · scope " + vm.scope[io] : "") + " · " + (vm.mazzoN ? "mazzo " + vm.mazzoN : "<b style='color:#ffd43b'>ultimo giro!</b>");
+      (vm.scope[io] ? " · scope " + vm.scope[io] : "") + " · " + (vm.mazzoN ? "mazzo " + vm.mazzoN : "<b style='color:var(--n-mini)'>ultimo giro!</b>");
     if (m.prTxt !== prTxt) { m.prTxt = prTxt; m.prese.innerHTML = prTxt; }
 
     // ---- la distribuzione quando la mano si riempie (inizio mano e ogni giro) ----
@@ -2115,7 +2183,7 @@
       riga("Totale", per(r.tot), fine && w != null ? w : null, "tot", ["", "", ""]);
       var barre = [];
       if (vm.traguardo) {   // la strada verso il traguardo
-        var bb = ord.map(function (x, i) { var b = el("b", { style: "transform:scaleX(0);background:" + (i ? "#ff8787" : "#69db7c") }); barre.push([b, Math.min(1, r.tot[x] / vm.traguardo)]); return el("div", { class: "sc-barra" }, [b]); });
+        var bb = ord.map(function (x, i) { var b = el("b", { style: "transform:scaleX(0);background:" + (i ? "var(--o-rosso)" : "var(--o-verde)") }); barre.push([b, Math.min(1, r.tot[x] / vm.traguardo)]); return el("div", { class: "sc-barra" }, [b]); });
         cont.appendChild(el("div", { class: "sc-rg", style: "animation-delay:" + (n++ * 0.2).toFixed(2) + "s;font-size:.8rem" }, [el("span", { text: "Verso " + vm.traguardo })].concat(bb)));
       }
       if (p.pCarte == null || p.pDen == null || p.pPrim == null)
@@ -2627,6 +2695,7 @@
     id: "scopa",
     nome: "Scopa",
     icona: "🃏",
+    tema: "oro",   // 🤍 Bianco e oro: impostazioni, riepiloghi e schermate di servizio chiari; il tavolo resta una stanza vera (schermata «scura»)
     descrizione: "Il classico gioco di carte napoletane: prendi le carte del tavolo e fai scopa. In due o in tre, contro il Bot o online, ognuno dal suo telefono.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 3, etichettaGiocatori: "👥 1–3 giocatori",   // (in tre: online o con due Bot)
     inTre: true,   // si gioca anche in tre, ognuno per sé (impostazioni.inTre; nella Sala il core la offre a chi è in tre)

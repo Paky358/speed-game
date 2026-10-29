@@ -10827,14 +10827,23 @@
         if (!o.titolo) o = Object.assign({}, o, { icona: null, sotto: null });
         var s = schermata(o);
         if (!o.titolo) s.classList.add("senza-testa");
-        // 🤍 il gioco resta col suo stile finché non lo si converte: tema: "oro" in SG.registra (tutto chiaro),
-        // oppure t.schermata({ chiara: true }) per una schermata sola (classifica, schermate di servizio)
-        if (g.tema !== "oro" && !o.chiara) { s.classList.remove("oro"); s._gioco = true; }
+        // 🌙 il gioco resta col suo stile finché non lo si converte: tema: "oro" in SG.registra (tutto col vestito dell'app),
+        // oppure t.schermata({ chiara: true }) per una schermata sola (classifica, schermate di servizio);
+        // in un gioco convertito, t.schermata({ scura: true }) (o la classe "sg-scura") tiene il suo stile a una schermata (un tavolo, un campo)
+        s.classList.add("g-" + g.id);   // (il «cartellino» del gioco: le sue regole di stile valgono solo qui, es. .oro.g-tris)
+        if (o.scura) s.classList.add("sg-scura");
+        if (o.scura || (g.tema !== "oro" && !o.chiara)) { s.classList.remove("oro"); s._gioco = true; }
+        else if (g.tema === "oro") s.classList.add("sg-dal-gioco");   // (gioco convertito: le sue emoji restano emoji e dietro niente sfondo animato, vedi js/stile.js)
         return s;
       },
       mostra: function (s) {
         if (!viva()) return;
-        if (s && g.tema !== "oro" && !(s.classList && s.classList.contains("oro"))) s._gioco = true;   // (🤍 una schermata del gioco: mostra() non la fa chiara)
+        // (🌙 una schermata del gioco: mostra() non le dà il vestito dell'app, tranne nei giochi convertiti (tema: "oro") o se il gioco l'ha già fatta .oro)
+        if (s && s.classList) {
+          s.classList.add("g-" + g.id);
+          if (!s.classList.contains("sg-scura") && (g.tema === "oro" || s.classList.contains("oro"))) { s.classList.add("oro"); if (g.tema === "oro") s.classList.add("sg-dal-gioco"); }
+          else { s.classList.remove("oro"); s._gioco = true; }
+        }
         if (salaCtx && salaCtx.tabellone) salaCtx.tabellone(s);   // torneo a eliminazione: tasto 🏆 Tabellone
         if (salaCtx && salaCtx.angolo) salaCtx.angolo(s);   // chi guarda il duello della Sala: "👥 Sala" in alto
         if (lp.stanza && !lp.guarda) dadoNelleSchermate(s, g, lp.stanza);   // chi entra senza profilo: il benvenuto, l'avatar e il 🎲

@@ -199,10 +199,11 @@
 
   // il tema della pagina: blu notte e sfondo animato dietro le schermate .oro, e il colore della barra del telefono
   var META_CHIARO = "#0d1020", META_SCURO = null;
-  function tema(chiaro) {
+  function tema(chiaro, s) {
     var b = document.body; if (!b) return;
     b.classList.toggle("tema-oro", !!chiaro);
-    if (window.SGSfondo) SGSfondo.mostra(!!chiaro);   // 🌙 lo sfondo animato: solo dietro le schermate del core, mai dietro le partite
+    // 🌙 lo sfondo animato: solo dietro le schermate del core, mai dietro le partite (anche quelle dei giochi convertiti, .sg-dal-gioco)
+    if (window.SGSfondo) SGSfondo.mostra(!!chiaro && !(s && s.classList && s.classList.contains("sg-dal-gioco")));
     var m = document.querySelector('meta[name="theme-color"]');
     if (m) { if (META_SCURO == null) META_SCURO = m.getAttribute("content") || "#0c1636"; m.setAttribute("content", chiaro ? META_CHIARO : META_SCURO); }
   }
@@ -211,7 +212,7 @@
     // la schermata del core prende lo stile dell'app (e dietro la pagina diventa blu notte, con lo sfondo animato)
     marca: function (s) { if (s && s.classList) { s.classList.add("oro"); pulisci(s); s._pulito = true; } return s; },
     // da chiamare dopo ogni cambio di schermata: stile dell'app se la schermata in vista è .oro
-    aggiorna: function (s) { tema(!!(s && s.classList && s.classList.contains("oro"))); },
+    aggiorna: function (s) { tema(!!(s && s.classList && s.classList.contains("oro")), s); },
     pulisci: pulisci,
     simboli: MAPPA,
     avvia: function () { scriviRegole(); osserva(); }
