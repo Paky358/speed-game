@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Avatar · catalogo dei pezzi</title>
+<style>
+body{margin:0;font:11px system-ui,sans-serif;background:#0d1020;color:#a6acc8}
+body.chiaro{background:#f4f1ec;color:#555}
+h2{font-size:14px;color:#f4f5fb;margin:10px 10px 4px}
+body.chiaro h2{color:#222}
+.g{display:flex;flex-wrap:wrap;gap:4px 10px;padding:0 8px}
+.v{display:flex;flex-direction:column;align-items:center;width:var(--w,150px)}
+.d{display:flex}
+.d svg{width:calc(var(--w,150px) / 2);height:auto;display:block}
+</style></head><body>
+<script src="../../../js/omino.js"></script>
+<script>
+// ?k=capelli (una voce), &lei=1 (forma donna), &chiaro=1 (fondo chiaro), &w=170 (larghezza di una coppia)
+var Q = new URLSearchParams(location.search), O = SGOmino, K = O.OPZ;
+if (Q.get("chiaro")) document.body.className = "chiaro";
+if (Q.get("w")) document.body.style.setProperty("--w", Q.get("w") + "px");
+var lei = !!Q.get("lei");
+var BASE = lei ? { forma: "donna", corpo: "medio", pelle: 1, capelli: "coda", colCap: 2, occhi: "tondi", bocca: "sorriso", capo: "maglietta", maglia: 1, sotto: "jeans", pantaloni: 8, modScarpe: "sneakers", scarpe: 1 }
+               : { forma: "uomo", corpo: "medio", pelle: 2, capelli: "corti", colCap: 1, occhi: "tondi", bocca: "sorriso", capo: "maglietta", maglia: 1, sotto: "jeans", pantaloni: 8, modScarpe: "sneakers", scarpe: 1 };
+var VISO = /^(viso|orecchie|occhi|sopracc|naso|bocca|segno|ombretto|eyeliner|mascara|rossetto|blush|guance|capelli|barba|cappello|occhiali|orecchini|pittura)$/;
+var EXTRA = { colCap: "capelli", colAcc: "cappello", colCollo: "collo", colMano: "mano", colSchiena: "schiena", colAnimale: "animale", colBorsa: "borsa", colOmbretto: "ombretto", colRossetto: "rossetto", colBlush: "blush", colEyeliner: "eyeliner" };
+var SCELTA = { colAcc: "berretto", colCollo: "sciarpa", colMano: "palloncino", colSchiena: "zaino", colAnimale: "gatto", colBorsa: "tracolla", colOmbretto: "intenso", colRossetto: "pieno", colBlush: "intenso", colEyeliner: "alato" };
+var voci = (Q.get("k") || "capelli").split(",");
+voci.forEach(function (k) {
+  var h = document.createElement("h2"); h.textContent = k + " (" + K[k].length + ")"; document.body.appendChild(h);
+  var g = document.createElement("div"); g.className = "g"; document.body.appendChild(g);
+  K[k].forEach(function (v, i) {
+    var cfg = {}; for (var b in BASE) cfg[b] = BASE[b];
+    cfg[k] = /^col|^pelle$|^iride$|^maglia$|^pantaloni$|^scarpe$/.test(k) ? i : v;
+    if (SCELTA[k]) cfg[EXTRA[k]] = SCELTA[k];
+    if (k === "occhi" || k === "iride") cfg.occhiali = "nessuno";
+    var busto = VISO.test(k) || /^(colCap|iride|pelle|colOmbretto|colRossetto|colBlush|colEyeliner|colAcc)$/.test(k);
+    if (Q.get("intero")) busto = false;
+    var op = { busto: busto }, d = document.createElement("div"); d.className = "v";
+    d.innerHTML = "<div class='d'>" + O.svg(cfg, Object.assign({ stile: "classico" }, op)) + O.svg(cfg, Object.assign({ stile: "rifinito" }, op)) + "</div><span>" + v + "</span>";
+    g.appendChild(d);
+  });
+});
+</script></body></html>

@@ -99,6 +99,8 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
 
+- 29 ott 01:50 · 🧍 Avatar · salvato sul ramo `avatar-mii` (copia `SG-avatar`; non in lavori-in-corso, non online) · passo 1 della strada A «Mii rifinito»: il disegno nuovo degli avatar c'è ma è SPENTO per tutti (si accende con l'interruttore dello stile; quello di oggi resta identico, controllato su 20.636 disegni); pagina di confronto prima/dopo in docs/stile/avatar-mii/ (look pronti, 8 Bot, 20 a caso, lui e lei in 10 pose, faccina grande e piccola, fondo blu notte e chiaro) e catalogo di tutti i pezzi. Aspetta il parere del proprietario · (questo salvataggio)
+
 - 29 ott 01:15 · Cervello · salvato · registro aggiornato: Notte vivace online (v275), le copie di lavoro di Notte vivace e Avatar, la chat Avatar può partire insieme alla Notte vivace
 
 - 29 ott 00:30 · 🌙 Notte vivace · PUBBLICATO · lo stile «🌙 Notte vivace» online al posto del Bianco e oro (novità v275): blu notte, vetro scuro, lampone come colore guida, carattere Plus Jakarta Sans, sfondo animato con luci e scintillii dietro le schermate dell'app (mai dietro le partite), home e saletta come nei disegni, tutte le altre schermate dell'app sistemate; le partite dei giochi restano come prima. Elenco dei giochi da convertire in docs/stile/notte-giochi.md (passo 3); il proprietario ha scelto di partire dal gruppo B (schermate di servizio dei giochi). Versione online ricostruita e provata (home, saletta, sfondo, Tris: nessun errore) · master (questo salvataggio)

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Avatar prima e dopo</title>
+<style>
+:root{--fondo:#0d1020;--carta:#151a2e;--filo:rgba(255,255,255,.08);--testo:#f4f5fb;--tenue:#a6acc8;--lampone:#e0225a;--pav:#1b2140}
+body.chiaro{--fondo:#f4f1ec;--carta:#ffffff;--filo:rgba(0,0,0,.08);--testo:#1d1d24;--tenue:#5d6070;--pav:#ebe5db}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--testo);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.pag{max-width:980px;margin:0 auto;padding:18px 16px 40px}
+h1{font-size:26px;line-height:1.15;margin:4px 0 6px}
+h2{font-size:19px;margin:30px 0 4px}
+p{margin:6px 0;color:var(--tenue);max-width:62ch}
+p b{color:var(--testo)}
+.fondi{display:flex;gap:8px;margin:14px 0 4px}
+.fondi button{font:600 14px system-ui,sans-serif;padding:9px 14px;border-radius:999px;border:1px solid var(--filo);background:var(--carta);color:var(--testo);cursor:pointer}
+.fondi button.su{background:var(--lampone);border-color:var(--lampone);color:#fff}
+.leg{display:flex;gap:6px;font-size:12px;color:var(--tenue);margin:2px 0 8px}
+.leg span{display:inline-flex;align-items:center;gap:5px}
+.leg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.griglia{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(var(--min,170px),1fr))}
+.coppia{background:var(--carta);border:1px solid var(--filo);border-radius:14px;padding:8px 6px 7px;display:flex;flex-direction:column;align-items:center}
+.due{display:flex;width:100%;justify-content:center;gap:2px}
+.due>div{flex:1;display:flex;flex-direction:column;align-items:center;min-width:0}
+.due>div+div{border-left:1px dashed var(--filo)}
+.due svg,.due img{width:100%;max-width:var(--fig,96px);height:auto;display:block}
+.cosa{font-size:12.5px;color:var(--tenue);margin-top:3px;text-align:center}
+.cosa b{color:var(--testo);font-weight:600}
+.tag{font-size:10.5px;letter-spacing:.02em;color:var(--tenue);margin-bottom:2px}
+.tag.nuovo{color:var(--lampone);font-weight:700}
+.tondo svg{border-radius:50%;background:var(--pav)}
+.facce{--min:300px;--fig:140px}
+.piccole{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px}
+.piccole .riga{background:var(--carta);border:1px solid var(--filo);border-radius:14px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:100%}
+.piccole svg{border-radius:50%;background:var(--pav);display:block}
+.gruppo{background:var(--carta);border:1px solid var(--filo);border-radius:14px;padding:10px 8px 0;margin-top:8px;overflow:hidden}
+.scena{display:flex;justify-content:center;align-items:flex-end;padding:0 4px;background:linear-gradient(180deg,transparent 70%,var(--pav) 70%)}
+.scena svg{width:19%;max-width:120px;height:auto;margin:0 -1.5%}
+.fine{background:var(--carta);border:1px solid var(--filo);border-radius:16px;padding:14px 16px;margin-top:30px}
+.fine ul{margin:6px 0 0;padding-left:20px;color:var(--tenue)}
+.fine li{margin:4px 0}
+.fine li b{color:var(--testo)}
+</style>
+</head>
+<body>
+<div class="pag">
+  <h1>Gli avatar: prima e dopo</h1>
+  <p>In ogni riquadro a sinistra c'è l'avatar <b>di oggi</b>, a destra lo stesso avatar col <b>disegno nuovo</b> («Mii rifinito»): stessa persona, stessi capelli, vestiti, colori ed extra. Cambiano solo il modo di disegnarlo: niente contorni scuri, occhi più piccoli e veri, luce più morbida, colori un po' più vivi.</p>
+  <div class="fondi"><button type="button" class="su" data-f="notte">Fondo blu notte</button><button type="button" data-f="chiaro">Fondo chiaro</button></div>
+
+  <h2>La faccina, in grande</h2>
+  <p>Quella del profilo, della saletta e delle classifiche.</p>
+  <div class="griglia facce" id="facce"></div>
+  <h2>La faccina, in piccolo</h2>
+  <p>Come nelle liste, nelle classifiche e sopra il campo dell'Asta.</p>
+  <div class="piccole" id="piccole"></div>
+
+  <h2>Gli 8 Bot</h2>
+  <div class="griglia" id="bot"></div>
+
+  <h2>Lui e lei, in tutte le pose</h2>
+  <p>In piedi, mentre esulta, seduto, mentre cammina, di spalle, con la canna da pesca.</p>
+  <div class="griglia" id="pose"></div>
+
+  <h2>In gruppo, come nella saletta</h2>
+  <div id="gruppo"></div>
+
+  <h2>I look pronti</h2>
+  <p>I 20 look dell'editor, su lui e su lei.</p>
+  <div class="griglia" id="look"></div>
+
+  <h2>20 avatar a caso</h2>
+  <div class="griglia" id="caso"></div>
+
+  <div class="fine">
+    <b>Cosa cambia per chi gioca</b>
+    <ul>
+      <li><b>Nessuno perde il suo avatar:</b> ognuno resta com'è, con tutto quello che ha scelto. Non c'è niente da rifare.</li>
+      <li><b>Stesse misure:</b> l'avatar occupa lo stesso spazio di oggi in ogni schermata e in ogni gioco.</li>
+      <li><b>Più pulito:</b> senza la riga scura attorno a ogni pezzo, con occhi più naturali e la pelle più calda.</li>
+    </ul>
+  </div>
+</div>
+<script src="../../../js/omino.js"></script>
+<script src="dati.js"></script>
+<script>
+(function () {
+  var O = SGOmino;
+  function conLook(cfg, L) { var c = {}, k; for (k in cfg) c[k] = cfg[k]; [LOOK_BASE, L.tutti, cfg.forma === "donna" ? L.donna : L.uomo].forEach(function (p) { if (p) for (k in p) c[k] = p[k]; }); return c; }
+  // chi cammina porta la sua animazione (uno <style> dentro il disegno): come immagine a parte, se no muove le braccia di tutti gli avatar della pagina
+  function disegno(cfg, op) { var t = O.svg(cfg, op); return op.cammina ? '<img alt="" src="data:image/svg+xml;charset=utf-8,' + encodeURIComponent(t) + '">' : t; }
+  function coppia(cfg, op, nome, cl) {
+    var d = document.createElement("div"); d.className = "coppia" + (cl ? " " + cl : "");
+    function lato(stile, tag) { return "<div><span class='tag" + (stile === "rifinito" ? " nuovo" : "") + "'>" + tag + "</span>" + disegno(cfg, Object.assign({}, op, { stile: stile })) + "</div>"; }
+    d.innerHTML = "<div class='due'>" + lato("classico", "Oggi") + lato("rifinito", "Nuovo") + "</div>" + (nome ? "<div class='cosa'>" + nome + "</div>" : "");
+    return d;
+  }
+  function metti(id, el) { document.getElementById(id).appendChild(el); }
+  var lui = O.casuale("Paky", "uomo"), lei = O.casuale("Giulia", "donna"), luca = O.casuale("Luca");
+
+  // la faccina grande
+  [[lui, "Paky"], [lei, "Giulia"], [luca, "Luca"], [BOT_PARTENZA[1].omino, "Angela"]].forEach(function (x) { metti("facce", coppia(x[0], { busto: true }, "<b>" + x[1] + "</b>", "tondo")); });
+  // in piccolo: una riga di faccine per misura, oggi e nuovo
+  [48, 32].forEach(function (px) {
+    ["classico", "rifinito"].forEach(function (st) {
+      var r = document.createElement("div"); r.className = "riga";
+      r.innerHTML = "<span class='tag" + (st === "rifinito" ? " nuovo" : "") + "'>" + (st === "rifinito" ? "Nuovo" : "Oggi") + "</span>" +
+        [lui, lei, luca].concat(BOT_PARTENZA.slice(0, 4).map(function (b) { return b.omino; })).map(function (c) { return O.svg(c, { busto: true, px: px, stile: st }); }).join("");
+      metti("piccole", r);
+    });
+  });
+  // gli 8 Bot
+  BOT_PARTENZA.forEach(function (b) { metti("bot", coppia(b.omino, {}, "<b>" + b.nome + "</b>")); });
+  // le pose
+  var POSE = [[{}, "In piedi"], [{ braccia: "su" }, "Esulta"], [{ braccia: "uno" }, "Un braccio su"], [{ seduto: true }, "Seduto"], [{ cammina: true }, "Mentre cammina"],
+    [{ spalle: true }, "Di spalle"], [{ seduto: true, spalle: true }, "Seduto, di spalle"], [{ cammina: true, spalle: true }, "Cammina, di spalle"], [{ braccia: "canna", angolo: 70 }, "Con la canna da pesca"], [{ hd: true }, "Nell'editor"]];
+  [[lui, "lui"], [lei, "lei"]].forEach(function (x) { POSE.forEach(function (p) { metti("pose", coppia(x[0], p[0], p[1] + ", " + x[1])); }); });
+  // in gruppo: una fila come nella saletta, oggi sopra e nuovo sotto
+  ["classico", "rifinito"].forEach(function (st) {
+    var g = document.createElement("div"); g.className = "gruppo";
+    g.innerHTML = "<span class='tag" + (st === "rifinito" ? " nuovo" : "") + "'>" + (st === "rifinito" ? "Nuovo" : "Oggi") + "</span><div class='scena'>" +
+      [lui, lei, luca, BOT_PARTENZA[4].omino, BOT_PARTENZA[6].omino].map(function (c) { return O.svg(c, { stile: st }); }).join("") + "</div>";
+    metti("gruppo", g);
+  });
+  // i look pronti
+  LOOK.forEach(function (L) { metti("look", coppia(conLook(lui, L), {}, "<b>" + L.nome + "</b>, lui")); metti("look", coppia(conLook(lei, L), {}, "<b>" + L.nome + "</b>, lei")); });
+  // 20 a caso (sempre gli stessi: il «seme» è il nome)
+  ["Marco", "Sara", "Ciro", "Marta", "Gianni", "Chiara", "Totò", "Ilaria", "Davide", "Noemi", "Kevin", "Asia", "Salvo", "Bea", "Enzo", "Lucia", "Pino", "Vale", "Ahmed", "Lin"].forEach(function (n) { metti("caso", coppia(O.casuale(n), {}, n)); });
+
+  // fondo: blu notte o chiaro (?chiaro=1 per le foto)
+  var bt = document.querySelectorAll(".fondi button");
+  function fondo(f) { document.body.classList.toggle("chiaro", f === "chiaro"); bt.forEach(function (b) { b.classList.toggle("su", b.getAttribute("data-f") === f); }); }
+  bt.forEach(function (b) { b.addEventListener("click", function () { fondo(b.getAttribute("data-f")); }); });
+  if (/chiaro=1/.test(location.search)) fondo("chiaro");
+})();
+</script>
+</body>
+</html>
