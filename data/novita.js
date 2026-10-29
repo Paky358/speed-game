@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 278,
+    data: "29 ottobre 2026",
+    titolo: "Una prima schermata più comoda 📱",
+    descrizione: [
+      "I giochi si scelgono più in fretta: le tessere sono più basse, senza la descrizione, con la foto, il nome, la categoria e quanti si gioca. In una schermata ne entrano molti di più.",
+      "In basso c'è il menu, sempre sotto il pollice: Giochi, Novità, Trofei, Classifica e il tuo Profilo. Si passa da uno all'altro con un tocco.",
+      "In alto restano il nome, le tue monete, «Gioca online» e le categorie.",
+      "La città per ora si riposa: l'app si apre più leggera."
+    ]
+  },
+  {
     v: 277,
     data: "29 ottobre 2026",
     titolo: "Avatar nuovi per tutti e altri cinque giochi di notte 🌙",
