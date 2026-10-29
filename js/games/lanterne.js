@@ -90,9 +90,11 @@ const ATRIO = crea({
   ostacoli:[
     {x:6,y:5,w:1,h:1,t:'pilastro'},{x:19,y:5,w:1,h:1,t:'pilastro'},{x:6,y:10,w:1,h:1,t:'pilastro'},{x:19,y:10,w:1,h:1,t:'pilastro'},
     {x:10,y:2,w:6,h:1,t:'panca'},
+    {x:12,y:6,w:2,h:1,t:'computer'},   // il computer della saletta: l'host ci sceglie le regole e fa partire la partita
   ],
 });
-ATRIO.centro = { x:13*T, y:9*T };
+ATRIO.centro = { x:13*T, y:10*T };
+const COMPUTER = { tx:13, ty:7 };   // dove ci si mette per usarlo (davanti alla scrivania)
 
 const POSTAZIONI = [
   { id:'libri',      nome:'Riordina i libri',      tx:11, ty:9,  gioco:'sequenza' },
@@ -403,18 +405,19 @@ const FRASI_COMPITO = { luce:'accendere il lampadario', ingranaggio:"caricare l'
 
 class Partita {
   // lista: [{ id, nome, bot }]; eventi: { privato(id,msg), tutti(msg) }
-  constructor(lista, imp, eventi){
-    this.imp = imp; this.ev = eventi;
+  // opz.saletta: la saletta d'attesa nell'atrio (nessun ruolo, nessun compito, si gira finché l'host non fa partire)
+  constructor(lista, imp, eventi, opz){
+    this.imp = imp; this.ev = eventi; this.saletta = !!(opz && opz.saletta);
     this.VEL = VEL_BASE*T*imp.velocita;
     this.gioc = lista.map(g=>this.nuovo(g));
     // si comincia nell'atrio: tutti girano liberi qualche secondo, poi escono i ruoli e si entra nel palazzo
-    this.M = ATRIO; this.fase = 'atrio'; this.t = 0; this.fineFase = DUR_ATRIO;
+    this.M = ATRIO; this.fase = 'atrio'; this.t = 0; this.fineFase = this.saletta ? Infinity : DUR_ATRIO;
     this.corpi = []; this.buio = null; this.interf = null; this.acqua = null; this.cdBuio = 30; this.nebbiaFine = 0; this.bengalaFine = 0; this.pub = {};
     this.riu = null; this.esito = null; this.vincitore = null; this.chat = []; this.round = 1; this.dichiarati = {};
     this.telecamere = TELECAMERE_BASE.map(c=>({ x:c.x, y:c.y, nome:c.nome, base:true }));
     this.cambiata = true;
-    this.assegnaRuoli();
-    this.gioc.forEach(g=>this.assegnaCompiti(g));
+    if(this.saletta){ this.ombreIniziali=1; this.celebri=[]; }
+    else { this.assegnaRuoli(); this.gioc.forEach(g=>this.assegnaCompiti(g)); }
     const n=this.gioc.length;
     this.gioc.forEach((p,i)=>{ const a=i/n*Math.PI*2; this.teletrasporta(p, ATRIO.centro.x+Math.cos(a)*3*T, ATRIO.centro.y+Math.sin(a)*2*T); });
   }
@@ -427,6 +430,21 @@ class Partita {
     p.ruolo=ruolo; this.preparaRuolo(p); this.assegnaCompiti(p);
     this.gioc.forEach(g=>{ if(g.ruolo==='accusatore'&&!g.bersaglio){ const c=this.gioc.filter(q=>q!==g&&q.squadra==='ospiti'); g.bersaglio=c.length?pick(c).id:null; } });
     this.segna();
+  }
+  // la saletta: chi arriva e chi se ne va mentre si aspetta
+  aggiungi(g){
+    if(!this.saletta || this.per(g.id)) return;
+    const p=this.nuovo(g); this.gioc.push(p);
+    this.teletrasporta(p, ATRIO.centro.x+(rnd()-.5)*5*T, ATRIO.centro.y+(rnd()-.5)*2*T); this.segna();
+  }
+  togli(id){ if(!this.saletta) return; this.gioc=this.gioc.filter(p=>p.id!==id); this.segna(); }
+  // dalla saletta alla partita: le regole scelte al computer, poi ruoli e compiti, e via nel palazzo
+  inizia(imp){
+    if(!this.saletta) return;
+    this.saletta=false; this.imp=imp; this.VEL=VEL_BASE*T*imp.velocita;
+    this.gioc.forEach(g=>{ g.campane=imp.campane; g.cd=15; g.cdA=8; });
+    this.assegnaRuoli(); this.gioc.forEach(g=>this.assegnaCompiti(g));
+    this.fineFase=this.t; this.via();
   }
   // dall'atrio al palazzo (a tempo scaduto, o quando l'host tocca «Via»)
   via(){
@@ -1061,7 +1079,7 @@ class Partita {
   }
   // la chat di prossimità (durante il gioco): i vivi si leggono da vicino, le anime leggono tutto e parlano solo tra loro
   parla(p, testo){
-    if(this.fase!=='gioco' || p.inBotola!=null || this.t-(p.tParla||-9)<1.5) return;
+    if((this.fase!=='gioco' && this.fase!=='atrio') || p.inBotola!=null || this.t-(p.tParla||-9)<1.5) return;
     testo=String(testo||'').replace(/\s+/g,' ').trim().slice(0,60); if(!testo) return;
     p.tParla=this.t;
     const msg={ t:'bolla', id:p.id, testo };
@@ -1703,6 +1721,15 @@ class Pittore {
       case 'stendino': c.strokeStyle='#9a8c78'; c.lineWidth=2; c.beginPath(); c.moveTo(x+2,y+8); c.lineTo(x+w-2,y+8); c.stroke(); ['#d64550','#4a74de','#e6e0d6','#2fa36b','#f0a23b'].forEach((col,i)=>{ c.fillStyle=col; c.fillRect(x+6+i*((w-12)/5),y+8,(w-12)/6,12+Math.sin(t*2+i)*2); }); break;
       case 'tinozza': c.fillStyle='#7a6c4f'; this.ell(x+w/2,y+h/2,w/2-2,h/2); c.fill(); c.fillStyle='rgba(150,200,240,.8)'; this.ell(x+w/2,y+h/2,w/2-6,h/2-4); c.fill(); break;
       case 'telegrafo': c.fillStyle='#5a4632'; c.fillRect(x,y+6,w,h-6); c.fillStyle='#b9a07a'; c.fillRect(x+6,y+10,14,8); c.fillStyle='#2b2732'; c.fillRect(x+w-24,y+9,16,10); if(Math.sin(t*12)>0.3){ c.fillStyle='rgba(255,200,120,.9)'; this.ell(x+w-16,y+14,2,2); c.fill(); } break;
+      case 'computer': {   // scrivania con lo schermo acceso: righe che scorrono, una luce che respira
+        c.fillStyle='rgba(0,0,0,.28)'; c.fillRect(x+3,y+h-2,w-6,6);
+        c.fillStyle='#4a3a2c'; c.fillRect(x,y+10,w,h-10); c.fillStyle='#6b5440'; c.fillRect(x,y+10,w,4);
+        const sx=x+w/2-17, sy=y-14, g=0.6+0.25*Math.sin(t*2.2);
+        c.fillStyle='#1a1e2c'; c.fillRect(sx-2,sy-2,38,26); c.fillStyle=`rgba(90,209,154,${0.18*g})`; c.fillRect(sx-10,sy-10,54,42);
+        c.fillStyle='#0d2a22'; c.fillRect(sx,sy,34,22);
+        for(let k=0;k<4;k++){ const lw=10+((k*7+Math.floor(t*3))%18); c.fillStyle=`rgba(140,240,190,${0.55+0.3*Math.sin(t*4+k)})`; c.fillRect(sx+3,sy+3+k*5,lw,2); }
+        c.fillStyle='#2b2f3d'; c.fillRect(sx+14,sy+22,6,6); c.fillStyle='#3a3f50'; c.fillRect(x+w/2-12,y+14,24,5);
+        break; }
       case 'pilastro': c.fillStyle='#5b4f63'; c.fillRect(x+4,y+4,w-8,h-8); c.fillStyle='#7a6c85'; c.fillRect(x+4,y+4,w-8,6); break;
       case 'panca': c.fillStyle='#6b4a30'; c.fillRect(x+2,y+8,w-4,h-14); c.fillStyle='#8a6440'; c.fillRect(x+2,y+8,w-4,5); break;
     }
@@ -1995,12 +2022,24 @@ function host(t) {
   function presenti() { return H.players.filter(function (p) { return !p.via; }); }
   // i Bot automatici: finché l'host non tocca i tasti dei Bot, la saletta sta a RIEMPI posti (le persone prendono il posto dei Bot)
   if (H.auto == null) H.auto = true;
+  // la saletta: una partita nell'atrio senza ruoli, dove si gira finché l'host non fa partire dal computer
+  function nuovaSaletta() {
+    P = new Partita(presenti().map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }), H.imp, eventi, { saletta: true });
+    if (window.LT_PROVA) window.LT_P = P;
+  }
+  function allinea() {
+    if (!P || !P.saletta) return;
+    var qui = presenti(), ids = qui.map(function (p) { return p.id; });
+    qui.forEach(function (p) { P.aggiungi({ id: p.id, nome: p.nome, bot: !!p.bot }); });
+    P.gioc.slice().forEach(function (g) { if (ids.indexOf(g.id) < 0) P.togli(g.id); });
+  }
   function riempi() {
-    if (!H.auto || H.fase !== "lobby") return;
+    if (!H.auto || H.fase !== "lobby") return allinea();
     var umani = H.players.filter(function (p) { return !p.bot; }).length, voluti = Math.max(0, Math.min(MAX - umani, RIEMPI - umani));
     var bot = H.players.filter(function (p) { return p.bot; }).length;
     while (bot < voluti) { aggiungiBot(true); bot++; }
     while (bot > voluti) { togliBot(true); bot--; }
+    allinea();
   }
 
   t.onRegole = function (im) { if (H.fase !== "lobby") return; H.imp = pulisci(im); bd(); };
@@ -2035,7 +2074,8 @@ function host(t) {
         }
         return;
       }
-      if (H.fase !== "gioco" || !P || !pById(id)) return;
+      if (!P || !pById(id) || (H.fase !== "gioco" && H.fase !== "lobby")) return;
+      if (H.fase === "lobby" && m.t !== "p" && !(m.t === "a" && m.k === "parla")) return;   // nella saletta: si cammina e si parla
       if (m.t === "p") { if (m.n <= (ultimaN[id] || 0)) return; ultimaN[id] = m.n; P.muovi(id, m); }
       else if (m.t === "a") P.azione(id, m);
     }
@@ -2047,7 +2087,7 @@ function host(t) {
     var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, rip: H.rip, tiene: IO, imp: H.imp, auto: !!H.auto,
       players: H.players.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" || p.bot ? (p.omino || null) : undefined }; }),
       guarda: H.guarda, classifica: H.classifica, fine: H.fine };
-    if (P && H.fase === "gioco") v.g = P.foto();
+    if (P && (H.fase === "gioco" || H.fase === "lobby")) v.g = P.foto();
     return v;
   }
   function ricorda() {
@@ -2078,7 +2118,7 @@ function host(t) {
   var loop = setInterval(function () {
     if (fermo) return;
     var ora = Date.now(), dt = Math.min(0.1, (ora - ultimo) / 1000); ultimo = ora;
-    if (!P || H.fase !== "gioco") return;
+    if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return;   // (anche nella saletta: si gira nell'atrio)
     P.tick(dt);
     if (P.cambiata) { P.cambiata = false; if (ora - ultimaFoto >= 250) bd(); else if (!fotoDopo) fotoDopo = setTimeout(bd, 250); }
     var pos = P.posizioni();
@@ -2093,12 +2133,12 @@ function host(t) {
 
   function comincia() {
     if (H.fase !== "lobby" || presenti().length < MIN) return;
-    H.players = presenti();
-    H.fase = "gioco"; H.partita++; H.classifica = null; H.fine = null; inviati = {}; ultimaN = {}; viaDa = {}; finePronta = false; roundDetto = 0;
-    P = new Partita(H.players.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }), H.imp, eventi);
+    H.players = presenti(); if (!P || !P.saletta) nuovaSaletta(); allinea();
+    H.fase = "gioco"; H.partita++; H.classifica = null; H.fine = null; inviati = {}; viaDa = {}; finePronta = false; roundDetto = 0;
+    P.inizia(H.imp);                                    // dalla saletta al palazzo: ruoli e compiti adesso
     if (t.ruoloProva) P.forzaRuolo(IO, t.ruoloProva);   // (solo nella versione da soli, per provare un ruolo)
     if (window.LT_PROVA) window.LT_P = P;               // (solo nella versione da soli: le prove automatiche guardano la partita)
-    t.aCheSiamo("Nell'atrio");
+    t.aCheSiamo("Si gioca");
     bd(); mandaPrivati(true);
   }
   function fine() {
@@ -2108,7 +2148,7 @@ function host(t) {
     H.fase = "fine"; bd();
     if (t.risultato) t.risultato(H.classifica.map(function (r) { var x = { nome: r.nome, pos: r.pos }; if (r.bot) x.bot = true; return x; }));
   }
-  function nuova() { if (H.fase !== "fine") return; P = null; H.fase = "lobby"; H.classifica = null; H.fine = null; H.players = presenti(); riempi(); bd(); }
+  function nuova() { if (H.fase !== "fine") return; H.fase = "lobby"; H.classifica = null; H.fine = null; H.players = presenti(); nuovaSaletta(); riempi(); bd(); mandaPrivati(true); }
   t.onRivincita = nuova;
   function aggiungiBot(da) {
     if (H.fase !== "lobby" || H.players.length >= MAX) return;
@@ -2117,19 +2157,20 @@ function host(t) {
     try { b = SG.bot && SG.bot.prendi ? SG.bot.prendi(1, { escludi: usati })[0] : null; } catch (e) {}
     var n = H.players.filter(function (p) { return p.bot; }).length + 1;
     H.players.push({ id: "bot-" + Date.now().toString(36) + n, nome: b ? b.nome : "Bot " + n, omino: b ? avatarValido(b.omino) : null, bot: true });
+    if (da !== true) allinea();
     bd();
   }
-  function togliBot(da) { if (da !== true) H.auto = false; for (var i = H.players.length - 1; i >= 0; i--) if (H.players[i].bot) { H.players.splice(i, 1); bd(); return; } }
+  function togliBot(da) { if (da !== true) H.auto = false; for (var i = H.players.length - 1; i >= 0; i--) if (H.players[i].bot) { H.players.splice(i, 1); if (da !== true) allinea(); bd(); return; } }
 
   var cbHost = { sonoHost: true, myId: IO, onComincia: comincia, onNuova: nuova, onBot: aggiungiBot, onTogliBot: togliBot,
-    onVia: function () { if (P) P.via(); },
-    mossa: function (m) { if (!P || H.fase !== "gioco") return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") P.azione(IO, m); },
+    onVia: function () { if (P && !P.saletta) P.via(); },
+    mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") P.azione(IO, m); },
     onEsci: function () {
       function via() { ferma(); t.ricorda(null); rete.chiudi(); chiudiUI(); t.esci(); }
       if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla home.", "Chiudi", via);
       via();
     } };
-  if (!riprendo) riempi();
+  if (!riprendo || H.fase === "lobby") { nuovaSaletta(); riempi(); }
   bd();
   if (P) mandaPrivati(true);
 }
@@ -2188,7 +2229,7 @@ function conserva(m) { if (m.t === "tp") PENDENTI.tp = m; }
 var UI = null, FIN = null;
 function chiudiUI() { if (UI) { UI.stop(); UI = null; } }
 function disegna(t, vm, cb) {
-  if (vm.fase === "lobby") { chiudiUI(); FIN = null; return lobby(t, vm, cb); }
+  if (vm.fase === "lobby" && (!vm.g || t.salettaClassica)) { chiudiUI(); FIN = null; return lobby(t, vm, cb); }
   if (vm.fase === "fine") {
     chiudiUI();
     var kf = "fine|" + vm.partita;
@@ -2433,6 +2474,7 @@ Vista.prototype.joyReset = function () { var j = this.joyV; j.id = null; j.x = 0
 // ----- quello che arriva dall'host -----
 Vista.prototype.foto = function (vm) {
   var V = this; V.vm = vm; V.g = vm.g || null;
+  if (V.compAgg) V.compAgg();
   vm.players.forEach(function (p, i) { V.cache[p.id] = V.cache[p.id] || { colore: COLORI[i % COLORI.length] }; V.cache[p.id].nome = p.nome; if (p.omino) avatarDi(p.id, p.omino); });
   var io = vm.players.filter(function (p) { return p.id === V.cb.myId; })[0];
   V.guardo = !io || !!io.via || !V.priv;
@@ -2631,6 +2673,47 @@ Vista.prototype.apriInfo = function () {
   box.appendChild(ul);
   V.apriPannello("info", box); ch.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
 };
+// la saletta nell'atrio: in alto il codice della stanza, quanti siamo e «Invita»
+Vista.prototype.aggSaletta = function (sal) {
+  var V = this;
+  if (!V.salBox) {
+    V.salBox = E("div", "lt-saletta"); V.salTesto = E("span", "cod"); V.salInv = tastoIco("inv", "invia", "Invita");
+    V.salInv.addEventListener("click", function () { V.invita(); }); V.salBox.append(V.salTesto, V.salInv); V.velo.parentNode.appendChild(V.salBox);
+  }
+  V.salBox.hidden = !sal; V.sc.classList.toggle("sal", !!sal); if (!sal) return;
+  var n = (V.vm.players || []).filter(function (p) { return !p.via; }).length, tx = "Stanza " + (V.vm.codice || "…") + " · " + n + "/" + MAX;
+  if (V.salTesto.textContent !== tx) V.salTesto.textContent = tx;
+};
+// il link d'invito della stanza (gli amici entrano direttamente nella saletta)
+Vista.prototype.invita = function () {
+  var V = this, cod = V.vm && V.vm.codice; if (!cod || cod === "…") return;
+  var url = location.origin + location.pathname + "#gioco=" + ID + "&stanza=" + cod, testo = "Vieni a giocare a Lanterne: stanza " + cod;
+  if (navigator.share) { navigator.share({ title: "Lanterne", text: testo, url: url }).catch(function () {}); return; }
+  try { navigator.clipboard.writeText(testo + " " + url).then(function () { V.avviso("Link copiato: mandalo agli amici."); }, function () { V.avviso("Codice della stanza: " + cod); }); } catch (e) { V.avviso("Codice della stanza: " + cod); }
+};
+// il computer della saletta: l'host sceglie le regole, i Bot e fa partire; gli altri vedono le regole e aspettano
+Vista.prototype.apriComputer = function () {
+  var V = this, host = !!V.cb.sonoHost, box = E("div", "lt-pannello lt-computer"), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×");
+  testa.append(E("h3", "", "Computer della saletta"), ch); box.appendChild(testa);
+  var dove = JSON.parse(JSON.stringify((V.vm && V.vm.imp) || {})), corpo = E("div", "corpo"); box.appendChild(corpo);
+  var applica = function () { if (host && V.t.onRegole) V.t.onRegole(dove); };
+  if (host) {
+    impostazioni(corpo, dove, { el: V.t.el });
+    var piede = E("div", "piede"), bAdd = tastoIco("", "pulito", "Aggiungi un Bot"), bTogli = E("button", "", "Togli un Bot"), via = tastoIco("via", "invia", "Comincia");
+    bTogli.type = "button";
+    bAdd.addEventListener("click", function () { V.cb.onBot && V.cb.onBot(); });
+    bTogli.addEventListener("click", function () { V.cb.onTogliBot && V.cb.onTogliBot(); });
+    via.addEventListener("click", function () { applica(); if (V.pannello) V.pannello.chiudi(); V.cb.onComincia && V.cb.onComincia(); });
+    var nota = E("p", "nota", ""); piede.append(bAdd, bTogli, via); box.append(piede, nota);
+    V.compAgg = function () { var n = (V.vm.players || []).filter(function (p) { return !p.via; }).length; via.disabled = n < MIN; nota.textContent = n < MIN ? "Servono almeno " + MIN + " giocatori: aggiungi un Bot." : n + " giocatori · " + riassunto(pulisci(dove)); };
+    V.compAgg();
+  } else {
+    corpo.appendChild(E("p", "desc", riassunto(pulisci(dove))));
+    corpo.appendChild(E("p", "nota", "Le regole le sceglie l'host. Si parte quando tocca «Comincia»."));
+  }
+  V.apriPannello("computer", box, function () { applica(); V.compAgg = null; });
+  ch.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
+};
 // dentro una botola: frecce verso le botole collegate (ci si sposta restando dentro) e «Esci» al centro.
 // Il Giullare ha solo «Esci»: entra, resta ed esce dalla stessa.
 Vista.prototype.aggBotola = function () {
@@ -2663,7 +2746,9 @@ Vista.prototype.passi = function (tx, ty) {
 };
 // la freccia e la riga in alto: corta, solo quello che serve
 Vista.prototype.meta = function () {
-  var V = this, g = V.g, me = V.me; if (!g || g.mappa !== "palazzo" || V.guardo) return null;
+  var V = this, g = V.g, me = V.me;
+  if (V.vm && V.vm.fase === "lobby") return V.cb.sonoHost ? { x: centro(COMPUTER.tx), y: centro(COMPUTER.ty), col: "#5ad19a", testo: "Al computer: regole e Comincia" } : { x: me.x, y: me.y, testo: "Aspettiamo che l'host cominci" };
+  if (!g || g.mappa !== "palazzo" || V.guardo) return null;
   var vivo = V.sonoVivo(), piu = function (l) { return l.slice().sort(function (a, b) { return V.passi(a.tx, a.ty) - V.passi(b.tx, b.ty); })[0]; };
   // i sabotaggi: la freccia la vedono tutti i vivi, ombre comprese (anche loro possono riparare)
   if (g.acqua && vivo) {
@@ -2708,7 +2793,9 @@ var FALLBACK = { x: 32 * T, y: 22 * T };
 
 // ----- pulsanti e scritte -----
 Vista.prototype.vicinoUsa = function () {
-  var V = this, me = V.me, g = V.g; if (!g || g.fase !== "gioco" || V.guardo) return null;
+  var V = this, me = V.me, g = V.g;
+  if (V.vm && V.vm.fase === "lobby") return g && Math.hypot(centro(COMPUTER.tx) - me.x, centro(COMPUTER.ty) - me.y) < R_USA * 1.2 ? { tipo: "computer" } : null;
+  if (!g || g.fase !== "gioco" || V.guardo) return null;
   var d = function (tx, ty) { return Math.hypot(centro(tx) - me.x, centro(ty) - me.y); };
   var crew = V.sonoVivo();   // (riparano tutti i vivi, ombre comprese)
   if (g.buio && crew && d(QUADRO.tx, QUADRO.ty) < R_USA) return { tipo: "ripara", cosa: "luci", post: QUADRO };
@@ -2739,13 +2826,18 @@ Vista.prototype.setBtn = function (k, vis, abil, et, cd) {
 };
 Vista.prototype.aggHud = function () {
   var V = this, g = V.g, pr = V.priv; if (!g) return;
-  var inGioco = g.fase === "gioco" && !V.guardo && !!pr, palazzo = g.mappa === "palazzo";
-  V.az.hidden = !inGioco || !palazzo;
-  V.s.querySelector(".lt-sx").hidden = !palazzo || V.guardo || !pr;
+  var inGioco = g.fase === "gioco" && !V.guardo && !!pr, palazzo = g.mappa === "palazzo", sal = V.vm && V.vm.fase === "lobby";
+  V.az.hidden = !(inGioco && palazzo) && !sal;
+  V.s.querySelector(".lt-sx").hidden = (!palazzo && !sal) || V.guardo || !pr;
+  V.aggSaletta(sal);
   V.btnMappa.hidden = !palazzo;
   V.btnParla.hidden = !palazzo || g.fase !== "gioco"; if (V.btnParla.hidden) V.parlaBar.hidden = true;
   var ora = performance.now(), sec = function (f) { return Math.max(0, Math.ceil((f - ora) / 1000)); };
-  if (inGioco && palazzo) {
+  if (sal) {   // nella saletta: solo «Usa» davanti al computer
+    var uS = V.vicinoUsa();
+    ["segnala", "spegni", "botola", "buio", "abil"].forEach(function (k) { V.setBtn(k, false, false, "", 0); });
+    V.setBtn("usa", true, !!uS, "Computer", 0);
+  } else if (inGioco && palazzo) {
     var vivo = V.sonoVivo(), om = pr.squadra === "ombre", u = V.vicinoUsa();
     V.setBtn("usa", true, !!u, u ? ({ ripara: "Ripara", campana: "Campana", telecamere: "Schermi", plastico: "Plastico" }[u.tipo] || "Usa") : "Usa", 0);
     V.setBtn("segnala", vivo, vivo && !!V.corpoVicino(), "Segnala", 0);
@@ -2785,7 +2877,7 @@ Vista.prototype.aggHud = function () {
   }
   // barra dei preparativi, ruolo e guida in alto
   if (pr) {
-    var nr = RUOLI[pr.ruolo] ? RUOLI[pr.ruolo].nome : ""; if (V.chip.textContent !== nr) { V.chip.textContent = nr; V.chip.dataset.squadra = pr.squadra; }
+    var nr = sal ? "Saletta" : RUOLI[pr.ruolo] ? RUOLI[pr.ruolo].nome : ""; if (V.chip.textContent !== nr) { V.chip.textContent = nr; V.chip.dataset.squadra = pr.squadra; }
     // le cose da sapere del proprio ruolo, in una riga
     var info = [], nome = function (id) { return (V.cache[id] || {}).nome || "?"; };
     if (V.bloccFine > ora) info.push("Sei ipnotizzato!");
@@ -2812,7 +2904,8 @@ Vista.prototype.aggHud = function () {
   }
   var pc = (g.pc || 0) + "%"; var fill = V.barra.querySelector("i"); if (fill.style.width !== pc) fill.style.width = pc;
   var meta = V.meta(), testo = "", rosso = false;
-  if (g.mappa !== "palazzo") testo = "Atrio · si comincia tra " + sec(V.secFine);
+  if (V.vm && V.vm.fase === "lobby") testo = (V.meta() || {}).testo || "";
+  else if (g.mappa !== "palazzo") testo = "Atrio · si comincia tra " + sec(V.secFine);
   else if (g.fase === "gioco") {
     if (V.guardo) testo = "Guardi la partita";
     else if (meta) { testo = meta.testo; rosso = !!meta.rosso; }
@@ -2826,7 +2919,7 @@ Vista.prototype.aggHud = function () {
   var mostraG = !!testo && (rosso || oraG < V.guidaFine);
   V.guida.hidden = !testo; V.guida.classList.toggle("rosso", rosso); V.guida.classList.toggle("via", !mostraG);
   // «Via ▶» dell'host nell'atrio
-  var kv = g.fase === "atrio" ? "atrio|" + (V.vm.partita || 0) + "|" + (V.vm.rip || 0) : null;
+  var kv = g.fase === "atrio" && V.vm.fase !== "lobby" ? "atrio|" + (V.vm.partita || 0) + "|" + (V.vm.rip || 0) : null;
   if (kv !== V.kVia) {
     V.kVia = kv; V.via.textContent = "";
     if (kv && V.cb.sonoHost) { var b = V.t.el("button", { class: "btn btn-primario lt-vai", text: "Via ▶", onclick: V.cb.onVia }); V.via.appendChild(b); }
@@ -2850,6 +2943,7 @@ Vista.prototype.aggLista = function () {
 Vista.prototype.manda = function (k, extra) { var m = { t: "a", k: k }; if (extra) for (var x in extra) m[x] = extra[x]; this.cb.mossa(m); };
 Vista.prototype.azione = function (k) {
   var V = this, pr = V.priv, comp = (pr && pr.compagni) || [];
+  if (V.vm && V.vm.fase === "lobby") { if (k === "usa" && V.vicinoUsa() && !V.pannello) V.apriComputer(); return; }
   if (!V.g || V.g.fase !== "gioco" || V.guardo || V.mg || V.pannello) return;
   if (!V.sonoVivo() && k !== "buio" && k !== "usa") return;
   if (k === "usa") {
@@ -3278,6 +3372,15 @@ function stile() {
     ".lt-scena.oriz .lt-riu .carta .az{grid-column:3;grid-row:1/span 2;margin-top:0;align-self:center}.lt-scena.oriz .lt-riu .carta .vt{grid-column:2/-1}",
     ".lt-scena.oriz .lt-riu .carta .az .dubbio span,.lt-scena.oriz .lt-riu .carta .az .fido span{display:none}.lt-scena.oriz .lt-riu .carta .az button{padding:6px 7px;flex:none}.lt-scena.oriz .lt-riu .carta .az .mio{padding:0 4px;font-size:.68rem}",
     ".lt-scena.oriz .lt-minimappa{height:min(78%,420px)}",
+    ".lt-scena.sal .lt-barra,.lt-scena.sal .lt-lista-btn,.lt-scena.sal .lt-lista,.lt-scena.sal .lt-ibtn,.lt-scena.sal .lt-info{display:none!important}",
+    ".lt-computer .piede{flex-direction:row}.lt-computer .piede button{width:auto;margin:0}",
+    ".lt-scena.oriz .lt-computer{max-width:860px;width:100%;display:grid;grid-template-columns:minmax(0,1fr) 210px;grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:'t t' 'c p' 'c n';column-gap:12px}",
+    ".lt-scena.oriz .lt-computer .testa{grid-area:t}.lt-scena.oriz .lt-computer .corpo{grid-area:c}.lt-scena.oriz .lt-computer .piede{grid-area:p;flex-direction:column;justify-content:flex-end;margin-top:0}.lt-scena.oriz .lt-computer .piede button{flex:none}.lt-scena.oriz .lt-computer .nota{grid-area:n;text-align:left}",
+    ".lt-saletta{position:absolute;z-index:1;left:0;right:0;margin:0 auto;top:calc(10px + env(safe-area-inset-top));width:max-content;max-width:calc(100% - 180px);display:flex;align-items:center;gap:8px;padding:5px 6px 5px 12px;border-radius:999px;background:rgba(13,16,32,.82);border:1px solid rgba(90,209,154,.45);font-weight:600;font-size:.85rem;color:#c9f2dc}",
+    ".lt-saletta .inv{display:inline-flex;align-items:center;gap:5px;font:inherit;font-weight:700;font-size:.8rem;border:0;border-radius:999px;padding:6px 11px;background:linear-gradient(180deg,#5ad19a,#2f9e6c);color:#062314;cursor:pointer}",
+    ".lt-computer{max-width:460px;max-height:100%;display:flex;flex-direction:column;padding:12px}.lt-computer .testa{display:flex;align-items:center;gap:8px;margin-bottom:8px}.lt-computer h3{margin:0;flex:1;color:#9fe8c0}.lt-computer .lt-chiudi{position:static}",
+    ".lt-computer .corpo{flex:1 1 auto;min-height:0;overflow-y:auto}.lt-computer .piede{display:flex;gap:6px;margin-top:8px}.lt-computer .piede button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;font:inherit;font-weight:700;font-size:.82rem;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.16);border-radius:10px;padding:9px 6px;cursor:pointer}",
+    ".lt-computer .piede .via{flex:1.3;background:linear-gradient(180deg,#5ad19a,#2f9e6c);color:#062314;border-color:transparent}.lt-computer .piede .via:disabled{opacity:.4}.lt-computer .nota{margin:6px 0 0;font-size:.78rem;color:#b8b1a2;text-align:center}.lt-computer .desc{margin:0 0 8px;color:#ebe3d3}",
     ".lt-ibtn{flex:none;width:26px;height:26px;margin-left:6px;border-radius:50%;border:1.5px solid rgba(246,217,153,.65);background:rgba(25,29,49,.85);color:#f6d999;font:700 italic 14px Georgia,'Times New Roman',serif;line-height:1;cursor:pointer;display:grid;place-items:center}.lt-chip{cursor:pointer}",
     ".lt-infor{max-width:420px;padding:14px 16px}.lt-infor .testa{display:flex;align-items:center;gap:10px;margin-bottom:6px}.lt-infor h3{margin:0;flex:1;font-size:1.25rem;color:#f6d999}.lt-infor .sq{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(231,183,92,.16);color:#f6d999}",
     ".lt-infor.ombre .sq{background:rgba(208,80,106,.2);color:#f6a3b2}.lt-infor.ombre h3{color:#f08aa0}.lt-infor.soli .sq{background:rgba(169,147,230,.2);color:#d6c8ff}.lt-infor.soli h3{color:#cbbcf6}.lt-infor .lt-chiudi{position:static}",
