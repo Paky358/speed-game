@@ -156,14 +156,18 @@
       var tt = await telefoni(NOMI), P = tt.P, C = tt.C;
       await astaVeloce(P, C);
       NOMI.forEach(function (n) { spia(n, LOG); });
-      var F = vm(C), conti = contiFoto(F), g3visto = {};
+      var F = vm(C), conti = contiFoto(F), g3visto = {}, pagVisto = {};
       x.push("classifica: " + conti.riga);
       var st = await finoAlPodio(NOMI, LOG, "Paky", { morti: o.morti, durante: async function (s) {
         // i quadretti all'inizio della 3ª (appena compare l'annuncio, su ogni telefono)
         NOMI.forEach(function (n) { var w = W.finestra(n); if (!w || g3visto[n] || (o.morti || {})[n]) return; var m = q(w, ".st-msg.on"); if (m && /3ª GIORNATA: SI DECIDE/.test(m.textContent)) { g3visto[n] = quadrettiG3(w, conti.cl); } });
+        // (30 ott, revisione) alla prima pagella i quadretti hanno già i punti veri: i voti veri al fischio + le porte inviolate
+        NOMI.forEach(function (n) { var w = W.finestra(n); if (!w || pagVisto[n] || (o.morti || {})[n]) return; var p = q(w, ".st-pag.on .st-pag-tit"); if (!p || !/La pagella/.test(p.textContent)) return;
+          var x = qa(w, ".st-gio-riga").map(function (z) { return { nome: z.querySelector(".st-gio-nome").textContent, pt: z.querySelector(".st-gio-pt").textContent }; });
+          pagVisto[n] = conti.cl.filter(function (r) { var y = x.filter(function (z) { return z.nome === r.nome; })[0]; return !y || y.pt !== num(r.tot); }).map(function (r) { var y = x.filter(function (z) { return z.nome === r.nome; })[0]; return r.nome + " «" + (y && y.pt) + "» invece di " + num(r.tot); }); });
         if (o.durante) await o.durante(s, P, C, LOG);
       } });
-      return { LOG: LOG, x: x, conti: conti, g3visto: g3visto, st: st, C: C, NOMI: NOMI };
+      return { LOG: LOG, x: x, conti: conti, g3visto: g3visto, pagVisto: pagVisto, st: st, C: C, NOMI: NOMI };
     } finally { W.BR.ritardo = vecchio; }
   }
   function controllaFine(r, nomi) {
@@ -182,6 +186,9 @@
         if (fin.k.indexOf(num(w0.tot) + " fantapunti in 3 giornate") < 0) no(n + ": alla fine «" + fin.k + "» senza il totale " + num(w0.tot));
         if (r.conti.ribaltone !== /ribaltone: dopo 2 giornate comandava/.test(fin.k)) no(n + ": il ribaltone finale " + (r.conti.ribaltone ? "manca" : "c'è ma non doveva") + " («" + fin.k + "»)");
       }
+      var rbCampo = l.some(function (e) { return /^m:💥 RIBALTONE!/.test(e.k); });   // (il ribaltone sul campo, prima delle pagelle: solo se è vero)
+      if (rbCampo !== r.conti.ribaltone) no(n + ": «💥 RIBALTONE!» sul campo " + (rbCampo ? "c'è ma alla fine non c'è" : "manca ma alla fine c'è"));
+      if (r.pagVisto && r.pagVisto[n] && r.pagVisto[n].length) no(n + ": alla prima pagella i quadretti non hanno i punti veri: " + r.pagVisto[n].join(", "));
     });
   }
 
