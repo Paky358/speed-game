@@ -16,6 +16,7 @@
 //      Rubasecondi: la lettera che non c'è toglie 3 secondi solo a Luca; chi vince sceglie la busta dal suo telefono e le
 //      Speed Coins le incassa solo lui.
 // rv4: contro i Bot (Difficile), 1 manche: i Bot giocano la finale e prendono punti; se vince Paky la busta vale un decimo.
+// rv6: a pari merito al primo posto una busta a testa (motore + online in 3, vedi sotto).
 // rv5: sullo stesso telefono in 2: niente «🏆 Finale» nelle regole né finale; chi vince sceglie la busta (un decimo, le Speed
 //      Coins solo se è il nome del profilo).
 // rv2: online in 2 (Paky tiene la partita, Luca dal suo telefono): Luca entra con le frasi già viste (l'host le riceve);
@@ -535,5 +536,92 @@
     if (G2.busta.nome === "Paky" ? inc !== "ok" : inc) no("Speed Coins sullo stesso telefono: " + inc + " (vince " + G2.busta.nome + ")");
     if (!await W.aspetta(function () { return P.document.querySelector(".classifica") && /ha aperto la busta/.test(W.testo(P)); }, 20000)) no("nella classifica non c'è la busta");
     return "vince " + G2.busta.nome + ", busta 4 = " + G2.busta.premio + " Speed Coins (" + (inc || "—") + ") · " + W.testo(P).replace(/\s+/g, " ").slice(0, 110);
+  } });
+  // ---- rv6: ✉️ pari merito al primo posto, una busta a testa (30 ott 2026, il proprietario: «la busta non può andare ad entrambi?») ----
+  // motore: due persone pari = due buste una dopo l'altra (chi è uscito un attimo ha il suo turno: a caso se non torna); un Bot pari = la busta solo
+  // alla persona; un Bot primo da solo = niente; tutti a 0 = solo il primo. Online in 3 (finale spenta, 1 manche): Paky e
+  // Luca pari, Giulia dietro: sceglie prima Paky (Luca legge «Poi tocca a te!»), poi Luca dal suo telefono; ognuno incassa
+  // la SUA busta sul suo telefono e basta, Giulia niente; in classifica «Pari merito, una busta a testa».
+  COPIONE.aggiungi("rv6", { nome: "Ruota: a pari merito al primo posto una busta a testa (motore e online in 3)", fai: async function () {
+    var L = [];
+    var w0 = await W.apriTel("Prova", { x: 0 }), R = w0.__RUOTA;
+    var gg = [{ id: "a", nome: "Paky" }, { id: "b", nome: "Luca" }, { id: "c", nome: "Matt", bot: true }];
+    function fine1(tot, prima) {
+      var Q = R.creaPartita(gg, 1, { prenota: false, express: false, veloce: false, finale: false, mistero: false, modo: "online" });
+      Q.nuovaManche(); Q.turno = 0; Q.risolvi(); Q.soluzione(Q.frase);
+      if (Q.fase !== "finemanche") no("motore: la manche non finisce (" + Q.fase + ")");
+      Object.keys(tot).forEach(function (id) { Q.trova(id).totale = tot[id]; });
+      if (prima) prima(Q);
+      Q.dopoManche(); return Q;
+    }
+    var Q = fine1({ a: 3000, b: 3000, c: 100 });
+    if (Q.fase !== "fbusta" || Q.busta.id !== "a" || !/Pari merito/.test(Q.msg) || Q.vista().busta.pari !== 2 || (Q.vista().busta.dopo || []).join() !== "b") no("pari merito: " + Q.fase + " " + Q.msg + " " + JSON.stringify(Q.vista().busta));
+    Q.finBusta(1);
+    if (Q.fase !== "fesito" || (Q.vista().buste || []).length !== 1) no("la prima busta non si apre");
+    Q.dopoFinale();
+    if (Q.fase !== "fbusta" || Q.busta.id !== "b" || !/Ora tocca a Luca/.test(Q.msg) || Q.busta.premi) no("dopo la prima busta non tocca a Luca: " + Q.fase + " " + Q.msg);
+    Q.finBusta(0); Q.dopoFinale();
+    var bb = Q.vista().buste || [];
+    if (Q.fase !== "fine" || bb.length !== 2 || bb[0].id !== "a" || bb[1].id !== "b" || !bb[0].premio || !bb[1].premio) no("due buste: " + Q.fase + " " + JSON.stringify(bb));
+    L.push("motore: Paky e Luca pari, due buste (" + bb[0].premio + ", " + bb[1].premio + ")");
+    Q = fine1({ a: 3000, b: 100, c: 3000 });
+    if (Q.fase !== "fbusta" || Q.busta.id !== "a" || Q.vista().busta.pari || !/vince la partita/.test(Q.msg)) no("pari col Bot: " + Q.fase + " " + Q.msg);
+    Q.finBusta(2); Q.dopoFinale(); if (Q.fase !== "fine") no("pari col Bot: dopo la busta di Paky c'è altro (" + Q.fase + ")");
+    Q = fine1({ a: 100, b: 100, c: 3000 }); if (Q.fase !== "fine" || Q.busta) no("vince il Bot da solo e c'è la busta");
+    Q = fine1({ a: 0, b: 0, c: 0 }); if (Q.fase !== "fbusta" || Q.busta.id !== "a" || Q.vista().busta.pari) no("tutti a 0: " + Q.fase + " " + JSON.stringify(Q.vista().busta));
+    Q = fine1({ a: 3000, b: 3000, c: 0 }); Q.trova("b").via = true; Q.finBusta(4); Q.dopoFinale();
+    if (Q.fase !== "fbusta" || Q.busta.id !== "b") no("Luca è uscito un attimo e perde la busta (" + Q.fase + ")");
+    Q.bustaAuto(); Q.dopoFinale();   // (allo scadere dei 20 secondi: busta a caso, la incassa quando torna)
+    if (Q.fase !== "fine" || (Q.vista().buste || []).length !== 2 || !Q.vista().buste[1].premio) no("la busta a caso di Luca uscito: " + Q.fase + " " + JSON.stringify(Q.vista().buste));
+    L.push("pari col Bot: solo Paky · Bot primo: niente · tutti a 0: solo il primo · chi è uscito un attimo ha la sua busta a caso");
+
+    // online in 3: Paky e Luca pari
+    var F = {};
+    var P = F.Paky = await W.apriTel("Paky", { x: 0, spiaRv: true, prima: function (w) { w.__impR = { manche: 1, prenota: false, express: false, veloce: false, mistero: false, finale: false }; } }); senzaAnimazioni(P);
+    var C = await W.apriStanza(P, "La Ruota della Fortuna");
+    F.Luca = await W.apriTel("Luca", { hash: "gioco=ruota&stanza=" + C, x: 185 }); senzaAnimazioni(F.Luca);
+    F.Giulia = await W.apriTel("Giulia", { hash: "gioco=ruota&stanza=" + C, x: 370 }); senzaAnimazioni(F.Giulia);
+    if (!await W.aspetta(function () { return A.contaDentro(vm(C)) === 3; }, 10000)) no("in saletta non sono in 3");
+    await W.dorme(400);
+    if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 5000)) no("l'host non ha «Comincia»");
+    var v = await finche(C, function (x) { return x.fase === "gira" && !x.sigla; }, null, 60000, "la manche non comincia");
+    function idDi(n) { return (vm(C).giocatori || []).filter(function (g) { return g.nome === n; })[0].id; }
+    var ID = { Paky: "host", Luca: idDi("Luca"), Giulia: idDi("Giulia") };
+    function nomeDi(id) { return Object.keys(ID).filter(function (n) { return ID[n] === id; })[0]; }
+    function az(n, a, x) {
+      if (n === "Paky") { var w = W.finestra("Paky"); if (w.__cbR) w.__cbR.onMsg("host", { t: "azione", a: a, x: x }); }
+      else W.reteDi(n).invia({ t: "azione", a: a, x: x });
+    }
+    var chi = nomeDi(v.turno), Pp = P.__RUOTA.ultima;
+    az(chi, "risolvi"); await W.dorme(500); az(chi, "soluzione", Pp.frase);
+    v = await finche(C, function (x) { return x.fase === "finemanche"; }, null, 8000, "la manche non finisce");
+    Pp = P.__RUOTA.ultima;
+    Pp.trova("host").totale = 3000; Pp.trova(ID.Luca).totale = 3000; Pp.trova(ID.Giulia).totale = 500;
+    v = await finche(C, function (x) { return x.fase === "fbusta"; }, null, 20000, "finita la manche non arriva la busta");
+    if (v.busta.id !== "host" || v.busta.pari !== 2 || (v.busta.dopo || []).join() !== ID.Luca || !/Pari merito/.test(v.msg)) no("la prima busta: " + JSON.stringify(v.busta) + " · " + v.msg);
+    if (!await W.aspetta(function () { return /Poi tocca a te/.test(azioni(F.Luca)); }, 5000)) no("Luca non legge «Poi tocca a te!» («" + azioni(F.Luca).slice(0, 80) + "»)");
+    if (/Poi tocca a te/.test(azioni(F.Giulia)) || !/sceglie una busta/.test(azioni(F.Giulia))) no("Giulia legge «" + azioni(F.Giulia).slice(0, 80) + "»");
+    if (!await W.aspetta(function () { return tasto(P, /✉️ 2/); }, 6000)) no("Paky non ha le buste");
+    tocca(P, tasto(P, /✉️ 2/));
+    v = await finche(C, function (x) { return x.fase === "fesito"; }, null, 6000, "la busta di Paky non si apre");
+    var gid = v.gameId, pk = v.busta.premio;
+    if (!await W.aspetta(function () { return (P.__RUOTA.INCASSI || {})[gid] === "ok"; }, 5000)) no("Paky non incassa la sua busta");
+    if (!await W.aspetta(function () { return /Ora tocca a te!/.test(azioni(F.Luca)) && /Ora la busta di Luca/.test(azioni(F.Giulia)); }, 4000)) no("mentre si apre la busta di Paky: Luca legge «" + azioni(F.Luca).slice(0, 80) + "», Giulia «" + azioni(F.Giulia).slice(0, 80) + "»");
+    v = await finche(C, function (x) { return x.fase === "fbusta" && x.busta.id === ID.Luca; }, null, 15000, "dopo Paky non tocca a Luca");
+    if (!/Ora tocca a Luca/.test(v.msg) || v.busta.premio || v.busta.premi) no("la busta di Luca: " + v.msg + " " + JSON.stringify(v.busta));
+    if (!await W.aspetta(function () { return tasto(F.Luca, /✉️ 5/); }, 6000)) no("Luca non ha le buste («" + azioni(F.Luca).slice(0, 80) + "»)");
+    if (tasto(P, /✉️ 1/)) no("Paky ha ancora le buste mentre sceglie Luca");
+    tocca(F.Luca, tasto(F.Luca, /✉️ 5/));
+    v = await finche(C, function (x) { return x.fase === "fesito" && x.busta.id === ID.Luca; }, null, 6000, "la busta di Luca non si apre");
+    var lk = v.busta.premio;
+    if ((v.buste || []).length !== 2 || [500, 1000, 2000, 5000].indexOf(lk) < 0 || [500, 1000, 2000, 5000].indexOf(pk) < 0) no("le buste: " + JSON.stringify(v.buste));
+    if (!await W.aspetta(function () { return (F.Luca.__RUOTA.INCASSI || {})[gid] === "ok"; }, 5000)) no("Luca non incassa la sua busta");
+    if ((F.Giulia.__RUOTA.INCASSI || {})[gid] || F.Giulia.localStorage.getItem("sg-ruota-premio|" + gid)) no("anche Giulia incassa");
+    if (!await W.aspetta(function () { return ["Paky", "Luca", "Giulia"].every(function (n) { return F[n].document.querySelector(".classifica"); }); }, 20000)) no("non arriva la classifica a tutti");
+    ["Paky", "Luca", "Giulia"].forEach(function (n) { if (!/Pari merito, una busta a testa/.test(W.testo(F[n]))) no("nella classifica di " + n + " non c'è «Pari merito, una busta a testa»"); });
+    if (!/salvadanaio/.test(W.testo(F.Luca)) || /salvadanaio/.test(W.testo(F.Giulia))) no("«Sono già nel tuo salvadanaio» al posto sbagliato");
+    var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
+    L.push("online: Paky busta " + pk + ", poi Luca busta " + lk + " (Luca leggeva «Poi tocca a te!»), ognuno incassa la sua, Giulia niente");
+    return L.join(" · ");
   } });
 })();
