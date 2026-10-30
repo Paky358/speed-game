@@ -461,6 +461,7 @@
       else if (v.fase === "lampo" && v.lampo && v.lampo.chi && P.lampo) { fatti[k] = 1; azR(nomeDi(v, v.lampo.chi), "soluzione", P.lampo.frase); }
       else if (v.fase === "gira" && chi) { fatti[k] = 1; azR(chi, "risolvi"); }
       else if (v.fase === "risolvi" && chi) { fatti[k] = 1; azR(chi, "soluzione", P.frase); }
+      else if (v.fase === "fbusta" && v.busta) { fatti[k] = 1; azR(nomeDi(v, v.busta.id), "busta", 0); }   // (31 ott: ✉️ chi vince sceglie la busta)
     };
   }
   COPIONE.aggiungi(553, { nome: "Ruota della Fortuna: l'host ricarica in saletta, alla frase lampo, quando tocca a uno, mentre la ruota gira, a fine manche e sulla classifica", fai: async function () {

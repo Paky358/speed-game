@@ -7,7 +7,7 @@
    - "Prenota", la frase lampo in apertura di ogni manche: le lettere compaiono da sole, chi la sa prenota;
    - lo spicchio "Express": niente più giri, 1.000 a consonante, ma un errore è Bancarotta;
    - l'ultimo round veloce: la ruota gira una volta sola, una lettera a testa e 5 secondi per risolvere;
-   - la finale del campione: busta con le Speed Coins, R S T L N E, 3 consonanti + 1 vocale, 10 secondi;
+   - la finale per tutti (online e contro i Bot): 3 tabelloni, ognuno sul suo telefono; poi chi vince sceglie una busta di Speed Coins;
    - ❓ lo spicchio Mistero nelle ultime due manche normali (+10.000 o Bancarotta, lo decide l'host solo quando si apre).
    ✍️ Le frasi degli amici: quelle scritte nel ⚙️ (restano sul telefono dell'host) e quelle mandate da chi guarda
    (vanno solo all'host, mai nella foto). Online, a fine manche «⏩ Avanti» a maggioranza.
@@ -39,19 +39,23 @@
   var BONUS_VELOCE = 1000;                         // il round veloce: lo spicchio + 1.000 a consonante
   var T_VEL_LETTERA = 12000, T_VEL_DECIDI = 5000, T_VEL_RISOLVI = 20000;
   var FIN_DATE = ["R", "S", "T", "L", "N", "E"], FIN_CONS = 3, FIN_VOC = 1;   // la finale: lettere regalate e da scegliere
-  var T_FIN_BUSTA = 20000, T_FIN_LETTERE = 30000, T_FIN_RISOLVI = 10000;
-  var FIN_GRAZIA = 1500;
-  // 🏆 la finale «delle meraviglie» (come quella di adesso in TV): 60 secondi in tutto per 3 tabelloni.
-  // 1) le lettere date + quelle scelte; 2) Testacoda: si vedono la prima e l'ultima lettera di ogni parola;
-  // 3) Rubasecondi: si chiamano lettere a volontà (una vocale sola), ma ogni lettera che non c'è toglie 3 secondi.
-  // Per ogni frase risolta si sceglie una busta (al massimo 3): si vince la più ricca.
-  var FIN_TOT = 60000, FIN_RUBA = 3000, FIN_TABELLONI = 3;
-  var FIN_NOMI = ["Le tue lettere", "Testacoda", "Rubasecondi"];                           // online: la soluzione arriva un po' dopo, non la si perde per la rete
-  var BUSTE = [500, 1000, 1000, 2000, 5000];       // le buste della finale, in Speed Coins (contro il computer un decimo)
+  var T_FIN_BUSTA = 20000, T_FIN_LETTERE = 10000;
+  var FIN_GRAZIA = 1500;   // online: la soluzione arriva un po' dopo, non la si perde per la rete
+  // 🏆 la finale «delle meraviglie» (come quella di adesso in TV), ma PER TUTTI INSIEME (31 ott 2026, il proprietario):
+  // dopo l'ultima manche giocano tutti, Bot compresi, ognuno sul suo telefono, 3 tabelloni con la stessa frase per tutti:
+  // 1) «Le tue lettere»: R S T L N E + 3 consonanti e 1 vocale scelte in segreto (10 s), poi 30 s per risolvere;
+  // 2) Testacoda: la prima e l'ultima lettera di ogni parola, 30 s; 3) Rubasecondi: si chiamano lettere a volontà
+  // (una vocale sola), ogni lettera che non c'è toglie 3 secondi SOLO a chi l'ha chiamata, 40 s.
+  // Ogni tabellone risolto vale 500 + 1.000 × (tempo che restava / tempo del tabellone), arrotondato a 50: va nel totale.
+  // Solo online e contro i Bot (sullo stesso telefono si vedrebbe tutto). Le buste le sceglie poi chi vince la partita.
+  var FIN_T = [30000, 30000, 40000], FIN_RUBA = 3000, FIN_TABELLONI = 3, FIN_BASE = 500, FIN_BONUS = 1000;
+  var FIN_NOMI = ["Le tue lettere", "Testacoda", "Rubasecondi"];
+  var BUSTE = [500, 1000, 1000, 2000, 5000];       // ✉️ la busta di chi vince la partita, in Speed Coins (contro il computer un decimo)
   var PREMIO_MAX = 5000;
   // i momenti che vanno avanti da soli (l'host aspetta tanto così)
-  var DURATE = { girando: T_GIRO, finemanche: 4500, lampofine: 3800, vgiro: 3000, fintro: 6000, frivela: 2600, fcambio: 2800, fesito: 7500, mapre: 1800, mrivela: 3200 };
-  var FASI_FIN = ["fintro", "fbusta", "flettere", "frivela", "ftempo", "fcambio", "fesito"];
+  var DURATE = { girando: T_GIRO, finemanche: 4500, lampofine: 3800, vgiro: 3000, fintro: 6000, frivela: 2600, fcambio: 3200, fesito: 7500, mapre: 1800, mrivela: 3200 };
+  var FASI_FIN = ["fintro", "flettere", "frivela", "ftempo", "fcambio"];   // la finale per tutti
+  var FASI_BUSTA = ["fbusta", "fesito"];                                   // ✉️ chi vince sceglie la busta, poi si apre
   var VOCALI = ["A", "E", "I", "O", "U"];
   var CONSONANTI = "BCDFGHJKLMNPQRSTVWXYZ".split("");
   var FREQ_C = "NRTLSCDMPVGBFZHQKJWXY".split("");   // consonanti dalla più frequente in italiano
@@ -76,9 +80,15 @@
   // ❓ lo spicchio Mistero (nelle ultime due manche normali): un 300 diventa Mistero; si gioca come un 1.000 e,
   // se la consonante c'è, si può aprire: metà delle volte +10.000, metà Bancarotta. Aperto, torna un 1.000 normale.
   var POSTO_MISTERO = 22, MIST_V = 1000, MIST_PREMIO = 10000;
-  // 🔒 «La so!»: chi aspetta il suo turno blocca in segreto la soluzione; se era giusta, quando la manche finisce prende
-  // un premio tanto più grande quanto meno lettere c'erano (da SEG_MIN a SEG_MAX), una volta per manche, mai nei giochi veloci
-  var SEG_MAX = 1500, SEG_MIN = 200;
+  // 🔒 «La so!»: chi aspetta il suo turno blocca in segreto la soluzione (una volta per manche, mai nei giochi veloci).
+  // Si può solo finché è scoperto meno del 40% delle lettere; vale 500 a tabellone vuoto e giù dritto fino a 0 al 40%
+  // (lo decide il momento in cui la blocchi). A fine manche: giusta = + il valore; sbagliata = − metà del valore (31 ott 2026)
+  var SEG_MAX = 500, SEG_QUOTA = 0.4, SEG_GRAZIA = 2500;   // (SEG_GRAZIA: un «La so!» toccato poco prima di una lettera nuova vale ancora quanto diceva il tasto)
+  // quanto vale bloccarla adesso (q = parte delle lettere già scoperte, da 0 a 1); 0 = non si può più
+  function valoreSeg(q) { return q >= SEG_QUOTA ? 0 : Math.max(0, Math.round(SEG_MAX * (1 - q / SEG_QUOTA) / 10) * 10); }
+  function mezzoSeg(v) { return Math.round(v / 2 / 10) * 10; }
+  // la stessa quota calcolata dal tabellone della foto (sul telefono): lettere scoperte / lettere della frase
+  function quotaTab(tab) { var noti = solo(tab).length, buchi = (String(tab || "").match(/_/g) || []).length; return noti + buchi ? noti / (noti + buchi) : 0; }
   var FASI_SEG = ["gira", "girando", "consonante", "vocale", "risolvi", "sceltaexp", "express", "mistero", "mapre", "mrivela", "vgiro", "vlettera", "vdecidi"];
   var T_RIEPILOGO = 10000;                         // online: il riepilogo di fine manche (o subito, se più di metà tocca «⏩ Avanti»)
   // mist: null (niente Mistero), "on" (da aprire), "aperto" (già aperto: vale 1.000)
@@ -129,6 +139,7 @@
   function firmaTesto(f) { return f ? "✍️ di " + f : "✍️ scritta da voi"; }
   function eLettera(ch) { return /^[A-ZÀÈÉÌÒÙ]$/.test(ch); }
   function fmtN(n) { var s = String(Math.round(Math.abs(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); return (n < 0 ? "−" : "") + s; }
+  function secTx(ms) { return Math.max(1, Math.round((+ms || 0) / 1000)) + " s"; }   // "in 12 s"
   function mischiaArr(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function stessoNome(a, b) { return String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase(); }
   function profiloAttivo() {
@@ -248,7 +259,7 @@
   // =========================================================
   function creaPartita(giocatori, mancheTot, regole) {
     var cfg = regole || {};
-    var RG = { prenota: !!cfg.prenota, express: !!cfg.express, veloce: !!cfg.veloce && mancheTot >= 2, finale: !!cfg.finale, mistero: !!cfg.mistero, frasi: cfg.frasi === "nostre" ? "nostre" : "gioco" };
+    var RG = { prenota: !!cfg.prenota, express: !!cfg.express, veloce: !!cfg.veloce && mancheTot >= 2, finale: !!cfg.finale && cfg.modo !== "telefono", mistero: !!cfg.mistero, frasi: cfg.frasi === "nostre" ? "nostre" : "gioco" };
     var P = { giocatori: giocatori.map(function (g) { return { id: g.id, nome: g.nome, bot: !!g.bot, omino: g.omino || null, totale: 0, soldi: 0, jolly: 0, via: false,
       stat: { giri: 0, consonantiIndovinate: 0, vocaliIndovinate: 0, frasiRisolte: 0, mancheVinte: 0, mancheDa5000: 0, bancarotte: 0, lampo: 0, finali: 0 } }; }),
       modo: cfg.modo || "bot", difficolta: cfg.difficolta || "medio", regole: RG, spicchi: spicchiDi(RG.express), decimo: !!cfg.decimo,
@@ -645,27 +656,29 @@
     P.velRisolvi = function () { if (P.fase !== "vdecidi") return false; P.fase = "risolvi"; P.msg = g().nome + " prova a risolvere…"; return true; };
     P.velPassa = function (tempo) { if (P.fase !== "vdecidi") return false; P.msg = (tempo ? "⏰ " : "⏭️ ") + g().nome + " passa."; prossimo(); return true; };
     // 🔒 una soluzione bloccata in segreto (da chi non è di turno): resta solo all'host, nella foto va solo CHI l'ha bloccata
-    P.puoSegreta = function (id) {
+    // (qPrima: la quota che c'era un attimo fa, quando il telefono ha mostrato il valore; la decide l'host, vedi azione)
+    P.puoSegreta = function (id, qPrima) {
       var p = trova(id), tp = g();
-      return !!p && !p.via && FASI_SEG.indexOf(P.fase) >= 0 && (!tp || tp.id !== id) && !P.segrete[id] && P.consonantiNascoste() + P.vocaliNascoste() > 0;
+      return !!p && !p.via && FASI_SEG.indexOf(P.fase) >= 0 && (!tp || tp.id !== id) && !P.segrete[id] && P.consonantiNascoste() + P.vocaliNascoste() > 0 &&
+        valoreSeg(qPrima != null ? qPrima : quotaNota(P)) > 0;   // (solo finché è scoperto meno del 40% delle lettere)
     };
-    P.segreta = function (id, testo) {
-      if (!P.puoSegreta(id)) return false;
+    P.segreta = function (id, testo, qPrima) {
+      if (!P.puoSegreta(id, qPrima)) return false;
       var t = String(testo || "").toUpperCase().slice(0, 80);
       if (solo(t).length !== solo(P.frase).length) return false;
-      P.segrete[id] = { t: t, q: Math.round(quotaNota(P) * 100) / 100 };
+      var q = qPrima != null ? qPrima : quotaNota(P);
+      P.segrete[id] = { t: t, q: Math.round(q * 1000) / 1000, v: valoreSeg(q) };   // (il valore scritto sul tasto quando l'ha toccato)
       ev("segreta", id);
       return true;
     };
     function vinceManche(p) {
-      // 🔒 prima di scoprire tutto: chi aveva bloccato la soluzione giusta
+      // 🔒 prima di scoprire tutto: chi aveva bloccato la soluzione (giusta: + il valore; sbagliata: − metà, mai sotto zero)
       var seg = [];
       Object.keys(P.segrete || {}).forEach(function (id) {
-        var x = trova(id), s = P.segrete[id]; if (!x || !s) return;
-        if (solo(s.t) === solo(P.frase)) {
-          var b = Math.max(SEG_MIN, Math.round(SEG_MAX * (1 - s.q) / 50) * 50);
-          x.totale += b; seg.push({ id: id, b: b, pct: Math.round(s.q * 100) });
-        } else seg.push({ id: id, no: 1 });
+        var x = trova(id), s = P.segrete[id]; if (!x || !s) return;   // (vale anche per chi è uscito: se torna, il totale è già giusto)
+        var v = s.v != null ? s.v : valoreSeg(s.q || 0);
+        if (solo(s.t) === solo(P.frase)) { x.totale += v; seg.push({ id: id, b: v, pct: Math.round((s.q || 0) * 100) }); }
+        else { var m = Math.min(x.totale, mezzoSeg(v)); x.totale -= m; seg.push({ id: id, no: 1, m: m, pct: Math.round((s.q || 0) * 100) }); }
       });
       CONSONANTI.concat(VOCALI).forEach(function (L) { P.rivelate[L] = 1; });
       var vincita = Math.max(p.soldi, MINIMO_RISOLVI);
@@ -675,147 +688,285 @@
       P.giocatori.forEach(function (x) { if (x !== p) x.soldi = 0; });
       p.soldi = vincita; P.exp = false;
       P.vince = { id: p.id, vincita: vincita, frase: P.frase, seg: seg.length ? seg : undefined };
-      P.fase = "finemanche"; P.msg = "🎉 " + p.nome + " risolve! +" + fmtN(vincita) + seg.filter(function (s) { return s.b; }).map(function (s) { return " · 🔒 " + trova(s.id).nome + " l'aveva capita: +" + fmtN(s.b); }).join("");
+      P.fase = "finemanche"; P.msg = "🎉 " + p.nome + " risolve! +" + fmtN(vincita) + seg.map(function (s) {
+        return s.b ? " · 🔒 " + trova(s.id).nome + " l'aveva capita: +" + fmtN(s.b) : " · 🔒 " + trova(s.id).nome + " ha sbagliato" + (s.m ? ": −" + fmtN(s.m) : "");
+      }).join("");
     }
     P.dopoManche = function () {
       if (P.fase !== "finemanche") return;
       if (P.manche >= P.mancheTot) {
-        // chi è uscito a metà va in fondo, segnato "uscito"
-        var dentro = P.giocatori.filter(function (x) { return !x.via; }).sort(function (a, b) { return b.totale - a.totale; });
-        var fuori = P.giocatori.filter(function (x) { return x.via; });
-        P.classifica = dentro.map(function (x) { return { id: x.id, nome: x.nome, punti: x.totale, pos: 1 + dentro.filter(function (q) { return q.totale > x.totale; }).length }; })
-          .concat(fuori.map(function (x, k) { return { id: x.id, nome: x.nome, punti: x.totale, pos: dentro.length + 1 + k, uscito: true }; }));
-        var primo = dentro[0];
-        if (RG.finale && primo && !primo.bot) iniziaFinale(primo);   // se vince un bot, niente finale
-        else { P.fase = "fine"; P.msg = ""; }
+        // 🏆 la finale per tutti (online e contro i Bot): i suoi punti vanno nel totale, poi la classifica e la busta
+        if (RG.finale && attivi().length) iniziaFinale();
+        else chiudiPartita();
       } else P.nuovaManche();
     };
-    // ---- la finale del campione ----
-    function iniziaFinale(p) {
-      P.lampo = null; P.exp = false; P.veloce = false; P.firma = null; P.mist = null; P.mres = null; P.vince = null;
-      P.turno = P.giocatori.indexOf(p);
-      P.fin = { id: p.id, nome: p.nome, premi: mischiaArr(BUSTE.map(function (v) { return P.decimo ? Math.round(v / 10) : v; })), buste: [], scelte: [], prove: 0,
-        vinto: null, premio: 0, b: 1, risolte: 0, esiti: [], resta: FIN_TOT, da: 0, pen: 0, voc: 0, vis: null };
-      nuovoTabellone();
-      P.fase = "fintro"; P.msg = "🏆 " + p.nome + " vince la partita e gioca la finale: 60 secondi, 3 frasi!";
+    // la classifica (chi è uscito a metà va in fondo, segnato "uscito"); poi chi vince, se è una persona, sceglie la busta
+    function chiudiPartita() {
+      P.lampo = null; P.exp = false; P.veloce = false; P.mist = null; P.mres = null; P.vince = null;
+      var dentro = attivi().sort(function (a, b) { return b.totale - a.totale; });
+      var fuori = P.giocatori.filter(function (x) { return x.via; });
+      P.classifica = dentro.map(function (x) { return { id: x.id, nome: x.nome, punti: x.totale, pos: 1 + dentro.filter(function (q) { return q.totale > x.totale; }).length }; })
+        .concat(fuori.map(function (x, k) { return { id: x.id, nome: x.nome, punti: x.totale, pos: dentro.length + 1 + k, uscito: true }; }));
+      var primo = dentro[0];   // (a pari merito sceglie il primo in classifica)
+      if (primo && !primo.bot) iniziaBusta(primo);
+      else { P.fase = "fine"; P.msg = ""; }
     }
-    // la frase del tabellone di adesso (1: corta; 2, Testacoda: anche più lunga; 3: corta)
-    function nuovoTabellone() {
-      var F = P.fin, fr = pesca(F.b === 2 ? function (x) { return !x.l && media(x); } : corta);
-      P.frase = fr.f; P.cat = fr.c; P.rivelate = {}; P.chiamate = {}; P.ultime = []; F.prove = 0; F.vis = null;
-      if (F.b === 2) {   // Testacoda: la prima e l'ultima lettera di ogni parola
+    // ---- ✉️ la busta di chi vince la partita (in tutti i modi): una sola, tra 5 mescolate ----
+    // (i premi si mescolano solo quando la busta si apre: prima, nello stato, ci sono solo i valori possibili, così nemmeno
+    // la copia per il vice dice dov'è la busta grossa)
+    function iniziaBusta(p) {
+      P.busta = { id: p.id, nome: p.nome, n: BUSTE.length, valori: BUSTE.map(function (v) { return P.decimo ? Math.round(v / 10) : v; }), premi: null, scelta: null, premio: 0 };
+      P.turno = P.giocatori.indexOf(p);
+      P.fase = "fbusta"; P.msg = "🏆 " + p.nome + " vince la partita e sceglie una busta!";
+    }
+    P.finBusta = function (k) {
+      k = Math.floor(+k); var B = P.busta;
+      if (P.fase !== "fbusta" || !B || !(k >= 0 && k < B.n)) return false;
+      B.premi = mischiaArr(B.valori.slice());
+      B.scelta = k; B.premio = B.premi[k];
+      P.fase = "fesito"; P.msg = "✉️ " + B.nome + " apre la busta " + (k + 1) + "…";
+      return true;
+    };
+    P.bustaAuto = function () { var B = P.busta; if (P.fase !== "fbusta" || !B) return false; return P.finBusta(Math.floor(Math.random() * B.n)); };   // (tempo scaduto: a caso)
+    P.dopoFinale = function () { if (P.fase === "fesito") { P.fase = "fine"; P.msg = ""; } };
+
+    // ---- 🏆 la finale per tutti: stessa frase, ognuno il suo tabellone e il suo tempo ----
+    // P.fin = { b (1-3), ids (chi gioca la finale), g: { id: { ch (le sue lettere), scelte, voc, pen (ms tolti), ok, passo, scad,
+    //   ms (in quanto l'ha risolta), punti, prove, tot, esiti, risolte } }, T (tempo del tabellone), da (ora dell'host in cui è
+    //   partito il tempo), scadeL (fine della scelta delle lettere), vis (Testacoda), svela, bot (cosa faranno i Bot) }
+    var GRAZIA = cfg.modo === "online" ? FIN_GRAZIA : 0;   // online la soluzione arriva un po' dopo: vale lo stesso
+    function iniziaFinale() {
+      P.lampo = null; P.exp = false; P.veloce = false; P.firma = null; P.mist = null; P.mres = null; P.vince = null; P.segrete = {};
+      var ids = attivi().map(function (x) { return x.id; });
+      P.fin = { b: 0, ids: ids, g: {}, T: 0, da: 0, scadeL: 0, vis: null, svela: false, bot: {} };
+      ids.forEach(function (id) { P.fin.g[id] = { tot: 0, esiti: [], risolte: 0, ch: [] }; });
+      P.frase = ""; P.cat = ""; P.rivelate = {}; P.chiamate = {}; P.ultime = [];
+      P.fase = "fintro"; P.msg = "🏆 La finale! Tre tabelloni per tutti: chi risolve prima prende di più";
+    }
+    // la frase del tabellone (1: corta; 2, Testacoda: anche più lunga; 3: corta): la stessa per tutti
+    function nuovoTabellone(b) {
+      var F = P.fin, fr = pesca(b === 2 ? function (x) { return !x.l && media(x); } : corta);
+      F.b = b; F.T = FIN_T[b - 1]; F.da = 0; F.scadeL = 0; F.svela = false; F.vis = null; F.bot = {};
+      P.frase = fr.f; P.cat = fr.c; P.rivelate = {}; P.chiamate = {}; P.ultime = [];
+      if (b === 1) FIN_DATE.forEach(function (L) { P.chiamate[L] = 1; if (occ(L)) P.rivelate[L] = 1; });
+      if (b === 2) {   // Testacoda: la prima e l'ultima lettera di ogni parola
         F.vis = {}; var inizio = -1;
         P.frase.split("").concat([" "]).forEach(function (ch, k) {
           if (eLettera(ch)) { if (inizio < 0) inizio = k; return; }
           if (inizio >= 0) { F.vis[inizio] = 1; F.vis[k - 1] = 1; inizio = -1; }
         });
       }
+      F.ids.forEach(function (id) { var g = F.g[id]; g.ch = b === 1 ? FIN_DATE.slice() : []; g.scelte = null; g.voc = 0; g.pen = 0; g.ok = false; g.scritta = false; g.passo = false; g.scad = false; g.ms = 0; g.punti = 0; g.prove = 0; });
     }
-    P.finResta = function () { var F = P.fin; return !F ? 0 : P.fase === "ftempo" ? Math.max(0, F.resta - (Date.now() - F.da)) : F.resta; };
+    // il tabellone con queste lettere scoperte (e, nel Testacoda, la prima e l'ultima di ogni parola)
+    function finTab(lettere) {
+      var F = P.fin, o = {}; (lettere || []).forEach(function (L) { o[L] = 1; });
+      return P.frase.split("").map(function (ch, k) { return eLettera(ch) && !o[base(ch)] && !(F.vis && F.vis[k]) ? "_" : ch; }).join("");
+    }
+    P.finTab = finTab;
+    // chi ha la frase tutta davanti (l'ha risolta, o le sue lettere la scoprono tutta): il suo tabellone NON va nella foto
+    // (la vedrebbero gli altri); la frase gli arriva da sola, in un messaggio solo per lui (vedi bd)
+    function finTutta(id) {
+      var F = P.fin, g = F && F.g[id];
+      return !!g && !!F.b && !F.svela && P.fase !== "flettere" && FASI_FIN.indexOf(P.fase) >= 0 && (g.ok || finTab(g.ch).indexOf("_") < 0);
+    }
+    P.finTutta = finTutta;
+    function finResta(id, ora) { var F = P.fin, g = F && F.g[id]; if (!g) return 0; return F.da ? F.T - ((ora || Date.now()) - F.da) - (g.pen || 0) : F.T - (g.pen || 0); }
+    P.finResta = finResta;
+    function finFatto(id) { var g = P.fin.g[id], p = trova(id); return !g || !p || p.via || g.ok || g.passo || g.scad; }
+    P.finFatto = finFatto;
+    function grazia(id) { var p = trova(id); return p && p.bot ? 0 : GRAZIA; }
+    function lettereAuto(caso) {   // le più frequenti in italiano (i Bot ne cambiano qualcuna)
+      var c = FREQ_C.filter(function (L) { return FIN_DATE.indexOf(L) < 0; }), v = FREQ_V.filter(function (L) { return FIN_DATE.indexOf(L) < 0; });
+      if (caso) { c = mischiaArr(c.slice(0, 6)); v = mischiaArr(v.slice(0, 2)); }
+      return c.slice(0, FIN_CONS).concat(v.slice(0, FIN_VOC));
+    }
+    function tuttiScelto() { return P.fin.ids.every(function (id) { var p = trova(id); return !p || p.via || P.fin.g[id].scelte; }); }
     P.finInizia = function () {
       if (P.fase !== "fintro") return false;
-      FIN_DATE.forEach(function (L) { P.chiamate[L] = 1; if (occ(L)) P.rivelate[L] = 1; });
-      P.ultime = FIN_DATE.slice();
-      P.fase = "flettere"; P.msg = "Tabellone 1: ecco R S T L N E! " + P.fin.nome + ": scegli " + FIN_CONS + " consonanti e " + FIN_VOC + " vocale";
+      nuovoTabellone(1);
+      P.fin.scadeL = Date.now() + T_FIN_LETTERE;
+      P.fin.ids.forEach(function (id) { var p = trova(id); if (p && p.bot) P.fin.g[id].scelte = lettereAuto(true); });
+      P.fase = "flettere"; P.msg = "Tabellone 1: ecco R S T L N E! Ognuno sceglie in segreto " + FIN_CONS + " consonanti e " + FIN_VOC + " vocale";
+      if (tuttiScelto()) applicaScelte();
       return true;
     };
-    function applicaScelte(lista) {
-      P.fin.scelte = lista;
-      lista.forEach(function (L) { P.chiamate[L] = 1; if (occ(L)) P.rivelate[L] = 1; });
-      P.ultime = lista.slice();
-      P.fase = "frivela"; P.msg = "Vediamo… " + lista.join(" ");
-    }
-    P.finLettere = function (lista) {
-      if (P.fase !== "flettere" || !Array.isArray(lista)) return false;
+    // (parz: il tempo è finito a metà scelta; quelle che ha toccato restano, le altre sono le più frequenti)
+    P.finLettere = function (id, lista, parz) {
+      var g = P.fin && P.fin.g[id], p = trova(id);
+      if (P.fase !== "flettere" || !g || !p || p.via || g.scelte || !Array.isArray(lista)) return false;
       var c = [], v = [];
       lista.forEach(function (L) {
         L = String(L || "").toUpperCase();
-        if (P.chiamate[L] || c.indexOf(L) >= 0 || v.indexOf(L) >= 0) return;
+        if (FIN_DATE.indexOf(L) >= 0 || c.indexOf(L) >= 0 || v.indexOf(L) >= 0) return;
         if (CONSONANTI.indexOf(L) >= 0) c.push(L); else if (VOCALI.indexOf(L) >= 0) v.push(L);
       });
+      if (parz) { FREQ_C.forEach(function (L) { if (c.length < FIN_CONS && FIN_DATE.indexOf(L) < 0 && c.indexOf(L) < 0) c.push(L); });
+        FREQ_V.forEach(function (L) { if (v.length < FIN_VOC && FIN_DATE.indexOf(L) < 0 && v.indexOf(L) < 0) v.push(L); }); }
       if (c.length !== FIN_CONS || v.length !== FIN_VOC) return false;
-      applicaScelte(c.concat(v)); return true;
-    };
-    P.finAuto = function () {   // tempo scaduto mentre sceglie: lettere più frequenti, buste a caso
-      if (P.fase === "fbusta") {
-        var libere = P.fin.premi.map(function (x, k) { return k; }).filter(function (k) { return P.fin.buste.indexOf(k) < 0; });
-        return P.finBusta(libere[Math.floor(Math.random() * libere.length)]);
-      }
-      if (P.fase !== "flettere") return false;
-      var c = FREQ_C.filter(function (L) { return !P.chiamate[L]; }).slice(0, FIN_CONS), v = FREQ_V.filter(function (L) { return !P.chiamate[L]; }).slice(0, FIN_VOC);
-      applicaScelte(c.concat(v)); return true;
-    };
-    P.finVia = function () {   // il tempo comincia a scorrere (e si ferma solo tra un tabellone e l'altro)
-      if (P.fase !== "frivela") return false;
-      P.fase = "ftempo"; P.fin.da = Date.now();
-      P.msg = "⏱️ " + P.fin.nome + ": " + Math.ceil(P.fin.resta / 1000) + " secondi per 3 frasi. Via!";
+      g.scelte = c.concat(v);
+      if (tuttiScelto()) applicaScelte();
       return true;
     };
-    function finTabelloneFatto(ok) {
+    P.finAuto = function () {   // finito il tempo per scegliere: a chi non ha scelto, le lettere più frequenti
+      if (P.fase !== "flettere") return false;
+      P.fin.ids.forEach(function (id) { if (!P.fin.g[id].scelte) P.fin.g[id].scelte = lettereAuto(); });
+      applicaScelte(); return true;
+    };
+    function applicaScelte() {
       var F = P.fin;
-      F.resta = P.finResta(); F.esiti.push(ok ? 1 : 0); if (ok) F.risolte++;
+      F.ids.forEach(function (id) { var g = F.g[id]; g.ch = FIN_DATE.concat(g.scelte || []); });
+      P.fase = "frivela"; P.msg = "🥁 Ecco le vostre lettere…";
+    }
+    function avviaTempo() { P.fase = "ftempo"; P.fin.da = Date.now(); pianoBot(); }
+    P.finVia = function () {   // il tempo comincia a scorrere (uguale per tutti; il Rubasecondi toglie secondi solo a chi sbaglia)
+      if (P.fase !== "frivela") return false;
+      avviaTempo(); P.msg = "⏱️ Via! " + (P.fin.T / 1000) + " secondi per risolvere";
+      // (tabellone 1: a chi le sue lettere scoprono tutta la frase, è già risolta, col tempo pieno)
+      var tutte = P.fin.ids.filter(function (id) { var g = P.fin.g[id]; return !finFatto(id) && finTab(g.ch).indexOf("_") < 0; });
+      tutte.forEach(function (id) { risolta(id, 0, true); });
+      if (tutte.length) finControlla();
+      return true;
+    };
+    // i Bot nella finale: quando risolvono (o se non ce la fanno) secondo la bravura; nel Rubasecondi chiamano qualche lettera
+    function pianoBot() {
+      var F = P.fin, liv = P.difficolta, prob = { facile: 0.45, medio: 0.75, difficile: 0.92 }[liv] || 0.75,
+        fr = { facile: [0.55, 0.97], medio: [0.3, 0.75], difficile: [0.12, 0.5] }[liv] || [0.3, 0.75];
+      F.bot = {};
+      F.ids.forEach(function (id) {
+        var p = trova(id); if (!p || !p.bot) return;
+        var sa = Math.random() < prob, x = { t: sa ? Math.round(F.T * (fr[0] + Math.random() * (fr[1] - fr[0]))) : null, no: null, passa: null, lettere: [] };
+        if (F.b === FIN_TABELLONI) {
+          var ll = mischiaArr(FREQ_C.slice(0, 10)).slice(0, 2 + Math.floor(Math.random() * 3));
+          if (Math.random() < 0.7) ll.splice(1, 0, mischiaArr(FREQ_V.slice())[0]);
+          x.lettere = ll.map(function (L, k) { return { t: 2200 * (k + 1) + Math.round(Math.random() * 600), L: L }; });
+          if (x.t != null) x.t = Math.max(x.t, x.lettere[x.lettere.length - 1].t + 1800);
+        }
+        if (x.t != null) { x.t = Math.min(x.t, F.T - 600); if (Math.random() < 0.25) x.no = Math.round(x.t * (0.5 + Math.random() * 0.3)); }   // ogni tanto prima sbaglia
+        else x.passa = Math.round(F.T * (0.6 + Math.random() * 0.3));   // non la sa: a un certo punto passa
+        F.bot[id] = x;
+      });
+    }
+    // il prossimo fatto dei Bot: tra quanti millisecondi (null = nessuno)
+    P.finBotProssimo = function () {
+      var F = P.fin; if (P.fase !== "ftempo" || !F || !F.da) return null;
+      var min = null, ora = Date.now() - F.da;
+      Object.keys(F.bot || {}).forEach(function (id) {
+        if (finFatto(id)) return;
+        var x = F.bot[id], tt = [x.no, x.t, x.passa].concat(x.lettere.filter(function (l) { return !l.f; }).map(function (l) { return l.t; }));
+        tt.forEach(function (t) { if (t != null && (min == null || t < min)) min = t; });
+      });
+      return min == null ? null : Math.max(0, min - ora);
+    };
+    P.finBotAgisci = function () {
+      var F = P.fin; if (P.fase !== "ftempo" || !F || !F.da) return false;
+      var ora = Date.now() - F.da, fatto = false;
+      Object.keys(F.bot || {}).forEach(function (id) {
+        var x = F.bot[id];
+        function puo() { return P.fase === "ftempo" && !finFatto(id); }
+        x.lettere.forEach(function (l) { if (!l.f && l.t <= ora && puo()) { l.f = 1; if (P.finLettera(id, l.L)) fatto = true; } });
+        if (x.no != null && x.no <= ora && puo()) { x.no = null; P.finSoluzione(id, "?"); fatto = true; }
+        if (x.t != null && x.t <= ora && puo()) { x.t = null; P.finSoluzione(id, P.frase); fatto = true; }
+        if (x.passa != null && x.passa <= ora && puo()) { x.passa = null; P.finPassa(id); fatto = true; }
+      });
+      return fatto;
+    };
+    P.finSoluzione = function (id, testo) {
+      var F = P.fin, g = F && F.g[id], ora = Date.now();
+      if (P.fase !== "ftempo" || !g || finFatto(id)) return false;
+      if (finResta(id, ora) + grazia(id) <= 0) { g.scad = true; finControlla(); return true; }
+      if (solo(testo) === solo(P.frase)) { risolta(id, ora - F.da); g.scritta = true; }   // (scritta: la frase ce l'ha già sul telefono)
+      else { g.prove++; ev("fino", id); }   // (niente penalità: si riprova finché c'è tempo)
+      return true;
+    };
+    // risolta: 500 + 1.000 × il tempo che restava / il tempo del tabellone, arrotondato a 50 (da 500 a 1.500)
+    function risolta(id, usati, quieto) {
+      var F = P.fin, g = F.g[id], p = trova(id), r = Math.max(0, Math.min(F.T, F.T - usati - (g.pen || 0)));
+      g.ok = true; g.ms = Math.max(0, Math.round(usati));
+      g.punti = Math.round((FIN_BASE + FIN_BONUS * r / F.T) / 50) * 50;
+      g.tot += g.punti; g.risolte++; g.esiti[F.b - 1] = g.punti; p.totale += g.punti;
+      ev("finok", id);
+      P.msg = "✅ " + p.nome + " l'ha risolta in " + secTx(g.ms) + "! +" + fmtN(g.punti);
+      if (!quieto) finControlla();
+    }
+    P.finPassa = function (id) {
+      var g = P.fin && P.fin.g[id]; if (P.fase !== "ftempo" || !g || finFatto(id)) return false;
+      g.passo = true; finControlla(); return true;
+    };
+    // 🕵️ Rubasecondi: si chiamano lettere (consonanti a volontà, una vocale); una lettera che non c'è toglie 3 secondi a chi l'ha chiamata
+    P.finLettera = function (id, L) {
+      var F = P.fin, g = F && F.g[id], ora = Date.now(); L = String(L || "").toUpperCase();
+      if (P.fase !== "ftempo" || !g || F.b !== FIN_TABELLONI || finFatto(id) || !/^[A-Z]$/.test(L) || g.ch.indexOf(L) >= 0) return false;
+      var voc = VOCALI.indexOf(L) >= 0; if (voc && g.voc >= 1) return false;
+      if (finResta(id, ora) + grazia(id) <= 0) { g.scad = true; finControlla(); return true; }
+      if (voc) g.voc++;
+      g.ch.push(L);
+      if (occ(L)) { if (finTab(g.ch).indexOf("_") < 0) risolta(id, ora - F.da); return true; }   // tutte le lettere fuori: è risolta
+      g.pen += FIN_RUBA; ev("ruba", id);
+      if (finResta(id, ora) <= 0) { g.scad = true; finControlla(); }
+      return true;
+    };
+    // finito il tempo di qualcuno: chi non ha risolto è fuori da questo tabellone
+    P.finTempo = function () {
+      var F = P.fin; if (P.fase !== "ftempo" || !F) return false;
+      var ora = Date.now(), cambia = false;
+      F.ids.forEach(function (id) { if (!finFatto(id) && finResta(id, ora) + grazia(id) <= 0) { F.g[id].scad = true; cambia = true; } });
+      if (cambia) finControlla();
+      return cambia;
+    };
+    // tra quanti millisecondi scade il tempo del prossimo (con la tolleranza della rete); null = hanno finito tutti
+    P.finProssimaScadenza = function () {
+      var F = P.fin; if (P.fase !== "ftempo" || !F) return null;
+      var min = null, ora = Date.now();
+      F.ids.forEach(function (id) { if (finFatto(id)) return; var r = finResta(id, ora) + grazia(id); if (min == null || r < min) min = r; });
+      return min == null ? null : Math.max(0, min);
+    };
+    function finControlla() {
+      var F = P.fin; if (P.fase !== "ftempo") return;
+      // le persone hanno finito: i Bot non si aspettano (risolvono quando l'avrebbero fatto, o passano)
+      if (F.ids.every(function (id) { var p = trova(id); return !p || p.bot || finFatto(id); })) chiudiBot();
+      if (F.ids.every(finFatto)) finFineTab();
+    }
+    // (le lettere del Rubasecondi che il Bot avrebbe chiamato prima di risolvere contano lo stesso: quelle che non ci sono
+    // gli tolgono i loro 3 secondi, come se il tabellone fosse andato avanti)
+    function chiudiBot() {
+      var F = P.fin;
+      F.ids.forEach(function (id) {
+        var p = trova(id), x = (F.bot || {})[id], g = F.g[id]; if (!p || !p.bot || finFatto(id)) return;
+        if (x && x.t != null) (x.lettere || []).forEach(function (l) {
+          if (l.f || l.t > x.t || g.ch.indexOf(l.L) >= 0) return;
+          var voc = VOCALI.indexOf(l.L) >= 0; l.f = 1;
+          if (voc && g.voc >= 1) return;
+          if (voc) g.voc++;
+          g.ch.push(l.L); if (!occ(l.L)) g.pen += FIN_RUBA;
+        });
+        if (x && x.t != null && F.T - x.t - (g.pen || 0) > 0) { var t = x.t; x.t = null; risolta(id, t, true); } else g.passo = true;
+      });
+    }
+    function finFineTab() {
+      var F = P.fin;
+      F.svela = true;
+      F.ids.forEach(function (id) { var g = F.g[id]; if (g.esiti[F.b - 1] == null) g.esiti[F.b - 1] = 0; });
       CONSONANTI.concat(VOCALI).forEach(function (L) { P.rivelate[L] = 1; });
-      if (F.b < FIN_TABELLONI && F.resta > 0) {
-        P.fase = "fcambio";
-        P.msg = (ok ? "✅ Risolta! " : "⏭️ Passata. ") + "Tabellone " + (F.b + 1) + ": " + FIN_NOMI[F.b] + "! Restano " + Math.ceil(F.resta / 1000) + " secondi";
-        return;
-      }
-      finFineTabelloni(ok ? "✅ Risolta!" : F.resta > 0 ? "⏭️ Passata." : "⏰ Tempo scaduto!");
+      var chi = F.ids.filter(function (id) { return F.g[id].ok; }).sort(function (a, b) { return F.g[a].ms - F.g[b].ms; });
+      P.fase = "fcambio";
+      P.msg = (chi.length ? "✅ " + chi.map(function (id) { return trova(id).nome + " in " + secTx(F.g[id].ms); }).join(", ") : "Nessuno l'ha risolta") +
+        (F.b < FIN_TABELLONI ? " · ora il tabellone " + (F.b + 1) + ": " + FIN_NOMI[F.b] : " · la finale è finita!");
     }
     P.dopoCambio = function () {
       if (P.fase !== "fcambio") return;
-      var F = P.fin; F.b++; nuovoTabellone();
-      P.fase = "ftempo"; F.da = Date.now();
-      P.msg = F.b === 2 ? "🔤 Testacoda: la prima e l'ultima lettera di ogni parola. Risolvi!" : "🕵️ Rubasecondi: chiama le lettere che vuoi (una vocale), ma ogni lettera che non c'è costa 3 secondi!";
-    };
-    function finFineTabelloni(pre) {
       var F = P.fin;
-      CONSONANTI.concat(VOCALI).forEach(function (L) { P.rivelate[L] = 1; });
-      if (!F.risolte) { finChiudi(false, pre + " Nessuna frase risolta: niente buste."); return; }
-      P.fase = "fbusta";
-      P.msg = pre + " " + F.nome + " ha risolto " + F.risolte + (F.risolte === 1 ? " frase: sceglie 1 busta!" : " frasi: sceglie " + Math.min(F.risolte, 3) + " buste, vince la più ricca!");
-    }
-    P.finSoluzione = function (testo) {
-      if (P.fase !== "ftempo") return false;
-      if (solo(testo) === solo(P.frase)) finTabelloneFatto(true);
-      else { P.fin.prove++; ev("fino", P.fin.id); P.msg = "❌ No! Riprova, " + P.fin.nome + "!"; }
-      return true;
+      if (F.b < FIN_TABELLONI) {
+        nuovoTabellone(F.b + 1); avviaTempo();
+        P.msg = F.b === 2 ? "🔤 Testacoda: la prima e l'ultima lettera di ogni parola. " + (F.T / 1000) + " secondi!" :
+          "🕵️ Rubasecondi: chiama le lettere che vuoi (una vocale), ma ogni lettera che non c'è ti costa 3 secondi!";
+        return;
+      }
+      // finita la finale. Il contatore «finali» (nelle statistiche della partita, oggi senza trofeo): +1 a chi ha risolto
+      // almeno 2 tabelloni su 3 (prima contava la finale vinta da soli: ora la giocano tutti)
+      F.ids.forEach(function (id) { var p = trova(id); if (p && F.g[id].risolte >= 2) p.stat.finali++; });
+      chiudiPartita();
     };
-    P.finPassa = function () { if (P.fase !== "ftempo") return false; finTabelloneFatto(false); return true; };
-    P.finTempo = function () {
-      if (P.fase !== "ftempo") return false;
-      var F = P.fin; F.resta = 0; F.esiti.push(0);
-      finFineTabelloni("⏰ Tempo scaduto!"); return true;
-    };
-    // 🕵️ Rubasecondi: si chiamano lettere (consonanti a volontà, una vocale); una lettera che non c'è toglie 3 secondi
-    P.finLettera = function (L) {
-      var F = P.fin; L = String(L || "").toUpperCase();
-      if (P.fase !== "ftempo" || F.b !== FIN_TABELLONI || P.chiamate[L] || !/^[A-Z]$/.test(L)) return false;
-      var voc = VOCALI.indexOf(L) >= 0; if (voc && F.voc >= 1) return false;
-      if (voc) F.voc++;
-      P.chiamate[L] = 1;
-      if (occ(L)) { P.rivelate[L] = 1; P.ultime = [L]; P.msg = "✅ C'è la " + L + "!"; if (P.tutteFuori()) finTabelloneFatto(true); return true; }
-      F.resta = P.finResta() - FIN_RUBA; F.da = Date.now(); F.pen++; ev("ruba", F.id);
-      P.msg = "❌ Niente " + L + ": −3 secondi!";
-      if (F.resta <= 0) P.finTempo();
-      return true;
-    };
-    P.finBusta = function (k) {
-      k = Math.floor(+k); var F = P.fin;
-      if (P.fase !== "fbusta" || !(k >= 0 && k < F.premi.length) || F.buste.indexOf(k) >= 0) return false;
-      F.buste.push(k);
-      if (F.buste.length >= Math.min(F.risolte, 3)) finChiudi(true, "🏆 " + F.nome + " apre " + (F.buste.length === 1 ? "la busta…" : "le buste…"));
-      else P.msg = F.nome + ": ancora " + (Math.min(F.risolte, 3) - F.buste.length) + (Math.min(F.risolte, 3) - F.buste.length === 1 ? " busta" : " buste");
-      return true;
-    };
-    function finChiudi(vinto, msg) {
-      CONSONANTI.concat(VOCALI).forEach(function (L) { P.rivelate[L] = 1; });
-      var F = P.fin;
-      F.vinto = vinto; F.premio = vinto ? Math.max.apply(null, F.buste.map(function (k) { return F.premi[k] || 0; }).concat([0])) : 0;
-      if (vinto) { F.busta = F.buste.filter(function (k) { return F.premi[k] === F.premio; })[0]; var pv = trova(F.id); if (pv) pv.stat.finali++; }   // (la busta che vince)
-      P.fase = "fesito"; P.msg = msg;
-    }
-    P.dopoFinale = function () { if (P.fase === "fesito") { P.fase = "fine"; P.msg = ""; } };
 
     P.esce = function (id) {
       P.giocatori.forEach(function (x, i) {
@@ -828,7 +979,9 @@
           else if (!attivi().some(function (y) { return !L.fuori[y.id]; })) lampoChiudi(null, "Nessuno l'ha indovinata: si gioca senza premio.");
           return;
         }
-        if (P.fin && P.fin.id === id && FASI_FIN.indexOf(P.fase) >= 0 && P.fase !== "fesito") { P.fin.via = true; finChiudi(false, "👋 " + x.nome + " ha lasciato la finale."); return; }
+        // la finale: chi esce non blocca gli altri (se era l'ultimo che mancava, il tabellone finisce)
+        if (P.fin && FASI_FIN.indexOf(P.fase) >= 0) { if (P.fase === "flettere" && tuttiScelto()) applicaScelte(); else if (P.fase === "ftempo") finControlla(); return; }
+        if (P.busta && P.fase === "fbusta" && P.busta.id === id) { P.bustaAuto(); return; }   // (chi vince esce prima di scegliere: busta a caso)
         if (i === P.turno && ["gira", "consonante", "vocale", "risolvi", "sceltaexp", "express", "vlettera", "vdecidi", "mistero"].indexOf(P.fase) >= 0) { P.msg = "👋 " + x.nome + " ha lasciato la partita."; prossimo(); }
         // (se esce mentre la ruota gira, il turno passa quando si ferma: vedi dopoGiro)
       });
@@ -836,15 +989,16 @@
     // chi era stato tolto (telefono spento più di 20 secondi) e torna: tiene il totale e rientra nel giro
     P.torna = function (id) {
       var ok = false;
-      P.giocatori.forEach(function (x) { if (x.id === id && x.via) { x.via = false; x.soldi = 0; x.jolly = 0; ok = true; if (["finemanche", "lampofine"].indexOf(P.fase) < 0 && FASI_FIN.indexOf(P.fase) < 0) P.msg = "👋 " + x.nome + " è di nuovo in gioco!"; } });
+      P.giocatori.forEach(function (x) { if (x.id === id && x.via) { x.via = false; x.soldi = 0; x.jolly = 0; ok = true; if (["finemanche", "lampofine"].indexOf(P.fase) < 0 && FASI_FIN.indexOf(P.fase) < 0 && FASI_BUSTA.indexOf(P.fase) < 0) P.msg = "👋 " + x.nome + " è di nuovo in gioco!"; } });
       return ok;
     };
     // la foto: MAI la frase vera (solo coperta), finché non è risolta
     P.vista = function () {
       var tp = P.giocatori[P.turno], f = P.fase, L = P.lampo, inLampo = !!L && (f === "lampo" || f === "lampofine");
-      var piena = f === "finemanche" || f === "fine" || f === "fesito";
+      var piena = f === "finemanche" || f === "fine" || FASI_BUSTA.indexOf(f) >= 0, inFin = !!P.fin && FASI_FIN.indexOf(f) >= 0;
       var v = { fase: f, manche: P.manche, mancheTot: P.mancheTot, cat: inLampo ? L.cat : P.cat,
-        tab: inLampo ? P.lampoTab() : piena ? P.frase : P.fin && P.fin.vis ? P.frase.split("").map(function (ch, k) { return eLettera(ch) && !P.rivelate[base(ch)] && !P.fin.vis[k] ? "_" : ch; }).join("") : coperta(P.frase, P.rivelate),
+        // (la finale: il tabellone «di base», uguale per tutti; quello di ognuno sta in fin.g, la frase vera solo quando il tabellone è finito)
+        tab: inLampo ? P.lampoTab() : piena ? P.frase : inFin ? (P.fin.svela ? P.frase : finTab(P.fin.b === 1 ? FIN_DATE : [])) : coperta(P.frase, P.rivelate),
         chiamate: inLampo ? [] : Object.keys(P.chiamate), ultime: inLampo ? [] : P.ultime.slice(), turno: tp ? tp.id : null, spicchio: P.spicchio, angolo: P.angolo, giroN: P.giroN, msg: P.msg, ev: P.ev,
         puo: tp ? P.puo() : null, indietro: f === "risolvi" && !P.annullato && !P.veloce, cons: P.consonantiNascoste(), voc: P.vocaliNascoste(), vince: P.vince, classifica: P.classifica,
         statFine: P.classifica ? P.giocatori.reduce(function (a, x) { a[x.id] = x.stat; return a; }, {}) : null,
@@ -855,10 +1009,28 @@
       if (inLampo) v.lampo = { n: L.n, tot: L.pos.length, chi: L.chi, fuori: Object.keys(L.fuori), vince: L.vince, prove: L.prove, k: P.manche + (L.tri ? "t" + L.tri.n : ""),
         tipo: L.tipo || "classica", tri: L.tri ? { n: L.tri.n, di: L.tri.di } : undefined, ok: L.ok ? L.ok.slice() : undefined, parole: L.parole || undefined };
       if (P.fin) {
-        var F = P.fin, aperta = f === "fesito" || f === "fine";
-        v.fin = { id: F.id, nome: F.nome, busta: F.busta, buste: (F.buste || []).slice(), scelte: F.scelte.slice(), prove: F.prove, vinto: F.vinto, via: F.via || undefined, n: F.premi.length,
-          b: F.b || 1, risolte: F.risolte || 0, esiti: (F.esiti || []).slice(), voc: F.voc || 0, pen: F.pen || 0, resta: Math.round(P.finResta ? P.finResta() : 0),
-          premio: aperta ? F.premio : undefined, premi: aperta ? F.premi.slice() : undefined };
+        // per ognuno: il SUO tabellone (solo le sue lettere; chi ha risolto non lo vede scoperto qui: la frase la sa solo lui),
+        // come sta andando e il tempo che gli resta in millisecondi (mai le ore dei telefoni)
+        var F = P.fin, ora = Date.now(), gv = {};
+        F.ids.forEach(function (id) {
+          var g = F.g[id]; if (!g) return;
+          var x = { tot: g.tot, esiti: g.esiti.slice(), risolte: g.risolte };
+          if (inFin && F.b) {
+            var mie = f === "flettere" ? FIN_DATE : g.ch;
+            if (!F.svela) x.tab = finTutta(id) ? finTab(F.b === 1 ? FIN_DATE : []) : finTab(mie);   // (frase tutta scoperta: il tabellone di base)
+            x.ch = mie.join(""); x.ok = g.ok || undefined; x.passo = g.passo || undefined; x.scad = g.scad || undefined; x.scelto = !!g.scelte || undefined;
+            if (g.ok) { x.ms = g.ms; x.punti = g.punti; }
+            if (F.b === FIN_TABELLONI) { x.voc = g.voc; x.pen = g.pen; }
+            if (f === "ftempo" && !finFatto(id)) x.resta = Math.max(0, Math.round(finResta(id, ora)));
+          }
+          gv[id] = x;
+        });
+        v.fin = { b: F.b, T: F.T, svela: F.svela || undefined, g: gv, rip: F.rip || undefined,
+          restaL: f === "flettere" ? Math.max(0, F.scadeL - ora) : undefined, restaB: f === "ftempo" && F.da ? Math.max(0, Math.round(F.T - (ora - F.da))) : undefined };
+      }
+      if (P.busta) {
+        var B = P.busta, aperta = f === "fesito" || f === "fine";
+        v.busta = { id: B.id, nome: B.nome, n: B.n || BUSTE.length, scelta: B.scelta, premio: aperta ? B.premio : undefined, premi: aperta && B.premi ? B.premi.slice() : undefined };
       }
       return v;
     };
@@ -1041,6 +1213,7 @@
       P.spicchi = spicchiDi(P.regole.express, P.mist);   // (❓ lo spicchio Mistero c'è ancora, o è già stato aperto)
       P.giocatori.forEach(function (g) { g.omino = H.omini[g.id] || null; if (!g.bot && g.id !== IO && !g.via) attesi[g.id] = 1; });
       H.fase = R0.fase; H.gameId = R0.gameId || ""; H.giocate = R0.giocate || 1; H.risultato = !!R0.risultato; H.pagato = !!R0.pagato;
+      if (window.__RUOTA) { window.__RUOTA.ultima = P; window.__RUOTA.H = H; }   // (per le prove: la partita ripresa)
     }
     H.mosse = 0;        // cresce a ogni mossa vera: il tempo per decidere riparte solo allora
     H.kFase = "";       // per quale momento è partito il timer dei momenti che vanno avanti da soli
@@ -1061,7 +1234,24 @@
     function fermaTempo() { clearTimeout(tTempo); tTempo = null; H.scade = 0; H.kTempo = ""; }
     function fermaBotLampo() { tBotL.forEach(clearTimeout); tBotL = []; H.botAspetta = {}; }
     function fermaLampo() { clearTimeout(tLampo); clearTimeout(tWin); tLampo = tWin = null; H.kLampo = ""; fermaBotLampo(); }
-    function ferma() { clearTimeout(tBot); clearTimeout(tFase); tBot = tFase = null; H.kFase = ""; fermaTempo(); fermaLampo(); }
+    function ferma() { clearTimeout(tBot); clearTimeout(tFase); tBot = tFase = null; H.kFase = ""; fermaTempo(); fermaLampo(); fermaFin(); }
+    // 🏆 la finale per tutti: l'orologio di chi finisce il tempo per primo (con la tolleranza della rete) e i Bot
+    var tFin = null, tFinBot = null, tFinRic = null;
+    function fermaFin() { clearTimeout(tFin); clearTimeout(tFinBot); clearInterval(tFinRic); tFin = tFinBot = tFinRic = null; }
+    function cicloFin() {
+      fermaFin();
+      var F = P.fin; if (!F) return;
+      // (online la partita si ricorda ogni 2 secondi: se ricarico, il tempo che restava a ognuno è quello di quel momento)
+      if (online) tFinRic = setInterval(function () { if (P && (P.fase === "ftempo" || P.fase === "flettere")) ricorda(); }, 2000);
+      if (P.fase === "flettere") {   // 10 secondi per scegliere le lettere (finisce prima, se hanno scelto tutti)
+        tFin = setTimeout(function () { tFin = null; if (P.finAuto()) { H.mosse++; dopo(); } }, Math.max(0, F.scadeL + (online ? FIN_GRAZIA : 0) - Date.now()));
+        return;
+      }
+      var ps = P.finProssimaScadenza();
+      if (ps != null) tFin = setTimeout(function () { tFin = null; if (P.finTempo()) { H.mosse++; dopo(); } else cicloFin(); }, ps + 30);
+      var pb = P.finBotProssimo();
+      if (pb != null) tFinBot = setTimeout(function () { tFinBot = null; if (P.finBotAgisci()) { H.mosse++; dopo(); } else cicloFin(); }, pb + 20);
+    }
     function vm() {
       if (H.fase !== "gioco" && H.fase !== "fine") return { fase: H.fase, codice: H.codice, pronta: H.pronta, mancheTot: mancheTot, gameId: H.gameId, modo: modo, difficolta: liv, regole: reg,
         giocatori: posti.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }), guarda: guarda.slice(), piuBot: posti.length + mancano() < MAX };
@@ -1071,10 +1261,33 @@
       if (online && H.fase === "gioco" && P.fase === "finemanche") { v.kAv = kAv(); v.pronti = prontiVeri(); v.servono = servono(); v.restaFase = Math.max(0, H.fineFase - Date.now()); }
       if (reg.frasi === "nostre") v.coda = H.coda.map(function (x) { return x.id; });   // (solo CHI ha una frase in coda, mai la frase)
       // il tempo che resta a chi deve toccare (in millisecondi: gli orologi dei telefoni non sono uguali) e quanto era in tutto
-      if (H.scade && H.fase === "gioco") { v.resta = Math.max(0, H.scade - Date.now()); v.tempoTot = H.tempoTot; v.kTempo = H.kTempo; if (online && P.fase === "ftempo") v.grazia = FIN_GRAZIA; }
+      if (H.scade && H.fase === "gioco") { v.resta = Math.max(0, H.scade - Date.now()); v.tempoTot = H.tempoTot; v.kTempo = H.kTempo; }
       return v;
     }
+    // 🏆 chi ha la frase della finale tutta davanti senza averla scritta (l'ultima lettera chiamata l'ha scoperta, o le sue
+    // lettere la scoprono tutta) o chi l'aveva scritta e rientra (pagina ricaricata): gliela mando in un messaggio solo per
+    // lui («to», come i segreti degli altri giochi), prima della foto, che per lui ha il tabellone di base; a me la metto qui
+    H.finSuaInv = {}; H.finSuaRientro = {};
+    function finSua() {
+      if (!P || !P.fin || !P.fin.b || !P.finTutta) return;
+      var kk = (H.gameId || "") + ":" + P.fin.b;
+      P.fin.ids.forEach(function (id) {
+        var p = P.trova(id); if (!p || p.bot || !P.finTutta(id)) return;
+        if (id === IO) { if (cb) { cb.finSua = cb.finSua || {}; cb.finSua[kk] = P.frase; } return; }
+        if (!rete || H.finSuaInv[kk + "|" + id] || P.fin.g[id].scritta && !H.finSuaRientro[id]) return;
+        H.finSuaInv[kk + "|" + id] = 1; rete.inviaA(id, { t: "finSua", to: id, k: kk, f: P.frase });
+      });
+    }
+    // 🔒 le quote di lettere scoperte di poco fa: un «La so!» toccato un attimo prima che uscisse una lettera vale quanto
+    // c'era scritto sul tasto (la mossa arriva dopo, per la rete)
+    var segStoria = [], segQ = null;
+    function segSegna() {
+      var ora = Date.now(), q = P && P.frase && FASI_SEG.indexOf(P.fase) >= 0 ? quotaNota(P) : null;
+      if (q !== segQ && segQ != null) segStoria.push({ q: segQ, fino: ora + SEG_GRAZIA, m: P ? P.manche : 0 });
+      segQ = q; segStoria = segStoria.filter(function (x) { return x.fino > ora; });
+    }
     function bd() {
+      segSegna(); finSua();
       var v = vm(); if (rete) { rete.invia({ t: "vm", vm: v }); ricordaPosti(); ricorda(); vici(); }
       if (rete && t.aCheSiamo && H.fase === "gioco" && P) t.aCheSiamo(P.fin ? "la finale" : "manche " + Math.max(1, P.manche || 0) + " di " + mancheTot);   // (nella Sala: a che punto è, per chi è fuori)
       disegna(t, v, cb);
@@ -1132,7 +1345,7 @@
     function attoreHost() {
       var f = P.fase;
       if (f === "lampo") return P.lampo && P.lampo.chi;
-      if (FASI_FIN.indexOf(f) >= 0) return P.fin && P.fin.id;
+      if (FASI_BUSTA.indexOf(f) >= 0) return P.busta && P.busta.id;
       var p = P.giocatori[P.turno]; return p && p.id;
     }
     // quanto tempo ha chi deve toccare (0 = senza limite: le mosse normali contro il computer e sullo stesso telefono)
@@ -1142,8 +1355,6 @@
       if (f === "vdecidi") return T_VEL_DECIDI;
       if (f === "risolvi" && P.veloce) return T_VEL_RISOLVI;
       if (f === "fbusta") return T_FIN_BUSTA;
-      if (f === "flettere") return T_FIN_LETTERE;
-      if (f === "ftempo") return Math.max(1, P.finResta()) + (online ? FIN_GRAZIA : 0);
       if (f === "lampo") return P.lampo && P.lampo.chi ? T_LAMPO_RISOLVI : 0;
       if (!online) return 0;
       if (f === "risolvi") return T_RISOLVI;
@@ -1153,8 +1364,7 @@
       var f = P.fase;
       if (f === "lampo") return P.lampoTempo();
       if (f === "vdecidi") return P.velPassa(true);
-      if (f === "fbusta" || f === "flettere") return P.finAuto();
-      if (f === "ftempo") return P.finTempo();
+      if (f === "fbusta") return P.bustaAuto();
       return P.rinuncia(true);
     }
     // il giro: i momenti che vanno avanti da soli, i bot, la frase lampo, il tempo per decidere.
@@ -1164,6 +1374,7 @@
       if (H.fase !== "gioco" || !P || H.sigla) { fermaTempo(); fermaLampo(); return; }
       var f = P.fase;
       if (f !== "lampo") fermaLampo();
+      if (f !== "flettere" && f !== "ftempo") fermaFin();
       if (DURATE[f]) {
         fermaTempo();
         var kf = f + ":" + P.manche + ":" + P.giroN;
@@ -1174,6 +1385,7 @@
         return;
       }
       if (f === "fine") return;
+      if (f === "flettere" || f === "ftempo") { fermaTempo(); return cicloFin(); }
       if (f === "lampo" && !P.lampo.chi) { fermaTempo(); return cicloLampo(); }
       var chi = attoreHost(), p = P.trova(chi);
       if (!p) { fermaTempo(); return; }
@@ -1187,10 +1399,10 @@
       }
       var ms = tempoPer();
       if (!ms) { fermaTempo(); return; }
-      var kt = f === "ftempo" ? "ft:" + P.manche + ":" + P.fin.b + ":" + P.fin.pen : f === "lampo" ? "l:" + P.manche + ":" + chi + ":" + P.lampo.prove : P.manche + ":" + f + ":" + chi + ":" + H.mosse;
+      var kt = f === "lampo" ? "l:" + P.manche + ":" + chi + ":" + P.lampo.prove : P.manche + ":" + f + ":" + chi + ":" + H.mosse;
       if (H.kTempo === kt && tTempo) return;   // stesso momento: il tempo non riparte da capo
       clearTimeout(tTempo); H.kTempo = kt;
-      H.tempoTot = f === "ftempo" ? FIN_TOT + (online ? FIN_GRAZIA : 0) : ms; H.scade = Date.now() + ms;   // (la barretta della finale misura tutti i 60 secondi)
+      H.tempoTot = ms; H.scade = Date.now() + ms;
       tTempo = setTimeout(function () { tTempo = null; H.scade = 0; if (scaduto()) { H.mosse++; dopo(); } }, ms);
     }
     // online il riepilogo di fine manche dura di più: si legge la frase e i totali (o si va avanti a maggioranza)
@@ -1295,7 +1507,8 @@
         if (!b.bot || !P.puoSegreta(b.id) || H.segVisto[b.id + ":" + P.manche + ":" + P.giroN]) return;
         H.segVisto[b.id + ":" + P.manche + ":" + P.giroN] = 1;   // (ci pensa una volta per giro di ruota)
         var c = candidati(P, b.nome, liv), q = quotaNota(P);
-        if (c.length === 1 && q >= ({ facile: 0.5, medio: 0.38, difficile: 0.28 }[liv] || 0.38) && Math.random() < 0.45) P.segreta(b.id, c[0].f);
+        // (31 ott) solo se la riconosce (una frase sola che ci sta) e finché si può: sotto il 40% di lettere scoperte; ogni tanto
+        if (c.length === 1 && q < SEG_QUOTA && Math.random() < 0.45) P.segreta(b.id, c[0].f);
       });
     }
     function dopo() {
@@ -1336,12 +1549,12 @@
       salvaTrofei(v, modo === "telefono" ? null : IO, modo, liv);
       if (t.risultato && P.classifica) t.risultato(P.classifica.filter(function (r) { var x = posti.filter(function (p) { return p.id === r.id; })[0]; return x && !x.bot && !r.uscito; }).map(function (r) { return { nome: r.nome, pos: r.pos }; }));
     }
-    // la finale vinta da chi gioca su questo telefono: le Speed Coins (sullo stesso telefono solo se il campione ha il nome del profilo)
+    // ✉️ la busta di chi vince, se gioca su questo telefono: le Speed Coins (sullo stesso telefono solo se chi vince ha il nome del profilo)
     function pagaQui() {
-      var F = P.fin; if (!F || !F.vinto || !F.premio) return;
+      var B = P.busta; if (!B || !B.premio) return;
       var pr = profiloAttivo();
-      var mio = modo === "telefono" ? !!(pr && stessoNome(pr.nome, F.nome)) : F.id === IO;
-      if (mio) incassa(H.gameId, F.premio);
+      var mio = modo === "telefono" ? !!(pr && stessoNome(pr.nome, B.nome)) : B.id === IO;
+      if (mio) incassa(H.gameId, B.premio);
     }
     function finePartita() {
       if (H.fase === "fine") return;   // una volta sola
@@ -1384,7 +1597,7 @@
       ferma();
       H.gameId = (online ? H.codice : modo) + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
       var umani = posti.filter(function (p) { return !p.bot; }).length;
-      // la finale vale tutta solo online con almeno un amico vero; contro il computer o sullo stesso telefono un decimo
+      // ✉️ la busta vale tutta solo online con almeno un amico vero; contro il computer o sullo stesso telefono un decimo
       H.nostre = reg.frasi === "nostre" ? leggiNostre() : []; H.nostreUsate = {}; H.pronti = { k: "", ids: [] };
       P = creaPartita(posti, mancheTot, { modo: modo, difficolta: liv, prenota: reg.prenota, express: reg.express, veloce: reg.veloce, finale: reg.finale, decimo: !(online && umani >= 2),
         mistero: reg.mistero, frasi: reg.frasi, amica: amica, visteAmici: function () { return H.visteAmici; } });
@@ -1409,7 +1622,10 @@
       if (a === "segreta") {   // 🔒 «La so!»: chi aspetta blocca in segreto la soluzione (non sullo stesso telefono: lì si vede tutto)
         if (modo === "telefono") return;
         var ps = P.trova(id); if (!ps || ps.bot) return;
-        if (P.segreta(id, x)) { H.mosse++; dopo(); }
+        // (x: la soluzione, o { t: la soluzione, v: il valore che c'era scritto sul tasto })
+        var testoS = x && typeof x === "object" ? x.t : x, vS = x && typeof x === "object" ? +x.v : 0, qS = null;
+        if (vS > 0 && valoreSeg(quotaNota(P)) !== vS) segStoria.forEach(function (e) { if (qS == null && e.m === P.manche && e.fino > Date.now() && valoreSeg(e.q) === vS) qS = e.q; });
+        if (P.segreta(id, testoS, qS)) { H.mosse++; dopo(); }
         return;
       }
       if (a === "prenoto") {   // la frase lampo: prenotano tutti (sullo stesso telefono x.p dice chi ha toccato)
@@ -1425,13 +1641,15 @@
         if (!lc || lc.bot || (modo !== "telefono" && L.chi !== id)) return;
         if (a === "soluzione") ok = P.lampoSoluzione(L.chi, x);
         else if (a === "annulla") ok = P.lampoRinuncia();
-      } else if (FASI_FIN.indexOf(f) >= 0) {
-        if (!P.fin || (modo !== "telefono" && P.fin.id !== id)) return;
+      } else if (FASI_FIN.indexOf(f) >= 0) {   // 🏆 la finale per tutti: ognuno le sue mosse (mai sullo stesso telefono)
+        var pf = P.trova(id); if (!P.fin || modo === "telefono" || !pf || pf.bot) return;
+        if (a === "passa") ok = P.finPassa(id);
+        else if (a === "lettera") ok = P.finLettera(id, x);
+        else if (a === "lettere") ok = Array.isArray(x) ? P.finLettere(id, x) : !!x && P.finLettere(id, x.l, !!x.parz);   // (parz: il tempo è finito a metà scelta)
+        else if (a === "soluzione") ok = P.finSoluzione(id, x);
+      } else if (FASI_BUSTA.indexOf(f) >= 0) {   // ✉️ la busta: solo chi ha vinto (sullo stesso telefono, chi ha il telefono)
+        if (!P.busta || (modo !== "telefono" && P.busta.id !== id)) return;
         if (a === "busta") ok = P.finBusta(x);
-        else if (a === "passa") ok = P.finPassa();
-        else if (a === "lettera") ok = P.finLettera(x);
-        else if (a === "lettere") ok = P.finLettere(x);
-        else if (a === "soluzione") ok = P.finSoluzione(x);
       } else {
         if (!mia(id)) return;
         if (a === "gira") ok = P.gira();
@@ -1497,7 +1715,14 @@
         if (P.veloce) P.fase = "vgiro";   // (nel round veloce la ruota la gira il gioco)
         else { P.fase = "gira"; if (g) { if (g.stat.giri) g.stat.giri--; P.msg = "🔁 La partita è ripresa: " + g.nome + ", gira di nuovo la ruota!"; } }
       }
-      if (P.fase === "ftempo" && P.fin && P.fin.da) P.fin.da = t.ripresa.ora(P.fin.da);   // (la finale: il tempo che restava resta quello)
+      // 🏆 la finale: le ore dell'host di prima nell'orologio di questo telefono; se è l'host che ha ricaricato, il tempo che
+      // restava resta quello (mentre ricaricava nessuno poteva mandare la soluzione)
+      if (P.fin) {
+        var ferma = t.ripresa.daRiserva ? 0 : Math.min(60000, +t.ripresa.eta || 0);
+        if (P.fin.da) P.fin.da = t.ripresa.ora(P.fin.da) + (P.fase === "ftempo" ? ferma : 0);
+        if (P.fin.scadeL) P.fin.scadeL = t.ripresa.ora(P.fin.scadeL) + (P.fase === "flettere" ? ferma : 0);
+        P.fin.rip = (P.fin.rip || 0) + 1;   // (cambia la chiave del tempo: gli orologi degli amici ripartono dal tempo vero)
+      }
       var L = P.lampo;
       if (L && P.fase === "lampo") {
         L.T = (L.T || []).map(function (x) { return t.ripresa.ora(x); });
@@ -1521,6 +1746,7 @@
           if (m.t === "frase") return riceviFrase(id, m);   // ✍️ una frase da chi guarda
           if (m.t === "join") {
             delete attesi[id];   // (dopo una ripresa: è tornato)
+            H.finSuaInv = {}; H.finSuaRientro[id] = 1;   // (🏆 chi rientra nella finale ritrova la sua frase risolta)
             var gia = posti.some(function (p) { return p.id === id; }), nomeJ = String(m.nome || "Amico").slice(0, 16);
             H.nomi[id] = nomeJ;
             if (Array.isArray(m.viste)) m.viste.slice(-VISTE_AMICI).forEach(function (h) { if (typeof h === "string" && h.length <= 8) H.visteAmici[h] = 1; });
@@ -1557,7 +1783,7 @@
     var S = { rete: null, myId: null, nome: "", vm: null, omini: {}, ultimoJoin: 0 };
     // guardo soltanto (link con guarda=1): lo studio come chi guarda, niente tasti, niente join, niente trofei; in basso la targhetta del core
     var GUARDA = !!t.guarda;
-    var cb = { sonoHost: false, online: true, myId: null, guarda: GUARDA, targa: GUARDA && !t.eliminazione,
+    var cb = { sonoHost: false, online: true, myId: null, guarda: GUARDA, targa: GUARDA && !t.eliminazione, finSua: {},
       omini: function () { return S.omini; },
       onAzione: function (a, x) { if (S.rete) S.rete.invia({ t: "azione", a: a, x: x }); },
       onFrase: function (c, f) { if (S.rete) S.rete.invia({ t: "frase", c: c, f: f, nome: S.nome }); },   // ✍️ va solo all'host
@@ -1595,11 +1821,12 @@
             var guardo = GUARDA || (v.guarda || []).some(function (g) { return g.id === S.myId; });   // (nella Sala: non sono tra gli scelti; o guardo soltanto)
             if (S.myId && !guardo && (v.fase === "lobby" ? !me && v.giocatori.length < MAX : me && me.via && v.giocoFase === "gioco") && Date.now() - S.ultimoJoin > 2500) join();
             if (v.classifica && v.statFine && !GUARDA) salvaTrofei(v, S.myId, v.modo, v.difficolta);
-            if (v.tab && v.tab.indexOf("_") < 0 && ["finemanche", "lampofine", "fesito"].indexOf(v.fase) >= 0 && S.vistaK !== v.tab) { S.vistaK = v.tab; segnaVista(v.tab); }
-            if (v.fin && v.fin.vinto && v.fin.id === S.myId && (v.fase === "fesito" || v.fase === "fine")) incassa(v.gameId, v.fin.premio);
+            if (v.tab && v.tab.indexOf("_") < 0 && ["finemanche", "lampofine", "fcambio"].indexOf(v.fase) >= 0 && S.vistaK !== v.tab) { S.vistaK = v.tab; segnaVista(v.tab); }
+            if (v.busta && v.busta.premio && v.busta.id === S.myId && !GUARDA && (v.fase === "fesito" || v.fase === "fine")) incassa(v.gameId, v.busta.premio);   // ✉️ ho vinto io: le Speed Coins sul mio telefono
             disegna(t, v, cb);
           }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
+          else if (m.t === "finSua" && m.to === S.myId && m.k) { cb.finSua[m.k] = String(m.f || ""); if (S.vm) disegna(t, S.vm, cb); }   // 🏆 la frase della finale che ho tutta davanti
           else if (m.t === "frasemsg" && m.to === S.myId && R && R.cb === cb) rispostaFrase(R, !!m.ok, String(m.msg || ""));
         },
         // chiusa apposta dall'host: sulla classifica finale la classifica resta (cambia solo la scritta), se no si avvisa
@@ -1630,8 +1857,8 @@
         var ui = R; ui.finita = true; ui.cb = cb; fermaRegia(ui); ritmo(ui, null);
         ui.sopra.classList.add("via");
         var vinc = vm.classifica && vm.classifica.length ? ui.ids.indexOf(vm.classifica[0].id) : -1;
-        // con la finale il campione l'abbiamo già festeggiato: basta un saluto
-        var chiusura = vm.fin ? fineCorta(ui.S) : ST.finale(ui.S, vinc, "Ha vinto La Ruota della Fortuna! 🎡");
+        // con la busta chi ha vinto l'abbiamo già festeggiato: basta un saluto
+        var chiusura = vm.busta || vm.fin ? fineCorta(ui.S) : ST.finale(ui.S, vinc, "Ha vinto La Ruota della Fortuna! 🎡");
         Promise.resolve(chiusura).catch(function () {}).then(function () {
           if (R === ui && ui.S.vivo()) { R = null; finale(t, vm, ui.cb); }
         });
@@ -1642,9 +1869,31 @@
     // (da capo anche se il tavolo è un altro: l'amico che prende il posto dell'host sparito, Passo 5, non usa lo studio di quando era ospite)
     if (R && R.t !== t) { try { fermaRegia(R); } catch (e) {} R = null; }
     if (!R || !R.S.vivo()) R = creaStudioRuota(t, vm, cb);
+    vm = vmMia(R, vm, cb);   // 🏆 nella finale ognuno vede il SUO tabellone e il SUO tempo
     R.cb = cb; R.vm = vm;
     if (R.sigla && !vm.sigla && vm.fase !== "lampo" || R.sigla && vm.lampo && vm.lampo.n > 0) R.taglia();   // (la partita è già andata avanti)
     if (!R.sigla) aggiorna(R, vm);
+  }
+  // 🏆 la finale per tutti: la foto vista da questo telefono. Chi gioca la finale ha il suo tabellone (solo le sue lettere;
+  // quando l'ha risolta, la frase che ha scritto lui, che resta solo qui), le sue lettere chiamate e il suo tempo; chi guarda
+  // (o chi ha già finito) vede il tabellone di base e il tempo del tabellone
+  function vmMia(ui, vm, cb) {
+    var F = vm.fin;
+    if (!F || FASI_FIN.indexOf(vm.fase) < 0 || !F.b) return vm;
+    var me = !cb.telefono && F.g ? F.g[cb.myId] : null, x = Object.assign({}, vm), k = (vm.gameId || "") + ":" + F.b, kt = k + ":" + (F.rip || 0);   // (F.rip: l'host ha ricaricato, il tempo riparte)
+    x.ultime = []; x.resta = 0; x.kTempo = ""; x.grazia = 0; x.miaFin = me || null;
+    if (me && !F.svela) {
+      // (la frase tutta: me la manda l'host, solo a me; se no quella che ho scritto io)
+      x.tab = cb.finSua && cb.finSua[k] || (me.ok && ui.finTesto && ui.finTesto[k]) || me.tab || vm.tab;
+      x.chiamate = String(me.ch || "").split("").filter(function (c) { return c; });
+      if (vm.fase === "frivela") x.ultime = x.chiamate.filter(function (L) { return FIN_DATE.indexOf(L) < 0; });
+      else if (F.b === FIN_TABELLONI && x.chiamate.length) x.ultime = [x.chiamate[x.chiamate.length - 1]];
+    }
+    var gioca = !!me && !me.ok && !me.passo && !me.scad;
+    if (vm.fase === "flettere" && F.restaL != null) { x.resta = F.restaL; x.kTempo = "fl:" + kt; x.tempoTot = T_FIN_LETTERE; }
+    else if (vm.fase === "ftempo" && gioca && me.resta != null) { x.resta = me.resta; x.kTempo = "ft:" + kt + ":" + (me.pen || 0); x.tempoTot = F.T; }
+    else if (vm.fase === "ftempo" && F.restaB != null) { x.resta = F.restaB; x.kTempo = "fb:" + kt; x.tempoTot = F.T; }
+    return x;
   }
   function fineCorta(S) {
     ST.viaBarra(S); ST.logoSchermo(S); ST.cartelliGiu(S);
@@ -1738,6 +1987,10 @@
     }
     ui.busteSub = el("div", { class: "ru-sch-sub" });
     ui.panBuste = el("div", { class: "ru-quadro ru-buste-sch" }, [ ui.busteTit, ui.busteRiga, ui.busteSub ]);
+    // 🏆 la finale per tutti sul maxischermo: che tabellone è e chi l'ha già risolta
+    ui.finTit = el("div", { class: "ru-sch-tit piccolo" }); ui.finSub = el("div", { class: "ru-sch-sub" });
+    ui.finLista = el("div", { class: "ru-fin-lista" }); ui.finRighe = {};
+    ui.panFin = el("div", { class: "ru-quadro ru-fin-sch" }, [ ui.finTit, ui.finSub, ui.finLista ]);
     ui.azioni = el("div", { class: "ru-azioni" });
     // la barretta del tempo che resta a chi deve toccare (si accorcia da sola, senza ridisegnare i tasti)
     ui.tempoBar = el("i"); ui.tempo = el("div", { class: "ru-tempo" }, [ ui.tempoBar ]);
@@ -1829,9 +2082,12 @@
     var f = vm.fase, ids = ui.ids, L = vm.lampo;
     if (f === "girando" || f === "finemanche" || f === "fintro") return;   // (ci pensano la ruota, la festa e lo spettacolo)
     if (f === "vgiro" || f === "fbusta" || f === "fesito" || f === "fcambio") return inquadra(ui, "ruota", null, ms);
+    if (FASI_FIN.indexOf(f) >= 0) {   // 🏆 la finale per tutti: mentre gioco, il mio leggio (sopra c'è la tastiera); se no il maxischermo con chi l'ha risolta
+      var mf = vm.miaFin, io = ids.indexOf(ui.cb.myId);
+      return mf && io >= 0 && (f === "flettere" ? !mf.scelto : f === "ftempo" && !(mf.ok || mf.passo || mf.scad)) ? inquadra(ui, "leggio", io, ms) : inquadra(ui, "ruota", null, ms);
+    }
     if (f === "lampo") return L && L.chi ? inquadra(ui, "leggio", ids.indexOf(L.chi), ms) : inquadra(ui, "tutti", null, ms);
     if (f === "lampofine") return L && L.vince ? inquadra(ui, "leggio", ids.indexOf(L.vince), ms) : inquadra(ui, "tutti", null, ms);
-    if (FASI_FIN.indexOf(f) >= 0) return inquadra(ui, "leggio", ids.indexOf(vm.fin && vm.fin.id), ms);
     inquadra(ui, "leggio", ids.indexOf(vm.turno), ms);
   }
   function dopo(ui, ms, fn) { ui.timer.push(setTimeout(function () { if (ui.S.vivo() && !ui.finita) fn(); }, ms)); }
@@ -1863,18 +2119,26 @@
   }
   function attore(vm) {
     if (vm.fase === "lampo") return vm.lampo && vm.lampo.chi;
-    if (FASI_FIN.indexOf(vm.fase) >= 0) return vm.fin && vm.fin.id;
+    if (FASI_FIN.indexOf(vm.fase) >= 0) return null;   // (la finale la giocano tutti insieme)
+    if (FASI_BUSTA.indexOf(vm.fase) >= 0) return vm.busta && vm.busta.id;
     return vm.turno;
   }
   // sui leggii i totali della partita (non i soldi della manche) in questi momenti
-  function totali(f) { return f === "finemanche" || f === "lampo" || f === "lampofine" || FASI_FIN.indexOf(f) >= 0; }
-  var ACCESI = ["gira", "consonante", "vocale", "risolvi", "girando", "sceltaexp", "express", "vlettera", "vdecidi", "lampo", "fintro", "fbusta", "flettere", "frivela", "ftempo", "fcambio", "fesito", "mistero", "mapre", "mrivela"];
+  function totali(f) { return f === "finemanche" || f === "lampo" || f === "lampofine" || FASI_FIN.indexOf(f) >= 0 || FASI_BUSTA.indexOf(f) >= 0; }
+  var ACCESI = ["gira", "consonante", "vocale", "risolvi", "girando", "sceltaexp", "express", "vlettera", "vdecidi", "lampo", "fbusta", "fesito", "mistero", "mapre", "mrivela"];
 
   function aggiorna(ui, vm) {
     var S = ui.S, cb = ui.cb, prec = ui.prec || {}, f = vm.fase, ids = ui.ids, L = vm.lampo, F = vm.fin;
     var att = attore(vm), ia = ids.indexOf(att), it = ids.indexOf(vm.turno), ip = ids.indexOf(prec.turno);
     var mioTurno = !!att && (cb.telefono ? !isBot(vm, att) : att === cb.myId);
+    var meF = FASI_FIN.indexOf(f) >= 0 ? vm.miaFin : null, meG = trovaG(vm, cb.myId);   // 🏆 io nella finale per tutti
+    if (meF) ia = ids.indexOf(cb.myId);
+    if (FASI_FIN.indexOf(f) >= 0) mioTurno = !!meF && !!meG && !meG.via && (f === "flettere" ? !meF.scelto : f === "ftempo" && !meF.ok && !meF.passo && !meF.scad);
     // 🔒 «La so!»: si scrive in segreto mentre gioca un altro (si chiude da solo quando tocca a me o finisce la manche)
+    var tardi = !mioTurno && FASI_SEG.indexOf(f) >= 0 && valoreSeg(quotaTab(vm.tab)) <= 0 && !(vm.lock && vm.lock.indexOf(cb.myId) >= 0);   // 🔒 ormai è scoperto il 40%
+    if (ui.segreto && ui.segreto === segK(vm) && tardi) ui.segNota = segK(vm);   // (stavo scrivendo: lo dico, se no sembra sparito tutto)
+    if (ui.segInv && (ui.segInv !== segK(vm) || vm.lock && vm.lock.indexOf(cb.myId) >= 0)) ui.segInv = null;
+    else if (ui.segInv && tardi) { ui.segNota = ui.segInv; ui.segInv = null; }   // (avevo toccato «Blocca», ma è arrivato troppo tardi)
     if (ui.segreto && (ui.segreto !== segK(vm) || mioTurno || !puoSegretaQui(ui, vm))) { ui.segreto = null; ui.kTast = ""; ui.scritto = []; ui.cur = 0; }
     if (ui.segreto || mioTurno && f === "ftempo") rimappaSegreto(ui, vm);   // (anche nel Rubasecondi escono lettere mentre si scrive)
     var chiama = f === "ftempo" && F && F.b === 3 && ui.finScrivi !== (vm.gameId || "") + ":rs";   // (Rubasecondi: sto chiamando lettere)
@@ -1887,7 +2151,7 @@
     ui.sopra.classList.toggle("lampo", f === "lampo" || f === "lampofine");
     var cat = (vm.cat || "").toUpperCase();
     var firma = vm.firma != null ? "  " + firmaTesto(vm.firma) : "";   // ✍️ la frase degli amici: la firma accanto alla categoria
-    var tc = f === "lampo" || f === "lampofine" ? titoloLampo(L, cat) : FASI_FIN.indexOf(f) >= 0 ? "🏆 " + cat + " · finale" + (F && f !== "fintro" ? " " + (F.b || 1) + "/3 · " + FIN_NOMI[(F.b || 1) - 1].toUpperCase() : "") :
+    var tc = f === "lampo" || f === "lampofine" ? titoloLampo(L, cat) : FASI_BUSTA.indexOf(f) >= 0 && vm.busta ? "✉️ LA BUSTA DI " + String(vm.busta.nome || "").toUpperCase() : FASI_FIN.indexOf(f) >= 0 ? (F && F.b ? "🏆 FINALE " + F.b + "/3 · " + FIN_NOMI[F.b - 1].toUpperCase() + " · " + cat : "🏆 FINALE · TRE TABELLONI PER TUTTI") :
       vm.veloce ? "⚡ " + cat + firma + " · ultimo round" : cat + firma + "  ·  " + (firma ? "" : "manche ") + vm.manche + "/" + vm.mancheTot;
     if (ui.cat.textContent !== tc) ui.cat.textContent = tc;
     // ❓ la ruota si ridisegna solo quando cambia (Mistero che arriva o che viene aperto)
@@ -1914,9 +2178,9 @@
       }
       var lkOn = !fu && !!vm.lock && vm.lock.indexOf(id) >= 0 && FASI_SEG.indexOf(f) >= 0;
       if (ui.lk[i] && ui.lk[i]._on !== lkOn) { ui.lk[i]._on = lkOn; ui.lk[i].classList.toggle("on", lkOn); }
-      var ch = ui.chip[id];
+      var ch = ui.chip[id], gf = F && F.g && FASI_FIN.indexOf(f) >= 0 ? F.g[id] : null;   // 🏆 nella finale: ✅ a chi l'ha risolta
       if (ch) {
-        var cv = fu ? "🚪" : fmtN(tot ? p.totale : p.soldi) + (lkOn ? " 🔒" : "");
+        var cv = fu ? "🚪" : fmtN(tot ? p.totale : p.soldi) + (lkOn ? " 🔒" : "") + (gf && gf.ok ? " ✅" : gf && (gf.passo || gf.scad) ? " ⏭️" : "");
         if (ch._v.textContent !== cv) ch._v.textContent = cv;
         var on = id === att && !tot; if (ch._on !== on) { ch._on = on; ch.classList.toggle("on", on); }
       }
@@ -1926,6 +2190,7 @@
       var d = 0;
       if (f === "finemanche" && prec.fase && prec.fase !== "finemanche") d = vm.vince && vm.vince.id === id ? vm.vince.vincita : 0;
       else if ((f === "lampofine" || f === "lampo") && ui.modoLeggii === tot && prec.manche === vm.manche) d = val - (ui.mostrati[id] || 0);
+      else if ((FASI_FIN.indexOf(f) >= 0 || FASI_BUSTA.indexOf(f) >= 0) && ui.modoLeggii === tot && prec.fase) d = val - (ui.mostrati[id] || 0);   // (i punti della finale)
       else if (!tot && prec.manche === vm.manche && ui.modoLeggii === tot) d = val - (ui.mostrati[id] || 0);
       ST.puntiLeggio(S, i, val, d);
       ui.mostrati[id] = val;
@@ -1934,6 +2199,7 @@
     // le luci: nella frase lampo restano accese tutte quelle di chi può ancora prenotare
     if (!ui.show) {
       if (f === "lampo" && L && !L.chi) ids.forEach(function (id, i) { var p = trovaG(vm, id); ST.accendi(S, i, !!p && !p.via && L.fuori.indexOf(id) < 0); });
+      else if (FASI_FIN.indexOf(f) >= 0 && F && F.g) ids.forEach(function (id, i) { var p = trovaG(vm, id), g = F.g[id]; ST.accendi(S, i, !!p && !p.via && !!g && (f !== "ftempo" || !(g.ok || g.passo || g.scad))); });   // 🏆 accesi quelli che giocano ancora
       else ST.accendiSolo(S, ACCESI.indexOf(f) >= 0 ? (f === "girando" ? it : ia) : -1);
     }
     // ---- cosa è successo: telecamera, suoni e facce (uguali su tutti i telefoni) ----
@@ -1978,7 +2244,12 @@
       if (f === "finemanche" && prec.fase !== "finemanche" && vm.vince && vm.vince.seg) {
         vm.vince.seg.forEach(function (s, k) {
           var is = ids.indexOf(s.id); if (is < 0) return;
-          dopo(ui, 1600 + k * 900, function () { facciaPerUnPo(ui, is, s.b ? "evviva" : "triste"); if (s.b) { ST.puntiLeggio(S, is, ui.mostrati[s.id] || 0, s.b); bip(1318, 0.2, "triangle", 0.06); if (s.id === cb.myId) vibra([25, 35, 25]); } });
+          // 🔒 il numero sale (o scende) sul leggio; vibra solo il telefono di chi l'aveva bloccata
+          dopo(ui, 1600 + k * 900, function () {
+            facciaPerUnPo(ui, is, s.b ? "evviva" : "triste");
+            if (s.b) { ST.puntiLeggio(S, is, ui.mostrati[s.id] || 0, s.b); bip(1318, 0.2, "triangle", 0.06); if (s.id === cb.myId && !cb.telefono) vibra([25, 35, 25]); }
+            else { if (s.m) ST.puntiLeggio(S, is, ui.mostrati[s.id] || 0, -s.m); suonoNo(); if (s.id === cb.myId && !cb.telefono) vibra(70); }
+          });
         });
       }
       if (f === "finemanche" && prec.fase !== "finemanche") {   // qualcuno ha risolto
@@ -2007,15 +2278,15 @@
         ST.terzo(S, null, "🔔 Giro finale!", "La ruota gira una volta sola: ogni consonante vale la cifra + " + fmtN(BONUS_VELOCE), "⚡");
         dopo(ui, 2800, function () { ST.viaTerzo(S); });
       }
-      if (f === "fintro" && prec.fase !== "fintro" && F) showCampione(ui, vm);
-      if (f === "fcambio" && prec.fase !== "fcambio" && F) {
-        var ic = F.esiti[F.esiti.length - 1] ? "✅" : "⏭️";
-        if (F.esiti[F.esiti.length - 1]) { suonoVinto(); ST.FX.applauso("forte"); } else ST.FX.ohh();
-        ST.terzo(S, null, ic + " Tabellone " + (F.b + 1) + " di 3", FIN_NOMI[F.b] + " · restano " + Math.ceil((F.resta || 0) / 1000) + " secondi", "🏆");
-        dopo(ui, 2500, function () { ST.viaTerzo(S); });
+      if (f === "fintro" && prec.fase !== "fintro" && F) showFinale(ui, vm);
+      if (f === "fcambio" && prec.fase !== "fcambio" && F && F.g) {   // 🏆 un tabellone finito: chi l'ha risolta e in quanto (3 secondi), poi il prossimo
+        var risolta = Object.keys(F.g).filter(function (id) { return F.g[id].ok; });
+        if (risolta.length) ST.FX.applauso("forte"); else ST.FX.ohh();
+        ST.terzo(S, null, F.b < FIN_TABELLONI ? "Ora il tabellone " + (F.b + 1) + " di 3" : "La finale è finita!", F.b < FIN_TABELLONI ? FIN_NOMI[F.b] : "Vediamo la classifica…", "🏆");
+        dopo(ui, 2600, function () { ST.viaTerzo(S); });
       }
-      if (f === "fbusta" && prec.fase !== "fbusta" && F) { suonoVinto(); ST.FX.applauso("forte"); ST.coriandoli(); }
-      if (f === "fesito" && prec.fase !== "fesito" && F) showEsito(ui);
+      if (f === "fbusta" && prec.fase !== "fbusta" && vm.busta) showVincitore(ui, vm);
+      if (f === "fesito" && prec.fase !== "fesito" && vm.busta) showEsito(ui);
       if (vm.manche !== prec.manche) ST.tutteNormali(S);
     } else if (f === "fesito") ui.bustaAperta = true;   // arrivato adesso (es. pagina ricaricata): la busta è già aperta
     // ---- poi la telecamera va su chi deve toccare ----
@@ -2041,8 +2312,14 @@
     else if (e.t === "triplete") { suonoVinto(); ST.pubblico(S, "ovazione"); ST.coriandoli(); facciaPerUnPo(ui, i, "evviva"); vibra([30, 40, 70]); }
     else if (e.t === "raddoppia") { suonoVinto(); ST.FX.applauso("forte"); ST.lampo(S); facciaPerUnPo(ui, i, "evviva"); vibra([25, 35, 25]); }
     else if (e.t === "express") { suonoTreno(); ST.FX.applauso("piano"); facciaPerUnPo(ui, i, "esulta"); }
-    else if (e.t === "ruba") { suonoNo(); rianima(ui.orol, "no"); facciaPerUnPo(ui, i, "paura"); vibra(60); }
-    else if (e.t === "fino") { suonoNo(); rianima(ui.tab, "no"); facciaPerUnPo(ui, i, "paura"); }
+    // 🏆 la finale per tutti: suono, scossa e vibrazione solo sul telefono di chi ha toccato; agli altri la faccia sul leggio
+    else if (e.t === "ruba") { facciaPerUnPo(ui, i, "paura"); if (e.id === ui.cb.myId) { suonoNo(); rianima(ui.orol, "no"); vibra(60); } }
+    else if (e.t === "fino") { facciaPerUnPo(ui, i, "paura"); if (e.id === ui.cb.myId) { suonoNo(); rianima(ui.tab, "no"); } }
+    else if (e.t === "finok") {
+      facciaPerUnPo(ui, i, "evviva");
+      if (e.id === ui.cb.myId) { suonoVinto(); ST.FX.applauso("forte"); ST.lampo(S); vibra([30, 40, 70]); }
+      else { bip(1318, 0.2, "triangle", 0.06); ST.FX.applauso("piano"); }
+    }
     // ❓ il Mistero: il rullo mentre si apre, poi l'applauso o «Ahi!» (e una vibrazione breve)
     else if (e.t === "mapre") { ST.FX.rullo(1.6); suonoMistero(); facciaPerUnPo(ui, i, "paura"); }
     else if (e.t === "mvinto") { suonoVinto(); ST.lampo(S); ST.pubblico(S, "ovazione"); ST.coriandoli(); facciaPerUnPo(ui, i, "evviva"); vibra([30, 40, 70]); }
@@ -2123,18 +2400,27 @@
     agg(vm); ui.avAgg = agg;
     ui.azioni.appendChild(el("div", { class: "ru-riga" }, [ b ]));
   }
-  // la finale: il campione festeggiato, poi si va alle buste
-  function showCampione(ui, vm) {
-    var S = ui.S, iv = ui.ids.indexOf(vm.fin.id);
+  // 🏆 la finale per tutti: si presenta (tutti i concorrenti, il rullo, la scritta), poi i tabelloni
+  function showFinale(ui, vm) {
+    var S = ui.S;
     fermaRegia(ui); ui.show = true;
     ST.accendiSolo(S, -1); ui.inq = ""; inquadra(ui, "tutti", null, 800);
     ST.FX.rullo(1.2);
     dopo(ui, 1300, function () {
-      ST.lampo(S); ST.accendiSolo(S, iv); inquadra(ui, "leggio", iv, 900); ST.faccia(S, iv, "evviva");
-      ST.terzo(S, iv, vm.fin.nome + " vince la partita!", "E ora la finale, per un premio vero", "🏆");
-      ST.pubblico(S, "ovazione"); ST.coriandoli(); ST.FX.fanfara();
+      ST.lampo(S); ui.ids.forEach(function (id, i) { var p = trovaG(ui.vm, id); ST.accendi(S, i, !!p && !p.via); });
+      ST.terzo(S, null, "La finale!", "Tre tabelloni per tutti: chi risolve prima prende di più", "🏆");
+      ST.pubblico(S, "ovazione"); ST.FX.fanfara();
     });
-    dopo(ui, 5400, function () { ST.viaTerzo(S); ST.faccia(S, iv, null); ui.show = false; });
+    dopo(ui, 5400, function () { ST.viaTerzo(S); ui.show = false; });
+  }
+  // ✉️ chi vince la partita: festa sul suo leggio, poi le buste sul maxischermo
+  function showVincitore(ui, vm) {
+    var S = ui.S, iv = ui.ids.indexOf(vm.busta.id);
+    fermaRegia(ui); ui.show = true; ui.inq = "";
+    ST.lampo(S); ST.accendiSolo(S, iv); inquadra(ui, "leggio", iv, 800); ST.faccia(S, iv, "evviva");
+    ST.terzo(S, iv, vm.busta.nome + " vince la partita!", "Ora sceglie una busta: fino a " + fmtN(vm.decimo ? PREMIO_MAX / 10 : PREMIO_MAX) + " Speed Coins", "🏆");
+    ST.pubblico(S, "ovazione"); ST.coriandoli(); ST.FX.fanfara(); suonoVinto();
+    dopo(ui, 3000, function () { ST.viaTerzo(S); ST.faccia(S, iv, null); ui.show = false; ui.inq = ""; inquadraFase(ui, ui.vm, 700); });
   }
   function showEsito(ui) {
     var S = ui.S;
@@ -2142,10 +2428,10 @@
     aggiornaBuste(ui, ui.vm);
     ST.FX.rullo(1.4);
     dopo(ui, 1500, function () {
-      var F = ui.vm.fin, iv = ui.ids.indexOf(F.id);
+      var B = ui.vm.busta, iv = B ? ui.ids.indexOf(B.id) : -1;
       ui.bustaAperta = true; aggiornaBuste(ui, ui.vm);
-      if (F.vinto) { ST.lampo(S); ST.pubblico(S, "ovazione"); ST.coriandoli(); ST.FX.fanfara(); ST.faccia(S, iv, "evviva"); }
-      else { ST.FX.ohh(); ST.faccia(S, iv, "triste"); }
+      ST.lampo(S); ST.pubblico(S, "ovazione"); ST.coriandoli(); ST.FX.fanfara(); if (iv >= 0) ST.faccia(S, iv, "evviva");
+      if (B && B.id === ui.cb.myId && !ui.cb.telefono) vibra([30, 40, 70]);
     });
   }
   // il tabellone: 4 righe da 12, la frase al centro. Le caselle appena scoperte si girano una dopo l'altra.
@@ -2182,12 +2468,12 @@
       }
     });
   }
-  // il maxischermo: la ruota, la campanella della frase lampo o le buste della finale
+  // il maxischermo: la ruota, la campanella della frase lampo, la finale (chi l'ha risolta) o le buste
   function schermo(ui, vm) {
-    var f = vm.fase, tipo = f === "lampo" || f === "lampofine" ? "lampo" : FASI_FIN.indexOf(f) >= 0 && f !== "fintro" ? "buste" : "ruota";
+    var f = vm.fase, tipo = f === "lampo" || f === "lampofine" ? "lampo" : FASI_FIN.indexOf(f) >= 0 && f !== "fintro" ? "fin" : FASI_BUSTA.indexOf(f) >= 0 ? "buste" : "ruota";
     if (tipo !== ui.schTipo) {
       ui.schTipo = tipo; ST.vuota(ui.S.sch);
-      ui.S.sch.appendChild(tipo === "lampo" ? ui.panLampo : tipo === "buste" ? ui.panBuste : ui.ruota);
+      ui.S.sch.appendChild(tipo === "lampo" ? ui.panLampo : tipo === "buste" ? ui.panBuste : tipo === "fin" ? ui.panFin : ui.ruota);
     }
     if (tipo === "lampo") {
       var L = vm.lampo, gv = L ? GIOCHI_VELOCI[L.tipo] || GIOCHI_VELOCI.classica : null, cruci = L && L.tipo === "cruci";
@@ -2201,22 +2487,39 @@
         cruci ? fmtN(CRUCI_PAROLA) + " a parola · trovate " + trovate + " di 4" : "Vale " + fmtN(PREMIO_LAMPO) + " · lettera " + L.n + " di " + L.tot;
       if (ui.lampoSub.textContent !== tx) ui.lampoSub.textContent = tx;
     } else if (tipo === "buste") aggiornaBuste(ui, vm);
+    else if (tipo === "fin") aggiornaFin(ui, vm);
   }
+  // 🏆 il maxischermo della finale: che tabellone è e, per ognuno, com'è andata (✅ in quanti secondi, ⏳ ci sta provando)
+  function aggiornaFin(ui, vm) {
+    var F = vm.fin; if (!F || !F.g) return;
+    var tit = "🏆 FINALE", sub = F.b ? "TABELLONE " + F.b + " DI 3 · " + FIN_NOMI[F.b - 1].toUpperCase() : "";
+    if (ui.finTit.textContent !== tit) ui.finTit.textContent = tit;
+    if (ui.finSub.textContent !== sub) ui.finSub.textContent = sub;
+    vm.giocatori.forEach(function (p) {
+      var g = F.g[p.id], r = ui.finRighe[p.id];
+      if (!r) { r = ui.finRighe[p.id] = { el: ui.el("div", { class: "ru-fin-riga" }, [ ui.el("span", { class: "n", text: p.nome }) ]), st: ui.el("b"), pt: ui.el("i") }; r.el.appendChild(r.st); r.el.appendChild(r.pt); ui.finLista.appendChild(r.el); }
+      var st = !g ? "" : p.via ? "🚪" : g.ok ? "✅ " + secTx(g.ms) : g.passo ? "⏭️ passa" : g.scad ? "⏰ tempo" : vm.fase === "flettere" ? (g.scelto ? "✅ lettere" : "🔤 sceglie…") : vm.fase === "fcambio" ? "❌" : "⏳";
+      var pt = g && g.tot ? "+" + fmtN(g.tot) : "";
+      var cls = "ru-fin-riga" + (!g ? " via" : g.ok ? " ok" : "");
+      if (r.el.className !== cls) r.el.className = cls;
+      if (r.st.textContent !== st) r.st.textContent = st;
+      if (r.pt.textContent !== pt) r.pt.textContent = pt;
+    });
+  }
+  // ✉️ la busta di chi vince: 5 buste mescolate, se ne sceglie una; poi si aprono tutte
   function aggiornaBuste(ui, vm) {
-    var F = vm.fin; if (!F) return;
-    var aperta = vm.fase === "fesito" && ui.bustaAperta && F.premi, sc = F.buste || [];
-    var tit = aperta ? (F.vinto ? "🎉 HA VINTO!" : "PECCATO…") : vm.fase === "fbusta" ? "✉️ LE BUSTE" : "🏆 TABELLONE " + (F.b || 1) + " DI 3";
+    var B = vm.busta; if (!B) return;
+    var aperta = vm.fase === "fesito" && ui.bustaAperta && B.premi;
+    var tit = aperta ? "🎉 " + fmtN(B.premio || 0) + "!" : "✉️ LA BUSTA";
     if (ui.busteTit.textContent !== tit) ui.busteTit.textContent = tit;
     ui.buste.forEach(function (b, k) {
-      var cls = "ru-busta" + (k >= (F.n || BUSTE.length) ? " via" : "") + (sc.indexOf(k) >= 0 ? " scelta" : sc.length ? " spenta" : "") + (aperta ? " aperta" : "") + (aperta && F.vinto && F.busta === k ? " vince" : "");
+      var sc = B.scelta === k, cls = "ru-busta" + (k >= (B.n || BUSTE.length) ? " via" : "") + (sc ? " scelta" : B.scelta != null ? " spenta" : "") + (aperta ? " aperta" : "") + (aperta && sc ? " vince" : "");
       if (b.className !== cls) b.className = cls;
-      var v = aperta && F.premi[k] != null ? fmtN(F.premi[k]) : "";
+      var v = aperta && B.premi[k] != null ? fmtN(B.premi[k]) : "";
       if (b._v.textContent !== v) b._v.textContent = v;
     });
-    var es = (F.esiti || []).map(function (x) { return x ? "✅" : "❌"; }).join(" ");
-    var sub = aperta ? (F.vinto ? "+" + fmtN(F.premio) + " Speed Coins per " + F.nome + " 🪙" : "Nessuna frase risolta: le buste restano chiuse") :
-      vm.fase === "fbusta" ? "Frasi risolte: " + (F.risolte || 0) + " · una busta per ogni frase, vince la più ricca" :
-      FIN_NOMI[(F.b || 1) - 1] + (es ? " · " + es : "") + " · ogni frase risolta = una busta";
+    var sub = aperta ? "+" + fmtN(B.premio || 0) + " Speed Coins per " + B.nome + " 🪙" :
+      vm.fase === "fbusta" ? B.nome + " sceglie una busta: da " + fmtN(vm.decimo ? 50 : 500) + " a " + fmtN(vm.decimo ? PREMIO_MAX / 10 : PREMIO_MAX) + " Speed Coins" : B.nome + " apre la busta " + (B.scelta + 1) + "…";
     if (ui.busteSub.textContent !== sub) ui.busteSub.textContent = sub;
   }
   function isBot(vm, id) { for (var i = 0; i < vm.giocatori.length; i++) if (vm.giocatori[i].id === id) return vm.giocatori[i].bot; return false; }
@@ -2242,6 +2545,8 @@
     ui.orol.classList.toggle("on", !!k);
     if (!k) return;
     var fine = Date.now() + vm.resta - (vm.grazia || 0), ultimo = -1;
+    // (nella finale ticchetta solo per chi sta ancora giocando, e solo negli ultimi 10 secondi: chi ha finito o guarda, silenzio)
+    var suona = vm.fase === "vdecidi" ? 99 : k.indexOf("ft:") === 0 ? 10 : 0;
     function tic() {
       if (!ui.S.vivo() || ui.kOrol !== k || ui.finita) { clearInterval(ui.tOrol); return; }
       var s = Math.max(0, Math.ceil((fine - Date.now()) / 1000));
@@ -2249,7 +2554,7 @@
       ultimo = s; ui.orolN.textContent = String(s);
       ui.orol.classList.toggle("urgente", s <= 3);
       rianima(ui.orol, "tic");
-      if (s > 0) bip(s <= 3 ? 1480 : 1150, 0.07, "square", 0.04);
+      if (s > 0 && s <= suona) bip(s <= 3 ? 1480 : 1150, 0.07, "square", 0.04);
     }
     tic(); ui.tOrol = setInterval(tic, 200);
   }
@@ -2322,10 +2627,11 @@
     var cb = ui.cb, el = ui.el, f = vm.fase, L = vm.lampo, F = vm.fin;
     var me = trovaG(vm, cb.myId);
     var chiave = [f, att, vm.turno, vm.chiamate.join(""), mioTurno, JSON.stringify(vm.puo), f === "lampo" ? "" : vm.tab, me ? (me.via ? "via" : "in") : "no", vm.kTempo || "", vm.cons,
-      L ? [L.chi, L.fuori.join(","), L.prove, L.k].join("/") : "", ui.segreto || "", (vm.lock || []).join(","), F ? [F.busta, (F.buste || []).join(","), F.b, F.voc, F.scelte.join(""), ui.finScrivi || ""].join("/") : "", ui.premuto || "", vm.kAv || "", vm.mres ? vm.mres.vinto : ""].join("|");
+      L ? [L.chi, L.fuori.join(","), L.prove, L.k].join("/") : "", ui.segreto || "", (vm.lock || []).join(","), F ? [F.b, vm.miaFin ? [vm.miaFin.ok, vm.miaFin.passo, vm.miaFin.scad, vm.miaFin.scelto, vm.miaFin.ch, vm.miaFin.voc].join(",") : "-", ui.finScrivi || ""].join("/") : "",
+      vm.busta ? vm.busta.id + "/" + vm.busta.scelta : "", ui.premuto || "", vm.kAv || "", vm.mres ? vm.mres.vinto : "", ui.segNota === segK(vm) ? "tardi" : ""].join("|");
     ui.scrivi = mioTurno && (f === "risolvi" || f === "ftempo" || (f === "lampo" && !!(L && L.chi))) || !!ui.segreto;
-    if (chiave === ui.kTast) { if (ui.scrivi) statoScritto(ui); if (ui.avAgg) ui.avAgg(vm); return; }   // (cambia solo il numero di «⏩ Avanti»)
-    ui.kTast = chiave; svuota(ui.azioni); ui.okBtn = null; ui.annBtn = null; ui.rsStato = null; ui.avAgg = null;
+    if (chiave === ui.kTast) { if (ui.scrivi) statoScritto(ui); if (ui.avAgg) ui.avAgg(vm); if (ui.finAgg) ui.finAgg(vm); return; }   // (cambia solo il numero di «⏩ Avanti», o chi ha risolto la finale)
+    ui.kTast = chiave; svuota(ui.azioni); ui.okBtn = null; ui.annBtn = null; ui.rsStato = null; ui.avAgg = null; ui.finAgg = null;
     if (ui.facc === undefined) ui.facc = cb.online && !cb.telefono && !cb.targa && ui.t.faccine ? ui.t.faccine() : null;   // la fila delle faccine (online)
     function stato(txt, cls) { var d = el("div", { class: "ru-stato" + (cls ? " " + cls : ""), text: txt }); ui.azioni.appendChild(d); return d; }
     function aspetta(txt) { stato(txt); if (ui.facc) ui.azioni.appendChild(ui.facc); }   // chi guarda: cosa succede e le faccine
@@ -2334,7 +2640,7 @@
     ui.ridisegna = function () { ui.kTab = ""; aggiorna(ui, ui.vm); };
     var chi = cb.telefono && att ? nomeDi(vm, cb, att) + ", " : "", nAtt = att ? nomeDi(vm, cb, att, true) : "";
     if (!mioTurno && ui.segreto) return tastiSegreto(ui, vm);   // 🔒 si scrive in segreto anche mentre la ruota gira
-    if (f === "girando") return stato(vm.veloce ? "⚡ La ruota gira una volta sola…" : "🎡 La ruota gira…");
+    if (f === "girando" && (mioTurno || !puoSegretaQui(ui, vm))) return stato(vm.veloce ? "⚡ La ruota gira una volta sola…" : "🎡 La ruota gira…");   // («La so!» resta anche mentre gira)
     if (f === "vgiro") return aspetta("🔔 Giro finale: la ruota gira una volta sola!");
     if (f === "mapre") return aspetta("❓ " + nAtt + " apre il Mistero… +" + fmtN(MIST_PREMIO) + " o Bancarotta?");
     if (f === "mrivela") return aspetta(vm.mres && vm.mres.vinto ? "💰 Mistero: +" + fmtN(MIST_PREMIO) + " per " + nAtt + "!" : "💥 Mistero: Bancarotta per " + nAtt + "!");
@@ -2374,53 +2680,65 @@
       ui.azioni.appendChild(tastoSubito(el, "prenoto grande", "🔔 PRENOTO!", function () { prenoto(ui, null); }));
       return;
     }
-    // ---- LA FINALE ----
-    if (f === "fintro") return aspetta("🏆 " + nAtt + " gioca la finale!");
-    if (f === "fesito") return aspetta(F && F.vinto ? "🎉 " + F.nome + " vince " + fmtN(F.premio || 0) + " Speed Coins!" : "Peccato! La frase era sul tabellone");
-    if (f === "frivela") return aspetta("🥁 Ecco le lettere scelte…");
-    if (FASI_FIN.indexOf(f) >= 0 && !mioTurno) {
-      return aspetta(f === "fbusta" ? "✉️ " + nAtt + " sceglie le buste…" : f === "flettere" ? "🔤 " + nAtt + " sceglie 3 consonanti e 1 vocale…" :
-        f === "fcambio" ? "🏆 Arriva il tabellone " + ((F.b || 1) + 1) + ": " + FIN_NOMI[F.b || 1] + "…" : "⏱️ " + nAtt + ": tabellone " + (F.b || 1) + " di 3, " + FIN_NOMI[(F.b || 1) - 1] + "! Forza!");
-    }
-    if (f === "fcambio") return aspetta("🏆 Arriva il tabellone " + ((F.b || 1) + 1) + ": " + FIN_NOMI[F.b || 1] + "…");
+    // ---- ✉️ LA BUSTA DI CHI HA VINTO ----
+    if (f === "fesito") return aspetta(vm.busta ? "🎉 " + vm.busta.nome + " vince " + fmtN(vm.busta.premio || 0) + " Speed Coins!" : "");
     if (f === "fbusta") {
-      var quante = Math.min(F.risolte || 1, 3), ancora = quante - (F.buste || []).length;
-      stato(chi + (quante === 1 ? "scegli una busta" : "scegli ancora " + ancora + (ancora === 1 ? " busta" : " buste") + ": vinci la più ricca") + (vm.decimo ? " (qui valgono un decimo)" : ""), "piccolo");
+      var B = vm.busta || {};
+      if (!mioTurno) return aspetta("✉️ " + (B.nome || "") + " sceglie una busta…");
+      stato((chi ? chi + "hai vinto" : "Hai vinto") + "! Scegli una busta" + (vm.decimo ? " (qui valgono un decimo)" : ""), "piccolo");
       var rb = el("div", { class: "ru-riga ru-buste-tasti" });
-      for (var k = 0; k < (F.n || BUSTE.length); k++) (function (k) { rb.appendChild(btn("busta", "✉️ " + (k + 1), function () { cb.onAzione("busta", k); }, (F.buste || []).indexOf(k) >= 0)); })(k);
+      for (var k = 0; k < (B.n || BUSTE.length); k++) (function (k) { rb.appendChild(btn("busta", "✉️ " + (k + 1), function () { cb.onAzione("busta", k); })); })(k);
       ui.azioni.appendChild(rb);
-      var caso = btn("annulla", "🎲 Scegli tu per me", function () {
-        var lib = []; for (var j = 0; j < (F.n || BUSTE.length); j++) if ((F.buste || []).indexOf(j) < 0) lib.push(j);
-        cb.onAzione("busta", lib[Math.floor(Math.random() * lib.length)]);
-      });
+      var caso = btn("annulla", "🎲 Scegli tu per me", function () { cb.onAzione("busta", Math.floor(Math.random() * (B.n || BUSTE.length))); });
       riga([caso]); contoSu(ui, vm, caso);
       return;
     }
-    // 🕵️ Rubasecondi: si chiamano le lettere (ogni lettera che non c'è costa 3 secondi), poi si passa a scrivere
-    if (f === "ftempo" && F && F.b === 3 && ui.finScrivi !== (vm.gameId || "") + ":rs") {
-      stato(chi + "chiama una lettera: se non c'è perdi 3 secondi" + (F.voc ? " (vocale già usata)" : " · una vocale sola"), "piccolo");
-      var gr = el("div", { class: "ru-lettere" });
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(function (Lt) {
-        var voc = VOCALI.indexOf(Lt) >= 0;
-        gr.appendChild(btn("lettera" + (voc ? " voc" : ""), Lt, function () { cb.onAzione("lettera", Lt); }, vm.chiamate.indexOf(Lt) >= 0 || (voc && F.voc >= 1)));
-      });
-      ui.azioni.appendChild(gr);
-      var bs = btn("risolvi", "💡 La so: scrivo", function () { ui.finScrivi = (vm.gameId || "") + ":rs"; ui.kTast = ""; ui.ridisegna(); });
-      riga([ btn("annulla", "⏭️ Basta così", function () { cb.onAzione("passa"); }), bs ]);
-      return;
+    // ---- 🏆 LA FINALE PER TUTTI: ognuno sul suo telefono ----
+    if (FASI_FIN.indexOf(f) >= 0) {
+      var mf = vm.miaFin, gioco = !!mf && !!me && !me.via;
+      // sotto, come va agli altri (✅ chi l'ha risolta): cambia da sola, senza ridisegnare i tasti
+      var altri = function (pre) {
+        var d = stato("", "piccolo");
+        ui.finAgg = function (v) { var tx = pre + (finProgressi(v, cb) ? " · " + finProgressi(v, cb) : ""); if (d.textContent !== tx) d.textContent = tx; };
+        ui.finAgg(vm);
+        if (ui.facc) ui.azioni.appendChild(ui.facc);
+      };
+      if (f === "fintro") return aspetta("🏆 La finale! Tre tabelloni, tutti insieme" + (gioco ? ": giochi dal tuo telefono" : ""));
+      if (f === "frivela") return aspetta(gioco ? "🥁 Ecco le tue lettere…" : "🥁 Ecco le lettere…");
+      if (f === "fcambio") return aspetta(F.b < FIN_TABELLONI ? "🏆 Arriva il tabellone " + (F.b + 1) + ": " + FIN_NOMI[F.b] + "…" : "🏆 La finale è finita: vediamo la classifica…");
+      if (!gioco) return altri("👀 Finale, tabellone " + F.b + " di 3");
+      if (f === "flettere") return mf.scelto ? altri("✅ Lettere scelte! Aspettiamo gli altri") : letterePerFinale(ui, vm, "");
+      if (mf.ok) return altri("✅ Risolta in " + secTx(mf.ms) + ": +" + fmtN(mf.punti || 0) + " · aspettiamo gli altri");
+      if (mf.passo) return altri("⏭️ Hai passato · aspettiamo gli altri");
+      if (mf.scad) return altri("⏰ Tempo scaduto · aspettiamo gli altri");
+      // 🕵️ Rubasecondi: si chiamano le lettere (ogni lettera che non c'è costa 3 secondi), poi si passa a scrivere
+      if (F.b === FIN_TABELLONI && ui.finScrivi !== (vm.gameId || "") + ":rs") {
+        stato("Chiama una lettera: se non c'è perdi 3 secondi" + (mf.voc ? " (vocale già usata)" : " · una vocale sola"), "piccolo");
+        var gl = el("div", { class: "ru-lettere" });
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(function (Lt) {
+          var voc = VOCALI.indexOf(Lt) >= 0;
+          gl.appendChild(btn("lettera" + (voc ? " voc" : ""), Lt, function () { cb.onAzione("lettera", Lt); }, vm.chiamate.indexOf(Lt) >= 0 || (voc && mf.voc >= 1)));
+        });
+        ui.azioni.appendChild(gl);
+        var bs = btn("risolvi", "💡 La so: scrivo", function () { ui.finScrivi = (vm.gameId || "") + ":rs"; ui.kTast = ""; ui.ridisegna(); });
+        riga([ btn("annulla", "⏭️ Passo", function () { cb.onAzione("passa"); }), bs ]);
+        return;
+      }
+      // (scrivo la soluzione: più giù, come quando si risolve una manche)
     }
-    if (f === "flettere") return letterePerFinale(ui, vm, chi);
     if (!mioTurno) {
       var guarda = !cb.telefono && !cb.sonoHost && !me;   // stanza piena o partita già cominciata
       if (puoSegretaQui(ui, vm)) {
-        var txs = f === "sceltaexp" ? "🚂 " + nAtt + " decide: Express o no?" : vm.exp ? "🚂 " + nAtt + " è sull'Express…" : "Tocca a " + nomeDi(vm, cb, att) + "…";
-        stato(txs + " · La sai già? Bloccala in segreto: prima la blocchi, più vale", "piccolo");
-        riga([ btn("segreta", "🔒 La so!", function () { ui.segreto = segK(vm); ui.segTab = vm.tab; ui.scritto = []; ui.cur = 0; ui.kTast = ""; ui.ridisegna(); }) ]);
+        var txs = f === "girando" ? "🎡 La ruota gira…" : f === "sceltaexp" ? "🚂 " + nAtt + " decide: Express o no?" : vm.exp ? "🚂 " + nAtt + " è sull'Express…" : "Tocca a " + nomeDi(vm, cb, att) + "…";
+        stato(txs + " · Bloccala in segreto: se è giusta prendi i punti, se sbagli ne perdi metà", "piccolo");
+        riga([ btn("segreta", "🔒 La so! · vale " + fmtN(valoreSeg(quotaTab(vm.tab))), function () { ui.segreto = segK(vm); ui.segTab = vm.tab; ui.scritto = []; ui.cur = 0; ui.kTast = ""; ui.ridisegna(); }) ]);
         if (ui.facc) ui.azioni.appendChild(ui.facc);
         return;
       }
       if (me && !cb.telefono && vm.lock && vm.lock.indexOf(cb.myId) >= 0 && FASI_SEG.indexOf(f) >= 0)
-        return aspetta("🔒 Soluzione bloccata! Se è giusta, a fine manche prendi il premio · Tocca a " + nomeDi(vm, cb, att) + "…");
+        return aspetta("🔒 Soluzione bloccata! A fine manche: giusta, prendi i punti; sbagliata, ne perdi metà · Tocca a " + nomeDi(vm, cb, att) + "…");
+      if (me && !cb.telefono && ui.segNota === segK(vm) && FASI_SEG.indexOf(f) >= 0 && !(vm.lock && vm.lock.indexOf(cb.myId) >= 0))
+        return aspetta("⏰ Troppo tardi per «La so!»: ormai è scoperto il 40% delle lettere · Tocca a " + nomeDi(vm, cb, att) + "…");
       if (f === "lampo" && L && L.chi) return aspetta("✍️ " + nAtt + " prova a risolvere la frase lampo…");
       if (me && me.via) return aspetta("Rientro nella partita…");
       var tx = f === "sceltaexp" ? "🚂 " + nAtt + " decide: Express o no?" : f === "mistero" ? "❓ " + nAtt + " decide: apre il Mistero?" :
@@ -2497,16 +2815,25 @@
         ui.scritto = []; ui.cur = 0; cb.onAzione("annulla", vuoto ? "vuoto" : "");
       });
       if (f === "ftempo") ui.passaBtn = F && F.b === 3 ? btn("annulla", "↩ Chiamo lettere", function () { ui.finScrivi = null; ui.kTast = ""; ui.ridisegna(); }) :
-        btn("annulla", F && F.b < 3 ? "⏭️ Passo" : "⏭️ Basta così", function () { cb.onAzione("passa"); });
+        btn("annulla", "⏭️ Passo", function () { cb.onAzione("passa"); });
       ui.okBtn = btn("gira", "✓ Risolvi", function () {
         var k = 0, testo = ui.vm.tab.replace(/_/g, function () { return ui.scritto[k++] || "?"; });
         if (ui.vm.fase !== "ftempo") { ui.scritto = []; ui.cur = 0; }   // nella finale le lettere restano: se è sbagliata si correggono
+        else if (ui.vm.fin) { ui.finTesto = ui.finTesto || {}; ui.finTesto[(ui.vm.gameId || "") + ":" + ui.vm.fin.b] = testo; }   // (se è giusta, la frase la vedo io e basta)
         cb.onAzione("soluzione", testo);
       }, true);
       riga(ui.annBtn ? [ ui.annBtn, ui.okBtn ] : f === "ftempo" ? [ ui.passaBtn, ui.okBtn ] : [ ui.okBtn ]);
       contoSu(ui, vm, ui.okBtn);
       statoScritto(ui);
     }
+  }
+  // 🏆 come va agli altri nella finale: «Luca ✅ · Giulia ⏳»
+  function finProgressi(vm, cb) {
+    var F = vm.fin; if (!F || !F.g) return "";
+    return vm.giocatori.filter(function (p) { return F.g[p.id] && p.id !== cb.myId && !p.via; }).map(function (p) {
+      var g = F.g[p.id];
+      return p.nome + " " + (vm.fase === "flettere" ? (g.scelto ? "✅" : "…") : g.ok ? "✅" : g.passo || g.scad ? "⏭️" : "⏳");
+    }).join(" · ");
   }
   function escapeHtml(s) { return String(s || "").replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]; }); }
   // la finale: 3 consonanti e 1 vocale da scegliere (si cambiano solo i tasti toccati, niente ridisegno)
@@ -2541,6 +2868,13 @@
     ui.azioni.appendChild(el("div", { class: "ru-riga" }, [ ok ]));
     rifai();
     contoSu(ui, vm, ok);
+    // (il tempo finisce a metà scelta: le lettere che ho toccato le mando lo stesso, le altre le sceglie il gioco)
+    clearTimeout(ui.tSel);
+    if (vm.resta > 0) ui.tSel = setTimeout(function () {
+      var v = ui.vm;
+      if (!ui.S.vivo() || !v || v.fase !== "flettere" || !v.miaFin || v.miaFin.scelto || ui.finSelK !== key || !ui.finSel.length) return;
+      cb.onAzione("lettere", { l: ui.finSel.slice(), parz: 1 });
+    }, Math.max(0, vm.resta - (vm.grazia || 0) - 350));
   }
   // mentre scrivi la soluzione cambiano solo il contatore e i due tasti (la tastiera resta com'è)
   function statoScritto(ui) {
@@ -2561,7 +2895,7 @@
   function puoSegretaQui(ui, vm) {
     var cb = ui.cb, me = trovaG(vm, cb.myId);
     return !cb.telefono && !cb.guarda && !!me && !me.via && FASI_SEG.indexOf(vm.fase) >= 0 && vm.turno !== cb.myId &&
-      !(vm.lock && vm.lock.indexOf(cb.myId) >= 0) && (vm.cons + vm.voc) > 0;
+      !(vm.lock && vm.lock.indexOf(cb.myId) >= 0) && (vm.cons + vm.voc) > 0 && valoreSeg(quotaTab(vm.tab)) > 0;   // (solo sotto il 40% di lettere scoperte)
   }
   // mentre scrivo in segreto escono altre lettere: le mie restano nelle caselle giuste
   function rimappaSegreto(ui, vm) {
@@ -2589,10 +2923,10 @@
     ui.azioni.appendChild(ui.rsStato);
     ui.annBtn = null;
     var ann = el("button", { class: "ru-btn annulla", text: "↩ Lascia stare", onclick: function () { ui.segreto = null; ui.scritto = []; ui.cur = 0; ui.kTast = ""; ui.ridisegna(); } });
-    ui.okBtn = el("button", { class: "ru-btn segreta", text: "🔒 Blocca", onclick: function () {
+    ui.okBtn = el("button", { class: "ru-btn segreta", text: "🔒 Blocca · vale " + fmtN(valoreSeg(quotaTab(vm.tab))), onclick: function () {
       var k = 0, testo = ui.vm.tab.replace(/_/g, function () { return ui.scritto[k++] || "?"; });
-      ui.segreto = null; ui.scritto = []; ui.cur = 0; ui.kTast = "";
-      cb.onAzione("segreta", testo); vibra(20);
+      ui.segreto = null; ui.scritto = []; ui.cur = 0; ui.kTast = ""; ui.segInv = segK(ui.vm);
+      cb.onAzione("segreta", { t: testo, v: valoreSeg(quotaTab(ui.vm.tab)) }); vibra(20);   // (il valore scritto sul tasto: l'host lo tiene, se è arrivato un attimo dopo una lettera)
       ui.ridisegna();
     } });
     ui.azioni.appendChild(el("div", { class: "ru-riga" }, [ ann, ui.okBtn ]));
@@ -2621,22 +2955,24 @@
         t.el("span", { class: "punti", text: fmtN(r.punti) }) ]));
     });
     s._contenuto.appendChild(ol);
-    // com'è andata la finale (e, per il campione, dove sono finite le Speed Coins)
-    var F = vm.fin;
-    if (F) {
-      var righeF = [ F.vinto ? "🏆 Finale vinta da " + F.nome + ": " + fmtN(F.premio || 0) + " Speed Coins! 🪙" :
-        "🏆 Finale: " + F.nome + (F.via ? " è uscito" : " non ha risolto nessuna frase") ];
-      if (F.esiti && F.esiti.length) righeF.push("Tabelloni: " + F.esiti.map(function (x, k) { return FIN_NOMI[k] + " " + (x ? "✅" : "❌"); }).join(" · "));
+    // ✉️ la busta di chi ha vinto (e dove sono finite le Speed Coins) e 🏆 com'è andata la finale per tutti
+    var F = vm.fin, B = vm.busta, righeF = [];
+    if (B && B.premio) {
+      righeF.push("✉️ " + B.nome + " ha vinto e ha aperto la busta: " + fmtN(B.premio) + " Speed Coins! 🪙");
       var es = INCASSI[vm.gameId];
-      if (F.vinto && es === "ok" && (cb.telefono || F.id === cb.myId)) righeF.push("Sono già nel tuo salvadanaio!");
-      else if (F.vinto && es === "noprofilo") righeF.push("Per incassare le Speed Coins serve un profilo.");
-      else if (F.vinto && cb.telefono && !es) {
+      if (es === "ok" && (cb.telefono || B.id === cb.myId)) righeF.push("Sono già nel tuo salvadanaio!");
+      else if (es === "noprofilo") righeF.push("Per incassare le Speed Coins serve un profilo.");
+      else if (cb.telefono && !es) {
         var pr = profiloAttivo();
         righeF.push(pr && pr.nome ? "Le Speed Coins vanno solo a " + pr.nome + ", che ha il profilo su questo telefono." : "Per incassare le Speed Coins serve un profilo.");
       }
       if (vm.decimo) righeF.push("(Contro i Bot e sullo stesso telefono le buste valgono un decimo.)");
-      s._contenuto.appendChild(t.el("div", { class: "ru-fin-box" + (F.vinto ? " vinto" : "") }, righeF.map(function (x, i) { return t.el(i ? "small" : "b", { text: x }); })));
     }
+    if (F && F.g) {
+      var fl = vm.giocatori.filter(function (p) { return F.g[p.id]; }).sort(function (a, b) { return (F.g[b.id].tot || 0) - (F.g[a.id].tot || 0); });
+      righeF.push("🏆 Finale: " + fl.map(function (p) { var g = F.g[p.id]; return p.nome + " +" + fmtN(g.tot || 0) + " (" + (g.risolte || 0) + " su 3)"; }).join(" · "));
+    }
+    if (righeF.length) s._contenuto.appendChild(t.el("div", { class: "ru-fin-box" + (B && B.premio ? " vinto" : "") }, righeF.map(function (x, i) { return t.el(i ? "small" : "b", { text: x }); })));
     var fac = cb.online && !cb.telefono && !cb.targa && t.faccine ? t.faccine() : null;   // online: le faccine mentre si guarda la classifica
     if (fac) s._contenuto.appendChild(t.el("div", { class: "ru-fac-fine" }, [ fac ]));
     // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
@@ -2804,6 +3140,13 @@
       ".ru-busta.aperta .v{opacity:1}.ru-busta.aperta.spenta{opacity:.7}",
       ".ru-busta.aperta.scelta .v{font-size:20px}",
       ".ru-busta.aperta.vince{box-shadow:0 0 0 4px #51cf66,0 0 30px rgba(81,207,102,.9)}",
+      // 🏆 la finale per tutti sul maxischermo: una riga per concorrente (nome, com'è andata, punti della finale)
+      ".ru-fin-sch{box-sizing:border-box}",   // (chi ha finito o guarda vede il maxischermo da vicino: con la telecamera su tutti, metà stava dietro il tabellone)
+      ".ru-fin-lista{display:flex;flex-direction:column;gap:10px;width:92%}",
+      ".ru-fin-riga{display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:14px;background:rgba(255,255,255,.08);font-size:24px;font-weight:800;color:#e7ecff;transition:background .3s}",
+      ".ru-fin-riga .n{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".ru-fin-riga b{flex:none;font-weight:900}.ru-fin-riga i{flex:none;min-width:3.6em;text-align:right;font-style:normal;font-weight:900;color:#ffd43b;font-variant-numeric:tabular-nums}",
+      ".ru-fin-riga.ok{background:rgba(81,207,102,.22);box-shadow:inset 0 0 0 2px rgba(81,207,102,.7)}.ru-fin-riga.via{opacity:.4}",
       // i tasti, nella barra dello studio
       ".ru-studio .st-barra{gap:6px;padding:10px 8px calc(10px + env(safe-area-inset-bottom))}",
       ".ru-azioni{display:flex;flex-direction:column;gap:6px;color:#fff}",
@@ -2878,7 +3221,7 @@
 
   SG.registra({
     id: ID, nome: "La Ruota della Fortuna", icona: "🎡",
-    descrizione: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase! Come in TV: prima di ogni manche un gioco veloce (frase lampo, Ruota del tempo, GiraMondo, Triplete, CruciRuota), Raddoppia, Express, Mistero, il giro finale e la finale con 3 tabelloni per le Speed Coins. Mentre aspetti puoi bloccare la soluzione in segreto. Più di 3.000 frasi, e potete metterci le vostre!",
+    descrizione: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase! Come in TV: prima di ogni manche un gioco veloce (frase lampo, Ruota del tempo, GiraMondo, Triplete, CruciRuota), Raddoppia, Express, Mistero, il giro finale e la finale con 3 tabelloni per tutti insieme. Chi vince (se non è un Bot) sceglie una busta di Speed Coins. Mentre aspetti puoi bloccare la soluzione in segreto. Più di 3.000 frasi, e potete metterci le vostre!",
     giocatoriMin: 1, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 1–4 giocatori",
     postiOnline: MAX,   // 4 alla ruota: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
     riprende: true,     // online: se l'host ricarica a metà partita, la partita riprende (stessa frase, tocca a chi toccava)
@@ -2896,10 +3239,11 @@
       "Chi risolve si tiene i soldi della manche (almeno " + fmtN(MINIMO_RISOLVI) + "). Vince chi alla fine ne ha di più.",
       "🔔 <b>Giochi veloci</b>: ogni manche si apre con un gioco senza ruota, ogni volta diverso. Le lettere compaiono da sole: chi la sa tocca <b>Prenoto!</b> e la scrive; chi sbaglia è fuori da quel gioco. Online vince chi ha i riflessi più pronti, non chi ha internet più veloce.",
       "I giochi veloci: 🔔 <b>Frase lampo</b> (vale " + fmtN(PREMIO_LAMPO) + "); ⏳ <b>La ruota del tempo</b> (vedi un anno: cosa è successo?); 🌍 <b>GiraMondo</b> (una parola straniera curiosa: cosa vuol dire?); 🎯 <b>Triplete</b> (3 frasi sullo stesso tema, " + fmtN(PREMIO_LAMPO) + " l'una, tutte e 3 alla stessa persona +" + fmtN(TRI_BONUS) + "); 🧩 <b>CruciRuota</b> (4 parole sul tema, una per riga: prenoti e scrivi quelle che sai, " + fmtN(CRUCI_PAROLA) + " l'una). Comincia la manche chi ha vinto il gioco veloce.",
-      "🔒 <b>La so!</b> Mentre gioca un altro puoi scrivere la soluzione in segreto e bloccarla (una volta per manche). Nessuno la vede: se era giusta, quando la manche finisce prendi un premio, più grande quanto meno lettere c'erano (fino a " + fmtN(SEG_MAX) + "). Online e contro i Bot, non sullo stesso telefono.",
+      "🔒 <b>La so!</b> Mentre gioca un altro puoi scrivere la soluzione in segreto e bloccarla (una volta per manche), ma solo all'inizio: finché è scoperto meno del 40% delle lettere. Il tasto ti dice quanto vale adesso: " + fmtN(SEG_MAX) + " a tabellone vuoto, poi sempre meno. Nessuno la vede: a fine manche, se era giusta prendi quei punti, se era sbagliata ne perdi metà. Online e contro i Bot, non sullo stesso telefono.",
       "🚂 <b>Express</b>: se la ruota si ferma lì, puoi salire sull'Express. Chiami consonanti senza girare (" + fmtN(EXPRESS_V) + " l'una), compri vocali e quando vuoi ti fermi e risolvi. Ma se sbagli una lettera o la soluzione: <b>Bancarotta</b>! Oppure giochi lo spicchio come uno normale.",
       "🔔 <b>Giro finale</b>: nell'ultima manche la ruota gira una volta sola. Ogni consonante vale quella cifra più " + fmtN(BONUS_VELOCE) + ", le vocali sono gratis ma non valgono niente. A turno si chiama una lettera e, se c'è, hai 5 secondi per decidere se risolvere.",
-      "🏆 <b>Finale</b>: chi vince la partita ha 60 secondi per 3 tabelloni. 1) vede R S T L N E e sceglie 3 consonanti e una vocale; 2) <b>Testacoda</b>: vede la prima e l'ultima lettera di ogni parola; 3) <b>Rubasecondi</b>: chiama le lettere che vuole (una vocale sola), ma ogni lettera che non c'è costa 3 secondi. Si può passare al tabellone dopo. Per ogni frase risolta sceglie una busta (al massimo 3) e vince la più ricca, da 500 a 5.000 Speed Coins. Le Speed Coins vanno a chi ha un profilo; contro i Bot e sullo stesso telefono le buste valgono un decimo.",
+      "🏆 <b>Finale</b>: dopo l'ultima manche giocano tutti insieme, ognuno sul suo telefono, Bot compresi: 3 tabelloni con la stessa frase per tutti. 1) <b>Le tue lettere</b>: vedi R S T L N E e scegli in segreto 3 consonanti e una vocale (10 secondi), poi hai 30 secondi; 2) <b>Testacoda</b>: vedi la prima e l'ultima lettera di ogni parola, 30 secondi; 3) <b>Rubasecondi</b>: chiami le lettere che vuoi (una vocale sola), ma ogni lettera che non c'è ti toglie 3 secondi, 40 secondi. Ogni tabellone risolto vale da " + fmtN(FIN_BASE) + " a " + fmtN(FIN_BASE + FIN_BONUS) + ": più tempo ti restava, più prendi. Se sbagli riprovi; puoi anche passare. I punti vanno nel totale e possono cambiare chi vince. Online e contro i Bot (sullo stesso telefono non c'è).",
+      "✉️ <b>La busta</b>: alla fine chi vince la partita (se non è un Bot) sceglie una busta tra cinque: da 500 a 5.000 Speed Coins. Le Speed Coins vanno a chi ha un profilo; contro i Bot e sullo stesso telefono le buste valgono un decimo.",
       "❓ <b>Mistero</b>: nelle ultime due manche (non nel round veloce) uno spicchio è il Mistero. Ci cadi e chiami una consonante da " + fmtN(MIST_V) + ": se c'è, scegli se tenerti i soldi o <b>aprire il Mistero</b>. Metà delle volte vale " + fmtN(MIST_PREMIO) + " in più, metà delle volte è <b>Bancarotta</b>! Aperto una volta, torna uno spicchio da " + fmtN(MIST_V) + ".",
       "✍️ <b>Le vostre frasi</b>: con «Frasi: Anche le nostre» l'host scrive nelle impostazioni fino a 5 frasi della compagnia (restano sul suo telefono). Online anche chi guarda può mandarne una con «✍️ Scrivi una frase»: nessuno la vede prima e, se gioca, chi l'ha scritta non la riceve. Escono al massimo una manche su due, con la firma accanto alla categoria.",
       "Online hai " + (T_MOSSA / 1000) + " secondi per ogni mossa e " + (T_RISOLVI / 1000) + " per risolvere: la barretta sopra i tasti ti dice quanto tempo resta. A fine manche si riparte da soli dopo 10 secondi, o subito se più di metà di chi gioca tocca «⏩ Avanti». I round speciali si accendono e si spengono nelle impostazioni."
@@ -2945,6 +3289,7 @@
       var gs = el("div", { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" });
       [["prenota", "🔔 Giochi veloci"], ["express", "🚂 Express"], ["veloce", "⚡ Giro finale"], ["finale", "🏆 Finale"], ["mistero", "❓ Mistero"]].forEach(function (r) {
         dove[r[0]] = true;
+        if (r[0] === "finale" && aiuti.modo === "telefono") return;   // (la finale per tutti si gioca ognuno sul suo telefono: sullo stesso telefono non c'è)
         var b = el("button", { class: "modo-chip attiva", style: "justify-content:center;text-align:center", onclick: function () {
           dove[r[0]] = !dove[r[0]]; b.className = "modo-chip" + (dove[r[0]] ? " attiva" : "");
         } }, [ el("div", { class: "mt", text: r[1] }) ]);
@@ -2967,5 +3312,5 @@
   });
 
   // per le prove
-  window.__RUOTA = { creaPartita: creaPartita, controllaFrase: controllaFrase, spicchiDi: spicchiDi, apreMistero: apreMistero, leggiNostre: leggiNostre, righe: righe, righeIdx: righeIdx, coperta: coperta, solo: solo, corta: corta, decidiBot: decidiBot, letteraBot: letteraBot, SPICCHI: SPICCHI, BUSTE: BUSTE, INCASSI: INCASSI };
+  window.__RUOTA = { creaPartita: creaPartita, controllaFrase: controllaFrase, spicchiDi: spicchiDi, apreMistero: apreMistero, leggiNostre: leggiNostre, righe: righe, righeIdx: righeIdx, coperta: coperta, solo: solo, corta: corta, valoreSeg: valoreSeg, quotaTab: quotaTab, decidiBot: decidiBot, letteraBot: letteraBot, SPICCHI: SPICCHI, BUSTE: BUSTE, INCASSI: INCASSI };
 })();

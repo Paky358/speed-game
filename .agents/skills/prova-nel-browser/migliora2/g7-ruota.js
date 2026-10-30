@@ -8,7 +8,7 @@
 //       solo se è indietro, le frasi degli amici una manche su due con la firma.
 // g7r1: contro i Bot (Facile), 4 manche, tutti i round, «Anche le nostre» con 2 frasi nel ⚙️: manche 1 e 3 con «✍️ scritta da voi»;
 //       nella manche 2 il Mistero (forzato): «❓ Apri il Mistero» → «+10.000!» grande, sul leggio i soldi; la ruota torna da 1.000;
-//       misure della scelta e della scritta a 360x640 e 412x915; partita fino alla classifica (finale compresa se la vince Paky).
+//       misure della scelta e della scritta a 360x640 e 412x915; partita fino alla classifica (31 ott: la finale per tutti, poi la busta se vince Paky).
 // g7r2: sullo stesso telefono in 2 (Prenota spento): Mistero aperto che va male → «BANCAROTTA!», soldi a zero, tocca all'altro;
 //       partita fino alla fine.
 // g7r3: online in 3 (Paky host, Luca, Giulia) + Bea che arriva a partita cominciata e guarda; «Anche le nostre», nessuna frase nel ⚙️.
@@ -79,14 +79,35 @@
   // opz.avanti(P) = cosa fare a fine manche (online); opz.ogni(P) = chiamata a ogni giro
   async function pilota(H, tel, opz) {
     opz = opz || {};
-    var fine = Date.now() + (opz.ms || 300000), k0 = "", fermo = 0, misteri = {}, forzato = null;
+    var fine = Date.now() + (opz.ms || 300000), k0 = "", fermo = 0, misteri = {}, forzato = null, finFatti = {};
     while (Date.now() < fine) {
       var P = Pdi(H);
       if (!P) { await W.dorme(200); continue; }
       if (opz.ogni) { var r = await opz.ogni(P); if (r === "basta") return P; }
       if (P.fase === "fine" || (H.document.querySelector(".classifica") && !H.document.querySelector(".ru-studio"))) return P;
       if (forzato && P.giroN !== forzato.g) { H.Math.random = forzato.r; forzato = null; }
-      var f = P.fase, L = P.lampo, att = f === "lampo" ? L && L.chi : ["fintro", "fbusta", "flettere", "frivela", "ftempo", "fesito"].indexOf(f) >= 0 ? P.fin && P.fin.id : P.giocatori[P.turno] && P.giocatori[P.turno].id;
+      var f = P.fase, L = P.lampo, att = f === "lampo" ? L && L.chi : ["fbusta", "fesito"].indexOf(f) >= 0 ? P.busta && P.busta.id : ["fintro", "flettere", "frivela", "ftempo", "fcambio"].indexOf(f) >= 0 ? null : P.giocatori[P.turno] && P.giocatori[P.turno].id;
+      // 🏆 (31 ott) la finale per tutti: ogni persona gioca dal suo telefono (opz.finale(P, id, w) può decidere lei: "salta" = non fare niente)
+      if ((f === "flettere" || f === "ftempo") && P.fin) {
+        for (var fid in tel) {
+          var gf = P.fin.g[fid]; if (!gf || P.finFatto(fid) || (f === "flettere" && gf.scelte)) continue;
+          var kf = f + ":" + P.fin.b + ":" + fid; if (finFatti[kf] && Date.now() - finFatti[kf] < 3000) continue;
+          finFatti[kf] = Date.now();
+          var wf = tel[fid];
+          try {
+            if (opz.finale && (await opz.finale(P, fid, wf)) === "salta") continue;
+            if (f === "flettere") {
+              var scc = "BCDFGHMPQVZ".split("").slice(0, 3).concat(["A"]);
+              scc.forEach(function (ch) { var b = lettera(wf, ch); if (b) tocca(wf, b); });
+              await W.dorme(100); var be = tasto(wf, /Ecco le mie lettere/); if (be) tocca(wf, be);
+            } else {
+              if (P.fin.b === 3) { var bs2 = tasto(wf, /La so: scrivo/); if (bs2) { tocca(wf, bs2); await W.dorme(200); } }
+              await scrivi(wf, P.frase, P.finTab(gf.ch));
+            }
+          } catch (e) {}
+        }
+        await W.dorme(250); continue;
+      }
       var w = att && tel[att], k = [f, P.manche, P.giroN, att, Object.keys(P.chiamate).length, L ? L.n + ":" + L.prove : ""].join("|");
       if (k === k0 && Date.now() - fermo < 900) { await W.dorme(120); continue; }
       k0 = k; fermo = Date.now();
@@ -112,15 +133,10 @@
         else if (f === "mistero") { if (opz.dopoScelta) await opz.dopoScelta("prima", P); tocca(w, tasto(w, opz.mistero && opz.mistero.apri === false ? /Mi tengo/ : /Apri il Mistero/)); }
         else if (f === "sceltaexp") tocca(w, tasto(w, /Gioco/));
         else if (f === "express") tocca(w, tasto(w, /Mi fermo/));
-        else if (f === "risolvi" || f === "ftempo") { await W.dorme(250); if (f === "ftempo" && P.fin && P.fin.b === 3) { var bs = tasto(w, /La so: scrivo/); if (bs) { tocca(w, bs); await W.dorme(200); } } await scrivi(w, P.frase, P.vista().tab); }   // (30 ott: la finale ha 3 tabelloni; il Testacoda scopre lettere di posto)
+        else if (f === "risolvi") { await W.dorme(250); await scrivi(w, P.frase, P.vista().tab); }
         else if (f === "vlettera") { var x = P.frase.split("").map(base).filter(function (ch) { return /[A-Z]/.test(ch) && !P.chiamate[ch]; })[0]; if (x && lettera(w, x)) tocca(w, lettera(w, x)); }
         else if (f === "vdecidi") tocca(w, tasto(w, /Risolvo/));
-        else if (f === "fbusta") { var bb = [].find.call(w.document.querySelectorAll(".ru-btn.busta"), function (b) { return !b.disabled; }); if (bb) tocca(w, bb); }   // (una busta per ogni frase risolta)
-        else if (f === "flettere") {
-          var cc = CONS.split("").filter(function (ch) { return !P.chiamate[ch]; }).slice(0, 3), vv = "AEIOU".split("").filter(function (ch) { return !P.chiamate[ch]; }).slice(0, 1);
-          cc.concat(vv).forEach(function (ch) { var b = lettera(w, ch); if (b) tocca(w, b); });
-          await W.dorme(100); tocca(w, tasto(w, /Ecco le mie lettere/));
-        }
+        else if (f === "fbusta") { if (opz.busta) await opz.busta(P, w); var bb = [].find.call(w.document.querySelectorAll(".ru-btn.busta"), function (b) { return !b.disabled; }); if (bb) tocca(w, bb); }   // (✉️ chi vince sceglie una busta)
         if (f === "finemanche" && opz.avanti) await opz.avanti(P);
       } catch (e) { /* (un tasto sparito tra un giro e l'altro: si riprova) */ }
       await W.dorme(250);
