@@ -258,7 +258,7 @@ const RUOLI = {
   sopravvissuto: { nome:'Sopravvissuto', squadra:'soli',   desc:'Giochi da solo: vinci se arrivi vivo alla fine, chiunque vinca. Hai la frenesia: non puoi restare troppo nella stessa stanza.' },
   accusatore:    { nome:'Accusatore',    squadra:'soli',   desc:'Giochi da solo: hai un bersaglio. Vinci se lo cacciano col voto.' },
   avvoltoio:     { nome:'Avvoltoio',     squadra:'soli',   abil:'Mangia',    desc:'Giochi da solo: fai sparire le lanterne spente. Se ne mangi abbastanza, vinci tu.' },
-  gatto:         { nome:'Gatto',         squadra:'soli',   desc:'Hai due vite: la prima volta che ti spengono ti rialzi. Vinci se arrivi vivo alla fine, chiunque vinca.' },
+  gatto:         { nome:'Gatto',         squadra:'soli',   desc:'Hai due vite: la prima volta che ti spengono ti rialzi, ma chi ti ha colpito può riprovare presto. Vinci se arrivi vivo alla fine e le ombre non hanno vinto.' },
 };
 const SPECIALI_OSPITI = ['investigatore','veggente','spia','trasportatore','bracconiere','imitatore','portiere','medico','sceriffo','sindaco','campanaro','vedetta','segugio','bengala','vendicatore','rianimatore','sentinella','ingegnere','veterano'];
 const SPECIALI_OMBRE = ['silenziatore','nebbia','trasformista','spazzino','ipnotista','avvelenatore','spettro','burattinaio'];
@@ -298,9 +298,9 @@ const IMP_BASE = {
   bengala:{ durata:5, usi:1 },
   rianimatore:{ usi:1, tempo:6 },
   silenziatore:{ ricarica:35 },
-  nebbia:{ durata:10, ricarica:40 },
-  trasformista:{ durata:15, ricarica:35 },
-  spazzino:{ ricarica:25 },
+  nebbia:{ durata:15, ricarica:30 },
+  trasformista:{ durata:10, ricarica:50 },
+  spazzino:{ ricarica:35, tempo:5 },
   ipnotista:{ durata:6, ricarica:35 },
   avvelenatore:{ ritardo:15 },
   burattinaio:{ durata:8, ricarica:40 },
@@ -308,6 +308,7 @@ const IMP_BASE = {
   sabotaggi:{ ricarica:45, acqua:60, interferenza:60, acquaSi:true, interferenzaSi:true },
   avvoltoio:{ quanti:2 },
   indovino:{ quanti:2, perRiunione:2, sbaglia:'muore' },
+  gatto:{ ricarica:4 },
   frenesia:{ attiva:true, secondi:45 },
   fantasmi:{ attivi:true, custode:50, medium:50, ricarica:45 },
 };
@@ -316,7 +317,7 @@ const IMP_BASE = {
 const P = [0,25,50,75,100];
 const probVoce = (r) => ({ g:'Probabilità dei ruoli', k:'prob.'+r, et:RUOLI[r].nome, opz:P, u:'%' });
 const VOCI = [
-  { g:'Partita', k:'ombre', et:'Ombre', opz:[[0,'in base ai giocatori'],1,2,3] },
+  { g:'Partita', k:'ombre', et:'Ombre', opz:[[0,'in base ai giocatori'],1,2,3,4] },
   { g:'Partita', k:'soli', et:'Ruoli da soli al massimo', opz:[0,1,2] },
   { g:'Partita', k:'ricarica', et:'Ricarica per eliminare', opz:[15,20,25,30,40], u:' s' },
   { g:'Partita', k:'velocita', et:'Velocità', opz:[[0.8,'lenta'],[1,'normale'],[1.25,'veloce'],[1.5,'molto veloce'],[1.75,'velocissima']] },
@@ -374,6 +375,7 @@ const VOCI = [
   { g:'Sabotaggi', k:'sabotaggi.interferenzaSi', et:'Interferenza', opz:[[true,'sì'],[false,'no']] },
   { g:'Sabotaggi', k:'sabotaggi.interferenza', et:'Quanto dura l\'interferenza (se nessuno ripara)', opz:[30,60,90], u:' s' },
   { g:'Spazzino', k:'spazzino.ricarica', et:'Ricarica', opz:[15,25,35], u:' s' },
+  { g:'Spazzino', k:'spazzino.tempo', et:'Tempo fermo accanto alla lanterna', opz:[3,5,8], u:' s' },
   { g:'Ipnotista', k:'ipnotista.durata', et:'Blocco', opz:[4,6,8], u:' s' },
   { g:'Ipnotista', k:'ipnotista.ricarica', et:'Ricarica', opz:[25,35,50], u:' s' },
   { g:'Avvelenatore', k:'avvelenatore.ritardo', et:'Dopo quanto si spegne', opz:[10,15,20], u:' s' },
@@ -381,6 +383,7 @@ const VOCI = [
   { g:'Indovino', k:'indovino.quanti', et:'Ruoli da indovinare per vincere', opz:[2,3,4] },
   { g:'Indovino', k:'indovino.perRiunione', et:'Tentativi per riunione', opz:[1,2,3] },
   { g:'Indovino', k:'indovino.sbaglia', et:'Se sbaglia', opz:[['muore','cade lui'],['niente','non succede niente']] },
+  { g:'Gatto', k:'gatto.ricarica', et:'Dopo che si rialza, chi lo ha colpito riprova dopo', opz:[4,8,15,25], u:' s' },
   { g:'Frenesia (Giullare e Sopravvissuto)', k:'frenesia.attiva', et:'Frenesia', opz:[[true,'sì'],[false,'no']] },
   { g:'Frenesia (Giullare e Sopravvissuto)', k:'frenesia.secondi', et:'Secondi nella stessa stanza', opz:[30,45,60,90], u:' s' },
   { g:'Fantasmi', k:'fantasmi.attivi', et:'Ruoli dei fantasmi', opz:[[true,'sì'],[false,'no']] },
@@ -407,18 +410,23 @@ function pulisci(imp){
   return out;
 }
 function conPreset(nome){ return pulisci(unisci(JSON.parse(JSON.stringify(IMP_BASE)), PRESET[nome]||{})); }
-// Quante ombre: «in base ai giocatori» (0) dà 1 ombra fino a 7 giocatori, 2 da 8 in su. Mai più di 1 fino a 6 giocatori, 2 fino a 8, 3 da 9 in su.
+// Da 11 giocatori in su: [ombre, compiti a testa] per ogni numero, tarati con partite di soli Bot (node gioco/prove/equilibrio.mjs 400 grandi).
+// I compiti possono avere i decimali: 3,15 vuol dire che a un giocatore su sette ne toccano 4 invece di 3 (così le ombre vincono fra il 30 e il 45%).
+const GRANDI = { 11:[2,10], 12:[3,3.15], 13:[3,4.15], 14:[3,5.2], 15:[4,3] };
+// Quante ombre: «in base ai giocatori» (0) dà 1 ombra fino a 7 giocatori, 2 da 8 a 10, poi 2, 3 e 4 secondo la tabella dei grandi.
+// Mai più di 1 fino a 6 giocatori, 2 fino a 8, 3 fino a 13, 4 da 14 in su.
 function quanteOmbre(imp, n){
-  const max = n<=6 ? 1 : n<=8 ? 2 : 3, voluto = imp.ombre>0 ? imp.ombre : (n>=8 ? 2 : 1);
+  const max = n<=6 ? 1 : n<=8 ? 2 : n<=13 ? 3 : 4, voluto = imp.ombre>0 ? imp.ombre : (GRANDI[n] ? GRANDI[n][0] : n>15 ? 4 : n>=8 ? 2 : 1);
   return Math.max(1, Math.min(voluto, max));
 }
 // Compiti a testa: «in base ai giocatori» (0) li sceglie da quanti ospiti ci sono per ogni ombra (r).
 // Tarati con migliaia di partite di soli Bot (gioco/prove/equilibrio.mjs) per stare vicino a metà e metà:
-// r fino a 3 → 3 compiti, fino a 3,5 → 4, fino a 4 → 6, oltre → 8.
+// r fino a 3 → 3 compiti, fino a 3,5 → 4, fino a 4 → 6, fino a 5 → 8, oltre → 12 (con 7 giocatori e un'ombra sola, con 8 compiti le ombre vincevano 2 volte su 10).
 function compitiPer(imp, n, ombre){
   if(imp.compiti>0) return imp.compiti;
+  if(GRANDI[n] && GRANDI[n][0]===ombre) return GRANDI[n][1];
   const r = (n-ombre)/Math.max(1,ombre);
-  return r<=3 ? 3 : r<=3.5 ? 4 : r<=4 ? 6 : 8;
+  return r<=3 ? 3 : r<=3.5 ? 4 : r<=4 ? 6 : r<=5 ? 8 : 12;
 }
 function riassunto(imp){
   const ruoli = Object.keys(imp.prob).filter(r=>imp.prob[r]>0).length;
@@ -444,10 +452,20 @@ const BERSAGLIO = { veggente:'vivo', medico:'vivo', sceriffo:'vivo', segugio:'vi
 const STAZ_RIP = { luci:QUADRO, console:CONSOLE, chiusaA:CHIUSA_A, chiusaB:CHIUSA_B };
 const TOLL = 1.4;              // margine per chi è un po' in ritardo sulla rete
 const VEL_ANIMA = 1.7;  // le anime vanno più veloci: seguono meglio la partita
-const R_PARLA = 7*T;    // la chat di prossimità: si legge solo chi è entro questo raggio
+const R_PARLA = 7*T;    // la chat di prossimità: si sente entro questo raggio, se non ci sono muri in mezzo
+const R_MURO = 3*T;     // attraverso un muro si sente solo da molto vicino, e più piano
+const MAX_PARLA = 80;   // caratteri di un messaggio
+const T_PARLA = 1.5;           // un messaggio ogni 1,5 secondi
+const R_RISPOSTA = 5*T;        // un Bot risponde a una persona solo se le è così vicino (e la vede)
+// il testo di un messaggio: una riga, senza caratteri strani, al massimo MAX_PARLA lettere
+const pulisciTesto = x => Array.from(String(x==null?'':x).replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g,' ').replace(/\s+/g,' ').trim()).slice(0,MAX_PARLA).join('').trim();
+// un testo in minuscolo, senza punteggiatura, con uno spazio ai lati di ogni parola (e il «?» staccato) per cercarci dentro parole intere
+const normChat = x => ' '+String(x).toLowerCase().replace(/[’']/g,' ').replace(/\?/g,' ? ').replace(/[^a-z0-9àèéìòóù? ]+/g,' ').replace(/\s+/g,' ').trim()+' ';
 const VEL_BASE = 3.8;   // caselle al secondo a velocità «normale» (era 3,4: un po' più di corsa)
 const DUR_ATRIO = 20, DUR_SVELA = 6, DUR_ESITO = 7;
 const MAX_CHAT = 40;
+const SOGLIA_VOTO = 18;        // quanto sospetto serve a un Bot ospite per votare qualcuno (con 30 sette riunioni su dieci finivano senza nessuno fuori)
+const PROV_GIULLARE = 2;       // quante volte a partita un Giullare Bot si fa vedere uscire da una botola
 const FRASI_COMPITO = { luce:'accendere il lampadario', ingranaggio:"caricare l'orologio", fuoco:'sfornare i dolci', acqua:'annaffiare la serra' };
 
 class Partita {
@@ -501,10 +519,11 @@ class Partita {
   }
   nuovo(g){
     return { id:g.id, nome:g.nome, bot:!!g.bot, ruolo:'ospite', squadra:'ospiti', x:0, y:0, dir:Math.PI/2, vivo:true, fantasma:false, uscito:false,
-      compiti:[], cd:15, cdA:8, usi:0, campane:this.imp.campane, zittito:false, protettoDa:null, ep:0, tPos:0, tCorr:-9, vPriv:0, tChat:-9,
+      compiti:[], cd:15, cdA:8, usi:0, campane:this.imp.campane, zittito:false, protettoDa:null, ep:0, tPos:0, tCorr:-9, vPriv:0, tChat:-9, tParla:-9,
       vite:1, aspetto:null, aspettoFine:0, bloccatoFine:0, veleno:null, traccia:null, rianima:null, usiRian:0, usiBeng:0, campVolte:0, mangiati:0, bersaglio:null, rivelato:false, segnato:false, indovinati:0, tentativi:0, frenStanza:null, frenDa:0, frenAvvisato:false, camPiazzate:0, usiVet:0, allertaFine:0, letti:{}, osserva:false, usiTra:0, schermoFine:0, mod:null, trappola:null, trapRuoli:null, imitato:false, imita:null,
       path:[], meta:null, attesa:0, azione:null, pensa:rnd()*0.4, visti:{}, storia:[], ultimaStoria:{}, sosp:{}, mem:{controlli:[], puliti:[]}, segnala:null, corpoVisto:null, muove:false,
-      ripara:null, campione:null, controllo:null, controllatoDa:null, portineria:null, tTp:0, prossimoGiro:false, dopoSpegni:false, ricalcola:0, cacciaFine:0 };
+      ripara:null, campione:null, controllo:null, controllatoDa:null, portineria:null, tTp:0, prossimoGiro:false, dopoSpegni:false, ricalcola:0, cacciaFine:0,
+      noti:{}, provocaz:0, insegue:null, insegueFine:0, vistoTrasf:{} };
   }
   per(id){ return this.gioc.find(p=>p.id===id); }
   nomeDi(id){ const p=this.per(id); return p ? p.nome : '?'; }
@@ -546,7 +565,9 @@ class Partita {
     g.campVolte = g.ruolo==='campanaro' ? this.imp.campanaro.volte : 0;
   }
   assegnaCompiti(g){
-    const lista = mescola(POSTAZIONI.slice()).slice(0, this.nCompiti||compitiPer(this.imp, this.gioc.length, this.ombreIniziali||1));
+    // (con i decimali, 3,15 vuol dire che a un giocatore su sette ne toccano 4)
+    const nc = this.nCompiti||compitiPer(this.imp, this.gioc.length, this.ombreIniziali||1), quanti = Math.floor(nc) + (rnd() < nc-Math.floor(nc) ? 1 : 0);
+    const lista = mescola(POSTAZIONI.slice()).slice(0, quanti);
     g.compiti = lista.map(p=>({ post:p, fatto:false, finto:g.squadra!=='ospiti' }));
     // i compiti in più della Sentinella le servono per le telecamere: non contano nella barra di tutti
     if(g.ruolo==='sentinella') for(let i=0;i<this.imp.sentinella.extra;i++) g.compiti.push({ post:pick(POSTAZIONI), fatto:false, finto:false, extra:true });
@@ -603,7 +624,8 @@ class Partita {
     const v=this.vincitore; if(!v) return [];
     return this.gioc.map(p=>{
       const vince = v.id ? p.id===v.id : p.squadra===v.chi;
-      return { id:p.id, nome:p.nome, bot:p.bot, pos: vince || ((p.ruolo==='gatto' || p.ruolo==='sopravvissuto') && p.vivo) ? 1 : 2 };
+      // il Sopravvissuto vince se è vivo, chiunque vinca; il Gatto solo se le ombre non hanno vinto (con due vite era troppo facile: 7 volte su 10)
+      return { id:p.id, nome:p.nome, bot:p.bot, pos: vince || (p.ruolo==='sopravvissuto' && p.vivo) || (p.ruolo==='gatto' && p.vivo && v.chi!=='ombre') ? 1 : 2 };
     });
   }
   // la partita da ricordare se l'host ricarica la pagina: solo dati semplici
@@ -656,8 +678,8 @@ class Partita {
     const p=this.per(id); if(!p||p.uscito) return;
     // chi è controllato dal Burattinaio è fermo: niente compiti, poteri o segnalazioni finché dura
     if(p.controllatoDa && this.fase==='gioco' && m.k!=='chat' && m.k!=='rapida') return;
-    // dentro una botola si può solo spostarsi tra le botole o uscire (e parlare)
-    if(p.inBotola!=null && this.fase==='gioco' && m.k!=='botola' && m.k!=='parla') return;
+    // dentro una botola si può solo spostarsi tra le botole o uscire (sotto terra non si parla: la chat di prossimità resta spenta)
+    if(p.inBotola!=null && this.fase==='gioco' && m.k!=='botola') return;
     switch(m.k){
       case 'fatto': return this.fatto(p, m.post);
       case 'ripara': { const cosa=m.cosa||'luci', st=STAZ_RIP[cosa]; if(this.fase==='gioco' && st && p.vivo && this.vicino(p,centro(st.tx),centro(st.ty),R_USA)) this.ripara(p, cosa); return; }   // (anche le ombre: fingono di aiutare)
@@ -689,7 +711,7 @@ class Partita {
     if(c.fatto) return;
     c.fatto=true; this.priv(p); this.segna();
     // i compiti visibili: chi è lì vicino vede l'effetto, e sa che chi l'ha fatto non è un'ombra (le ombre fingono e basta)
-    if(!c.finto && c.post.visibile && this.imp.compitiVisibili){
+    if(!c.finto && c.post.visibile && this.imp.compitiVisibili && !this.nebbiaAttiva()){
       this.fx('compito', centro(c.post.tx), centro(c.post.ty), { v:c.post.visibile, id:p.id });
       for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p) continue; if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)){ o.sosp[p.id]=(o.sosp[p.id]||0)-35; o.mem.puliti.push({ id:p.id, v:c.post.visibile }); } }
     }
@@ -707,6 +729,8 @@ class Partita {
       if(!p.campione||p.cdA>0||this.travestito(p)) return;
       p.aspetto=p.campione; p.aspettoFine=this.t+this.imp.trasformista.durata; p.cdA=this.imp.trasformista.ricarica; this.priv(p);
       this.avviso(p, `Ora sembri ${this.nomeDi(p.campione)}.`, 'ombra'); this.fx('trasforma', p.x, p.y);
+      // il lampo della trasformazione lo nota chi sta guardando (sei Bot su dieci, se è a portata d'occhio)
+      for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p||o.squadra==='ombre') continue; if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y) && rnd()<.6) o.vistoTrasf[p.id]=this.t; }
       return;
     }
     if(tipo==='stanza'){
@@ -753,10 +777,11 @@ class Partita {
       case 'sceriffo':
         if(p.cdA>0 || v===p) return;
         p.cdA=this.imp.sceriffo.ricarica; this.priv(p);
-        this.fx('sparo', p.x, p.y, { x2:Math.round(v.x), y2:Math.round(v.y) });
+        this.fx('sparo', p.x, p.y, { x2:Math.round(v.x), y2:Math.round(v.y) }); this.noto(p,'sceriffo');
         if(v.squadra==='ombre' || (v.squadra==='soli' && this.imp.sceriffo.soli)){
           if(v.protettoDa!=null){ this.rompiScudo(v, p); return; }
           this.spegni(p, v, 'sceriffo'); this.avviso(p, `Colpito: ${v.nome} era ${RUOLI[v.ruolo].nome}.`);
+          if(p.bot) p.mem.sparato={ id:v.id, ombra:v.squadra==='ombre' };
         } else { this.avviso(p, `${v.nome} è dei buoni: cadi tu.`, 'morte'); this.spegni(p, p, 'sceriffo'); }
         return;
       case 'segugio':
@@ -771,7 +796,7 @@ class Partita {
         return;
       case 'bengala':
         if(p.usiBeng<=0 || this.bengalaAttivo()) return;
-        p.usiBeng--; this.bengalaFine=this.t+this.imp.bengala.durata; this.priv(p); this.segna();
+        p.usiBeng--; this.bengalaFine=this.t+this.imp.bengala.durata; this.priv(p); this.segna(); this.noto(p,'bengala');
         this.fx('bengala', p.x, p.y, { globale:1 });
         return;
       case 'rianimatore':
@@ -825,11 +850,12 @@ class Partita {
         this.avviso(p, `Ora sembri ${v.nome}.`, 'ombra'); this.fx('trasforma', p.x, p.y);
         return;
       case 'spazzino':
-        // pulire vuol dire restare 3 secondi fermi accanto alla lanterna spenta: chi passa lo vede
+        // pulire vuol dire restare fermi accanto alla lanterna spenta (qualche secondo): chi passa lo vede
         if(p.cdA>0 || p.rianima) return;
-        if(p.bot){ if(p.azione && p.azione.tipo==='pulisci') return; p.attesa=3; p.azione={ tipo:'pulisci', corpo:c.id }; p.path=[]; p.meta=null; return; }
-        p.rianima={ corpo:c.id, fine:this.t+3, x:p.x, y:p.y, pulisci:true }; this.priv(p);
-        this.avviso(p, 'Resta fermo 3 secondi: la lanterna sparisce.', 'ombra');
+        { const tempo=this.imp.spazzino.tempo;
+          if(p.bot){ if(p.azione && p.azione.tipo==='pulisci') return; p.attesa=tempo; p.azione={ tipo:'pulisci', corpo:c.id }; p.path=[]; p.meta=null; return; }
+          p.rianima={ corpo:c.id, fine:this.t+tempo, x:p.x, y:p.y, pulisci:true }; this.priv(p);
+          this.avviso(p, `Resta fermo ${tempo} secondi: la lanterna sparisce.`, 'ombra'); }
         return;
       case 'ipnotista':
         if(p.cdA>0 || v===p || v.squadra==='ombre') return;
@@ -838,7 +864,7 @@ class Partita {
         return;
       case 'avvoltoio':
         this.corpi=this.corpi.filter(k=>k!==c); p.mangiati++; this.priv(p); this.segna();
-        this.fx('mangia', c.x, c.y);
+        this.fx('mangia', c.x, c.y); this.noto(p,'avvoltoio');
         if(p.mangiati>=this.imp.avvoltoio.quanti){ this.vincitore={ chi:'avvoltoio', id:p.id, perche:`L'Avvoltoio (${p.nome}) ha fatto sparire ${p.mangiati} lanterne.` }; this.chiudi(); }
         else this.avviso(p, `Lanterne mangiate: ${p.mangiati} su ${this.imp.avvoltoio.quanti}.`);
         return;
@@ -855,6 +881,7 @@ class Partita {
   rompiScudo(v, chi){
     const md=this.per(v.protettoDa); v.protettoDa=null; this.priv(v); this.segna();
     this.avviso(chi, 'Non puoi: ha lo scudo del Medico. Ora lo scudo si è rotto.', 'ombra');
+    if(md && md.bot) md.mem.scudoRotto=v.id;
     if(md) this.avviso(md, `Lo scudo di ${v.nome} si è rotto: qualcuno ci ha provato!`, 'ombra');
     this.fx('scudoRotto', v.x, v.y, { noOmbre:1 });
   }
@@ -883,6 +910,8 @@ class Partita {
       this.avviso(v, 'Ti hanno quasi spento: ti resta una vita.', 'ombra');
       if(k!==v) this.avviso(k, `${v.nome} si è rialzato: era un Gatto!`, 'ombra');
       this.fx('gatto', v.x, v.y);
+      // chi l'ha colpito ora sa che è un Gatto: può riprovare presto, e un'ombra Bot lo insegue per un po'
+      if(k!==v && modo==='normale' && k.squadra==='ombre'){ k.cd=Math.min(k.cd, this.imp.gatto.ricarica); this.priv(k); if(k.bot){ k.insegue=v.id; k.insegueFine=this.t+25; } }
       return;
     }
     v.vivo=false; v.fantasma=true; v.protettoDa=null; v.path=[]; v.meta=null; v.attesa=0; v.segnala=null; v.ripara=null; v.veleno=null; v.rianima=null;
@@ -895,11 +924,14 @@ class Partita {
     if(v.mod==='celebrita') this.celebri.push({ id:v.id, stanza:c.stanza, t:this.t });
     if(modo==='normale' && k.bot){ k.dopoSpegni=true; k.path=[]; k.meta=null; k.autoSegnala=rnd()<.3; }   // un'ombra su tre fa finta di trovarla lei
     if(modo==='normale'){
-      const neb=this.nebbiaAttiva(), visto=this.travestito(k)||k.id;
+      const neb=this.nebbiaAttiva(), travest=this.travestito(k);
       for(const o of this.gioc){
         if(!o.bot||!o.vivo||o===k||o.squadra==='ombre') continue;
         if(dist(o,k)<=this.vista(o) && vede(this.M,o.x,o.y,k.x,k.y)){
+          // chi ha visto con i suoi occhi la trasformazione sa chi è davvero; gli altri vedono il travestimento
+          const visto = travest && !(this.t-(o.vistoTrasf[k.id]||-99) <= this.imp.trasformista.durata+1) ? travest : k.id;
           if(neb) o.mem.nebbia={ vittima:v.id };
+          else if(visto===o.id) o.mem.copia={ vittima:v.id };   // vede uno identico a sé che spegne qualcuno: c'è un Mutaforma, ma non sa chi è
           else { o.mem.testimone={ killer:visto, vittima:v.id, stanza:c.stanza }; o.sosp[visto]=(o.sosp[visto]||0)+100; }
           if(o.segnala==null){ o.segnala=0.7+rnd()*0.6; o.corpoVisto=c; }
         }
@@ -1006,6 +1038,7 @@ class Partita {
     if(this.fase==='esito'){ if(this.t>=this.fineFase) this.dopoEsito(); return; }
   }
   passoGioco(dt){
+    if(this.codaBot && this.codaBot.length) this.botRispondono();
     for(const g of this.gioc){ if(g.cd>0) g.cd-=dt; if(g.cdA>0) g.cdA-=dt; if(g.cdF>0) g.cdF-=dt; }
     if(this.cdBuio>0) this.cdBuio-=dt;
     if(this.buio && this.t>this.buio.fine) this.fineBuio(false);
@@ -1061,7 +1094,7 @@ class Partita {
   pulisci(p, corpoId){
     const c=this.corpi.find(k=>k.id===corpoId);
     if(!c || !p.vivo || p.cdA>0 || !this.vicino(p,c.x,c.y,R_ABIL)) return;
-    this.corpi=this.corpi.filter(k=>k!==c); p.cdA=this.imp.spazzino.ricarica; p.cd=Math.max(p.cd, this.imp.ricarica); this.priv(p); this.segna();
+    this.corpi=this.corpi.filter(k=>k!==c); p.cdA=this.imp.spazzino.ricarica; p.cd=Math.max(p.cd, this.imp.ricarica); this.priv(p); this.segna(); this.noto(p,'spazzino');
     this.fx('sparisce', c.x, c.y);
   }
   riaccendi(r, corpoId){
@@ -1071,7 +1104,7 @@ class Partita {
     this.corpi=this.corpi.filter(k=>k!==c);
     v.vivo=true; v.fantasma=false; this.priv(v); this.teletrasporta(v, c.x, c.y);
     this.avviso(v, `${r.nome} ti ha riacceso: sei di nuovo in gioco!`); this.avviso(r, `Hai riacceso la lanterna di ${v.nome}.`);
-    this.fx('rianima', c.x, c.y); this.segna();
+    this.fx('rianima', c.x, c.y); this.segna(); this.noto(r,'rianimatore');
   }
 
   /* ----- bot ----- */
@@ -1081,6 +1114,7 @@ class Partita {
     b.meta=meta; b.path=liscia(this.M,p,b.x,b.y);
   }
   preda(b){
+    if(b.insegue && this.t<b.insegueFine){ const g=this.per(b.insegue); if(g && g.vivo && dist(g,b)<26*T) return g; }
     const cand=this.gioc.filter(p=>p.vivo&&p.squadra!=='ombre'&&dist(p,b)<26*T);
     if(!cand.length) return null;
     const solo=p=>this.gioc.filter(q=>q!==p&&q.vivo&&q.squadra!=='ombre'&&dist(p,q)<6*T).length;
@@ -1089,7 +1123,7 @@ class Partita {
   }
   scegliMeta(b){
     if(b.ripara && b.vivo && this.lavoroAttivo(b.ripara)){ const st=STAZ_RIP[b.ripara]; this.vaiA(b, st.tx, st.ty, {tipo:'ripara', cosa:b.ripara}); return; }
-    if(b.squadra==='ombre' && b.vivo && b.cd<=0 && rnd()<.55){ const p=this.preda(b); if(p){ this.vaiA(b, tX(this.M,p.x), tY(this.M,p.y), {tipo:'caccia', id:p.id}); b.ricalcola=1.2; b.cacciaFine=this.t+12; return; } }
+    if(b.squadra==='ombre' && b.vivo && b.cd<=0 && (this.t<b.insegueFine || rnd()<.55)){ const p=this.preda(b); if(p){ this.vaiA(b, tX(this.M,p.x), tY(this.M,p.y), {tipo:'caccia', id:p.id}); b.ricalcola=1.2; b.cacciaFine=this.t+12; return; } }
     if(b.dopoSpegni){ b.dopoSpegni=false;
       let bo=null, bd=7*T; for(const e of ESTREMI){ const d=Math.hypot(centro(e.tx)-b.x, centro(e.ty)-b.y); if(d<bd){ bd=d; bo=e; } }
       if(bo && rnd()<.55){ this.vaiA(b, bo.tx, bo.ty, {tipo:'botola', bo}); return; }
@@ -1109,6 +1143,7 @@ class Partita {
     const m=b.meta; if(!m) return;
     if(m.tipo==='compito'){ b.attesa=(6+rnd()*4)*(b.vivo?1:1.6); b.azione=m; }
     else if(m.tipo==='ripara'){ b.attesa=1.8; b.azione=m; }
+    else if(m.tipo==='botola' && m.prov){ b.provocaz++; this.vistoInBotola(b); this.fx('botola',b.x,b.y); b.attesa=0.6; b.azione=null; }   // il Giullare non va da nessuna parte: si fa solo vedere
     else if(m.tipo==='botola'){ this.vistoInBotola(b); this.fx('botola',b.x,b.y); b.x=centro(m.bo.va[0]); b.y=centro(m.bo.va[1]); b.attesa=0.3+rnd()*0.6; b.azione=null; }
     else if(m.tipo==='giro'){ b.attesa=1.5+rnd()*3; b.azione=null; }
     else if(m.tipo==='campana'){ b.meta=null; if(b.vivo && b.campane>0 && this.vicino(b,centro(CAMPANA.tx),centro(CAMPANA.ty),R_USA)){ b.campane--; this.iniziaRiunione({ tipo:'campana', da:b.id }); } return; }
@@ -1147,17 +1182,77 @@ class Partita {
     v.protettoDa=p.id; p.cdF=this.imp.fantasmi.ricarica; this.priv(p); this.segna();
     this.avviso(p, `Proteggi ${v.nome}: se ci provano, lo saprai.`); this.fx('scudo', v.x, v.y, { solo:p.id });
   }
-  // la chat di prossimità (durante il gioco): i vivi si leggono da vicino, le anime leggono tutto e parlano solo tra loro
+  // la chat di prossimità (nell'atrio e nel gioco; in riunione c'è la sua chat): l'host manda il fumetto SOLO a chi lo può sentire,
+  // con un messaggio privato a testa. I vivi si sentono da vicino (a vista, o da molto vicino attraverso un muro, più piano);
+  // le anime sentono tutti e parlano solo tra loro.
   parla(p, testo){
-    if((this.fase!=='gioco' && this.fase!=='atrio') || p.inBotola!=null || this.t-(p.tParla||-9)<1.5) return;
-    testo=String(testo||'').replace(/\s+/g,' ').trim().slice(0,60); if(!testo) return;
+    if((this.fase!=='gioco' && this.fase!=='atrio') || p.uscito || p.inBotola!=null || this.t-p.tParla<T_PARLA) return;
+    testo=pulisciTesto(testo); if(!testo) return;
     p.tParla=this.t;
-    const msg={ t:'bolla', id:p.id, testo };
+    this.emetti(p, testo);
+    this.rispondonoBot(p, testo);
+  }
+  // quanto «q» sente ciò che dice «p»: 0 niente · 1 forte · 2 attutito (attraverso un muro, da molto vicino)
+  sentePar(p,q){
+    if(q===p) return 1;
+    if(!p.vivo) return q.vivo ? 0 : 1;
+    if(!q.vivo) return 1;
+    const d=dist(p,q); if(d>R_PARLA) return 0;
+    if(vede(this.M,p.x,p.y,q.x,q.y)) return 1;
+    return d<=R_MURO ? 2 : 0;
+  }
+  // il fumetto di «p» (una persona o un Bot) a chi lo sente: un messaggio privato per ognuno, mai a tutti.
+  // «c»: se è travestito, chi sembra; «a»: lo dice un'anima; «w»: lo sente attutito
+  emetti(p, testo){
+    const base={ t:'bolla', id:p.id, testo, n:this.nParla=(this.nParla||0)+1 }, tr=this.travestito(p);
+    if(tr) base.c=tr;
+    if(!p.vivo) base.a=1;
     for(const q of this.gioc){
       if(q.bot||q.uscito) continue;
-      const sente = p.vivo ? (!q.vivo || Math.hypot(q.x-p.x,q.y-p.y)<=R_PARLA) : !q.vivo;
-      if(sente) this.ev.privato(q.id, msg);
+      const k=this.sentePar(p,q); if(!k) continue;
+      const m=Object.assign({}, base); if(k===2) m.w=1;
+      this.ev.privato(q.id, m);
     }
+  }
+  // ogni tanto un Bot vicino risponde a una persona che ha scritto: poco, breve, e solo con quello che sa
+  rispondonoBot(p, testo){
+    if(this.fase!=='gioco' || this.saletta || !p.vivo || p.bot || this.t<(this.botParlaDopo||0)) return;
+    const cand=this.gioc.filter(b=>b.bot&&b.vivo&&!b.uscito&&b.inBotola==null&&!b.controllatoDa&&b.bloccatoFine<=this.t&&this.t>=(b.tBotParla||0)&&dist(b,p)<=R_RISPOSTA&&vede(this.M,b.x,b.y,p.x,p.y));
+    if(!cand.length) return;
+    const b=cand.sort((x,y)=>dist(x,p)-dist(y,p))[0], s=normChat(testo), nominato=s.includes(normChat(b.nome)), chiede=/ (\?|ciao|ehi|salve|hey) /.test(s);
+    if(rnd()>=(nominato ? 0.8 : chiede ? 0.45 : 0.1)) return;
+    b.tBotParla=this.t+30; this.botParlaDopo=this.t+9;
+    (this.codaBot=this.codaBot||[]).push({ t:this.t+1.1+rnd()*1.4, b:b.id, p:p.id, s, nominato });
+  }
+  // le risposte dei Bot arrivate al momento (ricontrollando che siano ancora vicini e vivi)
+  botRispondono(){
+    const coda=this.codaBot; if(!coda || !coda.length) return;
+    for(let i=coda.length-1;i>=0;i--){
+      const e=coda[i]; if(e.t>this.t) continue;
+      coda.splice(i,1);
+      const b=this.per(e.b), p=this.per(e.p);
+      if(!b||!p||!b.vivo||!p.vivo||b.uscito||p.uscito||b.inBotola!=null||b.bloccatoFine>this.t||dist(b,p)>R_PARLA||!vede(this.M,b.x,b.y,p.x,p.y)) continue;
+      const frase=this.fraseBot(b,p,e.s,e.nominato); if(frase) this.emetti(b, frase);
+    }
+  }
+  // cosa dice un Bot a chi gli ha scritto: frasi corte, in base a quello che chiede e a quello che il Bot sa davvero
+  // (le ombre fingono: non dicono mai la verità sui compagni)
+  fraseBot(b, p, s, nominato){
+    const ombra=b.squadra==='ombre', ha=re=>re.test(s), stanza=stanzaDi(this.M,b).in;
+    if(nominato && ha(/ (sospett|ombra|bugiard|ment|strano|strana|spegn|uccid|botol|colpevol) /)) return ombra ? pick(['Io? Ma se sono qui con i compiti!','Io? Hai preso un granchio.']) : `Io? Ero ${stanza}, non ho fatto niente.`;
+    if(ha(/ (dove|dov) /)) return `Io sono ${stanza}.`;
+    if(ha(/ (sospett\w*|ombr\w+|vist[oa]|stran[oa]|chi (e|è) stato|chi ha|chi hai) /)){
+      const vivi=this.gioc.filter(q=>q.vivo&&!q.uscito&&q!==b&&q!==p);
+      if(ombra){ const buoni=vivi.filter(q=>q.squadra!=='ombre'); return rnd()<.5 && buoni.length ? `Io terrei d'occhio ${pick(buoni).nome}.` : 'Non ho visto niente di strano.'; }
+      const t=b.mem.testimone, K=t&&this.per(t.killer); if(K && K.vivo && K!==b) return `Ho visto ${K.nome} spegnere una lanterna ${t.stanza}!`;
+      const bo=b.mem.botola, B=bo&&this.per(bo.id); if(B && B.vivo && B!==b) return `Ho visto ${B.nome} uscire da una botola ${bo.stanza}.`;
+      const forte=vivi.filter(q=>(b.sosp[q.id]||0)>=25).sort((x,y)=>(b.sosp[y.id]||0)-(b.sosp[x.id]||0))[0];
+      return forte ? `Io terrei d'occhio ${forte.nome}.` : pick(['Non ho visto niente di strano.','Per ora niente di strano.']);
+    }
+    if(ha(/ (che fai|cosa fai|tutto ok|tutto bene|come va) /)) return pick(['Faccio i miei compiti.','Tutto bene, giro e faccio i compiti.']);
+    if(ha(/ (aiuto|serve|vieni|seguimi|con me) /)) return pick(['Ora ho i miei compiti.','Non posso, ho i miei compiti.']);
+    if(ha(/ (ciao|ehi|ehila|salve|hey|buonasera) /)) return pick(['Ciao!','Ehi, ciao.','Ciao, tutto bene?']);
+    return nominato ? 'Dimmi.' : pick(['Ok.','Va bene.','Tutto tranquillo qui.','Boh, qui niente.']);
   }
   // le botole: si entra (e si resta nascosti), ci si sposta tra quelle collegate restando dentro, si esce da quella in cui si è.
   // Ombre e Ingegnere viaggiano; il Giullare entra, resta ed esce dalla stessa.
@@ -1176,8 +1271,16 @@ class Partita {
   // chi esce da una botola davanti a un ospite si fa vedere
   vistoInBotola(p){
     const id=this.travestito(p)||p.id;
+    if(this.nebbiaAttiva()) return;   // nella nebbia nessuno riconosce chi è
     for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p||o.squadra==='ombre') continue;
-      if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)){ o.sosp[id]=(o.sosp[id]||0)+80; o.mem.botola={ id, stanza:stanzaDi(this.M,p).in }; } }
+      // chi lo vede se lo ricorda e ne parlerà in riunione; correre a suonare la campana lo fa solo 7 volte su 10, dopo un attimo di incredulità
+      if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)){ o.sosp[id]=(o.sosp[id]||0)+80; o.mem.botola={ id, stanza:stanzaDi(this.M,p).in, suona:rnd()<.7, quando:this.t+0.8+rnd()*1.7 }; } }
+  }
+  campioneVivo(b){ const c=b.campione ? this.per(b.campione) : null; return !!(c && c.vivo); }
+  // i Bot ricordano chi hanno visto usare un potere che si vede (serve all'Indovino per non tirare a caso)
+  noto(p, ruolo){
+    for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p||o.ruolo!=='indovino') continue;
+      if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)) o.noti[p.id]=ruolo; }
   }
   testimoni(k,v){
     let n=0;
@@ -1187,7 +1290,9 @@ class Partita {
   pensaBot(b){
     const rv=this.vista(b);
     // cosa vede: l'ultima volta di ognuno, e una storia corta (una voce al secondo a testa, 45 secondi) per ragionare in riunione
-    for(const p of this.gioc){ if(p===b||!p.vivo) continue; if(dist(b,p)<=rv && vede(this.M,b.x,b.y,p.x,p.y)){ const id=this.travestito(p)||p.id; b.visti[id]={ t:this.t, x:p.x, y:p.y };
+    // (nella nebbia tutti sono grigi e senza nome: nessuno si ricorda chi ha visto)
+    if(!this.nebbiaAttiva()) for(const p of this.gioc){ if(p===b||!p.vivo) continue; if(dist(b,p)<=rv && vede(this.M,b.x,b.y,p.x,p.y)){ const id=this.travestito(p)||p.id; b.visti[id]={ t:this.t, x:p.x, y:p.y };
+      if(p.segnato && b.squadra!=='ombre') b.sosp[p.id]=Math.max(b.sosp[p.id]||0, 100);   // l'alone rosso del Vendicatore: chi lo porta ha spento qualcuno
       if(b.squadra!=='ombre' && this.t-(b.ultimaStoria[id]||-9)>=1){ b.ultimaStoria[id]=this.t; b.storia.push([this.t, id, p.x, p.y]); } } }
     if(b.storia.length>40 && b.storia[0][0]<this.t-45){ let i=0; while(i<b.storia.length && b.storia[i][0]<this.t-45) i++; b.storia.splice(0,i); }
     // l'Avvoltoio sente le lanterne spente (ha la freccia): ci va dritto
@@ -1218,7 +1323,7 @@ class Partita {
       }
     }
     // ha visto spegnere qualcuno o uscire da una botola, ma la lanterna spenta non c'è più da segnalare: va a suonare la campana
-    if(b.squadra!=='ombre' && b.campane>0 && (b.mem.testimone||b.mem.botola) && b.segnala==null && !b.ripara && !(b.meta&&b.meta.tipo==='campana'))
+    if(b.squadra!=='ombre' && b.campane>0 && (b.mem.testimone || (b.mem.botola && b.mem.botola.suona && this.t>=b.mem.botola.quando)) && b.segnala==null && !b.ripara && !(b.meta&&b.meta.tipo==='campana'))
       this.vaiA(b, CAMPANA.tx, CAMPANA.ty, {tipo:'campana'});
     if(this.sabAttivo() && b.squadra!=='ombre') this.assegnaRiparatori();
     if(b.ruolo==='portiere' && !b.portineria && b.cdA<=0 && rnd()<.05) this.abilita(b, Math.floor(rnd()*PALAZZO.stanze.length));
@@ -1238,6 +1343,13 @@ class Partita {
       const p=this.bersaglio(b,R_ABIL,q=>(b.sosp[q.id]||0)>=80);
       if(p && rnd()<.5){ this.abilita(b,p.id); if(this.fase!=='gioco') return; }
     }
+    // il Mutaforma campiona chiunque gli passi vicino e si tiene il campione fino a che è vivo: poi, con qualcuno intorno, si trasforma e la colpa va a quello
+    if(b.ruolo==='trasformista' && !this.campioneVivo(b)){ const q=this.bersaglio(b,R_ABIL,x=>x.squadra!=='ombre'); if(q) this.abilita(b,q.id); }
+    // il Giullare Bot vuole farsi cacciare, ma con misura: ogni tanto esce da una botola sotto gli occhi di qualcuno (poche volte a partita)
+    if(b.ruolo==='giullare' && b.provocaz<PROV_GIULLARE && this.t>40 && !(b.meta&&b.meta.tipo==='botola') && rnd()<.03){
+      const e=ESTREMI.find(x=>Math.hypot(centro(x.tx)-b.x, centro(x.ty)-b.y)<6*T);
+      if(e && this.gioc.some(o=>o!==b&&o.vivo&&o.squadra!=='ombre'&&dist(o,b)<=this.vista(o)&&vede(this.M,o.x,o.y,b.x,b.y))) this.vaiA(b, e.tx, e.ty, {tipo:'botola', bo:e, prov:true});
+    }
     if(b.squadra==='ombre'){
       if(b.ruolo==='silenziatore' && b.cdA<=0 && rnd()<.15){ const p=this.bersaglio(b,R_ABIL,q=>q.squadra!=='ombre'&&!q.zittito); if(p) this.abilita(b,p.id); }
       if(b.ruolo==='ipnotista' && b.cdA<=0 && rnd()<.1){ const p=this.bersaglio(b,R_ABIL,q=>q.squadra!=='ombre'); if(p) this.abilita(b,p.id); }
@@ -1245,8 +1357,9 @@ class Partita {
         const v=this.bersaglio(b,R_SPEGNI,p=>p.squadra!=='ombre');
         if(v){
           const t=this.testimoni(b,v);
-          if(b.ruolo==='trasformista' && !b.campione){ const altro=this.bersaglio(b,R_ABIL,q=>q!==v&&q.squadra!=='ombre'); if(altro) this.abilita(b,altro.id); }
-          if(b.ruolo==='trasformista' && b.campione && b.cdA<=0 && t<=1) this.abilita(b,null);
+          if(b.ruolo==='trasformista' && this.campioneVivo(b) && b.cdA<=0 && t<=1) this.abilita(b,null);
+          // il veleno non si vede: l'Avvelenatore lo dà anche con una o due persone intorno, che non sapranno mai cos'è successo
+          if(b.ruolo==='avvelenatore' && t<=2 && !v.veleno && rnd()<.65){ this.provaSpegni(b,v); return; }
           if(t===0 && rnd()<.65){ this.provaSpegni(b,v); return; }
           if(t<=1 && (this.nebbiaAttiva()||this.travestito(b)) && rnd()<.7){ this.provaSpegni(b,v); return; }
           if(t<=1 && b.ruolo==='nebbia' && b.cdA<=0 && !this.nebbiaAttiva()) this.abilita(b,null);
@@ -1281,7 +1394,7 @@ class Partita {
     const avvelenati=[];
     for(const p of this.gioc){ if(p.veleno && p.vivo){ const k=this.per(p.veleno.da)||p; p.veleno=null; this.spegni(k,p,'veleno'); if(!p.vivo) avvelenati.push(p); } }
     if(this.vincitore) return;
-    this.fase='riunione';
+    this.fase='riunione'; this.codaBot=[];   // (in riunione la chat di prossimità è spenta: le risposte dei Bot in attesa cadono)
     const R={ motivo:m.tipo, da:m.da, corpo:m.corpo!=null?m.corpo:null, stanza:m.stanza||null, t:0, t0:this.t, disc:this.imp.discussione, voto:this.imp.voto, voti:new Map(), coda:[], chiusa:false,
       zittiti:this.gioc.filter(p=>p.vivo&&p.zittito).map(p=>p.id) };
     this.riu=R; this.chat=[]; this.esito=null;
@@ -1308,7 +1421,7 @@ class Partita {
     this.gioc.forEach(p=>{ if(p.controllo) this.fineControllo(p); p.ripara=null; });
     this.gioc.forEach(p=>{ p.path=[]; p.meta=null; p.attesa=0; p.azione=null; p.muove=false; p.veleno=null; p.rianima=null; p.aspetto=null; p.bloccatoFine=0; p.inBotola=null;
       p.tentativi = p.ruolo==='indovino' ? this.imp.indovino.perRiunione : 0; p.osserva=false; this.priv(p); });
-    for(const b of this.gioc.filter(q=>q.bot&&q.vivo&&q.ruolo==='indovino')) if(rnd()<.6) R.coda.push({ t:3+rnd()*Math.max(4,R.disc), chi:b, az:()=>this.indovinaBot(b) });
+    for(const b of this.gioc.filter(q=>q.bot&&q.vivo&&q.ruolo==='indovino')) if(rnd()<.9) R.coda.push({ t:3+rnd()*Math.max(4,R.disc), chi:b, az:()=>this.indovinaBot(b) });
     R.coda.sort((a,b)=>a.t-b.t);
     this.segna();
   }
@@ -1340,6 +1453,13 @@ class Partita {
   frasiBot(b,m){
     const out=[], crewVivi=()=>this.gioc.filter(p=>p.vivo&&p!==b&&p.squadra!=='ombre');
     if(b.ruolo==='sindaco' && !b.rivelato && rnd()<.5) out.push({ testo:'Mi rivelo: sono il Sindaco.', az:()=>this.rivela(b) });
+    // quando la partita è sul filo (un'ombra in più e vincono loro) gli ospiti con un ruolo si dichiarano per aiutare a votare giusto
+    // (negli altri momenti qualcuno lo fa lo stesso, ogni tanto: 1 volta su 10)
+    if(b.squadra==='ospiti' && b.ruolo!=='ospite' && b.ruolo!=='sindaco' && !this.dichiarati[b.id]){
+      const om=this.ombreNote(), altri=this.gioc.filter(p=>p.vivo).length-om;
+      if(altri<=om+1 ? rnd()<.8 : rnd()<.1){ const nome=RUOLI[b.ruolo].nome, art = ['spia','sentinella','vedetta'].includes(b.ruolo) ? 'la' : /^[aeiou]/i.test(nome) ? "l'" : 'il ';
+        out.push({ testo:`Sono ${art}${art==='la'?' ':''}${nome}.`, eff:()=>{ this.dichiarati[b.id]=b.ruolo; } }); }
+    }
     if(b.squadra==='ombre'){
       const cv=crewVivi(), soci=this.gioc.filter(p=>p.vivo&&p!==b&&p.squadra==='ombre');
       // un socio nei guai: a volte lo copre
@@ -1352,13 +1472,22 @@ class Partita {
     }
     if(b.mem.testimone){ const t=b.mem.testimone, K=this.per(t.killer); if(K && K.vivo) out.push({ testo:`Ho visto ${K.nome} spegnere la lanterna di ${this.nomeDi(t.vittima)} ${t.stanza}!`, eff:()=>this.sospetta(K,55,b) }); }
     else if(b.mem.nebbia) out.push({ testo:`C'era qualcuno vicino a ${this.nomeDi(b.mem.nebbia.vittima)}, ma con la nebbia erano tutti grigi.` });
+    else if(b.mem.copia) out.push({ testo:`Ho visto uno identico a me spegnere la lanterna di ${this.nomeDi(b.mem.copia.vittima)}: qui c'è un Mutaforma!` });
     if(b.mem.botola){ const K=this.per(b.mem.botola.id); if(K && K.vivo) out.push({ testo:`Ho visto ${K.nome} uscire da una botola ${b.mem.botola.stanza}!`, eff:()=>this.sospetta(K,45,b) }); }
     const vic=(b.mem.vicini||[]).map(id=>this.per(id)).filter(Boolean).slice(0,2);
-    if(vic.length && (m.da===b.id || rnd()<.6)) out.push({ testo: m.da===b.id ? `Poco prima lì vicino c'era ${elenco(vic.map(p=>p.nome))}.` : `Ho visto ${elenco(vic.map(p=>p.nome))} da quelle parti poco prima.`, eff:()=>vic.forEach(p=>{ this.sospetta(p, m.da===b.id?18:14, b); if(vic.length===1) this.rispostaBot(p,false); }) });
+    if(vic.length && (m.da===b.id || rnd()<.6)){
+      const nomi=elenco(vic.map(p=>p.nome)), ruoloDetto = b.ruolo==='investigatore' && rnd()<.5 ? 'investigatore' : b.ruolo==='vedetta' && rnd()<.5 ? 'vedetta' : null;
+      const testo = ruoloDetto==='investigatore' ? `Sono l'Investigatore: le orme di ${nomi} stavano lì vicino.` : ruoloDetto==='vedetta' ? `Sono la Vedetta: da lontano ho visto ${nomi} da quelle parti.`
+        : m.da===b.id ? `Poco prima lì vicino c'era ${nomi}.` : `Ho visto ${nomi} da quelle parti poco prima.`;
+      out.push({ testo, eff:()=>{ if(ruoloDetto) this.dichiarati[b.id]=ruoloDetto; vic.forEach(p=>{ this.sospetta(p, m.da===b.id?18:14, b); if(vic.length===1) this.rispostaBot(p,false); }); } });
+    }
     const ali=(b.mem.alibi||[]).map(id=>this.per(id)).filter(p=>p && (b.sosp[p.id]||0)<20);
     if(ali.length && rnd()<.5){ const p=pick(ali); out.push({ testo:`${p.nome} era sotto i miei occhi, lontano da lì: non è stato lui.`, eff:()=>this.sospetta(p,-14,b) }); }
     for(const x of b.mem.puliti.slice(0,1)){ const p=this.per(x.id); if(p && p.vivo) out.push({ testo:`Ho visto ${p.nome} ${FRASI_COMPITO[x.v]}: per me è pulito.`, eff:()=>this.sospetta(p,-25,b) }); }
     if(b.ruolo==='veggente') for(const r of b.mem.controlli){ const p=this.per(r.id); if(p) out.push({ testo: r.ok ? `Ho letto ${p.nome}: è dei buoni.` : `Ho letto ${p.nome}: è dei cattivi!`, eff:()=>{ this.dichiarati[b.id]='veggente'; this.sospetta(p, r.ok?-25:45, b); } }); }
+    if(b.ruolo==='sceriffo' && b.mem.sparato && rnd()<.8){ const x=this.per(b.mem.sparato.id); if(x) out.push({ testo:`Sono lo Sceriffo: ho spento ${x.nome}, ${b.mem.sparato.ombra?"era un'ombra":'non era dei buoni'}.`, eff:()=>{ this.dichiarati[b.id]='sceriffo'; } }); }
+    if(b.ruolo==='medico' && b.mem.scudoRotto && rnd()<.7){ const x=this.per(b.mem.scudoRotto); if(x) out.push({ testo:`Sono il Medico: proteggevo ${x.nome} e qualcuno ha provato a spegnerlo.`, eff:()=>{ this.dichiarati[b.id]='medico'; } }); }
+    if(b.ruolo==='bracconiere' && b.trapRuoli && rnd()<.7){ const r=b.trapRuoli; b.trapRuoli=null; out.push({ testo:`Sono il Bracconiere: nella mia trappola sono passati ${elenco(r)}.`, eff:()=>{ this.dichiarati[b.id]='bracconiere'; } }); }
     if(b.ruolo==='accusatore' && b.bersaglio){ const p=this.per(b.bersaglio); if(p && p.vivo) out.push({ testo:pick([`Io di ${p.nome} non mi fido per niente.`,`${p.nome} si muove in modo strano.`,`Secondo me è ${p.nome}.`]), eff:()=>this.sospetta(p,15,b) }); }
     if(b.ruolo==='giullare' && rnd()<.4) out.push({ testo:pick(['Io? Ero a farmi gli affari miei.','Guardate pure me, non ho niente da nascondere. Forse.','Che sguardi. Sembra che abbiate già deciso.']), eff:()=>this.sospetta(b,6,b) });
     if(!out.length) out.push({ testo: rnd()<.55 ? `Io ero ${stanzaDi(this.M,b).in}.` : pick(['Io non ho visto niente.','Ho fatto i miei compiti, tutto tranquillo.','Non ho prove, per ora salto.']) });
@@ -1434,14 +1563,17 @@ class Partita {
   }
   indovinaBot(b){
     const cand=this.gioc.filter(q=>q.vivo&&q!==b); if(!cand.length) return;
-    // chi ha detto in pubblico il suo ruolo (il Sindaco che si rivela, chi racconta cosa ha letto) è il primo da provare
-    const dich=cand.filter(q=>this.dichiarati[q.id] && !(b.provati||[]).includes(q.id));
-    if(dich.length){ const q=pick(dich); (b.provati=b.provati||[]).push(q.id); this.indovina(b, q.id, this.dichiarati[q.id]); return; }
-    // senza un ruolo detto in pubblico tira a indovinare solo se sbagliare non costa, o se di qualcuno è quasi sicuro
+    // prova solo con un buon motivo: un ruolo detto in pubblico (il Sindaco che si rivela, chi racconta cosa ha fatto)
+    // o un potere che ha visto usare con i suoi occhi (Sceriffo che spara, Bengala acceso)
+    const sa=q=>this.dichiarati[q.id]||b.noti[q.id];
+    const buoni=cand.filter(q=>sa(q) && !(b.provati||[]).includes(q.id));
+    if(buoni.length){ const q=pick(buoni); (b.provati=b.provati||[]).push(q.id); this.indovina(b, q.id, sa(q)); return; }
+    // senza un buon motivo, se sbagliare costa la lanterna sta zitto: tra una trentina di ruoli tirare a caso è una condanna
+    if(this.imp.indovino.sbaglia==='muore') return;
     cand.sort((x,y)=>(b.sosp[y.id]||0)-(b.sosp[x.id]||0));
-    const forte=cand[0], sos=b.sosp[forte.id]||0, gratis=this.imp.indovino.sbaglia!=='muore';
-    if(sos>=60 && (gratis || rnd()<.5)) this.indovina(b, forte.id, 'ombra');
-    else if(gratis && rnd()<.6) this.indovina(b, pick(cand).id, 'ospite');
+    const forte=cand[0];
+    if((b.sosp[forte.id]||0)>=60) this.indovina(b, forte.id, 'ombra');
+    else if(rnd()<.6) this.indovina(b, pick(cand).id, 'ospite');
   }
   peso(id){ const p=this.per(id); if(!p) return 1; return (p.ruolo==='sindaco' && p.rivelato ? 2 : 1) + (p.mod==='ago' ? 0.01 : 0); }
   imita(p, id){
@@ -1469,7 +1601,7 @@ class Partita {
     if(b.squadra==='ombre'){ let bv=28; for(const p of cand){ if(p.squadra==='ombre') continue; const v=(this.pub[p.id]||0)+this.votiPer(p.id)*12; if(v>bv){ bv=v; scelta=p; } } }
     else if(b.ruolo==='giullare') scelta = rnd()<.35 ? pick(cand) : null;
     else if(b.ruolo==='accusatore'){ const x=this.per(b.bersaglio); scelta = x && x.vivo ? x : null; }
-    else { let bv = critico ? 2 : 30; for(const p of cand){ const v=(b.sosp[p.id]||0)+this.votiPer(p.id)*(critico?14:6)+rnd()*6; if(v>bv){ bv=v; scelta=p; } } }
+    else { let bv = critico ? 2 : SOGLIA_VOTO; for(const p of cand){ const v=(b.sosp[p.id]||0)+this.votiPer(p.id)*(critico?14:6)+rnd()*6; if(v>bv){ bv=v; scelta=p; } } }
     this.riu.voti.set(b.id, scelta?scelta.id:'salta'); this.segna();
   }
   passoRiunione(dt){
@@ -1535,15 +1667,26 @@ class Partita {
 const PEZZO = 8;   // caselle per lato di un pezzo di pavimento
 const TELE = new Map(); let telePx = 0;
 const TELE_MAX = 20e6;    // pixel in tutto (circa 80 MB): oltre, si buttano le tele usate meno di recente
-function prendi(chiave, fare){
-  let e = TELE.get(chiave);
-  if(e){ TELE.delete(chiave); TELE.set(chiave, e); return e; }
-  e = fare() || { cv:null, px:0 }; e.nuovo = true;
+// una voce nuova nella cache (tela disegnata o immagine arrivata dalla rete); se si supera il tetto, escono le più vecchie
+function metti(chiave, e){
   TELE.set(chiave, e); telePx += e.px;
   for(const [k, v] of TELE){
     if(telePx <= TELE_MAX || k === chiave) break;
     TELE.delete(k); telePx -= v.px; if(v.cv){ v.cv.width = 0; v.cv.height = 0; }
+    if(v.libera) v.libera();   // le immagini: si segna che vanno riscaricate se servono ancora
   }
+}
+function prendi(chiave, fare){
+  let e = TELE.get(chiave);
+  if(e){ TELE.delete(chiave); TELE.set(chiave, e); return e; }
+  e = fare() || { cv:null, px:0 }; e.nuovo = true;
+  metti(chiave, e);
+  return e;
+}
+// una voce già in cache, senza farla (e rimessa in fondo alla coda: è appena stata usata)
+function cerca(chiave){
+  const e = TELE.get(chiave);
+  if(e){ TELE.delete(chiave); TELE.set(chiave, e); }
   return e;
 }
 
@@ -2253,9 +2396,224 @@ function pezzo(M, i, j, res, soloSePronto){
 function anticipa(M, i0, j0, i1, j1, res){
   const ni = Math.ceil(M.GW/PEZZO), nj = Math.ceil(M.GH/PEZZO);
   for(let j = Math.max(0, j0); j <= Math.min(nj - 1, j1); j++) for(let i = Math.max(0, i0); i <= Math.min(ni - 1, i1); i++){
+    if(immCopre(M, i, j)) continue;   // c'è (o sta arrivando) l'immagine di Blender: il pezzo a codice non serve
     if(!TELE.has('P|' + M.nome + '|' + i + ',' + j + '|' + res)){ pezzo(M, i, j, res).nuovo = false; return true; }
   }
   return false;
+}
+
+// ── Il palazzo reso in Blender: immagini al posto del disegno a codice ──
+// Il disegno a codice resta come riserva: con l'interruttore spento, o se l'indice o un'immagine non arrivano (rete, file che manca),
+// si usa il disegno di sempre, pezzo per pezzo. Le immagini si scaricano solo quando servono: i pezzi sullo schermo e quelli appena fuori.
+// Cartella (relativa alla pagina, come carte/giochi/ di SPeeD GAME): carte/lanterne/<mappa>/, con <mappa> = palazzo o atrio.
+// Il formato vero (quello che consegna Blender, vedi LEGGIMI.txt del SanDisk), letto da immLeggi:
+//   indice.json          { px_per_casella:64, pezzi:['p_5_4', ...],
+//                          mobili:[{ k, tipo, x, y, w, h (caselle), extra, file, rect:{ x, y, w, h } (pixel) }, ...],
+//                          animati:{ barca:{ file, rect, centro:[x, y], perno:[x, y] }, campana:{...}, ruota:{..., raggio} } }
+//     · extra:false → è il mobile k di M.ostacoli (stesso ordine della mappa); file 'mobili/<k>.webp'
+//     · extra:true  → oggetto di scena (sedia, vaso, lampione, sostegno della campana...): k è null, file 'mobili/x<n>.webp'.
+//                     Non è un ostacolo e sta già nel fondo: il ritaglio serve solo a coprire chi passa dietro. Si ordina per profondità
+//                     come i mobili, con la base nel bordo sud dell'impronta: (y + h) caselle.
+//     · (vecchia forma, ancora letta) mobili:{ '<k>':[x, y, larg, alt] } e extra:[{ f, rett, base }]
+//   p_<i>_<j>.webp       pezzo di 512×512 (8×8 caselle a 64 px per casella): caselle 8i…8i+7 e 8j…8j+7
+//   mobili/<k>.webp      ritaglio con alfa del mobile k di M.ostacoli
+//   animati/<nome>.webp  barca (dondola), campana (oscilla), ruota (gira col compito): NON stanno nel fondo, le muove il gioco
+// Nell'indice tutti i pixel sono a 64 px per casella, dall'angolo in alto a sinistra della mappa; rect è dove sta l'immagine, perno è il punto
+// attorno a cui ruota o dondola (barca: la linea dell'acqua; campana: il giogo; ruota: il centro).
+// Il gioco è a 32 px per casella: le immagini si disegnano scalate a metà (sugli schermi ad alta densità restano nitide).
+// (Non usare imageSmoothingQuality='high': provato a CPU ×4, i fotogrammi passano da 60 a 8-12 al secondo.)
+const IMMAGINI_PALAZZO = true;    // l'interruttore: acceso dal 30/10 col palazzo intero e la sala d'attesa (mai stanze vere mescolate a stanze disegnate)
+const IMM_VERSIONE = '2';                // da cambiare quando le immagini cambiano: il telefono non usa le vecchie
+const IMM_CARTELLA = 'carte/lanterne/';
+const IMM_IN_VOLO = 8;                   // scaricamenti insieme
+let immVolo = 0, immAcceso0;
+const immCoda = [];                      // cosa scaricare: si prende dalla fine, così quello che serve adesso passa avanti
+// con LT_PROVA, ?blender=1 accende e ?blender=0 spegne (per provare); altrimenti vale l'interruttore
+function immAcceso(){
+  if(immAcceso0 === undefined){
+    let v = IMMAGINI_PALAZZO;
+    try{ if(window.LT_PROVA){ const q = /[?&]blender=(\d)/.exec(location.search); if(q) v = q[1] === '1'; } }catch(e){}
+    immAcceso0 = v;
+  }
+  return immAcceso0;
+}
+// lo stato delle immagini di una mappa (null se la mappa non ne ha o l'interruttore è spento)
+function immMappa(M){
+  if(!immAcceso()) return null;
+  if(M._im === undefined){
+    const nome = M === PALAZZO ? 'palazzo' : M === ATRIO ? 'atrio' : null;
+    M._im = nome ? { nome, base:IMM_CARTELLA + nome + '/', stato:0, prove:0, riprova:0, quando:0, s:{}, f:{}, k:{}, sporco:true, ultQ:-1, pz:null, mobili:null, anim:null, extra:null, kk:0.5 } : null;
+  }
+  return M._im;
+}
+// stato dell'indice: 0 da scaricare · 1 in arrivo · 2 pronto · 3 non arrivato (si riprova) · 4 la mappa non ha immagini
+function immIndice(m){
+  if(m.stato === 1 || m.stato === 2 || m.stato === 4) return;
+  if(m.stato === 3 && (m.prove >= 3 || performance.now() < m.riprova)) return;
+  if(typeof fetch !== 'function' || (typeof location !== 'undefined' && location.protocol === 'file:')){ m.stato = 4; return; }   // (da file:// il browser non lascia leggere le immagini: resta il disegno a codice, senza errori in console)
+  m.stato = 1; m.prove++;
+  fetch(m.base + 'indice.json?v=' + IMM_VERSIONE).then(r => r.status === 404 ? 404 : r.ok ? r.json() : Promise.reject()).then(j => {
+    if(j === 404){ m.stato = 4; return; }
+    const ix = immLeggi(j); if(!ix){ m.stato = 4; return; }
+    m.pz = ix.pz; m.mobili = ix.mobili; m.anim = ix.anim; m.extra = ix.extra; m.kk = ix.kk; m.stato = 2; m.sporco = true;
+  }).catch(() => { m.stato = 3; m.riprova = performance.now() + 15000; });
+}
+// l'indice, letto con un po' di tolleranza (liste o oggetti), con le misure già nei pixel del gioco
+function immLeggi(j){
+  if(!j || typeof j !== 'object') return null;
+  const kk = T/(+j.pixel_per_casella || +j.px_per_casella || +j.ppc || 64);
+  // un rettangolo: [x, y, larg, alt] oppure { x, y, w, h } (anche dentro v.rect o v.rett), in pixel dell'indice → pixel del gioco
+  const rett = v => {
+    let r = Array.isArray(v) ? v : v && (v.rett || v.rect) ? (v.rett || v.rect) : v;
+    if(r && !Array.isArray(r)) r = [r.x != null ? r.x : r.px, r.y != null ? r.y : r.py, r.w != null ? r.w : r.larg, r.h != null ? r.h : r.alt];
+    return r && r.length >= 4 && r.every(n => typeof n === 'number' && isFinite(n)) ? { x:r[0]*kk, y:r[1]*kk, w:r[2]*kk, h:r[3]*kk } : null;
+  };
+  const pz = new Set();
+  (j.pezzi || []).forEach(p => {   // ogni pezzo: 'p_5_4.webp' o '5_4', oppure [5, 4], oppure { i:5, j:4 }
+    let a = null;
+    if(Array.isArray(p)) a = p; else if(p && typeof p === 'object') a = [p.i, p.j]; else { const q = /(\d+)_(\d+)/.exec(String(p)); if(q) a = [+q[1], +q[2]]; }
+    if(a && isFinite(a[0]) && isFinite(a[1]) && a[0] >= 0 && a[0] < 16) pz.add(a[1]*16 + a[0]);
+  });
+  if(!pz.size) return null;
+  const mobili = new Map(), extra = [], lista = j.mobili || [];
+  // (lista: una riga per mobile, con k e rect; oppure, nella vecchia forma, un oggetto { '<k>': [x, y, larg, alt] })
+  (Array.isArray(lista) ? lista.map((v, i) => [v && v.k != null ? +v.k : i, v]) : Object.keys(lista).map(k => [+k, lista[k]])).forEach(([k, v]) => {
+    const r = rett(v); if(!r) return;
+    if(v && !Array.isArray(v) && (v.extra === true || (v.k == null && v.file))){   // oggetto di scena: non è in M.ostacoli
+      if(!v.file) return;
+      const base = isFinite(v.y) && isFinite(v.h) ? (+v.y + +v.h)*T : r.y + r.h;   // il bordo sud dell'impronta, in pixel del gioco
+      extra.push({ f:String(v.file), x:r.x, y:r.y, w:r.w, h:r.h, base, tipo:v.tipo || '', o:{ x:+v.x, y:+v.y, w:+v.w, h:+v.h } });   // (o: l'impronta in caselle, per le parti vive)
+    } else if(isFinite(k)) mobili.set(k, r);
+  });
+  (j.extra || []).forEach(v => { const r = rett(v); if(r && v.f) extra.push({ f:String(v.f), x:r.x, y:r.y, w:r.w, h:r.h, base:(v.base != null ? v.base*kk : r.y + r.h) }); });   // (vecchia forma)
+  const anim = {}, an = j.animati || {};
+  Object.keys(an).forEach(nome => {
+    const a = an[nome], c = a && a.centro, r = rett(a); if(!c || !isFinite(c[0]) || !isFinite(c[1])) return;
+    const p = a.perno;
+    // r: dove sta l'immagine (se manca, si centra su `centro` con la misura del file); px, py: il perno (se manca, il centro)
+    anim[nome] = { cx:c[0]*kk, cy:c[1]*kk, px:p ? p[0]*kk : null, py:p ? p[1]*kk : null, r };
+  });
+  return { pz, mobili, anim, extra, kk };
+}
+// l'immagine di una voce: se è in cache la dà, se no la mette in coda (una volta sola) e dà null
+function immVoce(m, chiave, url){
+  const e = cerca(m.k[chiave] || (m.k[chiave] = 'I|' + m.nome + '|' + chiave));
+  if(e) return e.img;
+  immAccoda(m, chiave, url); immPompa();
+  return null;
+}
+function immAccoda(m, chiave, url){
+  const st = m.s[chiave];
+  if(st === 0 || st === 1 || st === 2) return;
+  if(st === 3){ const f = m.f[chiave]; if(f.n >= 3 || performance.now() - f.t < 15000) return; }
+  m.s[chiave] = 0; immCoda.push({ m, chiave, url:m.base + url + '?v=' + IMM_VERSIONE });
+}
+function immPompa(){
+  while(immVolo < IMM_IN_VOLO && immCoda.length){
+    const q = immCoda.pop(), m = q.m, chiave = q.chiave;
+    if(m.s[chiave] !== 0) continue;
+    m.s[chiave] = 1; immVolo++;
+    const im = new Image(); im.decoding = 'async';
+    const fatto = ok => {
+      immVolo--;
+      if(ok){
+        m.s[chiave] = 2; delete m.f[chiave];
+        metti(m.k[chiave] || (m.k[chiave] = 'I|' + m.nome + '|' + chiave), { img:im, px:im.naturalWidth*im.naturalHeight, libera(){ delete m.s[chiave]; m.sporco = true; } });
+      } else { m.s[chiave] = 3; const f = m.f[chiave] || (m.f[chiave] = { n:0, t:0 }); f.n++; f.t = performance.now(); }
+      immPompa();
+    };
+    im.src = q.url;
+    if(im.decode) im.decode().then(() => fatto(true), () => fatto(false)); else { im.onload = () => fatto(true); im.onerror = () => fatto(false); }
+  }
+}
+// le immagini di una mappa, se sono accese e l'indice è arrivato (se no null: si disegna a codice; l'indice parte da solo)
+function immPronta(M){
+  try{
+    const m = immMappa(M); if(!m) return null;
+    if(m.stato !== 2){ immIndice(m); return null; }
+    const ora = performance.now();
+    if(ora > m.quando){ m.quando = ora + 5000; if(Object.keys(m.f).length) m.sporco = true; }   // chi non è arrivato si riprova (ogni 15 s, al massimo 3 volte)
+    return m;
+  }catch(e){ immAcceso0 = false; return null; }   // rete di sicurezza: se qualcosa va storto le immagini si spengono e resta il disegno a codice
+}
+// vero se i pezzi di questa mappa li coprono le immagini (o l'indice sta arrivando): allora il pezzo a codice non va preparato in anticipo
+function immCopre(M, i, j){
+  if(!immAcceso() || !M._im) return false;
+  const m = M._im; return m.stato === 1 || (m.stato === 2 && m.pz.has(j*16 + i));
+}
+// il pezzo i, j come immagine (null se non c'è o non è ancora arrivato: allora resta il disegno a codice)
+function immPezzo(m, i, j){
+  const n = j*16 + i; if(!m.pz.has(n)) return null;
+  return immVoce(m, 'p' + i + '_' + j, 'p_' + i + '_' + j + '.webp');
+}
+// chiede le immagini che servono nel rettangolo di pezzi (i0..i1, j0..j1), più un anello intorno (anello = 1): i pezzi e poi i mobili, quelli sullo schermo per primi
+function immChiedi(m, M, i0, j0, i1, j1, anello){
+  if(!m || m.stato !== 2) return;
+  try{ immChiedi0(m, M, i0, j0, i1, j1, anello); }catch(e){ immAcceso0 = false; }   // (come sopra)
+}
+function immChiedi0(m, M, i0, j0, i1, j1, anello){
+  const q = (((i0 + 2)*256 + j0 + 2)*256 + i1 + 2)*256 + j1 + 2 + (anello ? 4294967296 : 0);   // il rettangolo, in un numero solo
+  if(q === m.ultQ && !m.sporco) return;
+  m.ultQ = q; m.sporco = false;
+  const L = PEZZO*T, ni = Math.ceil(M.GW/PEZZO), nj = Math.ceil(M.GH/PEZZO);
+  const tocca = (r, a) => r.x < (i1 + 1 + a)*L && r.x + r.w > (i0 - a)*L && r.y < (j1 + 1 + a)*L && r.y + r.h > (j0 - a)*L;
+  const pezzi = a => { for(let j = Math.max(0, j0 - a); j <= Math.min(nj - 1, j1 + a); j++) for(let i = Math.max(0, i0 - a); i <= Math.min(ni - 1, i1 + a); i++){
+    if(a && i >= i0 && i <= i1 && j >= j0 && j <= j1) continue; if(m.pz.has(j*16 + i)) immAccoda(m, 'p' + i + '_' + j, 'p_' + i + '_' + j + '.webp'); } };
+  const altro = a => {
+    m.mobili.forEach((r, k) => { if(tocca(r, a) && !(a && tocca(r, 0))) immAccoda(m, 'm' + k, 'mobili/' + k + '.webp'); });
+    m.extra.forEach((e, n) => { if(tocca(e, a) && !(a && tocca(e, 0))) immAccoda(m, 'e' + n, e.f); });
+    for(const nome in m.anim){ const A = m.anim[nome], r = { x:A.cx - 40, y:A.cy - 40, w:80, h:80 }; if(tocca(r, a) && !(a && tocca(r, 0))) immAccoda(m, 'a_' + nome, 'animati/' + nome + '.webp'); }
+  };
+  if(anello){ altro(1); pezzi(1); }   // l'anello, in fondo alla pila: arriva per ultimo
+  altro(0); pezzi(0);                 // quello che si vede: in cima, arriva per primo
+  immPompa();
+}
+// i pezzi di fondo di Blender che coprono il mobile k sono tutti arrivati? Allora il mobile è già nel fondo (e anche la sua ombra):
+// se il suo ritaglio non c'è ancora, non si disegna quello a codice sopra il render (il ritaglio serve solo a coprire chi passa dietro)
+function immFondoCopre(M, k){
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return false;
+  const r = m.mobili.get(k); if(!r) return false;   // senza ritaglio nell'indice non sappiamo dov'è: resta a codice
+  const L = PEZZO*T;
+  for(let j = Math.floor(r.y/L); j <= Math.floor((r.y + r.h - 0.01)/L); j++) for(let i = Math.floor(r.x/L); i <= Math.floor((r.x + r.w - 0.01)/L); i++){
+    if(!m.pz.has(j*16 + i)) continue;   // pezzo tutto nero: non c'è nell'indice
+    const ch = 'p' + i + '_' + j;
+    if(!cerca(m.k[ch] || (m.k[ch] = 'I|' + m.nome + '|' + ch))) return false;
+  }
+  return true;
+}
+// il ritaglio del mobile k di M.ostacoli: { img, x, y, w, h } nei pixel del gioco (null se non c'è o non è arrivato)
+function immMobile(M, k){
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return null;
+  const r = m.mobili.get(k); if(!r) return null;
+  const img = immVoce(m, 'm' + k, 'mobili/' + k + '.webp');
+  return img ? { img, x:r.x, y:r.y, w:r.w, h:r.h } : null;
+}
+// gli oggetti di scena (extra) da mettere in ordine di profondità insieme ai mobili
+function immExtra(m){ return m && m.stato === 2 ? m.extra : []; }
+function disegnaExtra(c, m, n, t){
+  const e = m.extra[n], img = immVoce(m, 'e' + n, e.f); if(!img) return;
+  c.drawImage(img, e.x, e.y, e.w, e.h);
+  const v = e.tipo && VIVO_EXTRA[e.tipo]; if(v && e.o && isFinite(e.o.x) && isFinite(e.o.y)){ c.save(); v(c, e.o, t || 0, n); c.restore(); }
+}
+// un'immagine animata (barca, campana, ruota): centro e perno dal file indice; dx, dy spostano, ang gira intorno al perno. Vero se l'ha disegnata.
+function immAnimata(c, M, nome, dx, dy, ang){
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return false;
+  const a = m.anim[nome]; if(!a) return false;
+  const img = immVoce(m, 'a_' + nome, 'animati/' + nome + '.webp'); if(!img) return false;
+  const r = a.r || { x:a.cx - img.naturalWidth*m.kk/2, y:a.cy - img.naturalHeight*m.kk/2, w:img.naturalWidth*m.kk, h:img.naturalHeight*m.kk };   // dove sta l'immagine
+  const px = a.px != null ? a.px : a.cx, py = a.py != null ? a.py : nome === 'campana' ? r.y : a.cy;   // la campana si appende in alto, il resto gira dal centro
+  c.save(); c.translate(px + (dx || 0), py + (dy || 0)); if(ang) c.rotate(ang);
+  c.drawImage(img, r.x - px, r.y - py, r.w, r.h); c.restore();
+  return true;
+}
+// l'indice ha questa immagine animata (anche se il file non è ancora arrivato)? Serve a non disegnare a codice una parte che sta per arrivare
+function immIndiceHa(M, nome){
+  const m = M._im; return !!(m && m.stato === 2 && immAcceso() && m.anim[nome]);
+}
+// c'è l'immagine animata e (se ancora non è arrivata) la si chiede? Serve a scegliere tra immagine e disegno a codice
+function immHa(M, nome){
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso() || !m.anim[nome]) return false;
+  return !!immVoce(m, 'a_' + nome, 'animati/' + nome + '.webp');
 }
 
 // ── Mobili: ogni tipo ha l'altezza, l'impronta dell'ombra, il disegno fermo e (se serve) la parte viva ──
@@ -2775,12 +3133,140 @@ function figurina(M, o, k, res){
   });
 }
 // altezza di un mobile sopra la sua impronta (per sapere se è sullo schermo)
-function altezzaMobile(o){ const m = MOBILI[o.t]; return m ? m.h + 16 : 0; }
+// (con M e k: se il mobile ha il ritaglio di Blender, conta il suo rettangolo, che può essere più alto del disegno a codice)
+function altezzaMobile(o, M, k){
+  const m = MOBILI[o.t]; let h = m ? m.h + 16 : 0;
+  const im = M && M._im && M._im.mobili && M._im.mobili.get(k); if(im) h = Math.max(h, o.y*T - im.y);
+  return h;
+}
 function disegnaMobile(c, M, o, k, res, t, eff, pit){
   const mod = MOBILI[o.t]; if(!mod) return;
-  const f = figurina(M, o, k, res), x = o.x*T, y = o.y*T;
-  if(f.cv) c.drawImage(f.cv, x + f.ox, y + f.oy, f.w, f.h);
+  const x = o.x*T, y = o.y*T, r = immMobile(M, k);
+  if(r || immFondoCopre(M, k)){   // il mobile di Blender (nel fondo, e col suo ritaglio sopra): le fiamme sono tolte dal render (restano le luci), le parti vive sono quelle fatte su misura per l'immagine
+    if(r) c.drawImage(r.img, r.x, r.y, r.w, r.h);
+    // l'ingranaggio: la ruota grande non è nel ritaglio, gira lei col compito (dall'angolo fermo, 0); finché non è arrivata non si disegna quella a codice
+    if(o.t === 'ingranaggio' && immIndiceHa(M, 'ruota')){ immAnimata(c, M, 'ruota', 0, 0, (eff || []).some(e => e.k === 'compito' && e.v === 'ingranaggio') ? t*6 : 0); return; }
+    const v = VIVO_IMM[o.t];
+    if(v){ c.save(); v(c, o, t, eff, pit); c.restore(); }
+    else if(VIVO_SOLO_PARTICELLE[o.t] && mod.vivo){ c.save(); c.translate(x, y); mod.vivo(c, o.w*T, o.h*T, o, t, eff, pit); c.restore(); }   // (poi niente: le parti vive del disegno a codice sono tarate su quel disegno)
+    return;
+  }
+  const f = figurina(M, o, k, res); if(f.cv) c.drawImage(f.cv, x + f.ox, y + f.oy, f.w, f.h);                    // la riserva: il disegno a codice
+  // le parti vive (fiamme, schermi, acqua) a codice sopra il disegno
   if(mod.vivo){ c.save(); c.translate(x, y); mod.vivo(c, o.w*T, o.h*T, o, t, eff, pit); c.restore(); }
+}
+// ── Le parti vive sopra le immagini di Blender ──
+// Blender mette ogni mobile con X verso est, Y verso nord (dal bordo sud dell'impronta) e Z in su, in caselle; sullo schermo del gioco il punto (X, Y, Z)
+// diventa (x, y - z). Le posizioni qui sotto vengono dagli stessi numeri degli script di Blender (blender/lanterne_mobili*.py): così fiamme e schermi
+// cadono dove stanno nell'immagine. I mobili che non sono qui non hanno parti vive sulle immagini: meglio fermo che sbagliato.
+const bl = (o, X, Y, Z) => [(o.x + X)*T, (o.y + o.h - Y - Z)*T];
+const VIVO_SOLO_PARTICELLE = { aiuola:1 };   // l'acqua del compito (gocce): non dipende da dove sta il disegno
+// la fiamma di una candela vera, piccola: x, y è la base dello stoppino
+function fiammaBl(c, x, y, t, k){
+  const fl = 0.8 + 0.2*Math.sin(t*11 + k*2.3) + 0.06*Math.sin(t*27 + k);
+  c.fillStyle = 'rgba(255,190,90,' + (0.14*fl).toFixed(3) + ')'; c.beginPath(); c.arc(x, y - 1.5, 4.2, 0, 7); c.fill();
+  c.fillStyle = 'rgba(255,214,130,.92)'; c.beginPath(); c.ellipse(x, y - 1.3*fl, 1.05, 2.3*fl, 0, 0, 7); c.fill();
+  c.fillStyle = 'rgba(255,248,215,.95)'; c.beginPath(); c.ellipse(x, y - 0.8*fl, 0.45, 1.2*fl, 0, 0, 7); c.fill();
+}
+// un vetro acceso (schermo): un velo che pulsa e qualche riga di testo che scorre; x, y è l'angolo in alto a sinistra
+function schermoBl(c, x, y, w, h, t, k, righe){
+  c.fillStyle = 'rgba(140,240,190,' + (0.06 + 0.05*Math.sin(t*5 + k*1.3)).toFixed(3) + ')'; c.fillRect(x, y, w, h);
+  for(let j = 0; j < righe; j++){
+    const lw = (0.25 + 0.6*((j*7 + k*3 + Math.floor(t*2.5)) % 5)/4)*(w - 4);
+    c.fillStyle = 'rgba(190,255,230,' + (0.35 + 0.25*Math.sin(t*4 + j + k)).toFixed(3) + ')'; c.fillRect(x + 2, y + 1.6 + j*(h - 3)/righe, lw, 1);
+  }
+}
+const VIVO_IMM = {
+  // candelabro a terra (1×1): cinque candele sui bracci
+  candelabro(c, o, t){
+    const cx = o.w/2, cy = o.h*0.55;
+    for(let i = 0; i < 5; i++){
+      const u = (i - 2)/2, a = Math.abs(u), z = 1.05 + 0.1 + 0.38*(1 - 0.3*a) + 0.12*(1 - a) + 0.03 + 0.22 + 0.004;   // la cima della cera
+      const p = bl(o, cx + 0.38*u, cy, z); fiammaBl(c, p[0], p[1], t, i + o.x*3);
+    }
+  },
+  // tavolo: due candelabri da tavola con tre candele ciascuno, sulla striscia rossa
+  tavolo(c, o, t){
+    const x0 = 0.1, x1 = o.w - 0.1, cy = (0.12 + o.h - 0.5)/2;
+    [0.25, 0.75].forEach((f, j) => {
+      const x = x0 + (x1 - x0)*f;
+      for(let i = 0; i < 3; i++){
+        const u = i - 1, a = Math.abs(u), z = 0.62 + 0.008 + 0.19 + 0.05*(1 - a) + 0.012 + (0.15 - 0.03*a) + 0.004;
+        const p = bl(o, x + u*0.14, cy, z); fiammaBl(c, p[0], p[1], t, j*3 + i + o.x);
+      }
+    });
+  },
+  // altare: i due candelieri alti ai lati della croce
+  altare(c, o, t){
+    const yc = (0.08 + 0.78)/2, z = 1.075 + 0.28 + 0.012 + 0.13 + 0.004;
+    [0.8, o.w - 0.8].forEach((X, i) => { const p = bl(o, X, yc, z); fiammaBl(c, p[0], p[1], t, 1 + i); });
+  },
+  // forno: la bocca ad arco è nera nel render (resta la luce): il fuoco ci balla dentro, tagliato sull'arco
+  forno(c, o, t, eff, pit){
+    const acceso = (eff || []).some(e => e.k === 'compito' && e.v === 'fuoco');
+    const [xa, yb] = bl(o, 0.7, 0.1, 0.52), xb = bl(o, 1.3, 0.1, 0.52)[0], yc = bl(o, 1.0, 0.1, 0.75)[1], cx = (xa + xb)/2, R = (xb - xa)/2;
+    const a = acceso ? 1 : 0.62 + Math.sin(t*3)*0.1;
+    c.beginPath(); c.moveTo(xa, yb); c.lineTo(xa, yc); c.arc(cx, yc, R, Math.PI, 0); c.lineTo(xb, yb); c.closePath(); c.clip();
+    c.globalCompositeOperation = 'lighter';
+    const g = c.createRadialGradient(cx, yb, 0, cx, yb, R*1.7); g.addColorStop(0, 'rgba(255,150,60,' + (0.5*a).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,110,30,0)');
+    c.fillStyle = g; c.fillRect(xa, yc - R, xb - xa, yb - yc + R);
+    for(let i = 0; i < 4; i++){   // lingue di fuoco morbide: ovali che si allungano in su e ballano, sempre in movimento
+      const fx = xa + (i + 0.5)*(xb - xa)/4 + Math.sin(t*4 + i*2)*0.8, h = (7.5 + 6*(0.5 + 0.5*Math.sin(t*7.3 + i*1.9)))*(acceso ? 1.3 : 1);
+      c.save(); c.translate(fx, yb - h*0.4); c.scale(1.15, h*0.6/3.4);
+      const f = c.createRadialGradient(0, 0, 0, 0, 0, 3.4); f.addColorStop(0, 'rgba(255,238,175,' + (0.85*a).toFixed(3) + ')'); f.addColorStop(0.45, 'rgba(255,170,70,' + (0.55*a).toFixed(3) + ')'); f.addColorStop(1, 'rgba(255,110,30,0)');
+      c.fillStyle = f; c.beginPath(); c.arc(0, 0, 3.4, 0, 7); c.fill(); c.restore();
+    }
+    if(acceso && Math.random() < 0.5) pit.sparpaglia('fiamma', cx, yb - 8, 1, { v:10, su:40, vita:0.6, r:4 });
+  },
+  // console: cinque schermi in due altezze
+  console(c, o, t){
+    const n = 5;
+    for(let k = 0; k < n; k++){
+      const alto = 0.04*(k % 2), p = bl(o, (k + 0.5)*o.w/n - 0.3, 0.485, 1.17 + alto);
+      schermoBl(c, p[0], p[1], 0.6*T, 0.28*T, t, k, 3);
+    }
+  },
+  // computer della sala d'attesa
+  computer(c, o, t){
+    const p = bl(o, o.w/2 - 0.4, 0.495, 0.7 + 0.67);
+    schermoBl(c, p[0], p[1], 0.8*T, 0.57*T, t, 1, 5);
+  },
+  // fontana: luccichii sull'acqua della vasca, come quelli del mare. Dietro la colonna c'è la vasca alta che copre l'acqua: solo a est, sud e ovest.
+  fontana(c, o, t){
+    const p = bl(o, o.w/2, o.h/2, 0.37);
+    for(let k = 0; k < 6; k++){
+      const ciclo = t*0.8 + k*0.31, n = Math.floor(ciclo), f = (ciclo - n)/0.4;
+      if(f >= 1) continue;
+      const a = Math.sin(f*Math.PI), ang = -0.1*Math.PI + fisso(n, k, 90)*1.2*Math.PI, r = (0.95 + fisso(n, k, 91)*0.4)*T;
+      const x = p[0] + Math.cos(ang)*r, y = p[1] + Math.sin(ang)*r;
+      c.fillStyle = 'rgba(235,245,255,' + (0.7*a).toFixed(3) + ')'; c.fillRect(x - 2.5, y, 5, 1.2); c.fillRect(x - 0.6, y - 1, 1.2, 3.2);
+    }
+  },
+};
+// le parti vive degli oggetti di scena (non sono in M.ostacoli): o = l'impronta in caselle { x, y, w, h }
+const VIVO_EXTRA = {
+  // lampione di ferro: la candela dentro il fanale, in cima al palo (alto 1,24 più la cera)
+  lampione(c, o, t, n){ const p = bl(o, 0.5, 0.45, 1.24 + 0.135); fiammaBl(c, p[0], p[1], t, 20 + n); },
+};
+// le candele sul pavimento dei dettagli delle stanze (x, y in caselle, altezza del candeliere): negli script di Blender sono sempre portacandela (cera 0,13 sopra il candeliere)
+const CANDELE_BL = { palazzo:[
+  [57.0, 4.6, 0.1], [63.6, 9.0, 0.1],                                                             // Torre
+  [16.6, 23.5, 0.1], [11.6, 37.2, 0.1], [29.1, 40.2, 0.1], [40.8, 36.6, 0.1], [67.4, 34.5, 0.1],  // Cucine, Cantina, Galleria (due), Telegrafo
+  [3.42, 18.55, 0.03], [3.62, 18.9, 0.03], [3.4, 19.2, 0.03], [10.35, 19.5, 0.03], [10.5, 15.9, 0.03],   // Cappella (candele votive: l'altezza vera è a caso tra 0 e 0,06)
+  [3.45, 10.3, 0.18], [14.35, 10.15, 0.1], [30.7, 11.1, 0.08], [55.7, 44.3, 0.05],                // Biblioteca (due), Salone, Molo
+] };
+// le fiamme di quelle candele: solo se il pezzo di fondo che le contiene è arrivato (se no la candela non c'è)
+function candeleVive(c, M, t, x0, y0, x1, y1){
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return;
+  const lista = CANDELE_BL[m.nome]; if(!lista) return;
+  const L = PEZZO*T;
+  for(let n = 0; n < lista.length; n++){
+    const q = lista[n], x = q[0]*T, y = (q[1] - (q[2] + 0.012 + 0.13 + 0.004))*T;
+    if(x < x0 || x > x1 || y < y0 || y > y1) continue;
+    const i = Math.floor(x/L), j = Math.floor(q[1]*T/L), ch = 'p' + i + '_' + j;
+    if(m.pz.has(j*16 + i) && !cerca(m.k[ch] || (m.k[ch] = 'I|' + m.nome + '|' + ch))) continue;
+    fiammaBl(c, x, y, t, 30 + n);
+  }
 }
 // le fiamme delle torce sui muri (vive)
 function torceVive(c, M, t, x0, y0, x1, y1){
@@ -2797,16 +3283,17 @@ function torceVive(c, M, t, x0, y0, x1, y1){
 // ── Il mare vivo: onde che scorrono, luccichii, schiuma sulle rive, cerchi d'acqua, la barca che dondola ──
 function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
   const A = prepara(M); if(!A.acque.length) return;
+  const q = M._im && M._im.stato === 2 && immAcceso() ? 0.7 : 1;   // sull'acqua di Blender onde e schiuma sono più discrete
   // le onde: due linee per riga d'acqua, la cresta chiara e il cavo scuro, che scorrono piano
   for(const [ty, a, b] of A.acque){
     if((ty + 1)*T < y0 || ty*T > y1) continue;
     const xa = Math.max(a*T, Math.floor(x0/8)*8), xb = Math.min(b*T, x1); if(xb <= xa) continue;
     for(let k = 0; k < 2; k++){
       const yb = ty*T + 9 + k*15;
-      c.lineWidth = 1.4; c.strokeStyle = 'rgba(8,20,32,.4)'; c.beginPath();
+      c.lineWidth = 1.4; c.strokeStyle = 'rgba(8,20,32,' + (0.4*q).toFixed(3) + ')'; c.beginPath();
       for(let x = xa; x <= xb; x += 8){ const y = yb + 2 + Math.sin(x*0.05 + t*1.3 + ty*1.7 + k*2.1)*2.4 + Math.sin(x*0.13 - t*2.1 + k)*1; if(x === xa) c.moveTo(x, y); else c.lineTo(x, y); }
       c.stroke();
-      c.lineWidth = 1; c.strokeStyle = 'rgba(160,205,235,.16)'; c.beginPath();
+      c.lineWidth = 1; c.strokeStyle = 'rgba(160,205,235,' + (0.16*q).toFixed(3) + ')'; c.beginPath();
       for(let x = xa; x <= xb; x += 8){ const y = yb + Math.sin(x*0.05 + t*1.3 + ty*1.7 + k*2.1)*2.4 + Math.sin(x*0.13 - t*2.1 + k)*1; if(x === xa) c.moveTo(x, y); else c.lineTo(x, y); }
       c.stroke();
     }
@@ -2823,7 +3310,7 @@ function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
   }
   // la schiuma che lambisce le rive: due righe tratteggiate che scorrono in versi opposti
   const riva = (off, w, alfa, dash, vel) => {
-    c.lineWidth = w; c.lineCap = 'round'; c.strokeStyle = 'rgba(225,240,250,' + alfa + ')'; c.setLineDash(dash); c.lineDashOffset = -t*vel; c.beginPath();
+    c.lineWidth = w; c.lineCap = 'round'; c.strokeStyle = 'rgba(225,240,250,' + (alfa*q).toFixed(3) + ')'; c.setLineDash(dash); c.lineDashOffset = -t*vel; c.beginPath();
     for(const r of A.rive){
       if(Math.max(r.x1, r.x2) < x0 || Math.min(r.x1, r.x2) > x1 || Math.max(r.y1, r.y2) < y0 || Math.min(r.y1, r.y2) > y1) continue;
       const o = off + Math.sin(t*2.2 + (r.x1 + r.y1)*0.05)*1.6;
@@ -2842,12 +3329,20 @@ function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
   }
   // la barca ormeggiata al pontile
   const B = M.barca; if(!B || B.x + 80 < x0 || B.x - 80 > x1 || B.y + 40 < y0 || B.y - 50 > y1) return;
-  const bob = Math.sin(t*1.25)*1.6, roll = Math.sin(t*0.95 + 0.6)*0.03, f = barca(res || 2);
-  c.fillStyle = 'rgba(4,12,20,.45)'; c.beginPath(); c.ellipse(B.x, B.y + 8, 52, 14, roll, 0, 7); c.fill();
-  c.strokeStyle = 'rgba(180,165,130,.9)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(B.cima[0], B.cima[1]); c.quadraticCurveTo((B.cima[0] + B.x - 44)/2, B.y + 10 + bob, B.x - 44, B.y - 6 + bob); c.stroke();
-  c.save(); c.translate(B.x, B.y + bob); c.rotate(roll); if(f.cv) c.drawImage(f.cv, f.ox, f.oy, f.w, f.h);
-  const fl = 0.8 + 0.2*Math.sin(t*9); c.fillStyle = 'rgba(255,200,110,' + (0.25*fl).toFixed(3) + ')'; c.beginPath(); c.arc(-36, -21, 9, 0, 7); c.fill(); c.fillStyle = 'rgba(255,226,150,.95)'; c.beginPath(); c.ellipse(-36, -21, 1.4, 2.4*fl, 0, 0, 7); c.fill();
-  c.restore();
+  const bob = Math.sin(t*1.25)*1.6, roll = Math.sin(t*0.95 + 0.6)*0.03;
+  // con l'immagine di Blender (ombra sull'acqua, cima e lanterna sono già nel fondo o nel ritaglio) la barca dondola intorno al suo perno
+  if(immHa(M, 'barca')){
+    // Blender non mette l'ombra della barca sull'acqua: una macchia scura sotto lo scafo, che segue il dondolio
+    c.fillStyle = 'rgba(3,10,18,.32)'; c.beginPath(); c.ellipse(B.x + 2, B.y + 10.5 + bob*0.4, 50, 10.5, roll, 0, 7); c.fill();
+    immAnimata(c, M, 'barca', 0, bob, roll);
+  } else {
+    const f = barca(res || 2);
+    c.fillStyle = 'rgba(4,12,20,.45)'; c.beginPath(); c.ellipse(B.x, B.y + 8, 52, 14, roll, 0, 7); c.fill();
+    c.strokeStyle = 'rgba(180,165,130,.9)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(B.cima[0], B.cima[1]); c.quadraticCurveTo((B.cima[0] + B.x - 44)/2, B.y + 10 + bob, B.x - 44, B.y - 6 + bob); c.stroke();
+    c.save(); c.translate(B.x, B.y + bob); c.rotate(roll); if(f.cv) c.drawImage(f.cv, f.ox, f.oy, f.w, f.h);
+    const fl = 0.8 + 0.2*Math.sin(t*9); c.fillStyle = 'rgba(255,200,110,' + (0.25*fl).toFixed(3) + ')'; c.beginPath(); c.arc(-36, -21, 9, 0, 7); c.fill(); c.fillStyle = 'rgba(255,226,150,.95)'; c.beginPath(); c.ellipse(-36, -21, 1.4, 2.4*fl, 0, 0, 7); c.fill();
+    c.restore();
+  }
   if(!B.ultima || t - B.ultima > 1.3){ B.ultima = t; onde.push({ x:B.x + (Math.random() < 0.5 ? -40 : 44), y:B.y + 8 + Math.random()*4, t0:t, r:16 }); }
 }
 // la barca: scafo con la fiancata, assi, panche, remi, una cima e la lanterna a poppa (tela fatta una volta)
@@ -2881,7 +3376,7 @@ function barca(res){
 
 const CORR1 = '#5a2b33', CORR2 = '#612f38';
 const FONT = '-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","Inter",system-ui,sans-serif';
-const ORO = '231,183,92', ROSSO = '240,90,110';
+const ORO = '231,183,92', ROSSO = '240,90,110', VOCE_COL = '150,235,200';   // VOCE_COL: l'anello della voce
 
 class Pittore {
   constructor(cv){
@@ -2891,6 +3386,8 @@ class Pittore {
     this.parti = [];        // particelle nel mondo (polvere dei passi, fumo, scintille)
     this.polvere = Array.from({length:26}, ()=>({ x:Math.random(), y:Math.random(), v:0.2+Math.random()*0.5, f:Math.random()*6 }));
     this.passi = {}; this.onde = []; this.ondaDi = {};
+    this.fum = {};   // i fumetti della chat: lo spostamento morbido di ogni pila (per non coprirsi)
+    this.ridotto = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);   // chi non vuole movimento: i fumetti non scivolano
   }
   misura(){
     // (le misure del riquadro, non dello schermo: se il gioco è girato di lato restano giuste)
@@ -2922,17 +3419,23 @@ class Pittore {
     this.cam.x += (seg.x-this.cam.x)*0.2; this.cam.y += (seg.y-this.cam.y)*0.2;
     if(Math.hypot(seg.x-this.cam.x, seg.y-this.cam.y) > 8*T){ this.cam.x=seg.x; this.cam.y=seg.y; }
     const sc = S.scossa>0 ? S.scossa*6 : 0;
-    const cx=this.cam.x-W/(2*s)+(Math.random()-0.5)*sc, cy=this.cam.y-H/(2*s)+(Math.random()-0.5)*sc;
+    const al=(S.alza||0)*this.DPR;   // mentre si scrive con la tastiera aperta la scena si alza: chi gioca resta sopra la barra
+    const cx=this.cam.x-W/(2*s)+(Math.random()-0.5)*sc, cy=this.cam.y-H/(2*s)+al/s+(Math.random()-0.5)*sc;
     c.setTransform(1,0,0,1,0,0); c.fillStyle='#090b16'; c.fillRect(0,0,W,H);
     // il palazzo fermo (pavimenti, tappeti, muri, ombre) è già disegnato a pezzi: si copiano quelli sullo schermo
     const res=Math.min(3, Math.ceil(s*10)/10), L=PEZZO*T, ni=Math.ceil(M.GW/PEZZO)-1, nj=Math.ceil(M.GH/PEZZO)-1;
     const i0=Math.max(0,Math.floor(cx/L)), j0=Math.max(0,Math.floor(cy/L)), i1=Math.min(ni,Math.floor((cx+W/s)/L)), j1=Math.min(nj,Math.floor((cy+H/s)/L));
+    // le immagini del palazzo reso in Blender (null se spente o se l'indice non è ancora arrivato: allora tutto a codice, come prima)
+    const imm=immPronta(M);
+    if(imm) immChiedi(imm, M, i0, j0, i1, j1, 1);   // scarica quello che serve: lo schermo e un anello di pezzi intorno
     // al massimo ~6 ms per fotogramma a fare pezzi nuovi: quelli che mancano ancora si abbozzano e arrivano al prossimo
     let nuovi=0, spesa=0;
     for(let j=j0;j<=j1;j++) for(let i=i0;i<=i1;i++){
+      const dx=Math.round((i*L-cx)*s), dy=Math.round((j*L-cy)*s), dw=Math.round(((i+1)*L-cx)*s)-dx, dh=Math.round(((j+1)*L-cy)*s)-dy;
+      const im=imm && immPezzo(imm, i, j);   // l'immagine di Blender del pezzo, se è già arrivata: prende il posto del disegno
+      if(im){ c.drawImage(im, dx, dy, dw+1, dh+1); continue; }
       let e=pezzo(M,i,j,res,true);
       if(!e && (spesa<6 || !nuovi)){ const a=performance.now(); e=pezzo(M,i,j,res); e.nuovo=false; nuovi++; spesa+=performance.now()-a; }
-      const dx=Math.round((i*L-cx)*s), dy=Math.round((j*L-cy)*s), dw=Math.round(((i+1)*L-cx)*s)-dx, dh=Math.round(((j+1)*L-cy)*s)-dy;
       if(e) c.drawImage(e.cv, dx, dy, dw+1, dh+1); else this.abbozzo(M, i, j, dx, dy, dw/(PEZZO*T));   // +1: nessuna riga tra un pezzo e l'altro
     }
     c.setTransform(s,0,0,s,-cx*s,-cy*s);
@@ -2940,10 +3443,12 @@ class Pittore {
     // solo il mare e le torce si muovono
     mareVivo(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+T, this.onde, res);
     torceVive(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+2*T);
+    candeleVive(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+2*T);   // (con le immagini di Blender: le fiamme delle candele sul pavimento)
     const vx0=cx-3*T, vy0=cy-3*T, vx1=cx+W/s+3*T, vy1=cy+H/s+3*T;
+    const campanaImm=!!(S.palazzo && imm && immHa(M,'campana'));
     if(S.palazzo){
       for(const p of POSTAZIONI) this.postazione(p,S.miei.has(p.id),t);
-      this.postazione({ tx:CAMPANA.tx, ty:CAMPANA.ty, tipo:'campana' },false,t);
+      if(!campanaImm) this.postazione({ tx:CAMPANA.tx, ty:CAMPANA.ty, tipo:'campana' },false,t);   // (con l'immagine di Blender la campana sta tra i mobili, in ordine di profondità)
       this.postazione({ tx:QUADRO.tx, ty:QUADRO.ty, tipo:'quadro' },!!S.buio,t);
       [[CHIUSA_A,0],[CHIUSA_B,1]].forEach(([q,i])=>this.postazione({ tx:q.tx, ty:q.ty, tipo:'chiusa' }, !!(S.chiuse&&S.chiuse[i]), t));
       if(S.interf){ const x=centro(CONSOLE.tx), y=centro(CONSOLE.ty), g=c.createRadialGradient(x,y,0,x,y,40); g.addColorStop(0,`rgba(255,180,90,${0.4+0.2*Math.sin(t*6)})`); g.addColorStop(1,'rgba(255,180,90,0)'); c.fillStyle=g; c.fillRect(x-40,y-40,80,80); }
@@ -2967,13 +3472,30 @@ class Pittore {
     c.globalAlpha=1;
     const tutti=S.altri.filter(p=>(!p.fantasma||anima) && (visibile(p) || (S.traccia && p.id===S.traccia)));
     if(io.mostra) tutti.push(io);
+    // mentre scrivo, un anello d'oro sotto chi mi sentirà (solo chi vedo: il buio non tradisce nessuno)
+    if(S.parla){ const P=S.parla, a=0.6+0.25*Math.sin(t*4);
+      for(const p of tutti){ if(p===io || (P.anima ? !p.fantasma : p.fantasma)) continue;
+        if(!P.anima && (Math.hypot(p.x-io.x,p.y-io.y)>P.R || !vede(M,io.x,io.y,p.x,p.y))) continue;
+        c.strokeStyle=`rgba(${ORO},${a})`; c.lineWidth=2; this.ell(p.x,p.y+T*0.34,T*0.5,T*0.2); c.stroke(); } }
+    // la voce: un anello verde chiaro sotto chi parla e lo sento (anche sotto di me, quando parlo). S.voce[id]: da 0 a 1, già morbido.
+    // Solo chi vedo: chi parla dietro un muro non si vede e non ha anello. Due cerchi, il più largo più leggero: pulsa con la voce.
+    // (chi non vuole movimento: l'anello non si allarga, cambia solo la trasparenza)
+    if(S.voce) for(const p of tutti){ const v=S.voce[p.id]; if(!(v>0.02)) continue; const w=this.ridotto?0.5:v;
+      c.lineWidth=2; c.strokeStyle=`rgba(${VOCE_COL},${0.3+0.5*v})`; this.ell(p.x,p.y+T*0.34,T*(0.5+0.14*w),T*(0.2+0.06*w)); c.stroke();
+      c.lineWidth=1.5; c.strokeStyle=`rgba(${VOCE_COL},${0.12+0.25*v})`; this.ell(p.x,p.y+T*0.34,T*(0.62+0.3*w),T*(0.25+0.12*w)); c.stroke(); }
     // mobili e persone in ordine di profondità: chi passa dietro un mobile alto ne resta coperto
     const scena=[];
-    M.ostacoli.forEach((o,k)=>{ if((o.x+o.w)*T<vx0||o.x*T>vx1||(o.y+o.h)*T<vy0||o.y*T-altezzaMobile(o)>vy1) return; scena.push({ y:(o.y+o.h)*T, o, k }); });
+    M.ostacoli.forEach((o,k)=>{ if((o.x+o.w)*T<vx0||o.x*T>vx1||(o.y+o.h)*T<vy0||o.y*T-altezzaMobile(o,M,k)>vy1) return; scena.push({ y:(o.y+o.h)*T, o, k }); });
+    if(imm){   // gli oggetti di scena di Blender (lampioni, sedie...) e la campana: anche loro dietro o davanti a chi passa
+      immExtra(imm).forEach((e,n)=>{ if(e.x+e.w<vx0||e.x>vx1||e.y+e.h<vy0||e.y>vy1) return; scena.push({ y:e.base, ex:n }); });
+      if(campanaImm){ const bx=centro(CAMPANA.tx), by=centro(CAMPANA.ty); if(bx>vx0 && bx<vx1 && by>vy0 && by<vy1+2*T) scena.push({ y:(CAMPANA.ty+1)*T, campana:true }); }
+    }
     for(const p of tutti) scena.push({ y:p.y+T*0.36, p });
     scena.sort((a,b)=>a.y-b.y);
     for(const q of scena){
       if(q.o){ disegnaMobile(c, M, q.o, q.k, res, t, S.effetti, this); continue; }
+      if(q.ex!==undefined){ disegnaExtra(c, imm, q.ex, t); continue; }
+      if(q.campana){ immAnimata(c, M, 'campana', 0, 0, Math.sin(t*2)*0.08); continue; }
       const p=q.p;
       if(p.muove && !p.fantasma){ const k=this.passi[p.id]||0; if(t-k>0.22){ this.passi[p.id]=t; this.sparpaglia('polvere', p.x+(Math.random()-0.5)*8, p.y+T*0.36, 2, { v:12, vita:0.5, r:2.5 }); }
         // sul bordo del molo i passi fanno cerchi nell'acqua
@@ -3022,7 +3544,12 @@ class Pittore {
       if(S.traccia){ const tg=S.altri.find(p=>p.id===S.traccia); if(tg) this.freccia(io, { x:tg.x, y:tg.y, col:'#cba2ff' }, t); }
       if(S.freccia) this.freccia(io, S.freccia, t);   // la freccia resta visibile anche fuori dalla luce
     } else if(S.palazzo && !S.bengala){ c.setTransform(1,0,0,1,0,0); c.fillStyle='rgba(60,80,150,.1)'; c.fillRect(0,0,W,H); }
-    if(S.bolle){ c.setTransform(s,0,0,s,-cx*s,-cy*s); this.bolle(S); }   // i fumetti della chat di prossimità, sopra il buio
+    // mentre scrivo, il raggio a cui mi sentono (i muri lo fermano; attraverso un muro solo da vicino), sopra il buio
+    if(S.parla && !S.parla.anima){ const P=S.parla; c.setTransform(s,0,0,s,-cx*s,-cy*s);
+      const pts=this.luce(M,io.x,io.y,P.R); c.beginPath(); pts.forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1])); c.closePath();
+      c.fillStyle=`rgba(${ORO},.06)`; c.fill(); c.strokeStyle=`rgba(${ORO},.42)`; c.lineWidth=1.5; c.setLineDash([6,6]); c.lineDashOffset=this.ridotto?0:-t*8; c.stroke();
+      c.strokeStyle=`rgba(${ORO},.2)`; c.setLineDash([2,6]); c.beginPath(); c.arc(io.x,io.y,P.Rm,0,Math.PI*2); c.stroke(); c.setLineDash([]); c.lineDashOffset=0; }
+    if(S.bolle && S.bolle.length){ c.setTransform(s,0,0,s,-cx*s,-cy*s); this.vista={ x0:cx, y0:cy, x1:cx+W/s, y1:cy+H/s }; this.bolle(S); }   // i fumetti della chat di prossimità, sopra il buio
     if(S.urlo) this.freccia(io, S.urlo, t);
     c.setTransform(1,0,0,1,0,0);
     if(S.bengala){ c.fillStyle=`rgba(255,220,180,${0.08+0.04*Math.sin(t*20)})`; c.fillRect(0,0,W,H); }
@@ -3038,6 +3565,8 @@ class Pittore {
     // a fotogrammi alterni si prepara un pezzo vicino che manca; nella sala d'attesa, quelli del palazzo intorno alla fontana
     if(S.scala==null){
       this.giro=(this.giro||0)+1;
+      // nella sala d'attesa si cominciano a scaricare anche le immagini del palazzo intorno alla fontana (dove si parte)
+      if(M!==PALAZZO){ const pi=immPronta(PALAZZO); if(pi){ const fi=Math.floor(FONTANA.x/L), fj=Math.floor(FONTANA.y/L); immChiedi(pi, PALAZZO, fi-1, fj-1, fi+1, fj+1, 0); } }
       if(!nuovi && this.giro%4===0 && !anticipa(M,i0-1,j0-1,i1+1,j1+1,res) && M!==PALAZZO){ const fi=Math.floor(FONTANA.x/L), fj=Math.floor(FONTANA.y/L); anticipa(PALAZZO,fi-1,fj-1,fi+1,fj+1,res); }
     }
   }
@@ -3089,23 +3618,81 @@ class Pittore {
     }
     return pts;
   }
-  // un fumetto sopra chi parla: va a capo da solo, svanisce nell'ultimo mezzo secondo
-  bolle(S){
-    const c=this.ctx, gente=[S.io].concat(S.altri||[]);
-    c.font='600 11px '+FONT; c.textAlign='center'; c.textBaseline='middle';
-    for(const p of gente){
-      const b=p && S.bolle[p.id]; if(!b) continue;
-      const parole=b.testo.split(' '), righe=[]; let r='';
-      for(const w of parole){ const prova=r?r+' '+w:w; if(c.measureText(prova).width>130 && r){ righe.push(r); r=w; } else r=prova; }
-      if(r) righe.push(r);
-      const lw=Math.max(...righe.map(x=>c.measureText(x).width))+16, lh=righe.length*14+10, x=p.x, y=p.y-T*1.75-lh;
-      c.globalAlpha=Math.min(1, b.f*9);
-      c.fillStyle='rgba(246,240,226,.96)'; c.strokeStyle='rgba(20,16,10,.35)'; c.lineWidth=1;
-      c.beginPath(); c.roundRect ? c.roundRect(x-lw/2,y,lw,lh,8) : c.rect(x-lw/2,y,lw,lh); c.moveTo(x-5,y+lh); c.lineTo(x,y+lh+6); c.lineTo(x+5,y+lh); c.fill(); c.stroke();
-      c.fillStyle='#22180c'; righe.forEach((rr,i)=>c.fillText(rr, x, y+12+i*14));
-      c.globalAlpha=1;
+  // le righe di un fumetto: si calcolano UNA volta per messaggio (poi stanno nel messaggio), non a ogni fotogramma.
+  // Va a capo tra le parole; una parola più larga del fumetto si spezza.
+  righeDi(b){
+    const c=this.ctx, MAXW=130, righe=[]; let r='';
+    c.font='600 11px '+FONT;
+    const spezza=w=>{ const out=[]; let x=''; for(const ch of w){ if(x && c.measureText(x+ch).width>MAXW){ out.push(x); x=ch; } else x+=ch; } if(x) out.push(x); return out; };
+    for(const w0 of b.testo.split(' ')){
+      for(const w of (c.measureText(w0).width>MAXW ? spezza(w0) : [w0])){
+        if(w!==w0 && r){ righe.push(r); r=''; }
+        const prova=r?r+' '+w:w;
+        if(c.measureText(prova).width>MAXW && r){ righe.push(r); r=w; } else r=prova;
+      }
     }
-    c.textBaseline='alphabetic';
+    if(r) righe.push(r);
+    b.righe=righe; b.lw=Math.max(...righe.map(x=>c.measureText(x).width))+16; b.lh=righe.length*14+10;
+  }
+  // i fumetti sopra chi parla (S.bolle: i messaggi vivi, S.ora: adesso).
+  // Più messaggi della stessa persona si impilano (il più nuovo in basso, vicino alla testa e scivola su quando ne arriva un altro);
+  // due persone vicine non si coprono: la pila si sposta di lato (se la testa resta sotto il fumetto) o più in alto.
+  // Ogni messaggio svanisce nell'ultimo mezzo secondo. «w»: attutito (dietro un muro) · «a»: lo dice un'anima.
+  bolle(S){
+    const c=this.ctx, ora=S.ora||performance.now(), V=this.vista, dt=Math.min(0.1,S.dt||0.016), k=this.ridotto?1:1-Math.exp(-dt*16), GAP=3;
+    const gente={}; for(const p of [S.io].concat(S.altri||[])) if(p) gente[p.id]=p;
+    const pile={}; const lista=[];
+    for(const b of S.bolle){
+      const p=gente[b.id]; if(!p || p.y<V.y0-20 || p.y>V.y1+60 || p.x<V.x0-120 || p.x>V.x1+120) continue;
+      if(!b.righe) this.righeDi(b);
+      let q=pile[b.id]; if(!q){ q=pile[b.id]={ p, l:[], w:0, h:0 }; lista.push(q); }
+      q.l.push(b); q.w=Math.max(q.w,b.lw);
+    }
+    if(!lista.length) return;
+    // posizione di ogni messaggio dentro la pila (relativa alla base: negativa = in su) e altezza totale
+    for(const q of lista){
+      let y=0;
+      for(let i=q.l.length-1;i>=0;i--){ const b=q.l[i]; y-=b.lh; const tgt=y; y-=GAP;
+        if(b.py==null) b.py=tgt; else b.py+=(tgt-b.py)*k; }
+      q.h=-y-GAP;
+    }
+    // le persone più in basso sullo schermo (più avanti) tengono il loro posto, le altre si spostano
+    lista.sort((a,b)=>b.p.y-a.p.y);
+    const messi=[];
+    for(const q of lista){
+      const f=this.fum[q.p.id]||(this.fum[q.p.id]={ dx:0, dy:0, t:0 }); f.t=ora;
+      const ax=q.p.x, ab=q.p.y-T*1.75; let dx=0, dy=0;
+      for(let it=0;it<8;it++){
+        const r={ l:ax-q.w/2+dx, r:ax+q.w/2+dx, t:ab-q.h+dy, b:ab+6+dy };
+        const urto=messi.find(m=>r.l<m.r+2 && r.r>m.l-2 && r.t<m.b+2 && r.b>m.t-2); if(!urto) break;
+        const sx=urto.l-4-r.r, dd=urto.r+4-r.l, sh=Math.abs(sx)<Math.abs(dd)?sx:dd;
+        if(Math.abs(dx+sh)<=q.w/2-12) dx+=sh; else dy-=(r.b-urto.t)+GAP;
+      }
+      f.dx+=(dx-f.dx)*k; f.dy+=(dy-f.dy)*k;
+      messi.push({ l:ax-q.w/2+dx, r:ax+q.w/2+dx, t:ab-q.h+dy, b:ab+6+dy });
+      q.fx=f.dx; q.fy=f.dy; q.ab=ab;
+    }
+    for(const id in this.fum) if(ora-this.fum[id].t>3000) delete this.fum[id];   // (chi non parla più perde il suo spostamento)
+    c.font='600 11px '+FONT; c.textAlign='center'; c.textBaseline='middle';
+    for(const q of lista){
+      const x0=q.p.x+q.fx, n=q.l.length;
+      q.l.forEach((b,i)=>{
+        const ultimo=i===n-1, e=Math.min(1,(ora-b.t0)/160), ease=this.ridotto?1:1-Math.pow(1-e,3);
+        const y=q.ab+q.fy+b.py+(1-ease)*6, lw=b.lw, lh=b.lh;
+        c.globalAlpha=Math.min(1,(b.fine-ora)/500)*(this.ridotto?1:ease)*(b.w?0.72:1);
+        c.fillStyle=b.a?'rgba(196,212,255,.9)':b.w?'rgba(214,216,226,.92)':'rgba(246,240,226,.96)';
+        c.strokeStyle=b.a?'rgba(60,80,150,.55)':'rgba(20,16,10,.35)'; c.lineWidth=1; c.setLineDash(b.w?[3,3]:[]);
+        c.beginPath(); c.roundRect ? c.roundRect(x0-lw/2,y,lw,lh,8) : c.rect(x0-lw/2,y,lw,lh);
+        if(ultimo){   // la codina verso chi parla (se la pila è stata spostata in su, un filo dritto fino alla testa)
+          const tx=Math.max(x0-lw/2+10,Math.min(x0+lw/2-10,q.p.x));
+          if(q.fy>-2){ c.moveTo(tx-5,y+lh); c.lineTo(Math.max(x0-lw/2+8,Math.min(x0+lw/2-8,q.p.x)),y+lh+6); c.lineTo(tx+5,y+lh); }
+        }
+        c.fill(); c.stroke(); c.setLineDash([]);
+        if(ultimo && q.fy<=-2){ c.strokeStyle=b.a?'rgba(150,170,230,.6)':'rgba(246,240,226,.55)'; c.beginPath(); c.moveTo(q.p.x,y+lh); c.lineTo(q.p.x,q.ab-2); c.stroke(); }
+        c.fillStyle=b.a?'#1b2440':b.w?'#3b3f50':'#22180c'; b.righe.forEach((rr,j)=>c.fillText(rr, x0, y+12+j*14));
+      });
+    }
+    c.globalAlpha=1; c.textBaseline='alphabetic';
   }
   freccia(io, f, t){
     const c=this.ctx, dx=f.x-io.x, dy=f.y-io.y, d=Math.hypot(dx,dy); if(d<3*T) return;
@@ -3372,6 +3959,503 @@ function quadri(z, post, ok){
   });
 }
 
+// ===== voce.js =====
+// Voce di prossimità di Lanterne: si parla a voce e si sente chi è vicino. Più piano da lontano, attutito dietro un muro,
+// da sinistra o da destra secondo dove sta chi parla. Stessa regola della chat scritta (Partita.sentePar).
+//
+// Quattro pezzi che non si conoscono fra loro, così il trasporto si cambia senza toccare il resto:
+//   1. voceRegola()       LA REGOLA: chi sente chi, quanto forte, quanto attutito, da che lato. Solo numeri: niente audio, niente rete.
+//   2. VoceMixer          IL MIXER (Web Audio): per ogni voce un filtro, un volume e una direzione. Non sa da dove arriva l'audio.
+//   3. TrasportoDiretto   IL TRASPORTO: WebRTC fra i telefoni, a maglia (ognuno con ognuno, fino a 10). Sceglie lui come arriva la voce.
+//   4. VOCE               IL COLLEGAMENTO COL GIOCO: microfono, timer da 10 al secondo, anelli, messaggi della stanza.
+//
+// Quando ci sarà il server (LiveKit), si scrive un TrasportoLiveKit con la stessa forma e si cambia UNA riga: la fabbrica
+// VOCE.nuovoTrasporto (più sotto), che oggi dà un TrasportoDiretto. Regola, mixer, tasti e anelli restano uguali.
+// La forma del trasporto:
+//   new Trasporto({ io, sess, manda(a, dati), onFlusso(id, flusso), onFine(id), onStato(id, stato), diario(testo) })
+//   .microfono(traccia o null)    metto o tolgo la mia voce (senza ricollegare nessuno)
+//   .persone([[id, sessione], …]) chi c'è adesso in voce (con un server non serve: lo sa lui)
+//   .segnale(da, dati)            è arrivato un messaggio di collegamento (con un server non serve)
+//   .stati()                      { id: 'connected' | … } per le prove
+//   .chiudi()
+// In più, il trasporto diretto ha bisogno di qualcuno che porti i messaggi di collegamento da un telefono all'altro:
+// è VoceStanza, sul telefono dell'host (fa da portalettere, non conserva niente). Con un server sparisce anche lui.
+
+
+// =========================================================
+//  1. LA REGOLA
+// =========================================================
+var VOCE_PIENO = 1.5 * T;          // entro questa distanza si sente al massimo
+var VOCE_PIENO_MURO = 1 * T;       // dietro un muro, da così vicino si sente al massimo (che è comunque più piano)
+var VOCE_APERTO = 16000;           // filtro passa-basso senza muri: non toglie niente
+var VOCE_MURO = 800;               // dietro un muro: restano solo i suoni gravi (circa 700-900 Hz)
+var VOCE_VOL_MURO = 0.6;           // e la voce è più bassa
+var VOCE_VOL_ANIME = 0.85;         // le anime sentono tutti: un po' più piano, così le voci non si coprono
+var VOCE_PAN_MAX = 0.85;           // quanto si sposta a sinistra o a destra al massimo
+var VOCE_PAN_DIST = 3 * T;         // a questa distanza di lato la voce è tutta da una parte
+var VOCE_FASI_VICINO = { atrio: 1, svela: 1, gioco: 1 };   // si sente per vicinanza
+var VOCE_FASI_RIUNIONE = { riunione: 1, esito: 1 };        // si sentono tutti i vivi
+
+// una curva morbida da 0 a 1 (piatta alle due estremità: nessuno scatto quando si entra o si esce dal raggio)
+function voceMorbido(t) { t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); }
+function voceLato(a, b) { var p = (b.x - a.x) / VOCE_PAN_DIST; return VOCE_PAN_MAX * (p < -1 ? -1 : p > 1 ? 1 : p); }
+
+// ascolta: chi sente, { x, y, vivo }   parla: chi parla, { x, y, vivo, muto }
+//   «muto»: è in una botola, è uscito, non ha una posizione, o in riunione è stato zittito.
+// fase: la fase della partita (atrio, svela, gioco, riunione, esito, fine); M: la mappa dove si trovano.
+// Risposta: { vol: 0..1, taglio: Hz del filtro, pan: -1..1, k } con k come in Partita.sentePar: 0 niente, 1 forte, 2 attutito.
+// Vale la stessa regola della chat scritta:
+//   · i vivi si sentono entro R_PARLA caselle a vista; attraverso un muro solo entro R_MURO, e attutiti;
+//   · le anime sentono tutti e parlano solo alle anime;
+//   · in riunione si sentono tutti i vivi (le anime parlano solo alle anime e sentono tutti);
+//   · a partita finita si sentono tutti.
+function voceRegola(fase, M, ascolta, parla) {
+  var zero = { vol: 0, taglio: VOCE_APERTO, pan: 0, k: 0 };
+  if (!parla || parla.muto) return zero;
+  var libera = { vol: 1, taglio: VOCE_APERTO, pan: 0, k: 1 };
+  if (VOCE_FASI_VICINO[fase]) {
+    if (!parla.vivo) return ascolta.vivo ? zero : libera;
+    if (!ascolta.vivo) return { vol: VOCE_VOL_ANIME, taglio: VOCE_APERTO, pan: 0, k: 1 };
+    var d = Math.hypot(parla.x - ascolta.x, parla.y - ascolta.y);
+    if (d > R_PARLA) return zero;
+    var pan = voceLato(ascolta, parla);
+    if (vede(M, ascolta.x, ascolta.y, parla.x, parla.y)) return { vol: voceMorbido((R_PARLA - d) / (R_PARLA - VOCE_PIENO)), taglio: VOCE_APERTO, pan: pan, k: 1 };
+    if (d <= R_MURO) return { vol: VOCE_VOL_MURO * voceMorbido((R_MURO - d) / (R_MURO - VOCE_PIENO_MURO)), taglio: VOCE_MURO, pan: pan, k: 2 };
+    return zero;
+  }
+  if (VOCE_FASI_RIUNIONE[fase]) return !parla.vivo && ascolta.vivo ? zero : libera;
+  return libera;
+}
+
+// =========================================================
+//  2. IL MIXER (Web Audio)
+// =========================================================
+// Ogni voce: MediaStreamSource → filtro passa-basso → volume → direzione → uscita.
+// A valle di tutto un compressore, così con tante voci insieme non si va in distorsione.
+function VoceMixer(ctx) {
+  this.ctx = ctx; this.v = {}; this.mio = null;
+  this.master = ctx.createGain(); this.master.gain.value = 0.9;
+  this.comp = ctx.createDynamicsCompressor();
+  this.comp.threshold.value = -16; this.comp.knee.value = 14; this.comp.ratio.value = 4; this.comp.attack.value = 0.005; this.comp.release.value = 0.2;
+  this.master.connect(this.comp); this.comp.connect(ctx.destination);
+}
+VoceMixer.prototype.aggiungi = function (id, flusso) {
+  var c = this.ctx; this.togli(id);
+  var src = c.createMediaStreamSource(flusso), fil = c.createBiquadFilter(), gan = c.createGain(), an = c.createAnalyser();
+  var pan = c.createStereoPanner ? c.createStereoPanner() : null;
+  fil.type = 'lowpass'; fil.frequency.value = VOCE_APERTO; fil.Q.value = 0.7;
+  gan.gain.value = 0;   // si parte da zero: il volume giusto arriva morbido dal primo giro della regola
+  an.fftSize = 1024;
+  src.connect(fil); fil.connect(gan); gan.connect(an);   // (l'analizzatore sta dopo il volume: l'anello compare solo per ciò che si sente)
+  if (pan) { gan.connect(pan); pan.connect(this.master); } else gan.connect(this.master);
+  this.v[id] = { src: src, fil: fil, gan: gan, an: an, pan: pan, buf: new Uint8Array(an.fftSize), ultimo: null };
+};
+VoceMixer.prototype.togli = function (id) {
+  var x = this.v[id]; if (!x) return;
+  [x.src, x.fil, x.gan, x.an, x.pan].forEach(function (n) { if (n) try { n.disconnect(); } catch (e) {} });
+  delete this.v[id];
+};
+// volume, filtro e direzione di una voce: transizioni morbide, mai salti (si chiama circa 10 volte al secondo)
+VoceMixer.prototype.regola = function (id, r) {
+  var x = this.v[id]; if (!x) return;
+  var u = x.ultimo; if (u && Math.abs(u.vol - r.vol) < 0.004 && u.taglio === r.taglio && Math.abs(u.pan - r.pan) < 0.01) return;
+  x.ultimo = { vol: r.vol, taglio: r.taglio, pan: r.pan };
+  var t = this.ctx.currentTime;
+  x.gan.gain.setTargetAtTime(r.vol, t, 0.07);
+  x.fil.frequency.setTargetAtTime(r.taglio, t, 0.1);
+  if (x.pan) x.pan.pan.setTargetAtTime(r.pan, t, 0.1);
+};
+function voceRms(an, buf) { an.getByteTimeDomainData(buf); var m = 0; for (var i = 0; i < buf.length; i++) { var s = (buf[i] - 128) / 128; m += s * s; } return Math.sqrt(m / buf.length); }
+// quanto forte arriva una voce (dopo il volume), da 0 a circa 1
+VoceMixer.prototype.livello = function (id) { var x = this.v[id]; return x ? voceRms(x.an, x.buf) : 0; };
+// la mia voce: solo da misurare (non va all'uscita, sennò mi sentirei)
+VoceMixer.prototype.ascoltaMio = function (flusso) {
+  this.smettiMio();
+  try { var src = this.ctx.createMediaStreamSource(flusso), an = this.ctx.createAnalyser(); an.fftSize = 1024; src.connect(an); this.mio = { src: src, an: an, buf: new Uint8Array(an.fftSize) }; } catch (e) { this.mio = null; }
+};
+VoceMixer.prototype.smettiMio = function () { if (this.mio) { try { this.mio.src.disconnect(); } catch (e) {} this.mio = null; } };
+VoceMixer.prototype.livelloMio = function () { return this.mio ? voceRms(this.mio.an, this.mio.buf) : 0; };
+VoceMixer.prototype.chiudi = function () {
+  var M = this; Object.keys(M.v).forEach(function (id) { M.togli(id); }); M.smettiMio();
+  try { M.master.disconnect(); M.comp.disconnect(); } catch (e) {}
+};
+
+// =========================================================
+//  3. IL TRASPORTO DIRETTO (WebRTC a maglia)
+// =========================================================
+// Solo audio. Ogni telefono ha un collegamento con ciascuno degli altri. Si usa solo lo STUN di Google per trovarsi (niente TURN:
+// su certe reti 4G/5G il collegamento può non riuscire). Offerta e risposta vanno COMPLETE (si aspetta la fine della raccolta dei
+// percorsi ICE e si manda il testo intero, niente candidati uno per uno). In ogni coppia propone chi ha l'id che viene prima,
+// così le offerte non si incrociano. Il canale audio è sempre «sendrecv»: la mia traccia si mette e si toglie con replaceTrack,
+// senza rifare i collegamenti, così si può anche solo ascoltare e accendere il microfono dopo.
+var VOCE_ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
+function voceId() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+
+function TrasportoDiretto(o) {
+  this.o = o; this.io = o.io; this.sess = o.sess || voceId(); this.pc = {}; this.membri = {}; this.falli = {}; this.attesa = {};
+  this.traccia = null; this.chiuso = false; this.visti = {}; this.n = 0;
+}
+// un diario corto di quello che fa (per capire cosa è successo; chi usa il trasporto può ignorarlo): o.diario(testo)
+TrasportoDiretto.prototype.dice = function (t) { if (this.o.diario) this.o.diario(t); };
+TrasportoDiretto.prototype.microfono = function (traccia) {
+  var X = this; X.traccia = traccia || null;
+  Object.keys(X.pc).forEach(function (id) { X.metti(X.pc[id]); });
+};
+// la mia traccia (o nessuna) sul canale audio di un collegamento
+// I messaggi di collegamento viaggiano su un canale veloce che ogni tanto ne perde uno: si mandano due volte (a mezzo secondo di distanza).
+// Chi li riceve scarta il doppione (offerta già vista, risposta quando non la aspetta più).
+TrasportoDiretto.prototype.invia = function (a, d) {
+  var X = this; X.o.manda(a, d);
+  setTimeout(function () { if (!X.chiuso) X.o.manda(a, d); }, 500);
+};
+TrasportoDiretto.prototype.metti = function (pc) {
+  if (!pc.trAudio) return;
+  try { var p = pc.trAudio.sender.replaceTrack(this.traccia); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+};
+// chi c'è adesso in voce (arriva dalla stanza): chiude i collegamenti di chi è uscito e propone quelli che mancano
+TrasportoDiretto.prototype.persone = function (lista) {
+  var X = this, nuovi = {}; if (X.chiuso) return;
+  lista.forEach(function (r) { if (r[0] !== X.io) nuovi[r[0]] = r[1]; });
+  X.membri = nuovi;
+  Object.keys(X.pc).forEach(function (id) { var pc = X.pc[id]; if (!(id in nuovi) || (pc.suaSess && pc.suaSess !== nuovi[id])) { X.dice('chiudo ' + id + ': ' + (id in nuovi ? 'ha una sessione nuova' : 'non è più in elenco')); X.chiudiPc(id); } });
+  Object.keys(nuovi).forEach(function (id) { if (!X.pc[id] && X.io < id && !(X.attesa[id] > Date.now())) X.offri(id); });
+};
+TrasportoDiretto.prototype.nuovo = function (id, suaSess) {
+  var X = this, pc = new RTCPeerConnection({ iceServers: VOCE_ICE });
+  pc.suaSess = suaSess; pc.t0 = Date.now(); X.pc[id] = pc;
+  pc.tCon = setTimeout(function () { if (X.pc[id] === pc && pc.connectionState !== 'connected') { X.dice(id + ': non si collega, rifaccio'); X.rifai(id); } }, 15000);
+  pc.ontrack = function (e) {
+    if (X.pc[id] !== pc) return;
+    X.o.onFlusso(id, e.streams && e.streams[0] ? e.streams[0] : new MediaStream([e.track]));
+  };
+  pc.onconnectionstatechange = function () {
+    if (X.pc[id] !== pc) return; var s = pc.connectionState;
+    X.dice(id + ': ' + s);
+    if (s === 'connected') { clearTimeout(pc.tDisc); clearTimeout(pc.tCon); X.falli[id] = 0; X.o.onStato(id, 'connesso'); }
+    else if (s === 'disconnected') { clearTimeout(pc.tDisc); X.o.onStato(id, 'instabile'); pc.tDisc = setTimeout(function () { if (X.pc[id] === pc && pc.connectionState !== 'connected') X.rifai(id); }, 4000); }
+    else if (s === 'failed') X.rifai(id);
+    else X.o.onStato(id, 'collego');
+  };
+  return pc;
+};
+// si aspetta di avere tutti i percorsi possibili, così basta un messaggio solo per parte (al massimo 2,5 secondi)
+TrasportoDiretto.prototype.raccolto = function (pc) {
+  return new Promise(function (r) {
+    if (pc.iceGatheringState === 'complete') { r(); return; }
+    var t = setTimeout(r, 2500);
+    pc.addEventListener('icegatheringstatechange', function () { if (pc.iceGatheringState === 'complete') { clearTimeout(t); r(); } });
+  });
+};
+TrasportoDiretto.prototype.offri = function (id) {
+  var X = this, suaSess = X.membri[id]; if (!suaSess || X.chiuso || !window.RTCPeerConnection) return;
+  var pc = X.nuovo(id, suaSess), oid = X.sess + '.' + (++X.n); pc.oid = oid; X.dice('offro a ' + id);
+  pc.trAudio = pc.addTransceiver('audio', { direction: 'sendrecv' }); X.metti(pc);
+  pc.createOffer().then(function (of) { return pc.setLocalDescription(of); }).then(function () { return X.raccolto(pc); }).then(function () {
+    if (X.pc[id] !== pc) return;
+    X.invia(id, { tipo: 'off', sdp: pc.localDescription.sdp, oid: oid, sda: X.sess, sa: suaSess });
+    // se la risposta non arriva (messaggio perso) si riprova da capo
+    pc.tRis = setTimeout(function () { if (X.pc[id] === pc && pc.signalingState === 'have-local-offer') X.rifai(id); }, 6000);
+  }).catch(function () { if (X.pc[id] === pc) X.rifai(id); });
+};
+// collegamento perso o mai nato: chi propone riprova; dopo 3 tentativi falliti di fila si ferma per 30 secondi
+TrasportoDiretto.prototype.rifai = function (id) {
+  var X = this; if (X.chiuso) return;
+  X.dice('rifaccio ' + id); X.chiudiPc(id); X.falli[id] = (X.falli[id] || 0) + 1;
+  if (X.falli[id] >= 3) { X.falli[id] = 0; X.attesa[id] = Date.now() + 30000; X.o.onStato(id, 'fallito'); return; }
+  X.o.onStato(id, 'collego');
+  if (X.io < id) setTimeout(function () { if (!X.chiuso && !X.pc[id] && X.membri[id]) X.offri(id); }, 1500);
+  else if (X.membri[id]) X.invia(id, { tipo: 'rifai', sda: X.sess, sa: X.membri[id] });   // chi non propone chiede all'altro di rifarlo
+};
+TrasportoDiretto.prototype.segnale = function (da, d) {
+  var X = this; if (X.chiuso || !d || da === X.io || d.sa !== X.sess) return;   // (un messaggio per una mia entrata precedente non vale)
+  if (d.tipo === 'off' && typeof d.sdp === 'string' && d.sdp.length < 40000 && d.oid) {
+    if (X.visti[d.oid]) return; X.visti[d.oid] = 1;   // (la stessa offerta arrivata due volte vale una)
+    X.dice('offerta da ' + da);
+    var ks = Object.keys(X.visti); if (ks.length > 40) delete X.visti[ks[0]];
+    X.chiudiPc(da);
+    var pc = X.nuovo(da, d.sda); pc.oid = d.oid;
+    pc.setRemoteDescription({ type: 'offer', sdp: d.sdp }).then(function () {
+      var tr = pc.getTransceivers().filter(function (x) { return x.receiver && x.receiver.track && x.receiver.track.kind === 'audio'; })[0];
+      if (tr) { pc.trAudio = tr; try { tr.direction = 'sendrecv'; } catch (e) {} X.metti(pc); }
+      return pc.createAnswer();
+    }).then(function (a) { return pc.setLocalDescription(a); }).then(function () { return X.raccolto(pc); }).then(function () {
+      if (X.pc[da] !== pc) return;
+      X.invia(da, { tipo: 'ris', sdp: pc.localDescription.sdp, oid: d.oid, sda: X.sess, sa: d.sda });
+    }).catch(function () { if (X.pc[da] === pc) X.rifai(da); });
+  } else if (d.tipo === 'ris' && typeof d.sdp === 'string' && d.sdp.length < 40000) {
+    var p = X.pc[da]; X.dice('risposta da ' + da + (p && p.signalingState === 'have-local-offer' && p.oid === d.oid ? '' : ' (scartata)'));
+    if (!p || p.signalingState !== 'have-local-offer' || p.oid !== d.oid) return;
+    clearTimeout(p.tRis);
+    p.setRemoteDescription({ type: 'answer', sdp: d.sdp }).catch(function () { if (X.pc[da] === p) X.rifai(da); });
+  } else if (d.tipo === 'rifai') {
+    X.dice(da + ' chiede di rifare');
+    var vecchio = X.pc[da]; if (vecchio && Date.now() - vecchio.t0 < 2500) return;   // (la richiesta è arrivata due volte: ho già ricominciato)
+    if (X.io < da && X.membri[da] && !(X.attesa[da] > Date.now())) { X.chiudiPc(da); X.offri(da); }
+  }
+};
+TrasportoDiretto.prototype.chiudiPc = function (id) {
+  var pc = this.pc[id]; if (!pc) return;
+  delete this.pc[id]; clearTimeout(pc.tDisc); clearTimeout(pc.tRis); clearTimeout(pc.tCon);
+  pc.ontrack = null; pc.onconnectionstatechange = null; try { pc.close(); } catch (e) {}
+  this.o.onFine(id);
+};
+TrasportoDiretto.prototype.stati = function () { var X = this, s = {}; Object.keys(X.pc).forEach(function (id) { s[id] = X.pc[id].connectionState; }); return s; };
+TrasportoDiretto.prototype.chiudi = function () { var X = this; X.chiuso = true; Object.keys(X.pc).forEach(function (id) { X.chiudiPc(id); }); };
+
+// =========================================================
+//  3b. IL PORTALETTERE (solo sul telefono dell'host)
+// =========================================================
+// Tiene l'elenco di chi è in voce (con un battito ogni 6 secondi: chi tace da 22 secondi esce) e porta i messaggi di collegamento
+// da un telefono all'altro. Non conserva niente: i messaggi passano e basta.
+//   dal telefono all'host:  { t:'vc', k:'su', sess, mic } · { t:'vc', k:'giu' } · { t:'vc', k:'sig', a:<destinatario>, d:<dati> }
+//   dall'host a un telefono: { t:'vc', k:'sig', da:<chi lo manda>, d:<dati> }
+//   dall'host a tutti:       { t:'vcl', l:[[id, sessione], …] }   (l'elenco, ogni volta che cambia e ogni 5 secondi)
+// o: { invia(a, m) a un telefono, tutti(m) a tutti }
+function VoceStanza(o) { this.o = o; this.l = {}; this.n = 0; this.vuoto = true; }
+VoceStanza.prototype.arriva = function (da, m) {
+  var S = this; if (!m || typeof da !== 'string') return;
+  if (m.k === 'su') {
+    var sess = String(m.sess || '').slice(0, 24); if (!sess) return;
+    var x = S.l[da], nuovo = !x || x.sess !== sess;
+    S.l[da] = { sess: sess, t: Date.now(), mic: m.mic ? 1 : 0 };
+    if (nuovo) S.manda();
+  } else if (m.k === 'giu') { if (S.l[da]) { delete S.l[da]; S.manda(); } }
+  else if (m.k === 'sig') {
+    var a = String(m.a || '');
+    if (!S.l[da] || !S.l[a] || a === da || !m.d || typeof m.d !== 'object') return;   // solo fra chi è in voce
+    if (S.o.nota) S.o.nota('porto ' + m.d.tipo + ' da ' + da + ' a ' + a);
+    S.o.invia(a, { t: 'vc', k: 'sig', da: da, d: m.d });
+  }
+};
+VoceStanza.prototype.via = function (id) { if (this.l[id]) { delete this.l[id]; this.manda(); } };
+VoceStanza.prototype.manda = function () {
+  var S = this, l = Object.keys(S.l).map(function (id) { return [id, S.l[id].sess]; });
+  S.vuoto = !l.length; this.o.tutti({ t: 'vcl', n: ++S.n, l: l });
+};
+// ogni 5 secondi: toglie chi non dà più segno di vita e rimanda l'elenco (così chi l'ha perso lo ritrova). Se non c'è nessuno, tace.
+VoceStanza.prototype.giro = function () {
+  var S = this, ora = Date.now();
+  Object.keys(S.l).forEach(function (id) { if (ora - S.l[id].t > 22000) delete S.l[id]; });
+  if (Object.keys(S.l).length || !S.vuoto) S.manda();
+};
+
+// =========================================================
+//  4. IL COLLEGAMENTO COL GIOCO
+// =========================================================
+// stato: spenta · accendo (aspetto il permesso) · parlo (microfono acceso) · muto (microfono spento da me) · ascolto (solo ascolto, senza microfono)
+var VOCE = {
+  stato: 'spenta', canale: null, roster: [], sess: '', ctx: null, mixer: null, tr: null, stream: null, traccia: null,
+  audio: {}, stati: {}, regole: {}, liv: {}, parla: {}, ascoltatori: [], fonte: null, fonteDi: null, nome: null, avvisa: null,
+  storia: [], ioStato: null, battito: 0, timer: null, ultimaMisura: 0, ultimoAvviso: '', ultimoAvvisoT: 0, legato: false
+};
+// la fabbrica del trasporto: QUI si cambia da WebRTC diretto a LiveKit (domani: return new TrasportoLiveKit(o))
+VOCE.nuovoTrasporto = function (o) { return new TrasportoDiretto(o); };
+// il diario (gli ultimi 60 fatti), per capire cosa è successo
+VOCE.nota = function (t) { this.storia.push(((Date.now() % 100000) / 1000).toFixed(1) + ' ' + t); if (this.storia.length > 60) this.storia.shift(); };
+VOCE.cambiato = function () { var V = this; V.ascoltatori = V.ascoltatori.filter(function (f) { try { return f() !== false; } catch (e) { return true; } }); };
+VOCE.suCambio = function (f) { this.ascoltatori.push(f); f(); };
+// un avviso corto, mai lo stesso due volte di fila a breve
+VOCE.dici = function (testo) {
+  var V = this, ora = Date.now(); if (V.ultimoAvviso === testo && ora - V.ultimoAvvisoT < 8000) return;
+  V.ultimoAvviso = testo; V.ultimoAvvisoT = ora; if (V.avvisa) V.avvisa(testo);
+};
+VOCE.nomeDi = function (id) { var n = this.nome ? this.nome(id) : ''; return n && n !== '?' ? n : 'un altro'; };
+// c'è una stanza online, e questo telefono sa fare la voce
+VOCE.disponibile = function () { return !!(this.canale && window.RTCPeerConnection && (window.AudioContext || window.webkitAudioContext)); };
+// la stanza si apre (host o ospite). canale: { io: il mio id, manda(m): porta un messaggio {t:'vc'…} all'host }
+VOCE.apri = function (canale) {
+  var V = this;
+  if (V.canale && V.canale.io !== canale.io) V.chiudiStanza();
+  V.canale = canale;
+  if (!V.legato && typeof window !== 'undefined') {
+    V.legato = true;
+    window.addEventListener('pagehide', function () { VOCE.esci(); });   // chiudendo la pagina la voce si chiude
+    document.addEventListener('visibilitychange', function () {   // tornando sull'app l'audio riparte (su iPhone si ferma con lo schermo bloccato)
+      if (document.visibilityState !== 'visible' || VOCE.stato === 'spenta') return;
+      try { if (VOCE.ctx && VOCE.ctx.state !== 'running') VOCE.ctx.resume(); } catch (e) {}
+      if (VOCE.traccia && VOCE.traccia.readyState === 'ended') VOCE.microfonoPerso();
+      VOCE.riprova();
+    });
+    document.addEventListener('pointerdown', function () { if (VOCE.stato !== 'spenta') VOCE.riprova(); }, { capture: true, passive: true });
+  }
+  if (window.LT_PROVA) window.LT_VOCE = V.prova();
+  V.cambiato();
+};
+VOCE.chiudiStanza = function () { var V = this; V.esci(); V.canale = null; V.roster = []; V.cambiato(); };
+// dalla rete del gioco: l'elenco di chi è in voce, o un messaggio di collegamento da un altro telefono
+VOCE.arriva = function (m) {
+  var V = this; if (!m || !V.canale) return;
+  if (m.t === 'vcl' && Array.isArray(m.l)) {
+    V.roster = m.l.filter(function (r) { return Array.isArray(r) && typeof r[0] === 'string' && typeof r[1] === 'string'; });
+    if (V.stato === 'spenta') return;
+    if (!V.roster.some(function (r) { return r[0] === V.canale.io && r[1] === V.sess; })) V.annuncia();   // l'host non mi ha in elenco: mi rifaccio vivo
+    if (V.tr) V.tr.persone(V.roster);
+  } else if (m.t === 'vc' && m.k === 'sig' && V.tr && typeof m.da === 'string') { V.nota('arriva ' + (m.d && m.d.tipo) + ' da ' + m.da); V.tr.segnale(m.da, m.d); }
+};
+VOCE.annuncia = function () {
+  var V = this; if (!V.canale || V.stato === 'spenta' || V.stato === 'accendo') return;
+  V.battito = Date.now(); V.canale.manda({ t: 'vc', k: 'su', sess: V.sess, mic: V.traccia ? 1 : 0 });
+};
+// il tasto principale: spenta → accende (e chiede il microfono); ascolto → prova ad accendere il microfono; parlo/muto → si alterna
+VOCE.tocca = function () {
+  var V = this;
+  if (V.stato === 'spenta') V.entra(true);
+  else if (V.stato === 'ascolto') V.accendiMic();
+  else if (V.stato === 'parlo' || V.stato === 'muto') {
+    V.stato = V.stato === 'parlo' ? 'muto' : 'parlo';
+    if (V.traccia) V.traccia.enabled = V.stato === 'parlo';
+    V.cambiato();
+  }
+};
+// il tasto piccolo: da spenta «solo ascolto», altrimenti «esci dalla voce»
+VOCE.secondo = function () { if (this.stato === 'spenta') this.entra(false); else this.esci(); };
+// Va chiamata DENTRO il tocco dell'utente: su iPhone l'audio parte solo da lì.
+VOCE.entra = function (conMic) {
+  var V = this; if (V.stato !== 'spenta' || !V.canale) return;
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC || !window.RTCPeerConnection) { V.dici('Voce: qui non funziona'); return; }
+  try { if (!V.ctx) V.ctx = new AC(); if (V.ctx.state !== 'running') V.ctx.resume(); } catch (e) { V.dici('Voce: audio non disponibile'); return; }
+  V.stato = 'accendo'; V.cambiato();
+  if (conMic) V.chiediMic(function (st) { V.avvia(st); }); else V.avvia(null);
+};
+// il permesso e il microfono (da chiamare dentro il tocco); se non va, va avanti senza
+VOCE.chiediMic = function (fatto) {
+  var V = this, md = navigator.mediaDevices;
+  if (!md || !md.getUserMedia) { V.dici('Voce: qui il microfono non va'); fatto(null); return; }
+  md.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false })
+    .then(fatto)
+    .catch(function (e) { V.dici(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? 'Voce: microfono non permesso' : 'Voce: microfono non disponibile'); fatto(null); });
+};
+VOCE.avvia = function (st) {
+  var V = this;
+  if (V.stato !== 'accendo') { if (st) st.getTracks().forEach(function (t) { t.stop(); }); return; }   // nel frattempo ho cambiato idea
+  V.sess = voceId();
+  V.mixer = new VoceMixer(V.ctx);
+  V.tr = V.nuovoTrasporto({
+    io: V.canale.io, sess: V.sess,
+    manda: function (a, d) { if (V.canale) { V.canale.manda({ t: 'vc', k: 'sig', a: a, d: d }); V.nota('mando ' + d.tipo + ' a ' + a + ' (' + (d.sdp ? d.sdp.length : 0) + ' car.)'); } },
+    onFlusso: function (id, flusso) { V.flusso(id, flusso); },
+    onFine: function (id) { V.fineFlusso(id); },
+    diario: function (t) { V.nota(t); },
+    onStato: function (id, s) { V.stati[id] = s; if (s === 'fallito') V.dici('Voce: con ' + V.nomeDi(id) + ' non si collega'); V.cambiato(); }
+  });
+  V.mettiMic(st);
+  V.stato = V.traccia ? 'parlo' : 'ascolto';
+  V.annuncia();
+  clearInterval(V.timer); V.timer = setInterval(function () { VOCE.giro(); }, 100);
+  if (V.roster.length) V.tr.persone(V.roster);
+  V.cambiato();
+};
+// il mio microfono (o nessuno): lo sentono tutti i collegamenti, anche quelli già aperti
+VOCE.mettiMic = function (st) {
+  var V = this;
+  if (V.stream && V.stream !== st) V.stream.getTracks().forEach(function (t) { t.stop(); });
+  V.stream = st || null; V.traccia = st ? st.getAudioTracks()[0] || null : null;
+  if (V.traccia) { V.traccia.enabled = true; V.traccia.addEventListener('ended', function () { if (VOCE.traccia === this) VOCE.microfonoPerso(); }); }
+  if (V.mixer) { if (st) V.mixer.ascoltaMio(st); else V.mixer.smettiMio(); }
+  if (V.tr) V.tr.microfono(V.traccia);
+};
+VOCE.microfonoPerso = function () {
+  var V = this; if (V.stato !== 'parlo' && V.stato !== 'muto') return;
+  V.mettiMic(null); V.stato = 'ascolto'; V.dici('Voce: microfono staccato'); V.annuncia(); V.cambiato();
+};
+VOCE.accendiMic = function () {
+  var V = this; if (V.stato !== 'ascolto') return;
+  V.chiediMic(function (st) {
+    if (!st || V.stato !== 'ascolto') { if (st) st.getTracks().forEach(function (t) { t.stop(); }); return; }
+    V.mettiMic(st); V.stato = 'parlo'; V.annuncia(); V.cambiato();
+  });
+};
+VOCE.esci = function () {
+  var V = this; if (V.stato === 'spenta') return;
+  var eraIn = V.stato !== 'accendo';
+  V.stato = 'spenta'; clearInterval(V.timer); V.timer = null;
+  if (eraIn && V.canale) { try { V.canale.manda({ t: 'vc', k: 'giu' }); } catch (e) {} }
+  if (V.tr) { V.tr.chiudi(); V.tr = null; }
+  V.mettiMic(null);
+  if (V.mixer) { V.mixer.chiudi(); V.mixer = null; }
+  Object.keys(V.audio).forEach(function (id) { V.fineFlusso(id); });
+  V.stati = {}; V.regole = {}; V.liv = {}; V.parla = {};
+  try { if (V.ctx && V.ctx.state === 'running') V.ctx.suspend(); } catch (e) {}
+  V.cambiato();
+};
+// arriva la voce di qualcuno: un <audio> muto resta collegato (a Chrome serve per far scorrere il flusso), il suono esce dal mixer
+VOCE.flusso = function (id, flusso) {
+  var V = this; if (V.stato === 'spenta' || !V.mixer) return;
+  var a = V.audio[id];
+  if (!a) { a = document.createElement('audio'); a.autoplay = true; a.muted = true; a.setAttribute('playsinline', ''); a.dataset.voce = id; a.style.display = 'none'; document.body.appendChild(a); V.audio[id] = a; }
+  a.srcObject = flusso;
+  var p = a.play(); if (p && p.catch) p.catch(function () { /* riprova al tocco successivo (VOCE.riprova) */ });
+  try { V.mixer.aggiungi(id, flusso); } catch (e) { V.dici('Voce: con ' + V.nomeDi(id) + ' non si sente'); }
+  V.regola();
+};
+VOCE.fineFlusso = function (id) {
+  var V = this, a = V.audio[id];
+  if (a) { try { a.pause(); } catch (e) {} a.srcObject = null; a.remove(); delete V.audio[id]; }
+  if (V.mixer) V.mixer.togli(id);
+  delete V.regole[id]; delete V.liv[id]; delete V.parla[id];
+};
+// al tocco o quando la pagina torna visibile: l'audio ferma riparte
+VOCE.riprova = function () {
+  var V = this;
+  try { if (V.ctx && V.ctx.state !== 'running') V.ctx.resume(); } catch (e) {}
+  Object.keys(V.audio).forEach(function (id) { var a = V.audio[id]; if (a.paused && a.srcObject) { var p = a.play(); if (p && p.catch) p.catch(function () {}); } });
+};
+// il giro da 10 al secondo: regola volumi, battito, orologio dell'audio
+VOCE.giro = function () {
+  var V = this; if (V.stato === 'spenta') return;
+  if (Date.now() - V.battito > 6000) V.annuncia();
+  if (V.ctx && V.ctx.state === 'suspended' && (typeof document === 'undefined' || document.visibilityState === 'visible')) { try { V.ctx.resume(); } catch (e) {} }
+  V.regola();
+};
+// applica la regola a ogni voce (chi sente chi lo dice la foto del gioco; senza gioco aperto si sentono tutti)
+VOCE.regola = function () {
+  var V = this; if (!V.mixer) return;
+  var S = V.fonte ? V.fonte() : null;
+  V.ioStato = S ? S.io : null;   // (come sto io: lo legge misura(), che gira molto più spesso)
+  Object.keys(V.mixer.v).forEach(function (id) {
+    var r = S ? voceRegola(S.fase, S.M, S.io, S.altri[id]) : { vol: 1, taglio: VOCE_APERTO, pan: 0, k: 1 };
+    V.regole[id] = r; V.mixer.regola(id, r);
+  });
+};
+// chi sta parlando adesso (per gli anelli): si chiama a ogni fotogramma, ma lavora al massimo ogni 33 ms.
+// liv: 0..1 (si smorza piano), parla: sopra la soglia
+VOCE.misura = function (ora) {
+  var V = this; if (V.stato === 'spenta' || !V.mixer || ora - V.ultimaMisura < 33) return;
+  V.ultimaMisura = ora;
+  function aggiorna(id, rms, sorda) {
+    var l = sorda ? 0 : Math.min(1, rms / 0.1), p = V.liv[id] || 0;
+    p = l > p ? l : p * 0.86; V.liv[id] = p; V.parla[id] = p > 0.12;
+  }
+  Object.keys(V.mixer.v).forEach(function (id) { aggiorna(id, V.mixer.livello(id), false); });
+  if (V.canale) {
+    var io = V.canale.io, zitto = V.stato !== 'parlo' || (V.ioStato && V.ioStato.muto);
+    aggiorna(io, zitto ? 0 : V.mixer.livelloMio(), zitto);
+  }
+};
+// per le prove a schermo: i numeri veri di quello che sta succedendo
+VOCE.prova = function () {
+  var V = this;
+  return {
+    stato: function () { return V.stato; },
+    stati: function () { return V.tr ? V.tr.stati() : {}; },
+    roster: function () { return V.roster; },
+    tracce: function () { return Object.keys(V.audio).filter(function (id) { var s = V.audio[id].srcObject; return s && s.getAudioTracks().length > 0; }); },
+    mic: function () { return V.traccia ? { attiva: V.traccia.enabled, stato: V.traccia.readyState } : null; },
+    regole: function () { var o = {}; Object.keys(V.regole).forEach(function (id) { o[id] = V.regole[id]; }); return o; },
+    gain: function () {
+      var o = {}; if (!V.mixer) return o;
+      Object.keys(V.mixer.v).forEach(function (id) { var x = V.mixer.v[id]; o[id] = { vol: x.gan.gain.value, taglio: x.fil.frequency.value, pan: x.pan ? x.pan.pan.value : 0 }; });
+      return o;
+    },
+    livelli: function () { return { liv: V.liv, parla: V.parla }; },
+    audio: function () { return V.ctx ? { stato: V.ctx.state, t: V.ctx.currentTime } : null; },
+    storia: function () { return V.storia.slice(); },
+    guasto: function (id) { if (V.tr) V.tr.o.onStato(id, 'fallito'); },   // (solo per provare l'avviso «non si collega»)
+    elementi: function () { return Object.keys(V.audio).map(function (id) { var a = V.audio[id]; return { id: id, muto: a.muted, paused: a.paused, autoplay: a.autoplay, playsinline: a.hasAttribute('playsinline') }; }); }
+  };
+};
+
 // ===== gioco.js =====
 // Lanterne dentro SPeeD GAME. Parte dal modello del progetto (.agents/skills/nuovo-gioco/modello-gioco-online.js):
 // l'host tiene la partita vera (Partita) e manda a tutti la foto (vm) e le posizioni; gli altri mandano solo mosse e posizione.
@@ -3387,6 +4471,9 @@ var RIEMPI = 6;   // in prova: con pochi amici la saletta si riempie da sola coi
 var AMMESSI = ["IL PAPPONE", "GAY", "MARIO"];
 function nomeAccount() { try { var p = window.SGNube && SGNube.profilo && SGNube.profilo(); return String((p && p.nome) || "").trim().toUpperCase(); } catch (e) { return ""; } }
 function ammesso() { return AMMESSI.indexOf(nomeAccount()) >= 0; }
+// la chat di prossimità: frasi a un tocco (poche e brevi) e quanti messaggi tiene lo storico
+var PARLA_RAPIDE = ["Ciao!", "Dove sei?", "Seguimi", "Aiuto!", "Occhio!"];
+var PARLA_STORICO = 4;
 var RITARDATARI = "partita";   // chi arriva a partita cominciata la guarda ed entra alla prossima
 var COLORI = ["#d64550","#f0a23b","#2fa36b","#4a74de","#9b59c9","#ff7f6b","#9cbf8a","#1f9a9a","#e8c547","#b9a6f0"];
 function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
@@ -3488,10 +4575,11 @@ function host(t) {
   rete = SGNet.ospita(ID, {
     onCodice: function (c) { H.codice = c; bd(); },
     onConnesso: function () { H.pronta = true; bd(); },
-    onErrore: function () { if (H.pronta) return; ferma(); if (rete) rete.chiudi(); erroreRete(t, "Non riesco ad aprire la stanza.", function () { host(t); }); },
+    onErrore: function () { if (H.pronta) return; ferma(); VOCE.chiudiStanza(); if (rete) rete.chiudi(); erroreRete(t, "Non riesco ad aprire la stanza.", function () { host(t); }); },
     onForse: function (id) { var p = pById(id); if (p && !p.forse) { p.forse = true; bd(); } },
     onTornato: function (id) { var p = pById(id); if (p && p.forse) { p.forse = false; bd(); } },
     onAddio: function (id) {
+      if (VS) VS.via(id);
       if (H.guarda.some(function (x) { return x.id === id; })) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
       var p = pById(id); if (!p) return;
       p.forse = false;
@@ -3500,6 +4588,7 @@ function host(t) {
     },
     onMsg: function (id, m) {
       if (!m || !m.t) return;
+      if (m.t === "vc") { var pv = pById(id); if (pv && !pv.via && VS) VS.arriva(id, m); return; }   // la voce: messaggi di collegamento
       if (m.t === "join") {
         var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
         if (!p && !t.puoSedersi(id, nome)) { if (!H.guarda.some(function (x) { return x.id === id; })) H.guarda.push({ id: id, nome: nome }); bd(); return; }
@@ -3523,6 +4612,13 @@ function host(t) {
   }, { ripresa: riprendo });
   if (!rete) return senzaRete(t);
   if (riprendo && rete.codice) H.codice = rete.codice;
+  // la voce: l'host fa da portalettere dei messaggi di collegamento fra i telefoni (non conserva niente, sono messaggi veloci)
+  var VS = new VoceStanza({
+    nota: function (t) { VOCE.nota(t); },
+    invia: function (a, m) { if (a === IO) VOCE.arriva(m); else { m.to = a; rete.inviaVeloce(m); } },
+    tutti: function (m) { rete.inviaVeloce(m); VOCE.arriva(m); } });
+  VOCE.apri({ io: IO, manda: function (m) { VS.arriva(IO, m); } });
+  var vsT = setInterval(function () { VS.giro(); }, 5000);
 
   function vm() {
     var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, rip: H.rip, tiene: IO, imp: H.imp, auto: !!H.auto,
@@ -3570,7 +4666,7 @@ function host(t) {
     Object.keys(viaDa).forEach(function (id) { if (ora - viaDa[id] > 90000) { delete viaDa[id]; P.esce(id); } });
     if (P.fase === "fine" && !finePronta) { finePronta = true; setTimeout(fine, 2600); }
   }, 50);
-  function ferma() { fermo = true; clearInterval(loop); if (fotoDopo) clearTimeout(fotoDopo); }
+  function ferma() { fermo = true; clearInterval(loop); clearInterval(vsT); if (fotoDopo) clearTimeout(fotoDopo); }
 
   function comincia() {
     if (H.fase !== "lobby" || presenti().length < MIN) return;
@@ -3607,7 +4703,7 @@ function host(t) {
     onVia: function () { if (P && !P.saletta) P.via(); },
     mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") P.azione(IO, m); },
     onEsci: function () {
-      function via() { ferma(); t.ricorda(null); rete.chiudi(); chiudiUI(); t.esci(); }
+      function via() { ferma(); VOCE.chiudiStanza(); t.ricorda(null); rete.chiudi(); chiudiUI(); t.esci(); }
       if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla home.", "Chiudi", via);
       via();
     } };
@@ -3625,7 +4721,7 @@ function ospite(t, codice) {
   var cb = { sonoHost: false, myId: null,
     mossa: function (m) { if (S.rete) S.rete.invia(m); },
     onEsci: function () {
-      function via() { if (S.rete) S.rete.chiudi(); chiudiUI(); t.esci(); }
+      function via() { VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); chiudiUI(); t.esci(); }
       if (t.guarda) return t.conferma("Smetti di guardare?", null, "Esci", via);
       if (S.vm && S.vm.fase === "gioco") return t.conferma("Uscire dalla partita?", null, "Esci", via);
       via();
@@ -3641,7 +4737,7 @@ function ospite(t, codice) {
   function collega() {
     attesa();
     S.rete = SGNet.entra(codice, {
-      onAperto: function (id) { S.myId = id; cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); },
+      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { if (S.rete) S.rete.invia(m); } }); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); },
       onMsg: function (m) {
         if (!m || !m.t) return;
         if (m.to && m.to !== S.myId) return;
@@ -3650,9 +4746,10 @@ function ospite(t, codice) {
         else if (m.t === "priv") { if (UI) UI.privato(m.p); else PENDENTI.priv = m.p; }
         else if (m.t === "tp" || m.t === "avviso" || m.t === "morte" || m.t === "bolla") { if (UI) UI.messaggio(m); else conserva(m); }
         else if (m.t === "av") (m.l || []).forEach(function (x) { avatarDi(x[0], avatarValido(x[1])); });
+        else if (m.t === "vc" || m.t === "vcl") VOCE.arriva(m);   // la voce: l'elenco di chi c'è e i messaggi di collegamento
       },
-      onChiuso: function (perche) { chiudiUI(); errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
-      onErrore: function () { if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
+      onChiuso: function (perche) { VOCE.chiudiStanza(); chiudiUI(); errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
+      onErrore: function () { VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
     });
     if (!S.rete) senzaRete(t);
   }
@@ -3668,6 +4765,9 @@ function conserva(m) { if (m.t === "tp") PENDENTI.tp = m; }
 //  DISEGNO: saletta, partita, fine
 // =========================================================
 var UI = null, FIN = null;
+// la voce chiede i nomi e gli avvisi a chi sta disegnando il gioco
+VOCE.nome = function (id) { var c = UI && UI.cache && UI.cache[id]; return c ? c.nome : ""; };
+VOCE.avvisa = function (testo) { if (UI) UI.avviso(testo); };
 function chiudiUI() { if (UI) { UI.stop(); UI = null; } }
 function disegna(t, vm, cb) {
   if (vm.fase === "lobby" && (!vm.g || t.salettaClassica)) { chiudiUI(); FIN = null; return lobby(t, vm, cb); }
@@ -3725,6 +4825,7 @@ function finale(t, vm, cb) {
       t.el("span", { class: "punti lt-ruolo", text: nomeR + (ru && !ru[2] ? " · spento" : "") }) ]));
   });
   s._contenuto.appendChild(ol);
+  if (!targa && cb.myId) s._contenuto.appendChild(creaVoce("riga fine"));   // a partita finita la voce resta accesa e si sentono tutti
   if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
   if (!cl.some(function (r) { return r.id === cb.myId; })) s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Questa partita l'hai guardata." }));
   if (!t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
@@ -3760,6 +4861,10 @@ function senzaRete(t) {
 // =========================================================
 // le icone del gioco: disegni a tratto (niente emoji), colore del testo intorno
 var ICONE = {
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>',
+  micOff: '<path d="M12 19v3M15 9.3V5a3 3 0 0 0-5.7-1.3M17 17A7 7 0 0 1 5 12v-2M19 12v-2M2 2l20 20M9 9v3a3 3 0 0 0 5.1 2.1"/>',
+  cuffia: '<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>',
+  esciVoce: '<path d="M6 6l12 12M18 6L6 18"/>',
   parla: '<path d="M4 5h16v10H10l-5 4v-4H4z"/>',
   invia: '<path d="M4 12h14M13 6l6 6-6 6"/>',
   mappa: '<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/>',
@@ -3788,6 +4893,30 @@ function icona(n) { return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="tr
 // un tasto con icona e scritta
 function tastoIco(cls, ico, testo) { var b = document.createElement("button"); b.type = "button"; if (cls) b.className = cls; b.innerHTML = icona(ico) + (testo ? "<span>" + testo + "</span>" : ""); return b; }
 function E(tag, cls, testo) { var e = document.createElement(tag); if (cls) e.className = cls; if (testo != null) e.textContent = testo; return e; }
+// i tasti della voce (uguali nel gioco, nella riunione e a fine partita): uno grande col microfono e uno piccolo.
+// Primo tocco: chiede il permesso e accende. Poi il grande alterna parlo/muto; il piccolo è «Ascolta» (senza microfono) o «Esci».
+// Lo stato si legge dal colore e dalla scritta: Voce (spenta) · Parli (verde) · Muto (rosso) · Ascolti (azzurro, tocca per parlare).
+var VOCE_ET = { spenta: ["mic", "Voce"], accendo: ["mic", "Voce…"], parlo: ["mic", "Parli"], muto: ["micOff", "Muto"], ascolto: ["cuffia", "Ascolti"] };
+function creaVoce(extra) {
+  var el = E("div", "lt-voce" + (extra ? " " + extra : "")), b = E("button", "lt-vbtn"), s = E("button", "lt-vpic"), visto = false;
+  b.type = "button"; s.type = "button"; el.append(b, s);
+  b.addEventListener("click", function () { VOCE.tocca(); });
+  s.addEventListener("click", function () { VOCE.secondo(); });
+  function agg() {
+    if (el.isConnected) visto = true; else if (visto) return false;   // tolto dalla pagina: smetto di aggiornarlo
+    var st = VOCE.stato, e = VOCE_ET[st] || VOCE_ET.spenta, k = st + "|" + VOCE.disponibile();
+    if (el._k === k) return true; el._k = k;
+    el.hidden = !VOCE.disponibile();
+    b.className = "lt-vbtn " + st; b.innerHTML = icona(e[0]) + "<span>" + e[1] + "</span>"; b.disabled = st === "accendo";
+    b.setAttribute("aria-label", st === "spenta" ? "Accendi la voce con il microfono" : st === "parlo" ? "Microfono acceso: tocca per mettere il muto" : st === "muto" ? "Microfono in muto: tocca per parlare" : st === "ascolto" ? "Stai solo ascoltando: tocca per accendere il microfono" : "Accendo la voce");
+    if (st === "parlo" || st === "muto") b.setAttribute("aria-pressed", st === "parlo" ? "true" : "false"); else b.removeAttribute("aria-pressed");
+    s.innerHTML = icona(st === "spenta" ? "cuffia" : "esciVoce") + "<span>" + (st === "spenta" ? "Ascolta" : "Esci") + "</span>"; s.hidden = st === "accendo";
+    s.setAttribute("aria-label", st === "spenta" ? "Ascolta senza microfono" : "Esci dalla voce");
+    return true;
+  }
+  VOCE.suCambio(agg);
+  return el;
+}
 function Vista(t, cb) {
   stile();
   var V = this; V.t = t; V.cb = cb; V.vivo = true;
@@ -3824,20 +4953,32 @@ function Vista(t, cb) {
   sc.appendChild(sx);
   var dx = E("div", "lt-dx"); V.btnSuono = E("button", "lt-hbtn ico"); V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); V.btnSuono.setAttribute("aria-label", "Suono"); V.btnMappa = E("button", "lt-hbtn"); V.btnMappa.innerHTML = icona("mappa") + "<span>Mappa</span>"; dx.append(V.btnSuono, V.btnMappa); sc.appendChild(dx);
   V.btnMappa.addEventListener("click", function () { V.apriMappa(); });
-  // la chat di prossimità: «Parla» apre una riga in basso; il messaggio compare come fumetto e lo legge solo chi è vicino
-  V.bolle = {};
+  // la chat di prossimità: «Parla» apre la barra in basso (sempre sopra la tastiera). Il messaggio compare come fumetto sopra chi parla
+  // e nello storico di chi lo sente: l'host lo manda solo a chi è abbastanza vicino. In riunione è spenta (c'è la chat della riunione).
+  V.bolle = []; V.storico = []; V.bVisti = []; V.ultimoParla = -99999; V.parlaAttesa = 0; V.parlaAlza = 0; V.parlaAlzaVista = 0; V.parlaSotto = -1;
   V.btnGira = E("button", "lt-hbtn ico"); V.btnGira.innerHTML = icona("gira"); V.btnGira.setAttribute("aria-label", "Gioca di lato"); dx.insertBefore(V.btnGira, dx.firstChild);
   V.btnGira.classList.toggle("acceso", !!V.oriz);
   V.btnGira.addEventListener("click", function () { V.oriz = !V.oriz; try { localStorage.setItem("lt-oriz", V.oriz ? "1" : "0"); } catch (e) {} V.btnGira.classList.toggle("acceso", V.oriz); V.joyReset(); V.ruota(); });
   V.btnParla = E("button", "lt-hbtn ico"); V.btnParla.innerHTML = icona("parla"); V.btnParla.setAttribute("aria-label", "Parla a chi è vicino"); dx.insertBefore(V.btnParla, V.btnMappa);
-  V.parlaBar = E("form", "lt-parla"); V.parlaBar.hidden = true;
-  var pIn = E("input"); pIn.type = "text"; pIn.maxLength = 60; pIn.placeholder = "Scrivi a chi è vicino"; pIn.setAttribute("enterkeyhint", "send");
-  var pOk = E("button"); pOk.type = "submit"; pOk.innerHTML = icona("invia"); pOk.setAttribute("aria-label", "Invia");
-  V.parlaBar.append(pIn, pOk); sc.appendChild(V.parlaBar);
-  V.btnParla.addEventListener("click", function () { V.parlaBar.hidden = !V.parlaBar.hidden; if (!V.parlaBar.hidden) pIn.focus(); else pIn.blur(); });
-  V.parlaBar.addEventListener("submit", function (e) { e.preventDefault(); var tx = pIn.value.trim(); if (!tx) return; V.manda("parla", { testo: tx }); pIn.value = ""; pIn.blur(); V.parlaBar.hidden = true; });
+  V.parlaBar = E("form", "lt-parla"); V.parlaBar.hidden = true; V.parlaBar.setAttribute("autocomplete", "off");
+  var pTesta = E("div", "lt-pt"); V.parlaUdi = E("span", "lt-udi", ""); V.parlaCont = E("span", "lt-cont", "0/" + MAX_PARLA); pTesta.append(V.parlaUdi, V.parlaCont);
+  var pCho = E("div", "lt-pcho"); PARLA_RAPIDE.forEach(function (f) { var b = E("button", "", f); b.type = "button"; b.addEventListener("click", function () { V.parlaManda(f); }); pCho.appendChild(b); });
+  var pRiga = E("div", "lt-priga"), pIn = E("input"), pOk = E("button");
+  pIn.type = "text"; pIn.maxLength = MAX_PARLA; pIn.placeholder = "Scrivi a chi è vicino"; pIn.setAttribute("enterkeyhint", "send"); pIn.setAttribute("autocomplete", "off"); pIn.setAttribute("aria-label", "Messaggio a chi è vicino");
+  pOk.type = "submit"; pOk.innerHTML = icona("invia"); pOk.setAttribute("aria-label", "Invia");
+  pRiga.append(pIn, pOk); V.parlaBar.append(pTesta, pCho, pRiga); sc.appendChild(V.parlaBar); V.parlaIn = pIn;
+  V.parlaStor = E("div", "lt-chatst"); V.parlaStor.setAttribute("aria-live", "polite"); sc.appendChild(V.parlaStor);
+  V.btnParla.addEventListener("click", function () { V.parlaApri(); });
+  V.parlaBar.addEventListener("submit", function (e) { e.preventDefault(); V.parlaManda(pIn.value); });   // Invio: manda e chiude
+  pIn.addEventListener("input", function () { V.parlaConta(); });
+  pIn.addEventListener("keydown", function (e) { if (e.key === "Escape") V.parlaApri(false); });
+  V.parlaVV = function () { V.parlaPosiz(); };   // la tastiera di iPhone cambia il «visualViewport»: la barra la segue
+  if (window.visualViewport) { visualViewport.addEventListener("resize", V.parlaVV); visualViewport.addEventListener("scroll", V.parlaVV); }
   V.btnSuono.addEventListener("click", function () { AUDIO.muto = !AUDIO.muto; try { localStorage.setItem("lt-muto", AUDIO.muto ? "1" : "0"); } catch (e) {} V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); if (!AUDIO.muto) SUONO.voto(); });
   V.s.addEventListener("pointerdown", function (e) { if (e.isTrusted) AUDIO.toccato = true; audio(); }, { passive: true });
+  // la voce di prossimità: i tasti sotto la fila in alto a destra; la regola di chi sente chi la legge dalla foto di questo telefono
+  V.voceGr = E("div", "lt-vx"); V.voceGr.hidden = true; V.voceGr.appendChild(creaVoce()); sc.appendChild(V.voceGr);
+  V.voceA = {}; VOCE.fonte = function () { return V.vivo ? V.statoVoce() : null; }; VOCE.fonteDi = V;
   V.guida = E("div", "lt-guida"); sc.appendChild(V.guida);
   V.nomeStanza = E("div", "lt-nomestanza"); V.nomeStanza.setAttribute("aria-live", "polite"); sc.appendChild(V.nomeStanza);
   V.via = E("div", "lt-via"); sc.appendChild(V.via);
@@ -3873,7 +5014,7 @@ function Vista(t, cb) {
   }
   requestAnimationFrame(giro);
 }
-Vista.prototype.stop = function () { this.vivo = false; this.slega(); };
+Vista.prototype.stop = function () { this.vivo = false; this.slega(); if (VOCE.fonteDi === this) { VOCE.fonte = null; VOCE.fonteDi = null; } };
 Vista.prototype.legaComandi = function () {
   var V = this, j = V.joyV;
   V.joyZona.addEventListener("pointerdown", function (e) {
@@ -3906,6 +5047,7 @@ Vista.prototype.slega = function () {
   if (this.suGiu) { document.removeEventListener("keydown", this.suGiu); document.removeEventListener("keyup", this.suGiu); }
   if (this.ruota) { window.removeEventListener("resize", this.ruota); window.removeEventListener("orientationchange", this.ruota); }
   if (this.noZoom) document.removeEventListener("gesturestart", this.noZoom);
+  if (this.parlaVV && window.visualViewport) { visualViewport.removeEventListener("resize", this.parlaVV); visualViewport.removeEventListener("scroll", this.parlaVV); }
 };
 // un punto del dito dentro la scena (in pixel della scena, anche quando è girata di lato)
 Vista.prototype.locale = function (e) {
@@ -3978,8 +5120,90 @@ Vista.prototype.messaggio = function (m) {
   }
   else if (m.t === "avviso") { this.avviso(m.testo, m.tipo); if (m.tipo === "morte") vibra(120); }
   else if (m.t === "morte") this.scenaMorte(m);
-  else if (m.t === "bolla") { this.bolle[m.id] = { testo: String(m.testo || "").slice(0, 60), fine: performance.now() + 4500 }; }
+  else if (m.t === "bolla") this.sentito(m);
   else if (m.t === "fx") this.effetto(m);
+};
+// ----- la chat di prossimità -----
+// apre o chiude la barra (senza argomento la gira)
+Vista.prototype.parlaApri = function (on) {
+  var V = this; if (on === undefined) on = V.parlaBar.hidden;
+  if (on && V.btnParla.hidden) return;
+  V.parlaBar.hidden = !on; V.btnParla.classList.toggle("acceso", !!on);
+  if (on) { V.parlaConta(); V.parlaStato(); V.parlaPosiz(); try { V.parlaIn.focus({ preventScroll: true }); } catch (e) { V.parlaIn.focus(); } }
+  else { V.parlaIn.blur(); V.parlaPosiz(); }
+};
+// la barra sta in basso, sopra la tastiera di iPhone («visualViewport»); con la scena girata di lato sta in alto.
+// Lo storico sale con lei, e la scena si alza quel tanto che serve perché chi gioca resti visibile sopra la barra.
+Vista.prototype.parlaPosiz = function () {
+  var V = this, aperta = !V.parlaBar.hidden, vv = window.visualViewport, r = V.sc.getBoundingClientRect(), alto = !!V.girato, sotto = 0, alza = 0;
+  if (aperta && vv && !alto) sotto = Math.max(0, Math.round(r.bottom - (vv.offsetTop + vv.height)));
+  V.parlaBar.classList.toggle("alto", alto);
+  if (V.parlaSotto !== sotto) { V.parlaSotto = sotto; V.sc.style.setProperty("--sotto", sotto + "px"); }
+  if (aperta && !alto) {
+    var h = V.parlaBar.offsetHeight, hs = V.parlaStor.offsetHeight, cima = V.parlaBar.getBoundingClientRect().top - r.top - (hs ? hs + 6 : 0);
+    V.parlaStor.style.bottom = "calc(max(env(safe-area-inset-bottom,0px)," + sotto + "px) + " + (h + 14) + "px)";
+    alza = Math.max(0, Math.round(r.height / 2 + 36 - cima));
+  } else V.parlaStor.style.bottom = "";
+  V.parlaAlza = alza;
+};
+// il contatore delle lettere (max MAX_PARLA)
+Vista.prototype.parlaConta = function () {
+  var n = Array.from(this.parlaIn.value).length; this.parlaCont.textContent = n + "/" + MAX_PARLA; this.parlaCont.classList.toggle("pieno", n >= MAX_PARLA - 10);
+};
+// la riga in alto nella barra: quante persone che vedo mi sentiranno (solo quelle che vedo: il buio non tradisce nessuno)
+Vista.prototype.parlaStato = function () {
+  var V = this, g = V.g, me = V.me, t, si = false; if (!g) return;
+  if (performance.now() < V.parlaAttesa) t = "Aspetta un attimo";
+  else if (!V.sonoVivo()) t = "Ti sentono i fantasmi";
+  else {
+    var anima = g.mappa !== "palazzo" || g.bengala > 0, R = anima ? R_PARLA : Math.min(R_PARLA, V.raggio() * 0.97), n = 0;
+    V.altri().forEach(function (p) { if (!p.fantasma && Math.hypot(p.x - me.x, p.y - me.y) <= R && vede(V.M, me.x, me.y, p.x, p.y)) n++; });
+    t = n === 0 ? "Nessuno vicino a te" : n === 1 ? "1 persona ti sente" : n + " persone ti sentono"; si = n > 0;
+  }
+  if (V.parlaUdi._t !== t) { V.parlaUdi._t = t; V.parlaUdi.textContent = t; }
+  V.parlaUdi.classList.toggle("si", si);
+};
+// manda un messaggio (scritto o a un tocco) e chiude la barra; un messaggio ogni 1,5 secondi
+Vista.prototype.parlaManda = function (testo) {
+  var V = this, tx = Array.from(String(testo || "").replace(/\s+/g, " ").trim()).slice(0, MAX_PARLA).join(""), ora = performance.now();
+  if (!tx) { V.parlaApri(false); return; }
+  if (ora - V.ultimoParla < 1500) { V.parlaAttesa = ora + 1200; V.parlaStato(); return; }
+  V.ultimoParla = ora; V.manda("parla", { testo: tx });
+  V.parlaIn.value = ""; V.parlaConta(); V.parlaApri(false);
+};
+// un messaggio sentito: il fumetto sopra chi parla (si impila e svanisce) e una riga nello storico. In riunione è spento.
+Vista.prototype.sentito = function (m) {
+  var V = this, g = V.g, ora = performance.now(), id = String(m.id || ""), testo = Array.from(String(m.testo || "").replace(/\s+/g, " ").trim()).slice(0, MAX_PARLA).join("");
+  if (!testo || !id || (g && g.fase !== "gioco" && g.fase !== "atrio")) return;
+  var k = id + "|" + m.n + "|" + testo; if (V.bVisti.indexOf(k) >= 0) return;   // (lo stesso messaggio arrivato due volte vale una)
+  V.bVisti.push(k); if (V.bVisti.length > 16) V.bVisti.shift();
+  var dur = Math.max(4200, Math.min(7500, 3000 + testo.length * 55)), mie = V.bolle.filter(function (x) { return x.id === id; });
+  if (mie.length >= 3) V.bolle.splice(V.bolle.indexOf(mie[0]), 1);   // al massimo tre fumetti per persona
+  V.bolle.push({ id: id, testo: testo, t0: ora, fine: ora + dur, w: !!m.w, a: !!m.a, righe: null });
+  var io = id === V.cb.myId, c = V.cache[m.c || id] || {};
+  V.storicoAgg({ nome: io ? "Tu" : (c.nome || "?"), testo: testo, t0: ora, w: !!m.w, a: !!m.a, io: io });
+};
+// lo storico: gli ultimi messaggi sentiti, sopra la barra; sfumano da soli (prima se la barra è chiusa)
+Vista.prototype.storicoAgg = function (s) {
+  var V = this, el = E("div", "lt-ch" + (s.io ? " io" : "") + (s.w ? " w" : "") + (s.a ? " a" : ""));
+  el.append(E("b", "", s.nome), document.createTextNode(s.testo));
+  s.el = el; s.op = 1; V.storico.push(s); V.parlaStor.appendChild(el);
+  while (V.storico.length > PARLA_STORICO) V.storico.shift().el.remove();
+  if (!V.parlaBar.hidden) V.parlaPosiz();
+};
+Vista.prototype.storicoGira = function (ora) {
+  var V = this, vita = V.parlaBar.hidden ? 7000 : 20000;
+  for (var i = V.storico.length - 1; i >= 0; i--) {
+    var s = V.storico[i], eta = ora - s.t0, op = eta < vita * 0.6 ? 1 : Math.max(0, 1 - (eta - vita * 0.6) / (vita * 0.4));
+    if (op <= 0) { s.el.remove(); V.storico.splice(i, 1); continue; }
+    op = Math.round(op * 10) / 10; if (s.op !== op) { s.op = op; s.el.style.opacity = op; }
+  }
+};
+// la riunione (o la fine) spegne la chat di prossimità: via fumetti, storico e barra
+Vista.prototype.parlaPulisci = function () {
+  var V = this; V.bolle.length = 0; V.bVisti.length = 0;
+  V.storico.forEach(function (s) { s.el.remove(); }); V.storico.length = 0;
+  if (!V.parlaBar.hidden) V.parlaApri(false);
 };
 var DURATE = { urlo: 6, scudoRotto: 1.2, telecamera: 1, trasporto: 1, spegni: 1.2, sparo: 0.5, scudo: 1.2, lente: 1.2, fiuto: 1, ipnosi: 1, trasforma: 0.9, botola: 0.7, sparisce: 1, mangia: 1, gatto: 1.2, rianima: 1.6, campana: 1.2, compito: 2.6, bengala: 1.2, luci: 0.8 };
 Vista.prototype.effetto = function (m) {
@@ -4062,6 +5286,7 @@ Vista.prototype.passo = function (dt) {
     V.altri().forEach(function (p) { if (p.muove && !p.fantasma) V.orme.push({ x: p.x, y: p.y, dir: p.dir, col: p.colore || "#ccc", t: V.tempo, lato: V.lato }); });
     var durO = (V.vm.imp.investigatore && V.vm.imp.investigatore.orme) || 10; V.orme = V.orme.filter(function (o) { return V.tempo - o.t < durO; });
   }
+  if (VOCE.stato !== "spenta") VOCE.misura(ora);   // chi parla a voce (per gli anelli)
   if (V.feed) V.disegnaSchermi();
   if (V.plastico) { if (V.plastico.fine && ora > V.plastico.fine) V.pannello && V.pannello.chiudi(); else if (V.tempo - V.plastico.ultimo > 1) V.disegnaPlastico(); }
   // con un pannello aperto la scena dietro il velo scuro si ridisegna un fotogramma su tre: non si vede la differenza, il telefono respira
@@ -4071,6 +5296,32 @@ Vista.prototype.passo = function (dt) {
   if (Math.floor(V.tempo * 6) !== V.kHud) { V.kHud = Math.floor(V.tempo * 6); V.aggHud(); V.aggVelo(true); }
 };
 Vista.prototype.sonoVivo = function () { var g = this.g; if (!g) return false; for (var i = 0; i < g.g.length; i++) if (g.g[i][0] === this.cb.myId) return !!g.g[i][1]; return false; };
+// la foto per la voce: dove sono io e dove sono gli altri (le ultime posizioni arrivate), chi è vivo, chi non può parlare.
+// Con le stesse regole della chat scritta (Partita.sentePar) ma calcolate qui, sul telefono di chi ascolta.
+// «muto»: è uscito, è in una botola (o ancora senza posizione), o in riunione è zittito.
+Vista.prototype.statoVoce = function () {
+  var V = this, g = V.g, pr = V.priv; if (!g) return null;
+  var l = V.buf.length ? V.buf[V.buf.length - 1].p : [], pos = {}, i;
+  for (i = 0; i < l.length; i++) pos[l[i][0]] = l[i];
+  var riu = g.fase === "riunione" || g.fase === "esito", zitti = (g.riu && g.riu.zittiti) || [];
+  var out = { fase: g.fase, M: V.M, io: { x: V.me.x, y: V.me.y, vivo: V.sonoVivo(), muto: riu ? !!(pr && pr.zittito) : !!(pr && pr.botola != null) }, altri: {} };
+  for (i = 0; i < g.g.length; i++) {
+    var q = g.g[i], id = q[0]; if (id === V.cb.myId) continue;
+    var p = pos[id];
+    out.altri[id] = { x: p ? p[1] : 0, y: p ? p[2] : 0, vivo: !!q[1], muto: !!q[2] || (riu ? zitti.indexOf(id) >= 0 : !p) };
+  }
+  return out;
+};
+// gli anelli della voce sotto chi parla: da 0 a 1 per ogni persona, che sale svelto e scende piano (così non lampeggia)
+Vista.prototype.voceAnelli = function () {
+  var V = this, m = V.voceA, k = Math.min(1, (V.dt || 0.016) * 14), ids = {}, id;
+  Object.keys(m).forEach(function (x) { ids[x] = 1; }); Object.keys(VOCE.liv).forEach(function (x) { ids[x] = 1; });
+  for (id in ids) {
+    var voluto = VOCE.parla[id] ? 0.3 + 0.7 * Math.min(1, VOCE.liv[id] || 0) : 0, a = (m[id] || 0) + (voluto - (m[id] || 0)) * k;
+    if (a < 0.02 && !voluto) delete m[id]; else m[id] = a;
+  }
+  return m;
+};
 Vista.prototype.altri = function () {
   var B = this.buf, V = this; if (!B.length) return [];
   // il momento da mostrare, nell'orologio dell'host; se il pacchetto dopo non è ancora arrivato si prolunga il moto (al massimo 250 ms)
@@ -4282,7 +5533,9 @@ Vista.prototype.disegnaScena = function () {
   var pr = V.priv || {}, come = pr.travestito || V.cb.myId;
   var mioAv = AVATAR[come], c = V.cache[come] || {};
   var ioD = { x: io.x, y: io.y, dir: io.dir, muove: io.muove, fantasma: !V.sonoVivo(), nome: c.nome || "", colore: c.colore, img: mioAv && mioAv.img, imgS: mioAv && mioAv.imgS, mostra: !V.guardo && !(pr && pr.botola != null), seme: 3, id: V.cb.myId };
-  var bolle = {}; Object.keys(V.bolle).forEach(function (id) { var b = V.bolle[id], r = (b.fine - performance.now()) / 4500; if (r <= 0) delete V.bolle[id]; else bolle[id] = { testo: b.testo, f: r }; });
+  var oraB = performance.now(); for (var ib = V.bolle.length - 1; ib >= 0; ib--) if (V.bolle[ib].fine <= oraB) V.bolle.splice(ib, 1);   // i fumetti scaduti
+  var apertaP = !V.parlaBar.hidden, vivoP = V.sonoVivo();
+  V.parlaAlzaVista = V.pit.ridotto ? V.parlaAlza : V.parlaAlzaVista + (V.parlaAlza - V.parlaAlzaVista) * Math.min(1, V.dt * 10);
   var miei = new Set(g.interf ? [] : V.compitiAperti().map(function (p) { return p.id; })), meta = V.meta(), ora = performance.now();
   if (meta && meta.nessunaFreccia) meta = null;
   V.pit.disegna({ M: V.M, palazzo: g.mappa === "palazzo", t: V.tempo, dt: V.dt, io: ioD, altri: altri, corpi: corpi, R: V.raggio(),
@@ -4291,7 +5544,8 @@ Vista.prototype.disegnaScena = function () {
     scudi: V.squadra() !== "ombre" ? (g.scudi || []).filter(function (id) { return id !== V.cb.myId; }) : [], telecamere: g.cam, osservate: g.osservate, orme: V.orme, durOrme: (V.vm.imp.investigatore && V.vm.imp.investigatore.orme) || 10,
     traccia: pr.traccia && V.tracciaFine > ora ? pr.traccia[0] : null, ipno: V.bloccFine > ora,
     trappola: g.mappa === "palazzo" ? pr.trappola : null, urlo: V.urlo && V.urlo.fine > V.tempo && g.mappa === "palazzo" ? V.urlo : null,
-    rianima: V.rianFine > ora ? 1 - (V.rianFine - ora) / V.rianTot : 0, bolle: bolle });
+    rianima: V.rianFine > ora ? 1 - (V.rianFine - ora) / V.rianTot : 0, bolle: V.bolle, ora: ora, alza: V.parlaAlzaVista, voce: V.voceAnelli(),
+    parla: apertaP ? { R: R_PARLA, Rm: R_MURO, anima: !vivoP } : null });
 };
 var FALLBACK = { x: 32 * T, y: 22 * T };
 
@@ -4335,7 +5589,12 @@ Vista.prototype.aggHud = function () {
   V.s.querySelector(".lt-sx").hidden = (!palazzo && !sal) || V.guardo || !pr;
   V.aggSaletta(sal);
   V.btnMappa.hidden = !palazzo;
-  V.btnParla.hidden = !palazzo || g.fase !== "gioco"; if (V.btnParla.hidden) V.parlaBar.hidden = true;
+  // la chat di prossimità c'è nel gioco e nella saletta; non in riunione, non a chi guarda, non da una botola
+  V.btnParla.hidden = V.guardo || !pr || ((!palazzo || g.fase !== "gioco" || pr.botola != null) && !sal);
+  if (V.btnParla.hidden && !V.parlaBar.hidden) V.parlaApri(false);
+  // la voce: nella saletta e nel gioco (in riunione i tasti stanno nella riunione), non a chi guarda; senza stanza online non c'è
+  V.voceGr.hidden = !(VOCE.disponibile() && !V.guardo && !!pr && (g.fase === "gioco" || g.fase === "atrio"));
+  V.storicoGira(performance.now()); if (!V.parlaBar.hidden) { V.parlaStato(); V.parlaPosiz(); }
   var ora = performance.now(), sec = function (f) { return Math.max(0, Math.ceil((f - ora) / 1000)); };
   if (sal) {   // nella saletta: solo «Usa» davanti al computer
     var uS = V.vicinoUsa();
@@ -4679,7 +5938,7 @@ Vista.prototype.apriIndovina = function (id) {
 // ----- i pannelli sopra la mappa: ruolo, riunione, esito, fine -----
 Vista.prototype.cambioFase = function () {
   var V = this, f = V.fase;
-  if (f !== "gioco" && f !== "atrio") { V.joyReset(); if (V.pannello) V.pannello.chiudi(); V.chiudiMappa(); if (V.mg) { V.mg = null; V.velo.hidden = true; V.veloTipo = null; } }
+  if (f !== "gioco" && f !== "atrio") { V.parlaPulisci(); V.joyReset(); if (V.pannello) V.pannello.chiudi(); V.chiudiMappa(); if (V.mg) { V.mg = null; V.velo.hidden = true; V.veloTipo = null; } }
   V.riuK = null;
 };
 Vista.prototype.aggVelo = function (soloTempi) {
@@ -4711,7 +5970,7 @@ Vista.prototype.aggVelo = function (soloTempi) {
       var b = E("div", "lt-pannello lt-vince"); var v = g.fine || {}; b.append(E("h2", "", titoloVince(v)), E("p", "", v.perche || ""));
       V.velo.textContent = ""; V.velo.appendChild(b); V.velo.hidden = false; V.veloTipo = "vince";
       var pr = V.priv || {}, ho = v.id ? v.id === V.cb.myId : pr.squadra === v.chi;
-      if ((pr.ruolo === "gatto" || pr.ruolo === "sopravvissuto") && V.sonoVivo()) ho = true;
+      if (V.sonoVivo() && (pr.ruolo === "sopravvissuto" || (pr.ruolo === "gatto" && v.chi !== "ombre"))) ho = true;   /* il Gatto vince solo se le ombre non hanno vinto */
       if (!V.guardo) { (ho ? SUONO.vince : SUONO.perde)(); b.classList.add(ho ? "vinto" : "perso"); }
     }
     return;
@@ -4756,7 +6015,7 @@ Vista.prototype.riunione = function (soloTempi) {
   if (V.riuK !== k || V.veloTipo !== "riu") {   // (se un pannello l'ha coperta, la riunione si ridisegna)
     V.riuK = k; V.veloTipo = "riu"; V.velo.textContent = ""; V.velo.hidden = false;
     var box = E("div", "lt-pannello lt-riu"); V.velo.appendChild(box);
-    var testa = E("div", "testa"); V.riuTit = E("h3", "", ""); V.riuTimer = E("div", "timer", ""); testa.append(V.riuTit, V.riuTimer); box.appendChild(testa);
+    var testa = E("div", "testa"); V.riuTit = E("h3", "", ""); V.riuTimer = E("div", "timer", ""); testa.append(V.riuTit, V.riuTimer); if (!V.guardo) testa.insertBefore(creaVoce("riga"), V.riuTimer); box.appendChild(testa);   // (i tasti della voce: anche qui si parla)
     V.riuGrid = E("div", "grid"); box.appendChild(V.riuGrid);
     V.riuChat = E("div", "chat"); box.appendChild(V.riuChat);
     V.riuRap = E("div", "rapide"); box.appendChild(V.riuRap);
@@ -4908,8 +6167,16 @@ function stile() {
     ".lt-riu .carta .az button,.lt-riu .rapide button,.lt-riu .voto .salta{display:flex;align-items:center;justify-content:center;gap:5px}",
     ".lt-intro .icona svg{width:64px;height:64px;color:#f6d999;stroke-width:1.6}.lt-pc-schede b svg{width:20px;height:20px}",
     ".lt-minimappa .testa b{display:inline-flex;align-items:center;gap:6px}.lt-minimappa .leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 4px 0 10px;vertical-align:middle;box-shadow:0 0 0 1px rgba(0,0,0,.4)}",
-    ".lt-parla{position:absolute;z-index:5;left:0;right:0;margin:0 auto;top:calc(58px + env(safe-area-inset-top));width:min(440px,calc(100% - 24px));display:flex;gap:6px;padding:6px;border-radius:14px;background:rgba(13,16,32,.9);border:1px solid rgba(241,232,214,.18);box-shadow:0 8px 24px rgba(0,0,0,.45);animation:ltSale .2s var(--lt-ease)}",
-    ".lt-parla input{flex:1;min-width:0;font:inherit;font-size:16px;color:#f1e8d6;background:#0d1020;border:1px solid rgba(241,232,214,.18);border-radius:10px;padding:7px 10px}.lt-parla button{flex:none;width:42px;border-radius:10px;border:0;background:linear-gradient(180deg,#e7b75c,#c9923a);color:#1d1508;display:grid;place-items:center;cursor:pointer}",
+    ".lt-parla{position:absolute;z-index:5;left:0;right:0;margin:0 auto;bottom:calc(8px + max(env(safe-area-inset-bottom,0px),var(--sotto,0px)));width:min(440px,calc(100% - 24px));display:grid;gap:6px;padding:7px;border-radius:14px;background:rgba(13,16,32,.93);border:1px solid rgba(241,232,214,.18);box-shadow:0 8px 24px rgba(0,0,0,.45);animation:ltSale .2s var(--lt-ease)}",
+    ".lt-parla.alto{bottom:auto;top:calc(58px + env(safe-area-inset-top))}",
+    ".lt-pt{display:flex;justify-content:space-between;gap:8px;padding:0 3px;font-size:.7rem;font-weight:600;letter-spacing:.03em;color:#b8b1a2}.lt-udi{transition:color .2s var(--lt-ease)}.lt-udi.si{color:#f6d999}.lt-cont.pieno{color:#f2a7b6}",
+    ".lt-pcho{display:flex;flex-wrap:wrap;gap:5px}.lt-pcho button{font:inherit;font-size:.78rem;font-weight:600;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.16);border-radius:999px;padding:5px 11px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease),background .2s var(--lt-ease)}.lt-pcho button:active{transform:scale(.94);background:#323b63}",
+    ".lt-priga{display:flex;gap:6px}.lt-priga input{flex:1;min-width:0;-webkit-user-select:text;user-select:text;font:inherit;font-size:16px;color:#f1e8d6;background:#0d1020;border:1px solid rgba(241,232,214,.18);border-radius:10px;padding:7px 10px;transition:border-color .2s var(--lt-ease),box-shadow .2s var(--lt-ease)}.lt-priga input:focus{outline:none;border-color:rgba(231,183,92,.7);box-shadow:0 0 0 3px rgba(231,183,92,.18)}",
+    ".lt-priga button{flex:none;width:42px;border-radius:10px;border:0;background:linear-gradient(180deg,#e7b75c,#c9923a);color:#1d1508;display:grid;place-items:center;cursor:pointer;touch-action:manipulation;transition:transform .16s var(--lt-ease)}.lt-priga button:active{transform:scale(.92)}",
+    ".lt-chatst{position:absolute;z-index:4;left:calc(10px + env(safe-area-inset-left));bottom:calc(196px + env(safe-area-inset-bottom));width:min(60%,300px);display:flex;flex-direction:column;gap:3px;pointer-events:none}",
+    ".lt-ch{align-self:flex-start;max-width:100%;overflow-wrap:anywhere;font-size:.8rem;line-height:1.3;color:#f1e8d6;background:rgba(13,16,32,.7);border-radius:10px;padding:3px 9px;transition:opacity .3s var(--lt-ease);animation:ltSale .2s var(--lt-ease)}.lt-ch b{margin-right:6px;font-weight:700;color:#f6d999}.lt-ch.io b{color:#b8b1a2}",
+    ".lt-scena.oriz .lt-chatst{bottom:calc(110px + env(safe-area-inset-bottom))}",
+    ".lt-ch.w{font-style:italic;color:#c9c2b4}.lt-ch.a{background:rgba(110,130,200,.38);color:#dfe8ff}.lt-ch.a b{color:#c9d8ff}",
     ".lt-lista-btn,.lt-hbtn{font:inherit;font-weight:700;font-size:.8rem;color:#f1e8d6;background:rgba(25,29,49,.85);border:1px solid rgba(241,232,214,.2);border-radius:9px;padding:5px 10px;cursor:pointer}",
     ".lt-lista{list-style:none;margin:0;padding:7px 9px;display:grid;gap:3px;background:rgba(13,16,32,.78);border-radius:10px;font-size:.78rem;line-height:1.3}",
     ".lt-lista li.fatto{opacity:.45;text-decoration:line-through}.lt-lista b{color:#f6d999}.lt-lista .nota{color:#b8b1a2;font-style:italic}",
@@ -5002,6 +6269,16 @@ function stile() {
     ".lt-perche{text-align:center;margin:0 0 10px;opacity:.8;font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Text\",\"SF Pro Display\",\"Helvetica Neue\",\"Inter\",system-ui,sans-serif}.lt-ruolo{font-size:.8rem}",
     ".schermata.lt-fine-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
     ".lt-dx{display:flex;gap:6px}",
+    ".lt-vx{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(54px + env(safe-area-inset-top));display:flex}",
+    ".lt-voce{display:flex;flex-direction:column;align-items:flex-end;gap:6px}.lt-voce.riga{flex-direction:row;align-items:center;gap:6px}.lt-voce.fine{justify-content:center;margin:10px 0 2px}",
+    ".lt-voce svg.ico{width:1.2em;height:1.2em;flex:none;vertical-align:-.22em}",
+    ".lt-vbtn,.lt-vpic{font:inherit;font-weight:700;font-size:.8rem;color:#f1e8d6;background:rgba(25,29,49,.88);border:1px solid rgba(241,232,214,.22);border-radius:9px;padding:6px 11px;display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease,cubic-bezier(.22,1,.36,1)),background-color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1)),border-color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1)),color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1))}",
+    ".lt-vbtn{min-width:88px}.lt-vpic{font-size:.7rem;padding:3px 8px;color:#b8b1a2}.lt-vbtn:active,.lt-vpic:active{transform:scale(.94)}",
+    ".lt-voce.riga .lt-vbtn{min-width:0}.lt-voce.riga .lt-vpic{padding:6px 8px}.lt-voce.riga .lt-vpic span{display:none}",
+    ".lt-vbtn.parlo{color:#d6fbe6;border-color:rgba(126,232,176,.75);background:rgba(46,150,104,.34)}.lt-vbtn.muto{color:#ffd0d8;border-color:rgba(240,90,110,.7);background:rgba(120,25,45,.6)}",
+    ".lt-vbtn.ascolto{color:#d2deff;border-color:rgba(150,180,255,.6);background:rgba(70,90,160,.3)}.lt-vbtn.accendo{opacity:.75;animation:ltVoceAttesa .9s var(--lt-ease,cubic-bezier(.22,1,.36,1)) infinite alternate}",
+    ".lt-vbtn.parlo svg{animation:ltVocePulsa 1.8s var(--lt-ease,cubic-bezier(.22,1,.36,1)) infinite}@keyframes ltVoceAttesa{to{opacity:.4}}@keyframes ltVocePulsa{50%{transform:scale(1.14)}}",
+    "@media (prefers-reduced-motion:reduce){.lt-voce *{animation:none!important;transition:none!important}}",
     ".lt-info{font-size:.74rem;font-weight:700;color:#f6d999;background:rgba(13,16,32,.78);border-radius:8px;padding:4px 8px;line-height:1.3}",
     ".lt-cam{display:flex;flex-direction:column;gap:8px;max-width:640px}.lt-cam .testa{display:flex;justify-content:space-between;align-items:center}.lt-cam .lt-chiudi{position:static}",
     ".lt-cam .griglia{display:grid;grid-template-columns:1fr 1fr;gap:6px}.lt-cam .schermo{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:#000;border:2px solid #2f3b44}.lt-cam .schermo canvas{width:100%;height:100%;display:block}",
