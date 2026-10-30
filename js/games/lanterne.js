@@ -258,7 +258,7 @@ const RUOLI = {
   sopravvissuto: { nome:'Sopravvissuto', squadra:'soli',   desc:'Giochi da solo: vinci se arrivi vivo alla fine, chiunque vinca. Hai la frenesia: non puoi restare troppo nella stessa stanza.' },
   accusatore:    { nome:'Accusatore',    squadra:'soli',   desc:'Giochi da solo: hai un bersaglio. Vinci se lo cacciano col voto.' },
   avvoltoio:     { nome:'Avvoltoio',     squadra:'soli',   abil:'Mangia',    desc:'Giochi da solo: fai sparire le lanterne spente. Se ne mangi abbastanza, vinci tu.' },
-  gatto:         { nome:'Gatto',         squadra:'soli',   desc:'Hai due vite: la prima volta che ti spengono ti rialzi. Vinci se arrivi vivo alla fine, chiunque vinca.' },
+  gatto:         { nome:'Gatto',         squadra:'soli',   desc:'Hai due vite: la prima volta che ti spengono ti rialzi, ma chi ti ha colpito può riprovare presto. Vinci se arrivi vivo alla fine e le ombre non hanno vinto.' },
 };
 const SPECIALI_OSPITI = ['investigatore','veggente','spia','trasportatore','bracconiere','imitatore','portiere','medico','sceriffo','sindaco','campanaro','vedetta','segugio','bengala','vendicatore','rianimatore','sentinella','ingegnere','veterano'];
 const SPECIALI_OMBRE = ['silenziatore','nebbia','trasformista','spazzino','ipnotista','avvelenatore','spettro','burattinaio'];
@@ -298,9 +298,9 @@ const IMP_BASE = {
   bengala:{ durata:5, usi:1 },
   rianimatore:{ usi:1, tempo:6 },
   silenziatore:{ ricarica:35 },
-  nebbia:{ durata:10, ricarica:40 },
-  trasformista:{ durata:15, ricarica:35 },
-  spazzino:{ ricarica:25 },
+  nebbia:{ durata:15, ricarica:30 },
+  trasformista:{ durata:10, ricarica:50 },
+  spazzino:{ ricarica:35, tempo:5 },
   ipnotista:{ durata:6, ricarica:35 },
   avvelenatore:{ ritardo:15 },
   burattinaio:{ durata:8, ricarica:40 },
@@ -308,6 +308,7 @@ const IMP_BASE = {
   sabotaggi:{ ricarica:45, acqua:60, interferenza:60, acquaSi:true, interferenzaSi:true },
   avvoltoio:{ quanti:2 },
   indovino:{ quanti:2, perRiunione:2, sbaglia:'muore' },
+  gatto:{ ricarica:4 },
   frenesia:{ attiva:true, secondi:45 },
   fantasmi:{ attivi:true, custode:50, medium:50, ricarica:45 },
 };
@@ -316,7 +317,7 @@ const IMP_BASE = {
 const P = [0,25,50,75,100];
 const probVoce = (r) => ({ g:'Probabilità dei ruoli', k:'prob.'+r, et:RUOLI[r].nome, opz:P, u:'%' });
 const VOCI = [
-  { g:'Partita', k:'ombre', et:'Ombre', opz:[[0,'in base ai giocatori'],1,2,3] },
+  { g:'Partita', k:'ombre', et:'Ombre', opz:[[0,'in base ai giocatori'],1,2,3,4] },
   { g:'Partita', k:'soli', et:'Ruoli da soli al massimo', opz:[0,1,2] },
   { g:'Partita', k:'ricarica', et:'Ricarica per eliminare', opz:[15,20,25,30,40], u:' s' },
   { g:'Partita', k:'velocita', et:'Velocità', opz:[[0.8,'lenta'],[1,'normale'],[1.25,'veloce'],[1.5,'molto veloce'],[1.75,'velocissima']] },
@@ -374,6 +375,7 @@ const VOCI = [
   { g:'Sabotaggi', k:'sabotaggi.interferenzaSi', et:'Interferenza', opz:[[true,'sì'],[false,'no']] },
   { g:'Sabotaggi', k:'sabotaggi.interferenza', et:'Quanto dura l\'interferenza (se nessuno ripara)', opz:[30,60,90], u:' s' },
   { g:'Spazzino', k:'spazzino.ricarica', et:'Ricarica', opz:[15,25,35], u:' s' },
+  { g:'Spazzino', k:'spazzino.tempo', et:'Tempo fermo accanto alla lanterna', opz:[3,5,8], u:' s' },
   { g:'Ipnotista', k:'ipnotista.durata', et:'Blocco', opz:[4,6,8], u:' s' },
   { g:'Ipnotista', k:'ipnotista.ricarica', et:'Ricarica', opz:[25,35,50], u:' s' },
   { g:'Avvelenatore', k:'avvelenatore.ritardo', et:'Dopo quanto si spegne', opz:[10,15,20], u:' s' },
@@ -381,6 +383,7 @@ const VOCI = [
   { g:'Indovino', k:'indovino.quanti', et:'Ruoli da indovinare per vincere', opz:[2,3,4] },
   { g:'Indovino', k:'indovino.perRiunione', et:'Tentativi per riunione', opz:[1,2,3] },
   { g:'Indovino', k:'indovino.sbaglia', et:'Se sbaglia', opz:[['muore','cade lui'],['niente','non succede niente']] },
+  { g:'Gatto', k:'gatto.ricarica', et:'Dopo che si rialza, chi lo ha colpito riprova dopo', opz:[4,8,15,25], u:' s' },
   { g:'Frenesia (Giullare e Sopravvissuto)', k:'frenesia.attiva', et:'Frenesia', opz:[[true,'sì'],[false,'no']] },
   { g:'Frenesia (Giullare e Sopravvissuto)', k:'frenesia.secondi', et:'Secondi nella stessa stanza', opz:[30,45,60,90], u:' s' },
   { g:'Fantasmi', k:'fantasmi.attivi', et:'Ruoli dei fantasmi', opz:[[true,'sì'],[false,'no']] },
@@ -407,18 +410,23 @@ function pulisci(imp){
   return out;
 }
 function conPreset(nome){ return pulisci(unisci(JSON.parse(JSON.stringify(IMP_BASE)), PRESET[nome]||{})); }
-// Quante ombre: «in base ai giocatori» (0) dà 1 ombra fino a 7 giocatori, 2 da 8 in su. Mai più di 1 fino a 6 giocatori, 2 fino a 8, 3 da 9 in su.
+// Da 11 giocatori in su: [ombre, compiti a testa] per ogni numero, tarati con partite di soli Bot (node gioco/prove/equilibrio.mjs 400 grandi).
+// I compiti possono avere i decimali: 3,15 vuol dire che a un giocatore su sette ne toccano 4 invece di 3 (così le ombre vincono fra il 30 e il 45%).
+const GRANDI = { 11:[2,10], 12:[3,3.15], 13:[3,4.15], 14:[3,5.2], 15:[4,3] };
+// Quante ombre: «in base ai giocatori» (0) dà 1 ombra fino a 7 giocatori, 2 da 8 a 10, poi 2, 3 e 4 secondo la tabella dei grandi.
+// Mai più di 1 fino a 6 giocatori, 2 fino a 8, 3 fino a 13, 4 da 14 in su.
 function quanteOmbre(imp, n){
-  const max = n<=6 ? 1 : n<=8 ? 2 : 3, voluto = imp.ombre>0 ? imp.ombre : (n>=8 ? 2 : 1);
+  const max = n<=6 ? 1 : n<=8 ? 2 : n<=13 ? 3 : 4, voluto = imp.ombre>0 ? imp.ombre : (GRANDI[n] ? GRANDI[n][0] : n>15 ? 4 : n>=8 ? 2 : 1);
   return Math.max(1, Math.min(voluto, max));
 }
 // Compiti a testa: «in base ai giocatori» (0) li sceglie da quanti ospiti ci sono per ogni ombra (r).
 // Tarati con migliaia di partite di soli Bot (gioco/prove/equilibrio.mjs) per stare vicino a metà e metà:
-// r fino a 3 → 3 compiti, fino a 3,5 → 4, fino a 4 → 6, oltre → 8.
+// r fino a 3 → 3 compiti, fino a 3,5 → 4, fino a 4 → 6, fino a 5 → 8, oltre → 12 (con 7 giocatori e un'ombra sola, con 8 compiti le ombre vincevano 2 volte su 10).
 function compitiPer(imp, n, ombre){
   if(imp.compiti>0) return imp.compiti;
+  if(GRANDI[n] && GRANDI[n][0]===ombre) return GRANDI[n][1];
   const r = (n-ombre)/Math.max(1,ombre);
-  return r<=3 ? 3 : r<=3.5 ? 4 : r<=4 ? 6 : 8;
+  return r<=3 ? 3 : r<=3.5 ? 4 : r<=4 ? 6 : r<=5 ? 8 : 12;
 }
 function riassunto(imp){
   const ruoli = Object.keys(imp.prob).filter(r=>imp.prob[r]>0).length;
@@ -456,6 +464,8 @@ const normChat = x => ' '+String(x).toLowerCase().replace(/[’']/g,' ').replace
 const VEL_BASE = 3.8;   // caselle al secondo a velocità «normale» (era 3,4: un po' più di corsa)
 const DUR_ATRIO = 20, DUR_SVELA = 6, DUR_ESITO = 7;
 const MAX_CHAT = 40;
+const SOGLIA_VOTO = 18;        // quanto sospetto serve a un Bot ospite per votare qualcuno (con 30 sette riunioni su dieci finivano senza nessuno fuori)
+const PROV_GIULLARE = 2;       // quante volte a partita un Giullare Bot si fa vedere uscire da una botola
 const FRASI_COMPITO = { luce:'accendere il lampadario', ingranaggio:"caricare l'orologio", fuoco:'sfornare i dolci', acqua:'annaffiare la serra' };
 
 class Partita {
@@ -512,7 +522,8 @@ class Partita {
       compiti:[], cd:15, cdA:8, usi:0, campane:this.imp.campane, zittito:false, protettoDa:null, ep:0, tPos:0, tCorr:-9, vPriv:0, tChat:-9, tParla:-9,
       vite:1, aspetto:null, aspettoFine:0, bloccatoFine:0, veleno:null, traccia:null, rianima:null, usiRian:0, usiBeng:0, campVolte:0, mangiati:0, bersaglio:null, rivelato:false, segnato:false, indovinati:0, tentativi:0, frenStanza:null, frenDa:0, frenAvvisato:false, camPiazzate:0, usiVet:0, allertaFine:0, letti:{}, osserva:false, usiTra:0, schermoFine:0, mod:null, trappola:null, trapRuoli:null, imitato:false, imita:null,
       path:[], meta:null, attesa:0, azione:null, pensa:rnd()*0.4, visti:{}, storia:[], ultimaStoria:{}, sosp:{}, mem:{controlli:[], puliti:[]}, segnala:null, corpoVisto:null, muove:false,
-      ripara:null, campione:null, controllo:null, controllatoDa:null, portineria:null, tTp:0, prossimoGiro:false, dopoSpegni:false, ricalcola:0, cacciaFine:0 };
+      ripara:null, campione:null, controllo:null, controllatoDa:null, portineria:null, tTp:0, prossimoGiro:false, dopoSpegni:false, ricalcola:0, cacciaFine:0,
+      noti:{}, provocaz:0, insegue:null, insegueFine:0, vistoTrasf:{} };
   }
   per(id){ return this.gioc.find(p=>p.id===id); }
   nomeDi(id){ const p=this.per(id); return p ? p.nome : '?'; }
@@ -554,7 +565,9 @@ class Partita {
     g.campVolte = g.ruolo==='campanaro' ? this.imp.campanaro.volte : 0;
   }
   assegnaCompiti(g){
-    const lista = mescola(POSTAZIONI.slice()).slice(0, this.nCompiti||compitiPer(this.imp, this.gioc.length, this.ombreIniziali||1));
+    // (con i decimali, 3,15 vuol dire che a un giocatore su sette ne toccano 4)
+    const nc = this.nCompiti||compitiPer(this.imp, this.gioc.length, this.ombreIniziali||1), quanti = Math.floor(nc) + (rnd() < nc-Math.floor(nc) ? 1 : 0);
+    const lista = mescola(POSTAZIONI.slice()).slice(0, quanti);
     g.compiti = lista.map(p=>({ post:p, fatto:false, finto:g.squadra!=='ospiti' }));
     // i compiti in più della Sentinella le servono per le telecamere: non contano nella barra di tutti
     if(g.ruolo==='sentinella') for(let i=0;i<this.imp.sentinella.extra;i++) g.compiti.push({ post:pick(POSTAZIONI), fatto:false, finto:false, extra:true });
@@ -611,7 +624,8 @@ class Partita {
     const v=this.vincitore; if(!v) return [];
     return this.gioc.map(p=>{
       const vince = v.id ? p.id===v.id : p.squadra===v.chi;
-      return { id:p.id, nome:p.nome, bot:p.bot, pos: vince || ((p.ruolo==='gatto' || p.ruolo==='sopravvissuto') && p.vivo) ? 1 : 2 };
+      // il Sopravvissuto vince se è vivo, chiunque vinca; il Gatto solo se le ombre non hanno vinto (con due vite era troppo facile: 7 volte su 10)
+      return { id:p.id, nome:p.nome, bot:p.bot, pos: vince || (p.ruolo==='sopravvissuto' && p.vivo) || (p.ruolo==='gatto' && p.vivo && v.chi!=='ombre') ? 1 : 2 };
     });
   }
   // la partita da ricordare se l'host ricarica la pagina: solo dati semplici
@@ -697,7 +711,7 @@ class Partita {
     if(c.fatto) return;
     c.fatto=true; this.priv(p); this.segna();
     // i compiti visibili: chi è lì vicino vede l'effetto, e sa che chi l'ha fatto non è un'ombra (le ombre fingono e basta)
-    if(!c.finto && c.post.visibile && this.imp.compitiVisibili){
+    if(!c.finto && c.post.visibile && this.imp.compitiVisibili && !this.nebbiaAttiva()){
       this.fx('compito', centro(c.post.tx), centro(c.post.ty), { v:c.post.visibile, id:p.id });
       for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p) continue; if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)){ o.sosp[p.id]=(o.sosp[p.id]||0)-35; o.mem.puliti.push({ id:p.id, v:c.post.visibile }); } }
     }
@@ -715,6 +729,8 @@ class Partita {
       if(!p.campione||p.cdA>0||this.travestito(p)) return;
       p.aspetto=p.campione; p.aspettoFine=this.t+this.imp.trasformista.durata; p.cdA=this.imp.trasformista.ricarica; this.priv(p);
       this.avviso(p, `Ora sembri ${this.nomeDi(p.campione)}.`, 'ombra'); this.fx('trasforma', p.x, p.y);
+      // il lampo della trasformazione lo nota chi sta guardando (sei Bot su dieci, se è a portata d'occhio)
+      for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p||o.squadra==='ombre') continue; if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y) && rnd()<.6) o.vistoTrasf[p.id]=this.t; }
       return;
     }
     if(tipo==='stanza'){
@@ -761,10 +777,11 @@ class Partita {
       case 'sceriffo':
         if(p.cdA>0 || v===p) return;
         p.cdA=this.imp.sceriffo.ricarica; this.priv(p);
-        this.fx('sparo', p.x, p.y, { x2:Math.round(v.x), y2:Math.round(v.y) });
+        this.fx('sparo', p.x, p.y, { x2:Math.round(v.x), y2:Math.round(v.y) }); this.noto(p,'sceriffo');
         if(v.squadra==='ombre' || (v.squadra==='soli' && this.imp.sceriffo.soli)){
           if(v.protettoDa!=null){ this.rompiScudo(v, p); return; }
           this.spegni(p, v, 'sceriffo'); this.avviso(p, `Colpito: ${v.nome} era ${RUOLI[v.ruolo].nome}.`);
+          if(p.bot) p.mem.sparato={ id:v.id, ombra:v.squadra==='ombre' };
         } else { this.avviso(p, `${v.nome} è dei buoni: cadi tu.`, 'morte'); this.spegni(p, p, 'sceriffo'); }
         return;
       case 'segugio':
@@ -779,7 +796,7 @@ class Partita {
         return;
       case 'bengala':
         if(p.usiBeng<=0 || this.bengalaAttivo()) return;
-        p.usiBeng--; this.bengalaFine=this.t+this.imp.bengala.durata; this.priv(p); this.segna();
+        p.usiBeng--; this.bengalaFine=this.t+this.imp.bengala.durata; this.priv(p); this.segna(); this.noto(p,'bengala');
         this.fx('bengala', p.x, p.y, { globale:1 });
         return;
       case 'rianimatore':
@@ -833,11 +850,12 @@ class Partita {
         this.avviso(p, `Ora sembri ${v.nome}.`, 'ombra'); this.fx('trasforma', p.x, p.y);
         return;
       case 'spazzino':
-        // pulire vuol dire restare 3 secondi fermi accanto alla lanterna spenta: chi passa lo vede
+        // pulire vuol dire restare fermi accanto alla lanterna spenta (qualche secondo): chi passa lo vede
         if(p.cdA>0 || p.rianima) return;
-        if(p.bot){ if(p.azione && p.azione.tipo==='pulisci') return; p.attesa=3; p.azione={ tipo:'pulisci', corpo:c.id }; p.path=[]; p.meta=null; return; }
-        p.rianima={ corpo:c.id, fine:this.t+3, x:p.x, y:p.y, pulisci:true }; this.priv(p);
-        this.avviso(p, 'Resta fermo 3 secondi: la lanterna sparisce.', 'ombra');
+        { const tempo=this.imp.spazzino.tempo;
+          if(p.bot){ if(p.azione && p.azione.tipo==='pulisci') return; p.attesa=tempo; p.azione={ tipo:'pulisci', corpo:c.id }; p.path=[]; p.meta=null; return; }
+          p.rianima={ corpo:c.id, fine:this.t+tempo, x:p.x, y:p.y, pulisci:true }; this.priv(p);
+          this.avviso(p, `Resta fermo ${tempo} secondi: la lanterna sparisce.`, 'ombra'); }
         return;
       case 'ipnotista':
         if(p.cdA>0 || v===p || v.squadra==='ombre') return;
@@ -846,7 +864,7 @@ class Partita {
         return;
       case 'avvoltoio':
         this.corpi=this.corpi.filter(k=>k!==c); p.mangiati++; this.priv(p); this.segna();
-        this.fx('mangia', c.x, c.y);
+        this.fx('mangia', c.x, c.y); this.noto(p,'avvoltoio');
         if(p.mangiati>=this.imp.avvoltoio.quanti){ this.vincitore={ chi:'avvoltoio', id:p.id, perche:`L'Avvoltoio (${p.nome}) ha fatto sparire ${p.mangiati} lanterne.` }; this.chiudi(); }
         else this.avviso(p, `Lanterne mangiate: ${p.mangiati} su ${this.imp.avvoltoio.quanti}.`);
         return;
@@ -863,6 +881,7 @@ class Partita {
   rompiScudo(v, chi){
     const md=this.per(v.protettoDa); v.protettoDa=null; this.priv(v); this.segna();
     this.avviso(chi, 'Non puoi: ha lo scudo del Medico. Ora lo scudo si è rotto.', 'ombra');
+    if(md && md.bot) md.mem.scudoRotto=v.id;
     if(md) this.avviso(md, `Lo scudo di ${v.nome} si è rotto: qualcuno ci ha provato!`, 'ombra');
     this.fx('scudoRotto', v.x, v.y, { noOmbre:1 });
   }
@@ -891,6 +910,8 @@ class Partita {
       this.avviso(v, 'Ti hanno quasi spento: ti resta una vita.', 'ombra');
       if(k!==v) this.avviso(k, `${v.nome} si è rialzato: era un Gatto!`, 'ombra');
       this.fx('gatto', v.x, v.y);
+      // chi l'ha colpito ora sa che è un Gatto: può riprovare presto, e un'ombra Bot lo insegue per un po'
+      if(k!==v && modo==='normale' && k.squadra==='ombre'){ k.cd=Math.min(k.cd, this.imp.gatto.ricarica); this.priv(k); if(k.bot){ k.insegue=v.id; k.insegueFine=this.t+25; } }
       return;
     }
     v.vivo=false; v.fantasma=true; v.protettoDa=null; v.path=[]; v.meta=null; v.attesa=0; v.segnala=null; v.ripara=null; v.veleno=null; v.rianima=null;
@@ -903,11 +924,14 @@ class Partita {
     if(v.mod==='celebrita') this.celebri.push({ id:v.id, stanza:c.stanza, t:this.t });
     if(modo==='normale' && k.bot){ k.dopoSpegni=true; k.path=[]; k.meta=null; k.autoSegnala=rnd()<.3; }   // un'ombra su tre fa finta di trovarla lei
     if(modo==='normale'){
-      const neb=this.nebbiaAttiva(), visto=this.travestito(k)||k.id;
+      const neb=this.nebbiaAttiva(), travest=this.travestito(k);
       for(const o of this.gioc){
         if(!o.bot||!o.vivo||o===k||o.squadra==='ombre') continue;
         if(dist(o,k)<=this.vista(o) && vede(this.M,o.x,o.y,k.x,k.y)){
+          // chi ha visto con i suoi occhi la trasformazione sa chi è davvero; gli altri vedono il travestimento
+          const visto = travest && !(this.t-(o.vistoTrasf[k.id]||-99) <= this.imp.trasformista.durata+1) ? travest : k.id;
           if(neb) o.mem.nebbia={ vittima:v.id };
+          else if(visto===o.id) o.mem.copia={ vittima:v.id };   // vede uno identico a sé che spegne qualcuno: c'è un Mutaforma, ma non sa chi è
           else { o.mem.testimone={ killer:visto, vittima:v.id, stanza:c.stanza }; o.sosp[visto]=(o.sosp[visto]||0)+100; }
           if(o.segnala==null){ o.segnala=0.7+rnd()*0.6; o.corpoVisto=c; }
         }
@@ -1070,7 +1094,7 @@ class Partita {
   pulisci(p, corpoId){
     const c=this.corpi.find(k=>k.id===corpoId);
     if(!c || !p.vivo || p.cdA>0 || !this.vicino(p,c.x,c.y,R_ABIL)) return;
-    this.corpi=this.corpi.filter(k=>k!==c); p.cdA=this.imp.spazzino.ricarica; p.cd=Math.max(p.cd, this.imp.ricarica); this.priv(p); this.segna();
+    this.corpi=this.corpi.filter(k=>k!==c); p.cdA=this.imp.spazzino.ricarica; p.cd=Math.max(p.cd, this.imp.ricarica); this.priv(p); this.segna(); this.noto(p,'spazzino');
     this.fx('sparisce', c.x, c.y);
   }
   riaccendi(r, corpoId){
@@ -1080,7 +1104,7 @@ class Partita {
     this.corpi=this.corpi.filter(k=>k!==c);
     v.vivo=true; v.fantasma=false; this.priv(v); this.teletrasporta(v, c.x, c.y);
     this.avviso(v, `${r.nome} ti ha riacceso: sei di nuovo in gioco!`); this.avviso(r, `Hai riacceso la lanterna di ${v.nome}.`);
-    this.fx('rianima', c.x, c.y); this.segna();
+    this.fx('rianima', c.x, c.y); this.segna(); this.noto(r,'rianimatore');
   }
 
   /* ----- bot ----- */
@@ -1090,6 +1114,7 @@ class Partita {
     b.meta=meta; b.path=liscia(this.M,p,b.x,b.y);
   }
   preda(b){
+    if(b.insegue && this.t<b.insegueFine){ const g=this.per(b.insegue); if(g && g.vivo && dist(g,b)<26*T) return g; }
     const cand=this.gioc.filter(p=>p.vivo&&p.squadra!=='ombre'&&dist(p,b)<26*T);
     if(!cand.length) return null;
     const solo=p=>this.gioc.filter(q=>q!==p&&q.vivo&&q.squadra!=='ombre'&&dist(p,q)<6*T).length;
@@ -1098,7 +1123,7 @@ class Partita {
   }
   scegliMeta(b){
     if(b.ripara && b.vivo && this.lavoroAttivo(b.ripara)){ const st=STAZ_RIP[b.ripara]; this.vaiA(b, st.tx, st.ty, {tipo:'ripara', cosa:b.ripara}); return; }
-    if(b.squadra==='ombre' && b.vivo && b.cd<=0 && rnd()<.55){ const p=this.preda(b); if(p){ this.vaiA(b, tX(this.M,p.x), tY(this.M,p.y), {tipo:'caccia', id:p.id}); b.ricalcola=1.2; b.cacciaFine=this.t+12; return; } }
+    if(b.squadra==='ombre' && b.vivo && b.cd<=0 && (this.t<b.insegueFine || rnd()<.55)){ const p=this.preda(b); if(p){ this.vaiA(b, tX(this.M,p.x), tY(this.M,p.y), {tipo:'caccia', id:p.id}); b.ricalcola=1.2; b.cacciaFine=this.t+12; return; } }
     if(b.dopoSpegni){ b.dopoSpegni=false;
       let bo=null, bd=7*T; for(const e of ESTREMI){ const d=Math.hypot(centro(e.tx)-b.x, centro(e.ty)-b.y); if(d<bd){ bd=d; bo=e; } }
       if(bo && rnd()<.55){ this.vaiA(b, bo.tx, bo.ty, {tipo:'botola', bo}); return; }
@@ -1118,6 +1143,7 @@ class Partita {
     const m=b.meta; if(!m) return;
     if(m.tipo==='compito'){ b.attesa=(6+rnd()*4)*(b.vivo?1:1.6); b.azione=m; }
     else if(m.tipo==='ripara'){ b.attesa=1.8; b.azione=m; }
+    else if(m.tipo==='botola' && m.prov){ b.provocaz++; this.vistoInBotola(b); this.fx('botola',b.x,b.y); b.attesa=0.6; b.azione=null; }   // il Giullare non va da nessuna parte: si fa solo vedere
     else if(m.tipo==='botola'){ this.vistoInBotola(b); this.fx('botola',b.x,b.y); b.x=centro(m.bo.va[0]); b.y=centro(m.bo.va[1]); b.attesa=0.3+rnd()*0.6; b.azione=null; }
     else if(m.tipo==='giro'){ b.attesa=1.5+rnd()*3; b.azione=null; }
     else if(m.tipo==='campana'){ b.meta=null; if(b.vivo && b.campane>0 && this.vicino(b,centro(CAMPANA.tx),centro(CAMPANA.ty),R_USA)){ b.campane--; this.iniziaRiunione({ tipo:'campana', da:b.id }); } return; }
@@ -1245,8 +1271,16 @@ class Partita {
   // chi esce da una botola davanti a un ospite si fa vedere
   vistoInBotola(p){
     const id=this.travestito(p)||p.id;
+    if(this.nebbiaAttiva()) return;   // nella nebbia nessuno riconosce chi è
     for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p||o.squadra==='ombre') continue;
-      if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)){ o.sosp[id]=(o.sosp[id]||0)+80; o.mem.botola={ id, stanza:stanzaDi(this.M,p).in }; } }
+      // chi lo vede se lo ricorda e ne parlerà in riunione; correre a suonare la campana lo fa solo 7 volte su 10, dopo un attimo di incredulità
+      if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)){ o.sosp[id]=(o.sosp[id]||0)+80; o.mem.botola={ id, stanza:stanzaDi(this.M,p).in, suona:rnd()<.7, quando:this.t+0.8+rnd()*1.7 }; } }
+  }
+  campioneVivo(b){ const c=b.campione ? this.per(b.campione) : null; return !!(c && c.vivo); }
+  // i Bot ricordano chi hanno visto usare un potere che si vede (serve all'Indovino per non tirare a caso)
+  noto(p, ruolo){
+    for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p||o.ruolo!=='indovino') continue;
+      if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)) o.noti[p.id]=ruolo; }
   }
   testimoni(k,v){
     let n=0;
@@ -1256,7 +1290,9 @@ class Partita {
   pensaBot(b){
     const rv=this.vista(b);
     // cosa vede: l'ultima volta di ognuno, e una storia corta (una voce al secondo a testa, 45 secondi) per ragionare in riunione
-    for(const p of this.gioc){ if(p===b||!p.vivo) continue; if(dist(b,p)<=rv && vede(this.M,b.x,b.y,p.x,p.y)){ const id=this.travestito(p)||p.id; b.visti[id]={ t:this.t, x:p.x, y:p.y };
+    // (nella nebbia tutti sono grigi e senza nome: nessuno si ricorda chi ha visto)
+    if(!this.nebbiaAttiva()) for(const p of this.gioc){ if(p===b||!p.vivo) continue; if(dist(b,p)<=rv && vede(this.M,b.x,b.y,p.x,p.y)){ const id=this.travestito(p)||p.id; b.visti[id]={ t:this.t, x:p.x, y:p.y };
+      if(p.segnato && b.squadra!=='ombre') b.sosp[p.id]=Math.max(b.sosp[p.id]||0, 100);   // l'alone rosso del Vendicatore: chi lo porta ha spento qualcuno
       if(b.squadra!=='ombre' && this.t-(b.ultimaStoria[id]||-9)>=1){ b.ultimaStoria[id]=this.t; b.storia.push([this.t, id, p.x, p.y]); } } }
     if(b.storia.length>40 && b.storia[0][0]<this.t-45){ let i=0; while(i<b.storia.length && b.storia[i][0]<this.t-45) i++; b.storia.splice(0,i); }
     // l'Avvoltoio sente le lanterne spente (ha la freccia): ci va dritto
@@ -1287,7 +1323,7 @@ class Partita {
       }
     }
     // ha visto spegnere qualcuno o uscire da una botola, ma la lanterna spenta non c'è più da segnalare: va a suonare la campana
-    if(b.squadra!=='ombre' && b.campane>0 && (b.mem.testimone||b.mem.botola) && b.segnala==null && !b.ripara && !(b.meta&&b.meta.tipo==='campana'))
+    if(b.squadra!=='ombre' && b.campane>0 && (b.mem.testimone || (b.mem.botola && b.mem.botola.suona && this.t>=b.mem.botola.quando)) && b.segnala==null && !b.ripara && !(b.meta&&b.meta.tipo==='campana'))
       this.vaiA(b, CAMPANA.tx, CAMPANA.ty, {tipo:'campana'});
     if(this.sabAttivo() && b.squadra!=='ombre') this.assegnaRiparatori();
     if(b.ruolo==='portiere' && !b.portineria && b.cdA<=0 && rnd()<.05) this.abilita(b, Math.floor(rnd()*PALAZZO.stanze.length));
@@ -1307,6 +1343,13 @@ class Partita {
       const p=this.bersaglio(b,R_ABIL,q=>(b.sosp[q.id]||0)>=80);
       if(p && rnd()<.5){ this.abilita(b,p.id); if(this.fase!=='gioco') return; }
     }
+    // il Mutaforma campiona chiunque gli passi vicino e si tiene il campione fino a che è vivo: poi, con qualcuno intorno, si trasforma e la colpa va a quello
+    if(b.ruolo==='trasformista' && !this.campioneVivo(b)){ const q=this.bersaglio(b,R_ABIL,x=>x.squadra!=='ombre'); if(q) this.abilita(b,q.id); }
+    // il Giullare Bot vuole farsi cacciare, ma con misura: ogni tanto esce da una botola sotto gli occhi di qualcuno (poche volte a partita)
+    if(b.ruolo==='giullare' && b.provocaz<PROV_GIULLARE && this.t>40 && !(b.meta&&b.meta.tipo==='botola') && rnd()<.03){
+      const e=ESTREMI.find(x=>Math.hypot(centro(x.tx)-b.x, centro(x.ty)-b.y)<6*T);
+      if(e && this.gioc.some(o=>o!==b&&o.vivo&&o.squadra!=='ombre'&&dist(o,b)<=this.vista(o)&&vede(this.M,o.x,o.y,b.x,b.y))) this.vaiA(b, e.tx, e.ty, {tipo:'botola', bo:e, prov:true});
+    }
     if(b.squadra==='ombre'){
       if(b.ruolo==='silenziatore' && b.cdA<=0 && rnd()<.15){ const p=this.bersaglio(b,R_ABIL,q=>q.squadra!=='ombre'&&!q.zittito); if(p) this.abilita(b,p.id); }
       if(b.ruolo==='ipnotista' && b.cdA<=0 && rnd()<.1){ const p=this.bersaglio(b,R_ABIL,q=>q.squadra!=='ombre'); if(p) this.abilita(b,p.id); }
@@ -1314,8 +1357,9 @@ class Partita {
         const v=this.bersaglio(b,R_SPEGNI,p=>p.squadra!=='ombre');
         if(v){
           const t=this.testimoni(b,v);
-          if(b.ruolo==='trasformista' && !b.campione){ const altro=this.bersaglio(b,R_ABIL,q=>q!==v&&q.squadra!=='ombre'); if(altro) this.abilita(b,altro.id); }
-          if(b.ruolo==='trasformista' && b.campione && b.cdA<=0 && t<=1) this.abilita(b,null);
+          if(b.ruolo==='trasformista' && this.campioneVivo(b) && b.cdA<=0 && t<=1) this.abilita(b,null);
+          // il veleno non si vede: l'Avvelenatore lo dà anche con una o due persone intorno, che non sapranno mai cos'è successo
+          if(b.ruolo==='avvelenatore' && t<=2 && !v.veleno && rnd()<.65){ this.provaSpegni(b,v); return; }
           if(t===0 && rnd()<.65){ this.provaSpegni(b,v); return; }
           if(t<=1 && (this.nebbiaAttiva()||this.travestito(b)) && rnd()<.7){ this.provaSpegni(b,v); return; }
           if(t<=1 && b.ruolo==='nebbia' && b.cdA<=0 && !this.nebbiaAttiva()) this.abilita(b,null);
@@ -1377,7 +1421,7 @@ class Partita {
     this.gioc.forEach(p=>{ if(p.controllo) this.fineControllo(p); p.ripara=null; });
     this.gioc.forEach(p=>{ p.path=[]; p.meta=null; p.attesa=0; p.azione=null; p.muove=false; p.veleno=null; p.rianima=null; p.aspetto=null; p.bloccatoFine=0; p.inBotola=null;
       p.tentativi = p.ruolo==='indovino' ? this.imp.indovino.perRiunione : 0; p.osserva=false; this.priv(p); });
-    for(const b of this.gioc.filter(q=>q.bot&&q.vivo&&q.ruolo==='indovino')) if(rnd()<.6) R.coda.push({ t:3+rnd()*Math.max(4,R.disc), chi:b, az:()=>this.indovinaBot(b) });
+    for(const b of this.gioc.filter(q=>q.bot&&q.vivo&&q.ruolo==='indovino')) if(rnd()<.9) R.coda.push({ t:3+rnd()*Math.max(4,R.disc), chi:b, az:()=>this.indovinaBot(b) });
     R.coda.sort((a,b)=>a.t-b.t);
     this.segna();
   }
@@ -1409,6 +1453,13 @@ class Partita {
   frasiBot(b,m){
     const out=[], crewVivi=()=>this.gioc.filter(p=>p.vivo&&p!==b&&p.squadra!=='ombre');
     if(b.ruolo==='sindaco' && !b.rivelato && rnd()<.5) out.push({ testo:'Mi rivelo: sono il Sindaco.', az:()=>this.rivela(b) });
+    // quando la partita è sul filo (un'ombra in più e vincono loro) gli ospiti con un ruolo si dichiarano per aiutare a votare giusto
+    // (negli altri momenti qualcuno lo fa lo stesso, ogni tanto: 1 volta su 10)
+    if(b.squadra==='ospiti' && b.ruolo!=='ospite' && b.ruolo!=='sindaco' && !this.dichiarati[b.id]){
+      const om=this.ombreNote(), altri=this.gioc.filter(p=>p.vivo).length-om;
+      if(altri<=om+1 ? rnd()<.8 : rnd()<.1){ const nome=RUOLI[b.ruolo].nome, art = ['spia','sentinella','vedetta'].includes(b.ruolo) ? 'la' : /^[aeiou]/i.test(nome) ? "l'" : 'il ';
+        out.push({ testo:`Sono ${art}${art==='la'?' ':''}${nome}.`, eff:()=>{ this.dichiarati[b.id]=b.ruolo; } }); }
+    }
     if(b.squadra==='ombre'){
       const cv=crewVivi(), soci=this.gioc.filter(p=>p.vivo&&p!==b&&p.squadra==='ombre');
       // un socio nei guai: a volte lo copre
@@ -1421,13 +1472,22 @@ class Partita {
     }
     if(b.mem.testimone){ const t=b.mem.testimone, K=this.per(t.killer); if(K && K.vivo) out.push({ testo:`Ho visto ${K.nome} spegnere la lanterna di ${this.nomeDi(t.vittima)} ${t.stanza}!`, eff:()=>this.sospetta(K,55,b) }); }
     else if(b.mem.nebbia) out.push({ testo:`C'era qualcuno vicino a ${this.nomeDi(b.mem.nebbia.vittima)}, ma con la nebbia erano tutti grigi.` });
+    else if(b.mem.copia) out.push({ testo:`Ho visto uno identico a me spegnere la lanterna di ${this.nomeDi(b.mem.copia.vittima)}: qui c'è un Mutaforma!` });
     if(b.mem.botola){ const K=this.per(b.mem.botola.id); if(K && K.vivo) out.push({ testo:`Ho visto ${K.nome} uscire da una botola ${b.mem.botola.stanza}!`, eff:()=>this.sospetta(K,45,b) }); }
     const vic=(b.mem.vicini||[]).map(id=>this.per(id)).filter(Boolean).slice(0,2);
-    if(vic.length && (m.da===b.id || rnd()<.6)) out.push({ testo: m.da===b.id ? `Poco prima lì vicino c'era ${elenco(vic.map(p=>p.nome))}.` : `Ho visto ${elenco(vic.map(p=>p.nome))} da quelle parti poco prima.`, eff:()=>vic.forEach(p=>{ this.sospetta(p, m.da===b.id?18:14, b); if(vic.length===1) this.rispostaBot(p,false); }) });
+    if(vic.length && (m.da===b.id || rnd()<.6)){
+      const nomi=elenco(vic.map(p=>p.nome)), ruoloDetto = b.ruolo==='investigatore' && rnd()<.5 ? 'investigatore' : b.ruolo==='vedetta' && rnd()<.5 ? 'vedetta' : null;
+      const testo = ruoloDetto==='investigatore' ? `Sono l'Investigatore: le orme di ${nomi} stavano lì vicino.` : ruoloDetto==='vedetta' ? `Sono la Vedetta: da lontano ho visto ${nomi} da quelle parti.`
+        : m.da===b.id ? `Poco prima lì vicino c'era ${nomi}.` : `Ho visto ${nomi} da quelle parti poco prima.`;
+      out.push({ testo, eff:()=>{ if(ruoloDetto) this.dichiarati[b.id]=ruoloDetto; vic.forEach(p=>{ this.sospetta(p, m.da===b.id?18:14, b); if(vic.length===1) this.rispostaBot(p,false); }); } });
+    }
     const ali=(b.mem.alibi||[]).map(id=>this.per(id)).filter(p=>p && (b.sosp[p.id]||0)<20);
     if(ali.length && rnd()<.5){ const p=pick(ali); out.push({ testo:`${p.nome} era sotto i miei occhi, lontano da lì: non è stato lui.`, eff:()=>this.sospetta(p,-14,b) }); }
     for(const x of b.mem.puliti.slice(0,1)){ const p=this.per(x.id); if(p && p.vivo) out.push({ testo:`Ho visto ${p.nome} ${FRASI_COMPITO[x.v]}: per me è pulito.`, eff:()=>this.sospetta(p,-25,b) }); }
     if(b.ruolo==='veggente') for(const r of b.mem.controlli){ const p=this.per(r.id); if(p) out.push({ testo: r.ok ? `Ho letto ${p.nome}: è dei buoni.` : `Ho letto ${p.nome}: è dei cattivi!`, eff:()=>{ this.dichiarati[b.id]='veggente'; this.sospetta(p, r.ok?-25:45, b); } }); }
+    if(b.ruolo==='sceriffo' && b.mem.sparato && rnd()<.8){ const x=this.per(b.mem.sparato.id); if(x) out.push({ testo:`Sono lo Sceriffo: ho spento ${x.nome}, ${b.mem.sparato.ombra?"era un'ombra":'non era dei buoni'}.`, eff:()=>{ this.dichiarati[b.id]='sceriffo'; } }); }
+    if(b.ruolo==='medico' && b.mem.scudoRotto && rnd()<.7){ const x=this.per(b.mem.scudoRotto); if(x) out.push({ testo:`Sono il Medico: proteggevo ${x.nome} e qualcuno ha provato a spegnerlo.`, eff:()=>{ this.dichiarati[b.id]='medico'; } }); }
+    if(b.ruolo==='bracconiere' && b.trapRuoli && rnd()<.7){ const r=b.trapRuoli; b.trapRuoli=null; out.push({ testo:`Sono il Bracconiere: nella mia trappola sono passati ${elenco(r)}.`, eff:()=>{ this.dichiarati[b.id]='bracconiere'; } }); }
     if(b.ruolo==='accusatore' && b.bersaglio){ const p=this.per(b.bersaglio); if(p && p.vivo) out.push({ testo:pick([`Io di ${p.nome} non mi fido per niente.`,`${p.nome} si muove in modo strano.`,`Secondo me è ${p.nome}.`]), eff:()=>this.sospetta(p,15,b) }); }
     if(b.ruolo==='giullare' && rnd()<.4) out.push({ testo:pick(['Io? Ero a farmi gli affari miei.','Guardate pure me, non ho niente da nascondere. Forse.','Che sguardi. Sembra che abbiate già deciso.']), eff:()=>this.sospetta(b,6,b) });
     if(!out.length) out.push({ testo: rnd()<.55 ? `Io ero ${stanzaDi(this.M,b).in}.` : pick(['Io non ho visto niente.','Ho fatto i miei compiti, tutto tranquillo.','Non ho prove, per ora salto.']) });
@@ -1503,14 +1563,17 @@ class Partita {
   }
   indovinaBot(b){
     const cand=this.gioc.filter(q=>q.vivo&&q!==b); if(!cand.length) return;
-    // chi ha detto in pubblico il suo ruolo (il Sindaco che si rivela, chi racconta cosa ha letto) è il primo da provare
-    const dich=cand.filter(q=>this.dichiarati[q.id] && !(b.provati||[]).includes(q.id));
-    if(dich.length){ const q=pick(dich); (b.provati=b.provati||[]).push(q.id); this.indovina(b, q.id, this.dichiarati[q.id]); return; }
-    // senza un ruolo detto in pubblico tira a indovinare solo se sbagliare non costa, o se di qualcuno è quasi sicuro
+    // prova solo con un buon motivo: un ruolo detto in pubblico (il Sindaco che si rivela, chi racconta cosa ha fatto)
+    // o un potere che ha visto usare con i suoi occhi (Sceriffo che spara, Bengala acceso)
+    const sa=q=>this.dichiarati[q.id]||b.noti[q.id];
+    const buoni=cand.filter(q=>sa(q) && !(b.provati||[]).includes(q.id));
+    if(buoni.length){ const q=pick(buoni); (b.provati=b.provati||[]).push(q.id); this.indovina(b, q.id, sa(q)); return; }
+    // senza un buon motivo, se sbagliare costa la lanterna sta zitto: tra una trentina di ruoli tirare a caso è una condanna
+    if(this.imp.indovino.sbaglia==='muore') return;
     cand.sort((x,y)=>(b.sosp[y.id]||0)-(b.sosp[x.id]||0));
-    const forte=cand[0], sos=b.sosp[forte.id]||0, gratis=this.imp.indovino.sbaglia!=='muore';
-    if(sos>=60 && (gratis || rnd()<.5)) this.indovina(b, forte.id, 'ombra');
-    else if(gratis && rnd()<.6) this.indovina(b, pick(cand).id, 'ospite');
+    const forte=cand[0];
+    if((b.sosp[forte.id]||0)>=60) this.indovina(b, forte.id, 'ombra');
+    else if(rnd()<.6) this.indovina(b, pick(cand).id, 'ospite');
   }
   peso(id){ const p=this.per(id); if(!p) return 1; return (p.ruolo==='sindaco' && p.rivelato ? 2 : 1) + (p.mod==='ago' ? 0.01 : 0); }
   imita(p, id){
@@ -1538,7 +1601,7 @@ class Partita {
     if(b.squadra==='ombre'){ let bv=28; for(const p of cand){ if(p.squadra==='ombre') continue; const v=(this.pub[p.id]||0)+this.votiPer(p.id)*12; if(v>bv){ bv=v; scelta=p; } } }
     else if(b.ruolo==='giullare') scelta = rnd()<.35 ? pick(cand) : null;
     else if(b.ruolo==='accusatore'){ const x=this.per(b.bersaglio); scelta = x && x.vivo ? x : null; }
-    else { let bv = critico ? 2 : 30; for(const p of cand){ const v=(b.sosp[p.id]||0)+this.votiPer(p.id)*(critico?14:6)+rnd()*6; if(v>bv){ bv=v; scelta=p; } } }
+    else { let bv = critico ? 2 : SOGLIA_VOTO; for(const p of cand){ const v=(b.sosp[p.id]||0)+this.votiPer(p.id)*(critico?14:6)+rnd()*6; if(v>bv){ bv=v; scelta=p; } } }
     this.riu.voti.set(b.id, scelta?scelta.id:'salta'); this.segna();
   }
   passoRiunione(dt){
@@ -2950,7 +3013,7 @@ function barca(res){
 
 const CORR1 = '#5a2b33', CORR2 = '#612f38';
 const FONT = '-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","Inter",system-ui,sans-serif';
-const ORO = '231,183,92', ROSSO = '240,90,110';
+const ORO = '231,183,92', ROSSO = '240,90,110', VOCE_COL = '150,235,200';   // VOCE_COL: l'anello della voce
 
 class Pittore {
   constructor(cv){
@@ -3044,6 +3107,12 @@ class Pittore {
       for(const p of tutti){ if(p===io || (P.anima ? !p.fantasma : p.fantasma)) continue;
         if(!P.anima && (Math.hypot(p.x-io.x,p.y-io.y)>P.R || !vede(M,io.x,io.y,p.x,p.y))) continue;
         c.strokeStyle=`rgba(${ORO},${a})`; c.lineWidth=2; this.ell(p.x,p.y+T*0.34,T*0.5,T*0.2); c.stroke(); } }
+    // la voce: un anello verde chiaro sotto chi parla e lo sento (anche sotto di me, quando parlo). S.voce[id]: da 0 a 1, già morbido.
+    // Solo chi vedo: chi parla dietro un muro non si vede e non ha anello. Due cerchi, il più largo più leggero: pulsa con la voce.
+    // (chi non vuole movimento: l'anello non si allarga, cambia solo la trasparenza)
+    if(S.voce) for(const p of tutti){ const v=S.voce[p.id]; if(!(v>0.02)) continue; const w=this.ridotto?0.5:v;
+      c.lineWidth=2; c.strokeStyle=`rgba(${VOCE_COL},${0.3+0.5*v})`; this.ell(p.x,p.y+T*0.34,T*(0.5+0.14*w),T*(0.2+0.06*w)); c.stroke();
+      c.lineWidth=1.5; c.strokeStyle=`rgba(${VOCE_COL},${0.12+0.25*v})`; this.ell(p.x,p.y+T*0.34,T*(0.62+0.3*w),T*(0.25+0.12*w)); c.stroke(); }
     // mobili e persone in ordine di profondità: chi passa dietro un mobile alto ne resta coperto
     const scena=[];
     M.ostacoli.forEach((o,k)=>{ if((o.x+o.w)*T<vx0||o.x*T>vx1||(o.y+o.h)*T<vy0||o.y*T-altezzaMobile(o)>vy1) return; scena.push({ y:(o.y+o.h)*T, o, k }); });
@@ -3512,6 +3581,503 @@ function quadri(z, post, ok){
   });
 }
 
+// ===== voce.js =====
+// Voce di prossimità di Lanterne: si parla a voce e si sente chi è vicino. Più piano da lontano, attutito dietro un muro,
+// da sinistra o da destra secondo dove sta chi parla. Stessa regola della chat scritta (Partita.sentePar).
+//
+// Quattro pezzi che non si conoscono fra loro, così il trasporto si cambia senza toccare il resto:
+//   1. voceRegola()       LA REGOLA: chi sente chi, quanto forte, quanto attutito, da che lato. Solo numeri: niente audio, niente rete.
+//   2. VoceMixer          IL MIXER (Web Audio): per ogni voce un filtro, un volume e una direzione. Non sa da dove arriva l'audio.
+//   3. TrasportoDiretto   IL TRASPORTO: WebRTC fra i telefoni, a maglia (ognuno con ognuno, fino a 10). Sceglie lui come arriva la voce.
+//   4. VOCE               IL COLLEGAMENTO COL GIOCO: microfono, timer da 10 al secondo, anelli, messaggi della stanza.
+//
+// Quando ci sarà il server (LiveKit), si scrive un TrasportoLiveKit con la stessa forma e si cambia UNA riga: la fabbrica
+// VOCE.nuovoTrasporto (più sotto), che oggi dà un TrasportoDiretto. Regola, mixer, tasti e anelli restano uguali.
+// La forma del trasporto:
+//   new Trasporto({ io, sess, manda(a, dati), onFlusso(id, flusso), onFine(id), onStato(id, stato), diario(testo) })
+//   .microfono(traccia o null)    metto o tolgo la mia voce (senza ricollegare nessuno)
+//   .persone([[id, sessione], …]) chi c'è adesso in voce (con un server non serve: lo sa lui)
+//   .segnale(da, dati)            è arrivato un messaggio di collegamento (con un server non serve)
+//   .stati()                      { id: 'connected' | … } per le prove
+//   .chiudi()
+// In più, il trasporto diretto ha bisogno di qualcuno che porti i messaggi di collegamento da un telefono all'altro:
+// è VoceStanza, sul telefono dell'host (fa da portalettere, non conserva niente). Con un server sparisce anche lui.
+
+
+// =========================================================
+//  1. LA REGOLA
+// =========================================================
+var VOCE_PIENO = 1.5 * T;          // entro questa distanza si sente al massimo
+var VOCE_PIENO_MURO = 1 * T;       // dietro un muro, da così vicino si sente al massimo (che è comunque più piano)
+var VOCE_APERTO = 16000;           // filtro passa-basso senza muri: non toglie niente
+var VOCE_MURO = 800;               // dietro un muro: restano solo i suoni gravi (circa 700-900 Hz)
+var VOCE_VOL_MURO = 0.6;           // e la voce è più bassa
+var VOCE_VOL_ANIME = 0.85;         // le anime sentono tutti: un po' più piano, così le voci non si coprono
+var VOCE_PAN_MAX = 0.85;           // quanto si sposta a sinistra o a destra al massimo
+var VOCE_PAN_DIST = 3 * T;         // a questa distanza di lato la voce è tutta da una parte
+var VOCE_FASI_VICINO = { atrio: 1, svela: 1, gioco: 1 };   // si sente per vicinanza
+var VOCE_FASI_RIUNIONE = { riunione: 1, esito: 1 };        // si sentono tutti i vivi
+
+// una curva morbida da 0 a 1 (piatta alle due estremità: nessuno scatto quando si entra o si esce dal raggio)
+function voceMorbido(t) { t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); }
+function voceLato(a, b) { var p = (b.x - a.x) / VOCE_PAN_DIST; return VOCE_PAN_MAX * (p < -1 ? -1 : p > 1 ? 1 : p); }
+
+// ascolta: chi sente, { x, y, vivo }   parla: chi parla, { x, y, vivo, muto }
+//   «muto»: è in una botola, è uscito, non ha una posizione, o in riunione è stato zittito.
+// fase: la fase della partita (atrio, svela, gioco, riunione, esito, fine); M: la mappa dove si trovano.
+// Risposta: { vol: 0..1, taglio: Hz del filtro, pan: -1..1, k } con k come in Partita.sentePar: 0 niente, 1 forte, 2 attutito.
+// Vale la stessa regola della chat scritta:
+//   · i vivi si sentono entro R_PARLA caselle a vista; attraverso un muro solo entro R_MURO, e attutiti;
+//   · le anime sentono tutti e parlano solo alle anime;
+//   · in riunione si sentono tutti i vivi (le anime parlano solo alle anime e sentono tutti);
+//   · a partita finita si sentono tutti.
+function voceRegola(fase, M, ascolta, parla) {
+  var zero = { vol: 0, taglio: VOCE_APERTO, pan: 0, k: 0 };
+  if (!parla || parla.muto) return zero;
+  var libera = { vol: 1, taglio: VOCE_APERTO, pan: 0, k: 1 };
+  if (VOCE_FASI_VICINO[fase]) {
+    if (!parla.vivo) return ascolta.vivo ? zero : libera;
+    if (!ascolta.vivo) return { vol: VOCE_VOL_ANIME, taglio: VOCE_APERTO, pan: 0, k: 1 };
+    var d = Math.hypot(parla.x - ascolta.x, parla.y - ascolta.y);
+    if (d > R_PARLA) return zero;
+    var pan = voceLato(ascolta, parla);
+    if (vede(M, ascolta.x, ascolta.y, parla.x, parla.y)) return { vol: voceMorbido((R_PARLA - d) / (R_PARLA - VOCE_PIENO)), taglio: VOCE_APERTO, pan: pan, k: 1 };
+    if (d <= R_MURO) return { vol: VOCE_VOL_MURO * voceMorbido((R_MURO - d) / (R_MURO - VOCE_PIENO_MURO)), taglio: VOCE_MURO, pan: pan, k: 2 };
+    return zero;
+  }
+  if (VOCE_FASI_RIUNIONE[fase]) return !parla.vivo && ascolta.vivo ? zero : libera;
+  return libera;
+}
+
+// =========================================================
+//  2. IL MIXER (Web Audio)
+// =========================================================
+// Ogni voce: MediaStreamSource → filtro passa-basso → volume → direzione → uscita.
+// A valle di tutto un compressore, così con tante voci insieme non si va in distorsione.
+function VoceMixer(ctx) {
+  this.ctx = ctx; this.v = {}; this.mio = null;
+  this.master = ctx.createGain(); this.master.gain.value = 0.9;
+  this.comp = ctx.createDynamicsCompressor();
+  this.comp.threshold.value = -16; this.comp.knee.value = 14; this.comp.ratio.value = 4; this.comp.attack.value = 0.005; this.comp.release.value = 0.2;
+  this.master.connect(this.comp); this.comp.connect(ctx.destination);
+}
+VoceMixer.prototype.aggiungi = function (id, flusso) {
+  var c = this.ctx; this.togli(id);
+  var src = c.createMediaStreamSource(flusso), fil = c.createBiquadFilter(), gan = c.createGain(), an = c.createAnalyser();
+  var pan = c.createStereoPanner ? c.createStereoPanner() : null;
+  fil.type = 'lowpass'; fil.frequency.value = VOCE_APERTO; fil.Q.value = 0.7;
+  gan.gain.value = 0;   // si parte da zero: il volume giusto arriva morbido dal primo giro della regola
+  an.fftSize = 1024;
+  src.connect(fil); fil.connect(gan); gan.connect(an);   // (l'analizzatore sta dopo il volume: l'anello compare solo per ciò che si sente)
+  if (pan) { gan.connect(pan); pan.connect(this.master); } else gan.connect(this.master);
+  this.v[id] = { src: src, fil: fil, gan: gan, an: an, pan: pan, buf: new Uint8Array(an.fftSize), ultimo: null };
+};
+VoceMixer.prototype.togli = function (id) {
+  var x = this.v[id]; if (!x) return;
+  [x.src, x.fil, x.gan, x.an, x.pan].forEach(function (n) { if (n) try { n.disconnect(); } catch (e) {} });
+  delete this.v[id];
+};
+// volume, filtro e direzione di una voce: transizioni morbide, mai salti (si chiama circa 10 volte al secondo)
+VoceMixer.prototype.regola = function (id, r) {
+  var x = this.v[id]; if (!x) return;
+  var u = x.ultimo; if (u && Math.abs(u.vol - r.vol) < 0.004 && u.taglio === r.taglio && Math.abs(u.pan - r.pan) < 0.01) return;
+  x.ultimo = { vol: r.vol, taglio: r.taglio, pan: r.pan };
+  var t = this.ctx.currentTime;
+  x.gan.gain.setTargetAtTime(r.vol, t, 0.07);
+  x.fil.frequency.setTargetAtTime(r.taglio, t, 0.1);
+  if (x.pan) x.pan.pan.setTargetAtTime(r.pan, t, 0.1);
+};
+function voceRms(an, buf) { an.getByteTimeDomainData(buf); var m = 0; for (var i = 0; i < buf.length; i++) { var s = (buf[i] - 128) / 128; m += s * s; } return Math.sqrt(m / buf.length); }
+// quanto forte arriva una voce (dopo il volume), da 0 a circa 1
+VoceMixer.prototype.livello = function (id) { var x = this.v[id]; return x ? voceRms(x.an, x.buf) : 0; };
+// la mia voce: solo da misurare (non va all'uscita, sennò mi sentirei)
+VoceMixer.prototype.ascoltaMio = function (flusso) {
+  this.smettiMio();
+  try { var src = this.ctx.createMediaStreamSource(flusso), an = this.ctx.createAnalyser(); an.fftSize = 1024; src.connect(an); this.mio = { src: src, an: an, buf: new Uint8Array(an.fftSize) }; } catch (e) { this.mio = null; }
+};
+VoceMixer.prototype.smettiMio = function () { if (this.mio) { try { this.mio.src.disconnect(); } catch (e) {} this.mio = null; } };
+VoceMixer.prototype.livelloMio = function () { return this.mio ? voceRms(this.mio.an, this.mio.buf) : 0; };
+VoceMixer.prototype.chiudi = function () {
+  var M = this; Object.keys(M.v).forEach(function (id) { M.togli(id); }); M.smettiMio();
+  try { M.master.disconnect(); M.comp.disconnect(); } catch (e) {}
+};
+
+// =========================================================
+//  3. IL TRASPORTO DIRETTO (WebRTC a maglia)
+// =========================================================
+// Solo audio. Ogni telefono ha un collegamento con ciascuno degli altri. Si usa solo lo STUN di Google per trovarsi (niente TURN:
+// su certe reti 4G/5G il collegamento può non riuscire). Offerta e risposta vanno COMPLETE (si aspetta la fine della raccolta dei
+// percorsi ICE e si manda il testo intero, niente candidati uno per uno). In ogni coppia propone chi ha l'id che viene prima,
+// così le offerte non si incrociano. Il canale audio è sempre «sendrecv»: la mia traccia si mette e si toglie con replaceTrack,
+// senza rifare i collegamenti, così si può anche solo ascoltare e accendere il microfono dopo.
+var VOCE_ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
+function voceId() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+
+function TrasportoDiretto(o) {
+  this.o = o; this.io = o.io; this.sess = o.sess || voceId(); this.pc = {}; this.membri = {}; this.falli = {}; this.attesa = {};
+  this.traccia = null; this.chiuso = false; this.visti = {}; this.n = 0;
+}
+// un diario corto di quello che fa (per capire cosa è successo; chi usa il trasporto può ignorarlo): o.diario(testo)
+TrasportoDiretto.prototype.dice = function (t) { if (this.o.diario) this.o.diario(t); };
+TrasportoDiretto.prototype.microfono = function (traccia) {
+  var X = this; X.traccia = traccia || null;
+  Object.keys(X.pc).forEach(function (id) { X.metti(X.pc[id]); });
+};
+// la mia traccia (o nessuna) sul canale audio di un collegamento
+// I messaggi di collegamento viaggiano su un canale veloce che ogni tanto ne perde uno: si mandano due volte (a mezzo secondo di distanza).
+// Chi li riceve scarta il doppione (offerta già vista, risposta quando non la aspetta più).
+TrasportoDiretto.prototype.invia = function (a, d) {
+  var X = this; X.o.manda(a, d);
+  setTimeout(function () { if (!X.chiuso) X.o.manda(a, d); }, 500);
+};
+TrasportoDiretto.prototype.metti = function (pc) {
+  if (!pc.trAudio) return;
+  try { var p = pc.trAudio.sender.replaceTrack(this.traccia); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+};
+// chi c'è adesso in voce (arriva dalla stanza): chiude i collegamenti di chi è uscito e propone quelli che mancano
+TrasportoDiretto.prototype.persone = function (lista) {
+  var X = this, nuovi = {}; if (X.chiuso) return;
+  lista.forEach(function (r) { if (r[0] !== X.io) nuovi[r[0]] = r[1]; });
+  X.membri = nuovi;
+  Object.keys(X.pc).forEach(function (id) { var pc = X.pc[id]; if (!(id in nuovi) || (pc.suaSess && pc.suaSess !== nuovi[id])) { X.dice('chiudo ' + id + ': ' + (id in nuovi ? 'ha una sessione nuova' : 'non è più in elenco')); X.chiudiPc(id); } });
+  Object.keys(nuovi).forEach(function (id) { if (!X.pc[id] && X.io < id && !(X.attesa[id] > Date.now())) X.offri(id); });
+};
+TrasportoDiretto.prototype.nuovo = function (id, suaSess) {
+  var X = this, pc = new RTCPeerConnection({ iceServers: VOCE_ICE });
+  pc.suaSess = suaSess; pc.t0 = Date.now(); X.pc[id] = pc;
+  pc.tCon = setTimeout(function () { if (X.pc[id] === pc && pc.connectionState !== 'connected') { X.dice(id + ': non si collega, rifaccio'); X.rifai(id); } }, 15000);
+  pc.ontrack = function (e) {
+    if (X.pc[id] !== pc) return;
+    X.o.onFlusso(id, e.streams && e.streams[0] ? e.streams[0] : new MediaStream([e.track]));
+  };
+  pc.onconnectionstatechange = function () {
+    if (X.pc[id] !== pc) return; var s = pc.connectionState;
+    X.dice(id + ': ' + s);
+    if (s === 'connected') { clearTimeout(pc.tDisc); clearTimeout(pc.tCon); X.falli[id] = 0; X.o.onStato(id, 'connesso'); }
+    else if (s === 'disconnected') { clearTimeout(pc.tDisc); X.o.onStato(id, 'instabile'); pc.tDisc = setTimeout(function () { if (X.pc[id] === pc && pc.connectionState !== 'connected') X.rifai(id); }, 4000); }
+    else if (s === 'failed') X.rifai(id);
+    else X.o.onStato(id, 'collego');
+  };
+  return pc;
+};
+// si aspetta di avere tutti i percorsi possibili, così basta un messaggio solo per parte (al massimo 2,5 secondi)
+TrasportoDiretto.prototype.raccolto = function (pc) {
+  return new Promise(function (r) {
+    if (pc.iceGatheringState === 'complete') { r(); return; }
+    var t = setTimeout(r, 2500);
+    pc.addEventListener('icegatheringstatechange', function () { if (pc.iceGatheringState === 'complete') { clearTimeout(t); r(); } });
+  });
+};
+TrasportoDiretto.prototype.offri = function (id) {
+  var X = this, suaSess = X.membri[id]; if (!suaSess || X.chiuso || !window.RTCPeerConnection) return;
+  var pc = X.nuovo(id, suaSess), oid = X.sess + '.' + (++X.n); pc.oid = oid; X.dice('offro a ' + id);
+  pc.trAudio = pc.addTransceiver('audio', { direction: 'sendrecv' }); X.metti(pc);
+  pc.createOffer().then(function (of) { return pc.setLocalDescription(of); }).then(function () { return X.raccolto(pc); }).then(function () {
+    if (X.pc[id] !== pc) return;
+    X.invia(id, { tipo: 'off', sdp: pc.localDescription.sdp, oid: oid, sda: X.sess, sa: suaSess });
+    // se la risposta non arriva (messaggio perso) si riprova da capo
+    pc.tRis = setTimeout(function () { if (X.pc[id] === pc && pc.signalingState === 'have-local-offer') X.rifai(id); }, 6000);
+  }).catch(function () { if (X.pc[id] === pc) X.rifai(id); });
+};
+// collegamento perso o mai nato: chi propone riprova; dopo 3 tentativi falliti di fila si ferma per 30 secondi
+TrasportoDiretto.prototype.rifai = function (id) {
+  var X = this; if (X.chiuso) return;
+  X.dice('rifaccio ' + id); X.chiudiPc(id); X.falli[id] = (X.falli[id] || 0) + 1;
+  if (X.falli[id] >= 3) { X.falli[id] = 0; X.attesa[id] = Date.now() + 30000; X.o.onStato(id, 'fallito'); return; }
+  X.o.onStato(id, 'collego');
+  if (X.io < id) setTimeout(function () { if (!X.chiuso && !X.pc[id] && X.membri[id]) X.offri(id); }, 1500);
+  else if (X.membri[id]) X.invia(id, { tipo: 'rifai', sda: X.sess, sa: X.membri[id] });   // chi non propone chiede all'altro di rifarlo
+};
+TrasportoDiretto.prototype.segnale = function (da, d) {
+  var X = this; if (X.chiuso || !d || da === X.io || d.sa !== X.sess) return;   // (un messaggio per una mia entrata precedente non vale)
+  if (d.tipo === 'off' && typeof d.sdp === 'string' && d.sdp.length < 40000 && d.oid) {
+    if (X.visti[d.oid]) return; X.visti[d.oid] = 1;   // (la stessa offerta arrivata due volte vale una)
+    X.dice('offerta da ' + da);
+    var ks = Object.keys(X.visti); if (ks.length > 40) delete X.visti[ks[0]];
+    X.chiudiPc(da);
+    var pc = X.nuovo(da, d.sda); pc.oid = d.oid;
+    pc.setRemoteDescription({ type: 'offer', sdp: d.sdp }).then(function () {
+      var tr = pc.getTransceivers().filter(function (x) { return x.receiver && x.receiver.track && x.receiver.track.kind === 'audio'; })[0];
+      if (tr) { pc.trAudio = tr; try { tr.direction = 'sendrecv'; } catch (e) {} X.metti(pc); }
+      return pc.createAnswer();
+    }).then(function (a) { return pc.setLocalDescription(a); }).then(function () { return X.raccolto(pc); }).then(function () {
+      if (X.pc[da] !== pc) return;
+      X.invia(da, { tipo: 'ris', sdp: pc.localDescription.sdp, oid: d.oid, sda: X.sess, sa: d.sda });
+    }).catch(function () { if (X.pc[da] === pc) X.rifai(da); });
+  } else if (d.tipo === 'ris' && typeof d.sdp === 'string' && d.sdp.length < 40000) {
+    var p = X.pc[da]; X.dice('risposta da ' + da + (p && p.signalingState === 'have-local-offer' && p.oid === d.oid ? '' : ' (scartata)'));
+    if (!p || p.signalingState !== 'have-local-offer' || p.oid !== d.oid) return;
+    clearTimeout(p.tRis);
+    p.setRemoteDescription({ type: 'answer', sdp: d.sdp }).catch(function () { if (X.pc[da] === p) X.rifai(da); });
+  } else if (d.tipo === 'rifai') {
+    X.dice(da + ' chiede di rifare');
+    var vecchio = X.pc[da]; if (vecchio && Date.now() - vecchio.t0 < 2500) return;   // (la richiesta è arrivata due volte: ho già ricominciato)
+    if (X.io < da && X.membri[da] && !(X.attesa[da] > Date.now())) { X.chiudiPc(da); X.offri(da); }
+  }
+};
+TrasportoDiretto.prototype.chiudiPc = function (id) {
+  var pc = this.pc[id]; if (!pc) return;
+  delete this.pc[id]; clearTimeout(pc.tDisc); clearTimeout(pc.tRis); clearTimeout(pc.tCon);
+  pc.ontrack = null; pc.onconnectionstatechange = null; try { pc.close(); } catch (e) {}
+  this.o.onFine(id);
+};
+TrasportoDiretto.prototype.stati = function () { var X = this, s = {}; Object.keys(X.pc).forEach(function (id) { s[id] = X.pc[id].connectionState; }); return s; };
+TrasportoDiretto.prototype.chiudi = function () { var X = this; X.chiuso = true; Object.keys(X.pc).forEach(function (id) { X.chiudiPc(id); }); };
+
+// =========================================================
+//  3b. IL PORTALETTERE (solo sul telefono dell'host)
+// =========================================================
+// Tiene l'elenco di chi è in voce (con un battito ogni 6 secondi: chi tace da 22 secondi esce) e porta i messaggi di collegamento
+// da un telefono all'altro. Non conserva niente: i messaggi passano e basta.
+//   dal telefono all'host:  { t:'vc', k:'su', sess, mic } · { t:'vc', k:'giu' } · { t:'vc', k:'sig', a:<destinatario>, d:<dati> }
+//   dall'host a un telefono: { t:'vc', k:'sig', da:<chi lo manda>, d:<dati> }
+//   dall'host a tutti:       { t:'vcl', l:[[id, sessione], …] }   (l'elenco, ogni volta che cambia e ogni 5 secondi)
+// o: { invia(a, m) a un telefono, tutti(m) a tutti }
+function VoceStanza(o) { this.o = o; this.l = {}; this.n = 0; this.vuoto = true; }
+VoceStanza.prototype.arriva = function (da, m) {
+  var S = this; if (!m || typeof da !== 'string') return;
+  if (m.k === 'su') {
+    var sess = String(m.sess || '').slice(0, 24); if (!sess) return;
+    var x = S.l[da], nuovo = !x || x.sess !== sess;
+    S.l[da] = { sess: sess, t: Date.now(), mic: m.mic ? 1 : 0 };
+    if (nuovo) S.manda();
+  } else if (m.k === 'giu') { if (S.l[da]) { delete S.l[da]; S.manda(); } }
+  else if (m.k === 'sig') {
+    var a = String(m.a || '');
+    if (!S.l[da] || !S.l[a] || a === da || !m.d || typeof m.d !== 'object') return;   // solo fra chi è in voce
+    if (S.o.nota) S.o.nota('porto ' + m.d.tipo + ' da ' + da + ' a ' + a);
+    S.o.invia(a, { t: 'vc', k: 'sig', da: da, d: m.d });
+  }
+};
+VoceStanza.prototype.via = function (id) { if (this.l[id]) { delete this.l[id]; this.manda(); } };
+VoceStanza.prototype.manda = function () {
+  var S = this, l = Object.keys(S.l).map(function (id) { return [id, S.l[id].sess]; });
+  S.vuoto = !l.length; this.o.tutti({ t: 'vcl', n: ++S.n, l: l });
+};
+// ogni 5 secondi: toglie chi non dà più segno di vita e rimanda l'elenco (così chi l'ha perso lo ritrova). Se non c'è nessuno, tace.
+VoceStanza.prototype.giro = function () {
+  var S = this, ora = Date.now();
+  Object.keys(S.l).forEach(function (id) { if (ora - S.l[id].t > 22000) delete S.l[id]; });
+  if (Object.keys(S.l).length || !S.vuoto) S.manda();
+};
+
+// =========================================================
+//  4. IL COLLEGAMENTO COL GIOCO
+// =========================================================
+// stato: spenta · accendo (aspetto il permesso) · parlo (microfono acceso) · muto (microfono spento da me) · ascolto (solo ascolto, senza microfono)
+var VOCE = {
+  stato: 'spenta', canale: null, roster: [], sess: '', ctx: null, mixer: null, tr: null, stream: null, traccia: null,
+  audio: {}, stati: {}, regole: {}, liv: {}, parla: {}, ascoltatori: [], fonte: null, fonteDi: null, nome: null, avvisa: null,
+  storia: [], ioStato: null, battito: 0, timer: null, ultimaMisura: 0, ultimoAvviso: '', ultimoAvvisoT: 0, legato: false
+};
+// la fabbrica del trasporto: QUI si cambia da WebRTC diretto a LiveKit (domani: return new TrasportoLiveKit(o))
+VOCE.nuovoTrasporto = function (o) { return new TrasportoDiretto(o); };
+// il diario (gli ultimi 60 fatti), per capire cosa è successo
+VOCE.nota = function (t) { this.storia.push(((Date.now() % 100000) / 1000).toFixed(1) + ' ' + t); if (this.storia.length > 60) this.storia.shift(); };
+VOCE.cambiato = function () { var V = this; V.ascoltatori = V.ascoltatori.filter(function (f) { try { return f() !== false; } catch (e) { return true; } }); };
+VOCE.suCambio = function (f) { this.ascoltatori.push(f); f(); };
+// un avviso corto, mai lo stesso due volte di fila a breve
+VOCE.dici = function (testo) {
+  var V = this, ora = Date.now(); if (V.ultimoAvviso === testo && ora - V.ultimoAvvisoT < 8000) return;
+  V.ultimoAvviso = testo; V.ultimoAvvisoT = ora; if (V.avvisa) V.avvisa(testo);
+};
+VOCE.nomeDi = function (id) { var n = this.nome ? this.nome(id) : ''; return n && n !== '?' ? n : 'un altro'; };
+// c'è una stanza online, e questo telefono sa fare la voce
+VOCE.disponibile = function () { return !!(this.canale && window.RTCPeerConnection && (window.AudioContext || window.webkitAudioContext)); };
+// la stanza si apre (host o ospite). canale: { io: il mio id, manda(m): porta un messaggio {t:'vc'…} all'host }
+VOCE.apri = function (canale) {
+  var V = this;
+  if (V.canale && V.canale.io !== canale.io) V.chiudiStanza();
+  V.canale = canale;
+  if (!V.legato && typeof window !== 'undefined') {
+    V.legato = true;
+    window.addEventListener('pagehide', function () { VOCE.esci(); });   // chiudendo la pagina la voce si chiude
+    document.addEventListener('visibilitychange', function () {   // tornando sull'app l'audio riparte (su iPhone si ferma con lo schermo bloccato)
+      if (document.visibilityState !== 'visible' || VOCE.stato === 'spenta') return;
+      try { if (VOCE.ctx && VOCE.ctx.state !== 'running') VOCE.ctx.resume(); } catch (e) {}
+      if (VOCE.traccia && VOCE.traccia.readyState === 'ended') VOCE.microfonoPerso();
+      VOCE.riprova();
+    });
+    document.addEventListener('pointerdown', function () { if (VOCE.stato !== 'spenta') VOCE.riprova(); }, { capture: true, passive: true });
+  }
+  if (window.LT_PROVA) window.LT_VOCE = V.prova();
+  V.cambiato();
+};
+VOCE.chiudiStanza = function () { var V = this; V.esci(); V.canale = null; V.roster = []; V.cambiato(); };
+// dalla rete del gioco: l'elenco di chi è in voce, o un messaggio di collegamento da un altro telefono
+VOCE.arriva = function (m) {
+  var V = this; if (!m || !V.canale) return;
+  if (m.t === 'vcl' && Array.isArray(m.l)) {
+    V.roster = m.l.filter(function (r) { return Array.isArray(r) && typeof r[0] === 'string' && typeof r[1] === 'string'; });
+    if (V.stato === 'spenta') return;
+    if (!V.roster.some(function (r) { return r[0] === V.canale.io && r[1] === V.sess; })) V.annuncia();   // l'host non mi ha in elenco: mi rifaccio vivo
+    if (V.tr) V.tr.persone(V.roster);
+  } else if (m.t === 'vc' && m.k === 'sig' && V.tr && typeof m.da === 'string') { V.nota('arriva ' + (m.d && m.d.tipo) + ' da ' + m.da); V.tr.segnale(m.da, m.d); }
+};
+VOCE.annuncia = function () {
+  var V = this; if (!V.canale || V.stato === 'spenta' || V.stato === 'accendo') return;
+  V.battito = Date.now(); V.canale.manda({ t: 'vc', k: 'su', sess: V.sess, mic: V.traccia ? 1 : 0 });
+};
+// il tasto principale: spenta → accende (e chiede il microfono); ascolto → prova ad accendere il microfono; parlo/muto → si alterna
+VOCE.tocca = function () {
+  var V = this;
+  if (V.stato === 'spenta') V.entra(true);
+  else if (V.stato === 'ascolto') V.accendiMic();
+  else if (V.stato === 'parlo' || V.stato === 'muto') {
+    V.stato = V.stato === 'parlo' ? 'muto' : 'parlo';
+    if (V.traccia) V.traccia.enabled = V.stato === 'parlo';
+    V.cambiato();
+  }
+};
+// il tasto piccolo: da spenta «solo ascolto», altrimenti «esci dalla voce»
+VOCE.secondo = function () { if (this.stato === 'spenta') this.entra(false); else this.esci(); };
+// Va chiamata DENTRO il tocco dell'utente: su iPhone l'audio parte solo da lì.
+VOCE.entra = function (conMic) {
+  var V = this; if (V.stato !== 'spenta' || !V.canale) return;
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC || !window.RTCPeerConnection) { V.dici('Voce: qui non funziona'); return; }
+  try { if (!V.ctx) V.ctx = new AC(); if (V.ctx.state !== 'running') V.ctx.resume(); } catch (e) { V.dici('Voce: audio non disponibile'); return; }
+  V.stato = 'accendo'; V.cambiato();
+  if (conMic) V.chiediMic(function (st) { V.avvia(st); }); else V.avvia(null);
+};
+// il permesso e il microfono (da chiamare dentro il tocco); se non va, va avanti senza
+VOCE.chiediMic = function (fatto) {
+  var V = this, md = navigator.mediaDevices;
+  if (!md || !md.getUserMedia) { V.dici('Voce: qui il microfono non va'); fatto(null); return; }
+  md.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false })
+    .then(fatto)
+    .catch(function (e) { V.dici(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? 'Voce: microfono non permesso' : 'Voce: microfono non disponibile'); fatto(null); });
+};
+VOCE.avvia = function (st) {
+  var V = this;
+  if (V.stato !== 'accendo') { if (st) st.getTracks().forEach(function (t) { t.stop(); }); return; }   // nel frattempo ho cambiato idea
+  V.sess = voceId();
+  V.mixer = new VoceMixer(V.ctx);
+  V.tr = V.nuovoTrasporto({
+    io: V.canale.io, sess: V.sess,
+    manda: function (a, d) { if (V.canale) { V.canale.manda({ t: 'vc', k: 'sig', a: a, d: d }); V.nota('mando ' + d.tipo + ' a ' + a + ' (' + (d.sdp ? d.sdp.length : 0) + ' car.)'); } },
+    onFlusso: function (id, flusso) { V.flusso(id, flusso); },
+    onFine: function (id) { V.fineFlusso(id); },
+    diario: function (t) { V.nota(t); },
+    onStato: function (id, s) { V.stati[id] = s; if (s === 'fallito') V.dici('Voce: con ' + V.nomeDi(id) + ' non si collega'); V.cambiato(); }
+  });
+  V.mettiMic(st);
+  V.stato = V.traccia ? 'parlo' : 'ascolto';
+  V.annuncia();
+  clearInterval(V.timer); V.timer = setInterval(function () { VOCE.giro(); }, 100);
+  if (V.roster.length) V.tr.persone(V.roster);
+  V.cambiato();
+};
+// il mio microfono (o nessuno): lo sentono tutti i collegamenti, anche quelli già aperti
+VOCE.mettiMic = function (st) {
+  var V = this;
+  if (V.stream && V.stream !== st) V.stream.getTracks().forEach(function (t) { t.stop(); });
+  V.stream = st || null; V.traccia = st ? st.getAudioTracks()[0] || null : null;
+  if (V.traccia) { V.traccia.enabled = true; V.traccia.addEventListener('ended', function () { if (VOCE.traccia === this) VOCE.microfonoPerso(); }); }
+  if (V.mixer) { if (st) V.mixer.ascoltaMio(st); else V.mixer.smettiMio(); }
+  if (V.tr) V.tr.microfono(V.traccia);
+};
+VOCE.microfonoPerso = function () {
+  var V = this; if (V.stato !== 'parlo' && V.stato !== 'muto') return;
+  V.mettiMic(null); V.stato = 'ascolto'; V.dici('Voce: microfono staccato'); V.annuncia(); V.cambiato();
+};
+VOCE.accendiMic = function () {
+  var V = this; if (V.stato !== 'ascolto') return;
+  V.chiediMic(function (st) {
+    if (!st || V.stato !== 'ascolto') { if (st) st.getTracks().forEach(function (t) { t.stop(); }); return; }
+    V.mettiMic(st); V.stato = 'parlo'; V.annuncia(); V.cambiato();
+  });
+};
+VOCE.esci = function () {
+  var V = this; if (V.stato === 'spenta') return;
+  var eraIn = V.stato !== 'accendo';
+  V.stato = 'spenta'; clearInterval(V.timer); V.timer = null;
+  if (eraIn && V.canale) { try { V.canale.manda({ t: 'vc', k: 'giu' }); } catch (e) {} }
+  if (V.tr) { V.tr.chiudi(); V.tr = null; }
+  V.mettiMic(null);
+  if (V.mixer) { V.mixer.chiudi(); V.mixer = null; }
+  Object.keys(V.audio).forEach(function (id) { V.fineFlusso(id); });
+  V.stati = {}; V.regole = {}; V.liv = {}; V.parla = {};
+  try { if (V.ctx && V.ctx.state === 'running') V.ctx.suspend(); } catch (e) {}
+  V.cambiato();
+};
+// arriva la voce di qualcuno: un <audio> muto resta collegato (a Chrome serve per far scorrere il flusso), il suono esce dal mixer
+VOCE.flusso = function (id, flusso) {
+  var V = this; if (V.stato === 'spenta' || !V.mixer) return;
+  var a = V.audio[id];
+  if (!a) { a = document.createElement('audio'); a.autoplay = true; a.muted = true; a.setAttribute('playsinline', ''); a.dataset.voce = id; a.style.display = 'none'; document.body.appendChild(a); V.audio[id] = a; }
+  a.srcObject = flusso;
+  var p = a.play(); if (p && p.catch) p.catch(function () { /* riprova al tocco successivo (VOCE.riprova) */ });
+  try { V.mixer.aggiungi(id, flusso); } catch (e) { V.dici('Voce: con ' + V.nomeDi(id) + ' non si sente'); }
+  V.regola();
+};
+VOCE.fineFlusso = function (id) {
+  var V = this, a = V.audio[id];
+  if (a) { try { a.pause(); } catch (e) {} a.srcObject = null; a.remove(); delete V.audio[id]; }
+  if (V.mixer) V.mixer.togli(id);
+  delete V.regole[id]; delete V.liv[id]; delete V.parla[id];
+};
+// al tocco o quando la pagina torna visibile: l'audio ferma riparte
+VOCE.riprova = function () {
+  var V = this;
+  try { if (V.ctx && V.ctx.state !== 'running') V.ctx.resume(); } catch (e) {}
+  Object.keys(V.audio).forEach(function (id) { var a = V.audio[id]; if (a.paused && a.srcObject) { var p = a.play(); if (p && p.catch) p.catch(function () {}); } });
+};
+// il giro da 10 al secondo: regola volumi, battito, orologio dell'audio
+VOCE.giro = function () {
+  var V = this; if (V.stato === 'spenta') return;
+  if (Date.now() - V.battito > 6000) V.annuncia();
+  if (V.ctx && V.ctx.state === 'suspended' && (typeof document === 'undefined' || document.visibilityState === 'visible')) { try { V.ctx.resume(); } catch (e) {} }
+  V.regola();
+};
+// applica la regola a ogni voce (chi sente chi lo dice la foto del gioco; senza gioco aperto si sentono tutti)
+VOCE.regola = function () {
+  var V = this; if (!V.mixer) return;
+  var S = V.fonte ? V.fonte() : null;
+  V.ioStato = S ? S.io : null;   // (come sto io: lo legge misura(), che gira molto più spesso)
+  Object.keys(V.mixer.v).forEach(function (id) {
+    var r = S ? voceRegola(S.fase, S.M, S.io, S.altri[id]) : { vol: 1, taglio: VOCE_APERTO, pan: 0, k: 1 };
+    V.regole[id] = r; V.mixer.regola(id, r);
+  });
+};
+// chi sta parlando adesso (per gli anelli): si chiama a ogni fotogramma, ma lavora al massimo ogni 33 ms.
+// liv: 0..1 (si smorza piano), parla: sopra la soglia
+VOCE.misura = function (ora) {
+  var V = this; if (V.stato === 'spenta' || !V.mixer || ora - V.ultimaMisura < 33) return;
+  V.ultimaMisura = ora;
+  function aggiorna(id, rms, sorda) {
+    var l = sorda ? 0 : Math.min(1, rms / 0.1), p = V.liv[id] || 0;
+    p = l > p ? l : p * 0.86; V.liv[id] = p; V.parla[id] = p > 0.12;
+  }
+  Object.keys(V.mixer.v).forEach(function (id) { aggiorna(id, V.mixer.livello(id), false); });
+  if (V.canale) {
+    var io = V.canale.io, zitto = V.stato !== 'parlo' || (V.ioStato && V.ioStato.muto);
+    aggiorna(io, zitto ? 0 : V.mixer.livelloMio(), zitto);
+  }
+};
+// per le prove a schermo: i numeri veri di quello che sta succedendo
+VOCE.prova = function () {
+  var V = this;
+  return {
+    stato: function () { return V.stato; },
+    stati: function () { return V.tr ? V.tr.stati() : {}; },
+    roster: function () { return V.roster; },
+    tracce: function () { return Object.keys(V.audio).filter(function (id) { var s = V.audio[id].srcObject; return s && s.getAudioTracks().length > 0; }); },
+    mic: function () { return V.traccia ? { attiva: V.traccia.enabled, stato: V.traccia.readyState } : null; },
+    regole: function () { var o = {}; Object.keys(V.regole).forEach(function (id) { o[id] = V.regole[id]; }); return o; },
+    gain: function () {
+      var o = {}; if (!V.mixer) return o;
+      Object.keys(V.mixer.v).forEach(function (id) { var x = V.mixer.v[id]; o[id] = { vol: x.gan.gain.value, taglio: x.fil.frequency.value, pan: x.pan ? x.pan.pan.value : 0 }; });
+      return o;
+    },
+    livelli: function () { return { liv: V.liv, parla: V.parla }; },
+    audio: function () { return V.ctx ? { stato: V.ctx.state, t: V.ctx.currentTime } : null; },
+    storia: function () { return V.storia.slice(); },
+    guasto: function (id) { if (V.tr) V.tr.o.onStato(id, 'fallito'); },   // (solo per provare l'avviso «non si collega»)
+    elementi: function () { return Object.keys(V.audio).map(function (id) { var a = V.audio[id]; return { id: id, muto: a.muted, paused: a.paused, autoplay: a.autoplay, playsinline: a.hasAttribute('playsinline') }; }); }
+  };
+};
+
 // ===== gioco.js =====
 // Lanterne dentro SPeeD GAME. Parte dal modello del progetto (.agents/skills/nuovo-gioco/modello-gioco-online.js):
 // l'host tiene la partita vera (Partita) e manda a tutti la foto (vm) e le posizioni; gli altri mandano solo mosse e posizione.
@@ -3631,10 +4197,11 @@ function host(t) {
   rete = SGNet.ospita(ID, {
     onCodice: function (c) { H.codice = c; bd(); },
     onConnesso: function () { H.pronta = true; bd(); },
-    onErrore: function () { if (H.pronta) return; ferma(); if (rete) rete.chiudi(); erroreRete(t, "Non riesco ad aprire la stanza.", function () { host(t); }); },
+    onErrore: function () { if (H.pronta) return; ferma(); VOCE.chiudiStanza(); if (rete) rete.chiudi(); erroreRete(t, "Non riesco ad aprire la stanza.", function () { host(t); }); },
     onForse: function (id) { var p = pById(id); if (p && !p.forse) { p.forse = true; bd(); } },
     onTornato: function (id) { var p = pById(id); if (p && p.forse) { p.forse = false; bd(); } },
     onAddio: function (id) {
+      if (VS) VS.via(id);
       if (H.guarda.some(function (x) { return x.id === id; })) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
       var p = pById(id); if (!p) return;
       p.forse = false;
@@ -3643,6 +4210,7 @@ function host(t) {
     },
     onMsg: function (id, m) {
       if (!m || !m.t) return;
+      if (m.t === "vc") { var pv = pById(id); if (pv && !pv.via && VS) VS.arriva(id, m); return; }   // la voce: messaggi di collegamento
       if (m.t === "join") {
         var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
         if (!p && !t.puoSedersi(id, nome)) { if (!H.guarda.some(function (x) { return x.id === id; })) H.guarda.push({ id: id, nome: nome }); bd(); return; }
@@ -3666,6 +4234,13 @@ function host(t) {
   }, { ripresa: riprendo });
   if (!rete) return senzaRete(t);
   if (riprendo && rete.codice) H.codice = rete.codice;
+  // la voce: l'host fa da portalettere dei messaggi di collegamento fra i telefoni (non conserva niente, sono messaggi veloci)
+  var VS = new VoceStanza({
+    nota: function (t) { VOCE.nota(t); },
+    invia: function (a, m) { if (a === IO) VOCE.arriva(m); else { m.to = a; rete.inviaVeloce(m); } },
+    tutti: function (m) { rete.inviaVeloce(m); VOCE.arriva(m); } });
+  VOCE.apri({ io: IO, manda: function (m) { VS.arriva(IO, m); } });
+  var vsT = setInterval(function () { VS.giro(); }, 5000);
 
   function vm() {
     var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, rip: H.rip, tiene: IO, imp: H.imp, auto: !!H.auto,
@@ -3713,7 +4288,7 @@ function host(t) {
     Object.keys(viaDa).forEach(function (id) { if (ora - viaDa[id] > 90000) { delete viaDa[id]; P.esce(id); } });
     if (P.fase === "fine" && !finePronta) { finePronta = true; setTimeout(fine, 2600); }
   }, 50);
-  function ferma() { fermo = true; clearInterval(loop); if (fotoDopo) clearTimeout(fotoDopo); }
+  function ferma() { fermo = true; clearInterval(loop); clearInterval(vsT); if (fotoDopo) clearTimeout(fotoDopo); }
 
   function comincia() {
     if (H.fase !== "lobby" || presenti().length < MIN) return;
@@ -3750,7 +4325,7 @@ function host(t) {
     onVia: function () { if (P && !P.saletta) P.via(); },
     mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") P.azione(IO, m); },
     onEsci: function () {
-      function via() { ferma(); t.ricorda(null); rete.chiudi(); chiudiUI(); t.esci(); }
+      function via() { ferma(); VOCE.chiudiStanza(); t.ricorda(null); rete.chiudi(); chiudiUI(); t.esci(); }
       if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla home.", "Chiudi", via);
       via();
     } };
@@ -3768,7 +4343,7 @@ function ospite(t, codice) {
   var cb = { sonoHost: false, myId: null,
     mossa: function (m) { if (S.rete) S.rete.invia(m); },
     onEsci: function () {
-      function via() { if (S.rete) S.rete.chiudi(); chiudiUI(); t.esci(); }
+      function via() { VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); chiudiUI(); t.esci(); }
       if (t.guarda) return t.conferma("Smetti di guardare?", null, "Esci", via);
       if (S.vm && S.vm.fase === "gioco") return t.conferma("Uscire dalla partita?", null, "Esci", via);
       via();
@@ -3784,7 +4359,7 @@ function ospite(t, codice) {
   function collega() {
     attesa();
     S.rete = SGNet.entra(codice, {
-      onAperto: function (id) { S.myId = id; cb.myId = id; S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); },
+      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { if (S.rete) S.rete.invia(m); } }); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); },
       onMsg: function (m) {
         if (!m || !m.t) return;
         if (m.to && m.to !== S.myId) return;
@@ -3793,9 +4368,10 @@ function ospite(t, codice) {
         else if (m.t === "priv") { if (UI) UI.privato(m.p); else PENDENTI.priv = m.p; }
         else if (m.t === "tp" || m.t === "avviso" || m.t === "morte" || m.t === "bolla") { if (UI) UI.messaggio(m); else conserva(m); }
         else if (m.t === "av") (m.l || []).forEach(function (x) { avatarDi(x[0], avatarValido(x[1])); });
+        else if (m.t === "vc" || m.t === "vcl") VOCE.arriva(m);   // la voce: l'elenco di chi c'è e i messaggi di collegamento
       },
-      onChiuso: function (perche) { chiudiUI(); errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
-      onErrore: function () { if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
+      onChiuso: function (perche) { VOCE.chiudiStanza(); chiudiUI(); errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
+      onErrore: function () { VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
     });
     if (!S.rete) senzaRete(t);
   }
@@ -3811,6 +4387,9 @@ function conserva(m) { if (m.t === "tp") PENDENTI.tp = m; }
 //  DISEGNO: saletta, partita, fine
 // =========================================================
 var UI = null, FIN = null;
+// la voce chiede i nomi e gli avvisi a chi sta disegnando il gioco
+VOCE.nome = function (id) { var c = UI && UI.cache && UI.cache[id]; return c ? c.nome : ""; };
+VOCE.avvisa = function (testo) { if (UI) UI.avviso(testo); };
 function chiudiUI() { if (UI) { UI.stop(); UI = null; } }
 function disegna(t, vm, cb) {
   if (vm.fase === "lobby" && (!vm.g || t.salettaClassica)) { chiudiUI(); FIN = null; return lobby(t, vm, cb); }
@@ -3868,6 +4447,7 @@ function finale(t, vm, cb) {
       t.el("span", { class: "punti lt-ruolo", text: nomeR + (ru && !ru[2] ? " · spento" : "") }) ]));
   });
   s._contenuto.appendChild(ol);
+  if (!targa && cb.myId) s._contenuto.appendChild(creaVoce("riga fine"));   // a partita finita la voce resta accesa e si sentono tutti
   if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
   if (!cl.some(function (r) { return r.id === cb.myId; })) s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Questa partita l'hai guardata." }));
   if (!t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
@@ -3903,6 +4483,10 @@ function senzaRete(t) {
 // =========================================================
 // le icone del gioco: disegni a tratto (niente emoji), colore del testo intorno
 var ICONE = {
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>',
+  micOff: '<path d="M12 19v3M15 9.3V5a3 3 0 0 0-5.7-1.3M17 17A7 7 0 0 1 5 12v-2M19 12v-2M2 2l20 20M9 9v3a3 3 0 0 0 5.1 2.1"/>',
+  cuffia: '<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>',
+  esciVoce: '<path d="M6 6l12 12M18 6L6 18"/>',
   parla: '<path d="M4 5h16v10H10l-5 4v-4H4z"/>',
   invia: '<path d="M4 12h14M13 6l6 6-6 6"/>',
   mappa: '<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/>',
@@ -3931,6 +4515,30 @@ function icona(n) { return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="tr
 // un tasto con icona e scritta
 function tastoIco(cls, ico, testo) { var b = document.createElement("button"); b.type = "button"; if (cls) b.className = cls; b.innerHTML = icona(ico) + (testo ? "<span>" + testo + "</span>" : ""); return b; }
 function E(tag, cls, testo) { var e = document.createElement(tag); if (cls) e.className = cls; if (testo != null) e.textContent = testo; return e; }
+// i tasti della voce (uguali nel gioco, nella riunione e a fine partita): uno grande col microfono e uno piccolo.
+// Primo tocco: chiede il permesso e accende. Poi il grande alterna parlo/muto; il piccolo è «Ascolta» (senza microfono) o «Esci».
+// Lo stato si legge dal colore e dalla scritta: Voce (spenta) · Parli (verde) · Muto (rosso) · Ascolti (azzurro, tocca per parlare).
+var VOCE_ET = { spenta: ["mic", "Voce"], accendo: ["mic", "Voce…"], parlo: ["mic", "Parli"], muto: ["micOff", "Muto"], ascolto: ["cuffia", "Ascolti"] };
+function creaVoce(extra) {
+  var el = E("div", "lt-voce" + (extra ? " " + extra : "")), b = E("button", "lt-vbtn"), s = E("button", "lt-vpic"), visto = false;
+  b.type = "button"; s.type = "button"; el.append(b, s);
+  b.addEventListener("click", function () { VOCE.tocca(); });
+  s.addEventListener("click", function () { VOCE.secondo(); });
+  function agg() {
+    if (el.isConnected) visto = true; else if (visto) return false;   // tolto dalla pagina: smetto di aggiornarlo
+    var st = VOCE.stato, e = VOCE_ET[st] || VOCE_ET.spenta, k = st + "|" + VOCE.disponibile();
+    if (el._k === k) return true; el._k = k;
+    el.hidden = !VOCE.disponibile();
+    b.className = "lt-vbtn " + st; b.innerHTML = icona(e[0]) + "<span>" + e[1] + "</span>"; b.disabled = st === "accendo";
+    b.setAttribute("aria-label", st === "spenta" ? "Accendi la voce con il microfono" : st === "parlo" ? "Microfono acceso: tocca per mettere il muto" : st === "muto" ? "Microfono in muto: tocca per parlare" : st === "ascolto" ? "Stai solo ascoltando: tocca per accendere il microfono" : "Accendo la voce");
+    if (st === "parlo" || st === "muto") b.setAttribute("aria-pressed", st === "parlo" ? "true" : "false"); else b.removeAttribute("aria-pressed");
+    s.innerHTML = icona(st === "spenta" ? "cuffia" : "esciVoce") + "<span>" + (st === "spenta" ? "Ascolta" : "Esci") + "</span>"; s.hidden = st === "accendo";
+    s.setAttribute("aria-label", st === "spenta" ? "Ascolta senza microfono" : "Esci dalla voce");
+    return true;
+  }
+  VOCE.suCambio(agg);
+  return el;
+}
 function Vista(t, cb) {
   stile();
   var V = this; V.t = t; V.cb = cb; V.vivo = true;
@@ -3990,6 +4598,9 @@ function Vista(t, cb) {
   if (window.visualViewport) { visualViewport.addEventListener("resize", V.parlaVV); visualViewport.addEventListener("scroll", V.parlaVV); }
   V.btnSuono.addEventListener("click", function () { AUDIO.muto = !AUDIO.muto; try { localStorage.setItem("lt-muto", AUDIO.muto ? "1" : "0"); } catch (e) {} V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); if (!AUDIO.muto) SUONO.voto(); });
   V.s.addEventListener("pointerdown", function (e) { if (e.isTrusted) AUDIO.toccato = true; audio(); }, { passive: true });
+  // la voce di prossimità: i tasti sotto la fila in alto a destra; la regola di chi sente chi la legge dalla foto di questo telefono
+  V.voceGr = E("div", "lt-vx"); V.voceGr.hidden = true; V.voceGr.appendChild(creaVoce()); sc.appendChild(V.voceGr);
+  V.voceA = {}; VOCE.fonte = function () { return V.vivo ? V.statoVoce() : null; }; VOCE.fonteDi = V;
   V.guida = E("div", "lt-guida"); sc.appendChild(V.guida);
   V.nomeStanza = E("div", "lt-nomestanza"); V.nomeStanza.setAttribute("aria-live", "polite"); sc.appendChild(V.nomeStanza);
   V.via = E("div", "lt-via"); sc.appendChild(V.via);
@@ -4025,7 +4636,7 @@ function Vista(t, cb) {
   }
   requestAnimationFrame(giro);
 }
-Vista.prototype.stop = function () { this.vivo = false; this.slega(); };
+Vista.prototype.stop = function () { this.vivo = false; this.slega(); if (VOCE.fonteDi === this) { VOCE.fonte = null; VOCE.fonteDi = null; } };
 Vista.prototype.legaComandi = function () {
   var V = this, j = V.joyV;
   V.joyZona.addEventListener("pointerdown", function (e) {
@@ -4297,6 +4908,7 @@ Vista.prototype.passo = function (dt) {
     V.altri().forEach(function (p) { if (p.muove && !p.fantasma) V.orme.push({ x: p.x, y: p.y, dir: p.dir, col: p.colore || "#ccc", t: V.tempo, lato: V.lato }); });
     var durO = (V.vm.imp.investigatore && V.vm.imp.investigatore.orme) || 10; V.orme = V.orme.filter(function (o) { return V.tempo - o.t < durO; });
   }
+  if (VOCE.stato !== "spenta") VOCE.misura(ora);   // chi parla a voce (per gli anelli)
   if (V.feed) V.disegnaSchermi();
   if (V.plastico) { if (V.plastico.fine && ora > V.plastico.fine) V.pannello && V.pannello.chiudi(); else if (V.tempo - V.plastico.ultimo > 1) V.disegnaPlastico(); }
   // con un pannello aperto la scena dietro il velo scuro si ridisegna un fotogramma su tre: non si vede la differenza, il telefono respira
@@ -4306,6 +4918,32 @@ Vista.prototype.passo = function (dt) {
   if (Math.floor(V.tempo * 6) !== V.kHud) { V.kHud = Math.floor(V.tempo * 6); V.aggHud(); V.aggVelo(true); }
 };
 Vista.prototype.sonoVivo = function () { var g = this.g; if (!g) return false; for (var i = 0; i < g.g.length; i++) if (g.g[i][0] === this.cb.myId) return !!g.g[i][1]; return false; };
+// la foto per la voce: dove sono io e dove sono gli altri (le ultime posizioni arrivate), chi è vivo, chi non può parlare.
+// Con le stesse regole della chat scritta (Partita.sentePar) ma calcolate qui, sul telefono di chi ascolta.
+// «muto»: è uscito, è in una botola (o ancora senza posizione), o in riunione è zittito.
+Vista.prototype.statoVoce = function () {
+  var V = this, g = V.g, pr = V.priv; if (!g) return null;
+  var l = V.buf.length ? V.buf[V.buf.length - 1].p : [], pos = {}, i;
+  for (i = 0; i < l.length; i++) pos[l[i][0]] = l[i];
+  var riu = g.fase === "riunione" || g.fase === "esito", zitti = (g.riu && g.riu.zittiti) || [];
+  var out = { fase: g.fase, M: V.M, io: { x: V.me.x, y: V.me.y, vivo: V.sonoVivo(), muto: riu ? !!(pr && pr.zittito) : !!(pr && pr.botola != null) }, altri: {} };
+  for (i = 0; i < g.g.length; i++) {
+    var q = g.g[i], id = q[0]; if (id === V.cb.myId) continue;
+    var p = pos[id];
+    out.altri[id] = { x: p ? p[1] : 0, y: p ? p[2] : 0, vivo: !!q[1], muto: !!q[2] || (riu ? zitti.indexOf(id) >= 0 : !p) };
+  }
+  return out;
+};
+// gli anelli della voce sotto chi parla: da 0 a 1 per ogni persona, che sale svelto e scende piano (così non lampeggia)
+Vista.prototype.voceAnelli = function () {
+  var V = this, m = V.voceA, k = Math.min(1, (V.dt || 0.016) * 14), ids = {}, id;
+  Object.keys(m).forEach(function (x) { ids[x] = 1; }); Object.keys(VOCE.liv).forEach(function (x) { ids[x] = 1; });
+  for (id in ids) {
+    var voluto = VOCE.parla[id] ? 0.3 + 0.7 * Math.min(1, VOCE.liv[id] || 0) : 0, a = (m[id] || 0) + (voluto - (m[id] || 0)) * k;
+    if (a < 0.02 && !voluto) delete m[id]; else m[id] = a;
+  }
+  return m;
+};
 Vista.prototype.altri = function () {
   var B = this.buf, V = this; if (!B.length) return [];
   // il momento da mostrare, nell'orologio dell'host; se il pacchetto dopo non è ancora arrivato si prolunga il moto (al massimo 250 ms)
@@ -4528,7 +5166,7 @@ Vista.prototype.disegnaScena = function () {
     scudi: V.squadra() !== "ombre" ? (g.scudi || []).filter(function (id) { return id !== V.cb.myId; }) : [], telecamere: g.cam, osservate: g.osservate, orme: V.orme, durOrme: (V.vm.imp.investigatore && V.vm.imp.investigatore.orme) || 10,
     traccia: pr.traccia && V.tracciaFine > ora ? pr.traccia[0] : null, ipno: V.bloccFine > ora,
     trappola: g.mappa === "palazzo" ? pr.trappola : null, urlo: V.urlo && V.urlo.fine > V.tempo && g.mappa === "palazzo" ? V.urlo : null,
-    rianima: V.rianFine > ora ? 1 - (V.rianFine - ora) / V.rianTot : 0, bolle: V.bolle, ora: ora, alza: V.parlaAlzaVista,
+    rianima: V.rianFine > ora ? 1 - (V.rianFine - ora) / V.rianTot : 0, bolle: V.bolle, ora: ora, alza: V.parlaAlzaVista, voce: V.voceAnelli(),
     parla: apertaP ? { R: R_PARLA, Rm: R_MURO, anima: !vivoP } : null });
 };
 var FALLBACK = { x: 32 * T, y: 22 * T };
@@ -4576,6 +5214,8 @@ Vista.prototype.aggHud = function () {
   // la chat di prossimità c'è nel gioco e nella saletta; non in riunione, non a chi guarda, non da una botola
   V.btnParla.hidden = V.guardo || !pr || ((!palazzo || g.fase !== "gioco" || pr.botola != null) && !sal);
   if (V.btnParla.hidden && !V.parlaBar.hidden) V.parlaApri(false);
+  // la voce: nella saletta e nel gioco (in riunione i tasti stanno nella riunione), non a chi guarda; senza stanza online non c'è
+  V.voceGr.hidden = !(VOCE.disponibile() && !V.guardo && !!pr && (g.fase === "gioco" || g.fase === "atrio"));
   V.storicoGira(performance.now()); if (!V.parlaBar.hidden) { V.parlaStato(); V.parlaPosiz(); }
   var ora = performance.now(), sec = function (f) { return Math.max(0, Math.ceil((f - ora) / 1000)); };
   if (sal) {   // nella saletta: solo «Usa» davanti al computer
@@ -4952,7 +5592,7 @@ Vista.prototype.aggVelo = function (soloTempi) {
       var b = E("div", "lt-pannello lt-vince"); var v = g.fine || {}; b.append(E("h2", "", titoloVince(v)), E("p", "", v.perche || ""));
       V.velo.textContent = ""; V.velo.appendChild(b); V.velo.hidden = false; V.veloTipo = "vince";
       var pr = V.priv || {}, ho = v.id ? v.id === V.cb.myId : pr.squadra === v.chi;
-      if ((pr.ruolo === "gatto" || pr.ruolo === "sopravvissuto") && V.sonoVivo()) ho = true;
+      if (V.sonoVivo() && (pr.ruolo === "sopravvissuto" || (pr.ruolo === "gatto" && v.chi !== "ombre"))) ho = true;   /* il Gatto vince solo se le ombre non hanno vinto */
       if (!V.guardo) { (ho ? SUONO.vince : SUONO.perde)(); b.classList.add(ho ? "vinto" : "perso"); }
     }
     return;
@@ -4997,7 +5637,7 @@ Vista.prototype.riunione = function (soloTempi) {
   if (V.riuK !== k || V.veloTipo !== "riu") {   // (se un pannello l'ha coperta, la riunione si ridisegna)
     V.riuK = k; V.veloTipo = "riu"; V.velo.textContent = ""; V.velo.hidden = false;
     var box = E("div", "lt-pannello lt-riu"); V.velo.appendChild(box);
-    var testa = E("div", "testa"); V.riuTit = E("h3", "", ""); V.riuTimer = E("div", "timer", ""); testa.append(V.riuTit, V.riuTimer); box.appendChild(testa);
+    var testa = E("div", "testa"); V.riuTit = E("h3", "", ""); V.riuTimer = E("div", "timer", ""); testa.append(V.riuTit, V.riuTimer); if (!V.guardo) testa.insertBefore(creaVoce("riga"), V.riuTimer); box.appendChild(testa);   // (i tasti della voce: anche qui si parla)
     V.riuGrid = E("div", "grid"); box.appendChild(V.riuGrid);
     V.riuChat = E("div", "chat"); box.appendChild(V.riuChat);
     V.riuRap = E("div", "rapide"); box.appendChild(V.riuRap);
@@ -5251,6 +5891,16 @@ function stile() {
     ".lt-perche{text-align:center;margin:0 0 10px;opacity:.8;font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Text\",\"SF Pro Display\",\"Helvetica Neue\",\"Inter\",system-ui,sans-serif}.lt-ruolo{font-size:.8rem}",
     ".schermata.lt-fine-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
     ".lt-dx{display:flex;gap:6px}",
+    ".lt-vx{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(54px + env(safe-area-inset-top));display:flex}",
+    ".lt-voce{display:flex;flex-direction:column;align-items:flex-end;gap:6px}.lt-voce.riga{flex-direction:row;align-items:center;gap:6px}.lt-voce.fine{justify-content:center;margin:10px 0 2px}",
+    ".lt-voce svg.ico{width:1.2em;height:1.2em;flex:none;vertical-align:-.22em}",
+    ".lt-vbtn,.lt-vpic{font:inherit;font-weight:700;font-size:.8rem;color:#f1e8d6;background:rgba(25,29,49,.88);border:1px solid rgba(241,232,214,.22);border-radius:9px;padding:6px 11px;display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease,cubic-bezier(.22,1,.36,1)),background-color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1)),border-color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1)),color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1))}",
+    ".lt-vbtn{min-width:88px}.lt-vpic{font-size:.7rem;padding:3px 8px;color:#b8b1a2}.lt-vbtn:active,.lt-vpic:active{transform:scale(.94)}",
+    ".lt-voce.riga .lt-vbtn{min-width:0}.lt-voce.riga .lt-vpic{padding:6px 8px}.lt-voce.riga .lt-vpic span{display:none}",
+    ".lt-vbtn.parlo{color:#d6fbe6;border-color:rgba(126,232,176,.75);background:rgba(46,150,104,.34)}.lt-vbtn.muto{color:#ffd0d8;border-color:rgba(240,90,110,.7);background:rgba(120,25,45,.6)}",
+    ".lt-vbtn.ascolto{color:#d2deff;border-color:rgba(150,180,255,.6);background:rgba(70,90,160,.3)}.lt-vbtn.accendo{opacity:.75;animation:ltVoceAttesa .9s var(--lt-ease,cubic-bezier(.22,1,.36,1)) infinite alternate}",
+    ".lt-vbtn.parlo svg{animation:ltVocePulsa 1.8s var(--lt-ease,cubic-bezier(.22,1,.36,1)) infinite}@keyframes ltVoceAttesa{to{opacity:.4}}@keyframes ltVocePulsa{50%{transform:scale(1.14)}}",
+    "@media (prefers-reduced-motion:reduce){.lt-voce *{animation:none!important;transition:none!important}}",
     ".lt-info{font-size:.74rem;font-weight:700;color:#f6d999;background:rgba(13,16,32,.78);border-radius:8px;padding:4px 8px;line-height:1.3}",
     ".lt-cam{display:flex;flex-direction:column;gap:8px;max-width:640px}.lt-cam .testa{display:flex;justify-content:space-between;align-items:center}.lt-cam .lt-chiudi{position:static}",
     ".lt-cam .griglia{display:grid;grid-template-columns:1fr 1fr;gap:6px}.lt-cam .schermo{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:#000;border:2px solid #2f3b44}.lt-cam .schermo canvas{width:100%;height:100%;display:block}",
