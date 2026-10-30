@@ -543,6 +543,26 @@
     ".st-rivela.zona .st-az-box::before{content:'';position:absolute;inset:0;z-index:2;border-radius:12px;box-shadow:inset 0 0 22px 3px rgba(255,61,94,.55);pointer-events:none;animation:stZona 1.3s ease-in-out infinite alternate;}",
     "@keyframes stZona{from{opacity:.35}to{opacity:1}}",
     ".st-az-box.attesa canvas{opacity:.5;transition:opacity .5s;}",
+    // 🦉 Gufa! / 🍀 Portafortuna (30 ott 2026): il tasto rotondo in un angolo del campo (dalla parte della porta, lontano da chi tira e dalle scritte),
+    // il conto in alto al posto della scritta della testata, i gufetti e i quadrifogli che salgono dai quadretti (solo transform e opacità)
+    ".st-gufo{position:absolute;z-index:4;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;transform:scale(.6);transition:opacity .22s,transform .3s cubic-bezier(.2,1.3,.4,1);pointer-events:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}",
+    ".st-gufo.on{opacity:1;transform:none;pointer-events:auto;cursor:pointer;}.st-gufo.dita{pointer-events:none;}",
+    ".st-gufo.b{bottom:10px;}.st-gufo.a{top:10px;}.st-gufo.sx{left:10px;}.st-gufo.dx{right:10px;}.st-gufo.f{--gc:#3ee0a8;}",
+    ".st-gufo-c{position:relative;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1;background:rgba(21,26,46,.94);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 2.5px var(--gc,#e0225a),0 0 16px var(--gc,#e0225a),0 8px 18px rgba(0,0,0,.55);}",
+    ".st-gufo-n{position:absolute;top:-5px;right:-8px;min-width:24px;height:20px;padding:0 5px;border-radius:10px;background:var(--gc,#e0225a);color:#fff;font:900 11px/20px var(--o-tit);text-align:center;opacity:0;transform:scale(.5);transition:opacity .15s,transform .2s;}",
+    ".st-gufo.f .st-gufo-n{color:#06241a;}.st-gufo-n.on{opacity:1;transform:none;}.st-gufo.pieno .st-gufo-c{opacity:.55;}",
+    ".st-gufo-et{padding:2px 9px;border-radius:9px;background:rgba(21,26,46,.94);box-shadow:inset 0 0 0 1px var(--o-filo);color:var(--o-testo);font:800 11.5px/1.3 var(--o-tit);white-space:nowrap;}",
+    ".st-gufo.dita .st-gufo-c{display:none;}.st-gufo.dita .st-gufo-et{padding:6px 12px;border-radius:12px;font-size:13px;}",
+    ".st-gufo.batte .st-gufo-c,.st-gufo-ch.batte{animation:stGufoBatte .24s ease-out;}@keyframes stGufoBatte{from{transform:scale(.84)}to{transform:none}}",
+    ".st-gufo-top{flex:1;min-width:0;display:none;align-items:center;justify-content:center;gap:6px;height:38px;}.sa-testa.gufo .sa-info{display:none;}.sa-testa.gufo .st-gufo-top{display:flex;}",
+    ".st-gufo-ch{display:inline-flex;align-items:center;height:30px;padding:0 10px;border-radius:15px;background:rgba(21,26,46,.92);color:var(--o-testo);font:900 .86rem/1 var(--o-tit);font-variant-numeric:tabular-nums;white-space:nowrap;}",
+    ".st-gufo-ch.g{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1.5px rgba(224,34,90,.8);}.st-gufo-ch.f{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1.5px rgba(62,224,168,.75);}",
+    ".st-gufo-es{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;max-width:100%;height:38px;padding:0 12px;border-radius:12px;background:rgba(21,26,46,.95);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1.5px var(--gc,#e0225a),0 6px 16px rgba(0,0,0,.45);text-align:center;animation:stGufoEs .35s cubic-bezier(.2,1.3,.4,1);}",
+    ".st-gufo-es b{max-width:100%;font:900 .84rem/1.15 var(--o-tit);color:var(--o-testo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.st-gufo-es span{max-width:100%;font:700 .7rem/1.15 var(--o-tit);color:var(--o-tenue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+    "@keyframes stGufoEs{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}",
+    ".st-gufo-volo{position:absolute;inset:0;z-index:8;pointer-events:none;overflow:hidden;}",
+    ".st-gufo-v{position:absolute;font-size:22px;line-height:1;opacity:0;animation:stGufoVola 1.15s ease-out forwards;will-change:transform,opacity;}",
+    "@keyframes stGufoVola{0%{opacity:0;transform:translate(-50%,0) scale(.5)}18%{opacity:1;transform:translate(calc(-50% + var(--dx,0px) * .3),-14px) scale(1.15)}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),-58px) scale(.85)}}",
     ".st-gio-riga.capo::before{content:'👑';position:absolute;left:2px;top:-3px;font-size:.66rem;line-height:1;transform:rotate(-14deg);z-index:2;}",
     ".st-gio-zona{flex:none;display:none;font-size:.62rem;font-weight:800;white-space:nowrap;overflow:hidden;color:#ff9fbb;}.st-rivela.zona .st-gio-tab.fitto .st-gio-pt{font-size:.92rem;}.st-rivela.zona .st-gio-tab.fittissimo .st-gio-pt{font-size:.86rem;}.st-rivela.zona .st-gio-zona{display:inline;}.st-rivela.zona .st-gio-ev{display:none;}",
     ".st-gio-zona.entra{animation:stEntra .45s cubic-bezier(.2,1.3,.4,1);}",
@@ -2636,6 +2656,7 @@
         e.v = aCaso(l); usate[e.v] = 1;
       });
     });
+    if (window.SG_PROVA_SERIEA) try { window.SG_PROVA_SERIEA(A, { righe: righe, rose: rose, comprati: comprati, rifai: rifaiRisultati, chiave: chiaveCalc }); } catch (e) { if (window.console) console.error(e); }   // (solo le prove nel browser: un rigore o una punizione messi apposta)
     var maxM = 90; A.partite.forEach(function (P) { P.ev.forEach(function (e) { if (e.m > maxM) maxM = e.m; }); });
     A.rec = Math.min(6, Math.max(3 + Math.floor(caso01() * 3), maxM - 90 + 1));   // ⏱️ il recupero annunciato al 90' (sempre almeno 3': non dice se succederà ancora qualcosa)
     function dai(k, m, t, d, p, e) { if (k && comprati[k]) (punti[k] = punti[k] || []).push({ m: m, t: t, d: d, p: p, e: e }); }
@@ -2684,10 +2705,12 @@
   function rivelaFanta(t, righe, opz) {
     if (RIVELA && RIVELA.chiave === opz.chiave && document.body.contains(RIVELA.radice)) {
       RIVELA.opz = opz; if (opz.cron && RIVELA.cron) RIVELA.cron = opz.cron;   // (la foto nuova: il piano col ⏩ e i passi di chi tiene la partita)
+      gufoDallaFoto(RIVELA, opz.gufi);   // (🦉 i tocchi che conosce chi tiene la partita)
       nuoviPassi(RIVELA); if (RIVELA.finito) piedeRivela(RIVELA); return;
     }
     fermaRivela(RIVELA);
-    var el = t.el, R = { el: el, chiave: opz.chiave, opz: opz, righe: righe, timer: [], iv: null, finito: false, conta: [] }, sfondo = el("div", { class: "sa-sfondo" }), quadro = arte("stadio", "");
+    var el = t.el, R = { el: el, chiave: opz.chiave, opz: opz, righe: righe, timer: [], iv: null, finito: false, conta: [], gufi: {} }, sfondo = el("div", { class: "sa-sfondo" }), quadro = arte("stadio", "");
+    gufoDallaFoto(R, opz.gufi);
     if (quadro) sfondo.style.backgroundImage = "url(\"" + quadro + "\")";
     var board = maxischermo(el, R, true), conGio = !!(righe[0] && righe[0].gio);
     R.campoBox = palco(el, R);
@@ -2720,8 +2743,8 @@
       podioRivela(R);
     } });
     R.radice = el("div", { class: "schermata sa-sala st-stadio st-rivela" + (t.guarda ? " as-targa" : "") }, [ sfondo,
-      el("div", { class: "sa-testa" }, [ el("button", { class: "sa-tasto", text: "‹", "aria-label": "Esci", onclick: function () { R.opz.onEsci(); } }),
-        (R.info = el("div", { class: "sa-info", text: "La classifica delle rose" })), R.salta ]),
+      (R.testa = el("div", { class: "sa-testa" }, [ el("button", { class: "sa-tasto", text: "‹", "aria-label": "Esci", onclick: function () { R.opz.onEsci(); } }),
+        (R.info = el("div", { class: "sa-info", text: "La classifica delle rose" })), R.salta ])),
       board, R.campoBox, R.gio, R.podio, R.piede ]);
     R.ruolo.className = "st-ruolo st-ruolo-classifica"; R.ruolo.textContent = "CLASSIFICA";
     coloriSchermo(R, ["#1b2a4a", "#0c1424"]);
@@ -2866,7 +2889,7 @@
         var q = chi[pi + "|" + ei] || [], dopo = P.ev[ei + 1], prima = P.ev[ei - 1];
         var rib = e.t === "gol" && e.v === "ribattuta" && prima && prima.t === "rigP" && (chi[pi + "|" + (ei - 1)] || []).length > 0;   // (dopo un rigore parato che si è visto, si vede anche la ribattuta)
         if (e.t === "rigP" && dopo && dopo.t === "gol" && dopo.v === "ribattuta") e.ribGol = 1;
-        if (q.length || rib || e.t === "gol" || e.t === "rig" || e.t === "aut") lista.push({ P: P, p: pi, e: e, chi: q, m: e.m, focus: q.length > 0 || rib });
+        if (q.length || rib || e.t === "gol" || e.t === "rig" || e.t === "aut") lista.push({ P: P, p: pi, ei: ei, e: e, chi: q, m: e.m, focus: q.length > 0 || rib });
       });
       if (chi[pi + "|-1"]) lista.push({ P: P, p: pi, e: { m: 90, t: "inv", s: null, r: [P.gc, P.gf] }, chi: chi[pi + "|-1"], m: 99, focus: true });   // (dopo il recupero)
     });
@@ -3014,6 +3037,7 @@
     if (e.v === "assedio" || e.v === "ultimo") T = [T[0], T[1], T[2] * 1.3, T[3]];
     var op = { verso: (Math.round(e.m) + x.p) % 2 === 1 ? -1 : 1, lato: seme % 2 ? 1 : -1, seme: seme, rib: e.rib, ribGol: e.ribGol, come: e.come, lento: t === "rig" || zona || semeRnd(seme + 11)() < 0.33 };   // (stessa partita e stesso minuto: stessa metà campo)
     if (e.ribGol || (e.t === "gol" && e.v === "ribattuta")) op.lato = (Math.round(e.m) + x.p) % 2 ? 1 : -1;   // (il rigore e la sua ribattuta: anche lo stesso lato)
+    var gufo = gufoMomento(R, x, t, v, esito, op);   // 🦉 / 🍀 a ogni rigore e a ogni punizione dal limite (sempre, qualunque cosa succeda)
     function prepara(sc) {   // le maglie e i vostri che non c'entrano (al posto del loro ruolo)
       sc.kA = K[sqAtt]; sc.kD = K[sqAtt === P.c ? P.f : P.c]; sc.pA = kitPortiere(sc.kA, sc.kD); sc.pD = kitPortiere(sc.kA, sc.kD, sc.pA.a);
       sc.noti = noti.filter(function (y) { return !y.usato; }).map(function (y) { return { sq: y.sq === sqAtt ? "A" : "D", nome: y.nome, faccia: y.faccia, pc: y.pc, ruolo: y.ruolo }; });
@@ -3024,25 +3048,35 @@
     barraPartita(R, x); segnaInCampo(R, noti);
     var pos = R.az.lontano(sc), passi = [];   // (le scritte stanno nella metà campo lontana dall'azione)
     if (t === "rig" && e.come === "var") passi.push({ avviso: ["📺 IL VAR RICHIAMA L'ARBITRO…", "va a rivedere l'azione al monitor"], ms: 2600, fermo: sc });
-    passi.push({ avviso: ann, mg: maglia(mg), sq: t === "amm" || t === "esp" || t === "rec" || t === "inv" ? null : mg, ms: T[0], fermo: sc });   // (l'azione: di chi è, in grande)
+    // (🦉 gufoApri: il tasto compare tot ms dopo l'annuncio; gufoEsito: la scritta dopo il VAR. Le ore sono quelle del piano: uguali su tutti i telefoni)
+    passi.push({ avviso: ann, mg: maglia(mg), sq: t === "amm" || t === "esp" || t === "rec" || t === "inv" ? null : mg, ms: T[0], fermo: sc, gufoApri: zona ? 150 : 400 });   // (l'azione: di chi è, in grande)
     passi.push({ ms: T[1] });
     if (t === "rig" && e.rip) {   // il portiere si era mosso prima: si tira di nuovo
       passi.push({ sc: prepara(scena("rig", null, "parata", null, et, { verso: op.verso, lato: op.lato, seme: seme + 5 })), dur: T[2] * 0.8 });
-      passi.push({ avviso: ["🔁 SI RIPETE!", "il portiere si era mosso prima"], ms: 2400, fermo: sc });
+      passi.push({ avviso: ["🔁 SI RIPETE!", "il portiere si era mosso prima"], ms: 2400, fermo: sc, gufoApri: 300 });   // (🦉 si può gufare di nuovo)
       passi.push({ ms: 400 });
     }
     passi.push({ sc: sc, dur: T[2], dunque: function () { dunqueSerieA(R, x, t, esito, sqA, pos, seme); } });
     if (t === "ann") {
       passi.push({ ms: 900, resta: true });
       passi.push({ avviso: ["📺 IL VAR CONTROLLA…", "un attimo di attesa"], ms: 2600 });
-      passi.push({ avviso: ["❌ GOL ANNULLATO!", { fuorigioco: "per fuorigioco", fallo: "c'era un fallo in attacco", mano: "per un tocco di mano" }[e.perche] || "dal VAR", "niente punti"], ms: T[3], resta: true });
+      passi.push({ avviso: ["❌ GOL ANNULLATO!", { fuorigioco: "per fuorigioco", fallo: "c'era un fallo in attacco", mano: "per un tocco di mano" }[e.perche] || "dal VAR", "niente punti"], ms: T[3], resta: true, gufoEsito: true });
     } else passi.push({ ms: T[3], resta: true });   // (l'esito resta un po')
     function esegui(i) {
       if (!vivoRivela(R)) return;
-      if (i >= passi.length) { viaAvviso(R); segnaInCampo(R, []); R.dopo(pausa, poi); return; }
+      if (i >= passi.length) { viaAvviso(R); segnaInCampo(R, []); if (gufo) gufoVia(R); R.dopo(pausa, poi); return; }
       var q = passi[i];
-      if (q.sc) { R.az.giocaPiano(q.sc, Math.round(q.dur * vv), R, q.dunque || function () {}, function () { esegui(i + 1); }); return; }
+      if (q.sc) {
+        var dq = Math.round(q.dur * vv);
+        if (gufo) {   // 🦉 il tasto si chiude quando parte il tiro; la scritta arriva poco dopo l'esito (col gol annullato: dopo il VAR)
+          if (q.sc.calcio != null) R.dopo(R.az.fino(q.sc, dq, q.sc.calcio), function () { gufoChiudi(R, gufo); });
+          if (q.dunque && t !== "ann") R.dopo(R.az.fino(q.sc, dq, q.sc.dunque) + 700 * vv, function () { gufoEsito(R, gufo); });
+        }
+        R.az.giocaPiano(q.sc, dq, R, q.dunque || function () {}, function () { esegui(i + 1); }); return;
+      }
       if (q.avviso) { if (q.fermo) R.az.fermo(q.fermo); avvisoCampo(R, pos, q.avviso, q.mg, q.sq); if (!inRitardo(R)) FX.tic(0.3); }
+      if (gufo && q.gufoApri != null) R.dopo(q.gufoApri * vv, function () { gufoApri(R, gufo); });
+      if (gufo && q.gufoEsito) R.dopo(300 * vv, function () { gufoEsito(R, gufo); });
       R.dopo(q.ms * vv, function () { if (!vivoRivela(R)) return; if (q.avviso && !q.resta) viaAvviso(R); esegui(i + 1); });
     }
     // ⏱️ quanto dura tutto il momento: se chi recupera è già oltre la sua fine, contano solo punti e risultati (niente scene né suoni)
@@ -3098,6 +3132,127 @@
     else if (buono) { FX.posto(); vibra(30); }
     else if (chi.length) FX.tic(chi.some(function (r) { return somma[r.id] > 0; }) ? 0.8 : 0.1);
     riordinaGiornata(R, x, muto);
+  }
+  // 🦉 GUFA! / 🍀 PORTAFORTUNA (30 ott 2026, deciso dal proprietario): a ogni rigore e a ogni punizione dal limite che si vede sul campo, per 2-3
+  // secondi prima del tiro, chi gioca online ha un tasto rotondo: chi ha in rosa chi tira tocca «🍀 Portafortuna», tutti gli altri «🦉 Gufa!» (fino
+  // a 5 tocchi a testa: ogni tocco fa salire un gufetto o un quadrifoglio dal suo quadretto, e in alto c'è il conto di tutti). È solo spettacolo: il
+  // tiro l'ha già deciso chi tiene la partita e il tasto c'è SEMPRE, qualunque cosa succeda (se no sarebbe uno spoiler). Dopo l'esito «🦉 Gufata
+  // riuscita! Paky e Luca» o «🍀 Il portafortuna ha vinto!»; a fine partita «🦉 Il gufo della serata» (lo conta chi tiene la partita: gufoDellaSerata).
+  // La finestra del tasto e la scritta dopo l'esito stanno nel piano (uguali su tutti i telefoni); i tocchi viaggiano come messaggi leggeri: ospite →
+  // host { t: "gufo", k: "partita|momento", n: i miei tocchi, tipo: "g"|"f" }, host → tutti { t: "gufo", k, l: [[id, n, tipo]] } (e nella foto
+  // `gufi`, per chi ricarica). I tocchi NON vibrano (il tasto non è un <button>). Sullo stesso telefono niente tasti: solo «🤞 Dita incrociate!»
+  var GUFO_MAX = 5;
+  function gufoMomento(R, x, t, v, esito, op) {
+    var e = x.e;
+    if (!(t === "rig" || ((t === "gol" || t === "occ" || t === "ann") && v === "punizione")) || x.ei == null) return null;
+    var mio = R.opz.mio, mia = mio != null ? R.righe.filter(function (r) { return r.id === mio; })[0] : null;
+    var suo = !!(mia && e.chi && mia.kit.some(function (c) { return chiaveCalc(c) === e.chi; }));   // (chi ha in rosa chi tira tifa portafortuna)
+    var vert = !R.az || R.az.vert !== false;
+    // il tasto: nella metà campo della porta (le scritte stanno nell'altra), nell'angolo lontano dall'arbitro e da chi tira
+    return { k: x.p + "|" + x.ei, locale: !R.opz.cron, mio: mia ? (suo ? "f" : "g") : null, gol: t === "gol" || (t === "rig" && (esito === "gol" || esito === "cucchiaio")),
+      basso: vert ? op.verso > 0 : true, sx: vert ? op.lato > 0 : op.verso > 0 };
+  }
+  function provaGufo(R, cosa, d) { try { if (window.SG_PROVA_GUFO) window.SG_PROVA_GUFO(cosa, { k: d.k, mio: d.mio, n: d.n, testo: d.testo, g: Math.round(R.g()) }); } catch (e) {} }   // (solo le prove nel browser)
+  function gufoNodi(R) {   // il tasto (sul campo), il conto (in alto, al posto della scritta della testata), il velo dei gufetti che volano
+    if (R.gufoQ && R.gufoQ.tasto.parentNode === R.azBox) return R.gufoQ;
+    var el = R.el, em = el("span"), n = el("b", { class: "st-gufo-n" }), et = el("span", { class: "st-gufo-et" });
+    var tasto = el("div", { class: "st-gufo" }, [ el("div", { class: "st-gufo-c" }, [ em, n ]), et ]);
+    tasto.addEventListener("pointerdown", function (ev) { if (ev.cancelable) ev.preventDefault(); gufoTocco(R); });
+    R.azBox.appendChild(tasto);
+    var top = el("div", { class: "st-gufo-top" });
+    if (R.testa && R.info && R.info.parentNode === R.testa) R.testa.insertBefore(top, R.info.nextSibling);
+    var volo = el("div", { class: "st-gufo-volo" }); R.radice.appendChild(volo);
+    return (R.gufoQ = { tasto: tasto, em: em, n: n, et: et, top: top, volo: volo });
+  }
+  function gufoApri(R, G) {
+    if (!vivoRivela(R) || R.fase !== "giornata" || R.finito) return;
+    var q = gufoNodi(R); R.gufoOra = G; G.aperta = true;
+    q.tasto.className = "st-gufo " + (G.basso ? "b " : "a ") + (G.sx ? "sx" : "dx");
+    if (G.locale) { q.tasto.classList.add("dita"); q.et.textContent = "🤞 Dita incrociate!"; void q.tasto.offsetWidth; q.tasto.classList.add("on"); return provaGufo(R, "apri", G); }
+    if (G.mio) {
+      var f = G.mio === "f";
+      q.tasto.classList.add(f ? "f" : "g"); q.em.textContent = f ? "🍀" : "🦉"; q.et.textContent = f ? "Portafortuna" : "Gufa!";
+      gufoMio(R, G); void q.tasto.offsetWidth; q.tasto.classList.add("on");
+    }
+    gufoConta(R, G, false); if (R.testa) R.testa.classList.add("gufo");
+    provaGufo(R, "apri", G);
+  }
+  function gufoChiudi(R, G) {   // (parte il tiro: il tasto se ne va, il conto resta fino all'esito)
+    if (R.gufoOra !== G || !G.aperta) return;
+    G.aperta = false; if (R.gufoQ) R.gufoQ.tasto.classList.remove("on");
+    provaGufo(R, "chiudi", G);
+  }
+  function gufoVia(R) {   // (finito il momento: via tutto)
+    var G = R.gufoOra; R.gufoOra = null; if (G) G.aperta = false;
+    if (R.testa) R.testa.classList.remove("gufo");
+    if (R.gufoQ) { R.gufoQ.tasto.classList.remove("on"); svuotaNodo(R.gufoQ.top); R.gufoQ.chG = null; }
+  }
+  function gufoTot(R, k) { var x = R.gufi[k] || {}, s = { g: 0, f: 0 }; Object.keys(x).forEach(function (id) { s[x[id][1] === "f" ? "f" : "g"] += x[id][0]; }); return s; }
+  function gufoMio(R, G) {   // (sul mio tasto: quante volte ho toccato; a 5 basta)
+    var q = R.gufoQ, x = R.gufi[G.k] || {}, n = x[R.opz.mio] ? x[R.opz.mio][0] : 0; if (!q) return;
+    q.n.textContent = "×" + n; q.n.classList.toggle("on", n > 0); q.tasto.classList.toggle("pieno", n >= GUFO_MAX);
+  }
+  function gufoConta(R, G, batte) {   // il conto in alto: 🦉 ×7 🍀 ×3 (dopo l'esito resta la scritta dell'esito)
+    var q = gufoNodi(R); if (G.locale || G.esitoFatto) return;
+    if (!q.chG || q.chG.parentNode !== q.top) { svuotaNodo(q.top); q.chG = R.el("span", { class: "st-gufo-ch g" }); q.chF = R.el("span", { class: "st-gufo-ch f" }); q.top.appendChild(q.chG); q.top.appendChild(q.chF); q.vG = q.vF = -1; }
+    var s = gufoTot(R, G.k);
+    if (s.g !== q.vG) { q.chG.textContent = "🦉 ×" + numIt(s.g); if (batte && q.vG >= 0) rianima(q.chG, "batte"); q.vG = s.g; }
+    if (s.f !== q.vF) { q.chF.textContent = "🍀 ×" + numIt(s.f); if (batte && q.vF >= 0) rianima(q.chF, "batte"); q.vF = s.f; }
+  }
+  function numIt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function gufoTocco(R) {   // un tocco sul mio tasto: il gufetto sale dal mio quadretto subito, il conto va a chi tiene la partita
+    var G = R.gufoOra; if (!G || !G.aperta || !G.mio || G.locale || !vivoRivela(R)) return;
+    var io = R.opz.mio, x = R.gufi[G.k] = R.gufi[G.k] || {}, n = x[io] ? x[io][0] : 0;
+    if (n >= GUFO_MAX) return;
+    x[io] = [n + 1, G.mio];
+    gufoVola(R, io, G.mio); gufoMio(R, G); rianima(R.gufoQ.tasto, "batte"); gufoConta(R, G, true);
+    if (R.opz.onGufo) R.opz.onGufo({ k: G.k, n: n + 1, tipo: G.mio });
+    provaGufo(R, "tocco", { k: G.k, n: n + 1 });
+  }
+  function gufoVola(R, id, tipo) {   // un gufetto (o un quadrifoglio) che sale dal quadretto di chi ha toccato (decorazione: non serve il piano)
+    var q = gufoNodi(R), g = R.gr && R.gr[id]; if (!g || !g.nodo || q.volo.childNodes.length > 24) return;
+    var a = g.nodo.getBoundingClientRect(), b = R.radice.getBoundingClientRect(); if (!a.width) return;
+    var s = R.el("span", { class: "st-gufo-v", text: tipo === "f" ? "🍀" : "🦉" });
+    s.style.left = Math.round(a.left - b.left + a.width * (0.25 + Math.random() * 0.5)) + "px"; s.style.top = Math.round(a.top - b.top + a.height * 0.1) + "px";
+    s.style.setProperty("--dx", Math.round((Math.random() - 0.5) * 44) + "px");
+    q.volo.appendChild(s);
+    setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 1300);
+  }
+  function gufoUnisci(R, k, l, vola) {   // i tocchi che conosce chi tiene la partita (l: [[id, n, tipo]]): si tiene sempre il numero più alto
+    var x = R.gufi[k] = R.gufi[k] || {}, G = R.gufoOra && R.gufoOra.k === k ? R.gufoOra : null, cambiato = false;
+    (l || []).forEach(function (y) {
+      if (!y || y[0] == null) return;
+      var id = String(y[0]), n = Math.max(0, Math.min(GUFO_MAX, Math.floor(+y[1] || 0))), tipo = y[2] === "f" ? "f" : "g", prima = x[id] ? x[id][0] : 0;
+      if (n <= prima) return;
+      x[id] = [n, tipo]; cambiato = true;
+      if (vola && G && !G.esitoFatto && id !== String(R.opz.mio) && !inRitardo(R))   // (i miei li ho già visti salire quando ho toccato)
+        for (var j = 0; j < n - prima; j++) (function (d) { R.timer.push(setTimeout(function () { if (vivoRivela(R) && R.gufoOra === G) gufoVola(R, id, tipo); }, d)); })(j * 140);
+    });
+    if (cambiato && G) { gufoConta(R, G, true); if (G.mio) gufoMio(R, G); }
+  }
+  function gufoDallaFoto(R, gufi) {   // (la foto: chi ricarica, chi arriva, chi prende il posto di chi teneva la partita)
+    if (!R || !R.gufi || !gufi) return;
+    Object.keys(gufi).forEach(function (k) { var x = gufi[k] || {}; gufoUnisci(R, k, Object.keys(x).map(function (id) { return [id, x[id][0], x[id][1]]; }), false); });
+  }
+  function gufoArriva(m) { var R = RIVELA; if (m && typeof m.k === "string" && Array.isArray(m.l) && vivoRivela(R) && R.gufi) gufoUnisci(R, m.k, m.l, true); }   // (il conto da chi tiene la partita)
+  function elencoNomi(l) { return l.length <= 1 ? (l[0] || "") : l.length <= 3 ? l.slice(0, -1).join(", ") + " e " + l[l.length - 1] : l.slice(0, 2).join(", ") + " e altri " + (l.length - 2); }
+  function gufoEsito(R, G) {   // dopo il tiro: com'è andata per i gufi e per il portafortuna (solo se qualcuno ha toccato)
+    if (!vivoRivela(R) || R.gufoOra !== G || G.locale || G.esitoFatto) return;
+    G.esitoFatto = true; G.aperta = false;
+    var q = gufoNodi(R), x = R.gufi[G.k] || {}, s = gufoTot(R, G.k);
+    function chi(tipo) {
+      return Object.keys(x).filter(function (id) { return x[id][1] === tipo && x[id][0] > 0 && R.gr[id]; })
+        .sort(function (a, b) { return (x[b][0] - x[a][0]) || (R.gr[a].ord - R.gr[b].ord); }).map(function (id) { return R.gr[id].r.nome; });
+    }
+    var tit, sotto, col = "#e0225a";
+    if (G.gol && (s.g || s.f)) { var fo = chi("f"); tit = "🍀 Il portafortuna ha vinto!"; sotto = fo.length ? "tifava " + elencoNomi(fo) : "i gufi non sono bastati"; if (fo.length > 1) sotto = "tifavano " + elencoNomi(fo); col = "#3ee0a8"; }
+    else if (!G.gol && s.g) { tit = "🦉 Gufata riuscita!"; sotto = elencoNomi(chi("g")); }
+    else if (!G.gol && s.f) { tit = "🍀 Il portafortuna non è bastato"; sotto = elencoNomi(chi("f")); col = "#3ee0a8"; }
+    svuotaNodo(q.top); q.chG = null;
+    if (!tit) { if (R.testa) R.testa.classList.remove("gufo"); return provaGufo(R, "esito", { k: G.k, testo: "" }); }   // (nessuno ha toccato: niente scritta)
+    q.top.appendChild(R.el("div", { class: "st-gufo-es", style: "--gc:" + col }, [ R.el("b", { text: tit }), R.el("span", { text: sotto }) ]));
+    if (R.testa) R.testa.classList.add("gufo");
+    provaGufo(R, "esito", { k: G.k, testo: tit + " " + sotto });
   }
   // la freccina accanto ai punti quando il voto di un calciatore cambia (↑ verde, ↓ rossa), per un attimo
   function frecciaVoto(g, d) { if (!d || !g.fr) return; var tok = g.frTok = (g.frTok || 0) + 1; g.fr.textContent = d > 0 ? "↑" : "↓"; g.fr.className = "st-gio-fr " + (d > 0 ? "su" : "giu"); rianima(g.fr, "on"); setTimeout(function () { if (g.frTok === tok) g.fr.textContent = ""; }, 1700); }   // (poi sparisce: nei quadretti stretti serve il posto)
@@ -3496,7 +3651,7 @@
         tg = tiro(0.5, [0.55, 0.79], 0.2, { dur: 0.09 });
       } else if (v === "punizione") {
         [0.455, 0.485, 0.515, 0.545].forEach(function (hx, i) { var dt = [0, 0.012, 0.004, 0.016][i]; att("D", null, [[0, hx, 0.625]], [[0.33 + dt, {}], [0.375 + dt, { salto: [0.4, 0.5, 0.45, 0.35][i], braccia: i % 3 ? 1 : 0 }], [0.46 + dt, {}]]); });   // (la barriera: ognuno salta a modo suo)
-        tira = att("A", et.tira, [[0, 0.36, 0.44], [0.2, 0.37, 0.46], [0.3, 0.42, 0.51]]); calcia(tira, 0.3);
+        tira = att("A", et.tira, [[0, 0.36, 0.44], [0.2, 0.37, 0.46], [0.3, 0.42, 0.51]]); calcia(tira, 0.3); sc.calcio = 0.3;   // (calcio: quando parte il tiro, per il 🦉)
         att("arb", null, [[0, 0.28, 0.62]]);
         palla([[0, 0.43, 0.52, 0], [0.3, 0.43, 0.52, 0], [0.39, 0.47, 0.64, 3.4]]);
         tg = tiro(0.39, [0.47, 0.64], 3.4, { dur: 0.11, quota: 1.9 });
@@ -3663,7 +3818,7 @@
       tira = att("A", et.tira, [[0, 0.44, 0.66], [0.3, 0.45, 0.68], [0.42, 0.494, 0.741]]);
       att("arb", null, [[0, 0.3, 0.74]]); sc.fischi = [0.3];   // (l'arbitro fischia: si può tirare)
       palla([[0, 0.5, 0.75, 0], [0.42, 0.5, 0.75, 0]]);
-      tg = tiro(0.43, [0.5, 0.75], 0, { dur: 0.09, quota: rnd() < 0.3 ? 1.9 : 0.3, lato: op.ribGol ? -1 : 0 });
+      tg = tiro(0.43, [0.5, 0.75], 0, { dur: 0.09, quota: rnd() < 0.3 ? 1.9 : 0.3, lato: op.ribGol ? -1 : 0 }); sc.calcio = 0.43;
       if (esito === "parata" && op.ribGol) { sc.palla.splice(sc.palla.length - 2, 2); palla([[0.62, 0.43, 0.84, 0], [1, 0.43, 0.84, 0]]); }   // (il pallone resta in area: c'è la ribattuta)
       if (esito === "parata" && op.rib) {
         var lr = sc.lt || 1;
@@ -4107,6 +4262,10 @@
     }
     function pDiT(T, x) { var i = 0; while (i < T.N - 1 && T.tab[i + 1] < x) i++; return Math.max(0, Math.min(1, (i + (x - T.tab[i]) / (T.tab[i + 1] - T.tab[i])) / T.N)); }
     A.durata = function (sc, dur) { return Math.max(0, dur * (tempi(sc).tot - (sc.parti || 0))); };   // (quanto dura l'azione, col rallentatore)
+    A.fino = function (sc, dur, p) {   // quanti ms dall'inizio dell'azione per arrivare al punto p (0-1), col rallentatore (come giocaPiano)
+      var T = tempi(sc), k = Math.max(0, Math.min(1, p)) * T.N, i = Math.min(T.N - 1, Math.floor(k));
+      return Math.max(0, dur * (T.tab[i] + (k - i) * (T.tab[i + 1] - T.tab[i]) - (sc.parti || 0)));
+    };
     // l'azione col piano della giornata: ogni fotogramma si calcola dal tempo di gioco (uguale su tutti i telefoni) e la fine ha la sua ora
     A.giocaPiano = function (sc, dur, R, alDunque, poi) {
       A.ferma(); A.sc = sc; if (!sc.folla) sc.folla = comparse(sc);
@@ -4156,6 +4315,7 @@
   }
   function fischioFinale(R) {   // 90': le pagelle vere, una rosa alla volta, da chi ha fatto meno a chi ha fatto di più; poi il podio
     if (!vivoRivela(R)) return;
+    gufoVia(R); if (R.opz.onFischio) try { R.opz.onFischio(); } catch (e) { if (window.console) console.error(e); }   // (🦉 chi tiene la partita manda la foto col gufo della serata)
     R.az.fermo(null); R.risN.forEach(function (q) { q.nodo.classList.remove("ora"); }); pagFissa(R);
     barraTesto(R, R.fischiato ? minTxt(90 + R.rec) : "90'", "🏁 Fischio finale");
     if (R.fischiato) avvisoCampo(R, 50, ["📋 LE PAGELLE", "arrivano i voti veri"]);   // (il triplice fischio c'è già stato)
@@ -4223,7 +4383,7 @@
   }
   function podioRivela(R) {   // il podio: i primi tre sui gradini (il primo con le braccia alzate), sotto gli altri
     if (!vivoRivela(R) || R.finito) return;
-    fermaRivela(R); R.finito = true;
+    fermaRivela(R); R.finito = true; gufoVia(R);
     // il tasto in alto diventa «📸 Foto» (la rosa da mandare nel gruppo); se non c'è la foto, sparisce
     if (R.opz.foto) { R.salta.textContent = "📸 Foto"; R.salta.onclick = function () { R.opz.foto(); }; R.salta.style.visibility = ""; } else R.salta.style.visibility = "hidden";   // (online gli amici non hanno «Salta», ma «📸 Foto» sì)
     var el = document.createElement.bind(document), w = R.righe[0], gio = !!(w && w.gio);
@@ -5412,6 +5572,7 @@
       onAvanti: function () {},
       onVoto: function (x) { manda({ t: "voto", per: x.per, s: S.vm && S.vm.sessione }); },
       onMal: function (x) { manda({ t: "mal", n: x.n, a: x.a, prezzo: x.prezzo, g: x.g }); },
+      onGufo: function (x) { manda({ t: "gufo", k: x.k, n: x.n, tipo: x.tipo }); },   // 🦉 / 🍀 (fanta: quante volte ho toccato in questo momento)
       onEsci: function () { cb._uscito = true; fermaTutto(); if (S.rete) S.rete.chiudi(); t.esci(); }
     };
     function disegna() {
@@ -5448,6 +5609,7 @@
             S.vm = m.vm; disegna();
           }
           else if (m.t === "ora" && m.a === S.myId) campioneOra(m.c, m.h);   // ⏱️ la risposta dell'host
+          else if (m.t === "gufo") gufoArriva(m);   // 🦉 / 🍀 il conto dei tocchi (con i gufetti degli altri)
           else if (m.t === "tardi" && m.a === S.myId) { cb._tardi = Date.now(); disegna(); }   // il mio rilancio è arrivato quando il prezzo era già salito
           else if (m.t === "tuaBusta" && m.a === S.myId && m.n != null) { cb._busta = { n: m.n, q: m.q, chiusa: true }; disegna(); }   // ✉️ (rientrato) la busta che avevo già chiuso
           else if (m.t === "tuoVoto" && m.a === S.myId && m.s === (S.vm && S.vm.sessione)) { cb._mioVoto = { s: m.s, per: m.per }; disegna(); }   // ⭐ (rientrato) il kit che avevo votato
@@ -6147,6 +6309,7 @@
         else if (m.t === "rilancia") rilanciaO(id, m);
         else if (m.t === "passa") passaO(id, m);
         else if (m.t === "ora") rete.inviaVeloce({ t: "ora", a: id, c: m.c, h: Date.now() });   // ⏱️ il botta e risposta dell'orologio
+        else if (m.t === "gufo") gufoO(id, m);   // 🦉 / 🍀 un tocco nella giornata (solo spettacolo)
       },
       onErrore: function (e) {
         // un errore di rete passeggero: la rete si ricollega da sola e rimanda l'ultima foto, quindi la partita NON si ferma
@@ -6261,8 +6424,23 @@
       bd();
       TM.dopo(prossima, e.tipo === "accollo" ? ACCOLLO_MS : ESITO_MS);
     }
+    // 🦉 / 🍀 i tocchi della giornata (m: { k: "partita|momento", n: quante volte ha toccato, tipo }): tengo il conto (per «🦉 Il gufo della
+    // serata», nella foto e nella copia per la ripresa) e lo giro a tutti, leggero. Il tiro è già deciso: i tocchi non cambiano niente
+    var gufoRic = null;
+    function gufoO(id, m) {
+      if (st.fase !== "fine" || !st.serieA || !st.serieA.partite || !m || typeof m.k !== "string" || !perId(st, id)) return;
+      var p = m.k.split("|"), P = st.serieA.partite[+p[0]], e = P && P.ev && P.ev[+p[1]];
+      if (!e || !(/^rig/.test(e.t) || e.v === "punizione")) return;   // (solo i rigori e le punizioni)
+      var n = Math.max(0, Math.min(GUFO_MAX, Math.floor(+m.n || 0))), G = st.gufi = st.gufi || {}, x = G[m.k] = G[m.k] || {};
+      if (!n || (x[id] && x[id][0] >= n)) return;
+      x[id] = [n, m.tipo === "f" ? "f" : "g"];
+      var l = Object.keys(x).map(function (j) { return [j, x[j][0], x[j][1]]; });
+      rete.inviaVeloce({ t: "gufo", k: m.k, l: l });
+      gufoArriva({ k: m.k, l: l });   // (sul mio campo: i gufetti degli amici)
+      if (!gufoRic) gufoRic = setTimeout(function () { gufoRic = null; if (!st.morto && !cb._uscito) ricorda(); }, 1500);
+    }
     function fine() {   // finito il mazzo: la classifica per valore delle rose (le quotazioni si scoprono solo ora)
-      st.asta = null; st.esito = null; st.scadenza = null;
+      st.asta = null; st.esito = null; st.scadenza = null; st.gufi = {};
       st.serieA = st.giornata ? {} : null;
       st.classifica = classificaFanta(st.giocatori, st.serieA);   // (⚽ con la giornata: la gioca l'host e la vedono tutti uguale)
       st.titoli = titoliFine(st.giocatori, FANTA_BUDGET, st.classifica);   // 🏅 i titoli scherzosi
@@ -6277,13 +6455,15 @@
       st.giocatori = st.giocatori.filter(function (g) { return !g.via; });   // chi non c'è più esce dalla stanza
       st.giocatori.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });   // (chi tiene la partita è il primo: in saletta ha la corona)
       st.giocatori.forEach(function (g) { g.crediti = FANTA_BUDGET; g.kit = []; g.conta = { P: 0, D: 0, C: 0, A: 0 }; g.stelle = 0; g.asteVinte = 0; g.st = statNuove(); });
-      st.titoli = null;
+      st.titoli = null; st.gufi = null;
       bd();
     }
     var cb = {
       myId: IO, sonoHost: true,
       onComincia: comincia, onNuova: nuovaInLobby,
       onRilancia: function (x) { rilanciaO(IO, x); }, onPassa: function (x) { passaO(IO, x); },
+      onGufo: function (x) { gufoO(IO, x); },   // 🦉 / 🍀 i miei tocchi
+      onFischio: function () { if (st.fase === "fine" && !st.morto && !cb._uscito) bd(); },   // (fischio finale: la foto col gufo della serata, anche per il mio podio)
       // (le pagelle: sono andato avanti) torna l'ora dell'host in cui la pagina gira per tutti (anche per me): ANTICIPO_PASSO dopo il tocco
       onPasso: function (quale, n) {
         st.passi = st.passi || {}; st.passi.h = st.passi.h || {};
@@ -6302,6 +6482,21 @@
     if (ripresa) riprendi(); else disegna();
   }
 
+  // 🦉 «Il gufo della serata»: chi ha gufato più tiri finiti fuori (rigore parato o sbagliato, punizione che non entra, gol annullato); a pari
+  // gufate chi ha toccato di più, poi tutti e due. Lo conta chi tiene la partita (con la sua copia dei tocchi): va in testa ai titoli
+  function gufoDellaSerata(st) {
+    var G = st.gufi, A = st.serieA, conta = {}, tocchi = {}; if (!G || !A || !A.partite) return null;
+    Object.keys(G).forEach(function (k) {
+      var p = k.split("|"), P = A.partite[+p[0]], e = P && P.ev && P.ev[+p[1]];
+      if (!e || e.t === "gol" || e.t === "rig") return;   // (è entrato: niente gufata)
+      Object.keys(G[k]).forEach(function (id) { var x = G[k][id]; if (x[1] !== "g" || !(x[0] > 0)) return; conta[id] = (conta[id] || 0) + 1; tocchi[id] = (tocchi[id] || 0) + x[0]; });
+    });
+    var ids = Object.keys(conta).filter(function (id) { return perId(st, id); }); if (!ids.length) return null;
+    ids.sort(function (a, b) { return (conta[b] - conta[a]) || (tocchi[b] - tocchi[a]); });
+    var n = conta[ids[0]], top = ids.filter(function (id) { return conta[id] === n && tocchi[id] === tocchi[ids[0]]; });
+    return { icona: "🦉", titolo: "Il gufo della serata", chi: elencoNomi(top.map(function (id) { return nomeDi(st, id); })), dett: n === 1 ? "1 gufata riuscita" : numIt(n) + " gufate riuscite" };
+  }
+  function titoliConGufo(st) { var g = gufoDellaSerata(st), l = st.titoli || []; return g ? [g].concat(l) : l; }
   function vmFanta(st) {
     var a = st.asta, e = st.esito;
     return {
@@ -6323,7 +6518,8 @@
       restano: st.mazzo ? st.mazzo.length : 0, presi: postiPresi(st.giocatori),
       classifica: st.classifica || null,
       serieA: st.fase === "fine" ? (st.serieA || null) : null,   // ⚽ la giornata di Serie A finta (la vedono tutti uguale)
-      titoli: st.fase === "fine" ? (st.titoli || []) : null,
+      titoli: st.fase === "fine" ? titoliConGufo(st) : null,   // (🦉 il gufo della serata si aggiunge quando c'è)
+      gufi: st.fase === "fine" ? (st.gufi || null) : null,   // 🦉 / 🍀 i tocchi di ognuno nella giornata (per chi ricarica a metà)
       passi: st.fase === "fine" ? (st.passi || {}) : null,   // ⏯️ fin dove è arrivato chi tiene la partita nelle pagelle (gli altri lo aspettano), con l'ora di ogni passo
       cron: st.fase === "fine" ? (st.cron || null) : null, ora: Date.now(), oraDi: st.oraDi || null,   // ⏱️ il piano dopo l'asta, l'ora di adesso e di chi è l'orologio
       nomeCapo: st.fase === "fine" ? (st.nomeCapo || "") : ""
@@ -6340,6 +6536,7 @@
       return rivelaFanta(t, vm.classifica || [], { chiave: "ro|" + (vm.codice || "") + "|" + vm.sessione, titoli: vm.titoli || [], mio: io ? io.id : null, serieA: vm.serieA || null,
         capo: !!cb.sonoHost, onPasso: cb.onPasso || null, passi: vm.passi || {}, nomeCapo: vm.nomeCapo || ((vm.giocatori || [])[0] || {}).nome || "",
         cron: vm.cron || null, onVel: cb.onVel || null, onSalta: cb.onSalta || null, prova: proprietario(t),
+        gufi: vm.gufi || null, onGufo: io && !t.guarda ? (cb.onGufo || null) : null, onFischio: cb.onFischio || null,   // 🦉 / 🍀 (chi guarda vede i gufetti ma non tocca)
         foto: function () { fotoRose(vm.classifica || [], io ? io.nome : null); },   // 📸 la mia rosa (chi guarda: tutte)
         onEsci: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },
         bottoni: function () {
