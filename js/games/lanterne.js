@@ -2406,16 +2406,24 @@ function anticipa(M, i0, j0, i1, j1, res){
 // Il disegno a codice resta come riserva: con l'interruttore spento, o se l'indice o un'immagine non arrivano (rete, file che manca),
 // si usa il disegno di sempre, pezzo per pezzo. Le immagini si scaricano solo quando servono: i pezzi sullo schermo e quelli appena fuori.
 // Cartella (relativa alla pagina, come carte/giochi/ di SPeeD GAME): carte/lanterne/<mappa>/, con <mappa> = palazzo o atrio.
-//   indice.json          { pixel_per_casella:64, pezzi:['5_4', ...], mobili:{ '<k>':[x, y, larg, alt] }, animati:{ barca:{ centro:[x, y], perno:[x, y] }, campana:{...}, ruota:{...} },
-//                          extra:[{ f:'extra/nome.webp', rett:[x, y, larg, alt], base:y }] }   (extra: oggetti di scena che non sono in M.ostacoli; facoltativo)
+// Il formato vero (quello che consegna Blender, vedi LEGGIMI.txt del SanDisk), letto da immLeggi:
+//   indice.json          { px_per_casella:64, pezzi:['p_5_4', ...],
+//                          mobili:[{ k, tipo, x, y, w, h (caselle), extra, file, rect:{ x, y, w, h } (pixel) }, ...],
+//                          animati:{ barca:{ file, rect, centro:[x, y], perno:[x, y] }, campana:{...}, ruota:{..., raggio} } }
+//     · extra:false → è il mobile k di M.ostacoli (stesso ordine della mappa); file 'mobili/<k>.webp'
+//     · extra:true  → oggetto di scena (sedia, vaso, lampione, sostegno della campana...): k è null, file 'mobili/x<n>.webp'.
+//                     Non è un ostacolo e sta già nel fondo: il ritaglio serve solo a coprire chi passa dietro. Si ordina per profondità
+//                     come i mobili, con la base nel bordo sud dell'impronta: (y + h) caselle.
+//     · (vecchia forma, ancora letta) mobili:{ '<k>':[x, y, larg, alt] } e extra:[{ f, rett, base }]
 //   p_<i>_<j>.webp       pezzo di 512×512 (8×8 caselle a 64 px per casella): caselle 8i…8i+7 e 8j…8j+7
-//   mobili/<k>.webp      ritaglio con alfa del mobile k di M.ostacoli (stesso ordine)
-//   animati/<nome>.webp  barca (dondola), campana (oscilla), ruota (gira col compito)
-// Nell'indice tutti i pixel sono a 64 px per casella, dall'angolo in alto a sinistra della mappa; centro e perno sono punti della mappa.
+//   mobili/<k>.webp      ritaglio con alfa del mobile k di M.ostacoli
+//   animati/<nome>.webp  barca (dondola), campana (oscilla), ruota (gira col compito): NON stanno nel fondo, le muove il gioco
+// Nell'indice tutti i pixel sono a 64 px per casella, dall'angolo in alto a sinistra della mappa; rect è dove sta l'immagine, perno è il punto
+// attorno a cui ruota o dondola (barca: la linea dell'acqua; campana: il giogo; ruota: il centro).
 // Il gioco è a 32 px per casella: le immagini si disegnano scalate a metà (sugli schermi ad alta densità restano nitide).
 // (Non usare imageSmoothingQuality='high': provato a CPU ×4, i fotogrammi passano da 60 a 8-12 al secondo.)
-const IMMAGINI_PALAZZO = false;   // l'interruttore: si accende solo quando il palazzo intero è pronto (mai stanze vere mescolate a stanze disegnate)
-const IMM_VERSIONE = '1';                // da cambiare quando le immagini cambiano: il telefono non usa le vecchie
+const IMMAGINI_PALAZZO = true;    // l'interruttore: acceso dal 30/10 col palazzo intero e la sala d'attesa (mai stanze vere mescolate a stanze disegnate)
+const IMM_VERSIONE = '2';                // da cambiare quando le immagini cambiano: il telefono non usa le vecchie
 const IMM_CARTELLA = 'carte/lanterne/';
 const IMM_IN_VOLO = 8;                   // scaricamenti insieme
 let immVolo = 0, immAcceso0;
@@ -2442,7 +2450,7 @@ function immMappa(M){
 function immIndice(m){
   if(m.stato === 1 || m.stato === 2 || m.stato === 4) return;
   if(m.stato === 3 && (m.prove >= 3 || performance.now() < m.riprova)) return;
-  if(typeof fetch !== 'function'){ m.stato = 4; return; }
+  if(typeof fetch !== 'function' || (typeof location !== 'undefined' && location.protocol === 'file:')){ m.stato = 4; return; }   // (da file:// il browser non lascia leggere le immagini: resta il disegno a codice, senza errori in console)
   m.stato = 1; m.prove++;
   fetch(m.base + 'indice.json?v=' + IMM_VERSIONE).then(r => r.status === 404 ? 404 : r.ok ? r.json() : Promise.reject()).then(j => {
     if(j === 404){ m.stato = 4; return; }
@@ -2454,8 +2462,12 @@ function immIndice(m){
 function immLeggi(j){
   if(!j || typeof j !== 'object') return null;
   const kk = T/(+j.pixel_per_casella || +j.px_per_casella || +j.ppc || 64);
-  const rett = v => { const r = Array.isArray(v) ? v : v && (v.rett || v.rect) ? (v.rett || v.rect) : v ? [v.x != null ? v.x : v.px, v.y != null ? v.y : v.py, v.w != null ? v.w : v.larg, v.h != null ? v.h : v.alt] : null;
-    return r && r.length >= 4 && r.every(n => isFinite(n)) ? { x:r[0]*kk, y:r[1]*kk, w:r[2]*kk, h:r[3]*kk } : null; };
+  // un rettangolo: [x, y, larg, alt] oppure { x, y, w, h } (anche dentro v.rect o v.rett), in pixel dell'indice → pixel del gioco
+  const rett = v => {
+    let r = Array.isArray(v) ? v : v && (v.rett || v.rect) ? (v.rett || v.rect) : v;
+    if(r && !Array.isArray(r)) r = [r.x != null ? r.x : r.px, r.y != null ? r.y : r.py, r.w != null ? r.w : r.larg, r.h != null ? r.h : r.alt];
+    return r && r.length >= 4 && r.every(n => typeof n === 'number' && isFinite(n)) ? { x:r[0]*kk, y:r[1]*kk, w:r[2]*kk, h:r[3]*kk } : null;
+  };
   const pz = new Set();
   (j.pezzi || []).forEach(p => {   // ogni pezzo: 'p_5_4.webp' o '5_4', oppure [5, 4], oppure { i:5, j:4 }
     let a = null;
@@ -2463,16 +2475,24 @@ function immLeggi(j){
     if(a && isFinite(a[0]) && isFinite(a[1]) && a[0] >= 0 && a[0] < 16) pz.add(a[1]*16 + a[0]);
   });
   if(!pz.size) return null;
-  const mobili = new Map(), lista = j.mobili || [];
-  (Array.isArray(lista) ? lista.map((v, k) => [v && v.k != null ? +v.k : k, v]) : Object.keys(lista).map(k => [+k, lista[k]])).forEach(([k, v]) => { const r = rett(v); if(r && isFinite(k)) mobili.set(k, r); });
+  const mobili = new Map(), extra = [], lista = j.mobili || [];
+  // (lista: una riga per mobile, con k e rect; oppure, nella vecchia forma, un oggetto { '<k>': [x, y, larg, alt] })
+  (Array.isArray(lista) ? lista.map((v, i) => [v && v.k != null ? +v.k : i, v]) : Object.keys(lista).map(k => [+k, lista[k]])).forEach(([k, v]) => {
+    const r = rett(v); if(!r) return;
+    if(v && !Array.isArray(v) && (v.extra === true || (v.k == null && v.file))){   // oggetto di scena: non è in M.ostacoli
+      if(!v.file) return;
+      const base = isFinite(v.y) && isFinite(v.h) ? (+v.y + +v.h)*T : r.y + r.h;   // il bordo sud dell'impronta, in pixel del gioco
+      extra.push({ f:String(v.file), x:r.x, y:r.y, w:r.w, h:r.h, base, tipo:v.tipo || '', o:{ x:+v.x, y:+v.y, w:+v.w, h:+v.h } });   // (o: l'impronta in caselle, per le parti vive)
+    } else if(isFinite(k)) mobili.set(k, r);
+  });
+  (j.extra || []).forEach(v => { const r = rett(v); if(r && v.f) extra.push({ f:String(v.f), x:r.x, y:r.y, w:r.w, h:r.h, base:(v.base != null ? v.base*kk : r.y + r.h) }); });   // (vecchia forma)
   const anim = {}, an = j.animati || {};
   Object.keys(an).forEach(nome => {
-    const a = an[nome], c = a && a.centro; if(!c || !isFinite(c[0]) || !isFinite(c[1])) return;
+    const a = an[nome], c = a && a.centro, r = rett(a); if(!c || !isFinite(c[0]) || !isFinite(c[1])) return;
     const p = a.perno;
-    anim[nome] = { cx:c[0]*kk, cy:c[1]*kk, px:p ? p[0]*kk : null, py:p ? p[1]*kk : null, w:a.w ? a.w*kk : 0, h:a.h ? a.h*kk : 0 };
+    // r: dove sta l'immagine (se manca, si centra su `centro` con la misura del file); px, py: il perno (se manca, il centro)
+    anim[nome] = { cx:c[0]*kk, cy:c[1]*kk, px:p ? p[0]*kk : null, py:p ? p[1]*kk : null, r };
   });
-  const extra = [];
-  (j.extra || []).forEach(v => { const r = rett(v); if(r && v.f) extra.push({ f:String(v.f), x:r.x, y:r.y, w:r.w, h:r.h, base:(v.base != null ? v.base*kk : r.y + r.h) }); });
   return { pz, mobili, anim, extra, kk };
 }
 // l'immagine di una voce: se è in cache la dà, se no la mette in coda (una volta sola) e dà null
@@ -2548,6 +2568,19 @@ function immChiedi0(m, M, i0, j0, i1, j1, anello){
   altro(0); pezzi(0);                 // quello che si vede: in cima, arriva per primo
   immPompa();
 }
+// i pezzi di fondo di Blender che coprono il mobile k sono tutti arrivati? Allora il mobile è già nel fondo (e anche la sua ombra):
+// se il suo ritaglio non c'è ancora, non si disegna quello a codice sopra il render (il ritaglio serve solo a coprire chi passa dietro)
+function immFondoCopre(M, k){
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return false;
+  const r = m.mobili.get(k); if(!r) return false;   // senza ritaglio nell'indice non sappiamo dov'è: resta a codice
+  const L = PEZZO*T;
+  for(let j = Math.floor(r.y/L); j <= Math.floor((r.y + r.h - 0.01)/L); j++) for(let i = Math.floor(r.x/L); i <= Math.floor((r.x + r.w - 0.01)/L); i++){
+    if(!m.pz.has(j*16 + i)) continue;   // pezzo tutto nero: non c'è nell'indice
+    const ch = 'p' + i + '_' + j;
+    if(!cerca(m.k[ch] || (m.k[ch] = 'I|' + m.nome + '|' + ch))) return false;
+  }
+  return true;
+}
 // il ritaglio del mobile k di M.ostacoli: { img, x, y, w, h } nei pixel del gioco (null se non c'è o non è arrivato)
 function immMobile(M, k){
   const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return null;
@@ -2557,20 +2590,25 @@ function immMobile(M, k){
 }
 // gli oggetti di scena (extra) da mettere in ordine di profondità insieme ai mobili
 function immExtra(m){ return m && m.stato === 2 ? m.extra : []; }
-function disegnaExtra(c, m, n){
+function disegnaExtra(c, m, n, t){
   const e = m.extra[n], img = immVoce(m, 'e' + n, e.f); if(!img) return;
   c.drawImage(img, e.x, e.y, e.w, e.h);
+  const v = e.tipo && VIVO_EXTRA[e.tipo]; if(v && e.o && isFinite(e.o.x) && isFinite(e.o.y)){ c.save(); v(c, e.o, t || 0, n); c.restore(); }
 }
 // un'immagine animata (barca, campana, ruota): centro e perno dal file indice; dx, dy spostano, ang gira intorno al perno. Vero se l'ha disegnata.
 function immAnimata(c, M, nome, dx, dy, ang){
   const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return false;
   const a = m.anim[nome]; if(!a) return false;
   const img = immVoce(m, 'a_' + nome, 'animati/' + nome + '.webp'); if(!img) return false;
-  const w = a.w || img.naturalWidth*m.kk, h = a.h || img.naturalHeight*m.kk;
-  const px = a.px != null ? a.px : a.cx, py = a.py != null ? a.py : nome === 'campana' ? a.cy - h/2 : a.cy;   // la campana si appende in alto, il resto gira dal centro
+  const r = a.r || { x:a.cx - img.naturalWidth*m.kk/2, y:a.cy - img.naturalHeight*m.kk/2, w:img.naturalWidth*m.kk, h:img.naturalHeight*m.kk };   // dove sta l'immagine
+  const px = a.px != null ? a.px : a.cx, py = a.py != null ? a.py : nome === 'campana' ? r.y : a.cy;   // la campana si appende in alto, il resto gira dal centro
   c.save(); c.translate(px + (dx || 0), py + (dy || 0)); if(ang) c.rotate(ang);
-  c.drawImage(img, a.cx - w/2 - px, a.cy - h/2 - py, w, h); c.restore();
+  c.drawImage(img, r.x - px, r.y - py, r.w, r.h); c.restore();
   return true;
+}
+// l'indice ha questa immagine animata (anche se il file non è ancora arrivato)? Serve a non disegnare a codice una parte che sta per arrivare
+function immIndiceHa(M, nome){
+  const m = M._im; return !!(m && m.stato === 2 && immAcceso() && m.anim[nome]);
 }
 // c'è l'immagine animata e (se ancora non è arrivata) la si chiede? Serve a scegliere tra immagine e disegno a codice
 function immHa(M, nome){
@@ -3104,12 +3142,131 @@ function altezzaMobile(o, M, k){
 function disegnaMobile(c, M, o, k, res, t, eff, pit){
   const mod = MOBILI[o.t]; if(!mod) return;
   const x = o.x*T, y = o.y*T, r = immMobile(M, k);
-  if(r) c.drawImage(r.img, r.x, r.y, r.w, r.h);   // il ritaglio di Blender
-  else { const f = figurina(M, o, k, res); if(f.cv) c.drawImage(f.cv, x + f.ox, y + f.oy, f.w, f.h); }                    // la riserva: il disegno a codice
-  // l'ingranaggio: se c'è l'immagine della ruota, gira lei col compito (dall'angolo fermo, 0) al posto di quella a codice
-  if(o.t === 'ingranaggio' && immAnimata(c, M, 'ruota', 0, 0, (eff || []).some(e => e.k === 'compito' && e.v === 'ingranaggio') ? t*6 : 0)) return;
-  // le parti vive (fiamme, schermi, acqua) restano a codice sopra il mobile, con l'immagine o senza
+  if(r || immFondoCopre(M, k)){   // il mobile di Blender (nel fondo, e col suo ritaglio sopra): le fiamme sono tolte dal render (restano le luci), le parti vive sono quelle fatte su misura per l'immagine
+    if(r) c.drawImage(r.img, r.x, r.y, r.w, r.h);
+    // l'ingranaggio: la ruota grande non è nel ritaglio, gira lei col compito (dall'angolo fermo, 0); finché non è arrivata non si disegna quella a codice
+    if(o.t === 'ingranaggio' && immIndiceHa(M, 'ruota')){ immAnimata(c, M, 'ruota', 0, 0, (eff || []).some(e => e.k === 'compito' && e.v === 'ingranaggio') ? t*6 : 0); return; }
+    const v = VIVO_IMM[o.t];
+    if(v){ c.save(); v(c, o, t, eff, pit); c.restore(); }
+    else if(VIVO_SOLO_PARTICELLE[o.t] && mod.vivo){ c.save(); c.translate(x, y); mod.vivo(c, o.w*T, o.h*T, o, t, eff, pit); c.restore(); }   // (poi niente: le parti vive del disegno a codice sono tarate su quel disegno)
+    return;
+  }
+  const f = figurina(M, o, k, res); if(f.cv) c.drawImage(f.cv, x + f.ox, y + f.oy, f.w, f.h);                    // la riserva: il disegno a codice
+  // le parti vive (fiamme, schermi, acqua) a codice sopra il disegno
   if(mod.vivo){ c.save(); c.translate(x, y); mod.vivo(c, o.w*T, o.h*T, o, t, eff, pit); c.restore(); }
+}
+// ── Le parti vive sopra le immagini di Blender ──
+// Blender mette ogni mobile con X verso est, Y verso nord (dal bordo sud dell'impronta) e Z in su, in caselle; sullo schermo del gioco il punto (X, Y, Z)
+// diventa (x, y - z). Le posizioni qui sotto vengono dagli stessi numeri degli script di Blender (blender/lanterne_mobili*.py): così fiamme e schermi
+// cadono dove stanno nell'immagine. I mobili che non sono qui non hanno parti vive sulle immagini: meglio fermo che sbagliato.
+const bl = (o, X, Y, Z) => [(o.x + X)*T, (o.y + o.h - Y - Z)*T];
+const VIVO_SOLO_PARTICELLE = { aiuola:1 };   // l'acqua del compito (gocce): non dipende da dove sta il disegno
+// la fiamma di una candela vera, piccola: x, y è la base dello stoppino
+function fiammaBl(c, x, y, t, k){
+  const fl = 0.8 + 0.2*Math.sin(t*11 + k*2.3) + 0.06*Math.sin(t*27 + k);
+  c.fillStyle = 'rgba(255,190,90,' + (0.14*fl).toFixed(3) + ')'; c.beginPath(); c.arc(x, y - 1.5, 4.2, 0, 7); c.fill();
+  c.fillStyle = 'rgba(255,214,130,.92)'; c.beginPath(); c.ellipse(x, y - 1.3*fl, 1.05, 2.3*fl, 0, 0, 7); c.fill();
+  c.fillStyle = 'rgba(255,248,215,.95)'; c.beginPath(); c.ellipse(x, y - 0.8*fl, 0.45, 1.2*fl, 0, 0, 7); c.fill();
+}
+// un vetro acceso (schermo): un velo che pulsa e qualche riga di testo che scorre; x, y è l'angolo in alto a sinistra
+function schermoBl(c, x, y, w, h, t, k, righe){
+  c.fillStyle = 'rgba(140,240,190,' + (0.06 + 0.05*Math.sin(t*5 + k*1.3)).toFixed(3) + ')'; c.fillRect(x, y, w, h);
+  for(let j = 0; j < righe; j++){
+    const lw = (0.25 + 0.6*((j*7 + k*3 + Math.floor(t*2.5)) % 5)/4)*(w - 4);
+    c.fillStyle = 'rgba(190,255,230,' + (0.35 + 0.25*Math.sin(t*4 + j + k)).toFixed(3) + ')'; c.fillRect(x + 2, y + 1.6 + j*(h - 3)/righe, lw, 1);
+  }
+}
+const VIVO_IMM = {
+  // candelabro a terra (1×1): cinque candele sui bracci
+  candelabro(c, o, t){
+    const cx = o.w/2, cy = o.h*0.55;
+    for(let i = 0; i < 5; i++){
+      const u = (i - 2)/2, a = Math.abs(u), z = 1.05 + 0.1 + 0.38*(1 - 0.3*a) + 0.12*(1 - a) + 0.03 + 0.22 + 0.004;   // la cima della cera
+      const p = bl(o, cx + 0.38*u, cy, z); fiammaBl(c, p[0], p[1], t, i + o.x*3);
+    }
+  },
+  // tavolo: due candelabri da tavola con tre candele ciascuno, sulla striscia rossa
+  tavolo(c, o, t){
+    const x0 = 0.1, x1 = o.w - 0.1, cy = (0.12 + o.h - 0.5)/2;
+    [0.25, 0.75].forEach((f, j) => {
+      const x = x0 + (x1 - x0)*f;
+      for(let i = 0; i < 3; i++){
+        const u = i - 1, a = Math.abs(u), z = 0.62 + 0.008 + 0.19 + 0.05*(1 - a) + 0.012 + (0.15 - 0.03*a) + 0.004;
+        const p = bl(o, x + u*0.14, cy, z); fiammaBl(c, p[0], p[1], t, j*3 + i + o.x);
+      }
+    });
+  },
+  // altare: i due candelieri alti ai lati della croce
+  altare(c, o, t){
+    const yc = (0.08 + 0.78)/2, z = 1.075 + 0.28 + 0.012 + 0.13 + 0.004;
+    [0.8, o.w - 0.8].forEach((X, i) => { const p = bl(o, X, yc, z); fiammaBl(c, p[0], p[1], t, 1 + i); });
+  },
+  // forno: la bocca ad arco è nera nel render (resta la luce): il fuoco ci balla dentro, tagliato sull'arco
+  forno(c, o, t, eff, pit){
+    const acceso = (eff || []).some(e => e.k === 'compito' && e.v === 'fuoco');
+    const [xa, yb] = bl(o, 0.7, 0.1, 0.52), xb = bl(o, 1.3, 0.1, 0.52)[0], yc = bl(o, 1.0, 0.1, 0.75)[1], cx = (xa + xb)/2, R = (xb - xa)/2;
+    const a = acceso ? 1 : 0.62 + Math.sin(t*3)*0.1;
+    c.beginPath(); c.moveTo(xa, yb); c.lineTo(xa, yc); c.arc(cx, yc, R, Math.PI, 0); c.lineTo(xb, yb); c.closePath(); c.clip();
+    c.globalCompositeOperation = 'lighter';
+    const g = c.createRadialGradient(cx, yb, 0, cx, yb, R*1.7); g.addColorStop(0, 'rgba(255,150,60,' + (0.5*a).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,110,30,0)');
+    c.fillStyle = g; c.fillRect(xa, yc - R, xb - xa, yb - yc + R);
+    for(let i = 0; i < 4; i++){   // lingue di fuoco morbide: ovali che si allungano in su e ballano, sempre in movimento
+      const fx = xa + (i + 0.5)*(xb - xa)/4 + Math.sin(t*4 + i*2)*0.8, h = (7.5 + 6*(0.5 + 0.5*Math.sin(t*7.3 + i*1.9)))*(acceso ? 1.3 : 1);
+      c.save(); c.translate(fx, yb - h*0.4); c.scale(1.15, h*0.6/3.4);
+      const f = c.createRadialGradient(0, 0, 0, 0, 0, 3.4); f.addColorStop(0, 'rgba(255,238,175,' + (0.85*a).toFixed(3) + ')'); f.addColorStop(0.45, 'rgba(255,170,70,' + (0.55*a).toFixed(3) + ')'); f.addColorStop(1, 'rgba(255,110,30,0)');
+      c.fillStyle = f; c.beginPath(); c.arc(0, 0, 3.4, 0, 7); c.fill(); c.restore();
+    }
+    if(acceso && Math.random() < 0.5) pit.sparpaglia('fiamma', cx, yb - 8, 1, { v:10, su:40, vita:0.6, r:4 });
+  },
+  // console: cinque schermi in due altezze
+  console(c, o, t){
+    const n = 5;
+    for(let k = 0; k < n; k++){
+      const alto = 0.04*(k % 2), p = bl(o, (k + 0.5)*o.w/n - 0.3, 0.485, 1.17 + alto);
+      schermoBl(c, p[0], p[1], 0.6*T, 0.28*T, t, k, 3);
+    }
+  },
+  // computer della sala d'attesa
+  computer(c, o, t){
+    const p = bl(o, o.w/2 - 0.4, 0.495, 0.7 + 0.67);
+    schermoBl(c, p[0], p[1], 0.8*T, 0.57*T, t, 1, 5);
+  },
+  // fontana: luccichii sull'acqua della vasca, come quelli del mare. Dietro la colonna c'è la vasca alta che copre l'acqua: solo a est, sud e ovest.
+  fontana(c, o, t){
+    const p = bl(o, o.w/2, o.h/2, 0.37);
+    for(let k = 0; k < 6; k++){
+      const ciclo = t*0.8 + k*0.31, n = Math.floor(ciclo), f = (ciclo - n)/0.4;
+      if(f >= 1) continue;
+      const a = Math.sin(f*Math.PI), ang = -0.1*Math.PI + fisso(n, k, 90)*1.2*Math.PI, r = (0.95 + fisso(n, k, 91)*0.4)*T;
+      const x = p[0] + Math.cos(ang)*r, y = p[1] + Math.sin(ang)*r;
+      c.fillStyle = 'rgba(235,245,255,' + (0.7*a).toFixed(3) + ')'; c.fillRect(x - 2.5, y, 5, 1.2); c.fillRect(x - 0.6, y - 1, 1.2, 3.2);
+    }
+  },
+};
+// le parti vive degli oggetti di scena (non sono in M.ostacoli): o = l'impronta in caselle { x, y, w, h }
+const VIVO_EXTRA = {
+  // lampione di ferro: la candela dentro il fanale, in cima al palo (alto 1,24 più la cera)
+  lampione(c, o, t, n){ const p = bl(o, 0.5, 0.45, 1.24 + 0.135); fiammaBl(c, p[0], p[1], t, 20 + n); },
+};
+// le candele sul pavimento dei dettagli delle stanze (x, y in caselle, altezza del candeliere): negli script di Blender sono sempre portacandela (cera 0,13 sopra il candeliere)
+const CANDELE_BL = { palazzo:[
+  [57.0, 4.6, 0.1], [63.6, 9.0, 0.1],                                                             // Torre
+  [16.6, 23.5, 0.1], [11.6, 37.2, 0.1], [29.1, 40.2, 0.1], [40.8, 36.6, 0.1], [67.4, 34.5, 0.1],  // Cucine, Cantina, Galleria (due), Telegrafo
+  [3.42, 18.55, 0.03], [3.62, 18.9, 0.03], [3.4, 19.2, 0.03], [10.35, 19.5, 0.03], [10.5, 15.9, 0.03],   // Cappella (candele votive: l'altezza vera è a caso tra 0 e 0,06)
+  [3.45, 10.3, 0.18], [14.35, 10.15, 0.1], [30.7, 11.1, 0.08], [55.7, 44.3, 0.05],                // Biblioteca (due), Salone, Molo
+] };
+// le fiamme di quelle candele: solo se il pezzo di fondo che le contiene è arrivato (se no la candela non c'è)
+function candeleVive(c, M, t, x0, y0, x1, y1){
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return;
+  const lista = CANDELE_BL[m.nome]; if(!lista) return;
+  const L = PEZZO*T;
+  for(let n = 0; n < lista.length; n++){
+    const q = lista[n], x = q[0]*T, y = (q[1] - (q[2] + 0.012 + 0.13 + 0.004))*T;
+    if(x < x0 || x > x1 || y < y0 || y > y1) continue;
+    const i = Math.floor(x/L), j = Math.floor(q[1]*T/L), ch = 'p' + i + '_' + j;
+    if(m.pz.has(j*16 + i) && !cerca(m.k[ch] || (m.k[ch] = 'I|' + m.nome + '|' + ch))) continue;
+    fiammaBl(c, x, y, t, 30 + n);
+  }
 }
 // le fiamme delle torce sui muri (vive)
 function torceVive(c, M, t, x0, y0, x1, y1){
@@ -3126,16 +3283,17 @@ function torceVive(c, M, t, x0, y0, x1, y1){
 // ── Il mare vivo: onde che scorrono, luccichii, schiuma sulle rive, cerchi d'acqua, la barca che dondola ──
 function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
   const A = prepara(M); if(!A.acque.length) return;
+  const q = M._im && M._im.stato === 2 && immAcceso() ? 0.7 : 1;   // sull'acqua di Blender onde e schiuma sono più discrete
   // le onde: due linee per riga d'acqua, la cresta chiara e il cavo scuro, che scorrono piano
   for(const [ty, a, b] of A.acque){
     if((ty + 1)*T < y0 || ty*T > y1) continue;
     const xa = Math.max(a*T, Math.floor(x0/8)*8), xb = Math.min(b*T, x1); if(xb <= xa) continue;
     for(let k = 0; k < 2; k++){
       const yb = ty*T + 9 + k*15;
-      c.lineWidth = 1.4; c.strokeStyle = 'rgba(8,20,32,.4)'; c.beginPath();
+      c.lineWidth = 1.4; c.strokeStyle = 'rgba(8,20,32,' + (0.4*q).toFixed(3) + ')'; c.beginPath();
       for(let x = xa; x <= xb; x += 8){ const y = yb + 2 + Math.sin(x*0.05 + t*1.3 + ty*1.7 + k*2.1)*2.4 + Math.sin(x*0.13 - t*2.1 + k)*1; if(x === xa) c.moveTo(x, y); else c.lineTo(x, y); }
       c.stroke();
-      c.lineWidth = 1; c.strokeStyle = 'rgba(160,205,235,.16)'; c.beginPath();
+      c.lineWidth = 1; c.strokeStyle = 'rgba(160,205,235,' + (0.16*q).toFixed(3) + ')'; c.beginPath();
       for(let x = xa; x <= xb; x += 8){ const y = yb + Math.sin(x*0.05 + t*1.3 + ty*1.7 + k*2.1)*2.4 + Math.sin(x*0.13 - t*2.1 + k)*1; if(x === xa) c.moveTo(x, y); else c.lineTo(x, y); }
       c.stroke();
     }
@@ -3152,7 +3310,7 @@ function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
   }
   // la schiuma che lambisce le rive: due righe tratteggiate che scorrono in versi opposti
   const riva = (off, w, alfa, dash, vel) => {
-    c.lineWidth = w; c.lineCap = 'round'; c.strokeStyle = 'rgba(225,240,250,' + alfa + ')'; c.setLineDash(dash); c.lineDashOffset = -t*vel; c.beginPath();
+    c.lineWidth = w; c.lineCap = 'round'; c.strokeStyle = 'rgba(225,240,250,' + (alfa*q).toFixed(3) + ')'; c.setLineDash(dash); c.lineDashOffset = -t*vel; c.beginPath();
     for(const r of A.rive){
       if(Math.max(r.x1, r.x2) < x0 || Math.min(r.x1, r.x2) > x1 || Math.max(r.y1, r.y2) < y0 || Math.min(r.y1, r.y2) > y1) continue;
       const o = off + Math.sin(t*2.2 + (r.x1 + r.y1)*0.05)*1.6;
@@ -3173,7 +3331,11 @@ function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
   const B = M.barca; if(!B || B.x + 80 < x0 || B.x - 80 > x1 || B.y + 40 < y0 || B.y - 50 > y1) return;
   const bob = Math.sin(t*1.25)*1.6, roll = Math.sin(t*0.95 + 0.6)*0.03;
   // con l'immagine di Blender (ombra sull'acqua, cima e lanterna sono già nel fondo o nel ritaglio) la barca dondola intorno al suo perno
-  if(!immAnimata(c, M, 'barca', 0, bob, roll)){
+  if(immHa(M, 'barca')){
+    // Blender non mette l'ombra della barca sull'acqua: una macchia scura sotto lo scafo, che segue il dondolio
+    c.fillStyle = 'rgba(3,10,18,.32)'; c.beginPath(); c.ellipse(B.x + 2, B.y + 10.5 + bob*0.4, 50, 10.5, roll, 0, 7); c.fill();
+    immAnimata(c, M, 'barca', 0, bob, roll);
+  } else {
     const f = barca(res || 2);
     c.fillStyle = 'rgba(4,12,20,.45)'; c.beginPath(); c.ellipse(B.x, B.y + 8, 52, 14, roll, 0, 7); c.fill();
     c.strokeStyle = 'rgba(180,165,130,.9)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(B.cima[0], B.cima[1]); c.quadraticCurveTo((B.cima[0] + B.x - 44)/2, B.y + 10 + bob, B.x - 44, B.y - 6 + bob); c.stroke();
@@ -3281,6 +3443,7 @@ class Pittore {
     // solo il mare e le torce si muovono
     mareVivo(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+T, this.onde, res);
     torceVive(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+2*T);
+    candeleVive(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+2*T);   // (con le immagini di Blender: le fiamme delle candele sul pavimento)
     const vx0=cx-3*T, vy0=cy-3*T, vx1=cx+W/s+3*T, vy1=cy+H/s+3*T;
     const campanaImm=!!(S.palazzo && imm && immHa(M,'campana'));
     if(S.palazzo){
@@ -3331,7 +3494,7 @@ class Pittore {
     scena.sort((a,b)=>a.y-b.y);
     for(const q of scena){
       if(q.o){ disegnaMobile(c, M, q.o, q.k, res, t, S.effetti, this); continue; }
-      if(q.ex!==undefined){ disegnaExtra(c, imm, q.ex); continue; }
+      if(q.ex!==undefined){ disegnaExtra(c, imm, q.ex, t); continue; }
       if(q.campana){ immAnimata(c, M, 'campana', 0, 0, Math.sin(t*2)*0.08); continue; }
       const p=q.p;
       if(p.muove && !p.fantasma){ const k=this.passi[p.id]||0; if(t-k>0.22){ this.passi[p.id]=t; this.sparpaglia('polvere', p.x+(Math.random()-0.5)*8, p.y+T*0.36, 2, { v:12, vita:0.5, r:2.5 }); }

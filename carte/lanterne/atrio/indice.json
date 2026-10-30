@@ -1,0 +1,247 @@
+{
+ "mappa": "atrio",
+ "px_per_casella": 64,
+ "lato_pezzo_caselle": 8,
+ "lato_pezzo_px": 512,
+ "larghezza_px": 2048,
+ "altezza_px": 1024,
+ "colonne": 4,
+ "righe": 2,
+ "pezzi": [
+  "p_0_0",
+  "p_1_0",
+  "p_2_0",
+  "p_3_0",
+  "p_0_1",
+  "p_1_1",
+  "p_2_1"
+ ],
+ "mobili": [
+  {
+   "k": 0,
+   "tipo": "pilastro",
+   "x": 6,
+   "y": 5,
+   "w": 1,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/0.webp",
+   "rect": {
+    "x": 391,
+    "y": 206,
+    "w": 50,
+    "h": 170
+   }
+  },
+  {
+   "k": 1,
+   "tipo": "pilastro",
+   "x": 19,
+   "y": 5,
+   "w": 1,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/1.webp",
+   "rect": {
+    "x": 1223,
+    "y": 206,
+    "w": 50,
+    "h": 170
+   }
+  },
+  {
+   "k": 2,
+   "tipo": "pilastro",
+   "x": 6,
+   "y": 10,
+   "w": 1,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/2.webp",
+   "rect": {
+    "x": 391,
+    "y": 526,
+    "w": 50,
+    "h": 170
+   }
+  },
+  {
+   "k": 3,
+   "tipo": "pilastro",
+   "x": 19,
+   "y": 10,
+   "w": 1,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/3.webp",
+   "rect": {
+    "x": 1223,
+    "y": 526,
+    "w": 50,
+    "h": 170
+   }
+  },
+  {
+   "k": 4,
+   "tipo": "panca",
+   "x": 10,
+   "y": 2,
+   "w": 6,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/4.webp",
+   "rect": {
+    "x": 637,
+    "y": 93,
+    "w": 390,
+    "h": 96
+   }
+  },
+  {
+   "k": 5,
+   "tipo": "computer",
+   "x": 12,
+   "y": 6,
+   "w": 2,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/5.webp",
+   "rect": {
+    "x": 770,
+    "y": 317,
+    "w": 124,
+    "h": 123
+   }
+  },
+  {
+   "k": 6,
+   "tipo": "albero",
+   "x": 2,
+   "y": 2,
+   "w": 1,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/6.webp",
+   "rect": {
+    "x": 117,
+    "y": 0,
+    "w": 87,
+    "h": 172
+   }
+  },
+  {
+   "k": 7,
+   "tipo": "albero",
+   "x": 23,
+   "y": 2,
+   "w": 1,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/7.webp",
+   "rect": {
+    "x": 1460,
+    "y": 0,
+    "w": 86,
+    "h": 172
+   }
+  },
+  {
+   "k": 8,
+   "tipo": "albero",
+   "x": 2,
+   "y": 13,
+   "w": 1,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/8.webp",
+   "rect": {
+    "x": 117,
+    "y": 693,
+    "w": 86,
+    "h": 183
+   }
+  },
+  {
+   "k": 9,
+   "tipo": "albero",
+   "x": 23,
+   "y": 13,
+   "w": 1,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/9.webp",
+   "rect": {
+    "x": 1462,
+    "y": 697,
+    "w": 84,
+    "h": 179
+   }
+  },
+  {
+   "k": null,
+   "tipo": "sedia",
+   "x": 9,
+   "y": 8,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x0.webp",
+   "rect": {
+    "x": 556,
+    "y": 447,
+    "w": 40,
+    "h": 91
+   }
+  },
+  {
+   "k": null,
+   "tipo": "sedia",
+   "x": 17,
+   "y": 8,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x1.webp",
+   "rect": {
+    "x": 1067,
+    "y": 483,
+    "w": 41,
+    "h": 68
+   }
+  },
+  {
+   "k": null,
+   "tipo": "sedia",
+   "x": 4,
+   "y": 5,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x2.webp",
+   "rect": {
+    "x": 251,
+    "y": 269,
+    "w": 36,
+    "h": 88
+   }
+  },
+  {
+   "k": null,
+   "tipo": "sedia",
+   "x": 21,
+   "y": 11,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x3.webp",
+   "rect": {
+    "x": 1338,
+    "y": 656,
+    "w": 38,
+    "h": 85
+   }
+  }
+ ],
+ "animati": {},
+ "nota": "rettangoli in pixel a 64 px per casella dall'angolo in alto a sinistra della mappa; il pezzo (i, j) copre le caselle x=0..7, y=0..7"
+}
