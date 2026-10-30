@@ -751,6 +751,19 @@
     ".st-pag{background:rgba(16,20,36,.97);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 0 0 1px var(--o-filo-oro),0 18px 40px -16px rgba(0,0,0,.9);}",
     ".st-pag,.st-pag *{font-family:var(--o-tit);}.st-pag-tit{color:var(--o-testo);}.st-pag-testa b{color:var(--o-testo);}.st-pag-nota{color:var(--o-tenue);opacity:1;}",
     ".st-pag-attesa{background:rgba(255,255,255,.07);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro);}",
+    // 🏆 le 3 giornate (30 ott 2026): la classifica dopo una giornata veloce, i punti una per una sotto la pagella e sul podio
+    ".st-cl3-righe{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:4px;}",
+    ".st-cl3-r{flex:1 1 0;min-height:0;max-height:46px;display:flex;align-items:center;gap:7px;padding:0 10px;border-radius:10px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--o-filo);animation:stSale .45s cubic-bezier(.2,1.3,.4,1) both;}",
+    ".st-cl3-r.mio{box-shadow:inset 0 0 0 1.5px var(--o-filo-oro);background:rgba(255,255,255,.11);}",
+    ".st-cl3-pos{flex:none;min-width:24px;font-weight:900;font-size:.9rem;color:var(--o-tenue);}.st-cl3-r:first-child .st-cl3-pos{color:var(--o-oro-testo);}",
+    ".st-cl3-r img{flex:none;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.16);}",
+    ".st-cl3-nome{flex:1;min-width:0;font-weight:900;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".st-cl3-su{flex:none;font-style:normal;font-size:.7rem;font-weight:900;}.st-cl3-su.su{color:#34d17a;}.st-cl3-su.giu{color:#ff6b78;}",
+    ".st-cl3-r small{flex:none;font-size:.72rem;font-weight:800;color:var(--o-tenue);font-variant-numeric:tabular-nums;}",
+    ".st-cl3-r b{flex:none;min-width:42px;text-align:right;font-size:1.15rem;font-weight:900;color:var(--o-testo);font-variant-numeric:tabular-nums;}",
+    ".st-pag-g3{flex:none;display:flex;align-items:baseline;justify-content:center;gap:8px;padding:5px 10px;border-radius:10px;background:rgba(255,255,255,.07);font-weight:800;font-size:.8rem;color:var(--o-tenue);font-variant-numeric:tabular-nums;animation:stSale .45s cubic-bezier(.2,1.3,.4,1) both;}",
+    ".st-pag-g3 b{font-size:1.05rem;color:var(--o-testo);white-space:nowrap;}.st-pag-g3 span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".st-gradino small.g3{font-size:.6rem;font-weight:800;color:var(--o-tenue);white-space:nowrap;}",
     ".st-rivela .st-pag-av{background:var(--o-tasto);color:var(--o-tasto-testo);font-family:var(--o-tit);font-weight:800;border:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 8px 18px rgba(224,34,90,.45);}"
   ].join("");
   document.head.appendChild(stile);
@@ -1093,6 +1106,7 @@
       "Sul maxischermo, accanto al calciatore all'asta: <b>🎯 RIGORISTA</b> (anche 2° o 3°), <b>🦶 BATTITORE</b> (punizioni) e <b>🚩 ANGOLI</b>, quelli veri di quest'anno.",
       "Alla fine si scoprono le <b>quotazioni vere</b> dei calciatori, dalla rosa che vale meno a quella che vale di più. Poi si gioca <b>⚽ una giornata di Serie A finta</b>, come nel fantacalcio vero: i vostri calciatori non giocano tra di loro, ognuno gioca con la sua squadra contro chi capita (le 20 squadre si sorteggiano; i risultati dipendono da attacco e difesa veri dell'anno scorso). I gol li segnano soprattutto i più quotati e gli attaccanti; i rigori li tirano i <b>🎯 rigoristi</b> di quest'anno (all'asta c'è la scritta sul maxischermo); i cartellini dipendono da quanti ne ha presi davvero ognuno. Chi comprate gioca sempre. Tutti partono da 6 in pagella (il portiere di solito resta a 6), poi voti e bonus come nel fantacalcio: <b>gol +3</b>, <b>assist +1</b>, <b>giallo −0,5</b>, <b>rosso −1</b>, <b>rigore sbagliato −3</b>, <b>autogol −2</b>; per il portiere <b>gol subito −1</b>, <b>porta inviolata +1</b>, <b>rigore parato +3</b>. Sul campo si vedono con calma i momenti dei vostri calciatori (anche i pali e le parate), col nome e la faccina di chi li ha comprati; a fine primo tempo e al fischio finale arrivano le pagelle. Vince chi fa <b>più fantapunti</b> (a pari punti la rosa che vale di più, poi chi ha più crediti avanzati).",
       "La giornata si spegne nel ⚙️: allora vince la rosa che <b>vale di più</b> (a pari valore chi ha <b>più crediti avanzati</b>).",
+      "<b>🏆 3 giornate</b> (si sceglie nel ⚙️): le stesse rose giocano tre giornate di fila, ognuna con partite sorteggiate da capo. Le prime due si vedono <b>veloci</b> (solo i momenti dei vostri calciatori), con la classifica dopo ognuna; la terza si gioca <b>intera</b>, partendo dai punti delle prime due. Vince chi fa <b>più fantapunti sommati</b>.",
       "A fine partita i <b>titoli scherzosi</b> (non sono trofei): 💸 lo sprecone, 🧊 il braccino corto, 🎯 il cecchino dell'ultimo secondo… e con <b>📸</b> mandi la foto della tua rosa nel gruppo."
   ];
   function giocoAsta(f) { return {
@@ -1112,7 +1126,7 @@
     // le regole in una riga, per la saletta: "🎁 Temi classici · Vacanze · 15 crediti" o "⚽ Mini asta Fantacalcio · 20 crediti" (di partenza: quello della tessera)
     riassunto: function (imp) {
       imp = imp || {};
-      if ((imp.formato || f) === "fanta") return "⚽ Mini asta Fantacalcio · " + FANTA_BUDGET + " crediti · rosa da 5 · rilanci +1 +2 +5" + (imp.giornata === false ? " · vince la rosa che vale di più" : " · poi la giornata ⚽");
+      if ((imp.formato || f) === "fanta") return "⚽ Mini asta Fantacalcio · " + FANTA_BUDGET + " crediti · rosa da 5 · rilanci +1 +2 +5" + (imp.giornata === false ? " · vince la rosa che vale di più" : imp.giornate === 3 ? " · poi 🏆 3 giornate ⚽" : " · poi la giornata ⚽");
       var temi = window.SG_ASTA_TEMI || [], tm = temi.filter(function (x) { return x.id === imp.tema; })[0] || temi[0];
       return "🎁 Temi classici" + (tm ? " · " + tm.icona + " " + tm.nome : "") + " · " + (imp.crediti || 15) + " crediti" +
         (imp.round === "normali" ? " · 🔨 round tutti normali" : " · 🎭 round ✉️ 📦 🎁") + (imp.maledetta ? " · 🧨 carta maledetta" : "");
@@ -1131,6 +1145,7 @@
       dove.maledetta = dove.maledetta === true;   // (riaprendo «⚙️ Regole» resta com'era; di base No)
       dove.round = dove.round === "normali" ? "normali" : "misti";   // (di base i 4 round diversi)
       dove.giornata = dove.giornata !== false;   // ⚽ la giornata dopo l'asta (fantacalcio): di base sì
+      dove.giornate = dove.giornate === 3 ? 3 : 1;   // 🏆 quante giornate (30 ott 2026): di base 1, com'era; 3 = due veloci e la terza intera
       // contenitori che compaiono/spariscono in base alla modalità scelta
       var wrapCrediti = el("div", {}), wrapTema = el("div", {}), wrapFanta = el("div", { hidden: "hidden" }), wrapMal = el("div", {}), wrapRound = el("div", {});
 
@@ -1247,10 +1262,12 @@
         text: "⚽ 20 crediti a testa · rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono dal mazzo uno alla volta, in ordine tutto a caso, e si rilancia di +1, +2 o +5. Alla fine si scoprono le quotazioni vere." }));
       wrapFanta.appendChild(el("div", { class: "etichetta", text: "⚽ La giornata dopo l'asta" }));
       var bGioSi, bGioNo;
+      var wrapG3 = el("div", {}), bG1, bG3;
       function scegliGio(v) {
         dove.giornata = v;
         bGioSi.className = "modo-chip" + (v ? " attiva" : "");
         bGioNo.className = "modo-chip" + (!v ? " attiva" : "");
+        wrapG3.hidden = !v;   // (quante giornate: solo se la giornata c'è)
       }
       bGioSi = el("button", { class: "modo-chip", onclick: function () { scegliGio(true); } }, [
         el("span", { class: "mi", text: "⚽" }), el("div", {}, [
@@ -1259,6 +1276,22 @@
         el("span", { class: "mi", text: "💎" }), el("div", {}, [
           el("div", { class: "mt", text: "No" }), el("div", { class: "ms", text: "Vince la rosa che vale di più" })])]);
       wrapFanta.appendChild(el("div", { class: "modo-griglia" }, [bGioSi, bGioNo]));
+      // 🏆 una giornata sola o tre di fila (le prime due veloci, la terza intera): vince chi fa più fantapunti sommati
+      function scegliG3(v) {
+        dove.giornate = v;
+        bG1.className = "modo-chip" + (v !== 3 ? " attiva" : "");
+        bG3.className = "modo-chip" + (v === 3 ? " attiva" : "");
+      }
+      bG1 = el("button", { class: "modo-chip", onclick: function () { scegliG3(1); } }, [
+        el("span", { class: "mi", text: "⚽" }), el("div", {}, [
+          el("div", { class: "mt", text: "1 giornata" }), el("div", { class: "ms", text: "Una partita intera" })])]);
+      bG3 = el("button", { class: "modo-chip", onclick: function () { scegliG3(3); } }, [
+        el("span", { class: "mi", text: "🏆" }), el("div", {}, [
+          el("div", { class: "mt", text: "3 giornate" }), el("div", { class: "ms", text: "Due veloci, la terza intera: contano i punti sommati" })])]);
+      wrapG3.appendChild(el("div", { class: "etichetta", text: "🏆 Quante giornate" }));
+      wrapG3.appendChild(el("div", { class: "modo-griglia" }, [bG1, bG3]));
+      wrapFanta.appendChild(wrapG3);
+      scegliG3(dove.giornate);
       scegliGio(dove.giornata);
       box.appendChild(wrapFanta);
       scegliFormato(f);
@@ -2435,7 +2468,10 @@
   function valoreCalc(c) { var V = (window.SG_FANTA_QUOTAZIONI || {}).valori || {}, v = +V[c.nome + " (" + c.squadra + ")"]; return v > 0 ? v : 1; }
   // serieA: un oggetto da riempire se si gioca anche la giornata (vedi giornataSerieA): allora la classifica va per fantapunti.
   // r.posV = il posto per valore
-  function classificaFanta(giocatori, serieA) {
+  // giornate: 3 = 🏆 tre giornate di fila (30 ott 2026): le prime due (veloci) in serieA.prima e r.prima, la terza (intera) dove sta
+  // la giornata sola di sempre (serieA.partite, r.gio); r.tot = i fantapunti sommati, che decidono la classifica
+  function puntiFin(r) { return r.tot != null ? r.tot : r.gio.punti; }
+  function classificaFanta(giocatori, serieA, giornate) {
     var righe = giocatori.map(function (g, i) {
       var kit = ordinaRosa(g.kit || []).map(function (c) { return { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo, valore: valoreCalc(c), prezzo: c.prezzo || 0 }; }), tot = 0;
       kit.forEach(function (c) { tot += c.valore; });
@@ -2444,9 +2480,11 @@
     righe.sort(function (a, b) { return (b.totale - a.totale) || (b.crediti - a.crediti); });
     righe.forEach(function (r, i) { var p = righe[i - 1]; r.pos = r.posV = p && p.totale === r.totale && p.crediti === r.crediti ? p.pos : i + 1; r.punti = "valore " + r.totale; });
     if (!serieA) return righe;
+    if (giornate === 3) serieA.prima = [0, 1].map(function () { var A = {}; giornataSerieA(righe, A); righe.forEach(function (r) { (r.prima = r.prima || []).push(r.gio); }); return A; });
     giornataSerieA(righe, serieA);
-    righe.sort(function (a, b) { return (b.gio.punti - a.gio.punti) || (b.totale - a.totale) || (b.crediti - a.crediti); });
-    righe.forEach(function (r, i) { var p = righe[i - 1]; r.pos = p && p.gio.punti === r.gio.punti && p.totale === r.totale && p.crediti === r.crediti ? p.pos : i + 1; r.punti = numFanta(r.gio.punti) + " fantapunti"; });
+    if (giornate === 3) righe.forEach(function (r) { r.tot = r.prima[0].punti + r.prima[1].punti + r.gio.punti; });
+    righe.sort(function (a, b) { return (puntiFin(b) - puntiFin(a)) || (b.totale - a.totale) || (b.crediti - a.crediti); });
+    righe.forEach(function (r, i) { var p = righe[i - 1]; r.pos = p && puntiFin(p) === puntiFin(r) && p.totale === r.totale && p.crediti === r.crediti ? p.pos : i + 1; r.punti = numFanta(puntiFin(r)) + " fantapunti"; });
     return righe;
   }
 
@@ -2789,7 +2827,7 @@
     RIVELA = R; t.mostra(R.radice); misuraPalco(R);
     avviaPiano(R);
     var ordine = righe.slice().sort(function (a, b) { return (b.posV || b.pos) - (a.posV || a.pos); }), j = 0;   // dalla rosa che vale meno
-    rianima(R.ticker, "via", "Si scoprono le quotazioni vere: dalla rosa che vale meno a quella che vale di più!" + (conGio ? " Poi si gioca la giornata ⚽" : ""));
+    rianima(R.ticker, "via", "Si scoprono le quotazioni vere: dalla rosa che vale meno a quella che vale di più!" + (conGio ? (opz.serieA && opz.serieA.prima ? " Poi si giocano 3 giornate 🏆" : " Poi si gioca la giornata ⚽") : ""));
     function avanti() {
       if (!vivoRivela(R)) return;
       if (j >= ordine.length) return conGio ? giornataRivela(R) : podioRivela(R);
@@ -2870,7 +2908,7 @@
   function sigla(sq) { return String(sq || "?").slice(0, 3).toUpperCase(); }
   function segnoFanta(x) { return x > 0 ? "+" + numFanta(x) : x < 0 ? "−" + numFanta(-x) : "0"; }
   function tempiAz(t) { return TEMPI_AZ[t === "rigP" || t === "rigF" ? "rig" : t] || TEMPI_AZ.occ; }
-  function totGio(g) { var s = 0; g.vv.forEach(function (v, k) { s += v + g.bon[k]; }); return s; }   // i voti di adesso + bonus e malus
+  function totGio(g) { var s = g.base || 0; g.vv.forEach(function (v, k) { s += v + g.bon[k]; }); return s; }   // i voti di adesso + bonus e malus (🏆 3 giornate: più i punti delle giornate prima, g.base)
   function listaGio(R) { return Object.keys(R.gr).map(function (k) { return R.gr[k]; }); }
   function perTotale(a, b) { return (totGio(b) - totGio(a)) || (a.ord - b.ord); }
   function giornataRivela(R) {
@@ -2878,7 +2916,17 @@
     var A = R.opz.serieA; if (!A || !A.partite) return podioRivela(R);
     if (R.alPodio) { if (R.opz.capo !== false && R.opz.onPasso) R.opz.onPasso("libero", 1); return podioRivela(R); }   // (chi tiene la partita ha toccato «Salta» due volte)
     fermaTempi(R); R.fase = "giornata"; R.saltato = true; provaPiano(R, "giornata");
+    giocaGiornata(R, A.prima && A.prima.length ? 0 : null);   // (🏆 3 giornate: si comincia dalla prima, veloce)
+  }
+  // una giornata sullo schermo. gk: null = la giornata sola di sempre; con le 🏆 3 giornate 0 e 1 = le due veloci (solo i momenti dei
+  // vostri calciatori, poi la classifica), 2 = la terza, intera come la giornata sola, coi quadretti che partono dai punti delle prime due
+  function giocaGiornata(R, gk) {
+    var A = R.opz.serieA, veloce = gk === 0 || gk === 1, base = {}, gia = gk > 0 && !!R.gr;   // (gia: i quadretti ci sono già, restano gli stessi)
+    if (veloce) A = A.prima[gk];
+    R.gk = gk; R.fuori = {}; R.minMax = 0; R.pagFissa = false;   // (ogni giornata da capo: chi era espulso gioca di nuovo, il minuto riparte)
     var el = R.el, righe = R.righe, n = righe.length;
+    righe.forEach(function (r) { base[r.id] = gk ? r.prima[0].punti + (gk > 1 ? r.prima[1].punti : 0) : 0; });
+    function gioDi(r) { return veloce ? r.prima[gk] : r.gio; }
     R.campoBox.style.display = "none"; R.radice.classList.add("gio"); R.gio.style.display = ""; R.info.textContent = "⚽ La giornata di Serie A";
     // i risultati delle 10 partite
     svuotaNodo(R.ris); R.risN = A.partite.map(function (P) {
@@ -2896,11 +2944,11 @@
     R.azBox.style.height = hc + "px"; R.azBox.style.width = lc ? lc + "px" : ""; R.azBox.style.margin = lc ? "0 auto 8px" : "";
     R.az = R.az || campoAzioni(el, R.azBox);
     R.az.misura();
-    svuotaNodo(R.gioTab);
+    if (!gia) svuotaNodo(R.gioTab);
     R.gioTab.style.height = (file * qh + (file - 1) * 5) + "px"; R.gioTab.style.setProperty("--qh", qh + "px"); R.gioTab.style.setProperty("--cols", cols);
     var qw = (w - (cols - 1) * 5) / cols; R.gioTab.classList.toggle("fitto", qw < 100); R.gioTab.classList.toggle("fittissimo", qw < 84);   // (quadrettini stretti: faccina piccola, o niente faccina)
-    R.gioCols = cols; R.gioQh = qh; R.gr = {}; R.facce = {}; R.busti = {}; R.colP = {};
-    righe.slice().sort(function (a, b) { return (a.posV || a.pos) - (b.posV || b.pos); }).forEach(function (r, i) {
+    R.gioCols = cols; R.gioQh = qh; if (!gia) { R.gr = {}; R.facce = {}; R.busti = {}; R.colP = {}; }
+    (gia ? [] : righe.slice().sort(function (a, b) { return (a.posV || a.pos) - (b.posV || b.pos); })).forEach(function (r, i) {
       var fr = el("span", { class: "st-gio-fr" }), zn = el("span", { class: "st-gio-zona" });   // (la freccina del voto che cambia; nella Zona Cesarini: cosa ti serve)
       var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), inC = el("span", { class: "st-gio-in" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true }), pc = COLORI_PERSONE[i % COLORI_PERSONE.length];
       var nodo = el("div", { class: "st-gio-riga" + (R.opz.mio != null && r.id === R.opz.mio ? " mio" : ""), style: "--pc:" + pc + ";transform:" + posQ(R, i), onclick: function () { schedaLive(R, R.gr[r.id]); } }, [
@@ -2912,13 +2960,14 @@
       var img = new Image(); img.onload = (function (id, im) { return function () { var c = document.createElement("canvas"); c.width = c.height = 96; c.getContext("2d").drawImage(im, 0, 0, 96, 96); R.facce[id] = c; }; })(r.id, img);
       img.src = src; R.facce[r.id] = img; R.busti[r.id] = src;   // (la faccina sul campo, accanto al nome dei suoi calciatori)
     });
+    if (gia) rimettiQuadretti(R, base);   // (🏆 la giornata dopo: stessi quadretti, i voti ripartono da 6 sopra i punti di prima)
     R.pag.style.top = R.azBox.offsetTop + "px";   // (le pagelle coprono il campo e la classifica)
     // chi c'entra in ogni momento: "partita|momento" → [{ r: la rosa, c: il calciatore, k: il suo posto nella rosa, t, d }]
     var chi = {};
-    righe.forEach(function (r) { r.gio.cal.forEach(function (x, k) { x.ev.forEach(function (e) { var key = e.p + "|" + e.e; (chi[key] = chi[key] || []).push({ r: r, c: r.kit[k], k: k, t: e.t, d: e.d, vv: e.vv }); }); }); });
+    righe.forEach(function (r) { gioDi(r).cal.forEach(function (x, k) { x.ev.forEach(function (e) { var key = e.p + "|" + e.e; (chi[key] = chi[key] || []).push({ r: r, c: r.kit[k], k: k, t: e.t, d: e.d, vv: e.vv }); }); }); });
     // i momenti in ordine di minuto: quelli dei vostri calciatori sul campo, i gol degli altri solo nei risultati; al 45' l'intervallo
     // i momenti speciali (sp): l'intervallo, ⏳ la Zona Cesarini al 75', ⏱️ il recupero al 90', 🏁 il fischio finale (prima delle porte inviolate)
-    var lista = [{ intervallo: true, sp: 1, m: 45.5 }, { zona: true, sp: 1, m: 74.9 }, { recupero: true, sp: 1, m: 90.5 }, { fischio: true, sp: 1, m: 98 }];
+    var lista = veloce ? [] : [{ intervallo: true, sp: 1, m: 45.5 }, { zona: true, sp: 1, m: 74.9 }, { recupero: true, sp: 1, m: 90.5 }, { fischio: true, sp: 1, m: 98 }];   // (le giornate veloci: niente intervallo, niente Zona Cesarini)
     R.golDi = {}; R.belli = []; R.zona = false; R.fischiato = false; R.capi = []; R.capoId = null; R.rec = A.rec || 4;
     A.partite.forEach(function (P, pi) {
       P.ev.forEach(function (e, ei) {
@@ -2931,13 +2980,13 @@
     });
     lista.sort(function (a, b) { return a.m - b.m; }); lista.forEach(function (x, k) { x.ord = k; }); R.risOrd = {};
     function durata() { var d = 0; lista.forEach(function (x) { if (x.sp || !x.focus) return; tempiAz(x.e.t).forEach(function (v) { d += v; }); }); return d; }   // (i gol degli altri non prendono tempo)
-    while (durata() > DURATA_GIORNATA) {
+    while (!veloce && durata() > DURATA_GIORNATA) {
       var contaP = {}, subP = {};   // (per ogni vostro portiere: quante occasioni gli restano e se prende gol)
       lista.forEach(function (x) { (x.chi || []).forEach(function (q) { if (q.c.ruolo !== "P") return; var kp = chiaveCalc(q.c); if (q.t === "sub") subP[kp] = 1; if (x.focus && x.e.t === "occ") contaP[kp] = (contaP[kp] || 0) + 1; }); });
       var os = lista.filter(function (x) { return x.focus && x.m < 75 && (x.e.t === "occ" || x.e.t === "rec") && !(x.chi || []).some(function (q) { var kp = chiaveCalc(q.c); return q.c.ruolo === "P" && subP[kp] && (contaP[kp] || 0) <= 1; }); }); if (!os.length) break;
       lista.splice(lista.indexOf(os[Math.floor(os.length / 2)]), 1);
     }
-    R.gioVel = Math.max(0.72, Math.min(1, DURATA_GIORNATA / Math.max(1, durata())));
+    R.gioVel = veloce ? sceltaVeloce(lista) : Math.max(0.72, Math.min(1, DURATA_GIORNATA / Math.max(1, durata())));
     var i = 0;
     // i gol delle partite dove nessuno di voi ha giocatori non fermano niente: i loro risultati si aggiornano in alto mentre si guarda
     // l'azione dopo (quelli della stessa partita dell'azione subito, così il risultato nella barra è già giusto); all'intervallo e al
@@ -2948,7 +2997,7 @@
       if (!vivoRivela(R)) return;
       var muti = [];
       while (i < lista.length && !lista[i].sp && !lista[i].focus) muti.push(lista[i++]);
-      if (i >= lista.length) { tuttiMuti(i); return fischioFinale(R); }
+      if (i >= lista.length) { tuttiMuti(i); return veloce ? fineVeloce(R, gk) : fischioFinale(R); }
       var x = lista[i++];
       if (x.intervallo) { tuttiMuti(i); return intervallo(R, prossimo); }
       if (x.zona) { tuttiMuti(i); return zonaCesarini(R, prossimo); }
@@ -2960,11 +3009,133 @@
       var radio = R.zona ? altri.filter(function (y) { var t0 = y.e.t; return t0 === "gol" || t0 === "rig" || t0 === "aut"; }) : [];
       if (radio.length) R.dopo(900, function () { if (!vivoRivela(R)) return; radio.forEach(aggiorna); interrompo(R, radio); });
       altri.forEach(function (y, k) { R.dopo(900 + k * passo, function () { aggiorna(y); }); });
+      if (x.lampo) return lampoSerieA(R, x, i, prossimo);   // (le giornate veloci: cartellini, porte inviolate e i gol meno vostri si vedono di colpo)
       momentoSerieA(R, x, i, prossimo);
     }
-    avvisoCampo(R, 50, ["⚽ FISCHIO D'INIZIO!", "tutti i vostri calciatori partono da 6", "tocca il tuo quadretto per vedere i tuoi calciatori"]); if (!inRitardo(R)) SUONI.fischio(1, true);
+    avvisoCampo(R, 50, gk != null ? inizioGiornata(R, gk) : ["⚽ FISCHIO D'INIZIO!", "tutti i vostri calciatori partono da 6", "tocca il tuo quadretto per vedere i tuoi calciatori"]); if (!inRitardo(R)) SUONI.fischio(1, true);
     R.dopo(2000, function () { if (!vivoRivela(R)) return; viaAvviso(R); R.dopo(400, prossimo); });
   }
+  // =========================================================
+  //  🏆 LE 3 GIORNATE (30 ott 2026, deciso dal proprietario): le stesse rose giocano tre giornate di Serie A finta di fila, ognuna col
+  //  suo sorteggio (decise tutte da chi tiene la partita, nella foto), e vince chi fa più fantapunti sommati. Le prime due sono veloci
+  //  (gli «highlights», circa un minuto e mezzo l'una: solo i momenti dei vostri calciatori, a ritmo rapido, niente intervallo né Zona
+  //  Cesarini), poi la classifica «dopo 1 giornata» / «dopo 2 giornate» coi punti sommati («Avanti ▶» di chi tiene la partita, col conto).
+  //  La terza è intera come la giornata sola, coi quadretti che partono dai punti delle prime due; se il primo cambia: «💥 RIBALTONE!».
+  //  Niente spoiler: un'azione annunciata può sempre finire in gol o no (se si tolgono occasioni ne resta almeno una ogni tre gol, per i
+  //  tiri dei vostri e per quelli contro i vostri portieri, e i rigori si vedono tutti); cartellini, porte inviolate e, se sono troppi,
+  //  i gol dove i vostri passano o difendono soltanto si vedono «di colpo», senza annuncio.
+  // =========================================================
+  var DURATA_VELOCE = 90000, LAMPO_MS = 1800;   // (quanto dura una giornata veloce; quanto resta un momento «di colpo»)
+  function inizioGiornata(R, gk) {   // la scritta in alto, la barra e l'annuncio sul campo
+    R.info.textContent = (gk < 2 ? "⚡ " : "⚽ ") + (gk + 1) + "ª giornata di 3";
+    barraTesto(R, "0'", gk < 2 ? "⚡ " + (gk + 1) + "ª giornata · highlights" : "⚽ 3ª giornata · intera");
+    R.provaM = (gk + 1) + "ª giornata"; provaPiano(R, "inizioG" + gk);
+    if (gk) riordinaGiornata(R, null, true);   // (i quadretti in ordine di punti sommati, la 👑 su chi comanda)
+    if (gk === 0) return ["⚡ 1ª GIORNATA · HIGHLIGHTS", "solo i momenti dei vostri calciatori", "3 giornate: contano i punti sommati"];
+    if (gk === 1) return ["⚡ 2ª GIORNATA · HIGHLIGHTS", "partite nuove: ogni calciatore riparte da 6", "nei quadretti i punti si sommano"];
+    return ["⚽ 3ª GIORNATA: SI DECIDE TUTTO!", "intera, fino al fischio finale", "nei quadretti i punti delle prime due"];
+  }
+  function rimettiQuadretti(R, base) {   // la giornata dopo: stessi quadretti (niente lampeggio), voti da 6 sopra i punti di prima
+    listaGio(R).forEach(function (g) {
+      g.base = base[g.r.id] || 0;
+      g.vv = g.r.kit.map(function () { return 6; }); g.bon = g.r.kit.map(function () { return 0; }); g.ic = g.r.kit.map(function () { return ""; });
+      svuotaNodo(g.ev); g.zn.textContent = ""; g.fr.textContent = ""; g.nodo.classList.remove("piu", "meno", "incampo");
+      g.pt.textContent = numFanta(totGio(g));
+    });
+  }
+  // cosa si vede in una giornata veloce (uguale su tutti i telefoni: dipende solo dalla giornata). Torna la velocità (R.gioVel)
+  function sceltaVeloce(lista) {
+    var vel = 0.8;
+    lista.forEach(function (x) {
+      if (!x.focus) return;
+      var t = x.e.t;
+      if (t === "rec") { x.focus = false; return; }   // (l'entrata pulita non dà punti)
+      if (t === "amm" || t === "esp" || t === "inv") { x.lampo = true; return; }
+      x.gol = t === "gol" || t === "aut"; x.occ = t === "occ" || t === "ann";
+      // rig: i rigori (e la ribattuta che segue) si vedono sempre; tiro: tira (o la mette nella sua porta) uno dei vostri; altro: i vostri passano o difendono
+      x.cat = /^rig/.test(t) || (t === "gol" && x.e.v === "ribattuta") ? "rig" : x.chi.some(function (q) { return chiaveCalc(q.c) === x.e.chi; }) ? "tiro" : "altro";
+    });
+    function dur(x) {
+      if (!x.focus || x.via) return 0;
+      if (x.lampo) return x.ms || LAMPO_MS;
+      var T = tempiAz(x.e.t), z = x.e.m >= 75 && x.cat !== "rig", lento = x.cat === "rig" || x.e.m >= 75 || semeRnd(semeDi(x) + 11)() < 0.33;   // (come in momentoSerieA: col rallentatore l'azione dura circa una volta e mezza)
+      if (z) T = [T[0] * 0.6, T[1] * 0.5, T[2] * 0.9, T[3]];
+      return (T[0] + T[1] + T[2] * (lento ? 1.55 : 1) * (x.e.v === "assedio" || x.e.v === "ultimo" ? 1.3 : 1) + T[3] + (x.e.t === "ann" ? 3500 : 0) + (x.e.come === "var" ? 2600 : 0) + (x.e.rip ? T[2] * 0.8 + 2800 : 0)) * vel + (x.e.m >= 75 ? 200 : 450);
+    }
+    function totale() { var d = 2400; lista.forEach(function (x) { d += dur(x); }); return d; }
+    function togli(cat) {   // un'occasione in meno (quella di mezzo), ma ne resta almeno una ogni tre gol
+      var g = 0, o = [];
+      lista.forEach(function (x) { if (x.focus && !x.via && !x.lampo && x.cat === cat) { if (x.gol) g++; else if (x.occ) o.push(x); } });
+      if (o.length <= (g ? Math.ceil(g / 3) : 0)) return false;
+      o[Math.floor(o.length / 2)].via = true; return true;
+    }
+    while (totale() > DURATA_VELOCE && (togli("altro") || togli("tiro"))) {}
+    if (totale() > DURATA_VELOCE) lista.forEach(function (x) { if (x.focus && !x.via && !x.lampo && x.cat === "altro") { if (x.gol) x.lampo = true; else x.via = true; } });   // (ancora troppo: i gol dove i vostri passano o difendono si vedono di colpo)
+    while (vel > 0.6 && totale() > DURATA_VELOCE) vel = Math.round((vel - 0.05) * 100) / 100;
+    if (totale() > DURATA_VELOCE) lista.forEach(function (x) { if (x.lampo) x.ms = 1300; });   // (tanti giocatori: i momenti «di colpo» restano un po' meno)
+    for (var k = lista.length - 1; k >= 0; k--) if (lista[k].via) lista.splice(k, 1);
+    return vel;
+  }
+  // un momento «di colpo»: niente annuncio né azione, subito l'esito coi punti (un cartellino, una porta inviolata, un gol subito dal vostro portiere)
+  function lampoSerieA(R, x, n, poi) {
+    if (!vivoRivela(R)) return;
+    var e = x.e, P = x.P, t = e.t === "rigP" || e.t === "rigF" ? "rig" : e.t, lato = e.s || (x.chi[0] && x.chi[0].c.squadra === P.f ? "f" : "c"), sqA = lato === "c" ? P.c : P.f, seme = semeDi(x);
+    R.provaM = "momento " + n;
+    var ms = x.ms || LAMPO_MS;
+    if (R.g() > R.pt + ms + 250) { dunqueSerieA(R, x, t, "gol", sqA, 50, seme, true); return R.dopo(ms, poi); }   // (chi recupera: solo punti e risultati)
+    provaPiano(R, "m" + n);
+    barraPartita(R, x);
+    dunqueSerieA(R, x, t, "gol", sqA, 50, seme);
+    R.dopo(ms - 250, function () { if (!vivoRivela(R)) return; viaAvviso(R); R.dopo(250, poi); });
+  }
+  // la classifica coi punti sommati: a pari punti la rosa che vale di più, poi chi ha più crediti avanzati (come alla fine)
+  function classificaSomma(R) {
+    var l = listaGio(R).map(function (g) { return { g: g, tot: totGio(g), gior: totGio(g) - (g.base || 0) }; });
+    l.sort(function (a, b) { return (b.tot - a.tot) || (b.g.r.totale - a.g.r.totale) || (b.g.r.crediti - a.g.r.crediti) || (a.g.ord - b.g.ord); });
+    l.forEach(function (x, i) { var p = l[i - 1]; x.pos = p && p.tot === x.tot && p.g.r.totale === x.g.r.totale && p.g.r.crediti === x.g.r.crediti ? p.pos : i + 1; });
+    return l;
+  }
+  // 🏁 fine di una giornata veloce: i voti veri di tutti (anche di chi non ha fatto niente), poi la classifica coi punti sommati
+  function fineVeloce(R, gk) {
+    if (!vivoRivela(R)) return;
+    R.az.fermo(null); R.risN.forEach(function (q) { q.nodo.classList.remove("ora"); }); pagFissa(R);
+    barraTesto(R, "90'", "🏁 Fine della " + (gk + 1) + "ª giornata");
+    avvisoCampo(R, 50, ["🏁 FINE DELLA " + (gk + 1) + "ª GIORNATA", "arrivano i voti veri"]); if (!inRitardo(R)) SUONI.fischio(3, true);
+    R.provaM = "fine " + (gk + 1) + "ª giornata"; provaPiano(R, "fineG" + gk);
+    R.dopo(1600, function () {
+      if (!vivoRivela(R)) return;
+      viaAvviso(R);
+      listaGio(R).forEach(function (g) {
+        g.r.prima[gk].cal.forEach(function (c, k) { g.vv[k] = c.v; g.bon[k] = c.fv - c.v; });
+        g.pt.textContent = numFanta(totGio(g)); rianima(g.pt, "batte");
+      });
+      riordinaGiornata(R, null, true);
+      var cl = classificaSomma(R);
+      if (gk === 1) R.primoDopo2 = cl.length > 1 && cl[1].pos > 1 ? cl[0].g.r.id : null;   // (chi comanda dopo 2 giornate, da solo: per il 💥 RIBALTONE)
+      classificaVeloce(R, gk, cl, function () { giocaGiornata(R, gk + 1); });
+    });
+  }
+  function classificaVeloce(R, gk, cl, poi) {   // 📊 «La classifica dopo 1 giornata» (o 2): i punti sommati, la giornata e chi sale o scende
+    var pag = R.pag, el = R.el, prima = R.posDopo || {}, box = el("div", { class: "st-cl3-righe" });
+    svuotaNodo(pag); pag.className = "st-pag st-cl3";
+    pag.appendChild(el("div", { class: "st-pag-tit", text: "📊 La classifica dopo " + (gk ? "2 giornate" : "1 giornata") }));
+    cl.forEach(function (x, j) {
+      var r = x.g.r, su = prima[r.id] != null ? prima[r.id] - x.pos : 0;
+      box.appendChild(el("div", { class: "st-cl3-r" + (R.opz.mio != null && r.id === R.opz.mio ? " mio" : ""), style: "animation-delay:" + (j * 0.06).toFixed(2) + "s" }, [
+        el("span", { class: "st-cl3-pos", text: x.pos + "°" }), el("img", { src: R.busti[r.id], alt: "" }),
+        el("span", { class: "st-cl3-nome", text: r.nome, style: "color:" + R.colP[r.id] }),
+        su ? el("i", { class: "st-cl3-su " + (su > 0 ? "su" : "giu"), text: (su > 0 ? "▲" : "▼") + Math.abs(su) }) : null,
+        gk ? el("small", { text: "+" + numFanta(x.gior) }) : null, el("b", { text: numFanta(x.tot) }) ]));   // (dopo 2 giornate: accanto quanto ha fatto nella 2ª)
+    });
+    pag.appendChild(box);
+    R.posDopo = {}; cl.forEach(function (x) { R.posDopo[x.g.r.id] = x.pos; });
+    R.provaM = "classifica dopo " + (gk + 1);
+    if (!inRitardo(R)) FX.posto();
+    void pag.offsetWidth; pag.classList.add("on");
+    passoCapo(R, pag, "gg", gk + 1, 12, function () { pag.classList.remove("on"); R.dopo(450, poi); }, 3000, true);   // (Avanti ▶ di chi tiene la partita: a zero del conto si va avanti da soli)
+  }
+  // 💥 chi comandava dopo 2 giornate, se adesso in testa c'è un altro (null se no, o con la giornata sola)
+  function ribaltone(R) { var p = R.primoDopo2; return p != null && R.capoId != null && R.capoId !== p && R.gr[p] && R.gr[R.capoId] ? R.gr[p].r.nome : null; }
   // la barra sopra il campo: il minuto e la partita del momento (o una scritta)
   function orologio(R, m, proprio) { if (!proprio) { m = Math.max(m, R.minMax || 0); R.minMax = m; } R.barMin.textContent = minTxt(m); }   // (proprio: il gol della giornata, che torna indietro apposta)
   // ⏱️ nella Zona Cesarini il minuto corre fino a quello del momento (76', 77', 78'…), come un cronometro (passi del piano: uguale su tutti)
@@ -3385,6 +3556,7 @@
       R.azBox.classList.remove("attesa"); R.zona = false; R.zitto = false; R.radice.classList.remove("zona"); follaVolume(0);
       barraTesto(R, minTxt(90 + R.rec), "🏁 Fischio finale");
       avvisoCampo(R, 50, ["🏁 FISCHIO FINALE!", "è finita!"]);
+      var rb = ribaltone(R); if (rb) { avvisoCampo(R, 50, ["💥 RIBALTONE!", "🏁 fischio finale: davanti c'è " + R.gr[R.capoId].r.nome, "dopo 2 giornate comandava " + rb]); if (!inRitardo(R)) { striscia(R, "💥 RIBALTONE ALL'ULTIMA GIORNATA!", "sorp"); FX.sorpasso(); } }   // 🏆 3 giornate: il primo è cambiato
       if (!inRitardo(R)) { SUONI.fischio(3, true); vibra(60); }
       R.dopo(1900, function () { if (!vivoRivela(R)) return; viaAvviso(R); R.dopo(200, poi); });
     });
@@ -3432,8 +3604,8 @@
     if (!vivoRivela(R) || R.fase !== "giornata" || R.pagFissa || !g) return;
     var pag = R.pag, el = R.el, r = g.r, tok = (R.pagTok || 0) + 1; R.pagTok = tok;
     svuotaNodo(pag); pag.className = "st-pag uno live";
-    pag.appendChild(el("div", { class: "st-pag-tit", text: "📋 I calciatori di " + r.nome + " · adesso" }));
-    pag.appendChild(el("div", { class: "st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome, style: "color:" + R.colP[r.id] }), el("b", { class: "st-pf-tot", text: numFanta(totGio(g)) }) ]));
+    pag.appendChild(el("div", { class: "st-pag-tit", text: "📋 I calciatori di " + r.nome + (R.gk != null ? " · " + (R.gk + 1) + "ª giornata" : " · adesso") }));   // (🏆 3 giornate: i punti di questa giornata; i sommati sono nel quadretto)
+    pag.appendChild(el("div", { class: "st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome, style: "color:" + R.colP[r.id] }), el("b", { class: "st-pf-tot", text: numFanta(totGio(g) - (g.base || 0)) }) ]));
     r.kit.forEach(function (cp, k) {
       pag.appendChild(el("div", { class: "st-pf on" }, [ el("span", { class: "as-rb as-rb-" + cp.ruolo, text: (FANTA_RUOLI[cp.ruolo] || {}).breve || "" }),
         el("div", { class: "st-pf-nome" }, [ el("b", { text: nomeCampo(cp.nome) }), el("small", { text: cp.squadra + (g.ic[k] ? " · " + g.ic[k] : "") }) ]),
@@ -3532,7 +3704,7 @@
             el("em", { class: "st-pv-ic", text: g.ic[kk] || "" }) ]);
         });
         pag.appendChild(el("div", { class: "st-pag-p", style: "animation-delay:" + (j * 0.15) + "s" }, [
-          el("div", { class: "st-pag-testa" }, [ el("img", { src: R.busti[g.r.id], alt: "" }), el("span", { text: g.r.nome, style: "color:" + R.colP[g.r.id] }), el("b", { text: numFanta(totGio(g)) }) ]),
+          el("div", { class: "st-pag-testa" }, [ el("img", { src: R.busti[g.r.id], alt: "" }), el("span", { text: g.r.nome, style: "color:" + R.colP[g.r.id] }), el("b", { text: g.base ? numFanta(totGio(g) - g.base) + " · tot " + numFanta(totGio(g)) : numFanta(totGio(g)) }) ]),   // (🏆 3ª giornata: la giornata e i punti sommati)
           el("div", { class: "st-pag-voti" }, voti) ]));
       });
       // «Avanti ▶» di chi tiene la partita (al massimo dopo 25 secondi si va avanti da soli)
@@ -4379,7 +4551,8 @@
         ordinaGiornata(R, function (a, b) { return (a.r.pos - b.r.pos) || (a.ord - b.ord); });
         listaGio(R).forEach(function (g) { g.nodo.classList.toggle("capo", R.righe.length > 1 && g.r.pos === 1); });   // (la 👑 su chi vince davvero)
         var w = R.righe[0], primi = R.righe.filter(function (r) { return r.pos === 1; });
-        avvisoCampo(R, 50, [primi.length > 1 ? "🏆 PARI MERITO!" : "🏆 " + w.nome.toUpperCase() + " VINCE!", numFanta(w.gio.punti) + " fantapunti" + (primi.length > 1 ? ": " + primi.map(function (r) { return r.nome; }).join(" e ") : "")]);
+        var rbF = R.gk != null && primi.length === 1 && R.primoDopo2 != null && w.id !== R.primoDopo2 && R.gr[R.primoDopo2] ? R.gr[R.primoDopo2].r.nome : "";   // (🏆 3 giornate: ha vinto chi dopo 2 giornate non comandava)
+        avvisoCampo(R, 50, [primi.length > 1 ? "🏆 PARI MERITO!" : "🏆 " + w.nome.toUpperCase() + " VINCE!", numFanta(puntiFin(w)) + " fantapunti" + (R.gk != null ? " in 3 giornate" : "") + (primi.length > 1 ? ": " + primi.map(function (r) { return r.nome; }).join(" e ") : ""), rbF ? "💥 ribaltone: dopo 2 giornate comandava " + rbF : ""]);
         if (!inRitardo(R)) FX.festa();
         R.dopo(2800, function () { podioRivela(R); });
         return;
@@ -4387,7 +4560,7 @@
       var g = ordine[j++], r = g.r, ultima = j === ordine.length, somma = 0, k = 0, mia = R.carta = (R.carta || 0) + 1;
       var tot = el("b", { class: "st-pf-tot", text: "0" }), righe = [];
       svuotaNodo(pag); pag.className = "st-pag uno";
-      pag.appendChild(el("div", { class: "st-pag-tit", text: "📋 La pagella" }));
+      pag.appendChild(el("div", { class: "st-pag-tit", text: R.gk != null ? "📋 La pagella della 3ª giornata" : "📋 La pagella" }));
       pag.appendChild(el("div", { class: "st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome, style: "color:" + R.colP[r.id] }), tot ]));
       r.gio.cal.forEach(function (c, kk) {
         var cp = r.kit[kk], ic = c.ev.map(function (e) { return EV_GIO[e.t] || ""; }).join("");
@@ -4413,8 +4586,9 @@
       function scopri() {   // un calciatore alla volta: il voto, il fantavoto, il totale che sale
         if (!vivoRivela(R) || mia !== R.carta) return;
         if (k >= righe.length) {
-          r.gio.cal.forEach(function (c, kk) { g.vv[kk] = c.v; g.bon[kk] = c.fv - c.v; }); g.pt.textContent = numFanta(r.gio.punti);
+          r.gio.cal.forEach(function (c, kk) { g.vv[kk] = c.v; g.bon[kk] = c.fv - c.v; }); g.pt.textContent = numFanta((g.base || 0) + r.gio.punti);
           pag.firstChild.textContent = "📋 La pagella · " + r.pos + "° posto" + (r.pos === 1 ? " 🏆" : "");
+          if (r.prima) pag.appendChild(el("div", { class: "st-pag-g3" }, [ el("span", { text: tre(r).map(function (x, i) { return (i + 1) + "ª " + x; }).join(" + ") }), el("b", { text: "= " + numFanta(puntiFin(r)) }) ]));   // 🏆 3 giornate: le giornate una per una e il totale
           if (inRitardo(R)) {} else if (ultima) { FX.posto(); vibra(30); } else FX.tic(0.9);
           R.carta++; if (svela && svela.parentNode) svela.parentNode.removeChild(svela);
           passoCapo(R, pag, "fin", idx, 20, prossima);   // (ora si guarda con calma: avanti quando lo dice chi tiene la partita)
@@ -4436,9 +4610,9 @@
     R.radice.classList.remove("gio"); R.info.textContent = "La classifica delle rose";
     R.campoBox.style.display = "none"; R.gio.style.display = "none"; R.podio.style.display = "";
     var primi = R.righe.filter(function (r) { return r.pos === 1; });   // (a pari punti (o valore) e pari crediti vincono insieme)
-    if (w) { R.magliaImg.src = srcAv(cfgDi(w.nome, w.omino), {}); R.nome.textContent = primi.map(function (r) { return r.nome; }).join(" e "); R.prezzoN.textContent = gio ? numFanta(w.gio.punti) : w.totale; R.chi.textContent = (gio ? "fantapunti · " : "") + (primi.length > 1 ? "pari merito! 🏆" : "vince! 🏆"); R.squadra.textContent = ""; rianima(R.schermo, "entra"); }
+    if (w) { R.magliaImg.src = srcAv(cfgDi(w.nome, w.omino), {}); R.nome.textContent = primi.map(function (r) { return r.nome; }).join(" e "); R.prezzoN.textContent = gio ? numFanta(puntiFin(w)) : w.totale; R.chi.textContent = (gio ? "fantapunti · " : "") + (primi.length > 1 ? "pari merito! 🏆" : "vince! 🏆"); R.squadra.textContent = ""; rianima(R.schermo, "entra"); }
     R.ruolo.className = "st-ruolo st-ruolo-classifica"; R.ruolo.textContent = "CLASSIFICA";
-    rianima(R.ticker, "via", gio ? "Vince chi fa più fantapunti nella giornata! A pari punti, la rosa che vale di più." : "Vince la rosa che vale di più! A pari valore, chi ha più crediti avanzati.");
+    rianima(R.ticker, "via", gio ? "Vince chi fa più fantapunti " + (w.prima ? "in 3 giornate" : "nella giornata") + "! A pari punti, la rosa che vale di più." : "Vince la rosa che vale di più! A pari valore, chi ha più crediti avanzati.");
     // 🏅 poi sul maxischermo girano i titoli scherzosi, uno ogni 3 secondi
     var tl = (R.opz.titoli || []).map(function (x) { return x.icona + " " + x.titolo + ": " + x.chi; }), k = 0;
     if (tl.length) R.tit = setInterval(function () { if (!vivoRivela(R)) { clearInterval(R.tit); R.tit = null; return; } rianima(R.ticker, "via", tl[k++ % tl.length]); }, 3200);
@@ -4447,20 +4621,22 @@
       var r = R.righe[i]; if (!r) return;
       var g = el("div"); g.className = "st-gradino p" + (i + 1); g.style.animationDelay = (i === 0 ? 0.5 : i === 1 ? 0.25 : 0) + "s";
       var img = el("img"); img.src = srcAv(cfgDi(r.nome, r.omino), i === 0 ? { braccia: "su" } : {}); img.alt = "";
-      var b = el("b"); b.textContent = r.nome; var sm = el("small"); sm.textContent = gio ? numFanta(r.gio.punti) + " punti" : r.totale + " · " + r.crediti + " 💰";
+      var b = el("b"); b.textContent = r.nome; var sm = el("small"); sm.textContent = gio ? numFanta(puntiFin(r)) + " punti" : r.totale + " · " + r.crediti + " 💰";
       var blocco = el("div"); blocco.className = "blocco"; blocco.textContent = r.pos;
-      g.appendChild(img); g.appendChild(b); g.appendChild(sm); g.appendChild(blocco);
+      g.appendChild(img); g.appendChild(b); g.appendChild(sm); if (r.prima) { var s3 = el("small"); s3.className = "g3"; s3.textContent = tre(r).join(" · "); g.appendChild(s3); }   // (🏆 3 giornate: una per una)
+      g.appendChild(blocco);
       gradini.appendChild(g);
     });
     R.podio.appendChild(gradini);
     if (R.righe.length > 3) {
       var altri = el("div"); altri.className = "st-altri";
-      R.righe.slice(3).forEach(function (r) { var riga = el("div"); riga.textContent = r.pos + "° " + r.nome + (gio ? " · " + numFanta(r.gio.punti) + " fantapunti" : "") + " · valore " + r.totale + (gio ? "" : " · " + r.crediti + " 💰"); altri.appendChild(riga); });
+      R.righe.slice(3).forEach(function (r) { var riga = el("div"); riga.textContent = r.pos + "° " + r.nome + (gio ? " · " + numFanta(puntiFin(r)) + " fantapunti" + (r.prima ? " (" + tre(r).join(" + ") + ")" : "") : "") + (r.prima ? "" : " · valore " + r.totale) + (gio ? "" : " · " + r.crediti + " 💰"); altri.appendChild(riga); });
       R.podio.appendChild(altri);
     }
     FX.festa();
     piedeRivela(R);
   }
+  function tre(r) { return [r.prima[0].punti, r.prima[1].punti, r.gio.punti].map(function (x) { return numFanta(x); }); }   // 🏆 i punti delle 3 giornate, una per una
   function piedeRivela(R) { svuotaNodo(R.piede); (R.opz.bottoni ? R.opz.bottoni() : []).forEach(function (b) { if (b) R.piede.appendChild(b); }); }
   function disegnaAsta(t, st) {   // (stesso telefono) l'asta nella sala: tocchi il tuo avatar per rilanciare (il tempo riparte solo coi rilanci)
     var el = t.el, a = st.asta, vc = vistaCarta(a.carta);
@@ -4758,7 +4934,7 @@
 
   function finePartita(t, st) {
     if (st && st.formato === "fanta") {   // fantacalcio: si scoprono le quotazioni, dalla rosa che vale meno a quella che vale di più
-      if (!st.classifica) { st.serieA = st.giornata ? {} : null; st.classifica = classificaFanta(st.giocatori, st.serieA); }   // (⚽ la giornata si gioca una volta sola)
+      if (!st.classifica) { st.serieA = st.giornata ? {} : null; st.classifica = classificaFanta(st.giocatori, st.serieA, st.giornate); }   // (⚽ la giornata si gioca una volta sola)
       var righe = st.classifica;
       st.titoli = titoliFine(st.giocatori, FANTA_BUDGET, righe);
       return rivelaFanta(t, righe, { chiave: "rl|" + st.sessione, onEsci: function () { esciAsta(t, st); }, titoli: st.titoli, serieA: st.serieA,
@@ -4778,7 +4954,7 @@
     if (tit) s._contenuto.appendChild(tit);
     else s._contenuto.appendChild(el("p", { class: "as-msg", text: "Partita tirata: nessuno si è preso un titolo! 😄" }));
     var box = el("div", { class: "as-kits" });
-    righe.forEach(function (r) { box.appendChild(nodoKit(el, { nome: r.pos + "° " + r.nome + (r.gio ? " · " + numFanta(r.gio.punti) + " fantapunti" : "") + " · valore " + r.totale, crediti: r.crediti, kit: r.kit }, st)); });
+    righe.forEach(function (r) { box.appendChild(nodoKit(el, { nome: r.pos + "° " + r.nome + (r.gio ? " · " + numFanta(puntiFin(r)) + " fantapunti" + (r.prima ? " (" + tre(r).join(" + ") + ")" : "") : "") + " · valore " + r.totale, crediti: r.crediti, kit: r.kit }, st)); });
     s._contenuto.appendChild(box);
     s._piede.appendChild(el("div", { class: "as-foto" }, [ el("button", { class: "btn btn-fantasma", text: "📸 Foto delle rose", onclick: function () { fotoRose(righe, null); } }) ]));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Classifica finale 🏆", onclick: function () { classificaFinale(t, st, righe); } }));
@@ -4817,7 +4993,7 @@
 
   function classificaFinale(t, st, righe) {
     var classifica = st.formato === "fanta" && righe
-      ? righe.map(function (r) { return { nome: r.nome, punti: (r.gio ? numFanta(r.gio.punti) + " fantapunti · valore " + r.totale : "valore " + r.totale + " · " + r.crediti + " 💰"), pos: r.pos }; })
+      ? righe.map(function (r) { return { nome: r.nome, punti: (r.gio ? numFanta(puntiFin(r)) + " fantapunti" + (r.prima ? " in 3 giornate" : "") + " · valore " + r.totale : "valore " + r.totale + " · " + r.crediti + " 💰"), pos: r.pos }; })
       : classificaStelle(st.giocatori);
     var profilo = window.SGNube && SGNube.profilo ? SGNube.profilo() : null;
     var me = profilo && st.giocatori.filter(function (g) { return String(g.nome).trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
@@ -4851,10 +5027,10 @@
     if (righe && righe[0] && righe[0].gio) {   // ⚽ la giornata: chi ha in rosa il bomber (il calciatore con più gol, da solo)
       var bomber = null, pariB = false;
       righe.forEach(function (r) { r.gio.cal.forEach(function (x, k) {
-        var g = x.ev.filter(function (e) { return e.t === "gol"; }).length; if (!g) return;
+        var g = 0; (r.prima || []).concat([r.gio]).forEach(function (gi) { g += gi.cal[k].ev.filter(function (e) { return e.t === "gol"; }).length; }); if (!g) return;   // (🏆 3 giornate: i gol di tutte e tre)
         if (!bomber || g > bomber.g) { bomber = { g: g, r: r, c: r.kit[k] }; pariB = false; } else if (g === bomber.g) pariB = true;
       }); });
-      if (bomber && !pariB) cand.push({ icona: "⚽", titolo: "Il bomber", chi: bomber.r.nome, dett: nomeCampo(bomber.c.nome) + (bomber.g >= 4 ? " poker" : bomber.g === 3 ? " tripletta" : bomber.g === 2 ? " doppietta" : " in gol") });
+      if (bomber && !pariB) cand.push({ icona: "⚽", titolo: "Il bomber", chi: bomber.r.nome, dett: nomeCampo(bomber.c.nome) + (bomber.r.prima ? (bomber.g > 1 ? " · " + bomber.g + " gol in 3 giornate" : " in gol") : bomber.g >= 4 ? " poker" : bomber.g === 3 ? " tripletta" : bomber.g === 2 ? " doppietta" : " in gol") });
     }
     prova("🎯", "Il cecchino dell'ultimo secondo", function (x) { return x.s.cecchino; }, 1, function (v) { return v === 1 ? "ha vinto un'asta all'ultimo secondo" : v + " aste vinte all'ultimo secondo"; });
     prova("💸", "Lo sprecone", function (x) { return x.spesi; }, 2, function (v) { return "ha speso " + v + " 💰"; });
@@ -4941,7 +5117,7 @@
       if (una) {
         ctx.font = "900 64px " + FONT; ctx.fillText(testoCorto(ctx, "⚽ La rosa di " + una.nome, W - 80), W / 2, 120);
         ctx.font = "800 38px " + FONT; ctx.fillStyle = "#ffe066";
-        ctx.fillText((una.pos ? una.pos + "° posto · " : "") + (una.gio ? numFanta(una.gio.punti) + " fantapunti · " : "") + "valore " + una.totale + (una.crediti != null && !una.gio ? " · " + una.crediti + " 💰 avanzati" : ""), W / 2, 185);
+        ctx.fillText((una.pos ? una.pos + "° posto · " : "") + (una.gio ? numFanta(puntiFin(una)) + " fantapunti · " : "") + "valore " + una.totale + (una.crediti != null && !una.gio ? " · " + una.crediti + " 💰 avanzati" : ""), W / 2, 185);
         var hc = campoTela(ctx, 110, 215, W - 220, una.kit || [], true), yl = 215 + hc + 28;
         // sotto il campetto la rosa in lista: ruolo, nome, squadra, quanto l'hai pagato e quanto vale
         ordinaRosa(una.kit || []).forEach(function (c, i) {
@@ -4950,8 +5126,9 @@
           ctx.textAlign = "left"; ctx.fillStyle = "#ffe066"; ctx.font = "900 26px " + FONT; ctx.fillText(ru.breve || "", 80, y + 41);
           ctx.fillStyle = "#fff"; ctx.font = "800 32px " + FONT; ctx.fillText(testoCorto(ctx, c.nome + (c.squadra ? " · " + c.squadra : ""), W - 520), 160, y + 42);
           ctx.textAlign = "right"; ctx.font = "800 28px " + FONT; ctx.fillStyle = "#ffe066";
-          var gk = una.gio ? una.gio.cal[(una.kit || []).indexOf(c)] : null;   // (⚽ con la giornata: anche il fantavoto)
-          ctx.fillText((c.prezzo ? c.prezzo + " 💰" : "") + (c.valore != null ? "  vale " + c.valore : "") + (gk ? "  ⚽ " + numFanta(gk.fv) : ""), W - 80, y + 41);
+          var ik = (una.kit || []).indexOf(c), gk = una.gio ? una.gio.cal[ik] : null, fv = gk ? gk.fv : 0;   // (⚽ con la giornata: anche il fantavoto; 🏆 con 3 giornate quelli sommati)
+          if (gk && una.prima) una.prima.forEach(function (gi) { fv += gi.cal[ik].fv; });
+          ctx.fillText((c.prezzo ? c.prezzo + " 💰" : "") + (c.valore != null ? "  vale " + c.valore : "") + (gk ? "  ⚽ " + numFanta(fv) : ""), W - 80, y + 41);
         });
       } else {
         ctx.font = "900 60px " + FONT; ctx.fillText("⚽ Le rose della serata", W / 2, 110);
@@ -4960,7 +5137,7 @@
         righe.slice(0, n).forEach(function (r, i) {
           var cx = 30 + (i % col) * (cw + gap) + (cw - cwFit) / 2, cy = top + Math.floor(i / col) * (chMax + gap);
           ctx.textAlign = "center"; ctx.fillStyle = r.pos === 1 ? "#ffe066" : "#fff"; ctx.font = "900 " + Math.round(Math.min(34, cwFit / 11)) + "px " + FONT;
-          ctx.fillText(testoCorto(ctx, (r.pos === 1 ? "🏆 " : r.pos + "° ") + r.nome + " · " + (r.gio ? numFanta(r.gio.punti) + " punti" : r.totale), cwFit), cx + cwFit / 2, cy + 32);
+          ctx.fillText(testoCorto(ctx, (r.pos === 1 ? "🏆 " : r.pos + "° ") + r.nome + " · " + (r.gio ? numFanta(puntiFin(r)) + " punti" : r.totale), cwFit), cx + cwFit / 2, cy + 32);
           campoTela(ctx, cx, cy + 44, cwFit, r.kit || [], false);
         });
       }
@@ -6171,6 +6348,7 @@
   function avviaFanta(t) {
     var st = {
       formato: "fanta", sessione: nuovaSessione(), asta: null, giriVuoti: 0, salto: 1, giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
+      giornate: t.impostazioni && t.impostazioni.giornate === 3 ? 3 : 1,   // 🏆 1 giornata o 3 (di partenza 1)
       giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove(), omino: ominoLocale(n) }; })
     };
     st.mazzo = costruisciMazzoFanta(st.giocatori.length);
@@ -6187,7 +6365,7 @@
         el("div", { class: "t", text: "Costruisci la rosa" })
       ]),
       el("p", { class: "as-msg", text: "Ognuno parte con " + FANTA_BUDGET + " 💰. Rosa da 5: 1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante." }),
-      st.giornata ? el("p", { class: "as-msg", text: "⚽ Alla fine si scoprono le quotazioni vere e si gioca una giornata di Serie A finta: ognuno dei tuoi calciatori gioca con la sua squadra (🎯 i rigoristi tirano i rigori). Vince chi fa più fantapunti." }) : null,
+      st.giornata ? el("p", { class: "as-msg", text: (st.giornate === 3 ? "🏆 Alla fine si scoprono le quotazioni vere e si giocano 3 giornate di Serie A finta (le prime due veloci, la terza intera): " : "⚽ Alla fine si scoprono le quotazioni vere e si gioca una giornata di Serie A finta: ") + "ognuno dei tuoi calciatori gioca con la sua squadra (🎯 i rigoristi tirano i rigori). Vince chi fa più fantapunti" + (st.giornate === 3 ? " sommati." : ".") }) : null,
       el("p", { class: "as-msg", text: "I calciatori escono uno alla volta dal mazzo: scegli il salto (+1, +2 o +5) e tocca il tuo avatar per offrire. Chi ha quel ruolo già pieno non punta. Se nessuno offre, il calciatore torna in fondo al mazzo e ripasserà: decide il caso solo se tutti quelli rimasti di un ruolo vengono rifiutati 2 volte." })
     ]));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Comincia l'asta ▶", onclick: function () { prossimaFanta(t, st); } }));
@@ -6309,6 +6487,7 @@
     var st = {
       formato: "fanta", crediti: FANTA_BUDGET, sessione: null, mazzo: [], asta: null, esito: null, classifica: null,
       giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
+      giornate: t.impostazioni && t.impostazioni.giornate === 3 ? 3 : 1,   // 🏆 1 giornata o 3 (di partenza 1)
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, giriVuoti: 0, giro: 0, nCarta: 0, nEsiti: 0,
       giocatori: [{ id: IO, nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove(), omino: t.mioOmino ? t.mioOmino() : null }]
     };
@@ -6326,7 +6505,7 @@
     // "⚙️ Regole" in saletta: se torni ai Temi classici cambia motore (stessa stanza, stessi amici)
     t.onRegole = function (im) {
       if (!st.iniziata && formatoDi(t, im) !== "fanta") { st.morto = true; TM.smetti(); avviaAsta(t); return; }
-      if (!st.iniziata) st.giornata = im.giornata !== false;   // ⚽ la giornata: si decide in saletta
+      if (!st.iniziata) { st.giornata = im.giornata !== false; st.giornate = im.giornate === 3 ? 3 : 1; }   // ⚽ la giornata (e 🏆 quante): si decide in saletta
     };
     t.onRivincita = function () { if (st.fase === "fine" && !st.morto) nuovaInLobby(); };   // la Rivincita: tutti di nuovo nella saletta
 
@@ -6488,7 +6667,7 @@
     function fine() {   // finito il mazzo: la classifica per valore delle rose (le quotazioni si scoprono solo ora)
       st.asta = null; st.esito = null; st.scadenza = null; st.gufi = {};
       st.serieA = st.giornata ? {} : null;
-      st.classifica = classificaFanta(st.giocatori, st.serieA);   // (⚽ con la giornata: la gioca l'host e la vedono tutti uguale)
+      st.classifica = classificaFanta(st.giocatori, st.serieA, st.giornate);   // (⚽ con la giornata: la gioca l'host e la vedono tutti uguale)
       st.titoli = titoliFine(st.giocatori, FANTA_BUDGET, st.classifica);   // 🏅 i titoli scherzosi
       st.passi = {}; st.nomeCapo = nomeDi(st, IO);   // (le pagelle: fin dove sono arrivato, e il mio nome per «Aspettiamo…»)
       st.cron = pianoNuovo(Date.now() + PARTENZA_MS, velPref());   // ⏱️ il piano: tutti i telefoni (anche il mio) cominciano tra 2 secondi, insieme
