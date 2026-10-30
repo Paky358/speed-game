@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 283,
+    data: "30 ottobre 2026",
+    titolo: "Sì... però: il capo, la luce del verdetto e quasi 400 carte nuove 🤨",
+    descrizione: [
+      "👑 Online ogni squadra ha un capo, che cambia a ogni round. Tocca le carte che ti piacciono: sulla carta compare la tua faccina e i compagni la vedono. Poi decide il capo. Se il tempo finisce, vanno le carte con più faccine.",
+      "👆 Le carte si possono segnare anche mentre gioca l'altra squadra: quando tocca a voi, sono già pronte.",
+      "⚖️ Il giudice tocca la squadra e conferma. Poi, su tutti i telefoni insieme, la luce passa da uno scenario all'altro e si ferma su chi ha vinto, e gli avatar dei vincitori saltano. Il telefono fa festa a chi vince e dà un colpo a chi perde.",
+      "⭐ Il giudice tocca la carta che l'ha convinto: alla fine della partita si rivedono tutte, le carte della serata.",
+      "✋ Chi arriva a partita in corso sceglie la sua squadra ed entra subito. Fa il giudice anche lui: la partita si allunga di un round.",
+      "🃏 Quasi 400 carte nuove, di vita di tutti i giorni (1.004 in tutto). E il telefono di chi tiene la partita ricorda quelle già uscite: non tornano subito.",
+      "🥊 All'inizio di ogni round, su tutti i telefoni, il giudice e le squadre con gli avatar grandi; gli avatar ci sono anche in testa agli scenari e nella classifica del round."
+    ]
+  },
+  {
     v: 281,
     data: "29 ottobre 2026",
     titolo: "Stessa Lunghezza d'Onda: la ruota nuova 📡",

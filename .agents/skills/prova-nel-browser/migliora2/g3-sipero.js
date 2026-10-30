@@ -326,11 +326,11 @@
     if (!v || v.vincitore !== scelto) no("il round non va a chi ha scelto il giudice");
     var pt = {}; v.giocatori.forEach(function (x) { pt[x.nome] = x.punti; });
     if (pt[nomeDi(C, scelto)] !== 1 || Object.keys(pt).filter(function (n) { return pt[n]; }).length !== 1) no("punti dopo il round: " + JSON.stringify(pt));
-    if (!/Vince /.test(T(wg))) no("niente verdetto in scena");
+    if (!await W.aspetta(function () { return /Vince /.test(T(wg)); }, 4500)) no("niente verdetto in scena (dopo la luce)");   // (30 ott 2026: prima la luce che gira, ~3 s)
     // ⏩ Avanti: 3 su 4; chi guarda non ha il tasto; il tocco vecchio non vale
     if (v.servono !== 3) no("servono " + v.servono + " invece di 3 (4 giocano, Marco guarda)");
     if (W.finestra("Marco").document.querySelector(".sp-pronto")) no("chi guarda ha «⏩ Avanti»");
-    if (!/Si va avanti tra/.test(T(P))) no("sull'esito manca il conto alla rovescia («" + T(P).slice(-100) + "»)");
+    if (!await W.aspetta(function () { return /Si va avanti tra/.test(T(P)); }, 4500)) no("sull'esito manca il conto alla rovescia («" + T(P).slice(-100) + "»)");
     W.reteDi("Marco") && W.reteDi("Marco").invia({ t: "pronto", k: v.kAv });
     W.reteDi("Giulia").invia({ t: "pronto", k: "vecchio|1" });
     await W.dorme(400);
@@ -384,7 +384,9 @@
     var v = await W.aspetta(function () { var x = vm(C); return x.fase === "gioco" && x.step ? x : null; }, 8000);
     if (!v || v.solo) no("la partita a squadre non comincia");
     // chi gioca per primo scrive la sua carta e la gioca
-    var sq = v.step.sq, ids = Object.keys(v.assegna).filter(function (id) { return v.assegna[id] === sq; }), chi = nomeDi(C, ids[0]), w = W.finestra(chi);
+    var sq = v.step.sq, ids = Object.keys(v.assegna).filter(function (id) { return v.assegna[id] === sq; });
+    ids.sort(function (a, b) { return (a === v.capo[sq] ? 0 : 1) - (b === v.capo[sq] ? 0 : 1); });   // (30 ott 2026: per primo il capo, l'unico con «Gioca»)
+    var chi = nomeDi(C, ids[0]), w = W.finestra(chi);
     var MIA = "Il tuo capo ti adora e ti paga doppio";
     await scrivi(w, MIA); metti(w);
     if (!await W.aspetta(function () { var s = w.document.querySelector(".sp-carta.scritta.su"); return s && /Il tuo capo/.test(s.textContent); }, 4000)) no("la carta scritta non arriva già scelta a " + chi);
@@ -401,7 +403,7 @@
     // si gioca il resto del round coi tocchi (chi è di turno gioca), poi arringa e verdetto
     var fino = Date.now() + 60000;
     while (Date.now() < fino && vm(C).fase === "gioco") {
-      v = vm(C); var tid = Object.keys(v.assegna).filter(function (id) { return v.assegna[id] === v.step.sq && !(v.giocatori.filter(function (g) { return g.id === id; })[0] || {}).via; })[0];
+      v = vm(C); var tid = Object.keys(v.assegna).filter(function (id) { return v.assegna[id] === v.step.sq && !(v.giocatori.filter(function (g) { return g.id === id; })[0] || {}).via; }).sort(function (a, b) { return (a === v.capo[v.step.sq] ? 0 : 1) - (b === v.capo[v.step.sq] ? 0 : 1); })[0];
       var wt = telDi(C, tid); var p0 = v.step.i;
       if (wt && wt.document.querySelector(".sp-carta[role=button]")) { try { await gioca(wt, v.step.n); } catch (e) {} }
       await W.aspetta(function () { return vm(C).fase !== "gioco" || vm(C).step.i !== p0; }, 3000);
@@ -409,8 +411,9 @@
     var wg = telDi(C, vm(C).giudiceId);
     for (var k = 0; k < 2; k++) { var bb = await W.aspetta(function () { var x = bottone(wg, /Tocca alla|Al verdetto/); return x && !x.disabled ? x : null; }, 5000); if (!bb) no("niente arringa (" + vm(C).fase + ")"); bb.click(); await W.dorme(300); }
     var bv = await W.aspetta(function () { return wg.document.querySelector(".sp-vota.c0:not([disabled])"); }, 4000); if (!bv) no("il giudice non può votare");
-    bv.click();
+    bv.click(); bv.click();   // (30 ott 2026: un tocco sceglie, il secondo conferma)
     v = await W.aspetta(function () { var x = vm(C); return x.fase === "esito" ? x : null; }, 4000); if (!v) no("niente esito");
+    await W.dorme(3300);   // (la luce del verdetto: poi «⏩ Avanti»)
     // Avanti: 4 giocano (Marco guarda) → 3; Sara esce durante l'esito → 3 presenti → servono 2
     if (v.servono !== 3) no("servono " + v.servono + " invece di 3");
     if (W.finestra("Marco").document.querySelector(".sp-pronto")) no("chi è arrivato tardi ha «⏩ Avanti» mentre guarda");
@@ -502,7 +505,7 @@
       tabs[1].click(); await W.dorme(100);
       var bs = bottone(w, /Scelgo/); if (!bs || bs.textContent.indexOf(pres[1]) < 0) no("«Scelgo» non segue la linguetta (" + (bs && bs.textContent) + ")");
       bs.click(); await W.dorme(400);
-      if (!new RegExp("Il round va a " + pres[1]).test(T(w))) no("l'esito non dà il round a " + pres[1]);
+      if (!await W.aspetta(function () { return new RegExp("Il round va a " + pres[1]).test(T(w)); }, 4500)) no("l'esito non dà il round a " + pres[1]);   // (30 ott 2026: dopo la luce)
       if (!W.clicca(w, /Prossimo round|Classifica finale/)) no("niente «Prossimo round»");
       await W.dorme(500);
     }

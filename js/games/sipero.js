@@ -549,7 +549,8 @@
       ".sp-cfa{width:22px;height:22px;border-radius:50%;overflow:hidden;background:var(--o-carta-2);display:inline-block;flex:0 0 auto}",
       // 🥁 la luce del verdetto e la stella
       ".sp-col.luce,.sp-tab button.luce{border-color:var(--o-oro)!important;box-shadow:0 0 0 2px var(--o-oro),0 0 26px rgba(255,194,71,.55)!important;transform:scale(1.025)}",
-      ".sp-col,.sp-tab button{transition:border-color .08s,box-shadow .08s,transform .08s,background-color .25s}",
+      ".sp-col,.sp-tab button{transition:border-color .08s,box-shadow .08s,transform .08s,background-color .25s,opacity .12s}",
+      ".sp-scena.sospesa .sp-col:not(.luce),.sp-scena.sospesa .sp-tab button:not(.luce){opacity:.45}",
       // (mai cambiare l'animazione delle carte già arrivate: ripartirebbe da capo col suo ritardo e la carta sparirebbe per qualche secondo)
       ".sp-col.scegli .sp-mini{cursor:pointer;outline:1.5px dashed var(--o-filo-oro);outline-offset:-2px}",
       ".oro.g-sipero .sp-mini.stella{outline:2px solid var(--o-oro);outline-offset:-2px;box-shadow:0 0 14px rgba(255,194,71,.45)}",
@@ -745,10 +746,12 @@
     if (!n) { setTimeout(onFine, ms); return; }
     while (somma + d < ms - 450) { ritardi.push(d); somma += d; d = Math.round(d * 1.14); }
     var tot = ritardi.length, i0 = ((fin - (tot - 1)) % n + n * 50) % n, passo = 0;
+    var sc = nodi[0].closest ? nodi[0].closest(".sp-scena") : null;   // (intanto gli altri si spengono un po')
+    if (sc) sc.classList.add("sospesa");
     function accendi(j) { nodi.forEach(function (x, q) { x.classList.toggle("luce", q === j); }); }
     (function giro() {
-      if (!document.body.contains(nodi[0])) return;
-      if (passo >= tot) { accendi(fin); setTimeout(function () { nodi.forEach(function (x) { x.classList.remove("luce"); }); onFine(); }, Math.max(150, ms - somma)); return; }
+      if (!document.body.contains(nodi[0])) { if (sc) sc.classList.remove("sospesa"); return; }
+      if (passo >= tot) { accendi(fin); setTimeout(function () { nodi.forEach(function (x) { x.classList.remove("luce"); }); if (sc) sc.classList.remove("sospesa"); onFine(); }, Math.max(150, ms - somma)); return; }
       accendi((i0 + passo) % n); suono("tic");
       setTimeout(giro, ritardi[passo++]);
     })();
@@ -1293,6 +1296,7 @@
     var ultimo = st.round >= st.totale;
     ui.piede.appendChild(el("button", { class: "btn btn-primario", text: ultimo ? "Classifica finale 🏆" : "Prossimo round ▶",
       onclick: function () { chiudiLente(); iniziaRound(t, st); } }));
+    adattaTavolo(ui);   // (col tasto in fondo le carte hanno meno posto: si rimisurano)
   }
   // ⭐ sullo stesso telefono: il giudice tocca la carta che l'ha convinto (sullo scenario che ha vinto)
   function stellaLocale(t, st, ui, col, voci, chi) {
@@ -1463,6 +1467,7 @@
     var ultimo = st.round >= st.totale;
     ui.piede.appendChild(el("button", { class: "btn btn-primario", text: ultimo ? "Classifica finale 🏆" : "Prossimo round ▶",
       onclick: function () { chiudiLente(); iniziaRound(t, st); } }));
+    adattaTavolo(ui);   // (col tasto in fondo le carte hanno meno posto: si rimisurano)
   }
 
   function finePartita(t, st) {
@@ -2476,12 +2481,12 @@
           if (!me.giudice) notaPiede(ui, "⚖️ Il giudice è uscito: vai avanti tu.");
           ui.piede.appendChild(b);
           conto(b);
-        } else notaPiede(ui, "Poi decide il giudice.");
+        } else notaPiede(ui, (me.guarda && !t.guarda ? "✋ Sei arrivato a partita in corso: entri dal prossimo round." : "Poi decide il giudice."));
       };
     } else if (vm.fase === "giudizio") {
       chiave = "giu|" + me.decide;
       fai = function () {
-        if (!me.decide) { faccine(ui.azione); return; }
+        if (!me.decide) { faccine(ui.azione); if (me.guarda && !t.guarda && me.sq < 0) notaPiede(ui, "✋ Sei arrivato a partita in corso: entri dal prossimo round."); return; }
         if (!me.giudice) ui.azione.appendChild(el("div", { class: "sp-avviso", text: "⚖️ Il giudice è uscito: decidi tu" }));
         // un tocco sceglie, il secondo conferma (niente verdetti per sbaglio)
         var bb = [];
@@ -2664,13 +2669,13 @@
           if (!me.giudice) notaPiede(ui, "⚖️ Il giudice è uscito: vai avanti tu.");
           ui.piede.appendChild(b);
           conto(b);
-        } else notaPiede(ui, chi === my ? "Quando hai finito, il giudice va avanti." : "Poi tocca agli altri, e alla fine decide il giudice.");
+        } else notaPiede(ui, (me.guarda && !t.guarda ? "✋ Sei arrivato a partita in corso: entri dal prossimo round." : chi === my ? "Quando hai finito, il giudice va avanti." : "Poi tocca agli altri, e alla fine decide il giudice."));
       };
     } else if (vm.fase === "giudizio") {
       chiave = "giu|" + me.decide;
       fai = function () {
         ui.labScegli = null;
-        if (!me.decide) { faccine(ui.azione); notaPiede(ui, "Tocca i nomi per rileggere gli scenari."); return; }
+        if (!me.decide) { faccine(ui.azione); notaPiede(ui, me.guarda && !t.guarda && !me.pres ? "✋ Entri dal prossimo round. Tocca i nomi per rileggere gli scenari." : "Tocca i nomi per rileggere gli scenari."); return; }
         if (!me.giudice) ui.azione.appendChild(el("div", { class: "sp-avviso", text: "⚖️ Il giudice è uscito: decidi tu" }));
         ui.labScegli = el("span");
         var b = el("button", { class: "btn btn-primario", onclick: function () { if (b.disabled) return; b.disabled = true; chiudiLente(); cb.onGiudica(V.vede); } }, [ui.labScegli]);
@@ -2761,7 +2766,7 @@
       ui.pronti = { agg: agg };
     } else {
       ui.piede.appendChild(nota);
-      notaPiede(ui, ultimo ? "Poi la classifica finale." : "👀 Guardi: si va avanti da soli.");
+      notaPiede(ui, ultimo ? "Poi la classifica finale." : io && io.guarda && !t.guarda ? "✋ Entri dal prossimo round: si va avanti da soli." : "👀 Guardi: si va avanti da soli.");
     }
     if (t.contoAvanti) t.contoAvanti(nota, vm.resta || TEMPO_ESITO, null, kConto);
   }
@@ -2807,5 +2812,7 @@
 
   // per le prove (skill prova-nel-browser): le regole di «Ognuno per sé» e della carta bianca senza grafica
   window.__sipero = { roundSolo: roundSolo, giocaSolo: giocaSolo, quanteSolo: quanteSolo, presDopo: presDopo, pulisciScritta: pulisciScritta,
-    riassunto: riassuntoImp, voce: voce, firmeDi: firmeDi };
+    riassunto: riassuntoImp, voce: voce, firmeDi: firmeDi,
+    // 🧠 la memoria delle uscite: la pila di un mazzo nuovo, l'impronta di una carta, la memoria da rileggere (dopo averla cambiata a mano)
+    pilaFresca: pilaFresca, impronta: impronta, rileggiMemoria: function () { memoria = null; return leggiMemoria(); } };
 })();

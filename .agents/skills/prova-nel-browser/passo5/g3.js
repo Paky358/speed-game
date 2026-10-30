@@ -244,7 +244,7 @@
       }
       var g = nomeDi(v, v.giudiceId), wg = g && W.finestra(g);
       if (v.fase === "arringa" && wg && !fatti["a|" + v.round + "|" + v.parla]) { if (W.clicca(wg, /Tocca alla Squadra|Al verdetto/)) fatti["a|" + v.round + "|" + v.parla] = 1; }
-      if (v.fase === "giudizio" && wg && !fatti["d|" + v.round]) { var b = wg.document.querySelector(".sp-vota"); if (b) { b.click(); fatti["d|" + v.round] = 1; } }
+      if (v.fase === "giudizio" && wg && !fatti["d|" + v.round]) { var b = wg.document.querySelector(".sp-vota"); if (b) { b.click(); b.click(); fatti["d|" + v.round] = 1; } }   // (30 ott 2026: il secondo tocco conferma)
       if (v.fase === "esito" && !fatti["e|" + v.round]) { if (W.clicca(W.finestra("Paky"), /Prossimo round|Classifica finale/)) fatti["e|" + v.round] = 1; }
     };
   }
@@ -266,7 +266,7 @@
     // le carte tornano alla squadra di turno (sul telefono di chi deve giocare)
     for (var i = 0; i < chiGioca.length; i++) {
       var n = chiGioca[i];
-      if (!await W.aspetta(function () { return W.finestra(n).document.querySelectorAll(".sp-carta").length > 0 && /Gioca ▶/.test(T(W.finestra(n))); }, 8000)) no(n + " non ha di nuovo le sue carte e «Gioca ▶»");
+      if (!await W.aspetta(function () { return W.finestra(n).document.querySelectorAll(".sp-carta").length > 0 && /Gioca ▶|Decide /.test(T(W.finestra(n))); }, 8000)) no(n + " non ha di nuovo le sue carte e «Gioca ▶» (o «👑 Decide …»)");   // (30 ott 2026: gioca il capo)
     }
     L.nota("carte → stessa fase, le carte tornano a " + chiGioca.join(", ") + " (" + r.dt + " s)");
     // all'arringa
@@ -306,7 +306,7 @@
     var b = await W.aspetta(function () { return wg.document.querySelectorAll(".sp-vota").length === 2 ? wg.document.querySelectorAll(".sp-vota") : null; }, 6000);
     if (!b) no(g + " (giudice) non ha più i due tasti per decidere");
     var vPrima = vm(C);
-    b[1].click();
+    b[1].click(); b[1].click();   // (30 ott 2026: un tocco sceglie, il secondo conferma)
     var v = await finche(C, function (x) { return x.fase === "esito"; }, null, 6000, "il verdetto dopo la ripresa non vale");
     if (v.vincitore !== 1 || v.sorte) no("ha vinto la squadra " + v.vincitore + (v.sorte ? " (a sorte)" : "") + " invece della 2 scelta dal giudice");
     var vinti = (v.giocatori || []).filter(function (p) { return v.assegna[p.id] === 1; }).map(function (p) { return p.nome + ":" + p.punti; });

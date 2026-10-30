@@ -309,7 +309,7 @@
     // decide il giudice; se è uscito (es. era l'host sparito) decide chi tiene la partita
     var g = nomeDi(X, v.giudiceId), wg = g && !v.giudiceVia && X.vivi.indexOf(g) >= 0 ? W.finestra(g) : (v.giudiceVia || !v.giudiceId ? wTiene(X) : null);
     if (v.fase === "arringa" && wg && !X.fatti["a|" + v.round + "|" + v.parla]) { if (W.clicca(wg, /Tocca alla Squadra|Al verdetto/)) X.fatti["a|" + v.round + "|" + v.parla] = 1; }
-    if (v.fase === "giudizio" && wg && !X.fatti["d|" + v.round]) { var b = wg.document.querySelector(".sp-vota"); if (b) { b.click(); X.fatti["d|" + v.round] = 1; } }
+    if (v.fase === "giudizio" && wg && !X.fatti["d|" + v.round]) { var b = wg.document.querySelector(".sp-vota"); if (b) { b.click(); b.click(); X.fatti["d|" + v.round] = 1; } }   // (30 ott 2026: il secondo tocco conferma)
     if (v.fase === "esito" && !X.fatti["e|" + v.round]) { if (W.clicca(wTiene(X), /Prossimo round|Classifica finale/)) X.fatti["e|" + v.round] = 1; }
   }
   COPIONE.aggiungi(591, { nome: "Riserva · Sì… però: l'host si spegne mentre si giocano le carte, Giulia porta avanti la partita fino alla classifica", fai: function () {
