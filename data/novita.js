@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 286,
+    data: "30 ottobre 2026",
+    titolo: "🎬 Le azioni da finale nella giornata del fanta",
+    descrizione: [
+      "Dal 75' arrivano le azioni da finale: la mischia in area, la palla lunga col colpo di testa, il tiro a giro all'incrocio, la doppia parata del portiere, l'assedio con tre o quattro tiri di fila e, dall'85', l'ultimo assalto col portiere che sale in area sul calcio d'angolo. In una giornata non si vedono mai due volte uguali.",
+      "Le azioni non svelano come vanno a finire: fino al tiro sono identiche, che sia gol o no.",
+      "Tiri e rigori più vari: prima andavano spesso dalla stessa parte e i rigori finivano quasi sempre alti.",
+      "Anche nelle occasioni si vede chi fa il passaggio, come nei gol."
+    ]
+  },
+  {
     v: 285,
     data: "30 ottobre 2026",
     titolo: "⏳ La Zona Cesarini nella giornata del fanta",
