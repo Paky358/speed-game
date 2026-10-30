@@ -148,6 +148,33 @@
     return r.note.join("; ") + " · " + testo(r);
   } });
 
+  // gs3 (30 ott 2026): Giulia ha il telefono più basso di quello di Paky (360x560 contro 360x900): le pagelle del primo tempo a lei
+  // servono più pagine. Quando Paky va avanti (o il conto finisce) le pagelle si chiudono anche per lei, e nel secondo tempo il campo si vede
+  // (prima l'ultima pagina si chiudeva e si riaccendeva subito, e restava aperta sopra il campo fino alla fine)
+  COPIONE.aggiungi("gs3", { nome: "Giornata del fanta online: un amico col telefono più basso dell'host ha più pagine di pagelle, ma nel secondo tempo il campo si vede", fai: async function () {
+    var NOMI = ["Paky", "Giulia", "Luca", "Marco"], vecchio = W.BR.ritardo;
+    try {
+      W.BR.ritardo = 300;
+      var o = await telefoni({ formato: "fanta" }, NOMI), P = o.P, C = o.C;
+      function misura(nome, w, h) { var f = document.getElementById("tel-" + nome), win = W.finestra(nome); f.style.width = w + "px"; f.style.height = h + "px"; win.dispatchEvent(new win.Event("resize")); }
+      misura("Paky", 360, 900); misura("Giulia", 360, 560);
+      await astaVeloce(P, C);
+      var G = W.finestra("Giulia"), pagG = 0, pagP = 0, fino = Date.now() + 240000;
+      while (Date.now() < fino) {
+        var tg = q(G, ".st-pag.on:not(.live) .st-pag-tit"), tp = q(P, ".st-pag.on:not(.live) .st-pag-tit");
+        if (tg && /primo tempo · (\d+)\/(\d+)/.test(tg.textContent)) pagG = Math.max(pagG, +RegExp.$2);
+        if (tp && /primo tempo/.test(tp.textContent)) pagP = Math.max(pagP, /· \d+\/(\d+)/.test(tp.textContent) ? +RegExp.$1 : 1);
+        if (/SI RIPARTE/.test((q(G, ".st-msg.on") || {}).textContent || "")) break;
+        await W.dorme(150);
+      }
+      if (!pagG) no("Giulia non ha visto le pagelle del primo tempo");
+      if (pagG <= pagP) no("le pagelle non hanno più pagine su Giulia (" + pagG + ") che su Paky (" + pagP + "): la prova non prova niente");
+      // il secondo tempo: per 8 secondi le pagelle di Giulia devono restare chiuse
+      for (var k = 0; k < 40; k++) { var aperte = q(G, ".st-pag.on:not(.live)"); if (aperte) no("nel secondo tempo le pagelle di Giulia sono ancora aperte: «" + (q(G, ".st-pag-tit") || {}).textContent + "»"); await W.dorme(200); }
+      return "Giulia " + pagG + " pagine di pagelle, Paky " + pagP + ": nel secondo tempo il campo si vede su tutti e due";
+    } finally { W.BR.ritardo = vecchio; }
+  } });
+
   COPIONE.aggiungi("gs0", { nome: "Giornata del fanta online, solo guardare: quanto sono sfasati i telefoni (rete 300 ms, orologi sfasati)", fai: async function () {
     var r = await serata(false);
     W.__ultimaSync = r;

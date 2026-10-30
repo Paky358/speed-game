@@ -9,6 +9,21 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 285,
+    data: "30 ottobre 2026",
+    titolo: "⏳ La Zona Cesarini nella giornata del fanta",
+    descrizione: [
+      "Dal 75' scatta la Zona Cesarini: barra rossa, campo che si scalda, il cronometro che corre e il cartello del recupero. Come nel calcio vero, nel finale e nel recupero succede di più: dal 75' arriva quasi un gol su tre dei vostri calciatori.",
+      "Ognuno vede sul suo quadretto cosa gli serve: 📌 sei in testa, 🔥 ti serve un gol, 💪 due, 🙏 un miracolo. La 👑 sta su chi è in testa e ogni sorpasso si annuncia.",
+      "📻 «Interrompo! Gol a San Siro»: i gol degli altri campi arrivano come alla radio.",
+      "I voti si muovono in diretta, con le freccine: il punteggio in alto è quello vero.",
+      "Il fischio finale si fa aspettare e, se la giornata si decide nel finale, si rivede «🎬 Il momento che ha deciso».",
+      "La rosa più forte vince un po' più spesso: i campioni segnano di più e i risultati sono meno pazzi. La fortuna resta.",
+      "Il rallentatore prima del tiro c'è sia sui gol sia sui non gol: non svela più come va a finire.",
+      "Online, sui telefoni più bassi di quello di chi tiene la partita, le pagelle del primo tempo non restano più aperte sopra il campo."
+    ]
+  },
+  {
     v: 283,
     data: "30 ottobre 2026",
     titolo: "Sì... però: il capo, la luce del verdetto e quasi 400 carte nuove 🤨",
