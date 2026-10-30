@@ -1667,15 +1667,26 @@ class Partita {
 const PEZZO = 8;   // caselle per lato di un pezzo di pavimento
 const TELE = new Map(); let telePx = 0;
 const TELE_MAX = 20e6;    // pixel in tutto (circa 80 MB): oltre, si buttano le tele usate meno di recente
-function prendi(chiave, fare){
-  let e = TELE.get(chiave);
-  if(e){ TELE.delete(chiave); TELE.set(chiave, e); return e; }
-  e = fare() || { cv:null, px:0 }; e.nuovo = true;
+// una voce nuova nella cache (tela disegnata o immagine arrivata dalla rete); se si supera il tetto, escono le più vecchie
+function metti(chiave, e){
   TELE.set(chiave, e); telePx += e.px;
   for(const [k, v] of TELE){
     if(telePx <= TELE_MAX || k === chiave) break;
     TELE.delete(k); telePx -= v.px; if(v.cv){ v.cv.width = 0; v.cv.height = 0; }
+    if(v.libera) v.libera();   // le immagini: si segna che vanno riscaricate se servono ancora
   }
+}
+function prendi(chiave, fare){
+  let e = TELE.get(chiave);
+  if(e){ TELE.delete(chiave); TELE.set(chiave, e); return e; }
+  e = fare() || { cv:null, px:0 }; e.nuovo = true;
+  metti(chiave, e);
+  return e;
+}
+// una voce già in cache, senza farla (e rimessa in fondo alla coda: è appena stata usata)
+function cerca(chiave){
+  const e = TELE.get(chiave);
+  if(e){ TELE.delete(chiave); TELE.set(chiave, e); }
   return e;
 }
 
@@ -2385,9 +2396,186 @@ function pezzo(M, i, j, res, soloSePronto){
 function anticipa(M, i0, j0, i1, j1, res){
   const ni = Math.ceil(M.GW/PEZZO), nj = Math.ceil(M.GH/PEZZO);
   for(let j = Math.max(0, j0); j <= Math.min(nj - 1, j1); j++) for(let i = Math.max(0, i0); i <= Math.min(ni - 1, i1); i++){
+    if(immCopre(M, i, j)) continue;   // c'è (o sta arrivando) l'immagine di Blender: il pezzo a codice non serve
     if(!TELE.has('P|' + M.nome + '|' + i + ',' + j + '|' + res)){ pezzo(M, i, j, res).nuovo = false; return true; }
   }
   return false;
+}
+
+// ── Il palazzo reso in Blender: immagini al posto del disegno a codice ──
+// Il disegno a codice resta come riserva: con l'interruttore spento, o se l'indice o un'immagine non arrivano (rete, file che manca),
+// si usa il disegno di sempre, pezzo per pezzo. Le immagini si scaricano solo quando servono: i pezzi sullo schermo e quelli appena fuori.
+// Cartella (relativa alla pagina, come carte/giochi/ di SPeeD GAME): carte/lanterne/<mappa>/, con <mappa> = palazzo o atrio.
+//   indice.json          { pixel_per_casella:64, pezzi:['5_4', ...], mobili:{ '<k>':[x, y, larg, alt] }, animati:{ barca:{ centro:[x, y], perno:[x, y] }, campana:{...}, ruota:{...} },
+//                          extra:[{ f:'extra/nome.webp', rett:[x, y, larg, alt], base:y }] }   (extra: oggetti di scena che non sono in M.ostacoli; facoltativo)
+//   p_<i>_<j>.webp       pezzo di 512×512 (8×8 caselle a 64 px per casella): caselle 8i…8i+7 e 8j…8j+7
+//   mobili/<k>.webp      ritaglio con alfa del mobile k di M.ostacoli (stesso ordine)
+//   animati/<nome>.webp  barca (dondola), campana (oscilla), ruota (gira col compito)
+// Nell'indice tutti i pixel sono a 64 px per casella, dall'angolo in alto a sinistra della mappa; centro e perno sono punti della mappa.
+// Il gioco è a 32 px per casella: le immagini si disegnano scalate a metà (sugli schermi ad alta densità restano nitide).
+// (Non usare imageSmoothingQuality='high': provato a CPU ×4, i fotogrammi passano da 60 a 8-12 al secondo.)
+const IMMAGINI_PALAZZO = false;   // l'interruttore: si accende solo quando il palazzo intero è pronto (mai stanze vere mescolate a stanze disegnate)
+const IMM_VERSIONE = '1';                // da cambiare quando le immagini cambiano: il telefono non usa le vecchie
+const IMM_CARTELLA = 'carte/lanterne/';
+const IMM_IN_VOLO = 8;                   // scaricamenti insieme
+let immVolo = 0, immAcceso0;
+const immCoda = [];                      // cosa scaricare: si prende dalla fine, così quello che serve adesso passa avanti
+// con LT_PROVA, ?blender=1 accende e ?blender=0 spegne (per provare); altrimenti vale l'interruttore
+function immAcceso(){
+  if(immAcceso0 === undefined){
+    let v = IMMAGINI_PALAZZO;
+    try{ if(window.LT_PROVA){ const q = /[?&]blender=(\d)/.exec(location.search); if(q) v = q[1] === '1'; } }catch(e){}
+    immAcceso0 = v;
+  }
+  return immAcceso0;
+}
+// lo stato delle immagini di una mappa (null se la mappa non ne ha o l'interruttore è spento)
+function immMappa(M){
+  if(!immAcceso()) return null;
+  if(M._im === undefined){
+    const nome = M === PALAZZO ? 'palazzo' : M === ATRIO ? 'atrio' : null;
+    M._im = nome ? { nome, base:IMM_CARTELLA + nome + '/', stato:0, prove:0, riprova:0, quando:0, s:{}, f:{}, k:{}, sporco:true, ultQ:-1, pz:null, mobili:null, anim:null, extra:null, kk:0.5 } : null;
+  }
+  return M._im;
+}
+// stato dell'indice: 0 da scaricare · 1 in arrivo · 2 pronto · 3 non arrivato (si riprova) · 4 la mappa non ha immagini
+function immIndice(m){
+  if(m.stato === 1 || m.stato === 2 || m.stato === 4) return;
+  if(m.stato === 3 && (m.prove >= 3 || performance.now() < m.riprova)) return;
+  if(typeof fetch !== 'function'){ m.stato = 4; return; }
+  m.stato = 1; m.prove++;
+  fetch(m.base + 'indice.json?v=' + IMM_VERSIONE).then(r => r.status === 404 ? 404 : r.ok ? r.json() : Promise.reject()).then(j => {
+    if(j === 404){ m.stato = 4; return; }
+    const ix = immLeggi(j); if(!ix){ m.stato = 4; return; }
+    m.pz = ix.pz; m.mobili = ix.mobili; m.anim = ix.anim; m.extra = ix.extra; m.kk = ix.kk; m.stato = 2; m.sporco = true;
+  }).catch(() => { m.stato = 3; m.riprova = performance.now() + 15000; });
+}
+// l'indice, letto con un po' di tolleranza (liste o oggetti), con le misure già nei pixel del gioco
+function immLeggi(j){
+  if(!j || typeof j !== 'object') return null;
+  const kk = T/(+j.pixel_per_casella || +j.px_per_casella || +j.ppc || 64);
+  const rett = v => { const r = Array.isArray(v) ? v : v && (v.rett || v.rect) ? (v.rett || v.rect) : v ? [v.x != null ? v.x : v.px, v.y != null ? v.y : v.py, v.w != null ? v.w : v.larg, v.h != null ? v.h : v.alt] : null;
+    return r && r.length >= 4 && r.every(n => isFinite(n)) ? { x:r[0]*kk, y:r[1]*kk, w:r[2]*kk, h:r[3]*kk } : null; };
+  const pz = new Set();
+  (j.pezzi || []).forEach(p => {   // ogni pezzo: 'p_5_4.webp' o '5_4', oppure [5, 4], oppure { i:5, j:4 }
+    let a = null;
+    if(Array.isArray(p)) a = p; else if(p && typeof p === 'object') a = [p.i, p.j]; else { const q = /(\d+)_(\d+)/.exec(String(p)); if(q) a = [+q[1], +q[2]]; }
+    if(a && isFinite(a[0]) && isFinite(a[1]) && a[0] >= 0 && a[0] < 16) pz.add(a[1]*16 + a[0]);
+  });
+  if(!pz.size) return null;
+  const mobili = new Map(), lista = j.mobili || [];
+  (Array.isArray(lista) ? lista.map((v, k) => [v && v.k != null ? +v.k : k, v]) : Object.keys(lista).map(k => [+k, lista[k]])).forEach(([k, v]) => { const r = rett(v); if(r && isFinite(k)) mobili.set(k, r); });
+  const anim = {}, an = j.animati || {};
+  Object.keys(an).forEach(nome => {
+    const a = an[nome], c = a && a.centro; if(!c || !isFinite(c[0]) || !isFinite(c[1])) return;
+    const p = a.perno;
+    anim[nome] = { cx:c[0]*kk, cy:c[1]*kk, px:p ? p[0]*kk : null, py:p ? p[1]*kk : null, w:a.w ? a.w*kk : 0, h:a.h ? a.h*kk : 0 };
+  });
+  const extra = [];
+  (j.extra || []).forEach(v => { const r = rett(v); if(r && v.f) extra.push({ f:String(v.f), x:r.x, y:r.y, w:r.w, h:r.h, base:(v.base != null ? v.base*kk : r.y + r.h) }); });
+  return { pz, mobili, anim, extra, kk };
+}
+// l'immagine di una voce: se è in cache la dà, se no la mette in coda (una volta sola) e dà null
+function immVoce(m, chiave, url){
+  const e = cerca(m.k[chiave] || (m.k[chiave] = 'I|' + m.nome + '|' + chiave));
+  if(e) return e.img;
+  immAccoda(m, chiave, url); immPompa();
+  return null;
+}
+function immAccoda(m, chiave, url){
+  const st = m.s[chiave];
+  if(st === 0 || st === 1 || st === 2) return;
+  if(st === 3){ const f = m.f[chiave]; if(f.n >= 3 || performance.now() - f.t < 15000) return; }
+  m.s[chiave] = 0; immCoda.push({ m, chiave, url:m.base + url + '?v=' + IMM_VERSIONE });
+}
+function immPompa(){
+  while(immVolo < IMM_IN_VOLO && immCoda.length){
+    const q = immCoda.pop(), m = q.m, chiave = q.chiave;
+    if(m.s[chiave] !== 0) continue;
+    m.s[chiave] = 1; immVolo++;
+    const im = new Image(); im.decoding = 'async';
+    const fatto = ok => {
+      immVolo--;
+      if(ok){
+        m.s[chiave] = 2; delete m.f[chiave];
+        metti(m.k[chiave] || (m.k[chiave] = 'I|' + m.nome + '|' + chiave), { img:im, px:im.naturalWidth*im.naturalHeight, libera(){ delete m.s[chiave]; m.sporco = true; } });
+      } else { m.s[chiave] = 3; const f = m.f[chiave] || (m.f[chiave] = { n:0, t:0 }); f.n++; f.t = performance.now(); }
+      immPompa();
+    };
+    im.src = q.url;
+    if(im.decode) im.decode().then(() => fatto(true), () => fatto(false)); else { im.onload = () => fatto(true); im.onerror = () => fatto(false); }
+  }
+}
+// le immagini di una mappa, se sono accese e l'indice è arrivato (se no null: si disegna a codice; l'indice parte da solo)
+function immPronta(M){
+  try{
+    const m = immMappa(M); if(!m) return null;
+    if(m.stato !== 2){ immIndice(m); return null; }
+    const ora = performance.now();
+    if(ora > m.quando){ m.quando = ora + 5000; if(Object.keys(m.f).length) m.sporco = true; }   // chi non è arrivato si riprova (ogni 15 s, al massimo 3 volte)
+    return m;
+  }catch(e){ immAcceso0 = false; return null; }   // rete di sicurezza: se qualcosa va storto le immagini si spengono e resta il disegno a codice
+}
+// vero se i pezzi di questa mappa li coprono le immagini (o l'indice sta arrivando): allora il pezzo a codice non va preparato in anticipo
+function immCopre(M, i, j){
+  if(!immAcceso() || !M._im) return false;
+  const m = M._im; return m.stato === 1 || (m.stato === 2 && m.pz.has(j*16 + i));
+}
+// il pezzo i, j come immagine (null se non c'è o non è ancora arrivato: allora resta il disegno a codice)
+function immPezzo(m, i, j){
+  const n = j*16 + i; if(!m.pz.has(n)) return null;
+  return immVoce(m, 'p' + i + '_' + j, 'p_' + i + '_' + j + '.webp');
+}
+// chiede le immagini che servono nel rettangolo di pezzi (i0..i1, j0..j1), più un anello intorno (anello = 1): i pezzi e poi i mobili, quelli sullo schermo per primi
+function immChiedi(m, M, i0, j0, i1, j1, anello){
+  if(!m || m.stato !== 2) return;
+  try{ immChiedi0(m, M, i0, j0, i1, j1, anello); }catch(e){ immAcceso0 = false; }   // (come sopra)
+}
+function immChiedi0(m, M, i0, j0, i1, j1, anello){
+  const q = (((i0 + 2)*256 + j0 + 2)*256 + i1 + 2)*256 + j1 + 2 + (anello ? 4294967296 : 0);   // il rettangolo, in un numero solo
+  if(q === m.ultQ && !m.sporco) return;
+  m.ultQ = q; m.sporco = false;
+  const L = PEZZO*T, ni = Math.ceil(M.GW/PEZZO), nj = Math.ceil(M.GH/PEZZO);
+  const tocca = (r, a) => r.x < (i1 + 1 + a)*L && r.x + r.w > (i0 - a)*L && r.y < (j1 + 1 + a)*L && r.y + r.h > (j0 - a)*L;
+  const pezzi = a => { for(let j = Math.max(0, j0 - a); j <= Math.min(nj - 1, j1 + a); j++) for(let i = Math.max(0, i0 - a); i <= Math.min(ni - 1, i1 + a); i++){
+    if(a && i >= i0 && i <= i1 && j >= j0 && j <= j1) continue; if(m.pz.has(j*16 + i)) immAccoda(m, 'p' + i + '_' + j, 'p_' + i + '_' + j + '.webp'); } };
+  const altro = a => {
+    m.mobili.forEach((r, k) => { if(tocca(r, a) && !(a && tocca(r, 0))) immAccoda(m, 'm' + k, 'mobili/' + k + '.webp'); });
+    m.extra.forEach((e, n) => { if(tocca(e, a) && !(a && tocca(e, 0))) immAccoda(m, 'e' + n, e.f); });
+    for(const nome in m.anim){ const A = m.anim[nome], r = { x:A.cx - 40, y:A.cy - 40, w:80, h:80 }; if(tocca(r, a) && !(a && tocca(r, 0))) immAccoda(m, 'a_' + nome, 'animati/' + nome + '.webp'); }
+  };
+  if(anello){ altro(1); pezzi(1); }   // l'anello, in fondo alla pila: arriva per ultimo
+  altro(0); pezzi(0);                 // quello che si vede: in cima, arriva per primo
+  immPompa();
+}
+// il ritaglio del mobile k di M.ostacoli: { img, x, y, w, h } nei pixel del gioco (null se non c'è o non è arrivato)
+function immMobile(M, k){
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return null;
+  const r = m.mobili.get(k); if(!r) return null;
+  const img = immVoce(m, 'm' + k, 'mobili/' + k + '.webp');
+  return img ? { img, x:r.x, y:r.y, w:r.w, h:r.h } : null;
+}
+// gli oggetti di scena (extra) da mettere in ordine di profondità insieme ai mobili
+function immExtra(m){ return m && m.stato === 2 ? m.extra : []; }
+function disegnaExtra(c, m, n){
+  const e = m.extra[n], img = immVoce(m, 'e' + n, e.f); if(!img) return;
+  c.drawImage(img, e.x, e.y, e.w, e.h);
+}
+// un'immagine animata (barca, campana, ruota): centro e perno dal file indice; dx, dy spostano, ang gira intorno al perno. Vero se l'ha disegnata.
+function immAnimata(c, M, nome, dx, dy, ang){
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return false;
+  const a = m.anim[nome]; if(!a) return false;
+  const img = immVoce(m, 'a_' + nome, 'animati/' + nome + '.webp'); if(!img) return false;
+  const w = a.w || img.naturalWidth*m.kk, h = a.h || img.naturalHeight*m.kk;
+  const px = a.px != null ? a.px : a.cx, py = a.py != null ? a.py : nome === 'campana' ? a.cy - h/2 : a.cy;   // la campana si appende in alto, il resto gira dal centro
+  c.save(); c.translate(px + (dx || 0), py + (dy || 0)); if(ang) c.rotate(ang);
+  c.drawImage(img, a.cx - w/2 - px, a.cy - h/2 - py, w, h); c.restore();
+  return true;
+}
+// c'è l'immagine animata e (se ancora non è arrivata) la si chiede? Serve a scegliere tra immagine e disegno a codice
+function immHa(M, nome){
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso() || !m.anim[nome]) return false;
+  return !!immVoce(m, 'a_' + nome, 'animati/' + nome + '.webp');
 }
 
 // ── Mobili: ogni tipo ha l'altezza, l'impronta dell'ombra, il disegno fermo e (se serve) la parte viva ──
@@ -2907,11 +3095,20 @@ function figurina(M, o, k, res){
   });
 }
 // altezza di un mobile sopra la sua impronta (per sapere se è sullo schermo)
-function altezzaMobile(o){ const m = MOBILI[o.t]; return m ? m.h + 16 : 0; }
+// (con M e k: se il mobile ha il ritaglio di Blender, conta il suo rettangolo, che può essere più alto del disegno a codice)
+function altezzaMobile(o, M, k){
+  const m = MOBILI[o.t]; let h = m ? m.h + 16 : 0;
+  const im = M && M._im && M._im.mobili && M._im.mobili.get(k); if(im) h = Math.max(h, o.y*T - im.y);
+  return h;
+}
 function disegnaMobile(c, M, o, k, res, t, eff, pit){
   const mod = MOBILI[o.t]; if(!mod) return;
-  const f = figurina(M, o, k, res), x = o.x*T, y = o.y*T;
-  if(f.cv) c.drawImage(f.cv, x + f.ox, y + f.oy, f.w, f.h);
+  const x = o.x*T, y = o.y*T, r = immMobile(M, k);
+  if(r) c.drawImage(r.img, r.x, r.y, r.w, r.h);   // il ritaglio di Blender
+  else { const f = figurina(M, o, k, res); if(f.cv) c.drawImage(f.cv, x + f.ox, y + f.oy, f.w, f.h); }                    // la riserva: il disegno a codice
+  // l'ingranaggio: se c'è l'immagine della ruota, gira lei col compito (dall'angolo fermo, 0) al posto di quella a codice
+  if(o.t === 'ingranaggio' && immAnimata(c, M, 'ruota', 0, 0, (eff || []).some(e => e.k === 'compito' && e.v === 'ingranaggio') ? t*6 : 0)) return;
+  // le parti vive (fiamme, schermi, acqua) restano a codice sopra il mobile, con l'immagine o senza
   if(mod.vivo){ c.save(); c.translate(x, y); mod.vivo(c, o.w*T, o.h*T, o, t, eff, pit); c.restore(); }
 }
 // le fiamme delle torce sui muri (vive)
@@ -2974,12 +3171,16 @@ function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
   }
   // la barca ormeggiata al pontile
   const B = M.barca; if(!B || B.x + 80 < x0 || B.x - 80 > x1 || B.y + 40 < y0 || B.y - 50 > y1) return;
-  const bob = Math.sin(t*1.25)*1.6, roll = Math.sin(t*0.95 + 0.6)*0.03, f = barca(res || 2);
-  c.fillStyle = 'rgba(4,12,20,.45)'; c.beginPath(); c.ellipse(B.x, B.y + 8, 52, 14, roll, 0, 7); c.fill();
-  c.strokeStyle = 'rgba(180,165,130,.9)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(B.cima[0], B.cima[1]); c.quadraticCurveTo((B.cima[0] + B.x - 44)/2, B.y + 10 + bob, B.x - 44, B.y - 6 + bob); c.stroke();
-  c.save(); c.translate(B.x, B.y + bob); c.rotate(roll); if(f.cv) c.drawImage(f.cv, f.ox, f.oy, f.w, f.h);
-  const fl = 0.8 + 0.2*Math.sin(t*9); c.fillStyle = 'rgba(255,200,110,' + (0.25*fl).toFixed(3) + ')'; c.beginPath(); c.arc(-36, -21, 9, 0, 7); c.fill(); c.fillStyle = 'rgba(255,226,150,.95)'; c.beginPath(); c.ellipse(-36, -21, 1.4, 2.4*fl, 0, 0, 7); c.fill();
-  c.restore();
+  const bob = Math.sin(t*1.25)*1.6, roll = Math.sin(t*0.95 + 0.6)*0.03;
+  // con l'immagine di Blender (ombra sull'acqua, cima e lanterna sono già nel fondo o nel ritaglio) la barca dondola intorno al suo perno
+  if(!immAnimata(c, M, 'barca', 0, bob, roll)){
+    const f = barca(res || 2);
+    c.fillStyle = 'rgba(4,12,20,.45)'; c.beginPath(); c.ellipse(B.x, B.y + 8, 52, 14, roll, 0, 7); c.fill();
+    c.strokeStyle = 'rgba(180,165,130,.9)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(B.cima[0], B.cima[1]); c.quadraticCurveTo((B.cima[0] + B.x - 44)/2, B.y + 10 + bob, B.x - 44, B.y - 6 + bob); c.stroke();
+    c.save(); c.translate(B.x, B.y + bob); c.rotate(roll); if(f.cv) c.drawImage(f.cv, f.ox, f.oy, f.w, f.h);
+    const fl = 0.8 + 0.2*Math.sin(t*9); c.fillStyle = 'rgba(255,200,110,' + (0.25*fl).toFixed(3) + ')'; c.beginPath(); c.arc(-36, -21, 9, 0, 7); c.fill(); c.fillStyle = 'rgba(255,226,150,.95)'; c.beginPath(); c.ellipse(-36, -21, 1.4, 2.4*fl, 0, 0, 7); c.fill();
+    c.restore();
+  }
   if(!B.ultima || t - B.ultima > 1.3){ B.ultima = t; onde.push({ x:B.x + (Math.random() < 0.5 ? -40 : 44), y:B.y + 8 + Math.random()*4, t0:t, r:16 }); }
 }
 // la barca: scafo con la fiancata, assi, panche, remi, una cima e la lanterna a poppa (tela fatta una volta)
@@ -3062,12 +3263,17 @@ class Pittore {
     // il palazzo fermo (pavimenti, tappeti, muri, ombre) è già disegnato a pezzi: si copiano quelli sullo schermo
     const res=Math.min(3, Math.ceil(s*10)/10), L=PEZZO*T, ni=Math.ceil(M.GW/PEZZO)-1, nj=Math.ceil(M.GH/PEZZO)-1;
     const i0=Math.max(0,Math.floor(cx/L)), j0=Math.max(0,Math.floor(cy/L)), i1=Math.min(ni,Math.floor((cx+W/s)/L)), j1=Math.min(nj,Math.floor((cy+H/s)/L));
+    // le immagini del palazzo reso in Blender (null se spente o se l'indice non è ancora arrivato: allora tutto a codice, come prima)
+    const imm=immPronta(M);
+    if(imm) immChiedi(imm, M, i0, j0, i1, j1, 1);   // scarica quello che serve: lo schermo e un anello di pezzi intorno
     // al massimo ~6 ms per fotogramma a fare pezzi nuovi: quelli che mancano ancora si abbozzano e arrivano al prossimo
     let nuovi=0, spesa=0;
     for(let j=j0;j<=j1;j++) for(let i=i0;i<=i1;i++){
+      const dx=Math.round((i*L-cx)*s), dy=Math.round((j*L-cy)*s), dw=Math.round(((i+1)*L-cx)*s)-dx, dh=Math.round(((j+1)*L-cy)*s)-dy;
+      const im=imm && immPezzo(imm, i, j);   // l'immagine di Blender del pezzo, se è già arrivata: prende il posto del disegno
+      if(im){ c.drawImage(im, dx, dy, dw+1, dh+1); continue; }
       let e=pezzo(M,i,j,res,true);
       if(!e && (spesa<6 || !nuovi)){ const a=performance.now(); e=pezzo(M,i,j,res); e.nuovo=false; nuovi++; spesa+=performance.now()-a; }
-      const dx=Math.round((i*L-cx)*s), dy=Math.round((j*L-cy)*s), dw=Math.round(((i+1)*L-cx)*s)-dx, dh=Math.round(((j+1)*L-cy)*s)-dy;
       if(e) c.drawImage(e.cv, dx, dy, dw+1, dh+1); else this.abbozzo(M, i, j, dx, dy, dw/(PEZZO*T));   // +1: nessuna riga tra un pezzo e l'altro
     }
     c.setTransform(s,0,0,s,-cx*s,-cy*s);
@@ -3076,9 +3282,10 @@ class Pittore {
     mareVivo(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+T, this.onde, res);
     torceVive(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+2*T);
     const vx0=cx-3*T, vy0=cy-3*T, vx1=cx+W/s+3*T, vy1=cy+H/s+3*T;
+    const campanaImm=!!(S.palazzo && imm && immHa(M,'campana'));
     if(S.palazzo){
       for(const p of POSTAZIONI) this.postazione(p,S.miei.has(p.id),t);
-      this.postazione({ tx:CAMPANA.tx, ty:CAMPANA.ty, tipo:'campana' },false,t);
+      if(!campanaImm) this.postazione({ tx:CAMPANA.tx, ty:CAMPANA.ty, tipo:'campana' },false,t);   // (con l'immagine di Blender la campana sta tra i mobili, in ordine di profondità)
       this.postazione({ tx:QUADRO.tx, ty:QUADRO.ty, tipo:'quadro' },!!S.buio,t);
       [[CHIUSA_A,0],[CHIUSA_B,1]].forEach(([q,i])=>this.postazione({ tx:q.tx, ty:q.ty, tipo:'chiusa' }, !!(S.chiuse&&S.chiuse[i]), t));
       if(S.interf){ const x=centro(CONSOLE.tx), y=centro(CONSOLE.ty), g=c.createRadialGradient(x,y,0,x,y,40); g.addColorStop(0,`rgba(255,180,90,${0.4+0.2*Math.sin(t*6)})`); g.addColorStop(1,'rgba(255,180,90,0)'); c.fillStyle=g; c.fillRect(x-40,y-40,80,80); }
@@ -3115,11 +3322,17 @@ class Pittore {
       c.lineWidth=1.5; c.strokeStyle=`rgba(${VOCE_COL},${0.12+0.25*v})`; this.ell(p.x,p.y+T*0.34,T*(0.62+0.3*w),T*(0.25+0.12*w)); c.stroke(); }
     // mobili e persone in ordine di profondità: chi passa dietro un mobile alto ne resta coperto
     const scena=[];
-    M.ostacoli.forEach((o,k)=>{ if((o.x+o.w)*T<vx0||o.x*T>vx1||(o.y+o.h)*T<vy0||o.y*T-altezzaMobile(o)>vy1) return; scena.push({ y:(o.y+o.h)*T, o, k }); });
+    M.ostacoli.forEach((o,k)=>{ if((o.x+o.w)*T<vx0||o.x*T>vx1||(o.y+o.h)*T<vy0||o.y*T-altezzaMobile(o,M,k)>vy1) return; scena.push({ y:(o.y+o.h)*T, o, k }); });
+    if(imm){   // gli oggetti di scena di Blender (lampioni, sedie...) e la campana: anche loro dietro o davanti a chi passa
+      immExtra(imm).forEach((e,n)=>{ if(e.x+e.w<vx0||e.x>vx1||e.y+e.h<vy0||e.y>vy1) return; scena.push({ y:e.base, ex:n }); });
+      if(campanaImm){ const bx=centro(CAMPANA.tx), by=centro(CAMPANA.ty); if(bx>vx0 && bx<vx1 && by>vy0 && by<vy1+2*T) scena.push({ y:(CAMPANA.ty+1)*T, campana:true }); }
+    }
     for(const p of tutti) scena.push({ y:p.y+T*0.36, p });
     scena.sort((a,b)=>a.y-b.y);
     for(const q of scena){
       if(q.o){ disegnaMobile(c, M, q.o, q.k, res, t, S.effetti, this); continue; }
+      if(q.ex!==undefined){ disegnaExtra(c, imm, q.ex); continue; }
+      if(q.campana){ immAnimata(c, M, 'campana', 0, 0, Math.sin(t*2)*0.08); continue; }
       const p=q.p;
       if(p.muove && !p.fantasma){ const k=this.passi[p.id]||0; if(t-k>0.22){ this.passi[p.id]=t; this.sparpaglia('polvere', p.x+(Math.random()-0.5)*8, p.y+T*0.36, 2, { v:12, vita:0.5, r:2.5 }); }
         // sul bordo del molo i passi fanno cerchi nell'acqua
@@ -3189,6 +3402,8 @@ class Pittore {
     // a fotogrammi alterni si prepara un pezzo vicino che manca; nella sala d'attesa, quelli del palazzo intorno alla fontana
     if(S.scala==null){
       this.giro=(this.giro||0)+1;
+      // nella sala d'attesa si cominciano a scaricare anche le immagini del palazzo intorno alla fontana (dove si parte)
+      if(M!==PALAZZO){ const pi=immPronta(PALAZZO); if(pi){ const fi=Math.floor(FONTANA.x/L), fj=Math.floor(FONTANA.y/L); immChiedi(pi, PALAZZO, fi-1, fj-1, fi+1, fj+1, 0); } }
       if(!nuovi && this.giro%4===0 && !anticipa(M,i0-1,j0-1,i1+1,j1+1,res) && M!==PALAZZO){ const fi=Math.floor(FONTANA.x/L), fj=Math.floor(FONTANA.y/L); anticipa(PALAZZO,fi-1,fj-1,fi+1,fj+1,res); }
     }
   }
