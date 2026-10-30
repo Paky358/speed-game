@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 287,
+    data: "30 ottobre 2026",
+    titolo: "🏆 3 giornate, 🦉 il gufo e lo stadio che trema",
+    descrizione: [
+      "🏆 Nel ⚙️ della Mini Asta Fantacalcio ora si possono giocare 3 giornate di fila con le stesse rose. Le prime due si vedono veloci, solo i momenti dei vostri calciatori, con la classifica dopo ognuna; la terza è intera, con la Zona Cesarini. Vince chi fa più punti sommati e, se all'ultima cambia chi comanda: 💥 RIBALTONE!",
+      "🦉 Gufa! / 🍀 Portafortuna (online): a ogni rigore e a ogni punizione compare un tasto. Se chi tira è tuo fai il portafortuna, se no lo gufi: fino a 5 tocchi, con gufetti e quadrifogli che volano dal tuo quadretto. Dopo il tiro si scopre se la gufata è riuscita, e a fine partita c'è il titolo «🦉 Il gufo della serata». Sullo stesso telefono: 🤞 dita incrociate.",
+      "Lo stadio si sente: dal 75' il battito del cuore che accelera, il brusio della folla che cresce, il silenzio prima di ogni rigore e di ogni punizione, il boato più forte sui gol del finale e i flash dei telefonini sugli spalti.",
+      "Al fischio finale i punteggi in alto sono già quelli veri.",
+      "Le azioni svelano ancora meno: quando si vede solo il vostro calciatore che passa la palla può finire in gol oppure no, l'autogol di un vostro difensore si vede di colpo e il rigore arriva dalla stessa parte comunque vada."
+    ]
+  },
+  {
     v: 286,
     data: "30 ottobre 2026",
     titolo: "🎬 Le azioni da finale nella giornata del fanta",

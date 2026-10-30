@@ -2622,13 +2622,6 @@
         else if ((v === "fuori" || v === "punizione") && caso01() < 0.2) eg.fin = "dev";   // (deviato da un difensore)
         P.ev.push(eg);
       }
-      // 🎭 chi passa (30 ott 2026, revisione): per ogni gol con l'assist di un vostro, quasi sempre anche un'occasione sbagliata con lui che
-      // passa (se no «c'è solo il vostro che passa» voleva dire sempre gol). Scene dove si vede chi passa (mai l'angolo: lo batte chi batte gli angoli)
-      P.ev.filter(function (e) { return e.t === "gol" && e.s === s && e.ass && comprati[e.ass]; }).forEach(function (e) {
-        var pa = rosa.filter(function (y) { return y.k === e.ass; })[0]; if (!pa || caso01() >= 0.85) return;
-        var tq = marcatore(rosa, PESO_GOL, pa);
-        P.ev.push({ m: minuto(), t: "occ", s: s, chi: tq ? tq.k : null, ass: pa.k, esito: aCaso(["palo", "fuori", "fuori", "alto", "parata", "parata", "traversa", "linea"]), v: aCaso(["cross", "unodue", "contro", "pallonetto"]) });
-      });
       if (caso01() < 0.07) {   // 📺 un gol annullato dal VAR: non conta, solo il brivido
         var ma = marcatore(rosa, PESO_GOL), aa = caso01() < 0.6 ? marcatore(rosa, PESO_ASS, ma) : null, va = scenaGol(!!aa), ta = tiriPiazzati(lato[s], va, ma, aa);
         ma = ta[0]; aa = ta[1];
@@ -2652,6 +2645,7 @@
         var dif = pescaPeso(rosa.filter(function (y) { return y.ruolo === "D"; }), function (y) { return y.q + 2; });
         P.ev.push({ m: minuto(), t: "aut", s: s, chi: dif ? dif.k : null, v: aCaso(["cross", "angolo", "fuori"]) });
       }
+      var wAss = 0; rosa.forEach(function (y) { wAss += PESO_ASS[y.ruolo] * Math.pow(y.q + 2, 2); });
       rosa.forEach(function (y) {   // i vostri calciatori: cartellini e occasioni mancate
         if (!comprati[y.k] || y.ruolo === "P") return;
         var ca = cartelliniDi(y);
@@ -2666,6 +2660,10 @@
         if (vo === "punizione" && !tiroN(y, "punizioni")) vo = aCaso(SCENE_OCC.filter(function (x) { return x !== "punizione"; }));   // (la punizione la tira chi la batte)
         var ao = caso01() < 0.6 ? marcatore(rosa, PESO_ASS, y) : null;   // (anche le occasioni hanno chi passa, come i gol: il nome di chi passa non svela niente)
         if (caso01() < occ) P.ev.push({ m: minuto(), t: "occ", s: s, chi: y.k, ass: ao ? ao.k : null, esito: aCaso(["palo", "fuori", "fuori", "alto", "parata", "parata", "traversa", "linea"]), v: vo });
+        // 🎭 chi passa (30 ott 2026, revisione): occasioni sbagliate con lui che passa, quante l'85% degli assist che ci si aspettano da lui (MAI legate ai
+        // suoi assist veri: se no dall'una si capiva l'altro). Così «c'è solo il vostro che passa» può finire in gol o no. Scene dove si vede chi passa (mai l'angolo)
+        var lp = 0.85 * 0.7 * 0.85 * lim(att - RIG_A_PARTITA * 0.76, 0.12, 4) * PESO_ASS[y.ruolo] * Math.pow(y.q + 2, 2) / Math.max(1e-9, wAss);
+        for (var op3 = poisson(lp); op3 > 0; op3--) { var tq = marcatore(rosa, PESO_GOL, y); P.ev.push({ m: minuto(), t: "occ", s: s, chi: tq ? tq.k : null, ass: y.k, esito: aCaso(["palo", "fuori", "fuori", "alto", "parata", "parata", "traversa", "linea"]), v: aCaso(["cross", "unodue", "contro", "pallonetto"]) }); }
       });
       // contro un vostro portiere ogni tanto anche un tiro che non entra (se no «azione pericolosa» contro di lui voleva dire sempre gol)
       if ((rose[lato[s === "c" ? "f" : "c"]] || []).some(function (y) { return y.ruolo === "P" && comprati[y.k]; })) {
@@ -2733,6 +2731,8 @@
         // il risultato di PRIMA, si butta avanti col portiere)
         var l = ["mischia", "testa", "assedio", "incrocio", "miracolo"];
         if (e.m >= 85 && mio <= suo) l.push("ultimo", "ultimo");
+        var sqA = e.s === "c" ? P.c : P.f, ang = tiratoriDi(sqA, "angoli"), yA = e.ass ? (rose[sqA] || []).filter(function (y) { return y.k === e.ass; })[0] : null;
+        if (e.ass && ang.length && !(yA && ang.some(function (x) { return normNome(x.nome) === normNome(yA.nome); }))) { l = l.filter(function (x) { return x !== "ultimo"; }); e.noAng = 1; }   // (l'angolo lo batte chi batte gli angoli)
         l = l.filter(function (x) { return !usate[x]; }); if (!l.length) return;
         e.v = aCaso(l); usate[e.v] = 1;
       });
@@ -2992,9 +2992,10 @@
     lista.sort(function (a, b) { return a.m - b.m; }); lista.forEach(function (x, k) { x.ord = k; }); R.risOrd = {};
     function durata() { var d = 0; lista.forEach(function (x) { if (x.sp || !x.focus) return; if (x.lampo) { d += LAMPO_MS; return; } tempiAz(x.e.t).forEach(function (v) { d += v; }); }); return d; }   // (i gol degli altri non prendono tempo)
     while (!veloce && durata() > DURATA_GIORNATA) {
-      var contaP = {}, subP = {}, passaG = {}, passaO = {};   // (per ogni vostro portiere: quante occasioni gli restano e se prende gol; lo stesso per chi passa)
-      lista.forEach(function (x) { (x.chi || []).forEach(function (q) { var kp = chiaveCalc(q.c); if (x.focus && kp === x.e.ass) { if (x.e.t === "gol" || x.e.t === "ann") passaG[kp] = 1; else if (x.e.t === "occ") passaO[kp] = (passaO[kp] || 0) + 1; } if (q.c.ruolo !== "P") return; if (q.t === "sub") subP[kp] = 1; if (x.focus && x.e.t === "occ") contaP[kp] = (contaP[kp] || 0) + 1; }); });
-      var os = lista.filter(function (x) { return x.focus && x.m < 75 && (x.e.t === "occ" || x.e.t === "rec") && !(x.chi || []).some(function (q) { var kp = chiaveCalc(q.c); return (q.c.ruolo === "P" && subP[kp] && (contaP[kp] || 0) <= 1) || (x.e.t === "occ" && kp === x.e.ass && passaG[kp] && (passaO[kp] || 0) <= 1); }); }); if (!os.length) break;
+      var contaP = {}, subP = {};   // (per ogni vostro portiere: quante occasioni gli restano e se prende gol. Le occasioni di chi passa non si tagliano mai: sono poche,
+      // e se si tagliassero solo loro (i gol non si tagliano) la prossima volta che passa sarebbe gol)
+      lista.forEach(function (x) { (x.chi || []).forEach(function (q) { var kp = chiaveCalc(q.c); if (q.c.ruolo !== "P") return; if (q.t === "sub") subP[kp] = 1; if (x.focus && x.e.t === "occ") contaP[kp] = (contaP[kp] || 0) + 1; }); });
+      var os = lista.filter(function (x) { return x.focus && x.m < 75 && (x.e.t === "occ" || x.e.t === "rec") && !(x.chi || []).some(function (q) { var kp = chiaveCalc(q.c); return (q.c.ruolo === "P" && subP[kp] && (contaP[kp] || 0) <= 1) || (x.e.t === "occ" && kp === x.e.ass); }); }); if (!os.length) break;
       lista.splice(lista.indexOf(os[Math.floor(os.length / 2)]), 1);
     }
     R.gioVel = veloce ? sceltaVeloce(lista) : Math.max(0.72, Math.min(1, DURATA_GIORNATA / Math.max(1, durata())));
@@ -3077,7 +3078,7 @@
     function togli(cat) {   // un'occasione in meno (quella di mezzo), ma ne resta almeno una ogni tre gol
       var g = 0, o = [];
       lista.forEach(function (x) { if (x.focus && !x.via && !x.lampo && x.cat === cat) { if (x.gol) g++; else if (x.occ) o.push(x); } });
-      if (o.length <= (g ? Math.ceil(g / 3) : 0)) return false;
+      if (cat === "passa" || o.length <= (g ? Math.ceil(g / 3) : 0)) return false;   // (le occasioni di chi passa non si tolgono: sono poche)
       o[Math.floor(o.length / 2)].via = true; return true;
     }
     while (totale() > DURATA_VELOCE && (togli("altro") || togli("passa") || togli("tiro"))) {}
@@ -3258,7 +3259,7 @@
     // il rallentatore prima del tiro: deciso dal minuto e dal seme, MAI da come finisce (prima partiva solo sui non-gol: era uno spoiler).
     // Sempre sui rigori e dal 75', prima un tiro su tre
     if (e.v === "assedio" || e.v === "ultimo") T = [T[0], T[1], T[2] * 1.3, T[3]];
-    var op = { verso: (Math.round(e.m) + x.p) % 2 === 1 ? -1 : 1, lato: seme % 2 ? 1 : -1, seme: seme, rib: e.rib, ribGol: e.ribGol, come: e.come, lento: t === "rig" || zona || semeRnd(seme + 11)() < 0.33 };   // (stessa partita e stesso minuto: stessa metà campo)
+    var op = { verso: (Math.round(e.m) + x.p) % 2 === 1 ? -1 : 1, lato: seme % 2 ? 1 : -1, seme: seme, rib: e.rib, ribGol: e.ribGol, come: e.come, noAng: e.noAng, lento: t === "rig" || zona || semeRnd(seme + 11)() < 0.33 };   // (stessa partita e stesso minuto: stessa metà campo)
     if (e.t === "gol" && e.v === "ribattuta" && P && P.ev[x.ei - 1]) op.lato = semeDi({ e: P.ev[x.ei - 1], p: x.p }) % 2 ? 1 : -1;   // (la ribattuta dalla stessa parte del rigore: il rigore non sa come andrà)   // (il rigore e la sua ribattuta: anche lo stesso lato)
     var gufo = gufoMomento(R, x, t, v, esito, op);   // 🦉 / 🍀 a ogni rigore e a ogni punizione dal limite (sempre, qualunque cosa succeda)
     function prepara(sc) {   // le maglie e i vostri che non c'entrano (al posto del loro ruolo)
@@ -3901,7 +3902,7 @@
       // identico qualunque sia l'esito, il colpo finale è sempre tiro())
       } else if (v === "mischia") {   // la mischia: cross dal fondo (o calcio d'angolo), un tiro respinto da un difensore, uno che sbatte addosso a un altro, poi il colpo da vicino
         if (fin === "dev") fin = null;   // (niente deviazione: il difensore che devia comparirebbe in area fin dall'inizio, e solo nel gol)
-        rnd(); var daAngM = rnd() < 0.5, ltM = rnd() < 0.5 ? 1 : -1, crM;   // (il primo numero del seme si scarta: coi semi veri è sempre tra 0,08 e 0,10. ltM: da che parte va il tiro finale, deciso prima: serve al difensore sul palo)
+        rnd(); var daAngM = rnd() < 0.5 && !op.noAng, ltM = rnd() < 0.5 ? 1 : -1, crM;   // (il primo numero del seme si scarta: coi semi veri è sempre tra 0,08 e 0,10. ltM: da che parte va il tiro finale, deciso prima: serve al difensore sul palo)
         if (daAngM) {   // dal calcio d'angolo
           crM = att("A", et.passa, [[0, 0.985, 0.93], [0.06, 0.995, 0.94], [0.08, 0.997, 0.942]]); calcia(crM, 0.08);
           palla([[0, 1.0, 0.946, 0], [0.08, 1.0, 0.946, 0], [0.18, 0.8, 0.9, 4.0]]);
@@ -4560,6 +4561,8 @@
     gufoVia(R); if (R.opz.onFischio) try { R.opz.onFischio(); } catch (e) { if (window.console) console.error(e); }   // (🦉 chi tiene la partita manda la foto col gufo della serata)
     R.az.fermo(null); R.risN.forEach(function (q) { q.nodo.classList.remove("ora"); }); pagFissa(R);
     barraTesto(R, R.fischiato ? minTxt(90 + R.rec) : "90'", "🏁 Fischio finale");
+    var w0 = R.righe[0];   // (a pari punti decide il valore della rosa: la 👑 va su chi vince davvero, prima del momento che ha deciso)
+    if (w0 && R.righe.filter(function (r) { return r.pos === 1; }).length === 1 && R.gr[w0.id] && R.capoId !== w0.id) { R.capoId = w0.id; R.capi.push({ x: null, id: w0.id, m: 99 }); listaGio(R).forEach(function (g) { g.nodo.classList.toggle("capo", R.righe.length > 1 && g.r.id === w0.id); }); }
     var rbI = ribaltoneVero(R);   // 🏆 3 giornate: comanda un altro rispetto a dopo 2 giornate
     if (rbI) { avvisoCampo(R, 50, ["💥 RIBALTONE!", "davanti c'è " + R.righe[0].nome, "dopo 2 giornate comandava " + rbI]); if (!inRitardo(R)) { striscia(R, "💥 RIBALTONE ALL'ULTIMA GIORNATA!", "sorp"); FX.sorpasso(); } }
     else if (R.fischiato) avvisoCampo(R, 50, ["📋 LE PAGELLE", "arrivano i voti veri"]);   // (il triplice fischio c'è già stato)
