@@ -613,6 +613,13 @@
     document.body.appendChild(velo);
   }
   // ⭐ le carte che hanno convinto il giudice, round per round
+  // ⭐ l'avviso sopra la classifica del round: «tocca la carta» al giudice, poi a tutti «la stella segna…»
+  function avvisoStella(ui, vm, possoStella, sonoGiudice) {
+    if (!ui.avvStella) return;
+    var tx = possoStella ? "⭐ Tocca la carta che ti ha convinto: entra tra le carte della serata" :
+      vm.fase === "esito" && vm.stella != null ? "⭐ La stella segna la carta che ha convinto " + (sonoGiudice ? "te" : vm.giudiceNome) : "";
+    testoSe(ui.avvStella, tx); ui.avvStella.hidden = !tx;
+  }
   function lenteStelle(t, stelle) {
     lente(t, "⭐ Le carte della serata", stelle.map(function (x) {
       return { tipo: x.tipo, testo: x.testo, di: x.di || undefined, nota: "Round " + x.r + " · ha convinto " + x.giudice + (x.chi && x.chi.length ? " · vinto da " + x.chi.join(" e ") : "") };
@@ -818,13 +825,15 @@
     return { nodo: g, sel: function () { return sel.slice(); }, adatta: function () { adattaCarte(g); },
       // 👆 chi ha segnato ogni carta: { testo: [{ id, nome, omino, capo }] } (si rifà solo la carta che cambia)
       marche: function (mappa) {
+        var cambiate = false;
         nodi.forEach(function (x) {
           var l = (mappa && mappa[x.c]) || [], sig = l.map(function (p) { return p.id + (p.capo ? "!" : ""); }).join(",");
           if (x.sig === sig) return;
           x.sig = sig; svuota(x.sg);
           l.slice(0, 4).forEach(function (p) { x.sg.appendChild(el("span", { class: "sp-fa" + (p.capo ? " capo" : ""), html: avatarHtml(p.nome, p.omino) })); });
-          x.b.classList.toggle("segnata", l.length > 0);
+          if (x.b.classList.contains("segnata") !== l.length > 0) { x.b.classList.toggle("segnata", l.length > 0); cambiate = true; }
         });
+        if (cambiate) adattaCarte(g);
       } };
   }
   // ogni carta col carattere più grande che ci sta
@@ -835,7 +844,8 @@
       if (!h) return;
       var f = Math.max(10, Math.min(15.5, h / 5));
       tx.style.fontSize = f + "px";
-      while (tx.offsetHeight > b.clientHeight - 10 && f > 9.5) { f -= 0.5; tx.style.fontSize = f + "px"; }
+      var spazio = b.clientHeight - 10 - (b.classList.contains("segnata") ? 12 : 0);   // (la carta segnata tiene sotto il posto per le faccine)
+      while (tx.offsetHeight > spazio && f > 9.5) { f -= 0.5; tx.style.fontSize = f + "px"; }
     });
   }
 
@@ -1439,7 +1449,7 @@
       if (bSc._fatto) return; bSc._fatto = true; chiudiLente();
       // 🥁 la luce passa da un nome all'altro e si ferma su chi ha vinto
       var chi = vede; svuota(ui.piede); nascondiScheda(ui); testoSe(ui.turno, "🥁 Il giudice ha deciso…");
-      linguette(ui, R.pres, function (x) { return x; }, null, null, function () {});
+      ui.tabSig = null; linguette(ui, R.pres, function (x) { return x; }, null, null, function () {});
       luce([].slice.call(ui.tab.children), R.pres.indexOf(chi), SUSPENSE, function () { if (document.body.contains(ui.s)) esitoSoloLocale(t, st, ui, chi); });
     } });
     ui.piede.appendChild(bSc);
@@ -1538,7 +1548,7 @@
     if (ripresa) {
       Object.keys(R0).forEach(function (k) { if (k !== "mazzi") st[k] = R0[k]; });
       st.mazzi = { bonus: mazzoDa(dati.bonus, R0.mazzi && R0.mazzi.bonus, "bonus"), malus: mazzoDa(dati.malus, R0.mazzi && R0.mazzi.malus, "malus") };
-      st.attesaTo = null; st.autoTo = null; st.pronta = false;
+      st.attesaTo = null; st.autoTo = null; st.esitoTo = null; st.pronta = false;
       st.statGiocatori = st.statGiocatori || Object.create(null);
       st.giocatori.forEach(function (p) { if (p.id !== IO && !p.via) attesi[p.id] = 1; });
     }
@@ -1556,7 +1566,7 @@
     function ricorda() {
       if (st.fase === "lobby") return t.ricorda(null);
       var s = {};
-      Object.keys(st).forEach(function (k) { if (k !== "attesaTo" && k !== "autoTo" && k !== "mazzi") s[k] = st[k]; });
+      Object.keys(st).forEach(function (k) { if (k !== "attesaTo" && k !== "autoTo" && k !== "esitoTo" && k !== "mazzi") s[k] = st[k]; });
       s.mazzi = { bonus: numeri(st.mazzi.bonus, dati.bonus), malus: numeri(st.mazzi.malus, dati.malus) };
       t.ricorda(s);
     }
@@ -1588,6 +1598,7 @@
     function presentiSq(k) { return st.giocatori.filter(function (p) { return !p.via && st.assegna[p.id] === k; }); }
     function ferma() {
       if (st.autoTo) { clearTimeout(st.autoTo); st.autoTo = null; }
+      if (st.esitoTo) { clearTimeout(st.esitoTo); st.esitoTo = null; }
       if (st.attesaTo) { clearTimeout(st.attesaTo); st.attesaTo = null; }
       st.scadenza = 0;
     }
@@ -1779,7 +1790,7 @@
         regole: { seq: r.seq, vuota: r.vuota, giri: r.giri, arringa: r.arringa, squadre: r.squadre, si: r.si, bianca: r.bianca },
         solo: st.fase === "lobby" ? r.si === "solo" : st.solo, bianche: Object.keys(st.bianche),
         pronti: st.fase === "esito" ? prontiVeri() : [], servono: servono(), kAv: kAv(),
-        manuale: st.manuale, round: st.round, totale: st.totale, assegna: st.assegna,
+        manuale: st.manuale, round: st.round, totale: st.totale + inArrivo() * ((st.regole && st.regole.giri) || 1), assegna: st.assegna,
         giudiceId: g ? g.id : null, giudiceNome: g ? g.nome : "", giudiceVia: !!(g && g.via),
         scen: st.scen, manoV: st.manoV, step: null, vuota: false, prossimi: null,
         parla: st.parla, timer: { n: st.timerN, sec: st.arringaSec }, vincitore: st.vincitore, sorte: st.sorte,
@@ -1800,6 +1811,11 @@
       }
       if (st.solo && st.R && st.fase !== "lobby" && st.fase !== "fine") vmSolo(v);
       return v;
+    }
+    // chi è arrivato a partita in corso e gioca dal round dopo (non è ancora nel giro dei giudici)
+    function inArrivo() {
+      if (st.manuale || st.fase === "lobby" || st.fase === "fine") return 0;
+      return st.giocatori.filter(function (p) { return !p.via && st.ordine.indexOf(p.id) < 0; }).length;
     }
     function bd() {
       var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegnaOn(V, v, cb); vici();
@@ -1965,7 +1981,13 @@
       ferma();
       st.vincitore = k; st.sorte = !!sorte; st.fase = "esito"; st.esitoOra = Date.now();
       st.giocatori.forEach(function (g) { if (st.assegna[g.id] === k) { st.punti[g.id] = (st.punti[g.id] || 0) + 1; statPersona(st, g.id).roundVinti++; } });
-      aspettaEsito(); bd();
+      aspettaEsito(); bd(); fotoDopoLuce();
+    }
+    // la foto rimandata quando la luce ha finito di girare (quella trattenuta dal broker è per chi arriva o ricarica)
+    function fotoDopoLuce() {
+      if (st.esitoTo) clearTimeout(st.esitoTo);
+      var r = st.round;
+      st.esitoTo = setTimeout(function () { st.esitoTo = null; if (st.fase === "esito" && st.round === r) bd(); }, 2600);
     }
     function prossimo() { if (st.fase === "esito") prossimoRound(); }
     // ⭐ il giudice tocca, sullo scenario che ha vinto, la carta che l'ha convinto (una per round): resta nelle «carte della serata»
@@ -2092,7 +2114,7 @@
       ferma();
       st.R.vincitore = chi; st.vincitore = chi; st.sorte = !!sorte; st.fase = "esito"; st.esitoOra = Date.now();
       st.punti[chi] = (st.punti[chi] || 0) + 1; statPersona(st, chi).roundVinti++;
-      aspettaEsito(); bd();
+      aspettaEsito(); bd(); fotoDopoLuce();
     }
     function fine() {
       ferma();
@@ -2412,14 +2434,19 @@
       }
       else if (me.sq < 0) {
         // ✋ arrivato a partita in corso: sceglie la squadra ed entra subito (o guarda ed entra dal prossimo round)
-        var scegli = me.guarda && !t.guarda && io && !io.via && !vm.manuale && !vm.vuota;
+        var scegli = me.guarda && !t.guarda && io && !io.via && !vm.manuale;
         chiave = "guarda|" + me.guarda + "|" + !!t.guarda + "|" + (scegli ? sqs[0].length + "-" + sqs[1].length : "");
         fai = function () {
           if (!scegli) { messaggio(ui, "👀", t.guarda ? "Guardi la partita: fai il tifo!" : me.guarda ? "Partita in corso: entri dal prossimo round. Intanto guardi!" : "Questo round lo giocano gli altri: tu guardi."); faccine(ui.azione); return; }
           var piccola = sqs[0].length === sqs[1].length ? -1 : (sqs[0].length < sqs[1].length ? 0 : 1);
           var box = el("div", { class: "sp-entra" }, [el("p", { text: "✋ Sei arrivato a partita in corso: scegli la tua squadra ed entri subito!" })]);
           [0, 1].forEach(function (k) {
-            var b = el("button", { class: "btn sp-vota sp-entra-b c" + k, onclick: function () { if (b.disabled) return; [].forEach.call(box.querySelectorAll("button"), function (x) { x.disabled = true; }); vibra(15); cb.onSquadra(k); } }, [
+            var b = el("button", { class: "btn sp-vota sp-entra-b c" + k, onclick: function () {
+              if (b.disabled) return;
+              var tutti = box.querySelectorAll("button");
+              [].forEach.call(tutti, function (x) { x.disabled = true; }); vibra(15); cb.onSquadra(k);
+              setTimeout(function () { if (document.body.contains(box)) [].forEach.call(tutti, function (x) { x.disabled = false; }); }, 3000);   // (la scelta non è arrivata: si riprova)
+            } }, [
               el("span", { text: emoSq(k) + " " + nomeSq(k) }), el("small", { text: sqs[k].map(function (m) { return m.nome; }).join(", ") + (k === piccola ? " · 👈 è più piccola" : "") })]);
             box.appendChild(b);
           });
@@ -2488,7 +2515,9 @@
       fai = function () {
         if (!me.decide) { faccine(ui.azione); if (me.guarda && !t.guarda && me.sq < 0) notaPiede(ui, "✋ Sei arrivato a partita in corso: entri dal prossimo round."); return; }
         if (!me.giudice) ui.azione.appendChild(el("div", { class: "sp-avviso", text: "⚖️ Il giudice è uscito: decidi tu" }));
-        // un tocco sceglie, il secondo conferma (niente verdetti per sbaglio)
+        // un tocco sceglie, il secondo conferma (niente verdetti per sbaglio). Il conto sta su una nota a parte:
+        // sul tasto si fermerebbe al primo tocco (quello che sceglie soltanto)
+        var nc = el("div", { class: "sp-nota sp-conto-giu" }); ui.azione.appendChild(nc); conto(nc, null, "⏳ Per decidere hai ancora ");
         var bb = [];
         [0, 1].forEach(function (k) {
           var lab = el("span", { text: emoSq(k) + " " + nomeSq(k) });
@@ -2501,18 +2530,16 @@
             bb.forEach(function (x) { x.b.disabled = true; }); cb.onGiudica(k);
           } }, [lab]);
           bb.push({ b: b, lab: lab, k: k });
-          ui.piede.appendChild(b);
-          conto(b);   // se nessuno sceglie in tempo, decide la sorte
+          ui.piede.appendChild(b);   // (se nessuno sceglie in tempo, decide la sorte)
         });
       };
     } else if (vm.fase === "esito") {
       if (susp) { chiave = "susp|" + kv; fai = function () { faccine(ui.azione); notaPiede(ui, "🥁 La luce si ferma sullo scenario che ha vinto…"); }; }
       else {
         var punti = vm.giocatori.filter(function (g) { return g.punti || (vm.assegna[g.id] != null); });
-        chiave = "esi|" + vm.round + "|" + JSON.stringify(punti.map(function (g) { return [g.id, g.punti]; })) + "|" + possoStella + "|" + (vm.stella != null);
+        chiave = "esi|" + vm.round + "|" + JSON.stringify(punti.map(function (g) { return [g.id, g.punti]; }));
         fai = function () {
-          if (possoStella) ui.azione.appendChild(el("div", { class: "sp-avviso", text: "⭐ Tocca la carta che ti ha convinto: entra tra le carte della serata" }));
-          else if (vm.stella != null) ui.azione.appendChild(el("div", { class: "sp-avviso", text: "⭐ La stella segna la carta che ha convinto " + (me.giudice ? "te" : vm.giudiceNome) }));
+          ui.avvStella = el("div", { class: "sp-avviso", hidden: "hidden" }); ui.azione.appendChild(ui.avvStella);
           ui.azione.appendChild(classificaCorta(t, punti.map(function (g) { return { id: g.id, nome: g.id === cb.myId ? "Tu" : g.nome, vero: g.nome, punti: g.punti }; }), cb.myId, cb.omino));
           piedeEsito(V, vm, cb, kConto);
         };
@@ -2524,7 +2551,8 @@
         }
       }
     } else { chiave = "?"; fai = function () {}; }
-    if (ui.chiave !== chiave) { ui.chiave = chiave; svuota(ui.azione); svuota(ui.piede); ui.pronti = null; ui.manoM = null; fai(); }
+    if (ui.chiave !== chiave) { ui.chiave = chiave; svuota(ui.azione); svuota(ui.piede); ui.pronti = null; ui.manoM = null; ui.avvStella = null; fai(); }
+    avvisoStella(ui, vm, possoStella, me.giudice);
     // 👆 le faccine dei compagni sulle carte che hanno segnato (cambiano solo loro: niente lampeggio)
     if (ui.manoM && me.sq >= 0 && cb.segni) {
       var sg = cb.segni(me.sq) || {}, mappa = {}, capoQ = capoDi(me.sq);
@@ -2686,10 +2714,9 @@
       chiave = "susp|" + kv; fai = function () { faccine(ui.azione); notaPiede(ui, "🥁 La luce si ferma su chi ha vinto…"); };
     } else if (vm.fase === "esito") {
       var punti = vm.giocatori.filter(function (g) { return g.punti || (vm.assegna[g.id] != null); });
-      chiave = "esi|" + vm.round + "|" + JSON.stringify(punti.map(function (g) { return [g.id, g.punti]; })) + "|" + possoStella + "|" + (vm.stella != null);
+      chiave = "esi|" + vm.round + "|" + JSON.stringify(punti.map(function (g) { return [g.id, g.punti]; }));
       fai = function () {
-        if (possoStella) ui.azione.appendChild(el("div", { class: "sp-avviso", text: "⭐ Tocca la carta che ti ha convinto: entra tra le carte della serata" }));
-        else if (vm.stella != null) ui.azione.appendChild(el("div", { class: "sp-avviso", text: "⭐ La stella segna la carta che ha convinto " + (me.giudice ? "te" : vm.giudiceNome) }));
+        ui.avvStella = el("div", { class: "sp-avviso", hidden: "hidden" }); ui.azione.appendChild(ui.avvStella);
         ui.azione.appendChild(classificaCorta(t, punti.map(function (g) { return { id: g.id, nome: g.id === my ? "Tu" : g.nome, vero: g.nome, punti: g.punti }; }), my, cb.omino));
         piedeEsito(V, vm, cb, kConto);
       };
@@ -2699,7 +2726,8 @@
         verdetto(ui, "s", (vm.sorte ? "🎲 " : "") + "Vince " + nomeV(vm.vincitore) + "!", vm.vincitore === my ? true : me.pres ? "perso" : null, [{ nome: nomeV(vm.vincitore), omino: cb.omino(vm.vincitore) }]);
       }
     } else { chiave = "?"; fai = function () {}; }
-    if (ui.chiave !== chiave) { ui.chiave = chiave; svuota(ui.azione); svuota(ui.piede); ui.pronti = null; fai(); }
+    if (ui.chiave !== chiave) { ui.chiave = chiave; svuota(ui.azione); svuota(ui.piede); ui.pronti = null; ui.avvStella = null; fai(); }
+    avvisoStella(ui, vm, possoStella, me.giudice);
     if (vm.fase === "giudizio" && ui.labScegli) testoSe(ui.labScegli, "⚖️ Scelgo " + nomeV(V.vede));
     if (vm.fase === "esito" && ui.pronti) ui.pronti.agg(vm);   // ⏩ si aggiorna solo il numero
     adattaTavolo(ui);
