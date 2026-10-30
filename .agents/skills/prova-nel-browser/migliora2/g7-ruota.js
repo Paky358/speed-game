@@ -112,10 +112,10 @@
         else if (f === "mistero") { if (opz.dopoScelta) await opz.dopoScelta("prima", P); tocca(w, tasto(w, opz.mistero && opz.mistero.apri === false ? /Mi tengo/ : /Apri il Mistero/)); }
         else if (f === "sceltaexp") tocca(w, tasto(w, /Gioco/));
         else if (f === "express") tocca(w, tasto(w, /Mi fermo/));
-        else if (f === "risolvi" || f === "ftempo") { await W.dorme(250); await scrivi(w, P.frase, coperta(P)); }
+        else if (f === "risolvi" || f === "ftempo") { await W.dorme(250); if (f === "ftempo" && P.fin && P.fin.b === 3) { var bs = tasto(w, /La so: scrivo/); if (bs) { tocca(w, bs); await W.dorme(200); } } await scrivi(w, P.frase, P.vista().tab); }   // (30 ott: la finale ha 3 tabelloni; il Testacoda scopre lettere di posto)
         else if (f === "vlettera") { var x = P.frase.split("").map(base).filter(function (ch) { return /[A-Z]/.test(ch) && !P.chiamate[ch]; })[0]; if (x && lettera(w, x)) tocca(w, lettera(w, x)); }
         else if (f === "vdecidi") tocca(w, tasto(w, /Risolvo/));
-        else if (f === "fbusta") tocca(w, tasto(w, /✉️ 1/));
+        else if (f === "fbusta") { var bb = [].find.call(w.document.querySelectorAll(".ru-btn.busta"), function (b) { return !b.disabled; }); if (bb) tocca(w, bb); }   // (una busta per ogni frase risolta)
         else if (f === "flettere") {
           var cc = CONS.split("").filter(function (ch) { return !P.chiamate[ch]; }).slice(0, 3), vv = "AEIOU".split("").filter(function (ch) { return !P.chiamate[ch]; }).slice(0, 1);
           cc.concat(vv).forEach(function (ch) { var b = lettera(w, ch); if (b) tocca(w, b); });
@@ -282,7 +282,7 @@
     [].forEach.call(P.document.querySelectorAll(".sala-riga input"), function (c, k) { c.value = ["Paky", "Giulia"][k] || ""; c.dispatchEvent(new P.Event("input", { bubbles: true })); });
     W.clicca(P, /Avanti/); await W.dorme(300);
     if (!chip(P, /^3 manche$/)) no("non trovo «3 manche»");
-    chip(P, /Prenota/);   // spento: si va più spediti
+    chip(P, /Giochi veloci/);   // spento: si va più spediti
     if (!W.clicca(P, /Comincia/)) no("non trovo «Comincia»");
     var tel = { p0: P, p1: P }, mist = null;
     await pilota(P, tel, { mistero: { manche: 1, sorte: false, apri: true }, ogni: async function (G) {
@@ -311,7 +311,7 @@
     await apriRuota(P);
     if (!W.clicca(P, /apro io/, ".modo-grande")) no("non c'è «Online: apro io»");
     await W.dorme(300);
-    chip(P, /^3 manche$/); chip(P, /Prenota/); chip(P, /Finale/); chip(P, /Anche le nostre/);
+    chip(P, /^3 manche$/); chip(P, /Giochi veloci/); chip(P, /Finale/); chip(P, /Anche le nostre/);
     if (!W.clicca(P, /Apri la stanza/)) no("non c'è «Apri la stanza»");
     var C = await W.aspetta(function () { var b = P.document.querySelector(".sl-cod b"); return b && /^[A-Z0-9]{4}$/.test(b.textContent) ? b.textContent : null; }, 6000);
     if (!C) no("niente codice");
@@ -426,7 +426,7 @@
     // ⚙️ Regole della saletta: 3 manche, niente Prenota né finale, «✍️ Anche le nostre» con una frase
     if (!await W.aspetta(function () { return W.clicca(P, /Regole/, ".sl-regole, button"); }, 4000)) no("non trovo ⚙️ Regole");
     await W.dorme(300);
-    chip(P, /^3 manche$/); chip(P, /Prenota/); chip(P, /Finale/);
+    chip(P, /^3 manche$/); chip(P, /Giochi veloci/); chip(P, /Finale/);
     await scriviNostre(P, [["Il motto di Paky", "CHI DORME NON PIGLIA PESCI"]]);
     W.clicca(P, /Fatto/, ".sl-foglio button, .sl-velo button"); await W.dorme(500);
     var rr = await W.aspetta(function () { var x = A.regoleDi(F.Giulia); return /anche le vostre frasi/.test(x) ? x : null; }, 5000);

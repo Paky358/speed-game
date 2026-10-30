@@ -475,7 +475,7 @@
     // Giulia prenota e la indovina: comincia lei la manche
     await finche(C, function (v) { return v.fase === "gira"; }, passoR(fatti), 40000, "dopo la frase lampo non si gira");
     // quando tocca a uno: tocca ancora a lui, stessa frase
-    r = await ricaricaHost(C, amici, { controlla: function (a, b) { return b.fase !== "gira" ? "fase " + b.fase : b.turno !== a.turno ? "tocca a " + nomeDi(b, b.turno) + " invece di " + nomeDi(a, a.turno) : b.tab !== a.tab ? "il tabellone è cambiato" : b.resta < 25000 ? "chi tocca non ha il tempo intero (" + b.resta + " ms)" : stessiPunti(a, b); } });
+    r = await ricaricaHost(C, amici, { controlla: function (a, b) { return b.fase !== "gira" ? "fase " + b.fase : b.turno !== a.turno ? "tocca a " + nomeDi(b, b.turno) + " invece di " + nomeDi(a, a.turno) : b.tab !== a.tab ? "il tabellone è cambiato" : b.resta < 12000 ? "chi tocca non ha il tempo intero (" + b.resta + " ms)" : stessiPunti(a, b); } });
     L.nota("turno → tocca ancora a " + nomeDi(r.dopo, r.dopo.turno) + " (" + r.dt + " s)");
     // mentre la ruota gira: non gira da sola, la rigira chi l'aveva girata
     var chi = nomeDi(vm(C), vm(C).turno), g0 = vm(C).giroN;

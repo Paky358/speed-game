@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 284,
+    data: "30 ottobre 2026",
+    titolo: "La Ruota della Fortuna come in TV, ma meglio 🎡",
+    descrizione: [
+      "🎬 Prima di ogni manche c'è un gioco veloce, ogni volta diverso: la frase lampo, ⏳ La ruota del tempo (vedi un anno: cosa è successo?), 🌍 GiraMondo (una parola straniera curiosa: cosa vuol dire?), 🎯 il Triplete (tre frasi sullo stesso tema, e chi le fa tutte e tre prende 2.000 in più) e 🧩 il CruciRuota (quattro parole sul tema, una per riga: prenoti e scrivi quelle che sai).",
+      "🔒 «La so!»: mentre gioca un altro puoi scrivere la soluzione in segreto e bloccarla. Nessuno la vede: se era giusta, a fine manche prendi un premio, più grande quanto prima l'hai capita. Così anche chi aspetta gioca.",
+      "✖️2 Sulla ruota c'è lo spicchio Raddoppia: i soldi della manche diventano il doppio.",
+      "🏆 La finale è nuova: 60 secondi per tre tabelloni. Prima le tue lettere, poi il Testacoda (si vedono la prima e l'ultima lettera di ogni parola), poi il Rubasecondi (chiami le lettere che vuoi, ma ogni lettera che non c'è costa 3 secondi). Per ogni frase risolta scegli una busta: vinci la più ricca.",
+      "📖 Più di 3.000 frasi in 35 argomenti (15 nuovi, come «Al bar», «Cose della mamma», «Cosa stai facendo?»), più 192 anni, 148 parole straniere e 130 cruciverba. Il telefono ricorda tutte le frasi già uscite, e online anche quelle già viste dagli amici che giocano con te: non tornano.",
+      "💰 I soldi di tutti sono sempre in vista sotto il tabellone; la ruota fa il tic-tic mentre rallenta; il giro finale si apre con la campana; online si hanno 15 secondi per ogni mossa."
+    ]
+  },
+  {
     v: 283,
     data: "30 ottobre 2026",
     titolo: "Sì... però: il capo, la luce del verdetto e quasi 400 carte nuove 🤨",
