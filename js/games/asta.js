@@ -542,6 +542,10 @@
     ".st-rivela.zona .st-bar::after{content:'';position:absolute;inset:0;border-radius:10px;box-shadow:inset 0 0 0 2px #ff3d5e;pointer-events:none;animation:stZona 1s ease-in-out infinite alternate;}",
     ".st-rivela.zona .st-az-box::before{content:'';position:absolute;inset:0;z-index:2;border-radius:12px;box-shadow:inset 0 0 22px 3px rgba(255,61,94,.55);pointer-events:none;animation:stZona 1.3s ease-in-out infinite alternate;}",
     "@keyframes stZona{from{opacity:.35}to{opacity:1}}",
+    ".st-flash{position:absolute;inset:0;z-index:0;pointer-events:none;display:none;overflow:hidden;}.st-rivela.zona .st-flash{display:block;}.st-rivela .sa-testa{position:relative;z-index:1;}",
+    ".st-flash i{position:absolute;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 8px 3px rgba(255,255,255,.75);opacity:0;animation:stFlash 3.2s ease-out infinite;}",
+    "@keyframes stFlash{0%,80%{opacity:0}83%{opacity:1}100%{opacity:0}}",
+    "@media (prefers-reduced-motion:reduce){.st-flash{display:none!important}}",
     ".st-az-box.attesa canvas{opacity:.5;transition:opacity .5s;}",
     ".st-gio-riga.capo::before{content:'👑';position:absolute;left:2px;top:-3px;font-size:.66rem;line-height:1;transform:rotate(-14deg);z-index:2;}",
     ".st-gio-zona{flex:none;display:none;font-size:.62rem;font-weight:800;white-space:nowrap;overflow:hidden;color:#ff9fbb;}.st-rivela.zona .st-gio-tab.fitto .st-gio-pt{font-size:.92rem;}.st-rivela.zona .st-gio-tab.fittissimo .st-gio-pt{font-size:.86rem;}.st-rivela.zona .st-gio-zona{display:inline;}.st-rivela.zona .st-gio-ev{display:none;}",
@@ -778,7 +782,36 @@
     so.connect(f); f.connect(g); g.connect(c.destination); so.start(t0); so.stop(t0 + durata + 0.05);
     return f;
   }
+  // 🏟️ la Zona Cesarini si sente (30 ott 2026, tappa 3): il brusio della folla che cresce col minuto (un nodo solo, acceso dal 75' al fischio),
+  // zitto prima dei rigori e delle punizioni e al fischio sospeso; il battito del cuore che accelera
+  var FOLLA = null;
+  function follaVolume(v, svelto) {
+    var c = ctx(); if (!c) return;
+    try {
+      if (!FOLLA && v > 0) {
+        var so = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
+        so.buffer = rumore(c); so.loop = true; fl.type = "bandpass"; fl.frequency.value = 520; fl.Q.value = 0.6; g.gain.value = 0.0001;
+        var m = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(); m.gain.value = 1; lfo.frequency.value = 0.23; lg.gain.value = 0.3; lfo.connect(lg); lg.connect(m.gain);   // (la folla sale e scende piano, a ondate)
+        so.connect(fl); fl.connect(m); m.connect(g); g.connect(c.destination); so.start(); lfo.start(); FOLLA = { so: so, g: g, lfo: lfo };
+        if (!follaVolume.su) { follaVolume.su = 1; document.addEventListener("visibilitychange", function () { if (document.hidden && FOLLA) follaVolume(0.0001, true); }); }   // (app in secondo piano: zitto)
+      }
+      if (!FOLLA) return;
+      FOLLA.g.gain.setTargetAtTime(Math.max(0.0001, v), c.currentTime, svelto ? 0.08 : 0.6);
+      if (v <= 0) { var x = FOLLA; FOLLA = null; setTimeout(function () { try { x.so.stop(); x.lfo.stop(); } catch (e) {} }, 1500); }
+    } catch (e) {}
+  }
   var SUONI = {
+    battito: function (forte) {   // tum-tum: un colpo basso (i telefoni non fanno i bassissimi: parte da 130 Hz e scende) e il secondo più piano
+      var c = ctx(); if (!c) return;
+      try {
+        [0, 0.17].forEach(function (dt, i) {
+          var t = c.currentTime + dt, o = c.createOscillator(), g = c.createGain();
+          o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.12);
+          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime((i ? 0.12 : 0.2) * (forte || 1), t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+          o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.18);
+        });
+      } catch (e) {}
+    },
     calcio: function (forza) {   // il colpo al pallone: un tonfo basso e uno schiocco
       var c = ctx(); if (!c) return;
       try {
@@ -2703,6 +2736,8 @@
       if (R.opz.onVel) R.opz.onVel(v); else aggiungiVel(R.cron, R.ora(), v);
       R.tic();
     } });
+    R.flash = el("div", { class: "st-flash" }, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].map(function (i) {   // ✨ i flash dei telefonini (solo nella Zona Cesarini; sugli spalti in alto, dietro il titolo: il resto lo coprono i punteggi e il campo)
+      var r = semeRnd(i * 97 + 13); return el("i", { style: "left:" + Math.round(r() * 96 + 2) + "%;top:" + (r() * 7.5 + 0.8).toFixed(1) + "%;animation-delay:" + (r() * 3.2).toFixed(2) + "s" }); }));
     R.radio = el("div", { class: "st-radio" });   // 📻 la striscia della radio e del sorpasso (sopra la barra, per un attimo)
     R.bar = el("div", { class: "st-bar" }, [ R.barMin, R.barIn, R.velB, R.radio ]);   // il minuto, la partita del momento e il tasto ⏩ Veloce
     R.msg = el("div", { class: "st-msg" }); R.azBox.appendChild(R.msg);   // l'annuncio e l'esito, sul campo
@@ -2726,7 +2761,8 @@
     R.ruolo.className = "st-ruolo st-ruolo-classifica"; R.ruolo.textContent = "CLASSIFICA";
     coloriSchermo(R, ["#1b2a4a", "#0c1424"]);
     if (opz.cron && !opz.onSalta) R.salta.style.visibility = "hidden";   // (online lo «Salta» delle rose e della giornata è di chi tiene la partita)
-    if (opz.prova) { R.provaN = el("div", { class: "st-prova" }); R.radice.appendChild(R.provaN); }   // 🧪 la scritta di prova del proprietario
+    if (opz.prova) { R.provaN = el("div", { class: "st-prova" }); R.radice.appendChild(R.provaN); }
+    R.radice.insertBefore(R.flash, sfondo.nextSibling);   // 🧪 la scritta di prova del proprietario
     RIVELA = R; t.mostra(R.radice); misuraPalco(R);
     avviaPiano(R);
     var ordine = righe.slice().sort(function (a, b) { return (b.posV || b.pos) - (a.posV || a.pos); }), j = 0;   // dalla rosa che vale meno
@@ -2752,7 +2788,7 @@
   }
   function vivoRivela(R) { return R && RIVELA === R && document.body.contains(R.radice); }
   function fermaTempi(R) { R.timer.forEach(function (x) { clearTimeout(x); }); R.timer = []; if (R.iv) { clearInterval(R.iv); R.iv = null; } if (R.tit) { clearInterval(R.tit); R.tit = null; } if (R.coda) R.coda = []; }   // (il direttore resta acceso)
-  function fermaRivela(R) { if (!R) return; if (R.az) R.az.ferma(); fermaTempi(R); if (R.dir) { clearInterval(R.dir); R.dir = null; } }
+  function fermaRivela(R) { if (!R) return; if (R.az) R.az.ferma(); fermaTempi(R); if (R.dir) { clearInterval(R.dir); R.dir = null; } follaVolume(0); R.zona = false; if (R.radice) R.radice.classList.remove("zona"); }   // (si esce o si salta al podio: niente più brusio né Zona)
   function svelaRosa(R, r, ultima, poi) {
     R.campoNome.textContent = "La rosa di " + r.nome + " · " + r.crediti + " 💰 avanzati";
     allenatore(R, r, "giu");
@@ -3031,7 +3067,7 @@
       passi.push({ avviso: ["🔁 SI RIPETE!", "il portiere si era mosso prima"], ms: 2400, fermo: sc });
       passi.push({ ms: 400 });
     }
-    passi.push({ sc: sc, dur: T[2], dunque: function () { dunqueSerieA(R, x, t, esito, sqA, pos, seme); } });
+    passi.push({ sc: sc, dur: T[2], dunque: function () { if (R.zitto && R.zona) { R.zitto = false; if (!inRitardo(R)) follaVolume(0.06); } dunqueSerieA(R, x, t, esito, sqA, pos, seme); } });
     if (t === "ann") {
       passi.push({ ms: 900, resta: true });
       passi.push({ avviso: ["📺 IL VAR CONTROLLA…", "un attimo di attesa"], ms: 2600 });
@@ -3042,7 +3078,7 @@
       if (i >= passi.length) { viaAvviso(R); segnaInCampo(R, []); R.dopo(pausa, poi); return; }
       var q = passi[i];
       if (q.sc) { R.az.giocaPiano(q.sc, Math.round(q.dur * vv), R, q.dunque || function () {}, function () { esegui(i + 1); }); return; }
-      if (q.avviso) { if (q.fermo) R.az.fermo(q.fermo); avvisoCampo(R, pos, q.avviso, q.mg, q.sq); if (!inRitardo(R)) FX.tic(0.3); }
+      if (q.avviso) { if (q.fermo) R.az.fermo(q.fermo); avvisoCampo(R, pos, q.avviso, q.mg, q.sq); if (!inRitardo(R)) FX.tic(0.3); if (R.zona && (t === "rig" || v === "punizione")) { R.zitto = true; if (!inRitardo(R)) follaVolume(0.0001, true); } }   // (🤫 lo stadio zitto prima di ogni rigore e punizione)
       R.dopo(q.ms * vv, function () { if (!vivoRivela(R)) return; if (q.avviso && !q.resta) viaAvviso(R); esegui(i + 1); });
     }
     // ⏱️ quanto dura tutto il momento: se chi recupera è già oltre la sua fine, contano solo punti e risultati (niente scene né suoni)
@@ -3146,7 +3182,9 @@
   // ⏳ il 75': la Zona Cesarini (sempre, in ogni giornata: non dice niente di quello che succederà). I voti di adesso nei quadretti
   function zonaCesarini(R, poi) {
     if (!vivoRivela(R)) return;
-    R.zona = true; R.radice.classList.add("zona"); R.provaM = "zona cesarini";
+    R.zona = true; R.zitto = false; R.radice.classList.add("zona"); R.provaM = "zona cesarini";
+    if (!inRitardo(R)) follaVolume(0.035);
+    battito(R, 0);
     listaGio(R).forEach(function (g) { var d = 0; g.r.gio.cal.forEach(function (c, k) { if (c.v75 != null) { d += c.v75 - g.vv[k]; g.vv[k] = c.v75; } }); if (d) frecciaVoto(g, d); g.pt.textContent = numFanta(totGio(g)); });
     var dur = 2600;
     if (R.g() > R.pt + dur + 250) { riordinaGiornata(R, null, true); orologio(R, 75); return R.dopo(dur + 200, poi); }   // (chi recupera: solo lo stato, e lo stesso tempo)
@@ -3157,6 +3195,14 @@
     if (!inRitardo(R)) FX.gong();
     riordinaGiornata(R, null, false);
     R.dopo(dur, function () { if (!vivoRivela(R)) return; viaAvviso(R); R.dopo(200, poi); });
+  }
+  // 💓 il battito: dal 75' un tum-tum che accelera col minuto (da 60 a circa 115 al minuto); ogni battito è un passo del piano (uguale su tutti
+  // i telefoni); tace per chi recupera e col ⏩. Il brusio della folla sale col minuto (non quando lo stadio è zitto)
+  function battito(R, k) {
+    if (!vivoRivela(R) || !R.zona) return;
+    var m = Math.max(75, R.minMax || 75), q = Math.min(1, (m - 75) / 20), bpm = 60 + q * 55;
+    if (!inRitardo(R) && segDi(R.cron, R.ora())[2] === 1) { SUONI.battito(0.7 + q * 0.5); if (k % 4 === 0 && !R.zitto) follaVolume(0.035 + q * 0.06); }
+    R.dopo(Math.round(60000 / bpm), function () { battito(R, k + 1); });
   }
   // ⏱️ al 90' il cartello del recupero (sempre, anche se poi non succede più niente)
   function cartelloRecupero(R, poi) {
@@ -3175,13 +3221,13 @@
     if (!vivoRivela(R)) return;
     var dur = 3500;   // (1,4 s di attesa + 1,9 s col fischio + 0,2 s)
     R.fischiato = true;
-    if (R.g() > R.pt + dur + 250) { R.zona = false; R.radice.classList.remove("zona"); orologio(R, 90 + R.rec); return R.dopo(dur, poi); }
+    if (R.g() > R.pt + dur + 250) { R.zona = false; R.zitto = false; R.radice.classList.remove("zona"); follaVolume(0); orologio(R, 90 + R.rec); return R.dopo(dur, poi); }
     provaPiano(R, "fischio"); R.provaM = "fischio finale";
     R.az.fermo(null); R.risN.forEach(function (q) { q.nodo.classList.remove("ora"); });
-    barraTesto(R, minTxt(90 + R.rec), "⏱️ Ultimi secondi…"); orologio(R, 90 + R.rec); R.azBox.classList.add("attesa");
+    barraTesto(R, minTxt(90 + R.rec), "⏱️ Ultimi secondi…"); orologio(R, 90 + R.rec); R.azBox.classList.add("attesa"); R.zitto = true; if (!inRitardo(R)) follaVolume(0.0001, true);   // (lo stadio trattiene il fiato: resta il battito)
     R.dopo(1400, function () {
       if (!vivoRivela(R)) return;
-      R.azBox.classList.remove("attesa"); R.zona = false; R.radice.classList.remove("zona");
+      R.azBox.classList.remove("attesa"); R.zona = false; R.zitto = false; R.radice.classList.remove("zona"); follaVolume(0);
       barraTesto(R, minTxt(90 + R.rec), "🏁 Fischio finale");
       avvisoCampo(R, 50, ["🏁 FISCHIO FINALE!", "è finita!"]);
       if (!inRitardo(R)) { SUONI.fischio(3, true); vibra(60); }
@@ -4091,7 +4137,7 @@
       (sc.fischi || []).forEach(function (t) { l.push({ t: t, f: function () { SUONI.fischio(1); } }); });
       sc.scritte.forEach(function (x) {
         var w = x.testo;
-        l.push({ t: x.t, f: /GOL|CUCCHIAIO/.test(w) ? function () { SUONI.rete(); SUONI.boato(1); } : /PALO|TRAVERSA/.test(w) ? function () { SUONI.palo(); SUONI.ooh(); } :
+        l.push({ t: x.t, f: /GOL|CUCCHIAIO/.test(w) ? function () { SUONI.rete(); SUONI.boato(RIVELA && RIVELA.zona ? 1.25 : 1); } : /PALO|TRAVERSA/.test(w) ? function () { SUONI.palo(); SUONI.ooh(); } :
           /PARAT|PARA ANCHE|LINEA/.test(w) ? function () { SUONI.calcio(0.5); SUONI.ooh(); } : function () { SUONI.ooh(); } });
       });
       return l.sort(function (a, b) { return a.t - b.t; });
