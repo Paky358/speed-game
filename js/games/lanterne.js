@@ -444,7 +444,15 @@ const BERSAGLIO = { veggente:'vivo', medico:'vivo', sceriffo:'vivo', segugio:'vi
 const STAZ_RIP = { luci:QUADRO, console:CONSOLE, chiusaA:CHIUSA_A, chiusaB:CHIUSA_B };
 const TOLL = 1.4;              // margine per chi è un po' in ritardo sulla rete
 const VEL_ANIMA = 1.7;  // le anime vanno più veloci: seguono meglio la partita
-const R_PARLA = 7*T;    // la chat di prossimità: si legge solo chi è entro questo raggio
+const R_PARLA = 7*T;    // la chat di prossimità: si sente entro questo raggio, se non ci sono muri in mezzo
+const R_MURO = 3*T;     // attraverso un muro si sente solo da molto vicino, e più piano
+const MAX_PARLA = 80;   // caratteri di un messaggio
+const T_PARLA = 1.5;           // un messaggio ogni 1,5 secondi
+const R_RISPOSTA = 5*T;        // un Bot risponde a una persona solo se le è così vicino (e la vede)
+// il testo di un messaggio: una riga, senza caratteri strani, al massimo MAX_PARLA lettere
+const pulisciTesto = x => Array.from(String(x==null?'':x).replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g,' ').replace(/\s+/g,' ').trim()).slice(0,MAX_PARLA).join('').trim();
+// un testo in minuscolo, senza punteggiatura, con uno spazio ai lati di ogni parola (e il «?» staccato) per cercarci dentro parole intere
+const normChat = x => ' '+String(x).toLowerCase().replace(/[’']/g,' ').replace(/\?/g,' ? ').replace(/[^a-z0-9àèéìòóù? ]+/g,' ').replace(/\s+/g,' ').trim()+' ';
 const VEL_BASE = 3.8;   // caselle al secondo a velocità «normale» (era 3,4: un po' più di corsa)
 const DUR_ATRIO = 20, DUR_SVELA = 6, DUR_ESITO = 7;
 const MAX_CHAT = 40;
@@ -501,7 +509,7 @@ class Partita {
   }
   nuovo(g){
     return { id:g.id, nome:g.nome, bot:!!g.bot, ruolo:'ospite', squadra:'ospiti', x:0, y:0, dir:Math.PI/2, vivo:true, fantasma:false, uscito:false,
-      compiti:[], cd:15, cdA:8, usi:0, campane:this.imp.campane, zittito:false, protettoDa:null, ep:0, tPos:0, tCorr:-9, vPriv:0, tChat:-9,
+      compiti:[], cd:15, cdA:8, usi:0, campane:this.imp.campane, zittito:false, protettoDa:null, ep:0, tPos:0, tCorr:-9, vPriv:0, tChat:-9, tParla:-9,
       vite:1, aspetto:null, aspettoFine:0, bloccatoFine:0, veleno:null, traccia:null, rianima:null, usiRian:0, usiBeng:0, campVolte:0, mangiati:0, bersaglio:null, rivelato:false, segnato:false, indovinati:0, tentativi:0, frenStanza:null, frenDa:0, frenAvvisato:false, camPiazzate:0, usiVet:0, allertaFine:0, letti:{}, osserva:false, usiTra:0, schermoFine:0, mod:null, trappola:null, trapRuoli:null, imitato:false, imita:null,
       path:[], meta:null, attesa:0, azione:null, pensa:rnd()*0.4, visti:{}, storia:[], ultimaStoria:{}, sosp:{}, mem:{controlli:[], puliti:[]}, segnala:null, corpoVisto:null, muove:false,
       ripara:null, campione:null, controllo:null, controllatoDa:null, portineria:null, tTp:0, prossimoGiro:false, dopoSpegni:false, ricalcola:0, cacciaFine:0 };
@@ -656,8 +664,8 @@ class Partita {
     const p=this.per(id); if(!p||p.uscito) return;
     // chi è controllato dal Burattinaio è fermo: niente compiti, poteri o segnalazioni finché dura
     if(p.controllatoDa && this.fase==='gioco' && m.k!=='chat' && m.k!=='rapida') return;
-    // dentro una botola si può solo spostarsi tra le botole o uscire (e parlare)
-    if(p.inBotola!=null && this.fase==='gioco' && m.k!=='botola' && m.k!=='parla') return;
+    // dentro una botola si può solo spostarsi tra le botole o uscire (sotto terra non si parla: la chat di prossimità resta spenta)
+    if(p.inBotola!=null && this.fase==='gioco' && m.k!=='botola') return;
     switch(m.k){
       case 'fatto': return this.fatto(p, m.post);
       case 'ripara': { const cosa=m.cosa||'luci', st=STAZ_RIP[cosa]; if(this.fase==='gioco' && st && p.vivo && this.vicino(p,centro(st.tx),centro(st.ty),R_USA)) this.ripara(p, cosa); return; }   // (anche le ombre: fingono di aiutare)
@@ -1006,6 +1014,7 @@ class Partita {
     if(this.fase==='esito'){ if(this.t>=this.fineFase) this.dopoEsito(); return; }
   }
   passoGioco(dt){
+    if(this.codaBot && this.codaBot.length) this.botRispondono();
     for(const g of this.gioc){ if(g.cd>0) g.cd-=dt; if(g.cdA>0) g.cdA-=dt; if(g.cdF>0) g.cdF-=dt; }
     if(this.cdBuio>0) this.cdBuio-=dt;
     if(this.buio && this.t>this.buio.fine) this.fineBuio(false);
@@ -1147,17 +1156,77 @@ class Partita {
     v.protettoDa=p.id; p.cdF=this.imp.fantasmi.ricarica; this.priv(p); this.segna();
     this.avviso(p, `Proteggi ${v.nome}: se ci provano, lo saprai.`); this.fx('scudo', v.x, v.y, { solo:p.id });
   }
-  // la chat di prossimità (durante il gioco): i vivi si leggono da vicino, le anime leggono tutto e parlano solo tra loro
+  // la chat di prossimità (nell'atrio e nel gioco; in riunione c'è la sua chat): l'host manda il fumetto SOLO a chi lo può sentire,
+  // con un messaggio privato a testa. I vivi si sentono da vicino (a vista, o da molto vicino attraverso un muro, più piano);
+  // le anime sentono tutti e parlano solo tra loro.
   parla(p, testo){
-    if((this.fase!=='gioco' && this.fase!=='atrio') || p.inBotola!=null || this.t-(p.tParla||-9)<1.5) return;
-    testo=String(testo||'').replace(/\s+/g,' ').trim().slice(0,60); if(!testo) return;
+    if((this.fase!=='gioco' && this.fase!=='atrio') || p.uscito || p.inBotola!=null || this.t-p.tParla<T_PARLA) return;
+    testo=pulisciTesto(testo); if(!testo) return;
     p.tParla=this.t;
-    const msg={ t:'bolla', id:p.id, testo };
+    this.emetti(p, testo);
+    this.rispondonoBot(p, testo);
+  }
+  // quanto «q» sente ciò che dice «p»: 0 niente · 1 forte · 2 attutito (attraverso un muro, da molto vicino)
+  sentePar(p,q){
+    if(q===p) return 1;
+    if(!p.vivo) return q.vivo ? 0 : 1;
+    if(!q.vivo) return 1;
+    const d=dist(p,q); if(d>R_PARLA) return 0;
+    if(vede(this.M,p.x,p.y,q.x,q.y)) return 1;
+    return d<=R_MURO ? 2 : 0;
+  }
+  // il fumetto di «p» (una persona o un Bot) a chi lo sente: un messaggio privato per ognuno, mai a tutti.
+  // «c»: se è travestito, chi sembra; «a»: lo dice un'anima; «w»: lo sente attutito
+  emetti(p, testo){
+    const base={ t:'bolla', id:p.id, testo, n:this.nParla=(this.nParla||0)+1 }, tr=this.travestito(p);
+    if(tr) base.c=tr;
+    if(!p.vivo) base.a=1;
     for(const q of this.gioc){
       if(q.bot||q.uscito) continue;
-      const sente = p.vivo ? (!q.vivo || Math.hypot(q.x-p.x,q.y-p.y)<=R_PARLA) : !q.vivo;
-      if(sente) this.ev.privato(q.id, msg);
+      const k=this.sentePar(p,q); if(!k) continue;
+      const m=Object.assign({}, base); if(k===2) m.w=1;
+      this.ev.privato(q.id, m);
     }
+  }
+  // ogni tanto un Bot vicino risponde a una persona che ha scritto: poco, breve, e solo con quello che sa
+  rispondonoBot(p, testo){
+    if(this.fase!=='gioco' || this.saletta || !p.vivo || p.bot || this.t<(this.botParlaDopo||0)) return;
+    const cand=this.gioc.filter(b=>b.bot&&b.vivo&&!b.uscito&&b.inBotola==null&&!b.controllatoDa&&b.bloccatoFine<=this.t&&this.t>=(b.tBotParla||0)&&dist(b,p)<=R_RISPOSTA&&vede(this.M,b.x,b.y,p.x,p.y));
+    if(!cand.length) return;
+    const b=cand.sort((x,y)=>dist(x,p)-dist(y,p))[0], s=normChat(testo), nominato=s.includes(normChat(b.nome)), chiede=/ (\?|ciao|ehi|salve|hey) /.test(s);
+    if(rnd()>=(nominato ? 0.8 : chiede ? 0.45 : 0.1)) return;
+    b.tBotParla=this.t+30; this.botParlaDopo=this.t+9;
+    (this.codaBot=this.codaBot||[]).push({ t:this.t+1.1+rnd()*1.4, b:b.id, p:p.id, s, nominato });
+  }
+  // le risposte dei Bot arrivate al momento (ricontrollando che siano ancora vicini e vivi)
+  botRispondono(){
+    const coda=this.codaBot; if(!coda || !coda.length) return;
+    for(let i=coda.length-1;i>=0;i--){
+      const e=coda[i]; if(e.t>this.t) continue;
+      coda.splice(i,1);
+      const b=this.per(e.b), p=this.per(e.p);
+      if(!b||!p||!b.vivo||!p.vivo||b.uscito||p.uscito||b.inBotola!=null||b.bloccatoFine>this.t||dist(b,p)>R_PARLA||!vede(this.M,b.x,b.y,p.x,p.y)) continue;
+      const frase=this.fraseBot(b,p,e.s,e.nominato); if(frase) this.emetti(b, frase);
+    }
+  }
+  // cosa dice un Bot a chi gli ha scritto: frasi corte, in base a quello che chiede e a quello che il Bot sa davvero
+  // (le ombre fingono: non dicono mai la verità sui compagni)
+  fraseBot(b, p, s, nominato){
+    const ombra=b.squadra==='ombre', ha=re=>re.test(s), stanza=stanzaDi(this.M,b).in;
+    if(nominato && ha(/ (sospett|ombra|bugiard|ment|strano|strana|spegn|uccid|botol|colpevol) /)) return ombra ? pick(['Io? Ma se sono qui con i compiti!','Io? Hai preso un granchio.']) : `Io? Ero ${stanza}, non ho fatto niente.`;
+    if(ha(/ (dove|dov) /)) return `Io sono ${stanza}.`;
+    if(ha(/ (sospett\w*|ombr\w+|vist[oa]|stran[oa]|chi (e|è) stato|chi ha|chi hai) /)){
+      const vivi=this.gioc.filter(q=>q.vivo&&!q.uscito&&q!==b&&q!==p);
+      if(ombra){ const buoni=vivi.filter(q=>q.squadra!=='ombre'); return rnd()<.5 && buoni.length ? `Io terrei d'occhio ${pick(buoni).nome}.` : 'Non ho visto niente di strano.'; }
+      const t=b.mem.testimone, K=t&&this.per(t.killer); if(K && K.vivo && K!==b) return `Ho visto ${K.nome} spegnere una lanterna ${t.stanza}!`;
+      const bo=b.mem.botola, B=bo&&this.per(bo.id); if(B && B.vivo && B!==b) return `Ho visto ${B.nome} uscire da una botola ${bo.stanza}.`;
+      const forte=vivi.filter(q=>(b.sosp[q.id]||0)>=25).sort((x,y)=>(b.sosp[y.id]||0)-(b.sosp[x.id]||0))[0];
+      return forte ? `Io terrei d'occhio ${forte.nome}.` : pick(['Non ho visto niente di strano.','Per ora niente di strano.']);
+    }
+    if(ha(/ (che fai|cosa fai|tutto ok|tutto bene|come va) /)) return pick(['Faccio i miei compiti.','Tutto bene, giro e faccio i compiti.']);
+    if(ha(/ (aiuto|serve|vieni|seguimi|con me) /)) return pick(['Ora ho i miei compiti.','Non posso, ho i miei compiti.']);
+    if(ha(/ (ciao|ehi|ehila|salve|hey|buonasera) /)) return pick(['Ciao!','Ehi, ciao.','Ciao, tutto bene?']);
+    return nominato ? 'Dimmi.' : pick(['Ok.','Va bene.','Tutto tranquillo qui.','Boh, qui niente.']);
   }
   // le botole: si entra (e si resta nascosti), ci si sposta tra quelle collegate restando dentro, si esce da quella in cui si è.
   // Ombre e Ingegnere viaggiano; il Giullare entra, resta ed esce dalla stessa.
@@ -1281,7 +1350,7 @@ class Partita {
     const avvelenati=[];
     for(const p of this.gioc){ if(p.veleno && p.vivo){ const k=this.per(p.veleno.da)||p; p.veleno=null; this.spegni(k,p,'veleno'); if(!p.vivo) avvelenati.push(p); } }
     if(this.vincitore) return;
-    this.fase='riunione';
+    this.fase='riunione'; this.codaBot=[];   // (in riunione la chat di prossimità è spenta: le risposte dei Bot in attesa cadono)
     const R={ motivo:m.tipo, da:m.da, corpo:m.corpo!=null?m.corpo:null, stanza:m.stanza||null, t:0, t0:this.t, disc:this.imp.discussione, voto:this.imp.voto, voti:new Map(), coda:[], chiusa:false,
       zittiti:this.gioc.filter(p=>p.vivo&&p.zittito).map(p=>p.id) };
     this.riu=R; this.chat=[]; this.esito=null;
@@ -2891,6 +2960,8 @@ class Pittore {
     this.parti = [];        // particelle nel mondo (polvere dei passi, fumo, scintille)
     this.polvere = Array.from({length:26}, ()=>({ x:Math.random(), y:Math.random(), v:0.2+Math.random()*0.5, f:Math.random()*6 }));
     this.passi = {}; this.onde = []; this.ondaDi = {};
+    this.fum = {};   // i fumetti della chat: lo spostamento morbido di ogni pila (per non coprirsi)
+    this.ridotto = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);   // chi non vuole movimento: i fumetti non scivolano
   }
   misura(){
     // (le misure del riquadro, non dello schermo: se il gioco è girato di lato restano giuste)
@@ -2922,7 +2993,8 @@ class Pittore {
     this.cam.x += (seg.x-this.cam.x)*0.2; this.cam.y += (seg.y-this.cam.y)*0.2;
     if(Math.hypot(seg.x-this.cam.x, seg.y-this.cam.y) > 8*T){ this.cam.x=seg.x; this.cam.y=seg.y; }
     const sc = S.scossa>0 ? S.scossa*6 : 0;
-    const cx=this.cam.x-W/(2*s)+(Math.random()-0.5)*sc, cy=this.cam.y-H/(2*s)+(Math.random()-0.5)*sc;
+    const al=(S.alza||0)*this.DPR;   // mentre si scrive con la tastiera aperta la scena si alza: chi gioca resta sopra la barra
+    const cx=this.cam.x-W/(2*s)+(Math.random()-0.5)*sc, cy=this.cam.y-H/(2*s)+al/s+(Math.random()-0.5)*sc;
     c.setTransform(1,0,0,1,0,0); c.fillStyle='#090b16'; c.fillRect(0,0,W,H);
     // il palazzo fermo (pavimenti, tappeti, muri, ombre) è già disegnato a pezzi: si copiano quelli sullo schermo
     const res=Math.min(3, Math.ceil(s*10)/10), L=PEZZO*T, ni=Math.ceil(M.GW/PEZZO)-1, nj=Math.ceil(M.GH/PEZZO)-1;
@@ -2967,6 +3039,11 @@ class Pittore {
     c.globalAlpha=1;
     const tutti=S.altri.filter(p=>(!p.fantasma||anima) && (visibile(p) || (S.traccia && p.id===S.traccia)));
     if(io.mostra) tutti.push(io);
+    // mentre scrivo, un anello d'oro sotto chi mi sentirà (solo chi vedo: il buio non tradisce nessuno)
+    if(S.parla){ const P=S.parla, a=0.6+0.25*Math.sin(t*4);
+      for(const p of tutti){ if(p===io || (P.anima ? !p.fantasma : p.fantasma)) continue;
+        if(!P.anima && (Math.hypot(p.x-io.x,p.y-io.y)>P.R || !vede(M,io.x,io.y,p.x,p.y))) continue;
+        c.strokeStyle=`rgba(${ORO},${a})`; c.lineWidth=2; this.ell(p.x,p.y+T*0.34,T*0.5,T*0.2); c.stroke(); } }
     // mobili e persone in ordine di profondità: chi passa dietro un mobile alto ne resta coperto
     const scena=[];
     M.ostacoli.forEach((o,k)=>{ if((o.x+o.w)*T<vx0||o.x*T>vx1||(o.y+o.h)*T<vy0||o.y*T-altezzaMobile(o)>vy1) return; scena.push({ y:(o.y+o.h)*T, o, k }); });
@@ -3022,7 +3099,12 @@ class Pittore {
       if(S.traccia){ const tg=S.altri.find(p=>p.id===S.traccia); if(tg) this.freccia(io, { x:tg.x, y:tg.y, col:'#cba2ff' }, t); }
       if(S.freccia) this.freccia(io, S.freccia, t);   // la freccia resta visibile anche fuori dalla luce
     } else if(S.palazzo && !S.bengala){ c.setTransform(1,0,0,1,0,0); c.fillStyle='rgba(60,80,150,.1)'; c.fillRect(0,0,W,H); }
-    if(S.bolle){ c.setTransform(s,0,0,s,-cx*s,-cy*s); this.bolle(S); }   // i fumetti della chat di prossimità, sopra il buio
+    // mentre scrivo, il raggio a cui mi sentono (i muri lo fermano; attraverso un muro solo da vicino), sopra il buio
+    if(S.parla && !S.parla.anima){ const P=S.parla; c.setTransform(s,0,0,s,-cx*s,-cy*s);
+      const pts=this.luce(M,io.x,io.y,P.R); c.beginPath(); pts.forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1])); c.closePath();
+      c.fillStyle=`rgba(${ORO},.06)`; c.fill(); c.strokeStyle=`rgba(${ORO},.42)`; c.lineWidth=1.5; c.setLineDash([6,6]); c.lineDashOffset=this.ridotto?0:-t*8; c.stroke();
+      c.strokeStyle=`rgba(${ORO},.2)`; c.setLineDash([2,6]); c.beginPath(); c.arc(io.x,io.y,P.Rm,0,Math.PI*2); c.stroke(); c.setLineDash([]); c.lineDashOffset=0; }
+    if(S.bolle && S.bolle.length){ c.setTransform(s,0,0,s,-cx*s,-cy*s); this.vista={ x0:cx, y0:cy, x1:cx+W/s, y1:cy+H/s }; this.bolle(S); }   // i fumetti della chat di prossimità, sopra il buio
     if(S.urlo) this.freccia(io, S.urlo, t);
     c.setTransform(1,0,0,1,0,0);
     if(S.bengala){ c.fillStyle=`rgba(255,220,180,${0.08+0.04*Math.sin(t*20)})`; c.fillRect(0,0,W,H); }
@@ -3089,23 +3171,81 @@ class Pittore {
     }
     return pts;
   }
-  // un fumetto sopra chi parla: va a capo da solo, svanisce nell'ultimo mezzo secondo
-  bolle(S){
-    const c=this.ctx, gente=[S.io].concat(S.altri||[]);
-    c.font='600 11px '+FONT; c.textAlign='center'; c.textBaseline='middle';
-    for(const p of gente){
-      const b=p && S.bolle[p.id]; if(!b) continue;
-      const parole=b.testo.split(' '), righe=[]; let r='';
-      for(const w of parole){ const prova=r?r+' '+w:w; if(c.measureText(prova).width>130 && r){ righe.push(r); r=w; } else r=prova; }
-      if(r) righe.push(r);
-      const lw=Math.max(...righe.map(x=>c.measureText(x).width))+16, lh=righe.length*14+10, x=p.x, y=p.y-T*1.75-lh;
-      c.globalAlpha=Math.min(1, b.f*9);
-      c.fillStyle='rgba(246,240,226,.96)'; c.strokeStyle='rgba(20,16,10,.35)'; c.lineWidth=1;
-      c.beginPath(); c.roundRect ? c.roundRect(x-lw/2,y,lw,lh,8) : c.rect(x-lw/2,y,lw,lh); c.moveTo(x-5,y+lh); c.lineTo(x,y+lh+6); c.lineTo(x+5,y+lh); c.fill(); c.stroke();
-      c.fillStyle='#22180c'; righe.forEach((rr,i)=>c.fillText(rr, x, y+12+i*14));
-      c.globalAlpha=1;
+  // le righe di un fumetto: si calcolano UNA volta per messaggio (poi stanno nel messaggio), non a ogni fotogramma.
+  // Va a capo tra le parole; una parola più larga del fumetto si spezza.
+  righeDi(b){
+    const c=this.ctx, MAXW=130, righe=[]; let r='';
+    c.font='600 11px '+FONT;
+    const spezza=w=>{ const out=[]; let x=''; for(const ch of w){ if(x && c.measureText(x+ch).width>MAXW){ out.push(x); x=ch; } else x+=ch; } if(x) out.push(x); return out; };
+    for(const w0 of b.testo.split(' ')){
+      for(const w of (c.measureText(w0).width>MAXW ? spezza(w0) : [w0])){
+        if(w!==w0 && r){ righe.push(r); r=''; }
+        const prova=r?r+' '+w:w;
+        if(c.measureText(prova).width>MAXW && r){ righe.push(r); r=w; } else r=prova;
+      }
     }
-    c.textBaseline='alphabetic';
+    if(r) righe.push(r);
+    b.righe=righe; b.lw=Math.max(...righe.map(x=>c.measureText(x).width))+16; b.lh=righe.length*14+10;
+  }
+  // i fumetti sopra chi parla (S.bolle: i messaggi vivi, S.ora: adesso).
+  // Più messaggi della stessa persona si impilano (il più nuovo in basso, vicino alla testa e scivola su quando ne arriva un altro);
+  // due persone vicine non si coprono: la pila si sposta di lato (se la testa resta sotto il fumetto) o più in alto.
+  // Ogni messaggio svanisce nell'ultimo mezzo secondo. «w»: attutito (dietro un muro) · «a»: lo dice un'anima.
+  bolle(S){
+    const c=this.ctx, ora=S.ora||performance.now(), V=this.vista, dt=Math.min(0.1,S.dt||0.016), k=this.ridotto?1:1-Math.exp(-dt*16), GAP=3;
+    const gente={}; for(const p of [S.io].concat(S.altri||[])) if(p) gente[p.id]=p;
+    const pile={}; const lista=[];
+    for(const b of S.bolle){
+      const p=gente[b.id]; if(!p || p.y<V.y0-20 || p.y>V.y1+60 || p.x<V.x0-120 || p.x>V.x1+120) continue;
+      if(!b.righe) this.righeDi(b);
+      let q=pile[b.id]; if(!q){ q=pile[b.id]={ p, l:[], w:0, h:0 }; lista.push(q); }
+      q.l.push(b); q.w=Math.max(q.w,b.lw);
+    }
+    if(!lista.length) return;
+    // posizione di ogni messaggio dentro la pila (relativa alla base: negativa = in su) e altezza totale
+    for(const q of lista){
+      let y=0;
+      for(let i=q.l.length-1;i>=0;i--){ const b=q.l[i]; y-=b.lh; const tgt=y; y-=GAP;
+        if(b.py==null) b.py=tgt; else b.py+=(tgt-b.py)*k; }
+      q.h=-y-GAP;
+    }
+    // le persone più in basso sullo schermo (più avanti) tengono il loro posto, le altre si spostano
+    lista.sort((a,b)=>b.p.y-a.p.y);
+    const messi=[];
+    for(const q of lista){
+      const f=this.fum[q.p.id]||(this.fum[q.p.id]={ dx:0, dy:0, t:0 }); f.t=ora;
+      const ax=q.p.x, ab=q.p.y-T*1.75; let dx=0, dy=0;
+      for(let it=0;it<8;it++){
+        const r={ l:ax-q.w/2+dx, r:ax+q.w/2+dx, t:ab-q.h+dy, b:ab+6+dy };
+        const urto=messi.find(m=>r.l<m.r+2 && r.r>m.l-2 && r.t<m.b+2 && r.b>m.t-2); if(!urto) break;
+        const sx=urto.l-4-r.r, dd=urto.r+4-r.l, sh=Math.abs(sx)<Math.abs(dd)?sx:dd;
+        if(Math.abs(dx+sh)<=q.w/2-12) dx+=sh; else dy-=(r.b-urto.t)+GAP;
+      }
+      f.dx+=(dx-f.dx)*k; f.dy+=(dy-f.dy)*k;
+      messi.push({ l:ax-q.w/2+dx, r:ax+q.w/2+dx, t:ab-q.h+dy, b:ab+6+dy });
+      q.fx=f.dx; q.fy=f.dy; q.ab=ab;
+    }
+    for(const id in this.fum) if(ora-this.fum[id].t>3000) delete this.fum[id];   // (chi non parla più perde il suo spostamento)
+    c.font='600 11px '+FONT; c.textAlign='center'; c.textBaseline='middle';
+    for(const q of lista){
+      const x0=q.p.x+q.fx, n=q.l.length;
+      q.l.forEach((b,i)=>{
+        const ultimo=i===n-1, e=Math.min(1,(ora-b.t0)/160), ease=this.ridotto?1:1-Math.pow(1-e,3);
+        const y=q.ab+q.fy+b.py+(1-ease)*6, lw=b.lw, lh=b.lh;
+        c.globalAlpha=Math.min(1,(b.fine-ora)/500)*(this.ridotto?1:ease)*(b.w?0.72:1);
+        c.fillStyle=b.a?'rgba(196,212,255,.9)':b.w?'rgba(214,216,226,.92)':'rgba(246,240,226,.96)';
+        c.strokeStyle=b.a?'rgba(60,80,150,.55)':'rgba(20,16,10,.35)'; c.lineWidth=1; c.setLineDash(b.w?[3,3]:[]);
+        c.beginPath(); c.roundRect ? c.roundRect(x0-lw/2,y,lw,lh,8) : c.rect(x0-lw/2,y,lw,lh);
+        if(ultimo){   // la codina verso chi parla (se la pila è stata spostata in su, un filo dritto fino alla testa)
+          const tx=Math.max(x0-lw/2+10,Math.min(x0+lw/2-10,q.p.x));
+          if(q.fy>-2){ c.moveTo(tx-5,y+lh); c.lineTo(Math.max(x0-lw/2+8,Math.min(x0+lw/2-8,q.p.x)),y+lh+6); c.lineTo(tx+5,y+lh); }
+        }
+        c.fill(); c.stroke(); c.setLineDash([]);
+        if(ultimo && q.fy<=-2){ c.strokeStyle=b.a?'rgba(150,170,230,.6)':'rgba(246,240,226,.55)'; c.beginPath(); c.moveTo(q.p.x,y+lh); c.lineTo(q.p.x,q.ab-2); c.stroke(); }
+        c.fillStyle=b.a?'#1b2440':b.w?'#3b3f50':'#22180c'; b.righe.forEach((rr,j)=>c.fillText(rr, x0, y+12+j*14));
+      });
+    }
+    c.globalAlpha=1; c.textBaseline='alphabetic';
   }
   freccia(io, f, t){
     const c=this.ctx, dx=f.x-io.x, dy=f.y-io.y, d=Math.hypot(dx,dy); if(d<3*T) return;
@@ -3387,6 +3527,9 @@ var RIEMPI = 6;   // in prova: con pochi amici la saletta si riempie da sola coi
 var AMMESSI = ["IL PAPPONE", "GAY", "MARIO"];
 function nomeAccount() { try { var p = window.SGNube && SGNube.profilo && SGNube.profilo(); return String((p && p.nome) || "").trim().toUpperCase(); } catch (e) { return ""; } }
 function ammesso() { return AMMESSI.indexOf(nomeAccount()) >= 0; }
+// la chat di prossimità: frasi a un tocco (poche e brevi) e quanti messaggi tiene lo storico
+var PARLA_RAPIDE = ["Ciao!", "Dove sei?", "Seguimi", "Aiuto!", "Occhio!"];
+var PARLA_STORICO = 4;
 var RITARDATARI = "partita";   // chi arriva a partita cominciata la guarda ed entra alla prossima
 var COLORI = ["#d64550","#f0a23b","#2fa36b","#4a74de","#9b59c9","#ff7f6b","#9cbf8a","#1f9a9a","#e8c547","#b9a6f0"];
 function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
@@ -3824,18 +3967,27 @@ function Vista(t, cb) {
   sc.appendChild(sx);
   var dx = E("div", "lt-dx"); V.btnSuono = E("button", "lt-hbtn ico"); V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); V.btnSuono.setAttribute("aria-label", "Suono"); V.btnMappa = E("button", "lt-hbtn"); V.btnMappa.innerHTML = icona("mappa") + "<span>Mappa</span>"; dx.append(V.btnSuono, V.btnMappa); sc.appendChild(dx);
   V.btnMappa.addEventListener("click", function () { V.apriMappa(); });
-  // la chat di prossimità: «Parla» apre una riga in basso; il messaggio compare come fumetto e lo legge solo chi è vicino
-  V.bolle = {};
+  // la chat di prossimità: «Parla» apre la barra in basso (sempre sopra la tastiera). Il messaggio compare come fumetto sopra chi parla
+  // e nello storico di chi lo sente: l'host lo manda solo a chi è abbastanza vicino. In riunione è spenta (c'è la chat della riunione).
+  V.bolle = []; V.storico = []; V.bVisti = []; V.ultimoParla = -99999; V.parlaAttesa = 0; V.parlaAlza = 0; V.parlaAlzaVista = 0; V.parlaSotto = -1;
   V.btnGira = E("button", "lt-hbtn ico"); V.btnGira.innerHTML = icona("gira"); V.btnGira.setAttribute("aria-label", "Gioca di lato"); dx.insertBefore(V.btnGira, dx.firstChild);
   V.btnGira.classList.toggle("acceso", !!V.oriz);
   V.btnGira.addEventListener("click", function () { V.oriz = !V.oriz; try { localStorage.setItem("lt-oriz", V.oriz ? "1" : "0"); } catch (e) {} V.btnGira.classList.toggle("acceso", V.oriz); V.joyReset(); V.ruota(); });
   V.btnParla = E("button", "lt-hbtn ico"); V.btnParla.innerHTML = icona("parla"); V.btnParla.setAttribute("aria-label", "Parla a chi è vicino"); dx.insertBefore(V.btnParla, V.btnMappa);
-  V.parlaBar = E("form", "lt-parla"); V.parlaBar.hidden = true;
-  var pIn = E("input"); pIn.type = "text"; pIn.maxLength = 60; pIn.placeholder = "Scrivi a chi è vicino"; pIn.setAttribute("enterkeyhint", "send");
-  var pOk = E("button"); pOk.type = "submit"; pOk.innerHTML = icona("invia"); pOk.setAttribute("aria-label", "Invia");
-  V.parlaBar.append(pIn, pOk); sc.appendChild(V.parlaBar);
-  V.btnParla.addEventListener("click", function () { V.parlaBar.hidden = !V.parlaBar.hidden; if (!V.parlaBar.hidden) pIn.focus(); else pIn.blur(); });
-  V.parlaBar.addEventListener("submit", function (e) { e.preventDefault(); var tx = pIn.value.trim(); if (!tx) return; V.manda("parla", { testo: tx }); pIn.value = ""; pIn.blur(); V.parlaBar.hidden = true; });
+  V.parlaBar = E("form", "lt-parla"); V.parlaBar.hidden = true; V.parlaBar.setAttribute("autocomplete", "off");
+  var pTesta = E("div", "lt-pt"); V.parlaUdi = E("span", "lt-udi", ""); V.parlaCont = E("span", "lt-cont", "0/" + MAX_PARLA); pTesta.append(V.parlaUdi, V.parlaCont);
+  var pCho = E("div", "lt-pcho"); PARLA_RAPIDE.forEach(function (f) { var b = E("button", "", f); b.type = "button"; b.addEventListener("click", function () { V.parlaManda(f); }); pCho.appendChild(b); });
+  var pRiga = E("div", "lt-priga"), pIn = E("input"), pOk = E("button");
+  pIn.type = "text"; pIn.maxLength = MAX_PARLA; pIn.placeholder = "Scrivi a chi è vicino"; pIn.setAttribute("enterkeyhint", "send"); pIn.setAttribute("autocomplete", "off"); pIn.setAttribute("aria-label", "Messaggio a chi è vicino");
+  pOk.type = "submit"; pOk.innerHTML = icona("invia"); pOk.setAttribute("aria-label", "Invia");
+  pRiga.append(pIn, pOk); V.parlaBar.append(pTesta, pCho, pRiga); sc.appendChild(V.parlaBar); V.parlaIn = pIn;
+  V.parlaStor = E("div", "lt-chatst"); V.parlaStor.setAttribute("aria-live", "polite"); sc.appendChild(V.parlaStor);
+  V.btnParla.addEventListener("click", function () { V.parlaApri(); });
+  V.parlaBar.addEventListener("submit", function (e) { e.preventDefault(); V.parlaManda(pIn.value); });   // Invio: manda e chiude
+  pIn.addEventListener("input", function () { V.parlaConta(); });
+  pIn.addEventListener("keydown", function (e) { if (e.key === "Escape") V.parlaApri(false); });
+  V.parlaVV = function () { V.parlaPosiz(); };   // la tastiera di iPhone cambia il «visualViewport»: la barra la segue
+  if (window.visualViewport) { visualViewport.addEventListener("resize", V.parlaVV); visualViewport.addEventListener("scroll", V.parlaVV); }
   V.btnSuono.addEventListener("click", function () { AUDIO.muto = !AUDIO.muto; try { localStorage.setItem("lt-muto", AUDIO.muto ? "1" : "0"); } catch (e) {} V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); if (!AUDIO.muto) SUONO.voto(); });
   V.s.addEventListener("pointerdown", function (e) { if (e.isTrusted) AUDIO.toccato = true; audio(); }, { passive: true });
   V.guida = E("div", "lt-guida"); sc.appendChild(V.guida);
@@ -3906,6 +4058,7 @@ Vista.prototype.slega = function () {
   if (this.suGiu) { document.removeEventListener("keydown", this.suGiu); document.removeEventListener("keyup", this.suGiu); }
   if (this.ruota) { window.removeEventListener("resize", this.ruota); window.removeEventListener("orientationchange", this.ruota); }
   if (this.noZoom) document.removeEventListener("gesturestart", this.noZoom);
+  if (this.parlaVV && window.visualViewport) { visualViewport.removeEventListener("resize", this.parlaVV); visualViewport.removeEventListener("scroll", this.parlaVV); }
 };
 // un punto del dito dentro la scena (in pixel della scena, anche quando è girata di lato)
 Vista.prototype.locale = function (e) {
@@ -3978,8 +4131,90 @@ Vista.prototype.messaggio = function (m) {
   }
   else if (m.t === "avviso") { this.avviso(m.testo, m.tipo); if (m.tipo === "morte") vibra(120); }
   else if (m.t === "morte") this.scenaMorte(m);
-  else if (m.t === "bolla") { this.bolle[m.id] = { testo: String(m.testo || "").slice(0, 60), fine: performance.now() + 4500 }; }
+  else if (m.t === "bolla") this.sentito(m);
   else if (m.t === "fx") this.effetto(m);
+};
+// ----- la chat di prossimità -----
+// apre o chiude la barra (senza argomento la gira)
+Vista.prototype.parlaApri = function (on) {
+  var V = this; if (on === undefined) on = V.parlaBar.hidden;
+  if (on && V.btnParla.hidden) return;
+  V.parlaBar.hidden = !on; V.btnParla.classList.toggle("acceso", !!on);
+  if (on) { V.parlaConta(); V.parlaStato(); V.parlaPosiz(); try { V.parlaIn.focus({ preventScroll: true }); } catch (e) { V.parlaIn.focus(); } }
+  else { V.parlaIn.blur(); V.parlaPosiz(); }
+};
+// la barra sta in basso, sopra la tastiera di iPhone («visualViewport»); con la scena girata di lato sta in alto.
+// Lo storico sale con lei, e la scena si alza quel tanto che serve perché chi gioca resti visibile sopra la barra.
+Vista.prototype.parlaPosiz = function () {
+  var V = this, aperta = !V.parlaBar.hidden, vv = window.visualViewport, r = V.sc.getBoundingClientRect(), alto = !!V.girato, sotto = 0, alza = 0;
+  if (aperta && vv && !alto) sotto = Math.max(0, Math.round(r.bottom - (vv.offsetTop + vv.height)));
+  V.parlaBar.classList.toggle("alto", alto);
+  if (V.parlaSotto !== sotto) { V.parlaSotto = sotto; V.sc.style.setProperty("--sotto", sotto + "px"); }
+  if (aperta && !alto) {
+    var h = V.parlaBar.offsetHeight, hs = V.parlaStor.offsetHeight, cima = V.parlaBar.getBoundingClientRect().top - r.top - (hs ? hs + 6 : 0);
+    V.parlaStor.style.bottom = "calc(max(env(safe-area-inset-bottom,0px)," + sotto + "px) + " + (h + 14) + "px)";
+    alza = Math.max(0, Math.round(r.height / 2 + 36 - cima));
+  } else V.parlaStor.style.bottom = "";
+  V.parlaAlza = alza;
+};
+// il contatore delle lettere (max MAX_PARLA)
+Vista.prototype.parlaConta = function () {
+  var n = Array.from(this.parlaIn.value).length; this.parlaCont.textContent = n + "/" + MAX_PARLA; this.parlaCont.classList.toggle("pieno", n >= MAX_PARLA - 10);
+};
+// la riga in alto nella barra: quante persone che vedo mi sentiranno (solo quelle che vedo: il buio non tradisce nessuno)
+Vista.prototype.parlaStato = function () {
+  var V = this, g = V.g, me = V.me, t, si = false; if (!g) return;
+  if (performance.now() < V.parlaAttesa) t = "Aspetta un attimo";
+  else if (!V.sonoVivo()) t = "Ti sentono i fantasmi";
+  else {
+    var anima = g.mappa !== "palazzo" || g.bengala > 0, R = anima ? R_PARLA : Math.min(R_PARLA, V.raggio() * 0.97), n = 0;
+    V.altri().forEach(function (p) { if (!p.fantasma && Math.hypot(p.x - me.x, p.y - me.y) <= R && vede(V.M, me.x, me.y, p.x, p.y)) n++; });
+    t = n === 0 ? "Nessuno vicino a te" : n === 1 ? "1 persona ti sente" : n + " persone ti sentono"; si = n > 0;
+  }
+  if (V.parlaUdi._t !== t) { V.parlaUdi._t = t; V.parlaUdi.textContent = t; }
+  V.parlaUdi.classList.toggle("si", si);
+};
+// manda un messaggio (scritto o a un tocco) e chiude la barra; un messaggio ogni 1,5 secondi
+Vista.prototype.parlaManda = function (testo) {
+  var V = this, tx = Array.from(String(testo || "").replace(/\s+/g, " ").trim()).slice(0, MAX_PARLA).join(""), ora = performance.now();
+  if (!tx) { V.parlaApri(false); return; }
+  if (ora - V.ultimoParla < 1500) { V.parlaAttesa = ora + 1200; V.parlaStato(); return; }
+  V.ultimoParla = ora; V.manda("parla", { testo: tx });
+  V.parlaIn.value = ""; V.parlaConta(); V.parlaApri(false);
+};
+// un messaggio sentito: il fumetto sopra chi parla (si impila e svanisce) e una riga nello storico. In riunione è spento.
+Vista.prototype.sentito = function (m) {
+  var V = this, g = V.g, ora = performance.now(), id = String(m.id || ""), testo = Array.from(String(m.testo || "").replace(/\s+/g, " ").trim()).slice(0, MAX_PARLA).join("");
+  if (!testo || !id || (g && g.fase !== "gioco" && g.fase !== "atrio")) return;
+  var k = id + "|" + m.n + "|" + testo; if (V.bVisti.indexOf(k) >= 0) return;   // (lo stesso messaggio arrivato due volte vale una)
+  V.bVisti.push(k); if (V.bVisti.length > 16) V.bVisti.shift();
+  var dur = Math.max(4200, Math.min(7500, 3000 + testo.length * 55)), mie = V.bolle.filter(function (x) { return x.id === id; });
+  if (mie.length >= 3) V.bolle.splice(V.bolle.indexOf(mie[0]), 1);   // al massimo tre fumetti per persona
+  V.bolle.push({ id: id, testo: testo, t0: ora, fine: ora + dur, w: !!m.w, a: !!m.a, righe: null });
+  var io = id === V.cb.myId, c = V.cache[m.c || id] || {};
+  V.storicoAgg({ nome: io ? "Tu" : (c.nome || "?"), testo: testo, t0: ora, w: !!m.w, a: !!m.a, io: io });
+};
+// lo storico: gli ultimi messaggi sentiti, sopra la barra; sfumano da soli (prima se la barra è chiusa)
+Vista.prototype.storicoAgg = function (s) {
+  var V = this, el = E("div", "lt-ch" + (s.io ? " io" : "") + (s.w ? " w" : "") + (s.a ? " a" : ""));
+  el.append(E("b", "", s.nome), document.createTextNode(s.testo));
+  s.el = el; s.op = 1; V.storico.push(s); V.parlaStor.appendChild(el);
+  while (V.storico.length > PARLA_STORICO) V.storico.shift().el.remove();
+  if (!V.parlaBar.hidden) V.parlaPosiz();
+};
+Vista.prototype.storicoGira = function (ora) {
+  var V = this, vita = V.parlaBar.hidden ? 7000 : 20000;
+  for (var i = V.storico.length - 1; i >= 0; i--) {
+    var s = V.storico[i], eta = ora - s.t0, op = eta < vita * 0.6 ? 1 : Math.max(0, 1 - (eta - vita * 0.6) / (vita * 0.4));
+    if (op <= 0) { s.el.remove(); V.storico.splice(i, 1); continue; }
+    op = Math.round(op * 10) / 10; if (s.op !== op) { s.op = op; s.el.style.opacity = op; }
+  }
+};
+// la riunione (o la fine) spegne la chat di prossimità: via fumetti, storico e barra
+Vista.prototype.parlaPulisci = function () {
+  var V = this; V.bolle.length = 0; V.bVisti.length = 0;
+  V.storico.forEach(function (s) { s.el.remove(); }); V.storico.length = 0;
+  if (!V.parlaBar.hidden) V.parlaApri(false);
 };
 var DURATE = { urlo: 6, scudoRotto: 1.2, telecamera: 1, trasporto: 1, spegni: 1.2, sparo: 0.5, scudo: 1.2, lente: 1.2, fiuto: 1, ipnosi: 1, trasforma: 0.9, botola: 0.7, sparisce: 1, mangia: 1, gatto: 1.2, rianima: 1.6, campana: 1.2, compito: 2.6, bengala: 1.2, luci: 0.8 };
 Vista.prototype.effetto = function (m) {
@@ -4282,7 +4517,9 @@ Vista.prototype.disegnaScena = function () {
   var pr = V.priv || {}, come = pr.travestito || V.cb.myId;
   var mioAv = AVATAR[come], c = V.cache[come] || {};
   var ioD = { x: io.x, y: io.y, dir: io.dir, muove: io.muove, fantasma: !V.sonoVivo(), nome: c.nome || "", colore: c.colore, img: mioAv && mioAv.img, imgS: mioAv && mioAv.imgS, mostra: !V.guardo && !(pr && pr.botola != null), seme: 3, id: V.cb.myId };
-  var bolle = {}; Object.keys(V.bolle).forEach(function (id) { var b = V.bolle[id], r = (b.fine - performance.now()) / 4500; if (r <= 0) delete V.bolle[id]; else bolle[id] = { testo: b.testo, f: r }; });
+  var oraB = performance.now(); for (var ib = V.bolle.length - 1; ib >= 0; ib--) if (V.bolle[ib].fine <= oraB) V.bolle.splice(ib, 1);   // i fumetti scaduti
+  var apertaP = !V.parlaBar.hidden, vivoP = V.sonoVivo();
+  V.parlaAlzaVista = V.pit.ridotto ? V.parlaAlza : V.parlaAlzaVista + (V.parlaAlza - V.parlaAlzaVista) * Math.min(1, V.dt * 10);
   var miei = new Set(g.interf ? [] : V.compitiAperti().map(function (p) { return p.id; })), meta = V.meta(), ora = performance.now();
   if (meta && meta.nessunaFreccia) meta = null;
   V.pit.disegna({ M: V.M, palazzo: g.mappa === "palazzo", t: V.tempo, dt: V.dt, io: ioD, altri: altri, corpi: corpi, R: V.raggio(),
@@ -4291,7 +4528,8 @@ Vista.prototype.disegnaScena = function () {
     scudi: V.squadra() !== "ombre" ? (g.scudi || []).filter(function (id) { return id !== V.cb.myId; }) : [], telecamere: g.cam, osservate: g.osservate, orme: V.orme, durOrme: (V.vm.imp.investigatore && V.vm.imp.investigatore.orme) || 10,
     traccia: pr.traccia && V.tracciaFine > ora ? pr.traccia[0] : null, ipno: V.bloccFine > ora,
     trappola: g.mappa === "palazzo" ? pr.trappola : null, urlo: V.urlo && V.urlo.fine > V.tempo && g.mappa === "palazzo" ? V.urlo : null,
-    rianima: V.rianFine > ora ? 1 - (V.rianFine - ora) / V.rianTot : 0, bolle: bolle });
+    rianima: V.rianFine > ora ? 1 - (V.rianFine - ora) / V.rianTot : 0, bolle: V.bolle, ora: ora, alza: V.parlaAlzaVista,
+    parla: apertaP ? { R: R_PARLA, Rm: R_MURO, anima: !vivoP } : null });
 };
 var FALLBACK = { x: 32 * T, y: 22 * T };
 
@@ -4335,7 +4573,10 @@ Vista.prototype.aggHud = function () {
   V.s.querySelector(".lt-sx").hidden = (!palazzo && !sal) || V.guardo || !pr;
   V.aggSaletta(sal);
   V.btnMappa.hidden = !palazzo;
-  V.btnParla.hidden = !palazzo || g.fase !== "gioco"; if (V.btnParla.hidden) V.parlaBar.hidden = true;
+  // la chat di prossimità c'è nel gioco e nella saletta; non in riunione, non a chi guarda, non da una botola
+  V.btnParla.hidden = V.guardo || !pr || ((!palazzo || g.fase !== "gioco" || pr.botola != null) && !sal);
+  if (V.btnParla.hidden && !V.parlaBar.hidden) V.parlaApri(false);
+  V.storicoGira(performance.now()); if (!V.parlaBar.hidden) { V.parlaStato(); V.parlaPosiz(); }
   var ora = performance.now(), sec = function (f) { return Math.max(0, Math.ceil((f - ora) / 1000)); };
   if (sal) {   // nella saletta: solo «Usa» davanti al computer
     var uS = V.vicinoUsa();
@@ -4679,7 +4920,7 @@ Vista.prototype.apriIndovina = function (id) {
 // ----- i pannelli sopra la mappa: ruolo, riunione, esito, fine -----
 Vista.prototype.cambioFase = function () {
   var V = this, f = V.fase;
-  if (f !== "gioco" && f !== "atrio") { V.joyReset(); if (V.pannello) V.pannello.chiudi(); V.chiudiMappa(); if (V.mg) { V.mg = null; V.velo.hidden = true; V.veloTipo = null; } }
+  if (f !== "gioco" && f !== "atrio") { V.parlaPulisci(); V.joyReset(); if (V.pannello) V.pannello.chiudi(); V.chiudiMappa(); if (V.mg) { V.mg = null; V.velo.hidden = true; V.veloTipo = null; } }
   V.riuK = null;
 };
 Vista.prototype.aggVelo = function (soloTempi) {
@@ -4908,8 +5149,16 @@ function stile() {
     ".lt-riu .carta .az button,.lt-riu .rapide button,.lt-riu .voto .salta{display:flex;align-items:center;justify-content:center;gap:5px}",
     ".lt-intro .icona svg{width:64px;height:64px;color:#f6d999;stroke-width:1.6}.lt-pc-schede b svg{width:20px;height:20px}",
     ".lt-minimappa .testa b{display:inline-flex;align-items:center;gap:6px}.lt-minimappa .leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 4px 0 10px;vertical-align:middle;box-shadow:0 0 0 1px rgba(0,0,0,.4)}",
-    ".lt-parla{position:absolute;z-index:5;left:0;right:0;margin:0 auto;top:calc(58px + env(safe-area-inset-top));width:min(440px,calc(100% - 24px));display:flex;gap:6px;padding:6px;border-radius:14px;background:rgba(13,16,32,.9);border:1px solid rgba(241,232,214,.18);box-shadow:0 8px 24px rgba(0,0,0,.45);animation:ltSale .2s var(--lt-ease)}",
-    ".lt-parla input{flex:1;min-width:0;font:inherit;font-size:16px;color:#f1e8d6;background:#0d1020;border:1px solid rgba(241,232,214,.18);border-radius:10px;padding:7px 10px}.lt-parla button{flex:none;width:42px;border-radius:10px;border:0;background:linear-gradient(180deg,#e7b75c,#c9923a);color:#1d1508;display:grid;place-items:center;cursor:pointer}",
+    ".lt-parla{position:absolute;z-index:5;left:0;right:0;margin:0 auto;bottom:calc(8px + max(env(safe-area-inset-bottom,0px),var(--sotto,0px)));width:min(440px,calc(100% - 24px));display:grid;gap:6px;padding:7px;border-radius:14px;background:rgba(13,16,32,.93);border:1px solid rgba(241,232,214,.18);box-shadow:0 8px 24px rgba(0,0,0,.45);animation:ltSale .2s var(--lt-ease)}",
+    ".lt-parla.alto{bottom:auto;top:calc(58px + env(safe-area-inset-top))}",
+    ".lt-pt{display:flex;justify-content:space-between;gap:8px;padding:0 3px;font-size:.7rem;font-weight:600;letter-spacing:.03em;color:#b8b1a2}.lt-udi{transition:color .2s var(--lt-ease)}.lt-udi.si{color:#f6d999}.lt-cont.pieno{color:#f2a7b6}",
+    ".lt-pcho{display:flex;flex-wrap:wrap;gap:5px}.lt-pcho button{font:inherit;font-size:.78rem;font-weight:600;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.16);border-radius:999px;padding:5px 11px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease),background .2s var(--lt-ease)}.lt-pcho button:active{transform:scale(.94);background:#323b63}",
+    ".lt-priga{display:flex;gap:6px}.lt-priga input{flex:1;min-width:0;-webkit-user-select:text;user-select:text;font:inherit;font-size:16px;color:#f1e8d6;background:#0d1020;border:1px solid rgba(241,232,214,.18);border-radius:10px;padding:7px 10px;transition:border-color .2s var(--lt-ease),box-shadow .2s var(--lt-ease)}.lt-priga input:focus{outline:none;border-color:rgba(231,183,92,.7);box-shadow:0 0 0 3px rgba(231,183,92,.18)}",
+    ".lt-priga button{flex:none;width:42px;border-radius:10px;border:0;background:linear-gradient(180deg,#e7b75c,#c9923a);color:#1d1508;display:grid;place-items:center;cursor:pointer;touch-action:manipulation;transition:transform .16s var(--lt-ease)}.lt-priga button:active{transform:scale(.92)}",
+    ".lt-chatst{position:absolute;z-index:4;left:calc(10px + env(safe-area-inset-left));bottom:calc(196px + env(safe-area-inset-bottom));width:min(60%,300px);display:flex;flex-direction:column;gap:3px;pointer-events:none}",
+    ".lt-ch{align-self:flex-start;max-width:100%;overflow-wrap:anywhere;font-size:.8rem;line-height:1.3;color:#f1e8d6;background:rgba(13,16,32,.7);border-radius:10px;padding:3px 9px;transition:opacity .3s var(--lt-ease);animation:ltSale .2s var(--lt-ease)}.lt-ch b{margin-right:6px;font-weight:700;color:#f6d999}.lt-ch.io b{color:#b8b1a2}",
+    ".lt-scena.oriz .lt-chatst{bottom:calc(110px + env(safe-area-inset-bottom))}",
+    ".lt-ch.w{font-style:italic;color:#c9c2b4}.lt-ch.a{background:rgba(110,130,200,.38);color:#dfe8ff}.lt-ch.a b{color:#c9d8ff}",
     ".lt-lista-btn,.lt-hbtn{font:inherit;font-weight:700;font-size:.8rem;color:#f1e8d6;background:rgba(25,29,49,.85);border:1px solid rgba(241,232,214,.2);border-radius:9px;padding:5px 10px;cursor:pointer}",
     ".lt-lista{list-style:none;margin:0;padding:7px 9px;display:grid;gap:3px;background:rgba(13,16,32,.78);border-radius:10px;font-size:.78rem;line-height:1.3}",
     ".lt-lista li.fatto{opacity:.45;text-decoration:line-through}.lt-lista b{color:#f6d999}.lt-lista .nota{color:#b8b1a2;font-style:italic}",
