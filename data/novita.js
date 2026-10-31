@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 289,
+    data: "31 ottobre 2026",
+    titolo: "😂 Memata: il gioco dei meme",
+    descrizione: [
+      "Gioco nuovo, online nella Sala della serata, da 3 a 10 amici: a ogni round ti arriva un meme famoso coi riquadri vuoti. Tocca un riquadro, scrivi la tua battuta e guardi subito come viene.",
+      "Non ti ispira? Una volta per round tocca «🔄 Cambia meme».",
+      "Poi i meme passano uno alla volta senza nome e si votano: 😂 fortissimo, 🙂 carino, 😐 meh. Alla rivelazione, col rullo di tamburi, si scopre chi li ha scritti.",
+      "L'ultimo round è lo stesso meme per tutti, a punti doppi. Alla fine il ⭐ meme della serata si manda su WhatsApp con un tocco.",
+      "Oltre 1.000 meme veri, i più usati in rete: non tornano subito, il gioco si ricorda quelli già usciti."
+    ]
+  },
+  {
     v: 288,
     data: "31 ottobre 2026",
     titolo: "📲 La prima schermata ancora più pulita",
