@@ -20,7 +20,7 @@
   var RESPIRO = 5;            // i secondi di respiro quando la partita riprende
   var RITARDATARI = "turno";  // chi arriva a partita cominciata entra dal round dopo, con 0 punti
   var VOTO_S = 12;            // i secondi per votare un meme (si va avanti prima se hanno votato tutti)
-  var ANTICIPO = 1500;        // l'host chiude la scrittura 1,5 s dopo lo zero (l'ultimo testo deve arrivare)
+  var ANTICIPO = 2000;        // l'host chiude scrittura e voto 2 s dopo lo zero (l'ultimo testo o voto deve arrivare)
   var PASSO_RIV = 2600;       // la rivelazione: un posto ogni 2,6 s (il primo con il rullo, più lungo)
   var AVANTI_S = 12;          // dopo la rivelazione: si va avanti da soli
   var PUNTI = [0, 100, 200];  // 😐 meh, 🙂 carino, 😂 fortissimo
@@ -37,7 +37,9 @@
   function mischia(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function leggi(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
   function scrivi(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-  function pulisci(s) { return String(s == null ? "" : s).replace(/[\u0000-\u0009\u000b-\u001f]/g, "").replace(/\n{3,}/g, "\n\n").slice(0, MAX_TESTO); }
+  // (si taglia per caratteri interi: un'emoji non si spezza a metà)
+  function taglia(s, n) { var a = Array.from(s); return a.length > n ? a.slice(0, n).join("") : s; }
+  function pulisci(s) { return taglia(String(s == null ? "" : s).replace(/[\u0000-\u0009\u000b-\u001f]/g, "").replace(/\n{3,}/g, "\n\n"), MAX_TESTO); }
   function vuoti(testi) { return !testi || !testi.some(function (x) { return String(x || "").trim(); }); }
 
   // =========================================================
@@ -68,10 +70,11 @@
       var parole = par.split(/\s+/).filter(Boolean), r = "";
       if (!parole.length) { out.push(""); return; }
       parole.forEach(function (p) {
-        while (ctx.measureText(p).width > w && p.length > 1) {   // parola più larga del riquadro: si spezza
-          var k = p.length - 1; while (k > 1 && ctx.measureText(p.slice(0, k)).width > w) k--;
+        var A = Array.from(p);   // (per caratteri interi: le emoji non si spezzano)
+        while (ctx.measureText(p).width > w && A.length > 1) {   // parola più larga del riquadro: si spezza
+          var k = A.length - 1; while (k > 1 && ctx.measureText(A.slice(0, k).join("")).width > w) k--;
           if (r) { out.push(r); r = ""; }
-          out.push(p.slice(0, k)); p = p.slice(k); out.spezza = true;
+          out.push(A.slice(0, k).join("")); A = A.slice(k); p = A.join(""); out.spezza = true;
         }
         var prova = r ? r + " " + p : p;
         if (ctx.measureText(prova).width <= w || !r) r = prova; else { out.push(r); r = p; }
@@ -81,11 +84,12 @@
     return out;
   }
   // la grandezza più grande che ci sta (w, h in px); torna { fs, righe }. Le parole si spezzano a metà solo se non c'è altro modo
-  function impagina(testo, w, h, st) {
-    var ctx = misuratore(), t = st.cp ? String(testo).toUpperCase() : String(testo), best = null;
+  // (larg = larghezza dell'immagine disegnata: il tetto della grandezza è in proporzione, uguale sullo schermo e nella foto)
+  function impagina(testo, w, h, st, larg) {
+    var ctx = misuratore(), t = st.cp ? String(testo).toUpperCase() : String(testo), best = null, sc = (larg || 330) / 330;
     [false, true].forEach(function (spezza) {
       if (best) return;
-      var lo = 6, hi = Math.max(8, Math.min(h, w * 0.6, 120));
+      var lo = 6 * sc, hi = Math.max(8 * sc, Math.min(h, w * 0.6, 120 * sc));
       for (var i = 0; i < 9; i++) {
         var fs = (lo + hi) / 2;
         ctx.font = st.peso + " " + fs + "px " + st.font;
@@ -93,7 +97,7 @@
         if (rr.length * fs * st.lh <= h && (spezza || !rr.spezza)) { best = { fs: fs, righe: rr }; lo = fs; } else hi = fs;
       }
     });
-    if (!best) { ctx.font = st.peso + " 6px " + st.font; best = { fs: 6, righe: righe(ctx, t, w) }; }
+    if (!best) { ctx.font = st.peso + " " + (6 * sc) + "px " + st.font; best = { fs: 6 * sc, righe: righe(ctx, t, w) }; }
     best.fs = Math.floor(best.fs * 10) / 10;
     return best;
   }
@@ -113,8 +117,9 @@
     var stato = t.el("div", { class: "me-carica", text: "Carico il meme…" });
     quadro.appendChild(img); box.appendChild(quadro); box.appendChild(stato);
     var P = { el: box, quadro: quadro, img: img, rec: null, testi: [], q: [], sel: -1, pronta: false, onRotta: null, onTocco: null };
-    img.addEventListener("load", function () { P.pronta = true; stato.style.display = "none"; quadro.style.visibility = ""; P.adatta(); });
-    img.addEventListener("error", function () { P.pronta = false; stato.textContent = "📶 Il meme non arriva…"; stato.style.display = ""; if (P.onRotta && P.rec) P.onRotta(P.rec[0]); });
+    img.addEventListener("load", function () { P.pronta = true; stato.style.display = "none"; quadro.style.visibility = ""; quadro.classList.remove("senza"); P.adatta(); });
+    // l'immagine non arriva: i riquadri restano (si scrive lo stesso) e chi tiene la partita, se può, dà un altro meme
+    img.addEventListener("error", function () { P.pronta = false; stato.textContent = "📶 L'immagine non arriva"; stato.style.display = ""; quadro.style.visibility = ""; quadro.classList.add("senza"); if (P.onRotta && P.rec) P.onRotta(P.rec[0]); });
     // quando il posto cambia (compare un tasto, si apre la tastiera) il meme si rifà della misura giusta
     if (window.ResizeObserver) try { new ResizeObserver(function () { P.adatta(); }).observe(box); } catch (e) {}
     P.metti = function (r, testi, o2) {
@@ -156,7 +161,7 @@
         var k = tx + "|" + w + "|" + h;
         if (v.k === k) return; v.k = k;
         if (!tx.trim()) { v.sp.textContent = ""; return; }
-        var lay = impagina(tx, Math.max(4, bw - pad * 2), Math.max(4, bh - pad * 2), v.st);
+        var lay = impagina(tx, Math.max(4, bw - pad * 2), Math.max(4, bh - pad * 2), v.st, w);
         v.sp.textContent = lay.righe.join("\n");
         v.sp.style.fontSize = lay.fs + "px";
         v.sp.style.textShadow = bordo(v.st.o, lay.fs);
@@ -172,7 +177,7 @@
     riquadri(r).forEach(function (q, i) {
       var tx = pulisci((testi || [])[i] || ""); if (!tx.trim()) return;
       var st = stileDi(q), bw = q[2] / 1000 * W, bh = q[3] / 1000 * H, pad = Math.max(1, Math.min(bw, bh) * 0.04);
-      var lay = impagina(tx, Math.max(4, bw - pad * 2), Math.max(4, bh - pad * 2), st);
+      var lay = impagina(tx, Math.max(4, bw - pad * 2), Math.max(4, bh - pad * 2), st, W);
       x.save();
       x.translate(X + q[0] / 1000 * W + bw / 2, Y + q[1] / 1000 * H + bh / 2);
       if (st.r) x.rotate(st.r * Math.PI / 180);
@@ -239,9 +244,10 @@
         var m = L[i]; if (!libero(m) || (cond && !cond(m, i))) continue;
         var w = Math.pow(1 + i / 150, -1.6) * (M.verificati[m[0]] ? 3 : 1); c.push([m, w]); tot += w;
       }
-      if (!c.length) {   // finiti (o quasi): si ricomincia a dimenticare
-        usciti = []; scrivi(MEM_USCITE, usciti);
-        for (var j = 0; j < L.length; j++) if (!rotte[L[j][0]] && !M.inPartita[L[j][0]] && (!cond || cond(L[j], j))) { c.push([L[j], 1]); tot += 1; }
+      if (!c.length) {
+        if (cond) return null;   // finito solo un gruppo (per esempio i famosi): chi chiama ripiega su tutto l'elenco
+        usciti = []; scrivi(MEM_USCITE, usciti);   // finito tutto l'elenco: si ricomincia a dimenticare
+        for (var j = 0; j < L.length; j++) if (!rotte[L[j][0]] && !M.inPartita[L[j][0]]) { c.push([L[j], 1]); tot += 1; }
         if (!c.length) return null;
       }
       var r = Math.random() * tot;
@@ -309,7 +315,16 @@
       H.prossimi = [];
     }
     function ferma() { if (H.to) { clearTimeout(H.to); H.to = null; } }
-    function dopo(ms, fn) { ferma(); H.to = setTimeout(function () { H.to = null; fn(); }, Math.max(0, ms)); }
+    // la partita è ancora di questo telefono? Se il core l'ha portata via (il vice ha preso il posto e io rientro da
+    // giocatore, Cambia gioco…) la mia schermata non è più nella pagina: i timer si fermano e non si disegna più niente
+    var morto = false;
+    function vivo() {
+      if (morto) return false;
+      if (H.fase !== "gioco") return true;
+      if (UI && UI.t === t && document.body.contains(UI.s)) return true;
+      morto = true; ferma(); return false;
+    }
+    function dopo(ms, fn) { ferma(); H.to = setTimeout(function () { H.to = null; if (vivo()) fn(); }, Math.max(0, ms)); }
 
     t.onRegole = function (im) { if (H.fase !== "lobby") return; H.giri = im.giri || 3; H.tempo = im.tempo || 75; bd(); };
 
@@ -348,6 +363,11 @@
           if (!p && H.fase === "lobby" && H.players.length < MAX)
             H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), punti: 0 });
           if (p) { p.forse = false; if (p.via && H.fase !== "lobby") p.via = false; if (!p.omino) p.omino = avatarValido(m.omino); }
+          // era uscito prima del round e torna mentre si scrive: ha anche lui il suo meme (nell'ultimo round quello di tutti)
+          if (p && H.fase === "gioco" && H.stato === "scrivi" && !H.mem[id] && H.scadenza - Date.now() > 15000) {
+            var unoDi = H.fin && Object.keys(H.mem)[0];
+            H.mem[id] = { r: unoDi ? H.mem[unoDi].r : nuovoMeme(null), c: 0, x: [], f: false };
+          }
           bd(); segreti(id);   // chi rientra ritrova il suo meme (e il suo testo)
           return;
         }
@@ -372,7 +392,7 @@
         classifica: H.classifica };
       if (H.stato === "vota" && H.vot) {
         var a = H.vot.ord[H.vot.k], x = H.mem[a] || {};
-        v.voto = { k: H.vot.k, n: H.vot.ord.length, rec: x.r, testi: x.x, hanno: Object.keys(H.vot.voti[a] || {}).length, aventi: votanti(a).length };
+        v.voto = { k: H.vot.k, n: H.vot.ord.length, rec: x.r, testi: x.x, hanno: Object.keys(H.vot.voti[a] || {}).length };
       }
       if (H.stato === "rivela" && H.riv) v.riv = H.riv;
       if (H.fase === "fine") v.serata = H.serata;
@@ -387,7 +407,7 @@
       if (H.fase !== "gioco") return;
       var x = H.mem[id];
       if (H.stato === "scrivi" && x) privato(id, { t: "tuo", g: H.giro, p: H.partita, rec: x.r, cambi: x.c, testi: x.x || [], fatto: !!x.f, fin: H.fin });
-      if (H.stato === "vota" && H.vot && H.vot.ord[H.vot.k] === id) privato(id, { t: "mio", g: H.giro, k: H.vot.k });
+      if (H.stato === "vota" && H.vot && H.vot.ord[H.vot.k] === id) privato(id, { t: "mio", g: H.giro, p: H.partita, k: H.vot.k });
     }
     function ricorda() {
       if (H.fase === "lobby") return t.ricorda(null);
@@ -396,7 +416,7 @@
       s.players = H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via }; });
       t.ricorda(s);
     }
-    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegna(t, v, CB); }
+    function bd() { if (morto) return; var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegna(t, v, CB); }
 
     // ----- la ripresa -----
     var nRespiri = 0;
@@ -417,7 +437,7 @@
         bd(); H.players.forEach(function (p) { segreti(p.id); }); dopo(H.scadenza - Date.now() + ANTICIPO, chiudiScrittura); return;
       }
       delete H.scadenzaPrima;
-      if (era === "vota" && H.vot) { H.vot.voti[H.vot.ord[H.vot.k]] = {}; return votaMeme(); }   // il meme a metà si rivota da capo
+      if (era === "vota" && H.vot) return votaMeme();   // il meme a metà riprende col tempo pieno (i voti già dati restano; un doppione si scarta)
       if (era === "rivela" && H.riv) { H.stato = "rivela"; H.riv.passo = H.riv.tot - 1; return fineRivela(); }   // (i punti erano già dati)
       prossimoGiro();
     }
@@ -441,7 +461,7 @@
       entrano();
       H.fin = H.giro === H.giri && H.giri > 1;
       t.aCheSiamo((H.fin ? "Ultimo round" : "Round " + H.giro) + " di " + H.giri);
-      H.mem = {}; H.vot = null; H.riv = null;
+      H.mem = {}; H.vot = null; H.riv = null; H.scadPronti = 0; H.rotteDa = {};
       // l'ultimo round: lo stesso meme per tutti, uno dei famosi con almeno due riquadri
       var uguale = H.fin ? nuovoMeme(function (m, i) { return i < 250 && (!m[4] || m[4].length >= 2); }) : null;
       presenti().forEach(function (p) { H.mem[p.id] = { r: uguale || nuovoMeme(null), c: 0, x: [], f: false }; });
@@ -454,6 +474,9 @@
       if (m.t === "testo" && H.stato === "scrivi" && x && m.g === H.giro) {
         var tt = (Array.isArray(m.testi) ? m.testi : []).slice(0, 8).map(pulisci);
         var era = x.f; x.x = tt; x.f = !!m.fatto && !vuoti(tt);
+        if (era && !x.f && H.scadPronti) {   // «✏️ Modifica» mentre si stava per chiudere: torna il tempo di prima
+          H.scadenza = H.scadPronti; H.scadPronti = 0; dopo(H.scadenza - Date.now() + ANTICIPO, chiudiScrittura);
+        }
         if (era !== x.f) bd(); else ricorda();
         controlla(); return;
       }
@@ -461,7 +484,11 @@
         x.c++; x.r = nuovoMeme(null); x.x = []; x.f = false; bd(); segreti(id); return;
       }
       if (m.t === "rotta" && H.stato === "scrivi" && x && m.g === H.giro && x.r && x.r[0] === m.id) {   // l'immagine non arriva a quel telefono: un altro meme, in silenzio
-        MZ.rotta(m.id);
+        x.rotte = (x.rotte || 0) + 1;
+        if (x.rotte > 2) return;   // (quel telefono non riceve le immagini: scrive coi riquadri senza la foto)
+        H.rotteDa = H.rotteDa || {}; var chi = H.rotteDa[m.id] = H.rotteDa[m.id] || [];
+        if (chi.indexOf(id) < 0) chi.push(id);
+        if (id === IO || chi.length >= 2) MZ.rotta(m.id);   // rotta davvero: non esce più per una settimana
         if (H.fin) { cambiaUguale(m.id); return; }
         x.r = nuovoMeme(null); x.x = []; x.f = false; bd(); segreti(id); return;
       }
@@ -476,7 +503,7 @@
     // l'ultimo round ha un meme solo per tutti: se non arriva a qualcuno si cambia per tutti (si ricomincia a scrivere)
     function cambiaUguale(vecchio) {
       if (H.cambiUguale >= 2) return; H.cambiUguale = (H.cambiUguale || 0) + 1;
-      var r = nuovoMeme(function (m, i) { return i < 250 && m[0] !== vecchio; });
+      var r = nuovoMeme(function (m, i) { return i < 250 && m[0] !== vecchio && (!m[4] || m[4].length >= 2); });
       Object.keys(H.mem).forEach(function (id) { var x = H.mem[id]; x.r = r; x.x = []; x.f = false; });
       H.scadenza = Math.max(H.scadenza, Date.now() + Math.min(H.tempo, 60) * 1000);
       bd(); presenti().forEach(function (p) { segreti(p.id); }); dopo(H.scadenza - Date.now() + ANTICIPO, chiudiScrittura);
@@ -485,24 +512,24 @@
     function controlla() {
       if (H.fase !== "gioco" || H.stato !== "scrivi") return;
       var tutti = presenti().every(function (p) { var x = H.mem[p.id]; return !x || x.f; });
-      if (tutti) { H.scadenza = Date.now() + 1200; bd(); dopo(1200, chiudiScrittura); }
+      if (tutti && !H.scadPronti) { H.scadPronti = H.scadenza; H.scadenza = Date.now() + 1200; bd(); dopo(1200, chiudiScrittura); }
     }
     function chiudiScrittura() {
       if (H.stato !== "scrivi") return;
-      H.cambiUguale = 0;
+      H.cambiUguale = 0; H.scadPronti = 0;
       var ord = mischia(Object.keys(H.mem).filter(function (id) { return !vuoti(H.mem[id].x); }));
       if (!ord.length) { H.stato = "vuoto"; H.scadenza = Date.now() + 5000; bd(); return dopo(5000, prossimoGiro); }
       H.vot = { ord: ord, k: 0, voti: {} };
       votaMeme();
     }
-    function votanti(a) { return presenti().filter(function (p) { return p.id !== a && H.mem[p.id] !== undefined; }); }
+    function votanti(a) { return presenti().filter(function (p) { return p.id !== a; }); }   // (anche chi è tornato a metà round: ha i tasti)
     function votaMeme() {
       H.stato = "vota"; H.scadenza = Date.now() + VOTO_S * 1000;
       H.vot.voti[H.vot.ord[H.vot.k]] = H.vot.voti[H.vot.ord[H.vot.k]] || {};
       bd(); segreti(H.vot.ord[H.vot.k]);
       // chi non può votare nessuno (in due, il meme dell'altro: vota solo uno) va avanti lo stesso a tempo
       if (!votanti(H.vot.ord[H.vot.k]).length) return dopo(2500, prossimoVoto);
-      dopo(VOTO_S * 1000 + 600, prossimoVoto);
+      dopo(VOTO_S * 1000 + ANTICIPO, prossimoVoto);
     }
     function prossimoVoto() {
       if (H.stato !== "vota") return;
@@ -618,9 +645,9 @@
   // =========================================================
   var UI = null, FIN = null;
   function disegna(t, vm, cb) {
-    if (vm.fase === "lobby") { UI = FIN = null; return lobby(t, vm, cb); }
+    if (vm.fase === "lobby") { UI = FIN = null; cb.ultimo = null; return lobby(t, vm, cb); }
     if (vm.fase === "fine") {
-      UI = null;
+      UI = null; cb.ultimo = null;
       var kf = "fine|" + vm.partita;
       if (FIN && FIN.k === kf && FIN.t === t && document.body.contains(FIN.s)) return;
       FIN = { k: kf, t: t, s: finale(t, vm, cb) };
@@ -692,7 +719,7 @@
     ui.campo.addEventListener("input", function () {
       if (!ui.mio) return;
       var v = ui.campo.value.replace(/\n{2,}/g, "\n"); if (v !== ui.campo.value) ui.campo.value = v;
-      ui.mio.testi[ui.sel] = pulisci(v); salvaBozza(ui); anteprima(ui); mandaBozza(ui);
+      ui.mio.testi[ui.sel] = pulisci(v); salvaBozza(ui); anteprima(ui); mandaBozza(ui, !!ui.mio.mandatoFine);   // (dall'ultimo secondo ogni lettera parte subito)
     });
     // «invio» passa al riquadro dopo (sull'ultimo consegna)
     ui.campo.addEventListener("keydown", function (e) {
@@ -728,8 +755,9 @@
     // i segreti che arrivano solo a me
     cb.onPriv = function (m) {
       if (!UI || UI.cb !== cb) return;
+      if (UI.vm && m.p != null && m.p !== UI.vm.partita) return;   // (di una partita di prima)
       if (m.t === "tuo") ricevoMeme(UI, m);
-      else if (m.t === "mio") { UI.mioVoto = m.g + "|" + m.k; if (UI.vm) aggiorna(UI, UI.vm, cb); }
+      else if (m.t === "mio") { UI.mioVoto = m.p + "|" + m.g + "|" + m.k; if (UI.vm) aggiorna(UI, UI.vm, cb); }
     };
     if (cb.ultimo) { var u = cb.ultimo; setTimeout(function () { if (UI === ui) cb.onPriv(u); }, 0); }
     // la tastiera di iPhone: lo schermo si abbassa e la pagina scorre; la scena resta attaccata a quello che si vede
@@ -759,7 +787,7 @@
     var b = leggi(MEM_BOZZA, null), chiave = (ui.vm && ui.vm.codice) + "|" + m.p + "|" + m.g + "|" + (m.rec && m.rec[0]);
     var testi = stesso ? era.testi : (b && b.k === chiave ? b.testi : (m.testi || []).slice());
     ui.mio = { g: m.g, p: m.p, rec: m.rec, cambi: m.cambi, fin: m.fin, testi: testi || [], fatto: stesso ? era.fatto && m.fatto : !!m.fatto, k: chiave };
-    if (!stesso) { ui.sel = 0; ui.campo.value = ui.mio.testi[0] || ""; if (!vuoti(ui.mio.testi) && !m.testi.length) mandaBozza(ui); }
+    if (!stesso) { ui.sel = 0; ui.campo.readOnly = false; ui.campo.value = ui.mio.testi[0] || ""; if (!vuoti(ui.mio.testi) && !m.testi.length) mandaBozza(ui); }
     if (ui.vm) aggiorna(ui, ui.vm, ui.cb);
   }
   function salvaBozza(ui) { if (ui.mio) scrivi(MEM_BOZZA, { k: ui.mio.k, testi: ui.mio.testi }); }
@@ -793,10 +821,12 @@
     mostraSe(ui.chips, n > 1);
     ui.campo.placeholder = n > 1 ? "Riquadro " + (ui.sel + 1) + " di " + n + "…" : "Scrivi qui…";
   }
+  function chiaveVoto(vm) { return vm.partita + "|" + vm.giro + "|" + vm.voto.k + "|" + (vm.rip || 0); }
   function vota(ui, v) {
     var vm = ui.vm; if (!vm || vm.stato !== "vota" || !vm.voto) return;
-    var k = vm.giro + "|" + vm.voto.k;
+    var k = chiaveVoto(vm);
     if (ui.votato && ui.votato.k === k) return;
+    if (ui.zeroVoto === k) return;   // (il tempo è finito: il voto non arriverebbe in tempo)
     ui.votato = { k: k, v: v };
     ui.cb.manda({ t: "voto", g: vm.giro, k: vm.voto.k, v: v });
     aggiorna(ui, vm, ui.cb);
@@ -806,8 +836,15 @@
   function tempo(ui) {
     var vm = ui.vm; if (!vm) return;
     if (!vm.resta || !(vm.stato === "scrivi" || vm.stato === "vota")) { tx(ui.tempo, ""); ui.tempo.className = "me-tempo"; return; }
-    if (ui.kTempo !== vm.stato + "|" + vm.resta + "|" + (vm.voto ? vm.voto.k : "")) { ui.kTempo = vm.stato + "|" + vm.resta + "|" + (vm.voto ? vm.voto.k : ""); ui.fineTempo = Date.now() + vm.resta * 1000; }
+    // (i secondi della foto sono arrotondati per eccesso e arrivano col ritardo della rete: si tiene la fine più vicina,
+    //  mezzo secondo prima; così un tocco all'ultimo secondo arriva ancora in tempo)
+    var kt = vm.partita + "|" + vm.giro + "|" + vm.stato + "|" + (vm.voto ? vm.voto.k : "") + "|" + (vm.rip || 0), stima = Date.now() + vm.resta * 1000 - 500;
+    if (ui.kTempo !== kt) { ui.kTempo = kt; ui.fineTempo = stima; ui.restaVisto = vm.resta; }
+    else if (vm.resta !== ui.restaVisto) { ui.restaVisto = vm.resta; if (stima < ui.fineTempo || vm.stato === "scrivi" && stima > ui.fineTempo + 3000) ui.fineTempo = stima; }
     var s = Math.max(0, Math.ceil((ui.fineTempo - Date.now()) / 1000));
+    if (vm.stato === "vota" && vm.voto && s === 0 && ui.zeroVoto !== chiaveVoto(vm)) { ui.zeroVoto = chiaveVoto(vm); setTimeout(function () { if (ui.vm) aggiorna(ui, ui.vm, ui.cb); }, 0); }
+    if (vm.stato === "scrivi" && s > 0 && ui.mio && ui.mio.zero) { ui.mio.zero = 0; ui.campo.readOnly = false; }   // (il tempo è stato allungato: si scrive di nuovo)
+    if (vm.stato === "scrivi" && s === 0 && ui.mio && ui.mio.g === vm.giro && !ui.mio.zero) { ui.mio.zero = 1; ui.campo.readOnly = true; if (!ui.mio.fatto) mandaBozza(ui, true); }
     tx(ui.tempo, "⏱ " + s);
     ui.tempo.className = "me-tempo" + (s <= 10 ? " poco" : "");
     // a un secondo dalla fine il mio testo parte comunque (anche senza «Fatto»)
@@ -842,17 +879,17 @@
         if (!guardo && !ui.mio) nota = "Arriva il tuo meme…";
       }
     } else if (st === "vota" && vm.voto) {
-      var mio = ui.mioVoto === vm.giro + "|" + vm.voto.k;
+      var mio = ui.mioVoto === vm.partita + "|" + vm.giro + "|" + vm.voto.k;
       ui.P.metti(vm.voto.rec, vm.voto.testi, {});
       titolo = "Meme " + (vm.voto.k + 1) + " di " + vm.voto.n + (vm.fin ? " · 🔥 punti doppi" : "");
-      var votato = ui.votato && ui.votato.k === vm.giro + "|" + vm.voto.k;
+      var votato = ui.votato && ui.votato.k === chiaveVoto(vm), chiuso = ui.zeroVoto === chiaveVoto(vm);
       if (!guardo) {
         mostraSe(ui.vota, true);
-        ui.vb.forEach(function (b, i) { var v = [2, 1, 0][i]; b.disabled = !!votato || mio; b.classList.toggle("scelto", !mio && !!votato && ui.votato.v === v); b.classList.toggle("spento", mio || (!!votato && ui.votato.v !== v)); });
+        ui.vb.forEach(function (b, i) { var v = [2, 1, 0][i]; b.disabled = !!votato || mio || chiuso; b.classList.toggle("scelto", !mio && !!votato && ui.votato.v === v); b.classList.toggle("spento", mio || (chiuso && !votato) || (!!votato && ui.votato.v !== v)); });
         if (mio) nota = "🤫 È il tuo: fai finta di niente!";
         else
-        nota = votato ? "🗳️ " + vm.voto.hanno + " di " + vm.voto.aventi + " hanno votato" : "Quanto fa ridere?";
-      } else nota = "🗳️ " + vm.voto.hanno + " di " + vm.voto.aventi + " hanno votato";
+        nota = votato ? "🗳️ Voti arrivati: " + vm.voto.hanno : chiuso ? "⏱ Tempo scaduto" : "Quanto fa ridere?";
+      } else nota = "🗳️ Voti arrivati: " + vm.voto.hanno;
     } else if (st === "rivela" && vm.riv) {
       mostraSe(ui.riv, true);
       rivelazione(ui, vm, cb);
@@ -903,7 +940,8 @@
     // quelli sotto il podio: tutti insieme in piccolo
     while (ui.altri.firstChild) ui.altri.removeChild(ui.altri.firstChild);
     L.slice(0, RV.podio).forEach(function (x) { ui.altri.appendChild(el("span", { class: "me-pchip" + (x.id === cb.myId ? " io" : ""), text: (x.id === cb.myId ? "Tu" : x.nome) + " +" + fmtN(x.pt) })); });
-    mostraSe(ui.altri, RV.podio > 0 && !rullo);
+    ui.altri.style.visibility = rullo ? "hidden" : "";   // (il posto resta: il meme non salta)
+    mostraSe(ui.altri, RV.podio > 0 && !RV.finito);   // (a rivelazione finita ci sono i totali di tutti)
     ui.P.metti(r.rec, r.testi, {});
     ui.rivTitolo = (pos === 1 ? "🏆 1° posto" : pos === 2 ? "🥈 2° posto" : pos === 3 ? "🥉 3° posto" : pos + "° posto") + (vm.fin ? " · 🔥 punti doppi" : "");
     ui.rivChi.className = "me-rivchi" + (rullo ? " rullo" : " su") + (primo && !rullo ? " primo" : "");
@@ -913,7 +951,8 @@
       [["😂", r.v[2]], ["🙂", r.v[1]], ["😐", r.v[0]]].forEach(function (x) { if (x[1]) ui.rivVoti.appendChild(el("span", { class: "me-vchip", text: x[0] + " × " + x[1] })); });
       if (r.bonus) ui.rivVoti.appendChild(el("span", { class: "me-vchip oro", text: "💯 Tutti 😂 +" + fmtN(r.bonus) }));
     }
-    mostraSe(ui.rivVoti, !rullo);
+    ui.rivVoti.style.visibility = rullo ? "hidden" : "";   // (il posto resta)
+    if (rullo) ui.rivVoti.appendChild(el("span", { class: "me-vchip", text: "😂 × 0" }));
     // suoni e vibrazione solo quando si vede succedere (non a chi arriva o ricarica a rivelazione fatta)
     var dalVivo = prima && prima.split("|")[1] === String(vm.giro) && prima.split("|")[0] === String(vm.partita);
     if (!dalVivo) return;
@@ -966,6 +1005,7 @@
         t.el("div", { class: "me-serata-tit" }, [t.el("b", { text: "⭐ Il meme della serata" }), t.el("span", { text: vm.serata.id === cb.myId ? "Il tuo! 🎉" : "di " + vm.serata.nome + " · " + fmtN(vm.serata.pt) + " punti" })]),
         foto ]));
       box.appendChild(P.el);
+      box.appendChild(t.el("a", { class: "me-cred", href: "https://imgflip.com", target: "_blank", rel: "noopener", text: "modello da imgflip.com" }));
       s._contenuto.appendChild(box);
       setTimeout(function () { P.metti(vm.serata.rec, vm.serata.testi, {}); }, 0);
       window.addEventListener("resize", function rs() { if (!s.isConnected) return window.removeEventListener("resize", rs); P.adatta(); });
@@ -1034,7 +1074,8 @@
       ".me-meme{position:relative;flex:1 1 0;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center}",
       ".me-quadro{position:relative;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px var(--o-filo-oro),var(--o-ombra-alta);background:#000}",
       ".me-img{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}",
-      ".me-carica{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--o-tenue);font-weight:800}",
+      ".me-carica{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--o-tenue);font-weight:800;pointer-events:none}",
+      ".me-quadro.senza{background:var(--o-carta-2)}.me-quadro.senza .me-img{visibility:hidden}",
       ".me-q{position:absolute;display:flex;box-sizing:border-box;transform-origin:50% 50%}",
       ".me-qt{display:block;white-space:pre;box-sizing:border-box;max-width:100%;max-height:100%;overflow:hidden;letter-spacing:.2px}",
       ".me-qn{display:none;position:absolute;left:3px;top:3px;min-width:18px;height:18px;border-radius:9px;background:var(--n-lampone);color:#fff;font:800 11px/18px var(--o-tit);text-align:center;padding:0 3px}",
@@ -1071,7 +1112,9 @@
       ".me-nota:empty{display:none}",
       // rivelazione
       ".me-riv{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px}",
-      ".me-rivchi{font-weight:900;font-size:1.35rem;text-align:center;min-height:1.6em}",
+      ".me-rivchi{font-weight:900;font-size:1.35rem;text-align:center;min-height:1.6em;line-height:1.6em}",
+      ".me-scena.st-rivela .me-meme{min-height:34%}",
+      ".me-scena.st-rivela .me-punti .me-pchip{font-size:.78rem;padding:4px 8px}",
       ".me-rivchi.rullo{color:var(--o-tenue);animation:meRullo .5s ease-in-out infinite alternate}@keyframes meRullo{to{transform:scale(1.04)}}",
       ".me-rivchi.su{animation:meSu .5s cubic-bezier(.2,1.5,.4,1)}@keyframes meSu{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}",
       ".me-rivchi.primo{color:var(--n-monete);font-size:1.6rem;text-shadow:0 0 18px rgba(255,194,71,.45)}",
