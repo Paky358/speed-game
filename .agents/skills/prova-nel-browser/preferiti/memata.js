@@ -9,6 +9,7 @@
 // mm4 l'host sparisce: il vice porta avanti la partita fino alla classifica (con Paky dentro).
 // mm5 in 8 dalla Sala: partita intera, «↻ Rivincita» col 3-2-1.
 // mm6 le misure a 360x640 e 412x915: scrivere (anche con la tastiera aperta), votare, rivelazione, fine: niente scorre, niente esce.
+// mm7 l'host ricarica DUE volte di fila mentre si scrive (la seconda durante il respiro): si riprende lo stesso round.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, vm = A.vm, no = A.no, T = A.T;
@@ -308,5 +309,25 @@
     await W.dorme(1500); await tutte("classifica");
     if (errori.length) no(errori.slice(0, 6).join(" · ") + (errori.length > 6 ? " · (+" + (errori.length - 6) + ")" : ""));
     return "misurate: " + fatte.join(", ") + " (360x640 e 412x915, più la tastiera aperta)";
+  } });
+  COPIONE.aggiungi("mm7", { nome: "Memata: l'host ricarica due volte di fila (la seconda nel respiro): stesso round", fai: async function () {
+    var Z = await MM.stanza(["Giulia", "Luca"]), C = Z.C;
+    if (!await W.aspetta(function () { return campo(F("Giulia")); }, 9000)) no("Giulia non scrive");
+    var imgG = F("Giulia").document.querySelector(".me-img").src;
+    await MM.scrivi(F("Giulia"), ["Giulia prima"], false);
+    await W.dorme(1200);
+    var sPrima = (W.statoStanza(C) || {})._s;
+    await W.ricarica("Paky");
+    if (!await W.aspetta(function () { var st = W.statoStanza(C) || {}; return st._s && st._s !== sPrima && vm(C).stato === "ripresa"; }, 12000)) no("la prima ripresa non parte");
+    var s2 = (W.statoStanza(C) || {})._s;
+    await W.ricarica("Paky");
+    if (!await W.aspetta(function () { var st = W.statoStanza(C) || {}; return st._s && st._s !== s2 && vm(C).stato === "ripresa"; }, 12000)) no("la seconda ripresa non parte");
+    if (!await W.aspetta(function () { return vm(C).stato !== "ripresa"; }, 30000)) no("la ripresa non finisce");
+    if (vm(C).stato !== "scrivi" || vm(C).giro !== 1) no("dopo due ricariche si è a «" + vm(C).stato + "» del round " + vm(C).giro + " invece di scrivere nel round 1");
+    if (F("Giulia").document.querySelector(".me-img").src !== imgG) no("Giulia ha un altro meme");
+    // (il campo mostra il riquadro scelto per ultimo: il testo del primo si guarda sull'anteprima)
+    function primo() { var q = F("Giulia").document.querySelector(".me-q .me-qt"); return q ? q.textContent.replace(/s+/g, " ").toLowerCase() : ""; }
+    if (!await W.aspetta(function () { return campo(F("Giulia")) && primo() === "giulia prima"; }, 5000)) no("Giulia non ritrova il testo («" + primo() + "»)");
+    return "due ricariche di fila: si continua a scrivere nel round 1, stesso meme e stesso testo";
   } });
 })();

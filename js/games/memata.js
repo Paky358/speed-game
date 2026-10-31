@@ -298,6 +298,7 @@
         p.forse = false; p.via = p.id !== IO; if (p.id === IO) p.omino = t.mioOmino(p.nome);
       });
       if (H.scadenza) H.scadenza = R.ora(H.scadenza);
+      if (H.scadenzaPrima) H.scadenzaPrima = R.ora(H.scadenzaPrima);   // (ricaricato durante il respiro di una ripresa)
       (H.usati || []).forEach(function (id) { MZ.inPartita[id] = 1; });
     }
     function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
@@ -401,8 +402,9 @@
     var nRespiri = 0;
     function riprendi() {
       if (H.fase !== "gioco") return bd();
-      var era = H.stato; H.statoPrima = era; H.stato = "ripresa"; H.rip++;
-      H.scadenzaPrima = H.scadenza; H.scadenza = Date.now() + RESPIRO * 1000;
+      // (se si ricarica di nuovo durante il respiro, la fase da riprendere resta quella di prima)
+      if (H.stato !== "ripresa") { H.statoPrima = H.stato; H.scadenzaPrima = H.scadenza; }
+      H.stato = "ripresa"; H.rip++; H.scadenza = Date.now() + RESPIRO * 1000;
       bd(); dopo(RESPIRO * 1000, dopoRespiro);
     }
     function dopoRespiro() {

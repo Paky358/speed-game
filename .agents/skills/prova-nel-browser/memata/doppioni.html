@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Memata · doppioni</title>
+<!-- 😂 I doppioni di Memata: lo stesso meme caricato più volte su Imgflip (con nomi diversi).
+     Per ogni modello si guarda la sua miniatura (i.imgflip.com/2/<id>.jpg, piccola), se ne fa un'«impronta» di 64 punti
+     (più chiaro / più scuro del vicino) e si mettono insieme quelli con le impronte quasi uguali. Il primo di ogni gruppo
+     è il più usato (si tiene), gli altri sono le copie (da mettere in togli.json, dopo averli guardati).
+     doppioni.html?soglia=6 (quanti punti diversi al massimo). Risultato anche in window.__doppioni. -->
+<style>
+  body { margin: 0; background: #0d1020; color: #fff; font: 13px system-ui, sans-serif; padding: 10px; }
+  .gr { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; padding: 8px; background: #151a2e; border-radius: 10px; flex-wrap: wrap; }
+  .gr div { width: 150px; font-size: 11px; }
+  .gr img { width: 150px; height: 120px; object-fit: contain; background: #000; display: block; }
+  .gr div:first-child img { outline: 3px solid #34d17a; }
+  .gr div:not(:first-child) img { outline: 3px solid #ff3355; }
+  b { color: #ffc247; }
+</style>
+</head>
+<body>
+<div id="stato">Calcolo le impronte…</div>
+<div id="g"></div>
+<script src="../../../../data/memata.js"></script>
+<script>
+(function () {
+  var L = window.SG_MEMATA || [], soglia = +new URLSearchParams(location.search).get("soglia") || 6;
+  var imp = new Array(L.length), fatti = 0, idx = 0, cv = document.createElement("canvas"); cv.width = 9; cv.height = 8;
+  var x = cv.getContext("2d", { willReadFrequently: true });
+  function impronta(img) {
+    x.drawImage(img, 0, 0, 9, 8);
+    var d = x.getImageData(0, 0, 9, 8).data, bit = [];
+    for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
+      var a = (r * 9 + c) * 4, b = (r * 9 + c + 1) * 4;
+      bit.push(d[a] + d[a + 1] + d[a + 2] > d[b] + d[b + 1] + d[b + 2] ? 1 : 0);
+    }
+    return bit;
+  }
+  function uno() {
+    if (idx >= L.length) return;
+    var i = idx++, m = L[i], img = new Image(); img.crossOrigin = "anonymous";
+    img.onload = function () { try { imp[i] = impronta(img); } catch (e) {} fine(); };
+    img.onerror = function () { var img2 = new Image(); img2.crossOrigin = "anonymous"; img2.onload = function () { try { imp[i] = impronta(img2); } catch (e) {} fine(); }; img2.onerror = fine; img2.src = "https://i.imgflip.com/" + m[0] + "." + m[1]; };
+    img.src = "https://i.imgflip.com/2/" + m[0] + ".jpg";
+    function fine() { fatti++; document.getElementById("stato").textContent = "Impronte: " + fatti + " di " + L.length; if (fatti === L.length) gruppi(); else uno(); }
+  }
+  // ?gruppi=<indirizzo di un JSON [["n:id", …], …]>&da=0&n=40: mostra soltanto dei gruppi già trovati (per le foto di controllo)
+  var qg = new URLSearchParams(location.search);
+  if (qg.get("gruppi")) {
+    var x0 = new XMLHttpRequest(); x0.open("GET", qg.get("gruppi"), false); x0.send();
+    var G = JSON.parse(x0.responseText).slice(+qg.get("da") || 0, (+qg.get("da") || 0) + (+qg.get("n") || 40)), box0 = document.getElementById("g"), quanti = 0, arrivate = 0;
+    document.getElementById("stato").textContent = "Gruppi " + ((+qg.get("da") || 0) + 1) + "-" + ((+qg.get("da") || 0) + G.length);
+    G.forEach(function (g, gi) {
+      var d = document.createElement("div"); d.className = "gr";
+      g.forEach(function (v) {
+        var n = +v.split(":")[0], id = v.split(":")[1], m = L[n - 1] || [id, "", 0, 0, 0, "?"], c = document.createElement("div"), im = new Image();
+        quanti++; im.onload = im.onerror = function () { arrivate++; if (arrivate >= quanti) setTimeout(function () { window.__pronti = true; }, 800); };
+        im.src = "https://i.imgflip.com/2/" + id + ".jpg"; c.appendChild(im);
+        var t = document.createElement("span"); t.innerHTML = "<b>G" + ((+qg.get("da") || 0) + gi + 1) + " #" + n + "</b> " + String(m[5]).replace(/</g, "&lt;"); c.appendChild(t); d.appendChild(c);
+      });
+      box0.appendChild(d);
+    });
+    return;
+  }
+  for (var k = 0; k < 6; k++) uno();
+  function dist(a, b) { var n = 0; for (var i = 0; i < 64; i++) if (a[i] !== b[i]) n++; return n; }
+  function gruppi() {
+    var preso = {}, out = [];
+    for (var i = 0; i < L.length; i++) {
+      if (!imp[i] || preso[i]) continue;
+      var g = [i];
+      // stessa impronta e stessa forma (larghezza/altezza simile): è lo stesso meme
+      for (var j = i + 1; j < L.length; j++) {
+        if (!imp[j] || preso[j]) continue;
+        var ri = L[i][2] / L[i][3], rj = L[j][2] / L[j][3];
+        if (Math.abs(ri - rj) / ri > 0.12) continue;
+        if (dist(imp[i], imp[j]) <= soglia) { g.push(j); preso[j] = 1; }
+      }
+      if (g.length > 1) out.push(g);
+    }
+    window.__doppioni = out.map(function (g) { return g.map(function (i) { return { n: i + 1, id: L[i][0], nome: L[i][5] }; }); });
+    window.__impronteMancanti = L.filter(function (m, i) { return !imp[i]; }).map(function (m) { return m[0]; });
+    document.getElementById("stato").textContent = out.length + " gruppi di doppioni (soglia " + soglia + "), impronte mancanti " + window.__impronteMancanti.length;
+    var box = document.getElementById("g");
+    out.forEach(function (g) {
+      var d = document.createElement("div"); d.className = "gr";
+      g.forEach(function (i) { var c = document.createElement("div"); c.innerHTML = '<img src="https://i.imgflip.com/2/' + L[i][0] + '.jpg"><b>#' + (i + 1) + " " + L[i][0] + "</b> " + L[i][5].replace(/</g, "&lt;"); d.appendChild(c); });
+      box.appendChild(d);
+    });
+    window.__fineDoppioni = true;
+  }
+})();
+</script>
+</body>
+</html>

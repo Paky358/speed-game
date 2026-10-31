@@ -10,7 +10,7 @@ const [, , PORTA, OUT, DA, A] = process.argv;
   const tot = await (async () => { await p.goto(`http://localhost:${PORTA}/.agents/skills/prova-nel-browser/memata/fogli.html?da=0&n=1`); return p.evaluate(() => (window.SG_MEMATA || []).length); })();
   const da = +DA || 0, a = Math.min(tot, +A || tot);
   for (let i = da; i < a; i += 24) {
-    const f = path.join(OUT, "foglio-" + String(i / 24 + 1).padStart(3, "0") + ".png");
+    const f = path.join(OUT, "foglio-" + String(i + 1).padStart(4, "0") + ".png");
     if (fs.existsSync(f)) continue;
     await p.goto(`http://localhost:${PORTA}/.agents/skills/prova-nel-browser/memata/fogli.html?da=${i}&n=24`);
     await p.waitForFunction(() => window.__pronti, null, { timeout: 30000 }).catch(() => {});

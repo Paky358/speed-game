@@ -40,11 +40,13 @@
     g.appendChild(el("div", { class: "c" }, [s, el("div", { class: "l" }, [el("b", { text: "#" + (L.indexOf(m0) + 1) + " " + m[0] }), document.createTextNode(" " + m[5])])]));
     var b = m[4] && m[4].length ? m[4] : M.CLASSICO, t = b.map(function (_, k) { return "TESTO " + (k + 1); });
     quanti++;
-    P.img.addEventListener("load", function () { fatti++; }); P.img.addEventListener("error", function () { fatti++; });
+    // (contata solo quando il browser l'ha davvero decodificata: prima la foto del foglio la mostrava nera)
+    P.img.addEventListener("load", function () { var im = P.img; (im.decode ? im.decode() : Promise.resolve()).then(function () { fatti++; }, function () { fatti++; }); });
+    P.img.addEventListener("error", function () { fatti++; });
     P.metti([m[0], m[1], m[2], m[3], m[4] || 0], t, {});
   });
   var t0 = Date.now();
-  (function guarda() { if (fatti >= quanti || Date.now() - t0 > 20000) { setTimeout(function () { window.__pronti = true; }, 600); return; } setTimeout(guarda, 200); })();
+  (function guarda() { if (fatti >= quanti || Date.now() - t0 > 20000) { requestAnimationFrame(function () { requestAnimationFrame(function () { setTimeout(function () { window.__pronti = true; }, 1200); }); }); return; } setTimeout(guarda, 200); })();
 })();
 </script>
 </body>
