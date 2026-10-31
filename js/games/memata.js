@@ -16,7 +16,7 @@
   "use strict";
 
   var ID = "memata";
-  var MIN = 3, MAX = 10;
+  var MIN = 2, MAX = 10;   // (in 2 si vota il meme dell'altro: niente anonimato e niente «💯 tutti 😂», ma si gioca; deciso dal proprietario il 31 ott)
   var RESPIRO = 5;            // i secondi di respiro quando la partita riprende
   var RITARDATARI = "turno";  // chi arriva a partita cominciata entra dal round dopo, con 0 punti
   var VOTO_S = 12;            // i secondi per votare un meme (si va avanti prima se hanno votato tutti)
@@ -663,7 +663,7 @@
     var guardano = vm.guarda || [], guardo = guardano.some(function (p) { return p.id === cb.myId; });
     var extra = [];
     if (guardano.length) extra.push(t.el("p", { class: "modulo-nota", text: "👀 Guardano: " + guardano.map(function (p) { return p.id === cb.myId ? "tu" : p.nome; }).join(", ") }));
-    extra.push(t.el("p", { class: "modulo-nota", text: "😂 Più siete, più si ride: da 3 a 10 amici." }));
+    extra.push(t.el("p", { class: "modulo-nota", text: "😂 Si gioca da 2 a 10: più siete, più si ride." }));
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
       vuoti: Math.max(0, MIN - vm.players.length),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),

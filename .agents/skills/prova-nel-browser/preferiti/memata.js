@@ -9,6 +9,7 @@
 // mm4 l'host sparisce: il vice porta avanti la partita fino alla classifica (con Paky dentro).
 // mm5 in 8 dalla Sala: partita intera, «↻ Rivincita» col 3-2-1.
 // mm6 le misure a 360x640 e 412x915: scrivere (anche con la tastiera aperta), votare, rivelazione, fine: niente scorre, niente esce.
+// mm9 in due: partita intera (ognuno vota il meme dell'altro), classifica e meme della serata.
 // mm8 l'host ricarica mentre si vota: il voto già dato da Giulia resta (non deve rivotare) e conta alla rivelazione.
 // mm7 l'host ricarica DUE volte di fila mentre si scrive (la seconda durante il respiro): si riprende lo stesso round.
 (function () {
@@ -346,5 +347,13 @@
     if (vm(C).voto.k !== 0) no("dopo la ripresa si vota il meme " + vm(C).voto.k + " invece del primo");
     if (vm(C).voto.hanno !== 1) no("dopo la ripresa i voti arrivati sono " + vm(C).voto.hanno + " invece di 1 (il voto di " + chi + " è sparito)");
     return "ripresa durante il voto: il voto di " + chi + " è rimasto (" + vm(C).voto.hanno + " arrivato)";
+  } });
+  COPIONE.aggiungi("mm9", { nome: "Memata in due: partita intera", fai: async function () {
+    var Z = await MM.stanza(["Giulia"], { imp: { tempo: 25, giri: 2 } }), C = Z.C;
+    if (!await MM.finoAllaFine(C, ["Paky", "Giulia"], { voto: function (n) { return n === "Paky" ? 2 : 1; } })) no("la partita in due non finisce (" + vm(C).stato + ")");
+    var cl = vm(C).classifica || [];
+    if (cl.length !== 2) no("in classifica ci sono " + cl.length + " giocatori");
+    if (!await W.aspetta(function () { return A.tastiFineDi(F("Paky")) && A.tastiFineDi(F("Giulia")); }, 5000)) no("mancano i tasti di fine");
+    return "in due: " + cl.map(function (r) { return r.nome + " " + r.punti; }).join(", ") + "; meme della serata di " + ((vm(C).serata || {}).nome || "nessuno");
   } });
 })();
