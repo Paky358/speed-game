@@ -825,7 +825,10 @@
     var testaCorta = null;
     if (HOME_MENU_SOTTO) {
       s.classList.add("home-menu-sotto");
-      testaCorta = prog ? el("button", { class: "ms-monete", "aria-label": "Il tuo profilo e le Speed Coins", onclick: function () { schermataAccesso(schermataHome); } }, [ el("span", { text: "🪙 " + cifre(prog.coins) }) ]) : null;
+      // 📲 chi non ha installato l'app vede in alto a destra «Installa l'app» al posto delle monete (31 ott 2026: in fondo alla pagina
+      //  nessuno lo trovava; le monete restano nel Profilo); chi l'ha installata vede le monete
+      if (!giaApp) testaCorta = el("button", { class: "ms-installa", onclick: installa }, [ el("span", { text: "📲 Installa l'app" }) ]);
+      else testaCorta = prog ? el("button", { class: "ms-monete", "aria-label": "Il tuo profilo e le Speed Coins", onclick: function () { schermataAccesso(schermataHome); } }, [ el("span", { text: "🪙 " + cifre(prog.coins) }) ]) : null;
       s._menu = "giochi";
     }
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
@@ -860,11 +863,13 @@
     var hao = conSala ? rigaAmiciOn() : null;
     if (hao) s._contenuto.appendChild(hao);
     // "🔁 Riapri la Sala di ieri sera (Giulia, Luca)": stesso codice, gli amici col link vecchio entrano da soli
-    var ieri = conSala && !sala && !salaG ? salaDiIeri() : null;
+    // (31 ott 2026, il proprietario: in home «Riapri la Sala» e «Giocato di recente» occupano solo spazio: tolti col menu sotto;
+    //  il gruppo fisso c'è già, sono le tessere delle Compagnie qui sopra)
+    var ieri = conSala && !sala && !salaG && !HOME_MENU_SOTTO ? salaDiIeri() : null;
     if (ieri) s._contenuto.appendChild(rigaIeri(ieri));
     // "👥 Giocato di recente": con chi ho giocato online ("Luca · 🎲 Tris", ➕ per chiedere l'amicizia col profilo online)
     var rec = null;
-    if (conSala && window.SGCompagnia && SGCompagnia.rigaRecenti) try {
+    if (conSala && !HOME_MENU_SOTTO && window.SGCompagnia && SGCompagnia.rigaRecenti) try {
       rec = el("div", { class: "home-rec" });
       if (SGCompagnia.rigaRecenti(rec, { conPiu: !!mioUidOnline() })) s._contenuto.appendChild(rec); else rec = null;
     } catch (e) { rec = null; setTimeout(function () { throw e; }, 0); }
@@ -917,7 +922,7 @@
     azioni.appendChild(el("button", { class: "azione", text: "🐞 Bug", onclick: schermataBug }));
     // con la Sala in alto: il torneo è un tasto piccolo qui (Sala e codice stanno nella riga online)
     if (conSala) azioni.appendChild(el("button", { class: "azione", text: (torneo || (sala && sala.torneo)) ? "🏆 Riprendi la serata a punti" : "🏆 Serata a punti", onclick: apriTorneo }));
-    if (!giaApp && !tInstalla) azioni.appendChild(el("button", { class: "azione", text: "📲 Installa l'app", onclick: installa }));
+    if (!giaApp && !tInstalla && !HOME_MENU_SOTTO) azioni.appendChild(el("button", { class: "azione", text: "📲 Installa l'app", onclick: installa }));
     s._piede.appendChild(azioni);
     if (rec) recInHome(rec, barra);
     if (conSala) return mostra(s);

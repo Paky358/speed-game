@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 288,
+    data: "31 ottobre 2026",
+    titolo: "📲 La prima schermata ancora più pulita",
+    descrizione: [
+      "Se usi SPeeD GAME dal browser, in alto a destra c'è «📲 Installa l'app»: tienila sul telefono e si apre con un tocco, come le altre app. Chi l'ha già installata vede le sue monete.",
+      "Tolte dalla prima schermata le righe «Riapri la Sala di ieri» e «Giocato di recente»: il gruppo fisso c'è già, è la vostra Compagnia. Così i giochi arrivano subito.",
+      "Nella Sala e nella Serata a punti i giochi si scelgono con le stesse tessere della prima schermata, due per riga."
+    ]
+  },
+  {
     v: 287,
     data: "30 ottobre 2026",
     titolo: "🏆 3 giornate, 🦉 il gufo e lo stadio che trema",

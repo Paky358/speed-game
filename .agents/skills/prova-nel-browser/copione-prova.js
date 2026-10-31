@@ -5651,7 +5651,7 @@
     var G = await W.apriTel("Giulia", { x: 185, salaSempre: true, prima: pr });
     var L = await W.apriTel("Luca", { x: 370, salaSempre: true, prima: pr });
     if (!await W.aspetta(function () { var r = rigaAmiciHome(P); return r && /Giulia e Luca sono nell'app/.test(r.textContent); }, 8000)) no("in home Paky non vede «Giulia e Luca sono nell'app» («" + (rigaAmiciHome(P) || {}).textContent + "»)");
-    if (!P.document.querySelector(".cmp-tessera") || !P.document.querySelector(".home-ieri")) no("in home mancano le compagnie o «Riapri»");
+    if (!P.document.querySelector(".cmp-tessera") || (!P.document.querySelector(".home-ieri") && !P.document.querySelector(".menu-sotto"))) no("in home mancano le compagnie o «Riapri»");
     var M = [[360, 640], [412, 915]], cat = [];
     for (var i = 0; i < M.length; i++) {
       var e0 = await misuraHome(P, "Paky", M[i][0], M[i][1]); if (e0) fuori.push("home a " + M[i].join("x") + ": " + e0);
