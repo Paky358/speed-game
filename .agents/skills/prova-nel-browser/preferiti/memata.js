@@ -9,6 +9,8 @@
 // mm4 l'host sparisce: il vice porta avanti la partita fino alla classifica (con Paky dentro).
 // mm5 in 8 dalla Sala: partita intera, «↻ Rivincita» col 3-2-1.
 // mm6 le misure a 360x640 e 412x915: scrivere (anche con la tastiera aperta), votare, rivelazione, fine: niente scorre, niente esce.
+// mm10 i cambi di meme scelti nelle impostazioni (3 in tutta la partita: il numero scende, poi il tasto sparisce; nell'ultimo
+//      round niente cambio) e i tasti per scrivere: «Avanti ▶» passa al riquadro dopo, «📤 Invia meme» manda anche a metà.
 // mm9 in due: partita intera (ognuno vota il meme dell'altro), classifica e meme della serata.
 // mm8 l'host ricarica mentre si vota: il voto già dato da Giulia resta (non deve rivotare) e conta alla rivelazione.
 // mm7 l'host ricarica DUE volte di fila mentre si scrive (la seconda durante il respiro): si riprende lo stesso round.
@@ -16,7 +18,7 @@
   "use strict";
   var W = window, A = COPIONE.aiuti, vm = A.vm, no = A.no, T = A.T;
   var MM = W.MM = {};
-  var IMP = { tempo: 25, giri: 3 };   // tempi corti per le prove
+  var IMP = { tempo: 25, giri: 3, cambi: 1 };   // tempi corti per le prove (e un cambio di meme solo, come all'inizio)
   function tocca(w, b) {
     var Ev = w.PointerEvent || w.MouseEvent;
     ["pointerdown", "pointerup"].forEach(function (tipo) { b.dispatchEvent(new Ev(tipo, { bubbles: true, cancelable: true, pointerId: 5, pointerType: "touch", isPrimary: true })); });
@@ -355,5 +357,48 @@
     if (cl.length !== 2) no("in classifica ci sono " + cl.length + " giocatori");
     if (!await W.aspetta(function () { return A.tastiFineDi(F("Paky")) && A.tastiFineDi(F("Giulia")); }, 5000)) no("mancano i tasti di fine");
     return "in due: " + cl.map(function (r) { return r.nome + " " + r.punti; }).join(", ") + "; meme della serata di " + ((vm(C).serata || {}).nome || "nessuno");
+  } });
+  COPIONE.aggiungi("mm10", { nome: "Memata: 3 cambi di meme per partita, «Avanti ▶» e «📤 Invia meme»", fai: async function () {
+    var Z = await MM.stanza(["Giulia", "Luca"], { imp: { tempo: 60, giri: 3, cambi: 3 } }), C = Z.C;
+    if (!await W.aspetta(function () { return campo(F("Luca")) && F("Luca").document.querySelector(".me-img").src; }, 9000)) no("Luca non scrive");
+    function tasto(w) { var b = w.document.querySelector(".me-cambia"); return b && b.offsetParent ? b : null; }
+    async function cambia(w, attesa) {
+      var b = await W.aspetta(function () { var x = tasto(w); return x && !x.disabled ? x : null; }, 5000); if (!b) return false;
+      var prima = w.document.querySelector(".me-img").src; tocca(w, b);
+      return !!await W.aspetta(function () { var i = w.document.querySelector(".me-img"); return i && i.src !== prima; }, attesa || 6000);
+    }
+    var L = F("Luca");
+    if (!/· 3/.test((tasto(L) || {}).textContent || "")) no("il tasto non dice che restano 3 cambi («" + ((tasto(L) || {}).textContent || "") + "»)");
+    if (!await cambia(L)) no("il primo cambio non arriva");
+    if (!await cambia(L)) no("il secondo cambio (stesso round) non arriva");
+    if (!/· 1/.test((tasto(L) || {}).textContent || "")) no("dopo due cambi il tasto dice «" + ((tasto(L) || {}).textContent || "") + "»");
+    // «Avanti ▶» e «📤 Invia meme» su un meme a più riquadri (Giulia cambia finché ne trova uno, al massimo 3 volte)
+    var G = F("Giulia");
+    for (var i = 0; i < 3 && G.document.querySelectorAll(".me-chip").length < 2; i++) await cambia(G);
+    var n = G.document.querySelectorAll(".me-chip").length, esitoTasti = "meme a un riquadro (tasti non provati)";
+    if (n >= 2) {
+      var pr = G.document.querySelector(".me-primario"), inv = G.document.querySelector(".me-invia");
+      if (!/Avanti/.test(pr.textContent)) no("sul primo riquadro il tasto accanto al campo è «" + pr.textContent + "»");
+      if (!inv || !inv.offsetParent) no("manca il tasto a parte «📤 Invia meme»");
+      var c = campo(G); c.value = "solo il primo"; c.dispatchEvent(new G.Event("input", { bubbles: true }));
+      tocca(G, pr);
+      if (!G.document.querySelectorAll(".me-chip")[1].classList.contains("on")) no("«Avanti ▶» non passa al secondo riquadro");
+      tocca(G, G.document.querySelector(".me-invia"));
+      if (!await W.aspetta(function () { return (vm(C).players || []).some(function (p) { return p.nome === "Giulia" && p.fatto; }); }, 5000)) no("«📤 Invia meme» non manda il meme");
+      esitoTasti = "«Avanti ▶» passa al riquadro 2, «📤 Invia meme» manda col solo primo riquadro scritto";
+    }
+    // round 2: a Luca resta 1 cambio; usato quello il tasto sparisce
+    await MM.finoAllaFine(C, ["Paky", "Giulia", "Luca"], { ferma: function (v) { return v.giro === 2 && v.stato === "scrivi" && campo(F("Luca")); } });
+    L = F("Luca");
+    if (!/· 1/.test((tasto(L) || {}).textContent || "")) no("al round 2 il tasto di Luca dice «" + ((tasto(L) || {}).textContent || "nessun tasto") + "»");
+    if (!await cambia(L)) no("il terzo cambio non arriva");
+    await W.dorme(600);
+    if (tasto(L)) no("finiti i cambi il tasto c'è ancora");
+    // ultimo round: niente cambio per nessuno
+    await MM.finoAllaFine(C, ["Paky", "Giulia", "Luca"], { ferma: function (v) { return v.giro === 3 && v.stato === "scrivi" && campo(F("Paky")); } });
+    await W.dorme(500);
+    if (tasto(F("Paky"))) no("nell'ultimo round (stesso meme per tutti) c'è il tasto per cambiare");
+    if (!await MM.finoAllaFine(C, ["Paky", "Giulia", "Luca"])) no("la partita non finisce");
+    return "3 cambi: · 3 → · 1 → finiti al round 2, niente cambio nell'ultimo round; " + esitoTasti;
   } });
 })();

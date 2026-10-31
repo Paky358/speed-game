@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 290,
+    data: "31 ottobre 2026",
+    titolo: "😂 Memata: più meme da cambiare",
+    descrizione: [
+      "Nelle regole si sceglie quanti meme può cambiare ognuno in tutta la partita: 1, 3, 5, 10, 50 o senza limite. Sul tasto «🔄 Cambia» c'è il numero che resta.",
+      "Per scrivere: «Avanti ▶» passa al riquadro dopo, «📤 Invia meme» manda il meme quando hai finito.",
+      "La rivelazione è più svelta: il rullo di tamburi dura meno."
+    ]
+  },
+  {
     v: 289,
     data: "31 ottobre 2026",
     titolo: "😂 Memata: il gioco dei meme",

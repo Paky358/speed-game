@@ -21,7 +21,7 @@
   var RITARDATARI = "turno";  // chi arriva a partita cominciata entra dal round dopo, con 0 punti
   var VOTO_S = 12;            // i secondi per votare un meme (si va avanti prima se hanno votato tutti)
   var ANTICIPO = 2000;        // l'host chiude scrittura e voto 2 s dopo lo zero (l'ultimo testo o voto deve arrivare)
-  var PASSO_RIV = 2600;       // la rivelazione: un posto ogni 2,6 s (il primo con il rullo, più lungo)
+  var PASSO_RIV = 2200;       // la rivelazione: ogni meme svelato resta 2,2 s; il rullo prima dura 1,2 s (il primo posto 2 s)
   var AVANTI_S = 12;          // dopo la rivelazione: si va avanti da soli
   var PUNTI = [0, 100, 200];  // 😐 meh, 🙂 carino, 😂 fortissimo
   var BONUS = 200;            // 💯 tutti 😂
@@ -284,7 +284,7 @@
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
     var IO = t.mioId || "host";   // io che tengo la partita (dopo un subentro l'id da amico del vice): MAI "host" fisso
     var MZ = Mazzo();
-    var H = { fase: "lobby", codice: "…", pronta: false, giri: imp.giri || 3, tempo: imp.tempo || 75, giro: 0, partita: 0, stato: "attesa",
+    var H = { fase: "lobby", codice: "…", pronta: false, giri: imp.giri || 3, tempo: imp.tempo || 75, cambi: imp.cambi != null ? imp.cambi : 3, giro: 0, partita: 0, stato: "attesa",
       scadenza: 0, to: null, rip: 0,
       fin: false,        // l'ultimo round: stesso meme per tutti, punti doppi
       mem: {},           // per giocatore: { r: rec, c: cambi usati, x: testi, f: consegnato }
@@ -326,7 +326,9 @@
     }
     function dopo(ms, fn) { ferma(); H.to = setTimeout(function () { H.to = null; if (vivo()) fn(); }, Math.max(0, ms)); }
 
-    t.onRegole = function (im) { if (H.fase !== "lobby") return; H.giri = im.giri || 3; H.tempo = im.tempo || 75; bd(); };
+    t.onRegole = function (im) { if (H.fase !== "lobby") return; H.giri = im.giri || 3; H.tempo = im.tempo || 75; H.cambi = im.cambi != null ? im.cambi : 3; bd(); };
+    // i «🔄 Cambia meme» che restano a un giocatore in questa partita (-1 = senza limite)
+    function restano(p) { return !H.cambi ? -1 : Math.max(0, H.cambi - ((p && p.cu) || 0)); }
 
     var rete = SGNet.ospita(ID, {
       onCodice: function (c) { H.codice = c; bd(); },
@@ -406,14 +408,14 @@
     function segreti(id) {
       if (H.fase !== "gioco") return;
       var x = H.mem[id];
-      if (H.stato === "scrivi" && x) privato(id, { t: "tuo", g: H.giro, p: H.partita, rec: x.r, cambi: x.c, testi: x.x || [], fatto: !!x.f, fin: H.fin });
+      if (H.stato === "scrivi" && x) privato(id, { t: "tuo", g: H.giro, p: H.partita, rec: x.r, cambi: restano(pById(id)), nc: x.c, testi: x.x || [], fatto: !!x.f, fin: H.fin });
       if (H.stato === "vota" && H.vot && H.vot.ord[H.vot.k] === id) privato(id, { t: "mio", g: H.giro, p: H.partita, k: H.vot.k });
     }
     function ricorda() {
       if (H.fase === "lobby") return t.ricorda(null);
       var s = {};
       Object.keys(H).forEach(function (k) { if (k !== "to" && k !== "prossimi") s[k] = H[k]; });
-      s.players = H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via }; });
+      s.players = H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, cu: p.cu || 0 }; });
       t.ricorda(s);
     }
     function bd() { if (morto) return; var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegna(t, v, CB); }
@@ -446,7 +448,7 @@
     function comincia() {
       if (H.fase !== "lobby" || presenti().length < MIN) return;
       H.fase = "gioco"; H.giro = 0; H.partita++; H.classifica = null; H.serata = null; H.migliori = []; H.usati = [];
-      H.players.forEach(function (p) { p.punti = 0; });
+      H.players.forEach(function (p) { p.punti = 0; p.cu = 0; });
       prossimoGiro();
     }
     function nuovoMeme(cond) {
@@ -480,9 +482,11 @@
         if (era !== x.f) bd(); else ricorda();
         controlla(); return;
       }
-      if (m.t === "cambia" && H.stato === "scrivi" && x && m.g === H.giro && !H.fin && x.c < 1) {
-        x.c++; x.r = nuovoMeme(null); x.x = []; x.f = false; bd(); segreti(id); return;
+      if (m.t === "cambia" && H.stato === "scrivi" && x && m.g === H.giro && !H.fin && restano(pById(id)) !== 0 && (m.nc == null || m.nc === x.c)) {
+        // (nc: il cambio di quel meme, così un doppio tocco non ne brucia due)
+        x.c++; var pc = pById(id); pc.cu = (pc.cu || 0) + 1; x.r = nuovoMeme(null); x.x = []; x.f = false; bd(); segreti(id); return;
       }
+      if (m.t === "cambia") { segreti(id); return; }   // (cambio non valido: si rimanda il meme di adesso, così il tasto torna com era)
       if (m.t === "rotta" && H.stato === "scrivi" && x && m.g === H.giro && x.r && x.r[0] === m.id) {   // l'immagine non arriva a quel telefono: un altro meme, in silenzio
         x.rotte = (x.rotte || 0) + 1;
         if (x.rotte > 2) return;   // (quel telefono non riceve le immagini: scrive coi riquadri senza la foto)
@@ -560,7 +564,7 @@
       var p = H.riv.passo;
       if (p >= H.riv.tot - 1) return fineRivela();   // l'ultimo (il primo posto) è svelato
       var primo = H.riv.podio + Math.floor(p / 2) === H.riv.lista.length - 1;
-      var ms = p % 2 === 0 ? (primo ? PASSO_RIV + 800 : 1700) : PASSO_RIV;   // (il rullo del primo posto è più lungo)
+      var ms = p % 2 === 0 ? (primo ? 2000 : 1200) : PASSO_RIV;   // (il rullo del primo posto è un po' più lungo; il proprietario, 31 ott: «ci mette troppo»)
       dopo(ms, function () { H.riv.passo++; bd(); passoRivela(); });
     }
     function fineRivela() {
@@ -707,13 +711,24 @@
     // --- scrivere ---
     ui.scrivi = el("div", { class: "me-scrivi" });
     ui.chips = el("div", { class: "me-chips" });
-    ui.cambia = bottone(t, "me-cambia", "🔄 Cambia meme", function () { if (ui.mio && !ui.mio.cambi && !ui.mio.fin) { ui.mio.cambi = 1; cb.manda({ t: "cambia", g: ui.mio.g }); } });
+    ui.cambia = bottone(t, "me-cambia", "🔄 Cambia", function () {
+      if (!ui.mio || ui.mio.fin || ui.mio.cambi === 0 || ui.mio.chiesto) return;
+      ui.mio.chiesto = 1; ui.cambia.disabled = true;   // (fino al meme nuovo: un doppio tocco non salta due meme)
+      cb.manda({ t: "cambia", g: ui.mio.g, nc: ui.mio.nc });
+    });
     ui.campo = el("textarea", { class: "me-campo", rows: "2", maxlength: String(MAX_TESTO), placeholder: "Scrivi qui…", enterkeyhint: "next", autocomplete: "off", autocapitalize: "sentences", spellcheck: "false" });
-    ui.fatto = bottone(t, "me-primario", "Fatto ✓", function () { consegna(ui, true); });
+    // accanto al campo: «Avanti ▶» passa al riquadro dopo; sull'ultimo (o col meme a un riquadro) diventa «📤 Invia»
+    ui.fatto = bottone(t, "me-primario", "📤 Invia", function () {
+      var n = riquadri(ui.mio && ui.mio.rec).length;
+      if (ui.sel < n - 1) { ui.sel++; scegliRiquadro(ui); } else consegna(ui, true);
+    });
+    // il tasto a parte per mandare il meme quando si vuole (anche con dei riquadri vuoti)
+    ui.invia = bottone(t, "me-invia", "📤 Invia meme", function () { consegna(ui, true); });
     ui.modifica = bottone(t, "me-vetro", "✏️ Modifica", function () { consegna(ui, false); });
     ui.aspetta = el("div", { class: "me-aspetta" });
     ui.scrivi.appendChild(el("div", { class: "me-riga" }, [ui.chips, ui.cambia]));
     ui.scrivi.appendChild(el("div", { class: "me-riga me-riga-campo" }, [ui.campo, ui.fatto]));
+    ui.scrivi.appendChild(el("div", { class: "me-riga me-riga-invia" }, [ui.invia]));
     ui.scrivi.appendChild(el("div", { class: "me-riga me-riga-fatto" }, [ui.aspetta, ui.modifica]));
     ui.root.appendChild(ui.scrivi);
     ui.campo.addEventListener("input", function () {
@@ -786,7 +801,7 @@
     var era = ui.mio, stesso = era && era.g === m.g && era.p === m.p && era.rec && m.rec && era.rec[0] === m.rec[0];
     var b = leggi(MEM_BOZZA, null), chiave = (ui.vm && ui.vm.codice) + "|" + m.p + "|" + m.g + "|" + (m.rec && m.rec[0]);
     var testi = stesso ? era.testi : (b && b.k === chiave ? b.testi : (m.testi || []).slice());
-    ui.mio = { g: m.g, p: m.p, rec: m.rec, cambi: m.cambi, fin: m.fin, testi: testi || [], fatto: stesso ? era.fatto && m.fatto : !!m.fatto, k: chiave };
+    ui.mio = { g: m.g, p: m.p, rec: m.rec, cambi: m.cambi, nc: m.nc, fin: m.fin, testi: testi || [], fatto: stesso ? era.fatto && m.fatto : !!m.fatto, k: chiave };
     if (!stesso) { ui.sel = 0; ui.campo.readOnly = false; ui.campo.value = ui.mio.testi[0] || ""; if (!vuoti(ui.mio.testi) && !m.testi.length) mandaBozza(ui); }
     if (ui.vm) aggiorna(ui, ui.vm, ui.cb);
   }
@@ -819,6 +834,10 @@
       c.classList.toggle("on", i === ui.sel); c.classList.toggle("pieno", !!String(ui.mio.testi[i] || "").trim());
     }
     mostraSe(ui.chips, n > 1);
+    var ultimo = ui.sel >= n - 1;
+    tx(ui.fatto, ultimo ? "📤 Invia" : "Avanti ▶");
+    ui.fatto.classList.toggle("avanti", !ultimo);
+    mostraSe(ui.invia.parentNode, !ultimo && !ui.mio.fatto);
     ui.campo.placeholder = n > 1 ? "Riquadro " + (ui.sel + 1) + " di " + n + "…" : "Scrivi qui…";
   }
   function chiaveVoto(vm) { return vm.partita + "|" + vm.giro + "|" + vm.voto.k + "|" + (vm.rip || 0); }
@@ -866,9 +885,12 @@
         var fatto = !!ui.mio.fatto;
         titolo = vm.fin ? "🔥 Stesso meme per tutti · punti doppi!" : fatto ? "✅ Consegnato!" : "✍️ Scrivi il tuo meme";
         anteprima(ui);
-        mostraSe(ui.cambia, !vm.fin && !ui.mio.cambi && !fatto);
+        mostraSe(ui.cambia, !vm.fin && ui.mio.cambi !== 0 && !fatto);
+        ui.cambia.disabled = !!ui.mio.chiesto;
+        tx(ui.cambia, "🔄 Cambia" + (ui.mio.cambi > 0 ? " · " + ui.mio.cambi : ""));
         mostraSe(ui.chips.parentNode, !fatto);
         mostraSe(ui.campo.parentNode, !fatto);
+        if (fatto) mostraSe(ui.invia.parentNode, false);
         mostraSe(ui.modifica.parentNode, fatto);
         var manca = vm.players.filter(function (p) { return !p.via && !p.fatto && p.id !== cb.myId; }).map(function (p) { return p.nome; });
         tx(ui.aspetta, manca.length ? "⏳ Scrivono: " + manca.join(", ") : "🎉 Tutti pronti!");
@@ -1097,6 +1119,10 @@
       ".me-campo:focus{outline:none;box-shadow:inset 0 0 0 2px var(--o-oro)}",
       ".me-campo.scuoti{animation:meScuoti .35s}@keyframes meScuoti{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}",
       ".me-primario{flex:none;height:56px;padding:0 16px;border-radius:14px;background:var(--o-tasto);color:#fff;font-size:1rem}",
+      ".me-primario.avanti{background:var(--o-carta-2);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
+      ".me-invia{flex:1;height:44px;border-radius:14px;background:var(--o-tasto);color:#fff;font-size:1rem}",
+      ".me-scena.scrive .me-invia{height:38px}",
+      ".me-cambia:disabled{opacity:.5}",
       ".me-vetro{flex:none;padding:10px 14px;border-radius:14px;background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
       ".me-aspetta{flex:1;min-width:0;font-size:.88rem;color:var(--o-tenue);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       // con la tastiera aperta: via il titolo e la riga dei crediti, il meme si stringe
@@ -1155,7 +1181,7 @@
     ritardatari: RITARDATARI,
     riprende: true,
     riserva: true,
-    riassunto: function (imp) { return (imp.giri || 3) + " round · " + (imp.tempo || 75) + " secondi per scrivere"; },
+    riassunto: function (imp) { var c = imp.cambi != null ? imp.cambi : 3; return (imp.giri || 3) + " round · " + (imp.tempo || 75) + " secondi per scrivere · " + (c ? c + (c === 1 ? " cambio" : " cambi") + " di meme" : "cambi di meme senza limite"); },
     regole: [
       "A ogni round ognuno riceve un <b>meme famoso coi riquadri vuoti</b>: tocca un riquadro, scrivi il tuo testo e guarda subito come viene. Se non ti ispira, una volta per round puoi toccare <b>🔄 Cambia meme</b>.",
       "Poi i meme passano uno alla volta, <b>senza nome</b>: vota quanto fa ridere (😂 fortissimo 200 punti, 🙂 carino 100, 😐 meh 0). Il tuo non lo voti. Se piace a tutti con 😂: <b>💯 +200</b>.",
@@ -1164,7 +1190,7 @@
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
-      dove.giri = 3; dove.tempo = 75;
+      dove.giri = 3; dove.tempo = 75; dove.cambi = 3;
       function scelta(tit, chiave, valori, testo, pre) {
         box.appendChild(el("div", { class: "etichetta", text: tit }));
         var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(3,1fr)" });
@@ -1178,6 +1204,7 @@
       }
       scelta("Quanti round", "giri", [3, 5, 7], function (n) { return n + " round"; }, 3);
       scelta("Tempo per scrivere", "tempo", [45, 75, 120], function (n) { return n + " secondi"; }, 75);
+      scelta("Meme da cambiare (in tutta la partita)", "cambi", [1, 3, 5, 10, 50, 0], function (n) { return n ? String(n) : "∞ Senza limite"; }, 3);
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);
