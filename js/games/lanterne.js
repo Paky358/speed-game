@@ -4714,6 +4714,46 @@ function vibra(ms) { try { if (!AUDIO.toccato) return; if (navigator.vibrate) na
 // =========================================================
 //  HOST: tiene la partita vera
 // =========================================================
+// ----- il filo diretto fra telefoni -----
+// I messaggi della partita passano dai broker pubblici: su HiveMQ vanno bene, su EMQX (chi ci finisce perché HiveMQ tarda) si sono visti buchi fino a 2 s.
+// Fra l'host e ogni ospite si apre anche un canale WebRTC di soli dati: niente server, niente microfono. Quello che passa da lì arriva prima;
+// il broker resta sempre acceso e chi riceve un messaggio due volte tiene il primo (numero u). Se il canale non si apre, non cambia niente.
+var FILO_ICE = [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }];
+function FiloDiretto(manda, arriva) { this.manda = manda; this.arriva = arriva; this.pc = null; this.ch = null; this.coda = []; this.t0 = Date.now(); }
+FiloDiretto.prototype.pronto = function () { var p = this.pc, st = p && p.iceConnectionState; return !!(this.ch && this.ch.readyState === "open" && (st === "connected" || st === "completed")); };
+FiloDiretto.prototype.lega = function (ch) {
+  var F = this; F.ch = ch;
+  ch.onopen = function () { if (window.LT_PROVA) window.LT_DIRETTO = (window.LT_DIRETTO || 0) + 1; };
+  ch.onmessage = function (e) { var m = null; try { m = JSON.parse(e.data); } catch (_) {} if (m) F.arriva(m); };
+};
+FiloDiretto.prototype.crea = function () {
+  var F = this, pc = new RTCPeerConnection({ iceServers: FILO_ICE }); F.pc = pc; F.t0 = Date.now();
+  pc.onicecandidate = function (e) { if (e.candidate) F.manda({ c: e.candidate }); };
+  return pc;
+};
+FiloDiretto.prototype.offri = function () {
+  var F = this, pc = F.crea();
+  F.lega(pc.createDataChannel("lt", { ordered: false, maxRetransmits: 0 }));
+  pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () { F.manda({ d: pc.localDescription }); }).catch(function () { F.chiudi(); });
+};
+FiloDiretto.prototype.segnale = function (s) {
+  var F = this;
+  if (s.d) {
+    var offerta = s.d.type === "offer";
+    if (offerta) { var c = F.coda; F.chiudi(); F.coda = c; F.crea().ondatachannel = function (e) { F.lega(e.channel); }; }
+    var pc = F.pc; if (!pc) return;
+    pc.setRemoteDescription(s.d).then(function () {
+      F.coda.splice(0).forEach(function (q) { pc.addIceCandidate(q).catch(function () {}); });
+      if (!offerta) return;
+      return pc.createAnswer().then(function (a) { return pc.setLocalDescription(a); }).then(function () { F.manda({ d: pc.localDescription }); });
+    }).catch(function () { F.chiudi(); });
+  } else if (s.c) {
+    if (F.pc && F.pc.remoteDescription) F.pc.addIceCandidate(s.c).catch(function () {}); else F.coda.push(s.c);
+  }
+};
+FiloDiretto.prototype.invia = function (tx) { if (this.pronto()) try { this.ch.send(tx); } catch (e) {} };
+FiloDiretto.prototype.chiudi = function () { try { if (this.ch) this.ch.close(); if (this.pc) this.pc.close(); } catch (e) {} this.ch = null; this.pc = null; this.coda = []; };
+
 function host(t) {
   if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
   precaricoAvvia();   // appena si entra comincia lo scaricamento di tutto il palazzo (la saletta serve a questo)
@@ -4721,10 +4761,27 @@ function host(t) {
   var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
   var H = { fase: "lobby", codice: "…", pronta: false, partita: 0, rip: 0, imp: pulisci(t.impostazioni),
     players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost) }], guarda: [], classifica: null, fine: null };
-  var P = null, rete = null, inviati = {}, ultimaN = {}, viaDa = {}, finePronta = false, roundDetto = 0;
+  var P = null, rete = null, inviati = {}, ultimaN = {}, viaDa = {}, finePronta = false, roundDetto = 0, fili = {}, nU = Date.now() % 1e9;
+  // i messaggi che contano: dal broker e, a chi ha il filo diretto aperto, anche da lì (il primo che arriva vale)
+  function veloce(m) {
+    if (!rete) return;
+    if (m.t !== "pos") m.u = ++nU;
+    rete.inviaVeloce(m);
+    var tx = null;
+    for (var id in fili) { if (m.to && m.to !== id) continue; if (fili[id].pronto()) { if (tx === null) tx = JSON.stringify(m); fili[id].invia(tx); } }
+  }
+  function filoApri(id) {
+    if (!window.RTCPeerConnection || !rete) return;
+    var F = fili[id]; if (F && (F.pronto() || Date.now() - F.t0 < 8000)) return;
+    if (F) F.chiudi();
+    F = fili[id] = new FiloDiretto(function (s) { if (rete) rete.inviaVeloce({ t: "fd", s: s, to: id }); }, function (m) { if (m && m.t && rete && arrivoOspite) arrivoOspite(id, m); });
+    F.offri();
+  }
+  function filiChiudi() { for (var id in fili) fili[id].chiudi(); fili = {}; }
+  var arrivoOspite = null;
   var eventi = {
-    privato: function (id, m) { if (id === IO) { if (UI) UI.messaggio(m); else conserva(m); return; } m.to = id; if (rete) rete.inviaVeloce(m); },
-    tutti: function (m) { if (rete) rete.inviaVeloce(m); if (UI) UI.messaggio(m); }
+    privato: function (id, m) { if (id === IO) { if (UI) UI.messaggio(m); else conserva(m); return; } m.to = id; veloce(m); },
+    tutti: function (m) { veloce(m); if (UI) UI.messaggio(m); }
   };
   var R = t.ripresa, riprendo = !!(R && R.stato && R.stato.fase && R.stato.fase !== "lobby" && R.stato.players);
   if (riprendo) {
@@ -4778,8 +4835,10 @@ function host(t) {
       if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); riempi(); bd(); return; }
       p.via = true; viaDa[id] = Date.now(); bd();   // resta in partita: se torna entro un minuto e mezzo riprende il suo posto
     },
-    onMsg: function (id, m) {
+    onMsg: function arrivo(id, m) {
+      arrivoOspite = arrivo;
       if (!m || !m.t) return;
+      if (m.t === "fd") { if (fili[id]) fili[id].segnale(m.s); return; }   // il filo diretto: i messaggi per aprirlo
       if (m.t === "vc") { var pv = pById(id); if (pv && !pv.via && VS) VS.arriva(id, m); return; }   // la voce: messaggi di collegamento
       if (m.t === "pr") {   // la mappa di quel telefono: percentuale e pronto. Si ridice a tutti solo se cambia davvero (pronto, o 10 punti)
         var pq = pById(id); if (!pq || pq.bot) return;
@@ -4800,6 +4859,7 @@ function host(t) {
           // gli avatar non viaggiano nella foto durante la partita: a chi rientra li mando a parte
           rete.inviaVeloce({ t: "av", l: H.players.filter(function (q) { return q.omino; }).map(function (q) { return [q.id, q.omino]; }), to: id });
         }
+        if (pById(id)) filoApri(id);
         return;
       }
       if (m.t === "rf") { if (Date.now() - ultimaFoto >= 150) bd(); else if (!fotoDopo) fotoDopo = setTimeout(bd, 150); return; }   // ha perso una foto
@@ -4808,7 +4868,7 @@ function host(t) {
       if (m.t === "p") { if (m.n <= (ultimaN[id] || 0)) return; ultimaN[id] = m.n; P.muovi(id, m); }
       else if (m.t === "a") {
         if (m.q != null) {   // la ricevuta parte sempre (anche per un doppione: la prima può essersi persa), la mossa vale una volta sola
-          rete.inviaVeloce({ t: "ak", q: m.q, to: id });
+          veloce({ t: "ak", q: m.q, to: id });
           var vq = visteA[id] || (visteA[id] = []); if (vq.indexOf(m.q) >= 0) return;
           vq.push(m.q); if (vq.length > 64) vq.shift();
         }
@@ -4848,7 +4908,7 @@ function host(t) {
     var v = vm();
     // in partita la foto parte veloce: quella trattenuta dal broker (per chi rientra) ci ha messo fino a 4,6 s nella prova del 31/10, e un sabotaggio deve arrivare subito.
     // Quella trattenuta resta una ogni 2 s e a ogni cambio di fase: chi la trova vecchia vede il numero nel battito e chiede l'ultima
-    if (H.fase === "gioco") rete.inviaVeloce({ t: "vm", vm: v });
+    if (H.fase === "gioco") veloce({ t: "vm", vm: v });
     if (H.fase !== "gioco" || H.faseT !== H.fase || ultimaFoto - (H.tT || 0) >= 2000) { H.faseT = H.fase; H.tT = ultimaFoto; rete.invia({ t: "vm", vm: v }); }
     if (H.fase !== ricordaFase || ultimaFoto - ricordaT > 2000) { ricordaFase = H.fase; ricordaT = ultimaFoto; ricorda(); } disegna(t, v, cbHost);
   }
@@ -4860,12 +4920,12 @@ function host(t) {
       if (!tutti && inviati[p.id] === pr.v) return;
       inviati[p.id] = pr.v;
       if (p.id === IO) { if (UI) UI.privato(pr); else PENDENTI.priv = pr; }
-      else rete.inviaVeloce({ t: "priv", p: pr, to: p.id });
+      else veloce({ t: "priv", p: pr, to: p.id });
     });
   }
   // la rete può perdere un messaggio e il ruolo o le ricariche non si rimandano da soli: ogni secondo e mezzo si ribadiscono (uguali: l'ospite li ignora)
   function ribadisciPrivati() {
-    H.players.forEach(function (p) { if (p.bot || p.id === IO || p.via) return; var pr = P.privato(p.id); if (pr) rete.inviaVeloce({ t: "priv", p: pr, to: p.id, r: 1 }); });
+    H.players.forEach(function (p) { if (p.bot || p.id === IO || p.via) return; var pr = P.privato(p.id); if (pr) veloce({ t: "priv", p: pr, to: p.id, r: 1 }); });
   }
   // il tempo della partita: 20 volte al secondo; le posizioni a tutti 10 volte al secondo
   var ultimo = Date.now(), nTick = 0, fermo = false;
@@ -4878,14 +4938,14 @@ function host(t) {
     if (P.cambiata) { P.cambiata = false; if (P.subito || ora - ultimaFoto >= 250) { P.subito = false; bd(); } else if (!fotoDopo) fotoDopo = setTimeout(bd, 250); }
     var pos = P.posizioni();
     if (UI) UI.posizioni(pos);
-    if (++nTick % 2 === 0) rete.inviaVeloce({ t: "pos", s: nTick, p: pos, v: H.ver });   // v: l'ultima foto: chi non ce l'ha se ne accorge al battito dopo
+    if (++nTick % 2 === 0) veloce({ t: "pos", s: nTick, p: pos, v: H.ver });   // v: l'ultima foto: chi non ce l'ha se ne accorge al battito dopo
     mandaPrivati(false);
     if (nTick % 30 === 0) ribadisciPrivati();
     if (P.round !== roundDetto && P.fase === "gioco") { roundDetto = P.round; t.aCheSiamo("Round " + P.round); }
     Object.keys(viaDa).forEach(function (id) { if (ora - viaDa[id] > 90000) { delete viaDa[id]; P.esce(id); } });
     if (P.fase === "fine" && !finePronta) { finePronta = true; setTimeout(fine, 2600); }
   }, 50);
-  function ferma() { fermo = true; clearInterval(loop); clearInterval(vsT); if (fotoDopo) clearTimeout(fotoDopo); }
+  function ferma() { fermo = true; clearInterval(loop); clearInterval(vsT); if (fotoDopo) clearTimeout(fotoDopo); filiChiudi(); }
 
   // il mio precarico (quello dell'host): se cambia lo dico a tutti; se si sta aspettando per cominciare, guardo se si può partire
   var mioPre = { ok: -1, p: -1 }, pmT = 0;
@@ -4972,6 +5032,7 @@ function ospite(t, codice) {
     S.prOk = ok; S.prP = ps.pct; S.prT = ora; if (S.rete) S.rete.invia({ t: "pr", p: ps.pct, ok: ok });
   }
   function fermaPr() { clearInterval(S.prInt); S.prInt = null; }
+  function chiudiFilo() { if (S.filo) { S.filo.chiudi(); S.filo = null; } }
   // le mosse (non i passi) si ripetono finché l'host non dà la ricevuta: la rete può perderne una, e un sabotaggio o una riparazione non possono sparire
   function perdo() { return window.LT_PROVA && window.LT_PERDI && Math.random() < window.LT_PERDI; }   // (solo per le prove: rete che perde messaggi)
   function mandaSicura(m) {
@@ -4980,7 +5041,7 @@ function ospite(t, codice) {
     (function giro() {
       if (!S.attese[m.q]) return;
       if (++v.n > 6 || !S.rete) { delete S.attese[m.q]; return; }
-      if (!perdo()) S.rete.invia(m);
+      if (!perdo()) { S.rete.invia(m); if (S.filo) S.filo.invia(JSON.stringify(m)); }
       v.t = setTimeout(giro, 180 + v.n * 70);
     })();
   }
@@ -4996,9 +5057,9 @@ function ospite(t, codice) {
     S.vmH = v.tiene; S.vmV = v.ver; S.mancaDa = 0; return false;
   }
   var cb = { sonoHost: false, myId: null,
-    mossa: function (m) { if (!S.rete) return; if (m.t === "a") return mandaSicura(m); if (!perdo()) S.rete.invia(m); },
+    mossa: function (m) { if (!S.rete) return; if (m.t === "a") return mandaSicura(m); if (!perdo()) { S.rete.invia(m); if (S.filo) S.filo.invia(JSON.stringify(m)); } },
     onEsci: function () {
-      function via() { fermaPr(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); chiudiUI(); t.esci(); }
+      function via() { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); chiudiUI(); t.esci(); }
       if (t.guarda) return t.conferma("Smetti di guardare?", null, "Esci", via);
       if (S.vm && S.vm.fase === "gioco") return t.conferma("Uscire dalla partita?", null, "Esci", via);
       via();
@@ -5015,9 +5076,14 @@ function ospite(t, codice) {
     attesa();
     S.rete = SGNet.entra(codice, {
       onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { if (S.rete) S.rete.invia(m); } }); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); riferisci(true); fermaPr(); S.prInt = setInterval(riferisci, 1000); },
-      onMsg: function (m) {
+      onMsg: function dalHost(m) {
         if (!m || !m.t) return;
         if (m.to && m.to !== S.myId) return;
+        if (m.t === "fd") {   // il filo diretto: l'host lo apre, io rispondo
+          if (!S.filo) S.filo = new FiloDiretto(function (x) { if (S.rete) S.rete.invia({ t: "fd", s: x }); }, dalHost);
+          S.filo.segnale(m.s); return;
+        }
+        if (m.u != null) { var uv = S.uViste || (S.uViste = []); if (uv.indexOf(m.u) >= 0) return; uv.push(m.u); if (uv.length > 80) uv.shift(); }   // già arrivato dall'altra strada
         if (perdo() && (m.t === "vm" || m.t === "pos" || m.t === "priv" || m.t === "ak")) return;
         if (m.t === "vm") { if (fotoVecchia(m.vm)) return; S.vm = m.vm; disegna(t, m.vm, cb); }
         else if (m.t === "pos") { if (UI) UI.posizioni(m.p, m.s); controllaFoto(m.v); }
@@ -5028,8 +5094,8 @@ function ospite(t, codice) {
         else if (m.t === "pm") { if (UI) UI.pronti(m.l); }   // chi ha la mappa pronta (messaggio piccolo)
         else if (m.t === "vc" || m.t === "vcl") VOCE.arriva(m);   // la voce: l'elenco di chi c'è e i messaggi di collegamento
       },
-      onChiuso: function (perche) { fermaPr(); VOCE.chiudiStanza(); chiudiUI(); errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
-      onErrore: function () { fermaPr(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
+      onChiuso: function (perche) { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); chiudiUI(); errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
+      onErrore: function () { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
     });
     if (!S.rete) senzaRete(t);
   }
