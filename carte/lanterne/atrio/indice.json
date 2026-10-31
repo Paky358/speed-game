@@ -14,7 +14,8 @@
   "p_3_0",
   "p_0_1",
   "p_1_1",
-  "p_2_1"
+  "p_2_1",
+  "p_3_1"
  ],
  "mobili": [
   {
@@ -31,7 +32,8 @@
     "y": 206,
     "w": 50,
     "h": 170
-   }
+   },
+   "fiamme": []
   },
   {
    "k": 1,
@@ -47,7 +49,8 @@
     "y": 206,
     "w": 50,
     "h": 170
-   }
+   },
+   "fiamme": []
   },
   {
    "k": 2,
@@ -63,7 +66,8 @@
     "y": 526,
     "w": 50,
     "h": 170
-   }
+   },
+   "fiamme": []
   },
   {
    "k": 3,
@@ -79,7 +83,8 @@
     "y": 526,
     "w": 50,
     "h": 170
-   }
+   },
+   "fiamme": []
   },
   {
    "k": 4,
@@ -95,7 +100,8 @@
     "y": 93,
     "w": 390,
     "h": 96
-   }
+   },
+   "fiamme": []
   },
   {
    "k": 5,
@@ -111,7 +117,8 @@
     "y": 317,
     "w": 124,
     "h": 123
-   }
+   },
+   "fiamme": []
   },
   {
    "k": 6,
@@ -127,7 +134,8 @@
     "y": 0,
     "w": 87,
     "h": 172
-   }
+   },
+   "fiamme": []
   },
   {
    "k": 7,
@@ -141,9 +149,10 @@
    "rect": {
     "x": 1460,
     "y": 0,
-    "w": 86,
+    "w": 87,
     "h": 172
-   }
+   },
+   "fiamme": []
   },
   {
    "k": 8,
@@ -159,7 +168,8 @@
     "y": 693,
     "w": 86,
     "h": 183
-   }
+   },
+   "fiamme": []
   },
   {
    "k": 9,
@@ -175,73 +185,246 @@
     "y": 697,
     "w": 84,
     "h": 179
-   }
+   },
+   "fiamme": []
   },
   {
-   "k": null,
+   "k": 10,
    "tipo": "sedia",
    "x": 9,
    "y": 8,
    "w": 1,
    "h": 1,
-   "extra": true,
-   "file": "mobili/x0.webp",
+   "extra": false,
+   "file": "mobili/10.webp",
    "rect": {
-    "x": 556,
-    "y": 447,
-    "w": 40,
-    "h": 91
-   }
+    "x": 581,
+    "y": 456,
+    "w": 54,
+    "h": 111
+   },
+   "fiamme": []
   },
   {
-   "k": null,
+   "k": 11,
    "tipo": "sedia",
    "x": 17,
    "y": 8,
    "w": 1,
    "h": 1,
-   "extra": true,
-   "file": "mobili/x1.webp",
+   "extra": false,
+   "file": "mobili/11.webp",
    "rect": {
-    "x": 1067,
-    "y": 483,
-    "w": 41,
-    "h": 68
-   }
+    "x": 1093,
+    "y": 457,
+    "w": 54,
+    "h": 110
+   },
+   "fiamme": []
   },
   {
-   "k": null,
+   "k": 12,
    "tipo": "sedia",
    "x": 4,
    "y": 5,
    "w": 1,
    "h": 1,
-   "extra": true,
-   "file": "mobili/x2.webp",
+   "extra": false,
+   "file": "mobili/12.webp",
    "rect": {
-    "x": 251,
+    "x": 265,
     "y": 269,
-    "w": 36,
-    "h": 88
-   }
+    "w": 46,
+    "h": 104
+   },
+   "fiamme": []
   },
   {
-   "k": null,
+   "k": 13,
    "tipo": "sedia",
    "x": 21,
    "y": 11,
    "w": 1,
    "h": 1,
-   "extra": true,
-   "file": "mobili/x3.webp",
+   "extra": false,
+   "file": "mobili/13.webp",
    "rect": {
-    "x": 1338,
-    "y": 656,
-    "w": 38,
+    "x": 1351,
+    "y": 652,
+    "w": 50,
+    "h": 106
+   },
+   "fiamme": []
+  },
+  {
+   "k": 14,
+   "tipo": "valigie",
+   "x": 20,
+   "y": 2,
+   "w": 3,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/14.webp",
+   "rect": {
+    "x": 1290,
+    "y": 91,
+    "w": 152,
     "h": 85
-   }
+   },
+   "fiamme": []
+  },
+  {
+   "k": 15,
+   "tipo": "credenza",
+   "x": 3,
+   "y": 2,
+   "w": 3,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/15.webp",
+   "rect": {
+    "x": 194,
+    "y": 73,
+    "w": 188,
+    "h": 111
+   },
+   "fiamme": []
+  },
+  {
+   "k": 16,
+   "tipo": "credenza",
+   "x": 2,
+   "y": 7,
+   "w": 1,
+   "h": 2,
+   "extra": false,
+   "file": "mobili/16.webp",
+   "rect": {
+    "x": 133,
+    "y": 389,
+    "w": 54,
+    "h": 170
+   },
+   "fiamme": []
+  },
+  {
+   "k": 17,
+   "tipo": "credenza",
+   "x": 23,
+   "y": 7,
+   "w": 1,
+   "h": 2,
+   "extra": false,
+   "file": "mobili/17.webp",
+   "rect": {
+    "x": 1477,
+    "y": 389,
+    "w": 54,
+    "h": 170
+   },
+   "fiamme": []
+  },
+  {
+   "k": null,
+   "tipo": "candelabro",
+   "x": 2,
+   "y": 13,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x0.webp",
+   "rect": {
+    "x": 178,
+    "y": 814,
+    "w": 14,
+    "h": 65
+   },
+   "fiamme": [
+    [
+     2.89,
+     12.746,
+     1.0
+    ]
+   ]
+  },
+  {
+   "k": null,
+   "tipo": "candelabro",
+   "x": 22,
+   "y": 2,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x1.webp",
+   "rect": {
+    "x": 1449,
+    "y": 116,
+    "w": 15,
+    "h": 65
+   },
+   "fiamme": [
+    [
+     22.76,
+     1.846,
+     1.0
+    ]
+   ]
+  },
+  {
+   "k": null,
+   "tipo": "lampadario",
+   "x": 13,
+   "y": 10,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x2.webp",
+   "rect": {
+    "x": 786,
+    "y": 478,
+    "w": 92,
+    "h": 153
+   },
+   "fiamme": []
   }
  ],
  "animati": {},
+ "fiamme": [
+  [
+   5.5,
+   1.075,
+   1.0
+  ],
+  [
+   8.0,
+   1.075,
+   1.0
+  ],
+  [
+   10.5,
+   1.075,
+   1.0
+  ],
+  [
+   13.0,
+   1.075,
+   1.0
+  ],
+  [
+   15.5,
+   1.075,
+   1.0
+  ],
+  [
+   18.0,
+   1.075,
+   1.0
+  ],
+  [
+   20.5,
+   1.075,
+   1.0
+  ]
+ ],
  "nota": "rettangoli in pixel a 64 px per casella dall'angolo in alto a sinistra della mappa; il pezzo (i, j) copre le caselle x=0..7, y=0..7"
 }
