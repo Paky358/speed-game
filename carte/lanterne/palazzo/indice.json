@@ -144,107 +144,107 @@
   {
    "k": 1,
    "tipo": "albero",
-   "x": 30,
-   "y": 21,
+   "x": 33,
+   "y": 18,
    "w": 1,
    "h": 1,
    "extra": false,
    "file": "mobili/1.webp",
    "rect": {
-    "x": 1913,
-    "y": 1209,
-    "w": 76,
-    "h": 178
+    "x": 2106,
+    "y": 1023,
+    "w": 77,
+    "h": 172
    },
    "fiamme": []
   },
   {
    "k": 2,
    "tipo": "albero",
-   "x": 41,
-   "y": 21,
+   "x": 38,
+   "y": 18,
    "w": 1,
    "h": 1,
    "extra": false,
    "file": "mobili/2.webp",
    "rect": {
-    "x": 2619,
-    "y": 1210,
-    "w": 75,
-    "h": 176
+    "x": 2426,
+    "y": 1025,
+    "w": 77,
+    "h": 169
    },
    "fiamme": []
   },
   {
    "k": 3,
    "tipo": "albero",
-   "x": 30,
+   "x": 27,
    "y": 26,
    "w": 1,
    "h": 1,
    "extra": false,
    "file": "mobili/3.webp",
    "rect": {
-    "x": 1915,
-    "y": 1533,
+    "x": 1721,
+    "y": 1532,
     "w": 77,
-    "h": 173
+    "h": 156
    },
    "fiamme": []
   },
   {
    "k": 4,
    "tipo": "albero",
-   "x": 41,
+   "x": 44,
    "y": 26,
    "w": 1,
    "h": 1,
    "extra": false,
    "file": "mobili/4.webp",
    "rect": {
-    "x": 2617,
-    "y": 1526,
-    "w": 77,
-    "h": 181
+    "x": 2808,
+    "y": 1536,
+    "w": 76,
+    "h": 152
    },
    "fiamme": []
   },
   {
    "k": 5,
    "tipo": "panchina",
-   "x": 31,
-   "y": 28,
+   "x": 30,
+   "y": 29,
    "w": 2,
    "h": 1,
    "extra": false,
    "file": "mobili/5.webp",
    "rect": {
-    "x": 1983,
-    "y": 1774,
+    "x": 1919,
+    "y": 1838,
     "w": 130,
-    "h": 69
+    "h": 68
    },
    "fiamme": []
   },
   {
    "k": 6,
    "tipo": "panchina",
-   "x": 38,
-   "y": 28,
+   "x": 40,
+   "y": 29,
    "w": 2,
    "h": 1,
    "extra": false,
    "file": "mobili/6.webp",
    "rect": {
-    "x": 2431,
-    "y": 1767,
+    "x": 2559,
+    "y": 1831,
     "w": 130,
-    "h": 76
+    "h": 75
    },
    "fiamme": [
     [
-     39.42,
-     27.69,
+     41.42,
+     28.69,
      1.0
     ]
    ]
@@ -252,22 +252,22 @@
   {
    "k": 7,
    "tipo": "scaffale",
-   "x": 4,
-   "y": 4,
-   "w": 4,
+   "x": 3,
+   "y": 3,
+   "w": 3,
    "h": 1,
    "extra": false,
    "file": "mobili/7.webp",
    "rect": {
-    "x": 255,
-    "y": 154,
-    "w": 258,
+    "x": 191,
+    "y": 90,
+    "w": 194,
     "h": 165
    },
    "fiamme": [
     [
-     7.55,
-     2.694,
+     3.86,
+     1.694,
      1.0
     ]
    ]
@@ -276,21 +276,21 @@
    "k": 8,
    "tipo": "scaffale",
    "x": 9,
-   "y": 4,
+   "y": 3,
    "w": 3,
    "h": 1,
    "extra": false,
    "file": "mobili/8.webp",
    "rect": {
     "x": 575,
-    "y": 158,
+    "y": 94,
     "w": 194,
     "h": 161
    },
    "fiamme": [
     [
      9.4,
-     2.634,
+     1.634,
      1.0
     ]
    ]
@@ -298,35 +298,12 @@
   {
    "k": 9,
    "tipo": "scaffale",
-   "x": 4,
-   "y": 7,
-   "w": 3,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/9.webp",
-   "rect": {
-    "x": 255,
-    "y": 357,
-    "w": 194,
-    "h": 154
-   },
-   "fiamme": [
-    [
-     5.7,
-     5.664,
-     1.0
-    ]
-   ]
-  },
-  {
-   "k": 10,
-   "tipo": "scaffale",
    "x": 9,
    "y": 7,
    "w": 3,
    "h": 1,
    "extra": false,
-   "file": "mobili/10.webp",
+   "file": "mobili/9.webp",
    "rect": {
     "x": 575,
     "y": 349,
@@ -336,106 +313,199 @@
    "fiamme": []
   },
   {
-   "k": 11,
+   "k": 10,
    "tipo": "poltrona",
    "x": 6,
    "y": 2,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/11.webp",
+   "file": "mobili/10.webp",
    "rect": {
     "x": 386,
-    "y": 60,
+    "y": 59,
     "w": 60,
-    "h": 107
+    "h": 127
    },
    "fiamme": []
   },
   {
-   "k": 12,
+   "k": 11,
    "tipo": "tavolo",
    "x": 28,
-   "y": 5,
+   "y": 3,
+   "w": 3,
+   "h": 2,
+   "extra": false,
+   "file": "mobili/11.webp",
+   "rect": {
+    "x": 1793,
+    "y": 126,
+    "w": 191,
+    "h": 197
+   },
+   "fiamme": [
+    [
+     28.784,
+     2.717,
+     1.0
+    ],
+    [
+     28.723,
+     2.872,
+     1.0
+    ],
+    [
+     28.848,
+     2.66,
+     1.0
+    ],
+    [
+     28.715,
+     2.668,
+     1.0
+    ],
+    [
+     28.842,
+     2.883,
+     1.0
+    ],
+    [
+     28.908,
+     2.778,
+     1.0
+    ],
+    [
+     28.663,
+     2.773,
+     1.0
+    ],
+    [
+     30.224,
+     2.717,
+     1.0
+    ],
+    [
+     30.163,
+     2.872,
+     1.0
+    ],
+    [
+     30.288,
+     2.66,
+     1.0
+    ],
+    [
+     30.155,
+     2.668,
+     1.0
+    ],
+    [
+     30.282,
+     2.883,
+     1.0
+    ],
+    [
+     30.348,
+     2.778,
+     1.0
+    ],
+    [
+     30.103,
+     2.773,
+     1.0
+    ]
+   ]
+  },
+  {
+   "k": 12,
+   "tipo": "tavolo",
+   "x": 39,
+   "y": 3,
    "w": 3,
    "h": 2,
    "extra": false,
    "file": "mobili/12.webp",
    "rect": {
-    "x": 1792,
-    "y": 252,
-    "w": 191,
-    "h": 199
+    "x": 2496,
+    "y": 126,
+    "w": 192,
+    "h": 198
    },
    "fiamme": [
     [
-     28.784,
-     4.717,
+     39.784,
+     2.717,
      1.0
     ],
     [
-     28.723,
-     4.872,
+     39.723,
+     2.872,
      1.0
     ],
     [
-     28.848,
-     4.66,
+     39.848,
+     2.66,
      1.0
     ],
     [
-     28.715,
-     4.668,
+     39.715,
+     2.668,
      1.0
     ],
     [
-     28.842,
-     4.883,
+     39.842,
+     2.883,
      1.0
     ],
     [
-     28.908,
-     4.778,
+     39.908,
+     2.778,
      1.0
     ],
     [
-     28.663,
-     4.773,
+     39.663,
+     2.773,
      1.0
     ],
     [
-     30.224,
-     4.717,
+     41.224,
+     2.717,
      1.0
     ],
     [
-     30.163,
-     4.872,
+     41.163,
+     2.872,
      1.0
     ],
     [
-     30.288,
-     4.66,
+     41.288,
+     2.66,
      1.0
     ],
     [
-     30.155,
-     4.668,
+     41.155,
+     2.668,
      1.0
     ],
     [
-     30.282,
-     4.883,
+     41.282,
+     2.883,
      1.0
     ],
     [
-     30.348,
-     4.778,
+     41.348,
+     2.778,
      1.0
     ],
     [
-     30.103,
-     4.773,
+     41.103,
+     2.773,
+     1.0
+    ],
+    [
+     41.5,
+     2.225,
      1.0
     ]
    ]
@@ -443,87 +513,87 @@
   {
    "k": 13,
    "tipo": "tavolo",
-   "x": 39,
-   "y": 5,
+   "x": 28,
+   "y": 10,
    "w": 3,
    "h": 2,
    "extra": false,
    "file": "mobili/13.webp",
    "rect": {
-    "x": 2497,
-    "y": 252,
-    "w": 191,
-    "h": 196
+    "x": 1792,
+    "y": 571,
+    "w": 192,
+    "h": 183
    },
    "fiamme": [
     [
-     39.784,
-     4.717,
+     28.784,
+     9.717,
      1.0
     ],
     [
-     39.723,
-     4.872,
+     28.723,
+     9.872,
      1.0
     ],
     [
-     39.848,
-     4.66,
+     28.848,
+     9.66,
      1.0
     ],
     [
-     39.715,
-     4.668,
+     28.715,
+     9.668,
      1.0
     ],
     [
-     39.842,
-     4.883,
+     28.842,
+     9.883,
      1.0
     ],
     [
-     39.908,
-     4.778,
+     28.908,
+     9.778,
      1.0
     ],
     [
-     39.663,
-     4.773,
+     28.663,
+     9.773,
      1.0
     ],
     [
-     41.224,
-     4.717,
+     30.224,
+     9.717,
      1.0
     ],
     [
-     41.163,
-     4.872,
+     30.163,
+     9.872,
      1.0
     ],
     [
-     41.288,
-     4.66,
+     30.288,
+     9.66,
      1.0
     ],
     [
-     41.155,
-     4.668,
+     30.155,
+     9.668,
      1.0
     ],
     [
-     41.282,
-     4.883,
+     30.282,
+     9.883,
      1.0
     ],
     [
-     41.348,
-     4.778,
+     30.348,
+     9.778,
      1.0
     ],
     [
-     41.103,
-     4.773,
+     30.103,
+     9.773,
      1.0
     ]
    ]
@@ -531,188 +601,100 @@
   {
    "k": 14,
    "tipo": "tavolo",
-   "x": 28,
-   "y": 8,
+   "x": 39,
+   "y": 10,
    "w": 3,
    "h": 2,
    "extra": false,
    "file": "mobili/14.webp",
    "rect": {
-    "x": 1792,
-    "y": 443,
+    "x": 2496,
+    "y": 572,
     "w": 192,
-    "h": 199
+    "h": 182
    },
    "fiamme": [
     [
-     28.784,
-     7.717,
+     39.784,
+     9.717,
      1.0
     ],
     [
-     28.723,
-     7.872,
+     39.723,
+     9.872,
      1.0
     ],
     [
-     28.848,
-     7.66,
+     39.848,
+     9.66,
      1.0
     ],
     [
-     28.715,
-     7.668,
+     39.715,
+     9.668,
      1.0
     ],
     [
-     28.842,
-     7.883,
+     39.842,
+     9.883,
      1.0
     ],
     [
-     28.908,
-     7.778,
+     39.908,
+     9.778,
      1.0
     ],
     [
-     28.663,
-     7.773,
+     39.663,
+     9.773,
      1.0
     ],
     [
-     30.224,
-     7.717,
+     41.224,
+     9.717,
      1.0
     ],
     [
-     30.163,
-     7.872,
+     41.163,
+     9.872,
      1.0
     ],
     [
-     30.288,
-     7.66,
+     41.288,
+     9.66,
      1.0
     ],
     [
-     30.155,
-     7.668,
+     41.155,
+     9.668,
      1.0
     ],
     [
-     30.282,
-     7.883,
+     41.282,
+     9.883,
      1.0
     ],
     [
-     30.348,
-     7.778,
+     41.348,
+     9.778,
      1.0
     ],
     [
-     30.103,
-     7.773,
+     41.103,
+     9.773,
      1.0
     ]
    ]
   },
   {
    "k": 15,
-   "tipo": "tavolo",
-   "x": 39,
-   "y": 8,
-   "w": 3,
-   "h": 2,
-   "extra": false,
-   "file": "mobili/15.webp",
-   "rect": {
-    "x": 2496,
-    "y": 444,
-    "w": 191,
-    "h": 200
-   },
-   "fiamme": [
-    [
-     39.784,
-     7.717,
-     1.0
-    ],
-    [
-     39.723,
-     7.872,
-     1.0
-    ],
-    [
-     39.848,
-     7.66,
-     1.0
-    ],
-    [
-     39.715,
-     7.668,
-     1.0
-    ],
-    [
-     39.842,
-     7.883,
-     1.0
-    ],
-    [
-     39.908,
-     7.778,
-     1.0
-    ],
-    [
-     39.663,
-     7.773,
-     1.0
-    ],
-    [
-     41.224,
-     7.717,
-     1.0
-    ],
-    [
-     41.163,
-     7.872,
-     1.0
-    ],
-    [
-     41.288,
-     7.66,
-     1.0
-    ],
-    [
-     41.155,
-     7.668,
-     1.0
-    ],
-    [
-     41.282,
-     7.883,
-     1.0
-    ],
-    [
-     41.348,
-     7.778,
-     1.0
-    ],
-    [
-     41.103,
-     7.773,
-     1.0
-    ]
-   ]
-  },
-  {
-   "k": 16,
    "tipo": "candelabro",
    "x": 32,
    "y": 2,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/16.webp",
+   "file": "mobili/15.webp",
    "rect": {
     "x": 2054,
     "y": 50,
@@ -758,14 +740,14 @@
    ]
   },
   {
-   "k": 17,
+   "k": 16,
    "tipo": "arpa",
    "x": 33,
    "y": 2,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/17.webp",
+   "file": "mobili/16.webp",
    "rect": {
     "x": 2114,
     "y": 46,
@@ -775,19 +757,19 @@
    "fiamme": []
   },
   {
-   "k": 18,
+   "k": 17,
    "tipo": "candelabro",
    "x": 39,
    "y": 2,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/18.webp",
+   "file": "mobili/17.webp",
    "rect": {
     "x": 2502,
     "y": 50,
     "w": 52,
-    "h": 115
+    "h": 114
    },
    "fiamme": [
     [
@@ -828,14 +810,14 @@
    ]
   },
   {
-   "k": 19,
+   "k": 18,
    "tipo": "ingranaggio",
    "x": 59,
    "y": 4,
    "w": 3,
    "h": 3,
    "extra": false,
-   "file": "mobili/19.webp",
+   "file": "mobili/18.webp",
    "rect": {
     "x": 3776,
     "y": 113,
@@ -851,14 +833,14 @@
    ]
   },
   {
-   "k": 20,
+   "k": 19,
    "tipo": "plastico",
    "x": 62,
    "y": 5,
    "w": 2,
    "h": 2,
    "extra": false,
-   "file": "mobili/20.webp",
+   "file": "mobili/19.webp",
    "rect": {
     "x": 3969,
     "y": 279,
@@ -868,19 +850,19 @@
    "fiamme": []
   },
   {
-   "k": 21,
+   "k": 20,
    "tipo": "altare",
    "x": 5,
    "y": 13,
    "w": 4,
    "h": 1,
    "extra": false,
-   "file": "mobili/21.webp",
+   "file": "mobili/20.webp",
    "rect": {
     "x": 320,
     "y": 751,
     "w": 256,
-    "h": 149
+    "h": 148
    },
    "fiamme": [
     [
@@ -916,48 +898,31 @@
    ]
   },
   {
+   "k": 21,
+   "tipo": "panca",
+   "x": 3,
+   "y": 18,
+   "w": 2,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/21.webp",
+   "rect": {
+    "x": 190,
+    "y": 1114,
+    "w": 132,
+    "h": 98
+   },
+   "fiamme": []
+  },
+  {
    "k": 22,
-   "tipo": "panca",
-   "x": 4,
-   "y": 18,
-   "w": 2,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/22.webp",
-   "rect": {
-    "x": 254,
-    "y": 1114,
-    "w": 132,
-    "h": 99
-   },
-   "fiamme": []
-  },
-  {
-   "k": 23,
-   "tipo": "panca",
-   "x": 8,
-   "y": 18,
-   "w": 2,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/23.webp",
-   "rect": {
-    "x": 510,
-    "y": 1114,
-    "w": 132,
-    "h": 99
-   },
-   "fiamme": []
-  },
-  {
-   "k": 24,
    "tipo": "candelabro",
    "x": 3,
    "y": 15,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/24.webp",
+   "file": "mobili/22.webp",
    "rect": {
     "x": 200,
     "y": 889,
@@ -1003,19 +968,19 @@
    ]
   },
   {
-   "k": 25,
+   "k": 23,
    "tipo": "candelabro",
    "x": 10,
    "y": 15,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/25.webp",
+   "file": "mobili/23.webp",
    "rect": {
     "x": 648,
     "y": 890,
     "w": 48,
-    "h": 110
+    "h": 114
    },
    "fiamme": [
     [
@@ -1056,31 +1021,31 @@
    ]
   },
   {
-   "k": 26,
+   "k": 24,
    "tipo": "piano",
    "x": 4,
-   "y": 25,
+   "y": 24,
    "w": 3,
    "h": 2,
    "extra": false,
-   "file": "mobili/26.webp",
+   "file": "mobili/24.webp",
    "rect": {
     "x": 255,
-    "y": 1508,
+    "y": 1443,
     "w": 190,
     "h": 209
    },
    "fiamme": []
   },
   {
-   "k": 27,
+   "k": 25,
    "tipo": "arpa",
    "x": 1,
    "y": 26,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/27.webp",
+   "file": "mobili/25.webp",
    "rect": {
     "x": 69,
     "y": 1586,
@@ -1090,93 +1055,93 @@
    "fiamme": []
   },
   {
-   "k": 28,
+   "k": 26,
    "tipo": "banco",
-   "x": 17,
-   "y": 17,
-   "w": 6,
+   "x": 21,
+   "y": 15,
+   "w": 4,
    "h": 1,
    "extra": false,
-   "file": "mobili/28.webp",
+   "file": "mobili/26.webp",
    "rect": {
-    "x": 1088,
-    "y": 1028,
-    "w": 384,
-    "h": 120
+    "x": 1344,
+    "y": 899,
+    "w": 256,
+    "h": 121
    },
    "fiamme": [
     [
-     22.62,
-     16.426,
+     24.84,
+     14.386,
      1.0
     ],
     [
-     17.22,
-     16.846,
+     21.22,
+     14.846,
      1.0
     ]
    ]
   },
   {
-   "k": 29,
+   "k": 27,
    "tipo": "forno",
-   "x": 21,
-   "y": 21,
+   "x": 22,
+   "y": 22,
    "w": 2,
    "h": 2,
    "extra": false,
-   "file": "mobili/29.webp",
+   "file": "mobili/27.webp",
    "rect": {
-    "x": 1343,
-    "y": 1240,
+    "x": 1407,
+    "y": 1304,
     "w": 130,
-    "h": 228
+    "h": 213
    },
    "fiamme": []
   },
   {
-   "k": 30,
+   "k": 28,
    "tipo": "sacchi",
    "x": 17,
    "y": 25,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/30.webp",
+   "file": "mobili/28.webp",
    "rect": {
     "x": 1089,
     "y": 1556,
     "w": 126,
-    "h": 96
+    "h": 94
    },
    "fiamme": []
   },
   {
-   "k": 31,
+   "k": 29,
    "tipo": "dispensa",
    "x": 19,
    "y": 25,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/31.webp",
+   "file": "mobili/29.webp",
    "rect": {
     "x": 1215,
     "y": 1533,
     "w": 130,
-    "h": 119
+    "h": 117
    },
    "fiamme": []
   },
   {
-   "k": 32,
+   "k": 30,
    "tipo": "botte",
    "x": 4,
    "y": 38,
    "w": 2,
    "h": 2,
    "extra": false,
-   "file": "mobili/32.webp",
+   "file": "mobili/30.webp",
    "rect": {
     "x": 263,
     "y": 2350,
@@ -1192,75 +1157,75 @@
    ]
   },
   {
-   "k": 33,
+   "k": 31,
    "tipo": "botte",
    "x": 4,
-   "y": 42,
+   "y": 43,
    "w": 2,
    "h": 2,
    "extra": false,
-   "file": "mobili/33.webp",
+   "file": "mobili/31.webp",
    "rect": {
     "x": 263,
-    "y": 2606,
+    "y": 2670,
     "w": 114,
-    "h": 211
+    "h": 190
    },
    "fiamme": [
     [
      5.0,
-     41.166,
+     42.166,
      1.0
     ],
     [
      4.6,
-     43.816,
+     44.816,
      1.0
     ],
     [
      4.78,
-     43.856,
+     44.856,
      1.0
     ]
    ]
   },
   {
-   "k": 34,
+   "k": 32,
    "tipo": "botte",
-   "x": 9,
-   "y": 42,
+   "x": 10,
+   "y": 43,
    "w": 2,
    "h": 2,
    "extra": false,
-   "file": "mobili/34.webp",
+   "file": "mobili/32.webp",
    "rect": {
-    "x": 583,
-    "y": 2606,
+    "x": 647,
+    "y": 2670,
     "w": 114,
-    "h": 211
+    "h": 190
    },
    "fiamme": [
     [
-     10.55,
-     43.796,
+     11.55,
+     44.796,
      1.0
     ]
    ]
   },
   {
-   "k": 35,
+   "k": 33,
    "tipo": "rastrelliera",
    "x": 6,
    "y": 46,
    "w": 3,
    "h": 1,
    "extra": false,
-   "file": "mobili/35.webp",
+   "file": "mobili/33.webp",
    "rect": {
     "x": 385,
     "y": 2866,
     "w": 191,
-    "h": 130
+    "h": 128
    },
    "fiamme": [
     [
@@ -1271,14 +1236,14 @@
    ]
   },
   {
-   "k": 36,
+   "k": 34,
    "tipo": "stendino",
    "x": 20,
    "y": 38,
    "w": 4,
    "h": 1,
    "extra": false,
-   "file": "mobili/36.webp",
+   "file": "mobili/34.webp",
    "rect": {
     "x": 1281,
     "y": 2377,
@@ -1288,116 +1253,65 @@
    "fiamme": []
   },
   {
-   "k": 37,
+   "k": 35,
    "tipo": "tinozza",
-   "x": 18,
-   "y": 42,
+   "x": 20,
+   "y": 44,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/37.webp",
+   "file": "mobili/35.webp",
    "rect": {
-    "x": 1148,
-    "y": 2649,
+    "x": 1276,
+    "y": 2777,
     "w": 131,
-    "h": 90
+    "h": 83
    },
    "fiamme": []
   },
   {
-   "k": 38,
+   "k": 36,
    "tipo": "stendino",
    "x": 19,
    "y": 45,
    "w": 4,
    "h": 1,
    "extra": false,
-   "file": "mobili/38.webp",
+   "file": "mobili/36.webp",
    "rect": {
     "x": 1215,
     "y": 2816,
     "w": 258,
-    "h": 116
+    "h": 114
    },
    "fiamme": []
   },
   {
-   "k": 39,
-   "tipo": "piedistallo",
-   "x": 30,
-   "y": 36,
-   "w": 2,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/39.webp",
-   "rect": {
-    "x": 1926,
-    "y": 2257,
-    "w": 116,
-    "h": 99
-   },
-   "fiamme": []
-  },
-  {
-   "k": 40,
-   "tipo": "piedistallo",
-   "x": 38,
-   "y": 36,
-   "w": 2,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/40.webp",
-   "rect": {
-    "x": 2438,
-    "y": 2256,
-    "w": 116,
-    "h": 100
-   },
-   "fiamme": []
-  },
-  {
-   "k": 41,
-   "tipo": "piedistallo",
-   "x": 31,
-   "y": 40,
-   "w": 2,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/41.webp",
-   "rect": {
-    "x": 1990,
-    "y": 2515,
-    "w": 116,
-    "h": 97
-   },
-   "fiamme": []
-  },
-  {
-   "k": 42,
+   "k": 37,
    "tipo": "cavalletto",
-   "x": 36,
+   "x": 37,
    "y": 40,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/42.webp",
+   "file": "mobili/37.webp",
    "rect": {
-    "x": 2312,
+    "x": 2376,
     "y": 2500,
-    "w": 51,
-    "h": 112
+    "w": 50,
+    "h": 110
    },
    "fiamme": []
   },
   {
-   "k": 43,
+   "k": 38,
    "tipo": "console",
    "x": 49,
    "y": 19,
    "w": 5,
    "h": 1,
    "extra": false,
-   "file": "mobili/43.webp",
+   "file": "mobili/38.webp",
    "rect": {
     "x": 3135,
     "y": 1152,
@@ -1407,14 +1321,14 @@
    "fiamme": []
   },
   {
-   "k": 44,
+   "k": 39,
    "tipo": "armadietto",
    "x": 48,
    "y": 19,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/44.webp",
+   "file": "mobili/39.webp",
    "rect": {
     "x": 3074,
     "y": 1127,
@@ -1424,14 +1338,14 @@
    "fiamme": []
   },
   {
-   "k": 45,
+   "k": 40,
    "tipo": "armadietto",
    "x": 55,
    "y": 19,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/45.webp",
+   "file": "mobili/40.webp",
    "rect": {
     "x": 3518,
     "y": 1124,
@@ -1441,105 +1355,99 @@
    "fiamme": []
   },
   {
-   "k": 46,
+   "k": 41,
    "tipo": "aiuola",
-   "x": 60,
-   "y": 16,
+   "x": 59,
+   "y": 22,
    "w": 3,
    "h": 3,
    "extra": false,
-   "file": "mobili/46.webp",
+   "file": "mobili/41.webp",
    "rect": {
-    "x": 3841,
-    "y": 983,
-    "w": 190,
-    "h": 230
-   },
-   "fiamme": []
-  },
-  {
-   "k": 47,
-   "tipo": "aiuola",
-   "x": 65,
-   "y": 16,
-   "w": 3,
-   "h": 3,
-   "extra": false,
-   "file": "mobili/47.webp",
-   "rect": {
-    "x": 4161,
-    "y": 960,
-    "w": 191,
-    "h": 253
-   },
-   "fiamme": []
-  },
-  {
-   "k": 48,
-   "tipo": "aiuola",
-   "x": 62,
-   "y": 21,
-   "w": 3,
-   "h": 2,
-   "extra": false,
-   "file": "mobili/48.webp",
-   "rect": {
-    "x": 3967,
-    "y": 1264,
+    "x": 3774,
+    "y": 1316,
     "w": 195,
-    "h": 205
+    "h": 270
    },
    "fiamme": [
     [
-     64.6,
-     20.07,
+     59.4,
+     20.89,
+     0.85
+    ],
+    [
+     61.6,
+     23.17,
      0.85
     ]
    ]
   },
   {
-   "k": 49,
+   "k": 42,
+   "tipo": "aiuola",
+   "x": 58,
+   "y": 15,
+   "w": 2,
+   "h": 4,
+   "extra": false,
+   "file": "mobili/42.webp",
+   "rect": {
+    "x": 3703,
+    "y": 900,
+    "w": 136,
+    "h": 313
+   },
+   "fiamme": []
+  },
+  {
+   "k": 43,
+   "tipo": "aiuola",
+   "x": 66,
+   "y": 22,
+   "w": 3,
+   "h": 2,
+   "extra": false,
+   "file": "mobili/43.webp",
+   "rect": {
+    "x": 4222,
+    "y": 1328,
+    "w": 204,
+    "h": 205
+   },
+   "fiamme": [
+    [
+     66.4,
+     21.07,
+     0.85
+    ]
+   ]
+  },
+  {
+   "k": 44,
    "tipo": "albero",
    "x": 70,
    "y": 17,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/49.webp",
+   "file": "mobili/44.webp",
    "rect": {
     "x": 4473,
     "y": 952,
     "w": 75,
-    "h": 175
+    "h": 180
    },
    "fiamme": []
   },
   {
-   "k": 50,
-   "tipo": "albero",
-   "x": 70,
-   "y": 21,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/50.webp",
-   "rect": {
-    "x": 4474,
-    "y": 1214,
-    "w": 78,
-    "h": 174
-   },
-   "fiamme": []
-  },
-  {
-   "k": 51,
+   "k": 45,
    "tipo": "telegrafo",
    "x": 60,
    "y": 31,
    "w": 3,
    "h": 1,
    "extra": false,
-   "file": "mobili/51.webp",
+   "file": "mobili/45.webp",
    "rect": {
     "x": 3839,
     "y": 1875,
@@ -1549,208 +1457,191 @@
    "fiamme": []
   },
   {
-   "k": 52,
+   "k": 46,
    "tipo": "baule",
    "x": 66,
    "y": 32,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/52.webp",
+   "file": "mobili/46.webp",
    "rect": {
     "x": 4228,
-    "y": 2021,
+    "y": 2009,
     "w": 120,
-    "h": 83
+    "h": 95
    },
    "fiamme": []
   },
   {
-   "k": 53,
+   "k": 47,
    "tipo": "cassa",
-   "x": 49,
-   "y": 40,
-   "w": 2,
-   "h": 2,
+   "x": 46,
+   "y": 41,
+   "w": 1,
+   "h": 3,
    "extra": false,
-   "file": "mobili/53.webp",
+   "file": "mobili/47.webp",
    "rect": {
-    "x": 3142,
-    "y": 2519,
-    "w": 117,
-    "h": 158
+    "x": 2947,
+    "y": 2579,
+    "w": 59,
+    "h": 231
    },
    "fiamme": []
   },
   {
-   "k": 54,
+   "k": 48,
    "tipo": "cassa",
-   "x": 56,
-   "y": 42,
+   "x": 55,
+   "y": 38,
    "w": 3,
-   "h": 2,
+   "h": 1,
    "extra": false,
-   "file": "mobili/54.webp",
+   "file": "mobili/48.webp",
    "rect": {
-    "x": 3588,
-    "y": 2642,
+    "x": 3524,
+    "y": 2366,
     "w": 185,
-    "h": 167
+    "h": 126
    },
    "fiamme": [
     [
-     56.28,
-     41.6,
+     55.26,
+     37.67,
      1.0
     ]
    ]
   },
   {
-   "k": 55,
+   "k": 49,
    "tipo": "cassa",
-   "x": 60,
-   "y": 40,
+   "x": 64,
+   "y": 41,
    "w": 2,
-   "h": 2,
+   "h": 1,
    "extra": false,
-   "file": "mobili/55.webp",
+   "file": "mobili/49.webp",
    "rect": {
-    "x": 3846,
-    "y": 2524,
-    "w": 117,
-    "h": 154
+    "x": 4101,
+    "y": 2571,
+    "w": 119,
+    "h": 111
    },
    "fiamme": [
     [
-     60.54,
-     40.06,
+     64.38,
+     40.56,
      1.0
     ]
    ]
   },
   {
-   "k": 56,
-   "tipo": "botte",
-   "x": 63,
-   "y": 42,
-   "w": 2,
-   "h": 2,
-   "extra": false,
-   "file": "mobili/56.webp",
-   "rect": {
-    "x": 4036,
-    "y": 2637,
-    "w": 120,
-    "h": 169
-   },
-   "fiamme": []
-  },
-  {
-   "k": 57,
+   "k": 50,
    "tipo": "tavolino",
-   "x": 12,
-   "y": 5,
+   "x": 7,
+   "y": 2,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/57.webp",
+   "file": "mobili/50.webp",
    "rect": {
-    "x": 773,
-    "y": 270,
+    "x": 453,
+    "y": 78,
     "w": 54,
     "h": 101
    },
    "fiamme": [
     [
-     12.3,
-     4.42,
+     7.3,
+     1.42,
      1.0
     ]
    ]
   },
   {
-   "k": 58,
-   "tipo": "sedia",
-   "x": 13,
-   "y": 5,
+   "k": 51,
+   "tipo": "libri",
+   "x": 8,
+   "y": 2,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/58.webp",
+   "file": "mobili/51.webp",
    "rect": {
-    "x": 840,
-    "y": 283,
-    "w": 48,
-    "h": 86
+    "x": 515,
+    "y": 100,
+    "w": 53,
+    "h": 82
    },
    "fiamme": []
   },
   {
-   "k": 59,
+   "k": 52,
    "tipo": "scrittoio",
    "x": 13,
-   "y": 8,
+   "y": 5,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/59.webp",
+   "file": "mobili/52.webp",
    "rect": {
     "x": 834,
-    "y": 453,
+    "y": 261,
     "w": 124,
     "h": 100
    },
    "fiamme": [
     [
      14.76,
-     7.29,
+     4.29,
      1.0
     ]
    ]
   },
   {
-   "k": 60,
+   "k": 53,
    "tipo": "sedia",
-   "x": 13,
-   "y": 9,
+   "x": 12,
+   "y": 5,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/60.webp",
+   "file": "mobili/53.webp",
    "rect": {
-    "x": 848,
-    "y": 555,
-    "w": 32,
-    "h": 66
+    "x": 777,
+    "y": 268,
+    "w": 46,
+    "h": 102
    },
    "fiamme": []
   },
   {
-   "k": 61,
+   "k": 54,
    "tipo": "mappamondo",
    "x": 3,
    "y": 10,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/61.webp",
+   "file": "mobili/54.webp",
    "rect": {
     "x": 198,
     "y": 598,
     "w": 52,
-    "h": 93
+    "h": 92
    },
    "fiamme": []
   },
   {
-   "k": 62,
+   "k": 55,
    "tipo": "libri",
    "x": 3,
    "y": 7,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/62.webp",
+   "file": "mobili/55.webp",
    "rect": {
     "x": 199,
     "y": 414,
@@ -1760,14 +1651,14 @@
    "fiamme": []
   },
   {
-   "k": 63,
+   "k": 56,
    "tipo": "scala",
    "x": 11,
    "y": 8,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/63.webp",
+   "file": "mobili/56.webp",
    "rect": {
     "x": 717,
     "y": 415,
@@ -1777,42 +1668,42 @@
    "fiamme": []
   },
   {
-   "k": 64,
+   "k": 57,
    "tipo": "tavolo_mappe",
-   "x": 7,
-   "y": 9,
+   "x": 4,
+   "y": 10,
    "w": 3,
    "h": 1,
    "extra": false,
-   "file": "mobili/64.webp",
+   "file": "mobili/57.webp",
    "rect": {
-    "x": 447,
-    "y": 511,
+    "x": 255,
+    "y": 575,
     "w": 194,
-    "h": 124
+    "h": 114
    },
    "fiamme": [
     [
-     8.1,
-     8.09,
+     5.1,
+     9.09,
      1.0
     ],
     [
-     9.2,
-     8.01,
+     6.2,
+     9.01,
      1.0
     ]
    ]
   },
   {
-   "k": 65,
+   "k": 58,
    "tipo": "rotoli",
    "x": 3,
    "y": 8,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/65.webp",
+   "file": "mobili/58.webp",
    "rect": {
     "x": 206,
     "y": 468,
@@ -1822,14 +1713,14 @@
    "fiamme": []
   },
   {
-   "k": 66,
+   "k": 59,
    "tipo": "statua",
    "x": 3,
    "y": 9,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/66.webp",
+   "file": "mobili/59.webp",
    "rect": {
     "x": 204,
     "y": 523,
@@ -1839,82 +1730,31 @@
    "fiamme": []
   },
   {
-   "k": 67,
-   "tipo": "libri",
-   "x": 14,
-   "y": 9,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/67.webp",
-   "rect": {
-    "x": 899,
-    "y": 549,
-    "w": 53,
-    "h": 82
-   },
-   "fiamme": []
-  },
-  {
-   "k": 68,
-   "tipo": "sedia",
-   "x": 32,
-   "y": 9,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/68.webp",
-   "rect": {
-    "x": 2055,
-    "y": 573,
-    "w": 50,
-    "h": 66
-   },
-   "fiamme": []
-  },
-  {
-   "k": 69,
+   "k": 60,
    "tipo": "sedia",
    "x": 31,
-   "y": 5,
+   "y": 11,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/69.webp",
+   "file": "mobili/60.webp",
    "rect": {
-    "x": 1998,
-    "y": 285,
-    "w": 36,
-    "h": 82
+    "x": 1991,
+    "y": 701,
+    "w": 50,
+    "h": 53
    },
    "fiamme": []
   },
   {
-   "k": 70,
-   "tipo": "sedia",
-   "x": 38,
-   "y": 9,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/70.webp",
-   "rect": {
-    "x": 2444,
-    "y": 547,
-    "w": 41,
-    "h": 75
-   },
-   "fiamme": []
-  },
-  {
-   "k": 71,
+   "k": 61,
    "tipo": "sedia",
    "x": 34,
    "y": 2,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/71.webp",
+   "file": "mobili/61.webp",
    "rect": {
     "x": 2192,
     "y": 78,
@@ -1924,14 +1764,14 @@
    "fiamme": []
   },
   {
-   "k": 72,
+   "k": 62,
    "tipo": "leggio",
    "x": 37,
    "y": 2,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/72.webp",
+   "file": "mobili/62.webp",
    "rect": {
     "x": 2385,
     "y": 81,
@@ -1941,14 +1781,14 @@
    "fiamme": []
   },
   {
-   "k": 73,
+   "k": 63,
    "tipo": "sedia",
    "x": 38,
    "y": 2,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/73.webp",
+   "file": "mobili/63.webp",
    "rect": {
     "x": 2444,
     "y": 78,
@@ -1958,77 +1798,48 @@
    "fiamme": []
   },
   {
-   "k": 74,
-   "tipo": "credenza",
-   "x": 28,
-   "y": 3,
+   "k": 64,
+   "tipo": "vaso",
+   "x": 40,
+   "y": 2,
    "w": 1,
-   "h": 2,
+   "h": 1,
    "extra": false,
-   "file": "mobili/74.webp",
+   "file": "mobili/64.webp",
    "rect": {
-    "x": 1797,
-    "y": 131,
-    "w": 54,
-    "h": 172
+    "x": 2554,
+    "y": 73,
+    "w": 70,
+    "h": 92
    },
-   "fiamme": [
-    [
-     28.52,
-     2.732,
-     1.25
-    ]
-   ]
+   "fiamme": []
   },
   {
-   "k": 75,
-   "tipo": "credenza",
-   "x": 41,
-   "y": 3,
-   "w": 1,
-   "h": 2,
-   "extra": false,
-   "file": "mobili/75.webp",
-   "rect": {
-    "x": 2629,
-    "y": 131,
-    "w": 54,
-    "h": 172
-   },
-   "fiamme": [
-    [
-     41.52,
-     2.732,
-     1.25
-    ]
-   ]
-  },
-  {
-   "k": 76,
+   "k": 65,
    "tipo": "vaso",
    "x": 26,
    "y": 5,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/76.webp",
+   "file": "mobili/65.webp",
    "rect": {
     "x": 1676,
     "y": 261,
     "w": 37,
-    "h": 105
+    "h": 104
    },
    "fiamme": []
   },
   {
-   "k": 77,
+   "k": 66,
    "tipo": "vaso",
    "x": 43,
    "y": 5,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/77.webp",
+   "file": "mobili/66.webp",
    "rect": {
     "x": 2763,
     "y": 253,
@@ -2038,14 +1849,14 @@
    "fiamme": []
   },
   {
-   "k": 78,
+   "k": 67,
    "tipo": "vaso",
    "x": 26,
    "y": 9,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/78.webp",
+   "file": "mobili/67.webp",
    "rect": {
     "x": 1658,
     "y": 521,
@@ -2055,14 +1866,14 @@
    "fiamme": []
   },
   {
-   "k": 79,
+   "k": 68,
    "tipo": "vaso",
    "x": 43,
    "y": 9,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/79.webp",
+   "file": "mobili/68.webp",
    "rect": {
     "x": 2746,
     "y": 521,
@@ -2072,48 +1883,48 @@
    "fiamme": []
   },
   {
-   "k": 80,
+   "k": 69,
    "tipo": "statua",
-   "x": 28,
+   "x": 33,
    "y": 11,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/80.webp",
+   "file": "mobili/69.webp",
    "rect": {
-    "x": 1802,
+    "x": 2122,
     "y": 634,
-    "w": 44,
-    "h": 122
+    "w": 43,
+    "h": 120
    },
    "fiamme": []
   },
   {
-   "k": 81,
+   "k": 70,
    "tipo": "statua",
-   "x": 41,
+   "x": 38,
    "y": 11,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/81.webp",
+   "file": "mobili/70.webp",
    "rect": {
-    "x": 2634,
+    "x": 2443,
     "y": 635,
-    "w": 44,
-    "h": 121
+    "w": 43,
+    "h": 119
    },
    "fiamme": []
   },
   {
-   "k": 82,
+   "k": 71,
    "tipo": "tavolino",
    "x": 27,
    "y": 5,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/82.webp",
+   "file": "mobili/71.webp",
    "rect": {
     "x": 1738,
     "y": 275,
@@ -2123,14 +1934,14 @@
    "fiamme": []
   },
   {
-   "k": 83,
+   "k": 72,
    "tipo": "tavolino",
    "x": 42,
    "y": 5,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/83.webp",
+   "file": "mobili/72.webp",
    "rect": {
     "x": 2698,
     "y": 276,
@@ -2140,19 +1951,19 @@
    "fiamme": []
   },
   {
-   "k": 84,
+   "k": 73,
    "tipo": "tavolino",
    "x": 27,
    "y": 9,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/84.webp",
+   "file": "mobili/73.webp",
    "rect": {
     "x": 1738,
     "y": 522,
     "w": 44,
-    "h": 105
+    "h": 103
    },
    "fiamme": [
     [
@@ -2163,19 +1974,19 @@
    ]
   },
   {
-   "k": 85,
+   "k": 74,
    "tipo": "tavolino",
    "x": 42,
    "y": 9,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/85.webp",
+   "file": "mobili/74.webp",
    "rect": {
     "x": 2698,
     "y": 522,
     "w": 44,
-    "h": 105
+    "h": 103
    },
    "fiamme": [
     [
@@ -2186,19 +1997,19 @@
    ]
   },
   {
-   "k": 86,
+   "k": 75,
    "tipo": "banco_attrezzi",
    "x": 56,
    "y": 9,
    "w": 3,
    "h": 1,
    "extra": false,
-   "file": "mobili/86.webp",
+   "file": "mobili/75.webp",
    "rect": {
     "x": 3585,
     "y": 516,
     "w": 190,
-    "h": 112
+    "h": 110
    },
    "fiamme": [
     [
@@ -2209,31 +2020,31 @@
    ]
   },
   {
-   "k": 87,
+   "k": 76,
    "tipo": "armadio",
-   "x": 62,
-   "y": 9,
-   "w": 2,
-   "h": 1,
+   "x": 64,
+   "y": 5,
+   "w": 1,
+   "h": 2,
    "extra": false,
-   "file": "mobili/87.webp",
+   "file": "mobili/76.webp",
    "rect": {
-    "x": 3972,
-    "y": 517,
-    "w": 120,
-    "h": 111
+    "x": 4101,
+    "y": 267,
+    "w": 54,
+    "h": 176
    },
    "fiamme": []
   },
   {
-   "k": 88,
+   "k": 77,
    "tipo": "cassa",
    "x": 57,
    "y": 3,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/88.webp",
+   "file": "mobili/77.webp",
    "rect": {
     "x": 3650,
     "y": 172,
@@ -2243,65 +2054,48 @@
    "fiamme": []
   },
   {
-   "k": 89,
+   "k": 78,
    "tipo": "regolatore",
-   "x": 56,
-   "y": 4,
+   "x": 63,
+   "y": 3,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/89.webp",
+   "file": "mobili/78.webp",
    "rect": {
-    "x": 3586,
-    "y": 127,
+    "x": 4034,
+    "y": 63,
     "w": 60,
     "h": 189
    },
    "fiamme": []
   },
   {
-   "k": 90,
+   "k": 79,
    "tipo": "contrappesi",
-   "x": 63,
-   "y": 3,
+   "x": 64,
+   "y": 4,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/90.webp",
+   "file": "mobili/79.webp",
    "rect": {
-    "x": 4035,
-    "y": 158,
+    "x": 4099,
+    "y": 222,
     "w": 58,
     "h": 93
    },
    "fiamme": []
   },
   {
-   "k": 91,
-   "tipo": "sgabello",
-   "x": 57,
-   "y": 8,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/91.webp",
-   "rect": {
-    "x": 3657,
-    "y": 493,
-    "w": 46,
-    "h": 40
-   },
-   "fiamme": []
-  },
-  {
-   "k": 92,
+   "k": 80,
    "tipo": "campana",
    "x": 29,
    "y": 18,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/92.webp",
+   "file": "mobili/80.webp",
    "rect": {
     "x": 1857,
     "y": 1071,
@@ -2311,19 +2105,19 @@
    "fiamme": []
   },
   {
-   "k": 93,
+   "k": 81,
    "tipo": "lampione",
    "x": 29,
    "y": 28,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/93.webp",
+   "file": "mobili/81.webp",
    "rect": {
     "x": 1887,
     "y": 1673,
     "w": 34,
-    "h": 171
+    "h": 170
    },
    "fiamme": [
     [
@@ -2334,14 +2128,14 @@
    ]
   },
   {
-   "k": 94,
+   "k": 82,
    "tipo": "lampione",
    "x": 42,
    "y": 28,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/94.webp",
+   "file": "mobili/82.webp",
    "rect": {
     "x": 2687,
     "y": 1673,
@@ -2357,14 +2151,14 @@
    ]
   },
   {
-   "k": 95,
+   "k": 83,
    "tipo": "fioriera",
    "x": 31,
    "y": 18,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/95.webp",
+   "file": "mobili/83.webp",
    "rect": {
     "x": 1982,
     "y": 1116,
@@ -2374,14 +2168,14 @@
    "fiamme": []
   },
   {
-   "k": 96,
+   "k": 84,
    "tipo": "fioriera",
    "x": 39,
    "y": 18,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/96.webp",
+   "file": "mobili/84.webp",
    "rect": {
     "x": 2493,
     "y": 1116,
@@ -2391,65 +2185,65 @@
    "fiamme": []
   },
   {
-   "k": 97,
+   "k": 85,
    "tipo": "statua",
    "x": 27,
-   "y": 24,
+   "y": 22,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/97.webp",
+   "file": "mobili/85.webp",
    "rect": {
     "x": 1736,
-    "y": 1465,
+    "y": 1337,
     "w": 49,
     "h": 127
    },
    "fiamme": []
   },
   {
-   "k": 98,
+   "k": 86,
    "tipo": "statua",
    "x": 44,
-   "y": 24,
+   "y": 22,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/98.webp",
+   "file": "mobili/86.webp",
    "rect": {
     "x": 2824,
-    "y": 1463,
+    "y": 1335,
     "w": 48,
     "h": 129
    },
    "fiamme": []
   },
   {
-   "k": 99,
+   "k": 87,
    "tipo": "vaso",
    "x": 27,
    "y": 18,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/99.webp",
+   "file": "mobili/87.webp",
    "rect": {
     "x": 1740,
     "y": 1113,
     "w": 42,
-    "h": 83
+    "h": 82
    },
    "fiamme": []
   },
   {
-   "k": 100,
+   "k": 88,
    "tipo": "vaso",
    "x": 44,
    "y": 18,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/100.webp",
+   "file": "mobili/88.webp",
    "rect": {
     "x": 2825,
     "y": 1112,
@@ -2459,48 +2253,14 @@
    "fiamme": []
   },
   {
-   "k": 101,
-   "tipo": "vaso",
-   "x": 33,
-   "y": 18,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/101.webp",
-   "rect": {
-    "x": 2116,
-    "y": 1125,
-    "w": 56,
-    "h": 71
-   },
-   "fiamme": []
-  },
-  {
-   "k": 102,
-   "tipo": "vaso",
-   "x": 38,
-   "y": 18,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/102.webp",
-   "rect": {
-    "x": 2438,
-    "y": 1122,
-    "w": 54,
-    "h": 72
-   },
-   "fiamme": []
-  },
-  {
-   "k": 103,
+   "k": 89,
    "tipo": "cassa",
    "x": 42,
    "y": 18,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/103.webp",
+   "file": "mobili/89.webp",
    "rect": {
     "x": 2693,
     "y": 1129,
@@ -2510,14 +2270,14 @@
    "fiamme": []
   },
   {
-   "k": 104,
+   "k": 90,
    "tipo": "cesto",
    "x": 30,
    "y": 18,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/104.webp",
+   "file": "mobili/90.webp",
    "rect": {
     "x": 1922,
     "y": 1143,
@@ -2527,14 +2287,14 @@
    "fiamme": []
   },
   {
-   "k": 106,
+   "k": 92,
    "tipo": "botte",
    "x": 41,
    "y": 18,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/106.webp",
+   "file": "mobili/92.webp",
    "rect": {
     "x": 2628,
     "y": 1102,
@@ -2544,19 +2304,19 @@
    "fiamme": []
   },
   {
-   "k": 107,
+   "k": 93,
    "tipo": "tavolino",
    "x": 27,
    "y": 27,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/107.webp",
+   "file": "mobili/93.webp",
    "rect": {
     "x": 1724,
     "y": 1683,
     "w": 135,
-    "h": 97
+    "h": 95
    },
    "fiamme": [
     [
@@ -2567,19 +2327,19 @@
    ]
   },
   {
-   "k": 108,
+   "k": 94,
    "tipo": "tavolino",
    "x": 43,
    "y": 27,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/108.webp",
+   "file": "mobili/94.webp",
    "rect": {
     "x": 2748,
     "y": 1678,
     "w": 135,
-    "h": 102
+    "h": 100
    },
    "fiamme": [
     [
@@ -2590,31 +2350,31 @@
    ]
   },
   {
-   "k": 109,
+   "k": 95,
    "tipo": "sedia",
    "x": 29,
    "y": 27,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/109.webp",
+   "file": "mobili/95.webp",
    "rect": {
     "x": 1857,
     "y": 1674,
     "w": 38,
-    "h": 108
+    "h": 107
    },
    "fiamme": []
   },
   {
-   "k": 110,
+   "k": 96,
    "tipo": "sedia",
    "x": 42,
    "y": 27,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/110.webp",
+   "file": "mobili/96.webp",
    "rect": {
     "x": 2715,
     "y": 1700,
@@ -2624,14 +2384,14 @@
    "fiamme": []
   },
   {
-   "k": 111,
+   "k": 97,
    "tipo": "vaso",
    "x": 29,
    "y": 29,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/111.webp",
+   "file": "mobili/97.webp",
    "rect": {
     "x": 1869,
     "y": 1804,
@@ -2641,14 +2401,14 @@
    "fiamme": []
   },
   {
-   "k": 112,
+   "k": 98,
    "tipo": "vaso",
    "x": 42,
    "y": 29,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/112.webp",
+   "file": "mobili/98.webp",
    "rect": {
     "x": 2706,
     "y": 1799,
@@ -2658,48 +2418,48 @@
    "fiamme": []
   },
   {
-   "k": 113,
+   "k": 99,
    "tipo": "panca",
-   "x": 4,
+   "x": 3,
    "y": 16,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/113.webp",
+   "file": "mobili/99.webp",
    "rect": {
-    "x": 254,
+    "x": 190,
     "y": 986,
     "w": 132,
-    "h": 99
+    "h": 98
    },
    "fiamme": []
   },
   {
-   "k": 114,
+   "k": 100,
    "tipo": "panca",
-   "x": 8,
+   "x": 9,
    "y": 16,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/114.webp",
+   "file": "mobili/100.webp",
    "rect": {
-    "x": 510,
+    "x": 574,
     "y": 986,
-    "w": 132,
-    "h": 99
+    "w": 130,
+    "h": 98
    },
    "fiamme": []
   },
   {
-   "k": 115,
+   "k": 101,
    "tipo": "leggio",
    "x": 5,
    "y": 14,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/115.webp",
+   "file": "mobili/101.webp",
    "rect": {
     "x": 337,
     "y": 858,
@@ -2709,14 +2469,14 @@
    "fiamme": []
   },
   {
-   "k": 116,
+   "k": 102,
    "tipo": "vaso",
    "x": 8,
    "y": 14,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/116.webp",
+   "file": "mobili/102.webp",
    "rect": {
     "x": 514,
     "y": 855,
@@ -2797,48 +2557,48 @@
    ]
   },
   {
-   "k": 117,
+   "k": 103,
    "tipo": "vaso",
    "x": 10,
-   "y": 16,
+   "y": 19,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/117.webp",
+   "file": "mobili/103.webp",
    "rect": {
     "x": 652,
-    "y": 1000,
+    "y": 1191,
     "w": 40,
-    "h": 85
+    "h": 75
    },
    "fiamme": []
   },
   {
-   "k": 118,
+   "k": 104,
    "tipo": "statua",
    "x": 3,
    "y": 19,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/118.webp",
+   "file": "mobili/104.webp",
    "rect": {
     "x": 197,
-    "y": 1154,
+    "y": 1155,
     "w": 54,
-    "h": 114
+    "h": 111
    },
    "fiamme": []
   },
   {
-   "k": 119,
+   "k": 105,
    "tipo": "sgabello",
    "x": 4,
    "y": 15,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/119.webp",
+   "file": "mobili/105.webp",
    "rect": {
     "x": 261,
     "y": 924,
@@ -2848,14 +2608,14 @@
    "fiamme": []
   },
   {
-   "k": 120,
+   "k": 106,
    "tipo": "sgabello",
    "x": 9,
    "y": 15,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/120.webp",
+   "file": "mobili/106.webp",
    "rect": {
     "x": 581,
     "y": 924,
@@ -2865,82 +2625,65 @@
    "fiamme": []
   },
   {
-   "k": 122,
+   "k": 108,
    "tipo": "cassa",
    "x": 4,
    "y": 20,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/122.webp",
+   "file": "mobili/108.webp",
    "rect": {
     "x": 258,
     "y": 1253,
     "w": 60,
-    "h": 79
+    "h": 77
    },
    "fiamme": []
   },
   {
-   "k": 123,
+   "k": 109,
    "tipo": "sgabello",
    "x": 3,
    "y": 25,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/123.webp",
+   "file": "mobili/109.webp",
    "rect": {
     "x": 199,
     "y": 1581,
     "w": 46,
-    "h": 73
+    "h": 72
    },
    "fiamme": []
   },
   {
-   "k": 124,
+   "k": 110,
    "tipo": "sedia",
-   "x": 8,
-   "y": 26,
+   "x": 10,
+   "y": 25,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/124.webp",
+   "file": "mobili/110.webp",
    "rect": {
-    "x": 520,
-    "y": 1625,
-    "w": 48,
-    "h": 88
+    "x": 648,
+    "y": 1544,
+    "w": 47,
+    "h": 110
    },
    "fiamme": []
   },
   {
-   "k": 125,
-   "tipo": "sedia",
-   "x": 9,
-   "y": 28,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/125.webp",
-   "rect": {
-    "x": 584,
-    "y": 1753,
-    "w": 48,
-    "h": 88
-   },
-   "fiamme": []
-  },
-  {
-   "k": 126,
+   "k": 111,
    "tipo": "leggio",
    "x": 9,
    "y": 29,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/126.webp",
+   "file": "mobili/111.webp",
    "rect": {
     "x": 589,
     "y": 1796,
@@ -2950,71 +2693,48 @@
    "fiamme": []
   },
   {
-   "k": 127,
+   "k": 112,
    "tipo": "leggio",
-   "x": 3,
+   "x": 1,
    "y": 27,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/127.webp",
+   "file": "mobili/112.webp",
    "rect": {
-    "x": 205,
+    "x": 78,
     "y": 1668,
-    "w": 38,
-    "h": 109
+    "w": 36,
+    "h": 102
    },
    "fiamme": []
   },
   {
-   "k": 128,
+   "k": 113,
    "tipo": "divano",
    "x": 5,
    "y": 29,
    "w": 3,
    "h": 1,
    "extra": false,
-   "file": "mobili/128.webp",
+   "file": "mobili/113.webp",
    "rect": {
     "x": 322,
     "y": 1835,
     "w": 188,
-    "h": 73
+    "h": 71
    },
    "fiamme": []
   },
   {
-   "k": 129,
-   "tipo": "credenza",
-   "x": 4,
-   "y": 24,
-   "w": 3,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/129.webp",
-   "rect": {
-    "x": 258,
-    "y": 1478,
-    "w": 188,
-    "h": 109
-   },
-   "fiamme": [
-    [
-     5.66,
-     23.214,
-     1.0
-    ]
-   ]
-  },
-  {
-   "k": 130,
+   "k": 114,
    "tipo": "credenza",
    "x": 1,
    "y": 25,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/130.webp",
+   "file": "mobili/114.webp",
    "rect": {
     "x": 66,
     "y": 1547,
@@ -3030,14 +2750,14 @@
    ]
   },
   {
-   "k": 131,
+   "k": 115,
    "tipo": "violoncello",
    "x": 9,
    "y": 24,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/131.webp",
+   "file": "mobili/115.webp",
    "rect": {
     "x": 588,
     "y": 1455,
@@ -3047,42 +2767,42 @@
    "fiamme": []
   },
   {
-   "k": 132,
+   "k": 116,
    "tipo": "tavolo_basso",
-   "x": 5,
+   "x": 1,
    "y": 28,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/132.webp",
+   "file": "mobili/116.webp",
    "rect": {
-    "x": 321,
+    "x": 65,
     "y": 1768,
     "w": 126,
-    "h": 70
+    "h": 74
    },
    "fiamme": [
     [
-     5.34,
+     1.34,
      27.65,
      1.0
     ]
    ]
   },
   {
-   "k": 133,
+   "k": 117,
    "tipo": "tavolino",
    "x": 8,
    "y": 29,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/133.webp",
+   "file": "mobili/117.webp",
    "rect": {
     "x": 518,
     "y": 1812,
     "w": 52,
-    "h": 96
+    "h": 93
    },
    "fiamme": [
     [
@@ -3093,14 +2813,14 @@
    ]
   },
   {
-   "k": 135,
+   "k": 119,
    "tipo": "credenza",
    "x": 7,
    "y": 24,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/135.webp",
+   "file": "mobili/119.webp",
    "rect": {
     "x": 447,
     "y": 1479,
@@ -3116,105 +2836,105 @@
    ]
   },
   {
-   "k": 136,
+   "k": 120,
    "tipo": "sgabello",
-   "x": 22,
-   "y": 19,
+   "x": 16,
+   "y": 21,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/136.webp",
+   "file": "mobili/120.webp",
    "rect": {
-    "x": 1409,
-    "y": 1191,
-    "w": 58,
-    "h": 79
+    "x": 1032,
+    "y": 1319,
+    "w": 51,
+    "h": 73
    },
    "fiamme": []
   },
   {
-   "k": 137,
+   "k": 121,
    "tipo": "botte",
-   "x": 23,
-   "y": 15,
+   "x": 24,
+   "y": 16,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/137.webp",
+   "file": "mobili/121.webp",
    "rect": {
-    "x": 1477,
-    "y": 911,
-    "w": 53,
-    "h": 103
+    "x": 1540,
+    "y": 973,
+    "w": 56,
+    "h": 87
    },
    "fiamme": []
   },
   {
-   "k": 138,
+   "k": 122,
    "tipo": "tavolo_cucina",
-   "x": 18,
-   "y": 20,
+   "x": 16,
+   "y": 17,
    "w": 3,
    "h": 2,
    "extra": false,
-   "file": "mobili/138.webp",
+   "file": "mobili/122.webp",
    "rect": {
-    "x": 1152,
-    "y": 1230,
+    "x": 1024,
+    "y": 1038,
     "w": 192,
     "h": 171
    },
    "fiamme": [
     [
-     20.36,
-     19.626,
+     18.36,
+     16.626,
      1.0
     ]
    ]
   },
   {
-   "k": 139,
+   "k": 123,
    "tipo": "credenza",
    "x": 18,
    "y": 15,
    "w": 3,
    "h": 1,
    "extra": false,
-   "file": "mobili/139.webp",
+   "file": "mobili/123.webp",
    "rect": {
     "x": 1146,
     "y": 850,
     "w": 197,
-    "h": 166
+    "h": 167
    },
    "fiamme": []
   },
   {
-   "k": 140,
+   "k": 124,
    "tipo": "botte",
    "x": 24,
-   "y": 15,
+   "y": 17,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/140.webp",
+   "file": "mobili/124.webp",
    "rect": {
-    "x": 1540,
-    "y": 908,
-    "w": 56,
-    "h": 106
+    "x": 1541,
+    "y": 1040,
+    "w": 53,
+    "h": 102
    },
    "fiamme": []
   },
   {
-   "k": 141,
+   "k": 125,
    "tipo": "cesto",
    "x": 16,
    "y": 22,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/141.webp",
+   "file": "mobili/125.webp",
    "rect": {
     "x": 1028,
     "y": 1377,
@@ -3224,14 +2944,14 @@
    "fiamme": []
   },
   {
-   "k": 142,
+   "k": 126,
    "tipo": "cesto",
    "x": 16,
    "y": 23,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/142.webp",
+   "file": "mobili/126.webp",
    "rect": {
     "x": 1028,
     "y": 1442,
@@ -3241,59 +2961,53 @@
    "fiamme": []
   },
   {
-   "k": 143,
+   "k": 127,
    "tipo": "legna",
-   "x": 23,
-   "y": 21,
+   "x": 24,
+   "y": 22,
    "w": 1,
    "h": 2,
    "extra": false,
-   "file": "mobili/143.webp",
+   "file": "mobili/127.webp",
    "rect": {
-    "x": 1474,
-    "y": 1309,
+    "x": 1538,
+    "y": 1373,
     "w": 59,
-    "h": 157
+    "h": 144
    },
    "fiamme": []
   },
   {
-   "k": 144,
+   "k": 128,
    "tipo": "cesto",
-   "x": 16,
-   "y": 17,
+   "x": 18,
+   "y": 16,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/144.webp",
+   "file": "mobili/128.webp",
    "rect": {
-    "x": 1030,
-    "y": 1051,
-    "w": 55,
-    "h": 92
+    "x": 1158,
+    "y": 988,
+    "w": 50,
+    "h": 56
    },
-   "fiamme": [
-    [
-     16.34,
-     16.525,
-     1.0
-    ]
-   ]
+   "fiamme": []
   },
   {
-   "k": 145,
+   "k": 129,
    "tipo": "botte",
    "x": 12,
    "y": 44,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/145.webp",
+   "file": "mobili/129.webp",
    "rect": {
     "x": 773,
     "y": 2771,
     "w": 54,
-    "h": 97
+    "h": 95
    },
    "fiamme": [
     [
@@ -3304,14 +3018,14 @@
    ]
   },
   {
-   "k": 146,
+   "k": 130,
    "tipo": "cassa",
    "x": 6,
    "y": 38,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/146.webp",
+   "file": "mobili/130.webp",
    "rect": {
     "x": 384,
     "y": 2366,
@@ -3327,14 +3041,14 @@
    ]
   },
   {
-   "k": 147,
+   "k": 131,
    "tipo": "cassa",
    "x": 5,
    "y": 36,
    "w": 1,
    "h": 2,
    "extra": false,
-   "file": "mobili/147.webp",
+   "file": "mobili/131.webp",
    "rect": {
     "x": 325,
     "y": 2268,
@@ -3350,37 +3064,37 @@
    ]
   },
   {
-   "k": 148,
+   "k": 132,
    "tipo": "cassa",
    "x": 9,
    "y": 36,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/148.webp",
+   "file": "mobili/132.webp",
    "rect": {
-    "x": 579,
-    "y": 2270,
-    "w": 122,
-    "h": 91
+    "x": 576,
+    "y": 2245,
+    "w": 128,
+    "h": 118
    },
    "fiamme": [
     [
-     10.72,
-     36.146,
+     10.76,
+     35.497,
      1.0
     ]
    ]
   },
   {
-   "k": 149,
+   "k": 133,
    "tipo": "bottiglie",
    "x": 14,
    "y": 37,
    "w": 1,
    "h": 2,
    "extra": false,
-   "file": "mobili/149.webp",
+   "file": "mobili/133.webp",
    "rect": {
     "x": 899,
     "y": 2287,
@@ -3396,14 +3110,14 @@
    ]
   },
   {
-   "k": 150,
+   "k": 134,
    "tipo": "botti",
    "x": 3,
    "y": 38,
    "w": 1,
    "h": 2,
    "extra": false,
-   "file": "mobili/150.webp",
+   "file": "mobili/134.webp",
    "rect": {
     "x": 196,
     "y": 2387,
@@ -3413,37 +3127,37 @@
    "fiamme": []
   },
   {
-   "k": 151,
+   "k": 135,
    "tipo": "tavolino",
-   "x": 9,
-   "y": 39,
+   "x": 6,
+   "y": 36,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/151.webp",
+   "file": "mobili/135.webp",
    "rect": {
-    "x": 580,
-    "y": 2435,
+    "x": 388,
+    "y": 2243,
     "w": 55,
     "h": 116
    },
    "fiamme": [
     [
-     9.26,
-     38.396,
+     6.26,
+     35.396,
      1.0
     ]
    ]
   },
   {
-   "k": 152,
+   "k": 136,
    "tipo": "volante",
    "x": 9,
    "y": 44,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/152.webp",
+   "file": "mobili/136.webp",
    "rect": {
     "x": 577,
     "y": 2745,
@@ -3453,70 +3167,14 @@
    "fiamme": []
   },
   {
-   "k": 153,
-   "tipo": "pilastro",
-   "x": 7,
-   "y": 41,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/153.webp",
-   "rect": {
-    "x": 449,
-    "y": 2549,
-    "w": 62,
-    "h": 137
-   },
-   "fiamme": [
-    [
-     7.5,
-     41.176,
-     1.0
-    ],
-    [
-     7.34,
-     40.306,
-     1.0
-    ]
-   ]
-  },
-  {
-   "k": 154,
-   "tipo": "pilastro",
-   "x": 12,
-   "y": 41,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/154.webp",
-   "rect": {
-    "x": 769,
-    "y": 2549,
-    "w": 62,
-    "h": 137
-   },
-   "fiamme": [
-    [
-     12.5,
-     41.176,
-     1.0
-    ],
-    [
-     12.34,
-     40.306,
-     1.0
-    ]
-   ]
-  },
-  {
-   "k": 155,
+   "k": 137,
    "tipo": "botti",
    "x": 14,
    "y": 42,
    "w": 1,
    "h": 2,
    "extra": false,
-   "file": "mobili/155.webp",
+   "file": "mobili/137.webp",
    "rect": {
     "x": 900,
     "y": 2643,
@@ -3526,59 +3184,36 @@
    "fiamme": []
   },
   {
-   "k": 156,
-   "tipo": "cassa",
-   "x": 10,
-   "y": 39,
-   "w": 2,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/156.webp",
-   "rect": {
-    "x": 640,
-    "y": 2437,
-    "w": 128,
-    "h": 118
-   },
-   "fiamme": [
-    [
-     11.76,
-     38.497,
-     1.0
-    ]
-   ]
-  },
-  {
-   "k": 157,
+   "k": 138,
    "tipo": "cassa",
    "x": 14,
    "y": 39,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/157.webp",
+   "file": "mobili/138.webp",
    "rect": {
     "x": 897,
     "y": 2424,
     "w": 55,
-    "h": 132
+    "h": 131
    },
    "fiamme": []
   },
   {
-   "k": 158,
+   "k": 139,
    "tipo": "cassa",
    "x": 14,
    "y": 44,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/158.webp",
+   "file": "mobili/139.webp",
    "rect": {
     "x": 899,
     "y": 2773,
     "w": 58,
-    "h": 95
+    "h": 93
    },
    "fiamme": [
     [
@@ -3589,14 +3224,14 @@
    ]
   },
   {
-   "k": 159,
+   "k": 140,
    "tipo": "cassa",
    "x": 14,
    "y": 36,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/159.webp",
+   "file": "mobili/140.webp",
    "rect": {
     "x": 905,
     "y": 2272,
@@ -3606,59 +3241,59 @@
    "fiamme": []
   },
   {
-   "k": 160,
+   "k": 141,
    "tipo": "botti",
    "x": 3,
-   "y": 42,
+   "y": 43,
    "w": 1,
    "h": 2,
    "extra": false,
-   "file": "mobili/160.webp",
+   "file": "mobili/141.webp",
    "rect": {
     "x": 196,
-    "y": 2643,
+    "y": 2707,
     "w": 56,
     "h": 159
    },
    "fiamme": []
   },
   {
-   "k": 161,
+   "k": 142,
    "tipo": "cassa",
-   "x": 3,
-   "y": 44,
+   "x": 5,
+   "y": 45,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/161.webp",
+   "file": "mobili/142.webp",
    "rect": {
-    "x": 196,
-    "y": 2784,
-    "w": 55,
-    "h": 84
+    "x": 324,
+    "y": 2848,
+    "w": 54,
+    "h": 81
    },
    "fiamme": [
     [
-     3.54,
-     43.726,
+     5.54,
+     44.726,
      1.0
     ]
    ]
   },
   {
-   "k": 162,
+   "k": 143,
    "tipo": "cassa",
    "x": 5,
    "y": 46,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/162.webp",
+   "file": "mobili/143.webp",
    "rect": {
     "x": 323,
     "y": 2916,
     "w": 58,
-    "h": 80
+    "h": 78
    },
    "fiamme": [
     [
@@ -3669,14 +3304,14 @@
    ]
   },
   {
-   "k": 163,
+   "k": 144,
    "tipo": "quadro_luci",
    "x": 23,
    "y": 42,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/163.webp",
+   "file": "mobili/144.webp",
    "rect": {
     "x": 1474,
     "y": 2617,
@@ -3692,31 +3327,31 @@
    ]
   },
   {
-   "k": 164,
+   "k": 145,
    "tipo": "cesto",
-   "x": 17,
-   "y": 42,
+   "x": 19,
+   "y": 43,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/164.webp",
+   "file": "mobili/145.webp",
    "rect": {
-    "x": 1091,
-    "y": 2657,
-    "w": 57,
-    "h": 52
+    "x": 1219,
+    "y": 2723,
+    "w": 56,
+    "h": 78
    },
    "fiamme": []
   },
   {
-   "k": 165,
+   "k": 146,
    "tipo": "cesto",
    "x": 19,
    "y": 38,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/165.webp",
+   "file": "mobili/146.webp",
    "rect": {
     "x": 1219,
     "y": 2405,
@@ -3726,14 +3361,14 @@
    "fiamme": []
   },
   {
-   "k": 166,
+   "k": 147,
    "tipo": "stufa",
    "x": 24,
    "y": 41,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/166.webp",
+   "file": "mobili/147.webp",
    "rect": {
     "x": 1540,
     "y": 2533,
@@ -3743,14 +3378,14 @@
    "fiamme": []
   },
   {
-   "k": 167,
+   "k": 148,
    "tipo": "armadio",
    "x": 24,
    "y": 38,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/167.webp",
+   "file": "mobili/148.webp",
    "rect": {
     "x": 1535,
     "y": 2329,
@@ -3760,14 +3395,14 @@
    "fiamme": []
   },
   {
-   "k": 168,
+   "k": 149,
    "tipo": "lavatoio",
    "x": 17,
    "y": 39,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/168.webp",
+   "file": "mobili/149.webp",
    "rect": {
     "x": 1089,
     "y": 2422,
@@ -3777,19 +3412,19 @@
    "fiamme": []
   },
   {
-   "k": 169,
+   "k": 150,
    "tipo": "asse_stiro",
    "x": 17,
    "y": 43,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/169.webp",
+   "file": "mobili/150.webp",
    "rect": {
     "x": 1089,
-    "y": 2695,
+    "y": 2694,
     "w": 126,
-    "h": 109
+    "h": 108
    },
    "fiamme": [
     [
@@ -3800,31 +3435,31 @@
    ]
   },
   {
-   "k": 170,
+   "k": 151,
    "tipo": "cesto",
    "x": 19,
    "y": 39,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/170.webp",
+   "file": "mobili/151.webp",
    "rect": {
     "x": 1226,
     "y": 2450,
     "w": 44,
-    "h": 100
+    "h": 99
    },
    "fiamme": []
   },
   {
-   "k": 171,
+   "k": 152,
    "tipo": "cesto",
    "x": 24,
    "y": 42,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/171.webp",
+   "file": "mobili/152.webp",
    "rect": {
     "x": 1540,
     "y": 2651,
@@ -3834,14 +3469,14 @@
    "fiamme": []
   },
   {
-   "k": 172,
+   "k": 153,
    "tipo": "cesto",
    "x": 19,
    "y": 44,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/172.webp",
+   "file": "mobili/153.webp",
    "rect": {
     "x": 1220,
     "y": 2771,
@@ -3851,14 +3486,14 @@
    "fiamme": []
   },
   {
-   "k": 173,
+   "k": 154,
    "tipo": "cesto",
    "x": 22,
    "y": 44,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/173.webp",
+   "file": "mobili/154.webp",
    "rect": {
     "x": 1410,
     "y": 2777,
@@ -3868,48 +3503,31 @@
    "fiamme": []
   },
   {
-   "k": 174,
+   "k": 155,
    "tipo": "panca",
-   "x": 33,
+   "x": 31,
    "y": 40,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/174.webp",
+   "file": "mobili/155.webp",
    "rect": {
-    "x": 2114,
+    "x": 1986,
     "y": 2543,
     "w": 124,
-    "h": 67
+    "h": 66
    },
    "fiamme": []
   },
   {
-   "k": 175,
-   "tipo": "panca",
-   "x": 38,
-   "y": 40,
-   "w": 2,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/175.webp",
-   "rect": {
-    "x": 2434,
-    "y": 2545,
-    "w": 124,
-    "h": 65
-   },
-   "fiamme": []
-  },
-  {
-   "k": 176,
+   "k": 156,
    "tipo": "statua",
    "x": 28,
    "y": 37,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/176.webp",
+   "file": "mobili/156.webp",
    "rect": {
     "x": 1801,
     "y": 2307,
@@ -3919,14 +3537,14 @@
    "fiamme": []
   },
   {
-   "k": 177,
+   "k": 157,
    "tipo": "statua",
    "x": 41,
    "y": 37,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/177.webp",
+   "file": "mobili/157.webp",
    "rect": {
     "x": 2626,
     "y": 2306,
@@ -3936,14 +3554,14 @@
    "fiamme": []
   },
   {
-   "k": 178,
+   "k": 158,
    "tipo": "teca",
    "x": 34,
    "y": 38,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/178.webp",
+   "file": "mobili/158.webp",
    "rect": {
     "x": 2178,
     "y": 2338,
@@ -3953,48 +3571,48 @@
    "fiamme": []
   },
   {
-   "k": 179,
+   "k": 159,
    "tipo": "tele",
-   "x": 37,
+   "x": 39,
    "y": 40,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/179.webp",
+   "file": "mobili/159.webp",
    "rect": {
-    "x": 2371,
+    "x": 2499,
     "y": 2549,
     "w": 55,
-    "h": 63
+    "h": 61
    },
    "fiamme": []
   },
   {
-   "k": 180,
+   "k": 160,
    "tipo": "tavolino",
-   "x": 35,
+   "x": 38,
    "y": 40,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/180.webp",
+   "file": "mobili/160.webp",
    "rect": {
-    "x": 2242,
+    "x": 2434,
     "y": 2519,
     "w": 60,
-    "h": 93
+    "h": 91
    },
    "fiamme": []
   },
   {
-   "k": 181,
+   "k": 161,
    "tipo": "credenza",
    "x": 30,
    "y": 35,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/181.webp",
+   "file": "mobili/161.webp",
    "rect": {
     "x": 1921,
     "y": 2191,
@@ -4015,14 +3633,14 @@
    ]
   },
   {
-   "k": 182,
+   "k": 162,
    "tipo": "credenza",
    "x": 38,
    "y": 35,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/182.webp",
+   "file": "mobili/162.webp",
    "rect": {
     "x": 2433,
     "y": 2190,
@@ -4038,14 +3656,14 @@
    ]
   },
   {
-   "k": 183,
+   "k": 163,
    "tipo": "vaso",
    "x": 29,
    "y": 35,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/183.webp",
+   "file": "mobili/163.webp",
    "rect": {
     "x": 1868,
     "y": 2209,
@@ -4055,14 +3673,14 @@
    "fiamme": []
   },
   {
-   "k": 184,
+   "k": 164,
    "tipo": "vaso",
    "x": 40,
    "y": 35,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/184.webp",
+   "file": "mobili/164.webp",
    "rect": {
     "x": 2572,
     "y": 2208,
@@ -4072,65 +3690,31 @@
    "fiamme": []
   },
   {
-   "k": 185,
-   "tipo": "tele",
-   "x": 30,
-   "y": 40,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/185.webp",
-   "rect": {
-    "x": 1930,
-    "y": 2552,
-    "w": 52,
-    "h": 60
-   },
-   "fiamme": []
-  },
-  {
-   "k": 186,
+   "k": 165,
    "tipo": "tele",
    "x": 40,
    "y": 40,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/186.webp",
+   "file": "mobili/165.webp",
    "rect": {
     "x": 2562,
     "y": 2544,
     "w": 60,
-    "h": 68
+    "h": 66
    },
    "fiamme": []
   },
   {
-   "k": 187,
-   "tipo": "sedia",
-   "x": 50,
-   "y": 21,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/187.webp",
-   "rect": {
-    "x": 3213,
-    "y": 1317,
-    "w": 38,
-    "h": 78
-   },
-   "fiamme": []
-  },
-  {
-   "k": 188,
+   "k": 166,
    "tipo": "armadietto",
    "x": 54,
    "y": 19,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/188.webp",
+   "file": "mobili/166.webp",
    "rect": {
     "x": 3457,
     "y": 1132,
@@ -4140,196 +3724,116 @@
    "fiamme": []
   },
   {
-   "k": 189,
+   "k": 167,
    "tipo": "scrivania",
    "x": 50,
    "y": 23,
    "w": 3,
    "h": 1,
    "extra": false,
-   "file": "mobili/189.webp",
+   "file": "mobili/167.webp",
    "rect": {
     "x": 3199,
-    "y": 1415,
+    "y": 1402,
     "w": 194,
-    "h": 109
-   },
-   "fiamme": []
-  },
-  {
-   "k": 190,
-   "tipo": "schedario",
-   "x": 48,
-   "y": 22,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/190.webp",
-   "rect": {
-    "x": 3073,
-    "y": 1340,
-    "w": 62,
     "h": 120
    },
    "fiamme": []
   },
   {
-   "k": 191,
+   "k": 168,
+   "tipo": "schedario",
+   "x": 54,
+   "y": 23,
+   "w": 1,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/168.webp",
+   "rect": {
+    "x": 3457,
+    "y": 1404,
+    "w": 62,
+    "h": 118
+   },
+   "fiamme": []
+  },
+  {
+   "k": 169,
    "tipo": "cassa",
    "x": 49,
    "y": 23,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/191.webp",
+   "file": "mobili/169.webp",
    "rect": {
     "x": 3139,
     "y": 1447,
     "w": 58,
-    "h": 77
+    "h": 75
    },
    "fiamme": []
   },
   {
-   "k": 192,
+   "k": 170,
    "tipo": "cassa",
    "x": 53,
    "y": 23,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/192.webp",
+   "file": "mobili/170.webp",
    "rect": {
     "x": 3396,
     "y": 1425,
     "w": 56,
-    "h": 99
+    "h": 97
    },
    "fiamme": []
   },
   {
-   "k": 193,
+   "k": 171,
    "tipo": "panchina",
-   "x": 67,
-   "y": 23,
-   "w": 2,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/193.webp",
-   "rect": {
-    "x": 4290,
-    "y": 1433,
-    "w": 124,
-    "h": 91
-   },
-   "fiamme": []
-  },
-  {
-   "k": 194,
-   "tipo": "vaso",
-   "x": 59,
-   "y": 22,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/194.webp",
-   "rect": {
-    "x": 3776,
-    "y": 1332,
-    "w": 65,
-    "h": 116
-   },
-   "fiamme": [
-    [
-     59.92,
-     21.16,
-     0.85
-    ]
-   ]
-  },
-  {
-   "k": 195,
-   "tipo": "vaso",
-   "x": 59,
-   "y": 17,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/195.webp",
-   "rect": {
-    "x": 3788,
-    "y": 1008,
-    "w": 42,
-    "h": 122
-   },
-   "fiamme": []
-  },
-  {
-   "k": 196,
-   "tipo": "banco_serra",
-   "x": 59,
-   "y": 23,
-   "w": 2,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/196.webp",
-   "rect": {
-    "x": 3777,
-    "y": 1420,
-    "w": 125,
-    "h": 109
-   },
-   "fiamme": [
-    [
-     60.7,
-     22.68,
-     0.85
-    ]
-   ]
-  },
-  {
-   "k": 197,
-   "tipo": "vaso",
-   "x": 69,
-   "y": 18,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/197.webp",
-   "rect": {
-    "x": 4428,
-    "y": 1116,
-    "w": 46,
-    "h": 80
-   },
-   "fiamme": []
-  },
-  {
-   "k": 198,
-   "tipo": "vaso",
    "x": 69,
    "y": 21,
-   "w": 1,
+   "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/198.webp",
+   "file": "mobili/171.webp",
    "rect": {
-    "x": 4421,
-    "y": 1312,
-    "w": 64,
-    "h": 73
+    "x": 4418,
+    "y": 1305,
+    "w": 124,
+    "h": 89
    },
    "fiamme": []
   },
   {
-   "k": 199,
+   "k": 172,
+   "tipo": "fioriera",
+   "x": 69,
+   "y": 20,
+   "w": 2,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/172.webp",
+   "rect": {
+    "x": 4412,
+    "y": 1216,
+    "w": 144,
+    "h": 119
+   },
+   "fiamme": []
+  },
+  {
+   "k": 173,
    "tipo": "banco_serra",
    "x": 62,
    "y": 14,
    "w": 6,
    "h": 1,
    "extra": false,
-   "file": "mobili/199.webp",
+   "file": "mobili/173.webp",
    "rect": {
     "x": 3969,
     "y": 844,
@@ -4345,116 +3849,88 @@
    ]
   },
   {
-   "k": 200,
+   "k": 174,
+   "tipo": "banco_serra",
+   "x": 65,
+   "y": 24,
+   "w": 3,
+   "h": 1,
+   "extra": false,
+   "file": "mobili/174.webp",
+   "rect": {
+    "x": 4161,
+    "y": 1496,
+    "w": 189,
+    "h": 90
+   },
+   "fiamme": [
+    [
+     67.7,
+     23.68,
+     0.85
+    ]
+   ]
+  },
+  {
+   "k": 175,
    "tipo": "botte",
-   "x": 66,
-   "y": 22,
+   "x": 65,
+   "y": 23,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/200.webp",
+   "file": "mobili/175.webp",
    "rect": {
-    "x": 4227,
-    "y": 1358,
+    "x": 4163,
+    "y": 1422,
     "w": 57,
-    "h": 104
+    "h": 102
    },
    "fiamme": []
   },
   {
-   "k": 201,
-   "tipo": "cesto",
-   "x": 60,
-   "y": 24,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/201.webp",
-   "rect": {
-    "x": 3847,
-    "y": 1510,
-    "w": 50,
-    "h": 73
-   },
-   "fiamme": []
-  },
-  {
-   "k": 202,
-   "tipo": "vaso",
-   "x": 59,
-   "y": 24,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/202.webp",
-   "rect": {
-    "x": 3784,
-    "y": 1499,
-    "w": 52,
-    "h": 79
-   },
-   "fiamme": []
-  },
-  {
-   "k": 203,
+   "k": 176,
    "tipo": "cassa",
    "x": 58,
    "y": 22,
    "w": 1,
    "h": 2,
    "extra": false,
-   "file": "mobili/203.webp",
+   "file": "mobili/176.webp",
    "rect": {
     "x": 3715,
     "y": 1341,
     "w": 58,
-    "h": 183
+    "h": 181
    },
    "fiamme": []
   },
   {
-   "k": 204,
-   "tipo": "fioriera",
-   "x": 67,
-   "y": 22,
-   "w": 2,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/204.webp",
-   "rect": {
-    "x": 4289,
-    "y": 1344,
-    "w": 129,
-    "h": 119
-   },
-   "fiamme": []
-  },
-  {
-   "k": 205,
+   "k": 177,
    "tipo": "cesto",
-   "x": 67,
-   "y": 24,
+   "x": 59,
+   "y": 14,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/205.webp",
+   "file": "mobili/177.webp",
    "rect": {
-    "x": 4293,
-    "y": 1514,
+    "x": 3781,
+    "y": 874,
     "w": 65,
-    "h": 74
+    "h": 67
    },
    "fiamme": []
   },
   {
-   "k": 206,
+   "k": 178,
    "tipo": "vaso",
    "x": 69,
    "y": 17,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/206.webp",
+   "file": "mobili/178.webp",
    "rect": {
     "x": 4428,
     "y": 1016,
@@ -4464,65 +3940,31 @@
    "fiamme": []
   },
   {
-   "k": 207,
-   "tipo": "cesto",
-   "x": 70,
-   "y": 18,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/207.webp",
-   "rect": {
-    "x": 4490,
-    "y": 1126,
-    "w": 45,
-    "h": 72
-   },
-   "fiamme": []
-  },
-  {
-   "k": 208,
-   "tipo": "sedia",
-   "x": 61,
-   "y": 34,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/208.webp",
-   "rect": {
-    "x": 3913,
-    "y": 2122,
-    "w": 46,
-    "h": 75
-   },
-   "fiamme": []
-  },
-  {
-   "k": 209,
+   "k": 179,
    "tipo": "scrivania",
    "x": 60,
    "y": 35,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/209.webp",
+   "file": "mobili/179.webp",
    "rect": {
     "x": 3839,
-    "y": 2196,
+    "y": 2170,
     "w": 130,
-    "h": 96
+    "h": 119
    },
    "fiamme": []
   },
   {
-   "k": 210,
+   "k": 180,
    "tipo": "armadio",
    "x": 67,
    "y": 33,
    "w": 1,
    "h": 2,
    "extra": false,
-   "file": "mobili/210.webp",
+   "file": "mobili/180.webp",
    "rect": {
     "x": 4292,
     "y": 2045,
@@ -4532,48 +3974,48 @@
    "fiamme": []
   },
   {
-   "k": 211,
+   "k": 181,
    "tipo": "schedario",
-   "x": 60,
-   "y": 34,
+   "x": 65,
+   "y": 31,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/211.webp",
+   "file": "mobili/181.webp",
    "rect": {
-    "x": 3841,
-    "y": 2112,
+    "x": 4161,
+    "y": 1920,
     "w": 62,
-    "h": 85
+    "h": 122
    },
    "fiamme": []
   },
   {
-   "k": 212,
+   "k": 182,
    "tipo": "cassa",
    "x": 65,
    "y": 35,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/212.webp",
+   "file": "mobili/182.webp",
    "rect": {
     "x": 4161,
     "y": 2221,
     "w": 62,
-    "h": 71
+    "h": 69
    },
    "fiamme": []
   },
   {
-   "k": 219,
+   "k": 184,
    "tipo": "botti",
    "x": 51,
    "y": 38,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/219.webp",
+   "file": "mobili/184.webp",
    "rect": {
     "x": 3267,
     "y": 2377,
@@ -4583,31 +4025,31 @@
    "fiamme": []
   },
   {
-   "k": 220,
+   "k": 185,
    "tipo": "cassa",
-   "x": 55,
+   "x": 53,
    "y": 38,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/220.webp",
+   "file": "mobili/185.webp",
    "rect": {
-    "x": 3523,
-    "y": 2385,
+    "x": 3395,
+    "y": 2412,
     "w": 121,
-    "h": 107
+    "h": 80
    },
    "fiamme": []
   },
   {
-   "k": 221,
+   "k": 186,
    "tipo": "reti",
    "x": 59,
    "y": 38,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/221.webp",
+   "file": "mobili/186.webp",
    "rect": {
     "x": 3792,
     "y": 2384,
@@ -4617,19 +4059,19 @@
    "fiamme": []
   },
   {
-   "k": 222,
+   "k": 187,
    "tipo": "bitta",
    "x": 46,
    "y": 44,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/222.webp",
+   "file": "mobili/187.webp",
    "rect": {
     "x": 2949,
-    "y": 2794,
+    "y": 2795,
     "w": 56,
-    "h": 78
+    "h": 77
    },
    "fiamme": [
     [
@@ -4640,65 +4082,14 @@
    ]
   },
   {
-   "k": 223,
-   "tipo": "bitta",
-   "x": 55,
-   "y": 44,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/223.webp",
-   "rect": {
-    "x": 3524,
-    "y": 2794,
-    "w": 57,
-    "h": 78
-   },
-   "fiamme": []
-  },
-  {
-   "k": 224,
-   "tipo": "bitta",
-   "x": 60,
-   "y": 44,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/224.webp",
-   "rect": {
-    "x": 3844,
-    "y": 2794,
-    "w": 57,
-    "h": 78
-   },
-   "fiamme": []
-  },
-  {
-   "k": 225,
-   "tipo": "bitta",
-   "x": 65,
-   "y": 44,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/225.webp",
-   "rect": {
-    "x": 4164,
-    "y": 2794,
-    "w": 57,
-    "h": 78
-   },
-   "fiamme": []
-  },
-  {
-   "k": 226,
+   "k": 188,
    "tipo": "volante",
    "x": 53,
    "y": 44,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/226.webp",
+   "file": "mobili/188.webp",
    "rect": {
     "x": 3397,
     "y": 2756,
@@ -4708,48 +4099,31 @@
    "fiamme": []
   },
   {
-   "k": 227,
-   "tipo": "cassa",
-   "x": 57,
-   "y": 47,
-   "w": 1,
-   "h": 1,
-   "extra": false,
-   "file": "mobili/227.webp",
-   "rect": {
-    "x": 3650,
-    "y": 2970,
-    "w": 60,
-    "h": 95
-   },
-   "fiamme": []
-  },
-  {
-   "k": 228,
+   "k": 189,
    "tipo": "reti",
-   "x": 47,
+   "x": 49,
    "y": 38,
    "w": 2,
    "h": 1,
    "extra": false,
-   "file": "mobili/228.webp",
+   "file": "mobili/189.webp",
    "rect": {
-    "x": 3024,
-    "y": 2408,
-    "w": 115,
-    "h": 82
+    "x": 3152,
+    "y": 2409,
+    "w": 108,
+    "h": 81
    },
    "fiamme": []
   },
   {
-   "k": 230,
+   "k": 191,
    "tipo": "statua",
    "x": 34,
    "y": 13,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/230.webp",
+   "file": "mobili/191.webp",
    "rect": {
     "x": 2186,
     "y": 763,
@@ -4759,14 +4133,14 @@
    "fiamme": []
   },
   {
-   "k": 231,
+   "k": 192,
    "tipo": "statua",
    "x": 37,
    "y": 13,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/231.webp",
+   "file": "mobili/192.webp",
    "rect": {
     "x": 2378,
     "y": 761,
@@ -4776,31 +4150,31 @@
    "fiamme": []
   },
   {
-   "k": 232,
+   "k": 193,
    "tipo": "vaso",
    "x": 34,
    "y": 16,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/232.webp",
+   "file": "mobili/193.webp",
    "rect": {
     "x": 2187,
     "y": 989,
     "w": 46,
-    "h": 78
+    "h": 77
    },
    "fiamme": []
   },
   {
-   "k": 233,
+   "k": 194,
    "tipo": "vaso",
    "x": 37,
    "y": 16,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/233.webp",
+   "file": "mobili/194.webp",
    "rect": {
     "x": 2373,
     "y": 996,
@@ -4810,14 +4184,14 @@
    "fiamme": []
   },
   {
-   "k": 234,
+   "k": 195,
    "tipo": "vaso",
    "x": 33,
    "y": 31,
    "w": 1,
    "h": 1,
    "extra": false,
-   "file": "mobili/234.webp",
+   "file": "mobili/195.webp",
    "rect": {
     "x": 2122,
     "y": 1945,
@@ -4933,9 +4307,60 @@
    "file": "mobili/x2.webp",
    "rect": {
     "x": 1408,
-    "y": 1513,
+    "y": 1514,
     "w": 192,
-    "h": 70
+    "h": 69
+   },
+   "fiamme": []
+  },
+  {
+   "k": null,
+   "tipo": "bitta",
+   "x": 50,
+   "y": 45,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x3.webp",
+   "rect": {
+    "x": 3203,
+    "y": 2850,
+    "w": 58,
+    "h": 127
+   },
+   "fiamme": []
+  },
+  {
+   "k": null,
+   "tipo": "bitta",
+   "x": 63,
+   "y": 45,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x4.webp",
+   "rect": {
+    "x": 4035,
+    "y": 2850,
+    "w": 58,
+    "h": 127
+   },
+   "fiamme": []
+  },
+  {
+   "k": null,
+   "tipo": "cassa",
+   "x": 56,
+   "y": 45,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x5.webp",
+   "rect": {
+    "x": 3585,
+    "y": 2841,
+    "w": 51,
+    "h": 116
    },
    "fiamme": []
   },
@@ -4947,7 +4372,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x3.webp",
+   "file": "mobili/x6.webp",
    "rect": {
     "x": 3269,
     "y": 2828,
@@ -4965,12 +4390,81 @@
   {
    "k": null,
    "tipo": "davanti",
+   "x": 55,
+   "y": 45,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x7.webp",
+   "rect": {
+    "x": 3570,
+    "y": 2830,
+    "w": 15,
+    "h": 41
+   },
+   "fiamme": [
+    [
+     55.9,
+     44.53,
+     1.0
+    ]
+   ]
+  },
+  {
+   "k": null,
+   "tipo": "davanti",
+   "x": 61,
+   "y": 45,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x8.webp",
+   "rect": {
+    "x": 3947,
+    "y": 2828,
+    "w": 16,
+    "h": 40
+   },
+   "fiamme": [
+    [
+     61.8,
+     44.49,
+     1.0
+    ]
+   ]
+  },
+  {
+   "k": null,
+   "tipo": "davanti",
+   "x": 64,
+   "y": 45,
+   "w": 1,
+   "h": 1,
+   "extra": true,
+   "file": "mobili/x9.webp",
+   "rect": {
+    "x": 4146,
+    "y": 2828,
+    "w": 15,
+    "h": 40
+   },
+   "fiamme": [
+    [
+     64.9,
+     44.49,
+     1.0
+    ]
+   ]
+  },
+  {
+   "k": null,
+   "tipo": "davanti",
    "x": 16,
    "y": 8,
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x4.webp",
+   "file": "mobili/x10.webp",
    "rect": {
     "x": 1049,
     "y": 500,
@@ -4993,7 +4487,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x5.webp",
+   "file": "mobili/x11.webp",
    "rect": {
     "x": 1334,
     "y": 487,
@@ -5016,7 +4510,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x6.webp",
+   "file": "mobili/x12.webp",
    "rect": {
     "x": 1628,
     "y": 499,
@@ -5039,7 +4533,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x7.webp",
+   "file": "mobili/x13.webp",
    "rect": {
     "x": 1168,
     "y": 496,
@@ -5056,7 +4550,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x8.webp",
+   "file": "mobili/x14.webp",
    "rect": {
     "x": 2896,
     "y": 487,
@@ -5079,7 +4573,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x9.webp",
+   "file": "mobili/x15.webp",
    "rect": {
     "x": 3122,
     "y": 499,
@@ -5102,7 +4596,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x10.webp",
+   "file": "mobili/x16.webp",
    "rect": {
     "x": 3382,
     "y": 487,
@@ -5125,7 +4619,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x11.webp",
+   "file": "mobili/x17.webp",
    "rect": {
     "x": 1689,
     "y": 1399,
@@ -5148,7 +4642,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x12.webp",
+   "file": "mobili/x18.webp",
    "rect": {
     "x": 2911,
     "y": 1395,
@@ -5171,7 +4665,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x13.webp",
+   "file": "mobili/x19.webp",
    "rect": {
     "x": 3609,
     "y": 1396,
@@ -5194,7 +4688,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x14.webp",
+   "file": "mobili/x20.webp",
    "rect": {
     "x": 3655,
     "y": 1376,
@@ -5211,7 +4705,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x15.webp",
+   "file": "mobili/x21.webp",
    "rect": {
     "x": 4115,
     "y": 2297,
@@ -5234,7 +4728,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x16.webp",
+   "file": "mobili/x22.webp",
    "rect": {
     "x": 2777,
     "y": 2548,
@@ -5257,7 +4751,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x17.webp",
+   "file": "mobili/x23.webp",
    "rect": {
     "x": 1689,
     "y": 2612,
@@ -5280,7 +4774,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x18.webp",
+   "file": "mobili/x24.webp",
    "rect": {
     "x": 985,
     "y": 2676,
@@ -5303,7 +4797,7 @@
    "w": 1,
    "h": 1,
    "extra": true,
-   "file": "mobili/x19.webp",
+   "file": "mobili/x25.webp",
    "rect": {
     "x": 1051,
     "y": 2677,
@@ -5399,22 +4893,12 @@
    1.0
   ],
   [
-   9.28,
-   2.045,
-   1.0
-  ],
-  [
-   11.72,
-   2.045,
-   1.0
-  ],
-  [
    58.02,
    2.045,
    1.0
   ],
   [
-   63.36,
+   63.05,
    2.045,
    1.0
   ],
@@ -5459,21 +4943,6 @@
    1.0
   ],
   [
-   3.25,
-   18.488,
-   0.8
-  ],
-  [
-   3.55,
-   18.678,
-   0.8
-  ],
-  [
-   3.84,
-   18.162,
-   1.25
-  ],
-  [
    4.26,
    19.114,
    0.8
@@ -5485,7 +4954,7 @@
   ],
   [
    4.46,
-   19.048,
+   19.058,
    1.25
   ],
   [
@@ -5500,7 +4969,7 @@
   ],
   [
    4.6,
-   19.372,
+   19.308,
    1.25
   ],
   [
@@ -5541,11 +5010,6 @@
   [
    59.08,
    47.14,
-   1.0
-  ],
-  [
-   61.8,
-   43.475,
    1.0
   ],
   [
