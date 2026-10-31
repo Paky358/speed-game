@@ -1,10 +1,11 @@
 // Dai modelli raccolti (modelli.jsonl) al file del gioco (data/memata.js).
 // node converti.js <modelli.jsonl> <uscita.js> [togli.json] [ritocchi.json]
-// togli.json: elenco di id (base 36) da non usare (controllo a occhio: brutti, volgari, rovinati)
+// togli.json: gli id (base 36) da non usare, con il perché ({ id: "motivo" }, o anche solo un elenco di id)
 // ritocchi.json: { id: riquadri } per i modelli corretti a mano con lo strumentino
 const fs = require("fs");
 const [, , IN, OUT, TOGLI, RITOCCHI] = process.argv;
-const togli = new Set(TOGLI && fs.existsSync(TOGLI) ? JSON.parse(fs.readFileSync(TOGLI, "utf8")) : []);
+const tj = TOGLI && fs.existsSync(TOGLI) ? JSON.parse(fs.readFileSync(TOGLI, "utf8")) : [];
+const togli = new Set(Array.isArray(tj) ? tj : Object.keys(tj));
 const rit = RITOCCHI && fs.existsSync(RITOCCHI) ? JSON.parse(fs.readFileSync(RITOCCHI, "utf8")) : {};
 const L = fs.readFileSync(IN, "utf8").trim().split("\n").map(r => JSON.parse(r)).filter(x => x.ok);
 const visti = new Set(), out = [];
