@@ -319,6 +319,20 @@
   var STACCO = 2600;   // ms di stacco su chi gioca prima che parta il suo tempo (online l'host lo aggiunge al timer)
   function durataApertura(n) { return 7500 + (n <= 4 ? 1550 * n : 6800); }
   var ST_COL = ["#ffd43b", "#4dabf7", "#ff6b6b", "#51cf66", "#cc5de8", "#ff922b", "#20c997", "#f783ac", "#a9e34b", "#74c0fc"];
+  // 🎨 I colori dello studio per ogni gioco (parete LED, scalinata, cornice del maxischermo, fari): si cambiano solo qui.
+  // Tre colori a gioco; chi non è nella lista prende quelli di base (fucsia, viola, ciano: lo «Studio colorato» scelto il 1 nov 2026).
+  var TEMA_BASE = ["#ff2d95", "#8b5cff", "#3fd8ff"];
+  var TEMI_STUDIO = [
+    [/ruota/i, ["#ffb02e", "#ff4f6d", "#ffe066"]],    // La Ruota della Fortuna: oro e arancio
+    [/patata/i, ["#ff7a2e", "#ff2d55", "#ffc247"]],   // La Patata Bollente: fuoco
+    [/prezzo/i, ["#ffc247", "#ff2d95", "#3fd8ff"]],   // Il Prezzo è Giusto: oro, fucsia, ciano
+    [/balla/i, ["#3fd8ff", "#8b5cff", "#ff2d95"]],    // La Balla Colossale
+    [/nomi/i, ["#3ee0a8", "#3fd8ff", "#8b5cff"]],     // Nomi, Cose e Città: verde acqua
+    [/ordine/i, ["#ff4f6d", "#8b5cff", "#4f9dff"]]    // Parola d'ordine: rosso e blu come le squadre
+  ];
+  function temaDi(titolo) { for (var i = 0; i < TEMI_STUDIO.length; i++) if (TEMI_STUDIO[i][0].test(titolo || "")) return TEMI_STUDIO[i][1]; return TEMA_BASE; }
+  function rgbDi(hex) { var n = parseInt(String(hex).slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function caso(i, j) { var s = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return s - Math.floor(s); }   // un numero fisso a caso per ogni pannello
   function dorme(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   function vuota(n) { while (n && n.firstChild) n.removeChild(n.firstChild); }
 
@@ -340,14 +354,15 @@
       ".st-quieto .st-anim,.st-quieto .st-anim *{animation-play-state:paused!important}",
       ".st-quieto .st-leggio .luce,.st-quieto .st-leggio .pozza{opacity:0!important}",
       ".st-tela{left:0;top:0}",
+      // la parete LED: una tela minuscola (un puntino = un pannello) ingrandita senza sfumare, e sopra la stessa più morbida (il bagliore)
+      ".st-parete{left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none}",
+      ".st-parete-m{pointer-events:none;opacity:.5}",
+      // il riflesso del bancone sul pavimento lucido (disegnato solo quando cambia il bancone o la faccia)
+      ".st-leggio .rifl{position:absolute;left:0;top:100%;width:100%;height:8em;pointer-events:none}",
+      ".st-leggio.alto .rifl{display:none}",
       // fari che girano (solo rotazione)
       ".st-fascio{transform-origin:50% 0;opacity:.5;will-change:transform;animation:stFascio 6s ease-in-out infinite alternate}",
       "@keyframes stFascio{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}",
-      // torri LED: un pannello a led (canvas) che si ridisegna pochi fotogrammi al secondo, a tempo di musica
-      ".st-eq{pointer-events:none}",
-      // lampadine della cornice: due disegni che si alternano (solo opacità)
-      ".st-lampade{will-change:opacity;animation:stLampade .9s linear infinite}",
-      "@keyframes stLampade{0%,49%{opacity:1}51%,100%{opacity:0}}",
       // pubblico (canvas) che salta quando applaude, con lucine dei telefoni e flash
       ".st-pubwrap{left:0}",
       ".st-pubwrap>*,.st-pubdeco>*{position:absolute}",
@@ -366,7 +381,6 @@
       "@keyframes stSventolaPoco{from{transform:rotate(-9deg) translateY(0)}to{transform:rotate(9deg) translateY(-4px)}}",
       ".st-occhio{opacity:.5;will-change:transform;animation:stGiro var(--dur,8s) ease-in-out var(--rit,0s) infinite}",
       "@keyframes stGiro{0%,100%{transform:translate(0,0)}33%{transform:translate(var(--dx),var(--dy))}66%{transform:translate(calc(var(--dx) * .35),calc(var(--dy) * -.7))}}",
-      ".st-ringhiera{height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,#ffd43b,transparent);box-shadow:0 0 10px rgba(255,212,59,.6)}",
       ".st-lucina{width:6px;height:6px;margin:-3px;border-radius:50%;background:#e8fbff;box-shadow:0 0 8px 3px rgba(160,240,255,.8);will-change:opacity;animation:stLuccica 2.4s ease-in-out infinite}",
       "@keyframes stLuccica{0%,100%{opacity:.15}50%{opacity:1}}",
       ".st-flash{width:26px;height:26px;margin:-13px;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,rgba(255,255,255,0) 70%);opacity:0}",
@@ -469,7 +483,7 @@
       "@keyframes stLampo{0%{opacity:.85}100%{opacity:0}}",
       // se il telefono fatica mentre la telecamera si muove, si spengono le luci che ballano (prima di tutto la fluidità)
       ".st-leggero-auto .st-fascio,.st-leggero-auto .st-occhio,.st-leggero-auto .st-bastone,.st-leggero-auto .st-lucina{display:none}",
-      ".st-leggero .st-fascio,.st-leggero .st-lucina,.st-leggero .st-lampade,.st-leggero .st-fila,.st-leggero .st-bastone,.st-leggero .st-cartellone,.st-leggero .st-occhio{animation:none}",
+      ".st-leggero .st-fascio,.st-leggero .st-lucina,.st-leggero .st-fila,.st-leggero .st-bastone,.st-leggero .st-cartellone,.st-leggero .st-occhio{animation:none}",
       // coriandoli, scossa della telecamera
       ".st-coriandoli{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}",
       ".st-coriandoli i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;will-change:transform;animation:stCade 2.6s cubic-bezier(.2,.6,.4,1) forwards}",
@@ -488,7 +502,7 @@
       ".st-leggio.tocca .anello{opacity:1;will-change:transform,opacity;animation:stAnello 1s ease-in-out infinite}",
       "@keyframes stAnello{0%,100%{transform:scale(.92);opacity:.55}50%{transform:scale(1.06);opacity:1}}",
       ".st-leggio.fuori .alone{opacity:0}",
-      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-lucina,.st-lampade,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}}"
+      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-lucina,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -504,32 +518,35 @@
     vista.addEventListener("scroll", function () { vista.scrollTop = 0; vista.scrollLeft = 0; });
     var S = { t: t, s: s, vista: vista, scena: scena, mondo: mondo, gioc: [], io: -1, L: [], shot: null, timer: null,
       titolo: opz.titolo || "", logo: opz.logo || [opz.titolo || "GAME SHOW"], onTocca: null };
+    S.tema = temaDi(opz.tema || S.titolo);   // i tre colori dello studio per questo gioco
     function pezzo(tag, cls, dove) { var e = el(tag, { class: cls }); (dove || mondo).appendChild(e); return e; }
-    // --- studio: il fondo fermo è un'immagine sola (canvas), sopra solo pochi pezzi che si muovono ---
+    // --- studio: la parete LED dietro (si muove), poi il fondo fermo (un'immagine sola, canvas), sopra solo pochi pezzi che si muovono ---
+    S.parete = pezzo("canvas", "st-parete");
+    S.pareteMorbida = pezzo("canvas", "st-parete-m");
+    S.par = { t: 0, luce: 1, tinta: null };
     S.tela = pezzo("canvas", "st-tela");
-    // i fari che girano sono luci già disegnate (canvas): la scheda grafica le gira senza ridisegnarle, anche mentre la telecamera si muove
+    // i fari che girano sono luci già disegnate (canvas): la scheda grafica le gira senza ridisegnarle, anche mentre la telecamera si muove.
+    // Stanno appesi in alto e passano DIETRO al maxischermo: non coprono mai il gioco.
     S.fasci = [];
-    if (!LEGGERO) ["rgba(255,236,170,.55)", "rgba(255,62,165,.5)", "rgba(34,211,238,.5)", "rgba(255,236,170,.55)"].forEach(function (c, i) {
-      var f = pezzo("canvas", "st-fascio st-anim"); fascio(f, c);
+    if (!LEGGERO) [S.tema[0], S.tema[1], S.tema[2], "#fff3d6"].forEach(function (c, i) {
+      var f = pezzo("canvas", "st-fascio st-anim"); fascio(f, rgbaDi(c, 0.5));
       f.style.animationDelay = (-i * 1.9) + "s"; f.style.animationDuration = (5 + (i % 3)) + "s"; S.fasci.push(f);
     });
-    S.eq = [0, 1].map(function () { return pezzo("canvas", "st-eq"); });   // torri LED: pannelli a led (canvas)
     // il pubblico: file di mini avatar (canvas, create in disegnaPubblico) + cose vive sopra
     S.pubWrap = pezzo("div", "st-pubwrap");
     S.strisce = [];
     S.pubDeco = pezzo("div", "st-pubdeco", S.pubWrap);
-    S.ringhiere = []; for (var q = 0; q < 6; q++) S.ringhiere.push(pezzo("div", "st-ringhiera", S.pubDeco));
-    S.occhi = LEGGERO ? [] : ["rgba(255,62,165,.55)", "rgba(34,211,238,.5)", "rgba(255,212,59,.42)"].map(function (c, i) {
+    S.occhi = LEGGERO ? [] : [rgbaDi(S.tema[0], 0.5), rgbaDi(S.tema[2], 0.45)].map(function (c, i) {
       var o = pezzo("canvas", "st-occhio st-anim", S.pubDeco); chiazza(o, c);
       o.style.setProperty("--dur", (7 + i * 2) + "s"); o.style.setProperty("--rit", (-i * 2.3) + "s"); o._i = i; return o;
     });
-    var COLB = ["#ff3ea5", "#22d3ee", "#ffd43b", "#a06bff", "#51cf66"];
+    var COLB = [S.tema[0], S.tema[2], "#ffd43b", S.tema[1], "#ffffff"], q;
     function vivo(e, zona) { e._rx = Math.random(); e._ry = Math.random(); e._zona = zona; e.style.setProperty("--dur", (1.1 + Math.random() * 0.9).toFixed(2) + "s"); e.style.setProperty("--rit", (-Math.random() * 2).toFixed(2) + "s"); return e; }
-    S.bastoni = []; for (q = 0; q < (LEGGERO ? 0 : 14); q++) { var ba = vivo(pezzo("div", "st-bastone st-anim", S.pubDeco), q % 3); ba.style.setProperty("--c", COLB[q % COLB.length]); S.bastoni.push(ba); }
-    S.cartelli = ["❤️ BRAVI", "⭐⭐⭐", "FORZA!", "👏👏", "WOW!"].map(function (tx, i) { var ca = vivo(pezzo("div", "st-cartellone st-anim", S.pubDeco), i % 3); ca.appendChild(el("b", { text: tx })); ca._ry *= 0.7; return ca; });
-    S.lucine = []; for (q = 0; q < (LEGGERO ? 0 : 10); q++) { var lu = pezzo("div", "st-lucina st-anim", S.pubDeco); lu.style.animationDelay = (-Math.random() * 2.4) + "s"; lu._rx = Math.random(); lu._ry = Math.random(); lu._zona = q % 3; S.lucine.push(lu); }
-    S.flash = []; for (q = 0; q < 6; q++) { var fl = pezzo("div", "st-flash", S.pubDeco); fl._rx = Math.random(); fl._ry = Math.random(); fl._zona = q % 3; S.flash.push(fl); }
-    S.lampade = pezzo("canvas", "st-lampade st-anim");
+    // (bastoncini, cartelli, lucine e flash stanno sulle due gradinate ai lati: zone 0 e 1)
+    S.bastoni = []; for (q = 0; q < (LEGGERO ? 0 : 12); q++) { var ba = vivo(pezzo("div", "st-bastone st-anim", S.pubDeco), q % 2); ba.style.setProperty("--c", COLB[q % COLB.length]); S.bastoni.push(ba); }
+    S.cartelli = ["❤️ BRAVI", "⭐⭐⭐", "FORZA!", "👏👏", "WOW!"].map(function (tx, i) { var ca = vivo(pezzo("div", "st-cartellone st-anim", S.pubDeco), i % 2); ca.appendChild(el("b", { text: tx })); ca._ry *= 0.7; return ca; });
+    S.lucine = []; for (q = 0; q < (LEGGERO ? 0 : 10); q++) { var lu = pezzo("div", "st-lucina st-anim", S.pubDeco); lu.style.animationDelay = (-Math.random() * 2.4) + "s"; lu._rx = Math.random(); lu._ry = Math.random(); lu._zona = q % 2; S.lucine.push(lu); }
+    S.flash = []; for (q = 0; q < 6; q++) { var fl = pezzo("div", "st-flash", S.pubDeco); fl._rx = Math.random(); fl._ry = Math.random(); fl._zona = q % 2; S.flash.push(fl); }
     S.schermo = pezzo("div", "st-schermo");
     S.sch = el("div", { class: "st-sch-in" }); S.schermo.appendChild(S.sch); S.schermo.appendChild(el("div", { class: "st-vetro" }));
     S.fumetto = pezzo("div", "st-fumetto");
@@ -574,7 +591,7 @@
     }).then(function () { S.rasterOk = true; });
     preparaSuoni();
     Musica.avvia();
-    avviaEq(S);
+    avviaParete(S);
     // mentre si scrive (es. il capo di Parola d'ordine dà l'indizio) lo studio resta alto com'era:
     // sull'iPhone la tastiera fa "accorciare" lo schermo e lo studio rimpicciolito lasciava sotto il blu vuoto.
     // Così invece il telefono sposta solo la vista per far vedere la casella sopra la tastiera, e la telecamera non si muove.
@@ -622,6 +639,7 @@
         x.globalCompositeOperation = "destination-in"; x.drawImage(img, 0, 0, w, h);
         x.globalCompositeOperation = "source-atop"; x.fillStyle = "rgba(0,0,0,.5)"; x.fillRect(0, 0, w, h); x.restore();
       }
+      riflettiLeggio(X);
     });
   }
   function costruisciLeggii(S) {
@@ -631,8 +649,8 @@
       // tutto quello che si illumina è già disegnato (canvas): accendere un leggio cambia solo l'opacità
       L.innerHTML = "<canvas class='luce' width='96' height='268'></canvas><canvas class='pozza'></canvas><canvas class='alone'></canvas>" +
         "<div class='anello'></div><div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'><canvas width='356' height='364'></canvas></div>" +
-        "<div class='podio'><canvas class='banco'></canvas><canvas class='banco-luce'></canvas><canvas class='bagliore'></canvas><div class='piano'></div></div>";
-      cono(L.querySelector(".luce")); pozza(L.querySelector(".pozza")); chiazza(L.querySelector(".alone"), rgbaDi(col, 1)); bagliore(L.querySelector(".bagliore"), col);
+        "<div class='podio'><canvas class='rifl'></canvas><canvas class='banco'></canvas><canvas class='banco-luce'></canvas><canvas class='bagliore'></canvas><div class='piano'></div></div>";
+      cono(L.querySelector(".luce")); pozza(L.querySelector(".pozza"), col); chiazza(L.querySelector(".alone"), rgbaDi(col, 1)); bagliore(L.querySelector(".bagliore"), col);
       // toccare un concorrente (es. per passargli la bomba). Il gioco decide chi si può toccare.
       // Vale tutta la sagoma, banco col nome compreso (.tap), e basta un tocco anche se il dito si muove un po':
       // su iPhone il "click" a volte non arriva (il tocco viene preso per uno scorrimento).
@@ -646,7 +664,7 @@
         L.addEventListener("click", scegli);   // mouse e tastiera (se il tocco è già passato, il doppione si scarta)
       })(L, i);
       var X = { el: L, avc: L.querySelector(".av canvas"), cart: L.querySelector(".cart"), delta: L.querySelector(".delta"),
-        banco: L.querySelector(".banco"), bancoLuce: L.querySelector(".banco-luce"), nome: g.nome, col: col, tu: i === S.io,
+        banco: L.querySelector(".banco"), bancoLuce: L.querySelector(".banco-luce"), rifl: L.querySelector(".rifl"), nome: g.nome, col: col, tu: i === S.io,
         disp: { t: "0", neg: false, testo: false }, valore: 0, faccia: null };
       mettiAvatar(X, g, null);
       setTimeout(function () { ["esulta", "triste", "pensa"].forEach(function (f) { immagineAvatar(g, f, null); }); }, 1500 + i * 200);   // pronte per dopo (non tutte insieme all'entrata)
@@ -654,11 +672,11 @@
     });
   }
   function rgbaDi(hex, a) { var n = parseInt(String(hex).slice(1), 16); return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")"; }
-  function pozza(c) {   // la pozza di luce sul pavimento (un'ellisse morbida)
+  function pozza(c, col) {   // la pozza di luce sul pavimento (un'ellisse morbida: bianca al centro, del colore del concorrente intorno)
     c.width = 240; c.height = 40;
     var x = c.getContext("2d"); x.translate(120, 20); x.scale(1, 40 / 240);
     var g = x.createRadialGradient(0, 0, 0, 0, 0, 120);
-    g.addColorStop(0, "rgba(255,248,215,.85)"); g.addColorStop(0.5, "rgba(255,232,160,.4)"); g.addColorStop(1, "rgba(255,232,160,0)");
+    g.addColorStop(0, "rgba(255,248,230,.85)"); g.addColorStop(0.45, rgbaDi(col || "#ffe8a0", 0.45)); g.addColorStop(1, rgbaDi(col || "#ffe8a0", 0));
     x.fillStyle = g; x.beginPath(); x.arc(0, 0, 120, 0, 7); x.fill();
   }
   function bagliore(c, col) {   // il bagliore della striscia led sotto al bancone quando il leggio è acceso
@@ -669,10 +687,10 @@
     x.fillStyle = g; x.beginPath(); x.arc(0, 0, 75, 0, 7); x.fill();
   }
 
-  // ---- il bancone del concorrente, disegnato su canvas (misure in "em": 1em = un decimo della larghezza del leggio) ----
-  // Da y = 0 (il piano) in giù: piano 1.1em, frontale 5.3em con lampadine, nome e display, striscia led .42em.
-  var FONT_PAGINA = null;
-  function fontPagina() { if (!FONT_PAGINA) { try { FONT_PAGINA = getComputedStyle(document.body).fontFamily || "system-ui,sans-serif"; } catch (e) { FONT_PAGINA = "system-ui,sans-serif"; } } return FONT_PAGINA; }
+  // ---- il bancone del concorrente: vetro con i bordi accesi del suo colore, disegnato su canvas (misure in "em": 1em = un decimo della larghezza del leggio) ----
+  // Da y = 0 (il piano) in giù: piano 1.1em, frontale 5.3em col nome sulla striscia LED e il display dei punti, striscia di luce .42em.
+  var FONT_STUDIO = "'SG Testo',system-ui,sans-serif";   // il carattere dell'app anche dentro i disegni (mai Courier: ha le grazie)
+  function fontPagina() { return FONT_STUDIO; }
   function rettTondo(x, X, Y, w, h, rs, ri) {   // rettangolo con angoli sopra (rs) e sotto (ri) diversi
     x.beginPath(); x.moveTo(X + rs, Y); x.lineTo(X + w - rs, Y); x.quadraticCurveTo(X + w, Y, X + w, Y + rs); x.lineTo(X + w, Y + h - ri);
     x.quadraticCurveTo(X + w, Y + h, X + w - ri, Y + h); x.lineTo(X + ri, Y + h); x.quadraticCurveTo(X, Y + h, X, Y + h - ri); x.lineTo(X, Y + rs); x.quadraticCurveTo(X, Y, X + rs, Y); x.closePath();
@@ -685,56 +703,66 @@
     var w = X.w || 100, em = w * 0.1, H = (6.82 + 2.2) * em, q = Math.min(LEGGERO ? 1.6 : 3, (window.devicePixelRatio || 1) * 1.3);
     return { w: w, em: em, H: H, q: q, cw: Math.max(1, Math.round(w * q)), ch: Math.max(1, Math.round(H * q)), su: 1.1 * em };
   }
-  function fondoBanco(X) {   // tutto quello che non cambia: piano, pulsante, frontale, lampadine, nome, striscia led
-    var M = misuraBanco(X), c = X.fondo || (X.fondo = document.createElement("canvas")), w = M.w, em = M.em, q = M.q;
-    c.width = M.cw; c.height = M.ch;
-    var x = c.getContext("2d"); x.setTransform(q, 0, 0, q, 0, M.su * q);
-    // piano
-    x.save(); x.shadowColor = "rgba(0,0,0,.4)"; x.shadowOffsetY = 0.25 * em * q; x.shadowBlur = 0.45 * em * q;
-    var g = x.createLinearGradient(0, 0, 0, 1.1 * em); g.addColorStop(0, "#ffffff"); g.addColorStop(0.35, "#d8d2ff"); g.addColorStop(0.75, "#8d84d8"); g.addColorStop(1, "#5a50a8");
-    x.fillStyle = g; rettTondo(x, 0, 0, w, 1.1 * em, 0.55 * em, 0.2 * em); x.fill(); x.restore();
-    // pulsante rosso
-    var bw = 1.15 * em, bh = 0.62 * em, bx = w * 0.87 - bw, by = -0.5 * em;
-    g = x.createRadialGradient(bx + bw * 0.4, by + bh * 0.3, 0, bx + bw * 0.4, by + bh * 0.3, bw * 0.75);
-    g.addColorStop(0, "#ffc2c7"); g.addColorStop(0.55, "#ff2d45"); g.addColorStop(1, "#8a0f1c");
-    x.fillStyle = g; rettTondo(x, bx, by, bw, bh, bh * 0.95, 0.2 * em); x.fill();
-    // "TU" sul leggio di chi ha questo telefono
-    if (X.tu) {
-      var f = 0.72 * em; x.font = "900 " + f.toFixed(2) + "px " + fontPagina();
-      var tw = x.measureText("TU").width + 1.1 * f, th = f * 1.25, tx = w * 0.1, ty = -0.62 * em;
-      g = x.createLinearGradient(0, ty, 0, ty + th); g.addColorStop(0, "#fff3a8"); g.addColorStop(1, "#ffca3a");
-      x.fillStyle = g; rettTondo(x, tx, ty, tw, th, th / 2, th / 2); x.fill();
-      x.fillStyle = "#241f00"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("TU", tx + tw / 2, ty + th / 2 + f * 0.04);
-    }
-    // frontale
-    trapezio(x, w, em);
-    g = x.createLinearGradient(0, 1.1 * em, 0, 6.4 * em); g.addColorStop(0, "#36268a"); g.addColorStop(0.55, "#1b1152"); g.addColorStop(1, "#0d0730");
-    x.fillStyle = g; x.fill();
-    g = x.createLinearGradient(0.05 * w, 0, 0.95 * w, 0); g.addColorStop(0, "rgba(255,255,255,.14)"); g.addColorStop(0.22, "rgba(255,255,255,0)"); g.addColorStop(0.78, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(255,255,255,.1)");
-    x.fillStyle = g; x.fill();
-    // lampadine in fila
-    var fx0 = 0.05 * w + 0.08 * 0.9 * w, fx1 = 0.95 * w - 0.08 * 0.9 * w, passo = 0.62 * em, cy = 1.1 * em + 0.39 * em;
-    for (var lx = fx0 + passo / 2; lx < fx1; lx += passo) {
-      g = x.createRadialGradient(lx, cy, 0, lx, cy, 0.21 * em);
-      g.addColorStop(0, "#fffbe0"); g.addColorStop(0.43, "#fffbe0"); g.addColorStop(0.7, X.col); g.addColorStop(1, rgbaDi(X.col, 0));
-      x.fillStyle = g; x.fillRect(lx - 0.21 * em, cy - 0.21 * em, 0.42 * em, 0.42 * em);
-    }
-    // nome
-    var fn = 1.3 * em, nome = String(X.nome || ""); x.font = "900 " + fn.toFixed(2) + "px " + fontPagina();
-    var maxW = 0.9 * w - 0.8 * em;
+  // la striscia LED col nome (spenta: nome del suo colore; accesa: nome bianco che brilla)
+  function strisciaNome(x, X, w, em, accesa) {
+    var nw = 0.8 * w, nh = 1.75 * em, nx = (w - nw) / 2, ny = 1.1 * em + 0.68 * em, col = X.col;
+    x.save();
+    if (!accesa) { x.fillStyle = "rgba(4,5,14,.86)"; rettTondo(x, nx, ny, nw, nh, 0.45 * em, 0.45 * em); x.fill(); }
+    if (accesa) { x.shadowColor = col; x.shadowBlur = 1.1 * em; }
+    x.strokeStyle = rgbaDi(col, accesa ? 1 : 0.55); x.lineWidth = (accesa ? 0.16 : 0.1) * em;
+    rettTondo(x, nx, ny, nw, nh, 0.45 * em, 0.45 * em); x.stroke();
+    var fn = 1.15 * em, nome = String(X.nome || "").toUpperCase(); x.font = "800 " + fn.toFixed(2) + "px " + FONT_STUDIO;
+    var maxW = nw - 0.8 * em;
     if (x.measureText(nome).width > maxW) { while (nome.length > 1 && x.measureText(nome + "…").width > maxW) nome = nome.slice(0, -1); nome += "…"; }
     x.textAlign = "center"; x.textBaseline = "middle";
-    x.fillStyle = "rgba(0,0,0,.45)"; x.fillText(nome, w / 2, 1.1 * em + 1.55 * em + 0.08 * em);
-    x.fillStyle = "#fff"; x.fillText(nome, w / 2, 1.1 * em + 1.55 * em);
-    // striscia led colorata
-    x.save(); x.shadowColor = X.col; x.shadowBlur = 0.8 * em * q; x.fillStyle = X.col;
+    if (accesa) { x.shadowBlur = 0.9 * em; x.fillStyle = "#fff"; }
+    else { x.shadowBlur = 0; x.fillStyle = "rgba(4,5,14,1)"; x.fillText(nome, w / 2, ny + nh / 2 + 0.06 * em); x.fillStyle = mescola(col, "#ffffff", 0.25); }
+    x.fillText(nome, w / 2, ny + nh / 2 + 0.06 * em);
+    x.restore();
+  }
+  function mescola(a, b, k) { var p = rgbDi(a), q = rgbDi(b); return "rgb(" + Math.round(p[0] + (q[0] - p[0]) * k) + "," + Math.round(p[1] + (q[1] - p[1]) * k) + "," + Math.round(p[2] + (q[2] - p[2]) * k) + ")"; }
+  function fondoBanco(X) {   // tutto quello che non cambia: piano di vetro, frontale di vetro coi bordi accesi, nome, striscia di luce
+    var M = misuraBanco(X), c = X.fondo || (X.fondo = document.createElement("canvas")), w = M.w, em = M.em, q = M.q, col = X.col, g;
+    c.width = M.cw; c.height = M.ch;
+    var x = c.getContext("2d"); x.setTransform(q, 0, 0, q, 0, M.su * q);
+    // "TU" sul leggio di chi ha questo telefono (pastiglia lampone, il colore guida dell'app)
+    if (X.tu) {
+      var f = 0.72 * em; x.font = "800 " + f.toFixed(2) + "px " + FONT_STUDIO;
+      var tw = x.measureText("TU").width + 1.1 * f, th = f * 1.3, tx = w * 0.1, ty = -0.7 * em;
+      x.fillStyle = "#e0225a"; rettTondo(x, tx, ty, tw, th, th / 2, th / 2); x.fill();
+      x.fillStyle = "#fff"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("TU", tx + tw / 2, ty + th / 2 + f * 0.04);
+    }
+    // frontale di vetro: si vede appena il corpo del concorrente dietro
+    trapezio(x, w, em);
+    g = x.createLinearGradient(0, 1.1 * em, 0, 6.4 * em); g.addColorStop(0, "rgba(150,170,255,.24)"); g.addColorStop(0.5, "rgba(46,52,120,.42)"); g.addColorStop(1, rgbaDi(col, 0.2));
+    x.fillStyle = g; x.fill();
+    x.save(); trapezio(x, w, em); x.clip();
+    g = x.createLinearGradient(0.05 * w, 1.1 * em, 0.95 * w, 6.4 * em);   // il riflesso di vetro in diagonale
+    g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(0.36, "rgba(255,255,255,0)"); g.addColorStop(0.42, "rgba(255,255,255,.14)"); g.addColorStop(0.5, "rgba(255,255,255,0)");
+    x.fillStyle = g; x.fillRect(0, 0, w, 7 * em); x.restore();
+    // spigoli: in alto bianco, ai lati del colore del concorrente
+    var r = 0.05 * 0.9 * w;
+    x.save(); x.lineCap = "round";
+    x.shadowColor = col; x.shadowBlur = 0.5 * em * q; x.strokeStyle = rgbaDi(col, 0.75); x.lineWidth = 0.14 * em;
+    x.beginPath(); x.moveTo(0.05 * w, 1.1 * em); x.lineTo(0.05 * w + r, 6.4 * em); x.moveTo(0.95 * w, 1.1 * em); x.lineTo(0.95 * w - r, 6.4 * em); x.stroke(); x.restore();
+    // piano: una lastra di vetro col filo di luce davanti
+    g = x.createLinearGradient(0, 0, 0, 1.1 * em); g.addColorStop(0, "rgba(255,255,255,.34)"); g.addColorStop(1, "rgba(160,175,255,.14)");
+    x.fillStyle = g; rettTondo(x, 0, 0.35 * em, w, 0.75 * em, 0.3 * em, 0.15 * em); x.fill();
+    x.fillStyle = "rgba(255,255,255,.85)"; x.fillRect(0.02 * w, 0.35 * em, 0.96 * w, 0.07 * em);
+    x.fillStyle = rgbaDi(col, 0.6); x.fillRect(0.03 * w, 1.04 * em, 0.94 * w, 0.06 * em);
+    strisciaNome(x, X, w, em, false);
+    // striscia di luce in basso, del colore del concorrente
+    x.save(); x.shadowColor = col; x.shadowBlur = 0.8 * em * q; x.fillStyle = col;
     rettTondo(x, 0.09 * w, 6.4 * em, 0.82 * w, 0.42 * em, 0.01, 0.3 * em); x.fill(); x.restore();
     X.fondoW = w;
-    // la luce sul frontale quando il leggio è acceso (canvas a parte: si accende con l'opacità)
+    // quando il leggio è acceso: il vetro si tinge del suo colore e il nome si accende (canvas a parte: si accende con l'opacità)
     var cl = X.bancoLuce; if (cl) {
       cl.width = M.cw; cl.height = M.ch; var y = cl.getContext("2d"); y.setTransform(q, 0, 0, q, 0, M.su * q);
-      trapezio(y, w, em); g = y.createLinearGradient(0, 1.1 * em, 0, 6.4 * em); g.addColorStop(0, "rgba(255,246,205,.3)"); g.addColorStop(1, "rgba(255,246,205,.08)");
+      trapezio(y, w, em); g = y.createLinearGradient(0, 1.1 * em, 0, 6.4 * em); g.addColorStop(0, rgbaDi(col, 0.1)); g.addColorStop(1, rgbaDi(col, 0.34));
       y.fillStyle = g; y.fill();
+      y.save(); y.lineCap = "round"; y.shadowColor = col; y.shadowBlur = 1.1 * em * q; y.strokeStyle = col; y.lineWidth = 0.2 * em;
+      y.beginPath(); y.moveTo(0.05 * w, 1.1 * em); y.lineTo(0.05 * w + r, 6.4 * em); y.moveTo(0.95 * w, 1.1 * em); y.lineTo(0.95 * w - r, 6.4 * em); y.stroke(); y.restore();
+      strisciaNome(y, X, w, em, true);
     }
   }
   // il display del leggio (punti o una scritta) sopra al fondo; se il concorrente è eliminato tutto in bianco e nero
@@ -748,15 +776,15 @@
     var x = dest.getContext("2d");
     x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, M.cw, M.ch); x.drawImage(X.fondo, 0, 0);
     x.setTransform(q, 0, 0, q, 0, M.su * q);
-    var d = X.disp || { t: "" }, dy = 1.1 * em + 2.61 * em, dh = 1.95 * em;
-    var f = (d.testo ? 1.2 : 1.6) * em, font = d.testo ? "900 " + f.toFixed(2) + "px " + fontPagina() : "900 " + f.toFixed(2) + "px 'Courier New',ui-monospace,monospace";
+    var d = X.disp || { t: "" }, dy = 1.1 * em + 2.75 * em, dh = 1.85 * em;
+    var f = (d.testo ? 1.15 : 1.4) * em, font = "800 " + f.toFixed(2) + "px " + FONT_STUDIO;
     x.font = font;
-    var tw = x.measureText(d.t).width, dw = Math.min(0.86 * w, Math.max(0.72 * 0.9 * w, tw + 0.9 * em)), dx = (w - dw) / 2;
-    x.fillStyle = "#05030f"; rettTondo(x, dx, dy, dw, dh, 0.3 * em, 0.3 * em); x.fill();
-    x.strokeStyle = "rgba(255,224,102,.3)"; x.lineWidth = 0.08 * em; rettTondo(x, dx + 0.04 * em, dy + 0.04 * em, dw - 0.08 * em, dh - 0.08 * em, 0.26 * em, 0.26 * em); x.stroke();
-    x.fillStyle = d.neg ? "#ff8d98" : "#ffe066"; x.textAlign = "center"; x.textBaseline = "middle";
-    if (tw > dw - 0.4 * em) { x.save(); x.translate(w / 2, dy + dh / 2); x.scale((dw - 0.4 * em) / tw, 1); x.fillText(d.t, 0, f * 0.04); x.restore(); }
-    else x.fillText(d.t, w / 2, dy + dh / 2 + f * 0.04);
+    var tw = x.measureText(d.t).width, dw = Math.min(0.8 * w, Math.max(0.46 * w, tw + 1.1 * em)), dx = (w - dw) / 2;
+    x.fillStyle = "rgba(3,4,12,.9)"; rettTondo(x, dx, dy, dw, dh, 0.45 * em, 0.45 * em); x.fill();
+    x.strokeStyle = "rgba(255,255,255,.12)"; x.lineWidth = 0.08 * em; rettTondo(x, dx, dy, dw, dh, 0.45 * em, 0.45 * em); x.stroke();
+    x.fillStyle = d.neg ? "#ff8d98" : "#ffc247"; x.textAlign = "center"; x.textBaseline = "middle";
+    if (tw > dw - 0.4 * em) { x.save(); x.translate(w / 2, dy + dh / 2); x.scale((dw - 0.4 * em) / tw, 1); x.fillText(d.t, 0, f * 0.06); x.restore(); }
+    else x.fillText(d.t, w / 2, dy + dh / 2 + f * 0.06);
     if (dest !== c) {   // eliminato: grigio e più scuro
       var y = c.getContext("2d"); y.setTransform(1, 0, 0, 1, 0, 0); y.clearRect(0, 0, M.cw, M.ch); y.drawImage(dest, 0, 0);
       y.globalCompositeOperation = "saturation"; y.fillStyle = "#808080"; y.fillRect(0, 0, M.cw, M.ch);
@@ -764,6 +792,23 @@
       y.globalCompositeOperation = "source-atop"; y.fillStyle = "rgba(0,0,0,.45)"; y.fillRect(0, 0, M.cw, M.ch);
       y.globalCompositeOperation = "source-over";
     }
+    riflettiLeggio(X);
+  }
+  // il riflesso del concorrente sul pavimento lucido: bancone e avatar capovolti, piccoli (così vengono morbidi da soli, senza filtri) e sfumati.
+  // Si ridisegna solo quando cambiano il bancone o la faccia: mentre la telecamera si muove non costa niente.
+  function riflettiLeggio(X) {
+    var c = X.rifl; if (!c || !X.w || X.alto) return;
+    var M = misuraBanco(X), w = M.w, em = M.em, k = Math.min(1, 0.55 * (window.devicePixelRatio || 1)), fondoY = 6.82 * em, D = 8 * em;
+    var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(D * k));
+    if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
+    var x = c.getContext("2d");
+    x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = "source-over"; x.clearRect(0, 0, cw, ch);
+    x.setTransform(k, 0, 0, -k, 0, fondoY * k);   // la riga y del podio finisce a (fondo − y): capovolto sul pavimento
+    if (X.avc && X.avc.width) x.drawImage(X.avc, 0.13 * w, 0.9 * em - 0.7566 * w, 0.74 * w, 0.7566 * w);   // l'avatar sta dietro al bancone
+    if (X.banco && X.banco.width) x.drawImage(X.banco, 0, -M.su, w, M.H);
+    x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = "destination-in";
+    var g = x.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, "rgba(0,0,0,.5)"); g.addColorStop(0.55, "rgba(0,0,0,.16)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = g; x.fillRect(0, 0, cw, ch); x.globalCompositeOperation = "source-over";
   }
   // posti dei leggii: fino a 4 una fila; da 5 a 10 due file sfalsate (quella dietro più piccola e più in alto)
   function postiLeggii(S) {
@@ -807,43 +852,63 @@
     g.addColorStop(0, "rgba(255,246,205,.46)"); g.addColorStop(0.4, "rgba(255,246,205,.2)"); g.addColorStop(0.92, "rgba(255,246,205,0)"); g.addColorStop(1, "rgba(255,246,205,0)");
     x.fillStyle = g; x.beginPath(); x.moveTo(w * 0.43, 0); x.lineTo(w * 0.57, 0); x.lineTo(w, h); x.lineTo(0, h); x.closePath(); x.fill();
   }
-  // ---- torri LED: due pannelli a led che ballano a tempo di musica (un canvas ciascuno, ridisegnato 14 volte al secondo) ----
-  var COL_LED = (function () {   // dal basso (viola) all'alto (giallo chiaro)
-    var t = [[123, 44, 255], [255, 62, 165], [255, 179, 0], [255, 243, 168]], out = [];
-    for (var s = 0; s < 12; s++) {
-      var p = s / 11 * 3, k = Math.min(2, Math.floor(p)), f = p - k, a = t[k], b = t[k + 1];
-      out.push("rgb(" + Math.round(a[0] + (b[0] - a[0]) * f) + "," + Math.round(a[1] + (b[1] - a[1]) * f) + "," + Math.round(a[2] + (b[2] - a[2]) * f) + ")");
-    }
-    return out;
-  })();
-  function disegnaTorreEq(c, liv) {
-    if (!c || !c.getContext || c.width < 2) return;
-    var x = c.getContext("2d"), W = c.width, H = c.height, N = 7, SEG = 12, bw = W / N, sh = H / SEG;
-    x.clearRect(0, 0, W, H);
-    for (var b = 0; b < N; b++) {
-      var acc = Math.round((liv ? liv[b] : 0.3 + ((b * 37) % 60) / 100) * SEG);
-      for (var s = 0; s < SEG; s++) {
-        x.globalAlpha = s < acc ? 1 : 0.13; x.fillStyle = COL_LED[s];
-        x.fillRect(b * bw + bw * 0.15, H - (s + 1) * sh + sh * 0.15, bw * 0.7, sh * 0.7);
-      }
-    }
-    x.globalAlpha = 1;
+  // ---- la parete LED dietro al maxischermo: un pannello = un puntino di una tela minuscola, ingrandita dalla scheda grafica ----
+  // Onde di colore che si muovono piano, col respiro della musica. Costa circa 1 ms a disegno anche sul computer rallentato ×4
+  // (misurato il 1 nov 2026): i seni si calcolano per colonna e per riga, non per pannello. Si ferma quando la telecamera è sul
+  // maxischermo (mentre si gioca), con l'app in secondo piano, con «riduci movimento» e sui telefoni leggeri (lì resta ferma).
+  var ONDE = [[5.2, 2.4, 1, 0], [-4.1, 4.6, 0.7, 1.7], [3.3, -5.8, 1.3, 3.1], [9, -3.5, 2, 0]];   // colori 1-3 e luce: colonne, righe, velocità, fase
+  function preparaParete(S) {
+    var P = S.par, W = S.W, h = S.pubTop + 0.1 * S.VH, cella = 0.034 * S.VW, i, j;
+    P.h = h; P.cols = Math.max(8, Math.round(W / cella)); P.righe = Math.max(4, Math.round(h / cella)); P.cw = W / P.cols; P.ch = h / P.righe;
+    var c = S.parete; c.width = P.cols; c.height = P.righe; c.style.width = W + "px"; c.style.height = h + "px";
+    var m = S.pareteMorbida; m.width = Math.max(2, Math.round(P.cols / 3)); m.height = Math.max(2, Math.round(P.righe / 3));
+    m.style.left = (-1.5 * P.cw) + "px"; m.style.top = (-1.5 * P.ch) + "px"; m.style.width = (W + 3 * P.cw) + "px"; m.style.height = (h + 3 * P.ch) + "px";
+    P.x = c.getContext("2d"); P.im = P.x.createImageData(P.cols, P.righe);
+    P.base = new Float32Array(P.cols * P.righe);   // ogni pannello un po' diverso, e la parete più scura in basso (dietro al pubblico)
+    for (j = 0; j < P.righe; j++) for (i = 0; i < P.cols; i++) P.base[j * P.cols + i] = (0.86 + 0.14 * caso(i, j)) * (1 - 0.55 * j / P.righe);
+    P.su = []; P.cu = []; P.sv = []; P.cv = [];
+    ONDE.forEach(function (o) {
+      var su = new Float32Array(P.cols), cu = new Float32Array(P.cols);
+      for (var i = 0; i < P.cols; i++) { su[i] = Math.sin(o[0] * i / P.cols); cu[i] = Math.cos(o[0] * i / P.cols); }
+      P.su.push(su); P.cu.push(cu); P.sv.push(new Float32Array(P.righe)); P.cv.push(new Float32Array(P.righe));
+    });
   }
-  function disegnaEq(S) { (S.eq || []).forEach(function (c, k) { disegnaTorreEq(c, S.eqLiv ? S.eqLiv.slice(k * 7, k * 7 + 7) : null); }); }
-  function avviaEq(S) {
-    if (LEGGERO) return disegnaEq(S);   // telefoni leggeri: pannelli fermi
-    var obi = []; S.eqLiv = []; for (var b = 0; b < 14; b++) { S.eqLiv.push(Math.random() * 0.6); obi.push(Math.random()); }
-    var id = setInterval(function () {
-      if (!S.vivo()) { clearInterval(id); return; }
-      if (document.hidden || S.leggeroAuto || S.mondo.classList.contains("st-quieto")) return;   // non si vede (o il telefono fatica): fermo
-      var batt = Musica.battito();
-      for (var b = 0; b < 14; b++) {
-        if (Math.random() < 0.3) obi[b] = 0.12 + Math.random() * 0.7;
-        var tgt = Math.min(1, obi[b] + batt * ((b % 7) < 3 ? 0.55 : 0.3)), l = S.eqLiv[b];   // le barre dei bassi saltano di più sul colpo
-        S.eqLiv[b] = l + (tgt - l) * (tgt > l ? 0.75 : 0.3);   // sale di scatto, scende piano
+  function disegnaParete(S) {
+    var P = S.par; if (!P || !P.im) return;
+    var cols = P.cols, righe = P.righe, D = P.im.data, B = P.base, T = S.tema.map(rgbDi), i, j, n, k = 0;
+    var luce = (P.luce == null ? 1 : P.luce) * (1 + 0.16 * (P.batt || 0)), ti = P.tinta ? rgbDi(P.tinta[0]) : null, kt = P.tinta ? P.tinta[1] : 0;
+    for (n = 0; n < ONDE.length; n++) { var o = ONDE[n], sv = P.sv[n], cv = P.cv[n]; for (j = 0; j < righe; j++) { var a = o[1] * j / righe + o[2] * P.t + o[3]; sv[j] = Math.sin(a); cv[j] = Math.cos(a); } }
+    var su0 = P.su[0], cu0 = P.cu[0], su1 = P.su[1], cu1 = P.cu[1], su2 = P.su[2], cu2 = P.cu[2], su3 = P.su[3], cu3 = P.cu[3];
+    var A = T[0], Bc = T[1], C = T[2];
+    for (j = 0; j < righe; j++) {
+      var s0 = P.sv[0][j], c0 = P.cv[0][j], s1 = P.sv[1][j], c1 = P.cv[1][j], s2 = P.sv[2][j], c2 = P.cv[2][j], s3 = P.sv[3][j], c3 = P.cv[3][j];
+      for (i = 0; i < cols; i++, k++) {
+        var w0 = 0.5 + 0.5 * (su0[i] * c0 + cu0[i] * s0); w0 *= w0;   // sin(a + b) = sin a cos b + cos a sin b
+        var w1 = 0.5 + 0.5 * (su1[i] * c1 + cu1[i] * s1); w1 *= w1;
+        var w2 = 0.5 + 0.5 * (su2[i] * c2 + cu2[i] * s2); w2 *= w2;
+        var l = 0.5 + 0.5 * (su3[i] * c3 + cu3[i] * s3), inv = 1 / (w0 + w1 + w2 + 1e-6);
+        l = (0.32 + 0.68 * l * l * l) * B[k] * luce;
+        var r = (A[0] * w0 + Bc[0] * w1 + C[0] * w2) * inv, g = (A[1] * w0 + Bc[1] * w1 + C[1] * w2) * inv, b = (A[2] * w0 + Bc[2] * w1 + C[2] * w2) * inv;
+        if (ti) { r += (ti[0] - r) * kt; g += (ti[1] - g) * kt; b += (ti[2] - b) * kt; }
+        var p = k * 4; D[p] = r * l; D[p + 1] = g * l; D[p + 2] = b * l; D[p + 3] = 255;
       }
-      disegnaEq(S);
-    }, 70);
+    }
+    P.x.putImageData(P.im, 0, 0);
+    var m = S.pareteMorbida, mx = m.getContext("2d"); mx.drawImage(S.parete, 0, 0, m.width, m.height);   // il bagliore: la stessa parete, piccola e sfumata
+  }
+  function avviaParete(S) {
+    var P = S.par, ferma = LEGGERO || !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    disegnaParete(S);
+    if (ferma) return;   // telefoni leggeri e «riduci movimento»: la parete resta accesa ma ferma
+    var ult = performance.now();
+    var id = setInterval(function () {   // 20 volte al secondo bastano: le onde vanno piano
+      if (!S.vivo()) { clearInterval(id); return; }
+      var ora = performance.now(), dt = Math.min(0.2, (ora - ult) / 1000); ult = ora;
+      if (document.hidden || S.leggeroAuto || S.mondo.classList.contains("st-quieto")) return;   // non si vede (o il telefono fatica): ferma
+      P.t += dt * 0.35; P.batt = Musica.battito();
+      var m0 = performance.now(); disegnaParete(S);
+      if (window.__studioMisura) window.__studioMisura.parete.push(performance.now() - m0);   // (solo per le prove di velocità)
+    }, 50);
   }
   // raggi che girano dietro a una carta o a un risultato (già sfumati verso il bordo: niente maschere da ricalcolare)
   function raggi(S, ko) {
@@ -899,92 +964,119 @@
     x.quadraticCurveTo(X + w, Y + h, X + w - r, Y + h); x.lineTo(X + r, Y + h); x.quadraticCurveTo(X, Y + h, X, Y + h - r); x.lineTo(X, Y + r); x.quadraticCurveTo(X, Y, X + r, Y); x.closePath();
   }
   function alone(x, cx, cy, r, col) { var g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(cx - r, cy - r, 2 * r, 2 * r); }
-  function lampadina(x, px, py, accesa) {
-    if (accesa) { alone(x, px, py, 8, "rgba(255,190,60,.55)"); x.fillStyle = "#ffc93c"; x.beginPath(); x.arc(px, py, 3.6, 0, 7); x.fill(); x.fillStyle = "#fffbe0"; x.beginPath(); x.arc(px, py, 2.4, 0, 7); x.fill(); }
-    else { x.fillStyle = "#5e4108"; x.beginPath(); x.arc(px, py, 3.6, 0, 7); x.fill(); x.fillStyle = "#8a6716"; x.beginPath(); x.arc(px, py, 2.2, 0, 7); x.fill(); }
+  // ---- lo studio colorato (scelto dal proprietario il 1 nov 2026: «B · Studio colorato»): parete LED, scalinata illuminata sotto
+  // il maxischermo, banconi di vetro e pavimento lucido che riflette. Le misure sono nel mondo (2 schermi × 2 schermi). ----
+  function geometria(S) {
+    var VW = S.VW, VH = S.VH, W = S.W, R = S.R.schermo;
+    S.yPav = 1.4 * VH;   // dove finisce la scalinata e comincia il pavimento lucido (i banconi ci stanno sopra)
+    var sc = S.scala = { y0: R.y + R.h + 0.024 * VH, y1: S.yPav, w0: 0.56 * VW, w1: 0.98 * VW, n: 7, cx: R.x + R.w / 2 };
+    S.pubTop = 0.62 * VH; S.pubH = S.yPav - S.pubTop;
+    // le zone del pubblico (dentro al blocco del pubblico): due gradinate ai lati e, sotto il maxischermo, i due spicchi accanto alla scalinata
+    var g = 0.03 * VW, giu = (R.y + R.h + 18) - S.pubTop, bordo = function (f) { return sc.cx - (sc.w0 + (sc.w1 - sc.w0) * f) / 2 - g; };
+    var f0 = Math.max(0, (R.y + R.h + 18 - sc.y0) / (sc.y1 - sc.y0));
+    function zona(l0, r0, l1, r1, y, h) { return { x: Math.min(l0, l1), y: y, w: Math.max(r0, r1) - Math.min(l0, l1), h: h, l0: l0, r0: r0, l1: l1, r1: r1 }; }
+    S.zonePub = [zona(0.02 * VW, 0.45 * VW, 0.02 * VW, 0.45 * VW, 0, S.pubH), zona(W - 0.45 * VW, W - 0.02 * VW, W - 0.45 * VW, W - 0.02 * VW, 0, S.pubH)];
+    if (bordo(f0) > 0.5 * VW) {
+      S.zonePub.push(zona(0.45 * VW, bordo(f0), 0.45 * VW, Math.max(0.46 * VW, bordo(1)), giu, S.pubH - giu));
+      S.zonePub.push(zona(W - bordo(f0), W - 0.45 * VW, Math.min(W - 0.46 * VW, W - bordo(1)), W - 0.45 * VW, giu, S.pubH - giu));
+    }
   }
-  function puntiCornice(R) {   // le lampadine lungo il bordo del maxischermo, ogni 20px
-    var p = [], x0 = R.x - 8, y0 = R.y - 8, x1 = R.x + R.w + 8, y1 = R.y + R.h + 8, d;
-    for (d = x0 + 10; d < x1 - 5; d += 20) p.push([d, y0]);
-    for (d = y0 + 10; d < y1 - 5; d += 20) p.push([x1, d]);
-    for (d = x1 - 10; d > x0 + 5; d -= 20) p.push([d, y1]);
-    for (d = y1 - 10; d > y0 + 5; d -= 20) p.push([x0, d]);
-    return p;
-  }
+  function zonaPercorso(x, z, dy) { x.moveTo(z.l0, z.y + dy); x.lineTo(z.r0, z.y + dy); x.lineTo(z.r1, z.y + z.h + dy); x.lineTo(z.l1, z.y + z.h + dy); x.closePath(); }
   function disegnaStudio(S) {
-    var VW = S.VW, VH = S.VH, W = S.W, H = S.H, R = S.R.schermo, q = qualitaTela(S), i;
+    var VW = S.VW, VH = S.VH, W = S.W, H = S.H, R = S.R.schermo, q = qualitaTela(S), T = S.tema, P = S.par, i, g;
     var x = preparaTela(S.tela, W, H, q);
-    // fondo luminoso da prima serata
-    var g = x.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#3a1b8c"); g.addColorStop(0.4, "#27106a"); g.addColorStop(0.7, "#1a0b4d"); g.addColorStop(1, "#120736");
-    x.fillStyle = g; x.fillRect(0, 0, W, H);
-    alone(x, W * 0.5, H * 0.24, VW * 0.9, "rgba(255,206,110,.5)");
-    alone(x, W * 0.03, H * 0.3, VW * 0.85, "rgba(255,62,165,.55)");
-    alone(x, W * 0.97, H * 0.3, VW * 0.85, "rgba(34,211,238,.5)");
-    alone(x, W * 0.5, H * 0.68, VW * 1.1, "rgba(140,90,255,.4)");
-    x.fillStyle = "rgba(255,255,255,.05)"; for (i = 0; i < W; i += 64) x.fillRect(i, 0, 2, H);
-    x.fillStyle = "rgba(255,255,255,.035)"; for (i = 0; i < H; i += 64) x.fillRect(0, i, W, 2);
-    // fari fissi dipinti (sui telefoni leggeri al posto di quelli che girano)
-    if (LEGGERO) [0.1, 0.37, 0.63, 0.9].forEach(function (p, k) {
-      x.save(); x.translate(W * p, 0.03 * VH); x.rotate((k % 2 ? 1 : -1) * 0.25);
-      var fg = x.createLinearGradient(0, 0, 0, 1.3 * VH); fg.addColorStop(0, "rgba(255,236,170,.35)"); fg.addColorStop(1, "rgba(255,236,170,0)");
-      x.fillStyle = fg; x.beginPath(); x.moveTo(-0.02 * VW, 0); x.lineTo(0.02 * VW, 0); x.lineTo(0.22 * VW, 1.3 * VH); x.lineTo(-0.22 * VW, 1.3 * VH); x.closePath(); x.fill(); x.restore();
-    });
-    // arco al neon attorno al maxischermo
-    var ax = R.x - 0.13 * VW, aw = R.w + 0.26 * VW, ay = 0.012 * VH, ah = 1.12 * VH, ry = Math.min(aw * 0.3, 0.16 * VH);
-    x.beginPath(); x.moveTo(ax, ay + ah); x.lineTo(ax, ay + ry); x.ellipse(ax + aw / 2, ay + ry, aw / 2, ry, 0, Math.PI, 2 * Math.PI); x.lineTo(ax + aw, ay + ah);
-    x.fillStyle = "rgba(10,6,40,.45)"; x.fill();
-    var ag = x.createLinearGradient(ax, ay, ax + aw, ay + ah);
-    ag.addColorStop(0, "#ff3ea5"); ag.addColorStop(0.35, "#ffd43b"); ag.addColorStop(0.65, "#22d3ee"); ag.addColorStop(1, "#a06bff");
-    x.save(); x.lineWidth = 7; x.strokeStyle = ag; x.shadowColor = "rgba(255,62,165,.9)"; x.shadowBlur = 26; x.stroke(); x.restore();
-    x.lineWidth = 2; x.strokeStyle = "rgba(255,255,255,.75)"; x.stroke();
-    // torri LED (le barre che ballano sono sopra, a parte)
-    S.torriR = [[0.06 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH], [1.58 * VW, 0.1 * VH, 0.36 * VW, 0.36 * VH]];
-    S.torriR.forEach(function (p) {
-      x.save(); rett(x, p[0], p[1], p[2], p[3], 14); x.fillStyle = "#0a0624"; x.shadowColor = "rgba(255,62,165,.65)"; x.shadowBlur = 26; x.fill(); x.restore();
-      rett(x, p[0], p[1], p[2], p[3], 14); x.lineWidth = 3; x.strokeStyle = "#2b2366"; x.stroke();
-      x.save(); x.fillStyle = "#ffe066"; x.font = "900 20px system-ui,sans-serif"; x.textAlign = "center"; x.shadowColor = "#ff9d2e"; x.shadowBlur = 12;
-      x.fillText("★  ★  ★", p[0] + p[2] / 2, p[1] + 30); x.restore();
-    });
-    // gradinate del pubblico: fondo scuro a gradoni (le persone sono sopra, a file che si muovono)
-    (S.zonePub || []).forEach(function (z) {
-      var zy = S.pubTop + z[1];
-      x.save(); x.beginPath(); rettAlto(x, z[0], zy, z[2], z[3], 18); x.clip();
-      var zg = x.createLinearGradient(0, zy, 0, zy + z[3]); zg.addColorStop(0, "#0c0729"); zg.addColorStop(1, "#1d1352");
-      x.fillStyle = zg; x.fillRect(z[0], zy, z[2], z[3]);
-      x.fillStyle = "rgba(255,255,255,.05)"; for (var gy2 = zy + 22; gy2 < zy + z[3]; gy2 += 24) x.fillRect(z[0], gy2, z[2], 3);
+    // 1) la parete LED è sotto (a parte, perché si muove): qui solo le fughe tra i pannelli e le righe dei led
+    x.fillStyle = "rgba(4,4,14,.72)";
+    for (i = 0; i <= P.cols; i++) x.fillRect(i * P.cw - P.cw * 0.07, 0, P.cw * 0.14, P.h);
+    for (i = 0; i <= P.righe; i++) x.fillRect(0, i * P.ch - P.ch * 0.07, W, P.ch * 0.14);
+    x.fillStyle = "rgba(0,0,0,.18)"; for (var yy = P.ch / 3; yy < P.h; yy += P.ch / 3) x.fillRect(0, yy, W, P.ch * 0.06);
+    // 2) sotto la parete la sala è in penombra
+    g = x.createLinearGradient(0, S.pubTop - 0.07 * VH, 0, S.pubTop + 0.05 * VH);
+    g.addColorStop(0, "rgba(6,7,22,0)"); g.addColorStop(1, "#06071a");
+    x.fillStyle = g; x.fillRect(0, S.pubTop - 0.07 * VH, W, 0.12 * VH);
+    x.fillStyle = "#06071a"; x.fillRect(0, S.pubTop + 0.05 * VH - 1, W, H);
+    // 3) le gradinate: gradoni scuri, col filo di luce della parete sul bordo di ogni gradone
+    S.zonePub.forEach(function (z, zi) {
+      x.save(); x.beginPath(); zonaPercorso(x, z, S.pubTop); x.clip();
+      g = x.createLinearGradient(0, S.pubTop + z.y, 0, S.pubTop + z.y + z.h); g.addColorStop(0, "#0d0f26"); g.addColorStop(1, "#07081a");
+      x.fillStyle = g; x.fillRect(z.x, S.pubTop + z.y, z.w, z.h);
+      for (var gy = S.pubTop + z.y + 0.02 * VH, k = 0; gy < S.pubTop + z.y + z.h; gy += 0.048 * VH, k++) { x.fillStyle = rgbaDi(T[(k + zi) % 3], 0.16); x.fillRect(z.x, gy, z.w, 1.5); }
       x.restore();
     });
-    // traliccio con i fari in alto
-    var th = 0.035 * VH, tg = x.createLinearGradient(0, 0, 0, th); tg.addColorStop(0, "#3b3560"); tg.addColorStop(1, "#1d1838");
-    x.fillStyle = tg; x.fillRect(0, 0, W, th);
-    x.strokeStyle = "rgba(255,255,255,.18)"; x.lineWidth = 2; x.beginPath();
-    for (i = -th; i < W + th; i += 12) { x.moveTo(i, th * 0.18); x.lineTo(i + th * 0.5, th * 0.82); x.moveTo(i + th * 0.5, th * 0.18); x.lineTo(i, th * 0.82); }
+    // 4) l'americana in alto con le teste dei fari (i fasci partono da qui)
+    var th = 0.032 * VH; x.fillStyle = "#0b0c18"; x.fillRect(0, 0, W, th);
+    x.strokeStyle = "rgba(255,255,255,.1)"; x.lineWidth = 1.2; x.beginPath();
+    for (i = 0; i < W; i += 0.06 * VW) { x.moveTo(i, 1); x.lineTo(i + 0.03 * VW, th - 1); x.lineTo(i + 0.06 * VW, 1); }
     x.stroke();
-    for (i = 0; i < 6; i++) {
-      var fx = W * (0.07 + i * 0.172), fy = 0.02 * VH + 12;
-      alone(x, fx, fy, 44, "rgba(255,220,130,.6)");
-      var lg = x.createRadialGradient(fx - 2, fy - 3, 1, fx, fy, 12); lg.addColorStop(0, "#fff"); lg.addColorStop(0.35, "#ffe9a8"); lg.addColorStop(0.7, "#ffb300"); lg.addColorStop(1, "#5a3a00");
-      x.fillStyle = lg; x.beginPath(); x.arc(fx, fy, 12, 0, 7); x.fill();
+    x.fillStyle = "rgba(255,255,255,.18)"; x.fillRect(0, 0, W, 1.5); x.fillRect(0, th - 1.5, W, 1.5);
+    [0.1, 0.367, 0.633, 0.9].forEach(function (p, k) {
+      var cx = W * p, cy = 0.03 * VH;
+      x.fillStyle = "#171a2c"; rett(x, cx - 0.035 * VW, cy - 0.01 * VH, 0.07 * VW, 0.028 * VH, 6); x.fill();
+      alone(x, cx, cy + 0.012 * VH, 0.07 * VW, rgbaDi(k === 3 ? "#fff3d6" : T[k], 0.55));
+      alone(x, cx, cy + 0.012 * VH, 0.025 * VW, "rgba(255,255,255,.95)");
+    });
+    // 5) due colonne di luce ai lati del maxischermo, fino alla scalinata
+    var sc = S.scala;
+    [R.x - 0.045 * VW, R.x + R.w + 0.03 * VW].forEach(function (cx, k) {
+      g = x.createLinearGradient(0, R.y, 0, sc.y0 + 0.18 * VH);
+      g.addColorStop(0, T[k ? 2 : 0]); g.addColorStop(0.55, T[1]); g.addColorStop(1, rgbaDi(T[k ? 0 : 2], 0.15));
+      x.save(); x.shadowColor = T[1]; x.shadowBlur = 22; x.fillStyle = g; rett(x, cx, R.y - 6, 0.015 * VW, sc.y0 + 0.18 * VH - R.y, 3); x.fill(); x.restore();
+    });
+    // 6) il maxischermo: cornice scura e filo al neon coi colori del gioco (il contenuto è del gioco e non cambia)
+    alone(x, R.x + R.w / 2, R.y + R.h * 0.5, R.w * 0.8, rgbaDi(T[1], 0.18));
+    x.fillStyle = "#04050c"; rett(x, R.x - 8, R.y - 8, R.w + 16, R.h + 16, 22); x.fill();
+    var lg = x.createLinearGradient(R.x, 0, R.x + R.w, 0); lg.addColorStop(0, T[0]); lg.addColorStop(0.5, T[1]); lg.addColorStop(1, T[2]);
+    x.save(); x.shadowColor = T[1]; x.shadowBlur = 26; x.strokeStyle = lg; x.lineWidth = 3; rett(x, R.x - 6, R.y - 6, R.w + 12, R.h + 12, 20); x.stroke(); x.restore();
+    // 7) la scalinata: gradini lucidi col filo di luce sullo spigolo
+    var hs = (sc.y1 - sc.y0) / sc.n;
+    for (var k = 0; k < sc.n; k++) {
+      var y = sc.y0 + k * hs, f = (k + 0.5) / sc.n, w = sc.w0 + (sc.w1 - sc.w0) * f, l = sc.cx - w / 2;
+      g = x.createLinearGradient(0, y, 0, y + hs); g.addColorStop(0, "#171a38"); g.addColorStop(0.25, "#0e1027"); g.addColorStop(1, "#07081a");
+      x.fillStyle = g; x.fillRect(l, y, w, hs);
+      g = x.createLinearGradient(0, y, 0, y + hs); g.addColorStop(0, rgbaDi(T[1], 0.2)); g.addColorStop(1, rgbaDi(T[1], 0));   // il maxischermo riflesso sui gradini
+      x.fillStyle = g; x.fillRect(l, y, w, hs);
+      var eg = x.createLinearGradient(l, 0, l + w, 0); eg.addColorStop(0, rgbaDi(T[0], 0.15)); eg.addColorStop(0.2, T[0]); eg.addColorStop(0.5, "#ffffff"); eg.addColorStop(0.8, T[2]); eg.addColorStop(1, rgbaDi(T[2], 0.15));
+      x.save(); x.shadowColor = T[k % 2 ? 2 : 0]; x.shadowBlur = 14; x.fillStyle = eg; x.globalAlpha = 0.92; x.fillRect(l, y, w, Math.max(2, 0.004 * VH)); x.restore();
     }
-    // pavimento lucido con la striscia di luci
-    var py = 1.48 * VH, pg = x.createLinearGradient(0, py, 0, H); pg.addColorStop(0, "#2c1c78"); pg.addColorStop(0.5, "#170d4a"); pg.addColorStop(1, "#0c0628");
-    x.fillStyle = pg; x.fillRect(0, py, W, H - py);
-    x.save(); x.beginPath(); x.rect(0, py, W, H - py); x.clip(); alone(x, W / 2, py, VW * 0.9, "rgba(255,206,110,.28)"); x.restore();
-    x.fillStyle = "rgba(255,255,255,.07)"; for (i = 0; i < W; i += 70) x.fillRect(i, py, 2, H - py);
-    var sg = x.createLinearGradient(0, 0, W, 0);
-    ["#ff3ea5", "#ffd43b", "#22d3ee", "#a06bff", "#ff3ea5"].forEach(function (c, k) { sg.addColorStop(k / 4, c); });
-    x.save(); x.fillStyle = sg; x.shadowColor = "#ffd43b"; x.shadowBlur = 20; x.fillRect(0, py, W, 6); x.restore();
-    // maxischermo: alone azzurro dietro, cornice dorata con le lampadine
-    x.save(); rett(x, R.x, R.y, R.w, R.h, 14); x.fillStyle = "#0b1030"; x.shadowColor = "rgba(120,170,255,.6)"; x.shadowBlur = 40; x.fill(); x.restore();
-    x.save(); rett(x, R.x - 16, R.y - 16, R.w + 32, R.h + 32, 26); x.fillStyle = "#2a1d00"; x.shadowColor = "rgba(255,190,60,.6)"; x.shadowBlur = 34; x.fill(); x.restore();
-    rett(x, R.x - 16, R.y - 16, R.w + 32, R.h + 32, 26); x.lineWidth = 3; x.strokeStyle = "#3a2a00"; x.stroke();
-    var pc = puntiCornice(R);
-    pc.forEach(function (p, k) { lampadina(x, p[0], p[1], k % 2 === 1); });
-    // seconda serie di lampadine (quelle che si alternano): canvas sopra che si accende e spegne
-    var lx = R.x - 16, ly = R.y - 16, y2 = preparaTela(S.lampade, R.w + 32, R.h + 32, q);
-    S.lampade.style.left = lx + "px"; S.lampade.style.top = ly + "px";
-    pc.forEach(function (p, k) { lampadina(y2, p[0] - lx, p[1] - ly, k % 2 === 0); });
+    // (il pavimento lo disegna rifletti(), dopo il pubblico: servono tutte le cose che ci si specchiano)
+  }
+  // ---- il pavimento lucido ----
+  function pavimento(S, x) {
+    var g = x.createLinearGradient(0, S.yPav, 0, S.H); g.addColorStop(0, "#0b0c20"); g.addColorStop(1, "#04050c");
+    x.fillStyle = g; x.fillRect(0, S.yPav, S.W, S.H - S.yPav);
+  }
+  function lineePavimento(S, x) {   // le righe del pavimento che vanno verso il fondo e il cerchio di luce davanti alla scalinata
+    var VW = S.VW, VH = S.VH, W = S.W, H = S.H, Y = S.yPav, T = S.tema, vx = S.scala.cx, vy = 0.9 * VH, i;
+    x.save(); x.lineWidth = 1; x.strokeStyle = rgbaDi(T[2], 0.12); x.beginPath();
+    for (i = -14; i <= 14; i++) { var xb = vx + i * 0.17 * VW, t0 = (Y - vy) / (H - vy); x.moveTo(vx + (xb - vx) * t0, Y); x.lineTo(xb, H); }
+    x.stroke();
+    x.strokeStyle = rgbaDi(T[0], 0.1); x.beginPath();
+    for (i = 1; i < 9; i++) { var y = Y + (H - Y) * Math.pow(i / 9, 1.6); x.moveTo(0, y); x.lineTo(W, y); }
+    x.stroke();
+    var cy = Y + 0.72 * (H - Y);
+    x.shadowColor = T[0]; x.shadowBlur = 18; x.strokeStyle = rgbaDi(T[0], 0.5); x.lineWidth = 2.5;
+    x.beginPath(); x.ellipse(vx, cy, 0.95 * VW, 0.085 * VH, 0, 0, 7); x.stroke();
+    x.shadowBlur = 0; x.strokeStyle = rgbaDi(T[2], 0.3); x.lineWidth = 1.5; x.beginPath(); x.ellipse(vx, cy, 0.78 * VW, 0.065 * VH, 0, 0, 7); x.stroke();
+    x.restore();
+  }
+  // Il riflesso: tutto quello che sta sopra il pavimento (scalinata, colonne, gradinate, pubblico) capovolto sotto la linea del pavimento,
+  // disegnato in piccolo (un quarto: così viene morbido da solo, senza sfocature) e sfumato. Una volta sola, dentro la tela ferma:
+  // poi non costa niente. Si rifà quando cambia la misura dello schermo o quando arriva la folla vera.
+  function rifletti(S) {
+    if (!S.tela || !S.tela.width || S.yPav == null) return;
+    var W = S.W, H = S.H, Y = S.yPav, D = Math.min(H - Y, 0.5 * S.VH), q = qualitaTela(S), k = 0.25;
+    var x = S.tela.getContext("2d"); x.setTransform(q, 0, 0, q, 0, 0);
+    pavimento(S, x);
+    var t = document.createElement("canvas"); t.width = Math.max(1, Math.round(W * k)); t.height = Math.max(1, Math.round(D * k));
+    var y = t.getContext("2d");
+    y.setTransform(k, 0, 0, -k, 0, Y * k);   // la riga (Y − d) del mondo finisce a d: capovolto
+    y.drawImage(S.tela, 0, 0, W, H);
+    (S.strisce || []).forEach(function (c) { var top = parseFloat(c.style.top) || 0, hh = parseFloat(c.style.height) || 0; if (hh) y.drawImage(c, 0, S.pubTop + top, W, hh); });
+    y.setTransform(1, 0, 0, 1, 0, 0); y.globalCompositeOperation = "destination-in";
+    var g = y.createLinearGradient(0, 0, 0, t.height); g.addColorStop(0, "rgba(0,0,0,.42)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    y.fillStyle = g; y.fillRect(0, 0, t.width, t.height);
+    x.imageSmoothingEnabled = true; x.drawImage(t, 0, Y, W, D);
+    lineePavimento(S, x);
   }
   // il pubblico: silhouette disegnate una volta sola (poi il canvas intero "salta" quando applaude)
   // ---- il pubblico: tanti piccoli avatar veri, disegnati una volta a file (canvas) che ondeggiano ognuna per conto suo ----
@@ -1040,14 +1132,14 @@
       c.style.setProperty("--dur", (1.6 + rnd() * 1.3).toFixed(2) + "s");
       c.style.setProperty("--rit", (-rnd() * 2).toFixed(2) + "s");
       x.translate(0, -y0);
-      x.save(); x.beginPath(); Z.forEach(function (z) { rettAlto(x, z[0], z[1], z[2], z[3], 18); }); x.clip();
+      x.save(); x.beginPath(); Z.forEach(function (z) { zonaPercorso(x, z, 0); }); x.clip();
       gruppo.forEach(function (R, k) {
         var s = R.s, passo = s * 0.78, off = ((r0 + k) % 2) * passo / 2;
-        Z.forEach(function (z, zi) {
-          if (R.y < z[1] - s * 0.2 || R.y > z[1] + z[3] - s * 0.35) return;
-          for (var px = z[0] - passo * 0.4 + off; px < z[0] + z[2] - s * 0.3; px += passo) {
-            // nella fascia sotto il maxischermo salto i tratti dove ci sono già le gradinate laterali
-            if (zi === 2 && ((px + s > Z[0][0] && px < Z[0][0] + Z[0][2]) || (px + s > Z[1][0] && px < Z[1][0] + Z[1][2]))) continue;
+        Z.forEach(function (z) {
+          if (R.y < z.y - s * 0.2 || R.y > z.y + z.h - s * 0.35) return;
+          // accanto alla scalinata la zona si stringe man mano che si scende
+          var f = Math.max(0, Math.min(1, (R.y + s * 0.5 - z.y) / z.h)), zl = z.l0 + (z.l1 - z.l0) * f, zr = z.r0 + (z.r1 - z.r0) * f;
+          for (var px = zl - passo * 0.4 + off; px < zr - s * 0.3; px += passo) {
             var ss = s * (0.9 + rnd() * 0.2), jx = (rnd() - 0.5) * s * 0.2, jy = (rnd() - 0.5) * s * 0.14;
             if (pool) {
               var im = pool[Math.floor(rnd() * pool.length)];
@@ -1057,18 +1149,20 @@
           }
         });
       });
-      // luce da palco solo sulle persone: più buio in fondo (in alto), magenta a sinistra e azzurro a destra
+      // luce da palco solo sulle persone: più buio in fondo (in alto), i colori dello studio ai lati
       x.globalCompositeOperation = "source-atop";
-      var sg = x.createLinearGradient(0, 0, 0, h); sg.addColorStop(0, "rgba(14,7,44,.72)"); sg.addColorStop(0.55, "rgba(14,7,44,.46)"); sg.addColorStop(1, "rgba(14,7,44,.34)");   // il pubblico sta in penombra: i concorrenti devono risaltare
+      var sg = x.createLinearGradient(0, 0, 0, h); sg.addColorStop(0, "rgba(8,9,26,.8)"); sg.addColorStop(0.55, "rgba(8,9,26,.62)"); sg.addColorStop(1, "rgba(8,9,26,.5)");   // il pubblico sta in penombra: i concorrenti devono risaltare
       x.fillStyle = sg; x.fillRect(0, y0, W, y1 - y0);
       var hg = x.createLinearGradient(0, 0, W, 0);
-      hg.addColorStop(0, "rgba(255,62,165,.3)"); hg.addColorStop(0.22, "rgba(255,62,165,0)"); hg.addColorStop(0.78, "rgba(34,211,238,0)"); hg.addColorStop(1, "rgba(34,211,238,.3)");
+      hg.addColorStop(0, rgbaDi(S.tema[0], 0.3)); hg.addColorStop(0.22, rgbaDi(S.tema[0], 0)); hg.addColorStop(0.78, rgbaDi(S.tema[2], 0)); hg.addColorStop(1, rgbaDi(S.tema[2], 0.3));
       x.fillStyle = hg; x.fillRect(0, y0, W, y1 - y0);
       x.globalCompositeOperation = "source-over";
       x.restore();
       S.pubWrap.insertBefore(c, S.pubDeco);
       S.strisce.push(c);
     }
+    var m0 = performance.now(); rifletti(S);   // il pubblico (e tutto il resto) specchiato nel pavimento
+    if (window.__studioMisura) window.__studioMisura.riflesso.push(performance.now() - m0);
   }
   function layoutStudio(S) {
     var VW = S.vista.clientWidth || 360, VH = S.vista.clientHeight || 640, W = 2 * VW, H = 2 * VH;
@@ -1077,26 +1171,19 @@
     S.mondo.style.width = W + "px"; S.mondo.style.height = H + "px";
     S.R = { schermo: { x: 0.5 * VW, y: 0.06 * VH, w: VW, h: VH } };
     var R = S.R.schermo;
-    // zone del pubblico (coordinate dentro al blocco del pubblico): due gradinate ai lati e la fascia sotto il maxischermo
-    S.pubTop = 0.52 * VH; S.pubH = 1.48 * VH - S.pubTop;
-    var fondo = (R.y + R.h + 18) - S.pubTop;   // la fascia parte sotto la cornice, così le lampadine restano sopra
-    S.zonePub = [[0.03 * VW, 0, 0.42 * VW, S.pubH], [1.55 * VW, 0, 0.42 * VW, S.pubH], [0.03 * VW, fondo, 1.94 * VW, S.pubH - fondo]];
+    geometria(S);        // scalinata, pavimento e zone del pubblico
+    preparaParete(S);
     disegnaStudio(S);
-    disegnaPubblico(S);
+    disegnaPubblico(S);  // (alla fine fa anche il riflesso nel pavimento)
+    disegnaParete(S);
     pos(S.schermo, R.x, R.y, R.w, R.h);
     S.fasci.forEach(function (f, i) { var fx = W * (0.1 + i * 0.267); pos(f, fx - 0.22 * VW, 0.03 * VH, 0.44 * VW, 1.35 * VH); });
-    S.eq.forEach(function (e, i) {   // dentro agli angoli tondi della torre
-      var p = S.torriR[i], qe = LEGGERO ? 1 : 1.5; pos(e, p[0] + 6, p[1] + 44, p[2] - 12, p[3] - 50);
-      e.width = Math.max(1, Math.round((p[2] - 12) * qe)); e.height = Math.max(1, Math.round((p[3] - 50) * qe));
-    });
-    disegnaEq(S);
-    function inPub(e) { var z = S.zonePub[e._zona]; pos(e, z[0] + 12 + e._rx * (z[2] - 24), z[1] + 24 + e._ry * (z[3] - 60)); }
+    function inPub(e) { var z = S.zonePub[e._zona] || S.zonePub[0]; pos(e, z.x + 12 + e._rx * (z.w - 24), z.y + 24 + e._ry * (z.h - 60)); }
     S.lucine.forEach(inPub); S.flash.forEach(inPub);
     S.bastoni.forEach(inPub); S.cartelli.forEach(inPub);
-    S.ringhiere.forEach(function (r, i) { var lato = i % 2, fila = Math.floor(i / 2); pos(r, lato ? 1.55 * VW : 0.03 * VW, (0.2 + fila * 0.26) * VH, 0.42 * VW, 5); });
-    S.occhi.forEach(function (o, i) {   // occhi di bue colorati che passano sulla folla
-      var z = S.zonePub[i], d = 0.55 * VW; pos(o, z[0] + z[2] / 2 - d / 2, z[1] + Math.min(z[3], 0.5 * VH) * 0.35 - d / 2, d, d);
-      o.style.setProperty("--dx", (i === 2 ? 0.7 * VW : (i ? -0.25 : 0.25) * VW) + "px"); o.style.setProperty("--dy", (i === 2 ? -0.06 * VH : 0.42 * VH) + "px");
+    S.occhi.forEach(function (o, i) {   // occhi di bue colorati che passano sulla folla delle due gradinate
+      var z = S.zonePub[i % 2], d = 0.55 * VW; pos(o, z.x + z.w / 2 - d / 2, z.y + z.h * 0.25 - d / 2, d, d);
+      o.style.setProperty("--dx", ((i % 2) ? -0.2 : 0.2) * VW + "px"); o.style.setProperty("--dy", 0.36 * VH + "px");
     });
     pos(S.fumetto, W / 2, 1.06 * VH);
     // leggii
@@ -1106,6 +1193,8 @@
       var p = S.posti[i], X = S.L[i]; if (!X) return;
       pos(X.el, p.cx - p.w / 2, p.top, p.w);
       X.el.style.fontSize = (p.w * 0.1).toFixed(1) + "px";
+      // un bancone che non sta sul pavimento (es. i capi di Parola d'ordine, in alto) non si specchia
+      var alto = p.top + 1.35 * p.w < S.yPav; if (X.alto !== alto) { X.alto = alto; X.el.classList.toggle("alto", alto); if (X.w === p.w) riflettiLeggio(X); }
       if (X.w !== p.w) { X.w = p.w; disegnaBanco(X); }   // il bancone si ridisegna solo se cambia misura
       S.zonaLeggii.appendChild(X.el);
     });
