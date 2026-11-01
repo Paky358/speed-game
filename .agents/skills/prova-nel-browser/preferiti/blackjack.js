@@ -312,4 +312,60 @@
     var err = P.__err || []; if (err.length) no("errori: " + err.join(" | "));
     return "«👯 Coppia +10» acceso accanto alla puntata, re di cuori e re di quadri: «" + ev + "», 1.000 − 100 − 10 + 160 = 1.050";
   } });
+
+  COPIONE.aggiungi("bjn8", { nome: "Black Jack, regole da esperti: 21+3, Stesso seme e Il banco sballa nella stessa mano; banco sul 17 morbido, 5 carte, raddoppio 9-11, assi di nuovo", fai: async function () {
+    if (!W.__prepCH) await COPIONE.carica("migliora/casino-horto.js");   // (la spia delle regole: w.__imp)
+    var r = await regoleBJ(), x = [];
+    if (!/Regole da esperti/.test(r) || !/21\+3/.test(r)) no("nelle regole non ci sono le regole da esperti");
+    // ---- il motore, direttamente: le regole una per una ----
+    var BJm = window.__BJ || (await W.apriTel("Paky", { x: 0 })).__BJ;
+    function motore(lista, opz, fiches) {
+      var testa = lista.map(carta);
+      return BJm.creaMotore(["A"], function (c) { var resto = c.slice(), t = []; testa.forEach(function (y) { var k = resto.findIndex(function (z) { return z.v === y.v && z.s === y.s; }); if (k >= 0) t.push(resto.splice(k, 1)[0]); }); testa = []; return t.concat(resto); }, [fiches || 1000], opz);
+    }
+    function distribuisci(M) { M.nuovaMano(); M.punta(0, 100); for (var i = 0; i < 4; i++) M.passoDistribuzione(); if (M.st.fase === "assic") M.assicura(0, false); }
+    function banco(M) { for (var i = 0; i < 12 && M.st.fase === "banco"; i++) M.passoBanco(); }
+    var M = motore(["10♠", "A♦", "8♣", "6♣", "2♥"], { h17: true }); distribuisci(M); M.azione("stai"); M.avanza(); banco(M);
+    if (M.st.banco.carte.length !== 3) no("col banco che tira sul 17 morbido, con Asso e 6 il banco non ha pescato (" + M.st.banco.carte.length + " carte)");
+    M = motore(["10♠", "A♦", "8♣", "6♣", "2♥"], {}); distribuisci(M); M.azione("stai"); M.avanza(); banco(M);
+    if (M.st.banco.carte.length !== 2) no("di partenza il banco col 17 morbido ha pescato lo stesso");
+    M = motore(["2♠", "10♦", "3♣", "7♣", "2♥", "3♥", "4♦"], { charlie: true }); distribuisci(M);
+    M.azione("carta"); M.azione("carta"); M.azione("carta");
+    var m5 = M.st.giocatori[0].mani[0];
+    if (!m5.charlie || !m5.chiusa) no("con 5 carte senza sballare la mano non si chiude vincente (" + m5.carte.length + " carte)");
+    M.avanza(); banco(M); if (m5.esito !== "vince") no("le 5 carte non vincono (" + m5.esito + ")");
+    M = motore(["5♠", "10♦", "3♣", "7♣"], { r911: true }); distribuisci(M);
+    if (M.mosseValide().raddoppia) no("col raddoppio solo su 9-11 si può raddoppiare su 8");
+    M = motore(["5♠", "10♦", "4♣", "7♣"], { r911: true }); distribuisci(M);
+    if (!M.mosseValide().raddoppia) no("col raddoppio solo su 9-11 non si può raddoppiare su 9");
+    M = motore(["A♠", "10♦", "A♣", "7♣", "A♥", "9♦"], { rsa: true }); distribuisci(M); M.azione("dividi"); M.passoDivisa();
+    if (M.st.giocatori[0].mani[0].chiusa || !M.mosseValide().dividi || M.mosseValide().carta) no("con «dividere di nuovo gli assi» un altro asso non lascia ridividere");
+    M = motore(["A♠", "10♦", "A♣", "7♣", "A♥", "9♦"], {}); distribuisci(M); M.azione("dividi"); M.passoDivisa();
+    if (!M.st.giocatori[0].mani[0].chiusa) no("di partenza gli assi divisi con un altro asso restano aperti");
+    x.push("banco sul 17 morbido, 5 carte, raddoppio 9-11 e assi di nuovo ok nel motore");
+    // ---- al tavolo: le tre scommesse accese, 7♥ 8♥ contro il 9♥ del banco: scala colore (21+3), stesso seme; poi il banco sballa con 3 carte ----
+    var P = await W.apriTel("Paky", { x: 0, ch: true, prima: function (w) { trucca(w, ["7♥", "9♥", "8♥", "7♠", "K♣"]); } });
+    P.__imp = { t213: true, royal: true, buster: true };
+    var tess = await W.aspetta(function () { return A.tessera(P, "Black Jack"); }, 6000); tess.click(); await W.dorme(300);
+    W.clicca(P, /Su questo telefono/, ".modo-grande");
+    for (var k = 0; k < 8 && !q(P, ".bj-wrap"); k++) { await W.dorme(300); W.clicca(P, /Avanti|Comincia/); }
+    await W.dorme(700); var sala = q(P, ".bj-sala"); if (sala) sala.click(); await W.dorme(300);
+    var ch = await W.aspetta(function () { var l = P.document.querySelectorAll(".bj-coppia"); return l.length === 4 ? l : null; }, 6000);
+    if (!ch) no("accanto alla puntata non ci sono i 4 interruttori (" + P.document.querySelectorAll(".bj-coppia").length + ")");
+    [].forEach.call(ch, function (b) { if (b.dataset.ex !== "coppia") b.click(); });
+    var mis = await A.misuraSchermata(P, "Paky", 360, 640); if (mis) no("a 360x640 coi 4 interruttori: " + mis);
+    W.clicca(P, /^Punta 100/);
+    var visti = {}, fine = Date.now() + 25000;
+    while (Date.now() < fine && !/Fine mano/.test(T(P))) {
+      var e = q(P, ".bj-evento"); if (e) visti[e.textContent] = 1;
+      W.clicca(P, /^Stai$/); await W.dorme(80);
+    }
+    for (var kk = 0; kk < 30; kk++) { var e2 = q(P, ".bj-evento"); if (e2) visti[e2.textContent] = 1; await W.dorme(100); }   // (l'annuncio del banco che sballa arriva con la fine della mano)
+    var ev = Object.keys(visti).join(" | ");
+    ["scala colore! +400", "stesso seme! +25", "il banco sballa con 3 carte! +20"].forEach(function (t) { if (ev.indexOf(t) < 0) no("non si è visto «" + t + "» (annunci: " + ev + ")"); });
+    if (!/1\.545/.test(T(P))) no("a fine mano Paky non ha 1.545 (1.000 − 130 + 410 + 35 + 200 + 30) («" + T(P).slice(-120) + "»)");
+    var err = P.__err || []; if (err.length) no("errori: " + err.join(" | "));
+    x.push("al tavolo: " + ev + ", Paky 1.545");
+    return x.join(" · ");
+  } });
 })();

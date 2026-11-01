@@ -47,7 +47,19 @@
 
   // La mossa giusta secondo la "strategia base" (6 mazzi, il banco sta sul 17).
   // m = la mano, su = la carta scoperta del banco; puoRadd/puoDiv = mosse permesse adesso.
-  function consiglio(m, su, puoRadd, puoDiv, puoResa) {
+  // le mosse permesse con le regole scelte (R = le regole da esperti: r911, das, rsa, resa…): le usano il motore e il disegno.
+  // m.assi = assi divisi ancora aperti (si può solo dividere di nuovo, se la regola lo lascia, o stare)
+  function mossePermesse(g, m, R) {
+    R = R || {};
+    var c = m.carte || [], due = c.length === 2, p = punteggio(c), soft = eSoft(c);
+    return {
+      carta: !m.assi, stai: true,
+      raddoppia: !m.assi && due && g.fiches >= m.puntata && (!R.r911 || (!soft && p >= 9 && p <= 11)) && (R.das !== false || !m.divisa),
+      dividi: due && valoreCarta(c[0].v) === valoreCarta(c[1].v) && g.fiches >= m.puntata && (g.mani || []).length < 4 && (!m.assi || !!R.rsa),
+      resa: R.resa !== false && due && (g.mani || []).length === 1 && !m.divisa && !m.raddoppiata
+    };
+  }
+  function consiglio(m, su, puoRadd, puoDiv, puoResa, h17) {
     var c = m.carte, d = su ? valoreCarta(su.v) : 10, p = punteggio(c), soft = eSoft(c);
     function radd(altrimenti) { return puoRadd ? "raddoppia" : altrimenti; }
     if (puoDiv && c.length === 2) {
@@ -59,10 +71,11 @@
       if (v === 4 && (d === 5 || d === 6)) return "dividi";
     }
     // la resa (1 nov 2026): come al casinò con 6 mazzi, 16 contro 9, 10 e Asso, 15 contro 10 (8 e 8 invece si dividono: sopra)
-    if (puoResa && !soft && ((p === 16 && d >= 9) || (p === 15 && d === 10))) return "resa";
+    if (puoResa && !soft && ((p === 16 && d >= 9) || (p === 15 && d === 10) || (h17 && d === 11 && (p === 15 || p === 17)))) return "resa";   // (col banco che tira sul 17 morbido anche 15 e 17 contro l'Asso)
     if (soft) {
-      if (p >= 19) return "stai";
-      if (p === 18) return (d >= 3 && d <= 6) ? radd("stai") : (d <= 8 ? "stai" : "carta");
+      if (p >= 20) return "stai";
+      if (p === 19) return h17 && d === 6 ? radd("stai") : "stai";
+      if (p === 18) return ((h17 ? d >= 2 : d >= 3) && d <= 6) ? radd("stai") : (d <= 8 ? "stai" : "carta");
       if (p === 17) return (d >= 3 && d <= 6) ? radd("carta") : "carta";
       if (p >= 15) return (d >= 4 && d <= 6) ? radd("carta") : "carta";
       if (p <= 12) return "carta";   // due assi che non si possono dividere
@@ -156,7 +169,7 @@
   // esposto per il resto del modulo (motore + UI qui sotto lo usano)
   window.__BJ = {
     SEMI: SEMI, RANGHI: RANGHI, N_MAZZI: N_MAZZI, SOGLIA_RIMESCOLA: SOGLIA_RIMESCOLA,
-    valoreCarta: valoreCarta, punteggio: punteggio, eSoft: eSoft, eBlackjack: eBlackjack, eBJ: eBJ, consiglio: consiglio,
+    valoreCarta: valoreCarta, punteggio: punteggio, eSoft: eSoft, eBlackjack: eBlackjack, eBJ: eBJ, consiglio: consiglio, mossePermesse: mossePermesse,
     testo: testo, fmtN: fmtN, cartaHTML: cartaHTML, fronteSVG: fronteSVG, retroSVG: retroSVG, colore: colore
   };
 
@@ -177,14 +190,14 @@
   }
 
   // Sabot: 6 mazzi uniti e mescolati; si rimescola quando restano poche carte.
-  function nuovoSabot(mischia) {
+  function nuovoSabot(mischia, nm) {
     var carte = [];
-    for (var d = 0; d < N_MAZZI; d++)
+    for (var d = 0; d < (nm || N_MAZZI); d++)
       for (var s = 0; s < 4; s++)
         for (var v = 1; v <= 13; v++) carte.push({ s: s, v: v });
     return { carte: (mischia || mischiaDef)(carte), i: 0, mischia: mischia || mischiaDef };
   }
-  function pescaSabot(sb) { return sb.carte[sb.i++]; }
+  function pescaSabot(sb) { if (sb.i >= sb.carte.length) { sb.carte = sb.mischia(sb.carte); sb.i = 0; } return sb.carte[sb.i++]; }
   function restaSotto(sb) { return (sb.carte.length - sb.i) < sb.carte.length * SOGLIA_RIMESCOLA; }
   function rimescolaSabot(sb) { sb.carte = sb.mischia(sb.carte); sb.i = 0; }
 
@@ -202,7 +215,7 @@
     // per i titoli scherzosi di fine partita (1 nov 2026)
     function statVuote() { return { bj: 0, sball: 0, rese: 0, rischio: 0, segue: 0, mosse: 0, perso: 0 }; }
     var st = {
-      sabot: nuovoSabot(mischia),
+      sabot: nuovoSabot(mischia, [1, 2, 6, 8].indexOf(+opz.mazzi) >= 0 ? +opz.mazzi : N_MAZZI),
       giocatori: nomi.map(function (n, i) { return nuovoGioc(i, n, fichesIniz ? fichesIniz[i] : null); }),
       banco: { carte: [] },
       fase: "punta",     // punta -> (assic) -> gioca -> banco -> esito  (e "fine": la classifica)
@@ -220,9 +233,10 @@
     function annuncia(seat, testo) { st.annSeq = (st.annSeq || 0) + 1; st.annuncio = { seat: seat, testo: testo, id: st.annSeq }; }
 
     function nuovaMano() {
-      if (restaSotto(st.sabot)) { rimescolaSabot(st.sabot); st.rimescolato = true; } else st.rimescolato = false;
+      // (con pochi mazzi si rimescola anche quando le carte rimaste non bastano per una mano di tutti)
+      if (restaSotto(st.sabot) || st.sabot.carte.length - st.sabot.i < (st.giocatori.length + 1) * 8) { rimescolaSabot(st.sabot); st.rimescolato = true; } else st.rimescolato = false;
       st.banco = { carte: [] };
-      st.giocatori.forEach(function (g) { g.puntata = 0; g.assicura = 0; g.mani = []; g.attiva = 0; g.decisoAssic = false; g.salta = false; g.coppia = 0; g.coppiaEsito = null; });
+      st.giocatori.forEach(function (g) { g.puntata = 0; g.assicura = 0; g.mani = []; g.attiva = 0; g.decisoAssic = false; g.salta = false; g.coppia = 0; g.coppiaEsito = null; g.ex = {}; g.exEsito = {}; });
       st.fase = "punta";
       // la gara (fiches uguali, con un numero di mani): le ultime 3 mani la puntata minima raddoppia (da 6 mani in su),
       // l'ultima si punta in segreto (nessuno vede le puntate degli altri finché non hanno puntato tutti)
@@ -243,7 +257,7 @@
 
     // Un giocatore punta (in qualsiasi ordine); quando hanno puntato tutti quelli che possono, si distribuisce.
     // coppia: la scommessa extra «👯 Coppia» (se è accesa nelle regole): vale la puntata minima della mano, si paga appena arrivano le carte
-    function punta(idx, importo, coppia) {
+    function punta(idx, importo, coppia, ex) {
       var g = st.giocatori[idx]; if (!g || st.fase !== "punta" || !puoPuntareG(g)) return st;
       importo = Math.floor(Number(importo)); if (!isFinite(importo)) return st;   // solo numeri interi veri
       importo = Math.max(Math.min(st.minMano || st.min, g.fiches), Math.min(importo, g.fiches));
@@ -251,6 +265,8 @@
       g.puntata = importo; g.fiches -= importo;
       var cq = st.minMano || st.min;
       if (opz.coppia && coppia && g.fiches >= cq) { g.coppia = cq; g.fiches -= cq; }
+      g.ex = g.ex || {}; g.exEsito = g.exEsito || {};
+      (Array.isArray(ex) ? ex : []).forEach(function (k) { if (EXTRA.indexOf(k) >= 0 && opz[k] && !g.ex[k] && g.fiches >= cq) { g.ex[k] = cq; g.fiches -= cq; } });
       annuncia(idx, st.segreta ? "🤫 Ho puntato" : (g.fiches === 0 ? "Tutto! " : "Punto ") + fmtN(importo));
       var next = primoCheDevePuntare(0);
       if (next < 0) chiudiPuntate(); else st.turno = next;
@@ -294,6 +310,18 @@
     // la «👯 Coppia» (come la «Perfect Pairs» dei casinò): le prime due carte dello stesso valore (K e K sì, K e Q no).
     // Colori diversi 6 a 1, stesso colore 15 a 1, identiche (stesso seme) 25 a 1. Con 6 mazzi il banco tiene appena 3 monete su 1.000.
     var PAGA_COPPIA = { mista: 6, colore: 15, perfetta: 25 };
+    // le altre scommesse extra (regole da esperti, 1 nov 2026), con vincite giuste calcolate su 6 mazzi (il banco tiene dallo 0,6 al 3%):
+    //  🃏 21+3 (le tue due carte + la scoperta del banco): colore 5, scala 11, tris 30, scala colore 40, tris dello stesso seme 100
+    //  👑 Stesso seme: 2,5 a 1, re e donna dello stesso seme 45 a 1
+    //  💥 Il banco sballa (il banco gioca sempre fino in fondo): con 3 carte 2, 4 carte 2,5, 5 carte 4, 6 carte 15, 7 carte 50, 8 e più 250
+    var EXTRA = ["t213", "buster", "royal"];
+    var PAGA_EXTRA = { t213: { colore: 5, scala: 11, tris: 30, scala_colore: 40, tris_seme: 100 }, royal: { seme: 2.5, reale: 45 },
+      buster: { b3: 2, b4: 2.5, b5: 4, b6: 15, b7: 50, b8: 250 } };
+    function tipo213(a, b, c) {
+      var vs = [a.v, b.v, c.v].sort(function (x, y) { return x - y; }), seme = a.s === b.s && b.s === c.s, tris = vs[0] === vs[2];
+      var scala = (vs[0] + 1 === vs[1] && vs[1] + 1 === vs[2]) || (vs[0] === 1 && vs[1] === 12 && vs[2] === 13);
+      return tris && seme ? "tris_seme" : (scala && seme ? "scala_colore" : (tris ? "tris" : (scala ? "scala" : (seme ? "colore" : "no"))));
+    }
     function pagaCoppie(att) {
       att.forEach(function (g) {
         if (!g.coppia) return;
@@ -302,6 +330,15 @@
         var v = tipo === "no" ? 0 : g.coppia * (PAGA_COPPIA[tipo] + 1);
         g.fiches += v; g.coppiaEsito = { tipo: tipo, vincita: v };
       });
+      att.forEach(function (g) {
+        var c = g.mani[0].carte, ex = g.ex || {}; g.exEsito = g.exEsito || {};
+        if (ex.t213) esitoExtra(g, "t213", tipo213(c[0], c[1], st.banco.carte[0]));
+        if (ex.royal) esitoExtra(g, "royal", c[0].s !== c[1].s ? "no" : ((c[0].v === 12 && c[1].v === 13) || (c[0].v === 13 && c[1].v === 12) ? "reale" : "seme"));
+      });
+    }
+    function esitoExtra(g, k, tipo) {
+      var v = tipo === "no" ? 0 : Math.floor(g.ex[k] * (PAGA_EXTRA[k][tipo] + 1));
+      g.fiches += v; g.exEsito[k] = { tipo: tipo, vincita: v };
     }
     function fineDistribuzione(att) {
       pagaCoppie(att);
@@ -361,16 +398,20 @@
       var g = st.giocatori[st.turno]; if (!g) return st;
       var m = g.mani[g.attiva]; if (!m || m.chiusa || m.carte.length < 2) return st;   // con una carta sola aspetta la seconda
       if (chk && (chk.h !== g.attiva || chk.n !== m.carte.length)) return st;
-      var mv = mosseValide(); g.stat.mosse++; if (consiglio(m, st.banco.carte[0], mv.raddoppia, mv.dividi, mv.resa) === mossa) g.stat.segue++;
-      if (mossa === "carta") { m.carte.push(pescaSabot(st.sabot)); if (punteggio(m.carte) >= 21) m.chiusa = true; annuncia(st.turno, "Carta!"); }
+      var mv = mosseValide(); g.stat.mosse++; if (consiglio(m, st.banco.carte[0], mv.raddoppia, mv.dividi, mv.resa, opz.h17) === mossa) g.stat.segue++;
+      if (mossa === "carta" && mv.carta) {
+        m.carte.push(pescaSabot(st.sabot)); annuncia(st.turno, "Carta!");
+        if (punteggio(m.carte) >= 21) m.chiusa = true;
+        else if (opz.charlie && m.carte.length >= 5) { m.chiusa = true; m.charlie = true; annuncia(st.turno, "5 carte! 🖐️"); }   // (regola «Charlie»: 5 carte senza sballare vincono)
+      }
       else if (mossa === "stai") { m.chiusa = true; annuncia(st.turno, "Passo"); }
       else if (mossa === "resa") {   // ti ritiri: riprendi metà puntata (solo con le prime due carte, mai dopo Dividi)
-        if (puoArrendersi(g, m)) { m.chiusa = true; m.resa = true; annuncia(st.turno, "Mi ritiro 🏳️"); }
+        if (mv.resa) { m.chiusa = true; m.resa = true; annuncia(st.turno, "Mi ritiro 🏳️"); }
       }
       else if (mossa === "raddoppia") {
-        if (m.carte.length === 2 && g.fiches >= m.puntata) { g.fiches -= m.puntata; m.puntata *= 2; m.raddoppiata = true; m.carte.push(pescaSabot(st.sabot)); m.chiusa = true; annuncia(st.turno, "Raddoppio!"); }
+        if (mv.raddoppia) { g.fiches -= m.puntata; m.puntata *= 2; m.raddoppiata = true; m.carte.push(pescaSabot(st.sabot)); m.chiusa = true; annuncia(st.turno, "Raddoppio!"); }
       } else if (mossa === "dividi") {
-        if (puoDividere(g, m)) {
+        if (mv.dividi) {
           g.fiches -= m.puntata;
           // le due mani restano con una carta: la seconda arriva una alla volta, quando tocca a quella mano (passoDivisa)
           var nuova = manoVuota(m.puntata); nuova.carte.push(m.carte.pop());
@@ -396,7 +437,8 @@
       var g = st.giocatori[st.turno]; if (!g) return st;
       var m = g.mani[g.attiva]; if (!m || m.chiusa || m.carte.length !== 1) return st;
       m.carte.push(pescaSabot(st.sabot));
-      if (m.assi || punteggio(m.carte) >= 21) m.chiusa = true;
+      // assi divisi: una carta sola; con «dividere di nuovo gli assi» un altro asso lascia la mano aperta (si può dividere ancora)
+      if (punteggio(m.carte) >= 21 || (m.assi && !(opz.rsa && m.carte[1].v === 1 && g.mani.length < 4))) m.chiusa = true;
       return st;
     }
     // un giocatore online se ne va: non si aspetta più (le sue mani restano ferme)
@@ -454,19 +496,9 @@
       if (ng < 0) giocaBanco(); else st.turno = ng;
     }
 
-    function puoArrendersi(g, m) { return m.carte.length === 2 && g.mani.length === 1 && !m.divisa && !m.raddoppiata; }
-    function puoDividere(g, m) {
-      return m.carte.length === 2 && valoreCarta(m.carte[0].v) === valoreCarta(m.carte[1].v) && g.fiches >= m.puntata && g.mani.length < 4;
-    }
     function mosseValide() {
       var g = st.giocatori[st.turno]; if (!g) return {};
-      var m = g.mani[g.attiva] || { carte: [] };
-      return {
-        carta: true, stai: true,
-        raddoppia: m.carte.length === 2 && g.fiches >= m.puntata,
-        dividi: puoDividere(g, m),
-        resa: puoArrendersi(g, m)
-      };
+      return mossePermesse(g, g.mani[g.attiva] || { carte: [] }, opz);
     }
 
     function giocaBanco() { st.fase = "banco"; }   // gira la coperta; poi pesca a passi
@@ -474,7 +506,9 @@
     // un passo del banco: pesca se ha 16 o meno (e c'è qualcuno da battere), altrimenti risolve
     function passoBanco() {
       if (st.fase !== "banco") return st;
-      if (bancoVivo() && punteggio(st.banco.carte) < 17) { st.banco.carte.push(pescaSabot(st.sabot)); return st; }
+      var pb = punteggio(st.banco.carte), tira = pb < 17 || (opz.h17 && pb === 17 && eSoft(st.banco.carte));
+      var buster = st.giocatori.some(function (g) { return g.ex && g.ex.buster; });
+      if ((bancoVivo() || buster) && tira) { st.banco.carte.push(pescaSabot(st.sabot)); return st; }
       risolvi();
       return st;
     }
@@ -484,9 +518,11 @@
       st.giocatori.forEach(function (g) {
         // assicurazione: paga 2:1 se il banco ha black jack
         if (g.assicura > 0) { if (bjBanco) g.fiches += g.assicura * 3; }
+        if (g.ex && g.ex.buster) esitoExtra(g, "buster", pb > 21 ? "b" + Math.min(8, st.banco.carte.length) : "no");   // 💥 Il banco sballa
         g.mani.forEach(function (m) {
           var pm = punteggio(m.carte), bjMano = eBJ(m), v = 0, es;
           if (m.resa) { es = "resa"; v = Math.floor(m.puntata / 2); }
+          else if (m.charlie && !bjBanco) { es = "vince"; v = m.puntata * 2; }   // 5 carte senza sballare
           else if (pm > 21) { es = "perde"; v = 0; }
           else if (bjMano && !bjBanco) { es = "blackjack"; v = m.puntata + Math.floor(m.puntata * 3 / 2); }
           else if (bjBanco && !bjMano) { es = "perde"; v = 0; }
@@ -959,7 +995,7 @@
     ".bj-titoli span{background:rgba(255,194,71,.12);box-shadow:inset 0 0 0 1px rgba(255,194,71,.45);border-radius:10px;padding:1px 8px;font-size:.7rem;font-weight:800;white-space:nowrap}",
     ".bj-wrap .bjr-fiche.coperta{--fc:#2a1b12;--fb:#ffc247;animation:none}",
     // la «👯 Coppia»: un interruttore piccolo accanto alla puntata (acceso = oro)
-    ".bj-valriga{display:flex;align-items:center;justify-content:center;gap:12px}",
+    ".bj-valriga{display:flex;align-items:center;justify-content:center;gap:12px}.bj-valriga.tante{gap:6px}.bj-valriga.tante .bj-punta-val{font-size:1.5rem}.bj-valriga.tante .bj-coppia{padding:5px 8px}",
     ".bj-coppia{border:0;border-radius:14px;padding:5px 11px;font:800 .78rem var(--o-tit);background:rgba(13,16,32,.78);color:var(--o-tenue);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18);cursor:pointer;white-space:nowrap}",
     ".bj-coppia.on{background:rgba(255,194,71,.16);color:#ffc247;box-shadow:inset 0 0 0 1.5px #ffc247}",
     ".bj-ptriga{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px}",
@@ -1189,6 +1225,8 @@
       fase: st.fase, giro: st.giro, mano: st.mano, maniTot: st.maniTot, rimescolato: st.rimescolato, turno: st.turno,
       annuncio: st.annuncio ? { seat: st.annuncio.seat, testo: st.annuncio.testo, id: st.annuncio.id } : null,
       puntataMin: st.minMano || st.min, consigli: !!(extra && extra.consigli), croupier: st.croupier || null, coppia: !!(extra && extra.coppia),
+      regole: extra ? { h17: !!extra.h17, r911: !!extra.r911, das: extra.das !== false, rsa: !!extra.rsa, resa: extra.resa !== false, charlie: !!extra.charlie,
+        t213: !!extra.t213, buster: !!extra.buster, royal: !!extra.royal } : {},
       // la gara: mani finali, ultima mano segreta, quota e montepremi, titoli di fine partita
       finali: !!st.finali, segreta: !!st.segreta, gara: st.gara || null, titoli: st.fase === "fine" ? (st.titoli || null) : null,
       uguali: !!(extra && extra.uguali),   // il Torneo della serata a fiches uguali (finte: nessun profilo si tocca)
@@ -1199,18 +1237,14 @@
         // l'ultima mano della gara si punta in segreto: di chi ha già puntato non si vedono né la puntata (-1 = coperta) né le fiches
         var cop = st.segreta && st.fase === "punta" && g.puntata > 0;
         return { id: g.id, rid: g.rid || null, nome: g.nome, fiches: cop ? null : g.fiches, puntata: cop ? -1 : g.puntata, assicura: g.assicura, attiva: g.attiva,
-          via: !!g.via, dec: !!g.decisoAssic, salta: !!g.salta, prova: !!g.prova, coppia: cop ? 0 : (g.coppia || 0), coppiaEsito: g.coppiaEsito || null,
-          mani: g.mani.map(function (m) { return { carte: m.carte.map(cp), chiusa: m.chiusa, esito: m.esito, vincita: m.vincita, puntata: m.puntata, divisa: !!m.divisa, assi: !!m.assi, resa: !!m.resa }; }) };
+          via: !!g.via, dec: !!g.decisoAssic, salta: !!g.salta, prova: !!g.prova, coppia: cop ? 0 : (g.coppia || 0), coppiaEsito: g.coppiaEsito || null, ex: cop ? {} : JSON.parse(JSON.stringify(g.ex || {})), exEsito: JSON.parse(JSON.stringify(g.exEsito || {})),   // (copie: sullo stesso telefono la foto di prima non deve cambiare con quella dopo)
+          mani: g.mani.map(function (m) { return { carte: m.carte.map(cp), chiusa: m.chiusa, esito: m.esito, vincita: m.vincita, puntata: m.puntata, divisa: !!m.divisa, assi: !!m.assi, resa: !!m.resa, charlie: !!m.charlie }; }) };
       })
     };
   }
   function mosseValideVm(vm) {
     var g = vm.giocatori[vm.turno]; if (!g) return {};
-    var m = g.mani[g.attiva] || { carte: [] }, due = m.carte.length === 2;
-    return { carta: true, stai: true,
-      raddoppia: due && g.fiches >= m.puntata,
-      dividi: due && BJ.valoreCarta(m.carte[0].v) === BJ.valoreCarta(m.carte[1].v) && g.fiches >= m.puntata && g.mani.length < 4,
-      resa: due && g.mani.length === 1 && !m.divisa };
+    return BJ.mossePermesse(g, g.mani[g.attiva] || { carte: [] }, vm.regole);
   }
 
   // ---- il tavolo: disegna da un vm e chiama i callback del "driver".
@@ -1247,7 +1281,8 @@
     var bolla = null, bollaId = -1, bollaTimer = null;   // nuvoletta della mossa
     var scopri = { attesa: false, t: null };   // la carta coperta di Bot si gira solo quando la telecamera è arrivata
     var puntataSegreta = 0;
-    var coppiaSi = false; try { coppiaSi = localStorage.getItem("sg-bj-coppia") === "1"; } catch (e) {}   // (la «👯 Coppia»: spenta finché non la tocchi, poi la ricorda il telefono: mai monete spese senza volerlo)   // la mia puntata dell'ultima mano della gara (nella foto è coperta per tutti)
+    // le scommesse extra accese su questo telefono (la «👯 Coppia» e le altre): spente finché non le tocchi, poi le ricorda il telefono
+    var extraSi = {}; ["coppia", "t213", "royal", "buster"].forEach(function (k) { try { extraSi[k] = localStorage.getItem("sg-bj-" + k) === "1"; } catch (e) { extraSi[k] = false; } });   // la mia puntata dell'ultima mano della gara (nella foto è coperta per tutti)
     var heroK = null, bloccoT = null;          // la parte di sotto si rifà solo se cambia; i tasti bloccati dopo un tocco
     var tempo = { el: el("div", { class: "bj-tempo", hidden: "hidden" }), fine: 0, k: "", int: null, ultimoS: -1 };
     zBanco.appendChild(tempo.el);
@@ -1382,10 +1417,19 @@
     // i momenti che contano, in grande sul tavolo per tutti (1 nov 2026): il Black Jack di qualcuno (vibra solo a chi l'ha fatto)
     // e chi punta TUTTO. Solo transform e trasparenza; uno alla volta (il nuovo prende il posto del vecchio)
     var eventoEl = null, eventoT = null;
+    var NOMI_EXTRA = { colore: "colore", scala: "scala", tris: "tris", scala_colore: "scala colore", tris_seme: "tris dello stesso seme", seme: "stesso seme",
+      reale: "re e donna dello stesso seme", b3: "il banco sballa con 3 carte", b4: "il banco sballa con 4 carte", b5: "il banco sballa con 5 carte",
+      b6: "il banco sballa con 6 carte", b7: "il banco sballa con 7 carte", b8: "il banco sballa con 8 carte" };
+    // (più annunci insieme, per esempio due scommesse vinte alla stessa carta: in fila, uno dopo l'altro, al massimo 4)
+    var codaEv = [];
     function evento(testo, cls) {
-      if (eventoEl) eventoEl.remove(); if (eventoT) clearTimeout(eventoT);
-      eventoEl = el("div", { class: "bj-evento " + cls, text: testo }); zBanco.appendChild(eventoEl);
-      eventoT = setTimeout(function () { if (eventoEl) eventoEl.remove(); eventoEl = null; }, 2000);
+      codaEv.push([testo, cls]); if (codaEv.length > 4) codaEv.shift();
+      if (!eventoEl) prossimoEvento();
+    }
+    function prossimoEvento() {
+      var x = codaEv.shift(); if (!x || chiuso) { eventoEl = null; return; }
+      eventoEl = el("div", { class: "bj-evento " + x[1], text: x[0] }); zBanco.appendChild(eventoEl);
+      eventoT = setTimeout(function () { if (eventoEl) eventoEl.remove(); eventoEl = null; prossimoEvento(); }, codaEv.length ? 1500 : 2000);
     }
     function eventi(pre, v) {
       if (!pre || pre.giocatori.length !== v.giocatori.length) return;
@@ -1396,6 +1440,11 @@
           if (!drv.mioIdx || i === mioIdx()) { try { if (navigator.vibrate) navigator.vibrate([30, 40, 70]); } catch (e) {} }
         }
         if (v.fase === "punta" && g.puntata > 0 && g.fiches === 0 && !p.puntata) evento("🔥 " + g.nome + " punta TUTTO!", "fuoco");
+        Object.keys(g.exEsito || {}).forEach(function (k) {
+          var e = g.exEsito[k]; if (!e || !e.vincita || (p.exEsito && p.exEsito[k])) return;
+          evento(({ t213: "🃏 ", royal: "👑 ", buster: "💥 " })[k] + g.nome + ": " + (NOMI_EXTRA[e.tipo] || e.tipo) + "! +" + fmt(e.vincita - ((g.ex || {})[k] || 0)), "oro");
+          if (!drv.mioIdx || i === mioIdx()) { try { if (navigator.vibrate) navigator.vibrate([30, 40, 70]); } catch (e2) {} }
+        });
         if (g.coppiaEsito && !p.coppiaEsito && g.coppiaEsito.vincita > 0) {   // la «👯 Coppia» vinta: in grande per tutti, vibra a chi l'ha presa
           evento("👯 " + g.nome + ": coppia" + ({ mista: "", colore: " di colore", perfetta: " perfetta" })[g.coppiaEsito.tipo] + "! +" + fmt(g.coppiaEsito.vincita - g.coppia), "oro");
           if (!drv.mioIdx || i === mioIdx()) { try { if (navigator.vibrate) navigator.vibrate([30, 40, 70]); } catch (e) {} }
@@ -1440,7 +1489,11 @@
     // i tagli delle fiches (1 nov 2026, il proprietario: «se punto 10.000 ce ne deve stare una da 10.000»): la pila si fa coi tagli più grandi
     var FICHE = [[100000, "f100k"], [50000, "f50k"], [10000, "f10k"], [5000, "f5k"], [1000, "f1k"], [500, "f500"], [100, "f100"], [50, "f50"], [10, "f10"]];
     function puntataDi(g) { return g.mani && g.mani.length ? g.mani.reduce(function (s, m) { return s + m.puntata; }, 0) : (g.puntata || 0); }
-    function nettoDi(g) { var n = 0; g.mani.forEach(function (m) { n += m.vincita - m.puntata; }); if (g.coppiaEsito) n += g.coppiaEsito.vincita - (g.coppia || 0); return n; }
+    function nettoDi(g) {
+      var n = 0; g.mani.forEach(function (m) { n += m.vincita - m.puntata; }); if (g.coppiaEsito) n += g.coppiaEsito.vincita - (g.coppia || 0);
+      Object.keys(g.exEsito || {}).forEach(function (k) { n += g.exEsito[k].vincita - ((g.ex || {})[k] || 0); });
+      return n;
+    }
     function facciaDi(g, idx) {
       var m = g.mani[g.attiva] || g.mani[0];
       if (vm.fase === "fine") { var rc = rigaClass(idx); return rc && rc.netto > 0 ? "esulta" : (rc && rc.netto < 0 ? "triste" : "normale"); }
@@ -1846,7 +1899,7 @@
       if (!cfg) return null;
       return el("div", { class: "bj-av", style: "width:" + px + "px;height:" + px + "px", html: svgAvatar(cfg, "normale", { busto: true }) });
     }
-    function etichettaEsito(m) { return ({ vince: "vince", blackjack: "BJ!", perde: "perde", pari: "pari", resa: "resa" })[m.esito] || ""; }
+    function etichettaEsito(m) { if (m.charlie && m.esito === "vince") return "5 carte!"; return ({ vince: "vince", blackjack: "BJ!", perde: "perde", pari: "pari", resa: "resa" })[m.esito] || ""; }
 
     // ---------- LA PARTE DI SOTTO: si rifà solo quando cambia quello che mostra (niente lampeggio) ----------
     function maniK(g) { return g ? g.mani.map(function (m) { return m.carte.map(function (c) { return c.v + "" + c.s; }).join(",") + (m.chiusa ? "c" : "") + m.puntata + (m.esito || ""); }).join("/") : ""; }
@@ -1883,7 +1936,7 @@
       if (vm.fase === "svela") return heroInfo("🥁", "Si scoprono le puntate!");
       if (vm.fase === "punta") return heroPunta(chiDecide());
       if (vm.fase === "assic") return heroAssic(chiDecide());
-      if (vm.fase === "banco") return bancoTira() ? heroInfo("🎩", "Il banco tira sempre fino a 17") : heroInfo("🎴", "Gioca il banco…");
+      if (vm.fase === "banco") return bancoTira() ? heroInfo("🎩", vm.regole && vm.regole.h17 ? "Il banco tira fino a 17, anche sul 17 morbido" : "Il banco tira sempre fino a 17") : heroInfo("🎴", "Gioca il banco…");
       if (vm.fase === "gioca") return heroGioca(mio);
       if (vm.fase === "esito") return heroEsito();
     }
@@ -1898,7 +1951,8 @@
     function bancoTira() {
       if (vm.fase !== "banco" || scopri.attesa || BJ.punteggio(vm.banco) > 21) return false;
       if (vm.banco.length > 2) return true;
-      return BJ.punteggio(vm.banco) < 17 && vm.giocatori.some(function (g) { return g.mani.some(function (m) { return BJ.punteggio(m.carte) <= 21 && !BJ.eBJ(m) && !m.resa; }); });
+      var R = vm.regole || {}, pb = BJ.punteggio(vm.banco), tira = pb < 17 || (R.h17 && pb === 17 && BJ.eSoft(vm.banco));
+      return tira && vm.giocatori.some(function (g) { return (g.ex && g.ex.buster) || g.mani.some(function (m) { return BJ.punteggio(m.carte) <= 21 && !BJ.eBJ(m) && !m.resa; }); });
     }
     // «Assi divisi: una carta per asso, come al casinò» (con un piccolo asso disegnato: l'emoji della carta non c'è su tutti i telefoni)
     function notaAssi() {
@@ -1952,13 +2006,27 @@
       if (puntSel == null) puntSel = Math.min(ultimePuntate[chiavePuntata(g)] || Math.max(100, minP), maxP);   // di base la stessa puntata della mano prima
       puntSel = Math.max(minP, Math.min(puntSel, maxP));
       var val = el("div", { class: "bj-punta-val", text: fmt(puntSel) + " 🪙" });
-      // la «👯 Coppia»: un interruttore accanto alla puntata (resta come l'hai lasciato), vale la puntata minima
-      if (vm.coppia && maxP > (vm.puntataMin || 10)) {
-        var bc = el("button", { class: "bj-coppia" + (coppiaSi ? " on" : ""), text: "👯 Coppia +" + fmt(vm.puntataMin || 10) });
-        bc.onclick = function () { coppiaSi = !coppiaSi; bc.classList.toggle("on", coppiaSi); try { localStorage.setItem("sg-bj-coppia", coppiaSi ? "1" : "0"); } catch (e) {} };
-        zHero.appendChild(el("div", { class: "bj-valriga" }, [ val, bc ]));
+      // le scommesse extra: un interruttore per ognuna accesa nelle regole, accanto alla puntata (spenti finché non li tocchi, poi li
+      // ricorda il telefono: mai monete spese senza volerlo). Ognuna vale la puntata minima. Con più di una, solo il simbolo
+      var R = vm.regole || {}, qm = vm.puntataMin || 10, chip = [];
+      [["coppia", "👯", "Coppia", vm.coppia], ["t213", "🃏", "21+3", R.t213], ["royal", "👑", "Seme", R.royal], ["buster", "💥", "Sballa", R.buster]].forEach(function (x) {
+        if (x[3] && maxP > qm) chip.push(x);
+      });
+      if (chip.length) {
+        var riga = el("div", { class: "bj-valriga" + (chip.length > 1 ? " tante" : "") }, [ val ]);
+        chip.forEach(function (x) {
+          var b = el("button", { class: "bj-coppia" + (extraSi[x[0]] ? " on" : ""), "data-ex": x[0], text: x[1] + (chip.length > 2 ? "" : " " + x[2]) + " +" + fmt(qm) });
+          b.onclick = function () { extraSi[x[0]] = !extraSi[x[0]]; b.classList.toggle("on", extraSi[x[0]]); try { localStorage.setItem("sg-bj-" + x[0], extraSi[x[0]] ? "1" : "0"); } catch (e) {} };
+          riga.appendChild(b);
+        });
+        zHero.appendChild(riga);
       } else zHero.appendChild(val);
-      function conCoppia(v) { return !!(vm.coppia && coppiaSi && maxP - v >= (vm.puntataMin || 10)); }
+      function conCoppia(v) { return !!(vm.coppia && extraSi.coppia && maxP - v >= qm); }
+      function extraScelti(v) {   // le scommesse extra accese (finché bastano le monete, dopo la puntata e la Coppia)
+        var resto = maxP - v - (conCoppia(v) ? qm : 0), l = [];
+        ["t213", "royal", "buster"].forEach(function (k) { if (R[k] && extraSi[k] && resto >= qm) { l.push(k); resto -= qm; } });
+        return l;
+      }
       var bPunta;
       function agg() {
         puntSel = Math.max(minP, Math.min(puntSel, maxP));
@@ -1988,7 +2056,7 @@
         if (drv.moneteVere && drv.moneteVere(idx) && v > g.fiches / 2 && t.conferma) t.conferma("Punti " + fmt(v) + " 🪙?", "È più della metà delle tue Speed Coins (" + fmt(g.fiches) + ").", "Sì, punto", fai);
         else fai();
       }
-      bPunta = el("button", { class: "bj-btn bj-b-carta", text: "Punta " + fmt(puntSel) + " ▶", onclick: function () { var v = puntSel; seServe(v, function () { puntSel = null; if (vm.segreta) puntataSegreta = v; ultimePuntate[chiavePuntata(g)] = v; suonoChip(); bloccaTasti(); drv.onPunta(v, idx, conCoppia(v)); }); } });
+      bPunta = el("button", { class: "bj-btn bj-b-carta", text: "Punta " + fmt(puntSel) + " ▶", onclick: function () { var v = puntSel; seServe(v, function () { puntSel = null; if (vm.segreta) puntataSegreta = v; ultimePuntate[chiavePuntata(g)] = v; suonoChip(); bloccaTasti(); drv.onPunta(v, idx, conCoppia(v), extraScelti(v)); }); } });
       az.appendChild(bPunta);
       az.appendChild(el("button", { class: "bj-btn bj-b-stai", text: "Tutto (" + fmt(maxP) + ")", onclick: function () { seServe(maxP, function () { puntSel = null; if (vm.segreta) puntataSegreta = maxP; ultimePuntate[chiavePuntata(g)] = maxP; suonoChip(); bloccaTasti(); drv.onPunta(maxP, idx); }); } }));
       zHero.appendChild(az);
@@ -2047,8 +2115,9 @@
       if (mio && ma && !ma.chiusa && v.resa) resaB = el("button", { class: "bj-btn bj-m bj-m-resa bj-resa", text: "Resa" });   // (si accende qui sotto, col consiglio)
       heroCarte(g, centro, resaB);
       var attesa = ma && !ma.chiusa && ma.carte.length < 2;   // dopo "Dividi": aspetta la seconda carta
-      if (ma && ma.assi) centro.appendChild(notaAssi());   // assi divisi: niente tasti, si spiega perché (resta per tutte e due le mani)
+      if (ma && ma.assi && (ma.chiusa || !mio)) centro.appendChild(notaAssi());   // assi divisi: niente tasti, si spiega perché (resta per tutte e due le mani)
       else if (attesa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#ffe58a", text: nomeBanco(vm) + " ti dà la carta…" }));
+      else if (ma && ma.charlie) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#9fe6b4", text: "🖐️ 5 carte senza sballare: vinci!" }));
       else if (ma && ma.resa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:var(--o-tenue)", text: "🏳️ Ti ritiri: riprendi " + fmt(Math.floor(ma.puntata / 2)) + " 🪙" }));
       else if (ma && ma.chiusa) {   // mano finita: resta a schermo un attimo prima di passare
         var pm = BJ.punteggio(ma.carte);
@@ -2058,13 +2127,13 @@
       if (!mio || (ma && ma.chiusa) || attesa) { zHero.appendChild(centro); return; }
       // tasti ai lati delle carte: a sinistra Dividi e Raddoppia, a destra Stai e Carta
       var chk = { h: g.attiva, n: ma.carte.length };
-      var cons = vm.consigli ? BJ.consiglio(ma, vm.banco[0], v.raddoppia, v.dividi, v.resa) : null;   // la mossa giusta brilla
+      var cons = vm.consigli ? BJ.consiglio(ma, vm.banco[0], v.raddoppia, v.dividi, v.resa, vm.regole && vm.regole.h17) : null;   // la mossa giusta brilla
       function b(txt, cls, on, mv) {
         var x = tasto(txt, cls + (cons === mv ? " bj-cons" : ""), function () { bloccaTasti(); drv.onMossa(mv, chk); });
         if (!on) x.disabled = true; return x;
       }
       var sx = el("div", { class: "bj-col" }, [ b("Dividi", "bj-m bj-m-dividi", v.dividi, "dividi"), b("Raddoppia", "bj-m bj-m-radd", v.raddoppia, "raddoppia") ]);
-      var dx = el("div", { class: "bj-col" }, [ b("Stai", "bj-m bj-m-stai", true, "stai"), b("Carta", "bj-m bj-m-carta", true, "carta") ]);
+      var dx = el("div", { class: "bj-col" }, [ b("Stai", "bj-m bj-m-stai", true, "stai"), b("Carta", "bj-m bj-m-carta", v.carta !== false, "carta") ]);
       if (resaB) { if (cons === "resa") resaB.classList.add("bj-cons"); resaB.onclick = function () { bloccaTasti(); drv.onMossa("resa", chk); }; }
       zHero.appendChild(el("div", { class: "bj-hriga" }, [sx, centro, dx]));
     }
@@ -2136,13 +2205,19 @@
       quota: uguali ? Math.max(0, Math.floor(+imp.quota) || 0) : 0,   // la gara con le Speed Coins (solo online): la quota d'ingresso, 0 = fiches finte
       tempo: imp.tempo == null ? 25 : Math.max(0, Math.floor(+imp.tempo) || 0),   // secondi per decidere (online)
       consigli: imp.consigli == null ? true : !!imp.consigli,
-      coppia: imp.coppia == null ? true : !!imp.coppia   // la scommessa extra «👯 Coppia» (di partenza accesa, 1 nov 2026: per provarla)
+      coppia: imp.coppia == null ? true : !!imp.coppia,   // la scommessa extra «👯 Coppia» (di partenza accesa, 1 nov 2026: per provarla)
+      // 🎰 le regole da esperti (1 nov 2026, il proprietario: «mettiamo tutte le regole, al massimo le lasciamo disattivate»): di partenza come prima
+      h17: !!imp.h17, mazzi: [1, 2, 6, 8].indexOf(+imp.mazzi) >= 0 ? +imp.mazzi : 6, r911: !!imp.r911, das: imp.das !== false, rsa: !!imp.rsa,
+      resa: imp.resa !== false, charlie: !!imp.charlie, t213: !!imp.t213, buster: !!imp.buster, royal: !!imp.royal
     };
   }
   function testoRegole(r, online) {
     return (r.uguali ? (online && r.quota ? "🏆 Gara: quota " + fmt(r.quota) + " 🪙, montepremi ai primi · " : "🏆 Torneo: tutti con " + fmt(BJ.FICHES_TORNEO) + " fiches finte · ") : "") +
       "Puntata minima " + fmt(r.min) + " 🪙 · " + (r.mani ? r.mani + " mani" : "mani senza fine") +
-      (online ? " · " + (r.tempo ? r.tempo + " s per decidere" : "tempo libero") : "") + (r.consigli ? " · 💡 consigli" : "") + (r.coppia ? " · 👯 coppia" : "");
+      (online ? " · " + (r.tempo ? r.tempo + " s per decidere" : "tempo libero") : "") + (r.consigli ? " · 💡 consigli" : "") + (r.coppia ? " · 👯 coppia" : "") +
+      (r.t213 ? " · 🃏 21+3" : "") + (r.royal ? " · 👑 stesso seme" : "") + (r.buster ? " · 💥 il banco sballa" : "") +
+      (r.h17 ? " · banco tira sul 17 morbido" : "") + (r.mazzi !== 6 ? " · " + r.mazzi + (r.mazzi === 1 ? " mazzo" : " mazzi") : "") + (r.r911 ? " · raddoppio su 9-11" : "") +
+      (!r.das ? " · niente raddoppio dopo Dividi" : "") + (r.rsa ? " · assi divisi di nuovo" : "") + (!r.resa ? " · niente resa" : "") + (r.charlie ? " · 5 carte vincono" : "");
   }
   // ---- LA GARA CON LA QUOTA: ogni telefono paga la sua quota e prende il suo premio da solo, una volta sola ----
   // (sg-bj-gare: { idGara: { q: quote già pagate, p: 1 = premio già preso } }, le ultime 30: così una pagina ricaricata non paga
@@ -2234,7 +2309,7 @@
       },
       onRicarica: function () { if (RG.uguali) return; st.giocatori.forEach(function (g, i) { if (g.fiches <= 0) M.ricarica(i); }); refresh(); },
       onPasso: function (k) { if (k === "distrib") M.passoDistribuzione(); else if (k === "banco") M.passoBanco(); else if (k === "divisa") M.passoDivisa(); else if (k === "avanza") M.avanza(); else if (k === "svela") M.passoSvela(); refresh(); },
-      onPunta: function (v, i, cp) { M.punta(st.turno, v, cp); refresh(); },
+      onPunta: function (v, i, cp, ex) { M.punta(st.turno, v, cp, ex); refresh(); },
       onMossa: function (m) { if (m === "stai") suonoStai(); M.azione(m); refresh(); },
       onAssicura: function (si) { M.assicura(st.turno, si); refresh(); },
       onFineMano: function (v) { var g = v.giocatori[0]; if (prof && !g.prova) { salvaFineMano(g, v); if (!RG.uguali) salvato = g.fiches; } maniFinite++; },
@@ -2496,7 +2571,7 @@
         onRuota: function () { ruotaDalTavolo(bonusHost); },
         onRicarica: function () { if (RG.uguali || mio() < 0) return; M.ricarica(mio()); bcast(); },
         onPasso: function (k) { if (k === "distrib") M.passoDistribuzione(); else if (k === "banco") M.passoBanco(); else if (k === "divisa") M.passoDivisa(); else if (k === "avanza") M.avanza(); else if (k === "svela") M.passoSvela(); bcast(); },
-        onPunta: function (v, i, cp) { if (mio() < 0) return; M.punta(mio(), v, cp); bcast(); },
+        onPunta: function (v, i, cp, ex) { if (mio() < 0) return; M.punta(mio(), v, cp, ex); bcast(); },
         onMossa: function (m, chk) { if (M.st.turno === mio()) { if (m === "stai") suonoStai(); M.azione(m, chk); bcast(); } },
         onAssicura: function (si) { if (mio() < 0) return; M.assicura(mio(), si); bcast(); },
         onFineMano: function (vm) { var g = vm.giocatori[mio()]; if (prof && g && !g.prova) { salvaFineMano(g, vm); if (!RG.uguali) salvato = g.fiches; } maniFinite++; },
@@ -2517,7 +2592,7 @@
             Object.keys(Gx.pagati).forEach(function (k) { rimb.premi[k] = Gx.pagati[k] * Gx.quota; });
             contiGara({ gara: rimb, fase: "fine" }, io, prof);
           }
-          if (rimborso) M.st.giocatori.forEach(function (g, i) { if (i !== io) g.fiches += puntataInGioco(g) + (g.assicura || 0) + (g.coppiaEsito ? 0 : (g.coppia || 0)); });
+          if (rimborso) M.st.giocatori.forEach(function (g, i) { if (i !== io) g.fiches += puntataInGioco(g) + (g.assicura || 0) + (g.coppiaEsito ? 0 : (g.coppia || 0)) + Object.keys(g.ex || {}).reduce(function (a, k) { return a + ((g.exEsito || {})[k] ? 0 : g.ex[k]); }, 0); });
           // gli amici vedono chi ha chiuso e com'è finita (non "collegamento perso")
           if (rete) { try { rete.inviaVeloce({ t: "chiuso", nome: (seats[io] || { nome: (t.giocatori && t.giocatori[0]) || "" }).nome, rimborso: rimborso, classifica: M ? M.classifica() : null, garaRimborso: rimb }); } catch (e) {} rete.chiudi(); }
           t.esci();
@@ -2617,7 +2692,7 @@
           M.ricarica(sr); bcast();
         } else if (M && m.t === "mossa") {
           var seat = seatDiId(id); if (seat < 0) return;
-          if (m.kind === "punta") M.punta(seat, m.val, !!m.coppia);            // le puntate arrivano da tutti insieme (con la «Coppia», se c'è)
+          if (m.kind === "punta") M.punta(seat, m.val, !!m.coppia, m.ex);            // le puntate arrivano da tutti insieme (con la «Coppia», se c'è)
           else if (m.kind === "assic") M.assicura(seat, !!m.si);
           else if (m.kind === "azione") {
             if (M.st.turno !== seat) return;
@@ -2713,7 +2788,7 @@
           return vm.uguali ? "🏆 Torneo in corso: lo guardi e giochi al prossimo" : "👀 Guardi il tavolo: questa volta giocano gli altri";
         },
         onPasso: function () {},
-        onPunta: function (v, i, cp) { invia({ t: "mossa", kind: "punta", val: v, coppia: !!cp }); },
+        onPunta: function (v, i, cp, ex) { invia({ t: "mossa", kind: "punta", val: v, coppia: !!cp, ex: ex || [] }); },
         onMossa: function (m, chk) { if (m === "stai") suonoStai(); invia({ t: "mossa", kind: "azione", mossa: m, h: chk ? chk.h : null, n: chk ? chk.n : null }); },
         onAssicura: function (si) { invia({ t: "mossa", kind: "assic", si: si }); },
         onFineMano: function (vm) { var me = vm.giocatori[S.mioSeat]; if (prof && me && !me.prova) { salvaFineMano(me, vm); if (!vm.uguali) S.salvato = me.fiches; } },
@@ -2847,6 +2922,7 @@
       "<b>🏆 Gara della serata</b> (si accende nelle regole): tutti con le stesse fiches e un numero di mani, la classifica sempre in alto, vince chi ha più fiches alla fine. L'<b>ultima mano si punta in segreto</b>: le puntate si scoprono tutte insieme. Dalle 6 mani in su c'è anche il <b>giro di boa</b> a metà, e nelle ultime 3 mani la puntata minima raddoppia.",
       "Online la gara si gioca con le <b>Speed Coins</b>: ognuno paga la quota d'ingresso (chi non ce l'ha guarda) e le quote vanno nel <b>montepremi</b>: fino a 3 giocatori tutto al primo, da 4 a 6 il 70% e il 30%, da 7 in su 60, 30 e 10%. Chi resta senza fiches può <b>rientrare</b> pagando di nuovo la quota, fino alla penultima mano. Con la quota «Gratis» e sullo stesso telefono si gioca con fiches finte.",
       "<b>👯 Coppia</b> (si spegne nelle regole): mentre punti puoi aggiungere una fiche piccola, la puntata minima, che scommette sulle tue prime due carte. Se sono una coppia (due 8, due re…) vinci subito, anche se poi la mano va male: colori diversi 6 volte la fiche, stesso colore 15 volte, identiche (stesso seme) 25 volte. Se non è coppia perdi solo quella fiche.",
+      "<b>🎰 Regole da esperti</b> (nelle regole, tutte come al casinò e di partenza spente): <b>🃏 21+3</b> (le tue due carte con la scoperta del banco: colore 5 volte, scala 11, tris 30, scala colore 40, tris dello stesso seme 100), <b>👑 Stesso seme</b> (le prime due carte dello stesso seme 2,5 volte, re e donna dello stesso seme 45), <b>💥 Il banco sballa</b> (il banco gioca sempre fino in fondo; se sballa paga secondo le carte che ha: 3 carte 2 volte, 4 carte 2,5, 5 carte 4, 6 carte 15, 7 carte 50, 8 e più 250); e poi il banco che tira sul 17 morbido, quanti mazzi (1, 2, 6 o 8), il raddoppio solo su 9, 10 e 11, niente raddoppio dopo Dividi, dividere di nuovo gli Assi, niente resa, 5 carte senza sballare che vincono sempre.",
       "A fine partita i <b>titoli</b>: 🍀 Il Fortunato, 🎲 Lo Spericolato, 💥 Lo Sballone, 🏳️ Il Prudente, 🧊 Il Ragioniere e 🎩 L'amico del banco."
     ],
     impostazioni: function (box, dove, aiuti) {
@@ -2893,8 +2969,27 @@
       box.appendChild(notaU);
       if (online) gruppo("Tempo per decidere", "tempo", [[15, "15 s"], [25, "25 s"], [0, "Senza limite"]]);
       gruppo("💡 Consiglio della mossa giusta", "consigli", [[true, "Sì"], [false, "No"]]);
-      dove.coppia = true;
+      // 🎰 le regole da esperti: chiuse in una sezione che si apre con un tocco (chi non le conosce non vede un muro di opzioni)
+      dove.coppia = true; dove.h17 = false; dove.mazzi = 6; dove.r911 = false; dove.das = true; dove.rsa = false; dove.resa = true; dove.charlie = false;
+      dove.t213 = false; dove.buster = false; dove.royal = false;
+      var sez = el("div", { style: "display:none" }), apri = el("button", { class: "modo-chip", style: "margin-top:12px;width:100%;justify-content:center", onclick: function () {
+        var on = sez.style.display === "none"; sez.style.display = on ? "" : "none"; apri.firstChild.textContent = on ? "🎰 Regole da esperti ▾" : "🎰 Regole da esperti ›";
+      } }, [ el("div", { class: "mt", text: "🎰 Regole da esperti ›" }) ]);
+      box.appendChild(apri); box.appendChild(sez);
+      var boxFuori = box; box = sez;   // (i gruppi qui sotto finiscono nella sezione)
+      box.appendChild(el("p", { class: "modulo-nota", style: "margin-top:6px", text: "Le scommesse extra valgono la puntata minima e si accendono con l'interruttore accanto alla puntata." }));
       gruppo("👯 Scommessa «Coppia»", "coppia", [[true, "Sì"], [false, "No"]]);
+      gruppo("🃏 Scommessa «21+3»", "t213", [[false, "No"], [true, "Sì"]]);
+      gruppo("👑 Scommessa «Stesso seme»", "royal", [[false, "No"], [true, "Sì"]]);
+      gruppo("💥 Scommessa «Il banco sballa»", "buster", [[false, "No"], [true, "Sì"]]);
+      gruppo("Il banco col 17 morbido (Asso e 6)", "h17", [[false, "Sta"], [true, "Tira"]]);
+      gruppo("Mazzi", "mazzi", [[1, "1"], [2, "2"], [6, "6"], [8, "8"]]);
+      gruppo("Raddoppio", "r911", [[false, "Sempre"], [true, "Solo 9-10-11"]]);
+      gruppo("Raddoppio dopo Dividi", "das", [[true, "Sì"], [false, "No"]]);
+      gruppo("Dividere di nuovo gli Assi", "rsa", [[false, "No"], [true, "Sì"]]);
+      gruppo("🏳️ Resa", "resa", [[true, "Sì"], [false, "No"]]);
+      gruppo("🖐️ 5 carte senza sballare vincono", "charlie", [[false, "No"], [true, "Sì"]]);
+      box = boxFuori;
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospiteBJ(t, t.linkParams.stanza);

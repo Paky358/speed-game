@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 292,
+    data: "1 novembre 2026",
+    titolo: "🃏 Black Jack: le regole da esperti",
+    descrizione: [
+      "Nelle regole del Black Jack c'è la sezione «🎰 Regole da esperti», chiusa: si apre con un tocco. Di partenza tutto è come prima.",
+      "Tre scommesse extra come al casinò, ognuna col suo interruttore accanto alla puntata: «🃏 21+3» (le tue due carte con la carta scoperta del banco: colore, scala, tris, scala colore), «👑 Stesso seme» (le prime due carte dello stesso seme, re e donna pagano 45 volte) e «💥 Il banco sballa» (più carte gli servono per sballare, più paga). Le vincite sono giuste: il banco tiene pochissimo.",
+      "Le varianti del casinò: il banco che tira sul 17 morbido, 1, 2, 6 o 8 mazzi, il raddoppio solo su 9-10-11, niente raddoppio dopo Dividi, dividere di nuovo gli Assi, niente resa, 5 carte senza sballare che vincono sempre. Il consiglio della mossa giusta si adatta da solo.",
+      "Quando vinci più scommesse alla stessa carta, gli annunci arrivano uno dopo l'altro."
+    ]
+  },
+  {
     v: 291,
     data: "1 novembre 2026",
     titolo: "🃏 Black Jack: tavolo nuovo e la gara con le Speed Coins",
