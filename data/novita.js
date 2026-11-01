@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 291,
+    data: "1 novembre 2026",
+    titolo: "🃏 Black Jack: tavolo nuovo e la gara con le Speed Coins",
+    descrizione: [
+      "Tavolo da casinò di notte: panno verde smeraldo col filo d'oro, carte più grandi e leggibili, fiches di tutti i tagli (da 10 a 100.000) che scivolano sul tavolo. Le carte del banco restano sempre in vista accanto alla sua faccia.",
+      "Tasti delle mosse nuovi: ognuno col suo colore (Carta verde, Stai rosso, Raddoppia oro, Dividi azzurro, Assicura viola) e la mossa consigliata si accende.",
+      "Per puntare c'è una lineetta da trascinare: a sinistra la puntata minima, a destra tutte le tue monete. Se punti più di metà delle tue Speed Coins il gioco ti chiede un secondo sì.",
+      "Nuova mossa «🏳️ Resa»: con le prime due carte ti ritiri e riprendi metà puntata, come al casinò.",
+      "Il gioco spiega le regole del casinò quando succedono: «🎩 Il banco tira sempre fino a 17» e «Assi divisi: una carta per asso».",
+      "🏆 Gara della serata: online si gioca con le Speed Coins. Ognuno paga la quota, tutti partono con le stesse fiches e il montepremi va ai primi. Chi resta senza fiches può rientrare. La classifica è sempre in alto, a metà c'è il giro di boa, le ultime 3 mani la puntata minima raddoppia e l'ultima si punta in segreto: le puntate si scoprono tutte insieme.",
+      "A fine partita i titoli: 🍀 Il Fortunato, 🎲 Lo Spericolato, 💥 Lo Sballone, 🏳️ Il Prudente, 🧊 Il Ragioniere e 🎩 L'amico del banco. E quando qualcuno fa Black Jack o punta tutto, lo vedono tutti in grande."
+    ]
+  },
+  {
     v: 290,
     data: "31 ottobre 2026",
     titolo: "😂 Memata: più meme da cambiare",
