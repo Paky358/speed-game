@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 293,
+    data: "1 novembre 2026",
+    titolo: "🎨 Scarabocchio: disegnare col dito è più facile",
+    descrizione: [
+      "Chi disegna ha 16 colori (4 nuovi, chiari, per fare il cielo, l'erba e gli sfondi col secchiello) e 5 grandezze, dalla finissima per i dettagli alla grossissima per riempire.",
+      "Strumenti nuovi: la linea dritta (si tocca dove comincia e si stacca il dito dove finisce) e il tondo per cerchi e ovali. Mentre muovi il dito li vedi solo tu; agli altri arrivano quando lo stacchi.",
+      "C'è anche «↷ Ripeti»: rimette il segno che hai appena annullato.",
+      "Niente lettere sulla lavagna: a chi disegna lo ricorda una scritta all'inizio del turno. Chi indovina può toccare «🔤 Ha scritto!»: se lo dice più di metà del gruppo il turno finisce e chi disegnava prende 0 punti (da 3 giocatori in su).",
+      "Chi indovina per primo fa festa su tutti i telefoni: la sua faccina salta in cima alla lavagna (e a lui il telefono vibra).",
+      "In tanti (da 6 in su) chi disegna prende una volta e mezza la sua parte: disegna poche volte e così il disegno conta di più.",
+      "Le parole uscite non tornano per 30 giorni: serata dopo serata escono sempre parole nuove."
+    ]
+  },
+  {
     v: 292,
     data: "1 novembre 2026",
     titolo: "🃏 Black Jack: le regole da esperti",
