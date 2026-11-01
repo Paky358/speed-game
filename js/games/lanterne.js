@@ -202,6 +202,18 @@ const tY = (m,y) => Math.max(0, Math.min(m.GH-1, Math.floor(y/T)));
 function stanzaDi(m,o){ const p=m.PAV[tY(m,o.y)*m.GW+tX(m,o.x)]; return p>=0 ? m.stanze[p] : CORRIDOIO; }
 function solidoA(m,px,py){ const tx=Math.floor(px/T), ty=Math.floor(py/T); if(tx<0||ty<0||tx>=m.GW||ty>=m.GH) return true; return m.SOL[ty*m.GW+tx]===1; }
 function libero(m,x,y){ return !solidoA(m,x-RP,y-RP) && !solidoA(m,x+RP,y-RP) && !solidoA(m,x-RP,y+RP) && !solidoA(m,x+RP,y+RP); }
+// Il corpo a terra è più largo di chi cammina: la stoffa non deve finire sul muro né sul nero. CORPO_L è la sagoma del telo steso, CORPO_S quella del telo raccolto
+// lungo un muro, dove il largo non ci sta. Numeri rispetto al punto del giocatore, misurati sul telo disegnato (prova: gioco/prove/browser/lenzuolo-gioco.mjs)
+const CORPO_L=[[46,14],[-46,14],[32,0],[-32,0],[32,30],[-32,30],[0,-6],[0,36],[20,-6],[-20,-6],[20,36],[-20,36]];
+const CORPO_S=[[21,12],[-21,12],[0,-14],[0,40],[14,-8],[-14,-8],[14,32],[-14,32]];
+const corpoCi=(m,x,y,S)=>{ for(const q of S) if(solidoA(m,x+q[0],y+q[1])) return false; return true; };
+function corpoStretto(m,x,y){ return !corpoCi(m,x,y,CORPO_L) && corpoCi(m,x,y,CORPO_S); }
+// dove cade il corpo: il punto più vicino dove il telo sta tutto sul pavimento, senza mai passare oltre un muro. Largo se si può, raccolto se no
+function corpoCerca(m,x,y,S,r0,r1){
+  for(let r=r0;r<=r1;r+=4) for(let a=0;a<16;a++){ const X=Math.round(x+Math.cos(a*0.3927)*r), Y=Math.round(y+Math.sin(a*0.3927)*r); if(libero(m,X,Y) && corpoCi(m,X,Y,S) && vede(m,x,y,X,Y)) return { x:X, y:Y }; }
+  return null;
+}
+function postoCorpo(m,x,y){ return corpoCi(m,x,y,CORPO_L) ? { x, y } : corpoCerca(m,x,y,CORPO_L,4,48) || corpoCerca(m,x,y,CORPO_S,0,48) || corpoCerca(m,x,y,CORPO_L,52,72) || { x, y }; }
 function vede(m,ax,ay,bx,by){
   const dx=bx-ax, dy=by-ay, n=Math.ceil(Math.hypot(dx,dy)/(T*0.2));
   for(let k=1;k<n;k++){ const x=ax+dx*k/n, y=ay+dy*k/n; const tx=Math.floor(x/T), ty=Math.floor(y/T); if(tx<0||ty<0||tx>=m.GW||ty>=m.GH||m.MURO[ty*m.GW+tx]) return false; }
@@ -481,6 +493,7 @@ const pulisciTesto = x => Array.from(String(x==null?'':x).replace(/[\u0000-\u001
 // un testo in minuscolo, senza punteggiatura, con uno spazio ai lati di ogni parola (e il «?» staccato) per cercarci dentro parole intere
 const normChat = x => ' '+String(x).toLowerCase().replace(/[’']/g,' ').replace(/\?/g,' ? ').replace(/[^a-z0-9àèéìòóù? ]+/g,' ').replace(/\s+/g,' ').trim()+' ';
 const VEL_BASE = 3.8;   // caselle al secondo a velocità «normale» (era 3,4: un po' più di corsa)
+const POSTI_SALA = [[9.6,11.6],[16.6,11.4],[8.4,7.8],[17.6,7.8],[6,4.8],[20,4.8],[10.4,4.4],[15.8,4.4],[5,10.4],[21,10.4],[13,12.8],[4.6,7.6],[21.4,7.6],[7,12.6],[19,12.6]];   // in caselle: sparsi per la sala
 const DUR_ATRIO = 20, DUR_SVELA = 6, DUR_ESITO = 7;
 const MAX_CHAT = 40;
 const SOGLIA_VOTO = 18;        // quanto sospetto serve a un Bot ospite per votare qualcuno (con 30 sette riunioni su dieci finivano senza nessuno fuori)
@@ -502,8 +515,13 @@ class Partita {
     this.cambiata = true;
     if(this.saletta){ this.ombreIniziali=1; this.celebri=[]; }
     else { this.assegnaRuoli(); this.gioc.forEach(g=>this.assegnaCompiti(g)); }
-    const n=this.gioc.length;
-    this.gioc.forEach((p,i)=>{ const a=i/n*Math.PI*2; this.teletrasporta(p, ATRIO.centro.x+Math.cos(a)*3*T, ATRIO.centro.y+Math.sin(a)*2*T); });
+    const messi=[]; this.gioc.forEach(p=>{ const q=this.postoSala(messi); messi.push(q); this.teletrasporta(p, q.x, q.y); });
+  }
+  // un posto nella sala d'attesa: il più lontano da chi c'è già e non troppo dal centro. Mai sotto il lampadario né attaccati alla scrivania: si deve vedere che siamo in tanti
+  postoSala(chi){
+    let m=POSTI_SALA[0], d=-1e9;
+    for(const q of POSTI_SALA){ const x=q[0]*T, y=q[1]*T; let v=1e9; for(const o of chi) v=Math.min(v,Math.hypot(o.x-x,o.y-y)); if(v>1e8) v=0; v-=0.3*Math.hypot(x-ATRIO.centro.x,y-ATRIO.centro.y); if(v>d){ d=v; m=q; } }
+    return { x:m[0]*T+(rnd()-.5)*8, y:m[1]*T+(rnd()-.5)*8 };
   }
   // solo per le prove (versione da soli): dà a un giocatore il ruolo scelto, scambiandolo con chi ce l'aveva
   forzaRuolo(id, ruolo){
@@ -519,7 +537,7 @@ class Partita {
   aggiungi(g){
     if(!this.saletta || this.per(g.id)) return;
     const p=this.nuovo(g); this.gioc.push(p);
-    this.teletrasporta(p, ATRIO.centro.x+(rnd()-.5)*5*T, ATRIO.centro.y+(rnd()-.5)*2*T); this.segna();
+    const q=this.postoSala(this.gioc.filter(o=>o!==p)); this.teletrasporta(p, q.x, q.y); this.segna();
   }
   togli(id){ if(!this.saletta) return; this.gioc=this.gioc.filter(p=>p.id!==id); this.segna(); }
   // dalla saletta alla partita: le regole scelte al computer, poi ruoli e compiti, e via nel palazzo
@@ -937,7 +955,7 @@ class Partita {
     v.vivo=false; v.fantasma=true; v.protettoDa=null; v.path=[]; v.meta=null; v.attesa=0; v.segnala=null; v.ripara=null; v.veleno=null; v.rianima=null;
     if(v.controllo) this.fineControllo(v);
     if(v.ruolo==='medico') this.gioc.forEach(q=>{ if(q.protettoDa===v.id) q.protettoDa=null; });
-    const c={ id:v.id, x:v.x, y:v.y, stanza:stanzaDi(this.M,v).in, da:k.id, t:this.t };
+    const dove=postoCorpo(this.M,v.x,v.y), c={ id:v.id, x:dove.x, y:dove.y, stanza:stanzaDi(this.M,v).in, da:k.id, t:this.t };   // (il telo steso è largo: mai a cavallo di un muro)
     this.corpi.push(c);
     this.fx('spegni', v.x, v.y);
     if(v.mod==='urlatore') this.fx('urlo', v.x, v.y, { globale:1 });
@@ -3524,13 +3542,968 @@ function barca(res){
   });
 }
 
+// ===== lenzuolo.js =====
+// Il lenzuolo: la stoffa che ogni giocatore ha addosso. Un telo vero a nodi (Verlet e vincoli), tenuto da testa e spalle,
+// libero sotto, disegnato su canvas con ombre che nascono dalla forma simulata. Nessuna immagine, nessuna libreria.
+// La simulazione ha 24 colonne; il disegno ne ha 48 e traccia solo i contorni (sagoma, pieghe, alone): circa 480 punti a personaggio.
+//
+// Uso (da persona() in disegno.js):
+//   const l = new Lenzuolo({ c:3, m:null }, { seme:7 });     c: indice in LENZUOLI; m: il disegno sul telo ('righe', 'pois', 'quadri'), se il telo non ne ha già uno
+//   l.aggiorna(dt, x, y, dir, muove, attivo);                 attivo=false: fuori dalla luce o dallo schermo, non si simula
+//   l.disegna(ctx, { x, y, alfa, lanterna, ombra, grigio, t, scala, fine });   x,y: i piedi sul pavimento, nelle coordinate del mondo; fine: più sfumature, per il ritratto
+//   l.cadi()  l.subito()  l.spegni(stretto)  l.fantasma(si)   caduta in saletta, posa pronta, telo afflosciato (stretto: raccolto lungo un muro), fantasma
+//   l.copre()                                                 quanto il telo ha coperto chi sta sotto (0-1): a 1 l'avatar non si disegna più
+//   l.cede()                                                  di quante unità la testa di chi sta sotto cede all'impatto del telo
+//   l.guarda(x, y)                                            gli occhi vanno verso chi si muove; l.guarda() li libera
+//   l.cima()                                                  di quanto sale la testa sopra i piedi, sullo schermo (per il nome)
+//   ritrattoLenzuolo(c, lato)                                 mezzo busto fermo, una canvas quadrata per il registro
+//   teloLibero(presi)                                         per l'host: il primo telo che nessuno ha. Quindici teli per quindici giocatori, mai due uguali
+//
+// Coordinate del telo: X a destra, Y verso chi guarda, Z in alto, origine ai piedi. Vista obliqua: LZ_KY schiaccia il
+// pavimento, LZ_KZ l'altezza. I nodi stanno rispetto al corpo: spostarsi non scala i numeri e un teletrasporto non tira nulla.
+
+const LZ_C = 24, LZ_R = 7, LZ_N = 1 + LZ_C * LZ_R;       // colonne attorno, anelli dalla testa all'orlo, nodi
+const LZ_H = 1 / 60, LZ_MAXP = 2;                         // tempo fisso, al massimo due sotto-passi per fotogramma
+const LZ_KY = 0.46, LZ_KZ = 0.888;                        // la vista: sin e cos dell'inclinazione
+const LZ_VX = 0, LZ_VY = LZ_KZ, LZ_VZ = LZ_KY;            // verso chi guarda
+const LZ_G = 0.2;                                         // gravità per passo al quadrato
+const LZ_ARIA = 0.972;                                    // l'aria frena la stoffa
+const LZ_SALTO = 46;                                      // oltre questo in un colpo è un teletrasporto: il telo non se ne accorge
+const LZ_INERZIA = 0.36;                                   // quanta velocità del corpo sente la stoffa: a piena velocità sbandiererebbe, qui ha il peso di un lenzuolo
+const LZ_INERZIA_O = 0.46, LZ_FRUSTA = 1;                // gli ultimi due anelli: restano più indietro e, quando il corpo frena o parte, frustano
+const LZ_PIEDE = 8, LZ_RL = 13, LZ_FIANCO = 6, LZ_TORCE = 0.4, LZ_ORLOG = 0.1;          // quanto il piede solleva l'orlo, fin dove arriva, quanto girano le spalle a ogni passo
+const LZ_PZ = 11, LZ_PUGNO = 4;                           // la presa della mano: fin dove raccoglie la stoffa, quanto sporge il pugno
+const LZ_Z0 = 190, LZ_TC = 0.82;                          // la caduta: da che altezza parte la cima (l'orlo resta 30-40 px sopra la testa) e quanto ci mette ad arrivare
+const LZ_VOLOZ = 0.66, LZ_VOLOR = 0.32;                  // in volo è una campana stretta: più bassa del telo addosso e un po' più larga in fondo, circa una volta e mezzo l'omino
+const LZ_TIRO = 7.5;                                      // spinta massima per passo: un fotogramma lungo non fa esplodere nulla
+const LZ_SEGUE = 0.05;                                    // dopo un giro l'orlo raggiunge il corpo in mezzo secondo
+const LZ_ORLOSU = 15;                                     // l'orlo oltre quest'altezza, per più di un attimo, è un telo rovesciato
+// il corpo sotto il telo
+const LZ_ZT = 55.5, LZ_RT = 12.4, LZ_SP = 0.9;            // testa: altezza del centro, raggio, spessore della stoffa
+const LZ_ZS = 38.5, LZ_SX = 18.5, LZ_SY = 10.5, LZ_SZ = 8; // spalle: altezza, semiassi
+const LZ_RB = 13;                                         // busto e gambe
+const LZ_RP = 5.6;                                        // piedi
+const LZ_CIMA = LZ_ZT + LZ_RT + LZ_SP;                    // la cima del telo addosso
+const LZ_RM = 5;                                          // la mano che regge la lanterna (solleva il telo)
+const LZ_KT = 0.08, LZ_GY = 10, LZ_GS = 28, LZ_CY = 6, LZ_GZ = 4;   // il corpo a terra: quanto resta del corpo; di quanto la testa finisce dietro il punto del giocatore (telo largo e telo raccolto lungo il muro); dove sta il centro della stoffa, davanti alla testa; di quanto la testa resta alzata
+const LZ_DPI = 2 * Math.PI;
+
+// i teli: si dicono in chat con una parola. Tinte di stoffa, non da giocattolo. b base, s ombra delle pieghe, l cresta chiara, d interno del telo.
+// Gli ultimi tre sono a disegno: a il colore del disegno. Stesse tinte sul pavimento e sotto la lanterna: la prova è in prove/lenzuolo-colori.mjs
+const LENZUOLI = [
+  { n: 'Rosso',    b: '#b9252b', s: '#661314', l: '#de6f63', d: '#36090b' },
+  { n: 'Turchese', b: '#0db6c8', s: '#075f69', l: '#8be0e3', d: '#07393f' },
+  { n: 'Senape',   b: '#d8b13d', s: '#8c6a14', l: '#f2dc90', d: '#48370c' },
+  { n: 'Viola',    b: '#8b50c2', s: '#4a2474', l: '#c19ae6', d: '#2a1442' },
+  { n: 'Verde',    b: '#1a7d5c', s: '#0a4a36', l: '#69c3a3', d: '#082c21' },
+  { n: 'Zucca',    b: '#c9620f', s: '#7c3806', l: '#f0a05e', d: '#3d1d05' },
+  { n: 'Blu',      b: '#2e49a3', s: '#141f5e', l: '#6f8fe0', d: '#0b1334' },
+  { n: 'Confetto', b: '#e486a0', s: '#a24b66', l: '#f6c1d0', d: '#502433' },
+  { n: 'Panna',    b: '#eeebe2', s: '#8d8b88', l: '#ffffff', d: '#4d4b4a' },
+  { n: 'Oliva',    b: '#979b5e', s: '#565a2c', l: '#cdd09a', d: '#2d2f14' },
+  { n: 'Grigio',   b: '#7b7f90', s: '#444753', l: '#b3b7c6', d: '#292b33' },
+  { n: 'Nero',     b: '#2b2d36', s: '#15161b', l: '#8a8d9a', d: '#0b0b0e', c: 'rgb(84,82,88)', fori: true },   // c: la luce calda del Nero. Se schiarisse come le altre tinte diventerebbe un grigio
+  { n: 'Righe',    b: '#e4dbc7', s: '#8f8776', l: '#fbf6ea', d: '#4a4640', a: '#2d4274', m: 'righe' },
+  { n: 'Pois',     b: '#3b2c4d', s: '#1d1428', l: '#7a6890', d: '#120c1a', a: '#e8dcc2', m: 'pois', fori: true },
+  { n: 'Quadri',   b: '#e6d9c2', s: '#928672', l: '#fbf4e6', d: '#4c463d', a: '#a93f3a', m: 'quadri' },
+];
+const lzNebbia = { n: 'Nebbia', b: '#8b8f99', s: '#55585f', l: '#a9acb4', d: '#33353a' };      // nella nebbia non si vede di chi è
+
+// per l'host: il primo telo che nessuno ha. presi: gli indici già assegnati. Nessun DOM, si può chiamare anche lontano dalla canvas.
+function teloLibero(presi) {
+  const n = LENZUOLI.length, a = presi || [];
+  for (let i = 0; i < n; i++) if (a.indexOf(i) < 0) return i;
+  return a.length % n;                                                                          // più di quindici non si gioca: resta un numero valido
+}
+
+// ---------- la forma: uguale per tutti tranne quattro varianti dell'orlo ----------
+let lzTopo = null;
+const lzForme = [];
+
+function lzCaso(s) { let v = (s * 2654435761) >>> 0; return () => { v ^= v << 13; v >>>= 0; v ^= v >>> 17; v ^= v << 5; v >>>= 0; return v / 4294967296; }; }
+function lzI(i, j) { return i === 0 ? 0 : 1 + (i - 1) * LZ_C + ((j % LZ_C) + LZ_C) % LZ_C; }
+
+function lzTopologia() {
+  if (lzTopo) return lzTopo;
+  const a = [], b = [], gr = {};
+  const metti = (p, q) => { a.push(p); b.push(q); };
+  gr.r0 = 0;                                                     // lungo le colonne, dalla testa in giù (così il tiro scende in un giro)
+  for (let i = 0; i < LZ_R; i++) for (let j = 0; j < LZ_C; j++) metti(lzI(i, j), lzI(i + 1, j));
+  gr.r1 = a.length; gr.a0 = a.length;                            // lungo gli anelli
+  for (let i = 1; i <= LZ_R; i++) for (let j = 0; j < LZ_C; j++) metti(lzI(i, j), lzI(i, j + 1));
+  gr.a1 = a.length; gr.d0 = a.length;                            // in diagonale, a scacchi: tiene la trama
+  for (let i = 1; i < LZ_R; i++) for (let j = 0; j < LZ_C; j++) { if ((i + j) & 1) metti(lzI(i, j), lzI(i + 1, j + 1)); else metti(lzI(i, j + 1), lzI(i + 1, j)); }
+  gr.d1 = a.length; gr.p0 = a.length;                            // la memoria delle pieghe lungo gli anelli
+  for (let i = 3; i < LZ_R - 1; i++) for (let j = 0; j < LZ_C; j++) metti(lzI(i, j), lzI(i, j + 2));
+  gr.p1 = a.length; gr.c0 = a.length;                            // la rigidità lungo le colonne
+  for (let i = 2; i < LZ_R; i++) for (let j = 0; j < LZ_C; j++) metti(lzI(i - 1, j), lzI(i + 1, j));
+  gr.c1 = a.length; gr.b0 = a.length;                            // sugli ultimi due anelli la stoffa resiste a piegarsi di colpo: gli angoli si arrotondano invece di spezzarsi
+  for (let i = LZ_R - 1; i <= LZ_R; i++) for (let j = 0; j < LZ_C; j++) metti(lzI(i, j), lzI(i, j + 2));
+  gr.b1 = a.length;
+  lzTopo = { ca: Int16Array.from(a), cb: Int16Array.from(b), gr, nc: a.length };
+  return lzTopo;
+}
+
+// dove si poggia una colonna del telo a distanza s dalla cima: testa, tenda fino alla spalla, gonna, poi strascico a terra
+function lzProfilo(s, th, rO, out) {
+  const c = Math.cos(th), d = Math.sin(th), rS = 1 / Math.sqrt(c * c / (LZ_SX * LZ_SX) + d * d / (LZ_SY * LZ_SY)) + LZ_SP;
+  const R = LZ_RT + LZ_SP, fi = 1.2, s1 = R * fi, ax = R * Math.sin(fi), az = LZ_ZT + R * Math.cos(fi);
+  if (s <= s1) { out.r = R * Math.sin(s / R); out.z = LZ_ZT + R * Math.cos(s / R); return; }
+  const bx = rS, bz = LZ_ZS + 2, s2 = s1 + Math.hypot(bx - ax, az - bz);
+  if (s <= s2) { const u = (s - s1) / (s2 - s1); out.r = ax + (bx - ax) * u; out.z = az + (bz - az) * u; return; }
+  const s3 = s2 + Math.hypot(rO - bx, bz);
+  if (s <= s3) { const u = (s - s2) / (s3 - s2), g = u * u; out.r = bx + (rO - bx) * (0.35 * u + 0.65 * g); out.z = bz * (1 - u); return; }
+  out.r = rO + (s - s3); out.z = 0;
+}
+
+function lzForma(k) {
+  if (lzForme[k]) return lzForme[k];
+  const T = lzTopologia(), N = LZ_N, C = LZ_C, R = LZ_R, rnd = lzCaso(1237 + k * 977);
+  const px = new Float32Array(N), py = new Float32Array(N), pz = new Float32Array(N);        // la posa drappeggiata (faccia verso chi guarda)
+  const fx = new Float32Array(N), fy = new Float32Array(N), fz = new Float32Array(N);        // il telo steso, aperto
+  const lra = new Float32Array(N), bas = new Float32Array(N);                                // distanza massima dalla cima; rilievi a terra
+  const f = [0, 0.09, 0.18, 0.28, 0.4, 0.55, 0.74, 1];                                        // gli anelli: fitti sulla testa
+  const a0 = 72.5, pw = 2.7, spig = rnd() * LZ_DPI;                                             // mezzo lato; gli spigoli del lenzuolo
+  const ph = [rnd() * 6.28, rnd() * 6.28, rnd() * 6.28, rnd() * 6.28, rnd() * 6.28];
+  const A = [0, 0, 0, 0.5, 2.2, 4, 5.4, 6.4];                                               // quanto sono profonde le pieghe, anello per anello
+  const o = { r: 0, z: 0 };
+  pz[0] = LZ_ZT + LZ_RT + LZ_SP; fz[0] = 0;
+  for (let j = 0; j < C; j++) {
+    const th = j / C * LZ_DPI, cu = Math.abs(Math.cos(th - spig)), si = Math.abs(Math.sin(th - spig));
+    const L = a0 / Math.pow(Math.pow(cu, pw) + Math.pow(si, pw), 1 / pw) * (1 + 0.035 * Math.sin(3 * th + ph[0]) + 0.02 * (rnd() - 0.5));
+    const rO = 20.5 + 3.2 * Math.cos(th) ** 2 + 1.2 * Math.sin(3 * th + ph[1]);             // l'orlo: più largo ai fianchi
+    for (let i = 1; i <= R; i++) {
+      const u = i <= 4 ? 0 : (i - 4) / (R - 4), Lc = a0 + (L - a0) * u * u, s = f[i] * Lc;
+      lzProfilo(s, th, rO, o);
+      const n = lzI(i, j), tw = 0.3 * f[i];
+      const pieg = 0.62 * Math.cos(5 * th + ph[2] + tw) + 0.5 * Math.cos(7 * th + ph[3] - tw) + 0.3 * Math.cos(3 * th + ph[4]);
+      const r = o.r + A[i] * pieg;
+      px[n] = r * Math.cos(th); py[n] = r * Math.sin(th); pz[n] = o.z;
+      fx[n] = s * Math.cos(th); fy[n] = s * Math.sin(th);
+      lra[n] = s * 1.015; bas[n] = i >= 6 ? 0.25 + rnd() * 1.1 : 0.2 + rnd() * 0.3;
+    }
+  }
+  // la posa non deve entrare nel corpo
+  const fin = new Lenzuolo({ c: 0 }, null, { px, py, pz }); fin.mz = -60;
+  for (let p = 0; p < 3; p++) fin.scosta(px, py, pz);
+  // le lunghezze a riposo si misurano sulla posa: le pieghe restano nella stoffa come quelle di un lenzuolo stirato
+  const rest = new Float32Array(T.nc), restA = new Float32Array(T.nc);
+  for (let c = 0; c < T.nc; c++) {
+    const a = T.ca[c], b = T.cb[c];
+    rest[c] = Math.hypot(px[b] - px[a], py[b] - py[a], pz[b] - pz[a]);
+    restA[c] = Math.hypot(fx[b] - fx[a], fy[b] - fy[a], fz[b] - fz[a]);
+  }
+  for (let c = T.gr.r0; c < T.gr.r1; c++) rest[c] = restA[c];                                 // lungo le colonne la stoffa non si allunga: vale il telo vero
+  // il mucchio non è una focaccia: ogni colonna arriva dove vuole e un lembo arriva più lontano degli altri
+  const lim = new Float32Array(C), dis = new Float32Array(C), lembo = rnd() * LZ_DPI;
+  for (let j = 0; j < C; j++) {
+    const th = j / C * LZ_DPI; let dl = th - lembo; while (dl > Math.PI) dl -= LZ_DPI; while (dl < -Math.PI) dl += LZ_DPI;
+    lim[j] = 37 + 5 * Math.sin(2 * th + ph[1]) + 3 * Math.sin(3 * th + ph[2]) + 11 * Math.exp(-dl * dl / 0.26);
+    dis[j] = 1 + 0.32 * Math.sin(2 * th + ph[3]) + 0.2 * Math.sin(5 * th + ph[4]);
+  }
+  // le piegoline: pieghe strette che scendono dalle spalle verso l'orlo, solo nel tono. Sono loro a dire «stoffa fine» e non «feltro»
+  const mic = new Float32Array(LZ_DN), W = [0, 0.05, 0.34, 0.66, 0.8, 0.92, 1, 0.82];
+  for (let q = 0; q < 15; q++) {
+    const c0 = rnd() * LZ_DC, der = (rnd() - 0.5) * 0.9, lar = 0.95 + rnd() * 0.7, pro = 0.28 + rnd() * 0.3, ini = 1 + Math.floor(rnd() * 3), e1 = 1 / (2 * lar * lar), e2 = 1 / (2 * lar * lar * 1.7);
+    for (let r = ini; r < LZ_RR; r++) for (let j = 0; j < LZ_DC; j++) {
+      let d = j - c0 - der * r; while (d > LZ_DC / 2) d -= LZ_DC; while (d < -LZ_DC / 2) d += LZ_DC;
+      const e = d - lar * 1.5;
+      mic[1 + r * LZ_DC + j] += W[r] * Math.min(1, (r - ini + 1) / 2) * (-pro * Math.exp(-d * d * e1) + pro * 0.62 * Math.exp(-e * e * e2));
+    }
+  }
+  const F = { px, py, pz, fx, fy, fz, lra, bas, rest, restA, lim, dis, mic, cor: null, gx: [-3, 2, 4, -2][k & 3] };          // gx: da che parte finisce la testa quando il telo crolla
+  lzForme[k] = F;
+  // l'assestamento una volta sola, per ogni forma: poi chi arriva a partita iniziata ha già il telo a posto
+  const l = new Lenzuolo({ c: 0 }, { seme: k }, F);
+  l.pronto = true; l.posa(); l.corpo();
+  for (let p = 0; p < 110; p++) l.passo(0, 0);
+  F.px = l.x.slice(); F.py = l.y.slice(); F.pz = l.z.slice();
+  return F;
+}
+
+// ---------- due disegnini morbidi, una volta sola: l'ombra a terra e l'alone della lanterna ----------
+let lzOmbraT = null, lzAlone = null;
+function lzPrepara() {
+  if (lzOmbraT) return;
+  const o = document.createElement('canvas'); o.width = 96; o.height = 48;
+  const oc = o.getContext('2d'); oc.setTransform(1, 0, 0, 0.5, 0, 0);
+  const g = oc.createRadialGradient(48, 48, 0, 48, 48, 47); g.addColorStop(0, 'rgba(4,4,10,.62)'); g.addColorStop(0.55, 'rgba(4,4,10,.42)'); g.addColorStop(0.82, 'rgba(4,4,10,.14)'); g.addColorStop(1, 'rgba(4,4,10,0)');
+  oc.fillStyle = g; oc.fillRect(0, 0, 96, 96);
+  lzOmbraT = o;
+  const w = document.createElement('canvas'); w.width = w.height = 48; const wc = w.getContext('2d'), gw = wc.createRadialGradient(24, 24, 0, 24, 24, 23.5);
+  gw.addColorStop(0, 'rgba(255,214,140,.5)'); gw.addColorStop(0.3, 'rgba(255,200,120,.14)'); gw.addColorStop(0.65, 'rgba(255,190,110,.04)'); gw.addColorStop(1, 'rgba(255,190,110,0)'); wc.fillStyle = gw; wc.fillRect(0, 0, 48, 48);
+  lzAlone = w;
+}
+
+// i fogli di lavoro del disegno: uno solo, si disegna un personaggio alla volta. Anelli e colonne raddoppiano solo sullo schermo.
+const LZ_RG = [1, 2, 4, 5, 5.5, 6, 6.5, 7], LZ_RR = LZ_RG.length, LZ_DC = LZ_C * 2, LZ_DN = 1 + LZ_DC * LZ_RR, LZ_CL = LZ_DC * LZ_RR;
+const lzGx = new Float32Array(LZ_DN), lzGy = new Float32Array(LZ_DN), lzGz = new Float32Array(LZ_DN), lzSx = new Float32Array(LZ_DN * 3), lzSy = new Float32Array(LZ_DN * 3);       // dopo i nodi, i punti dove le curve di livello tagliano i lati
+const lzTono = new Float32Array(LZ_DN), lzT2 = new Float32Array(LZ_DN), lzCal = new Float32Array(LZ_DN), lzCell = new Uint8Array(LZ_CL);
+// le soglie del tono: due verso il buio, due verso il chiaro. Sono velature: una sopra l'altra fanno la piega, e il disegno del telo resta sotto
+const LZ_LIV = [-0.16, -0.46, 0.2, 0.54], LZ_LIVA = [0.3, 0.42, 0.16, 0.24];
+const LZ_LIVF = [-0.1, -0.24, -0.4, -0.58, -0.84, 0.14, 0.32, 0.56], LZ_LIVFA = [0.18, 0.2, 0.22, 0.26, 0.32, 0.11, 0.14, 0.22];     // nel ritratto, fermo e grande, un passo di sfumatura in più
+const LZ_ORLOC = 4;                                                  // l'orlo cucito si vede solo su tratti dritti di almeno due celle vere
+const LZ_WR = [0, 0.3, 1, 0.5], LZ_WA = [0, 0, 0, 0.1, 0.24, 0.48, 0.74, 1];     // quanto respirano gli anelli delle spalle, quanta aria sentono quelli verso l'orlo
+const LZ_QR = [0, 1, 1, 0, 0, 1, 1, 0], LZ_OTTA = [1, 0.707, 0, -0.707, -1, -0.707, 0, 0.707];     // le file dei quadri, il giro di un pois
+const lzSen = k => { const a = new Float32Array(LZ_DC); for (let j = 0; j < LZ_DC; j++) a[j] = Math.sin(j / LZ_DC * LZ_DPI * k); return a; }, lzCos = k => { const a = new Float32Array(LZ_DC); for (let j = 0; j < LZ_DC; j++) a[j] = Math.cos(j / LZ_DC * LZ_DPI * k); return a; };
+const LZ_S3 = lzSen(3), LZ_C3 = lzCos(3), LZ_S4 = lzSen(4), LZ_C4 = lzCos(4), LZ_S5 = lzSen(5), LZ_C5 = lzCos(5);
+
+function lzRidotto() { try { return !!(typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; } }
+
+class Lenzuolo {
+  constructor(d, o, forma) {
+    d = d || {}; o = o || {};
+    this.c = ((d.c | 0) % LENZUOLI.length + LENZUOLI.length) % LENZUOLI.length; this.m = d.m || LENZUOLI[this.c].m || null;        // m: il disegno sul telo
+    this.seme = o.seme | 0;
+    const n = LZ_N;
+    this.x = new Float32Array(n); this.y = new Float32Array(n); this.z = new Float32Array(n);
+    this.ox = new Float32Array(n); this.oy = new Float32Array(n); this.oz = new Float32Array(n);
+    this.F = forma && forma.lra ? forma : null;
+    this.stato = 'su';      // su · cade · steso · fantasma
+    this.fermoV = lzRidotto();
+    this.pronto = false; this.acc = 0; this.wx = 0; this.wy = 0; this.vx = 0; this.vy = 0; this.vxS = 0; this.vyS = 0;
+    this.dir = Math.PI / 2; this.fa = Math.PI / 2; this.spalle = Math.PI / 2; this.muove = false;
+    this.anda = 0; this.fase = (this.seme * 1.7) % 6.28; this.t = 0; this.tStato = 0;
+    this.hx = 0; this.hy = 0; this.hz = LZ_ZT; this.sx = 0; this.sy = 0; this.sz = LZ_ZS; this.sc = 0; this.ss = 1; this.alz = 0;
+    this.pp = 0; this.p1x = 0; this.p1y = 0; this.p1z = 0; this.p2x = 0; this.p2y = 0; this.p2z = 0;
+    this.lato = 0; this.latoV = 0; this.mx = 21; this.my = 3; this.mz = 30; this.lx = 27; this.ly = 4; this.lz = 19; this.lvx = 0; this.lvy = 0; this.lvz = 0;
+    this.tw = 0; this.storto = 0; this.calmo = 0; this.corpoK = 1; this.ap = 0; this.dorme = false; this.quieto = 0; this.cop = 1; this.xv = 0; this.yv = 0; this.en = 0; this.appeso = true;
+    this.al = 0; this.bl = 0; this.nato = -9; this.pT = -1; this.l0x = 0; this.l0y = 0; this.l0z = 0; this.lfx = 0; this.lfy = 0;
+    this.ev = new Uint8Array(2); this.ev[0] = this.ev[1] = 1; this.ea = new Float32Array(2); this.ea[0] = this.ea[1] = 1;
+    this.rnd = ((this.seme + 1) * 2654435761) >>> 0 || 1; this.bT = 1.5 + this.caso() * 4; this.sgT = 2 + this.caso() * 4; this.sgX = 0;
+    this.gOn = false; this.gX = 0; this.gY = 0; this.gx = 0; this.gy = 0; this.stretto = false; this.capA = 0;
+    if (!forma) { this.F = lzForma(this.seme & 3); this.posa(); }
+    else if (forma.lra) this.posa();
+  }
+
+  // ---------- gli stati ----------
+  posa() { const F = this.F; this.tw = 0; this.x.set(F.px); this.y.set(F.py); this.z.set(F.pz); this.ox.set(F.px); this.oy.set(F.py); this.oz.set(F.pz); this.ruota(this.dir - Math.PI / 2); this.fa = this.spalle = this.dir; }
+  ruota(a) { const c = Math.cos(a), s = Math.sin(a), x = this.x, y = this.y, ox = this.ox, oy = this.oy; for (let n = 0; n < LZ_N; n++) { const u = x[n], v = y[n]; x[n] = u * c - v * s; y[n] = u * s + v * c; const p = ox[n], q = oy[n]; ox[n] = p * c - q * s; oy[n] = p * s + q * c; } }
+  subito() { this.stato = 'su'; this.ap = 0; this.corpoK = 1; this.cop = 1; this.dorme = false; this.quieto = 0; this.nato = -9; this.pT = -1; this.appeso = true; this.posa(); }
+  caso() { let v = this.rnd; v ^= v << 13; v ^= v >>> 17; v ^= v << 5; this.rnd = v >>>= 0; return v / 4294967296; }
+  guarda(x, y) { if (x == null) this.gOn = false; else { this.gOn = true; this.gX = x; this.gY = y; } }
+  // all'impatto la testa di chi sta sotto cede di 3 unità per 0,12 secondi
+  cede() { if (this.stato !== 'cade') return 0; const u = (this.tStato - LZ_TC) / 0.12; return u > 0 && u < 1 ? 3 * Math.sin(Math.PI * u) : 0; }
+  // il telo parte raccolto in alto, si apre stretto come una campana con le sue pieghe, scende sopra la testa e poi l'orlo scivola giù lungo il corpo
+  cadi() {
+    if (lzRidotto()) { this.subito(); return; }               // chi non vuole movimento trova il telo già addosso
+    const F = this.F, x = this.x, y = this.y, z = this.z; this.stato = 'cade'; this.tStato = 0; this.ap = 0.4; this.cop = 0; this.dorme = false; this.quieto = 0; this.corpoK = 1; this.appeso = false; this.nato = 1e9; this.pT = -1; this.ev[0] = this.ev[1] = 1; this.ea[0] = this.ea[1] = 1;
+    const a = this.seme * 2.1;
+    for (let n = 0; n < LZ_N; n++) { x[n] = F.px[n] * 0.3 + 3 * Math.sin(n * 7.1 + a); y[n] = F.py[n] * 0.3 + 2.5 * Math.sin(n * 3.3 + a); z[n] = LZ_Z0 + (F.pz[n] - LZ_CIMA) * 0.2 + 3 * Math.sin(n * 5.7 + a); }
+    this.ox.set(x); this.oy.set(y); this.oz.set(z);
+  }
+  // la lanterna cade dove stava la mano e si rovescia accanto al mucchio: dice anche dove è successo
+  // stretto: lo spazio non basta, il telo si raccoglie lungo il muro con la testa in fondo. La testa si gira verso chi guarda: il corpo si deve capire senza leggere nulla
+  spegni(stretto) {
+    if (this.stato === 'steso') return;
+    this.stato = 'steso'; this.tStato = 0; this.dorme = false; this.quieto = 0; this.appeso = true; this.capA = this.fa - Math.PI / 2; this.dir = Math.PI / 2; this.stretto = !!stretto;
+    const a = this.lx >= 0 ? 0.32 : Math.PI - 0.32, j = ((Math.round((a - this.fa + Math.PI / 2) / LZ_DPI * LZ_C) % LZ_C) + LZ_C) % LZ_C, r = stretto ? 33 : Math.min(this.F.lim[j] * 1.02, 46) + 9;
+    this.l0x = this.lx; this.l0y = this.ly; this.l0z = this.lz; this.lfx = Math.cos(a) * r; this.lfy = Math.sin(a) * r;
+  }
+  fantasma(si) { if (this.stato === 'steso' || this.stato === 'cade') this.subito(); this.stato = si ? 'fantasma' : 'su'; this.tStato = 0; this.dorme = false; this.quieto = 0; }
+  copre() { return this.cop; }
+  cima() { return (this.stato === 'steso' ? 22 : this.z[0]) * LZ_KZ; }
+  // il mucchio finito, una volta sola per forma: serve a chi si spegne dove nessuno guarda
+  mucchio() {
+    const F = this.F, k = this.stretto ? 'mS' : 'mL';
+    if (!F[k]) { const l = new Lenzuolo({ c: 0 }, { seme: 0 }, F); l.pronto = true; l.corpo(); l.spegni(this.stretto); for (let p = 0; p < 170; p++) l.passo(0, 0); F[k] = [l.x.slice(), l.y.slice(), l.z.slice()]; }
+    this.capA = 0; const m = F[k]; this.x.set(m[0]); this.y.set(m[1]); this.z.set(m[2]); this.ox.set(m[0]); this.oy.set(m[1]); this.oz.set(m[2]); this.corpoK = LZ_KT; this.ap = 0.14; this.dorme = true; this.cop = 1; this.tStato = 9;
+    this.fa = this.spalle = this.dir = Math.PI / 2; this.corpo();
+  }
+
+  // ---------- un passo della stoffa ----------
+  corpo() {
+    const v = this.t, f = this.fase, an = this.anda, cf = Math.cos(this.fa), sf = Math.sin(this.fa), sp = Math.sin(f), cp = Math.cos(f);
+    const lean = an * 0.55;
+    const acX = (this.vx - this.vxS) * 2, acY = (this.vy - this.vyS) * 2;
+    const px = -sf, py = cf, ond = sp * 2.2 * an, lX = cf * 2.6 * lean + acX * 2.4, lY = sf * 2.6 * lean + acY * 2.4;
+    const fant = this.stato === 'fantasma', alt = this.alz = this.alz + ((fant ? 14 + 2.4 * Math.sin(v * 1.7 + this.seme) : 0) - this.alz) * 0.05;
+    const crolla = this.stato === 'steso' ? this.corpoK : 1;
+    this.hx = lX + px * ond; this.hy = lY + py * ond; this.hz = (LZ_ZT + alt - Math.abs(sp) * 1.5 * an) * crolla - this.cede();
+    if (this.stato === 'steso') { const g = 1 - crolla; this.hx += this.F.gx * g; this.hy -= (this.stretto ? LZ_GS : LZ_GY) * g; this.hz += LZ_GZ * g; }      // cadendo la testa va dietro il centro del telo: il corpo si stende davanti a lei
+    this.sx = lX * 0.55 + px * ond * 0.6; this.sy = lY * 0.55 + py * ond * 0.6; this.sz = (LZ_ZS + alt - Math.abs(sp) * 1.1 * an) * crolla;
+    const a = this.spalle + LZ_TORCE * sp * an; this.sc = Math.cos(a); this.ss = Math.sin(a);
+    // i piedi vanno avanti e indietro: quello in aria alza l'orlo, una volta da un lato e una dall'altro
+    const pas = 16 * sp * an, sol = LZ_PIEDE * an, al = this.al = cp > 0 ? Math.sqrt(cp) * sol : 0, bl = this.bl = cp < 0 ? Math.sqrt(-cp) * sol : 0;
+    this.p1x = cf * pas + px * 10; this.p1y = sf * pas + py * 10; this.p1z = 3 + al * 0.6 + alt;
+    this.p2x = -cf * pas - px * 10; this.p2y = -sf * pas - py * 10; this.p2z = 3 + bl * 0.6 + alt;
+    // la mano con la lanterna: a destra o a sinistra, passando davanti e mai dietro
+    const ml = Math.cos(this.lato), ms = Math.sin(this.lato), oscilla = sp * 2.2 * an;
+    this.mx = ml * 20 + this.sx * 0.8 + px * oscilla * 0.3; this.my = ms * 19 + 2 + this.sy * 0.8 + oscilla * 0.6; this.mz = (30.5 + alt + Math.abs(cp) * 0.9 * an) * crolla;
+    if (fant) { this.mz = this.p1z = this.p2z = -60; this.al = this.bl = 0; }         // il fantasma non ha piedi né lanterna
+  }
+
+  // porta fuori dal corpo una posa (x,y,z): serve anche alla forma, a telo fermo
+  scosta(x, y, z) {
+    const hR = LZ_RT + LZ_SP, hR2 = hR * hR, hx = this.hx, hy = this.hy, hz = this.hz, sx = this.sx, sy = this.sy, sz = this.sz, c = this.sc, s = this.ss;
+    const rb = LZ_RB + LZ_SP, ia = 1 / (LZ_SX + LZ_SP), ib = 1 / (LZ_SY + LZ_SP), ic = 1 / (LZ_SZ + LZ_SP), rM = LZ_RM + LZ_SP, rM2 = rM * rM, rP = LZ_RP + LZ_SP, rP2 = rP * rP;
+    const mx = this.mx, my = this.my, mz = this.mz, p1x = this.p1x, p1y = this.p1y, p1z = this.p1z, p2x = this.p2x, p2y = this.p2y, p2z = this.p2z, cima = sz - 2;
+    for (let n = 1; n < LZ_N; n++) {
+      let X = x[n], Y = y[n], Z = z[n], dx = X - hx, dy = Y - hy, dz = Z - hz, d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < hR2 && d2 > 1e-4) { const q = hR / Math.sqrt(d2); X = hx + dx * q; Y = hy + dy * q; Z = hz + dz * q; }
+      // spalle: un ellissoide girato come il corpo
+      dx = X - sx; dy = Y - sy; dz = Z - sz;
+      const a = (dx * s - dy * c), b = (dx * c + dy * s);          // a di lato, b avanti
+      const ua = a * ia, ub = b * ib, uc = dz * ic, e = ua * ua + ub * ub + uc * uc;
+      if (e < 1 && e > 1e-4) { const q = 1 / Math.sqrt(e), ra = a * q, rb2 = b * q; X = sx + ra * s + rb2 * c; Y = sy - ra * c + rb2 * s; Z = sz + dz * q; }
+      if (Z < cima) {
+        dx = X - sx * 0.6; dy = Y - sy * 0.6; d2 = dx * dx + dy * dy;
+        if (d2 < rb * rb && d2 > 1e-4) { const q = rb / Math.sqrt(d2); X = sx * 0.6 + dx * q; Y = sy * 0.6 + dy * q; }
+      }
+      dx = X - mx; dy = Y - my; dz = Z - mz; d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < rM2 && d2 > 1e-4) { const q = rM / Math.sqrt(d2); X = mx + dx * q; Y = my + dy * q; Z = mz + dz * q; }
+      if (n > 1 + LZ_C * 4) {
+        dx = X - p1x; dy = Y - p1y; dz = Z - p1z; d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < rP2 && d2 > 1e-4) { const q = rP / Math.sqrt(d2); X = p1x + dx * q; Y = p1y + dy * q; Z = p1z + dz * q; }
+        dx = X - p2x; dy = Y - p2y; dz = Z - p2z; d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < rP2 && d2 > 1e-4) { const q = rP / Math.sqrt(d2); X = p2x + dx * q; Y = p2y + dy * q; Z = p2z + dz * q; }
+      }
+      x[n] = X; y[n] = Y; z[n] = Z;
+    }
+  }
+
+  // dX, dY: quanto si è spostato il corpo in questo passo
+  passo(dX, dY) {
+    const h = LZ_H, F = this.F, T = lzTopo, x = this.x, y = this.y, z = this.z, ox = this.ox, oy = this.oy, oz = this.oz, st = this.stato;
+    this.t += h; this.tStato += h;
+    // il corpo: velocità, passo, sguardo
+    const d = Math.sqrt(dX * dX + dY * dY); let kT = 1; if (d > LZ_TIRO) kT = LZ_TIRO / d;
+    const vT = 0.3, vP = this.vx, vQ = this.vy; this.vx += (dX * kT * LZ_INERZIA - this.vx) * vT; this.vy += (dY * kT * LZ_INERZIA * 1.2 - this.vy) * vT;
+    const vX = this.vx, vY = this.vy, fX = (vX - vP) * LZ_FRUSTA, fY = (vY - vQ) * LZ_FRUSTA; this.vxS += (vX - this.vxS) * 0.14; this.vyS += (vY - this.vyS) * 0.14;
+    this.anda += ((this.muove && st !== 'steso' ? Math.min(1, d / 1.6) : 0) - this.anda) * 0.16;
+    this.fase += LZ_DPI * 1.75 * h * (0.45 + 0.55 * this.anda);
+    let dA = this.dir - this.fa; while (dA > Math.PI) dA -= LZ_DPI; while (dA < -Math.PI) dA += LZ_DPI;
+    const rot = Math.max(-0.17, Math.min(0.17, dA * 0.16)), rotT = st === 'steso' ? 0 : rot; this.fa += rot;      // (a terra gira solo lo sguardo: la stoffa resta dov'è)
+    let dS = this.fa - this.spalle; while (dS > Math.PI) dS -= LZ_DPI; while (dS < -Math.PI) dS += LZ_DPI; this.spalle += dS * 0.13;
+    // la lanterna cambia mano passando davanti
+    const cd = Math.cos(this.fa), tg = Math.abs(cd) > 0.5 ? 1.57 - cd * 0.8 : this.lato > 1.57 ? Math.PI : 0;
+    this.latoV += (tg - this.lato) * 0.03; this.latoV *= 0.8; this.lato += this.latoV;
+    if (st === 'steso') this.corpoK += (LZ_KT - this.corpoK) * Math.min(1, this.tStato * 0.34);
+    this.corpo();
+    const appeso = st !== 'steso' && (st !== 'cade' || this.tStato >= LZ_TC);
+    this.appeso = appeso;
+    // arrivato sulla testa il telo riprende la sua misura di telo addosso; steso resta un po' raccolto
+    if (st === 'cade') {
+      if (appeso) { this.cop = Math.min(1, this.cop + 0.04); this.ap = Math.max(0, this.ap - 0.03); }
+      if (this.nato > 1e8 && this.tStato >= LZ_TC + 0.74) { this.nato = this.t; this.bT = this.t + 0.42; }      // il telo è fermo sulla testa: qui nasce il personaggio
+      if (this.tStato > LZ_TC + 1.25) { this.stato = 'su'; this.cop = 1; this.ap = 0; }
+    } else if (st === 'steso') this.ap = Math.min(0.14, this.ap + 0.008);
+    // integra: il corpo si sposta, la stoffa resta dov'era finché qualcosa non la tira
+    this.calmo = this.muove || d > 0.01 || Math.abs(dA) > 0.01 || st === 'cade' ? 0 : this.calmo + 1;   // dopo un secondo fermo la stoffa si calma e si addormenta
+    const aria = st === 'cade' && !appeso ? 0.88 : st === 'fantasma' ? 0.965 : LZ_ARIA - 0.1 * Math.max(0, Math.min(1, (this.calmo - 34) / 44)), gi = st === 'cade' && !appeso ? 0 : LZ_G, tt = this.t;
+    const nO = 1 + (LZ_R - 2) * LZ_C, kO = LZ_INERZIA_O / LZ_INERZIA;
+    for (let n = 0; n < LZ_N; n++) {
+      const orlo = n >= nO, sX = orlo ? vX * kO : vX, sY = orlo ? vY * kO : vY, X = x[n] - sX, Y = y[n] - sY, Z = z[n];
+      let wx = (x[n] - ox[n]) * aria, wy = (y[n] - oy[n]) * aria, wz = (Z - oz[n]) * aria - gi;
+      if (orlo) { wx -= fX; wy -= fY; if (st === 'su') wz -= LZ_ORLOG * this.anda; }                                                // il corpo frena e l'orlo continua: la frusta
+      if (wx * wx + wy * wy + wz * wz > 36) { wx *= 0.5; wy *= 0.5; wz *= 0.5; }     // niente esplosioni
+      ox[n] = X; oy[n] = Y; oz[n] = Z;
+      x[n] = X + wx; y[n] = Y + wy; z[n] = Z + wz;
+    }
+    // nell'aria il telo è una campana stretta, con le pieghe e l'orlo del telo vero: si apre in un attimo, ondeggia mentre scende, l'orlo resta indietro e sbatte
+    if (st === 'cade' && !appeso) {
+      const q = this.tStato, u = Math.min(1, q / LZ_TC), ap0 = 1 - Math.min(1, q / 0.3), o = 0.3 + 0.7 * (1 - ap0 * ap0 * ap0), zc = LZ_Z0 + (this.hz + LZ_RT + LZ_SP - LZ_Z0) * u * u * (0.55 + 0.45 * u);
+      const gi2 = this.fa - Math.PI / 2 + 0.7 * (1 - u) * (1 - u), c = Math.cos(gi2) * o, s = Math.sin(gi2) * o, px = F.px, py = F.py, pz = F.pz, sw = 5 * (1 - u) * Math.sin(tt * 3.4 + this.seme), kz = LZ_VOLOZ * o;
+      for (let n = 0; n < LZ_N; n++) {
+        const a = px[n], b = py[n], e = 1 - pz[n] / LZ_CIMA, e2 = e * e, fl = 1 + LZ_VOLOR * e2 * (1 + 0.3 * Math.sin(tt * 9 + a * 0.09 + b * 0.05 + this.seme)), fo = 0.3 - 0.14 * e;
+        x[n] += (this.hx + sw * (1 - 0.7 * e) + (a * c - b * s) * fl - x[n]) * fo; y[n] += (this.hy + (a * s + b * c) * fl - y[n]) * fo; z[n] += (zc - (LZ_CIMA - pz[n]) * kz + e2 * 3.6 * Math.cos(tt * 7.4 + b * 0.09 - a * 0.06) - z[n]) * fo;
+      }
+    }
+    if (st === 'fantasma') for (let n = 1 + 4 * LZ_C; n < LZ_N; n++) { const r = (n - 1) % LZ_C * 0.2618; x[n] += 0.05 * Math.sin(tt * 1.9 + r * 3); y[n] += 0.04 * Math.cos(tt * 1.6 + r * 2); }
+    // il girarsi: la cima del telo gira con la testa, il resto segue tardi. Tardi, non mai: quello che l'orlo ha lasciato indietro (tw) lo recupera piano,
+    // se no a forza di girarsi la stoffa si attorciglia attorno al corpo come una corda e l'orlo sale
+    this.tw += rotT * 0.58;
+    const segue = this.tw * LZ_SEGUE; this.tw -= segue;
+    if (Math.abs(rotT) > 1e-4 || Math.abs(segue) > 1e-4) {
+      const hx = this.hx, hy = this.hy;
+      for (let i = 1; i <= LZ_R; i++) {
+        const w = (i <= 4 ? rotT : i === 5 ? rotT * 0.86 + segue * 0.24 : i === 6 ? rotT * 0.62 + segue * 0.655 : rotT * 0.42 + segue), c = Math.cos(w), s = Math.sin(w), a = 1 + (i - 1) * LZ_C;
+        for (let n = a; n < a + LZ_C; n++) { const u = x[n] - hx, v = y[n] - hy; x[n] = hx + u * c - v * s; y[n] = hy + u * s + v * c; const p = ox[n] - hx, q = oy[n] - hy; ox[n] = hx + p * c - q * s; oy[n] = hy + p * s + q * c; }
+      }
+    }
+    // i vincoli: dalla testa in giù
+    const ax = this.hx, ay = this.hy, az = this.hz + LZ_RT + LZ_SP;
+    if (appeso) { const q = st === 'cade' ? 0.3 : 1; x[0] += (ax - x[0]) * q; y[0] += (ay - y[0]) * q; z[0] += (az - z[0]) * q; ox[0] = x[0] - (x[0] - ox[0]) * 0.3; oy[0] = y[0] - (y[0] - oy[0]) * 0.3; oz[0] = z[0] - (z[0] - oz[0]) * 0.3; }
+    const G = T.gr, ap = this.ap, rest = F.rest, restA = F.restA, ca = T.ca, cb = T.cb;
+    if (st !== 'cade' || appeso) {
+      const kR = st === 'steso' ? 0.3 : 1, q1 = st === 'cade' ? 1 - ap : 1, K = lzK;        // finché il telo è aperto si può solo arricciare: niente memoria delle pieghe
+      K[0] = ap;
+      for (let g = 0; g < 2; g++) {
+        K[1] = 1; K[2] = kR; K[3] = appeso ? 0.12 : 0.5; lzVincola(x, y, z, ca, cb, rest, restA, G.r0, G.r1);
+        K[1] = 0.85; K[2] = 0.3 * q1; K[3] = 0.5; lzVincola(x, y, z, ca, cb, rest, restA, G.a0, G.a1);
+        if (appeso) { x[0] += (ax - x[0]) * 0.9; y[0] += (ay - y[0]) * 0.9; z[0] += (az - z[0]) * 0.9; }
+      }
+      K[1] = 0.5; K[2] = 0.12 * q1; lzVincola(x, y, z, ca, cb, rest, restA, G.d0, G.d1);
+      K[1] = 0.14 * q1; K[2] = 0.2 * q1; lzVincola(x, y, z, ca, cb, rest, restA, G.p0, G.p1);
+      K[1] = 0.28 * q1; K[2] = 0.3 * q1; lzVincola(x, y, z, ca, cb, rest, restA, G.c0, G.c1);
+      K[1] = (st === 'steso' ? 0.2 : 0.7) * q1; K[2] = (st === 'steso' ? 0.12 : 0.7) * q1; lzVincola(x, y, z, ca, cb, rest, restA, G.b0, G.b1);
+    }
+    // l'assestamento: gli ultimi attimi della caduta accompagnano la stoffa alla sua posa, così qualunque cosa sia successa nell'aria il telo finisce bene
+    if (st === 'cade' && appeso && this.tStato > LZ_TC + 0.14) {
+      const k = Math.min(0.2, (this.tStato - LZ_TC - 0.14) * 0.3), g = this.fa - Math.PI / 2, c = Math.cos(g), s = Math.sin(g), px = F.px, py = F.py, pz = F.pz;
+      for (let n = 1; n < LZ_N; n++) { const a = px[n], b = py[n]; x[n] += (a * c - b * s - x[n]) * k; y[n] += (a * s + b * c - y[n]) * k; z[n] += (pz[n] - z[n]) * k; }
+    }
+    // la rete di sicurezza: se la stoffa si impiglia nella mano o nel corpo e l'orlo resta su, la posa la riporta giù in un attimo, come una stoffa che ricade.
+    // Una frusta normale dura meno e qui non arriva: entra solo chi resta rovesciato
+    if (st === 'su') {
+      let zo = 0; for (let n = 1 + (LZ_R - 1) * LZ_C; n < LZ_N; n += 2) zo += z[n];
+      zo /= LZ_C / 2; this.storto = zo > LZ_ORLOSU ? Math.min(1, this.storto + 0.07) : zo < 8 ? Math.max(0, this.storto - 0.05) : this.storto;   // (lascia solo quando l'orlo è tornato giù)
+      if (this.storto > 0.2) {
+        const k = 0.16 * (this.storto - 0.2), g = this.fa - Math.PI / 2, c = Math.cos(g), s = Math.sin(g), px = F.px, py = F.py, pz = F.pz;
+        for (let n = 1 + 2 * LZ_C; n < LZ_N; n++) { const a = px[n], b = py[n]; x[n] += (a * c - b * s - x[n]) * k; y[n] += (a * s + b * c - y[n]) * k; z[n] += (pz[n] - z[n]) * k; }
+        this.tw *= 0.9;
+      }
+    }
+    // corpo e pavimento
+    if ((st !== 'steso' || this.corpoK > 0.3) && (st !== 'cade' || appeso)) this.scosta(x, y, z);
+    if (st === 'steso') {             // a terra la testa resta una gobba sotto la stoffa, davanti a lei il corpo: una spalla di stoffa, l'aria sotto, mai un adesivo. L'allargarsi si ferma dove l'orlo ha toccato terra
+      if (this.corpoK <= 0.3) {
+        const hx = this.hx, hy = this.hy, hz = this.hz, hR = LZ_RT + LZ_SP - 1, hR2 = hR * hR;
+        // la cima del telo resta calzata sulla testa come un berretto: è lei a fare la gobba, e con la gobba il corpo si capisce senza leggere nulla
+        const kc = Math.min(0.3, 0.05 + (0.3 - this.corpoK) * 2), cc = Math.cos(this.capA), sc = Math.sin(this.capA), fx = F.fx, fy = F.fy;
+        x[0] += (hx - x[0]) * kc; y[0] += (hy - y[0]) * kc; z[0] += (hz + hR - z[0]) * kc;
+        for (let n = 1; n < 1 + 3 * LZ_C; n++) {
+          const a = fx[n], b = fy[n], s0 = Math.sqrt(a * a + b * b), fi = s0 / hR, r = hR * Math.sin(fi) / s0;
+          x[n] += (hx + (a * cc - b * sc) * r - x[n]) * kc; y[n] += (hy + (a * sc + b * cc) * r - y[n]) * kc; z[n] += (hz + hR * Math.cos(fi) - z[n]) * kc;
+        }
+        for (let n = 0; n < LZ_N; n++) {
+          const dx = x[n] - hx, dy = y[n] - hy, dz = z[n] - hz, d2 = dx * dx + dy * dy + dz * dz; if (d2 >= hR2 || d2 < 1e-4) continue;
+          if (dz >= 0) { const q = hR / Math.sqrt(d2); x[n] = hx + dx * q; y[n] = hy + dy * q; z[n] = hz + dz * q; }
+          else { const m = Math.sqrt(dx * dx + dy * dy) + 1e-3, q = Math.sqrt(hR2 - dz * dz) / m; x[n] = hx + dx * q; y[n] = hy + dy * q; }
+        }
+      }
+      const lim = F.lim, dis = F.dis, str = this.stretto, cy = str ? 0 : LZ_CY, cm = str ? 12 : LZ_CY + 5, ra = 1 / 25, rb = 1 / 70;
+      for (let i = 1; i <= LZ_R; i++) {
+        const a = 1 + (i - 1) * LZ_C, w = i < 5 ? 0 : i === 5 ? 0.66 : i === 6 ? 0.83 : 1;
+        for (let j = 0; j < LZ_C; j++) {
+          const n = a + j, X = x[n], Y = y[n], Yc = Y - cy, Ym = Y - cm, r2 = X * X + Yc * Yc, m = 6.5 * dis[j] * Math.exp(-(X * X + Ym * Ym * (str ? 0.2 : 1)) / 380); if (z[n] < m) z[n] += (m - z[n]) * 0.2;
+          if (w <= 0) continue;
+          if (str) {
+            const u = X * ra, v = Y * rb, e2 = u * u + v * v;
+            if (e2 > w * w) { const q = (1 - w / Math.sqrt(e2)) * 0.34; x[n] -= X * q; y[n] -= Y * q; }
+            else if (i > 5) y[n] += Y * 0.018;                 // la stoffa si stira lungo il muro
+          } else { const L = lim[j] * w; if (r2 > L * L) { const q = (1 - L / Math.sqrt(r2)) * 0.34; x[n] -= X * q; y[n] -= Yc * q; } }
+        }
+      }
+    }
+    // i piedi sollevano l'orlo: un rigonfiamento che sale sotto la stoffa e la lascia ricadere, a ogni passo
+    if (st === 'su' && this.anda > 0.04) {
+      const r2 = LZ_RL * LZ_RL, ir = 1 / r2, lx = -Math.sin(this.fa) * LZ_FIANCO, ly = Math.cos(this.fa) * LZ_FIANCO, p1x = this.p1x + lx, p1y = this.p1y + ly, p2x = this.p2x - lx, p2y = this.p2y - ly, a1 = this.al, a2 = this.bl;
+      for (let n = nO; n < LZ_N; n++) {
+        const X = x[n], Y = y[n], d1 = (X - p1x) * (X - p1x) + (Y - p1y) * (Y - p1y), d2 = (X - p2x) * (X - p2x) + (Y - p2y) * (Y - p2y);
+        let m = 0; if (d1 < r2) m = a1 * (1 - d1 * ir); if (d2 < r2) { const b = a2 * (1 - d2 * ir); if (b > m) m = b; }
+        if (z[n] < m) z[n] += (m - z[n]) * 0.55;
+      }
+    }
+    // la mano stringe la stoffa: i nodi più vicini vengono raccolti sul pugno, così le pieghe convergono lì e il filo parte da lì
+    if (st === 'su' && this.mz > 0) {
+      const mx = this.mx, my = this.my, mz = this.mz, ml = LZ_PUGNO / (Math.sqrt(mx * mx + my * my) + 1e-3), gx = mx + mx * ml, gy = my + my * ml, r2 = LZ_PZ * LZ_PZ, ir = 1 / r2;
+      let mi = 1e9, nn = -1;
+      for (let n = 1 + 3 * LZ_C; n < 1 + 6 * LZ_C; n++) {
+        const dx = x[n] - gx, dy = y[n] - gy, dz = z[n] - mz, d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < mi) { mi = d2; nn = n; }
+        if (d2 < r2) { const w = 1 - d2 * ir, k = w * w * 0.5; x[n] -= dx * k; y[n] -= dy * k; z[n] -= dz * k; }
+      }
+      if (nn > 0 && mi >= r2 * 0.2) { x[nn] += (gx - x[nn]) * 0.3; y[nn] += (gy - y[nn]) * 0.3; z[nn] += (mz - z[nn]) * 0.3; }      // anche se il telo vola via, un lembo resta nel pugno
+    }
+    // nessun nodo più lontano dalla cima della stoffa che ha: così basta un giro di vincoli e il telo non si allunga mai
+    if (appeso) {
+      const lra = F.lra, X0 = x[0], Y0 = y[0], Z0 = z[0];
+      for (let n = 1; n < LZ_N; n++) { const dx = x[n] - X0, dy = y[n] - Y0, dz = z[n] - Z0, d2 = dx * dx + dy * dy + dz * dz, m = lra[n]; if (d2 > m * m) { const q = m / Math.sqrt(d2); x[n] = X0 + dx * q; y[n] = Y0 + dy * q; z[n] = Z0 + dz * q; } }
+    }
+    const terra = st !== 'fantasma' && (st !== 'cade' || appeso), bas = F.bas, attr = st === 'steso' ? 0.5 : 0.1, gr = st === 'steso' ? 3.2 : 1;
+    if (terra) for (let n = 1; n < LZ_N; n++) { const m = bas[n] * gr; if (z[n] < m) { z[n] = m; x[n] += (ox[n] - x[n]) * attr; y[n] += (oy[n] - y[n]) * attr; } }
+    if (st === 'cade' && appeso && this.pT < 0) { let zm = 0; for (let n = 1 + (LZ_R - 1) * LZ_C; n < LZ_N; n += 4) zm += z[n]; if (zm / 6 < 6) this.pT = this.t; }      // l'orlo ha toccato terra
+    // la lanterna pende e dondola
+    const lk = 0.07; let lvx = this.lvx, lvy = this.lvy;
+    const hm = 1 + LZ_PUGNO / (Math.sqrt(this.mx * this.mx + this.my * this.my) + 1e-3);
+    lvx += (this.mx * hm - this.lx) * lk - vX * 0.06; lvy += (this.my * hm - this.ly) * lk - vY * 0.06; lvx *= 0.92; lvy *= 0.92;
+    this.lx += lvx; this.ly += lvy; this.lvx = lvx; this.lvy = lvy; this.lz = this.mz - 11.5;
+    this.vista();
+    // a riposo la stoffa dorme: fermo non costa niente
+    if (!this.muove && d < 0.01 && st !== 'cade' && st !== 'fantasma' && Math.abs(dA) < 0.01 && (st !== 'steso' || this.tStato > 1.2)) {
+      let m = 0; for (let n = 1 + (LZ_R - 1) * LZ_C; n < LZ_N; n += 3) { const a = x[n] - ox[n], b = y[n] - oy[n], c = z[n] - oz[n]; m += a * a + b * b + c * c; }
+      if (m < 0.003) { if (++this.quieto > 24) this.dorme = true; } else this.quieto = 0;
+      if (st === 'steso' && this.tStato > 3.4) this.dorme = true;                                 // a terra si smette comunque: un corpo fermo non deve costare niente
+    } else this.quieto = 0;
+  }
+
+  aggiorna(dt, x, y, dir, muove, attivo) {
+    this.xv = x; this.yv = y;
+    if (dir != null) this.dir = dir;
+    this.muove = !!muove;
+    if (!this.pronto) { this.pronto = true; this.wx = x; this.wy = y; this.fa = this.spalle = this.dir; this.posa(); this.corpo(); return; }
+    if (attivo === false) {                 // fuori dalla luce non si simula, ma chi torna a guardare deve trovare il telo giusto
+      this.wx = x; this.wy = y; this.acc = 0; this.vx = this.vy = 0; this.anda = 0;
+      if (this.stato === 'cade') this.subito(); else if (this.stato === 'steso' && !this.dorme) this.mucchio();
+      return;
+    }
+    const dX = x - this.wx, dY = y - this.wy, salto = dX * dX + dY * dY > LZ_SALTO * LZ_SALTO;
+    if (this.dorme) { if (dX * dX + dY * dY > 0.01 || this.muove || this.stato === 'cade' || Math.abs(this.dir - this.fa) > 0.02) { this.dorme = false; this.quieto = 0; } else { this.wx = x; this.wy = y; this.acc = 0; this.t += dt; return; } }
+    this.acc += Math.min(dt, 0.1);
+    let n = Math.floor(this.acc / LZ_H); if (n < 1) return;
+    if (n > LZ_MAXP) { n = LZ_MAXP; this.acc = 0; } else this.acc -= n * LZ_H;
+    const px = salto ? 0 : dX / n, py = salto ? 0 : dY / n;
+    this.wx = x; this.wy = y;
+    for (let i = 0; i < n; i++) this.passo(px, py);
+  }
+
+  // ---------- il disegno ----------
+  // Niente qui tocca la simulazione: un telo addormentato resta addormentato, l'aria e il respiro vivono solo sullo schermo.
+  disegna(ctx, o) {
+    o = o || {}; lzPrepara();
+    const X0 = o.x != null ? o.x : this.xv, Y0 = o.y != null ? o.y : this.yv, S = o.scala || 1, alfa = o.alfa == null ? 1 : o.alfa, t = o.t != null ? o.t : this.t;
+    const stato = this.stato, fant = stato === 'fantasma', steso = stato === 'steso', vola = stato === 'cade' && !this.appeso, L = o.grigio ? lzNebbia : LENZUOLI[this.c];
+    const alza = vola ? (this.z[0] - LZ_CIMA) * LZ_KZ : 0;      // in volo la sfumatura della stoffa sale col telo
+    const C = LZ_DC, R = LZ_RR, N = LZ_DN, gx = lzGx, gy = lzGy, gz = lzGz, sx = lzSx, sy = lzSy, tono = lzTono, t2 = lzT2, cal = lzCal, cell = lzCell, mic = this.F.mic;
+    const base = (fant ? alfa * 0.5 : alfa) * (vola ? Math.min(1, this.tStato / 0.12) : 1), hLant = !fant && !steso && o.lanterna !== false;
+    lzGriglia(this.x, this.y, this.z); lzOrlo(gx); lzOrlo(gy);
+    if (!this.fermoV && (stato === 'su' || fant)) this.aria(t);
+    lzInfittisci(gx); lzInfittisci(gy); lzInfittisci(gz);
+    for (let n = 0; n < N; n++) { sx[n] = gx[n]; sy[n] = gy[n] * LZ_KY - gz[n] * LZ_KZ + alza; }
+    // le normali e il tono nascono dalla forma simulata, sulla griglia fine
+    const lux = this.lx, luy = this.ly, luz = this.lz + 4;
+    for (let r = 0; r < R; r++) {
+      const d = 1 + r * C;
+      for (let j = 0; j < C; j += 2) {
+        const n = d + j, a = d + (j === C - 2 ? 0 : j + 2), b = d + (j === 0 ? C - 2 : j - 2), u = r === 0 ? 0 : n - C, v = r === R - 1 ? n : n + C, X = gx[n], Y = gy[n], Z = gz[n];
+        const ux = gx[a] - gx[b], uy = gy[a] - gy[b], uz = gz[a] - gz[b], vx = gx[v] - gx[u], vy = gy[v] - gy[u], vz = gz[v] - gz[u];
+        let qx = vy * uz - vz * uy, qy = vz * ux - vx * uz, qz = vx * uy - vy * ux; const m = 1 / (Math.sqrt(qx * qx + qy * qy + qz * qz) + 1e-5);
+        qx *= m; qy *= m; qz *= m;
+        // luce di taglio dall'alto a sinistra: fa nascere le pieghe. La conca fra due creste è scura
+        const dif = qx * -0.52 + qy * 0.5 + qz * 0.69;
+        const ce = ((gx[a] + gx[b]) * 0.5 - X) * X + ((gy[a] + gy[b]) * 0.5 - Y) * Y, rr = 1 / (Math.sqrt(X * X + Y * Y) + 3), conca = ce * rr * 0.34;
+        tono[n] = (dif - 0.42) * 1.15 - (conca > 1 ? 1 : conca < -1 ? -1 : conca) * 0.9;
+        if (hLant) { const dx = lux - X, dy = luy - Y, dz = luz - Z, d2 = dx * dx + dy * dy + dz * dz, l = (dx * qx + dy * qy + dz * qz) / Math.sqrt(d2 + 1); cal[n] = l < 0 ? 0 : l * 2100 / (d2 + 900); }
+      }
+    }
+    // la morbidezza: lungo gli anelli sui nodi veri, poi lungo le colonne. Il mucchio, tutto schiacciato, ne vuole di più
+    for (let g = steso ? 2 : 1; g > 0; g--) {
+      for (let r = 0; r < R; r++) { const d = 1 + r * C; for (let j = 0; j < C; j += 2) t2[d + j] = 0.5 * tono[d + j] + 0.25 * (tono[d + (j === C - 2 ? 0 : j + 2)] + tono[d + (j === 0 ? C - 2 : j - 2)]); }
+      for (let r = 0; r < R; r++) { const d = 1 + r * C; for (let j = 0; j < C; j += 2) { const n = d + j; tono[n] = r === R - 1 ? t2[n] : 0.5 * t2[n] + 0.25 * ((r === 0 ? t2[n] : t2[n - C]) + t2[n + C]); } }
+    }
+    lzInfittisci(tono); if (hLant) lzInfittisci(cal);
+        { const k = steso ? 0.8 : 1; for (let n = 1; n < N; n++) tono[n] += mic[n] * k; }      // le piegoline sottili: il telo è fine, non è feltro
+    let acc = 0; for (let j = 0; j < C; j++) acc += tono[1 + j]; tono[0] = acc / C;
+    // la cella guarda chi osserva? L'area sullo schermo lo dice senza sbagliare
+    for (let r = 0; r < R; r++) for (let j = 0; j < C; j++) {
+      const j2 = (j + 1) % C, a = r === 0 ? 0 : 1 + (r - 1) * C + j, b = r === 0 ? 0 : 1 + (r - 1) * C + j2, c = 1 + r * C + j2, d = 1 + r * C + j;
+      cell[r * C + j] = (sx[c] - sx[a]) * (sy[d] - sy[b]) - (sx[d] - sx[b]) * (sy[c] - sy[a]) < 0 ? 1 : 0;
+    }
+    // la stoffa dritta in un elenco, con i suoi lati aperti e il minimo e il massimo del tono: ogni soglia guarda solo quello che le serve
+    { let nf = 0; const fr = lzFr, bo = lzBordo, lo = lzTm, hi = lzTM, ko = lzKm, kh = lzKM;
+      for (let r = 0; r < R; r++) { const d = r * C; for (let j = 0; j < C; j++) {
+        const k = d + j; if (!cell[k]) continue; fr[nf++] = k;
+        bo[k] = (cell[d + (j + C - 1) % C] ? 0 : 1) | (r === R - 1 || !cell[k + C] ? 2 : 0) | (cell[d + (j + 1) % C] ? 0 : 4) | (r > 0 && !cell[k - C] ? 8 : 0);
+        const a = LZ_CA[k], e = LZ_CB[k], c = LZ_CC[k], w = LZ_CD[k]; let v = tono[a], mn = v, mx = v; v = tono[e]; if (v < mn) mn = v; else if (v > mx) mx = v; v = tono[c]; if (v < mn) mn = v; else if (v > mx) mx = v; v = tono[w]; if (v < mn) mn = v; else if (v > mx) mx = v; lo[k] = mn; hi[k] = mx;
+        if (hLant) { v = cal[a]; mn = v; mx = v; v = cal[e]; if (v < mn) mn = v; else if (v > mx) mx = v; v = cal[c]; if (v < mn) mn = v; else if (v > mx) mx = v; v = cal[w]; if (v < mn) mn = v; else if (v > mx) mx = v; ko[k] = mn; kh[k] = mx; }
+      } }
+      lzNf = nf;
+    }
+    ctx.save(); ctx.translate(X0, Y0); if (S !== 1) ctx.scale(S, S);
+    if (o.ombra !== false && !fant) this.ombra(ctx, alfa, base);
+    if (alza) ctx.translate(0, -alza);
+    // l'interno del telo, dove si vede da dentro: il fantasma è trasparente e deve restare pulito
+    ctx.globalAlpha = base; ctx.fillStyle = fant ? L.b : steso ? L.s : lzDentro(L); ctx.beginPath(); lzMaschera(ctx, sx, sy, cell, 0, 44, 2.2); ctx.fill();
+    // i piedi: stanno sotto il telo, si vedono solo quando l'orlo si alza
+    if (this.anda > 0.08 && stato === 'su') {
+      ctx.fillStyle = '#14110e';
+      ctx.beginPath(); ctx.ellipse(this.p1x * 0.7, this.p1y * 0.7 * LZ_KY - (this.p1z - 2.5) * LZ_KZ, 3, 1.7, 0, 0, LZ_DPI); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(this.p2x * 0.7, this.p2y * 0.7 * LZ_KY - (this.p2z - 2.5) * LZ_KZ, 3, 1.7, 0, 0, LZ_DPI); ctx.fill();
+    }
+    // la stoffa: dall'alto più chiara, in basso più scura. Sopra il disegno del telo, poi le pieghe come velature: seguono la forma e non coprono il disegno
+    ctx.fillStyle = steso ? L.b : lzTelo(L); ctx.beginPath(); lzSagoma(ctx, sx, sy); if (stato === 'su' || fant) { const hy = this.hy * LZ_KY - this.hz * LZ_KZ, hr = LZ_RT + LZ_SP; ctx.moveTo(this.hx + hr, hy); ctx.arc(this.hx, hy, hr, 0, LZ_DPI); } ctx.fill();
+    if (L.fori && !steso && !fant) { ctx.globalAlpha = base * 0.5; ctx.strokeStyle = L.l; ctx.lineWidth = 0.8; ctx.lineJoin = 'round'; ctx.beginPath(); lzSagoma(ctx, sx, sy); ctx.stroke(); }      // il telo scuro ha un filo chiaro sul bordo: fuori dalla lanterna non sparisce, e chi lo sceglie non ha un vantaggio
+    if (this.m && !o.grigio) lzMotivo(ctx, sx, sy, cell, this.m, L);
+    const liv = o.fine ? LZ_LIVF : LZ_LIV, liva = o.fine ? LZ_LIVFA : LZ_LIVA;
+    for (let k = 0; k < liv.length; k++) { const q = liv[k]; ctx.globalAlpha = base * liva[k]; ctx.fillStyle = q > 0 ? L.l : L.s; ctx.beginPath(); lzRegione(ctx, sx, sy, tono, lzTm, lzTM, q < 0 ? -1 : 1, Math.abs(q)); ctx.fill(); }
+    if (hLant) {
+      ctx.fillStyle = lzCalda(L); ctx.globalAlpha = base * 0.17; ctx.beginPath(); lzRegione(ctx, sx, sy, cal, lzKm, lzKM, 1, 0.24); ctx.fill();
+      ctx.globalAlpha = base * 0.21; ctx.beginPath(); lzRegione(ctx, sx, sy, cal, lzKm, lzKM, 1, 0.6); ctx.fill();
+    }
+    // l'orlo cucito: una riga appena più chiara poco sopra il bordo, solo dove il telo si vede davanti per un buon tratto
+    {
+      const a = 1 + (R - 1) * C, e = (R - 1) * C; let via = -1;
+      for (let j = 0; j < C; j++) if (cell[e + j] !== 1) { via = j; break; }
+      ctx.strokeStyle = L.l; ctx.lineWidth = 0.7; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.globalAlpha = base * 0.42; ctx.beginPath();
+      if (via < 0) { for (let j = 0; j <= C; j++) { const n = a + j % C, b = n - C, X = sx[n] + (sx[b] - sx[n]) * 0.16, Y = sy[n] + (sy[b] - sy[n]) * 0.16; if (j) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); } }
+      else {
+        let lun = 0;
+        for (let i = 1; i <= C; i++) {
+          const j = (via + i) % C, front = i < C && cell[e + j] === 1;
+          if (front) lun++;
+          else {
+            if (lun >= LZ_ORLOC) for (let k = lun; k >= 0; k--) { const n = a + (j + C - k) % C, b = n - C, X = sx[n] + (sx[b] - sx[n]) * 0.16, Y = sy[n] + (sy[b] - sy[n]) * 0.16; if (k === lun) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
+            lun = 0;
+          }
+        }
+      }
+      ctx.stroke();
+    }
+    // i fori per gli occhi, sul telo: si muovono con la stoffa e di spalle non si vedono
+    this.occhi(ctx, L, base, t, hLant);
+    if (alza) ctx.translate(0, alza);
+    if (stato === 'cade') this.polvere(ctx, base);
+    if (!fant && o.lanterna !== false) this.lanterna(ctx, alfa, t);
+    ctx.restore();
+  }
+
+  // l'ombra a terra: larga e morbida, si stringe quando il telo scende. Dove l'orlo tocca è una riga scura, dove si solleva si stacca
+  ombra(ctx, alfa, base) {
+    const x = this.x, y = this.y, z = this.z, a = 1 + (LZ_R - 1) * LZ_C, C = LZ_C; let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9, zm = 0, zo = 0;
+    for (let n = a; n < LZ_N; n++) { const u = x[n], v = y[n]; if (u < a0) a0 = u; if (u > a1) a1 = u; if (v < b0) b0 = v; if (v > b1) b1 = v; zm += z[n]; }
+    zm /= C; const qa = Math.max(0.25, 1 - zm / 150), ww = (a1 - a0 + 16) * (1 + zm * 0.005), hh = (b1 - b0) * LZ_KY + 12;
+    ctx.globalAlpha = alfa * qa; ctx.drawImage(lzOmbraT, (a0 + a1) * 0.5 - ww * 0.5, (b0 + b1) * 0.5 * LZ_KY - hh * 0.5 + 1.5, ww, hh);
+    for (let j = 0; j < C; j += 4) zo += z[a + j];
+    ctx.globalAlpha = base * Math.max(0, 1 - zo / 36); ctx.fillStyle = 'rgba(5,4,11,.38)'; ctx.beginPath();
+    for (let j = 0; j < C; j++) { const n = a + j, px = x[n], py = y[n] * LZ_KY + 0.9; if (j) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+    ctx.closePath(); ctx.fill();
+    if (this.stato === 'steso') {                 // l'ombra di contatto: il telo sta a terra e pesa, non è una macchia sul pavimento
+      for (let k = 0; k < 2; k++) {
+        const g = k ? 1.02 : 1.07, dy = k ? 1.7 : 3.4; ctx.globalAlpha = base * (k ? 0.4 : 0.26); ctx.beginPath();
+        for (let j = 0; j < C; j++) { const n = a + j, px = x[n] * g, py = y[n] * g * LZ_KY + dy; if (j) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+        ctx.closePath(); ctx.fill();
+      }
+    }
+  }
+
+  // l'aria ferma e il respiro, solo nel disegno. Il respiro muove le spalle, non tutta la figura; camminando un'onda corre giù per la stoffa
+  aria(t) {
+    const C = LZ_DC, gx = lzGx, gy = lzGy, gz = lzGz, an = this.anda, ferma = 1 - an * 0.75, sem = this.seme * 1.31, re = Math.sin(t * 1.9 + sem) * 0.75 * ferma;
+    const s1 = Math.sin(t * 1.25 + sem), c1 = Math.cos(t * 1.25 + sem), s2 = Math.sin(t * 2.1 + sem * 2), c2 = Math.cos(t * 2.1 + sem * 2);
+    for (let r = 1; r <= 3; r++) { const w = LZ_WR[r] * re, d = 1 + r * C; for (let j = 0; j < C; j += 2) { const n = d + j, u = gx[n], v = gy[n], m = 1 / (Math.sqrt(u * u + v * v) + 1); gx[n] = u + u * m * w; gy[n] = v + v * m * w; } }
+    for (let r = 3; r < LZ_RR; r++) {
+      const w = LZ_WA[r], d = 1 + r * C, f = this.fase * 2 - r * 1.05, s3 = Math.sin(f), c3 = Math.cos(f), p1 = w * ferma * 0.72, p2 = w * ferma * 0.48, p3 = w * an * 1.9;
+      for (let j = 0; j < C; j += 2) {
+        const n = d + j, u = gx[n], v = gy[n], m = 1 / (Math.sqrt(u * u + v * v) + 1);
+        // sin(a + k j) con le tabelle: tre onde lente attorno all'orlo, cinque contrarie, quattro che scendono quando si cammina
+        const q = p1 * (s1 * LZ_C3[j] + c1 * LZ_S3[j]) + p2 * (s2 * LZ_C5[j] - c2 * LZ_S5[j]) + p3 * (s3 * LZ_C4[j] + c3 * LZ_S4[j]);
+        gx[n] = u + u * m * q; gy[n] = v + v * m * q; gz[n] += Math.abs(q) * 0.32;
+      }
+    }
+  }
+
+  // I fori stanno sulla testa, non sui nodi: la stoffa lì è tesa, e così non possono finire uno sull'altro quando il telo si assesta.
+  // L'occhio di là non si schiaccia: si stringe un poco, scivola verso il centro della testa e svanisce. Si spegne sotto 0,30 e si riaccende sopra 0,42
+  occhi(ctx, L, base, t, hLant) {
+    const st = this.stato, morto = st === 'steso';
+    const vt = this.t - this.nato;
+    if (vt < 0) return;                                               // finché il telo non è fermo sulla testa non ci sono occhi: si aprono lì
+    const fant = st === 'fantasma', nA = vt >= 0.16 ? 1 : lzFaro(vt / 0.16), vivo = !this.fermoV && !morto, lol = morto ? (this.F.gx < 0 ? -0.26 : 0.26) : 0;
+    // il battito: ogni 3-6 secondi, un decimo di secondo
+    let chiude = 0, bt = this.t - this.bT;
+    if (bt >= 0.1) { this.bT = this.t + 3 + 3 * this.caso(); bt = -1; }
+    if (vivo && bt >= 0) chiude = Math.sin(Math.PI * bt / 0.1);
+    // lo sguardo: un punto verso chi si muove; se nessuno si muove, ogni tanto si guarda attorno
+    let tx = 0, ty = 0;
+    if (vivo) {
+      if (this.gOn) { const dx = this.gX - this.xv, dy = this.gY - this.yv, m = Math.sqrt(dx * dx + dy * dy); if (m > 1) { tx = dx / m; ty = dy / m * 0.6; } }
+      else { if (this.t > this.sgT) { const v = this.caso(); this.sgX = v < 0.5 ? 0 : v < 0.75 ? 1 : -1; this.sgT = this.t + (this.sgX ? 0.9 : 2 + 4 * this.caso()); } tx = this.sgX; }
+    }
+    this.gx += (tx - this.gx) * 0.2; this.gy += (ty - this.gy) * 0.2;
+    const hR = LZ_RT + LZ_SP, hcx = this.hx, hcy = this.hy * LZ_KY - this.hz * LZ_KZ, si = morto ? 0.86 : 0.71, co = morto ? 0.5 : 0.7;
+    for (let k = 0; k < 2; k++) {
+      const e = k ? 1 : -1, th = this.fa + e * 0.4, ct = Math.cos(th), sn = Math.sin(th), q = si * sn * LZ_VY + co * LZ_VZ;
+      const ch = Math.max(0, Math.min(1, (q - 0.3) / 0.3)), ea = this.ea[k]; if (ea < 0.03) continue;
+      const qx = -sn, qy = ct * LZ_KY, sc = Math.sqrt(qx * qx + qy * qy), ry0 = morto ? 3.5 : 3.1, ry = ry0 * nA * (1 - 0.88 * chiude), rx = Math.max(0.45 * ry0, (morto ? 2.6 : 2.3) * sc), rot = Math.atan2(qx < 0 ? -qy : qy, Math.abs(qx)) * ch + lol;
+      let px = hcx + hR * si * ct, py = (this.hy + hR * si * sn) * LZ_KY - (this.hz + hR * co) * LZ_KZ, ux = hcx - px, uy = hcy - py, dm = Math.sqrt(ux * ux + uy * uy) + 1e-4; ux /= dm; uy /= dm;
+      px += ux * (1 - ch) * 2.5 + this.gx; py += uy * (1 - ch) * 2.5 + this.gy + e * lol * 5;      // (la testa a terra è reclinata: un occhio più basso dell'altro)
+      // il foro sta dentro la sagoma della testa, sempre
+      ux = px - hcx; uy = py - hcy; dm = Math.sqrt(ux * ux + uy * uy) + 1e-4; const ec = Math.cos(rot), es = Math.sin(rot), pa = (ux * ec + uy * es) / dm * rx, pb = (uy * ec - ux * es) / dm * ry, lim = hR - 0.7 - Math.sqrt(pa * pa + pb * pb);
+      if (dm > lim) { const m = lim / dm; px = hcx + ux * m; py = hcy + uy * m; }
+      if (fant) {             // il fantasma ha gli occhi accesi: è l'unica luce che gli resta
+        ctx.globalAlpha = 0.16 * ea * nA; ctx.fillStyle = '#bfe3ff'; ctx.beginPath(); ctx.ellipse(px, py, rx * 2, ry * 1.7, rot, 0, LZ_DPI); ctx.fill();
+        ctx.globalAlpha = Math.min(1, base * 1.9) * ea; ctx.fillStyle = '#e4f4ff'; ctx.beginPath(); ctx.ellipse(px, py, rx, Math.max(0.25, ry), rot, 0, LZ_DPI); ctx.fill();
+        continue;
+      }
+      ctx.globalAlpha = base * ea; ctx.fillStyle = '#0b0910'; ctx.beginPath(); ctx.ellipse(px, py, rx, Math.max(0.25, ry), rot, 0, LZ_DPI); ctx.fill();
+      if (L.fori) { ctx.globalAlpha = base * ea * 0.55; ctx.strokeStyle = L.l; ctx.lineWidth = 0.55; ctx.stroke(); }      // sul telo scuro un filo chiaro attorno ai fori
+      if (!morto && chiude < 0.5 && nA > 0.5) { ctx.globalAlpha = base * ea * (hLant ? 0.72 + 0.14 * Math.sin(t * 7 + e) : 0.5); ctx.fillStyle = hLant ? '#f2c777' : '#8f8aa0'; ctx.beginPath(); ctx.ellipse(px + 0.3, py + 1.7 * (ry / ry0), rx * 0.5, ry * 0.14, rot, 0, LZ_DPI); ctx.fill(); }
+    }
+  }
+
+  // un filo di polvere attorno all'orlo, quando tocca terra
+  polvere(ctx, base) {
+    const q = (this.t - this.pT) / 0.46; if (this.pT < 0 || q < 0 || q >= 1) return;
+    const x = this.x, y = this.y, a = 1 + (LZ_R - 1) * LZ_C, e = 1 - (1 - q) * (1 - q);
+    ctx.fillStyle = '#d9ccb4'; ctx.globalAlpha = base * 0.2 * (1 - q) * (1 - q);
+    ctx.beginPath();
+    for (let j = 0; j < LZ_C; j += 2) {
+      const n = a + j, u = x[n], v = y[n], m = 1 / (Math.sqrt(u * u + v * v) + 1), o = 2 + 11 * e * (0.7 + 0.3 * LZ_S3[j * 2]), X = u + u * m * o, Y = (v + v * m * o) * LZ_KY - (0.8 + 4.5 * e * (0.6 + 0.4 * LZ_C5[j * 2])) * LZ_KZ, r = (0.55 + 0.3 * (j % 3)) * (1 + 1.2 * e);
+      ctx.moveTo(X + r, Y); ctx.arc(X, Y, r, 0, LZ_DPI);
+    }
+    ctx.fill();
+  }
+
+  // quanto si vede ogni occhio: si spegne sotto 0,30, si riaccende sopra 0,42, e nel mezzo sfuma. A tempo fisso, così non dipende da quanto si disegna
+  vista() {
+    for (let k = 0; k < 2; k++) {
+      const q = 0.71 * Math.sin(this.fa + (k ? 0.4 : -0.4)) * LZ_VY + 0.7 * LZ_VZ, ch = Math.max(0, Math.min(1, (q - 0.3) / 0.3));
+      if (this.ev[k] && q < 0.3) this.ev[k] = 0; else if (!this.ev[k] && q > 0.42) this.ev[k] = 1;
+      this.ea[k] += ((this.ev[k] ? ch * ch : 0) - this.ea[k]) * 0.3;
+    }
+  }
+
+  // la lanterna resta fuori dal telo: la mano la stringe attraverso la stoffa e pende, con il suo alone. Quando il telo crolla cade, si rovescia e si spegne
+  lanterna(ctx, alfa, t) {
+    if (this.stato === 'steso') {
+      const q = this.tStato, u = Math.min(1, q / 0.34), e = u * u, sp = Math.max(0, 1 - q / 0.5), lato = this.lfx >= 0 ? 1 : -1, b = q - 0.34;
+      const lx = this.l0x + (this.lfx - this.l0x) * u, ly = this.l0y + (this.lfy - this.l0y) * u, lz = this.l0z + (2.6 - this.l0z) * e + (b > 0 ? 4.2 * Math.abs(Math.sin(b * 13)) * Math.exp(-b * 9) : 0), rot = lato * 1.46 * Math.min(1, u * u * (3 - 2 * u)) + (b > 0 ? lato * 0.14 * Math.sin(b * 16) * Math.exp(-b * 7) : 0), X = lx, Y = ly * LZ_KY - lz * LZ_KZ;
+      if (sp > 0) { const r = 17 * (0.6 + 0.4 * sp); ctx.globalAlpha = alfa * 0.6 * sp; ctx.drawImage(lzAlone, X - r, Y - r, r * 2, r * 2); }
+      ctx.globalAlpha = alfa * 0.5 * u; ctx.fillStyle = '#05040b'; ctx.beginPath(); ctx.ellipse(X, ly * LZ_KY + 1.4, 8, 2.6, 0, 0, LZ_DPI); ctx.fill();
+      ctx.translate(X, Y); ctx.rotate(rot); ctx.globalAlpha = alfa;
+      lzLanternaSpenta(ctx, sp);
+      ctx.rotate(-rot); ctx.translate(-X, -Y);
+      return;
+    }
+    const hm = LZ_PUGNO / (Math.sqrt(this.mx * this.mx + this.my * this.my) + 1e-3), hx = this.mx * (1 + hm), hy = this.my * (1 + hm) * LZ_KY - this.mz * LZ_KZ, lx = this.lx, ly = this.ly * LZ_KY - this.lz * LZ_KZ;
+    const f = 0.86 + 0.14 * Math.sin(t * 13 + this.seme), r = 17 * (0.96 + 0.04 * f);
+    ctx.globalAlpha = alfa * 0.62 * f; ctx.drawImage(lzAlone, lx - r, ly - r, r * 2, r * 2);
+    ctx.globalAlpha = alfa; ctx.strokeStyle = '#1f1910'; ctx.lineCap = 'round'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(lx, ly - 6.2); ctx.stroke();
+    lzLanternaCorpo(ctx, lx, ly, f, 1);
+    ctx.globalAlpha = alfa;
+  }
+}
+
+// il corpo della lanterna: acceso a 1, spento a 0
+function lzLanternaCorpo(ctx, lx, ly, f, luce) {
+  const a = ctx.globalAlpha;
+  ctx.fillStyle = '#231c12'; ctx.beginPath(); ctx.moveTo(lx - 3.4, ly - 4); ctx.lineTo(lx, ly - 6.6); ctx.lineTo(lx + 3.4, ly - 4); ctx.lineTo(lx + 3, ly + 4.6); ctx.lineTo(lx - 3, ly + 4.6); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#3d3020'; ctx.fillRect(lx - 2.3, ly - 3.4, 4.6, 7.2);
+  if (luce > 0) { ctx.globalAlpha = a * luce; ctx.fillStyle = '#ffb44f'; ctx.fillRect(lx - 2.3, ly - 3.4, 4.6, 7.2); ctx.fillStyle = '#ffe9b0'; ctx.globalAlpha = a * f * luce; ctx.fillRect(lx - 1.2, ly - 1.9, 2.4, 4.6); ctx.globalAlpha = a; }
+}
+
+// la lanterna spenta e rovesciata: ottone e vetro freddo, così sul pavimento scuro resta una lanterna e non un puntino. Il manico aiuta a capirla
+function lzLanternaSpenta(ctx, sp) {
+  const a = ctx.globalAlpha;
+  ctx.strokeStyle = '#a58a55'; ctx.lineWidth = 0.9; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, -6.6, 2.4, Math.PI, 0, false); ctx.stroke();
+  ctx.fillStyle = '#6f5a38'; ctx.beginPath(); ctx.moveTo(-3.6, -4); ctx.lineTo(0, -6.8); ctx.lineTo(3.6, -4); ctx.lineTo(3.2, 4.8); ctx.lineTo(-3.2, 4.8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#4b4a48'; ctx.fillRect(-2.4, -3.4, 4.8, 7.4); ctx.fillStyle = '#8f8d82'; ctx.fillRect(-1.9, -2.9, 1.3, 6.4);
+  if (sp > 0) { ctx.globalAlpha = a * sp; ctx.fillStyle = '#ffb44f'; ctx.fillRect(-2.4, -3.4, 4.8, 7.4); ctx.globalAlpha = a; }
+}
+
+// la griglia fine, solo per il disegno: fra i nodi veri una curva che passa per i nodi, prima lungo le colonne, poi attorno al telo
+function lzGriglia(x, y, z) {
+  const C = LZ_C, D = LZ_DC, R = LZ_R, gx = lzGx, gy = lzGy, gz = lzGz;
+  gx[0] = x[0]; gy[0] = y[0]; gz[0] = z[0];
+  for (let r = 0; r < LZ_RR; r++) {
+    const g = LZ_RG[r], i = g | 0, d = 1 + r * D, e = 1 + (i - 1) * C;
+    if (g === i) for (let j = 0; j < C; j++) { const k = d + j * 2, n = e + j; gx[k] = x[n]; gy[k] = y[n]; gz[k] = z[n]; }
+    else for (let j = 0; j < C; j++) {
+      const k = d + j * 2, p = e + j - C, a = e + j, b = a + C, q = i + 2 <= R ? b + C : b;
+      gx[k] = (x[a] + x[b]) * 0.5625 - (x[p] + x[q]) * 0.0625; gy[k] = (y[a] + y[b]) * 0.5625 - (y[p] + y[q]) * 0.0625; gz[k] = (z[a] + z[b]) * 0.5625 - (z[p] + z[q]) * 0.0625;
+    }
+  }
+}
+// l'orlo un filo più morbido: le rientranze strette non devono fare angolo
+function lzOrlo(g) {
+  const D = LZ_DC, d = 1 + (LZ_RR - 1) * D, a = lzT2;
+  for (let j = 0; j < D; j += 2) a[j] = g[d + j] * 0.7 + (g[d + (j === D - 2 ? 0 : j + 2)] + g[d + (j === 0 ? D - 2 : j - 2)]) * 0.15;
+  for (let j = 0; j < D; j += 2) g[d + j] = a[j];
+}
+// le colonne dispari, attorno al telo: la stessa curva a quattro punti
+function lzInfittisci(g) {
+  const D = LZ_DC;
+  for (let r = 0; r < LZ_RR; r++) {
+    const d = 1 + r * D;
+    for (let j = 1; j < D; j += 2) { const a = d + j - 1, b = d + (j === D - 1 ? 0 : j + 1), p = d + (j === 1 ? D - 2 : j - 3), q = d + (j >= D - 3 ? j + 3 - D : j + 3); g[d + j] = (g[a] + g[b]) * 0.5625 - (g[p] + g[q]) * 0.0625; }
+  }
+}
+
+// un giro di vincoli su un tratto: duro a tirare (ks), morbido a comprimere (kc), con le misure del telo aperto se ap>0
+const lzK = new Float64Array(4);      // ap, ks, kc, wa: stanno qui e non negli argomenti, così nessun numero viene impacchettato a ogni passo
+function lzVincola(x, y, z, ca, cb, rest, restA, i0, i1) {
+  const ap = lzK[0], ks = lzK[1], kc = lzK[2], wa = lzK[3], wb = 1 - wa, ap1 = 1 - ap;
+  for (let c = i0; c < i1; c++) {
+    const a = ca[c], b = cb[c], dx = x[b] - x[a], dy = y[b] - y[a], dz = z[b] - z[a], d2 = dx * dx + dy * dy + dz * dz;
+    if (d2 < 1e-8) continue;
+    const r = rest[c] * ap1 + restA[c] * ap, d = Math.sqrt(d2), e = (d - r) / d, q = e * (e > 0 ? ks : kc), qa = q * wa, qb = q * wb;
+    x[a] += dx * qa; y[a] += dy * qa; z[a] += dz * qa;
+    x[b] -= dx * qb; y[b] -= dy * qb; z[b] -= dz * qb;
+  }
+}
+
+// ---------- le regioni del telo: solo il contorno ----------
+// Riempire cella per cella costa migliaia di punti a personaggio. Qui ogni cella dice solo quali pezzi di bordo ha, i pezzi si legano in giri chiusi
+// e ogni giro diventa una curva che passa per i punti medi: pochi punti, niente denti di sega, pieghe e sagoma morbide.
+const LZ_DN2 = LZ_DN * 2, LZ_PT = LZ_DN * 3;
+const LZ_CA = new Int16Array(LZ_CL), LZ_CB = new Int16Array(LZ_CL), LZ_CC = new Int16Array(LZ_CL), LZ_CD = new Int16Array(LZ_CL);
+for (let r = 0; r < LZ_RR; r++) for (let j = 0; j < LZ_DC; j++) { const j2 = (j + 1) % LZ_DC, k = r * LZ_DC + j; LZ_CA[k] = r === 0 ? 0 : 1 + (r - 1) * LZ_DC + j; LZ_CB[k] = r === 0 ? 0 : 1 + (r - 1) * LZ_DC + j2; LZ_CC[k] = 1 + r * LZ_DC + j2; LZ_CD[k] = 1 + r * LZ_DC + j; }
+const lzNext = new Int16Array(LZ_PT), lzNext2 = new Int16Array(LZ_PT), lzTimbro = new Int32Array(LZ_PT), lzVia = new Int16Array(LZ_PT), lzGiro = new Int16Array(LZ_PT * 2), LZ_SCHEGGIA = 12;
+const lzFr = new Int16Array(LZ_CL), lzBordo = new Uint8Array(LZ_CL), lzMot = new Uint8Array(LZ_CL), lzTm = new Float32Array(LZ_CL), lzTM = new Float32Array(LZ_CL), lzKm = new Float32Array(LZ_CL), lzKM = new Float32Array(LZ_CL);
+let lzMarca = 0, lzNv = 0, lzNf = 0, lzUsc = -1, lzEnt = -1, lzEsile = 0;
+
+const LZ_TIENI = new Uint8Array(LZ_PT);
+for (let n = 0; n < LZ_DN; n++) { const r = n ? ((n - 1) / LZ_DC) | 0 : 0, j = n ? (n - 1) % LZ_DC : 0; LZ_TIENI[n] = 1; LZ_TIENI[LZ_DN + n] = r & 1 ? 0 : 1; LZ_TIENI[LZ_DN2 + n] = j & 1 ? 0 : 1; }
+
+function lzLega(p, q) { if (lzTimbro[p] !== lzMarca) { lzTimbro[p] = lzMarca; lzNext[p] = q; lzNext2[p] = -1; lzVia[lzNv++] = p; } else if (lzNext2[p] < 0) lzNext2[p] = q; }
+
+// un lato di una cella tagliata dalla curva di livello. aperto: oltre questo lato la stoffa non continua
+function lzLato(sx, sy, p, q, fp, fq, id, aperto, L) {
+  const ip = fp >= L, iq = fq >= L;
+  if (ip && iq) { if (aperto) lzLega(p, q); return; }
+  if (!ip && !iq) return;
+  const u = (L - fp) / (fq - fp); sx[id] = sx[p] + (sx[q] - sx[p]) * u; sy[id] = sy[p] + (sy[q] - sy[p]) * u;
+  if (ip) { if (aperto) lzLega(p, id); lzUsc = id; }
+  else { if (lzUsc >= 0) { lzLega(lzUsc, id); lzUsc = -1; } else lzEnt = id; if (aperto) lzLega(id, q); }
+}
+
+// lega i pezzi in giri chiusi e li traccia con curve per i punti medi. I giri più piccoli di amin si scartano: sono schegge, non pieghe.
+// tutti false: i giri girati al contrario sono buchi nella sagoma, cioè una piega vista di taglio, e la stoffa li copre
+function lzCammina(ctx, sx, sy, amin, tutti) {
+  const nx = lzNext, n2 = lzNext2, tm = lzTimbro, mk = lzMarca, n = lzNv, via = lzVia, gi = lzGiro;
+  for (let i = 0; i < n; i++) {
+    const s = via[i];
+    while (nx[s] >= 0) {
+      let p = s, m = 0, ar = 0, gi2 = 0;
+      for (;;) {
+        gi[m++] = p;
+        const q = nx[p]; nx[p] = n2[p]; n2[p] = -1;
+        const ux = sx[q] - sx[p], uy = sy[q] - sy[p]; gi2 += (ux < 0 ? -ux : ux) + (uy < 0 ? -uy : uy);
+        ar += sx[p] * sy[q] - sx[q] * sy[p];
+        p = q;
+        if (p === s || tm[p] !== mk || nx[p] < 0) break;
+      }
+      if (m < 3 || (ar < amin && ar > -amin) || (!tutti && ar < 0) || (tutti && (ar < 0 ? -ar : ar) < gi2 * lzEsile)) continue;      // anche i fili sottili: una piega ha sempre un po' di larghezza
+      if (lzEsile > 0 && m >= 10) { let w = 0; for (let k = 0; k < m; k++) if (LZ_TIENI[gi[k]]) gi[w++] = gi[k]; if (w >= 4) m = w; }      // nelle pieghe basta un punto ogni due: sempre gli stessi, così la curva non trema da un fotogramma all'altro
+      const a = gi[m - 1], b = gi[0], x0 = (sx[a] + sx[b]) * 0.5, y0 = (sy[a] + sy[b]) * 0.5;
+      ctx.moveTo(x0, y0);
+      for (let k = 0; k < m - 1; k++) { const u = gi[k], v = gi[k + 1]; ctx.quadraticCurveTo(sx[u], sy[u], (sx[u] + sx[v]) * 0.5, (sy[u] + sy[v]) * 0.5); }
+      ctx.quadraticCurveTo(sx[a], sy[a], x0, y0); ctx.closePath();
+    }
+  }
+}
+
+// dove il campo f (per il verso sg) supera la soglia L, sulla stoffa dritta. lo e hi: minimo e massimo per cella, così le celle che non c'entrano costano un confronto
+function lzRegione(ctx, sx, sy, f, lo, hi, sg, L) {
+  lzMarca++; lzNv = 0; lzEsile = 1.5;
+  const fr = lzFr, bo = lzBordo, nf = lzNf;
+  for (let i = 0; i < nf; i++) {
+    const k = fr[i], mn = sg > 0 ? lo[k] : -hi[k], mx = sg > 0 ? hi[k] : -lo[k], b = bo[k];
+    if (mx < L || (mn >= L && !b)) continue;
+    const a = LZ_CA[k], e = LZ_CB[k], c = LZ_CC[k], d = LZ_CD[k], fa = f[a] * sg, fe = f[e] * sg, fc = f[c] * sg, fd = f[d] * sg;
+    lzUsc = -1; lzEnt = -1;
+    lzLato(sx, sy, a, d, fa, fd, LZ_DN2 + d, b & 1, L);
+    lzLato(sx, sy, d, c, fd, fc, LZ_DN + d, b & 2, L);
+    lzLato(sx, sy, c, e, fc, fe, LZ_DN2 + c, b & 4, L);
+    if (a !== e) lzLato(sx, sy, e, a, fe, fa, LZ_DN + a, b & 8, L);
+    if (lzUsc >= 0 && lzEnt >= 0) lzLega(lzUsc, lzEnt);
+  }
+  lzCammina(ctx, sx, sy, LZ_SCHEGGIA, true);
+}
+
+// tutta la stoffa dritta: il suo bordo è la sagoma
+function lzSagoma(ctx, sx, sy) {
+  lzMarca++; lzNv = 0; lzEsile = 0;
+  const fr = lzFr, bo = lzBordo, nf = lzNf;
+  for (let i = 0; i < nf; i++) {
+    const k = fr[i], b = bo[k]; if (!b) continue;
+    const a = LZ_CA[k], e = LZ_CB[k], c = LZ_CC[k], d = LZ_CD[k];
+    if (b & 1) lzLega(a, d); if (b & 2) lzLega(d, c); if (b & 4) lzLega(c, e); if ((b & 8) && a !== e) lzLega(e, a);
+  }
+  lzCammina(ctx, sx, sy, LZ_SCHEGGIA, false);
+}
+
+// le celle di una maschera m dove m vale v: l'interno del telo, le righe e i quadri del disegno
+function lzMaschera(ctx, sx, sy, m, v, amin, esile) {
+  lzMarca++; lzNv = 0; lzEsile = esile;
+  const C = LZ_DC, R = LZ_RR;
+  for (let r = 0; r < R; r++) for (let j = 0; j < C; j++) {
+    const k = r * C + j; if (m[k] !== v) continue;
+    const a = LZ_CA[k], e = LZ_CB[k], c = LZ_CC[k], d = LZ_CD[k];
+    if (m[r * C + (j + C - 1) % C] !== v) lzLega(a, d);
+    if (r === R - 1 || m[k + C] !== v) lzLega(d, c);
+    if (m[r * C + (j + 1) % C] !== v) lzLega(c, e);
+    if (r > 0 && m[k - C] !== v) lzLega(e, a);
+  }
+  lzCammina(ctx, sx, sy, amin, true);
+}
+
+// il disegno sul telo: segue le celle, quindi pieghe e movimento lo portano con sé. Si legge in una parola: Righe, Pois, Quadri
+function lzMotivo(ctx, sx, sy, cell, m, L) {
+  const C = LZ_DC, R = LZ_RR;
+  ctx.fillStyle = L.a; ctx.beginPath();
+  if (m === 'pois') {
+    for (let r = 1; r < R - 1; r += 2) for (let j = (r & 2) ? 3 : 0; j < C; j += 6) {
+      if (cell[r * C + j] !== 1 || cell[(r + 1) * C + j] !== 1) continue;
+      const n = 1 + r * C + j, d = 1 + r * C, a = d + (j + 1) % C, b = d + (j + C - 1) % C, ux = (sx[a] - sx[b]) * 0.62, uy = (sy[a] - sy[b]) * 0.62, vx = (sx[n + C] - sx[n - C]) * 0.21, vy = (sy[n + C] - sy[n - C]) * 0.21, X = sx[n], Y = sy[n];
+      ctx.moveTo(X + ux, Y + uy);
+      for (let k = 1; k < 8; k++) { const p = LZ_OTTA[k], q = LZ_OTTA[(k + 2) & 7]; ctx.lineTo(X + ux * p + vx * q, Y + uy * p + vy * q); }
+      ctx.closePath();
+    }
+  } else {
+    const mo = lzMot;
+    for (let r = 0; r < R; r++) for (let j = 0; j < C; j++) { const k = r * C + j, dis = (j >> 2) & 1; mo[k] = cell[k] && (m === 'righe' ? dis : dis ^ LZ_QR[r]) ? 1 : 0; }
+    lzMaschera(ctx, sx, sy, mo, 1, LZ_SCHEGGIA, 0);
+  }
+  ctx.fill();
+}
+
+function lzFaro(u) { const v = 1 - u; return 1 - v * v * v * (1 + 0.6 * u); }                // come --faro-ease: parte svelta, arriva piano
+function lzMisto(a, b, u) { const p = parseInt(a.slice(1), 16), q = parseInt(b.slice(1), 16), c = s => { const x = (p >> s) & 255, y = (q >> s) & 255; return Math.round(x + (y - x) * u); }; return `rgb(${c(16)},${c(8)},${c(0)})`; }
+function lzHue(r, g, b) { const M = Math.max(r, g, b), m = Math.min(r, g, b), d = M - m; if (d === 0) return { h: 0, s: 0, l: (M + m) / 510 }; const l = (M + m) / 510, s = d / (255 - Math.abs(M + m - 255)), h = M === r ? ((g - b) / d + 6) % 6 : M === g ? (b - r) / d + 2 : (r - g) / d + 4; return { h: h * 60, s, l }; }
+function lzRgb(h, s, l) { const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2, k = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]; return k.map(v => Math.round((v + m) * 255)); }
+// la luce calda sulla stoffa: la stessa tinta più chiara, 70 di cresta e 30 di caldo, e mai più di 12 gradi lontana. «Ho visto il viola» deve restare vero anche vicino alla lanterna
+function lzCalda(L) {
+  if (L.c) return L.c;
+  const hex = (s) => { const n = parseInt(s.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }, a = hex(L.l), b = hex(L.b), w = [255, 214, 150], m = [0, 1, 2].map(i => a[i] * 0.7 + w[i] * 0.3), H0 = lzHue(b[0], b[1], b[2]), H = lzHue(m[0], m[1], m[2]);
+  let h = H.h;
+  if (H0.s > 0.16) { let d = h - H0.h; while (d > 180) d -= 360; while (d < -180) d += 360; h = (H0.h + Math.max(-11.5, Math.min(11.5, d)) + 360) % 360; }
+  const r = lzRgb(h, H.s, H.l);
+  L.c = `rgb(${r[0]},${r[1]},${r[2]})`;
+  return L.c;
+}
+// l'interno del telo: in ombra, ma è la stessa stoffa
+function lzDentro(L) { if (!L.i) L.i = lzMisto(L.d, L.s, 0.5); return L.i; }
+// la stoffa in piedi: dall'alto chiara, verso l'orlo più scura. Una sfumatura sola per tinta, in unità del telo: vale per tutti e non costa niente
+function lzTelo(L) {
+  if (L.g) return L.g;
+  const g = lzOmbraT.getContext('2d').createLinearGradient(0, -64, 0, 2);
+  g.addColorStop(0, lzMisto(L.b, L.l, 0.14)); g.addColorStop(0.3, L.b); g.addColorStop(0.72, lzMisto(L.b, L.s, 0.18)); g.addColorStop(1, lzMisto(L.b, L.s, 0.52));
+  L.g = g; return g;
+}
+
+// il mezzo busto fermo, per il registro: una canvas quadrata, con un passo di sfumatura in più
+const lzRitratti = {};
+function ritrattoLenzuolo(c, lato) {
+  lato = lato || 96; const k = c + ':' + lato; if (lzRitratti[k]) return lzRitratti[k];
+  const cv = document.createElement('canvas'); cv.width = cv.height = lato;
+  const q = cv.getContext('2d'), l = new Lenzuolo({ c }, { seme: c }), S = lato / 46;
+  l.pronto = true; l.corpo();
+  l.disegna(q, { x: lato / 2, y: lato * 0.05 + 70 * LZ_KZ * S, scala: S, ombra: false, lanterna: false, t: 0, fine: true });
+  lzRitratti[k] = cv; return cv;
+}
+
 // ===== disegno.js =====
 // Il disegno della mappa, degli avatar, della luce delle lanterne e degli effetti (uguale su tutti i telefoni).
+
 
 
 const CORR1 = '#5a2b33', CORR2 = '#612f38';
 const FONT = '-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","Inter",system-ui,sans-serif';
 const ORO = '231,183,92', ROSSO = '240,90,110', VOCE_COL = '150,235,200';   // VOCE_COL: l'anello della voce
+
+// I teli di chi gioca stanno qui e non nel Pittore: la scena e gli schermi delle telecamere disegnano le stesse persone,
+// e la stoffa si simula una volta sola a fotogramma, da chi la disegna per prima (tU: l'ultimo momento simulato).
+// tV: l'ultima volta che qualcuno l'ha disegnata. Chi non si vede da un quarto di secondo non si simula.
+const TELO_K = 0.86;             // alto come era l'omino: fumetti, nomi e mobili restano giusti
+const TELO_PIEDI = T * 0.38;     // da dove sta il punto del giocatore a dove poggia il telo
+const TELO_ORLO = T * 0.68;      // fin dove arriva l'orlo davanti: è lì che si decide chi sta davanti a un mobile basso
+const TELO_ATTESA = 1.15;        // in saletta: quanto si vede l'omino prima che il telo gli cada in testa
+const TELO_FUORI = 0.25;
+const TELO_TETTO = 2.4;          // millisecondi a fotogramma per tutti i teli a schermo: oltre, si diradano
+const TELO_STRAPPO = 420;        // oltre questi pixel al secondo non si cammina più (il passo più svelto, da anima, arriva a 310)
+const TELO_BASE = { c: 0, m: null };
+// Il telo degli altri si stampa su una tavoletta sua e si copia sulla scena: la stoffa viva si disegna a turno (con tanta gente a schermo una volta ogni due
+// o tre fotogrammi, sul telefono non si nota) e la copia costa pochissimo. Il mio telo no: si disegna sempre, è quello che si guarda.
+const STAMPA_W = 116, STAMPA_H = 104, STAMPA_X = 58, STAMPA_Y = 76;           // la tavoletta di chi sta in piedi: i piedi stanno a (X,Y)
+const STESO_W = 164, STESO_H = 92, STESO_X = 80, STESO_Y = 52;                // quella del telo a terra, con la lanterna accanto
+let TELI = {}, STESI = {}, NOMI = {}, nNomi = 0, RES = 2, NUM = 0, NOMI_SU = {};
+const NOMI_MAX = 24, NOMI_C = [];      // i nomi da scrivere in questo fotogramma: oggetti riusati, nessuna allocazione
+for(let i=0;i<NOMI_MAX;i++) NOMI_C.push({ id:'', nome:'', col:'', x:0, y:0, a:1, w:0, yF:0 });
+function teliAzzera(){ TELI = {}; STESI = {}; NOMI = {}; nNomi = 0; NOMI_SU = {}; }
+function tavoletta(w, h){ const cv = document.createElement('canvas'), q = RES; cv.width = Math.ceil(w*q); cv.height = Math.ceil(h*q); return { cv, c:cv.getContext('2d'), res:q, t:-9, g:false }; }
 
 class Pittore {
   constructor(cv){
@@ -3620,15 +4593,21 @@ class Pittore {
       if(serra) for(let i=0;i<9;i++){ const x=(serra.x+1+((i*37)%11)+Math.sin(t*0.7+i)*0.8)*T, y=(serra.y+1+((i*53)%11)+Math.cos(t*0.9+i*2)*0.8)*T, a=0.4+0.4*Math.sin(t*3+i*1.7); const g=c.createRadialGradient(x,y,0,x,y,9); g.addColorStop(0,`rgba(210,255,140,${a})`); g.addColorStop(1,'rgba(210,255,140,0)'); c.fillStyle=g; c.fillRect(x-9,y-9,18,18); }
     }
     const R=S.R, anima=S.anima;
+    this.cx=cx; this.cy=cy; this.s=s; if(S.scala==null) RES=s;   // (per copiare le tavolette sui pixel giusti)
     const visibile = q => anima || (Math.hypot(q.x-io.x,q.y-io.y)<=R*0.97 && vede(M,io.x,io.y,q.x,q.y));
-    for(const k of S.corpi) if(visibile(k)) this.corpo(k,t);
+    for(const k of S.corpi) this.corpo(k,t,visibile(k)&&k.x>vx0&&k.x<vx1&&k.y>vy0&&k.y<vy1,S.neb,M);
+    if(S.scala==null){ let n=0; for(const id in STESI) n++; if(n!==S.corpi.length) for(const id in STESI) if(!S.corpi.some(k=>k.id===id)) delete STESI[id]; }   // (rianimato, mangiato, pulito: il mucchio va via)
     // gli effetti nel mondo (sotto i personaggi quelli a terra)
     for(const e of S.effetti||[]) if(e.terra && (e.sempre || visibile(e))) this.effetto(e,t);
     // le orme (solo l'Investigatore): una per passo, del colore di chi l'ha lasciata
-    for(const o of S.orme||[]){ const a=Math.max(0,1-(t-o.t)/(S.durOrme||10)); if(a<=0) continue; c.save(); c.translate(o.x,o.y+T*0.3); c.rotate(o.dir+Math.PI/2); c.globalAlpha=0.65*a; c.fillStyle=o.col; this.ell(o.lato*4,0,2.6,4.2); c.fill(); c.restore(); }
+    for(const o of S.orme||[]){ const a=Math.max(0,1-(t-o.t)/(S.durOrme||10)); if(a<=0) continue; c.save(); c.translate(o.x,o.y+T*0.3); c.rotate(o.dir+Math.PI/2); c.globalAlpha=0.65*a; c.fillStyle=o.col; this.ell(o.lato*4,0,2.6,4.2); c.fill(); if(o.bordo){ c.strokeStyle=o.bordo; c.lineWidth=1; c.stroke(); } c.restore(); }
     c.globalAlpha=1;
     const tutti=S.altri.filter(p=>(!p.fantasma||anima) && (visibile(p) || (S.traccia && p.id===S.traccia)));
     if(io.mostra) tutti.push(io);
+    this.saletta=!!S.saletta; this.sguardo=S.scala==null && io.muove ? io : null;   // nella saletta il telo cade; gli occhi di chi è fermo seguono chi cammina vicino
+    this.mio=S.scala==null?io:null;
+    // quante persone a schermo decidono ogni quanto si ridisegna ognuna; se il telefono non ce la fa (piu) si dirada ancora: la scena resta fluida, la stoffa fa meno pose
+    if(S.scala==null){ this.turno=(this.turno||0)+1; this.piu=this.piu||0; this.gruppi=Math.min(5,(tutti.length<=3?1:tutti.length<=7?2:3)+this.piu); this.spesa=0; } else this.gruppi=0;
     // mentre scrivo, un anello d'oro sotto chi mi sentirà (solo chi vedo: il buio non tradisce nessuno)
     if(S.parla){ const P=S.parla, a=0.6+0.25*Math.sin(t*4);
       for(const p of tutti){ if(p===io || (P.anima ? !p.fantasma : p.fantasma)) continue;
@@ -3647,13 +4626,14 @@ class Pittore {
       immExtra(imm).forEach((e,n)=>{ if(e.x+e.w<vx0||e.x>vx1||e.y+e.h<vy0||e.y>vy1) return; scena.push({ y:e.base, ex:n }); });
       if(campanaImm){ const bx=centro(CAMPANA.tx), by=centro(CAMPANA.ty); if(bx>vx0 && bx<vx1 && by>vy0 && by<vy1+2*T) scena.push({ y:(CAMPANA.oy+1)*T, campana:true }); }
     }
-    for(const p of tutti) scena.push({ y:p.y+T*0.36, p });
+    for(const p of tutti) if(p===io || (p.x>vx0 && p.x<vx1 && p.y>vy0 && p.y<vy1)) scena.push({ y:p.y+TELO_ORLO, p });   // chi è fuori dallo schermo non si disegna e non si simula
     scena.sort((a,b)=>a.y-b.y);
+    let dopoIo=false, coperto=false;   // qualcosa di alto mi sta davanti? Solo allora serve la mia sagoma trasparente
     for(const q of scena){
-      if(q.o){ disegnaMobile(c, M, q.o, q.k, res, t, S.effetti, this); continue; }
-      if(q.ex!==undefined){ disegnaExtra(c, imm, q.ex, t); continue; }
-      if(q.campana){ immAnimata(c, M, 'campana', 0, 0, Math.sin(t*2)*0.08); continue; }
-      const p=q.p;
+      if(q.o){ if(dopoIo && !coperto) coperto=(q.o.x*T<io.x+T && (q.o.x+q.o.w)*T>io.x-T && q.o.y*T-altezzaMobile(q.o,M,q.k)<io.y+T*0.4); disegnaMobile(c, M, q.o, q.k, res, t, S.effetti, this); continue; }
+      if(q.ex!==undefined){ if(dopoIo && !coperto){ const e=immExtra(imm)[q.ex]; coperto=e.x<io.x+T && e.x+e.w>io.x-T && e.y<io.y+T*0.4; } disegnaExtra(c, imm, q.ex, t); continue; }
+      if(q.campana){ coperto=coperto||dopoIo; immAnimata(c, M, 'campana', 0, 0, Math.sin(t*2)*0.08); continue; }
+      const p=q.p; if(p===io) dopoIo=true;
       if(p.muove && !p.fantasma){ const k=this.passi[p.id]||0; if(t-k>0.22){ this.passi[p.id]=t; this.sparpaglia('polvere', p.x+(Math.random()-0.5)*8, p.y+T*0.36, 2, { v:12, vita:0.5, r:2.5 }); }
         // sul bordo del molo i passi fanno cerchi nell'acqua
         if(t-(this.ondaDi[p.id]||0)>0.5 && this.onde.length<24){ const px=Math.floor(p.x/T), py=Math.floor((p.y+T*0.36)/T);
@@ -3661,10 +4641,19 @@ class Pittore {
       const grigio=S.neb && p!==io;
       if(S.segnati && S.segnati.indexOf(p.id)>=0 && !grigio){ const g=c.createRadialGradient(p.x,p.y-T*0.4,0,p.x,p.y-T*0.4,T*1.2); g.addColorStop(0,`rgba(${ROSSO},${0.45+0.2*Math.sin(t*6)})`); g.addColorStop(1,`rgba(${ROSSO},0)`); c.fillStyle=g; c.fillRect(p.x-T*1.2,p.y-T*1.6,T*2.4,T*2.4); }
       if(S.traccia && p.id===S.traccia){ c.strokeStyle=`rgba(${ORO},.8)`; c.lineWidth=2; c.setLineDash([4,4]); this.ell(p.x,p.y+T*0.3,T*0.55,T*0.22); c.stroke(); c.setLineDash([]); }
+      const ini=performance.now();
       this.persona(p,t,{ alfa:p.fantasma?0.45:1, grigio, nome:!grigio, coloreNome:p.coloreNome||(p.alleata?'#f2a7b6':null) });
+      this.spesa+=performance.now()-ini;
       if(S.scudi && S.scudi.indexOf(p.id)>=0 && !p.fantasma){ const a=0.35+0.15*Math.sin(t*3); c.strokeStyle=`rgba(120,220,255,${a+0.25})`; c.lineWidth=2; this.ell(p.x,p.y-T*0.45,T*0.62,T*0.85); c.stroke(); c.fillStyle=`rgba(120,220,255,${a*0.25})`; c.fill(); }
     }
-    if(io.mostra && !io.fantasma) this.persona(io,t,{ alfa:0.55, nome:true, nomePieno:true });   // la propria sagoma trasparente: dietro un pilastro o uno scaffale chi gioca non si perde (solo la sua, gli altri restano nascosti)
+    if(io.mostra && !io.fantasma && coperto) this.persona(io,t,{ alfa:0.55, nome:false });   // la propria sagoma trasparente: dietro un pilastro o uno scaffale chi gioca non si perde (solo la sua, gli altri restano nascosti)
+    this.scriviNomi(dt);
+    // chi è fuori dalla luce o dallo schermo: la stoffa non si simula, ma chi torna a guardare trova il telo giusto
+    if(S.scala==null){
+      for(const p of S.altri){ const r=TELI[p.id]; if(r && !r.attesa && t-r.tV>TELO_FUORI){ const fa=t-r.tU; r.tU=t; r.l.aggiorna(fa>0.1?0.1:fa, p.x, p.y, p.dir, false, false); } }
+      this.spesaM=(this.spesaM||0)+(this.spesa-(this.spesaM||0))*0.08;
+      if(this.turno%30===0){ if(this.spesaM>TELO_TETTO && this.piu<3) this.piu++; else if(this.spesaM<TELO_TETTO*0.5 && this.piu>0) this.piu--; }
+    }
     // la freccetta d'oro dei miei compiti resta sopra i mobili
     if(S.palazzo) for(const p of POSTAZIONI) if(S.miei.has(p.id)){ const x=centro(p.tx), y=centro(p.ty), b=Math.sin(t*4)*3; c.fillStyle='#e7b75c'; c.beginPath(); c.moveTo(x-6,y-24+b); c.lineTo(x+6,y-24+b); c.lineTo(x,y-16+b); c.closePath(); c.fill(); }
     // particelle
@@ -3876,7 +4865,9 @@ class Pittore {
         const y=q.ab+q.fy+b.py+(1-ease)*6, lw=b.lw, lh=b.lh;
         c.globalAlpha=Math.min(1,(b.fine-ora)/500)*(this.ridotto?1:ease)*(b.w?0.72:1);
         c.fillStyle=b.a?'rgba(196,212,255,.9)':b.w?'rgba(214,216,226,.92)':'rgba(246,240,226,.96)';
-        c.strokeStyle=b.a?'rgba(60,80,150,.55)':'rgba(20,16,10,.35)'; c.lineWidth=1; c.setLineDash(b.w?[3,3]:[]);
+        // il filo del fumetto è del colore di chi parla (nella nebbia no: non si vede di chi è). Il testo resta scuro su carta chiara
+        const tl=!b.a && !S.neb && q.p.lenz ? LENZUOLI[q.p.lenz.c] : null;
+        c.strokeStyle=tl ? tl.b : b.a?'rgba(60,80,150,.55)':'rgba(20,16,10,.35)'; c.lineWidth=tl?1.6:1; c.setLineDash(b.w?[3,3]:[]);
         c.beginPath(); c.roundRect ? c.roundRect(x0-lw/2,y,lw,lh,8) : c.rect(x0-lw/2,y,lw,lh);
         if(ultimo){   // la codina verso chi parla (se la pila è stata spostata in su, un filo dritto fino alla testa)
           const tx=Math.max(x0-lw/2+10,Math.min(x0+lw/2-10,q.p.x));
@@ -3891,7 +4882,7 @@ class Pittore {
   }
   freccia(io, f, t){
     const c=this.ctx, dx=f.x-io.x, dy=f.y-io.y, d=Math.hypot(dx,dy); if(d<3*T) return;
-    const a=Math.atan2(dy,dx), r=2.1*T+Math.sin(t*5)*3, x=io.x+Math.cos(a)*r, y=io.y+Math.sin(a)*r;
+    const a=Math.atan2(dy,dx), su=Math.max(0,-dy/d), r=(2.1+su*su*1.15)*T+Math.sin(t*5)*3, x=io.x+Math.cos(a)*r, y=io.y+Math.sin(a)*r;   // (verso l'alto gira più largo: non copre il mio nome)
     c.save(); c.translate(x,y); c.rotate(a);
     c.fillStyle=f.col; c.strokeStyle='rgba(9,11,22,.8)'; c.lineWidth=3; c.lineJoin='round';
     c.beginPath(); c.moveTo(15,0); c.lineTo(-9,-7); c.lineTo(-4,0); c.lineTo(-9,7); c.closePath(); c.stroke(); c.fill();
@@ -3927,11 +4918,96 @@ class Pittore {
     if(p.visibile){ c.strokeStyle='rgba(241,232,214,.35)'; c.lineWidth=1.2; c.beginPath(); c.arc(x,y,15,0,Math.PI*2); c.stroke(); }
   }
   // p: { x, y, dir, muove, fantasma, nome, colore, img, imgS (di spalle), seme }
+  // il telo di una persona, simulato fino a t. Un telo nuovo nella saletta aspetta un attimo sopra l'omino; fuori dalla saletta è già addosso.
+  // Cambiare colore (o travestirsi) è un telo nuovo: stessa stoffa, stessa forma di chi ha quel colore, così il travestimento non si tradisce
+  teloDi(p, t){
+    const d=p.lenz||TELO_BASE, m=d.m||null, salt=this.saletta; let r=TELI[p.id];
+    if(!r || r.c!==d.c || r.m!==m){
+      r=TELI[p.id]={ l:new Lenzuolo(d,{ seme:d.c }), c:d.c, m, t0:t, tU:t, tV:t, attesa:!!salt && !r, ricade:!!salt && !!r, num:NUM++, sp:r?r.sp:null };
+      if(r.sp) r.sp.t=-9;
+    }
+    const l=r.l; r.tV=t;
+    if(r.attesa){ if(!salt) r.attesa=false; else if(t-r.t0<TELO_ATTESA+(r.num%5)*0.1) return r; else { r.attesa=false; r.ricade=true; } }   // (uno dopo l'altro: si capisce quale telo va su quale testa)
+    if(r.ricade){ r.ricade=false; r.tU=t; l.aggiorna(0, p.x, p.y, p.dir, false, true); if(salt) l.cadi(); }
+    const fa=t-r.tU;
+    if(fa>0 && this.tocca(r,p,fa)){
+      r.tU=t;
+      if(!!p.fantasma!==(l.stato==='fantasma')) l.fantasma(!!p.fantasma);
+      // uno strattone che camminando non si può fare (botola, Trasportatore, rete che recupera in un colpo) è un salto: la stoffa non se ne accorge.
+      // E chi è fermo non si gira: la stoffa non deve attorcigliarsi attorno a chi cambia direzione sul posto
+      if(Math.hypot(p.x-l.wx, p.y-l.wy)>TELO_STRAPPO*fa+6){ l.wx=p.x; l.wy=p.y; }
+      l.aggiorna(fa>0.1?0.1:fa, p.x, p.y, p.muove?p.dir:null, !!p.muove, true);
+    }
+    const g=this.sguardo;
+    if(g && g!==p && Math.abs(g.x-p.x)<5*T && Math.abs(g.y-p.y)<4*T) l.guarda(g.x, g.y); else if(l.gOn) l.guarda();
+    return r;
+  }
+  teloStato(id){ const r=TELI[id]; return r ? (r.attesa ? 'attesa' : r.l.stato) : null; }   // (per le prove)
+  // tocca a questa persona? Il mio telo sempre; gli altri a turno: chi guarda la scena con dieci persone li vede muovere lo stesso,
+  // e nessun fotogramma paga per tutti insieme. Gli schermi delle telecamere vanno a 15 al secondo
+  tocca(r, p, fa){ return p===this.mio || r.l.stato==='cade' || (this.gruppi ? this.gruppi===1 || (r.num+this.turno)%this.gruppi===0 : fa>=0.066); }
   persona(p, t, o){
-    const c=this.ctx, ph=t*10+(p.seme||0), bob=p.muove?Math.abs(Math.sin(ph))*3:Math.sin(t*2+(p.seme||0))*0.6, x=p.x, y=p.y;
+    const c=this.ctx, x=p.x, y=p.y, r=this.teloDi(p,t), l=r.l, sotto=r.attesa||l.copre()<1;
+    let testa=y+TELO_PIEDI-l.cima()*TELO_K;
+    if(sotto) testa=this.omino(p, t, o, r.attesa, r.attesa?0:l.cede());
+    if(!r.attesa){
+      if(o.alfa<0.9 && !p.fantasma || l.stato==='cade' || (p===this.mio && !l.dorme)) l.disegna(c,{ x, y:y+TELO_PIEDI, alfa:p.fantasma?1:o.alfa, grigio:o.grigio, lanterna:!o.grigio, ombra:o.alfa>=0.9, t, scala:TELO_K });
+      else this.stampa(r, x, y+TELO_PIEDI, t, !!o.grigio);
+    }
+    if(o.nome) this.nomeDopo(p.id, p.nome, o.coloreNome||'#f1e8d6', x, testa-5, o.alfa);
+    c.globalAlpha=1;
+  }
+  // i nomi si scrivono dopo tutta la scena: lampadari e mobili non li coprono mai. Due etichette che si toccano non si accavallano: quella dietro sale, piano, così non saltella
+  nomeDopo(id, nome, col, x, y, alfa){ const n=this.nN|0; if(n>=NOMI_MAX) return; const q=NOMI_C[n]; q.id=id; q.nome=nome; q.col=col; q.x=x; q.y=y; q.a=alfa; q.w=this.nomeLargo(nome,col); this.nN=n+1; }
+  scriviNomi(dt){
+    const n=this.nN|0; this.nN=0; if(!n) return;
+    for(let i=1;i<n;i++){ const q=NOMI_C[i]; let j=i-1; while(j>=0 && NOMI_C[j].y<q.y){ NOMI_C[j+1]=NOMI_C[j]; j--; } NOMI_C[j+1]=q; }      // dal più vicino al più lontano
+    for(let i=0;i<n;i++){
+      const q=NOMI_C[i]; let y=q.y;
+      for(let g=0;g<5;g++){ let urta=false; for(let j=0;j<i;j++){ const o=NOMI_C[j]; if(Math.abs(o.x-q.x)<(o.w+q.w)/2-5 && Math.abs(o.yF-y)<13){ y=o.yF-13; urta=true; } } if(!urta) break; }
+      q.yF=y;
+      const su=(NOMI_SU[q.id]||0)+(q.y-y-(NOMI_SU[q.id]||0))*Math.min(1,dt*16); NOMI_SU[q.id]=su;
+      this.scriviNome(q.nome, q.col, q.x, q.y-su, q.a);
+    }
+    this.ctx.globalAlpha=1;
+  }
+  // una tavoletta sulla scena, sui pixel giusti: copiata uno a uno resta nitida come se fosse disegnata lì
+  copia(sp, wx, wy, w, h){
+    const c=this.ctx, s=this.s, q=sp.res;
+    if(Math.abs(s-q)<0.001) c.drawImage(sp.cv, Math.round((wx-this.cx)*s)/s+this.cx, Math.round((wy-this.cy)*s)/s+this.cy, sp.cv.width/q, sp.cv.height/q);
+    else c.drawImage(sp.cv, wx, wy, w, h);
+  }
+  // il telo degli altri: si ristampa quando tocca, si copia sempre
+  stampa(r, x, y, t, grigio){
+    let sp=r.sp;
+    if(!sp || sp.res!==RES) sp=r.sp=tavoletta(STAMPA_W, STAMPA_H);
+    if((r.tU>sp.t && (!r.l.dorme || t-sp.t>=0.1)) || sp.g!==grigio){   // (chi dorme respira soltanto: dieci pose al secondo bastano)
+      const q=sp.c; q.setTransform(1,0,0,1,0,0); q.clearRect(0,0,sp.cv.width,sp.cv.height); q.setTransform(sp.res,0,0,sp.res,0,0);
+      r.l.disegna(q,{ x:STAMPA_X, y:STAMPA_Y, grigio, lanterna:!grigio, t, scala:TELO_K });
+      sp.t=t; sp.g=grigio;
+    }
+    this.ctx.globalAlpha=1; this.copia(sp, x-STAMPA_X, y-STAMPA_Y, STAMPA_W, STAMPA_H);
+  }
+  // il nome sopra la testa: scrivere con il contorno è la cosa più lenta del fotogramma, e il nome non cambia mai
+  nomeTav(nome, col){
+    const k=RES+'|'+col+'|'+nome; let n=NOMI[k];
+    if(!n){
+      if(nNomi>48){ NOMI={}; nNomi=0; }
+      const m=this.ctx; m.save(); m.font='600 11px '+FONT; const w=Math.ceil(m.measureText(nome).width)+10; m.restore();
+      n=NOMI[k]=tavoletta(w, 18); n.w=w; nNomi++;
+      const q=n.c; q.setTransform(n.res,0,0,n.res,0,0); q.font='600 11px '+FONT; q.textAlign='center'; q.lineJoin='round';
+      q.lineWidth=3; q.strokeStyle='rgba(9,11,22,.85)'; q.strokeText(nome,w/2,13); q.fillStyle=col; q.fillText(nome,w/2,13);
+    }
+    return n;
+  }
+  nomeLargo(nome, col){ return this.nomeTav(nome,col).w; }
+  scriviNome(nome, col, x, y, alfa){ const n=this.nomeTav(nome,col); this.ctx.globalAlpha=alfa; this.copia(n, x-n.w/2, y-13, n.w, 18); }
+  // chi sta sotto il telo: si vede nella saletta, per un attimo, finché la stoffa non lo copre. All'impatto la testa cede. Torna dove sta la testa
+  omino(p, t, o, conLanterna, cede){
+    const c=this.ctx, ph=t*10+(p.seme||0), bob=p.muove?Math.abs(Math.sin(ph))*3:Math.sin(t*2+(p.seme||0))*0.6, x=p.x, y=p.y+cede;
     const incl = p.muove ? Math.sin(ph)*0.07 : 0, sq = p.muove ? 1+Math.abs(Math.cos(ph))*0.04 : 1+Math.sin(t*2+(p.seme||0))*0.015;
     c.globalAlpha=o.alfa;
-    c.fillStyle='rgba(0,0,0,.35)'; this.ell(x,y+T*0.36,T*0.38*(1-bob*0.03),T*0.15); c.fill();
+    c.fillStyle='rgba(0,0,0,.35)'; this.ell(x,p.y+T*0.36,T*0.38*(1-bob*0.03),T*0.15); c.fill();
     const img = o.grigio ? null : (Math.sin(p.dir||0)<-0.6 && p.imgS && p.imgS.complete && p.imgS.naturalWidth ? p.imgS : (p.img && p.img.complete && p.img.naturalWidth ? p.img : null));
     let testa;
     c.save(); c.translate(x, y+T*0.38-bob); c.rotate(incl); c.scale(1/sq, sq);
@@ -3951,29 +5027,38 @@ class Pittore {
       testa = y+T*0.38-bob-46;
     }
     c.restore();
-    if(!p.fantasma && !o.grigio){
-      const sw=Math.sin(ph*0.5)*(p.muove?3:1), lx=x+T*0.45+sw, ly=y-T*0.1-bob;
+    if(conLanterna && !p.fantasma && !o.grigio){   // (dove la terrà poi il telo: quando la stoffa arriva la lanterna non salta)
+      const sw=Math.sin(ph*0.5)*(p.muove?3:1), lx=x+T*0.7+sw, ly=y-bob;
       const g=c.createRadialGradient(lx,ly,0,lx,ly,18); g.addColorStop(0,'rgba(246,217,153,.55)'); g.addColorStop(1,'rgba(246,217,153,0)');
       c.fillStyle=g; this.ell(lx,ly,18,18); c.fill();
       c.strokeStyle='#3a3020'; c.lineWidth=1.2; c.beginPath(); c.moveTo(lx,ly-5); c.lineTo(lx-sw*0.4,ly-10); c.stroke();
       c.fillStyle='#3a3020'; c.fillRect(lx-3.5,ly-5,7,10); c.fillStyle=`rgba(246,217,153,${0.85+0.15*Math.sin(t*13+(p.seme||0))})`; c.fillRect(lx-2,ly-3.5,4,7);
     }
-    if(o.nome){
-      if(o.nomePieno) c.globalAlpha=1;
-      c.font='600 11px '+FONT; c.textAlign='center'; c.lineJoin='round';
-      c.lineWidth=3; c.strokeStyle='rgba(9,11,22,.85)'; c.strokeText(p.nome,x,testa-5);
-      c.fillStyle=o.coloreNome||'#f1e8d6'; c.fillText(p.nome,x,testa-5);
-    }
-    c.globalAlpha=1;
+    return testa;
   }
-  corpo(k,t){
-    const c=this.ctx, x=k.x, y=k.y;
-    if(k.img && k.img.complete && k.img.naturalWidth){
-      const H=T*1.5, W=H*k.img.naturalWidth/k.img.naturalHeight;
-      c.save(); c.translate(x,y+4); c.rotate(-Math.PI/2); c.globalAlpha=.8; c.drawImage(k.img,-W/2,-H/2,W,H); c.restore(); c.globalAlpha=1;
-    } else { c.fillStyle=k.colore||'#888'; c.globalAlpha=.75; this.ell(x,y+4,15,8,0.2); c.fill(); c.globalAlpha=1; c.fillStyle='#e9e0cc'; this.ell(x-6,y,6,9,0.9); c.fill(); }
-    c.save(); c.translate(x+16,y+4); c.rotate(1.2); c.fillStyle='#4b4a52'; c.fillRect(-4,-5,8,11); c.fillStyle='#2a2a30'; c.fillRect(-2,-3,4,7); c.restore();
-    for(let i=0;i<2;i++){ const ph=((t*0.6)+i*0.5)%1; c.strokeStyle=`rgba(200,200,210,${0.35*(1-ph)})`; c.lineWidth=1.5; c.beginPath(); const yy=y-4-ph*24; c.moveTo(x+16,yy+6); c.quadraticCurveTo(x+21+Math.sin(t*2+i)*3,yy,x+16,yy-6); c.stroke(); }
+  // il corpo: il telo afflosciato del suo colore, con la lanterna spenta accanto. Se chi cade è sotto gli occhi il telo si affloscia davvero;
+  // se no (è già a terra, o si guarda da un'altra parte) è il mucchio finito. vis: lo si vede adesso
+  corpo(k,t,vis,neb,M){
+    const c=this.ctx, d=k.lenz||TELO_BASE; let r=STESI[k.id];
+    if(!r){
+      const v=TELI[k.id], s=corpoStretto(M,k.x,k.y);
+      if(v && vis && !v.attesa && v.c===d.c && v.l.stato==='su' && t-v.tV<=TELO_FUORI){ r={ l:v.l, tU:v.tU, sx:v.l.wx-k.x, sy:v.l.wy-k.y }; delete TELI[k.id]; r.l.spegni(s); }      // (se il corpo finisce un po' più in là del muro, il telo ci scivola mentre crolla)
+      else { r={ l:new Lenzuolo(d,{ seme:d.c }), tU:t, sx:0, sy:0 }; r.l.aggiorna(0, k.x, k.y, null, false, true); r.l.spegni(s); r.l.mucchio(); }
+      STESI[k.id]=r;
+    }
+    const l=r.l, fa=t-r.tU, x=k.x+r.sx, y=k.y+r.sy;
+    if(fa>0){ r.tU=t; l.aggiorna(fa>0.1?0.1:fa, x, y, null, false, vis); const q=Math.exp(-fa*8); r.sx*=q; r.sy*=q; if(Math.abs(r.sx)+Math.abs(r.sy)<0.4) r.sx=r.sy=0; }
+    if(!vis) return;
+    if(l.dorme){   // fermo a terra non cambia più: una stampa sola
+      const g=!!neb; let sp=r.sp;
+      if(!sp || sp.res!==RES) sp=r.sp=tavoletta(STESO_W, STESO_H);
+      if(sp.t<0 || sp.g!==g){ const q=sp.c; q.setTransform(1,0,0,1,0,0); q.clearRect(0,0,sp.cv.width,sp.cv.height); q.setTransform(sp.res,0,0,sp.res,0,0); l.disegna(q,{ x:STESO_X, y:STESO_Y, grigio:g, t, scala:TELO_K, fine:true }); sp.t=t; sp.g=g; }
+      c.globalAlpha=1; this.copia(sp, x-STESO_X, y+TELO_PIEDI-STESO_Y, STESO_W, STESO_H);
+    } else l.disegna(c,{ x, y:y+TELO_PIEDI, grigio:!!neb, t, scala:TELO_K, fine:true });
+    // il filo di fumo della lanterna appena spenta
+    const fx=x+l.lfx*TELO_K, fy=y+TELO_PIEDI+l.lfy*0.46*TELO_K-T*0.2;
+    for(let i=0;i<2;i++){ const ph=((t*0.6)+i*0.5)%1; c.strokeStyle=`rgba(200,200,210,${0.35*(1-ph)})`; c.lineWidth=1.5; c.beginPath(); const yy=fy-4-ph*24; c.moveTo(fx,yy+6); c.quadraticCurveTo(fx+5+Math.sin(t*2+i)*3,yy,fx,yy-6); c.stroke(); }
+    c.globalAlpha=1;
   }
 }
 
@@ -3983,10 +5068,17 @@ function disegnaMappa(cv, M, segni, maxW, maxH, sopra){
   cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); cv.style.width=w+'px'; cv.style.height=h+'px';
   const m=cv.getContext('2d'); m.setTransform(dpr*sc,0,0,dpr*sc,0,0); m.fillStyle='#0b0d18'; m.fillRect(0,0,M.GW*T,M.GH*T);
   for(let y=0;y<M.GH;y++) for(let x=0;x<M.GW;x++){ const i=y*M.GW+x, p=M.PAV[i]; if(p===-2){ if(M.ACQUA[i]){ m.fillStyle='#132c40'; m.fillRect(x*T,y*T,T+.5,T+.5); } continue; } m.fillStyle = p===-1 ? CORR2 : M.stanze[p].c2; m.fillRect(x*T,y*T,T+.5,T+.5); }
-  m.font=`600 ${11/sc}px ${FONT}`; m.textAlign='center'; m.fillStyle='rgba(241,232,214,.85)';
-  for(const s of M.stanze){ const lw=m.measureText(s.nome).width/2+3/sc; m.fillText(s.nome, Math.max(lw, Math.min(M.GW*T-lw, (s.lx!=null?s.lx:s.x+s.w/2)*T)), (s.ly!=null?s.ly:s.y+s.h/2)*T); }
   for(const g of segni){ m.fillStyle=g.col; m.beginPath(); m.arc(g.x,g.y,(g.r||5)/sc,0,Math.PI*2); m.fill(); if(g.bordo){ m.strokeStyle='#0b0d18'; m.lineWidth=2/sc; m.stroke(); } }
   if(sopra) sopra(m, sc);
+  // i nomi delle stanze dopo i pallini, su un fondo scuro. Un pallino non sta mai sotto le lettere: se c'è, il nome si sposta sopra o sotto
+  m.font=`600 ${11/sc}px ${FONT}`; m.textAlign='center';
+  const riga=13/sc, sotto=3/sc, su=10/sc;
+  for(const s of M.stanze){
+    const lw=m.measureText(s.nome).width/2+3/sc, x=Math.max(lw, Math.min(M.GW*T-lw, (s.lx!=null?s.lx:s.x+s.w/2)*T)), y0=(s.ly!=null?s.ly:s.y+s.h/2)*T; let y=y0;
+    for(const k of [0,-1,1,-2,2]){ const q=y0+k*riga; if(!segni.some(g=>{ const r=(g.r||5)/sc; return Math.abs(g.x-x)<lw+r && g.y>q-su-r && g.y<q+sotto+r; })){ y=q; break; } }
+    m.fillStyle='rgba(11,13,24,.62)'; m.beginPath(); if(m.roundRect) m.roundRect(x-lw,y-su-1/sc,lw*2,riga+1/sc,3/sc); else m.rect(x-lw,y-su-1/sc,lw*2,riga+1/sc); m.fill();
+    m.fillStyle='rgba(241,232,214,.92)'; m.fillText(s.nome,x,y);
+  }
 }
 
 // ===== minigiochi.js =====
@@ -4672,6 +5764,7 @@ VOCE.prova = function () {
 
 
 
+
 var ID = "lanterne";
 var MIN = 4, MAX = 10;
 var RIEMPI = 6;   // in prova: con pochi amici la saletta si riempie da sola coi Bot fino a 6 (escono man mano che arriva gente)
@@ -4684,8 +5777,45 @@ var PARLA_RAPIDE = ["Ciao!", "Dove sei?", "Seguimi", "Aiuto!", "Occhio!"];
 var PARLA_STORICO = 4;
 var AVVIO_MAX = 18000;   // al massimo, quanto aspetta la partita chi ha il telefono lento (poi si parte lo stesso, col disegno a codice dove manca la mappa)
 var RITARDATARI = "partita";   // chi arriva a partita cominciata la guarda ed entra alla prossima
-var COLORI = ["#d64550","#f0a23b","#2fa36b","#4a74de","#9b59c9","#ff7f6b","#9cbf8a","#1f9a9a","#e8c547","#b9a6f0"];
 function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+
+// I lenzuoli: ognuno ha il suo colore, lo decide l'host e viaggia nella foto (mai nelle posizioni).
+// Valgono i dodici a tinta unita del modulo: i tre a disegno e il campo m restano per quando si potrà personalizzare il telo.
+var LENZ_N = 12;
+var LENZ_DI = {}, COLORI_DI = {};   // id → { c, m } e id → colore, dall'ultima foto dell'host
+var RITR = {}, RITR_C = [];         // i ritratti del Registro, uno per colore
+function lenzValido(x) { var c = x && x.c; return typeof c === "number" && c >= 0 && c < LENZ_N && c === Math.floor(c) ? { c: c, m: null } : null; }
+function lenzMio() { try { var v = localStorage.getItem("lt-lenz"); return v == null || v === "" ? null : lenzValido({ c: +v }); } catch (e) { return null; } }
+var NOMI_COLORE = LENZUOLI.map(function (L) { return L.n; }).concat(["Rosa", "Bianca", "Bianco", "Giallo", "Azzurra", "Azzurro", "Marrone", "Arancio", "Celeste", "Ambra", "Rubino", "Viola", "Lilla", "Perla", "Smeralda"]);
+function lenzRicorda(c) { try { localStorage.setItem("lt-lenz", String(c)); } catch (e) {} }
+function liberoLenz(presi) { var c = teloLibero(presi); return c < LENZ_N ? c : presi.length % LENZ_N; }
+// le partite salvate prima del lenzuolo, o con numeri strani: ognuno ne ha uno, senza doppioni
+function lenzInOrdine(lista) {
+  var presi = [];
+  lista.forEach(function (p) { var v = lenzValido(p.lenz) || lenzValido({ c: p.telo }); if (v && presi.indexOf(v.c) >= 0) v = null; p.lenz = v; if (v) presi.push(v.c); delete p.telo; });
+  lista.forEach(function (p) { if (!p.lenz) { p.lenz = { c: liberoLenz(presi), m: null }; presi.push(p.lenz.c); } });
+}
+// quello che arriva con la foto dell'host non è detto che sia giusto: si tiene solo un colore vero. Un telo, una tinta sola ovunque: dove il Nero sparirebbe, orme e plastico gli mettono attorno il filo chiaro di orloTinta
+function notaLenz(players) {
+  (players || []).forEach(function (p, i) {
+    var d = lenzValido(p.lenz) || lenzValido({ c: p.telo }) || LENZ_DI[p.id] || { c: i % LENZ_N, m: null }, L = LENZUOLI[d.c];
+    LENZ_DI[p.id] = d; COLORI_DI[p.id] = L.b; ritrattoDopo(d.c);
+  });
+}
+function orloTinta(col) { var L = LENZUOLI.filter(function (x) { return x.b === col && x.fori; })[0]; return L ? L.l : null; }
+function panno(id) { return LENZUOLI[(LENZ_DI[id] || { c: 0 }).c]; }
+// il mezzo busto del Registro: si prepara con calma, a uno a uno, così la riunione si apre senza strappi
+function ritrattoUrl(c) { if (RITR[c] == null) { try { RITR[c] = ritrattoLenzuolo(c, 168).toDataURL(); } catch (e) { RITR[c] = ""; } } return RITR[c]; }
+function ritrattoDopo(c) { if (RITR[c] != null || RITR_C.indexOf(c) >= 0) return; RITR_C.push(c); if (RITR_C.length === 1) setTimeout(ritrattiGiro, 400); }
+function ritrattiGiro() { if (!RITR_C.length) return; ritrattoUrl(RITR_C[0]); RITR_C.shift(); if (RITR_C.length) setTimeout(ritrattiGiro, 160); }
+// la figura intera, ferma: per la scena della morte e per le foto dall'aldilà. Una canvas per colore
+var FIGURE = {};
+function figuraTelo(c) {
+  if (FIGURE[c]) return FIGURE[c];
+  var S = 3, cv = document.createElement("canvas"), l = new Lenzuolo({ c: c }, { seme: c }); cv.width = 112 * S; cv.height = 84 * S;
+  l.pronto = true; l.corpo(); l.disegna(cv.getContext("2d"), { x: cv.width * 0.44, y: 76 * S, scala: S, ombra: false, t: 0, fine: true });
+  FIGURE[c] = cv; return cv;
+}
 
 // gli avatar disegnati una volta sola (davanti, di spalle, busto per la riunione)
 var AVATAR = {};
@@ -4791,7 +5921,7 @@ function host(t) {
   var IO = t.mioId || "host";
   var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
   var H = { fase: "lobby", codice: "…", pronta: false, partita: 0, rip: 0, imp: pulisci(t.impostazioni),
-    players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost) }], guarda: [], classifica: null, fine: null };
+    players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), lenz: lenzMio() || { c: 0, m: null } }], guarda: [], classifica: null, fine: null };
   var P = null, rete = null, inviati = {}, ultimaN = {}, viaDa = {}, finePronta = false, roundDetto = 0, fili = {}, filiN = {}, nU = Date.now() % 1e9;
   // i messaggi che contano: dal broker e, a chi ha il filo diretto aperto, anche da lì (il primo che arriva vale)
   function veloce(m) {
@@ -4821,12 +5951,34 @@ function host(t) {
   if (riprendo) {
     H = R.stato; H.pronta = false; H.rip = (H.rip || 0) + 1; H.guarda = H.guarda || []; H.imp = pulisci(H.imp);
     H.players.forEach(function (p) { p.forse = false; p.via = p.id !== IO && !p.bot; if (p.id === IO) p.omino = t.mioOmino(p.nome); });
+    lenzInOrdine(H.players);
     if (H.fase === "gioco" && H.salvata) P = Partita.daStato(H.salvata, H.imp, eventi);
     else if (H.fase === "gioco") H.fase = "lobby";
     delete H.salvata;
   }
   function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
   function presenti() { return H.players.filter(function (p) { return !p.via; }); }
+  // il lenzuolo lo decide l'host: due giocatori non hanno mai lo stesso. Chi entra col suo colore lo trova, se è libero o se ce l'ha un Bot (che ne prende un altro)
+  function presiLenz() { return H.players.map(function (p) { return p.lenz ? p.lenz.c : -1; }); }
+  function lenzNuovo(voluto) {
+    var v = lenzValido(voluto);
+    if (v) {
+      var chi = H.players.filter(function (p) { return p.lenz && p.lenz.c === v.c; })[0];
+      if (!chi) return v;
+      if (chi.bot) { chi.lenz = { c: liberoLenz(presiLenz().concat(v.c)), m: null }; return v; }
+    }
+    return { c: liberoLenz(presiLenz()), m: null };
+  }
+  // la mossa «lenz», nella saletta: se due toccano lo stesso colore vince il primo, un Bot invece cede il suo e prende quello lasciato.
+  // Comunque vada parte una foto: chi è arrivato tardi vede com'è andata
+  function cambiaLenz(id, c) {
+    var p = pById(id), v = lenzValido({ c: c }); if (H.fase !== "lobby" || !p || !v) return;
+    if (p.lenz && p.lenz.c === v.c) return bd();
+    var altro = H.players.filter(function (q) { return q.id !== id && q.lenz && q.lenz.c === v.c; })[0];
+    if (altro && !altro.bot) return bd();
+    if (altro) altro.lenz = p.lenz || { c: liberoLenz(presiLenz()), m: null };
+    p.lenz = v; bd();
+  }
   // chi ha la mappa pronta: i Bot sempre; io col mio precarico; gli altri dicono la loro («pr»). Chi non lo dice mai (un telefono con una versione vecchia) vale pronto dopo 5 s.
   function pronto(p) { return !!p.bot || (p.id === IO ? precaricoStato().pronto : p.pr !== undefined ? !!p.pr : Date.now() - (p.t0 || 0) > 5000); }
   function mappaPct(p) { return pronto(p) ? 100 : p.id === IO ? precaricoStato().pct : (p.mp || 0); }
@@ -4884,7 +6036,7 @@ function host(t) {
         var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
         if (!p && !t.puoSedersi(id, nome)) { if (!H.guarda.some(function (x) { return x.id === id; })) H.guarda.push({ id: id, nome: nome }); bd(); return; }
         if (!p && H.fase === "lobby" && H.players.length >= MAX && H.auto) togliBot(true);   // un Bot automatico lascia il posto
-        if (!p && H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), t0: Date.now() }); riempi(); }
+        if (!p && H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), t0: Date.now(), lenz: lenzNuovo(m.lenz) }); riempi(); }
         if (p) { p.forse = false; if (p.via && H.fase !== "lobby") { p.via = false; delete viaDa[id]; } if (!p.omino) p.omino = avatarValido(m.omino); }
         bd();
         if (p && P) {
@@ -4898,7 +6050,7 @@ function host(t) {
       }
       if (m.t === "rf") { if (Date.now() - ultimaFoto >= 150) bd(); else if (!fotoDopo) fotoDopo = setTimeout(bd, 150); return; }   // ha perso una foto
       if (!P || !pById(id) || (H.fase !== "gioco" && H.fase !== "lobby")) return;
-      if (H.fase === "lobby" && m.t !== "p" && !(m.t === "a" && m.k === "parla")) return;   // nella saletta: si cammina e si parla
+      if (H.fase === "lobby" && m.t !== "p" && !(m.t === "a" && (m.k === "parla" || m.k === "lenz"))) return;   // nella saletta: si cammina, si parla, si cambia lenzuolo
       if (m.t === "p") { if (m.n <= (ultimaN[id] || 0)) return; ultimaN[id] = m.n; P.muovi(id, m); }
       else if (m.t === "a") {
         if (m.q != null) {   // la ricevuta parte sempre (anche per un doppione: la prima può essersi persa), la mossa vale una volta sola
@@ -4906,7 +6058,7 @@ function host(t) {
           var vq = visteA[id] || (visteA[id] = []); if (vq.indexOf(m.q) >= 0) return;
           vq.push(m.q); if (vq.length > 64) vq.shift();
         }
-        P.azione(id, m);
+        if (m.k === "lenz") cambiaLenz(id, m.c); else P.azione(id, m);
       }
     }
   }, { ripresa: riprendo });
@@ -4922,7 +6074,7 @@ function host(t) {
 
   function vm() {
     var v = { ver: H.ver, fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, rip: H.rip, tiene: IO, imp: H.imp, auto: !!H.auto,
-      players: H.players.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" || p.bot ? (p.omino || null) : undefined, mp: H.fase === "lobby" ? mappaPct(p) : undefined, pr: H.fase === "lobby" ? (pronto(p) ? 1 : 0) : undefined }; }),
+      players: H.players.map(function (p) { return { id: p.id, nome: p.nome, lenz: p.lenz, bot: !!p.bot, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" || p.bot ? (p.omino || null) : undefined, mp: H.fase === "lobby" ? mappaPct(p) : undefined, pr: H.fase === "lobby" ? (pronto(p) ? 1 : 0) : undefined }; }),
       avvio: H.avvio ? { n: inAttesa().length } : null,
       guarda: H.guarda, classifica: H.classifica, fine: H.fine };
     if (P && (H.fase === "gioco" || H.fase === "lobby")) v.g = P.foto();
@@ -4931,7 +6083,7 @@ function host(t) {
   function ricorda() {
     if (H.fase === "lobby") return t.ricorda(null);
     t.ricorda({ fase: H.fase, codice: H.codice, partita: H.partita, rip: H.rip, imp: H.imp, guarda: H.guarda, classifica: H.classifica, fine: H.fine,
-      players: H.players.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot, via: !!p.via, omino: p.bot ? p.omino : undefined }; }),
+      players: H.players.map(function (p) { return { id: p.id, nome: p.nome, lenz: p.lenz, bot: !!p.bot, via: !!p.via, omino: p.bot ? p.omino : undefined }; }),
       salvata: P && H.fase === "gioco" ? P.salva() : null });
   }
   var visteA = {};   // le mosse già fatte, per ospite
@@ -5031,10 +6183,10 @@ function host(t) {
   function aggiungiBot(da) {
     if (H.fase !== "lobby" || H.players.length >= MAX) return;
     if (da !== true) H.auto = false;   // l'host ha deciso lui: da qui i Bot li gestisce a mano
-    var usati = H.players.map(function (p) { return p.nome; }), b = null;
+    var usati = H.players.map(function (p) { return p.nome; }).concat(NOMI_COLORE), b = null;   // (un Bot che si chiama Rosa non si può dire: «ho visto Rosa» è un nome o un telo?)
     try { b = SG.bot && SG.bot.prendi ? SG.bot.prendi(1, { escludi: usati })[0] : null; } catch (e) {}
     var n = H.players.filter(function (p) { return p.bot; }).length + 1;
-    H.players.push({ id: "bot-" + Date.now().toString(36) + n, nome: b ? b.nome : "Bot " + n, omino: b ? avatarValido(b.omino) : null, bot: true });
+    H.players.push({ id: "bot-" + Date.now().toString(36) + n, nome: b ? b.nome : "Bot " + n, omino: b ? avatarValido(b.omino) : null, bot: true, lenz: lenzNuovo(null) });
     if (da !== true) allinea();
     bd();
   }
@@ -5042,7 +6194,7 @@ function host(t) {
 
   var cbHost = { sonoHost: true, myId: IO, onComincia: comincia, onNuova: nuova, onBot: aggiungiBot, onTogliBot: togliBot,
     onVia: function () { if (P && !P.saletta) P.via(); },
-    mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") P.azione(IO, m); },
+    mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") { if (m.k === "lenz") cambiaLenz(IO, m.c); else P.azione(IO, m); } },
     onEsci: function () {
       function via() { ferma(); VOCE.chiudiStanza(); t.ricorda(null); rete.chiudi(); chiudiUI(); t.esci(); }
       if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla home.", "Chiudi", via);
@@ -5110,7 +6262,7 @@ function ospite(t, codice) {
   function collega() {
     attesa();
     S.rete = SGNet.entra(codice, {
-      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { if (S.rete) S.rete.invia(m); } }); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); riferisci(true); fermaPr(); S.prInt = setInterval(riferisci, 1000); },
+      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { if (S.rete) S.rete.invia(m); } }); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome), lenz: lenzMio() }); riferisci(true); fermaPr(); S.prInt = setInterval(riferisci, 1000); },
       onMsg: function dalHost(m) {
         if (!m || !m.t) return;
         if (m.to && m.to !== S.myId) return;
@@ -5160,6 +6312,7 @@ VOCE.avvisa = function (testo) {
 };
 function chiudiUI() { if (UI) { UI.stop(); UI = null; } }
 function disegna(t, vm, cb) {
+  notaLenz(vm.players);
   if (vm.fase === "lobby" && (!vm.g || t.salettaClassica)) { chiudiUI(); FIN = null; return lobby(t, vm, cb); }
   if (vm.fase === "fine") {
     chiudiUI();
@@ -5190,7 +6343,7 @@ function lobby(t, vm, cb) {
   if (guardano.length) extra.push(t.el("p", { class: "modulo-nota", text: "Guardano: " + guardano.map(function (p) { return p.id === cb.myId ? "tu" : p.nome; }).join(", ") }));
   t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
     vuoti: Math.max(0, MIN - vm.players.length),
-    giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),
+    giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, colore: COLORI_DI[p.id], host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),
     extra: extra,
     spettatore: t.guarda ? "Guardi soltanto" : guardo ? "Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX ? "La stanza è piena: guardi la partita" : false,
     attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
@@ -5221,7 +6374,8 @@ function finale(t, vm, cb) {
     var col = E("div", "col " + x[2]), righe = E("div", "righe"); col.append(E("h3", "", x[1]), righe);
     x[0].forEach(function (r) {
       var ru = ruoli[r.id], nomeR = ru && RUOLI[ru[1]] ? RUOLI[ru[1]].nome : "", spento = ru && !ru[2], rg = E("div", "rg" + (r.pos === 1 ? " vincitore" : "") + (spento ? " spento" : "")), tx = E("div");
-      tx.append(E("span", "nome", r.id === cb.myId ? r.nome + " (tu)" : r.nome), E("span", "punti lt-ruolo", nomeR + (spento ? " · spento" : "")));
+      var riga2 = E("span", "punti lt-ruolo"); riga2.append(tintaDi(r.id), (nomeR ? " · " + nomeR : "") + (spento ? " · spento" : ""));
+      tx.append(E("span", "nome", r.id === cb.myId ? r.nome + " (tu)" : r.nome), riga2);
       rg.append(ritratto(r.id), tx); righe.appendChild(rg);
     });
     quadro.appendChild(col);
@@ -5298,12 +6452,15 @@ function icona(n) { return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="tr
 // un tasto con icona e scritta
 function tastoIco(cls, ico, testo) { var b = document.createElement("button"); b.type = "button"; if (cls) b.className = cls; b.innerHTML = icona(ico) + (testo ? "<span>" + testo + "</span>" : ""); return b; }
 function E(tag, cls, testo) { var e = document.createElement(tag); if (cls) e.className = cls; if (testo != null) e.textContent = testo; return e; }
-// il ritratto di un ospite; se la faccia non c'è, una sagoma scura col suo colore intorno
+// il ritratto di un ospite: il suo telo a mezzo busto. Se non si sa ancora di chi è, una sagoma scura
 function ritratto(id) {
-  var a = AVATAR[id], f;
-  if (a && a.busto) { f = a.busto.cloneNode(); f.className = "faccia"; return f; }
-  f = E("i", "pall"); if (COLORI_DI[id]) f.style.boxShadow = "0 0 0 1.5px " + COLORI_DI[id]; return f;
+  var d = LENZ_DI[id], u = d ? ritrattoUrl(d.c) : "", f;
+  if (u) { f = new Image(); f.src = u; f.alt = ""; f.className = "faccia"; return f; }
+  return E("i", "pall");
 }
+// il colore detto a parole, con la sua tinta accanto: «ho visto Mario, quello rosso»
+function tintaDi(id) { var L = panno(id), s = E("span", "lt-tinta"), i = E("i"); i.style.background = L.b; s.append(i, L.n); return s; }
+function pezzetta(id) { var i = E("i", "lt-pz"); i.style.background = panno(id).b; return i; }
 // lo stemma del palazzo, inciso: uno scudo con la lanterna
 var STEMMA = '<svg class="stemma" viewBox="0 0 28 32" aria-hidden="true"><path d="M3 3.5h22v14c0 6-5.2 9.6-11 12.4C8.2 27.1 3 23.5 3 17.5z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.3 5.8h17.4v11.6c0 4.7-3.9 7.7-8.7 10.1-4.8-2.4-8.7-5.4-8.7-10.1z" fill="none" stroke="currentColor" stroke-width=".6"/><path d="M11.8 9.2a2.2 2.2 0 0 1 4.4 0M10 11.6h8l-1.6-2.2h-4.8zM10.7 11.6l-.9 9.4h8.4l-.9-9.4zM8.8 21h10.4v1.8H8.8z" fill="currentColor"/><path d="M14 13.4c1.5 1.7 1.5 3.7 0 5.2-1.5-1.5-1.5-3.5 0-5.2z" fill="#f4e6c6"/></svg>';
 function intestazione(testo) { var d = E("div", "intest"); d.innerHTML = STEMMA; d.appendChild(E("span", "", testo)); return d; }
@@ -5352,6 +6509,7 @@ function creaVoce(extra) {
 }
 function Vista(t, cb) {
   stile();
+  teliAzzera();
   var V = this; V.t = t; V.cb = cb; V.vivo = true;
   V.s = t.schermata({}); V.s.classList.add("lt-piena");
   var sc = E("div", "lt-scena"); V.s._contenuto.appendChild(sc); V.sc = sc;
@@ -5383,7 +6541,7 @@ function Vista(t, cb) {
   V.lista = E("ol", "lt-lista"); V.lista.hidden = true; sx.appendChild(V.lista);
   tocca(V.btnLista, function () { V.lista.hidden = !V.lista.hidden; V.aggLista(); });
   sc.appendChild(sx);
-  var dx = E("div", "lt-dx"); V.btnSuono = E("button", "lt-hbtn ico"); V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); V.btnSuono.setAttribute("aria-label", "Suono"); V.btnMappa = E("button", "lt-hbtn"); V.btnMappa.innerHTML = icona("mappa") + "<span>Mappa</span>"; dx.append(V.btnSuono, V.btnMappa); sc.appendChild(dx);
+  var dx = E("div", "lt-dx"); V.btnSuono = E("button", "lt-hbtn ico"); V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); V.btnSuono.setAttribute("aria-label", "Suono"); V.btnMappa = E("button", "lt-hbtn"); V.btnMappa.innerHTML = icona("mappa") + "<span>Mappa</span>"; V.btnMappa.setAttribute("aria-label", "Mappa"); dx.append(V.btnSuono, V.btnMappa); sc.appendChild(dx);
   tocca(V.btnMappa, function () { V.apriMappa(); });
   // la chat di prossimità: «Parla» apre la barra in basso (sempre sopra la tastiera). Il messaggio compare come fumetto sopra chi parla
   // e nello storico di chi lo sente: l'host lo manda solo a chi è abbastanza vicino. In riunione è spenta (c'è la chat della riunione).
@@ -5424,8 +6582,8 @@ function Vista(t, cb) {
   V.via = E("div", "lt-via"); sc.appendChild(V.via);
   V.az = E("div", "lt-azioni"); sc.appendChild(V.az);
   V.btn = {};
-  [["abil", "Abilità", "viola"], ["botola", "Botola", "rosso"], ["buio", "Buio", "rosso"], ["segnala", "Segnala", ""], ["spegni", "Spegni", "rosso"], ["usa", "Usa", "oro"]].forEach(function (b) {
-    var e = E("button", "lt-az " + b[2]); e.innerHTML = '<span class="et"></span><span class="cd" hidden></span>'; e.style.gridArea = b[0];
+  [["abil", "Abilità", "viola"], ["botola", "Botola", "rosso"], ["buio", "Buio", "rosso"], ["segnala", "Segnala", ""], ["spegni", "Spegni", "rosso"], ["usa", "Usa", "oro"], ["lenz", "Lenzuolo", "telo"]].forEach(function (b) {
+    var e = E("button", "lt-az " + b[2]); e.innerHTML = '<span class="et"></span><span class="cd" hidden></span>'; e.style.gridArea = b[0] === "lenz" ? "spegni" : b[0];   // (il tasto del lenzuolo c'è solo nella saletta: accanto a «Usa»)
     e.addEventListener("pointerdown", function (ev) { ev.preventDefault(); if (!e.disabled) V.azione(b[0]); });
     V.btn[b[0]] = e; V.az.appendChild(e);
   });
@@ -5479,7 +6637,7 @@ Vista.prototype.legaComandi = function () {
     if (!V.vivo || /INPUT|TEXTAREA/.test((document.activeElement || {}).tagName || "")) return;
     V.tasti[e.code] = e.type === "keydown";
     if (e.type !== "keydown" || e.repeat) return;
-    var k = { KeyE: "usa", KeyR: "segnala", KeyQ: "spegni", KeyF: "abil", KeyV: "botola", KeyB: "buio" }[e.code];
+    var k = { KeyE: "usa", KeyR: "segnala", KeyQ: "spegni", KeyF: "abil", KeyV: "botola", KeyB: "buio", KeyL: "lenz" }[e.code];
     if (k && V.btn[k] && !V.btn[k].disabled && !V.btn[k].hidden) V.azione(k);
     if (e.code === "KeyM") V.apriMappa();
   };
@@ -5533,7 +6691,7 @@ Vista.prototype.foto = function (vm) {
   var V = this; V.vm = vm; V.g = vm.g || null;
   if (V.ottimo) { if (performance.now() > V.ottimo.fine) V.ottimo = null; else if (V.g) mascheraRip(V.g, V.ottimo.cosa); }
   if (V.compAgg) V.compAgg();
-  vm.players.forEach(function (p, i) { V.cache[p.id] = V.cache[p.id] || { colore: COLORI[i % COLORI.length] }; V.cache[p.id].nome = p.nome; COLORI_DI[p.id] = V.cache[p.id].colore; if (p.omino) avatarDi(p.id, p.omino); });
+  vm.players.forEach(function (p) { var c = V.cache[p.id] = V.cache[p.id] || {}; c.nome = p.nome; c.lenz = LENZ_DI[p.id]; c.colore = COLORI_DI[p.id]; if (p.omino) avatarDi(p.id, p.omino); });
   var io = vm.players.filter(function (p) { return p.id === V.cb.myId; })[0];
   V.guardo = !io || !!io.via || !V.priv;
   if (!V.g) return;
@@ -5653,12 +6811,12 @@ Vista.prototype.sentito = function (m) {
   if (mie.length >= 3) V.bolle.splice(V.bolle.indexOf(mie[0]), 1);   // al massimo tre fumetti per persona
   V.bolle.push({ id: id, testo: testo, t0: ora, fine: ora + dur, w: !!m.w, a: !!m.a, righe: null });
   var io = id === V.cb.myId, c = V.cache[m.c || id] || {};
-  V.storicoAgg({ nome: io ? "Tu" : (c.nome || "?"), testo: testo, t0: ora, w: !!m.w, a: !!m.a, io: io });
+  V.storicoAgg({ nome: io ? "Tu" : (c.nome || "?"), id: m.c || id, testo: testo, t0: ora, w: !!m.w, a: !!m.a, io: io });
 };
 // lo storico: gli ultimi messaggi sentiti, sopra la barra; sfumano da soli (prima se la barra è chiusa)
 Vista.prototype.storicoAgg = function (s) {
   var V = this, el = E("div", "lt-ch" + (s.io ? " io" : "") + (s.w ? " w" : "") + (s.a ? " a" : ""));
-  el.append(E("b", "", s.nome), document.createTextNode(s.testo));
+  el.append(pezzetta(s.id), E("b", "", s.nome), document.createTextNode(s.testo));
   s.el = el; s.op = 1; V.storico.push(s); V.parlaStor.appendChild(el);
   while (V.storico.length > PARLA_STORICO) V.storico.shift().el.remove();
   if (!V.parlaBar.hidden) V.parlaPosiz();
@@ -5755,7 +6913,7 @@ Vista.prototype.passo = function (dt) {
   // le orme per l'Investigatore
   if (pr && pr.ruolo === "investigatore" && g.mappa === "palazzo" && V.tempo - (V.ultimaOrma || 0) > 0.28) {
     V.ultimaOrma = V.tempo; V.lato = -(V.lato || 1);
-    V.altri().forEach(function (p) { if (p.muove && !p.fantasma) V.orme.push({ x: p.x, y: p.y, dir: p.dir, col: p.colore || "#ccc", t: V.tempo, lato: V.lato }); });
+    V.altri().forEach(function (p) { if (p.muove && !p.fantasma) V.orme.push({ x: p.x, y: p.y, dir: p.dir, col: p.colore || "#ccc", bordo: orloTinta(p.colore), t: V.tempo, lato: V.lato }); });
     var durO = (V.vm.imp.investigatore && V.vm.imp.investigatore.orme) || 10; V.orme = V.orme.filter(function (o) { return V.tempo - o.t < durO; });
   }
   if (VOCE.stato !== "spenta") VOCE.misura(ora);   // chi parla a voce (per gli anelli)
@@ -5811,7 +6969,7 @@ Vista.prototype.altri = function () {
     var c = V.cache[come] || {}, av = AVATAR[come];
     var lt = V.letti[q[0]];
     if (V.ctrl && V.ctrl.id === q[0] && V.ctrl.fine > performance.now()) { x = V.ctrl.x; y = V.ctrl.y; }
-    out.push({ id: q[0], x: x, y: y, dir: q[3], muove: !!(q[4] & 1), fantasma: !!(q[4] & 2), nome: c.nome || "?", colore: c.colore, img: av && av.img, imgS: av && av.imgS, seme: (q[0].length * 7) % 11, alleata: comp.indexOf(q[0]) >= 0, coloreNome: lt === "buono" ? "#8ee6a8" : lt === "cattivo" ? "#ff7a8a" : null });
+    out.push({ id: q[0], x: x, y: y, dir: q[3], muove: !!(q[4] & 1), fantasma: !!(q[4] & 2), nome: c.nome || "?", colore: c.colore, lenz: c.lenz, img: av && av.img, imgS: av && av.imgS, seme: (q[0].length * 7) % 11, alleata: comp.indexOf(q[0]) >= 0, coloreNome: lt === "buono" ? "#8ee6a8" : lt === "cattivo" ? "#ff7a8a" : null });
   });
   return out;
 };
@@ -5825,6 +6983,36 @@ Vista.prototype.raggio = function () {
 };
 Vista.prototype.compitiAperti = function () { var V = this; if (!V.priv) return []; return V.priv.compiti.filter(function (c) { return !c[1] && !V.fatti[c[0]]; }).map(function (c) { return POSTAZIONI.filter(function (p) { return p.id === c[0]; })[0]; }).filter(Boolean); };
 // la foto del Medium: la si guarda, la si rifà (con la ricarica); alla riunione la vedono tutti
+// i campioni di stoffa, nella saletta. I colori presi hanno scritto di chi sono; quello di un Bot si può prendere lo stesso.
+// La scelta parte con la mossa con ricevuta: decide l'host, e il foglio si chiude quando la foto dice che il telo è mio
+Vista.prototype.apriLenzuolo = function () {
+  var V = this; if (V.pannello || V.guardo || !V.vm || V.vm.fase !== "lobby") return;
+  var box = E("div", "lt-pannello lt-foglio lt-lenz"), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×"), gr = E("div", "campioni"), righe = [];
+  ch.type = "button"; ch.setAttribute("aria-label", "Chiudi"); testa.append(E("h3", "", "Il tuo lenzuolo"), ch);
+  box.append(intestazione("Registro di Palazzo Velmare"), testa, gr, E("p", "nota", "Ti riconosceranno da questo colore."));
+  LENZUOLI.slice(0, LENZ_N).forEach(function (L, c) {
+    var b = E("button", "cmp"), st = E("span", "stoffa"), chi = E("span", "chi", "");
+    b.type = "button"; st.style.setProperty("--b", L.b); st.style.setProperty("--s", L.s); st.style.setProperty("--l", L.l);
+    b.append(st, E("span", "nm", L.n), chi); gr.appendChild(b); righe.push({ b: b, chi: chi, n: L.n });
+    b.addEventListener("click", function () { if (b.disabled) return; V.lenzVoluto = c; lenzRicorda(c); vibra(15); V.manda("lenz", { c: c }); agg(); });
+  });
+  var agg = function () {
+    if (!V.vm) return;
+    var qui = (V.vm.players || []).filter(function (p) { return !p.via; }), voluto = V.lenzVoluto, mio = (LENZ_DI[V.cb.myId] || {}).c;
+    righe.forEach(function (x, c) {
+      var chi = qui.filter(function (p) { return LENZ_DI[p.id] && LENZ_DI[p.id].c === c; })[0], io = !!chi && chi.id === V.cb.myId, altro = !!chi && !chi.bot && !io, nome = chi && !io ? "di " + chi.nome : io ? "il tuo" : "";
+      x.b.className = "cmp" + (io ? " mio" : "") + (altro ? " preso" : "") + (chi && chi.bot ? " bot" : "") + (voluto === c && !io ? " atteso" : "");
+      x.b.disabled = altro; if (x.chi.textContent !== nome) x.chi.textContent = nome;
+      x.b.setAttribute("aria-label", x.n + (nome ? ", " + nome : ", libero"));
+      if (voluto === c && altro) V.lenzVoluto = null;   // è arrivato prima un altro: si resta qui e si sceglie ancora
+    });
+    if (voluto != null && mio === voluto) { V.lenzVoluto = null; setTimeout(function () { if (V.pannello && V.pannello.tipo === "lenz") V.pannello.chiudi(); }, 260); }
+  };
+  V.apriPannello("lenz", box, function () { V.compAgg = null; V.lenzVoluto = null; });
+  V.compAgg = agg; agg();
+  ch.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
+  ltSfuma(gr);
+};
 Vista.prototype.apriFoto = function () {
   var V = this, pr = V.priv; if (!pr || !pr.foto || !V.g || V.g.fase !== "gioco") return;
   var box = E("div", "lt-pannello lt-foto"), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×"), cv = E("canvas", "foto");
@@ -5836,18 +7024,19 @@ Vista.prototype.apriFoto = function () {
   ch.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
   agg(); clearInterval(V.fotoT); V.fotoT = setInterval(agg, 400);
 };
-// una foto dall'aldilà, disegnata dal vero: un pezzo dell'avatar di chi è stato (cappello, viso, scarpe…) o un angolo della stanza,
-// in seppia, sgranata e storta come una vecchia stampa. Il seme decide tutto: la stessa foto viene uguale su tutti i telefoni.
-var COLORI_DI = {};   // (id → colore, per le foto di chi non ha l'avatar)
+// una foto dall'aldilà, disegnata dal vero: un pezzo del telo di chi è stato (la testa, un fianco, l'orlo sul pavimento) o un angolo della stanza,
+// virata e sgranata come una vecchia stampa colorata a mano: il colore del telo si riconosce, è lui l'indizio.
+// Il seme decide tutto: la stessa foto viene uguale su tutti i telefoni.
 function casoDa(seme) { var x = seme >>> 0; return function () { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; }
-var PEZZI = [[0.24, 0.0, 0.52, 0.34], [0.3, 0.1, 0.4, 0.28], [0.18, 0.3, 0.64, 0.34], [0.2, 0.58, 0.6, 0.3], [0.16, 0.78, 0.68, 0.22], [0.5, 0.36, 0.46, 0.34]];
+// dove guarda la foto (centro, in frazioni della figura) e quanta figura entra in larghezza. C'è sempre qualcosa che dice cos'è: un occhio, il bordo della sagoma, l'orlo sul pavimento
+var PEZZI = [[0.5, 0.2, 0.8], [0.2, 0.42, 0.86], [0.8, 0.46, 0.86], [0.24, 0.84, 0.9], [0.78, 0.84, 0.9], [0.5, 0.8, 1.04]];
 function disegnaFoto(cv, f) {
   var c = cv.getContext("2d"), w = cv.offsetWidth || 220, h = cv.offsetHeight || 160, dpr = Math.min(2, window.devicePixelRatio || 1), r = casoDa(f.seme);
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); c.setTransform(dpr, 0, 0, dpr, 0, 0);
   var fine = function () {
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    c.globalCompositeOperation = "saturation"; c.fillStyle = "#808080"; c.fillRect(0, 0, w, h);
-    c.globalCompositeOperation = "multiply"; c.fillStyle = "#d9b98a"; c.fillRect(0, 0, w, h);
+    c.globalCompositeOperation = "saturation"; c.globalAlpha = 0.34; c.fillStyle = "#808080"; c.fillRect(0, 0, w, h); c.globalAlpha = 1;
+    c.globalCompositeOperation = "multiply"; c.fillStyle = "#e8d2ac"; c.fillRect(0, 0, w, h);
     c.globalCompositeOperation = "source-over";
     for (var i = 0; i < 900; i++) { c.fillStyle = "rgba(" + (r() < .5 ? "0,0,0" : "255,240,210") + "," + (0.05 + r() * 0.12) + ")"; c.fillRect(r() * w, r() * h, 1.2, 1.2); }
     var g = c.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.7); g.addColorStop(0, "rgba(40,25,10,0)"); g.addColorStop(1, "rgba(40,25,10,.75)");
@@ -5855,21 +7044,14 @@ function disegnaFoto(cv, f) {
   };
   c.fillStyle = "#2b2420"; c.fillRect(0, 0, w, h);
   if (f.tipo === "chi") {
-    var av = AVATAR[f.id], img = av && av.img;
-    var pz = PEZZI[Math.floor(r() * PEZZI.length)], jx = (r() - 0.5) * 0.08, jy = (r() - 0.5) * 0.06, rot = (r() - 0.5) * 0.35;
-    var dis = function () {
-      var iw = img.naturalWidth || 100, ih = img.naturalHeight || 160, sx = (pz[0] + jx) * iw, sy = Math.max(0, (pz[1] + jy) * ih), sw = pz[2] * iw, sh = pz[3] * ih, sc = Math.max(w / sw, h / sh) * 1.08;
-      c.save(); c.translate(w / 2, h / 2); c.rotate(rot); c.drawImage(img, sx, sy, sw, sh, -sw * sc / 2, -sh * sc / 2, sw * sc, sh * sc); c.restore(); fine();
-    };
-    if (img && img.complete && img.naturalWidth) dis(); else if (img) img.addEventListener("load", dis, { once: true });
-    else {   // senza avatar: una figura incappucciata del suo colore, vista da vicino
-      var col = (COLORI_DI[f.id]) || "#8a7a9a", cx = w / 2 + (r() - 0.5) * w * 0.3, cy = h * (0.35 + r() * 0.5), k = 1.6 + r() * 1.2;
-      c.save(); c.translate(cx, cy); c.rotate(rot); c.scale(k, k);
-      c.fillStyle = col; c.beginPath(); c.ellipse(0, 24, 30, 34, 0, 0, Math.PI * 2); c.fill();
-      c.beginPath(); c.ellipse(0, -14, 20, 22, 0, 0, Math.PI * 2); c.fill();
-      c.fillStyle = "#f1e8d6"; c.beginPath(); c.ellipse(0, -10, 11, 9, 0, 0, Math.PI * 2); c.fill();
-      c.fillStyle = "#1a1420"; c.fillRect(-6, -13, 3, 3); c.fillRect(3, -13, 3, 3); c.restore(); fine();
-    }
+    var pz = PEZZI[Math.floor(r() * PEZZI.length)], jx = (r() - 0.5) * 0.06, jy = (r() - 0.5) * 0.05, rot = (r() - 0.5) * 0.22;
+    var img = figuraTelo((LENZ_DI[f.id] || { c: 0 }).c), iw = img.width * 0.54, ih = img.height * 0.86, cx = img.width * 0.17 + (pz[0] + jx) * iw, cy = img.height * 0.07 + (pz[1] + jy) * ih, sc = w / (pz[2] * iw) * 1.08;   // (il riquadro del telo dentro la canvas)
+    var suolo = img.height * 0.8;      // il pavimento: un'ombra sotto i piedi e le assi, così il pezzo di stoffa ha un posto dove stare
+    c.save(); c.translate(w / 2, h / 2); c.rotate(rot); c.scale(sc, sc); c.translate(-cx, -cy);
+    c.fillStyle = "#4a3a2c"; c.fillRect(-img.width, suolo, img.width * 3, img.height * 2);
+    c.fillStyle = "rgba(20,12,8,.5)"; for (var a = 0; a < 7; a++) c.fillRect(-img.width, suolo + a * a * 5 + 8, img.width * 3, 2.2);
+    c.fillStyle = "rgba(10,6,4,.55)"; c.beginPath(); c.ellipse(img.width * 0.45, img.height * 0.905, img.width * 0.27, img.height * 0.06, 0, 0, 6.3); c.fill();
+    c.drawImage(img, 0, 0); c.restore(); fine();
   } else {
     var st = f.st >= 0 ? PALAZZO.stanze[f.st] : null, px = st ? (st.x + 1 + r() * Math.max(1, st.w - 2)) * T : f.x + (r() - 0.5) * 4 * T, py = st ? (st.y + 1 + r() * Math.max(1, st.h - 2)) * T : f.y + (r() - 0.5) * 4 * T;
     if (st && PALAZZO.PAV[Math.floor(py / T) * PALAZZO.GW + Math.floor(px / T)] !== f.st) { px = st.lx * T; py = st.ly * T; }   // la stanza ha un angolo tagliato lì
@@ -5908,7 +7090,7 @@ Vista.prototype.aggSaletta = function (sal) {
     V.salInv.addEventListener("click", function () { V.invita(); }); V.salBox.append(V.salTesto, V.salInv); V.velo.parentNode.appendChild(V.salBox);
   }
   V.salBox.hidden = !sal; V.sc.classList.toggle("sal", !!sal); if (!sal) return;
-  var n = (V.vm.players || []).filter(function (p) { return !p.via; }).length, tx = "Stanza " + (V.vm.codice || "…") + " · " + n + "/" + MAX;
+  var n = (V.vm.players || []).filter(function (p) { return !p.via; }).length, tx = (V.oriz ? "Stanza " : "") + (V.vm.codice || "…") + " · " + n + "/" + MAX;   // (in verticale la riga è stretta: bastano codice e numero)
   if (V.salTesto.textContent !== tx) V.salTesto.textContent = tx;
 };
 // il link d'invito della stanza (gli amici entrano direttamente nella saletta)
@@ -6007,19 +7189,19 @@ Vista.prototype.meta = function () {
 };
 Vista.prototype.disegnaScena = function () {
   var V = this, g = V.g, io = V.me; if (!g) return;
-  var altri = V.altri(), corpi = (g.corpi || []).map(function (k) { var c = V.cache[k[0]] || {}, av = AVATAR[k[0]]; return { id: k[0], x: k[1], y: k[2], colore: c.colore, img: av && av.img }; });
+  var altri = V.altri(), corpi = (g.corpi || []).map(function (k) { return { id: k[0], x: k[1], y: k[2], lenz: LENZ_DI[k[0]] }; });
   var segui = null;
   if (V.guardo) { var vivi = altri.filter(function (p) { return !p.fantasma; }); segui = vivi[0] || altri[0] || { x: FALLBACK.x, y: FALLBACK.y }; }
   if (V.ctrl && V.ctrl.fine > performance.now()) segui = { x: V.ctrl.x, y: V.ctrl.y };
   var pr = V.priv || {}, come = pr.travestito || V.cb.myId;
   var mioAv = AVATAR[come], c = V.cache[come] || {};
-  var ioD = { x: io.x, y: io.y, dir: io.dir, muove: io.muove, fantasma: !V.sonoVivo(), nome: c.nome || "", colore: c.colore, img: mioAv && mioAv.img, imgS: mioAv && mioAv.imgS, mostra: !V.guardo && !(pr && pr.botola != null), seme: 3, id: V.cb.myId };
+  var ioD = { x: io.x, y: io.y, dir: io.dir, muove: io.muove, fantasma: !V.sonoVivo(), nome: c.nome || "", colore: c.colore, lenz: c.lenz, img: mioAv && mioAv.img, imgS: mioAv && mioAv.imgS, mostra: !V.guardo && !(pr && pr.botola != null), seme: 3, id: V.cb.myId };
   var oraB = performance.now(); for (var ib = V.bolle.length - 1; ib >= 0; ib--) if (V.bolle[ib].fine <= oraB) V.bolle.splice(ib, 1);   // i fumetti scaduti
   var apertaP = !V.parlaBar.hidden, vivoP = V.sonoVivo();
   V.parlaAlzaVista = V.pit.ridotto ? V.parlaAlza : V.parlaAlzaVista + (V.parlaAlza - V.parlaAlzaVista) * Math.min(1, V.dt * 10);
   var miei = new Set(g.interf ? [] : V.compitiAperti().map(function (p) { return p.id; })), meta = V.meta(), ora = performance.now();
   if (meta && meta.nessunaFreccia) meta = null;
-  V.pit.disegna({ M: V.M, palazzo: g.mappa === "palazzo", t: V.tempo, dt: V.dt, io: ioD, altri: altri, corpi: corpi, R: V.raggio(),
+  V.pit.disegna({ M: V.M, palazzo: g.mappa === "palazzo", saletta: !!(V.vm && V.vm.fase === "lobby"), t: V.tempo, dt: V.dt, io: ioD, altri: altri, corpi: corpi, R: V.raggio(),
     anima: V.guardo || !V.sonoVivo() || g.mappa !== "palazzo" || g.bengala > 0, neb: g.neb > 0, buio: g.buio > 0 && V.squadra() !== "ombre" && V.sonoVivo(), bengala: g.bengala > 0,
     miei: miei, freccia: meta, acqua: !!g.acqua, chiuse: g.acqua ? [!g.acqua[1], !g.acqua[2]] : null, interf: g.interf > 0, botole: V.squadra() === "ombre" || !V.sonoVivo() || pr.ruolo === "ingegnere", segui: segui, effetti: V.effetti, segnati: g.segnati, scossa: V.scossa,
     scudi: V.squadra() !== "ombre" ? (g.scudi || []).filter(function (id) { return id !== V.cb.myId; }) : [], telecamere: g.cam, osservate: g.osservate, orme: V.orme, durOrme: (V.vm.imp.investigatore && V.vm.imp.investigatore.orme) || 10,
@@ -6137,9 +7319,11 @@ function scrittaTasto(b, testo) {
   et.textContent = ""; et.appendChild(sv); et.style.fontSize = ""; et.style.transform = "";
   b.dataset.corpo = f.toFixed(2); b.dataset.righe = String(n);
 }
+// il ruolo in alto: i nomi lunghi si stringono, così non finiscono sotto i tasti di destra
+Vista.prototype.scriviChip = function (nr) { var c = this.chip; c.textContent = nr; c.classList.toggle("lunga", nr.length >= 9); c.classList.toggle("lunghissima", nr.length >= 12); };
 Vista.prototype.setBtn = function (k, vis, abil, et, cd) {
   var b = this.btn[k], key = vis + "|" + abil + "|" + et + "|" + cd; if (b._k === key) return; b._k = key;
-  b.hidden = !vis; b.disabled = !abil; scrittaTasto(b, et);
+  b.hidden = !vis; b.disabled = !abil; scrittaTasto(b, et); b.classList.toggle("conta", !!cd);
   var c = b.querySelector(".cd"); c.hidden = !cd; c.textContent = cd || "";
 };
 Vista.prototype.aggHud = function () {
@@ -6148,6 +7332,11 @@ Vista.prototype.aggHud = function () {
   V.az.hidden = !(inGioco && palazzo) && !sal;
   V.s.querySelector(".lt-sx").hidden = (!palazzo && !sal) || V.guardo || !pr;
   V.aggSaletta(sal); V.aggMappa(sal);
+  V.setBtn("lenz", !!sal && !V.guardo && !!pr, true, "Lenzuolo", 0);
+  if (sal && !V.btn.lenz.hidden) {   // il tasto ha il colore del mio telo; lo scritto si legge sempre
+    var telo = panno(V.cb.myId), rr = parseInt(telo.b.slice(1), 16), luce = 0.3 * (rr >> 16) + 0.59 * ((rr >> 8) & 255) + 0.11 * (rr & 255);
+    if (V.btn.lenz._c !== telo.b) { V.btn.lenz._c = telo.b; V.btn.lenz.style.setProperty("--telo", telo.b); V.btn.lenz.style.setProperty("--orlo", telo.l); V.btn.lenz.style.color = luce > 135 ? "#1d1508" : "#fff4e0"; }
+  }
   V.btnMappa.hidden = !palazzo;
   // la chat di prossimità c'è nel gioco e nella saletta; non in riunione, non a chi guarda, non da una botola
   V.btnParla.hidden = V.guardo || !pr || ((!palazzo || g.fase !== "gioco" || pr.botola != null) && !sal);
@@ -6203,7 +7392,7 @@ Vista.prototype.aggHud = function () {
   }
   // barra dei preparativi, ruolo e guida in alto
   if (pr) {
-    var nr = sal ? "Saletta" : !V.sonoVivo() && pr.fantasmaRuolo && FANTASMI[pr.fantasmaRuolo] ? FANTASMI[pr.fantasmaRuolo].nome : RUOLI[pr.ruolo] ? RUOLI[pr.ruolo].nome : ""; if (V.chip.textContent !== nr) { V.chip.textContent = nr; V.chip.dataset.squadra = pr.squadra; }
+    var nr = sal ? "Saletta" : !V.sonoVivo() && pr.fantasmaRuolo && FANTASMI[pr.fantasmaRuolo] ? FANTASMI[pr.fantasmaRuolo].nome : RUOLI[pr.ruolo] ? RUOLI[pr.ruolo].nome : ""; if (V.chip.textContent !== nr) { V.scriviChip(nr); V.chip.dataset.squadra = pr.squadra; }
     // le cose da sapere del proprio ruolo, in una riga
     var info = [], nome = function (id) { return (V.cache[id] || {}).nome || "?"; };
     if (V.bloccFine > ora) info.push("Sei ipnotizzato!");
@@ -6261,7 +7450,7 @@ Vista.prototype.prDi = function (p) { var x = this.pm && this.pm[p.id]; return x
 // la mappa nella saletta: la mia percentuale, piccola e discreta; l'host vede anche quanti sono pronti
 Vista.prototype.aggMappa = function (sal) {
   var V = this, el = V.salMappa, ps = precaricoStato(), ora = performance.now();
-  if (!el) { el = V.salMappa = E("div", "lt-mappa"); el.hidden = true; el.innerHTML = '<span class="t"></span><i></i>'; V.sc.appendChild(el); }
+  if (!el) { el = V.salMappa = E("div", "lt-premappa"); el.hidden = true; el.innerHTML = '<span class="t"></span><i></i>'; V.sc.appendChild(el); }
   var pl = ((V.vm && V.vm.players) || []).filter(function (p) { return !p.via; }), nPronti = pl.filter(function (p) { return p.bot || V.prDi(p).pr; }).length, testo = "", ok = false;
   if (sal && ps.attivo) {
     if (!ps.pronto) testo = "Mappa " + ps.pct + "%";
@@ -6320,7 +7509,7 @@ Vista.prototype.aggLista = function () {
 Vista.prototype.manda = function (k, extra) { var m = { t: "a", k: k }; if (extra) for (var x in extra) m[x] = extra[x]; this.cb.mossa(m); };
 Vista.prototype.azione = function (k) {
   var V = this, pr = V.priv, comp = (pr && pr.compagni) || [];
-  if (V.vm && V.vm.fase === "lobby") { if (k === "usa" && V.vicinoUsa() && !V.pannello) V.apriComputer(); return; }
+  if (V.vm && V.vm.fase === "lobby") { if (k === "lenz") V.apriLenzuolo(); else if (k === "usa" && V.vicinoUsa() && !V.pannello) V.apriComputer(); return; }
   if (V.pannello && V.pannello.libero) V.pannello.chiudi();   // il tasto vale anche con la scheda del ruolo aperta
   if (!V.g || V.g.fase !== "gioco" || V.guardo || V.mg || V.pannello) return;
   if (!V.sonoVivo() && k === "abil" && pr && pr.fantasmaRuolo) {
@@ -6381,14 +7570,15 @@ Vista.prototype.chiudiMappa = function () { var V = this; if (!V.mappa) return; 
 Vista.prototype.disegnaMappaViva = function () {
   var V = this, M = V.mappa; if (!M || !V.g) return;
   M.ultimo = V.tempo;
-  var segni = V.compitiAperti().map(function (p) { return { x: centro(p.tx), y: centro(p.ty), col: "#e7b75c" }; }), leg = [["#ffffff", "tu"], ["#e7b75c", "compiti"]];
+  var mioC = (V.cache[(V.priv && V.priv.travestito) || V.cb.myId] || {}).colore || "#ffffff", mioP = panno((V.priv && V.priv.travestito) || V.cb.myId);
+  var segni = V.compitiAperti().map(function (p) { return { x: centro(p.tx), y: centro(p.ty), col: "#e7b75c" }; }), leg = [[mioC, "tu · " + mioP.n], ["#e7b75c", "compiti"]];
   if (V.g.buio) { segni.push({ x: centro(QUADRO.tx), y: centro(QUADRO.ty), col: "#f05a6e", r: 7 }); leg.push(["#f05a6e", "luci"]); }
   if (V.squadra() === "ombre") { ESTREMI.forEach(function (e) { segni.push({ x: centro(e.tx), y: centro(e.ty), col: "#a993e6", r: 4 }); }); leg.push(["#a993e6", "botole"]); }
   segni.push({ x: centro(CAMPANA.tx), y: centro(CAMPANA.ty), col: "#d9a94a", r: 4 });
   // il Segugio: il pallino di chi sta seguendo, finché dura la scia
   var tr = V.priv && V.priv.traccia && V.tracciaFine > performance.now() ? V.priv.traccia[0] : null;
-  if (tr) { var q = V.altri().filter(function (p) { return p.id === tr; })[0]; if (q) { segni.push({ x: q.x, y: q.y, col: "#cba2ff", r: 7, bordo: true }); leg.push(["#cba2ff", (V.cache[tr] || {}).nome || "la scia"]); } }
-  segni.push({ x: V.me.x, y: V.me.y, col: "#ffffff", r: 6, bordo: true });
+  if (tr) { var q = V.altri().filter(function (p) { return p.id === tr; })[0]; if (q) { segni.push({ x: q.x, y: q.y, col: "#cba2ff", r: 8, bordo: true }, { x: q.x, y: q.y, col: q.colore || "#cba2ff", r: 5 }); leg.push([q.colore || "#cba2ff", ((V.cache[tr] || {}).nome || "la scia") + " · " + panno(tr).n]); } }
+  segni.push({ x: V.me.x, y: V.me.y, col: "#ffffff", r: 7, bordo: true }, { x: V.me.x, y: V.me.y, col: mioC, r: 4.5 });
   var w = M.box.clientWidth - 16, h = Math.max(80, M.box.clientHeight - 58);
   disegnaMappa(M.cv, PALAZZO, segni, w, h);
   var t = leg.map(function (l) { return '<i style="background:' + l[0] + '"></i>' + l[1]; }).join(""); if (M.legK !== t) { M.legK = t; M.leg.innerHTML = t; }
@@ -6423,8 +7613,8 @@ Vista.prototype.disegnaSchermi = function () {
   var cams = (g && g.cam) || [], n = Math.max(1, Math.ceil(cams.length / 4)); F.pagina = Math.min(F.pagina, n - 1);
   F.pag.textContent = (F.pagina + 1) + " / " + n;
   var gente = V.altri().filter(function (p) { return !p.fantasma; });
-  if (V.sonoVivo() && !V.guardo) { var c0 = V.cache[V.cb.myId] || {}, a0 = AVATAR[V.cb.myId]; gente.push({ id: V.cb.myId, x: V.me.x, y: V.me.y, dir: V.me.dir, muove: V.me.muove, nome: c0.nome, colore: c0.colore, img: a0 && a0.img, imgS: a0 && a0.imgS }); }
-  var corpi = (g.corpi || []).map(function (k) { var c = V.cache[k[0]] || {}, av = AVATAR[k[0]]; return { id: k[0], x: k[1], y: k[2], colore: c.colore, img: av && av.img }; });
+  if (V.sonoVivo() && !V.guardo) { var c0 = V.cache[(V.priv && V.priv.travestito) || V.cb.myId] || {}, a0 = AVATAR[V.cb.myId]; gente.push({ id: V.cb.myId, x: V.me.x, y: V.me.y, dir: V.me.dir, muove: V.me.muove, nome: c0.nome, colore: c0.colore, lenz: c0.lenz, img: a0 && a0.img, imgS: a0 && a0.imgS }); }
+  var corpi = (g.corpi || []).map(function (k) { return { id: k[0], x: k[1], y: k[2], lenz: LENZ_DI[k[0]] }; });
   var nBase = 0;
   F.schermi.forEach(function (sc, i) {
     var k = cams[F.pagina * 4 + i]; sc.w.hidden = !k; if (!k) return;
@@ -6456,7 +7646,7 @@ Vista.prototype.disegnaPlastico = function () {
   if (V.g && V.g.interf) { V.statico(P.cv, 320, 220); P.nota.textContent = "Nessun segnale: c'è un'interferenza."; return; }
   var spia = V.priv && V.priv.ruolo === "spia";
   var gente = V.altri().filter(function (p) { return !p.fantasma; });
-  if (V.sonoVivo() && !V.guardo) gente.push({ id: V.cb.myId, x: V.me.x, y: V.me.y, colore: (V.cache[V.cb.myId] || {}).colore });
+  if (V.sonoVivo() && !V.guardo) gente.push({ id: V.cb.myId, x: V.me.x, y: V.me.y, colore: (V.cache[(V.priv && V.priv.travestito) || V.cb.myId] || {}).colore });
   var stanze = {};
   gente.forEach(function (p) { var st = stanzaDi(PALAZZO, p); if (st.x == null) return; (stanze[st.nome] = stanze[st.nome] || { st: st, l: [] }).l.push(p); });
   var r = V.s.getBoundingClientRect();
@@ -6465,7 +7655,7 @@ Vista.prototype.disegnaPlastico = function () {
       var o = stanze[k], st = o.st, per = Math.max(1, Math.floor((st.w - 1) / 2.8));
       o.l.forEach(function (p, i) {
         var cx = (st.x + 1.6 + (i % per) * 2.8) * T, cy = (st.y + st.h - 1.8 - Math.floor(i / per) * 3) * T;
-        m.fillStyle = spia ? (p.colore || "#ccc") : "#d9dce4"; m.strokeStyle = "rgba(0,0,0,.55)"; m.lineWidth = 2 / sc;
+        m.fillStyle = spia ? (p.colore || "#ccc") : "#d9dce4"; m.strokeStyle = (spia && orloTinta(p.colore)) || "rgba(0,0,0,.55)"; m.lineWidth = 2 / sc;
         m.beginPath(); m.arc(cx, cy - 0.6 * T, 0.95 * T, 0, Math.PI * 2); m.fill(); m.stroke();
         m.beginPath(); m.ellipse(cx, cy + 0.85 * T, 1.3 * T, 0.75 * T, 0, Math.PI, 0); m.fill(); m.stroke();
       });
@@ -6481,7 +7671,7 @@ Vista.prototype.apriScambio = function () {
   var vivi = (V.g.g || []).filter(function (q) { return q[1] && !q[2]; });
   var vai = E("button", "btn btn-primario", "Scambia"), no = E("button", "btn btn-fantasma", "Annulla"); vai.disabled = true;
   vivi.forEach(function (q, j) {
-    var b = E("button", "", (V.cache[q[0]] || {}).nome || "?"); b.type = "button";
+    var b = E("button", "", (V.cache[q[0]] || {}).nome || "?"); b.type = "button"; b.prepend(pezzetta(q[0]));
     b.addEventListener("click", function () { var i = scelti.indexOf(q[0]); if (i >= 0) scelti.splice(i, 1); else if (scelti.length < 2) scelti.push(q[0]); [].forEach.call(gr.children, function (x, k) { x.classList.toggle("sel", scelti.indexOf(vivi[k][0]) >= 0); }); vai.disabled = scelti.length !== 2; });
     gr.appendChild(b);
   });
@@ -6519,7 +7709,7 @@ Vista.prototype.aggRegistro = function (pr) {
   var V = this, P = pr.portineria, box = V.registroBox; box.textContent = "";
   if (!P || !P.log.length) return;
   var ol = E("ol", "lt-registro");
-  P.log.slice(-5).forEach(function (x) { var li = E("li", x[1] ? "entra" : "esce", ((V.cache[x[0]] || {}).nome || "?") + (x[1] ? " è entrato" : " è uscito") + " · " + (x[2] < 2 ? "ora" : x[2] + " s fa")); ol.appendChild(li); });
+  P.log.slice(-5).forEach(function (x) { var li = E("li", x[1] ? "entra" : "esce", ((V.cache[x[0]] || {}).nome || "?") + (x[1] ? " è entrato" : " è uscito") + " · " + (x[2] < 2 ? "ora" : x[2] + " s fa")); li.prepend(pezzetta(x[0])); ol.appendChild(li); });
   box.appendChild(ol);
 };
 
@@ -6566,13 +7756,13 @@ Vista.prototype.aggVelo = function (soloTempi) {
   if (f === "svela" && V.priv && !V.guardo) {
     if (V.veloTipo !== "svela") {
       var r = RUOLI[V.priv.ruolo], box = E("div", "lt-pannello lt-foglio lt-svela " + V.priv.squadra);
-      var mio = AVATAR[V.cb.myId]; if (mio && mio.busto) { var im = mio.busto.cloneNode(); im.className = "lt-svela-av"; box.appendChild(im); }
+      var im = ritratto(V.cb.myId); if (im.tagName === "IMG") { im.className = "lt-svela-av"; box.appendChild(im); }
       box.append(E("p", "lt-sopra", "Questa notte sei"), E("h2", "", r.nome), E("p", "", r.desc));
       if (V.priv.squadra === "ombre") {
-        var nn = V.priv.compagni.map(function (id) { return (V.cache[id] || {}).nome; }).filter(Boolean);
+        var nn = V.priv.compagni.map(function (id) { var n = (V.cache[id] || {}).nome; return n && n + " (" + panno(id).n + ")"; }).filter(Boolean);
         box.appendChild(E("p", "lt-comp", nn.length ? "Le altre ombre: " + nn.join(", ") + "." : "Sei l'unica ombra nel palazzo."));
-        var fila = E("div", "lt-alleati"); V.priv.compagni.forEach(function (id) { var a = AVATAR[id]; if (a && a.busto) fila.appendChild(a.busto.cloneNode()); }); if (fila.firstChild) box.appendChild(fila);
-      } else if (V.priv.ruolo === "accusatore" && V.priv.bersaglio) box.appendChild(E("p", "lt-comp", "Il tuo bersaglio: " + ((V.cache[V.priv.bersaglio] || {}).nome || "?") + "."));
+        var fila = E("div", "lt-alleati"); V.priv.compagni.forEach(function (id) { fila.appendChild(ritratto(id)); }); if (fila.firstChild) box.appendChild(fila);
+      } else if (V.priv.ruolo === "accusatore" && V.priv.bersaglio) box.appendChild(E("p", "lt-comp", "Il tuo bersaglio: " + ((V.cache[V.priv.bersaglio] || {}).nome || "?") + " (" + panno(V.priv.bersaglio).n + ")."));
       else box.appendChild(E("p", "lt-comp", "Attento: tra voi ci sono delle ombre."));
       if (V.priv.mod && MODIFICATORI[V.priv.mod]) { var md = MODIFICATORI[V.priv.mod]; box.appendChild(E("p", "lt-mod", "Modificatore: " + md.nome + ". " + md.desc)); }
       SUONO.ruolo();
@@ -6587,7 +7777,7 @@ Vista.prototype.aggVelo = function (soloTempi) {
     if (V.veloTipo !== "vince") {
       var b = E("div", "lt-pannello lt-foglio lt-vince"), v = g.fine || {}, tes = E("div", "tes"), fila = E("div", "fila");
       tes.append(E("p", "occh", "Proclama · Fine della notte"), E("h2", "", titoloVince(v)), E("p", "", v.perche || ""));
-      vincitoriDi(v).forEach(function (id) { var u = E("div", "u"); u.append(ritratto(id), E("span", "", (V.cache[id] || {}).nome || "?")); fila.appendChild(u); });
+      vincitoriDi(v).forEach(function (id) { var u = E("div", "u"); u.append(ritratto(id), E("span", "", (V.cache[id] || {}).nome || "?"), tintaDi(id)); fila.appendChild(u); });
       b.append(intestazione("Registro di Palazzo Velmare"), E("i", "sig"), tes); if (fila.firstChild) b.appendChild(fila);
       V.velo.textContent = ""; V.velo.appendChild(b); V.velo.hidden = false; V.veloTipo = "vince";
       var pr = V.priv || {}, ho = v.id ? v.id === V.cb.myId : pr.squadra === v.chi;
@@ -6598,18 +7788,27 @@ Vista.prototype.aggVelo = function (soloTempi) {
   }
   if (V.veloTipo) { V.velo.hidden = true; V.velo.textContent = ""; V.veloTipo = null; }
 };
-// la scena della morte: chi ti ha spento (grande, a sinistra), la lanterna che si spegne, tu che cadi. Un tocco la chiude.
+// la scena della morte: chi ti ha spento (grande, a sinistra, col telo che vedevi: travestito o no) e il tuo telo che si affloscia davvero,
+// con la lanterna che cade e si spegne, come nel palazzo. Un tocco la chiude.
 Vista.prototype.scenaMorte = function (m) {
-  var V = this, sc = V.velo.parentNode, chi = (V.cache[m.da] || {}).nome || "Qualcuno", a = AVATAR[m.da], io = AVATAR[V.cb.myId];
+  var V = this, sc = V.velo.parentNode, chi = (V.cache[m.da] || {}).nome || "Qualcuno", dk = LENZ_DI[m.da], io = LENZ_DI[V.cb.myId] || { c: 0, m: null };
   var vecchia = sc.querySelector(".lt-morte"); if (vecchia) vecchia.remove();
-  var box = E("div", "lt-morte"), palco = E("div", "palco");
-  var k = a && a.img ? a.img.cloneNode() : E("div", "sagoma"); k.classList.add("killer");
-  var me = io && io.img ? io.img.cloneNode() : E("div", "sagoma"); me.classList.add("vittima");
-  var lan = E("div", "lanterna"); lan.append(E("i", "fiamma"), E("i", "fumo"), E("i", "fumo f2"));
-  palco.append(k, lan, me);
+  var box = E("div", "lt-morte"), palco = E("div", "palco"), k, me = E("canvas", "vittima"), S = 3, q = me.getContext("2d");
+  if (dk) { var fg = figuraTelo(dk.c); k = E("canvas"); k.width = fg.width; k.height = fg.height; k.getContext("2d").drawImage(fg, 0, 0); } else k = E("div", "sagoma");
+  k.classList.add("killer");
+  me.width = 140 * S; me.height = 84 * S; palco.append(k, me);
+  var l = new Lenzuolo(io, { seme: io.c }), t0 = performance.now(), prima = t0, mostra = function () { q.clearRect(0, 0, me.width, me.height); l.disegna(q, { x: me.width * 0.46, y: 72 * S, scala: S, t: l.t, fine: true }); };
+  l.aggiorna(0, 0, 0, Math.PI / 2, false, true);
+  var giro = function () {
+    if (!box.parentNode || box.classList.contains("via")) return;
+    var ora = performance.now(), dt = Math.min(0.05, (ora - prima) / 1000); prima = ora;
+    if (ora - t0 > 900) l.spegni();
+    l.aggiorna(dt, 0, 0, null, false, true); mostra(); requestAnimationFrame(giro);
+  };
   var testo = m.modo === "sceriffo" ? "Lo Sceriffo " + chi + " ti ha colpito" : m.modo === "veterano" ? chi + " era il Veterano in allerta" : m.modo === "veleno" ? "Il veleno di " + chi + " ha fatto effetto" : chi + " ti ha spento la lanterna";
   box.append(palco, E("h2", "", testo), E("p", "", m.modo === "veterano" ? "L'hai toccato mentre era in allerta." : "Ora sei un'anima: puoi ancora finire i compiti."));
   sc.appendChild(box); vibra([90, 60, 180]); SUONO.spegni();
+  if (V.pit.ridotto) { l.spegni(); l.mucchio(); mostra(); } else giro();
   var via = function () { if (!box.parentNode || box.classList.contains("via")) return; box.classList.add("via"); setTimeout(function () { box.remove(); }, 320); };
   box.addEventListener("click", via); setTimeout(via, 3800);
 };
@@ -6644,7 +7843,7 @@ Vista.prototype.chiHaVotato = function (esito) {
   var box = E("div", "chivoti"); box.appendChild(E("p", "occh", "Chi ha votato chi"));
   ordine.forEach(function (su) {
     var salto = su === "salta", r = E("div", "rg" + (salto ? " salto" : "")), dx = E("span", "su"), da = E("span", "da");
-    if (!salto) dx.appendChild(ritratto(su)); dx.appendChild(E("b", "", salto ? "Hanno saltato" : (V.cache[su] || {}).nome || "?"));
+    if (!salto) dx.appendChild(ritratto(su)); dx.appendChild(E("b", "", salto ? "Hanno saltato" : (V.cache[su] || {}).nome || "?")); if (!salto) dx.appendChild(tintaDi(su));
     per[su].forEach(function (id) { var f = ritratto(id); f.title = (V.cache[id] || {}).nome || ""; da.appendChild(f); });
     r.append(dx, da); box.appendChild(r);
   });
@@ -6673,7 +7872,7 @@ Vista.prototype.riunione = function (soloTempi) {
     // la scritta grande che apre la riunione
     var da = R ? (V.cache[R.da] || {}).nome || "?" : "?", corpoN = R && R.corpo != null ? (V.cache[R.corpo] || {}).nome : null;
     V.intro.textContent = ""; V.intro.className = "lt-intro " + (R && R.motivo === "corpo" ? "corpo" : "campana");
-    var facce = E("div", "facce"); [R && R.da, R && R.corpo].forEach(function (id, i) { if (id == null) return; var a = AVATAR[id]; var f = a && a.busto ? a.busto.cloneNode() : E("i", "pall"); f.className = i ? "morto" : ""; facce.appendChild(f); });
+    var facce = E("div", "facce"); [R && R.da, R && R.corpo].forEach(function (id, i) { if (id == null) return; var f = ritratto(id); if (i) f.classList.add("morto"); facce.appendChild(f); });
     var icI = E("div", "icona"); icI.innerHTML = icona(R && R.motivo === "corpo" ? "lanterna" : "campana"); V.intro.append(icI, E("h2", "", R && R.motivo === "corpo" ? "Lanterna spenta!" : "Riunione!"), facce, E("p", "", corpoN ? da + " ha trovato " + corpoN : da + " ha suonato la campana"));
     V.intro.hidden = false; vibra(80);
     (R && R.motivo === "corpo" ? SUONO.corpo : SUONO.campana)();
@@ -6700,7 +7899,7 @@ Vista.prototype.riunione = function (soloTempi) {
     V.conf = null; V.mioVoto = null; V.carte = {}; V.nChat = 0; V.espK = null;
     g.g.forEach(function (q) {
       var io = q[0] === V.cb.myId, c = E("div", "carta" + (io ? " io" : "")), nt = E("span", "nt");
-      if (io) nt.appendChild(E("span", "tu", "tu")); nt.appendChild(E("span", "st", ""));
+      if (io) nt.appendChild(E("span", "tu", "tu")); nt.appendChild(tintaDi(q[0])); nt.appendChild(E("span", "st", ""));
       c.append(ritratto(q[0]), E("span", "nm", (V.cache[q[0]] || {}).nome || "?"), nt, E("span", "vt", ""), E("div", "az"));
       V.carte[q[0]] = c; V.riuGrid.appendChild(c);
     });
@@ -6716,7 +7915,7 @@ Vista.prototype.riunione = function (soloTempi) {
   var tmr = faseK === "esito" ? "✓" : String(resta);
   if (V.riuTimer.textContent !== tmr) { V.riuTimer.textContent = tmr; V.riuTimer.style.setProperty("--p", faseK === "esito" ? 100 : Math.min(100, Math.round(100 * resta / V.riuTot))); V.riuTimer.classList.toggle("stretta", faseK === "vota" && resta <= 10); }
   if (R) {   // (prima del ritorno dei soli tempi: la scritta cambia nel momento in cui si apre il voto)
-    var era = R.motivo === "corpo" ? "Era quella di " + ((V.cache[R.corpo] || {}).nome || "?") : "Vuole parlare con tutti", votoAperto = faseK === "vota" && vivo, devo = votoAperto && !V.mioVoto;
+    var era = R.motivo === "corpo" ? "Era quella di " + ((V.cache[R.corpo] || {}).nome || "?") + " (" + panno(R.corpo).n + ")" : "Vuole parlare con tutti", votoAperto = faseK === "vota" && vivo, devo = votoAperto && !V.mioVoto;
     var oc = votoAperto ? era : "Riunione n. " + g.round, pe = devo ? "Premi il sigillo di chi vuoi cacciare." : votoAperto ? "Aspettiamo gli altri voti." : era + ".";
     if (V.riuOcch.textContent !== oc) V.riuOcch.textContent = oc;
     if (V.riuPerche.textContent !== pe) { V.riuPerche.textContent = pe; V.riuPerche.classList.toggle("chiede", devo); }
@@ -6728,7 +7927,7 @@ Vista.prototype.riunione = function (soloTempi) {
     V.riuTit.textContent = R.motivo === "corpo" ? da + " ha trovato una lanterna spenta" : da + " ha suonato la campana";
     var chat = R.chat || [];
     for (var i = V.nChat; i < chat.length; i++) {
-      var p = E("p"); var chi = chat[i][0]; if (chi != null) { var pt = ritratto(chi); pt.classList.add("pt"); p.append(pt, E("b", "", ((V.cache[chi] || {}).nome || "?") + ": ")); } else p.className = "sis"; p.append(chat[i][1]); V.riuChat.appendChild(p);
+      var p = E("p"); var chi = chat[i][0]; if (chi != null) { var pt = ritratto(chi); pt.classList.add("pt"); p.append(pt, E("b", "", (V.cache[chi] || {}).nome || "?"), E("span", "tc", " " + panno(chi).n), ": "); } else p.className = "sis"; p.append(chat[i][1]); V.riuChat.appendChild(p);
       if (chat[i][2] && chat[i][2].foto) { var fc = E("canvas", "foto"); V.riuChat.appendChild(fc); disegnaFoto(fc, chat[i][2].foto); }
     }
     if (chat.length > V.nChat) V.riuChat.scrollTop = V.riuChat.scrollHeight;
@@ -6770,10 +7969,10 @@ Vista.prototype.riunione = function (soloTempi) {
     V.riuNota.textContent = salti ? "Hanno saltato: " + salti + "." : "";
     setTimeout(function () {
       if (V.riuK !== k || !V.vivo) return;
-      var es = E("div", "lt-esp lt-foglio"), av = esito.espulso != null ? AVATAR[esito.espulso] : null, rt = E("div", "ritr" + (esito.espulso == null ? " vuoto" : "")), tx = E("div", "txt");
-      var ft = av && (av.busto || av.img); if (ft) { var im = ft.cloneNode(); im.className = "faccia"; rt.appendChild(im); } else if (esito.espulso != null) rt.classList.add("sagoma");
+      var es = E("div", "lt-esp lt-foglio"), rt = E("div", "ritr" + (esito.espulso == null ? " vuoto" : "")), tx = E("div", "txt");
+      if (esito.espulso != null) { var ft = ritratto(esito.espulso); if (ft.tagName === "IMG") { ft.src = ritrattoLenzuolo(LENZ_DI[esito.espulso].c, 330).toDataURL(); rt.appendChild(ft); } else rt.classList.add("sagoma"); }   // (il verdetto lo porta grande)
       rt.appendChild(E("div", "timbro", esito.espulso != null ? "Cacciato" : "Nessuno"));
-      tx.append(E("p", "occh", "Verdetto · Riunione n. " + g.round), E("h2", "", esito.titolo)); if (esito.sotto) tx.appendChild(E("p", "sotto", testoEsito(esito.sotto)));
+      tx.append(E("p", "occh", "Verdetto · Riunione n. " + g.round), E("h2", "", esito.titolo)); if (esito.espulso != null) tx.appendChild(tintaDi(esito.espulso)); if (esito.sotto) tx.appendChild(E("p", "sotto", testoEsito(esito.sotto)));
       var nVoti = 0, nSalti = 0; esito.voti.forEach(function (x) { var u = Math.round(x[2] || 1); if (x[1] === "salta") nSalti += u; else if (x[1] === esito.espulso) nVoti += u; });
       var conto = E("div", "conto");   // la riga del registro: quanti voti, quanti hanno saltato
       if (esito.espulso != null) { var c1 = E("span"); c1.append(E("b", "", String(nVoti)), nVoti === 1 ? "voto" : "voti"); conto.appendChild(c1); }
@@ -6813,6 +8012,15 @@ function ltSagoma() {
   var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 53' preserveAspectRatio='none'><path d='M22 11a9.6 11 0 1 1 0 22 9.6 11 0 0 1 0-22zM3 53c1-11 9-17 19-17s18 6 19 17z' fill='#1f120a'/></svg>";
   return "url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
 }
+// il bordo a dentelli dei campioni di stoffa: un poligono solo, come le forbici da sarta
+function ltDentelli() {
+  var p = [], i, N = 16, M = 9, d = 2.4;
+  for (i = 0; i <= N * 2; i++) p.push((i / (N * 2) * 100).toFixed(2) + "% " + (i % 2 ? d : 0) + "px");
+  for (i = 1; i <= M * 2; i++) p.push("calc(100% - " + (i % 2 ? d : 0) + "px) " + (i / (M * 2) * 100).toFixed(2) + "%");
+  for (i = N * 2 - 1; i >= 0; i--) p.push((i / (N * 2) * 100).toFixed(2) + "% calc(100% - " + (i % 2 ? d : 0) + "px)");
+  for (i = M * 2 - 1; i > 0; i--) p.push((i % 2 ? d : 0) + "px " + (i / (M * 2) * 100).toFixed(2) + "%");
+  return "polygon(" + p.join(",") + ")";
+}
 // il sigillo di ceralacca: una goccia irregolare e il cerchio premuto; con la lanterna del palazzo quando è stato impresso
 function ltCera(conLanterna, pallida) {
   var a = ltCaso(977), n = 11, pt = [], i, d = "";
@@ -6827,10 +8035,47 @@ function ltCera(conLanterna, pallida) {
 }
 function cssRegistro() {
   return `
-:root{--lt-ease:cubic-bezier(.22,1,.36,1);--r-carta:#ecdfc4;--r-chiara:#f8f0de;--r-scura:#d9c59c;--r-ink:#28180d;--r-ink2:#54402b;--r-ink3:#755d42;--r-filo:rgba(84,60,34,.36);--r-oro:#8a6519;--r-ottone:#c39a48;--r-ottone-ch:#efd595;--r-cera:#8f1d2b;--r-cera-ch:#bb3445;--r-cera-sc:#5c0f1b;--r-verde:#1d5a3b;--r-viola:#4a3678;--r-ardesia:#2c4660;--r-crema:#fff1da;--r-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;--r-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue","Inter",system-ui,sans-serif;--r-grana:url(data:image/png;base64,@GRANA@);--r-sigillo:@SIGILLO@;--r-sigillo-vuoto:@VUOTO@;--r-sigillo-pallido:@PALLIDO@;--r-filigrana:@FILIGRANA@;--r-sagoma:@SAGOMA@;--r-seppia:rgba(84,60,34,.18);--r-seppia2:rgba(84,60,34,.3);--r-strappo:@STRAPPO@;--r-tavolo:radial-gradient(85% 55% at 4% -4%,rgba(255,170,76,.36),rgba(255,170,76,0) 65%),radial-gradient(90% 70% at 104% 106%,rgba(104,16,40,.66),rgba(104,16,40,0) 70%),repeating-linear-gradient(91deg,rgba(255,214,160,.035) 0 1px,rgba(0,0,0,0) 1px 6px,rgba(0,0,0,.13) 6px 7px,rgba(0,0,0,0) 7px 17px),repeating-linear-gradient(88.5deg,rgba(0,0,0,0) 0 38px,rgba(255,214,160,.03) 38px 41px,rgba(0,0,0,0) 41px 73px),linear-gradient(165deg,#34211a,#1c110b)}
+:root{--lt-ease:cubic-bezier(.22,1,.36,1);--r-carta:#ecdfc4;--r-chiara:#f8f0de;--r-scura:#d9c59c;--r-ink:#28180d;--r-ink2:#54402b;--r-ink3:#755d42;--r-filo:rgba(84,60,34,.36);--r-oro:#8a6519;--r-ottone:#c39a48;--r-ottone-ch:#efd595;--r-cera:#8f1d2b;--r-cera-ch:#bb3445;--r-cera-sc:#5c0f1b;--r-verde:#1d5a3b;--r-viola:#4a3678;--r-ardesia:#2c4660;--r-crema:#fff1da;--r-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;--r-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue","Inter",system-ui,sans-serif;--r-grana:url(data:image/png;base64,@GRANA@);--r-sigillo:@SIGILLO@;--r-sigillo-vuoto:@VUOTO@;--r-sigillo-pallido:@PALLIDO@;--r-filigrana:@FILIGRANA@;--r-sagoma:@SAGOMA@;--r-seppia:rgba(84,60,34,.18);--r-seppia2:rgba(84,60,34,.3);--r-strappo:@STRAPPO@;--r-dentelli:@DENTELLI@;--r-tavolo:radial-gradient(85% 55% at 4% -4%,rgba(255,170,76,.36),rgba(255,170,76,0) 65%),radial-gradient(90% 70% at 104% 106%,rgba(104,16,40,.66),rgba(104,16,40,0) 70%),repeating-linear-gradient(91deg,rgba(255,214,160,.035) 0 1px,rgba(0,0,0,0) 1px 6px,rgba(0,0,0,.13) 6px 7px,rgba(0,0,0,0) 7px 17px),repeating-linear-gradient(88.5deg,rgba(0,0,0,0) 0 38px,rgba(255,214,160,.03) 38px 41px,rgba(0,0,0,0) 41px 73px),linear-gradient(165deg,#34211a,#1c110b)}
 
 /* il tavolo di noce e velluto sotto i fogli */
-.lt-velo:has(>.lt-riu),.lt-velo:has(>.lt-computer),.lt-velo:has(>.lt-svela),.lt-velo:has(>.lt-vince){background:var(--r-tavolo)}
+.lt-velo:has(>.lt-riu),.lt-velo:has(>.lt-computer),.lt-velo:has(>.lt-svela),.lt-velo:has(>.lt-vince),.lt-velo:has(>.lt-lenz){background:var(--r-tavolo)}
+
+/* il colore detto a parole: la tinta del telo, una pezzetta di stoffa e il suo nome. Sulla carta scrive sempre l'inchiostro */
+.lt-tinta{display:inline-flex;align-items:center;gap:3px;min-width:0;font:italic 12.5px/1 var(--r-serif);color:var(--r-ink2);white-space:nowrap}
+.lt-tinta i{flex:none;width:9px;height:9px;border-radius:1.5px;box-shadow:inset 0 0 0 .5px rgba(20,10,4,.6),0 0 0 .5px rgba(84,60,34,.4)}
+.lt-pz{display:inline-block;flex:none;width:8px;height:8px;margin-right:4px;border-radius:1.5px;vertical-align:.02em;box-shadow:0 0 0 1px rgba(241,232,214,.4)}
+.lt-foglio .lt-pz{box-shadow:inset 0 0 0 .5px rgba(20,10,4,.6),0 0 0 .5px rgba(84,60,34,.4)}
+.lt-riu .chat .tc{font-style:italic;font-size:13px;color:var(--r-ink2)}
+.lt-riu .carta.spento .lt-tinta,.lt-riu .carta.zitto .lt-tinta{gap:0;font-size:0}
+.lt-esp .txt .lt-tinta{justify-content:center;font-size:14.5px}.lt-esp .txt .lt-tinta i{width:11px;height:11px}
+.lt-esp .rg .su .lt-tinta{margin-left:3px;font-size:12px}
+.lt-vince .u .lt-tinta{justify-content:center;max-width:64px;font-size:11.5px}.lt-vince .u .lt-tinta i{width:8px;height:8px}
+.lt-ultima .lt-ruolo .lt-tinta{vertical-align:baseline;font-size:12px}
+.lt-scambio .griglia button .lt-pz{margin-right:5px}
+
+/* i campioni di stoffa: pezzi tagliati con le forbici a dentelli, appuntati sul Registro */
+.lt-lenz.lt-foglio{box-sizing:border-box;width:100%;max-width:460px;max-height:100%;display:flex;flex-direction:column;padding:15px 16px 12px;animation:ltGira .24s var(--lt-ease) both}
+.lt-lenz .testa{flex:none;display:flex;align-items:center;justify-content:space-between;min-height:40px}
+.lt-lenz h3{margin:0;font-size:23px}
+.lt-lenz .campioni{flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:7px 8px;padding:3px 2px 2px}
+.lt-lenz .cmp{position:relative;display:grid;justify-items:center;align-content:start;min-width:0;min-height:44px;margin:0;padding:0;border:0;background:none;font-family:var(--r-serif);color:var(--r-ink);filter:drop-shadow(0 1.5px 1.5px rgba(50,28,10,.5));transition:transform .16s var(--lt-ease)}
+.lt-lenz .cmp:active:not(:disabled){transform:scale(.96)}
+.lt-lenz .stoffa{position:relative;display:block;width:100%;aspect-ratio:5/3;clip-path:var(--r-dentelli);background:var(--b);transition:opacity .2s var(--lt-ease),filter .2s var(--lt-ease)}
+.lt-lenz .stoffa::before{content:"";position:absolute;inset:0;opacity:.62;background:linear-gradient(112deg,transparent 12%,var(--l) 25%,transparent 40%,transparent 58%,var(--l) 70%,transparent 84%)}
+.lt-lenz .stoffa::after{content:"";position:absolute;inset:0;opacity:.68;background:linear-gradient(112deg,transparent 30%,var(--s) 45%,transparent 58%),linear-gradient(112deg,transparent 80%,var(--s) 100%)}
+.lt-lenz .nm{max-width:100%;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 15px/1.1 var(--r-serif)}
+.lt-lenz .chi{display:block;max-width:100%;min-height:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:12px/13px var(--r-serif);color:var(--r-ink3)}
+.lt-lenz .cmp.preso .stoffa{opacity:.46;filter:saturate(.6)}
+.lt-lenz .cmp.preso .nm{color:var(--r-ink3);font-weight:400}.lt-lenz .cmp.preso .chi{color:var(--r-ink2);font-weight:700}
+.lt-lenz .cmp.preso:disabled{opacity:1}
+.lt-lenz .cmp.mio .chi{color:var(--r-cera);font-weight:700}
+.lt-lenz .cmp.mio::after,.lt-lenz .cmp.atteso::after{content:"";position:absolute;right:-3px;top:-3px;width:30px;height:30px;background:var(--r-sigillo) center/100% 100% no-repeat;transform:rotate(-10deg);animation:ltSigillo .22s var(--lt-ease) both}
+.lt-lenz .cmp.atteso::after{opacity:.55}
+.lt-lenz .nota{flex:none;margin:6px 0 0;text-align:center;font:italic 14px/1.2 var(--r-serif);color:var(--r-ink2)}
+.lt-scena.oriz .lt-lenz.lt-foglio{max-width:760px;padding:10px 16px 8px}
+.lt-scena.oriz .lt-lenz .testa{min-height:34px}
+.lt-scena.oriz .lt-lenz .campioni{grid-template-columns:repeat(6,minmax(0,1fr))}
+.lt-scena.oriz .lt-lenz .stoffa{aspect-ratio:7/3}
 
 /* il foglio: carta rifilata male, il foglio sotto, candela in alto a sinistra, filo d'oro */
 .lt-foglio{position:relative;isolation:isolate;background:none;border:0;border-radius:0;box-shadow:0 16px 34px rgba(0,0,0,.6);color:var(--r-ink);font-family:var(--r-serif);letter-spacing:0;font-variant-numeric:lining-nums}
@@ -6861,7 +8106,7 @@ function cssRegistro() {
 .lt-riu .chi{grid-area:c;position:relative;display:flex;justify-content:center}
 .lt-riu .chi .faccia,.lt-riu .chi .pall{display:block;flex:none;width:44px;height:53px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1.5px var(--r-ottone),0 0 0 2.5px rgba(40,20,8,.4),0 2px 4px rgba(40,20,8,.45)}
 .lt-riu .chi .faccia{background:linear-gradient(#4a3325,#21150e)}
-.lt-riu .chi .morto{margin-left:-15px;filter:grayscale(1)}
+.lt-riu .chi .morto{margin-left:-15px;filter:saturate(.6) brightness(.82)}
 .lt-riu .fase{position:absolute;left:50%;bottom:-3px;box-sizing:border-box;padding:2px 6px 1px;border:3px double var(--r-ink2);border-radius:3px;font:700 12.5px/1.1 var(--r-serif);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;color:var(--r-ink2);background:rgba(248,240,222,.88);transform:translateX(-50%) rotate(-6deg)}
 .lt-riu[data-fase="vota"] .fase{border-color:var(--r-cera);color:var(--r-cera);font-size:14.5px;animation:ltTimbroV .24s var(--lt-ease) both}
 .lt-riu[data-fase="esito"] .fase{border-color:var(--r-cera);color:var(--r-cera);font-size:11.5px;letter-spacing:.03em;animation:ltTimbroE .24s var(--lt-ease) both}
@@ -6897,7 +8142,7 @@ function cssRegistro() {
 .lt-riu .carta.spento .st,.lt-riu .carta.zitto .st{padding:0 4px;font:700 9.5px/14px var(--r-sans);letter-spacing:.07em;text-transform:uppercase;border-radius:1px}
 .lt-riu .carta.spento .st{color:var(--r-ink2);box-shadow:inset 0 0 0 1px var(--r-ink3);transform:rotate(-3deg)}
 .lt-riu .carta.zitto .st{color:var(--r-chiara);background:var(--r-ink);box-shadow:1px 1px 0 rgba(40,20,8,.3);transform:rotate(-2deg)}
-.lt-riu .carta.spento>.faccia,.lt-riu .carta.spento>.pall{filter:grayscale(1) contrast(.82);opacity:.72}
+.lt-riu .carta.spento>.faccia,.lt-riu .carta.spento>.pall{filter:saturate(.6) contrast(.86);opacity:.78}
 .lt-riu .carta.spento .nm{color:var(--r-ink3);text-decoration:line-through;text-decoration-thickness:1.5px}
 .lt-riu .carta.zitto::before{content:"";pointer-events:none;position:absolute;left:0;top:21px;width:28px;height:6px;background:var(--r-ink);box-shadow:0 1px 1px rgba(0,0,0,.4);transform:rotate(-9deg);z-index:1}
 .lt-riu .carta .vt{grid-area:a;justify-self:start;align-self:center;display:flex;min-width:0;padding-left:1px}
@@ -7255,7 +8500,7 @@ html:has(.lt-pc.lt-foglio),body:has(.lt-pc.lt-foglio){background:#1c110b}
 .lt-scena.oriz .lt-riu[data-fase="parla"] .leg{display:flex}
 .lt-scena.oriz .lt-riu .carta{grid-template-columns:28px minmax(0,1fr) auto;grid-template-rows:23px 23px;grid-template-areas:'f n a' 'f s a';column-gap:5px;padding:0 1px}
 .lt-scena.oriz .lt-riu .carta>.faccia,.lt-scena.oriz .lt-riu .carta>.pall{width:27px;height:31px;margin:0}
-.lt-scena.oriz .lt-riu .carta .nm{grid-row:1/span 2;align-self:center;font-size:15px}
+.lt-scena.oriz .lt-riu .carta .nm{grid-row:1;align-self:end;font-size:15px}
 .lt-scena.oriz .lt-riu .carta.spento .nm,.lt-scena.oriz .lt-riu .carta.zitto .nm,.lt-scena.oriz .lt-riu .carta.io .nm,.lt-scena.oriz .lt-riu .carta.votato .nm{grid-row:1;align-self:end}
 .lt-scena.oriz .lt-riu .carta .nt{justify-content:flex-start;align-self:start;font-size:11.5px}
 .lt-scena.oriz .lt-riu .carta .az{grid-row:1/span 2;align-self:center}
@@ -7357,7 +8602,7 @@ html:has(.lt-fine),body:has(.lt-fine){background:#1c110b}
 .lt-ultima .rg{display:grid;grid-template-columns:29px minmax(0,1fr);align-items:center;column-gap:6px;min-height:40px;padding:1px 5px 1px 7px;text-align:left;border-bottom:1px solid var(--r-seppia2)}
 .lt-ultima .rg .faccia,.lt-ultima .rg .pall{display:block;width:29px;height:34px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone),0 0 0 2px rgba(40,20,8,.32)}
 .lt-ultima .rg .faccia{background:linear-gradient(#4a3325,#21150e)}
-.lt-ultima .rg.spento .faccia,.lt-ultima .rg.spento .pall{filter:grayscale(1) contrast(.82);opacity:.75}
+.lt-ultima .rg.spento .faccia,.lt-ultima .rg.spento .pall{filter:saturate(.6) contrast(.86);opacity:.8}
 .schermata.lt-fine .lt-ultima .nome{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 15.5px/1.14 var(--r-serif);color:var(--r-ink)}
 .schermata.lt-fine .lt-ultima .punti{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:12.5px/1.18 var(--r-serif);color:var(--r-ink2)}
 .schermata.lt-fine .modulo-nota{color:#ddcbaa}
@@ -7386,7 +8631,7 @@ html:has(.lt-fine),body:has(.lt-fine){background:#1c110b}
 }
 
 @media (prefers-reduced-motion:reduce){.lt-scena *,.lt-scena *::before,.lt-scena *::after,.lt-pc *,.lt-pc *::before,.lt-pc *::after,.lt-fine *,.lt-fine *::before,.lt-fine *::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
-`.replace("@GRANA@", GRANA).replace("@SIGILLO@", ltCera(true)).replace("@VUOTO@", ltCera(false)).replace("@PALLIDO@", ltCera(false, true)).replace("@FILIGRANA@", ltFiligrana()).replace("@SAGOMA@", ltSagoma()).replace("@STRAPPO@", ltStrappo());
+`.replace("@GRANA@", GRANA).replace("@SIGILLO@", ltCera(true)).replace("@VUOTO@", ltCera(false)).replace("@PALLIDO@", ltCera(false, true)).replace("@FILIGRANA@", ltFiligrana()).replace("@SAGOMA@", ltSagoma()).replace("@STRAPPO@", ltStrappo()).replace("@DENTELLI@", ltDentelli());
 }
 var cssFatto = false;
 function stile() {
@@ -7406,14 +8651,18 @@ function stile() {
     ".lt-sx{position:absolute;left:calc(10px + env(safe-area-inset-left));top:calc(8px + env(safe-area-inset-top));width:min(230px,52vw);display:flex;flex-direction:column;gap:6px;align-items:flex-start;pointer-events:none}",
     ".lt-sx>*{pointer-events:auto}.lt-riga{display:flex;gap:8px;align-items:center}",
     ".lt-esci{width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1.3rem;font-weight:700;cursor:pointer}",
-    ".lt-chip{display:inline-flex;align-items:center;gap:6px;min-height:30px;box-sizing:border-box;padding:4px 7px 4px 11px;border-radius:999px;font:inherit;font-weight:600;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;background:rgba(231,183,92,.16);color:#f6d999;border:1px solid rgba(231,183,92,.4);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease)}.lt-chip:active{transform:scale(.95)}.lt-chip::after{content:'i';flex:none;width:17px;height:17px;border-radius:50%;border:1px solid currentColor;display:grid;place-items:center;font:700 italic 11px Georgia,'Times New Roman',serif;letter-spacing:0;text-transform:none;opacity:.85}.lt-scena.sal .lt-chip::after{display:none}",
-    ".lt-chip[data-squadra=ombre]{background:rgba(208,80,106,.16);color:#f2a7b6;border-color:rgba(208,80,106,.5)}.lt-chip[data-squadra=soli]{background:rgba(169,147,230,.16);color:#d5c9f7;border-color:rgba(169,147,230,.5)}",
-    ".lt-barra{width:100%;display:grid;gap:3px;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b8b1a2}",
-    ".lt-barra .tr{height:7px;border-radius:4px;background:rgba(241,232,214,.12);overflow:hidden}.lt-barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,#c9923a,#f6d999);transition:width .3s var(--lt-ease)}",
+    ".lt-chip{display:inline-flex;align-items:center;gap:6px;min-height:30px;box-sizing:border-box;padding:4px 7px 4px 11px;border-radius:999px;font:inherit;font-weight:600;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;background:rgba(33,21,14,.88);color:#f6d999;border:1px solid rgba(231,183,92,.4);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease)}.lt-chip:active{transform:scale(.95)}.lt-chip::after{content:'i';flex:none;width:17px;height:17px;border-radius:50%;border:1px solid currentColor;display:grid;place-items:center;font:700 italic 11px Georgia,'Times New Roman',serif;letter-spacing:0;text-transform:none;opacity:.85}.lt-scena.sal .lt-chip::after{display:none}",
+    ".lt-scena:not(.oriz) .lt-chip.lunga{font-size:.64rem;letter-spacing:.03em;padding:4px 5px 4px 8px;gap:4px}.lt-scena:not(.oriz) .lt-chip.lunghissima{font-size:.58rem;letter-spacing:0}",
+    "@media (max-width:380px){.lt-scena:not(.oriz) .lt-dx .lt-hbtn:not(.ico) span{display:none}}",
+    ".lt-chip[data-squadra=ombre]{color:#f2a7b6;border-color:rgba(208,80,106,.5)}.lt-chip[data-squadra=soli]{color:#d5c9f7;border-color:rgba(169,147,230,.5)}",   // (fondo pieno: anche il fantasma, che vede tutto chiaro, lo legge sul marmo)
+    ".lt-barra{width:100%;display:grid;gap:3px;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#d9d2c3;text-shadow:0 0 2px #0a0705,0 1px 3px #0a0705,0 0 6px rgba(10,7,5,.8)}",
+    ".lt-barra .tr{height:7px;border-radius:4px;background:rgba(14,9,6,.78);box-shadow:0 0 0 1px rgba(241,232,214,.16);overflow:hidden}.lt-barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,#c9923a,#f6d999);transition:width .3s var(--lt-ease)}",
     ".lt-scena.oriz .lt-velo{padding:8px max(10px,env(safe-area-inset-right)) 8px max(10px,env(safe-area-inset-left))}",
     ".lt-scena.oriz .lt-minimappa{height:min(78%,420px)}",
     ".lt-scena.sal .lt-barra,.lt-scena.sal .lt-lista-btn,.lt-scena.sal .lt-lista,.lt-scena.sal .lt-ibtn,.lt-scena.sal .lt-info{display:none!important}",
-    ".lt-saletta{position:absolute;z-index:1;left:0;right:0;margin:0 auto;top:calc(10px + env(safe-area-inset-top));width:max-content;max-width:calc(100% - 180px);display:flex;align-items:center;gap:8px;padding:5px 6px 5px 12px;border-radius:999px;background:rgba(20,12,8,.86);border:1px solid rgba(195,154,72,.55);font-weight:600;font-size:.85rem;color:#f0dcae}",
+    ".lt-scena.sal:not(.oriz) .lt-chip{display:none}",   // (in verticale la riga non basta per tutto: «Saletta» lo dice già la stanza)
+    ".lt-saletta{position:absolute;z-index:1;left:0;right:0;margin:0 auto;top:calc(8px + env(safe-area-inset-top));width:max-content;max-width:calc(100% - 180px);box-sizing:border-box;min-height:36px;white-space:nowrap;display:flex;align-items:center;gap:8px;padding:5px 6px 5px 12px;border-radius:999px;background:rgba(20,12,8,.86);border:1px solid rgba(195,154,72,.55);font-weight:600;font-size:.85rem;color:#f0dcae}",
+    ".lt-scena.sal:not(.oriz) .lt-saletta{left:calc(54px + env(safe-area-inset-left));right:auto;margin:0;max-width:calc(100% - 192px - env(safe-area-inset-left) - env(safe-area-inset-right));padding:3px 4px 3px 10px;gap:6px}.lt-saletta .cod{min-width:0;overflow:hidden;text-overflow:ellipsis}",
     ".lt-saletta .inv{display:inline-flex;align-items:center;gap:5px;font:inherit;font-weight:700;font-size:.8rem;border:0;border-radius:999px;padding:6px 11px;background:linear-gradient(180deg,#d9b56a,#a9812f);color:#22140a;cursor:pointer}",
     ".lt-foto{max-width:360px;display:flex;flex-direction:column;align-items:center;gap:8px}.lt-foto .testa{display:flex;align-items:center;gap:8px;width:100%}.lt-foto h3{margin:0;flex:1;color:#e9d3ae}.lt-foto .lt-chiudi{position:static}",
     "canvas.foto{display:block;width:min(260px,100%);aspect-ratio:4/3;height:auto;border:6px solid #efe6d2;border-bottom-width:18px;border-radius:2px;box-shadow:0 8px 20px rgba(0,0,0,.5);transform:rotate(-1.5deg);background:#2b2420}",
@@ -7456,6 +8705,8 @@ function stile() {
     ".lt-az{position:relative;width:62px;height:62px;border-radius:50%;border:1.5px solid rgba(241,232,214,.3);background:rgba(33,21,14,.85);color:#f1e8d6;font:inherit;font-weight:600;font-size:.62rem;letter-spacing:.02em;text-transform:uppercase;display:grid;place-items:center;padding:0;touch-action:manipulation;transition:transform .16s var(--lt-ease),opacity .2s var(--lt-ease)}",
     ".lt-az:active:not(:disabled){transform:scale(.9)}.lt-az:disabled{opacity:.62;border-color:rgba(255,255,255,.35)}.lt-az .et{position:absolute;inset:0;pointer-events:none}.lt-az .et svg{display:block;width:100%;height:100%;overflow:visible;fill:currentColor;font:inherit;font-weight:600;letter-spacing:.02em;text-transform:uppercase}",
     ".lt-az.oro{border-color:rgba(231,183,92,.75);background:rgba(231,183,92,.22)}.lt-az.oro:not(:disabled){border-color:#f6d999;background:#e7b75c;color:#1d1508}.lt-az.rosso{border-color:rgba(208,80,106,.8);background:rgba(208,80,106,.26)}.lt-az.viola{border-color:rgba(169,147,230,.75);background:rgba(169,147,230,.2)}",
+    ".lt-az.telo,.lt-az.telo:disabled{opacity:1;background:var(--telo,#7c8088);border:2px solid var(--orlo,#b4b8c0);box-shadow:0 2px 7px rgba(0,0,0,.5);transition:transform .16s var(--lt-ease),background-color .2s var(--lt-ease),border-color .2s var(--lt-ease)}",
+    ".lt-az.conta .et{visibility:hidden}",
     ".lt-az .cd{position:absolute;inset:0;display:grid;place-items:center;font-size:1.15rem;background:rgba(14,9,6,.62);border-radius:50%}",
     ".lt-avviso{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translate(-50%,-6px);max-width:calc(100% - 32px);font-weight:700;font-size:.9rem;text-align:center;background:rgba(33,21,14,.95);border:1px solid rgba(231,183,92,.4);padding:9px 13px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .22s var(--lt-ease),transform .22s var(--lt-ease);z-index:3}",
     ".lt-avviso.su{opacity:1;transform:translate(-50%,0)}.lt-avviso.ombra,.lt-avviso.morte{border-color:rgba(208,80,106,.7)}",
@@ -7484,12 +8735,8 @@ function stile() {
     ".lt-morte{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;text-align:center;background:radial-gradient(ellipse at center,rgba(70,10,22,.92),rgba(5,4,10,.97) 70%);animation:ltMorteEntra .25s var(--lt-ease) both}",
     ".lt-morte.via{animation:ltMorteVia .3s var(--lt-ease) both}@keyframes ltMorteEntra{from{opacity:0}to{opacity:1}}@keyframes ltMorteVia{to{opacity:0}}",
     ".lt-morte .palco{display:flex;align-items:flex-end;justify-content:center;gap:4%;width:100%;height:46%}",
-    ".lt-morte .killer,.lt-morte .vittima{height:100%;width:auto;max-width:34%;object-fit:contain}.lt-morte .sagoma{width:18%;max-width:120px;height:auto;aspect-ratio:1/2;border-radius:50% 50% 14% 14%/34% 34% 10% 10%;background:linear-gradient(#3a2a20,#1e130c)}",
+    ".lt-morte .killer,.lt-morte .vittima{min-width:0;height:100%;object-fit:contain;object-position:50% 100%}.lt-morte .killer{flex:0 1 43%;width:43%}.lt-morte .vittima{flex:0 1 53%;width:53%}.lt-morte .sagoma{width:18%;max-width:120px;height:auto;aspect-ratio:1/2;border-radius:50% 50% 14% 14%/34% 34% 10% 10%;background:linear-gradient(#3a2a20,#1e130c)}",
     ".lt-morte .killer{filter:drop-shadow(0 0 18px rgba(240,90,110,.75));animation:ltKiller .45s var(--lt-ease) .1s both}@keyframes ltKiller{from{opacity:0;transform:translateX(-40%) scale(.9)}to{opacity:1;transform:none}}",
-    ".lt-morte .vittima{transform-origin:50% 100%;animation:ltCade .7s cubic-bezier(.5,0,.75,0) 1.2s both}@keyframes ltCade{to{transform:rotate(84deg) translateY(10%);filter:grayscale(1) brightness(.55)}}",
-    ".lt-morte .lanterna{position:relative;width:13%;max-width:70px;aspect-ratio:3/4;margin-bottom:6%;border-radius:30% 30% 22% 22%;background:linear-gradient(#3a2d3d,#1c1722);box-shadow:inset 0 0 0 3px #e7b75c}",
-    ".lt-morte .fiamma{position:absolute;left:50%;top:22%;width:44%;height:52%;margin-left:-22%;border-radius:50% 50% 45% 45%;background:radial-gradient(ellipse at 50% 70%,#fff3c4,#ffb347 45%,#ff6a2a 80%);box-shadow:0 0 26px 10px rgba(255,170,70,.55);animation:ltSpegne .5s ease-in .8s both}@keyframes ltSpegne{to{transform:scale(.05);opacity:0;box-shadow:none}}",
-    ".lt-morte .fumo{position:absolute;left:44%;top:10%;width:14%;height:14%;border-radius:50%;background:rgba(200,200,215,.5);opacity:0;animation:ltFumo 1.4s ease-out 1.1s both}.lt-morte .fumo.f2{left:52%;animation-delay:1.3s}@keyframes ltFumo{0%{opacity:.7;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-260%) scale(2.6)}}",
     ".lt-morte h2{margin:10px 0 0;font-size:1.45rem;font-weight:700;letter-spacing:-.02em;color:#ff9aa9;animation:ltKiller .4s var(--lt-ease) .5s both}.lt-morte p{margin:0;color:#c9bfb0;font-size:.9rem;animation:ltKiller .4s var(--lt-ease) .9s both}",
     ".lt-minimappa{position:absolute;z-index:3;left:0;right:0;margin:0 auto;top:calc(8px + env(safe-area-inset-top));width:min(560px,calc(100% - 24px));height:min(58%,420px);display:flex;flex-direction:column;padding:6px 8px 6px;border-radius:14px;background:rgba(20,12,8,.86);border:1px solid rgba(231,183,92,.3);box-shadow:0 10px 30px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:ltSale .22s var(--lt-ease)}",
     ".lt-minimappa .testa{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.82rem;color:#f6d999}.lt-minimappa .lt-chiudi{position:static;width:34px;height:34px;flex:none;font-size:1.3rem}",
@@ -7512,13 +8759,14 @@ function stile() {
     ".lt-carica{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(ellipse at 50% 42%,#1a1f38,#090b16 72%);opacity:0;transition:opacity .3s var(--lt-ease,cubic-bezier(.22,1,.36,1));touch-action:none}.lt-carica[hidden]{display:none}.lt-carica.su{opacity:1}",
     ".lt-carica svg.ico{width:72px;height:72px;color:#e7b75c;stroke-width:1.5;vertical-align:baseline}.lt-carica svg.ico path:last-child{fill:#f6d999;stroke:none;transform-box:fill-box;transform-origin:50% 100%;animation:ltFiamma 1.1s ease-in-out infinite alternate}@keyframes ltFiamma{to{transform:scale(1.18,1.3);opacity:.75}}",
     ".lt-carica .tit{font-weight:700;font-size:1.05rem;color:#f1e8d6;letter-spacing:-.01em}.lt-carica .bar{width:min(220px,60%);height:5px;border-radius:3px;background:rgba(241,232,214,.14);overflow:hidden}.lt-carica .bar i{display:block;height:100%;width:0;background:#e7b75c;border-radius:3px;transition:width .3s var(--lt-ease,cubic-bezier(.22,1,.36,1))}.lt-carica .num{font-size:.8rem;font-weight:700;color:#b8b1a2;font-variant-numeric:tabular-nums}",
-    ".lt-mappa{position:absolute;z-index:1;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 180px);top:calc(52px + env(safe-area-inset-top));font-size:.68rem;font-weight:700;color:#b8b1a2;background:rgba(20,12,8,.62);border-radius:999px;padding:2px 9px;display:flex;align-items:center;gap:6px;pointer-events:none}.lt-mappa[hidden]{display:none}.lt-mappa.ok{color:#9fe3bd}",
-    ".lt-mappa i{display:inline-block;width:34px;height:3px;border-radius:2px;background:rgba(241,232,214,.18);position:relative;overflow:hidden}.lt-mappa i:after{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--p,0%);background:#e7b75c;transition:width .3s var(--lt-ease,cubic-bezier(.22,1,.36,1))}.lt-mappa.ok i{display:none}",
+    ".lt-premappa{position:absolute;z-index:1;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 180px);top:calc(52px + env(safe-area-inset-top));font-size:.68rem;font-weight:700;color:#b8b1a2;background:rgba(20,12,8,.62);border-radius:999px;padding:2px 9px;display:flex;align-items:center;gap:6px;pointer-events:none}.lt-mappa[hidden]{display:none}.lt-mappa.ok{color:#9fe3bd}",
+    ".lt-premappa i{display:inline-block;width:34px;height:3px;border-radius:2px;background:rgba(241,232,214,.18);position:relative;overflow:hidden}.lt-premappa i:after{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--p,0%);background:#e7b75c;transition:width .3s var(--lt-ease,cubic-bezier(.22,1,.36,1))}.lt-mappa.ok i{display:none}",
     ".lt-info{font-size:.74rem;font-weight:700;color:#f6d999;background:rgba(20,12,8,.78);border-radius:8px;padding:4px 8px;line-height:1.3}",
     ".lt-cam{display:flex;flex-direction:column;gap:8px;max-width:640px}.lt-cam .testa{display:flex;justify-content:space-between;align-items:center}.lt-cam .lt-chiudi{position:static}",
     ".lt-cam .griglia{display:grid;grid-template-columns:1fr 1fr;gap:6px}.lt-cam .schermo{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:#000;border:2px solid #2f3b44}.lt-cam .schermo canvas{width:100%;height:100%;display:block}",
     ".lt-cam .nav{display:flex;justify-content:center;align-items:center;gap:14px;font-weight:600}.lt-cam .nav button{font:inherit;font-size:1.2rem;font-weight:700;color:#f1e8d6;background:#35241a;border:1px solid rgba(241,232,214,.2);border-radius:10px;width:44px;height:36px}",
-    ".lt-plastico h3{margin-bottom:6px}",
+    ".lt-plastico h3{margin-bottom:6px}.lt-plastico{box-sizing:border-box;width:100%}",
+    "@media (max-width:600px){.lt-plastico canvas{width:100%!important;height:auto!important}.lt-plastico p{margin-top:6px}}",
     ".lt-mod{color:#cbbcf6!important;font-weight:700}",
     ".lt-fermo{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;font-size:3.2rem;font-weight:700;letter-spacing:.08em;color:#ffd0d8;text-shadow:0 0 24px rgba(208,80,106,.8);background:radial-gradient(circle,rgba(90,20,35,.15),rgba(90,20,35,.55));animation:ltPulsa .8s var(--lt-ease) infinite alternate}",
     ".lt-fermo small{font-size:.9rem;letter-spacing:0;font-weight:700}",
@@ -7528,7 +8776,7 @@ function stile() {
     ".lt-intro.corpo{background:radial-gradient(circle,rgba(92,16,32,.95),rgba(14,9,6,.98))}",
     ".lt-intro .icona{font-size:4rem;animation:ltDondola .5s ease-in-out 3 alternate}.lt-intro h2{margin:0;padding:0 14px;font-family:var(--r-serif);font-size:2.5rem;font-weight:700;line-height:1.08;letter-spacing:0;color:#f6d999;animation:ltColpo .5s var(--lt-ease) both}",
     ".lt-intro.corpo h2{color:#f6d999}.lt-intro p{margin:0;font-family:var(--r-serif);font-size:1.1rem;font-style:italic;color:#f1e8d6}",
-    ".lt-intro .facce{display:flex;gap:14px}.lt-intro .facce img,.lt-intro .facce .pall{width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:top;background:#35241a;border:3px solid #c39a48}.lt-intro .facce .morto{filter:grayscale(1) brightness(.7);border-color:#8d7f6c}",
+    ".lt-intro .facce{display:flex;gap:14px}.lt-intro .facce img,.lt-intro .facce .pall{width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:top;background:#35241a;border:3px solid #c39a48}.lt-intro .facce .morto{filter:saturate(.6) brightness(.76);border-color:#8d7f6c}",
     "@keyframes ltIntro{0%{opacity:0}12%{opacity:1}82%{opacity:1}100%{opacity:0}}",
     "@keyframes ltDondola{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}",
     "@keyframes ltColpo{from{transform:scale(2.2);opacity:0}to{transform:scale(1);opacity:1}}",
