@@ -646,7 +646,7 @@ class Partita {
     return { ruolo:p.ruolo, squadra:p.squadra, compagni: om ? this.gioc.filter(q=>q!==p&&q.squadra==='ombre').map(q=>q.id) : [],
       compiti:p.compiti.map(c=>[c.post.id, c.fatto?1:0]), finti: p.squadra!=='ospiti',
       cd: om ? sec(p.cd+this.t) : 0, cdA:sec(p.cdA+this.t), usi:p.usi, campane:p.campane, cdBuio: om ? sec(this.cdBuio+this.t) : 0,
-      zittito: !!(this.riu && this.riu.zittiti.includes(p.id)), ep:p.ep, v:p.vPriv,
+      zittito: !!(this.riu && this.riu.zittiti.includes(p.id)), voto:(this.riu && this.riu.voti.get(p.id)) || null, ep:p.ep, v:p.vPriv,
       vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati, quanti:this.imp.avvoltoio.quanti, usiRian:p.usiRian, usiBeng:p.usiBeng, campVolte:p.campVolte,
       bloccato: sec(p.bloccatoFine), traccia: p.traccia && p.traccia.fine>this.t ? [p.traccia.id, sec(p.traccia.fine)] : null,
       rianima: p.rianima ? sec(p.rianima.fine) : 0, travestito: this.travestito(p), rivelato:p.rivelato,
@@ -668,14 +668,22 @@ class Partita {
   }
   // la partita da ricordare se l'host ricarica la pagina: solo dati semplici
   salva(){
+    const resta=f=>Math.max(0,Math.round((f-this.t)*10)/10), R=this.riu;
     return { round:this.round, vincitore:this.vincitore, cdBuio:Math.round(this.cdBuio), ombreIniziali:this.ombreIniziali, dichiarati:this.dichiarati,
       cam:this.telecamere.filter(c=>!c.base).map(c=>[Math.round(c.x), Math.round(c.y), c.nome, c.da]),
-      gioc:this.gioc.map(p=>({ id:p.id, nome:p.nome, bot:p.bot, ruolo:p.ruolo, vivo:p.vivo, uscito:p.uscito, campane:p.campane, vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati,
+      // a che punto era tutto: la fase, i sabotaggi aperti, le lanterne a terra, la riunione coi voti (daStato li tratta come facoltativi: una copia vecchia non li ha)
+      fase:this.fase, resto:resta(this.fineFase),
+      buio:this.buio?resta(this.buio.fine):0, interf:this.interf?resta(this.interf.fine):0, acqua:this.acqua?[resta(this.acqua.fine),this.acqua.a?1:0,this.acqua.b?1:0]:null,
+      neb:this.nebbiaFine>this.t?resta(this.nebbiaFine):0, ben:this.bengalaFine>this.t?resta(this.bengalaFine):0,
+      corpi:this.corpi.map(c=>[c.id,Math.round(c.x),Math.round(c.y),c.stanza,c.da]),
+      riu:R?{ motivo:R.motivo, da:R.da, corpo:R.corpo, stanza:R.stanza, t:Math.round(R.t*10)/10, disc:R.disc, voto:R.voto, voti:[...R.voti], zittiti:R.zittiti, chiusa:R.chiusa }:null,
+      chat:R?this.chat:null, esito:this.esito||null,
+      gioc:this.gioc.map(p=>({ id:p.id, nome:p.nome, bot:p.bot, ruolo:p.ruolo, vivo:p.vivo, uscito:p.uscito, usciVivo:p.usciVivo, x:Math.round(p.x), y:Math.round(p.y), dir:Math.round(p.dir*100)/100, cd:Math.round(p.cd), cdA:Math.round(p.cdA), usi:p.usi, campane:p.campane, vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati,
         usiRian:p.usiRian, usiBeng:p.usiBeng, campVolte:p.campVolte, rivelato:p.rivelato, camPiazzate:p.camPiazzate, usiVet:p.usiVet, usiTra:p.usiTra, mod:p.mod, imitato:p.imitato, imita:p.imita,
         indovinati:p.indovinati, fantasmaRuolo:p.fantasmaRuolo||null, foto:p.foto||null, morte:p.morte||null, letti:p.letti, protettoDa:p.protettoDa, zittito:p.zittito, segnato:p.segnato, campione:p.campione, trapRuoli:p.trapRuoli,
         compiti:p.compiti.map(c=>[c.post.id, c.fatto?1:0, c.extra?1:0]) })) };
   }
-  // si riparte dal palazzo, tutti alla fontana, con ruoli, compiti ed eliminati di prima
+  // si riparte dal palazzo com'era: ruoli, compiti, eliminati, posti, sabotaggi, riunione. Con una copia di una versione vecchia (senza quei campi) tutti alla fontana
   static daStato(s, imp, eventi){
     const P=new Partita(s.gioc.map(g=>({ id:g.id, nome:g.nome, bot:g.bot })), imp, eventi);
     P.round=s.round||1; P.cdBuio=Math.max(20, s.cdBuio||0);
@@ -684,14 +692,36 @@ class Partita {
     (s.cam||[]).forEach(([x,y,nome,da])=>{ if(isFinite(x)&&isFinite(y)) P.telecamere.push({ x, y, nome:String(nome||'Telecamera'), da }); });
     s.gioc.forEach(g=>{
       const p=P.per(g.id); p.ruolo=RUOLI[g.ruolo]?g.ruolo:'ospite'; P.preparaRuolo(p);
-      p.vivo=!!g.vivo; p.fantasma=!g.vivo; p.uscito=!!g.uscito; p.campane=g.campane|0; p.cd=18; p.cdA=10;
-      ['vite','bersaglio','mangiati','usiRian','usiBeng','campVolte','rivelato','camPiazzate','usiVet','usiTra','mod','imitato','imita','indovinati','fantasmaRuolo','foto','morte','letti','protettoDa','zittito','segnato','campione','trapRuoli'].forEach(k=>{ if(g[k]!=null) p[k]=g[k]; });
+      p.vivo=!!g.vivo; p.fantasma=!g.vivo; p.uscito=!!g.uscito; p.usciVivo=!!g.usciVivo; p.campane=g.campane|0; p.cd=g.cd!=null?+g.cd||0:18; p.cdA=g.cdA!=null?+g.cdA||0:10;
+      ['usi','vite','bersaglio','mangiati','usiRian','usiBeng','campVolte','rivelato','camPiazzate','usiVet','usiTra','mod','imitato','imita','indovinati','fantasmaRuolo','foto','morte','letti','protettoDa','zittito','segnato','campione','trapRuoli'].forEach(k=>{ if(g[k]!=null) p[k]=g[k]; });
       p.mod = g.mod || null;
       p.compiti=(g.compiti||[]).map(([id,f,x])=>({ post:POSTAZIONI.find(q=>q.id===id), fatto:!!f, finto:p.squadra!=='ospiti', extra:!!x })).filter(c=>c.post);
     });
     P.M=PALAZZO; P.inCerchio();
+    s.gioc.forEach(g=>{
+      const p=P.per(g.id); if(p.uscito || !isFinite(g.x) || !isFinite(g.y) || g.x==null || g.y==null || (p.vivo && !libero(P.M,g.x,g.y))) return;
+      P.teletrasporta(p,g.x,g.y); if(isFinite(g.dir) && g.dir!=null) p.dir=g.dir;
+    });
+    const f=s.fase, inRiu=(f==='riunione'||f==='esito') && !!s.riu;
     if(s.vincitore){ P.vincitore=s.vincitore; P.fase='fine'; }
-    else { P.fase='svela'; P.fineFase=P.t+DUR_SVELA; }
+    else if(f==='gioco' || inRiu){
+      P.fase=f; P.fineFase=P.t+(+s.resto||0);
+      (s.corpi||[]).forEach(([id,x,y,stanza,da])=>{ if(P.per(id)) P.corpi.push({ id, x, y, stanza, da, t:P.t }); });
+      if(s.buio) P.buio={ fine:P.t+s.buio };
+      if(s.interf) P.interf={ fine:P.t+s.interf };
+      if(s.acqua) P.acqua={ fine:P.t+s.acqua[0], a:!!s.acqua[1], b:!!s.acqua[2] };
+      if(s.neb) P.nebbiaFine=P.t+s.neb;
+      if(s.ben) P.bengalaFine=P.t+s.ben;
+      if(P.buio||P.interf||P.acqua) P.assegnaRiparatori();
+      if(inRiu){
+        const r=s.riu, R={ motivo:r.motivo, da:r.da, corpo:r.corpo, stanza:r.stanza, t:+r.t||0, t0:P.t-(+r.t||0), disc:r.disc, voto:r.voto, voti:new Map(r.voti||[]), coda:[], chiusa:!!r.chiusa, zittiti:r.zittiti||[] };
+        P.riu=R; P.chat=s.chat||[]; if(s.esito) P.esito=s.esito;
+        // quello che i Bot dovevano dire è perso; il loro voto no
+        for(const b of P.gioc) if(b.bot&&b.vivo&&!R.voti.has(b.id)) R.coda.push({ t:Math.max(R.t+1,R.disc+1.5)+rnd()*R.voto*0.5, chi:b, voto:true });
+        R.coda.sort((a,b)=>a.t-b.t);
+      }
+    }
+    else { P.fase='svela'; P.fineFase=P.t+(f==='svela'?Math.min(DUR_SVELA,+s.resto||0):DUR_SVELA); }
     P.segna();
     return P;
   }
@@ -1057,9 +1087,17 @@ class Partita {
   /* ----- chi esce e chi torna ----- */
   esce(id){
     const p=this.per(id); if(!p||p.uscito) return;
+    p.usciVivo=p.vivo;   // (chi era già fantasma non ha perso niente: al ritorno niente avviso)
     p.uscito=true; p.vivo=false; p.fantasma=true; p.compiti.forEach(c=>c.fatto=true);
     this.segna();
     if(this.fase!=='fine' && this.controllaVittoria()) this.chiudi();
+  }
+
+  // chi torna quando il suo posto non c'è più (oltre un minuto e mezzo senza rete): resta fantasma e guarda la partita, mai fermo
+  rientra(id){
+    const p=this.per(id); if(!p||!p.uscito) return;
+    p.uscito=false; p.vivo=false; p.fantasma=true;
+    this.priv(p); this.segna(); if(p.usciVivo) this.avviso(p, 'Sei stato via troppo: ora sei un fantasma.');
   }
 
   /* ----- il tempo che passa ----- */
@@ -2586,6 +2624,12 @@ function immPompa(){
     else immScarica(q.url).then(bb => { if(bb){ daBlob = true; parti(immOggetto(q.url, bb)); } else fatto(false); });   // (se lo sta già scaricando il precarico, si aspetta lui: mai due volte)
   }
 }
+// la coda di quello che serve a chi gioca non vale più (si è appena scoperto dove sono, e le immagini chieste intorno alla fontana starebbero davanti a quelle vere): si ricomincia da quello che serve adesso
+function immCodaDaCapo(){
+  const resta = [];
+  for(const q of immCoda){ if(q.pre) resta.push(q); else { if(q.m.s[q.chiave] === 0) delete q.m.s[q.chiave]; q.m.sporco = true; } }
+  immCoda.length = 0; immCoda.push(...resta);
+}
 // le immagini di una mappa, se sono accese e l'indice è arrivato (se no null: si disegna a codice; l'indice parte da solo)
 function immPronta(M){
   try{
@@ -2612,6 +2656,7 @@ function immChiedi(m, M, i0, j0, i1, j1, anello){
   try{ immChiedi0(m, M, i0, j0, i1, j1, anello); }catch(e){ immAcceso0 = false; }   // (come sopra)
 }
 function immChiedi0(m, M, i0, j0, i1, j1, anello){
+  if(PRE.liv === 2) anello = 0;   // col caricamento a tutto schermo l'anello passa dopo: sulla pila finirebbe sopra a quello che si sta aspettando
   const q = (((i0 + 2)*256 + j0 + 2)*256 + i1 + 2)*256 + j1 + 2 + (anello ? 4294967296 : 0);   // il rettangolo, in un numero solo
   if(q === m.ultQ && !m.sporco) return;
   m.ultQ = q; m.sporco = false;
@@ -2778,7 +2823,7 @@ function precaricoStato(){
   if(!PRE.avviato || PRE.spento) return { attivo:false, pct:100, pronto:true, tier:PRE.tier, persi:0 };
   let tot = 0, fatto = 0, persi = 0;
   for(const m of PRE.mappe) tot += m.preFatta ? m.preTot : PRE_STIMA[m.nome] || 0;
-  for(const v of PRE.voci){ if(v.fatto) fatto += v.peso; if(v.perso) persi++; }
+  for(const v of PRE.voci){ if(v.fatto || immBlobV.has(v.url)) fatto += v.peso; if(v.perso) persi++; }   // (conta anche quello che è arrivato perché serviva subito a chi gioca)
   return { attivo:true, pct:PRE.pronto ? 100 : tot ? Math.min(99, Math.floor(100*fatto/tot)) : 0, pronto:PRE.pronto, tier:PRE.tier, persi, secondi:+(((PRE.tPronto || performance.now()) - PRE.t0)/1000).toFixed(1) };   // (secondi: da quando è partito il precarico a quando è stato pronto, o a adesso)
 }
 // le immagini intorno a un punto (quello che si vede e un poco di più) sono già decodificate? Le chiede, se mancano.
@@ -5264,6 +5309,7 @@ function quadri(z, post, ok){
 //   .microfono(traccia o null)    metto o tolgo la mia voce (senza ricollegare nessuno)
 //   .persone([[id, sessione], …]) chi c'è adesso in voce (con un server non serve: lo sa lui)
 //   .segnale(da, dati)            è arrivato un messaggio di collegamento (con un server non serve)
+//   .risveglia()                  (facoltativo) il telefono torna dal blocco schermo: i collegamenti caduti si riprendono subito
 //   .stati()                      { id: 'connected' | … } per le prove
 //   .chiudi()
 // In più, il trasporto diretto ha bisogno di qualcuno che porti i messaggi di collegamento da un telefono all'altro:
@@ -5372,12 +5418,26 @@ VoceMixer.prototype.chiudi = function () {
 //  3. IL TRASPORTO DIRETTO (WebRTC a maglia)
 // =========================================================
 // Solo audio. Ogni telefono ha un collegamento con ciascuno degli altri. Si usa solo lo STUN di Google per trovarsi (niente TURN:
-// su certe reti 4G/5G il collegamento può non riuscire). Offerta e risposta vanno COMPLETE (si aspetta la fine della raccolta dei
-// percorsi ICE e si manda il testo intero, niente candidati uno per uno). In ogni coppia propone chi ha l'id che viene prima,
+// su certe reti 4G/5G il collegamento può non riuscire). Offerta e risposta vanno COMPLETE (dentro ci sono i percorsi ICE trovati, niente
+// candidati uno per uno): si parte appena c'è un indirizzo pubblico. In ogni coppia propone chi ha l'id che viene prima,
 // così le offerte non si incrociano. Il canale audio è sempre «sendrecv»: la mia traccia si mette e si toglie con replaceTrack,
 // senza rifare i collegamenti, così si può anche solo ascoltare e accendere il microfono dopo.
 var VOCE_ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
+var VOCE_PUBBLICO = / typ (srflx|relay) /;   // un percorso ICE con l'indirizzo pubblico
+var VOCE_BITRATE = 24000;             // con 10 persone un telefono manda 9 voci: 24 kbit/s bastano per parlare
 function voceId() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+
+// Opus nel testo dell'offerta e della risposta: 24 kbit/s, il silenzio non viaggia (DTX), i pacchetti persi si ricostruiscono (FEC).
+// Questi numeri dicono all'altro telefono come mandare: si scrivono su quello che parte e su quello che arriva, così valgono
+// tutte e due le direzioni anche se l'altro ha una versione vecchia. Passarci due volte non cambia niente.
+function voceOpus(sdp) {
+  var m = /a=rtpmap:(\d+) opus\/48000/i.exec(sdp); if (!m) return sdp;
+  var riga = new RegExp('a=fmtp:' + m[1] + ' ([^\\r\\n]*)'), vuoi = ['usedtx=1', 'useinbandfec=1', 'maxaveragebitrate=' + VOCE_BITRATE];
+  if (riga.test(sdp)) return sdp.replace(riga, function (t, par) {
+    return 'a=fmtp:' + m[1] + ' ' + par.split(';').filter(function (x) { return x && !/^\s*(usedtx|useinbandfec|maxaveragebitrate)=/.test(x); }).concat(vuoi).join(';');
+  });
+  return sdp.replace(new RegExp('(a=rtpmap:' + m[1] + ' opus/48000[^\\r\\n]*(\\r?\\n))', 'i'), function (t, r, a) { return r + 'a=fmtp:' + m[1] + ' ' + vuoi.join(';') + a; });
+}
 
 function TrasportoDiretto(o) {
   this.o = o; this.io = o.io; this.sess = o.sess || voceId(); this.pc = {}; this.membri = {}; this.falli = {}; this.attesa = {};
@@ -5390,11 +5450,16 @@ TrasportoDiretto.prototype.microfono = function (traccia) {
   Object.keys(X.pc).forEach(function (id) { X.metti(X.pc[id]); });
 };
 // la mia traccia (o nessuna) sul canale audio di un collegamento
-// I messaggi di collegamento viaggiano su un canale veloce che ogni tanto ne perde uno: si mandano due volte (a mezzo secondo di distanza).
-// Chi li riceve scarta il doppione (offerta già vista, risposta quando non la aspetta più).
-TrasportoDiretto.prototype.invia = function (a, d) {
+// I messaggi di collegamento viaggiano su canali veloci che ogni tanto ne perdono uno: il primo prende la strada più rapida (il filo, se è aperto);
+// se dopo 0,8 s serve ancora, una seconda copia passa dal broker (bis). Chi li riceve scarta il doppione (offerta già vista, risposta quando non la aspetta più).
+// (Non prima: con 10 persone sono 45 collegamenti tutti insieme, e dall'host passano tutte le copie.)
+// sempre: la seconda copia parte comunque (la risposta a un rinfresco: qui il collegamento può restare «connected» mentre l'altro aspetta, lo stato non dice se è arrivata)
+TrasportoDiretto.prototype.invia = function (a, d, pc, sempre) {
   var X = this; X.o.manda(a, d);
-  setTimeout(function () { if (!X.chiuso) X.o.manda(a, d); }, 500);
+  setTimeout(function () {
+    if (X.chiuso || (pc && (X.pc[a] !== pc || (d.tipo === 'off' ? pc.signalingState !== 'have-local-offer' : !sempre && pc.connectionState === 'connected')))) return;
+    X.o.manda(a, d, true);
+  }, 800);
 };
 TrasportoDiretto.prototype.metti = function (pc) {
   if (!pc.trAudio) return;
@@ -5419,19 +5484,32 @@ TrasportoDiretto.prototype.nuovo = function (id, suaSess) {
   pc.onconnectionstatechange = function () {
     if (X.pc[id] !== pc) return; var s = pc.connectionState;
     X.dice(id + ': ' + s);
-    if (s === 'connected') { clearTimeout(pc.tDisc); clearTimeout(pc.tCon); X.falli[id] = 0; X.o.onStato(id, 'connesso'); }
-    else if (s === 'disconnected') { clearTimeout(pc.tDisc); X.o.onStato(id, 'instabile'); pc.tDisc = setTimeout(function () { if (X.pc[id] === pc && pc.connectionState !== 'connected') X.rifai(id); }, 4000); }
-    else if (s === 'failed') X.rifai(id);
+    if (s === 'connected') { clearTimeout(pc.tDisc); clearTimeout(pc.tCon); clearTimeout(pc.tRi); pc.tRi = 0; pc.vivo = true; X.falli[id] = 0; X.tetto(pc); X.o.onStato(id, 'connesso'); }
+    else if (s === 'disconnected') { clearTimeout(pc.tDisc); X.o.onStato(id, 'instabile'); pc.tDisc = setTimeout(function () { if (X.pc[id] === pc && pc.connectionState !== 'connected') X.rinfresca(id); }, 1500); }
+    else if (s === 'failed') X.rinfresca(id);
     else X.o.onStato(id, 'collego');
   };
   return pc;
 };
-// si aspetta di avere tutti i percorsi possibili, così basta un messaggio solo per parte (al massimo 2,5 secondi)
-TrasportoDiretto.prototype.raccolto = function (pc) {
+// il tetto dei 24 kbit/s anche sul mittente: vale qualunque cosa dica l'altro telefono
+TrasportoDiretto.prototype.tetto = function (pc) {
+  var s = pc.trAudio && pc.trAudio.sender; if (!s || !s.getParameters || !s.setParameters) return;
+  try {
+    var par = s.getParameters(); if (!par.encodings || !par.encodings.length || par.encodings[0].maxBitrate === VOCE_BITRATE) return;
+    par.encodings[0].maxBitrate = VOCE_BITRATE;
+    var p = s.setParameters(par); if (p && p.catch) p.catch(function () {});
+  } catch (e) {}
+};
+// basta un messaggio solo per parte: si parte appena c'è un indirizzo pubblico, gli altri percorsi non servono. Se non arriva, si aspetta la fine della raccolta (al massimo 2,5 secondi).
+// rifatta: dopo un rinfresco la raccolta ricomincia da zero, lo stato «complete» di prima non vale
+TrasportoDiretto.prototype.raccolto = function (pc, rifatta) {
   return new Promise(function (r) {
-    if (pc.iceGatheringState === 'complete') { r(); return; }
-    var t = setTimeout(r, 2500);
-    pc.addEventListener('icegatheringstatechange', function () { if (pc.iceGatheringState === 'complete') { clearTimeout(t); r(); } });
+    if (!rifatta && (pc.iceGatheringState === 'complete' || VOCE_PUBBLICO.test(pc.localDescription ? pc.localDescription.sdp : ''))) { r(); return; }
+    var t = setTimeout(fine, 2500);
+    function fine() { clearTimeout(t); pc.removeEventListener('icecandidate', perCand); pc.removeEventListener('icegatheringstatechange', perStato); r(); }
+    function perCand(e) { if (!e.candidate || VOCE_PUBBLICO.test(e.candidate.candidate)) fine(); }
+    function perStato() { if (pc.iceGatheringState === 'complete') fine(); }
+    pc.addEventListener('icecandidate', perCand); pc.addEventListener('icegatheringstatechange', perStato);
   });
 };
 TrasportoDiretto.prototype.offri = function (id) {
@@ -5440,10 +5518,38 @@ TrasportoDiretto.prototype.offri = function (id) {
   pc.trAudio = pc.addTransceiver('audio', { direction: 'sendrecv' }); X.metti(pc);
   pc.createOffer().then(function (of) { return pc.setLocalDescription(of); }).then(function () { return X.raccolto(pc); }).then(function () {
     if (X.pc[id] !== pc) return;
-    X.invia(id, { tipo: 'off', sdp: pc.localDescription.sdp, oid: oid, sda: X.sess, sa: suaSess });
+    X.invia(id, { tipo: 'off', sdp: voceOpus(pc.localDescription.sdp), oid: oid, sda: X.sess, sa: suaSess }, pc);
     // se la risposta non arriva (messaggio perso) si riprova da capo
     pc.tRis = setTimeout(function () { if (X.pc[id] === pc && pc.signalingState === 'have-local-offer') X.rifai(id); }, 6000);
   }).catch(function () { if (X.pc[id] === pc) X.rifai(id); });
+};
+// collegamento caduto: prima si cerca un percorso nuovo sullo stesso collegamento (ICE restart): flusso, mixer e audio restano dove sono. Se in 8 secondi non torna, si rifà da capo.
+// Propone sempre l'id che viene prima: l'altro glielo chiede. Con una versione vecchia dall'altra parte la richiesta si perde o l'offerta diventa un collegamento nuovo: si finisce da capo come sempre.
+TrasportoDiretto.prototype.rinfresca = function (id) {
+  var X = this, pc = X.pc[id]; if (X.chiuso || !pc || pc.tRi) return;
+  if (!pc.vivo || pc.signalingState !== 'stable' || !X.membri[id]) { X.rifai(id); return; }   // (mai collegato: non c'è niente da rinfrescare)
+  X.dice('rinfresco ' + id); X.o.onStato(id, 'instabile'); clearTimeout(pc.tDisc);
+  pc.tRi = setTimeout(function () { pc.tRi = 0; if (X.pc[id] === pc && (pc.connectionState !== 'connected' || pc.signalingState !== 'stable')) X.rifai(id); }, 8000);
+  if (X.io > id) { X.invia(id, { tipo: 'ri', sda: X.sess, sa: X.membri[id] }, pc); return; }
+  var oid = X.sess + '.' + (++X.n);
+  pc.createOffer({ iceRestart: true }).then(function (of) { return pc.setLocalDescription(of); }).then(function () { return X.raccolto(pc, true); }).then(function () {
+    if (X.pc[id] !== pc) return;
+    pc.oid = oid; X.invia(id, { tipo: 'off', sdp: voceOpus(pc.localDescription.sdp), oid: oid, sda: X.sess, sa: X.membri[id], ri: 1 }, pc);
+  }).catch(function () { if (X.pc[id] === pc) X.rifai(id); });
+};
+// il percorso nuovo è arrivato senza mai perdere «connected»: nessun altro segnale dirà che il rinfresco è finito
+TrasportoDiretto.prototype.rinfrescato = function (id, pc) {
+  if (!pc.tRi || this.pc[id] !== pc || pc.connectionState !== 'connected') return;
+  clearTimeout(pc.tRi); pc.tRi = 0; this.o.onStato(id, 'connesso');
+};
+// il telefono torna dal blocco schermo: quello che è caduto mentre dormiva si riprende subito, e le attese dei tentativi di prima non valgono più
+TrasportoDiretto.prototype.risveglia = function () {
+  var X = this; if (X.chiuso) return; X.attesa = {}; X.falli = {};
+  Object.keys(X.pc).forEach(function (id) { var s = X.pc[id].connectionState; if (s === 'disconnected' || s === 'failed') X.rinfresca(id); });
+  Object.keys(X.membri).forEach(function (id) {
+    if (X.pc[id]) return;
+    if (X.io < id) X.offri(id); else X.invia(id, { tipo: 'rifai', sda: X.sess, sa: X.membri[id], su: 1 });
+  });
 };
 // collegamento perso o mai nato: chi propone riprova; dopo 3 tentativi falliti di fila si ferma per 30 secondi
 TrasportoDiretto.prototype.rifai = function (id) {
@@ -5460,30 +5566,41 @@ TrasportoDiretto.prototype.segnale = function (da, d) {
     if (X.visti[d.oid]) return; X.visti[d.oid] = 1;   // (la stessa offerta arrivata due volte vale una)
     X.dice('offerta da ' + da);
     var ks = Object.keys(X.visti); if (ks.length > 40) delete X.visti[ks[0]];
+    var pc = X.pc[da];
+    if (d.ri && pc && pc.suaSess === d.sda && pc.signalingState === 'stable') { X.rispondi(da, pc, d); return; }   // un rinfresco: lo stesso collegamento, percorso nuovo
     X.chiudiPc(da);
-    var pc = X.nuovo(da, d.sda); pc.oid = d.oid;
-    pc.setRemoteDescription({ type: 'offer', sdp: d.sdp }).then(function () {
-      var tr = pc.getTransceivers().filter(function (x) { return x.receiver && x.receiver.track && x.receiver.track.kind === 'audio'; })[0];
-      if (tr) { pc.trAudio = tr; try { tr.direction = 'sendrecv'; } catch (e) {} X.metti(pc); }
-      return pc.createAnswer();
-    }).then(function (a) { return pc.setLocalDescription(a); }).then(function () { return X.raccolto(pc); }).then(function () {
-      if (X.pc[da] !== pc) return;
-      X.invia(da, { tipo: 'ris', sdp: pc.localDescription.sdp, oid: d.oid, sda: X.sess, sa: d.sda });
-    }).catch(function () { if (X.pc[da] === pc) X.rifai(da); });
+    X.rispondi(da, X.nuovo(da, d.sda), d);
   } else if (d.tipo === 'ris' && typeof d.sdp === 'string' && d.sdp.length < 40000) {
     var p = X.pc[da]; X.dice('risposta da ' + da + (p && p.signalingState === 'have-local-offer' && p.oid === d.oid ? '' : ' (scartata)'));
     if (!p || p.signalingState !== 'have-local-offer' || p.oid !== d.oid) return;
     clearTimeout(p.tRis);
-    p.setRemoteDescription({ type: 'answer', sdp: d.sdp }).catch(function () { if (X.pc[da] === p) X.rifai(da); });
+    p.setRemoteDescription({ type: 'answer', sdp: voceOpus(d.sdp) }).then(function () { X.rinfrescato(da, p); }).catch(function () { if (X.pc[da] === p) X.rifai(da); });
+  } else if (d.tipo === 'ri') {
+    X.dice(da + ' chiede di rinfrescare');
+    if (X.io < da) X.rinfresca(da);
   } else if (d.tipo === 'rifai') {
     X.dice(da + ' chiede di rifare');
+    if (d.su) delete X.attesa[da];   // (è tornato dal blocco schermo: la pausa dei tentativi falliti non vale più)
     var vecchio = X.pc[da]; if (vecchio && Date.now() - vecchio.t0 < 2500) return;   // (la richiesta è arrivata due volte: ho già ricominciato)
     if (X.io < da && X.membri[da] && !(X.attesa[da] > Date.now())) { X.chiudiPc(da); X.offri(da); }
   }
 };
+// la risposta a un'offerta: su un collegamento nuovo o, per un rinfresco, su quello che c'è già
+TrasportoDiretto.prototype.rispondi = function (da, pc, d) {
+  var X = this; pc.oid = d.oid;
+  pc.setRemoteDescription({ type: 'offer', sdp: voceOpus(d.sdp) }).then(function () {
+    var tr = pc.getTransceivers().filter(function (x) { return x.receiver && x.receiver.track && x.receiver.track.kind === 'audio'; })[0];
+    if (tr) { pc.trAudio = tr; try { tr.direction = 'sendrecv'; } catch (e) {} X.metti(pc); }
+    return pc.createAnswer();
+  }).then(function (a) { return pc.setLocalDescription(a); }).then(function () { return X.raccolto(pc, !!d.ri); }).then(function () {
+    if (X.pc[da] !== pc) return;
+    X.invia(da, { tipo: 'ris', sdp: voceOpus(pc.localDescription.sdp), oid: d.oid, sda: X.sess, sa: d.sda }, pc, !!d.ri);
+    X.rinfrescato(da, pc);
+  }).catch(function () { if (X.pc[da] === pc) X.rifai(da); });
+};
 TrasportoDiretto.prototype.chiudiPc = function (id) {
   var pc = this.pc[id]; if (!pc) return;
-  delete this.pc[id]; clearTimeout(pc.tDisc); clearTimeout(pc.tRis); clearTimeout(pc.tCon);
+  delete this.pc[id]; clearTimeout(pc.tDisc); clearTimeout(pc.tRis); clearTimeout(pc.tCon); clearTimeout(pc.tRi);
   pc.ontrack = null; pc.onconnectionstatechange = null; try { pc.close(); } catch (e) {}
   this.o.onFine(id);
 };
@@ -5497,8 +5614,10 @@ TrasportoDiretto.prototype.chiudi = function () { var X = this; X.chiuso = true;
 // da un telefono all'altro. Non conserva niente: i messaggi passano e basta.
 //   dal telefono all'host:  { t:'vc', k:'su', sess, mic } · { t:'vc', k:'giu' } · { t:'vc', k:'sig', a:<destinatario>, d:<dati> }
 //   dall'host a un telefono: { t:'vc', k:'sig', da:<chi lo manda>, d:<dati> }
-//   dall'host a tutti:       { t:'vcl', l:[[id, sessione], …] }   (l'elenco, ogni volta che cambia e ogni 5 secondi)
-// o: { invia(a, m) a un telefono, tutti(m) a tutti }
+//   dall'host a tutti:       { t:'vcl', n:<numero>, l:[[id, sessione], …] }   (l'elenco, ogni volta che cambia e ogni 5 secondi)
+// Viaggiano sul filo diretto quando è aperto, sennò dal broker. Due campi facoltativi: g (leggero: col filo aperto il broker non serve),
+// b (la seconda copia: passa dal broker anche se il filo c'è, nell'ultimo tratto compreso). Una versione vecchia li ignora.
+// o: { invia(a, m) a un telefono, tutti(m, ripetuto) a tutti }   ripetuto: l'elenco non è cambiato, è solo il giro dei 5 secondi
 function VoceStanza(o) { this.o = o; this.l = {}; this.n = 0; this.vuoto = true; }
 VoceStanza.prototype.arriva = function (da, m) {
   var S = this; if (!m || typeof da !== 'string') return;
@@ -5512,19 +5631,27 @@ VoceStanza.prototype.arriva = function (da, m) {
     var a = String(m.a || '');
     if (!S.l[da] || !S.l[a] || a === da || !m.d || typeof m.d !== 'object') return;   // solo fra chi è in voce
     if (S.o.nota) S.o.nota('porto ' + m.d.tipo + ' da ' + da + ' a ' + a);
-    S.o.invia(a, { t: 'vc', k: 'sig', da: da, d: m.d });
+    var fuori = { t: 'vc', k: 'sig', da: da, d: m.d }; if (m.b) fuori.b = 1;
+    S.o.invia(a, fuori);
   }
 };
 VoceStanza.prototype.via = function (id) { if (this.l[id]) { delete this.l[id]; this.manda(); } };
-VoceStanza.prototype.manda = function () {
+// la ripresa: l'elenco per la copia, e dall'elenco di prima si riparte (chi non si rifà vivo esce da solo dopo 22 s, come sempre)
+VoceStanza.prototype.elenco = function () { var S = this; return Object.keys(S.l).map(function (id) { return [id, S.l[id].sess, S.l[id].mic]; }); };
+VoceStanza.prototype.semina = function (l, tranne) {
+  var S = this, ora = Date.now();
+  (Array.isArray(l) ? l : []).forEach(function (r) { if (Array.isArray(r) && typeof r[0] === 'string' && typeof r[1] === 'string' && r[0] !== tranne) S.l[r[0]] = { sess: r[1].slice(0, 24), t: ora, mic: r[2] ? 1 : 0 }; });
+  S.vuoto = !Object.keys(S.l).length;
+};
+VoceStanza.prototype.manda = function (ripetuto) {
   var S = this, l = Object.keys(S.l).map(function (id) { return [id, S.l[id].sess]; });
-  S.vuoto = !l.length; this.o.tutti({ t: 'vcl', n: ++S.n, l: l });
+  S.vuoto = !l.length; this.o.tutti({ t: 'vcl', n: ++S.n, l: l }, !!ripetuto);
 };
 // ogni 5 secondi: toglie chi non dà più segno di vita e rimanda l'elenco (così chi l'ha perso lo ritrova). Se non c'è nessuno, tace.
 VoceStanza.prototype.giro = function () {
   var S = this, ora = Date.now();
   Object.keys(S.l).forEach(function (id) { if (ora - S.l[id].t > 22000) delete S.l[id]; });
-  if (Object.keys(S.l).length || !S.vuoto) S.manda();
+  if (Object.keys(S.l).length || !S.vuoto) S.manda(true);
 };
 
 // =========================================================
@@ -5536,8 +5663,10 @@ VoceStanza.prototype.giro = function () {
 var VOCE = {
   stato: 'spenta', canale: null, roster: [], sess: '', ctx: null, mixer: null, tr: null, stream: null, traccia: null,
   audio: {}, stati: {}, regole: {}, liv: {}, parla: {}, ascoltatori: [], fonte: null, fonteDi: null, nome: null, avvisa: null,
-  storia: [], ioStato: null, battito: 0, timer: null, ultimaMisura: 0, ultimoAvviso: '', ultimoAvvisoT: 0, legato: false
+  storia: [], ioStato: null, battito: 0, timer: null, ultimaMisura: 0, ultimoAvviso: '', ultimoAvvisoT: 0, legato: false,
+  vclN: 0, vclT: 0, ctxPausa: false, svegliaT: 0, ridando: false, ridaT: 0
 };
+var VOCE_MIC = { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false };
 // la fabbrica del trasporto: QUI si cambia da WebRTC diretto a LiveKit (domani: return new TrasportoLiveKit(o))
 VOCE.nuovoTrasporto = function (o) { return new TrasportoDiretto(o); };
 // il diario (gli ultimi 60 fatti), per capire cosa è successo
@@ -5564,32 +5693,33 @@ VOCE.apri = function (canale) {
   V.canale = canale;
   if (!V.legato && typeof window !== 'undefined') {
     V.legato = true;
-    window.addEventListener('pagehide', function () { VOCE.esci(); });   // chiudendo la pagina la voce si chiude
-    document.addEventListener('visibilitychange', function () {   // tornando sull'app l'audio riparte (su iPhone si ferma con lo schermo bloccato)
-      if (document.visibilityState !== 'visible' || VOCE.stato === 'spenta') return;
-      try { if (VOCE.ctx && VOCE.ctx.state !== 'running') VOCE.ctx.resume(); } catch (e) {}
-      if (VOCE.traccia && VOCE.traccia.readyState === 'ended') VOCE.microfonoPerso();
-      VOCE.riprova();
-    });
-    document.addEventListener('pointerdown', function () { if (VOCE.stato !== 'spenta') VOCE.riprova(); }, { capture: true, passive: true });
+    window.addEventListener('pagehide', function (e) { if (!e.persisted) VOCE.esci(); });   // chiudendo la pagina la voce si chiude (se resta in memoria può tornare)
+    window.addEventListener('pageshow', function (e) { if (e.persisted) VOCE.riprendi(); });
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') VOCE.riprendi(); });   // tornando sull'app la voce riparte (su iPhone si ferma con lo schermo bloccato)
+    // l'audio riparte solo dentro un gesto: su un telefono conta la fine del tocco, non l'inizio
+    ['pointerdown', 'pointerup', 'touchend', 'click'].forEach(function (k) { document.addEventListener(k, function () { if (VOCE.stato !== 'spenta') VOCE.riprova(); }, { capture: true, passive: true }); });
   }
   if (window.LT_PROVA) window.LT_VOCE = V.prova();
   V.cambiato();
 };
-VOCE.chiudiStanza = function () { var V = this; V.esci(); V.canale = null; V.roster = []; V.cambiato(); };
+VOCE.chiudiStanza = function () { var V = this; V.esci(); V.canale = null; V.roster = []; V.vclN = 0; V.cambiato(); };
 // dalla rete del gioco: l'elenco di chi è in voce, o un messaggio di collegamento da un altro telefono
 VOCE.arriva = function (m) {
   var V = this; if (!m || !V.canale) return;
   if (m.t === 'vcl' && Array.isArray(m.l)) {
+    // lo stesso elenco può arrivare dal filo e dal broker: un numero già visto non conta (nemmeno se più vecchio: chiuderebbe chi è appena entrato). Solo un host nuovo riparte da 1, e dopo 4 s vale
+    var ora = Date.now(); if (m.n != null) { if (m.n <= V.vclN && ora - V.vclT < 4000) return; V.vclN = m.n; V.vclT = ora; }
     V.roster = m.l.filter(function (r) { return Array.isArray(r) && typeof r[0] === 'string' && typeof r[1] === 'string'; });
     if (V.stato === 'spenta') return;
     if (!V.roster.some(function (r) { return r[0] === V.canale.io && r[1] === V.sess; })) V.annuncia();   // l'host non mi ha in elenco: mi rifaccio vivo
     if (V.tr) V.tr.persone(V.roster);
   } else if (m.t === 'vc' && m.k === 'sig' && V.tr && typeof m.da === 'string') { V.nota('arriva ' + (m.d && m.d.tipo) + ' da ' + m.da); V.tr.segnale(m.da, m.d); }
 };
-VOCE.annuncia = function () {
+// mi faccio vivo con l'host. battito: è solo quello dei 6 secondi, col filo aperto il broker non serve
+VOCE.annuncia = function (battito) {
   var V = this; if (!V.canale || V.stato === 'spenta' || V.stato === 'accendo') return;
-  V.battito = Date.now(); V.canale.manda({ t: 'vc', k: 'su', sess: V.sess, mic: V.traccia ? 1 : 0 });
+  var m = { t: 'vc', k: 'su', sess: V.sess, mic: V.traccia ? 1 : 0 }; if (battito) m.g = 1;
+  V.battito = Date.now(); V.canale.manda(m);
 };
 // il tasto principale: spenta → accende (e chiede il microfono); ascolto → prova ad accendere il microfono; parlo/muto → si alterna
 VOCE.tocca = function () {
@@ -5610,7 +5740,7 @@ VOCE.entra = function (conMic) {
   V.autoProvata = true;   // (chiesta una volta: il tocco automatico non insiste)
   var AC = window.AudioContext || window.webkitAudioContext;
   if (!AC || !window.RTCPeerConnection) { V.dici('Voce: qui non funziona'); return; }
-  try { if (!V.ctx) V.ctx = new AC(); if (V.ctx.state !== 'running') V.ctx.resume(); } catch (e) { V.dici('Voce: audio non disponibile'); return; }
+  try { if (!V.ctx) { V.ctx = new AC(); V.ctx.onstatechange = function () { VOCE.statoAudio(); }; } if (V.ctx.state !== 'running') V.ctx.resume(); } catch (e) { V.dici('Voce: audio non disponibile'); return; }
   V.stato = 'accendo'; V.cambiato();
   if (conMic) V.chiediMic(function (st) { V.avvia(st); }); else V.avvia(null);
 };
@@ -5618,7 +5748,7 @@ VOCE.entra = function (conMic) {
 VOCE.chiediMic = function (fatto) {
   var V = this, md = navigator.mediaDevices;
   if (!md || !md.getUserMedia) { V.dici('Voce: qui il microfono non va'); fatto(null); return; }
-  md.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false })
+  md.getUserMedia(VOCE_MIC)
     .then(fatto)
     .catch(function (e) { var neg = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError'); if (neg) V.ricorda('0'); V.dici(neg ? 'Voce: microfono non permesso' : 'Voce: microfono non disponibile'); fatto(null); });
 };
@@ -5629,7 +5759,7 @@ VOCE.avvia = function (st) {
   V.mixer = new VoceMixer(V.ctx);
   V.tr = V.nuovoTrasporto({
     io: V.canale.io, sess: V.sess,
-    manda: function (a, d) { if (V.canale) { V.canale.manda({ t: 'vc', k: 'sig', a: a, d: d }); V.nota('mando ' + d.tipo + ' a ' + a + ' (' + (d.sdp ? d.sdp.length : 0) + ' car.)'); } },
+    manda: function (a, d, bis) { if (V.canale) { V.canale.manda(bis ? { t: 'vc', k: 'sig', a: a, d: d, b: 1 } : { t: 'vc', k: 'sig', a: a, d: d, g: 1 }); V.nota('mando ' + d.tipo + ' a ' + a + ' (' + (d.sdp ? d.sdp.length : 0) + ' car.)' + (bis ? ' copia' : '')); } },
     onFlusso: function (id, flusso) { V.flusso(id, flusso); },
     onFine: function (id) { V.fineFlusso(id); },
     diario: function (t) { V.nota(t); },
@@ -5648,13 +5778,26 @@ VOCE.mettiMic = function (st) {
   var V = this;
   if (V.stream && V.stream !== st) V.stream.getTracks().forEach(function (t) { t.stop(); });
   V.stream = st || null; V.traccia = st ? st.getAudioTracks()[0] || null : null;
-  if (V.traccia) { V.traccia.enabled = true; V.traccia.addEventListener('ended', function () { if (VOCE.traccia === this) VOCE.microfonoPerso(); }); }
+  if (V.traccia) { V.traccia.enabled = true; V.traccia.addEventListener('ended', function () { if (VOCE.traccia === this && document.visibilityState === 'visible') VOCE.ridaiMic(); }); }   // (a schermo bloccato ci pensa riprendi, al ritorno)
   if (V.mixer) { if (st) V.mixer.ascoltaMio(st); else V.mixer.smettiMio(); }
   if (V.tr) V.tr.microfono(V.traccia);
 };
 VOCE.microfonoPerso = function () {
   var V = this; if (V.stato !== 'parlo' && V.stato !== 'muto') return;
   V.mettiMic(null); V.stato = 'ascolto'; V.dici('Voce: microfono staccato'); V.annuncia(); V.cambiato();
+};
+// il microfono si è fermato da solo (schermo bloccato, telefonata): si richiede senza disturbare e sugli stessi collegamenti. Solo se non torna si resta in ascolto
+VOCE.ridaiMic = function () {
+  var V = this, ora = Date.now(), md = navigator.mediaDevices;
+  if (V.ridando || (V.stato !== 'parlo' && V.stato !== 'muto')) return;
+  if (!md || !md.getUserMedia || ora - V.ridaT < 5000) { V.microfonoPerso(); return; }   // (appena richiesto e già fermo: non si insiste)
+  V.ridando = true; V.ridaT = ora; V.nota('richiedo il microfono');
+  md.getUserMedia(VOCE_MIC).then(function (st) {
+    V.ridando = false;
+    if (V.stato !== 'parlo' && V.stato !== 'muto') { st.getTracks().forEach(function (t) { t.stop(); }); return; }
+    V.mettiMic(st); if (V.traccia) V.traccia.enabled = V.stato === 'parlo';
+    V.annuncia(); V.cambiato();
+  }).catch(function () { V.ridando = false; V.microfonoPerso(); });
 };
 VOCE.accendiMic = function () {
   var V = this; if (V.stato !== 'ascolto') return;
@@ -5672,7 +5815,7 @@ VOCE.esci = function () {
   V.mettiMic(null);
   if (V.mixer) { V.mixer.chiudi(); V.mixer = null; }
   Object.keys(V.audio).forEach(function (id) { V.fineFlusso(id); });
-  V.stati = {}; V.regole = {}; V.liv = {}; V.parla = {};
+  V.stati = {}; V.regole = {}; V.liv = {}; V.parla = {}; V.ctxPausa = false;
   try { if (V.ctx && V.ctx.state === 'running') V.ctx.suspend(); } catch (e) {}
   V.cambiato();
 };
@@ -5692,17 +5835,39 @@ VOCE.fineFlusso = function (id) {
   if (V.mixer) V.mixer.togli(id);
   delete V.regole[id]; delete V.liv[id]; delete V.parla[id];
 };
-// al tocco o quando la pagina torna visibile: l'audio ferma riparte
+// l'orologio dell'audio riparte. Su iPhone oltre a «suspended» c'è «interrupted» (schermo bloccato, telefonata); fuori da un gesto può non riuscire, e ci riprova il tocco dopo
+VOCE.sveglia = function () {
+  var c = this.ctx; if (!c || c.state === 'running' || c.state === 'closed') return;
+  try { var p = c.resume(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+};
+// al tocco o quando la pagina torna visibile: l'audio fermo riparte
 VOCE.riprova = function () {
-  var V = this;
-  try { if (V.ctx && V.ctx.state !== 'running') V.ctx.resume(); } catch (e) {}
+  var V = this; V.sveglia();
   Object.keys(V.audio).forEach(function (id) { var a = V.audio[id]; if (a.paused && a.srcObject) { var p = a.play(); if (p && p.catch) p.catch(function () {}); } });
+};
+// l'audio torna dopo una pausa: su iPhone le voci già collegate possono restare mute, si ricollegano al mixer (il volume giusto arriva dal giro dopo)
+VOCE.statoAudio = function () {
+  var V = this, s = V.ctx ? V.ctx.state : ''; if (!V.mixer) return;
+  if (s !== 'running') { V.ctxPausa = true; return; }
+  if (!V.ctxPausa) return; V.ctxPausa = false; V.nota('audio ripartito');
+  Object.keys(V.audio).forEach(function (id) { var fl = V.audio[id].srcObject; if (fl) try { V.mixer.aggiungi(id, fl); } catch (e) {} });
+  if (V.stream) V.mixer.ascoltaMio(V.stream);
+  V.regola();
+};
+// il telefono torna sull'app: audio, microfono, posto nell'elenco, collegamenti caduti. Non chiede niente a chi guarda lo schermo
+VOCE.riprendi = function () {
+  var V = this; if (V.stato === 'spenta' || V.stato === 'accendo') return;
+  V.riprova(); V.annuncia();
+  if (V.traccia && V.traccia.readyState === 'ended') V.ridaiMic();
+  else if (V.traccia && V.traccia.muted) setTimeout(function () { if (V.traccia && V.traccia.muted && document.visibilityState === 'visible') V.ridaiMic(); }, 1500);   // (iPhone: traccia viva ma muta dopo il blocco)
+  if (V.tr && V.tr.risveglia) V.tr.risveglia();
 };
 // il giro da 10 al secondo: regola volumi, battito, orologio dell'audio
 VOCE.giro = function () {
   var V = this; if (V.stato === 'spenta') return;
-  if (Date.now() - V.battito > 6000) V.annuncia();
-  if (V.ctx && V.ctx.state === 'suspended' && (typeof document === 'undefined' || document.visibilityState === 'visible')) { try { V.ctx.resume(); } catch (e) {} }
+  var ora = Date.now();
+  if (ora - V.battito > 6000) V.annuncia(true);
+  if (ora - V.svegliaT > 1000 && (typeof document === 'undefined' || document.visibilityState === 'visible')) { V.svegliaT = ora; V.sveglia(); }
   V.regola();
 };
 // applica la regola a ogni voce (chi sente chi lo dice la foto del gioco; senza gioco aperto si sentono tutti)
@@ -5751,6 +5916,7 @@ VOCE.prova = function () {
     audio: function () { return V.ctx ? { stato: V.ctx.state, t: V.ctx.currentTime } : null; },
     storia: function () { return V.storia.slice(); },
     guasto: function (id) { if (V.tr) V.tr.o.onStato(id, 'fallito'); },   // (solo per provare l'avviso «non si collega»)
+    trasporto: function () { return V.tr; }, ctx: function () { return V.ctx; }, traccia: function () { return V.traccia; },
     elementi: function () { return Object.keys(V.audio).map(function (id) { var a = V.audio[id]; return { id: id, muto: a.muted, paused: a.paused, autoplay: a.autoplay, playsinline: a.hasAttribute('playsinline') }; }); }
   };
 };
@@ -5776,6 +5942,8 @@ function ammesso() { return AMMESSI.indexOf(nomeAccount()) >= 0; }
 var PARLA_RAPIDE = ["Ciao!", "Dove sei?", "Seguimi", "Aiuto!", "Occhio!"];
 var PARLA_STORICO = 4;
 var AVVIO_MAX = 18000;   // al massimo, quanto aspetta la partita chi ha il telefono lento (poi si parte lo stesso, col disegno a codice dove manca la mappa)
+var RESPIRO = 5000;      // l'host riprende: da quando è di nuovo sul broker la partita sta ferma al massimo così, mentre gli ospiti tornano
+var TACE_MS = 8000;      // da quanto non si sentono le posizioni dell'host prima di dirlo sullo schermo
 var RITARDATARI = "partita";   // chi arriva a partita cominciata la guarda ed entra alla prossima
 function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
 
@@ -5872,17 +6040,36 @@ function vibra(ms) { try { if (!AUDIO.toccato) return; if (navigator.vibrate) na
 // Fra l'host e ogni ospite si apre anche un canale WebRTC di soli dati: niente server, niente microfono. Quello che passa da lì arriva prima;
 // il broker resta sempre acceso e chi riceve un messaggio due volte tiene il primo (numero u). Se il canale non si apre, non cambia niente.
 var FILO_ICE = [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }];
-function FiloDiretto(manda, arriva) { this.manda = manda; this.arriva = arriva; this.pc = null; this.ch = null; this.coda = []; this.t0 = Date.now(); }
+function FiloDiretto(manda, arriva) { this.manda = manda; this.arriva = arriva; this.pc = null; this.ch = null; this.coda = []; this.t0 = Date.now(); this.giuDa = 0; this.o = null; }
 FiloDiretto.prototype.pronto = function () { var p = this.pc, st = p && p.iceConnectionState; return !!(this.ch && this.ch.readyState === "open" && (st === "connected" || st === "completed")); };
+// si rifà il filo? Aperto mai. Se è caduto, passati 1,5 s (un buco breve si riprende da solo). Se la risposta non è arrivata un messaggio si è perso sul broker:
+// si riprova presto e poi sempre più di rado, fino a 60 s (certe reti mobili non lo aprono mai). Con la risposta in mano i telefoni si stanno cercando: non si interrompono.
+FiloDiretto.prototype.daRifare = function (n) {
+  if (this.pronto()) return false;
+  var ora = Date.now(), attesa = Math.min(2500 * Math.pow(2, Math.max(0, n - 1)), 60000);
+  if (this.giuDa) return ora - this.giuDa >= 1500;
+  if (this.pc && this.pc.signalingState === "stable") attesa = Math.max(attesa, 12000);
+  return ora - this.t0 >= attesa;
+};
 FiloDiretto.prototype.lega = function (ch) {
   var F = this; F.ch = ch;
-  ch.onopen = function () { if (window.LT_PROVA) window.LT_DIRETTO = (window.LT_DIRETTO || 0) + 1; };
+  ch.onopen = function () { if (window.LT_PROVA) window.LT_DIRETTO = (window.LT_DIRETTO || 0) + 1; if (F.aperto) F.aperto(); };
+  ch.onclose = function () { if (F.ch === ch && F.caduto) F.caduto(); };
   ch.onmessage = function (e) { var m = null; try { m = JSON.parse(e.data); } catch (_) {} if (m) F.arriva(m); };
 };
+// ogni messaggio dice di quale tentativo è (o): la risposta a un'offerta di prima, arrivata tardi, non deve finire sul filo nuovo. Chi ha una versione vecchia non lo ripete, e va bene lo stesso
+FiloDiretto.prototype.dai = function (s) { if (this.o != null) s.o = this.o; this.manda(s); };
 FiloDiretto.prototype.crea = function () {
-  var F = this, pc = new RTCPeerConnection({ iceServers: FILO_ICE }); F.pc = pc; F.t0 = Date.now();
+  var F = this, pc = new RTCPeerConnection({ iceServers: FILO_ICE }); F.pc = pc; F.t0 = Date.now(); F.giuDa = 0;
   if (window.LT_PROVA) (window.LT_FILI = window.LT_FILI || []).push(F);
-  pc.onicecandidate = function (e) { if (e.candidate) F.manda({ c: e.candidate }); };
+  pc.onicecandidate = function (e) { if (e.candidate && F.detto === pc) F.dai({ c: e.candidate }); };   // (quelli di prima sono già dentro l'offerta: un messaggio solo sul broker)
+  pc.oniceconnectionstatechange = function () {
+    if (F.pc !== pc) return;
+    var st = pc.iceConnectionState;
+    if (st === "disconnected") F.giuDa = F.giuDa || Date.now();
+    else if (st === "connected" || st === "completed") F.giuDa = 0;
+    else if (st === "failed" && F.caduto) F.caduto();
+  };
   return pc;
 };
 // l'offerta e la risposta partono con gli indirizzi già dentro (si aspettano al massimo 1,2 s): meno messaggi sul broker, meno che se ne perda uno
@@ -5892,21 +6079,23 @@ FiloDiretto.prototype.dopoIndirizzi = function (pc, fatto) {
   pc.addEventListener("icegatheringstatechange", function () { if (pc.iceGatheringState === "complete") via(); });
   setTimeout(via, 1200);
 };
+FiloDiretto.prototype.dici = function (pc) { if (this.pc === pc) { this.detto = pc; this.dai({ d: pc.localDescription }); } };
 FiloDiretto.prototype.offri = function () {
   var F = this, pc = F.crea();
   F.lega(pc.createDataChannel("lt", { ordered: false, maxRetransmits: 0 }));
-  pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () { F.dopoIndirizzi(pc, function () { if (F.pc === pc) F.manda({ d: pc.localDescription }); }); }).catch(function () { F.chiudi(); });
+  pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () { F.dopoIndirizzi(pc, function () { F.dici(pc); }); }).catch(function () { F.chiudi(); });
 };
 FiloDiretto.prototype.segnale = function (s) {
-  var F = this;
+  var F = this, offerta = !!(s.d && s.d.type === "offer");
+  if (offerta) F.o = s.o != null ? s.o : null;
+  else if (s.o != null && F.o != null && s.o !== F.o) return;   // è del tentativo di prima
   if (s.d) {
-    var offerta = s.d.type === "offer";
     if (offerta) { var c = F.coda; F.chiudi(); F.coda = c; F.crea().ondatachannel = function (e) { F.lega(e.channel); }; }
     var pc = F.pc; if (!pc) return;
     pc.setRemoteDescription(s.d).then(function () {
       F.coda.splice(0).forEach(function (q) { pc.addIceCandidate(q).catch(function () {}); });
       if (!offerta) return;
-      return pc.createAnswer().then(function (a) { return pc.setLocalDescription(a); }).then(function () { F.dopoIndirizzi(pc, function () { if (F.pc === pc) F.manda({ d: pc.localDescription }); }); });
+      return pc.createAnswer().then(function (a) { return pc.setLocalDescription(a); }).then(function () { F.dopoIndirizzi(pc, function () { F.dici(pc); }); });
     }).catch(function () { F.chiudi(); });
   } else if (s.c) {
     if (F.pc && F.pc.remoteDescription) F.pc.addIceCandidate(s.c).catch(function () {}); else F.coda.push(s.c);
@@ -5922,37 +6111,59 @@ function host(t) {
   var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
   var H = { fase: "lobby", codice: "…", pronta: false, partita: 0, rip: 0, imp: pulisci(t.impostazioni),
     players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), lenz: lenzMio() || { c: 0, m: null } }], guarda: [], classifica: null, fine: null };
-  var P = null, rete = null, inviati = {}, ultimaN = {}, viaDa = {}, finePronta = false, roundDetto = 0, fili = {}, filiN = {}, nU = Date.now() % 1e9;
+  var P = null, rete = null, inviati = {}, ultimaN = {}, viaDa = {}, finePronta = false, roundDetto = 0, fili = {}, filiN = {}, nFilo = 0, nU = Date.now() % 1e9;
   // i messaggi che contano: dal broker e, a chi ha il filo diretto aperto, anche da lì (il primo che arriva vale)
   function veloce(m) {
     if (!rete) return;
-    if (m.t !== "pos") m.u = ++nU;
+    m.u = ++nU;
     rete.inviaVeloce(m);
     var tx = null;
     for (var id in fili) { if (m.to && m.to !== id) continue; if (fili[id].pronto()) { if (tx === null) tx = JSON.stringify(m); fili[id].invia(tx); } }
   }
-  function filoApri(id) {
+  // filiN: i tentativi di fila. Torna a zero quando il filo si apre, così se cade si riapre subito e non dopo l'attesa dei tentativi di prima
+  function filoApri(id, subito) {
     if (!window.RTCPeerConnection || !rete) return;
-    // il messaggio per aprirlo può perdersi: si riprova, sempre più di rado (su certe reti mobili il canale non si apre mai)
-    var F = fili[id], n = filiN[id] || 0; if (F && (F.pronto() || Date.now() - F.t0 < Math.min(8000 * n, 60000))) return;
+    var F = fili[id], n = filiN[id] || 0; if (F && !subito && !F.daRifare(n)) return;
     filiN[id] = n + 1;
     if (F) F.chiudi();
     F = fili[id] = new FiloDiretto(function (s) { if (rete) rete.inviaVeloce({ t: "fd", s: s, to: id }); }, function (m) { if (m && m.t && rete && arrivoOspite) arrivoOspite(id, m); });
-    F.offri();
+    F.aperto = function () { filiN[id] = 0; };
+    F.caduto = function () { var p = pById(id); tuttiFilo = false; if (fili[id] === F && !filiN[id] && p && !p.via) filoApri(id, true); };
+    F.o = ++nFilo; F.offri();
   }
   function filiChiudi() { for (var id in fili) fili[id].chiudi(); fili = {}; }
-  function filiControllo() { H.players.forEach(function (p) { if (!p.bot && p.id !== IO && !p.via) filoApri(p.id); }); }
+  function filiControllo() {
+    var tutti = !H.guarda.length && Date.now() - guardaT > 15000;
+    H.players.forEach(function (p) {
+      if (p.bot || p.id === IO || p.via) return;
+      filoApri(p.id);
+      if (!(fili[p.id] && fili[p.id].pronto())) tutti = false;
+    });
+    tuttiFilo = tutti;
+  }
+  function soloFilo(m) { var tx = null; for (var id in fili) if (fili[id].pronto()) { if (tx === null) tx = JSON.stringify(m); fili[id].invia(tx); } }
+  // EMQX accetta circa 10 messaggi al secondo da ogni telefono (misurato l'1/11: a 8 passano tutti in 60 ms, a 10 ci mettono 200 ms, a 20 se ne perde metà); HiveMQ non ha questo tetto.
+  // Le posizioni si ripetono da sole e cedono il posto agli altri messaggi: sul broker al massimo 8 al secondo, 4 se tutti hanno il filo; se nell'ultimo secondo ne sono già partiti 9 si salta, ma mai per più di 330 ms
+  var tuttiFilo = false, guardaT = 0, posCr = 0, posT = 0, partiti = [];
+  function brokerLibero() { var ora = Date.now(); while (partiti.length && ora - partiti[0] >= 1000) partiti.shift(); return partiti.length < 9 || ora - posT >= 330; }
   var arrivoOspite = null;
   var eventi = {
     privato: function (id, m) { if (id === IO) { if (UI) UI.messaggio(m); else conserva(m); return; } m.to = id; veloce(m); },
     tutti: function (m) { veloce(m); if (UI) UI.messaggio(m); }
   };
   var R = t.ripresa, riprendo = !!(R && R.stato && R.stato.fase && R.stato.fase !== "lobby" && R.stato.players);
+  // il respiro: l'host riprende e la partita sta ferma finché gli ospiti tornano, così nessun tempo salta mentre si ricollegano.
+  // Prima che l'host sia sul broker nessuno può tornare: i 5 s partono da lì (onConnesso; se il broker non risponde ci pensa onErrore)
+  var respiro = 0;
   if (riprendo) {
     H = R.stato; H.pronta = false; H.rip = (H.rip || 0) + 1; H.guarda = H.guarda || []; H.imp = pulisci(H.imp);
     H.players.forEach(function (p) { p.forse = false; p.via = p.id !== IO && !p.bot; if (p.id === IO) p.omino = t.mioOmino(p.nome); });
     lenzInOrdine(H.players);
-    if (H.fase === "gioco" && H.salvata) P = Partita.daStato(H.salvata, H.imp, eventi);
+    if (H.fase === "gioco" && H.salvata) {
+      P = Partita.daStato(H.salvata, H.imp, eventi); respiro = Infinity;
+      H.players.forEach(function (p) { if (p.via) viaDa[p.id] = Date.now(); });   // chi non torna esce come gli altri, dopo un minuto e mezzo
+      if (window.LT_PROVA) window.LT_P = P;
+    }
     else if (H.fase === "gioco") H.fase = "lobby";
     delete H.salvata;
   }
@@ -6009,7 +6220,11 @@ function host(t) {
 
   rete = SGNet.ospita(ID, {
     onCodice: function (c) { H.codice = c; bd(); },
-    onConnesso: function () { H.pronta = true; bd(); },
+    onConnesso: function () {
+      H.pronta = true;
+      if (respiro === Infinity) { respiro = Date.now() + RESPIRO; Object.keys(viaDa).forEach(function (id) { viaDa[id] = Date.now(); }); }   // solo adesso gli ospiti possono tornare: da qui contano i 5 s e il minuto e mezzo
+      bd();
+    },
     onErrore: function () { if (H.pronta) return; ferma(); VOCE.chiudiStanza(); if (rete) rete.chiudi(); erroreRete(t, "Non riesco ad aprire la stanza.", function () { host(t); }); },
     onForse: function (id) { var p = pById(id); if (p && !p.forse) { p.forse = true; bd(); } },
     onTornato: function (id) { var p = pById(id); if (p && p.forse) { p.forse = false; bd(); } },
@@ -6019,7 +6234,7 @@ function host(t) {
       var p = pById(id); if (!p) return;
       p.forse = false;
       if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); riempi(); bd(); return; }
-      p.via = true; viaDa[id] = Date.now(); bd();   // resta in partita: se torna entro un minuto e mezzo riprende il suo posto
+      p.via = true; if (!viaDa[id]) viaDa[id] = Date.now(); bd();   // resta in partita: se torna entro un minuto e mezzo riprende il suo posto (dopo una ripresa il conto è già partito)
     },
     onMsg: function arrivo(id, m) {
       arrivoOspite = arrivo;
@@ -6037,7 +6252,7 @@ function host(t) {
         if (!p && !t.puoSedersi(id, nome)) { if (!H.guarda.some(function (x) { return x.id === id; })) H.guarda.push({ id: id, nome: nome }); bd(); return; }
         if (!p && H.fase === "lobby" && H.players.length >= MAX && H.auto) togliBot(true);   // un Bot automatico lascia il posto
         if (!p && H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), t0: Date.now(), lenz: lenzNuovo(m.lenz) }); riempi(); }
-        if (p) { p.forse = false; if (p.via && H.fase !== "lobby") { p.via = false; delete viaDa[id]; } if (!p.omino) p.omino = avatarValido(m.omino); }
+        if (p) { p.forse = false; if (p.via && H.fase !== "lobby") { p.via = false; delete viaDa[id]; } if (!p.omino) p.omino = avatarValido(m.omino); if (P && H.fase === "gioco") P.rientra(id); }
         bd();
         if (p && P) {
           inviati[id] = -1; ultimaN[id] = 0;
@@ -6045,7 +6260,8 @@ function host(t) {
           // gli avatar non viaggiano nella foto durante la partita: a chi rientra li mando a parte
           rete.inviaVeloce({ t: "av", l: H.players.filter(function (q) { return q.omino; }).map(function (q) { return [q.id, q.omino]; }), to: id });
         }
-        if (pById(id)) filoApri(id);
+        if (p && fili[id] && !fili[id].pronto()) filiN[id] = 0;   // chi rientra non aspetta i tentativi fatti mentre non c'era
+        tuttiFilo = false; if (pById(id)) filoApri(id); else guardaT = Date.now();   // (arrivato a partita cominciata: guarda, e le posizioni gli arrivano solo dal broker)
         return;
       }
       if (m.t === "rf") { if (Date.now() - ultimaFoto >= 150) bd(); else if (!fotoDopo) fotoDopo = setTimeout(bd, 150); return; }   // ha perso una foto
@@ -6063,12 +6279,32 @@ function host(t) {
     }
   }, { ripresa: riprendo });
   if (!rete) return senzaRete(t);
+  if (window.LT_PROVA) window.LT_RETE = rete;
+  // senza rete i messaggi veloci non partono: tanto non arriverebbero, e nel collegamento fermo si accumulerebbero fino a far scattare un difetto di mqtt 4.3.7 (oltre 512 KB in coda chiama due volte la stessa funzione: «Callback called multiple times»)
+  ["invia", "inviaVeloce"].forEach(function (k) { var f = rete[k]; rete[k] = function (m) { if (k === "inviaVeloce" && navigator.onLine === false) return; partiti.push(Date.now()); if (partiti.length > 64) partiti.shift(); return f.call(rete, m); }; });
   if (riprendo && rete.codice) H.codice = rete.codice;
   // la voce: l'host fa da portalettere dei messaggi di collegamento fra i telefoni (non conserva niente, sono messaggi veloci)
+  // Col filo aperto passano da lì: arrivano prima e non consumano i messaggi del broker (con 10 persone sono 45 collegamenti). Solo il giro dei 5 secondi resta fuori dal broker: un elenco nuovo passa da tutte e due le strade
   var VS = new VoceStanza({
     nota: function (t) { VOCE.nota(t); },
-    invia: function (a, m) { if (a === IO) VOCE.arriva(m); else { m.to = a; rete.inviaVeloce(m); } },
-    tutti: function (m) { rete.inviaVeloce(m); VOCE.arriva(m); } });
+    invia: function (a, m) {
+      if (a === IO) { VOCE.arriva(m); return; }
+      m.to = a; var F = fili[a];
+      if (!m.b && F && F.pronto()) F.invia(JSON.stringify(m)); else rete.inviaVeloce(m);
+    },
+    tutti: function (m, ripetuto) {
+      VOCE.arriva(m);
+      var tx = null, broker = !ripetuto;
+      H.players.forEach(function (p) {
+        if (p.bot || p.id === IO) return;
+        var F = fili[p.id];
+        if (F && F.pronto()) { if (tx === null) tx = JSON.stringify(m); F.invia(tx); } else broker = true;
+      });
+      if (broker) rete.inviaVeloce(m);
+    } });
+  // chi era in voce prima della ripresa resta in elenco finché non si rifà vivo: senza, il primo elenco chiuderebbe i collegamenti fra gli altri telefoni.
+  // Tolto solo chi non c'è più: io che ho ricaricato (la mia voce riparte da capo), o l'host di prima se ho preso il suo posto
+  if (riprendo) { VS.semina(H.voce, R.daRiserva ? R.vecchioHost : IO); delete H.voce; }
   VOCE.apri({ io: IO, manda: function (m) { VS.arriva(IO, m); } });
   var vsT = setInterval(function () { VS.giro(); }, 5000);
 
@@ -6082,21 +6318,33 @@ function host(t) {
   }
   function ricorda() {
     if (H.fase === "lobby") return t.ricorda(null);
-    t.ricorda({ fase: H.fase, codice: H.codice, partita: H.partita, rip: H.rip, imp: H.imp, guarda: H.guarda, classifica: H.classifica, fine: H.fine,
+    t.ricorda({ fase: H.fase, codice: H.codice, partita: H.partita, rip: H.rip, imp: H.imp, guarda: H.guarda, classifica: H.classifica, fine: H.fine, voce: VS ? VS.elenco() : null,
       players: H.players.map(function (p) { return { id: p.id, nome: p.nome, lenz: p.lenz, bot: !!p.bot, via: !!p.via, omino: p.bot ? p.omino : undefined }; }),
       salvata: P && H.fase === "gioco" ? P.salva() : null });
   }
-  var visteA = {};   // le mosse già fatte, per ospite
+  var visteA = {}, giroPriv = 0;   // le mosse già fatte, per ospite
   var ultimaFoto = 0, fotoDopo = null, ricordaT = 0, ricordaFase = null;   // (lo stato per la ripresa si salva ogni 2 s, e a ogni cambio di fase)
-  function bd() {
+  var ultimaV = null, fotoRip = [], fotoFase = null;
+  // la foto che conta (un sabotaggio aperto o chiuso, un cambio di fase) parte altre 2 volte: una perdita sul broker non costa secondi, e il numero ver evita i doppioni.
+  // A un cambio di fase, la seconda volta anche la copia trattenuta: chi ricarica la pagina deve trovare quella giusta, non una di prima
+  function ripetiFoto(trattieni) {
+    fotoRip.forEach(clearTimeout);
+    fotoRip = [150, 400].map(function (ms, i) {
+      return setTimeout(function () { if (!rete || fermo || !ultimaV) return; veloce({ t: "vm", vm: ultimaV }); if (i && trattieni) rete.invia({ t: "vm", vm: ultimaV }); }, ms);
+    });
+  }
+  function bd(conta) {
+    if (fermo) return;
     if (fotoDopo) { clearTimeout(fotoDopo); fotoDopo = null; }
     ultimaFoto = Date.now(); H.ver = (H.ver || ultimaFoto) + 1;
-    var v = vm();
+    var v = ultimaV = vm(), ff = H.fase + "|" + (P ? P.fase : "");
+    if (conta === true || ff !== fotoFase) { ripetiFoto(ff !== fotoFase); fotoFase = ff; }
     // in partita la foto parte veloce: quella trattenuta dal broker (per chi rientra) ci ha messo fino a 4,6 s nella prova del 31/10, e un sabotaggio deve arrivare subito.
     // Quella trattenuta resta una ogni 2 s e a ogni cambio di fase: chi la trova vecchia vede il numero nel battito e chiede l'ultima
     if (H.fase === "gioco") veloce({ t: "vm", vm: v });
     if (H.fase !== "gioco" || H.faseT !== H.fase || ultimaFoto - (H.tT || 0) >= 2000) { H.faseT = H.fase; H.tT = ultimaFoto; rete.invia({ t: "vm", vm: v }); }
-    if (H.fase !== ricordaFase || ultimaFoto - ricordaT > 2000) { ricordaFase = H.fase; ricordaT = ultimaFoto; ricorda(); } disegna(t, v, cbHost);
+    var rk = ff + "|" + (P && P.riu ? P.riu.voti.size : 0);   // (un sabotaggio o un voto si ricordano subito: chi prende il posto dell'host non deve perderli)
+    if (conta === true || rk !== ricordaFase || ultimaFoto - ricordaT > 2000) { ricordaFase = rk; ricordaT = ultimaFoto; ricorda(); } disegna(t, v, cbHost);
   }
   function mandaPrivati(tutti) {
     if (!P) return;
@@ -6111,28 +6359,42 @@ function host(t) {
   }
   // la rete può perdere un messaggio e il ruolo o le ricariche non si rimandano da soli: ogni secondo e mezzo si ribadiscono (uguali: l'ospite li ignora)
   function ribadisciPrivati() {
-    H.players.forEach(function (p) { if (p.bot || p.id === IO || p.via) return; var pr = P.privato(p.id); if (pr) veloce({ t: "priv", p: pr, to: p.id, r: 1 }); });
+    var sulBroker = [];
+    H.players.forEach(function (p) {
+      if (p.bot || p.id === IO || p.via) return;
+      var pr = P.privato(p.id); if (!pr) return;
+      var m = { t: "priv", p: pr, to: p.id, r: 1 }, F = fili[p.id];
+      if (F && F.pronto()) F.invia(JSON.stringify(m)); else sulBroker.push(m);
+    });
+    for (var i = 0; i < Math.min(2, sulBroker.length); i++) veloce(sulBroker[(giroPriv + i) % sulBroker.length]);   // chi non ha il filo, due alla volta: con 9 telefoni sarebbero 6 messaggi al secondo
+    giroPriv += 2;
   }
   // il tempo della partita: 20 volte al secondo; le posizioni a tutti 10 volte al secondo
   var ultimo = Date.now(), nTick = 0, fermo = false;
   var loop = setInterval(function () {
     if (fermo) return;
+    if (rete && (rete._chiusa || (rete.stato && rete.stato().chiusa))) { ferma(); if (UI && UI.t === t) chiudiUI(); return; }   // la stanza non è più mia (il core l'ha chiusa, o la tiene un altro e io rientro da giocatore: cediPosto)
     var ora = Date.now(), dt = Math.min(0.1, (ora - ultimo) / 1000); ultimo = ora;
     if (H.fase === "lobby") seguiPrecarico();
     if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return;   // (anche nella saletta: si gira nell'atrio)
-    P.tick(dt);
-    if (P.cambiata) { P.cambiata = false; if (P.subito || ora - ultimaFoto >= 250) { P.subito = false; bd(); } else if (!fotoDopo) fotoDopo = setTimeout(bd, 250); }
+    if (respiro && (ora >= respiro || !H.players.some(function (p) { return p.via; }))) respiro = 0;
+    if (!respiro) P.tick(dt);
+    if (P.cambiata) { P.cambiata = false; if (P.subito || ora - ultimaFoto >= 250) { var urgente = !!P.subito; P.subito = false; bd(urgente); } else if (!fotoDopo) fotoDopo = setTimeout(bd, 250); }
     var pos = P.posizioni();
     if (UI) UI.posizioni(pos);
-    if (++nTick % 2 === 0) veloce({ t: "pos", s: nTick, p: pos, v: H.ver });   // v: l'ultima foto: chi non ce l'ha se ne accorge al battito dopo
+    nTick++; posCr += tuttiFilo ? 0.2 : 0.4;
+    var mPos = { t: "pos", s: nTick, p: pos, v: H.ver };   // v: l'ultima foto: chi non ce l'ha se ne accorge al battito dopo
+    if (nTick % 2 === 0 || !window.LT_POS10) soloFilo(mPos);   // sul filo 20 volte al secondo: si vede 26 ms prima (75 → 49) e il telefono non lavora di più (prova P, 1/11)
+    if (posCr >= 1) { posCr -= 1; if (rete && brokerLibero()) { posT = Date.now(); rete.inviaVeloce(mPos); } }
     mandaPrivati(false);
     if (nTick % 30 === 0) ribadisciPrivati();
-    if (nTick % 80 === 0) filiControllo();
+    if (nTick % 20 === 0) filiControllo();
+    if (nTick % 40 === 0 && H.fase === "gioco" && ora - ricordaT >= 2000) { ricordaT = ora; ricorda(); }   // (i posti cambiano anche senza foto nuove)
     if (P.round !== roundDetto && P.fase === "gioco") { roundDetto = P.round; t.aCheSiamo("Round " + P.round); }
     Object.keys(viaDa).forEach(function (id) { if (ora - viaDa[id] > 90000) { delete viaDa[id]; P.esce(id); } });
     if (P.fase === "fine" && !finePronta) { finePronta = true; setTimeout(fine, 2600); }
   }, 50);
-  function ferma() { fermo = true; clearInterval(loop); clearInterval(vsT); if (fotoDopo) clearTimeout(fotoDopo); filiChiudi(); }
+  function ferma() { fermo = true; clearInterval(loop); clearInterval(vsT); if (fotoDopo) clearTimeout(fotoDopo); fotoRip.forEach(clearTimeout); filiChiudi(); }
 
   // il mio precarico (quello dell'host): se cambia lo dico a tutti; se si sta aspettando per cominciare, guardo se si può partire
   var mioPre = { ok: -1, p: -1 }, pmT = 0;
@@ -6220,6 +6482,28 @@ function ospite(t, codice) {
   }
   function fermaPr() { clearInterval(S.prInt); S.prInt = null; }
   function chiudiFilo() { if (S.filo) { S.filo.chiudi(); S.filo = null; } }
+  // l'host tace: da 8 s niente posizioni, che arrivano da 4 a 20 volte al secondo. Lo dice un bigliettino, che se ne va da solo quando tornano; se l'app sta già
+  // parlando con una pillola (rete giù, host sparito, partita ripresa) non serve.
+  // Con la riserva accesa si avvisa anche il core, senza aspettare i 30-40 s del testamento: il primo vice dopo 8 s (più 6 suoi), il secondo dopo 16 (più 12), perché il primo ci mette
+  // qualche secondo a farsi sentire e se partissero insieme sarebbero due host (misurato: 14 s e 20 s si sovrapponevano)
+  function ogniSecondo() {
+    riferisci();
+    var st = S.rete && S.rete.stato ? S.rete.stato() : null;
+    if (!st || st.chiusa) { S.finita = true; fermaPr(); chiudiFilo(); return; }   // la stanza non c'è più: ho preso il posto dell'host, o sono uscito
+    var vm = S.vm, gioco = !!vm && (vm.fase === "gioco" || (vm.fase === "lobby" && !!vm.g)), ora = Date.now();
+    if (!gioco || document.hidden) { S.posT = 0; return taceHost(false, false); }
+    if (!S.posT) S.posT = ora;
+    var fermo = navigator.onLine === false ? 0 : ora - S.posT;   // (senza rete sono io, non l'host: lo dice la pillola «Mi ricollego»)
+    taceHost(fermo >= TACE_MS, fermo >= TACE_MS * (postoVice(vm) + 1));
+    if (UI) UI.tace(S.tace && !document.querySelector(".sg-pillola"));
+  }
+  // chi prende il posto per primo: il primo arrivato ancora presente (il core sceglie allo stesso modo)
+  function postoVice(vm) { return vm.players.filter(function (p) { return !p.bot && !p.via && p.id !== vm.tiene; })[0] === vm.players.filter(function (p) { return p.id === S.myId; })[0] ? 0 : 1; }
+  function taceHost(si, via) {
+    if (!si) via = false;
+    if (!!S.tace !== si) { S.tace = si; if (UI) UI.tace(false); }
+    if (!!S.viaDetta !== !!via) { S.viaDetta = !!via; if (S.cbRete && S.cbRete.onHostVia) S.cbRete.onHostVia(!!via); }
+  }
   // le mosse (non i passi) si ripetono finché l'host non dà la ricevuta: la rete può perderne una, e un sabotaggio o una riparazione non possono sparire
   function perdo() { return window.LT_PROVA && window.LT_PERDI && Math.random() < window.LT_PERDI; }   // (solo per le prove: rete che perde messaggi)
   function mandaSicura(m) {
@@ -6227,9 +6511,9 @@ function ospite(t, codice) {
     var v = { n: 0, t: 0 }; S.attese = S.attese || {}; S.attese[m.q] = v;
     (function giro() {
       if (!S.attese[m.q]) return;
-      if (++v.n > 6 || !S.rete) { delete S.attese[m.q]; return; }
+      if (++v.n > 9 || !S.rete) { delete S.attese[m.q]; return; }   // (9 volte in circa 3 s)
       if (!perdo()) { S.rete.invia(m); if (S.filo) S.filo.invia(JSON.stringify(m)); }
-      v.t = setTimeout(giro, 180 + v.n * 70);
+      v.t = setTimeout(giro, 130 + v.n * 50);
     })();
   }
   // l'ultima foto dell'host (numero nel battito) non è arrivata: dopo un attimo la si chiede
@@ -6238,13 +6522,28 @@ function ospite(t, codice) {
     var ora = Date.now(); if (!S.mancaDa) { S.mancaDa = ora; return; }
     if (ora - S.mancaDa >= 200 && ora - (S.rfT || 0) >= 400 && S.rete) { S.rfT = ora; S.rete.invia({ t: "rf" }); }
   }
+  // l'host mi crede via ma io ci sono (una mossa persa, o un host nuovo che ha parlato prima di sapere di me): mi rifaccio vivo, al massimo una volta al secondo
+  function miCredeVia(v) {
+    var io = (v.players || []).filter(function (p) { return p.id === S.myId; })[0], ora = Date.now();
+    if (!io || !io.via || !S.rete || !S.rete.riprova || ora - (S.viaT || 0) < 1000) return;
+    S.viaT = ora; S.rete.riprova();
+  }
   function fotoVecchia(v) {
     if (v.ver == null) return false;
     if (S.vmH === v.tiene && S.vmV != null && v.ver <= S.vmV) return true;
     S.vmH = v.tiene; S.vmV = v.ver; S.mancaDa = 0; return false;
   }
   var cb = { sonoHost: false, myId: null,
-    mossa: function (m) { if (!S.rete) return; if (m.t === "a") return mandaSicura(m); if (!perdo()) { S.rete.invia(m); if (S.filo) S.filo.invia(JSON.stringify(m)); } },
+    mossa: function (m) {
+      if (!S.rete) return;
+      if (m.t === "a") return mandaSicura(m);
+      if (perdo()) return;
+      var sulFilo = S.filo && S.filo.pronto();
+      if (sulFilo) S.filo.invia(JSON.stringify(m));
+      // i passi sono 10 al secondo: sul broker 8 (il tetto di EMQX, vedi l'host), 3 o 4 se c'è il filo
+      if (m.t === "p" || m.t === "pc") { S.pCr = Math.min(1.5, (S.pCr || 0) + (sulFilo ? 0.35 : 0.8)); if (S.pCr < 1) return; S.pCr -= 1; }
+      S.rete.invia(m);
+    },
     onEsci: function () {
       function via() { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); chiudiUI(); t.esci(); }
       if (t.guarda) return t.conferma("Smetti di guardare?", null, "Esci", via);
@@ -6261,10 +6560,10 @@ function ospite(t, codice) {
   }
   function collega() {
     attesa();
-    S.rete = SGNet.entra(codice, {
-      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { if (S.rete) S.rete.invia(m); } }); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome), lenz: lenzMio() }); riferisci(true); fermaPr(); S.prInt = setInterval(riferisci, 1000); },
+    var cbRete = S.cbRete = {   // (il core ci mette il suo onHostVia, se la riserva è accesa)
+      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { var f = S.filo && S.filo.pronto(); if (f && !m.b) S.filo.invia(JSON.stringify(m)); if (S.rete && (!f || !m.g)) S.rete.invia(m); } }); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome), lenz: lenzMio() }); riferisci(true); fermaPr(); S.prInt = setInterval(ogniSecondo, 1000); },
       onMsg: function dalHost(m) {
-        if (!m || !m.t) return;
+        if (!m || !m.t || S.finita) return;
         if (m.to && m.to !== S.myId) return;
         if (m.t === "fd") {   // il filo diretto: l'host lo apre, io rispondo
           if (window.LT_PROVA && window.LT_SALTAFD > 0) { window.LT_SALTAFD--; return; }   // (solo per le prove: il messaggio si perde)
@@ -6273,8 +6572,8 @@ function ospite(t, codice) {
         }
         if (m.u != null) { var uv = S.uViste || (S.uViste = []); if (uv.indexOf(m.u) >= 0) return; uv.push(m.u); if (uv.length > 80) uv.shift(); }   // già arrivato dall'altra strada
         if (perdo() && (m.t === "vm" || m.t === "pos" || m.t === "priv" || m.t === "ak")) return;
-        if (m.t === "vm") { if (fotoVecchia(m.vm)) return; S.vm = m.vm; disegna(t, m.vm, cb); }
-        else if (m.t === "pos") { if (UI) UI.posizioni(m.p, m.s); controllaFoto(m.v); }
+        if (m.t === "vm") { if (fotoVecchia(m.vm)) return; S.vm = m.vm; miCredeVia(m.vm); disegna(t, m.vm, cb); }
+        else if (m.t === "pos") { S.posT = Date.now(); if (S.tace) taceHost(false, false); if (UI) UI.posizioni(m.p, m.s); controllaFoto(m.v); }
         else if (m.t === "ak") { var at = S.attese && S.attese[m.q]; if (at) { clearTimeout(at.t); delete S.attese[m.q]; } }
         else if (m.t === "priv") { if (m.r && UI && UI.priv && UI.priv.v === m.p.v) return; if (UI) UI.privato(m.p); else PENDENTI.priv = m.p; }
         else if (m.t === "tp" || m.t === "avviso" || m.t === "morte" || m.t === "bolla") { if (UI) UI.messaggio(m); else conserva(m); }
@@ -6284,7 +6583,8 @@ function ospite(t, codice) {
       },
       onChiuso: function (perche) { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); chiudiUI(); errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
       onErrore: function () { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
-    });
+    };
+    S.rete = SGNet.entra(codice, cbRete);
     if (!S.rete) senzaRete(t);
   }
   function attesa() {
@@ -6589,6 +6889,7 @@ function Vista(t, cb) {
   });
   V.avv = E("div", "lt-avviso"); sc.appendChild(V.avv);
   V.velo = E("div", "lt-velo"); V.velo.hidden = true; sc.appendChild(V.velo);
+  V.taceEl = E("div", "lt-tace"); V.taceEl.setAttribute("role", "status"); V.taceEl.innerHTML = icona("lanterna") + "<span>L'host non risponde</span>"; sc.appendChild(V.taceEl);   // (dopo il velo: sui fogli sta in basso, vedi la CSS)
   V.intro = E("div", "lt-intro"); V.intro.hidden = true; sc.appendChild(V.intro);
   V.carica = E("div", "lt-carica"); V.carica.hidden = true; V.carica.setAttribute("role", "status");   // il caricamento a tutto schermo (a «Comincia», o entrando a partita già cominciata)
   V.carica.innerHTML = icona("lanterna") + '<b class="tit"></b><div class="bar"><i></i></div><span class="num"></span>'; sc.appendChild(V.carica);
@@ -6694,6 +6995,7 @@ Vista.prototype.foto = function (vm) {
   vm.players.forEach(function (p) { var c = V.cache[p.id] = V.cache[p.id] || {}; c.nome = p.nome; c.lenz = LENZ_DI[p.id]; c.colore = COLORI_DI[p.id]; if (p.omino) avatarDi(p.id, p.omino); });
   var io = vm.players.filter(function (p) { return p.id === V.cb.myId; })[0];
   V.guardo = !io || !!io.via || !V.priv;
+  V.notaAssenti(vm);
   if (!V.g) return;
   var M = V.g.mappa === "palazzo" ? PALAZZO : ATRIO;
   if (M !== V.M) { V.M = M; V.pit.cam.ok = false; V.buf = []; }   // la posizione nuova arriva col «tp» dell'host
@@ -6715,7 +7017,7 @@ Vista.prototype.posizioni = function (p, s) {
     var off = ora - ht; V.offs = V.offs || []; V.offs.push(off); if (V.offs.length > 60) V.offs.shift();
     var m = Infinity; for (var i = 0; i < V.offs.length; i++) if (V.offs[i] < m) m = V.offs[i];
     var d = V.offs.map(function (o) { return o - m; }).sort(function (a, b) { return a - b; });
-    V.offMin = m; V.ritardo = Math.max(70, Math.min(350, d[Math.floor(d.length * 0.9)] + 35));
+    V.offMin = m; V.ritardo = Math.max(B.length >= 30 ? 50 : 70, Math.min(350, d[Math.floor(d.length * 0.9)] + 35));   // (almeno 30 pacchetti in 2 s: sul filo arrivano 20 volte al secondo, e si può stare più vicini)
   }
   B.push({ ht: ht, p: p });
   while (B.length > 2 && B[B.length - 1].ht - B[0].ht > 2000) B.shift();
@@ -6737,6 +7039,7 @@ Vista.prototype.privato = function (pr) {
   if (pr.ep > V.me.ep) V.me.ep = pr.ep;
   pr.compiti.forEach(function (c) { if (c[1]) delete V.fatti[c[0]]; });
   if (V.vm) { var io = V.vm.players.filter(function (p) { return p.id === V.cb.myId; })[0]; V.guardo = !io || !!io.via; }
+  if (pr.voto && !V.mioVoto) V.mioVoto = pr.voto;   // (chi rientra durante il voto: l'host si ricorda del suo)
   V.aggLista(); V.aggHud(); if (V.g) V.aggVelo();
 };
 Vista.prototype.messaggio = function (m) {
@@ -6857,6 +7160,21 @@ Vista.prototype.effetto = function (m) {
   else if (m.k === "bengala" || m.k === "luci") SUONO.luci();
   else if (/sparisce|mangia|botola|trasforma/.test(m.k)) P.sparpaglia("fumo", m.x, m.y - T * 0.3, 10, { v: 30, vita: 0.9, r: 5 });
   else SUONO.abil();
+};
+Vista.prototype.tace = function (si) { var e = this.taceEl; if (e.classList.contains("su") !== !!si) e.classList.toggle("su", !!si); };
+// chi perde la rete e chi torna: una riga, una volta sola. V.assenti: 1 via senza averlo detto (appena dopo una ripresa risultano via tutti: non è una notizia), 2 detto, 3 fuori dalla partita
+Vista.prototype.notaAssenti = function (vm) {
+  var V = this, prima = V.assenti || {}, ora = V.assenti = {}, nuova = V.assRip !== (vm.rip || 0), gioco = vm.fase === "gioco" && !!V.g;
+  V.assRip = vm.rip || 0;
+  vm.players.forEach(function (p) {
+    if (p.bot || p.id === V.cb.myId) return;
+    var via = !!(p.via || p.forse), era = prima[p.id] || 0, q = gioco ? V.g.g.filter(function (x) { return x[0] === p.id; })[0] : null, fuori = !!(q && q[2]);
+    if (!via) { if (era > 1 && gioco) V.avviso(p.nome + " è tornato"); return; }
+    if (!gioco || nuova) { ora[p.id] = era || 1; return; }
+    if (fuori && era < 3) { V.avviso(p.nome + " è uscito dalla partita"); ora[p.id] = 3; return; }
+    if (!era) V.avviso(p.nome + " ha perso la rete");
+    ora[p.id] = era || 2;
+  });
 };
 Vista.prototype.avviso = function (testo, tipo) {
   var a = this.avv; a.textContent = testo; a.className = "lt-avviso su" + (tipo ? " " + tipo : "");
@@ -7470,9 +7788,17 @@ Vista.prototype.aggMappa = function (sal) {
 Vista.prototype.aggCarica = function () {
   var V = this, vm = V.vm, ora = performance.now(), mod = null, el = V.carica; if (!vm || !el) return;
   var ps = precaricoStato();
-  if (vm.avvio) { V.vistoAvvio = true; mod = "avvio"; }
+  if (V.nataT == null) V.nataT = ora;
+  // chi ricarica la pagina può trovare sul broker una foto vecchia, ancora con l'attesa di «Comincia»: quella vera dell'host arriva subito dopo.
+  // Appena aperta la pagina non ci si crede, e il mini caricamento d'ingresso si salta solo se l'attesa si è vista davvero
+  if (vm.avvio) {
+    if (V.avvioT == null) V.avvioT = ora;
+    if (ora - V.avvioT >= 2000) V.vistoAvvio = true;
+    if (ora - V.nataT >= 800) mod = "avvio";
+  }
   else if (vm.fase !== "lobby" && V.g && !V.vistoAvvio && !V.ingressoFatto) {
-    if (V.ingressoT == null) V.ingressoT = ora;
+    if (V.ingressoT == null) { V.ingressoT = ora; precaricoFretta(2); }   // (prima di chiedere i pezzi: se l'indice è già arrivato, l'anello non deve passare davanti)
+    if (!V.me.ok) V.ingCerco = true; else if (V.ingCerco) { V.ingCerco = false; immCodaDaCapo(); }
     var qui = V.me.ok ? V.me : { x: FONTANA.x, y: FONTANA.y }, pv = V.pit.meta;
     var ing = immIntorno(V.M, qui.x, qui.y, pv && pv.w / 2, pv && pv.h / 2); V.ingPct = Math.max(V.ingPct || 0, ing.pct);
     if (ora - V.ingressoT >= 10000) V.ingressoFatto = true;
@@ -7853,7 +8179,7 @@ Vista.prototype.chiHaVotato = function (esito) {
 Vista.prototype.lampo = function (b) { b.classList.remove("fatto"); void b.offsetWidth; b.classList.add("fatto"); vibra(15); };
 Vista.prototype.riunione = function (soloTempi) {
   var V = this, g = V.g, R = g.riu, ora = performance.now(), vivo = V.sonoVivo() && !V.guardo;
-  var k = "riu|" + g.round + "|" + (V.vm.rip || 0);
+  var k = "riu|" + g.round + "|" + (V.vm.rip || 0) + "|" + (V.guardo ? 1 : 0);   // (chi rientra vede la foto prima del ruolo: la riunione si rifà quando arriva, coi tasti giusti)
   if (V.riuK !== k || V.veloTipo !== "riu") {   // (se un pannello l'ha coperta, la riunione si ridisegna)
     V.riuK = k; V.veloTipo = "riu"; V.velo.textContent = ""; V.velo.hidden = false;
     var box = E("div", "lt-pannello lt-foglio lt-riu"); V.velo.appendChild(box); V.riuBox = box; V.riuFaseK = null;
@@ -7874,9 +8200,11 @@ Vista.prototype.riunione = function (soloTempi) {
     V.intro.textContent = ""; V.intro.className = "lt-intro " + (R && R.motivo === "corpo" ? "corpo" : "campana");
     var facce = E("div", "facce"); [R && R.da, R && R.corpo].forEach(function (id, i) { if (id == null) return; var f = ritratto(id); if (i) f.classList.add("morto"); facce.appendChild(f); });
     var icI = E("div", "icona"); icI.innerHTML = icona(R && R.motivo === "corpo" ? "lanterna" : "campana"); V.intro.append(icI, E("h2", "", R && R.motivo === "corpo" ? "Lanterna spenta!" : "Riunione!"), facce, E("p", "", corpoN ? da + " ha trovato " + corpoN : da + " ha suonato la campana"));
-    V.intro.hidden = false; vibra(80);
-    (R && R.motivo === "corpo" ? SUONO.corpo : SUONO.campana)();
-    clearTimeout(V.introT); V.introT = setTimeout(function () { V.intro.hidden = true; }, 2000);
+    if (V.introR !== g.round) {   // (ridisegnarla non la riapre: la scritta grande si vede una volta sola)
+      V.introR = g.round; V.intro.hidden = false; vibra(80);
+      (R && R.motivo === "corpo" ? SUONO.corpo : SUONO.campana)();
+      clearTimeout(V.introT); V.introT = setTimeout(function () { V.intro.hidden = true; }, 2000);
+    }
     // sospetti, «pulito», voto e Indovino stanno sulle schede dei giocatori; qui sotto solo le frasi per sé e i tasti dei ruoli
     var rapide = [["ero", "Io ero…", "pin"], ["salto", "Non so", "boh"]];
     if (V.priv && V.priv.ruolo === "sindaco" && !V.priv.rivelato && vivo) rapide.unshift(["rivela", "Rivelati", "corona"]);
@@ -7896,7 +8224,7 @@ Vista.prototype.riunione = function (soloTempi) {
     var fondo = E("div", "fondo"); if (!V.guardo) fondo.appendChild(creaVoce("riga")); fondo.appendChild(V.riuVoto); box.appendChild(fondo);   // (la voce: anche qui si parla)
     V.btnSalta.addEventListener("click", function () { if (V.mioVoto) return; V.manda("voto", { su: "salta" }); V.mioVoto = "salta"; V.conf = null; vibra(25); V.riunione(); });
     V.riuNota = E("p", "nota", ""); box.appendChild(V.riuNota);
-    V.conf = null; V.mioVoto = null; V.carte = {}; V.nChat = 0; V.espK = null;
+    V.conf = null; V.mioVoto = (V.priv && V.priv.voto) || null; V.carte = {}; V.nChat = 0; V.espK = null;
     g.g.forEach(function (q) {
       var io = q[0] === V.cb.myId, c = E("div", "carta" + (io ? " io" : "")), nt = E("span", "nt");
       if (io) nt.appendChild(E("span", "tu", "tu")); nt.appendChild(tintaDi(q[0])); nt.appendChild(E("span", "st", ""));
@@ -7939,7 +8267,8 @@ Vista.prototype.riunione = function (soloTempi) {
   var zittitoIo = !!(R && zitt.indexOf(V.cb.myId) >= 0), indov = V.priv && V.priv.ruolo === "indovino" && vivo && V.priv.tentativi > 0;
   g.g.forEach(function (q) {
     var c = V.carte[q[0]]; if (!c) return;
-    c.classList.toggle("spento", !q[1]); c.classList.toggle("zitto", !!q[1] && zitt.indexOf(q[0]) >= 0); c.classList.toggle("mio-voto", V.mioVoto === q[0]); c.classList.toggle("votato", votati.indexOf(q[0]) >= 0);
+    var ass = !!q[1] && !!(V.assenti || {})[q[0]];   // (senza rete: una scheda sola per volta dice una cosa)
+    c.classList.toggle("spento", !q[1]); c.classList.toggle("rete", ass); c.classList.toggle("zitto", !!q[1] && !ass && zitt.indexOf(q[0]) >= 0); c.classList.toggle("mio-voto", V.mioVoto === q[0]); c.classList.toggle("votato", votati.indexOf(q[0]) >= 0);
     // i tasti sulla scheda: mentre si parla «Sospetto» e «Pulito», quando si vota «Vota» (al secondo tocco «Confermi?»)
     var altro = q[0] !== V.cb.myId, puo = vivo && !!q[1] && g.fase === "riunione";   // (votarsi da soli si può sempre)
     var ak = !puo ? (g.fase === "esito" && V.mioVoto === q[0] ? "mio" : "") : disc > 0 ? (zittitoIo || !altro ? "" : "parla") : V.mioVoto ? (V.mioVoto === q[0] ? "mio" : "") : V.conf === q[0] ? "conf" : "vota";
@@ -7948,7 +8277,7 @@ Vista.prototype.riunione = function (soloTempi) {
     var nm = ((V.cache[q[0]] || {}).nome || "?") + (sindaci.indexOf(q[0]) >= 0 ? " ★" : "") + (q[0] === mioBers ? " ◎" : "");
     var nmE = c.querySelector(".nm"); if (nmE.textContent !== nm) nmE.textContent = nm;
     nmE.classList.toggle("buono", V.letti[q[0]] === "buono"); nmE.classList.toggle("cattivo", V.letti[q[0]] === "cattivo");
-    var stt = !q[1] ? "spento" : zitt.indexOf(q[0]) >= 0 ? "zittito" : "";
+    var stt = !q[1] ? "spento" : ass ? "assente" : zitt.indexOf(q[0]) >= 0 ? "zittito" : "";
     var st = c.querySelector(".st"); if (st.textContent !== stt) st.textContent = stt;
     if (votati.indexOf(q[0]) >= 0 && !c.dataset.batti) { c.dataset.batti = "1"; c.classList.remove("lt-batti"); void c.offsetWidth; c.classList.add("lt-batti"); }
     if (!nuovoEsito) return;
@@ -8047,6 +8376,8 @@ function cssRegistro() {
 .lt-foglio .lt-pz{box-shadow:inset 0 0 0 .5px rgba(20,10,4,.6),0 0 0 .5px rgba(84,60,34,.4)}
 .lt-riu .chat .tc{font-style:italic;font-size:13px;color:var(--r-ink2)}
 .lt-riu .carta.spento .lt-tinta,.lt-riu .carta.zitto .lt-tinta{gap:0;font-size:0}
+.lt-riu .carta.rete .lt-tinta{display:none}
+.lt-scena:not(.oriz) .lt-riu[data-fase="vota"] .carta.votato .lt-tinta{gap:0;font-size:0}
 .lt-esp .txt .lt-tinta{justify-content:center;font-size:14.5px}.lt-esp .txt .lt-tinta i{width:11px;height:11px}
 .lt-esp .rg .su .lt-tinta{margin-left:3px;font-size:12px}
 .lt-vince .u .lt-tinta{justify-content:center;max-width:64px;font-size:11.5px}.lt-vince .u .lt-tinta i{width:8px;height:8px}
@@ -8139,8 +8470,9 @@ function cssRegistro() {
 .lt-riu .carta .nt{grid-area:s;display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;white-space:nowrap;font:italic 12.5px/1 var(--r-serif);color:var(--r-ink3)}
 .lt-riu .carta .tu{font-weight:700;color:var(--r-ink2)}
 .lt-riu .carta .st:empty{display:none}
-.lt-riu .carta.spento .st,.lt-riu .carta.zitto .st{padding:0 4px;font:700 9.5px/14px var(--r-sans);letter-spacing:.07em;text-transform:uppercase;border-radius:1px}
+.lt-riu .carta.spento .st,.lt-riu .carta.zitto .st,.lt-riu .carta.rete .st{padding:0 4px;font:700 9.5px/14px var(--r-sans);letter-spacing:.07em;text-transform:uppercase;border-radius:1px}
 .lt-riu .carta.spento .st{color:var(--r-ink2);box-shadow:inset 0 0 0 1px var(--r-ink3);transform:rotate(-3deg)}
+.lt-riu .carta.rete .st{color:var(--r-oro);box-shadow:inset 0 0 0 1px var(--r-ottone);transform:rotate(-2deg)}
 .lt-riu .carta.zitto .st{color:var(--r-chiara);background:var(--r-ink);box-shadow:1px 1px 0 rgba(40,20,8,.3);transform:rotate(-2deg)}
 .lt-riu .carta.spento>.faccia,.lt-riu .carta.spento>.pall{filter:saturate(.6) contrast(.86);opacity:.78}
 .lt-riu .carta.spento .nm{color:var(--r-ink3);text-decoration:line-through;text-decoration-thickness:1.5px}
@@ -8229,6 +8561,11 @@ function cssRegistro() {
 /* un avviso della voce quando il tasto non si vede: un bigliettino in basso, non copre mai i titoli */
 .lt-avviso.voce{top:auto;bottom:calc(10px + env(safe-area-inset-bottom));padding:7px 12px;border:0;border-radius:2px;font:700 14px/1.2 var(--r-serif);color:var(--r-ink);background:var(--r-grana),linear-gradient(var(--r-carta),var(--r-carta));box-shadow:0 3px 8px rgba(0,0,0,.5);transform:translate(-50%,6px) rotate(-1deg)}
 .lt-avviso.voce.su{transform:translate(-50%,0) rotate(-1deg)}
+/* l'host non risponde: lo stesso bigliettino, che resta finché non torna. In alto a destra sotto la voce: in basso ci sono i tasti. Sui fogli del registro in fondo, sotto la penna. Non prende i tocchi */
+.lt-tace{--ltx:0;--lty:-6px;--ltr:1deg;position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(104px + env(safe-area-inset-top));z-index:5;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:2px;font:700 14px/1.2 var(--r-serif);color:var(--r-ink);background:var(--r-grana),linear-gradient(var(--r-carta),var(--r-carta));box-shadow:0 3px 8px rgba(0,0,0,.5);white-space:nowrap;pointer-events:none;opacity:0;transform:translate(var(--ltx),var(--lty)) rotate(var(--ltr));transition:opacity .22s var(--lt-ease),transform .22s var(--lt-ease)}
+.lt-tace.su{--lty:0px;opacity:1}
+.lt-tace .ico{flex:none;width:15px;height:15px;color:var(--r-oro)}
+.lt-velo:not([hidden])~.lt-tace{--ltx:-50%;--ltr:-1deg;left:50%;right:auto;top:auto;bottom:calc(10px + env(safe-area-inset-bottom))}
 
 /* il verdetto: una riga di registro col timbro */
 .lt-esp.lt-foglio{position:absolute;inset:0;z-index:3;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,max-content);justify-items:center;align-content:center;gap:14px;padding:22px 24px;text-align:center;box-shadow:none;animation:ltSale .24s var(--lt-ease)}
@@ -8501,7 +8838,7 @@ html:has(.lt-pc.lt-foglio),body:has(.lt-pc.lt-foglio){background:#1c110b}
 .lt-scena.oriz .lt-riu .carta{grid-template-columns:28px minmax(0,1fr) auto;grid-template-rows:23px 23px;grid-template-areas:'f n a' 'f s a';column-gap:5px;padding:0 1px}
 .lt-scena.oriz .lt-riu .carta>.faccia,.lt-scena.oriz .lt-riu .carta>.pall{width:27px;height:31px;margin:0}
 .lt-scena.oriz .lt-riu .carta .nm{grid-row:1;align-self:end;font-size:15px}
-.lt-scena.oriz .lt-riu .carta.spento .nm,.lt-scena.oriz .lt-riu .carta.zitto .nm,.lt-scena.oriz .lt-riu .carta.io .nm,.lt-scena.oriz .lt-riu .carta.votato .nm{grid-row:1;align-self:end}
+.lt-scena.oriz .lt-riu .carta.spento .nm,.lt-scena.oriz .lt-riu .carta.zitto .nm,.lt-scena.oriz .lt-riu .carta.rete .nm,.lt-scena.oriz .lt-riu .carta.io .nm,.lt-scena.oriz .lt-riu .carta.votato .nm{grid-row:1;align-self:end}
 .lt-scena.oriz .lt-riu .carta .nt{justify-content:flex-start;align-self:start;font-size:11.5px}
 .lt-scena.oriz .lt-riu .carta .az{grid-row:1/span 2;align-self:center}
 .lt-scena.oriz .lt-riu .carta .vt{grid-area:a;grid-row:1/span 2;justify-self:end;padding-right:11px}
@@ -8929,7 +9266,9 @@ SG.registra({
   modi: [], soloOnline: true,
   postiOnline: MAX,
   ritardatari: RITARDATARI,
-  riprende: true,   // senza riserva: è un gioco in tempo reale
+  riprende: true,
+  // l'host di riserva: provato (prove/browser/rientri.mjs) ma SPENTO, l'AGENTS.md dell'app lo vieta nei giochi in tempo reale. Si accende solo col sì di Mario: qui, true al posto di window.LT_RISERVA
+  riserva: !!window.LT_RISERVA,
   riassunto: function (imp) { return riassunto(pulisci(imp)); },
   regole: [
     "Gli <b>ospiti</b> fanno i compiti in giro per il palazzo. Le <b>ombre</b> spengono le lanterne quando nessuno le vede.",
