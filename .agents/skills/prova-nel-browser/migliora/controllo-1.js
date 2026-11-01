@@ -286,7 +286,7 @@
 
   // =================== ck6: Balla, chi arriva tardi ===================
   function veloAperto(w) { return w && w.document.querySelector(".bc-velo.on:not(.via)"); }
-  function scrivi(w, testo) { var v = veloAperto(w), ta = v && v.querySelector(".bc-penna"), ok = v && v.querySelector(".bc-ok"); if (!ta || !ok) return false; ta.value = testo; ta.dispatchEvent(new w.Event("input", { bubbles: true })); ok.click(); return true; }
+  function scrivi(w, testo) { var v = veloAperto(w), ta = v && v.querySelector(".bc-penna"), ok = v && v.querySelector(".bc-ok"); if (!ta || !ok) return false; [].forEach.call(v.querySelectorAll(".bc-penna"), function (t, n) { t.value = n ? testo + " bis" : testo; t.dispatchEvent(new w.Event("input", { bubbles: true })); }); ok.click(); return true; }
   function vota(w) { var v = veloAperto(w); if (!v) return false; var b = [].filter.call(v.querySelectorAll(".bc-scelta"), function (x) { return !x.disabled; })[0]; if (!b) return false; b.click(); var ok = v.querySelector(".bc-ok"); if (!ok || ok.disabled) return false; ok.click(); return true; }
   COPIONE.aggiungi("ck6", { nome: "Balla online: chi arriva a partita cominciata non gioca e non rompe niente, fino alla fine", fai: async function () {
     var P = await W.apriTel("Paky", { x: 0, spiaBalla: true, prima: function (w) { w.__imp = { round: 3, amici: "no", ride: true }; } });
@@ -305,6 +305,7 @@
       }
       (v.players || []).forEach(function (p) {
         var w = W.finestra(p.nome), k = v.fase + "|" + v.giro + "|" + p.id; if (fatti[k] || !w) return;
+        if (v.fase === "categoria" && v.cat && v.cat.k == null && v.cat.chi === p.id) { var bc = w.document.querySelector(".bc-cat-c:not(:disabled)"); if (bc) { bc.click(); fatti[k] = 1; } return; }
         if (v.fase === "scrittura" && veloAperto(w)) fatti[k] = scrivi(w, "balla di " + p.nome + " " + v.giro);
         if (v.fase === "voto" && veloAperto(w)) fatti[k] = vota(w);
       });

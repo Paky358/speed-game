@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 294,
+    data: "1 novembre 2026",
+    titolo: "🤥 La Balla Colossale: la prima pagina, la Balla Finale e tante notizie nuove",
+    descrizione: [
+      "La notizia ora è il titolo della prima pagina di un giornale, «Il Colossale», col pezzo mancante in giallo. Niente più scrittura a mano: risposte e titoli si leggono al volo.",
+      "🔥 La Balla Finale: l'ultima notizia ha due pezzi mancanti. Si inventano tutti e due e vale il triplo: chi è indietro può ancora vincere.",
+      "🎯 Sceglie chi è ultimo: prima di ogni notizia chi è ultimo in classifica sceglie l'argomento tra tre (🐾 Animali, 🏛️ Storia, 🍝 Italia…). Si può spegnere nelle regole.",
+      "Le notizie sono quasi il doppio (746, più 67 per la Balla Finale), controllate una per una: via quelle che si indovinavano dalla domanda, e le balle della redazione più credibili."
+    ]
+  },
+  {
     v: 293,
     data: "1 novembre 2026",
     titolo: "🎨 Scarabocchio: disegnare col dito è più facile",

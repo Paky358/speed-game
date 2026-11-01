@@ -11,6 +11,11 @@
 // balla4: sullo stesso telefono in 3, 3 round «Notizie e amici» con «Che balla!», dalla home alla fine, solo coi tasti;
 //         misure (360x640 e 412x915) del foglio della verità, del tasto 😂 e della Balla d'oro.
 // balla5: nella Sala (Paky, Luca, Sara giocano; Giulia non scelta guarda e può ridere), 1 round fino alla fine.
+// ballaN1 (1 nov 2026): online in 3, 3 round «Solo notizie»: «🎯 Sceglie chi è ultimo» (al primo round tutti a zero, solo chi sceglie
+//         può scegliere, chi sceglie ricarica e ritrova le carte, la notizia è dell'argomento scelto; al secondo round sceglie chi ha meno
+//         punti e, se non tocca niente, si sceglie a caso), poi «🔥 La Balla Finale» (due campi, una balla con un pezzo solo non vale,
+//         chi ricarica mentre si scrive ritrova i due campi, le risposte «pezzo / pezzo», punti tripli: +6 la verità, +3 a inganno).
+// ballaN2: le regole nuove senza grafica (due pezzi, punti tripli, chi sceglie) e le notizie (argomento, lunghezze, doppioni, Balla Finale).
 // balla6: chi ricarica: il protagonista dopo aver scritto la verità (niente foglio di nuovo), un amico al voto (ritrova il foglio),
 //         chi ha toccato 😂 (lo ritrova già messo).
 // Le regole della partita per la prova: w.__imp (le legge solo l'host, all'avvio), con apriTel(nome, { spiaBalla: true }).
@@ -48,7 +53,7 @@
   function foglio(w) { var v = veloAperto(w); return v ? v.innerText.replace(/\s+/g, " ") : ""; }
   function scrivi(w, testo) {
     var v = veloAperto(w), ta = v && v.querySelector(".bc-penna"), ok = v && v.querySelector(".bc-ok"); if (!ta || !ok) return false;
-    ta.value = testo; ta.dispatchEvent(new w.Event("input", { bubbles: true })); ok.click(); return true;
+    [].forEach.call(v.querySelectorAll(".bc-penna"), function (t, n) { t.value = n ? testo + " bis" : testo; t.dispatchEvent(new w.Event("input", { bubbles: true })); }); ok.click(); return true;   // (la Balla Finale ha due campi)
   }
   // vota la prima risposta che va bene (pred sul testo); false se il foglio del voto non c'è
   function vota(w, pred) {
@@ -76,9 +81,12 @@
     f.style.width = wh[0] + "px"; f.style.height = wh[1] + "px"; w.dispatchEvent(new w.Event("resize"));
     await W.dorme(900);
     var esito = cosa(w), scorre = w.document.scrollingElement.scrollHeight > w.innerHeight + 2;
-    if (scorre) esito = (esito || "") + " · la pagina scorre";
+    if (scorre) esito = (esito || "") + " · " + wh.join("x") + ": la pagina scorre (" + (w.document.querySelector(".bc-velo.on") ? "foglio " + w.document.querySelector(".bc-velo.on .bc-carta").className : ((w.document.querySelector(".st-sch-in > *") || {}).className || "?")) + ")";
     return esito;
   }
+  // le foto dei momenti (W.__foto c'è solo quando le prende lo strumento delle foto, fuori dal copione): una volta per momento
+  var FOTO = {};
+  async function foto(nome) { if (!W.__foto || FOTO[nome]) return; FOTO[nome] = 1; await W.dorme(900); await W.__foto(nome); }
   async function torna360(nome) { var f = document.getElementById("tel-" + nome), w = W.finestra(nome); f.style.width = "360px"; f.style.height = "740px"; w.dispatchEvent(new w.Event("resize")); await W.dorme(300); }
   function errori() { var e = W.erroriTel(); return e.length ? e.slice(0, 3).join(" / ") : ""; }
 
@@ -103,7 +111,8 @@
     if (B.calcolaOro(sc, [5, 0, 0, 4])) no("Balla d'oro senza 😂 sulle balle dei giocatori");
     // il piano dei round
     var pr = function (n, m) { return B.pianoRound(n, m).join(""); };
-    if (pr(5, "misto") !== "nanan" || pr(3, "misto") !== "nan" || pr(7, "misto") !== "nananan" || pr(3, "solo") !== "aaa" || pr(5, "no") !== "nnnnn" || pr(1, "misto") !== "n")
+    // (dal 1 nov 2026 l'ultima notizia è la Balla Finale, "f")
+    if (pr(5, "misto") !== "nanaf" || pr(3, "misto") !== "naf" || pr(7, "misto") !== "nananaf" || pr(3, "solo") !== "aaa" || pr(5, "no") !== "nnnnf" || pr(1, "misto") !== "n")
       no("piano dei round: " + [pr(5, "misto"), pr(3, "misto"), pr(7, "misto"), pr(3, "solo"), pr(5, "no"), pr(1, "misto")].join(" "));
     // le domande sugli amici
     var L = w.SG_BALLA_AMICI || [], visti = {}, male = [];
@@ -124,7 +133,8 @@
     var g = w.__gBalla;
     if (g && g.riassunto) {
       var r1 = g.riassunto({ round: 5, amici: "misto", ride: true }), r2 = g.riassunto({ round: 3, amici: "no", ride: false });
-      if (r1 !== "5 round · Notizie e amici · 😂 Che balla!" || r2 !== "3 round · Solo notizie · senza «Che balla!»") no("riassunto: " + r1 + " / " + r2);
+      var r3 = g.riassunto({ round: 7, amici: "solo", ride: true, sceglie: false });
+      if (r1 !== "5 round · Notizie e amici · 🎯 sceglie chi è ultimo · 😂 Che balla!" || r2 !== "3 round · Solo notizie · 🎯 sceglie chi è ultimo · senza «Che balla!»" || r3 !== "7 round · Solo amici · 😂 Che balla!") no("riassunto: " + r1 + " / " + r2 + " / " + r3);
     } else no("non vedo il gioco registrato (riassunto)");
     return "regole ok, " + L.length + " domande sugli amici ok " + note.join(" ");
   } });
@@ -151,6 +161,7 @@
       (v.players || []).forEach(function (p) {
         if (p.via) return; var w = W.finestra(p.nome), k = v.fase + "|" + v.giro + "." + (v.rif || 0) + "|" + p.id;
         if (fatti[k] || !w) return;
+        if (v.fase === "categoria" && v.cat && v.cat.k == null && v.cat.chi === p.id) { var bc = w.document.querySelector(".bc-cat-c:not(:disabled)"); if (bc) { bc.click(); fatti[k] = 1; } return; }
         if (v.fase === "scrittura" && veloAperto(w)) { fatti[k] = scrivi(w, v.amici && v.prot === p.id ? (verita || "il mare d'inverno") : "balla " + p.nome + " " + v.giro); }
         if (v.fase === "voto" && veloAperto(w)) { fatti[k] = vota(w, function () { return true; }); }
       });
@@ -365,21 +376,42 @@
     var bAv = [].find.call(P.document.querySelectorAll(".schermata .piede button"), function (x) { return /Avanti|Comincia|Gioca|Via|▶/.test(x.textContent) && !x.disabled; });
     if (!bAv) no("non trovo il tasto per cominciare"); bAv.click();
     if (!await W.aspetta(function () { return P.document.querySelector(".st-vista"); }, 5000)) no("lo studio non si apre");
-    var fino = Date.now() + 420000, n = 0, testate = {}, visto = { vero: 0, ride: 0, oro: 0 };
+    var fino = Date.now() + 420000, n = 0, testate = {}, visto = { vero: 0, ride: 0, oro: 0, cat: 0, finale: 0 };
     while (Date.now() < fino) {
       if (!P.document.querySelector(".st-vista") && /🏆|Rivincita|Vince/.test(T(P))) break;
-      var ts = P.document.querySelector(".bc-sch .bc-testata"); if (ts) testate[ts.textContent.replace(/ · round.*/, "") + " · " + ts.textContent.replace(/.* · /, "")] = 1;
+      var rg = P.document.querySelector(".bc-sch .bc-ritaglio");
+      if (rg) {   // la prima pagina: l'occhiello e il round nella riga sotto la testata; «Parliamo di te»: il foglietto con la sua testata
+        var oc = rg.querySelector(".bc-occhio"), gr = rg.querySelectorAll(".bc-griga span")[1], te = rg.querySelector(".bc-testata");
+        var lab = oc ? oc.textContent.replace(/^.*· (Notizia vera)$/, "$1") : te.textContent.replace(/ · round.*/, ""), rd = gr ? gr.textContent.toLowerCase() : te.textContent.replace(/.* · /, "");
+        testate[lab + " · " + rd] = 1;
+      }
+      var cc = P.document.querySelector(".bc-cat-c:not(:disabled)");
+      if (cc && !visto.cat++) {
+        var tutteC = function (w) { var b = [].filter.call(w.document.querySelectorAll(".bc-cat-c"), function (x) { return !dentroSchermo(w, x); }); return b.length ? w.innerWidth + "x" + w.innerHeight + ": argomenti fuori schermo" : ""; };
+        misure.push(await misura("Paky", [360, 640], tutteC)); misure.push(await misura("Paky", [412, 915], tutteC));
+        await torna360("Paky"); cc = P.document.querySelector(".bc-cat-c:not(:disabled)");
+      }
+      if (cc) { await foto("1-argomento"); cc = P.document.querySelector(".bc-cat-c:not(:disabled)"); if (cc) cc.click(); await W.dorme(250); continue; }
+      if (!veloAperto(P) && P.document.querySelector(".bc-sch .bc-ritaglio.grande.pagina")) await foto(P.document.querySelector(".bc-ritaglio.finale") ? "2b-prima-pagina-finale" : "2-prima-pagina");
+      if (!veloAperto(P) && P.document.querySelector(".bc-sch.tab .bc-riga:not(.giu)") && P.document.querySelector(".bc-sch.tab .bc-ritaglio.pagina")) await foto("4-tabellone");
+      if (!veloAperto(P) && P.document.querySelector(".bc-big .bc-timbro.on")) await foto(P.document.querySelector(".bc-timbro.vero.on") ? "6-verita" : "5-balla-scoperta");
       var v = veloAperto(P);
       if (v) {
         if (v.querySelector(".bc-penna")) {
           var vero = /Scrivi la VERITÀ/.test(foglio(P));
+          if (!vero) await foto(v.querySelectorAll(".bc-penna").length === 2 ? "3b-scrivi-finale" : "3-scrivi");
+          if (v.querySelectorAll(".bc-penna").length === 2 && !visto.finale++) {   // la Balla Finale: due campi e «Fatto» a vista
+            var dueC = function (w) { var b = [].filter.call(veloAperto(w).querySelectorAll(".bc-penna,.bc-ok"), function (x) { return !dentroSchermo(w, x); }); return b.length ? w.innerWidth + "x" + w.innerHeight + ": Balla Finale, " + b.length + " pezzi fuori schermo" : ""; };
+            misure.push(await misura("Paky", [360, 640], dueC)); misure.push(await misura("Paky", [412, 915], dueC));
+            await torna360("Paky");
+          }
           if (vero && !visto.vero++) {
             misure.push(await misura("Paky", [360, 640], function (w) { return dentroSchermo(w, veloAperto(w).querySelector(".bc-ok")) ? "" : "360x640: «Fatto» fuori schermo"; }));
             misure.push(await misura("Paky", [412, 915], function (w) { return dentroSchermo(w, veloAperto(w).querySelector(".bc-ok")) ? "" : "412x915: «Fatto» fuori schermo"; }));
             await torna360("Paky");
           }
           scrivi(P, vero ? "la verita numero " + (n++) : "balla numero " + (n++));
-        } else vota(P, function () { return true; });
+        } else { await foto(P.document.querySelector(".bc-velo .bc-ritaglio.finale") ? "4b-vota-finale" : "4-vota"); vota(P, function () { return true; }); }
       } else {
         var r = P.document.querySelector(".bc-ride:not([disabled])");
         if (r && !r.__toccato && !visto.ride++) {
@@ -401,11 +433,145 @@
       await W.dorme(250);
     }
     if (P.document.querySelector(".st-vista")) no("la partita non finisce (" + T(P).slice(0, 80) + ")");
-    var am = Object.keys(testate).filter(function (k) { return /Parliamo di/.test(k); }), nt = Object.keys(testate).filter(function (k) { return /Notizia vera/.test(k); });
-    if (am.length !== 1 || nt.length !== 2) no("attesi 1 round «Parliamo di» e 2 notizie: " + Object.keys(testate).join(" | "));
-    if (!visto.vero || !visto.ride || !visto.oro) no("non visti: " + JSON.stringify(visto));
+    var am = Object.keys(testate).filter(function (k) { return /Parliamo di/.test(k); }), nt = Object.keys(testate).filter(function (k) { return /Notizia vera/.test(k); }),
+      fi = Object.keys(testate).filter(function (k) { return /Balla Finale/.test(k); });
+    if (am.length !== 1 || nt.length !== 1 || fi.length !== 1) no("attesi 1 round «Parliamo di», 1 notizia e la Balla Finale: " + Object.keys(testate).join(" | "));
+    if (!visto.vero || !visto.ride || !visto.oro || !visto.cat || !visto.finale) no("non visti: " + JSON.stringify(visto));
     var m = misure.filter(Boolean); if (m.length) no("misure: " + m.join(" | "));
     var e = errori(); if (e) no("errori: " + e);
     return "ok · " + Object.keys(testate).join(" | ") + " · misure ok (360x640, 412x915)";
+  } });
+
+  // ===================== ballaN1: l'argomento e la Balla Finale, online =====================
+  function carteAccese(w) { return w ? w.document.querySelectorAll(".bc-cat-c:not(:disabled)").length : 0; }
+  function avantiTutti(C) { (vm(C).players || []).forEach(function (p) { if ((vm(C).avanti || []).indexOf(p.id) < 0) { var h = W.reteDi(p.nome); if (h) h.invia({ t: "avanti" }); else W.clicca(W.finestra(p.nome), /Avanti/, ".bc-avanti"); } }); }
+  COPIONE.aggiungi("ballaN1", { nome: "Balla online: chi è ultimo sceglie l'argomento, il tempo che scade, la Balla Finale a due pezzi (punti tripli), chi ricarica", fai: async function () {
+    var X0 = await partita({ round: 3, amici: "no", ride: false, sceglie: true }), P = X0.P, C = X0.C, note = [];
+    // ---- round 1: siete tutti a zero, sceglie uno; solo lui ----
+    if (!await W.aspetta(function () { return vm(C).fase === "categoria"; }, 20000)) no("non si arriva alla scelta dell'argomento (fase " + vm(C).fase + ")");
+    var v = vm(C), c = v.cat || {}, nC = nomeDi(v, c.chi), altri = v.players.filter(function (p) { return p.id !== c.chi; }).map(function (p) { return p.nome; });
+    if (!c.opz || c.opz.length !== 3 || c.perche !== "zero" || c.k != null) no("la scelta dell'argomento è sbagliata: " + JSON.stringify(c));
+    if (!await W.aspetta(function () { return carteAccese(W.finestra(nC)) === 3; }, 8000)) no(nC + " (sceglie) non ha le 3 carte da toccare");
+    if (!/Scegli tu l'argomento/.test(T(W.finestra(nC)))) no(nC + " non legge «Scegli tu l'argomento»");
+    altri.forEach(function (n) { var w = W.finestra(n); if (carteAccese(w)) no(n + " può toccare le carte ma non sceglie lui"); if (!new RegExp(nC + " sceglie l'argomento").test(T(w))) no(n + " non legge «" + nC + " sceglie l'argomento»"); });
+    var h = W.reteDi(altri[0] === "Paky" ? altri[1] : altri[0]); if (h) h.invia({ t: "cat", k: 1 });   // chi non sceglie prova lo stesso: niente
+    await W.dorme(900);
+    if (vm(C).cat && vm(C).cat.k != null) no("ha scelto l'argomento chi non doveva");
+    if (nC !== "Paky") {   // chi sceglie ricarica: ritrova le carte, stesse
+      await W.ricarica(nC);
+      if (!await W.aspetta(function () { return carteAccese(W.finestra(nC)) === 3; }, 15000)) no(nC + " dopo la ricarica non ritrova le carte («" + T(W.finestra(nC)).slice(0, 90) + "»)");
+      if (JSON.stringify(vm(C).cat.opz) !== JSON.stringify(c.opz)) no("dopo la ricarica gli argomenti sono cambiati");
+    }
+    W.finestra(nC).document.querySelectorAll(".bc-cat-c")[2].click();
+    if (!await W.aspetta(function () { return vm(C).cat && vm(C).cat.k === 2; }, 5000)) no("la scelta di " + nC + " non arriva all'host");
+    if (!await W.aspetta(function () { return ["Paky", "Luca", "Sara"].every(function (n) { var b = W.finestra(n).document.querySelectorAll(".bc-cat-c")[2]; return b && b.classList.contains("scelta"); }); }, 5000)) no("la carta scelta non si accende su tutti i telefoni");
+    if (!await W.aspetta(function () { return vm(C).fase === "notizia"; }, 8000)) no("dopo la scelta non arriva la notizia");
+    v = vm(C);
+    if (v.catN !== c.opz[2]) no("la notizia è dell'argomento «" + v.catN + "» invece di «" + c.opz[2] + "»");
+    var nomeCat = (P.__balla.CATEGORIE.filter(function (x) { return x.k === c.opz[2]; })[0] || {}).nome;
+    if (!await W.aspetta(function () { var o = P.document.querySelector(".bc-sch .bc-occhio"); return o && o.textContent.indexOf(nomeCat) >= 0; }, 6000)) no("sulla prima pagina non c'è l'argomento «" + nomeCat + "»");
+    note.push("1° round: " + nC + " sceglie «" + nomeCat + "»");
+    v = await roundSemplice(C, false);
+    if (v.fase !== "punti") no("il primo round non arriva ai punti (fase " + v.fase + ")");
+    avantiTutti(C);
+    // ---- round 2: sceglie chi ha meno punti; se non tocca niente, a caso ----
+    if (!await W.aspetta(function () { return vm(C).fase === "categoria" && vm(C).giro === 1; }, 20000)) no("al secondo round non si sceglie l'argomento (fase " + vm(C).fase + ")");
+    v = vm(C); c = v.cat;
+    var min = Math.min.apply(null, v.players.map(function (p) { return p.punti; })), chi = v.players.filter(function (p) { return p.id === c.chi; })[0];
+    if (!chi || chi.punti !== min) no("sceglie " + (chi && chi.nome) + " con " + (chi && chi.punti) + " punti, ma il minimo è " + min);
+    if (!await W.aspetta(function () { return /Si sceglie a caso tra/.test(T(P)) || /Scegli entro/.test(T(P)); }, 6000)) no("non c'è il conto alla rovescia della scelta («" + T(P).slice(-80) + "»)");
+    var t0 = Date.now();
+    if (!await W.aspetta(function () { return vm(C).cat && vm(C).cat.k != null; }, 22000)) no("nessuno sceglie e il tempo non scade");
+    var dt = Math.round((Date.now() - t0) / 1000);
+    if (dt < 8) no("la scelta a caso è arrivata troppo presto (" + dt + " s)");
+    note.push("2° round: sceglie " + chi.nome + " (" + chi.punti + " punti), a caso dopo " + dt + " s");
+    if (!await W.aspetta(function () { return vm(C).fase === "notizia"; }, 8000)) no("dopo la scelta a caso non arriva la notizia");
+    v = await roundSemplice(C, false);
+    if (v.fase !== "punti") no("il secondo round non arriva ai punti");
+    avantiTutti(C);
+    // ---- round 3: la Balla Finale ----
+    if (!await W.aspetta(function () { return vm(C).giro === 2 && vm(C).fase === "notizia"; }, 20000)) no("all'ultimo round si sceglie ancora l'argomento o non arriva la notizia (fase " + vm(C).fase + ")");
+    v = vm(C);
+    if (!v.doppia || (v.domanda.match(/_{3,}/g) || []).length !== 2) no("l'ultimo round non è la Balla Finale: " + v.domanda);
+    if (!await W.aspetta(function () { return P.document.querySelector(".bc-sch .bc-ritaglio.finale") && P.document.querySelectorAll(".bc-sch .bc-buco").length === 2; }, 6000)) no("sulla prima pagina non ci sono i due buchi della Balla Finale");
+    if (!await W.aspetta(function () { return /La Balla Finale/.test(T(W.finestra("Luca"))); }, 6000)) no("a Luca non si annuncia «La Balla Finale»");
+    var fin = P.SG_BALLA_FINALE.filter(function (d) { return d.domanda === v.domanda; })[0];
+    if (!fin) no("non trovo la notizia della Balla Finale nei dati");
+    var vera = fin.risposteVere.join(" / ");
+    if (!await W.aspetta(function () { return vm(C).fase === "scrittura" && veloAperto(W.finestra("Luca")); }, 15000)) no("non si arriva a scrivere la Balla Finale");
+    if (veloAperto(W.finestra("Luca")).querySelectorAll(".bc-penna").length !== 2) no("nella Balla Finale Luca non ha due campi");
+    // un pezzo solo non vale
+    W.reteDi("Luca").invia({ t: "balla", testo: "un pezzo solo" });
+    await W.dorme(1200);
+    if ((vm(C).fatti || []).indexOf(idDi(vm(C), "Luca")) >= 0) no("una balla con un pezzo solo è stata presa");
+    // Sara ricarica mentre si scrive: ritrova i due campi
+    await W.ricarica("Sara");
+    if (!await W.aspetta(function () { var x = veloAperto(W.finestra("Sara")); return x && x.querySelectorAll(".bc-penna").length === 2; }, 15000)) no("Sara dopo la ricarica non ritrova i due campi");
+    // Luca: «il capanno / la pentola» (due pezzi), Sara, Paky dal foglio
+    var lucaB = "la balla di Luca", saraB = "la balla di Sara";
+    var wL = W.finestra("Luca"), vL = veloAperto(wL), cL = vL.querySelectorAll(".bc-penna");
+    cL[0].value = lucaB; cL[0].dispatchEvent(new wL.Event("input", { bubbles: true }));
+    if (!vL.querySelector(".bc-ok").disabled) no("con un pezzo solo «Fatto» è già acceso");
+    var bL = vL.querySelectorAll(".bc-buco"); if (!bL[0] || bL[0].textContent !== lucaB) no("il primo pezzo non si vede nel primo buco della notizia");
+    cL[1].value = "e il suo secondo"; cL[1].dispatchEvent(new wL.Event("input", { bubbles: true }));
+    if (bL[1].textContent !== "e il suo secondo") no("il secondo pezzo non si vede nel secondo buco");
+    vL.querySelector(".bc-ok").click();
+    scrivi(W.finestra("Sara"), saraB); scrivi(P, "la balla di Paky");
+    if (!await W.aspetta(function () { return vm(C).fase === "voto"; }, 30000)) no("non si arriva al voto della Balla Finale (fatti " + JSON.stringify(vm(C).fatti) + ")");
+    v = vm(C);
+    var testi = v.scelte.map(function (s) { return P.__balla.vis(s.testo); });
+    if (testi.indexOf(lucaB + " / e il suo secondo") < 0 || testi.indexOf(vera) < 0) no("sul tabellone mancano la balla di Luca o la verità: " + testi.join(" | "));
+    if (!await W.aspetta(function () { return veloAperto(P) && veloAperto(P).querySelector(".bc-scelta"); }, 8000)) no("a Paky non si apre il voto");
+    if (![].some.call(veloAperto(P).querySelectorAll(".bc-scelta .tx"), function (x) { return x.textContent === vera; })) no("nel voto la verità non si legge «pezzo / pezzo»");
+    vota(P, function (t) { return t === vera; });
+    W.reteDi("Luca").invia({ t: "voto", k: testi.indexOf(vera) });
+    W.reteDi("Sara").invia({ t: "voto", k: testi.indexOf(lucaB + " / e il suo secondo") });
+    if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 90000)) no("la partita non finisce (fase " + vm(C).fase + ")");
+    v = vm(C);
+    var u = v.ultimo || {}, iL = idDi(v, "Luca"), iP = idDi(v, "Paky");
+    if (u[iL] !== 9 || u[iP] !== 6) no("punti della Balla Finale: Luca " + u[iL] + " (attesi 9 = 6 la verità + 3 Sara ingannata), Paky " + u[iP] + " (attesi 6)");
+    var e = errori(); if (e) no("errori: " + e);
+    return "ok · " + note.join(" · ") + " · Balla Finale: Luca +9, Paky +6";
+  } });
+  function idDi(v, nome) { var p = (v.players || []).filter(function (x) { return x.nome === nome; })[0]; return p ? p.id : null; }
+
+  // ===================== ballaN2: le regole nuove e le notizie =====================
+  COPIONE.aggiungi("ballaN2", { nome: "Balla: regole della Balla Finale e di chi sceglie, notizie (argomenti, lunghezze, doppioni, due pezzi)", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0, spiaBalla: true }), B = w.__balla, male = [];
+    if (!B || !B.pulisciR) no("non vedo le regole nuove (window.__balla)");
+    if (B.pulisciR("  il capanno ‖ la tempura. ", true) !== "il capanno ‖ la tempura") male.push("pulisciR due pezzi: " + B.pulisciR("  il capanno ‖ la tempura. ", true));
+    if (B.pulisciR("solo uno", true) !== "") male.push("pulisciR con un pezzo solo");
+    if (B.pulisci("a ‖ b").indexOf("‖") >= 0) male.push("una balla normale con ‖");
+    if (!B.eLaVeritaR("Il Capanno ‖ la tempura", "il capanno ‖ la tempura", true) || B.eLaVeritaR("il capanno ‖ le frittelle", "il capanno ‖ la tempura", true)) male.push("eLaVeritaR");
+    if (B.moltiplica(2, 3, true) !== 3 || B.moltiplica(2, 3, false) !== 2 || B.moltiplica(1, 3, true) !== 1) male.push("moltiplica");
+    if (B.vis("a ‖ b") !== "a / b") male.push("vis");
+    var a = { punti: 0 }, b = { punti: 0 }, ch = B.chiSceglie([a, b]); if (ch.perche !== "zero") male.push("chiSceglie zero");
+    var x = { punti: 3 }, y = { punti: 1, nScelte: 1 }, z = { punti: 1 }; ch = B.chiSceglie([x, y, z]); if (ch.g !== z || ch.perche !== "pari") male.push("chiSceglie pari: " + JSON.stringify(ch));
+    ch = B.chiSceglie([{ punti: 4 }, y]); if (ch.g !== y || ch.perche !== "ultimo") male.push("chiSceglie ultimo");
+    var tre = B.treCategorie(), chiavi = B.CATEGORIE.map(function (c) { return c.k; });
+    if (tre.length !== 3 || tre.some(function (k) { return chiavi.indexOf(k) < 0; }) || tre[0] === tre[1] || tre[1] === tre[2] || tre[0] === tre[2]) male.push("treCategorie: " + tre);
+    // le notizie
+    var N = w.SG_BALLA || [], conta = {}, visti = {};
+    N.forEach(function (d, i) {
+      if (chiavi.indexOf(d.cat) < 0) male.push(i + " senza argomento");
+      conta[d.cat] = (conta[d.cat] || 0) + 1;
+      if (!d.rispostaVera || d.rispostaVera.length > 45 || /[.]$/.test(d.rispostaVera)) male.push(i + " risposta «" + d.rispostaVera + "»");
+      if (!(/(...|…)$/.test(d.domanda) || (d.domanda.match(/_{3,}/g) || []).length === 1)) male.push(i + " senza buco: " + d.domanda.slice(0, 40));
+      if (!d.balleCasa || d.balleCasa.length !== 3 || d.balleCasa.some(function (q) { return !q || q.length > 45 || B.eLaVerita(q, d.rispostaVera); })) male.push(i + " balle di scorta: " + JSON.stringify(d.balleCasa));
+      var k = B.norm(d.domanda); if (visti[k]) male.push(i + " doppia"); visti[k] = 1;
+    });
+    if (N.length < 700) male.push("poche notizie: " + N.length);
+    chiavi.forEach(function (k) { if ((conta[k] || 0) < 40) male.push("poche notizie «" + k + "»: " + (conta[k] || 0)); });
+    var F = w.SG_BALLA_FINALE || [];
+    if (F.length < 50) male.push("poche notizie della Balla Finale: " + F.length);
+    F.forEach(function (d, i) {
+      if ((d.domanda.match(/_{3,}/g) || []).length !== 2 || B.pezziN(d.domanda).length !== 3) male.push("F" + i + " non ha due buchi");
+      if (!d.risposteVere || d.risposteVere.length !== 2 || d.risposteVere.some(function (q) { return !q || q.length > 30; })) male.push("F" + i + " risposte vere");
+      if (!d.balleCasa || d.balleCasa.length !== 3 || d.balleCasa.some(function (p) { return p.length !== 2 || B.eLaVeritaR(p.join(" ‖ "), d.risposteVere.join(" ‖ "), true); })) male.push("F" + i + " balle di scorta");
+      if (chiavi.indexOf(d.cat) < 0) male.push("F" + i + " senza argomento");
+    });
+    var s = B.scegliFinale(); if (!s || !s.doppia || s.rispostaVera.indexOf(" ‖ ") < 0 || s.balleCasa.length !== 3) male.push("scegliFinale: " + JSON.stringify(s));
+    if (male.length) no(male.length + " cose da sistemare: " + male.slice(0, 6).join(" | "));
+    return "ok · " + N.length + " notizie (" + chiavi.map(function (k) { return k + " " + conta[k]; }).join(", ") + ") · " + F.length + " della Balla Finale";
   } });
 })();

@@ -156,9 +156,10 @@
         if (p.via || X.aMano[p.id]) return;
         var k = v.fase + "|" + v.giro + "." + (v.rif || 0) + "|" + p.id, mia = "balla di " + p.nome + " " + v.giro;
         if (fatti[k]) return;
-        if (v.fase === "scrittura" && (v.fatti || []).indexOf(p.id) < 0) { fatti[k] = 1; manda(X, p.id, { t: "balla", testo: mia }); }
+        if (v.fase === "categoria" && v.cat && v.cat.k == null && v.cat.chi === p.id) { fatti[k] = 1; manda(X, p.id, { t: "cat", k: 0 }); return; }
+        if (v.fase === "scrittura" && (v.fatti || []).indexOf(p.id) < 0) { fatti[k] = 1; manda(X, p.id, { t: "balla", testo: v.doppia ? mia + " ‖ bis" : mia }); }
         else if (v.fase === "voto" && (v.fatti || []).indexOf(p.id) < 0) {
-          var kk = (v.scelte || []).map(function (s) { return s.testo; }).findIndex(function (tx) { return tx !== mia; });
+          var kk = (v.scelte || []).map(function (s) { return s.testo; }).findIndex(function (tx) { return tx.indexOf(mia) !== 0; });
           if (kk >= 0) { fatti[k] = 1; manda(X, p.id, { t: "voto", k: kk }); }
         }
         else if (v.fase === "punti" && (v.avanti || []).indexOf(p.id) < 0) { fatti[k] = 1; manda(X, p.id, { t: "avanti" }); }
@@ -222,8 +223,8 @@
       var foglio = await W.aspetta(function () { return wM.document.querySelector(balla ? ".bc-velo.on:not(.via)" : ".nc-foglio.on:not(.via)"); }, 15000);
       if (!foglio) no("a Marco non si apre il foglio al " + parola + " 2 («" + T(wM).slice(-100) + "»)");
       if (balla) {
-        var ta = foglio.querySelector(".bc-penna"), ok = foglio.querySelector(".bc-ok");
-        ta.value = "la balla di Marco"; ta.dispatchEvent(new wM.Event("input", { bubbles: true })); ok.click();
+        var ok = foglio.querySelector(".bc-ok");
+        [].forEach.call(foglio.querySelectorAll(".bc-penna"), function (ta, n) { ta.value = n ? "e il secondo pezzo" : "la balla di Marco"; ta.dispatchEvent(new wM.Event("input", { bubbles: true })); }); ok.click();
       } else W.reteDi("Marco").invia({ t: "risposte", r: (vm(C).cats || []).map(function (c, i) { return vm(C).lettera + "osso" + i; }) });
       if (!await W.aspetta(function () { return (vm(C).fatti || []).indexOf(idM) >= 0; }, 6000)) no("il foglio di Marco non arriva all'host");
       delete X.aMano[idM];
