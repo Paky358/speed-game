@@ -294,7 +294,7 @@ const RUOLI = {
 const SPECIALI_OSPITI = ['investigatore','veggente','spia','trasportatore','bracconiere','imitatore','portiere','medico','sceriffo','sindaco','campanaro','vedetta','segugio','bengala','vendicatore','rianimatore','sentinella','ingegnere','veterano'];
 const SPECIALI_OMBRE = ['silenziatore','nebbia','trasformista','spazzino','ipnotista','avvelenatore','spettro','burattinaio'];
 const SPECIALI_SOLI = ['giullare','accusatore','avvoltoio','gatto','indovino','sopravvissuto'];
-// i modificatori: si aggiungono sopra il ruolo, rari, e solo chi ce l'ha lo sa
+// i modificatori: si aggiungono sopra il ruolo, rari, e solo chi ce l'ha lo sa (solo: la squadra che può averlo; senza, chiunque)
 // i ruoli dei fantasmi: un ospite spento può diventarlo (con la sua probabilità); poteri da fantasma
 const FANTASMI = {
   custode: { nome:'Custode', abil:'Proteggi', desc:'Da fantasma dai uno scudo a un vivo che hai vicino: il prossimo che prova a spegnerlo fallisce, e tu lo sai.' },
@@ -304,6 +304,7 @@ const MODIFICATORI = {
   urlatore:  { nome:'Urlatore',  icona:'🔊', desc:'Quando ti spengono, tutti ricevono subito un avviso e una freccia rossa che indica il punto.' },
   celebrita: { nome:'Celebrità', icona:'⭐', desc:'Quando ti spengono, alla riunione dopo tutti sanno dove sei caduto e quanto tempo prima.' },
   ago:       { nome:'Ago della bilancia', icona:'⚖️', desc:'Il tuo voto vale un pelo di più (1,01): nei pareggi vince la tua parte. Nessuno sa che sei tu.' },
+  esca:      { nome:'Esca',      icona:'🎣', solo:'ospiti', desc:'Quando ti spengono, chi è stato segnala da solo: la riunione si apre subito a suo nome. Solo tra gli ospiti.' },
 };
 // chi ha la frenesia: se resta troppo nella stessa stanza, la lanterna si spegne
 const FRENESIA = ['giullare','sopravvissuto'];
@@ -322,7 +323,7 @@ const IMP_BASE = {
   veterano:{ durata:15, ricarica:35, usi:2 },
   spia:{ durata:5, ricarica:60 },
   bracconiere:{ quanti:3, ricarica:30 },
-  modificatori:{ urlatore:10, celebrita:10, ago:10 },
+  modificatori:{ urlatore:10, celebrita:10, ago:10, esca:10 },
   trasportatore:{ ricarica:45, usi:2 },
   campanaro:{ volte:2 },
   segugio:{ durata:30, ricarica:35 },
@@ -378,6 +379,7 @@ const VOCI = [
   { g:'Modificatori', k:'modificatori.urlatore', et:'Urlatore', opz:[0,5,10,25,50], u:'%' },
   { g:'Modificatori', k:'modificatori.celebrita', et:'Celebrità', opz:[0,5,10,25,50], u:'%' },
   { g:'Modificatori', k:'modificatori.ago', et:'Ago della bilancia', opz:[0,5,10,25,50], u:'%' },
+  { g:'Modificatori', k:'modificatori.esca', et:'Esca', opz:[0,5,10,25,50], u:'%' },
   { g:'Spia', k:'spia.durata', et:'Schermo portatile', opz:[3,5,8], u:' s' },
   { g:'Spia', k:'spia.ricarica', et:'Ricarica dello schermo', opz:[45,60,90], u:' s' },
   { g:'Trasportatore', k:'trasportatore.ricarica', et:'Ricarica', opz:[30,45,60], u:' s' },
@@ -496,6 +498,7 @@ const VEL_BASE = 3.8;   // caselle al secondo a velocità «normale» (era 3,4: 
 const POSTI_SALA = [[9.6,11.6],[16.6,11.4],[8.4,7.8],[17.6,7.8],[6,4.8],[20,4.8],[10.4,4.4],[15.8,4.4],[5,10.4],[21,10.4],[13,12.8],[4.6,7.6],[21.4,7.6],[7,12.6],[19,12.6]];   // in caselle: sparsi per la sala
 const DUR_ATRIO = 20, DUR_SVELA = 6, DUR_ESITO = 7;
 const MAX_CHAT = 40;
+const RITARDO_ESCA = 0.4;      // chi spegne un'Esca segnala da solo dopo 0,4 s: il minimo per vedere la lanterna che si spegne (il lampo a schermo dura 0,5 s) e prima di qualunque Bot (0,5 s)
 const SOGLIA_VOTO = 18;        // quanto sospetto serve a un Bot ospite per votare qualcuno (con 30 sette riunioni su dieci finivano senza nessuno fuori)
 const PROV_GIULLARE = 2;       // quante volte a partita un Giullare Bot si fa vedere uscire da una botola
 const FRASI_COMPITO = { luce:'accendere il lampadario', ingranaggio:"caricare l'orologio", fuoco:'sfornare i dolci', acqua:'annaffiare la serra' };
@@ -510,7 +513,7 @@ class Partita {
     // si comincia nell'atrio: tutti girano liberi qualche secondo, poi escono i ruoli e si entra nel palazzo
     this.M = ATRIO; this.fase = 'atrio'; this.t = 0; this.fineFase = this.saletta ? Infinity : DUR_ATRIO;
     this.corpi = []; this.buio = null; this.interf = null; this.acqua = null; this.cdBuio = 30; this.nebbiaFine = 0; this.bengalaFine = 0; this.pub = {};
-    this.riu = null; this.esito = null; this.vincitore = null; this.chat = []; this.round = 1; this.dichiarati = {};
+    this.riu = null; this.esito = null; this.vincitore = null; this.chat = []; this.round = 1; this.dichiarati = {}; this.esche = [];
     this.telecamere = TELECAMERE_BASE.map(c=>({ x:c.x, y:c.y, nome:c.nome, base:true }));
     this.cambiata = true;
     if(this.saletta){ this.ombreIniziali=1; this.celebri=[]; }
@@ -530,6 +533,7 @@ class Partita {
     if(!altro && (RUOLI[ruolo].squadra==='ombre')!==(p.squadra==='ombre')) altro=this.gioc.find(q=>q!==p&&(q.squadra==='ombre')===(RUOLI[ruolo].squadra==='ombre'));
     if(altro){ altro.ruolo=p.ruolo; this.preparaRuolo(altro); this.assegnaCompiti(altro); }
     p.ruolo=ruolo; this.preparaRuolo(p); this.assegnaCompiti(p);
+    [p,altro].forEach(q=>{ const m=q&&MODIFICATORI[q.mod]; if(m&&m.solo&&m.solo!==q.squadra) q.mod=null; });
     this.gioc.forEach(g=>{ if(g.ruolo==='accusatore'&&!g.bersaglio){ const c=this.gioc.filter(q=>q!==g&&q.squadra==='ospiti'); g.bersaglio=c.length?pick(c).id:null; } });
     this.segna();
   }
@@ -590,8 +594,8 @@ class Partita {
     mescola(ruoli);
     this.gioc.forEach((g,i)=>{ g.ruolo=ruoli[i]; this.preparaRuolo(g); });
     // l'Accusatore riceve un bersaglio tra gli ospiti
-    // i modificatori: ognuno esce con la sua probabilità, al massimo uno a testa
-    for(const m of Object.keys(MODIFICATORI)) if(rnd()*100 < (imp.modificatori[m]||0)){ const liberi=this.gioc.filter(g=>!g.mod); if(liberi.length) pick(liberi).mod=m; }
+    // i modificatori: ognuno esce con la sua probabilità, al massimo uno a testa (quelli con solo: li ha soltanto quella squadra)
+    for(const m of Object.keys(MODIFICATORI)) if(rnd()*100 < (imp.modificatori[m]||0)){ const solo=MODIFICATORI[m].solo, liberi=this.gioc.filter(g=>!g.mod&&(!solo||g.squadra===solo)); if(liberi.length) pick(liberi).mod=m; }
     this.celebri=[];
     this.gioc.filter(g=>g.ruolo==='accusatore').forEach(g=>{ const c=this.gioc.filter(q=>q!==g&&q.squadra==='ospiti'); g.bersaglio = c.length ? pick(c).id : null; if(!g.bersaglio){ g.ruolo='giullare'; this.preparaRuolo(g); } });
   }
@@ -632,7 +636,8 @@ class Partita {
       corpi: this.corpi.map(c=>[c.id, Math.round(c.x), Math.round(c.y)]),
       segnati: this.gioc.filter(p=>p.segnato&&p.vivo).map(p=>p.id), sindaci: this.gioc.filter(p=>p.rivelato).map(p=>p.id),
       scudi: this.gioc.filter(p=>p.vivo&&p.protettoDa!=null).map(p=>p.id), cam: this.telecamere.map(c=>[Math.round(c.x),Math.round(c.y),c.base?1:0]), osservate: this.gioc.some(p=>p.osserva&&p.vivo) };
-    if(this.riu){ const R=this.riu; f.riu = { motivo:R.motivo, da:R.da, corpo:R.corpo, disc:sec(R.disc+R.t0), voto:sec(R.disc+R.voto+R.t0), votati:[...R.voti.keys()], zittiti:R.zittiti, chat:this.chat.slice(-MAX_CHAT) }; }
+    // (di chi è la lanterna non parte più: nemmeno i telefoni con la versione vecchia in cache lo sanno. Senza il campo non vanno in errore: sotto «Lanterna spenta!» scrivono «ha suonato la campana»)
+    if(this.riu){ const R=this.riu; f.riu = { motivo:R.motivo, da:R.da, disc:sec(R.disc+R.t0), voto:sec(R.disc+R.voto+R.t0), votati:[...R.voti.keys()], zittiti:R.zittiti, chat:this.chat.slice(-MAX_CHAT) }; }
     if(this.esito) f.esito = this.esito;
     if(this.vincitore) f.fine = { ...this.vincitore, ruoli:this.gioc.map(p=>[p.id, p.ruolo, p.vivo?1:0]) };
     return f;
@@ -675,7 +680,7 @@ class Partita {
       fase:this.fase, resto:resta(this.fineFase),
       buio:this.buio?resta(this.buio.fine):0, interf:this.interf?resta(this.interf.fine):0, acqua:this.acqua?[resta(this.acqua.fine),this.acqua.a?1:0,this.acqua.b?1:0]:null,
       neb:this.nebbiaFine>this.t?resta(this.nebbiaFine):0, ben:this.bengalaFine>this.t?resta(this.bengalaFine):0,
-      corpi:this.corpi.map(c=>[c.id,Math.round(c.x),Math.round(c.y),c.stanza,c.da]),
+      corpi:this.corpi.map(c=>[c.id,Math.round(c.x),Math.round(c.y),c.stanza,c.da]), esche:this.esche.map(e=>[e.da,e.corpo,resta(e.t)]),
       riu:R?{ motivo:R.motivo, da:R.da, corpo:R.corpo, stanza:R.stanza, t:Math.round(R.t*10)/10, disc:R.disc, voto:R.voto, voti:[...R.voti], zittiti:R.zittiti, chiusa:R.chiusa }:null,
       chat:R?this.chat:null, esito:this.esito||null,
       gioc:this.gioc.map(p=>({ id:p.id, nome:p.nome, bot:p.bot, ruolo:p.ruolo, vivo:p.vivo, uscito:p.uscito, usciVivo:p.usciVivo, x:Math.round(p.x), y:Math.round(p.y), dir:Math.round(p.dir*100)/100, cd:Math.round(p.cd), cdA:Math.round(p.cdA), usi:p.usi, campane:p.campane, vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati,
@@ -707,6 +712,7 @@ class Partita {
     else if(f==='gioco' || inRiu){
       P.fase=f; P.fineFase=P.t+(+s.resto||0);
       (s.corpi||[]).forEach(([id,x,y,stanza,da])=>{ if(P.per(id)) P.corpi.push({ id, x, y, stanza, da, t:P.t }); });
+      if(f==='gioco') (s.esche||[]).forEach(([da,corpo,r])=>{ P.esche.push({ da, corpo, t:P.t+(+r||0) }); });
       if(s.buio) P.buio={ fine:P.t+s.buio };
       if(s.interf) P.interf={ fine:P.t+s.interf };
       if(s.acqua) P.acqua={ fine:P.t+s.acqua[0], a:!!s.acqua[1], b:!!s.acqua[2] };
@@ -990,6 +996,7 @@ class Partita {
     this.fx('spegni', v.x, v.y);
     if(v.mod==='urlatore') this.fx('urlo', v.x, v.y, { globale:1 });
     if(v.mod==='celebrita') this.celebri.push({ id:v.id, stanza:c.stanza, t:this.t });
+    if(v.mod==='esca' && k!==v && k.vivo && this.fase==='gioco') this.esche.push({ da:k.id, corpo:c.id, t:this.t+RITARDO_ESCA });   // la riunione la apre passoGioco: qui siamo a metà di uno spegnimento, magari dentro iniziaRiunione
     if(modo==='normale' && k.bot){ k.dopoSpegni=true; k.path=[]; k.meta=null; k.autoSegnala=rnd()<.3; }   // un'ombra su tre fa finta di trovarla lei
     if(modo==='normale'){
       const neb=this.nebbiaAttiva(), travest=this.travestito(k);
@@ -1024,6 +1031,19 @@ class Partita {
       if(modo==='normale') this.avviso(k, `Hai spento la lanterna di ${v.nome}.`, 'ombra');
     }
     if(this.controllaVittoria()) this.chiudi();
+  }
+  // chi ha spento un'Esca segnala da solo, per la stessa strada di una segnalazione normale. Se nel frattempo è caduto o la lanterna non c'è più, niente riunione a suo nome.
+  // Una riunione aperta da altri svuota la coda: due spegnimenti insieme fanno una riunione sola.
+  scattaEsca(){
+    while(this.esche.length && this.t>=this.esche[0].t){
+      const e=this.esche.shift(), k=this.per(e.da), c=this.corpi.find(q=>q.id===e.corpo);
+      if(!k || !k.vivo || !c) continue;
+      k.dopoSpegni=false; k.autoSegnala=false; k.segnala=null; k.corpoVisto=null;
+      this.iniziaRiunione({ tipo:'corpo', da:k.id, corpo:c.id, stanza:c.stanza });
+      if(this.fase==='riunione'){ this.avviso(k, "Era un'Esca: hai segnalato tu.", 'ombra'); this.subitoATutti(); }
+      return true;
+    }
+    return false;
   }
   stanzaIdx(q){ return this.M.PAV[tY(this.M,q.y)*this.M.GW+tX(this.M,q.x)]; }
   sabAttivo(){ return !!(this.buio || this.interf || this.acqua); }
@@ -1114,6 +1134,7 @@ class Partita {
     if(this.fase==='esito'){ if(this.t>=this.fineFase) this.dopoEsito(); return; }
   }
   passoGioco(dt){
+    if(this.esche.length && this.scattaEsca()) return;
     if(this.codaBot && this.codaBot.length) this.botRispondono();
     for(const g of this.gioc){ if(g.cd>0) g.cd-=dt; if(g.cdA>0) g.cdA-=dt; if(g.cdF>0) g.cdF-=dt; }
     if(this.cdBuio>0) this.cdBuio-=dt;
@@ -1469,15 +1490,16 @@ class Partita {
     // il veleno non aspetta la riunione: chi era avvelenato cade adesso
     const avvelenati=[];
     for(const p of this.gioc){ if(p.veleno && p.vivo){ const k=this.per(p.veleno.da)||p; p.veleno=null; this.spegni(k,p,'veleno'); if(!p.vivo) avvelenati.push(p); } }
+    this.esche=[];   // (anche un'Esca caduta col veleno qui sopra: la riunione è già questa)
     if(this.vincitore) return;
     this.fase='riunione'; this.codaBot=[];   // (in riunione la chat di prossimità è spenta: le risposte dei Bot in attesa cadono)
     const R={ motivo:m.tipo, da:m.da, corpo:m.corpo!=null?m.corpo:null, stanza:m.stanza||null, t:0, t0:this.t, disc:this.imp.discussione, voto:this.imp.voto, voti:new Map(), coda:[], chiusa:false,
       zittiti:this.gioc.filter(p=>p.vivo&&p.zittito).map(p=>p.id) };
     this.riu=R; this.chat=[]; this.esito=null;
     const da=this.per(m.da);
-    this.scrivi(null, m.tipo==='corpo' ? `${da.nome} ha trovato la lanterna di ${this.nomeDi(m.corpo)} spenta ${m.stanza}.` : `${da.nome} ha suonato la campana.`);
+    this.scrivi(null, m.tipo==='corpo' ? `${da.nome} ha segnalato una lanterna spenta.` : `${da.nome} ha suonato la campana.`);   // solo chi ha chiamato: niente dove, niente di chi
     for(const p of this.gioc){ if(p.fantasmaRuolo==='medium' && p.foto && p.fotoMostrata!==p.foto.seme){ p.fotoMostrata=p.foto.seme; this.scrivi(null, `Una foto dall'aldilà, da ${p.nome}:`, { foto:p.foto }); } }
-    for(const v of avvelenati) this.scrivi(null, `Proprio adesso si è spenta anche la lanterna di ${v.nome}.`);
+    for(const v of avvelenati) this.scrivi(null, 'Proprio adesso si è spenta un\'altra lanterna.');
     for(const c of this.celebri) this.scrivi(null, `${this.nomeDi(c.id)} era una Celebrità: è stato spento ${c.stanza} circa ${Math.max(1,Math.round(this.t-c.t))} secondi fa.`);
     this.celebri=[];
     // il Bracconiere scopre chi è passato nella trappola piena (solo i ruoli, in ordine sparso)
@@ -6663,26 +6685,29 @@ function finale(t, vm, cb) {
   var targa = !!t.guarda && !t.eliminazione, cl = (vm.classifica || []).slice().sort(function (a, b) { return a.pos - b.pos; }), fac = targa ? null : t.faccine();
   s.classList.add("lt-fine"); if (targa) s.classList.add("lt-fine-targa");
   // l'ultima pagina del registro: chi ha vinto e chi ha perso, a due colonne, con ritratto, nome e ruolo
-  var pag = E("div", "lt-foglio lt-ultima"), tes = E("div", "tes");
+  var pag = E("div", "lt-foglio lt-ultima"), tes = E("div", "tes"), mio = cl.filter(function (r) { return r.id === cb.myId; })[0]; if (mio && mio.pos !== 1) pag.classList.add("perso");
   tes.append(E("p", "occh", "Ultima pagina"), E("h2", "", titoloVince(v))); if (v) tes.appendChild(E("p", "lt-perche", v.perche));
   pag.append(intestazione("Registro di Palazzo Velmare"), tes);
   var ruoli = {}; (f.ruoli || []).forEach(function (r) { ruoli[r[0]] = r; });
   var vinti = cl.filter(function (r) { return r.pos === 1; }), persi = cl.filter(function (r) { return r.pos !== 1; });
-  var quadro = E("div", "classifica" + (vinti.length && persi.length ? "" : " solo"));
+  var righeF = Math.max(vinti.length, persi.length, 1), quadro = E("div", "classifica" + (vinti.length && persi.length ? "" : " solo") + (righeF <= 4 ? " pochi" : "")); quadro.style.setProperty("--n", righeF);
   [[vinti, "Vincitori", "vinc"], [persi, "Sconfitti", "scon"]].forEach(function (x) {
     if (!x[0].length) return;
     var col = E("div", "col " + x[2]), righe = E("div", "righe"); col.append(E("h3", "", x[1]), righe);
     x[0].forEach(function (r) {
       var ru = ruoli[r.id], nomeR = ru && RUOLI[ru[1]] ? RUOLI[ru[1]].nome : "", spento = ru && !ru[2], rg = E("div", "rg" + (r.pos === 1 ? " vincitore" : "") + (spento ? " spento" : "")), tx = E("div");
-      var riga2 = E("span", "punti lt-ruolo"); riga2.append(tintaDi(r.id), (nomeR ? " · " + nomeR : "") + (spento ? " · spento" : ""));
+      var riga2 = E("span", "punti lt-ruolo"); riga2.append(tintaDi(r.id), E("span", "ru", (nomeR ? nomeR : "") + (spento ? (nomeR ? ", " : "") + "spento" : "")));   // (il ruolo è il dato di questa pagina: va a capo, mai tagliato; con la virgola la riga spezzata si legge)
       tx.append(E("span", "nome", r.id === cb.myId ? r.nome + " (tu)" : r.nome), riga2);
       rg.append(ritratto(r.id), tx); righe.appendChild(rg);
     });
     quadro.appendChild(col);
   });
-  pag.appendChild(quadro); s._contenuto.appendChild(pag); ltSfuma(quadro);
-  if (!targa && cb.myId) s._contenuto.appendChild(creaVoce("riga fine"));   // a partita finita la voce resta accesa e si sentono tutti
-  if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
+  pag.append(quadro, E("i", "chiusa")); s._contenuto.appendChild(pag); ltSfuma(quadro);   // il sigillo chiude il registro della notte
+  // sotto il foglio, sul tavolo, un vassoio solo: la voce e le faccine dell'app
+  var vass = E("div", "fine-fila");
+  if (!targa && cb.myId) vass.appendChild(creaVoce("riga fine"));   // a partita finita la voce resta accesa e si sentono tutti
+  if (fac) { fac.classList.add("fine-faccine"); vass.appendChild(fac); }
+  if (vass.firstChild) s._contenuto.appendChild(vass);
   if (!cl.some(function (r) { return r.id === cb.myId; })) s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Questa partita l'hai guardata." }));
   if (!t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
     if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
@@ -6862,7 +6887,7 @@ function Vista(t, cb) {
   V.parlaBar.addEventListener("submit", function (e) { e.preventDefault(); V.parlaManda(pIn.value); });   // Invio: manda e chiude
   pIn.addEventListener("input", function () { V.parlaConta(); });
   pIn.addEventListener("keydown", function (e) { if (e.key === "Escape") V.parlaApri(false); });
-  V.parlaVV = function () { V.parlaPosiz(); };   // la tastiera di iPhone cambia il «visualViewport»: la barra la segue
+  V.parlaVV = function () { V.parlaPosiz(); V.chatPosiz(); };   // la tastiera di iPhone cambia il «visualViewport»: la barra la segue
   if (window.visualViewport) { visualViewport.addEventListener("resize", V.parlaVV); visualViewport.addEventListener("scroll", V.parlaVV); }
   tocca(V.btnSuono, function () { AUDIO.muto = !AUDIO.muto; try { localStorage.setItem("lt-muto", AUDIO.muto ? "1" : "0"); } catch (e) {} V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); if (!AUDIO.muto) SUONO.voto(); });
   V.s.addEventListener("pointerdown", function (e) { if (e.isTrusted) AUDIO.toccato = true; audio(); }, { passive: true });
@@ -7385,12 +7410,12 @@ Vista.prototype.apriInfo = function () {
   var V = this, pr = V.priv; if (!pr || !RUOLI[pr.ruolo] || !V.g || (V.g.fase !== "gioco" && V.g.fase !== "atrio")) return;
   if (!V.sonoVivo() && pr.fantasmaRuolo && FANTASMI[pr.fantasmaRuolo]) {
     var F = FANTASMI[pr.fantasmaRuolo], bf = E("div", "lt-pannello lt-foglio lt-infor fantasma"), tf = E("div", "testa"), cf = E("button", "lt-chiudi", "×");
-    tf.append(E("span", "sq", "Fantasma"), E("h3", "", F.nome), cf); bf.append(tf, E("p", "desc", F.desc));
+    tf.append(E("span", "sq", "Fantasma"), E("h3", "", F.nome), cf); bf.append(intestazione("Registro di Palazzo Velmare"), tf, E("p", "desc", F.desc));
     var ulf = E("ul"); ulf.append(E("li", "", "Il tuo tasto: " + F.abil), E("li", "", "Vai più veloce e passi dai muri. Puoi ancora finire i tuoi compiti.")); bf.appendChild(ulf);
     V.apriPannello("info", bf); tocca(cf, function () { if (V.pannello) V.pannello.chiudi(); }); return;
   }
   var R = RUOLI[pr.ruolo], box = E("div", "lt-pannello lt-foglio lt-infor " + pr.squadra), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×");
-  testa.append(E("span", "sq", { ospiti: "Ospite", ombre: "Ombra", soli: "Da solo" }[pr.squadra] || ""), E("h3", "", R.nome), ch); box.appendChild(testa);
+  testa.append(E("span", "sq", { ospiti: "Ospite", ombre: "Ombra", soli: "Da solo" }[pr.squadra] || ""), E("h3", "", R.nome), ch); box.append(intestazione("Registro di Palazzo Velmare"), testa);
   box.appendChild(E("p", "desc", R.desc));
   var ul = E("ul");
   if (R.abil) ul.appendChild(E("li", "", "Il tuo tasto: " + R.abil));
@@ -7427,7 +7452,7 @@ Vista.prototype.apriComputer = function () {
   if (host) {
     impostazioni(corpo, dove, { el: V.t.el });
     var pronti = E("div", "lt-pronti"); pronti.setAttribute("aria-label", "Chi ha la mappa pronta"); corpo.insertBefore(pronti, corpo.firstChild);   // chi ha già scaricato la mappa
-    var piede = E("div", "piede"), bAdd = tastoIco("", "piu", "Aggiungi un Bot"), bTogli = tastoIco("", "meno", "Togli un Bot"), via = tastoIco("via", "", "Comincia");
+    var piede = E("div", "piede"), bAdd = tastoIco("", "piu", "<i>Aggiungi un </i>Bot"), bTogli = tastoIco("", "meno", "<i>Togli un </i>Bot"), via = tastoIco("via", "", "Comincia");
     bAdd.addEventListener("click", function () { V.cb.onBot && V.cb.onBot(); });
     bTogli.addEventListener("click", function () { V.cb.onTogliBot && V.cb.onTogliBot(); });
     via.addEventListener("click", function () { applica(); if (V.pannello) V.pannello.chiudi(); V.cb.onComincia && V.cb.onComincia(); });
@@ -8010,7 +8035,7 @@ Vista.prototype.apriScambio = function () {
 // le ombre scelgono il sabotaggio
 Vista.prototype.apriSabota = function () {
   var V = this, imp = (V.vm && V.vm.imp && V.vm.imp.sabotaggi) || {}, box = E("div", "lt-pannello lt-foglio lt-scambio");
-  box.append(E("h3", "", "Che sabotaggio?"), E("p", "", "Uno alla volta. Gli ospiti vedono subito dove ripararlo."));
+  box.append(intestazione("Registro di Palazzo Velmare"), E("h3", "", "Che sabotaggio?"), E("p", "", "Uno alla volta. Gli ospiti vedono subito dove ripararlo."));
   var gr = E("div", "griglia sab");
   [["buio", "Buio", "Gli ospiti vedono pochissimo finché non riparano il quadro delle luci in Lavanderia."], ["interferenza", "Interferenza", "Si spengono telecamere, plastico e frecce dei compiti, finché non riparano il telegrafo (Sala del telegrafo)."], ["acqua", "Acqua alta", "Il palazzo si allaga: se non chiudono le due chiuse (Molo e Cantina) in tempo, vincete voi."]].forEach(function (x) {
     if ((x[0] === "acqua" && imp.acquaSi === false) || (x[0] === "interferenza" && imp.interferenzaSi === false)) return;
@@ -8074,6 +8099,7 @@ Vista.prototype.cambioFase = function () {
   var V = this, f = V.fase;
   if (f !== "gioco" && f !== "atrio") { V.parlaPulisci(); V.joyReset(); if (V.pannello) V.pannello.chiudi(); V.chiudiMappa(); if (V.mg) { V.mg = null; V.velo.hidden = true; V.veloTipo = null; } }
   if (f !== "esito") V.riuK = null;   // dalla riunione al verdetto il foglio resta quello: niente ridisegno, niente scritta d'apertura rifatta, il sigillo resta dov'è
+  if (f !== "riunione" && f !== "esito") { V.chatS = null; clearTimeout(V.bigT); V.bigT = null; }   // (la riunione dopo riparte con la chat chiusa)
 };
 Vista.prototype.aggVelo = function (soloTempi) {
   var V = this, g = V.g; if (!g) return;
@@ -8082,6 +8108,7 @@ Vista.prototype.aggVelo = function (soloTempi) {
   if (f === "svela" && V.priv && !V.guardo) {
     if (V.veloTipo !== "svela") {
       var r = RUOLI[V.priv.ruolo], box = E("div", "lt-pannello lt-foglio lt-svela " + V.priv.squadra);
+      box.appendChild(intestazione("Registro di Palazzo Velmare"));
       var im = ritratto(V.cb.myId); if (im.tagName === "IMG") { im.className = "lt-svela-av"; box.appendChild(im); }
       box.append(E("p", "lt-sopra", "Questa notte sei"), E("h2", "", r.nome), E("p", "", r.desc));
       if (V.priv.squadra === "ombre") {
@@ -8154,11 +8181,77 @@ Vista.prototype.tastiCarta = function (c, id, ak) {
   } else if (tipo === "mio") { var mio = E("span", "mio"); mio.append(E("span", "", "Il tuo voto"), E("i", "sig")); az.appendChild(mio); }   // il sigillo cade sul biglietto
   if (ak.indexOf("|ind") >= 0) tasto("ind", "", function () { V.apriIndovina(id); }, "potere");
 };
-// in riunione: una riga per ospite se c'è spazio, altrimenti due colonne (il numero di ospiti lo decide, non il telefono)
+// in riunione la chat sta chiusa, quindi la lista prende tutto il foglio e le righe crescono fin dove c'è spazio (--rh).
+// In verticale una riga per ospite se ci stanno, altrimenti due colonne; di lato tre colonne (il numero di ospiti lo decide, non il telefono)
 Vista.prototype.riuAdatta = function () {
-  var V = this, box = V.riuBox; if (!box || !box.isConnected || !V.g) return;
+  var V = this, box = V.riuBox, lista = V.riuGrid; if (!box || !box.isConnected || !V.g) return;
   if (document.activeElement && document.activeElement.tagName === "INPUT") return;   // (mentre si scrive il foglio non si ridispone: la tastiera non deve spostare le righe)
-  box.classList.toggle("una", !V.sc.classList.contains("oriz") && box.clientHeight >= V.g.g.length * 45 + 347);
+  var n = V.g.g.length, oriz = V.sc.classList.contains("oriz"), h = lista.clientHeight, una = !oriz && h - 16 >= n * 44;
+  box.classList.toggle("una", una);
+  var col = oriz ? 3 : una ? 1 : 2, rh = Math.floor((h - V.riuCol.offsetHeight) / Math.ceil(n / col));
+  rh = Math.max(una ? 44 : oriz ? 46 : 66, Math.min(oriz ? 92 : una ? 112 : 84, rh));   // (pochi ospiti: righe alte, ritratti e sigilli più grandi)
+  box.style.setProperty("--rh", rh + "px");
+  box.classList.toggle("ampia", rh >= (una ? 54 : 56));
+  box.classList.toggle("grande", rh >= (una ? 86 : 74));
+};
+// quante righe di «ora» non erano in «prima». L'host tiene le ultime 40: a chat piena le vecchie escono dalla testa e la lunghezza non dice più niente
+function righeNuove(prima, ora) {
+  for (var s = 0; s < prima.length; s++) {
+    var n = prima.length - s, i = 0; if (n > ora.length) continue;
+    while (i < n && prima[s + i][0] === ora[i][0] && prima[s + i][1] === ora[i][1]) i++;
+    if (i === n) return ora.length - n;
+  }
+  return ora.length;
+}
+// la chat della riunione si apre a mano: un foglietto sopra la lista, che non la sposta. Lo stato sta in V.chatS e dura tutta la riunione
+Vista.prototype.chatApri = function (si) {
+  var V = this, c = V.chatS; if (!c || !V.riuFog) return;
+  c.aperta = si;
+  V.riuFog.classList.toggle("su", si); V.btnChat.classList.toggle("aperta", si); V.btnChat.setAttribute("aria-expanded", si ? "true" : "false");
+  if (si) {
+    if (c.nuovi) c.fondo = true;   // (i non letti si leggono dall'ultimo)
+    c.nuovi = 0; c.coda = []; if (c.ora) V.bigVia();   // (da qui le righe del gioco si leggono nel foglietto)
+    if (c.fondo) V.riuChat.scrollTop = V.riuChat.scrollHeight;
+  } else if (document.activeElement === V.riuInp) V.riuInp.blur();
+  V.chatSegno(); V.chatPosiz();
+};
+// il sigillo di ceralacca col numero dei messaggi non letti: compare e sparisce con una transizione, il ridisegno non lo tocca
+Vista.prototype.chatSegno = function () {
+  var V = this, c = V.chatS; if (!c || !V.btnChat) return;
+  if (c.nuovi) {
+    var t = c.nuovi > 9 ? "9+" : String(c.nuovi);
+    if (V.chatSeg.textContent !== t) {   // (a zero il numero resta mentre il sigillo svanisce)
+      if (V.chatSeg.textContent && V.chatSeg.classList.contains("su")) { V.segScatto = !V.segScatto; V.chatSeg.classList.toggle("scatto-a", V.segScatto); V.chatSeg.classList.toggle("scatto-b", !V.segScatto); }   // (il numero cambia: uno scatto solo, i ridisegni non lo toccano)
+      V.chatSeg.textContent = t;
+    }
+  }
+  V.chatSeg.classList.toggle("su", c.nuovi > 0);
+  V.btnChat.setAttribute("aria-label", c.nuovi ? "Chat, " + c.nuovi + (c.nuovi === 1 ? " messaggio nuovo" : " messaggi nuovi") : "Chat");
+};
+// con la tastiera aperta il foglietto sale sopra i tasti del telefono e si accorcia a quello che resta: il campo si vede sempre.
+// Come la barra della chat di prossimità: la tastiera di iPhone cambia solo il «visualViewport». Con la scena girata il foglietto sta dal lato opposto alla tastiera
+Vista.prototype.chatPosiz = function () {
+  var V = this, f = V.riuFog, vv = window.visualViewport; if (!f || !f.isConnected) return;
+  var sotto = 0, r = V.riuBox.getBoundingClientRect();
+  if (vv && !V.girato && V.chatS && V.chatS.aperta && document.activeElement === V.riuInp) sotto = Math.max(0, Math.round(r.bottom - (vv.offsetTop + vv.height)));
+  f.classList.toggle("tastiera", sotto > 0);
+  if (!sotto) { f.style.top = f.style.bottom = f.style.height = ""; return; }
+  var base = Math.round(r.bottom - V.riuFondo.getBoundingClientRect().top) + 6;
+  f.style.top = "auto"; f.style.bottom = Math.max(base, sotto + 6) + "px"; f.style.height = Math.max(96, Math.min(Math.round(r.height * 0.6), Math.round(vv.height) - 12)) + "px";
+};
+// le righe del gioco (Celebrità, foto del Medium, lanterne cadute…) a chat chiusa: un bigliettino alla volta sopra le schede, che non sposta niente. Un tocco lo toglie
+Vista.prototype.bigGiro = function () {
+  var V = this, c = V.chatS, b = V.riuBig; if (!c || !b || V.bigT || c.aperta || !c.coda.length) return;
+  if (!V.intro.hidden) { V.bigT = setTimeout(function () { V.bigT = null; if (V.vivo) V.bigGiro(); }, 250); return; }   // (prima finisce la scritta grande)
+  var r = c.ora = c.coda.shift(), foto = r[2] && r[2].foto;
+  b.textContent = ""; b.appendChild(E("span", "", r[1]));
+  if (foto) { var fc = E("canvas", "foto"); b.appendChild(fc); disegnaFoto(fc, foto); }
+  b.classList.add("su");
+  V.bigT = setTimeout(function () { if (V.vivo) V.bigVia(); }, foto ? 7000 : 5000);
+};
+Vista.prototype.bigVia = function () {
+  var V = this; clearTimeout(V.bigT); if (V.chatS) V.chatS.ora = null; if (V.riuBig) V.riuBig.classList.remove("su");
+  V.bigT = setTimeout(function () { V.bigT = null; if (V.vivo) V.bigGiro(); }, 240);   // (il tempo di uscire, poi il prossimo)
 };
 // chi ha votato chi, in fondo al verdetto: in una deduzione è il dato che conta
 Vista.prototype.chiHaVotato = function (esito) {
@@ -8181,25 +8274,37 @@ Vista.prototype.riunione = function (soloTempi) {
   var V = this, g = V.g, R = g.riu, ora = performance.now(), vivo = V.sonoVivo() && !V.guardo;
   var k = "riu|" + g.round + "|" + (V.vm.rip || 0) + "|" + (V.guardo ? 1 : 0);   // (chi rientra vede la foto prima del ruolo: la riunione si rifà quando arriva, coi tasti giusti)
   if (V.riuK !== k || V.veloTipo !== "riu") {   // (se un pannello l'ha coperta, la riunione si ridisegna)
+    soloTempi = false;   // (il foglio nuovo si riempie subito: anche se a ridisegnarlo è il giro dei secondi)
+    // la chat dura tutta la riunione: ridisegnare il foglio non la chiude, non perde il testo a metà, i non letti e il punto a cui si era arrivati
+    var cs = V.chatS, scriveva = false;
+    if (!cs || cs.r !== g.round) cs = V.chatS = { r: g.round, aperta: false, nuovi: 0, viste: [], testo: "", sc: 0, fondo: true, coda: [], ora: null };
+    else if (V.riuInp) { cs.testo = V.riuInp.value; scriveva = document.activeElement === V.riuInp; }
+    if (cs.ora) { cs.coda.unshift(cs.ora); cs.ora = null; }
+    clearTimeout(V.bigT); V.bigT = null;
     V.riuK = k; V.veloTipo = "riu"; V.velo.textContent = ""; V.velo.hidden = false;
     var box = E("div", "lt-pannello lt-foglio lt-riu"); V.velo.appendChild(box); V.riuBox = box; V.riuFaseK = null;
     // in alto: chi ha chiamato la riunione, perché e quanto tempo resta
     var testa = E("div", "testa"), chiR = E("div", "chi"), titR = E("div", "tit"), occh = E("p", "occh");
     V.riuOcch = E("span", "", "Riunione n. " + g.round); occh.innerHTML = STEMMA; occh.append(E("span", "reg", "Registro di Palazzo Velmare · "), V.riuOcch);
     V.riuFase = E("b", "fase", ""); V.riuTit = E("h3", "", ""); V.riuPerche = E("p", "perche", ""); V.riuTimer = E("div", "timer", "");
-    [R && R.da, R && R.corpo].forEach(function (id, i) { if (id == null) return; var f = ritratto(id); if (i) f.classList.add("morto"); chiR.appendChild(f); });
+    if (R && R.da != null) chiR.appendChild(ritratto(R.da));   // solo chi ha chiamato: di chi è la lanterna e dove stava non si dice
     chiR.appendChild(V.riuFase);   // il timbro: si parla, si vota, verdetto
-    titR.append(occh, V.riuTit); testa.append(intestazione("Registro di Palazzo Velmare"), chiR, titR, V.riuTimer, V.riuPerche); box.appendChild(testa);
+    V.riuBig = E("div", "big"); V.riuBig.setAttribute("aria-live", "polite"); V.riuBig.addEventListener("click", function () { if (V.chatS && V.chatS.ora) V.bigVia(); });
+    titR.append(occh, V.riuTit); testa.append(intestazione("Registro di Palazzo Velmare"), chiR, titR, V.riuTimer, V.riuPerche, V.riuBig); box.appendChild(testa);
     V.riuGrid = E("div", "grid"); box.appendChild(V.riuGrid);
     var colonne = E("div", "colonne"), legenda = E("span", "leg"); legenda.innerHTML = icona("sospetto") + "<i>sospetto</i>" + icona("pulito") + "<i>pulito</i>";   // (di lato i tasti sono solo icone: la legenda sta qui)
-    V.riuC3 = E("span", "c3", ""); colonne.append(E("span", "c1", "Ospite"), E("span", "c2", "Note"), V.riuC3, legenda); V.riuGrid.appendChild(colonne);
-    V.riuChat = E("div", "chat"); box.appendChild(V.riuChat);
-    var penna = E("div", "penna"); V.riuRap = E("div", "rapide"); penna.appendChild(V.riuRap); box.appendChild(penna);
+    V.riuC3 = E("span", "c3", ""); colonne.append(E("span", "c1", "Ospite"), E("span", "c2", "Note"), V.riuC3, legenda); V.riuGrid.appendChild(colonne); V.riuCol = colonne;
+    V.riuPot = E("div", "poteri"); box.appendChild(V.riuPot);   // (i tasti dei ruoli non stanno nel foglietto: non si perdono a chat chiusa)
+    // il foglietto della chat: messaggi, risposte rapide e la riga per scrivere
+    V.riuFog = E("div", "foglietto" + (cs.aperta ? " su" : "")); var cimaF = E("div", "cima"), viaF = E("button", "via"); viaF.type = "button"; viaF.innerHTML = icona("esciVoce"); viaF.setAttribute("aria-label", "Chiudi la chat");
+    viaF.addEventListener("click", function () { V.chatApri(false); }); cimaF.append(E("span", "ti", "Chat"), viaF);
+    V.riuChat = E("div", "chat"); V.riuChat.addEventListener("scroll", function () { var el = this, c = V.chatS; if (!c || el !== V.riuChat) return; c.sc = el.scrollTop; c.fondo = el.scrollHeight - el.clientHeight - el.scrollTop < 24; }, { passive: true });
+    var penna = E("div", "penna"); V.riuRap = E("div", "rapide"); penna.appendChild(V.riuRap); V.riuPen = penna; V.riuFog.append(cimaF, V.riuChat, penna);
     // la scritta grande che apre la riunione
-    var da = R ? (V.cache[R.da] || {}).nome || "?" : "?", corpoN = R && R.corpo != null ? (V.cache[R.corpo] || {}).nome : null;
+    var da = R ? (V.cache[R.da] || {}).nome || "?" : "?";
     V.intro.textContent = ""; V.intro.className = "lt-intro " + (R && R.motivo === "corpo" ? "corpo" : "campana");
-    var facce = E("div", "facce"); [R && R.da, R && R.corpo].forEach(function (id, i) { if (id == null) return; var f = ritratto(id); if (i) f.classList.add("morto"); facce.appendChild(f); });
-    var icI = E("div", "icona"); icI.innerHTML = icona(R && R.motivo === "corpo" ? "lanterna" : "campana"); V.intro.append(icI, E("h2", "", R && R.motivo === "corpo" ? "Lanterna spenta!" : "Riunione!"), facce, E("p", "", corpoN ? da + " ha trovato " + corpoN : da + " ha suonato la campana"));
+    var facce = E("div", "facce"); if (R && R.da != null) facce.appendChild(ritratto(R.da));
+    var icI = E("div", "icona"); icI.innerHTML = icona(R && R.motivo === "corpo" ? "lanterna" : "campana"); V.intro.append(icI, E("h2", "", R && R.motivo === "corpo" ? "Lanterna spenta!" : "Riunione!"), facce, E("p", "", da + (R && R.motivo === "corpo" ? " ha segnalato una lanterna spenta" : " ha suonato la campana")));
     if (V.introR !== g.round) {   // (ridisegnarla non la riapre: la scritta grande si vede una volta sola)
       V.introR = g.round; V.intro.hidden = false; vibra(80);
       (R && R.motivo === "corpo" ? SUONO.corpo : SUONO.campana)();
@@ -8216,50 +8321,60 @@ Vista.prototype.riunione = function (soloTempi) {
         if (q[0] === "imita") return V.apriImita(b);
         V.manda("rapida", { tipo: q[0] }); V.lampo(b);
       });
-      V.riuRap.appendChild(b);
+      (q[0] === "ero" || q[0] === "salto" ? V.riuRap : V.riuPot).appendChild(b);
     });
     V.riuForm = E("form", "scrivi"); var inp = E("input"); inp.type = "text"; inp.maxLength = 90; inp.placeholder = "Scrivi…"; var inv = E("button", "", "Invia"); inv.type = "submit"; V.riuForm.append(inp, inv); penna.appendChild(V.riuForm);
+    V.riuInp = inp; inp.value = cs.testo; inp.addEventListener("focus", function () { V.chatPosiz(); }); inp.addEventListener("blur", function () { V.chatPosiz(); V.riuAdatta(); });
     V.riuForm.addEventListener("submit", function (e) { e.preventDefault(); var tx = inp.value.trim(); if (!tx) return; V.manda("chat", { testo: tx }); inp.value = ""; inp.blur(); });
     V.riuVoto = E("div", "voto"); V.btnSalta = tastoIco("btn btn-fantasma salta", "salta", "Salto il voto"); V.riuVoto.append(V.btnSalta);
-    var fondo = E("div", "fondo"); if (!V.guardo) fondo.appendChild(creaVoce("riga")); fondo.appendChild(V.riuVoto); box.appendChild(fondo);   // (la voce: anche qui si parla)
+    V.btnChat = tastoIco("btn btn-fantasma cht" + (cs.aperta ? " aperta" : ""), "parla", "Chat"); V.chatSeg = E("i", "nuovi" + (cs.nuovi ? " su" : "")); V.btnChat.appendChild(V.chatSeg); V.btnChat.setAttribute("aria-expanded", cs.aperta ? "true" : "false");
+    V.btnChat.addEventListener("click", function () { V.chatApri(!V.chatS.aperta); });
+    var fondo = E("div", "fondo"); if (!V.guardo) fondo.appendChild(creaVoce("riga")); fondo.append(V.btnChat, V.riuVoto); box.append(fondo, V.riuFog); V.riuFondo = fondo;   // (la voce: anche qui si parla)
     V.btnSalta.addEventListener("click", function () { if (V.mioVoto) return; V.manda("voto", { su: "salta" }); V.mioVoto = "salta"; V.conf = null; vibra(25); V.riunione(); });
-    V.riuNota = E("p", "nota", ""); box.appendChild(V.riuNota);
-    V.conf = null; V.mioVoto = (V.priv && V.priv.voto) || null; V.carte = {}; V.nChat = 0; V.espK = null;
+    V.conf = null; V.mioVoto = (V.priv && V.priv.voto) || null; V.carte = {}; V.riuRighe = null; V.espK = null;
     g.g.forEach(function (q) {
       var io = q[0] === V.cb.myId, c = E("div", "carta" + (io ? " io" : "")), nt = E("span", "nt");
       if (io) nt.appendChild(E("span", "tu", "tu")); nt.appendChild(tintaDi(q[0])); nt.appendChild(E("span", "st", ""));
       c.append(ritratto(q[0]), E("span", "nm", (V.cache[q[0]] || {}).nome || "?"), nt, E("span", "vt", ""), E("div", "az"));
       V.carte[q[0]] = c; V.riuGrid.appendChild(c);
     });
-    ltSfuma(V.riuGrid);
     if (V.riuRO) V.riuRO.disconnect();
-    if (window.ResizeObserver) { V.riuRO = new ResizeObserver(function () { V.riuAdatta(); }); V.riuRO.observe(box); }
-    V.riuAdatta();
+    if (window.ResizeObserver) { V.riuRO = new ResizeObserver(function () { V.riuAdatta(); }); V.riuRO.observe(box); V.riuRO.observe(V.riuGrid); }
+    V.riuAdatta(); V.chatSegno();
   }
   // tempi
   var disc = Math.max(0, Math.ceil((V.discFine - ora) / 1000)), voto = Math.max(0, Math.ceil((V.votoFine - ora) / 1000));
   var faseK = g.fase === "esito" ? "esito" : disc > 0 ? "parla" : "vota", resta = faseK === "parla" ? disc : voto;
-  if (V.riuFaseK !== faseK) { V.riuFaseK = faseK; V.riuTot = Math.max(1, resta); V.riuFase.textContent = { parla: "Si parla", vota: "Si vota", esito: "Verdetto" }[faseK]; V.riuC3.textContent = { parla: "Di' la tua", vota: "Voto", esito: "Voti" }[faseK]; V.riuBox.dataset.fase = faseK; }
+  if (V.riuFaseK !== faseK) { V.riuFaseK = faseK; V.riuTot = Math.max(1, resta); V.riuFase.textContent = { parla: "Si parla", vota: "Si vota", esito: "Verdetto" }[faseK]; V.riuC3.textContent = { parla: "Di' la tua", vota: "Voto", esito: "Voti" }[faseK]; V.riuBox.dataset.fase = faseK; var vistaF = g.round + "|" + faseK; V.riuFase.classList.toggle("cade", V.faseVista !== vistaF); V.faseVista = vistaF; }   // (il timbro cade quando la fase cambia, non quando il foglio si rifà)
   var tmr = faseK === "esito" ? "✓" : String(resta);
-  if (V.riuTimer.textContent !== tmr) { V.riuTimer.textContent = tmr; V.riuTimer.style.setProperty("--p", faseK === "esito" ? 100 : Math.min(100, Math.round(100 * resta / V.riuTot))); V.riuTimer.classList.toggle("stretta", faseK === "vota" && resta <= 10); }
+  if (V.riuTimer.textContent !== tmr) { V.riuTimer.textContent = tmr; V.riuTimer.style.setProperty("--lt-giro", faseK === "esito" ? 100 : Math.min(100, Math.round(100 * resta / V.riuTot))); V.riuTimer.classList.toggle("stretta", faseK === "vota" && resta <= 10); if (faseK === "vota" && resta > 0 && resta <= 10) { V.riuBatte = !V.riuBatte; V.riuTimer.classList.toggle("batte-a", V.riuBatte); V.riuTimer.classList.toggle("batte-b", !V.riuBatte); } }   // (gli ultimi dieci secondi battono: una volta per numero)
   if (R) {   // (prima del ritorno dei soli tempi: la scritta cambia nel momento in cui si apre il voto)
-    var era = R.motivo === "corpo" ? "Era quella di " + ((V.cache[R.corpo] || {}).nome || "?") + " (" + panno(R.corpo).n + ")" : "Vuole parlare con tutti", votoAperto = faseK === "vota" && vivo, devo = votoAperto && !V.mioVoto;
-    var oc = votoAperto ? era : "Riunione n. " + g.round, pe = devo ? "Premi il sigillo di chi vuoi cacciare." : votoAperto ? "Aspettiamo gli altri voti." : era + ".";
-    if (V.riuOcch.textContent !== oc) V.riuOcch.textContent = oc;
+    // una riga sola, sempre piena: la testata non cambia altezza e la lista non si muove quando si apre il voto
+    var devo = faseK === "vota" && vivo && !V.mioVoto, salti = g.esito ? g.esito.voti.filter(function (x) { return x[1] === "salta"; }).length : 0;
+    var pe = faseK === "esito" ? (salti ? "Hanno saltato: " + salti + "." : "Si contano i voti.") : !vivo ? "Sei un'anima: guardi la riunione." : faseK === "parla" ? (R.zittiti.indexOf(V.cb.myId) >= 0 ? "Sei stato zittito: non parli, ma voti." : "Si parla: il voto si apre tra " + disc + " s") : devo ? "Premi il sigillo di chi vuoi cacciare." : V.mioVoto === "salta" ? "Hai saltato. Aspettiamo gli altri." : "Hai votato " + ((V.cache[V.mioVoto] || {}).nome || "") + ". Aspettiamo gli altri.";
     if (V.riuPerche.textContent !== pe) { V.riuPerche.textContent = pe; V.riuPerche.classList.toggle("chiede", devo); }
   }
-  if (g.fase === "riunione") V.riuNota.textContent = !vivo ? "Sei un'anima: guardi la riunione." : R && R.zittiti.indexOf(V.cb.myId) >= 0 && disc > 0 ? "Sei stato zittito: non parli, ma voti." : disc > 0 ? "Si parla: il voto si apre tra " + disc + " s" : V.mioVoto === "salta" ? "Hai saltato il voto." : V.mioVoto ? "Hai votato " + ((V.cache[V.mioVoto] || {}).nome || "") + "." : "Se non sai chi, puoi saltare il voto.";
   if (soloTempi) return;
   if (R) {
     var da = (V.cache[R.da] || {}).nome || "?";
-    V.riuTit.textContent = R.motivo === "corpo" ? da + " ha trovato una lanterna spenta" : da + " ha suonato la campana";
-    var chat = R.chat || [];
-    for (var i = V.nChat; i < chat.length; i++) {
+    V.riuTit.textContent = R.motivo === "corpo" ? da + " ha segnalato una lanterna spenta" : da + " ha suonato la campana";
+    var chat = R.chat || [], cs2 = V.chatS, disegna = V.riuRighe ? righeNuove(V.riuRighe, chat) : chat.length, nuove = righeNuove(cs2.viste, chat);
+    for (var i = chat.length - disegna; i < chat.length; i++) {
       var p = E("p"); var chi = chat[i][0]; if (chi != null) { var pt = ritratto(chi); pt.classList.add("pt"); p.append(pt, E("b", "", (V.cache[chi] || {}).nome || "?"), E("span", "tc", " " + panno(chi).n), ": "); } else p.className = "sis"; p.append(chat[i][1]); V.riuChat.appendChild(p);
       if (chat[i][2] && chat[i][2].foto) { var fc = E("canvas", "foto"); V.riuChat.appendChild(fc); disegnaFoto(fc, chat[i][2].foto); }
     }
-    if (chat.length > V.nChat) V.riuChat.scrollTop = V.riuChat.scrollHeight;
-    V.nChat = chat.length;
+    if (disegna && (cs2.fondo || !V.riuRighe)) V.riuChat.scrollTop = cs2.fondo ? V.riuChat.scrollHeight : cs2.sc;   // (chi sta leggendo più su resta dov'è)
+    if (!V.riuRighe && scriveva) inp.focus();
+    V.riuRighe = chat; cs2.viste = chat;
+    // a chat chiusa: i messaggi degli altri fanno il numero sul sigillo, le righe del gioco diventano bigliettini. «Ha segnalato» e «ha suonato» stanno già nella testata
+    if (!cs2.aperta) for (var j = chat.length - nuove; j < chat.length; j++) {
+      if (chat[j][0] != null) { if (chat[j][0] !== V.cb.myId) cs2.nuovi++; }
+      else if (!/ ha (segnalato una lanterna spenta|suonato la campana)\.$/.test(chat[j][1])) cs2.coda.push(chat[j]);
+    }
+    // quello che il Bracconiere legge nella trappola: è suo e basta, non passa dalla chat. L'avviso cade sulla scritta grande, il bigliettino resta da leggere
+    var trap = V.priv && V.priv.trapRuoli ? V.priv.trapRuoli.join(", ") : null;
+    if (trap && V.trapVisto !== trap) { V.trapVisto = trap; cs2.coda.push([null, "Nella trappola sono passati: " + trap + "."]); }
+    V.chatSegno(); V.bigGiro();
   }
   var votati = R ? R.votati : [], zitt = R ? R.zittiti : [], esito = g.esito, sindaci = g.sindaci || [];
   var mioBers = V.priv && V.priv.ruolo === "accusatore" ? V.priv.bersaglio : null;
@@ -8288,14 +8403,13 @@ Vista.prototype.riunione = function (soloTempi) {
   if (nuovoEsito) V.kVoti = kEs;
   var aperto = g.fase === "riunione" && disc <= 0;
   var zittito = R && zitt.indexOf(V.cb.myId) >= 0;
-  V.riuRap.hidden = V.riuForm.hidden = !vivo || g.fase !== "riunione" || zittito;
+  V.riuRap.hidden = V.riuForm.hidden = V.riuPen.hidden = V.riuPot.hidden = !vivo || g.fase !== "riunione" || zittito;
   V.riuVoto.hidden = !vivo || g.fase !== "riunione";
   V.btnSalta.disabled = !aperto || !!V.mioVoto;
   var ts = V.mioVoto === "salta" ? "Hai saltato" : V.mioVoto ? "Hai votato" : "Salto il voto", tsp = V.btnSalta.querySelector("span"); if (tsp && tsp.textContent !== ts) tsp.textContent = ts;
   if (esito && V.espK !== esito.titolo + "|" + g.round) {
     V.espK = esito.titolo + "|" + g.round;
-    var box = V.velo.querySelector(".lt-riu"), salti = esito.voti.filter(function (x) { return x[1] === "salta"; }).length;
-    V.riuNota.textContent = salti ? "Hanno saltato: " + salti + "." : "";
+    var box = V.velo.querySelector(".lt-riu");
     setTimeout(function () {
       if (V.riuK !== k || !V.vivo) return;
       var es = E("div", "lt-esp lt-foglio"), rt = E("div", "ritr" + (esito.espulso == null ? " vuoto" : "")), tx = E("div", "txt");
@@ -8306,7 +8420,7 @@ Vista.prototype.riunione = function (soloTempi) {
       var conto = E("div", "conto");   // la riga del registro: quanti voti, quanti hanno saltato
       if (esito.espulso != null) { var c1 = E("span"); c1.append(E("b", "", String(nVoti)), nVoti === 1 ? "voto" : "voti"); conto.appendChild(c1); }
       var c2 = E("span"); c2.append(E("b", "", String(nSalti)), nSalti === 1 ? "ha saltato" : "hanno saltato"); conto.appendChild(c2); tx.appendChild(conto);
-      es.append(rt, tx); var cv = V.chiHaVotato(esito); if (cv) es.appendChild(cv); box.appendChild(es); if (cv) ltSfuma(cv); SUONO.esce();
+      es.append(intestazione("Registro di Palazzo Velmare"), rt, tx); var cv = V.chiHaVotato(esito); if (cv) es.appendChild(cv); box.appendChild(es); if (cv) ltSfuma(cv); SUONO.esce();
     }, 2600);
   }
 };
@@ -8332,8 +8446,8 @@ function ltStrappo() {
   return "polygon(" + p.join(",") + ")";
 }
 // la filigrana: la lanterna del palazzo dentro la carta, che si vede appena
-function ltFiligrana() {
-  var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 170' fill='none' stroke='#5e4018' stroke-opacity='.065' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'><path d='M60 4v10M48 26a12 12 0 0 1 24 0'/><path d='M38 42h44L72 26H48z'/><path d='M42 42 34 134h52L78 42z'/><path d='M26 134h68v12H26z'/><path d='M60 68c14 15 14 34 0 48-14-14-14-33 0-48z'/><path d='M40 150h40L60 166z'/></svg>";
+function ltFiligrana(colore, forza) {
+  var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 170' fill='none' stroke='" + (colore || "#5e4018") + "' stroke-opacity='" + (forza || ".065") + "' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'><path d='M60 4v10M48 26a12 12 0 0 1 24 0'/><path d='M38 42h44L72 26H48z'/><path d='M42 42 34 134h52L78 42z'/><path d='M26 134h68v12H26z'/><path d='M60 68c14 15 14 34 0 48-14-14-14-33 0-48z'/><path d='M40 150h40L60 166z'/></svg>";
   return "url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
 }
 // chi non ha la faccia caricata: una sagoma scura, mai un disco di colore
@@ -8356,15 +8470,20 @@ function ltCera(conLanterna, pallida) {
   for (i = 0; i < n; i++) { var an = i / n * 6.2832, r = 27.5 + a() * 3.6; pt.push([32 + Math.cos(an) * r, 32 + Math.sin(an) * r]); }
   for (i = 0; i < n; i++) { var q = pt[i], w = pt[(i + 1) % n], mx = (q[0] + w[0]) / 2, my = (q[1] + w[1]) / 2; d += (i ? "" : "M" + ((pt[n - 1][0] + q[0]) / 2).toFixed(1) + " " + ((pt[n - 1][1] + q[1]) / 2).toFixed(1)) + "Q" + q[0].toFixed(1) + " " + q[1].toFixed(1) + " " + mx.toFixed(1) + " " + my.toFixed(1); }
   var lan = "<path d='M29 21.4a3 3 0 0 1 6 0M26.4 24.6h11.2l-2.1-3.2h-7zM27.3 24.6 26 40.4h12l-1.3-15.8zM24.6 40.4h14.8v2.8H24.6zM32 28.6c2.5 2.7 2.5 6 0 8.4-2.5-2.4-2.5-5.7 0-8.4z'";
-  var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><radialGradient id='a' cx='.34' cy='.28' r='.9'><stop offset='0' stop-color='" + (pallida ? "#f4ead4" : "#dd5a64") + "'/><stop offset='.42' stop-color='" + (pallida ? "#ddc9a2" : "#a92433") + "'/><stop offset='1' stop-color='" + (pallida ? "#a98c5e" : "#570c17") + "'/></radialGradient><radialGradient id='b' cx='.62' cy='.72' r='.8'><stop offset='0' stop-color='" + (pallida ? "#e6d5b2" : "#b52d3b") + "'/><stop offset='1' stop-color='" + (pallida ? "#c4ab7e" : "#74151f") + "'/></radialGradient></defs>" +
+  var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><radialGradient id='a' cx='.34' cy='.28' r='.9'><stop offset='0' stop-color='" + (pallida ? "#f4ead4" : "#dd5a64") + "'/><stop offset='.42' stop-color='" + (pallida ? "#ddc9a2" : "#a92433") + "'/><stop offset='1' stop-color='" + (pallida ? "#a98c5e" : "#570c17") + "'/></radialGradient><radialGradient id='b' cx='.62' cy='.72' r='.8'><stop offset='0' stop-color='" + (pallida ? "#efe2c6" : "#a62735") + "'/><stop offset='1' stop-color='" + (pallida ? "#d3bc90" : "#6d131d") + "'/></radialGradient></defs>" +
     "<path d='" + d + "z' fill='#3a0710' opacity='.45' transform='translate(1.1 1.8)'/><path d='" + d + "z' fill='url(#a)'/><path d='" + d + "z' fill='none' stroke='#f0a0a0' stroke-opacity='.3'/>" +
-    "<circle cx='32' cy='32' r='20.6' fill='url(#b)' stroke='" + (pallida ? "#8a6d44" : "#470912") + "' stroke-width='1.7'/><circle cx='32.5' cy='32.7' r='20.8' fill='none' stroke='#ee9a9a' stroke-opacity='.42' stroke-width='.8'/>" +
+    "<circle cx='32' cy='32' r='22' fill='url(#b)' stroke='" + (pallida ? "#8a6d44" : "#470912") + "' stroke-width='1.7'/><circle cx='32.5' cy='32.7' r='22.2' fill='none' stroke='#ee9a9a' stroke-opacity='.42' stroke-width='.8'/>" +
     (conLanterna ? lan + " fill='#ee9a9a' fill-opacity='.4' transform='translate(.5 .6)'/>" + lan + " fill='#4c0a13'/>" : "") + "</svg>";
+  return "url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
+}
+// il segno di spunta tirato a penna: chi ha già votato
+function ltSpunta() {
+  var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M2.2 8.8c1.3 1 2.4 2.3 3.5 4.2C7.5 8.4 10.3 5 13.9 2.9' fill='none' stroke='#1d5a3b' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'/></svg>";
   return "url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
 }
 function cssRegistro() {
   return `
-:root{--lt-ease:cubic-bezier(.22,1,.36,1);--r-carta:#ecdfc4;--r-chiara:#f8f0de;--r-scura:#d9c59c;--r-ink:#28180d;--r-ink2:#54402b;--r-ink3:#755d42;--r-filo:rgba(84,60,34,.36);--r-oro:#8a6519;--r-ottone:#c39a48;--r-ottone-ch:#efd595;--r-cera:#8f1d2b;--r-cera-ch:#bb3445;--r-cera-sc:#5c0f1b;--r-verde:#1d5a3b;--r-viola:#4a3678;--r-ardesia:#2c4660;--r-crema:#fff1da;--r-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;--r-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue","Inter",system-ui,sans-serif;--r-grana:url(data:image/png;base64,@GRANA@);--r-sigillo:@SIGILLO@;--r-sigillo-vuoto:@VUOTO@;--r-sigillo-pallido:@PALLIDO@;--r-filigrana:@FILIGRANA@;--r-sagoma:@SAGOMA@;--r-seppia:rgba(84,60,34,.18);--r-seppia2:rgba(84,60,34,.3);--r-strappo:@STRAPPO@;--r-dentelli:@DENTELLI@;--r-tavolo:radial-gradient(85% 55% at 4% -4%,rgba(255,170,76,.36),rgba(255,170,76,0) 65%),radial-gradient(90% 70% at 104% 106%,rgba(104,16,40,.66),rgba(104,16,40,0) 70%),repeating-linear-gradient(91deg,rgba(255,214,160,.035) 0 1px,rgba(0,0,0,0) 1px 6px,rgba(0,0,0,.13) 6px 7px,rgba(0,0,0,0) 7px 17px),repeating-linear-gradient(88.5deg,rgba(0,0,0,0) 0 38px,rgba(255,214,160,.03) 38px 41px,rgba(0,0,0,0) 41px 73px),linear-gradient(165deg,#34211a,#1c110b)}
+:root{--lt-ease:cubic-bezier(.22,1,.36,1);--r-carta:#ecdfc4;--r-chiara:#f8f0de;--r-scura:#d9c59c;--r-ink:#28180d;--r-ink2:#54402b;--r-ink3:#755d42;--r-filo:rgba(84,60,34,.36);--r-oro:#8a6519;--r-ottone:#c39a48;--r-ottone-ch:#efd595;--r-cera:#8f1d2b;--r-cera-ch:#bb3445;--r-cera-sc:#5c0f1b;--r-verde:#1d5a3b;--r-viola:#4a3678;--r-ardesia:#2c4660;--r-crema:#fff1da;--r-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;--r-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue","Inter",system-ui,sans-serif;--r-grana:url(data:image/png;base64,@GRANA@);--r-sigillo:@SIGILLO@;--r-sigillo-vuoto:@VUOTO@;--r-sigillo-pallido:@PALLIDO@;--r-filigrana:@FILIGRANA@;--r-sagoma:@SAGOMA@;--r-spunta:@SPUNTA@;--r-lanterna:@LANTERNA@;--r-seppia:rgba(84,60,34,.18);--r-seppia2:rgba(84,60,34,.3);--r-strappo:@STRAPPO@;--r-dentelli:@DENTELLI@;--r-tavolo:radial-gradient(85% 55% at 4% -4%,rgba(255,170,76,.36),rgba(255,170,76,0) 65%),radial-gradient(90% 70% at 104% 106%,rgba(104,16,40,.66),rgba(104,16,40,0) 70%),repeating-linear-gradient(91deg,rgba(255,214,160,.035) 0 1px,rgba(0,0,0,0) 1px 6px,rgba(0,0,0,.13) 6px 7px,rgba(0,0,0,0) 7px 17px),repeating-linear-gradient(88.5deg,rgba(0,0,0,0) 0 38px,rgba(255,214,160,.03) 38px 41px,rgba(0,0,0,0) 41px 73px),linear-gradient(165deg,#34211a,#1c110b)}
 
 /* il tavolo di noce e velluto sotto i fogli */
 .lt-velo:has(>.lt-riu),.lt-velo:has(>.lt-computer),.lt-velo:has(>.lt-svela),.lt-velo:has(>.lt-vince),.lt-velo:has(>.lt-lenz){background:var(--r-tavolo)}
@@ -8375,9 +8494,9 @@ function cssRegistro() {
 .lt-pz{display:inline-block;flex:none;width:8px;height:8px;margin-right:4px;border-radius:1.5px;vertical-align:.02em;box-shadow:0 0 0 1px rgba(241,232,214,.4)}
 .lt-foglio .lt-pz{box-shadow:inset 0 0 0 .5px rgba(20,10,4,.6),0 0 0 .5px rgba(84,60,34,.4)}
 .lt-riu .chat .tc{font-style:italic;font-size:13px;color:var(--r-ink2)}
-.lt-riu .carta.spento .lt-tinta,.lt-riu .carta.zitto .lt-tinta{gap:0;font-size:0}
-.lt-riu .carta.rete .lt-tinta{display:none}
-.lt-scena:not(.oriz) .lt-riu[data-fase="vota"] .carta.votato .lt-tinta{gap:0;font-size:0}
+.lt-riu:not(.una) .carta.spento .lt-tinta,.lt-riu:not(.una) .carta.zitto .lt-tinta{gap:0;font-size:0}
+.lt-riu:not(.una) .carta.rete .lt-tinta{display:none}
+.lt-scena:not(.oriz) .lt-riu:not(.una)[data-fase="vota"] .carta.votato .lt-tinta{gap:0;font-size:0}
 .lt-esp .txt .lt-tinta{justify-content:center;font-size:14.5px}.lt-esp .txt .lt-tinta i{width:11px;height:11px}
 .lt-esp .rg .su .lt-tinta{margin-left:3px;font-size:12px}
 .lt-vince .u .lt-tinta{justify-content:center;max-width:64px;font-size:11.5px}.lt-vince .u .lt-tinta i{width:8px;height:8px}
@@ -8413,7 +8532,7 @@ function cssRegistro() {
 .lt-foglio::before{content:"";position:absolute;inset:0;z-index:-1;clip-path:var(--r-strappo);box-shadow:inset 0 0 46px rgba(112,70,24,.36);background:linear-gradient(var(--r-ottone),var(--r-ottone)) 8px 8px/calc(100% - 16px) 1px no-repeat,linear-gradient(var(--r-ottone),var(--r-ottone)) 8px calc(100% - 8px)/calc(100% - 16px) 1px no-repeat,linear-gradient(var(--r-ottone),var(--r-ottone)) 8px 8px/1px calc(100% - 16px) no-repeat,linear-gradient(var(--r-ottone),var(--r-ottone)) calc(100% - 8px) 8px/1px calc(100% - 16px) no-repeat,radial-gradient(130% 70% at -4% -6%,rgba(255,206,120,.66),rgba(255,206,120,0) 60%),radial-gradient(100% 70% at 108% 108%,rgba(92,54,20,.34),rgba(92,54,20,0) 62%),radial-gradient(10px 8px at 84% 7%,rgba(118,74,28,.22),rgba(118,74,28,0)),radial-gradient(16px 12px at 7% 64%,rgba(118,74,28,.14),rgba(118,74,28,0)),var(--r-filigrana) 50% 58%/min(62%,250px) auto no-repeat,linear-gradient(rgba(236,223,196,.42),rgba(236,223,196,.42)),var(--r-grana),linear-gradient(var(--r-carta),var(--r-carta))}
 .lt-foglio::after{content:"";position:absolute;inset:5px -4px -6px 3px;z-index:-2;clip-path:var(--r-strappo);transform:rotate(.55deg);background:var(--r-grana),linear-gradient(170deg,#c9b288,#a48a5e)}
 .lt-foglio h2,.lt-foglio h3{margin:0;color:var(--r-ink);font-family:var(--r-serif);font-weight:700;letter-spacing:0;line-height:1.12}
-.lt-foglio .occh{margin:0;font:700 10.5px/1.25 var(--r-sans);letter-spacing:.13em;text-transform:uppercase;color:var(--r-ink3)}
+.lt-foglio .occh{margin:0;font:700 11px/1.25 var(--r-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--r-ink3)}
 .lt-foglio button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer;transition:transform .16s var(--lt-ease),background-color .2s var(--lt-ease),color .2s var(--lt-ease),box-shadow .2s var(--lt-ease),opacity .2s var(--lt-ease)}
 .lt-foglio button:active:not(:disabled){transform:scale(.95)}
 .lt-foglio button:focus-visible,.lt-foglio input:focus-visible{outline:2px solid var(--r-oro);outline-offset:1px}
@@ -8428,19 +8547,20 @@ function cssRegistro() {
 
 /* la riunione: il registro aperto */
 .lt-foglio .stemma{display:inline-block;flex:none;width:20px;height:23px;color:var(--r-cera-sc);vertical-align:-6px}
-.lt-foglio .intest{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;font:700 10.5px/1.2 var(--r-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--r-ink2);white-space:nowrap}
+.lt-foglio .intest{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;font:700 11px/1.2 var(--r-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--r-ink2);white-space:nowrap}
 .lt-foglio .intest::before,.lt-foglio .intest::after{content:"";flex:1 1 0;min-width:6px;height:2px;border-top:1px solid var(--r-filo);border-bottom:1px solid var(--r-filo)}
 .lt-foglio .pall{display:block;background:var(--r-sagoma) center/100% 100% no-repeat,linear-gradient(#a08a6d,#6d5740)}
-.lt-riu{--vn:66px;--vv:150px;display:flex;flex-direction:column;gap:5px;height:100%;max-height:900px;padding:14px 15px 12px}
-.lt-riu .testa{flex:none;display:grid;grid-template-columns:78px minmax(0,1fr) auto;grid-template-areas:'i i i' 'c t o' 'p p p';align-items:center;column-gap:9px;row-gap:3px;padding-bottom:5px;border-bottom:3px double var(--r-filo)}
+.lt-riu{--vn:66px;--vv:150px;--rh:66px;display:flex;flex-direction:column;gap:5px;height:100%;max-height:900px;padding:14px 15px 12px}
+.lt-riu .testa{position:relative;flex:none;display:grid;margin:0;grid-template-columns:78px minmax(0,1fr) auto;grid-template-areas:'i i i' 'c t o' 'p p p';align-items:center;column-gap:9px;row-gap:3px;padding-bottom:5px;border-bottom:3px double var(--r-filo)}
 .lt-riu .intest{grid-area:i}
 .lt-riu .chi{grid-area:c;position:relative;display:flex;justify-content:center}
-.lt-riu .chi .faccia,.lt-riu .chi .pall{display:block;flex:none;width:44px;height:53px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1.5px var(--r-ottone),0 0 0 2.5px rgba(40,20,8,.4),0 2px 4px rgba(40,20,8,.45)}
+.lt-riu .chi .faccia,.lt-riu .chi .pall{display:block;flex:none;width:48px;height:58px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1.5px var(--r-ottone),0 0 0 2.5px rgba(40,20,8,.4),0 2px 4px rgba(40,20,8,.45)}
 .lt-riu .chi .faccia{background:linear-gradient(#4a3325,#21150e)}
-.lt-riu .chi .morto{margin-left:-15px;filter:saturate(.6) brightness(.82)}
-.lt-riu .fase{position:absolute;left:50%;bottom:-3px;box-sizing:border-box;padding:2px 6px 1px;border:3px double var(--r-ink2);border-radius:3px;font:700 12.5px/1.1 var(--r-serif);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;color:var(--r-ink2);background:rgba(248,240,222,.88);transform:translateX(-50%) rotate(-6deg)}
-.lt-riu[data-fase="vota"] .fase{border-color:var(--r-cera);color:var(--r-cera);font-size:14.5px;animation:ltTimbroV .24s var(--lt-ease) both}
-.lt-riu[data-fase="esito"] .fase{border-color:var(--r-cera);color:var(--r-cera);font-size:11.5px;letter-spacing:.03em;animation:ltTimbroE .24s var(--lt-ease) both}
+.lt-riu .fase{position:absolute;left:50%;bottom:-6px;box-sizing:border-box;padding:2px 5px 1px;border:3px double var(--r-ink2);border-radius:3px;font:700 12px/1.1 var(--r-serif);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;color:var(--r-ink2);background:rgba(248,240,222,.88);transform:translateX(-50%) rotate(-6deg)}
+.lt-riu[data-fase="vota"] .fase{border-color:var(--r-cera);color:var(--r-cera);font-size:13px}
+.lt-riu[data-fase="esito"] .fase{border-color:var(--r-cera);color:var(--r-cera);font-size:11.5px;letter-spacing:.03em}
+.lt-riu[data-fase="vota"] .fase.cade{animation:ltTimbroV .24s var(--lt-ease) both}
+.lt-riu[data-fase="esito"] .fase.cade{animation:ltTimbroE .24s var(--lt-ease) both}
 @keyframes ltTimbroV{0%{transform:translateX(-50%) rotate(-14deg) scale(1.7);opacity:0}60%{transform:translateX(-50%) rotate(-5deg) scale(.95);opacity:1}100%{transform:translateX(-50%) rotate(-6deg) scale(1);opacity:1}}
 @keyframes ltTimbroE{0%{transform:translateX(-50%) rotate(-14deg) scale(1.7);opacity:0}60%{transform:translateX(-50%) rotate(-5deg) scale(.95);opacity:1}100%{transform:translateX(-50%) rotate(-6deg) scale(1);opacity:1}}
 .lt-riu .tit{grid-area:t;min-width:0}
@@ -8448,21 +8568,27 @@ function cssRegistro() {
 .lt-riu h3{font-size:19px;margin:1px 0 0}
 .lt-riu .perche{grid-area:p;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font:italic 15px/18px var(--r-serif);color:var(--r-ink2);transition:color .2s var(--lt-ease)}
 .lt-riu .perche.chiede{font-style:normal;font-weight:700;color:var(--r-cera)}
-.lt-riu .timer{--p:100;grid-area:o;flex:none;width:58px;height:58px;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;font:700 24px/1 var(--r-serif);font-variant-numeric:tabular-nums lining-nums;color:var(--r-ink);background:radial-gradient(circle,var(--r-chiara) 0 60%,rgba(0,0,0,0) 61%),conic-gradient(var(--r-ink) calc(var(--p)*1%),rgba(84,60,34,.2) 0);box-shadow:0 0 0 1px var(--r-filo),0 1px 3px rgba(60,36,14,.35)}
-.lt-riu[data-fase="vota"] .timer{background:radial-gradient(circle,var(--r-chiara) 0 60%,rgba(0,0,0,0) 61%),conic-gradient(var(--r-cera) calc(var(--p)*1%),rgba(84,60,34,.2) 0)}
+@property --lt-giro{syntax:"<number>";inherits:false;initial-value:100}
+.lt-riu .timer{--lt-giro:100;transition:--lt-giro .24s var(--lt-ease),color .2s var(--lt-ease);grid-area:o;flex:none;width:58px;height:58px;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;font:700 24px/1 var(--r-serif);font-variant-numeric:tabular-nums lining-nums;color:var(--r-ink);background:radial-gradient(circle,var(--r-chiara) 0 60%,rgba(0,0,0,0) 61%),conic-gradient(var(--r-ink) calc(var(--lt-giro)*1%),rgba(84,60,34,.2) 0);box-shadow:0 0 0 1px var(--r-filo),0 1px 3px rgba(60,36,14,.35)}
+.lt-riu[data-fase="vota"] .timer{background:radial-gradient(circle,var(--r-chiara) 0 60%,rgba(0,0,0,0) 61%),conic-gradient(var(--r-cera) calc(var(--lt-giro)*1%),rgba(84,60,34,.2) 0)}
 .lt-riu .timer.stretta{color:var(--r-cera)}
+.lt-riu .timer.batte-a{animation:ltBattito1 .24s var(--lt-ease)}
+.lt-riu .timer.batte-b{animation:ltBattito2 .24s var(--lt-ease)}
+@keyframes ltBattito1{0%{transform:scale(1.09)}100%{transform:none}}
+@keyframes ltBattito2{0%{transform:scale(1.09)}100%{transform:none}}
 
 /* gli ospiti: righe tirate sul foglio. Di solito due colonne di registro (nome sopra, tasti sotto); con .una, quando c'è spazio, una riga per ospite a colonne Ospite · Note · Voto */
-.lt-riu .grid{position:relative;flex:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:13px}
+.lt-riu .grid{position:relative;flex:1 1 0;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:var(--rh);align-content:start;column-gap:13px}
+.lt-riu .grid::-webkit-scrollbar{display:none}
 .lt-riu .grid::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:1px;margin-left:-2px;border-left:1px solid var(--r-filo);border-right:1px solid var(--r-filo);pointer-events:none}
 .lt-riu .colonne{display:none;grid-column:1/-1}
 .lt-riu .colonne span{min-width:0}
-.lt-riu .colonne,.lt-riu .colonne i{font:700 9.5px/15px var(--r-sans);letter-spacing:.11em;text-transform:uppercase;color:var(--r-ink3)}
+.lt-riu .colonne,.lt-riu .colonne i{font:700 11px/16px var(--r-sans);letter-spacing:.1em;text-transform:uppercase;color:var(--r-ink3)}
 .lt-riu .colonne i{font-style:normal;letter-spacing:.04em;text-transform:none;font-size:11px}
 .lt-riu .leg{display:none;align-items:center;gap:3px}
 .lt-riu .leg svg.ico{width:13px;height:13px;stroke-width:2.5;color:var(--r-cera)}
 .lt-riu .leg svg.ico~svg.ico{margin-left:7px;color:var(--r-verde)}
-.lt-riu .carta{position:relative;display:grid;grid-template-columns:27px minmax(0,1fr) auto;grid-template-rows:24px 44px;grid-template-areas:'f n s' 'a a a';column-gap:6px;align-items:center;padding:2px 1px 1px;font-family:var(--r-serif);color:var(--r-ink);border-bottom:1px solid var(--r-seppia2);transition:background-color .2s var(--lt-ease)}
+.lt-riu .carta{position:relative;display:grid;grid-template-columns:27px minmax(0,1fr) auto;grid-template-rows:minmax(24px,1fr) 44px;grid-template-areas:'f n s' 'a a a';column-gap:6px;align-items:center;padding:2px 1px 1px;font-family:var(--r-serif);color:var(--r-ink);border-bottom:1px solid var(--r-seppia2);transition:background-color .2s var(--lt-ease)}
 .lt-riu .carta>.faccia,.lt-riu .carta>.pall{grid-area:f;display:block;width:27px;height:29px;margin-top:3px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone),0 0 0 2px rgba(40,20,8,.32)}
 .lt-riu .carta>.faccia{background:linear-gradient(#4a3325,#21150e)}
 .lt-riu .carta .nm{grid-area:n;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 16.5px/1.15 var(--r-serif);color:var(--r-ink)}
@@ -8470,10 +8596,10 @@ function cssRegistro() {
 .lt-riu .carta .nt{grid-area:s;display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;white-space:nowrap;font:italic 12.5px/1 var(--r-serif);color:var(--r-ink3)}
 .lt-riu .carta .tu{font-weight:700;color:var(--r-ink2)}
 .lt-riu .carta .st:empty{display:none}
-.lt-riu .carta.spento .st,.lt-riu .carta.zitto .st,.lt-riu .carta.rete .st{padding:0 4px;font:700 9.5px/14px var(--r-sans);letter-spacing:.07em;text-transform:uppercase;border-radius:1px}
-.lt-riu .carta.spento .st{color:var(--r-ink2);box-shadow:inset 0 0 0 1px var(--r-ink3);transform:rotate(-3deg)}
-.lt-riu .carta.rete .st{color:var(--r-oro);box-shadow:inset 0 0 0 1px var(--r-ottone);transform:rotate(-2deg)}
-.lt-riu .carta.zitto .st{color:var(--r-chiara);background:var(--r-ink);box-shadow:1px 1px 0 rgba(40,20,8,.3);transform:rotate(-2deg)}
+.lt-riu .carta.spento .st,.lt-riu .carta.zitto .st,.lt-riu .carta.rete .st{flex:none;box-sizing:border-box;padding:2px 5px 1px;border:2.5px double currentColor;border-radius:2px;font:700 11.5px/1.1 var(--r-serif);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.lt-riu .carta.spento .st{color:var(--r-ink2);background:rgba(248,240,222,.5);transform:rotate(-4deg)}
+.lt-riu .carta.rete .st{color:var(--r-oro);background:rgba(248,240,222,.5);transform:rotate(-3deg)}
+.lt-riu .carta.zitto .st{padding:3px 6px 2px;border:0;color:var(--r-chiara);background:var(--r-ink);box-shadow:1px 1px 0 rgba(40,20,8,.3);clip-path:polygon(0 8%,3% 0,98% 6%,100% 92%,96% 100%,2% 94%);transform:rotate(-2deg)}
 .lt-riu .carta.spento>.faccia,.lt-riu .carta.spento>.pall{filter:saturate(.6) contrast(.86);opacity:.78}
 .lt-riu .carta.spento .nm{color:var(--r-ink3);text-decoration:line-through;text-decoration-thickness:1.5px}
 .lt-riu .carta.zitto::before{content:"";pointer-events:none;position:absolute;left:0;top:21px;width:28px;height:6px;background:var(--r-ink);box-shadow:0 1px 1px rgba(0,0,0,.4);transform:rotate(-9deg);z-index:1}
@@ -8493,37 +8619,87 @@ function cssRegistro() {
 .lt-riu .carta .az .ind{flex:0 0 34px;color:var(--r-viola)}
 .lt-riu .carta[data-ak*="ind"] .az .dubbio,.lt-riu .carta[data-ak*="ind"] .az .fido{font-size:11.5px}
 .lt-riu .carta[data-ak*="ind"] .az .dubbio svg.ico,.lt-riu .carta[data-ak*="ind"] .az .fido svg.ico{display:none}
+.lt-riu .carta[data-ak*="ind"] .az .mio span{display:none}
 
 /* il voto: il sigillo di ceralacca */
-.lt-riu .carta .az .vota{flex:none;width:48px;height:48px;margin:-2px 0;border-radius:50%;background:var(--r-sigillo-vuoto) center/100% 100% no-repeat;font:700 13px/1 var(--r-serif);color:var(--r-crema);text-shadow:0 1px 1px rgba(60,0,10,.8);filter:none}
-.lt-riu .carta .az .vota.me{background-image:var(--r-sigillo-pallido);font-size:10.5px;letter-spacing:-.01em;color:var(--r-ink2);text-shadow:none}
+.lt-riu .carta .az .vota{flex:none;width:48px;height:48px;margin:-2px 0;border-radius:50%;background:var(--r-sigillo-vuoto) center/100% 100% no-repeat;font:700 14px/1 var(--r-serif);letter-spacing:.01em;color:var(--r-crema);text-shadow:0 1px 0 rgba(50,0,8,.9),0 0 3px rgba(50,0,8,.45);filter:none}
+.lt-riu .carta .az .vota.me{background-image:var(--r-sigillo-pallido);font-size:12px;letter-spacing:-.02em;color:var(--r-ink);text-shadow:0 1px 0 rgba(255,250,236,.6)}
+.lt-riu .carta .az .vota:active:not(:disabled){transform:scale(.86) rotate(-6deg)}
+@media (hover:hover){.lt-riu .carta .az .vota:hover{transform:translateY(-1px) rotate(-3deg)}}
 .lt-riu .carta .az .vota::before{display:none}.lt-riu .carta .az .vota svg.ico{display:none}
 .lt-riu .carta .az .conf{flex:none;height:44px;padding:0 12px;border-radius:22px;background:linear-gradient(180deg,var(--r-cera-ch),var(--r-cera) 60%,var(--r-cera-sc));font:700 14px/1 var(--r-serif);color:var(--r-crema);box-shadow:0 0 0 2px var(--r-ottone-ch),0 3px 8px rgba(60,10,10,.55);animation:ltSu .18s var(--lt-ease) both}
 .lt-riu .carta .az .conf::before{display:none}
 @keyframes ltSu{from{transform:scale(.8)}to{transform:none}}
 .lt-riu .carta .az .mio{display:flex;align-items:center;gap:3px;font:italic 700 13px/1 var(--r-serif);color:var(--r-cera);white-space:nowrap}
-.lt-riu .carta .az .sig{display:block;flex:none;width:50px;height:50px;margin:-3px 0;background:var(--r-sigillo) center/100% 100% no-repeat;transform:rotate(-10deg);animation:ltSigillo .22s var(--lt-ease) both}
+.lt-riu .carta .az .sig{display:block;flex:none;width:50px;height:50px;margin:-3px 0;background:var(--r-sigillo) center/100% 100% no-repeat;transform:rotate(-10deg);transition:width .2s var(--lt-ease),height .2s var(--lt-ease);animation:ltSigillo .22s var(--lt-ease) both}
+.lt-riu[data-fase="esito"] .carta .az .sig{width:34px;height:34px;margin:0}
 @keyframes ltSigillo{0%{transform:translateY(-12px) scale(1.9) rotate(-28deg);opacity:0}58%{transform:scale(.9) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-10deg);opacity:1}}
 .lt-riu .carta.mio-voto{background-color:rgba(187,52,69,.11)}
 .lt-riu[data-fase="esito"] .carta .az .mio span{display:none}
-.lt-riu[data-fase="vota"] .carta.votato .nt::after{content:"\\2713\\00a0votato";font-weight:700;color:var(--r-verde)}
+.lt-riu:not(.una)[data-fase="vota"] .carta.votato .nt::after{content:"votato";padding-left:14px;font-weight:700;color:var(--r-verde);background:var(--r-spunta) 0 50%/12px 12px no-repeat}
+.lt-riu .carta .vt:has(>:nth-child(7))>*{margin-right:-10px}
 .lt-batti{animation:ltBatti .3s var(--lt-ease)}
 @keyframes ltBatti{50%{background-color:rgba(195,154,72,.3)}}
 
 /* una riga per ospite */
-.lt-riu.una .grid{grid-template-columns:minmax(0,1fr)}
+.lt-riu.una .grid{grid-template-columns:minmax(0,1fr);grid-template-rows:auto}
 .lt-riu.una .grid::before{display:none}
-.lt-riu.una .colonne{display:grid;grid-template-columns:minmax(0,1fr) var(--vn) var(--vv);border-bottom:1px solid var(--r-filo)}
-.lt-riu.una .colonne .c2,.lt-riu.una .colonne .c3{padding-left:5px}
-.lt-riu.una .carta{grid-template-columns:36px minmax(0,1fr) var(--vn) var(--vv);grid-template-rows:44px;grid-template-areas:'f n s a';column-gap:0;padding:0;background-image:linear-gradient(var(--r-seppia2),var(--r-seppia2)),linear-gradient(var(--r-seppia2),var(--r-seppia2));background-size:1px 100%;background-repeat:no-repeat;background-position:calc(100% - var(--vv)) 0,calc(100% - var(--vv) - var(--vn)) 0}
-.lt-riu.una .carta>.faccia,.lt-riu.una .carta>.pall{width:31px;height:36px;margin:0 0 0 1px}
-.lt-riu.una .carta .nm{font-size:17.5px}
-.lt-riu.una .carta .nt{justify-content:flex-start;padding-left:5px}
-.lt-riu.una .carta .az,.lt-riu.una .carta .vt{padding-left:5px}
-.lt-riu.una .carta.zitto::before{left:0;top:23px;width:33px;height:7px}
+.lt-riu.una .colonne{display:grid;grid-template-columns:minmax(0,1fr) var(--vv);border-bottom:1px solid var(--r-filo)}
+.lt-riu.una .colonne .c2{display:none}
+.lt-riu.una .colonne .c3{padding-left:6px}
+.lt-riu.una .carta{grid-template-columns:40px auto minmax(0,1fr) var(--vv);grid-template-rows:minmax(0,1fr) auto auto minmax(0,1fr);grid-template-areas:'f . . a' 'f n n a' 'f c s a' 'f . . a';column-gap:0;padding:0;background-image:linear-gradient(var(--r-seppia2),var(--r-seppia2));background-size:1px 100%;background-repeat:no-repeat;background-position:calc(100% - var(--vv)) 0}
+.lt-riu.una .carta>.faccia,.lt-riu.una .carta>.pall{width:33px;height:38px;margin:0 0 0 1px}
+.lt-riu.una .carta .nm{align-self:end;font-size:17px;line-height:1.14}
+.lt-riu.una .carta.io .nm::after{content:"\\00a0(tu)";font-size:.74em;font-weight:400;color:var(--r-ink3)}
+.lt-riu.una .carta .nt{display:contents}
+.lt-riu.una .carta .tu{display:none}
+.lt-riu.una .carta .lt-tinta{grid-area:c;align-self:start}
+.lt-riu.una .carta .st{grid-area:s;align-self:center;justify-self:start;margin:1px 0 0 6px}
+.lt-riu.una.grande .carta.spento .lt-tinta,.lt-riu.una.grande .carta.zitto .lt-tinta,.lt-riu.una.grande .carta.rete .lt-tinta{gap:0;font-size:0}
+.lt-riu.una .carta .az,.lt-riu.una .carta .vt{padding-left:6px}
+.lt-riu.una .carta .az{padding-right:1px}
+.lt-riu.una[data-fase="vota"] .carta.votato .az:empty{display:flex}
+.lt-riu.una[data-fase="vota"] .carta.votato .az::before{content:"votato";flex:none;margin-right:auto;padding-left:17px;font:italic 700 13.5px/16px var(--r-serif);color:var(--r-verde);background:var(--r-spunta) 0 50%/14px 14px no-repeat}
+.lt-riu.una[data-fase="vota"] .carta.votato.mio-voto .az .mio span{display:none}
+.lt-riu.una .carta.zitto::before{left:0;top:calc(50% + 2px);width:35px;height:7px}
+.lt-riu.una.ampia .carta{grid-template-columns:50px auto minmax(0,1fr) var(--vv)}
+.lt-riu.una.ampia .carta>.faccia,.lt-riu.una.ampia .carta>.pall{width:min(42px,calc(var(--rh)*.72));height:min(50px,calc(var(--rh)*.84))}
+.lt-riu.una.ampia .carta .nm{font-size:19px}
+.lt-riu.una.ampia .carta .lt-tinta{font-size:13.5px}
+.lt-riu.una.ampia .carta .lt-tinta i{width:10px;height:10px}
+.lt-riu.una.ampia .carta .st{font-size:12px}
+.lt-riu.una.ampia .carta .az{gap:5px}
+.lt-riu.una.ampia .carta .az .vota{width:min(60px,calc(var(--rh) - 5px));height:min(60px,calc(var(--rh) - 5px));margin:0;font-size:16px}
+.lt-riu.una.ampia .carta .az .vota.me{font-size:13px}
+.lt-riu.una.ampia .carta .az .sig{width:min(62px,calc(var(--rh) - 3px));height:min(62px,calc(var(--rh) - 3px));margin:0}
+.lt-riu.una.ampia[data-fase="esito"] .carta .az .sig{width:34px;height:34px}
+.lt-riu.una.ampia .carta.zitto::before{width:44px}
+.lt-riu.una.grande .carta{grid-template-columns:72px auto minmax(0,1fr) var(--vv)}
+.lt-riu.una.grande .carta>.faccia,.lt-riu.una.grande .carta>.pall{width:60px;height:72px}
+.lt-riu.una.grande .carta .nm{font-size:22px}
+.lt-riu.una.grande .carta .lt-tinta{gap:4px;font-size:15px}
+.lt-riu.una.grande .carta .lt-tinta i{width:12px;height:12px}
+.lt-riu.una.grande .carta .az .vota{width:70px;height:70px;font-size:18px}
+.lt-riu.una.grande .carta .az .vota.me{font-size:15px}
+.lt-riu.una.grande .carta .az .sig{width:72px;height:72px}
+.lt-riu.una.grande .carta.zitto::before{top:calc(50% + 4px);width:62px;height:10px}
+.lt-riu.una.grande .carta .st{font-size:13px}
 
 /* le note a margine */
-.lt-riu .chat{flex:1 1 auto;min-height:64px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;margin-top:1px;padding:0 4px 0 0;border-top:1px solid var(--r-filo);font:15px/21px var(--r-serif);color:var(--r-ink);background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 20px,var(--r-seppia) 20px 21px),linear-gradient(90deg,rgba(0,0,0,0) 24px,var(--r-seppia2) 24px 25px,rgba(0,0,0,0) 25px 27px,var(--r-seppia2) 27px 28px,rgba(0,0,0,0) 28px);background-attachment:local,scroll}
+.lt-riu .foglietto{position:absolute;z-index:2;left:11px;right:11px;bottom:59px;height:60%;box-sizing:border-box;display:flex;flex-direction:column;gap:5px;padding:2px 9px 9px;border-radius:3px;background:var(--r-grana),linear-gradient(180deg,var(--r-chiara),var(--r-carta));box-shadow:inset 0 0 0 1px var(--r-ottone),0 0 0 1px rgba(60,36,14,.3),0 -6px 20px rgba(60,36,14,.42);opacity:0;visibility:hidden;transform:translateY(12px);transition:transform .24s var(--lt-ease),opacity .18s var(--lt-ease),visibility 0s linear .24s}
+.lt-riu .foglietto.su{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.lt-riu .foglietto .cima{flex:none;display:flex;align-items:center;justify-content:space-between;height:36px}
+.lt-riu .foglietto .ti{font:700 11px/1 var(--r-sans);letter-spacing:.13em;text-transform:uppercase;color:var(--r-ink3)}
+.lt-riu .foglietto .via{flex:none;width:44px;height:44px;margin:-4px -9px -4px 0;padding:0;border:0;border-radius:50%;background:none;display:grid;place-items:center;color:var(--r-ink)}
+.lt-riu .foglietto .via:active{background:rgba(84,60,34,.14)}
+.lt-riu .foglietto .via svg.ico{width:18px;height:18px;stroke-width:2.4}
+.lt-riu .foglietto.tastiera .cima,.lt-riu .foglietto.tastiera .rapide{display:none}
+.lt-riu .big{-webkit-tap-highlight-color:transparent;position:absolute;z-index:2;grid-area:c-start/c-start/p-end/t-end;top:0;left:0;right:0;min-height:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;padding:6px 11px 6px 36px;border-radius:2px;font:italic 15px/20px var(--r-serif);color:var(--r-ink);background:var(--r-sigillo) 8px 50%/22px 22px no-repeat,var(--r-grana),linear-gradient(var(--r-chiara),var(--r-chiara));box-shadow:inset 0 0 0 1px var(--r-ottone),0 4px 12px rgba(60,36,14,.45);cursor:pointer;opacity:0;visibility:hidden;transform:translateY(-6px);transition:transform .22s var(--lt-ease),opacity .18s var(--lt-ease),visibility 0s linear .22s}
+.lt-riu .big.su{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.lt-riu .testa:has(.big.su) .chi,.lt-riu .testa:has(.big.su) .perche{visibility:hidden}
+.lt-riu .big span{flex:1 1 auto;min-width:0}
+.lt-riu .big canvas.foto{flex:none;width:92px;height:68px;border-radius:1px;box-shadow:0 0 0 2px var(--r-crema),0 1px 3px rgba(40,20,8,.45);transform:rotate(1.5deg)}
+.lt-riu .chat{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;margin-top:1px;padding:0 4px 0 0;border-top:1px solid var(--r-filo);font:15px/21px var(--r-serif);color:var(--r-ink);background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 20px,var(--r-seppia) 20px 21px),linear-gradient(90deg,rgba(0,0,0,0) 24px,var(--r-seppia2) 24px 25px,rgba(0,0,0,0) 25px 27px,var(--r-seppia2) 27px 28px,rgba(0,0,0,0) 28px);background-attachment:local,scroll}
 .lt-riu .chat p{flex:none;position:relative;margin:0;padding-left:32px}
 .lt-riu .chat .pt{position:absolute;left:3px;top:1px;display:block;width:17px;height:19px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone)}
 .lt-riu .chat .faccia.pt{background:linear-gradient(#4a3325,#21150e)}
@@ -8531,22 +8707,35 @@ function cssRegistro() {
 .lt-riu .chat .sis{color:var(--r-ink2);font-style:italic}
 .lt-riu .chat canvas.foto{flex:none;width:min(200px,70%);margin:4px 0 6px 32px}
 .lt-riu .penna{flex:none;display:flex;flex-wrap:wrap;gap:5px}
-.lt-riu .rapide{flex:0 1 auto;display:flex;gap:4px;min-width:0}
-.lt-riu .rapide button{flex:none;height:44px;margin:0;padding:0 9px;border:0;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:4px;font:700 14px/1 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.62);box-shadow:inset 0 0 0 1px var(--r-filo);white-space:nowrap}
+.lt-riu .rapide{flex:1 1 100%;display:flex;gap:4px;min-width:0}
+.lt-riu .rapide button{flex:1 1 0;height:44px;margin:0;padding:0 9px;border:0;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:4px;font:700 14px/1 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.62);box-shadow:inset 0 0 0 1px var(--r-filo);white-space:nowrap}
 .lt-riu .rapide button svg.ico{width:15px;height:15px}
 .lt-riu .rapide button.fatto{animation:ltLampoT .3s var(--lt-ease)}
 @keyframes ltLampoT{0%{background:var(--r-ottone-ch)}100%{background:rgba(255,250,236,.62)}}
-.lt-riu .scrivi{flex:1 1 118px;min-width:0;margin:0;display:flex;gap:4px}
+.lt-riu .scrivi{flex:1 1 100%;min-width:0;margin:0;display:flex;gap:4px}
 .lt-riu .scrivi input{flex:1;min-width:0;height:44px;box-sizing:border-box;margin:0;padding:0 9px;border:0;border-radius:4px;font:16px var(--r-serif);color:var(--r-ink);background:var(--r-chiara);box-shadow:inset 0 0 0 1px var(--r-filo);-webkit-user-select:text;user-select:text;transition:box-shadow .2s var(--lt-ease)}
 .lt-riu .scrivi input::placeholder{color:var(--r-ink3);font-style:italic}
 .lt-riu .scrivi input:focus{outline:none;box-shadow:inset 0 0 0 1.5px var(--r-oro),0 0 0 3px rgba(195,154,72,.3)}
 .lt-riu .scrivi button{flex:none;height:44px;margin:0;padding:0 11px;border:0;border-radius:4px;font:700 15px/1 var(--r-serif);color:var(--r-crema);background:var(--r-ink)}
 .lt-riu .fondo{flex:none;display:flex;gap:6px;min-width:0}
 .lt-riu .fondo .lt-voce{flex:none}
+.lt-riu .fondo .cht{position:relative;flex:none;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;height:44px;padding:0 11px;font:700 15px/1 var(--r-serif);white-space:nowrap}
+.lt-riu .fondo .cht svg.ico{width:16px;height:16px}
+.lt-riu .fondo .cht.aperta{color:var(--r-crema);background:var(--r-ink);box-shadow:none}
+.lt-riu .fondo:has(>.voto[hidden]) .cht{flex:1}
+.lt-riu .cht .nuovi{position:absolute;top:-9px;right:-6px;width:25px;height:25px;display:grid;place-items:center;background:var(--r-sigillo-vuoto) center/100% 100% no-repeat;font:700 11.5px/1 var(--r-sans);font-style:normal;font-variant-numeric:lining-nums;color:var(--r-crema);text-shadow:0 1px 1px rgba(60,0,10,.8);pointer-events:none;opacity:0;transform:scale(.55) rotate(-10deg);transition:transform .2s var(--lt-ease),opacity .16s var(--lt-ease)}
+.lt-riu .cht .nuovi.su{opacity:1;transform:rotate(-10deg)}
+.lt-riu .cht .nuovi.scatto-a{animation:ltNumero1 .24s var(--lt-ease)}
+.lt-riu .cht .nuovi.scatto-b{animation:ltNumero2 .24s var(--lt-ease)}
+@keyframes ltNumero1{0%{transform:scale(1.36) rotate(-16deg)}100%{transform:rotate(-10deg)}}
+@keyframes ltNumero2{0%{transform:scale(1.36) rotate(-16deg)}100%{transform:rotate(-10deg)}}
+.lt-riu .poteri{flex:none;display:flex;gap:6px}
+.lt-riu .poteri:empty{display:none}
+.lt-riu .poteri button{flex:1 1 auto;height:44px;margin:0;padding:0 11px;border:0;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:5px;font:700 15px/1 var(--r-serif);color:var(--r-cera);background:rgba(255,250,236,.62);box-shadow:inset 0 0 0 1.5px var(--r-cera);white-space:nowrap}
+.lt-riu .poteri button svg.ico{width:16px;height:16px}
 .lt-riu .voto{flex:1 1 auto;min-width:0;display:flex}
 .lt-riu .voto .salta{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;height:44px;padding:0 6px;font:700 15px/1 var(--r-serif);white-space:nowrap}
 .lt-riu .voto .salta svg.ico{width:16px;height:16px}
-.lt-riu .nota{flex:none;margin:0;min-height:16px;font:italic 13.5px/16px var(--r-serif);color:var(--r-ink2);text-align:center}
 .lt-foglio .lt-vbtn{height:44px;min-height:44px;box-sizing:border-box;padding:0 10px;border:0;border-radius:4px;font:700 14px/1 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.62);box-shadow:inset 0 0 0 1px var(--r-filo)}
 .lt-foglio .lt-vbtn.parlo{color:var(--r-verde)}.lt-foglio .lt-vbtn.muto{color:var(--r-cera);box-shadow:inset 0 0 0 1.5px var(--r-cera)}
 .lt-foglio .lt-vbtn.spenta{color:var(--r-ottone-ch);background:var(--r-ink);box-shadow:none;animation:none}
@@ -8568,30 +8757,36 @@ function cssRegistro() {
 .lt-velo:not([hidden])~.lt-tace{--ltx:-50%;--ltr:-1deg;left:50%;right:auto;top:auto;bottom:calc(10px + env(safe-area-inset-bottom))}
 
 /* il verdetto: una riga di registro col timbro */
-.lt-esp.lt-foglio{position:absolute;inset:0;z-index:3;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,max-content);justify-items:center;align-content:center;gap:14px;padding:22px 24px;text-align:center;box-shadow:none;animation:ltSale .24s var(--lt-ease)}
-.lt-esp.lt-foglio::after{inset:13px;z-index:-1;clip-path:none;transform:none;background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 29px,var(--r-seppia) 29px 30px),linear-gradient(90deg,rgba(0,0,0,0) 23px,var(--r-seppia2) 23px 24px,rgba(0,0,0,0) 24px 26px,var(--r-seppia2) 26px 27px,rgba(0,0,0,0) 27px)}
-.lt-esp .ritr{position:relative;width:132px;height:160px;border-radius:50%;background:linear-gradient(#4a3325,#21150e);box-shadow:0 0 0 2px var(--r-ottone),0 0 0 5px var(--r-chiara),0 0 0 6px var(--r-filo),0 6px 14px rgba(50,28,10,.45)}
-.lt-esp .ritr.vuoto{background:rgba(255,250,236,.4);box-shadow:inset 0 0 0 1.5px var(--r-filo)}
+.lt-esp.lt-foglio{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 15px 13px;text-align:center;box-shadow:none;animation:ltSale .24s var(--lt-ease)}
+.lt-esp.lt-foglio::after{display:none}
+.lt-esp .intest{flex:none;align-self:stretch}
+.lt-esp .ritr{position:relative;flex:none;width:132px;height:160px;margin-top:auto;border-radius:50%;background:linear-gradient(#4a3325,#21150e);box-shadow:0 0 0 2px var(--r-ottone),0 0 0 5px var(--r-chiara),0 0 0 6px var(--r-filo),0 6px 14px rgba(50,28,10,.45);animation:ltBotta .16s var(--lt-ease) .46s}
+@keyframes ltBotta{0%{transform:none}40%{transform:translateY(3px) scale(.985)}100%{transform:none}}
+.lt-esp .ritr.vuoto{background:var(--r-lanterna) center 44%/52% auto no-repeat,linear-gradient(#4a3325,#21150e)}
 .lt-esp .ritr.sagoma{background:var(--r-sagoma) center/100% 100% no-repeat,linear-gradient(#a08a6d,#6d5740)}
 .lt-esp .ritr .faccia{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top}
 .lt-esp .timbro{position:absolute;left:50%;bottom:6px;box-sizing:border-box;padding:4px 10px 3px;border:3px double var(--r-cera);border-radius:3px;font:700 20px/1 var(--r-serif);letter-spacing:.08em;text-transform:uppercase;color:var(--r-cera);background:rgba(248,240,222,.86);white-space:nowrap;transform:translateX(-50%) rotate(-9deg);animation:ltTimbro .22s var(--lt-ease) .34s both}
 @keyframes ltTimbro{0%{transform:translateX(-50%) rotate(-16deg) scale(1.9);opacity:0}60%{transform:translateX(-50%) rotate(-8deg) scale(.94);opacity:1}100%{transform:translateX(-50%) rotate(-9deg) scale(1);opacity:1}}
-.lt-esp .txt{display:grid;gap:6px;justify-items:center;min-width:0}
-.lt-esp .conto{display:flex;gap:18px;font:italic 16px/1.2 var(--r-serif);color:var(--r-ink2)}
-.lt-esp .conto b{font:700 25px/1 var(--r-serif);font-style:normal;font-variant-numeric:tabular-nums lining-nums;color:var(--r-ink);margin-right:4px}
-@media (min-height:701px){.lt-scena:not(.oriz) .lt-esp .ritr{width:150px;height:182px}.lt-scena:not(.oriz) .lt-esp h2{font-size:32px}}
+.lt-esp .txt{flex:none;width:100%;display:grid;gap:7px;justify-items:center;min-width:0;margin-bottom:auto}
+.lt-esp .conto{display:flex;align-items:stretch;justify-content:center;margin-top:2px}
+.lt-esp .conto span{display:grid;justify-items:center;align-content:start;gap:2px;min-width:96px;padding:0 14px;font:italic 14.5px/1.15 var(--r-serif);color:var(--r-ink2)}
+.lt-esp .conto span+span{box-shadow:inset 3px 0 0 -2px var(--r-filo),inset 5px 0 0 -4px var(--r-filo)}
+.lt-esp .conto b{font:700 31px/1 var(--r-serif);font-style:normal;font-variant-numeric:tabular-nums lining-nums;color:var(--r-ink)}
+@media (min-height:701px){.lt-scena:not(.oriz) .lt-esp .ritr{width:166px;height:200px}.lt-scena:not(.oriz) .lt-esp h2{font-size:33px}}
 .lt-esp h2{font-size:29px}
-.lt-esp .sotto{margin:0;padding-top:6px;border-top:3px double var(--r-filo);font:17px/1.3 var(--r-serif);color:var(--r-ink2)}
-.lt-esp .chivoti{width:100%;max-width:340px;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:left;border-top:3px double var(--r-filo)}
-.lt-esp .chivoti .occh{padding:4px 0 2px;text-align:center}
-.lt-esp .rg{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px;min-height:31px;border-bottom:1px solid var(--r-seppia2)}
-.lt-esp .rg .su{display:flex;align-items:center;gap:6px;min-width:0}
-.lt-esp .rg b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 15.5px/1.1 var(--r-serif);color:var(--r-ink)}
+.lt-esp .sotto{width:100%;box-sizing:border-box;margin:0;padding:7px 8px 0;border-top:3px double var(--r-filo);font:17px/1.28 var(--r-serif);color:var(--r-ink2)}
+.lt-esp .chivoti{flex:0 1 auto;width:100%;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:left;border-top:3px double var(--r-filo)}
+.lt-esp .chivoti .occh{padding:5px 0 4px;text-align:center;border-bottom:1px solid var(--r-filo)}
+.lt-esp .rg{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px;min-height:42px;border-bottom:1px solid var(--r-seppia2)}
+.lt-esp .rg:last-child{border-bottom:0}
+.lt-esp .rg .su{display:flex;align-items:center;gap:7px;min-width:0}
+.lt-esp .rg b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 16.5px/1.14 var(--r-serif);color:var(--r-ink)}
 .lt-esp .rg.salto b{font-weight:400;color:var(--r-ink2)}
-.lt-esp .rg .da{display:flex;padding-right:3px}
-.lt-esp .rg .faccia,.lt-esp .rg .pall{display:block;flex:none;width:22px;height:25px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone)}
+.lt-esp .rg .da{display:flex;padding:0 2px 0 6px}
+.lt-esp .rg .da:has(>:nth-child(7))>*{margin-left:-11px}
+.lt-esp .rg .faccia,.lt-esp .rg .pall{display:block;flex:none;width:28px;height:33px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone)}
 .lt-esp .rg .faccia{background:linear-gradient(#4a3325,#21150e)}
-.lt-esp .rg .da .faccia,.lt-esp .rg .da .pall{margin-left:-4px;box-shadow:0 0 0 1px var(--r-ottone),0 0 0 2px var(--r-chiara)}
+.lt-esp .rg .da .faccia,.lt-esp .rg .da .pall{margin-left:-6px;box-shadow:0 0 0 1px var(--r-ottone),0 0 0 2px var(--r-chiara)}
 
 /* l'Indovino e l'Imitatore: un foglietto sopra il registro */
 .lt-indov.lt-foglio{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;gap:7px;padding:17px 15px 13px;box-shadow:none;animation:ltSale .22s var(--lt-ease)}
@@ -8600,7 +8795,7 @@ function cssRegistro() {
 .lt-indov p{flex:none;margin:0;font:italic 14px/1.25 var(--r-serif);color:var(--r-ink2)}
 .lt-indov .griglia{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:4px;align-content:start}
 .lt-indov .griglia.gruppi{display:flex;flex-direction:column;gap:3px}
-.lt-indov h4{flex:none;margin:4px 0 0;padding-bottom:1px;border-bottom:1px solid currentColor;font:700 10.5px/1.3 var(--r-sans);letter-spacing:.13em;text-transform:uppercase;color:var(--r-ink2)}
+.lt-indov h4{flex:none;margin:4px 0 0;padding-bottom:1px;border-bottom:1px solid currentColor;font:700 11px/1.3 var(--r-sans);letter-spacing:.13em;text-transform:uppercase;color:var(--r-ink2)}
 .lt-indov h4.ombre{color:var(--r-cera)}.lt-indov h4.soli{color:var(--r-viola)}
 .lt-indov .gruppo{flex:1 0 auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(44px,1fr);gap:3px}
 .lt-indov .griglia button{min-height:44px;margin:0;padding:3px;border:0;border-radius:3px;font:700 14px/1.08 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.56);box-shadow:inset 0 0 0 1px var(--r-filo)}
@@ -8608,14 +8803,14 @@ function cssRegistro() {
 .lt-indov .annulla{flex:none;min-height:44px;margin:0;border:0;border-radius:4px;font:700 15px/1 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.5);box-shadow:inset 0 0 0 1.5px var(--r-ink2)}
 
 /* la scheda del ruolo, le scelte, la rivelazione, il risultato */
-.lt-infor.lt-foglio{max-width:420px;padding:17px 18px 16px}
-.lt-infor .testa{display:flex;align-items:center;gap:9px;margin-bottom:7px;padding-bottom:6px;border-bottom:3px double var(--r-filo)}
+.lt-infor.lt-foglio{max-width:420px;padding:14px 16px 15px;text-align:left}
+.lt-infor .testa{display:flex;align-items:center;gap:9px;min-height:40px;margin:4px 0 7px;padding-bottom:4px;border-bottom:3px double var(--r-filo)}
 .lt-infor h3{flex:1;min-width:0;font-size:24px}
-.lt-infor .sq{flex:none;padding:3px 7px 2px;border:1.5px solid currentColor;border-radius:2px;font:800 10px/1.2 var(--r-sans);letter-spacing:.11em;text-transform:uppercase;color:var(--r-oro);transform:rotate(-3deg)}
+.lt-infor .sq{flex:none;box-sizing:border-box;padding:3px 6px 2px;border:2.5px double currentColor;border-radius:2px;font:700 12px/1.1 var(--r-serif);letter-spacing:.06em;text-transform:uppercase;color:var(--r-oro);transform:rotate(-3deg)}
 .lt-infor.ombre .sq,.lt-infor.ombre h3{color:var(--r-cera)}.lt-infor.soli .sq,.lt-infor.soli h3{color:var(--r-viola)}.lt-infor.fantasma .sq,.lt-infor.fantasma h3{color:var(--r-ardesia)}
 .lt-infor .desc{margin:0 0 8px;font:16px/1.38 var(--r-serif);color:var(--r-ink)}
-.lt-infor ul{margin:0;padding-left:18px;display:grid;gap:5px;font:14.5px/1.32 var(--r-serif);color:var(--r-ink2)}
-.lt-scambio.lt-foglio{display:flex;flex-direction:column;gap:8px;padding:18px 16px 15px}
+.lt-infor ul{margin:0;padding-left:18px;display:grid;gap:5px;font:14.5px/1.32 var(--r-serif);color:var(--r-ink2);text-align:left}
+.lt-scambio.lt-foglio{display:flex;flex-direction:column;gap:8px;padding:14px 16px 15px}
 .lt-scambio h3{font-size:22px}
 .lt-scambio p{margin:0;font:italic 15px/1.3 var(--r-serif);color:var(--r-ink2)}
 .lt-scambio .griglia{min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:5px}
@@ -8627,7 +8822,8 @@ function cssRegistro() {
 .lt-scambio .griglia.sab b svg{width:21px;height:21px;flex:none;color:var(--r-cera)}
 .lt-scambio .griglia.sab small{font:14px/1.25 var(--r-serif);color:var(--r-ink2)}
 .lt-scambio .piede{display:flex;gap:8px}.lt-scambio .piede .btn{flex:1}
-.lt-svela.lt-foglio{max-width:420px;padding:24px 22px 20px;text-align:center;animation:ltGira .3s var(--lt-ease) both}
+.lt-svela.lt-foglio{max-width:420px;padding:14px 18px 18px;text-align:center;animation:ltGira .3s var(--lt-ease) both}
+.lt-svela .intest{margin-bottom:12px}
 .lt-svela h2{margin:4px 0 8px;font-size:39px;color:var(--r-oro)}.lt-svela.ombre h2{color:var(--r-cera)}.lt-svela.soli h2{color:var(--r-viola)}
 .lt-svela p{margin:0 0 8px;font:16px/1.38 var(--r-serif);color:var(--r-ink2)}
 .lt-svela .lt-sopra{font:700 11px/1.2 var(--r-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--r-ink3)}
@@ -8638,22 +8834,22 @@ function cssRegistro() {
 .lt-alleati{display:flex;justify-content:center;gap:9px;margin-top:6px}
 .lt-alleati img{width:44px;height:52px;border-radius:50%;object-fit:cover;object-position:top;background:linear-gradient(#4a3325,#21150e);box-shadow:0 0 0 1.5px var(--r-cera)}
 .lt-vince.lt-foglio{position:relative;width:100%;max-width:480px;height:100%;max-height:800px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px 22px;text-align:center}
-.lt-vince .intest{position:absolute;left:22px;right:22px;top:17px}
+.lt-vince .intest{position:absolute;left:15px;right:15px;top:14px}
 .lt-vince .sig{display:block;flex:none;width:128px;height:128px;background:var(--r-sigillo) center/100% 100% no-repeat;transform:rotate(-10deg);animation:ltSigillo .24s var(--lt-ease) .08s both}
 .lt-vince .tes{display:grid;gap:6px;justify-items:center;min-width:0}
 .lt-vince h2{font-size:38px;animation:ltColpo .3s var(--lt-ease) both}
 .lt-vince.perso h2{color:var(--r-cera)}
 .lt-vince p{margin:0;font:18px/1.32 var(--r-serif);color:var(--r-ink2)}
-.lt-vince p.occh{font:700 10.5px/1.25 var(--r-sans)}
+.lt-vince p.occh{font:700 11px/1.25 var(--r-sans)}
 .lt-vince p.mio{font:italic 700 16px/1.2 var(--r-serif);color:var(--r-ink)}
 .lt-vince .fila{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 10px;min-width:0;padding-top:9px;border-top:3px double var(--r-filo)}
 .lt-vince .u{display:grid;justify-items:center;gap:4px;width:64px;min-width:0}
 .lt-vince .u .faccia,.lt-vince .u .pall{display:block;width:54px;height:64px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1.5px var(--r-ottone),0 0 0 3px var(--r-chiara),0 0 0 4px var(--r-filo)}
 .lt-vince .u .faccia{background:linear-gradient(#4a3325,#21150e)}
-.lt-vince .u span{max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 14.5px/1.15 var(--r-serif);color:var(--r-ink)}
+.lt-vince .u>span:not(.lt-tinta){max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 14.5px/1.15 var(--r-serif);color:var(--r-ink)}
 
 /* le regole dell'host: il registro coi segnalibri di nastro */
-.lt-computer.lt-foglio{max-width:480px;height:100%;max-height:min(100%,800px);display:flex;flex-direction:column;padding:12px 14px 10px}
+.lt-computer.lt-foglio{max-width:480px;height:100%;max-height:min(100%,800px);display:flex;flex-direction:column;padding:14px 15px 12px}
 .lt-computer>.intest{flex:none}
 .lt-computer .testa{flex:none;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;min-height:38px}
 .lt-computer .tit{grid-column:2;min-width:0;text-align:center}
@@ -8664,6 +8860,7 @@ function cssRegistro() {
 .lt-computer .piede{flex:none;display:flex;flex-direction:row;flex-wrap:wrap;gap:5px;margin-top:6px;padding:0}
 .lt-computer .piede button{flex:1 1 40%;width:auto;min-width:0;min-height:44px;margin:0;padding:0 7px;border:0;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;gap:4px;font:700 14.5px/1.05 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.6);box-shadow:inset 0 0 0 1px var(--r-ink2)}
 .lt-computer .piede button svg.ico{width:15px;height:15px}
+.lt-computer .piede button i{font-style:normal}
 .lt-computer .piede .via{flex:1 1 100%;min-height:50px;font:700 19px/1 var(--r-serif);color:var(--r-crema);background:linear-gradient(180deg,var(--r-cera-ch),var(--r-cera) 62%,var(--r-cera-sc));box-shadow:inset 0 0 0 1px var(--r-ottone),0 3px 7px rgba(60,16,10,.42)}
 .lt-computer .piede .via:disabled{opacity:.45}.lt-computer .piede .via svg.ico{display:none}
 .lt-computer>.nota{flex:none;margin:5px 0 0;font:italic 13.5px/1.2 var(--r-serif);color:var(--r-ink2);text-align:center}
@@ -8675,7 +8872,7 @@ function cssRegistro() {
 .lt-pc button{font:inherit;border:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .lt-pc svg.ico{width:1.2em;height:1.2em;flex:none;vertical-align:-.22em}
 .lt-pc-barra{flex:none;display:flex;align-items:center;gap:6px;min-height:44px}
-.lt-pc-barra>span:first-child{flex:1;min-width:0;font:700 10.5px/1.2 var(--r-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--r-ink3)}
+.lt-pc-barra>span:first-child{flex:1;min-width:0;font:700 11px/1.2 var(--r-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--r-ink3)}
 .lt-pc-barra>span.tit{font:700 19px/1.05 var(--r-serif);letter-spacing:0;text-transform:none;color:var(--r-ink)}
 .lt-pc-preset{display:flex;gap:4px}
 .lt-pc-preset button{position:relative;z-index:0;height:44px;padding:0 10px;background:none;font:700 14px/1 var(--r-serif);color:var(--r-ink2)}
@@ -8764,32 +8961,33 @@ html:has(.lt-pc.lt-foglio),body:has(.lt-pc.lt-foglio){background:#1c110b}
 /* telefono piccolo, in verticale */
 @media (max-height:700px){
 .lt-scena:not(.oriz) .lt-riu{gap:4px;padding:12px 12px 9px}
-.lt-scena:not(.oriz) .lt-riu .testa{grid-template-columns:62px minmax(0,1fr) auto;grid-template-areas:'c t o' 'p p p';column-gap:7px;row-gap:2px;padding-bottom:3px}
+.lt-scena:not(.oriz) .lt-riu .testa{grid-template-columns:68px minmax(0,1fr) auto;grid-template-areas:'c t o' 'p p p';column-gap:7px;row-gap:2px;padding-bottom:3px}
 .lt-scena:not(.oriz) .lt-riu .intest{display:none}
 .lt-scena:not(.oriz) .lt-riu .occh .stemma{display:inline-block;width:12px;height:14px;margin-right:4px;vertical-align:-3px}
-.lt-scena:not(.oriz) .lt-riu .occh{font-size:9.5px;letter-spacing:.08em}
-.lt-scena:not(.oriz) .lt-riu .chi .faccia,.lt-scena:not(.oriz) .lt-riu .chi .pall{width:36px;height:43px}
-.lt-scena:not(.oriz) .lt-riu .chi .morto{margin-left:-12px}
-.lt-scena:not(.oriz) .lt-riu .fase{font-size:11px;padding:1px 4px 0;border-width:2.5px}
-.lt-scena:not(.oriz) .lt-riu[data-fase="vota"] .fase{font-size:12.5px}
-.lt-scena:not(.oriz) .lt-riu[data-fase="esito"] .fase{font-size:10px;letter-spacing:0;padding:1px 3px 0}
+.lt-scena:not(.oriz) .lt-riu .occh{font-size:11px;letter-spacing:.07em}
+.lt-scena:not(.oriz) .lt-riu .chi .faccia,.lt-scena:not(.oriz) .lt-riu .chi .pall{width:40px;height:48px}
+.lt-scena:not(.oriz) .lt-riu .fase{bottom:-5px;font-size:11px;padding:1px 4px 0;border-width:2.5px}
+.lt-scena:not(.oriz) .lt-riu[data-fase="vota"] .fase{font-size:11.5px}
+.lt-scena:not(.oriz) .lt-riu[data-fase="esito"] .fase{font-size:11px;letter-spacing:0;padding:1px 3px 0}
 .lt-scena:not(.oriz) .lt-riu h3{font-size:16px}
 .lt-scena:not(.oriz) .lt-riu .perche{font-size:13.5px;line-height:16px}
 .lt-scena:not(.oriz) .lt-riu .timer{width:46px;height:46px;font-size:20px}
 .lt-scena:not(.oriz) .lt-riu:not(.una) .grid{column-gap:11px}
-.lt-scena:not(.oriz) .lt-riu:not(.una) .carta{grid-template-columns:22px minmax(0,1fr) auto;grid-template-rows:21px 44px;column-gap:5px;padding:1px 0 0}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta{grid-template-columns:22px minmax(0,1fr) auto;grid-template-rows:minmax(21px,1fr) 44px;column-gap:5px;padding:1px 0 0}
 .lt-scena:not(.oriz) .lt-riu:not(.una) .carta>.faccia,.lt-scena:not(.oriz) .lt-riu:not(.una) .carta>.pall{width:22px;height:24px;margin-top:2px}
 .lt-scena:not(.oriz) .lt-riu:not(.una) .carta .nm{font-size:15px}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta.spento .nt{grid-area:a;justify-self:start}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta.zitto .st,.lt-scena:not(.oriz) .lt-riu:not(.una) .carta.rete .st{font-size:11px;letter-spacing:.02em;padding-left:3px;padding-right:3px}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta.zitto .lt-tinta{display:none}
 .lt-scena:not(.oriz) .lt-riu:not(.una) .carta.zitto::before{top:15px;width:23px;height:5px}
 .lt-scena:not(.oriz) .lt-riu .carta .az .sig{width:46px;height:46px;margin:-1px 0}
-.lt-scena:not(.oriz) .lt-riu .chat{min-height:58px;font-size:14.5px}
-.lt-scena:not(.oriz) .lt-riu .nota{font-size:12.5px;min-height:15px;line-height:15px}
+.lt-scena:not(.oriz) .lt-riu .chat{font-size:14.5px}
 .lt-scena:not(.oriz) .lt-computer>.intest{display:none}
-.lt-scena:not(.oriz) .lt-computer .piede button{flex:1 1 0;min-height:46px;padding:0 4px;font-size:13.5px}
-.lt-scena:not(.oriz) .lt-computer .piede button svg.ico{display:none}
-.lt-scena:not(.oriz) .lt-computer .piede .via{flex:1.25 1 0;font-size:18px}
+.lt-scena:not(.oriz) .lt-computer .piede button{flex:0 0 66px;min-height:46px;padding:0 4px;font-size:14px}
+.lt-scena:not(.oriz) .lt-computer .piede button i{display:none}
+.lt-scena:not(.oriz) .lt-computer .piede .via{flex:1 1 0;font-size:18px}
 .lt-computer .testa{min-height:32px}
-.lt-computer.lt-foglio{padding:9px 12px 8px}
+.lt-computer.lt-foglio{padding:12px 12px 9px}
 .lt-pc-barra{min-height:40px}
 .lt-pc-schede{height:52px}
 .lt-pc-schede button{height:44px;font-size:11.5px}
@@ -8805,37 +9003,49 @@ html:has(.lt-pc.lt-foglio),body:has(.lt-pc.lt-foglio){background:#1c110b}
 }
 
 @media (max-width:375px){
-.lt-riu{--vn:54px;--vv:140px}
+.lt-riu{--vn:60px;--vv:138px}
 .lt-riu.una .carta .nm{font-size:16px}
+.lt-riu.una.ampia .carta{grid-template-columns:46px auto minmax(0,1fr) var(--vv)}
+.lt-riu.una.ampia .carta .nm{font-size:18px}
+.lt-riu.una.ampia .carta .lt-tinta{font-size:12.5px}
+.lt-riu.una.ampia .carta .st{font-size:11px}
 .lt-pc-r b{font-size:12.5px;letter-spacing:-.012em}
 .lt-pc-pick button{font-size:11px;letter-spacing:-.025em}
 .lt-pc-sq button{font-size:12px}
 .lt-riu .carta .az button{font-size:12.5px}
 .lt-riu .carta .az button svg.ico{width:12px;height:12px}
+.lt-riu .fondo{gap:5px}
+.lt-riu .fondo .lt-vbtn{padding:0 7px;font-size:13.5px}
+.lt-riu .fondo .cht{gap:4px;padding:0 8px;font-size:14px}
+.lt-riu .voto .salta{padding:0 4px;font-size:14px}
+.lt-riu .voto .salta svg.ico{display:none}
+}
+@media (max-width:340px){
+.lt-riu .fondo .cht span{display:none}
 }
 
 /* di lato (telefono girato o scena girata col tasto) */
-.lt-scena.oriz .lt-riu{display:grid;width:min(100%,980px);max-width:none;height:100%;max-height:none;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto auto;grid-template-areas:'t t' 'g c' 'g p' 'g f' 'g n';column-gap:13px;row-gap:5px;padding:10px 15px 9px}
-.lt-scena.oriz .lt-riu .testa{grid-area:t;grid-template-columns:62px minmax(0,1fr) auto;grid-template-areas:'c t o' 'c p o';row-gap:0;padding-bottom:3px}
+.lt-scena.oriz .lt-riu{width:min(100%,980px);max-width:none;height:100%;max-height:none;padding:10px 15px 9px}
+.lt-scena.oriz .lt-riu .testa{grid-template-columns:68px minmax(0,1fr) auto;grid-template-areas:'c t o' 'c p o';row-gap:0;padding-bottom:3px}
 .lt-scena.oriz .lt-riu .intest{display:none}
-.lt-scena.oriz .lt-riu .occh{font-size:9.5px;letter-spacing:.1em}
+.lt-scena.oriz .lt-riu .occh{font-size:11px;letter-spacing:.07em}
 .lt-scena.oriz .lt-riu .occh .stemma{display:inline-block;width:12px;height:14px;margin-right:4px;vertical-align:-3px}
 .lt-scena.oriz .lt-riu .occh .reg{display:inline}
-.lt-scena.oriz .lt-riu .chi .faccia,.lt-scena.oriz .lt-riu .chi .pall{width:34px;height:41px}
-.lt-scena.oriz .lt-riu .chi .morto{margin-left:-12px}
-.lt-scena.oriz .lt-riu .fase{font-size:11px;padding:1px 4px 0;border-width:2.5px}
-.lt-scena.oriz .lt-riu[data-fase="vota"] .fase{font-size:12.5px}
-.lt-scena.oriz .lt-riu[data-fase="esito"] .fase{font-size:10px;letter-spacing:0;padding:1px 3px 0}
+.lt-scena.oriz .lt-riu .chi .faccia,.lt-scena.oriz .lt-riu .chi .pall{width:38px;height:45px}
+.lt-scena.oriz .lt-riu .fase{bottom:-4px;font-size:11px;padding:1px 4px 0;border-width:2.5px}
+.lt-scena.oriz .lt-riu[data-fase="vota"] .fase{font-size:11.5px}
+.lt-scena.oriz .lt-riu[data-fase="esito"] .fase{font-size:11px;letter-spacing:0;padding:1px 3px 0}
 .lt-scena.oriz .lt-riu h3{font-size:17.5px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lt-scena.oriz .lt-riu .perche{text-align:left;font-size:14px;line-height:16px}
 .lt-scena.oriz .lt-riu .timer{width:46px;height:46px;font-size:20px}
-.lt-scena.oriz .lt-riu .grid{grid-area:g;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;align-content:start;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px;padding:0 1px}
-.lt-scena.oriz .lt-riu .grid::before{top:16px}
+.lt-scena.oriz .lt-riu .grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;gap:0 13px;padding:0 1px}
+.lt-scena.oriz .lt-riu .grid::before{top:16px;left:33.33%}
+.lt-scena.oriz .lt-riu .grid::after{content:"";position:absolute;top:16px;bottom:0;left:66.66%;width:1px;margin-left:-2px;border-left:1px solid var(--r-filo);border-right:1px solid var(--r-filo);pointer-events:none}
 .lt-scena.oriz .lt-riu .colonne{display:flex;align-items:center;justify-content:space-between;grid-column:1/-1;border-bottom:1px solid var(--r-filo)}
 .lt-scena.oriz .lt-riu .colonne .c2{display:none}
 .lt-scena.oriz .lt-riu[data-fase="parla"] .colonne .c3{display:none}
 .lt-scena.oriz .lt-riu[data-fase="parla"] .leg{display:flex}
-.lt-scena.oriz .lt-riu .carta{grid-template-columns:28px minmax(0,1fr) auto;grid-template-rows:23px 23px;grid-template-areas:'f n a' 'f s a';column-gap:5px;padding:0 1px}
+.lt-scena.oriz .lt-riu .carta{grid-template-columns:28px minmax(0,1fr) auto;grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:'f n a' 'f s a';column-gap:5px;padding:0 1px}
 .lt-scena.oriz .lt-riu .carta>.faccia,.lt-scena.oriz .lt-riu .carta>.pall{width:27px;height:31px;margin:0}
 .lt-scena.oriz .lt-riu .carta .nm{grid-row:1;align-self:end;font-size:15px}
 .lt-scena.oriz .lt-riu .carta.spento .nm,.lt-scena.oriz .lt-riu .carta.zitto .nm,.lt-scena.oriz .lt-riu .carta.rete .nm,.lt-scena.oriz .lt-riu .carta.io .nm,.lt-scena.oriz .lt-riu .carta.votato .nm{grid-row:1;align-self:end}
@@ -8846,17 +9056,40 @@ html:has(.lt-pc.lt-foglio),body:has(.lt-pc.lt-foglio){background:#1c110b}
 .lt-scena.oriz .lt-riu .carta .az .dubbio,.lt-scena.oriz .lt-riu .carta .az .fido{flex:none;width:37px}
 .lt-scena.oriz .lt-riu .carta .az .dubbio span,.lt-scena.oriz .lt-riu .carta .az .fido span{display:none}
 .lt-scena.oriz .lt-riu .carta .az .dubbio svg.ico,.lt-scena.oriz .lt-riu .carta .az .fido svg.ico{display:block;width:15px;height:15px}
-.lt-scena.oriz .lt-riu .carta .az .vota{width:44px;height:44px;margin:0;font-size:12.5px}
-.lt-scena.oriz .lt-riu .carta .az .vota.me{font-size:10.5px}
+.lt-scena.oriz .lt-riu .carta .az .vota{width:44px;height:44px;margin:0;font-size:13px}
+.lt-scena.oriz .lt-riu .carta .az .vota.me{font-size:11px;letter-spacing:-.03em}
 .lt-scena.oriz .lt-riu .carta .az .conf{height:44px;padding:0 10px;font-size:13px}
 .lt-scena.oriz .lt-riu .carta .az .sig{width:44px;height:44px;margin:0}
 .lt-scena.oriz .lt-riu .carta .az .mio span{display:none}
-.lt-scena.oriz .lt-riu[data-fase="vota"] .carta.votato .nt::after{content:"\\2713\\00a0votato"}
-.lt-scena.oriz .lt-riu .carta.zitto::before{left:0;top:24px;width:28px;height:6px}
-.lt-scena.oriz .lt-riu .chat{grid-area:c;min-height:0}
-.lt-scena.oriz .lt-riu .penna{grid-area:p}
-.lt-scena.oriz .lt-riu .fondo{grid-area:f}
-.lt-scena.oriz .lt-riu .nota{grid-area:n;font-size:12.5px;min-height:14px;line-height:14px}
+.lt-scena.oriz .lt-riu[data-fase="esito"] .carta .az .mio{opacity:0;transition:opacity .2s var(--lt-ease)}
+.lt-scena.oriz .lt-riu .carta.zitto::before{left:0;top:calc(50% + 1px);width:28px;height:6px}
+.lt-scena.oriz .lt-riu.ampia .carta{grid-template-columns:34px minmax(0,1fr) auto;column-gap:6px}
+.lt-scena.oriz .lt-riu.ampia .carta>.faccia,.lt-scena.oriz .lt-riu.ampia .carta>.pall{width:33px;height:38px}
+.lt-scena.oriz .lt-riu.ampia .carta .nm{font-size:16.5px}
+.lt-scena.oriz .lt-riu.ampia .carta .az .vota{width:48px;height:48px;font-size:13.5px}
+.lt-scena.oriz .lt-riu.ampia .carta .az .sig{width:48px;height:48px}
+.lt-scena.oriz .lt-riu.ampia .carta.zitto::before{width:34px}
+.lt-scena.oriz .lt-riu.grande .carta{grid-template-columns:48px minmax(0,1fr) auto}
+.lt-scena.oriz .lt-riu.grande .carta>.faccia,.lt-scena.oriz .lt-riu.grande .carta>.pall{width:46px;height:54px}
+.lt-scena.oriz .lt-riu.grande .carta .nm{font-size:19px}
+.lt-scena.oriz .lt-riu.grande .carta .nt{font-size:13px}
+.lt-scena.oriz .lt-riu.grande .carta .az .vota{width:56px;height:56px;font-size:15px}
+.lt-scena.oriz .lt-riu.grande .carta .az .sig{width:56px;height:56px}
+.lt-scena.oriz .lt-riu.grande .carta.zitto::before{width:46px;height:8px}
+.lt-scena.oriz .lt-riu .foglietto{left:auto;right:15px;top:63px;bottom:59px;width:min(54%,400px);height:auto;transform:translateX(12px)}
+.lt-scena.oriz .lt-riu .foglietto.su{transform:none}
+.lt-scena.oriz.lt-ruota .lt-riu .foglietto{left:15px;right:auto;transform:translateX(-12px)}
+.lt-scena.oriz.lt-ruota .lt-riu .foglietto.su{transform:none}
+.lt-scena.oriz .lt-riu .foglietto .cima{height:32px}
+.lt-scena.oriz .lt-riu .foglietto .via{margin:-6px -9px -6px 0}
+.lt-scena.oriz .lt-riu .penna{flex-wrap:nowrap}
+.lt-scena.oriz .lt-riu .scrivi{flex:1 1 0}
+.lt-scena.oriz .lt-riu .rapide{flex:none}
+.lt-scena.oriz .lt-riu .rapide button{flex:none;padding:0 7px}
+.lt-scena.oriz .lt-riu .big{padding-top:3px;padding-bottom:3px}
+.lt-scena.oriz .lt-riu .big canvas.foto{width:60px;height:44px}
+.lt-scena.oriz .lt-riu .fondo .voto{flex:0 1 240px;margin-left:auto}
+.lt-scena.oriz .lt-riu .fondo .cht{flex:none}
 @media (max-width:720px){
 .lt-scena.oriz .lt-riu{padding-left:12px;padding-right:12px;column-gap:10px}
 .lt-scena.oriz .lt-riu .grid{column-gap:9px}
@@ -8867,10 +9100,20 @@ html:has(.lt-pc.lt-foglio),body:has(.lt-pc.lt-foglio){background:#1c110b}
 .lt-scena.oriz .lt-riu .carta .nm{font-size:14.5px}
 }
 .lt-scena.oriz .lt-riu .carta[data-ak*="ind"] .az .dubbio,.lt-scena.oriz .lt-riu .carta[data-ak*="ind"] .az .fido{width:28px}
-.lt-scena.oriz .lt-esp.lt-foglio{grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);justify-items:start;align-items:center;align-content:stretch;gap:24px;padding:14px 30px 14px 38px;text-align:left}
-.lt-scena.oriz .lt-esp .ritr{width:124px;height:150px}
-.lt-scena.oriz .lt-esp .txt{justify-items:start}
-.lt-scena.oriz .lt-esp .chivoti{align-self:center;max-height:100%;max-width:none}
+.lt-scena.oriz .lt-esp.lt-foglio{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);justify-items:start;align-items:center;gap:4px 22px;padding:12px 24px 12px 30px;text-align:left}
+.lt-scena.oriz .lt-esp .intest{display:flex;grid-column:1/-1;grid-row:1;width:100%}
+.lt-scena.oriz .lt-esp .ritr{grid-row:2;width:124px;height:150px;margin:0}
+.lt-scena.oriz .lt-esp .txt{grid-row:2;justify-items:start;margin:0}
+.lt-scena.oriz .lt-esp .sotto{padding:6px 0 0}
+.lt-scena.oriz .lt-esp .conto{justify-content:flex-start}
+.lt-scena.oriz .lt-esp .conto span{min-width:0;padding:0 12px;font-size:13.5px}
+.lt-scena.oriz .lt-esp .conto span:first-child{padding-left:0}
+.lt-scena.oriz .lt-esp .conto b{font-size:25px}
+.lt-scena.oriz .lt-esp .chivoti{grid-row:2;align-self:center;max-height:100%}
+.lt-scena.oriz .lt-esp .rg{min-height:38px}
+.lt-scena.oriz .lt-esp .rg .faccia,.lt-scena.oriz .lt-esp .rg .pall{width:25px;height:29px}
+.lt-scena.oriz .lt-esp .rg .su .lt-tinta{display:none}
+.lt-scena.oriz .lt-esp .rg .da:has(>:nth-child(5))>*{margin-left:-13px}
 .lt-scena.oriz .lt-esp h2{font-size:25px}
 .lt-scena.oriz .lt-esp .sotto{font-size:15.5px}
 .lt-scena.oriz .lt-indov.lt-foglio{padding:11px 14px 9px;gap:4px}
@@ -8885,9 +9128,10 @@ html:has(.lt-pc.lt-foglio),body:has(.lt-pc.lt-foglio){background:#1c110b}
 .lt-scena.oriz .lt-vince .fila{grid-area:f;justify-content:flex-start;padding-top:7px}
 .lt-scena.oriz .lt-vince h2{font-size:31px}
 .lt-scena.oriz .lt-vince p{font-size:16px}
-.lt-scena.oriz .lt-vince .u{width:52px}
+.lt-scena.oriz .lt-vince .u{width:68px}
 .lt-scena.oriz .lt-vince .u .faccia,.lt-scena.oriz .lt-vince .u .pall{width:40px;height:47px}
-.lt-scena.oriz .lt-vince .u span{font-size:12.5px;max-width:52px}
+.lt-scena.oriz .lt-vince .u span{font-size:13px;max-width:68px}
+.lt-scena.oriz .lt-vince .u .lt-tinta{max-width:68px;font-size:11.5px}
 .lt-scena.oriz .lt-computer.lt-foglio{width:100%;max-width:900px;height:100%;max-height:100%;display:grid;grid-template-columns:minmax(0,1fr) 172px;grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:'t t' 'c p' 'c n';column-gap:12px;padding:8px 14px 8px}
 .lt-scena.oriz .lt-computer>.intest{display:none}
 .lt-scena.oriz .lt-computer .testa{grid-area:t;display:flex;gap:10px;min-height:30px}
@@ -8909,6 +9153,18 @@ html:has(.lt-pc.lt-foglio),body:has(.lt-pc.lt-foglio){background:#1c110b}
 .lt-scena.oriz .lt-pc-corpo{grid-area:c;min-height:0;padding:0 8px;border-bottom:0}
 .lt-scena.oriz .lt-pc-pag{display:grid;grid-template-columns:repeat(auto-fit,minmax(226px,1fr));column-gap:16px;align-content:start;min-height:0}
 .lt-scena.oriz .lt-pc-sq,.lt-scena.oriz .lt-pc-ruoli,.lt-scena.oriz .lt-pc-tutti,.lt-scena.oriz .lt-pc-pick,.lt-scena.oriz .lt-pc-regole,.lt-scena.oriz .lt-pc-aiuto{grid-column:1/-1}
+.lt-scena.oriz .lt-pc-pag.s-partita,.lt-scena.oriz .lt-pc-pag.s-riunioni,.lt-scena.oriz .lt-pc-pag.s-sabotaggi{grid-auto-rows:minmax(44px,58px)}
+.lt-scena.oriz .lt-pc-pag.s-ruoli{grid-template-columns:repeat(2,minmax(0,1fr))}
+.lt-scena.oriz .lt-pc-pag.s-ruoli .lt-pc-aiuto{display:none}
+.lt-scena.oriz .lt-pc-pag.s-ruoli .lt-pc-sq{grid-column:1;grid-row:1}
+.lt-scena.oriz .lt-pc-pag.s-ruoli .lt-pc-tutti{grid-column:2;grid-row:1;align-self:center;margin:0}
+.lt-scena.oriz .lt-pc-pag.s-ruoli .lt-pc-ruoli{grid-row:2;margin-top:4px}
+.lt-scena.oriz .lt-pc-pag.s-poteri .lt-pc-aiuto{display:none}
+.lt-scena.oriz .lt-pc-pag.s-poteri .lt-pc-pick{margin-top:3px}
+@media (max-width:720px){
+.lt-scena.oriz .lt-pc-pag.s-ruoli{grid-template-columns:minmax(0,1fr)}
+.lt-scena.oriz .lt-pc-pag.s-ruoli .lt-pc-tutti{grid-column:1;grid-row:3;margin-top:2px}
+}
 .lt-scena.oriz .lt-pc-regole{display:grid;grid-template-columns:repeat(auto-fit,minmax(226px,1fr));column-gap:16px}
 .lt-scena.oriz .lt-pc-nota{grid-column:1/-1}
 .lt-scena.oriz .lt-pc-riga{border-bottom:1px solid var(--r-seppia2)}
@@ -8917,58 +9173,104 @@ html:has(.lt-pc.lt-foglio),body:has(.lt-pc.lt-foglio){background:#1c110b}
 .lt-scena.oriz .lt-pc-ruoli{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
 .lt-scena.oriz .lt-pc-r{padding:2px 4px}
 .lt-scena.oriz .lt-pc-r b{font-size:13px;letter-spacing:-.01em}
-.lt-scena.oriz .lt-pc-pick{grid-template-columns:repeat(auto-fill,minmax(82px,1fr))}
+.lt-scena.oriz .lt-pc-pick{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}
 .lt-scena.oriz .lt-pc-stato{grid-area:z;margin-top:2px;padding-left:14px;font-size:13px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* la fine: l'ultima pagina del registro, sul tavolo */
 html:has(.lt-fine),body:has(.lt-fine){background:#1c110b}
 #app:has(.lt-fine){max-width:none}
-.schermata.lt-fine{max-width:none;background:var(--r-tavolo);color:var(--r-crema)}
+.schermata.lt-fine{max-width:none;box-sizing:border-box;flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0;overflow:hidden;background:var(--r-tavolo);color:var(--r-crema)}
 .schermata.lt-fine>.testa{display:none}
 .schermata.lt-fine>.contenuto{display:flex;flex-direction:column;min-height:0}
-.lt-ultima.lt-foglio{flex:0 1 auto;box-sizing:border-box;min-height:0;width:100%;max-width:480px;margin:0 auto 6px;display:flex;flex-direction:column;gap:5px;padding:14px 14px 13px;text-align:center}
+.lt-ultima.lt-foglio{flex:1 1 auto;box-sizing:border-box;min-height:0;width:100%;max-width:480px;max-height:800px;margin:0 auto;display:flex;flex-direction:column;gap:6px;padding:14px 15px 12px;text-align:center}
+.lt-ultima .intest{flex:none}
 .lt-ultima .tes{flex:none;display:grid;gap:3px;justify-items:center;min-width:0}
 .lt-ultima h2{font-size:30px}
+.lt-ultima.perso h2{color:var(--r-cera)}
+.lt-ultima .chiusa{flex:none;display:block;width:56px;height:56px;margin:auto auto 0;background:var(--r-sigillo) center/100% 100% no-repeat;transform:rotate(-10deg);animation:ltSigillo .24s var(--lt-ease) .24s both}
 .lt-ultima .lt-perche{margin:0;font:italic 15.5px/1.25 var(--r-serif);color:var(--r-ink2)}
-.schermata.lt-fine .lt-ultima .classifica{flex:0 1 auto;min-height:0;margin:2px 0 0;padding:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border-top:3px double var(--r-filo)}
+.schermata.lt-fine .lt-ultima .classifica{flex:1 1 auto;min-height:0;max-height:calc(var(--n)*96px + 28px);margin:2px 0 0;padding:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border-top:3px double var(--r-filo)}
+.lt-ultima .col{display:flex;flex-direction:column;min-height:0}
+.lt-ultima .col h3{flex:none}
+.lt-ultima .righe{flex:1 1 auto;display:grid;align-content:start}
 .schermata.lt-fine .lt-ultima .classifica.solo{grid-template-columns:minmax(0,1fr)}
 .lt-ultima .col{min-width:0}
 .lt-ultima .col+.col{box-shadow:inset 3px 0 0 -2px var(--r-filo),inset 5px 0 0 -4px var(--r-filo)}
-.lt-ultima .col h3{margin:0;padding:4px 0 3px;font:700 10.5px/1.25 var(--r-sans);letter-spacing:.13em;text-transform:uppercase;color:var(--r-ink2);border-bottom:1px solid var(--r-filo)}
+.lt-ultima .col h3{margin:0;padding:5px 0 4px;font:700 11px/1.25 var(--r-sans);letter-spacing:.13em;text-transform:uppercase;color:var(--r-ink2);border-bottom:1px solid var(--r-filo)}
 .lt-ultima .col.vinc h3{color:var(--r-cera)}
-.lt-ultima .rg{display:grid;grid-template-columns:29px minmax(0,1fr);align-items:center;column-gap:6px;min-height:40px;padding:1px 5px 1px 7px;text-align:left;border-bottom:1px solid var(--r-seppia2)}
+.lt-ultima .rg{box-sizing:border-box;min-height:clamp(40px,calc((var(--alt,100dvh) - 420px)/var(--n)),96px);display:grid;grid-template-columns:29px minmax(0,1fr);align-items:center;column-gap:7px;padding:1px 5px 1px 7px;text-align:left;border-bottom:1px solid var(--r-seppia2)}
 .lt-ultima .rg .faccia,.lt-ultima .rg .pall{display:block;width:29px;height:34px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone),0 0 0 2px rgba(40,20,8,.32)}
 .lt-ultima .rg .faccia{background:linear-gradient(#4a3325,#21150e)}
 .lt-ultima .rg.spento .faccia,.lt-ultima .rg.spento .pall{filter:saturate(.6) contrast(.86);opacity:.8}
 .schermata.lt-fine .lt-ultima .nome{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 15.5px/1.14 var(--r-serif);color:var(--r-ink)}
-.schermata.lt-fine .lt-ultima .punti{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:12.5px/1.18 var(--r-serif);color:var(--r-ink2)}
+.schermata.lt-fine .lt-ultima .punti{display:block;min-width:0;font:12.5px/1.18 var(--r-serif);color:var(--r-ink2)}
+@media (max-height:739px){
+.lt-ultima .lt-ruolo .lt-tinta{display:none}
+}
+@media (min-height:740px){
+.lt-ultima .lt-ruolo .ru{display:block;margin-top:1px}
+.lt-ultima .rg{grid-template-columns:38px minmax(0,1fr)}
+.lt-ultima .rg .faccia,.lt-ultima .rg .pall{width:38px;height:45px}
+.schermata.lt-fine .lt-ultima .nome{font-size:16.5px}
+.lt-ultima .pochi .rg{grid-template-columns:54px minmax(0,1fr)}
+.lt-ultima .pochi .rg .faccia,.lt-ultima .pochi .rg .pall{width:54px;height:64px}
+.schermata.lt-fine .lt-ultima .pochi .nome{font-size:19px}
+.schermata.lt-fine .lt-ultima .pochi .punti{font-size:13.5px}
+}
 .schermata.lt-fine .modulo-nota{color:#ddcbaa}
 .schermata.lt-fine .btn{border-radius:4px;font-family:var(--r-serif);font-weight:700;letter-spacing:0}
 .schermata.lt-fine .btn-primario{background:linear-gradient(180deg,var(--r-cera-ch),var(--r-cera));color:var(--r-crema);box-shadow:inset 0 0 0 1px var(--r-ottone),0 3px 8px rgba(0,0,0,.45)}
 .schermata.lt-fine .btn-fantasma{background:none;color:var(--r-ottone-ch);box-shadow:inset 0 0 0 1px rgba(195,154,72,.7)}
-.schermata.lt-fine .lt-vbtn{min-height:44px}
+.schermata.lt-fine .btn-verde{background:linear-gradient(180deg,#2d7a54,var(--r-verde));color:var(--r-crema);box-shadow:inset 0 0 0 1px var(--r-ottone),0 3px 8px rgba(0,0,0,.45)}
+.schermata.lt-fine .fine-fila{flex:none;box-sizing:border-box;display:flex;align-items:stretch;width:100%;max-width:480px;margin:8px auto 0;border-radius:4px;background:rgba(20,10,5,.58);box-shadow:inset 0 0 0 1px rgba(195,154,72,.5),0 2px 7px rgba(0,0,0,.4)}
+.schermata.lt-fine .fine-fila .lt-voce{flex:none;display:flex;margin:0}
+.schermata.lt-fine .fine-fila .lt-voce:only-child{flex:1 1 auto}
+.schermata.lt-fine .fine-fila .lt-voce:only-child .lt-vbtn{flex:1 1 auto;box-shadow:none}
+.schermata.lt-fine .lt-vbtn{height:46px;min-height:46px;box-sizing:border-box;padding:0 12px;border:0;border-radius:0;background:none;font:700 14.5px/1 var(--r-serif);letter-spacing:0;color:var(--r-ottone-ch);box-shadow:inset -1px 0 0 rgba(195,154,72,.4);animation:none}
+.schermata.lt-fine .lt-vbtn.parlo{color:#9fd8b4}.schermata.lt-fine .lt-vbtn.muto{color:#f0a9a0}
+.schermata.lt-fine .fine-faccine{flex:1 1 0;min-width:0;margin:0;padding:0 2px;gap:0;border-radius:0;background:none;box-shadow:none}
+.schermata.lt-fine .fine-faccine .sl-fa{height:46px;font-size:1.22rem;border-radius:3px;filter:sepia(.3) saturate(.85)}
+.schermata.lt-fine>.piede{flex:none;display:flex;flex-wrap:wrap;gap:8px;width:100%;max-width:480px;margin:0 auto;padding-top:8px}
+.schermata.lt-fine .fine-tasti{gap:8px;margin:0}
+.schermata.lt-fine>.piede .btn{width:auto;min-width:0;min-height:50px;margin:0;padding:0 10px;border:0;font-size:15.5px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.schermata.lt-fine>.piede .btn-primario,.schermata.lt-fine>.piede .ft-primo{flex:1 1 0}
+.schermata.lt-fine>.piede .btn-fantasma:not(.ft-primo){flex:0 0 84px;box-shadow:inset 0 0 0 1px rgba(195,154,72,.7)}
+.schermata.lt-fine>.piede .ft-punti{flex:1 1 100%;min-height:0;font-family:var(--r-serif)}
+@media (max-width:375px){
+.schermata.lt-fine>.piede .btn{font-size:14.5px}
+}
+@media (max-width:340px){
+.schermata.lt-fine>.piede .btn{padding:0 6px;font-size:13.5px}
+.schermata.lt-fine>.piede .btn-fantasma:not(.ft-primo){flex:0 0 64px}
+}
+@media (max-height:680px){
+.lt-ultima .chiusa{display:none}
+}
 @media (orientation:landscape) and (max-height:520px){
-.schermata.lt-fine{display:grid;grid-template-columns:minmax(0,1fr) 186px;grid-template-rows:auto auto minmax(0,1fr);column-gap:12px}
+.schermata.lt-fine{display:grid;grid-template-columns:minmax(0,1fr) 216px;grid-template-rows:auto minmax(0,1fr);column-gap:12px}
 .schermata.lt-fine>.contenuto{display:contents}
 .lt-ultima.lt-foglio{grid-column:1;grid-row:1/-1;max-width:none;height:100%;margin:0;gap:3px;padding:9px 12px 9px}
 .lt-ultima .tes{grid-template-columns:auto minmax(0,1fr);align-items:baseline;column-gap:12px;justify-items:start;text-align:left}
 .lt-ultima .tes .occh{display:none}
 .lt-ultima h2{font-size:22px;white-space:nowrap}
 .lt-ultima .lt-perche{font-size:14px}
-.schermata.lt-fine .lt-ultima .classifica{flex:1 1 auto;grid-template-columns:minmax(0,1fr);align-content:start}
+.schermata.lt-fine .lt-ultima .classifica{flex:1 1 auto;grid-template-columns:minmax(0,1fr);align-content:start;max-height:none}
 .lt-ultima .col+.col{box-shadow:none}
-.lt-ultima .righe{display:grid;grid-template-columns:repeat(auto-fill,minmax(134px,1fr))}
-.lt-ultima .rg{min-height:38px}
-.schermata.lt-fine .lt-voce{grid-column:2;grid-row:1}
-.schermata.lt-fine .fine-faccine{grid-column:2;grid-row:2;margin:6px 0 0}
-.schermata.lt-fine>.piede{grid-column:2;grid-row:3;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding-top:6px}
-.schermata.lt-fine .fine-tasti{display:flex;flex-direction:column;gap:6px;width:100%}
-.schermata.lt-fine .fine-faccine{flex-wrap:wrap;justify-content:center}
-.schermata.lt-fine .fine-faccine .sl-fa{flex:0 0 44px}
+.lt-ultima .righe{grid-template-columns:repeat(auto-fill,minmax(122px,1fr))}
+.lt-ultima .rg{min-height:40px}
+.lt-ultima .chiusa{display:none}
+.schermata.lt-fine .fine-fila{grid-column:2;grid-row:1;flex-wrap:wrap;margin:0}
+.schermata.lt-fine .fine-fila .lt-voce{flex:1 1 100%}
+.schermata.lt-fine .fine-fila .lt-vbtn{flex:1 1 auto;box-shadow:inset 0 -1px 0 rgba(195,154,72,.4)}
+.schermata.lt-fine .fine-faccine{flex:1 1 100%}
+.schermata.lt-fine>.piede{grid-column:2;grid-row:2;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding-top:6px}
+.schermata.lt-fine .fine-tasti{display:flex;flex-direction:column;flex-wrap:nowrap;gap:6px;width:100%}
+.schermata.lt-fine>.piede{flex-wrap:nowrap;margin:0;max-width:none}
+.schermata.lt-fine>.piede .btn,.schermata.lt-fine>.piede .btn-primario,.schermata.lt-fine>.piede .ft-primo,.schermata.lt-fine>.piede .btn-fantasma:not(.ft-primo){flex:none;width:100%;padding:0 6px;font-size:14px}
 }
 
 @media (prefers-reduced-motion:reduce){.lt-scena *,.lt-scena *::before,.lt-scena *::after,.lt-pc *,.lt-pc *::before,.lt-pc *::after,.lt-fine *,.lt-fine *::before,.lt-fine *::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
-`.replace("@GRANA@", GRANA).replace("@SIGILLO@", ltCera(true)).replace("@VUOTO@", ltCera(false)).replace("@PALLIDO@", ltCera(false, true)).replace("@FILIGRANA@", ltFiligrana()).replace("@SAGOMA@", ltSagoma()).replace("@STRAPPO@", ltStrappo()).replace("@DENTELLI@", ltDentelli());
+`.replace("@GRANA@", GRANA).replace("@SIGILLO@", ltCera(true)).replace("@VUOTO@", ltCera(false)).replace("@PALLIDO@", ltCera(false, true)).replace("@FILIGRANA@", ltFiligrana()).replace("@LANTERNA@", ltFiligrana("#c39a48", ".85")).replace("@SAGOMA@", ltSagoma()).replace("@SPUNTA@", ltSpunta()).replace("@STRAPPO@", ltStrappo()).replace("@DENTELLI@", ltDentelli());
 }
 var cssFatto = false;
 function stile() {
@@ -9007,7 +9309,7 @@ function stile() {
     ".lt-ibtn{flex:none;width:26px;height:26px;margin-left:6px;border-radius:50%;border:1.5px solid rgba(246,217,153,.65);background:rgba(33,21,14,.85);color:#f6d999;font:700 italic 14px Georgia,'Times New Roman',serif;line-height:1;cursor:pointer;display:grid;place-items:center}.lt-chip{cursor:pointer}",
     ".lt-scena svg.ico,.lt-pc svg.ico{width:1.2em;height:1.2em;flex:none;vertical-align:-.22em}",
     ".lt-hbtn{display:inline-flex;align-items:center;gap:5px}.lt-hbtn.ico{padding:5px 8px}.lt-hbtn.acceso{color:#f6d999;border-color:rgba(231,183,92,.65);background:rgba(231,183,92,.16)}",
-    ".lt-intro .icona svg{width:64px;height:64px;color:#f6d999;stroke-width:1.6}.lt-pc-schede b svg{width:20px;height:20px}",
+    ".lt-intro .icona svg{width:84px;height:84px;color:#f6d999;stroke-width:1.4}.lt-pc-schede b svg{width:20px;height:20px}",
     ".lt-minimappa .testa b{display:inline-flex;align-items:center;gap:6px}.lt-minimappa .leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 4px 0 10px;vertical-align:middle;box-shadow:0 0 0 1px rgba(0,0,0,.4)}",
     ".lt-parla{position:absolute;z-index:5;left:0;right:0;margin:0 auto;bottom:calc(8px + max(env(safe-area-inset-bottom,0px),var(--sotto,0px)));width:min(440px,calc(100% - 24px));display:grid;gap:6px;padding:7px;border-radius:14px;background:rgba(20,12,8,.93);border:1px solid rgba(241,232,214,.18);box-shadow:0 8px 24px rgba(0,0,0,.45);animation:ltSale .2s var(--lt-ease)}",
     ".lt-parla.alto{bottom:auto;top:calc(58px + env(safe-area-inset-top))}",
@@ -9045,7 +9347,7 @@ function stile() {
     ".lt-az.telo,.lt-az.telo:disabled{opacity:1;background:var(--telo,#7c8088);border:2px solid var(--orlo,#b4b8c0);box-shadow:0 2px 7px rgba(0,0,0,.5);transition:transform .16s var(--lt-ease),background-color .2s var(--lt-ease),border-color .2s var(--lt-ease)}",
     ".lt-az.conta .et{visibility:hidden}",
     ".lt-az .cd{position:absolute;inset:0;display:grid;place-items:center;font-size:1.15rem;background:rgba(14,9,6,.62);border-radius:50%}",
-    ".lt-avviso{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translate(-50%,-6px);max-width:calc(100% - 32px);font-weight:700;font-size:.9rem;text-align:center;background:rgba(33,21,14,.95);border:1px solid rgba(231,183,92,.4);padding:9px 13px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .22s var(--lt-ease),transform .22s var(--lt-ease);z-index:3}",
+    ".lt-avviso{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translate(-50%,-6px);max-width:calc(100% - 32px);font-weight:700;font-size:.9rem;text-align:center;background:rgba(33,21,14,.95);border:1px solid rgba(231,183,92,.4);padding:9px 13px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .22s var(--lt-ease),transform .22s var(--lt-ease);z-index:5}",   // (sopra la scritta grande della riunione: gli avvisi privati di quel momento si devono leggere)
     ".lt-avviso.su{opacity:1;transform:translate(-50%,0)}.lt-avviso.ombra,.lt-avviso.morte{border-color:rgba(208,80,106,.7)}",
     ".lt-velo.passa{background:none;align-items:flex-start;pointer-events:none;padding-top:calc(58px + env(safe-area-inset-top))}.lt-velo.passa .lt-pannello{pointer-events:auto;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,.45)}",
     ".lt-velo{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;background:rgba(14,9,6,.78);padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom))}",
@@ -9113,7 +9415,8 @@ function stile() {
     ".lt-intro.corpo{background:radial-gradient(circle,rgba(92,16,32,.95),rgba(14,9,6,.98))}",
     ".lt-intro .icona{font-size:4rem;animation:ltDondola .5s ease-in-out 3 alternate}.lt-intro h2{margin:0;padding:0 14px;font-family:var(--r-serif);font-size:2.5rem;font-weight:700;line-height:1.08;letter-spacing:0;color:#f6d999;animation:ltColpo .5s var(--lt-ease) both}",
     ".lt-intro.corpo h2{color:#f6d999}.lt-intro p{margin:0;font-family:var(--r-serif);font-size:1.1rem;font-style:italic;color:#f1e8d6}",
-    ".lt-intro .facce{display:flex;gap:14px}.lt-intro .facce img,.lt-intro .facce .pall{width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:top;background:#35241a;border:3px solid #c39a48}.lt-intro .facce .morto{filter:saturate(.6) brightness(.76);border-color:#8d7f6c}",
+    ".lt-scena.oriz .lt-intro{padding-top:48px;gap:6px}.lt-scena.oriz .lt-intro .icona{font-size:2.5rem;line-height:1}.lt-scena.oriz .lt-intro .icona svg{width:44px;height:44px}.lt-scena.oriz .lt-intro .facce img,.lt-scena.oriz .lt-intro .facce .pall{width:50px;height:60px}",   // (di lato lo schermo è basso: l'avviso in alto non deve coprire la lanterna)
+    ".lt-intro .facce{display:flex;gap:14px}.lt-intro .facce img,.lt-intro .facce .pall{width:72px;height:86px;border-radius:50%;object-fit:cover;object-position:top;background:#35241a;box-shadow:0 0 0 2px #c39a48,0 0 0 4px rgba(248,240,222,.85)}.lt-intro .facce .morto{filter:saturate(.6) brightness(.76);border-color:#8d7f6c}",
     "@keyframes ltIntro{0%{opacity:0}12%{opacity:1}82%{opacity:1}100%{opacity:0}}",
     "@keyframes ltDondola{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}",
     "@keyframes ltColpo{from{transform:scale(2.2);opacity:0}to{transform:scale(1);opacity:1}}",
@@ -9204,7 +9507,7 @@ function impostazioni(box, dove, aiuti) {
   }
   function disegna() {
     corpo.textContent = "";
-    var dentro = E("div", "lt-pc-pag"); corpo.appendChild(dentro);
+    var dentro = E("div", "lt-pc-pag s-" + PC.scheda); corpo.appendChild(dentro);
     if (PC.scheda === "partita") perG["Partita"].forEach(function (v) { dentro.appendChild(riga(v)); });
     else if (PC.scheda === "riunioni") perG["Riunioni"].forEach(function (v) { dentro.appendChild(riga(v)); });
     else if (PC.scheda === "sabotaggi") (perG["Sabotaggi"] || []).forEach(function (v) { dentro.appendChild(riga(v)); });
