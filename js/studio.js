@@ -358,7 +358,7 @@
       ".st-parete{left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none}",
       ".st-parete-m{pointer-events:none;opacity:.5}",
       // il riflesso del bancone sul pavimento lucido (disegnato solo quando cambia il bancone o la faccia)
-      ".st-leggio .rifl{position:absolute;left:0;top:100%;width:100%;height:8em;pointer-events:none}",
+      ".st-leggio .rifl{position:absolute;z-index:1;left:0;top:100%;width:100%;height:8em;pointer-events:none}",   // (sotto tutte le facce: anche quelle della fila davanti)
       ".st-leggio.alto .rifl{display:none}",
       // fari che girano (solo rotazione)
       ".st-fascio{transform-origin:50% 0;opacity:.5;will-change:transform;animation:stFascio 6s ease-in-out infinite alternate}",
@@ -523,15 +523,9 @@
     // --- studio: la parete LED dietro (si muove), poi il fondo fermo (un'immagine sola, canvas), sopra solo pochi pezzi che si muovono ---
     S.parete = pezzo("canvas", "st-parete");
     S.pareteMorbida = pezzo("canvas", "st-parete-m");
-    S.par = { t: 0, luce: 1, tinta: null };
+    // la parete: luce e colore di adesso (tc, kt, luce) e quelli verso cui va piano piano (ob…), decisi dalla regia delle luci
+    S.par = { t: 0, luce: 1, kt: 0, tc: [255, 255, 255], obLuce: 1, obKt: 0, obTc: [255, 255, 255] };
     S.tela = pezzo("canvas", "st-tela");
-    // i fari che girano sono luci già disegnate (canvas): la scheda grafica le gira senza ridisegnarle, anche mentre la telecamera si muove.
-    // Stanno appesi in alto e passano DIETRO al maxischermo: non coprono mai il gioco.
-    S.fasci = [];
-    if (!LEGGERO) [S.tema[0], S.tema[1], S.tema[2], "#fff3d6"].forEach(function (c, i) {
-      var f = pezzo("canvas", "st-fascio st-anim"); fascio(f, rgbaDi(c, 0.5));
-      f.style.animationDelay = (-i * 1.9) + "s"; f.style.animationDuration = (5 + (i % 3)) + "s"; S.fasci.push(f);
-    });
     // il pubblico: file di mini avatar (canvas, create in disegnaPubblico) + cose vive sopra
     S.pubWrap = pezzo("div", "st-pubwrap");
     S.strisce = [];
@@ -547,6 +541,14 @@
     S.cartelli = ["❤️ BRAVI", "⭐⭐⭐", "FORZA!", "👏👏", "WOW!"].map(function (tx, i) { var ca = vivo(pezzo("div", "st-cartellone st-anim", S.pubDeco), i % 2); ca.appendChild(el("b", { text: tx })); ca._ry *= 0.7; return ca; });
     S.lucine = []; for (q = 0; q < (LEGGERO ? 0 : 10); q++) { var lu = pezzo("div", "st-lucina st-anim", S.pubDeco); lu.style.animationDelay = (-Math.random() * 2.4) + "s"; lu._rx = Math.random(); lu._ry = Math.random(); lu._zona = q % 2; S.lucine.push(lu); }
     S.flash = []; for (q = 0; q < 6; q++) { var fl = pezzo("div", "st-flash", S.pubDeco); fl._rx = Math.random(); fl._ry = Math.random(); fl._zona = q % 2; S.flash.push(fl); }
+    // i fari: luci già disegnate (canvas) appese all'americana in alto; la scheda grafica le gira senza ridisegnarle.
+    // Passano davanti al pubblico ma DIETRO al maxischermo (non coprono mai il gioco) e dietro ai banconi.
+    // Di solito spazzano la sala; quando c'è un momento del gioco la regia delle luci li punta su un concorrente.
+    S.fasci = [];
+    if (!LEGGERO) [S.tema[0], S.tema[1], S.tema[2], "#fff3d6"].forEach(function (c, i) {
+      var f = pezzo("canvas", "st-fascio st-anim"); f._col0 = f._col = c; fascio(f, rgbaDi(c, 0.5));
+      f._dur = 5 + (i % 3); f.style.animationDelay = (-i * 1.9) + "s"; f.style.animationDuration = f._dur + "s"; S.fasci.push(f);
+    });
     S.schermo = pezzo("div", "st-schermo");
     S.sch = el("div", { class: "st-sch-in" }); S.schermo.appendChild(S.sch); S.schermo.appendChild(el("div", { class: "st-vetro" }));
     S.fumetto = pezzo("div", "st-fumetto");
@@ -647,9 +649,9 @@
     S.gioc.forEach(function (g, i) {
       var col = g.col || ST_COL[i % ST_COL.length], L = el("div", { class: "st-leggio" }); L.style.position = "absolute"; L.style.setProperty("--col", col);   // g.col: il colore scelto dal gioco (es. quello della squadra)
       // tutto quello che si illumina è già disegnato (canvas): accendere un leggio cambia solo l'opacità
-      L.innerHTML = "<canvas class='luce' width='96' height='268'></canvas><canvas class='pozza'></canvas><canvas class='alone'></canvas>" +
+      L.innerHTML = "<canvas class='luce' width='96' height='268'></canvas><canvas class='pozza'></canvas><canvas class='alone'></canvas><canvas class='rifl'></canvas>" +
         "<div class='anello'></div><div class='cart'><div class='in'><div class='f'>?</div><div class='f r'></div></div></div><div class='delta'></div><div class='av'><canvas width='356' height='364'></canvas></div>" +
-        "<div class='podio'><canvas class='rifl'></canvas><canvas class='banco'></canvas><canvas class='banco-luce'></canvas><canvas class='bagliore'></canvas><div class='piano'></div></div>";
+        "<div class='podio'><canvas class='banco'></canvas><canvas class='banco-luce'></canvas><canvas class='bagliore'></canvas><div class='piano'></div></div>";
       cono(L.querySelector(".luce")); pozza(L.querySelector(".pozza"), col); chiazza(L.querySelector(".alone"), rgbaDi(col, 1)); bagliore(L.querySelector(".bagliore"), col);
       // toccare un concorrente (es. per passargli la bomba). Il gioco decide chi si può toccare.
       // Vale tutta la sagoma, banco col nome compreso (.tap), e basta un tocco anche se il dito si muove un po':
@@ -720,7 +722,10 @@
     x.fillText(nome, w / 2, ny + nh / 2 + 0.06 * em);
     x.restore();
   }
-  function mescola(a, b, k) { var p = rgbDi(a), q = rgbDi(b); return "rgb(" + Math.round(p[0] + (q[0] - p[0]) * k) + "," + Math.round(p[1] + (q[1] - p[1]) * k) + "," + Math.round(p[2] + (q[2] - p[2]) * k) + ")"; }
+  function mescola(a, b, k) {   // due colori #rrggbb mescolati (k = quanto del secondo); risultato #rrggbb, come vogliono rgbaDi e i fari
+    var p = rgbDi(a), q = rgbDi(b), r = Math.round(p[0] + (q[0] - p[0]) * k), g = Math.round(p[1] + (q[1] - p[1]) * k), bl = Math.round(p[2] + (q[2] - p[2]) * k);
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1);
+  }
   function fondoBanco(X) {   // tutto quello che non cambia: piano di vetro, frontale di vetro coi bordi accesi, nome, striscia di luce
     var M = misuraBanco(X), c = X.fondo || (X.fondo = document.createElement("canvas")), w = M.w, em = M.em, q = M.q, col = X.col, g;
     c.width = M.cw; c.height = M.ch;
@@ -851,6 +856,13 @@
     var w = c.width, h = c.height, x = c.getContext("2d"), g = x.createLinearGradient(0, h, 0, 0);
     g.addColorStop(0, "rgba(255,246,205,.46)"); g.addColorStop(0.4, "rgba(255,246,205,.2)"); g.addColorStop(0.92, "rgba(255,246,205,0)"); g.addColorStop(1, "rgba(255,246,205,0)");
     x.fillStyle = g; x.beginPath(); x.moveTo(w * 0.43, 0); x.lineTo(w * 0.57, 0); x.lineTo(w, h); x.lineTo(0, h); x.closePath(); x.fill();
+    // bordi morbidi: ai lati e in fondo la luce si spegne piano (sul pavimento scuro un bordo netto si vedrebbe come un rettangolo)
+    x.globalCompositeOperation = "destination-in";
+    g = x.createLinearGradient(0, 0, w, 0); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(0.3, "#000"); g.addColorStop(0.7, "#000"); g.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = g; x.fillRect(0, 0, w, h);
+    g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#000"); g.addColorStop(0.8, "#000"); g.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = g; x.fillRect(0, 0, w, h);
+    x.globalCompositeOperation = "source-over";
   }
   // ---- la parete LED dietro al maxischermo: un pannello = un puntino di una tela minuscola, ingrandita dalla scheda grafica ----
   // Onde di colore che si muovono piano, col respiro della musica. Costa circa 1 ms a disegno anche sul computer rallentato ×4
@@ -876,7 +888,7 @@
   function disegnaParete(S) {
     var P = S.par; if (!P || !P.im) return;
     var cols = P.cols, righe = P.righe, D = P.im.data, B = P.base, T = S.tema.map(rgbDi), i, j, n, k = 0;
-    var luce = (P.luce == null ? 1 : P.luce) * (1 + 0.16 * (P.batt || 0)), ti = P.tinta ? rgbDi(P.tinta[0]) : null, kt = P.tinta ? P.tinta[1] : 0;
+    var luce = P.luce * (1 + 0.16 * (P.batt || 0)), kt = P.kt, ti = kt > 0.004 ? P.tc : null;   // tc e kt: il colore del momento (regia delle luci)
     for (n = 0; n < ONDE.length; n++) { var o = ONDE[n], sv = P.sv[n], cv = P.cv[n]; for (j = 0; j < righe; j++) { var a = o[1] * j / righe + o[2] * P.t + o[3]; sv[j] = Math.sin(a); cv[j] = Math.cos(a); } }
     var su0 = P.su[0], cu0 = P.cu[0], su1 = P.su[1], cu1 = P.cu[1], su2 = P.su[2], cu2 = P.cu[2], su3 = P.su[3], cu3 = P.cu[3];
     var A = T[0], Bc = T[1], C = T[2];
@@ -896,8 +908,22 @@
     P.x.putImageData(P.im, 0, 0);
     var m = S.pareteMorbida, mx = m.getContext("2d"); mx.drawImage(S.parete, 0, 0, m.width, m.height);   // il bagliore: la stessa parete, piccola e sfumata
   }
+  // la regia delle luci chiede alla parete un colore (col, quanto: kt) e una luce (1 = normale): ci va piano piano, mai di scatto.
+  // Dove la parete è ferma (telefoni leggeri, «riduci movimento», telefono che fatica) il cambio è subito, con un disegno solo.
+  function bersaglioParete(S, col, kt, luce) {
+    var P = S.par; if (!P) return;
+    if (col) P.obTc = rgbDi(col);
+    P.obKt = col ? kt : 0; P.obLuce = luce == null ? 1 : luce;
+    if (P.ferma || S.leggeroAuto) { P.tc = P.obTc.slice(); P.kt = P.obKt; P.luce = P.obLuce; disegnaParete(S); }
+  }
+  function verso(P, dt) {   // un passo verso il colore e la luce chiesti (metà strada in circa 0,1 secondi)
+    var a = 1 - Math.exp(-dt / 0.14);
+    if (P.kt < 0.004) P.tc = P.obTc.slice();   // la parete era senza colore: il colore nuovo entra solo con la sua forza
+    else for (var c = 0; c < 3; c++) P.tc[c] += (P.obTc[c] - P.tc[c]) * a;
+    P.kt += (P.obKt - P.kt) * a; P.luce += (P.obLuce - P.luce) * a;
+  }
   function avviaParete(S) {
-    var P = S.par, ferma = LEGGERO || !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    var P = S.par, ferma = P.ferma = LEGGERO || !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     disegnaParete(S);
     if (ferma) return;   // telefoni leggeri e «riduci movimento»: la parete resta accesa ma ferma
     var ult = performance.now();
@@ -905,7 +931,7 @@
       if (!S.vivo()) { clearInterval(id); return; }
       var ora = performance.now(), dt = Math.min(0.2, (ora - ult) / 1000); ult = ora;
       if (document.hidden || S.leggeroAuto || S.mondo.classList.contains("st-quieto")) return;   // non si vede (o il telefono fatica): ferma
-      P.t += dt * 0.35; P.batt = Musica.battito();
+      P.t += dt * 0.35; P.batt = Musica.battito(); verso(P, dt);
       var m0 = performance.now(); disegnaParete(S);
       if (window.__studioMisura) window.__studioMisura.parete.push(performance.now() - m0);   // (solo per le prove di velocità)
     }, 50);
@@ -1177,7 +1203,9 @@
     disegnaPubblico(S);  // (alla fine fa anche il riflesso nel pavimento)
     disegnaParete(S);
     pos(S.schermo, R.x, R.y, R.w, R.h);
-    S.fasci.forEach(function (f, i) { var fx = W * (0.1 + i * 0.267); pos(f, fx - 0.22 * VW, 0.03 * VH, 0.44 * VW, 1.35 * VH); });
+    // i fari partono dall'americana (stessi punti delle teste disegnate) e sono lunghi abbastanza da arrivare ai banconi
+    S.fasciPos = [];
+    S.fasci.forEach(function (f, i) { var fx = W * (0.1 + i * 0.267); pos(f, fx - 0.22 * VW, 0.03 * VH, 0.44 * VW, 1.9 * VH); S.fasciPos.push([fx, 0.03 * VH]); });
     function inPub(e) { var z = S.zonePub[e._zona] || S.zonePub[0]; pos(e, z.x + 12 + e._rx * (z.w - 24), z.y + 24 + e._ry * (z.h - 60)); }
     S.lucine.forEach(inPub); S.flash.forEach(inPub);
     S.bastoni.forEach(inPub); S.cartelli.forEach(inPub);
@@ -1200,6 +1228,7 @@
     });
     S.file = S.posti.length > 4 ? 2 : 1;
     if (S.dopoLayout) try { S.dopoLayout(S); } catch (e) {}   // il gioco sistema i suoi pezzi (es. i banconi delle squadre)
+    if (S.luciBase) applicaLuci(S);   // i fari puntati vanno rifatti sui posti nuovi
   }
 
   // ---------- TELECAMERA ----------
@@ -1269,6 +1298,7 @@
     m.mosse++; if (lenti / d.length > 0.25) m.male++;
     if (m.mosse >= 3 && m.male >= 2) {
       S.leggeroAuto = true; S.vista.classList.add("st-leggero", "st-leggero-auto");
+      var P = S.par; if (P && P.im) { P.tc = P.obTc.slice(); P.kt = P.obKt; P.luce = P.obLuce; disegnaParete(S); }   // la parete si ferma già al colore chiesto
       try { console.info("[studio] il telefono fatica: tolgo le luci che ballano"); } catch (e) {}
     }
   }
@@ -1315,8 +1345,89 @@
     });
   }
   function lampo(S) { var l = S.lampoEl; l.classList.remove("on"); void l.offsetWidth; l.classList.add("on"); }
-  function accendi(S, i, on) { var X = S.L[i]; if (X) X.el.classList.toggle("acceso", !!on); }
-  function accendiSolo(S, i) { S.L.forEach(function (X, k) { X.el.classList.toggle("acceso", k === i); }); }
+  function accendi(S, i, on) { var X = S.L[i]; if (X) X.el.classList.toggle("acceso", !!on); luciSuiAccesi(S); }
+  function accendiSolo(S, i) { S.L.forEach(function (X, k) { X.el.classList.toggle("acceso", k === i); }); luciSuiAccesi(S); }
+
+  // ---------- 🎛️ LA REGIA DELLE LUCI (tappa 2, 1 nov 2026) ----------
+  // Le luci seguono il gioco da sole, i giochi non devono fare niente di nuovo:
+  //  · chi ha il turno (leggio acceso): due fari dall'alto si girano su di lui e la parete prende un po' del suo colore;
+  //  · chi fa punti: la parete si accende del suo colore e i fari vanno su di lui per un momento;
+  //  · «ohhh» del pubblico o punti persi: la parete si abbassa un attimo; chi salta in aria (fuori con lampo): lampo rosso;
+  //  · chi vince: parete d'oro e TUTTI i fari su di lui.
+  // Si muovono solo i fari (rotazione, con una transizione) e i colori della parete (che si ridisegna già da sola): niente lampeggi, niente filtri.
+  function colDi(S, i) { var X = S.L[i]; return X ? X.col : "#ffffff"; }
+  function liberaFascio(f, fermo) {   // il faro torna a spazzare la sala: prima al centro, piano, poi riparte la spazzata da lì (niente scatti)
+    if (!f._punta) return;
+    f._punta = false; clearTimeout(f._tLib);
+    f.style.transition = fermo ? "none" : "transform .8s ease-in-out"; f.style.transform = "rotate(0deg)";   // («riduci movimento»: subito)
+    if (f._col !== f._col0) { f._col = f._col0; fascio(f, rgbaDi(f._col0, 0.5)); }
+    f._tLib = setTimeout(function () {
+      if (f._punta) return;
+      f.style.transition = ""; f.style.transform = ""; f.style.animation = "";
+      f.style.animationDuration = f._dur + "s"; f.style.animationDelay = (-f._dur / 2) + "s";   // a metà della spazzata l'angolo è 0: riparte da dove è
+    }, fermo ? 0 : 820);
+  }
+  function puntaFascio(S, k, i, col) {
+    var f = S.fasci[k], p = S.posti && S.posti[i], o = S.fasciPos && S.fasciPos[k]; if (!f || !p || !o) return;
+    clearTimeout(f._tLib);
+    if (!f._punta) {   // ferma la spazzata dov'è (l'angolo di adesso), poi da lì gira verso il concorrente
+      var m = getComputedStyle(f).transform;
+      f.style.transition = "none"; f.style.animation = "none"; f.style.transform = m && m !== "none" ? m : "rotate(0deg)"; void f.offsetWidth;
+      f._punta = true;
+    }
+    var ang = -Math.atan2(p.cx - o[0], (p.top + 0.55 * p.w) - o[1]) * 180 / Math.PI;   // 0° = dritto in giù
+    f.style.transition = S.par && S.par.ferma ? "none" : "transform .7s cubic-bezier(.3,.8,.3,1)";   // con «riduci movimento» il faro è subito lì
+    f.style.transform = "rotate(" + ang.toFixed(1) + "deg)";
+    if (col && f._col !== col) { f._col = col; fascio(f, rgbaDi(col, 0.55)); }   // ridisegnato una volta (64×380): non a ogni fotogramma
+  }
+  // lista: su chi puntare; tutti = tutti i fari (vittoria), se no i due più vicini a ognuno; gli altri fari spazzano la sala
+  function puntaFasci(S, lista, tutti, col) {
+    var F = S.fasci || [], pos = S.fasciPos || [], usati = {};
+    (lista || []).forEach(function (i) {
+      var p = S.posti && S.posti[i]; if (!p) return;
+      var ord = F.map(function (f, k) { return k; }).filter(function (k) { return pos[k] && !usati[k]; })
+        .sort(function (a, b) { return Math.abs(pos[a][0] - p.cx) - Math.abs(pos[b][0] - p.cx); });
+      (tutti ? ord : ord.slice(0, lista.length > 1 ? 1 : 2)).forEach(function (k) { usati[k] = true; puntaFascio(S, k, i, col || mescola(colDi(S, i), "#ffffff", 0.45)); });
+    });
+    F.forEach(function (f, k) { if (!usati[k]) liberaFascio(f, S.par && S.par.ferma); });
+  }
+  function applicaLuci(S) {   // la situazione di base (finito un momento forte si torna qui)
+    var b = S.luciBase || { m: "normale" };
+    if (b.m === "vittoria") { puntaFasci(S, [b.i], true, "#fff1c2"); bersaglioParete(S, "#ffc247", 0.78, 1.18); }
+    else if (b.m === "turno" && b.lista.length) {
+      puntaFasci(S, b.lista, false);
+      if (b.lista.length === 1) bersaglioParete(S, colDi(S, b.lista[0]), 0.32, 0.92); else bersaglioParete(S, null, 0, 0.95);
+    } else { puntaFasci(S, [], false); bersaglioParete(S, null, 0, 1); }
+  }
+  function luciSuiAccesi(S) {   // dopo accendi / accendiSolo: i fari seguono chi è acceso
+    if (!S.L) return;
+    var lista = []; S.L.forEach(function (X, k) { if (X.el.classList.contains("acceso")) lista.push(k); });
+    if (S.luciBase && S.luciBase.m === "vittoria" && lista.length === 1 && lista[0] === S.luciBase.i) return;   // il vincitore resta in festa
+    S.luciBase = lista.length ? { m: "turno", lista: lista } : { m: "normale" };
+    if (!S.tLuci) applicaLuci(S);   // (durante un momento forte si aspetta che finisca)
+  }
+  // un momento forte che dura poco, poi si torna alla situazione di base
+  function momentoLuci(S, col, kt, luce, ms, lista) {
+    clearTimeout(S.tLuci);
+    bersaglioParete(S, col, kt, luce);
+    if (lista && lista.length) puntaFasci(S, lista, false, col ? mescola(col, "#ffffff", 0.45) : null);
+    S.tLuci = setTimeout(function () { S.tLuci = null; if (S.vivo()) applicaLuci(S); }, ms);
+    S.tLuciFine = performance.now() + ms;
+  }
+  function vittoriaLuci(S, i) { clearTimeout(S.tLuci); S.tLuci = null; S.luciBase = i >= 0 ? { m: "vittoria", i: i } : { m: "normale" }; applicaLuci(S); }
+  // punti: se ne arrivano tanti insieme (es. la classifica di un round) li raccolgo e li festeggio tutti insieme
+  // (chi fa punti mentre la festa è ancora accesa si aggiunge alla stessa festa: la parete diventa bianca una volta e i fari vanno anche su di lui)
+  function puntiLuci(S, i) {
+    var R = S.raccolta || (S.raccolta = { lista: [], fino: 0 });
+    if (performance.now() > R.fino) R.lista = [];   // nessuna festa dei punti in corso: se ne comincia una nuova
+    if (R.lista.indexOf(i) < 0) R.lista.push(i);
+    clearTimeout(R.t);
+    R.t = setTimeout(function () {
+      var l = R.lista.slice(); if (!S.vivo() || !l.length) return;
+      R.fino = performance.now() + 1300;
+      momentoLuci(S, l.length === 1 ? colDi(S, l[0]) : "#ffffff", l.length === 1 ? 0.62 : 0.3, 1.35, 1300, l);
+    }, 60);
+  }
   function faccia(S, i, f) { var X = S.L[i]; if (!X || X.faccia === (f || null)) return; X.faccia = f || null; mettiAvatar(X, S.gioc[i], f); }
   function tutteNormali(S) { S.L.forEach(function (X, i) { faccia(S, i, null); }); }
   function puntiLeggio(S, i, valore, delta) {
@@ -1325,6 +1436,8 @@
     function punti(n) { return (n < 0 ? "−" : "") + String(Math.abs(Math.round(n))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }   // cifre col punto: 1.500
     function scrivi(v) { var tx = punti(v); if (X.disp && !X.disp.testo && X.disp.t === tx) return; X.disp = { t: tx, neg: v < 0, testo: false }; disegnaBanco(X); }
     if (!delta) return scrivi(valore);
+    if (delta > 0) puntiLuci(S, i);   // la parete e i fari festeggiano chi fa punti
+    else if (!S.tLuci) momentoLuci(S, null, 0, 0.62, 900, null);   // punti persi: la parete si abbassa un attimo
     X.delta.textContent = (delta > 0 ? "+" : "−") + punti(Math.abs(delta));
     X.delta.style.color = delta > 0 ? "#6ff0a6" : "#ff8d98";
     X.delta.classList.remove("on"); void X.delta.offsetWidth; X.delta.classList.add("on");
@@ -1351,7 +1464,10 @@
       S.flash.forEach(function (f, k) { setTimeout(function () { f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }, 100 + Math.random() * 1300); });
       setTimeout(function () { S.pubWrap.classList.remove("salta"); }, tipo === "ovazione" ? 2800 : 1900);
       FX.applauso(tipo === "ovazione" ? "forte" : tipo === "piano" ? "piano" : null);
-    } else FX.ohh();
+    } else {
+      FX.ohh();
+      if (!S.tLuci || performance.now() > S.tLuciFine - 300) momentoLuci(S, null, 0, 0.5, 1400, null);   // «ohhh»: la sala si abbassa (mai sopra una festa appena cominciata)
+    }
   }
   function logoSchermo(S) {
     fermaTimer(S);
@@ -1408,7 +1524,7 @@
     FX.rullo(1.6);
     await dorme(1800); viaTerzo(S);
     if (vinc >= 0) {
-      lampo(S); accendiSolo(S, vinc);
+      lampo(S); accendiSolo(S, vinc); vittoriaLuci(S, vinc);   // parete d'oro e tutti i fari sul vincitore
       await suLeggio(S, vinc, 1100);
       faccia(S, vinc, "esulta");
       terzo(S, vinc, (S.gioc[vinc] ? S.gioc[vinc].nome : "") + " vince!", sotto || "", "🏆");
@@ -1428,8 +1544,11 @@
   }
   // quali leggii si possono toccare (anello verde che pulsa); lista di indici
   function tocca(S, lista) { S.L.forEach(function (X, k) { X.el.classList.toggle("tocca", lista.indexOf(k) >= 0); }); }
-  function fuori(S, i, on) {
+  // lampo = true solo quando il concorrente salta in aria davanti a tutti (la bomba della Patata): lampo rosso e fari su di lui.
+  // Chi esce dalla partita o si scollega va in grigio e basta.
+  function fuori(S, i, on, lampo) {
     var X = S.L[i]; if (!X) return; X.el.classList.toggle("fuori", !!on);
+    if (on && lampo && !X.grigio && S.rasterOk) momentoLuci(S, "#ff3b30", 0.72, 1.3, 1000, [i]);
     if (!!X.grigio !== !!on) { X.grigio = !!on; mettiAvatar(X, S.gioc[i], X.faccia); disegnaBanco(X); }   // avatar e bancone in bianco e nero
   }
   // la telecamera trema (un'esplosione): la muovo io, così lo studio non si ridisegna
