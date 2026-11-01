@@ -9,7 +9,7 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 294,
+    v: 295,
     data: "1 novembre 2026",
     titolo: "🤥 La Balla Colossale: la prima pagina, la Balla Finale e tante notizie nuove",
     descrizione: [
@@ -17,6 +17,18 @@ window.SG_NOVITA = [
       "🔥 La Balla Finale: l'ultima notizia ha due pezzi mancanti. Si inventano tutti e due e vale il triplo: chi è indietro può ancora vincere.",
       "🎯 Sceglie chi è ultimo: prima di ogni notizia chi è ultimo in classifica sceglie l'argomento tra tre (🐾 Animali, 🏛️ Storia, 🍝 Italia…). Si può spegnere nelle regole.",
       "Le notizie sono quasi il doppio (746, più 67 per la Balla Finale), controllate una per una: via quelle che si indovinavano dalla domanda, e le balle della redazione più credibili."
+    ]
+  },
+  {
+    v: 294,
+    data: "1 novembre 2026",
+    titolo: "📺 Lo studio TV nuovo: luci, parete LED e pavimento che riflette",
+    descrizione: [
+      "Lo studio dei game show (La Balla Colossale, La Ruota della Fortuna, La Patata Bollente, Il Prezzo è Giusto, La linea del tempo, Nomi, Cose e Città, Parola d'ordine) è tutto nuovo, da prima serata.",
+      "Dietro al maxischermo c'è una parete LED che si muove piano a tempo di musica e prende i colori del gioco: oro e arancio per la Ruota, fuoco per la Patata, verde acqua per Nomi, Cose e Città…",
+      "Sotto il maxischermo una scalinata illuminata; i concorrenti stanno dietro a banconi di vetro col nome che si accende quando tocca a loro, e il pavimento lucido riflette tutto, concorrenti compresi.",
+      "Le luci seguono il gioco da sole: i fari dall'alto si girano su chi ha il turno, la parete si accende del colore di chi fa punti, la sala si abbassa all'«ohhh» del pubblico, nella Patata chi salta in aria ha il lampo rosso e chi vince ha la parete d'oro e tutti i fari addosso.",
+      "Il gioco non cambia: domande, tabelloni e carte stanno sul maxischermo come prima, e mentre si gioca lo studio si ferma (anche sui telefoni meno potenti va liscio)."
     ]
   },
   {
