@@ -17,6 +17,7 @@ window.SG_NOVITA = [
       "Tasti delle mosse nuovi: ognuno col suo colore (Carta verde, Stai rosso, Raddoppia oro, Dividi azzurro, Assicura viola) e la mossa consigliata si accende.",
       "Per puntare c'è una lineetta da trascinare: a sinistra la puntata minima, a destra tutte le tue monete. Se punti più di metà delle tue Speed Coins il gioco ti chiede un secondo sì.",
       "Nuova mossa «🏳️ Resa»: con le prime due carte ti ritiri e riprendi metà puntata, come al casinò.",
+      "Nuova scommessa «👯 Coppia», come la «Perfect Pairs» dei casinò: accendi l'interruttore accanto alla puntata e scommetti la puntata minima che le tue prime due carte siano una coppia. Paga subito, anche se poi la mano va male: 6 volte con due colori diversi, 15 con lo stesso colore, 25 se sono identiche. Si spegne nelle regole.",
       "Il gioco spiega le regole del casinò quando succedono: «🎩 Il banco tira sempre fino a 17» e «Assi divisi: una carta per asso».",
       "🏆 Gara della serata: online si gioca con le Speed Coins. Ognuno paga la quota, tutti partono con le stesse fiches e il montepremi va ai primi. Chi resta senza fiches può rientrare. La classifica è sempre in alto, a metà c'è il giro di boa, le ultime 3 mani la puntata minima raddoppia e l'ultima si punta in segreto: le puntate si scoprono tutte insieme.",
       "A fine partita i titoli: 🍀 Il Fortunato, 🎲 Lo Spericolato, 💥 Lo Sballone, 🏳️ Il Prudente, 🧊 Il Ragioniere e 🎩 L'amico del banco. E quando qualcuno fa Black Jack o punta tutto, lo vedono tutti in grande."

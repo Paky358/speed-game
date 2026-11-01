@@ -211,14 +211,12 @@
     if (v.giocatori[seat(v, "Giulia")].fiches !== 0) no("Giulia doveva perdere tutto alla prima mano (" + v.giocatori.map(function (g) { return g.nome + ":" + g.fiches; }).join(" ") + ")");
     var bR = await W.aspetta(function () { return [].find.call(G.document.querySelectorAll(".bj-hero button"), function (b) { return /Rientra \(1\.000/.test(b.textContent) && !b.disabled; }); }, 6000);
     if (!bR) no("Giulia a zero non vede «🔁 Rientra (1.000 🪙)» («" + T(G).slice(-120) + "»)");
-    var spia = [], rg0 = gid(), inv0 = rg0.invia;
-    rg0.invia = function (m) { spia.push("manda " + m.t); return inv0.apply(this, arguments); };
-    var giro = setInterval(function () { var c = G.document.querySelector(".conferma-sfondo"); var tx = c ? "finestra «" + c.innerText.replace(/\s+/g, " ").slice(0, 40) + "»" : "niente"; if (spia[spia.length - 1] !== tx) spia.push(tx); }, 30);
     bR.click();
-    var si = await W.aspetta(function () { return [].find.call(G.document.querySelectorAll(".conferma-sfondo button"), function (b) { return /Sì, rientro/.test(b.textContent) && !b.disabled; }); }, 3000);
-    clearInterval(giro); rg0.invia = inv0;
-    if (!si) no("il rientro non chiede conferma (spia: " + spia.join(" → ") + "; finestra: «" + ((G.document.querySelector(".conferma-sfondo") || {}).innerText || "nessuna") + "», fase " + vmC().fase + ", tasto ancora lì: " + !!G.document.body.contains(bR) + ", Giulia: «" + T(G).slice(-100) + "»)");
-    si.click();
+    // la domanda deve comparire; il «Sì» rosso lo tocca chi arriva prima: io o il copione (__autoConferma lo tocca da solo ogni 100 ms)
+    var visto = await W.aspetta(function () { var c = G.document.querySelector(".conferma-sfondo"); return c && /Rientri nella gara\?/.test(c.innerText); }, 2000);
+    if (!visto) no("il rientro non chiede conferma («" + T(G).slice(-100) + "»)");
+    var si = await W.aspetta(function () { return [].find.call(G.document.querySelectorAll(".conferma-sfondo button"), function (b) { return /Sì, rientro/.test(b.textContent) && !b.disabled; }); }, 1500);
+    if (si) si.click();
     if (!await W.aspetta(function () { var v = vmC(); return v.gara.monte === 3000 && v.gara.pagati[seat(v, "Giulia")] === 2 && v.giocatori[seat(v, "Giulia")].fiches === 1000; }, 6000)) no("il rientro non arriva: " + JSON.stringify(vmC().gara));
     if (!await W.aspetta(function () { return W.__portafogli.Giulia === 1000; }, 5000)) no("il rientro non è stato pagato da Giulia una volta (" + W.__portafogli.Giulia + ")");
     x.push("Giulia rientra (montepremi 3.000)");
@@ -292,5 +290,26 @@
     if (W.__portafogli.Paky !== 5000 || W.__portafogli.Giulia !== 3000) no("rimborso doppio: " + JSON.stringify(W.__portafogli));
     var e = W.erroriTel(); if (e.length) no("errori: " + e.slice(0, 3).join(" | "));
     return "host chiude a metà: Paky 5.000 e Giulia 3.000 di nuovo (" + JSON.stringify(W.__salvate) + ")";
+  } });
+
+  COPIONE.aggiungi("bjn7", { nome: "Black Jack: la scommessa «👯 Coppia» (accesa di partenza): due re dello stesso colore pagano 15 a 1 appena arrivano le carte", fai: async function () {
+    var r = await regoleBJ();
+    if (!/Coppia.*15 volte/.test(r)) no("nelle regole non c'è la Coppia");
+    var P = await W.apriTel("Paky", { x: 0, prima: function (w) { trucca(w, ["K♥", "9♠", "K♦", "7♣"]); } });
+    var tess = await W.aspetta(function () { return A.tessera(P, "Black Jack"); }, 6000); tess.click(); await W.dorme(300);
+    W.clicca(P, /Su questo telefono/, ".modo-grande");
+    for (var k = 0; k < 8 && !q(P, ".bj-wrap"); k++) { await W.dorme(300); W.clicca(P, /Avanti|Comincia/); }
+    await W.dorme(700); var sala = q(P, ".bj-sala"); if (sala) sala.click(); await W.dorme(300);
+    var bc = await W.aspetta(function () { return q(P, ".bj-coppia"); }, 6000);
+    if (!bc) no("accanto alla puntata non c'è «👯 Coppia» («" + hero(P) + "»)");
+    if (bc.classList.contains("on") || !/Coppia \+10/.test(bc.textContent)) no("la Coppia non parte spenta da 10 («" + bc.textContent + "»)");
+    bc.click(); if (!bc.classList.contains("on")) no("toccata, la Coppia non si accende");
+    var m = await A.misuraSchermata(P, "Paky", 360, 640); if (m) no("a 360x640 con la Coppia: " + m);
+    W.clicca(P, /^Punta 100/);
+    var ev = await W.aspetta(function () { var e = q(P, ".bj-evento"); return e && /coppia di colore! \+150/.test(e.textContent) ? e.textContent : null; }, 12000);
+    if (!ev) no("non compare «👯 Paky: coppia di colore! +150»");
+    if (!await W.aspetta(function () { return /1\.050/.test((q(P, ".bj-turno") || {}).textContent || ""); }, 5000)) no("dopo la coppia Paky non ha 1.050 («" + ((q(P, ".bj-turno") || {}).textContent) + "»)");
+    var err = P.__err || []; if (err.length) no("errori: " + err.join(" | "));
+    return "«👯 Coppia +10» acceso accanto alla puntata, re di cuori e re di quadri: «" + ev + "», 1.000 − 100 − 10 + 160 = 1.050";
   } });
 })();
