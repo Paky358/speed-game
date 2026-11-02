@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 300,
+    data: "2 novembre 2026",
+    titolo: "🏷️ Il Prezzo è Giusto: 11 foto nuove",
+    descrizione: [
+      "Altri 11 premi hanno la loro foto vera al posto del disegnino: la panna da cucina, la tastiera Logitech, la visita dall'oculista, la lezione di yoga, la seduta di fisioterapia, la barba dal barbiere, i leggings, l'assicurazione dell'auto, la tribuna di Monza e il LEGO Titanic."
+    ]
+  },
+  {
     v: 299,
     data: "2 novembre 2026",
     titolo: "🖼️ Immagini nuove nella home",
