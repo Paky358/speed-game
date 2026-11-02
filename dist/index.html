@@ -49005,6 +49005,17 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 298,
+    data: "2 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: la giornata senza spoiler",
+    descrizione: [
+      "Nelle azioni della giornata non si capisce più prima del tiro come andrà a finire: fino al tiro tutto si muove uguale, che sia gol, parata, palo o fuori.",
+      "C'è sempre un difensore sul palo: prima c'era solo quando poi la salvava sulla linea.",
+      "Il passettino del portiere prima del tiro non dice più da che parte andrà il pallone.",
+      "Nel contropiede il portiere a volte esce anche quando non è gol: può fermarti in uscita, o ti fa tirare da posizione difficile. E anche il tiro da centrocampo, rarissimo, ora può finire fuori o essere parato."
+    ]
+  },
+  {
     v: 297,
     data: "2 novembre 2026",
     titolo: "⚽ Mini Asta Fantacalcio: listone nuovo e un portiere per squadra",
@@ -63041,7 +63052,7 @@ window.SG_UNAPAROLA = [
           if (m1 < 85 && caso01() < 0.07) P.ev.push({ m: m1 + 1 + Math.floor(caso01() * (89 - m1)), t: "esp", s: s, chi: y.k, dg: 1, come: "entrata" });   // 🟨🟨 il secondo giallo
         }
         if (caso01() < ca[0] * 0.5 + ca[1]) P.ev.push({ m: minuto(), t: "rec", s: s, chi: y.k });   // 👏 un'entrata dura… pulita: così «entrata dura» non vuol dire per forza giallo (circa una volta su due)
-        var occ = y.ruolo === "A" ? 0.25 + 0.012 * y.q : y.ruolo === "C" ? 0.1 + 0.006 * y.q : 0, vo = aCaso(SCENE_OCC);
+        var occ = y.ruolo === "A" ? 0.25 + 0.012 * y.q : y.ruolo === "C" ? 0.1 + 0.006 * y.q : 0, vo = caso01() < 0.004 ? "centrocampo" : aCaso(SCENE_OCC);   // (da centrocampo anche le occasioni, rare: se no quel tiro voleva dire sempre gol)
         if (vo === "punizione" && !tiroN(y, "punizioni")) vo = aCaso(SCENE_OCC.filter(function (x) { return x !== "punizione"; }));   // (la punizione la tira chi la batte)
         var ao = caso01() < 0.6 ? marcatore(rosa, PESO_ASS, y) : null;   // (anche le occasioni hanno chi passa, come i gol: il nome di chi passa non svela niente)
         if (caso01() < occ) P.ev.push({ m: minuto(), t: "occ", s: s, chi: y.k, ass: ao ? ao.k : null, esito: aCaso(["palo", "fuori", "fuori", "alto", "parata", "parata", "traversa", "linea"]), v: vo });
@@ -64162,13 +64173,21 @@ window.SG_UNAPAROLA = [
     function tiro(t0, da, z0, q) {
       q = q || {};
       if (z0 < 1 && tira) calcia(tira, t0);   // (di piede: si vede il calcio; di testa no)
-      var lt = q.lato || (rnd() < 0.5 ? 1 : -1), zq = q.quota != null ? q.quota : (rnd() < 0.4 ? 1.9 : 0.35), d = q.dur || 0.11, tA = t0 + d, pX = 0.5 + lt * 0.054, es = esito, td = t0 + d * 0.4;
+      var lt = q.lato || (rnd() < 0.5 ? 1 : -1), zq = q.quota != null ? q.quota : (rnd() < 0.4 ? 1.9 : 0.35), d = q.dur || 0.11, tA = t0 + d, es = esito, td = t0 + d * 0.4, pp = rnd() < 0.5 ? 1 : -1;
+      var dp = sc.dPalo && !sc.dPalo.fatto ? sc.dPalo : null;   // (il difensore sul palo, se la scena ce l'ha)
+      if (dp && es === "linea" && !q.lato) lt = dp.s;   // (sulla linea la toglie lui: il tiro va dalla sua parte)
+      var pX = 0.5 + lt * 0.054;
+      if (dp) {   // 🦵 il difensore sul palo: c'è in TUTTE le azioni, fermo sul palo fino al tiro; solo sulla linea si butta sul pallone (2 nov 2026: prima c'era solo quando poi salvava)
+        muovi(dp, t0, 0.5 + dp.s * 0.165, 0.92); muovi(dp, tA, es === "linea" ? 0.5 + lt * 0.039 : 0.5 + dp.s * 0.165, 0.942); dp.fatto = true;
+        if (es === "linea") { posa(dp, tA - 0.03, {}); posa(dp, tA, { cade: -lt * 0.5, salto: 0.2 }); posa(dp, tA + 0.12, { cade: -lt * 0.5 }); posa(dp, tA + 0.3, {}); }
+      }
       palla([[t0, da[0], da[1], z0]]); sc.lt = lt;
-      function tuffa(dove, quanto, tempo) { muovi(por, td, 0.5, 0.935); muovi(por, tempo, 0.5 + dove * 0.068 * quanto, 0.935); posa(por, td, { tuffo: 0 }); posa(por, tempo, { tuffo: dove * quanto, salto: 0.35 * quanto, braccia: 1 }); posa(por, tempo + 0.09, { tuffo: dove * quanto, salto: 0, braccia: 1 });
+      function tuffa(dove, quanto, tempo) { var u = por.pts[por.pts.length - 1]; if (u[0] < t0) por.pts.push([t0, u[1], u[2]]);   // (fino al tiro resta dov'è: uguale per tutti gli esiti)
+        muovi(por, td, 0.5, 0.935); muovi(por, tempo, 0.5 + dove * 0.068 * quanto, 0.935); posa(por, td, { tuffo: 0 }); posa(por, tempo, { tuffo: dove * quanto, salto: 0.35 * quanto, braccia: 1 }); posa(por, tempo + 0.09, { tuffo: dove * quanto, salto: 0, braccia: 1 });
         if (es !== "gol" && es !== "cucchiaio" && !op.rib && !op.ribGol) { posa(por, tempo + 0.22, { tuffo: dove * quanto * 0.5 }); posa(por, tempo + 0.38, {}); }   // (se non è gol si rialza: prima seduto, poi in piedi)
       }
       if (q.fermo) tuffa = function () {};   // (il portiere resta dov'è: è uscito o è a terra)
-      else if (por.pts.length === 1) { muovi(por, Math.max(0.04, t0 - 0.3), 0.5 - lt * 0.02, 0.935); muovi(por, Math.max(0.06, t0 - 0.12), 0.5 + lt * 0.014, 0.935); }   // (prima del tiro un passettino di qua e di là, sulle punte)
+      else if (por.pts.length === 1) { muovi(por, Math.max(0.04, t0 - 0.3), 0.5 - pp * 0.02, 0.935); muovi(por, Math.max(0.06, t0 - 0.12), 0.5 + pp * 0.014, 0.935); }   // (prima del tiro un passettino di qua e di là, sulle punte: da che parte lo dice il seme, MAI il lato del tiro o del tuffo)
       if (op.lento && !q.senzaLento) rallenta(t0, tA + 0.14);   // (uguale per gol e non gol: il rallentatore non dice come finisce)
       if (es === "gol" && fin === "dev") {   // deviato da un difensore: cambia strada a metà, il portiere va dall'altra parte
         var mx = da[0] + (pX - da[0]) * 0.55, my = da[1] + (GL - da[1]) * 0.55;
@@ -64203,8 +64222,8 @@ window.SG_UNAPAROLA = [
         palla([[tA, 0.5 + lt * 0.023, GL + 0.004, 3.3], [tA + 0.08, 0.5 + lt * 0.03, 1.0, 3.6], [1, 0.5 + lt * 0.03, 1.03, 0]]);
         tuffa(lt, 0.3, tA); scritta(tA, "ALTO!", "#ffffff"); return (sc.dunque = tA);
       }
-      if (es === "linea") {   // un difensore la toglie sulla linea, col portiere battuto
-        att("D", et.linea || null, [[0, 0.5 + lt * 0.15, 0.9], [t0, 0.5 + lt * 0.165, 0.92], [tA, 0.5 + lt * 0.039, 0.942]], [[tA - 0.03, {}], [tA, { cade: -lt * 0.5, salto: 0.2 }], [tA + 0.12, { cade: -lt * 0.5 }], [tA + 0.3, {}]]);
+      if (es === "linea") {   // un difensore la toglie sulla linea, col portiere battuto (nelle scene senza il difensore sul palo, come prima)
+        if (!dp) att("D", null, [[0, 0.5 + lt * 0.15, 0.9], [t0, 0.5 + lt * 0.165, 0.92], [tA, 0.5 + lt * 0.039, 0.942]], [[tA - 0.03, {}], [tA, { cade: -lt * 0.5, salto: 0.2 }], [tA + 0.12, { cade: -lt * 0.5 }], [tA + 0.3, {}]]);
         palla([[tA, 0.5 + lt * 0.036, 0.938, 0.3], [tA + 0.14, 0.5 + lt * 0.3, 0.74, 2.6], [tA + 0.26, 0.5 + lt * 0.36, 0.62, 0], [1, 0.5 + lt * 0.4, 0.55, 0]]);
         tuffa(-lt, 0.6, tA - 0.02); scritta(tA, "SULLA LINEA!", "#69db7c"); return (sc.dunque = tA);
       }
@@ -64213,6 +64232,10 @@ window.SG_UNAPAROLA = [
     }
     var tira, tg;
     if (tipo === "gol" || tipo === "occ" || tipo === "ann") {
+      if (!/^(mischia|testa|assedio|ultimo)$/.test(v || "")) {   // 🦵 il difensore sul palo (le scene da finale hanno il loro): da che parte lo dice il seme
+        var sP = /^(incrocio|miracolo)$/.test(v || "") ? 1 : rnd() < 0.5 ? 1 : -1;
+        sc.dPalo = att("D", null, [[0, 0.5 + sP * 0.15, 0.9], [0.3, 0.5 + sP * 0.165, 0.92]]); sc.dPalo.s = sP;   // (sul palo da 0,3 in poi: gli stessi tempi in tutte le azioni)
+      }
       if (v === "cross" || v === "rovesciata") {
         var pc0 = att("A", et.passa, [[0, 0.84, 0.5], [0.3, 0.9, 0.82], [0.4, 0.89, 0.84]]); calcia(pc0, 0.32);
         palla([[0, 0.83, 0.51, 0], [0.3, 0.89, 0.83, 0], [0.33, 0.9, 0.845, 0.2], [0.43, 0.7, 0.84, 4.2]]);
@@ -64254,11 +64277,11 @@ window.SG_UNAPAROLA = [
         tira = att("A", et.tira, [[0, 0.64, 0.16], [0.42, 0.6, 0.62], [0.56, 0.55, 0.8]]);
         palla([[0, 0.35, 0.09, 0], [0.12, 0.36, 0.125, 0], [0.27, 0.5, 0.4, 8], [0.42, 0.6, 0.625, 0], [0.56, 0.55, 0.805, 0]]);
         att("D", null, [[0, 0.56, 0.3], [0.56, 0.56, 0.72]]); att("D", null, [[0, 0.44, 0.36], [0.56, 0.5, 0.7]]);
-        if (esito === "gol" && !fin) {   // scarta anche il portiere e la mette nella porta vuota
-          if (op.lento) rallenta(0.57, 0.8);   // (come il tiro del non-gol)
+        if (rnd() < 0.5 && fin !== "dev") {   // il portiere esce (2 nov 2026: una volta su due, qualunque cosa succeda; prima usciva solo nei gol)
+          if (op.lento) rallenta(0.57, 0.8);   // (come il tiro senza uscita)
           muovi(por, 0.46, 0.5, 0.92); muovi(por, 0.56, 0.535, 0.86); posa(por, 0.55, {}); posa(por, 0.6, { tuffo: 1, salto: 0.15, braccia: 1 }); posa(por, 0.7, { tuffo: 1, braccia: 1 });
-          muovi(tira, 0.63, 0.46, 0.87); palla([[0.63, 0.455, 0.872, 0], [0.7, 0.49, NET, 0.3], [1, 0.49, NET, 0]]); calcia(tira, 0.63);
-          sc.rete = 0.7; scritta(0.7, "GOL!"); tg = sc.dunque = 0.7;
+          if (esito === "parata") { palla([[0.6, 0.545, 0.858, 0], [1, 0.545, 0.858, 0]]); scritta(0.6, "PARATA!", "#69db7c"); tg = sc.dunque = 0.6; }   // (gliela toglie dai piedi in uscita)
+          else { muovi(tira, 0.63, 0.46, 0.87); palla([[0.63, 0.455, 0.872, 0]]); tg = tiro(0.64, [0.455, 0.872], 0, { dur: 0.07, fermo: true, senzaLento: true }); }   // (lo scarta e tira da posizione defilata: dentro, fuori, palo, sulla linea…)
         } else { muovi(por, 0.5, 0.52, 0.9); tg = tiro(0.57, [0.55, 0.81], 0.3, { dur: 0.09 }); }
       } else if (v === "pallonetto") {
         calcia(att("A", et.passa, [[0, 0.48, 0.38], [0.2, 0.49, 0.42]]), 0.2);
@@ -64418,7 +64441,7 @@ window.SG_UNAPAROLA = [
         palla([[0, 0.35, 0.575, 0], [0.28, 0.4, 0.63, 0], [0.4, 0.47, 0.925, 0.5], [0.5, 0.56, 0.86, 0]]);
         muovi(por, 0.36, 0.5, 0.935); muovi(por, 0.4, 0.47, 0.935); posa(por, 0.34, {}); posa(por, 0.4, { tuffo: -1, salto: 0.3, braccia: 1 }); posa(por, 0.5, { tuffo: -1, braccia: 1 });
         att("D", null, [[0, 0.62, 0.78], [0.5, 0.6, 0.86]]);
-        if (esito === "gol") { if (op.lento) rallenta(0.52, 0.74); calcia(tira, 0.5); palla([[0.55, 0.53, NET, 0.3], [1, 0.53, NET, 0]]); sc.rete = 0.55; scritta(0.55, "GOL!"); tg = sc.dunque = 0.55; }
+        if (esito === "gol") { if (op.lento) rallenta(0.52, 0.74); calcia(tira, 0.52); palla([[0.52, 0.565, 0.855, 0], [0.58, 0.53, NET, 0.3], [1, 0.53, NET, 0]]); sc.rete = 0.58; scritta(0.58, "GOL!"); tg = sc.dunque = 0.58; }   // (calcio e arrivo coi tempi del tiro che non entra)
         else tg = tiro(0.52, [0.565, 0.855], 0, { dur: 0.08, fermo: esito !== "parata" });
       } else if (v === "ribattuta") {   // il portiere ha parato il rigore: il pallone torna in area e qualcuno ci arriva prima di tutti
         posa(por, 0, { tuffo: -1, braccia: 1 }); posa(por, 0.3, { tuffo: -1, braccia: 1 }); posa(por, 0.42, { tuffo: -0.4 }); muovi(por, 0.3, 0.47, 0.935); muovi(por, 0.42, 0.49, 0.93);
@@ -64428,10 +64451,11 @@ window.SG_UNAPAROLA = [
         sc.rete = 0.36; scritta(0.36, "GOL!"); tg = sc.dunque = 0.36;
       } else if (v === "centrocampo") {   // da centrocampo: vede il portiere fuori dai pali e la tira da lontanissimo
         tira = att("A", et.tira, [[0, 0.52, 0.0], [0.22, 0.5, 0.03]]); calcia(tira, 0.22);
-        palla([[0, 0.53, 0.0, 0], [0.22, 0.5, 0.035, 0], [0.45, 0.5, 0.5, 13], [0.7, 0.5, GL, 1.6], [0.73, 0.5, NET, 0.6], [1, 0.5, NET, 0]]);
+        palla([[0, 0.53, 0.0, 0], [0.22, 0.5, 0.035, 0], [0.45, 0.5, 0.5, 13]]);
         muovi(por, 0.2, 0.5, 0.82); muovi(por, 0.68, 0.5, 0.92); posa(por, 0.6, {}); posa(por, 0.69, { salto: 0.5, braccia: 1 }); posa(por, 0.78, { cade: 1 });
         att("D", null, [[0, 0.45, 0.08], [0.22, 0.48, 0.06]]);
-        sc.rete = 0.7; scritta(0.7, "GOL!"); tg = sc.dunque = 0.7; sc.zoomFine = 0.35; sc.tz = 0.6; sc.lento = [0.55, 0.75, 0.45];
+        tg = tiro(0.58, [0.5, 0.79], 5, { dur: 0.12, quota: 1.6, fermo: true, senzaLento: true });   // (2 nov 2026: anche nelle occasioni, e allora parata, traversa, fuori…)
+        sc.zoomFine = 0.35; sc.tz = 0.6; sc.lento = [0.55, 0.75, 0.45];
       } else {   // fuori: il tiro da fuori area (anche un missile all'incrocio)
         calcia(att("A", null, [[0, 0.2, 0.45], [0.2, 0.24, 0.47]]), 0.2);
         tira = att("A", et.tira, [[0, 0.52, 0.44], [0.3, 0.47, 0.49], [0.42, 0.48, 0.53]]);
@@ -64440,6 +64464,7 @@ window.SG_UNAPAROLA = [
         att("D", null, [[0, 0.62, 0.72], [0.44, 0.58, 0.7]]);
         tg = tiro(0.45, [0.48, 0.54], 0.3, { dur: 0.15, quota: rnd() < 0.6 ? 1.9 : 0.4 });
       }
+      if (sc.dPalo && !sc.dPalo.fatto) { var dq = sc.dPalo; muovi(dq, tg, 0.5 + dq.s * 0.165, 0.92); muovi(dq, tg + 0.06, 0.5 + dq.s * 0.165, 0.942); dq.fatto = true; }   // (le azioni che finiscono senza tiro(): resta sul palo uguale)
       if ((tipo === "gol" || tipo === "ann") && tira && et.tira) festa(tira, tg + (v === "rovesciata" ? 0.16 : 0.04));   // (dalla rovesciata prima si rialza)
       if (tipo === "gol" || tipo === "ann") sc.gol = true;
     } else if (tipo === "rig") {   // il rigore: la rincorsa, il tiro, il tuffo; con la ribattuta parata (rib) anche il secondo tiro
