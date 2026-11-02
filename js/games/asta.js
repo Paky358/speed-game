@@ -366,7 +366,7 @@
     ".st-magliabox{flex:0 0 27%;height:100%;display:flex;align-items:center;justify-content:center;}",
     ".st-maglia{max-height:100%;max-width:100%;}",
     ".st-dati{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding:4px 8px;border-radius:8px;background:rgba(0,0,0,.34);text-shadow:0 2px 4px rgba(0,0,0,.7);}",
-    ".st-tiri{display:flex;align-items:center;gap:6px;min-width:0;}.st-dati .st-riga{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;min-width:0;margin-top:0;}",   // (st-riga c'è anche nelle statistiche dell'app, che la mandano a capo: qui sempre su una riga)
+    ".st-dati .st-riga{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;min-width:0;margin-top:0;}",   // (st-riga c'è anche nelle statistiche dell'app, che la mandano a capo: qui sempre su una riga)
     ".st-ruolo{flex:none;font-size:.62rem;font-weight:900;letter-spacing:.04em;padding:3px 7px;border-radius:6px;color:#0d1230;text-shadow:none;}",
     ".st-ruolo-classifica{background:#ffd43b;color:#3a2200;}",
     ".st-rig,.st-pun{flex:none;font-size:.62rem;font-weight:900;letter-spacing:.03em;padding:2px 6px;border-radius:6px;background:#ffd43b;color:#3a2200;text-shadow:none;white-space:nowrap;}.st-rig:empty,.st-pun:empty{display:none;}.st-pun{background:#a5d8ff;color:#06263f;}.st-ang{background:#b2f2bb;color:#0b3d17;}.st-rig.stretta,.st-pun.stretta{font-size:.54rem;padding:2px 4px;letter-spacing:0;}",
@@ -392,6 +392,10 @@
     ".st-nome{font-weight:800;letter-spacing:-.01em;}.st-squadra{font-size:.8rem;font-weight:800;letter-spacing:.06em;}",
     ".st-ruolo{font-size:.68rem;font-weight:800;letter-spacing:.03em;}.st-rig,.st-pun{font-size:.68rem;font-weight:800;letter-spacing:.02em;}",
     ".st-rig.stretta,.st-pun.stretta{font-size:.62rem;padding:2px 5px;letter-spacing:0;}",
+    ".st-rig.media,.st-pun.media{font-size:.56rem;padding:1px 4px;}.st-rig.minima,.st-pun.minima{font-size:.5rem;padding:1px 3px;}",
+    // 🎯 🦶 🚩 (2 nov 2026, il proprietario: «la maglietta la voglio assolutamente tenere… a destra, in piccolo, più in basso»): uno sotto l'altro
+    // a destra dall'altezza del nome in giù, sempre col numero e la scritta intera; nome e prezzo gli lasciano posto
+    ".st-dati{position:relative;}.st-tiri-d{position:absolute;right:6px;top:0;z-index:1;display:flex;flex-direction:column;align-items:stretch;gap:2px;pointer-events:none;}.st-tiri-d .st-rig,.st-tiri-d .st-pun{text-align:center;line-height:1.2;}",
     ".st-prezzo b{font-weight:800;}.st-prezzo span{font-size:.78rem;font-weight:700;}.st-ticker{font-weight:800;font-size:.82rem;letter-spacing:.01em;}",
     // il palco (la classifica finale delle rose): il campo grande con la formazione e, a bordo campo, l'avatar in piedi (l'allenatore).
     // Le misure delle maglie (--mg) e dell'allenatore (--all) le mette misuraPalco, dalla grandezza vera del campo
@@ -1104,7 +1108,7 @@
       "Un solo telefono <b>appoggiato al tavolo</b>: tutti vedono il maxischermo e ognuno offre toccando <b>la sua faccina</b> in panchina. Online ognuno offre dal suo telefono.",
       "<b>20 crediti</b> a testa per una rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono a caso uno alla volta e partono da <b>1 credito</b>; si offre a salto: <b>+1</b>, <b>+2</b> o <b>+5</b>. Ci sono <b>6 secondi</b> per la prima offerta e <b>8</b> dopo ogni rilancio, poi chi offre di più se lo prende. Se nessuno lo vuole <b>torna in fondo al mazzo</b> e si va avanti; solo quando tutti quelli rimasti di un ruolo sono stati rifiutati <b>2 volte</b>, vanno a caso a chi ne ha ancora bisogno.",
       "Chi ha già l'offerta più alta <b>può rialzare da solo</b> (tocca di nuovo la sua faccina, o il tasto): è strategia, così chi ha pochi crediti non ci arriva più. Sotto ogni squadra si leggono i crediti e <b>fin dove può arrivare</b>.",
-      "Sul maxischermo, accanto al calciatore all'asta: <b>🎯 RIGORISTA</b> (anche 2° o 3°), <b>🦶 BATTITORE</b> (punizioni) e <b>🚩 ANGOLI</b>, quelli veri di quest'anno.",
+      "Sul maxischermo, accanto al calciatore all'asta: <b>🎯 RIGORISTA</b>, <b>🦶 PUNIZIONI</b> e <b>🚩 ANGOLI</b> col numero (1°, 2° o 3° della squadra), quelli veri di quest'anno.",
       "Alla fine si scoprono le <b>quotazioni vere</b> dei calciatori, dalla rosa che vale meno a quella che vale di più. Poi si gioca <b>⚽ una giornata di Serie A finta</b>, come nel fantacalcio vero: i vostri calciatori non giocano tra di loro, ognuno gioca con la sua squadra contro chi capita (le 20 squadre si sorteggiano; i risultati dipendono da attacco e difesa veri dell'anno scorso). I gol li segnano soprattutto i più quotati e gli attaccanti; i rigori li tirano i <b>🎯 rigoristi</b> di quest'anno (all'asta c'è la scritta sul maxischermo); i cartellini dipendono da quanti ne ha presi davvero ognuno. Chi comprate gioca sempre. Tutti partono da 6 in pagella (il portiere di solito resta a 6), poi voti e bonus come nel fantacalcio: <b>gol +3</b>, <b>assist +1</b>, <b>giallo −0,5</b>, <b>rosso −1</b>, <b>rigore sbagliato −3</b>, <b>autogol −2</b>; per il portiere <b>gol subito −1</b>, <b>porta inviolata +1</b>, <b>rigore parato +3</b>. Sul campo si vedono con calma i momenti dei vostri calciatori (anche i pali e le parate), col nome e la faccina di chi li ha comprati; a fine primo tempo e al fischio finale arrivano le pagelle. Vince chi fa <b>più fantapunti</b> (a pari punti la rosa che vale di più, poi chi ha più crediti avanzati).",
       "La giornata si spegne nel ⚙️: allora vince la rosa che <b>vale di più</b> (a pari valore chi ha <b>più crediti avanzati</b>).",
       "<b>🏆 3 giornate</b> (si sceglie nel ⚙️): le stesse rose giocano tre giornate di fila, ognuna con partite sorteggiate da capo. Le prime due si vedono <b>veloci</b> (solo i momenti dei vostri calciatori), con la classifica dopo ognuna; la terza si gioca <b>intera</b>, partendo dai punti delle prime due. Vince chi fa <b>più fantapunti sommati</b>.",
@@ -2074,33 +2078,36 @@
     var p = posa !== "giu" && prezzo != null ? String(prezzo) : "";
     if (p !== S.palN.textContent) { S.palN.textContent = p; if (p) rianima(S.pal, "batte"); }
   }
-  function etichetteTiri(S, rn, pn, an) {   // «🎯 2° RIGORISTA», «🦶 BATTITORE» (le punizioni), «🚩 ANGOLI» (il proprietario: mai «rigori», mai «punizioni»): per esteso se c'è posto,
-    // se no più piccole, poi solo il simbolo di battitore e angoli (RIGORISTA resta per intero), poi tutti simboli
-    function o(n) { return n > 1 ? n + "° " : ""; }
-    function solo(ic, n) { return n ? ic + (n > 1 ? " " + n + "°" : "") : ""; }
-    var rig = rn ? "🎯 " + o(rn) + "RIGORISTA" : "", pun = pn ? "🦶 " + o(pn) + "BATTITORE" : "", ang = an ? "🚩 " + o(an) + "ANGOLI" : "";
-    var forme = [[rig, pun, ang, 0], [rig, pun, ang, 1], [rig, pun, solo("🚩", an), 1], [rig, solo("🦶", pn), solo("🚩", an), 1], [solo("🎯", rn), solo("🦶", pn), solo("🚩", an), 1], [rn ? "🎯" : "", pn ? "🦶" : "", an ? "🚩" : "", 1]];
-    var riga = S.ruolo.parentNode, dati = riga && riga.parentNode, dentro = dati && dati.parentNode, badge = [S.rig, S.pun, S.ang];
-    function metti(dove) { badge.forEach(function (b) { if (b.parentNode !== dove) dove.appendChild(b); }); if (S.tiri) S.tiri.style.display = dove === S.tiri ? "" : "none"; }
-    function prova(dove, usato) {   // la prima forma che ci sta in quella riga (usato: lo spazio già preso da ruolo e squadra)
-      for (var i = 0; i < forme.length; i++) {
-        S.rig.textContent = forme[i][0]; S.pun.textContent = forme[i][1]; S.ang.textContent = forme[i][2];
-        badge.forEach(function (b) { b.classList.toggle("stretta", !!forme[i][3]); });
-        if (!dove.clientWidth) return true;
-        var vis = badge.filter(function (b) { return b.offsetWidth > 0; });
-        if (usato + vis.reduce(function (t, b) { return t + b.offsetWidth; }, 0) + 6 * vis.length <= dove.clientWidth) return true;
-      }
-      return false;
+  function etichetteTiri(S, rn, pn, an) {   // «🎯 1° RIGORISTA», «🦶 2° PUNIZIONI», «🚩 1° ANGOLI» (il proprietario, 2 nov 2026: sempre il numero e la scritta,
+    // «al posto di battitore mettiamo punizioni»; mai «rigori»): piccole, una sotto l'altra a destra (dall'altezza del nome in giù), così la maglia resta grande
+    function o(n) { return n + "° "; }
+    var badge = [S.rig, S.pun, S.ang], col = S.tiriD, dati = col.parentNode, prezzo = S.prezzoN.parentNode, ci = rn || pn || an;
+    S.rig.textContent = rn ? "🎯 " + o(rn) + "RIGORISTA" : ""; S.pun.textContent = pn ? "🦶 " + o(pn) + "PUNIZIONI" : ""; S.ang.textContent = an ? "🚩 " + o(an) + "ANGOLI" : "";
+    S.nome.style.fontSize = S.nome.style.paddingRight = prezzo.style.paddingRight = "";
+    col.style.display = ci ? "" : "none"; S.corto = false;
+    badge.forEach(function (b) { b.classList.add("stretta"); b.classList.remove("media", "minima"); });
+    if (!ci || !dati.clientWidth) return;
+    var pv = !S.prezzoN.textContent; if (pv) S.prezzoN.textContent = "1 💰";   // (si misura col prezzo al suo posto: arriva subito dopo)
+    var spazio = dati.clientHeight - S.ruolo.parentNode.offsetHeight - 6, testo = document.createRange(); testo.selectNodeContents(S.nome);   // (sotto ruolo e squadra)
+    function metti() {   // la colonna parte dall'altezza del nome; restituisce quanto viene grande il nome
+      var largo = col.offsetWidth + 8 + "px";
+      S.nome.style.fontSize = prezzo.style.paddingRight = ""; S.nome.style.paddingRight = largo;   // il nome le lascia posto, e se è lungo si rimpicciolisce (poi i puntini, come sempre)
+      var st = getComputedStyle(S.nome), fs = parseFloat(st.fontSize), posto = S.nome.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight);
+      while (testo.getBoundingClientRect().width > posto && fs > 12) { fs -= 1; S.nome.style.fontSize = fs + "px"; }
+      var su = Math.max(0, Math.min(S.nome.offsetTop, dati.clientHeight - col.offsetHeight - 4)); col.style.top = su + "px";
+      if (su + col.offsetHeight > prezzo.offsetTop + prezzo.offsetHeight * 0.4) prezzo.style.paddingRight = largo;   // (scende fino al prezzo: anche il prezzo e chi offre le lasciano posto)
+      return fs;
     }
-    if (!riga) return;
-    if ((rn || pn || an) && S.tiri) {   // se il tabellone è alto abbastanza: una riga tutta per loro, sotto la squadra (le scritte per intero)
-      metti(S.tiri); S.rig.textContent = forme[0][0]; S.pun.textContent = forme[0][1]; S.ang.textContent = forme[0][2];   // (si misura con le scritte del calciatore nuovo)
-      var pv = S.prezzoN && !S.prezzoN.textContent; if (pv) S.prezzoN.textContent = "1 💰";   // (e col prezzo al suo posto: arriva subito dopo)
-      var ci = function () { return dentro && dati.offsetHeight <= dentro.clientHeight - 2; };
-      var sta = ci() && prova(S.tiri, 0) && ci(); if (pv) S.prezzoN.textContent = "";
-      if (sta) return;
+    var buono = -1;   // la misura più grande che ci sta, meglio se lascia intero il prezzo con chi offre (piccola, media, minima)
+    for (var liv = 0; liv < 3; liv++) {
+      badge.forEach(function (b) { b.classList.toggle("media", liv === 1); b.classList.toggle("minima", liv === 2); });
+      var ok = metti() >= 16 && col.offsetHeight <= spazio && col.offsetWidth <= dati.clientWidth * 0.45;
+      if (ok && !prezzo.style.paddingRight) { buono = -1; break; }
+      if (ok && buono < 0) buono = liv;
     }
-    metti(riga); prova(riga, S.ruolo.offsetWidth + 6 + 56);   // (se no accanto alla squadra: 56 = quanto resta almeno al suo nome)
+    if (liv === 3) { liv = buono < 0 ? 2 : buono; badge.forEach(function (b) { b.classList.toggle("media", liv === 1); b.classList.toggle("minima", liv === 2); }); metti(); }
+    S.corto = !!prezzo.style.paddingRight;   // (se le scritte scendono fino al prezzo, chi offre si scrive più corto: «di Giulia»)
+    if (pv) S.prezzoN.textContent = "";
   }
   function maxischermo(el, S, conContatore) {   // il maxischermo: due strati di colore che sfumano, la maglia, i dati, lo speaker in basso
     S.colA = el("div", { class: "st-colori" }); S.colB = el("div", { class: "st-colori" });
@@ -2112,7 +2119,8 @@
     S.schermo = el("div", { class: "st-schermo vuoto" }, [ S.colA, S.colB,
       el("div", { class: "st-dentro" }, [
         el("div", { class: "st-magliabox" }, [ S.magliaImg ]),
-        el("div", { class: "st-dati" }, [ el("div", { class: "st-riga" }, [ S.ruolo, S.squadra, S.rig, S.pun, S.ang ]), (S.tiri = el("div", { class: "st-tiri", style: "display:none" })), S.nome, el("div", { class: conContatore ? "st-prezzo st-contatore" : "st-prezzo" }, [ S.prezzoN, S.chi ]) ])
+        el("div", { class: "st-dati" }, [ el("div", { class: "st-riga" }, [ S.ruolo, S.squadra ]), S.nome, el("div", { class: conContatore ? "st-prezzo st-contatore" : "st-prezzo" }, [ S.prezzoN, S.chi ]),
+          (S.tiriD = el("div", { class: "st-tiri-d", style: "display:none" }, [ S.rig, S.pun, S.ang ])) ])
       ]), S.ticker, el("div", { class: "st-led" }) ]);
     return el("div", { class: "st-board" }, [ S.schermo ]);
   }
@@ -2228,7 +2236,7 @@
     }
     S.prezzoN.textContent = !c ? "" : d.esito && d.esito.tipo === "accollo" && !d.prezzo ? "—" : d.prezzo + " 💰";   // (nessuno lo vuole: niente "0 💰")
     var capo = trova(d.persone, d.leader);
-    S.chi.textContent = !c ? "" : capo ? (d.io != null && capo.id === d.io ? "👑 l'offerta è tua" : "offerta di " + capo.nome) : (d.base ? "prezzo di partenza" : "");
+    S.chi.textContent = !c ? "" : capo ? (d.io != null && capo.id === d.io ? (S.corto ? "👑 è tua" : "👑 l'offerta è tua") : (S.corto ? "di " : "offerta di ") + capo.nome) : (d.base ? (S.corto ? "di partenza" : "prezzo di partenza") : "");
     S.avviso.textContent = d.avviso || ""; S.avviso.style.display = d.avviso ? "" : "none";
     aggiornaPubblico(S, d);
     d.persone.forEach(function (p) { var q = S.pers[p.id]; if (q && q.pal && p.id === d.leader && q.pal.textContent !== String(d.prezzo)) q.pal.textContent = d.prezzo; });   // in panchina il cartellino col prezzo
@@ -6344,16 +6352,22 @@
     var q = { A: Math.max(1, Math.floor(n / 3)), C: Math.max(1, Math.floor(n / 3)) };
     q.B = n - q.A - q.C;
     if (q.B < 0) { q.B = 0; q.A = Math.min(q.A, n); q.C = n - q.A; }
-    var out = [];
-    ["A", "B", "C"].forEach(function (tk) {
-      for (var i = 0; i < q[tk] && pool[tk].length; i++) {
-        var c = pool[tk].shift(); out.push({ nome: c.nome, squadra: c.squadra, ruolo: ruolo, tier: tk });
+    var out = [], squadre = {};
+    function prendi(tk) {   // il primo della fascia che può uscire; i portieri uno solo per squadra (30 ott 2026, il proprietario: due portieri della stessa squadra nella giornata avrebbero la stessa porta)
+      for (var j = 0; j < pool[tk].length; j++) {
+        var c = pool[tk][j];
+        if (ruolo === "P" && squadre[c.squadra]) continue;
+        pool[tk].splice(j, 1); squadre[c.squadra] = 1; out.push({ nome: c.nome, squadra: c.squadra, ruolo: ruolo, tier: tk }); return;
       }
+      pool[tk] = [];   // (in questa fascia non resta nessuno che possa uscire)
+    }
+    ["A", "B", "C"].forEach(function (tk) {
+      for (var i = 0; i < q[tk] && pool[tk].length; i++) prendi(tk);
     });
     var giro = 0;
     while (out.length < n && giro < 300) {
       var t2 = ["B", "C", "A"][giro % 3];
-      if (pool[t2].length) { var c2 = pool[t2].shift(); out.push({ nome: c2.nome, squadra: c2.squadra, ruolo: ruolo, tier: t2 }); }
+      if (pool[t2].length) prendi(t2);
       giro++;
     }
     segnaVisti(id, out.map(function (c) { return c.nome; }));

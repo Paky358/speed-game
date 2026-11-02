@@ -21,7 +21,9 @@ window.SG_FANTA_CALCIATORI = {
     ],
     C: [
       "Perri (Torino)", "Bijlow (Genoa)", "Muric (Sassuolo)",
-      "Palmisani (Frosinone)", "Stankovic F. (Venezia)", "Thiam (Monza)"
+      "Palmisani (Frosinone)", "Stankovic F. (Venezia)", "Thiam (Monza)",
+      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
+      "Gollini (Roma)"
     ]
   },
 
@@ -32,7 +34,9 @@ window.SG_FANTA_CALCIATORI = {
       "Mancini (Roma)", "Bastoni (Inter)", "Rrahmani (Napoli)", "Kalulu (Juventus)",
       "Pavlovic (Milan)", "Solet (Udinese)", "Bisseck (Inter)", "Di Lorenzo (Napoli)",
       "Gila (Milan)", "Ramon (Como)", "Stones (Inter)", "Hermoso (Roma)",
-      "Chalobah T. (Como)"
+      "Chalobah T. (Como)",
+      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
+      "Oyono A. (Frosinone)"
     ],
     B: [
       "Molina N. (Roma)", "Spence (Inter)", "Ostigard (Genoa)", "Scalvini (Atalanta)",
@@ -43,7 +47,10 @@ window.SG_FANTA_CALCIATORI = {
       "Kaiki (Como)", "Lucumi (Juventus)", "Miranda J. (Bologna)", "Spinazzola (Napoli)",
       "Theate (Bologna)", "Vojvoda (Udinese)", "Zappacosta (Atalanta)", "Bracaglia (Frosinone)",
       "Celik (Juventus)", "Valle (Como)", "Tavares N. (Lazio)", "Bellanova (Atalanta)",
-      "Kossounou (Atalanta)", "Pavard (Inter)"
+      "Kossounou (Atalanta)", "Pavard (Inter)",
+      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
+      "N'Dicka (Roma)", "Abankwah (Udinese)", "Zortea (Bologna)", "Calvani (Frosinone)",
+      "Pedraza (Lazio)", "Veiga D. (Lecce)", "Kouadio (Monza)"
     ],
     C: [
       "Diego Carlos (Parma)", "Obert (Cagliari)", "Balerdi (Roma)", "Coco (Torino)",
@@ -53,10 +60,13 @@ window.SG_FANTA_CALCIATORI = {
       "Gabbia (Milan)", "Gallo (Lecce)", "Hainaut (Venezia)", "Heggem (Bologna)",
       "Holm (Bologna)", "Kempf (Como)", "Kolasinac (Atalanta)", "Kristensen T. (Atalanta)",
       "Marusic (Lazio)", "Lulli (Roma)", "Tomori (Milan)", "Beukema (Napoli)",
-      "De Winter (Milan)", "Gatti (Juventus)", "Favasuli (Napoli)", "Kelly (Juventus)",
-      "Valdepenas (Fiorentina)", "Cinquegrano (Sassuolo)", "Mussolini (Lazio)", "Juan Jesus (Venezia)",
+      "De Winter (Milan)", "Gatti (Juventus)", "Favasuli (Napoli)",
+      "Valdepenas (Fiorentina)", "Cinquegrano (Sassuolo)", "Floriani Mussolini (Lazio)", "Juan Jesus (Venezia)",
       "Mazzocchi (Venezia)", "Olivera (Napoli)", "Provstgaard (Lazio)", "Rensch (Roma)",
-      "Vitik (Bologna)", "Estupinan (Milan)", "Marin R. (Napoli)"
+      "Vitik (Bologna)", "Estupinan (Milan)", "Marin R. (Napoli)",
+      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
+      "Terzic (Frosinone)", "Goglichidze (Monza)", "Casale (Bologna)", "Monterisi (Frosinone)",
+      "Siebert (Lecce)", "Sutalo J. (Lazio)"
     ]
   },
 
@@ -76,7 +86,10 @@ window.SG_FANTA_CALCIATORI = {
       "Kessie (Atalanta)", "Perrone (Como)", "Rodriguez Je. (Como)", "Bernardeschi (Bologna)",
       "Cancellieri (Lazio)", "Diouf (Inter)", "Kone M. (Roma)", "Lobotka (Napoli)",
       "Mandragora (Torino)", "Politano (Napoli)", "Rowe (Atalanta)", "Saelemaekers (Milan)",
-      "Thorstvedt (Sassuolo)", "Zambo Anguissa (Napoli)"
+      "Thorstvedt (Sassuolo)", "Zambo Anguissa (Napoli)",
+      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
+      "Pobega (Bologna)", "Zalewski (Atalanta)", "Messias (Genoa)", "Caqueret (Como)",
+      "Belahyane (Lazio)", "Matic (Sassuolo)", "Bakola (Sassuolo)"
     ],
     C: [
       "Adzic (Sassuolo)", "Calo (Frosinone)", "Casadei (Torino)", "Colpani (Monza)",
@@ -87,7 +100,13 @@ window.SG_FANTA_CALCIATORI = {
       "Pasalic (Atalanta)", "Pisilli (Roma)", "Romano (Cagliari)", "Schmid (Frosinone)",
       "Sucic P. (Inter)", "Zhegrova (Juventus)", "Akinsanmiro (Monza)", "Bernabe (Parma)",
       "Braganca (Torino)", "Busio (Venezia)", "Cacciamani (Torino)", "El Shaarawy (Genoa)",
-      "Fazzini (Cagliari)", "Frendrup (Genoa)", "Gaetano (Atalanta)"
+      "Fazzini (Cagliari)", "Frendrup (Genoa)", "Gaetano (Atalanta)",
+      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
+      "Masini (Frosinone)", "Koopmeiners (Juventus)", "Dele-Bashiru (Lazio)", "Gilmour (Napoli)",
+      "Fitz-Jim (Torino)", "Hutchinson (Milan)", "Mbangula (Bologna)", "Milla (Como)",
+      "Ellertsson (Genoa)", "Njie (Fiorentina)", "Cissè A. (Milan)", "Winks (Cagliari)",
+      "Douglas Luiz (Juventus)", "Piotrowski (Udinese)", "Elmas (Atalanta)", "Cichella (Frosinone)",
+      "Mkhitaryan (Inter)", "Musah (Milan)", "Monteiro J. (Lecce)"
     ]
   },
 
@@ -104,7 +123,9 @@ window.SG_FANTA_CALCIATORI = {
       "Lauriente (Sassuolo)", "Pellegrino M. (Fiorentina)", "Soule (Roma)", "Beto (Fiorentina)",
       "Castro S. (Roma)", "Diao (Como)", "Santos A. (Napoli)", "Simeone (Torino)",
       "Esposito Se. (Sassuolo)", "Raspadori (Atalanta)", "Pinamonti (Lazio)", "Colombo (Genoa)",
-      "Adams C. (Torino)", "Kvernadze (Frosinone)", "Raimondo (Frosinone)"
+      "Adams C. (Torino)", "Kvernadze (Frosinone)", "Raimondo (Frosinone)",
+      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
+      "Ghedjemis (Frosinone)", "Osmajic (Genoa)", "Kulenovic (Torino)", "Robinson J. (Monza)"
     ],
     C: [
       "Adams A. (Venezia)", "Bowie (Sassuolo)", "Kevin Carlos (Cagliari)", "Romero D. (Parma)",
@@ -112,9 +133,11 @@ window.SG_FANTA_CALCIATORI = {
       "Maldini (Cagliari)", "Piccoli (Bologna)", "Bonny (Inter)", "Geubbels (Lecce)",
       "Noslin (Lazio)", "Vitinha O. (Genoa)", "Gnonto (Fiorentina)", "Mendy P. (Cagliari)",
       "Rrahmani Al. (Venezia)", "Stulic (Lecce)", "Varela G. (Monza)", "Boga (Juventus)",
-      "Sulemana K. (Atalanta)", "Camarda (Milan)", "Lang (Napoli)", "Milik (Juventus)",
+      "Sulemana K. (Atalanta)", "Camarda (Milan)", "Lang (Napoli)",
       "N'Dri (Lecce)", "Ngonge (Monza)", "Nzola (Cagliari)", "Elphege (Parma)",
-      "Giovane (Napoli)"
+      "Giovane (Napoli)",
+      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
+      "Mota (Monza)", "Lontani (Parma)", "Fatah (Lecce)"
     ]
   }
 };

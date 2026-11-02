@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 297,
+    data: "2 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: listone nuovo e un portiere per squadra",
+    descrizione: [
+      "Il listone è quello del 2026/27: entrano 48 calciatori (tutti quelli da 10 in su e chi da 7 a 9 gioca davvero, come Pobega, Zalewski, Koopmeiners, Douglas Luiz e Osmajic). Escono Milik e Kelly.",
+      "All'asta esce un solo portiere per squadra: se va all'asta Martinez dell'Inter, Provedel non esce più. Così nella giornata non ci sono mai due portieri vostri con la stessa porta.",
+      "Sul maxischermo «🎯 RIGORISTA», «🦶 PUNIZIONI» e «🚩 ANGOLI» hanno sempre il numero (1°, 2° o 3° della squadra) e la scritta intera, anche quando un calciatore fa tutte e tre le cose. Stanno a destra, piccole, una sotto l'altra: la maglia resta grande.",
+      "Chi batte le punizioni e gli angoli è aggiornato: al Lecce Gallo, al Genoa gli angoli li batte Messias."
+    ]
+  },
+  {
     v: 296,
     data: "2 novembre 2026",
     titolo: "🃏 Black Jack: lo zoom su di te più pulito",
