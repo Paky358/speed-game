@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 301,
+    data: "2 novembre 2026",
+    titolo: "✉️ Mini Asta Fantacalcio: l'asta a busta chiusa",
+    descrizione: [
+      "Nel ⚙️ c'è «💰 Come si compra»: l'asta di sempre coi rilanci, «✉️ Tutta a buste» o «✉️ Buste solo per i big» (a busta i calciatori più forti, gli altri all'asta normale).",
+      "A busta ognuno scrive in segreto quanto offre, o passa. Si aprono le buste tutte insieme, dalla più bassa alla più alta, con un attimo di suspense sull'ultima: vince l'offerta più alta e paga quello che ha scritto.",
+      "A pari offerta non vince chi è stato più veloce: c'è lo spareggio a busta solo tra chi era pari (almeno 1 in più, o resti dov'eri). Se siete ancora pari, decide la ruota, uguale su tutti i telefoni.",
+      "Online hai 15 secondi per scrivere (10 nello spareggio). Sullo stesso telefono vi passate il telefono come nei temi."
+    ]
+  },
+  {
     v: 300,
     data: "2 novembre 2026",
     titolo: "🏷️ Il Prezzo è Giusto: 11 foto nuove",
