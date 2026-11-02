@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 299,
+    data: "2 novembre 2026",
+    titolo: "🖼️ Immagini nuove nella home",
+    descrizione: [
+      "Palla Matta, Una parola sola, Memata e Da dove viene? hanno finalmente la loro immagine nella prima schermata, nello stesso stile degli altri giochi.",
+      "La Mini Asta Fantacalcio ha un'immagine nuova: il pallone sul podio del banditore, col martelletto d'oro."
+    ]
+  },
+  {
     v: 298,
     data: "2 novembre 2026",
     titolo: "⚽ Mini Asta Fantacalcio: la giornata senza spoiler",
