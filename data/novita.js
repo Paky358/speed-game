@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 296,
+    data: "2 novembre 2026",
+    titolo: "🃏 Black Jack: lo zoom su di te più pulito",
+    descrizione: [
+      "Il tuo punteggio adesso sta sotto le carte: la pila delle fiches non lo copre più, nemmeno dopo Raddoppia o Dividi.",
+      "La scritta in alto («Tocca a…») non è più coperta dalle carte del banco, che stanno subito sotto, e coi nomi lunghi non viene tagliata.",
+      "Quando la telecamera è su chi gioca, nome e monete li trovi una volta sola nella scritta in alto. Con tanti giocatori le tue carte restano sempre dentro lo schermo."
+    ]
+  },
+  {
     v: 295,
     data: "1 novembre 2026",
     titolo: "🤥 La Balla Colossale: la prima pagina, la Balla Finale e tante notizie nuove",

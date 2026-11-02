@@ -1026,8 +1026,11 @@
     ".bj-retro .rb-fondo{fill:var(--t-dorso,#243a86);stroke:var(--t-dorso-bordo,#dfe6ff)}.bj-retro .rb-cornice{stroke:var(--t-dorso-filo,#6f86d8)}.bj-retro .rb-righe{stroke:var(--t-dorso-righe,#4a63b8)}",
     ".bj-retro .rb-tondo{fill:var(--t-dorso-tondo,#1a2a63);stroke:var(--t-dorso-filo,#6f86d8)}.bj-retro .rb-21{fill:var(--t-dorso-21,#dfe6ff)}",
     // il banco: vetro, avatar un po' più grande
+    ".bj-wrap .bjr-punti{top:auto;bottom:-24px}",   // (2 nov 2026: il punteggio sotto le carte: sopra, la pila delle fiches lo copriva)
+    // la scritta grande in alto ha il suo fondino: niente della scena le passa sopra o la confonde
+    ".bj-wrap .bj-turno{z-index:7;background:rgba(9,11,22,.78);padding:3px 14px 4px;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.35)}.bj-wrap .bj-turno:empty{display:none}.bj-wrap .bj-turno.lunga{font-size:1.12rem}",   // (2 nov 2026: sopra le carte la pila delle fiches lo copriva)
     ".bjr-matt-carte{position:absolute;left:8px;top:8px;z-index:6;display:flex;align-items:center;gap:3px;padding:3px 5px 3px 4px;border-radius:9px;background:rgba(9,11,22,.72);box-shadow:inset 0 0 0 1px var(--o-filo-oro);pointer-events:none}.bjr-matt-carte span{font-size:.8rem;line-height:1}.bjr-matt-carte .bjr-carta{width:24px}",
-    ".bj-wrap.bj-in-gara .bjr-matt-carte{top:30px}",
+    ".bj-wrap .bjr-matt-carte{top:66px}.bj-wrap.bj-in-gara .bjr-matt-carte{top:92px}",
     ".bj-wrap .bjr-matt .bj-av{width:64px;height:64px;background:radial-gradient(circle at 50% 35%,#2a3160,#141a33);border-color:var(--o-filo-oro)}",
     ".bj-wrap .bj-av{background:radial-gradient(circle at 50% 35%,#2a3160,#141a33)}",
     ".bj-wrap .bj-podio{background:rgba(9,12,26,.9)}",
@@ -1613,6 +1616,9 @@
         // sopra la testa: il nome e le fiche che ha (a fine mano anche quanto ha vinto o perso)
         var d = vm.fase === "esito" ? nettoDi(g) : 0;
         var kn = g.nome + "|" + attivo + "|" + d + "|" + g.fiches + "|" + !!g.via + "|" + (drv.mioIdx && i === mioIdx());
+        // (2 nov 2026) quando la telecamera è su chi gioca, nome e monete li dice la scritta grande in alto: i cartellini sulle teste
+        // si nascondono (comparivano due volte, e quello del vicino finiva sotto la scritta); tornano quando la telecamera si allarga
+        s.nome.style.visibility = (vm.fase === "gioca" || (vm.fase === "assic" && !drv.mioIdx)) ? "hidden" : "";
         if (s.k.n !== kn) {
           s.k.n = kn; nomiCambiati = true; s.nome.className = "bjr-nome" + (N > 6 ? " mini" : "") + (attivo ? " attivo" : "") + (g.via ? " via" : "");
           s.nome.innerHTML = "";
@@ -1714,7 +1720,7 @@
       else if (gt) { scritta = (vm.fase === "punta" ? (vm.segreta ? "🤫 Punta " : "Punta ") : (vm.fase === "assic" ? "Assicura? " : "Tocca a ")) + gt.nome; sotto = fmt(gt.fiches) + " 🪙" + (vm.fase === "punta" && quale ? " · " + quale : ""); }
       var kcap = intro.corre ? "" : scritta + "|" + sotto;
       if (capt.dataset.k !== kcap) {   // la scritta si rifà solo se cambia
-        capt.dataset.k = kcap; capt.innerHTML = "";
+        capt.dataset.k = kcap; capt.innerHTML = ""; capt.classList.toggle("lunga", scritta.length > 15);   // (un nome lungo: la scritta più piccola, mai tagliata)
         if (!intro.corre) { capt.appendChild(el("div", { text: scritta })); if (sotto) capt.appendChild(el("small", { text: sotto })); }
       }
       disegnaGara();
@@ -1800,9 +1806,13 @@
       if (tr === camK) return;
       camK = tr; cam.style.transitionDuration = (durata || 0.95) + "s"; cam.style.transform = tr;
     }
+    // (2 nov 2026) l'inquadratura prende avatar, fiches, carte E il punteggio sotto le carte: con tanti giocatori i posti di lato hanno
+    // le carte spostate rispetto alla testa, e prima finivano fuori dallo schermo
     function suGiocatore(i, largo) {
-      var s = R.seg[i], top = s.testa - 22, bot = Math.max(s.carte.y, s.fp.y) + 34;
-      return { x: s.x, y: (top + bot) / 2, w: Math.max(s.w * (largo ? 3 : 1.3), largo ? 230 : 140, (s.ccW || 0) * 1.35), h: (bot - top) * (largo ? 1.25 : 1) };
+      var s = R.seg[i], sc = (s.carte && s.carte.sc) || 1, mezze = (s.ccW || s.cw * sc) / 2 + 12;
+      var top = s.testa - 46, bot = Math.max(s.carte.y + (s.cw * 0.8 + 34) * sc, s.fp.y + 34);   // (sopra la testa c'è posto per la nuvoletta «Raddoppio!»)
+      var x0 = Math.min(s.x - s.w * 0.4, s.carte.x - mezze, s.fp.x - 30), x1 = Math.max(s.x + s.w * 0.4, s.carte.x + mezze, s.fp.x + 30);
+      return { x: (x0 + x1) / 2, y: (top + bot) / 2, w: Math.max((x1 - x0) * (largo ? 1.6 : 1.08), s.w * (largo ? 3 : 1.3), largo ? 230 : 140), h: (bot - top) * (largo ? 1.25 : 1) };
     }
     // lo zoom sul banco va sulle CARTE di Bot, al centro (la sua faccia è già nell'angolo)
     function suMatt() {
