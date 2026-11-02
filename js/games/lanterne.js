@@ -583,7 +583,8 @@ class Partita {
   subitoATutti(){ this.cambiata = true; this.subito = true; }   // i sabotaggi non aspettano il giro della foto: partono al primo battito
   priv(p){ p.vPriv++; }
   avviso(p, testo, tipo){ if(p && !p.bot) this.ev.privato(p.id, { t:'avviso', testo, tipo:tipo||'' }); }
-  fx(k, x, y, extra){ this.ev.tutti(Object.assign({ t:'fx', k, x:Math.round(x), y:Math.round(y) }, extra||{})); }
+  // (quello che vede uno solo non passa dalla foto comune: dice chi ha usato il potere)
+  fx(k, x, y, extra){ const m=Object.assign({ t:'fx', k, x:Math.round(x), y:Math.round(y) }, extra||{}); if(m.solo){ const q=this.per(m.solo); if(q&&!q.bot) this.ev.privato(q.id, m); return; } this.ev.tutti(m); }
 
   assegnaRuoli(){
     const n=this.gioc.length, imp=this.imp, k=Math.max(1, Math.min(quanteOmbre(imp, n), Math.floor((n-1)/2)));
@@ -789,7 +790,8 @@ class Partita {
     c.fatto=true; this.priv(p); this.segna();
     // i compiti visibili: chi è lì vicino vede l'effetto, e sa che chi l'ha fatto non è un'ombra (le ombre fingono e basta)
     if(!c.finto && c.post.visibile && this.imp.compitiVisibili && !this.nebbiaAttiva()){
-      this.fx('compito', centro(c.post.tx), centro(c.post.ty), { v:c.post.visibile, id:p.id });
+      this.fx('compito', centro(c.post.tx), centro(c.post.ty), { v:c.post.visibile });   // (senza chi l'ha fatto: un compito vero dice che non è un'ombra)
+      if(!p.bot) this.ev.privato(p.id, { t:'fx', k:'compitoMio', x:0, y:0 });
       for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p) continue; if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)){ o.sosp[p.id]=(o.sosp[p.id]||0)-35; o.mem.puliti.push({ id:p.id, v:c.post.visibile }); } }
     }
     if(!c.finto && this.controllaVittoria()) this.chiudi();
@@ -874,7 +876,7 @@ class Partita {
       case 'bengala':
         if(p.usiBeng<=0 || this.bengalaAttivo()) return;
         p.usiBeng--; this.bengalaFine=this.t+this.imp.bengala.durata; this.priv(p); this.segna(); this.noto(p,'bengala');
-        this.fx('bengala', p.x, p.y, { globale:1 });
+        this.fx('bengala', 0, 0, { globale:1 });   // (a tutto schermo: il posto direbbe chi l'ha acceso)
         return;
       case 'rianimatore':
         if(p.usiRian<=0 || p.rianima) return;
@@ -919,7 +921,7 @@ class Partita {
       case 'nebbia':
         if(p.cdA>0 || this.nebbiaAttiva()) return;
         this.nebbiaFine=this.t+this.imp.nebbia.durata; p.cdA=this.imp.nebbia.ricarica; this.priv(p); this.segna();
-        this.fx('nebbia', p.x, p.y, { globale:1 });
+        this.fx('nebbia', 0, 0, { globale:1 });
         return;
       case 'trasformista':
         if(p.cdA>0 || v===p) return;
@@ -1069,7 +1071,7 @@ class Partita {
     else if(tipo==='buio') return this.attivaBuio(chi);
     else return;
     this.cdBuio=S.ricarica; this.subitoATutti();
-    this.gioc.forEach(p=>{ if(p.squadra==='ombre') this.priv(p); });
+    this.gioc.forEach(p=>this.priv(p));   // (a tutti, anche se la ricarica serve solo alle ombre: sul broker non si deve vedere a chi arriva un privato subito dopo un sabotaggio)
     this.assegnaRiparatori();
   }
   ripara(p, cosa){
@@ -1086,7 +1088,7 @@ class Partita {
   attivaBuio(chi){
     if(this.sabAttivo() || this.cdBuio>0) return;
     this.buio={ fine:this.t+40 }; this.cdBuio=this.imp.sabotaggi.ricarica; this.subitoATutti();
-    this.gioc.forEach(p=>{ if(p.squadra==='ombre') this.priv(p); });
+    this.gioc.forEach(p=>this.priv(p));   // (a tutti, anche se la ricarica serve solo alle ombre: sul broker non si deve vedere a chi arriva un privato subito dopo un sabotaggio)
     this.fx('buio', centro(QUADRO.tx), centro(QUADRO.ty), { globale:1 });
     const vivi=this.gioc.filter(p=>p.bot&&p.vivo&&p.squadra!=='ombre');
     this.assegnaRiparatori();
@@ -2556,7 +2558,7 @@ function immMappa(M){
   if(!immAcceso()) return null;
   if(M._im === undefined){
     const nome = M === PALAZZO ? 'palazzo' : M === ATRIO ? 'atrio' : null;
-    M._im = nome ? { nome, base:IMM_CARTELLA + nome + '/', stato:0, prove:0, riprova:0, quando:0, s:{}, f:{}, k:{}, sporco:true, ultQ:-1, pz:null, mobili:null, anim:null, extra:null, kk:0.5 } : null;
+    M._im = nome ? { nome, base:IMM_CARTELLA + nome + '/', stato:0, prove:0, riprova:0, quando:0, s:{}, f:{}, k:{}, sporco:true, ultQ:-1, pz:null, mobili:null, anim:null, extra:null, kk:0.5, ante:null, aP:null, aN:0, aDopo:0 } : null;
   }
   return M._im;
 }
@@ -2617,6 +2619,7 @@ function immVoce(m, chiave, url){
   return null;
 }
 function immAccoda(m, chiave, url, pre){
+  if(immSosp && !pre) return;
   const st = m.s[chiave];
   if(st === 0 || st === 1 || st === 2) return;
   if(st === 3){ const f = m.f[chiave]; if(f.n >= 3 || performance.now() - f.t < 15000) return; }
@@ -2635,7 +2638,8 @@ function immScarica(url){
 }
 function immOggetto(url, b){ let o = immOgg.get(url); if(!o){ o = URL.createObjectURL(b); immOgg.set(url, o); } return o; }
 function immPompa(){
-  while(immVolo < IMM_IN_VOLO && immCoda.length){
+  const max = preKbs() < 300 ? 3 : IMM_IN_VOLO;   // su una rete lenta più file insieme non vanno più in fretta: lasciano solo indietro i messaggi del gioco
+  while(immVolo < max && immCoda.length){
     const q = immCoda.pop(), m = q.m, chiave = q.chiave;
     if(m.s[chiave] !== 0) continue;
     m.s[chiave] = 1; immVolo++; if(!q.pre) immReali++;
@@ -2644,6 +2648,7 @@ function immPompa(){
     const fatto = ok => {
       immVolo--; if(!q.pre) immReali--;
       if(ok){
+        im._t = immUltimo = performance.now();
         m.s[chiave] = 2; delete m.f[chiave];
         metti(m.k[chiave] || (m.k[chiave] = 'I|' + m.nome + '|' + chiave), { img:im, px:im.naturalWidth*im.naturalHeight, libera(){ delete m.s[chiave]; m.sporco = true; } });
       } else {
@@ -2660,6 +2665,53 @@ function immPompa(){
     if(b){ daBlob = true; parti(immOggetto(q.url, b)); }
     else immScarica(q.url).then(bb => { if(bb){ daBlob = true; parti(immOggetto(q.url, bb)); } else fatto(false); });   // (se lo sta già scaricando il precarico, si aspetta lui: mai due volte)
   }
+}
+// ── L'anteprima: tutta la mappa in piccolo, in un file solo (anteprima.webp, fatta da gioco/anteprima.py con i pezzi veri) ──
+// Arriva per prima e sta sotto i pezzi che mancano: chi cammina verso una zona non ancora arrivata vede il palazzo sfocato, mai il vuoto né il disegno a codice.
+// Il file scaricato non si tiene: resta una copia sola, decodificata fuori dal giro principale, e conta nel tetto delle tele. Esce dalla memoria quando
+// tutti i pezzi sono arrivati; sul telefono piccolo, dove i pezzi entrano ed escono dalla cache, resta come rete.
+// Se il file non c'è tutto va come prima: disegno a codice dove manca un pezzo, «pronto» solo a fine scaricamento.
+const DISSOLVI = 200;   // ms: il pezzo vero entra in dissolvenza sopra l'anteprima
+const IMM_FERMO = (() => { try{ return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){ return false; } })();   // chi non vuole movimento: il pezzo si cambia e basta
+let immUltimo = 0;      // quando è arrivata l'ultima immagine (l'anteprima esce a dissolvenze finite)
+let immSosp = false;    // chi rientra in partita: sotto il mini caricamento passa solo l'anteprima. La scena dietro segue ancora un altro: chiederebbe pezzi che non servono, davanti a quelli veri
+function immSospendi(v){
+  if(immSosp === !!v) return;
+  immSosp = !!v;
+  if(!v) (PRE.mappe || []).forEach(m => { m.sporco = true; });   // adesso si sa dove chiedere
+}
+function anteLeggi(b){
+  const fatta = (img, w, h) => ({ img, w, h, px:w*h, size:b.size });
+  const daImg = () => {
+    const u = URL.createObjectURL(b), im = new Image(); im.decoding = 'async'; im.src = u;
+    const p = im.decode ? im.decode() : new Promise((ok, no) => { im.onload = ok; im.onerror = no; });
+    return p.then(() => { URL.revokeObjectURL(u); return fatta(im, im.naturalWidth, im.naturalHeight); }, () => { URL.revokeObjectURL(u); return null; });
+  };
+  return typeof createImageBitmap === 'function' ? createImageBitmap(b).then(x => fatta(x, x.width, x.height), daImg) : daImg();
+}
+// si chiede una volta sola, anche se la vogliono insieme il precarico e chi sta disegnando. Dà la promessa dell'anteprima, o null se per ora non si può chiedere
+function antePrendi(m){
+  if(m.ante || m.aP) return m.aP;
+  const url = m.base + 'anteprima.webp?v=' + IMM_VERSIONE;
+  if(immNonCe.has(url) || m.aN >= 3 || performance.now() < m.aDopo) return null;
+  m.aN++;
+  return m.aP = fetch(url).then(r => { if(r.status === 404 || r.status === 410) immNonCe.add(url); return r.ok ? r.blob() : null; }).then(b => b && b.size ? anteLeggi(b) : null).catch(() => null).then(a => {
+    if(a){ m.ante = a; telePx += a.px; } else { m.aP = null; m.aDopo = performance.now() + 800; }
+    return a;
+  });
+}
+function immAnteprima(M){ const m = M._im; return m ? m.ante : null; }
+// quanto è entrata un'immagine appena arrivata, da 0 a 1 (in uscita rapida, come --faro-ease). Senza anteprima sotto si cambia e basta, come sempre
+function immDissolvi(m, im){
+  if(!m.ante || IMM_FERMO) return 1;
+  const a = (performance.now() - im._t)/DISSOLVI;
+  return a >= 1 ? 1 : a <= 0 ? 0 : 1 - Math.pow(1 - a, 3);
+}
+// tutti i pezzi di questa mappa sono in memoria, a dissolvenze finite: l'anteprima lascia il posto
+function anteLascia(m){
+  if(!m.ante || m.stato !== 2 || performance.now() - immUltimo < 2*DISSOLVI) return;
+  for(const n of m.pz){ const k = m.k['p' + (n % 16) + '_' + ((n / 16) | 0)]; if(!k || !TELE.has(k)) return; }
+  const a = m.ante; m.ante = null; m.aFatta = true; telePx -= a.px; if(a.img.close) a.img.close();
 }
 // la coda di quello che serve a chi gioca non vale più (si è appena scoperto dove sono, e le immagini chieste intorno alla fontana starebbero davanti a quelle vere): si ricomincia da quello che serve adesso
 function immCodaDaCapo(){
@@ -2693,11 +2745,14 @@ function immChiedi(m, M, i0, j0, i1, j1, anello){
   try{ immChiedi0(m, M, i0, j0, i1, j1, anello); }catch(e){ immAcceso0 = false; }   // (come sopra)
 }
 function immChiedi0(m, M, i0, j0, i1, j1, anello){
+  const gioca = anello && m.nome === 'palazzo';   // qualcuno sta camminando qui (dalla sala d'attesa si chiede il palazzo senza anello, solo intorno alla fontana)
   if(PRE.liv === 2) anello = 0;   // col caricamento a tutto schermo l'anello passa dopo: sulla pila finirebbe sopra a quello che si sta aspettando
   const q = (((i0 + 2)*256 + j0 + 2)*256 + i1 + 2)*256 + j1 + 2 + (anello ? 4294967296 : 0);   // il rettangolo, in un numero solo
   if(q === m.ultQ && !m.sporco) return;
   m.ultQ = q; m.sporco = false;
+  antePrendi(m);
   const L = PEZZO*T, ni = Math.ceil(M.GW/PEZZO), nj = Math.ceil(M.GH/PEZZO);
+  if(gioca) preVerso(m, (i0 + i1 + 1)*L/2, (j0 + j1 + 1)*L/2);
   const tocca = (r, a) => r.x < (i1 + 1 + a)*L && r.x + r.w > (i0 - a)*L && r.y < (j1 + 1 + a)*L && r.y + r.h > (j0 - a)*L;
   const pezzi = a => { for(let j = Math.max(0, j0 - a); j <= Math.min(nj - 1, j1 + a); j++) for(let i = Math.max(0, i0 - a); i <= Math.min(ni - 1, i1 + a); i++){
     if(a && i >= i0 && i <= i1 && j >= j0 && j <= j1) continue; if(m.pz.has(j*16 + i)) immAccoda(m, 'p' + i + '_' + j, 'p_' + i + '_' + j + '.webp'); } };
@@ -2713,7 +2768,9 @@ function immChiedi0(m, M, i0, j0, i1, j1, anello){
 // i pezzi di fondo di Blender che coprono il mobile k sono tutti arrivati? Allora il mobile è già nel fondo (e anche la sua ombra):
 // se il suo ritaglio non c'è ancora, non si disegna quello a codice sopra il render (il ritaglio serve solo a coprire chi passa dietro)
 function immFondoCopre(M, k){
-  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return false;
+  const m = M._im; if(!m || !immAcceso()) return false;
+  if(m.ante && (m.stato !== 2 || m.mobili.has(k))) return true;   // nell'anteprima il mobile c'è già
+  if(m.stato !== 2) return false;
   const r = m.mobili.get(k); if(!r) return false;   // senza ritaglio nell'indice non sappiamo dov'è: resta a codice
   const L = PEZZO*T;
   for(let j = Math.floor(r.y/L); j <= Math.floor((r.y + r.h - 0.01)/L); j++) for(let i = Math.floor(r.x/L); i <= Math.floor((r.x + r.w - 0.01)/L); i++){
@@ -2734,7 +2791,7 @@ function immMobile(M, k){
 function immExtra(m){ return m && m.stato === 2 ? m.extra : []; }
 function disegnaExtra(c, m, n, t){
   const e = m.extra[n], img = immVoce(m, 'e' + n, e.f); if(!img) return;
-  c.drawImage(img, e.x, e.y, e.w, e.h);
+  const g = c.globalAlpha; c.globalAlpha = g*immDissolvi(m, img); c.drawImage(img, e.x, e.y, e.w, e.h); c.globalAlpha = g;
   fiammeDi(c, e.fl, t || 0, 100 + n);
 }
 // un'immagine animata (barca, campana, ruota): centro e perno dal file indice; dx, dy spostano, ang gira intorno al perno. Vero se l'ha disegnata.
@@ -2759,14 +2816,16 @@ function immHa(M, nome){
 }
 
 // ── Il precarico: nella saletta si scarica tutto il palazzo ──
-// Appena si entra parte lo scaricamento di TUTTE le immagini (indici, pezzi, ritagli, oggetti di scena, animati), pochi file alla volta
+// Appena si entra parte lo scaricamento di TUTTE le immagini (indici, anteprime, pezzi, ritagli, oggetti di scena, animati), pochi file alla volta
 // (3, per non rallentare la saletta; 8 quando si sta solo aspettando il caricamento). Ogni file resta in memoria come blob.
 // Si decodifica tutto quando il telefono ha memoria (navigator.deviceMemory > 2, o sconosciuta come su iPhone); con poca memoria
 // solo l'atrio e i pezzi intorno alla fontana, da dove si parte. Il resto si decodifica in un attimo dalla memoria, quando serve.
-// «Pronto» = tutto scaricato (o perso: allora resta il disegno a codice) e decodificato quello che serve per partire.
+// «Pronto» = l'anteprima del palazzo, l'atrio e i pezzi intorno alla fontana, arrivati e decodificati. Il resto continua dietro, anche a partita
+// cominciata, prima quello vicino a chi cammina: nel frattempo si vede l'anteprima. Se l'anteprima non c'è, «pronto» = tutto scaricato (o perso).
 // Senza immagini (interruttore spento, indice che manca, da file://) è pronto subito: si parte a codice senza aspettare.
-const PRE = { avviato:false, spento:false, tier:'tutto', liv:1, volo:0, scarico:[], lista:[], voci:[], pronto:false, giro:null, t0:0 };
-const PRE_STIMA = { atrio:55, palazzo:400 };   // il peso che si conta per una mappa finché il suo indice non è arrivato (pezzo = 5, ritaglio = 1)
+const PRE = { avviato:false, spento:false, tier:'tutto', liv:1, volo:0, scarico:[], lista:[], voci:[], pronto:false, giro:null, t0:0, pct:0, vAnte:null };
+const PRE_STIMA = { atrio:63, palazzo:68 };   // il peso che si conta per una mappa finché il suo indice non è arrivato (pezzo = 5, ritaglio = 1)
+const PRE_GRANDE = 8192;   // la velocità della rete si misura sui file da qui in su: su quelli piccoli si misurerebbe solo la latenza
 function preAttivo(){
   try{
     if(!immAcceso() || typeof fetch !== 'function' || typeof location === 'undefined' || location.protocol === 'file:') return false;
@@ -2776,25 +2835,27 @@ function preAttivo(){
 }
 function precaricoAvvia(){
   if(PRE.avviato) return; PRE.avviato = true; PRE.t0 = performance.now();
-  if(window.LT_PROVA) window.LT_PRE = { stato:precaricoStato, voci:() => PRE.voci.length, decodificate:() => { let n = 0; for(const k of TELE.keys()) if(k.charCodeAt(0) === 73) n++; return n; }, blob:() => immBlobV.size, kb:() => { let n = 0; immBlobV.forEach(b => { n += b.size; }); return Math.round(n/1024); }, teleExtra:() => teleExtra };   // (per le prove a schermo)
+  if(window.LT_PROVA) window.LT_PRE = { stato:precaricoStato, voci:() => PRE.voci.filter(v => !v.ante).length, decodificate:() => { let n = 0; for(const k of TELE.keys()) if(k.charCodeAt(0) === 73) n++; return n; }, blob:() => immBlobV.size, kb:() => { let n = 0; immBlobV.forEach(b => { n += b.size; }); return Math.round(n/1024); }, teleExtra:() => teleExtra, tele:() => telePx, ante:() => (PRE.mappe || []).map(m => [m.nome, m.ante ? m.ante.px : 0, m.ante ? Math.round(m.ante.size/1024) : 0]) };   // (per le prove a schermo)
   if(!preAttivo()){ PRE.spento = true; return; }
   const dm = navigator.deviceMemory;   // solo Chrome: 0,25 … 8 (GB, arrotondati). Safari non lo dice.
   PRE.tier = dm && dm <= 2 ? 'vicino' : 'tutto';
   if(PRE.tier === 'tutto') teleExtra = 8e6;   // tutto il palazzo decodificato sta nel tetto: niente uscite dalla cache
   PRE.mappe = [ATRIO, PALAZZO].map(M => immMappa(M)).filter(Boolean);
   if(!PRE.mappe.length){ PRE.spento = true; return; }
+  PRE.mappe.forEach(m => { if(m.nome === 'atrio') antePrendi(m); });   // subito, senza aspettare l'indice: è quello che si ha davanti appena si entra
   PRE.giro = setInterval(preGiro, 150); preGiro();
 }
-// quanto in fretta si scarica: 0 = a partita cominciata (uno alla volta, il gioco ha la precedenza), 1 = nella saletta (3 insieme),
+// quanto in fretta si scarica: 0 = a partita cominciata (uno alla volta, il gioco ha la precedenza; 2 se la rete è buona), 1 = nella saletta (3 insieme),
 // 2 = si sta solo aspettando il caricamento a tutto schermo (8 insieme). Con una rete lentissima si scende ancora (vedi prePompa).
 function precaricoFretta(liv){ PRE.liv = liv === true ? 2 : liv === false ? 1 : liv; }
-// la rete è lentissima? Si guarda la velocità di ogni file (byte diviso il tempo che ci ha messo), moltiplicata per quanti ne scaricavano insieme,
-// sugli ultimi 8: se in tutto va a meno di 50 KB/s, più file insieme non danno più velocità ma i messaggi del gioco restano indietro: allora uno alla volta.
-function preLenta(){
-  const r = PRE.scarico; if(r.length < 3) return false;
+// quanto va la rete, in KB/s: la velocità di ogni file (byte diviso il tempo che ci ha messo), moltiplicata per quanti ne scaricavano insieme, sugli ultimi 8 file grandi.
+function preKbs(){
+  const r = PRE.scarico; if(r.length < 3) return Infinity;
   let kb = 0, ms = 0, k = 0; for(const x of r){ kb += x[1]; ms += x[2]; k += x[3]; }
-  return ms > 0 && kb / ms * 1000 * (k / r.length) < 50*1024;
+  return ms > 0 ? kb / ms * 1000 * (k / r.length) / 1024 : Infinity;
 }
+// la rete è lentissima? Sotto i 50 KB/s più file insieme non danno più velocità ma i messaggi del gioco restano indietro: allora uno alla volta.
+function preLenta(){ return preKbs() < 50; }
 function preGiro(){
   try{ preGiro0(); }catch(e){ PRE.spento = true; clearInterval(PRE.giro); }   // rete di sicurezza: se qualcosa va storto il precarico si ferma e il gioco resta com'è
 }
@@ -2808,28 +2869,43 @@ function preGiro0(){
   // quello che serve per partire dev'essere decodificato: se non è in coda, si rimette
   let coreOk = true;
   for(const v of PRE.voci){
-    if(!v.core || v.perso) continue;
+    if(!v.attendi || v.perso || v.ante) continue;
     if(!v.ok){ coreOk = false; continue; }
     if(!immPronta0(v.m, v.chiave)){ coreOk = false; if(v.m.s[v.chiave] === undefined) immAccoda(v.m, v.chiave, v.rel, true); }
   }
-  if(!PRE.pronto && risolti && !PRE.lista.length && !PRE.volo && coreOk){ PRE.pronto = true; PRE.tPronto = performance.now(); }
-  if(PRE.pronto && !PRE.lista.length && !PRE.volo && PRE.mappe.every(m => m.stato === 2 || m.stato === 4)) clearInterval(PRE.giro);   // tutto scaricato: il giro si ferma
+  const finita = !PRE.lista.length && !PRE.volo, aV = PRE.vAnte;
+  if(!PRE.pronto && risolti && coreOk && (finita || (aV && aV.m.ante))){ PRE.pronto = true; PRE.tPronto = performance.now(); }
+  if(PRE.pronto && finita && PRE.mappe.every(m => m.stato === 2 || m.stato === 4)){   // tutto scaricato: l'anteprima esce, se non serve più, e il giro si ferma
+    if(!PRE.tFine) PRE.tFine = performance.now();
+    const persi = PRE.voci.some(v => v.perso);
+    if(PRE.tier === 'tutto' && !persi) PRE.mappe.forEach(anteLascia);
+    if(persi || PRE.tier !== 'tutto' || PRE.mappe.every(m => !m.ante) || performance.now() - PRE.tFine > 30000) clearInterval(PRE.giro);
+  }
   immPompa();   // (le decodifiche messe in coda partono anche se nessuno sta disegnando: l'host in attesa, la pagina in secondo piano)
+}
+// a partita cominciata quello che resta arriva prima vicino a chi cammina; l'atrio, che ormai serve solo alla prossima partita, per ultimo
+const preOrdine = (a, b) => (a.pri - b.pri) || (a.d - b.d);
+function preVerso(m, x, y){
+  if(!PRE.lista.length) return;
+  for(const v of PRE.lista){ v.pri = v.m !== m ? 9 : v.ante ? 0 : 1; v.d = Math.hypot(v.x - x, v.y - y); }
+  PRE.lista.sort(preOrdine);
 }
 // pochi scaricamenti insieme; appena uno finisce parte il prossimo (senza aspettare il giro); chi è fallito aspetta un po' (al massimo 3 tentativi)
 function prePompa(){
+  if(immSosp) return;
   const ora = performance.now();
-  let max = PRE.liv === 2 ? 8 : PRE.liv === 0 ? 1 : 3;
+  let max = PRE.liv === 2 ? 8 : PRE.liv === 0 ? (preKbs() < 300 ? 1 : 2) : 3;
   if(PRE.scarico.length < 3) max = Math.min(max, PRE.liv === 2 ? 3 : 1);   // si parte piano: i primi file uno alla volta, per capire quanto va la rete
   else if(preLenta()) max = Math.min(max, PRE.liv === 2 ? 2 : 1);
+  else if(preKbs() < 300) max = Math.min(max, 3);
   if(immReali > 0) max = Math.min(max, 1);   // se chi gioca ha bisogno di qualcosa adesso, il precarico si fa da parte (passa uno alla volta)
   if(PRE.liv !== 2 && PRE.pausaFino > ora) return;   // rete lentissima: fra un file e l'altro un respiro, perché i messaggi del gioco passino
   while(PRE.volo < max){
     const n = PRE.lista.findIndex(v => !v.dopo || v.dopo <= ora); if(n < 0) break;
     const v = PRE.lista.splice(n, 1)[0]; PRE.volo++; v.t0 = performance.now(); v.k = PRE.volo;
-    immScarica(v.url).then(b => {
+    (v.ante ? antePrendi(v.m) || Promise.resolve(null) : immScarica(v.url)).then(b => {
       PRE.volo--; if(PRE.liv !== 2 && preLenta()) PRE.pausaFino = performance.now() + 300;
-      if(b){ v.ok = true; { PRE.scarico.push([performance.now(), b.size, performance.now() - v.t0, v.k]); if(PRE.scarico.length > 8) PRE.scarico.shift(); } if(v.core || PRE.tier === 'tutto'){ immAccoda(v.m, v.chiave, v.rel, true); immPompa(); } }
+      if(b){ v.ok = true; if(b.size >= PRE_GRANDE){ PRE.scarico.push([performance.now(), b.size, performance.now() - v.t0, v.k]); if(PRE.scarico.length > 8) PRE.scarico.shift(); } if(!v.ante && (v.core || PRE.tier === 'tutto')){ immAccoda(v.m, v.chiave, v.rel, true); immPompa(); } }
       else if(!immNonCe.has(v.url) && ++v.prove < 3){ v.dopo = performance.now() + 900*v.prove; PRE.lista.push(v); }
       else v.perso = true;   // non arriva: resterà il disegno a codice (e il gioco ci riprova da solo quando serve)
       v.fatto = !!(b || v.perso);
@@ -2843,37 +2919,47 @@ function preCostruisci(m){
   m.preFatta = true;
   const L = PEZZO*T, fi = Math.floor(FONTANA.x/L), fj = Math.floor(FONTANA.y/L), atrio = m.nome === 'atrio';
   const vicino = r => r.x < (fi + 2)*L && r.x + r.w > (fi - 1)*L && r.y < (fj + 2)*L && r.y + r.h > (fj - 1)*L;   // i 3×3 pezzi intorno alla fontana
-  const d = (x, y) => Math.hypot(x - FONTANA.x, y - FONTANA.y);
   const voci = [];
-  const aggiungi = (chiave, rel, peso, core, dist) => voci.push({ m, chiave, rel, url:m.base + rel + '?v=' + IMM_VERSIONE, peso, core:atrio || core, d:dist, prove:0, ok:false, perso:false, fatto:false });
-  m.pz.forEach(n => { const i = n % 16, j = (n / 16) | 0; aggiungi('p' + i + '_' + j, 'p_' + i + '_' + j + '.webp', 5, i >= fi - 1 && i <= fi + 1 && j >= fj - 1 && j <= fj + 1, d((i + 0.5)*L, (j + 0.5)*L)); });
-  m.mobili.forEach((r, k) => aggiungi('m' + k, 'mobili/' + k + '.webp', 1, vicino(r), d(r.x + r.w/2, r.y + r.h/2)));
-  m.extra.forEach((e, n) => aggiungi('e' + n, e.f, 1, vicino(e), d(e.x + e.w/2, e.y + e.h/2)));
-  for(const nome in m.anim){ const A = m.anim[nome]; aggiungi('a_' + nome, 'animati/' + nome + '.webp', 1, vicino({ x:A.cx - 40, y:A.cy - 40, w:80, h:80 }), d(A.cx, A.cy)); }
+  // core: si decodifica subito anche sul telefono piccolo. attendi: «pronto» lo aspetta. I ritagli del palazzo non si aspettano: il mobile è già nel fondo, il ritaglio serve a coprire chi gli passa dietro
+  const aggiungi = (chiave, rel, peso, core, attendi, pri, x, y) => voci.push({ m, chiave, rel, url:m.base + rel + '?v=' + IMM_VERSIONE, peso, core:atrio || core, attendi:atrio || attendi, pri:atrio ? 1 : pri, x, y, d:Math.hypot(x - FONTANA.x, y - FONTANA.y), prove:0, ok:false, perso:false, fatto:false });
+  m.pz.forEach(n => { const i = n % 16, j = (n / 16) | 0, q = i >= fi - 1 && i <= fi + 1 && j >= fj - 1 && j <= fj + 1; aggiungi('p' + i + '_' + j, 'p_' + i + '_' + j + '.webp', 5, q, q, q ? 3 : 4, (i + 0.5)*L, (j + 0.5)*L); });
+  m.mobili.forEach((r, k) => aggiungi('m' + k, 'mobili/' + k + '.webp', 1, vicino(r), false, 4, r.x + r.w/2, r.y + r.h/2));
+  m.extra.forEach((e, n) => aggiungi('e' + n, e.f, 1, vicino(e), false, 4, e.x + e.w/2, e.y + e.h/2));
+  for(const nome in m.anim){ const A = m.anim[nome]; aggiungi('a_' + nome, 'animati/' + nome + '.webp', 1, true, true, 3, A.cx, A.cy); }   // (non stanno nel fondo: nell'anteprima non ci sono)
+  aggiungi('ante', 'anteprima.webp', atrio ? 2 : 20, true, true, 2, FONTANA.x, FONTANA.y);
+  const a = voci[voci.length - 1]; a.ante = true; a.pri = atrio ? 0 : 0.5; if(!atrio) PRE.vAnte = a;
   m.preTot = voci.reduce((s, v) => s + v.peso, 0);
+  m.preAttendi = voci.reduce((s, v) => s + (v.attendi ? v.peso : 0), 0);
   PRE.voci.push(...voci); PRE.lista.push(...voci);
-  // prima quello che serve per partire (l'atrio, poi i pezzi intorno alla fontana), poi il resto dal più vicino al più lontano
-  PRE.lista.sort((a, b) => (b.core - a.core) || ((a.m.nome === 'atrio' ? 0 : 1) - (b.m.nome === 'atrio' ? 0 : 1)) || (a.d - b.d));
+  // prima le due anteprime (sul telefono lento la partita può partire prima che finisca l'atrio: senza quella del palazzo resterebbe il caricamento), poi l'atrio che si ha davanti, poi i pezzi del palazzo intorno alla fontana, poi il resto dal più vicino al più lontano
+  PRE.lista.sort(preOrdine);
 }
-// com'è messo: pct 0…100 (99 finché non è tutto pronto), pronto, quanti file non sono arrivati
+// com'è messo: pct 0…100 (99 finché non è pronto, mai indietro), pronto, tutto (ogni file è arrivato), quanti file non sono arrivati
 function precaricoStato(){
-  if(!PRE.avviato || PRE.spento) return { attivo:false, pct:100, pronto:true, tier:PRE.tier, persi:0 };
+  if(!PRE.avviato || PRE.spento) return { attivo:false, pct:100, pronto:true, tutto:true, tier:PRE.tier, persi:0 };
+  const solo = !(PRE.vAnte && PRE.vAnte.perso);   // con l'anteprima si conta solo quello che «pronto» aspetta; senza, tutto
   let tot = 0, fatto = 0, persi = 0;
-  for(const m of PRE.mappe) tot += m.preFatta ? m.preTot : PRE_STIMA[m.nome] || 0;
-  for(const v of PRE.voci){ if(v.fatto || immBlobV.has(v.url)) fatto += v.peso; if(v.perso) persi++; }   // (conta anche quello che è arrivato perché serviva subito a chi gioca)
-  return { attivo:true, pct:PRE.pronto ? 100 : tot ? Math.min(99, Math.floor(100*fatto/tot)) : 0, pronto:PRE.pronto, tier:PRE.tier, persi, secondi:+(((PRE.tPronto || performance.now()) - PRE.t0)/1000).toFixed(1) };   // (secondi: da quando è partito il precarico a quando è stato pronto, o a adesso)
+  for(const m of PRE.mappe) tot += m.preFatta ? (solo ? m.preAttendi : m.preTot) : PRE_STIMA[m.nome] || 0;
+  for(const v of PRE.voci){ if((!solo || v.attendi) && (v.fatto || immBlobV.has(v.url))) fatto += v.peso; if(v.perso) persi++; }   // (conta anche quello che è arrivato perché serviva subito a chi gioca)
+  PRE.pct = Math.max(PRE.pct, tot ? Math.min(99, Math.floor(100*fatto/tot)) : 0);
+  return { attivo:true, pct:PRE.pronto ? 100 : PRE.pct, pronto:PRE.pronto, tutto:!!PRE.tFine, tier:PRE.tier, persi, secondi:+(((PRE.tPronto || performance.now()) - PRE.t0)/1000).toFixed(1), secondiTutto:+(((PRE.tFine || performance.now()) - PRE.t0)/1000).toFixed(1) };   // (secondi: da quando è partito il precarico a quando è stato pronto, o a adesso)
 }
 // le immagini intorno a un punto (quello che si vede e un poco di più) sono già decodificate? Le chiede, se mancano.
 // Vero anche se la mappa non ha immagini o non sono arrivate (resta il disegno a codice, senza aspettare). Falso solo mentre si aspetta davvero.
-function immIntorno(M, x, y, mw, mh){   // mw, mh: metà della larghezza e dell'altezza che si vede (pixel del gioco); senza, una finestra larga
-  // Risposta { ok, pct }: ok = tutto pronto (o niente da aspettare); pct = quante di quelle immagini sono già pronte
+function immIntorno(M, x, y, mw, mh, cerco){   // mw, mh: metà della larghezza e dell'altezza che si vede (pixel del gioco); senza, una finestra larga. cerco: non so ancora dove sono, non si chiedono pezzi
+  // Risposta { ok, pct }: ok = tutto pronto (o niente da aspettare); pct = quante di quelle immagini sono già pronte. Con l'anteprima basta lei: i pezzi veri arrivano dopo, in dissolvenza
   try{
     const m = immMappa(M); if(!m) return { ok:true, pct:100 };
-    if(m.stato !== 2){ immIndice(m); const ok = m.stato !== 0 && m.stato !== 1; return { ok, pct:ok ? 100 : 0 }; }
+    if(m.stato !== 2) immIndice(m);
+    if(m.stato !== 4) antePrendi(m);
+    if(m.ante) return { ok:true, pct:100 };
+    if(m.aP && !m.aFatta) return { ok:false, pct:m.stato === 2 ? 50 : 0 };
+    if(m.stato !== 2){ const ok = m.stato !== 0 && m.stato !== 1; return { ok, pct:ok ? 100 : 0 }; }
+    if(cerco) return { ok:false, pct:0 };
     const L = PEZZO*T, ni = Math.ceil(M.GW/PEZZO), nj = Math.ceil(M.GH/PEZZO);
     const hw = mw ? mw + 4*T : 13*T, hh = mh ? mh + 4*T : 10*T;   // quello che si vede, più mezzo pezzo
     const i0 = Math.max(0, Math.floor((x - hw)/L)), i1 = Math.min(ni - 1, Math.floor((x + hw)/L)), j0 = Math.max(0, Math.floor((y - hh)/L)), j1 = Math.min(nj - 1, Math.floor((y + hh)/L));
-    immChiedi(m, M, i0, j0, i1, j1, 1);
+    const s = immSosp; immSosp = false; immChiedi(m, M, i0, j0, i1, j1, 1); immSosp = s;
     let tot = 0, manca = 0;
     const conta = chiave => { tot++; if(!immPronta0(m, chiave)) manca++; };
     for(let j = j0; j <= j1; j++) for(let i = i0; i <= i1; i++) if(m.pz.has(j*16 + i)) conta('p' + i + '_' + j);
@@ -3419,7 +3505,7 @@ function disegnaMobile(c, M, o, k, res, t, eff, pit){
   const mod = MOBILI[o.t]; if(!mod) return;
   const x = o.x*T, y = o.y*T, r = immMobile(M, k);
   if(r || immFondoCopre(M, k)){   // il mobile di Blender (nel fondo, e col suo ritaglio sopra): le fiamme sono tolte dal render (restano le luci), le parti vive sono quelle fatte su misura per l'immagine
-    if(r){ c.drawImage(r.img, r.x, r.y, r.w, r.h); fiammeDi(c, r.fl, t, k); }
+    if(r){ const g = c.globalAlpha; c.globalAlpha = g*immDissolvi(M._im, r.img); c.drawImage(r.img, r.x, r.y, r.w, r.h); c.globalAlpha = g; fiammeDi(c, r.fl, t, k); }
     // l'ingranaggio: la ruota grande non è nel ritaglio, gira lei col compito (dall'angolo fermo, 0); finché non è arrivata non si disegna quella a codice
     if(o.t === 'ingranaggio' && immIndiceHa(M, 'ruota')){ immAnimata(c, M, 'ruota', 0, 0, (eff || []).some(e => e.k === 'compito' && e.v === 'ingranaggio') ? t*6 : 0); return; }
     const v = VIVO_IMM[o.t];
@@ -3495,7 +3581,7 @@ const VIVO_IMM = {
     }
   },
 };
-// le fiamme delle candele di fondo (posizioni in caselle sullo schermo, le manda Blender in indice.json): solo se il pezzo che le contiene è arrivato
+// le fiamme delle candele di fondo (posizioni in caselle sullo schermo, le manda Blender in indice.json): solo se il pezzo che le contiene è arrivato, o se sotto c'è l'anteprima
 function candeleVive(c, M, t, x0, y0, x1, y1){
   const m = M._im; if(!m || m.stato !== 2 || !immAcceso() || !m.fiamme) return;
   const L = PEZZO*T;
@@ -3503,7 +3589,7 @@ function candeleVive(c, M, t, x0, y0, x1, y1){
     const q = m.fiamme[n], x = q[0]*T, y = q[1]*T;
     if(x < x0 || x > x1 || y < y0 || y > y1) continue;
     const i = Math.floor(x/L), j = Math.floor(y/L), ch = 'p' + i + '_' + j;
-    if(m.pz.has(j*16 + i) && !cerca(m.k[ch] || (m.k[ch] = 'I|' + m.nome + '|' + ch))) continue;
+    if(!m.ante && m.pz.has(j*16 + i) && !cerca(m.k[ch] || (m.k[ch] = 'I|' + m.nome + '|' + ch))) continue;
     fiammaBl(c, x, y, t, 30 + n, q[2]);
   }
 }
@@ -4638,18 +4724,33 @@ class Pittore {
     const imm=immPronta(M);
     if(imm) immChiedi(imm, M, i0, j0, i1, j1, 1);   // scarica quello che serve: lo schermo e un anello di pezzi intorno
     // al massimo ~6 ms per fotogramma a fare pezzi nuovi: quelli che mancano ancora si abbozzano e arrivano al prossimo
-    let nuovi=0, spesa=0, manca=0;
+    let nuovi=0, spesa=0, manca=0, vuoti=0;
+    // l'anteprima sotto i pezzi che mancano o stanno entrando: una pennellata sola su tutto il rettangolo, così fra un pezzo e l'altro non resta nessuna riga
+    const ante=immAnteprima(M);
+    if(ante){
+      let a0=ni+1, a1=-1, b0=nj+1, b1=-1;
+      for(let j=j0;j<=j1;j++) for(let i=i0;i<=i1;i++){
+        const im=imm && immPezzo(imm, i, j);
+        if(im && immDissolvi(imm, im)>=1) continue;
+        if(i<a0) a0=i; if(i>a1) a1=i; if(j<b0) b0=j; if(j>b1) b1=j;
+      }
+      if(a1>=0){ const k=ante.w/(M.GW*T), x=Math.round((a0*L-cx)*s), y=Math.round((b0*L-cy)*s);
+        c.drawImage(ante.img, a0*L*k, b0*L*k, (a1-a0+1)*L*k, (b1-b0+1)*L*k, x, y, Math.round(((a1+1)*L-cx)*s)-x+1, Math.round(((b1+1)*L-cy)*s)-y+1); }
+    }
     for(let j=j0;j<=j1;j++) for(let i=i0;i<=i1;i++){
       const dx=Math.round((i*L-cx)*s), dy=Math.round((j*L-cy)*s), dw=Math.round(((i+1)*L-cx)*s)-dx, dh=Math.round(((j+1)*L-cy)*s)-dy;
       const im=imm && immPezzo(imm, i, j);   // l'immagine di Blender del pezzo, se è già arrivata: prende il posto del disegno
-      if(im){ c.drawImage(im, dx, dy, dw+1, dh+1); continue; }
+      if(im){ if(ante){ c.globalAlpha=immDissolvi(imm, im); c.drawImage(im, dx, dy, dw+1, dh+1); c.globalAlpha=1; } else c.drawImage(im, dx, dy, dw+1, dh+1); continue; }
       if(imm && imm.pz.has(j*16+i)) manca++;   // (doveva esserci l'immagine di Blender e non c'è ancora: per le prove e per il caricamento d'ingresso)
+      if(ante) continue;                        // (sotto c'è già l'anteprima)
+      vuoti++;
       let e=pezzo(M,i,j,res,true);
       if(!e && (spesa<6 || !nuovi)){ const a=performance.now(); e=pezzo(M,i,j,res); e.nuovo=false; nuovi++; spesa+=performance.now()-a; }
       if(e) c.drawImage(e.cv, dx, dy, dw+1, dh+1); else this.abbozzo(M, i, j, dx, dy, dw/(PEZZO*T));   // +1: nessuna riga tra un pezzo e l'altro
     }
     this.meta={ w:W/s, h:H/s };   // quanto vedo, in pixel del gioco (lo usa il caricamento d'ingresso per sapere quali pezzi servono)
     this.manca=manca; if(manca) this.fotMancano=(this.fotMancano||0)+1;   // pezzi di Blender mancanti in questo fotogramma / fotogrammi con pezzi mancanti dall'inizio
+    if(vuoti) this.fotVuoti=(this.fotVuoti||0)+1;                         // fotogrammi con pezzi a codice (né l'immagine né l'anteprima): per le prove
     c.setTransform(s,0,0,s,-cx*s,-cy*s);
     const tx0=Math.max(0,Math.floor(cx/T)-1), ty0=Math.max(0,Math.floor(cy/T)-1), tx1=Math.min(M.GW-1,Math.ceil((cx+W/s)/T)+1), ty1=Math.min(M.GH-1,Math.ceil((cy+H/s)/T)+1);
     // solo il mare e le torce si muovono
@@ -5978,7 +6079,7 @@ function ammesso() { return AMMESSI.indexOf(nomeAccount()) >= 0; }
 // la chat di prossimità: frasi a un tocco (poche e brevi) e quanti messaggi tiene lo storico
 var PARLA_RAPIDE = ["Ciao!", "Dove sei?", "Seguimi", "Aiuto!", "Occhio!"];
 var PARLA_STORICO = 4;
-var AVVIO_MAX = 18000;   // al massimo, quanto aspetta la partita chi ha il telefono lento (poi si parte lo stesso, col disegno a codice dove manca la mappa)
+var AVVIO_MAX = 18000;   // al massimo, quanto aspetta la partita chi ha il telefono lento (poi si parte lo stesso: dove manca un pezzo si vede l'anteprima, o il disegno a codice se manca anche quella)
 var RESPIRO = 5000;      // l'host riprende: da quando è di nuovo sul broker la partita sta ferma al massimo così, mentre gli ospiti tornano
 var TACE_MS = 8000;      // da quanto non si sentono le posizioni dell'host prima di dirlo sullo schermo
 var RITARDATARI = "partita";   // chi arriva a partita cominciata la guarda ed entra alla prossima
@@ -6141,19 +6242,90 @@ FiloDiretto.prototype.segnale = function (s) {
 FiloDiretto.prototype.invia = function (tx) { if (this.pronto()) try { this.ch.send(tx); } catch (e) {} };
 FiloDiretto.prototype.chiudi = function () { try { if (this.ch) this.ch.close(); if (this.pc) this.pc.close(); } catch (e) {} this.ch = null; this.pc = null; this.coda = []; };
 
+// ----- i messaggi privati sul broker -----
+// Sul broker legge chiunque conosca il codice della stanza. Ruolo, compiti, avvisi privati e mosse non ci passano in chiaro: ogni ospite e l'host si fanno una chiave (ECDH P-256, WebCrypto)
+// e con quella cifrano in AES-GCM (anche i messaggi per aprire il filo diretto, che hanno dentro gli indirizzi dei telefoni). Niente server: l'host mette la sua parte pubblica in ogni foto (ck), l'ospite nel «join» (ck, e un messaggio «ck» se serve ridirla).
+// Chi non manda la chiave ha una versione vecchia, o un telefono senza crypto.subtle (c'è solo su https e localhost): per lui resta il chiaro di sempre, e il suo ruolo resta leggibile.
+// Chi la manda non riceve mai niente in chiaro, nemmeno se la chiave è in ritardo: si aspetta. Sul filo diretto non serve, è già cifrato da WebRTC. La voce resta fuori.
+// Il messaggio cifrato è { t: "z", c, to } e fuori si legge solo a chi va, come prima. La lunghezza dice poco: i testi si riempiono di spazi fino a un blocco (privati 512, il resto 128 byte).
+// Protegge da chi ascolta il broker, non da chi fa da host né da chi inietta messaggi falsi: per quello servirebbe un server.
+var CIF = { pub: null, priv: null, fatto: false, avvio: null };
+var CIF_PRIV = 512, CIF_ALTRI = 128, CIF_ATTESA = 12000;   // (quanto resta buono un messaggio fermo per una chiave in ritardo: dopo vale meno di quello che è successo intanto)
+function cifB64(u) { var s = ""; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); }
+function cifByte(b) { var s = atob(b), u = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+function cifTesto(s) { return new TextEncoder().encode(s); }
+function cifConta(k, t0) { if (!window.LT_PROVA) return; var c = window.LT_CIF = window.LT_CIF || { n: {}, ms: {} }; c.n[k] = (c.n[k] || 0) + 1; if (t0 != null) { c.ms[k] = (c.ms[k] || 0) + performance.now() - t0; } }
+// la chiave comune, uguale sui due telefoni: hp e op sono le parti pubbliche di host e ospite, «loro» quella dell'altro
+function cifDeriva(hp, op, loro) {
+  var s = crypto.subtle, t0 = performance.now();
+  return Promise.resolve().then(function () { return s.importKey("raw", cifByte(loro), { name: "ECDH", namedCurve: "P-256" }, false, []); })   // (una chiave rotta non deve fermare chi la riceve)
+    .then(function (k) { return s.deriveBits({ name: "ECDH", public: k }, CIF.priv, 256); })
+    .then(function (b) { return s.importKey("raw", b, "HKDF", false, ["deriveKey"]); })
+    .then(function (b) { return s.deriveKey({ name: "HKDF", hash: "SHA-256", salt: cifTesto("lanterne"), info: cifTesto(hp + "|" + op) }, b, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]); })
+    .then(function (k) { cifConta("chiave", t0); return k; });
+}
+// lato: a chi va, così un messaggio non vale nell'altro verso né per un altro ospite
+function cifChiudi(k, tx, lato, blocco) {
+  var t = cifTesto(tx), b = new Uint8Array(Math.ceil(t.length / blocco) * blocco), iv = crypto.getRandomValues(new Uint8Array(12)), t0 = performance.now();
+  b.fill(32); b.set(t);
+  return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv, additionalData: cifTesto(lato) }, k, b).then(function (c) {
+    var u = new Uint8Array(12 + c.byteLength); u.set(iv); u.set(new Uint8Array(c), 12);
+    var z = cifB64(u); cifConta("chiudi", t0); return z;
+  });
+}
+function cifApri(k, tx, lato) {
+  var u = cifByte(tx), t0 = performance.now();
+  return crypto.subtle.decrypt({ name: "AES-GCM", iv: u.subarray(0, 12), additionalData: cifTesto(lato) }, k, u.subarray(12)).then(function (b) {
+    var m = JSON.parse(new TextDecoder().decode(b)); cifConta("apri", t0); return m;
+  });
+}
+// appena caricato il gioco: la coppia di chiavi di questa pagina e una prova completa su se stessa. Se un passo non riesce CIF.pub resta vuoto e il telefono si comporta come una versione vecchia
+CIF.avvio = (function () {
+  function fine() { CIF.fatto = true; }
+  try {
+    if (window.LT_PROVA && window.LT_NOCIF) throw 0;   // (solo per le prove: un telefono senza crypto.subtle)
+    if (!window.crypto || !crypto.subtle || !window.TextEncoder || !window.TextDecoder) throw 0;
+    return crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"]).then(function (c) {
+      CIF.priv = c.privateKey;
+      return crypto.subtle.exportKey("raw", c.publicKey).then(function (r) {
+        var pub = cifB64(new Uint8Array(r));
+        return cifDeriva(pub, pub, pub)
+          .then(function (k) { return cifChiudi(k, "{\"a\":1}", "x", 16).then(function (z) { return cifApri(k, z, "x"); }); })
+          .then(function (m) { if (m && m.a === 1) CIF.pub = pub; });
+      });
+    }).then(fine, fine);
+  } catch (e) { fine(); return Promise.resolve(); }
+})();
+function cifPronta(f) { if (CIF.fatto) f(); else CIF.avvio.then(f); }
+// la copia della partita per i vice (solo con l'host di riserva acceso): ha dentro tutti i ruoli e passa dal broker, quindi viaggia chiusa con una chiave di partita (CIF.kp)
+// che l'host dà solo ai vice, dentro i loro privati. Chi prende il posto la apre: se non può, si riparte dalla saletta
+function cifCopia(fatto) {
+  if (CIF.kpK) return fatto(CIF.kpK);
+  if (!CIF.kp) CIF.kp = cifB64(crypto.getRandomValues(new Uint8Array(32)));
+  crypto.subtle.importKey("raw", cifByte(CIF.kp), "AES-GCM", false, ["encrypt", "decrypt"]).then(function (k) { CIF.kpK = k; fatto(k); }, function () {});
+}
+
 function host(t) {
   if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-  precaricoAvvia();   // appena si entra comincia lo scaricamento di tutto il palazzo (la saletta serve a questo)
+  var copia = t.ripresa && t.ripresa.stato && t.ripresa.stato.z;
+  if (copia) {
+    var dopo = function (s) { if (s) t.ripresa.stato = s; else t.ripresa = null; host(t); };
+    if (!CIF.kp) return dopo(null);
+    CIF.kpK = null;
+    return cifCopia(function (k) { cifApri(k, copia, "copia").then(dopo, function () { dopo(null); }); });
+  }
+  precaricoAvvia();   // appena si entra comincia lo scaricamento del palazzo: prima quello che serve per partire, poi il resto (anche a partita cominciata)
   var IO = t.mioId || "host";
   var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
   var H = { fase: "lobby", codice: "…", pronta: false, partita: 0, rip: 0, imp: pulisci(t.impostazioni),
     players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), lenz: lenzMio() || { c: 0, m: null } }], guarda: [], classifica: null, fine: null };
   var P = null, rete = null, inviati = {}, ultimaN = {}, viaDa = {}, finePronta = false, roundDetto = 0, fili = {}, filiN = {}, nFilo = 0, nU = Date.now() % 1e9;
-  // i messaggi che contano: dal broker e, a chi ha il filo diretto aperto, anche da lì (il primo che arriva vale)
+  var chiavi = {}, fermi = {}, ePriv = nU, viciOra = [], codaCopia = Promise.resolve();   // ePriv: quale giro di privati è (cambia con la partita: il numero v dei privati riparte da capo)
+  // i messaggi che contano: dal broker e, a chi ha il filo diretto aperto, anche da lì (il primo che arriva vale). Quelli per uno solo sul broker vanno cifrati
   function veloce(m) {
     if (!rete) return;
     m.u = ++nU;
-    rete.inviaVeloce(m);
+    if (m.to) perLui(m); else rete.inviaVeloce(m);
     var tx = null;
     for (var id in fili) { if (m.to && m.to !== id) continue; if (fili[id].pronto()) { if (tx === null) tx = JSON.stringify(m); fili[id].invia(tx); } }
   }
@@ -6163,7 +6335,7 @@ function host(t) {
     var F = fili[id], n = filiN[id] || 0; if (F && !subito && !F.daRifare(n)) return;
     filiN[id] = n + 1;
     if (F) F.chiudi();
-    F = fili[id] = new FiloDiretto(function (s) { if (rete) rete.inviaVeloce({ t: "fd", s: s, to: id }); }, function (m) { if (m && m.t && rete && arrivoOspite) arrivoOspite(id, m); });
+    F = fili[id] = new FiloDiretto(function (s) { if (rete) perLui({ t: "fd", s: s, to: id }); }, function (m) { if (m && m.t && rete && arrivoOspite) arrivoOspite(id, m, true); });
     F.aperto = function () { filiN[id] = 0; };
     F.caduto = function () { var p = pById(id); tuttiFilo = false; if (fili[id] === F && !filiN[id] && p && !p.via) filoApri(id, true); };
     F.o = ++nFilo; F.offri();
@@ -6179,6 +6351,51 @@ function host(t) {
     tuttiFilo = tutti;
   }
   function soloFilo(m) { var tx = null; for (var id in fili) if (fili[id].pronto()) { if (tx === null) tx = JSON.stringify(m); fili[id].invia(tx); } }
+  // ----- le chiavi degli ospiti: vedi in cima -----
+  // Cifrare è asincrono: per ogni ospite una fila in uscita (coda) e una in entrata (codaA), così i messaggi restano nell'ordine in cui sono nati
+  function cifra(id, m) {
+    var c = chiavi[id], k = c.k, tx = JSON.stringify(m), blocco = m.t === "priv" ? CIF_PRIV : CIF_ALTRI;
+    c.coda = c.coda.then(function () { return cifChiudi(k, tx, "h" + id, blocco); }).then(function (z) { if (rete && !fermo && chiavi[id] === c) rete.inviaVeloce({ t: "z", to: id, c: z }); }, function () {});
+  }
+  // un messaggio per uno solo, sul broker. Il chiaro è solo per chi non sa cifrare. Se la chiave è in ritardo si aspetta: il privato lo rimanda da solo il battito quando la chiave c'è,
+  // gli altri stanno fermi un momento in fila. La ricevuta di una mossa e gli avatar non dicono niente e non aspettano
+  function perLui(m) {
+    var id = m.to, c = chiavi[id], p = pById(id);
+    if (c && c.k) return cifra(id, m);
+    if (!c && !(p && p.cif) || (CIF.fatto && !CIF.pub)) return rete.inviaVeloce(m);
+    if (m.t === "ak" || m.t === "av") return rete.inviaVeloce(m);
+    if (m.t === "priv") { cifConta("privFermo"); return; }
+    var l = fermi[id] || (fermi[id] = []); l.push({ m: m, t: Date.now() }); if (l.length > 32) l.shift();
+    cifConta("fermi");
+  }
+  function chiaveOspite(id, pub, ridico) {
+    if (!pub) { delete chiavi[id]; delete fermi[id]; return; }
+    if (!CIF.fatto) return cifPronta(function () { if (!fermo) chiaveOspite(id, pub, ridico); });
+    if (!CIF.pub) return;
+    var c = chiavi[id];
+    if (c && c.pub === pub) { if (c.k && ridico) cifra(id, { t: "cko", to: id }); return; }
+    var n = chiavi[id] = { pub: pub, k: null, coda: Promise.resolve(), codaA: Promise.resolve() };
+    cifDeriva(CIF.pub, pub, pub).then(function (k) {
+      var rit = window.LT_PROVA && window.LT_CKRITARDO;   // (solo per le prove: una chiave in ritardo)
+      return rit ? new Promise(function (ok) { setTimeout(function () { ok(k); }, rit); }) : k;
+    }).then(function (k) {
+      if (fermo || chiavi[id] !== n) return;
+      n.k = k; cifra(id, { t: "cko", to: id });
+      inviati[id] = -1;   // il privato parte al prossimo battito
+      var ora = Date.now(), l = fermi[id] || []; delete fermi[id];
+      l.forEach(function (x) { if (ora - x.t < CIF_ATTESA) cifra(id, x.m); });
+    }, function () { if (chiavi[id] === n) delete chiavi[id]; });
+  }
+  function chiaveManca(p) { return !!p.cif && !p.bot && p.id !== IO && !!CIF.pub && !(chiavi[p.id] && chiavi[p.id].k); }
+  // la copia per i vice (la manda il core, con l'host di riserva acceso): chiusa, se tutti e due sanno cifrare. Il core sa solo la fase
+  function copiaChiusa(m, manda) {
+    if (!CIF.pub || !m.vici.every(function (id) { var p = pById(id); return p && p.cif; })) return manda.call(rete, m);
+    var tx = JSON.stringify(m.s), fase = m.s.fase; viciOra = m.vici;
+    cifCopia(function (k) {
+      codaCopia = codaCopia.then(function () { return cifChiudi(k, tx, "copia", CIF_ALTRI); }).then(function (z) { if (rete && !fermo) manda.call(rete, Object.assign({}, m, { s: { z: z, fase: fase } })); }, function () {});
+    });
+  }
+  function kpPer(id) { return viciOra.indexOf(id) >= 0 ? CIF.kp : undefined; }
   // EMQX accetta circa 10 messaggi al secondo da ogni telefono (misurato l'1/11: a 8 passano tutti in 60 ms, a 10 ci mettono 200 ms, a 20 se ne perde metà); HiveMQ non ha questo tetto.
   // Le posizioni si ripetono da sole e cedono il posto agli altri messaggi: sul broker al massimo 8 al secondo, 4 se tutti hanno il filo; se nell'ultimo secondo ne sono già partiti 9 si salta, ma mai per più di 330 ms
   var tuttiFilo = false, guardaT = 0, posCr = 0, posT = 0, partiti = [];
@@ -6230,12 +6447,13 @@ function host(t) {
   // chi ha la mappa pronta: i Bot sempre; io col mio precarico; gli altri dicono la loro («pr»). Chi non lo dice mai (un telefono con una versione vecchia) vale pronto dopo 5 s.
   function pronto(p) { return !!p.bot || (p.id === IO ? precaricoStato().pronto : p.pr !== undefined ? !!p.pr : Date.now() - (p.t0 || 0) > 5000); }
   function mappaPct(p) { return pronto(p) ? 100 : p.id === IO ? precaricoStato().pct : (p.mp || 0); }
-  function inAttesa() { return presenti().filter(function (p) { return !pronto(p); }); }
+  function inAttesa() { return presenti().filter(function (p) { return !pronto(p) || chiaveManca(p); }); }   // (la partita aspetta anche le chiavi: si fanno nella saletta, un attimo)
   // i Bot automatici: finché l'host non tocca i tasti dei Bot, la saletta sta a RIEMPI posti (le persone prendono il posto dei Bot)
   if (H.auto == null) H.auto = true;
   // la saletta: una partita nell'atrio senza ruoli, dove si gira finché l'host non fa partire dal computer
   function nuovaSaletta() {
     P = new Partita(presenti().map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }), H.imp, eventi, { saletta: true });
+    ePriv = ++nU;
     if (window.LT_PROVA) window.LT_P = P;
   }
   function allinea() {
@@ -6273,10 +6491,16 @@ function host(t) {
       if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); riempi(); bd(); return; }
       p.via = true; if (!viaDa[id]) viaDa[id] = Date.now(); bd();   // resta in partita: se torna entro un minuto e mezzo riprende il suo posto (dopo una ripresa il conto è già partito)
     },
-    onMsg: function arrivo(id, m) {
+    onMsg: function arrivo(id, m, sulFilo) {
       arrivoOspite = arrivo;
       if (!m || !m.t) return;
       if (m.t === "fd") { if (fili[id]) fili[id].segnale(m.s); return; }   // il filo diretto: i messaggi per aprirlo
+      if (m.t === "z") {   // una mossa cifrata: se non si apre si scarta, l'ospite la ripete
+        var cz = chiavi[id]; if (!cz || !cz.k) return;
+        var kz = cz.k; cz.codaA = cz.codaA.then(function () { return cifApri(kz, m.c, "o" + id); }).then(function (x) { if (!fermo && x && (x.t === "a" || x.t === "pc" || x.t === "fd")) arrivo(id, x); }, function () { cifConta("scarti"); });
+        return;
+      }
+      if (m.t === "ck") { var pk = pById(id); if (pk) pk.cif = 1; chiaveOspite(id, m.k, true); return; }   // la sua chiave, ridetta: l'host ne ha una nuova, o il «join» è di prima
       if (m.t === "vc") { var pv = pById(id); if (pv && !pv.via && VS) VS.arriva(id, m); return; }   // la voce: messaggi di collegamento
       if (m.t === "pr") {   // la mappa di quel telefono: percentuale e pronto. Si ridice a tutti solo se cambia davvero (pronto, o 10 punti)
         var pq = pById(id); if (!pq || pq.bot) return;
@@ -6286,16 +6510,18 @@ function host(t) {
       }
       if (m.t === "join") {
         var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
+        chiaveOspite(id, m.ck);   // (chi manda la chiave sa cifrare: lo si sa da subito, senza attese. Prima di tutto il resto: anche i primi messaggi per lui devono trovarla)
+        if (p) p.cif = m.ck ? 1 : 0;
         if (!p && !t.puoSedersi(id, nome)) { if (!H.guarda.some(function (x) { return x.id === id; })) H.guarda.push({ id: id, nome: nome }); bd(); return; }
         if (!p && H.fase === "lobby" && H.players.length >= MAX && H.auto) togliBot(true);   // un Bot automatico lascia il posto
-        if (!p && H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), t0: Date.now(), lenz: lenzNuovo(m.lenz) }); riempi(); }
+        if (!p && H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), t0: Date.now(), lenz: lenzNuovo(m.lenz), cif: m.ck ? 1 : 0 }); riempi(); }
         if (p) { p.forse = false; if (p.via && H.fase !== "lobby") { p.via = false; delete viaDa[id]; } if (!p.omino) p.omino = avatarValido(m.omino); if (P && H.fase === "gioco") P.rientra(id); }
         bd();
         if (p && P) {
           inviati[id] = -1; ultimaN[id] = 0;
-          var g = P.per(id); if (g) rete.inviaVeloce({ t: "tp", x: Math.round(g.x), y: Math.round(g.y), ep: g.ep, to: id });
+          var g = P.per(id); if (g) perLui({ t: "tp", x: Math.round(g.x), y: Math.round(g.y), ep: g.ep, to: id });
           // gli avatar non viaggiano nella foto durante la partita: a chi rientra li mando a parte
-          rete.inviaVeloce({ t: "av", l: H.players.filter(function (q) { return q.omino; }).map(function (q) { return [q.id, q.omino]; }), to: id });
+          perLui({ t: "av", l: H.players.filter(function (q) { return q.omino; }).map(function (q) { return [q.id, q.omino]; }), to: id });
         }
         if (p && fili[id] && !fili[id].pronto()) filiN[id] = 0;   // chi rientra non aspetta i tentativi fatti mentre non c'era
         tuttiFilo = false; if (pById(id)) filoApri(id); else guardaT = Date.now();   // (arrivato a partita cominciata: guarda, e le posizioni gli arrivano solo dal broker)
@@ -6307,18 +6533,20 @@ function host(t) {
       if (m.t === "p") { if (m.n <= (ultimaN[id] || 0)) return; ultimaN[id] = m.n; P.muovi(id, m); }
       else if (m.t === "a") {
         if (m.q != null) {   // la ricevuta parte sempre (anche per un doppione: la prima può essersi persa), la mossa vale una volta sola
-          veloce({ t: "ak", q: m.q, to: id });
+          var Fq = sulFilo === true && fili[id], ak = { t: "ak", q: m.q, to: id };
+          if (Fq && Fq.pronto()) Fq.invia(JSON.stringify(ak)); else veloce(ak);   // (torna da dove è venuta: col filo aperto sul broker non si deve vedere a chi rispondo)
           var vq = visteA[id] || (visteA[id] = []); if (vq.indexOf(m.q) >= 0) return;
           vq.push(m.q); if (vq.length > 64) vq.shift();
         }
         if (m.k === "lenz") cambiaLenz(id, m.c); else P.azione(id, m);
       }
+      else if (m.t === "pc") P.azione(id, { k: "pc", x: m.x, y: m.y, d: m.d, m: m.m });   // il Burattinaio muove la sua vittima
     }
   }, { ripresa: riprendo });
   if (!rete) return senzaRete(t);
   if (window.LT_PROVA) window.LT_RETE = rete;
   // senza rete i messaggi veloci non partono: tanto non arriverebbero, e nel collegamento fermo si accumulerebbero fino a far scattare un difetto di mqtt 4.3.7 (oltre 512 KB in coda chiama due volte la stessa funzione: «Callback called multiple times»)
-  ["invia", "inviaVeloce"].forEach(function (k) { var f = rete[k]; rete[k] = function (m) { if (k === "inviaVeloce" && navigator.onLine === false) return; partiti.push(Date.now()); if (partiti.length > 64) partiti.shift(); return f.call(rete, m); }; });
+  ["invia", "inviaVeloce"].forEach(function (k) { var f = rete[k]; rete[k] = function (m) { if (k === "inviaVeloce" && navigator.onLine === false) return; if (m && m.t === "__ris" && m.s) return copiaChiusa(m, f); partiti.push(Date.now()); if (partiti.length > 64) partiti.shift(); return f.call(rete, m); }; });
   if (riprendo && rete.codice) H.codice = rete.codice;
   // la voce: l'host fa da portalettere dei messaggi di collegamento fra i telefoni (non conserva niente, sono messaggi veloci)
   // Col filo aperto passano da lì: arrivano prima e non consumano i messaggi del broker (con 10 persone sono 45 collegamenti). Solo il giro dei 5 secondi resta fuori dal broker: un elenco nuovo passa da tutte e due le strade
@@ -6346,9 +6574,9 @@ function host(t) {
   var vsT = setInterval(function () { VS.giro(); }, 5000);
 
   function vm() {
-    var v = { ver: H.ver, fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, rip: H.rip, tiene: IO, imp: H.imp, auto: !!H.auto,
+    var v = { ver: H.ver, fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, rip: H.rip, tiene: IO, imp: H.imp, auto: !!H.auto, ck: CIF.pub || undefined,
       players: H.players.map(function (p) { return { id: p.id, nome: p.nome, lenz: p.lenz, bot: !!p.bot, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" || p.bot ? (p.omino || null) : undefined, mp: H.fase === "lobby" ? mappaPct(p) : undefined, pr: H.fase === "lobby" ? (pronto(p) ? 1 : 0) : undefined }; }),
-      avvio: H.avvio ? { n: inAttesa().length } : null,
+      avvio: H.avvio ? { n: inAttesa().length, t: H.avvio.t0 + avvioMax() } : null,
       guarda: H.guarda, classifica: H.classifica, fine: H.fine };
     if (P && (H.fase === "gioco" || H.fase === "lobby")) v.g = P.foto();
     return v;
@@ -6356,7 +6584,7 @@ function host(t) {
   function ricorda() {
     if (H.fase === "lobby") return t.ricorda(null);
     t.ricorda({ fase: H.fase, codice: H.codice, partita: H.partita, rip: H.rip, imp: H.imp, guarda: H.guarda, classifica: H.classifica, fine: H.fine, voce: VS ? VS.elenco() : null,
-      players: H.players.map(function (p) { return { id: p.id, nome: p.nome, lenz: p.lenz, bot: !!p.bot, via: !!p.via, omino: p.bot ? p.omino : undefined }; }),
+      players: H.players.map(function (p) { return { id: p.id, nome: p.nome, lenz: p.lenz, bot: !!p.bot, via: !!p.via, omino: p.bot ? p.omino : undefined, cif: p.cif ? 1 : undefined }; }),
       salvata: P && H.fase === "gioco" ? P.salva() : null });
   }
   var visteA = {}, giroPriv = 0;   // le mosse già fatte, per ospite
@@ -6378,8 +6606,8 @@ function host(t) {
     if (conta === true || ff !== fotoFase) { ripetiFoto(ff !== fotoFase); fotoFase = ff; }
     // in partita la foto parte veloce: quella trattenuta dal broker (per chi rientra) ci ha messo fino a 4,6 s nella prova del 31/10, e un sabotaggio deve arrivare subito.
     // Quella trattenuta resta una ogni 2 s e a ogni cambio di fase: chi la trova vecchia vede il numero nel battito e chiede l'ultima
-    if (H.fase === "gioco") veloce({ t: "vm", vm: v });
-    if (H.fase !== "gioco" || H.faseT !== H.fase || ultimaFoto - (H.tT || 0) >= 2000) { H.faseT = H.fase; H.tT = ultimaFoto; rete.invia({ t: "vm", vm: v }); }
+    if (H.fase === "gioco" || H.avvio) veloce({ t: "vm", vm: v });
+    if ((H.fase !== "gioco" && !H.avvio) || H.faseT !== H.fase || ultimaFoto - (H.tT || 0) >= 2000) { H.faseT = H.fase; H.tT = ultimaFoto; rete.invia({ t: "vm", vm: v }); }
     var rk = ff + "|" + (P && P.riu ? P.riu.voti.size : 0);   // (un sabotaggio o un voto si ricordano subito: chi prende il posto dell'host non deve perderli)
     if (conta === true || rk !== ricordaFase || ultimaFoto - ricordaT > 2000) { ricordaFase = rk; ricordaT = ultimaFoto; ricorda(); } disegna(t, v, cbHost);
   }
@@ -6389,9 +6617,10 @@ function host(t) {
       if (p.bot) return;
       var pr = P.privato(p.id); if (!pr) return;
       if (!tutti && inviati[p.id] === pr.v) return;
+      if (p.id !== IO && chiaveManca(p)) return;   // (partirà quando la chiave c'è: un ruolo non esce mai in chiaro)
       inviati[p.id] = pr.v;
       if (p.id === IO) { if (UI) UI.privato(pr); else PENDENTI.priv = pr; }
-      else veloce({ t: "priv", p: pr, to: p.id });
+      else veloce({ t: "priv", p: pr, to: p.id, e: ePriv, kp: kpPer(p.id) });
     });
   }
   // la rete può perdere un messaggio e il ruolo o le ricariche non si rimandano da soli: ogni secondo e mezzo si ribadiscono (uguali: l'ospite li ignora)
@@ -6400,8 +6629,8 @@ function host(t) {
     H.players.forEach(function (p) {
       if (p.bot || p.id === IO || p.via) return;
       var pr = P.privato(p.id); if (!pr) return;
-      var m = { t: "priv", p: pr, to: p.id, r: 1 }, F = fili[p.id];
-      if (F && F.pronto()) F.invia(JSON.stringify(m)); else sulBroker.push(m);
+      var m = { t: "priv", p: pr, to: p.id, r: 1, e: ePriv, kp: kpPer(p.id) }, F = fili[p.id];
+      if (F && F.pronto()) F.invia(JSON.stringify(m)); else if (!chiaveManca(p)) sulBroker.push(m);
     });
     for (var i = 0; i < Math.min(2, sulBroker.length); i++) veloce(sulBroker[(giroPriv + i) % sulBroker.length]);   // chi non ha il filo, due alla volta: con 9 telefoni sarebbero 6 messaggi al secondo
     giroPriv += 2;
@@ -6453,11 +6682,11 @@ function host(t) {
     if (inAttesa().length) { H.avvio = { t0: Date.now() }; precaricoFretta(2); bd(); return; }
     parti();
   }
+  function avvioMax() { return (window.LT_PROVA && window.LT_AVVIO_MAX) || AVVIO_MAX; }
   function controllaAvvio() {
     if (!H.avvio || H.fase !== "lobby") return;
     if (presenti().length < MIN) { H.avvio = null; precaricoFretta(1); bd(); return; }   // nel frattempo se ne sono andati: si torna alla saletta
-    var max = (window.LT_PROVA && window.LT_AVVIO_MAX) || AVVIO_MAX;
-    if (!inAttesa().length || Date.now() - H.avvio.t0 >= max) parti();
+    if (!inAttesa().length || Date.now() - H.avvio.t0 >= avvioMax()) parti();
   }
   function parti() {
     if (H.fase !== "lobby" || presenti().length < MIN) return;
@@ -6493,7 +6722,7 @@ function host(t) {
 
   var cbHost = { sonoHost: true, myId: IO, onComincia: comincia, onNuova: nuova, onBot: aggiungiBot, onTogliBot: togliBot,
     onVia: function () { if (P && !P.saletta) P.via(); },
-    mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") { if (m.k === "lenz") cambiaLenz(IO, m.c); else P.azione(IO, m); } },
+    mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") { if (m.k === "lenz") cambiaLenz(IO, m.c); else P.azione(IO, m); } else if (m.t === "pc") P.azione(IO, { k: "pc", x: m.x, y: m.y, d: m.d, m: m.m }); },
     onEsci: function () {
       function via() { ferma(); VOCE.chiudiStanza(); t.ricorda(null); rete.chiudi(); chiudiUI(); t.esci(); }
       if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla home.", "Chiudi", via);
@@ -6502,6 +6731,7 @@ function host(t) {
   if (!riprendo || H.fase === "lobby") { nuovaSaletta(); riempi(); }
   bd();
   if (P) mandaPrivati(true);
+  if (!CIF.fatto) cifPronta(function () { if (!fermo) bd(); });   // (la parte pubblica della chiave non era ancora pronta per la prima foto)
 }
 
 // =========================================================
@@ -6524,7 +6754,7 @@ function ospite(t, codice) {
   // Con la riserva accesa si avvisa anche il core, senza aspettare i 30-40 s del testamento: il primo vice dopo 8 s (più 6 suoi), il secondo dopo 16 (più 12), perché il primo ci mette
   // qualche secondo a farsi sentire e se partissero insieme sarebbero due host (misurato: 14 s e 20 s si sovrapponevano)
   function ogniSecondo() {
-    riferisci();
+    riferisci(); dicoChiave();
     var st = S.rete && S.rete.stato ? S.rete.stato() : null;
     if (!st || st.chiusa) { S.finita = true; fermaPr(); chiudiFilo(); return; }   // la stanza non c'è più: ho preso il posto dell'host, o sono uscito
     var vm = S.vm, gioco = !!vm && (vm.fase === "gioco" || (vm.fase === "lobby" && !!vm.g)), ora = Date.now();
@@ -6541,6 +6771,42 @@ function ospite(t, codice) {
     if (!!S.tace !== si) { S.tace = si; if (UI) UI.tace(false); }
     if (!!S.viaDetta !== !!via) { S.viaDetta = !!via; if (S.cbRete && S.cbRete.onHostVia) S.cbRete.onHostVia(!!via); }
   }
+  // ----- la chiave con l'host: vedi in cima -----
+  // S.cif: null finché l'host non ne ha una (e per sempre se ha una versione vecchia, o se questo telefono non sa cifrare). h: la sua parte pubblica; ok: sappiamo che la mia gli è arrivata.
+  // Una foto senza chiave dello stesso host è solo di quando la sua non era ancora pronta
+  function chiaveHost(v) {
+    if (!CIF.pub) return;
+    var c = S.cif;
+    if (!v.ck) { if (c && c.tiene !== v.tiene) S.cif = null; return; }
+    if (c && c.h === v.ck) return;
+    var n = S.cif = { h: v.ck, tiene: v.tiene, k: null, ok: false, dT: Date.now(), coda: null, codaU: Promise.resolve() };
+    n.coda = cifDeriva(v.ck, CIF.pub, v.ck).then(function (k) { n.k = k; }, function () { if (S.cif === n) S.cif = null; });
+    var l = S.zFermi; S.zFermi = null; if (l) l.forEach(apriZ);
+  }
+  // il «join» porta già la mia parte: la ridico solo se dopo un po' non ho sentito niente di cifrato dall'host
+  function dicoChiave() {
+    var c = S.cif, ora = Date.now();
+    if (!c || !c.k || c.ok || ora - c.dT < 1200 || !S.rete) return;
+    c.dT = ora; S.rete.invia({ t: "ck", k: CIF.pub });
+  }
+  // dall'host, in fila. Quello che non si apre (una chiave di prima) si scarta: i privati tornano col ribadire ogni 1,5 s, la chiave si ridice
+  function apriZ(m) {
+    var c = S.cif;
+    if (!c) { if (CIF.pub) { var l = S.zFermi = S.zFermi || []; l.push(m); if (l.length > 16) l.shift(); } return; }
+    c.coda = c.coda.then(function () { return c.k ? cifApri(c.k, m.c, "h" + S.myId) : null; }).then(function (x) {
+      if (!x) return;
+      c.ok = true;
+      if (x.t !== "cko") S.dalHost(x);
+    }, function () { cifConta("scarti"); c.dT = 0; });
+  }
+  // una mossa verso il broker. Se l'host cifra e la chiave non è pronta non parte: mandaSicura la ripete. In uscita in fila anche qui
+  function alBroker(m) {
+    var c = S.cif;
+    if (!c) return S.rete.invia(m);
+    if (!c.ok) return;
+    var tx = JSON.stringify(m), k = c.k;
+    c.codaU = c.codaU.then(function () { return cifChiudi(k, tx, "o" + S.myId, CIF_ALTRI); }).then(function (z) { if (S.rete && S.cif === c) S.rete.invia({ t: "z", c: z }); }, function () {});
+  }
   // le mosse (non i passi) si ripetono finché l'host non dà la ricevuta: la rete può perderne una, e un sabotaggio o una riparazione non possono sparire
   function perdo() { return window.LT_PROVA && window.LT_PERDI && Math.random() < window.LT_PERDI; }   // (solo per le prove: rete che perde messaggi)
   function mandaSicura(m) {
@@ -6549,7 +6815,8 @@ function ospite(t, codice) {
     (function giro() {
       if (!S.attese[m.q]) return;
       if (++v.n > 9 || !S.rete) { delete S.attese[m.q]; return; }   // (9 volte in circa 3 s)
-      if (!perdo()) { S.rete.invia(m); if (S.filo) S.filo.invia(JSON.stringify(m)); }
+      // col filo aperto la mossa passa da lì: sul broker si vedrebbe chi l'ha fatta un attimo prima dell'effetto per tutti. Il broker è la riserva, dopo 0,4 s senza ricevuta (il filo può perdere)
+      if (!perdo()) { if (v.n > 2 || !(S.filo && S.filo.pronto())) alBroker(m); if (S.filo) S.filo.invia(JSON.stringify(m)); }
       v.t = setTimeout(giro, 130 + v.n * 50);
     })();
   }
@@ -6577,9 +6844,10 @@ function ospite(t, codice) {
       if (perdo()) return;
       var sulFilo = S.filo && S.filo.pronto();
       if (sulFilo) S.filo.invia(JSON.stringify(m));
+      if (sulFilo && m.t === "pc") return;   // (i passi del Burattinaio dicono chi è: col filo aperto sul broker non passano)
       // i passi sono 10 al secondo: sul broker 8 (il tetto di EMQX, vedi l'host), 3 o 4 se c'è il filo
       if (m.t === "p" || m.t === "pc") { S.pCr = Math.min(1.5, (S.pCr || 0) + (sulFilo ? 0.35 : 0.8)); if (S.pCr < 1) return; S.pCr -= 1; }
-      S.rete.invia(m);
+      if (m.t === "pc") alBroker(m); else S.rete.invia(m);   // (i passi del Burattinaio dicono chi è: gli altri passi sono nelle posizioni)
     },
     onEsci: function () {
       function via() { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); chiudiUI(); t.esci(); }
@@ -6598,22 +6866,29 @@ function ospite(t, codice) {
   function collega() {
     attesa();
     var cbRete = S.cbRete = {   // (il core ci mette il suo onHostVia, se la riserva è accesa)
-      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { var f = S.filo && S.filo.pronto(); if (f && !m.b) S.filo.invia(JSON.stringify(m)); if (S.rete && (!f || !m.g)) S.rete.invia(m); } }); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome), lenz: lenzMio() }); riferisci(true); fermaPr(); S.prInt = setInterval(ogniSecondo, 1000); },
+      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { var f = S.filo && S.filo.pronto(); if (f && !m.b) S.filo.invia(JSON.stringify(m)); if (S.rete && (!f || !m.g)) S.rete.invia(m); } }); cifPronta(function () { if (S.rete) S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome), lenz: lenzMio(), ck: CIF.pub || undefined }); }); riferisci(true); fermaPr(); S.prInt = setInterval(ogniSecondo, 1000); },
       onMsg: function dalHost(m) {
         if (!m || !m.t || S.finita) return;
         if (m.to && m.to !== S.myId) return;
         if (m.t === "fd") {   // il filo diretto: l'host lo apre, io rispondo
           if (window.LT_PROVA && window.LT_SALTAFD > 0) { window.LT_SALTAFD--; return; }   // (solo per le prove: il messaggio si perde)
-          if (!S.filo) S.filo = new FiloDiretto(function (x) { if (S.rete) S.rete.invia({ t: "fd", s: x }); }, dalHost);
+          if (!S.filo) S.filo = new FiloDiretto(function (x) { if (S.rete) alBroker({ t: "fd", s: x }); }, dalHost);
           S.filo.segnale(m.s); return;
         }
+        if (m.t === "z") { S.dalHost = dalHost; return apriZ(m); }
         if (m.u != null) { var uv = S.uViste || (S.uViste = []); if (uv.indexOf(m.u) >= 0) return; uv.push(m.u); if (uv.length > 80) uv.shift(); }   // già arrivato dall'altra strada
         if (perdo() && (m.t === "vm" || m.t === "pos" || m.t === "priv" || m.t === "ak")) return;
-        if (m.t === "vm") { if (fotoVecchia(m.vm)) return; S.vm = m.vm; miCredeVia(m.vm); disegna(t, m.vm, cb); }
+        if (m.t === "vm") { if (fotoVecchia(m.vm)) return; chiaveHost(m.vm); S.vm = m.vm; miCredeVia(m.vm); disegna(t, m.vm, cb); }
         else if (m.t === "pos") { S.posT = Date.now(); if (S.tace) taceHost(false, false); if (UI) UI.posizioni(m.p, m.s); controllaFoto(m.v); }
         else if (m.t === "ak") { var at = S.attese && S.attese[m.q]; if (at) { clearTimeout(at.t); delete S.attese[m.q]; } }
-        else if (m.t === "priv") { if (m.r && UI && UI.priv && UI.priv.v === m.p.v) return; if (UI) UI.privato(m.p); else PENDENTI.priv = m.p; }
+        else if (m.t === "priv") {
+          if (m.kp) { if (CIF.kp !== m.kp) CIF.kpK = null; CIF.kp = m.kp; }   // (sono un vice: serve ad aprire la copia della partita)
+          if (m.r && UI && UI.priv && UI.priv.v === m.p.v) return;
+          if (m.e != null) { if (S.privE === m.e && m.p.v < S.privV) return; S.privE = m.e; S.privV = m.p.v; }   // cifrare e strade diverse possono invertire: uno di prima non copre mai uno più nuovo
+          if (UI) UI.privato(m.p); else PENDENTI.priv = m.p;
+        }
         else if (m.t === "tp" || m.t === "avviso" || m.t === "morte" || m.t === "bolla") { if (UI) UI.messaggio(m); else conserva(m); }
+        else if (m.t === "fx") { if (UI) UI.messaggio(m); }
         else if (m.t === "av") (m.l || []).forEach(function (x) { avatarDi(x[0], avatarValido(x[1])); });
         else if (m.t === "pm") { if (UI) UI.pronti(m.l); }   // chi ha la mappa pronta (messaggio piccolo)
         else if (m.t === "vc" || m.t === "vcl") VOCE.arriva(m);   // la voce: l'elenco di chi c'è e i messaggi di collegamento
@@ -6622,6 +6897,7 @@ function ospite(t, codice) {
       onErrore: function () { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
     };
     S.rete = SGNet.entra(codice, cbRete);
+    if (window.LT_PROVA) { window.LT_RETE_O = S.rete; window.LT_S = S; }
     if (!S.rete) senzaRete(t);
   }
   function attesa() {
@@ -7182,6 +7458,7 @@ var DURATE = { urlo: 6, scudoRotto: 1.2, telecamera: 1, trasporto: 1, spegni: 1.
 Vista.prototype.effetto = function (m) {
   var V = this, ora = V.tempo, P = V.pit;
   if (m.k === "cade") { SUONO.spegni(); vibra(60); return; }
+  if (m.k === "compitoMio") { SUONO.compito(); return; }
   if (m.k === "interferenza" || m.k === "acqua") { if (V.squadra() !== "ombre") { SUONO.allarme(); vibra(100); } V.avviso(m.k === "acqua" ? "Acqua alta! Una chiusa sul Molo, una in Cantina." : "Interferenza: telecamere, plastico e frecce sono spenti.", "morte"); return; }
   if (m.k === "urlo") { V.urlo = { x: m.x, y: m.y, col: "#ff5a6e", fine: V.tempo + 6 }; SUONO.corpo(); vibra(150); V.avviso("Un urlo! Segui la freccia rossa.", "morte"); return; }
   if (m.solo && m.solo !== V.cb.myId) return;
@@ -7194,7 +7471,7 @@ Vista.prototype.effetto = function (m) {
   var visto = m.globale || anima || (Math.hypot(m.x - V.me.x, m.y - V.me.y) < V.raggio() + T && vede(V.M, V.me.x, V.me.y, m.x, m.y));
   if (!visto) return;
   if (m.k === "spegni") { P.sparpaglia("fumo", m.x, m.y - T * 0.4, 14, { v: 40, vita: 1.2, r: 6 }); P.sparpaglia("scintilla", m.x, m.y - T * 0.4, 8, { v: 60, vita: 0.5, r: 2 }); V.scossa = 0.45; SUONO.spegni(); V.effetti.push({ k: "spegni", schermo: true, t0: ora, dur: 0.5, x: m.x, y: m.y }); }
-  else if (m.k === "compito") { P.sparpaglia("scintilla", m.x, m.y - T * 0.5, 18, { v: 70, vita: 0.9, r: 3 }); if (m.id === V.cb.myId) SUONO.compito(); }
+  else if (m.k === "compito") P.sparpaglia("scintilla", m.x, m.y - T * 0.5, 18, { v: 70, vita: 0.9, r: 3 });
   else if (m.k === "rianima" || m.k === "gatto") { P.sparpaglia("scintilla", m.x, m.y - T * 0.5, 26, { v: 90, vita: 1.2, r: 3 }); SUONO.abil(); }
   else if (m.k === "sparo") { SUONO.spegni(); V.scossa = 0.3; }
   else if (m.k === "bengala" || m.k === "luci") SUONO.luci();
@@ -7824,28 +8101,35 @@ Vista.prototype.aggMappa = function (sal) {
   el.hidden = !testo; el.classList.toggle("ok", ok); el.querySelector(".t").textContent = testo; el.style.setProperty("--p", ps.pct + "%");
 };
 // il caricamento a tutto schermo. Due casi: (1) l'host ha premuto «Comincia» e qualcuno non ha ancora la mappa: tutti aspettano (al massimo AVVIO_MAX,
-// poi si parte lo stesso e chi è rimasto indietro vede il disegno a codice). (2) arrivo a partita già cominciata (tardi, o pagina ricaricata):
-// finché i pezzi intorno a me non sono pronti, al massimo 10 secondi.
+// poi si parte lo stesso e chi è rimasto indietro vede l'anteprima, o il disegno a codice). (2) arrivo a partita già cominciata (tardi, o pagina ricaricata):
+// finché non c'è l'anteprima, o i pezzi intorno a me se l'anteprima manca, al massimo 10 secondi.
 Vista.prototype.aggCarica = function () {
   var V = this, vm = V.vm, ora = performance.now(), mod = null, el = V.carica; if (!vm || !el) return;
   var ps = precaricoStato();
   if (V.nataT == null) V.nataT = ora;
+  if (vm.fase === "lobby") V.inSala = true;
   // chi ricarica la pagina può trovare sul broker una foto vecchia, ancora con l'attesa di «Comincia»: quella vera dell'host arriva subito dopo.
   // Appena aperta la pagina non ci si crede, e il mini caricamento d'ingresso si salta solo se l'attesa si è vista davvero
   if (vm.avvio) {
     if (V.avvioT == null) V.avvioT = ora;
     if (ora - V.avvioT >= 2000) V.vistoAvvio = true;
-    if (ora - V.nataT >= 800) mod = "avvio";
+    if (ora - V.nataT >= 1500) mod = "avvio";
   }
   else if (vm.fase !== "lobby" && V.g && !V.vistoAvvio && !V.ingressoFatto) {
     if (V.ingressoT == null) { V.ingressoT = ora; precaricoFretta(2); }   // (prima di chiedere i pezzi: se l'indice è già arrivato, l'anello non deve passare davanti)
     if (!V.me.ok) V.ingCerco = true; else if (V.ingCerco) { V.ingCerco = false; immCodaDaCapo(); }
+    immSospendi(true);   // sotto il caricamento non si chiede niente per conto del disegno: arriva prima l'anteprima, poi quello che serve davvero
+    var ioQui = vm.players.filter(function (p) { return p.id === V.cb.myId; })[0];   // (V.guardo qui non basta: finché non arrivano i privati vale anche per chi gioca, e la scena segue un altro)
+    var cerco = !!ioQui && !ioQui.via && !(V.inSala ? V.me.ok || V.guardo : V.me.ok && V.priv);   // (chi arriva dalla saletta è già a posto: per lui i privati sono questione di un attimo, niente caricamento)
     var qui = V.me.ok ? V.me : { x: FONTANA.x, y: FONTANA.y }, pv = V.pit.meta;
-    var ing = immIntorno(V.M, qui.x, qui.y, pv && pv.w / 2, pv && pv.h / 2); V.ingPct = Math.max(V.ingPct || 0, ing.pct);
+    var ing = immIntorno(V.M, qui.x, qui.y, pv && pv.w / 2, pv && pv.h / 2, cerco); V.ingPct = Math.max(V.ingPct || 0, ing.pct);
     if (ora - V.ingressoT >= 10000) V.ingressoFatto = true;
-    else if (!ing.ok || !(V.me.ok || V.guardo)) mod = "ingresso";   // (finché non so dove sono, guardo i pezzi intorno alla fontana ma non do per fatto)
+    else if (!ing.ok || cerco) mod = "ingresso";
     else V.ingressoFatto = true;
   }
+  // l'ultimo secondo e mezzo dell'attesa (t: quando scade, orologio dell'host) niente file nuovi: su una rete lenta il via e il ruolo resterebbero dietro ai file
+  var allaFine = vm.avvio && vm.avvio.t ? Date.now() - vm.avvio.t : -1e9;
+  if (mod !== "ingresso") immSospendi(allaFine > -1500 && allaFine < 1500);
   precaricoFretta(mod ? 2 : vm.fase !== "lobby" ? 0 : 1);   // col caricamento a tutto schermo si scarica più in fretta; a partita cominciata piano, il gioco ha la precedenza
   if (!mod) { if (!el.hidden && !V.caricaT) { el.classList.remove("su"); V.caricaT = setTimeout(function () { el.hidden = true; V.caricaT = null; }, 330); } return; }
   if (V.caricaT) { clearTimeout(V.caricaT); V.caricaT = null; }
