@@ -9,8 +9,8 @@ Ultimo aggiornamento: **29 ott 2026, 19:10** (ora italiana).
 
 | Limite | Usato | Si azzera |
 |---|---|---|
-| Settimana (tutti i modelli) | **24%** (29 ott 12:35; azzerata il 28 ott alle 15:00) | **mercoledì 4 nov alle 15:00** |
-| 5 ore | 2% | 29 ott alle 16:40 |
+| Settimana (tutti i modelli) | **86%** (2 nov mattina) | **mercoledì 4 nov alle 15:00** |
+| 5 ore | 0% (2 nov mattina) | — |
 | Settimana Fable | 0% | mercoledì 4 nov alle 15:00 |
 | Crediti cloud | 250 USD il 26 ott sera, da ricontrollare | **scadono il 5 nov alle 08:59** |
 
@@ -28,7 +28,9 @@ Regole generali: sotto il 70% lavori grandi ok · 70-85% lavori medi, aiutanti S
 
 ## 2. 🌐 Cosa c'è online
 
-**Online adesso:** master del 29 ott alle 19:10 = **novità v280** (chat «🌙 Notte vivace 2»: Chi di Noi? blu notte, schede di fine di Parola d'ordine scure, riquadri dello stadio del fanta, i 6 difetti piccoli, «Contro il Bot» ovunque; più la scelta del gioco nella Sala due per riga della chat «🏠 Home compatta») + **v281** (chat «STESSA LUNGHEZZA D'ONDA»: ruota nuova, «Tutti insieme» online, chi arriva tardi, 155 scale nuove) + Lanterne di Mario in prova. Prima (15:10, `ff73096`): **novità v278 + v279** (e Lanterne in prova):
+**Online adesso (2 nov):** master `6038436` = fino alla **novità v294** (1 nov: v291-v292 Black Jack nuovo e regole da esperti, v293 Scarabocchio, v294 lo studio TV nuovo tappe 1 e 2) + Lanterne di Mario in prova. **In `lavori-in-corso`, NON online:** la Balla Colossale nuova (v295: prima pagina «Il Colossale», Balla Finale, Sceglie chi è ultimo, 746 notizie; prove ballaN1 e ballaN2 ancora da far girare). **Da fare mercoledì 4 nov dopo le 15:** studio TV tappa 3, poi #31 (app più leggera).
+
+Prima: master del 29 ott alle 19:10 = **novità v280** (chat «🌙 Notte vivace 2»: Chi di Noi? blu notte, schede di fine di Parola d'ordine scure, riquadri dello stadio del fanta, i 6 difetti piccoli, «Contro il Bot» ovunque; più la scelta del gioco nella Sala due per riga della chat «🏠 Home compatta») + **v281** (chat «STESSA LUNGHEZZA D'ONDA»: ruota nuova, «Tutti insieme» online, chi arriva tardi, 155 scale nuove) + Lanterne di Mario in prova. Prima (15:10, `ff73096`): **novità v278 + v279** (e Lanterne in prova):
 - **Lanterne** (chat di Mario De Viva, l'amico del proprietario): il gioco nuovo «🏮 Lanterne» (alla Among Us, online da 4 a 10, 35 ruoli, Bot), pubblicato da Mario stesso direttamente su master (14:46, poi 14:56). **In prova**: la tessera la vedono solo gli account IL PAPPONE e «gay» (di Mario), solo loro aprono la stanza; chi è invitato (link, codice, Sala) entra lo stesso; la saletta si riempie di Bot fino a 6. La sua novità v277 è stata tolta. La serata vera con 4+ telefoni non c'è ancora stata (#25).
 - **v279** (chat «🏠 Home compatta», ramo `home-compatta`): prima schermata con le tessere dei giochi senza descrizione, due per riga; menu in basso (Giochi · Novità · Trofei · Classifica · Profilo); **città spenta per tutti** (`CITTA_VISIBILE = false`: la versione online non contiene città, casa, casinò, circolo e scavi, ~3 MB in meno; spariscono per ora anche la Ruota del giorno e le sfide del giorno; la Gara di pesca va come prima). Chiesto dal proprietario («rimuoviamo anche la città visibile per adesso»).
 - **v278**: avatar «Mii rifinito» **per tutti** (`AVATAR_NUOVO = "tutti"`) e le cinque proposte approvate dal proprietario sulle foto («li ho visti e vanno bene»): Horto Muso di sera, Palla a Pendolo di notte, Chi di Noi? con scene e carte in vetro scuro (fondo viola ancora), sala dei temi dell'Asta di sera (banco marrone, stadio del fanta com'era), Parola d'ordine col tavolo blu notte e le carte crema. Fatte da 5 aiutanti (uno per gioco) + un revisore; nel Pendolo l'alone della palla è un gradiente (non una sfocatura a ogni fotogramma).
