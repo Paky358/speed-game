@@ -252,7 +252,7 @@
   }
   COPIONE.aggiungi(542, { nome: "Balla Colossale: l'host ricarica in saletta, mentre si scrive, al voto, alla rivelazione, ai punti e sulla classifica", fai: async function () {
     var L = N(), amici = ["Luca", "Sara"], sent = sentinella(["Paky"].concat(amici)), fatti = {};
-    var X = await stanza("La Balla Colossale", "balla", { round: 2, amici: "no", ride: false }, amici), C = X.C;
+    var X = await stanza("La Balla Colossale", "balla", { round: 2, amici: "no", ride: false, sceglie: false }, amici), C = X.C;
     var r = await ricaricaHost(C, amici, { lobby: true }); L.nota("saletta → saletta (" + r.dt + " s)");
     if (!await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /Comincia/); }, 5000)) no("l'host non ha «Comincia»");
     // mentre si scrive: Luca ha già scritto, Sara no → si riparte dalla notizia, poi si scrive col tempo intero:

@@ -453,7 +453,11 @@
     if (!c.opz || c.opz.length !== 3 || c.perche !== "zero" || c.k != null) no("la scelta dell'argomento è sbagliata: " + JSON.stringify(c));
     if (!await W.aspetta(function () { return carteAccese(W.finestra(nC)) === 3; }, 8000)) no(nC + " (sceglie) non ha le 3 carte da toccare");
     if (!/Scegli tu l'argomento/.test(T(W.finestra(nC)))) no(nC + " non legge «Scegli tu l'argomento»");
-    altri.forEach(function (n) { var w = W.finestra(n); if (carteAccese(w)) no(n + " può toccare le carte ma non sceglie lui"); if (!new RegExp(nC + " sceglie l'argomento").test(T(w))) no(n + " non legge «" + nC + " sceglie l'argomento»"); });
+    for (var q = 0; q < altri.length; q++) {
+      var wq = W.finestra(altri[q]);
+      if (!await W.aspetta(function () { return new RegExp(nC + " sceglie l'argomento").test(T(wq)); }, 6000)) no(altri[q] + " non legge «" + nC + " sceglie l'argomento» («" + T(wq).replace(/s+/g, " ").slice(0, 120) + "»)");
+      if (carteAccese(wq)) no(altri[q] + " può toccare le carte ma non sceglie lui");
+    }
     var h = W.reteDi(altri[0] === "Paky" ? altri[1] : altri[0]); if (h) h.invia({ t: "cat", k: 1 });   // chi non sceglie prova lo stesso: niente
     await W.dorme(900);
     if (vm(C).cat && vm(C).cat.k != null) no("ha scelto l'argomento chi non doveva");

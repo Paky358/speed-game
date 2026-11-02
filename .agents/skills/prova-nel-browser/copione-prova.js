@@ -5455,7 +5455,12 @@
     var C = await giocoPerTutti(cinque, S, "balla");
     await W.dorme(600);
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 8000)) no("Paky non trova «Comincia» nella Balla");
-    if (!await W.aspetta(function () { return vm(C).fase === "scrittura"; }, 30000)) no("la Balla non arriva a scrivere (fase " + vm(C).fase + ")");
+    // (dal 1 nov 2026 prima della notizia chi è ultimo sceglie l'argomento: lo tocca subito)
+    if (!await W.aspetta(function () {
+      var v = vm(C);
+      if (v.fase === "categoria" && v.cat && v.cat.k == null) { var pc = (v.players || []).filter(function (p) { return p.id === v.cat.chi; })[0], wc = pc && W.finestra(pc.nome), bc = wc && wc.document.querySelector(".bc-cat-c:not(:disabled)"); if (bc) bc.click(); }
+      return v.fase === "scrittura";
+    }, 40000)) no("la Balla non arriva a scrivere (fase " + vm(C).fase + ")");
     var X = { gid: "balla", P: P, C: C, nomeDi: { host: "Paky" }, id: { Paky: "host" }, aMano: {} };
     (vm(C).players || []).forEach(function (p) { if (p.id !== "host") { X.id[p.nome] = p.id; X.nomeDi[p.id] = p.nome; } });
     if ((vm(C).players || []).length !== 5) no("nella Balla giocano in " + (vm(C).players || []).length + " invece di 5");

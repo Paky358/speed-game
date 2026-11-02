@@ -120,7 +120,7 @@ window.SG_BALLA = [
   { domanda: "Dentro il bozzolo, prima di diventare farfalla, il bruco...", rispostaVera: "si scioglie quasi tutto in una poltiglia", balleCasa: ["dorme sei mesi di fila", "diventa duro come il legno", "si mangia il bozzolo"], cat: "animali" },
   { domanda: "Le formiche non hanno...", rispostaVera: "i polmoni", balleCasa: ["il cuore", "lo stomaco", "il cervello"], cat: "animali" },
   { domanda: "Gli scienziati hanno scoperto che i ratti, quando gli si fa il solletico...", rispostaVera: "ridono", balleCasa: ["starnutiscono", "si arrabbiano", "restano fermi come statue"], cat: "animali" },
-  { domanda: "Secondo gli esperimenti degli scienziati, le strisce delle zebre servono soprattutto a...", rispostaVera: "tenere lontani i tafani", balleCasa: ["tenere lontani i tafani", "riconoscere la mamma", "confondere i leoni"], cat: "animali" },
+  { domanda: "Secondo gli esperimenti degli scienziati, le strisce delle zebre servono soprattutto a...", rispostaVera: "tenere lontani i tafani", balleCasa: ["spaventare i coccodrilli", "riconoscere la mamma", "confondere i leoni"], cat: "animali" },
   { domanda: "Le orche, che in inglese chiamano \\\"balene assassine\\\", in realtà sono...", rispostaVera: "delfini", balleCasa: ["squali", "balene vere", "pesci spada giganti"], cat: "animali" },
   { domanda: "Il pesce rosso non ha la memoria di tre secondi: si ricorda le cose per...", rispostaVera: "mesi", balleCasa: ["un minuto", "trenta secondi", "un'ora"], cat: "animali" },
   { domanda: "L'animale con il morso più forte mai misurato è...", rispostaVera: "il coccodrillo marino", balleCasa: ["il leone", "l'ippopotamo", "la iena"], cat: "animali" },

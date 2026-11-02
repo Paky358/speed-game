@@ -193,7 +193,7 @@
   function tardi(gid) {
     var balla = gid === "balla", gioca = balla ? giocaBalla : giocaNcc, parola = balla ? "round" : "giro";
     return { nome: NOMI[gid] + ": chi arriva mentre si scrive entra dal " + parola + " dopo con 0 punti (i punti del " + parola + " in corso restano giusti)", fai: async function () {
-      var X = await apriPartita(gid, balla ? { round: 2, amici: "no", ride: false } : { round: 2, secondi: 40 }, ["Luca", "Sara"]), C = X.C;
+      var X = await apriPartita(gid, balla ? { round: 2, amici: "no", ride: false, sceglie: false } : { round: 2, secondi: 40 }, ["Luca", "Sara"]), C = X.C;
       if (!await W.aspetta(function () { return vm(C).fase === "scrittura" && vm(C).giro === 0; }, 30000)) no("non si arriva a scrivere (fase " + vm(C).fase + ")");
       var M = await entraTardi(X, "Marco", 555), wM = M.w, idM = M.id;
       if (!await W.aspetta(function () { return (vm(C).prossimi || []).indexOf(idM) >= 0; }, 8000)) no("Marco non è tra i «prossimi» della foto (" + JSON.stringify(vm(C).prossimi) + ")");
@@ -243,7 +243,7 @@
   function guarda(gid) {
     var balla = gid === "balla", gioca = balla ? giocaBalla : giocaNcc;
     return { nome: NOMI[gid] + ": chi guarda col link (guarda=1) fino alla fine, senza fogli né uscite doppie, poi entra da solo", fai: async function () {
-      var X = await apriPartita(gid, balla ? { round: 1, amici: "no", ride: false } : { round: 1, secondi: 40 }, ["Luca", "Sara"]), C = X.C, P = X.P;
+      var X = await apriPartita(gid, balla ? { round: 1, amici: "no", ride: false, sceglie: false } : { round: 1, secondi: 40 }, ["Luca", "Sara"]), C = X.C, P = X.P;
       if (!await W.aspetta(function () { return vm(C).fase === "scrittura"; }, 30000)) no("non si arriva a scrivere");
       var B = await W.apriTel("Bea", { hash: "gioco=" + gid + "&stanza=" + C + "&guarda=1", x: 555, g4: true });
       if (!await W.aspetta(function () { return B.document.querySelector(".sg-guardo"); }, 8000)) no("Bea non ha la targhetta («" + T(B).slice(0, 100) + "»)");
@@ -356,7 +356,7 @@
 
   // ===================== 692: Balla nella Sala, arriva a partita in corso =====================
   aggiungi(692, { nome: "Balla nella Sala: chi arriva a partita in corso tocca «▶ Entra» e gioca dal round dopo con 0 punti", fai: async function () {
-    var P = await tel("Paky", { x: 0, salaSempre: true, prima: function (w) { w.__imp = { round: 2, amici: "no", ride: false }; } });
+    var P = await tel("Paky", { x: 0, salaSempre: true, prima: function (w) { w.__imp = { round: 2, amici: "no", ride: false, sceglie: false }; } });
     var S = await A.apriSalaNuova("Paky");
     var amici = ["Luca", "Sara"];
     for (var i = 0; i < amici.length; i++) {
