@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 298,
+    data: "2 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: la giornata senza spoiler",
+    descrizione: [
+      "Nelle azioni della giornata non si capisce più prima del tiro come andrà a finire: fino al tiro tutto si muove uguale, che sia gol, parata, palo o fuori.",
+      "C'è sempre un difensore sul palo: prima c'era solo quando poi la salvava sulla linea.",
+      "Il passettino del portiere prima del tiro non dice più da che parte andrà il pallone.",
+      "Nel contropiede il portiere a volte esce anche quando non è gol: può fermarti in uscita, o ti fa tirare da posizione difficile. E anche il tiro da centrocampo, rarissimo, ora può finire fuori o essere parato."
+    ]
+  },
+  {
     v: 297,
     data: "2 novembre 2026",
     titolo: "⚽ Mini Asta Fantacalcio: listone nuovo e un portiere per squadra",
