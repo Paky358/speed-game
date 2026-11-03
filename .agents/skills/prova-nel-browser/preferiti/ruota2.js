@@ -290,7 +290,7 @@
     b.click(); return true;
   }
   function tasto(w, re) { return [].find.call(w.document.querySelectorAll(".ru-azioni button"), function (b) { return re.test(b.textContent) && !b.disabled && b.getClientRects().length > 0; }) || null; }
-  function lettera(w, L) { return [].find.call(w.document.querySelectorAll(".ru-azioni .ru-btn.lettera"), function (b) { return b.textContent === L && !b.disabled; }) || null; }
+  function lettera(w, L) { return [].find.call(w.document.querySelectorAll(".ru-qwerty .ru-btn.lettera, .ru-azioni .ru-btn.lettera"), function (b) { return b.textContent === L && !b.disabled; }) || null; }
   function base(ch) { return { "À": "A", "È": "E", "É": "E", "Ì": "I", "Ò": "O", "Ù": "U" }[ch] || ch; }
   function Pdi(w) { return w.__RUOTA && w.__RUOTA.ultima; }
   function azioni(w) { var a = w.document.querySelector(".ru-azioni"); return a ? a.textContent : ""; }
@@ -622,6 +622,99 @@
     if (!/salvadanaio/.test(W.testo(F.Luca)) || /salvadanaio/.test(W.testo(F.Giulia))) no("«Sono già nel tuo salvadanaio» al posto sbagliato");
     var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
     L.push("online: Paky busta " + pk + ", poi Luca busta " + lk + " (Luca leggeva «Poi tocca a te!»), ognuno incassa la sua, Giulia niente");
+    return L.join(" · ");
+  } });
+  // =====================================================================
+  //  rv7 (giro 3, 3 nov 2026): la tastiera QWERTY fissa per tutti, la lettera accesa col primo tocco (gli altri la
+  //  vedono prima che la chiami), la soluzione che compare dal vivo sul tabellone di chi guarda, niente «indietro» dopo
+  //  la prima lettera, la fila dei soldi con manche e totale separati
+  // =====================================================================
+  COPIONE.aggiungi("rv7", { nome: "Ruota online in 3: tastiera QWERTY fissa, lettera accesa dal vivo, soluzione scritta dal vivo, soldi manche/totale", fai: async function () {
+    var L = [], F = {};
+    var IMP7 = { manche: 1, prenota: false, express: false, veloce: false, mistero: false, finale: false };
+    var P = F.Paky = await W.apriTel("Paky", { x: 0, spiaRv: true, prima: function (w) { w.__impR = IMP7; } }); senzaAnimazioni(P);
+    var C = await W.apriStanza(P, "La Ruota della Fortuna");
+    F.Luca = await W.apriTel("Luca", { hash: "gioco=ruota&stanza=" + C, x: 185 }); senzaAnimazioni(F.Luca);
+    F.Giulia = await W.apriTel("Giulia", { hash: "gioco=ruota&stanza=" + C, x: 370 }); senzaAnimazioni(F.Giulia);
+    if (!await W.aspetta(function () { return A.contaDentro(vm(C)) === 3; }, 10000)) no("in saletta non sono in 3");
+    await W.dorme(400);
+    if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 5000)) no("l'host non ha «Comincia»");
+    var v = await finche(C, function (x) { return x.fase === "gira" && !x.sigla; }, null, 60000, "la manche non comincia");
+    function idDi(n) { return (vm(C).giocatori || []).filter(function (g) { return g.nome === n; })[0].id; }
+    var ID = { Paky: "host", Luca: idDi("Luca"), Giulia: idDi("Giulia") };
+    function nomeDi(id) { return Object.keys(ID).filter(function (n) { return ID[n] === id; })[0]; }
+    function az(n, a, x) {
+      if (n === "Paky") { var w = W.finestra("Paky"); if (w.__cbR) w.__cbR.onMsg("host", { t: "azione", a: a, x: x }); }
+      else W.reteDi(n).invia({ t: "azione", a: a, x: x });
+    }
+    function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+    function chip(w, nome) { return [].find.call(w.document.querySelectorAll(".ru-chip"), function (c) { var n = c.querySelector(".n"); return n && n.textContent === nome; }); }
+    async function passaA(id) {   // chi è di turno sbaglia apposta finché tocca a id
+      for (var g = 0; g < 4 && vm(C).turno !== id; g++) {
+        var chi = nomeDi(vm(C).turno); az(chi, "risolvi"); await W.dorme(400); az(chi, "soluzione", "SBAGLIATA");
+        await finche(C, function (x) { return x.fase === "gira" && x.turno !== ID[chi]; }, null, 6000, "il turno non passa");
+      }
+      if (vm(C).turno !== id) no("non tocca a " + nomeDi(id));
+    }
+    // la tastiera: QWERTY, c'è su tutti e tre i telefoni
+    var ord = "QWERTYUIOPASDFGHJKLZXCVBNM";
+    ["Paky", "Luca", "Giulia"].forEach(function (n) {
+      var t = [].map.call(F[n].document.querySelectorAll(".ru-qwerty .ru-btn.lettera"), function (b) { return b.textContent; }).filter(function (x) { return /^[A-Z]$/.test(x); }).join("");
+      if (t !== ord) no("la tastiera di " + n + " non è QWERTY: " + t);
+    });
+    L.push("tastiera QWERTY su tutti e tre");
+    await passaA(ID.Luca);
+    // Luca gira: la ruota si ferma sul 1.000
+    var Pp = P.__RUOTA.ultima, rnd = P.Math.random; P.Math.random = function () { return 10.5 / 24; };
+    az("Luca", "gira"); await finche(C, function (x) { return x.fase === "girando"; }, null, 4000, "Luca non gira");
+    P.Math.random = rnd;
+    v = await finche(C, function (x) { return x.fase === "consonante"; }, null, 12000, "dopo il giro non si sceglie la consonante");
+    var Lc = Pp.frase.split("").map(base).filter(function (ch) { return "BCDFGHLMNPRSTVZ".indexOf(ch) >= 0 && !Pp.chiamate[ch]; })[0];
+    if (!await W.aspetta(function () { return lettera(F.Luca, Lc); }, 4000)) no("Luca non può toccare la " + Lc);
+    if (lettera(F.Luca, "A")) no("in «scegli una consonante» Luca può toccare una vocale");
+    if (lettera(F.Giulia, Lc)) no("Giulia può toccare la tastiera mentre tocca a Luca");
+    tocca(F.Luca, lettera(F.Luca, Lc));
+    var acc = await W.aspetta(function () { var b = F.Giulia.document.querySelector(".ru-qwerty .ru-btn.lettera.sel"); return b && b.textContent === Lc ? b : null; }, 4000);
+    if (!acc) no("Giulia non vede accesa la " + Lc + " di Luca");
+    if (vm(C).fase !== "consonante" || Pp.chiamate[Lc]) no("il primo tocco ha già chiamato la lettera");
+    if (!/sceglie… la /.test(azioni(F.Giulia))) L.push("(Giulia non legge «Luca sceglie… la " + Lc + "?»)");
+    L.push("Giulia vede la " + Lc + " accesa da Luca prima che la chiami");
+    if (!await W.aspetta(function () { return tasto(F.Luca, new RegExp("✓ Chiama la " + Lc)); }, 3000)) no("Luca non ha «✓ Chiama la " + Lc + "»");
+    tocca(F.Luca, lettera(F.Luca, Lc));   // il secondo tocco la chiama
+    v = await finche(C, function (x) { return x.chiamate.indexOf(Lc) >= 0; }, null, 5000, "il secondo tocco non chiama la lettera");
+    if (v.sel) no("la lettera resta accesa nella foto dopo la mossa");
+    var bL = await W.aspetta(function () { var b = [].find.call(F.Giulia.document.querySelectorAll(".ru-qwerty .ru-btn.lettera"), function (x) { return x.textContent === Lc; }); return b && /\b(si|no)\b/.test(b.className) ? b : null; }, 4000);
+    if (!bL) no("sulla tastiera di Giulia la " + Lc + " chiamata non è segnata");
+    L.push("doppio tocco: la " + Lc + " è chiamata (" + fmt(v.giocatori.filter(function (x) { return x.id === ID.Luca; })[0].soldi) + " a Luca)");
+    // la fila dei soldi: manche grande, totale piccolo
+    var cl = await W.aspetta(function () { var c = chip(F.Giulia, "Luca"); return c && /tot 0/.test(c.querySelector("small").textContent) && c.querySelector("b").textContent !== "0" ? c : null; }, 4000);
+    if (!cl) no("nella fila dei soldi di Giulia Luca non ha manche e totale separati: " + ((chip(F.Giulia, "Luca") || {}).textContent));
+    // ora tocca a Paky, che risolve scrivendo sulla tastiera
+    await passaA("host");
+    if (!await W.aspetta(function () { return W.clicca(P, /💡 Risolvi/) || Pp.fase === "risolvi"; }, 4000)) no("Paky non ha «💡 Risolvi»");
+    await finche(C, function (x) { return x.fase === "risolvi"; }, null, 4000, "Paky non passa a risolvere");
+    if (!await W.aspetta(function () { return tasto(P, /Indietro|Rinuncio/); }, 3000)) no("prima di scrivere Paky non può tornare indietro");
+    var tab = Pp.vista().tab, buchi = [];
+    for (var k = 0; k < tab.length; k++) if (tab.charAt(k) === "_") buchi.push(base(Pp.frase.charAt(k)));
+    tocca(P, lettera(P, buchi[0]));
+    var viva = await W.aspetta(function () { var c = F.Giulia.document.querySelector(".ru-tab .ru-cella.scritta.vivo"); return c && c.textContent === buchi[0] ? c : null; }, 4000);
+    if (!viva) no("Giulia non vede comparire la prima lettera scritta da Paky");
+    if (F.Giulia.document.querySelectorAll(".ru-tab .ru-cella.scritta.vivo").length !== 1) no("Giulia vede più lettere di quelle scritte");
+    if (tasto(P, /Indietro|Rinuncio/)) no("dopo la prima lettera Paky può ancora tornare indietro");
+    L.push("Giulia vede la " + buchi[0] + " sul tabellone mentre Paky scrive; niente «indietro»");
+    for (k = 1; k < buchi.length; k++) { tocca(P, lettera(P, buchi[k])); await W.dorme(40); }
+    if (buchi.length > 1 && !await W.aspetta(function () { return F.Giulia.document.querySelectorAll(".ru-tab .ru-cella.scritta.vivo").length >= 2; }, 4000)) no("Giulia non vede le altre lettere di Paky");
+    tocca(P, tasto(P, /✓ Risolvi/));
+    v = await finche(C, function (x) { return x.fase === "finemanche"; }, null, 8000, "la manche non finisce");
+    if (v.scr) no("la soluzione dal vivo resta nella foto a fine manche");
+    var pk = v.giocatori.filter(function (x) { return x.id === "host"; })[0], vi = v.vince.vincita;
+    if (pk.totale !== vi) no("il totale di Paky non è la vincita (" + pk.totale + " invece di " + vi + ")");
+    var cP = await W.aspetta(function () { var c = chip(F.Giulia, "Paky"); return c && c.querySelector("b").textContent === "+" + fmt(vi) && c.querySelector("small").textContent === "tot " + fmt(pk.totale) ? c : null; }, 4000);
+    if (!cP) no("a fine manche Giulia non vede Paky incassare: " + ((chip(F.Giulia, "Paky") || {}).textContent));
+    var cL2 = chip(F.Giulia, "Luca");
+    if (!cL2 || cL2.querySelector("b").textContent !== "0") no("a fine manche Luca non torna a 0: " + (cL2 || {}).textContent);
+    L.push("fine manche: Paky +" + fmt(vi) + " (tot " + fmt(pk.totale) + "), Luca torna a 0");
+    var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
     return L.join(" · ");
   } });
 })();

@@ -33,7 +33,7 @@
     b.click();
   }
   function tasto(w, re) { return [].find.call(w.document.querySelectorAll(".ru-azioni button, .ru-scrivi-riga button, .ru-form button"), function (b) { return re.test(b.textContent) && !b.disabled && !b.hidden && b.getClientRects().length > 0; }) || null; }
-  function lettera(w, L) { return [].find.call(w.document.querySelectorAll(".ru-azioni .ru-btn.lettera"), function (b) { return b.textContent === L && !b.disabled; }) || null; }
+  function lettera(w, L) { return [].find.call(w.document.querySelectorAll(".ru-qwerty .ru-btn.lettera, .ru-azioni .ru-btn.lettera"), function (b) { return b.textContent === L && !b.disabled; }) || null; }
   function Pdi(h) { return h.__RUOTA && h.__RUOTA.ultima; }
   function cat(w) { var c = w.document.querySelector(".ru-cat"); return c ? c.textContent : ""; }
   function base(ch) { return { "À": "A", "È": "E", "É": "E", "Ì": "I", "Ò": "O", "Ù": "U" }[ch] || ch; }
