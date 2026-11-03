@@ -14,7 +14,7 @@ window.SG_NOVITA = [
     titolo: "😏 Black Jack: il banco vi prende in giro",
     descrizione: [
       "Nei momenti forti il banco dice la sua in un fumetto, col vostro nome: chi sballa (anche a 22, per un punto), chi punta tutto, chi perde tre mani di fila, chi resta quasi a zero, chi divide e perde tutte e due le mani…",
-      "E quando vincete voi (Black Jack, vincita grossa, 5 carte) il banco fa l'offeso. Quando sballa lui, fa finta di niente.",
+      "E quando vincete voi (Black Jack, vincita grossa, 5 carte) il banco fa l'offeso. Quando sballa lui ha sempre una scusa: resta il migliore, s'intende.",
       "Più di 90 battute diverse, da amici al bar: escono ogni 2-3 mani al massimo, spariscono da sole in pochi secondi e non fermano il gioco. Online le vedono tutti uguali.",
       "Non vi piacciono? Si spengono nelle regole ⚙️ con «😏 Battute del banco»."
     ]
