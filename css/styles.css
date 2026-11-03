@@ -4086,3 +4086,8 @@ html body.tema-oro::before{ display:none; }
 .oro.scelta-giochi .tessera .info .tess-punti .emo{ --emo-tinta:currentColor; }
 .oro.scelta-giochi .tessera .tess-voto{ top:8px; right:8px; z-index:5; }
 .oro.scelta-giochi .griglia-giochi .tessera.proposta{ border:3px solid #ffc247; }   /* (il bordo: un contorno «outline» resterebbe sotto la foto) */
+
+/* ---- 📲 «Installa l'app» in alto a destra, al posto delle monete, solo per chi non ha installato l'app (31 ott 2026) ---- */
+.oro.home.home-menu-sotto .ms-installa{ flex:0 0 auto; display:flex; align-items:center; min-height:44px; padding:0 14px; border:0; border-radius:99px;
+  font:700 .86rem var(--o-tit); color:#fff; background:rgba(224,34,90,.18); box-shadow:inset 0 0 0 1.5px #e0225a; white-space:nowrap; }
+.oro.home .ms-installa .emo{ --emo-tinta:#fff; --emo-col:#fff; margin-right:6px; }

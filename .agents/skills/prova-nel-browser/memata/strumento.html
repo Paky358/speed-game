@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Memata · riquadri</title>
+<!-- 😂 Lo strumentino dei riquadri di Memata (31 ott 2026).
+     Si apre col server di prova: http://localhost:<porta>/.agents/skills/prova-nel-browser/memata/strumento.html
+     Mostra ogni meme coi suoi riquadri (quelli del generatore di Imgflip), con un testo di prova scritto dal motore VERO del gioco.
+     Si possono spostare (trascinando il riquadro), allargare (il quadratino in basso a destra), girare, cambiare carattere e colori,
+     aggiungere o togliere riquadri, segnare un meme «da togliere». Le correzioni restano in questo browser e si esportano con
+     «📋 Esporta»: vanno in ritocchi.json e togli.json qui accanto, poi `node converti.js` rifà data/memata.js (vedi LEGGIMI.md). -->
+<link rel="stylesheet" href="../../../../css/styles.css">
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: var(--o-fondo, #0d1020); color: var(--o-testo, #f4f5fb); font: 14px/1.4 var(--o-tit, system-ui); }
+  .tutto { display: grid; grid-template-columns: 280px 1fr 300px; height: 100vh; }
+  .col { overflow: auto; padding: 10px; box-sizing: border-box; }
+  .lista { border-right: 1px solid rgba(255,255,255,.1); }
+  .lista input, .lato input, .lato select { width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 8px; border: 0; background: #151a2e; color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); font: inherit; }
+  .filtri { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+  .filtri button, .lato button { border: 0; border-radius: 8px; padding: 5px 9px; background: rgba(48,56,92,.8); color: #fff; font: inherit; cursor: pointer; }
+  .filtri button.on { background: #e0225a; }
+  .voce { padding: 5px 8px; border-radius: 8px; cursor: pointer; display: flex; gap: 6px; align-items: center; }
+  .voce:hover { background: rgba(255,255,255,.06); }
+  .voce.on { background: rgba(224,34,90,.25); }
+  .voce .n { opacity: .5; width: 38px; flex: none; font-variant-numeric: tabular-nums; }
+  .voce .s { margin-left: auto; }
+  .centro { display: flex; flex-direction: column; gap: 8px; }
+  .scena { flex: 1; min-height: 0; position: relative; }
+  .scena .me-meme { position: absolute; inset: 0; }
+  .me-q.str { outline: 2px dashed rgba(255,255,255,.8); outline-offset: -2px; cursor: move; }
+  .me-q.str.sel { outline: 3px solid #ff4f86; background: rgba(224,34,90,.12); }
+  .maniglia { position: absolute; right: -7px; bottom: -7px; width: 14px; height: 14px; background: #ff4f86; border-radius: 3px; cursor: nwse-resize; z-index: 2; }
+  .tit { font-weight: 800; font-size: 1.05rem; }
+  .lato { border-left: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; gap: 8px; }
+  .lato label { display: block; font-size: .8rem; opacity: .7; margin-top: 4px; }
+  .riga { display: flex; gap: 6px; align-items: center; }
+  .riga > * { flex: 1; }
+  .rosso { background: #d63c4a !important; }
+  .verde { background: #2f9e44 !important; }
+  textarea { width: 100%; box-sizing: border-box; height: 120px; background: #151a2e; color: #fff; border: 0; border-radius: 8px; font: 12px monospace; }
+  a { color: #ff6d97; }
+</style>
+</head>
+<body>
+<div class="tutto">
+  <div class="col lista">
+    <input id="cerca" placeholder="Cerca un meme…">
+    <div class="filtri" id="filtri"></div>
+    <div id="elenco"></div>
+  </div>
+  <div class="col centro">
+    <div class="tit" id="tit"></div>
+    <div class="riga" style="flex:none"><input id="prova" value="QUANDO IL PROF DICE «UNA DOMANDINA»" style="flex:3"><button id="vuoto">Testo vuoto</button></div>
+    <div class="scena" id="scena"></div>
+    <div id="nota" style="opacity:.7;font-size:.85rem">Trascina un riquadro per spostarlo, il quadratino rosa per allargarlo. Frecce: sposta di 1 (con Maiusc di 10).</div>
+  </div>
+  <div class="col lato" id="lato"></div>
+</div>
+<script>window.SG = { registra: function () {} };</script>
+<script src="../../../../data/memata.js"></script>
+<script src="../../../../js/games/memata.js"></script>
+<script>
+(function () {
+  "use strict";
+  var M = window.SG_MEMATA_MOTORE, L = window.SG_MEMATA || [];
+  var MEM = "sg-memata-strumento";
+  var D = (function () { try { return JSON.parse(localStorage.getItem(MEM)) || {}; } catch (e) { return {}; } })();
+  D.rit = D.rit || {}; D.togli = D.togli || {}; D.ok = D.ok || {};
+  function salva() { try { localStorage.setItem(MEM, JSON.stringify(D)); } catch (e) {} }
+  function el(tag, a, figli) {
+    var e = document.createElement(tag);
+    Object.keys(a || {}).forEach(function (k) { if (k === "text") e.textContent = a[k]; else if (k === "class") e.className = a[k]; else if (k.slice(0, 2) === "on") e.addEventListener(k.slice(2), a[k]); else e.setAttribute(k, a[k]); });
+    (figli || []).forEach(function (f) { if (f) e.appendChild(f); });
+    return e;
+  }
+  M.stile(); M.caricaFont();
+  var filtro = "tutti", cur = 0, sel = 0, P = null;
+  var FILTRI = [["tutti", "Tutti"], ["classici", "Classici"], ["coi", "Coi riquadri"], ["corretti", "✏️ Corretti"], ["togli", "🗑 Da togliere"], ["visti", "✅ Visti"], ["davedere", "Da vedere"]];
+  FILTRI.forEach(function (f) {
+    document.getElementById("filtri").appendChild(el("button", { text: f[1], "data-f": f[0], onclick: function () { filtro = f[0]; elenco(); } }));
+  });
+  document.getElementById("cerca").addEventListener("input", elenco);
+  function boxDi(m) { return D.rit[m[0]] ? D.rit[m[0]] : (m[4] && m[4].length ? m[4] : null); }
+  function stato(m) { return D.togli[m[0]] ? "🗑" : D.rit[m[0]] ? "✏️" : D.ok[m[0]] ? "✅" : ""; }
+  function elenco() {
+    [].forEach.call(document.querySelectorAll("#filtri button"), function (b) { b.classList.toggle("on", b.getAttribute("data-f") === filtro); });
+    var q = document.getElementById("cerca").value.toLowerCase(), box = document.getElementById("elenco"); box.innerHTML = "";
+    var n = 0;
+    L.forEach(function (m, i) {
+      if (q && String(m[5]).toLowerCase().indexOf(q) < 0) return;
+      if (filtro === "classici" && boxDi(m)) return;
+      if (filtro === "coi" && !boxDi(m)) return;
+      if (filtro === "corretti" && !D.rit[m[0]]) return;
+      if (filtro === "togli" && !D.togli[m[0]]) return;
+      if (filtro === "visti" && !D.ok[m[0]]) return;
+      if (filtro === "davedere" && (D.ok[m[0]] || D.rit[m[0]] || D.togli[m[0]])) return;
+      if (++n > 300) return;
+      box.appendChild(el("div", { class: "voce" + (i === cur ? " on" : ""), onclick: function () { apri(i); } }, [el("span", { class: "n", text: String(i + 1) }), el("span", { text: m[5] }), el("span", { class: "s", text: stato(m) })]));
+    });
+    if (n > 300) box.appendChild(el("div", { style: "opacity:.6;padding:6px", text: "…e altri " + (n - 300) + ": cerca per nome" }));
+  }
+  function copia(o) { return JSON.parse(JSON.stringify(o)); }
+  function mieiBox() { var m = L[cur]; return copia(boxDi(m) || M.CLASSICO); }
+  function scriviBox(b) { D.rit[L[cur][0]] = b; salva(); disegna(); elenco(); }
+  function apri(i) { cur = i; sel = 0; disegna(); elenco(); }
+  function testiProva(n) { var t = document.getElementById("prova").value; var a = []; for (var i = 0; i < n; i++) a.push(n > 1 ? (i + 1) + ". " + t : t); return a; }
+  function disegna() {
+    var m = L[cur]; if (!m) return;
+    var num = parseInt(m[0], 36), slug = String(m[5]).replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-");
+    var tit = document.getElementById("tit"); tit.innerHTML = "";
+    tit.appendChild(el("span", { text: (cur + 1) + ". " + m[5] + " " + stato(m) + " · " }));
+    tit.appendChild(el("a", { href: "https://imgflip.com/meme/" + num + "/" + slug, target: "_blank", text: "esempi veri su Imgflip ↗" }));
+    var sc = document.getElementById("scena"); sc.innerHTML = "";
+    P = M.pannello({ el: el });
+    sc.appendChild(P.el);
+    var b = boxDi(m), rec = [m[0], m[1], m[2], m[3], b || 0];
+    P.metti(rec, testiProva((b || M.CLASSICO).length), {});
+    // i riquadri si toccano: spostare, allargare
+    P.q.forEach(function (v, i) {
+      v.el.classList.add("str"); v.el.classList.toggle("sel", i === sel);
+      v.el.style.pointerEvents = "auto";
+      var man = el("div", { class: "maniglia" }); v.el.appendChild(man);
+      trascina(v.el, i, false); trascina(man, i, true);
+    });
+    lato();
+  }
+  function trascina(nodo, i, allarga) {
+    nodo.addEventListener("pointerdown", function (e) {
+      e.preventDefault(); e.stopPropagation(); sel = i;
+      var r = P.quadro.getBoundingClientRect(), b = mieiBox(), q0 = b[i].slice(), x0 = e.clientX, y0 = e.clientY;
+      function muovi(ev) {
+        var dx = Math.round((ev.clientX - x0) / r.width * 1000), dy = Math.round((ev.clientY - y0) / r.height * 1000), q = b[i];
+        if (allarga) { q[2] = Math.max(20, Math.min(1000 - q0[0], q0[2] + dx)); q[3] = Math.max(20, Math.min(1000 - q0[1], q0[3] + dy)); }
+        else { q[0] = Math.max(0, Math.min(1000 - q0[2], q0[0] + dx)); q[1] = Math.max(0, Math.min(1000 - q0[3], q0[1] + dy)); }
+        var v = P.q[i]; v.el.style.left = q[0] / 10 + "%"; v.el.style.top = q[1] / 10 + "%"; v.el.style.width = q[2] / 10 + "%"; v.el.style.height = q[3] / 10 + "%";
+      }
+      function su() { window.removeEventListener("pointermove", muovi); window.removeEventListener("pointerup", su); scriviBox(b); }
+      window.addEventListener("pointermove", muovi); window.addEventListener("pointerup", su);
+      [].forEach.call(document.querySelectorAll(".me-q"), function (x, k) { x.classList.toggle("sel", k === i); });
+      lato();
+    });
+  }
+  function lato() {
+    var m = L[cur], box = document.getElementById("lato"); box.innerHTML = "";
+    var b = mieiBox(), q = b[sel] || b[0]; if (!q) return;
+    var o = q[4] || {};
+    function cambia(fn) { var bb = mieiBox(); fn(bb[sel], bb[sel][4] = bb[sel][4] || {}); if (!Object.keys(bb[sel][4]).length) bb[sel].length = 4; scriviBox(bb); }
+    box.appendChild(el("div", { class: "tit", text: "Riquadro " + (sel + 1) + " di " + b.length }));
+    var righe = el("div", { class: "riga" });
+    ["x", "y", "largo", "alto"].forEach(function (nome, k) {
+      var inp = el("input", { type: "number", value: q[k], min: 0, max: 1000 });
+      inp.addEventListener("change", function () { cambia(function (qq) { qq[k] = Math.max(0, Math.min(1000, +inp.value || 0)); }); });
+      righe.appendChild(el("div", {}, [el("label", { text: nome }), inp]));
+    });
+    box.appendChild(righe);
+    var rot = el("input", { type: "range", min: -45, max: 45, value: o.r || 0 });
+    rot.addEventListener("change", function () { cambia(function (qq, oo) { if (+rot.value) oo.r = +rot.value; else delete oo.r; }); });
+    box.appendChild(el("label", { text: "Girato: " + (o.r || 0) + "°" })); box.appendChild(rot);
+    var font = el("select", {}, [el("option", { value: "i", text: "Classico (bianco, bordo nero, MAIUSCOLO)" }), el("option", { value: "a", text: "Moderno (Arial, nero, bordo bianco)" })]);
+    font.value = o.f || "i";
+    font.addEventListener("change", function () { cambia(function (qq, oo) { if (font.value === "a") oo.f = "a"; else delete oo.f; delete oo.c; delete oo.o; delete oo.cp; }); });
+    box.appendChild(el("label", { text: "Carattere" })); box.appendChild(font);
+    var rc = el("div", { class: "riga" });
+    [["c", "Colore", o.c || (o.f === "a" ? "#000000" : "#ffffff")], ["o", "Bordo", o.o || (o.f === "a" ? "#ffffff" : "#000000")]].forEach(function (x) {
+      var inp = el("input", { type: "color", value: x[2] });
+      inp.addEventListener("change", function () { cambia(function (qq, oo) { oo[x[0]] = inp.value; }); });
+      rc.appendChild(el("div", {}, [el("label", { text: x[1] }), inp]));
+    });
+    box.appendChild(rc);
+    var al = el("select", {}, [["left", "a sinistra"], ["center", "al centro"], ["right", "a destra"]].map(function (x) { return el("option", { value: x[0], text: x[1] }); }));
+    al.value = o.al || "center";
+    al.addEventListener("change", function () { cambia(function (qq, oo) { if (al.value !== "center") oo.al = al.value; else delete oo.al; }); });
+    var va = el("select", {}, [["top", "in alto"], ["middle", "in mezzo"], ["bottom", "in basso"]].map(function (x) { return el("option", { value: x[0], text: x[1] }); }));
+    va.value = o.va || "middle";
+    va.addEventListener("change", function () { cambia(function (qq, oo) { if (va.value !== "middle") oo.va = va.value; else delete oo.va; }); });
+    box.appendChild(el("div", { class: "riga" }, [el("div", {}, [el("label", { text: "Allineato" }), al]), el("div", {}, [el("label", { text: "In verticale" }), va])]));
+    box.appendChild(el("div", { class: "riga" }, [
+      el("button", { text: "➕ Riquadro", onclick: function () { var bb = mieiBox(); bb.push([350, 400, 300, 200].concat(bb[sel] && bb[sel][4] ? [copia(bb[sel][4])] : [])); sel = bb.length - 1; scriviBox(bb); } }),
+      el("button", { class: "rosso", text: "➖ Questo", onclick: function () { var bb = mieiBox(); if (bb.length < 2) return; bb.splice(sel, 1); sel = 0; scriviBox(bb); } })
+    ]));
+    box.appendChild(el("div", { class: "riga" }, [
+      el("button", { text: "↺ Come Imgflip", onclick: function () { delete D.rit[m[0]]; salva(); disegna(); elenco(); } }),
+      el("button", { class: "verde", text: D.ok[m[0]] ? "✅ Visto" : "Segna visto", onclick: function () { if (D.ok[m[0]]) delete D.ok[m[0]]; else D.ok[m[0]] = 1; salva(); disegna(); elenco(); } })
+    ]));
+    box.appendChild(el("button", { class: D.togli[m[0]] ? "rosso" : "", text: D.togli[m[0]] ? "🗑 Da togliere (tocca per tenerlo)" : "🗑 Segna da togliere", onclick: function () { if (D.togli[m[0]]) delete D.togli[m[0]]; else D.togli[m[0]] = 1; salva(); disegna(); elenco(); } }));
+    box.appendChild(el("div", { class: "riga" }, [
+      el("button", { text: "◀ Prima", onclick: function () { if (cur > 0) apri(cur - 1); } }),
+      el("button", { text: "Dopo ▶", onclick: function () { if (cur < L.length - 1) apri(cur + 1); } })
+    ]));
+    box.appendChild(el("label", { text: "Correzioni (" + Object.keys(D.rit).length + " ritocchi, " + Object.keys(D.togli).length + " da togliere)" }));
+    var ta = el("textarea", { readonly: "readonly" });
+    ta.value = JSON.stringify({ ritocchi: D.rit, togli: Object.keys(D.togli) });
+    box.appendChild(ta);
+    box.appendChild(el("div", { class: "riga" }, [
+      el("button", { text: "📋 Esporta", onclick: function () { ta.select(); try { document.execCommand("copy"); } catch (e) {} var a = el("a", { href: "data:application/json," + encodeURIComponent(ta.value), download: "memata-correzioni.json" }); document.body.appendChild(a); a.click(); a.remove(); } }),
+      el("button", { text: "📥 Importa", onclick: function () { var s = prompt("Incolla le correzioni (JSON)"); if (!s) return; try { var j = JSON.parse(s); Object.assign(D.rit, j.ritocchi || {}); (j.togli || []).forEach(function (id) { D.togli[id] = 1; }); salva(); disegna(); elenco(); } catch (e) { alert("Non è un JSON valido"); } } })
+    ]));
+  }
+  window.addEventListener("keydown", function (e) {
+    if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    var d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (!d) return;
+    e.preventDefault(); var k = e.shiftKey ? 10 : 1, bb = mieiBox(), q = bb[sel];
+    q[0] = Math.max(0, Math.min(1000 - q[2], q[0] + d[0] * k)); q[1] = Math.max(0, Math.min(1000 - q[3], q[1] + d[1] * k)); scriviBox(bb);
+  });
+  document.getElementById("prova").addEventListener("input", disegna);
+  document.getElementById("vuoto").addEventListener("click", function () { document.getElementById("prova").value = ""; disegna(); });
+  var h = parseInt((location.hash.match(/n=(\d+)/) || [])[1], 10);
+  apri(h > 0 ? h - 1 : 0);
+  window.addEventListener("resize", function () { if (P) P.adatta(); });
+})();
+</script>
+</body>
+</html>

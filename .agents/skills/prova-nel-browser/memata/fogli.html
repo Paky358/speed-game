@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Memata · fogli di controllo</title>
+<!-- 😂 Fogli di miniature per il controllo a occhio dei meme di Memata: fogli.html?da=0&n=24
+     oppure fogli.html?ids=30b1gx,1g8my4&rit=<indirizzo di un JSON { id: riquadri }> (le proposte di correzione, da guardare prima di tenerle)
+     Ogni casella: il meme coi suoi riquadri (contorno rosso tratteggiato) e un testo di prova scritto dal motore del gioco.
+     Sotto: numero d'ordine, id e nome. Le foto si fanno con lo script foto-fogli.js (Playwright, fuori dal progetto). -->
+<style>
+  body { margin: 0; background: #0d1020; color: #fff; font: 13px system-ui, sans-serif; }
+  .g { display: grid; grid-template-columns: repeat(6, 300px); gap: 8px; padding: 8px; }
+  .c { width: 300px; }
+  .s { position: relative; width: 300px; height: 280px; background: #222; }
+  .s .me-meme { position: absolute; inset: 0; }
+  .me-q { outline: 2px dashed #ff3355; outline-offset: -2px; }
+  .l { padding: 3px 2px; height: 34px; overflow: hidden; line-height: 1.25; }
+  .l b { color: #ffc247; }
+</style>
+</head>
+<body>
+<div class="g" id="g"></div>
+<script>window.SG = { registra: function () {} };</script>
+<script src="../../../../data/memata.js"></script>
+<script src="../../../../js/games/memata.js"></script>
+<script>
+(function () {
+  var M = window.SG_MEMATA_MOTORE, L = window.SG_MEMATA || [], q = new URLSearchParams(location.search);
+  var da = +q.get("da") || 0, n = +q.get("n") || 24, ids = (q.get("ids") || "").split(",").filter(Boolean), rit = {};
+  if (q.get("rit")) { var x = new XMLHttpRequest(); x.open("GET", q.get("rit") + (q.get("rit").indexOf("?") < 0 ? "?" : "&") + Date.now(), false); try { x.send(); rit = JSON.parse(x.responseText) || {}; } catch (e) { rit = {}; } }
+  function el(tag, a, f) { var e = document.createElement(tag); Object.keys(a || {}).forEach(function (k) { if (k === "text") e.textContent = a[k]; else if (k === "class") e.className = a[k]; else e.setAttribute(k, a[k]); }); (f || []).forEach(function (x) { e.appendChild(x); }); return e; }
+  M.stile(); M.caricaFont();
+  if (q.get("grande")) { var st = document.createElement("style"); st.textContent = ".g{grid-template-columns:repeat(3,600px)}.c{width:600px}.s{width:600px;height:560px}"; document.head.appendChild(st); }
+  var g = document.getElementById("g"), quanti = 0, fatti = 0;
+  window.__pronti = false;
+  var scelti = ids.length ? ids.map(function (id) { for (var k = 0; k < L.length; k++) if (L[k][0] === id) return L[k]; return null; }).filter(Boolean) : L.slice(da, da + n);
+  scelti.forEach(function (m0, i) {
+    var m = rit[m0[0]] ? [m0[0], m0[1], m0[2], m0[3], rit[m0[0]], m0[5] + " ✏️"] : m0;
+    var P = M.pannello({ el: el }), s = el("div", { class: "s" }, [P.el]);
+    g.appendChild(el("div", { class: "c" }, [s, el("div", { class: "l" }, [el("b", { text: "#" + (L.indexOf(m0) + 1) + " " + m[0] }), document.createTextNode(" " + m[5])])]));
+    var b = m[4] && m[4].length ? m[4] : M.CLASSICO, t = b.map(function (_, k) { return "TESTO " + (k + 1); });
+    quanti++;
+    // (contata solo quando il browser l'ha davvero decodificata: prima la foto del foglio la mostrava nera)
+    P.img.addEventListener("load", function () { var im = P.img; (im.decode ? im.decode() : Promise.resolve()).then(function () { fatti++; }, function () { fatti++; }); });
+    P.img.addEventListener("error", function () { fatti++; });
+    P.metti([m[0], m[1], m[2], m[3], m[4] || 0], t, {});
+  });
+  var t0 = Date.now();
+  (function guarda() { if (fatti >= quanti || Date.now() - t0 > 20000) { requestAnimationFrame(function () { requestAnimationFrame(function () { setTimeout(function () { window.__pronti = true; }, 1200); }); }); return; } setTimeout(guarda, 200); })();
+})();
+</script>
+</body>
+</html>

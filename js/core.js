@@ -44,14 +44,14 @@
   var CAT_GIOCO = {
     scopa: "carte", scopa2v2: "carte", scopone: "carte", blackjack: "carte", poker: "carte", ruota: "parole", ordine: "parole",
     tris: "sfida", drop4: "sfida", hockey: "sfida", navale: "sfida", calciobiliardo: "sfida",
-    asta: "festa", astafanta: "festa", lanterne: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa", lunghezza: "festa", chidinoi: "festa",
+    asta: "festa", astafanta: "festa", lanterne: "festa", impostore: "festa", sipero: "festa", scarabocchio: "festa", lunghezza: "festa", chidinoi: "festa", memata: "festa",
     scalinata: "mini", horto: "mini", pendolo: "mini", pallamatta: "mini", garapesca: "mini",
     timeline: "parole", nomicose: "parole", patata: "parole", taboo: "parole", balla: "parole", prezzo: "parole", unaparola: "parole", dadoveviene: "parole"
   };
   var catAttiva = "tutti";
   function catDi(g) { return CAT_GIOCO[g.id] || null; }
   // Giochi che hanno la modalità "ognuno dal suo telefono" (usabili nella Sala online).
-  var GIOCHI_ONLINE = { lanterne: 1, asta: 1, astafanta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1, pallamatta: 1, garapesca: 1, balla: 1, lunghezza: 1, chidinoi: 1, scopone: 1, impostore: 1, prezzo: 1, unaparola: 1, dadoveviene: 1 };
+  var GIOCHI_ONLINE = { lanterne: 1, asta: 1, astafanta: 1, blackjack: 1, poker: 1, ruota: 1, ordine: 1, drop4: 1, horto: 1, navale: 1, nomicose: 1, patata: 1, pendolo: 1, scalinata: 1, scopa: 1, scopa2v2: 1, sipero: 1, timeline: 1, tris: 1, scarabocchio: 1, taboo: 1, calciobiliardo: 1, pallamatta: 1, garapesca: 1, balla: 1, lunghezza: 1, chidinoi: 1, scopone: 1, impostore: 1, prezzo: 1, unaparola: 1, dadoveviene: 1, memata: 1 };
   function giocoOnline(g) { return !!(g && (GIOCHI_ONLINE[g.id] || g.provaOnline)); }   // (provaOnline: solo i giochi finti delle prove, es. il Contatore)
   var app;                    // contenitore radice (#app)
   var linkParams = {};        // impostazioni arrivate da un link condiviso
@@ -825,7 +825,10 @@
     var testaCorta = null;
     if (HOME_MENU_SOTTO) {
       s.classList.add("home-menu-sotto");
-      testaCorta = prog ? el("button", { class: "ms-monete", "aria-label": "Il tuo profilo e le Speed Coins", onclick: function () { schermataAccesso(schermataHome); } }, [ el("span", { text: "🪙 " + cifre(prog.coins) }) ]) : null;
+      // 📲 chi non ha installato l'app vede in alto a destra «Installa l'app» al posto delle monete (31 ott 2026: in fondo alla pagina
+      //  nessuno lo trovava; le monete restano nel Profilo); chi l'ha installata vede le monete
+      if (!giaApp) testaCorta = el("button", { class: "ms-installa", onclick: installa }, [ el("span", { text: "📲 Installa l'app" }) ]);
+      else testaCorta = prog ? el("button", { class: "ms-monete", "aria-label": "Il tuo profilo e le Speed Coins", onclick: function () { schermataAccesso(schermataHome); } }, [ el("span", { text: "🪙 " + cifre(prog.coins) }) ]) : null;
       s._menu = "giochi";
     }
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
@@ -860,11 +863,13 @@
     var hao = conSala ? rigaAmiciOn() : null;
     if (hao) s._contenuto.appendChild(hao);
     // "🔁 Riapri la Sala di ieri sera (Giulia, Luca)": stesso codice, gli amici col link vecchio entrano da soli
-    var ieri = conSala && !sala && !salaG ? salaDiIeri() : null;
+    // (31 ott 2026, il proprietario: in home «Riapri la Sala» e «Giocato di recente» occupano solo spazio: tolti col menu sotto;
+    //  il gruppo fisso c'è già, sono le tessere delle Compagnie qui sopra)
+    var ieri = conSala && !sala && !salaG && !HOME_MENU_SOTTO ? salaDiIeri() : null;
     if (ieri) s._contenuto.appendChild(rigaIeri(ieri));
     // "👥 Giocato di recente": con chi ho giocato online ("Luca · 🎲 Tris", ➕ per chiedere l'amicizia col profilo online)
     var rec = null;
-    if (conSala && window.SGCompagnia && SGCompagnia.rigaRecenti) try {
+    if (conSala && !HOME_MENU_SOTTO && window.SGCompagnia && SGCompagnia.rigaRecenti) try {
       rec = el("div", { class: "home-rec" });
       if (SGCompagnia.rigaRecenti(rec, { conPiu: !!mioUidOnline() })) s._contenuto.appendChild(rec); else rec = null;
     } catch (e) { rec = null; setTimeout(function () { throw e; }, 0); }
@@ -917,7 +922,7 @@
     azioni.appendChild(el("button", { class: "azione", text: "🐞 Bug", onclick: schermataBug }));
     // con la Sala in alto: il torneo è un tasto piccolo qui (Sala e codice stanno nella riga online)
     if (conSala) azioni.appendChild(el("button", { class: "azione", text: (torneo || (sala && sala.torneo)) ? "🏆 Riprendi la serata a punti" : "🏆 Serata a punti", onclick: apriTorneo }));
-    if (!giaApp && !tInstalla) azioni.appendChild(el("button", { class: "azione", text: "📲 Installa l'app", onclick: installa }));
+    if (!giaApp && !tInstalla && !HOME_MENU_SOTTO) azioni.appendChild(el("button", { class: "azione", text: "📲 Installa l'app", onclick: installa }));
     s._piede.appendChild(azioni);
     if (rec) recInHome(rec, barra);
     if (conSala) return mostra(s);

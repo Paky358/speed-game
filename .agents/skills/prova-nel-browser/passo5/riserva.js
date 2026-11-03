@@ -216,7 +216,8 @@
     (v.players || []).forEach(function (p) {
       var n = nomeDi(X, p.id); if (!n || p.via || X.vivi.indexOf(n) < 0) return;
       var k = v.fase + "|" + v.giro + "." + (v.rif || 0) + "|" + n; if (X.fatti[k]) return;
-      if (v.fase === "scrittura" && (v.fatti || []).indexOf(p.id) < 0) { if (manda(X, n, { t: "balla", testo: "balla di " + n + " " + v.giro + "." + (v.rif || 0) })) X.fatti[k] = 1; }
+      if (v.fase === "categoria" && v.cat && v.cat.k == null && v.cat.chi === p.id) { if (manda(X, n, { t: "cat", k: 0 })) X.fatti[k] = 1; }
+      if (v.fase === "scrittura" && (v.fatti || []).indexOf(p.id) < 0) { if (manda(X, n, { t: "balla", testo: "balla di " + n + " " + v.giro + "." + (v.rif || 0) + (v.doppia ? " ‖ bis" : "") })) X.fatti[k] = 1; }
       if (v.fase === "voto" && (v.fatti || []).indexOf(p.id) < 0 && v.scelte) {
         var kk = -1; v.scelte.forEach(function (s, i) { if (kk < 0 && String(s.testo || "").toLowerCase().indexOf("balla di " + n.toLowerCase()) < 0) kk = i; });
         if (kk >= 0 && manda(X, n, { t: "voto", k: kk })) X.fatti[k] = 1;

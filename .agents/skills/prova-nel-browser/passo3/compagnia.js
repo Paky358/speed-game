@@ -1110,6 +1110,8 @@
     var o = JSON.parse(P.localStorage.getItem("sg-sala-ieri") || "null");
     if (!o || o.codice !== S || o.nomi.slice().sort().join(",") !== "Giulia,Luca") no("sg-sala-ieri: " + JSON.stringify(o));
     if (P.localStorage.getItem("sg-mia-sala")) no("sg-mia-sala non è stata cancellata");
+    // (31 ott 2026: col menu sotto «Riapri la Sala» in home non c'è più, deciso dal proprietario: si controlla che non ci sia)
+    if (await W.aspetta(function () { return P.document.querySelector(".menu-sotto"); }, 3000)) { await W.dorme(500); if (rigaIeri(P)) no("col menu sotto in home c'è ancora «Riapri»"); erroriVuoti(); return "col menu sotto la home non ha «Riapri» (tolto il 31 ott); sg-sala-ieri salvato per " + S; }
     if (!await W.aspetta(function () { return rigaIeri(P); }, 2000)) no("dopo la chiusura in home non c'è «Riapri»");
     if (!/^🔁 Riapri la Sala di prima \((con (Giulia e Luca|Luca e Giulia))\)$/.test(rigaIeri(P))) no("subito dopo: «" + rigaIeri(P) + "»");
     // 25 ore dopo: niente
@@ -1157,6 +1159,7 @@
     var T2 = await A.lanciaDallaSala("Marco", S2, "Tris");
     // a) ieri Paky aveva la Sala T2 (oggi è il Tris di Marco)
     var P = await telHome("Paky", 0, { prima: conIeri(T2, ["Giulia"], 3) });
+    if (P.document.querySelector(".menu-sotto")) { await W.dorme(500); if (rigaIeri(P)) no("col menu sotto in home c'è ancora «Riapri»"); erroriVuoti(); return "col menu sotto la home non ha «Riapri» (tolto il 31 ott): niente da riaprire"; }
     if (!/^🔁 Riapri la Sala di prima \(con Giulia\)$/.test(rigaIeri(P))) no("«Riapri»: «" + rigaIeri(P) + "»");
     var sP = spiaPillole(P), vT = JSON.stringify(A.vm(T2));
     W.clicca(P, /Riapri la Sala/, ".home-ieri button");
@@ -1207,8 +1210,8 @@
   // 346. Misure della home e di «Come giocate?»
   aggiungi(346, { nome: "Misure: home con 2 compagnie, «Riapri ieri» e la riga online (categorie entro 640 px, meno di 230 px in più) e «Come giocate?» con la compagnia", fai: async function () {
     var P = await telHome("Paky", 0, { prima: function (w) { conComp([[C, NOME], ["MNPQRS", "La squadra del calcetto", "⚽"]])(w); conIeri("WXYZ", ["Giulia", "Luca", "Marco", "Bea"], 20)(w); } });
-    if (!await W.aspetta(function () { return P.document.querySelectorAll(".cmp-tessera").length === 2 && rigaIeri(P); }, 3000)) no("in home non ci sono 2 tessere e «Riapri» (" + P.document.querySelectorAll(".cmp-tessera").length + ", «" + rigaIeri(P) + "»)");
-    if (!/^🔁 Riapri la Sala di ieri sera \(con Giulia, Luca e altri 2\)$/.test(rigaIeri(P))) no("«Riapri» con 4 nomi: «" + rigaIeri(P) + "»");
+    if (!await W.aspetta(function () { return P.document.querySelectorAll(".cmp-tessera").length === 2 && (P.document.querySelector(".menu-sotto") ? !rigaIeri(P) : rigaIeri(P)); }, 3000)) no("in home non ci sono 2 tessere e «Riapri» (" + P.document.querySelectorAll(".cmp-tessera").length + ", «" + rigaIeri(P) + "»)");
+    if (!/^🔁 Riapri la Sala di ieri sera \(con Giulia, Luca e altri 2\)$/.test(rigaIeri(P)) && !P.document.querySelector(".menu-sotto")) no("«Riapri» con 4 nomi: «" + rigaIeri(P) + "»");
     await W.aspetta(function () { return !/…/.test(P3.tessere(P).join("")); }, 8000);
     var fuori = [], righe = [];
     var M = [[360, 640], [412, 915]];
@@ -1216,7 +1219,7 @@
       var L = M[i][0], H = M[i][1];
       var e = await A.misuraHome(P, "Paky", L, H); if (e) no("home a " + L + "x" + H + ": " + e);
       var d = P.document, q = function (s) { return d.querySelector(s).getBoundingClientRect(); };
-      var rc = q(".home-comp"), ro = q(".home-online"), ri = q(".home-ieri"), rb = q(".cat-barra");
+      var rc = q(".home-comp"), ro = q(".home-online"), ri = d.querySelector(".home-ieri") ? q(".home-ieri") : ro, rb = q(".cat-barra");   // (col menu sotto «Riapri» non c'è)
       var piu = Math.round((ro.top - rc.top) + (ri.bottom - ro.bottom));
       righe.push(L + "x" + H + ": categorie a " + Math.round(rb.top) + " px, " + piu + " px in più");
       if (rb.top > 640) fuori.push(L + ": la barra delle categorie comincia a " + Math.round(rb.top) + " px");
@@ -1224,7 +1227,7 @@
       [].forEach.call(d.querySelectorAll(".cmp-tessera, .home-ieri button"), function (b) {
         var r = b.getBoundingClientRect(); if (r.left < 0 || r.right > L + 1) fuori.push(L + ": «" + b.textContent.slice(0, 30) + "» esce di lato");
       });
-      var hx = q(".home-ieri .hi-x"); if (hx.width < 30 || hx.height < 30) fuori.push(L + ": il ✕ è piccolo (" + Math.round(hx.width) + "x" + Math.round(hx.height) + ")");
+      var hx = d.querySelector(".home-ieri .hi-x") ? q(".home-ieri .hi-x") : { width: 44, height: 44 }; if (hx.width < 30 || hx.height < 30) fuori.push(L + ": il ✕ è piccolo (" + Math.round(hx.width) + "x" + Math.round(hx.height) + ")");
     }
     if (fuori.length) no(fuori.join(" · ") + " (" + righe.join("; ") + ")");
     // «Come giocate?» del Tris (6 modi) a misura: tutti i tasti in vista
@@ -1315,6 +1318,7 @@
     // la home di Paky
     await allaSala(P, S);
     await chiudiPerTutti(P, "Paky");
+    if (await W.aspetta(function () { return P.document.querySelector(".menu-sotto"); }, 3000)) { await W.dorme(500); if (chipRec(P).length) no("col menu sotto in home c'è ancora «Giocato di recente»"); erroriVuoti(); return "fine Tris e Scalinata come prima; col menu sotto la home non ha «Giocato di recente» (tolto il 31 ott)"; }
     if (!await W.aspetta(function () { return chipRec(P).length >= 2; }, 3000)) no("in home Paky non ha «Giocato di recente» (" + JSON.stringify(chipRec(P)) + ")");
     var ch = chipRec(P);
     // (la Scalinata è l'ultima partita: Giulia e Bea, nell'ordine della classifica)

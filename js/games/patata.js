@@ -1019,7 +1019,7 @@
     R.inq = "leggio"; await ST.suLeggio(S, i, 450);
     if (R.cb.chiuso || !S.vivo()) return;
     ST.faccia(S, i, "esploso"); ST.accendiSolo(S, -1);
-    if (fuori) { ST.fuori(S, i, true); ST.testoLeggio(S, i, "💀 OUT", true); }
+    if (fuori) { ST.fuori(S, i, true, true); ST.testoLeggio(S, i, "💀 OUT", true); }   // (true, true: salta in aria, lampo rosso nello studio)
     else ST.testoLeggio(S, i, testoInGara(vm, vm.players[i] || {}), true);
     ST.pubblico(S, "ohh");
     ST.terzo(S, i, "💥 BOOM! " + vm.boom.nome, fuori ? "è eliminato!" : resta, "💥");

@@ -75,6 +75,8 @@
     w.SGNube.salvaProgressi = function (f) { if (f != null) w.__salvaF++; return sp && sp.apply(this, arguments); };
   }
   function senzaErrori(cosa) { var e = W.erroriTel(); if (e.length) no((cosa ? cosa + ": " : "") + "errori: " + e.slice(0, 3).join(" | ")); }
+  // (Black Jack) la gara a fiches finte: quota «Gratis» nel ⚙️
+  function gratis(foglio) { var b = foglio && [].find.call(foglio.querySelectorAll(".modo-chip"), function (x) { return /^Gratis$/.test(x.textContent.trim()); }); if (b) b.click(); else no("nel ⚙️ del Black Jack non c'è la quota «Gratis»"); }
   async function regola(P, re, poi) {   // l'host cambia una regola dal ⚙️ della saletta
     if (!await W.aspetta(function () { return W.clicca(P, /Regole/, ".sl-regole, button"); }, 5000)) no("non trovo ⚙️ Regole");
     await W.dorme(300);
@@ -371,7 +373,7 @@
     P.__imp = { mani: 2 };
     var C = await A.lanciaDallaSala("Paky", S, "Black Jack");
     if (!await W.aspetta(function () { return /Regole/.test(T(P)); }, 4000)) no("nella saletta del Black Jack non c'è ⚙️ Regole");
-    await regola(P, /Fiches uguali/);
+    await regola(P, /Fiches uguali/, gratis);   // (1 nov 2026: online la gara parte con la quota in Speed Coins; qui si prova quella a fiches finte)
     if (!await W.aspetta(function () { return /Torneo/.test(A.regoleDi(W.finestra("Giulia"))); }, 4000)) no("la riga «Si gioca così» di Giulia non dice del torneo («" + A.regoleDi(W.finestra("Giulia")) + "»)");
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 6000)) no("non trovo «Comincia»");
     if (!await W.aspetta(function () { return vm(C).fase === "punta"; }, 15000)) no("il Black Jack non parte");
@@ -398,7 +400,7 @@
     var P = await tel("Paky", { x: 0, monete: 700 }); P.__imp = { mani: 2 };
     var C = await stanza(P, "Black Jack", "blackjack", ["Giulia"], { Giulia: 300 }), note = [];
     if (!await W.aspetta(function () { return /Giulia/.test(T(P)); }, 6000)) no("Giulia non arriva in saletta");
-    await regola(P, /Fiches uguali/);
+    await regola(P, /Fiches uguali/, gratis);   // (1 nov 2026: online la gara parte con la quota in Speed Coins; qui si prova quella a fiches finte)
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 4000)) no("non trovo «Comincia»");
     if (!await W.aspetta(function () { return vm(C).fase === "punta"; }, 15000)) no("il Black Jack non parte");
     if (vm(C).maniTot !== 2) note.push("(mani: " + vm(C).maniTot + ")");

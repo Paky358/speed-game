@@ -228,7 +228,7 @@
   function veloAperto(w) { return w && w.document.querySelector(".bc-velo.on:not(.via)"); }
   function scriviB(w, testo) {
     var v = veloAperto(w), ta = v && v.querySelector(".bc-penna"), ok = v && v.querySelector(".bc-ok"); if (!ta || !ok) return false;
-    ta.value = testo; ta.dispatchEvent(new w.Event("input", { bubbles: true })); ok.click(); return true;
+    [].forEach.call(v.querySelectorAll(".bc-penna"), function (t, n) { t.value = n ? testo + " bis" : testo; t.dispatchEvent(new w.Event("input", { bubbles: true })); }); ok.click(); return true;   // (la Balla Finale ha due campi)
   }
   function votaB(w) {
     var v = veloAperto(w); if (!v || !v.querySelector(".bc-scelta")) return false;
@@ -244,6 +244,7 @@
         if (p.via || (chi && chi.indexOf(p.nome) < 0)) return;
         var w = W.finestra(p.nome), k = v.fase + "|" + v.giro + "." + (v.rif || 0) + "|" + p.id;
         if (fatti[k] || !w) return;
+        if (v.fase === "categoria" && v.cat && v.cat.k == null && v.cat.chi === p.id) { var bc = w.document.querySelector(".bc-cat-c:not(:disabled)"); if (bc) { bc.click(); fatti[k] = 1; } return; }
         if (v.fase === "scrittura" && veloAperto(w)) fatti[k] = scriviB(w, "balla di " + p.nome + " " + v.giro + "." + (v.rif || 0));
         if (v.fase === "voto" && veloAperto(w)) fatti[k] = votaB(w);
       });
@@ -251,7 +252,7 @@
   }
   COPIONE.aggiungi(542, { nome: "Balla Colossale: l'host ricarica in saletta, mentre si scrive, al voto, alla rivelazione, ai punti e sulla classifica", fai: async function () {
     var L = N(), amici = ["Luca", "Sara"], sent = sentinella(["Paky"].concat(amici)), fatti = {};
-    var X = await stanza("La Balla Colossale", "balla", { round: 2, amici: "no", ride: false }, amici), C = X.C;
+    var X = await stanza("La Balla Colossale", "balla", { round: 2, amici: "no", ride: false, sceglie: false }, amici), C = X.C;
     var r = await ricaricaHost(C, amici, { lobby: true }); L.nota("saletta → saletta (" + r.dt + " s)");
     if (!await W.aspetta(function () { return W.clicca(W.finestra("Paky"), /Comincia/); }, 5000)) no("l'host non ha «Comincia»");
     // mentre si scrive: Luca ha già scritto, Sara no → si riparte dalla notizia, poi si scrive col tempo intero:

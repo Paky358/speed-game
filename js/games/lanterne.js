@@ -84,29 +84,46 @@ const PALAZZO = crea({
   // i mobili: ognuno è un oggetto a sé (tipo, posto, misure), anche per il nascondino che verrà
   ostacoli:[
     {x:34,y:22,w:4,h:4,t:'fontana'},
-    {x:30,y:21,w:1,h:1,t:'albero'},{x:41,y:21,w:1,h:1,t:'albero'},{x:30,y:26,w:1,h:1,t:'albero'},{x:41,y:26,w:1,h:1,t:'albero'},
-    {x:31,y:28,w:2,h:1,t:'panchina'},{x:38,y:28,w:2,h:1,t:'panchina'},
-    {x:4,y:4,w:4,h:1,t:'scaffale'},{x:9,y:4,w:3,h:1,t:'scaffale'},{x:4,y:7,w:3,h:1,t:'scaffale'},{x:9,y:7,w:3,h:1,t:'scaffale'},
-    {x:7,y:2,w:1,h:1,t:'poltrona'},
-    {x:28,y:5,w:3,h:2,t:'tavolo'},{x:39,y:5,w:3,h:2,t:'tavolo'},{x:28,y:8,w:3,h:2,t:'tavolo'},{x:39,y:8,w:3,h:2,t:'tavolo'},
-    {x:32,y:2,w:1,h:1,t:'candelabro'},{x:35,y:2,w:1,h:1,t:'arpa'},{x:39,y:2,w:1,h:1,t:'candelabro'},
+    {x:33,y:18,w:1,h:1,t:'albero'},{x:38,y:18,w:1,h:1,t:'albero'},{x:27,y:26,w:1,h:1,t:'albero'},{x:44,y:26,w:1,h:1,t:'albero'},
+    {x:30,y:29,w:2,h:1,t:'panchina'},{x:40,y:29,w:2,h:1,t:'panchina'},
+    {x:3,y:3,w:3,h:1,t:'scaffale'},{x:9,y:3,w:3,h:1,t:'scaffale'},{x:9,y:7,w:3,h:1,t:'scaffale'},
+    {x:6,y:2,w:1,h:1,t:'poltrona'},
+    {x:28,y:3,w:3,h:2,t:'tavolo'},{x:39,y:3,w:3,h:2,t:'tavolo'},{x:28,y:10,w:3,h:2,t:'tavolo'},{x:39,y:10,w:3,h:2,t:'tavolo'},
+    {x:32,y:2,w:1,h:1,t:'candelabro'},{x:33,y:2,w:1,h:1,t:'arpa'},{x:39,y:2,w:1,h:1,t:'candelabro'},
     {x:59,y:4,w:3,h:3,t:'ingranaggio'},{x:62,y:5,w:2,h:2,t:'plastico'},
-    {x:5,y:13,w:4,h:1,t:'altare'},{x:4,y:18,w:2,h:1,t:'panca'},{x:8,y:18,w:2,h:1,t:'panca'},
+    {x:5,y:13,w:4,h:1,t:'altare'},{x:3,y:18,w:2,h:1,t:'panca'},
     {x:3,y:15,w:1,h:1,t:'candelabro'},{x:10,y:15,w:1,h:1,t:'candelabro'},
-    {x:4,y:25,w:3,h:2,t:'piano'},{x:1,y:26,w:1,h:1,t:'arpa'},
-    {x:17,y:17,w:6,h:1,t:'banco'},{x:21,y:21,w:2,h:2,t:'forno'},
+    {x:4,y:24,w:3,h:2,t:'piano'},{x:1,y:26,w:1,h:1,t:'arpa'},
+    {x:21,y:15,w:4,h:1,t:'banco'},{x:22,y:22,w:2,h:2,t:'forno'},
     {x:17,y:25,w:2,h:1,t:'sacchi'},{x:19,y:25,w:2,h:1,t:'dispensa'},
-    {x:4,y:38,w:2,h:2,t:'botte'},{x:4,y:42,w:2,h:2,t:'botte'},{x:9,y:42,w:2,h:2,t:'botte'},
+    {x:4,y:38,w:2,h:2,t:'botte'},{x:4,y:43,w:2,h:2,t:'botte'},{x:10,y:43,w:2,h:2,t:'botte'},
     {x:6,y:46,w:3,h:1,t:'rastrelliera'},
-    {x:20,y:38,w:4,h:1,t:'stendino'},{x:18,y:42,w:2,h:1,t:'tinozza'},{x:19,y:45,w:4,h:1,t:'stendino'},
-    {x:30,y:36,w:2,h:1,t:'piedistallo'},{x:38,y:36,w:2,h:1,t:'piedistallo'},
-    {x:31,y:40,w:2,h:1,t:'piedistallo'},{x:36,y:40,w:1,h:1,t:'cavalletto'},
+    {x:20,y:38,w:4,h:1,t:'stendino'},{x:20,y:44,w:2,h:1,t:'tinozza'},{x:19,y:45,w:4,h:1,t:'stendino'},
+    {x:37,y:40,w:1,h:1,t:'cavalletto'},
     {x:49,y:19,w:5,h:1,t:'console'},{x:48,y:19,w:1,h:1,t:'armadietto'},{x:55,y:19,w:1,h:1,t:'armadietto'},
-    {x:60,y:16,w:3,h:3,t:'aiuola'},{x:65,y:16,w:3,h:3,t:'aiuola'},{x:62,y:21,w:3,h:2,t:'aiuola'},
-    {x:70,y:17,w:1,h:1,t:'albero'},{x:70,y:21,w:1,h:1,t:'albero'},
+    {x:59,y:22,w:3,h:3,t:'aiuola'},{x:58,y:15,w:2,h:4,t:'aiuola'},{x:66,y:22,w:3,h:2,t:'aiuola'},
+    {x:70,y:17,w:1,h:1,t:'albero'},
     {x:60,y:31,w:3,h:1,t:'telegrafo'},   // nell'angolo: la porta dalla Serra (x 63-64) resta libera
     {x:66,y:32,w:2,h:1,t:'baule'},
-    {x:49,y:40,w:2,h:2,t:'cassa'},{x:56,y:42,w:3,h:2,t:'cassa'},{x:60,y:40,w:2,h:2,t:'cassa'},{x:63,y:42,w:2,h:2,t:'botte'},
+    {x:46,y:41,w:1,h:3,t:'cassa'},{x:55,y:38,w:3,h:1,t:'cassa'},{x:64,y:41,w:2,h:1,t:'cassa'},
+    // dal 30/10 sera tutto quello che ha un volume nel palazzo reso in Blender è solido: niente sedie o vasi che si attraversano
+    {x:7,y:2,w:1,h:1,t:'tavolino'},{x:8,y:2,w:1,h:1,t:'libri'},{x:13,y:5,w:2,h:1,t:'scrittoio'},{x:12,y:5,w:1,h:1,t:'sedia'},{x:3,y:10,w:1,h:1,t:'mappamondo'},{x:3,y:7,w:1,h:1,t:'libri'},{x:11,y:8,w:1,h:1,t:'scala'},{x:4,y:10,w:3,h:1,t:'tavolo_mappe'},{x:3,y:8,w:1,h:1,t:'rotoli'},{x:3,y:9,w:1,h:1,t:'statua'},   // Biblioteca (tutto a corona: scaffali al muro nord, angolo di lettura nella nicchia, scrittoio sotto la finestra, tavolo delle carte a sud; in mezzo solo lo scaffale del compito con la sua scala)
+    {x:31,y:11,w:1,h:1,t:'sedia'},{x:34,y:2,w:1,h:1,t:'sedia'},{x:37,y:2,w:1,h:1,t:'leggio'},{x:38,y:2,w:1,h:1,t:'sedia'},{x:40,y:2,w:1,h:1,t:'vaso'},
+    {x:26,y:5,w:1,h:1,t:'vaso'},{x:43,y:5,w:1,h:1,t:'vaso'},{x:26,y:9,w:1,h:1,t:'vaso'},{x:43,y:9,w:1,h:1,t:'vaso'},{x:33,y:11,w:1,h:1,t:'statua'},{x:38,y:11,w:1,h:1,t:'statua'},{x:27,y:5,w:1,h:1,t:'tavolino'},{x:42,y:5,w:1,h:1,t:'tavolino'},{x:27,y:9,w:1,h:1,t:'tavolino'},{x:42,y:9,w:1,h:1,t:'tavolino'},   // Salone (le quattro tavole nei quattro angoli, la sala libera sull'intarsio; le statue ai lati della porta sud, i tavolini nelle rientranze delle ali)
+    {x:56,y:9,w:3,h:1,t:'banco_attrezzi'},{x:64,y:5,w:1,h:2,t:'armadio'},{x:57,y:3,w:1,h:1,t:'cassa'},{x:63,y:3,w:1,h:1,t:'regolatore'},{x:64,y:4,w:1,h:1,t:'contrappesi'},   // Torre (la piazza a L fra le due porte, la botola e i compiti; i mobili a nord e a est della macchina)
+    {x:29,y:18,w:1,h:1,t:'campana'},{x:29,y:28,w:1,h:1,t:'lampione'},{x:42,y:28,w:1,h:1,t:'lampione'},{x:31,y:18,w:2,h:1,t:'fioriera'},{x:39,y:18,w:2,h:1,t:'fioriera'},
+    {x:27,y:22,w:1,h:1,t:'statua'},{x:44,y:22,w:1,h:1,t:'statua'},{x:27,y:18,w:1,h:1,t:'vaso'},{x:44,y:18,w:1,h:1,t:'vaso'},{x:42,y:18,w:2,h:1,t:'cassa'},{x:30,y:18,w:1,h:1,t:'cesto'},{x:28,y:18,w:1,h:1,t:'appoggio'},{x:41,y:18,w:1,h:1,t:'botte'},{x:27,y:27,w:2,h:1,t:'tavolino'},{x:43,y:27,w:2,h:1,t:'tavolino'},{x:29,y:27,w:1,h:1,t:'sedia'},{x:42,y:27,w:1,h:1,t:'sedia'},{x:29,y:29,w:1,h:1,t:'vaso'},{x:42,y:29,w:1,h:1,t:'vaso'},   // Cortile (scopa e secchio, botte del vino, i due tavoli del rinfresco con le sedie, gli alberelli negli angoli sud)
+    {x:3,y:16,w:2,h:1,t:'panca'},{x:9,y:16,w:2,h:1,t:'panca'},{x:5,y:14,w:1,h:1,t:'leggio'},{x:8,y:14,w:1,h:1,t:'vaso'},{x:10,y:19,w:1,h:1,t:'vaso'},{x:3,y:19,w:1,h:1,t:'statua'},{x:4,y:15,w:1,h:1,t:'sgabello'},{x:9,y:15,w:1,h:1,t:'sgabello'},{x:3,y:17,w:1,h:1,t:'appoggio'},{x:4,y:20,w:1,h:1,t:'cassa'},   // Cappella (banchi contro i fianchi, navata libera; panchetto dei cuscini fra i banchi a ovest, acquasantiera accanto alla porta, santo, ceri e cassone nell'angolo sud-ovest)
+    {x:3,y:25,w:1,h:1,t:'sgabello'},{x:10,y:25,w:1,h:1,t:'sedia'},{x:9,y:29,w:1,h:1,t:'leggio'},{x:1,y:27,w:1,h:1,t:'leggio'},{x:5,y:29,w:3,h:1,t:'divano'},{x:1,y:25,w:2,h:1,t:'credenza'},{x:9,y:24,w:1,h:1,t:'violoncello'},{x:1,y:28,w:2,h:1,t:'tavolo_basso'},{x:8,y:29,w:1,h:1,t:'tavolino'},{x:4,y:29,w:1,h:1,t:'appoggio'},{x:7,y:24,w:2,h:1,t:'credenza'},   // Sala della musica (il pianoforte contro il muro nord, il tavolino del tè e il secondo leggio nel bovindo, la sedia del violino nell'angolo: tre righe libere dal bovindo alla porta)
+    {x:16,y:21,w:1,h:1,t:'sgabello'},{x:24,y:16,w:1,h:1,t:'botte'},{x:16,y:17,w:3,h:2,t:'tavolo_cucina'},{x:18,y:15,w:3,h:1,t:'credenza'},{x:24,y:17,w:1,h:1,t:'botte'},{x:16,y:22,w:1,h:1,t:'cesto'},{x:16,y:23,w:1,h:1,t:'cesto'},{x:24,y:22,w:1,h:2,t:'legna'},{x:18,y:16,w:1,h:1,t:'cesto'},   // Cucine (tutto a corona: il tavolo nell'angolo sotto la stanga, il forno e la legna a sud-est, il banco sotto il rame, l'orcio dell'olio accanto alla piattaia)
+    {x:12,y:44,w:1,h:1,t:'botte'},{x:6,y:38,w:1,h:1,t:'cassa'},{x:5,y:36,w:1,h:2,t:'cassa'},{x:9,y:36,w:2,h:1,t:'cassa'},{x:14,y:37,w:1,h:2,t:'bottiglie'},{x:3,y:38,w:1,h:2,t:'botti'},{x:6,y:36,w:1,h:1,t:'tavolino'},{x:9,y:44,w:1,h:1,t:'volante'},{x:14,y:42,w:1,h:2,t:'botti'},{x:14,y:39,w:1,h:1,t:'cassa'},{x:14,y:44,w:1,h:1,t:'cassa'},{x:14,y:36,w:1,h:1,t:'cassa'},{x:3,y:43,w:1,h:2,t:'botti'},{x:5,y:45,w:1,h:1,t:'cassa'},{x:5,y:46,w:1,h:1,t:'cassa'},   // Cantina (tutto contro i muri: in mezzo solo pavimento; il banco dell'imbottigliatura a nord, la botte grande accanto alla chiusa)
+    {x:23,y:42,w:1,h:1,t:'quadro_luci'},{x:19,y:43,w:1,h:1,t:'cesto'},{x:19,y:38,w:1,h:1,t:'cesto'},{x:24,y:41,w:1,h:1,t:'stufa'},{x:24,y:38,w:1,h:1,t:'armadio'},{x:17,y:39,w:2,h:1,t:'lavatoio'},{x:17,y:43,w:2,h:1,t:'asse_stiro'},{x:19,y:39,w:1,h:1,t:'cesto'},{x:24,y:42,w:1,h:1,t:'cesto'},{x:19,y:44,w:1,h:1,t:'cesto'},{x:22,y:44,w:1,h:1,t:'cesto'},   // Lavanderia (il mangano accanto al lavatoio, il carbone nella nicchia dietro il quadro, secchi, tinozze e lino nel cortiletto: a ovest resta il passaggio libero dalla porta)
+    {x:31,y:40,w:2,h:1,t:'panca'},{x:28,y:37,w:1,h:1,t:'statua'},{x:41,y:37,w:1,h:1,t:'statua'},{x:34,y:38,w:2,h:1,t:'teca'},{x:39,y:40,w:1,h:1,t:'tele'},{x:38,y:40,w:1,h:1,t:'tavolino'},{x:30,y:35,w:2,h:1,t:'credenza'},{x:38,y:35,w:2,h:1,t:'credenza'},{x:29,y:35,w:1,h:1,t:'vaso'},{x:40,y:35,w:1,h:1,t:'vaso'},{x:40,y:40,w:1,h:1,t:'tele'},   // Galleria (la teca è il cuore, con due caselle libere intorno; il banco del restauratore nell'angolo sud-est)
+    {x:54,y:19,w:1,h:1,t:'armadietto'},{x:50,y:23,w:3,h:1,t:'scrivania'},{x:54,y:23,w:1,h:1,t:'schedario'},{x:49,y:23,w:1,h:1,t:'cassa'},{x:53,y:23,w:1,h:1,t:'cassa'},   // Sorveglianza (la sedia sta dentro lo scrittoio: fra la console e la fila sud si cammina dritti da porta a porta)
+    {x:69,y:21,w:2,h:1,t:'panchina'},{x:69,y:20,w:2,h:1,t:'fioriera'},{x:62,y:14,w:6,h:1,t:'banco_serra'},{x:65,y:24,w:3,h:1,t:'banco_serra'},{x:65,y:23,w:1,h:1,t:'botte'},{x:58,y:22,w:1,h:2,t:'cassa'},{x:59,y:14,w:1,h:1,t:'cesto'},{x:69,y:17,w:1,h:1,t:'vaso'},   // Serra (tutto in corona: le aiuole ai muri, il prato in mezzo è una piazza; panchina e graticcio in fondo alla veranda, la botte e il banco accanto al compito)
+    {x:60,y:35,w:2,h:1,t:'scrivania'},{x:67,y:33,w:1,h:2,t:'armadio'},{x:65,y:31,w:1,h:1,t:'schedario'},{x:65,y:35,w:1,h:1,t:'cassa'},   // Sala del telegrafo (la sedia sta dentro il tavolino, la cassetta degli isolatori sul baule)
+    {x:4,y:19,w:1,h:1,t:'appoggio'},   // cassette, ceste, pentole e ceri a terra: bassi ma ci si sbatte (l'oggetto è nel fondo, t:'appoggio' non disegna niente)
+    {x:51,y:38,w:2,h:1,t:'botti'},{x:53,y:38,w:2,h:1,t:'cassa'},{x:59,y:38,w:2,h:1,t:'reti'},{x:46,y:44,w:1,h:1,t:'bitta'},{x:53,y:44,w:1,h:1,t:'volante'},{x:49,y:38,w:2,h:1,t:'reti'},{x:64,y:39,w:2,h:2,t:'appoggio'},{x:34,y:13,w:1,h:1,t:'statua'},{x:37,y:13,w:1,h:1,t:'statua'},{x:34,y:16,w:1,h:1,t:'vaso'},{x:37,y:16,w:1,h:1,t:'vaso'},{x:33,y:31,w:1,h:1,t:'vaso'},   // Molo
   ],
 });
 // la barca ormeggiata a est del pontile (si muove col mare, non si cammina): centro e dove è legata la cima
@@ -124,10 +141,12 @@ const ATRIO = crea({
   stanze:[{ nome:"Sala d'attesa", in:'nella sala', x:2, y:2, w:22, h:12, c1:'#3d3346', c2:'#44394e' }],
   corridoi:[], acqua:[],
   ostacoli:[
-    {x:6,y:5,w:1,h:1,t:'pilastro'},{x:19,y:5,w:1,h:1,t:'pilastro'},{x:6,y:10,w:1,h:1,t:'pilastro'},{x:19,y:10,w:1,h:1,t:'pilastro'},
+    {x:2,y:5,w:1,h:1,t:'pilastro'},{x:23,y:5,w:1,h:1,t:'pilastro'},{x:2,y:10,w:1,h:1,t:'pilastro'},{x:23,y:10,w:1,h:1,t:'pilastro'},
     {x:10,y:2,w:6,h:1,t:'panca'},
     {x:12,y:6,w:2,h:1,t:'computer'},   // il computer della saletta: l'host ci sceglie le regole e fa partire la partita
     {x:2,y:2,w:1,h:1,t:'albero'},{x:23,y:2,w:1,h:1,t:'albero'},{x:2,y:13,w:1,h:1,t:'albero'},{x:23,y:13,w:1,h:1,t:'albero'},
+    {x:2,y:6,w:1,h:1,t:'sedia'},{x:23,y:6,w:1,h:1,t:'sedia'},{x:2,y:9,w:1,h:1,t:'sedia'},{x:23,y:9,w:1,h:1,t:'sedia'},
+    {x:20,y:2,w:3,h:1,t:'valigie'},{x:3,y:2,w:3,h:1,t:'credenza'},{x:2,y:7,w:1,h:2,t:'credenza'},{x:23,y:7,w:1,h:2,t:'credenza'},
   ],
 });
 ATRIO.centro = { x:13*T, y:10*T };
@@ -147,7 +166,7 @@ const POSTAZIONI = [
   { id:'bucato',     nome:'Stendi il bucato',      tx:21, ty:39, gioco:'trascina' },
   { id:'telegramma', nome:'Trasmetti il telegramma', tx:60, ty:32, gioco:'leva' },
 ];
-const CAMPANA = { tx:29, ty:19 };
+const CAMPANA = { tx:29, ty:19, oy:18 };   // tx, ty: dove ci si mette per suonarla; oy: la riga dove sta la campana (solida, un passo più a nord)
 // la Sorveglianza: dal monitor si guardano le telecamere fisse e quelle della Sentinella
 const MONITOR = { tx:51, ty:20 };
 // il plastico del palazzo, nella Torre: mostra chi c'è in ogni stanza (teste grigie; la Spia vede i colori)
@@ -183,6 +202,18 @@ const tY = (m,y) => Math.max(0, Math.min(m.GH-1, Math.floor(y/T)));
 function stanzaDi(m,o){ const p=m.PAV[tY(m,o.y)*m.GW+tX(m,o.x)]; return p>=0 ? m.stanze[p] : CORRIDOIO; }
 function solidoA(m,px,py){ const tx=Math.floor(px/T), ty=Math.floor(py/T); if(tx<0||ty<0||tx>=m.GW||ty>=m.GH) return true; return m.SOL[ty*m.GW+tx]===1; }
 function libero(m,x,y){ return !solidoA(m,x-RP,y-RP) && !solidoA(m,x+RP,y-RP) && !solidoA(m,x-RP,y+RP) && !solidoA(m,x+RP,y+RP); }
+// Il corpo a terra è più largo di chi cammina: la stoffa non deve finire sul muro né sul nero. CORPO_L è la sagoma del telo steso, CORPO_S quella del telo raccolto
+// lungo un muro, dove il largo non ci sta. Numeri rispetto al punto del giocatore, misurati sul telo disegnato (prova: gioco/prove/browser/lenzuolo-gioco.mjs)
+const CORPO_L=[[46,14],[-46,14],[32,0],[-32,0],[32,30],[-32,30],[0,-6],[0,36],[20,-6],[-20,-6],[20,36],[-20,36]];
+const CORPO_S=[[21,12],[-21,12],[0,-14],[0,40],[14,-8],[-14,-8],[14,32],[-14,32]];
+const corpoCi=(m,x,y,S)=>{ for(const q of S) if(solidoA(m,x+q[0],y+q[1])) return false; return true; };
+function corpoStretto(m,x,y){ return !corpoCi(m,x,y,CORPO_L) && corpoCi(m,x,y,CORPO_S); }
+// dove cade il corpo: il punto più vicino dove il telo sta tutto sul pavimento, senza mai passare oltre un muro. Largo se si può, raccolto se no
+function corpoCerca(m,x,y,S,r0,r1){
+  for(let r=r0;r<=r1;r+=4) for(let a=0;a<16;a++){ const X=Math.round(x+Math.cos(a*0.3927)*r), Y=Math.round(y+Math.sin(a*0.3927)*r); if(libero(m,X,Y) && corpoCi(m,X,Y,S) && vede(m,x,y,X,Y)) return { x:X, y:Y }; }
+  return null;
+}
+function postoCorpo(m,x,y){ return corpoCi(m,x,y,CORPO_L) ? { x, y } : corpoCerca(m,x,y,CORPO_L,4,48) || corpoCerca(m,x,y,CORPO_S,0,48) || corpoCerca(m,x,y,CORPO_L,52,72) || { x, y }; }
 function vede(m,ax,ay,bx,by){
   const dx=bx-ax, dy=by-ay, n=Math.ceil(Math.hypot(dx,dy)/(T*0.2));
   for(let k=1;k<n;k++){ const x=ax+dx*k/n, y=ay+dy*k/n; const tx=Math.floor(x/T), ty=Math.floor(y/T); if(tx<0||ty<0||tx>=m.GW||ty>=m.GH||m.MURO[ty*m.GW+tx]) return false; }
@@ -254,7 +285,7 @@ const RUOLI = {
   ipnotista:     { nome:'Ipnotista',     squadra:'ombre',  abil:'Ipnotizza', desc:'Blocchi chi ti sta vicino per qualche secondo: non può muoversi.' },
   avvelenatore:  { nome:'Avvelenatore',  squadra:'ombre',  desc:'Non spegni subito: avveleni. La lanterna si spegne qualche secondo dopo, quando sei già lontano.' },
   giullare:      { nome:'Giullare',      squadra:'soli',   desc:"Giochi da solo: vinci se ti cacciano col voto. Vedi lontano come le ombre, ma hai la frenesia: non puoi restare troppo nella stessa stanza." },
-  indovino:      { nome:'Indovino',      squadra:'soli',   desc:'Giochi da solo. In riunione indovini il ruolo di qualcuno, scegliendolo tra tutti i ruoli del gioco: se ci prendi, cade e nessuno sa chi è stato; se sbagli, cadi tu. Indovinane abbastanza e vinci tu.' },
+  indovino:      { nome:'Indovino',      squadra:'soli',   desc:'Giochi da solo. In riunione indovini il ruolo di qualcuno: se ci prendi cade, e nessuno sa che sei stato tu; se sbagli cadi tu. Arrivato al numero giusto, vinci.' },
   sopravvissuto: { nome:'Sopravvissuto', squadra:'soli',   desc:'Giochi da solo: vinci se arrivi vivo alla fine, chiunque vinca. Hai la frenesia: non puoi restare troppo nella stessa stanza.' },
   accusatore:    { nome:'Accusatore',    squadra:'soli',   desc:'Giochi da solo: hai un bersaglio. Vinci se lo cacciano col voto.' },
   avvoltoio:     { nome:'Avvoltoio',     squadra:'soli',   abil:'Mangia',    desc:'Giochi da solo: fai sparire le lanterne spente. Se ne mangi abbastanza, vinci tu.' },
@@ -263,16 +294,17 @@ const RUOLI = {
 const SPECIALI_OSPITI = ['investigatore','veggente','spia','trasportatore','bracconiere','imitatore','portiere','medico','sceriffo','sindaco','campanaro','vedetta','segugio','bengala','vendicatore','rianimatore','sentinella','ingegnere','veterano'];
 const SPECIALI_OMBRE = ['silenziatore','nebbia','trasformista','spazzino','ipnotista','avvelenatore','spettro','burattinaio'];
 const SPECIALI_SOLI = ['giullare','accusatore','avvoltoio','gatto','indovino','sopravvissuto'];
-// i modificatori: si aggiungono sopra il ruolo, rari, e solo chi ce l'ha lo sa
+// i modificatori: si aggiungono sopra il ruolo, rari, e solo chi ce l'ha lo sa (solo: la squadra che può averlo; senza, chiunque)
 // i ruoli dei fantasmi: un ospite spento può diventarlo (con la sua probabilità); poteri da fantasma
 const FANTASMI = {
   custode: { nome:'Custode', abil:'Proteggi', desc:'Da fantasma dai uno scudo a un vivo che hai vicino: il prossimo che prova a spegnerlo fallisce, e tu lo sai.' },
-  medium:  { nome:'Medium',  abil:'Foto',     desc:'Da fantasma scatti una foto confusa di chi ti ha spento o di dove è successo. Alla riunione dopo la vedono tutti. Se non ti piace, la rifai.' },
+  medium:  { nome:'Medium',  abil:'Foto',     desc:'Da fantasma scatti una foto confusa di chi ti ha spento o di dove è successo. Alla riunione dopo la vedono tutti, senza il tuo nome. Se non ti piace, la rifai.' },
 };
 const MODIFICATORI = {
   urlatore:  { nome:'Urlatore',  icona:'🔊', desc:'Quando ti spengono, tutti ricevono subito un avviso e una freccia rossa che indica il punto.' },
   celebrita: { nome:'Celebrità', icona:'⭐', desc:'Quando ti spengono, alla riunione dopo tutti sanno dove sei caduto e quanto tempo prima.' },
   ago:       { nome:'Ago della bilancia', icona:'⚖️', desc:'Il tuo voto vale un pelo di più (1,01): nei pareggi vince la tua parte. Nessuno sa che sei tu.' },
+  esca:      { nome:'Esca',      icona:'🎣', solo:'ospiti', desc:'Quando ti spengono, chi è stato segnala da solo: la riunione si apre subito a suo nome. Solo tra gli ospiti.' },
 };
 // chi ha la frenesia: se resta troppo nella stessa stanza, la lanterna si spegne
 const FRENESIA = ['giullare','sopravvissuto'];
@@ -280,6 +312,7 @@ const FRENESIA = ['giullare','sopravvissuto'];
 const prob = v => Object.fromEntries([...SPECIALI_OSPITI, ...SPECIALI_OMBRE, ...SPECIALI_SOLI].map(r => [r, v]));
 const IMP_BASE = {
   ombre:0, ricarica:25, velocita:1, vistaOspiti:6, vistaOmbre:7, compiti:0, soli:1, compitiVisibili:true,
+  rev:2,   // (pulisci: da quale edizione delle regole vengono quelle che arrivano da fuori)
   discussione:30, voto:45, campane:1, mostraRuolo:true,
   prob: prob(25),
   sceriffo:{ ricarica:25, soli:true },
@@ -291,7 +324,7 @@ const IMP_BASE = {
   veterano:{ durata:15, ricarica:35, usi:2 },
   spia:{ durata:5, ricarica:60 },
   bracconiere:{ quanti:3, ricarica:30 },
-  modificatori:{ urlatore:10, celebrita:10, ago:10 },
+  modificatori:{ urlatore:10, celebrita:10, ago:10, esca:10 },
   trasportatore:{ ricarica:45, usi:2 },
   campanaro:{ volte:2 },
   segugio:{ durata:30, ricarica:35 },
@@ -307,7 +340,7 @@ const IMP_BASE = {
   portiere:{ ricarica:30 },
   sabotaggi:{ ricarica:45, acqua:60, interferenza:60, acquaSi:true, interferenzaSi:true },
   avvoltoio:{ quanti:2 },
-  indovino:{ quanti:2, perRiunione:2, sbaglia:'muore' },
+  indovino:{ quanti:3, perRiunione:2, sbaglia:'muore' },
   gatto:{ ricarica:4 },
   frenesia:{ attiva:true, secondi:45 },
   fantasmi:{ attivi:true, custode:50, medium:50, ricarica:45 },
@@ -347,6 +380,7 @@ const VOCI = [
   { g:'Modificatori', k:'modificatori.urlatore', et:'Urlatore', opz:[0,5,10,25,50], u:'%' },
   { g:'Modificatori', k:'modificatori.celebrita', et:'Celebrità', opz:[0,5,10,25,50], u:'%' },
   { g:'Modificatori', k:'modificatori.ago', et:'Ago della bilancia', opz:[0,5,10,25,50], u:'%' },
+  { g:'Modificatori', k:'modificatori.esca', et:'Esca', opz:[0,5,10,25,50], u:'%' },
   { g:'Spia', k:'spia.durata', et:'Schermo portatile', opz:[3,5,8], u:' s' },
   { g:'Spia', k:'spia.ricarica', et:'Ricarica dello schermo', opz:[45,60,90], u:' s' },
   { g:'Trasportatore', k:'trasportatore.ricarica', et:'Ricarica', opz:[30,45,60], u:' s' },
@@ -407,6 +441,8 @@ function unisci(base, sopra){ for(const k in sopra){ if(sopra[k] && typeof sopra
 function pulisci(imp){
   const out = JSON.parse(JSON.stringify(IMP_BASE));
   for(const v of VOCI){ const x=leggi(imp||{}, v.k); if(v.opz.some(o=>valoreOpz(o)===x)) scrivi(out, v.k, x); }
+  // dall'1/11 l'Indovino parte da 3: le regole ricordate da prima (senza rev) col vecchio 2 salgono. Chi sceglie 2 adesso resta a 2: le sue regole hanno rev
+  if(!(imp && imp.rev) && out.indovino.quanti===2) out.indovino.quanti=3;
   return out;
 }
 function conPreset(nome){ return pulisci(unisci(JSON.parse(JSON.stringify(IMP_BASE)), PRESET[nome]||{})); }
@@ -462,8 +498,10 @@ const pulisciTesto = x => Array.from(String(x==null?'':x).replace(/[\u0000-\u001
 // un testo in minuscolo, senza punteggiatura, con uno spazio ai lati di ogni parola (e il «?» staccato) per cercarci dentro parole intere
 const normChat = x => ' '+String(x).toLowerCase().replace(/[’']/g,' ').replace(/\?/g,' ? ').replace(/[^a-z0-9àèéìòóù? ]+/g,' ').replace(/\s+/g,' ').trim()+' ';
 const VEL_BASE = 3.8;   // caselle al secondo a velocità «normale» (era 3,4: un po' più di corsa)
-const DUR_ATRIO = 20, DUR_SVELA = 6, DUR_ESITO = 7;
+const POSTI_SALA = [[9.6,11.6],[16.6,11.4],[8.4,7.8],[17.6,7.8],[6,4.8],[20,4.8],[10.4,4.4],[15.8,4.4],[5,10.4],[21,10.4],[13,12.8],[4.6,7.6],[21.4,7.6],[7,12.6],[19,12.6]];   // in caselle: sparsi per la sala
+const DUR_ATRIO = 20, DUR_SVELA = 6, DUR_ESITO = 7, DUR_SIGILLI = 6;
 const MAX_CHAT = 40;
+const RITARDO_ESCA = 0.4;      // chi spegne un'Esca segnala da solo dopo 0,4 s: il minimo per vedere la lanterna che si spegne (il lampo a schermo dura 0,5 s) e prima di qualunque Bot (0,5 s)
 const SOGLIA_VOTO = 18;        // quanto sospetto serve a un Bot ospite per votare qualcuno (con 30 sette riunioni su dieci finivano senza nessuno fuori)
 const PROV_GIULLARE = 2;       // quante volte a partita un Giullare Bot si fa vedere uscire da una botola
 const FRASI_COMPITO = { luce:'accendere il lampadario', ingranaggio:"caricare l'orologio", fuoco:'sfornare i dolci', acqua:'annaffiare la serra' };
@@ -478,13 +516,18 @@ class Partita {
     // si comincia nell'atrio: tutti girano liberi qualche secondo, poi escono i ruoli e si entra nel palazzo
     this.M = ATRIO; this.fase = 'atrio'; this.t = 0; this.fineFase = this.saletta ? Infinity : DUR_ATRIO;
     this.corpi = []; this.buio = null; this.interf = null; this.acqua = null; this.cdBuio = 30; this.nebbiaFine = 0; this.bengalaFine = 0; this.pub = {};
-    this.riu = null; this.esito = null; this.vincitore = null; this.chat = []; this.round = 1; this.dichiarati = {};
+    this.riu = null; this.esito = null; this.vincitore = null; this.chat = []; this.round = 1; this.dichiarati = {}; this.esche = [];
     this.telecamere = TELECAMERE_BASE.map(c=>({ x:c.x, y:c.y, nome:c.nome, base:true }));
     this.cambiata = true;
     if(this.saletta){ this.ombreIniziali=1; this.celebri=[]; }
     else { this.assegnaRuoli(); this.gioc.forEach(g=>this.assegnaCompiti(g)); }
-    const n=this.gioc.length;
-    this.gioc.forEach((p,i)=>{ const a=i/n*Math.PI*2; this.teletrasporta(p, ATRIO.centro.x+Math.cos(a)*3*T, ATRIO.centro.y+Math.sin(a)*2*T); });
+    const messi=[]; this.gioc.forEach(p=>{ const q=this.postoSala(messi); messi.push(q); this.teletrasporta(p, q.x, q.y); });
+  }
+  // un posto nella sala d'attesa: il più lontano da chi c'è già e non troppo dal centro. Mai sotto il lampadario né attaccati alla scrivania: si deve vedere che siamo in tanti
+  postoSala(chi){
+    let m=POSTI_SALA[0], d=-1e9;
+    for(const q of POSTI_SALA){ const x=q[0]*T, y=q[1]*T; let v=1e9; for(const o of chi) v=Math.min(v,Math.hypot(o.x-x,o.y-y)); if(v>1e8) v=0; v-=0.3*Math.hypot(x-ATRIO.centro.x,y-ATRIO.centro.y); if(v>d){ d=v; m=q; } }
+    return { x:m[0]*T+(rnd()-.5)*8, y:m[1]*T+(rnd()-.5)*8 };
   }
   // solo per le prove (versione da soli): dà a un giocatore il ruolo scelto, scambiandolo con chi ce l'aveva
   forzaRuolo(id, ruolo){
@@ -493,6 +536,7 @@ class Partita {
     if(!altro && (RUOLI[ruolo].squadra==='ombre')!==(p.squadra==='ombre')) altro=this.gioc.find(q=>q!==p&&(q.squadra==='ombre')===(RUOLI[ruolo].squadra==='ombre'));
     if(altro){ altro.ruolo=p.ruolo; this.preparaRuolo(altro); this.assegnaCompiti(altro); }
     p.ruolo=ruolo; this.preparaRuolo(p); this.assegnaCompiti(p);
+    [p,altro].forEach(q=>{ const m=q&&MODIFICATORI[q.mod]; if(m&&m.solo&&m.solo!==q.squadra) q.mod=null; });
     this.gioc.forEach(g=>{ if(g.ruolo==='accusatore'&&!g.bersaglio){ const c=this.gioc.filter(q=>q!==g&&q.squadra==='ospiti'); g.bersaglio=c.length?pick(c).id:null; } });
     this.segna();
   }
@@ -500,7 +544,7 @@ class Partita {
   aggiungi(g){
     if(!this.saletta || this.per(g.id)) return;
     const p=this.nuovo(g); this.gioc.push(p);
-    this.teletrasporta(p, ATRIO.centro.x+(rnd()-.5)*5*T, ATRIO.centro.y+(rnd()-.5)*2*T); this.segna();
+    const q=this.postoSala(this.gioc.filter(o=>o!==p)); this.teletrasporta(p, q.x, q.y); this.segna();
   }
   togli(id){ if(!this.saletta) return; this.gioc=this.gioc.filter(p=>p.id!==id); this.segna(); }
   // dalla saletta alla partita: le regole scelte al computer, poi ruoli e compiti, e via nel palazzo
@@ -536,9 +580,11 @@ class Partita {
     const v=this.imp.vistaOspiti*T; return this.buio ? Math.min(v, 2.2*T) : v;
   }
   segna(){ this.cambiata = true; }
+  subitoATutti(){ this.cambiata = true; this.subito = true; }   // i sabotaggi non aspettano il giro della foto: partono al primo battito
   priv(p){ p.vPriv++; }
   avviso(p, testo, tipo){ if(p && !p.bot) this.ev.privato(p.id, { t:'avviso', testo, tipo:tipo||'' }); }
-  fx(k, x, y, extra){ this.ev.tutti(Object.assign({ t:'fx', k, x:Math.round(x), y:Math.round(y) }, extra||{})); }
+  // (quello che vede uno solo non passa dalla foto comune: dice chi ha usato il potere)
+  fx(k, x, y, extra){ const m=Object.assign({ t:'fx', k, x:Math.round(x), y:Math.round(y) }, extra||{}); if(m.solo){ const q=this.per(m.solo); if(q&&!q.bot) this.ev.privato(q.id, m); return; } this.ev.tutti(m); }
 
   assegnaRuoli(){
     const n=this.gioc.length, imp=this.imp, k=Math.max(1, Math.min(quanteOmbre(imp, n), Math.floor((n-1)/2)));
@@ -552,8 +598,8 @@ class Partita {
     mescola(ruoli);
     this.gioc.forEach((g,i)=>{ g.ruolo=ruoli[i]; this.preparaRuolo(g); });
     // l'Accusatore riceve un bersaglio tra gli ospiti
-    // i modificatori: ognuno esce con la sua probabilità, al massimo uno a testa
-    for(const m of Object.keys(MODIFICATORI)) if(rnd()*100 < (imp.modificatori[m]||0)){ const liberi=this.gioc.filter(g=>!g.mod); if(liberi.length) pick(liberi).mod=m; }
+    // i modificatori: ognuno esce con la sua probabilità, al massimo uno a testa (quelli con solo: li ha soltanto quella squadra)
+    for(const m of Object.keys(MODIFICATORI)) if(rnd()*100 < (imp.modificatori[m]||0)){ const solo=MODIFICATORI[m].solo, liberi=this.gioc.filter(g=>!g.mod&&(!solo||g.squadra===solo)); if(liberi.length) pick(liberi).mod=m; }
     this.celebri=[];
     this.gioc.filter(g=>g.ruolo==='accusatore').forEach(g=>{ const c=this.gioc.filter(q=>q!==g&&q.squadra==='ospiti'); g.bersaglio = c.length ? pick(c).id : null; if(!g.bersaglio){ g.ruolo='giullare'; this.preparaRuolo(g); } });
   }
@@ -587,14 +633,15 @@ class Partita {
   /* ----- cosa vede chi gioca ----- */
   foto(){
     const { tot, fatti } = this.contaCompiti();
-    const sec = f => Math.max(0, Math.ceil(f-this.t));
+    const sec = f => Math.max(0, Math.ceil(f-this.t-1e-9));   // (il margine: lo scarto dei conti fra secondi faceva leggere 7 invece di 6)
     const f = { fase:this.fase, mappa:this.M===ATRIO?'atrio':'palazzo', sec:sec(this.fineFase), round:this.round,
       g:this.gioc.map(p=>[p.id, p.vivo?1:0, p.uscito?1:0]), pc: tot?Math.round(fatti/tot*100):0,
       buio: this.buio ? sec(this.buio.fine) : 0, interf: this.interf ? sec(this.interf.fine) : 0, acqua: this.acqua ? [sec(this.acqua.fine), this.acqua.a?1:0, this.acqua.b?1:0] : null, neb: this.nebbiaAttiva() ? sec(this.nebbiaFine) : 0, bengala: this.bengalaAttivo() ? sec(this.bengalaFine) : 0,
       corpi: this.corpi.map(c=>[c.id, Math.round(c.x), Math.round(c.y)]),
       segnati: this.gioc.filter(p=>p.segnato&&p.vivo).map(p=>p.id), sindaci: this.gioc.filter(p=>p.rivelato).map(p=>p.id),
       scudi: this.gioc.filter(p=>p.vivo&&p.protettoDa!=null).map(p=>p.id), cam: this.telecamere.map(c=>[Math.round(c.x),Math.round(c.y),c.base?1:0]), osservate: this.gioc.some(p=>p.osserva&&p.vivo) };
-    if(this.riu){ const R=this.riu; f.riu = { motivo:R.motivo, da:R.da, corpo:R.corpo, disc:sec(R.disc+R.t0), voto:sec(R.disc+R.voto+R.t0), votati:[...R.voti.keys()], zittiti:R.zittiti, chat:this.chat.slice(-MAX_CHAT) }; }
+    // (di chi è la lanterna non parte più: nemmeno i telefoni con la versione vecchia in cache lo sanno. Senza il campo non vanno in errore: sotto «Lanterna spenta!» scrivono «ha suonato la campana»)
+    if(this.riu){ const R=this.riu; f.riu = { motivo:R.motivo, da:R.da, disc:sec(R.disc+R.t0), voto:sec(Math.min(R.disc+R.voto, R.conta!=null?R.conta:Infinity)+R.t0), votati:[...R.voti.keys()], zittiti:R.zittiti, chat:this.chat.slice(-MAX_CHAT) }; }
     if(this.esito) f.esito = this.esito;
     if(this.vincitore) f.fine = { ...this.vincitore, ruoli:this.gioc.map(p=>[p.id, p.ruolo, p.vivo?1:0]) };
     return f;
@@ -608,7 +655,7 @@ class Partita {
     return { ruolo:p.ruolo, squadra:p.squadra, compagni: om ? this.gioc.filter(q=>q!==p&&q.squadra==='ombre').map(q=>q.id) : [],
       compiti:p.compiti.map(c=>[c.post.id, c.fatto?1:0]), finti: p.squadra!=='ospiti',
       cd: om ? sec(p.cd+this.t) : 0, cdA:sec(p.cdA+this.t), usi:p.usi, campane:p.campane, cdBuio: om ? sec(this.cdBuio+this.t) : 0,
-      zittito: !!(this.riu && this.riu.zittiti.includes(p.id)), ep:p.ep, v:p.vPriv,
+      zittito: !!(this.riu && this.riu.zittiti.includes(p.id)), voto:(this.riu && this.riu.voti.get(p.id)) || null, ep:p.ep, v:p.vPriv,
       vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati, quanti:this.imp.avvoltoio.quanti, usiRian:p.usiRian, usiBeng:p.usiBeng, campVolte:p.campVolte,
       bloccato: sec(p.bloccatoFine), traccia: p.traccia && p.traccia.fine>this.t ? [p.traccia.id, sec(p.traccia.fine)] : null,
       rianima: p.rianima ? sec(p.rianima.fine) : 0, travestito: this.travestito(p), rivelato:p.rivelato,
@@ -630,14 +677,22 @@ class Partita {
   }
   // la partita da ricordare se l'host ricarica la pagina: solo dati semplici
   salva(){
+    const resta=f=>Math.max(0,Math.round((f-this.t)*10)/10), R=this.riu;
     return { round:this.round, vincitore:this.vincitore, cdBuio:Math.round(this.cdBuio), ombreIniziali:this.ombreIniziali, dichiarati:this.dichiarati,
       cam:this.telecamere.filter(c=>!c.base).map(c=>[Math.round(c.x), Math.round(c.y), c.nome, c.da]),
-      gioc:this.gioc.map(p=>({ id:p.id, nome:p.nome, bot:p.bot, ruolo:p.ruolo, vivo:p.vivo, uscito:p.uscito, campane:p.campane, vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati,
+      // a che punto era tutto: la fase, i sabotaggi aperti, le lanterne a terra, la riunione coi voti (daStato li tratta come facoltativi: una copia vecchia non li ha)
+      fase:this.fase, resto:resta(this.fineFase),
+      buio:this.buio?resta(this.buio.fine):0, interf:this.interf?resta(this.interf.fine):0, acqua:this.acqua?[resta(this.acqua.fine),this.acqua.a?1:0,this.acqua.b?1:0]:null,
+      neb:this.nebbiaFine>this.t?resta(this.nebbiaFine):0, ben:this.bengalaFine>this.t?resta(this.bengalaFine):0,
+      corpi:this.corpi.map(c=>[c.id,Math.round(c.x),Math.round(c.y),c.stanza,c.da]), esche:this.esche.map(e=>[e.da,e.corpo,resta(e.t)]),
+      riu:R?{ motivo:R.motivo, da:R.da, corpo:R.corpo, stanza:R.stanza, t:Math.round(R.t*10)/10, disc:R.disc, voto:R.voto, voti:[...R.voti], zittiti:R.zittiti, chiusa:R.chiusa }:null,
+      chat:R?this.chat:null, esito:this.esito||null,
+      gioc:this.gioc.map(p=>({ id:p.id, nome:p.nome, bot:p.bot, ruolo:p.ruolo, vivo:p.vivo, uscito:p.uscito, usciVivo:p.usciVivo, x:Math.round(p.x), y:Math.round(p.y), dir:Math.round(p.dir*100)/100, cd:Math.round(p.cd), cdA:Math.round(p.cdA), usi:p.usi, campane:p.campane, vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati,
         usiRian:p.usiRian, usiBeng:p.usiBeng, campVolte:p.campVolte, rivelato:p.rivelato, camPiazzate:p.camPiazzate, usiVet:p.usiVet, usiTra:p.usiTra, mod:p.mod, imitato:p.imitato, imita:p.imita,
-        indovinati:p.indovinati, fantasmaRuolo:p.fantasmaRuolo||null, foto:p.foto||null, morte:p.morte||null, letti:p.letti, protettoDa:p.protettoDa, zittito:p.zittito, segnato:p.segnato, campione:p.campione, trapRuoli:p.trapRuoli,
+        indovinati:p.indovinati, tentativi:p.tentativi, fotoMostrata:p.fotoMostrata, fantasmaRuolo:p.fantasmaRuolo||null, foto:p.foto||null, morte:p.morte||null, letti:p.letti, protettoDa:p.protettoDa, zittito:p.zittito, segnato:p.segnato, campione:p.campione, trapRuoli:p.trapRuoli,
         compiti:p.compiti.map(c=>[c.post.id, c.fatto?1:0, c.extra?1:0]) })) };
   }
-  // si riparte dal palazzo, tutti alla fontana, con ruoli, compiti ed eliminati di prima
+  // si riparte dal palazzo com'era: ruoli, compiti, eliminati, posti, sabotaggi, riunione. Con una copia di una versione vecchia (senza quei campi) tutti alla fontana
   static daStato(s, imp, eventi){
     const P=new Partita(s.gioc.map(g=>({ id:g.id, nome:g.nome, bot:g.bot })), imp, eventi);
     P.round=s.round||1; P.cdBuio=Math.max(20, s.cdBuio||0);
@@ -646,14 +701,37 @@ class Partita {
     (s.cam||[]).forEach(([x,y,nome,da])=>{ if(isFinite(x)&&isFinite(y)) P.telecamere.push({ x, y, nome:String(nome||'Telecamera'), da }); });
     s.gioc.forEach(g=>{
       const p=P.per(g.id); p.ruolo=RUOLI[g.ruolo]?g.ruolo:'ospite'; P.preparaRuolo(p);
-      p.vivo=!!g.vivo; p.fantasma=!g.vivo; p.uscito=!!g.uscito; p.campane=g.campane|0; p.cd=18; p.cdA=10;
-      ['vite','bersaglio','mangiati','usiRian','usiBeng','campVolte','rivelato','camPiazzate','usiVet','usiTra','mod','imitato','imita','indovinati','fantasmaRuolo','foto','morte','letti','protettoDa','zittito','segnato','campione','trapRuoli'].forEach(k=>{ if(g[k]!=null) p[k]=g[k]; });
+      p.vivo=!!g.vivo; p.fantasma=!g.vivo; p.uscito=!!g.uscito; p.usciVivo=!!g.usciVivo; p.campane=g.campane|0; p.cd=g.cd!=null?+g.cd||0:18; p.cdA=g.cdA!=null?+g.cdA||0:10;
+      ['usi','vite','bersaglio','mangiati','usiRian','usiBeng','campVolte','rivelato','camPiazzate','usiVet','usiTra','mod','imitato','imita','indovinati','tentativi','fotoMostrata','fantasmaRuolo','foto','morte','letti','protettoDa','zittito','segnato','campione','trapRuoli'].forEach(k=>{ if(g[k]!=null) p[k]=g[k]; });
       p.mod = g.mod || null;
       p.compiti=(g.compiti||[]).map(([id,f,x])=>({ post:POSTAZIONI.find(q=>q.id===id), fatto:!!f, finto:p.squadra!=='ospiti', extra:!!x })).filter(c=>c.post);
     });
     P.M=PALAZZO; P.inCerchio();
+    s.gioc.forEach(g=>{
+      const p=P.per(g.id); if(p.uscito || !isFinite(g.x) || !isFinite(g.y) || g.x==null || g.y==null || (p.vivo && !libero(P.M,g.x,g.y))) return;
+      P.teletrasporta(p,g.x,g.y); if(isFinite(g.dir) && g.dir!=null) p.dir=g.dir;
+    });
+    const f=s.fase, inRiu=(f==='riunione'||f==='esito') && !!s.riu;
     if(s.vincitore){ P.vincitore=s.vincitore; P.fase='fine'; }
-    else { P.fase='svela'; P.fineFase=P.t+DUR_SVELA; }
+    else if(f==='gioco' || inRiu){
+      P.fase=f; P.fineFase=P.t+(+s.resto||0);
+      (s.corpi||[]).forEach(([id,x,y,stanza,da])=>{ if(P.per(id)) P.corpi.push({ id, x, y, stanza, da, t:P.t }); });
+      if(f==='gioco') (s.esche||[]).forEach(([da,corpo,r])=>{ P.esche.push({ da, corpo, t:P.t+(+r||0) }); });
+      if(s.buio) P.buio={ fine:P.t+s.buio };
+      if(s.interf) P.interf={ fine:P.t+s.interf };
+      if(s.acqua) P.acqua={ fine:P.t+s.acqua[0], a:!!s.acqua[1], b:!!s.acqua[2] };
+      if(s.neb) P.nebbiaFine=P.t+s.neb;
+      if(s.ben) P.bengalaFine=P.t+s.ben;
+      if(P.buio||P.interf||P.acqua) P.assegnaRiparatori();
+      if(inRiu){
+        const r=s.riu, R={ motivo:r.motivo, da:r.da, corpo:r.corpo, stanza:r.stanza, t:+r.t||0, t0:P.t-(+r.t||0), disc:r.disc, voto:r.voto, voti:new Map(r.voti||[]), coda:[], chiusa:!!r.chiusa, zittiti:r.zittiti||[] };
+        P.riu=R; P.chat=s.chat||[]; if(s.esito) P.esito=s.esito;
+        // quello che i Bot dovevano dire è perso; il loro voto no
+        for(const b of P.gioc) if(b.bot&&b.vivo&&!R.voti.has(b.id)) R.coda.push({ t:Math.max(R.t+1,R.disc+1.5)+rnd()*R.voto*0.5, chi:b, voto:true });
+        R.coda.sort((a,b)=>a.t-b.t);
+      }
+    }
+    else { P.fase='svela'; P.fineFase=P.t+(f==='svela'?Math.min(DUR_SVELA,+s.resto||0):DUR_SVELA); }
     P.segna();
     return P;
   }
@@ -712,7 +790,8 @@ class Partita {
     c.fatto=true; this.priv(p); this.segna();
     // i compiti visibili: chi è lì vicino vede l'effetto, e sa che chi l'ha fatto non è un'ombra (le ombre fingono e basta)
     if(!c.finto && c.post.visibile && this.imp.compitiVisibili && !this.nebbiaAttiva()){
-      this.fx('compito', centro(c.post.tx), centro(c.post.ty), { v:c.post.visibile, id:p.id });
+      this.fx('compito', centro(c.post.tx), centro(c.post.ty), { v:c.post.visibile });   // (senza chi l'ha fatto: un compito vero dice che non è un'ombra)
+      if(!p.bot) this.ev.privato(p.id, { t:'fx', k:'compitoMio', x:0, y:0 });
       for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p) continue; if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)){ o.sosp[p.id]=(o.sosp[p.id]||0)-35; o.mem.puliti.push({ id:p.id, v:c.post.visibile }); } }
     }
     if(!c.finto && this.controllaVittoria()) this.chiudi();
@@ -797,7 +876,7 @@ class Partita {
       case 'bengala':
         if(p.usiBeng<=0 || this.bengalaAttivo()) return;
         p.usiBeng--; this.bengalaFine=this.t+this.imp.bengala.durata; this.priv(p); this.segna(); this.noto(p,'bengala');
-        this.fx('bengala', p.x, p.y, { globale:1 });
+        this.fx('bengala', 0, 0, { globale:1 });   // (a tutto schermo: il posto direbbe chi l'ha acceso)
         return;
       case 'rianimatore':
         if(p.usiRian<=0 || p.rianima) return;
@@ -837,12 +916,12 @@ class Partita {
       case 'silenziatore':
         if(p.cdA>0 || v===p || v.zittito) return;
         v.zittito=true; p.cdA=this.imp.silenziatore.ricarica; this.priv(p);
-        this.avviso(p, `${v.nome} starà zitto alla prossima riunione.`, 'ombra');
+        this.avviso(p, `${v.nome} non potrà parlare alla prossima riunione.`, 'ombra');
         return;
       case 'nebbia':
         if(p.cdA>0 || this.nebbiaAttiva()) return;
         this.nebbiaFine=this.t+this.imp.nebbia.durata; p.cdA=this.imp.nebbia.ricarica; this.priv(p); this.segna();
-        this.fx('nebbia', p.x, p.y, { globale:1 });
+        this.fx('nebbia', 0, 0, { globale:1 });
         return;
       case 'trasformista':
         if(p.cdA>0 || v===p) return;
@@ -887,7 +966,7 @@ class Partita {
   }
   respinto(vet, chi){
     this.avviso(chi, 'Hai toccato il Veterano in allerta: la tua lanterna si è spenta.', 'morte');
-    this.avviso(vet, `${chi.nome} ti ha toccato mentre eri in allerta: è caduto.`);
+    this.avviso(vet, `${chi.nome} ti ha toccato mentre eri in allerta: la sua lanterna si è spenta.`);
     this.spegni(vet, chi, 'veterano');
   }
   provaSpegni(k,v){
@@ -917,11 +996,12 @@ class Partita {
     v.vivo=false; v.fantasma=true; v.protettoDa=null; v.path=[]; v.meta=null; v.attesa=0; v.segnala=null; v.ripara=null; v.veleno=null; v.rianima=null;
     if(v.controllo) this.fineControllo(v);
     if(v.ruolo==='medico') this.gioc.forEach(q=>{ if(q.protettoDa===v.id) q.protettoDa=null; });
-    const c={ id:v.id, x:v.x, y:v.y, stanza:stanzaDi(this.M,v).in, da:k.id, t:this.t };
+    const dove=postoCorpo(this.M,v.x,v.y), c={ id:v.id, x:dove.x, y:dove.y, stanza:stanzaDi(this.M,v).in, da:k.id, t:this.t };   // (il telo steso è largo: mai a cavallo di un muro)
     this.corpi.push(c);
     this.fx('spegni', v.x, v.y);
     if(v.mod==='urlatore') this.fx('urlo', v.x, v.y, { globale:1 });
     if(v.mod==='celebrita') this.celebri.push({ id:v.id, stanza:c.stanza, t:this.t });
+    if(v.mod==='esca' && k!==v && k.vivo && this.fase==='gioco') this.esche.push({ da:k.id, corpo:c.id, t:this.t+RITARDO_ESCA });   // la riunione la apre passoGioco: qui siamo a metà di uno spegnimento, magari dentro iniziaRiunione
     if(modo==='normale' && k.bot){ k.dopoSpegni=true; k.path=[]; k.meta=null; k.autoSegnala=rnd()<.3; }   // un'ombra su tre fa finta di trovarla lei
     if(modo==='normale'){
       const neb=this.nebbiaAttiva(), travest=this.travestito(k);
@@ -957,6 +1037,19 @@ class Partita {
     }
     if(this.controllaVittoria()) this.chiudi();
   }
+  // chi ha spento un'Esca segnala da solo, per la stessa strada di una segnalazione normale. Se nel frattempo è caduto o la lanterna non c'è più, niente riunione a suo nome.
+  // Una riunione aperta da altri svuota la coda: due spegnimenti insieme fanno una riunione sola.
+  scattaEsca(){
+    while(this.esche.length && this.t>=this.esche[0].t){
+      const e=this.esche.shift(), k=this.per(e.da), c=this.corpi.find(q=>q.id===e.corpo);
+      if(!k || !k.vivo || !c) continue;
+      k.dopoSpegni=false; k.autoSegnala=false; k.segnala=null; k.corpoVisto=null;
+      this.iniziaRiunione({ tipo:'corpo', da:k.id, corpo:c.id, stanza:c.stanza });
+      if(this.fase==='riunione'){ this.avviso(k, "Era un'Esca: ti ha tradito.", 'ombra'); this.subitoATutti(); }
+      return true;
+    }
+    return false;
+  }
   stanzaIdx(q){ return this.M.PAV[tY(this.M,q.y)*this.M.GW+tX(this.M,q.x)]; }
   sabAttivo(){ return !!(this.buio || this.interf || this.acqua); }
   lavoroAttivo(cosa){ return cosa==='luci' ? !!this.buio : cosa==='console' ? !!this.interf : cosa==='chiusaA' ? !!(this.acqua && !this.acqua.a) : cosa==='chiusaB' ? !!(this.acqua && !this.acqua.b) : false; }
@@ -977,15 +1070,15 @@ class Partita {
     else if(tipo==='acqua' && S.acquaSi){ this.acqua={ fine:this.t+S.acqua, a:false, b:false }; this.fx('acqua', centro(CHIUSA_A.tx), centro(CHIUSA_A.ty), { globale:1 }); }
     else if(tipo==='buio') return this.attivaBuio(chi);
     else return;
-    this.cdBuio=S.ricarica; this.segna();
-    this.gioc.forEach(p=>{ if(p.squadra==='ombre') this.priv(p); });
+    this.cdBuio=S.ricarica; this.subitoATutti();
+    this.gioc.forEach(p=>this.priv(p));   // (a tutti, anche se la ricarica serve solo alle ombre: sul broker non si deve vedere a chi arriva un privato subito dopo un sabotaggio)
     this.assegnaRiparatori();
   }
   ripara(p, cosa){
     if(cosa==='luci') return this.fineBuio(true, p);
-    if(cosa==='console' && this.interf){ this.interf=null; this.liberaRip('console'); this.segna(); this.ev.tutti({ t:'avviso', testo:`${p.nome} ha riparato il telegrafo.` }); this.fx('luci', centro(CONSOLE.tx), centro(CONSOLE.ty), { globale:1 }); return; }
+    if(cosa==='console' && this.interf){ this.interf=null; this.liberaRip('console'); this.subitoATutti(); this.ev.tutti({ t:'avviso', testo:`${p.nome} ha riparato il telegrafo.` }); this.fx('luci', centro(CONSOLE.tx), centro(CONSOLE.ty), { globale:1 }); return; }
     if((cosa==='chiusaA'||cosa==='chiusaB') && this.acqua){
-      this.acqua[cosa==='chiusaA'?'a':'b']=true; this.liberaRip(cosa); this.segna();
+      this.acqua[cosa==='chiusaA'?'a':'b']=true; this.liberaRip(cosa); this.subitoATutti();
       if(this.acqua.a && this.acqua.b){ this.acqua=null; this.ev.tutti({ t:'avviso', testo:'Le chiuse sono chiuse: l\'acqua si ritira.' }); this.fx('luci', p.x, p.y, { globale:1 }); }
       else this.ev.tutti({ t:'avviso', testo:`${p.nome} ha chiuso una chiusa: manca l'altra!` });
     }
@@ -994,15 +1087,15 @@ class Partita {
   fineSab(p){ if(this.buio) this.fineBuio(true,p); if(this.interf) this.ripara(p,'console'); if(this.acqua){ this.acqua.a=this.acqua.b=true; this.ripara(p,'chiusaA'); } }
   attivaBuio(chi){
     if(this.sabAttivo() || this.cdBuio>0) return;
-    this.buio={ fine:this.t+40 }; this.cdBuio=this.imp.sabotaggi.ricarica; this.segna();
-    this.gioc.forEach(p=>{ if(p.squadra==='ombre') this.priv(p); });
+    this.buio={ fine:this.t+40 }; this.cdBuio=this.imp.sabotaggi.ricarica; this.subitoATutti();
+    this.gioc.forEach(p=>this.priv(p));   // (a tutti, anche se la ricarica serve solo alle ombre: sul broker non si deve vedere a chi arriva un privato subito dopo un sabotaggio)
     this.fx('buio', centro(QUADRO.tx), centro(QUADRO.ty), { globale:1 });
     const vivi=this.gioc.filter(p=>p.bot&&p.vivo&&p.squadra!=='ombre');
     this.assegnaRiparatori();
   }
   fineBuio(riparato, chi){
     if(!this.buio) return;
-    this.buio=null; this.liberaRip('luci'); this.segna();
+    this.buio=null; this.liberaRip('luci'); this.subitoATutti();
     if(riparato && chi){ this.ev.tutti({ t:'avviso', testo:`${chi.nome} ha riacceso le luci.` }); this.fx('luci', centro(QUADRO.tx), centro(QUADRO.ty), { globale:1 }); }
   }
   controllaVittoria(){
@@ -1019,9 +1112,17 @@ class Partita {
   /* ----- chi esce e chi torna ----- */
   esce(id){
     const p=this.per(id); if(!p||p.uscito) return;
+    p.usciVivo=p.vivo;   // (chi era già fantasma non ha perso niente: al ritorno niente avviso)
     p.uscito=true; p.vivo=false; p.fantasma=true; p.compiti.forEach(c=>c.fatto=true);
     this.segna();
     if(this.fase!=='fine' && this.controllaVittoria()) this.chiudi();
+  }
+
+  // chi torna quando il suo posto non c'è più (oltre un minuto e mezzo senza rete): resta fantasma e guarda la partita, mai fermo
+  rientra(id){
+    const p=this.per(id); if(!p||!p.uscito) return;
+    p.uscito=false; p.vivo=false; p.fantasma=true;
+    this.priv(p); this.segna(); if(p.usciVivo) this.avviso(p, 'Troppo tempo via: ora sei un fantasma.');
   }
 
   /* ----- il tempo che passa ----- */
@@ -1038,6 +1139,7 @@ class Partita {
     if(this.fase==='esito'){ if(this.t>=this.fineFase) this.dopoEsito(); return; }
   }
   passoGioco(dt){
+    if(this.esche.length && this.scattaEsca()) return;
     if(this.codaBot && this.codaBot.length) this.botRispondono();
     for(const g of this.gioc){ if(g.cd>0) g.cd-=dt; if(g.cdA>0) g.cdA-=dt; if(g.cdF>0) g.cdF-=dt; }
     if(this.cdBuio>0) this.cdBuio-=dt;
@@ -1168,10 +1270,12 @@ class Partita {
     for(const p of this.gioc){ if(p===g||!p.vivo||!filtro(p)) continue; const d=dist(g,p); if(d<bd && vede(this.M,g.x,g.y,p.x,p.y)){ bd=d; best=p; } }
     return best;
   }
-  // i poteri dei fantasmi. La foto del Medium: un dettaglio di chi l'ha spento, o un angolo della stanza dov'è successo
+  // i poteri dei fantasmi. La foto del Medium: un dettaglio di chi l'ha spento, o un angolo della stanza dov'è successo.
+  // Non dice mai chi l'ha scattata: l'id è di chi ha spento (serve a disegnare il suo telo), il punto esatto parte solo fuori dalle stanze. Spento da un Mutaforma col suo stesso aspetto, niente telo: sarebbe il suo
   nuovaFoto(p){
     const M=p.morte||{}, seme=Math.floor(rnd()*1e9);
-    return M.da && rnd()<.6 ? { tipo:'chi', id:M.da, seme } : { tipo:'dove', st:M.st, x:M.x, y:M.y, seme };
+    if(M.da && M.da!==p.id && rnd()<.6) return { tipo:'chi', id:M.da, seme };
+    return M.st>=0 ? { tipo:'dove', st:M.st, seme } : { tipo:'dove', st:M.st, x:M.x, y:M.y, seme };
   }
   poteriFantasma(p, m){
     if(this.fase!=='gioco' || p.vivo || p.uscito || !p.fantasmaRuolo) return;
@@ -1393,16 +1497,18 @@ class Partita {
     // il veleno non aspetta la riunione: chi era avvelenato cade adesso
     const avvelenati=[];
     for(const p of this.gioc){ if(p.veleno && p.vivo){ const k=this.per(p.veleno.da)||p; p.veleno=null; this.spegni(k,p,'veleno'); if(!p.vivo) avvelenati.push(p); } }
+    this.esche=[];   // (anche un'Esca caduta col veleno qui sopra: la riunione è già questa)
     if(this.vincitore) return;
     this.fase='riunione'; this.codaBot=[];   // (in riunione la chat di prossimità è spenta: le risposte dei Bot in attesa cadono)
     const R={ motivo:m.tipo, da:m.da, corpo:m.corpo!=null?m.corpo:null, stanza:m.stanza||null, t:0, t0:this.t, disc:this.imp.discussione, voto:this.imp.voto, voti:new Map(), coda:[], chiusa:false,
       zittiti:this.gioc.filter(p=>p.vivo&&p.zittito).map(p=>p.id) };
     this.riu=R; this.chat=[]; this.esito=null;
-    const da=this.per(m.da);
-    this.scrivi(null, m.tipo==='corpo' ? `${da.nome} ha trovato la lanterna di ${this.nomeDi(m.corpo)} spenta ${m.stanza}.` : `${da.nome} ha suonato la campana.`);
-    for(const p of this.gioc){ if(p.fantasmaRuolo==='medium' && p.foto && p.fotoMostrata!==p.foto.seme){ p.fotoMostrata=p.foto.seme; this.scrivi(null, `Una foto dall'aldilà, da ${p.nome}:`, { foto:p.foto }); } }
-    for(const v of avvelenati) this.scrivi(null, `Proprio adesso si è spenta anche la lanterna di ${v.nome}.`);
-    for(const c of this.celebri) this.scrivi(null, `${this.nomeDi(c.id)} era una Celebrità: è stato spento ${c.stanza} circa ${Math.max(1,Math.round(this.t-c.t))} secondi fa.`);
+    const da=this.per(m.da), corpo=m.tipo==='corpo';
+    // solo chi ha chiamato: niente dove, niente di chi. Sul suo telefono «Hai…» (tuo, da); i telefoni con la versione vecchia non lo guardano e leggono la terza persona
+    this.scrivi(null, corpo ? `${da.nome} ha segnalato una lanterna spenta.` : `${da.nome} ha suonato la campana.`, { da:da.id, tuo: corpo ? 'Hai segnalato una lanterna spenta.' : 'Hai suonato la campana.' });
+    for(const p of this.gioc){ if(p.fantasmaRuolo==='medium' && p.foto && p.fotoMostrata!==p.foto.seme){ p.fotoMostrata=p.foto.seme; this.scrivi(null, "Una foto dall'aldilà:", { foto:p.foto }); } }   // (senza nome: chi l'ha mandata lo sa già)
+    for(const v of avvelenati) this.scrivi(null, 'Proprio adesso si è spenta un\'altra lanterna.');
+    for(const c of this.celebri) this.scrivi(null, `${this.nomeDi(c.id)} era una Celebrità: la sua lanterna si è spenta ${c.stanza} circa ${Math.max(1,Math.round(this.t-c.t))} secondi fa.`);
     this.celebri=[];
     // il Bracconiere scopre chi è passato nella trappola piena (solo i ruoli, in ordine sparso)
     for(const p of this.gioc){ const tr=p.trappola; if(!tr || tr.ids.length<this.imp.bracconiere.quanti) continue;
@@ -1464,7 +1570,7 @@ class Partita {
       const cv=crewVivi(), soci=this.gioc.filter(p=>p.vivo&&p!==b&&p.squadra==='ombre');
       // un socio nei guai: a volte lo copre
       const socio=soci.find(p=>(this.pub[p.id]||0)>=30);
-      if(socio && rnd()<.45){ out.push({ testo:`${socio.nome} era con me ${pick(this.M.stanze).in}, non è stato lui.`, eff:()=>this.sospetta(socio,-14,b) }); return out; }
+      if(socio && rnd()<.45){ out.push({ testo:`${socio.nome} era con me ${pick(this.M.stanze).in}, non c'entra.`, eff:()=>this.sospetta(socio,-14,b) }); return out; }
       if(m.tipo==='corpo' && m.da===b.id && cv.length && rnd()<.6){ const p=pick(cv); out.push({ testo:`Poco prima lì vicino c'era ${p.nome}.`, eff:()=>{ this.sospetta(p,18,b); this.rispostaBot(p,false); } }); return out; }
       if(cv.length && rnd()<.3){ const p=pick(cv); out.push({ testo:`Ho visto ${p.nome} uscire di corsa ${pick(this.M.stanze).in}.`, eff:()=>{ this.sospetta(p,16,b); this.rispostaBot(p,false); } }); }
       else out.push({ testo:`Io ero ${pick(this.M.stanze).in}. Niente di strano.` });
@@ -1482,7 +1588,7 @@ class Partita {
       out.push({ testo, eff:()=>{ if(ruoloDetto) this.dichiarati[b.id]=ruoloDetto; vic.forEach(p=>{ this.sospetta(p, m.da===b.id?18:14, b); if(vic.length===1) this.rispostaBot(p,false); }); } });
     }
     const ali=(b.mem.alibi||[]).map(id=>this.per(id)).filter(p=>p && (b.sosp[p.id]||0)<20);
-    if(ali.length && rnd()<.5){ const p=pick(ali); out.push({ testo:`${p.nome} era sotto i miei occhi, lontano da lì: non è stato lui.`, eff:()=>this.sospetta(p,-14,b) }); }
+    if(ali.length && rnd()<.5){ const p=pick(ali); out.push({ testo:`${p.nome} era sotto i miei occhi, lontano da lì: non c'entra.`, eff:()=>this.sospetta(p,-14,b) }); }
     for(const x of b.mem.puliti.slice(0,1)){ const p=this.per(x.id); if(p && p.vivo) out.push({ testo:`Ho visto ${p.nome} ${FRASI_COMPITO[x.v]}: per me è pulito.`, eff:()=>this.sospetta(p,-25,b) }); }
     if(b.ruolo==='veggente') for(const r of b.mem.controlli){ const p=this.per(r.id); if(p) out.push({ testo: r.ok ? `Ho letto ${p.nome}: è dei buoni.` : `Ho letto ${p.nome}: è dei cattivi!`, eff:()=>{ this.dichiarati[b.id]='veggente'; this.sospetta(p, r.ok?-25:45, b); } }); }
     if(b.ruolo==='sceriffo' && b.mem.sparato && rnd()<.8){ const x=this.per(b.mem.sparato.id); if(x) out.push({ testo:`Sono lo Sceriffo: ho spento ${x.nome}, ${b.mem.sparato.ombra?"era un'ombra":'non era dei buoni'}.`, eff:()=>{ this.dichiarati[b.id]='sceriffo'; } }); }
@@ -1495,7 +1601,7 @@ class Partita {
   }
   chatUmana(p, testo){
     const R=this.riu; if(this.fase!=='riunione'||!R||R.chiusa||!p.vivo) return;
-    if(R.zittiti.includes(p.id)){ this.avviso(p,'Sei stato zittito: in questa riunione non puoi scrivere.','ombra'); return; }
+    if(R.zittiti.includes(p.id)){ this.avviso(p,'Ti hanno zittito: in questa riunione non puoi scrivere.','ombra'); return; }
     if(this.t-p.tChat<1.2) return;
     testo=testo.replace(/\s+/g,' ').trim().slice(0,90); if(!testo) return;
     p.tChat=this.t; this.scrivi(p, testo);
@@ -1520,7 +1626,7 @@ class Partita {
   }
   rapida(p, tipo, id){
     const R=this.riu; if(this.fase!=='riunione'||!R||R.chiusa||!p.vivo) return;
-    if(R.zittiti.includes(p.id)){ this.avviso(p,'Sei stato zittito: in questa riunione non puoi scrivere.','ombra'); return; }
+    if(R.zittiti.includes(p.id)){ this.avviso(p,'Ti hanno zittito: in questa riunione non puoi scrivere.','ombra'); return; }
     if(this.t-p.tChat<1.2) return; p.tChat=this.t;
     const x=this.per(id);
     if(tipo==='sospetto' && x && x!==p){ this.scrivi(p, `Sospetto di ${x.nome}.`); this.sospetta(x,20,p); this.rispostaBot(x,false); }
@@ -1539,25 +1645,31 @@ class Partita {
     R.coda.sort((a,b)=>a.t-b.t);
   }
   // l'Indovino in riunione: se indovina il ruolo, quella persona cade (e nessuno sa chi è stato)
-  cadeInRiunione(v, testoVittima){
+  cadeInRiunione(v, testoVittima, indovino){
     const R=this.riu; v.vivo=false; v.fantasma=true;
-    if(R){ R.voti.delete(v.id); for(const [chi,su] of [...R.voti]) if(su===v.id) R.voti.delete(chi); }
+    if(R){ R.voti.delete(v.id);
+      // chi aveva votato per lui rivota: il sigillo gli torna in mano, il Bot ci ripensa
+      for(const [chi,su] of [...R.voti]) if(su===v.id){ R.voti.delete(chi); const q=this.per(chi); this.priv(q); if(q.bot) R.coda.push({ t:R.t+1+rnd()*3, chi:q, voto:true }); else if(q!==indovino) this.avviso(q, `La lanterna di ${v.nome} si è spenta: vota di nuovo.`); }
+      R.coda.sort((a,b)=>a.t-b.t); }
     this.gioc.filter(a=>a.ruolo==='accusatore'&&a.vivo&&a.bersaglio===v.id).forEach(a=>{ a.ruolo='giullare'; this.priv(a); this.avviso(a,'Il tuo bersaglio è uscito: ora sei il Giullare. Fatti cacciare col voto!'); });
-    this.scrivi(null, `${v.nome} è caduto.`); this.priv(v); this.segna();
+    this.scrivi(null, `La lanterna di ${v.nome} si è spenta.`); this.priv(v); this.segna();
     this.ev.tutti({ t:'fx', k:'cade', x:0, y:0, id:v.id });
     this.avviso(v, testoVittima || "Un indovino ha letto il tuo ruolo: la tua lanterna si è spenta.", 'morte');
   }
   indovina(p, id, ruolo){
-    const R=this.riu; if(this.fase!=='riunione'||!R||R.chiusa||!p.vivo||p.ruolo!=='indovino'||p.tentativi<=0||!RUOLI[ruolo]) return;
-    const v=this.per(id); if(!v||!v.vivo||v===p) return;
+    const R=this.riu, v=this.per(id); if(!p.vivo||p.ruolo!=='indovino'||p.tentativi<=0||!RUOLI[ruolo]||!v||v===p) return;
+    // il foglietto era aperto ma è tardi: il tentativo non si perde, e sul suo telefono si capisce perché
+    if(this.fase!=='riunione'||!R||R.chiusa||!v.vivo){ this.priv(p); this.avviso(p, v.vivo ? 'Troppo tardi: il voto è chiuso.' : `La lanterna di ${v.nome} è già spenta.`); return; }
     p.tentativi--; this.priv(p);
     if(v.ruolo===ruolo){
-      p.indovinati++; this.cadeInRiunione(v);
+      const rivota=R.voti.get(p.id)===id;   // aveva votato proprio chi cade: un avviso copre quello di prima, quindi il sigillo che torna lo dice la stessa riga
+      p.indovinati++; this.cadeInRiunione(v, null, p);
       if(p.indovinati>=this.imp.indovino.quanti){ this.vincitore={ chi:'indovino', id:p.id, perche:`L'Indovino (${p.nome}) ha indovinato ${p.indovinati} ruoli.` }; this.chiudi(); return; }
-      this.avviso(p, `Giusto: ${v.nome} era ${RUOLI[ruolo].nome}. Indovinati ${p.indovinati} su ${this.imp.indovino.quanti}.`);
+      this.avviso(p, `Giusto: ${v.nome} era ${RUOLI[ruolo].nome}. Indovinati ${p.indovinati} su ${this.imp.indovino.quanti}.${rivota?' Vota di nuovo.':''}`);
     } else {
-      this.avviso(p, `Sbagliato: ${v.nome} non è ${RUOLI[ruolo].nome}.`, 'ombra');
-      if(this.imp.indovino.sbaglia==='muore') this.cadeInRiunione(p, "Hai sbagliato: la tua lanterna si è spenta.");
+      const no=`Sbagliato: ${v.nome} non è ${RUOLI[ruolo].nome}.`;
+      if(this.imp.indovino.sbaglia==='muore') this.cadeInRiunione(p, no+' Cadi tu.');   // (una riga sola: due di fila, la prima non si leggerebbe)
+      else this.avviso(p, no, 'ombra');
     }
     if(this.controllaVittoria()) this.chiudi();
   }
@@ -1612,8 +1724,11 @@ class Partita {
       else { if(ev.az) ev.az(); else this.scrivi(ev.chi, ev.testo); if(ev.eff) ev.eff(); }
       if(this.fase!=='riunione' || this.riu!==R) return;   // l'Indovino può aver chiuso la partita
     }
-    const vivi=this.gioc.filter(p=>p.vivo);
-    if(!R.chiusa && (R.t>=R.disc+R.voto || (R.t>=R.disc && vivi.every(p=>R.voti.has(p.id))))) this.concludiRiunione();
+    const vivi=this.gioc.filter(p=>p.vivo), tutti=R.t>=R.disc && vivi.every(p=>R.voti.has(p.id));
+    // messo l'ultimo sigillo il voto resta aperto ancora un poco, sempre: se si chiudesse lì, l'Indovino dovrebbe tentare prima di votare e chi cade indicherebbe l'unico senza sigillo
+    const conta = tutti ? (R.conta!=null ? R.conta : R.t+DUR_SIGILLI) : null;
+    if(conta!=R.conta){ R.conta=conta; this.segna(); }
+    if(!R.chiusa && (R.t>=R.disc+R.voto || (tutti && R.t>=conta))) this.concludiRiunione();
   }
   concludiRiunione(){
     const R=this.riu; R.chiusa=true;
@@ -2424,7 +2539,7 @@ function anticipa(M, i0, j0, i1, j1, res){
 // Il gioco è a 32 px per casella: le immagini si disegnano scalate a metà (sugli schermi ad alta densità restano nitide).
 // (Non usare imageSmoothingQuality='high': provato a CPU ×4, i fotogrammi passano da 60 a 8-12 al secondo.)
 const IMMAGINI_PALAZZO = true;    // l'interruttore: acceso dal 30/10 col palazzo intero e la sala d'attesa (mai stanze vere mescolate a stanze disegnate)
-const IMM_VERSIONE = '2';                // da cambiare quando le immagini cambiano: il telefono non usa le vecchie
+const IMM_VERSIONE = '5';                // da cambiare quando le immagini cambiano: il telefono non usa le vecchie
 const IMM_CARTELLA = 'carte/lanterne/';
 const IMM_IN_VOLO = 8;                   // scaricamenti insieme
 let immVolo = 0, immReali = 0, immAcceso0;   // immReali: quante delle immagini in corso servono adesso a chi gioca (non le ha chieste il precarico)
@@ -2443,7 +2558,7 @@ function immMappa(M){
   if(!immAcceso()) return null;
   if(M._im === undefined){
     const nome = M === PALAZZO ? 'palazzo' : M === ATRIO ? 'atrio' : null;
-    M._im = nome ? { nome, base:IMM_CARTELLA + nome + '/', stato:0, prove:0, riprova:0, quando:0, s:{}, f:{}, k:{}, sporco:true, ultQ:-1, pz:null, mobili:null, anim:null, extra:null, kk:0.5 } : null;
+    M._im = nome ? { nome, base:IMM_CARTELLA + nome + '/', stato:0, prove:0, riprova:0, quando:0, s:{}, f:{}, k:{}, sporco:true, ultQ:-1, pz:null, mobili:null, anim:null, extra:null, kk:0.5, ante:null, aP:null, aN:0, aDopo:0 } : null;
   }
   return M._im;
 }
@@ -2456,7 +2571,7 @@ function immIndice(m){
   fetch(m.base + 'indice.json?v=' + IMM_VERSIONE).then(r => r.status === 404 ? 404 : r.ok ? r.json() : Promise.reject()).then(j => {
     if(j === 404){ m.stato = 4; return; }
     const ix = immLeggi(j); if(!ix){ m.stato = 4; return; }
-    m.pz = ix.pz; m.mobili = ix.mobili; m.anim = ix.anim; m.extra = ix.extra; m.kk = ix.kk; m.stato = 2; m.sporco = true;
+    m.pz = ix.pz; m.mobili = ix.mobili; m.anim = ix.anim; m.extra = ix.extra; m.kk = ix.kk; m.fiamme = Array.isArray(j.fiamme) ? j.fiamme : []; m.stato = 2; m.sporco = true;
   }).catch(() => { m.stato = 3; m.riprova = performance.now() + 15000; });
 }
 // l'indice, letto con un po' di tolleranza (liste o oggetti), con le misure già nei pixel del gioco
@@ -2483,8 +2598,8 @@ function immLeggi(j){
     if(v && !Array.isArray(v) && (v.extra === true || (v.k == null && v.file))){   // oggetto di scena: non è in M.ostacoli
       if(!v.file) return;
       const base = isFinite(v.y) && isFinite(v.h) ? (+v.y + +v.h)*T : r.y + r.h;   // il bordo sud dell'impronta, in pixel del gioco
-      extra.push({ f:String(v.file), x:r.x, y:r.y, w:r.w, h:r.h, base, tipo:v.tipo || '', o:{ x:+v.x, y:+v.y, w:+v.w, h:+v.h } });   // (o: l'impronta in caselle, per le parti vive)
-    } else if(isFinite(k)) mobili.set(k, r);
+      extra.push({ f:String(v.file), x:r.x, y:r.y, w:r.w, h:r.h, base, fl:v.fiamme || [] });
+    } else if(isFinite(k)){ r.fl = v.fiamme || []; mobili.set(k, r); }   // (fl: le fiamme vive di quel mobile, in caselle sullo schermo: le manda Blender)
   });
   (j.extra || []).forEach(v => { const r = rett(v); if(r && v.f) extra.push({ f:String(v.f), x:r.x, y:r.y, w:r.w, h:r.h, base:(v.base != null ? v.base*kk : r.y + r.h) }); });   // (vecchia forma)
   const anim = {}, an = j.animati || {};
@@ -2504,6 +2619,7 @@ function immVoce(m, chiave, url){
   return null;
 }
 function immAccoda(m, chiave, url, pre){
+  if(immSosp && !pre) return;
   const st = m.s[chiave];
   if(st === 0 || st === 1 || st === 2) return;
   if(st === 3){ const f = m.f[chiave]; if(f.n >= 3 || performance.now() - f.t < 15000) return; }
@@ -2522,7 +2638,8 @@ function immScarica(url){
 }
 function immOggetto(url, b){ let o = immOgg.get(url); if(!o){ o = URL.createObjectURL(b); immOgg.set(url, o); } return o; }
 function immPompa(){
-  while(immVolo < IMM_IN_VOLO && immCoda.length){
+  const max = preKbs() < 300 ? 3 : IMM_IN_VOLO;   // su una rete lenta più file insieme non vanno più in fretta: lasciano solo indietro i messaggi del gioco
+  while(immVolo < max && immCoda.length){
     const q = immCoda.pop(), m = q.m, chiave = q.chiave;
     if(m.s[chiave] !== 0) continue;
     m.s[chiave] = 1; immVolo++; if(!q.pre) immReali++;
@@ -2531,6 +2648,7 @@ function immPompa(){
     const fatto = ok => {
       immVolo--; if(!q.pre) immReali--;
       if(ok){
+        im._t = immUltimo = performance.now();
         m.s[chiave] = 2; delete m.f[chiave];
         metti(m.k[chiave] || (m.k[chiave] = 'I|' + m.nome + '|' + chiave), { img:im, px:im.naturalWidth*im.naturalHeight, libera(){ delete m.s[chiave]; m.sporco = true; } });
       } else {
@@ -2547,6 +2665,59 @@ function immPompa(){
     if(b){ daBlob = true; parti(immOggetto(q.url, b)); }
     else immScarica(q.url).then(bb => { if(bb){ daBlob = true; parti(immOggetto(q.url, bb)); } else fatto(false); });   // (se lo sta già scaricando il precarico, si aspetta lui: mai due volte)
   }
+}
+// ── L'anteprima: tutta la mappa in piccolo, in un file solo (anteprima.webp, fatta da gioco/anteprima.py con i pezzi veri) ──
+// Arriva per prima e sta sotto i pezzi che mancano: chi cammina verso una zona non ancora arrivata vede il palazzo sfocato, mai il vuoto né il disegno a codice.
+// Il file scaricato non si tiene: resta una copia sola, decodificata fuori dal giro principale, e conta nel tetto delle tele. Esce dalla memoria quando
+// tutti i pezzi sono arrivati; sul telefono piccolo, dove i pezzi entrano ed escono dalla cache, resta come rete.
+// Se il file non c'è tutto va come prima: disegno a codice dove manca un pezzo, «pronto» solo a fine scaricamento.
+const DISSOLVI = 200;   // ms: il pezzo vero entra in dissolvenza sopra l'anteprima
+const IMM_FERMO = (() => { try{ return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){ return false; } })();   // chi non vuole movimento: il pezzo si cambia e basta
+let immUltimo = 0;      // quando è arrivata l'ultima immagine (l'anteprima esce a dissolvenze finite)
+let immSosp = false;    // chi rientra in partita: sotto il mini caricamento passa solo l'anteprima. La scena dietro segue ancora un altro: chiederebbe pezzi che non servono, davanti a quelli veri
+function immSospendi(v){
+  if(immSosp === !!v) return;
+  immSosp = !!v;
+  if(!v) (PRE.mappe || []).forEach(m => { m.sporco = true; });   // adesso si sa dove chiedere
+}
+function anteLeggi(b){
+  const fatta = (img, w, h) => ({ img, w, h, px:w*h, size:b.size });
+  const daImg = () => {
+    const u = URL.createObjectURL(b), im = new Image(); im.decoding = 'async'; im.src = u;
+    const p = im.decode ? im.decode() : new Promise((ok, no) => { im.onload = ok; im.onerror = no; });
+    return p.then(() => { URL.revokeObjectURL(u); return fatta(im, im.naturalWidth, im.naturalHeight); }, () => { URL.revokeObjectURL(u); return null; });
+  };
+  return typeof createImageBitmap === 'function' ? createImageBitmap(b).then(x => fatta(x, x.width, x.height), daImg) : daImg();
+}
+// si chiede una volta sola, anche se la vogliono insieme il precarico e chi sta disegnando. Dà la promessa dell'anteprima, o null se per ora non si può chiedere
+function antePrendi(m){
+  if(m.ante || m.aP) return m.aP;
+  const url = m.base + 'anteprima.webp?v=' + IMM_VERSIONE;
+  if(immNonCe.has(url) || m.aN >= 3 || performance.now() < m.aDopo) return null;
+  m.aN++;
+  return m.aP = fetch(url).then(r => { if(r.status === 404 || r.status === 410) immNonCe.add(url); return r.ok ? r.blob() : null; }).then(b => b && b.size ? anteLeggi(b) : null).catch(() => null).then(a => {
+    if(a){ m.ante = a; telePx += a.px; } else { m.aP = null; m.aDopo = performance.now() + 800; }
+    return a;
+  });
+}
+function immAnteprima(M){ const m = M._im; return m ? m.ante : null; }
+// quanto è entrata un'immagine appena arrivata, da 0 a 1 (in uscita rapida, come --faro-ease). Senza anteprima sotto si cambia e basta, come sempre
+function immDissolvi(m, im){
+  if(!m.ante || IMM_FERMO) return 1;
+  const a = (performance.now() - im._t)/DISSOLVI;
+  return a >= 1 ? 1 : a <= 0 ? 0 : 1 - Math.pow(1 - a, 3);
+}
+// tutti i pezzi di questa mappa sono in memoria, a dissolvenze finite: l'anteprima lascia il posto
+function anteLascia(m){
+  if(!m.ante || m.stato !== 2 || performance.now() - immUltimo < 2*DISSOLVI) return;
+  for(const n of m.pz){ const k = m.k['p' + (n % 16) + '_' + ((n / 16) | 0)]; if(!k || !TELE.has(k)) return; }
+  const a = m.ante; m.ante = null; m.aFatta = true; telePx -= a.px; if(a.img.close) a.img.close();
+}
+// la coda di quello che serve a chi gioca non vale più (si è appena scoperto dove sono, e le immagini chieste intorno alla fontana starebbero davanti a quelle vere): si ricomincia da quello che serve adesso
+function immCodaDaCapo(){
+  const resta = [];
+  for(const q of immCoda){ if(q.pre) resta.push(q); else { if(q.m.s[q.chiave] === 0) delete q.m.s[q.chiave]; q.m.sporco = true; } }
+  immCoda.length = 0; immCoda.push(...resta);
 }
 // le immagini di una mappa, se sono accese e l'indice è arrivato (se no null: si disegna a codice; l'indice parte da solo)
 function immPronta(M){
@@ -2574,10 +2745,14 @@ function immChiedi(m, M, i0, j0, i1, j1, anello){
   try{ immChiedi0(m, M, i0, j0, i1, j1, anello); }catch(e){ immAcceso0 = false; }   // (come sopra)
 }
 function immChiedi0(m, M, i0, j0, i1, j1, anello){
+  const gioca = anello && m.nome === 'palazzo';   // qualcuno sta camminando qui (dalla sala d'attesa si chiede il palazzo senza anello, solo intorno alla fontana)
+  if(PRE.liv === 2) anello = 0;   // col caricamento a tutto schermo l'anello passa dopo: sulla pila finirebbe sopra a quello che si sta aspettando
   const q = (((i0 + 2)*256 + j0 + 2)*256 + i1 + 2)*256 + j1 + 2 + (anello ? 4294967296 : 0);   // il rettangolo, in un numero solo
   if(q === m.ultQ && !m.sporco) return;
   m.ultQ = q; m.sporco = false;
+  antePrendi(m);
   const L = PEZZO*T, ni = Math.ceil(M.GW/PEZZO), nj = Math.ceil(M.GH/PEZZO);
+  if(gioca) preVerso(m, (i0 + i1 + 1)*L/2, (j0 + j1 + 1)*L/2);
   const tocca = (r, a) => r.x < (i1 + 1 + a)*L && r.x + r.w > (i0 - a)*L && r.y < (j1 + 1 + a)*L && r.y + r.h > (j0 - a)*L;
   const pezzi = a => { for(let j = Math.max(0, j0 - a); j <= Math.min(nj - 1, j1 + a); j++) for(let i = Math.max(0, i0 - a); i <= Math.min(ni - 1, i1 + a); i++){
     if(a && i >= i0 && i <= i1 && j >= j0 && j <= j1) continue; if(m.pz.has(j*16 + i)) immAccoda(m, 'p' + i + '_' + j, 'p_' + i + '_' + j + '.webp'); } };
@@ -2593,7 +2768,9 @@ function immChiedi0(m, M, i0, j0, i1, j1, anello){
 // i pezzi di fondo di Blender che coprono il mobile k sono tutti arrivati? Allora il mobile è già nel fondo (e anche la sua ombra):
 // se il suo ritaglio non c'è ancora, non si disegna quello a codice sopra il render (il ritaglio serve solo a coprire chi passa dietro)
 function immFondoCopre(M, k){
-  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return false;
+  const m = M._im; if(!m || !immAcceso()) return false;
+  if(m.ante && (m.stato !== 2 || m.mobili.has(k))) return true;   // nell'anteprima il mobile c'è già
+  if(m.stato !== 2) return false;
   const r = m.mobili.get(k); if(!r) return false;   // senza ritaglio nell'indice non sappiamo dov'è: resta a codice
   const L = PEZZO*T;
   for(let j = Math.floor(r.y/L); j <= Math.floor((r.y + r.h - 0.01)/L); j++) for(let i = Math.floor(r.x/L); i <= Math.floor((r.x + r.w - 0.01)/L); i++){
@@ -2608,14 +2785,14 @@ function immMobile(M, k){
   const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return null;
   const r = m.mobili.get(k); if(!r) return null;
   const img = immVoce(m, 'm' + k, 'mobili/' + k + '.webp');
-  return img ? { img, x:r.x, y:r.y, w:r.w, h:r.h } : null;
+  return img ? { img, x:r.x, y:r.y, w:r.w, h:r.h, fl:r.fl } : null;
 }
 // gli oggetti di scena (extra) da mettere in ordine di profondità insieme ai mobili
 function immExtra(m){ return m && m.stato === 2 ? m.extra : []; }
 function disegnaExtra(c, m, n, t){
   const e = m.extra[n], img = immVoce(m, 'e' + n, e.f); if(!img) return;
-  c.drawImage(img, e.x, e.y, e.w, e.h);
-  const v = e.tipo && VIVO_EXTRA[e.tipo]; if(v && e.o && isFinite(e.o.x) && isFinite(e.o.y)){ c.save(); v(c, e.o, t || 0, n); c.restore(); }
+  const g = c.globalAlpha; c.globalAlpha = g*immDissolvi(m, img); c.drawImage(img, e.x, e.y, e.w, e.h); c.globalAlpha = g;
+  fiammeDi(c, e.fl, t || 0, 100 + n);
 }
 // un'immagine animata (barca, campana, ruota): centro e perno dal file indice; dx, dy spostano, ang gira intorno al perno. Vero se l'ha disegnata.
 function immAnimata(c, M, nome, dx, dy, ang){
@@ -2639,14 +2816,16 @@ function immHa(M, nome){
 }
 
 // ── Il precarico: nella saletta si scarica tutto il palazzo ──
-// Appena si entra parte lo scaricamento di TUTTE le immagini (indici, pezzi, ritagli, oggetti di scena, animati), pochi file alla volta
+// Appena si entra parte lo scaricamento di TUTTE le immagini (indici, anteprime, pezzi, ritagli, oggetti di scena, animati), pochi file alla volta
 // (3, per non rallentare la saletta; 8 quando si sta solo aspettando il caricamento). Ogni file resta in memoria come blob.
 // Si decodifica tutto quando il telefono ha memoria (navigator.deviceMemory > 2, o sconosciuta come su iPhone); con poca memoria
 // solo l'atrio e i pezzi intorno alla fontana, da dove si parte. Il resto si decodifica in un attimo dalla memoria, quando serve.
-// «Pronto» = tutto scaricato (o perso: allora resta il disegno a codice) e decodificato quello che serve per partire.
+// «Pronto» = l'anteprima del palazzo, l'atrio e i pezzi intorno alla fontana, arrivati e decodificati. Il resto continua dietro, anche a partita
+// cominciata, prima quello vicino a chi cammina: nel frattempo si vede l'anteprima. Se l'anteprima non c'è, «pronto» = tutto scaricato (o perso).
 // Senza immagini (interruttore spento, indice che manca, da file://) è pronto subito: si parte a codice senza aspettare.
-const PRE = { avviato:false, spento:false, tier:'tutto', liv:1, volo:0, scarico:[], lista:[], voci:[], pronto:false, giro:null, t0:0 };
-const PRE_STIMA = { atrio:55, palazzo:400 };   // il peso che si conta per una mappa finché il suo indice non è arrivato (pezzo = 5, ritaglio = 1)
+const PRE = { avviato:false, spento:false, tier:'tutto', liv:1, volo:0, scarico:[], lista:[], voci:[], pronto:false, giro:null, t0:0, pct:0, vAnte:null };
+const PRE_STIMA = { atrio:63, palazzo:68 };   // il peso che si conta per una mappa finché il suo indice non è arrivato (pezzo = 5, ritaglio = 1)
+const PRE_GRANDE = 8192;   // la velocità della rete si misura sui file da qui in su: su quelli piccoli si misurerebbe solo la latenza
 function preAttivo(){
   try{
     if(!immAcceso() || typeof fetch !== 'function' || typeof location === 'undefined' || location.protocol === 'file:') return false;
@@ -2656,25 +2835,27 @@ function preAttivo(){
 }
 function precaricoAvvia(){
   if(PRE.avviato) return; PRE.avviato = true; PRE.t0 = performance.now();
-  if(window.LT_PROVA) window.LT_PRE = { stato:precaricoStato, voci:() => PRE.voci.length, decodificate:() => { let n = 0; for(const k of TELE.keys()) if(k.charCodeAt(0) === 73) n++; return n; }, blob:() => immBlobV.size, kb:() => { let n = 0; immBlobV.forEach(b => { n += b.size; }); return Math.round(n/1024); }, teleExtra:() => teleExtra };   // (per le prove a schermo)
+  if(window.LT_PROVA) window.LT_PRE = { stato:precaricoStato, voci:() => PRE.voci.filter(v => !v.ante).length, decodificate:() => { let n = 0; for(const k of TELE.keys()) if(k.charCodeAt(0) === 73) n++; return n; }, blob:() => immBlobV.size, kb:() => { let n = 0; immBlobV.forEach(b => { n += b.size; }); return Math.round(n/1024); }, teleExtra:() => teleExtra, tele:() => telePx, ante:() => (PRE.mappe || []).map(m => [m.nome, m.ante ? m.ante.px : 0, m.ante ? Math.round(m.ante.size/1024) : 0]) };   // (per le prove a schermo)
   if(!preAttivo()){ PRE.spento = true; return; }
   const dm = navigator.deviceMemory;   // solo Chrome: 0,25 … 8 (GB, arrotondati). Safari non lo dice.
   PRE.tier = dm && dm <= 2 ? 'vicino' : 'tutto';
   if(PRE.tier === 'tutto') teleExtra = 8e6;   // tutto il palazzo decodificato sta nel tetto: niente uscite dalla cache
   PRE.mappe = [ATRIO, PALAZZO].map(M => immMappa(M)).filter(Boolean);
   if(!PRE.mappe.length){ PRE.spento = true; return; }
+  PRE.mappe.forEach(m => { if(m.nome === 'atrio') antePrendi(m); });   // subito, senza aspettare l'indice: è quello che si ha davanti appena si entra
   PRE.giro = setInterval(preGiro, 150); preGiro();
 }
-// quanto in fretta si scarica: 0 = a partita cominciata (uno alla volta, il gioco ha la precedenza), 1 = nella saletta (3 insieme),
+// quanto in fretta si scarica: 0 = a partita cominciata (uno alla volta, il gioco ha la precedenza; 2 se la rete è buona), 1 = nella saletta (3 insieme),
 // 2 = si sta solo aspettando il caricamento a tutto schermo (8 insieme). Con una rete lentissima si scende ancora (vedi prePompa).
 function precaricoFretta(liv){ PRE.liv = liv === true ? 2 : liv === false ? 1 : liv; }
-// la rete è lentissima? Si guarda la velocità di ogni file (byte diviso il tempo che ci ha messo), moltiplicata per quanti ne scaricavano insieme,
-// sugli ultimi 8: se in tutto va a meno di 50 KB/s, più file insieme non danno più velocità ma i messaggi del gioco restano indietro: allora uno alla volta.
-function preLenta(){
-  const r = PRE.scarico; if(r.length < 3) return false;
+// quanto va la rete, in KB/s: la velocità di ogni file (byte diviso il tempo che ci ha messo), moltiplicata per quanti ne scaricavano insieme, sugli ultimi 8 file grandi.
+function preKbs(){
+  const r = PRE.scarico; if(r.length < 3) return Infinity;
   let kb = 0, ms = 0, k = 0; for(const x of r){ kb += x[1]; ms += x[2]; k += x[3]; }
-  return ms > 0 && kb / ms * 1000 * (k / r.length) < 50*1024;
+  return ms > 0 ? kb / ms * 1000 * (k / r.length) / 1024 : Infinity;
 }
+// la rete è lentissima? Sotto i 50 KB/s più file insieme non danno più velocità ma i messaggi del gioco restano indietro: allora uno alla volta.
+function preLenta(){ return preKbs() < 50; }
 function preGiro(){
   try{ preGiro0(); }catch(e){ PRE.spento = true; clearInterval(PRE.giro); }   // rete di sicurezza: se qualcosa va storto il precarico si ferma e il gioco resta com'è
 }
@@ -2688,28 +2869,43 @@ function preGiro0(){
   // quello che serve per partire dev'essere decodificato: se non è in coda, si rimette
   let coreOk = true;
   for(const v of PRE.voci){
-    if(!v.core || v.perso) continue;
+    if(!v.attendi || v.perso || v.ante) continue;
     if(!v.ok){ coreOk = false; continue; }
     if(!immPronta0(v.m, v.chiave)){ coreOk = false; if(v.m.s[v.chiave] === undefined) immAccoda(v.m, v.chiave, v.rel, true); }
   }
-  if(!PRE.pronto && risolti && !PRE.lista.length && !PRE.volo && coreOk){ PRE.pronto = true; PRE.tPronto = performance.now(); }
-  if(PRE.pronto && !PRE.lista.length && !PRE.volo && PRE.mappe.every(m => m.stato === 2 || m.stato === 4)) clearInterval(PRE.giro);   // tutto scaricato: il giro si ferma
+  const finita = !PRE.lista.length && !PRE.volo, aV = PRE.vAnte;
+  if(!PRE.pronto && risolti && coreOk && (finita || (aV && aV.m.ante))){ PRE.pronto = true; PRE.tPronto = performance.now(); }
+  if(PRE.pronto && finita && PRE.mappe.every(m => m.stato === 2 || m.stato === 4)){   // tutto scaricato: l'anteprima esce, se non serve più, e il giro si ferma
+    if(!PRE.tFine) PRE.tFine = performance.now();
+    const persi = PRE.voci.some(v => v.perso);
+    if(PRE.tier === 'tutto' && !persi) PRE.mappe.forEach(anteLascia);
+    if(persi || PRE.tier !== 'tutto' || PRE.mappe.every(m => !m.ante) || performance.now() - PRE.tFine > 30000) clearInterval(PRE.giro);
+  }
   immPompa();   // (le decodifiche messe in coda partono anche se nessuno sta disegnando: l'host in attesa, la pagina in secondo piano)
+}
+// a partita cominciata quello che resta arriva prima vicino a chi cammina; l'atrio, che ormai serve solo alla prossima partita, per ultimo
+const preOrdine = (a, b) => (a.pri - b.pri) || (a.d - b.d);
+function preVerso(m, x, y){
+  if(!PRE.lista.length) return;
+  for(const v of PRE.lista){ v.pri = v.m !== m ? 9 : v.ante ? 0 : 1; v.d = Math.hypot(v.x - x, v.y - y); }
+  PRE.lista.sort(preOrdine);
 }
 // pochi scaricamenti insieme; appena uno finisce parte il prossimo (senza aspettare il giro); chi è fallito aspetta un po' (al massimo 3 tentativi)
 function prePompa(){
+  if(immSosp) return;
   const ora = performance.now();
-  let max = PRE.liv === 2 ? 8 : PRE.liv === 0 ? 1 : 3;
+  let max = PRE.liv === 2 ? 8 : PRE.liv === 0 ? (preKbs() < 300 ? 1 : 2) : 3;
   if(PRE.scarico.length < 3) max = Math.min(max, PRE.liv === 2 ? 3 : 1);   // si parte piano: i primi file uno alla volta, per capire quanto va la rete
   else if(preLenta()) max = Math.min(max, PRE.liv === 2 ? 2 : 1);
+  else if(preKbs() < 300) max = Math.min(max, 3);
   if(immReali > 0) max = Math.min(max, 1);   // se chi gioca ha bisogno di qualcosa adesso, il precarico si fa da parte (passa uno alla volta)
   if(PRE.liv !== 2 && PRE.pausaFino > ora) return;   // rete lentissima: fra un file e l'altro un respiro, perché i messaggi del gioco passino
   while(PRE.volo < max){
     const n = PRE.lista.findIndex(v => !v.dopo || v.dopo <= ora); if(n < 0) break;
     const v = PRE.lista.splice(n, 1)[0]; PRE.volo++; v.t0 = performance.now(); v.k = PRE.volo;
-    immScarica(v.url).then(b => {
+    (v.ante ? antePrendi(v.m) || Promise.resolve(null) : immScarica(v.url)).then(b => {
       PRE.volo--; if(PRE.liv !== 2 && preLenta()) PRE.pausaFino = performance.now() + 300;
-      if(b){ v.ok = true; { PRE.scarico.push([performance.now(), b.size, performance.now() - v.t0, v.k]); if(PRE.scarico.length > 8) PRE.scarico.shift(); } if(v.core || PRE.tier === 'tutto'){ immAccoda(v.m, v.chiave, v.rel, true); immPompa(); } }
+      if(b){ v.ok = true; if(b.size >= PRE_GRANDE){ PRE.scarico.push([performance.now(), b.size, performance.now() - v.t0, v.k]); if(PRE.scarico.length > 8) PRE.scarico.shift(); } if(!v.ante && (v.core || PRE.tier === 'tutto')){ immAccoda(v.m, v.chiave, v.rel, true); immPompa(); } }
       else if(!immNonCe.has(v.url) && ++v.prove < 3){ v.dopo = performance.now() + 900*v.prove; PRE.lista.push(v); }
       else v.perso = true;   // non arriva: resterà il disegno a codice (e il gioco ci riprova da solo quando serve)
       v.fatto = !!(b || v.perso);
@@ -2723,37 +2919,47 @@ function preCostruisci(m){
   m.preFatta = true;
   const L = PEZZO*T, fi = Math.floor(FONTANA.x/L), fj = Math.floor(FONTANA.y/L), atrio = m.nome === 'atrio';
   const vicino = r => r.x < (fi + 2)*L && r.x + r.w > (fi - 1)*L && r.y < (fj + 2)*L && r.y + r.h > (fj - 1)*L;   // i 3×3 pezzi intorno alla fontana
-  const d = (x, y) => Math.hypot(x - FONTANA.x, y - FONTANA.y);
   const voci = [];
-  const aggiungi = (chiave, rel, peso, core, dist) => voci.push({ m, chiave, rel, url:m.base + rel + '?v=' + IMM_VERSIONE, peso, core:atrio || core, d:dist, prove:0, ok:false, perso:false, fatto:false });
-  m.pz.forEach(n => { const i = n % 16, j = (n / 16) | 0; aggiungi('p' + i + '_' + j, 'p_' + i + '_' + j + '.webp', 5, i >= fi - 1 && i <= fi + 1 && j >= fj - 1 && j <= fj + 1, d((i + 0.5)*L, (j + 0.5)*L)); });
-  m.mobili.forEach((r, k) => aggiungi('m' + k, 'mobili/' + k + '.webp', 1, vicino(r), d(r.x + r.w/2, r.y + r.h/2)));
-  m.extra.forEach((e, n) => aggiungi('e' + n, e.f, 1, vicino(e), d(e.x + e.w/2, e.y + e.h/2)));
-  for(const nome in m.anim){ const A = m.anim[nome]; aggiungi('a_' + nome, 'animati/' + nome + '.webp', 1, vicino({ x:A.cx - 40, y:A.cy - 40, w:80, h:80 }), d(A.cx, A.cy)); }
+  // core: si decodifica subito anche sul telefono piccolo. attendi: «pronto» lo aspetta. I ritagli del palazzo non si aspettano: il mobile è già nel fondo, il ritaglio serve a coprire chi gli passa dietro
+  const aggiungi = (chiave, rel, peso, core, attendi, pri, x, y) => voci.push({ m, chiave, rel, url:m.base + rel + '?v=' + IMM_VERSIONE, peso, core:atrio || core, attendi:atrio || attendi, pri:atrio ? 1 : pri, x, y, d:Math.hypot(x - FONTANA.x, y - FONTANA.y), prove:0, ok:false, perso:false, fatto:false });
+  m.pz.forEach(n => { const i = n % 16, j = (n / 16) | 0, q = i >= fi - 1 && i <= fi + 1 && j >= fj - 1 && j <= fj + 1; aggiungi('p' + i + '_' + j, 'p_' + i + '_' + j + '.webp', 5, q, q, q ? 3 : 4, (i + 0.5)*L, (j + 0.5)*L); });
+  m.mobili.forEach((r, k) => aggiungi('m' + k, 'mobili/' + k + '.webp', 1, vicino(r), false, 4, r.x + r.w/2, r.y + r.h/2));
+  m.extra.forEach((e, n) => aggiungi('e' + n, e.f, 1, vicino(e), false, 4, e.x + e.w/2, e.y + e.h/2));
+  for(const nome in m.anim){ const A = m.anim[nome]; aggiungi('a_' + nome, 'animati/' + nome + '.webp', 1, true, true, 3, A.cx, A.cy); }   // (non stanno nel fondo: nell'anteprima non ci sono)
+  aggiungi('ante', 'anteprima.webp', atrio ? 2 : 20, true, true, 2, FONTANA.x, FONTANA.y);
+  const a = voci[voci.length - 1]; a.ante = true; a.pri = atrio ? 0 : 0.5; if(!atrio) PRE.vAnte = a;
   m.preTot = voci.reduce((s, v) => s + v.peso, 0);
+  m.preAttendi = voci.reduce((s, v) => s + (v.attendi ? v.peso : 0), 0);
   PRE.voci.push(...voci); PRE.lista.push(...voci);
-  // prima quello che serve per partire (l'atrio, poi i pezzi intorno alla fontana), poi il resto dal più vicino al più lontano
-  PRE.lista.sort((a, b) => (b.core - a.core) || ((a.m.nome === 'atrio' ? 0 : 1) - (b.m.nome === 'atrio' ? 0 : 1)) || (a.d - b.d));
+  // prima le due anteprime (sul telefono lento la partita può partire prima che finisca l'atrio: senza quella del palazzo resterebbe il caricamento), poi l'atrio che si ha davanti, poi i pezzi del palazzo intorno alla fontana, poi il resto dal più vicino al più lontano
+  PRE.lista.sort(preOrdine);
 }
-// com'è messo: pct 0…100 (99 finché non è tutto pronto), pronto, quanti file non sono arrivati
+// com'è messo: pct 0…100 (99 finché non è pronto, mai indietro), pronto, tutto (ogni file è arrivato), quanti file non sono arrivati
 function precaricoStato(){
-  if(!PRE.avviato || PRE.spento) return { attivo:false, pct:100, pronto:true, tier:PRE.tier, persi:0 };
+  if(!PRE.avviato || PRE.spento) return { attivo:false, pct:100, pronto:true, tutto:true, tier:PRE.tier, persi:0 };
+  const solo = !(PRE.vAnte && PRE.vAnte.perso);   // con l'anteprima si conta solo quello che «pronto» aspetta; senza, tutto
   let tot = 0, fatto = 0, persi = 0;
-  for(const m of PRE.mappe) tot += m.preFatta ? m.preTot : PRE_STIMA[m.nome] || 0;
-  for(const v of PRE.voci){ if(v.fatto) fatto += v.peso; if(v.perso) persi++; }
-  return { attivo:true, pct:PRE.pronto ? 100 : tot ? Math.min(99, Math.floor(100*fatto/tot)) : 0, pronto:PRE.pronto, tier:PRE.tier, persi, secondi:+(((PRE.tPronto || performance.now()) - PRE.t0)/1000).toFixed(1) };   // (secondi: da quando è partito il precarico a quando è stato pronto, o a adesso)
+  for(const m of PRE.mappe) tot += m.preFatta ? (solo ? m.preAttendi : m.preTot) : PRE_STIMA[m.nome] || 0;
+  for(const v of PRE.voci){ if((!solo || v.attendi) && (v.fatto || immBlobV.has(v.url))) fatto += v.peso; if(v.perso) persi++; }   // (conta anche quello che è arrivato perché serviva subito a chi gioca)
+  PRE.pct = Math.max(PRE.pct, tot ? Math.min(99, Math.floor(100*fatto/tot)) : 0);
+  return { attivo:true, pct:PRE.pronto ? 100 : PRE.pct, pronto:PRE.pronto, tutto:!!PRE.tFine, tier:PRE.tier, persi, secondi:+(((PRE.tPronto || performance.now()) - PRE.t0)/1000).toFixed(1), secondiTutto:+(((PRE.tFine || performance.now()) - PRE.t0)/1000).toFixed(1) };   // (secondi: da quando è partito il precarico a quando è stato pronto, o a adesso)
 }
 // le immagini intorno a un punto (quello che si vede e un poco di più) sono già decodificate? Le chiede, se mancano.
 // Vero anche se la mappa non ha immagini o non sono arrivate (resta il disegno a codice, senza aspettare). Falso solo mentre si aspetta davvero.
-function immIntorno(M, x, y, mw, mh){   // mw, mh: metà della larghezza e dell'altezza che si vede (pixel del gioco); senza, una finestra larga
-  // Risposta { ok, pct }: ok = tutto pronto (o niente da aspettare); pct = quante di quelle immagini sono già pronte
+function immIntorno(M, x, y, mw, mh, cerco){   // mw, mh: metà della larghezza e dell'altezza che si vede (pixel del gioco); senza, una finestra larga. cerco: non so ancora dove sono, non si chiedono pezzi
+  // Risposta { ok, pct }: ok = tutto pronto (o niente da aspettare); pct = quante di quelle immagini sono già pronte. Con l'anteprima basta lei: i pezzi veri arrivano dopo, in dissolvenza
   try{
     const m = immMappa(M); if(!m) return { ok:true, pct:100 };
-    if(m.stato !== 2){ immIndice(m); const ok = m.stato !== 0 && m.stato !== 1; return { ok, pct:ok ? 100 : 0 }; }
+    if(m.stato !== 2) immIndice(m);
+    if(m.stato !== 4) antePrendi(m);
+    if(m.ante) return { ok:true, pct:100 };
+    if(m.aP && !m.aFatta) return { ok:false, pct:m.stato === 2 ? 50 : 0 };
+    if(m.stato !== 2){ const ok = m.stato !== 0 && m.stato !== 1; return { ok, pct:ok ? 100 : 0 }; }
+    if(cerco) return { ok:false, pct:0 };
     const L = PEZZO*T, ni = Math.ceil(M.GW/PEZZO), nj = Math.ceil(M.GH/PEZZO);
     const hw = mw ? mw + 4*T : 13*T, hh = mh ? mh + 4*T : 10*T;   // quello che si vede, più mezzo pezzo
     const i0 = Math.max(0, Math.floor((x - hw)/L)), i1 = Math.min(ni - 1, Math.floor((x + hw)/L)), j0 = Math.max(0, Math.floor((y - hh)/L)), j1 = Math.min(nj - 1, Math.floor((y + hh)/L));
-    immChiedi(m, M, i0, j0, i1, j1, 1);
+    const s = immSosp; immSosp = false; immChiedi(m, M, i0, j0, i1, j1, 1); immSosp = s;
     let tot = 0, manca = 0;
     const conta = chiave => { tot++; if(!immPronta0(m, chiave)) manca++; };
     for(let j = j0; j <= j1; j++) for(let i = i0; i <= i1; i++) if(m.pz.has(j*16 + i)) conta('p' + i + '_' + j);
@@ -3269,6 +3475,14 @@ const MOBILI = {
     c.fillRect(x + ww/2 - 3, fy + 1, 6, 6); c.fillStyle = '#2a1a10'; c.fillRect(x + ww/2 - 0.8, fy + 3, 1.6, 3);
   } },
 };
+// i mobili che da subito esistono solo come immagine di Blender: se le immagini non arrivano resta un volume semplice della misura giusta (così si vede dove si sbatte)
+[['sedia', 30, '#5e4228', '#46301c'], ['sgabello', 20, '#6a4a2c', '#4e3620'], ['tavolino', 26, '#6a4a2c', '#4e3620'], ['scrittoio', 30, '#5a3c24', '#442c1a'], ['mappamondo', 34, '#7a6a4a', '#5a4c34'], ['libri', 18, '#6e3a34', '#50281f'],
+ ['credenza', 40, '#5a3c24', '#442c1a'], ['vaso', 26, '#8a6a4a', '#664c34'], ['statua', 54, '#a5a095', '#7c776d'], ['banco_attrezzi', 30, '#5e4a34', '#463624'], ['armadio', 52, '#553a24', '#402a1a'], ['campana', 44, '#4a4a4e', '#333338'],
+ ['lampione', 56, '#2c2c30', '#1e1e22'], ['fioriera', 22, '#7a5a42', '#5a402e'], ['leggio', 32, '#6e5636', '#524026'], ['divano', 26, '#5a2f36', '#432228'], ['tavolo_cucina', 28, '#7a5a3a', '#5a4028'], ['bottiglie', 46, '#4a3a2a', '#35291d'],
+ ['cesto', 20, '#8a7044', '#675230'], ['stufa', 36, '#3a3a3e', '#28282c'], ['scrivania', 28, '#5e4a34', '#463624'], ['schedario', 40, '#5a6268', '#42484e'], ['bitta', 18, '#4a4038', '#352e28'], ['botti', 34, '#6a4a2c', '#4e3620'],
+ ['reti', 16, '#6a6048', '#4e4634'], ['banco_serra', 26, '#6a5236', '#4e3c26'], ['valigie', 24, '#6a4a2c', '#4e3620'], ['regolatore', 50, '#6a5a3a', '#4e4228'], ['contrappesi', 44, '#4a4a4e', '#333338'], ['volante', 20, '#3a3a3e', '#28282c'], ['legna', 26, '#6a4a2c', '#4e3620'], ['quadro_luci', 44, '#4a4a4e', '#333338'], ['lavatoio', 26, '#8a8a84', '#6a6a64'], ['asse_stiro', 22, '#8a7a64', '#675a48'], ['scala', 40, '#6a4a2c', '#4e3620'], ['tavolo_mappe', 28, '#5a3c24', '#442c1a'], ['rotoli', 26, '#a08a64', '#7a6848'], ['teca', 34, '#6a5236', '#4e3c26'], ['tele', 30, '#6a5236', '#4e3c26'], ['violoncello', 44, '#6a3a22', '#4e2a18'], ['tavolo_basso', 18, '#5a3c24', '#442c1a']].forEach(([n, h, a, b]) => {
+  MOBILI[n] = { h, base:(w, d) => [3, d*0.2, w - 6, d*0.72], fermo(c, w, d){ cubo(c, 3, d*0.2, w - 6, d*0.72, h, a, b); } };
+});
 // la figurina di un mobile (una tela per mobile e risoluzione)
 function figurina(M, o, k, res){
   return prendi('F|' + M.nome + '|' + k + '|' + res, () => {
@@ -3291,7 +3505,7 @@ function disegnaMobile(c, M, o, k, res, t, eff, pit){
   const mod = MOBILI[o.t]; if(!mod) return;
   const x = o.x*T, y = o.y*T, r = immMobile(M, k);
   if(r || immFondoCopre(M, k)){   // il mobile di Blender (nel fondo, e col suo ritaglio sopra): le fiamme sono tolte dal render (restano le luci), le parti vive sono quelle fatte su misura per l'immagine
-    if(r) c.drawImage(r.img, r.x, r.y, r.w, r.h);
+    if(r){ const g = c.globalAlpha; c.globalAlpha = g*immDissolvi(M._im, r.img); c.drawImage(r.img, r.x, r.y, r.w, r.h); c.globalAlpha = g; fiammeDi(c, r.fl, t, k); }
     // l'ingranaggio: la ruota grande non è nel ritaglio, gira lei col compito (dall'angolo fermo, 0); finché non è arrivata non si disegna quella a codice
     if(o.t === 'ingranaggio' && immIndiceHa(M, 'ruota')){ immAnimata(c, M, 'ruota', 0, 0, (eff || []).some(e => e.k === 'compito' && e.v === 'ingranaggio') ? t*6 : 0); return; }
     const v = VIVO_IMM[o.t];
@@ -3310,11 +3524,11 @@ function disegnaMobile(c, M, o, k, res, t, eff, pit){
 const bl = (o, X, Y, Z) => [(o.x + X)*T, (o.y + o.h - Y - Z)*T];
 const VIVO_SOLO_PARTICELLE = { aiuola:1 };   // l'acqua del compito (gocce): non dipende da dove sta il disegno
 // la fiamma di una candela vera, piccola: x, y è la base dello stoppino
-function fiammaBl(c, x, y, t, k){
+function fiammaBl(c, x, y, t, k, s = 1){
   const fl = 0.8 + 0.2*Math.sin(t*11 + k*2.3) + 0.06*Math.sin(t*27 + k);
-  c.fillStyle = 'rgba(255,190,90,' + (0.14*fl).toFixed(3) + ')'; c.beginPath(); c.arc(x, y - 1.5, 4.2, 0, 7); c.fill();
-  c.fillStyle = 'rgba(255,214,130,.92)'; c.beginPath(); c.ellipse(x, y - 1.3*fl, 1.05, 2.3*fl, 0, 0, 7); c.fill();
-  c.fillStyle = 'rgba(255,248,215,.95)'; c.beginPath(); c.ellipse(x, y - 0.8*fl, 0.45, 1.2*fl, 0, 0, 7); c.fill();
+  c.fillStyle = 'rgba(255,190,90,' + (0.14*fl).toFixed(3) + ')'; c.beginPath(); c.arc(x, y - 1.5*s, 4.2*s, 0, 7); c.fill();
+  c.fillStyle = 'rgba(255,214,130,.92)'; c.beginPath(); c.ellipse(x, y - 1.3*fl*s, 1.05*s, 2.3*fl*s, 0, 0, 7); c.fill();
+  c.fillStyle = 'rgba(255,248,215,.95)'; c.beginPath(); c.ellipse(x, y - 0.8*fl*s, 0.45*s, 1.2*fl*s, 0, 0, 7); c.fill();
 }
 // un vetro acceso (schermo): un velo che pulsa e qualche riga di testo che scorre; x, y è l'angolo in alto a sinistra
 function schermoBl(c, x, y, w, h, t, k, righe){
@@ -3325,34 +3539,10 @@ function schermoBl(c, x, y, w, h, t, k, righe){
   }
 }
 const VIVO_IMM = {
-  // candelabro a terra (1×1): cinque candele sui bracci
-  candelabro(c, o, t){
-    const cx = o.w/2, cy = o.h*0.55;
-    for(let i = 0; i < 5; i++){
-      const u = (i - 2)/2, a = Math.abs(u), z = 1.05 + 0.1 + 0.38*(1 - 0.3*a) + 0.12*(1 - a) + 0.03 + 0.22 + 0.004;   // la cima della cera
-      const p = bl(o, cx + 0.38*u, cy, z); fiammaBl(c, p[0], p[1], t, i + o.x*3);
-    }
-  },
-  // tavolo: due candelabri da tavola con tre candele ciascuno, sulla striscia rossa
-  tavolo(c, o, t){
-    const x0 = 0.1, x1 = o.w - 0.1, cy = (0.12 + o.h - 0.5)/2;
-    [0.25, 0.75].forEach((f, j) => {
-      const x = x0 + (x1 - x0)*f;
-      for(let i = 0; i < 3; i++){
-        const u = i - 1, a = Math.abs(u), z = 0.62 + 0.008 + 0.19 + 0.05*(1 - a) + 0.012 + (0.15 - 0.03*a) + 0.004;
-        const p = bl(o, x + u*0.14, cy, z); fiammaBl(c, p[0], p[1], t, j*3 + i + o.x);
-      }
-    });
-  },
-  // altare: i due candelieri alti ai lati della croce
-  altare(c, o, t){
-    const yc = (0.08 + 0.78)/2, z = 1.075 + 0.28 + 0.012 + 0.13 + 0.004;
-    [0.8, o.w - 0.8].forEach((X, i) => { const p = bl(o, X, yc, z); fiammaBl(c, p[0], p[1], t, 1 + i); });
-  },
   // forno: la bocca ad arco è nera nel render (resta la luce): il fuoco ci balla dentro, tagliato sull'arco
   forno(c, o, t, eff, pit){
     const acceso = (eff || []).some(e => e.k === 'compito' && e.v === 'fuoco');
-    const [xa, yb] = bl(o, 0.7, 0.1, 0.52), xb = bl(o, 1.3, 0.1, 0.52)[0], yc = bl(o, 1.0, 0.1, 0.75)[1], cx = (xa + xb)/2, R = (xb - xa)/2;
+    const [xa, yb] = bl(o, 0.66, 0.2, 0.72), xb = bl(o, 1.34, 0.2, 0.72)[0], yc = bl(o, 1.0, 0.2, 1.02)[1], cx = (xa + xb)/2, R = (xb - xa)/2;   // (0,72: la cima della soglia di pietra davanti alla bocca: il fuoco nasce dietro, non ci passa sopra)
     const a = acceso ? 1 : 0.62 + Math.sin(t*3)*0.1;
     c.beginPath(); c.moveTo(xa, yb); c.lineTo(xa, yc); c.arc(cx, yc, R, Math.PI, 0); c.lineTo(xb, yb); c.closePath(); c.clip();
     c.globalCompositeOperation = 'lighter';
@@ -3364,7 +3554,7 @@ const VIVO_IMM = {
       const f = c.createRadialGradient(0, 0, 0, 0, 0, 3.4); f.addColorStop(0, 'rgba(255,238,175,' + (0.85*a).toFixed(3) + ')'); f.addColorStop(0.45, 'rgba(255,170,70,' + (0.55*a).toFixed(3) + ')'); f.addColorStop(1, 'rgba(255,110,30,0)');
       c.fillStyle = f; c.beginPath(); c.arc(0, 0, 3.4, 0, 7); c.fill(); c.restore();
     }
-    if(acceso && Math.random() < 0.5) pit.sparpaglia('fiamma', cx, yb - 8, 1, { v:10, su:40, vita:0.6, r:4 });
+    if(acceso && Math.random() < 0.5) pit.sparpaglia('fiamma', cx, yb - 6, 1, { v:8, su:18, vita:0.5, r:2.2 });   // (faville piccole: restano dentro la bocca, sotto l'architrave)
   },
   // console: cinque schermi in due altezze
   console(c, o, t){
@@ -3386,38 +3576,28 @@ const VIVO_IMM = {
       const ciclo = t*0.8 + k*0.31, n = Math.floor(ciclo), f = (ciclo - n)/0.4;
       if(f >= 1) continue;
       const a = Math.sin(f*Math.PI), ang = -0.1*Math.PI + fisso(n, k, 90)*1.2*Math.PI, r = (0.95 + fisso(n, k, 91)*0.4)*T;
-      const x = p[0] + Math.cos(ang)*r, y = p[1] + Math.sin(ang)*r;
+      const x = p[0] + Math.cos(ang)*r, y = p[1] + Math.sin(ang)*r*0.88;   // (0,88: a sud l'acqua finisce prima, i luccichii non salgono sul bordo della vasca)
       c.fillStyle = 'rgba(235,245,255,' + (0.7*a).toFixed(3) + ')'; c.fillRect(x - 2.5, y, 5, 1.2); c.fillRect(x - 0.6, y - 1, 1.2, 3.2);
     }
   },
 };
-// le parti vive degli oggetti di scena (non sono in M.ostacoli): o = l'impronta in caselle { x, y, w, h }
-const VIVO_EXTRA = {
-  // lampione di ferro: la candela dentro il fanale, in cima al palo (alto 1,24 più la cera)
-  lampione(c, o, t, n){ const p = bl(o, 0.5, 0.45, 1.24 + 0.135); fiammaBl(c, p[0], p[1], t, 20 + n); },
-};
-// le candele sul pavimento dei dettagli delle stanze (x, y in caselle, altezza del candeliere): negli script di Blender sono sempre portacandela (cera 0,13 sopra il candeliere)
-const CANDELE_BL = { palazzo:[
-  [57.0, 4.6, 0.1], [63.6, 9.0, 0.1],                                                             // Torre
-  [16.6, 23.5, 0.1], [11.6, 37.2, 0.1], [29.1, 40.2, 0.1], [40.8, 36.6, 0.1], [67.4, 34.5, 0.1],  // Cucine, Cantina, Galleria (due), Telegrafo
-  [3.42, 18.55, 0.03], [3.62, 18.9, 0.03], [3.4, 19.2, 0.03], [10.35, 19.5, 0.03], [10.5, 15.9, 0.03],   // Cappella (candele votive: l'altezza vera è a caso tra 0 e 0,06)
-  [3.45, 10.3, 0.18], [14.35, 10.15, 0.1], [30.7, 11.1, 0.08], [55.7, 44.3, 0.05],                // Biblioteca (due), Salone, Molo
-] };
-// le fiamme di quelle candele: solo se il pezzo di fondo che le contiene è arrivato (se no la candela non c'è)
+// le fiamme delle candele di fondo (posizioni in caselle sullo schermo, le manda Blender in indice.json): solo se il pezzo che le contiene è arrivato, o se sotto c'è l'anteprima
 function candeleVive(c, M, t, x0, y0, x1, y1){
-  const m = M._im; if(!m || m.stato !== 2 || !immAcceso()) return;
-  const lista = CANDELE_BL[m.nome]; if(!lista) return;
+  const m = M._im; if(!m || m.stato !== 2 || !immAcceso() || !m.fiamme) return;
   const L = PEZZO*T;
-  for(let n = 0; n < lista.length; n++){
-    const q = lista[n], x = q[0]*T, y = (q[1] - (q[2] + 0.012 + 0.13 + 0.004))*T;
+  for(let n = 0; n < m.fiamme.length; n++){
+    const q = m.fiamme[n], x = q[0]*T, y = q[1]*T;
     if(x < x0 || x > x1 || y < y0 || y > y1) continue;
-    const i = Math.floor(x/L), j = Math.floor(q[1]*T/L), ch = 'p' + i + '_' + j;
-    if(m.pz.has(j*16 + i) && !cerca(m.k[ch] || (m.k[ch] = 'I|' + m.nome + '|' + ch))) continue;
-    fiammaBl(c, x, y, t, 30 + n);
+    const i = Math.floor(x/L), j = Math.floor(y/L), ch = 'p' + i + '_' + j;
+    if(!m.ante && m.pz.has(j*16 + i) && !cerca(m.k[ch] || (m.k[ch] = 'I|' + m.nome + '|' + ch))) continue;
+    fiammaBl(c, x, y, t, 30 + n, q[2]);
   }
 }
+// le fiamme di un mobile, sopra il suo ritaglio
+function fiammeDi(c, lista, t, k){ if(lista) for(let n = 0; n < lista.length; n++) fiammaBl(c, lista[n][0]*T, lista[n][1]*T, t, k + n, lista[n][2]); }
 // le fiamme delle torce sui muri (vive)
 function torceVive(c, M, t, x0, y0, x1, y1){
+  if(M._im && M._im.stato === 2 && M._im.fiamme && immAcceso()) return;   // (con le immagini di Blender anche le fiamme dei muri arrivano da lì, in candeleVive)
   for(const q of prepara(M).torce){
     if(q.x < x0 || q.x > x1 || q.y < y0 || q.y > y1) continue;
     const fl = 0.6 + Math.sin(t*9 + q.x)*0.2 + Math.sin(t*23 + q.y)*0.1;
@@ -3428,6 +3608,10 @@ function torceVive(c, M, t, x0, y0, x1, y1){
   }
 }
 
+// La scogliera di Blender a ovest del mare (x 44-46): i massi stanno nell'acqua, onde, luccichii e schiuma cominciano dove finiscono loro.
+// SCOGLIO_RIGHE, per ogni riga d'acqua: x in caselle della prima onda, della seconda e dei luccichii. SCOGLIO_RIVA: il filo dei massi, da nord a sud, per la schiuma.
+const SCOGLIO_RIGHE = { 45:[45.2, 46.2, 46.2], 46:[45.9, 45.15, 46.2], 47:[45.15, 45.55, 45.55], 48:[45.1, 45, 45.1], 49:[45.15, 45.5, 45.5] };
+const SCOGLIO_RIVA = [[46.12, 45.5], [46.12, 45.85], [45.95, 46.15], [45.6, 46.25], [45.25, 46.3], [45.05, 46.45], [45.05, 47], [45, 47.25], [45.02, 47.38], [45.46, 47.42], [45.46, 47.95], [45.1, 48.1], [44.98, 48.3], [44.75, 48.62], [44.8, 48.95], [45.05, 49.25], [45.05, 49.62], [45.4, 49.66], [45.4, 50]];
 // ── Il mare vivo: onde che scorrono, luccichii, schiuma sulle rive, cerchi d'acqua, la barca che dondola ──
 function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
   const A = prepara(M); if(!A.acque.length) return;
@@ -3435,24 +3619,29 @@ function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
   // le onde: due linee per riga d'acqua, la cresta chiara e il cavo scuro, che scorrono piano
   for(const [ty, a, b] of A.acque){
     if((ty + 1)*T < y0 || ty*T > y1) continue;
-    const xa = Math.max(a*T, Math.floor(x0/8)*8), xb = Math.min(b*T, x1); if(xb <= xa) continue;
+    const mg = q < 1 ? 8 : 0;   // (sull'acqua di Blender le onde si fermano prima del bordo di assi di moli e pontile)
+    const xa = Math.max(a*T + mg, Math.floor(x0/8)*8), xb = Math.min(b*T - mg, x1); if(xb <= xa) continue;
+    const sc = q < 1 && a === 44 ? SCOGLIO_RIGHE[ty] : null;
     for(let k = 0; k < 2; k++){
-      const yb = ty*T + 9 + k*15;
+      const yb = ty*T + 9 + k*15, xk = sc ? Math.max(xa, sc[k]*T) : xa;
       c.lineWidth = 1.4; c.strokeStyle = 'rgba(8,20,32,' + (0.4*q).toFixed(3) + ')'; c.beginPath();
-      for(let x = xa; x <= xb; x += 8){ const y = yb + 2 + Math.sin(x*0.05 + t*1.3 + ty*1.7 + k*2.1)*2.4 + Math.sin(x*0.13 - t*2.1 + k)*1; if(x === xa) c.moveTo(x, y); else c.lineTo(x, y); }
+      for(let x = xk; x <= xb; x += 8){ const y = yb + 2 + Math.sin(x*0.05 + t*1.3 + ty*1.7 + k*2.1)*2.4 + Math.sin(x*0.13 - t*2.1 + k)*1; if(x === xk) c.moveTo(x, y); else c.lineTo(x, y); }
       c.stroke();
       c.lineWidth = 1; c.strokeStyle = 'rgba(160,205,235,' + (0.16*q).toFixed(3) + ')'; c.beginPath();
-      for(let x = xa; x <= xb; x += 8){ const y = yb + Math.sin(x*0.05 + t*1.3 + ty*1.7 + k*2.1)*2.4 + Math.sin(x*0.13 - t*2.1 + k)*1; if(x === xa) c.moveTo(x, y); else c.lineTo(x, y); }
+      for(let x = xk; x <= xb; x += 8){ const y = yb + Math.sin(x*0.05 + t*1.3 + ty*1.7 + k*2.1)*2.4 + Math.sin(x*0.13 - t*2.1 + k)*1; if(x === xk) c.moveTo(x, y); else c.lineTo(x, y); }
       c.stroke();
     }
   }
   // luccichii della luna: ogni casella ha il suo, che si accende di rado
-  const tx0 = Math.max(0, Math.floor(x0/T)), tx1 = Math.min(M.GW - 1, Math.floor(x1/T)), ty0 = Math.max(0, Math.floor(y0/T)), ty1 = Math.min(M.GH - 1, Math.floor(y1/T));
+  const tx0 = Math.max(0, Math.floor(x0/T)), tx1 = Math.min(M.GW - 1, Math.floor(x1/T)), ty0 = Math.max(0, Math.floor(y0/T)), ty1 = Math.min(M.GH - 1, Math.floor(y1/T)), suBl = q < 1;
   for(let ty = ty0; ty <= ty1; ty++) for(let tx = tx0; tx <= tx1; tx++){
     const k = ty*M.GW + tx; if(!M.ACQUA[k] || M.PAV[k] !== -2) continue;
     for(let q = 0; q < 2; q++){
       const b = Math.sin(t*(1.1 + fisso(tx, ty, 70 + q)) + fisso(tx, ty, 71 + q)*40); if(b < 0.9) continue;
-      const a = (b - 0.9)*10, x = tx*T + fisso(tx, ty, 72 + q)*T, y = ty*T + fisso(tx, ty, 73 + q)*T + Math.sin(t + q)*1.5;
+      // (sull'acqua di Blender le prime caselle sotto una riva e a fianco di un pontile hanno davanti la faccia delle assi: il luccichio sta sull'acqua, non sul legno)
+      let fx = fisso(tx, ty, 72 + q)*T, fy = fisso(tx, ty, 73 + q)*T;
+      if(suBl){ const acq = n => M.ACQUA[n] && M.PAV[n] === -2; if(!acq(k - M.GW)) fy = 9 + fy*(T - 9)/T; if(!acq(k - 1)) fx = Math.max(fx, 6); if(!acq(k + 1)) fx = Math.min(fx, T - 6); if(SCOGLIO_RIGHE[ty] && tx*T + fx < SCOGLIO_RIGHE[ty][2]*T) continue; }
+      const a = (b - 0.9)*10, x = tx*T + fx, y = ty*T + fy + Math.sin(t + q)*1.5;
       c.fillStyle = 'rgba(235,245,255,' + (0.75*a).toFixed(3) + ')'; c.fillRect(x - 2.5, y, 5, 1.2); c.fillRect(x - 0.6, y - 1, 1.2, 3.2);
     }
   }
@@ -3461,9 +3650,12 @@ function mareVivo(c, M, t, x0, y0, x1, y1, onde, res){
     c.lineWidth = w; c.lineCap = 'round'; c.strokeStyle = 'rgba(225,240,250,' + (alfa*q).toFixed(3) + ')'; c.setLineDash(dash); c.lineDashOffset = -t*vel; c.beginPath();
     for(const r of A.rive){
       if(Math.max(r.x1, r.x2) < x0 || Math.min(r.x1, r.x2) > x1 || Math.max(r.y1, r.y2) < y0 || Math.min(r.y1, r.y2) > y1) continue;
-      const o = off + Math.sin(t*2.2 + (r.x1 + r.y1)*0.05)*1.6;
+      if(suBl && r.x1 === 44*T && (r.nx > 0 || r.y1 === 45*T)) continue;   // (la riva dritta a x=44 sta sotto i massi: lì la schiuma segue il loro filo, qui sotto)
+      // (sull'acqua di Blender la riva a sud ha davanti la faccia delle assi e dei conci, a est e a ovest il bordo del pontile: la schiuma sta dove comincia l'acqua vera)
+      const o = off + (suBl ? (r.ny > 0 ? 7 : r.nx ? 3 : 0) : 0) + Math.sin(t*2.2 + (r.x1 + r.y1)*0.05)*1.6;
       c.moveTo(r.x1 + r.nx*o, r.y1 + r.ny*o); c.lineTo(r.x2 + r.nx*o, r.y2 + r.ny*o);
     }
+    if(suBl && x0 < 47*T && x1 > 44*T && y1 > 45*T) SCOGLIO_RIVA.forEach(([x, y], n) => { const px = x*T + off + Math.sin(t*2.2 + n*0.9)*1.6; if(n) c.lineTo(px, y*T); else c.moveTo(px, y*T); });
     c.stroke();
   };
   riva(3, 2.2, 0.32, [7, 5, 3, 6], 9); riva(7.5, 1.4, 0.16, [2, 11], -6); c.setLineDash([]); c.lineDashOffset = 0; c.lineCap = 'butt';
@@ -3518,13 +3710,968 @@ function barca(res){
   });
 }
 
+// ===== lenzuolo.js =====
+// Il lenzuolo: la stoffa che ogni giocatore ha addosso. Un telo vero a nodi (Verlet e vincoli), tenuto da testa e spalle,
+// libero sotto, disegnato su canvas con ombre che nascono dalla forma simulata. Nessuna immagine, nessuna libreria.
+// La simulazione ha 24 colonne; il disegno ne ha 48 e traccia solo i contorni (sagoma, pieghe, alone): circa 480 punti a personaggio.
+//
+// Uso (da persona() in disegno.js):
+//   const l = new Lenzuolo({ c:3, m:null }, { seme:7 });     c: indice in LENZUOLI; m: il disegno sul telo ('righe', 'pois', 'quadri'), se il telo non ne ha già uno
+//   l.aggiorna(dt, x, y, dir, muove, attivo);                 attivo=false: fuori dalla luce o dallo schermo, non si simula
+//   l.disegna(ctx, { x, y, alfa, lanterna, ombra, grigio, t, scala, fine });   x,y: i piedi sul pavimento, nelle coordinate del mondo; fine: più sfumature, per il ritratto
+//   l.cadi()  l.subito()  l.spegni(stretto)  l.fantasma(si)   caduta in saletta, posa pronta, telo afflosciato (stretto: raccolto lungo un muro), fantasma
+//   l.copre()                                                 quanto il telo ha coperto chi sta sotto (0-1): a 1 l'avatar non si disegna più
+//   l.cede()                                                  di quante unità la testa di chi sta sotto cede all'impatto del telo
+//   l.guarda(x, y)                                            gli occhi vanno verso chi si muove; l.guarda() li libera
+//   l.cima()                                                  di quanto sale la testa sopra i piedi, sullo schermo (per il nome)
+//   ritrattoLenzuolo(c, lato)                                 mezzo busto fermo, una canvas quadrata per il registro
+//   teloLibero(presi)                                         per l'host: il primo telo che nessuno ha. Quindici teli per quindici giocatori, mai due uguali
+//
+// Coordinate del telo: X a destra, Y verso chi guarda, Z in alto, origine ai piedi. Vista obliqua: LZ_KY schiaccia il
+// pavimento, LZ_KZ l'altezza. I nodi stanno rispetto al corpo: spostarsi non scala i numeri e un teletrasporto non tira nulla.
+
+const LZ_C = 24, LZ_R = 7, LZ_N = 1 + LZ_C * LZ_R;       // colonne attorno, anelli dalla testa all'orlo, nodi
+const LZ_H = 1 / 60, LZ_MAXP = 2;                         // tempo fisso, al massimo due sotto-passi per fotogramma
+const LZ_KY = 0.46, LZ_KZ = 0.888;                        // la vista: sin e cos dell'inclinazione
+const LZ_VX = 0, LZ_VY = LZ_KZ, LZ_VZ = LZ_KY;            // verso chi guarda
+const LZ_G = 0.2;                                         // gravità per passo al quadrato
+const LZ_ARIA = 0.972;                                    // l'aria frena la stoffa
+const LZ_SALTO = 46;                                      // oltre questo in un colpo è un teletrasporto: il telo non se ne accorge
+const LZ_INERZIA = 0.36;                                   // quanta velocità del corpo sente la stoffa: a piena velocità sbandiererebbe, qui ha il peso di un lenzuolo
+const LZ_INERZIA_O = 0.46, LZ_FRUSTA = 1;                // gli ultimi due anelli: restano più indietro e, quando il corpo frena o parte, frustano
+const LZ_PIEDE = 8, LZ_RL = 13, LZ_FIANCO = 6, LZ_TORCE = 0.4, LZ_ORLOG = 0.1;          // quanto il piede solleva l'orlo, fin dove arriva, quanto girano le spalle a ogni passo
+const LZ_PZ = 11, LZ_PUGNO = 4;                           // la presa della mano: fin dove raccoglie la stoffa, quanto sporge il pugno
+const LZ_Z0 = 190, LZ_TC = 0.82;                          // la caduta: da che altezza parte la cima (l'orlo resta 30-40 px sopra la testa) e quanto ci mette ad arrivare
+const LZ_VOLOZ = 0.66, LZ_VOLOR = 0.32;                  // in volo è una campana stretta: più bassa del telo addosso e un po' più larga in fondo, circa una volta e mezzo l'omino
+const LZ_TIRO = 7.5;                                      // spinta massima per passo: un fotogramma lungo non fa esplodere nulla
+const LZ_SEGUE = 0.05;                                    // dopo un giro l'orlo raggiunge il corpo in mezzo secondo
+const LZ_ORLOSU = 15;                                     // l'orlo oltre quest'altezza, per più di un attimo, è un telo rovesciato
+// il corpo sotto il telo
+const LZ_ZT = 55.5, LZ_RT = 12.4, LZ_SP = 0.9;            // testa: altezza del centro, raggio, spessore della stoffa
+const LZ_ZS = 38.5, LZ_SX = 18.5, LZ_SY = 10.5, LZ_SZ = 8; // spalle: altezza, semiassi
+const LZ_RB = 13;                                         // busto e gambe
+const LZ_RP = 5.6;                                        // piedi
+const LZ_CIMA = LZ_ZT + LZ_RT + LZ_SP;                    // la cima del telo addosso
+const LZ_RM = 5;                                          // la mano che regge la lanterna (solleva il telo)
+const LZ_KT = 0.08, LZ_GY = 10, LZ_GS = 28, LZ_CY = 6, LZ_GZ = 4;   // il corpo a terra: quanto resta del corpo; di quanto la testa finisce dietro il punto del giocatore (telo largo e telo raccolto lungo il muro); dove sta il centro della stoffa, davanti alla testa; di quanto la testa resta alzata
+const LZ_DPI = 2 * Math.PI;
+
+// i teli: si dicono in chat con una parola. Tinte di stoffa, non da giocattolo. b base, s ombra delle pieghe, l cresta chiara, d interno del telo.
+// Gli ultimi tre sono a disegno: a il colore del disegno. Stesse tinte sul pavimento e sotto la lanterna: la prova è in prove/lenzuolo-colori.mjs
+const LENZUOLI = [
+  { n: 'Rosso',    b: '#b9252b', s: '#661314', l: '#de6f63', d: '#36090b' },
+  { n: 'Turchese', b: '#0db6c8', s: '#075f69', l: '#8be0e3', d: '#07393f' },
+  { n: 'Senape',   b: '#d8b13d', s: '#8c6a14', l: '#f2dc90', d: '#48370c' },
+  { n: 'Viola',    b: '#8b50c2', s: '#4a2474', l: '#c19ae6', d: '#2a1442' },
+  { n: 'Verde',    b: '#1a7d5c', s: '#0a4a36', l: '#69c3a3', d: '#082c21' },
+  { n: 'Zucca',    b: '#c9620f', s: '#7c3806', l: '#f0a05e', d: '#3d1d05' },
+  { n: 'Blu',      b: '#2e49a3', s: '#141f5e', l: '#6f8fe0', d: '#0b1334' },
+  { n: 'Confetto', b: '#e486a0', s: '#a24b66', l: '#f6c1d0', d: '#502433' },
+  { n: 'Panna',    b: '#eeebe2', s: '#8d8b88', l: '#ffffff', d: '#4d4b4a' },
+  { n: 'Oliva',    b: '#979b5e', s: '#565a2c', l: '#cdd09a', d: '#2d2f14' },
+  { n: 'Grigio',   b: '#7b7f90', s: '#444753', l: '#b3b7c6', d: '#292b33' },
+  { n: 'Nero',     b: '#2b2d36', s: '#15161b', l: '#8a8d9a', d: '#0b0b0e', c: 'rgb(84,82,88)', fori: true },   // c: la luce calda del Nero. Se schiarisse come le altre tinte diventerebbe un grigio
+  { n: 'Righe',    b: '#e4dbc7', s: '#8f8776', l: '#fbf6ea', d: '#4a4640', a: '#2d4274', m: 'righe' },
+  { n: 'Pois',     b: '#3b2c4d', s: '#1d1428', l: '#7a6890', d: '#120c1a', a: '#e8dcc2', m: 'pois', fori: true },
+  { n: 'Quadri',   b: '#e6d9c2', s: '#928672', l: '#fbf4e6', d: '#4c463d', a: '#a93f3a', m: 'quadri' },
+];
+const lzNebbia = { n: 'Nebbia', b: '#8b8f99', s: '#55585f', l: '#a9acb4', d: '#33353a' };      // nella nebbia non si vede di chi è
+
+// per l'host: il primo telo che nessuno ha. presi: gli indici già assegnati. Nessun DOM, si può chiamare anche lontano dalla canvas.
+function teloLibero(presi) {
+  const n = LENZUOLI.length, a = presi || [];
+  for (let i = 0; i < n; i++) if (a.indexOf(i) < 0) return i;
+  return a.length % n;                                                                          // più di quindici non si gioca: resta un numero valido
+}
+
+// ---------- la forma: uguale per tutti tranne quattro varianti dell'orlo ----------
+let lzTopo = null;
+const lzForme = [];
+
+function lzCaso(s) { let v = (s * 2654435761) >>> 0; return () => { v ^= v << 13; v >>>= 0; v ^= v >>> 17; v ^= v << 5; v >>>= 0; return v / 4294967296; }; }
+function lzI(i, j) { return i === 0 ? 0 : 1 + (i - 1) * LZ_C + ((j % LZ_C) + LZ_C) % LZ_C; }
+
+function lzTopologia() {
+  if (lzTopo) return lzTopo;
+  const a = [], b = [], gr = {};
+  const metti = (p, q) => { a.push(p); b.push(q); };
+  gr.r0 = 0;                                                     // lungo le colonne, dalla testa in giù (così il tiro scende in un giro)
+  for (let i = 0; i < LZ_R; i++) for (let j = 0; j < LZ_C; j++) metti(lzI(i, j), lzI(i + 1, j));
+  gr.r1 = a.length; gr.a0 = a.length;                            // lungo gli anelli
+  for (let i = 1; i <= LZ_R; i++) for (let j = 0; j < LZ_C; j++) metti(lzI(i, j), lzI(i, j + 1));
+  gr.a1 = a.length; gr.d0 = a.length;                            // in diagonale, a scacchi: tiene la trama
+  for (let i = 1; i < LZ_R; i++) for (let j = 0; j < LZ_C; j++) { if ((i + j) & 1) metti(lzI(i, j), lzI(i + 1, j + 1)); else metti(lzI(i, j + 1), lzI(i + 1, j)); }
+  gr.d1 = a.length; gr.p0 = a.length;                            // la memoria delle pieghe lungo gli anelli
+  for (let i = 3; i < LZ_R - 1; i++) for (let j = 0; j < LZ_C; j++) metti(lzI(i, j), lzI(i, j + 2));
+  gr.p1 = a.length; gr.c0 = a.length;                            // la rigidità lungo le colonne
+  for (let i = 2; i < LZ_R; i++) for (let j = 0; j < LZ_C; j++) metti(lzI(i - 1, j), lzI(i + 1, j));
+  gr.c1 = a.length; gr.b0 = a.length;                            // sugli ultimi due anelli la stoffa resiste a piegarsi di colpo: gli angoli si arrotondano invece di spezzarsi
+  for (let i = LZ_R - 1; i <= LZ_R; i++) for (let j = 0; j < LZ_C; j++) metti(lzI(i, j), lzI(i, j + 2));
+  gr.b1 = a.length;
+  lzTopo = { ca: Int16Array.from(a), cb: Int16Array.from(b), gr, nc: a.length };
+  return lzTopo;
+}
+
+// dove si poggia una colonna del telo a distanza s dalla cima: testa, tenda fino alla spalla, gonna, poi strascico a terra
+function lzProfilo(s, th, rO, out) {
+  const c = Math.cos(th), d = Math.sin(th), rS = 1 / Math.sqrt(c * c / (LZ_SX * LZ_SX) + d * d / (LZ_SY * LZ_SY)) + LZ_SP;
+  const R = LZ_RT + LZ_SP, fi = 1.2, s1 = R * fi, ax = R * Math.sin(fi), az = LZ_ZT + R * Math.cos(fi);
+  if (s <= s1) { out.r = R * Math.sin(s / R); out.z = LZ_ZT + R * Math.cos(s / R); return; }
+  const bx = rS, bz = LZ_ZS + 2, s2 = s1 + Math.hypot(bx - ax, az - bz);
+  if (s <= s2) { const u = (s - s1) / (s2 - s1); out.r = ax + (bx - ax) * u; out.z = az + (bz - az) * u; return; }
+  const s3 = s2 + Math.hypot(rO - bx, bz);
+  if (s <= s3) { const u = (s - s2) / (s3 - s2), g = u * u; out.r = bx + (rO - bx) * (0.35 * u + 0.65 * g); out.z = bz * (1 - u); return; }
+  out.r = rO + (s - s3); out.z = 0;
+}
+
+function lzForma(k) {
+  if (lzForme[k]) return lzForme[k];
+  const T = lzTopologia(), N = LZ_N, C = LZ_C, R = LZ_R, rnd = lzCaso(1237 + k * 977);
+  const px = new Float32Array(N), py = new Float32Array(N), pz = new Float32Array(N);        // la posa drappeggiata (faccia verso chi guarda)
+  const fx = new Float32Array(N), fy = new Float32Array(N), fz = new Float32Array(N);        // il telo steso, aperto
+  const lra = new Float32Array(N), bas = new Float32Array(N);                                // distanza massima dalla cima; rilievi a terra
+  const f = [0, 0.09, 0.18, 0.28, 0.4, 0.55, 0.74, 1];                                        // gli anelli: fitti sulla testa
+  const a0 = 72.5, pw = 2.7, spig = rnd() * LZ_DPI;                                             // mezzo lato; gli spigoli del lenzuolo
+  const ph = [rnd() * 6.28, rnd() * 6.28, rnd() * 6.28, rnd() * 6.28, rnd() * 6.28];
+  const A = [0, 0, 0, 0.5, 2.2, 4, 5.4, 6.4];                                               // quanto sono profonde le pieghe, anello per anello
+  const o = { r: 0, z: 0 };
+  pz[0] = LZ_ZT + LZ_RT + LZ_SP; fz[0] = 0;
+  for (let j = 0; j < C; j++) {
+    const th = j / C * LZ_DPI, cu = Math.abs(Math.cos(th - spig)), si = Math.abs(Math.sin(th - spig));
+    const L = a0 / Math.pow(Math.pow(cu, pw) + Math.pow(si, pw), 1 / pw) * (1 + 0.035 * Math.sin(3 * th + ph[0]) + 0.02 * (rnd() - 0.5));
+    const rO = 20.5 + 3.2 * Math.cos(th) ** 2 + 1.2 * Math.sin(3 * th + ph[1]);             // l'orlo: più largo ai fianchi
+    for (let i = 1; i <= R; i++) {
+      const u = i <= 4 ? 0 : (i - 4) / (R - 4), Lc = a0 + (L - a0) * u * u, s = f[i] * Lc;
+      lzProfilo(s, th, rO, o);
+      const n = lzI(i, j), tw = 0.3 * f[i];
+      const pieg = 0.62 * Math.cos(5 * th + ph[2] + tw) + 0.5 * Math.cos(7 * th + ph[3] - tw) + 0.3 * Math.cos(3 * th + ph[4]);
+      const r = o.r + A[i] * pieg;
+      px[n] = r * Math.cos(th); py[n] = r * Math.sin(th); pz[n] = o.z;
+      fx[n] = s * Math.cos(th); fy[n] = s * Math.sin(th);
+      lra[n] = s * 1.015; bas[n] = i >= 6 ? 0.25 + rnd() * 1.1 : 0.2 + rnd() * 0.3;
+    }
+  }
+  // la posa non deve entrare nel corpo
+  const fin = new Lenzuolo({ c: 0 }, null, { px, py, pz }); fin.mz = -60;
+  for (let p = 0; p < 3; p++) fin.scosta(px, py, pz);
+  // le lunghezze a riposo si misurano sulla posa: le pieghe restano nella stoffa come quelle di un lenzuolo stirato
+  const rest = new Float32Array(T.nc), restA = new Float32Array(T.nc);
+  for (let c = 0; c < T.nc; c++) {
+    const a = T.ca[c], b = T.cb[c];
+    rest[c] = Math.hypot(px[b] - px[a], py[b] - py[a], pz[b] - pz[a]);
+    restA[c] = Math.hypot(fx[b] - fx[a], fy[b] - fy[a], fz[b] - fz[a]);
+  }
+  for (let c = T.gr.r0; c < T.gr.r1; c++) rest[c] = restA[c];                                 // lungo le colonne la stoffa non si allunga: vale il telo vero
+  // il mucchio non è una focaccia: ogni colonna arriva dove vuole e un lembo arriva più lontano degli altri
+  const lim = new Float32Array(C), dis = new Float32Array(C), lembo = rnd() * LZ_DPI;
+  for (let j = 0; j < C; j++) {
+    const th = j / C * LZ_DPI; let dl = th - lembo; while (dl > Math.PI) dl -= LZ_DPI; while (dl < -Math.PI) dl += LZ_DPI;
+    lim[j] = 37 + 5 * Math.sin(2 * th + ph[1]) + 3 * Math.sin(3 * th + ph[2]) + 11 * Math.exp(-dl * dl / 0.26);
+    dis[j] = 1 + 0.32 * Math.sin(2 * th + ph[3]) + 0.2 * Math.sin(5 * th + ph[4]);
+  }
+  // le piegoline: pieghe strette che scendono dalle spalle verso l'orlo, solo nel tono. Sono loro a dire «stoffa fine» e non «feltro»
+  const mic = new Float32Array(LZ_DN), W = [0, 0.05, 0.34, 0.66, 0.8, 0.92, 1, 0.82];
+  for (let q = 0; q < 15; q++) {
+    const c0 = rnd() * LZ_DC, der = (rnd() - 0.5) * 0.9, lar = 0.95 + rnd() * 0.7, pro = 0.28 + rnd() * 0.3, ini = 1 + Math.floor(rnd() * 3), e1 = 1 / (2 * lar * lar), e2 = 1 / (2 * lar * lar * 1.7);
+    for (let r = ini; r < LZ_RR; r++) for (let j = 0; j < LZ_DC; j++) {
+      let d = j - c0 - der * r; while (d > LZ_DC / 2) d -= LZ_DC; while (d < -LZ_DC / 2) d += LZ_DC;
+      const e = d - lar * 1.5;
+      mic[1 + r * LZ_DC + j] += W[r] * Math.min(1, (r - ini + 1) / 2) * (-pro * Math.exp(-d * d * e1) + pro * 0.62 * Math.exp(-e * e * e2));
+    }
+  }
+  const F = { px, py, pz, fx, fy, fz, lra, bas, rest, restA, lim, dis, mic, cor: null, gx: [-3, 2, 4, -2][k & 3] };          // gx: da che parte finisce la testa quando il telo crolla
+  lzForme[k] = F;
+  // l'assestamento una volta sola, per ogni forma: poi chi arriva a partita iniziata ha già il telo a posto
+  const l = new Lenzuolo({ c: 0 }, { seme: k }, F);
+  l.pronto = true; l.posa(); l.corpo();
+  for (let p = 0; p < 110; p++) l.passo(0, 0);
+  F.px = l.x.slice(); F.py = l.y.slice(); F.pz = l.z.slice();
+  return F;
+}
+
+// ---------- due disegnini morbidi, una volta sola: l'ombra a terra e l'alone della lanterna ----------
+let lzOmbraT = null, lzAlone = null;
+function lzPrepara() {
+  if (lzOmbraT) return;
+  const o = document.createElement('canvas'); o.width = 96; o.height = 48;
+  const oc = o.getContext('2d'); oc.setTransform(1, 0, 0, 0.5, 0, 0);
+  const g = oc.createRadialGradient(48, 48, 0, 48, 48, 47); g.addColorStop(0, 'rgba(4,4,10,.62)'); g.addColorStop(0.55, 'rgba(4,4,10,.42)'); g.addColorStop(0.82, 'rgba(4,4,10,.14)'); g.addColorStop(1, 'rgba(4,4,10,0)');
+  oc.fillStyle = g; oc.fillRect(0, 0, 96, 96);
+  lzOmbraT = o;
+  const w = document.createElement('canvas'); w.width = w.height = 48; const wc = w.getContext('2d'), gw = wc.createRadialGradient(24, 24, 0, 24, 24, 23.5);
+  gw.addColorStop(0, 'rgba(255,214,140,.5)'); gw.addColorStop(0.3, 'rgba(255,200,120,.14)'); gw.addColorStop(0.65, 'rgba(255,190,110,.04)'); gw.addColorStop(1, 'rgba(255,190,110,0)'); wc.fillStyle = gw; wc.fillRect(0, 0, 48, 48);
+  lzAlone = w;
+}
+
+// i fogli di lavoro del disegno: uno solo, si disegna un personaggio alla volta. Anelli e colonne raddoppiano solo sullo schermo.
+const LZ_RG = [1, 2, 4, 5, 5.5, 6, 6.5, 7], LZ_RR = LZ_RG.length, LZ_DC = LZ_C * 2, LZ_DN = 1 + LZ_DC * LZ_RR, LZ_CL = LZ_DC * LZ_RR;
+const lzGx = new Float32Array(LZ_DN), lzGy = new Float32Array(LZ_DN), lzGz = new Float32Array(LZ_DN), lzSx = new Float32Array(LZ_DN * 3), lzSy = new Float32Array(LZ_DN * 3);       // dopo i nodi, i punti dove le curve di livello tagliano i lati
+const lzTono = new Float32Array(LZ_DN), lzT2 = new Float32Array(LZ_DN), lzCal = new Float32Array(LZ_DN), lzCell = new Uint8Array(LZ_CL);
+// le soglie del tono: due verso il buio, due verso il chiaro. Sono velature: una sopra l'altra fanno la piega, e il disegno del telo resta sotto
+const LZ_LIV = [-0.16, -0.46, 0.2, 0.54], LZ_LIVA = [0.3, 0.42, 0.16, 0.24];
+const LZ_LIVF = [-0.1, -0.24, -0.4, -0.58, -0.84, 0.14, 0.32, 0.56], LZ_LIVFA = [0.18, 0.2, 0.22, 0.26, 0.32, 0.11, 0.14, 0.22];     // nel ritratto, fermo e grande, un passo di sfumatura in più
+const LZ_ORLOC = 4;                                                  // l'orlo cucito si vede solo su tratti dritti di almeno due celle vere
+const LZ_WR = [0, 0.3, 1, 0.5], LZ_WA = [0, 0, 0, 0.1, 0.24, 0.48, 0.74, 1];     // quanto respirano gli anelli delle spalle, quanta aria sentono quelli verso l'orlo
+const LZ_QR = [0, 1, 1, 0, 0, 1, 1, 0], LZ_OTTA = [1, 0.707, 0, -0.707, -1, -0.707, 0, 0.707];     // le file dei quadri, il giro di un pois
+const lzSen = k => { const a = new Float32Array(LZ_DC); for (let j = 0; j < LZ_DC; j++) a[j] = Math.sin(j / LZ_DC * LZ_DPI * k); return a; }, lzCos = k => { const a = new Float32Array(LZ_DC); for (let j = 0; j < LZ_DC; j++) a[j] = Math.cos(j / LZ_DC * LZ_DPI * k); return a; };
+const LZ_S3 = lzSen(3), LZ_C3 = lzCos(3), LZ_S4 = lzSen(4), LZ_C4 = lzCos(4), LZ_S5 = lzSen(5), LZ_C5 = lzCos(5);
+
+function lzRidotto() { try { return !!(typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; } }
+
+class Lenzuolo {
+  constructor(d, o, forma) {
+    d = d || {}; o = o || {};
+    this.c = ((d.c | 0) % LENZUOLI.length + LENZUOLI.length) % LENZUOLI.length; this.m = d.m || LENZUOLI[this.c].m || null;        // m: il disegno sul telo
+    this.seme = o.seme | 0;
+    const n = LZ_N;
+    this.x = new Float32Array(n); this.y = new Float32Array(n); this.z = new Float32Array(n);
+    this.ox = new Float32Array(n); this.oy = new Float32Array(n); this.oz = new Float32Array(n);
+    this.F = forma && forma.lra ? forma : null;
+    this.stato = 'su';      // su · cade · steso · fantasma
+    this.fermoV = lzRidotto();
+    this.pronto = false; this.acc = 0; this.wx = 0; this.wy = 0; this.vx = 0; this.vy = 0; this.vxS = 0; this.vyS = 0;
+    this.dir = Math.PI / 2; this.fa = Math.PI / 2; this.spalle = Math.PI / 2; this.muove = false;
+    this.anda = 0; this.fase = (this.seme * 1.7) % 6.28; this.t = 0; this.tStato = 0;
+    this.hx = 0; this.hy = 0; this.hz = LZ_ZT; this.sx = 0; this.sy = 0; this.sz = LZ_ZS; this.sc = 0; this.ss = 1; this.alz = 0;
+    this.pp = 0; this.p1x = 0; this.p1y = 0; this.p1z = 0; this.p2x = 0; this.p2y = 0; this.p2z = 0;
+    this.lato = 0; this.latoV = 0; this.mx = 21; this.my = 3; this.mz = 30; this.lx = 27; this.ly = 4; this.lz = 19; this.lvx = 0; this.lvy = 0; this.lvz = 0;
+    this.tw = 0; this.storto = 0; this.calmo = 0; this.corpoK = 1; this.ap = 0; this.dorme = false; this.quieto = 0; this.cop = 1; this.xv = 0; this.yv = 0; this.en = 0; this.appeso = true;
+    this.al = 0; this.bl = 0; this.nato = -9; this.pT = -1; this.l0x = 0; this.l0y = 0; this.l0z = 0; this.lfx = 0; this.lfy = 0;
+    this.ev = new Uint8Array(2); this.ev[0] = this.ev[1] = 1; this.ea = new Float32Array(2); this.ea[0] = this.ea[1] = 1;
+    this.rnd = ((this.seme + 1) * 2654435761) >>> 0 || 1; this.bT = 1.5 + this.caso() * 4; this.sgT = 2 + this.caso() * 4; this.sgX = 0;
+    this.gOn = false; this.gX = 0; this.gY = 0; this.gx = 0; this.gy = 0; this.stretto = false; this.capA = 0;
+    if (!forma) { this.F = lzForma(this.seme & 3); this.posa(); }
+    else if (forma.lra) this.posa();
+  }
+
+  // ---------- gli stati ----------
+  posa() { const F = this.F; this.tw = 0; this.x.set(F.px); this.y.set(F.py); this.z.set(F.pz); this.ox.set(F.px); this.oy.set(F.py); this.oz.set(F.pz); this.ruota(this.dir - Math.PI / 2); this.fa = this.spalle = this.dir; }
+  ruota(a) { const c = Math.cos(a), s = Math.sin(a), x = this.x, y = this.y, ox = this.ox, oy = this.oy; for (let n = 0; n < LZ_N; n++) { const u = x[n], v = y[n]; x[n] = u * c - v * s; y[n] = u * s + v * c; const p = ox[n], q = oy[n]; ox[n] = p * c - q * s; oy[n] = p * s + q * c; } }
+  subito() { this.stato = 'su'; this.ap = 0; this.corpoK = 1; this.cop = 1; this.dorme = false; this.quieto = 0; this.nato = -9; this.pT = -1; this.appeso = true; this.posa(); }
+  caso() { let v = this.rnd; v ^= v << 13; v ^= v >>> 17; v ^= v << 5; this.rnd = v >>>= 0; return v / 4294967296; }
+  guarda(x, y) { if (x == null) this.gOn = false; else { this.gOn = true; this.gX = x; this.gY = y; } }
+  // all'impatto la testa di chi sta sotto cede di 3 unità per 0,12 secondi
+  cede() { if (this.stato !== 'cade') return 0; const u = (this.tStato - LZ_TC) / 0.12; return u > 0 && u < 1 ? 3 * Math.sin(Math.PI * u) : 0; }
+  // il telo parte raccolto in alto, si apre stretto come una campana con le sue pieghe, scende sopra la testa e poi l'orlo scivola giù lungo il corpo
+  cadi() {
+    if (lzRidotto()) { this.subito(); return; }               // chi non vuole movimento trova il telo già addosso
+    const F = this.F, x = this.x, y = this.y, z = this.z; this.stato = 'cade'; this.tStato = 0; this.ap = 0.4; this.cop = 0; this.dorme = false; this.quieto = 0; this.corpoK = 1; this.appeso = false; this.nato = 1e9; this.pT = -1; this.ev[0] = this.ev[1] = 1; this.ea[0] = this.ea[1] = 1;
+    const a = this.seme * 2.1;
+    for (let n = 0; n < LZ_N; n++) { x[n] = F.px[n] * 0.3 + 3 * Math.sin(n * 7.1 + a); y[n] = F.py[n] * 0.3 + 2.5 * Math.sin(n * 3.3 + a); z[n] = LZ_Z0 + (F.pz[n] - LZ_CIMA) * 0.2 + 3 * Math.sin(n * 5.7 + a); }
+    this.ox.set(x); this.oy.set(y); this.oz.set(z);
+  }
+  // la lanterna cade dove stava la mano e si rovescia accanto al mucchio: dice anche dove è successo
+  // stretto: lo spazio non basta, il telo si raccoglie lungo il muro con la testa in fondo. La testa si gira verso chi guarda: il corpo si deve capire senza leggere nulla
+  spegni(stretto) {
+    if (this.stato === 'steso') return;
+    this.stato = 'steso'; this.tStato = 0; this.dorme = false; this.quieto = 0; this.appeso = true; this.capA = this.fa - Math.PI / 2; this.dir = Math.PI / 2; this.stretto = !!stretto;
+    const a = this.lx >= 0 ? 0.32 : Math.PI - 0.32, j = ((Math.round((a - this.fa + Math.PI / 2) / LZ_DPI * LZ_C) % LZ_C) + LZ_C) % LZ_C, r = stretto ? 33 : Math.min(this.F.lim[j] * 1.02, 46) + 9;
+    this.l0x = this.lx; this.l0y = this.ly; this.l0z = this.lz; this.lfx = Math.cos(a) * r; this.lfy = Math.sin(a) * r;
+  }
+  fantasma(si) { if (this.stato === 'steso' || this.stato === 'cade') this.subito(); this.stato = si ? 'fantasma' : 'su'; this.tStato = 0; this.dorme = false; this.quieto = 0; }
+  copre() { return this.cop; }
+  cima() { return (this.stato === 'steso' ? 22 : this.z[0]) * LZ_KZ; }
+  // il mucchio finito, una volta sola per forma: serve a chi si spegne dove nessuno guarda
+  mucchio() {
+    const F = this.F, k = this.stretto ? 'mS' : 'mL';
+    if (!F[k]) { const l = new Lenzuolo({ c: 0 }, { seme: 0 }, F); l.pronto = true; l.corpo(); l.spegni(this.stretto); for (let p = 0; p < 170; p++) l.passo(0, 0); F[k] = [l.x.slice(), l.y.slice(), l.z.slice()]; }
+    this.capA = 0; const m = F[k]; this.x.set(m[0]); this.y.set(m[1]); this.z.set(m[2]); this.ox.set(m[0]); this.oy.set(m[1]); this.oz.set(m[2]); this.corpoK = LZ_KT; this.ap = 0.14; this.dorme = true; this.cop = 1; this.tStato = 9;
+    this.fa = this.spalle = this.dir = Math.PI / 2; this.corpo();
+  }
+
+  // ---------- un passo della stoffa ----------
+  corpo() {
+    const v = this.t, f = this.fase, an = this.anda, cf = Math.cos(this.fa), sf = Math.sin(this.fa), sp = Math.sin(f), cp = Math.cos(f);
+    const lean = an * 0.55;
+    const acX = (this.vx - this.vxS) * 2, acY = (this.vy - this.vyS) * 2;
+    const px = -sf, py = cf, ond = sp * 2.2 * an, lX = cf * 2.6 * lean + acX * 2.4, lY = sf * 2.6 * lean + acY * 2.4;
+    const fant = this.stato === 'fantasma', alt = this.alz = this.alz + ((fant ? 14 + 2.4 * Math.sin(v * 1.7 + this.seme) : 0) - this.alz) * 0.05;
+    const crolla = this.stato === 'steso' ? this.corpoK : 1;
+    this.hx = lX + px * ond; this.hy = lY + py * ond; this.hz = (LZ_ZT + alt - Math.abs(sp) * 1.5 * an) * crolla - this.cede();
+    if (this.stato === 'steso') { const g = 1 - crolla; this.hx += this.F.gx * g; this.hy -= (this.stretto ? LZ_GS : LZ_GY) * g; this.hz += LZ_GZ * g; }      // cadendo la testa va dietro il centro del telo: il corpo si stende davanti a lei
+    this.sx = lX * 0.55 + px * ond * 0.6; this.sy = lY * 0.55 + py * ond * 0.6; this.sz = (LZ_ZS + alt - Math.abs(sp) * 1.1 * an) * crolla;
+    const a = this.spalle + LZ_TORCE * sp * an; this.sc = Math.cos(a); this.ss = Math.sin(a);
+    // i piedi vanno avanti e indietro: quello in aria alza l'orlo, una volta da un lato e una dall'altro
+    const pas = 16 * sp * an, sol = LZ_PIEDE * an, al = this.al = cp > 0 ? Math.sqrt(cp) * sol : 0, bl = this.bl = cp < 0 ? Math.sqrt(-cp) * sol : 0;
+    this.p1x = cf * pas + px * 10; this.p1y = sf * pas + py * 10; this.p1z = 3 + al * 0.6 + alt;
+    this.p2x = -cf * pas - px * 10; this.p2y = -sf * pas - py * 10; this.p2z = 3 + bl * 0.6 + alt;
+    // la mano con la lanterna: a destra o a sinistra, passando davanti e mai dietro
+    const ml = Math.cos(this.lato), ms = Math.sin(this.lato), oscilla = sp * 2.2 * an;
+    this.mx = ml * 20 + this.sx * 0.8 + px * oscilla * 0.3; this.my = ms * 19 + 2 + this.sy * 0.8 + oscilla * 0.6; this.mz = (30.5 + alt + Math.abs(cp) * 0.9 * an) * crolla;
+    if (fant) { this.mz = this.p1z = this.p2z = -60; this.al = this.bl = 0; }         // il fantasma non ha piedi né lanterna
+  }
+
+  // porta fuori dal corpo una posa (x,y,z): serve anche alla forma, a telo fermo
+  scosta(x, y, z) {
+    const hR = LZ_RT + LZ_SP, hR2 = hR * hR, hx = this.hx, hy = this.hy, hz = this.hz, sx = this.sx, sy = this.sy, sz = this.sz, c = this.sc, s = this.ss;
+    const rb = LZ_RB + LZ_SP, ia = 1 / (LZ_SX + LZ_SP), ib = 1 / (LZ_SY + LZ_SP), ic = 1 / (LZ_SZ + LZ_SP), rM = LZ_RM + LZ_SP, rM2 = rM * rM, rP = LZ_RP + LZ_SP, rP2 = rP * rP;
+    const mx = this.mx, my = this.my, mz = this.mz, p1x = this.p1x, p1y = this.p1y, p1z = this.p1z, p2x = this.p2x, p2y = this.p2y, p2z = this.p2z, cima = sz - 2;
+    for (let n = 1; n < LZ_N; n++) {
+      let X = x[n], Y = y[n], Z = z[n], dx = X - hx, dy = Y - hy, dz = Z - hz, d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < hR2 && d2 > 1e-4) { const q = hR / Math.sqrt(d2); X = hx + dx * q; Y = hy + dy * q; Z = hz + dz * q; }
+      // spalle: un ellissoide girato come il corpo
+      dx = X - sx; dy = Y - sy; dz = Z - sz;
+      const a = (dx * s - dy * c), b = (dx * c + dy * s);          // a di lato, b avanti
+      const ua = a * ia, ub = b * ib, uc = dz * ic, e = ua * ua + ub * ub + uc * uc;
+      if (e < 1 && e > 1e-4) { const q = 1 / Math.sqrt(e), ra = a * q, rb2 = b * q; X = sx + ra * s + rb2 * c; Y = sy - ra * c + rb2 * s; Z = sz + dz * q; }
+      if (Z < cima) {
+        dx = X - sx * 0.6; dy = Y - sy * 0.6; d2 = dx * dx + dy * dy;
+        if (d2 < rb * rb && d2 > 1e-4) { const q = rb / Math.sqrt(d2); X = sx * 0.6 + dx * q; Y = sy * 0.6 + dy * q; }
+      }
+      dx = X - mx; dy = Y - my; dz = Z - mz; d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < rM2 && d2 > 1e-4) { const q = rM / Math.sqrt(d2); X = mx + dx * q; Y = my + dy * q; Z = mz + dz * q; }
+      if (n > 1 + LZ_C * 4) {
+        dx = X - p1x; dy = Y - p1y; dz = Z - p1z; d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < rP2 && d2 > 1e-4) { const q = rP / Math.sqrt(d2); X = p1x + dx * q; Y = p1y + dy * q; Z = p1z + dz * q; }
+        dx = X - p2x; dy = Y - p2y; dz = Z - p2z; d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < rP2 && d2 > 1e-4) { const q = rP / Math.sqrt(d2); X = p2x + dx * q; Y = p2y + dy * q; Z = p2z + dz * q; }
+      }
+      x[n] = X; y[n] = Y; z[n] = Z;
+    }
+  }
+
+  // dX, dY: quanto si è spostato il corpo in questo passo
+  passo(dX, dY) {
+    const h = LZ_H, F = this.F, T = lzTopo, x = this.x, y = this.y, z = this.z, ox = this.ox, oy = this.oy, oz = this.oz, st = this.stato;
+    this.t += h; this.tStato += h;
+    // il corpo: velocità, passo, sguardo
+    const d = Math.sqrt(dX * dX + dY * dY); let kT = 1; if (d > LZ_TIRO) kT = LZ_TIRO / d;
+    const vT = 0.3, vP = this.vx, vQ = this.vy; this.vx += (dX * kT * LZ_INERZIA - this.vx) * vT; this.vy += (dY * kT * LZ_INERZIA * 1.2 - this.vy) * vT;
+    const vX = this.vx, vY = this.vy, fX = (vX - vP) * LZ_FRUSTA, fY = (vY - vQ) * LZ_FRUSTA; this.vxS += (vX - this.vxS) * 0.14; this.vyS += (vY - this.vyS) * 0.14;
+    this.anda += ((this.muove && st !== 'steso' ? Math.min(1, d / 1.6) : 0) - this.anda) * 0.16;
+    this.fase += LZ_DPI * 1.75 * h * (0.45 + 0.55 * this.anda);
+    let dA = this.dir - this.fa; while (dA > Math.PI) dA -= LZ_DPI; while (dA < -Math.PI) dA += LZ_DPI;
+    const rot = Math.max(-0.17, Math.min(0.17, dA * 0.16)), rotT = st === 'steso' ? 0 : rot; this.fa += rot;      // (a terra gira solo lo sguardo: la stoffa resta dov'è)
+    let dS = this.fa - this.spalle; while (dS > Math.PI) dS -= LZ_DPI; while (dS < -Math.PI) dS += LZ_DPI; this.spalle += dS * 0.13;
+    // la lanterna cambia mano passando davanti
+    const cd = Math.cos(this.fa), tg = Math.abs(cd) > 0.5 ? 1.57 - cd * 0.8 : this.lato > 1.57 ? Math.PI : 0;
+    this.latoV += (tg - this.lato) * 0.03; this.latoV *= 0.8; this.lato += this.latoV;
+    if (st === 'steso') this.corpoK += (LZ_KT - this.corpoK) * Math.min(1, this.tStato * 0.34);
+    this.corpo();
+    const appeso = st !== 'steso' && (st !== 'cade' || this.tStato >= LZ_TC);
+    this.appeso = appeso;
+    // arrivato sulla testa il telo riprende la sua misura di telo addosso; steso resta un po' raccolto
+    if (st === 'cade') {
+      if (appeso) { this.cop = Math.min(1, this.cop + 0.04); this.ap = Math.max(0, this.ap - 0.03); }
+      if (this.nato > 1e8 && this.tStato >= LZ_TC + 0.74) { this.nato = this.t; this.bT = this.t + 0.42; }      // il telo è fermo sulla testa: qui nasce il personaggio
+      if (this.tStato > LZ_TC + 1.25) { this.stato = 'su'; this.cop = 1; this.ap = 0; }
+    } else if (st === 'steso') this.ap = Math.min(0.14, this.ap + 0.008);
+    // integra: il corpo si sposta, la stoffa resta dov'era finché qualcosa non la tira
+    this.calmo = this.muove || d > 0.01 || Math.abs(dA) > 0.01 || st === 'cade' ? 0 : this.calmo + 1;   // dopo un secondo fermo la stoffa si calma e si addormenta
+    const aria = st === 'cade' && !appeso ? 0.88 : st === 'fantasma' ? 0.965 : LZ_ARIA - 0.1 * Math.max(0, Math.min(1, (this.calmo - 34) / 44)), gi = st === 'cade' && !appeso ? 0 : LZ_G, tt = this.t;
+    const nO = 1 + (LZ_R - 2) * LZ_C, kO = LZ_INERZIA_O / LZ_INERZIA;
+    for (let n = 0; n < LZ_N; n++) {
+      const orlo = n >= nO, sX = orlo ? vX * kO : vX, sY = orlo ? vY * kO : vY, X = x[n] - sX, Y = y[n] - sY, Z = z[n];
+      let wx = (x[n] - ox[n]) * aria, wy = (y[n] - oy[n]) * aria, wz = (Z - oz[n]) * aria - gi;
+      if (orlo) { wx -= fX; wy -= fY; if (st === 'su') wz -= LZ_ORLOG * this.anda; }                                                // il corpo frena e l'orlo continua: la frusta
+      if (wx * wx + wy * wy + wz * wz > 36) { wx *= 0.5; wy *= 0.5; wz *= 0.5; }     // niente esplosioni
+      ox[n] = X; oy[n] = Y; oz[n] = Z;
+      x[n] = X + wx; y[n] = Y + wy; z[n] = Z + wz;
+    }
+    // nell'aria il telo è una campana stretta, con le pieghe e l'orlo del telo vero: si apre in un attimo, ondeggia mentre scende, l'orlo resta indietro e sbatte
+    if (st === 'cade' && !appeso) {
+      const q = this.tStato, u = Math.min(1, q / LZ_TC), ap0 = 1 - Math.min(1, q / 0.3), o = 0.3 + 0.7 * (1 - ap0 * ap0 * ap0), zc = LZ_Z0 + (this.hz + LZ_RT + LZ_SP - LZ_Z0) * u * u * (0.55 + 0.45 * u);
+      const gi2 = this.fa - Math.PI / 2 + 0.7 * (1 - u) * (1 - u), c = Math.cos(gi2) * o, s = Math.sin(gi2) * o, px = F.px, py = F.py, pz = F.pz, sw = 5 * (1 - u) * Math.sin(tt * 3.4 + this.seme), kz = LZ_VOLOZ * o;
+      for (let n = 0; n < LZ_N; n++) {
+        const a = px[n], b = py[n], e = 1 - pz[n] / LZ_CIMA, e2 = e * e, fl = 1 + LZ_VOLOR * e2 * (1 + 0.3 * Math.sin(tt * 9 + a * 0.09 + b * 0.05 + this.seme)), fo = 0.3 - 0.14 * e;
+        x[n] += (this.hx + sw * (1 - 0.7 * e) + (a * c - b * s) * fl - x[n]) * fo; y[n] += (this.hy + (a * s + b * c) * fl - y[n]) * fo; z[n] += (zc - (LZ_CIMA - pz[n]) * kz + e2 * 3.6 * Math.cos(tt * 7.4 + b * 0.09 - a * 0.06) - z[n]) * fo;
+      }
+    }
+    if (st === 'fantasma') for (let n = 1 + 4 * LZ_C; n < LZ_N; n++) { const r = (n - 1) % LZ_C * 0.2618; x[n] += 0.05 * Math.sin(tt * 1.9 + r * 3); y[n] += 0.04 * Math.cos(tt * 1.6 + r * 2); }
+    // il girarsi: la cima del telo gira con la testa, il resto segue tardi. Tardi, non mai: quello che l'orlo ha lasciato indietro (tw) lo recupera piano,
+    // se no a forza di girarsi la stoffa si attorciglia attorno al corpo come una corda e l'orlo sale
+    this.tw += rotT * 0.58;
+    const segue = this.tw * LZ_SEGUE; this.tw -= segue;
+    if (Math.abs(rotT) > 1e-4 || Math.abs(segue) > 1e-4) {
+      const hx = this.hx, hy = this.hy;
+      for (let i = 1; i <= LZ_R; i++) {
+        const w = (i <= 4 ? rotT : i === 5 ? rotT * 0.86 + segue * 0.24 : i === 6 ? rotT * 0.62 + segue * 0.655 : rotT * 0.42 + segue), c = Math.cos(w), s = Math.sin(w), a = 1 + (i - 1) * LZ_C;
+        for (let n = a; n < a + LZ_C; n++) { const u = x[n] - hx, v = y[n] - hy; x[n] = hx + u * c - v * s; y[n] = hy + u * s + v * c; const p = ox[n] - hx, q = oy[n] - hy; ox[n] = hx + p * c - q * s; oy[n] = hy + p * s + q * c; }
+      }
+    }
+    // i vincoli: dalla testa in giù
+    const ax = this.hx, ay = this.hy, az = this.hz + LZ_RT + LZ_SP;
+    if (appeso) { const q = st === 'cade' ? 0.3 : 1; x[0] += (ax - x[0]) * q; y[0] += (ay - y[0]) * q; z[0] += (az - z[0]) * q; ox[0] = x[0] - (x[0] - ox[0]) * 0.3; oy[0] = y[0] - (y[0] - oy[0]) * 0.3; oz[0] = z[0] - (z[0] - oz[0]) * 0.3; }
+    const G = T.gr, ap = this.ap, rest = F.rest, restA = F.restA, ca = T.ca, cb = T.cb;
+    if (st !== 'cade' || appeso) {
+      const kR = st === 'steso' ? 0.3 : 1, q1 = st === 'cade' ? 1 - ap : 1, K = lzK;        // finché il telo è aperto si può solo arricciare: niente memoria delle pieghe
+      K[0] = ap;
+      for (let g = 0; g < 2; g++) {
+        K[1] = 1; K[2] = kR; K[3] = appeso ? 0.12 : 0.5; lzVincola(x, y, z, ca, cb, rest, restA, G.r0, G.r1);
+        K[1] = 0.85; K[2] = 0.3 * q1; K[3] = 0.5; lzVincola(x, y, z, ca, cb, rest, restA, G.a0, G.a1);
+        if (appeso) { x[0] += (ax - x[0]) * 0.9; y[0] += (ay - y[0]) * 0.9; z[0] += (az - z[0]) * 0.9; }
+      }
+      K[1] = 0.5; K[2] = 0.12 * q1; lzVincola(x, y, z, ca, cb, rest, restA, G.d0, G.d1);
+      K[1] = 0.14 * q1; K[2] = 0.2 * q1; lzVincola(x, y, z, ca, cb, rest, restA, G.p0, G.p1);
+      K[1] = 0.28 * q1; K[2] = 0.3 * q1; lzVincola(x, y, z, ca, cb, rest, restA, G.c0, G.c1);
+      K[1] = (st === 'steso' ? 0.2 : 0.7) * q1; K[2] = (st === 'steso' ? 0.12 : 0.7) * q1; lzVincola(x, y, z, ca, cb, rest, restA, G.b0, G.b1);
+    }
+    // l'assestamento: gli ultimi attimi della caduta accompagnano la stoffa alla sua posa, così qualunque cosa sia successa nell'aria il telo finisce bene
+    if (st === 'cade' && appeso && this.tStato > LZ_TC + 0.14) {
+      const k = Math.min(0.2, (this.tStato - LZ_TC - 0.14) * 0.3), g = this.fa - Math.PI / 2, c = Math.cos(g), s = Math.sin(g), px = F.px, py = F.py, pz = F.pz;
+      for (let n = 1; n < LZ_N; n++) { const a = px[n], b = py[n]; x[n] += (a * c - b * s - x[n]) * k; y[n] += (a * s + b * c - y[n]) * k; z[n] += (pz[n] - z[n]) * k; }
+    }
+    // la rete di sicurezza: se la stoffa si impiglia nella mano o nel corpo e l'orlo resta su, la posa la riporta giù in un attimo, come una stoffa che ricade.
+    // Una frusta normale dura meno e qui non arriva: entra solo chi resta rovesciato
+    if (st === 'su') {
+      let zo = 0; for (let n = 1 + (LZ_R - 1) * LZ_C; n < LZ_N; n += 2) zo += z[n];
+      zo /= LZ_C / 2; this.storto = zo > LZ_ORLOSU ? Math.min(1, this.storto + 0.07) : zo < 8 ? Math.max(0, this.storto - 0.05) : this.storto;   // (lascia solo quando l'orlo è tornato giù)
+      if (this.storto > 0.2) {
+        const k = 0.16 * (this.storto - 0.2), g = this.fa - Math.PI / 2, c = Math.cos(g), s = Math.sin(g), px = F.px, py = F.py, pz = F.pz;
+        for (let n = 1 + 2 * LZ_C; n < LZ_N; n++) { const a = px[n], b = py[n]; x[n] += (a * c - b * s - x[n]) * k; y[n] += (a * s + b * c - y[n]) * k; z[n] += (pz[n] - z[n]) * k; }
+        this.tw *= 0.9;
+      }
+    }
+    // corpo e pavimento
+    if ((st !== 'steso' || this.corpoK > 0.3) && (st !== 'cade' || appeso)) this.scosta(x, y, z);
+    if (st === 'steso') {             // a terra la testa resta una gobba sotto la stoffa, davanti a lei il corpo: una spalla di stoffa, l'aria sotto, mai un adesivo. L'allargarsi si ferma dove l'orlo ha toccato terra
+      if (this.corpoK <= 0.3) {
+        const hx = this.hx, hy = this.hy, hz = this.hz, hR = LZ_RT + LZ_SP - 1, hR2 = hR * hR;
+        // la cima del telo resta calzata sulla testa come un berretto: è lei a fare la gobba, e con la gobba il corpo si capisce senza leggere nulla
+        const kc = Math.min(0.3, 0.05 + (0.3 - this.corpoK) * 2), cc = Math.cos(this.capA), sc = Math.sin(this.capA), fx = F.fx, fy = F.fy;
+        x[0] += (hx - x[0]) * kc; y[0] += (hy - y[0]) * kc; z[0] += (hz + hR - z[0]) * kc;
+        for (let n = 1; n < 1 + 3 * LZ_C; n++) {
+          const a = fx[n], b = fy[n], s0 = Math.sqrt(a * a + b * b), fi = s0 / hR, r = hR * Math.sin(fi) / s0;
+          x[n] += (hx + (a * cc - b * sc) * r - x[n]) * kc; y[n] += (hy + (a * sc + b * cc) * r - y[n]) * kc; z[n] += (hz + hR * Math.cos(fi) - z[n]) * kc;
+        }
+        for (let n = 0; n < LZ_N; n++) {
+          const dx = x[n] - hx, dy = y[n] - hy, dz = z[n] - hz, d2 = dx * dx + dy * dy + dz * dz; if (d2 >= hR2 || d2 < 1e-4) continue;
+          if (dz >= 0) { const q = hR / Math.sqrt(d2); x[n] = hx + dx * q; y[n] = hy + dy * q; z[n] = hz + dz * q; }
+          else { const m = Math.sqrt(dx * dx + dy * dy) + 1e-3, q = Math.sqrt(hR2 - dz * dz) / m; x[n] = hx + dx * q; y[n] = hy + dy * q; }
+        }
+      }
+      const lim = F.lim, dis = F.dis, str = this.stretto, cy = str ? 0 : LZ_CY, cm = str ? 12 : LZ_CY + 5, ra = 1 / 25, rb = 1 / 70;
+      for (let i = 1; i <= LZ_R; i++) {
+        const a = 1 + (i - 1) * LZ_C, w = i < 5 ? 0 : i === 5 ? 0.66 : i === 6 ? 0.83 : 1;
+        for (let j = 0; j < LZ_C; j++) {
+          const n = a + j, X = x[n], Y = y[n], Yc = Y - cy, Ym = Y - cm, r2 = X * X + Yc * Yc, m = 6.5 * dis[j] * Math.exp(-(X * X + Ym * Ym * (str ? 0.2 : 1)) / 380); if (z[n] < m) z[n] += (m - z[n]) * 0.2;
+          if (w <= 0) continue;
+          if (str) {
+            const u = X * ra, v = Y * rb, e2 = u * u + v * v;
+            if (e2 > w * w) { const q = (1 - w / Math.sqrt(e2)) * 0.34; x[n] -= X * q; y[n] -= Y * q; }
+            else if (i > 5) y[n] += Y * 0.018;                 // la stoffa si stira lungo il muro
+          } else { const L = lim[j] * w; if (r2 > L * L) { const q = (1 - L / Math.sqrt(r2)) * 0.34; x[n] -= X * q; y[n] -= Yc * q; } }
+        }
+      }
+    }
+    // i piedi sollevano l'orlo: un rigonfiamento che sale sotto la stoffa e la lascia ricadere, a ogni passo
+    if (st === 'su' && this.anda > 0.04) {
+      const r2 = LZ_RL * LZ_RL, ir = 1 / r2, lx = -Math.sin(this.fa) * LZ_FIANCO, ly = Math.cos(this.fa) * LZ_FIANCO, p1x = this.p1x + lx, p1y = this.p1y + ly, p2x = this.p2x - lx, p2y = this.p2y - ly, a1 = this.al, a2 = this.bl;
+      for (let n = nO; n < LZ_N; n++) {
+        const X = x[n], Y = y[n], d1 = (X - p1x) * (X - p1x) + (Y - p1y) * (Y - p1y), d2 = (X - p2x) * (X - p2x) + (Y - p2y) * (Y - p2y);
+        let m = 0; if (d1 < r2) m = a1 * (1 - d1 * ir); if (d2 < r2) { const b = a2 * (1 - d2 * ir); if (b > m) m = b; }
+        if (z[n] < m) z[n] += (m - z[n]) * 0.55;
+      }
+    }
+    // la mano stringe la stoffa: i nodi più vicini vengono raccolti sul pugno, così le pieghe convergono lì e il filo parte da lì
+    if (st === 'su' && this.mz > 0) {
+      const mx = this.mx, my = this.my, mz = this.mz, ml = LZ_PUGNO / (Math.sqrt(mx * mx + my * my) + 1e-3), gx = mx + mx * ml, gy = my + my * ml, r2 = LZ_PZ * LZ_PZ, ir = 1 / r2;
+      let mi = 1e9, nn = -1;
+      for (let n = 1 + 3 * LZ_C; n < 1 + 6 * LZ_C; n++) {
+        const dx = x[n] - gx, dy = y[n] - gy, dz = z[n] - mz, d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < mi) { mi = d2; nn = n; }
+        if (d2 < r2) { const w = 1 - d2 * ir, k = w * w * 0.5; x[n] -= dx * k; y[n] -= dy * k; z[n] -= dz * k; }
+      }
+      if (nn > 0 && mi >= r2 * 0.2) { x[nn] += (gx - x[nn]) * 0.3; y[nn] += (gy - y[nn]) * 0.3; z[nn] += (mz - z[nn]) * 0.3; }      // anche se il telo vola via, un lembo resta nel pugno
+    }
+    // nessun nodo più lontano dalla cima della stoffa che ha: così basta un giro di vincoli e il telo non si allunga mai
+    if (appeso) {
+      const lra = F.lra, X0 = x[0], Y0 = y[0], Z0 = z[0];
+      for (let n = 1; n < LZ_N; n++) { const dx = x[n] - X0, dy = y[n] - Y0, dz = z[n] - Z0, d2 = dx * dx + dy * dy + dz * dz, m = lra[n]; if (d2 > m * m) { const q = m / Math.sqrt(d2); x[n] = X0 + dx * q; y[n] = Y0 + dy * q; z[n] = Z0 + dz * q; } }
+    }
+    const terra = st !== 'fantasma' && (st !== 'cade' || appeso), bas = F.bas, attr = st === 'steso' ? 0.5 : 0.1, gr = st === 'steso' ? 3.2 : 1;
+    if (terra) for (let n = 1; n < LZ_N; n++) { const m = bas[n] * gr; if (z[n] < m) { z[n] = m; x[n] += (ox[n] - x[n]) * attr; y[n] += (oy[n] - y[n]) * attr; } }
+    if (st === 'cade' && appeso && this.pT < 0) { let zm = 0; for (let n = 1 + (LZ_R - 1) * LZ_C; n < LZ_N; n += 4) zm += z[n]; if (zm / 6 < 6) this.pT = this.t; }      // l'orlo ha toccato terra
+    // la lanterna pende e dondola
+    const lk = 0.07; let lvx = this.lvx, lvy = this.lvy;
+    const hm = 1 + LZ_PUGNO / (Math.sqrt(this.mx * this.mx + this.my * this.my) + 1e-3);
+    lvx += (this.mx * hm - this.lx) * lk - vX * 0.06; lvy += (this.my * hm - this.ly) * lk - vY * 0.06; lvx *= 0.92; lvy *= 0.92;
+    this.lx += lvx; this.ly += lvy; this.lvx = lvx; this.lvy = lvy; this.lz = this.mz - 11.5;
+    this.vista();
+    // a riposo la stoffa dorme: fermo non costa niente
+    if (!this.muove && d < 0.01 && st !== 'cade' && st !== 'fantasma' && Math.abs(dA) < 0.01 && (st !== 'steso' || this.tStato > 1.2)) {
+      let m = 0; for (let n = 1 + (LZ_R - 1) * LZ_C; n < LZ_N; n += 3) { const a = x[n] - ox[n], b = y[n] - oy[n], c = z[n] - oz[n]; m += a * a + b * b + c * c; }
+      if (m < 0.003) { if (++this.quieto > 24) this.dorme = true; } else this.quieto = 0;
+      if (st === 'steso' && this.tStato > 3.4) this.dorme = true;                                 // a terra si smette comunque: un corpo fermo non deve costare niente
+    } else this.quieto = 0;
+  }
+
+  aggiorna(dt, x, y, dir, muove, attivo) {
+    this.xv = x; this.yv = y;
+    if (dir != null) this.dir = dir;
+    this.muove = !!muove;
+    if (!this.pronto) { this.pronto = true; this.wx = x; this.wy = y; this.fa = this.spalle = this.dir; this.posa(); this.corpo(); return; }
+    if (attivo === false) {                 // fuori dalla luce non si simula, ma chi torna a guardare deve trovare il telo giusto
+      this.wx = x; this.wy = y; this.acc = 0; this.vx = this.vy = 0; this.anda = 0;
+      if (this.stato === 'cade') this.subito(); else if (this.stato === 'steso' && !this.dorme) this.mucchio();
+      return;
+    }
+    const dX = x - this.wx, dY = y - this.wy, salto = dX * dX + dY * dY > LZ_SALTO * LZ_SALTO;
+    if (this.dorme) { if (dX * dX + dY * dY > 0.01 || this.muove || this.stato === 'cade' || Math.abs(this.dir - this.fa) > 0.02) { this.dorme = false; this.quieto = 0; } else { this.wx = x; this.wy = y; this.acc = 0; this.t += dt; return; } }
+    this.acc += Math.min(dt, 0.1);
+    let n = Math.floor(this.acc / LZ_H); if (n < 1) return;
+    if (n > LZ_MAXP) { n = LZ_MAXP; this.acc = 0; } else this.acc -= n * LZ_H;
+    const px = salto ? 0 : dX / n, py = salto ? 0 : dY / n;
+    this.wx = x; this.wy = y;
+    for (let i = 0; i < n; i++) this.passo(px, py);
+  }
+
+  // ---------- il disegno ----------
+  // Niente qui tocca la simulazione: un telo addormentato resta addormentato, l'aria e il respiro vivono solo sullo schermo.
+  disegna(ctx, o) {
+    o = o || {}; lzPrepara();
+    const X0 = o.x != null ? o.x : this.xv, Y0 = o.y != null ? o.y : this.yv, S = o.scala || 1, alfa = o.alfa == null ? 1 : o.alfa, t = o.t != null ? o.t : this.t;
+    const stato = this.stato, fant = stato === 'fantasma', steso = stato === 'steso', vola = stato === 'cade' && !this.appeso, L = o.grigio ? lzNebbia : LENZUOLI[this.c];
+    const alza = vola ? (this.z[0] - LZ_CIMA) * LZ_KZ : 0;      // in volo la sfumatura della stoffa sale col telo
+    const C = LZ_DC, R = LZ_RR, N = LZ_DN, gx = lzGx, gy = lzGy, gz = lzGz, sx = lzSx, sy = lzSy, tono = lzTono, t2 = lzT2, cal = lzCal, cell = lzCell, mic = this.F.mic;
+    const base = (fant ? alfa * 0.5 : alfa) * (vola ? Math.min(1, this.tStato / 0.12) : 1), hLant = !fant && !steso && o.lanterna !== false;
+    lzGriglia(this.x, this.y, this.z); lzOrlo(gx); lzOrlo(gy);
+    if (!this.fermoV && (stato === 'su' || fant)) this.aria(t);
+    lzInfittisci(gx); lzInfittisci(gy); lzInfittisci(gz);
+    for (let n = 0; n < N; n++) { sx[n] = gx[n]; sy[n] = gy[n] * LZ_KY - gz[n] * LZ_KZ + alza; }
+    // le normali e il tono nascono dalla forma simulata, sulla griglia fine
+    const lux = this.lx, luy = this.ly, luz = this.lz + 4;
+    for (let r = 0; r < R; r++) {
+      const d = 1 + r * C;
+      for (let j = 0; j < C; j += 2) {
+        const n = d + j, a = d + (j === C - 2 ? 0 : j + 2), b = d + (j === 0 ? C - 2 : j - 2), u = r === 0 ? 0 : n - C, v = r === R - 1 ? n : n + C, X = gx[n], Y = gy[n], Z = gz[n];
+        const ux = gx[a] - gx[b], uy = gy[a] - gy[b], uz = gz[a] - gz[b], vx = gx[v] - gx[u], vy = gy[v] - gy[u], vz = gz[v] - gz[u];
+        let qx = vy * uz - vz * uy, qy = vz * ux - vx * uz, qz = vx * uy - vy * ux; const m = 1 / (Math.sqrt(qx * qx + qy * qy + qz * qz) + 1e-5);
+        qx *= m; qy *= m; qz *= m;
+        // luce di taglio dall'alto a sinistra: fa nascere le pieghe. La conca fra due creste è scura
+        const dif = qx * -0.52 + qy * 0.5 + qz * 0.69;
+        const ce = ((gx[a] + gx[b]) * 0.5 - X) * X + ((gy[a] + gy[b]) * 0.5 - Y) * Y, rr = 1 / (Math.sqrt(X * X + Y * Y) + 3), conca = ce * rr * 0.34;
+        tono[n] = (dif - 0.42) * 1.15 - (conca > 1 ? 1 : conca < -1 ? -1 : conca) * 0.9;
+        if (hLant) { const dx = lux - X, dy = luy - Y, dz = luz - Z, d2 = dx * dx + dy * dy + dz * dz, l = (dx * qx + dy * qy + dz * qz) / Math.sqrt(d2 + 1); cal[n] = l < 0 ? 0 : l * 2100 / (d2 + 900); }
+      }
+    }
+    // la morbidezza: lungo gli anelli sui nodi veri, poi lungo le colonne. Il mucchio, tutto schiacciato, ne vuole di più
+    for (let g = steso ? 2 : 1; g > 0; g--) {
+      for (let r = 0; r < R; r++) { const d = 1 + r * C; for (let j = 0; j < C; j += 2) t2[d + j] = 0.5 * tono[d + j] + 0.25 * (tono[d + (j === C - 2 ? 0 : j + 2)] + tono[d + (j === 0 ? C - 2 : j - 2)]); }
+      for (let r = 0; r < R; r++) { const d = 1 + r * C; for (let j = 0; j < C; j += 2) { const n = d + j; tono[n] = r === R - 1 ? t2[n] : 0.5 * t2[n] + 0.25 * ((r === 0 ? t2[n] : t2[n - C]) + t2[n + C]); } }
+    }
+    lzInfittisci(tono); if (hLant) lzInfittisci(cal);
+        { const k = steso ? 0.8 : 1; for (let n = 1; n < N; n++) tono[n] += mic[n] * k; }      // le piegoline sottili: il telo è fine, non è feltro
+    let acc = 0; for (let j = 0; j < C; j++) acc += tono[1 + j]; tono[0] = acc / C;
+    // la cella guarda chi osserva? L'area sullo schermo lo dice senza sbagliare
+    for (let r = 0; r < R; r++) for (let j = 0; j < C; j++) {
+      const j2 = (j + 1) % C, a = r === 0 ? 0 : 1 + (r - 1) * C + j, b = r === 0 ? 0 : 1 + (r - 1) * C + j2, c = 1 + r * C + j2, d = 1 + r * C + j;
+      cell[r * C + j] = (sx[c] - sx[a]) * (sy[d] - sy[b]) - (sx[d] - sx[b]) * (sy[c] - sy[a]) < 0 ? 1 : 0;
+    }
+    // la stoffa dritta in un elenco, con i suoi lati aperti e il minimo e il massimo del tono: ogni soglia guarda solo quello che le serve
+    { let nf = 0; const fr = lzFr, bo = lzBordo, lo = lzTm, hi = lzTM, ko = lzKm, kh = lzKM;
+      for (let r = 0; r < R; r++) { const d = r * C; for (let j = 0; j < C; j++) {
+        const k = d + j; if (!cell[k]) continue; fr[nf++] = k;
+        bo[k] = (cell[d + (j + C - 1) % C] ? 0 : 1) | (r === R - 1 || !cell[k + C] ? 2 : 0) | (cell[d + (j + 1) % C] ? 0 : 4) | (r > 0 && !cell[k - C] ? 8 : 0);
+        const a = LZ_CA[k], e = LZ_CB[k], c = LZ_CC[k], w = LZ_CD[k]; let v = tono[a], mn = v, mx = v; v = tono[e]; if (v < mn) mn = v; else if (v > mx) mx = v; v = tono[c]; if (v < mn) mn = v; else if (v > mx) mx = v; v = tono[w]; if (v < mn) mn = v; else if (v > mx) mx = v; lo[k] = mn; hi[k] = mx;
+        if (hLant) { v = cal[a]; mn = v; mx = v; v = cal[e]; if (v < mn) mn = v; else if (v > mx) mx = v; v = cal[c]; if (v < mn) mn = v; else if (v > mx) mx = v; v = cal[w]; if (v < mn) mn = v; else if (v > mx) mx = v; ko[k] = mn; kh[k] = mx; }
+      } }
+      lzNf = nf;
+    }
+    ctx.save(); ctx.translate(X0, Y0); if (S !== 1) ctx.scale(S, S);
+    if (o.ombra !== false && !fant) this.ombra(ctx, alfa, base);
+    if (alza) ctx.translate(0, -alza);
+    // l'interno del telo, dove si vede da dentro: il fantasma è trasparente e deve restare pulito
+    ctx.globalAlpha = base; ctx.fillStyle = fant ? L.b : steso ? L.s : lzDentro(L); ctx.beginPath(); lzMaschera(ctx, sx, sy, cell, 0, 44, 2.2); ctx.fill();
+    // i piedi: stanno sotto il telo, si vedono solo quando l'orlo si alza
+    if (this.anda > 0.08 && stato === 'su') {
+      ctx.fillStyle = '#14110e';
+      ctx.beginPath(); ctx.ellipse(this.p1x * 0.7, this.p1y * 0.7 * LZ_KY - (this.p1z - 2.5) * LZ_KZ, 3, 1.7, 0, 0, LZ_DPI); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(this.p2x * 0.7, this.p2y * 0.7 * LZ_KY - (this.p2z - 2.5) * LZ_KZ, 3, 1.7, 0, 0, LZ_DPI); ctx.fill();
+    }
+    // la stoffa: dall'alto più chiara, in basso più scura. Sopra il disegno del telo, poi le pieghe come velature: seguono la forma e non coprono il disegno
+    ctx.fillStyle = steso ? L.b : lzTelo(L); ctx.beginPath(); lzSagoma(ctx, sx, sy); if (stato === 'su' || fant) { const hy = this.hy * LZ_KY - this.hz * LZ_KZ, hr = LZ_RT + LZ_SP; ctx.moveTo(this.hx + hr, hy); ctx.arc(this.hx, hy, hr, 0, LZ_DPI); } ctx.fill();
+    if (L.fori && !steso && !fant) { ctx.globalAlpha = base * 0.5; ctx.strokeStyle = L.l; ctx.lineWidth = 0.8; ctx.lineJoin = 'round'; ctx.beginPath(); lzSagoma(ctx, sx, sy); ctx.stroke(); }      // il telo scuro ha un filo chiaro sul bordo: fuori dalla lanterna non sparisce, e chi lo sceglie non ha un vantaggio
+    if (this.m && !o.grigio) lzMotivo(ctx, sx, sy, cell, this.m, L);
+    const liv = o.fine ? LZ_LIVF : LZ_LIV, liva = o.fine ? LZ_LIVFA : LZ_LIVA;
+    for (let k = 0; k < liv.length; k++) { const q = liv[k]; ctx.globalAlpha = base * liva[k]; ctx.fillStyle = q > 0 ? L.l : L.s; ctx.beginPath(); lzRegione(ctx, sx, sy, tono, lzTm, lzTM, q < 0 ? -1 : 1, Math.abs(q)); ctx.fill(); }
+    if (hLant) {
+      ctx.fillStyle = lzCalda(L); ctx.globalAlpha = base * 0.17; ctx.beginPath(); lzRegione(ctx, sx, sy, cal, lzKm, lzKM, 1, 0.24); ctx.fill();
+      ctx.globalAlpha = base * 0.21; ctx.beginPath(); lzRegione(ctx, sx, sy, cal, lzKm, lzKM, 1, 0.6); ctx.fill();
+    }
+    // l'orlo cucito: una riga appena più chiara poco sopra il bordo, solo dove il telo si vede davanti per un buon tratto
+    {
+      const a = 1 + (R - 1) * C, e = (R - 1) * C; let via = -1;
+      for (let j = 0; j < C; j++) if (cell[e + j] !== 1) { via = j; break; }
+      ctx.strokeStyle = L.l; ctx.lineWidth = 0.7; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.globalAlpha = base * 0.42; ctx.beginPath();
+      if (via < 0) { for (let j = 0; j <= C; j++) { const n = a + j % C, b = n - C, X = sx[n] + (sx[b] - sx[n]) * 0.16, Y = sy[n] + (sy[b] - sy[n]) * 0.16; if (j) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); } }
+      else {
+        let lun = 0;
+        for (let i = 1; i <= C; i++) {
+          const j = (via + i) % C, front = i < C && cell[e + j] === 1;
+          if (front) lun++;
+          else {
+            if (lun >= LZ_ORLOC) for (let k = lun; k >= 0; k--) { const n = a + (j + C - k) % C, b = n - C, X = sx[n] + (sx[b] - sx[n]) * 0.16, Y = sy[n] + (sy[b] - sy[n]) * 0.16; if (k === lun) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); }
+            lun = 0;
+          }
+        }
+      }
+      ctx.stroke();
+    }
+    // i fori per gli occhi, sul telo: si muovono con la stoffa e di spalle non si vedono
+    this.occhi(ctx, L, base, t, hLant);
+    if (alza) ctx.translate(0, alza);
+    if (stato === 'cade') this.polvere(ctx, base);
+    if (!fant && o.lanterna !== false) this.lanterna(ctx, alfa, t);
+    ctx.restore();
+  }
+
+  // l'ombra a terra: larga e morbida, si stringe quando il telo scende. Dove l'orlo tocca è una riga scura, dove si solleva si stacca
+  ombra(ctx, alfa, base) {
+    const x = this.x, y = this.y, z = this.z, a = 1 + (LZ_R - 1) * LZ_C, C = LZ_C; let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9, zm = 0, zo = 0;
+    for (let n = a; n < LZ_N; n++) { const u = x[n], v = y[n]; if (u < a0) a0 = u; if (u > a1) a1 = u; if (v < b0) b0 = v; if (v > b1) b1 = v; zm += z[n]; }
+    zm /= C; const qa = Math.max(0.25, 1 - zm / 150), ww = (a1 - a0 + 16) * (1 + zm * 0.005), hh = (b1 - b0) * LZ_KY + 12;
+    ctx.globalAlpha = alfa * qa; ctx.drawImage(lzOmbraT, (a0 + a1) * 0.5 - ww * 0.5, (b0 + b1) * 0.5 * LZ_KY - hh * 0.5 + 1.5, ww, hh);
+    for (let j = 0; j < C; j += 4) zo += z[a + j];
+    ctx.globalAlpha = base * Math.max(0, 1 - zo / 36); ctx.fillStyle = 'rgba(5,4,11,.38)'; ctx.beginPath();
+    for (let j = 0; j < C; j++) { const n = a + j, px = x[n], py = y[n] * LZ_KY + 0.9; if (j) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+    ctx.closePath(); ctx.fill();
+    if (this.stato === 'steso') {                 // l'ombra di contatto: il telo sta a terra e pesa, non è una macchia sul pavimento
+      for (let k = 0; k < 2; k++) {
+        const g = k ? 1.02 : 1.07, dy = k ? 1.7 : 3.4; ctx.globalAlpha = base * (k ? 0.4 : 0.26); ctx.beginPath();
+        for (let j = 0; j < C; j++) { const n = a + j, px = x[n] * g, py = y[n] * g * LZ_KY + dy; if (j) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+        ctx.closePath(); ctx.fill();
+      }
+    }
+  }
+
+  // l'aria ferma e il respiro, solo nel disegno. Il respiro muove le spalle, non tutta la figura; camminando un'onda corre giù per la stoffa
+  aria(t) {
+    const C = LZ_DC, gx = lzGx, gy = lzGy, gz = lzGz, an = this.anda, ferma = 1 - an * 0.75, sem = this.seme * 1.31, re = Math.sin(t * 1.9 + sem) * 0.75 * ferma;
+    const s1 = Math.sin(t * 1.25 + sem), c1 = Math.cos(t * 1.25 + sem), s2 = Math.sin(t * 2.1 + sem * 2), c2 = Math.cos(t * 2.1 + sem * 2);
+    for (let r = 1; r <= 3; r++) { const w = LZ_WR[r] * re, d = 1 + r * C; for (let j = 0; j < C; j += 2) { const n = d + j, u = gx[n], v = gy[n], m = 1 / (Math.sqrt(u * u + v * v) + 1); gx[n] = u + u * m * w; gy[n] = v + v * m * w; } }
+    for (let r = 3; r < LZ_RR; r++) {
+      const w = LZ_WA[r], d = 1 + r * C, f = this.fase * 2 - r * 1.05, s3 = Math.sin(f), c3 = Math.cos(f), p1 = w * ferma * 0.72, p2 = w * ferma * 0.48, p3 = w * an * 1.9;
+      for (let j = 0; j < C; j += 2) {
+        const n = d + j, u = gx[n], v = gy[n], m = 1 / (Math.sqrt(u * u + v * v) + 1);
+        // sin(a + k j) con le tabelle: tre onde lente attorno all'orlo, cinque contrarie, quattro che scendono quando si cammina
+        const q = p1 * (s1 * LZ_C3[j] + c1 * LZ_S3[j]) + p2 * (s2 * LZ_C5[j] - c2 * LZ_S5[j]) + p3 * (s3 * LZ_C4[j] + c3 * LZ_S4[j]);
+        gx[n] = u + u * m * q; gy[n] = v + v * m * q; gz[n] += Math.abs(q) * 0.32;
+      }
+    }
+  }
+
+  // I fori stanno sulla testa, non sui nodi: la stoffa lì è tesa, e così non possono finire uno sull'altro quando il telo si assesta.
+  // L'occhio di là non si schiaccia: si stringe un poco, scivola verso il centro della testa e svanisce. Si spegne sotto 0,30 e si riaccende sopra 0,42
+  occhi(ctx, L, base, t, hLant) {
+    const st = this.stato, morto = st === 'steso';
+    const vt = this.t - this.nato;
+    if (vt < 0) return;                                               // finché il telo non è fermo sulla testa non ci sono occhi: si aprono lì
+    const fant = st === 'fantasma', nA = vt >= 0.16 ? 1 : lzFaro(vt / 0.16), vivo = !this.fermoV && !morto, lol = morto ? (this.F.gx < 0 ? -0.26 : 0.26) : 0;
+    // il battito: ogni 3-6 secondi, un decimo di secondo
+    let chiude = 0, bt = this.t - this.bT;
+    if (bt >= 0.1) { this.bT = this.t + 3 + 3 * this.caso(); bt = -1; }
+    if (vivo && bt >= 0) chiude = Math.sin(Math.PI * bt / 0.1);
+    // lo sguardo: un punto verso chi si muove; se nessuno si muove, ogni tanto si guarda attorno
+    let tx = 0, ty = 0;
+    if (vivo) {
+      if (this.gOn) { const dx = this.gX - this.xv, dy = this.gY - this.yv, m = Math.sqrt(dx * dx + dy * dy); if (m > 1) { tx = dx / m; ty = dy / m * 0.6; } }
+      else { if (this.t > this.sgT) { const v = this.caso(); this.sgX = v < 0.5 ? 0 : v < 0.75 ? 1 : -1; this.sgT = this.t + (this.sgX ? 0.9 : 2 + 4 * this.caso()); } tx = this.sgX; }
+    }
+    this.gx += (tx - this.gx) * 0.2; this.gy += (ty - this.gy) * 0.2;
+    const hR = LZ_RT + LZ_SP, hcx = this.hx, hcy = this.hy * LZ_KY - this.hz * LZ_KZ, si = morto ? 0.86 : 0.71, co = morto ? 0.5 : 0.7;
+    for (let k = 0; k < 2; k++) {
+      const e = k ? 1 : -1, th = this.fa + e * 0.4, ct = Math.cos(th), sn = Math.sin(th), q = si * sn * LZ_VY + co * LZ_VZ;
+      const ch = Math.max(0, Math.min(1, (q - 0.3) / 0.3)), ea = this.ea[k]; if (ea < 0.03) continue;
+      const qx = -sn, qy = ct * LZ_KY, sc = Math.sqrt(qx * qx + qy * qy), ry0 = morto ? 3.5 : 3.1, ry = ry0 * nA * (1 - 0.88 * chiude), rx = Math.max(0.45 * ry0, (morto ? 2.6 : 2.3) * sc), rot = Math.atan2(qx < 0 ? -qy : qy, Math.abs(qx)) * ch + lol;
+      let px = hcx + hR * si * ct, py = (this.hy + hR * si * sn) * LZ_KY - (this.hz + hR * co) * LZ_KZ, ux = hcx - px, uy = hcy - py, dm = Math.sqrt(ux * ux + uy * uy) + 1e-4; ux /= dm; uy /= dm;
+      px += ux * (1 - ch) * 2.5 + this.gx; py += uy * (1 - ch) * 2.5 + this.gy + e * lol * 5;      // (la testa a terra è reclinata: un occhio più basso dell'altro)
+      // il foro sta dentro la sagoma della testa, sempre
+      ux = px - hcx; uy = py - hcy; dm = Math.sqrt(ux * ux + uy * uy) + 1e-4; const ec = Math.cos(rot), es = Math.sin(rot), pa = (ux * ec + uy * es) / dm * rx, pb = (uy * ec - ux * es) / dm * ry, lim = hR - 0.7 - Math.sqrt(pa * pa + pb * pb);
+      if (dm > lim) { const m = lim / dm; px = hcx + ux * m; py = hcy + uy * m; }
+      if (fant) {             // il fantasma ha gli occhi accesi: è l'unica luce che gli resta
+        ctx.globalAlpha = 0.16 * ea * nA; ctx.fillStyle = '#bfe3ff'; ctx.beginPath(); ctx.ellipse(px, py, rx * 2, ry * 1.7, rot, 0, LZ_DPI); ctx.fill();
+        ctx.globalAlpha = Math.min(1, base * 1.9) * ea; ctx.fillStyle = '#e4f4ff'; ctx.beginPath(); ctx.ellipse(px, py, rx, Math.max(0.25, ry), rot, 0, LZ_DPI); ctx.fill();
+        continue;
+      }
+      ctx.globalAlpha = base * ea; ctx.fillStyle = '#0b0910'; ctx.beginPath(); ctx.ellipse(px, py, rx, Math.max(0.25, ry), rot, 0, LZ_DPI); ctx.fill();
+      if (L.fori) { ctx.globalAlpha = base * ea * 0.55; ctx.strokeStyle = L.l; ctx.lineWidth = 0.55; ctx.stroke(); }      // sul telo scuro un filo chiaro attorno ai fori
+      if (!morto && chiude < 0.5 && nA > 0.5) { ctx.globalAlpha = base * ea * (hLant ? 0.72 + 0.14 * Math.sin(t * 7 + e) : 0.5); ctx.fillStyle = hLant ? '#f2c777' : '#8f8aa0'; ctx.beginPath(); ctx.ellipse(px + 0.3, py + 1.7 * (ry / ry0), rx * 0.5, ry * 0.14, rot, 0, LZ_DPI); ctx.fill(); }
+    }
+  }
+
+  // un filo di polvere attorno all'orlo, quando tocca terra
+  polvere(ctx, base) {
+    const q = (this.t - this.pT) / 0.46; if (this.pT < 0 || q < 0 || q >= 1) return;
+    const x = this.x, y = this.y, a = 1 + (LZ_R - 1) * LZ_C, e = 1 - (1 - q) * (1 - q);
+    ctx.fillStyle = '#d9ccb4'; ctx.globalAlpha = base * 0.2 * (1 - q) * (1 - q);
+    ctx.beginPath();
+    for (let j = 0; j < LZ_C; j += 2) {
+      const n = a + j, u = x[n], v = y[n], m = 1 / (Math.sqrt(u * u + v * v) + 1), o = 2 + 11 * e * (0.7 + 0.3 * LZ_S3[j * 2]), X = u + u * m * o, Y = (v + v * m * o) * LZ_KY - (0.8 + 4.5 * e * (0.6 + 0.4 * LZ_C5[j * 2])) * LZ_KZ, r = (0.55 + 0.3 * (j % 3)) * (1 + 1.2 * e);
+      ctx.moveTo(X + r, Y); ctx.arc(X, Y, r, 0, LZ_DPI);
+    }
+    ctx.fill();
+  }
+
+  // quanto si vede ogni occhio: si spegne sotto 0,30, si riaccende sopra 0,42, e nel mezzo sfuma. A tempo fisso, così non dipende da quanto si disegna
+  vista() {
+    for (let k = 0; k < 2; k++) {
+      const q = 0.71 * Math.sin(this.fa + (k ? 0.4 : -0.4)) * LZ_VY + 0.7 * LZ_VZ, ch = Math.max(0, Math.min(1, (q - 0.3) / 0.3));
+      if (this.ev[k] && q < 0.3) this.ev[k] = 0; else if (!this.ev[k] && q > 0.42) this.ev[k] = 1;
+      this.ea[k] += ((this.ev[k] ? ch * ch : 0) - this.ea[k]) * 0.3;
+    }
+  }
+
+  // la lanterna resta fuori dal telo: la mano la stringe attraverso la stoffa e pende, con il suo alone. Quando il telo crolla cade, si rovescia e si spegne
+  lanterna(ctx, alfa, t) {
+    if (this.stato === 'steso') {
+      const q = this.tStato, u = Math.min(1, q / 0.34), e = u * u, sp = Math.max(0, 1 - q / 0.5), lato = this.lfx >= 0 ? 1 : -1, b = q - 0.34;
+      const lx = this.l0x + (this.lfx - this.l0x) * u, ly = this.l0y + (this.lfy - this.l0y) * u, lz = this.l0z + (2.6 - this.l0z) * e + (b > 0 ? 4.2 * Math.abs(Math.sin(b * 13)) * Math.exp(-b * 9) : 0), rot = lato * 1.46 * Math.min(1, u * u * (3 - 2 * u)) + (b > 0 ? lato * 0.14 * Math.sin(b * 16) * Math.exp(-b * 7) : 0), X = lx, Y = ly * LZ_KY - lz * LZ_KZ;
+      if (sp > 0) { const r = 17 * (0.6 + 0.4 * sp); ctx.globalAlpha = alfa * 0.6 * sp; ctx.drawImage(lzAlone, X - r, Y - r, r * 2, r * 2); }
+      ctx.globalAlpha = alfa * 0.5 * u; ctx.fillStyle = '#05040b'; ctx.beginPath(); ctx.ellipse(X, ly * LZ_KY + 1.4, 8, 2.6, 0, 0, LZ_DPI); ctx.fill();
+      ctx.translate(X, Y); ctx.rotate(rot); ctx.globalAlpha = alfa;
+      lzLanternaSpenta(ctx, sp);
+      ctx.rotate(-rot); ctx.translate(-X, -Y);
+      return;
+    }
+    const hm = LZ_PUGNO / (Math.sqrt(this.mx * this.mx + this.my * this.my) + 1e-3), hx = this.mx * (1 + hm), hy = this.my * (1 + hm) * LZ_KY - this.mz * LZ_KZ, lx = this.lx, ly = this.ly * LZ_KY - this.lz * LZ_KZ;
+    const f = 0.86 + 0.14 * Math.sin(t * 13 + this.seme), r = 17 * (0.96 + 0.04 * f);
+    ctx.globalAlpha = alfa * 0.62 * f; ctx.drawImage(lzAlone, lx - r, ly - r, r * 2, r * 2);
+    ctx.globalAlpha = alfa; ctx.strokeStyle = '#1f1910'; ctx.lineCap = 'round'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(lx, ly - 6.2); ctx.stroke();
+    lzLanternaCorpo(ctx, lx, ly, f, 1);
+    ctx.globalAlpha = alfa;
+  }
+}
+
+// il corpo della lanterna: acceso a 1, spento a 0
+function lzLanternaCorpo(ctx, lx, ly, f, luce) {
+  const a = ctx.globalAlpha;
+  ctx.fillStyle = '#231c12'; ctx.beginPath(); ctx.moveTo(lx - 3.4, ly - 4); ctx.lineTo(lx, ly - 6.6); ctx.lineTo(lx + 3.4, ly - 4); ctx.lineTo(lx + 3, ly + 4.6); ctx.lineTo(lx - 3, ly + 4.6); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#3d3020'; ctx.fillRect(lx - 2.3, ly - 3.4, 4.6, 7.2);
+  if (luce > 0) { ctx.globalAlpha = a * luce; ctx.fillStyle = '#ffb44f'; ctx.fillRect(lx - 2.3, ly - 3.4, 4.6, 7.2); ctx.fillStyle = '#ffe9b0'; ctx.globalAlpha = a * f * luce; ctx.fillRect(lx - 1.2, ly - 1.9, 2.4, 4.6); ctx.globalAlpha = a; }
+}
+
+// la lanterna spenta e rovesciata: ottone e vetro freddo, così sul pavimento scuro resta una lanterna e non un puntino. Il manico aiuta a capirla
+function lzLanternaSpenta(ctx, sp) {
+  const a = ctx.globalAlpha;
+  ctx.strokeStyle = '#a58a55'; ctx.lineWidth = 0.9; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, -6.6, 2.4, Math.PI, 0, false); ctx.stroke();
+  ctx.fillStyle = '#6f5a38'; ctx.beginPath(); ctx.moveTo(-3.6, -4); ctx.lineTo(0, -6.8); ctx.lineTo(3.6, -4); ctx.lineTo(3.2, 4.8); ctx.lineTo(-3.2, 4.8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#4b4a48'; ctx.fillRect(-2.4, -3.4, 4.8, 7.4); ctx.fillStyle = '#8f8d82'; ctx.fillRect(-1.9, -2.9, 1.3, 6.4);
+  if (sp > 0) { ctx.globalAlpha = a * sp; ctx.fillStyle = '#ffb44f'; ctx.fillRect(-2.4, -3.4, 4.8, 7.4); ctx.globalAlpha = a; }
+}
+
+// la griglia fine, solo per il disegno: fra i nodi veri una curva che passa per i nodi, prima lungo le colonne, poi attorno al telo
+function lzGriglia(x, y, z) {
+  const C = LZ_C, D = LZ_DC, R = LZ_R, gx = lzGx, gy = lzGy, gz = lzGz;
+  gx[0] = x[0]; gy[0] = y[0]; gz[0] = z[0];
+  for (let r = 0; r < LZ_RR; r++) {
+    const g = LZ_RG[r], i = g | 0, d = 1 + r * D, e = 1 + (i - 1) * C;
+    if (g === i) for (let j = 0; j < C; j++) { const k = d + j * 2, n = e + j; gx[k] = x[n]; gy[k] = y[n]; gz[k] = z[n]; }
+    else for (let j = 0; j < C; j++) {
+      const k = d + j * 2, p = e + j - C, a = e + j, b = a + C, q = i + 2 <= R ? b + C : b;
+      gx[k] = (x[a] + x[b]) * 0.5625 - (x[p] + x[q]) * 0.0625; gy[k] = (y[a] + y[b]) * 0.5625 - (y[p] + y[q]) * 0.0625; gz[k] = (z[a] + z[b]) * 0.5625 - (z[p] + z[q]) * 0.0625;
+    }
+  }
+}
+// l'orlo un filo più morbido: le rientranze strette non devono fare angolo
+function lzOrlo(g) {
+  const D = LZ_DC, d = 1 + (LZ_RR - 1) * D, a = lzT2;
+  for (let j = 0; j < D; j += 2) a[j] = g[d + j] * 0.7 + (g[d + (j === D - 2 ? 0 : j + 2)] + g[d + (j === 0 ? D - 2 : j - 2)]) * 0.15;
+  for (let j = 0; j < D; j += 2) g[d + j] = a[j];
+}
+// le colonne dispari, attorno al telo: la stessa curva a quattro punti
+function lzInfittisci(g) {
+  const D = LZ_DC;
+  for (let r = 0; r < LZ_RR; r++) {
+    const d = 1 + r * D;
+    for (let j = 1; j < D; j += 2) { const a = d + j - 1, b = d + (j === D - 1 ? 0 : j + 1), p = d + (j === 1 ? D - 2 : j - 3), q = d + (j >= D - 3 ? j + 3 - D : j + 3); g[d + j] = (g[a] + g[b]) * 0.5625 - (g[p] + g[q]) * 0.0625; }
+  }
+}
+
+// un giro di vincoli su un tratto: duro a tirare (ks), morbido a comprimere (kc), con le misure del telo aperto se ap>0
+const lzK = new Float64Array(4);      // ap, ks, kc, wa: stanno qui e non negli argomenti, così nessun numero viene impacchettato a ogni passo
+function lzVincola(x, y, z, ca, cb, rest, restA, i0, i1) {
+  const ap = lzK[0], ks = lzK[1], kc = lzK[2], wa = lzK[3], wb = 1 - wa, ap1 = 1 - ap;
+  for (let c = i0; c < i1; c++) {
+    const a = ca[c], b = cb[c], dx = x[b] - x[a], dy = y[b] - y[a], dz = z[b] - z[a], d2 = dx * dx + dy * dy + dz * dz;
+    if (d2 < 1e-8) continue;
+    const r = rest[c] * ap1 + restA[c] * ap, d = Math.sqrt(d2), e = (d - r) / d, q = e * (e > 0 ? ks : kc), qa = q * wa, qb = q * wb;
+    x[a] += dx * qa; y[a] += dy * qa; z[a] += dz * qa;
+    x[b] -= dx * qb; y[b] -= dy * qb; z[b] -= dz * qb;
+  }
+}
+
+// ---------- le regioni del telo: solo il contorno ----------
+// Riempire cella per cella costa migliaia di punti a personaggio. Qui ogni cella dice solo quali pezzi di bordo ha, i pezzi si legano in giri chiusi
+// e ogni giro diventa una curva che passa per i punti medi: pochi punti, niente denti di sega, pieghe e sagoma morbide.
+const LZ_DN2 = LZ_DN * 2, LZ_PT = LZ_DN * 3;
+const LZ_CA = new Int16Array(LZ_CL), LZ_CB = new Int16Array(LZ_CL), LZ_CC = new Int16Array(LZ_CL), LZ_CD = new Int16Array(LZ_CL);
+for (let r = 0; r < LZ_RR; r++) for (let j = 0; j < LZ_DC; j++) { const j2 = (j + 1) % LZ_DC, k = r * LZ_DC + j; LZ_CA[k] = r === 0 ? 0 : 1 + (r - 1) * LZ_DC + j; LZ_CB[k] = r === 0 ? 0 : 1 + (r - 1) * LZ_DC + j2; LZ_CC[k] = 1 + r * LZ_DC + j2; LZ_CD[k] = 1 + r * LZ_DC + j; }
+const lzNext = new Int16Array(LZ_PT), lzNext2 = new Int16Array(LZ_PT), lzTimbro = new Int32Array(LZ_PT), lzVia = new Int16Array(LZ_PT), lzGiro = new Int16Array(LZ_PT * 2), LZ_SCHEGGIA = 12;
+const lzFr = new Int16Array(LZ_CL), lzBordo = new Uint8Array(LZ_CL), lzMot = new Uint8Array(LZ_CL), lzTm = new Float32Array(LZ_CL), lzTM = new Float32Array(LZ_CL), lzKm = new Float32Array(LZ_CL), lzKM = new Float32Array(LZ_CL);
+let lzMarca = 0, lzNv = 0, lzNf = 0, lzUsc = -1, lzEnt = -1, lzEsile = 0;
+
+const LZ_TIENI = new Uint8Array(LZ_PT);
+for (let n = 0; n < LZ_DN; n++) { const r = n ? ((n - 1) / LZ_DC) | 0 : 0, j = n ? (n - 1) % LZ_DC : 0; LZ_TIENI[n] = 1; LZ_TIENI[LZ_DN + n] = r & 1 ? 0 : 1; LZ_TIENI[LZ_DN2 + n] = j & 1 ? 0 : 1; }
+
+function lzLega(p, q) { if (lzTimbro[p] !== lzMarca) { lzTimbro[p] = lzMarca; lzNext[p] = q; lzNext2[p] = -1; lzVia[lzNv++] = p; } else if (lzNext2[p] < 0) lzNext2[p] = q; }
+
+// un lato di una cella tagliata dalla curva di livello. aperto: oltre questo lato la stoffa non continua
+function lzLato(sx, sy, p, q, fp, fq, id, aperto, L) {
+  const ip = fp >= L, iq = fq >= L;
+  if (ip && iq) { if (aperto) lzLega(p, q); return; }
+  if (!ip && !iq) return;
+  const u = (L - fp) / (fq - fp); sx[id] = sx[p] + (sx[q] - sx[p]) * u; sy[id] = sy[p] + (sy[q] - sy[p]) * u;
+  if (ip) { if (aperto) lzLega(p, id); lzUsc = id; }
+  else { if (lzUsc >= 0) { lzLega(lzUsc, id); lzUsc = -1; } else lzEnt = id; if (aperto) lzLega(id, q); }
+}
+
+// lega i pezzi in giri chiusi e li traccia con curve per i punti medi. I giri più piccoli di amin si scartano: sono schegge, non pieghe.
+// tutti false: i giri girati al contrario sono buchi nella sagoma, cioè una piega vista di taglio, e la stoffa li copre
+function lzCammina(ctx, sx, sy, amin, tutti) {
+  const nx = lzNext, n2 = lzNext2, tm = lzTimbro, mk = lzMarca, n = lzNv, via = lzVia, gi = lzGiro;
+  for (let i = 0; i < n; i++) {
+    const s = via[i];
+    while (nx[s] >= 0) {
+      let p = s, m = 0, ar = 0, gi2 = 0;
+      for (;;) {
+        gi[m++] = p;
+        const q = nx[p]; nx[p] = n2[p]; n2[p] = -1;
+        const ux = sx[q] - sx[p], uy = sy[q] - sy[p]; gi2 += (ux < 0 ? -ux : ux) + (uy < 0 ? -uy : uy);
+        ar += sx[p] * sy[q] - sx[q] * sy[p];
+        p = q;
+        if (p === s || tm[p] !== mk || nx[p] < 0) break;
+      }
+      if (m < 3 || (ar < amin && ar > -amin) || (!tutti && ar < 0) || (tutti && (ar < 0 ? -ar : ar) < gi2 * lzEsile)) continue;      // anche i fili sottili: una piega ha sempre un po' di larghezza
+      if (lzEsile > 0 && m >= 10) { let w = 0; for (let k = 0; k < m; k++) if (LZ_TIENI[gi[k]]) gi[w++] = gi[k]; if (w >= 4) m = w; }      // nelle pieghe basta un punto ogni due: sempre gli stessi, così la curva non trema da un fotogramma all'altro
+      const a = gi[m - 1], b = gi[0], x0 = (sx[a] + sx[b]) * 0.5, y0 = (sy[a] + sy[b]) * 0.5;
+      ctx.moveTo(x0, y0);
+      for (let k = 0; k < m - 1; k++) { const u = gi[k], v = gi[k + 1]; ctx.quadraticCurveTo(sx[u], sy[u], (sx[u] + sx[v]) * 0.5, (sy[u] + sy[v]) * 0.5); }
+      ctx.quadraticCurveTo(sx[a], sy[a], x0, y0); ctx.closePath();
+    }
+  }
+}
+
+// dove il campo f (per il verso sg) supera la soglia L, sulla stoffa dritta. lo e hi: minimo e massimo per cella, così le celle che non c'entrano costano un confronto
+function lzRegione(ctx, sx, sy, f, lo, hi, sg, L) {
+  lzMarca++; lzNv = 0; lzEsile = 1.5;
+  const fr = lzFr, bo = lzBordo, nf = lzNf;
+  for (let i = 0; i < nf; i++) {
+    const k = fr[i], mn = sg > 0 ? lo[k] : -hi[k], mx = sg > 0 ? hi[k] : -lo[k], b = bo[k];
+    if (mx < L || (mn >= L && !b)) continue;
+    const a = LZ_CA[k], e = LZ_CB[k], c = LZ_CC[k], d = LZ_CD[k], fa = f[a] * sg, fe = f[e] * sg, fc = f[c] * sg, fd = f[d] * sg;
+    lzUsc = -1; lzEnt = -1;
+    lzLato(sx, sy, a, d, fa, fd, LZ_DN2 + d, b & 1, L);
+    lzLato(sx, sy, d, c, fd, fc, LZ_DN + d, b & 2, L);
+    lzLato(sx, sy, c, e, fc, fe, LZ_DN2 + c, b & 4, L);
+    if (a !== e) lzLato(sx, sy, e, a, fe, fa, LZ_DN + a, b & 8, L);
+    if (lzUsc >= 0 && lzEnt >= 0) lzLega(lzUsc, lzEnt);
+  }
+  lzCammina(ctx, sx, sy, LZ_SCHEGGIA, true);
+}
+
+// tutta la stoffa dritta: il suo bordo è la sagoma
+function lzSagoma(ctx, sx, sy) {
+  lzMarca++; lzNv = 0; lzEsile = 0;
+  const fr = lzFr, bo = lzBordo, nf = lzNf;
+  for (let i = 0; i < nf; i++) {
+    const k = fr[i], b = bo[k]; if (!b) continue;
+    const a = LZ_CA[k], e = LZ_CB[k], c = LZ_CC[k], d = LZ_CD[k];
+    if (b & 1) lzLega(a, d); if (b & 2) lzLega(d, c); if (b & 4) lzLega(c, e); if ((b & 8) && a !== e) lzLega(e, a);
+  }
+  lzCammina(ctx, sx, sy, LZ_SCHEGGIA, false);
+}
+
+// le celle di una maschera m dove m vale v: l'interno del telo, le righe e i quadri del disegno
+function lzMaschera(ctx, sx, sy, m, v, amin, esile) {
+  lzMarca++; lzNv = 0; lzEsile = esile;
+  const C = LZ_DC, R = LZ_RR;
+  for (let r = 0; r < R; r++) for (let j = 0; j < C; j++) {
+    const k = r * C + j; if (m[k] !== v) continue;
+    const a = LZ_CA[k], e = LZ_CB[k], c = LZ_CC[k], d = LZ_CD[k];
+    if (m[r * C + (j + C - 1) % C] !== v) lzLega(a, d);
+    if (r === R - 1 || m[k + C] !== v) lzLega(d, c);
+    if (m[r * C + (j + 1) % C] !== v) lzLega(c, e);
+    if (r > 0 && m[k - C] !== v) lzLega(e, a);
+  }
+  lzCammina(ctx, sx, sy, amin, true);
+}
+
+// il disegno sul telo: segue le celle, quindi pieghe e movimento lo portano con sé. Si legge in una parola: Righe, Pois, Quadri
+function lzMotivo(ctx, sx, sy, cell, m, L) {
+  const C = LZ_DC, R = LZ_RR;
+  ctx.fillStyle = L.a; ctx.beginPath();
+  if (m === 'pois') {
+    for (let r = 1; r < R - 1; r += 2) for (let j = (r & 2) ? 3 : 0; j < C; j += 6) {
+      if (cell[r * C + j] !== 1 || cell[(r + 1) * C + j] !== 1) continue;
+      const n = 1 + r * C + j, d = 1 + r * C, a = d + (j + 1) % C, b = d + (j + C - 1) % C, ux = (sx[a] - sx[b]) * 0.62, uy = (sy[a] - sy[b]) * 0.62, vx = (sx[n + C] - sx[n - C]) * 0.21, vy = (sy[n + C] - sy[n - C]) * 0.21, X = sx[n], Y = sy[n];
+      ctx.moveTo(X + ux, Y + uy);
+      for (let k = 1; k < 8; k++) { const p = LZ_OTTA[k], q = LZ_OTTA[(k + 2) & 7]; ctx.lineTo(X + ux * p + vx * q, Y + uy * p + vy * q); }
+      ctx.closePath();
+    }
+  } else {
+    const mo = lzMot;
+    for (let r = 0; r < R; r++) for (let j = 0; j < C; j++) { const k = r * C + j, dis = (j >> 2) & 1; mo[k] = cell[k] && (m === 'righe' ? dis : dis ^ LZ_QR[r]) ? 1 : 0; }
+    lzMaschera(ctx, sx, sy, mo, 1, LZ_SCHEGGIA, 0);
+  }
+  ctx.fill();
+}
+
+function lzFaro(u) { const v = 1 - u; return 1 - v * v * v * (1 + 0.6 * u); }                // come --faro-ease: parte svelta, arriva piano
+function lzMisto(a, b, u) { const p = parseInt(a.slice(1), 16), q = parseInt(b.slice(1), 16), c = s => { const x = (p >> s) & 255, y = (q >> s) & 255; return Math.round(x + (y - x) * u); }; return `rgb(${c(16)},${c(8)},${c(0)})`; }
+function lzHue(r, g, b) { const M = Math.max(r, g, b), m = Math.min(r, g, b), d = M - m; if (d === 0) return { h: 0, s: 0, l: (M + m) / 510 }; const l = (M + m) / 510, s = d / (255 - Math.abs(M + m - 255)), h = M === r ? ((g - b) / d + 6) % 6 : M === g ? (b - r) / d + 2 : (r - g) / d + 4; return { h: h * 60, s, l }; }
+function lzRgb(h, s, l) { const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2, k = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]; return k.map(v => Math.round((v + m) * 255)); }
+// la luce calda sulla stoffa: la stessa tinta più chiara, 70 di cresta e 30 di caldo, e mai più di 12 gradi lontana. «Ho visto il viola» deve restare vero anche vicino alla lanterna
+function lzCalda(L) {
+  if (L.c) return L.c;
+  const hex = (s) => { const n = parseInt(s.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }, a = hex(L.l), b = hex(L.b), w = [255, 214, 150], m = [0, 1, 2].map(i => a[i] * 0.7 + w[i] * 0.3), H0 = lzHue(b[0], b[1], b[2]), H = lzHue(m[0], m[1], m[2]);
+  let h = H.h;
+  if (H0.s > 0.16) { let d = h - H0.h; while (d > 180) d -= 360; while (d < -180) d += 360; h = (H0.h + Math.max(-11.5, Math.min(11.5, d)) + 360) % 360; }
+  const r = lzRgb(h, H.s, H.l);
+  L.c = `rgb(${r[0]},${r[1]},${r[2]})`;
+  return L.c;
+}
+// l'interno del telo: in ombra, ma è la stessa stoffa
+function lzDentro(L) { if (!L.i) L.i = lzMisto(L.d, L.s, 0.5); return L.i; }
+// la stoffa in piedi: dall'alto chiara, verso l'orlo più scura. Una sfumatura sola per tinta, in unità del telo: vale per tutti e non costa niente
+function lzTelo(L) {
+  if (L.g) return L.g;
+  const g = lzOmbraT.getContext('2d').createLinearGradient(0, -64, 0, 2);
+  g.addColorStop(0, lzMisto(L.b, L.l, 0.14)); g.addColorStop(0.3, L.b); g.addColorStop(0.72, lzMisto(L.b, L.s, 0.18)); g.addColorStop(1, lzMisto(L.b, L.s, 0.52));
+  L.g = g; return g;
+}
+
+// il mezzo busto fermo, per il registro: una canvas quadrata, con un passo di sfumatura in più
+const lzRitratti = {};
+function ritrattoLenzuolo(c, lato) {
+  lato = lato || 96; const k = c + ':' + lato; if (lzRitratti[k]) return lzRitratti[k];
+  const cv = document.createElement('canvas'); cv.width = cv.height = lato;
+  const q = cv.getContext('2d'), l = new Lenzuolo({ c }, { seme: c }), S = lato / 46;
+  l.pronto = true; l.corpo();
+  l.disegna(q, { x: lato / 2, y: lato * 0.05 + 70 * LZ_KZ * S, scala: S, ombra: false, lanterna: false, t: 0, fine: true });
+  lzRitratti[k] = cv; return cv;
+}
+
 // ===== disegno.js =====
 // Il disegno della mappa, degli avatar, della luce delle lanterne e degli effetti (uguale su tutti i telefoni).
+
 
 
 const CORR1 = '#5a2b33', CORR2 = '#612f38';
 const FONT = '-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","Inter",system-ui,sans-serif';
 const ORO = '231,183,92', ROSSO = '240,90,110', VOCE_COL = '150,235,200';   // VOCE_COL: l'anello della voce
+
+// I teli di chi gioca stanno qui e non nel Pittore: la scena e gli schermi delle telecamere disegnano le stesse persone,
+// e la stoffa si simula una volta sola a fotogramma, da chi la disegna per prima (tU: l'ultimo momento simulato).
+// tV: l'ultima volta che qualcuno l'ha disegnata. Chi non si vede da un quarto di secondo non si simula.
+const TELO_K = 0.86;             // alto come era l'omino: fumetti, nomi e mobili restano giusti
+const TELO_PIEDI = T * 0.38;     // da dove sta il punto del giocatore a dove poggia il telo
+const TELO_ORLO = T * 0.68;      // fin dove arriva l'orlo davanti: è lì che si decide chi sta davanti a un mobile basso
+const TELO_ATTESA = 1.15;        // in saletta: quanto si vede l'omino prima che il telo gli cada in testa
+const TELO_FUORI = 0.25;
+const TELO_TETTO = 2.4;          // millisecondi a fotogramma per tutti i teli a schermo: oltre, si diradano
+const TELO_STRAPPO = 420;        // oltre questi pixel al secondo non si cammina più (il passo più svelto, da anima, arriva a 310)
+const TELO_BASE = { c: 0, m: null };
+// Il telo degli altri si stampa su una tavoletta sua e si copia sulla scena: la stoffa viva si disegna a turno (con tanta gente a schermo una volta ogni due
+// o tre fotogrammi, sul telefono non si nota) e la copia costa pochissimo. Il mio telo no: si disegna sempre, è quello che si guarda.
+const STAMPA_W = 116, STAMPA_H = 104, STAMPA_X = 58, STAMPA_Y = 76;           // la tavoletta di chi sta in piedi: i piedi stanno a (X,Y)
+const STESO_W = 164, STESO_H = 92, STESO_X = 80, STESO_Y = 52;                // quella del telo a terra, con la lanterna accanto
+let TELI = {}, STESI = {}, NOMI = {}, nNomi = 0, RES = 2, NUM = 0, NOMI_SU = {};
+const NOMI_MAX = 24, NOMI_C = [];      // i nomi da scrivere in questo fotogramma: oggetti riusati, nessuna allocazione
+for(let i=0;i<NOMI_MAX;i++) NOMI_C.push({ id:'', nome:'', col:'', x:0, y:0, a:1, w:0, yF:0 });
+function teliAzzera(){ TELI = {}; STESI = {}; NOMI = {}; nNomi = 0; NOMI_SU = {}; }
+function tavoletta(w, h){ const cv = document.createElement('canvas'), q = RES; cv.width = Math.ceil(w*q); cv.height = Math.ceil(h*q); return { cv, c:cv.getContext('2d'), res:q, t:-9, g:false }; }
 
 class Pittore {
   constructor(cv){
@@ -3544,7 +4691,7 @@ class Pittore {
     if(w===this.w && h===this.h && dpr===this.DPR) return;
     this.w = w; this.h = h; this.DPR = dpr;
     this.cv.width = Math.round(w*dpr); this.cv.height = Math.round(h*dpr);
-    this.ombra.width = this.cv.width; this.ombra.height = this.cv.height;
+    this.ombra.width = Math.ceil(this.cv.width/3); this.ombra.height = Math.ceil(this.cv.height/3);   // il buio a un terzo: costa meno e il bordo della luce viene morbido
     this.SCALA = Math.max(0.6, Math.min(1.6, Math.min(w,h)/(13*T)));
   }
   ell(x,y,rx,ry,rot){ const c=this.ctx; c.beginPath(); c.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2); }
@@ -3577,18 +4724,33 @@ class Pittore {
     const imm=immPronta(M);
     if(imm) immChiedi(imm, M, i0, j0, i1, j1, 1);   // scarica quello che serve: lo schermo e un anello di pezzi intorno
     // al massimo ~6 ms per fotogramma a fare pezzi nuovi: quelli che mancano ancora si abbozzano e arrivano al prossimo
-    let nuovi=0, spesa=0, manca=0;
+    let nuovi=0, spesa=0, manca=0, vuoti=0;
+    // l'anteprima sotto i pezzi che mancano o stanno entrando: una pennellata sola su tutto il rettangolo, così fra un pezzo e l'altro non resta nessuna riga
+    const ante=immAnteprima(M);
+    if(ante){
+      let a0=ni+1, a1=-1, b0=nj+1, b1=-1;
+      for(let j=j0;j<=j1;j++) for(let i=i0;i<=i1;i++){
+        const im=imm && immPezzo(imm, i, j);
+        if(im && immDissolvi(imm, im)>=1) continue;
+        if(i<a0) a0=i; if(i>a1) a1=i; if(j<b0) b0=j; if(j>b1) b1=j;
+      }
+      if(a1>=0){ const k=ante.w/(M.GW*T), x=Math.round((a0*L-cx)*s), y=Math.round((b0*L-cy)*s);
+        c.drawImage(ante.img, a0*L*k, b0*L*k, (a1-a0+1)*L*k, (b1-b0+1)*L*k, x, y, Math.round(((a1+1)*L-cx)*s)-x+1, Math.round(((b1+1)*L-cy)*s)-y+1); }
+    }
     for(let j=j0;j<=j1;j++) for(let i=i0;i<=i1;i++){
       const dx=Math.round((i*L-cx)*s), dy=Math.round((j*L-cy)*s), dw=Math.round(((i+1)*L-cx)*s)-dx, dh=Math.round(((j+1)*L-cy)*s)-dy;
       const im=imm && immPezzo(imm, i, j);   // l'immagine di Blender del pezzo, se è già arrivata: prende il posto del disegno
-      if(im){ c.drawImage(im, dx, dy, dw+1, dh+1); continue; }
+      if(im){ if(ante){ c.globalAlpha=immDissolvi(imm, im); c.drawImage(im, dx, dy, dw+1, dh+1); c.globalAlpha=1; } else c.drawImage(im, dx, dy, dw+1, dh+1); continue; }
       if(imm && imm.pz.has(j*16+i)) manca++;   // (doveva esserci l'immagine di Blender e non c'è ancora: per le prove e per il caricamento d'ingresso)
+      if(ante) continue;                        // (sotto c'è già l'anteprima)
+      vuoti++;
       let e=pezzo(M,i,j,res,true);
       if(!e && (spesa<6 || !nuovi)){ const a=performance.now(); e=pezzo(M,i,j,res); e.nuovo=false; nuovi++; spesa+=performance.now()-a; }
       if(e) c.drawImage(e.cv, dx, dy, dw+1, dh+1); else this.abbozzo(M, i, j, dx, dy, dw/(PEZZO*T));   // +1: nessuna riga tra un pezzo e l'altro
     }
     this.meta={ w:W/s, h:H/s };   // quanto vedo, in pixel del gioco (lo usa il caricamento d'ingresso per sapere quali pezzi servono)
     this.manca=manca; if(manca) this.fotMancano=(this.fotMancano||0)+1;   // pezzi di Blender mancanti in questo fotogramma / fotogrammi con pezzi mancanti dall'inizio
+    if(vuoti) this.fotVuoti=(this.fotVuoti||0)+1;                         // fotogrammi con pezzi a codice (né l'immagine né l'anteprima): per le prove
     c.setTransform(s,0,0,s,-cx*s,-cy*s);
     const tx0=Math.max(0,Math.floor(cx/T)-1), ty0=Math.max(0,Math.floor(cy/T)-1), tx1=Math.min(M.GW-1,Math.ceil((cx+W/s)/T)+1), ty1=Math.min(M.GH-1,Math.ceil((cy+H/s)/T)+1);
     // solo il mare e le torce si muovono
@@ -3614,15 +4776,21 @@ class Pittore {
       if(serra) for(let i=0;i<9;i++){ const x=(serra.x+1+((i*37)%11)+Math.sin(t*0.7+i)*0.8)*T, y=(serra.y+1+((i*53)%11)+Math.cos(t*0.9+i*2)*0.8)*T, a=0.4+0.4*Math.sin(t*3+i*1.7); const g=c.createRadialGradient(x,y,0,x,y,9); g.addColorStop(0,`rgba(210,255,140,${a})`); g.addColorStop(1,'rgba(210,255,140,0)'); c.fillStyle=g; c.fillRect(x-9,y-9,18,18); }
     }
     const R=S.R, anima=S.anima;
+    this.cx=cx; this.cy=cy; this.s=s; if(S.scala==null) RES=s;   // (per copiare le tavolette sui pixel giusti)
     const visibile = q => anima || (Math.hypot(q.x-io.x,q.y-io.y)<=R*0.97 && vede(M,io.x,io.y,q.x,q.y));
-    for(const k of S.corpi) if(visibile(k)) this.corpo(k,t);
+    for(const k of S.corpi) this.corpo(k,t,visibile(k)&&k.x>vx0&&k.x<vx1&&k.y>vy0&&k.y<vy1,S.neb,M);
+    if(S.scala==null){ let n=0; for(const id in STESI) n++; if(n!==S.corpi.length) for(const id in STESI) if(!S.corpi.some(k=>k.id===id)) delete STESI[id]; }   // (rianimato, mangiato, pulito: il mucchio va via)
     // gli effetti nel mondo (sotto i personaggi quelli a terra)
     for(const e of S.effetti||[]) if(e.terra && (e.sempre || visibile(e))) this.effetto(e,t);
     // le orme (solo l'Investigatore): una per passo, del colore di chi l'ha lasciata
-    for(const o of S.orme||[]){ const a=Math.max(0,1-(t-o.t)/(S.durOrme||10)); if(a<=0) continue; c.save(); c.translate(o.x,o.y+T*0.3); c.rotate(o.dir+Math.PI/2); c.globalAlpha=0.65*a; c.fillStyle=o.col; this.ell(o.lato*4,0,2.6,4.2); c.fill(); c.restore(); }
+    for(const o of S.orme||[]){ const a=Math.max(0,1-(t-o.t)/(S.durOrme||10)); if(a<=0) continue; c.save(); c.translate(o.x,o.y+T*0.3); c.rotate(o.dir+Math.PI/2); c.globalAlpha=0.65*a; c.fillStyle=o.col; this.ell(o.lato*4,0,2.6,4.2); c.fill(); if(o.bordo){ c.strokeStyle=o.bordo; c.lineWidth=1; c.stroke(); } c.restore(); }
     c.globalAlpha=1;
     const tutti=S.altri.filter(p=>(!p.fantasma||anima) && (visibile(p) || (S.traccia && p.id===S.traccia)));
     if(io.mostra) tutti.push(io);
+    this.saletta=!!S.saletta; this.sguardo=S.scala==null && io.muove ? io : null;   // nella saletta il telo cade; gli occhi di chi è fermo seguono chi cammina vicino
+    this.mio=S.scala==null?io:null;
+    // quante persone a schermo decidono ogni quanto si ridisegna ognuna; se il telefono non ce la fa (piu) si dirada ancora: la scena resta fluida, la stoffa fa meno pose
+    if(S.scala==null){ this.turno=(this.turno||0)+1; this.piu=this.piu||0; this.gruppi=Math.min(5,(tutti.length<=3?1:tutti.length<=7?2:3)+this.piu); this.spesa=0; } else this.gruppi=0;
     // mentre scrivo, un anello d'oro sotto chi mi sentirà (solo chi vedo: il buio non tradisce nessuno)
     if(S.parla){ const P=S.parla, a=0.6+0.25*Math.sin(t*4);
       for(const p of tutti){ if(p===io || (P.anima ? !p.fantasma : p.fantasma)) continue;
@@ -3639,15 +4807,16 @@ class Pittore {
     M.ostacoli.forEach((o,k)=>{ if((o.x+o.w)*T<vx0||o.x*T>vx1||(o.y+o.h)*T<vy0||o.y*T-altezzaMobile(o,M,k)>vy1) return; scena.push({ y:(o.y+o.h)*T, o, k }); });
     if(imm){   // gli oggetti di scena di Blender (lampioni, sedie...) e la campana: anche loro dietro o davanti a chi passa
       immExtra(imm).forEach((e,n)=>{ if(e.x+e.w<vx0||e.x>vx1||e.y+e.h<vy0||e.y>vy1) return; scena.push({ y:e.base, ex:n }); });
-      if(campanaImm){ const bx=centro(CAMPANA.tx), by=centro(CAMPANA.ty); if(bx>vx0 && bx<vx1 && by>vy0 && by<vy1+2*T) scena.push({ y:(CAMPANA.ty+1)*T, campana:true }); }
+      if(campanaImm){ const bx=centro(CAMPANA.tx), by=centro(CAMPANA.ty); if(bx>vx0 && bx<vx1 && by>vy0 && by<vy1+2*T) scena.push({ y:(CAMPANA.oy+1)*T, campana:true }); }
     }
-    for(const p of tutti) scena.push({ y:p.y+T*0.36, p });
+    for(const p of tutti) if(p===io || (p.x>vx0 && p.x<vx1 && p.y>vy0 && p.y<vy1)) scena.push({ y:p.y+TELO_ORLO, p });   // chi è fuori dallo schermo non si disegna e non si simula
     scena.sort((a,b)=>a.y-b.y);
+    let dopoIo=false, coperto=false;   // qualcosa di alto mi sta davanti? Solo allora serve la mia sagoma trasparente
     for(const q of scena){
-      if(q.o){ disegnaMobile(c, M, q.o, q.k, res, t, S.effetti, this); continue; }
-      if(q.ex!==undefined){ disegnaExtra(c, imm, q.ex, t); continue; }
-      if(q.campana){ immAnimata(c, M, 'campana', 0, 0, Math.sin(t*2)*0.08); continue; }
-      const p=q.p;
+      if(q.o){ if(dopoIo && !coperto) coperto=(q.o.x*T<io.x+T && (q.o.x+q.o.w)*T>io.x-T && q.o.y*T-altezzaMobile(q.o,M,q.k)<io.y+T*0.4); disegnaMobile(c, M, q.o, q.k, res, t, S.effetti, this); continue; }
+      if(q.ex!==undefined){ if(dopoIo && !coperto){ const e=immExtra(imm)[q.ex]; coperto=e.x<io.x+T && e.x+e.w>io.x-T && e.y<io.y+T*0.4; } disegnaExtra(c, imm, q.ex, t); continue; }
+      if(q.campana){ coperto=coperto||dopoIo; immAnimata(c, M, 'campana', 0, 0, Math.sin(t*2)*0.08); continue; }
+      const p=q.p; if(p===io) dopoIo=true;
       if(p.muove && !p.fantasma){ const k=this.passi[p.id]||0; if(t-k>0.22){ this.passi[p.id]=t; this.sparpaglia('polvere', p.x+(Math.random()-0.5)*8, p.y+T*0.36, 2, { v:12, vita:0.5, r:2.5 }); }
         // sul bordo del molo i passi fanno cerchi nell'acqua
         if(t-(this.ondaDi[p.id]||0)>0.5 && this.onde.length<24){ const px=Math.floor(p.x/T), py=Math.floor((p.y+T*0.36)/T);
@@ -3655,8 +4824,18 @@ class Pittore {
       const grigio=S.neb && p!==io;
       if(S.segnati && S.segnati.indexOf(p.id)>=0 && !grigio){ const g=c.createRadialGradient(p.x,p.y-T*0.4,0,p.x,p.y-T*0.4,T*1.2); g.addColorStop(0,`rgba(${ROSSO},${0.45+0.2*Math.sin(t*6)})`); g.addColorStop(1,`rgba(${ROSSO},0)`); c.fillStyle=g; c.fillRect(p.x-T*1.2,p.y-T*1.6,T*2.4,T*2.4); }
       if(S.traccia && p.id===S.traccia){ c.strokeStyle=`rgba(${ORO},.8)`; c.lineWidth=2; c.setLineDash([4,4]); this.ell(p.x,p.y+T*0.3,T*0.55,T*0.22); c.stroke(); c.setLineDash([]); }
+      const ini=performance.now();
       this.persona(p,t,{ alfa:p.fantasma?0.45:1, grigio, nome:!grigio, coloreNome:p.coloreNome||(p.alleata?'#f2a7b6':null) });
+      this.spesa+=performance.now()-ini;
       if(S.scudi && S.scudi.indexOf(p.id)>=0 && !p.fantasma){ const a=0.35+0.15*Math.sin(t*3); c.strokeStyle=`rgba(120,220,255,${a+0.25})`; c.lineWidth=2; this.ell(p.x,p.y-T*0.45,T*0.62,T*0.85); c.stroke(); c.fillStyle=`rgba(120,220,255,${a*0.25})`; c.fill(); }
+    }
+    if(io.mostra && !io.fantasma && coperto) this.persona(io,t,{ alfa:0.55, nome:false });   // la propria sagoma trasparente: dietro un pilastro o uno scaffale chi gioca non si perde (solo la sua, gli altri restano nascosti)
+    this.scriviNomi(dt);
+    // chi è fuori dalla luce o dallo schermo: la stoffa non si simula, ma chi torna a guardare trova il telo giusto
+    if(S.scala==null){
+      for(const p of S.altri){ const r=TELI[p.id]; if(r && !r.attesa && t-r.tV>TELO_FUORI){ const fa=t-r.tU; r.tU=t; r.l.aggiorna(fa>0.1?0.1:fa, p.x, p.y, p.dir, false, false); } }
+      this.spesaM=(this.spesaM||0)+(this.spesa-(this.spesaM||0))*0.08;
+      if(this.turno%30===0){ if(this.spesaM>TELO_TETTO && this.piu<3) this.piu++; else if(this.spesaM<TELO_TETTO*0.5 && this.piu>0) this.piu--; }
     }
     // la freccetta d'oro dei miei compiti resta sopra i mobili
     if(S.palazzo) for(const p of POSTAZIONI) if(S.miei.has(p.id)){ const x=centro(p.tx), y=centro(p.ty), b=Math.sin(t*4)*3; c.fillStyle='#e7b75c'; c.beginPath(); c.moveTo(x-6,y-24+b); c.lineTo(x+6,y-24+b); c.lineTo(x,y-16+b); c.closePath(); c.fill(); }
@@ -3679,17 +4858,32 @@ class Pittore {
     if(S.freccia) this.freccia(io, S.freccia, t);
     if(S.neb){ c.setTransform(1,0,0,1,0,0); for(let i=0;i<6;i++){ const x=((t*20*(i%2?1:-1)+i*W/3)%(W*1.4))-W*0.2, y=H*(0.15+i*0.14); const g=c.createRadialGradient(x,y,0,x,y,W*0.35); g.addColorStop(0,'rgba(170,175,190,.18)'); g.addColorStop(1,'rgba(170,175,190,0)'); c.fillStyle=g; c.fillRect(0,0,W,H); } c.setTransform(s,0,0,s,-cx*s,-cy*s); }
     if(!anima){
-      const o=this.octx, Rf=R*(1+0.015*Math.sin(t*7)+0.01*Math.sin(t*13));
-      o.setTransform(1,0,0,1,0,0); o.globalCompositeOperation='source-over'; o.clearRect(0,0,W,H);
-      o.fillStyle='rgba(4,6,14,.88)'; o.fillRect(0,0,W,H);
-      o.setTransform(s,0,0,s,-cx*s,-cy*s); o.globalCompositeOperation='destination-out';
-      const gr=o.createRadialGradient(io.x,io.y,0,io.x,io.y,Rf); gr.addColorStop(0,'rgba(0,0,0,1)'); gr.addColorStop(0.72,'rgba(0,0,0,.96)'); gr.addColorStop(1,'rgba(0,0,0,0)');
-      o.fillStyle=gr; o.beginPath(); const pts=this.luce(M,io.x,io.y,Rf); o.moveTo(pts[0][0],pts[0][1]); for(let i=1;i<pts.length;i++) o.lineTo(pts[i][0],pts[i][1]); o.closePath(); o.fill();
+      const o=this.octx, Rf=R*(1+0.015*Math.sin(t*7)+0.01*Math.sin(t*13)), oW=this.ombra.width, oH=this.ombra.height, k=oW/W, spento=!!S.buio;
+      o.setTransform(1,0,0,1,0,0); o.globalCompositeOperation='source-over'; o.clearRect(0,0,oW,oH);
+      o.fillStyle=spento?'rgba(4,6,14,.9)':'rgba(4,6,14,.8)'; o.fillRect(0,0,oW,oH);
+      o.setTransform(s*k,0,0,s*k,-cx*s*k,-cy*s*k);
+      // la pianta dei muri sta nel buio: oltre la lanterna si capisce dove continua la stanza e dov'è la porta (il varco nella riga). Non mostra nessuno
+      if(!spento){ o.strokeStyle='rgba(216,195,160,.3)'; o.lineWidth=1.6*(this.DPR||1)/s; o.lineJoin='round'; o.stroke(this.pianta(M)); }
+      o.globalCompositeOperation='destination-out';
+      const gr=o.createRadialGradient(io.x,io.y,0,io.x,io.y,Rf); gr.addColorStop(0,'rgba(0,0,0,1)'); gr.addColorStop(0.55,'rgba(0,0,0,.98)'); gr.addColorStop(0.82,'rgba(0,0,0,.55)'); gr.addColorStop(1,'rgba(0,0,0,0)');
+      const pts=this.luce(M,io.x,io.y,spento?Rf:Rf*1.45);
+      o.beginPath(); o.moveTo(pts[0][0],pts[0][1]); for(let i=1;i<pts.length;i++) o.lineTo(pts[i][0],pts[i][1]); o.closePath();
+      o.fillStyle=gr; o.fill();
+      if(!spento){ const al=o.createRadialGradient(io.x,io.y,Rf*0.6,io.x,io.y,Rf*1.45); al.addColorStop(0,'rgba(0,0,0,.3)'); al.addColorStop(1,'rgba(0,0,0,0)'); o.fillStyle=al; o.fill(); }
       o.globalCompositeOperation='source-over';
-      c.setTransform(1,0,0,1,0,0); c.drawImage(this.ombra,0,0);
-      c.setTransform(s,0,0,s,-cx*s,-cy*s); c.globalCompositeOperation='lighter';
-      const calda=c.createRadialGradient(io.x,io.y,0,io.x,io.y,R*0.8); calda.addColorStop(0,`rgba(${ORO},.08)`); calda.addColorStop(1,`rgba(${ORO},0)`);
+      c.setTransform(1,0,0,1,0,0); c.imageSmoothingEnabled=true; c.drawImage(this.ombra,0,0,W,H);
+      c.setTransform(s,0,0,s,-cx*s,-cy*s);
+      // dentro la luce schiarisce senza velare i neri: gli oggetti si staccano dal pavimento
+      c.globalCompositeOperation='soft-light';
+      const calda=c.createRadialGradient(io.x,io.y,0,io.x,io.y,R*0.85); calda.addColorStop(0,'rgba(255,236,205,.34)'); calda.addColorStop(1,'rgba(255,236,205,0)');
       c.fillStyle=calda; c.fillRect(io.x-R,io.y-R,R*2,R*2); c.globalCompositeOperation='source-over';
+      // i miei compiti si vedono anche nel buio; a portata di mano l'anello batte
+      if(S.palazzo && !S.interf) for(const p of POSTAZIONI){
+        if(!S.miei.has(p.id)) continue;
+        const px=centro(p.tx), py=centro(p.ty), d=Math.hypot(px-io.x,py-io.y);
+        c.globalAlpha=d<R*0.8?1:0.75; this.postazione(p,true,t); c.globalAlpha=1;
+        if(d<T*1.7){ const q=17*(1.06+0.06*Math.sin(t*10.5)); c.strokeStyle=`rgba(${ORO},.95)`; c.lineWidth=2.2; c.beginPath(); c.arc(px,py,q,0,Math.PI*2); c.stroke(); }
+      }
       // pulviscolo nella luce
       for(const d of this.polvere){ d.f+=dt*d.v; const ang=d.x*Math.PI*2, rr=d.y*R*0.8, px=io.x+Math.cos(ang+d.f*0.2)*rr, py=io.y+Math.sin(ang+d.f*0.2)*rr - (d.f*6%20); c.fillStyle=`rgba(255,235,190,${0.15+0.15*Math.sin(d.f*2)})`; c.fillRect(px,py,1.6,1.6); }
       if(S.traccia){ const tg=S.altri.find(p=>p.id===S.traccia); if(tg) this.freccia(io, { x:tg.x, y:tg.y, col:'#cba2ff' }, t); }
@@ -3746,9 +4940,9 @@ class Pittore {
         break; }
       case 'compito': {
         if(e.v==='luce'){ const g=c.createRadialGradient(e.x,e.y+T*2,0,e.x,e.y+T*2,T*6); g.addColorStop(0,`rgba(255,230,160,${0.5*a})`); g.addColorStop(1,'rgba(255,230,160,0)'); c.fillStyle=g; c.fillRect(e.x-T*6,e.y-T*4,T*12,T*12);
-          for(let i=0;i<10;i++){ const ang=i/10*Math.PI*2+t; c.strokeStyle=`rgba(255,230,160,${0.4*a})`; c.lineWidth=2; c.beginPath(); c.moveTo(e.x,e.y); c.lineTo(e.x+Math.cos(ang)*T*3,e.y+Math.sin(ang)*T*3); c.stroke(); } }
-        else if(e.v==='ingranaggio'){ c.save(); c.translate(e.x+T*2,e.y-T*2.5); c.rotate(t*12); c.strokeStyle=`rgba(${ORO},${a})`; c.lineWidth=3; for(let i=0;i<8;i++){ c.rotate(Math.PI/4); c.beginPath(); c.moveTo(0,10); c.lineTo(0,26); c.stroke(); } c.restore(); }
-        else if(e.v==='fuoco'){ const g=c.createRadialGradient(e.x-T*7,e.y,0,e.x-T*7,e.y,T*3); g.addColorStop(0,`rgba(255,140,40,${0.6*a})`); g.addColorStop(1,'rgba(255,140,40,0)'); c.fillStyle=g; c.fillRect(e.x-T*10,e.y-T*3,T*6,T*6); }
+          for(let i=0;i<10;i++){ const ang=i/10*Math.PI*2+t; c.strokeStyle=`rgba(255,230,160,${0.4*a})`; c.lineWidth=2; c.beginPath(); c.moveTo(e.x,e.y-T*2); c.lineTo(e.x+Math.cos(ang)*T*3,e.y-T*2+Math.sin(ang)*T*3); c.stroke(); } }
+        else if(e.v==='ingranaggio'){ c.save(); c.translate(e.x,e.y-T*2.1); c.rotate(t*12); c.strokeStyle=`rgba(${ORO},${a})`; c.lineWidth=3; for(let i=0;i<8;i++){ c.rotate(Math.PI/4); c.beginPath(); c.moveTo(0,10); c.lineTo(0,26); c.stroke(); } c.restore(); }
+        else if(e.v==='fuoco'){ const gx=e.x+T*0.5, gy=e.y-T*1.6, g=c.createRadialGradient(gx,gy,0,gx,gy,T*3); g.addColorStop(0,`rgba(255,140,40,${0.6*a})`); g.addColorStop(1,'rgba(255,140,40,0)'); c.fillStyle=g; c.fillRect(gx-T*3,gy-T*3,T*6,T*6); }
         c.fillStyle=`rgba(${ORO},${a})`; c.font='700 16px '+FONT; c.textAlign='center'; c.fillText('✓', e.x, e.y-T*0.9-f*14);
         break; }
     }
@@ -3758,14 +4952,36 @@ class Pittore {
     if(e.k==='bengala'||e.k==='luci'){ c.fillStyle=`rgba(255,240,210,${0.7*a*a})`; c.fillRect(0,0,W,H); }
     else if(e.k==='spegni'){ c.fillStyle=`rgba(${ROSSO},${0.35*a})`; c.fillRect(0,0,W,H); }
   }
+  // i bordi fra pavimento e muro, una volta sola per mappa: righe unite, così il disegno a ogni fotogramma è una riga sola
+  pianta(M){
+    if(M.pianta) return M.pianta;
+    const P=new Path2D(), { GW, GH, MURO }=M, mu=(x,y)=>x<0||y<0||x>=GW||y>=GH||MURO[y*GW+x]===1;
+    for(let y=0;y<=GH;y++){ let x0=-1; for(let x=0;x<=GW;x++){ const b=x<GW && mu(x,y-1)!==mu(x,y); if(b&&x0<0) x0=x; if(!b&&x0>=0){ P.moveTo(x0*T,y*T); P.lineTo(x*T,y*T); x0=-1; } } }
+    for(let x=0;x<=GW;x++){ let y0=-1; for(let y=0;y<=GH;y++){ const b=y<GH && mu(x-1,y)!==mu(x,y); if(b&&y0<0) y0=y; if(!b&&y0>=0){ P.moveTo(x*T,y0*T); P.lineTo(x*T,y*T); y0=-1; } } }
+    return M.pianta=P;
+  }
   luce(M,ox,oy,R){
-    const n=160, pts=new Array(n), passo=T*0.2;
+    const n=180, pts=new Array(n), passo=T*0.2, G=M.GW, A=M.GH, MU=M.MURO;
+    if(!this.luceD){ this.luceD=new Float32Array(n); this.luceU=new Uint8Array(n); this.luceC=new Float32Array(n); this.luceS=new Float32Array(n); for(let i=0;i<n;i++){ this.luceC[i]=Math.cos(i/n*Math.PI*2); this.luceS[i]=Math.sin(i/n*Math.PI*2); } }
+    const ds=this.luceD, ur=this.luceU, CO=this.luceC, SE=this.luceS;
     for(let i=0;i<n;i++){
-      const a=i/n*Math.PI*2, dx=Math.cos(a), dy=Math.sin(a); let d=0, urto=false, tx=0, ty=0;
-      while(d<R){ d+=passo; tx=Math.floor((ox+dx*d)/T); ty=Math.floor((oy+dy*d)/T); if(tx<0||ty<0||tx>=M.GW||ty>=M.GH||M.MURO[ty*M.GW+tx]){ urto=true; break; } }
-      // contro un muro la luce entra un po'; verso nord sale sulla faccia alta del muro (se dietro c'è altro muro)
-      if(urto){ let ext=T*0.6; if(dy<-0.2 && ty>0 && tx>=0 && tx<M.GW && M.MURO[(ty-1)*M.GW+tx]) ext+=T*0.9*(-dy); d=Math.min(R,d+ext); }
-      pts[i]=[ox+dx*d, oy+dy*d];
+      const dx=CO[i], dy=SE[i]; let d=0, urto=0;
+      while(d<R){ d+=passo; const x=ox+dx*d, y=oy+dy*d; if(x<0||y<0){ urto=1; break; } const tx=x/T|0, ty=y/T|0; if(tx>=G||ty>=A||MU[ty*G+tx]){ urto=1; break; } }
+      if(urto){
+        // il punto esatto dove il raggio tocca il muro: così il bordo della luce segue il muro e non fa scalini
+        let a0=d-passo, b0=d; for(let k=0;k<2;k++){ const m=(a0+b0)/2, x=ox+dx*m, y=oy+dy*m, tx=x/T|0, ty=y/T|0; if(x<0||y<0||tx>=G||ty>=A||MU[ty*G+tx]) b0=m; else a0=m; } d=b0;
+        // contro un muro la luce entra un po'; verso nord sale sulla faccia alta del muro (se dietro c'è altro muro)
+        let ext=T*0.6;
+        if(dy<-0.2){ const tx=(ox+dx*d)/T|0, ty=((oy+dy*d)/T|0)-1; if(ty>=0 && tx>=0 && tx<G && MU[ty*G+tx]) ext+=T*0.9*(-dy); }
+        d=Math.min(R,d+ext);
+      }
+      ds[i]=d; ur[i]=urto;
+    }
+    // lungo uno stesso muro due raggi vicini non fanno dente: si lisciano (mai sopra uno spigolo vero, dove la distanza salta)
+    for(let i=0;i<n;i++){
+      const p=i?i-1:n-1, q=i<n-1?i+1:0; let d=ds[i];
+      if(ur[i] && ur[p] && ur[q] && Math.abs(ds[p]-d)<T*0.8 && Math.abs(ds[q]-d)<T*0.8) d=(ds[p]+2*d+ds[q])/4;
+      pts[i]=[ox+CO[i]*d, oy+SE[i]*d];
     }
     return pts;
   }
@@ -3832,7 +5048,9 @@ class Pittore {
         const y=q.ab+q.fy+b.py+(1-ease)*6, lw=b.lw, lh=b.lh;
         c.globalAlpha=Math.min(1,(b.fine-ora)/500)*(this.ridotto?1:ease)*(b.w?0.72:1);
         c.fillStyle=b.a?'rgba(196,212,255,.9)':b.w?'rgba(214,216,226,.92)':'rgba(246,240,226,.96)';
-        c.strokeStyle=b.a?'rgba(60,80,150,.55)':'rgba(20,16,10,.35)'; c.lineWidth=1; c.setLineDash(b.w?[3,3]:[]);
+        // il filo del fumetto è del colore di chi parla (nella nebbia no: non si vede di chi è). Il testo resta scuro su carta chiara
+        const tl=!b.a && !S.neb && q.p.lenz ? LENZUOLI[q.p.lenz.c] : null;
+        c.strokeStyle=tl ? tl.b : b.a?'rgba(60,80,150,.55)':'rgba(20,16,10,.35)'; c.lineWidth=tl?1.6:1; c.setLineDash(b.w?[3,3]:[]);
         c.beginPath(); c.roundRect ? c.roundRect(x0-lw/2,y,lw,lh,8) : c.rect(x0-lw/2,y,lw,lh);
         if(ultimo){   // la codina verso chi parla (se la pila è stata spostata in su, un filo dritto fino alla testa)
           const tx=Math.max(x0-lw/2+10,Math.min(x0+lw/2-10,q.p.x));
@@ -3847,10 +5065,10 @@ class Pittore {
   }
   freccia(io, f, t){
     const c=this.ctx, dx=f.x-io.x, dy=f.y-io.y, d=Math.hypot(dx,dy); if(d<3*T) return;
-    const a=Math.atan2(dy,dx), r=2.1*T+Math.sin(t*5)*3, x=io.x+Math.cos(a)*r, y=io.y+Math.sin(a)*r;
+    const a=Math.atan2(dy,dx), su=Math.max(0,-dy/d), r=(2.1+su*su*1.15)*T+Math.sin(t*5)*3, x=io.x+Math.cos(a)*r, y=io.y+Math.sin(a)*r;   // (verso l'alto gira più largo: non copre il mio nome)
     c.save(); c.translate(x,y); c.rotate(a);
     c.fillStyle=f.col; c.strokeStyle='rgba(9,11,22,.8)'; c.lineWidth=3; c.lineJoin='round';
-    c.beginPath(); c.moveTo(11,0); c.lineTo(-7,-9); c.lineTo(-3,0); c.lineTo(-7,9); c.closePath(); c.stroke(); c.fill();
+    c.beginPath(); c.moveTo(15,0); c.lineTo(-9,-7); c.lineTo(-4,0); c.lineTo(-9,7); c.closePath(); c.stroke(); c.fill();
     c.restore();
   }
   postazione(p,attiva,t){
@@ -3865,7 +5083,7 @@ class Pittore {
     }
     if(tipo==='chiusa'){
       c.strokeStyle = attiva ? `rgba(90,176,255,${0.7+0.3*Math.sin(t*6)})` : '#7a6c4f'; c.lineWidth=4; c.beginPath(); c.arc(x,y,10,0,Math.PI*2); c.stroke();
-      c.save(); c.translate(x,y); c.rotate(attiva ? t*3 : 0); c.beginPath(); c.moveTo(-10,0); c.lineTo(10,0); c.moveTo(0,-10); c.lineTo(0,10); c.stroke(); c.restore();
+      c.save(); c.translate(x,y); c.rotate(attiva ? t*3 : 0); c.beginPath(); for(let k=0;k<3;k++){ const a=k*Math.PI/3, qx=Math.cos(a)*10, qy=Math.sin(a)*10; c.moveTo(-qx,-qy); c.lineTo(qx,qy); } c.stroke(); c.restore();   // un volano a sei raggi: la botola è la croce
       if(attiva){ const g=c.createRadialGradient(x,y,0,x,y,44); g.addColorStop(0,'rgba(90,176,255,.4)'); g.addColorStop(1,'rgba(90,176,255,0)'); c.fillStyle=g; c.fillRect(x-44,y-44,88,88); }
       return;
     }
@@ -3883,11 +5101,96 @@ class Pittore {
     if(p.visibile){ c.strokeStyle='rgba(241,232,214,.35)'; c.lineWidth=1.2; c.beginPath(); c.arc(x,y,15,0,Math.PI*2); c.stroke(); }
   }
   // p: { x, y, dir, muove, fantasma, nome, colore, img, imgS (di spalle), seme }
+  // il telo di una persona, simulato fino a t. Un telo nuovo nella saletta aspetta un attimo sopra l'omino; fuori dalla saletta è già addosso.
+  // Cambiare colore (o travestirsi) è un telo nuovo: stessa stoffa, stessa forma di chi ha quel colore, così il travestimento non si tradisce
+  teloDi(p, t){
+    const d=p.lenz||TELO_BASE, m=d.m||null, salt=this.saletta; let r=TELI[p.id];
+    if(!r || r.c!==d.c || r.m!==m){
+      r=TELI[p.id]={ l:new Lenzuolo(d,{ seme:d.c }), c:d.c, m, t0:t, tU:t, tV:t, attesa:!!salt && !r, ricade:!!salt && !!r, num:NUM++, sp:r?r.sp:null };
+      if(r.sp) r.sp.t=-9;
+    }
+    const l=r.l; r.tV=t;
+    if(r.attesa){ if(!salt) r.attesa=false; else if(t-r.t0<TELO_ATTESA+(r.num%5)*0.1) return r; else { r.attesa=false; r.ricade=true; } }   // (uno dopo l'altro: si capisce quale telo va su quale testa)
+    if(r.ricade){ r.ricade=false; r.tU=t; l.aggiorna(0, p.x, p.y, p.dir, false, true); if(salt) l.cadi(); }
+    const fa=t-r.tU;
+    if(fa>0 && this.tocca(r,p,fa)){
+      r.tU=t;
+      if(!!p.fantasma!==(l.stato==='fantasma')) l.fantasma(!!p.fantasma);
+      // uno strattone che camminando non si può fare (botola, Trasportatore, rete che recupera in un colpo) è un salto: la stoffa non se ne accorge.
+      // E chi è fermo non si gira: la stoffa non deve attorcigliarsi attorno a chi cambia direzione sul posto
+      if(Math.hypot(p.x-l.wx, p.y-l.wy)>TELO_STRAPPO*fa+6){ l.wx=p.x; l.wy=p.y; }
+      l.aggiorna(fa>0.1?0.1:fa, p.x, p.y, p.muove?p.dir:null, !!p.muove, true);
+    }
+    const g=this.sguardo;
+    if(g && g!==p && Math.abs(g.x-p.x)<5*T && Math.abs(g.y-p.y)<4*T) l.guarda(g.x, g.y); else if(l.gOn) l.guarda();
+    return r;
+  }
+  teloStato(id){ const r=TELI[id]; return r ? (r.attesa ? 'attesa' : r.l.stato) : null; }   // (per le prove)
+  // tocca a questa persona? Il mio telo sempre; gli altri a turno: chi guarda la scena con dieci persone li vede muovere lo stesso,
+  // e nessun fotogramma paga per tutti insieme. Gli schermi delle telecamere vanno a 15 al secondo
+  tocca(r, p, fa){ return p===this.mio || r.l.stato==='cade' || (this.gruppi ? this.gruppi===1 || (r.num+this.turno)%this.gruppi===0 : fa>=0.066); }
   persona(p, t, o){
-    const c=this.ctx, ph=t*10+(p.seme||0), bob=p.muove?Math.abs(Math.sin(ph))*3:Math.sin(t*2+(p.seme||0))*0.6, x=p.x, y=p.y;
+    const c=this.ctx, x=p.x, y=p.y, r=this.teloDi(p,t), l=r.l, sotto=r.attesa||l.copre()<1;
+    let testa=y+TELO_PIEDI-l.cima()*TELO_K;
+    if(sotto) testa=this.omino(p, t, o, r.attesa, r.attesa?0:l.cede());
+    if(!r.attesa){
+      if(o.alfa<0.9 && !p.fantasma || l.stato==='cade' || (p===this.mio && !l.dorme)) l.disegna(c,{ x, y:y+TELO_PIEDI, alfa:p.fantasma?1:o.alfa, grigio:o.grigio, lanterna:!o.grigio, ombra:o.alfa>=0.9, t, scala:TELO_K });
+      else this.stampa(r, x, y+TELO_PIEDI, t, !!o.grigio);
+    }
+    if(o.nome) this.nomeDopo(p.id, p.nome, o.coloreNome||'#f1e8d6', x, testa-5, o.alfa);
+    c.globalAlpha=1;
+  }
+  // i nomi si scrivono dopo tutta la scena: lampadari e mobili non li coprono mai. Due etichette che si toccano non si accavallano: quella dietro sale, piano, così non saltella
+  nomeDopo(id, nome, col, x, y, alfa){ const n=this.nN|0; if(n>=NOMI_MAX) return; const q=NOMI_C[n]; q.id=id; q.nome=nome; q.col=col; q.x=x; q.y=y; q.a=alfa; q.w=this.nomeLargo(nome,col); this.nN=n+1; }
+  scriviNomi(dt){
+    const n=this.nN|0; this.nN=0; if(!n) return;
+    for(let i=1;i<n;i++){ const q=NOMI_C[i]; let j=i-1; while(j>=0 && NOMI_C[j].y<q.y){ NOMI_C[j+1]=NOMI_C[j]; j--; } NOMI_C[j+1]=q; }      // dal più vicino al più lontano
+    for(let i=0;i<n;i++){
+      const q=NOMI_C[i]; let y=q.y;
+      for(let g=0;g<5;g++){ let urta=false; for(let j=0;j<i;j++){ const o=NOMI_C[j]; if(Math.abs(o.x-q.x)<(o.w+q.w)/2-5 && Math.abs(o.yF-y)<13){ y=o.yF-13; urta=true; } } if(!urta) break; }
+      q.yF=y;
+      const su=(NOMI_SU[q.id]||0)+(q.y-y-(NOMI_SU[q.id]||0))*Math.min(1,dt*16); NOMI_SU[q.id]=su;
+      this.scriviNome(q.nome, q.col, q.x, q.y-su, q.a);
+    }
+    this.ctx.globalAlpha=1;
+  }
+  // una tavoletta sulla scena, sui pixel giusti: copiata uno a uno resta nitida come se fosse disegnata lì
+  copia(sp, wx, wy, w, h){
+    const c=this.ctx, s=this.s, q=sp.res;
+    if(Math.abs(s-q)<0.001) c.drawImage(sp.cv, Math.round((wx-this.cx)*s)/s+this.cx, Math.round((wy-this.cy)*s)/s+this.cy, sp.cv.width/q, sp.cv.height/q);
+    else c.drawImage(sp.cv, wx, wy, w, h);
+  }
+  // il telo degli altri: si ristampa quando tocca, si copia sempre
+  stampa(r, x, y, t, grigio){
+    let sp=r.sp;
+    if(!sp || sp.res!==RES) sp=r.sp=tavoletta(STAMPA_W, STAMPA_H);
+    if((r.tU>sp.t && (!r.l.dorme || t-sp.t>=0.1)) || sp.g!==grigio){   // (chi dorme respira soltanto: dieci pose al secondo bastano)
+      const q=sp.c; q.setTransform(1,0,0,1,0,0); q.clearRect(0,0,sp.cv.width,sp.cv.height); q.setTransform(sp.res,0,0,sp.res,0,0);
+      r.l.disegna(q,{ x:STAMPA_X, y:STAMPA_Y, grigio, lanterna:!grigio, t, scala:TELO_K });
+      sp.t=t; sp.g=grigio;
+    }
+    this.ctx.globalAlpha=1; this.copia(sp, x-STAMPA_X, y-STAMPA_Y, STAMPA_W, STAMPA_H);
+  }
+  // il nome sopra la testa: scrivere con il contorno è la cosa più lenta del fotogramma, e il nome non cambia mai
+  nomeTav(nome, col){
+    const k=RES+'|'+col+'|'+nome; let n=NOMI[k];
+    if(!n){
+      if(nNomi>48){ NOMI={}; nNomi=0; }
+      const m=this.ctx; m.save(); m.font='600 11px '+FONT; const w=Math.ceil(m.measureText(nome).width)+10; m.restore();
+      n=NOMI[k]=tavoletta(w, 18); n.w=w; nNomi++;
+      const q=n.c; q.setTransform(n.res,0,0,n.res,0,0); q.font='600 11px '+FONT; q.textAlign='center'; q.lineJoin='round';
+      q.lineWidth=3; q.strokeStyle='rgba(9,11,22,.85)'; q.strokeText(nome,w/2,13); q.fillStyle=col; q.fillText(nome,w/2,13);
+    }
+    return n;
+  }
+  nomeLargo(nome, col){ return this.nomeTav(nome,col).w; }
+  scriviNome(nome, col, x, y, alfa){ const n=this.nomeTav(nome,col); this.ctx.globalAlpha=alfa; this.copia(n, x-n.w/2, y-13, n.w, 18); }
+  // chi sta sotto il telo: si vede nella saletta, per un attimo, finché la stoffa non lo copre. All'impatto la testa cede. Torna dove sta la testa
+  omino(p, t, o, conLanterna, cede){
+    const c=this.ctx, ph=t*10+(p.seme||0), bob=p.muove?Math.abs(Math.sin(ph))*3:Math.sin(t*2+(p.seme||0))*0.6, x=p.x, y=p.y+cede;
     const incl = p.muove ? Math.sin(ph)*0.07 : 0, sq = p.muove ? 1+Math.abs(Math.cos(ph))*0.04 : 1+Math.sin(t*2+(p.seme||0))*0.015;
     c.globalAlpha=o.alfa;
-    c.fillStyle='rgba(0,0,0,.35)'; this.ell(x,y+T*0.36,T*0.38*(1-bob*0.03),T*0.15); c.fill();
+    c.fillStyle='rgba(0,0,0,.35)'; this.ell(x,p.y+T*0.36,T*0.38*(1-bob*0.03),T*0.15); c.fill();
     const img = o.grigio ? null : (Math.sin(p.dir||0)<-0.6 && p.imgS && p.imgS.complete && p.imgS.naturalWidth ? p.imgS : (p.img && p.img.complete && p.img.naturalWidth ? p.img : null));
     let testa;
     c.save(); c.translate(x, y+T*0.38-bob); c.rotate(incl); c.scale(1/sq, sq);
@@ -3907,28 +5210,38 @@ class Pittore {
       testa = y+T*0.38-bob-46;
     }
     c.restore();
-    if(!p.fantasma && !o.grigio){
-      const sw=Math.sin(ph*0.5)*(p.muove?3:1), lx=x+T*0.45+sw, ly=y-T*0.1-bob;
+    if(conLanterna && !p.fantasma && !o.grigio){   // (dove la terrà poi il telo: quando la stoffa arriva la lanterna non salta)
+      const sw=Math.sin(ph*0.5)*(p.muove?3:1), lx=x+T*0.7+sw, ly=y-bob;
       const g=c.createRadialGradient(lx,ly,0,lx,ly,18); g.addColorStop(0,'rgba(246,217,153,.55)'); g.addColorStop(1,'rgba(246,217,153,0)');
       c.fillStyle=g; this.ell(lx,ly,18,18); c.fill();
       c.strokeStyle='#3a3020'; c.lineWidth=1.2; c.beginPath(); c.moveTo(lx,ly-5); c.lineTo(lx-sw*0.4,ly-10); c.stroke();
       c.fillStyle='#3a3020'; c.fillRect(lx-3.5,ly-5,7,10); c.fillStyle=`rgba(246,217,153,${0.85+0.15*Math.sin(t*13+(p.seme||0))})`; c.fillRect(lx-2,ly-3.5,4,7);
     }
-    if(o.nome){
-      c.font='600 11px '+FONT; c.textAlign='center'; c.lineJoin='round';
-      c.lineWidth=3; c.strokeStyle='rgba(9,11,22,.85)'; c.strokeText(p.nome,x,testa-5);
-      c.fillStyle=o.coloreNome||'#f1e8d6'; c.fillText(p.nome,x,testa-5);
-    }
-    c.globalAlpha=1;
+    return testa;
   }
-  corpo(k,t){
-    const c=this.ctx, x=k.x, y=k.y;
-    if(k.img && k.img.complete && k.img.naturalWidth){
-      const H=T*1.5, W=H*k.img.naturalWidth/k.img.naturalHeight;
-      c.save(); c.translate(x,y+4); c.rotate(-Math.PI/2); c.globalAlpha=.8; c.drawImage(k.img,-W/2,-H/2,W,H); c.restore(); c.globalAlpha=1;
-    } else { c.fillStyle=k.colore||'#888'; c.globalAlpha=.75; this.ell(x,y+4,15,8,0.2); c.fill(); c.globalAlpha=1; c.fillStyle='#e9e0cc'; this.ell(x-6,y,6,9,0.9); c.fill(); }
-    c.save(); c.translate(x+16,y+4); c.rotate(1.2); c.fillStyle='#4b4a52'; c.fillRect(-4,-5,8,11); c.fillStyle='#2a2a30'; c.fillRect(-2,-3,4,7); c.restore();
-    for(let i=0;i<2;i++){ const ph=((t*0.6)+i*0.5)%1; c.strokeStyle=`rgba(200,200,210,${0.35*(1-ph)})`; c.lineWidth=1.5; c.beginPath(); const yy=y-4-ph*24; c.moveTo(x+16,yy+6); c.quadraticCurveTo(x+21+Math.sin(t*2+i)*3,yy,x+16,yy-6); c.stroke(); }
+  // il corpo: il telo afflosciato del suo colore, con la lanterna spenta accanto. Se chi cade è sotto gli occhi il telo si affloscia davvero;
+  // se no (è già a terra, o si guarda da un'altra parte) è il mucchio finito. vis: lo si vede adesso
+  corpo(k,t,vis,neb,M){
+    const c=this.ctx, d=k.lenz||TELO_BASE; let r=STESI[k.id];
+    if(!r){
+      const v=TELI[k.id], s=corpoStretto(M,k.x,k.y);
+      if(v && vis && !v.attesa && v.c===d.c && v.l.stato==='su' && t-v.tV<=TELO_FUORI){ r={ l:v.l, tU:v.tU, sx:v.l.wx-k.x, sy:v.l.wy-k.y }; delete TELI[k.id]; r.l.spegni(s); }      // (se il corpo finisce un po' più in là del muro, il telo ci scivola mentre crolla)
+      else { r={ l:new Lenzuolo(d,{ seme:d.c }), tU:t, sx:0, sy:0 }; r.l.aggiorna(0, k.x, k.y, null, false, true); r.l.spegni(s); r.l.mucchio(); }
+      STESI[k.id]=r;
+    }
+    const l=r.l, fa=t-r.tU, x=k.x+r.sx, y=k.y+r.sy;
+    if(fa>0){ r.tU=t; l.aggiorna(fa>0.1?0.1:fa, x, y, null, false, vis); const q=Math.exp(-fa*8); r.sx*=q; r.sy*=q; if(Math.abs(r.sx)+Math.abs(r.sy)<0.4) r.sx=r.sy=0; }
+    if(!vis) return;
+    if(l.dorme){   // fermo a terra non cambia più: una stampa sola
+      const g=!!neb; let sp=r.sp;
+      if(!sp || sp.res!==RES) sp=r.sp=tavoletta(STESO_W, STESO_H);
+      if(sp.t<0 || sp.g!==g){ const q=sp.c; q.setTransform(1,0,0,1,0,0); q.clearRect(0,0,sp.cv.width,sp.cv.height); q.setTransform(sp.res,0,0,sp.res,0,0); l.disegna(q,{ x:STESO_X, y:STESO_Y, grigio:g, t, scala:TELO_K, fine:true }); sp.t=t; sp.g=g; }
+      c.globalAlpha=1; this.copia(sp, x-STESO_X, y+TELO_PIEDI-STESO_Y, STESO_W, STESO_H);
+    } else l.disegna(c,{ x, y:y+TELO_PIEDI, grigio:!!neb, t, scala:TELO_K, fine:true });
+    // il filo di fumo della lanterna appena spenta
+    const fx=x+l.lfx*TELO_K, fy=y+TELO_PIEDI+l.lfy*0.46*TELO_K-T*0.2;
+    for(let i=0;i<2;i++){ const ph=((t*0.6)+i*0.5)%1; c.strokeStyle=`rgba(200,200,210,${0.35*(1-ph)})`; c.lineWidth=1.5; c.beginPath(); const yy=fy-4-ph*24; c.moveTo(fx,yy+6); c.quadraticCurveTo(fx+5+Math.sin(t*2+i)*3,yy,fx,yy-6); c.stroke(); }
+    c.globalAlpha=1;
   }
 }
 
@@ -3938,10 +5251,17 @@ function disegnaMappa(cv, M, segni, maxW, maxH, sopra){
   cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); cv.style.width=w+'px'; cv.style.height=h+'px';
   const m=cv.getContext('2d'); m.setTransform(dpr*sc,0,0,dpr*sc,0,0); m.fillStyle='#0b0d18'; m.fillRect(0,0,M.GW*T,M.GH*T);
   for(let y=0;y<M.GH;y++) for(let x=0;x<M.GW;x++){ const i=y*M.GW+x, p=M.PAV[i]; if(p===-2){ if(M.ACQUA[i]){ m.fillStyle='#132c40'; m.fillRect(x*T,y*T,T+.5,T+.5); } continue; } m.fillStyle = p===-1 ? CORR2 : M.stanze[p].c2; m.fillRect(x*T,y*T,T+.5,T+.5); }
-  m.font=`600 ${11/sc}px ${FONT}`; m.textAlign='center'; m.fillStyle='rgba(241,232,214,.85)';
-  for(const s of M.stanze){ const lw=m.measureText(s.nome).width/2+3/sc; m.fillText(s.nome, Math.max(lw, Math.min(M.GW*T-lw, (s.lx!=null?s.lx:s.x+s.w/2)*T)), (s.ly!=null?s.ly:s.y+s.h/2)*T); }
   for(const g of segni){ m.fillStyle=g.col; m.beginPath(); m.arc(g.x,g.y,(g.r||5)/sc,0,Math.PI*2); m.fill(); if(g.bordo){ m.strokeStyle='#0b0d18'; m.lineWidth=2/sc; m.stroke(); } }
   if(sopra) sopra(m, sc);
+  // i nomi delle stanze dopo i pallini, su un fondo scuro. Un pallino non sta mai sotto le lettere: se c'è, il nome si sposta sopra o sotto
+  m.font=`600 ${11/sc}px ${FONT}`; m.textAlign='center';
+  const riga=13/sc, sotto=3/sc, su=10/sc;
+  for(const s of M.stanze){
+    const lw=m.measureText(s.nome).width/2+3/sc, x=Math.max(lw, Math.min(M.GW*T-lw, (s.lx!=null?s.lx:s.x+s.w/2)*T)), y0=(s.ly!=null?s.ly:s.y+s.h/2)*T; let y=y0;
+    for(const k of [0,-1,1,-2,2]){ const q=y0+k*riga; if(!segni.some(g=>{ const r=(g.r||5)/sc; return Math.abs(g.x-x)<lw+r && g.y>q-su-r && g.y<q+sotto+r; })){ y=q; break; } }
+    m.fillStyle='rgba(11,13,24,.62)'; m.beginPath(); if(m.roundRect) m.roundRect(x-lw,y-su-1/sc,lw*2,riga+1/sc,3/sc); else m.rect(x-lw,y-su-1/sc,lw*2,riga+1/sc); m.fill();
+    m.fillStyle='rgba(241,232,214,.92)'; m.fillText(s.nome,x,y);
+  }
 }
 
 // ===== minigiochi.js =====
@@ -4127,6 +5447,7 @@ function quadri(z, post, ok){
 //   .microfono(traccia o null)    metto o tolgo la mia voce (senza ricollegare nessuno)
 //   .persone([[id, sessione], …]) chi c'è adesso in voce (con un server non serve: lo sa lui)
 //   .segnale(da, dati)            è arrivato un messaggio di collegamento (con un server non serve)
+//   .risveglia()                  (facoltativo) il telefono torna dal blocco schermo: i collegamenti caduti si riprendono subito
 //   .stati()                      { id: 'connected' | … } per le prove
 //   .chiudi()
 // In più, il trasporto diretto ha bisogno di qualcuno che porti i messaggi di collegamento da un telefono all'altro:
@@ -4235,12 +5556,26 @@ VoceMixer.prototype.chiudi = function () {
 //  3. IL TRASPORTO DIRETTO (WebRTC a maglia)
 // =========================================================
 // Solo audio. Ogni telefono ha un collegamento con ciascuno degli altri. Si usa solo lo STUN di Google per trovarsi (niente TURN:
-// su certe reti 4G/5G il collegamento può non riuscire). Offerta e risposta vanno COMPLETE (si aspetta la fine della raccolta dei
-// percorsi ICE e si manda il testo intero, niente candidati uno per uno). In ogni coppia propone chi ha l'id che viene prima,
+// su certe reti 4G/5G il collegamento può non riuscire). Offerta e risposta vanno COMPLETE (dentro ci sono i percorsi ICE trovati, niente
+// candidati uno per uno): si parte appena c'è un indirizzo pubblico. In ogni coppia propone chi ha l'id che viene prima,
 // così le offerte non si incrociano. Il canale audio è sempre «sendrecv»: la mia traccia si mette e si toglie con replaceTrack,
 // senza rifare i collegamenti, così si può anche solo ascoltare e accendere il microfono dopo.
 var VOCE_ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
+var VOCE_PUBBLICO = / typ (srflx|relay) /;   // un percorso ICE con l'indirizzo pubblico
+var VOCE_BITRATE = 24000;             // con 10 persone un telefono manda 9 voci: 24 kbit/s bastano per parlare
 function voceId() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+
+// Opus nel testo dell'offerta e della risposta: 24 kbit/s, il silenzio non viaggia (DTX), i pacchetti persi si ricostruiscono (FEC).
+// Questi numeri dicono all'altro telefono come mandare: si scrivono su quello che parte e su quello che arriva, così valgono
+// tutte e due le direzioni anche se l'altro ha una versione vecchia. Passarci due volte non cambia niente.
+function voceOpus(sdp) {
+  var m = /a=rtpmap:(\d+) opus\/48000/i.exec(sdp); if (!m) return sdp;
+  var riga = new RegExp('a=fmtp:' + m[1] + ' ([^\\r\\n]*)'), vuoi = ['usedtx=1', 'useinbandfec=1', 'maxaveragebitrate=' + VOCE_BITRATE];
+  if (riga.test(sdp)) return sdp.replace(riga, function (t, par) {
+    return 'a=fmtp:' + m[1] + ' ' + par.split(';').filter(function (x) { return x && !/^\s*(usedtx|useinbandfec|maxaveragebitrate)=/.test(x); }).concat(vuoi).join(';');
+  });
+  return sdp.replace(new RegExp('(a=rtpmap:' + m[1] + ' opus/48000[^\\r\\n]*(\\r?\\n))', 'i'), function (t, r, a) { return r + 'a=fmtp:' + m[1] + ' ' + vuoi.join(';') + a; });
+}
 
 function TrasportoDiretto(o) {
   this.o = o; this.io = o.io; this.sess = o.sess || voceId(); this.pc = {}; this.membri = {}; this.falli = {}; this.attesa = {};
@@ -4253,11 +5588,16 @@ TrasportoDiretto.prototype.microfono = function (traccia) {
   Object.keys(X.pc).forEach(function (id) { X.metti(X.pc[id]); });
 };
 // la mia traccia (o nessuna) sul canale audio di un collegamento
-// I messaggi di collegamento viaggiano su un canale veloce che ogni tanto ne perde uno: si mandano due volte (a mezzo secondo di distanza).
-// Chi li riceve scarta il doppione (offerta già vista, risposta quando non la aspetta più).
-TrasportoDiretto.prototype.invia = function (a, d) {
+// I messaggi di collegamento viaggiano su canali veloci che ogni tanto ne perdono uno: il primo prende la strada più rapida (il filo, se è aperto);
+// se dopo 0,8 s serve ancora, una seconda copia passa dal broker (bis). Chi li riceve scarta il doppione (offerta già vista, risposta quando non la aspetta più).
+// (Non prima: con 10 persone sono 45 collegamenti tutti insieme, e dall'host passano tutte le copie.)
+// sempre: la seconda copia parte comunque (la risposta a un rinfresco: qui il collegamento può restare «connected» mentre l'altro aspetta, lo stato non dice se è arrivata)
+TrasportoDiretto.prototype.invia = function (a, d, pc, sempre) {
   var X = this; X.o.manda(a, d);
-  setTimeout(function () { if (!X.chiuso) X.o.manda(a, d); }, 500);
+  setTimeout(function () {
+    if (X.chiuso || (pc && (X.pc[a] !== pc || (d.tipo === 'off' ? pc.signalingState !== 'have-local-offer' : !sempre && pc.connectionState === 'connected')))) return;
+    X.o.manda(a, d, true);
+  }, 800);
 };
 TrasportoDiretto.prototype.metti = function (pc) {
   if (!pc.trAudio) return;
@@ -4282,19 +5622,32 @@ TrasportoDiretto.prototype.nuovo = function (id, suaSess) {
   pc.onconnectionstatechange = function () {
     if (X.pc[id] !== pc) return; var s = pc.connectionState;
     X.dice(id + ': ' + s);
-    if (s === 'connected') { clearTimeout(pc.tDisc); clearTimeout(pc.tCon); X.falli[id] = 0; X.o.onStato(id, 'connesso'); }
-    else if (s === 'disconnected') { clearTimeout(pc.tDisc); X.o.onStato(id, 'instabile'); pc.tDisc = setTimeout(function () { if (X.pc[id] === pc && pc.connectionState !== 'connected') X.rifai(id); }, 4000); }
-    else if (s === 'failed') X.rifai(id);
+    if (s === 'connected') { clearTimeout(pc.tDisc); clearTimeout(pc.tCon); clearTimeout(pc.tRi); pc.tRi = 0; pc.vivo = true; X.falli[id] = 0; X.tetto(pc); X.o.onStato(id, 'connesso'); }
+    else if (s === 'disconnected') { clearTimeout(pc.tDisc); X.o.onStato(id, 'instabile'); pc.tDisc = setTimeout(function () { if (X.pc[id] === pc && pc.connectionState !== 'connected') X.rinfresca(id); }, 1500); }
+    else if (s === 'failed') X.rinfresca(id);
     else X.o.onStato(id, 'collego');
   };
   return pc;
 };
-// si aspetta di avere tutti i percorsi possibili, così basta un messaggio solo per parte (al massimo 2,5 secondi)
-TrasportoDiretto.prototype.raccolto = function (pc) {
+// il tetto dei 24 kbit/s anche sul mittente: vale qualunque cosa dica l'altro telefono
+TrasportoDiretto.prototype.tetto = function (pc) {
+  var s = pc.trAudio && pc.trAudio.sender; if (!s || !s.getParameters || !s.setParameters) return;
+  try {
+    var par = s.getParameters(); if (!par.encodings || !par.encodings.length || par.encodings[0].maxBitrate === VOCE_BITRATE) return;
+    par.encodings[0].maxBitrate = VOCE_BITRATE;
+    var p = s.setParameters(par); if (p && p.catch) p.catch(function () {});
+  } catch (e) {}
+};
+// basta un messaggio solo per parte: si parte appena c'è un indirizzo pubblico, gli altri percorsi non servono. Se non arriva, si aspetta la fine della raccolta (al massimo 2,5 secondi).
+// rifatta: dopo un rinfresco la raccolta ricomincia da zero, lo stato «complete» di prima non vale
+TrasportoDiretto.prototype.raccolto = function (pc, rifatta) {
   return new Promise(function (r) {
-    if (pc.iceGatheringState === 'complete') { r(); return; }
-    var t = setTimeout(r, 2500);
-    pc.addEventListener('icegatheringstatechange', function () { if (pc.iceGatheringState === 'complete') { clearTimeout(t); r(); } });
+    if (!rifatta && (pc.iceGatheringState === 'complete' || VOCE_PUBBLICO.test(pc.localDescription ? pc.localDescription.sdp : ''))) { r(); return; }
+    var t = setTimeout(fine, 2500);
+    function fine() { clearTimeout(t); pc.removeEventListener('icecandidate', perCand); pc.removeEventListener('icegatheringstatechange', perStato); r(); }
+    function perCand(e) { if (!e.candidate || VOCE_PUBBLICO.test(e.candidate.candidate)) fine(); }
+    function perStato() { if (pc.iceGatheringState === 'complete') fine(); }
+    pc.addEventListener('icecandidate', perCand); pc.addEventListener('icegatheringstatechange', perStato);
   });
 };
 TrasportoDiretto.prototype.offri = function (id) {
@@ -4303,10 +5656,38 @@ TrasportoDiretto.prototype.offri = function (id) {
   pc.trAudio = pc.addTransceiver('audio', { direction: 'sendrecv' }); X.metti(pc);
   pc.createOffer().then(function (of) { return pc.setLocalDescription(of); }).then(function () { return X.raccolto(pc); }).then(function () {
     if (X.pc[id] !== pc) return;
-    X.invia(id, { tipo: 'off', sdp: pc.localDescription.sdp, oid: oid, sda: X.sess, sa: suaSess });
+    X.invia(id, { tipo: 'off', sdp: voceOpus(pc.localDescription.sdp), oid: oid, sda: X.sess, sa: suaSess }, pc);
     // se la risposta non arriva (messaggio perso) si riprova da capo
     pc.tRis = setTimeout(function () { if (X.pc[id] === pc && pc.signalingState === 'have-local-offer') X.rifai(id); }, 6000);
   }).catch(function () { if (X.pc[id] === pc) X.rifai(id); });
+};
+// collegamento caduto: prima si cerca un percorso nuovo sullo stesso collegamento (ICE restart): flusso, mixer e audio restano dove sono. Se in 8 secondi non torna, si rifà da capo.
+// Propone sempre l'id che viene prima: l'altro glielo chiede. Con una versione vecchia dall'altra parte la richiesta si perde o l'offerta diventa un collegamento nuovo: si finisce da capo come sempre.
+TrasportoDiretto.prototype.rinfresca = function (id) {
+  var X = this, pc = X.pc[id]; if (X.chiuso || !pc || pc.tRi) return;
+  if (!pc.vivo || pc.signalingState !== 'stable' || !X.membri[id]) { X.rifai(id); return; }   // (mai collegato: non c'è niente da rinfrescare)
+  X.dice('rinfresco ' + id); X.o.onStato(id, 'instabile'); clearTimeout(pc.tDisc);
+  pc.tRi = setTimeout(function () { pc.tRi = 0; if (X.pc[id] === pc && (pc.connectionState !== 'connected' || pc.signalingState !== 'stable')) X.rifai(id); }, 8000);
+  if (X.io > id) { X.invia(id, { tipo: 'ri', sda: X.sess, sa: X.membri[id] }, pc); return; }
+  var oid = X.sess + '.' + (++X.n);
+  pc.createOffer({ iceRestart: true }).then(function (of) { return pc.setLocalDescription(of); }).then(function () { return X.raccolto(pc, true); }).then(function () {
+    if (X.pc[id] !== pc) return;
+    pc.oid = oid; X.invia(id, { tipo: 'off', sdp: voceOpus(pc.localDescription.sdp), oid: oid, sda: X.sess, sa: X.membri[id], ri: 1 }, pc);
+  }).catch(function () { if (X.pc[id] === pc) X.rifai(id); });
+};
+// il percorso nuovo è arrivato senza mai perdere «connected»: nessun altro segnale dirà che il rinfresco è finito
+TrasportoDiretto.prototype.rinfrescato = function (id, pc) {
+  if (!pc.tRi || this.pc[id] !== pc || pc.connectionState !== 'connected') return;
+  clearTimeout(pc.tRi); pc.tRi = 0; this.o.onStato(id, 'connesso');
+};
+// il telefono torna dal blocco schermo: quello che è caduto mentre dormiva si riprende subito, e le attese dei tentativi di prima non valgono più
+TrasportoDiretto.prototype.risveglia = function () {
+  var X = this; if (X.chiuso) return; X.attesa = {}; X.falli = {};
+  Object.keys(X.pc).forEach(function (id) { var s = X.pc[id].connectionState; if (s === 'disconnected' || s === 'failed') X.rinfresca(id); });
+  Object.keys(X.membri).forEach(function (id) {
+    if (X.pc[id]) return;
+    if (X.io < id) X.offri(id); else X.invia(id, { tipo: 'rifai', sda: X.sess, sa: X.membri[id], su: 1 });
+  });
 };
 // collegamento perso o mai nato: chi propone riprova; dopo 3 tentativi falliti di fila si ferma per 30 secondi
 TrasportoDiretto.prototype.rifai = function (id) {
@@ -4323,30 +5704,41 @@ TrasportoDiretto.prototype.segnale = function (da, d) {
     if (X.visti[d.oid]) return; X.visti[d.oid] = 1;   // (la stessa offerta arrivata due volte vale una)
     X.dice('offerta da ' + da);
     var ks = Object.keys(X.visti); if (ks.length > 40) delete X.visti[ks[0]];
+    var pc = X.pc[da];
+    if (d.ri && pc && pc.suaSess === d.sda && pc.signalingState === 'stable') { X.rispondi(da, pc, d); return; }   // un rinfresco: lo stesso collegamento, percorso nuovo
     X.chiudiPc(da);
-    var pc = X.nuovo(da, d.sda); pc.oid = d.oid;
-    pc.setRemoteDescription({ type: 'offer', sdp: d.sdp }).then(function () {
-      var tr = pc.getTransceivers().filter(function (x) { return x.receiver && x.receiver.track && x.receiver.track.kind === 'audio'; })[0];
-      if (tr) { pc.trAudio = tr; try { tr.direction = 'sendrecv'; } catch (e) {} X.metti(pc); }
-      return pc.createAnswer();
-    }).then(function (a) { return pc.setLocalDescription(a); }).then(function () { return X.raccolto(pc); }).then(function () {
-      if (X.pc[da] !== pc) return;
-      X.invia(da, { tipo: 'ris', sdp: pc.localDescription.sdp, oid: d.oid, sda: X.sess, sa: d.sda });
-    }).catch(function () { if (X.pc[da] === pc) X.rifai(da); });
+    X.rispondi(da, X.nuovo(da, d.sda), d);
   } else if (d.tipo === 'ris' && typeof d.sdp === 'string' && d.sdp.length < 40000) {
     var p = X.pc[da]; X.dice('risposta da ' + da + (p && p.signalingState === 'have-local-offer' && p.oid === d.oid ? '' : ' (scartata)'));
     if (!p || p.signalingState !== 'have-local-offer' || p.oid !== d.oid) return;
     clearTimeout(p.tRis);
-    p.setRemoteDescription({ type: 'answer', sdp: d.sdp }).catch(function () { if (X.pc[da] === p) X.rifai(da); });
+    p.setRemoteDescription({ type: 'answer', sdp: voceOpus(d.sdp) }).then(function () { X.rinfrescato(da, p); }).catch(function () { if (X.pc[da] === p) X.rifai(da); });
+  } else if (d.tipo === 'ri') {
+    X.dice(da + ' chiede di rinfrescare');
+    if (X.io < da) X.rinfresca(da);
   } else if (d.tipo === 'rifai') {
     X.dice(da + ' chiede di rifare');
+    if (d.su) delete X.attesa[da];   // (è tornato dal blocco schermo: la pausa dei tentativi falliti non vale più)
     var vecchio = X.pc[da]; if (vecchio && Date.now() - vecchio.t0 < 2500) return;   // (la richiesta è arrivata due volte: ho già ricominciato)
     if (X.io < da && X.membri[da] && !(X.attesa[da] > Date.now())) { X.chiudiPc(da); X.offri(da); }
   }
 };
+// la risposta a un'offerta: su un collegamento nuovo o, per un rinfresco, su quello che c'è già
+TrasportoDiretto.prototype.rispondi = function (da, pc, d) {
+  var X = this; pc.oid = d.oid;
+  pc.setRemoteDescription({ type: 'offer', sdp: voceOpus(d.sdp) }).then(function () {
+    var tr = pc.getTransceivers().filter(function (x) { return x.receiver && x.receiver.track && x.receiver.track.kind === 'audio'; })[0];
+    if (tr) { pc.trAudio = tr; try { tr.direction = 'sendrecv'; } catch (e) {} X.metti(pc); }
+    return pc.createAnswer();
+  }).then(function (a) { return pc.setLocalDescription(a); }).then(function () { return X.raccolto(pc, !!d.ri); }).then(function () {
+    if (X.pc[da] !== pc) return;
+    X.invia(da, { tipo: 'ris', sdp: voceOpus(pc.localDescription.sdp), oid: d.oid, sda: X.sess, sa: d.sda }, pc, !!d.ri);
+    X.rinfrescato(da, pc);
+  }).catch(function () { if (X.pc[da] === pc) X.rifai(da); });
+};
 TrasportoDiretto.prototype.chiudiPc = function (id) {
   var pc = this.pc[id]; if (!pc) return;
-  delete this.pc[id]; clearTimeout(pc.tDisc); clearTimeout(pc.tRis); clearTimeout(pc.tCon);
+  delete this.pc[id]; clearTimeout(pc.tDisc); clearTimeout(pc.tRis); clearTimeout(pc.tCon); clearTimeout(pc.tRi);
   pc.ontrack = null; pc.onconnectionstatechange = null; try { pc.close(); } catch (e) {}
   this.o.onFine(id);
 };
@@ -4360,8 +5752,10 @@ TrasportoDiretto.prototype.chiudi = function () { var X = this; X.chiuso = true;
 // da un telefono all'altro. Non conserva niente: i messaggi passano e basta.
 //   dal telefono all'host:  { t:'vc', k:'su', sess, mic } · { t:'vc', k:'giu' } · { t:'vc', k:'sig', a:<destinatario>, d:<dati> }
 //   dall'host a un telefono: { t:'vc', k:'sig', da:<chi lo manda>, d:<dati> }
-//   dall'host a tutti:       { t:'vcl', l:[[id, sessione], …] }   (l'elenco, ogni volta che cambia e ogni 5 secondi)
-// o: { invia(a, m) a un telefono, tutti(m) a tutti }
+//   dall'host a tutti:       { t:'vcl', n:<numero>, l:[[id, sessione], …] }   (l'elenco, ogni volta che cambia e ogni 5 secondi)
+// Viaggiano sul filo diretto quando è aperto, sennò dal broker. Due campi facoltativi: g (leggero: col filo aperto il broker non serve),
+// b (la seconda copia: passa dal broker anche se il filo c'è, nell'ultimo tratto compreso). Una versione vecchia li ignora.
+// o: { invia(a, m) a un telefono, tutti(m, ripetuto) a tutti }   ripetuto: l'elenco non è cambiato, è solo il giro dei 5 secondi
 function VoceStanza(o) { this.o = o; this.l = {}; this.n = 0; this.vuoto = true; }
 VoceStanza.prototype.arriva = function (da, m) {
   var S = this; if (!m || typeof da !== 'string') return;
@@ -4375,19 +5769,27 @@ VoceStanza.prototype.arriva = function (da, m) {
     var a = String(m.a || '');
     if (!S.l[da] || !S.l[a] || a === da || !m.d || typeof m.d !== 'object') return;   // solo fra chi è in voce
     if (S.o.nota) S.o.nota('porto ' + m.d.tipo + ' da ' + da + ' a ' + a);
-    S.o.invia(a, { t: 'vc', k: 'sig', da: da, d: m.d });
+    var fuori = { t: 'vc', k: 'sig', da: da, d: m.d }; if (m.b) fuori.b = 1;
+    S.o.invia(a, fuori);
   }
 };
 VoceStanza.prototype.via = function (id) { if (this.l[id]) { delete this.l[id]; this.manda(); } };
-VoceStanza.prototype.manda = function () {
+// la ripresa: l'elenco per la copia, e dall'elenco di prima si riparte (chi non si rifà vivo esce da solo dopo 22 s, come sempre)
+VoceStanza.prototype.elenco = function () { var S = this; return Object.keys(S.l).map(function (id) { return [id, S.l[id].sess, S.l[id].mic]; }); };
+VoceStanza.prototype.semina = function (l, tranne) {
+  var S = this, ora = Date.now();
+  (Array.isArray(l) ? l : []).forEach(function (r) { if (Array.isArray(r) && typeof r[0] === 'string' && typeof r[1] === 'string' && r[0] !== tranne) S.l[r[0]] = { sess: r[1].slice(0, 24), t: ora, mic: r[2] ? 1 : 0 }; });
+  S.vuoto = !Object.keys(S.l).length;
+};
+VoceStanza.prototype.manda = function (ripetuto) {
   var S = this, l = Object.keys(S.l).map(function (id) { return [id, S.l[id].sess]; });
-  S.vuoto = !l.length; this.o.tutti({ t: 'vcl', n: ++S.n, l: l });
+  S.vuoto = !l.length; this.o.tutti({ t: 'vcl', n: ++S.n, l: l }, !!ripetuto);
 };
 // ogni 5 secondi: toglie chi non dà più segno di vita e rimanda l'elenco (così chi l'ha perso lo ritrova). Se non c'è nessuno, tace.
 VoceStanza.prototype.giro = function () {
   var S = this, ora = Date.now();
   Object.keys(S.l).forEach(function (id) { if (ora - S.l[id].t > 22000) delete S.l[id]; });
-  if (Object.keys(S.l).length || !S.vuoto) S.manda();
+  if (Object.keys(S.l).length || !S.vuoto) S.manda(true);
 };
 
 // =========================================================
@@ -4399,8 +5801,10 @@ VoceStanza.prototype.giro = function () {
 var VOCE = {
   stato: 'spenta', canale: null, roster: [], sess: '', ctx: null, mixer: null, tr: null, stream: null, traccia: null,
   audio: {}, stati: {}, regole: {}, liv: {}, parla: {}, ascoltatori: [], fonte: null, fonteDi: null, nome: null, avvisa: null,
-  storia: [], ioStato: null, battito: 0, timer: null, ultimaMisura: 0, ultimoAvviso: '', ultimoAvvisoT: 0, legato: false
+  storia: [], ioStato: null, battito: 0, timer: null, ultimaMisura: 0, ultimoAvviso: '', ultimoAvvisoT: 0, legato: false,
+  vclN: 0, vclT: 0, ctxPausa: false, svegliaT: 0, ridando: false, ridaT: 0
 };
+var VOCE_MIC = { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false };
 // la fabbrica del trasporto: QUI si cambia da WebRTC diretto a LiveKit (domani: return new TrasportoLiveKit(o))
 VOCE.nuovoTrasporto = function (o) { return new TrasportoDiretto(o); };
 // il diario (gli ultimi 60 fatti), per capire cosa è successo
@@ -4427,32 +5831,33 @@ VOCE.apri = function (canale) {
   V.canale = canale;
   if (!V.legato && typeof window !== 'undefined') {
     V.legato = true;
-    window.addEventListener('pagehide', function () { VOCE.esci(); });   // chiudendo la pagina la voce si chiude
-    document.addEventListener('visibilitychange', function () {   // tornando sull'app l'audio riparte (su iPhone si ferma con lo schermo bloccato)
-      if (document.visibilityState !== 'visible' || VOCE.stato === 'spenta') return;
-      try { if (VOCE.ctx && VOCE.ctx.state !== 'running') VOCE.ctx.resume(); } catch (e) {}
-      if (VOCE.traccia && VOCE.traccia.readyState === 'ended') VOCE.microfonoPerso();
-      VOCE.riprova();
-    });
-    document.addEventListener('pointerdown', function () { if (VOCE.stato !== 'spenta') VOCE.riprova(); }, { capture: true, passive: true });
+    window.addEventListener('pagehide', function (e) { if (!e.persisted) VOCE.esci(); });   // chiudendo la pagina la voce si chiude (se resta in memoria può tornare)
+    window.addEventListener('pageshow', function (e) { if (e.persisted) VOCE.riprendi(); });
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') VOCE.riprendi(); });   // tornando sull'app la voce riparte (su iPhone si ferma con lo schermo bloccato)
+    // l'audio riparte solo dentro un gesto: su un telefono conta la fine del tocco, non l'inizio
+    ['pointerdown', 'pointerup', 'touchend', 'click'].forEach(function (k) { document.addEventListener(k, function () { if (VOCE.stato !== 'spenta') VOCE.riprova(); }, { capture: true, passive: true }); });
   }
   if (window.LT_PROVA) window.LT_VOCE = V.prova();
   V.cambiato();
 };
-VOCE.chiudiStanza = function () { var V = this; V.esci(); V.canale = null; V.roster = []; V.cambiato(); };
+VOCE.chiudiStanza = function () { var V = this; V.esci(); V.canale = null; V.roster = []; V.vclN = 0; V.cambiato(); };
 // dalla rete del gioco: l'elenco di chi è in voce, o un messaggio di collegamento da un altro telefono
 VOCE.arriva = function (m) {
   var V = this; if (!m || !V.canale) return;
   if (m.t === 'vcl' && Array.isArray(m.l)) {
+    // lo stesso elenco può arrivare dal filo e dal broker: un numero già visto non conta (nemmeno se più vecchio: chiuderebbe chi è appena entrato). Solo un host nuovo riparte da 1, e dopo 4 s vale
+    var ora = Date.now(); if (m.n != null) { if (m.n <= V.vclN && ora - V.vclT < 4000) return; V.vclN = m.n; V.vclT = ora; }
     V.roster = m.l.filter(function (r) { return Array.isArray(r) && typeof r[0] === 'string' && typeof r[1] === 'string'; });
     if (V.stato === 'spenta') return;
     if (!V.roster.some(function (r) { return r[0] === V.canale.io && r[1] === V.sess; })) V.annuncia();   // l'host non mi ha in elenco: mi rifaccio vivo
     if (V.tr) V.tr.persone(V.roster);
   } else if (m.t === 'vc' && m.k === 'sig' && V.tr && typeof m.da === 'string') { V.nota('arriva ' + (m.d && m.d.tipo) + ' da ' + m.da); V.tr.segnale(m.da, m.d); }
 };
-VOCE.annuncia = function () {
+// mi faccio vivo con l'host. battito: è solo quello dei 6 secondi, col filo aperto il broker non serve
+VOCE.annuncia = function (battito) {
   var V = this; if (!V.canale || V.stato === 'spenta' || V.stato === 'accendo') return;
-  V.battito = Date.now(); V.canale.manda({ t: 'vc', k: 'su', sess: V.sess, mic: V.traccia ? 1 : 0 });
+  var m = { t: 'vc', k: 'su', sess: V.sess, mic: V.traccia ? 1 : 0 }; if (battito) m.g = 1;
+  V.battito = Date.now(); V.canale.manda(m);
 };
 // il tasto principale: spenta → accende (e chiede il microfono); ascolto → prova ad accendere il microfono; parlo/muto → si alterna
 VOCE.tocca = function () {
@@ -4473,7 +5878,7 @@ VOCE.entra = function (conMic) {
   V.autoProvata = true;   // (chiesta una volta: il tocco automatico non insiste)
   var AC = window.AudioContext || window.webkitAudioContext;
   if (!AC || !window.RTCPeerConnection) { V.dici('Voce: qui non funziona'); return; }
-  try { if (!V.ctx) V.ctx = new AC(); if (V.ctx.state !== 'running') V.ctx.resume(); } catch (e) { V.dici('Voce: audio non disponibile'); return; }
+  try { if (!V.ctx) { V.ctx = new AC(); V.ctx.onstatechange = function () { VOCE.statoAudio(); }; } if (V.ctx.state !== 'running') V.ctx.resume(); } catch (e) { V.dici('Voce: audio non disponibile'); return; }
   V.stato = 'accendo'; V.cambiato();
   if (conMic) V.chiediMic(function (st) { V.avvia(st); }); else V.avvia(null);
 };
@@ -4481,7 +5886,7 @@ VOCE.entra = function (conMic) {
 VOCE.chiediMic = function (fatto) {
   var V = this, md = navigator.mediaDevices;
   if (!md || !md.getUserMedia) { V.dici('Voce: qui il microfono non va'); fatto(null); return; }
-  md.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false })
+  md.getUserMedia(VOCE_MIC)
     .then(fatto)
     .catch(function (e) { var neg = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError'); if (neg) V.ricorda('0'); V.dici(neg ? 'Voce: microfono non permesso' : 'Voce: microfono non disponibile'); fatto(null); });
 };
@@ -4492,7 +5897,7 @@ VOCE.avvia = function (st) {
   V.mixer = new VoceMixer(V.ctx);
   V.tr = V.nuovoTrasporto({
     io: V.canale.io, sess: V.sess,
-    manda: function (a, d) { if (V.canale) { V.canale.manda({ t: 'vc', k: 'sig', a: a, d: d }); V.nota('mando ' + d.tipo + ' a ' + a + ' (' + (d.sdp ? d.sdp.length : 0) + ' car.)'); } },
+    manda: function (a, d, bis) { if (V.canale) { V.canale.manda(bis ? { t: 'vc', k: 'sig', a: a, d: d, b: 1 } : { t: 'vc', k: 'sig', a: a, d: d, g: 1 }); V.nota('mando ' + d.tipo + ' a ' + a + ' (' + (d.sdp ? d.sdp.length : 0) + ' car.)' + (bis ? ' copia' : '')); } },
     onFlusso: function (id, flusso) { V.flusso(id, flusso); },
     onFine: function (id) { V.fineFlusso(id); },
     diario: function (t) { V.nota(t); },
@@ -4511,13 +5916,26 @@ VOCE.mettiMic = function (st) {
   var V = this;
   if (V.stream && V.stream !== st) V.stream.getTracks().forEach(function (t) { t.stop(); });
   V.stream = st || null; V.traccia = st ? st.getAudioTracks()[0] || null : null;
-  if (V.traccia) { V.traccia.enabled = true; V.traccia.addEventListener('ended', function () { if (VOCE.traccia === this) VOCE.microfonoPerso(); }); }
+  if (V.traccia) { V.traccia.enabled = true; V.traccia.addEventListener('ended', function () { if (VOCE.traccia === this && document.visibilityState === 'visible') VOCE.ridaiMic(); }); }   // (a schermo bloccato ci pensa riprendi, al ritorno)
   if (V.mixer) { if (st) V.mixer.ascoltaMio(st); else V.mixer.smettiMio(); }
   if (V.tr) V.tr.microfono(V.traccia);
 };
 VOCE.microfonoPerso = function () {
   var V = this; if (V.stato !== 'parlo' && V.stato !== 'muto') return;
   V.mettiMic(null); V.stato = 'ascolto'; V.dici('Voce: microfono staccato'); V.annuncia(); V.cambiato();
+};
+// il microfono si è fermato da solo (schermo bloccato, telefonata): si richiede senza disturbare e sugli stessi collegamenti. Solo se non torna si resta in ascolto
+VOCE.ridaiMic = function () {
+  var V = this, ora = Date.now(), md = navigator.mediaDevices;
+  if (V.ridando || (V.stato !== 'parlo' && V.stato !== 'muto')) return;
+  if (!md || !md.getUserMedia || ora - V.ridaT < 5000) { V.microfonoPerso(); return; }   // (appena richiesto e già fermo: non si insiste)
+  V.ridando = true; V.ridaT = ora; V.nota('richiedo il microfono');
+  md.getUserMedia(VOCE_MIC).then(function (st) {
+    V.ridando = false;
+    if (V.stato !== 'parlo' && V.stato !== 'muto') { st.getTracks().forEach(function (t) { t.stop(); }); return; }
+    V.mettiMic(st); if (V.traccia) V.traccia.enabled = V.stato === 'parlo';
+    V.annuncia(); V.cambiato();
+  }).catch(function () { V.ridando = false; V.microfonoPerso(); });
 };
 VOCE.accendiMic = function () {
   var V = this; if (V.stato !== 'ascolto') return;
@@ -4535,7 +5953,7 @@ VOCE.esci = function () {
   V.mettiMic(null);
   if (V.mixer) { V.mixer.chiudi(); V.mixer = null; }
   Object.keys(V.audio).forEach(function (id) { V.fineFlusso(id); });
-  V.stati = {}; V.regole = {}; V.liv = {}; V.parla = {};
+  V.stati = {}; V.regole = {}; V.liv = {}; V.parla = {}; V.ctxPausa = false;
   try { if (V.ctx && V.ctx.state === 'running') V.ctx.suspend(); } catch (e) {}
   V.cambiato();
 };
@@ -4555,17 +5973,39 @@ VOCE.fineFlusso = function (id) {
   if (V.mixer) V.mixer.togli(id);
   delete V.regole[id]; delete V.liv[id]; delete V.parla[id];
 };
-// al tocco o quando la pagina torna visibile: l'audio ferma riparte
+// l'orologio dell'audio riparte. Su iPhone oltre a «suspended» c'è «interrupted» (schermo bloccato, telefonata); fuori da un gesto può non riuscire, e ci riprova il tocco dopo
+VOCE.sveglia = function () {
+  var c = this.ctx; if (!c || c.state === 'running' || c.state === 'closed') return;
+  try { var p = c.resume(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+};
+// al tocco o quando la pagina torna visibile: l'audio fermo riparte
 VOCE.riprova = function () {
-  var V = this;
-  try { if (V.ctx && V.ctx.state !== 'running') V.ctx.resume(); } catch (e) {}
+  var V = this; V.sveglia();
   Object.keys(V.audio).forEach(function (id) { var a = V.audio[id]; if (a.paused && a.srcObject) { var p = a.play(); if (p && p.catch) p.catch(function () {}); } });
+};
+// l'audio torna dopo una pausa: su iPhone le voci già collegate possono restare mute, si ricollegano al mixer (il volume giusto arriva dal giro dopo)
+VOCE.statoAudio = function () {
+  var V = this, s = V.ctx ? V.ctx.state : ''; if (!V.mixer) return;
+  if (s !== 'running') { V.ctxPausa = true; return; }
+  if (!V.ctxPausa) return; V.ctxPausa = false; V.nota('audio ripartito');
+  Object.keys(V.audio).forEach(function (id) { var fl = V.audio[id].srcObject; if (fl) try { V.mixer.aggiungi(id, fl); } catch (e) {} });
+  if (V.stream) V.mixer.ascoltaMio(V.stream);
+  V.regola();
+};
+// il telefono torna sull'app: audio, microfono, posto nell'elenco, collegamenti caduti. Non chiede niente a chi guarda lo schermo
+VOCE.riprendi = function () {
+  var V = this; if (V.stato === 'spenta' || V.stato === 'accendo') return;
+  V.riprova(); V.annuncia();
+  if (V.traccia && V.traccia.readyState === 'ended') V.ridaiMic();
+  else if (V.traccia && V.traccia.muted) setTimeout(function () { if (V.traccia && V.traccia.muted && document.visibilityState === 'visible') V.ridaiMic(); }, 1500);   // (iPhone: traccia viva ma muta dopo il blocco)
+  if (V.tr && V.tr.risveglia) V.tr.risveglia();
 };
 // il giro da 10 al secondo: regola volumi, battito, orologio dell'audio
 VOCE.giro = function () {
   var V = this; if (V.stato === 'spenta') return;
-  if (Date.now() - V.battito > 6000) V.annuncia();
-  if (V.ctx && V.ctx.state === 'suspended' && (typeof document === 'undefined' || document.visibilityState === 'visible')) { try { V.ctx.resume(); } catch (e) {} }
+  var ora = Date.now();
+  if (ora - V.battito > 6000) V.annuncia(true);
+  if (ora - V.svegliaT > 1000 && (typeof document === 'undefined' || document.visibilityState === 'visible')) { V.svegliaT = ora; V.sveglia(); }
   V.regola();
 };
 // applica la regola a ogni voce (chi sente chi lo dice la foto del gioco; senza gioco aperto si sentono tutti)
@@ -4614,6 +6054,7 @@ VOCE.prova = function () {
     audio: function () { return V.ctx ? { stato: V.ctx.state, t: V.ctx.currentTime } : null; },
     storia: function () { return V.storia.slice(); },
     guasto: function (id) { if (V.tr) V.tr.o.onStato(id, 'fallito'); },   // (solo per provare l'avviso «non si collega»)
+    trasporto: function () { return V.tr; }, ctx: function () { return V.ctx; }, traccia: function () { return V.traccia; },
     elementi: function () { return Object.keys(V.audio).map(function (id) { var a = V.audio[id]; return { id: id, muto: a.muted, paused: a.paused, autoplay: a.autoplay, playsinline: a.hasAttribute('playsinline') }; }); }
   };
 };
@@ -4621,6 +6062,7 @@ VOCE.prova = function () {
 // ===== gioco.js =====
 // Lanterne dentro SPeeD GAME. Parte dal modello del progetto (.agents/skills/nuovo-gioco/modello-gioco-online.js):
 // l'host tiene la partita vera (Partita) e manda a tutti la foto (vm) e le posizioni; gli altri mandano solo mosse e posizione.
+
 
 
 
@@ -4637,10 +6079,49 @@ function ammesso() { return AMMESSI.indexOf(nomeAccount()) >= 0; }
 // la chat di prossimità: frasi a un tocco (poche e brevi) e quanti messaggi tiene lo storico
 var PARLA_RAPIDE = ["Ciao!", "Dove sei?", "Seguimi", "Aiuto!", "Occhio!"];
 var PARLA_STORICO = 4;
-var AVVIO_MAX = 18000;   // al massimo, quanto aspetta la partita chi ha il telefono lento (poi si parte lo stesso, col disegno a codice dove manca la mappa)
+var AVVIO_MAX = 18000;   // al massimo, quanto aspetta la partita chi ha il telefono lento (poi si parte lo stesso: dove manca un pezzo si vede l'anteprima, o il disegno a codice se manca anche quella)
+var RESPIRO = 5000;      // l'host riprende: da quando è di nuovo sul broker la partita sta ferma al massimo così, mentre gli ospiti tornano
+var TACE_MS = 8000;      // da quanto non si sentono le posizioni dell'host prima di dirlo sullo schermo
 var RITARDATARI = "partita";   // chi arriva a partita cominciata la guarda ed entra alla prossima
-var COLORI = ["#d64550","#f0a23b","#2fa36b","#4a74de","#9b59c9","#ff7f6b","#9cbf8a","#1f9a9a","#e8c547","#b9a6f0"];
 function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
+
+// I lenzuoli: ognuno ha il suo colore, lo decide l'host e viaggia nella foto (mai nelle posizioni).
+// Valgono i dodici a tinta unita del modulo: i tre a disegno e il campo m restano per quando si potrà personalizzare il telo.
+var LENZ_N = 12;
+var LENZ_DI = {}, COLORI_DI = {};   // id → { c, m } e id → colore, dall'ultima foto dell'host
+var RITR = {}, RITR_C = [];         // i ritratti del Registro, uno per colore
+function lenzValido(x) { var c = x && x.c; return typeof c === "number" && c >= 0 && c < LENZ_N && c === Math.floor(c) ? { c: c, m: null } : null; }
+function lenzMio() { try { var v = localStorage.getItem("lt-lenz"); return v == null || v === "" ? null : lenzValido({ c: +v }); } catch (e) { return null; } }
+var NOMI_COLORE = LENZUOLI.map(function (L) { return L.n; }).concat(["Rosa", "Bianca", "Bianco", "Giallo", "Azzurra", "Azzurro", "Marrone", "Arancio", "Celeste", "Ambra", "Rubino", "Viola", "Lilla", "Perla", "Smeralda"]);
+function lenzRicorda(c) { try { localStorage.setItem("lt-lenz", String(c)); } catch (e) {} }
+function liberoLenz(presi) { var c = teloLibero(presi); return c < LENZ_N ? c : presi.length % LENZ_N; }
+// le partite salvate prima del lenzuolo, o con numeri strani: ognuno ne ha uno, senza doppioni
+function lenzInOrdine(lista) {
+  var presi = [];
+  lista.forEach(function (p) { var v = lenzValido(p.lenz) || lenzValido({ c: p.telo }); if (v && presi.indexOf(v.c) >= 0) v = null; p.lenz = v; if (v) presi.push(v.c); delete p.telo; });
+  lista.forEach(function (p) { if (!p.lenz) { p.lenz = { c: liberoLenz(presi), m: null }; presi.push(p.lenz.c); } });
+}
+// quello che arriva con la foto dell'host non è detto che sia giusto: si tiene solo un colore vero. Un telo, una tinta sola ovunque: dove il Nero sparirebbe, orme e plastico gli mettono attorno il filo chiaro di orloTinta
+function notaLenz(players) {
+  (players || []).forEach(function (p, i) {
+    var d = lenzValido(p.lenz) || lenzValido({ c: p.telo }) || LENZ_DI[p.id] || { c: i % LENZ_N, m: null }, L = LENZUOLI[d.c];
+    LENZ_DI[p.id] = d; COLORI_DI[p.id] = L.b; ritrattoDopo(d.c);
+  });
+}
+function orloTinta(col) { var L = LENZUOLI.filter(function (x) { return x.b === col && x.fori; })[0]; return L ? L.l : null; }
+function panno(id) { return LENZUOLI[(LENZ_DI[id] || { c: 0 }).c]; }
+// il mezzo busto del Registro: si prepara con calma, a uno a uno, così la riunione si apre senza strappi
+function ritrattoUrl(c) { if (RITR[c] == null) { try { RITR[c] = ritrattoLenzuolo(c, 168).toDataURL(); } catch (e) { RITR[c] = ""; } } return RITR[c]; }
+function ritrattoDopo(c) { if (RITR[c] != null || RITR_C.indexOf(c) >= 0) return; RITR_C.push(c); if (RITR_C.length === 1) setTimeout(ritrattiGiro, 400); }
+function ritrattiGiro() { if (!RITR_C.length) return; ritrattoUrl(RITR_C[0]); RITR_C.shift(); if (RITR_C.length) setTimeout(ritrattiGiro, 160); }
+// la figura intera, ferma: per la scena della morte e per le foto dall'aldilà. Una canvas per colore
+var FIGURE = {};
+function figuraTelo(c) {
+  if (FIGURE[c]) return FIGURE[c];
+  var S = 3, cv = document.createElement("canvas"), l = new Lenzuolo({ c: c }, { seme: c }); cv.width = 112 * S; cv.height = 84 * S;
+  l.pronto = true; l.corpo(); l.disegna(cv.getContext("2d"), { x: cv.width * 0.44, y: 76 * S, scala: S, ombra: false, t: 0, fine: true });
+  FIGURE[c] = cv; return cv;
+}
 
 // gli avatar disegnati una volta sola (davanti, di spalle, busto per la riunione)
 var AVATAR = {};
@@ -4680,6 +6161,7 @@ var SUONO = {
   allarme: function () { for (var i = 0; i < 4; i++) nota(i % 2 ? 330 : 247, 0.32, "square", 0.045, i * 0.34); },
   abil: function () { nota(523, 0.2, "sine", 0.1); nota(784, 0.3, "sine", 0.08, 0.08); },
   voto: function (q) { nota(880, 0.08, "triangle", 0.07, q || 0); },
+  sigillo: function () { nota(150, 0.09, "triangle", 0.2, 0, 70); soffio(0.05, 0.12, 0, 1100); },
   esce: function () { nota(600, 1.1, "sine", 0.12, 0, 150); soffio(0.8, 0.1, 0.1, 1500); },
   vince: function () { [523, 659, 784, 1046].forEach(function (f, i) { nota(f, 0.45, "triangle", 0.12, i * 0.13); }); },
   perde: function () { [392, 330, 262].forEach(function (f, i) { nota(f, 0.55, "triangle", 0.1, i * 0.2); }); },
@@ -4691,37 +6173,287 @@ function vibra(ms) { try { if (!AUDIO.toccato) return; if (navigator.vibrate) na
 // =========================================================
 //  HOST: tiene la partita vera
 // =========================================================
+// ----- il filo diretto fra telefoni -----
+// I messaggi della partita passano dai broker pubblici: su HiveMQ vanno bene, su EMQX (chi ci finisce perché HiveMQ tarda) si sono visti buchi fino a 2 s.
+// Fra l'host e ogni ospite si apre anche un canale WebRTC di soli dati: niente server, niente microfono. Quello che passa da lì arriva prima;
+// il broker resta sempre acceso e chi riceve un messaggio due volte tiene il primo (numero u). Se il canale non si apre, non cambia niente.
+var FILO_ICE = [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }];
+function FiloDiretto(manda, arriva) { this.manda = manda; this.arriva = arriva; this.pc = null; this.ch = null; this.coda = []; this.t0 = Date.now(); this.giuDa = 0; this.o = null; }
+FiloDiretto.prototype.pronto = function () { var p = this.pc, st = p && p.iceConnectionState; return !!(this.ch && this.ch.readyState === "open" && (st === "connected" || st === "completed")); };
+// si rifà il filo? Aperto mai. Se è caduto, passati 1,5 s (un buco breve si riprende da solo). Se la risposta non è arrivata un messaggio si è perso sul broker:
+// si riprova presto e poi sempre più di rado, fino a 60 s (certe reti mobili non lo aprono mai). Con la risposta in mano i telefoni si stanno cercando: non si interrompono.
+FiloDiretto.prototype.daRifare = function (n) {
+  if (this.pronto()) return false;
+  var ora = Date.now(), attesa = Math.min(2500 * Math.pow(2, Math.max(0, n - 1)), 60000);
+  if (this.giuDa) return ora - this.giuDa >= 1500;
+  if (this.pc && this.pc.signalingState === "stable") attesa = Math.max(attesa, 12000);
+  return ora - this.t0 >= attesa;
+};
+FiloDiretto.prototype.lega = function (ch) {
+  var F = this; F.ch = ch;
+  ch.onopen = function () { if (window.LT_PROVA) window.LT_DIRETTO = (window.LT_DIRETTO || 0) + 1; if (F.aperto) F.aperto(); };
+  ch.onclose = function () { if (F.ch === ch && F.caduto) F.caduto(); };
+  ch.onmessage = function (e) { var m = null; try { m = JSON.parse(e.data); } catch (_) {} if (m) F.arriva(m); };
+};
+// ogni messaggio dice di quale tentativo è (o): la risposta a un'offerta di prima, arrivata tardi, non deve finire sul filo nuovo. Chi ha una versione vecchia non lo ripete, e va bene lo stesso
+FiloDiretto.prototype.dai = function (s) { if (this.o != null) s.o = this.o; this.manda(s); };
+FiloDiretto.prototype.crea = function () {
+  var F = this, pc = new RTCPeerConnection({ iceServers: FILO_ICE }); F.pc = pc; F.t0 = Date.now(); F.giuDa = 0;
+  if (window.LT_PROVA) (window.LT_FILI = window.LT_FILI || []).push(F);
+  pc.onicecandidate = function (e) { if (e.candidate && F.detto === pc) F.dai({ c: e.candidate }); };   // (quelli di prima sono già dentro l'offerta: un messaggio solo sul broker)
+  pc.oniceconnectionstatechange = function () {
+    if (F.pc !== pc) return;
+    var st = pc.iceConnectionState;
+    if (st === "disconnected") F.giuDa = F.giuDa || Date.now();
+    else if (st === "connected" || st === "completed") F.giuDa = 0;
+    else if (st === "failed" && F.caduto) F.caduto();
+  };
+  return pc;
+};
+// l'offerta e la risposta partono con gli indirizzi già dentro (si aspettano al massimo 1,2 s): meno messaggi sul broker, meno che se ne perda uno
+FiloDiretto.prototype.dopoIndirizzi = function (pc, fatto) {
+  var una = false, via = function () { if (una) return; una = true; fatto(); };
+  if (pc.iceGatheringState === "complete") return via();
+  pc.addEventListener("icegatheringstatechange", function () { if (pc.iceGatheringState === "complete") via(); });
+  setTimeout(via, 1200);
+};
+FiloDiretto.prototype.dici = function (pc) { if (this.pc === pc) { this.detto = pc; this.dai({ d: pc.localDescription }); } };
+FiloDiretto.prototype.offri = function () {
+  var F = this, pc = F.crea();
+  F.lega(pc.createDataChannel("lt", { ordered: false, maxRetransmits: 0 }));
+  pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () { F.dopoIndirizzi(pc, function () { F.dici(pc); }); }).catch(function () { F.chiudi(); });
+};
+FiloDiretto.prototype.segnale = function (s) {
+  var F = this, offerta = !!(s.d && s.d.type === "offer");
+  if (offerta) F.o = s.o != null ? s.o : null;
+  else if (s.o != null && F.o != null && s.o !== F.o) return;   // è del tentativo di prima
+  if (s.d) {
+    if (offerta) { var c = F.coda; F.chiudi(); F.coda = c; F.crea().ondatachannel = function (e) { F.lega(e.channel); }; }
+    var pc = F.pc; if (!pc) return;
+    pc.setRemoteDescription(s.d).then(function () {
+      F.coda.splice(0).forEach(function (q) { pc.addIceCandidate(q).catch(function () {}); });
+      if (!offerta) return;
+      return pc.createAnswer().then(function (a) { return pc.setLocalDescription(a); }).then(function () { F.dopoIndirizzi(pc, function () { F.dici(pc); }); });
+    }).catch(function () { F.chiudi(); });
+  } else if (s.c) {
+    if (F.pc && F.pc.remoteDescription) F.pc.addIceCandidate(s.c).catch(function () {}); else F.coda.push(s.c);
+  }
+};
+FiloDiretto.prototype.invia = function (tx) { if (this.pronto()) try { this.ch.send(tx); } catch (e) {} };
+FiloDiretto.prototype.chiudi = function () { try { if (this.ch) this.ch.close(); if (this.pc) this.pc.close(); } catch (e) {} this.ch = null; this.pc = null; this.coda = []; };
+
+// ----- i messaggi privati sul broker -----
+// Sul broker legge chiunque conosca il codice della stanza. Ruolo, compiti, avvisi privati e mosse non ci passano in chiaro: ogni ospite e l'host si fanno una chiave (ECDH P-256, WebCrypto)
+// e con quella cifrano in AES-GCM (anche i messaggi per aprire il filo diretto, che hanno dentro gli indirizzi dei telefoni). Niente server: l'host mette la sua parte pubblica in ogni foto (ck), l'ospite nel «join» (ck, e un messaggio «ck» se serve ridirla).
+// Chi non manda la chiave ha una versione vecchia, o un telefono senza crypto.subtle (c'è solo su https e localhost): per lui resta il chiaro di sempre, e il suo ruolo resta leggibile.
+// Chi la manda non riceve mai niente in chiaro, nemmeno se la chiave è in ritardo: si aspetta. Sul filo diretto non serve, è già cifrato da WebRTC. La voce resta fuori.
+// Il messaggio cifrato è { t: "z", c, to } e fuori si legge solo a chi va, come prima. La lunghezza dice poco: i testi si riempiono di spazi fino a un blocco (privati 512, il resto 128 byte).
+// Protegge da chi ascolta il broker, non da chi fa da host né da chi inietta messaggi falsi: per quello servirebbe un server.
+var CIF = { pub: null, priv: null, fatto: false, avvio: null };
+var CIF_PRIV = 512, CIF_ALTRI = 128, CIF_ATTESA = 12000;   // (quanto resta buono un messaggio fermo per una chiave in ritardo: dopo vale meno di quello che è successo intanto)
+function cifB64(u) { var s = ""; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); }
+function cifByte(b) { var s = atob(b), u = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+function cifTesto(s) { return new TextEncoder().encode(s); }
+function cifConta(k, t0) { if (!window.LT_PROVA) return; var c = window.LT_CIF = window.LT_CIF || { n: {}, ms: {} }; c.n[k] = (c.n[k] || 0) + 1; if (t0 != null) { c.ms[k] = (c.ms[k] || 0) + performance.now() - t0; } }
+// la chiave comune, uguale sui due telefoni: hp e op sono le parti pubbliche di host e ospite, «loro» quella dell'altro
+function cifDeriva(hp, op, loro) {
+  var s = crypto.subtle, t0 = performance.now();
+  return Promise.resolve().then(function () { return s.importKey("raw", cifByte(loro), { name: "ECDH", namedCurve: "P-256" }, false, []); })   // (una chiave rotta non deve fermare chi la riceve)
+    .then(function (k) { return s.deriveBits({ name: "ECDH", public: k }, CIF.priv, 256); })
+    .then(function (b) { return s.importKey("raw", b, "HKDF", false, ["deriveKey"]); })
+    .then(function (b) { return s.deriveKey({ name: "HKDF", hash: "SHA-256", salt: cifTesto("lanterne"), info: cifTesto(hp + "|" + op) }, b, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]); })
+    .then(function (k) { cifConta("chiave", t0); return k; });
+}
+// lato: a chi va, così un messaggio non vale nell'altro verso né per un altro ospite
+function cifChiudi(k, tx, lato, blocco) {
+  var t = cifTesto(tx), b = new Uint8Array(Math.ceil(t.length / blocco) * blocco), iv = crypto.getRandomValues(new Uint8Array(12)), t0 = performance.now();
+  b.fill(32); b.set(t);
+  return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv, additionalData: cifTesto(lato) }, k, b).then(function (c) {
+    var u = new Uint8Array(12 + c.byteLength); u.set(iv); u.set(new Uint8Array(c), 12);
+    var z = cifB64(u); cifConta("chiudi", t0); return z;
+  });
+}
+function cifApri(k, tx, lato) {
+  var u = cifByte(tx), t0 = performance.now();
+  return crypto.subtle.decrypt({ name: "AES-GCM", iv: u.subarray(0, 12), additionalData: cifTesto(lato) }, k, u.subarray(12)).then(function (b) {
+    var m = JSON.parse(new TextDecoder().decode(b)); cifConta("apri", t0); return m;
+  });
+}
+// appena caricato il gioco: la coppia di chiavi di questa pagina e una prova completa su se stessa. Se un passo non riesce CIF.pub resta vuoto e il telefono si comporta come una versione vecchia
+CIF.avvio = (function () {
+  function fine() { CIF.fatto = true; }
+  try {
+    if (window.LT_PROVA && window.LT_NOCIF) throw 0;   // (solo per le prove: un telefono senza crypto.subtle)
+    if (!window.crypto || !crypto.subtle || !window.TextEncoder || !window.TextDecoder) throw 0;
+    return crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, false, ["deriveBits"]).then(function (c) {
+      CIF.priv = c.privateKey;
+      return crypto.subtle.exportKey("raw", c.publicKey).then(function (r) {
+        var pub = cifB64(new Uint8Array(r));
+        return cifDeriva(pub, pub, pub)
+          .then(function (k) { return cifChiudi(k, "{\"a\":1}", "x", 16).then(function (z) { return cifApri(k, z, "x"); }); })
+          .then(function (m) { if (m && m.a === 1) CIF.pub = pub; });
+      });
+    }).then(fine, fine);
+  } catch (e) { fine(); return Promise.resolve(); }
+})();
+function cifPronta(f) { if (CIF.fatto) f(); else CIF.avvio.then(f); }
+// la copia della partita per i vice (solo con l'host di riserva acceso): ha dentro tutti i ruoli e passa dal broker, quindi viaggia chiusa con una chiave di partita (CIF.kp)
+// che l'host dà solo ai vice, dentro i loro privati. Chi prende il posto la apre: se non può, si riparte dalla saletta
+function cifCopia(fatto) {
+  if (CIF.kpK) return fatto(CIF.kpK);
+  if (!CIF.kp) CIF.kp = cifB64(crypto.getRandomValues(new Uint8Array(32)));
+  crypto.subtle.importKey("raw", cifByte(CIF.kp), "AES-GCM", false, ["encrypt", "decrypt"]).then(function (k) { CIF.kpK = k; fatto(k); }, function () {});
+}
+
 function host(t) {
   if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
-  precaricoAvvia();   // appena si entra comincia lo scaricamento di tutto il palazzo (la saletta serve a questo)
+  var copia = t.ripresa && t.ripresa.stato && t.ripresa.stato.z;
+  if (copia) {
+    var dopo = function (s) { if (s) t.ripresa.stato = s; else t.ripresa = null; host(t); };
+    if (!CIF.kp) return dopo(null);
+    CIF.kpK = null;
+    return cifCopia(function (k) { cifApri(k, copia, "copia").then(dopo, function () { dopo(null); }); });
+  }
+  precaricoAvvia();   // appena si entra comincia lo scaricamento del palazzo: prima quello che serve per partire, poi il resto (anche a partita cominciata)
   var IO = t.mioId || "host";
   var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
   var H = { fase: "lobby", codice: "…", pronta: false, partita: 0, rip: 0, imp: pulisci(t.impostazioni),
-    players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost) }], guarda: [], classifica: null, fine: null };
-  var P = null, rete = null, inviati = {}, ultimaN = {}, viaDa = {}, finePronta = false, roundDetto = 0;
+    players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), lenz: lenzMio() || { c: 0, m: null } }], guarda: [], classifica: null, fine: null };
+  var P = null, rete = null, inviati = {}, ultimaN = {}, viaDa = {}, finePronta = false, roundDetto = 0, fili = {}, filiN = {}, nFilo = 0, nU = Date.now() % 1e9;
+  var chiavi = {}, fermi = {}, ePriv = nU, viciOra = [], codaCopia = Promise.resolve();   // ePriv: quale giro di privati è (cambia con la partita: il numero v dei privati riparte da capo)
+  // i messaggi che contano: dal broker e, a chi ha il filo diretto aperto, anche da lì (il primo che arriva vale). Quelli per uno solo sul broker vanno cifrati
+  function veloce(m) {
+    if (!rete) return;
+    m.u = ++nU;
+    if (m.to) perLui(m); else rete.inviaVeloce(m);
+    var tx = null;
+    for (var id in fili) { if (m.to && m.to !== id) continue; if (fili[id].pronto()) { if (tx === null) tx = JSON.stringify(m); fili[id].invia(tx); } }
+  }
+  // filiN: i tentativi di fila. Torna a zero quando il filo si apre, così se cade si riapre subito e non dopo l'attesa dei tentativi di prima
+  function filoApri(id, subito) {
+    if (!window.RTCPeerConnection || !rete) return;
+    var F = fili[id], n = filiN[id] || 0; if (F && !subito && !F.daRifare(n)) return;
+    filiN[id] = n + 1;
+    if (F) F.chiudi();
+    F = fili[id] = new FiloDiretto(function (s) { if (rete) perLui({ t: "fd", s: s, to: id }); }, function (m) { if (m && m.t && rete && arrivoOspite) arrivoOspite(id, m, true); });
+    F.aperto = function () { filiN[id] = 0; };
+    F.caduto = function () { var p = pById(id); tuttiFilo = false; if (fili[id] === F && !filiN[id] && p && !p.via) filoApri(id, true); };
+    F.o = ++nFilo; F.offri();
+  }
+  function filiChiudi() { for (var id in fili) fili[id].chiudi(); fili = {}; }
+  function filiControllo() {
+    var tutti = !H.guarda.length && Date.now() - guardaT > 15000;
+    H.players.forEach(function (p) {
+      if (p.bot || p.id === IO || p.via) return;
+      filoApri(p.id);
+      if (!(fili[p.id] && fili[p.id].pronto())) tutti = false;
+    });
+    tuttiFilo = tutti;
+  }
+  function soloFilo(m) { var tx = null; for (var id in fili) if (fili[id].pronto()) { if (tx === null) tx = JSON.stringify(m); fili[id].invia(tx); } }
+  // ----- le chiavi degli ospiti: vedi in cima -----
+  // Cifrare è asincrono: per ogni ospite una fila in uscita (coda) e una in entrata (codaA), così i messaggi restano nell'ordine in cui sono nati
+  function cifra(id, m) {
+    var c = chiavi[id], k = c.k, tx = JSON.stringify(m), blocco = m.t === "priv" ? CIF_PRIV : CIF_ALTRI;
+    c.coda = c.coda.then(function () { return cifChiudi(k, tx, "h" + id, blocco); }).then(function (z) { if (rete && !fermo && chiavi[id] === c) rete.inviaVeloce({ t: "z", to: id, c: z }); }, function () {});
+  }
+  // un messaggio per uno solo, sul broker. Il chiaro è solo per chi non sa cifrare. Se la chiave è in ritardo si aspetta: il privato lo rimanda da solo il battito quando la chiave c'è,
+  // gli altri stanno fermi un momento in fila. La ricevuta di una mossa e gli avatar non dicono niente e non aspettano
+  function perLui(m) {
+    var id = m.to, c = chiavi[id], p = pById(id);
+    if (c && c.k) return cifra(id, m);
+    if (!c && !(p && p.cif) || (CIF.fatto && !CIF.pub)) return rete.inviaVeloce(m);
+    if (m.t === "ak" || m.t === "av") return rete.inviaVeloce(m);
+    if (m.t === "priv") { cifConta("privFermo"); return; }
+    var l = fermi[id] || (fermi[id] = []); l.push({ m: m, t: Date.now() }); if (l.length > 32) l.shift();
+    cifConta("fermi");
+  }
+  function chiaveOspite(id, pub, ridico) {
+    if (!pub) { delete chiavi[id]; delete fermi[id]; return; }
+    if (!CIF.fatto) return cifPronta(function () { if (!fermo) chiaveOspite(id, pub, ridico); });
+    if (!CIF.pub) return;
+    var c = chiavi[id];
+    if (c && c.pub === pub) { if (c.k && ridico) cifra(id, { t: "cko", to: id }); return; }
+    var n = chiavi[id] = { pub: pub, k: null, coda: Promise.resolve(), codaA: Promise.resolve() };
+    cifDeriva(CIF.pub, pub, pub).then(function (k) {
+      var rit = window.LT_PROVA && window.LT_CKRITARDO;   // (solo per le prove: una chiave in ritardo)
+      return rit ? new Promise(function (ok) { setTimeout(function () { ok(k); }, rit); }) : k;
+    }).then(function (k) {
+      if (fermo || chiavi[id] !== n) return;
+      n.k = k; cifra(id, { t: "cko", to: id });
+      inviati[id] = -1;   // il privato parte al prossimo battito
+      var ora = Date.now(), l = fermi[id] || []; delete fermi[id];
+      l.forEach(function (x) { if (ora - x.t < CIF_ATTESA) cifra(id, x.m); });
+    }, function () { if (chiavi[id] === n) delete chiavi[id]; });
+  }
+  function chiaveManca(p) { return !!p.cif && !p.bot && p.id !== IO && !!CIF.pub && !(chiavi[p.id] && chiavi[p.id].k); }
+  // la copia per i vice (la manda il core, con l'host di riserva acceso): chiusa, se tutti e due sanno cifrare. Il core sa solo la fase
+  function copiaChiusa(m, manda) {
+    if (!CIF.pub || !m.vici.every(function (id) { var p = pById(id); return p && p.cif; })) return manda.call(rete, m);
+    var tx = JSON.stringify(m.s), fase = m.s.fase; viciOra = m.vici;
+    cifCopia(function (k) {
+      codaCopia = codaCopia.then(function () { return cifChiudi(k, tx, "copia", CIF_ALTRI); }).then(function (z) { if (rete && !fermo) manda.call(rete, Object.assign({}, m, { s: { z: z, fase: fase } })); }, function () {});
+    });
+  }
+  function kpPer(id) { return viciOra.indexOf(id) >= 0 ? CIF.kp : undefined; }
+  // EMQX accetta circa 10 messaggi al secondo da ogni telefono (misurato l'1/11: a 8 passano tutti in 60 ms, a 10 ci mettono 200 ms, a 20 se ne perde metà); HiveMQ non ha questo tetto.
+  // Le posizioni si ripetono da sole e cedono il posto agli altri messaggi: sul broker al massimo 8 al secondo, 4 se tutti hanno il filo; se nell'ultimo secondo ne sono già partiti 9 si salta, ma mai per più di 330 ms
+  var tuttiFilo = false, guardaT = 0, posCr = 0, posT = 0, partiti = [];
+  function brokerLibero() { var ora = Date.now(); while (partiti.length && ora - partiti[0] >= 1000) partiti.shift(); return partiti.length < 9 || ora - posT >= 330; }
+  var arrivoOspite = null;
   var eventi = {
-    privato: function (id, m) { if (id === IO) { if (UI) UI.messaggio(m); else conserva(m); return; } m.to = id; if (rete) rete.inviaVeloce(m); },
-    tutti: function (m) { if (rete) rete.inviaVeloce(m); if (UI) UI.messaggio(m); }
+    privato: function (id, m) { if (id === IO) { if (UI) UI.messaggio(m); else conserva(m); return; } m.to = id; veloce(m); },
+    tutti: function (m) { veloce(m); if (UI) UI.messaggio(m); }
   };
   var R = t.ripresa, riprendo = !!(R && R.stato && R.stato.fase && R.stato.fase !== "lobby" && R.stato.players);
+  // il respiro: l'host riprende e la partita sta ferma finché gli ospiti tornano, così nessun tempo salta mentre si ricollegano.
+  // Prima che l'host sia sul broker nessuno può tornare: i 5 s partono da lì (onConnesso; se il broker non risponde ci pensa onErrore)
+  var respiro = 0;
   if (riprendo) {
     H = R.stato; H.pronta = false; H.rip = (H.rip || 0) + 1; H.guarda = H.guarda || []; H.imp = pulisci(H.imp);
     H.players.forEach(function (p) { p.forse = false; p.via = p.id !== IO && !p.bot; if (p.id === IO) p.omino = t.mioOmino(p.nome); });
-    if (H.fase === "gioco" && H.salvata) P = Partita.daStato(H.salvata, H.imp, eventi);
+    lenzInOrdine(H.players);
+    if (H.fase === "gioco" && H.salvata) {
+      P = Partita.daStato(H.salvata, H.imp, eventi); respiro = Infinity;
+      H.players.forEach(function (p) { if (p.via) viaDa[p.id] = Date.now(); });   // chi non torna esce come gli altri, dopo un minuto e mezzo
+      if (window.LT_PROVA) window.LT_P = P;
+    }
     else if (H.fase === "gioco") H.fase = "lobby";
     delete H.salvata;
   }
   function pById(id) { for (var i = 0; i < H.players.length; i++) if (H.players[i].id === id) return H.players[i]; return null; }
   function presenti() { return H.players.filter(function (p) { return !p.via; }); }
+  // il lenzuolo lo decide l'host: due giocatori non hanno mai lo stesso. Chi entra col suo colore lo trova, se è libero o se ce l'ha un Bot (che ne prende un altro)
+  function presiLenz() { return H.players.map(function (p) { return p.lenz ? p.lenz.c : -1; }); }
+  function lenzNuovo(voluto) {
+    var v = lenzValido(voluto);
+    if (v) {
+      var chi = H.players.filter(function (p) { return p.lenz && p.lenz.c === v.c; })[0];
+      if (!chi) return v;
+      if (chi.bot) { chi.lenz = { c: liberoLenz(presiLenz().concat(v.c)), m: null }; return v; }
+    }
+    return { c: liberoLenz(presiLenz()), m: null };
+  }
+  // la mossa «lenz», nella saletta: se due toccano lo stesso colore vince il primo, un Bot invece cede il suo e prende quello lasciato.
+  // Comunque vada parte una foto: chi è arrivato tardi vede com'è andata
+  function cambiaLenz(id, c) {
+    var p = pById(id), v = lenzValido({ c: c }); if (H.fase !== "lobby" || !p || !v) return;
+    if (p.lenz && p.lenz.c === v.c) return bd();
+    var altro = H.players.filter(function (q) { return q.id !== id && q.lenz && q.lenz.c === v.c; })[0];
+    if (altro && !altro.bot) return bd();
+    if (altro) altro.lenz = p.lenz || { c: liberoLenz(presiLenz()), m: null };
+    p.lenz = v; bd();
+  }
   // chi ha la mappa pronta: i Bot sempre; io col mio precarico; gli altri dicono la loro («pr»). Chi non lo dice mai (un telefono con una versione vecchia) vale pronto dopo 5 s.
   function pronto(p) { return !!p.bot || (p.id === IO ? precaricoStato().pronto : p.pr !== undefined ? !!p.pr : Date.now() - (p.t0 || 0) > 5000); }
   function mappaPct(p) { return pronto(p) ? 100 : p.id === IO ? precaricoStato().pct : (p.mp || 0); }
-  function inAttesa() { return presenti().filter(function (p) { return !pronto(p); }); }
+  function inAttesa() { return presenti().filter(function (p) { return !pronto(p) || chiaveManca(p); }); }   // (la partita aspetta anche le chiavi: si fanno nella saletta, un attimo)
   // i Bot automatici: finché l'host non tocca i tasti dei Bot, la saletta sta a RIEMPI posti (le persone prendono il posto dei Bot)
   if (H.auto == null) H.auto = true;
   // la saletta: una partita nell'atrio senza ruoli, dove si gira finché l'host non fa partire dal computer
   function nuovaSaletta() {
     P = new Partita(presenti().map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }), H.imp, eventi, { saletta: true });
+    ePriv = ++nU;
     if (window.LT_PROVA) window.LT_P = P;
   }
   function allinea() {
@@ -4743,7 +6475,11 @@ function host(t) {
 
   rete = SGNet.ospita(ID, {
     onCodice: function (c) { H.codice = c; bd(); },
-    onConnesso: function () { H.pronta = true; bd(); },
+    onConnesso: function () {
+      H.pronta = true;
+      if (respiro === Infinity) { respiro = Date.now() + RESPIRO; Object.keys(viaDa).forEach(function (id) { viaDa[id] = Date.now(); }); }   // solo adesso gli ospiti possono tornare: da qui contano i 5 s e il minuto e mezzo
+      bd();
+    },
     onErrore: function () { if (H.pronta) return; ferma(); VOCE.chiudiStanza(); if (rete) rete.chiudi(); erroreRete(t, "Non riesco ad aprire la stanza.", function () { host(t); }); },
     onForse: function (id) { var p = pById(id); if (p && !p.forse) { p.forse = true; bd(); } },
     onTornato: function (id) { var p = pById(id); if (p && p.forse) { p.forse = false; bd(); } },
@@ -4753,10 +6489,18 @@ function host(t) {
       var p = pById(id); if (!p) return;
       p.forse = false;
       if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); riempi(); bd(); return; }
-      p.via = true; viaDa[id] = Date.now(); bd();   // resta in partita: se torna entro un minuto e mezzo riprende il suo posto
+      p.via = true; if (!viaDa[id]) viaDa[id] = Date.now(); bd();   // resta in partita: se torna entro un minuto e mezzo riprende il suo posto (dopo una ripresa il conto è già partito)
     },
-    onMsg: function (id, m) {
+    onMsg: function arrivo(id, m, sulFilo) {
+      arrivoOspite = arrivo;
       if (!m || !m.t) return;
+      if (m.t === "fd") { if (fili[id]) fili[id].segnale(m.s); return; }   // il filo diretto: i messaggi per aprirlo
+      if (m.t === "z") {   // una mossa cifrata: se non si apre si scarta, l'ospite la ripete
+        var cz = chiavi[id]; if (!cz || !cz.k) return;
+        var kz = cz.k; cz.codaA = cz.codaA.then(function () { return cifApri(kz, m.c, "o" + id); }).then(function (x) { if (!fermo && x && (x.t === "a" || x.t === "pc" || x.t === "fd")) arrivo(id, x); }, function () { cifConta("scarti"); });
+        return;
+      }
+      if (m.t === "ck") { var pk = pById(id); if (pk) pk.cif = 1; chiaveOspite(id, m.k, true); return; }   // la sua chiave, ridetta: l'host ne ha una nuova, o il «join» è di prima
       if (m.t === "vc") { var pv = pById(id); if (pv && !pv.via && VS) VS.arriva(id, m); return; }   // la voce: messaggi di collegamento
       if (m.t === "pr") {   // la mappa di quel telefono: percentuale e pronto. Si ridice a tutti solo se cambia davvero (pronto, o 10 punti)
         var pq = pById(id); if (!pq || pq.bot) return;
@@ -4766,54 +6510,106 @@ function host(t) {
       }
       if (m.t === "join") {
         var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
+        chiaveOspite(id, m.ck);   // (chi manda la chiave sa cifrare: lo si sa da subito, senza attese. Prima di tutto il resto: anche i primi messaggi per lui devono trovarla)
+        if (p) p.cif = m.ck ? 1 : 0;
         if (!p && !t.puoSedersi(id, nome)) { if (!H.guarda.some(function (x) { return x.id === id; })) H.guarda.push({ id: id, nome: nome }); bd(); return; }
         if (!p && H.fase === "lobby" && H.players.length >= MAX && H.auto) togliBot(true);   // un Bot automatico lascia il posto
-        if (!p && H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), t0: Date.now() }); riempi(); }
-        if (p) { p.forse = false; if (p.via && H.fase !== "lobby") { p.via = false; delete viaDa[id]; } if (!p.omino) p.omino = avatarValido(m.omino); }
+        if (!p && H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), t0: Date.now(), lenz: lenzNuovo(m.lenz), cif: m.ck ? 1 : 0 }); riempi(); }
+        if (p) { p.forse = false; if (p.via && H.fase !== "lobby") { p.via = false; delete viaDa[id]; } if (!p.omino) p.omino = avatarValido(m.omino); if (P && H.fase === "gioco") P.rientra(id); }
         bd();
         if (p && P) {
           inviati[id] = -1; ultimaN[id] = 0;
-          var g = P.per(id); if (g) rete.inviaVeloce({ t: "tp", x: Math.round(g.x), y: Math.round(g.y), ep: g.ep, to: id });
+          var g = P.per(id); if (g) perLui({ t: "tp", x: Math.round(g.x), y: Math.round(g.y), ep: g.ep, to: id });
           // gli avatar non viaggiano nella foto durante la partita: a chi rientra li mando a parte
-          rete.inviaVeloce({ t: "av", l: H.players.filter(function (q) { return q.omino; }).map(function (q) { return [q.id, q.omino]; }), to: id });
+          perLui({ t: "av", l: H.players.filter(function (q) { return q.omino; }).map(function (q) { return [q.id, q.omino]; }), to: id });
         }
+        if (p && fili[id] && !fili[id].pronto()) filiN[id] = 0;   // chi rientra non aspetta i tentativi fatti mentre non c'era
+        tuttiFilo = false; if (pById(id)) filoApri(id); else guardaT = Date.now();   // (arrivato a partita cominciata: guarda, e le posizioni gli arrivano solo dal broker)
         return;
       }
+      if (m.t === "rf") { if (Date.now() - ultimaFoto >= 150) bd(); else if (!fotoDopo) fotoDopo = setTimeout(bd, 150); return; }   // ha perso una foto
       if (!P || !pById(id) || (H.fase !== "gioco" && H.fase !== "lobby")) return;
-      if (H.fase === "lobby" && m.t !== "p" && !(m.t === "a" && m.k === "parla")) return;   // nella saletta: si cammina e si parla
+      if (H.fase === "lobby" && m.t !== "p" && !(m.t === "a" && (m.k === "parla" || m.k === "lenz"))) return;   // nella saletta: si cammina, si parla, si cambia lenzuolo
       if (m.t === "p") { if (m.n <= (ultimaN[id] || 0)) return; ultimaN[id] = m.n; P.muovi(id, m); }
-      else if (m.t === "a") P.azione(id, m);
+      else if (m.t === "a") {
+        if (m.q != null) {   // la ricevuta parte sempre (anche per un doppione: la prima può essersi persa), la mossa vale una volta sola
+          var Fq = sulFilo === true && fili[id], ak = { t: "ak", q: m.q, to: id };
+          if (Fq && Fq.pronto()) Fq.invia(JSON.stringify(ak)); else veloce(ak);   // (torna da dove è venuta: col filo aperto sul broker non si deve vedere a chi rispondo)
+          var vq = visteA[id] || (visteA[id] = []); if (vq.indexOf(m.q) >= 0) return;
+          vq.push(m.q); if (vq.length > 64) vq.shift();
+        }
+        if (m.k === "lenz") cambiaLenz(id, m.c); else P.azione(id, m);
+      }
+      else if (m.t === "pc") P.azione(id, { k: "pc", x: m.x, y: m.y, d: m.d, m: m.m });   // il Burattinaio muove la sua vittima
     }
   }, { ripresa: riprendo });
   if (!rete) return senzaRete(t);
+  if (window.LT_PROVA) window.LT_RETE = rete;
+  // senza rete i messaggi veloci non partono: tanto non arriverebbero, e nel collegamento fermo si accumulerebbero fino a far scattare un difetto di mqtt 4.3.7 (oltre 512 KB in coda chiama due volte la stessa funzione: «Callback called multiple times»)
+  ["invia", "inviaVeloce"].forEach(function (k) { var f = rete[k]; rete[k] = function (m) { if (k === "inviaVeloce" && navigator.onLine === false) return; if (m && m.t === "__ris" && m.s) return copiaChiusa(m, f); partiti.push(Date.now()); if (partiti.length > 64) partiti.shift(); return f.call(rete, m); }; });
   if (riprendo && rete.codice) H.codice = rete.codice;
   // la voce: l'host fa da portalettere dei messaggi di collegamento fra i telefoni (non conserva niente, sono messaggi veloci)
+  // Col filo aperto passano da lì: arrivano prima e non consumano i messaggi del broker (con 10 persone sono 45 collegamenti). Solo il giro dei 5 secondi resta fuori dal broker: un elenco nuovo passa da tutte e due le strade
   var VS = new VoceStanza({
     nota: function (t) { VOCE.nota(t); },
-    invia: function (a, m) { if (a === IO) VOCE.arriva(m); else { m.to = a; rete.inviaVeloce(m); } },
-    tutti: function (m) { rete.inviaVeloce(m); VOCE.arriva(m); } });
+    invia: function (a, m) {
+      if (a === IO) { VOCE.arriva(m); return; }
+      m.to = a; var F = fili[a];
+      if (!m.b && F && F.pronto()) F.invia(JSON.stringify(m)); else rete.inviaVeloce(m);
+    },
+    tutti: function (m, ripetuto) {
+      VOCE.arriva(m);
+      var tx = null, broker = !ripetuto;
+      H.players.forEach(function (p) {
+        if (p.bot || p.id === IO) return;
+        var F = fili[p.id];
+        if (F && F.pronto()) { if (tx === null) tx = JSON.stringify(m); F.invia(tx); } else broker = true;
+      });
+      if (broker) rete.inviaVeloce(m);
+    } });
+  // chi era in voce prima della ripresa resta in elenco finché non si rifà vivo: senza, il primo elenco chiuderebbe i collegamenti fra gli altri telefoni.
+  // Tolto solo chi non c'è più: io che ho ricaricato (la mia voce riparte da capo), o l'host di prima se ho preso il suo posto
+  if (riprendo) { VS.semina(H.voce, R.daRiserva ? R.vecchioHost : IO); delete H.voce; }
   VOCE.apri({ io: IO, manda: function (m) { VS.arriva(IO, m); } });
   var vsT = setInterval(function () { VS.giro(); }, 5000);
 
   function vm() {
-    var v = { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, rip: H.rip, tiene: IO, imp: H.imp, auto: !!H.auto,
-      players: H.players.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" || p.bot ? (p.omino || null) : undefined, mp: H.fase === "lobby" ? mappaPct(p) : undefined, pr: H.fase === "lobby" ? (pronto(p) ? 1 : 0) : undefined }; }),
-      avvio: H.avvio ? { n: inAttesa().length } : null,
+    var v = { ver: H.ver, fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, rip: H.rip, tiene: IO, imp: H.imp, auto: !!H.auto, ck: CIF.pub || undefined,
+      players: H.players.map(function (p) { return { id: p.id, nome: p.nome, lenz: p.lenz, bot: !!p.bot, via: !!p.via, forse: !!p.forse, omino: H.fase === "lobby" || p.bot ? (p.omino || null) : undefined, mp: H.fase === "lobby" ? mappaPct(p) : undefined, pr: H.fase === "lobby" ? (pronto(p) ? 1 : 0) : undefined }; }),
+      avvio: H.avvio ? { n: inAttesa().length, t: H.avvio.t0 + avvioMax() } : null,
       guarda: H.guarda, classifica: H.classifica, fine: H.fine };
     if (P && (H.fase === "gioco" || H.fase === "lobby")) v.g = P.foto();
     return v;
   }
   function ricorda() {
     if (H.fase === "lobby") return t.ricorda(null);
-    t.ricorda({ fase: H.fase, codice: H.codice, partita: H.partita, rip: H.rip, imp: H.imp, guarda: H.guarda, classifica: H.classifica, fine: H.fine,
-      players: H.players.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot, via: !!p.via, omino: p.bot ? p.omino : undefined }; }),
+    t.ricorda({ fase: H.fase, codice: H.codice, partita: H.partita, rip: H.rip, imp: H.imp, guarda: H.guarda, classifica: H.classifica, fine: H.fine, voce: VS ? VS.elenco() : null,
+      players: H.players.map(function (p) { return { id: p.id, nome: p.nome, lenz: p.lenz, bot: !!p.bot, via: !!p.via, omino: p.bot ? p.omino : undefined, cif: p.cif ? 1 : undefined }; }),
       salvata: P && H.fase === "gioco" ? P.salva() : null });
   }
+  var visteA = {}, giroPriv = 0;   // le mosse già fatte, per ospite
   var ultimaFoto = 0, fotoDopo = null, ricordaT = 0, ricordaFase = null;   // (lo stato per la ripresa si salva ogni 2 s, e a ogni cambio di fase)
-  function bd() {
+  var ultimaV = null, fotoRip = [], fotoFase = null;
+  // la foto che conta (un sabotaggio aperto o chiuso, un cambio di fase) parte altre 2 volte: una perdita sul broker non costa secondi, e il numero ver evita i doppioni.
+  // A un cambio di fase, la seconda volta anche la copia trattenuta: chi ricarica la pagina deve trovare quella giusta, non una di prima
+  function ripetiFoto(trattieni) {
+    fotoRip.forEach(clearTimeout);
+    fotoRip = [150, 400].map(function (ms, i) {
+      return setTimeout(function () { if (!rete || fermo || !ultimaV) return; veloce({ t: "vm", vm: ultimaV }); if (i && trattieni) rete.invia({ t: "vm", vm: ultimaV }); }, ms);
+    });
+  }
+  function bd(conta) {
+    if (fermo) return;
     if (fotoDopo) { clearTimeout(fotoDopo); fotoDopo = null; }
-    ultimaFoto = Date.now();
-    var v = vm(); rete.invia({ t: "vm", vm: v }); if (H.fase !== ricordaFase || ultimaFoto - ricordaT > 2000) { ricordaFase = H.fase; ricordaT = ultimaFoto; ricorda(); } disegna(t, v, cbHost);
+    ultimaFoto = Date.now(); H.ver = (H.ver || ultimaFoto) + 1;
+    var v = ultimaV = vm(), ff = H.fase + "|" + (P ? P.fase : "");
+    if (conta === true || ff !== fotoFase) { ripetiFoto(ff !== fotoFase); fotoFase = ff; }
+    // in partita la foto parte veloce: quella trattenuta dal broker (per chi rientra) ci ha messo fino a 4,6 s nella prova del 31/10, e un sabotaggio deve arrivare subito.
+    // Quella trattenuta resta una ogni 2 s e a ogni cambio di fase: chi la trova vecchia vede il numero nel battito e chiede l'ultima
+    if (H.fase === "gioco" || H.avvio) veloce({ t: "vm", vm: v });
+    if ((H.fase !== "gioco" && !H.avvio) || H.faseT !== H.fase || ultimaFoto - (H.tT || 0) >= 2000) { H.faseT = H.fase; H.tT = ultimaFoto; rete.invia({ t: "vm", vm: v }); }
+    var rk = ff + "|" + (P && P.riu ? P.riu.voti.size : 0);   // (un sabotaggio o un voto si ricordano subito: chi prende il posto dell'host non deve perderli)
+    if (conta === true || rk !== ricordaFase || ultimaFoto - ricordaT > 2000) { ricordaFase = rk; ricordaT = ultimaFoto; ricorda(); } disegna(t, v, cbHost);
   }
   function mandaPrivati(tutti) {
     if (!P) return;
@@ -4821,29 +6617,50 @@ function host(t) {
       if (p.bot) return;
       var pr = P.privato(p.id); if (!pr) return;
       if (!tutti && inviati[p.id] === pr.v) return;
+      if (p.id !== IO && chiaveManca(p)) return;   // (partirà quando la chiave c'è: un ruolo non esce mai in chiaro)
       inviati[p.id] = pr.v;
       if (p.id === IO) { if (UI) UI.privato(pr); else PENDENTI.priv = pr; }
-      else rete.inviaVeloce({ t: "priv", p: pr, to: p.id });
+      else veloce({ t: "priv", p: pr, to: p.id, e: ePriv, kp: kpPer(p.id) });
     });
+  }
+  // la rete può perdere un messaggio e il ruolo o le ricariche non si rimandano da soli: ogni secondo e mezzo si ribadiscono (uguali: l'ospite li ignora)
+  function ribadisciPrivati() {
+    var sulBroker = [];
+    H.players.forEach(function (p) {
+      if (p.bot || p.id === IO || p.via) return;
+      var pr = P.privato(p.id); if (!pr) return;
+      var m = { t: "priv", p: pr, to: p.id, r: 1, e: ePriv, kp: kpPer(p.id) }, F = fili[p.id];
+      if (F && F.pronto()) F.invia(JSON.stringify(m)); else if (!chiaveManca(p)) sulBroker.push(m);
+    });
+    for (var i = 0; i < Math.min(2, sulBroker.length); i++) veloce(sulBroker[(giroPriv + i) % sulBroker.length]);   // chi non ha il filo, due alla volta: con 9 telefoni sarebbero 6 messaggi al secondo
+    giroPriv += 2;
   }
   // il tempo della partita: 20 volte al secondo; le posizioni a tutti 10 volte al secondo
   var ultimo = Date.now(), nTick = 0, fermo = false;
   var loop = setInterval(function () {
     if (fermo) return;
+    if (rete && (rete._chiusa || (rete.stato && rete.stato().chiusa))) { ferma(); if (UI && UI.t === t) chiudiUI(); return; }   // la stanza non è più mia (il core l'ha chiusa, o la tiene un altro e io rientro da giocatore: cediPosto)
     var ora = Date.now(), dt = Math.min(0.1, (ora - ultimo) / 1000); ultimo = ora;
     if (H.fase === "lobby") seguiPrecarico();
     if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return;   // (anche nella saletta: si gira nell'atrio)
-    P.tick(dt);
-    if (P.cambiata) { P.cambiata = false; if (ora - ultimaFoto >= 250) bd(); else if (!fotoDopo) fotoDopo = setTimeout(bd, 250); }
+    if (respiro && (ora >= respiro || !H.players.some(function (p) { return p.via; }))) respiro = 0;
+    if (!respiro) P.tick(dt);
+    if (P.cambiata) { P.cambiata = false; if (P.subito || ora - ultimaFoto >= 250) { var urgente = !!P.subito; P.subito = false; bd(urgente); } else if (!fotoDopo) fotoDopo = setTimeout(bd, 250); }
     var pos = P.posizioni();
     if (UI) UI.posizioni(pos);
-    if (++nTick % 2 === 0) rete.inviaVeloce({ t: "pos", s: nTick, p: pos });
+    nTick++; posCr += tuttiFilo ? 0.2 : 0.4;
+    var mPos = { t: "pos", s: nTick, p: pos, v: H.ver };   // v: l'ultima foto: chi non ce l'ha se ne accorge al battito dopo
+    if (nTick % 2 === 0 || !window.LT_POS10) soloFilo(mPos);   // sul filo 20 volte al secondo: si vede 26 ms prima (75 → 49) e il telefono non lavora di più (prova P, 1/11)
+    if (posCr >= 1) { posCr -= 1; if (rete && brokerLibero()) { posT = Date.now(); rete.inviaVeloce(mPos); } }
     mandaPrivati(false);
+    if (nTick % 30 === 0) ribadisciPrivati();
+    if (nTick % 20 === 0) filiControllo();
+    if (nTick % 40 === 0 && H.fase === "gioco" && ora - ricordaT >= 2000) { ricordaT = ora; ricorda(); }   // (i posti cambiano anche senza foto nuove)
     if (P.round !== roundDetto && P.fase === "gioco") { roundDetto = P.round; t.aCheSiamo("Round " + P.round); }
     Object.keys(viaDa).forEach(function (id) { if (ora - viaDa[id] > 90000) { delete viaDa[id]; P.esce(id); } });
     if (P.fase === "fine" && !finePronta) { finePronta = true; setTimeout(fine, 2600); }
   }, 50);
-  function ferma() { fermo = true; clearInterval(loop); clearInterval(vsT); if (fotoDopo) clearTimeout(fotoDopo); }
+  function ferma() { fermo = true; clearInterval(loop); clearInterval(vsT); if (fotoDopo) clearTimeout(fotoDopo); fotoRip.forEach(clearTimeout); filiChiudi(); }
 
   // il mio precarico (quello dell'host): se cambia lo dico a tutti; se si sta aspettando per cominciare, guardo se si può partire
   var mioPre = { ok: -1, p: -1 }, pmT = 0;
@@ -4865,11 +6682,11 @@ function host(t) {
     if (inAttesa().length) { H.avvio = { t0: Date.now() }; precaricoFretta(2); bd(); return; }
     parti();
   }
+  function avvioMax() { return (window.LT_PROVA && window.LT_AVVIO_MAX) || AVVIO_MAX; }
   function controllaAvvio() {
     if (!H.avvio || H.fase !== "lobby") return;
     if (presenti().length < MIN) { H.avvio = null; precaricoFretta(1); bd(); return; }   // nel frattempo se ne sono andati: si torna alla saletta
-    var max = (window.LT_PROVA && window.LT_AVVIO_MAX) || AVVIO_MAX;
-    if (!inAttesa().length || Date.now() - H.avvio.t0 >= max) parti();
+    if (!inAttesa().length || Date.now() - H.avvio.t0 >= avvioMax()) parti();
   }
   function parti() {
     if (H.fase !== "lobby" || presenti().length < MIN) return;
@@ -4894,10 +6711,10 @@ function host(t) {
   function aggiungiBot(da) {
     if (H.fase !== "lobby" || H.players.length >= MAX) return;
     if (da !== true) H.auto = false;   // l'host ha deciso lui: da qui i Bot li gestisce a mano
-    var usati = H.players.map(function (p) { return p.nome; }), b = null;
+    var usati = H.players.map(function (p) { return p.nome; }).concat(NOMI_COLORE), b = null;   // (un Bot che si chiama Rosa non si può dire: «ho visto Rosa» è un nome o un telo?)
     try { b = SG.bot && SG.bot.prendi ? SG.bot.prendi(1, { escludi: usati })[0] : null; } catch (e) {}
     var n = H.players.filter(function (p) { return p.bot; }).length + 1;
-    H.players.push({ id: "bot-" + Date.now().toString(36) + n, nome: b ? b.nome : "Bot " + n, omino: b ? avatarValido(b.omino) : null, bot: true });
+    H.players.push({ id: "bot-" + Date.now().toString(36) + n, nome: b ? b.nome : "Bot " + n, omino: b ? avatarValido(b.omino) : null, bot: true, lenz: lenzNuovo(null) });
     if (da !== true) allinea();
     bd();
   }
@@ -4905,7 +6722,7 @@ function host(t) {
 
   var cbHost = { sonoHost: true, myId: IO, onComincia: comincia, onNuova: nuova, onBot: aggiungiBot, onTogliBot: togliBot,
     onVia: function () { if (P && !P.saletta) P.via(); },
-    mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") P.azione(IO, m); },
+    mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") { if (m.k === "lenz") cambiaLenz(IO, m.c); else P.azione(IO, m); } else if (m.t === "pc") P.azione(IO, { k: "pc", x: m.x, y: m.y, d: m.d, m: m.m }); },
     onEsci: function () {
       function via() { ferma(); VOCE.chiudiStanza(); t.ricorda(null); rete.chiudi(); chiudiUI(); t.esci(); }
       if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla home.", "Chiudi", via);
@@ -4914,6 +6731,7 @@ function host(t) {
   if (!riprendo || H.fase === "lobby") { nuovaSaletta(); riempi(); }
   bd();
   if (P) mandaPrivati(true);
+  if (!CIF.fatto) cifPronta(function () { if (!fermo) bd(); });   // (la parte pubblica della chiave non era ancora pronta per la prima foto)
 }
 
 // =========================================================
@@ -4930,10 +6748,109 @@ function ospite(t, codice) {
     S.prOk = ok; S.prP = ps.pct; S.prT = ora; if (S.rete) S.rete.invia({ t: "pr", p: ps.pct, ok: ok });
   }
   function fermaPr() { clearInterval(S.prInt); S.prInt = null; }
+  function chiudiFilo() { if (S.filo) { S.filo.chiudi(); S.filo = null; } }
+  // l'host tace: da 8 s niente posizioni, che arrivano da 4 a 20 volte al secondo. Lo dice un bigliettino, che se ne va da solo quando tornano; se l'app sta già
+  // parlando con una pillola (rete giù, host sparito, partita ripresa) non serve.
+  // Con la riserva accesa si avvisa anche il core, senza aspettare i 30-40 s del testamento: il primo vice dopo 8 s (più 6 suoi), il secondo dopo 16 (più 12), perché il primo ci mette
+  // qualche secondo a farsi sentire e se partissero insieme sarebbero due host (misurato: 14 s e 20 s si sovrapponevano)
+  function ogniSecondo() {
+    riferisci(); dicoChiave();
+    var st = S.rete && S.rete.stato ? S.rete.stato() : null;
+    if (!st || st.chiusa) { S.finita = true; fermaPr(); chiudiFilo(); return; }   // la stanza non c'è più: ho preso il posto dell'host, o sono uscito
+    var vm = S.vm, gioco = !!vm && (vm.fase === "gioco" || (vm.fase === "lobby" && !!vm.g)), ora = Date.now();
+    if (!gioco || document.hidden) { S.posT = 0; return taceHost(false, false); }
+    if (!S.posT) S.posT = ora;
+    var fermo = navigator.onLine === false ? 0 : ora - S.posT;   // (senza rete sono io, non l'host: lo dice la pillola «Mi ricollego»)
+    taceHost(fermo >= TACE_MS, fermo >= TACE_MS * (postoVice(vm) + 1));
+    if (UI) UI.tace(S.tace && !document.querySelector(".sg-pillola"));
+  }
+  // chi prende il posto per primo: il primo arrivato ancora presente (il core sceglie allo stesso modo)
+  function postoVice(vm) { return vm.players.filter(function (p) { return !p.bot && !p.via && p.id !== vm.tiene; })[0] === vm.players.filter(function (p) { return p.id === S.myId; })[0] ? 0 : 1; }
+  function taceHost(si, via) {
+    if (!si) via = false;
+    if (!!S.tace !== si) { S.tace = si; if (UI) UI.tace(false); }
+    if (!!S.viaDetta !== !!via) { S.viaDetta = !!via; if (S.cbRete && S.cbRete.onHostVia) S.cbRete.onHostVia(!!via); }
+  }
+  // ----- la chiave con l'host: vedi in cima -----
+  // S.cif: null finché l'host non ne ha una (e per sempre se ha una versione vecchia, o se questo telefono non sa cifrare). h: la sua parte pubblica; ok: sappiamo che la mia gli è arrivata.
+  // Una foto senza chiave dello stesso host è solo di quando la sua non era ancora pronta
+  function chiaveHost(v) {
+    if (!CIF.pub) return;
+    var c = S.cif;
+    if (!v.ck) { if (c && c.tiene !== v.tiene) S.cif = null; return; }
+    if (c && c.h === v.ck) return;
+    var n = S.cif = { h: v.ck, tiene: v.tiene, k: null, ok: false, dT: Date.now(), coda: null, codaU: Promise.resolve() };
+    n.coda = cifDeriva(v.ck, CIF.pub, v.ck).then(function (k) { n.k = k; }, function () { if (S.cif === n) S.cif = null; });
+    var l = S.zFermi; S.zFermi = null; if (l) l.forEach(apriZ);
+  }
+  // il «join» porta già la mia parte: la ridico solo se dopo un po' non ho sentito niente di cifrato dall'host
+  function dicoChiave() {
+    var c = S.cif, ora = Date.now();
+    if (!c || !c.k || c.ok || ora - c.dT < 1200 || !S.rete) return;
+    c.dT = ora; S.rete.invia({ t: "ck", k: CIF.pub });
+  }
+  // dall'host, in fila. Quello che non si apre (una chiave di prima) si scarta: i privati tornano col ribadire ogni 1,5 s, la chiave si ridice
+  function apriZ(m) {
+    var c = S.cif;
+    if (!c) { if (CIF.pub) { var l = S.zFermi = S.zFermi || []; l.push(m); if (l.length > 16) l.shift(); } return; }
+    c.coda = c.coda.then(function () { return c.k ? cifApri(c.k, m.c, "h" + S.myId) : null; }).then(function (x) {
+      if (!x) return;
+      c.ok = true;
+      if (x.t !== "cko") S.dalHost(x);
+    }, function () { cifConta("scarti"); c.dT = 0; });
+  }
+  // una mossa verso il broker. Se l'host cifra e la chiave non è pronta non parte: mandaSicura la ripete. In uscita in fila anche qui
+  function alBroker(m) {
+    var c = S.cif;
+    if (!c) return S.rete.invia(m);
+    if (!c.ok) return;
+    var tx = JSON.stringify(m), k = c.k;
+    c.codaU = c.codaU.then(function () { return cifChiudi(k, tx, "o" + S.myId, CIF_ALTRI); }).then(function (z) { if (S.rete && S.cif === c) S.rete.invia({ t: "z", c: z }); }, function () {});
+  }
+  // le mosse (non i passi) si ripetono finché l'host non dà la ricevuta: la rete può perderne una, e un sabotaggio o una riparazione non possono sparire
+  function perdo() { return window.LT_PROVA && window.LT_PERDI && Math.random() < window.LT_PERDI; }   // (solo per le prove: rete che perde messaggi)
+  function mandaSicura(m) {
+    S.q = (S.q || (Date.now() % 1e9)) + 1; m.q = S.q;
+    var v = { n: 0, t: 0 }; S.attese = S.attese || {}; S.attese[m.q] = v;
+    (function giro() {
+      if (!S.attese[m.q]) return;
+      if (++v.n > 9 || !S.rete) { delete S.attese[m.q]; return; }   // (9 volte in circa 3 s)
+      // col filo aperto la mossa passa da lì: sul broker si vedrebbe chi l'ha fatta un attimo prima dell'effetto per tutti. Il broker è la riserva, dopo 0,4 s senza ricevuta (il filo può perdere)
+      if (!perdo()) { if (v.n > 2 || !(S.filo && S.filo.pronto())) alBroker(m); if (S.filo) S.filo.invia(JSON.stringify(m)); }
+      v.t = setTimeout(giro, 130 + v.n * 50);
+    })();
+  }
+  // l'ultima foto dell'host (numero nel battito) non è arrivata: dopo un attimo la si chiede
+  function controllaFoto(v) {
+    if (v == null || S.vmV == null || v <= S.vmV) { S.mancaDa = 0; return; }
+    var ora = Date.now(); if (!S.mancaDa) { S.mancaDa = ora; return; }
+    if (ora - S.mancaDa >= 200 && ora - (S.rfT || 0) >= 400 && S.rete) { S.rfT = ora; S.rete.invia({ t: "rf" }); }
+  }
+  // l'host mi crede via ma io ci sono (una mossa persa, o un host nuovo che ha parlato prima di sapere di me): mi rifaccio vivo, al massimo una volta al secondo
+  function miCredeVia(v) {
+    var io = (v.players || []).filter(function (p) { return p.id === S.myId; })[0], ora = Date.now();
+    if (!io || !io.via || !S.rete || !S.rete.riprova || ora - (S.viaT || 0) < 1000) return;
+    S.viaT = ora; S.rete.riprova();
+  }
+  function fotoVecchia(v) {
+    if (v.ver == null) return false;
+    if (S.vmH === v.tiene && S.vmV != null && v.ver <= S.vmV) return true;
+    S.vmH = v.tiene; S.vmV = v.ver; S.mancaDa = 0; return false;
+  }
   var cb = { sonoHost: false, myId: null,
-    mossa: function (m) { if (S.rete) S.rete.invia(m); },
+    mossa: function (m) {
+      if (!S.rete) return;
+      if (m.t === "a") return mandaSicura(m);
+      if (perdo()) return;
+      var sulFilo = S.filo && S.filo.pronto();
+      if (sulFilo) S.filo.invia(JSON.stringify(m));
+      if (sulFilo && m.t === "pc") return;   // (i passi del Burattinaio dicono chi è: col filo aperto sul broker non passano)
+      // i passi sono 10 al secondo: sul broker 8 (il tetto di EMQX, vedi l'host), 3 o 4 se c'è il filo
+      if (m.t === "p" || m.t === "pc") { S.pCr = Math.min(1.5, (S.pCr || 0) + (sulFilo ? 0.35 : 0.8)); if (S.pCr < 1) return; S.pCr -= 1; }
+      if (m.t === "pc") alBroker(m); else S.rete.invia(m);   // (i passi del Burattinaio dicono chi è: gli altri passi sono nelle posizioni)
+    },
     onEsci: function () {
-      function via() { fermaPr(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); chiudiUI(); t.esci(); }
+      function via() { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); chiudiUI(); t.esci(); }
       if (t.guarda) return t.conferma("Smetti di guardare?", null, "Esci", via);
       if (S.vm && S.vm.fase === "gioco") return t.conferma("Uscire dalla partita?", null, "Esci", via);
       via();
@@ -4948,22 +6865,39 @@ function ospite(t, codice) {
   }
   function collega() {
     attesa();
-    S.rete = SGNet.entra(codice, {
-      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { if (S.rete) S.rete.invia(m); } }); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome) }); riferisci(true); fermaPr(); S.prInt = setInterval(riferisci, 1000); },
-      onMsg: function (m) {
-        if (!m || !m.t) return;
+    var cbRete = S.cbRete = {   // (il core ci mette il suo onHostVia, se la riserva è accesa)
+      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { var f = S.filo && S.filo.pronto(); if (f && !m.b) S.filo.invia(JSON.stringify(m)); if (S.rete && (!f || !m.g)) S.rete.invia(m); } }); cifPronta(function () { if (S.rete) S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome), lenz: lenzMio(), ck: CIF.pub || undefined }); }); riferisci(true); fermaPr(); S.prInt = setInterval(ogniSecondo, 1000); },
+      onMsg: function dalHost(m) {
+        if (!m || !m.t || S.finita) return;
         if (m.to && m.to !== S.myId) return;
-        if (m.t === "vm") { S.vm = m.vm; disegna(t, m.vm, cb); }
-        else if (m.t === "pos") { if (UI) UI.posizioni(m.p, m.s); }
-        else if (m.t === "priv") { if (UI) UI.privato(m.p); else PENDENTI.priv = m.p; }
+        if (m.t === "fd") {   // il filo diretto: l'host lo apre, io rispondo
+          if (window.LT_PROVA && window.LT_SALTAFD > 0) { window.LT_SALTAFD--; return; }   // (solo per le prove: il messaggio si perde)
+          if (!S.filo) S.filo = new FiloDiretto(function (x) { if (S.rete) alBroker({ t: "fd", s: x }); }, dalHost);
+          S.filo.segnale(m.s); return;
+        }
+        if (m.t === "z") { S.dalHost = dalHost; return apriZ(m); }
+        if (m.u != null) { var uv = S.uViste || (S.uViste = []); if (uv.indexOf(m.u) >= 0) return; uv.push(m.u); if (uv.length > 80) uv.shift(); }   // già arrivato dall'altra strada
+        if (perdo() && (m.t === "vm" || m.t === "pos" || m.t === "priv" || m.t === "ak")) return;
+        if (m.t === "vm") { if (fotoVecchia(m.vm)) return; chiaveHost(m.vm); S.vm = m.vm; miCredeVia(m.vm); disegna(t, m.vm, cb); }
+        else if (m.t === "pos") { S.posT = Date.now(); if (S.tace) taceHost(false, false); if (UI) UI.posizioni(m.p, m.s); controllaFoto(m.v); }
+        else if (m.t === "ak") { var at = S.attese && S.attese[m.q]; if (at) { clearTimeout(at.t); delete S.attese[m.q]; } }
+        else if (m.t === "priv") {
+          if (m.kp) { if (CIF.kp !== m.kp) CIF.kpK = null; CIF.kp = m.kp; }   // (sono un vice: serve ad aprire la copia della partita)
+          if (m.r && UI && UI.priv && UI.priv.v === m.p.v) return;
+          if (m.e != null) { if (S.privE === m.e && m.p.v < S.privV) return; S.privE = m.e; S.privV = m.p.v; }   // cifrare e strade diverse possono invertire: uno di prima non copre mai uno più nuovo
+          if (UI) UI.privato(m.p); else PENDENTI.priv = m.p;
+        }
         else if (m.t === "tp" || m.t === "avviso" || m.t === "morte" || m.t === "bolla") { if (UI) UI.messaggio(m); else conserva(m); }
+        else if (m.t === "fx") { if (UI) UI.messaggio(m); }
         else if (m.t === "av") (m.l || []).forEach(function (x) { avatarDi(x[0], avatarValido(x[1])); });
         else if (m.t === "pm") { if (UI) UI.pronti(m.l); }   // chi ha la mappa pronta (messaggio piccolo)
         else if (m.t === "vc" || m.t === "vcl") VOCE.arriva(m);   // la voce: l'elenco di chi c'è e i messaggi di collegamento
       },
-      onChiuso: function (perche) { fermaPr(); VOCE.chiudiStanza(); chiudiUI(); errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
-      onErrore: function () { fermaPr(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
-    });
+      onChiuso: function (perche) { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); chiudiUI(); errore(t, perche && perche.sparito ? "L'host non è tornato: la stanza è chiusa." : "L'host ha chiuso la partita."); },
+      onErrore: function () { fermaPr(); chiudiFilo(); VOCE.chiudiStanza(); if (S.rete) S.rete.chiudi(); erroreRete(t, "Non riesco a entrare nella stanza.", collega); }
+    };
+    S.rete = SGNet.entra(codice, cbRete);
+    if (window.LT_PROVA) { window.LT_RETE_O = S.rete; window.LT_S = S; }
     if (!S.rete) senzaRete(t);
   }
   function attesa() {
@@ -4980,9 +6914,18 @@ function conserva(m) { if (m.t === "tp") PENDENTI.tp = m; }
 var UI = null, FIN = null;
 // la voce chiede i nomi e gli avvisi a chi sta disegnando il gioco
 VOCE.nome = function (id) { var c = UI && UI.cache && UI.cache[id]; return c ? c.nome : ""; };
-VOCE.avvisa = function (testo) { if (UI) UI.avviso(testo); };
+// gli avvisi della voce si scrivono nel tasto stesso, così non coprono mai niente; se il tasto non si vede, un bigliettino in basso
+VOCE.avvisa = function (testo) {
+  if (!/^Voce:/.test(testo)) { if (UI) UI.avviso(testo); return; }
+  var corto = testo.replace(/^Voce:\s*/, ""), visibili = [].some.call(document.querySelectorAll(".lt-vbtn"), function (b) { return b.offsetParent; });
+  corto = corto.charAt(0).toUpperCase() + corto.slice(1);
+  if (!visibili) { if (UI) UI.avviso(corto, "voce"); return; }
+  VOCE.detto = corto; VOCE.cambiato(); clearTimeout(VOCE.dettoT);
+  VOCE.dettoT = setTimeout(function () { VOCE.detto = null; VOCE.cambiato(); }, 3200);
+};
 function chiudiUI() { if (UI) { UI.stop(); UI = null; } }
 function disegna(t, vm, cb) {
+  notaLenz(vm.players);
   if (vm.fase === "lobby" && (!vm.g || t.salettaClassica)) { chiudiUI(); FIN = null; return lobby(t, vm, cb); }
   if (vm.fase === "fine") {
     chiudiUI();
@@ -5013,39 +6956,56 @@ function lobby(t, vm, cb) {
   if (guardano.length) extra.push(t.el("p", { class: "modulo-nota", text: "Guardano: " + guardano.map(function (p) { return p.id === cb.myId ? "tu" : p.nome; }).join(", ") }));
   t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
     vuoti: Math.max(0, MIN - vm.players.length),
-    giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),
+    giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, colore: COLORI_DI[p.id], host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),
     extra: extra,
     spettatore: t.guarda ? "Guardi soltanto" : guardo ? "Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX ? "La stanza è piena: guardi la partita" : false,
     attesa: "Aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
 }
-function medaglie(posti) { var gruppi = 0, prec = null; return posti.map(function (p) { if (p !== prec) { gruppi++; prec = p; } return gruppi + "°"; }); }
+
 var TITOLI = { ospiti: "Vincono gli ospiti", ombre: "Vincono le ombre", giullare: "Vince il Giullare", accusatore: "Vince l'Accusatore", avvoltoio: "Vince l'Avvoltoio", indovino: "Vince l'Indovino" };
 function titoloVince(v) { return !v ? "Fine della notte" : TITOLI[v.chi] || "Fine della notte"; }
+// chi ha vinto, dai ruoli svelati a fine partita (la stessa regola della classifica)
+function vincitoriDi(v) {
+  if (!v || !v.ruoli) return [];
+  return v.ruoli.filter(function (r) { var ru = RUOLI[r[1]] || {}; return (v.id ? r[0] === v.id : ru.squadra === v.chi) || (r[1] === "sopravvissuto" && r[2]) || (r[1] === "gatto" && r[2] && v.chi !== "ombre"); }).map(function (r) { return r[0]; });
+}
 function finale(t, vm, cb) {
   stile();
   var f = vm.fine || {}, v = f.vincitore;
-  var s = t.schermata({ icona: v && v.chi === "ombre" ? "🌑" : "🏮", titolo: titoloVince(v) });
+  var s = t.schermata({});
   var targa = !!t.guarda && !t.eliminazione, cl = (vm.classifica || []).slice().sort(function (a, b) { return a.pos - b.pos; }), fac = targa ? null : t.faccine();
-  if (targa) s.classList.add("lt-fine-targa");
-  if (v) s._contenuto.appendChild(t.el("p", { class: "lt-perche", text: v.perche }));
+  s.classList.add("lt-fine"); if (targa) s.classList.add("lt-fine-targa");
+  // l'ultima pagina del registro: chi ha vinto e chi ha perso, a due colonne, con ritratto, nome e ruolo
+  var pag = E("div", "lt-foglio lt-ultima"), tes = E("div", "tes"), mio = cl.filter(function (r) { return r.id === cb.myId; })[0]; if (mio && mio.pos !== 1) pag.classList.add("perso");
+  tes.append(E("p", "occh", "Ultima pagina"), E("h2", "", titoloVince(v))); if (v) tes.appendChild(E("p", "lt-perche", v.perche));
+  pag.append(intestazione("Registro di Palazzo Velmare"), tes);
   var ruoli = {}; (f.ruoli || []).forEach(function (r) { ruoli[r[0]] = r; });
-  var ol = t.el("ol", { class: "classifica" + (cl.length > 6 ? " fitta" : "") }), med = medaglie(cl.map(function (r) { return r.pos; }));
-  cl.forEach(function (r, i) {
-    var ru = ruoli[r.id], nomeR = ru && RUOLI[ru[1]] ? RUOLI[ru[1]].nome : "";
-    ol.appendChild(t.el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
-      t.el("span", { class: "pos", text: med[i] }),
-      t.el("span", { class: "nome", text: (r.id === cb.myId ? r.nome + " (tu)" : r.nome) }),
-      t.el("span", { class: "punti lt-ruolo", text: nomeR + (ru && !ru[2] ? " · spento" : "") }) ]));
+  var vinti = cl.filter(function (r) { return r.pos === 1; }), persi = cl.filter(function (r) { return r.pos !== 1; });
+  var righeF = Math.max(vinti.length, persi.length, 1), quadro = E("div", "classifica" + (vinti.length && persi.length ? "" : " solo") + (righeF <= 4 ? " pochi" : "")); quadro.style.setProperty("--n", righeF);
+  [[vinti, "Vincitori", "vinc"], [persi, "Sconfitti", "scon"]].forEach(function (x) {
+    if (!x[0].length) return;
+    var col = E("div", "col " + x[2]), righe = E("div", "righe"); col.append(E("h3", "", x[1]), righe);
+    x[0].forEach(function (r) {
+      var ru = ruoli[r.id], nomeR = ru && RUOLI[ru[1]] ? RUOLI[ru[1]].nome : "", spento = ru && !ru[2], rg = E("div", "rg" + (r.pos === 1 ? " vincitore" : "") + (spento ? " spento" : "")), tx = E("div");
+      var riga2 = E("span", "punti lt-ruolo"); riga2.append(tintaDi(r.id), E("span", "ru", (nomeR ? nomeR : "") + (spento ? (nomeR ? ", " : "") + "spento" : "")));   // (il ruolo è il dato di questa pagina: va a capo, mai tagliato; con la virgola la riga spezzata si legge)
+      tx.append(E("span", "nome", r.id === cb.myId ? r.nome + " (tu)" : r.nome), riga2);
+      rg.append(ritratto(r.id), tx); righe.appendChild(rg);
+    });
+    quadro.appendChild(col);
   });
-  s._contenuto.appendChild(ol);
-  if (!targa && cb.myId) s._contenuto.appendChild(creaVoce("riga fine"));   // a partita finita la voce resta accesa e si sentono tutti
-  if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }
+  pag.append(quadro, E("i", "chiusa")); s._contenuto.appendChild(pag); ltSfuma(quadro);   // il sigillo chiude il registro della notte
+  // sotto il foglio, sul tavolo, un vassoio solo: la voce e le faccine dell'app
+  var vass = E("div", "fine-fila");
+  if (!targa && cb.myId) vass.appendChild(creaVoce("riga fine"));   // a partita finita la voce resta accesa e si sentono tutti
+  if (fac) { fac.classList.add("fine-faccine"); vass.appendChild(fac); }
+  if (vass.firstChild) s._contenuto.appendChild(vass);
   if (!cl.some(function (r) { return r.id === cb.myId; })) s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Questa partita l'hai guardata." }));
   if (!t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
     if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
-    else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: targa ? "Se l'host fa un'altra partita, entri anche tu nella saletta." : "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+    else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: targa ? "Se si gioca ancora, entri anche tu nella saletta." : "Se si gioca ancora, torni da solo nella saletta." }));
     if (!targa) s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "Esci", onclick: cb.onEsci }));
   }
+  senzaEmoji(s._piede);
   t.mostra(s);
   return s;
 }
@@ -5086,6 +7046,8 @@ var ICONE = {
   vota: '<path d="M4 11h16v9H4z"/><path d="M8 11V4h8v7M10 7.5h4"/>',
   sospetto: '<circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/>',
   pulito: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+  piu: '<path d="M12 5v14M5 12h14"/>',
+  meno: '<path d="M5 12h14"/>',
   salta: '<path d="M5 6l7 6-7 6M13 6l7 6-7 6"/>',
   pin: '<path d="M12 21s-6-6.3-6-11a6 6 0 0 1 12 0c0 4.7-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/>',
   boh: '<path d="M9 9a3 3 0 1 1 4.6 2.5c-1 .7-1.6 1.3-1.6 2.5"/><path d="M12 18.2v.3"/>',
@@ -5106,6 +7068,40 @@ function icona(n) { return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="tr
 // un tasto con icona e scritta
 function tastoIco(cls, ico, testo) { var b = document.createElement("button"); b.type = "button"; if (cls) b.className = cls; b.innerHTML = icona(ico) + (testo ? "<span>" + testo + "</span>" : ""); return b; }
 function E(tag, cls, testo) { var e = document.createElement(tag); if (cls) e.className = cls; if (testo != null) e.textContent = testo; return e; }
+// il ritratto di un ospite: il suo telo a mezzo busto. Se non si sa ancora di chi è, una sagoma scura
+function ritratto(id) {
+  var d = LENZ_DI[id], u = d ? ritrattoUrl(d.c) : "", f;
+  if (u) { f = new Image(); f.src = u; f.alt = ""; f.className = "faccia"; return f; }
+  return E("i", "pall");
+}
+// il colore detto a parole, con la sua tinta accanto: «ho visto Mario, quello rosso»
+function tintaDi(id) { var L = panno(id), s = E("span", "lt-tinta"), i = E("i"); i.style.background = L.b; s.append(i, L.n); return s; }
+function pezzetta(id) { var i = E("i", "lt-pz"); i.style.background = panno(id).b; return i; }
+// lo stemma del palazzo, inciso: uno scudo con la lanterna
+var STEMMA = '<svg class="stemma" viewBox="0 0 28 32" aria-hidden="true"><path d="M3 3.5h22v14c0 6-5.2 9.6-11 12.4C8.2 27.1 3 23.5 3 17.5z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.3 5.8h17.4v11.6c0 4.7-3.9 7.7-8.7 10.1-4.8-2.4-8.7-5.4-8.7-10.1z" fill="none" stroke="currentColor" stroke-width=".6"/><path d="M11.8 9.2a2.2 2.2 0 0 1 4.4 0M10 11.6h8l-1.6-2.2h-4.8zM10.7 11.6l-.9 9.4h8.4l-.9-9.4zM8.8 21h10.4v1.8H8.8z" fill="currentColor"/><path d="M14 13.4c1.5 1.7 1.5 3.7 0 5.2-1.5-1.5-1.5-3.5 0-5.2z" fill="#f4e6c6"/></svg>';
+function intestazione(testo) { var d = E("div", "intest"); d.innerHTML = STEMMA; d.appendChild(E("span", "", testo)); return d; }
+// una sfumatura in fondo a ogni zona che scorre: dice che c'è dell'altro. Si aggiorna scorrendo; chi cambia il contenuto richiama quello che restituisce
+function ltSfuma(el) {
+  el.classList.add("lt-sf");
+  function agg() { el.classList.toggle("lt-piu", el.scrollHeight - el.clientHeight - el.scrollTop > 6); }
+  el.addEventListener("scroll", agg, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(agg).observe(el);
+  setTimeout(agg, 0); return agg;
+}
+// l'app scrive i suoi tasti con le emoji: sulle schermate di Lanterne si tolgono
+var EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{25B6}]/gu;
+function senzaEmoji(box) { [].forEach.call(box.querySelectorAll("button"), function (b) { var tx = b.textContent.replace(EMOJI, "").trim(); if (tx && tx !== b.textContent) b.textContent = tx; }); }
+// «Era un'ombra (Ombra).» ripete la parola: si scrive solo il ruolo, se dice qualcosa in più
+function testoEsito(s) { return String(s || "").replace(/(Non era|Era) un'ombra \(([^)]+)\)\./, function (m, a, r) { return /^(Ombra|Ospite)$/.test(r) ? a + " un'ombra." : a + " un'ombra: " + r + "."; }); }
+// un tocco che funziona anche con l'altro dito sul joystick: su iPhone il «click» non parte finché c'è un altro dito sullo schermo, «touchend» sì.
+// Il «click» resta per mouse e tastiera (se è appena partito il tocco, non conta due volte).
+function tocca(el, fn) {
+  var su = false, ultimo = -1e9;
+  el.addEventListener("touchstart", function () { su = true; }, { passive: true });
+  el.addEventListener("touchcancel", function () { su = false; }, { passive: true });
+  el.addEventListener("touchend", function (e) { if (!su) return; su = false; if (e.cancelable) e.preventDefault(); ultimo = performance.now(); if (!el.disabled) fn(e); });
+  el.addEventListener("click", function (e) { if (performance.now() - ultimo > 500) fn(e); });
+}
 // Il tasto della voce (uguale nel gioco, nella riunione e a fine partita). Il microfono resta sempre acceso e si parla e si ascolta insieme,
 // come dal vivo: niente turni. Prima c'è solo l'invito «Attiva la voce» (il tocco chiede il permesso); poi resta un tasto piccolo «Muto»
 // che spegne e riaccende il microfono. Chi parla si vede dall'anello sotto i piedi, non da una scritta.
@@ -5113,13 +7109,13 @@ var VOCE_ET = { spenta: ["mic", "Attiva la voce"], ascolto: ["mic", "Attiva la v
 function creaVoce(extra) {
   var el = E("div", "lt-voce" + (extra ? " " + extra : "")), b = E("button", "lt-vbtn"), visto = false;
   b.type = "button"; el.appendChild(b);
-  b.addEventListener("click", function () { VOCE.tocca(); });
+  tocca(b, function () { VOCE.tocca(); });
   function agg() {
     if (el.isConnected) visto = true; else if (visto) return false;   // tolto dalla pagina: smetto di aggiornarlo
-    var st = VOCE.stato, e = VOCE_ET[st] || VOCE_ET.spenta, k = st + "|" + VOCE.disponibile();
+    var st = VOCE.stato, e = VOCE_ET[st] || VOCE_ET.spenta, detto = VOCE.detto, k = st + "|" + VOCE.disponibile() + "|" + (detto || "");
     if (el._k === k) return true; el._k = k;
     el.hidden = !VOCE.disponibile();
-    b.className = "lt-vbtn " + (st === "ascolto" ? "spenta" : st); b.innerHTML = icona(e[0]) + "<span>" + e[1] + "</span>"; b.disabled = st === "accendo";
+    b.className = "lt-vbtn " + (st === "ascolto" ? "spenta" : st) + (detto ? " detto" : ""); b.innerHTML = icona(e[0]) + "<span>" + (detto || e[1]) + "</span>"; b.disabled = st === "accendo";
     b.setAttribute("aria-label", st === "parlo" ? "Microfono acceso: tocca per mettere il muto" : st === "muto" ? "Microfono in muto: tocca per riaccenderlo" : st === "accendo" ? "Attivo la voce" : "Attiva la voce: parli e senti chi ti passa vicino");
     if (st === "parlo" || st === "muto") b.setAttribute("aria-pressed", st === "muto" ? "true" : "false"); else b.removeAttribute("aria-pressed");
     return true;
@@ -5129,6 +7125,7 @@ function creaVoce(extra) {
 }
 function Vista(t, cb) {
   stile();
+  teliAzzera();
   var V = this; V.t = t; V.cb = cb; V.vivo = true;
   V.s = t.schermata({}); V.s.classList.add("lt-piena");
   var sc = E("div", "lt-scena"); V.s._contenuto.appendChild(sc); V.sc = sc;
@@ -5149,26 +7146,25 @@ function Vista(t, cb) {
   V.joyZona = E("div", "lt-joyzona"); V.joy = E("div", "lt-joy"); V.knob = E("div", "lt-knob"); V.joy.appendChild(V.knob); V.joyZona.appendChild(V.joy); sc.appendChild(V.joyZona);
   var sx = E("div", "lt-sx");
   var esci = E("button", "lt-esci", "‹"); esci.setAttribute("aria-label", "Esci"); esci.addEventListener("click", cb.onEsci);
-  V.chip = E("span", "lt-chip", "");
-  // la «i»: cosa fa il mio ruolo, il mio tasto, come si vince (si apre anche toccando il nome del ruolo)
-  V.btnInfo = E("button", "lt-ibtn", "i"); V.btnInfo.type = "button"; V.btnInfo.setAttribute("aria-label", "Il tuo ruolo");
-  V.btnInfo.addEventListener("click", function () { V.apriInfo(); }); V.chip.addEventListener("click", function () { V.apriInfo(); });
-  sx.appendChild(E("div", "lt-riga", null)); sx.firstChild.append(esci, V.chip, V.btnInfo);
+  // il nome del ruolo è il tasto unico: cosa fa il mio ruolo, il mio tasto, come si vince
+  V.chip = E("button", "lt-chip", ""); V.chip.type = "button"; V.chip.setAttribute("aria-label", "Il tuo ruolo");
+  tocca(V.chip, function () { V.apriInfo(); });
+  sx.appendChild(E("div", "lt-riga", null)); sx.firstChild.append(esci, V.chip);
   V.barra = E("div", "lt-barra"); V.barra.innerHTML = '<span>Preparativi</span><div class="tr"><i></i></div>'; sx.appendChild(V.barra);
   V.info = E("div", "lt-info", ""); V.info.hidden = true; sx.appendChild(V.info);
   V.registroBox = E("div"); sx.appendChild(V.registroBox);
   V.btnLista = E("button", "lt-lista-btn", "Compiti"); sx.appendChild(V.btnLista);
   V.lista = E("ol", "lt-lista"); V.lista.hidden = true; sx.appendChild(V.lista);
-  V.btnLista.addEventListener("click", function () { V.lista.hidden = !V.lista.hidden; V.aggLista(); });
+  tocca(V.btnLista, function () { V.lista.hidden = !V.lista.hidden; V.aggLista(); });
   sc.appendChild(sx);
-  var dx = E("div", "lt-dx"); V.btnSuono = E("button", "lt-hbtn ico"); V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); V.btnSuono.setAttribute("aria-label", "Suono"); V.btnMappa = E("button", "lt-hbtn"); V.btnMappa.innerHTML = icona("mappa") + "<span>Mappa</span>"; dx.append(V.btnSuono, V.btnMappa); sc.appendChild(dx);
-  V.btnMappa.addEventListener("click", function () { V.apriMappa(); });
+  var dx = E("div", "lt-dx"); V.btnSuono = E("button", "lt-hbtn ico"); V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); V.btnSuono.setAttribute("aria-label", "Suono"); V.btnMappa = E("button", "lt-hbtn"); V.btnMappa.innerHTML = icona("mappa") + "<span>Mappa</span>"; V.btnMappa.setAttribute("aria-label", "Mappa"); dx.append(V.btnSuono, V.btnMappa); sc.appendChild(dx);
+  tocca(V.btnMappa, function () { V.apriMappa(); });
   // la chat di prossimità: «Parla» apre la barra in basso (sempre sopra la tastiera). Il messaggio compare come fumetto sopra chi parla
   // e nello storico di chi lo sente: l'host lo manda solo a chi è abbastanza vicino. In riunione è spenta (c'è la chat della riunione).
   V.bolle = []; V.storico = []; V.bVisti = []; V.ultimoParla = -99999; V.parlaAttesa = 0; V.parlaAlza = 0; V.parlaAlzaVista = 0; V.parlaSotto = -1;
   V.btnGira = E("button", "lt-hbtn ico"); V.btnGira.innerHTML = icona("gira"); V.btnGira.setAttribute("aria-label", "Gioca di lato"); dx.insertBefore(V.btnGira, dx.firstChild);
   V.btnGira.classList.toggle("acceso", !!V.oriz);
-  V.btnGira.addEventListener("click", function () { V.oriz = !V.oriz; try { localStorage.setItem("lt-oriz", V.oriz ? "1" : "0"); } catch (e) {} V.btnGira.classList.toggle("acceso", V.oriz); V.joyReset(); V.ruota(); });
+  tocca(V.btnGira, function () { V.oriz = !V.oriz; try { localStorage.setItem("lt-oriz", V.oriz ? "1" : "0"); } catch (e) {} V.btnGira.classList.toggle("acceso", V.oriz); V.joyReset(); V.ruota(); });
   V.btnParla = E("button", "lt-hbtn ico"); V.btnParla.innerHTML = icona("parla"); V.btnParla.setAttribute("aria-label", "Parla a chi è vicino"); dx.insertBefore(V.btnParla, V.btnMappa);
   V.parlaBar = E("form", "lt-parla"); V.parlaBar.hidden = true; V.parlaBar.setAttribute("autocomplete", "off");
   var pTesta = E("div", "lt-pt"); V.parlaUdi = E("span", "lt-udi", ""); V.parlaCont = E("span", "lt-cont", "0/" + MAX_PARLA); pTesta.append(V.parlaUdi, V.parlaCont);
@@ -5178,13 +7174,13 @@ function Vista(t, cb) {
   pOk.type = "submit"; pOk.innerHTML = icona("invia"); pOk.setAttribute("aria-label", "Invia");
   pRiga.append(pIn, pOk); V.parlaBar.append(pTesta, pCho, pRiga); sc.appendChild(V.parlaBar); V.parlaIn = pIn;
   V.parlaStor = E("div", "lt-chatst"); V.parlaStor.setAttribute("aria-live", "polite"); sc.appendChild(V.parlaStor);
-  V.btnParla.addEventListener("click", function () { V.parlaApri(); });
+  tocca(V.btnParla, function () { V.parlaApri(); });
   V.parlaBar.addEventListener("submit", function (e) { e.preventDefault(); V.parlaManda(pIn.value); });   // Invio: manda e chiude
   pIn.addEventListener("input", function () { V.parlaConta(); });
   pIn.addEventListener("keydown", function (e) { if (e.key === "Escape") V.parlaApri(false); });
-  V.parlaVV = function () { V.parlaPosiz(); };   // la tastiera di iPhone cambia il «visualViewport»: la barra la segue
+  V.parlaVV = function () { V.parlaPosiz(); V.chatPosiz(); };   // la tastiera di iPhone cambia il «visualViewport»: la barra la segue
   if (window.visualViewport) { visualViewport.addEventListener("resize", V.parlaVV); visualViewport.addEventListener("scroll", V.parlaVV); }
-  V.btnSuono.addEventListener("click", function () { AUDIO.muto = !AUDIO.muto; try { localStorage.setItem("lt-muto", AUDIO.muto ? "1" : "0"); } catch (e) {} V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); if (!AUDIO.muto) SUONO.voto(); });
+  tocca(V.btnSuono, function () { AUDIO.muto = !AUDIO.muto; try { localStorage.setItem("lt-muto", AUDIO.muto ? "1" : "0"); } catch (e) {} V.btnSuono.innerHTML = icona(AUDIO.muto ? "muto" : "suono"); if (!AUDIO.muto) SUONO.voto(); });
   V.s.addEventListener("pointerdown", function (e) { if (e.isTrusted) AUDIO.toccato = true; audio(); }, { passive: true });
   // la voce di prossimità: i tasti sotto la fila in alto a destra; la regola di chi sente chi la legge dalla foto di questo telefono
   V.voceGr = E("div", "lt-vx"); V.voceGr.hidden = true; V.voceGr.appendChild(creaVoce()); sc.appendChild(V.voceGr);
@@ -5202,13 +7198,14 @@ function Vista(t, cb) {
   V.via = E("div", "lt-via"); sc.appendChild(V.via);
   V.az = E("div", "lt-azioni"); sc.appendChild(V.az);
   V.btn = {};
-  [["abil", "Abilità", "viola"], ["botola", "Botola", "rosso"], ["buio", "Buio", "rosso"], ["segnala", "Segnala", ""], ["spegni", "Spegni", "rosso"], ["usa", "Usa", "oro"]].forEach(function (b) {
-    var e = E("button", "lt-az " + b[2]); e.innerHTML = '<span class="et"></span><span class="cd" hidden></span>'; e.style.gridArea = b[0];
+  [["abil", "Abilità", "viola"], ["botola", "Botola", "rosso"], ["buio", "Buio", "rosso"], ["segnala", "Segnala", ""], ["spegni", "Spegni", "rosso"], ["usa", "Usa", "oro"], ["lenz", "Lenzuolo", "telo"]].forEach(function (b) {
+    var e = E("button", "lt-az " + b[2]); e.innerHTML = '<span class="et"></span><span class="cd" hidden></span>'; e.style.gridArea = b[0] === "lenz" ? "spegni" : b[0];   // (il tasto del lenzuolo c'è solo nella saletta: accanto a «Usa»)
     e.addEventListener("pointerdown", function (ev) { ev.preventDefault(); if (!e.disabled) V.azione(b[0]); });
     V.btn[b[0]] = e; V.az.appendChild(e);
   });
   V.avv = E("div", "lt-avviso"); sc.appendChild(V.avv);
   V.velo = E("div", "lt-velo"); V.velo.hidden = true; sc.appendChild(V.velo);
+  V.taceEl = E("div", "lt-tace"); V.taceEl.setAttribute("role", "status"); V.taceEl.innerHTML = icona("lanterna") + "<span>L'host non risponde</span>"; sc.appendChild(V.taceEl);   // (dopo il velo: sui fogli sta in basso, vedi la CSS)
   V.intro = E("div", "lt-intro"); V.intro.hidden = true; sc.appendChild(V.intro);
   V.carica = E("div", "lt-carica"); V.carica.hidden = true; V.carica.setAttribute("role", "status");   // il caricamento a tutto schermo (a «Comincia», o entrando a partita già cominciata)
   V.carica.innerHTML = icona("lanterna") + '<b class="tit"></b><div class="bar"><i></i></div><span class="num"></span>'; sc.appendChild(V.carica);
@@ -5252,12 +7249,12 @@ Vista.prototype.legaComandi = function () {
     V.knob.style.transform = "translate(" + dx + "px," + dy + "px)";
   });
   var fine = function (e) { if (e.pointerId === j.id) V.joyReset(); };
-  V.joyZona.addEventListener("pointerup", fine); V.joyZona.addEventListener("pointercancel", fine);
+  V.joyZona.addEventListener("pointerup", fine); V.joyZona.addEventListener("pointercancel", fine); V.joyZona.addEventListener("lostpointercapture", fine);
   V.suGiu = function (e) {
     if (!V.vivo || /INPUT|TEXTAREA/.test((document.activeElement || {}).tagName || "")) return;
     V.tasti[e.code] = e.type === "keydown";
     if (e.type !== "keydown" || e.repeat) return;
-    var k = { KeyE: "usa", KeyR: "segnala", KeyQ: "spegni", KeyF: "abil", KeyV: "botola", KeyB: "buio" }[e.code];
+    var k = { KeyE: "usa", KeyR: "segnala", KeyQ: "spegni", KeyF: "abil", KeyV: "botola", KeyB: "buio", KeyL: "lenz" }[e.code];
     if (k && V.btn[k] && !V.btn[k].disabled && !V.btn[k].hidden) V.azione(k);
     if (e.code === "KeyM") V.apriMappa();
   };
@@ -5278,13 +7275,43 @@ Vista.prototype.locale = function (e) {
 };
 Vista.prototype.joyReset = function () { var j = this.joyV; j.id = null; j.x = 0; j.y = 0; this.joy.classList.remove("on"); this.joy.style.left = ""; this.joy.style.top = ""; this.knob.style.transform = ""; };
 
+// il passo: si scivola lungo muri e mobili. Contro uno spigolo, se pochi pixel più in là si passa, si gira attorno da soli: niente fermate secche
+var AGGIRA = T * 0.55;
+function cammina(M, me, vx, vy) {
+  var okX = !vx || libero(M, me.x + vx, me.y), okY = !vy || libero(M, me.x, me.y + vy);
+  if (okX) me.x += vx; if (okY) me.y += vy;
+  if (okX && okY) return;
+  var passo = Math.hypot(vx, vy);
+  if (!okX) aggira(M, me, Math.sign(vx), 0, passo); else aggira(M, me, 0, Math.sign(vy), passo);
+}
+function aggira(M, me, dx, dy, passo) {
+  var px = dy ? 1 : 0, py = dx ? 1 : 0;   // la direzione di lato rispetto a dove si spinge
+  for (var s = 2; s <= AGGIRA; s += 2) for (var q = -1; q <= 1; q += 2) {
+    var x = me.x + px * q * s, y = me.y + py * q * s;
+    if (libero(M, x, y) && libero(M, x + dx * 3, y + dy * 3)) {
+      var n = Math.min(s, passo), x2 = me.x + px * q * n, y2 = me.y + py * q * n;
+      if (libero(M, x2, y2)) { me.x = x2; me.y = y2; }
+      return;
+    }
+  }
+}
+// chi ripara vede subito il risultato: l'host lo conferma un attimo dopo, e una foto partita prima del tocco non lo smentisce
+function mascheraRip(g, cosa) { if (cosa === "luci") g.buio = 0; else if (cosa === "console") g.interf = 0; else if (g.acqua) g.acqua[cosa === "chiusaA" ? 1 : 2] = 1; }
+Vista.prototype.ottimista = function (cosa) {
+  var V = this; V.ottimo = { cosa: cosa, fine: performance.now() + 1500 };
+  if (V.vm) V.foto(V.vm);
+  setTimeout(function () { if (V.vivo) V.cb.mossa({ t: "rf" }); }, 1600);   // scaduta la promessa, si chiede la foto vera
+};
+
 // ----- quello che arriva dall'host -----
 Vista.prototype.foto = function (vm) {
   var V = this; V.vm = vm; V.g = vm.g || null;
+  if (V.ottimo) { if (performance.now() > V.ottimo.fine) V.ottimo = null; else if (V.g) mascheraRip(V.g, V.ottimo.cosa); }
   if (V.compAgg) V.compAgg();
-  vm.players.forEach(function (p, i) { V.cache[p.id] = V.cache[p.id] || { colore: COLORI[i % COLORI.length] }; V.cache[p.id].nome = p.nome; COLORI_DI[p.id] = V.cache[p.id].colore; if (p.omino) avatarDi(p.id, p.omino); });
+  vm.players.forEach(function (p) { var c = V.cache[p.id] = V.cache[p.id] || {}; c.nome = p.nome; c.lenz = LENZ_DI[p.id]; c.colore = COLORI_DI[p.id]; if (p.omino) avatarDi(p.id, p.omino); });
   var io = vm.players.filter(function (p) { return p.id === V.cb.myId; })[0];
   V.guardo = !io || !!io.via || !V.priv;
+  V.notaAssenti(vm);
   if (!V.g) return;
   var M = V.g.mappa === "palazzo" ? PALAZZO : ATRIO;
   if (M !== V.M) { V.M = M; V.pit.cam.ok = false; V.buf = []; }   // la posizione nuova arriva col «tp» dell'host
@@ -5306,7 +7333,7 @@ Vista.prototype.posizioni = function (p, s) {
     var off = ora - ht; V.offs = V.offs || []; V.offs.push(off); if (V.offs.length > 60) V.offs.shift();
     var m = Infinity; for (var i = 0; i < V.offs.length; i++) if (V.offs[i] < m) m = V.offs[i];
     var d = V.offs.map(function (o) { return o - m; }).sort(function (a, b) { return a - b; });
-    V.offMin = m; V.ritardo = Math.max(70, Math.min(350, d[Math.floor(d.length * 0.9)] + 35));
+    V.offMin = m; V.ritardo = Math.max(B.length >= 30 ? 50 : 70, Math.min(350, d[Math.floor(d.length * 0.9)] + 35));   // (almeno 30 pacchetti in 2 s: sul filo arrivano 20 volte al secondo, e si può stare più vicini)
   }
   B.push({ ht: ht, p: p });
   while (B.length > 2 && B[B.length - 1].ht - B[0].ht > 2000) B.shift();
@@ -5328,6 +7355,7 @@ Vista.prototype.privato = function (pr) {
   if (pr.ep > V.me.ep) V.me.ep = pr.ep;
   pr.compiti.forEach(function (c) { if (c[1]) delete V.fatti[c[0]]; });
   if (V.vm) { var io = V.vm.players.filter(function (p) { return p.id === V.cb.myId; })[0]; V.guardo = !io || !!io.via; }
+  if (pr.voto && !V.mioVoto) V.mioVoto = pr.voto;   // (chi rientra durante il voto: l'host si ricorda del suo)
   V.aggLista(); V.aggHud(); if (V.g) V.aggVelo();
 };
 Vista.prototype.messaggio = function (m) {
@@ -5402,12 +7430,12 @@ Vista.prototype.sentito = function (m) {
   if (mie.length >= 3) V.bolle.splice(V.bolle.indexOf(mie[0]), 1);   // al massimo tre fumetti per persona
   V.bolle.push({ id: id, testo: testo, t0: ora, fine: ora + dur, w: !!m.w, a: !!m.a, righe: null });
   var io = id === V.cb.myId, c = V.cache[m.c || id] || {};
-  V.storicoAgg({ nome: io ? "Tu" : (c.nome || "?"), testo: testo, t0: ora, w: !!m.w, a: !!m.a, io: io });
+  V.storicoAgg({ nome: io ? "Tu" : (c.nome || "?"), id: m.c || id, testo: testo, t0: ora, w: !!m.w, a: !!m.a, io: io });
 };
 // lo storico: gli ultimi messaggi sentiti, sopra la barra; sfumano da soli (prima se la barra è chiusa)
 Vista.prototype.storicoAgg = function (s) {
   var V = this, el = E("div", "lt-ch" + (s.io ? " io" : "") + (s.w ? " w" : "") + (s.a ? " a" : ""));
-  el.append(E("b", "", s.nome), document.createTextNode(s.testo));
+  el.append(pezzetta(s.id), E("b", "", s.nome), document.createTextNode(s.testo));
   s.el = el; s.op = 1; V.storico.push(s); V.parlaStor.appendChild(el);
   while (V.storico.length > PARLA_STORICO) V.storico.shift().el.remove();
   if (!V.parlaBar.hidden) V.parlaPosiz();
@@ -5430,6 +7458,7 @@ var DURATE = { urlo: 6, scudoRotto: 1.2, telecamera: 1, trasporto: 1, spegni: 1.
 Vista.prototype.effetto = function (m) {
   var V = this, ora = V.tempo, P = V.pit;
   if (m.k === "cade") { SUONO.spegni(); vibra(60); return; }
+  if (m.k === "compitoMio") { SUONO.compito(); return; }
   if (m.k === "interferenza" || m.k === "acqua") { if (V.squadra() !== "ombre") { SUONO.allarme(); vibra(100); } V.avviso(m.k === "acqua" ? "Acqua alta! Una chiusa sul Molo, una in Cantina." : "Interferenza: telecamere, plastico e frecce sono spenti.", "morte"); return; }
   if (m.k === "urlo") { V.urlo = { x: m.x, y: m.y, col: "#ff5a6e", fine: V.tempo + 6 }; SUONO.corpo(); vibra(150); V.avviso("Un urlo! Segui la freccia rossa.", "morte"); return; }
   if (m.solo && m.solo !== V.cb.myId) return;
@@ -5442,12 +7471,27 @@ Vista.prototype.effetto = function (m) {
   var visto = m.globale || anima || (Math.hypot(m.x - V.me.x, m.y - V.me.y) < V.raggio() + T && vede(V.M, V.me.x, V.me.y, m.x, m.y));
   if (!visto) return;
   if (m.k === "spegni") { P.sparpaglia("fumo", m.x, m.y - T * 0.4, 14, { v: 40, vita: 1.2, r: 6 }); P.sparpaglia("scintilla", m.x, m.y - T * 0.4, 8, { v: 60, vita: 0.5, r: 2 }); V.scossa = 0.45; SUONO.spegni(); V.effetti.push({ k: "spegni", schermo: true, t0: ora, dur: 0.5, x: m.x, y: m.y }); }
-  else if (m.k === "compito") { P.sparpaglia("scintilla", m.x, m.y - T * 0.5, 18, { v: 70, vita: 0.9, r: 3 }); if (m.id === V.cb.myId) SUONO.compito(); }
+  else if (m.k === "compito") P.sparpaglia("scintilla", m.x, m.y - T * 0.5, 18, { v: 70, vita: 0.9, r: 3 });
   else if (m.k === "rianima" || m.k === "gatto") { P.sparpaglia("scintilla", m.x, m.y - T * 0.5, 26, { v: 90, vita: 1.2, r: 3 }); SUONO.abil(); }
   else if (m.k === "sparo") { SUONO.spegni(); V.scossa = 0.3; }
   else if (m.k === "bengala" || m.k === "luci") SUONO.luci();
   else if (/sparisce|mangia|botola|trasforma/.test(m.k)) P.sparpaglia("fumo", m.x, m.y - T * 0.3, 10, { v: 30, vita: 0.9, r: 5 });
   else SUONO.abil();
+};
+Vista.prototype.tace = function (si) { var e = this.taceEl; if (e.classList.contains("su") !== !!si) e.classList.toggle("su", !!si); };
+// chi perde la rete e chi torna: una riga, una volta sola. V.assenti: 1 via senza averlo detto (appena dopo una ripresa risultano via tutti: non è una notizia), 2 detto, 3 fuori dalla partita
+Vista.prototype.notaAssenti = function (vm) {
+  var V = this, prima = V.assenti || {}, ora = V.assenti = {}, nuova = V.assRip !== (vm.rip || 0), gioco = vm.fase === "gioco" && !!V.g;
+  V.assRip = vm.rip || 0;
+  vm.players.forEach(function (p) {
+    if (p.bot || p.id === V.cb.myId) return;
+    var via = !!(p.via || p.forse), era = prima[p.id] || 0, q = gioco ? V.g.g.filter(function (x) { return x[0] === p.id; })[0] : null, fuori = !!(q && q[2]);
+    if (!via) { if (era > 1 && gioco) V.avviso(p.nome + " è di nuovo qui"); return; }
+    if (!gioco || nuova) { ora[p.id] = era || 1; return; }
+    if (fuori && era < 3) { V.avviso(p.nome + " ha lasciato la partita"); ora[p.id] = 3; return; }
+    if (!era) V.avviso(p.nome + " ha perso la rete");
+    ora[p.id] = era || 2;
+  });
 };
 Vista.prototype.avviso = function (testo, tipo) {
   var a = this.avv; a.textContent = testo; a.className = "lt-avviso su" + (tipo ? " " + tipo : "");
@@ -5462,7 +7506,7 @@ Vista.prototype.passo = function (dt) {
   V.effetti = V.effetti.filter(function (e) { return V.tempo - e.t0 < e.dur; });
   if (V.scossa > 0) V.scossa = Math.max(0, V.scossa - dt);
   V.dt = dt;
-  var puoMuovere = !V.guardo && pr && pr.botola == null && (g.fase === "gioco" || g.fase === "atrio") && !V.mg && !V.pannello && V.bloccFine <= performance.now();
+  var puoMuovere = !V.guardo && pr && pr.botola == null && (g.fase === "gioco" || g.fase === "atrio") && !V.mg && (!V.pannello || V.pannello.libero) && V.bloccFine <= performance.now();
   V.aggBotola();
   if (V.mappa && V.tempo - V.mappa.ultimo > 0.2) V.disegnaMappaViva();
   // entrando in una stanza il suo nome compare un attimo al centro (i corridoi no)
@@ -5490,7 +7534,7 @@ Vista.prototype.passo = function (dt) {
   if (me.muove) {
     var vel = VEL_BASE * T * ((V.vm && V.vm.imp && V.vm.imp.velocita) || 1) * (anima && g.mappa === "palazzo" ? VEL_ANIMA : 1), vx = mx * vel * dt, vy = my * vel * dt, M = V.M;
     if (anima && g.mappa === "palazzo") { me.x = Math.max(T, Math.min((M.GW - 1) * T, me.x + vx)); me.y = Math.max(T, Math.min((M.GH - 1) * T, me.y + vy)); }
-    else { if (libero(M, me.x + vx, me.y)) me.x += vx; if (libero(M, me.x, me.y + vy)) me.y += vy; }
+    else cammina(M, me, vx, vy);
     me.dir = Math.atan2(my, mx);
   }
   var ora = performance.now();
@@ -5504,7 +7548,7 @@ Vista.prototype.passo = function (dt) {
   // le orme per l'Investigatore
   if (pr && pr.ruolo === "investigatore" && g.mappa === "palazzo" && V.tempo - (V.ultimaOrma || 0) > 0.28) {
     V.ultimaOrma = V.tempo; V.lato = -(V.lato || 1);
-    V.altri().forEach(function (p) { if (p.muove && !p.fantasma) V.orme.push({ x: p.x, y: p.y, dir: p.dir, col: p.colore || "#ccc", t: V.tempo, lato: V.lato }); });
+    V.altri().forEach(function (p) { if (p.muove && !p.fantasma) V.orme.push({ x: p.x, y: p.y, dir: p.dir, col: p.colore || "#ccc", bordo: orloTinta(p.colore), t: V.tempo, lato: V.lato }); });
     var durO = (V.vm.imp.investigatore && V.vm.imp.investigatore.orme) || 10; V.orme = V.orme.filter(function (o) { return V.tempo - o.t < durO; });
   }
   if (VOCE.stato !== "spenta") VOCE.misura(ora);   // chi parla a voce (per gli anelli)
@@ -5560,7 +7604,7 @@ Vista.prototype.altri = function () {
     var c = V.cache[come] || {}, av = AVATAR[come];
     var lt = V.letti[q[0]];
     if (V.ctrl && V.ctrl.id === q[0] && V.ctrl.fine > performance.now()) { x = V.ctrl.x; y = V.ctrl.y; }
-    out.push({ id: q[0], x: x, y: y, dir: q[3], muove: !!(q[4] & 1), fantasma: !!(q[4] & 2), nome: c.nome || "?", colore: c.colore, img: av && av.img, imgS: av && av.imgS, seme: (q[0].length * 7) % 11, alleata: comp.indexOf(q[0]) >= 0, coloreNome: lt === "buono" ? "#8ee6a8" : lt === "cattivo" ? "#ff7a8a" : null });
+    out.push({ id: q[0], x: x, y: y, dir: q[3], muove: !!(q[4] & 1), fantasma: !!(q[4] & 2), nome: c.nome || "?", colore: c.colore, lenz: c.lenz, img: av && av.img, imgS: av && av.imgS, seme: (q[0].length * 7) % 11, alleata: comp.indexOf(q[0]) >= 0, coloreNome: lt === "buono" ? "#8ee6a8" : lt === "cattivo" ? "#ff7a8a" : null });
   });
   return out;
 };
@@ -5574,10 +7618,40 @@ Vista.prototype.raggio = function () {
 };
 Vista.prototype.compitiAperti = function () { var V = this; if (!V.priv) return []; return V.priv.compiti.filter(function (c) { return !c[1] && !V.fatti[c[0]]; }).map(function (c) { return POSTAZIONI.filter(function (p) { return p.id === c[0]; })[0]; }).filter(Boolean); };
 // la foto del Medium: la si guarda, la si rifà (con la ricarica); alla riunione la vedono tutti
+// i campioni di stoffa, nella saletta. I colori presi hanno scritto di chi sono; quello di un Bot si può prendere lo stesso.
+// La scelta parte con la mossa con ricevuta: decide l'host, e il foglio si chiude quando la foto dice che il telo è mio
+Vista.prototype.apriLenzuolo = function () {
+  var V = this; if (V.pannello || V.guardo || !V.vm || V.vm.fase !== "lobby") return;
+  var box = E("div", "lt-pannello lt-foglio lt-lenz"), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×"), gr = E("div", "campioni"), righe = [];
+  ch.type = "button"; ch.setAttribute("aria-label", "Chiudi"); testa.append(E("h3", "", "Il tuo lenzuolo"), ch);
+  box.append(intestazione("Registro di Palazzo Velmare"), testa, gr, E("p", "nota", "Ti riconosceranno da questo colore."));
+  LENZUOLI.slice(0, LENZ_N).forEach(function (L, c) {
+    var b = E("button", "cmp"), st = E("span", "stoffa"), chi = E("span", "chi", "");
+    b.type = "button"; st.style.setProperty("--b", L.b); st.style.setProperty("--s", L.s); st.style.setProperty("--l", L.l);
+    b.append(st, E("span", "nm", L.n), chi); gr.appendChild(b); righe.push({ b: b, chi: chi, n: L.n });
+    b.addEventListener("click", function () { if (b.disabled) return; V.lenzVoluto = c; lenzRicorda(c); vibra(15); V.manda("lenz", { c: c }); agg(); });
+  });
+  var agg = function () {
+    if (!V.vm) return;
+    var qui = (V.vm.players || []).filter(function (p) { return !p.via; }), voluto = V.lenzVoluto, mio = (LENZ_DI[V.cb.myId] || {}).c;
+    righe.forEach(function (x, c) {
+      var chi = qui.filter(function (p) { return LENZ_DI[p.id] && LENZ_DI[p.id].c === c; })[0], io = !!chi && chi.id === V.cb.myId, altro = !!chi && !chi.bot && !io, nome = chi && !io ? "di " + chi.nome : io ? "il tuo" : "";
+      x.b.className = "cmp" + (io ? " mio" : "") + (altro ? " preso" : "") + (chi && chi.bot ? " bot" : "") + (voluto === c && !io ? " atteso" : "");
+      x.b.disabled = altro; if (x.chi.textContent !== nome) x.chi.textContent = nome;
+      x.b.setAttribute("aria-label", x.n + (nome ? ", " + nome : ", libero"));
+      if (voluto === c && altro) V.lenzVoluto = null;   // è arrivato prima un altro: si resta qui e si sceglie ancora
+    });
+    if (voluto != null && mio === voluto) { V.lenzVoluto = null; setTimeout(function () { if (V.pannello && V.pannello.tipo === "lenz") V.pannello.chiudi(); }, 260); }
+  };
+  V.apriPannello("lenz", box, function () { V.compAgg = null; V.lenzVoluto = null; });
+  V.compAgg = agg; agg();
+  ch.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
+  ltSfuma(gr);
+};
 Vista.prototype.apriFoto = function () {
   var V = this, pr = V.priv; if (!pr || !pr.foto || !V.g || V.g.fase !== "gioco") return;
   var box = E("div", "lt-pannello lt-foto"), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×"), cv = E("canvas", "foto");
-  testa.append(E("h3", "", "La tua foto dall'aldilà"), ch); box.append(testa, cv, E("p", "nota", "Alla prossima riunione la vedranno tutti."));
+  testa.append(E("h3", "", "La tua foto dall'aldilà"), ch); box.append(testa, cv, E("p", "nota", "Alla prossima riunione la vedranno tutti, senza il tuo nome."));
   var rifai = tastoIco("rifai", "gira", "Rifai"); box.appendChild(rifai);
   var k = null, agg = function () { if (!V.priv || !V.priv.foto) return; if (k !== V.priv.foto.seme) { k = V.priv.foto.seme; disegnaFoto(cv, V.priv.foto); } var cdF = V.priv.cdF || 0; rifai.disabled = cdF > 0; rifai.querySelector("span").textContent = cdF > 0 ? "Rifai tra " + cdF + " s" : "Rifai"; };
   rifai.addEventListener("click", function () { V.manda("fantasma", { rifai: 1 }); });
@@ -5585,18 +7659,19 @@ Vista.prototype.apriFoto = function () {
   ch.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
   agg(); clearInterval(V.fotoT); V.fotoT = setInterval(agg, 400);
 };
-// una foto dall'aldilà, disegnata dal vero: un pezzo dell'avatar di chi è stato (cappello, viso, scarpe…) o un angolo della stanza,
-// in seppia, sgranata e storta come una vecchia stampa. Il seme decide tutto: la stessa foto viene uguale su tutti i telefoni.
-var COLORI_DI = {};   // (id → colore, per le foto di chi non ha l'avatar)
+// una foto dall'aldilà, disegnata dal vero: un pezzo del telo di chi è stato (la testa, un fianco, l'orlo sul pavimento) o un angolo della stanza,
+// virata e sgranata come una vecchia stampa colorata a mano: il colore del telo si riconosce, è lui l'indizio.
+// Il seme decide tutto: la stessa foto viene uguale su tutti i telefoni.
 function casoDa(seme) { var x = seme >>> 0; return function () { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; }
-var PEZZI = [[0.24, 0.0, 0.52, 0.34], [0.3, 0.1, 0.4, 0.28], [0.18, 0.3, 0.64, 0.34], [0.2, 0.58, 0.6, 0.3], [0.16, 0.78, 0.68, 0.22], [0.5, 0.36, 0.46, 0.34]];
+// dove guarda la foto (centro, in frazioni della figura) e quanta figura entra in larghezza. C'è sempre qualcosa che dice cos'è: un occhio, il bordo della sagoma, l'orlo sul pavimento
+var PEZZI = [[0.5, 0.2, 0.8], [0.2, 0.42, 0.86], [0.8, 0.46, 0.86], [0.24, 0.84, 0.9], [0.78, 0.84, 0.9], [0.5, 0.8, 1.04]];
 function disegnaFoto(cv, f) {
   var c = cv.getContext("2d"), w = cv.offsetWidth || 220, h = cv.offsetHeight || 160, dpr = Math.min(2, window.devicePixelRatio || 1), r = casoDa(f.seme);
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); c.setTransform(dpr, 0, 0, dpr, 0, 0);
   var fine = function () {
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    c.globalCompositeOperation = "saturation"; c.fillStyle = "#808080"; c.fillRect(0, 0, w, h);
-    c.globalCompositeOperation = "multiply"; c.fillStyle = "#d9b98a"; c.fillRect(0, 0, w, h);
+    c.globalCompositeOperation = "saturation"; c.globalAlpha = 0.34; c.fillStyle = "#808080"; c.fillRect(0, 0, w, h); c.globalAlpha = 1;
+    c.globalCompositeOperation = "multiply"; c.fillStyle = "#e8d2ac"; c.fillRect(0, 0, w, h);
     c.globalCompositeOperation = "source-over";
     for (var i = 0; i < 900; i++) { c.fillStyle = "rgba(" + (r() < .5 ? "0,0,0" : "255,240,210") + "," + (0.05 + r() * 0.12) + ")"; c.fillRect(r() * w, r() * h, 1.2, 1.2); }
     var g = c.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.7); g.addColorStop(0, "rgba(40,25,10,0)"); g.addColorStop(1, "rgba(40,25,10,.75)");
@@ -5604,21 +7679,14 @@ function disegnaFoto(cv, f) {
   };
   c.fillStyle = "#2b2420"; c.fillRect(0, 0, w, h);
   if (f.tipo === "chi") {
-    var av = AVATAR[f.id], img = av && av.img;
-    var pz = PEZZI[Math.floor(r() * PEZZI.length)], jx = (r() - 0.5) * 0.08, jy = (r() - 0.5) * 0.06, rot = (r() - 0.5) * 0.35;
-    var dis = function () {
-      var iw = img.naturalWidth || 100, ih = img.naturalHeight || 160, sx = (pz[0] + jx) * iw, sy = Math.max(0, (pz[1] + jy) * ih), sw = pz[2] * iw, sh = pz[3] * ih, sc = Math.max(w / sw, h / sh) * 1.08;
-      c.save(); c.translate(w / 2, h / 2); c.rotate(rot); c.drawImage(img, sx, sy, sw, sh, -sw * sc / 2, -sh * sc / 2, sw * sc, sh * sc); c.restore(); fine();
-    };
-    if (img && img.complete && img.naturalWidth) dis(); else if (img) img.addEventListener("load", dis, { once: true });
-    else {   // senza avatar: una figura incappucciata del suo colore, vista da vicino
-      var col = (COLORI_DI[f.id]) || "#8a7a9a", cx = w / 2 + (r() - 0.5) * w * 0.3, cy = h * (0.35 + r() * 0.5), k = 1.6 + r() * 1.2;
-      c.save(); c.translate(cx, cy); c.rotate(rot); c.scale(k, k);
-      c.fillStyle = col; c.beginPath(); c.ellipse(0, 24, 30, 34, 0, 0, Math.PI * 2); c.fill();
-      c.beginPath(); c.ellipse(0, -14, 20, 22, 0, 0, Math.PI * 2); c.fill();
-      c.fillStyle = "#f1e8d6"; c.beginPath(); c.ellipse(0, -10, 11, 9, 0, 0, Math.PI * 2); c.fill();
-      c.fillStyle = "#1a1420"; c.fillRect(-6, -13, 3, 3); c.fillRect(3, -13, 3, 3); c.restore(); fine();
-    }
+    var pz = PEZZI[Math.floor(r() * PEZZI.length)], jx = (r() - 0.5) * 0.06, jy = (r() - 0.5) * 0.05, rot = (r() - 0.5) * 0.22;
+    var img = figuraTelo((LENZ_DI[f.id] || { c: 0 }).c), iw = img.width * 0.54, ih = img.height * 0.86, cx = img.width * 0.17 + (pz[0] + jx) * iw, cy = img.height * 0.07 + (pz[1] + jy) * ih, sc = w / (pz[2] * iw) * 1.08;   // (il riquadro del telo dentro la canvas)
+    var suolo = img.height * 0.8;      // il pavimento: un'ombra sotto i piedi e le assi, così il pezzo di stoffa ha un posto dove stare
+    c.save(); c.translate(w / 2, h / 2); c.rotate(rot); c.scale(sc, sc); c.translate(-cx, -cy);
+    c.fillStyle = "#4a3a2c"; c.fillRect(-img.width, suolo, img.width * 3, img.height * 2);
+    c.fillStyle = "rgba(20,12,8,.5)"; for (var a = 0; a < 7; a++) c.fillRect(-img.width, suolo + a * a * 5 + 8, img.width * 3, 2.2);
+    c.fillStyle = "rgba(10,6,4,.55)"; c.beginPath(); c.ellipse(img.width * 0.45, img.height * 0.905, img.width * 0.27, img.height * 0.06, 0, 0, 6.3); c.fill();
+    c.drawImage(img, 0, 0); c.restore(); fine();
   } else {
     var st = f.st >= 0 ? PALAZZO.stanze[f.st] : null, px = st ? (st.x + 1 + r() * Math.max(1, st.w - 2)) * T : f.x + (r() - 0.5) * 4 * T, py = st ? (st.y + 1 + r() * Math.max(1, st.h - 2)) * T : f.y + (r() - 0.5) * 4 * T;
     if (st && PALAZZO.PAV[Math.floor(py / T) * PALAZZO.GW + Math.floor(px / T)] !== f.st) { px = st.lx * T; py = st.ly * T; }   // la stanza ha un angolo tagliato lì
@@ -5633,21 +7701,22 @@ var TASTI = { ospiti: "Usa: compiti e riparazioni · Segnala: una lanterna spent
 Vista.prototype.apriInfo = function () {
   var V = this, pr = V.priv; if (!pr || !RUOLI[pr.ruolo] || !V.g || (V.g.fase !== "gioco" && V.g.fase !== "atrio")) return;
   if (!V.sonoVivo() && pr.fantasmaRuolo && FANTASMI[pr.fantasmaRuolo]) {
-    var F = FANTASMI[pr.fantasmaRuolo], bf = E("div", "lt-pannello lt-infor fantasma"), tf = E("div", "testa"), cf = E("button", "lt-chiudi", "×");
-    tf.append(E("span", "sq", "Fantasma"), E("h3", "", F.nome), cf); bf.append(tf, E("p", "desc", F.desc));
+    var F = FANTASMI[pr.fantasmaRuolo], bf = E("div", "lt-pannello lt-foglio lt-infor fantasma"), tf = E("div", "testa"), cf = E("button", "lt-chiudi", "×");
+    tf.append(E("span", "sq", "Fantasma"), E("h3", "", F.nome), cf); bf.append(intestazione("Registro di Palazzo Velmare"), tf, E("p", "desc", F.desc));
     var ulf = E("ul"); ulf.append(E("li", "", "Il tuo tasto: " + F.abil), E("li", "", "Vai più veloce e passi dai muri. Puoi ancora finire i tuoi compiti.")); bf.appendChild(ulf);
-    V.apriPannello("info", bf); cf.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); }); return;
+    V.apriPannello("info", bf); tocca(cf, function () { if (V.pannello) V.pannello.chiudi(); }); return;
   }
-  var R = RUOLI[pr.ruolo], box = E("div", "lt-pannello lt-infor " + pr.squadra), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×");
-  testa.append(E("span", "sq", { ospiti: "Ospite", ombre: "Ombra", soli: "Da solo" }[pr.squadra] || ""), E("h3", "", R.nome), ch); box.appendChild(testa);
+  var R = RUOLI[pr.ruolo], box = E("div", "lt-pannello lt-foglio lt-infor " + pr.squadra), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×");
+  testa.append(E("span", "sq", { ospiti: "Ospite", ombre: "Ombra", soli: "Da solo" }[pr.squadra] || ""), E("h3", "", R.nome), ch); box.append(intestazione("Registro di Palazzo Velmare"), testa);
   box.appendChild(E("p", "desc", R.desc));
   var ul = E("ul");
   if (R.abil) ul.appendChild(E("li", "", "Il tuo tasto: " + R.abil));
   if (TASTI[pr.squadra]) ul.appendChild(E("li", "", TASTI[pr.squadra]));
   if (VINCI[pr.squadra]) ul.appendChild(E("li", "", VINCI[pr.squadra]));
+  if (pr.ruolo === "indovino") { var impI = (V.vm && V.vm.imp && V.vm.imp.indovino) || {}; ul.appendChild(E("li", "", "Il tuo tasto in riunione: la maschera sulle schede. Indovinati " + pr.indovinati + " su " + pr.quantiInd + (impI.sbaglia === "niente" ? ". Se sbagli, in questa partita non cadi." : "."))); }
   if (pr.mod && MODIFICATORI[pr.mod]) ul.appendChild(E("li", "", MODIFICATORI[pr.mod].nome + ": " + MODIFICATORI[pr.mod].desc));
   box.appendChild(ul);
-  V.apriPannello("info", box); ch.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
+  V.apriPannello("info", box); tocca(ch, function () { if (V.pannello) V.pannello.chiudi(); });
 };
 // la saletta nell'atrio: in alto il codice della stanza, quanti siamo e «Invita»
 Vista.prototype.aggSaletta = function (sal) {
@@ -5657,7 +7726,7 @@ Vista.prototype.aggSaletta = function (sal) {
     V.salInv.addEventListener("click", function () { V.invita(); }); V.salBox.append(V.salTesto, V.salInv); V.velo.parentNode.appendChild(V.salBox);
   }
   V.salBox.hidden = !sal; V.sc.classList.toggle("sal", !!sal); if (!sal) return;
-  var n = (V.vm.players || []).filter(function (p) { return !p.via; }).length, tx = "Stanza " + (V.vm.codice || "…") + " · " + n + "/" + MAX;
+  var n = (V.vm.players || []).filter(function (p) { return !p.via; }).length, tx = (V.oriz ? "Stanza " : "") + (V.vm.codice || "…") + " · " + n + "/" + MAX;   // (in verticale la riga è stretta: bastano codice e numero)
   if (V.salTesto.textContent !== tx) V.salTesto.textContent = tx;
 };
 // il link d'invito della stanza (gli amici entrano direttamente nella saletta)
@@ -5667,17 +7736,16 @@ Vista.prototype.invita = function () {
   if (navigator.share) { navigator.share({ title: "Lanterne", text: testo, url: url }).catch(function () {}); return; }
   try { navigator.clipboard.writeText(testo + " " + url).then(function () { V.avviso("Link copiato: mandalo agli amici."); }, function () { V.avviso("Codice della stanza: " + cod); }); } catch (e) { V.avviso("Codice della stanza: " + cod); }
 };
-// il computer della saletta: l'host sceglie le regole, i Bot e fa partire; gli altri vedono le regole e aspettano
+// il registro delle regole, nella saletta: l'host sceglie le regole, i Bot e fa partire; gli altri vedono le regole e aspettano
 Vista.prototype.apriComputer = function () {
-  var V = this, host = !!V.cb.sonoHost, box = E("div", "lt-pannello lt-computer"), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×");
-  testa.append(E("h3", "", "Computer della saletta"), ch); box.appendChild(testa);
+  var V = this, host = !!V.cb.sonoHost, box = E("div", "lt-pannello lt-foglio lt-computer"), testa = E("div", "testa"), tit = E("div", "tit"), ch = E("button", "lt-chiudi", "×");
+  ch.setAttribute("aria-label", "Chiudi"); tit.appendChild(E("h3", "", "Regole della notte")); testa.append(tit, ch); box.append(intestazione("Registro di Palazzo Velmare"), testa);
   var dove = JSON.parse(JSON.stringify((V.vm && V.vm.imp) || {})), corpo = E("div", "corpo"); box.appendChild(corpo);
   var applica = function () { if (host && V.t.onRegole) V.t.onRegole(dove); };
   if (host) {
     impostazioni(corpo, dove, { el: V.t.el });
     var pronti = E("div", "lt-pronti"); pronti.setAttribute("aria-label", "Chi ha la mappa pronta"); corpo.insertBefore(pronti, corpo.firstChild);   // chi ha già scaricato la mappa
-    var piede = E("div", "piede"), bAdd = tastoIco("", "pulito", "Aggiungi un Bot"), bTogli = E("button", "", "Togli un Bot"), via = tastoIco("via", "invia", "Comincia");
-    bTogli.type = "button";
+    var piede = E("div", "piede"), bAdd = tastoIco("", "piu", "<i>Aggiungi un </i>Bot"), bTogli = tastoIco("", "meno", "<i>Togli un </i>Bot"), via = tastoIco("via", "", "Comincia");
     bAdd.addEventListener("click", function () { V.cb.onBot && V.cb.onBot(); });
     bTogli.addEventListener("click", function () { V.cb.onTogliBot && V.cb.onTogliBot(); });
     via.addEventListener("click", function () { applica(); if (V.pannello) V.pannello.chiudi(); V.cb.onComincia && V.cb.onComincia(); });
@@ -5688,11 +7756,14 @@ Vista.prototype.apriComputer = function () {
         pronti._k = kp; pronti.textContent = ""; pronti.hidden = umani.length < 2;
         umani.forEach(function (p) { var x = V.prDi(p), c = E("span", x.pr ? "ok" : "", p.nome), b = E("b"); b.innerHTML = x.pr ? icona("pulito") : x.mp + "%"; c.appendChild(b); pronti.appendChild(c); });
       }
-      var n = qui.length; via.disabled = n < MIN || !!V.vm.avvio; nota.textContent = n < MIN ? "Servono almeno " + MIN + " giocatori: aggiungi un Bot." : n + " giocatori · " + riassunto(pulisci(dove)); };
+      var n = qui.length; via.disabled = n < MIN || !!V.vm.avvio; nota.textContent = n < MIN ? "Servono almeno " + MIN + " giocatori: aggiungi un Bot." : n + " giocatori nella saletta"; };
     V.compAgg();
   } else {
-    corpo.appendChild(E("p", "desc", riassunto(pulisci(dove))));
-    corpo.appendChild(E("p", "nota", "Le regole le sceglie l'host. Si parte quando tocca «Comincia»."));
+    // chi non ha aperto la stanza vede lo stesso registro, in sola lettura; se le regole cambiano si aggiorna da solo
+    var ultimo = JSON.stringify(dove);
+    impostazioni(corpo, dove, { el: V.t.el, sola: true });
+    box.appendChild(E("p", "nota", "Le regole le sceglie chi ha aperto la stanza."));
+    V.compAgg = function () { var ora = JSON.stringify((V.vm && V.vm.imp) || {}); if (ora === ultimo) return; ultimo = ora; dove = JSON.parse(ora); impostazioni(corpo, dove, { el: V.t.el, sola: true }); };
   }
   V.apriPannello("computer", box, function () { applica(); V.compAgg = null; });
   ch.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
@@ -5730,7 +7801,7 @@ Vista.prototype.passi = function (tx, ty) {
 // la freccia e la riga in alto: corta, solo quello che serve
 Vista.prototype.meta = function () {
   var V = this, g = V.g, me = V.me;
-  if (V.vm && V.vm.fase === "lobby") return V.cb.sonoHost ? { x: centro(COMPUTER.tx), y: centro(COMPUTER.ty), col: "#5ad19a", testo: "Al computer: regole e Comincia" } : { x: me.x, y: me.y, testo: "Aspettiamo che l'host cominci" };
+  if (V.vm && V.vm.fase === "lobby") return V.cb.sonoHost ? { x: centro(COMPUTER.tx), y: centro(COMPUTER.ty), col: "#5ad19a", testo: "Al registro: regole e Comincia" } : { x: me.x, y: me.y, testo: "Aspettiamo chi ha aperto la stanza" };
   if (!g || g.mappa !== "palazzo" || V.guardo) return null;
   var vivo = V.sonoVivo(), piu = function (l) { return l.slice().sort(function (a, b) { return V.passi(a.tx, a.ty) - V.passi(b.tx, b.ty); })[0]; };
   // i sabotaggi: la freccia la vedono tutti i vivi, ombre comprese (anche loro possono riparare)
@@ -5754,19 +7825,19 @@ Vista.prototype.meta = function () {
 };
 Vista.prototype.disegnaScena = function () {
   var V = this, g = V.g, io = V.me; if (!g) return;
-  var altri = V.altri(), corpi = (g.corpi || []).map(function (k) { var c = V.cache[k[0]] || {}, av = AVATAR[k[0]]; return { id: k[0], x: k[1], y: k[2], colore: c.colore, img: av && av.img }; });
+  var altri = V.altri(), corpi = (g.corpi || []).map(function (k) { return { id: k[0], x: k[1], y: k[2], lenz: LENZ_DI[k[0]] }; });
   var segui = null;
   if (V.guardo) { var vivi = altri.filter(function (p) { return !p.fantasma; }); segui = vivi[0] || altri[0] || { x: FALLBACK.x, y: FALLBACK.y }; }
   if (V.ctrl && V.ctrl.fine > performance.now()) segui = { x: V.ctrl.x, y: V.ctrl.y };
   var pr = V.priv || {}, come = pr.travestito || V.cb.myId;
   var mioAv = AVATAR[come], c = V.cache[come] || {};
-  var ioD = { x: io.x, y: io.y, dir: io.dir, muove: io.muove, fantasma: !V.sonoVivo(), nome: c.nome || "", colore: c.colore, img: mioAv && mioAv.img, imgS: mioAv && mioAv.imgS, mostra: !V.guardo && !(pr && pr.botola != null), seme: 3, id: V.cb.myId };
+  var ioD = { x: io.x, y: io.y, dir: io.dir, muove: io.muove, fantasma: !V.sonoVivo(), nome: c.nome || "", colore: c.colore, lenz: c.lenz, img: mioAv && mioAv.img, imgS: mioAv && mioAv.imgS, mostra: !V.guardo && !(pr && pr.botola != null), seme: 3, id: V.cb.myId };
   var oraB = performance.now(); for (var ib = V.bolle.length - 1; ib >= 0; ib--) if (V.bolle[ib].fine <= oraB) V.bolle.splice(ib, 1);   // i fumetti scaduti
   var apertaP = !V.parlaBar.hidden, vivoP = V.sonoVivo();
   V.parlaAlzaVista = V.pit.ridotto ? V.parlaAlza : V.parlaAlzaVista + (V.parlaAlza - V.parlaAlzaVista) * Math.min(1, V.dt * 10);
   var miei = new Set(g.interf ? [] : V.compitiAperti().map(function (p) { return p.id; })), meta = V.meta(), ora = performance.now();
   if (meta && meta.nessunaFreccia) meta = null;
-  V.pit.disegna({ M: V.M, palazzo: g.mappa === "palazzo", t: V.tempo, dt: V.dt, io: ioD, altri: altri, corpi: corpi, R: V.raggio(),
+  V.pit.disegna({ M: V.M, palazzo: g.mappa === "palazzo", saletta: !!(V.vm && V.vm.fase === "lobby"), t: V.tempo, dt: V.dt, io: ioD, altri: altri, corpi: corpi, R: V.raggio(),
     anima: V.guardo || !V.sonoVivo() || g.mappa !== "palazzo" || g.bengala > 0, neb: g.neb > 0, buio: g.buio > 0 && V.squadra() !== "ombre" && V.sonoVivo(), bengala: g.bengala > 0,
     miei: miei, freccia: meta, acqua: !!g.acqua, chiuse: g.acqua ? [!g.acqua[1], !g.acqua[2]] : null, interf: g.interf > 0, botole: V.squadra() === "ombre" || !V.sonoVivo() || pr.ruolo === "ingegnere", segui: segui, effetti: V.effetti, segnati: g.segnati, scossa: V.scossa,
     scudi: V.squadra() !== "ombre" ? (g.scudi || []).filter(function (id) { return id !== V.cb.myId; }) : [], telecamere: g.cam, osservate: g.osservate, orme: V.orme, durOrme: (V.vm.imp.investigatore && V.vm.imp.investigatore.orme) || 10,
@@ -5884,9 +7955,11 @@ function scrittaTasto(b, testo) {
   et.textContent = ""; et.appendChild(sv); et.style.fontSize = ""; et.style.transform = "";
   b.dataset.corpo = f.toFixed(2); b.dataset.righe = String(n);
 }
+// il ruolo in alto: i nomi lunghi si stringono, così non finiscono sotto i tasti di destra
+Vista.prototype.scriviChip = function (nr) { var c = this.chip; c.textContent = nr; c.classList.toggle("lunga", nr.length >= 9); c.classList.toggle("lunghissima", nr.length >= 12); };
 Vista.prototype.setBtn = function (k, vis, abil, et, cd) {
   var b = this.btn[k], key = vis + "|" + abil + "|" + et + "|" + cd; if (b._k === key) return; b._k = key;
-  b.hidden = !vis; b.disabled = !abil; scrittaTasto(b, et);
+  b.hidden = !vis; b.disabled = !abil; scrittaTasto(b, et); b.classList.toggle("conta", !!cd);
   var c = b.querySelector(".cd"); c.hidden = !cd; c.textContent = cd || "";
 };
 Vista.prototype.aggHud = function () {
@@ -5895,6 +7968,11 @@ Vista.prototype.aggHud = function () {
   V.az.hidden = !(inGioco && palazzo) && !sal;
   V.s.querySelector(".lt-sx").hidden = (!palazzo && !sal) || V.guardo || !pr;
   V.aggSaletta(sal); V.aggMappa(sal);
+  V.setBtn("lenz", !!sal && !V.guardo && !!pr, true, "Lenzuolo", 0);
+  if (sal && !V.btn.lenz.hidden) {   // il tasto ha il colore del mio telo; lo scritto si legge sempre
+    var telo = panno(V.cb.myId), rr = parseInt(telo.b.slice(1), 16), luce = 0.3 * (rr >> 16) + 0.59 * ((rr >> 8) & 255) + 0.11 * (rr & 255);
+    if (V.btn.lenz._c !== telo.b) { V.btn.lenz._c = telo.b; V.btn.lenz.style.setProperty("--telo", telo.b); V.btn.lenz.style.setProperty("--orlo", telo.l); V.btn.lenz.style.color = luce > 135 ? "#1d1508" : "#fff4e0"; }
+  }
   V.btnMappa.hidden = !palazzo;
   // la chat di prossimità c'è nel gioco e nella saletta; non in riunione, non a chi guarda, non da una botola
   V.btnParla.hidden = V.guardo || !pr || ((!palazzo || g.fase !== "gioco" || pr.botola != null) && !sal);
@@ -5950,7 +8028,7 @@ Vista.prototype.aggHud = function () {
   }
   // barra dei preparativi, ruolo e guida in alto
   if (pr) {
-    var nr = sal ? "Saletta" : !V.sonoVivo() && pr.fantasmaRuolo && FANTASMI[pr.fantasmaRuolo] ? FANTASMI[pr.fantasmaRuolo].nome : RUOLI[pr.ruolo] ? RUOLI[pr.ruolo].nome : ""; if (V.chip.textContent !== nr) { V.chip.textContent = nr; V.chip.dataset.squadra = pr.squadra; }
+    var nr = sal ? "Saletta" : !V.sonoVivo() && pr.fantasmaRuolo && FANTASMI[pr.fantasmaRuolo] ? FANTASMI[pr.fantasmaRuolo].nome : RUOLI[pr.ruolo] ? RUOLI[pr.ruolo].nome : ""; if (V.chip.textContent !== nr) { V.scriviChip(nr); V.chip.dataset.squadra = pr.squadra; }
     // le cose da sapere del proprio ruolo, in una riga
     var info = [], nome = function (id) { return (V.cache[id] || {}).nome || "?"; };
     if (V.bloccFine > ora) info.push("Sei ipnotizzato!");
@@ -6008,7 +8086,7 @@ Vista.prototype.prDi = function (p) { var x = this.pm && this.pm[p.id]; return x
 // la mappa nella saletta: la mia percentuale, piccola e discreta; l'host vede anche quanti sono pronti
 Vista.prototype.aggMappa = function (sal) {
   var V = this, el = V.salMappa, ps = precaricoStato(), ora = performance.now();
-  if (!el) { el = V.salMappa = E("div", "lt-mappa"); el.hidden = true; el.innerHTML = '<span class="t"></span><i></i>'; V.sc.appendChild(el); }
+  if (!el) { el = V.salMappa = E("div", "lt-premappa"); el.hidden = true; el.innerHTML = '<span class="t"></span><i></i>'; V.sc.appendChild(el); }
   var pl = ((V.vm && V.vm.players) || []).filter(function (p) { return !p.via; }), nPronti = pl.filter(function (p) { return p.bot || V.prDi(p).pr; }).length, testo = "", ok = false;
   if (sal && ps.attivo) {
     if (!ps.pronto) testo = "Mappa " + ps.pct + "%";
@@ -6023,20 +8101,35 @@ Vista.prototype.aggMappa = function (sal) {
   el.hidden = !testo; el.classList.toggle("ok", ok); el.querySelector(".t").textContent = testo; el.style.setProperty("--p", ps.pct + "%");
 };
 // il caricamento a tutto schermo. Due casi: (1) l'host ha premuto «Comincia» e qualcuno non ha ancora la mappa: tutti aspettano (al massimo AVVIO_MAX,
-// poi si parte lo stesso e chi è rimasto indietro vede il disegno a codice). (2) arrivo a partita già cominciata (tardi, o pagina ricaricata):
-// finché i pezzi intorno a me non sono pronti, al massimo 10 secondi.
+// poi si parte lo stesso e chi è rimasto indietro vede l'anteprima, o il disegno a codice). (2) arrivo a partita già cominciata (tardi, o pagina ricaricata):
+// finché non c'è l'anteprima, o i pezzi intorno a me se l'anteprima manca, al massimo 10 secondi.
 Vista.prototype.aggCarica = function () {
   var V = this, vm = V.vm, ora = performance.now(), mod = null, el = V.carica; if (!vm || !el) return;
   var ps = precaricoStato();
-  if (vm.avvio) { V.vistoAvvio = true; mod = "avvio"; }
+  if (V.nataT == null) V.nataT = ora;
+  if (vm.fase === "lobby") V.inSala = true;
+  // chi ricarica la pagina può trovare sul broker una foto vecchia, ancora con l'attesa di «Comincia»: quella vera dell'host arriva subito dopo.
+  // Appena aperta la pagina non ci si crede, e il mini caricamento d'ingresso si salta solo se l'attesa si è vista davvero
+  if (vm.avvio) {
+    if (V.avvioT == null) V.avvioT = ora;
+    if (ora - V.avvioT >= 2000) V.vistoAvvio = true;
+    if (ora - V.nataT >= 1500) mod = "avvio";
+  }
   else if (vm.fase !== "lobby" && V.g && !V.vistoAvvio && !V.ingressoFatto) {
-    if (V.ingressoT == null) V.ingressoT = ora;
+    if (V.ingressoT == null) { V.ingressoT = ora; precaricoFretta(2); }   // (prima di chiedere i pezzi: se l'indice è già arrivato, l'anello non deve passare davanti)
+    if (!V.me.ok) V.ingCerco = true; else if (V.ingCerco) { V.ingCerco = false; immCodaDaCapo(); }
+    immSospendi(true);   // sotto il caricamento non si chiede niente per conto del disegno: arriva prima l'anteprima, poi quello che serve davvero
+    var ioQui = vm.players.filter(function (p) { return p.id === V.cb.myId; })[0];   // (V.guardo qui non basta: finché non arrivano i privati vale anche per chi gioca, e la scena segue un altro)
+    var cerco = !!ioQui && !ioQui.via && !(V.inSala ? V.me.ok || V.guardo : V.me.ok && V.priv);   // (chi arriva dalla saletta è già a posto: per lui i privati sono questione di un attimo, niente caricamento)
     var qui = V.me.ok ? V.me : { x: FONTANA.x, y: FONTANA.y }, pv = V.pit.meta;
-    var ing = immIntorno(V.M, qui.x, qui.y, pv && pv.w / 2, pv && pv.h / 2); V.ingPct = Math.max(V.ingPct || 0, ing.pct);
+    var ing = immIntorno(V.M, qui.x, qui.y, pv && pv.w / 2, pv && pv.h / 2, cerco); V.ingPct = Math.max(V.ingPct || 0, ing.pct);
     if (ora - V.ingressoT >= 10000) V.ingressoFatto = true;
-    else if (!ing.ok || !(V.me.ok || V.guardo)) mod = "ingresso";   // (finché non so dove sono, guardo i pezzi intorno alla fontana ma non do per fatto)
+    else if (!ing.ok || cerco) mod = "ingresso";
     else V.ingressoFatto = true;
   }
+  // l'ultimo secondo e mezzo dell'attesa (t: quando scade, orologio dell'host) niente file nuovi: su una rete lenta il via e il ruolo resterebbero dietro ai file
+  var allaFine = vm.avvio && vm.avvio.t ? Date.now() - vm.avvio.t : -1e9;
+  if (mod !== "ingresso") immSospendi(allaFine > -1500 && allaFine < 1500);
   precaricoFretta(mod ? 2 : vm.fase !== "lobby" ? 0 : 1);   // col caricamento a tutto schermo si scarica più in fretta; a partita cominciata piano, il gioco ha la precedenza
   if (!mod) { if (!el.hidden && !V.caricaT) { el.classList.remove("su"); V.caricaT = setTimeout(function () { el.hidden = true; V.caricaT = null; }, 330); } return; }
   if (V.caricaT) { clearTimeout(V.caricaT); V.caricaT = null; }
@@ -6067,7 +8160,8 @@ Vista.prototype.aggLista = function () {
 Vista.prototype.manda = function (k, extra) { var m = { t: "a", k: k }; if (extra) for (var x in extra) m[x] = extra[x]; this.cb.mossa(m); };
 Vista.prototype.azione = function (k) {
   var V = this, pr = V.priv, comp = (pr && pr.compagni) || [];
-  if (V.vm && V.vm.fase === "lobby") { if (k === "usa" && V.vicinoUsa() && !V.pannello) V.apriComputer(); return; }
+  if (V.vm && V.vm.fase === "lobby") { if (k === "lenz") V.apriLenzuolo(); else if (k === "usa" && V.vicinoUsa() && !V.pannello) V.apriComputer(); return; }
+  if (V.pannello && V.pannello.libero) V.pannello.chiudi();   // il tasto vale anche con la scheda del ruolo aperta
   if (!V.g || V.g.fase !== "gioco" || V.guardo || V.mg || V.pannello) return;
   if (!V.sonoVivo() && k === "abil" && pr && pr.fantasmaRuolo) {
     if (pr.fantasmaRuolo === "medium") return V.apriFoto();
@@ -6081,7 +8175,7 @@ Vista.prototype.azione = function (k) {
     if (u.tipo === "plastico") return V.apriPlastico(0);
     var post = u.post;
     V.apriCompito(post, function () {
-      if (u.tipo === "ripara") V.manda("ripara", { cosa: u.cosa });
+      if (u.tipo === "ripara") { V.manda("ripara", { cosa: u.cosa }); V.ottimista(u.cosa); }
       else { V.fatti[post.id] = 1; V.manda("fatto", { post: post.id }); V.aggLista(); }
     });
   } else if (k === "segnala") { var c = V.corpoVicino(); if (c != null) V.manda("segnala", { id: c }); }
@@ -6118,7 +8212,7 @@ Vista.prototype.apriMappa = function () {
   var box = E("div", "lt-minimappa"), testa = E("div", "testa"), x = E("button", "lt-chiudi", "×"), cv = E("canvas"), leg = E("p", "leg", "");
   x.type = "button"; x.setAttribute("aria-label", "Chiudi la mappa");
   var tit = E("b"); tit.innerHTML = icona("mappa") + "<span>Mappa del palazzo</span>"; testa.append(tit, x); box.append(testa, cv, leg);
-  x.addEventListener("click", function (e) { e.stopPropagation(); V.chiudiMappa(); });
+  tocca(x, function (e) { e.stopPropagation(); V.chiudiMappa(); });
   V.velo.parentNode.appendChild(box);
   V.mappa = { box: box, cv: cv, leg: leg, ultimo: -9 };
   V.mappaAperta = true; V.disegnaMappaViva();
@@ -6127,14 +8221,15 @@ Vista.prototype.chiudiMappa = function () { var V = this; if (!V.mappa) return; 
 Vista.prototype.disegnaMappaViva = function () {
   var V = this, M = V.mappa; if (!M || !V.g) return;
   M.ultimo = V.tempo;
-  var segni = V.compitiAperti().map(function (p) { return { x: centro(p.tx), y: centro(p.ty), col: "#e7b75c" }; }), leg = [["#ffffff", "tu"], ["#e7b75c", "compiti"]];
+  var mioC = (V.cache[(V.priv && V.priv.travestito) || V.cb.myId] || {}).colore || "#ffffff", mioP = panno((V.priv && V.priv.travestito) || V.cb.myId);
+  var segni = V.compitiAperti().map(function (p) { return { x: centro(p.tx), y: centro(p.ty), col: "#e7b75c" }; }), leg = [[mioC, "tu · " + mioP.n], ["#e7b75c", "compiti"]];
   if (V.g.buio) { segni.push({ x: centro(QUADRO.tx), y: centro(QUADRO.ty), col: "#f05a6e", r: 7 }); leg.push(["#f05a6e", "luci"]); }
   if (V.squadra() === "ombre") { ESTREMI.forEach(function (e) { segni.push({ x: centro(e.tx), y: centro(e.ty), col: "#a993e6", r: 4 }); }); leg.push(["#a993e6", "botole"]); }
   segni.push({ x: centro(CAMPANA.tx), y: centro(CAMPANA.ty), col: "#d9a94a", r: 4 });
   // il Segugio: il pallino di chi sta seguendo, finché dura la scia
   var tr = V.priv && V.priv.traccia && V.tracciaFine > performance.now() ? V.priv.traccia[0] : null;
-  if (tr) { var q = V.altri().filter(function (p) { return p.id === tr; })[0]; if (q) { segni.push({ x: q.x, y: q.y, col: "#cba2ff", r: 7, bordo: true }); leg.push(["#cba2ff", (V.cache[tr] || {}).nome || "la scia"]); } }
-  segni.push({ x: V.me.x, y: V.me.y, col: "#ffffff", r: 6, bordo: true });
+  if (tr) { var q = V.altri().filter(function (p) { return p.id === tr; })[0]; if (q) { segni.push({ x: q.x, y: q.y, col: "#cba2ff", r: 8, bordo: true }, { x: q.x, y: q.y, col: q.colore || "#cba2ff", r: 5 }); leg.push([q.colore || "#cba2ff", ((V.cache[tr] || {}).nome || "la scia") + " · " + panno(tr).n]); } }
+  segni.push({ x: V.me.x, y: V.me.y, col: "#ffffff", r: 7, bordo: true }, { x: V.me.x, y: V.me.y, col: mioC, r: 4.5 });
   var w = M.box.clientWidth - 16, h = Math.max(80, M.box.clientHeight - 58);
   disegnaMappa(M.cv, PALAZZO, segni, w, h);
   var t = leg.map(function (l) { return '<i style="background:' + l[0] + '"></i>' + l[1]; }).join(""); if (M.legK !== t) { M.legK = t; M.leg.innerHTML = t; }
@@ -6142,10 +8237,11 @@ Vista.prototype.disegnaMappaViva = function () {
 
 // i pannelli sopra il gioco: schermi delle telecamere, plastico, scambio del Trasportatore
 Vista.prototype.apriPannello = function (tipo, box, chiudi) {
-  var V = this; V.joyReset();
+  var V = this, libero = tipo === "info" || tipo === "sabota";   // scheda del ruolo e scelta del sabotaggio: si continua a camminare, il joystick resta libero
+  if (!libero) V.joyReset();
   if (V.pannello) V.pannello.chiudi();
-  V.velo.textContent = ""; V.velo.appendChild(box); V.velo.hidden = false; V.veloTipo = "pannello";
-  V.pannello = { tipo: tipo, chiudi: function () { if (V.pannello === null) return; V.pannello = null; V.velo.hidden = true; V.veloTipo = null; V.velo.textContent = ""; if (chiudi) chiudi(); V.aggVelo(); } };
+  V.velo.textContent = ""; V.velo.appendChild(box); V.velo.hidden = false; V.veloTipo = "pannello"; V.velo.classList.toggle("passa", libero);
+  V.pannello = { tipo: tipo, libero: libero, chiudi: function () { if (V.pannello === null) return; V.pannello = null; V.velo.hidden = true; V.velo.classList.remove("passa"); V.veloTipo = null; V.velo.textContent = ""; if (chiudi) chiudi(); V.aggVelo(); } };
 };
 Vista.prototype.apriTelecamere = function () {
   var V = this, box = E("div", "lt-pannello lt-cam"), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×");
@@ -6168,8 +8264,8 @@ Vista.prototype.disegnaSchermi = function () {
   var cams = (g && g.cam) || [], n = Math.max(1, Math.ceil(cams.length / 4)); F.pagina = Math.min(F.pagina, n - 1);
   F.pag.textContent = (F.pagina + 1) + " / " + n;
   var gente = V.altri().filter(function (p) { return !p.fantasma; });
-  if (V.sonoVivo() && !V.guardo) { var c0 = V.cache[V.cb.myId] || {}, a0 = AVATAR[V.cb.myId]; gente.push({ id: V.cb.myId, x: V.me.x, y: V.me.y, dir: V.me.dir, muove: V.me.muove, nome: c0.nome, colore: c0.colore, img: a0 && a0.img, imgS: a0 && a0.imgS }); }
-  var corpi = (g.corpi || []).map(function (k) { var c = V.cache[k[0]] || {}, av = AVATAR[k[0]]; return { id: k[0], x: k[1], y: k[2], colore: c.colore, img: av && av.img }; });
+  if (V.sonoVivo() && !V.guardo) { var c0 = V.cache[(V.priv && V.priv.travestito) || V.cb.myId] || {}, a0 = AVATAR[V.cb.myId]; gente.push({ id: V.cb.myId, x: V.me.x, y: V.me.y, dir: V.me.dir, muove: V.me.muove, nome: c0.nome, colore: c0.colore, lenz: c0.lenz, img: a0 && a0.img, imgS: a0 && a0.imgS }); }
+  var corpi = (g.corpi || []).map(function (k) { return { id: k[0], x: k[1], y: k[2], lenz: LENZ_DI[k[0]] }; });
   var nBase = 0;
   F.schermi.forEach(function (sc, i) {
     var k = cams[F.pagina * 4 + i]; sc.w.hidden = !k; if (!k) return;
@@ -6201,7 +8297,7 @@ Vista.prototype.disegnaPlastico = function () {
   if (V.g && V.g.interf) { V.statico(P.cv, 320, 220); P.nota.textContent = "Nessun segnale: c'è un'interferenza."; return; }
   var spia = V.priv && V.priv.ruolo === "spia";
   var gente = V.altri().filter(function (p) { return !p.fantasma; });
-  if (V.sonoVivo() && !V.guardo) gente.push({ id: V.cb.myId, x: V.me.x, y: V.me.y, colore: (V.cache[V.cb.myId] || {}).colore });
+  if (V.sonoVivo() && !V.guardo) gente.push({ id: V.cb.myId, x: V.me.x, y: V.me.y, colore: (V.cache[(V.priv && V.priv.travestito) || V.cb.myId] || {}).colore });
   var stanze = {};
   gente.forEach(function (p) { var st = stanzaDi(PALAZZO, p); if (st.x == null) return; (stanze[st.nome] = stanze[st.nome] || { st: st, l: [] }).l.push(p); });
   var r = V.s.getBoundingClientRect();
@@ -6210,7 +8306,7 @@ Vista.prototype.disegnaPlastico = function () {
       var o = stanze[k], st = o.st, per = Math.max(1, Math.floor((st.w - 1) / 2.8));
       o.l.forEach(function (p, i) {
         var cx = (st.x + 1.6 + (i % per) * 2.8) * T, cy = (st.y + st.h - 1.8 - Math.floor(i / per) * 3) * T;
-        m.fillStyle = spia ? (p.colore || "#ccc") : "#d9dce4"; m.strokeStyle = "rgba(0,0,0,.55)"; m.lineWidth = 2 / sc;
+        m.fillStyle = spia ? (p.colore || "#ccc") : "#d9dce4"; m.strokeStyle = (spia && orloTinta(p.colore)) || "rgba(0,0,0,.55)"; m.lineWidth = 2 / sc;
         m.beginPath(); m.arc(cx, cy - 0.6 * T, 0.95 * T, 0, Math.PI * 2); m.fill(); m.stroke();
         m.beginPath(); m.ellipse(cx, cy + 0.85 * T, 1.3 * T, 0.75 * T, 0, Math.PI, 0); m.fill(); m.stroke();
       });
@@ -6220,13 +8316,13 @@ Vista.prototype.disegnaPlastico = function () {
   P.nota.textContent = (spia ? "Vedi i colori: sei la Spia. " : "Teste in ogni stanza (non nei corridoi). ") + (P.fine ? "Si chiude tra " + resta + " s" : "Tocca per chiudere");
 };
 Vista.prototype.apriScambio = function () {
-  var V = this, scelti = [], box = E("div", "lt-pannello lt-scambio");
+  var V = this, scelti = [], box = E("div", "lt-pannello lt-foglio lt-scambio");
   box.append(E("h3", "", "Chi scambi di posto?"), E("p", "", "Tocca due persone: si scambiano all'istante, ovunque siano."));
   var gr = E("div", "griglia"); box.appendChild(gr);
   var vivi = (V.g.g || []).filter(function (q) { return q[1] && !q[2]; });
   var vai = E("button", "btn btn-primario", "Scambia"), no = E("button", "btn btn-fantasma", "Annulla"); vai.disabled = true;
   vivi.forEach(function (q, j) {
-    var b = E("button", "", (V.cache[q[0]] || {}).nome || "?"); b.type = "button";
+    var b = E("button", "", (V.cache[q[0]] || {}).nome || "?"); b.type = "button"; b.prepend(pezzetta(q[0]));
     b.addEventListener("click", function () { var i = scelti.indexOf(q[0]); if (i >= 0) scelti.splice(i, 1); else if (scelti.length < 2) scelti.push(q[0]); [].forEach.call(gr.children, function (x, k) { x.classList.toggle("sel", scelti.indexOf(vivi[k][0]) >= 0); }); vai.disabled = scelti.length !== 2; });
     gr.appendChild(b);
   });
@@ -6238,25 +8334,25 @@ Vista.prototype.apriScambio = function () {
 
 // le ombre scelgono il sabotaggio
 Vista.prototype.apriSabota = function () {
-  var V = this, imp = (V.vm && V.vm.imp && V.vm.imp.sabotaggi) || {}, box = E("div", "lt-pannello lt-scambio");
-  box.append(E("h3", "", "Che sabotaggio?"), E("p", "", "Uno alla volta. Gli ospiti vedono subito dove ripararlo."));
+  var V = this, imp = (V.vm && V.vm.imp && V.vm.imp.sabotaggi) || {}, box = E("div", "lt-pannello lt-foglio lt-scambio");
+  box.append(intestazione("Registro di Palazzo Velmare"), E("h3", "", "Che sabotaggio?"), E("p", "", "Uno alla volta. Gli ospiti vedono subito dove ripararlo."));
   var gr = E("div", "griglia sab");
   [["buio", "Buio", "Gli ospiti vedono pochissimo finché non riparano il quadro delle luci in Lavanderia."], ["interferenza", "Interferenza", "Si spengono telecamere, plastico e frecce dei compiti, finché non riparano il telegrafo (Sala del telegrafo)."], ["acqua", "Acqua alta", "Il palazzo si allaga: se non chiudono le due chiuse (Molo e Cantina) in tempo, vincete voi."]].forEach(function (x) {
     if ((x[0] === "acqua" && imp.acquaSi === false) || (x[0] === "interferenza" && imp.interferenzaSi === false)) return;
     var b = E("button", "", ""), tit = E("b"); b.type = "button"; tit.innerHTML = icona({ buio: "buio", interferenza: "antenna", acqua: "onda" }[x[0]]) + "<span>" + x[1] + "</span>"; b.append(tit, E("small", "", x[2]));
-    b.addEventListener("click", function () { V.manda("sabota", { tipo: x[0] }); if (V.pannello) V.pannello.chiudi(); });
+    tocca(b, function () { V.manda("sabota", { tipo: x[0] }); if (V.pannello) V.pannello.chiudi(); });
     gr.appendChild(b);
   });
-  var no = E("button", "btn btn-fantasma", "Annulla"); no.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
+  var no = E("button", "btn btn-fantasma", "Annulla"); tocca(no, function () { if (V.pannello) V.pannello.chiudi(); });
   box.append(gr, no);
   V.apriPannello("sabota", box);
 };
 // il Portiere sceglie la stanza da tenere d'occhio
 Vista.prototype.apriPortineria = function () {
-  var V = this, box = E("div", "lt-pannello lt-scambio"), gr = E("div", "griglia");
+  var V = this, box = E("div", "lt-pannello lt-foglio lt-scambio"), gr = E("div", "griglia");
   box.append(E("h3", "", "Quale stanza sorvegli?"), E("p", "", "Da adesso saprai chi entra e chi esce, in ordine."));
   PALAZZO.stanze.forEach(function (st, i) { var b = E("button", "", st.nome); b.type = "button"; b.addEventListener("click", function () { V.manda("abil", { id: i }); if (V.pannello) V.pannello.chiudi(); }); gr.appendChild(b); });
-  var no = E("button", "btn btn-fantasma", "Annulla"); no.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
+  var no = E("button", "btn btn-fantasma", "Annulla"); tocca(no, function () { if (V.pannello) V.pannello.chiudi(); });
   box.append(gr, no);
   V.apriPannello("portineria", box);
 };
@@ -6264,40 +8360,52 @@ Vista.prototype.aggRegistro = function (pr) {
   var V = this, P = pr.portineria, box = V.registroBox; box.textContent = "";
   if (!P || !P.log.length) return;
   var ol = E("ol", "lt-registro");
-  P.log.slice(-5).forEach(function (x) { var li = E("li", x[1] ? "entra" : "esce", ((V.cache[x[0]] || {}).nome || "?") + (x[1] ? " è entrato" : " è uscito") + " · " + (x[2] < 2 ? "ora" : x[2] + " s fa")); ol.appendChild(li); });
+  P.log.slice(-5).forEach(function (x) { var li = E("li", x[1] ? "entra" : "esce", ((V.cache[x[0]] || {}).nome || "?") + (x[1] ? " entra" : " esce") + " · " + (x[2] < 2 ? "ora" : x[2] + " s fa")); li.prepend(pezzetta(x[0])); ol.appendChild(li); });
   box.appendChild(ol);
 };
 
 // l'Imitatore sceglie un eliminato (il server accetta solo gli ospiti)
 Vista.prototype.apriImita = function (bottone) {
   var V = this, box = V.velo.querySelector(".lt-riu"); if (!box) return;
-  var p = E("div", "lt-indov"), gr = E("div", "griglia");
+  var p = E("div", "lt-indov lt-foglio"), gr = E("div", "griglia");
   p.append(E("h3", "", "Di chi prendi il ruolo?"), E("p", "", "Solo il ruolo di un ospite eliminato. Lo diventi dal prossimo round."));
   V.g.g.filter(function (q) { return !q[1] && !q[2]; }).forEach(function (q) { var b = E("button", "", (V.cache[q[0]] || {}).nome || "?"); b.type = "button"; b.addEventListener("click", function () { V.manda("imita", { id: q[0] }); p.remove(); if (bottone) bottone.remove(); }); gr.appendChild(b); });
   var no = E("button", "annulla", "Annulla"); no.type = "button"; no.addEventListener("click", function () { p.remove(); });
   p.append(gr, no); box.appendChild(p);
 };
 
-// l'Indovino sceglie il ruolo da indovinare
+// l'Indovino sceglie il ruolo da indovinare. Il foglietto si apre solo qui: nessun altro telefono sa niente, nemmeno che è aperto
+Vista.prototype.rigaIndov = function () { var pr = this.priv || {}; return "Tentativi rimasti: " + pr.tentativi + " · Indovinati " + pr.indovinati + " su " + pr.quantiInd; };
 Vista.prototype.apriIndovina = function (id) {
   var V = this, box = V.velo.querySelector(".lt-riu"); if (!box || !V.priv) return;
   var vecchio = box.querySelector(".lt-indov"); if (vecchio) vecchio.remove();
   // si sceglie tra tutti i ruoli del gioco, anche quelli spenti nelle regole
   var imp = (V.vm && V.vm.imp) || {}, cade = !imp.indovino || imp.indovino.sbaglia !== "niente";
   var ruoli = Object.keys(RUOLI);
-  var p = E("div", "lt-indov");
-  p.append(E("h3", "", "Che ruolo ha " + ((V.cache[id] || {}).nome || "?") + "?"), E("p", "", "Tentativi rimasti in questa riunione: " + V.priv.tentativi + (cade ? " · se sbagli, cadi tu" : "")));
-  var gr = E("div", "griglia");
-  ruoli.forEach(function (r) { var b = E("button", RUOLI[r].squadra, RUOLI[r].nome); b.type = "button"; b.addEventListener("click", function () { V.manda("indovina", { id: id, ruolo: r }); p.remove(); }); gr.appendChild(b); });
-  var no = E("button", "annulla", "Annulla"); no.type = "button"; no.addEventListener("click", function () { p.remove(); });
-  p.append(gr, no); box.appendChild(p);
+  var p = E("div", "lt-indov lt-foglio");
+  var riga = E("span", "", V.rigaIndov()), sotto = E("p"); sotto.appendChild(riga); if (cade) sotto.append(" · se sbagli, cadi tu");
+  var capo = E("div", "capo"); capo.append(ritratto(id), E("h3", "", "Che ruolo ha " + ((V.cache[id] || {}).nome || "?") + "?"));
+  p.append(capo, sotto);
+  V.indovF = { el: p, id: id, riga: riga };
+  var gr = E("div", "griglia gruppi");
+  [["ospiti", "Ospiti"], ["ombre", "Ombre"], ["soli", "Da soli"]].forEach(function (sq) {
+    var voci = ruoli.filter(function (r) { return RUOLI[r].squadra === sq[0]; }), fila = E("div", "gruppo"); if (!voci.length) return;
+    fila.style.flexGrow = Math.ceil(voci.length / 3);
+    voci.forEach(function (r) { var b = E("button", sq[0], RUOLI[r].nome); b.type = "button"; b.addEventListener("click", function () { V.manda("indovina", { id: id, ruolo: r }); V.priv.tentativi = Math.max(0, V.priv.tentativi - 1); p.remove(); V.indovF = null; V.riunione(); }); fila.appendChild(b); });
+    gr.append(E("h4", sq[0], sq[1]), fila);
+  });
+  var no = E("button", "annulla", "Annulla"); no.type = "button"; no.addEventListener("click", function () { p.remove(); V.indovF = null; });
+  p.append(gr, no); box.appendChild(p); ltSfuma(gr);
 };
+// chi ha chiamato la riunione: «Hai segnalato…» sul suo telefono, «Matt ha segnalato…» su tutti gli altri, fantasmi e chi guarda compresi
+Vista.prototype.fraseRiunione = function (R) { return (R.da === this.cb.myId ? "Hai" : ((this.cache[R.da] || {}).nome || "?") + " ha") + (R.motivo === "corpo" ? " segnalato una lanterna spenta" : " suonato la campana"); };
 
 // ----- i pannelli sopra la mappa: ruolo, riunione, esito, fine -----
 Vista.prototype.cambioFase = function () {
   var V = this, f = V.fase;
   if (f !== "gioco" && f !== "atrio") { V.parlaPulisci(); V.joyReset(); if (V.pannello) V.pannello.chiudi(); V.chiudiMappa(); if (V.mg) { V.mg = null; V.velo.hidden = true; V.veloTipo = null; } }
-  V.riuK = null;
+  if (f !== "esito") V.riuK = null;   // dalla riunione al verdetto il foglio resta quello: niente ridisegno, niente scritta d'apertura rifatta, il sigillo resta dov'è
+  if (f !== "riunione" && f !== "esito") { V.chatS = null; clearTimeout(V.bigT); V.bigT = null; }   // (la riunione dopo riparte con la chat chiusa)
 };
 Vista.prototype.aggVelo = function (soloTempi) {
   var V = this, g = V.g; if (!g) return;
@@ -6305,14 +8413,15 @@ Vista.prototype.aggVelo = function (soloTempi) {
   var f = g.fase, ora = performance.now();
   if (f === "svela" && V.priv && !V.guardo) {
     if (V.veloTipo !== "svela") {
-      var r = RUOLI[V.priv.ruolo], box = E("div", "lt-pannello lt-svela " + V.priv.squadra);
-      var mio = AVATAR[V.cb.myId]; if (mio && mio.busto) { var im = mio.busto.cloneNode(); im.className = "lt-svela-av"; box.appendChild(im); }
+      var r = RUOLI[V.priv.ruolo], box = E("div", "lt-pannello lt-foglio lt-svela " + V.priv.squadra);
+      box.appendChild(intestazione("Registro di Palazzo Velmare"));
+      var im = ritratto(V.cb.myId); if (im.tagName === "IMG") { im.className = "lt-svela-av"; box.appendChild(im); }
       box.append(E("p", "lt-sopra", "Questa notte sei"), E("h2", "", r.nome), E("p", "", r.desc));
       if (V.priv.squadra === "ombre") {
-        var nn = V.priv.compagni.map(function (id) { return (V.cache[id] || {}).nome; }).filter(Boolean);
+        var nn = V.priv.compagni.map(function (id) { var n = (V.cache[id] || {}).nome; return n && n + " (" + panno(id).n + ")"; }).filter(Boolean);
         box.appendChild(E("p", "lt-comp", nn.length ? "Le altre ombre: " + nn.join(", ") + "." : "Sei l'unica ombra nel palazzo."));
-        var fila = E("div", "lt-alleati"); V.priv.compagni.forEach(function (id) { var a = AVATAR[id]; if (a && a.busto) fila.appendChild(a.busto.cloneNode()); }); if (fila.firstChild) box.appendChild(fila);
-      } else if (V.priv.ruolo === "accusatore" && V.priv.bersaglio) box.appendChild(E("p", "lt-comp", "Il tuo bersaglio: " + ((V.cache[V.priv.bersaglio] || {}).nome || "?") + "."));
+        var fila = E("div", "lt-alleati"); V.priv.compagni.forEach(function (id) { fila.appendChild(ritratto(id)); }); if (fila.firstChild) box.appendChild(fila);
+      } else if (V.priv.ruolo === "accusatore" && V.priv.bersaglio) box.appendChild(E("p", "lt-comp", "Il tuo bersaglio: " + ((V.cache[V.priv.bersaglio] || {}).nome || "?") + " (" + panno(V.priv.bersaglio).n + ")."));
       else box.appendChild(E("p", "lt-comp", "Attento: tra voi ci sono delle ombre."));
       if (V.priv.mod && MODIFICATORI[V.priv.mod]) { var md = MODIFICATORI[V.priv.mod]; box.appendChild(E("p", "lt-mod", "Modificatore: " + md.nome + ". " + md.desc)); }
       SUONO.ruolo();
@@ -6325,28 +8434,40 @@ Vista.prototype.aggVelo = function (soloTempi) {
   if (f === "riunione" || f === "esito") return V.riunione(soloTempi);
   if (f === "fine") {
     if (V.veloTipo !== "vince") {
-      var b = E("div", "lt-pannello lt-vince"); var v = g.fine || {}; b.append(E("h2", "", titoloVince(v)), E("p", "", v.perche || ""));
+      var b = E("div", "lt-pannello lt-foglio lt-vince"), v = g.fine || {}, tes = E("div", "tes"), fila = E("div", "fila");
+      tes.append(E("p", "occh", "Proclama · Fine della notte"), E("h2", "", titoloVince(v)), E("p", "", v.perche || ""));
+      vincitoriDi(v).forEach(function (id) { var u = E("div", "u"); u.append(ritratto(id), E("span", "", (V.cache[id] || {}).nome || "?"), tintaDi(id)); fila.appendChild(u); });
+      b.append(intestazione("Registro di Palazzo Velmare"), E("i", "sig"), tes); if (fila.firstChild) b.appendChild(fila);
       V.velo.textContent = ""; V.velo.appendChild(b); V.velo.hidden = false; V.veloTipo = "vince";
       var pr = V.priv || {}, ho = v.id ? v.id === V.cb.myId : pr.squadra === v.chi;
       if (V.sonoVivo() && (pr.ruolo === "sopravvissuto" || (pr.ruolo === "gatto" && v.chi !== "ombre"))) ho = true;   /* il Gatto vince solo se le ombre non hanno vinto */
-      if (!V.guardo) { (ho ? SUONO.vince : SUONO.perde)(); b.classList.add(ho ? "vinto" : "perso"); }
+      if (!V.guardo) { (ho ? SUONO.vince : SUONO.perde)(); b.classList.add(ho ? "vinto" : "perso"); tes.appendChild(E("p", "mio", ho ? "Hai vinto" : "Hai perso")); }
     }
     return;
   }
   if (V.veloTipo) { V.velo.hidden = true; V.velo.textContent = ""; V.veloTipo = null; }
 };
-// la scena della morte: chi ti ha spento (grande, a sinistra), la lanterna che si spegne, tu che cadi. Un tocco la chiude.
+// la scena della morte: chi ti ha spento (grande, a sinistra, col telo che vedevi: travestito o no) e il tuo telo che si affloscia davvero,
+// con la lanterna che cade e si spegne, come nel palazzo. Un tocco la chiude.
 Vista.prototype.scenaMorte = function (m) {
-  var V = this, sc = V.velo.parentNode, chi = (V.cache[m.da] || {}).nome || "Qualcuno", a = AVATAR[m.da], io = AVATAR[V.cb.myId];
+  var V = this, sc = V.velo.parentNode, chi = (V.cache[m.da] || {}).nome || "Qualcuno", dk = LENZ_DI[m.da], io = LENZ_DI[V.cb.myId] || { c: 0, m: null };
   var vecchia = sc.querySelector(".lt-morte"); if (vecchia) vecchia.remove();
-  var box = E("div", "lt-morte"), palco = E("div", "palco");
-  var k = a && a.img ? a.img.cloneNode() : E("div", "sagoma"); k.classList.add("killer");
-  var me = io && io.img ? io.img.cloneNode() : E("div", "sagoma"); me.classList.add("vittima");
-  var lan = E("div", "lanterna"); lan.append(E("i", "fiamma"), E("i", "fumo"), E("i", "fumo f2"));
-  palco.append(k, lan, me);
+  var box = E("div", "lt-morte"), palco = E("div", "palco"), k, me = E("canvas", "vittima"), S = 3, q = me.getContext("2d");
+  if (dk) { var fg = figuraTelo(dk.c); k = E("canvas"); k.width = fg.width; k.height = fg.height; k.getContext("2d").drawImage(fg, 0, 0); } else k = E("div", "sagoma");
+  k.classList.add("killer");
+  me.width = 140 * S; me.height = 84 * S; palco.append(k, me);
+  var l = new Lenzuolo(io, { seme: io.c }), t0 = performance.now(), prima = t0, mostra = function () { q.clearRect(0, 0, me.width, me.height); l.disegna(q, { x: me.width * 0.46, y: 72 * S, scala: S, t: l.t, fine: true }); };
+  l.aggiorna(0, 0, 0, Math.PI / 2, false, true);
+  var giro = function () {
+    if (!box.parentNode || box.classList.contains("via")) return;
+    var ora = performance.now(), dt = Math.min(0.05, (ora - prima) / 1000); prima = ora;
+    if (ora - t0 > 900) l.spegni();
+    l.aggiorna(dt, 0, 0, null, false, true); mostra(); requestAnimationFrame(giro);
+  };
   var testo = m.modo === "sceriffo" ? "Lo Sceriffo " + chi + " ti ha colpito" : m.modo === "veterano" ? chi + " era il Veterano in allerta" : m.modo === "veleno" ? "Il veleno di " + chi + " ha fatto effetto" : chi + " ti ha spento la lanterna";
   box.append(palco, E("h2", "", testo), E("p", "", m.modo === "veterano" ? "L'hai toccato mentre era in allerta." : "Ora sei un'anima: puoi ancora finire i compiti."));
   sc.appendChild(box); vibra([90, 60, 180]); SUONO.spegni();
+  if (V.pit.ridotto) { l.spegni(); l.mucchio(); mostra(); } else giro();
   var via = function () { if (!box.parentNode || box.classList.contains("via")) return; box.classList.add("via"); setTimeout(function () { box.remove(); }, 320); };
   box.addEventListener("click", via); setTimeout(via, 3800);
 };
@@ -6359,32 +8480,141 @@ Vista.prototype.tastiCarta = function (c, id, ak) {
     tasto("dubbio", "Sospetto", function (b) { V.manda("rapida", { tipo: "sospetto", id: id }); V.lampo(b); }, "sospetto");
     tasto("fido", "Pulito", function (b) { V.manda("rapida", { tipo: "pulito", id: id }); V.lampo(b); }, "pulito");
   } else if (tipo === "vota") {
-    tasto("vota", "Vota", function () { V.conf = id; clearTimeout(V.confT); V.confT = setTimeout(function () { if (V.conf === id) { V.conf = null; V.riunione(); } }, 4000); vibra(15); V.riunione(); }, "vota");
+    var me = id === V.cb.myId;   // (votarsi da soli si può: il sigillo è pallido, così non capita per sbaglio)
+    tasto("vota" + (me ? " me" : ""), me ? "Votati" : "Vota", function () { V.conf = id; clearTimeout(V.confT); V.confT = setTimeout(function () { if (V.conf === id) { V.conf = null; V.riunione(); } }, 4000); vibra(15); V.riunione(); }, "vota");
   } else if (tipo === "conf") {
-    tasto("conf", "Confermi?", function () { if (V.mioVoto) return; V.manda("voto", { su: id }); V.mioVoto = id; V.conf = null; clearTimeout(V.confT); vibra(40); V.riunione(); }, "pulito");
-  } else if (tipo === "mio") az.appendChild(E("span", "mio", "Il tuo voto"));
-  if (ak.indexOf("|ind") >= 0) tasto("ind", "", function () { V.apriIndovina(id); }, "potere");
+    tasto("conf", "Confermi?", function () { if (V.mioVoto) return; V.manda("voto", { su: id }); V.mioVoto = id; V.conf = null; clearTimeout(V.confT); vibra(40); SUONO.sigillo(); V.riunione(); }, "pulito");
+  } else if (tipo === "mio") { var mio = E("span", "mio"); mio.append(E("span", "", "Il tuo voto"), E("i", "sig")); az.appendChild(mio); }   // il sigillo cade sul biglietto
+  if (ak.indexOf("|ind") >= 0) tasto("ind", "?", function () { V.apriIndovina(id); }, "maschera").setAttribute("aria-label", "Indovina il ruolo di " + ((V.cache[id] || {}).nome || "?"));
+};
+// in riunione la chat sta chiusa, quindi la lista prende tutto il foglio e le righe crescono fin dove c'è spazio (--rh).
+// In verticale una riga per ospite se ci stanno, altrimenti due colonne; di lato tre colonne (il numero di ospiti lo decide, non il telefono)
+Vista.prototype.riuAdatta = function () {
+  var V = this, box = V.riuBox, lista = V.riuGrid; if (!box || !box.isConnected || !V.g) return;
+  if (document.activeElement && document.activeElement.tagName === "INPUT") return;   // (mentre si scrive il foglio non si ridispone: la tastiera non deve spostare le righe)
+  var n = V.g.g.length, oriz = V.sc.classList.contains("oriz"), h = lista.clientHeight, una = !oriz && h - 16 >= n * 44;
+  box.classList.toggle("una", una);
+  var col = oriz ? 3 : una ? 1 : 2, rh = Math.floor((h - V.riuCol.offsetHeight) / Math.ceil(n / col));
+  rh = Math.max(una ? 44 : oriz ? 46 : 66, Math.min(oriz ? 92 : una ? 112 : 84, rh));   // (pochi ospiti: righe alte, ritratti e sigilli più grandi)
+  box.style.setProperty("--rh", rh + "px");
+  box.classList.toggle("ampia", rh >= (una ? 54 : 56));
+  box.classList.toggle("grande", rh >= (una ? 86 : 74));
+};
+// quante righe di «ora» non erano in «prima». L'host tiene le ultime 40: a chat piena le vecchie escono dalla testa e la lunghezza non dice più niente
+function righeNuove(prima, ora) {
+  for (var s = 0; s < prima.length; s++) {
+    var n = prima.length - s, i = 0; if (n > ora.length) continue;
+    while (i < n && prima[s + i][0] === ora[i][0] && prima[s + i][1] === ora[i][1]) i++;
+    if (i === n) return ora.length - n;
+  }
+  return ora.length;
+}
+// la chat della riunione si apre a mano: un foglietto sopra la lista, che non la sposta. Lo stato sta in V.chatS e dura tutta la riunione
+Vista.prototype.chatApri = function (si) {
+  var V = this, c = V.chatS; if (!c || !V.riuFog) return;
+  c.aperta = si;
+  V.riuFog.classList.toggle("su", si); V.btnChat.classList.toggle("aperta", si); V.btnChat.setAttribute("aria-expanded", si ? "true" : "false");
+  if (si) {
+    if (c.nuovi) c.fondo = true;   // (i non letti si leggono dall'ultimo)
+    c.nuovi = 0; c.coda = []; if (c.ora) V.bigVia();   // (da qui le righe del gioco si leggono nel foglietto)
+    if (c.fondo) V.riuChat.scrollTop = V.riuChat.scrollHeight;
+  } else if (document.activeElement === V.riuInp) V.riuInp.blur();
+  V.chatSegno(); V.chatPosiz();
+};
+// il sigillo di ceralacca col numero dei messaggi non letti: compare e sparisce con una transizione, il ridisegno non lo tocca
+Vista.prototype.chatSegno = function () {
+  var V = this, c = V.chatS; if (!c || !V.btnChat) return;
+  if (c.nuovi) {
+    var t = c.nuovi > 9 ? "9+" : String(c.nuovi);
+    if (V.chatSeg.textContent !== t) {   // (a zero il numero resta mentre il sigillo svanisce)
+      if (V.chatSeg.textContent && V.chatSeg.classList.contains("su")) { V.segScatto = !V.segScatto; V.chatSeg.classList.toggle("scatto-a", V.segScatto); V.chatSeg.classList.toggle("scatto-b", !V.segScatto); }   // (il numero cambia: uno scatto solo, i ridisegni non lo toccano)
+      V.chatSeg.textContent = t;
+    }
+  }
+  V.chatSeg.classList.toggle("su", c.nuovi > 0);
+  V.btnChat.setAttribute("aria-label", c.nuovi ? "Chat, " + c.nuovi + (c.nuovi === 1 ? " messaggio nuovo" : " messaggi nuovi") : "Chat");
+};
+// con la tastiera aperta il foglietto sale sopra i tasti del telefono e si accorcia a quello che resta: il campo si vede sempre.
+// Come la barra della chat di prossimità: la tastiera di iPhone cambia solo il «visualViewport». Con la scena girata il foglietto sta dal lato opposto alla tastiera
+Vista.prototype.chatPosiz = function () {
+  var V = this, f = V.riuFog, vv = window.visualViewport; if (!f || !f.isConnected) return;
+  var sotto = 0, r = V.riuBox.getBoundingClientRect();
+  if (vv && !V.girato && V.chatS && V.chatS.aperta && document.activeElement === V.riuInp) sotto = Math.max(0, Math.round(r.bottom - (vv.offsetTop + vv.height)));
+  f.classList.toggle("tastiera", sotto > 0);
+  if (!sotto) { f.style.top = f.style.bottom = f.style.height = ""; return; }
+  var base = Math.round(r.bottom - V.riuFondo.getBoundingClientRect().top) + 6;
+  f.style.top = "auto"; f.style.bottom = Math.max(base, sotto + 6) + "px"; f.style.height = Math.max(96, Math.min(Math.round(r.height * 0.6), Math.round(vv.height) - 12)) + "px";
+};
+// le righe del gioco (Celebrità, foto del Medium, lanterne cadute…) a chat chiusa: un bigliettino alla volta sopra le schede, che non sposta niente. Un tocco lo toglie
+Vista.prototype.bigGiro = function () {
+  var V = this, c = V.chatS, b = V.riuBig; if (!c || !b || V.bigT || c.aperta || !c.coda.length) return;
+  if (!V.intro.hidden) { V.bigT = setTimeout(function () { V.bigT = null; if (V.vivo) V.bigGiro(); }, 250); return; }   // (prima finisce la scritta grande)
+  var r = c.ora = c.coda.shift(), foto = r[2] && r[2].foto;
+  b.textContent = ""; b.appendChild(E("span", "", r[1]));
+  if (foto) { var fc = E("canvas", "foto"); b.appendChild(fc); disegnaFoto(fc, foto); }
+  b.classList.add("su");
+  V.bigT = setTimeout(function () { if (V.vivo) V.bigVia(); }, foto ? 7000 : 5000);
+};
+Vista.prototype.bigVia = function () {
+  var V = this; clearTimeout(V.bigT); if (V.chatS) V.chatS.ora = null; if (V.riuBig) V.riuBig.classList.remove("su");
+  V.bigT = setTimeout(function () { V.bigT = null; if (V.vivo) V.bigGiro(); }, 240);   // (il tempo di uscire, poi il prossimo)
+};
+// chi ha votato chi, in fondo al verdetto: in una deduzione è il dato che conta
+Vista.prototype.chiHaVotato = function (esito) {
+  var V = this, per = {}, ordine = [];
+  esito.voti.forEach(function (x) { if (!per[x[1]]) { per[x[1]] = []; ordine.push(x[1]); } per[x[1]].push(x[0]); });
+  if (!ordine.length) return null;
+  ordine.sort(function (a, b) { return (a === "salta") - (b === "salta") || per[b].length - per[a].length; });
+  var box = E("div", "chivoti"); box.appendChild(E("p", "occh", "Chi ha votato chi"));
+  ordine.forEach(function (su) {
+    var salto = su === "salta", r = E("div", "rg" + (salto ? " salto" : "")), dx = E("span", "su"), da = E("span", "da");
+    if (!salto) dx.appendChild(ritratto(su)); dx.appendChild(E("b", "", salto ? "Hanno saltato" : (V.cache[su] || {}).nome || "?")); if (!salto) dx.appendChild(tintaDi(su));
+    per[su].forEach(function (id) { var f = ritratto(id); f.title = (V.cache[id] || {}).nome || ""; da.appendChild(f); });
+    r.append(dx, da); box.appendChild(r);
+  });
+  return box;
 };
 // un tasto premuto si accende un attimo (la frase è partita)
 Vista.prototype.lampo = function (b) { b.classList.remove("fatto"); void b.offsetWidth; b.classList.add("fatto"); vibra(15); };
 Vista.prototype.riunione = function (soloTempi) {
   var V = this, g = V.g, R = g.riu, ora = performance.now(), vivo = V.sonoVivo() && !V.guardo;
-  var k = "riu|" + g.round + "|" + (V.vm.rip || 0);
+  var k = "riu|" + g.round + "|" + (V.vm.rip || 0) + "|" + (V.guardo ? 1 : 0);   // (chi rientra vede la foto prima del ruolo: la riunione si rifà quando arriva, coi tasti giusti)
   if (V.riuK !== k || V.veloTipo !== "riu") {   // (se un pannello l'ha coperta, la riunione si ridisegna)
+    soloTempi = false;   // (il foglio nuovo si riempie subito: anche se a ridisegnarlo è il giro dei secondi)
+    // la chat dura tutta la riunione: ridisegnare il foglio non la chiude, non perde il testo a metà, i non letti e il punto a cui si era arrivati
+    var cs = V.chatS, scriveva = false;
+    if (!cs || cs.r !== g.round) cs = V.chatS = { r: g.round, aperta: false, nuovi: 0, viste: [], testo: "", sc: 0, fondo: true, coda: [], ora: null };
+    else if (V.riuInp) { cs.testo = V.riuInp.value; scriveva = document.activeElement === V.riuInp; }
+    if (cs.ora) { cs.coda.unshift(cs.ora); cs.ora = null; }
+    clearTimeout(V.bigT); V.bigT = null;
     V.riuK = k; V.veloTipo = "riu"; V.velo.textContent = ""; V.velo.hidden = false;
-    var box = E("div", "lt-pannello lt-riu"); V.velo.appendChild(box);
-    var testa = E("div", "testa"); V.riuTit = E("h3", "", ""); V.riuTimer = E("div", "timer", ""); testa.append(V.riuTit, V.riuTimer); if (!V.guardo) testa.insertBefore(creaVoce("riga"), V.riuTimer); box.appendChild(testa);   // (i tasti della voce: anche qui si parla)
+    var box = E("div", "lt-pannello lt-foglio lt-riu"); V.velo.appendChild(box); V.riuBox = box; V.riuFaseK = null;
+    // in alto: chi ha chiamato la riunione, perché e quanto tempo resta
+    var testa = E("div", "testa"), chiR = E("div", "chi"), titR = E("div", "tit"), occh = E("p", "occh");
+    V.riuOcch = E("span", "", "Riunione n. " + g.round); occh.innerHTML = STEMMA; occh.append(E("span", "reg", "Registro di Palazzo Velmare · "), V.riuOcch);
+    V.riuFase = E("b", "fase", ""); V.riuTit = E("h3", "", ""); V.riuPerche = E("p", "perche", ""); V.riuTimer = E("div", "timer", "");
+    if (R && R.da != null) chiR.appendChild(ritratto(R.da));   // solo chi ha chiamato: di chi è la lanterna e dove stava non si dice
+    chiR.appendChild(V.riuFase);   // il timbro: si parla, si vota, verdetto
+    V.riuBig = E("div", "big"); V.riuBig.setAttribute("aria-live", "polite"); V.riuBig.addEventListener("click", function () { if (V.chatS && V.chatS.ora) V.bigVia(); });
+    titR.append(occh, V.riuTit); testa.append(intestazione("Registro di Palazzo Velmare"), chiR, titR, V.riuTimer, V.riuPerche, V.riuBig); box.appendChild(testa);
     V.riuGrid = E("div", "grid"); box.appendChild(V.riuGrid);
-    V.riuChat = E("div", "chat"); box.appendChild(V.riuChat);
-    V.riuRap = E("div", "rapide"); box.appendChild(V.riuRap);
+    var colonne = E("div", "colonne"), legenda = E("span", "leg"); legenda.innerHTML = icona("sospetto") + "<i>sospetto</i>" + icona("pulito") + "<i>pulito</i>";   // (di lato i tasti sono solo icone: la legenda sta qui)
+    V.riuC3 = E("span", "c3", ""); colonne.append(E("span", "c1", "Ospite"), E("span", "c2", "Note"), V.riuC3, legenda); V.riuGrid.appendChild(colonne); V.riuCol = colonne;
+    V.riuPot = E("div", "poteri"); box.appendChild(V.riuPot);   // (i tasti dei ruoli non stanno nel foglietto: non si perdono a chat chiusa)
+    // il foglietto della chat: messaggi, risposte rapide e la riga per scrivere
+    V.riuFog = E("div", "foglietto" + (cs.aperta ? " su" : "")); var cimaF = E("div", "cima"), viaF = E("button", "via"); viaF.type = "button"; viaF.innerHTML = icona("esciVoce"); viaF.setAttribute("aria-label", "Chiudi la chat");
+    viaF.addEventListener("click", function () { V.chatApri(false); }); cimaF.append(E("span", "ti", "Chat"), viaF);
+    V.riuChat = E("div", "chat"); V.riuChat.addEventListener("scroll", function () { var el = this, c = V.chatS; if (!c || el !== V.riuChat) return; c.sc = el.scrollTop; c.fondo = el.scrollHeight - el.clientHeight - el.scrollTop < 24; }, { passive: true });
+    var penna = E("div", "penna"); V.riuRap = E("div", "rapide"); penna.appendChild(V.riuRap); V.riuPen = penna; V.riuFog.append(cimaF, V.riuChat, penna);
     // la scritta grande che apre la riunione
-    var da = R ? (V.cache[R.da] || {}).nome || "?" : "?", corpoN = R && R.corpo != null ? (V.cache[R.corpo] || {}).nome : null;
     V.intro.textContent = ""; V.intro.className = "lt-intro " + (R && R.motivo === "corpo" ? "corpo" : "campana");
-    var facce = E("div", "facce"); [R && R.da, R && R.corpo].forEach(function (id, i) { if (id == null) return; var a = AVATAR[id]; var f = a && a.busto ? a.busto.cloneNode() : E("i", "pall"); f.className = i ? "morto" : ""; facce.appendChild(f); });
-    var icI = E("div", "icona"); icI.innerHTML = icona(R && R.motivo === "corpo" ? "lanterna" : "campana"); V.intro.append(icI, E("h2", "", R && R.motivo === "corpo" ? "Lanterna spenta!" : "Riunione!"), facce, E("p", "", corpoN ? da + " ha trovato " + corpoN : da + " ha suonato la campana"));
-    V.intro.hidden = false; vibra(80);
-    (R && R.motivo === "corpo" ? SUONO.corpo : SUONO.campana)();
-    clearTimeout(V.introT); V.introT = setTimeout(function () { V.intro.hidden = true; }, 2000);
+    var facce = E("div", "facce"); if (R && R.da != null) facce.appendChild(ritratto(R.da));
+    var icI = E("div", "icona"); icI.innerHTML = icona(R && R.motivo === "corpo" ? "lanterna" : "campana"); V.intro.append(icI, E("h2", "", R && R.motivo === "corpo" ? "Lanterna spenta!" : "Riunione!"), facce, E("p", "", R ? V.fraseRiunione(R) : ""));
+    if (V.introR !== g.round) {   // (ridisegnarla non la riapre: la scritta grande si vede una volta sola)
+      V.introR = g.round; V.intro.hidden = false; vibra(80);
+      (R && R.motivo === "corpo" ? SUONO.corpo : SUONO.campana)();
+      clearTimeout(V.introT); V.introT = setTimeout(function () { V.intro.hidden = true; }, 2000);
+    }
     // sospetti, «pulito», voto e Indovino stanno sulle schede dei giocatori; qui sotto solo le frasi per sé e i tasti dei ruoli
     var rapide = [["ero", "Io ero…", "pin"], ["salto", "Non so", "boh"]];
     if (V.priv && V.priv.ruolo === "sindaco" && !V.priv.rivelato && vivo) rapide.unshift(["rivela", "Rivelati", "corona"]);
@@ -6396,77 +8626,111 @@ Vista.prototype.riunione = function (soloTempi) {
         if (q[0] === "imita") return V.apriImita(b);
         V.manda("rapida", { tipo: q[0] }); V.lampo(b);
       });
-      V.riuRap.appendChild(b);
+      (q[0] === "ero" || q[0] === "salto" ? V.riuRap : V.riuPot).appendChild(b);
     });
-    V.riuForm = E("form", "scrivi"); var inp = E("input"); inp.type = "text"; inp.maxLength = 90; inp.placeholder = "Scrivi…"; var inv = E("button", "", "Invia"); inv.type = "submit"; V.riuForm.append(inp, inv); box.appendChild(V.riuForm);
+    V.riuForm = E("form", "scrivi"); var inp = E("input"); inp.type = "text"; inp.maxLength = 90; inp.placeholder = "Scrivi…"; var inv = E("button", "", "Invia"); inv.type = "submit"; V.riuForm.append(inp, inv); penna.appendChild(V.riuForm);
+    V.riuInp = inp; inp.value = cs.testo; inp.addEventListener("focus", function () { V.chatPosiz(); }); inp.addEventListener("blur", function () { V.chatPosiz(); V.riuAdatta(); });
     V.riuForm.addEventListener("submit", function (e) { e.preventDefault(); var tx = inp.value.trim(); if (!tx) return; V.manda("chat", { testo: tx }); inp.value = ""; inp.blur(); });
-    V.riuVoto = E("div", "voto"); V.btnSalta = tastoIco("btn btn-fantasma salta", "salta", "Salto il voto"); V.riuVoto.append(V.btnSalta); box.appendChild(V.riuVoto);
+    V.riuVoto = E("div", "voto"); V.btnSalta = tastoIco("btn btn-fantasma salta", "salta", "Salto il voto"); V.riuVoto.append(V.btnSalta);
+    V.btnChat = tastoIco("btn btn-fantasma cht" + (cs.aperta ? " aperta" : ""), "parla", "Chat"); V.chatSeg = E("i", "nuovi" + (cs.nuovi ? " su" : "")); V.btnChat.appendChild(V.chatSeg); V.btnChat.setAttribute("aria-expanded", cs.aperta ? "true" : "false");
+    V.btnChat.addEventListener("click", function () { V.chatApri(!V.chatS.aperta); });
+    var fondo = E("div", "fondo"); if (!V.guardo) fondo.appendChild(creaVoce("riga")); fondo.append(V.btnChat, V.riuVoto); box.append(fondo, V.riuFog); V.riuFondo = fondo;   // (la voce: anche qui si parla)
     V.btnSalta.addEventListener("click", function () { if (V.mioVoto) return; V.manda("voto", { su: "salta" }); V.mioVoto = "salta"; V.conf = null; vibra(25); V.riunione(); });
-    V.riuNota = E("p", "nota", ""); box.appendChild(V.riuNota);
-    V.conf = null; V.mioVoto = null; V.carte = {}; V.nChat = 0; V.espK = null;
+    V.conf = null; V.mioVoto = (V.priv && V.priv.voto) || null; V.carte = {}; V.riuRighe = null; V.espK = null;
     g.g.forEach(function (q) {
-      var c = E("div", "carta"); var av = AVATAR[q[0]];
-      var fac = av && av.busto ? av.busto.cloneNode() : E("i", "pall", ""); if (!av) fac.style.background = (V.cache[q[0]] || {}).colore; fac.className = av ? "faccia" : "pall";
-      c.append(fac, E("span", "nm", (V.cache[q[0]] || {}).nome || "?"), E("span", "st", ""), E("span", "vt", ""), E("div", "az"));
+      var io = q[0] === V.cb.myId, c = E("div", "carta" + (io ? " io" : "")), nt = E("span", "nt");
+      if (io) nt.appendChild(E("span", "tu", "tu")); nt.appendChild(tintaDi(q[0])); nt.appendChild(E("span", "st", ""));
+      c.append(ritratto(q[0]), E("span", "nm", (V.cache[q[0]] || {}).nome || "?"), nt, E("span", "vt", ""), E("div", "az"));
       V.carte[q[0]] = c; V.riuGrid.appendChild(c);
     });
+    if (V.riuRO) V.riuRO.disconnect();
+    if (window.ResizeObserver) { V.riuRO = new ResizeObserver(function () { V.riuAdatta(); }); V.riuRO.observe(box); V.riuRO.observe(V.riuGrid); }
+    V.riuAdatta(); V.chatSegno();
   }
   // tempi
   var disc = Math.max(0, Math.ceil((V.discFine - ora) / 1000)), voto = Math.max(0, Math.ceil((V.votoFine - ora) / 1000));
-  V.riuTimer.textContent = g.fase === "esito" ? "✓" : disc > 0 ? disc : voto;
-  if (g.fase === "riunione") V.riuNota.textContent = !vivo ? "Sei un'anima: guardi la riunione." : R && R.zittiti.indexOf(V.cb.myId) >= 0 && disc > 0 ? "Sei stato zittito: non parli, ma voti." : disc > 0 ? "Si parla: il voto si apre tra " + disc + " s" : V.mioVoto === "salta" ? "Hai saltato il voto." : V.mioVoto ? "Hai votato " + ((V.cache[V.mioVoto] || {}).nome || "") + "." : "Vota: tocca Vota sotto chi vuoi cacciare.";
+  var faseK = g.fase === "esito" ? "esito" : disc > 0 ? "parla" : "vota", resta = faseK === "parla" ? disc : voto;
+  if (V.riuFaseK !== faseK) { V.riuFaseK = faseK; V.riuTot = Math.max(1, resta); V.riuFase.textContent = { parla: "Si parla", vota: "Si vota", esito: "Verdetto" }[faseK]; V.riuC3.textContent = { parla: "Di' la tua", vota: "Voto", esito: "Voti" }[faseK]; V.riuBox.dataset.fase = faseK; var vistaF = g.round + "|" + faseK; V.riuFase.classList.toggle("cade", V.faseVista !== vistaF); V.faseVista = vistaF; }   // (il timbro cade quando la fase cambia, non quando il foglio si rifà)
+  var tmr = faseK === "esito" ? "✓" : String(resta);
+  if (V.riuTimer.textContent !== tmr) { V.riuTimer.textContent = tmr; V.riuTimer.style.setProperty("--lt-giro", faseK === "esito" ? 100 : Math.min(100, Math.round(100 * resta / V.riuTot))); V.riuTimer.classList.toggle("stretta", faseK === "vota" && resta <= 10); if (faseK === "vota" && resta > 0 && resta <= 10) { V.riuBatte = !V.riuBatte; V.riuTimer.classList.toggle("batte-a", V.riuBatte); V.riuTimer.classList.toggle("batte-b", !V.riuBatte); } }   // (gli ultimi dieci secondi battono: una volta per numero)
+  if (R) {   // (prima del ritorno dei soli tempi: la scritta cambia nel momento in cui si apre il voto)
+    // chi cade in riunione porta via i voti: il mio per lui non vale più e il sigillo torna in mano. Caduto io, il mio non conta
+    if (g.fase === "riunione" && V.mioVoto) { var votoSu = g.g.filter(function (q) { return q[0] === V.mioVoto; })[0]; if (!V.sonoVivo() || (votoSu && !votoSu[1])) V.mioVoto = null; }
+    // una riga sola, sempre piena: la testata non cambia altezza e la lista non si muove quando si apre il voto
+    var devo = faseK === "vota" && vivo && !V.mioVoto, salti = g.esito ? g.esito.voti.filter(function (x) { return x[1] === "salta"; }).length : 0;
+    var tuttiVot = faseK === "vota" && g.g.every(function (q) { return !q[1] || R.votati.indexOf(q[0]) >= 0; });   // (l'ultimo sigillo è messo, il verdetto arriva tra pochi secondi)
+    var pe = faseK === "esito" ? (salti ? "Hanno saltato: " + salti + "." : "Si contano i voti.") : !vivo ? "Sei un'anima: guardi la riunione." : faseK === "parla" ? (R.zittiti.indexOf(V.cb.myId) >= 0 ? "Sei stato zittito: non parli, ma voti." : "Si parla: il voto si apre tra " + disc + " s") : devo ? "Premi il sigillo di chi vuoi cacciare." : tuttiVot ? "Hanno votato tutti: si chiude tra " + voto + " s" : V.mioVoto === "salta" ? "Hai saltato. Aspettiamo gli altri." : "Hai votato " + ((V.cache[V.mioVoto] || {}).nome || "") + ". Aspettiamo gli altri.";
+    if (V.riuPerche.textContent !== pe) { V.riuPerche.textContent = pe; V.riuPerche.classList.toggle("chiede", devo); }
+  }
   if (soloTempi) return;
   if (R) {
-    var da = (V.cache[R.da] || {}).nome || "?";
-    V.riuTit.textContent = R.motivo === "corpo" ? da + " ha trovato una lanterna spenta" : da + " ha suonato la campana";
-    var chat = R.chat || [];
-    for (var i = V.nChat; i < chat.length; i++) {
-      var p = E("p"); var chi = chat[i][0]; if (chi != null) { var b = E("b", "", ((V.cache[chi] || {}).nome || "?") + ": "); b.style.color = (V.cache[chi] || {}).colore; p.appendChild(b); } else p.className = "sis"; p.append(chat[i][1]); V.riuChat.appendChild(p);
+    V.riuTit.textContent = V.fraseRiunione(R);
+    var chat = R.chat || [], cs2 = V.chatS, disegna = V.riuRighe ? righeNuove(V.riuRighe, chat) : chat.length, nuove = righeNuove(cs2.viste, chat);
+    for (var i = chat.length - disegna; i < chat.length; i++) {
+      var p = E("p"); var chi = chat[i][0]; if (chi != null) { var pt = ritratto(chi); pt.classList.add("pt"); p.append(pt, E("b", "", (V.cache[chi] || {}).nome || "?"), E("span", "tc", " " + panno(chi).n), ": "); } else p.className = "sis"; p.append(chat[i][2] && chat[i][2].tuo && chat[i][2].da === V.cb.myId ? chat[i][2].tuo : chat[i][1]); V.riuChat.appendChild(p);
       if (chat[i][2] && chat[i][2].foto) { var fc = E("canvas", "foto"); V.riuChat.appendChild(fc); disegnaFoto(fc, chat[i][2].foto); }
     }
-    if (chat.length > V.nChat) V.riuChat.scrollTop = V.riuChat.scrollHeight;
-    V.nChat = chat.length;
+    if (disegna && (cs2.fondo || !V.riuRighe)) V.riuChat.scrollTop = cs2.fondo ? V.riuChat.scrollHeight : cs2.sc;   // (chi sta leggendo più su resta dov'è)
+    if (!V.riuRighe && scriveva) inp.focus();
+    V.riuRighe = chat; cs2.viste = chat;
+    // a chat chiusa: i messaggi degli altri fanno il numero sul sigillo, le righe del gioco diventano bigliettini. «Ha segnalato» e «ha suonato» stanno già nella testata
+    if (!cs2.aperta) for (var j = chat.length - nuove; j < chat.length; j++) {
+      if (chat[j][0] != null) { if (chat[j][0] !== V.cb.myId) cs2.nuovi++; }
+      else if (!/ ha (segnalato una lanterna spenta|suonato la campana)\.$/.test(chat[j][1])) cs2.coda.push(chat[j]);
+    }
+    // quello che il Bracconiere legge nella trappola: è suo e basta, non passa dalla chat. L'avviso cade sulla scritta grande, il bigliettino resta da leggere
+    var trap = V.priv && V.priv.trapRuoli ? V.priv.trapRuoli.join(", ") : null;
+    if (trap && V.trapVisto !== trap) { V.trapVisto = trap; cs2.coda.push([null, "Nella trappola sono passati: " + trap + "."]); }
+    V.chatSegno(); V.bigGiro();
   }
   var votati = R ? R.votati : [], zitt = R ? R.zittiti : [], esito = g.esito, sindaci = g.sindaci || [];
   var mioBers = V.priv && V.priv.ruolo === "accusatore" ? V.priv.bersaglio : null;
   var nVoto = 0, kEs = esito ? "es|" + g.round : null, nuovoEsito = kEs && V.kVoti !== kEs;
   var zittitoIo = !!(R && zitt.indexOf(V.cb.myId) >= 0), indov = V.priv && V.priv.ruolo === "indovino" && vivo && V.priv.tentativi > 0;
+  // il foglietto dell'Indovino aperto: si chiude da solo se il voto finisce, se i tentativi finiscono o se chi guardava è caduto; il conto in alto è sempre quello vero
+  var fi = V.indovF;
+  if (fi) { var suChi = g.g.filter(function (q) { return q[0] === fi.id; })[0]; if (!fi.el.isConnected || !indov || g.fase !== "riunione" || !suChi || !suChi[1]) { fi.el.remove(); V.indovF = null; } else { var rgI = V.rigaIndov(); if (fi.riga.textContent !== rgI) fi.riga.textContent = rgI; } }
   g.g.forEach(function (q) {
     var c = V.carte[q[0]]; if (!c) return;
-    c.classList.toggle("spento", !q[1]); c.classList.toggle("mio-voto", V.mioVoto === q[0]); c.classList.toggle("votato", votati.indexOf(q[0]) >= 0);
+    var ass = !!q[1] && !!(V.assenti || {})[q[0]];   // (senza rete: una scheda sola per volta dice una cosa)
+    c.classList.toggle("spento", !q[1]); c.classList.toggle("rete", ass); c.classList.toggle("zitto", !!q[1] && !ass && zitt.indexOf(q[0]) >= 0); c.classList.toggle("mio-voto", V.mioVoto === q[0]); c.classList.toggle("votato", votati.indexOf(q[0]) >= 0);
     // i tasti sulla scheda: mentre si parla «Sospetto» e «Pulito», quando si vota «Vota» (al secondo tocco «Confermi?»)
     var altro = q[0] !== V.cb.myId, puo = vivo && !!q[1] && g.fase === "riunione";   // (votarsi da soli si può sempre)
-    var ak = !puo ? "" : disc > 0 ? (zittitoIo || !altro ? "" : "parla") : V.mioVoto ? (V.mioVoto === q[0] ? "mio" : "") : V.conf === q[0] ? "conf" : "vota";
+    var ak = !puo ? (g.fase === "esito" && V.mioVoto === q[0] ? "mio" : "") : disc > 0 ? (zittitoIo || !altro ? "" : "parla") : V.mioVoto ? (V.mioVoto === q[0] ? "mio" : "") : V.conf === q[0] ? "conf" : "vota";
     if (puo && indov && altro) ak += "|ind";
     if (c.dataset.ak !== ak) { c.dataset.ak = ak; V.tastiCarta(c, q[0], ak); }
     var nm = ((V.cache[q[0]] || {}).nome || "?") + (sindaci.indexOf(q[0]) >= 0 ? " ★" : "") + (q[0] === mioBers ? " ◎" : "");
     var nmE = c.querySelector(".nm"); if (nmE.textContent !== nm) nmE.textContent = nm;
-    nmE.style.color = V.letti[q[0]] === "buono" ? "#8ee6a8" : V.letti[q[0]] === "cattivo" ? "#ff7a8a" : "";
-    var stt = !q[1] ? "spento" : zitt.indexOf(q[0]) >= 0 ? "zittito" : "";
+    nmE.classList.toggle("buono", V.letti[q[0]] === "buono"); nmE.classList.toggle("cattivo", V.letti[q[0]] === "cattivo");
+    var stt = !q[1] ? "spento" : ass ? "assente" : zitt.indexOf(q[0]) >= 0 ? "zittito" : "";
     var st = c.querySelector(".st"); if (st.textContent !== stt) st.textContent = stt;
     if (votati.indexOf(q[0]) >= 0 && !c.dataset.batti) { c.dataset.batti = "1"; c.classList.remove("lt-batti"); void c.offsetWidth; c.classList.add("lt-batti"); }
     if (!nuovoEsito) return;
     var vt = c.querySelector(".vt"); vt.textContent = "";
     // i voti compaiono uno alla volta
-    esito.voti.forEach(function (x) { if (x[1] !== q[0]) return; for (var w = 0; w < (x[2] || 1); w++) { var d = E("i"); d.style.background = (V.cache[x[0]] || {}).colore; d.title = (V.cache[x[0]] || {}).nome || ""; d.style.animationDelay = (0.2 + nVoto * 0.18) + "s"; SUONO.voto(0.2 + nVoto * 0.18); nVoto++; vt.appendChild(d); } });
+    esito.voti.forEach(function (x) { if (x[1] !== q[0]) return; for (var w = 0, peso = Math.round(x[2] || 1); w < peso; w++) { var d = ritratto(x[0]); d.title = (V.cache[x[0]] || {}).nome || ""; d.style.animationDelay = (0.2 + nVoto * 0.18) + "s"; SUONO.voto(0.2 + nVoto * 0.18); nVoto++; vt.appendChild(d); } });
   });
   if (nuovoEsito) V.kVoti = kEs;
   var aperto = g.fase === "riunione" && disc <= 0;
   var zittito = R && zitt.indexOf(V.cb.myId) >= 0;
-  V.riuRap.hidden = V.riuForm.hidden = !vivo || g.fase !== "riunione" || zittito;
+  V.riuRap.hidden = V.riuForm.hidden = V.riuPen.hidden = V.riuPot.hidden = !vivo || g.fase !== "riunione" || zittito;
   V.riuVoto.hidden = !vivo || g.fase !== "riunione";
   V.btnSalta.disabled = !aperto || !!V.mioVoto;
   var ts = V.mioVoto === "salta" ? "Hai saltato" : V.mioVoto ? "Hai votato" : "Salto il voto", tsp = V.btnSalta.querySelector("span"); if (tsp && tsp.textContent !== ts) tsp.textContent = ts;
   if (esito && V.espK !== esito.titolo + "|" + g.round) {
     V.espK = esito.titolo + "|" + g.round;
-    var box = V.velo.querySelector(".lt-riu"), salti = esito.voti.filter(function (x) { return x[1] === "salta"; }).length;
-    V.riuNota.textContent = salti ? "Hanno saltato: " + salti + "." : "";
+    var box = V.velo.querySelector(".lt-riu");
     setTimeout(function () {
       if (V.riuK !== k || !V.vivo) return;
-      var es = E("div", "lt-esp"), av = esito.espulso != null ? AVATAR[esito.espulso] : null;
-      if (av && av.img) { var im = av.img.cloneNode(); im.className = "vola"; es.appendChild(im); } else es.appendChild(E("div", "lt-masch" + (esito.espulso == null ? " vuota" : "")));
-      es.append(E("h2", "", esito.titolo), E("p", "", esito.sotto || ""));
-      box.appendChild(es); SUONO.esce();
+      var es = E("div", "lt-esp lt-foglio"), rt = E("div", "ritr" + (esito.espulso == null ? " vuoto" : "")), tx = E("div", "txt");
+      if (esito.espulso != null) { var ft = ritratto(esito.espulso); if (ft.tagName === "IMG") { ft.src = ritrattoLenzuolo(LENZ_DI[esito.espulso].c, 330).toDataURL(); rt.appendChild(ft); } else rt.classList.add("sagoma"); }   // (il verdetto lo porta grande)
+      rt.appendChild(E("div", "timbro", esito.espulso != null ? "Cacciato" : "Nessuno"));
+      tx.append(E("p", "occh", "Verdetto · Riunione n. " + g.round), E("h2", "", esito.titolo)); if (esito.espulso != null) tx.appendChild(tintaDi(esito.espulso)); if (esito.sotto) tx.appendChild(E("p", "sotto", testoEsito(esito.sotto)));
+      var nVoti = 0, nSalti = 0; esito.voti.forEach(function (x) { var u = Math.round(x[2] || 1); if (x[1] === "salta") nSalti += u; else if (x[1] === esito.espulso) nVoti += u; });
+      var conto = E("div", "conto");   // la riga del registro: quanti voti, quanti hanno saltato
+      if (esito.espulso != null) { var c1 = E("span"); c1.append(E("b", "", String(nVoti)), nVoti === 1 ? "voto" : "voti"); conto.appendChild(c1); }
+      var c2 = E("span"); c2.append(E("b", "", String(nSalti)), nSalti === 1 ? "ha saltato" : "hanno saltato"); conto.appendChild(c2); tx.appendChild(conto);
+      es.append(intestazione("Registro di Palazzo Velmare"), rt, tx); var cv = V.chiHaVotato(esito); if (cv) es.appendChild(cv); box.appendChild(es); if (cv) ltSfuma(cv); SUONO.esce();
     }, 2600);
   }
 };
@@ -6474,12 +8738,861 @@ Vista.prototype.riunione = function (soloTempi) {
 // =========================================================
 //  STILE (prefisso lt-)
 // =========================================================
+// =========================================================
+//  IL REGISTRO DI PALAZZO VELMARE
+//  Riunione, voto, esito, regole dell'host, ruolo e finale sono fogli di carta su un tavolo di noce:
+//  ceralacca, ottone, inchiostro. Tutto in CSS: l'unica immagine è la grana qui sotto (5,6 KB, ripetuta).
+// =========================================================
+var GRANA = "iVBORw0KGgoAAAANSUhEUgAAAIwAAACMBAMAAABc7lwNAAAAMFBMVEU6JBI6JBI6JBI6JBI6JBI6JBI6JBI6JBIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADW+9ABAAAACHRSTlMABgwSGB4kKhCTungAABV1SURBVHjabVpHc+TMkS3Ts+cyoM5lQJ3LoEfXBgo933XIbo6u2jGh+26E9u/vyyo0OZ9CjDE0QJk0L1++JPNqFhsTPAau2OwdY0yJqTDDmaqv9CVjXND/0TPu8f/iU2CKPT6S8nVmSVS2C2M5k4lH6xPPysREL2uz4nVOz9JbOlbeGJPCM+veV+EuaLkzx7PembFL0kV7mbfpwtyMZXjKCW8L8XjBTJntjE/C8T33dfoOOYnisY/1mxJKOi34EsuPmhzH4oqvwSs8yY+dlTEiR8eFZHrGD/CH83HQrGiZEFxkIi1MvIXyP9E4jZ86e6FH1HEjfMj86bKa/umiFZYxj3PumYXgvXECD50uOLP+aoqiezhxmJepMh7WeOKVGeOczrTH8YFNzhVnxvcd889f5wsT8FJIfQEl1XiIs6AYnY/VL+U7K4yvTGiy2mHjLKaFmVTxrXkP63XlSl44PEV3SdKN6/CHb7k/75uNQqV+tvfLMiNvLMc9OREzL3GVN+5nU72DIZMQajzO+5HwNHt62VulT5hiHzbDDXbmT1sKf10D16xc91KWqSC4cKzjGT3ibxh51fLxLfbuQlwP+8x7rudL0MLfvzWxniM2SeJEyyj/2FJQ+HqjlDjszj/CGCmgaKfIZqcrz9fr3ZRFIeoTp7v86eHhXa8C+/eP/lB0shpuWJjKMn+Xtfp+Gk4Bz4c7wmMxZMdpxQGPYOrfxgOSX5ifn3fNgs9/udXt9hRjUYa7OisKphHvipMZkbVeqxnpoBytwPtq/dCIIgS0NtPW8vO2JX3izxt+1ioCykjbE74vIyRFPJIy0tXEe3DDWBwZQIAwZ16bD2VldlHPjZ7znml5qtn5cSIRpUhKa5vJ6hIBlh6WwR+eKGyvRdYZn4c0L+l868nmsIz3+Xi4xyIWkDvuxfxSQ3x3E/0TEAR1uUeledXXvOz62yu+yQhnkOQmaQoPnhAFgV7ITG9O7pXuOeKn3498GpLZXNO5Vp2Q5D+VUwp+FTUROvDDT8paz3wSek2wPr3dY2k4oQNPdfDDstrrXXNmEMNJw0u8KDKmfjxFSOpg5swylz03yXD8WArHXREqJtzmedWcnxG+jvsl88R+SxzBhPNccBhJYBnj6Tqlh5YbOABjprCnVz45n5eIa8OLGqnfg9eNNBfwHj+iSDMpm4ebEdnCHrjkgOebWmCNk/alxm5eRIl06h1vyVlW65KOdyQ/r3Q8xZYF8YSjOWU8XGNzq5aZfP1BuwvEh3Suu/KxjIkCYXCYNQBGyYd6D6XvFXC6Bhy1t+vNFPb0v32/YCrXPceP7ORsdzIpQcdB8NV5lJ4U+MguUbjHuZxy+bVqdtp6PCVCGJhl1LV+sd1RlaBVhRO7T4yqSvXGaKb71n5EonrRSovS0yWbUUNGNh8gJzVSq4MwgoFTGhHA0xVxDM6tHUm20sZbvwLSHLiDK7mRw+y4oiVbca6PVGO6oNr+Fhcaoa90ZvKlu3djkuCrh/oIPriCoxCK7gGZ81jHD0hyfXFmexrhsO7IXAfrMNQ0eouurFF4VUzKDVQWob7nN66H0Eh9eddXlNXJAbaKJyMCFZGgND0tbEr6ogZkcv4gA0rTNjhEG0W9Z+Dsy8hY3RCB7JzwvO9Vi1mhFL+MqIE9By7TuTR9ZQH3sDfewY4Uhqynm8p6kRxAn/FjQXaWWS7b2qEh8NJtiu8WHFpFzipb4Qhhi9LhiFhQIQSl4xZmf83k2BFgi62jmCcWDz8J5QgyQK9YI0NEFVyOBAqnADvB0Vo++bzflpJ7cVHsNC+LO+hVPVCP5+74AMRYHawRcbs5cRzn00KBTcedvVmTaL2SYSETzJa7D6PLB/Q9vy54hRs3sYuycJQxBO+wkNS9xvOI3UK8XZfDcR1ZyabZV7cdy5w8p22Yrz1lowMMyUCfilGcOBBSRG++tUT10lHQ8IZYYiFVB3tSVWXyPiUqzPWNNWQ/Aa+fcudg8shoOxMmWkclnZwybXAYVmzwHc6e6cyGlhE1yJmVtb+WuaiPuBSIIRH5yDQCdrpA8OdOMjaDGJMdNpW9Toni/pQJJcmhYXDeUZMBHFhEMunLl9tgKHyu9UL1PQax3T1zOKbOz28td6OwmnogHfSiX8pmsoHFDUL5dhtsRsR4/W/VPczd7PUFdgKnqj8CK5nKRKcaoR8D7qKajDKLg5yuXPP5bR2EyCw/ZyR/yJoWnzVxF6xqfni5bjUeruNUzbXlOhj2jDjj0SwtgCPMlQ2YvO5Tyd7j/Gx5nRTDUky6uHL54ukIXhHU4NGCEg//82A5QpK/XaNY4zTjpIEnMa92e54buSAEYn8TcjKtzYZboOIYCsEbCp1jfCSKCAaE/va32bxqwLPwzRer7o2drrmj8rxkJq4ABbO+yHYlm5o8p0yw8EHQrDQgcuXbqzcBDMfWZzQF/rqZ57NtVJvWs2HyX1MuvNXTvHcX68lFbY1+r+vGWudXF+93O60ZL5SnF5Sg82KfPy8FhxWrEN7++NJM3u4VuEgYiPJfneXqg0gLbWpBKd1AulEauHlqJYu3Vq/f9mSpZFWg3tuvxGt+neKSDyZJFfFxJaqgoFp1xVoGWxCHlaGGMJd135sJ2dXVKuFivEz+vofdDG6CYKqcPRqw0GHZal+nF478II4i6znz51u71ojywFFAFJWo1tbW7svIQnFVpj0o96DniG2zyVOKjr5AfOjrztv1120FwPUCiP+cjPs/wtdzDLazKGJsg2+wI5sZKM+Vf7rV1JRcQka/Vn0Ja60P81XmwC7++tIuM6xo1EexoaDxA/aTXPIunm7XF0DiE2pJPG8ibhf4dhxaJ0S9aLbM6rxrLt57HP5O3f2AA2Hi6x+/VqMnzuN2Aq7qWlYwLTqypxIjr99+gphvD9JOfylsiBhxajeQiWEK0+vfbq9szYQcz/i3gRUT3vencbvTvtyZWnHOg0z2/NQaXSvhO5NfHXB5un/7vF6nHy0EEXAdG3VQ0XdkHp2Wmfbi4hWMcByDmKDyOj7CzwES5ent8+L/uW918qe5Xgy6cFQvuj03/Cie5vw6f4tOv5MXp/rnThIwG4OA4ftil3/+3OaTmZd2qTHmVOAi7Ua8G4TWEl4QN53dHc5CP5toA1RWYd2sN27uf7wu+1rBYexd7RI9eGL2wxeyJVlub8sI2zkc/FdcYD8ivKcWWrlIHv6a0c9FqUAn0JcKgeJBDY6gQgPm4pDVzk+2M+hPSXZSCS+mAencoMzqSdpztk5U2V/UaN1KteHJANPJEUQDjcpob3u4zUkKwyEvoMPjo9Qh/bAWNQUavAT9F1UPW5xPKj6BrFPeEdESsUDH4FS02FOss/DI/Koj1QcsUFAO1ODomVhMgC80zIJ8efo8eAVYu+5Yj+6b8kc/Oz93ZK8l9cP4GN4acR0DJ8MCndLyorvk8OlcHWWmr7969IbmRxBNq4fygpagn51wedpvNYw9dzB50E7QE9qcGpAaEiixmsuvEXGTG00x3/SyR7ehbxvAkeJutkre4D2wlL44HvLwqw1OAfWc3UIM9IKlIKYX18vzfVb3CoOyoUkVRNGgw/S1kC9upBKYj7BEjwUXbVdId8ckNbGEET7919v5dRH3NMCrm5cYlB56lHaXhGLm2ZE2RBzU872tvW94ij1VRTHtc3wrCzEeOl5n1ErkjxaQLADAZqnjIo6Qizf+Fr68du6FR8C0bClzPKcFbVUnLdRSUERlm/zo2ywJR2DWCSv4Hid0gF8vTytfjxYRcth92cPcXtFrOUMBqXEedaHGXWjKweBFpx+W+ApuJy8oa6K81ql1KQclF7TmfN9XG1B65t6ldQ7OU8K9Sr8Y+AVH5dDC0tZEErccUANRy8i3xEBgG7nnztc3/vmeulgQEEPrhm+ikSZqgFVKRKPWUyAIzptrWAv4Q/xM4sJYyIbNGSXivixvCNiMZayCVHf4BLxShwUlmGmkuSaziaQrijteflLgHtgWez/f8bKJfn+7ofaTrOYimlFdlNVdrQCKZUpmVy56UEPAMw+rPdsniHu9TRDs7+2euDev/vn6DWKZeEVvTDW0N0zjPUYNpwdnHTKg+LUq3dpW2GkZWDVptn/5kUBLbuHt9q+GgMuhEaun6DH0mnxXEP3QJBhv59Utzy+Rn0BQEA02Gna9RZRGptrb8qYDBEneyhSokZSBjiOP7u6Ae14Fi+XFi+WVezkFYLyT58a+fNfZXbi/PG2IQMQjs/ZKtEZLTTljxml4TzCKInGp4AJITQBinjMiT7xlNn+PFVrtGmalT/fOqWfodjiPCcM8RDzq6J/AUlr0bc6nMqM3JgkU+SOXle1XbW9Zzxuu8NxIyoDouyyFLwZkgjCImrau4qGvoTZji9vPyhfdU5cOGeXCrtd6QuScMxDqXHlvlEtEg7XIEnzPR47ClXoDA1dqyDyqRcp4DsPA2Y1SDuRU6xzOryGxpXSfIKHvasliUXbTCZ1RlKXgQp5ErMl6UEITQ3G95Go2X3KnVwrtX/v56yuro2PdOFq7ZyNLtqFpSj++uV462P4UwT6nNlUKBlRabqAUY3si12Cbtx/7cjFNkEcK85/maqsFTALmgaR2S4SGvLTnzC8TFOWiKd1QgaE7fjVkf3HKquztbXNdMUbY1fq8n6c8zTukDMqxpZGmCMwBow6X0JiFeOIYxHfOzfVGiUao7NwZjU4a6UE69bSci+axtrZAFQOFpUaAao0arbPOGteCJwVUVKpcuqum3E6lgIoJEbuOLs+bIkVDZwj31Iuy0ONY+f48ZwVMiNodnFAq2Cj32iTTtO5lDQzZjW+Kv9y1XUxI0PAD2okATUIQ6BbeqTNWdURZJZ0Qa8WeyQpsZC7QnUigKejkr+eflp1KSQ7dLBEeCFskgozyYDMMBRUDqpKCcicz+H7qRBeVETwAFhfAOL6Ev303RoKXM9gM4V1LeCE5BFIo1Q2cS8zoL4kNgIpHzFq6/oD8NzBXHI+GZ/P0RgqH0PLb+QYchir0lXaj/rRrkByGxfwCRhauWmQ4Sh+HfEPpYXeSz1Ahdgx2ZqfQ0uu4dyBn4dIznZaxmk/RfeoKIgYB4Xq+o5MFEdMd5TCqcXR7CQQQM3EbEJxp2YbxnDv6Yo3eFwztFGK2AoASy7Qk4hhDJ0RIPVN9cyC/hlptRsAcRZH0qemqC2qFi2YzuzOnW5Y2yI1tO4kaH6Md2dpkumLqhHanwKnlXLAh9oYGt1O9xJYxgEuY5akZkD1wfoCnoE6S8UEceD1HVANlu+wUOc6i8brSSw8WZHS/2RVEO6JVJ7oEPQDH5SYzkkZGKQY9+lXgjwC9k5PAChClvoyTXA5FsHsU7TNEc7AdKj34okXKZEnggMpDhFB+/r9fPa1sfYh4ufcGODK7pA7rFAVuRoI4TTMmThGvCHlJGDANL/j5jx///NlI4h0lxfXVnD5RAc4rVXOChoobgMQhxJDzPoL6eOShQfSieKGw7k+3v98y6xIhmKlNJMJBe5OBWzqHkyuBO9VNIJi8QFug/huDrNn1giZi2293M5u3JT1mYIpMrHqj/xCNAfccTuFFINCsAoChgaitwy6SEcZo5/tmF7+J5MY8jnCFm95hkLV8ir4IYmE4PKYVKIOpGKBc2CKTeE5zv+JriWD4dgtl6LpwkQJxIMNr3rGMxiPIO3dMdUjXz+xiQCX2TjaDzCGmaCIHLdJ7r/VYxpNM4ePHTILTSAJKIhhS7RSxmooJJBXwXhZB/8SKMsDiavxkzG+DJ7TomGbqvn3oR4DmCNzsdK8V3qOrQvMWVMHQnXY7dMeYhzbQm2vgsWXHTIqT+ETDTHqEp4rI413nRZ6CXpnJWFIQQwWNDf636QLNPspjRNDvpvrNInU12x1xI0Ivs7QgP9mNq6lwBKdVv8/B0DKdKvdeH3OoPpJS2pB70vZCnbL0XcuihnfGjY3dlU5dnvsYLvig0BA4MgZQaLgMOmqAUxDjKIZcLJ1zU5xPgB1I7KggPl/X0Ucd2nfrzXAXy0+4DMyAOU8nUNgiT5eetL15BtLxuOYMFoXTLP5j6oQQLp0gHgoRCcNolxCfcYOTdBVoulL3B1FF2FGvSDbMuaAau/fhDfVbmMsAerqvtSl4N/UAjGfRp0DGpmFC0AfKxcXirJt+CCadKRLRMSeafNYxDKDGKSWUYfTWBt3QfgEHJSUe0/o6v0KOXTbYsYyIObTV8WYXxXt/BC0AQaFJ1pv9W0tCfRnMQRF2fQ93GCeWQxJV/DGeJmIeJsI4jD37cBJsEJHhTiKu55Ct3bfDoehSvi8klPo6fj9gLKPepxjcjzk8kse5ECVgr8hwer3bVcaJ9FQQBQ89abmTcBFD7/V/H+TqjhawHJ3EcY0RLiGFUkWY69uXTUd+TP881GtMbUQPElkOxeQxPB3ly1HFZnglGDWhXbkgpk7X89VBodq57gWQXo8djvu4aCx/VC5SHqhBG50DLqWyRLfs0KXBLN8SR4l4D05KrrF//G343xe6lT6NQselqY1q0IhQ4KgTK/K8aNs41V6qb26wjF5TjPrzfNokN3pYRR2xDHY97gyyxX8qMS9IZDTQUYTwmGNxS8T3uF4/EO8/IhUyFlIKzNAsSdvEAX+A5J/BO7C8YB8zcoFkYeqwi0KweP0YV5r9lz5BvtnikNRALqQmvfpkJmevAM+Q2e8+dscY1/c5sUjHhGSmphjNJQTE7noADqoEcvAEhWo/oWVk/+ED6mGP+rgNOiNEofpJapoagzFwLhKsxRQg+MLOgT1yUbyP+hDGBS6e8j7mP3huJYmgU8ShLICvBBA0Me1WGAhk+uFf8afz0Pw5brPhj5vy/fdygfFEJS7Anq+Ewf33Yh5y3Z8vpli7LODNpL/3f9jD/p0ZnVoi4X2iSaZ0ZaDBfzAPZy31MSsnZ1LwgBIcy0DtPGHgBPW3zylFa+r3qNW/LyRWlx6/qUJclfktHz+izhxMuSvP2pAq5d7TUP3brcC/DC1M3AOIC5zeto/NwG06FyHvLfpQrB21V+pPv31iXEhBkKyBDgLKXgMQpA/Lib7ScLEcNIyCHlIeRsdevSMxgB2JpHmXSzr1Vty925EA6P33VDAGpMJN00eohfhVnlC0eWzpQrfNGPTT5ka955roBOPwLkSfMWVzKeV0SLTRD0T2eYbsIbhxR5lQIr3f+XQMWQ5cehwrNdLjPQoq/UJR/1lT+6vj70eXY/HeTDHx6XjIvfuZ6CR1JKQhYMLB0mEAkmgyZpvhWMb0OQHNidATfMp9WeWOmO4FCHiinbdIR4AN/qp+OS10FmH6+IUfsqU2PSJn3eccobsHl4UyHv8fh8PL05dcArcAAAAASUVORK5CYII=";
+function ltCaso(seme) { var r = seme; return function () { r = (r * 16807) % 2147483647; return r / 2147483647; }; }
+// il bordo rifilato male: un poligono solo, calcolato una volta, che taglia tutti i fogli
+function ltStrappo() {
+  var a = ltCaso(4242), p = [], i, N = 30, M = 44, d = 1.6;
+  function passo(max) { d += (a() - 0.5) * 1.5; if (a() < 0.1) d = max; if (a() < 0.12) d = 0.3; d = Math.max(0, Math.min(max, d)); return d.toFixed(1); }
+  for (i = 0; i < N; i++) p.push((i / N * 100).toFixed(1) + "% " + passo(4) + "px");
+  for (i = 0; i < M; i++) p.push("calc(100% - " + passo(3.4) + "px) " + (i / M * 100).toFixed(1) + "%");
+  for (i = N; i > 0; i--) p.push((i / N * 100).toFixed(1) + "% calc(100% - " + passo(4.4) + "px)");
+  for (i = M; i > 0; i--) p.push(passo(3.4) + "px " + (i / M * 100).toFixed(1) + "%");
+  return "polygon(" + p.join(",") + ")";
+}
+// la filigrana: la lanterna del palazzo dentro la carta, che si vede appena
+function ltFiligrana(colore, forza) {
+  var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 170' fill='none' stroke='" + (colore || "#5e4018") + "' stroke-opacity='" + (forza || ".065") + "' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'><path d='M60 4v10M48 26a12 12 0 0 1 24 0'/><path d='M38 42h44L72 26H48z'/><path d='M42 42 34 134h52L78 42z'/><path d='M26 134h68v12H26z'/><path d='M60 68c14 15 14 34 0 48-14-14-14-33 0-48z'/><path d='M40 150h40L60 166z'/></svg>";
+  return "url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
+}
+// chi non ha la faccia caricata: una sagoma scura, mai un disco di colore
+function ltSagoma() {
+  var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 53' preserveAspectRatio='none'><path d='M22 11a9.6 11 0 1 1 0 22 9.6 11 0 0 1 0-22zM3 53c1-11 9-17 19-17s18 6 19 17z' fill='#1f120a'/></svg>";
+  return "url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
+}
+// il bordo a dentelli dei campioni di stoffa: un poligono solo, come le forbici da sarta
+function ltDentelli() {
+  var p = [], i, N = 16, M = 9, d = 2.4;
+  for (i = 0; i <= N * 2; i++) p.push((i / (N * 2) * 100).toFixed(2) + "% " + (i % 2 ? d : 0) + "px");
+  for (i = 1; i <= M * 2; i++) p.push("calc(100% - " + (i % 2 ? d : 0) + "px) " + (i / (M * 2) * 100).toFixed(2) + "%");
+  for (i = N * 2 - 1; i >= 0; i--) p.push((i / (N * 2) * 100).toFixed(2) + "% calc(100% - " + (i % 2 ? d : 0) + "px)");
+  for (i = M * 2 - 1; i > 0; i--) p.push((i % 2 ? d : 0) + "px " + (i / (M * 2) * 100).toFixed(2) + "%");
+  return "polygon(" + p.join(",") + ")";
+}
+// il sigillo di ceralacca: una goccia irregolare e il cerchio premuto; con la lanterna del palazzo quando è stato impresso
+function ltCera(conLanterna, pallida) {
+  var a = ltCaso(977), n = 11, pt = [], i, d = "";
+  for (i = 0; i < n; i++) { var an = i / n * 6.2832, r = 27.5 + a() * 3.6; pt.push([32 + Math.cos(an) * r, 32 + Math.sin(an) * r]); }
+  for (i = 0; i < n; i++) { var q = pt[i], w = pt[(i + 1) % n], mx = (q[0] + w[0]) / 2, my = (q[1] + w[1]) / 2; d += (i ? "" : "M" + ((pt[n - 1][0] + q[0]) / 2).toFixed(1) + " " + ((pt[n - 1][1] + q[1]) / 2).toFixed(1)) + "Q" + q[0].toFixed(1) + " " + q[1].toFixed(1) + " " + mx.toFixed(1) + " " + my.toFixed(1); }
+  var lan = "<path d='M29 21.4a3 3 0 0 1 6 0M26.4 24.6h11.2l-2.1-3.2h-7zM27.3 24.6 26 40.4h12l-1.3-15.8zM24.6 40.4h14.8v2.8H24.6zM32 28.6c2.5 2.7 2.5 6 0 8.4-2.5-2.4-2.5-5.7 0-8.4z'";
+  var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><radialGradient id='a' cx='.34' cy='.28' r='.9'><stop offset='0' stop-color='" + (pallida ? "#f4ead4" : "#dd5a64") + "'/><stop offset='.42' stop-color='" + (pallida ? "#ddc9a2" : "#a92433") + "'/><stop offset='1' stop-color='" + (pallida ? "#a98c5e" : "#570c17") + "'/></radialGradient><radialGradient id='b' cx='.62' cy='.72' r='.8'><stop offset='0' stop-color='" + (pallida ? "#efe2c6" : "#a62735") + "'/><stop offset='1' stop-color='" + (pallida ? "#d3bc90" : "#6d131d") + "'/></radialGradient></defs>" +
+    "<path d='" + d + "z' fill='#3a0710' opacity='.45' transform='translate(1.1 1.8)'/><path d='" + d + "z' fill='url(#a)'/><path d='" + d + "z' fill='none' stroke='#f0a0a0' stroke-opacity='.3'/>" +
+    "<circle cx='32' cy='32' r='22' fill='url(#b)' stroke='" + (pallida ? "#8a6d44" : "#470912") + "' stroke-width='1.7'/><circle cx='32.5' cy='32.7' r='22.2' fill='none' stroke='#ee9a9a' stroke-opacity='.42' stroke-width='.8'/>" +
+    (conLanterna ? lan + " fill='#ee9a9a' fill-opacity='.4' transform='translate(.5 .6)'/>" + lan + " fill='#4c0a13'/>" : "") + "</svg>";
+  return "url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
+}
+// il segno di spunta tirato a penna: chi ha già votato
+function ltSpunta() {
+  var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M2.2 8.8c1.3 1 2.4 2.3 3.5 4.2C7.5 8.4 10.3 5 13.9 2.9' fill='none' stroke='#1d5a3b' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+  return "url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
+}
+function cssRegistro() {
+  return `
+:root{--lt-ease:cubic-bezier(.22,1,.36,1);--r-carta:#ecdfc4;--r-chiara:#f8f0de;--r-scura:#d9c59c;--r-ink:#28180d;--r-ink2:#54402b;--r-ink3:#755d42;--r-filo:rgba(84,60,34,.36);--r-oro:#8a6519;--r-ottone:#c39a48;--r-ottone-ch:#efd595;--r-cera:#8f1d2b;--r-cera-ch:#bb3445;--r-cera-sc:#5c0f1b;--r-verde:#1d5a3b;--r-viola:#4a3678;--r-ardesia:#2c4660;--r-crema:#fff1da;--r-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;--r-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue","Inter",system-ui,sans-serif;--r-grana:url(data:image/png;base64,@GRANA@);--r-sigillo:@SIGILLO@;--r-sigillo-vuoto:@VUOTO@;--r-sigillo-pallido:@PALLIDO@;--r-filigrana:@FILIGRANA@;--r-sagoma:@SAGOMA@;--r-spunta:@SPUNTA@;--r-lanterna:@LANTERNA@;--r-seppia:rgba(84,60,34,.18);--r-seppia2:rgba(84,60,34,.3);--r-strappo:@STRAPPO@;--r-dentelli:@DENTELLI@;--r-tavolo:radial-gradient(85% 55% at 4% -4%,rgba(255,170,76,.36),rgba(255,170,76,0) 65%),radial-gradient(90% 70% at 104% 106%,rgba(104,16,40,.66),rgba(104,16,40,0) 70%),repeating-linear-gradient(91deg,rgba(255,214,160,.035) 0 1px,rgba(0,0,0,0) 1px 6px,rgba(0,0,0,.13) 6px 7px,rgba(0,0,0,0) 7px 17px),repeating-linear-gradient(88.5deg,rgba(0,0,0,0) 0 38px,rgba(255,214,160,.03) 38px 41px,rgba(0,0,0,0) 41px 73px),linear-gradient(165deg,#34211a,#1c110b)}
+
+/* il tavolo di noce e velluto sotto i fogli */
+.lt-velo:has(>.lt-riu),.lt-velo:has(>.lt-computer),.lt-velo:has(>.lt-svela),.lt-velo:has(>.lt-vince),.lt-velo:has(>.lt-lenz){background:var(--r-tavolo)}
+
+/* il colore detto a parole: la tinta del telo, una pezzetta di stoffa e il suo nome. Sulla carta scrive sempre l'inchiostro */
+.lt-tinta{display:inline-flex;align-items:center;gap:3px;min-width:0;font:italic 12.5px/1 var(--r-serif);color:var(--r-ink2);white-space:nowrap}
+.lt-tinta i{flex:none;width:9px;height:9px;border-radius:1.5px;box-shadow:inset 0 0 0 .5px rgba(20,10,4,.6),0 0 0 .5px rgba(84,60,34,.4)}
+.lt-pz{display:inline-block;flex:none;width:8px;height:8px;margin-right:4px;border-radius:1.5px;vertical-align:.02em;box-shadow:0 0 0 1px rgba(241,232,214,.4)}
+.lt-foglio .lt-pz{box-shadow:inset 0 0 0 .5px rgba(20,10,4,.6),0 0 0 .5px rgba(84,60,34,.4)}
+.lt-riu .chat .tc{font-style:italic;font-size:13px;color:var(--r-ink2)}
+.lt-riu:not(.una) .carta.spento .lt-tinta,.lt-riu:not(.una) .carta.zitto .lt-tinta{gap:0;font-size:0}
+.lt-riu:not(.una) .carta.rete .lt-tinta{display:none}
+.lt-scena:not(.oriz) .lt-riu:not(.una)[data-fase="vota"] .carta.votato .lt-tinta{gap:0;font-size:0}
+.lt-esp .txt .lt-tinta{justify-content:center;font-size:14.5px}.lt-esp .txt .lt-tinta i{width:11px;height:11px}
+.lt-esp .rg .su .lt-tinta{margin-left:3px;font-size:12px}
+.lt-vince .u .lt-tinta{justify-content:center;max-width:64px;font-size:11.5px}.lt-vince .u .lt-tinta i{width:8px;height:8px}
+.lt-ultima .lt-ruolo .lt-tinta{vertical-align:baseline;font-size:12px}
+.lt-scambio .griglia button .lt-pz{margin-right:5px}
+
+/* i campioni di stoffa: pezzi tagliati con le forbici a dentelli, appuntati sul Registro */
+.lt-lenz.lt-foglio{box-sizing:border-box;width:100%;max-width:460px;max-height:100%;display:flex;flex-direction:column;padding:15px 16px 12px;animation:ltGira .24s var(--lt-ease) both}
+.lt-lenz .testa{flex:none;display:flex;align-items:center;justify-content:space-between;min-height:40px}
+.lt-lenz h3{margin:0;font-size:23px}
+.lt-lenz .campioni{flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:7px 8px;padding:3px 2px 2px}
+.lt-lenz .cmp{position:relative;display:grid;justify-items:center;align-content:start;min-width:0;min-height:44px;margin:0;padding:0;border:0;background:none;font-family:var(--r-serif);color:var(--r-ink);filter:drop-shadow(0 1.5px 1.5px rgba(50,28,10,.5));transition:transform .16s var(--lt-ease)}
+.lt-lenz .cmp:active:not(:disabled){transform:scale(.96)}
+.lt-lenz .stoffa{position:relative;display:block;width:100%;aspect-ratio:5/3;clip-path:var(--r-dentelli);background:var(--b);transition:opacity .2s var(--lt-ease),filter .2s var(--lt-ease)}
+.lt-lenz .stoffa::before{content:"";position:absolute;inset:0;opacity:.62;background:linear-gradient(112deg,transparent 12%,var(--l) 25%,transparent 40%,transparent 58%,var(--l) 70%,transparent 84%)}
+.lt-lenz .stoffa::after{content:"";position:absolute;inset:0;opacity:.68;background:linear-gradient(112deg,transparent 30%,var(--s) 45%,transparent 58%),linear-gradient(112deg,transparent 80%,var(--s) 100%)}
+.lt-lenz .nm{max-width:100%;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 15px/1.1 var(--r-serif)}
+.lt-lenz .chi{display:block;max-width:100%;min-height:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:12px/13px var(--r-serif);color:var(--r-ink3)}
+.lt-lenz .cmp.preso .stoffa{opacity:.46;filter:saturate(.6)}
+.lt-lenz .cmp.preso .nm{color:var(--r-ink3);font-weight:400}.lt-lenz .cmp.preso .chi{color:var(--r-ink2);font-weight:700}
+.lt-lenz .cmp.preso:disabled{opacity:1}
+.lt-lenz .cmp.mio .chi{color:var(--r-cera);font-weight:700}
+.lt-lenz .cmp.mio::after,.lt-lenz .cmp.atteso::after{content:"";position:absolute;right:-3px;top:-3px;width:30px;height:30px;background:var(--r-sigillo) center/100% 100% no-repeat;transform:rotate(-10deg);animation:ltSigillo .22s var(--lt-ease) both}
+.lt-lenz .cmp.atteso::after{opacity:.55}
+.lt-lenz .nota{flex:none;margin:6px 0 0;text-align:center;font:italic 14px/1.2 var(--r-serif);color:var(--r-ink2)}
+.lt-scena.oriz .lt-lenz.lt-foglio{max-width:760px;padding:10px 16px 8px}
+.lt-scena.oriz .lt-lenz .testa{min-height:34px}
+.lt-scena.oriz .lt-lenz .campioni{grid-template-columns:repeat(6,minmax(0,1fr))}
+.lt-scena.oriz .lt-lenz .stoffa{aspect-ratio:7/3}
+
+/* il foglio: carta rifilata male, il foglio sotto, candela in alto a sinistra, filo d'oro */
+.lt-foglio{position:relative;isolation:isolate;background:none;border:0;border-radius:0;box-shadow:0 16px 34px rgba(0,0,0,.6);color:var(--r-ink);font-family:var(--r-serif);letter-spacing:0;font-variant-numeric:lining-nums}
+.lt-foglio::before{content:"";position:absolute;inset:0;z-index:-1;clip-path:var(--r-strappo);box-shadow:inset 0 0 46px rgba(112,70,24,.36);background:linear-gradient(var(--r-ottone),var(--r-ottone)) 8px 8px/calc(100% - 16px) 1px no-repeat,linear-gradient(var(--r-ottone),var(--r-ottone)) 8px calc(100% - 8px)/calc(100% - 16px) 1px no-repeat,linear-gradient(var(--r-ottone),var(--r-ottone)) 8px 8px/1px calc(100% - 16px) no-repeat,linear-gradient(var(--r-ottone),var(--r-ottone)) calc(100% - 8px) 8px/1px calc(100% - 16px) no-repeat,radial-gradient(130% 70% at -4% -6%,rgba(255,206,120,.66),rgba(255,206,120,0) 60%),radial-gradient(100% 70% at 108% 108%,rgba(92,54,20,.34),rgba(92,54,20,0) 62%),radial-gradient(10px 8px at 84% 7%,rgba(118,74,28,.22),rgba(118,74,28,0)),radial-gradient(16px 12px at 7% 64%,rgba(118,74,28,.14),rgba(118,74,28,0)),var(--r-filigrana) 50% 58%/min(62%,250px) auto no-repeat,linear-gradient(rgba(236,223,196,.42),rgba(236,223,196,.42)),var(--r-grana),linear-gradient(var(--r-carta),var(--r-carta))}
+.lt-foglio::after{content:"";position:absolute;inset:5px -4px -6px 3px;z-index:-2;clip-path:var(--r-strappo);transform:rotate(.55deg);background:var(--r-grana),linear-gradient(170deg,#c9b288,#a48a5e)}
+.lt-foglio h2,.lt-foglio h3{margin:0;color:var(--r-ink);font-family:var(--r-serif);font-weight:700;letter-spacing:0;line-height:1.12}
+.lt-foglio .occh{margin:0;font:700 11px/1.25 var(--r-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--r-ink3)}
+.lt-foglio button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer;transition:transform .16s var(--lt-ease),background-color .2s var(--lt-ease),color .2s var(--lt-ease),box-shadow .2s var(--lt-ease),opacity .2s var(--lt-ease)}
+.lt-foglio button:active:not(:disabled){transform:scale(.95)}
+.lt-foglio button:focus-visible,.lt-foglio input:focus-visible{outline:2px solid var(--r-oro);outline-offset:1px}
+.lt-foglio .btn{width:auto;margin:0;min-height:46px;border:0;border-radius:4px;font:700 16px/1.1 var(--r-serif);box-shadow:none;filter:none}
+.lt-foglio .btn.btn-fantasma{background:rgba(255,250,236,.5);color:var(--r-ink);box-shadow:inset 0 0 0 1.5px var(--r-ink2)}
+.lt-foglio .btn.btn-primario{background:linear-gradient(180deg,var(--r-cera-ch),var(--r-cera));color:var(--r-crema);box-shadow:inset 0 0 0 1px var(--r-ottone),0 2px 5px rgba(60,16,10,.35)}
+.lt-foglio .btn:disabled{opacity:.45}
+.lt-foglio .lt-chiudi{position:static;flex:none;width:44px;height:44px;margin:-4px -6px -4px 0;padding:0;border:0;border-radius:50%;background:none;color:var(--r-ink);font:400 27px/44px var(--r-serif);text-align:center}
+.lt-pannello>.lt-chiudi{top:3px;right:3px}
+.lt-foglio>.lt-chiudi{position:absolute;top:8px;right:8px;margin:0}
+.lt-foglio .lt-chiudi:active{background:rgba(84,60,34,.14)}
+
+/* la riunione: il registro aperto */
+.lt-foglio .stemma{display:inline-block;flex:none;width:20px;height:23px;color:var(--r-cera-sc);vertical-align:-6px}
+.lt-foglio .intest{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;font:700 11px/1.2 var(--r-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--r-ink2);white-space:nowrap}
+.lt-foglio .intest::before,.lt-foglio .intest::after{content:"";flex:1 1 0;min-width:6px;height:2px;border-top:1px solid var(--r-filo);border-bottom:1px solid var(--r-filo)}
+.lt-foglio .pall{display:block;background:var(--r-sagoma) center/100% 100% no-repeat,linear-gradient(#a08a6d,#6d5740)}
+.lt-riu{--vn:66px;--vv:150px;--rh:66px;display:flex;flex-direction:column;gap:5px;height:100%;max-height:900px;padding:14px 15px 12px}
+.lt-riu .testa{position:relative;flex:none;display:grid;margin:0;grid-template-columns:78px minmax(0,1fr) auto;grid-template-areas:'i i i' 'c t o' 'p p p';align-items:center;column-gap:9px;row-gap:3px;padding-bottom:5px;border-bottom:3px double var(--r-filo)}
+.lt-riu .intest{grid-area:i}
+.lt-riu .chi{grid-area:c;position:relative;display:flex;justify-content:center}
+.lt-riu .chi .faccia,.lt-riu .chi .pall{display:block;flex:none;width:48px;height:58px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1.5px var(--r-ottone),0 0 0 2.5px rgba(40,20,8,.4),0 2px 4px rgba(40,20,8,.45)}
+.lt-riu .chi .faccia{background:linear-gradient(#4a3325,#21150e)}
+.lt-riu .fase{position:absolute;left:50%;bottom:-6px;box-sizing:border-box;padding:2px 5px 1px;border:3px double var(--r-ink2);border-radius:3px;font:700 12px/1.1 var(--r-serif);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;color:var(--r-ink2);background:rgba(248,240,222,.88);transform:translateX(-50%) rotate(-6deg)}
+.lt-riu[data-fase="vota"] .fase{border-color:var(--r-cera);color:var(--r-cera);font-size:13px}
+.lt-riu[data-fase="esito"] .fase{border-color:var(--r-cera);color:var(--r-cera);font-size:11.5px;letter-spacing:.03em}
+.lt-riu[data-fase="vota"] .fase.cade{animation:ltTimbroV .24s var(--lt-ease) both}
+.lt-riu[data-fase="esito"] .fase.cade{animation:ltTimbroE .24s var(--lt-ease) both}
+@keyframes ltTimbroV{0%{transform:translateX(-50%) rotate(-14deg) scale(1.7);opacity:0}60%{transform:translateX(-50%) rotate(-5deg) scale(.95);opacity:1}100%{transform:translateX(-50%) rotate(-6deg) scale(1);opacity:1}}
+@keyframes ltTimbroE{0%{transform:translateX(-50%) rotate(-14deg) scale(1.7);opacity:0}60%{transform:translateX(-50%) rotate(-5deg) scale(.95);opacity:1}100%{transform:translateX(-50%) rotate(-6deg) scale(1);opacity:1}}
+.lt-riu .tit{grid-area:t;min-width:0}
+.lt-riu .occh .stemma,.lt-riu .occh .reg{display:none}
+.lt-riu h3{font-size:19px;margin:1px 0 0}
+.lt-riu .perche{grid-area:p;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font:italic 15px/18px var(--r-serif);color:var(--r-ink2);transition:color .2s var(--lt-ease)}
+.lt-riu .perche.chiede{font-style:normal;font-weight:700;color:var(--r-cera)}
+@property --lt-giro{syntax:"<number>";inherits:false;initial-value:100}
+.lt-riu .timer{--lt-giro:100;transition:--lt-giro .24s var(--lt-ease),color .2s var(--lt-ease);grid-area:o;flex:none;width:58px;height:58px;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;font:700 24px/1 var(--r-serif);font-variant-numeric:tabular-nums lining-nums;color:var(--r-ink);background:radial-gradient(circle,var(--r-chiara) 0 60%,rgba(0,0,0,0) 61%),conic-gradient(var(--r-ink) calc(var(--lt-giro)*1%),rgba(84,60,34,.2) 0);box-shadow:0 0 0 1px var(--r-filo),0 1px 3px rgba(60,36,14,.35)}
+.lt-riu[data-fase="vota"] .timer{background:radial-gradient(circle,var(--r-chiara) 0 60%,rgba(0,0,0,0) 61%),conic-gradient(var(--r-cera) calc(var(--lt-giro)*1%),rgba(84,60,34,.2) 0)}
+.lt-riu .timer.stretta{color:var(--r-cera)}
+.lt-riu .timer.batte-a{animation:ltBattito1 .24s var(--lt-ease)}
+.lt-riu .timer.batte-b{animation:ltBattito2 .24s var(--lt-ease)}
+@keyframes ltBattito1{0%{transform:scale(1.09)}100%{transform:none}}
+@keyframes ltBattito2{0%{transform:scale(1.09)}100%{transform:none}}
+
+/* gli ospiti: righe tirate sul foglio. Di solito due colonne di registro (nome sopra, tasti sotto); con .una, quando c'è spazio, una riga per ospite a colonne Ospite · Note · Voto */
+.lt-riu .grid{position:relative;flex:1 1 0;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:var(--rh);align-content:start;column-gap:13px}
+.lt-riu .grid::-webkit-scrollbar{display:none}
+.lt-riu .grid::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:1px;margin-left:-2px;border-left:1px solid var(--r-filo);border-right:1px solid var(--r-filo);pointer-events:none}
+.lt-riu .colonne{display:none;grid-column:1/-1}
+.lt-riu .colonne span{min-width:0}
+.lt-riu .colonne,.lt-riu .colonne i{font:700 11px/16px var(--r-sans);letter-spacing:.1em;text-transform:uppercase;color:var(--r-ink3)}
+.lt-riu .colonne i{font-style:normal;letter-spacing:.04em;text-transform:none;font-size:11px}
+.lt-riu .leg{display:none;align-items:center;gap:3px}
+.lt-riu .leg svg.ico{width:13px;height:13px;stroke-width:2.5;color:var(--r-cera)}
+.lt-riu .leg svg.ico~svg.ico{margin-left:7px;color:var(--r-verde)}
+.lt-riu .carta{position:relative;display:grid;grid-template-columns:27px minmax(0,1fr) auto;grid-template-rows:minmax(24px,1fr) 44px;grid-template-areas:'f n s' 'a a a';column-gap:6px;align-items:center;padding:2px 1px 1px;font-family:var(--r-serif);color:var(--r-ink);border-bottom:1px solid var(--r-seppia2);transition:background-color .2s var(--lt-ease)}
+.lt-riu .carta>.faccia,.lt-riu .carta>.pall{grid-area:f;display:block;width:27px;height:29px;margin-top:3px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone),0 0 0 2px rgba(40,20,8,.32)}
+.lt-riu .carta>.faccia{background:linear-gradient(#4a3325,#21150e)}
+.lt-riu .carta .nm{grid-area:n;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 16.5px/1.15 var(--r-serif);color:var(--r-ink)}
+.lt-riu .carta .nm.buono{color:var(--r-verde);text-decoration:underline}.lt-riu .carta .nm.cattivo{color:var(--r-cera);text-decoration:underline}
+.lt-riu .carta .nt{grid-area:s;display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;white-space:nowrap;font:italic 12.5px/1 var(--r-serif);color:var(--r-ink3)}
+.lt-riu .carta .tu{font-weight:700;color:var(--r-ink2)}
+.lt-riu .carta .st:empty{display:none}
+.lt-riu .carta.spento .st,.lt-riu .carta.zitto .st,.lt-riu .carta.rete .st{flex:none;box-sizing:border-box;padding:2px 5px 1px;border:2.5px double currentColor;border-radius:2px;font:700 11.5px/1.1 var(--r-serif);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.lt-riu .carta.spento .st{color:var(--r-ink2);background:rgba(248,240,222,.5);transform:rotate(-4deg)}
+.lt-riu .carta.rete .st{color:var(--r-oro);background:rgba(248,240,222,.5);transform:rotate(-3deg)}
+.lt-riu .carta.zitto .st{padding:3px 6px 2px;border:0;color:var(--r-chiara);background:var(--r-ink);box-shadow:1px 1px 0 rgba(40,20,8,.3);clip-path:polygon(0 8%,3% 0,98% 6%,100% 92%,96% 100%,2% 94%);transform:rotate(-2deg)}
+.lt-riu .carta.spento>.faccia,.lt-riu .carta.spento>.pall{filter:saturate(.6) contrast(.86);opacity:.78}
+.lt-riu .carta.spento .nm{color:var(--r-ink3);text-decoration:line-through;text-decoration-thickness:1.5px}
+.lt-riu .carta.zitto::before{content:"";pointer-events:none;position:absolute;left:0;top:21px;width:28px;height:6px;background:var(--r-ink);box-shadow:0 1px 1px rgba(0,0,0,.4);transform:rotate(-9deg);z-index:1}
+.lt-riu .carta .vt{grid-area:a;justify-self:start;align-self:center;display:flex;min-width:0;padding-left:1px}
+.lt-riu .carta .vt:empty{display:none}
+.lt-riu .carta .vt .faccia,.lt-riu .carta .vt .pall{display:block;flex:none;width:21px;height:24px;margin-right:-5px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone),0 0 0 2px var(--r-chiara);animation:ltPop .26s var(--lt-ease) both}
+.lt-riu .carta .vt .faccia{background:linear-gradient(#4a3325,#21150e)}
+@keyframes ltPop{from{transform:scale(0);opacity:0}60%{transform:scale(1.3)}to{transform:scale(1);opacity:1}}
+.lt-riu .carta .az{grid-area:a;display:flex;gap:4px;align-items:center;justify-content:flex-end;min-width:0}
+.lt-riu .carta .az:empty{display:none}
+.lt-riu .carta .az button{position:relative;z-index:0;flex:1 1 0;min-width:0;height:44px;margin:0;padding:0 3px;border:0;background:none;display:flex;align-items:center;justify-content:center;gap:3px;font:700 13px/1 var(--r-serif);color:var(--r-ink)}
+.lt-riu .carta .az button::before{content:"";position:absolute;inset:6px 0;z-index:-1;border-radius:3px;background:rgba(255,250,236,.6);box-shadow:inset 0 0 0 1px var(--r-filo);transition:background-color .2s var(--lt-ease),box-shadow .2s var(--lt-ease)}
+.lt-riu .carta .az button svg.ico{width:13px;height:13px;stroke-width:2.6}
+.lt-riu .carta .az .dubbio{flex:1.3 1 0;color:var(--r-cera)}.lt-riu .carta .az .fido{color:var(--r-verde)}
+.lt-riu .carta .az button.fatto::before{animation:ltLampo .3s var(--lt-ease)}
+@keyframes ltLampo{0%{background:var(--r-ottone-ch)}100%{background:rgba(255,250,236,.6)}}
+.lt-riu .carta .az .ind{flex:0 0 34px;gap:1px;color:var(--r-viola)}
+.lt-riu .carta[data-ak*="ind"] .az .dubbio,.lt-riu .carta[data-ak*="ind"] .az .fido{font-size:11.5px}
+.lt-riu .carta[data-ak*="ind"] .az .dubbio svg.ico,.lt-riu .carta[data-ak*="ind"] .az .fido svg.ico{display:none}
+.lt-riu .carta[data-ak*="ind"] .az .mio span{display:none}
+
+/* il voto: il sigillo di ceralacca */
+.lt-riu .carta .az .vota{flex:none;width:48px;height:48px;margin:-2px 0;border-radius:50%;background:var(--r-sigillo-vuoto) center/100% 100% no-repeat;font:700 14px/1 var(--r-serif);letter-spacing:.01em;color:var(--r-crema);text-shadow:0 1px 0 rgba(50,0,8,.9),0 0 3px rgba(50,0,8,.45);filter:none}
+.lt-riu .carta .az .vota.me{background-image:var(--r-sigillo-pallido);font-size:12px;letter-spacing:-.02em;color:var(--r-ink);text-shadow:0 1px 0 rgba(255,250,236,.6)}
+.lt-riu .carta .az .vota:active:not(:disabled){transform:scale(.86) rotate(-6deg)}
+@media (hover:hover){.lt-riu .carta .az .vota:hover{transform:translateY(-1px) rotate(-3deg)}}
+.lt-riu .carta .az .vota::before{display:none}.lt-riu .carta .az .vota svg.ico{display:none}
+.lt-riu .carta .az .conf{flex:none;height:44px;padding:0 12px;border-radius:22px;background:linear-gradient(180deg,var(--r-cera-ch),var(--r-cera) 60%,var(--r-cera-sc));font:700 14px/1 var(--r-serif);color:var(--r-crema);box-shadow:0 0 0 2px var(--r-ottone-ch),0 3px 8px rgba(60,10,10,.55);animation:ltSu .18s var(--lt-ease) both}
+.lt-riu .carta .az .conf::before{display:none}
+@keyframes ltSu{from{transform:scale(.8)}to{transform:none}}
+.lt-riu .carta .az .mio{display:flex;align-items:center;gap:3px;font:italic 700 13px/1 var(--r-serif);color:var(--r-cera);white-space:nowrap}
+.lt-riu .carta .az .sig{display:block;flex:none;width:50px;height:50px;margin:-3px 0;background:var(--r-sigillo) center/100% 100% no-repeat;transform:rotate(-10deg);transition:width .2s var(--lt-ease),height .2s var(--lt-ease);animation:ltSigillo .22s var(--lt-ease) both}
+.lt-riu[data-fase="esito"] .carta .az .sig{width:34px;height:34px;margin:0}
+@keyframes ltSigillo{0%{transform:translateY(-12px) scale(1.9) rotate(-28deg);opacity:0}58%{transform:scale(.9) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-10deg);opacity:1}}
+.lt-riu .carta.mio-voto{background-color:rgba(187,52,69,.11)}
+.lt-riu[data-fase="esito"] .carta .az .mio span{display:none}
+.lt-riu:not(.una)[data-fase="vota"] .carta.votato .nt::after{content:"votato";padding-left:14px;font-weight:700;color:var(--r-verde);background:var(--r-spunta) 0 50%/12px 12px no-repeat}
+.lt-riu .carta .vt:has(>:nth-child(7))>*{margin-right:-10px}
+.lt-batti{animation:ltBatti .3s var(--lt-ease)}
+@keyframes ltBatti{50%{background-color:rgba(195,154,72,.3)}}
+
+/* una riga per ospite */
+.lt-riu.una .grid{grid-template-columns:minmax(0,1fr);grid-template-rows:auto}
+.lt-riu.una .grid::before{display:none}
+.lt-riu.una .colonne{display:grid;grid-template-columns:minmax(0,1fr) var(--vv);border-bottom:1px solid var(--r-filo)}
+.lt-riu.una .colonne .c2{display:none}
+.lt-riu.una .colonne .c3{padding-left:6px}
+.lt-riu.una .carta{grid-template-columns:40px auto minmax(0,1fr) var(--vv);grid-template-rows:minmax(0,1fr) auto auto minmax(0,1fr);grid-template-areas:'f . . a' 'f n n a' 'f c s a' 'f . . a';column-gap:0;padding:0;background-image:linear-gradient(var(--r-seppia2),var(--r-seppia2));background-size:1px 100%;background-repeat:no-repeat;background-position:calc(100% - var(--vv)) 0}
+.lt-riu.una .carta>.faccia,.lt-riu.una .carta>.pall{width:33px;height:38px;margin:0 0 0 1px}
+.lt-riu.una .carta .nm{align-self:end;font-size:17px;line-height:1.14}
+.lt-riu.una .carta.io .nm::after{content:"\\00a0(tu)";font-size:.74em;font-weight:400;color:var(--r-ink3)}
+.lt-riu.una .carta .nt{display:contents}
+.lt-riu.una .carta .tu{display:none}
+.lt-riu.una .carta .lt-tinta{grid-area:c;align-self:start}
+.lt-riu.una .carta .st{grid-area:s;align-self:center;justify-self:start;margin:1px 0 0 6px}
+.lt-riu.una.grande .carta.spento .lt-tinta,.lt-riu.una.grande .carta.zitto .lt-tinta,.lt-riu.una.grande .carta.rete .lt-tinta{gap:0;font-size:0}
+.lt-riu.una .carta .az,.lt-riu.una .carta .vt{padding-left:6px}
+.lt-riu.una .carta .az{padding-right:1px}
+.lt-riu.una[data-fase="vota"] .carta.votato .az:empty{display:flex}
+.lt-riu.una[data-fase="vota"] .carta.votato .az::before{content:"votato";flex:none;margin-right:auto;padding-left:17px;font:italic 700 13.5px/16px var(--r-serif);color:var(--r-verde);background:var(--r-spunta) 0 50%/14px 14px no-repeat}
+.lt-riu.una[data-fase="vota"] .carta.votato.mio-voto .az .mio span{display:none}
+.lt-riu.una .carta.zitto::before{left:0;top:calc(50% + 2px);width:35px;height:7px}
+.lt-riu.una.ampia .carta{grid-template-columns:50px auto minmax(0,1fr) var(--vv)}
+.lt-riu.una.ampia .carta>.faccia,.lt-riu.una.ampia .carta>.pall{width:min(42px,calc(var(--rh)*.72));height:min(50px,calc(var(--rh)*.84))}
+.lt-riu.una.ampia .carta .nm{font-size:19px}
+.lt-riu.una.ampia .carta .lt-tinta{font-size:13.5px}
+.lt-riu.una.ampia .carta .lt-tinta i{width:10px;height:10px}
+.lt-riu.una.ampia .carta .st{font-size:12px}
+.lt-riu.una.ampia .carta .az{gap:5px}
+.lt-riu.una.ampia .carta .az .vota{width:min(60px,calc(var(--rh) - 5px));height:min(60px,calc(var(--rh) - 5px));margin:0;font-size:16px}
+.lt-riu.una.ampia .carta .az .vota.me{font-size:13px}
+.lt-riu.una.ampia .carta .az .sig{width:min(62px,calc(var(--rh) - 3px));height:min(62px,calc(var(--rh) - 3px));margin:0}
+.lt-riu.una.ampia[data-fase="esito"] .carta .az .sig{width:34px;height:34px}
+.lt-riu.una.ampia .carta.zitto::before{width:44px}
+.lt-riu.una.grande .carta{grid-template-columns:72px auto minmax(0,1fr) var(--vv)}
+.lt-riu.una.grande .carta>.faccia,.lt-riu.una.grande .carta>.pall{width:60px;height:72px}
+.lt-riu.una.grande .carta .nm{font-size:22px}
+.lt-riu.una.grande .carta .lt-tinta{gap:4px;font-size:15px}
+.lt-riu.una.grande .carta .lt-tinta i{width:12px;height:12px}
+.lt-riu.una.grande .carta .az .vota{width:70px;height:70px;font-size:18px}
+.lt-riu.una.grande .carta .az .vota.me{font-size:15px}
+.lt-riu.una.grande .carta .az .sig{width:72px;height:72px}
+.lt-riu.una.grande .carta.zitto::before{top:calc(50% + 4px);width:62px;height:10px}
+.lt-riu.una.grande .carta .st{font-size:13px}
+
+/* le note a margine */
+.lt-riu .foglietto{position:absolute;z-index:2;left:11px;right:11px;bottom:59px;height:60%;box-sizing:border-box;display:flex;flex-direction:column;gap:5px;padding:2px 9px 9px;border-radius:3px;background:var(--r-grana),linear-gradient(180deg,var(--r-chiara),var(--r-carta));box-shadow:inset 0 0 0 1px var(--r-ottone),0 0 0 1px rgba(60,36,14,.3),0 -6px 20px rgba(60,36,14,.42);opacity:0;visibility:hidden;transform:translateY(12px);transition:transform .24s var(--lt-ease),opacity .18s var(--lt-ease),visibility 0s linear .24s}
+.lt-riu .foglietto.su{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.lt-riu .foglietto .cima{flex:none;display:flex;align-items:center;justify-content:space-between;height:36px}
+.lt-riu .foglietto .ti{font:700 11px/1 var(--r-sans);letter-spacing:.13em;text-transform:uppercase;color:var(--r-ink3)}
+.lt-riu .foglietto .via{flex:none;width:44px;height:44px;margin:-4px -9px -4px 0;padding:0;border:0;border-radius:50%;background:none;display:grid;place-items:center;color:var(--r-ink)}
+.lt-riu .foglietto .via:active{background:rgba(84,60,34,.14)}
+.lt-riu .foglietto .via svg.ico{width:18px;height:18px;stroke-width:2.4}
+.lt-riu .foglietto.tastiera .cima,.lt-riu .foglietto.tastiera .rapide{display:none}
+.lt-riu .big{-webkit-tap-highlight-color:transparent;position:absolute;z-index:2;grid-area:c-start/c-start/p-end/t-end;top:0;left:0;right:0;min-height:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;padding:6px 11px 6px 36px;border-radius:2px;font:italic 15px/20px var(--r-serif);color:var(--r-ink);background:var(--r-sigillo) 8px 50%/22px 22px no-repeat,var(--r-grana),linear-gradient(var(--r-chiara),var(--r-chiara));box-shadow:inset 0 0 0 1px var(--r-ottone),0 4px 12px rgba(60,36,14,.45);cursor:pointer;opacity:0;visibility:hidden;transform:translateY(-6px);transition:transform .22s var(--lt-ease),opacity .18s var(--lt-ease),visibility 0s linear .22s}
+.lt-riu .big.su{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.lt-riu .testa:has(.big.su) .chi,.lt-riu .testa:has(.big.su) .perche{visibility:hidden}
+.lt-riu .big span{flex:1 1 auto;min-width:0}
+.lt-riu .big canvas.foto{flex:none;width:92px;height:68px;border-radius:1px;box-shadow:0 0 0 2px var(--r-crema),0 1px 3px rgba(40,20,8,.45);transform:rotate(1.5deg)}
+.lt-riu:not(.una) .big canvas.foto{width:82px;height:60px}
+.lt-riu .chat{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;margin-top:1px;padding:0 4px 0 0;border-top:1px solid var(--r-filo);font:15px/21px var(--r-serif);color:var(--r-ink);background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 20px,var(--r-seppia) 20px 21px),linear-gradient(90deg,rgba(0,0,0,0) 24px,var(--r-seppia2) 24px 25px,rgba(0,0,0,0) 25px 27px,var(--r-seppia2) 27px 28px,rgba(0,0,0,0) 28px);background-attachment:local,scroll}
+.lt-riu .chat p{flex:none;position:relative;margin:0;padding-left:32px}
+.lt-riu .chat .pt{position:absolute;left:3px;top:1px;display:block;width:17px;height:19px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone)}
+.lt-riu .chat .faccia.pt{background:linear-gradient(#4a3325,#21150e)}
+.lt-riu .chat b{font-weight:700}
+.lt-riu .chat .sis{color:var(--r-ink2);font-style:italic}
+.lt-riu .chat canvas.foto{flex:none;width:min(200px,70%);margin:4px 0 6px 32px}
+.lt-riu .penna{flex:none;display:flex;flex-wrap:wrap;gap:5px}
+.lt-riu .rapide{flex:1 1 100%;display:flex;gap:4px;min-width:0}
+.lt-riu .rapide button{flex:1 1 0;height:44px;margin:0;padding:0 9px;border:0;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:4px;font:700 14px/1 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.62);box-shadow:inset 0 0 0 1px var(--r-filo);white-space:nowrap}
+.lt-riu .rapide button svg.ico{width:15px;height:15px}
+.lt-riu .rapide button.fatto{animation:ltLampoT .3s var(--lt-ease)}
+@keyframes ltLampoT{0%{background:var(--r-ottone-ch)}100%{background:rgba(255,250,236,.62)}}
+.lt-riu .scrivi{flex:1 1 100%;min-width:0;margin:0;display:flex;gap:4px}
+.lt-riu .scrivi input{flex:1;min-width:0;height:44px;box-sizing:border-box;margin:0;padding:0 9px;border:0;border-radius:4px;font:16px var(--r-serif);color:var(--r-ink);background:var(--r-chiara);box-shadow:inset 0 0 0 1px var(--r-filo);-webkit-user-select:text;user-select:text;transition:box-shadow .2s var(--lt-ease)}
+.lt-riu .scrivi input::placeholder{color:var(--r-ink3);font-style:italic}
+.lt-riu .scrivi input:focus{outline:none;box-shadow:inset 0 0 0 1.5px var(--r-oro),0 0 0 3px rgba(195,154,72,.3)}
+.lt-riu .scrivi button{flex:none;height:44px;margin:0;padding:0 11px;border:0;border-radius:4px;font:700 15px/1 var(--r-serif);color:var(--r-crema);background:var(--r-ink)}
+.lt-riu .fondo{flex:none;display:flex;gap:6px;min-width:0}
+.lt-riu .fondo .lt-voce{flex:none}
+.lt-riu .fondo .cht{position:relative;flex:none;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;height:44px;padding:0 11px;font:700 15px/1 var(--r-serif);white-space:nowrap}
+.lt-riu .fondo .cht svg.ico{width:16px;height:16px}
+.lt-riu .fondo .cht.aperta{color:var(--r-crema);background:var(--r-ink);box-shadow:none}
+.lt-riu .fondo:has(>.voto[hidden]) .cht{flex:1}
+.lt-riu .cht .nuovi{position:absolute;top:-9px;right:-6px;width:25px;height:25px;display:grid;place-items:center;background:var(--r-sigillo-vuoto) center/100% 100% no-repeat;font:700 11.5px/1 var(--r-sans);font-style:normal;font-variant-numeric:lining-nums;color:var(--r-crema);text-shadow:0 1px 1px rgba(60,0,10,.8);pointer-events:none;opacity:0;transform:scale(.55) rotate(-10deg);transition:transform .2s var(--lt-ease),opacity .16s var(--lt-ease)}
+.lt-riu .cht .nuovi.su{opacity:1;transform:rotate(-10deg)}
+.lt-riu .cht .nuovi.scatto-a{animation:ltNumero1 .24s var(--lt-ease)}
+.lt-riu .cht .nuovi.scatto-b{animation:ltNumero2 .24s var(--lt-ease)}
+@keyframes ltNumero1{0%{transform:scale(1.36) rotate(-16deg)}100%{transform:rotate(-10deg)}}
+@keyframes ltNumero2{0%{transform:scale(1.36) rotate(-16deg)}100%{transform:rotate(-10deg)}}
+.lt-riu .poteri{flex:none;display:flex;gap:6px}
+.lt-riu .poteri:empty{display:none}
+.lt-riu .poteri button{flex:1 1 auto;height:44px;margin:0;padding:0 11px;border:0;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:5px;font:700 15px/1 var(--r-serif);color:var(--r-cera);background:rgba(255,250,236,.62);box-shadow:inset 0 0 0 1.5px var(--r-cera);white-space:nowrap}
+.lt-riu .poteri button svg.ico{width:16px;height:16px}
+.lt-riu .voto{flex:1 1 auto;min-width:0;display:flex}
+.lt-riu .voto .salta{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;height:44px;padding:0 6px;font:700 15px/1 var(--r-serif);white-space:nowrap}
+.lt-riu .voto .salta svg.ico{width:16px;height:16px}
+.lt-foglio .lt-vbtn{height:44px;min-height:44px;box-sizing:border-box;padding:0 10px;border:0;border-radius:4px;font:700 14px/1 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.62);box-shadow:inset 0 0 0 1px var(--r-filo)}
+.lt-foglio .lt-vbtn.parlo{color:var(--r-verde)}.lt-foglio .lt-vbtn.muto{color:var(--r-cera);box-shadow:inset 0 0 0 1.5px var(--r-cera)}
+.lt-foglio .lt-vbtn.spenta{color:var(--r-ottone-ch);background:var(--r-ink);box-shadow:none;animation:none}
+.lt-foglio .lt-vbtn.detto{font-size:13px;color:var(--r-cera);background:var(--r-chiara);box-shadow:inset 0 0 0 1.5px var(--r-cera);animation:none}
+.lt-vbtn.detto{animation:none}
+
+/* una zona che scorre: la sfumatura in fondo dice che c'è dell'altro */
+.lt-sf::after{content:"";flex:none;display:block;grid-column:1/-1;position:sticky;left:0;right:0;bottom:0;height:26px;margin-top:-26px;pointer-events:none;background:linear-gradient(rgba(233,219,190,0),rgba(233,219,190,.97));opacity:0;transition:opacity .2s var(--lt-ease)}
+.lt-sf.lt-piu::after{opacity:1}
+.lt-sf{scrollbar-width:none}.lt-sf::-webkit-scrollbar{display:none}
+
+/* un avviso della voce quando il tasto non si vede: un bigliettino in basso, non copre mai i titoli */
+.lt-avviso.voce{top:auto;bottom:calc(10px + env(safe-area-inset-bottom));padding:7px 12px;border:0;border-radius:2px;font:700 14px/1.2 var(--r-serif);color:var(--r-ink);background:var(--r-grana),linear-gradient(var(--r-carta),var(--r-carta));box-shadow:0 3px 8px rgba(0,0,0,.5);transform:translate(-50%,6px) rotate(-1deg)}
+.lt-avviso.voce.su{transform:translate(-50%,0) rotate(-1deg)}
+/* l'host non risponde: lo stesso bigliettino, che resta finché non torna. In alto a destra sotto la voce: in basso ci sono i tasti. Sui fogli del registro in fondo, sotto la penna. Non prende i tocchi */
+.lt-tace{--ltx:0;--lty:-6px;--ltr:1deg;position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(104px + env(safe-area-inset-top));z-index:5;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:2px;font:700 14px/1.2 var(--r-serif);color:var(--r-ink);background:var(--r-grana),linear-gradient(var(--r-carta),var(--r-carta));box-shadow:0 3px 8px rgba(0,0,0,.5);white-space:nowrap;pointer-events:none;opacity:0;transform:translate(var(--ltx),var(--lty)) rotate(var(--ltr));transition:opacity .22s var(--lt-ease),transform .22s var(--lt-ease)}
+.lt-tace.su{--lty:0px;opacity:1}
+.lt-tace .ico{flex:none;width:15px;height:15px;color:var(--r-oro)}
+.lt-velo:not([hidden])~.lt-tace{--ltx:-50%;--ltr:-1deg;left:50%;right:auto;top:auto;bottom:calc(10px + env(safe-area-inset-bottom))}
+
+/* il verdetto: una riga di registro col timbro */
+.lt-esp.lt-foglio{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 15px 13px;text-align:center;box-shadow:none;animation:ltSale .24s var(--lt-ease)}
+.lt-esp.lt-foglio::after{display:none}
+.lt-esp .intest{flex:none;align-self:stretch}
+.lt-esp .ritr{position:relative;flex:none;width:132px;height:160px;margin-top:auto;border-radius:50%;background:linear-gradient(#4a3325,#21150e);box-shadow:0 0 0 2px var(--r-ottone),0 0 0 5px var(--r-chiara),0 0 0 6px var(--r-filo),0 6px 14px rgba(50,28,10,.45);animation:ltBotta .16s var(--lt-ease) .46s}
+@keyframes ltBotta{0%{transform:none}40%{transform:translateY(3px) scale(.985)}100%{transform:none}}
+.lt-esp .ritr.vuoto{background:var(--r-lanterna) center 44%/52% auto no-repeat,linear-gradient(#4a3325,#21150e)}
+.lt-esp .ritr.sagoma{background:var(--r-sagoma) center/100% 100% no-repeat,linear-gradient(#a08a6d,#6d5740)}
+.lt-esp .ritr .faccia{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top}
+.lt-esp .timbro{position:absolute;left:50%;bottom:6px;box-sizing:border-box;padding:4px 10px 3px;border:3px double var(--r-cera);border-radius:3px;font:700 20px/1 var(--r-serif);letter-spacing:.08em;text-transform:uppercase;color:var(--r-cera);background:rgba(248,240,222,.86);white-space:nowrap;transform:translateX(-50%) rotate(-9deg);animation:ltTimbro .22s var(--lt-ease) .34s both}
+@keyframes ltTimbro{0%{transform:translateX(-50%) rotate(-16deg) scale(1.9);opacity:0}60%{transform:translateX(-50%) rotate(-8deg) scale(.94);opacity:1}100%{transform:translateX(-50%) rotate(-9deg) scale(1);opacity:1}}
+.lt-esp .txt{flex:none;width:100%;display:grid;gap:7px;justify-items:center;min-width:0;margin-bottom:auto}
+.lt-esp .conto{display:flex;align-items:stretch;justify-content:center;margin-top:2px}
+.lt-esp .conto span{display:grid;justify-items:center;align-content:start;gap:2px;min-width:96px;padding:0 14px;font:italic 14.5px/1.15 var(--r-serif);color:var(--r-ink2)}
+.lt-esp .conto span+span{box-shadow:inset 3px 0 0 -2px var(--r-filo),inset 5px 0 0 -4px var(--r-filo)}
+.lt-esp .conto b{font:700 31px/1 var(--r-serif);font-style:normal;font-variant-numeric:tabular-nums lining-nums;color:var(--r-ink)}
+@media (min-height:701px){.lt-scena:not(.oriz) .lt-esp .ritr{width:166px;height:200px}.lt-scena:not(.oriz) .lt-esp h2{font-size:33px}}
+.lt-esp h2{font-size:29px}
+.lt-esp .sotto{width:100%;box-sizing:border-box;margin:0;padding:7px 8px 0;border-top:3px double var(--r-filo);font:17px/1.28 var(--r-serif);color:var(--r-ink2)}
+.lt-esp .chivoti{flex:0 1 auto;width:100%;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:left;border-top:3px double var(--r-filo)}
+.lt-esp .chivoti .occh{padding:5px 0 4px;text-align:center;border-bottom:1px solid var(--r-filo)}
+.lt-esp .rg{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px;min-height:42px;border-bottom:1px solid var(--r-seppia2)}
+.lt-esp .rg:last-child{border-bottom:0}
+.lt-esp .rg .su{display:flex;align-items:center;gap:7px;min-width:0}
+.lt-esp .rg b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 16.5px/1.14 var(--r-serif);color:var(--r-ink)}
+.lt-esp .rg.salto b{font-weight:400;color:var(--r-ink2)}
+.lt-esp .rg .da{display:flex;padding:0 2px 0 6px}
+.lt-esp .rg .da:has(>:nth-child(7))>*{margin-left:-11px}
+.lt-esp .rg .faccia,.lt-esp .rg .pall{display:block;flex:none;width:28px;height:33px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone)}
+.lt-esp .rg .faccia{background:linear-gradient(#4a3325,#21150e)}
+.lt-esp .rg .da .faccia,.lt-esp .rg .da .pall{margin-left:-6px;box-shadow:0 0 0 1px var(--r-ottone),0 0 0 2px var(--r-chiara)}
+
+/* l'Indovino e l'Imitatore: un foglietto sopra il registro */
+.lt-indov.lt-foglio{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;gap:7px;padding:17px 15px 13px;box-shadow:none;animation:ltSale .22s var(--lt-ease)}
+.lt-indov.lt-foglio::after{display:none}
+.lt-riu .lt-indov h3{flex:none;margin:0;font-size:21px;white-space:normal;overflow:visible}
+.lt-indov .capo{flex:none;display:flex;align-items:center;gap:9px;min-width:0}
+.lt-riu .lt-indov .capo h3{flex:1 1 auto;min-width:0}
+.lt-indov .capo .faccia,.lt-indov .capo .pall{display:block;flex:none;width:30px;height:34px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone),0 0 0 2px rgba(40,20,8,.32)}
+.lt-indov .capo .faccia{background:linear-gradient(#4a3325,#21150e)}
+.lt-indov p{flex:none;margin:0;font:italic 14px/1.25 var(--r-serif);color:var(--r-ink2)}
+.lt-indov .griglia{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:4px;align-content:start}
+.lt-indov .griglia.gruppi{display:flex;flex-direction:column;gap:3px}
+.lt-indov h4{flex:none;margin:4px 0 0;padding-bottom:1px;border-bottom:1px solid currentColor;font:700 11px/1.3 var(--r-sans);letter-spacing:.13em;text-transform:uppercase;color:var(--r-ink2)}
+.lt-indov h4.ombre{color:var(--r-cera)}.lt-indov h4.soli{color:var(--r-viola)}
+.lt-indov .gruppo{flex:1 0 auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(44px,1fr);gap:3px}
+.lt-indov .griglia button{min-height:44px;margin:0;padding:3px;border:0;border-radius:3px;font:700 14px/1.08 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.56);box-shadow:inset 0 0 0 1px var(--r-filo)}
+.lt-indov .griglia button.ombre{color:var(--r-cera)}.lt-indov .griglia button.soli{color:var(--r-viola)}
+.lt-indov .annulla{flex:none;min-height:44px;margin:0;border:0;border-radius:4px;font:700 15px/1 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.5);box-shadow:inset 0 0 0 1.5px var(--r-ink2)}
+
+/* la scheda del ruolo, le scelte, la rivelazione, il risultato */
+.lt-infor.lt-foglio{max-width:420px;padding:14px 16px 15px;text-align:left}
+.lt-infor .testa{display:flex;align-items:center;gap:9px;min-height:40px;margin:4px 0 7px;padding-bottom:4px;border-bottom:3px double var(--r-filo)}
+.lt-infor h3{flex:1;min-width:0;font-size:24px}
+.lt-infor .sq{flex:none;box-sizing:border-box;padding:3px 6px 2px;border:2.5px double currentColor;border-radius:2px;font:700 12px/1.1 var(--r-serif);letter-spacing:.06em;text-transform:uppercase;color:var(--r-oro);transform:rotate(-3deg)}
+.lt-infor.ombre .sq,.lt-infor.ombre h3{color:var(--r-cera)}.lt-infor.soli .sq,.lt-infor.soli h3{color:var(--r-viola)}.lt-infor.fantasma .sq,.lt-infor.fantasma h3{color:var(--r-ardesia)}
+.lt-infor .desc{margin:0 0 8px;font:16px/1.38 var(--r-serif);color:var(--r-ink)}
+.lt-infor ul{margin:0;padding-left:18px;display:grid;gap:5px;font:14.5px/1.32 var(--r-serif);color:var(--r-ink2);text-align:left}
+.lt-scambio.lt-foglio{display:flex;flex-direction:column;gap:8px;padding:14px 16px 15px}
+.lt-scambio h3{font-size:22px}
+.lt-scambio p{margin:0;font:italic 15px/1.3 var(--r-serif);color:var(--r-ink2)}
+.lt-scambio .griglia{min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:5px}
+.lt-scambio .griglia button{min-height:46px;margin:0;padding:6px 4px;border:0;border-radius:3px;font:700 14px/1.1 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.66);box-shadow:inset 0 0 0 1px var(--r-filo)}
+.lt-scambio .griglia button.sel{color:var(--r-cera);background:rgba(187,52,69,.14);box-shadow:inset 0 0 0 2px var(--r-cera)}
+.lt-scambio .griglia.sab{grid-template-columns:minmax(0,1fr)}
+.lt-scambio .griglia.sab button{display:grid;gap:3px;padding:9px 11px;text-align:left}
+.lt-scambio .griglia.sab b{display:flex;align-items:center;gap:8px;font:700 17px/1.1 var(--r-serif)}
+.lt-scambio .griglia.sab b svg{width:21px;height:21px;flex:none;color:var(--r-cera)}
+.lt-scambio .griglia.sab small{font:14px/1.25 var(--r-serif);color:var(--r-ink2)}
+.lt-scambio .piede{display:flex;gap:8px}.lt-scambio .piede .btn{flex:1}
+.lt-svela.lt-foglio{max-width:420px;padding:14px 18px 18px;text-align:center;animation:ltGira .3s var(--lt-ease) both}
+.lt-svela .intest{margin-bottom:12px}
+.lt-svela h2{margin:4px 0 8px;font-size:39px;color:var(--r-oro)}.lt-svela.ombre h2{color:var(--r-cera)}.lt-svela.soli h2{color:var(--r-viola)}
+.lt-svela p{margin:0 0 8px;font:16px/1.38 var(--r-serif);color:var(--r-ink2)}
+.lt-svela .lt-sopra{font:700 11px/1.2 var(--r-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--r-ink3)}
+.lt-svela .lt-comp{font-weight:700;color:var(--r-ink)}
+.lt-svela .lt-conto{font:700 15.5px/1.2 var(--r-serif);color:var(--r-ink)!important;font-variant-numeric:tabular-nums}
+.lt-svela .lt-mod{color:var(--r-viola)!important}
+.lt-svela-av{display:block;width:84px;height:100px;margin:0 auto 8px;border-radius:50%;object-fit:cover;object-position:top;background:linear-gradient(#4a3325,#21150e);box-shadow:0 0 0 2px var(--r-ottone),0 0 0 4px var(--r-chiara),0 0 0 5px var(--r-filo)}
+.lt-alleati{display:flex;justify-content:center;gap:9px;margin-top:6px}
+.lt-alleati img{width:44px;height:52px;border-radius:50%;object-fit:cover;object-position:top;background:linear-gradient(#4a3325,#21150e);box-shadow:0 0 0 1.5px var(--r-cera)}
+.lt-vince.lt-foglio{position:relative;width:100%;max-width:480px;height:100%;max-height:800px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px 22px;text-align:center}
+.lt-vince .intest{position:absolute;left:15px;right:15px;top:14px}
+.lt-vince .sig{display:block;flex:none;width:128px;height:128px;background:var(--r-sigillo) center/100% 100% no-repeat;transform:rotate(-10deg);animation:ltSigillo .24s var(--lt-ease) .08s both}
+.lt-vince .tes{display:grid;gap:6px;justify-items:center;min-width:0}
+.lt-vince h2{font-size:38px;animation:ltColpo .3s var(--lt-ease) both}
+.lt-vince.perso h2{color:var(--r-cera)}
+.lt-vince p{margin:0;font:18px/1.32 var(--r-serif);color:var(--r-ink2)}
+.lt-vince p.occh{font:700 11px/1.25 var(--r-sans)}
+.lt-vince p.mio{font:italic 700 16px/1.2 var(--r-serif);color:var(--r-ink)}
+.lt-vince .fila{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 10px;min-width:0;padding-top:9px;border-top:3px double var(--r-filo)}
+.lt-vince .u{display:grid;justify-items:center;gap:4px;width:64px;min-width:0}
+.lt-vince .u .faccia,.lt-vince .u .pall{display:block;width:54px;height:64px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1.5px var(--r-ottone),0 0 0 3px var(--r-chiara),0 0 0 4px var(--r-filo)}
+.lt-vince .u .faccia{background:linear-gradient(#4a3325,#21150e)}
+.lt-vince .u>span:not(.lt-tinta){max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 14.5px/1.15 var(--r-serif);color:var(--r-ink)}
+
+/* le regole dell'host: il registro coi segnalibri di nastro */
+.lt-computer.lt-foglio{max-width:480px;height:100%;max-height:min(100%,800px);display:flex;flex-direction:column;padding:14px 15px 12px}
+.lt-computer>.intest{flex:none}
+.lt-computer .testa{flex:none;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;min-height:38px}
+.lt-computer .tit{grid-column:2;min-width:0;text-align:center}
+.lt-computer h3{font-size:22px}
+.lt-computer .lt-chiudi{grid-column:3;justify-self:end}
+.lt-computer .corpo{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.lt-computer .lt-pc{flex:1 1 auto;min-height:0}
+.lt-computer .piede{flex:none;display:flex;flex-direction:row;flex-wrap:wrap;gap:5px;margin-top:6px;padding:0}
+.lt-computer .piede button{flex:1 1 40%;width:auto;min-width:0;min-height:44px;margin:0;padding:0 7px;border:0;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;gap:4px;font:700 14.5px/1.05 var(--r-serif);color:var(--r-ink);background:rgba(255,250,236,.6);box-shadow:inset 0 0 0 1px var(--r-ink2)}
+.lt-computer .piede button svg.ico{width:15px;height:15px}
+.lt-computer .piede button i{font-style:normal}
+.lt-computer .piede .via{flex:1 1 100%;min-height:50px;font:700 19px/1 var(--r-serif);color:var(--r-crema);background:linear-gradient(180deg,var(--r-cera-ch),var(--r-cera) 62%,var(--r-cera-sc));box-shadow:inset 0 0 0 1px var(--r-ottone),0 3px 7px rgba(60,16,10,.42)}
+.lt-computer .piede .via:disabled{opacity:.45}.lt-computer .piede .via svg.ico{display:none}
+.lt-computer>.nota{flex:none;margin:5px 0 0;font:italic 13.5px/1.2 var(--r-serif);color:var(--r-ink2);text-align:center}
+.lt-pronti{flex:none;display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 4px}.lt-pronti[hidden]{display:none}
+.lt-pronti span{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:2px;font:700 12.5px/1.1 var(--r-serif);color:var(--r-ink2);box-shadow:inset 0 0 0 1px var(--r-filo)}
+.lt-pronti span.ok{color:var(--r-verde)}.lt-pronti svg.ico{width:.95em;height:.95em;vertical-align:-.12em}
+.lt-pc{display:flex;flex-direction:column;min-height:0;font-family:var(--r-serif);color:var(--r-ink);font-variant-numeric:lining-nums}
+.lt-pc.lt-foglio{box-sizing:border-box;width:100%;max-width:480px;margin:0 auto;padding:11px 13px 9px;box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.lt-pc button{font:inherit;border:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lt-pc svg.ico{width:1.2em;height:1.2em;flex:none;vertical-align:-.22em}
+.lt-pc-barra{flex:none;display:flex;align-items:center;gap:6px;min-height:44px}
+.lt-pc-barra>span:first-child{flex:1;min-width:0;font:700 11px/1.2 var(--r-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--r-ink3)}
+.lt-pc-barra>span.tit{font:700 19px/1.05 var(--r-serif);letter-spacing:0;text-transform:none;color:var(--r-ink)}
+.lt-pc-preset{display:flex;gap:4px}
+.lt-pc-preset button{position:relative;z-index:0;height:44px;padding:0 10px;background:none;font:700 14px/1 var(--r-serif);color:var(--r-ink2)}
+.lt-pc-preset button::before{content:"";position:absolute;inset:6px 0;z-index:-1;border-radius:3px;box-shadow:inset 0 0 0 1px var(--r-filo);transition:background-color .2s var(--lt-ease),box-shadow .2s var(--lt-ease)}
+.lt-pc-preset button.attiva{color:var(--r-cera)}
+.lt-pc-preset button.attiva::before{background:rgba(187,52,69,.1);box-shadow:inset 0 0 0 1.5px var(--r-cera),inset 0 0 0 3px rgba(248,240,222,.8),inset 0 0 0 3.5px var(--r-cera)}
+.lt-pc-preset .scelta{font:italic 700 15.5px/44px var(--r-serif);color:var(--r-cera)}
+.lt-pc-schede{position:relative;z-index:1;flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:start;gap:4px;height:56px;padding:0 3px;border-top:3px double var(--r-filo)}
+.lt-pc-schede button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:46px;padding:0 0 9px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,rgba(0,0,0,.06) 1px 2px),linear-gradient(90deg,#4f3625,#6e4e36 50%,#4f3625);color:#f0dfc2;font:700 12px/1 var(--r-serif);clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 7px),0 100%);transition:height .2s var(--lt-ease),transform .16s var(--lt-ease)}
+.lt-pc-schede button::after{content:"";position:absolute;left:3px;right:3px;top:3px;border-top:1.5px dashed rgba(255,235,200,.5);pointer-events:none}
+.lt-pc-schede button.attiva{height:54px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,rgba(0,0,0,.06) 1px 2px),linear-gradient(90deg,var(--r-cera),var(--r-cera-ch) 50%,var(--r-cera));color:var(--r-crema)}
+.lt-foglio .lt-pc-schede button:active:not(:disabled){transform:translateY(2px)}
+.lt-pc-schede b{display:block;line-height:0}.lt-pc-schede b svg{width:18px;height:18px}
+.lt-pc-corpo{position:relative;z-index:2;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 3px;border-bottom:3px double var(--r-filo)}
+.lt-pc-pag{display:flex;flex-direction:column;min-height:100%;animation:ltPcEntra .2s var(--lt-ease) both}
+@keyframes ltPcEntra{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.lt-pc-riga{flex:1 0 44px;max-height:60px;display:flex;align-items:center;gap:5px;min-height:44px;border-bottom:1px solid var(--r-seppia2)}
+.lt-pc-riga:last-child{border-bottom:0}
+.lt-pc-riga .et{flex:0 1 auto;min-width:0;font:600 15.5px/1.1 var(--r-serif);color:var(--r-ink)}
+.lt-pc-riga .pp{flex:1 1 6px;min-width:4px;height:12px;margin-top:6px;border-bottom:1.5px dotted rgba(84,60,34,.42)}
+.lt-pc-riga .ctr{flex:none;display:flex;align-items:center}
+.lt-pc-riga .fr{width:34px;height:44px;padding:0;background:none;color:var(--r-cera);font:400 27px/40px var(--r-serif)}
+.lt-pc-riga .fr:disabled{color:rgba(84,60,34,.28)}
+.lt-pc-riga .val{position:relative;z-index:0;min-width:64px;max-width:108px;height:44px;padding:0 7px;background:none;font:700 14.5px/1.04 var(--r-serif);color:var(--r-ink)}
+.lt-pc-riga .val::before{content:"";position:absolute;inset:6px 0;z-index:-1;border-radius:3px;background:rgba(255,255,255,.5);box-shadow:inset 0 0 0 1px var(--r-filo)}
+.lt-pc-riga span.val{flex:none;display:block;height:auto;text-align:right;font-style:italic;font-weight:700}
+.lt-pc-riga span.val::before{display:none}
+.lt-pc .pop{animation:ltPcPop .2s var(--lt-ease)}
+@keyframes ltPcPop{from{transform:scale(.88)}to{transform:none}}
+.lt-pc-aiuto{flex:none;margin:4px 2px 5px;font:italic 14px/1.22 var(--r-serif);color:var(--r-ink2)}
+.lt-pc-sq{flex:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;border-bottom:1px solid var(--r-filo)}
+.lt-pc-sq button{height:44px;padding:0;background:none;font:700 14px/1 var(--r-serif);color:var(--r-ink3);box-shadow:inset 0 0 0 rgba(0,0,0,0)}
+.lt-pc-sq button.attiva{color:var(--r-ink);box-shadow:inset 0 -3px 0 var(--r-ink)}
+.lt-pc-sq button.ombre.attiva{color:var(--r-cera);box-shadow:inset 0 -3px 0 var(--r-cera)}
+.lt-pc-sq button.soli.attiva{color:var(--r-viola);box-shadow:inset 0 -3px 0 var(--r-viola)}
+.lt-pc-sq button.mod.attiva{color:var(--r-ardesia);box-shadow:inset 0 -3px 0 var(--r-ardesia)}
+.lt-pc-ruoli{flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--r-seppia2);border-left:1px solid var(--r-seppia2)}
+.lt-pc-r{position:relative;display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:0;height:47px;box-sizing:border-box;padding:2px 5px;overflow:hidden;text-align:left;background:none;border-right:1px solid var(--r-seppia2);border-bottom:1px solid var(--r-seppia2);color:var(--r-ink)}
+.lt-pc .lt-pc-r{border-right:1px solid var(--r-seppia2);border-bottom:1px solid var(--r-seppia2)}
+.lt-pc-r b{display:block;font:700 13.5px/1.14 var(--r-serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lt-pc-r .quanto{display:flex;align-items:flex-end;gap:5px;height:16px}
+.lt-pc-r .sp{font:italic 12.5px/1 var(--r-serif);color:var(--r-ink2)}
+.lt-pc .cand{display:inline-flex;align-items:flex-end;gap:2px;height:16px}
+.lt-pc .cand i{position:relative;display:block;width:6px;height:9px;border-radius:1px 1px 0 0;background:rgba(84,60,34,.14);box-shadow:inset 0 0 0 .5px rgba(84,60,34,.5);transition:background-color .2s var(--lt-ease)}
+.lt-pc .cand i::before{content:"";position:absolute;left:.5px;bottom:9.5px;width:5px;height:6px;border-radius:50% 50% 45% 45%/65% 65% 35% 35%;background:radial-gradient(circle at 50% 72%,#fff2b8 0 24%,#f2a93a 56%,#c9541e 100%);opacity:0;transform:scaleY(.5);transform-origin:50% 100%;transition:opacity .2s var(--lt-ease),transform .2s var(--lt-ease)}
+.lt-pc .cand i.on{background:linear-gradient(90deg,#fff6e2,#e4cfa4);box-shadow:inset 0 0 0 .5px rgba(84,60,34,.65)}
+.lt-pc .cand i.on::before{opacity:1;transform:none}
+.lt-pc-r.zero{background:rgba(84,60,34,.05)}.lt-pc-r.zero b{color:var(--r-ink3);text-decoration:line-through}.lt-pc-r.zero .sp{color:var(--r-ink3)}
+.lt-pc-tutti{flex:none;display:flex;align-items:center;gap:3px;margin-top:2px;font:italic 14px/1 var(--r-serif);color:var(--r-ink2)}
+.lt-pc-tutti span{margin-right:3px}
+.lt-pc-tutti button{position:relative;z-index:0;flex:1;height:44px;padding:0;background:none;font:700 13.5px/1 var(--r-serif);font-variant-numeric:tabular-nums lining-nums;color:var(--r-ink)}
+.lt-pc-tutti button::before{content:"";position:absolute;inset:7px 0;z-index:-1;border-radius:3px;box-shadow:inset 0 0 0 1px var(--r-filo)}
+.lt-pc-pick{flex:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 3px;margin-bottom:3px}
+.lt-pc-pick button{position:relative;z-index:0;min-width:0;height:44px;padding:0 1px;background:none;font:700 12px/1.05 var(--r-serif);letter-spacing:-.015em;color:var(--r-ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lt-pc-pick button::before{content:"";position:absolute;inset:4px 0;z-index:-1;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(84,60,34,.24)}
+.lt-pc-pick button.attiva{color:var(--r-crema)}
+.lt-pc-pick button.attiva::before{background:var(--r-ink);box-shadow:none}
+.lt-pc-regole{flex:none;border-top:3px double var(--r-filo)}
+.lt-pc-nota{margin:5px 0 0;font:italic 14px/1.25 var(--r-serif);color:var(--r-ink2)}
+.lt-pc-stato{flex:none;margin-top:5px;padding:0 3px;font:italic 14px/1.22 var(--r-serif);color:var(--r-ink2);text-align:center}
+
+/* la schermata dell'app con le regole, prima di aprire la stanza: anche lei sul tavolo, niente blu di SPeeD GAME (solo per Lanterne) */
+html:has(.lt-pc.lt-foglio),body:has(.lt-pc.lt-foglio){background:#1c110b}
+#app:has(.lt-pc.lt-foglio){max-width:none}
+.schermata:has(.lt-pc.lt-foglio){max-width:none;background:var(--r-tavolo);color:var(--r-crema)}
+.schermata:has(.lt-pc.lt-foglio)>.testa h1,.schermata:has(.lt-pc.lt-foglio)>.testa h2{margin:0;color:var(--r-ottone-ch);font-family:var(--r-serif);font-weight:700;letter-spacing:0}
+.schermata:has(.lt-pc.lt-foglio)>.testa .sotto{color:#ecdcc0;font-family:var(--r-serif);opacity:1}
+.schermata:has(.lt-pc.lt-foglio)>.testa .stemma{display:block;flex:none;width:30px;height:35px;color:var(--r-ottone-ch)}
+.schermata:has(.lt-pc.lt-foglio)>.testa .btn{color:var(--r-ottone-ch);background:none;border-color:rgba(195,154,72,.6)}
+.schermata:has(.lt-pc.lt-foglio) .modulo-nota{margin:0 0 7px;color:#ecdcc0;font-family:var(--r-serif);font-size:15px}
+.schermata:has(.lt-pc.lt-foglio)>.contenuto{display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:0 4px 8px 0}
+.schermata:has(.lt-pc.lt-foglio)>.contenuto>:has(>.lt-pc.lt-foglio){flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.schermata:has(.lt-pc.lt-foglio) .lt-pc.lt-foglio{flex:1 1 auto;max-height:680px}
+.schermata:has(.lt-pc.lt-foglio) .piede .btn{border-radius:4px;font-family:var(--r-serif);font-weight:700;letter-spacing:0}
+.schermata:has(.lt-pc.lt-foglio) .piede .btn-primario{color:var(--r-crema);background:linear-gradient(180deg,var(--r-cera-ch),var(--r-cera) 62%,var(--r-cera-sc));border:0;box-shadow:inset 0 0 0 1px var(--r-ottone),0 3px 8px rgba(0,0,0,.45)}
+.schermata:has(.lt-pc.lt-foglio) .piede .btn-fantasma{color:var(--r-crema);background:none;border:0;box-shadow:inset 0 0 0 1px rgba(195,154,72,.7)}
+@media (orientation:landscape) and (max-height:520px){
+.schermata:has(.lt-pc.lt-foglio){display:grid;grid-template-columns:minmax(0,1fr) 190px;grid-template-rows:auto minmax(0,1fr);column-gap:14px}
+.schermata:has(.lt-pc.lt-foglio)>.testa{grid-column:1/-1}
+.schermata:has(.lt-pc.lt-foglio)>.contenuto{grid-column:1;min-height:0}
+.schermata:has(.lt-pc.lt-foglio)>.piede{grid-column:2;display:flex;flex-direction:column;justify-content:flex-end;gap:7px}
+.schermata:has(.lt-pc.lt-foglio) .modulo-nota{display:none}
+.lt-pc.lt-foglio .lt-pc-stato{display:none}
+}
+
+/* telefono piccolo, in verticale */
+@media (max-height:700px){
+.lt-scena:not(.oriz) .lt-riu{gap:4px;padding:12px 12px 9px}
+.lt-scena:not(.oriz) .lt-riu .testa{grid-template-columns:68px minmax(0,1fr) auto;grid-template-areas:'c t o' 'p p p';column-gap:7px;row-gap:2px;padding-bottom:3px}
+.lt-scena:not(.oriz) .lt-riu .intest{display:none}
+.lt-scena:not(.oriz) .lt-riu .occh .stemma{display:inline-block;width:12px;height:14px;margin-right:4px;vertical-align:-3px}
+.lt-scena:not(.oriz) .lt-riu .occh{font-size:11px;letter-spacing:.07em}
+.lt-scena:not(.oriz) .lt-riu .chi .faccia,.lt-scena:not(.oriz) .lt-riu .chi .pall{width:40px;height:48px}
+.lt-scena:not(.oriz) .lt-riu .fase{bottom:-5px;font-size:11px;padding:1px 4px 0;border-width:2.5px}
+.lt-scena:not(.oriz) .lt-riu[data-fase="vota"] .fase{font-size:11.5px}
+.lt-scena:not(.oriz) .lt-riu[data-fase="esito"] .fase{font-size:11px;letter-spacing:0;padding:1px 3px 0}
+.lt-scena:not(.oriz) .lt-riu h3{font-size:16px}
+.lt-scena:not(.oriz) .lt-riu .perche{font-size:13.5px;line-height:16px}
+.lt-scena:not(.oriz) .lt-riu .timer{width:46px;height:46px;font-size:20px}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .grid{column-gap:11px}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta{grid-template-columns:22px minmax(0,1fr) auto;grid-template-rows:minmax(21px,1fr) 44px;column-gap:5px;padding:1px 0 0}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta>.faccia,.lt-scena:not(.oriz) .lt-riu:not(.una) .carta>.pall{width:22px;height:24px;margin-top:2px}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta .nm{font-size:15px}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta.spento .nt{grid-area:a;justify-self:start}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta.zitto .st,.lt-scena:not(.oriz) .lt-riu:not(.una) .carta.rete .st{font-size:11px;letter-spacing:.02em;padding-left:3px;padding-right:3px}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta.zitto .lt-tinta{display:none}
+.lt-scena:not(.oriz) .lt-riu:not(.una) .carta.zitto::before{top:15px;width:23px;height:5px}
+.lt-scena:not(.oriz) .lt-riu .carta .az .sig{width:46px;height:46px;margin:-1px 0}
+.lt-scena:not(.oriz) .lt-riu .chat{font-size:14.5px}
+.lt-scena:not(.oriz) .lt-computer>.intest{display:none}
+.lt-scena:not(.oriz) .lt-computer .piede button{flex:0 0 66px;min-height:46px;padding:0 4px;font-size:14px}
+.lt-scena:not(.oriz) .lt-computer .piede button i{display:none}
+.lt-scena:not(.oriz) .lt-computer .piede .via{flex:1 1 0;font-size:18px}
+.lt-computer .testa{min-height:32px}
+.lt-computer.lt-foglio{padding:12px 12px 9px}
+.lt-pc-barra{min-height:40px}
+.lt-pc-schede{height:52px}
+.lt-pc-schede button{height:44px;font-size:11.5px}
+.lt-pc-schede button.attiva{height:50px}
+.lt-pc-sq button{font-size:12.5px}
+.lt-pc-stato{font-size:13px}
+.lt-indov.lt-foglio{padding:14px 12px 10px;gap:5px}
+.lt-vince .sig{width:96px;height:96px}
+.lt-vince h2{font-size:32px}
+.lt-vince p{font-size:16.5px}
+.lt-vince .u .faccia,.lt-vince .u .pall{width:44px;height:52px}
+.lt-vince .fila{gap:6px}
+}
+
+@media (max-width:375px){
+.lt-riu{--vn:60px;--vv:138px}
+.lt-riu.una .carta .nm{font-size:16px}
+.lt-riu.una.ampia .carta{grid-template-columns:46px auto minmax(0,1fr) var(--vv)}
+.lt-riu.una.ampia .carta .nm{font-size:18px}
+.lt-riu.una.ampia .carta .lt-tinta{font-size:12.5px}
+.lt-riu.una.ampia .carta .st{font-size:11px}
+.lt-pc-r b{font-size:12.5px;letter-spacing:-.012em}
+.lt-pc-pick button{font-size:11px;letter-spacing:-.025em}
+.lt-pc-sq button{font-size:12px}
+.lt-riu .carta .az button{font-size:12.5px}
+.lt-riu .carta .az button svg.ico{width:12px;height:12px}
+.lt-riu .fondo{gap:5px}
+.lt-riu .fondo .lt-vbtn{padding:0 7px;font-size:13.5px}
+.lt-riu .fondo .cht{gap:4px;padding:0 8px;font-size:14px}
+.lt-riu .voto .salta{padding:0 4px;font-size:14px}
+.lt-riu .voto .salta svg.ico{display:none}
+}
+@media (max-width:340px){
+.lt-riu .fondo .cht span{display:none}
+}
+
+/* di lato (telefono girato o scena girata col tasto) */
+.lt-scena.oriz .lt-riu{width:min(100%,980px);max-width:none;height:100%;max-height:none;padding:10px 15px 9px}
+.lt-scena.oriz .lt-riu .testa{grid-template-columns:68px minmax(0,1fr) auto;grid-template-areas:'c t o' 'c p o';row-gap:0;padding-bottom:3px}
+.lt-scena.oriz .lt-riu .intest{display:none}
+.lt-scena.oriz .lt-riu .occh{font-size:11px;letter-spacing:.07em}
+.lt-scena.oriz .lt-riu .occh .stemma{display:inline-block;width:12px;height:14px;margin-right:4px;vertical-align:-3px}
+.lt-scena.oriz .lt-riu .occh .reg{display:inline}
+.lt-scena.oriz .lt-riu .chi .faccia,.lt-scena.oriz .lt-riu .chi .pall{width:38px;height:45px}
+.lt-scena.oriz .lt-riu .fase{bottom:-4px;font-size:11px;padding:1px 4px 0;border-width:2.5px}
+.lt-scena.oriz .lt-riu[data-fase="vota"] .fase{font-size:11.5px}
+.lt-scena.oriz .lt-riu[data-fase="esito"] .fase{font-size:11px;letter-spacing:0;padding:1px 3px 0}
+.lt-scena.oriz .lt-riu h3{font-size:17.5px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lt-scena.oriz .lt-riu .perche{text-align:left;font-size:14px;line-height:16px}
+.lt-scena.oriz .lt-riu .timer{width:46px;height:46px;font-size:20px}
+.lt-scena.oriz .lt-riu .grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;gap:0 13px;padding:0 1px}
+.lt-scena.oriz .lt-riu .grid::before{top:16px;left:33.33%}
+.lt-scena.oriz .lt-riu .grid::after{content:"";position:absolute;top:16px;bottom:0;left:66.66%;width:1px;margin-left:-2px;border-left:1px solid var(--r-filo);border-right:1px solid var(--r-filo);pointer-events:none}
+.lt-scena.oriz .lt-riu .colonne{display:flex;align-items:center;justify-content:space-between;grid-column:1/-1;border-bottom:1px solid var(--r-filo)}
+.lt-scena.oriz .lt-riu .colonne .c2{display:none}
+.lt-scena.oriz .lt-riu[data-fase="parla"] .colonne .c3{display:none}
+.lt-scena.oriz .lt-riu[data-fase="parla"] .leg{display:flex}
+.lt-scena.oriz .lt-riu .carta{grid-template-columns:28px minmax(0,1fr) auto;grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:'f n a' 'f s a';column-gap:5px;padding:0 1px}
+.lt-scena.oriz .lt-riu .carta>.faccia,.lt-scena.oriz .lt-riu .carta>.pall{width:27px;height:31px;margin:0}
+.lt-scena.oriz .lt-riu .carta .nm{grid-row:1;align-self:end;font-size:15px}
+.lt-scena.oriz .lt-riu .carta.spento .nm,.lt-scena.oriz .lt-riu .carta.zitto .nm,.lt-scena.oriz .lt-riu .carta.rete .nm,.lt-scena.oriz .lt-riu .carta.io .nm,.lt-scena.oriz .lt-riu .carta.votato .nm{grid-row:1;align-self:end}
+.lt-scena.oriz .lt-riu .carta .nt{justify-content:flex-start;align-self:start;font-size:11.5px}
+.lt-scena.oriz .lt-riu .carta .az{grid-row:1/span 2;align-self:center}
+.lt-scena.oriz .lt-riu .carta .vt{grid-area:a;grid-row:1/span 2;justify-self:end;padding-right:11px}
+.lt-scena.oriz .lt-riu .carta .vt .faccia,.lt-scena.oriz .lt-riu .carta .vt .pall{margin-right:-11px}
+.lt-scena.oriz .lt-riu .carta .az .dubbio,.lt-scena.oriz .lt-riu .carta .az .fido{flex:none;width:37px}
+.lt-scena.oriz .lt-riu .carta .az .dubbio span,.lt-scena.oriz .lt-riu .carta .az .fido span{display:none}
+.lt-scena.oriz .lt-riu .carta .az .dubbio svg.ico,.lt-scena.oriz .lt-riu .carta .az .fido svg.ico{display:block;width:15px;height:15px}
+.lt-scena.oriz .lt-riu .carta .az .vota{width:44px;height:44px;margin:0;font-size:13px}
+.lt-scena.oriz .lt-riu .carta .az .vota.me{font-size:11px;letter-spacing:-.03em}
+.lt-scena.oriz .lt-riu .carta .az .conf{height:44px;padding:0 10px;font-size:13px}
+.lt-scena.oriz .lt-riu .carta .az .sig{width:44px;height:44px;margin:0}
+.lt-scena.oriz .lt-riu .carta .az .mio span{display:none}
+.lt-scena.oriz .lt-riu[data-fase="esito"] .carta .az .mio{opacity:0;transition:opacity .2s var(--lt-ease)}
+.lt-scena.oriz .lt-riu .carta.zitto::before{left:0;top:calc(50% + 1px);width:28px;height:6px}
+.lt-scena.oriz .lt-riu.ampia .carta{grid-template-columns:34px minmax(0,1fr) auto;column-gap:6px}
+.lt-scena.oriz .lt-riu.ampia .carta>.faccia,.lt-scena.oriz .lt-riu.ampia .carta>.pall{width:33px;height:38px}
+.lt-scena.oriz .lt-riu.ampia .carta .nm{font-size:16.5px}
+.lt-scena.oriz .lt-riu.ampia .carta .az .vota{width:48px;height:48px;font-size:13.5px}
+.lt-scena.oriz .lt-riu.ampia .carta .az .sig{width:48px;height:48px}
+.lt-scena.oriz .lt-riu.ampia .carta.zitto::before{width:34px}
+.lt-scena.oriz .lt-riu.grande .carta{grid-template-columns:48px minmax(0,1fr) auto}
+.lt-scena.oriz .lt-riu.grande .carta>.faccia,.lt-scena.oriz .lt-riu.grande .carta>.pall{width:46px;height:54px}
+.lt-scena.oriz .lt-riu.grande .carta .nm{font-size:19px}
+.lt-scena.oriz .lt-riu.grande .carta .nt{font-size:13px}
+.lt-scena.oriz .lt-riu.grande .carta .az .vota{width:56px;height:56px;font-size:15px}
+.lt-scena.oriz .lt-riu.grande .carta .az .sig{width:56px;height:56px}
+.lt-scena.oriz .lt-riu.grande .carta.zitto::before{width:46px;height:8px}
+.lt-scena.oriz .lt-riu .foglietto{left:auto;right:15px;top:63px;bottom:59px;width:min(54%,400px);height:auto;transform:translateX(12px)}
+.lt-scena.oriz .lt-riu .foglietto.su{transform:none}
+.lt-scena.oriz.lt-ruota .lt-riu .foglietto{left:15px;right:auto;transform:translateX(-12px)}
+.lt-scena.oriz.lt-ruota .lt-riu .foglietto.su{transform:none}
+.lt-scena.oriz .lt-riu .foglietto .cima{height:32px}
+.lt-scena.oriz .lt-riu .foglietto .via{margin:-6px -9px -6px 0}
+.lt-scena.oriz .lt-riu .penna{flex-wrap:nowrap}
+.lt-scena.oriz .lt-riu .scrivi{flex:1 1 0}
+.lt-scena.oriz .lt-riu .rapide{flex:none}
+.lt-scena.oriz .lt-riu .rapide button{flex:none;padding:0 7px}
+.lt-scena.oriz .lt-riu .big{padding-top:3px;padding-bottom:3px}
+.lt-scena.oriz .lt-riu .big canvas.foto{width:60px;height:44px}
+.lt-scena.oriz .lt-riu .fondo .voto{flex:0 1 240px;margin-left:auto}
+.lt-scena.oriz .lt-riu .fondo .cht{flex:none}
+@media (max-width:720px){
+.lt-scena.oriz .lt-riu{padding-left:12px;padding-right:12px;column-gap:10px}
+.lt-scena.oriz .lt-riu .grid{column-gap:9px}
+.lt-scena.oriz .lt-riu .carta{column-gap:4px}
+.lt-scena.oriz .lt-riu .carta .az{gap:2px}
+.lt-scena.oriz .lt-riu .carta .az .dubbio,.lt-scena.oriz .lt-riu .carta .az .fido{width:30px}
+.lt-scena.oriz .lt-riu .carta .az .ind{flex:0 0 28px}
+.lt-scena.oriz .lt-riu .carta .nm{font-size:14.5px}
+}
+.lt-scena.oriz .lt-riu .carta[data-ak*="ind"] .az .dubbio,.lt-scena.oriz .lt-riu .carta[data-ak*="ind"] .az .fido{width:28px}
+.lt-scena.oriz .lt-esp.lt-foglio{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);justify-items:start;align-items:center;gap:4px 22px;padding:12px 24px 12px 30px;text-align:left}
+.lt-scena.oriz .lt-esp .intest{display:flex;grid-column:1/-1;grid-row:1;width:100%}
+.lt-scena.oriz .lt-esp .ritr{grid-row:2;width:124px;height:150px;margin:0}
+.lt-scena.oriz .lt-esp .txt{grid-row:2;justify-items:start;margin:0}
+.lt-scena.oriz .lt-esp .sotto{padding:6px 0 0}
+.lt-scena.oriz .lt-esp .conto{justify-content:flex-start}
+.lt-scena.oriz .lt-esp .conto span{min-width:0;padding:0 12px;font-size:13.5px}
+.lt-scena.oriz .lt-esp .conto span:first-child{padding-left:0}
+.lt-scena.oriz .lt-esp .conto b{font-size:25px}
+.lt-scena.oriz .lt-esp .chivoti{grid-row:2;align-self:center;max-height:100%}
+.lt-scena.oriz .lt-esp .rg{min-height:38px}
+.lt-scena.oriz .lt-esp .rg .faccia,.lt-scena.oriz .lt-esp .rg .pall{width:25px;height:29px}
+.lt-scena.oriz .lt-esp .rg .su .lt-tinta{display:none}
+.lt-scena.oriz .lt-esp .rg .da:has(>:nth-child(5))>*{margin-left:-13px}
+.lt-scena.oriz .lt-esp h2{font-size:25px}
+.lt-scena.oriz .lt-esp .sotto{font-size:15.5px}
+.lt-scena.oriz .lt-indov.lt-foglio{padding:11px 14px 9px;gap:4px}
+.lt-scena.oriz .lt-riu .lt-indov h3{font-size:19px}
+.lt-scena.oriz .lt-indov .griglia{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
+.lt-scena.oriz .lt-indov .gruppo{flex:none;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));grid-auto-rows:44px}
+.lt-scena.oriz .lt-scambio.lt-foglio:has(.griglia.sab){width:100%;max-width:760px}
+.lt-scena.oriz .lt-scambio .griglia.sab{grid-template-columns:repeat(3,minmax(0,1fr))}
+.lt-scena.oriz .lt-vince.lt-foglio{max-width:760px;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:'s t' 's f';align-content:center;gap:10px 26px;padding:34px 34px 16px;text-align:left}
+.lt-scena.oriz .lt-vince .sig{grid-area:s;width:120px;height:120px}
+.lt-scena.oriz .lt-vince .tes{grid-area:t;justify-items:start}
+.lt-scena.oriz .lt-vince .fila{grid-area:f;justify-content:flex-start;padding-top:7px}
+.lt-scena.oriz .lt-vince h2{font-size:31px}
+.lt-scena.oriz .lt-vince p{font-size:16px}
+.lt-scena.oriz .lt-vince .u{width:68px}
+.lt-scena.oriz .lt-vince .u .faccia,.lt-scena.oriz .lt-vince .u .pall{width:40px;height:47px}
+.lt-scena.oriz .lt-vince .u span{font-size:13px;max-width:68px}
+.lt-scena.oriz .lt-vince .u .lt-tinta{max-width:68px;font-size:11.5px}
+.lt-scena.oriz .lt-computer.lt-foglio{width:100%;max-width:900px;height:100%;max-height:100%;display:grid;grid-template-columns:minmax(0,1fr) 172px;grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:'t t' 'c p' 'c n';column-gap:12px;padding:8px 14px 8px}
+.lt-scena.oriz .lt-computer>.intest{display:none}
+.lt-scena.oriz .lt-computer .testa{grid-area:t;display:flex;gap:10px;min-height:30px}
+.lt-scena.oriz .lt-computer .tit{flex:1;text-align:left}
+.lt-scena.oriz .lt-computer h3{font-size:20px}
+.lt-scena.oriz .lt-computer .corpo{grid-area:c}
+.lt-scena.oriz .lt-computer .piede{grid-area:p;flex-direction:column;flex-wrap:nowrap;justify-content:flex-end;margin-top:0}
+.lt-scena.oriz .lt-computer .piede button{flex:none;width:100%;min-height:44px}
+.lt-scena.oriz .lt-computer .piede .via{min-height:58px}
+.lt-scena.oriz .lt-computer>.nota{grid-area:n;margin:3px 0 0;text-align:left;font-size:12.5px}
+.lt-scena.oriz .lt-pc{display:grid;grid-template-columns:96px minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;grid-template-areas:'s c' 's z';column-gap:0}
+.lt-scena.oriz .lt-pc-barra{position:absolute;top:4px;right:58px;min-height:40px}
+.lt-scena.oriz .lt-pc-barra>span:first-child{flex:none}
+.lt-scena.oriz .lt-pc-schede{grid-area:s;grid-template-columns:minmax(0,1fr);grid-auto-rows:44px;justify-items:end;align-items:start;gap:3px;height:auto;padding:3px 0;border-top:0;border-right:3px double var(--r-filo)}
+.lt-scena.oriz .lt-pc-schede button{flex-direction:row;justify-content:flex-start;gap:5px;width:86px;height:44px;padding:0 6px 0 12px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,rgba(0,0,0,.06) 1px 2px),linear-gradient(0deg,#4f3625,#6e4e36 50%,#4f3625);clip-path:polygon(0 0,100% 0,100% 100%,0 100%,7px 50%);transition:width .2s var(--lt-ease),transform .16s var(--lt-ease)}
+.lt-scena.oriz .lt-pc-schede button::after{left:auto;right:3px;top:3px;bottom:3px;border-top:0;border-right:1.5px dashed rgba(255,235,200,.5)}
+.lt-scena.oriz .lt-pc-schede button.attiva{width:96px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,rgba(0,0,0,.06) 1px 2px),linear-gradient(0deg,var(--r-cera),var(--r-cera-ch) 50%,var(--r-cera))}
+.lt-scena.oriz .lt-foglio .lt-pc-schede button:active:not(:disabled){transform:translateX(2px)}
+.lt-scena.oriz .lt-pc-corpo{grid-area:c;min-height:0;padding:0 8px;border-bottom:0}
+.lt-scena.oriz .lt-pc-pag{display:grid;grid-template-columns:repeat(auto-fit,minmax(226px,1fr));column-gap:16px;align-content:start;min-height:0}
+.lt-scena.oriz .lt-pc-sq,.lt-scena.oriz .lt-pc-ruoli,.lt-scena.oriz .lt-pc-tutti,.lt-scena.oriz .lt-pc-pick,.lt-scena.oriz .lt-pc-regole,.lt-scena.oriz .lt-pc-aiuto{grid-column:1/-1}
+.lt-scena.oriz .lt-pc-pag.s-partita,.lt-scena.oriz .lt-pc-pag.s-riunioni,.lt-scena.oriz .lt-pc-pag.s-sabotaggi{grid-auto-rows:minmax(44px,58px)}
+.lt-scena.oriz .lt-pc-pag.s-ruoli{grid-template-columns:repeat(2,minmax(0,1fr))}
+.lt-scena.oriz .lt-pc-pag.s-ruoli .lt-pc-aiuto{display:none}
+.lt-scena.oriz .lt-pc-pag.s-ruoli .lt-pc-sq{grid-column:1;grid-row:1}
+.lt-scena.oriz .lt-pc-pag.s-ruoli .lt-pc-tutti{grid-column:2;grid-row:1;align-self:center;margin:0}
+.lt-scena.oriz .lt-pc-pag.s-ruoli .lt-pc-ruoli{grid-row:2;margin-top:4px}
+.lt-scena.oriz .lt-pc-pag.s-poteri .lt-pc-aiuto{display:none}
+.lt-scena.oriz .lt-pc-pag.s-poteri .lt-pc-pick{margin-top:3px}
+@media (max-width:720px){
+.lt-scena.oriz .lt-pc-pag.s-ruoli{grid-template-columns:minmax(0,1fr)}
+.lt-scena.oriz .lt-pc-pag.s-ruoli .lt-pc-tutti{grid-column:1;grid-row:3;margin-top:2px}
+}
+.lt-scena.oriz .lt-pc-regole{display:grid;grid-template-columns:repeat(auto-fit,minmax(226px,1fr));column-gap:16px}
+.lt-scena.oriz .lt-pc-nota{grid-column:1/-1}
+.lt-scena.oriz .lt-pc-riga{border-bottom:1px solid var(--r-seppia2)}
+.lt-scena.oriz .lt-pc-riga .val{min-width:58px;max-width:88px;padding:0 4px;font-size:14px}
+.lt-scena.oriz .lt-pc-riga .fr{width:30px}
+.lt-scena.oriz .lt-pc-ruoli{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
+.lt-scena.oriz .lt-pc-r{padding:2px 4px}
+.lt-scena.oriz .lt-pc-r b{font-size:13px;letter-spacing:-.01em}
+.lt-scena.oriz .lt-pc-pick{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}
+.lt-scena.oriz .lt-pc-stato{grid-area:z;margin-top:2px;padding-left:14px;font-size:13px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* la fine: l'ultima pagina del registro, sul tavolo */
+html:has(.lt-fine),body:has(.lt-fine){background:#1c110b}
+#app:has(.lt-fine){max-width:none}
+.schermata.lt-fine{max-width:none;box-sizing:border-box;flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0;overflow:hidden;background:var(--r-tavolo);color:var(--r-crema)}
+.schermata.lt-fine>.testa{display:none}
+.schermata.lt-fine>.contenuto{display:flex;flex-direction:column;min-height:0}
+.lt-ultima.lt-foglio{flex:1 1 auto;box-sizing:border-box;min-height:0;width:100%;max-width:480px;max-height:800px;margin:0 auto;display:flex;flex-direction:column;gap:6px;padding:14px 15px 12px;text-align:center}
+.lt-ultima .intest{flex:none}
+.lt-ultima .tes{flex:none;display:grid;gap:3px;justify-items:center;min-width:0}
+.lt-ultima h2{font-size:30px}
+.lt-ultima.perso h2{color:var(--r-cera)}
+.lt-ultima .chiusa{flex:none;display:block;width:56px;height:56px;margin:auto auto 0;background:var(--r-sigillo) center/100% 100% no-repeat;transform:rotate(-10deg);animation:ltSigillo .24s var(--lt-ease) .24s both}
+.lt-ultima .lt-perche{margin:0;font:italic 15.5px/1.25 var(--r-serif);color:var(--r-ink2)}
+.schermata.lt-fine .lt-ultima .classifica{flex:1 1 auto;min-height:0;max-height:calc(var(--n)*96px + 28px);margin:2px 0 0;padding:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border-top:3px double var(--r-filo)}
+.lt-ultima .col{display:flex;flex-direction:column;min-height:0}
+.lt-ultima .col h3{flex:none}
+.lt-ultima .righe{flex:1 1 auto;display:grid;align-content:start}
+.schermata.lt-fine .lt-ultima .classifica.solo{grid-template-columns:minmax(0,1fr)}
+.lt-ultima .col{min-width:0}
+.lt-ultima .col+.col{box-shadow:inset 3px 0 0 -2px var(--r-filo),inset 5px 0 0 -4px var(--r-filo)}
+.lt-ultima .col h3{margin:0;padding:5px 0 4px;font:700 11px/1.25 var(--r-sans);letter-spacing:.13em;text-transform:uppercase;color:var(--r-ink2);border-bottom:1px solid var(--r-filo)}
+.lt-ultima .col.vinc h3{color:var(--r-cera)}
+.lt-ultima .rg{box-sizing:border-box;min-height:clamp(40px,calc((var(--alt,100dvh) - 420px)/var(--n)),96px);display:grid;grid-template-columns:29px minmax(0,1fr);align-items:center;column-gap:7px;padding:1px 5px 1px 7px;text-align:left;border-bottom:1px solid var(--r-seppia2)}
+.lt-ultima .rg .faccia,.lt-ultima .rg .pall{display:block;width:29px;height:34px;border-radius:50%;object-fit:cover;object-position:top;box-shadow:0 0 0 1px var(--r-ottone),0 0 0 2px rgba(40,20,8,.32)}
+.lt-ultima .rg .faccia{background:linear-gradient(#4a3325,#21150e)}
+.lt-ultima .rg.spento .faccia,.lt-ultima .rg.spento .pall{filter:saturate(.6) contrast(.86);opacity:.8}
+.schermata.lt-fine .lt-ultima .nome{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:italic 700 15.5px/1.14 var(--r-serif);color:var(--r-ink)}
+.schermata.lt-fine .lt-ultima .punti{display:block;min-width:0;font:12.5px/1.18 var(--r-serif);color:var(--r-ink2)}
+@media (max-height:739px){
+.lt-ultima .lt-ruolo .lt-tinta{display:none}
+}
+@media (min-height:740px){
+.lt-ultima .lt-ruolo .ru{display:block;margin-top:1px}
+.lt-ultima .rg{grid-template-columns:38px minmax(0,1fr)}
+.lt-ultima .rg .faccia,.lt-ultima .rg .pall{width:38px;height:45px}
+.schermata.lt-fine .lt-ultima .nome{font-size:16.5px}
+.lt-ultima .pochi .rg{grid-template-columns:54px minmax(0,1fr)}
+.lt-ultima .pochi .rg .faccia,.lt-ultima .pochi .rg .pall{width:54px;height:64px}
+.schermata.lt-fine .lt-ultima .pochi .nome{font-size:19px}
+.schermata.lt-fine .lt-ultima .pochi .punti{font-size:13.5px}
+}
+.schermata.lt-fine .modulo-nota{color:#ddcbaa}
+.schermata.lt-fine .btn{border-radius:4px;font-family:var(--r-serif);font-weight:700;letter-spacing:0}
+.schermata.lt-fine .btn-primario{background:linear-gradient(180deg,var(--r-cera-ch),var(--r-cera));color:var(--r-crema);box-shadow:inset 0 0 0 1px var(--r-ottone),0 3px 8px rgba(0,0,0,.45)}
+.schermata.lt-fine .btn-fantasma{background:none;color:var(--r-ottone-ch);box-shadow:inset 0 0 0 1px rgba(195,154,72,.7)}
+.schermata.lt-fine .btn-verde{background:linear-gradient(180deg,#2d7a54,var(--r-verde));color:var(--r-crema);box-shadow:inset 0 0 0 1px var(--r-ottone),0 3px 8px rgba(0,0,0,.45)}
+.schermata.lt-fine .fine-fila{flex:none;box-sizing:border-box;display:flex;align-items:stretch;width:100%;max-width:480px;margin:8px auto 0;border-radius:4px;background:rgba(20,10,5,.58);box-shadow:inset 0 0 0 1px rgba(195,154,72,.5),0 2px 7px rgba(0,0,0,.4)}
+.schermata.lt-fine .fine-fila .lt-voce{flex:none;display:flex;margin:0}
+.schermata.lt-fine .fine-fila .lt-voce:only-child{flex:1 1 auto}
+.schermata.lt-fine .fine-fila .lt-voce:only-child .lt-vbtn{flex:1 1 auto;box-shadow:none}
+.schermata.lt-fine .lt-vbtn{height:46px;min-height:46px;box-sizing:border-box;padding:0 12px;border:0;border-radius:0;background:none;font:700 14.5px/1 var(--r-serif);letter-spacing:0;color:var(--r-ottone-ch);box-shadow:inset -1px 0 0 rgba(195,154,72,.4);animation:none}
+.schermata.lt-fine .lt-vbtn.parlo{color:#9fd8b4}.schermata.lt-fine .lt-vbtn.muto{color:#f0a9a0}
+.schermata.lt-fine .fine-faccine{flex:1 1 0;min-width:0;margin:0;padding:0 2px;gap:0;border-radius:0;background:none;box-shadow:none}
+.schermata.lt-fine .fine-faccine .sl-fa{height:46px;font-size:1.22rem;border-radius:3px;filter:sepia(.3) saturate(.85)}
+.schermata.lt-fine>.piede{flex:none;display:flex;flex-wrap:wrap;gap:8px;width:100%;max-width:480px;margin:0 auto;padding-top:8px}
+.schermata.lt-fine .fine-tasti{gap:8px;margin:0}
+.schermata.lt-fine>.piede .btn{width:auto;min-width:0;min-height:50px;margin:0;padding:0 10px;border:0;font-size:15.5px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.schermata.lt-fine>.piede .btn-primario,.schermata.lt-fine>.piede .ft-primo{flex:1 1 0}
+.schermata.lt-fine>.piede .btn-fantasma:not(.ft-primo){flex:0 0 84px;box-shadow:inset 0 0 0 1px rgba(195,154,72,.7)}
+.schermata.lt-fine>.piede .ft-punti{flex:1 1 100%;min-height:0;font-family:var(--r-serif)}
+@media (max-width:375px){
+.schermata.lt-fine>.piede .btn{font-size:14.5px}
+}
+@media (max-width:340px){
+.schermata.lt-fine>.piede .btn{padding:0 6px;font-size:13.5px}
+.schermata.lt-fine>.piede .btn-fantasma:not(.ft-primo){flex:0 0 64px}
+}
+@media (max-height:680px){
+.lt-ultima .chiusa{display:none}
+}
+@media (orientation:landscape) and (max-height:520px){
+.schermata.lt-fine{display:grid;grid-template-columns:minmax(0,1fr) 216px;grid-template-rows:auto minmax(0,1fr);column-gap:12px}
+.schermata.lt-fine>.contenuto{display:contents}
+.lt-ultima.lt-foglio{grid-column:1;grid-row:1/-1;max-width:none;height:100%;margin:0;gap:3px;padding:9px 12px 9px}
+.lt-ultima .tes{grid-template-columns:auto minmax(0,1fr);align-items:baseline;column-gap:12px;justify-items:start;text-align:left}
+.lt-ultima .tes .occh{display:none}
+.lt-ultima h2{font-size:22px;white-space:nowrap}
+.lt-ultima .lt-perche{font-size:14px}
+.schermata.lt-fine .lt-ultima .classifica{flex:1 1 auto;grid-template-columns:minmax(0,1fr);align-content:start;max-height:none}
+.lt-ultima .col+.col{box-shadow:none}
+.lt-ultima .righe{grid-template-columns:repeat(auto-fill,minmax(122px,1fr))}
+.lt-ultima .rg{min-height:40px}
+.lt-ultima .chiusa{display:none}
+.schermata.lt-fine .fine-fila{grid-column:2;grid-row:1;flex-wrap:wrap;margin:0}
+.schermata.lt-fine .fine-fila .lt-voce{flex:1 1 100%}
+.schermata.lt-fine .fine-fila .lt-vbtn{flex:1 1 auto;box-shadow:inset 0 -1px 0 rgba(195,154,72,.4)}
+.schermata.lt-fine .fine-faccine{flex:1 1 100%}
+.schermata.lt-fine>.piede{grid-column:2;grid-row:2;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding-top:6px}
+.schermata.lt-fine .fine-tasti{display:flex;flex-direction:column;flex-wrap:nowrap;gap:6px;width:100%}
+.schermata.lt-fine>.piede{flex-wrap:nowrap;margin:0;max-width:none}
+.schermata.lt-fine>.piede .btn,.schermata.lt-fine>.piede .btn-primario,.schermata.lt-fine>.piede .ft-primo,.schermata.lt-fine>.piede .btn-fantasma:not(.ft-primo){flex:none;width:100%;padding:0 6px;font-size:14px}
+}
+
+@media (prefers-reduced-motion:reduce){.lt-scena *,.lt-scena *::before,.lt-scena *::after,.lt-pc *,.lt-pc *::before,.lt-pc *::after,.lt-fine *,.lt-fine *::before,.lt-fine *::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+`.replace("@GRANA@", GRANA).replace("@SIGILLO@", ltCera(true)).replace("@VUOTO@", ltCera(false)).replace("@PALLIDO@", ltCera(false, true)).replace("@FILIGRANA@", ltFiligrana()).replace("@LANTERNA@", ltFiligrana("#c39a48", ".85")).replace("@SAGOMA@", ltSagoma()).replace("@SPUNTA@", ltSpunta()).replace("@STRAPPO@", ltStrappo()).replace("@DENTELLI@", ltDentelli());
+}
 var cssFatto = false;
 function stile() {
   if (cssFatto) return; cssFatto = true;
   var st = document.createElement("style");
   st.textContent = [
-    ".schermata.lt-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#0d1020;color:#f1e8d6}",
+    ".schermata.lt-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:#140c08;color:#f1e8d6}",
     ".schermata.lt-piena>.testa,.schermata.lt-piena>.piede{display:none}",
     ".schermata.lt-piena>.contenuto{height:100%;margin:0;padding:0}",
     ".lt-scena{position:fixed;left:0;top:0;z-index:800;width:100vw;height:var(--alt,100dvh);overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Text\",\"SF Pro Display\",\"Helvetica Neue\",\"Inter\",system-ui,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.005em;user-select:none;-webkit-user-select:none;touch-action:none;--lt-ease:cubic-bezier(.22,1,.36,1)}",
@@ -6492,54 +9605,43 @@ function stile() {
     ".lt-sx{position:absolute;left:calc(10px + env(safe-area-inset-left));top:calc(8px + env(safe-area-inset-top));width:min(230px,52vw);display:flex;flex-direction:column;gap:6px;align-items:flex-start;pointer-events:none}",
     ".lt-sx>*{pointer-events:auto}.lt-riga{display:flex;gap:8px;align-items:center}",
     ".lt-esci{width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:1.3rem;font-weight:700;cursor:pointer}",
-    ".lt-chip{padding:4px 10px;border-radius:999px;font-weight:600;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;background:rgba(231,183,92,.16);color:#f6d999;border:1px solid rgba(231,183,92,.4)}",
-    ".lt-chip[data-squadra=ombre]{background:rgba(208,80,106,.16);color:#f2a7b6;border-color:rgba(208,80,106,.5)}.lt-chip[data-squadra=soli]{background:rgba(169,147,230,.16);color:#d5c9f7;border-color:rgba(169,147,230,.5)}",
-    ".lt-barra{width:100%;display:grid;gap:3px;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b8b1a2}",
-    ".lt-barra .tr{height:7px;border-radius:4px;background:rgba(241,232,214,.12);overflow:hidden}.lt-barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,#c9923a,#f6d999);transition:width .3s var(--lt-ease)}",
+    ".lt-chip{display:inline-flex;align-items:center;gap:6px;min-height:30px;box-sizing:border-box;padding:4px 7px 4px 11px;border-radius:999px;font:inherit;font-weight:600;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;background:rgba(33,21,14,.88);color:#f6d999;border:1px solid rgba(231,183,92,.4);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease)}.lt-chip:active{transform:scale(.95)}.lt-chip::after{content:'i';flex:none;width:17px;height:17px;border-radius:50%;border:1px solid currentColor;display:grid;place-items:center;font:700 italic 11px Georgia,'Times New Roman',serif;letter-spacing:0;text-transform:none;opacity:.85}.lt-scena.sal .lt-chip::after{display:none}",
+    ".lt-scena:not(.oriz) .lt-chip.lunga{font-size:.64rem;letter-spacing:.03em;padding:4px 5px 4px 8px;gap:4px}.lt-scena:not(.oriz) .lt-chip.lunghissima{font-size:.58rem;letter-spacing:0}",
+    "@media (max-width:380px){.lt-scena:not(.oriz) .lt-dx .lt-hbtn:not(.ico) span{display:none}}",
+    ".lt-chip[data-squadra=ombre]{color:#f2a7b6;border-color:rgba(208,80,106,.5)}.lt-chip[data-squadra=soli]{color:#d5c9f7;border-color:rgba(169,147,230,.5)}",   // (fondo pieno: anche il fantasma, che vede tutto chiaro, lo legge sul marmo)
+    ".lt-barra{width:100%;display:grid;gap:3px;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#d9d2c3;text-shadow:0 0 2px #0a0705,0 1px 3px #0a0705,0 0 6px rgba(10,7,5,.8)}",
+    ".lt-barra .tr{height:7px;border-radius:4px;background:rgba(14,9,6,.78);box-shadow:0 0 0 1px rgba(241,232,214,.16);overflow:hidden}.lt-barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,#c9923a,#f6d999);transition:width .3s var(--lt-ease)}",
     ".lt-scena.oriz .lt-velo{padding:8px max(10px,env(safe-area-inset-right)) 8px max(10px,env(safe-area-inset-left))}",
-    ".lt-scena.oriz .lt-riu{display:grid;width:min(100%,940px);max-width:none;height:100%;max-height:none;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto auto auto;grid-template-areas:'t t' 'g c' 'g r' 'g s' 'g v' 'g n';column-gap:12px;row-gap:6px;padding:10px 12px}",
-    ".lt-scena.oriz .lt-riu .testa{grid-area:t}.lt-scena.oriz .lt-riu .grid{grid-area:g;min-height:0;overflow-y:auto;align-content:start;grid-template-columns:repeat(2,minmax(0,1fr))}.lt-scena.oriz .lt-riu .chat{grid-area:c;min-height:0}.lt-scena.oriz .lt-riu .rapide{grid-area:r}.lt-scena.oriz .lt-riu .scrivi{grid-area:s}.lt-scena.oriz .lt-riu .voto{grid-area:v}.lt-scena.oriz .lt-riu .nota{grid-area:n}",
-    ".lt-scena.oriz .lt-riu .carta{grid-template-columns:26px minmax(0,1fr) auto;column-gap:6px;padding:3px 6px}.lt-scena.oriz .lt-riu .carta .faccia,.lt-scena.oriz .lt-riu .carta .pall{width:26px;height:26px}",
-    ".lt-scena.oriz .lt-riu .carta .az{grid-column:3;grid-row:1/span 2;margin-top:0;align-self:center}.lt-scena.oriz .lt-riu .carta .vt{grid-column:2/-1}",
-    ".lt-scena.oriz .lt-riu .carta .az .dubbio span,.lt-scena.oriz .lt-riu .carta .az .fido span{display:none}.lt-scena.oriz .lt-riu .carta .az button{padding:6px 7px;flex:none}.lt-scena.oriz .lt-riu .carta .az .mio{padding:0 4px;font-size:.68rem}",
     ".lt-scena.oriz .lt-minimappa{height:min(78%,420px)}",
     ".lt-scena.sal .lt-barra,.lt-scena.sal .lt-lista-btn,.lt-scena.sal .lt-lista,.lt-scena.sal .lt-ibtn,.lt-scena.sal .lt-info{display:none!important}",
-    ".lt-computer .piede{flex-direction:row}.lt-computer .piede button{width:auto;margin:0}",
-    ".lt-scena.oriz .lt-computer{max-width:860px;width:100%;display:grid;grid-template-columns:minmax(0,1fr) 210px;grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:'t t' 'c p' 'c n';column-gap:12px}",
-    ".lt-scena.oriz .lt-computer .testa{grid-area:t}.lt-scena.oriz .lt-computer .corpo{grid-area:c}.lt-scena.oriz .lt-computer .piede{grid-area:p;flex-direction:column;justify-content:flex-end;margin-top:0}.lt-scena.oriz .lt-computer .piede button{flex:none}.lt-scena.oriz .lt-computer .nota{grid-area:n;text-align:left}",
-    ".lt-saletta{position:absolute;z-index:1;left:0;right:0;margin:0 auto;top:calc(10px + env(safe-area-inset-top));width:max-content;max-width:calc(100% - 180px);display:flex;align-items:center;gap:8px;padding:5px 6px 5px 12px;border-radius:999px;background:rgba(13,16,32,.82);border:1px solid rgba(90,209,154,.45);font-weight:600;font-size:.85rem;color:#c9f2dc}",
-    ".lt-saletta .inv{display:inline-flex;align-items:center;gap:5px;font:inherit;font-weight:700;font-size:.8rem;border:0;border-radius:999px;padding:6px 11px;background:linear-gradient(180deg,#5ad19a,#2f9e6c);color:#062314;cursor:pointer}",
-    ".lt-computer{max-width:460px;max-height:100%;display:flex;flex-direction:column;padding:12px}.lt-computer .testa{display:flex;align-items:center;gap:8px;margin-bottom:8px}.lt-computer h3{margin:0;flex:1;color:#9fe8c0}.lt-computer .lt-chiudi{position:static}",
-    ".lt-computer .corpo{flex:1 1 auto;min-height:0;overflow-y:auto}.lt-computer .piede{display:flex;gap:6px;margin-top:8px}.lt-computer .piede button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;font:inherit;font-weight:700;font-size:.82rem;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.16);border-radius:10px;padding:9px 6px;cursor:pointer}",
-    ".lt-computer .piede .via{flex:1.3;background:linear-gradient(180deg,#5ad19a,#2f9e6c);color:#062314;border-color:transparent}.lt-computer .piede .via:disabled{opacity:.4}.lt-computer .nota{margin:6px 0 0;font-size:.78rem;color:#b8b1a2;text-align:center}.lt-computer .desc{margin:0 0 8px;color:#ebe3d3}",
+    ".lt-scena.sal:not(.oriz) .lt-chip{display:none}",   // (in verticale la riga non basta per tutto: «Saletta» lo dice già la stanza)
+    ".lt-saletta{position:absolute;z-index:1;left:0;right:0;margin:0 auto;top:calc(8px + env(safe-area-inset-top));width:max-content;max-width:calc(100% - 180px);box-sizing:border-box;min-height:36px;white-space:nowrap;display:flex;align-items:center;gap:8px;padding:5px 6px 5px 12px;border-radius:999px;background:rgba(20,12,8,.86);border:1px solid rgba(195,154,72,.55);font-weight:600;font-size:.85rem;color:#f0dcae}",
+    ".lt-scena.sal:not(.oriz) .lt-saletta{left:calc(54px + env(safe-area-inset-left));right:auto;margin:0;max-width:calc(100% - 192px - env(safe-area-inset-left) - env(safe-area-inset-right));padding:3px 4px 3px 10px;gap:6px}.lt-saletta .cod{min-width:0;overflow:hidden;text-overflow:ellipsis}",
+    ".lt-saletta .inv{display:inline-flex;align-items:center;gap:5px;font:inherit;font-weight:700;font-size:.8rem;border:0;border-radius:999px;padding:6px 11px;background:linear-gradient(180deg,#d9b56a,#a9812f);color:#22140a;cursor:pointer}",
     ".lt-foto{max-width:360px;display:flex;flex-direction:column;align-items:center;gap:8px}.lt-foto .testa{display:flex;align-items:center;gap:8px;width:100%}.lt-foto h3{margin:0;flex:1;color:#e9d3ae}.lt-foto .lt-chiudi{position:static}",
     "canvas.foto{display:block;width:min(260px,100%);aspect-ratio:4/3;height:auto;border:6px solid #efe6d2;border-bottom-width:18px;border-radius:2px;box-shadow:0 8px 20px rgba(0,0,0,.5);transform:rotate(-1.5deg);background:#2b2420}",
-    ".lt-foto .nota{margin:0;font-size:.8rem;color:#b8b1a2}.lt-foto .rifai{display:inline-flex;align-items:center;gap:6px;font:inherit;font-weight:700;border:0;border-radius:10px;padding:9px 16px;background:#242a45;color:#f1e8d6;border:1px solid rgba(241,232,214,.18);cursor:pointer}.lt-foto .rifai:disabled{opacity:.45}",
-    ".lt-riu .chat canvas.foto{width:min(200px,70%);margin:4px 0 6px 6px}.lt-infor.fantasma .sq{background:rgba(160,190,255,.18);color:#c9d8ff}.lt-infor.fantasma h3{color:#c9d8ff}",
-    ".lt-ibtn{flex:none;width:26px;height:26px;margin-left:6px;border-radius:50%;border:1.5px solid rgba(246,217,153,.65);background:rgba(25,29,49,.85);color:#f6d999;font:700 italic 14px Georgia,'Times New Roman',serif;line-height:1;cursor:pointer;display:grid;place-items:center}.lt-chip{cursor:pointer}",
-    ".lt-infor{max-width:420px;padding:14px 16px}.lt-infor .testa{display:flex;align-items:center;gap:10px;margin-bottom:6px}.lt-infor h3{margin:0;flex:1;font-size:1.25rem;color:#f6d999}.lt-infor .sq{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(231,183,92,.16);color:#f6d999}",
-    ".lt-infor.ombre .sq{background:rgba(208,80,106,.2);color:#f6a3b2}.lt-infor.ombre h3{color:#f08aa0}.lt-infor.soli .sq{background:rgba(169,147,230,.2);color:#d6c8ff}.lt-infor.soli h3{color:#cbbcf6}.lt-infor .lt-chiudi{position:static}",
-    ".lt-infor .desc{margin:0 0 8px;line-height:1.45;color:#ebe3d3}.lt-infor ul{margin:0;padding-left:18px;display:grid;gap:5px;color:#c9bfb0;font-size:.86rem;line-height:1.4}",
+    ".lt-foto .nota{margin:0;font-size:.8rem;color:#b8b1a2}.lt-foto .rifai{display:inline-flex;align-items:center;gap:6px;font:inherit;font-weight:700;border:0;border-radius:10px;padding:9px 16px;background:#35241a;color:#f1e8d6;border:1px solid rgba(241,232,214,.18);cursor:pointer}.lt-foto .rifai:disabled{opacity:.45}",
+    ".lt-ibtn{flex:none;width:26px;height:26px;margin-left:6px;border-radius:50%;border:1.5px solid rgba(246,217,153,.65);background:rgba(33,21,14,.85);color:#f6d999;font:700 italic 14px Georgia,'Times New Roman',serif;line-height:1;cursor:pointer;display:grid;place-items:center}.lt-chip{cursor:pointer}",
     ".lt-scena svg.ico,.lt-pc svg.ico{width:1.2em;height:1.2em;flex:none;vertical-align:-.22em}",
     ".lt-hbtn{display:inline-flex;align-items:center;gap:5px}.lt-hbtn.ico{padding:5px 8px}.lt-hbtn.acceso{color:#f6d999;border-color:rgba(231,183,92,.65);background:rgba(231,183,92,.16)}",
-    ".lt-riu .carta .az button,.lt-riu .rapide button,.lt-riu .voto .salta{display:flex;align-items:center;justify-content:center;gap:5px}",
-    ".lt-intro .icona svg{width:64px;height:64px;color:#f6d999;stroke-width:1.6}.lt-pc-schede b svg{width:20px;height:20px}",
+    ".lt-intro .icona svg{width:84px;height:84px;color:#f6d999;stroke-width:1.4}.lt-pc-schede b svg{width:20px;height:20px}",
     ".lt-minimappa .testa b{display:inline-flex;align-items:center;gap:6px}.lt-minimappa .leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 4px 0 10px;vertical-align:middle;box-shadow:0 0 0 1px rgba(0,0,0,.4)}",
-    ".lt-parla{position:absolute;z-index:5;left:0;right:0;margin:0 auto;bottom:calc(8px + max(env(safe-area-inset-bottom,0px),var(--sotto,0px)));width:min(440px,calc(100% - 24px));display:grid;gap:6px;padding:7px;border-radius:14px;background:rgba(13,16,32,.93);border:1px solid rgba(241,232,214,.18);box-shadow:0 8px 24px rgba(0,0,0,.45);animation:ltSale .2s var(--lt-ease)}",
+    ".lt-parla{position:absolute;z-index:5;left:0;right:0;margin:0 auto;bottom:calc(8px + max(env(safe-area-inset-bottom,0px),var(--sotto,0px)));width:min(440px,calc(100% - 24px));display:grid;gap:6px;padding:7px;border-radius:14px;background:rgba(20,12,8,.93);border:1px solid rgba(241,232,214,.18);box-shadow:0 8px 24px rgba(0,0,0,.45);animation:ltSale .2s var(--lt-ease)}",
     ".lt-parla.alto{bottom:auto;top:calc(58px + env(safe-area-inset-top))}",
     ".lt-pt{display:flex;justify-content:space-between;gap:8px;padding:0 3px;font-size:.7rem;font-weight:600;letter-spacing:.03em;color:#b8b1a2}.lt-udi{transition:color .2s var(--lt-ease)}.lt-udi.si{color:#f6d999}.lt-cont.pieno{color:#f2a7b6}",
-    ".lt-pcho{display:flex;flex-wrap:wrap;gap:5px}.lt-pcho button{font:inherit;font-size:.78rem;font-weight:600;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.16);border-radius:999px;padding:5px 11px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease),background .2s var(--lt-ease)}.lt-pcho button:active{transform:scale(.94);background:#323b63}",
-    ".lt-priga{display:flex;gap:6px}.lt-priga input{flex:1;min-width:0;-webkit-user-select:text;user-select:text;font:inherit;font-size:16px;color:#f1e8d6;background:#0d1020;border:1px solid rgba(241,232,214,.18);border-radius:10px;padding:7px 10px;transition:border-color .2s var(--lt-ease),box-shadow .2s var(--lt-ease)}.lt-priga input:focus{outline:none;border-color:rgba(231,183,92,.7);box-shadow:0 0 0 3px rgba(231,183,92,.18)}",
+    ".lt-pcho{display:flex;flex-wrap:wrap;gap:5px}.lt-pcho button{font:inherit;font-size:.78rem;font-weight:600;color:#f1e8d6;background:#35241a;border:1px solid rgba(241,232,214,.16);border-radius:999px;padding:5px 11px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease),background .2s var(--lt-ease)}.lt-pcho button:active{transform:scale(.94);background:#4a3325}",
+    ".lt-priga{display:flex;gap:6px}.lt-priga input{flex:1;min-width:0;-webkit-user-select:text;user-select:text;font:inherit;font-size:16px;color:#f1e8d6;background:#140c08;border:1px solid rgba(241,232,214,.18);border-radius:10px;padding:7px 10px;transition:border-color .2s var(--lt-ease),box-shadow .2s var(--lt-ease)}.lt-priga input:focus{outline:none;border-color:rgba(231,183,92,.7);box-shadow:0 0 0 3px rgba(231,183,92,.18)}",
     ".lt-priga button{flex:none;width:42px;border-radius:10px;border:0;background:linear-gradient(180deg,#e7b75c,#c9923a);color:#1d1508;display:grid;place-items:center;cursor:pointer;touch-action:manipulation;transition:transform .16s var(--lt-ease)}.lt-priga button:active{transform:scale(.92)}",
     ".lt-chatst{position:absolute;z-index:4;left:calc(10px + env(safe-area-inset-left));bottom:calc(196px + env(safe-area-inset-bottom));width:min(60%,300px);display:flex;flex-direction:column;gap:3px;pointer-events:none}",
-    ".lt-ch{align-self:flex-start;max-width:100%;overflow-wrap:anywhere;font-size:.8rem;line-height:1.3;color:#f1e8d6;background:rgba(13,16,32,.7);border-radius:10px;padding:3px 9px;transition:opacity .3s var(--lt-ease);animation:ltSale .2s var(--lt-ease)}.lt-ch b{margin-right:6px;font-weight:700;color:#f6d999}.lt-ch.io b{color:#b8b1a2}",
+    ".lt-ch{align-self:flex-start;max-width:100%;overflow-wrap:anywhere;font-size:.8rem;line-height:1.3;color:#f1e8d6;background:rgba(20,12,8,.7);border-radius:10px;padding:3px 9px;transition:opacity .3s var(--lt-ease);animation:ltSale .2s var(--lt-ease)}.lt-ch b{margin-right:6px;font-weight:700;color:#f6d999}.lt-ch.io b{color:#b8b1a2}",
     ".lt-scena.oriz .lt-chatst{bottom:calc(110px + env(safe-area-inset-bottom))}",
     ".lt-ch.w{font-style:italic;color:#c9c2b4}.lt-ch.a{background:rgba(110,130,200,.38);color:#dfe8ff}.lt-ch.a b{color:#c9d8ff}",
-    ".lt-lista-btn,.lt-hbtn{font:inherit;font-weight:700;font-size:.8rem;color:#f1e8d6;background:rgba(25,29,49,.85);border:1px solid rgba(241,232,214,.2);border-radius:9px;padding:5px 10px;cursor:pointer}",
-    ".lt-lista{list-style:none;margin:0;padding:7px 9px;display:grid;gap:3px;background:rgba(13,16,32,.78);border-radius:10px;font-size:.78rem;line-height:1.3}",
+    ".lt-lista-btn,.lt-hbtn{font:inherit;font-weight:700;font-size:.8rem;color:#f1e8d6;background:rgba(33,21,14,.85);border:1px solid rgba(241,232,214,.2);border-radius:9px;padding:5px 10px;cursor:pointer}",
+    ".lt-lista{list-style:none;margin:0;padding:7px 9px;display:grid;gap:3px;background:rgba(20,12,8,.78);border-radius:10px;font-size:.78rem;line-height:1.3}",
     ".lt-lista li.fatto{opacity:.45;text-decoration:line-through}.lt-lista b{color:#f6d999}.lt-lista .nota{color:#b8b1a2;font-style:italic}",
     ".lt-dx{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(8px + env(safe-area-inset-top))}",
-    ".lt-guida{position:absolute;left:50%;bottom:calc(160px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:calc(100% - 24px);font-weight:600;font-size:.82rem;text-align:center;color:#f6d999;background:rgba(13,16,32,.82);border:1px solid rgba(231,183,92,.45);padding:6px 12px;border-radius:999px;pointer-events:none}",
+    ".lt-guida{position:absolute;left:50%;bottom:calc(160px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:calc(100% - 24px);font-weight:600;font-size:.82rem;text-align:center;color:#f6d999;background:rgba(20,12,8,.82);border:1px solid rgba(231,183,92,.45);padding:6px 12px;border-radius:999px;pointer-events:none}",
+    "@media (max-height:480px){.lt-guida{bottom:calc(20px + env(safe-area-inset-bottom))}}",
     ".lt-botola{position:absolute;inset:0;z-index:4;pointer-events:none;background:radial-gradient(circle at 50% 50%,transparent 0 16vmin,rgba(4,6,14,.55) 34vmin,rgba(4,6,14,.85));animation:ltMorteEntra .2s var(--lt-ease) both}",
     ".lt-botola .qui{position:absolute;left:0;right:0;top:calc(14px + env(safe-area-inset-top));text-align:center;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:rgba(203,162,255,.85)}",
     ".lt-botola button{pointer-events:auto;position:absolute;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease)}.lt-botola button:active{transform:translate(-50%,-50%) scale(.92)}",
@@ -6549,35 +9651,37 @@ function stile() {
     ".lt-nomestanza{position:absolute;left:0;right:0;top:30%;z-index:2;text-align:center;pointer-events:none;font-weight:700;font-size:clamp(1.6rem,6vmin,2.6rem);letter-spacing:.14em;text-transform:uppercase;color:rgba(246,217,153,.55);text-shadow:0 1px 0 rgba(255,236,190,.35),0 3px 0 rgba(90,60,20,.45),0 10px 24px rgba(0,0,0,.55);opacity:0;perspective:600px}",
     ".lt-nomestanza.su{animation:ltNomeStanza 1.6s var(--lt-ease) both}@keyframes ltNomeStanza{0%{opacity:0;transform:translateY(10px) rotateX(55deg) scale(.92)}18%{opacity:1;transform:none}70%{opacity:.9;transform:none}100%{opacity:0;transform:translateY(-8px) scale(1.03)}}",
     ".lt-guida{transition:opacity .35s var(--lt-ease),transform .35s var(--lt-ease)}.lt-guida.via{opacity:0;transform:translateX(-50%) translateY(6px);pointer-events:none}",
+    ".lt-scena.oriz .lt-guida{top:calc(10px + env(safe-area-inset-top));bottom:auto;max-width:calc(100% - 480px);min-width:150px;background:rgba(20,12,8,.55)}",
     ".lt-guida.rosso{color:#ffd0d8;background:rgba(120,25,45,.85);border-color:rgba(240,90,110,.7);animation:ltPulsa 1.2s var(--lt-ease) infinite alternate}",
     "@keyframes ltPulsa{from{opacity:.7}to{opacity:1}}",
     ".lt-via{position:absolute;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%)}.lt-vai{width:auto;min-width:160px;margin:0}",
     ".lt-azioni{position:absolute;right:calc(12px + env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,62px);grid-template-rows:repeat(2,62px);gap:9px;grid-template-areas:'abil botola buio' 'segnala spegni usa'}",
-    ".lt-az{position:relative;width:62px;height:62px;border-radius:50%;border:1.5px solid rgba(241,232,214,.3);background:rgba(25,29,49,.85);color:#f1e8d6;font:inherit;font-weight:600;font-size:.62rem;letter-spacing:.02em;text-transform:uppercase;display:grid;place-items:center;padding:0;touch-action:manipulation;transition:transform .16s var(--lt-ease),opacity .2s var(--lt-ease)}",
-    ".lt-az:active:not(:disabled){transform:scale(.9)}.lt-az:disabled{opacity:.3}.lt-az .et{position:absolute;inset:0;pointer-events:none}.lt-az .et svg{display:block;width:100%;height:100%;overflow:visible;fill:currentColor;font:inherit;font-weight:600;letter-spacing:.02em;text-transform:uppercase}",
-    ".lt-az.oro{border-color:rgba(231,183,92,.75);background:rgba(231,183,92,.22)}.lt-az.rosso{border-color:rgba(208,80,106,.8);background:rgba(208,80,106,.26)}.lt-az.viola{border-color:rgba(169,147,230,.75);background:rgba(169,147,230,.2)}",
-    ".lt-az .cd{position:absolute;inset:0;display:grid;place-items:center;font-size:1.15rem;background:rgba(9,11,22,.62);border-radius:50%}",
-    ".lt-avviso{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translate(-50%,-6px);max-width:calc(100% - 32px);font-weight:700;font-size:.9rem;text-align:center;background:rgba(25,29,49,.95);border:1px solid rgba(231,183,92,.4);padding:9px 13px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .22s var(--lt-ease),transform .22s var(--lt-ease);z-index:3}",
+    ".lt-az{position:relative;width:62px;height:62px;border-radius:50%;border:1.5px solid rgba(241,232,214,.3);background:rgba(33,21,14,.85);color:#f1e8d6;font:inherit;font-weight:600;font-size:.62rem;letter-spacing:.02em;text-transform:uppercase;display:grid;place-items:center;padding:0;touch-action:manipulation;transition:transform .16s var(--lt-ease),opacity .2s var(--lt-ease)}",
+    ".lt-az:active:not(:disabled){transform:scale(.9)}.lt-az:disabled{opacity:.62;border-color:rgba(255,255,255,.35)}.lt-az .et{position:absolute;inset:0;pointer-events:none}.lt-az .et svg{display:block;width:100%;height:100%;overflow:visible;fill:currentColor;font:inherit;font-weight:600;letter-spacing:.02em;text-transform:uppercase}",
+    ".lt-az.oro{border-color:rgba(231,183,92,.75);background:rgba(231,183,92,.22)}.lt-az.oro:not(:disabled){border-color:#f6d999;background:#e7b75c;color:#1d1508}.lt-az.rosso{border-color:rgba(208,80,106,.8);background:rgba(208,80,106,.26)}.lt-az.viola{border-color:rgba(169,147,230,.75);background:rgba(169,147,230,.2)}",
+    ".lt-az.telo,.lt-az.telo:disabled{opacity:1;background:var(--telo,#7c8088);border:2px solid var(--orlo,#b4b8c0);box-shadow:0 2px 7px rgba(0,0,0,.5);transition:transform .16s var(--lt-ease),background-color .2s var(--lt-ease),border-color .2s var(--lt-ease)}",
+    ".lt-az.conta .et{visibility:hidden}",
+    ".lt-az .cd{position:absolute;inset:0;display:grid;place-items:center;font-size:1.15rem;background:rgba(14,9,6,.62);border-radius:50%}",
+    ".lt-avviso{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translate(-50%,-6px);box-sizing:border-box;width:max-content;max-width:calc(100% - 32px);font-weight:700;font-size:.9rem;text-align:center;background:rgba(33,21,14,.95);border:1px solid rgba(231,183,92,.4);padding:9px 13px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .22s var(--lt-ease),transform .22s var(--lt-ease);z-index:5}",   // (sopra la scritta grande della riunione: gli avvisi privati di quel momento si devono leggere)
     ".lt-avviso.su{opacity:1;transform:translate(-50%,0)}.lt-avviso.ombra,.lt-avviso.morte{border-color:rgba(208,80,106,.7)}",
-    ".lt-velo{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;background:rgba(9,11,22,.78);padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom))}",
-    ".lt-pannello{position:relative;width:100%;max-width:480px;max-height:100%;box-sizing:border-box;background:#191d31;border:1px solid rgba(231,183,92,.22);border-radius:16px;padding:16px;animation:ltSale .24s var(--lt-ease)}",
+    ".lt-velo.passa{background:none;align-items:flex-start;pointer-events:none;padding-top:calc(58px + env(safe-area-inset-top))}.lt-velo.passa .lt-pannello{pointer-events:auto;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,.45)}",
+    ".lt-velo{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;background:rgba(14,9,6,.78);padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom))}",
+    ".lt-pannello{position:relative;width:100%;max-width:480px;max-height:100%;box-sizing:border-box;background:linear-gradient(180deg,#2e1e14,#1f140d);border:1px solid rgba(195,154,72,.38);border-radius:6px;padding:16px;animation:ltSale .24s var(--lt-ease)}",
     "@keyframes ltSale{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}",
     ".lt-pannello h2,.lt-pannello h3{margin:0;color:#e7b75c;font-weight:700;letter-spacing:-.02em;line-height:1.15}",
-    ".lt-svela{text-align:center}.lt-svela h2{font-size:2.4rem;margin:4px 0 8px}.lt-svela.ombre h2{color:#f08aa0}.lt-svela.soli h2{color:#cbbcf6}.lt-svela p{color:#b8b1a2;margin:0 0 8px;line-height:1.45}.lt-sopra{font-size:.7rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase}.lt-conto{font-weight:600;color:#f1e8d6!important}",
-    ".lt-vince{text-align:center}.lt-vince h2{font-size:2rem}.lt-vince p{color:#b8b1a2}",
     ".lt-compito{text-align:center}.lt-compito h3{font-size:1.3rem;padding-right:34px}",
-    ".lt-chiudi{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:#242a45;border:1px solid rgba(241,232,214,.2);color:#f1e8d6;font-size:1.1rem;cursor:pointer}",
+    ".lt-chiudi{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;background:#35241a;border:1px solid rgba(241,232,214,.2);color:#f1e8d6;font-size:1.2rem;cursor:pointer;transition:transform .16s var(--lt-ease)}.lt-chiudi:active{transform:scale(.92)}",
     ".lt-istr{color:#b8b1a2;margin:6px 0 14px;font-size:.92rem}.lt-ok{font-weight:600;color:#7fb68f;margin:10px 0 0}",
     ".lt-mg{display:grid;justify-items:center;gap:12px}",
-    ".lt-tieni{width:140px;height:140px;border-radius:50%;border:0;background:#0d1020;position:relative;display:grid;place-items:center;color:#f1e8d6;font:inherit;font-weight:600;text-transform:uppercase;touch-action:none;transition:transform .16s var(--lt-ease)}",
+    ".lt-tieni{width:140px;height:140px;border-radius:50%;border:0;background:#140c08;position:relative;display:grid;place-items:center;color:#f1e8d6;font:inherit;font-weight:600;text-transform:uppercase;touch-action:none;transition:transform .16s var(--lt-ease)}",
     ".lt-tieni.giu{transform:scale(.95)}.lt-tieni svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}.lt-tieni .tr{fill:none;stroke:rgba(241,232,214,.12);stroke-width:9}.lt-tieni .rp{fill:none;stroke:#e7b75c;stroke-width:9;stroke-linecap:round}",
     ".lt-seq{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.lt-seq button{width:52px;height:70px;border-radius:8px;border:1px solid rgba(241,232,214,.2);background:linear-gradient(180deg,#5b3d2a,#3f2a1d);color:#f1e8d6;font:inherit;font-weight:600;font-size:1.3rem;transition:transform .16s var(--lt-ease)}",
     ".lt-seq button.ok{background:linear-gradient(180deg,#e7b75c,#b9862f);color:#1d1508}",
-    ".lt-leva{position:relative;width:100%;max-width:320px;height:44px;border-radius:10px;background:#0d1020;overflow:hidden}.lt-leva .zona{position:absolute;top:0;bottom:0;background:rgba(231,183,92,.32);border-left:2px solid #e7b75c;border-right:2px solid #e7b75c}.lt-leva .ago{position:absolute;top:4px;bottom:4px;width:6px;margin-left:-3px;border-radius:3px;background:#f1e8d6}",
+    ".lt-leva{position:relative;width:100%;max-width:320px;height:44px;border-radius:10px;background:#140c08;overflow:hidden}.lt-leva .zona{position:absolute;top:0;bottom:0;background:rgba(231,183,92,.32);border-left:2px solid #e7b75c;border-right:2px solid #e7b75c}.lt-leva .ago{position:absolute;top:4px;bottom:4px;width:6px;margin-left:-3px;border-radius:3px;background:#f1e8d6}",
     ".lt-btn{font:inherit;font-weight:600;color:#1d1508;background:#e7b75c;border:0;border-radius:12px;padding:12px 26px;touch-action:none;transition:transform .16s var(--lt-ease)}.lt-btn.giu,.lt-btn:active{transform:scale(.96)}",
-    ".lt-tr{position:relative;width:100%;max-width:320px;height:200px;border-radius:12px;background:#0d1020}.lt-tr .meta{position:absolute;right:8px;top:8px;bottom:8px;width:44%;border:2px dashed rgba(231,183,92,.6);border-radius:10px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;padding:6px;box-sizing:border-box}.lt-tr .meta span{width:100%;font-size:.7rem;color:#b8b1a2;text-transform:uppercase;font-weight:600}",
+    ".lt-tr{position:relative;width:100%;max-width:320px;height:200px;border-radius:12px;background:#140c08}.lt-tr .meta{position:absolute;right:8px;top:8px;bottom:8px;width:44%;border:2px dashed rgba(231,183,92,.6);border-radius:10px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;padding:6px;box-sizing:border-box}.lt-tr .meta span{width:100%;font-size:.7rem;color:#b8b1a2;text-transform:uppercase;font-weight:600}",
     ".lt-tr .cosa{position:absolute;width:54px;height:54px;touch-action:none;cursor:grab;z-index:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}.lt-tr .cosa svg{display:block;width:100%;height:100%;pointer-events:none}.lt-tr .cosa.su{z-index:3;transform-origin:center}.lt-tr .meta .cosa{position:relative;width:40px;height:40px}.lt-tr .meta .sfondo{position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);z-index:0;pointer-events:none}.lt-tr .meta span{position:relative;z-index:1}",
-    ".lt-vaso{position:relative;width:110px;height:170px;border:3px solid rgba(241,232,214,.5);border-top:0;border-radius:0 0 18px 18px;overflow:hidden;background:rgba(13,16,32,.6)}.lt-vaso .liv{position:absolute;left:0;right:0;bottom:0;height:0}.lt-vaso .fascia{position:absolute;left:0;right:0;background:rgba(231,183,92,.35);border-top:2px solid #e7b75c;border-bottom:2px solid #e7b75c;z-index:1}",
+    ".lt-vaso{position:relative;width:110px;height:170px;border:3px solid rgba(241,232,214,.5);border-top:0;border-radius:0 0 18px 18px;overflow:hidden;background:rgba(20,12,8,.6)}.lt-vaso .liv{position:absolute;left:0;right:0;bottom:0;height:0}.lt-vaso .fascia{position:absolute;left:0;right:0;background:rgba(231,183,92,.35);border-top:2px solid #e7b75c;border-bottom:2px solid #e7b75c;z-index:1}",
     ".lt-quadri{display:grid;grid-template-columns:repeat(2,84px);gap:10px}.lt-quadri .q{width:84px;height:84px;border-radius:6px;border:0;padding:0;background:transparent;display:grid;place-items:center;transition:box-shadow .2s var(--lt-ease)}.lt-quadri .q span{display:block;width:78px;height:78px;transition:transform .2s var(--lt-ease)}.lt-quadri .q svg{display:block;width:100%;height:100%}.lt-quadri .q.ok{box-shadow:0 0 0 3px #e7b75c,0 0 18px rgba(231,183,92,.45)}",
     ".lt-scuoti{animation:ltScuoti .3s var(--lt-ease)}@keyframes ltScuoti{0%,100%{translate:0}25%{translate:-8px}50%{translate:7px}75%{translate:-4px}}",
     ".lt-scena.lt-ruota{transform-origin:0 0}",
@@ -6585,44 +9689,13 @@ function stile() {
     ".lt-morte{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;text-align:center;background:radial-gradient(ellipse at center,rgba(70,10,22,.92),rgba(5,4,10,.97) 70%);animation:ltMorteEntra .25s var(--lt-ease) both}",
     ".lt-morte.via{animation:ltMorteVia .3s var(--lt-ease) both}@keyframes ltMorteEntra{from{opacity:0}to{opacity:1}}@keyframes ltMorteVia{to{opacity:0}}",
     ".lt-morte .palco{display:flex;align-items:flex-end;justify-content:center;gap:4%;width:100%;height:46%}",
-    ".lt-morte .killer,.lt-morte .vittima{height:100%;width:auto;max-width:34%;object-fit:contain}.lt-morte .sagoma{width:18%;max-width:120px;height:auto;aspect-ratio:1/2;border-radius:50% 50% 14% 14%/34% 34% 10% 10%;background:linear-gradient(#2a3150,#141a30)}",
+    ".lt-morte .killer,.lt-morte .vittima{min-width:0;height:100%;object-fit:contain;object-position:50% 100%}.lt-morte .killer{flex:0 1 43%;width:43%}.lt-morte .vittima{flex:0 1 53%;width:53%}.lt-morte .sagoma{width:18%;max-width:120px;height:auto;aspect-ratio:1/2;border-radius:50% 50% 14% 14%/34% 34% 10% 10%;background:linear-gradient(#3a2a20,#1e130c)}",
     ".lt-morte .killer{filter:drop-shadow(0 0 18px rgba(240,90,110,.75));animation:ltKiller .45s var(--lt-ease) .1s both}@keyframes ltKiller{from{opacity:0;transform:translateX(-40%) scale(.9)}to{opacity:1;transform:none}}",
-    ".lt-morte .vittima{transform-origin:50% 100%;animation:ltCade .7s cubic-bezier(.5,0,.75,0) 1.2s both}@keyframes ltCade{to{transform:rotate(84deg) translateY(10%);filter:grayscale(1) brightness(.55)}}",
-    ".lt-morte .lanterna{position:relative;width:13%;max-width:70px;aspect-ratio:3/4;margin-bottom:6%;border-radius:30% 30% 22% 22%;background:linear-gradient(#3a2d3d,#1c1722);box-shadow:inset 0 0 0 3px #e7b75c}",
-    ".lt-morte .fiamma{position:absolute;left:50%;top:22%;width:44%;height:52%;margin-left:-22%;border-radius:50% 50% 45% 45%;background:radial-gradient(ellipse at 50% 70%,#fff3c4,#ffb347 45%,#ff6a2a 80%);box-shadow:0 0 26px 10px rgba(255,170,70,.55);animation:ltSpegne .5s ease-in .8s both}@keyframes ltSpegne{to{transform:scale(.05);opacity:0;box-shadow:none}}",
-    ".lt-morte .fumo{position:absolute;left:44%;top:10%;width:14%;height:14%;border-radius:50%;background:rgba(200,200,215,.5);opacity:0;animation:ltFumo 1.4s ease-out 1.1s both}.lt-morte .fumo.f2{left:52%;animation-delay:1.3s}@keyframes ltFumo{0%{opacity:.7;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-260%) scale(2.6)}}",
     ".lt-morte h2{margin:10px 0 0;font-size:1.45rem;font-weight:700;letter-spacing:-.02em;color:#ff9aa9;animation:ltKiller .4s var(--lt-ease) .5s both}.lt-morte p{margin:0;color:#c9bfb0;font-size:.9rem;animation:ltKiller .4s var(--lt-ease) .9s both}",
-    ".lt-minimappa{position:absolute;z-index:3;left:0;right:0;margin:0 auto;top:calc(8px + env(safe-area-inset-top));width:min(560px,calc(100% - 24px));height:min(58%,420px);display:flex;flex-direction:column;padding:6px 8px 6px;border-radius:14px;background:rgba(13,16,32,.86);border:1px solid rgba(231,183,92,.3);box-shadow:0 10px 30px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:ltSale .22s var(--lt-ease)}",
+    ".lt-minimappa{position:absolute;z-index:3;left:0;right:0;margin:0 auto;top:calc(8px + env(safe-area-inset-top));width:min(560px,calc(100% - 24px));height:min(58%,420px);display:flex;flex-direction:column;padding:6px 8px 6px;border-radius:14px;background:rgba(20,12,8,.86);border:1px solid rgba(231,183,92,.3);box-shadow:0 10px 30px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:ltSale .22s var(--lt-ease)}",
     ".lt-minimappa .testa{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.82rem;color:#f6d999}.lt-minimappa .lt-chiudi{position:static;width:34px;height:34px;flex:none;font-size:1.3rem}",
     ".lt-minimappa canvas{display:block;margin:2px auto 0;border-radius:8px;max-width:100%;flex:1 1 auto;min-height:0;object-fit:contain}.lt-minimappa .leg{margin:4px 0 0;font-size:.7rem;color:#b8b1a2;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
     ".lt-mappa{max-width:960px;text-align:center;padding:10px}.lt-mappa canvas{display:block;margin:0 auto;border-radius:10px;max-width:100%}.lt-mappa p{margin:8px 0 0;font-size:.78rem;color:#b8b1a2}",
-    ".lt-riu{display:flex;flex-direction:column;gap:8px;height:100%;max-height:640px;padding:12px}",
-    ".lt-riu .testa{display:flex;justify-content:space-between;align-items:center;gap:10px}.lt-riu h3{font-size:1rem}",
-    ".lt-riu .timer{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:600;border:2px solid rgba(231,183,92,.55);color:#f6d999;font-variant-numeric:tabular-nums}",
-    ".lt-riu .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}",
-    ".lt-riu .carta{display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-rows:auto auto;column-gap:7px;align-items:center;text-align:left;padding:4px 7px;border-radius:9px;background:#0d1020;border:1.5px solid rgba(241,232,214,.12);color:#f1e8d6;font:inherit;font-weight:700;font-size:.82rem;transition:border-color .2s var(--lt-ease),opacity .2s var(--lt-ease)}",
-    ".lt-riu .carta .faccia,.lt-riu .carta .pall{grid-row:span 2;width:28px;height:28px;border-radius:50%;object-fit:cover;object-position:top;background:#242a45}",
-    ".lt-riu .carta .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lt-riu .carta .st{font-size:.66rem;font-weight:600;color:#b8b1a2;min-height:.8rem}",
-    ".lt-riu .carta .vt{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:3px}.lt-riu .carta .vt i{width:9px;height:9px;border-radius:50%;display:block}",
-    ".lt-riu .carta.mio-voto{border-color:#e7b75c;background:rgba(231,183,92,.14)}.lt-riu .carta.spento{opacity:.38}.lt-riu .carta{position:relative}",
-    ".lt-riu .carta.votato::after{content:'✓';position:absolute;left:24px;top:1px;width:14px;height:14px;border-radius:50%;background:#5ad19a;color:#062314;font-size:10px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px #0d1020}",
-    ".lt-riu .carta .az{grid-column:1/-1;display:flex;gap:4px;margin-top:4px}.lt-riu .carta .az:empty{display:none}",
-    ".lt-riu .carta .az button{flex:1;min-width:0;font:inherit;font-size:.72rem;font-weight:700;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.16);border-radius:8px;padding:6px 2px;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease),background-color .2s var(--lt-ease),box-shadow .2s var(--lt-ease)}",
-    ".lt-riu .carta .az button:active{transform:scale(.94)}.lt-riu .carta .az button.fatto{animation:ltLampo .6s var(--lt-ease)}@keyframes ltLampo{0%{background:rgba(90,209,154,.45)}100%{background:#242a45}}",
-    ".lt-riu .carta .az .vota{background:linear-gradient(180deg,#e7b75c,#c9923a);color:#1d1508;border-color:transparent;font-size:.8rem;padding:7px 2px}",
-    ".lt-riu .carta .az .conf{background:#5ad19a;color:#062314;border-color:transparent;font-size:.8rem;padding:7px 2px;animation:ltConferma .9s var(--lt-ease) infinite}@keyframes ltConferma{50%{box-shadow:0 0 0 4px rgba(90,209,154,.25)}}",
-    ".lt-riu .carta .az .ind{flex:0 0 34px}.lt-riu .carta .az .mio{flex:1;text-align:center;font-size:.74rem;font-weight:700;color:#f6d999;padding:5px 0}",
-    ".lt-riu .voto .salta{font-size:.95rem}",
-    ".lt-riu .chat{flex:1 1 auto;min-height:70px;overflow-y:auto;background:#0d1020;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:5px;font-size:.84rem;line-height:1.35;user-select:text;-webkit-user-select:text}",
-    ".lt-riu .chat p{margin:0}.lt-riu .chat .sis{color:#b8b1a2;font-style:italic}",
-    ".lt-riu .rapide{display:flex;gap:5px;flex-wrap:wrap}.lt-riu .rapide button{flex:1;font:inherit;font-weight:700;font-size:.76rem;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.16);border-radius:999px;padding:6px 8px}",
-    ".lt-riu .scrivi{display:flex;gap:5px}.lt-riu .scrivi input{flex:1;min-width:0;font:inherit;font-size:16px;color:#f1e8d6;background:#0d1020;border:1px solid rgba(241,232,214,.18);border-radius:9px;padding:6px 9px}.lt-riu .scrivi button{font:inherit;font-weight:700;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.18);border-radius:9px;padding:0 12px}",
-    ".lt-riu .voto{display:flex;gap:6px}.lt-riu .voto .btn{flex:1;margin:0;padding:10px}",
-    ".lt-riu .nota{margin:0;font-size:.78rem;color:#b8b1a2;text-align:center;min-height:1em}",
-    ".lt-esp{position:absolute;inset:0;border-radius:16px;background:rgba(13,16,32,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:20px;animation:ltSale .3s var(--lt-ease)}",
-    ".lt-esp img{height:150px}.lt-esp h2{font-size:1.5rem;color:#f1e8d6}.lt-esp p{color:#b8b1a2;margin:0}",
-    ".lt-masch{width:110px;height:72px;border-radius:55px 55px 40px 40px/46px 46px 26px 26px;background:#f1e8d6;box-shadow:0 0 0 6px #888}.lt-masch.vuota{background:transparent;box-shadow:0 0 0 2px rgba(241,232,214,.25)}",
-    ".vola{animation:ltVola 2.6s var(--lt-ease) both}@keyframes ltVola{from{transform:translateY(20px) rotate(-8deg);opacity:0}30%{opacity:1}to{transform:translateY(-20px) rotate(8deg);opacity:.9}}",
     ".lt-bot{display:flex;gap:8px;flex-wrap:wrap}.lt-bot .btn{flex:1;margin:0;white-space:nowrap;font-size:.95rem}",
     ".lt-perche{text-align:center;margin:0 0 10px;opacity:.8;font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Text\",\"SF Pro Display\",\"Helvetica Neue\",\"Inter\",system-ui,sans-serif}.lt-ruolo{font-size:.8rem}",
     ".schermata.lt-fine-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
@@ -6630,9 +9703,9 @@ function stile() {
     ".lt-vx{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(54px + env(safe-area-inset-top));display:flex}",
     ".lt-voce{display:flex;flex-direction:column;align-items:flex-end;gap:6px}.lt-voce.riga{flex-direction:row;align-items:center;gap:6px}.lt-voce.fine{justify-content:center;margin:10px 0 2px}",
     ".lt-voce svg.ico{width:1.2em;height:1.2em;flex:none;vertical-align:-.22em}",
-    ".lt-vbtn{font:inherit;font-weight:700;font-size:.8rem;color:#f1e8d6;background:rgba(25,29,49,.88);border:1px solid rgba(241,232,214,.22);border-radius:9px;padding:6px 11px;display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease,cubic-bezier(.22,1,.36,1)),background-color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1)),border-color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1)),color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1))}",
+    ".lt-vbtn{font:inherit;font-weight:700;font-size:.8rem;color:#f1e8d6;background:rgba(33,21,14,.88);border:1px solid rgba(241,232,214,.22);border-radius:9px;padding:6px 11px;display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--lt-ease,cubic-bezier(.22,1,.36,1)),background-color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1)),border-color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1)),color .2s var(--lt-ease,cubic-bezier(.22,1,.36,1))}",
     ".lt-vbtn:active{transform:scale(.94)}",
-    ".lt-vbtn.spenta{color:#f6d999;border-color:rgba(231,183,92,.75);background:rgba(231,183,92,.2);animation:ltVoceInvito 1.4s var(--lt-ease,cubic-bezier(.22,1,.36,1)) infinite alternate}",
+    ".lt-vbtn.spenta{color:#f1e8d6;border-color:rgba(255,255,255,.35);background:rgba(33,21,14,.88)}",   // (l'oro resta solo per ciò che si può usare)
     ".lt-vbtn.parlo,.lt-vbtn.muto{font-size:.72rem;padding:4px 9px}",
     ".lt-vbtn.parlo{color:#d6fbe6;border-color:rgba(126,232,176,.6);background:rgba(46,150,104,.28)}.lt-vbtn.muto{color:#ffd0d8;border-color:rgba(240,90,110,.7);background:rgba(120,25,45,.6)}",
     ".lt-vbtn.accendo{opacity:.75;animation:ltVoceAttesa .9s var(--lt-ease,cubic-bezier(.22,1,.36,1)) infinite alternate}@keyframes ltVoceAttesa{to{opacity:.4}}@keyframes ltVoceInvito{to{box-shadow:0 0 0 4px rgba(231,183,92,.22)}}",
@@ -6640,94 +9713,60 @@ function stile() {
     ".lt-carica{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(ellipse at 50% 42%,#1a1f38,#090b16 72%);opacity:0;transition:opacity .3s var(--lt-ease,cubic-bezier(.22,1,.36,1));touch-action:none}.lt-carica[hidden]{display:none}.lt-carica.su{opacity:1}",
     ".lt-carica svg.ico{width:72px;height:72px;color:#e7b75c;stroke-width:1.5;vertical-align:baseline}.lt-carica svg.ico path:last-child{fill:#f6d999;stroke:none;transform-box:fill-box;transform-origin:50% 100%;animation:ltFiamma 1.1s ease-in-out infinite alternate}@keyframes ltFiamma{to{transform:scale(1.18,1.3);opacity:.75}}",
     ".lt-carica .tit{font-weight:700;font-size:1.05rem;color:#f1e8d6;letter-spacing:-.01em}.lt-carica .bar{width:min(220px,60%);height:5px;border-radius:3px;background:rgba(241,232,214,.14);overflow:hidden}.lt-carica .bar i{display:block;height:100%;width:0;background:#e7b75c;border-radius:3px;transition:width .3s var(--lt-ease,cubic-bezier(.22,1,.36,1))}.lt-carica .num{font-size:.8rem;font-weight:700;color:#b8b1a2;font-variant-numeric:tabular-nums}",
-    ".lt-mappa{position:absolute;z-index:1;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 180px);top:calc(52px + env(safe-area-inset-top));font-size:.68rem;font-weight:700;color:#b8b1a2;background:rgba(13,16,32,.62);border-radius:999px;padding:2px 9px;display:flex;align-items:center;gap:6px;pointer-events:none}.lt-mappa[hidden]{display:none}.lt-mappa.ok{color:#9fe3bd}",
-    ".lt-mappa i{display:inline-block;width:34px;height:3px;border-radius:2px;background:rgba(241,232,214,.18);position:relative;overflow:hidden}.lt-mappa i:after{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--p,0%);background:#e7b75c;transition:width .3s var(--lt-ease,cubic-bezier(.22,1,.36,1))}.lt-mappa.ok i{display:none}",
-    ".lt-pronti{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 8px}.lt-pronti[hidden]{display:none}.lt-pronti span{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:#b8b1a2;background:rgba(241,232,214,.07);border-radius:999px;padding:3px 9px}.lt-pronti span.ok{color:#9fe3bd}.lt-pronti svg.ico{width:.95em;height:.95em;vertical-align:-.12em}",
-    ".lt-info{font-size:.74rem;font-weight:700;color:#f6d999;background:rgba(13,16,32,.78);border-radius:8px;padding:4px 8px;line-height:1.3}",
+    ".lt-premappa{position:absolute;z-index:1;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 180px);top:calc(52px + env(safe-area-inset-top));font-size:.68rem;font-weight:700;color:#b8b1a2;background:rgba(20,12,8,.62);border-radius:999px;padding:2px 9px;display:flex;align-items:center;gap:6px;pointer-events:none}.lt-mappa[hidden]{display:none}.lt-mappa.ok{color:#9fe3bd}",
+    ".lt-premappa i{display:inline-block;width:34px;height:3px;border-radius:2px;background:rgba(241,232,214,.18);position:relative;overflow:hidden}.lt-premappa i:after{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--p,0%);background:#e7b75c;transition:width .3s var(--lt-ease,cubic-bezier(.22,1,.36,1))}.lt-mappa.ok i{display:none}",
+    ".lt-info{font-size:.74rem;font-weight:700;color:#f6d999;background:rgba(20,12,8,.78);border-radius:8px;padding:4px 8px;line-height:1.3}",
     ".lt-cam{display:flex;flex-direction:column;gap:8px;max-width:640px}.lt-cam .testa{display:flex;justify-content:space-between;align-items:center}.lt-cam .lt-chiudi{position:static}",
     ".lt-cam .griglia{display:grid;grid-template-columns:1fr 1fr;gap:6px}.lt-cam .schermo{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:#000;border:2px solid #2f3b44}.lt-cam .schermo canvas{width:100%;height:100%;display:block}",
-    ".lt-cam .nav{display:flex;justify-content:center;align-items:center;gap:14px;font-weight:600}.lt-cam .nav button{font:inherit;font-size:1.2rem;font-weight:700;color:#f1e8d6;background:#242a45;border:1px solid rgba(241,232,214,.2);border-radius:10px;width:44px;height:36px}",
-    ".lt-plastico h3{margin-bottom:6px}",
-    ".lt-scambio{display:flex;flex-direction:column;gap:8px}.lt-scambio p{margin:0;color:#b8b1a2;font-size:.85rem}.lt-scambio .griglia{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}",
-    ".lt-scambio .griglia button{font:inherit;font-weight:700;font-size:.85rem;color:#f1e8d6;background:#242a45;border:1.5px solid rgba(241,232,214,.18);border-radius:10px;padding:10px 4px}.lt-scambio .griglia button.sel{border-color:#a0e6ff;background:rgba(120,220,255,.15)}",
-    ".lt-scambio .piede{display:flex;gap:8px}.lt-scambio .piede .btn{flex:1;margin:0}",
+    ".lt-cam .nav{display:flex;justify-content:center;align-items:center;gap:14px;font-weight:600}.lt-cam .nav button{font:inherit;font-size:1.2rem;font-weight:700;color:#f1e8d6;background:#35241a;border:1px solid rgba(241,232,214,.2);border-radius:10px;width:44px;height:36px}",
+    ".lt-plastico h3{margin-bottom:6px}.lt-plastico{box-sizing:border-box;width:100%}",
+    "@media (max-width:600px){.lt-plastico canvas{width:100%!important;height:auto!important}.lt-plastico p{margin-top:6px}}",
     ".lt-mod{color:#cbbcf6!important;font-weight:700}",
     ".lt-fermo{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;font-size:3.2rem;font-weight:700;letter-spacing:.08em;color:#ffd0d8;text-shadow:0 0 24px rgba(208,80,106,.8);background:radial-gradient(circle,rgba(90,20,35,.15),rgba(90,20,35,.55));animation:ltPulsa .8s var(--lt-ease) infinite alternate}",
     ".lt-fermo small{font-size:.9rem;letter-spacing:0;font-weight:700}",
-    ".lt-registro{list-style:none;margin:0;padding:5px 8px;background:rgba(13,16,32,.78);border-radius:8px;font-size:.72rem;line-height:1.35;display:grid;gap:1px}.lt-registro .entra{color:#8ee6a8}.lt-registro .esce{color:#ffb3a1}",
-    ".lt-scambio .griglia.sab{grid-template-columns:1fr}.lt-scambio .griglia.sab button{display:grid;gap:3px;text-align:left;padding:10px 12px}.lt-scambio .griglia.sab b{display:flex;align-items:center;gap:8px}.lt-scambio .griglia.sab b svg{width:20px;height:20px;flex:none;color:#f0a0ae}.lt-scambio .griglia.sab small{font-weight:500;color:#b8b1a2;font-size:.76rem}",
+    ".lt-registro{list-style:none;margin:0;padding:5px 8px;background:rgba(20,12,8,.78);border-radius:8px;font-size:.72rem;line-height:1.35;display:grid;gap:1px}.lt-registro .entra{color:#8ee6a8}.lt-registro .esce{color:#ffb3a1}",
     ".lt-info.urgente{color:#ffd0d8;background:rgba(120,25,45,.85);animation:ltPulsa .5s var(--lt-ease) infinite alternate}",
-    ".lt-indov{position:absolute;inset:0;border-radius:16px;background:rgba(13,16,32,.97);padding:14px;display:flex;flex-direction:column;gap:8px;z-index:2;animation:ltSale .22s var(--lt-ease)}",
-    ".lt-indov h3{font-size:1.05rem}.lt-indov p{margin:0;font-size:.8rem;color:#b8b1a2}",
-    ".lt-indov .griglia{flex:1 1 auto;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;align-content:start}",
-    ".lt-indov .griglia button{font:inherit;font-weight:700;font-size:.74rem;color:#f1e8d6;background:#242a45;border:1px solid rgba(231,183,92,.35);border-radius:9px;padding:9px 4px}",
-    ".lt-indov .griglia button.ombre{border-color:rgba(208,80,106,.6)}.lt-indov .griglia button.soli{border-color:rgba(169,147,230,.6)}",
-    ".lt-indov .annulla{font:inherit;font-weight:700;color:#f1e8d6;background:transparent;border:1px solid rgba(241,232,214,.3);border-radius:10px;padding:9px}",
-    ".lt-intro{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;pointer-events:none;background:radial-gradient(circle,rgba(13,16,32,.55),rgba(9,11,22,.92));animation:ltIntro 2s var(--lt-ease) both}",
-    ".lt-intro.corpo{background:radial-gradient(circle,rgba(90,20,35,.6),rgba(9,11,22,.94))}",
-    ".lt-intro .icona{font-size:4rem;animation:ltDondola .5s ease-in-out 3 alternate}.lt-intro h2{margin:0;font-size:2.4rem;font-weight:700;letter-spacing:.02em;color:#f6d999;text-transform:uppercase;animation:ltColpo .5s var(--lt-ease) both}",
-    ".lt-intro.corpo h2{color:#ffb3c1}.lt-intro p{margin:0;font-weight:700;color:#f1e8d6}",
-    ".lt-intro .facce{display:flex;gap:14px}.lt-intro .facce img,.lt-intro .facce .pall{width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:top;background:#242a45;border:3px solid #e7b75c}.lt-intro .facce .morto{filter:grayscale(1) brightness(.6);border-color:#888}",
+    ".lt-intro{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;pointer-events:none;background:radial-gradient(circle,rgba(50,18,24,.95),rgba(14,9,6,.98));animation:ltIntro 2s var(--lt-ease) both}",
+    ".lt-intro.corpo{background:radial-gradient(circle,rgba(92,16,32,.95),rgba(14,9,6,.98))}",
+    ".lt-intro .icona{font-size:4rem;animation:ltDondola .5s ease-in-out 3 alternate}.lt-intro h2{margin:0;padding:0 14px;font-family:var(--r-serif);font-size:2.5rem;font-weight:700;line-height:1.08;letter-spacing:0;color:#f6d999;animation:ltColpo .5s var(--lt-ease) both}",
+    ".lt-intro.corpo h2{color:#f6d999}.lt-intro p{margin:0;font-family:var(--r-serif);font-size:1.1rem;font-style:italic;color:#f1e8d6}",
+    ".lt-scena.oriz .lt-intro{padding-top:48px;gap:6px}.lt-scena.oriz .lt-intro .icona{font-size:2.5rem;line-height:1}.lt-scena.oriz .lt-intro .icona svg{width:44px;height:44px}.lt-scena.oriz .lt-intro .facce img,.lt-scena.oriz .lt-intro .facce .pall{width:50px;height:60px}",   // (di lato lo schermo è basso: l'avviso in alto non deve coprire la lanterna)
+    ".lt-intro .facce{display:flex;gap:14px}.lt-intro .facce img,.lt-intro .facce .pall{width:72px;height:86px;border-radius:50%;object-fit:cover;object-position:top;background:#35241a;box-shadow:0 0 0 2px #c39a48,0 0 0 4px rgba(248,240,222,.85)}.lt-intro .facce .morto{filter:saturate(.6) brightness(.76);border-color:#8d7f6c}",
     "@keyframes ltIntro{0%{opacity:0}12%{opacity:1}82%{opacity:1}100%{opacity:0}}",
     "@keyframes ltDondola{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}",
     "@keyframes ltColpo{from{transform:scale(2.2);opacity:0}to{transform:scale(1);opacity:1}}",
-    ".lt-svela{animation:ltGira .7s var(--lt-ease) both;transform-style:preserve-3d}.lt-svela.ombre{box-shadow:0 0 60px rgba(208,80,106,.35);border-color:rgba(208,80,106,.5)}.lt-svela.soli{box-shadow:0 0 60px rgba(169,147,230,.35);border-color:rgba(169,147,230,.5)}.lt-svela.ospiti{box-shadow:0 0 60px rgba(231,183,92,.3)}",
     "@keyframes ltGira{from{transform:perspective(700px) rotateY(90deg) scale(.9);opacity:0}to{transform:perspective(700px) rotateY(0) scale(1);opacity:1}}",
-    ".lt-svela-av{width:84px;height:84px;border-radius:50%;object-fit:cover;object-position:top;background:#242a45;border:3px solid currentColor;color:#e7b75c;margin:0 auto 6px;display:block}.lt-svela.ombre .lt-svela-av{color:#f08aa0}",
-    ".lt-alleati{display:flex;justify-content:center;gap:8px;margin-top:6px}.lt-alleati img{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;background:#242a45;border:2px solid #f08aa0}",
-    ".lt-riu .carta .vt i{animation:ltPop .35s var(--lt-ease) both}@keyframes ltPop{from{transform:scale(0);opacity:0}60%{transform:scale(1.5)}to{transform:scale(1);opacity:1}}",
-    ".lt-batti{animation:ltBatti .4s var(--lt-ease)}@keyframes ltBatti{50%{transform:scale(1.05);border-color:#e7b75c}}",
-    ".lt-vince.vinto{box-shadow:0 0 70px rgba(231,183,92,.45)}.lt-vince.perso{box-shadow:0 0 70px rgba(208,80,106,.35)}.lt-vince h2{animation:ltColpo .6s var(--lt-ease) both}",
-    "@media (max-height:700px){.lt-riu{gap:5px;padding:9px}.lt-riu .grid{grid-template-columns:repeat(3,1fr);gap:4px}.lt-riu .carta{grid-template-columns:22px minmax(0,1fr);font-size:.72rem;padding:3px 5px;column-gap:5px}.lt-riu .carta .faccia,.lt-riu .carta .pall{width:22px;height:22px}.lt-riu .carta .st{font-size:.58rem}.lt-riu .chat{min-height:56px;font-size:.8rem}.lt-riu .voto .btn{padding:8px}.lt-riu .timer{width:38px;height:38px}}",
-    // il «computer» delle regole (⚙️): schermo scuro del palazzo, schede, righe ‹ ›, griglia dei ruoli
-    ".lt-pc{--pc-e:cubic-bezier(.22,1,.36,1);position:relative;border-radius:16px;overflow:hidden;color:#f1e8d6;font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Text\",\"Helvetica Neue\",\"Inter\",system-ui,sans-serif;-webkit-font-smoothing:antialiased;background:linear-gradient(180deg,#151b33,#0b0f1e);border:1px solid rgba(231,183,92,.3);box-shadow:0 12px 32px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05)}",
-    ".lt-pc::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px)}",
-    ".lt-pc button{font:inherit;border:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--pc-e),background-color .2s var(--pc-e),color .2s var(--pc-e),opacity .2s var(--pc-e)}.lt-pc button:active{transform:scale(.95)}",
-    ".lt-pc-barra{display:flex;align-items:center;gap:6px;padding:6px 8px 6px 12px;background:rgba(231,183,92,.08);border-bottom:1px solid rgba(231,183,92,.16);font:600 11px ui-monospace,\"SF Mono\",Menlo,monospace;letter-spacing:.12em;color:#f6d999}",
-    ".lt-pc-barra i{width:8px;height:8px;border-radius:50%;background:#f05a6e;opacity:.8}.lt-pc-barra i:nth-child(2){background:#e7b75c}.lt-pc-barra i:nth-child(3){background:#5ad19a}.lt-pc-barra span{margin-left:6px}",
-    ".lt-pc-preset{display:flex;gap:4px;margin-left:auto;letter-spacing:0}",
-    ".lt-pc-preset button{height:28px;padding:0 10px;border-radius:8px;background:rgba(241,232,214,.07);color:#d9d1c1;font:600 12px -apple-system,BlinkMacSystemFont,\"SF Pro Text\",system-ui,sans-serif}.lt-pc-preset button.attiva{background:rgba(231,183,92,.2);color:#f6d999;box-shadow:inset 0 0 0 1px rgba(231,183,92,.5)}",
-    ".lt-pc-schede{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:6px 10px}",
-    ".lt-pc-schede button{display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 0;border-radius:10px;background:transparent;color:#a9a294}.lt-pc-schede b{font-size:17px;line-height:1.1}.lt-pc-schede span{font-size:10.5px;font-weight:600}",
-    ".lt-pc-schede button.attiva{background:rgba(231,183,92,.15);color:#f6d999;box-shadow:inset 0 0 0 1px rgba(231,183,92,.45)}",
-    ".lt-pc-corpo{padding:0 10px 6px;min-height:236px}",
-    ".lt-pc-pag{animation:ltPcEntra .22s var(--pc-e) both}@keyframes ltPcEntra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
-    ".lt-pc-riga{display:flex;align-items:center;gap:8px;min-height:37px;border-bottom:1px solid rgba(241,232,214,.06)}.lt-pc-riga:last-child{border-bottom:0}",
-    ".lt-pc-riga .et{flex:1;min-width:0;font-size:14px;font-weight:600;color:#ebe3d3;line-height:1.2}",
-    ".lt-pc-riga .ctr{display:flex;align-items:center;gap:3px;flex:none}",
-    ".lt-pc-riga .fr{width:30px;height:30px;border-radius:8px;background:rgba(241,232,214,.07);color:#f6d999;font-size:18px;font-weight:700;line-height:1}.lt-pc-riga .fr:disabled{opacity:.22;cursor:default}",
-    ".lt-pc-riga .val{min-width:96px;height:30px;padding:0 8px;border-radius:8px;background:rgba(231,183,92,.12);color:#f6d999;font:600 12.5px ui-monospace,\"SF Mono\",Menlo,monospace;white-space:nowrap}",
-    ".lt-pc .pop{animation:ltPcPop .2s var(--pc-e)}@keyframes ltPcPop{from{transform:scale(.88)}to{transform:none}}",
-    ".lt-pc-sq{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px}",
-    ".lt-pc-sq button{height:30px;border-radius:8px;background:rgba(241,232,214,.05);color:#a9a294;font-size:12px;font-weight:600}",
-    ".lt-pc-sq button.attiva{color:#f6d999;background:rgba(231,183,92,.16);box-shadow:inset 0 0 0 1px rgba(231,183,92,.45)}.lt-pc-sq button.ombre.attiva{color:#f6a3b2;background:rgba(208,80,106,.18);box-shadow:inset 0 0 0 1px rgba(208,80,106,.5)}.lt-pc-sq button.soli.attiva{color:#d6c8ff;background:rgba(169,147,230,.18);box-shadow:inset 0 0 0 1px rgba(169,147,230,.5)}",
-    ".lt-pc-ruoli{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}@media (max-width:370px){.lt-pc-ruoli{grid-template-columns:repeat(3,1fr)}}",
-    ".lt-pc-r{position:relative;height:37px;padding:3px 6px;border-radius:9px;overflow:hidden;text-align:left;background:rgba(241,232,214,.06);color:#f1e8d6;box-shadow:inset 0 0 0 1px rgba(241,232,214,.07)}",
-    ".lt-pc-r b{display:block;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lt-pc-r span{display:inline-block;font:600 11px ui-monospace,\"SF Mono\",Menlo,monospace;color:#f6d999}",
-    ".lt-pc-r i{position:absolute;left:0;bottom:0;height:3px;background:linear-gradient(90deg,#c9923a,#f6d999);transition:width .25s var(--pc-e)}.lt-pc-ruoli.ombre .lt-pc-r i{background:linear-gradient(90deg,#a8344c,#f08aa0)}.lt-pc-ruoli.soli .lt-pc-r i{background:linear-gradient(90deg,#7d68c4,#cbbcf6)}",
-    ".lt-pc-r.zero{opacity:.5}.lt-pc-r.zero span{color:#8c8577}",
-    ".lt-pc-tutti{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:12px;color:#a9a294}.lt-pc-tutti span{margin-right:2px}.lt-pc-tutti button{flex:1;height:28px;border-radius:8px;background:rgba(241,232,214,.06);color:#d9d1c1;font:600 11.5px ui-monospace,\"SF Mono\",Menlo,monospace}",
-    ".lt-pc-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px}",
-    ".lt-pc-pick button{height:28px;padding:0 3px;border-radius:8px;background:rgba(241,232,214,.05);color:#b8b1a2;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lt-pc-pick button.attiva{color:#f6d999;background:rgba(231,183,92,.16);box-shadow:inset 0 0 0 1px rgba(231,183,92,.45)}",
-    ".lt-pc-regole{border-top:1px solid rgba(231,183,92,.16);padding-top:2px}.lt-pc-nota{margin:4px 0 0;font-size:12px;line-height:1.35;color:#a9a294;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}",
-    ".lt-pc-stato{padding:7px 12px 8px;border-top:1px solid rgba(231,183,92,.14);font:500 11px/1.35 ui-monospace,\"SF Mono\",Menlo,monospace;color:#9fd8b0;background:rgba(0,0,0,.18)}.lt-pc-stato::after{content:'▍';margin-left:2px;animation:ltPcCursore 1s steps(1) infinite}@keyframes ltPcCursore{50%{opacity:0}}",
-    "@media (max-height:700px){.lt-pc-riga{min-height:36px}.lt-pc-corpo{min-height:220px}.lt-pc-schede button{padding:4px 0}.lt-pc-r{height:36px}}",
-    "@media (prefers-reduced-motion:reduce){.lt-pc *,.lt-pc *::after,.lt-pc::after{animation:none!important;transition:none!important}}",
-    "@media (prefers-reduced-motion:reduce){.lt-scena *,.lt-scena *::before{animation-duration:.01ms!important;transition-duration:.01ms!important}}"
-  ].join("");
+  ].join("") + cssRegistro();
   document.head.appendChild(st);
 }
 
 // =========================================================
 //  LE REGOLE DELL'HOST (bottoni .modo-chip, come gli altri giochi)
 // =========================================================
-// ⚙️ Le regole della partita: il «computer» del palazzo, a schede. Ogni scheda sta in uno schermo: righe corte con ‹ ›,
+// ⚙️ Le regole della partita: il registro del palazzo, coi segnalibri. Ogni scheda sta in uno schermo: righe corte con ‹ ›,
 // i ruoli in una griglia (un tocco cambia la probabilità), i poteri ruolo per ruolo. Si ritrova la scheda di prima riaprendo.
 var SCHEDE = [["partita", "partita", "Partita"], ["riunioni", "campana", "Riunioni"], ["ruoli", "maschera", "Ruoli"], ["poteri", "potere", "Poteri"], ["sabotaggi", "sabota", "Sabotaggi"]];
 var SQUADRE = [["ospiti", "Ospiti"], ["ombre", "Ombre"], ["soli", "Da soli"], ["mod", "Modificatori"]];
 var PC = { scheda: "partita", squadra: "ospiti", gruppo: null };
+// quanto spesso esce un ruolo, a parole (il numero in % non dice niente a chi gioca)
+function frequenza(x) { return !x ? "mai" : x >= 100 ? "sempre" : x === 75 ? "3 su 4" : "1 su " + Math.round(100 / x); }
+// la riga di riepilogo, che si capisca senza conoscere le regole
+function rigaStato(imp) {
+  var ruoli = Object.keys(imp.prob).filter(function (r) { return imp.prob[r] > 0; }).length, om = imp.ombre > 0 ? imp.ombre + (imp.ombre === 1 ? " ombra" : " ombre") : "", co = imp.compiti > 0 ? imp.compiti + " compiti" : "";
+  return (om && co ? om + " · " + co : om ? om + " · compiti in base a quanti siete" : co ? co + " · ombre in base a quanti siete" : "Ombre e compiti in base a quanti siete") + " · " + ruoli + " ruoli speciali";
+}
+// la schermata dell'app che ospita il foglio, prima di aprire la stanza: i colori li mette la CSS, qui si tolgono le emoji dai testi
+function vestiRegole(box) {
+  var s = box.closest && box.closest(".schermata"); if (!s) return;
+  senzaEmoji(s.querySelector(".piede") || s);
+  var so = s.querySelector(".testa .sotto"), nota = s.querySelector(".contenuto>.sl-prima"), ico = s.querySelector(".testa>span");
+  if (so) so.textContent = so.textContent.replace(EMOJI, "").trim();
+  if (nota) nota.textContent = "Scegli le regole, poi apri la stanza: gli amici entrano col tuo invito.";
+  if (ico) ico.innerHTML = STEMMA;
+}
 function impostazioni(box, dove, aiuti) {
   stile();
+  var sola = !!(aiuti && aiuti.sola);   // sola lettura: chi non ha aperto la stanza vede lo stesso registro, senza frecce
   var cur = pulisci(dove); Object.keys(cur).forEach(function (k) { dove[k] = cur[k]; });
   var perG = {}; VOCI.forEach(function (v) { (perG[v.g] = perG[v.g] || []).push(v); });
   var POTERI = Object.keys(perG).filter(function (g) { return ["Partita", "Riunioni", "Probabilità dei ruoli", "Sabotaggi", "Modificatori"].indexOf(g) < 0; });
@@ -6737,15 +9776,19 @@ function impostazioni(box, dove, aiuti) {
   box.textContent = "";
   var pc = E("div", "lt-pc"); box.appendChild(pc);
   pc.setAttribute("data-regola", "");   // (così l'app sa che Lanterne ha delle regole: in saletta c'è «⚙️ Regole»)
+  // da solo (schermata dell'app) è un foglio a sé; nella saletta sta dentro il foglio con «Comincia»
+  var aSe = !(box.closest && box.closest(".lt-computer")); if (aSe) { pc.classList.add("lt-foglio"); Promise.resolve().then(function () { vestiRegole(box); }); }
   var barra = E("div", "lt-pc-barra"), preset = E("div", "lt-pc-preset");
-  barra.append(E("i"), E("i"), E("i"), E("span", "", "REGOLE"), preset);   // in alto le partenze veloci, come i tasti di una finestra
+  barra.append(E("span", aSe ? "tit" : "", aSe ? "Regole della notte" : "Partenza"), preset);   // in alto le partenze veloci
   var schede = E("div", "lt-pc-schede"), corpo = E("div", "lt-pc-corpo"), stato = E("div", "lt-pc-stato");
-  pc.append(barra, schede, corpo, stato);
+  pc.append(barra, schede, corpo, stato); var sfuma = ltSfuma(corpo);
   function aggStato() {
-    stato.textContent = "> " + riassunto(pulisci(dove));
-    [].forEach.call(preset.children, function (b) { b.classList.toggle("attiva", JSON.stringify(conPreset(b.dataset.p)) === JSON.stringify(pulisci(dove))); });
+    stato.textContent = rigaStato(pulisci(dove));
+    var att = [["classica", "Classica"], ["tanti", "Tanti"], ["caos", "Caos"]].filter(function (p) { return JSON.stringify(conPreset(p[0])) === JSON.stringify(pulisci(dove)); })[0];
+    if (sola) { preset.textContent = ""; preset.appendChild(E("span", "scelta", att ? att[1] : "Su misura")); }
+    else [].forEach.call(preset.children, function (b) { b.classList.toggle("attiva", !!att && b.dataset.p === att[0]); });
   }
-  [["classica", "Classica"], ["tanti", "Tanti"], ["caos", "Caos"]].forEach(function (p) {
+  if (!sola) [["classica", "Classica"], ["tanti", "Tanti"], ["caos", "Caos"]].forEach(function (p) {
     var b = E("button", "", p[1]); b.type = "button"; b.dataset.p = p[0];
     b.addEventListener("click", function () { var v = conPreset(p[0]); Object.keys(v).forEach(function (k) { dove[k] = v[k]; }); disegna(); aggStato(); });
     preset.appendChild(b);
@@ -6758,24 +9801,28 @@ function impostazioni(box, dove, aiuti) {
   });
   // una regola: nome a sinistra, ‹ valore › a destra (il valore si tocca anche da solo: passa al successivo)
   function riga(v, et) {
+    var nome = et || v.et.replace(/ \(.*\)$/, "");
+    if (sola) { var rs = E("div", "lt-pc-riga"); rs.append(E("span", "et", nome), E("i", "pp"), E("span", "val", scrittaOpz(v.opz[idx(v)], v.u))); return rs; }
     var r = E("div", "lt-pc-riga"), c = E("div", "ctr"), meno = E("button", "fr", "‹"), val = E("button", "val"), piu = E("button", "fr", "›");
     meno.type = val.type = piu.type = "button"; meno.setAttribute("aria-label", "meno"); piu.setAttribute("aria-label", "più");
     function mostra() { var i = idx(v); val.textContent = scrittaOpz(v.opz[i], v.u); meno.disabled = i === 0; piu.disabled = i === v.opz.length - 1; }
     function vai(d, giro) { var i = idx(v) + d; if (giro) i = (i + v.opz.length) % v.opz.length; if (i < 0 || i >= v.opz.length) return; scrivi(dove, v.k, valoreOpz(v.opz[i])); mostra(); pop(val); aggStato(); }
     meno.addEventListener("click", function () { vai(-1); }); piu.addEventListener("click", function () { vai(1); }); val.addEventListener("click", function () { vai(1, true); });
-    c.append(meno, val, piu); r.append(E("span", "et", et || v.et.replace(/ \(.*\)$/, "")), c); mostra();
+    c.append(meno, val, piu); r.append(E("span", "et", nome), E("i", "pp"), c); mostra();
     return r;
   }
-  // un ruolo nella griglia: tocco = probabilità dopo (0 → 25 → 50 → 75 → 100 → 0); la barretta sotto dice quanto
+  // un ruolo nella griglia: tocco = quanto spesso esce, dopo (mai → 1 su 4 → 1 su 2 → 3 su 4 → sempre → mai); le candele accese lo dicono a colpo d'occhio
   function cella(v, nome) {
-    var b = E("button", "lt-pc-r"), n = E("b", "", nome), q = E("span"), bar = E("i"); b.type = "button"; b.append(n, q, bar);
-    function mostra() { var x = leggi(dove, v.k), mx = valoreOpz(v.opz[v.opz.length - 1]) || 100; q.textContent = scrittaOpz(v.opz[idx(v)], v.u); bar.style.width = Math.round(100 * x / mx) + "%"; b.classList.toggle("zero", !x); }
-    b.addEventListener("click", function () { var i = (idx(v) + 1) % v.opz.length; scrivi(dove, v.k, valoreOpz(v.opz[i])); mostra(); pop(q); aggStato(); });
+    var b = E(sola ? "div" : "button", "lt-pc-r"), n = E("b", "", nome), riga2 = E("span", "quanto"), cand = E("span", "cand"), q = E("span", "sp"), lumi = [];
+    for (var i = 0; i < 4; i++) { var u = E("i"); lumi.push(u); cand.appendChild(u); }
+    riga2.append(cand, q); b.append(n, riga2);
+    function mostra() { var x = leggi(dove, v.k), j = idx(v); q.textContent = frequenza(x); lumi.forEach(function (u, k) { u.classList.toggle("on", k < j); }); b.classList.toggle("zero", !x); b.setAttribute("aria-label", nome + ": esce " + frequenza(x)); }
+    if (!sola) { b.type = "button"; b.addEventListener("click", function () { var i = (idx(v) + 1) % v.opz.length; scrivi(dove, v.k, valoreOpz(v.opz[i])); mostra(); pop(q); aggStato(); }); }
     mostra(); return b;
   }
   function disegna() {
     corpo.textContent = "";
-    var dentro = E("div", "lt-pc-pag"); corpo.appendChild(dentro);
+    var dentro = E("div", "lt-pc-pag s-" + PC.scheda); corpo.appendChild(dentro);
     if (PC.scheda === "partita") perG["Partita"].forEach(function (v) { dentro.appendChild(riga(v)); });
     else if (PC.scheda === "riunioni") perG["Riunioni"].forEach(function (v) { dentro.appendChild(riga(v)); });
     else if (PC.scheda === "sabotaggi") (perG["Sabotaggi"] || []).forEach(function (v) { dentro.appendChild(riga(v)); });
@@ -6786,15 +9833,18 @@ function impostazioni(box, dove, aiuti) {
       if (PC.squadra === "mod") voci = (perG["Modificatori"] || []).map(function (v) { return [v, v.et]; });
       else voci = perG["Probabilità dei ruoli"].filter(function (v) { return RUOLI[v.k.slice(5)].squadra === PC.squadra; }).map(function (v) { return [v, v.et]; });
       voci.forEach(function (x) { gr.appendChild(cella(x[0], x[1])); });
-      // tutti insieme: spenti, al minimo, a metà, sempre
-      var tutti = E("div", "lt-pc-tutti"); tutti.appendChild(E("span", "", "Tutti:"));
-      [0, 1, 2, -1].forEach(function (j) {
-        var o = voci.length ? voci[0][0].opz : [], val = o.length ? valoreOpz(o[j < 0 ? o.length - 1 : Math.min(j, o.length - 1)]) : 0;
-        var b = E("button", "", o.length ? scrittaOpz(o[j < 0 ? o.length - 1 : Math.min(j, o.length - 1)], voci[0][0].u) : ""); b.type = "button";
-        b.addEventListener("click", function () { voci.forEach(function (x) { scrivi(dove, x[0].k, val); }); disegna(); aggStato(); });
-        tutti.appendChild(b);
-      });
-      dentro.append(sq, gr, tutti);
+      dentro.append(sq, E("p", "lt-pc-aiuto", sola ? "Le candele dicono quanto spesso esce ogni ruolo." : PC.squadra === "mod" ? "Tocca per cambiare quanto spesso capita." : "Tocca un ruolo per cambiare quanto spesso esce."), gr);
+      // tutti insieme: mai, poco, a metà, sempre
+      if (!sola) {
+        var tutti = E("div", "lt-pc-tutti"); tutti.appendChild(E("span", "", "Tutti:"));
+        [0, 1, 2, -1].forEach(function (j) {
+          var o = voci.length ? voci[0][0].opz : [], val = o.length ? valoreOpz(o[j < 0 ? o.length - 1 : Math.min(j, o.length - 1)]) : 0, sc = frequenza(val);
+          var b = E("button", "", sc.charAt(0).toUpperCase() + sc.slice(1)); b.type = "button";
+          b.addEventListener("click", function () { voci.forEach(function (x) { scrivi(dove, x[0].k, val); }); disegna(); aggStato(); });
+          tutti.appendChild(b);
+        });
+        dentro.appendChild(tutti);
+      }
     } else if (PC.scheda === "poteri") {
       var pick = E("div", "lt-pc-pick");
       POTERI.forEach(function (g) { var nome = g.replace(/ \(.*\)$/, ""); var b = E("button", g === PC.gruppo ? "attiva" : "", nome); b.type = "button"; b.addEventListener("click", function () { PC.gruppo = g; disegna(); }); pick.appendChild(b); });
@@ -6802,8 +9852,9 @@ function impostazioni(box, dove, aiuti) {
       perG[PC.gruppo].forEach(function (v) { regole.appendChild(riga(v)); });
       var r = Object.keys(RUOLI).filter(function (k) { return RUOLI[k].nome === PC.gruppo; })[0];
       if (r) regole.appendChild(E("p", "lt-pc-nota", RUOLI[r].desc));
-      dentro.append(pick, regole);
+      dentro.append(E("p", "lt-pc-aiuto", sola ? "Scegli un ruolo e guarda i suoi poteri." : "Scegli un ruolo e regola i suoi poteri."), pick, regole);
     }
+    sfuma();
   }
   disegna(); aggStato();
 }
@@ -6833,13 +9884,16 @@ SG.registra({
   modi: [], soloOnline: true,
   postiOnline: MAX,
   ritardatari: RITARDATARI,
-  riprende: true,   // senza riserva: è un gioco in tempo reale
+  riprende: true,
+  // l'host di riserva: provato (prove/browser/rientri.mjs) ma SPENTO, l'AGENTS.md dell'app lo vieta nei giochi in tempo reale. Si accende solo col sì di Mario: qui, true al posto di window.LT_RISERVA
+  riserva: !!window.LT_RISERVA,
   riassunto: function (imp) { return riassunto(pulisci(imp)); },
   regole: [
     "Gli <b>ospiti</b> fanno i compiti in giro per il palazzo. Le <b>ombre</b> spengono le lanterne quando nessuno le vede.",
     "Chi trova una lanterna spenta la <b>segnala</b>: si fa una riunione, si parla e si vota chi cacciare.",
     "Vincono gli ospiti se finiscono i compiti o cacciano tutte le ombre. Vincono le ombre se diventano tante quanto gli ospiti.",
-    "Ruoli speciali: Investigatore, Medico, Sceriffo, Silenziatore, Nebbia e Giullare. L'host sceglie quanto spesso escono."
+    "Ruoli speciali: Investigatore, Medico, Sceriffo, Silenziatore, Nebbia e Giullare. Chi apre la stanza sceglie quanto spesso escono.",
+    "Modelli 3D: Poly Haven, NVIDIA SimReady Assets (CC BY 4.0)."
   ],
   impostazioni: impostazioni,
   avvia: function (t) {

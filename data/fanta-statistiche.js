@@ -198,7 +198,6 @@ window.SG_FANTA_STATISTICHE = {
     "Sulemana K. (Atalanta)": [17, 0.1],
     "Camarda (Milan)": [6, 0.1],
     "Lang (Napoli)": [13, 0.2],
-    "Milik (Juventus)": [7, 0.4],
     "Ngonge (Monza)": [11, 0.1],
     "Nzola (Cagliari)": [7, 3],
     "Elphege (Parma)": [4, 0.2],

@@ -9,8 +9,8 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 284,
-    data: "30 ottobre 2026",
+    v: 302,
+    data: "3 novembre 2026",
     titolo: "La Ruota della Fortuna come in TV, ma meglio 🎡",
     descrizione: [
       "🎬 Prima di ogni manche c'è un gioco veloce, ogni volta diverso: la frase lampo, ⏳ La ruota del tempo (vedi un anno: cosa è successo?), 🌍 GiraMondo (una parola straniera curiosa: cosa vuol dire?), 🎯 il Triplete (tre frasi sullo stesso tema, e chi le fa tutte e tre prende 2.000 in più) e 🧩 il CruciRuota (quattro parole sul tema, una per riga: prenoti e scrivi quelle che sai).",
@@ -20,6 +20,199 @@ window.SG_NOVITA = [
       "✉️ Alla fine chi vince la partita, se non è un Bot, sceglie una busta tra cinque: da 500 a 5.000 Speed Coins (contro i Bot e sullo stesso telefono valgono un decimo). A pari merito, una busta a testa. Anche sullo stesso telefono.",
       "📖 Più di 3.000 frasi in 35 argomenti (15 nuovi, come «Al bar», «Cose della mamma», «Cosa stai facendo?»), più 192 anni, 148 parole straniere e 130 cruciverba. Il telefono ricorda tutte le frasi già uscite, e online anche quelle già viste dagli amici che giocano con te: non tornano.",
       "💰 I soldi di tutti sono sempre in vista sotto il tabellone; la ruota fa il tic-tic mentre rallenta; il giro finale si apre con la campana; online si hanno 15 secondi per ogni mossa."
+    ]
+  },
+  {
+    v: 301,
+    data: "2 novembre 2026",
+    titolo: "✉️ Mini Asta Fantacalcio: l'asta a busta chiusa",
+    descrizione: [
+      "Nel ⚙️ c'è «💰 Come si compra»: l'asta di sempre coi rilanci, «✉️ Tutta a buste» o «✉️ Buste solo per i big» (a busta i calciatori più forti, gli altri all'asta normale).",
+      "A busta ognuno scrive in segreto quanto offre, o passa. Si aprono le buste tutte insieme, dalla più bassa alla più alta, con un attimo di suspense sull'ultima: vince l'offerta più alta e paga quello che ha scritto.",
+      "A pari offerta non vince chi è stato più veloce: c'è lo spareggio a busta solo tra chi era pari (almeno 1 in più, o resti dov'eri). Se siete ancora pari, decide la ruota, uguale su tutti i telefoni.",
+      "Online hai 15 secondi per scrivere (10 nello spareggio). Sullo stesso telefono vi passate il telefono come nei temi."
+    ]
+  },
+  {
+    v: 300,
+    data: "2 novembre 2026",
+    titolo: "🏷️ Il Prezzo è Giusto: 11 foto nuove",
+    descrizione: [
+      "Altri 11 premi hanno la loro foto vera al posto del disegnino: la panna da cucina, la tastiera Logitech, la visita dall'oculista, la lezione di yoga, la seduta di fisioterapia, la barba dal barbiere, i leggings, l'assicurazione dell'auto, la tribuna di Monza e il LEGO Titanic."
+    ]
+  },
+  {
+    v: 299,
+    data: "2 novembre 2026",
+    titolo: "🖼️ Immagini nuove nella home",
+    descrizione: [
+      "Palla Matta, Una parola sola, Memata e Da dove viene? hanno finalmente la loro immagine nella prima schermata, nello stesso stile degli altri giochi.",
+      "La Mini Asta Fantacalcio ha un'immagine nuova: il pallone sul podio del banditore, col martelletto d'oro."
+    ]
+  },
+  {
+    v: 298,
+    data: "2 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: la giornata senza spoiler",
+    descrizione: [
+      "Nelle azioni della giornata non si capisce più prima del tiro come andrà a finire: fino al tiro tutto si muove uguale, che sia gol, parata, palo o fuori.",
+      "C'è sempre un difensore sul palo: prima c'era solo quando poi la salvava sulla linea.",
+      "Il passettino del portiere prima del tiro non dice più da che parte andrà il pallone.",
+      "Nel contropiede il portiere a volte esce anche quando non è gol: può fermarti in uscita, o ti fa tirare da posizione difficile. E anche il tiro da centrocampo, rarissimo, ora può finire fuori o essere parato."
+    ]
+  },
+  {
+    v: 297,
+    data: "2 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: listone nuovo e un portiere per squadra",
+    descrizione: [
+      "Il listone è quello del 2026/27: entrano 48 calciatori (tutti quelli da 10 in su e chi da 7 a 9 gioca davvero, come Pobega, Zalewski, Koopmeiners, Douglas Luiz e Osmajic). Escono Milik e Kelly.",
+      "All'asta esce un solo portiere per squadra: se va all'asta Martinez dell'Inter, Provedel non esce più. Così nella giornata non ci sono mai due portieri vostri con la stessa porta.",
+      "Sul maxischermo «🎯 RIGORISTA», «🦶 PUNIZIONI» e «🚩 ANGOLI» hanno sempre il numero (1°, 2° o 3° della squadra) e la scritta intera, anche quando un calciatore fa tutte e tre le cose. Stanno a destra, piccole, una sotto l'altra: la maglia resta grande.",
+      "Chi batte le punizioni e gli angoli è aggiornato: al Lecce Gallo, al Genoa gli angoli li batte Messias."
+    ]
+  },
+  {
+    v: 296,
+    data: "2 novembre 2026",
+    titolo: "🃏 Black Jack: lo zoom su di te più pulito",
+    descrizione: [
+      "Il tuo punteggio adesso sta sotto le carte: la pila delle fiches non lo copre più, nemmeno dopo Raddoppia o Dividi.",
+      "La scritta in alto («Tocca a…») non è più coperta dalle carte del banco, che stanno subito sotto, e coi nomi lunghi non viene tagliata.",
+      "Quando la telecamera è su chi gioca, nome e monete li trovi una volta sola nella scritta in alto. Con tanti giocatori le tue carte restano sempre dentro lo schermo."
+    ]
+  },
+  {
+    v: 295,
+    data: "1 novembre 2026",
+    titolo: "🤥 La Balla Colossale: la prima pagina, la Balla Finale e tante notizie nuove",
+    descrizione: [
+      "La notizia ora è il titolo della prima pagina di un giornale, «Il Colossale», col pezzo mancante in giallo. Niente più scrittura a mano: risposte e titoli si leggono al volo.",
+      "🔥 La Balla Finale: l'ultima notizia ha due pezzi mancanti. Si inventano tutti e due e vale il triplo: chi è indietro può ancora vincere.",
+      "🎯 Sceglie chi è ultimo: prima di ogni notizia chi è ultimo in classifica sceglie l'argomento tra tre (🐾 Animali, 🏛️ Storia, 🍝 Italia…). Si può spegnere nelle regole.",
+      "Le notizie sono quasi il doppio (746, più 67 per la Balla Finale), controllate una per una: via quelle che si indovinavano dalla domanda, e le balle della redazione più credibili."
+    ]
+  },
+  {
+    v: 294,
+    data: "1 novembre 2026",
+    titolo: "📺 Lo studio TV nuovo: luci, parete LED e pavimento che riflette",
+    descrizione: [
+      "Lo studio dei game show (La Balla Colossale, La Ruota della Fortuna, La Patata Bollente, Il Prezzo è Giusto, La linea del tempo, Nomi, Cose e Città, Parola d'ordine) è tutto nuovo, da prima serata.",
+      "Dietro al maxischermo c'è una parete LED che si muove piano a tempo di musica e prende i colori del gioco: oro e arancio per la Ruota, fuoco per la Patata, verde acqua per Nomi, Cose e Città…",
+      "Sotto il maxischermo una scalinata illuminata; i concorrenti stanno dietro a banconi di vetro col nome che si accende quando tocca a loro, e il pavimento lucido riflette tutto, concorrenti compresi.",
+      "Le luci seguono il gioco da sole: i fari dall'alto si girano su chi ha il turno, la parete si accende del colore di chi fa punti, la sala si abbassa all'«ohhh» del pubblico, nella Patata chi salta in aria ha il lampo rosso e chi vince ha la parete d'oro e tutti i fari addosso.",
+      "Il gioco non cambia: domande, tabelloni e carte stanno sul maxischermo come prima, e mentre si gioca lo studio si ferma (anche sui telefoni meno potenti va liscio)."
+    ]
+  },
+  {
+    v: 293,
+    data: "1 novembre 2026",
+    titolo: "🎨 Scarabocchio: disegnare col dito è più facile",
+    descrizione: [
+      "Chi disegna ha 16 colori (4 nuovi, chiari, per fare il cielo, l'erba e gli sfondi col secchiello) e 5 grandezze, dalla finissima per i dettagli alla grossissima per riempire.",
+      "Strumenti nuovi: la linea dritta (si tocca dove comincia e si stacca il dito dove finisce) e il tondo per cerchi e ovali. Mentre muovi il dito li vedi solo tu; agli altri arrivano quando lo stacchi.",
+      "C'è anche «↷ Ripeti»: rimette il segno che hai appena annullato.",
+      "Niente lettere sulla lavagna: a chi disegna lo ricorda una scritta all'inizio del turno. Chi indovina può toccare «🔤 Ha scritto!»: se lo dice più di metà del gruppo il turno finisce e chi disegnava prende 0 punti (da 3 giocatori in su).",
+      "Chi indovina per primo fa festa su tutti i telefoni: la sua faccina salta in cima alla lavagna (e a lui il telefono vibra).",
+      "In tanti (da 6 in su) chi disegna prende una volta e mezza la sua parte: disegna poche volte e così il disegno conta di più.",
+      "Le parole uscite non tornano per 30 giorni: serata dopo serata escono sempre parole nuove."
+    ]
+  },
+  {
+    v: 292,
+    data: "1 novembre 2026",
+    titolo: "🃏 Black Jack: le regole da esperti",
+    descrizione: [
+      "Nelle regole del Black Jack c'è la sezione «🎰 Regole da esperti», chiusa: si apre con un tocco. Di partenza tutto è come prima.",
+      "Tre scommesse extra come al casinò, ognuna col suo interruttore accanto alla puntata: «🃏 21+3» (le tue due carte con la carta scoperta del banco: colore, scala, tris, scala colore), «👑 Stesso seme» (le prime due carte dello stesso seme, re e donna pagano 45 volte) e «💥 Il banco sballa» (più carte gli servono per sballare, più paga). Le vincite sono giuste: il banco tiene pochissimo.",
+      "Le varianti del casinò: il banco che tira sul 17 morbido, 1, 2, 6 o 8 mazzi, il raddoppio solo su 9-10-11, niente raddoppio dopo Dividi, dividere di nuovo gli Assi, niente resa, 5 carte senza sballare che vincono sempre. Il consiglio della mossa giusta si adatta da solo.",
+      "Quando vinci più scommesse alla stessa carta, gli annunci arrivano uno dopo l'altro."
+    ]
+  },
+  {
+    v: 291,
+    data: "1 novembre 2026",
+    titolo: "🃏 Black Jack: tavolo nuovo e la gara con le Speed Coins",
+    descrizione: [
+      "Tavolo da casinò di notte: panno verde smeraldo col filo d'oro, carte più grandi e leggibili, fiches di tutti i tagli (da 10 a 100.000) che scivolano sul tavolo. Le carte del banco restano sempre in vista accanto alla sua faccia.",
+      "Tasti delle mosse nuovi: ognuno col suo colore (Carta verde, Stai rosso, Raddoppia oro, Dividi azzurro, Assicura viola) e la mossa consigliata si accende.",
+      "Per puntare c'è una lineetta da trascinare: a sinistra la puntata minima, a destra tutte le tue monete. Se punti più di metà delle tue Speed Coins il gioco ti chiede un secondo sì.",
+      "Nuova mossa «🏳️ Resa»: con le prime due carte ti ritiri e riprendi metà puntata, come al casinò.",
+      "Nuova scommessa «👯 Coppia», come la «Perfect Pairs» dei casinò: accendi l'interruttore accanto alla puntata e scommetti la puntata minima che le tue prime due carte siano una coppia. Paga subito, anche se poi la mano va male: 6 volte con due colori diversi, 15 con lo stesso colore, 25 se sono identiche. Si spegne nelle regole.",
+      "Il gioco spiega le regole del casinò quando succedono: «🎩 Il banco tira sempre fino a 17» e «Assi divisi: una carta per asso».",
+      "🏆 Gara della serata: online si gioca con le Speed Coins. Ognuno paga la quota, tutti partono con le stesse fiches e il montepremi va ai primi. Chi resta senza fiches può rientrare. La classifica è sempre in alto, a metà c'è il giro di boa, le ultime 3 mani la puntata minima raddoppia e l'ultima si punta in segreto: le puntate si scoprono tutte insieme.",
+      "A fine partita i titoli: 🍀 Il Fortunato, 🎲 Lo Spericolato, 💥 Lo Sballone, 🏳️ Il Prudente, 🧊 Il Ragioniere e 🎩 L'amico del banco. E quando qualcuno fa Black Jack o punta tutto, lo vedono tutti in grande."
+    ]
+  },
+  {
+    v: 290,
+    data: "31 ottobre 2026",
+    titolo: "😂 Memata: più meme da cambiare",
+    descrizione: [
+      "Nelle regole si sceglie quanti meme può cambiare ognuno in tutta la partita: 1, 3, 5, 10, 50 o senza limite. Sul tasto «🔄 Cambia» c'è il numero che resta.",
+      "Per scrivere: «Avanti ▶» passa al riquadro dopo, «📤 Invia meme» manda il meme quando hai finito.",
+      "La rivelazione è più svelta: il rullo di tamburi dura meno."
+    ]
+  },
+  {
+    v: 289,
+    data: "31 ottobre 2026",
+    titolo: "😂 Memata: il gioco dei meme",
+    descrizione: [
+      "Gioco nuovo, online nella Sala della serata, da 2 a 10 amici: a ogni round ti arriva un meme famoso coi riquadri vuoti. Tocca un riquadro, scrivi la tua battuta e guardi subito come viene.",
+      "Non ti ispira? Una volta per round tocca «🔄 Cambia meme».",
+      "Poi i meme passano uno alla volta senza nome e si votano: 😂 fortissimo, 🙂 carino, 😐 meh. Alla rivelazione, col rullo di tamburi, si scopre chi li ha scritti.",
+      "L'ultimo round è lo stesso meme per tutti, a punti doppi. Alla fine il ⭐ meme della serata si manda su WhatsApp con un tocco.",
+      "Oltre 1.000 meme veri, i più usati in rete: non tornano subito, il gioco si ricorda quelli già usciti."
+    ]
+  },
+  {
+    v: 288,
+    data: "31 ottobre 2026",
+    titolo: "📲 La prima schermata ancora più pulita",
+    descrizione: [
+      "Se usi SPeeD GAME dal browser, in alto a destra c'è «📲 Installa l'app»: tienila sul telefono e si apre con un tocco, come le altre app. Chi l'ha già installata vede le sue monete.",
+      "Tolte dalla prima schermata le righe «Riapri la Sala di ieri» e «Giocato di recente»: il gruppo fisso c'è già, è la vostra Compagnia. Così i giochi arrivano subito.",
+      "Nella Sala e nella Serata a punti i giochi si scelgono con le stesse tessere della prima schermata, due per riga."
+    ]
+  },
+  {
+    v: 287,
+    data: "30 ottobre 2026",
+    titolo: "🏆 3 giornate, 🦉 il gufo e lo stadio che trema",
+    descrizione: [
+      "🏆 Nel ⚙️ della Mini Asta Fantacalcio ora si possono giocare 3 giornate di fila con le stesse rose. Le prime due si vedono veloci, solo i momenti dei vostri calciatori, con la classifica dopo ognuna; la terza è intera, con la Zona Cesarini. Vince chi fa più punti sommati e, se all'ultima cambia chi comanda: 💥 RIBALTONE!",
+      "🦉 Gufa! / 🍀 Portafortuna (online): a ogni rigore e a ogni punizione compare un tasto. Se chi tira è tuo fai il portafortuna, se no lo gufi: fino a 5 tocchi, con gufetti e quadrifogli che volano dal tuo quadretto. Dopo il tiro si scopre se la gufata è riuscita, e a fine partita c'è il titolo «🦉 Il gufo della serata». Sullo stesso telefono: 🤞 dita incrociate.",
+      "Lo stadio si sente: dal 75' il battito del cuore che accelera, il brusio della folla che cresce, il silenzio prima di ogni rigore e di ogni punizione, il boato più forte sui gol del finale e i flash dei telefonini sugli spalti.",
+      "Al fischio finale i punteggi in alto sono già quelli veri.",
+      "Le azioni svelano ancora meno: quando si vede solo il vostro calciatore che passa la palla può finire in gol oppure no, l'autogol di un vostro difensore si vede di colpo e il rigore arriva dalla stessa parte comunque vada."
+    ]
+  },
+  {
+    v: 286,
+    data: "30 ottobre 2026",
+    titolo: "🎬 Le azioni da finale nella giornata del fanta",
+    descrizione: [
+      "Dal 75' arrivano le azioni da finale: la mischia in area, la palla lunga col colpo di testa, il tiro a giro all'incrocio, la doppia parata del portiere, l'assedio con tre o quattro tiri di fila e, dall'85', l'ultimo assalto col portiere che sale in area sul calcio d'angolo. In una giornata non si vedono mai due volte uguali.",
+      "Le azioni non svelano come vanno a finire: fino al tiro sono identiche, che sia gol o no.",
+      "Tiri e rigori più vari: prima andavano spesso dalla stessa parte e i rigori finivano quasi sempre alti.",
+      "Anche nelle occasioni si vede chi fa il passaggio, come nei gol."
+    ]
+  },
+  {
+    v: 285,
+    data: "30 ottobre 2026",
+    titolo: "⏳ La Zona Cesarini nella giornata del fanta",
+    descrizione: [
+      "Dal 75' scatta la Zona Cesarini: barra rossa, campo che si scalda, il cronometro che corre e il cartello del recupero. Come nel calcio vero, nel finale e nel recupero succede di più: dal 75' arriva quasi un gol su tre dei vostri calciatori.",
+      "Ognuno vede sul suo quadretto cosa gli serve: 📌 sei in testa, 🔥 ti serve un gol, 💪 due, 🙏 un miracolo. La 👑 sta su chi è in testa e ogni sorpasso si annuncia.",
+      "📻 «Interrompo! Gol a San Siro»: i gol degli altri campi arrivano come alla radio.",
+      "I voti si muovono in diretta, con le freccine: il punteggio in alto è quello vero.",
+      "Il fischio finale si fa aspettare e, se la giornata si decide nel finale, si rivede «🎬 Il momento che ha deciso».",
+      "La rosa più forte vince un po' più spesso: i campioni segnano di più e i risultati sono meno pazzi. La fortuna resta.",
+      "Il rallentatore prima del tiro c'è sia sui gol sia sui non gol: non svela più come va a finire.",
+      "Online, sui telefoni più bassi di quello di chi tiene la partita, le pagelle del primo tempo non restano più aperte sopra il campo."
     ]
   },
   {

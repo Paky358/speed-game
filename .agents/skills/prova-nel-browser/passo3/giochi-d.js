@@ -192,7 +192,8 @@
         // (p5-z) la classifica del round: tutti «Avanti», se no ogni round aspetta il tempo intero e la partita non sta nei 120 s
         if (v.fase === "punti" && !p.via && (v.avanti || []).indexOf(p.id) < 0) { var ka = "a|" + v.giro + "|" + p.id; if (!F[ka]) { F[ka] = 1; manda(X, p.id, { t: "avanti" }); } return; }
         if (p.via || (v.fatti || []).indexOf(p.id) >= 0) return;
-        if (v.fase === "scrittura") { var k = "s|" + v.giro + "|" + p.id; if (!F[k]) { F[k] = 1; manda(X, p.id, { t: "balla", testo: "una balla inventata da " + p.nome }); } }
+        if (v.fase === "categoria" && v.cat && v.cat.k == null && v.cat.chi === p.id) { var kc = "c|" + v.giro + "|" + (v.rif || 0); if (!F[kc]) { F[kc] = 1; manda(X, p.id, { t: "cat", k: 0 }); } }
+        if (v.fase === "scrittura") { var k = "s|" + v.giro + "|" + p.id; if (!F[k]) { F[k] = 1; manda(X, p.id, { t: "balla", testo: "una balla inventata da " + p.nome + (v.doppia ? " ‖ e il secondo pezzo" : "") }); } }
         if (v.fase === "voto" && v.scelte && v.scelte.length) { F.prova[p.id] = (F.prova[p.id] || 0) + 1; manda(X, p.id, { t: "voto", k: F.prova[p.id] % v.scelte.length }); }
       });
     },

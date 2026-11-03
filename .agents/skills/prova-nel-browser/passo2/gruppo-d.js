@@ -165,7 +165,8 @@
         var v = vm(C);
         (v.players || []).forEach(function (p, i) {
           if (p.via || (v.fatti || []).indexOf(p.id) >= 0) return;
-          if (v.fase === "scrittura") { var k = "s|" + v.giro + "|" + p.id; if (!fatti[k]) { fatti[k] = 1; manda(X, p.id, { t: "balla", testo: "una balla inventata da " + p.nome }); } }
+          if (v.fase === "categoria" && v.cat && v.cat.k == null && v.cat.chi === p.id) { var kc = "c|" + v.giro + "|" + (v.rif || 0); if (!fatti[kc]) { fatti[kc] = 1; manda(X, p.id, { t: "cat", k: 0 }); } }
+          if (v.fase === "scrittura") { var k = "s|" + v.giro + "|" + p.id; if (!fatti[k]) { fatti[k] = 1; manda(X, p.id, { t: "balla", testo: "una balla inventata da " + p.nome + (v.doppia ? " ‖ e il secondo pezzo" : "") }); } }
           if (v.fase === "voto" && v.scelte && v.scelte.length) { prova[p.id] = (prova[p.id] || 0) + 1; manda(X, p.id, { t: "voto", k: prova[p.id] % v.scelte.length }); }
         });
         await W.dorme(500);
