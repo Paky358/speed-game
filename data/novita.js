@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 302,
+    data: "3 novembre 2026",
+    titolo: "😏 Black Jack: il banco vi prende in giro",
+    descrizione: [
+      "Nei momenti forti il banco dice la sua in un fumetto, col vostro nome: chi sballa (anche a 22, per un punto), chi punta tutto, chi perde tre mani di fila, chi resta quasi a zero, chi divide e perde tutte e due le mani…",
+      "E quando vincete voi (Black Jack, vincita grossa, 5 carte) il banco fa l'offeso. Quando sballa lui, fa finta di niente.",
+      "Più di 90 battute diverse, da amici al bar: escono ogni 2-3 mani al massimo, spariscono da sole in pochi secondi e non fermano il gioco. Online le vedono tutti uguali.",
+      "Non vi piacciono? Si spengono nelle regole ⚙️ con «😏 Battute del banco»."
+    ]
+  },
+  {
     v: 301,
     data: "2 novembre 2026",
     titolo: "✉️ Mini Asta Fantacalcio: l'asta a busta chiusa",

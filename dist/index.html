@@ -49005,6 +49005,17 @@ window.SG_NCC_CATEGORIE = {
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 302,
+    data: "3 novembre 2026",
+    titolo: "😏 Black Jack: il banco vi prende in giro",
+    descrizione: [
+      "Nei momenti forti il banco dice la sua in un fumetto, col vostro nome: chi sballa (anche a 22, per un punto), chi punta tutto, chi perde tre mani di fila, chi resta quasi a zero, chi divide e perde tutte e due le mani…",
+      "E quando vincete voi (Black Jack, vincita grossa, 5 carte) il banco fa l'offeso. Quando sballa lui, fa finta di niente.",
+      "Più di 90 battute diverse, da amici al bar: escono ogni 2-3 mani al massimo, spariscono da sole in pochi secondi e non fermano il gioco. Online le vedono tutti uguali.",
+      "Non vi piacciono? Si spengono nelle regole ⚙️ con «😏 Battute del banco»."
+    ]
+  },
+  {
     v: 301,
     data: "2 novembre 2026",
     titolo: "✉️ Mini Asta Fantacalcio: l'asta a busta chiusa",
@@ -69823,6 +69834,63 @@ window.SG_UNAPAROLA = [
   function manoVuota(puntata) { return { carte: [], puntata: puntata, chiusa: false, raddoppiata: false, divisa: false, esito: null, vincita: 0 }; }
   var MAX_POSTI = 10;
 
+  // ---- 😏 le battute del banco (3 nov 2026, il proprietario: «il banco prende in giro chi gioca, per far ridere il tavolo») ----
+  // Nei momenti forti il banco dice UNA battuta col nome di chi c'entra: al massimo una ogni 2-3 mani. La sceglie chi tiene
+  // la partita (nel motore) e va a tutti nella foto, uguale. {n} = il nome. Battute da amici al bar: MAI offensive.
+  var BATTUTE = {
+    sballa22: ["{n}, 22! Per un punto Martin perse la cappa", "22? {n}, il 21 era lì, bastava fermarsi a salutarlo", "{n}, sballato di un punto: il destino ha senso dell'umorismo",
+      "Un punto, {n}. UNO. Lo racconterai ai nipoti", "{n}, 22: la carta giusta era quella prima", "{n}, 22 è un bel numero… per un altro gioco",
+      "22, {n}! Così vicino che quasi ti pagavo… quasi", "{n}, hai sballato col righello: di un punto preciso"],
+    sballa: ["{n}, la carta in più la offre la casa. Grazie!", "{n}, chi troppo vuole…", "{n}, ma chi te l'ha detto di chiedere carta?",
+      "Coraggioso, {n}, ma il 21 non si prende a spallate", "{n}, sballato! Le tue fiches stanno bene qui con me", "{n}, ancora una carta e arrivavi a 40",
+      "{n}, la prossima volta chiedi a me: il consiglio è gratis", "{n}, sballato con stile, almeno"],
+    meta: ["{n}, metà delle fiches in una mano. Che generosità!", "{n}, le tue fiches hanno traslocato. Qui da me", "{n}, quella mano ti è costata come una cena fuori",
+      "{n}, hai dimezzato il bottino. Il banco ringrazia", "{n}, a questo ritmo il caffè te lo offro io", "{n}, la pila di prima era più bella",
+      "{n}, una mano così e la pila si è fatta bassina"],
+    tuttoPerso: ["{n}, tutto su una mano e… tutto a me. Grazie!", "{n}, tutto dentro! E ora tutto fuori", "{n}, il coraggio c'era. Le carte no",
+      "{n}, o la va o la spacca. Si è spaccata", "{n}, tutto dentro, tutto fuori. Che velocità", "{n}, che cuore! Peccato per il resto",
+      "{n}, tutto puntato e tutto perso: almeno sei coerente"],
+    tuttoVinto: ["{n}, tutto su una mano e l'hai vinta. Non rifarlo, mi viene l'ansia", "{n}, raddoppiato tutto. Ok, stavolta hai ragione tu",
+      "{n}, tutto e ti è andata bene. Ritenta, dai… ti prego", "{n}, che fegato! Il banco è un po' offeso", "{n} punta tutto e vince. Chiamo il direttore",
+      "{n}, va bene, applausi. Ora però basta"],
+    tre: ["{n}, tre di fila! Anche stasera offri tu?", "{n}, tre mani perse: sei il mio cliente preferito", "{n}, terza di fila. Vuoi che giochi io per te?",
+      "{n}, tre su tre… per me. Grazie della fiducia", "{n}, cambia sedia, magari porta bene", "{n}, tre di fila! Lo dico con affetto: è un record",
+      "{n}, la fortuna ti ha lasciato un biglietto: torna più tardi"],
+    zero: ["{n}, ti restano due fiches e tanta dignità", "{n}, la pila è diventata un gradino", "{n}, con quelle fiches ci giochi a tris",
+      "{n}, quasi a zero. Ma la rimonta sarà leggendaria, vero?", "{n}, le fiches stanno finendo, il sorriso no", "{n}, ti lascio qualche fiche per ricordo",
+      "{n}, dai, da qui si può solo salire"],
+    bj: ["{n}, Black Jack. Vabbè, non ti parlo più", "{n}, asso e figura… ma chi te l'ha insegnato?", "{n}, Black Jack! Lo sapevo che mi avresti tradito",
+      "{n}, 3 a 2. Te li pago, ma con dolore", "{n}, Black Jack? Fammi vedere le maniche", "Black Jack di {n}. Il banco non saluta più",
+      "{n}, ok, hai vinto. Ma io ho il papillon", "{n}, Black Jack! Il mazzo ce l'ha con me stasera"],
+    grosso: ["{n}, mi stai svuotando la cassa. Ti tengo d'occhio", "{n}, vinci tu? Ricontrolla, sarà un errore", "{n}, vinto grosso. Il direttore mi licenzia",
+      "{n}, va bene, festeggia. Ma con moderazione", "{n}, queste fiches erano mie, sappilo", "{n}, mani d'oro o mazzo stregato?", "{n}, che botta! Mi siedo un attimo"],
+    resa: ["{n}, bandiera bianca? Neanche hai visto le mie carte", "{n}, ti arrendi? Metà fiches a me, metà orgoglio a te", "{n}, ritirata strategica… o paura?",
+      "{n}, scappi? Ti tengo la sedia calda", "{n}, saggio. Noioso, ma saggio", "{n}, ti sei arreso prima di me. Bravo… credo", "{n}, resa! Ma non dirlo in giro"],
+    bancoSballa: ["Sballato. Fate finta di non aver visto", "Ho sballato, sì. Era per farvi felici", "Il banco sballa: stasera offro io, non abituatevi",
+      "Sballato! Era una tattica… non chiedete quale", "Una carta di troppo. Capita anche ai professionisti", "Il mazzo mi ha tradito. Lo licenzio",
+      "Pago tutti. Con gioia. No, non è vero"],
+    raddoppio: ["{n}, raddoppiato e perso: hai raddoppiato il mio sorriso", "{n}, raddoppio! E il banco ringrazia due volte", "{n}, raddoppiare era un'idea. Non buona, ma un'idea",
+      "{n}, doppia puntata, doppia figuraccia", "{n}, raddoppio perso. Te lo segno sul conto", "{n}, il raddoppio è coraggio. Il resto è storia", "{n}, due volte tanto… per me"],
+    divise: ["{n}, hai diviso e hai perso due volte. Efficiente!", "{n}, due mani, due delusioni", "{n}, dividere per perdere doppio: strategia nuova",
+      "{n}, hai diviso le carte… e io mi prendo tutte e due", "{n}, due mani perse insieme: un affare per me", "{n}, dividi et… perdi", "{n}, doppia mano, doppio regalo al banco"],
+    cinque: ["{n}, cinque carte e niente sballo. Ma sei un mago?", "{n}, cinque carte! Pensavo volessi farti un mazzo tuo", "{n}, carta, carta, carta… e hai pure vinto. Assurdo",
+      "{n}, cinque carte senza sballare: lo scrivo nel diario", "{n}, con tutte quelle carte ci giocavi a scopa", "{n}, il coraggio di un leone e la fortuna di un gatto"]
+  };
+  // l'ordine conta: se succedono più cose nella stessa mano vince la prima (le più rare e le più forti prima)
+  var ORDINE_BATTUTE = ["tuttoPerso", "divise", "raddoppio", "zero", "tre", "meta", "sballa22", "cinque", "tuttoVinto", "bj", "grosso", "bancoSballa", "resa", "sballa"];
+  var BATTUTE_LEGGERE = { bancoSballa: 1, resa: 1, sballa: 1 };   // le più comuni: una volta su due, se no sarebbero sempre loro
+  // le ultime uscite (sul telefono di chi tiene la partita), per non ripeterle presto
+  function pescaBattuta(chiave) {
+    var l = BATTUTE[chiave], rec = [];
+    try { rec = JSON.parse(localStorage.getItem("sg-bj-battute") || "[]") || []; } catch (e) { rec = []; }
+    var lib = []; l.forEach(function (x, k) { if (rec.indexOf(chiave + k) < 0) lib.push(k); });
+    if (!lib.length) { rec = rec.filter(function (x) { return x.indexOf(chiave) !== 0 || !/^\d+$/.test(x.slice(chiave.length)); }); lib = l.map(function (x, k) { return k; }); }
+    var k = lib[Math.floor(Math.random() * lib.length)];
+    rec.push(chiave + k); if (rec.length > 60) rec = rec.slice(-60);
+    try { localStorage.setItem("sg-bj-battute", JSON.stringify(rec)); } catch (e) {}
+    return l[k];
+  }
+
   // opz: { min: puntata minima, mani: quante mani si giocano (0 = senza fine) }
   var ROSSO_M = ROSSO;   // (cuori e quadri: per la «Coppia» dello stesso colore)
   function creaMotoreBJ(nomi, mischia, fichesIniz, opz) {
@@ -69855,8 +69923,8 @@ window.SG_UNAPAROLA = [
       // (con pochi mazzi si rimescola anche quando le carte rimaste non bastano per una mano di tutti)
       if (restaSotto(st.sabot) || st.sabot.carte.length - st.sabot.i < (st.giocatori.length + 1) * 8) { rimescolaSabot(st.sabot); st.rimescolato = true; } else st.rimescolato = false;
       st.banco = { carte: [] };
-      st.giocatori.forEach(function (g) { g.puntata = 0; g.assicura = 0; g.mani = []; g.attiva = 0; g.decisoAssic = false; g.salta = false; g.coppia = 0; g.coppiaEsito = null; g.ex = {}; g.exEsito = {}; });
-      st.fase = "punta";
+      st.giocatori.forEach(function (g) { g.puntata = 0; g.assicura = 0; g.mani = []; g.attiva = 0; g.decisoAssic = false; g.salta = false; g.coppia = 0; g.coppiaEsito = null; g.ex = {}; g.exEsito = {}; g.fIn = g.fiches; });
+      st.fase = "punta"; st.battuta = null;
       // la gara (fiches uguali, con un numero di mani): le ultime 3 mani la puntata minima raddoppia (da 6 mani in su),
       // l'ultima si punta in segreto (nessuno vede le puntate degli altri finché non hanno puntato tutti)
       var gara = !!opz.uguali && st.maniTot > 0;
@@ -70155,6 +70223,43 @@ window.SG_UNAPAROLA = [
       });
       st.fase = "esito";
       st.giro++; st.mano++;
+      if (opz.battute !== false) battuta(pb);
+    }
+    // 😏 la battuta del banco a fine mano: il momento più forte del tavolo, una sola, al massimo una ogni 2-3 mani
+    function battuta(pb) {
+      var cand = [], qm = st.minMano || st.min;
+      st.giocatori.forEach(function (g, i) {
+        if (!g.mani.length || g.via) return;
+        var prima = g.fIn == null ? g.fiches : g.fIn, netto = g.fiches - prima, k = {};
+        var perse = g.mani.every(function (m) { return m.esito === "perde"; }), vinte = g.mani.some(function (m) { return m.esito === "vince" || m.esito === "blackjack"; });
+        g.serieP = perse ? (g.serieP || 0) + 1 : (vinte ? 0 : (g.serieP || 0));
+        var tutto = g.puntata > 0 && g.puntata >= prima;
+        if (tutto && netto < 0) k.tuttoPerso = 1;
+        if (tutto && netto > 0) k.tuttoVinto = 1;
+        if (g.mani.length > 1 && perse) k.divise = 1;
+        if (g.mani.some(function (m) { return m.raddoppiata && m.esito === "perde"; })) k.raddoppio = 1;
+        if (netto < 0 && g.fiches < qm * 2) k.zero = 1;
+        if (g.serieP === 3) k.tre = 1;
+        if (-netto > prima / 2) k.meta = 1;
+        g.mani.forEach(function (m) {
+          var p = punteggio(m.carte);
+          if (p === 22) k.sballa22 = 1; else if (p > 21) k.sballa = 1;
+          if (m.carte.length >= 5 && m.esito === "vince") k.cinque = 1;
+          if (m.esito === "blackjack") k.bj = 1;
+          if (m.resa) k.resa = 1;
+        });
+        if (netto >= Math.max(qm * 10, prima / 2)) k.grosso = 1;
+        Object.keys(k).forEach(function (c) { cand.push({ c: c, i: i }); });
+      });
+      if (pb > 21) cand.push({ c: "bancoSballa", i: -1 });
+      if (st.mano < (st.battDa || 0)) return;   // (la serie delle mani perse si conta lo stesso)
+      cand = cand.filter(function (x) { return !BATTUTE_LEGGERE[x.c] || Math.random() < 0.5; });
+      if (!cand.length) return;
+      var c = null; ORDINE_BATTUTE.some(function (o) { c = o; return cand.some(function (x) { return x.c === o; }); });
+      var chi = cand.filter(function (x) { return x.c === c; }), x = chi[Math.floor(Math.random() * chi.length)], g = st.giocatori[x.i];
+      st.battSeq = (st.battSeq || 0) + 1;
+      st.battuta = { id: st.battSeq, c: c, testo: pescaBattuta(c).replace("{n}", g ? g.nome : "") };
+      st.battDa = st.mano + 2 + (Math.random() < 0.5 ? 1 : 0);   // la prossima tra 2 o 3 mani, mai prima
     }
 
     // la classifica della partita: chi ha guadagnato di più al tavolo (pari merito = stesso posto)
@@ -70450,6 +70555,7 @@ window.SG_UNAPAROLA = [
     // dopo "Dividi": un mazzetto per mano, quello che si gioca illuminato
     ".bjr-cc.cascata.divise{display:flex;align-items:flex-end;gap:9px}.bjr-mn{position:relative;flex:none;border-radius:5px;transform-style:preserve-3d}.bjr-mn.on{box-shadow:0 0 0 2px #ffd45e,0 0 12px rgba(255,212,94,.7)}",
     ".bjr-fum{position:absolute;max-width:150px;background:#fff;color:#12233a;font-weight:900;border-radius:13px;padding:5px 10px;font-size:.8rem;line-height:1.15;box-shadow:0 4px 12px rgba(0,0,0,.4);transform:translateY(-100%);animation:bjFum .26s cubic-bezier(.3,1.6,.5,1)}",
+    ".bjr-fum.batt{max-width:min(210px,62vw);font-size:.84rem;box-shadow:0 0 0 2px var(--n-lampone,#e0225a),0 4px 12px rgba(0,0,0,.45)}",
     ".bjr-fum.bj-doro{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400}",
     "@keyframes bjFum{from{transform:translateY(-100%) scale(.3);opacity:0}}",
     // apertura: Bot ci guarda, poi la telecamera passa su ognuno
@@ -70846,6 +70952,7 @@ window.SG_UNAPAROLA = [
     return {
       fase: st.fase, giro: st.giro, mano: st.mano, maniTot: st.maniTot, rimescolato: st.rimescolato, turno: st.turno,
       annuncio: st.annuncio ? { seat: st.annuncio.seat, testo: st.annuncio.testo, id: st.annuncio.id } : null,
+      battuta: st.fase === "esito" && st.battuta ? { id: st.battuta.id, c: st.battuta.c, testo: st.battuta.testo } : null,   // 😏 la battuta del banco
       puntataMin: st.minMano || st.min, consigli: !!(extra && extra.consigli), croupier: st.croupier || null, coppia: !!(extra && extra.coppia),
       regole: extra ? { h17: !!extra.h17, r911: !!extra.r911, das: extra.das !== false, rsa: !!extra.rsa, resa: extra.resa !== false, charlie: !!extra.charlie,
         t213: !!extra.t213, buster: !!extra.buster, royal: !!extra.royal } : {},
@@ -70901,6 +71008,7 @@ window.SG_UNAPAROLA = [
 
     var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [], puntSel = null, chiuso = false;
     var bolla = null, bollaId = -1, bollaTimer = null;   // nuvoletta della mossa
+    var batt = null, battId = -1, battTimer = null;   // 😏 la battuta del banco: nel fumetto di Bot per 3,8 s, poi sparisce da sola (non ferma niente)
     var scopri = { attesa: false, t: null };   // la carta coperta di Bot si gira solo quando la telecamera è arrivata
     var puntataSegreta = 0;
     // le scommesse extra accese su questo telefono (la «👯 Coppia» e le altre): spente finché non le tocchi, poi le ricorda il telefono
@@ -70961,6 +71069,11 @@ window.SG_UNAPAROLA = [
       } else if (vm.fase !== "banco") { scopri.attesa = false; clearTimeout(scopri.t); }
       applicaDiff(pre, vm);
       eventi(pre, vm);
+      if (vm.battuta && vm.battuta.id !== battId) {
+        battId = vm.battuta.id; batt = vm.battuta;
+        clearTimeout(battTimer);
+        battTimer = setTimeout(function () { batt = null; if (!chiuso && vm && document.body.contains(wrap)) disegnaScena(); }, 3800);
+      }
       if (vm.annuncio && vm.annuncio.id !== bollaId) {   // nuova mossa: mostra la nuvoletta ~2,2s
         bollaId = vm.annuncio.id; bolla = { seat: vm.annuncio.seat, testo: vm.annuncio.testo };
         if (bollaTimer) clearTimeout(bollaTimer);
@@ -71155,6 +71268,8 @@ window.SG_UNAPAROLA = [
         else if (giocate) r.fum = frase("pari", seme);
       }
       else if (vm.fase === "fine") { r.faccia = "esulta"; r.fum = frase("fine", seme); }
+      // 😏 la battuta del banco prende il posto della frase di sempre (una sola alla volta), finché non sparisce
+      if (batt && vm.fase !== "fine") { r.fum = batt.testo; r.oro = false; r.batt = true; r.faccia = /^(bj|grosso|tuttoVinto|cinque|bancoSballa)$/.test(batt.c) ? "triste" : "esulta"; }
       return r;
     }
     function cartaR(c, w, nuova, coperta) { var d = el("div", { class: "bjr-carta" + (nuova ? " arriva" : ""), html: BJ.cartaHTML(c, coperta) }); d.style.width = w + "px"; return d; }
@@ -71166,6 +71281,21 @@ window.SG_UNAPAROLA = [
     zBanco.appendChild(cam); zBanco.appendChild(capt); zBanco.appendChild(hud);
     var R = null;   // il mondo costruito: si rifà solo se cambia il numero di giocatori o la misura dello schermo
 
+    // 😏 la battuta è più lunga della frase di sempre: se tocca carte, punteggi, fiches o nomi (tante carte del banco, la
+    // carte che arrivano) sale sopra di loro, a ogni fotogramma per i primi 2,5 s. Mai sopra le cose che contano.
+    function spostaBatt() {
+      if (!fumEl || !fumEl.classList.contains("batt") || !document.body.contains(fumEl)) return;
+      var zr = zBanco.getBoundingClientRect();
+      for (var k = 0; k < 4; k++) {
+        var a = fumEl.getBoundingClientRect(), su = null;
+        [].forEach.call(zBanco.querySelectorAll(".bjr-carta, .bjr-cc, .bjr-punti, .bjr-fiche, .bjr-pila, .bjr-fval, .bjr-nome, .bjr-matt-carte"), function (e) {
+          var b = e.getBoundingClientRect(); if (!b.width || !b.height) return;
+          if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1) su = su == null ? b.top : Math.min(su, b.top);
+        });
+        if (su == null || su - zr.top - 4 < a.height) return;
+        fumEl.style.top = Math.round(su - zr.top - 4) + "px";
+      }
+    }
     function costruisci() {
       var N = vm.giocatori.length, W = zBanco.clientWidth, H = zBanco.clientHeight;
       svuota(cam); cam.style.transition = "none"; cam.style.transform = "none";
@@ -71315,7 +71445,7 @@ window.SG_UNAPAROLA = [
         var mc = zBanco.querySelector(".bjr-matt-carte"); if (mc) mc.remove();   // (in alto a sinistra: nello zoom su chi gioca lì non c'è niente)
         if (conCarte) { mc = el("div", { class: "bjr-matt-carte" }, [ el("span", { text: "🎩" }) ]); vm.banco.forEach(function (c, k) { mc.appendChild(el("div", { class: "bjr-carta", html: BJ.cartaHTML(c, k === 1 && !scoperta) })); }); zBanco.appendChild(mc); }
         if (fumEl) fumEl.remove(); fumEl = null;
-        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " bj-doro" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
+        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " bj-doro" : "") + (fm.batt ? " batt" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); if (fm.batt) { var fino = Date.now() + 2500; (function giro() { spostaBatt(); if (Date.now() < fino && fumEl && fumEl.classList.contains("batt")) requestAnimationFrame(giro); })(); } }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
       }
       // la nuvoletta della mossa sopra la testa di chi l'ha detta
       [].forEach.call(R.sopra.querySelectorAll(".bjr-bolla"), function (b) { if (!bolla || +b.dataset.id !== bollaId) b.remove(); });
@@ -71834,7 +71964,8 @@ window.SG_UNAPAROLA = [
       quota: uguali ? Math.max(0, Math.floor(+imp.quota) || 0) : 0,   // la gara con le Speed Coins (solo online): la quota d'ingresso, 0 = fiches finte
       tempo: imp.tempo == null ? 25 : Math.max(0, Math.floor(+imp.tempo) || 0),   // secondi per decidere (online)
       consigli: imp.consigli == null ? true : !!imp.consigli,
-      coppia: imp.coppia == null ? true : !!imp.coppia,   // la scommessa extra «👯 Coppia» (di partenza accesa, 1 nov 2026: per provarla)
+      coppia: imp.coppia == null ? true : !!imp.coppia,
+      battute: imp.battute == null ? true : !!imp.battute,   // 😏 le battute del banco (di partenza accese, 3 nov 2026)   // la scommessa extra «👯 Coppia» (di partenza accesa, 1 nov 2026: per provarla)
       // 🎰 le regole da esperti (1 nov 2026, il proprietario: «mettiamo tutte le regole, al massimo le lasciamo disattivate»): di partenza come prima
       h17: !!imp.h17, mazzi: [1, 2, 6, 8].indexOf(+imp.mazzi) >= 0 ? +imp.mazzi : 6, r911: !!imp.r911, das: imp.das !== false, rsa: !!imp.rsa,
       resa: imp.resa !== false, charlie: !!imp.charlie, t213: !!imp.t213, buster: !!imp.buster, royal: !!imp.royal
@@ -71843,7 +71974,7 @@ window.SG_UNAPAROLA = [
   function testoRegole(r, online) {
     return (r.uguali ? (online && r.quota ? "🏆 Gara: quota " + fmt(r.quota) + " 🪙, montepremi ai primi · " : "🏆 Torneo: tutti con " + fmt(BJ.FICHES_TORNEO) + " fiches finte · ") : "") +
       "Puntata minima " + fmt(r.min) + " 🪙 · " + (r.mani ? r.mani + " mani" : "mani senza fine") +
-      (online ? " · " + (r.tempo ? r.tempo + " s per decidere" : "tempo libero") : "") + (r.consigli ? " · 💡 consigli" : "") + (r.coppia ? " · 👯 coppia" : "") +
+      (online ? " · " + (r.tempo ? r.tempo + " s per decidere" : "tempo libero") : "") + (r.consigli ? " · 💡 consigli" : "") + (r.battute ? "" : " · niente battute") + (r.coppia ? " · 👯 coppia" : "") +
       (r.t213 ? " · 🃏 21+3" : "") + (r.royal ? " · 👑 stesso seme" : "") + (r.buster ? " · 💥 il banco sballa" : "") +
       (r.h17 ? " · banco tira sul 17 morbido" : "") + (r.mazzi !== 6 ? " · " + r.mazzi + (r.mazzi === 1 ? " mazzo" : " mazzi") : "") + (r.r911 ? " · raddoppio su 9-11" : "") +
       (!r.das ? " · niente raddoppio dopo Dividi" : "") + (r.rsa ? " · assi divisi di nuovo" : "") + (!r.resa ? " · niente resa" : "") + (r.charlie ? " · 5 carte vincono" : "");
@@ -72550,6 +72681,7 @@ window.SG_UNAPAROLA = [
       "Ogni mano scegli quanto puntare con la <b>lineetta</b>: a sinistra la puntata minima, a destra tutte le tue monete. Con le Speed Coins, se punti più di metà di quello che hai, il gioco ti chiede un secondo sì.",
       "<b>🏆 Gara della serata</b> (si accende nelle regole): tutti con le stesse fiches e un numero di mani, la classifica sempre in alto, vince chi ha più fiches alla fine. L'<b>ultima mano si punta in segreto</b>: le puntate si scoprono tutte insieme. Dalle 6 mani in su c'è anche il <b>giro di boa</b> a metà, e nelle ultime 3 mani la puntata minima raddoppia.",
       "Online la gara si gioca con le <b>Speed Coins</b>: ognuno paga la quota d'ingresso (chi non ce l'ha guarda) e le quote vanno nel <b>montepremi</b>: fino a 3 giocatori tutto al primo, da 4 a 6 il 70% e il 30%, da 7 in su 60, 30 e 10%. Chi resta senza fiches può <b>rientrare</b> pagando di nuovo la quota, fino alla penultima mano. Con la quota «Gratis» e sullo stesso telefono si gioca con fiches finte.",
+      "<b>😏 Battute del banco</b> (si spengono nelle regole): ogni tanto, nei momenti forti (chi sballa, chi punta tutto, chi fa Black Jack…), il banco prende in giro chi gioca con una battuta nel suo fumetto. Per ridere, mai per offendere.",
       "<b>👯 Coppia</b> (si spegne nelle regole): mentre punti puoi aggiungere una fiche piccola, la puntata minima, che scommette sulle tue prime due carte. Se sono una coppia (due 8, due re…) vinci subito, anche se poi la mano va male: colori diversi 6 volte la fiche, stesso colore 15 volte, identiche (stesso seme) 25 volte. Se non è coppia perdi solo quella fiche.",
       "<b>🎰 Regole da esperti</b> (nelle regole, tutte come al casinò e di partenza spente): <b>🃏 21+3</b> (le tue due carte con la scoperta del banco: colore 5 volte, scala 11, tris 30, scala colore 40, tris dello stesso seme 100), <b>👑 Stesso seme</b> (le prime due carte dello stesso seme 2,5 volte, re e donna dello stesso seme 45), <b>💥 Il banco sballa</b> (il banco gioca sempre fino in fondo; se sballa paga secondo le carte che ha: 3 carte 2 volte, 4 carte 2,5, 5 carte 4, 6 carte 15, 7 carte 50, 8 e più 250); e poi il banco che tira sul 17 morbido, quanti mazzi (1, 2, 6 o 8), il raddoppio solo su 9, 10 e 11, niente raddoppio dopo Dividi, dividere di nuovo gli Assi, niente resa, 5 carte senza sballare che vincono sempre.",
       "A fine partita i <b>titoli</b>: 🍀 Il Fortunato, 🎲 Lo Spericolato, 💥 Lo Sballone, 🏳️ Il Prudente, 🧊 Il Ragioniere e 🎩 L'amico del banco."
@@ -72598,6 +72730,8 @@ window.SG_UNAPAROLA = [
       box.appendChild(notaU);
       if (online) gruppo("Tempo per decidere", "tempo", [[15, "15 s"], [25, "25 s"], [0, "Senza limite"]]);
       gruppo("💡 Consiglio della mossa giusta", "consigli", [[true, "Sì"], [false, "No"]]);
+      dove.battute = true;
+      gruppo("😏 Battute del banco", "battute", [[true, "Sì"], [false, "No"]]);
       // 🎰 le regole da esperti: chiuse in una sezione che si apre con un tocco (chi non le conosce non vede un muro di opzioni)
       dove.coppia = true; dove.h17 = false; dove.mazzi = 6; dove.r911 = false; dove.das = true; dove.rsa = false; dove.resa = true; dove.charlie = false;
       dove.t213 = false; dove.buster = false; dove.royal = false;
