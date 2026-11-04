@@ -59,3 +59,6 @@ NON si unisce in `lavori-in-corso` né si pubblica finché il proprietario non l
 - 4 nov ~21:10 — revisione finale (un aiutante Opus, senza toccare file): nessun problema concreto (alias, codice al caricamento,
   confronti, `this`/`arguments`, window.SG controllati uno per uno). Unito origin/lavori-in-corso (cambiava solo il registro).
 - Da fare (non di questo lavoro): i 10 NO già presenti, da passare al Cervello; la parte 2 (#31: ogni gioco scaricato solo quando serve).
+- 4 nov ~21:40 — il proprietario: «Se devi unirlo prima, unisci prima. Fai quello che devi fare». Nessun ramo aperto aveva cambi al cuore:
+  `app-leggera` unito in `lavori-in-corso` (avanti veloce). NON pubblicato (master non toccato). La parte 2 resta dopo lo studio TV
+  e gli avatar, come deciso nel registro.
