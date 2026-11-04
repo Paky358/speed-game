@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 306,
+    data: "4 novembre 2026",
+    titolo: "L'Impostore: 10 temi nuovi, 1.350 coppie di parole",
+    descrizione: [
+      "🕵️ 518 coppie di parole nuove in 10 temi: ⚽ Calcio, 🏖️ Estate e vacanze, 📱 Internet e social, 📼 Anni '80, '90 e 2000, 🏛️ Storia e miti, 🦸 Supereroi, fumetti e videogiochi, 💼 Lavoro e soldi, 🎵 Musica e cantanti, 🏡 Vita di tutti i giorni e 🌶️ Serata. In tutto ora sono 1.350.",
+      "🌶️ La Serata (appuntamenti, ex, cocktail, matrimoni: un po' piccante ma mai volgare) parte spenta: si gioca solo se chi apre la partita la sceglie tra le categorie, nelle «Altre scelte». Toccandola si aggiunge a tutte le altre.",
+      "Le parole già uscite continuano a non tornare per un bel po'."
+    ]
+  },
+{
     v: 305,
     data: "4 novembre 2026",
     titolo: "🔨 L'Asta: due temi nuovi",

@@ -149,6 +149,37 @@
     return "regole ok, riassunti ok, impostazioni ok " + errori();
   } });
 
+  // 4 nov 2026: 10 temi nuovi (1.350 coppie); 🌶️ Serata spenta di partenza: con «Tutte» non esce mai, toccandola si aggiunge
+  COPIONE.aggiungi("imp7", { nome: "Impostore: 🌶️ Serata spenta di partenza (fuori da «Tutte», toccandola si aggiunge alle altre), 27 temi e 1.350 coppie", fai: async function () {
+    var w = await W.apriTel("Paky", opzImp({ x: 0 })), I = w.__impostore, g = w.__gImp;
+    if (!I || !I.categorie || !I.pescaCoppia || !g) no("non vedo categorie e pescaCoppia (window.__impostore) o il gioco");
+    try { w.localStorage.removeItem("sg_impostore_regole"); w.localStorage.removeItem("sg_impostore_usate"); } catch (e) {}
+    var cats = I.categorie(), ser = cats.filter(function (c) { return c.id === "serata"; })[0], tot = 0;
+    cats.forEach(function (c) { tot += c.coppie.length; });
+    if (!ser || !ser.spento) no("la 🌶️ Serata non c'è o non è spenta");
+    if (cats.filter(function (c) { return c.spento; }).length !== 1) no("le categorie spente non sono solo la Serata");
+    if (cats.length !== 27 || tot !== 1350) no("i temi sono " + cats.length + " e le coppie " + tot + " (aspettati 27 e 1.350)");
+    var st = { cats: cats, R: { cat: null } }, uscite = 0, i;
+    for (i = 0; i < 400; i++) if (I.pescaCoppia(st).cat === "serata") uscite++;
+    if (uscite) no("con «Tutte» la Serata è uscita " + uscite + " volte su 400");
+    st.R.cat = ["serata"];
+    for (i = 0; i < 30; i++) if (I.pescaCoppia(st).cat !== "serata") no("scelta la sola Serata è uscita un'altra categoria");
+    // le impostazioni: «Tutte» non conta la Serata; toccata si aggiunge a tutte; ritoccata si torna a «Tutte»
+    var box = w.document.createElement("div"), dove = {}, normali = tot - ser.coppie.length;
+    g.impostazioni(box, dove, { el: w.SG._util.el, sala: true, modo: "online", giocatori: ["Paky"] });
+    if (dove.cat) no("di partenza le categorie non sono «Tutte»: " + JSON.stringify(dove.cat));
+    if (box.textContent.indexOf(normali.toLocaleString("it-IT") + " coppie di parole in gioco") < 0 || !/Serata solo se la scegli/.test(box.textContent)) no("con «Tutte» non si legge «" + normali.toLocaleString("it-IT") + " coppie … (🌶️ Serata solo se la scegli)»");
+    var chip = [].filter.call(box.querySelectorAll(".cat-chip"), function (b) { return /Serata/.test(b.textContent); })[0];
+    if (!chip) no("manca il tasto della Serata");
+    chip.click();
+    if (!dove.cat || dove.cat.length !== cats.length || dove.cat.indexOf("serata") < 0) no("toccando la Serata da «Tutte» non si aggiunge alle altre: " + JSON.stringify(dove.cat));
+    if (box.textContent.indexOf(tot.toLocaleString("it-IT") + " coppie di parole in gioco") < 0) no("con la Serata non si legge «" + tot.toLocaleString("it-IT") + " coppie»");
+    chip.click();
+    if (dove.cat) no("ritoccando la Serata non si torna a «Tutte»: " + JSON.stringify(dove.cat));
+    try { w.localStorage.removeItem("sg_impostore_regole"); w.localStorage.removeItem("sg_impostore_usate"); } catch (e) {}
+    return "Serata spenta ok (" + cats.length + " temi, " + tot.toLocaleString("it-IT") + " coppie) " + errori();
+  } });
+
   // gioca un giro di indizi: ognuno scrive "<nome> <giro>" (tranne chi è in salta). Restituisce la foto dopo
   async function giroIndizi(C, nomi, salta) {
     var v = await aspettaPasso(C, "indizi"); if (!v) no("non si scrivono gli indizi (" + vm(C).passo + ")");

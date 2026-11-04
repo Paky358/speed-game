@@ -68,9 +68,9 @@
     var G = W.finestra(resto[1]);
     if (!await W.aspetta(function () { return bottoniVoto(G).indexOf(X) >= 0; }, 3000)) no(X + " (uscito) non si può votare: " + bottoniVoto(G).join(","));
     resto.forEach(function (n) { if (!vota(W.finestra(n), X)) no(n + " non riesce a votare " + X); });
-    // (il voto aspetta anche lui, che ha il telefono bloccato: 40 + 50 s)
+    // (il voto aspetta anche lui, che ha il telefono bloccato: 40 + 50 s; se è l'impostore, anche la sua ultima possibilità: 25 + 50 s)
     if (X === imp) {
-      v = await aspettaPasso(C, "esito", 110000);
+      v = await aspettaPasso(C, "esito", 200000);
       if (!v) no("l'impostore uscito e votato fuori: la mano non finisce (" + vm(C).passo + ")");
       if (v.esito.vince !== "cit") no("dovrebbero vincere i cittadini: " + v.esito.vince);
     } else {
