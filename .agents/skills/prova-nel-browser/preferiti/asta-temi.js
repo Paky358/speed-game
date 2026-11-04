@@ -1,5 +1,5 @@
 // =========================================================================================================================
-// L'Asta, i temi nuovi (4 nov 2026: 🌴 L'Isola Deserta, 🎸 La Band dei Sogni). Si carica dopo preferiti/asta.js (la spia pa).
+// L'Asta, i temi nuovi (4 nov 2026: 📺 Il Reality Show, ⏳ Il Viaggio nel Tempo). Si carica dopo preferiti/asta.js (la spia pa).
 // tn0 I dati di tutti i temi: 4 round con le fasce A/B/C piene, emoji, niente doppioni nello stesso tema, 3 scenari corti.
 // tn1 Stesso telefono in 3 con ognuno dei temi nuovi (round «Tutti diversi»): le carte che escono sono del tema, si vota,
 //     si arriva alle fasce svelate.
@@ -9,7 +9,7 @@
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T;
-  var NUOVI = ["isola", "band"];
+  var NUOVI = ["reality", "tempo"];
   function q(w, s) { return w.document.querySelector(s); }
   function qa(w, s) { return [].slice.call(w.document.querySelectorAll(s)); }
   function visibile(e) { return !!e && e.getClientRects().length > 0; }
@@ -20,7 +20,7 @@
   function norm(s) { return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, ""); }
   function nomiDi(tm) { var s = {}; tm.round.forEach(function (r) { ["A", "B", "C"].forEach(function (k) { r[k].forEach(function (c) { s[norm(c.nome)] = 1; }); }); }); return s; }
   async function temi() {
-    if (!(W.SG_ASTA_TEMI || []).some(function (t) { return t.id === "isola"; })) {
+    if (!(W.SG_ASTA_TEMI || []).some(function (t) { return t.id === "reality"; })) {
       var src = await (await fetch("/index.html?" + Date.now())).text(), fs = src.match(/data\/asta-[a-z]+\.js/g).filter(function (f) { return !/fanta|icone/.test(f); });
       var salva = W.SG_ASTA_TEMI; W.SG_ASTA_TEMI = [];
       for (var i = 0; i < fs.length; i++) (0, eval)(await (await fetch("/" + fs[i] + "?" + Date.now())).text());

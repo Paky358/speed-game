@@ -13,8 +13,8 @@ window.SG_NOVITA = [
     data: "4 novembre 2026",
     titolo: "🔨 L'Asta: due temi nuovi",
     descrizione: [
-      "🌴 L'Isola Deserta: siete naufragati e all'asta ci sono l'oggetto salvato dal naufragio, il compagno di sventura, il rifugio e lo sfizio per non impazzire. C'è chi si prende il coltellino svizzero e chi resta col phon senza corrente e il pallone da pallavolo con la faccia disegnata.",
-      "🎸 La Band dei Sogni: mettete su il gruppo che riempie gli stadi (o che svuota la sagra): la voce, il musicista, il palco e il gran finale. Dal chitarrista leggendario al cugino col triangolo, dallo stadio tutto esaurito al garage dello zio.",
+      "📺 Il Reality Show: all'asta ci sono il concorrente, la prova della settimana, l'alleato e il colpo di scena. C'è chi si prende lo stratega e l'immunità e chi resta col concorrente che litiga con le telecamere e la mamma che racconta le figuracce in diretta.",
+      "⏳ Il Viaggio nel Tempo: scegli l'epoca, cosa portarti, chi incontrare e come tornare. Dal Rinascimento a Firenze con Leonardo da Vinci al Big Bang visto da molto vicino, dalla macchina del tempo con l'autopilota a quella coi pezzi dell'IKEA da montare.",
       "Ognuno ha più di 260 carte e i suoi tre scenari per il voto finale: si scelgono nelle regole, tra i temi."
     ]
   },
