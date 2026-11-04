@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 304,
+    data: "4 novembre 2026",
+    titolo: "🥔 La Patata Bollente: 240 categorie nuove",
+    descrizione: [
+      "🥔 200 categorie nuove per tutti, come «Cose che si trovano nel divano», «Scuse per non lavare i piatti», «Cose che fanno i nonni», «Superstizioni» e «Cose in un luna park». Ora sono quasi 500: in una serata lunga ritornano molto meno.",
+      "🧠 40 categorie difficili in più, come «Capoluoghi di regione», «Proverbi italiani» e «Animali estinti», per chi le accende nelle regole: ora sono 87."
+    ]
+  },
+  {
     v: 302,
     data: "3 novembre 2026",
     titolo: "😏 Black Jack: il banco vi prende in giro",
