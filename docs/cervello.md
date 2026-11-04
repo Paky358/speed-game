@@ -9,7 +9,7 @@ Ultimo aggiornamento: **29 ott 2026, 19:10** (ora italiana).
 
 | Limite | Usato | Si azzera |
 |---|---|---|
-| Settimana (tutti i modelli) | **88%** (2 nov pomeriggio; il proprietario tiene il resto per le sue lezioni: fino a mercoledì solo cose piccole) | **mercoledì 4 nov alle 15:00** |
+| Settimana (tutti i modelli) | **0%** (azzerata mer 4 nov alle 15:00; la settimana prima si è chiusa al 95%) | **mercoledì 11 nov alle 15:00** |
 | 5 ore | 0% (2 nov mattina) | — |
 | Settimana Fable | 0% | mercoledì 4 nov alle 15:00 |
 | Crediti cloud | 250 USD il 26 ott sera, da ricontrollare | **scadono il 5 nov alle 08:59** |
