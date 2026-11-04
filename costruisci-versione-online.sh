@@ -79,6 +79,8 @@ fi
   cat js/stile.js   # 🌙 Notte vivace: lo stile delle schermate del core e simboli puliti al posto delle emoji
   cat js/core.js
   echo ''
+  # i pezzi del cuore (js/cuore/*.js), nell'ordine di index.html
+  for f in $(grep -o 'js/cuore/[a-z0-9-]*\.js' index.html); do cat "$f"; echo ''; done
   cat js/net.js
   echo ''
   [ -e js/ably-key.js ] && { cat js/ably-key.js; echo ''; }

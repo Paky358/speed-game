@@ -1,6 +1,6 @@
 ---
 name: trofei
-description: Usala quando devi aggiungere o cambiare i trofei di un gioco di SPeeD GAME (lista TROFEI in core.js e contatori nel gioco). Spiega il formato, chi conta e come controllare che si possano davvero prendere.
+description: Usala quando devi aggiungere o cambiare i trofei di un gioco di SPeeD GAME (lista TROFEI in js/cuore/trofei.js e contatori nel gioco). Spiega il formato, chi conta e come controllare che si possano davvero prendere.
 ---
 
 # Trofei
@@ -8,7 +8,7 @@ description: Usala quando devi aggiungere o cambiare i trofei di un gioco di SPe
 Sono in stile PlayStation: Bronzo, Argento, Oro e Diamante, più il Platino, che arriva da solo quando hai tutti gli altri trofei del gioco.
 
 ## Dove stanno
-- Elenco unico `TROFEI` in `js/core.js`, una riga per trofeo:
+- Elenco unico `TROFEI` in `js/cuore/trofei.js`, una riga per trofeo:
   `{ gioco: "tris", livello: "bronzo", icona: "⭕", nome: "Primo Passo", desc: "Vinci la tua prima partita", stat: "vinte", meta: 1 }`
   (`livello`: `bronzo` | `argento` | `oro` | `diamante`). Il trofeo è preso quando `stat.<gioco>.<stat>` del profilo arriva a `meta`.
 - I contatori li aggiorna il gioco con **una sola chiamata** a fine mano o partita:
