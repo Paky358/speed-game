@@ -15,7 +15,7 @@
       schermataHome = cuore.schermataHome, riquadroLivello = cuore.riquadroLivello, eProprietario = cuore.eProprietario,
       AVATAR_NUOVO = cuore.AVATAR_NUOVO, avatarNuoviSpenti = cuore.avatarNuoviSpenti, K_PROFILI = cuore.K_PROFILI, K_ATTIVO = cuore.K_ATTIVO,
       FACCINE = cuore.FACCINE, leggiL = cuore.leggiL, scriviL = cuore.scriviL, profili = cuore.profili, profiloAttivo = cuore.profiloAttivo,
-      giocoDa = cuore.giocoDa, dadoNome = cuore.dadoNome, cifre = cuore.cifre, audioCtx = cuore.audioCtx;
+      giocoDa = cuore.giocoDa, cifre = cuore.cifre, audioCtx = cuore.audioCtx;
 
   // ---- l'ultimo profilo usato su questo telefono: { nome, omino } (mai la password). Serve se la sessione scade
   //      (si chiede solo la password, col nome già scritto) o se all'apertura manca la rete (si entra lo stesso) ----
@@ -238,7 +238,7 @@
     var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
     c.appendChild(ant); c.appendChild(nome); c.appendChild(pwd); c.appendChild(avviso);
     if (o.nome) nome.value = o.nome;
-    dadoNome(nome, ant);   // 🎲 un nome buffo a caso (se è vuoto mette il nome dell'ultima volta)
+    cuore.dadoNome(nome, ant);   // 🎲 un nome buffo a caso (se è vuoto mette il nome dell'ultima volta)
     var bAvanti = el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: avanti });
     function avanti() {
       if (bAvanti.disabled) return;

@@ -11,16 +11,10 @@
   "use strict";
   var cuore = window.SGCuore;
   // ---- dal cuore: gli aiuti che questo pezzo usa (non cambiano mai, si prendono una volta) ----
-  var el = cuore.el, schermata = cuore.schermata, mostra = cuore.mostra, dimenticaLinkSessione = cuore.dimenticaLinkSessione,
-      pillola = cuore.pillola, schermataHome = cuore.schermataHome, postiDi = cuore.postiDi, salaRisultato = cuore.salaRisultato,
-      rigaPuntiFine = cuore.rigaPuntiFine, creaSala = cuore.creaSala, chiudiSala = cuore.chiudiSala, membroSala = cuore.membroSala,
-      disegnaSalaHost = cuore.disegnaSalaHost, hostSceglie = cuore.hostSceglie, salaScegliGioco = cuore.salaScegliGioco,
-      salaPreparaGioco = cuore.salaPreparaGioco, restaOpz = cuore.restaOpz, salaParti = cuore.salaParti, aGioco = cuore.aGioco,
-      salaLancia = cuore.salaLancia, salaCambiaGioco = cuore.salaCambiaGioco, salaOspite = cuore.salaOspite, mioIdSala = cuore.mioIdSala,
-      GIOCHI_ELIMINAZIONE = cuore.GIOCHI_ELIMINAZIONE, MAX_ELIM = cuore.MAX_ELIM, giocoDa = cuore.giocoDa, SL = cuore.SL, haRegole = cuore.haRegole,
-      togliNodo = cuore.togliNodo, SVH = cuore.SVH, medaglieAPari = cuore.medaglieAPari, cifre = cuore.cifre, stessoNome = cuore.stessoNome,
-      impSalvabili = cuore.impSalvabili, chipGuardo = cuore.chipGuardo, togliGuardo = cuore.togliGuardo, contoAvanti = cuore.contoAvanti,
-      lasciaPartita = cuore.lasciaPartita, avviaPartita = cuore.avviaPartita;
+  var el = cuore.el, schermata = cuore.schermata, mostra = cuore.mostra, pillola = cuore.pillola, schermataHome = cuore.schermataHome,
+      GIOCHI_ELIMINAZIONE = cuore.GIOCHI_ELIMINAZIONE, MAX_ELIM = cuore.MAX_ELIM, giocoDa = cuore.giocoDa, medaglieAPari = cuore.medaglieAPari,
+      cifre = cuore.cifre, stessoNome = cuore.stessoNome, contoAvanti = cuore.contoAvanti, lasciaPartita = cuore.lasciaPartita,
+      avviaPartita = cuore.avviaPartita;
 
   // ---------- IL TORNEINO: un gioco a due con 3 o più persone, giocano tutti ----------
   // È il torneo a eliminazione dentro la Sala della serata (stessi id, nessun link nuovo): coppie a sorte, tutte le partite
@@ -66,7 +60,7 @@
   function schermataTorneino(g, R) {
     if (!cuore.sala) return schermataHome();
     var n = cuore.sala.membri.length, T = cuore.sala.optTorneino = cuore.sala.optTorneino || { resto: "bot", livello: "medio" }, scelta = "torneino";
-    var s = schermata({ icona: g.icona || "🎲", titolo: g.nome + " in " + n, sotto: "Si gioca in 2: come fate?", indietro: function () { salaScegliGioco(); } });
+    var s = schermata({ icona: g.icona || "🎲", titolo: g.nome + " in " + n, sotto: "Si gioca in 2: come fate?", indietro: function () { cuore.salaScegliGioco(); } });
     s.classList.add("torneino-sc");
     function carta(id, ico, tit, sotto) {
       var b = el("button", { class: "tn-scelta", type: "button", "aria-pressed": "false", onclick: function () { scelta = id; rifai(); } }, [
@@ -79,7 +73,7 @@
     var m = quantiTorneino(n), dispari = m % 2 === 1;
     var cT = carta("torneino", "⚔️", "Torneo: giocate tutti", (n > MAX_ELIM ? "Giocano in " + MAX_ELIM + ", gli altri guardano. " : "") + "Tutte le partite insieme: chi vince va avanti fino alla finale");
     // (Passo 6) da qui anche "👑 Chi vince resta": in «Chi gioca?» (una carta in più farebbe scorrere lo schermo)
-    var cS = carta("sfida", "🤺", "Una sfida: scegli chi gioca", restaOpz(g, R) ? "In 2, gli altri guardano · anche 👑 Chi vince resta" : "Giocano in 2, gli altri guardano in diretta");
+    var cS = carta("sfida", "🤺", "Una sfida: scegli chi gioca", cuore.restaOpz(g, R) ? "In 2, gli altri guardano · anche 👑 Chi vince resta" : "Giocano in 2, gli altri guardano in diretta");
     // un gioco che si fa anche in tre (la Scopa: g.inTre e il riquadro delle regole sa passare a tre): in tre la prima scelta
     // è «In tre: giocate tutti», tutti allo stesso tavolo
     var tre = n === 3 && g.inTre && R && R.box && typeof R.box._inTre === "function";
@@ -93,12 +87,12 @@
     var via = el("button", { class: "btn btn-primario", type: "button", onclick: function () {
       if (!cuore.sala) return schermataHome();
       if (tre) try { R.box._inTre(scelta === "tre"); } catch (e) {}   // (in due per la sfida e il torneo)
-      if (scelta === "tre") return salaParti(g, R, cuore.sala.membri.map(function (x) { return { id: x.id, nome: x.nome }; }));
-      if (scelta === "sfida") return schermataChiGioca(g, function (scelti) { salaParti(g, R, scelti); }, restaOpz(g, R));
+      if (scelta === "tre") return cuore.salaParti(g, R, cuore.sala.membri.map(function (x) { return { id: x.id, nome: x.nome }; }));
+      if (scelta === "sfida") return schermataChiGioca(g, function (scelti) { cuore.salaParti(g, R, scelti); }, cuore.restaOpz(g, R));
       salaTorneino(g, R, T);
     } });
     // le regole del gioco (le stesse per tutte le partite): nel ⚙️, come nella saletta
-    var bReg = R && haRegole(R.box) ? el("button", { class: "btn btn-fantasma sl-regole", type: "button", text: "⚙️ Regole", onclick: function () { foglioBox("⚙️ Regole della partita", R.box); } }) : null;
+    var bReg = R && cuore.haRegole(R.box) ? el("button", { class: "btn btn-fantasma sl-regole", type: "button", text: "⚙️ Regole", onclick: function () { foglioBox("⚙️ Regole della partita", R.box); } }) : null;
     s._piede.appendChild(bReg ? el("div", { class: "sl-tasti" }, [bReg, via]) : via);
     // si cambiano solo le classi e le scritte: niente lampeggio
     function rifai() {
@@ -165,7 +159,7 @@
     if (P.salaCtx) {
       var R = cuore.sala.regole && cuore.sala.regole[g.id];
       if (!R) R = cuore.sala.regole[g.id] = { box: U.R ? U.R.box : null, imp: P.tavolo ? P.tavolo.impostazioni : {} };
-      SL.ultimo = null;
+      cuore.SL.ultimo = null;
       return salaTorneino(g, R, T);
     }
     var C = SGNet.nuovoCodice(), h = SV.h, attesi = Object.keys(SV.dentro).filter(function (id) { return id !== "host" && id !== "__io" && !SV.fuori[id]; });
@@ -175,10 +169,10 @@
     var msg = { t: "__torneino", sala: C }, volte = 0;
     try { h.invia(msg); } catch (e) {}
     var tRip = setInterval(function () { if (++volte > 6) return clearInterval(tRip); try { h.inviaVeloce(msg); } catch (e) {} }, 700);
-    lasciaPartita(); SL.ultimo = null;
+    lasciaPartita(); cuore.SL.ultimo = null;
     SGNet.chiudiGiochi(5000);   // (la stanza del gioco si chiude quando sono passati tutti)
-    if (cuore.sala) chiudiSala();
-    creaSala({ codice: C, torneino: { gioco: g.id, imp: imp, box: box, resto: T.resto, livello: T.livello, coppie: T.coppie, attesi: attesi } });
+    if (cuore.sala) cuore.chiudiSala();
+    cuore.creaSala({ codice: C, torneino: { gioco: g.id, imp: imp, box: box, resto: T.resto, livello: T.livello, coppie: T.coppie, attesi: attesi } });
   }
   // chi era nella stanza riceve "__torneino": passa nella Sala del torneino (con lo stesso id della stanza)
   function vaiAlTorneino(R, m) {
@@ -188,9 +182,9 @@
     var id = R.h && R.h.mioId;
     if (id) SGNet.ricordaId(C, id);
     lasciaPartita(); SGNet.chiudiGiochi();
-    dimenticaLinkSessione();
+    cuore.dimenticaLinkSessione();
     pillola("torneino", "⚔️ Si fa il torneo!", "verde", 3000);
-    salaOspite(C);
+    cuore.salaOspite(C);
   }
 
   // ---------- "CHI GIOCA A TRIS?" (siamo più dei posti) ----------
@@ -210,11 +204,11 @@
   function schermataChiGioca(g, poi, o) {
     if (!cuore.sala) return schermataHome();
     o = o && typeof o.resta === "function" ? o : null;
-    var posti = postiDi(g), conHost = posti >= 3, membri = cuore.sala.membri.slice();
+    var posti = cuore.postiDi(g), conHost = posti >= 3, membri = cuore.sala.membri.slice();
     var sc = sceltiDiPartenza(posti, conHost).map(function (m) { return m.id; });
-    var s = schermata({ icona: g.icona || "🎲", titolo: "Chi gioca " + aGioco(g.nome) + "?",
+    var s = schermata({ icona: g.icona || "🎲", titolo: "Chi gioca " + cuore.aGioco(g.nome) + "?",
       sotto: posti === 2 ? "Giocano in 2: gli altri guardano" : "Giocano in " + posti + ": gli altri guardano",
-      indietro: function () { salaScegliGioco(); } });
+      indietro: function () { cuore.salaScegliGioco(); } });
     s.classList.add("chi-gioca-sc");
     var griglia = el("div", { class: "chi-gioca" + (membri.length > 10 ? " tanti" : "") });
     var celle = {};
@@ -291,19 +285,19 @@
   }
   // l'host guarda il duello (anche quando ci torna da "👀 Guarda" nella Sala): in alto a destra "👥 Sala" per tornare nella Sala
   function guardaDuelloHost(D) {
-    var g = giocoDa(D.gioco); if (!cuore.sala || cuore.sala.duello !== D || !g) return disegnaSalaHost();
+    var g = giocoDa(D.gioco); if (!cuore.sala || cuore.sala.duello !== D || !g) return cuore.disegnaSalaHost();
     SGNet.chiudiGiochi();
     cuore.sala.inGioco = true; cuore.sala.fineDuello = null;   // (la Sala non si ridisegna sopra la partita)
     var ctx = cuore.sala.ctx = {
       duello: D.stanza,
       esci: function () { tornaDalDuello(); }, fine: function () { tornaDalDuello(); }, risultato: function () {},
       angolo: function (s) { tastoSala(s, function () { tornaDalDuello(); }); },
-      cambia: function () { salaCambiaGioco(); }
+      cambia: function () { cuore.salaCambiaGioco(); }
     };
     function tornaDalDuello() {
       if (!cuore.sala || cuore.sala.ctx !== ctx) return;
       lasciaPartita(); SGNet.chiudiGiochi(); cuore.sala.inGioco = false; cuore.sala.ctx = null;
-      disegnaSalaHost();
+      cuore.disegnaSalaHost();
     }
     cuore.linkParams = { gioco: g.id, stanza: D.stanza, guarda: 1 };
     avviaPartita(g, [], {}, null, ctx);
@@ -326,7 +320,7 @@
     if (m.t === "duelloFase") {
       var f = m.fase === "lobby" || m.fase === "gioco" || m.fase === "fine" ? m.fase : null;
       if (!f || f === cuore.sala.fase) return;
-      var prima = cuore.sala.fase; cuore.sala.fase = f; cuore.sala._bcast(); if (!cuore.sala.inGioco) disegnaSalaHost();   // (sono nella Sala: il riquadro del duello)
+      var prima = cuore.sala.fase; cuore.sala.fase = f; cuore.sala._bcast(); if (!cuore.sala.inGioco) cuore.disegnaSalaHost();   // (sono nella Sala: il riquadro del duello)
       // la rivincita del duello comincia: se sono sulla classifica, torno a guardare da solo
       if (prima === "fine" && f !== "fine" && cuore.sala.fineDuello === D) { cuore.sala.fineDuello = null; guardaDuelloHost(D); }
       return;
@@ -339,8 +333,8 @@
     if (D.visti[k]) return;   // (la stessa partita detta due volte)
     D.visti[k] = 1;
     D.n += 1; D.fine = { n: D.n, cl: cl, giro: m.giro | 0 };
-    salaRisultato(g, cl, { stanza: D.stanza, giro: m.giro | 0 });   // (giocate e punti del torneo; manda la Sala a tutti)
-    cuore.sala._bcast(); if (!cuore.sala.inGioco) disegnaSalaHost();
+    cuore.salaRisultato(g, cl, { stanza: D.stanza, giro: m.giro | 0 });   // (giocate e punti del torneo; manda la Sala a tutti)
+    cuore.sala._bcast(); if (!cuore.sala.inGioco) cuore.disegnaSalaHost();
     // se sto guardando il duello: dopo un attimo (si vede la mossa finale) la classifica con "⚔️ Altra sfida" e "🎮 Cambia gioco"
     var P = cuore.partitaCorrente;
     if (P && P.viva() && P.salaCtx && P.salaCtx.duello === D.stanza && !P.salaCtx.gioca) setTimeout(function () {
@@ -358,17 +352,17 @@
     cuore.sala.ctx = null;
     if (restaFineDi(D.stanza)) {
       bloccoResta(s._piede, D.stanza, true, { SV: { codice: D.stanza, giro: +giro || 0 }, salaHost: true, host: true });
-      tastoSala(s, function () { if (!cuore.sala) return schermataHome(); cuore.sala.fineDuello = null; cuore.sala.inGioco = false; cuore.sala.ctx = null; disegnaSalaHost(); });
+      tastoSala(s, function () { if (!cuore.sala) return schermataHome(); cuore.sala.fineDuello = null; cuore.sala.inGioco = false; cuore.sala.ctx = null; cuore.disegnaSalaHost(); });
       return mostra(s);
     }
     var box = el("div", { class: "fine-tasti" });
-    rigaPuntiFine(box, { codice: D.stanza, giro: +giro || 0 }, true, true);   // (la Classifica della serata: "🏆 Serata: Giulia 1° · Luca 2°")
+    cuore.rigaPuntiFine(box, { codice: D.stanza, giro: +giro || 0 }, true, true);   // (la Classifica della serata: "🏆 Serata: Giulia 1° · Luca 2°")
     box.appendChild(el("button", { class: "btn btn-primario ft-primo", type: "button", text: "⚔️ Altra sfida", onclick: function () { salaAltraSfida(g); } }));
-    box.appendChild(el("button", { class: "btn btn-fantasma ft-secondo", type: "button", text: "🎮 Cambia gioco", onclick: function () { salaCambiaGioco(); } }));
+    box.appendChild(el("button", { class: "btn btn-fantasma ft-secondo", type: "button", text: "🎮 Cambia gioco", onclick: function () { cuore.salaCambiaGioco(); } }));
     s._piede.appendChild(box);
     tastoSala(s, function () {
       if (!cuore.sala) return schermataHome();
-      cuore.sala.fineDuello = null; cuore.sala.inGioco = false; cuore.sala.ctx = null; disegnaSalaHost();
+      cuore.sala.fineDuello = null; cuore.sala.inGioco = false; cuore.sala.ctx = null; cuore.disegnaSalaHost();
     });
     mostra(s);
   }
@@ -387,7 +381,7 @@
     cuore.sala.gioco = null; cuore.sala.stanza = null; cuore.sala.inGioco = false; cuore.sala.fase = null; cuore.sala.fuori = {}; cuore.sala.ctx = null; cuore.sala.duello = null; cuore.sala.fineDuello = null;
     cuore.sala._bcast();
     if (guardavo) { lasciaPartita(); SGNet.chiudiGiochi(); pillola("sala", "🏁 La sfida è finita: si torna in Sala", "verde", 2600); }
-    disegnaSalaHost();
+    cuore.disegnaSalaHost();
   }
   // "⚔️ Altra sfida": tutti nella Sala ("Paky sceglie chi gioca… ⚔️") e l'host è già su "Chi gioca?" con chi ha giocato meno
   function salaAltraSfida(g) {
@@ -396,7 +390,7 @@
     cuore.sala.gioco = null; cuore.sala.stanza = null; cuore.sala.inGioco = false; cuore.sala.fase = null; cuore.sala.fuori = {}; cuore.sala.ctx = null; cuore.sala.duello = null; cuore.sala.fineDuello = null;
     cuore.sala.sceglie = "sfida"; cuore.sala._bcast();
     SGNet.chiudiGiochi(1500);
-    salaPreparaGioco(g, { sfida: true });
+    cuore.salaPreparaGioco(g, { sfida: true });
   }
 
   // ---------- "👑 CHI VINCE RESTA" (Passo 6): un gioco a due nella Sala, chi vince resta al tavolo, gli altri in coda ----------
@@ -419,7 +413,7 @@
   function restaInizia(g, R, scelti) {
     if (!cuore.sala || !g || !scelti || scelti.length !== 2) return;
     restaFerma(true);
-    var imp = impSalvabili(R && R.imp); delete imp.scelti; imp.modo = "online";
+    var imp = cuore.impSalvabili(R && R.imp); delete imp.scelti; imp.modo = "online";
     var ids = scelti.map(function (x) { return x.id; });
     cuore.sala.resta = { gioco: g.id, imp: imp, coda: codaDiPartenza(ids), campione: null, serie: 0, record: null,
       sfida: { a: ids[0], b: ids[1], stanza: SGNet.nuovoCodice() }, n: 1, esito: null, parte: Date.now(), l: 0 };
@@ -435,7 +429,7 @@
     Rr.l = n; Rr.lanciata = Date.now(); Rr.aperta = null;
     Rr.sfida.na = nomeMembro(cuore.sala, a); Rr.sfida.nb = nomeMembro(cuore.sala, b);   // (i nomi restano anche se uno se ne va)
     cuore.sala.regole = cuore.sala.regole || {};
-    var R = cuore.sala.regole[g.id] || (cuore.sala.regole[g.id] = { box: null, imp: impSalvabili(Rr.imp) });
+    var R = cuore.sala.regole[g.id] || (cuore.sala.regole[g.id] = { box: null, imp: cuore.impSalvabili(Rr.imp) });
     var sc = [{ id: a, nome: nomeMembro(cuore.sala, a) }, { id: b, nome: nomeMembro(cuore.sala, b) }];
     lasciaPartita(); cuore.FINE = null; RESTA_FINE = null;
     SGNet.chiudiGiochi(1500);   // (la stanza della sfida di prima: un attimo dopo, prima gli amici passano alla nuova)
@@ -443,8 +437,8 @@
       var altro = a === "host" ? b : a, nomi = {}; nomi[altro] = nomeMembro(cuore.sala, altro);
       cuore.RIV = { codice: Rr.sfida.stanza, attesi: [altro], nomi: nomi, quando: Date.now() + 10000, auto: true, pronti: {}, daSala: true, U: null };
       R.imp.modo = "online"; R.imp.scelti = sc;
-      SL.ultimo = null;   // (una stanza nuova: la saletta si rifà, anche se ero ancora nella saletta di prima, es. "⏭ Salta")
-      return salaLancia(g, R.imp, R.box, { codice: Rr.sfida.stanza });
+      cuore.SL.ultimo = null;   // (una stanza nuova: la saletta si rifà, anche se ero ancora nella saletta di prima, es. "⏭ Salta")
+      return cuore.salaLancia(g, R.imp, R.box, { codice: Rr.sfida.stanza });
     }
     cuore.RIV = null;
     salaDuello(g, R, sc, Rr.sfida.stanza);
@@ -463,9 +457,9 @@
     var nv = (vince === a ? sf.na : sf.nb) || nomeMembro(cuore.sala, vince), np = (perde === a ? sf.na : sf.nb) || nomeMembro(cuore.sala, perde);
     Rr.serie = Rr.campione === vince ? (Rr.serie || 0) + 1 : 1; Rr.campione = vince;
     if (!Rr.record || Rr.serie > Rr.record.n) Rr.record = { id: vince, nome: nomeMembro(cuore.sala, vince), n: Rr.serie };
-    Rr.coda = Rr.coda.filter(function (x) { return x !== vince && x !== perde && membroSala(x); });
-    if (perde && membroSala(perde)) Rr.coda.push(perde);
-    var dopo = membroSala(vince) ? (Rr.coda.shift() || null) : null;
+    Rr.coda = Rr.coda.filter(function (x) { return x !== vince && x !== perde && cuore.membroSala(x); });
+    if (perde && cuore.membroSala(perde)) Rr.coda.push(perde);
+    var dopo = cuore.membroSala(vince) ? (Rr.coda.shift() || null) : null;
     Rr.esito = { stanza: st, n: Rr.n, vince: vince, perde: perde, pari: pari ? 1 : 0, nv: nv, np: np, via: forza ? 1 : 0 };
     Rr.sfida = { a: vince, b: dopo, stanza: dopo ? SGNet.nuovoCodice() : null };   // (nessuno dopo: rimasti in pochi, si chiude)
     Rr.n += 1; Rr.parte = Date.now() + RESTA_PAUSA;
@@ -474,11 +468,11 @@
     if (forza) {
       var dentro = cuore.sala.inGioco;
       cuore.sala.gioco = null; cuore.sala.stanza = null; cuore.sala.inGioco = false; cuore.sala.fase = null; cuore.sala.fuori = {}; cuore.sala.ctx = null; cuore.sala.duello = null; cuore.sala.fineDuello = null; cuore.sala.scelti = null;
-      if (dentro) { lasciaPartita(); togliGuardo(); cuore.FINE = null; }
+      if (dentro) { lasciaPartita(); cuore.togliGuardo(); cuore.FINE = null; }
       SGNet.chiudiGiochi(1500);
       if (cuore.sala._bcast) cuore.sala._bcast();
       if (cuore.sala.pronta) pillola("sala", "🚪 " + (np || "L'avversario") + " non c'è più: resta " + (nv || "l'altro"), "verde", 3000);
-      if (cuore.sala.pronta && !hostSceglie()) disegnaSalaHost();
+      if (cuore.sala.pronta && !cuore.hostSceglie()) cuore.disegnaSalaHost();
       return true;
     }
     if (cuore.sala._bcast) cuore.sala._bcast();
@@ -501,7 +495,7 @@
     if (!sf || !sf.stanza || cuore.sala.stanza !== sf.stanza || (Rr.esito && Rr.esito.stanza === sf.stanza)) return null;
     if (Date.now() - (Rr.lanciata || 0) < RESTA_SALTA || (cuore.sala.fase && cuore.sala.fase !== "lobby")) return null;
     if (sf.a === "host" || sf.b === "host") {
-      var altro = sf.a === "host" ? sf.b : sf.a, SV = SVH[sf.stanza];
+      var altro = sf.a === "host" ? sf.b : sf.a, SV = cuore.SVH[sf.stanza];
       return SV && !SV.dentro[altro] ? altro : null;
     }
     return Rr.aperta === sf.stanza ? sf.b : sf.a;
@@ -509,7 +503,7 @@
   // "⏭ Salta Luca" (solo l'host della Sala, in alto, sopra qualunque schermata): un nodo solo, cambia solo la scritta
   var SALTA_R = null;
   function restaSaltaTasto(id) {
-    if (!id || !cuore.sala) { if (SALTA_R) { togliNodo(SALTA_R.nodo); SALTA_R = null; } return; }
+    if (!id || !cuore.sala) { if (SALTA_R) { cuore.togliNodo(SALTA_R.nodo); SALTA_R = null; } return; }
     var tx = "⏭ Salta " + (nomeMembro(cuore.sala, id) || "…");
     if (!SALTA_R) {
       var b = el("button", { class: "sl-resta-salta", type: "button", onclick: function () { if (SALTA_R) restaSalta(SALTA_R.id); } });
@@ -525,8 +519,8 @@
     restaSaltaTasto(null);
     if (!sf || (id !== sf.a && id !== sf.b) || Rr.l !== Rr.n) return;
     var resta = id === sf.a ? sf.b : sf.a;
-    Rr.coda = Rr.coda.filter(function (x) { return x !== id && x !== resta && membroSala(x); });
-    if (membroSala(id)) Rr.coda.push(id);
+    Rr.coda = Rr.coda.filter(function (x) { return x !== id && x !== resta && cuore.membroSala(x); });
+    if (cuore.membroSala(id)) Rr.coda.push(id);
     if (Rr.campione === id) { Rr.campione = null; Rr.serie = 0; }
     var dopo = Rr.coda[0] !== id ? Rr.coda.shift() : null;
     if (!dopo) return restaBasta("pochi");
@@ -576,12 +570,12 @@
   function restaBasta(perche) {
     if (!cuore.sala) return;
     restaFerma(true);
-    lasciaPartita(); cuore.FINE = null; cuore.RIV = null; togliGuardo();
+    lasciaPartita(); cuore.FINE = null; cuore.RIV = null; cuore.togliGuardo();
     cuore.sala.gioco = null; cuore.sala.stanza = null; cuore.sala.inGioco = false; cuore.sala.fase = null; cuore.sala.fuori = {}; cuore.sala.ctx = null; cuore.sala.duello = null; cuore.sala.fineDuello = null; cuore.sala.scelti = null; cuore.sala.sceglie = false;
     cuore.sala._bcast();
     SGNet.chiudiGiochi(1500);
     if (perche === "pochi") pillola("sala", "👑 Siete rimasti in pochi: «Chi vince resta» finisce qui", "blu", 3500);
-    disegnaSalaHost();
+    cuore.disegnaSalaHost();
   }
   // (la Sala si riapre: pagina ricaricata, subentro del vice, trasloco nella Compagnia) la serie riprende da dov'era.
   // Se la sfida in corso è rimasta (il duello di due amici, o la partita che riprende) si aspetta il suo esito; se si è persa:
@@ -592,13 +586,13 @@
     var sf = Rr.sfida || {};
     if (cuore.sala.gioco && cuore.sala.stanza && sf.stanza === cuore.sala.stanza) return;
     if (Rr.l === Rr.n && sf.stanza && !(Rr.esito && Rr.esito.stanza === sf.stanza)) {
-      var ca = !!sf.a && !!membroSala(sf.a), cb = !!sf.b && !!membroSala(sf.b);
+      var ca = !!sf.a && !!cuore.membroSala(sf.a), cb = !!sf.b && !!cuore.membroSala(sf.b);
       if (ca !== cb) { restaEsito(null, sf.stanza, ca ? sf.a : sf.b); return; }
       if (!ca) return restaBasta("pochi");
       Rr.sfida = { a: sf.a, b: sf.b, stanza: SGNet.nuovoCodice() }; Rr.n += 1;
     } else if (Rr.l !== Rr.n) {
-      if (!sf.a || !membroSala(sf.a)) { Rr.campione = null; Rr.serie = 0; sf.a = sf.b && membroSala(sf.b) ? sf.b : (Rr.coda.shift() || null); sf.b = null; }
-      if (!sf.b || !membroSala(sf.b) || sf.b === sf.a) sf.b = Rr.coda.shift() || null;
+      if (!sf.a || !cuore.membroSala(sf.a)) { Rr.campione = null; Rr.serie = 0; sf.a = sf.b && cuore.membroSala(sf.b) ? sf.b : (Rr.coda.shift() || null); sf.b = null; }
+      if (!sf.b || !cuore.membroSala(sf.b) || sf.b === sf.a) sf.b = Rr.coda.shift() || null;
       if (sf.b && !sf.stanza) sf.stanza = SGNet.nuovoCodice();
       Rr.sfida = sf;
     }
@@ -633,7 +627,7 @@
   // la serie vista da questo telefono: { R, S (la Sala: membri), io (il mio id), host (la Sala è mia) }
   function restaMia() {
     if (cuore.sala && cuore.sala.resta) return { R: cuore.sala.resta, S: cuore.sala, io: "host", host: true };
-    if (cuore.salaG && cuore.salaG.resta && !cuore.salaG.elim) return { R: cuore.salaG.resta, S: cuore.salaG, io: mioIdSala(cuore.salaG), host: false };
+    if (cuore.salaG && cuore.salaG.resta && !cuore.salaG.elim) return { R: cuore.salaG.resta, S: cuore.salaG, io: cuore.mioIdSala(cuore.salaG), host: false };
     return null;
   }
   // questa stanza è una sfida della serie (quella in corso o quella appena finita)?
@@ -662,8 +656,8 @@
     var box = el("div", { class: "fine-tasti" });
     if (hostSala) {
       box.appendChild(el("button", { class: "btn btn-fantasma ft-primo", type: "button", text: "⏹ Basta così", onclick: function () { restaBasta(); } }));
-      box.appendChild(el("button", { class: "btn btn-fantasma ft-secondo", type: "button", text: "🎮 Cambia gioco", onclick: function () { restaFerma(true); salaCambiaGioco(); } }));
-    } else if (rp && rp.SV) rigaPuntiFine(box, rp.SV, !!rp.salaHost, !!rp.host);   // (la Classifica della serata: l'host la ha nella Sala)
+      box.appendChild(el("button", { class: "btn btn-fantasma ft-secondo", type: "button", text: "🎮 Cambia gioco", onclick: function () { restaFerma(true); cuore.salaCambiaGioco(); } }));
+    } else if (rp && rp.SV) cuore.rigaPuntiFine(box, rp.SV, !!rp.salaHost, !!rp.host);   // (la Classifica della serata: l'host la ha nella Sala)
     if (box.firstChild) piede.appendChild(box);
     cuore.FINE = null;
     RESTA_FINE = F;
@@ -705,7 +699,7 @@
     }
     if ((P.testoGuardo || null) === tx) return;
     P.testoGuardo = tx;
-    if (cuore.GUARDO && cuore.GUARDO.P === P) chipGuardo(P);
+    if (cuore.GUARDO && cuore.GUARDO.P === P) cuore.chipGuardo(P);
   }
   // qualcosa è cambiato nella serie (foto della Sala, esito): si aggiornano solo le scritte sullo schermo
   function restaAggiorna() {
@@ -724,7 +718,7 @@
       if (!S._rec || S._rec.tx !== txr) S._rec = { tx: txr, nodo: el("div", { class: "sl-coda sl-coda-rec" }, [ el("span", { class: "sl-coda-testi" }, [ el("span", { class: "sl-coda-tx", text: txr }) ]) ]) };
       return S._rec.nodo;
     }
-    var io = host ? "host" : mioIdSala(S);
+    var io = host ? "host" : cuore.mioIdSala(S);
     function nm(id) { return id === io ? "tu" : (nomeMembro(S, id) || "…"); }
     var tx = (R.campione ? "👑 " + nm(R.campione) + (R.serie >= 2 ? " 🔥" + R.serie : "") : "👑 Chi vince resta") + (R.coda.length ? " · in coda: " + R.coda.map(nm).join(", ") : "");
     var C = S._coda;

@@ -16,9 +16,8 @@
       tempoBreve = cuore.tempoBreve, serveExtra = cuore.serveExtra, caricaExtra = cuore.caricaExtra, giardinoPronto = cuore.giardinoPronto,
       PROPRIETARIO = cuore.PROPRIETARIO, eProprietario = cuore.eProprietario, novitaTutteViste = cuore.novitaTutteViste,
       schermataNovita = cuore.schermataNovita, profiloAttivo = cuore.profiloAttivo, listaProfilo = cuore.listaProfilo,
-      salvaListaProfilo = cuore.salvaListaProfilo, creaSala = cuore.creaSala, giocoDa = cuore.giocoDa, modiDi = cuore.modiDi,
-      conCodice = cuore.conCodice, sceltoModo = cuore.sceltoModo, apriGioco = cuore.apriGioco, schermataRegole = cuore.schermataRegole,
-      oggiStr = cuore.oggiStr, cifre = cuore.cifre, audioCtx = cuore.audioCtx;
+      salvaListaProfilo = cuore.salvaListaProfilo, giocoDa = cuore.giocoDa, modiDi = cuore.modiDi, conCodice = cuore.conCodice,
+      sceltoModo = cuore.sceltoModo, schermataRegole = cuore.schermataRegole, oggiStr = cuore.oggiStr, cifre = cuore.cifre, audioCtx = cuore.audioCtx;
 
   // ---- La ruota del giorno (al posto del regalo fisso): un giro al giorno, torna a mezzanotte.
   //      Spicchi di monete (oro) e di XP (viola); le regole e i premi stanno in nube.js (SGNube.ruota).
@@ -206,7 +205,7 @@
     var io = profiloAttivo();
     var s = SGPesca.crea({ omino: io && io.omino, dati: datiPesca(), salva: salvaPesca, audio: audioCtx,
       monete: function () { return SGNube.monete(); }, cambia: function (n) { SGNube.cambiaMonete(n); },
-      apriGara: giocoDa("garapesca") ? function () { cuore.rientro = schermataPesca; apriGioco(giocoDa("garapesca")); } : null,   // la gara di pesca con gli amici, online
+      apriGara: giocoDa("garapesca") ? function () { cuore.rientro = schermataPesca; cuore.apriGioco(giocoDa("garapesca")); } : null,   // la gara di pesca con gli amici, online
       indietro: function () { schermataCitta(); } });
     mostra(s); s._monta();
   }
@@ -493,7 +492,7 @@
       var v = pannelloSfide(function (sfida) {
         if (sfida.fonte === "pesca") return portaA("pesca", schermataPesca);
         if (sfida.fonte === "scavi") return portaA("scavi", schermataScavi);
-        var g = giocoDa(sfida.gioco); if (g) { cuore.rientro = schermataCitta; apriGioco(g); }
+        var g = giocoDa(sfida.gioco); if (g) { cuore.rientro = schermataCitta; cuore.apriGioco(g); }
       }, function () { ultimaColonna = ""; aggiornaAvvisi(); if (prog) aggTesta(); });
       if (v) s.appendChild(v);
     }
@@ -557,7 +556,7 @@
         { icona: "👥", nome: "Classifica e amici", sotto: "Chi ha più trofei, tra gli amici e tra tutti", fai: function () { cuore.schermataAmici(); } } ]; } },
     bar:    { nome: "Bar",         sotto: "Ci si trova con gli amici",    deco: ["☕", "🥐", "🍹", "💬", "🎲", "🧁"],
       azioni: function () { return [
-        { icona: "👥", nome: "Sala online", sotto: "Porta il gruppo da un gioco all'altro, ognuno dal suo telefono", fai: creaSala },
+        { icona: "👥", nome: "Sala online", sotto: "Porta il gruppo da un gioco all'altro, ognuno dal suo telefono", fai: cuore.creaSala },
         { icona: "🏆", nome: "Serata a punti", sotto: "Più giochi di fila: i punti si sommano", fai: cuore.apriTorneo },
         { icona: "🔑", nome: "Ho un codice", sotto: "Entra nella stanza di un amico", fai: function () { entraConCodice(); } } ]; } }
   };
@@ -816,7 +815,7 @@
     if (!profiloAttivo()) return cuore.schermataAccesso(function () { schermataEdificio(k); });
     var modi = modiDi(g).slice();
     if (giocoOnline(g)) conCodice(modi);
-    if (modi.length <= 1) return apriGioco(g);   // un modo solo: si parte subito, come dalla home
+    if (modi.length <= 1) return cuore.apriGioco(g);   // un modo solo: si parte subito, come dalla home
     var chiudi = function () { if (sfondo.parentNode) sfondo.parentNode.removeChild(sfondo); };
     var lista = el("div", { class: "modo-scelta" });
     modi.forEach(function (m) {

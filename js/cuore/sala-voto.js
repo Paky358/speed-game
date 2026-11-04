@@ -12,10 +12,7 @@
   var cuore = window.SGCuore;
   // ---- dal cuore: gli aiuti che questo pezzo usa (non cambiano mai, si prendono una volta) ----
   var giochi = cuore.giochi, giocoOnline = cuore.giocoOnline, el = cuore.el, chiediConferma = cuore.chiediConferma, mischia = cuore.mischia,
-      schermata = cuore.schermata, mostra = cuore.mostra, schermataHome = cuore.schermataHome, minDi = cuore.minDi, membroSala = cuore.membroSala,
-      disegnaSalaHost = cuore.disegnaSalaHost, salaScegliGioco = cuore.salaScegliGioco, aDue = cuore.aDue, etichettaPosti = cuore.etichettaPosti,
-      salaPreparaGioco = cuore.salaPreparaGioco, chiudiSalaOspite = cuore.chiudiSalaOspite, disegnaSalaOspite = cuore.disegnaSalaOspite,
-      mioIdSala = cuore.mioIdSala, giocoDa = cuore.giocoDa;
+      schermata = cuore.schermata, mostra = cuore.mostra, schermataHome = cuore.schermataHome, minDi = cuore.minDi, giocoDa = cuore.giocoDa;
 
   // ---------- "🗳️ SCEGLIAMO INSIEME" (Passo 6, p6-e): l'host propone 3 giochi, tutti votano 20 s, la ruota decide ----------
   // sala.insieme = l'interruttore del ⚙️ (ricordato sul telefono dell'host in sg-insieme); sala.giochiFatti = i giochi di
@@ -37,12 +34,12 @@
   function proponiTre() {
     var n = cuore.sala ? cuore.sala.membri.length : 1, fatti = (cuore.sala && cuore.sala.giochiFatti) || [], ultimo = fatti[fatti.length - 1];
     var tutti = giochi.filter(giocoOnline);
-    var adatti = tutti.filter(function (g) { return aDue(g) ? n >= 2 : minDi(g, "online") <= n; });
+    var adatti = tutti.filter(function (g) { return cuore.aDue(g) ? n >= 2 : minDi(g, "online") <= n; });
     if (adatti.length < 3) adatti = tutti;
     var ordine = mischia(adatti.filter(function (g) { return g.id !== ultimo && fatti.indexOf(g.id) < 0; }))
       .concat(mischia(adatti.filter(function (g) { return g.id !== ultimo && fatti.indexOf(g.id) >= 0; })), adatti.filter(function (g) { return g.id === ultimo; }));
     var out = [], due = 0;
-    ordine.forEach(function (g) { if (out.length >= 3 || (aDue(g) && due)) return; if (aDue(g)) due++; out.push(g.id); });
+    ordine.forEach(function (g) { if (out.length >= 3 || (cuore.aDue(g) && due)) return; if (cuore.aDue(g)) due++; out.push(g.id); });
     ordine.forEach(function (g) { if (out.length < 3 && out.indexOf(g.id) < 0) out.push(g.id); });   // (pochi giochi adatti: anche un secondo a due)
     return out;
   }
@@ -91,7 +88,7 @@
   function salaVotoApri(ids, eredita) {
     if (!cuore.sala || !window.SGScegliamo) return;
     ids = (ids || []).filter(function (id, i, a) { return giocoDa(id) && a.indexOf(id) === i; }).slice(0, 3);
-    if (ids.length < 2) return salaScegliGioco({ scelgoIo: true });
+    if (ids.length < 2) return cuore.salaScegliGioco({ scelgoIo: true });
     if (cuore.sala.resta) cuore.restaFerma(true);
     // (un gioco degli amici ancora aperto, con l'host già nella Sala: finisce, come quando si sceglie un altro gioco)
     if (cuore.sala.gioco && !cuore.sala.inGioco) { cuore.sala.gioco = null; cuore.sala.stanza = null; cuore.sala.fase = null; cuore.sala.fuori = {}; cuore.sala.ctx = null; cuore.sala.duello = null; cuore.sala.scelti = null; SGNet.chiudiGiochi(1500); }
@@ -110,7 +107,7 @@
   function salaVotoSegna(id, n, g) {
     var V = cuore.sala && cuore.sala.voto;
     if (!V || V.fase !== "voto" || +n !== V.n || V.giochi.indexOf(g) < 0) return;
-    if (id !== "host" && !membroSala(id)) return;
+    if (id !== "host" && !cuore.membroSala(id)) return;
     if (V.voti[id] === g) return;
     V.voti[id] = g;
     votoAggiornaUI(); votoInvia(); votoTimer();
@@ -137,7 +134,7 @@
     if (V && V.fase !== "voto") return;   // (la ruota gira già: si aspetta lei)
     if (cuore.sala) { clearTimeout(cuore.sala.tVoto); clearTimeout(cuore.sala.tVotoB); cuore.sala.tVotoB = null; cuore.sala.voto = null; cuore.sala.sceglie = false; cuore.sala._bcast(); }
     VOTO_UI = null;
-    disegnaSalaHost();
+    cuore.disegnaSalaHost();
   }
   // il voto si chiude: la ruota (spicchio e theta li decide l'host, uguali su tutti i telefoni)
   function salaVotoChiudi(n) {
@@ -164,7 +161,7 @@
     var g = giocoDa(gid) || giocoDa(S0.voto.giochi[0]);
     S0.voto = null; VOTO_UI = null;
     S0._bcast();
-    if (g) salaPreparaGioco(g); else disegnaSalaHost();
+    if (g) cuore.salaPreparaGioco(g); else cuore.disegnaSalaHost();
   }
   // la Sala si riapre col voto di prima: pagina ricaricata (il voto riparte da capo con gli stessi giochi) o subentro del vice
   // (continua coi voti di prima). Se la ruota aveva già deciso si va dritti al gioco uscito
@@ -174,7 +171,7 @@
     if (vp.fase === "ruota") {
       var x = SGScegliamo.spicchi(votoInfo(vp.giochi), vp.ruota.spicchi)[vp.ruota.vince | 0], g = x && giocoDa(x.g);
       cuore.sala.voto = null; cuore.sala._bcast();
-      if (g) salaPreparaGioco(g); else disegnaSalaHost();
+      if (g) cuore.salaPreparaGioco(g); else cuore.disegnaSalaHost();
       return true;
     }
     salaVotoApri(vp.giochi, continua ? { n: vp.n, voti: vp.voti, scade: Date.now() + 15000 } : null);
@@ -191,12 +188,12 @@
   }
   // la scheda del voto (host e amici): S = la Sala (sala o salaG), V = il voto
   function schermataVotoGiochi(S, V, host) {
-    var mio = host ? "host" : mioIdSala(S), quanti = (S.membri || []).length;
-    var s = schermata({ indietro: host ? salaVotoAnnulla : function () { chiediConferma("Uscire dalla Sala?", null, "🚪 Esci", function () { VOTO_UI = null; chiudiSalaOspite(); schermataHome(); }); } });
+    var mio = host ? "host" : cuore.mioIdSala(S), quanti = (S.membri || []).length;
+    var s = schermata({ indietro: host ? salaVotoAnnulla : function () { chiediConferma("Uscire dalla Sala?", null, "🚪 Esci", function () { VOTO_UI = null; cuore.chiudiSalaOspite(); schermataHome(); }); } });
     s.classList.add("sala-voto");
     var mioG = V.voti[mio] || (!host && S.votoMio && S.votoMio.n === V.n ? S.votoMio.g : null);
     var sc = SGScegliamo.scheda({
-      giochi: V.giochi.map(function (id) { var g = giocoDa(id), et = g ? etichettaPosti(g, quanti) : null; return { id: id, icona: (g && g.icona) || "🎲", nome: (g && g.nome) || id, sotto: et ? et.t : "" }; }),
+      giochi: V.giochi.map(function (id) { var g = giocoDa(id), et = g ? cuore.etichettaPosti(g, quanti) : null; return { id: id, icona: (g && g.icona) || "🎲", nome: (g && g.nome) || id, sotto: et ? et.t : "" }; }),
       mio: mioG, voti: votiPersone(S, V), scade: V.scade, scarto: host ? 0 : (S.votoScarto || 0), host: host, membri: host ? votoVotanti().length : quanti,
       onVota: function (g) {
         if (host) return salaVotoSegna("host", V.n, g);
@@ -215,7 +212,7 @@
     var U = VOTO_UI; if (!U || !document.body.contains(U.s)) return;
     var host = U.S === cuore.sala, V = host ? cuore.sala.voto : U.S.voto;
     if (!V || V.n !== U.n || V.fase !== "voto") return;
-    var mio = host ? "host" : mioIdSala(U.S);
+    var mio = host ? "host" : cuore.mioIdSala(U.S);
     var ms = V.scade - (Date.now() + (host ? 0 : (U.S.votoScarto || 0)));
     U.sc.aggiorna(votiPersone(U.S, V), V.voti[mio] !== undefined ? V.voti[mio] : undefined, ms, host ? votoVotanti().length : (U.S.membri || []).length);
   }
@@ -233,7 +230,7 @@
         return;
       }
       if (VOTO_UI && VOTO_UI.S === S) VOTO_UI.sc.chiudi();
-      else disegnaSalaOspite();   // (arrivo a ruota già partita: sotto c'è la Sala)
+      else cuore.disegnaSalaOspite();   // (arrivo a ruota già partita: sotto c'è la Sala)
       return giraOspite(S, V);
     }
     if (VOTO_UI && VOTO_UI.S === S && VOTO_UI.n === V.n && document.body.contains(VOTO_UI.s)) return votoAggiornaUI();
@@ -248,7 +245,7 @@
         if (cuore.salaG !== S) return;
         S.veloV = null;
         if (VOTO_UI && VOTO_UI.S === S) VOTO_UI = null;
-        if (S.inGioco === null && document.querySelector(".sala-voto")) disegnaSalaOspite();   // (il gioco non è ancora partito: la Sala)
+        if (S.inGioco === null && document.querySelector(".sala-voto")) cuore.disegnaSalaOspite();   // (il gioco non è ancora partito: la Sala)
       } });
   }
   // (amico) nella foto non c'è più il voto: via la scheda (la ruota, se gira, finisce da sola)

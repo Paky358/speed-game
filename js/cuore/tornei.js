@@ -14,10 +14,8 @@
   var giochi = cuore.giochi, el = cuore.el, svuota = cuore.svuota, mischia = cuore.mischia, schermata = cuore.schermata, mostra = cuore.mostra,
       tesseraGioco = cuore.tesseraGioco, pillola = cuore.pillola, schermataHome = cuore.schermataHome, profiloAttivo = cuore.profiloAttivo,
       gruppo = cuore.gruppo, nomiGruppo = cuore.nomiGruppo, schermataSala = cuore.schermataSala, schermataPreGioco = cuore.schermataPreGioco,
-      salaRisultato = cuore.salaRisultato, creaSala = cuore.creaSala, disegnaSalaHost = cuore.disegnaSalaHost, aGioco = cuore.aGioco,
-      disegnaSalaOspite = cuore.disegnaSalaOspite, MAX_ELIM = cuore.MAX_ELIM, giocoDa = cuore.giocoDa, SL = cuore.SL, haRegole = cuore.haRegole,
-      medaglieAPari = cuore.medaglieAPari, classificaFitta = cuore.classificaFitta, cifre = cuore.cifre, stessoNome = cuore.stessoNome,
-      lasciaPartita = cuore.lasciaPartita, avviaPartita = cuore.avviaPartita;
+      MAX_ELIM = cuore.MAX_ELIM, giocoDa = cuore.giocoDa, medaglieAPari = cuore.medaglieAPari, classificaFitta = cuore.classificaFitta,
+      cifre = cuore.cifre, stessoNome = cuore.stessoNome, lasciaPartita = cuore.lasciaPartita, avviaPartita = cuore.avviaPartita;
 
   // =========================================================
   //  TORNEO A ELIMINAZIONE (giochi a due: Tris, Drop 4…)
@@ -163,7 +161,7 @@
     if (!E || !E.torneino || E.contato || !cuore.sala) return;
     E.contato = true;
     var g = giocoDa(E.gioco); if (!g) return;
-    salaRisultato(g, classificaElim(E), { stanza: "torneino-" + (E.k || ""), giro: 0 });
+    cuore.salaRisultato(g, classificaElim(E), { stanza: "torneino-" + (E.k || ""), giro: 0 });
   }
   // chi esce dalla sala a torneo iniziato: se stava giocando, vince l'altro (contro il bot, vince il bot)
   function elimUscito(id) {
@@ -246,7 +244,7 @@
     cuore.sala.gioco = null; cuore.sala.stanza = null; cuore.sala.inGioco = false; cuore.sala.fase = null; cuore.sala.fuori = {}; cuore.sala.ctx = null; cuore.sala.duello = null; cuore.sala.sceglie = false;
     cuore.sala._bcast();
     SGNet.chiudiGiochi(1500);   // (le stanze delle partite: prima gli amici tornano nella Sala, poi si chiudono)
-    disegnaSalaHost();
+    cuore.disegnaSalaHost();
   }
   // il torneino nato da una stanza: si parte appena sono arrivati tutti quelli che c'erano (true = partito)
   function torneinoArrivati() {
@@ -257,8 +255,8 @@
     cuore.partiTorneino(E);
     return !!E.iniziato;
   }
-  function seguiHost() { if (cuore.sala && cuore.sala.elim) seguiTabellone(cuore.sala, "host", cuore.sala.membri[0].nome, disegnaSalaHost, function (k, v) { esitoPartita(k, v, "host"); }); }
-  function seguiOspite() { if (cuore.salaG && cuore.salaG.elim) seguiTabellone(cuore.salaG, cuore.salaG.myId, cuore.salaG.nome, disegnaSalaOspite, function (k, v) { if (cuore.salaG && cuore.salaG.rete) cuore.salaG.rete.invia({ t: "esito", k: k, vinto: v }); }); }
+  function seguiHost() { if (cuore.sala && cuore.sala.elim) seguiTabellone(cuore.sala, "host", cuore.sala.membri[0].nome, cuore.disegnaSalaHost, function (k, v) { esitoPartita(k, v, "host"); }); }
+  function seguiOspite() { if (cuore.salaG && cuore.salaG.elim) seguiTabellone(cuore.salaG, cuore.salaG.myId, cuore.salaG.nome, cuore.disegnaSalaOspite, function (k, v) { if (cuore.salaG && cuore.salaG.rete) cuore.salaG.rete.invia({ t: "esito", k: k, vinto: v }); }); }
   // ⚙️ Regole del torneo: le impostazioni del gioco (es. i punti da raggiungere nella Scopa), uguali per tutte le partite.
   // Il riquadro resta sul telefono dell'host; i valori (E.imp) viaggiano con la sala.
   // In cima le regole del torneo (chi resta in più: Bot o passa il turno; la bravura del Bot): si vedono prima di partire
@@ -277,15 +275,15 @@
       delete imp.scelti; imp.modo = "online"; E.imp = imp;
       var opz = opzioniTorneino(E, function () {
         if (!cuore.sala || cuore.sala.elim !== E) return;
-        if (SL.ultimo) SL.ultimo.regR = null;   // (la riga "📜 Si gioca così" si rilegge)
+        if (cuore.SL.ultimo) cuore.SL.ultimo.regR = null;   // (la riga "📜 Si gioca così" si rilegge)
         if (E.torneino) cuore.sala.optTorneino = { resto: E.resto, livello: E.livello, coppie: E.coppie };   // (la prossima volta si parte da qui)
-        cuore.sala._bcast(); disegnaSalaHost();
+        cuore.sala._bcast(); cuore.disegnaSalaHost();
       }, true);
       cuore.sala.regoleElim = { box: el("div", {}, [opz, gbox]), imp: imp, E: E, opz: opz };
     }
     var R = cuore.sala.regoleElim;
     R.opz.hidden = !!(E.iniziato && !E.finito);   // (a torneo in corso non cambiano: valgono dall'inizio alla fine)
-    return haRegole(R.box) ? R : null;
+    return cuore.haRegole(R.box) ? R : null;
   }
   // le scelte del torneo: "Chi resta in più" (🤖 Gioca col Bot / ⏭️ Passa il turno) e la bravura del Bot.
   // T = { resto, livello } (si cambia lì dentro); poi() dopo ogni tocco. Tasti come quelli delle regole dei giochi
@@ -407,7 +405,7 @@
     var gE = giocoDa(E.gioco), nomeG = gE ? gE.nome : "";
     if (!E.iniziato && E.torneino && !E.scade) {   // il torneino nato da una stanza: si aspetta che arrivino tutti (pochi secondi)
       var qui = ((S && S.membri) || []).length, tot = Math.max(qui, (E.attesi ? E.attesi.length : 0) + 1);
-      box.appendChild(el("div", { class: "sl-elim-stato", text: "⚔️ Torneo " + aGioco(nomeG) }));
+      box.appendChild(el("div", { class: "sl-elim-stato", text: "⚔️ Torneo " + cuore.aGioco(nomeG) }));
       box.appendChild(el("p", { class: "modulo-nota tb-nota", text: (E.attesi ? "Arrivano gli amici: " + qui + " su " + tot + "… " : "") + "Si comincia appena ci siete tutti: " + (E.coppie === "scelte" ? "poi ognuno sceglie dove sedersi." : "coppie a sorte, tutte le partite insieme.") }));
       return box;
     }
@@ -594,7 +592,7 @@
   }
 
   function apriTorneo() {
-    if (cuore.sala && cuore.sala.torneo) return disegnaSalaHost();   // torneo online in corso
+    if (cuore.sala && cuore.sala.torneo) return cuore.disegnaSalaHost();   // torneo online in corso
     if (torneo) return schermataTorneoHub();
     if (!profiloAttivo()) return cuore.schermataAccesso(apriTorneo);
     schermataTorneoModo();
@@ -604,7 +602,7 @@
     var s = schermata({ icona: "🏆", titolo: "Serata a punti", sotto: "Come giocate?", indietro: schermataHome });
     var griglia = el("div", { class: "modo-scelta" });
     [{ icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono: prima aggiungi chi gioca", via: function () { schermataSala(null, { torneo: true }); } },
-     { icona: "🔗", nome: "Online", sotto: "La Sala con la Classifica della serata: ognuno dal suo telefono", online: true, via: function () { creaSala({ torneo: true }); } }
+     { icona: "🔗", nome: "Online", sotto: "La Sala con la Classifica della serata: ognuno dal suo telefono", online: true, via: function () { cuore.creaSala({ torneo: true }); } }
     ].forEach(function (m) {
       griglia.appendChild(el("button", { class: "modo-grande" + (m.online ? " online" : ""), onclick: m.via }, [
         el("div", { class: "mg-ico", text: m.icona }),
