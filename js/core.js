@@ -10,6 +10,7 @@
    ========================================================= */
 (function () {
   "use strict";
+  var cuore = window.SGCuore = {};   // i pezzi del cuore (js/cuore/*.js) si parlano da qui: vedi in fondo «AI PEZZI DEL CUORE»
 
   // Altezza VERA dello schermo: il browser a volte (es. dopo un "ricarica" con l'app installata)
   // crede che lo schermo sia più alto di quello che si vede, e i tasti in fondo finiscono fuori.
@@ -196,9 +197,9 @@
     s.appendChild(el("nav", { class: "menu-sotto" }, [
       tab("giochi", "🎮 Giochi", schermataHome),
       (window.SG_NOVITA || []).length ? tab("novita", "🆕 Novità", novitaLista, null, [ el("span", { text: "🆕 Novità" }), novitaTutteViste() ? null : el("span", { class: "pallino" }) ]) : null,
-      tab("trofei", "🏆 Trofei", schermataSfide),
-      tab("classifica", "👥 Classifica", function () { schermataAmici(); }, "home-amici", [ el("span", { text: "👥 Classifica" }), cacheRich && cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]),
-      tab("profilo", "Profilo", function () { schermataAccesso(schermataHome); }, "ms-io", [
+      tab("trofei", "🏆 Trofei", cuore.schermataSfide),
+      tab("classifica", "👥 Classifica", function () { cuore.schermataAmici(); }, "home-amici", [ el("span", { text: "👥 Classifica" }), cuore.cacheRich && cuore.cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]),
+      tab("profilo", "Profilo", function () { cuore.schermataAccesso(schermataHome); }, "ms-io", [
         io && io.omino && window.SGOmino ? el("span", { class: "ms-faccia", html: SGOmino.svg(io.omino, { busto: true }) }) : el("span", { class: "ms-faccia sg-dal-gioco", text: (io && io.emoji) || "👤" }),
         el("small", { text: "Profilo" }) ])
     ]));
@@ -785,14 +786,14 @@
     if (window.SGNet && SGNet.chiudiGiochi) SGNet.chiudiGiochi();   // niente collegamenti vecchi aperti (la sala resta)
     // la Sala resta aperta ma il gioco no: lo dico agli amici (tornano nella Sala invece di aspettare una stanza chiusa)
     if (sala && sala.inGioco && !sala.elim) { sala.gioco = sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null; if (sala._bcast) sala._bcast(); }
-    chiudiTabelloneElim();
+    cuore.chiudiTabelloneElim();
     tieniAcceso(false);
     var s = schermata({});
     s.className += " home";
     var io = profiloAttivo();
     // riga profilo: il nome utente (col livello e le Speed Coins) + il tasto "Novità" affianco
     var prog = io && io.cloud && window.SGLivelli && SGNube.progressione ? SGNube.progressione() : null;
-    var profiloChip = el("button", { class: "profilo-chip" + (prog ? " con-livello" : ""), onclick: function () { schermataAccesso(schermataHome); } },
+    var profiloChip = el("button", { class: "profilo-chip" + (prog ? " con-livello" : ""), onclick: function () { cuore.schermataAccesso(schermataHome); } },
       io ? [io.omino && window.SGOmino ? el("span", { class: "chip-omino", html: SGOmino.svg(io.omino, { busto: true }) }) : el("span", { text: io.emoji }),
             prog ? chipLivello(io.nome, prog) : el("span", { text: io.nome }),
             prog ? el("span", { class: "chip-monete", text: "🪙 " + cifre(prog.coins) }) : null,
@@ -806,10 +807,10 @@
       rigaProfilo.appendChild(bNov);
     }
     // la città: accanto a Novità; gli edifici portano ai giochi della loro categoria
-    if (CITTA_VISIBILE && window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: schermataCitta }, [ el("span", { text: "🏙️ La città" }) ]));
-    rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
-    rigaProfilo.appendChild(el("button", { class: "home-novita home-amici", onclick: function () { schermataAmici(); } }, [ el("span", { text: "👥 Classifica" }), cacheRich && cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]));
-    setTimeout(function () { aggiornaRichieste(); }, 0);   // richieste di amicizia nuove? pallino sul tasto
+    if (CITTA_VISIBILE && window.SGCitta) rigaProfilo.appendChild(el("button", { class: "home-novita home-citta", onclick: cuore.schermataCitta }, [ el("span", { text: "🏙️ La città" }) ]));
+    rigaProfilo.appendChild(el("button", { class: "home-novita", onclick: cuore.schermataSfide }, [ el("span", { text: "🏆 Trofei" }) ]));
+    rigaProfilo.appendChild(el("button", { class: "home-novita home-amici", onclick: function () { cuore.schermataAmici(); } }, [ el("span", { text: "👥 Classifica" }), cuore.cacheRich && cuore.cacheRich.arrivate.length ? el("span", { class: "pallino" }) : null ]));
+    setTimeout(function () { cuore.aggiornaRichieste(); }, 0);   // richieste di amicizia nuove? pallino sul tasto
     // "Installa l'app": solo dal browser (se è già aperta come app, non serve)
     var giaApp = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone;
     var iPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -828,7 +829,7 @@
       // 📲 chi non ha installato l'app vede in alto a destra «Installa l'app» al posto delle monete (31 ott 2026: in fondo alla pagina
       //  nessuno lo trovava; le monete restano nel Profilo); chi l'ha installata vede le monete
       if (!giaApp) testaCorta = el("button", { class: "ms-installa", onclick: installa }, [ el("span", { text: "📲 Installa l'app" }) ]);
-      else testaCorta = prog ? el("button", { class: "ms-monete", "aria-label": "Il tuo profilo e le Speed Coins", onclick: function () { schermataAccesso(schermataHome); } }, [ el("span", { text: "🪙 " + cifre(prog.coins) }) ]) : null;
+      else testaCorta = prog ? el("button", { class: "ms-monete", "aria-label": "Il tuo profilo e le Speed Coins", onclick: function () { cuore.schermataAccesso(schermataHome); } }, [ el("span", { text: "🪙 " + cifre(prog.coins) }) ]) : null;
       s._menu = "giochi";
     }
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
@@ -918,10 +919,10 @@
 
     // Riga di tasti piccoli: Proposte · Bug (Novità è accanto al nome utente, in alto)
     var azioni = el("div", { class: "home-azioni" });
-    azioni.appendChild(el("button", { class: "azione", text: "💡 Proposte", onclick: schermataProposte }));
-    azioni.appendChild(el("button", { class: "azione", text: "🐞 Bug", onclick: schermataBug }));
+    azioni.appendChild(el("button", { class: "azione", text: "💡 Proposte", onclick: cuore.schermataProposte }));
+    azioni.appendChild(el("button", { class: "azione", text: "🐞 Bug", onclick: cuore.schermataBug }));
     // con la Sala in alto: il torneo è un tasto piccolo qui (Sala e codice stanno nella riga online)
-    if (conSala) azioni.appendChild(el("button", { class: "azione", text: (torneo || (sala && sala.torneo)) ? "🏆 Riprendi la serata a punti" : "🏆 Serata a punti", onclick: apriTorneo }));
+    if (conSala) azioni.appendChild(el("button", { class: "azione", text: (cuore.torneo || (sala && sala.torneo)) ? "🏆 Riprendi la serata a punti" : "🏆 Serata a punti", onclick: cuore.apriTorneo }));
     if (!giaApp && !tInstalla && !HOME_MENU_SOTTO) azioni.appendChild(el("button", { class: "azione", text: "📲 Installa l'app", onclick: installa }));
     s._piede.appendChild(azioni);
     if (rec) recInHome(rec, barra);
@@ -929,8 +930,8 @@
 
     // Torneo: più giochi di fila con gli stessi giocatori, punti che si sommano
     s._piede.appendChild(el("button", {
-      class: "btn btn-primario", html: (torneo || (sala && sala.torneo)) ? "🏆 Riprendi la serata a punti" : "🏆 Serata a punti (più giochi di fila)",
-      onclick: apriTorneo
+      class: "btn btn-primario", html: (cuore.torneo || (sala && sala.torneo)) ? "🏆 Riprendi la serata a punti" : "🏆 Serata a punti (più giochi di fila)",
+      onclick: cuore.apriTorneo
     }));
 
     // Sala online: crea un gruppo che passa da un gioco all'altro (ognuno dal suo telefono)
@@ -984,221 +985,7 @@
 
   function tempoBreve(ms) { var m = Math.max(1, Math.ceil((ms || 0) / 60000)), h = Math.floor(m / 60); return h ? h + "h " + (m % 60) + "m" : m + " min"; }
 
-  // ---- La ruota del giorno (al posto del regalo fisso): un giro al giorno, torna a mezzanotte.
-  //      Spicchi di monete (oro) e di XP (viola); le regole e i premi stanno in nube.js (SGNube.ruota).
-  //      dopo(esito) = facoltativo: chi l'ha aperta aggiorna le sue monete / il suo livello ----
-  function testoPremioRuota(p) { return p.xp ? cifre(p.xp) + " XP" : cifre(p.monete); }
-  function disegnaRuotaGiorno(cv, R, lato) {
-    var dpr = Math.min(2, window.devicePixelRatio || 1), r = lato / 2, n = R.length, passo = Math.PI * 2 / n;
-    cv.width = cv.height = Math.round(lato * dpr); cv.style.width = cv.style.height = lato + "px";
-    var c = cv.getContext("2d"); c.scale(dpr, dpr); c.translate(r, r);
-    R.forEach(function (p, i) {
-      var a0 = -Math.PI / 2 + i * passo, a1 = a0 + passo, g = c.createRadialGradient(0, 0, r * 0.15, 0, 0, r);
-      if (p.top && p.xp) { g.addColorStop(0, "#5ff0d0"); g.addColorStop(1, "#0b8f78"); }
-      else if (p.top) { g.addColorStop(0, "#ff7a6b"); g.addColorStop(1, "#c3171f"); }
-      else if (p.xp) { g.addColorStop(0, i % 4 === 1 ? "#a58bff" : "#8f7bff"); g.addColorStop(1, i % 4 === 1 ? "#5a33d6" : "#4a2fb8"); }
-      else { g.addColorStop(0, "#ffe9a0"); g.addColorStop(1, i % 4 === 2 ? "#f0a400" : "#e39300"); }
-      c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r - 2, a0, a1); c.closePath();
-      c.fillStyle = g; c.fill(); c.strokeStyle = "rgba(255,255,255,.75)"; c.lineWidth = 2; c.stroke();
-      // la scritta lungo il raggio, verso il bordo
-      c.save(); c.rotate(a0 + passo / 2); c.textAlign = "right"; c.textBaseline = "middle";
-      var scuro = !p.xp && !p.top, testo = p.xp ? cifre(p.xp) : cifre(p.monete);
-      c.fillStyle = scuro ? "#4a2a00" : "#fff"; c.font = "900 " + Math.round(lato * (testo.length > 4 ? 0.068 : 0.078)) + "px system-ui, sans-serif";
-      if (!scuro) { c.shadowColor = "rgba(0,0,0,.35)"; c.shadowBlur = 3; }
-      c.fillText(testo, r - lato * 0.115, 0);
-      c.shadowBlur = 0;
-      // dopo il numero: la moneta o la scritta XP
-      if (p.xp) { c.font = "900 " + Math.round(lato * 0.04) + "px system-ui, sans-serif"; c.fillStyle = "rgba(255,255,255,.9)"; c.fillText("XP", r - lato * 0.05, 0); }
-      else {
-        c.beginPath(); c.arc(r - lato * 0.072, 0, lato * 0.026, 0, Math.PI * 2);
-        c.fillStyle = p.top ? "#ffd43b" : "#fff3bf"; c.fill(); c.lineWidth = 1.5; c.strokeStyle = "#b7791f"; c.stroke();
-      }
-      c.restore();
-    });
-  }
-  function suonoRuota(tipo) {
-    var ctx = audioCtx(); if (!ctx) return;
-    try {
-      var note = tipo === "tic" ? [[1900, 0, 0.035, 0.05]] : tipo === "top" ? [[784, 0, .3, .2], [988, .1, .3, .2], [1175, .2, .3, .2], [1568, .3, .6, .22], [2093, .45, .7, .18]]
-        : [[880, 0, .25, .18], [1175, .1, .25, .18], [1568, .2, .5, .18]];
-      note.forEach(function (n) {
-        var t0 = ctx.currentTime + n[1], o = ctx.createOscillator(), gn = ctx.createGain();
-        o.type = tipo === "tic" ? "triangle" : "sine"; o.frequency.setValueAtTime(n[0], t0);
-        gn.gain.setValueAtTime(0.0001, t0); gn.gain.exponentialRampToValueAtTime(n[3], t0 + 0.008); gn.gain.exponentialRampToValueAtTime(0.0001, t0 + n[2]);
-        o.connect(gn); gn.connect(ctx.destination); o.start(t0); o.stop(t0 + n[2] + 0.05);
-      });
-    } catch (e) {}
-  }
-  function ruotaDelGiorno(dopo) {
-    var N = window.SGNube, R = N && N.ruota;
-    if (!R || !(N.profilo && N.profilo())) return;
-    var n = R.length, passo = 360 / n, lato = Math.max(220, Math.min(330, Math.round(window.innerWidth - 90), Math.round((window.innerHeight || 640) * 0.48)));
-    var pronta = N.puoRitirareBonus(), ang = 0, girando = false, finita = false;
-    var cv = el("canvas", { class: "rg-disco" });
-    disegnaRuotaGiorno(cv, R, lato);
-    // le lampadine sul bordo (ferme: gira solo il disco)
-    var luci = "";
-    for (var k = 0; k < 24; k++) {
-      var a = k * Math.PI * 2 / 24, x = 50 + 48.3 * Math.sin(a), y = 50 - 48.3 * Math.cos(a);
-      luci += '<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="1.35" class="' + (k % 2 ? "rg-l2" : "rg-l1") + '"/>';
-    }
-    var bordo = el("div", { class: "rg-bordo", html: '<svg viewBox="0 0 100 100">' + luci + "</svg>" });
-    var freccia = el("div", { class: "rg-freccia" });
-    var gira = el("button", { class: "rg-gira", text: pronta ? "GIRA" : "⏳" });
-    var sotto = el("div", { class: "rg-sotto", text: pronta ? "Un giro al giorno: monete o XP. Tocca GIRA!" : "Hai già girato oggi: il prossimo giro tra " + tempoBreve(N.prossimoBonusMs()) + " (a mezzanotte)" });
-    var esito = el("div", { class: "rg-esito" });
-    var chiudiB = el("button", { class: "btn " + (pronta ? "btn-fantasma" : "btn-primario") + " rg-chiudi", text: pronta ? "Più tardi" : "Chiudi" });
-    var tutto = el("div", { class: "rg-tutto", style: "width:" + (lato + 22) + "px;height:" + (lato + 22) + "px" }, [ bordo, cv, freccia, gira ]);
-    var velo = el("div", { class: "rg-velo" }, [ el("div", { class: "rg-scheda" }, [
-      el("div", { class: "rg-titolo", text: "🎡 Ruota del giorno" }), sotto, tutto, esito, chiudiB ]) ]);
-    if (!pronta) velo.classList.add("ferma");
-    function chiudi() {
-      if (girando) return;
-      velo.classList.remove("su");
-      setTimeout(function () { if (velo.parentNode) velo.parentNode.removeChild(velo); }, 260);
-    }
-    chiudiB.onclick = chiudi;
-    velo.addEventListener("click", function (e) { if (e.target === velo) chiudi(); });
-    gira.onclick = function () {
-      if (girando || finita) return;
-      var res = N.giraRuota();
-      if (!res) { sotto.textContent = "Hai già girato oggi: torna dopo mezzanotte 🌙"; gira.textContent = "⏳"; velo.classList.add("ferma"); return; }
-      girando = true; gira.disabled = true; chiudiB.style.visibility = "hidden";
-      sotto.textContent = "Gira, gira…";
-      // dove deve fermarsi: lo spicchio vinto sotto la freccia (in alto), non sempre nel centro dello spicchio
-      var theta = (res.i + 0.5) * passo + (Math.random() - 0.5) * passo * 0.7;
-      var meta = Math.ceil(ang / 360) * 360 + 360 * 6 + ((360 - theta) % 360);
-      var a0 = ang, t0 = 0, durata = 5200, tacca = Math.floor(ang / passo);
-      function passo1(ora) {
-        if (!t0) t0 = ora;
-        var k = Math.min(1, (ora - t0) / durata), e = 1 - Math.pow(1 - k, 4);
-        ang = a0 + (meta - a0) * e;
-        cv.style.transform = "rotate(" + ang.toFixed(2) + "deg)";
-        var tq = Math.floor(ang / passo);
-        if (tq !== tacca) { tacca = tq; suonoRuota("tic"); freccia.classList.remove("tic"); void freccia.offsetWidth; freccia.classList.add("tic"); }
-        if (k < 1) requestAnimationFrame(passo1); else fermata();
-      }
-      requestAnimationFrame(passo1);
-      function fermata() {
-        girando = false; finita = true;
-        var p = res.premio;
-        tutto.classList.add("vinto"); if (p.top) velo.classList.add("top");
-        suonoRuota(p.top ? "top" : "vinto");
-        try { if (navigator.vibrate) navigator.vibrate(p.top ? [40, 60, 40, 60, 90] : [30, 40, 30]); } catch (e) {}
-        esito.innerHTML = "";
-        esito.appendChild(el("b", { text: "+" + testoPremioRuota(p) + (p.xp ? "" : " 🪙") }));
-        esito.appendChild(el("span", { text: p.top ? "Premio grosso! ⭐" : (p.xp ? "Punti esperienza per salire di livello" : "Speed Coins") }));
-        esito.classList.add("su");
-        sotto.textContent = "Il prossimo giro a mezzanotte 🌙";
-        gira.textContent = "✓";
-        chiudiB.textContent = "Ritira"; chiudiB.className = "btn btn-primario rg-chiudi"; chiudiB.style.visibility = "";
-        // livelli saliti con gli XP della ruota (ognuno regala monete)
-        var lv = 0, pr = 0, m2 = 0;
-        (res.eventi || []).forEach(function (e) { m2 += e.monete; if (e.tipo === "livello") lv = e.livello; if (e.tipo === "prestigio") pr = e.prestigio; });
-        if (pr) codaTrofei.push({ tipo: "xp", cls: "tl-platino", icona: "🌟", su: "PRESTIGIO " + pr + "!", nome: "Si riparte dal livello 1", sotto: "+" + cifre(m2) + " Speed Coins 🪙" });
-        else if (lv) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🆙", su: "Con la ruota del giorno", nome: "Livello " + lv + "!", sotto: "+" + cifre(m2) + " Speed Coins 🪙" });
-        if (res.avvisa) res.avvisa();   // ora i trofei (es. "Ritira il regalo del giorno 10 volte")
-        prossimoAvviso();
-        if (dopo) dopo(res);
-      }
-    };
-    document.body.appendChild(velo);
-    requestAnimationFrame(function () { requestAnimationFrame(function () { velo.classList.add("su"); }); });
-  }
-  // ---- La città: si tocca un edificio, la città fa zoom e si entra.
-  //      In alto chi sei (avatar, nome, livello con la barra degli XP) e le Speed Coins;
-  //      in basso Casa, Clan e Negozio (in arrivo) e la Ruota del giorno ----
-  // ---- La casa (js/casa.js) e il negozio: per tutti quelli col profilo. Si paga con le Speed Coins vere;
-  //      la casa si salva nel profilo (Firebase) e anche su questo telefono, così non si perde niente ----
-  var casaInUso = null, tCasaNube = null;   // la casa aperta adesso (casa e negozio lavorano sulla stessa)
-  function chiaveCasa() { var N = window.SGNube, u = N && N.utente && N.utente(); return u ? "sg-casa|" + u.uid : null; }
-  function datiCasa() {
-    var N = window.SGNube, k = chiaveCasa(); if (!k) return null;
-    if (casaInUso && casaInUso._chiave === k) return casaInUso;
-    var nube = N.casa && N.casa(), qui = null;
-    try { qui = JSON.parse(localStorage.getItem(k) || "null"); } catch (e) {}
-    var c = nube && (!qui || (nube.agg || 0) >= (qui.agg || 0)) ? JSON.parse(JSON.stringify(nube)) : qui;   // la più recente
-    if (!c || !c.v) { c = SGCasa.casaIniziale(); delete c.monete; }   // si parte dalla casa scadente, uguale per tutti
-    c._chiave = k; casaInUso = c; return c;
-  }
-  function salvaCasa(c) {
-    var k = chiaveCasa(); if (!k || !c) return;
-    c.agg = Date.now(); casaInUso = c;
-    var pulita = JSON.parse(JSON.stringify(c)); delete pulita._chiave;
-    try { localStorage.setItem(k, JSON.stringify(pulita)); } catch (e) {}
-    clearTimeout(tCasaNube); tCasaNube = setTimeout(function () {   // nel profilo: un attimo dopo (non a ogni spostamento), e la copia che vedono gli amici
-      if (window.SGNube && SGNube.salvaCasa) SGNube.salvaCasa(pulita);
-      if (window.SGNube && SGNube.salvaVetrinaCasa) { SGNube.salvaVetrinaCasa(SGCasa.vetrina(pulita)); casaPubblicata = true; }
-    }, 1500);
-  }
-  var casaPubblicata = false;   // la copia per gli amici si rinfresca una volta all'avvio (per chi ha arredato prima che ci fossero le visite)
-  function pubblicaCasa() {
-    var N = window.SGNube; if (casaPubblicata || !window.SGCasa || !N || !N.salvaVetrinaCasa || !N.casa || !N.casa()) return;
-    casaPubblicata = true; N.salvaVetrinaCasa(SGCasa.vetrina(N.casa()));
-  }
-  // a casa di un amico: la sua casa com'è adesso, col suo avatar che ci gira dentro (si guarda, non si tocca niente)
-  function schermataCasaAmico(x, torna) {
-    if (!window.SGCasa || !(window.SGNube && SGNube.casaDi)) return;
-    var s0 = schermata({ icona: "🏠", titolo: x.nome, sotto: "Vado a casa sua…", indietro: function () { schermataTrofeiAmico(x, torna); } }); mostra(s0);
-    SGNube.casaDi(x.uid).catch(function () { return null; }).then(function (c) {
-      if (!s0.parentNode) return;   // è già tornato indietro
-      var s = SGCasa.crea({ visita: true, vuota: !c, dati: c, avatar: x.omino || null, nome: x.nome, audio: audioCtx, stanza: "soggiorno",
-        indietro: function () { schermataTrofeiAmico(x, torna); } });
-      mostra(s); s._monta();
-    });
-  }
-  function soldiCasa() { return { monete: function () { return SGNube.monete(); }, spendi: function (n) { SGNube.cambiaMonete(-n); }, guadagna: function (n) { SGNube.cambiaMonete(n); } }; }
-  // ---- la pesca al laghetto (js/pesca.js): album, cesto ed esche nel profilo e su questo telefono (come la casa) ----
-  var tPescaNube = null;
-  function chiavePesca() { var N = window.SGNube, u = N && N.utente && N.utente(); return u ? "sg-pesca|" + u.uid : null; }
-  function datiPesca() {
-    var N = window.SGNube, k = chiavePesca(); if (!k) return null;
-    var nube = N.pesca && N.pesca(), qui = null;
-    try { qui = JSON.parse(localStorage.getItem(k) || "null"); } catch (e) {}
-    var d = nube && (!qui || (nube.agg || 0) >= (qui.agg || 0)) ? JSON.parse(JSON.stringify(nube)) : qui;   // la più recente
-    return d && d.v ? d : null;
-  }
-  function salvaPesca(d) {
-    var k = chiavePesca(); if (!k || !d) return;
-    d.agg = Date.now();
-    try { localStorage.setItem(k, JSON.stringify(d)); } catch (e) {}
-    clearTimeout(tPescaNube); tPescaNube = setTimeout(function () { if (window.SGNube && SGNube.salvaPesca) SGNube.salvaPesca(JSON.parse(JSON.stringify(d))); }, 1200);
-  }
-  function schermataPesca() {
-    if (!window.SGPesca) return schermataCitta();
-    if (serveProfilo()) return;
-    var io = profiloAttivo();
-    var s = SGPesca.crea({ omino: io && io.omino, dati: datiPesca(), salva: salvaPesca, audio: audioCtx,
-      monete: function () { return SGNube.monete(); }, cambia: function (n) { SGNube.cambiaMonete(n); },
-      apriGara: giocoDa("garapesca") ? function () { rientro = schermataPesca; apriGioco(giocoDa("garapesca")); } : null,   // la gara di pesca con gli amici, online
-      indietro: function () { schermataCitta(); } });
-    mostra(s); s._monta();
-  }
-  // ---- gli scavi antichi (js/scavi.js): museo, zaino e colpi nel profilo e su questo telefono (come la pesca) ----
-  var tScaviNube = null;
-  function chiaveScavi() { var N = window.SGNube, u = N && N.utente && N.utente(); return u ? "sg-scavi|" + u.uid : null; }
-  function datiScavi() {
-    var N = window.SGNube, k = chiaveScavi(); if (!k) return null;
-    var nube = N.scavi && N.scavi(), qui = null;
-    try { qui = JSON.parse(localStorage.getItem(k) || "null"); } catch (e) {}
-    var d = nube && (!qui || (nube.agg || 0) >= (qui.agg || 0)) ? JSON.parse(JSON.stringify(nube)) : qui;   // la più recente
-    return d && d.v ? d : null;
-  }
-  function salvaScavi(d) {
-    var k = chiaveScavi(); if (!k || !d) return;
-    d.agg = Date.now();
-    try { localStorage.setItem(k, JSON.stringify(d)); } catch (e) {}
-    clearTimeout(tScaviNube); tScaviNube = setTimeout(function () { if (window.SGNube && SGNube.salvaScavi) SGNube.salvaScavi(JSON.parse(JSON.stringify(d))); }, 1200);
-  }
-  function schermataScavi() {
-    if (!window.SGScavi) return schermataCitta();
-    if (serveProfilo()) return;
-    var io = profiloAttivo(), u = window.SGNube && SGNube.utente && SGNube.utente();
-    var s = SGScavi.crea({ omino: io && io.omino, dati: datiScavi(), salva: salvaScavi, audio: audioCtx, seme: u ? u.uid : "", illimitati: eProprietario(),   // il proprietario (IL PAPPONE) ha i colpi illimitati, per provare
-      monete: function () { return SGNube.monete(); }, cambia: function (n) { SGNube.cambiaMonete(n); },
-      indietro: function () { schermataCitta(); } });
-    mostra(s); s._monta();
-  }
+  // ---- 🏙️ IL MONDO (ruota del giorno, città, casa e negozio, pesca, scavi, giardino, sfide del giorno, edifici, Casinò e Circolo): in js/cuore/mondo.js. Qui restano extra.js e CITTA_VISIBILE ----
   // ---- il giardino fuori casa (js/giardino.js): piante, orto, decorazioni e cesto nel profilo e su questo telefono ----
   // ---- i disegni della casa nuova, del casinò e della città a piedi: nella versione online stanno in un file a parte (extra.js),
   //      scaricato solo da chi li usa (così l'app si apre più in fretta per tutti); nella cartella di lavoro ci sono già ----
@@ -1207,7 +994,7 @@
   // visibile per adesso, non farla scaricare a nessuno»): niente tasto in home, niente disegni scaricati. true = torna com'era
   // (costruisci-versione-online.sh guarda questa riga: con false la versione online non contiene i file della città)
   var CITTA_VISIBILE = false;
-  function serveExtra() { return CITTA_VISIBILE && !window.SGGiardino && !!window.SG_EXTRA && (GIARDINO_PRONTO || CITTA_A_PIEDI || eProprietario()); }
+  function serveExtra() { return CITTA_VISIBILE && !window.SGGiardino && !!window.SG_EXTRA && (GIARDINO_PRONTO || cuore.CITTA_A_PIEDI || eProprietario()); }
   function caricaExtra(poi, attesa) {
     if (window.SGGiardino || !window.SG_EXTRA) { if (poi) poi(); return; }
     if (attesa) mostra(el("div", { class: "schermata carica-extra" }, [ el("div", { class: "ce-ico", text: attesa }), el("p", { text: "Un attimo…" }) ]));
@@ -1219,63 +1006,6 @@
   }
   var GIARDINO_PRONTO = true;   // la casa nuova (come The Sims): dal 13 ott 2026 per tutti (false = la vede solo il proprietario, gli altri hanno la casa di prima)
   function giardinoPronto() { return !!window.SGGiardino && (GIARDINO_PRONTO || eProprietario()); }
-  var tGiardinoNube = null;
-  function chiaveGiardino() { var N = window.SGNube, u = N && N.utente && N.utente(); return u ? "sg-giardino|" + u.uid : null; }
-  function datiGiardino() {
-    var N = window.SGNube, k = chiaveGiardino(); if (!k) return null;
-    var nube = N.giardino && N.giardino(), qui = null;
-    try { qui = JSON.parse(localStorage.getItem(k) || "null"); } catch (e) {}
-    var d = nube && (!qui || (nube.agg || 0) >= (qui.agg || 0)) ? JSON.parse(JSON.stringify(nube)) : qui;   // la più recente
-    return d && d.v ? d : null;
-  }
-  function salvaGiardino(d) {
-    var k = chiaveGiardino(); if (!k || !d) return;
-    d.agg = Date.now();
-    try { localStorage.setItem(k, JSON.stringify(d)); } catch (e) {}
-    clearTimeout(tGiardinoNube); tGiardinoNube = setTimeout(function () { if (window.SGNube && SGNube.salvaGiardino) SGNube.salvaGiardino(JSON.parse(JSON.stringify(d))); }, 1200);
-  }
-  function schermataGiardino(daCasa, apri) {   // dalla città si arriva qui, davanti a casa: la porta porta dentro
-    if (serveExtra()) return caricaExtra(function () { schermataGiardino(daCasa, apri); }, "🏡");
-    if (!giardinoPronto()) return schermataCasa();
-    if (serveProfilo()) return;
-    var io = profiloAttivo(), m = soldiCasa();
-    var s = SGGiardino.crea({ omino: io && io.omino, nome: io && io.nome, dati: datiGiardino(), daCasa: !!daCasa, apri: apri || null, salva: salvaGiardino, audio: audioCtx,
-      monete: m.monete, spendi: m.spendi, guadagna: m.guadagna,
-      entraInCasa: function () { schermataCasa(); }, indietro: function () { schermataCitta(); } });
-    mostra(s); s._monta();
-  }
-  function serveProfilo() {   // casa e negozio vogliono il profilo (le monete e i mobili sono tuoi)
-    var N = window.SGNube; if (N && N.profilo && N.profilo()) return false;
-    schermataAccesso(schermataCitta); return true;
-  }
-  function schermataCasa(stanza) {
-    if (!window.SGCasa) return schermataCitta();
-    if (serveProfilo()) return;
-    var io = profiloAttivo(), m = soldiCasa();
-    var s = SGCasa.crea({ avatar: io && io.omino, nome: io && io.nome, dati: datiCasa(), audio: audioCtx, stanza: stanza, monete: m.monete, spendi: m.spendi, guadagna: m.guadagna, salva: salvaCasa,
-      vestiti: function () { schermataOmino(function () { schermataCasa("camera"); }); },   // dall'armadio aperto: si cambia il look e si torna in camera
-      pesca: { dati: function () { return datiPesca() || (window.SGPesca ? { v: 1, album: {}, cesto: [], esche: {}, extra: 0, tot: 0 } : null); }, salva: salvaPesca },   // gli acquari prendono i pesci dal cesto della pesca
-      negozio: function (st) { schermataNegozio(st); },   // dal cassetto dell'Arreda
-      indietro: function () { if (giardinoPronto()) schermataGiardino(true); else schermataCitta(); } });   // uscendo di casa si va in giardino
-    mostra(s); s._monta();
-  }
-  function schermataNegozio(daStanza) {   // daStanza: si arriva dalla casa (e indietro si torna lì), altrimenti dalla città
-    if (!window.SGCasa) return schermataCitta();
-    if (serveProfilo()) return;
-    var m = soldiCasa(), cm = commessaSalvata();
-    var s = SGCasa.negozio({ dati: datiCasa(), salva: salvaCasa, monete: m.monete, spendi: m.spendi, audio: audioCtx, reparto: daStanza || null,
-      indietro: function () { if (daStanza) schermataCasa(daStanza); else schermataCitta(); },
-      aCasa: daStanza ? null : function () { schermataCasa(); },
-      commessa: cm, modificaCommessa: eProprietario() ? function (cfg) { modificaCommessa(cfg, daStanza); } : null });
-    mostra(s); s._monta();
-    // la commessa vera la prende dalla scheda del proprietario (la prossima volta si vede subito)
-    if (window.SGNube && SGNube.commessa) SGNube.commessa(PROPRIETARIO).then(function (c) {
-      if (!c || JSON.stringify(c) === JSON.stringify(cm)) return;
-      try { localStorage.setItem("sg-commessa", JSON.stringify(c)); } catch (e) {}
-      if (document.body.contains(s) && s._commessa) s._commessa(c);
-    }).catch(function () {});
-  }
-  // la commessa del negozio: la disegna il proprietario con l'editor degli avatar, e la vedono tutti uguale
   var PROPRIETARIO = "IL PAPPONE";
   function eProprietario() { var io = profiloAttivo(); return String((io && io.nome) || "").trim().toUpperCase() === PROPRIETARIO; }
   // 🧍 GLI AVATAR NUOVI «Mii rifinito» (29 ott 2026): lo stesso avatar di ognuno, disegnato senza contorni scuri e con occhi più veri
@@ -1288,195 +1018,13 @@
     if (!window.SGOmino || !SGOmino.stile) return;
     SGOmino.stile(AVATAR_NUOVO === "tutti" || (AVATAR_NUOVO === "proprietario" && eProprietario() && !avatarNuoviSpenti()) ? "rifinito" : "classico");
   }
-  function commessaSalvata() { try { return JSON.parse(localStorage.getItem("sg-commessa") || "null"); } catch (e) { return null; } }
-  function modificaCommessa(cfg, daStanza) {
-    var bozza = { nome: "Commessa", omino: cfg, omini: null }, prima = JSON.stringify(cfg);
-    schermataOmino(function () {
-      if (bozza.omino && JSON.stringify(bozza.omino) !== prima) {
-        try { localStorage.setItem("sg-commessa", JSON.stringify(bozza.omino)); } catch (e) {}
-        if (window.SGNube && SGNube.salvaCommessa) SGNube.salvaCommessa(bozza.omino);
-      }
-      schermataNegozio(daStanza);
-    }, bozza);
-  }
-
   // ---- 🤖 i BOT: un gruppo fisso di personaggi, uguali in tutti i giochi (così si riconoscono: "Matt vince sempre").
   //      Nei tasti, nelle regole e nei menu si dice solo "Bot"; in partita ognuno ha il suo nome e il suo avatar.
   //      Il proprietario (IL PAPPONE) li cambia con "🤖 I Bot" nel suo profilo: si salvano nella sua scheda pubblica
   //      (come la commessa) e tutti li caricano da lì; senza internet valgono gli ultimi visti, o quelli di partenza.
   //      Per i giochi: SG.bot.prendi(n, { livello, escludi, caso }), SG.bot.tutti(), SG.bot.daId(id) ----
   var BOT_LIVELLI = ["facile", "medio", "difficile"], BOT_MAX_NOME = 12, BOT_MAX_FRASE = 70;
-  var BOT_LIV = { facile: "🟢 Facile", medio: "🟡 Medio", difficile: "🔴 Difficile" };
-  var BOT_PARTENZA = [
-    { id: "matt", nome: "Matt", livello: "difficile", frase: "Il campione: vince sempre, e lo sa.",
-      omino: { forma: "uomo", corpo: "snello", pelle: 1, viso: "squadrato", occhi: "furbi", iride: 2, sopracc: "decise", naso: "dritto", bocca: "ghigno",
-        capelli: "ciuffo", colCap: 4, barba: "accenno", capo: "giacca", maglia: 7, sotto: "pantaloni", pantaloni: 1, modScarpe: "eleganti", scarpe: 0,
-        occhiali: "sole", collo: "catena", mano: "trofeo", cappello: "nessuno" } },
-    { id: "angela", nome: "Angela", livello: "difficile", frase: "La professoressa: pensa a ogni mossa, e non sbaglia.",
-      omino: { forma: "donna", corpo: "snello", pelle: 0, viso: "ovale", occhi: "mandorla", iride: 3, sopracc: "arcuate", naso: "piccolo", bocca: "sorrisetto",
-        capelli: "chignon", colCap: 0, capo: "camicetta", maglia: 4, sotto: "gonnatubino", pantaloni: 1, modScarpe: "tacchi", scarpe: 0,
-        occhiali: "felina", orecchini: "perla", collo: "perle", eyeliner: "sottile", rossetto: "pieno", colRossetto: 0, mano: "libro", colMano: 4, cappello: "nessuno" } },
-    { id: "rosa", nome: "Rosa", livello: "facile", frase: "Allegra e chiacchierona: gioca d'istinto.",
-      omino: { forma: "donna", corpo: "medio", pelle: 2, viso: "tondo", occhi: "felici", iride: 1, sopracc: "morbide", naso: "insu", bocca: "sorrisone", guance: "lentiggini",
-        capelli: "riccilunghi", colCap: 3, capo: "vestito", maglia: 5, stampa: "pois", sotto: "gonna", pantaloni: 5, modScarpe: "ballerine", scarpe: 2,
-        cappello: "fiori", orecchini: "cuori", blush: "leggero", mano: "palloncino", colMano: 0, occhiali: "nessuno" } },
-    { id: "peppe", nome: "Peppe", livello: "medio", frase: "Il furbo del bar: bluffa, ride e ti frega.",
-      omino: { forma: "uomo", corpo: "robusto", pelle: 3, viso: "paffuto", occhi: "occhiolino", iride: 0, sopracc: "folte", naso: "patata", bocca: "sorrisetto",
-        capelli: "stempiato", colCap: 6, barba: "baffoni", capo: "gilet", maglia: 3, sotto: "pantaloni", pantaloni: 2, modScarpe: "eleganti", scarpe: 5,
-        cappello: "coppola", colAcc: 7, mano: "tazza", colMano: 8, occhiali: "nessuno" } },
-    { id: "gina", nome: "Gina", livello: "medio", frase: "La cuoca: ti serve la sconfitta su un piatto.",
-      omino: { forma: "donna", corpo: "robusto", pelle: 5, viso: "paffuto", occhi: "dolci", iride: 1, sopracc: "morbide", naso: "tondo", bocca: "sorrisone",
-        capelli: "ricciraccolti", colCap: 0, capo: "grembiule", maglia: 8, sotto: "gonnalunga", pantaloni: 0, modScarpe: "sneakers", scarpe: 1,
-        cappello: "chef", orecchini: "cerchioni", rossetto: "tinta", colRossetto: 1, mano: "pizza", occhiali: "nessuno" } },
-    { id: "toto", nome: "Totò", livello: "medio", frase: "Il nonno saggio: lento, ma non perde un colpo.",
-      omino: { forma: "uomo", corpo: "medio", pelle: 1, viso: "lungo", occhi: "assonnati", iride: 4, sopracc: "folte", naso: "aquilino", bocca: "sorriso", segno: "rughe",
-        capelli: "chierica", colCap: 6, barba: "barbalunga", capo: "cardigan", maglia: 2, sotto: "pantaloni", pantaloni: 0, modScarpe: "pantofole", scarpe: 5,
-        cappello: "borsalino", colAcc: 7, occhiali: "tondi", animale: "cane", colAnimale: 4 } },
-    { id: "ciro", nome: "Ciro", livello: "facile", frase: "Tifoso scatenato: attacca sempre, anche quando non deve.",
-      omino: { forma: "uomo", corpo: "snello", pelle: 4, viso: "lungo", occhi: "grandi", iride: 0, sopracc: "alzate", naso: "largo", bocca: "risata",
-        capelli: "riccicorti", colCap: 0, capo: "calcio", maglia: 6, stampa: "numero", sotto: "pantaloncini", pantaloni: 7, modScarpe: "sneakers", scarpe: 1,
-        collo: "sciarpa", colCollo: 6, mano: "bandiera", colMano: 6, pittura: "sportivo", cappello: "nessuno", occhiali: "nessuno" } },
-    { id: "lella", nome: "Lella", livello: "facile", frase: "La sognatrice: a volte si distrae e regala punti.",
-      omino: { forma: "donna", corpo: "snello", pelle: 7, viso: "cuore", occhi: "stelline", iride: 7, sopracc: "sottili", naso: "puntino", bocca: "micio", guance: "rosse",
-        capelli: "codini", colCap: 10, capo: "felpa", maglia: 4, stampa: "arcobaleno", sotto: "gonnapieghe", pantaloni: 8, modScarpe: "stivaletti", scarpe: 1,
-        occhiali: "cuore", animale: "gatto", colAnimale: 3, cappello: "nessuno" } }
-  ];
-  var botCast = null, botSalvatoA = 0;
-  // i bot salvati (dalla scheda del proprietario o da questo telefono) sopra quelli di partenza: per id, con ogni campo controllato
-  function botDaSalvati(lista) {
-    lista = Array.isArray(lista) ? lista : [];
-    return BOT_PARTENZA.map(function (b) {
-      var s = lista.filter(function (x) { return x && x.id === b.id; })[0] || {};
-      var nome = typeof s.nome === "string" ? s.nome.replace(/\s+/g, " ").trim().slice(0, BOT_MAX_NOME) : "";
-      var frase = typeof s.frase === "string" ? s.frase.replace(/\s+/g, " ").trim().slice(0, BOT_MAX_FRASE) : "";
-      return { id: b.id, nome: nome.length >= 2 ? nome : b.nome, livello: BOT_LIVELLI.indexOf(s.livello) >= 0 ? s.livello : b.livello,
-        frase: frase || b.frase, omino: s.omino && typeof s.omino === "object" ? s.omino : b.omino };
-    });
-  }
-  function botTutti() {
-    if (!botCast) { var m = null; try { m = JSON.parse(localStorage.getItem("sg-bot") || "null"); } catch (e) {} botCast = botDaSalvati(m); }
-    return botCast;
-  }
-  function copiaBot(b) {
-    return { id: b.id, nome: b.nome, livello: b.livello, frase: b.frase, bot: true,
-      omino: window.SGOmino ? SGOmino.norm(b.omino) : JSON.parse(JSON.stringify(b.omino || null)) };
-  }
-  // n bot diversi, sempre gli stessi nello stesso ordine: prima quelli del livello chiesto, poi i più vicini (facile ↔ difficile per ultimi).
-  // escludi: id o nomi da non usare (es. i nomi delle persone in partita, così nessun bot si chiama come uno di loro).
-  // caso: true = a sorte (es. il Bot del torneino), sempre preferendo il livello chiesto. Più di 8: "Bot 9", "Bot 10"…
-  function botPrendi(n, o) {
-    o = o || {}; n = Math.max(0, Math.floor(+n) || 0);
-    var via = [].concat(o.escludi || []).map(function (x) { return x && typeof x === "object" ? (x.id || x.nome) : x; }).filter(function (x) { return x != null; }).map(String);
-    var fuori = function (id, nome) { return via.some(function (x) { return x === id || stessoNome(x, nome); }); };
-    var lv = BOT_LIVELLI.indexOf(o.livello), lista = botTutti().filter(function (b) { return !fuori(b.id, b.nome); });
-    if (o.caso) lista = mischia(lista);
-    if (lv >= 0) lista = lista.map(function (b, i) { return { b: b, d: Math.abs(BOT_LIVELLI.indexOf(b.livello) - lv) * 100 + i }; })
-      .sort(function (x, y) { return x.d - y.d; }).map(function (x) { return x.b; });
-    var out = lista.slice(0, n).map(copiaBot);
-    for (var k = BOT_PARTENZA.length + 1; out.length < n && k < 99; k++) {
-      var nome = "Bot " + k; if (fuori("bot" + k, nome)) continue;
-      out.push({ id: "bot" + k, nome: nome, livello: lv >= 0 ? BOT_LIVELLI[lv] : "medio", frase: "", bot: true, omino: window.SGOmino ? SGOmino.norm(SGOmino.casuale(nome)) : null });
-    }
-    return out;
-  }
-  function botDaId(id) { var b = botTutti().filter(function (x) { return x.id === id; })[0]; return b ? copiaBot(b) : null; }
-  // salva i bot (solo il proprietario): su questo telefono e nella sua scheda pubblica, dove li leggono tutti
-  function salvaBot(lista) {
-    botCast = botDaSalvati(lista); botSalvatoA = Date.now(); schedaProp = null;   // (la scheda letta prima ha i bot vecchi)
-    try { localStorage.setItem("sg-bot", JSON.stringify(botCast)); } catch (e) {}
-    var N = window.SGNube;
-    if (N && N.pubblica && eProprietario()) try { Promise.resolve(N.pubblica({ bot: botCast })).catch(function () {}); } catch (e) {}
-  }
-  // i bot del proprietario dalla sua scheda pubblica (all'avvio e aprendo "🤖 I Bot"). poi(cambiati)
-  function caricaBot(poi) {
-    var N = window.SGNube, t0 = Date.now();
-    function fine(c) { if (poi) try { poi(c); } catch (e) {} }
-    if (!(N && N.cercaNome)) return fine(false);
-    try {
-      schedaDelProprietario().then(function (sch) {
-        if (!sch || !Array.isArray(sch.bot) || t0 < botSalvatoA) return fine(false);   // (salvati qui nel frattempo: valgono quelli)
-        var nuovi = botDaSalvati(sch.bot);
-        if (JSON.stringify(nuovi) === JSON.stringify(botTutti())) return fine(false);
-        botCast = nuovi;
-        try { localStorage.setItem("sg-bot", JSON.stringify(nuovi)); } catch (e) {}
-        fine(true);
-      }).catch(function () { fine(false); });
-    } catch (e) { fine(false); }
-  }
-  // "🤖 I Bot" (solo il proprietario, dal suo profilo): gli 8 bot in una griglia, un tocco apre la scheda di uno
-  function schermataBot(indietro) {
-    var s = schermata({ icona: "🤖", titolo: "I Bot", sotto: "Uguali per tutti, in tutti i giochi", indietro: indietro });
-    s.classList.add("bot-cast");
-    var griglia = el("div", { class: "bc-griglia" });
-    function disegna() {
-      svuota(griglia);
-      botTutti().forEach(function (b) {
-        griglia.appendChild(el("button", { class: "bc-bot liv-" + b.livello, type: "button", onclick: function () { schermataUnBot(b.id, function () { schermataBot(indietro); }); } }, [
-          el("span", { class: "bc-av", "aria-hidden": "true", html: window.SGOmino ? SGOmino.svg(b.omino, { busto: true }) : "🤖" }),
-          el("b", { text: b.nome }), el("small", { text: BOT_LIV[b.livello] }) ]));
-      });
-    }
-    s._contenuto.appendChild(griglia);
-    s._contenuto.appendChild(el("p", { class: "modulo-nota bc-nota", text: "Tocca un bot per cambiargli avatar, nome, frase e livello. Li vedono tutti così, in tutti i giochi. Nei tasti resta scritto solo «Bot»." }));
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", type: "button", text: "↺ Tutti come all'inizio", onclick: function () {
-      chiediConferma("Rimettere tutti i bot come all'inizio?", "Nomi, avatar, frasi e livelli tornano quelli di partenza, per tutti.", "↺ Rimetti", function () { salvaBot([]); disegna(); });
-    } }));
-    mostra(s); disegna();
-    caricaBot(function (c) { if (c && s.isConnected) disegna(); });   // (cambiati da un altro telefono del proprietario)
-  }
-  // la scheda di un bot: avatar (col camerino), nome, frase e livello. b = la bozza (resta mentre si cambia l'avatar)
-  function schermataUnBot(id, indietro, b) {
-    var orig = botDaId(id); if (!orig) return indietro();
-    b = b || { nome: orig.nome, frase: orig.frase, livello: orig.livello, omino: orig.omino };
-    var parti = BOT_PARTENZA.filter(function (x) { return x.id === id; })[0];
-    var cambiato = function () { return b.nome !== orig.nome || b.frase !== orig.frase || b.livello !== orig.livello || JSON.stringify(SGOmino.norm(b.omino)) !== JSON.stringify(orig.omino); };
-    var s = schermata({ icona: "🤖", titolo: orig.nome, sotto: "Come lo vedono tutti", indietro: function () {
-      leggi();
-      if (cambiato()) chiediConferma("Uscire senza salvare?", "Le modifiche a " + orig.nome + " si perdono.", "Esci", indietro); else indietro();
-    } });
-    s.classList.add("bot-scheda");
-    var palco = el("div", { class: "bc-palco", "aria-hidden": "true", html: SGOmino.svg(b.omino) });
-    var tAv = el("button", { class: "btn btn-fantasma bc-cambia", type: "button", text: "✏️ Cambia avatar", onclick: function () {
-      leggi();
-      var bozza = { nome: b.nome, omino: b.omino, omini: null };
-      schermataOmino(function () { b.omino = bozza.omino || b.omino; schermataUnBot(id, indietro, b); }, bozza);
-    } });
-    var nome = el("input", { class: "link-campo bc-campo", type: "text", maxlength: String(BOT_MAX_NOME), placeholder: "Nome del bot", autocomplete: "off", autocapitalize: "words" });
-    var frase = el("input", { class: "link-campo bc-campo", type: "text", maxlength: String(BOT_MAX_FRASE), placeholder: "Il suo carattere in una frase", autocomplete: "off" });
-    nome.value = b.nome; frase.value = b.frase;
-    var livelli = el("div", { class: "bc-livelli", role: "group", "aria-label": "Livello preferito" });
-    function disegnaLivelli() {
-      svuota(livelli);
-      BOT_LIVELLI.forEach(function (lv) {
-        livelli.appendChild(el("button", { class: "bc-liv liv-" + lv + (b.livello === lv ? " on" : ""), type: "button", text: BOT_LIV[lv], onclick: function () { b.livello = lv; aggLivelli(); } }));
-      });
-    }
-    function aggLivelli() { [].forEach.call(livelli.children, function (x, i) { x.classList.toggle("on", BOT_LIVELLI[i] === b.livello); }); }   // (solo la classe: niente lampeggio)
-    disegnaLivelli();
-    var avviso = el("div", { class: "link-avviso bc-avviso", "aria-live": "polite" });
-    function leggi() { b.nome = nome.value.replace(/\s+/g, " ").trim().slice(0, BOT_MAX_NOME); b.frase = frase.value.replace(/\s+/g, " ").trim().slice(0, BOT_MAX_FRASE); }
-    s._contenuto.appendChild(el("div", { class: "bc-testa" }, [ palco, el("div", { class: "bc-lato" }, [ tAv,
-      el("button", { class: "btn btn-fantasma bc-cambia", type: "button", text: "↺ Come all'inizio", onclick: function () {
-        if (!parti) return;
-        b.nome = parti.nome; b.frase = parti.frase; b.livello = parti.livello; b.omino = parti.omino;
-        nome.value = b.nome; frase.value = b.frase; aggLivelli(); palco.innerHTML = SGOmino.svg(b.omino); avviso.textContent = "";
-      } }) ]) ]));
-    s._contenuto.appendChild(el("label", { class: "bc-etich", text: "Nome" })); s._contenuto.appendChild(nome);
-    s._contenuto.appendChild(el("label", { class: "bc-etich", text: "Carattere" })); s._contenuto.appendChild(frase);
-    s._contenuto.appendChild(el("label", { class: "bc-etich", text: "Livello preferito" })); s._contenuto.appendChild(livelli);
-    s._contenuto.appendChild(avviso);
-    s._piede.appendChild(el("button", { class: "btn btn-primario", type: "button", text: "💾 Salva", onclick: function () {
-      leggi();
-      if (b.nome.length < 2) { avviso.textContent = "Il nome deve avere almeno 2 lettere."; nome.focus(); return; }
-      if (/^bot\b/i.test(b.nome)) { avviso.textContent = "«Bot» resta per i tasti: dagli un nome vero."; nome.focus(); return; }
-      if (botTutti().some(function (x) { return x.id !== id && stessoNome(x.nome, b.nome); })) { avviso.textContent = "C'è già un bot che si chiama così."; nome.focus(); return; }
-      salvaBot(botTutti().map(function (x) { return x.id === id ? { id: id, nome: b.nome, frase: b.frase || (parti && parti.frase) || "", livello: b.livello, omino: SGOmino.norm(b.omino) } : x; }));
-      pillola("bot", "🤖 " + b.nome + " salvato: lo vedono tutti così", "verde", 2500);
-      indietro();
-    } }));
-    mostra(s);
-  }
-
+  // ---- 🤖 il gruppo dei Bot (BOT_PARTENZA, SG.bot.prendi, l'editor «🤖 I Bot» del proprietario): in js/cuore/bot.js ----
   // ---- la scheda pubblica del proprietario, letta una volta per tutti quelli che la chiedono insieme (i bot e l'ordine dei
   //      giochi all'avvio: una lettura sola). Per 5 s si riusa la stessa risposta ----
   var schedaProp = null;
@@ -1723,554 +1271,6 @@
     // (cambiato da un altro telefono del proprietario: se qui non ha ancora toccato niente, la lista si rimette in fila)
     caricaOrdine(function (c) { if (c && !toccato && !drag && lista.isConnected) { firma0 = idGiochi(giochi).join("|"); metti(idGiochi(giochi)); } });
   }
-  var scrollCitta = 0;   // fin dove avevi scorso la città: uscendo da un edificio si torna lì (dalla home si riparte dall'alto)
-  var CITTA_A_PIEDI = true, ultimoEdificio = null;   // (dal 13 ott 2026 per tutti)
-  var fotoCitta = null;   // la città com'era quando hai toccato la bacheca (fa da sfondo sfocato alle novità)   // la città dove si cammina (come la casa): finché è false la vede solo il proprietario; ultimoEdificio: da dove si esce tornando in città
-  function cittaAPiedi() { return !!(window.SGGiardino && window.SGCitta && SGCitta.arte) && (CITTA_A_PIEDI || eProprietario()); }
-  // ---- 🎯 le sfide del giorno: 3 al giorno (una tra pesca e scavi, due tra i giochi che si fanno anche contro il computer),
-  //      uguali per tutti e diverse ogni giorno. Si misurano coi contatori che i giochi tengono già (quelli dei trofei):
-  //      la prima volta che le guardi oggi si segna da dove parti, e il progresso è quanto sei salito da lì ----
-  var SFIDE_VITA = [
-    { id: "pesca3", icona: "🎣", testo: "Pesca 3 pesci al laghetto", fonte: "pesca", meta: 3, monete: 300, xp: 60 },
-    { id: "pesca6", icona: "🎣", testo: "Pesca 6 pesci al laghetto", fonte: "pesca", meta: 6, monete: 500, xp: 100 },
-    { id: "scavi1", icona: "🏺", testo: "Trova un reperto agli scavi", fonte: "scavi", meta: 1, monete: 300, xp: 60 },
-    { id: "scavi2", icona: "🏺", testo: "Trova 2 reperti agli scavi", fonte: "scavi", meta: 2, monete: 500, xp: 100 }
-  ];
-  var SFIDE_GIOCHI = [
-    { id: "bj-mani", icona: "🃏", testo: "Vinci 3 mani a Black Jack", gioco: "blackjack", stat: "maniVinte", meta: 3, monete: 300, xp: 60 },
-    { id: "bj-21", icona: "🃏", testo: "Fai un Black Jack", gioco: "blackjack", stat: "blackjackFatti", meta: 1, monete: 400, xp: 80 },
-    { id: "scopa-v", icona: "🂡", testo: "Vinci una partita a Scopa", gioco: "scopa", stat: "vinte", meta: 1, monete: 400, xp: 100 },
-    { id: "scopa-s", icona: "🧹", testo: "Fai 3 scope a Scopa", gioco: "scopa", stat: "scope", meta: 3, monete: 400, xp: 80 },
-    { id: "scopa-7", icona: "7️⃣", testo: "Prendi il Settebello a Scopa", gioco: "scopa", stat: "settebello", meta: 1, monete: 300, xp: 60 },
-    { id: "hockey-v", icona: "🏒", testo: "Vinci una partita a Glow Hockey", gioco: "hockey", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
-    { id: "hockey-g", icona: "🏒", testo: "Segna 10 gol a Glow Hockey", gioco: "hockey", stat: "golFatti", meta: 10, monete: 300, xp: 60 },
-    { id: "calcio-v", icona: "⚽", testo: "Vinci una partita a Calcio Biliardo", gioco: "calciobiliardo", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
-    { id: "calcio-g", icona: "⚽", testo: "Segna 5 gol a Calcio Biliardo", gioco: "calciobiliardo", stat: "golFatti", meta: 5, monete: 300, xp: 60 },
-    { id: "drop4-v", icona: "🟡", testo: "Vinci una partita a Drop 4", gioco: "drop4", stat: "vinte", meta: 1, monete: 300, xp: 60 },
-    { id: "navale-n", icona: "🚢", testo: "Affonda 3 navi a Battaglia Navale", gioco: "navale", stat: "naviAffondate", meta: 3, monete: 300, xp: 60 },
-    { id: "navale-v", icona: "🚢", testo: "Vinci a Battaglia Navale", gioco: "navale", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
-    { id: "poker-v", icona: "♠️", testo: "Vinci una mano di Texas Hold'em", gioco: "poker", stat: "vittorieTexas", meta: 1, monete: 300, xp: 60 },
-    { id: "ruota-p", icona: "🎡", testo: "Gioca alla Ruota della Fortuna", gioco: "ruota", stat: "partite", meta: 1, monete: 250, xp: 50 },
-    { id: "pendolo-p", icona: "🎯", testo: "Gioca 2 partite a Palla a Pendolo", gioco: "pendolo", stat: "partite", meta: 2, monete: 250, xp: 50 }
-  ];
-  var BONUS_SFIDE = { monete: 1000, xp: 200 };   // tutte e 3 fatte: il forziere
-  function sfideDiOggi() {   // scelte dal giorno: oggi le stesse per tutti, domani altre
-    var g = oggiStr(), h = 2166136261, i; for (i = 0; i < g.length; i++) { h ^= g.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-    function rnd() { h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; }
-    var vita = SFIDE_VITA.filter(function (s) { return s.fonte === "pesca" ? !!window.SGPesca : !!window.SGScavi; }), giochiOk = SFIDE_GIOCHI.filter(function (s) { return !!giocoDa(s.gioco); });
-    var l = vita.length ? [vita[Math.floor(rnd() * vita.length)]] : [], usati = {}, prove = 0;
-    while (l.length < 3 && prove++ < 200) { var s = giochiOk[Math.floor(rnd() * giochiOk.length)]; if (!s || usati[s.gioco]) continue; usati[s.gioco] = 1; l.push(s); }
-    return l;
-  }
-  function valoreSfida(s) {   // il contatore che sale giocando
-    if (s.fonte === "pesca") { var p = datiPesca(); return (p && p.tot) || 0; }
-    if (s.fonte === "scavi") { var d = datiScavi(); return (d && d.tot) || 0; }
-    var prof = window.SGNube && SGNube.profilo && SGNube.profilo(); return prof ? valoreStat(prof, s.gioco, s.stat) || 0 : 0;
-  }
-  function statoSfide() {   // { g, base: { id: da dove parti }, presi: { id: true }, bonus }: si segna la prima volta che le guardi oggi
-    if (!profiloAttivo()) return null;
-    var st = listaProfilo("sfide")[0];
-    if (!st || st.g !== oggiStr() || !st.base) {
-      st = { g: oggiStr(), base: {}, presi: {}, bonus: false };
-      sfideDiOggi().forEach(function (s) { st.base[s.id] = valoreSfida(s); });
-      salvaListaProfilo("sfide", [st]);
-    }
-    return st;
-  }
-  function progressoSfida(s, st) { return Math.max(0, Math.min(s.meta, valoreSfida(s) - ((st && st.base[s.id]) || 0))); }
-  function riassuntoSfide() {   // per l'avviso in città: quante fatte, quante da ritirare
-    var st = statoSfide(); if (!st) return null;
-    var l = sfideDiOggi(), fatte = 0, ritira = 0;
-    l.forEach(function (s) { if (st.presi[s.id]) fatte++; else if (progressoSfida(s, st) >= s.meta) ritira++; });
-    if (fatte === l.length && !st.bonus) ritira++;
-    return { tot: l.length, fatte: fatte, ritira: ritira };
-  }
-  function premia(monete, xp) { try { if (monete && window.SGNube && SGNube.cambiaMonete) SGNube.cambiaMonete(monete); if (xp && SGNube.aggiungiXp) SGNube.aggiungiXp(xp); } catch (e) {} }
-  // il pannello delle sfide (sopra la città): le 3 sfide con la barra, "Vai" per andarci, "Ritira!" quando è fatta, e il forziere se le fai tutte
-  function pannelloSfide(vai, poi) {
-    var st = statoSfide(); if (!st) return;
-    var velo = el("div", { class: "sf-velo" }), foglio = el("div", { class: "sf-foglio" }), lista = el("div", {}), tempo = el("div", { class: "sf-tempo" });
-    function chiudi() { if (velo.parentNode) velo.parentNode.removeChild(velo); if (poi) poi(); }
-    velo.addEventListener("click", function (e) { if (e.target === velo) chiudi(); });
-    var tFesta = null;
-    function festa(msg) { clearTimeout(tFesta); tempo.textContent = msg; tempo.classList.add("festa"); tFesta = setTimeout(function () { tempo.classList.remove("festa"); if (velo.parentNode) disegna(); }, 2600); }   // il premio, scritto in grande per un attimo
-    function finoMezzanotte() { var d = new Date(); d.setHours(24, 0, 0, 0); return d - Date.now(); }
-    function disegna() {
-      svuota(lista); tempo.textContent = "⏳ Nuove sfide tra " + tempoBreve(finoMezzanotte());
-      var l = sfideDiOggi(), fatte = 0;
-      l.forEach(function (s) {
-        var p = progressoSfida(s, st), preso = !!st.presi[s.id], pronta = !preso && p >= s.meta; if (preso) fatte++;
-        var tasto = el("button", { class: "sf-tasto" + (pronta ? " ritira" : preso ? " fatto" : ""), text: pronta ? "Ritira!" : preso ? "✔" : "Vai" });
-        tasto.onclick = function () {
-          if (preso) return;
-          if (pronta) { st.presi[s.id] = true; salvaListaProfilo("sfide", [st]); premia(s.monete, s.xp); disegna(); festa("🎉 +" + cifre(s.monete) + " monete e +" + s.xp + " XP"); return; }
-          chiudi(); vai(s);
-        };
-        lista.appendChild(el("div", { class: "sf-carta" + (preso ? " fatta" : "") }, [
-          el("div", { class: "sf-ico", text: s.icona }),
-          el("div", { class: "sf-corpo" }, [
-            el("div", { class: "sf-testo", text: s.testo }),
-            el("div", { class: "sf-barra" }, [ el("i", { style: "width:" + Math.round(p * 100 / s.meta) + "%" }) ]),
-            el("div", { class: "sf-premio", text: p + "/" + s.meta + "  ·  🪙 " + cifre(s.monete) + "  ·  ⭐ " + s.xp + " XP" })
-          ]),
-          tasto
-        ]));
-      });
-      var tutte = fatte === l.length, bTasto = el("button", { class: "sf-tasto" + (tutte && !st.bonus ? " ritira" : st.bonus ? " fatto" : ""), text: st.bonus ? "✔" : tutte ? "Apri!" : fatte + "/" + l.length });
-      bTasto.onclick = function () { if (!tutte || st.bonus) return; st.bonus = true; salvaListaProfilo("sfide", [st]); premia(BONUS_SFIDE.monete, BONUS_SFIDE.xp); disegna(); festa("🎁 Forziere: +" + cifre(BONUS_SFIDE.monete) + " monete e +" + BONUS_SFIDE.xp + " XP!"); };
-      lista.appendChild(el("div", { class: "sf-bonus" + (st.bonus ? " fatta" : "") }, [
-        el("div", { class: "sf-ico", text: "🎁" }),
-        el("div", { class: "sf-corpo" }, [ el("div", { class: "sf-testo", text: "Fai tutte e 3 le sfide" }), el("div", { class: "sf-premio", text: "Il forziere: 🪙 " + cifre(BONUS_SFIDE.monete) + "  ·  ⭐ " + BONUS_SFIDE.xp + " XP" }) ]),
-        bTasto
-      ]));
-    }
-    var x = el("button", { class: "sf-x", text: "✕", "aria-label": "Chiudi", onclick: chiudi });
-    foglio.appendChild(el("div", { class: "sf-testa" }, [ el("b", { text: "🎯 Sfide del giorno" }), x ]));
-    foglio.appendChild(tempo); foglio.appendChild(lista); velo.appendChild(foglio);
-    disegna();
-    return velo;
-  }
-  function schermataCitta() {
-    if (serveExtra()) return caricaExtra(schermataCitta, "🏙️");
-    controllaGiorno();   // (se l'app è rimasta aperta da ieri)
-    var io = profiloAttivo(), N = window.SGNube, fase = SGCitta.fase(new Date()), via = false;
-    var cloud = !!(N && N.profilo && N.profilo()), prog = window.SGLivelli && cloud && N.progressione ? N.progressione() : null;
-    var vista = cittaAPiedi() ? SGGiardino.crea({ luogo: "citta", incassata: true, omino: io && io.omino, nome: io && io.nome, audio: audioCtx, da: ultimoEdificio,   // la città a piedi (per ora solo per il proprietario)
-      entra: function (k, punto, tela) {
-        if (via) return; via = true; ultimoEdificio = k; suonoEdificio(k);
-        if (k === "piazza") { var foto = null; try { foto = document.createElement("canvas"); foto.width = tela.width; foto.height = tela.height; foto.getContext("2d").drawImage(tela, 0, 0); } catch (e) { foto = null; } fotoCitta = { tela: foto, punto: punto, t: Date.now() }; return entraEdificio(k); }   // (una copia al volo della città: niente immagine da comprimere)   // la bacheca delle novità: la si legge da vicino, con la città dietro
-        try { vista.style.transition = "opacity .2s ease-in"; vista.style.opacity = "0"; } catch (e) {}   // (la città sfuma, poi si entra: niente cambio secco)
-        setTimeout(function () { entraEdificio(k); }, 200); } }) : null;
-    var mappa = vista || el("div", { class: "citta-mappa", html: SGCitta.svg({ fase: fase, io: io && io.omino, sopra: 80 }) });
-    // in alto: tu (tocca per il profilo) e le monete
-    var testoIo = el("span", { class: "citta-io-testo" }, [ el("b", { text: io ? io.nome : "Entra" }) ]);
-    if (prog) {
-      var serve = SGLivelli.xpPerSalire(prog.level), pct = Math.max(3, Math.min(100, Math.floor(prog.xp * 100 / serve)));
-      testoIo.appendChild(el("small", { text: (prog.prestige ? "★" + prog.prestige + " · " : "") + "Livello " + prog.level + fuocoGiorni() }));
-      testoIo.appendChild(el("i", { class: "citta-xp" }, [ el("i", { style: "width:" + pct + "%" }) ]));
-    } else testoIo.appendChild(el("small", { text: io ? "Il tuo profilo" : "Crea il tuo profilo" }));
-    var faccia = el("span", { class: "citta-faccia" });
-    if (io && io.omino && window.SGOmino) faccia.innerHTML = SGOmino.svg(io.omino, { busto: true }); else faccia.textContent = (io && io.emoji) || "👤";
-    var monete = el("b", { text: prog ? cifre(prog.coins) : "—" });
-    // in basso: le cose in arrivo (spente) e la ruota del giorno
-    var avviso = el("div", { class: "citta-presto" });
-    function presto(testo) { avviso.textContent = testo; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
-    function tastoPresto(icona, nome, frase) {
-      return el("button", { class: "citta-tasto spento", onclick: function () { presto(frase); } }, [ el("span", { class: "ct-ico", text: icona }), el("span", { text: nome }), el("small", { text: "🔒 presto" }) ]);
-    }
-    var regalo = el("button", { class: "citta-tasto" });
-    function aggRegalo() {
-      var pronto = cloud && N.puoRitirareBonus && N.puoRitirareBonus();
-      regalo.className = "citta-tasto regalo" + (pronto ? " pronto" : " spento");
-      svuota(regalo);
-      regalo.appendChild(el("span", { class: "ct-ico", text: "🎡" }));
-      regalo.appendChild(el("span", { text: "Ruota" }));
-      regalo.appendChild(el("small", { text: !cloud ? "col profilo" : (pronto ? "gira!" : "tra " + tempoBreve(N.prossimoBonusMs())) }));
-    }
-    // dopo il giro: monete, livello e barra degli XP si aggiornano lì dove sono (niente ridisegno della città)
-    function aggTesta() {
-      var p = N.progressione(); monete.textContent = cifre(p.coins);
-      var sm = testoIo.querySelector("small"), bar = testoIo.querySelector(".citta-xp > i");
-      if (sm) sm.textContent = (p.prestige ? "★" + p.prestige + " · " : "") + "Livello " + p.level + fuocoGiorni();
-      if (bar) bar.style.width = Math.max(3, Math.min(100, Math.floor(p.xp * 100 / SGLivelli.xpPerSalire(p.level)))) + "%";
-      aggRegalo();
-    }
-    regalo.onclick = function () {
-      if (!cloud) return presto("Crea il tuo profilo per girare la ruota del giorno");
-      ruotaDelGiorno(aggTesta);
-    };
-    aggRegalo();
-    // ---- a sinistra, come nei giochi che vanno forte: le cose da fare oggi, con l'avviso che salta e il conto alla rovescia ----
-    var colonna = el("div", { class: "citta-avvisi" }), ultimaColonna = "";
-    function finoMezzanotte() { var d = new Date(); d.setHours(24, 0, 0, 0); return d - Date.now(); }
-    function portaA(k, altrimenti) { if (vista && vista._vai && vista._vai(k)) return; altrimenti(); }   // in città a piedi l'avatar ci corre; se no si entra subito
-    function trofeoVicino() {   // il trofeo che ti manca di meno (non quelli che premiano le sconfitte)
-      var prof = cloud && N.profilo && N.profilo(), vic = null; if (!prof) return null;
-      TROFEI.forEach(function (t) {
-        if (/sconfitt|sball|perse/i.test(t.stat) || trofeoFatto(prof, t)) return;
-        var v = valoreStat(prof, t.gioco, t.stat), q = v / t.meta; if (!v) return;
-        if (q >= .6 && (!vic || q > vic.q)) vic = { q: q, t: t, manca: t.meta - v };
-      });
-      return vic;
-    }
-    function vociAvvisi() {
-      var l = [], ps, sc, gs, tv;
-      var sf = cloud ? riassuntoSfide() : null;   // 🎯 per prime le sfide del giorno
-      if (sf && sf.tot) l.push({ id: "sfide", icona: "🎯", col: "#e8590c", acceso: sf.ritira > 0 || sf.fatte < sf.tot, badge: sf.ritira > 0 ? String(sf.ritira) : sf.fatte < sf.tot ? String(sf.tot - sf.fatte) : "", sotto: sf.ritira > 0 ? "Ritira!" : sf.fatte + "/" + sf.tot + " sfide", tocca: apriSfide });
-      if (cloud && window.SGPesca && SGPesca.stato) { ps = SGPesca.stato(datiPesca());
-        l.push({ id: "pesca", icona: "🎣", col: "#1c7ed6", acceso: ps.gratis > 0, badge: ps.gratis > 0 ? String(ps.gratis) : "", sotto: ps.gratis > 0 ? ps.gratis + " esche" : "tra " + tempoBreve(finoMezzanotte()), tocca: function () { portaA("pesca", schermataPesca); } }); }
-      if (cloud && window.SGScavi && SGScavi.stato) { sc = SGScavi.stato(datiScavi()); var inf = eProprietario();
-        l.push({ id: "scavi", icona: "🏺", col: "#c0702f", acceso: inf || sc.gratis > 0, badge: inf ? "∞" : sc.gratis > 0 ? String(sc.gratis) : "", sotto: inf ? "scava!" : sc.gratis > 0 ? sc.gratis + " colpi" : "tra " + tempoBreve(finoMezzanotte()), tocca: function () { portaA("scavi", schermataScavi); } }); }
-      if (cloud && giardinoPronto() && SGGiardino.stato) { gs = SGGiardino.stato(datiGiardino()); var da = gs.pronte + gs.sete;
-        l.push({ id: "orto", icona: gs.pronte ? "🧺" : gs.sete ? "💧" : "🌱", col: "#2f9e44", acceso: da > 0, badge: da > 0 ? String(da) : "", sotto: gs.pronte ? "raccogli" : gs.sete ? "ha sete" : gs.tra != null ? "tra " + tempoBreve(gs.tra) : "pianta!", tocca: function () { schermataGiardino(); } }); }
-      if (!novitaTutteViste()) l.push({ id: "novita", icona: "📰", col: "#4c6ef5", acceso: true, badge: "!", sotto: "Novità", tocca: function () { portaA("piazza", function () { rientro = schermataCitta; schermataNovita(); }); } });
-      if (prog && N.progressione().xpGiorno !== oggiStr()) l.push({ id: "xp", icona: "⭐", col: "#f59f00", acceso: true, badge: "!", sotto: "+" + SGLivelli.BONUS_GIORNO + " XP", tocca: function () { scrollCitta = 0; ultimoEdificio = null; schermataHome(); } });
-      if ((tv = trofeoVicino())) l.push({ id: "trofeo", icona: tv.t.icona || "🏆", col: "#7048e8", acceso: tv.q >= .9, badge: tv.q >= .9 ? "!" : "", sotto: "ne mancano " + cifre(tv.manca), tocca: function () { schermataSfideGioco(tv.t.gioco); } });
-      return l.slice(0, window.innerHeight < 700 ? 5 : 6);
-    }
-    function apriSfide() {   // il pannello delle sfide: "Vai" porta al gioco (o al laghetto, agli scavi), chiudendo si aggiornano monete e avvisi
-      var v = pannelloSfide(function (sfida) {
-        if (sfida.fonte === "pesca") return portaA("pesca", schermataPesca);
-        if (sfida.fonte === "scavi") return portaA("scavi", schermataScavi);
-        var g = giocoDa(sfida.gioco); if (g) { rientro = schermataCitta; apriGioco(g); }
-      }, function () { ultimaColonna = ""; aggiornaAvvisi(); if (prog) aggTesta(); });
-      if (v) s.appendChild(v);
-    }
-    function aggiornaAvvisi() {   // si rifà solo la colonna, e solo se è cambiato qualcosa (niente lampeggio)
-      var l = vociAvvisi(), chiave = JSON.stringify(l.map(function (v) { return [v.id, v.icona, v.acceso, v.badge, v.sotto]; }));
-      if (chiave === ultimaColonna) return; ultimaColonna = chiave; svuota(colonna);
-      l.forEach(function (v) {
-        var tondo = el("span", { class: "ca-tondo", style: "background-color:" + v.col }, [ el("span", { class: "ca-ico", text: v.icona }) ]);
-        if (v.badge) tondo.appendChild(el("span", { class: "ca-badge", text: v.badge }));
-        colonna.appendChild(el("button", { class: "citta-av " + (v.acceso ? "acceso" : "spento"), "aria-label": v.sotto, onclick: function () { if (!via) v.tocca(); } }, [ tondo, el("span", { class: "ca-nome", text: v.sotto }) ]));
-      });
-    }
-    var s = el("div", { class: "schermata citta-vista" + (fase === "notte" ? " notte" : ""), style: "background:" + SGCitta.colorePrato(fase) }, [
-      mappa, colonna,
-      el("div", { class: "citta-testa" }, [
-        el("button", { class: "citta-indietro", text: "‹", "aria-label": "Indietro", onclick: function () { scrollCitta = 0; ultimoEdificio = null; schermataHome(); } }),
-        el("button", { class: "citta-io", "aria-label": "Il tuo profilo", onclick: function () { schermataAccesso(schermataCitta); } }, [ faccia, testoIo ]),
-        el("div", { class: "citta-monete", "aria-label": "Speed Coins" }, [ el("span", { class: "citta-moneta" }), monete ])
-      ]),
-      avviso,
-      el("div", { class: "citta-giu" }, [
-        el("button", { class: "citta-tasto", onclick: function () { if (!cloud) return presto("Crea il tuo profilo per avere la tua casa 🏠"); schermataGiardino(); } }, [ el("span", { class: "ct-ico", text: "🏠" }), el("span", { text: "Casa" }), el("small", { text: cloud ? "arreda" : "col profilo" }) ]),
-        tastoPresto("🛡️", "Clan", "I quartieri-clan arrivano presto 🛡️"),
-        el("button", { class: "citta-tasto", onclick: function () { if (!cloud) return presto("Crea il tuo profilo per fare acquisti 🛍️"); if (giardinoPronto() || serveExtra()) return schermataGiardino(false, "compra"); schermataNegozio(); } }, [ el("span", { class: "ct-ico", text: "🛍️" }), el("span", { text: "Negozio" }), el("small", { text: cloud ? "compra" : "col profilo" }) ]),
-        regalo
-      ])
-    ]);
-    if (!vista) mappa.addEventListener("click", function (e) {
-      var t = e.target && e.target.closest && e.target.closest("[data-vai]");
-      if (!t || via) return;
-      via = true;
-      var k = t.getAttribute("data-vai"), r = t.getBoundingClientRect(), R = mappa.getBoundingClientRect();
-      if (k === "piazza") fotoCitta = { src: null, punto: { x: r.left + r.width / 2, y: r.top + r.height / 2 }, t: Date.now() };   // (le novità partono dalla bacheca toccata)
-      scrollCitta = mappa.scrollTop;
-      // zoom verso l'edificio toccato e dissolvenza (solo transform e opacity: niente scatti)
-      mappa.style.transformOrigin = Math.round(r.left + r.width / 2 - R.left) + "px " + Math.round(r.top + r.height / 2 - R.top) + "px";
-      mappa.style.transition = "transform .42s cubic-bezier(.55,0,.8,.3), opacity .42s ease-in";
-      requestAnimationFrame(function () { mappa.style.transform = "scale(2.6)"; mappa.style.opacity = "0"; });
-      suonoEdificio(k);
-      setTimeout(function () { entraEdificio(k); }, 400);
-    });
-    aggiornaAvvisi();
-    mostra(s);
-    if (vista) vista._monta(); else if (scrollCitta) mappa.scrollTop = scrollCitta;
-    var tAvvisi = setInterval(function () { if (!document.body.contains(s)) return clearInterval(tAvvisi); aggiornaAvvisi(); }, 30000);   // (a mezzanotte tornano esche e colpi, le piante maturano)
-  }
-
-  // ---- Dentro gli edifici della città: le sale coi giochi della categoria (stesso modello per tutti) ----
-  // cat = categoria dei giochi (CAT_GIOCO); azioni = tasti al posto dei giochi; deco = cose sparse sullo sfondo
-  var EDIFICI_CITTA = {
-    casino: { nome: "Casinò",      sotto: "Black Jack e Poker",           cat: "carte",  deco: ["🃏", "♠️", "🪙", "♦️", "🎲", "♣️"] },
-    circolo: { nome: "Il Circolo", sotto: "Carte e giochi da tavolo",     cat: "carte",  deco: ["🂡", "⭕", "🟡", "🚢", "☕", "🃏"] },
-    studio: { nome: "Studio TV",   sotto: "Quiz & parole",                cat: "parole", deco: ["❓", "🎤", "💡", "🔤", "⭐", "📺"] },
-    giochi: { nome: "Sala giochi", sotto: "I minigiochi",                 cat: "mini",   deco: ["🕹️", "👾", "⭐", "🎯", "💥", "🔺"] },
-    arena:  { nome: "Arena",       sotto: "Sport e sfide 1 contro 1",     cat: "sfida",  deco: ["⚔️", "🛡️", "🏁", "⚡", "🥊", "🎯"],
-      fuori: { tris: 1, drop4: 1, navale: 1 } },   // Tris, Drop 4 e Battaglia Navale stanno al Circolo
-    locale: { nome: "Locale",      sotto: "Giochi da fare in gruppo",     cat: "festa",  deco: ["🎉", "🪩", "🎈", "🍹", "🎶", "✨"] },
-    trofei: { nome: "Sala Trofei", sotto: "Trofei e classifiche",         deco: ["🏆", "🥇", "⭐", "🎖️", "👑", "🥈"],
-      azioni: function () { return [
-        { icona: "🏆", nome: "I tuoi trofei", sotto: "Tutti i trofei, gioco per gioco", fai: schermataSfide },
-        { icona: "👥", nome: "Classifica e amici", sotto: "Chi ha più trofei, tra gli amici e tra tutti", fai: function () { schermataAmici(); } } ]; } },
-    bar:    { nome: "Bar",         sotto: "Ci si trova con gli amici",    deco: ["☕", "🥐", "🍹", "💬", "🎲", "🧁"],
-      azioni: function () { return [
-        { icona: "👥", nome: "Sala online", sotto: "Porta il gruppo da un gioco all'altro, ognuno dal suo telefono", fai: creaSala },
-        { icona: "🏆", nome: "Serata a punti", sotto: "Più giochi di fila: i punti si sommano", fai: apriTorneo },
-        { icona: "🔑", nome: "Ho un codice", sotto: "Entra nella stanza di un amico", fai: function () { entraConCodice(); } } ]; } }
-  };
-  function entraEdificio(k) {
-    if (k === "piazza") { rientro = schermataCitta; return schermataNovita(); }   // la piazza: le novità
-    if (k === "pesca") return schermataPesca();   // il laghetto col pontile: si pesca
-    if (k === "scavi") return schermataScavi();   // gli scavi antichi fuori città: si scava
-    if (INTERNI[k]) percorsoInterno[k] = [];   // entrando dalla città si comincia dall'ingresso
-    schermataEdificio(k);
-  }
-
-  // ---- Gli interni in prima persona: il Casinò e il Circolo (i disegni sono in casino.js).
-  //      Si entra in una scena (il salone, l'atrio con le porte). Toccando un tavolo o una porta la vista
-  //      "cammina" fin lì (solo transform) e compare la scena dopo (una sala del Circolo) o la sala del gioco,
-  //      dove si tocca il tavolo per scegliere come giocare. Con ‹ si torna indietro un passo alla volta.
-  //      In basso i nomi di tutti i giochi dell'edificio, per andare dritti al tavolo ----
-  var INTERNI = {
-    casino:  { titolo: "CASINÒ",     scena: "salone" },
-    circolo: { titolo: "IL CIRCOLO", scena: "circolo" }
-  };
-  var percorsoInterno = {};   // dove sei in ogni edificio: i punti toccati (es. ["carte", "scopa"]); finita la partita si torna lì
-  function schermataInterno(k) {
-    var I = INTERNI[k];
-    if (!I || !window.SGCasino) return schermataCitta();
-    rientro = function () { schermataInterno(k); };   // finita la partita (o "indietro") si torna allo stesso tavolo
-    var N = window.SGNube, prog = window.SGLivelli && N && N.progressione && N.profilo() ? N.progressione() : null;
-    function pc(v, tot) { return (v * 100 / tot).toFixed(2) + "%"; }
-    // tutti i giochi dell'edificio con la strada per arrivarci (porte e tavoli da toccare)
-    var strade = [];
-    (function cerca(idScena, strada) {
-      (SGCasino.punti(idScena) || { punti: [] }).punti.forEach(function (p) {
-        if (p.va.gioco && giocoDa(p.va.gioco)) strade.push({ id: p.va.gioco, nome: giocoDa(p.va.gioco).nome, strada: strada.concat(p.id) });
-        else if (p.va.scena) cerca(p.va.scena, strada.concat(p.id));
-      });
-    })(I.scena, []);
-    if (!strade.length) return schermataCitta();
-    var vista = el("div", { class: "cs-vista" }), strati = [], percorso = [], cammina = false, geo = null;
-    var invito = el("div", { class: "cs-tocca cs-invito" }), avviso = el("div", { class: "cs-presto" });
-    var titolo = el("div", { class: "cs-titolo", text: I.titolo });
-    vista.appendChild(invito); vista.appendChild(avviso);
-
-    // una scena: il disegno 360×640 steso come "copertina", con sopra le insegne, i luccichii e le zone da toccare
-    function stratoScena(idScena, nome) {
-      var S = SGCasino.scena(idScena);
-      var mov = el("div", { class: "cs-salone" });
-      var dentro = el("div", { class: "cs-salone-in" }, [ el("img", { class: "cs-scena-salone", alt: "", draggable: "false", src: S.img }) ]);
-      S.luci.forEach(function (l, i) {
-        for (var q = 0; q < 5; q++) {
-          var a = q * 1.3 + i * 0.6, x = l[0] + Math.cos(a) * l[2] * 0.5, y = l[1] + l[2] * 0.12 + Math.sin(a) * l[2] * 0.26;
-          dentro.appendChild(el("i", { class: "cs-luccica", style: "left:" + pc(x, 360) + ";top:" + pc(y, 640) + ";animation-delay:" + (q * 0.55 + i * 0.3).toFixed(2) + "s" }));
-        }
-      });
-      S.punti.forEach(function (p) {
-        if (p.va.gioco && !giocoDa(p.va.gioco)) return;
-        var b = p.box;
-        if (p.cartello) dentro.appendChild(el("div", { class: "cs-cartello cs-" + p.stile + (p.muro ? " cs-muro" : ""), style: "left:" + pc(p.cartello[0], 360) + ";top:" + pc(p.cartello[1], 640) },
-          [ el("b", { text: p.insegna }), p.va.presto ? el("i", { class: "cs-lucchetto", text: "🔒 Prossimamente" }) : null ]));
-        dentro.appendChild(el("button", { class: "cs-zona", "aria-label": p.nome, onclick: function () { tocca(p); },
-          style: "left:" + pc(b[0], 360) + ";top:" + pc(b[1], 640) + ";width:" + pc(b[2] - b[0], 360) + ";height:" + pc(b[3] - b[1], 640) }));
-      });
-      mov.appendChild(dentro);
-      var porte = S.punti.some(function (p) { return p.va.scena; });
-      return { tipo: "scena", el: mov, dentro: dentro, punti: S.punti, nome: nome, invito: porte ? "👆 Scegli una porta" : "👆 Scegli un tavolo" };
-    }
-    // la sala di un gioco (il primo piano del tavolo): si tocca e si sceglie come giocare
-    function stratoSala(id, nome) {
-      var x = SGCasino.SALE.filter(function (q) { return q.id === id; })[0] || { nome: id, insegna: id, stile: "bj" };
-      var d = el("div", { class: "cs-sala cs-primo cs-" + x.stile, role: "button", "aria-label": x.nome + ": tocca per giocare" }, [
-        el("img", { class: "cs-scena", alt: "", draggable: "false", src: SGCasino.immagine(id) }),
-        el("div", { class: "cs-insegna" }, [ el("b", { text: x.insegna }) ]),
-        el("div", { class: "cs-tocca", text: "👆 Tocca il tavolo per giocare" })
-      ]);
-      d.addEventListener("click", function () { var g = !cammina && giocoDa(id); if (g) scegliModoEdificio(g, k); });
-      return { tipo: "sala", el: d, id: id, nome: nome };
-    }
-    function stendi(s) {
-      if (s.tipo !== "scena" || !geo) return;
-      s.dentro.style.cssText = "width:" + (360 * geo.s).toFixed(1) + "px;height:" + (640 * geo.s).toFixed(1) + "px;left:" + geo.ox.toFixed(1) + "px;top:" + geo.oy.toFixed(1) + "px;--s:" + geo.s.toFixed(3);
-    }
-    function misura() {
-      var cw = vista.clientWidth, ch = vista.clientHeight; if (!cw || !ch) return false;
-      var s = Math.max(cw / 360, ch / 640);
-      geo = { s: s, ox: (cw - 360 * s) / 2, oy: (ch - 640 * s) * 0.45, cw: cw, ch: ch };
-      strati.forEach(stendi);
-      return true;
-    }
-    function cima() { return strati[strati.length - 1]; }
-    function zoomSu(s, p) {   // la vista che porta il punto p della scena s al centro, da vicino
-      var fx = geo.ox + p.fuoco[0] * geo.s, fy = geo.oy + p.fuoco[1] * geo.s;
-      s.el.style.transformOrigin = fx.toFixed(1) + "px " + fy.toFixed(1) + "px";
-      return "translate(" + (geo.cw / 2 - fx).toFixed(1) + "px," + (geo.ch * 0.52 - fy).toFixed(1) + "px) scale(" + (p.va.scena ? 2.3 : 2.6) + ")";
-    }
-    function aggiorna() {   // il titolo, il "tocca qui", il gioco acceso nei tasti in basso; si ricorda dove sei
-      var c = cima(), nome = I.titolo;
-      strati.forEach(function (s) { if (s.tipo === "scena" && s.nome) nome = s.nome; });
-      titolo.textContent = nome;
-      invito.textContent = c && c.invito || "";
-      vista.classList.toggle("in-sala", !!c && c.tipo === "sala");
-      tasti.forEach(function (b) { b.el.classList.toggle("on", c && c.tipo === "sala" && c.id === b.id); });
-      percorsoInterno[k] = percorso.slice();
-    }
-    function presto(testo) { avviso.textContent = testo; avviso.classList.remove("su"); void avviso.offsetWidth; avviso.classList.add("su"); }
-    function tocca(p) {
-      if (cammina) return;
-      if (p.va.presto) return presto(p.va.presto);
-      avanti(p);
-    }
-    // un passo avanti: la vista si avvicina al punto e compare quello che c'è dietro
-    function avanti(p, subito, poi) {
-      var sotto = cima();
-      if (cammina || !geo || !sotto || sotto.tipo !== "scena") return;
-      var nuovo = p.va.scena ? stratoScena(p.va.scena, p.nome.toUpperCase()) : stratoSala(p.va.gioco);
-      if (nuovo.tipo === "scena") nuovo.el.classList.add("cs-primo");
-      vista.insertBefore(nuovo.el, invito);
-      strati.push(nuovo); percorso.push(p.id); sotto.verso = p;
-      stendi(nuovo); aggiorna();
-      if (subito) {
-        sotto.el.style.transition = nuovo.el.style.transition = "none";
-        sotto.el.style.transform = zoomSu(sotto, p); sotto.el.style.visibility = "hidden";
-        nuovo.el.classList.add("su"); void nuovo.el.offsetWidth; nuovo.el.style.transition = "";
-        if (poi) poi();
-        return;
-      }
-      cammina = true;
-      sotto.el.style.transition = "transform .85s cubic-bezier(.45,0,.25,1)";
-      sotto.el.style.transform = zoomSu(sotto, p);
-      sotto.el.classList.add("passi");
-      setTimeout(function () { nuovo.el.classList.add("su"); suonoEdificio(nuovo.tipo === "sala" && k === "casino" ? "casino" : k); }, 560);
-      setTimeout(function () { cammina = false; sotto.el.classList.remove("passi"); sotto.el.style.visibility = "hidden"; if (poi) poi(); }, 950);
-      if (nuovo.tipo === "scena") prepara(nuovo.punti, 1100);
-    }
-    // un passo indietro: quello di sopra sparisce e la vista si allontana
-    function indietro(poi) {
-      if (cammina || strati.length < 2) return;
-      cammina = true;
-      var su = strati.pop(), sotto = cima();
-      percorso.pop(); sotto.verso = null; aggiorna();
-      sotto.el.style.visibility = "";
-      su.el.style.transform = ""; su.el.classList.remove("su");
-      sotto.el.style.transition = "transform .7s cubic-bezier(.3,0,.2,1)";
-      requestAnimationFrame(function () { sotto.el.style.transform = "none"; });
-      setTimeout(function () { if (su.el.parentNode) su.el.parentNode.removeChild(su.el); cammina = false; if (poi) poi(); }, 730);
-    }
-    function punto(s, id) { return (s.punti || []).filter(function (p) { return p.id === id; })[0]; }
-    // dai tasti in basso: dritti al tavolo di quel gioco (le porte di mezzo si passano subito, l'ultimo passo si cammina)
-    function vaiA(strada) {
-      if (cammina) return;
-      var com = 0;
-      while (com < percorso.length && com < strada.length && percorso[com] === strada[com]) com++;
-      if (com === strada.length && percorso.length === strada.length) return;
-      if (strati.length - 1 > com) {   // torno dove la strada si divide
-        if (strati.length - 2 === com) return indietro(function () { vaiA(strada); });
-        while (strati.length - 1 > com) { var s = strati.pop(); if (s.el.parentNode) s.el.parentNode.removeChild(s.el); percorso.pop(); }
-        var base = cima(); base.verso = null; base.el.style.transition = "none"; base.el.style.transform = "none"; base.el.style.visibility = "";
-        aggiorna();
-      }
-      (function passo(i) {
-        var p = punto(cima(), strada[i]); if (!p) return;
-        if (i < strada.length - 1) avanti(p, true, function () { passo(i + 1); });
-        else avanti(p);
-      })(com);
-    }
-    // i disegni dietro le porte e le sale dei tavoli si preparano dopo, uno alla volta (così si entra subito)
-    function prepara(lista, dopo) {
-      lista.forEach(function (p, i) {
-        setTimeout(function () {
-          if (!document.body.contains(vista)) return;
-          if (p.va.scena) SGCasino.scena(p.va.scena); else if (p.va.gioco) { var im = new Image(); im.src = SGCasino.immagine(p.va.gioco); }
-        }, dopo + i * 250);
-      });
-    }
-    var links = el("div", { class: "cs-giochi" });
-    var tasti = strade.map(function (r) {
-      var b = el("button", { class: "cs-link", text: r.nome, onclick: function () { vaiA(r.strada); } });
-      links.appendChild(b);
-      return { el: b, id: r.id };
-    });
-    var s = el("div", { class: "schermata casino-sale interno-" + k }, [
-      vista,
-      el("div", { class: "cs-testa" }, [
-        el("button", { class: "ed-indietro", text: "‹", "aria-label": "Indietro", onclick: function () {
-          if (strati.length > 1) indietro(); else if (!cammina) { rientro = null; schermataCitta(); }
-        } }),
-        titolo,
-        prog ? el("div", { class: "ed-monete", text: "🪙 " + cifre(prog.coins) }) : el("div", { class: "ed-monete vuoto" })
-      ]),
-      links
-    ]);
-    mostra(s);
-    var radice = stratoScena(I.scena, null), ritorno = (percorsoInterno[k] || []).slice();
-    vista.insertBefore(radice.el, invito); strati.push(radice);
-    (function parti() {
-      if (!misura()) return requestAnimationFrame(parti);
-      aggiorna();
-      // tornando da una partita: di nuovo dov'eri, senza camminare
-      (function passo(i) { var p = i < ritorno.length && punto(cima(), ritorno[i]); if (p) avanti(p, true, function () { passo(i + 1); }); })(0);
-      prepara(radice.punti, 450);
-    })();
-    // telefono girato o finestra cambiata: si ristende tutto (e la vista resta dov'era)
-    function ridim() {
-      if (!document.body.contains(vista)) return window.removeEventListener("resize", ridim);
-      if (!misura()) return;
-      strati.forEach(function (st) { if (st.verso) { st.el.style.transition = "none"; st.el.style.transform = zoomSu(st, st.verso); } });
-    }
-    window.addEventListener("resize", ridim);
-  }
-  function schermataEdificio(k) {
-    if (k === "casino") { if (serveExtra()) return caricaExtra(function () { schermataEdificio(k); }, "🎰"); if (window.SGGiardino) return schermataCasinoSala(); }   // il Casinò nuovo, visto dall'alto (per ora solo per il proprietario)
-    if (k === "circolo" && (CIRCOLO_PRONTO || eProprietario())) { if (serveExtra()) return caricaExtra(function () { schermataEdificio(k); }, "🎲"); if (window.SGGiardino) return schermataCircoloSala(); }   // il Circolo visto dall'alto
-    if (INTERNI[k] && window.SGCasino) return schermataInterno(k);   // Casinò e Circolo: gli interni in prima persona
-    var E = EDIFICI_CITTA[k]; if (!E) return schermataCitta();
-    rientro = function () { schermataEdificio(k); };   // finita la partita (o "indietro") si torna qui
-    var N = window.SGNube, prog = window.SGLivelli && N && N.progressione && N.profilo() ? N.progressione() : null;
-    var s = el("div", { class: "schermata edificio ed-" + k });
-    var deco = el("div", { class: "ed-deco", "aria-hidden": "true" });
-    E.deco.forEach(function (d, i) { deco.appendChild(el("span", { class: "d" + i, text: d })); });
-    s.appendChild(deco);
-    s.appendChild(el("div", { class: "ed-testa" }, [
-      el("button", { class: "ed-indietro", text: "‹", "aria-label": "Torna in città", onclick: function () { rientro = null; schermataCitta(); } }),
-      el("div", { class: "ed-titolo" }, [ el("b", { text: E.nome.toUpperCase() }), el("span", { text: E.sotto }) ]),
-      prog ? el("div", { class: "ed-monete", text: "🪙 " + cifre(prog.coins) }) : el("div", { class: "ed-monete vuoto" })
-    ]));
-    var griglia = el("div", { class: "griglia-giochi ed-sale" });
-    if (E.cat) giochi.forEach(function (g) { if (catDi(g) === E.cat && !(E.fuori && E.fuori[g.id])) griglia.appendChild(tesseraGioco(g, function () { scegliModoEdificio(g, k); })); });
-    else E.azioni().forEach(function (a) {
-      griglia.appendChild(el("button", { class: "tessera ed-azione", onclick: a.fai }, [
-        el("span", { class: "icona" }, [ el("span", { class: "emoji", text: a.icona }) ]),
-        el("div", { class: "info" }, [ el("h2", { text: a.nome }), el("p", { text: a.sotto }) ])
-      ]));
-    });
-    s.appendChild(griglia);
-    mostra(s);
-  }
-  var posCasino = null;   // dove eri nel casinò quando hai cominciato una partita: finita, si torna lì
-  function schermataCasinoSala(pos) {   // il salone del Casinò visto dall'alto, come la casa: si cammina tra i tavoli e ci si siede a giocare
-    rientro = function () { schermataCasinoSala(posCasino); };   // finita la partita si torna nel salone, dove eri
-    var io = profiloAttivo(), m = soldiCasa();
-    var s = SGGiardino.crea({ luogo: "casino", pos: pos || null, omino: io && io.omino, nome: io && io.nome, audio: audioCtx, monete: m.monete, spendi: m.spendi, guadagna: m.guadagna,
-      gioca: function (id, dove) { posCasino = dove || null; var g = giocoDa(id); if (g) scegliModoEdificio(g, "casino"); },
-      indietro: function () { rientro = null; schermataCitta(); } });
-    mostra(s); s._monta();
-  }
-  // il Circolo visto dall'alto: si cammina tra i tavoli, ci si siede e si gioca (carte, giochi a due, biliardo); fuori il cortile con le bocce
-  var CIRCOLO_PRONTO = false;   // false = per ora lo vede solo il proprietario (gli altri hanno il Circolo di prima)
-  var posCircolo = null;
-  function schermataCircoloSala(pos) {
-    rientro = function () { schermataCircoloSala(posCircolo); };   // finita la partita si torna nel Circolo, dove eri
-    var io = profiloAttivo(), m = soldiCasa();
-    var s = SGGiardino.crea({ luogo: "circolo", pos: pos || null, omino: io && io.omino, nome: io && io.nome, audio: audioCtx, monete: m.monete, spendi: m.spendi, guadagna: m.guadagna,
-      gioca: function (id, dove) { posCircolo = dove || null; var g = giocoDa(id); if (g) scegliModoEdificio(g, "circolo"); },
-      indietro: function () { rientro = null; schermataCitta(); } });
-    mostra(s); s._monta();
-  }
-  // toccato un gioco: "Come giocate?" in una finestra sopra la sala, coi modi veri del gioco
-  function scegliModoEdificio(g, k) {
-    if (!profiloAttivo()) return schermataAccesso(function () { schermataEdificio(k); });
-    var modi = modiDi(g).slice();
-    if (giocoOnline(g)) conCodice(modi);
-    if (modi.length <= 1) return apriGioco(g);   // un modo solo: si parte subito, come dalla home
-    var chiudi = function () { if (sfondo.parentNode) sfondo.parentNode.removeChild(sfondo); };
-    var lista = el("div", { class: "modo-scelta" });
-    modi.forEach(function (m) {
-      lista.appendChild(el("button", { class: "modo-grande" + (m.modo === "online" ? " online" : ""), onclick: function () { chiudi(); sceltoModo(g, m); } }, [
-        el("div", { class: "mg-ico", text: m.icona }),
-        el("div", { class: "mg-testo" }, [ el("div", { class: "mg-tit", text: m.nome }), el("div", { class: "mg-sotto", text: m.sotto || "" }) ]),
-        el("div", { class: "mg-freccia", text: "›" })
-      ]));
-    });
-    var sfondo = el("div", { class: "ed-modale-sfondo ed-" + k, onclick: function (e) { if (e.target === sfondo) chiudi(); } }, [
-      el("div", { class: "ed-modale", role: "dialog" }, [
-        el("div", { class: "edm-testa" }, [ el("span", { class: "edm-ico", text: g.icona || "🎲" }), el("div", {}, [ el("b", { text: g.nome }), el("span", { text: "Come giocate?" }) ]) ]),
-        lista,
-        el("div", { class: "edm-piede" }, [
-          el("button", { class: "btn btn-fantasma", text: "📖 Come si gioca", onclick: function () { chiudi(); schermataRegole(g, function () { schermataEdificio(k); }); } }),
-          el("button", { class: "btn btn-fantasma", text: "✕ Chiudi", onclick: chiudi })
-        ])
-      ])
-    ]);
-    document.body.appendChild(sfondo);
-  }
-  // un suono corto entrando (le fiches al Casinò, un "din" altrove): niente musica di sottofondo
-  function suonoEdificio(k) {
-    var ctx = audioCtx(); if (!ctx) return;
-    try {
-      var note = k === "casino" ? [[2400, 0], [2900, .07], [2600, .13]] : [[660, 0], [990, .09]];
-      note.forEach(function (n) {
-        var t0 = ctx.currentTime + n[1], o = ctx.createOscillator(), gn = ctx.createGain();
-        o.type = k === "casino" ? "triangle" : "sine"; o.frequency.setValueAtTime(n[0], t0);
-        gn.gain.setValueAtTime(0.0001, t0); gn.gain.exponentialRampToValueAtTime(k === "casino" ? 0.08 : 0.1, t0 + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t0 + (k === "casino" ? 0.12 : 0.3));
-        o.connect(gn); gn.connect(ctx.destination); o.start(t0); o.stop(t0 + 0.35);
-      });
-    } catch (e) {}
-  }
-
   // ---- Novità (il diario di cosa viene aggiunto) ----
   var CHIAVE_NOVITA = "sg_novita_vista";
   function ultimaVersioneNovita() {
@@ -2316,7 +1316,7 @@
     return b;
   }
   function schermataNovita() {   // le novità si leggono sulla bacheca della piazza, da vicino, con la città sfocata dietro
-    var f = fotoCitta && Date.now() - fotoCitta.t < 8000 ? fotoCitta : null; fotoCitta = null;
+    var f = cuore.fotoCitta && Date.now() - cuore.fotoCitta.t < 8000 ? cuore.fotoCitta : null; cuore.fotoCitta = null;
     var fase = window.SGCitta ? SGCitta.fase(new Date()) : "giorno", visto = 0;
     try { visto = Number(localStorage.getItem(CHIAVE_NOVITA)) || 0; } catch (e) {}
     var sfondo, scatto = null;
@@ -2364,7 +1364,7 @@
     var s = el("div", { class: "schermata nb-vista" + (fase === "notte" ? " notte" : fase === "tramonto" ? " tramonto" : "") }, [
       sfondo, el("div", { class: "nb-velo" }), bacheca,
       el("button", { class: "nb-indietro", text: "‹", "aria-label": "Torna indietro", onclick: esci }),
-      el("button", { class: "nb-ok", text: rientro === schermataCitta ? "Torna in piazza" : "Ho capito", onclick: esci })
+      el("button", { class: "nb-ok", text: rientro === cuore.schermataCitta ? "Torna in piazza" : "Ho capito", onclick: esci })
     ]);
     if (scatto) s.appendChild(scatto);
     segnaNovitaViste();   // aperto = visto
@@ -2388,1132 +1388,9 @@
       }
     } catch (e) { fermo(); }
   }
+  // ---- 🏆 SFIDE E TROFEI (la lista TROFEI, le pagine dei trofei, l'avviso «Trofeo sbloccato!», i giorni di fila): in js/cuore/trofei.js ----
 
-  // ---- Sfide e Trofei (stile PlayStation: bronzo/argento/oro/diamante + platino) ----
-  // Ogni trofeo confronta una statistica del profilo con una soglia (meta) e ha un
-  // livello. Il PLATINO di un gioco si sblocca da solo quando prendi tutti gli altri.
-  // Aggiungere/scrivere trofei = aggiungere righe qui (niente altro codice da toccare).
-  var LIVELLI = {
-    bronzo:   { nome: "Bronzo",   cls: "tl-bronzo" },
-    argento:  { nome: "Argento",  cls: "tl-argento" },
-    oro:      { nome: "Oro",      cls: "tl-oro" },
-    diamante: { nome: "Diamante", cls: "tl-diamante" }
-  };
-  var ORDINE_LIV = ["bronzo", "argento", "oro", "diamante"];
-  var TROFEI = [
-    // ---- Black Jack ----
-    { gioco: "blackjack", livello: "bronzo",   icona: "🪑", nome: "Il Primo Passo",           desc: "Siediti al tavolo e gioca la tua primissima mano",           stat: "maniGiocate",       meta: 1 },
-    { gioco: "blackjack", livello: "bronzo",   icona: "😊", nome: "Il Primo Sorriso",         desc: "Vinci la tua prima mano contro il banco",                    stat: "maniVinte",         meta: 1 },
-    { gioco: "blackjack", livello: "bronzo",   icona: "✨", nome: "Magia del Ventuno",        desc: "Fai il tuo primo Black Jack",                                stat: "blackjackFatti",    meta: 1 },
-    { gioco: "blackjack", livello: "bronzo",   icona: "🎁", nome: "Piccolo Dono",             desc: "Gira per la prima volta la ruota del giorno",                 stat: "bonusRitirati",     meta: 1 },
-    { gioco: "blackjack", livello: "bronzo",   icona: "🐷", nome: "Risparmiatore Felice",     desc: "Vinci 500 fiches in totale",                                 stat: "fichesVinteTot",    meta: 500 },
-    { gioco: "blackjack", livello: "bronzo",   icona: "🙃", nome: "Sbagliando si Impara",     desc: "Sballa superando il 21 per 5 volte",                         stat: "maniSballate",      meta: 5 },
-    { gioco: "blackjack", livello: "bronzo",   icona: "🤝", nome: "Stretta di Mano",          desc: "Pareggia con il banco 3 volte",                              stat: "maniPari",          meta: 3 },
-    { gioco: "blackjack", livello: "bronzo",   icona: "🍀", nome: "Fortuna Cieca",            desc: "Vinci 5 mani perché il banco sballa",                        stat: "vinteSballoBanco",  meta: 5 },
-    { gioco: "blackjack", livello: "bronzo",   icona: "🌧️", nome: "Domani Andrà Meglio",      desc: "Perdi 3 mani di fila. Non mollare!",                         stat: "serieSconfitteMax", meta: 3 },
-    { gioco: "blackjack", livello: "argento",  icona: "🌊", nome: "Onda Positiva",            desc: "Vinci 20 mani contro il banco",                              stat: "maniVinte",         meta: 20 },
-    { gioco: "blackjack", livello: "argento",  icona: "🎼", nome: "Armonia Perfetta",         desc: "Fai Black Jack 10 volte",                                    stat: "blackjackFatti",    meta: 10 },
-    { gioco: "blackjack", livello: "argento",  icona: "📅", nome: "Appuntamento Felice",      desc: "Gira la ruota del giorno 10 volte",                            stat: "bonusRitirati",     meta: 10 },
-    { gioco: "blackjack", livello: "argento",  icona: "🌾", nome: "Abbondanza",               desc: "Vinci 5.000 fiches in totale",                               stat: "fichesVinteTot",    meta: 5000 },
-    { gioco: "blackjack", livello: "argento",  icona: "🌈", nome: "Ottimismo Incorreggibile", desc: "Sballa superando il 21 per 25 volte",                        stat: "maniSballate",      meta: 25 },
-    { gioco: "blackjack", livello: "argento",  icona: "🫱", nome: "Pura Sinergia",            desc: "Pareggia con il banco 15 volte",                             stat: "maniPari",          meta: 15 },
-    { gioco: "blackjack", livello: "argento",  icona: "🛡️", nome: "Aura Protettiva",          desc: "Vinci 25 mani perché il banco sballa",                       stat: "vinteSballoBanco",  meta: 25 },
-    { gioco: "blackjack", livello: "argento",  icona: "🧊", nome: "Sangue Freddo",            desc: "Fai 21 esatto con 3 o più carte, 5 volte",                   stat: "ventunoTre",        meta: 5 },
-    { gioco: "blackjack", livello: "argento",  icona: "🦁", nome: "Coraggio da Leoni",        desc: "Vinci una mano puntando almeno 500 fiches",                  stat: "puntataVintaMax",   meta: 500 },
-    { gioco: "blackjack", livello: "oro",      icona: "☀️", nome: "Raggio di Sole",           desc: "Vinci 100 mani contro il banco",                             stat: "maniVinte",         meta: 100 },
-    { gioco: "blackjack", livello: "oro",      icona: "🤩", nome: "Estasi del Gioco",         desc: "Fai Black Jack 50 volte",                                    stat: "blackjackFatti",    meta: 50 },
-    { gioco: "blackjack", livello: "oro",      icona: "💝", nome: "Gratitudine Infinita",     desc: "Gira la ruota del giorno 50 volte",                            stat: "bonusRitirati",     meta: 50 },
-    { gioco: "blackjack", livello: "oro",      icona: "💎", nome: "Tesoro Luminoso",          desc: "Vinci 25.000 fiches in totale",                              stat: "fichesVinteTot",    meta: 25000 },
-    { gioco: "blackjack", livello: "oro",      icona: "🏛️", nome: "Architetto del Ventuno",   desc: "Fai 21 esatto con 3 o più carte, 20 volte",                  stat: "ventunoTre",        meta: 20 },
-    { gioco: "blackjack", livello: "oro",      icona: "🔥", nome: "All-In Emotivo",           desc: "Vinci una mano puntando almeno 2.500 fiches",                stat: "puntataVintaMax",   meta: 2500 },
-    { gioco: "blackjack", livello: "diamante", icona: "☁️", nome: "Nuvola Nove",              desc: "Fai 2 Black Jack di fila nella stessa sessione",             stat: "serieBJMax",        meta: 2 },
-    { gioco: "blackjack", livello: "diamante", icona: "🕊️", nome: "Spirito Libero",           desc: "Vinci 7 mani di fila senza perdere né pareggiare",           stat: "serieVinteMax",     meta: 7 },
-    { gioco: "blackjack", livello: "diamante", icona: "🧘", nome: "Pace dei Sensi",           desc: "Arriva ad avere 100.000 Speed Coins",                        stat: "recordFiches",      meta: 100000 },
-    { gioco: "blackjack", livello: "diamante", icona: "🤹", nome: "Funambolo",                desc: "Vinci una mano con 5 o più carte senza sballare",            stat: "vinte5carte",       meta: 1 },
-
-    // ---- Scopa ----
-    { gioco: "scopa", livello: "bronzo",   icona: "🃏", nome: "Il Primo Taglio",       desc: "Gioca la tua primissima partita a Scopa",                      stat: "partite",         meta: 1 },
-    { gioco: "scopa", livello: "bronzo",   icona: "🎯", nome: "Asso di Bastoni",       desc: "Vinci la tua prima partita",                                   stat: "vinte",           meta: 1 },
-    { gioco: "scopa", livello: "bronzo",   icona: "🧹", nome: "Tavolo Pulito",         desc: "Fai la tua prima Scopa",                                       stat: "scope",           meta: 1 },
-    { gioco: "scopa", livello: "bronzo",   icona: "7️⃣", nome: "Quello Bello",          desc: "Prendi il Settebello per la prima volta",                      stat: "settebello",      meta: 1 },
-    { gioco: "scopa", livello: "bronzo",   icona: "🧮", nome: "Calcolatore",           desc: "Vinci il punto di Primiera 5 volte",                           stat: "primiera",        meta: 5 },
-    { gioco: "scopa", livello: "bronzo",   icona: "🪙", nome: "Zio Paperone",          desc: "Vinci il punto dei Denari 5 volte",                            stat: "denari",          meta: 5 },
-    { gioco: "scopa", livello: "bronzo",   icona: "🗃️", nome: "Pigliatutto",           desc: "Vinci il punto delle Carte 5 volte",                           stat: "carte",           meta: 5 },
-    { gioco: "scopa", livello: "bronzo",   icona: "✨", nome: "Spazzata d'Oro",        desc: "Fai 5 Scope giocando o prendendo una carta di Denari",         stat: "scopeDenari",     meta: 5 },
-    { gioco: "scopa", livello: "argento",  icona: "🏘️", nome: "Giocatore di Quartiere", desc: "Vinci 15 partite",                                            stat: "vinte",           meta: 15 },
-    { gioco: "scopa", livello: "argento",  icona: "🧽", nome: "Ramazza d'Argento",     desc: "Fai 25 Scope in totale",                                       stat: "scope",           meta: 25 },
-    { gioco: "scopa", livello: "argento",  icona: "🏹", nome: "Cacciatore di Sette",   desc: "Prendi il Settebello 25 volte",                                stat: "settebello",      meta: 25 },
-    { gioco: "scopa", livello: "argento",  icona: "📐", nome: "Matematica Pura",       desc: "Vinci il punto di Primiera 25 volte",                          stat: "primiera",        meta: 25 },
-    { gioco: "scopa", livello: "argento",  icona: "🔐", nome: "Cassaforte",            desc: "Vinci il punto dei Denari 25 volte",                           stat: "denari",          meta: 25 },
-    { gioco: "scopa", livello: "argento",  icona: "📚", nome: "Mazzo Finito",          desc: "Vinci il punto delle Carte 25 volte",                          stat: "carte",           meta: 25 },
-    { gioco: "scopa", livello: "diamante", icona: "🦹", nome: "Vittoria di Rapina",    desc: "Vinci una partita senza mai prendere il Settebello",           stat: "vinteSenzaSette", meta: 1 },
-    { gioco: "scopa", livello: "oro",      icona: "👑", nome: "Boss del Tavolo",       desc: "Vinci 50 partite",                                             stat: "vinte",           meta: 50 },
-    { gioco: "scopa", livello: "oro",      icona: "🌪️", nome: "L'Aspirapolvere",       desc: "Fai 100 Scope in totale",                                      stat: "scope",           meta: 100 },
-    { gioco: "scopa", livello: "oro",      icona: "💞", nome: "Amico del Settebello",  desc: "Prendi il Settebello 100 volte",                               stat: "settebello",      meta: 100 },
-    { gioco: "scopa", livello: "oro",      icona: "⏱️", nome: "Tempismo Perfetto",     desc: "Fai 5 Scope calando un Asso",                                  stat: "scopeAsso",       meta: 5 },
-    { gioco: "scopa", livello: "argento",  icona: "🧥", nome: "Cappotto Perfetto",     desc: "Prendi Carte, Denari, Settebello e Primiera nella stessa smazzata", stat: "cappotto",   meta: 1 },
-    { gioco: "scopa", livello: "oro",      icona: "📈", nome: "Sopra la Media",        desc: "4+1: i quattro punti classici più almeno una Scopa, in una smazzata", stat: "sopraMedia", meta: 1 },
-    { gioco: "scopa", livello: "diamante", icona: "🧚", nome: "Mano Fatata",           desc: "Fai 4 Scope in una sola smazzata",                             stat: "scopeRoundMax",   meta: 4 },
-    { gioco: "scopa", livello: "diamante", icona: "🌋", nome: "Dominio Partenopeo",    desc: "Vinci una partita lasciando l'avversario a 0 punti",           stat: "vinteAZero",      meta: 1 },
-    { gioco: "scopa", livello: "diamante", icona: "🔥", nome: "Rimonta Epica",         desc: "Vinci dopo che l'avversario era arrivato a 10 punti prima di te", stat: "rimonte",      meta: 1 },
-
-    // ---- Scopa 2 vs 2 ----
-    { gioco: "scopa2v2", livello: "bronzo",   icona: "👫", nome: "Esordio di Coppia",      desc: "Gioca la tua prima partita a Scopa 2 vs 2",                 stat: "partite",            meta: 1 },
-    { gioco: "scopa2v2", livello: "bronzo",   icona: "🙌", nome: "Prima Intesa",           desc: "Vinci la tua prima partita in squadra",                     stat: "vinte",              meta: 1 },
-    { gioco: "scopa2v2", livello: "bronzo",   icona: "🧹", nome: "Contributo Attivo",      desc: "Fai la tua prima Scopa personale a squadre",                stat: "scopePersonali",     meta: 1 },
-    { gioco: "scopa2v2", livello: "bronzo",   icona: "💰", nome: "Tesoro Condiviso",       desc: "Prendi tu il Settebello per la squadra 5 volte",            stat: "settePersonale",     meta: 5 },
-    { gioco: "scopa2v2", livello: "bronzo",   icona: "🎯", nome: "Assist Perfetto",        desc: "Il compagno fa Scopa prendendo la carta che hai messo giù tu (3 volte)", stat: "assist", meta: 3 },
-    { gioco: "scopa2v2", livello: "bronzo",   icona: "🧽", nome: "Spazzino di Squadra",    desc: "Fai 10 Scope personali",                                    stat: "scopePersonali",     meta: 10 },
-    { gioco: "scopa2v2", livello: "argento",  icona: "💞", nome: "Affinità di Coppia",     desc: "Vinci 15 partite a squadre",                                stat: "vinte",              meta: 15 },
-    { gioco: "scopa2v2", livello: "argento",  icona: "🔗", nome: "Lavoro Sincronizzato",   desc: "Tu e il compagno fate almeno 2 Scope a testa nella stessa partita", stat: "sincronizzati", meta: 1 },
-    { gioco: "scopa2v2", livello: "oro",      icona: "🏋️", nome: "Il Trascinatore",        desc: "Vinci facendo tu tutte le Scope della squadra (almeno 3)",  stat: "trascinatore",       meta: 1 },
-    { gioco: "scopa2v2", livello: "argento",  icona: "🏛️", nome: "Colonna Portante",       desc: "La squadra prende Primiera e Denari nella stessa smazzata (10 volte)", stat: "primDenSquadra", meta: 10 },
-    { gioco: "scopa2v2", livello: "argento",  icona: "🤝", nome: "Fiducia Ripagata",       desc: "Prendi tu il Settebello 25 volte",                          stat: "settePersonale",     meta: 25 },
-    { gioco: "scopa2v2", livello: "argento",  icona: "🛡️", nome: "Guardia del Corpo",      desc: "Vinci 5 partite senza che gli avversari prendano il Settebello", stat: "vinteNoSetteAvv", meta: 5 },
-    { gioco: "scopa2v2", livello: "oro",      icona: "🦸", nome: "Dinamico Duo",           desc: "Vinci 50 partite a squadre",                                stat: "vinte",              meta: 50 },
-    { gioco: "scopa2v2", livello: "oro",      icona: "⚡", nome: "Sinergia Totale",        desc: "Fai 100 Scope personali",                                   stat: "scopePersonali",     meta: 100 },
-    { gioco: "scopa2v2", livello: "argento",  icona: "🎾", nome: "Grande Slam di Squadra", desc: "La squadra prende tutti e 4 i punti in una smazzata (5 volte)", stat: "grandeSlam",      meta: 5 },
-    { gioco: "scopa2v2", livello: "oro",      icona: "🧱", nome: "Difesa di Ferro",        desc: "Vinci 10 partite senza subire nemmeno una Scopa",           stat: "vinteNoScopeSubite", meta: 10 },
-    { gioco: "scopa2v2", livello: "diamante", icona: "🔮", nome: "Telepatia Pura",         desc: "Vinci 10 partite di fila",                                  stat: "serieVinteMax",      meta: 10 },
-    { gioco: "scopa2v2", livello: "diamante", icona: "😵", nome: "Umiliazione di Coppia",  desc: "Vinci lasciando gli avversari a 0 punti",                   stat: "vinteAZero",         meta: 1 },
-    { gioco: "scopa2v2", livello: "diamante", icona: "🔥", nome: "Eroi della Rimonta",     desc: "Vinci dopo che gli avversari erano arrivati a 10 prima di voi", stat: "rimonte",         meta: 1 },
-
-    // ---- L'Impostore ----
-    { gioco: "impostore", livello: "bronzo",   icona: "👀", nome: "Battesimo del Sospetto", desc: "Gioca la tua primissima partita",                              stat: "partite",               meta: 1 },
-    { gioco: "impostore", livello: "bronzo",   icona: "🔎", nome: "Principio di Deduzione", desc: "Vota giusto l'impostore per la prima volta",                   stat: "smascherati",           meta: 1 },
-    { gioco: "impostore", livello: "bronzo",   icona: "😐", nome: "Faccia di Bronzo",       desc: "Vinci la tua prima partita da impostore",                      stat: "vinteImpostore",        meta: 1 },
-    { gioco: "impostore", livello: "bronzo",   icona: "🎬", nome: "Aiutino dal Regista",    desc: "Gioca da impostore con l'aiutino acceso (la parola simile)",   stat: "impostoreConAiuto",     meta: 1 },
-    { gioco: "impostore", livello: "bronzo",   icona: "🐑", nome: "Vittima Sacrificale",    desc: "Sii il più votato pur essendo innocente, 3 volte",             stat: "innocenteAccusato",     meta: 3 },
-    { gioco: "impostore", livello: "argento",  icona: "🕵️", nome: "Detective Dilettante",   desc: "Vota giusto l'impostore 15 volte",                             stat: "smascherati",           meta: 15 },
-    { gioco: "impostore", livello: "argento",  icona: "🎭", nome: "Attore Nato",            desc: "Vinci 10 partite da impostore",                                stat: "vinteImpostore",        meta: 10 },
-    { gioco: "impostore", livello: "argento",  icona: "🦠", nome: "Parassita",              desc: "Vinci 5 partite da impostore con l'aiutino acceso",            stat: "vinteImpAiutoOn",       meta: 5 },
-    { gioco: "impostore", livello: "argento",  icona: "⚔️", nome: "Gioco ad Armi Impari",   desc: "Vota giusto l'impostore 10 volte quando lui aveva l'aiutino",  stat: "smascheratiControAiuto", meta: 10 },
-    { gioco: "impostore", livello: "argento",  icona: "🎖️", nome: "Veterano del Sospetto",  desc: "Gioca 25 partite",                                             stat: "partite",               meta: 25 },
-    { gioco: "impostore", livello: "oro",      icona: "🧥", nome: "Investigatore Privato",  desc: "Vota giusto l'impostore 50 volte",                             stat: "smascherati",           meta: 50 },
-    { gioco: "impostore", livello: "oro",      icona: "🐺", nome: "Lupo tra le Pecore",     desc: "Vinci 25 partite da impostore",                                stat: "vinteImpostore",        meta: 25 },
-    { gioco: "impostore", livello: "oro",      icona: "🧠", nome: "Mente Superiore",        desc: "Vinci 10 partite da impostore con l'aiutino spento",           stat: "vinteImpAiutoOff",      meta: 10 },
-    { gioco: "impostore", livello: "oro",      icona: "🧊", nome: "Rompighiaccio",          desc: "Vinci da impostore quando tocca a te aprire il giro",          stat: "vinteImpApertura",      meta: 1 },
-    { gioco: "impostore", livello: "diamante", icona: "🙈", nome: "Fiducia Cieca",          desc: "Vinci da impostore senza ricevere nemmeno un voto",            stat: "vinteImp0Voti",         meta: 1 },
-    { gioco: "impostore", livello: "diamante", icona: "🐕", nome: "Segugio Infallibile",    desc: "Vota giusto l'impostore 5 partite di fila",                    stat: "serieSmascheratiMax",   meta: 5 },
-    { gioco: "impostore", livello: "diamante", icona: "🔮", nome: "Telepatia Pura",         desc: "Vinci da impostore con l'aiutino spento e zero voti contro",   stat: "vinteImpPerfette",      meta: 1 },
-
-    // ---- La linea del tempo ----
-    { gioco: "timeline", livello: "bronzo",   icona: "📜", nome: "Prima Pagina",            desc: "Gioca la tua prima partita",                          stat: "partite",        meta: 1 },
-    { gioco: "timeline", livello: "bronzo",   icona: "📶", nome: "Connessione Stabilita",   desc: "Gioca 1 partita online (ognuno dal suo telefono)",    stat: "partiteOnline",  meta: 1 },
-    { gioco: "timeline", livello: "bronzo",   icona: "🏅", nome: "Il Primo Trionfo",        desc: "Vinci 1 partita online",                              stat: "vinteOnline",    meta: 1 },
-    { gioco: "timeline", livello: "bronzo",   icona: "🎤", nome: "Fan del Rap",             desc: "Piazza giuste 25 carte di Rap italiano",              stat: "giuste_rap",        meta: 25 },
-    { gioco: "timeline", livello: "bronzo",   icona: "📣", nome: "Tifoso",                  desc: "Piazza giuste 25 carte di Calcio",                    stat: "giuste_calcio",     meta: 25 },
-    { gioco: "timeline", livello: "bronzo",   icona: "🍿", nome: "Cinefilo",                desc: "Piazza giuste 25 carte di Cinema",                    stat: "giuste_cinema",     meta: 25 },
-    { gioco: "timeline", livello: "bronzo",   icona: "📚", nome: "Studente",                desc: "Piazza giuste 25 carte di Storia",                    stat: "giuste_storia",     meta: 25 },
-    { gioco: "timeline", livello: "bronzo",   icona: "🔍", nome: "Curioso",                 desc: "Piazza giuste 25 carte di Invenzioni e scoperte",     stat: "giuste_invenzioni", meta: 25 },
-    { gioco: "timeline", livello: "bronzo",   icona: "🪧", nome: "Paletta del Giudice",     desc: "Azzecca 10 voti sulle carte degli altri",             stat: "votiGiusti",     meta: 10 },
-    { gioco: "timeline", livello: "bronzo",   icona: "🤝", nome: "Fiducia nel Prossimo",    desc: "Vota 👍 e azzeccaci 10 volte",                    stat: "votiSiGiusti",   meta: 10 },
-    { gioco: "timeline", livello: "bronzo",   icona: "🌍", nome: "Cultura Generale",        desc: "Vinci una partita con tutte e 5 le categorie",        stat: "vinte5cat",      meta: 1 },
-    { gioco: "timeline", livello: "bronzo",   icona: "🙈", nome: "Memoria Corta",           desc: "Sbaglia la tua primissima carta della partita",       stat: "erroriPrimaCarta", meta: 1 },
-    { gioco: "timeline", livello: "bronzo",   icona: "🔭", nome: "Occhio Lungo",            desc: "5 carte giuste di fila",                              stat: "serieMax",       meta: 5 },
-    { gioco: "timeline", livello: "argento",  icona: "🕰️", nome: "Viaggiatore nel Tempo",   desc: "Gioca 20 partite",                                    stat: "partite",        meta: 20 },
-    { gioco: "timeline", livello: "argento",  icona: "📱", nome: "Serata Digitale",         desc: "Gioca 12 partite online",                             stat: "partiteOnline",  meta: 12 },
-    { gioco: "timeline", livello: "argento",  icona: "🧊", nome: "Sangue Freddo",           desc: "Vinci 8 partite online",                              stat: "vinteOnline",    meta: 8 },
-    { gioco: "timeline", livello: "argento",  icona: "💿", nome: "Disco d'Oro",             desc: "Piazza giuste 100 carte di Rap italiano",             stat: "giuste_rap",        meta: 100 },
-    { gioco: "timeline", livello: "argento",  icona: "⚽", nome: "Pallone d'Oro",           desc: "Piazza giuste 100 carte di Calcio",                   stat: "giuste_calcio",     meta: 100 },
-    { gioco: "timeline", livello: "argento",  icona: "🎬", nome: "Premio Oscar",            desc: "Piazza giuste 100 carte di Cinema",                   stat: "giuste_cinema",     meta: 100 },
-    { gioco: "timeline", livello: "argento",  icona: "🎓", nome: "Titolare di Cattedra",    desc: "Piazza giuste 100 carte di Storia",                   stat: "giuste_storia",     meta: 100 },
-    { gioco: "timeline", livello: "argento",  icona: "🧪", nome: "Premio Nobel",            desc: "Piazza giuste 100 carte di Invenzioni e scoperte",    stat: "giuste_invenzioni", meta: 100 },
-    { gioco: "timeline", livello: "argento",  icona: "🧐", nome: "Il Critico",              desc: "Azzecca 50 voti sulle carte degli altri",             stat: "votiGiusti",     meta: 50 },
-    { gioco: "timeline", livello: "argento",  icona: "🤨", nome: "Scettico di Professione", desc: "Vota 👎 e azzeccaci 25 volte",                    stat: "votiNoGiusti",   meta: 25 },
-    { gioco: "timeline", livello: "argento",  icona: "✨", nome: "Mente Lucida",            desc: "Finisci una partita senza sbagliare nessuna carta",   stat: "perfette",       meta: 1 },
-    { gioco: "timeline", livello: "argento",  icona: "🚀", nome: "Senza Rivali",            desc: "Vinci con almeno 500 punti di distacco",              stat: "distaccoMax",    meta: 500 },
-    { gioco: "timeline", livello: "oro",      icona: "🏃", nome: "Maratoneta del Tempo",    desc: "Gioca 50 partite online",                             stat: "partiteOnline",  meta: 50 },
-    { gioco: "timeline", livello: "oro",      icona: "👑", nome: "Dominatore Online",       desc: "Vinci 25 partite online",                             stat: "vinteOnline",    meta: 25 },
-    { gioco: "timeline", livello: "oro",      icona: "🗄️", nome: "L'Archivista",            desc: "Piazza giuste 500 carte in totale",                   stat: "giusteTot",      meta: 500 },
-    { gioco: "timeline", livello: "oro",      icona: "⚖️", nome: "Giudice Infallibile",     desc: "Azzecca 200 voti sulle carte degli altri",            stat: "votiGiusti",     meta: 200 },
-    { gioco: "timeline", livello: "oro",      icona: "🧠", nome: "Tuttologo",               desc: "Vinci 10 partite con tutte e 5 le categorie",         stat: "vinte5cat",      meta: 10 },
-    { gioco: "timeline", livello: "oro",      icona: "🏆", nome: "Collezionista",           desc: "Vinci 50 partite",                                    stat: "vinte",          meta: 50 },
-    { gioco: "timeline", livello: "diamante", icona: "🏔️", nome: "Difficoltà Massima",      desc: "Partita perfetta con 8 carte a testa",                stat: "perfette8",      meta: 1 },
-    { gioco: "timeline", livello: "diamante", icona: "👁️", nome: "Memoria Eidetica",        desc: "15 carte giuste di fila (vale anche tra più partite)", stat: "serieMax",      meta: 15 },
-    { gioco: "timeline", livello: "diamante", icona: "🔮", nome: "Macchina della Verità",   desc: "15 voti azzeccati di fila",                           stat: "serieVotiMax",   meta: 15 },
-    { gioco: "timeline", livello: "diamante", icona: "⏳", nome: "Dio del Tempo",           desc: "30 carte giuste di fila (vale anche tra più partite)", stat: "serieMax",      meta: 30 },
-
-    // ---------- Glow Hockey (contro il bot) ----------
-    { gioco: "hockey", livello: "bronzo",   icona: "🏒", nome: "Battesimo del Disco",       desc: "Gioca la tua prima partita",                          stat: "partite",           meta: 1 },
-    { gioco: "hockey", livello: "bronzo",   icona: "🔥", nome: "Dito Caldo",                desc: "Segna il tuo primo gol",                              stat: "golFatti",          meta: 1 },
-    { gioco: "hockey", livello: "bronzo",   icona: "🥇", nome: "La Prima Vittoria",         desc: "Vinci la tua prima partita arrivando a 7",            stat: "vittorie",          meta: 1 },
-    { gioco: "hockey", livello: "bronzo",   icona: "🌡️", nome: "Riscaldamento Completato",  desc: "Batti il bot Facile",                                 stat: "vinte_facile",      meta: 1 },
-    { gioco: "hockey", livello: "bronzo",   icona: "🎯", nome: "Cecchino in Erba",          desc: "Segna 50 gol in totale",                              stat: "golFatti",          meta: 50 },
-    { gioco: "hockey", livello: "bronzo",   icona: "📸", nome: "Fotofinish",                desc: "Vinci una partita 7 a 6",                             stat: "fotofinish",        meta: 1 },
-    { gioco: "hockey", livello: "argento",  icona: "📈", nome: "Salto di Qualità",          desc: "Batti il bot Medio",                                  stat: "vinte_medio",       meta: 1 },
-    { gioco: "hockey", livello: "argento",  icona: "⚡", nome: "Goleador",                  desc: "Segna 200 gol in totale",                             stat: "golFatti",          meta: 200 },
-    { gioco: "hockey", livello: "argento",  icona: "📅", nome: "Pratica Quotidiana",        desc: "Vinci 15 partite",                                    stat: "vittorie",          meta: 15 },
-    { gioco: "hockey", livello: "argento",  icona: "🧱", nome: "Muro di Gomma",             desc: "Batti il bot Medio 10 volte",                         stat: "vinte_medio",       meta: 10 },
-    { gioco: "hockey", livello: "argento",  icona: "🚫", nome: "Porta Inviolata",           desc: "Vinci 7 a 0 (a qualsiasi difficoltà)",                stat: "cappotti",          meta: 1 },
-    { gioco: "hockey", livello: "argento",  icona: "🔄", nome: "Rimonta sul Ghiaccio",      desc: "Vinci dopo essere stato sotto di 3 gol",              stat: "rimonte",           meta: 1 },
-    { gioco: "hockey", livello: "oro",      icona: "🤖", nome: "Ribellione delle Macchine", desc: "Batti il bot Difficile",                              stat: "vinte_difficile",   meta: 1 },
-    { gioco: "hockey", livello: "oro",      icona: "💥", nome: "Dominatore del Disco",      desc: "Segna 500 gol in totale",                             stat: "golFatti",          meta: 500 },
-    { gioco: "hockey", livello: "oro",      icona: "🏅", nome: "Professionista dell'Air Hockey", desc: "Vinci 50 partite",                               stat: "vittorie",          meta: 50 },
-    { gioco: "hockey", livello: "oro",      icona: "🛡️", nome: "Antivirus",                 desc: "Batti il bot Difficile 10 volte",                     stat: "vinte_difficile",   meta: 10 },
-    { gioco: "hockey", livello: "oro",      icona: "🔒", nome: "Saracinesca",               desc: "Batti il bot Medio 7 a 0",                            stat: "cappotti_medio",    meta: 1 },
-    { gioco: "hockey", livello: "diamante", icona: "⚡", nome: "Riflessi Fulminei",         desc: "Batti il bot Difficile 7 a 0",                        stat: "cappotti_difficile", meta: 1 },
-    { gioco: "hockey", livello: "diamante", icona: "🔌", nome: "Cortocircuito Totale",      desc: "Batti il bot Difficile 5 volte di fila (una sconfitta col Difficile azzera)", stat: "serieDiffMax", meta: 5 },
-    { gioco: "hockey", livello: "diamante", icona: "👑", nome: "Leggenda del Tavolo",       desc: "Segna 1.000 gol in totale",                           stat: "golFatti",          meta: 1000 },
-
-    // ---------- Calcio Biliardo ----------
-    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🏟️", nome: "Esordio in Campo",      desc: "Gioca la tua prima partita",                               stat: "partite",           meta: 1 },
-    { gioco: "calciobiliardo", livello: "bronzo",   icona: "⚽", nome: "La Prima Rete",          desc: "Segna il tuo primo gol",                                    stat: "golFatti",          meta: 1 },
-    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🥅", nome: "Tre Punti",              desc: "Vinci la tua prima partita",                                stat: "vittorie",          meta: 1 },
-    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🤖", nome: "Bot, Attento!",         desc: "Batti Bot Facile",                                         stat: "vinte_facile",      meta: 1 },
-    { gioco: "calciobiliardo", livello: "bronzo",   icona: "😎", nome: "Faccia da Gol",          desc: "Segna con il tuo attaccante, quello col tuo avatar",        stat: "golAttaccante",     meta: 1 },
-    { gioco: "calciobiliardo", livello: "bronzo",   icona: "🌐", nome: "Vittoria in Rete",       desc: "Vinci una partita online",                                  stat: "vinteOnline",       meta: 1 },
-    { gioco: "calciobiliardo", livello: "argento",  icona: "⚡", nome: "Reti in Crescita",       desc: "Segna 25 gol in totale",                                    stat: "golFatti",          meta: 25 },
-    { gioco: "calciobiliardo", livello: "argento",  icona: "🧠", nome: "Bot alla Prova",        desc: "Batti Bot Medio",                                          stat: "vinte_medio",       meta: 1 },
-    { gioco: "calciobiliardo", livello: "argento",  icona: "🪵", nome: "Sponda Vincente",        desc: "Segna 5 gol dopo un rimbalzo sulla sponda nello stesso tiro", stat: "golSponda",         meta: 5 },
-    { gioco: "calciobiliardo", livello: "argento",  icona: "🎯", nome: "Tiro da Lontano",       desc: "Segna 5 gol partendo dalla tua metà campo",                  stat: "golLontano",        meta: 5 },
-    { gioco: "calciobiliardo", livello: "argento",  icona: "⏱️", nome: "Fischio Finale",        desc: "Vinci una partita a tempo",                                  stat: "vinteTempo",        meta: 1 },
-    { gioco: "calciobiliardo", livello: "oro",      icona: "💯", nome: "Cento Reti",             desc: "Segna 100 gol in totale",                                   stat: "golFatti",          meta: 100 },
-    { gioco: "calciobiliardo", livello: "oro",      icona: "🦾", nome: "Bot Battuto",           desc: "Batti Bot Difficile",                                      stat: "vinte_difficile",   meta: 1 },
-    { gioco: "calciobiliardo", livello: "oro",      icona: "🤝", nome: "Amici in Rete",          desc: "Vinci 10 partite online",                                   stat: "vinteOnline",       meta: 10 },
-    { gioco: "calciobiliardo", livello: "oro",      icona: "🏆", nome: "Rigori da Campione",     desc: "Vinci una partita ai rigori",                               stat: "vinteRigori",       meta: 1 },
-    { gioco: "calciobiliardo", livello: "oro",      icona: "🔄", nome: "Rimonta Completa",       desc: "Vinci dopo essere stato sotto di 2 gol",                    stat: "rimonte",           meta: 1 },
-    { gioco: "calciobiliardo", livello: "oro",      icona: "🔔", nome: "Palo e Rete",            desc: "Segna 3 gol dopo aver colpito il palo nello stesso tiro",    stat: "golPalo",           meta: 3 },
-    { gioco: "calciobiliardo", livello: "diamante", icona: "🧱", nome: "Muro Giallo e Blu",      desc: "Batti Bot Difficile senza subire gol, segnandone almeno 3", stat: "cappotti_difficile", meta: 1 },
-    { gioco: "calciobiliardo", livello: "diamante", icona: "👑", nome: "Cinque Volte Bot",      desc: "Batti Bot Difficile 5 volte",                               stat: "vinte_difficile",   meta: 5 },
-    { gioco: "calciobiliardo", livello: "diamante", icona: "🌟", nome: "Leggenda del Campo",     desc: "Segna 250 gol in totale",                                   stat: "golFatti",          meta: 250 },
-
-    // ---------- Scopone (classico + scientifico, contro il computer) ----------
-    { gioco: "scopone", livello: "bronzo",   icona: "🪑", nome: "Il Tavolo dei Grandi",     desc: "Gioca la tua prima partita",                          stat: "partite",           meta: 1 },
-    { gioco: "scopone", livello: "bronzo",   icona: "📜", nome: "Tradizione",               desc: "Vinci una partita a Scopone Classico",                stat: "vinteClassico",     meta: 1 },
-    { gioco: "scopone", livello: "bronzo",   icona: "🎓", nome: "Calcolo Mentale",          desc: "Vinci una partita a Scopone Scientifico",             stat: "vinteScientifico",  meta: 1 },
-    { gioco: "scopone", livello: "bronzo",   icona: "7️⃣", nome: "Custode del Sette",        desc: "La tua squadra prende il Settebello 5 volte",         stat: "settebello",        meta: 5 },
-    { gioco: "scopone", livello: "bronzo",   icona: "🪙", nome: "L'Oro del Sud",            desc: "La tua squadra vince il punto dei Denari 5 volte",    stat: "denari",            meta: 5 },
-    { gioco: "scopone", livello: "bronzo",   icona: "🤝", nome: "Lavoro di Squadra",        desc: "Vinci 10 partite (le due modalità insieme)",          stat: "vinte",             meta: 10 },
-    { gioco: "scopone", livello: "argento",  icona: "🏛️", nome: "Purista del Classico",     desc: "Vinci 15 partite a Scopone Classico",                 stat: "vinteClassico",     meta: 15 },
-    { gioco: "scopone", livello: "argento",  icona: "🧠", nome: "Memoria di Ferro",         desc: "Vinci 15 partite a Scopone Scientifico",              stat: "vinteScientifico",  meta: 15 },
-    { gioco: "scopone", livello: "argento",  icona: "🃏", nome: "Pigliatutto a Squadre",    desc: "La tua squadra vince il punto delle Carte 25 volte",  stat: "carte",             meta: 25 },
-    { gioco: "scopone", livello: "argento",  icona: "🧮", nome: "Re della Primiera",        desc: "La tua squadra vince la Primiera 25 volte",           stat: "primiera",          meta: 25 },
-    { gioco: "scopone", livello: "argento",  icona: "🧹", nome: "Contributo Personale",     desc: "Fai tu 50 scope",                                     stat: "scopePersonali",    meta: 50 },
-    { gioco: "scopone", livello: "argento",  icona: "🚀", nome: "Partenza a Razzo",         desc: "Classico: fai scopa con la tua prima carta della smazzata", stat: "scopaPrimoTurno", meta: 1 },
-    { gioco: "scopone", livello: "argento",  icona: "🎰", nome: "Grande Slam in Quattro",   desc: "Carte, Denari, Settebello e Primiera alla tua squadra in una smazzata (5 volte)", stat: "grandeSlam", meta: 5 },
-    { gioco: "scopone", livello: "oro",      icona: "🎩", nome: "Signore dello Scopone",    desc: "Vinci 50 partite",                                    stat: "vinte",             meta: 50 },
-    { gioco: "scopone", livello: "oro",      icona: "🤓", nome: "Il Cervellone",            desc: "Vinci 30 partite a Scopone Scientifico",              stat: "vinteScientifico",  meta: 30 },
-    { gioco: "scopone", livello: "diamante", icona: "🐝", nome: "Mente Alveare",            desc: "Vinci 7 partite di fila a Scopone Scientifico",       stat: "serieSciMax",       meta: 7 },
-    { gioco: "scopone", livello: "diamante", icona: "🧥", nome: "Cappotto a Quattro",       desc: "Vinci lasciando gli avversari a 0 punti",             stat: "vinteAZero",        meta: 1 },
-
-    // ---------- La Scalinata ----------
-    { gioco: "scalinata", livello: "bronzo",   icona: "🪜", nome: "Il Primo Gradino",       desc: "Gioca la tua prima partita",                          stat: "partite",           meta: 1 },
-    { gioco: "scalinata", livello: "bronzo",   icona: "🦘", nome: "Salto della Quaglia",    desc: "Avanza di 5 gradini in un colpo",                     stat: "mosse5",            meta: 1 },
-    { gioco: "scalinata", livello: "bronzo",   icona: "💫", nome: "Bonk!",                  desc: "Scontrati con qualcuno che ha scelto il tuo numero",  stat: "scontri",           meta: 1 },
-    { gioco: "scalinata", livello: "bronzo",   icona: "🏁", nome: "Vetta Raggiunta",        desc: "Vinci la tua prima partita",                          stat: "vinte",             meta: 1 },
-    { gioco: "scalinata", livello: "bronzo",   icona: "🤦", nome: "Passo Falso",            desc: "Scontrati già al primo turno",                        stat: "scontriPrimoTurno", meta: 1 },
-    { gioco: "scalinata", livello: "argento",  icona: "🐜", nome: "Passo dopo Passo",       desc: "Avanza di 1 gradino 30 volte",                        stat: "mosse1",            meta: 30 },
-    { gioco: "scalinata", livello: "argento",  icona: "⚖️", nome: "La Via di Mezzo",        desc: "Avanza di 3 gradini 30 volte",                        stat: "mosse3",            meta: 30 },
-    { gioco: "scalinata", livello: "argento",  icona: "🦵", nome: "Falcata Lunga",          desc: "Avanza di 5 gradini 30 volte",                        stat: "mosse5",            meta: 30 },
-    { gioco: "scalinata", livello: "argento",  icona: "🤕", nome: "Teste Dure",             desc: "Scontrati 100 volte in totale",                       stat: "scontri",           meta: 100 },
-    { gioco: "scalinata", livello: "argento",  icona: "🧗", nome: "Scalatore Esperto",      desc: "Vinci 15 partite",                                    stat: "vinte",             meta: 15 },
-    { gioco: "scalinata", livello: "argento",  icona: "🐢", nome: "Chi Va Piano...",        desc: "Vinci senza mai scegliere il 5",                      stat: "vinteSenza5",       meta: 1 },
-    { gioco: "scalinata", livello: "argento",  icona: "3️⃣", nome: "La Costanza Premia",     desc: "Vinci scegliendo solo il 3, dall'inizio alla fine",   stat: "vinteSolo3",        meta: 1 },
-    { gioco: "scalinata", livello: "oro",      icona: "🏔️", nome: "Alpinista",              desc: "Vinci 50 partite",                                    stat: "vinte",             meta: 50 },
-    { gioco: "scalinata", livello: "oro",      icona: "🏃", nome: "Maratona Verticale",     desc: "Sali 750 gradini in totale",                          stat: "gradini",           meta: 750 },
-    { gioco: "scalinata", livello: "oro",      icona: "😈", nome: "Genio del Male",         desc: "Arriva in cima nel turno in cui tutti gli altri si scontrano", stat: "vinteAltriBloccati", meta: 1 },
-    { gioco: "scalinata", livello: "diamante", icona: "🛗", nome: "Ascensore Privato",      desc: "Vinci in 3 turni: 5, 5, 5 senza mai scontrarti",      stat: "vinteIn3",          meta: 1 },
-    { gioco: "scalinata", livello: "diamante", icona: "👻", nome: "Il Fantasma",            desc: "Vinci senza subire nemmeno uno scontro",              stat: "vinteSenzaScontri", meta: 1 },
-    // ---- TRIS (26 set 2026, liste dell'utente; "Difficile" è il bot nuovo battibile, "Impossibile" resta imbattibile) ----
-    { gioco: "tris", livello: "bronzo",   icona: "✏️", nome: "Mossa d'Apertura",       desc: "Gioca la tua primissima partita",                              stat: "partite",         meta: 1 },
-    { gioco: "tris", livello: "bronzo",   icona: "⭕", nome: "Il Primo Tris",          desc: "Vinci una partita, in qualsiasi modo",                          stat: "vinte",           meta: 1 },
-    { gioco: "tris", livello: "bronzo",   icona: "🌱", nome: "Riscaldamento",          desc: "Batti il bot a livello Facile",                                stat: "vinteFacile",     meta: 1 },
-    { gioco: "tris", livello: "bronzo",   icona: "🤝", nome: "Nessun Vincitore",       desc: "Pareggia una partita: griglia piena e nessun tris",            stat: "pareggi",         meta: 1 },
-    { gioco: "tris", livello: "bronzo",   icona: "🔗", nome: "In Rete",                desc: "Gioca la tua prima partita online",                            stat: "online",          meta: 1 },
-    { gioco: "tris", livello: "argento",  icona: "🧠", nome: "Pensiero Laterale",      desc: "Batti il bot a livello Medio",                                 stat: "vinteMedio",      meta: 1 },
-    { gioco: "tris", livello: "argento",  icona: "📐", nome: "Geometria",              desc: "Vinci 5 partite chiudendo il tris in diagonale",               stat: "vinteDiagonale",  meta: 5 },
-    { gioco: "tris", livello: "argento",  icona: "⚔️", nome: "Spirito Competitivo",    desc: "Vinci 10 partite online",                                      stat: "vinteOnline",     meta: 10 },
-    { gioco: "tris", livello: "argento",  icona: "⚡", nome: "Scacco Matto in Tre",    desc: "Vinci mettendo solo 3 simboli (non vale contro il bot Facile)", stat: "vinteIn3",        meta: 1 },
-    { gioco: "tris", livello: "argento",  icona: "🕊️", nome: "Pace Fatta",             desc: "Pareggia 15 partite in tutto",                                 stat: "pareggi",         meta: 15 },
-    { gioco: "tris", livello: "oro",      icona: "🎓", nome: "Supera il Maestro",      desc: "Batti il bot a livello Difficile",                             stat: "vinteDifficile",  meta: 1 },
-    { gioco: "tris", livello: "oro",      icona: "🏅", nome: "Insuperabile",           desc: "Vinci 20 partite online",                                      stat: "vinteOnline",     meta: 20 },
-    { gioco: "tris", livello: "oro",      icona: "🧱", nome: "Muro Invalicabile",      desc: "Pareggia 5 partite di fila (senza vincere né perdere in mezzo)", stat: "serieParMax",   meta: 5 },
-    { gioco: "tris", livello: "oro",      icona: "🖊️", nome: "Grafomane",              desc: "Metti 200 simboli sulla griglia in tutto",                     stat: "simboli",         meta: 200 },
-    { gioco: "tris", livello: "diamante", icona: "👑", nome: "Dominio Totale",         desc: "Vinci 5 partite online di fila",                               stat: "serieOnlineMax",  meta: 5 },
-    { gioco: "tris", livello: "diamante", icona: "🤖", nome: "Intelligenza Superiore", desc: "Batti il bot Difficile 5 volte",                               stat: "vinteDifficile",  meta: 5 },
-    { gioco: "tris", livello: "diamante", icona: "🔮", nome: "Onniscienza",            desc: "Gioca 10 partite di fila contro il bot Difficile senza mai perdere", stat: "serieImbDiffMax", meta: 10 },
-    // ---- DROP 4 (Forza 4) ----
-    { gioco: "drop4", livello: "bronzo",   icona: "🟡", nome: "Battesimo di Gravità",   desc: "Gioca la tua primissima partita",                              stat: "partite",         meta: 1 },
-    { gioco: "drop4", livello: "bronzo",   icona: "🎉", nome: "Finalmente Forza 4!",    desc: "Vinci la tua prima partita",                                   stat: "vinte",           meta: 1 },
-    { gioco: "drop4", livello: "bronzo",   icona: "🌍", nome: "Sfida Globale",          desc: "Gioca la tua prima partita online",                            stat: "online",          meta: 1 },
-    { gioco: "drop4", livello: "bronzo",   icona: "🌱", nome: "Livello Base",           desc: "Batti il bot a livello Facile",                                stat: "vinteFacile",     meta: 1 },
-    { gioco: "drop4", livello: "bronzo",   icona: "🛑", nome: "Guastafeste",            desc: "Blocca 5 volte l'avversario che stava per fare 4",             stat: "blocchi",         meta: 5 },
-    { gioco: "drop4", livello: "argento",  icona: "🧠", nome: "Mente Tattica",          desc: "Batti il bot a livello Medio",                                 stat: "vinteMedio",      meta: 1 },
-    { gioco: "drop4", livello: "argento",  icona: "🗼", nome: "Costruttore di Torri",   desc: "Vinci 5 partite con 4 pedine in verticale",                    stat: "vinteVerticale",  meta: 5 },
-    { gioco: "drop4", livello: "argento",  icona: "➖", nome: "Orizzonte Piatto",       desc: "Vinci 5 partite con 4 pedine in orizzontale",                  stat: "vinteOrizzontale", meta: 5 },
-    { gioco: "drop4", livello: "argento",  icona: "⚔️", nome: "Gladiatore Online",      desc: "Vinci 10 partite online",                                      stat: "vinteOnline",     meta: 10 },
-    { gioco: "drop4", livello: "argento",  icona: "🏚️", nome: "Sfratto",                desc: "Vinci con più di 21 pedine sulla griglia",                     stat: "vinteSfratto",    meta: 1 },
-    { gioco: "drop4", livello: "oro",      icona: "🤖", nome: "Scacco alla Macchina",   desc: "Batti il bot a livello Difficile",                             stat: "vinteDifficile",  meta: 1 },
-    { gioco: "drop4", livello: "oro",      icona: "📐", nome: "Geometria Letale",       desc: "Vinci 10 partite con 4 pedine in diagonale",                   stat: "vinteDiagonale",  meta: 10 },
-    { gioco: "drop4", livello: "oro",      icona: "🏆", nome: "Leggenda della Griglia", desc: "Vinci 20 partite online",                                      stat: "vinteOnline",     meta: 20 },
-    { gioco: "drop4", livello: "oro",      icona: "🌧️", nome: "Pioggia di Gettoni",     desc: "Fai cadere 300 pedine in tutto",                               stat: "gettoni",         meta: 300 },
-    { gioco: "drop4", livello: "diamante", icona: "✨", nome: "Partita Perfetta",       desc: "Vinci mettendo solo 4 pedine (online o contro il Bot Difficile)", stat: "vinteIn4",        meta: 1 },
-    { gioco: "drop4", livello: "diamante", icona: "💻", nome: "Dominio Cibernetico",    desc: "Batti il bot Difficile 5 volte",                               stat: "vinteDifficile",  meta: 5 },
-    { gioco: "drop4", livello: "diamante", icona: "🧊", nome: "Stallo Architettonico",  desc: "Pareggia online o contro il Bot Medio o Difficile: griglia piena, nessuno fa 4",stat: "pareggi",         meta: 1 },
-
-    // ---- BATTAGLIA NAVALE ----
-    { gioco: "navale", livello: "bronzo",   icona: "🚢", nome: "Prima Salva",             desc: "Gioca la tua prima partita",                                  stat: "partite",             meta: 1 },
-    { gioco: "navale", livello: "bronzo",   icona: "🎯", nome: "Tiro a Segno",             desc: "Colpisci una nave",                                           stat: "colpiAsegno",         meta: 1 },
-    { gioco: "navale", livello: "bronzo",   icona: "💥", nome: "A Fondo!",                 desc: "Affonda la tua prima nave avversaria",                       stat: "naviAffondate",       meta: 1 },
-    { gioco: "navale", livello: "bronzo",   icona: "🏁", nome: "Prima Vittoria",           desc: "Vinci una partita",                                           stat: "vittorie",            meta: 1 },
-    { gioco: "navale", livello: "bronzo",   icona: "🔭", nome: "Buona la Prima",           desc: "Colpisci una nave con il primo tiro della partita",           stat: "primiColpiAsegno",    meta: 1 },
-    { gioco: "navale", livello: "bronzo",   icona: "🔗", nome: "In Rete",                  desc: "Gioca la tua prima partita online",                           stat: "partiteOnline",       meta: 1 },
-    { gioco: "navale", livello: "argento",  icona: "⚓", nome: "Marinaio Costante",        desc: "Gioca 10 partite",                                            stat: "partite",             meta: 10 },
-    { gioco: "navale", livello: "argento",  icona: "🫧", nome: "Flotta negli Abissi",      desc: "Affonda 25 navi avversarie in tutto",                        stat: "naviAffondate",       meta: 25 },
-    { gioco: "navale", livello: "argento",  icona: "🧭", nome: "Mira Sicura",              desc: "Colpisci 100 caselle occupate da navi",                      stat: "colpiAsegno",         meta: 100 },
-    { gioco: "navale", livello: "argento",  icona: "🧠", nome: "Occhio Tattico",           desc: "Batti il bot Medio 3 volte",                                  stat: "vittorieMedio",       meta: 3 },
-    { gioco: "navale", livello: "argento",  icona: "🌐", nome: "Duello Online",            desc: "Vinci 5 partite online",                                     stat: "vittorieOnline",      meta: 5 },
-    { gioco: "navale", livello: "oro",      icona: "🏴‍☠️", nome: "Ammiraglio",               desc: "Vinci 25 partite",                                            stat: "vittorie",            meta: 25 },
-    { gioco: "navale", livello: "oro",      icona: "🤖", nome: "Sfida Difficile",          desc: "Batti il bot Difficile",                                     stat: "vittorieDifficile",   meta: 1 },
-    { gioco: "navale", livello: "oro",      icona: "🌊", nome: "Mare di Colpi",            desc: "Spara 500 volte in tutto",                                   stat: "colpi",               meta: 500 },
-    { gioco: "navale", livello: "oro",      icona: "🏆", nome: "Capitano di Rete",         desc: "Vinci 15 partite online",                                    stat: "vittorieOnline",      meta: 15 },
-    { gioco: "navale", livello: "diamante", icona: "💎", nome: "Lupo di Mare",              desc: "Batti il bot Difficile 3 volte di fila",                      stat: "serieDifficileMax",   meta: 3 },
-    { gioco: "navale", livello: "diamante", icona: "⚡", nome: "Tiro dopo Tiro",           desc: "Colpisci 5 caselle di nave di fila",                         stat: "serieColpiMax",       meta: 5 },
-    { gioco: "navale", livello: "diamante", icona: "👑", nome: "Dominio Online",           desc: "Vinci 5 partite online di fila",                             stat: "serieOnlineMax",      meta: 5 },
-
-    // ---------- Poker ----------
-    { gioco: "poker", livello: "bronzo",   icona: "🪑", nome: "Una Mano al Tavolo",     desc: "Partecipa alla tua prima mano",                              stat: "maniGiocate",             meta: 1 },
-    { gioco: "poker", livello: "bronzo",   icona: "🃏", nome: "Carte Scoperte",         desc: "Vinci una mano arrivando a mostrare le carte",               stat: "maniVinteShowdown",       meta: 1 },
-    { gioco: "poker", livello: "bronzo",   icona: "📈", nome: "Alzo la Puntata",        desc: "Fai il tuo primo rilancio",                                  stat: "rilanci",                 meta: 1 },
-    { gioco: "poker", livello: "bronzo",   icona: "🔄", nome: "Cambio di Piano",        desc: "Cambia almeno una carta nel Poker all'italiana",            stat: "carteCambiate",           meta: 1 },
-    { gioco: "poker", livello: "bronzo",   icona: "🦊", nome: "Tutti a Terra",          desc: "Vinci una mano facendo lasciare gli avversari",             stat: "maniVinteSenzaShowdown",  meta: 1 },
-    { gioco: "poker", livello: "bronzo",   icona: "🌐", nome: "Primo Tavolo Online",    desc: "Gioca una mano online con almeno un'altra persona",         stat: "maniOnline",              meta: 1 },
-    { gioco: "poker", livello: "bronzo",   icona: "🇮🇹", nome: "Prima Mano Italiana",    desc: "Partecipa alla tua prima mano di Poker all'italiana",      stat: "maniItaliane",            meta: 1 },
-    { gioco: "poker", livello: "bronzo",   icona: "♣️", nome: "Buona la Prima",          desc: "Vinci la tua prima mano di Texas Hold'em",                 stat: "vittorieTexas",            meta: 1 },
-    { gioco: "poker", livello: "argento",  icona: "🔟", nome: "Dieci Mani",             desc: "Partecipa a 10 mani",                                       stat: "maniGiocate",             meta: 10 },
-    { gioco: "poker", livello: "argento",  icona: "🎭", nome: "Showdown Ricorrente",    desc: "Vinci 10 mani mostrando le carte",                           stat: "maniVinteShowdown",       meta: 10 },
-    { gioco: "poker", livello: "argento",  icona: "✌️", nome: "Doppia Soddisfazione",   desc: "Vinci 3 mani con una doppia coppia",                         stat: "vittorieDoppia",          meta: 3 },
-    { gioco: "poker", livello: "argento",  icona: "🗣️", nome: "Parola al Rilancio",     desc: "Vinci 3 mani dopo aver rilanciato",                          stat: "vittorieRilancio",        meta: 3 },
-    { gioco: "poker", livello: "argento",  icona: "🇮🇹", nome: "Mano Rinnovata",        desc: "Vinci 3 mani dopo aver cambiato carte all'italiana",         stat: "vittorieCambio",          meta: 3 },
-    { gioco: "poker", livello: "argento",  icona: "👥", nome: "Tavolo in Compagnia",   desc: "Partecipa a 10 mani online contro altre persone",           stat: "maniOnline",              meta: 10 },
-    { gioco: "poker", livello: "argento",  icona: "🇺🇸", nome: "Texas in Crescita",      desc: "Vinci 5 mani di Texas Hold'em",                             stat: "vittorieTexas",            meta: 5 },
-    { gioco: "poker", livello: "argento",  icona: "🔁", nome: "Tradizione Vincente",    desc: "Vinci 5 mani di Poker all'italiana",                       stat: "vittorieItaliana",         meta: 5 },
-    { gioco: "poker", livello: "oro",      icona: "🦾", nome: "Bot non Molla",         desc: "Vinci 10 mani contro bot a difficoltà Difficile",           stat: "vittorieDifficile",       meta: 10 },
-    { gioco: "poker", livello: "oro",      icona: "🤝", nome: "Amici al Piattone",      desc: "Vinci 10 mani online contro altre persone",                 stat: "vittorieOnline",          meta: 10 },
-    { gioco: "poker", livello: "oro",      icona: "🧠", nome: "Tris o Meglio",          desc: "Vinci 10 showdown con tris o una mano più forte",            stat: "vittorieTrisPlus",        meta: 10 },
-    { gioco: "poker", livello: "oro",      icona: "🏰", nome: "Castello di Carte",      desc: "Vinci allo showdown con un full, un poker o una scala colore", stat: "vittorieFullPlus",      meta: 1 },
-    { gioco: "poker", livello: "oro",      icona: "🏅", nome: "Re del Tavolo",          desc: "Vinci 50 mani mostrando le carte",                           stat: "maniVinteShowdown",       meta: 50 },
-    { gioco: "poker", livello: "oro",      icona: "🪜", nome: "Scala Maestra",          desc: "Vinci 5 showdown con una scala",                             stat: "vittorieScala",           meta: 5 },
-    { gioco: "poker", livello: "oro",      icona: "🎨", nome: "Colore Vincente",        desc: "Vinci 2 showdown con un colore",                            stat: "vittorieColore",          meta: 2 },
-    { gioco: "poker", livello: "oro",      icona: "🃏", nome: "Quattro Uguali",          desc: "Vinci allo showdown con quattro carte dello stesso valore", stat: "vittoriePoker",           meta: 1 },
-    { gioco: "poker", livello: "diamante", icona: "⚔️", nome: "Tre di Fila",            desc: "Vinci 3 mani di fila contro i bot Difficili",                stat: "serieDifficileMax",       meta: 3 },
-    { gioco: "poker", livello: "diamante", icona: "🔥", nome: "Cinque Online",          desc: "Vinci 5 mani online di fila contro altre persone",          stat: "serieOnlineMax",          meta: 5 },
-    { gioco: "poker", livello: "diamante", icona: "♠️", nome: "Poker da Campione",       desc: "Vinci 3 showdown con un poker",                              stat: "vittoriePoker",           meta: 3 },
-    { gioco: "poker", livello: "diamante", icona: "🤖", nome: "Bot non ti Ferma",       desc: "Vinci 5 mani di fila contro i bot Difficili",               stat: "serieDifficileMax",       meta: 5 },
-    { gioco: "poker", livello: "diamante", icona: "🌍", nome: "Amici di Lungo Corso",   desc: "Vinci 25 mani online contro altre persone",                 stat: "vittorieOnline",          meta: 25 },
-
-    // ---- TABOO ----
-    { gioco: "taboo", livello: "bronzo",   icona: "🤐", nome: "Prima Parola",       desc: "Finisci la tua prima partita",                         stat: "partite",                  meta: 1 },
-    { gioco: "taboo", livello: "bronzo",   icona: "🎙️", nome: "Prendi la Parola",   desc: "Spiega la tua prima carta alla squadra",              stat: "turniSpiegati",            meta: 1 },
-    { gioco: "taboo", livello: "bronzo",   icona: "✅", nome: "Ci Siamo!",           desc: "Fai indovinare una carta alla tua squadra",          stat: "carteIndovinate",          meta: 1 },
-    { gioco: "taboo", livello: "bronzo",   icona: "⏭️", nome: "Cambio Carta",        desc: "Passa una carta durante un tuo turno",               stat: "cartePassate",             meta: 1 },
-    { gioco: "taboo", livello: "bronzo",   icona: "🚨", nome: "Orecchie Aperte",     desc: "Fai il tuo primo BUZZ alla squadra avversaria",      stat: "buzzFatti",                meta: 1 },
-    { gioco: "taboo", livello: "bronzo",   icona: "🏆", nome: "Squadra Vincente",    desc: "Concludi una partita con la tua squadra vincitrice", stat: "vittorie",                 meta: 1 },
-    { gioco: "taboo", livello: "argento",  icona: "🎲", nome: "Ci Si Rivede",        desc: "Finisci 5 partite",                                 stat: "partite",                  meta: 5 },
-    { gioco: "taboo", livello: "argento",  icona: "🗣️", nome: "Voce del Gruppo",     desc: "Spiega 10 turni alla tua squadra",                  stat: "turniSpiegati",            meta: 10 },
-    { gioco: "taboo", livello: "argento",  icona: "💡", nome: "Parole in Fila",      desc: "Fai indovinare 25 carte in tutto",                  stat: "carteIndovinate",          meta: 25 },
-    { gioco: "taboo", livello: "argento",  icona: "🛤️", nome: "Piano B",             desc: "Passa 10 carte durante i tuoi turni",               stat: "cartePassate",             meta: 10 },
-    { gioco: "taboo", livello: "argento",  icona: "🔔", nome: "Fischietto Pronto",   desc: "Fai 8 BUZZ validi contro la squadra avversaria",    stat: "buzzFatti",                meta: 8 },
-    { gioco: "taboo", livello: "oro",      icona: "🥇", nome: "Capitano di Squadra", desc: "Concludi 15 partite con la tua squadra vincitrice", stat: "vittorie",                 meta: 15 },
-    { gioco: "taboo", livello: "oro",      icona: "🧠", nome: "Giro di Parole",      desc: "Fai indovinare 100 carte in tutto",                 stat: "carteIndovinate",          meta: 100 },
-    { gioco: "taboo", livello: "oro",      icona: "⚡", nome: "Sette di Fila",       desc: "Fai indovinare 7 carte di fila nello stesso turno", stat: "comboCarteMax",            meta: 7 },
-    { gioco: "taboo", livello: "oro",      icona: "🌟", nome: "Turno da Ricordare",  desc: "Concludi 15 turni con più indovinate che BUZZ",     stat: "turniPositivi",            meta: 15 },
-    { gioco: "taboo", livello: "diamante", icona: "👑", nome: "Re delle Squadre",    desc: "Concludi 25 partite con la tua squadra vincitrice", stat: "vittorie",                 meta: 25 },
-    { gioco: "taboo", livello: "diamante", icona: "💥", nome: "Dieci Perfette",      desc: "Fai indovinare 10 carte di fila nello stesso turno",stat: "comboCarteMax",            meta: 10 },
-    { gioco: "taboo", livello: "diamante", icona: "🔮", nome: "Intesa Imbattibile",  desc: "Concludi 5 tuoi turni positivi di fila, anche tra partite diverse", stat: "serieTurniPositiviMax", meta: 5 },
-
-    // ---- Palla a Pendolo ----
-    { gioco: "pendolo", livello: "bronzo",   icona: "🏁", nome: "Prima Partita",        desc: "Concludi la tua prima partita",                                stat: "partite",                       meta: 1 },
-    { gioco: "pendolo", livello: "bronzo",   icona: "🎯", nome: "Prendi la Mira",        desc: "Gioca una partita da lanciatore",                             stat: "partiteLanciatore",             meta: 1 },
-    { gioco: "pendolo", livello: "bronzo",   icona: "🏃", nome: "Piedi sulla Trave",     desc: "Gioca una partita sulla trave",                               stat: "partiteTrave",                  meta: 1 },
-    { gioco: "pendolo", livello: "bronzo",   icona: "💦", nome: "Primo Tuffo",           desc: "Butta giù un avversario in una sfida",                       stat: "avversariButtati",              meta: 1 },
-    { gioco: "pendolo", livello: "bronzo",   icona: "⤴️", nome: "Salto al Momento",      desc: "Schiva la palla con un salto in una sfida",                   stat: "saltiRiusciti",                 meta: 1 },
-    { gioco: "pendolo", livello: "bronzo",   icona: "🏆", nome: "Prima Vittoria",        desc: "Vinci una sfida contro bot non Facili o contro una persona",  stat: "vittorie",                     meta: 1 },
-    { gioco: "pendolo", livello: "argento",  icona: "🔟", nome: "Dieci Partite",         desc: "Concludi 10 partite",                                         stat: "partite",                      meta: 10 },
-    { gioco: "pendolo", livello: "argento",  icona: "🎳", nome: "Caduta dopo Caduta",    desc: "Butta giù 10 avversari in totale nelle sfide",              stat: "avversariButtati",              meta: 10 },
-    { gioco: "pendolo", livello: "argento",  icona: "🔥", nome: "Braccio Sicuro",        desc: "Vinci 3 sfide da lanciatore",                                 stat: "vittorieLanciatore",            meta: 3 },
-    { gioco: "pendolo", livello: "argento",  icona: "⚖️", nome: "Equilibrio d'Argento",  desc: "Vinci 3 sfide sulla trave",                                   stat: "vittorieTrave",                 meta: 3 },
-    { gioco: "pendolo", livello: "argento",  icona: "🌐", nome: "Pendolo in Compagnia", desc: "Vinci 3 partite online contro almeno una persona",           stat: "vittorieOnline",                meta: 3 },
-    { gioco: "pendolo", livello: "oro",      icona: "📅", nome: "Serate sul Pendolo",   desc: "Concludi 25 partite",                                         stat: "partite",                      meta: 25 },
-    { gioco: "pendolo", livello: "oro",      icona: "🎪", nome: "Lanciatore Esperto",    desc: "Vinci 10 sfide da lanciatore",                                stat: "vittorieLanciatore",           meta: 10 },
-    { gioco: "pendolo", livello: "oro",      icona: "🦾", nome: "Bot in Acqua",         desc: "Batti 3 volte il bot Difficile giocando da lanciatore",     stat: "vittorieLanciatoreDifficile",   meta: 3 },
-    { gioco: "pendolo", livello: "oro",      icona: "🛡️", nome: "Sempre in Piedi",      desc: "Resisti al bot Difficile sulla trave",                      stat: "vittorieTraveDifficile",        meta: 1 },
-    { gioco: "pendolo", livello: "diamante", icona: "⚡", nome: "Lancio Lampo",          desc: "Batti il bot Difficile buttando giù tutti in 10 secondi",  stat: "triplettaDifficileVeloce",      meta: 1 },
-    { gioco: "pendolo", livello: "diamante", icona: "🧿", nome: "Mira da Campione",      desc: "Batti 20 volte il bot Difficile da lanciatore",           stat: "vittorieLanciatoreDifficile",   meta: 20 },
-    { gioco: "pendolo", livello: "diamante", icona: "🌊", nome: "Trave Impossibile",     desc: "Resisti 3 volte al bot Difficile sulla trave",            stat: "vittorieTraveDifficile",        meta: 3 },
-
-    // ---- La Ruota della Fortuna ----
-    { gioco: "ruota", livello: "bronzo",   icona: "🎡", nome: "Dieci Giri",          desc: "Gira la ruota 10 volte",                                      stat: "giri",                          meta: 10 },
-    { gioco: "ruota", livello: "bronzo",   icona: "🅰️", nome: "Una Vocale alla Volta",desc: "Scopri 3 vocali comprate in modalità Sfida",                  stat: "vocaliIndovinate",              meta: 3 },
-    { gioco: "ruota", livello: "bronzo",   icona: "🔤", nome: "Consonante Fortunata",desc: "Indovina 10 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 10 },
-    { gioco: "ruota", livello: "bronzo",   icona: "💡", nome: "La Frase è Mia",       desc: "Risolvi una frase in modalità Sfida",                         stat: "frasiRisolte",                  meta: 1 },
-    { gioco: "ruota", livello: "bronzo",   icona: "🏅", nome: "Vittoria in Sfida",    desc: "Vinci una partita contro il Bot Medio o Difficile, oppure contro persone", stat: "vittorieSfida", meta: 1 },
-    { gioco: "ruota", livello: "bronzo",   icona: "🎤", nome: "Al Microfono",         desc: "Concludi la tua prima partita",                              stat: "partite",                       meta: 1 },
-    { gioco: "ruota", livello: "argento",  icona: "🔟", nome: "Dieci Puntate",        desc: "Concludi 10 partite",                                         stat: "partite",                       meta: 10 },
-    { gioco: "ruota", livello: "argento",  icona: "🧩", nome: "Frasi Svelate",        desc: "Risolvi 10 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 10 },
-    { gioco: "ruota", livello: "argento",  icona: "🎯", nome: "Occhio alle Lettere",  desc: "Indovina 50 consonanti in modalità Sfida",                    stat: "consonantiIndovinate",          meta: 50 },
-    { gioco: "ruota", livello: "argento",  icona: "🥈", nome: "Cinque Trionfi",       desc: "Vinci 5 partite in modalità Sfida",                           stat: "vittorieSfida",                 meta: 5 },
-    { gioco: "ruota", livello: "argento",  icona: "🧠", nome: "Avanti il Prossimo",   desc: "Batti Bot e gli altri bot di bravura Media 3 volte",         stat: "vittorieMedio",                 meta: 3 },
-    { gioco: "ruota", livello: "oro",      icona: "📅", nome: "Ruota di Serate",      desc: "Concludi 25 partite",                                         stat: "partite",                       meta: 25 },
-    { gioco: "ruota", livello: "oro",      icona: "📣", nome: "Voce da Campione",     desc: "Risolvi 30 frasi in modalità Sfida",                          stat: "frasiRisolte",                  meta: 30 },
-    { gioco: "ruota", livello: "oro",      icona: "💰", nome: "Manche da 5.000",      desc: "Vinci 3 manche con almeno 5.000 punti ciascuna",             stat: "mancheDa5000",                  meta: 3 },
-    { gioco: "ruota", livello: "oro",      icona: "🤖", nome: "Bot al Tappeto",      desc: "Batti i bot di bravura Difficile",                            stat: "vittorieDifficile",             meta: 1 },
-    { gioco: "ruota", livello: "diamante", icona: "👑", nome: "Re della Ruota",       desc: "Vinci 20 partite in modalità Sfida",                          stat: "vittorieSfida",                 meta: 20 },
-    { gioco: "ruota", livello: "diamante", icona: "🛡️", nome: "Senza Bancarotta",     desc: "Batti i bot Difficili senza mai fare Bancarotta",            stat: "vittorieDifficileSenzaBancarotta", meta: 1 },
-    { gioco: "ruota", livello: "diamante", icona: "💎", nome: "Partita Perfetta",     desc: "Batti i bot Difficili vincendo tutte le manche di una partita da almeno 3 manche", stat: "vittorieDifficileTutteLeManche", meta: 1 },
-
-    // ---- L'Asta ----
-    { gioco: "asta", livello: "bronzo",   icona: "🔨", nome: "Prima Asta",             desc: "Concludi la tua prima partita",                              stat: "partite",         meta: 1 },
-    { gioco: "asta", livello: "bronzo",   icona: "🏆", nome: "Al Primo Posto",         desc: "Vinci una partita",                                           stat: "vinte",            meta: 1 },
-    { gioco: "asta", livello: "bronzo",   icona: "🎒", nome: "Kit in Costruzione",     desc: "Gioca una partita dei Temi classici",                         stat: "partiteTemi",      meta: 1 },
-    { gioco: "asta", livello: "bronzo",   icona: "⚽", nome: "Rosa al Completo",       desc: "Gioca una partita di Mini asta Fantacalcio",                  stat: "partiteFanta",     meta: 1 },
-    { gioco: "asta", livello: "bronzo",   icona: "💰", nome: "La Prima Aggiudicazione",desc: "Vinci una carta con un'offerta",                               stat: "asteVinte",        meta: 1 },
-    { gioco: "asta", livello: "bronzo",   icona: "⭐", nome: "Pioggia di Stelle",      desc: "Ricevi almeno 5 stelle in totale",                            stat: "stelleRicevute",   meta: 5 },
-    { gioco: "asta", livello: "argento",  icona: "🔟", nome: "Dieci Serate",           desc: "Concludi 10 partite",                                         stat: "partite",          meta: 10 },
-    { gioco: "asta", livello: "argento",  icona: "🥈", nome: "Cinque Vittorie",        desc: "Vinci 5 partite",                                             stat: "vinte",            meta: 5 },
-    { gioco: "asta", livello: "argento",  icona: "🛎️", nome: "Banco Battuto",          desc: "Aggiudicati 20 carte con le tue offerte",                     stat: "asteVinte",        meta: 20 },
-    { gioco: "asta", livello: "argento",  icona: "🌐", nome: "Tavolo Online",          desc: "Concludi 5 partite online",                                   stat: "partiteOnline",    meta: 5 },
-    { gioco: "asta", livello: "argento",  icona: "🪙", nome: "Portafoglio Leggero",    desc: "Spendi 100 crediti nelle aste",                               stat: "creditiSpesi",     meta: 100 },
-    { gioco: "asta", livello: "oro",      icona: "🎒", nome: "Maestro dei Temi",       desc: "Vinci 5 partite dei Temi classici",                          stat: "vinteTemi",        meta: 5 },
-    { gioco: "asta", livello: "oro",      icona: "⚽", nome: "Re del Fantacalcio",     desc: "Vinci 5 partite di Mini asta Fantacalcio",                   stat: "vinteFanta",       meta: 5 },
-    { gioco: "asta", livello: "oro",      icona: "🤝", nome: "Compagnia Vincente",     desc: "Vinci 10 partite online",                                    stat: "vinteOnline",      meta: 10 },
-    { gioco: "asta", livello: "oro",      icona: "📣", nome: "Rilancio dopo Rilancio", desc: "Aggiudicati 50 carte con le tue offerte",                    stat: "asteVinte",        meta: 50 },
-    { gioco: "asta", livello: "oro",      icona: "🌟", nome: "Kit da Applausi",        desc: "Ricevi 50 stelle in totale",                                 stat: "stelleRicevute",   meta: 50 },
-    { gioco: "asta", livello: "diamante", icona: "💎", nome: "Presenza Costante",      desc: "Concludi 50 partite",                                         stat: "partite",          meta: 50 },
-    { gioco: "asta", livello: "diamante", icona: "👑", nome: "Leggenda della Stanza",  desc: "Vinci 20 partite online",                                    stat: "vinteOnline",      meta: 20 },
-    { gioco: "asta", livello: "diamante", icona: "⚡", nome: "Re del Martello",        desc: "Aggiudicati 100 carte con le tue offerte",                   stat: "asteVinte",        meta: 100 },
-
-    // ---- NOMI, COSE E CITTÀ ----
-    { gioco: "nomicose", livello: "bronzo",   icona: "✍️", nome: "Prima Matita",       desc: "Concludi la tua prima partita",                              stat: "partite",       meta: 1 },
-    { gioco: "nomicose", livello: "bronzo",   icona: "🔤", nome: "Parola Valida",      desc: "Fai approvare la tua prima parola",                        stat: "paroleValide",  meta: 1 },
-    { gioco: "nomicose", livello: "bronzo",   icona: "📋", nome: "Caselle Piene",      desc: "Completa tutte le categorie in un giro",                   stat: "giriCompleti",  meta: 1 },
-    { gioco: "nomicose", livello: "bronzo",   icona: "🌐", nome: "Al Tavolo Online",   desc: "Concludi una partita online",                              stat: "partiteOnline", meta: 1 },
-    { gioco: "nomicose", livello: "bronzo",   icona: "🏅", nome: "Prima Vittoria",     desc: "Vinci una partita",                                        stat: "vinte",         meta: 1 },
-    { gioco: "nomicose", livello: "bronzo",   icona: "🤝", nome: "Stessa Risposta",    desc: "Scrivi 3 parole valide uguali a quelle di un altro giocatore", stat: "paroleDoppie", meta: 3 },
-    { gioco: "nomicose", livello: "argento",  icona: "🔟", nome: "Serata di Parole",   desc: "Concludi 10 partite",                                      stat: "partite",       meta: 10 },
-    { gioco: "nomicose", livello: "argento",  icona: "🖋️", nome: "Penna Sciolta",      desc: "Fai approvare 50 parole",                                  stat: "paroleValide",  meta: 50 },
-    { gioco: "nomicose", livello: "argento",  icona: "🔁", nome: "Menti Gemelle",      desc: "Scrivi 15 parole valide uguali a quelle di un altro",        stat: "paroleDoppie", meta: 15 },
-    { gioco: "nomicose", livello: "argento",  icona: "📱", nome: "Amici in Rete",      desc: "Concludi 8 partite online",                                stat: "partiteOnline", meta: 8 },
-    { gioco: "nomicose", livello: "argento",  icona: "🥇", nome: "Cinque Vittorie",    desc: "Vinci 5 partite",                                          stat: "vinte",         meta: 5 },
-    { gioco: "nomicose", livello: "oro",      icona: "📚", nome: "Vocabolario Vivente", desc: "Fai approvare 150 parole",                                stat: "paroleValide",  meta: 150 },
-    { gioco: "nomicose", livello: "oro",      icona: "🧠", nome: "Giro Senza Macchie", desc: "Fai approvare tutte le parole in 10 giri",                stat: "giriPerfetti",  meta: 10 },
-    { gioco: "nomicose", livello: "oro",      icona: "🎉", nome: "Serate in Compagnia", desc: "Concludi 25 partite",                                     stat: "partite",       meta: 25 },
-    { gioco: "nomicose", livello: "oro",      icona: "🏆", nome: "Campione del Gruppo", desc: "Vinci 10 partite",                                        stat: "vinte",         meta: 10 },
-    { gioco: "nomicose", livello: "oro",      icona: "🛜", nome: "Campione Connesso",  desc: "Vinci 10 partite online",                                 stat: "vinteOnline",   meta: 10 },
-    { gioco: "nomicose", livello: "diamante", icona: "💎", nome: "Grande Lessico",     desc: "Fai approvare 300 parole",                                stat: "paroleValide",  meta: 300 },
-    { gioco: "nomicose", livello: "diamante", icona: "👑", nome: "Re delle Parole",    desc: "Vinci 20 partite",                                        stat: "vinte",         meta: 20 },
-    { gioco: "nomicose", livello: "diamante", icona: "✨", nome: "Giri da Manuale",    desc: "Fai approvare tutte le parole in 25 giri",                stat: "giriPerfetti",  meta: 25 },
-
-    // ---- La Patata Bollente ----
-    { gioco: "patata", livello: "bronzo",   icona: "💣", nome: "Si Comincia",         desc: "Concludi la tua prima partita",                                      stat: "partite",             meta: 1 },
-    { gioco: "patata", livello: "bronzo",   icona: "🤲", nome: "Bomba in Mano",       desc: "Ricevi la bomba 5 volte",                                             stat: "bombeRicevute",       meta: 5 },
-    { gioco: "patata", livello: "bronzo",   icona: "🏃", nome: "Passa la Patata",     desc: "Passa la bomba 5 volte",                                             stat: "passaggi",            meta: 5 },
-    { gioco: "patata", livello: "bronzo",   icona: "🛡️", nome: "Ancora in Gara",      desc: "Sopravvivi a 3 esplosioni",                                          stat: "roundSopravvissuti",  meta: 3 },
-    { gioco: "patata", livello: "bronzo",   icona: "🗳️", nome: "Scelta di Gruppo",    desc: "Vota una categoria in una partita online",                           stat: "votiCategoria",       meta: 1 },
-    { gioco: "patata", livello: "bronzo",   icona: "📱", nome: "Prima Bomba Online",  desc: "Concludi una partita online",                                       stat: "partiteOnline",       meta: 1 },
-    { gioco: "patata", livello: "argento",  icona: "🔟", nome: "Serate Esplosive",    desc: "Concludi 10 partite",                                                stat: "partite",             meta: 10 },
-    { gioco: "patata", livello: "argento",  icona: "💨", nome: "Mani Veloci",         desc: "Passa la bomba 30 volte",                                           stat: "passaggi",            meta: 30 },
-    { gioco: "patata", livello: "argento",  icona: "↩️", nome: "Non Era Valida",      desc: "Rimanda indietro la bomba 5 volte",                                 stat: "rimandi",             meta: 5 },
-    { gioco: "patata", livello: "argento",  icona: "🧍", nome: "Duro a Morire",       desc: "Sopravvivi a 25 esplosioni",                                        stat: "roundSopravvissuti",  meta: 25 },
-    { gioco: "patata", livello: "argento",  icona: "🎲", nome: "La Ruota Decide",     desc: "Gioca 3 partite con una categoria a sorpresa",                      stat: "partiteSorpresa",     meta: 3 },
-    { gioco: "patata", livello: "argento",  icona: "🏆", nome: "Ultimo Rimasto",      desc: "Vinci la tua prima partita online (almeno in 3)",                    stat: "vittorie",            meta: 1 },
-    { gioco: "patata", livello: "oro",      icona: "⚡", nome: "Passaggi Fulminei",   desc: "Passa la bomba 100 volte",                                          stat: "passaggi",            meta: 100 },
-    { gioco: "patata", livello: "oro",      icona: "🌋", nome: "Sopravvissuto",       desc: "Sopravvivi a 60 esplosioni",                                        stat: "roundSopravvissuti",  meta: 60 },
-    { gioco: "patata", livello: "oro",      icona: "🌐", nome: "Ultimo Online",       desc: "Vinci 5 partite online (almeno in 3)",                              stat: "vittorieOnline",      meta: 5 },
-    { gioco: "patata", livello: "oro",      icona: "🎰", nome: "Amante del Rischio",  desc: "Gioca 10 partite con una categoria a sorpresa",                     stat: "partiteSorpresa",     meta: 10 },
-    { gioco: "patata", livello: "diamante", icona: "👑", nome: "Re della Patata",     desc: "Vinci 15 partite online (almeno in 3)",                             stat: "vittorieOnline",      meta: 15 },
-    { gioco: "patata", livello: "diamante", icona: "🔥", nome: "Serie Bollente",      desc: "Vinci 3 partite online di fila (almeno in 3)",                      stat: "serieVittorieMax",    meta: 3 },
-    { gioco: "patata", livello: "diamante", icona: "💎", nome: "Giro Infinito",       desc: "Passa la bomba 200 volte",                                          stat: "passaggi",            meta: 200 },
-
-    // ---- Sì... però ----
-    { gioco: "sipero", livello: "bronzo",   icona: "🤨", nome: "Ci Sono Anch'io",     desc: "Concludi la tua prima partita",                              stat: "partite",          meta: 1 },
-    { gioco: "sipero", livello: "bronzo",   icona: "⚖️", nome: "Primo Verdetto",       desc: "Fai da giudice in un round",                                  stat: "roundGiudice",     meta: 1 },
-    { gioco: "sipero", livello: "bronzo",   icona: "🟥", nome: "Dalla Parte Giusta",   desc: "Vinci il tuo primo round in squadra",                        stat: "roundVinti",       meta: 1 },
-    { gioco: "sipero", livello: "bronzo",   icona: "🟢", nome: "Un Tocco di Paradiso", desc: "Gioca 5 carte Bonus con la tua squadra",                    stat: "carteBonus",       meta: 5 },
-    { gioco: "sipero", livello: "bronzo",   icona: "🔴", nome: "Piccolo Disastro",     desc: "Gioca 5 carte Malus con la tua squadra",                    stat: "carteMalus",       meta: 5 },
-    { gioco: "sipero", livello: "bronzo",   icona: "🌐", nome: "Prima Stanza",         desc: "Concludi una partita online",                               stat: "partiteOnline",    meta: 1 },
-    { gioco: "sipero", livello: "argento",  icona: "🔟", nome: "Serate al Circolo",    desc: "Concludi 10 partite",                                       stat: "partite",          meta: 10 },
-    { gioco: "sipero", livello: "argento",  icona: "🎙️", nome: "Giudice Abituale",     desc: "Fai da giudice in 8 round",                                 stat: "roundGiudice",     meta: 8 },
-    { gioco: "sipero", livello: "argento",  icona: "🏅", nome: "La Squadra Convince",  desc: "Vinci 15 round in squadra",                                 stat: "roundVinti",       meta: 15 },
-    { gioco: "sipero", livello: "argento",  icona: "✨", nome: "Idee Brillanti",       desc: "Gioca 30 carte Bonus con la tua squadra",                   stat: "carteBonus",       meta: 30 },
-    { gioco: "sipero", livello: "argento",  icona: "💥", nome: "Malus a Raffica",      desc: "Gioca 30 carte Malus con la tua squadra",                  stat: "carteMalus",       meta: 30 },
-    { gioco: "sipero", livello: "oro",      icona: "🏆", nome: "Cinque Vittorie",      desc: "Vinci 5 partite",                                          stat: "vittorie",         meta: 5 },
-    { gioco: "sipero", livello: "oro",      icona: "🧑‍⚖️", nome: "Arbitro Esperto",      desc: "Fai da giudice in 20 round",                                stat: "roundGiudice",     meta: 20 },
-    { gioco: "sipero", livello: "oro",      icona: "🤝", nome: "Compagni di Avventura",desc: "Vinci 50 round in squadra",                                stat: "roundVinti",       meta: 50 },
-    { gioco: "sipero", livello: "oro",      icona: "📡", nome: "Squadra Connessa",     desc: "Vinci 5 partite online facendo parte della squadra scelta", stat: "vittorieOnline",   meta: 5 },
-    { gioco: "sipero", livello: "oro",      icona: "🃏", nome: "Scenari Memorabili",   desc: "Gioca 50 carte Bonus con la tua squadra",                  stat: "carteBonus",       meta: 50 },
-    { gioco: "sipero", livello: "diamante", icona: "💎", nome: "Venti Serate Online",  desc: "Concludi 20 partite online",                               stat: "partiteOnline",    meta: 20 },
-    { gioco: "sipero", livello: "diamante", icona: "🎓", nome: "Giudice di Fiducia",   desc: "Fai da giudice in 50 round",                                stat: "roundGiudice",     meta: 50 },
-    { gioco: "sipero", livello: "diamante", icona: "🔥", nome: "Il Verdetto è Tuo",    desc: "Vinci 3 partite di fila (quelle da giudice non interrompono la serie)", stat: "serieVittorieMax", meta: 3 },
-
-    // ---- PAROLA D'ORDINE ----
-    { gioco: "ordine", livello: "bronzo",   icona: "🕵️", nome: "Prima Missione",        desc: "Concludi la tua prima partita online",                   stat: "partite",      meta: 1 },
-    { gioco: "ordine", livello: "bronzo",   icona: "👑", nome: "Capo per un Giro",      desc: "Dai il tuo primo indizio valido alla squadra",          stat: "indizi",       meta: 1 },
-    { gioco: "ordine", livello: "bronzo",   icona: "🔎", nome: "Occhio di Squadra",     desc: "Gira 3 parole della tua squadra",                      stat: "paroleGiuste", meta: 3 },
-    { gioco: "ordine", livello: "bronzo",   icona: "🗣️", nome: "Voce al Tabellone",     desc: "Dai 5 indizi validi nel corso delle partite",          stat: "indizi",       meta: 5 },
-    { gioco: "ordine", livello: "bronzo",   icona: "🏅", nome: "Prima Vittoria",        desc: "Vinci una partita con la tua squadra",                stat: "vittorie",     meta: 1 },
-    { gioco: "ordine", livello: "bronzo",   icona: "⭐", nome: "Parola d'Oro",          desc: "Gira la casella speciale della parola d'oro",          stat: "paroleOro",    meta: 1 },
-    { gioco: "ordine", livello: "argento",  icona: "📱", nome: "Serata in Rete",        desc: "Concludi 10 partite online",                           stat: "partiteOnline", meta: 10 },
-    { gioco: "ordine", livello: "argento",  icona: "🧩", nome: "Intesa Crescente",      desc: "Gira 25 parole della tua squadra",                    stat: "paroleGiuste", meta: 25 },
-    { gioco: "ordine", livello: "argento",  icona: "🎙️", nome: "Indiziere Affidabile", desc: "Dai 15 indizi validi",                                stat: "indizi",       meta: 15 },
-    { gioco: "ordine", livello: "argento",  icona: "🥇", nome: "Squadra Affiatata",     desc: "Vinci 5 partite con la tua squadra",                  stat: "vittorie",     meta: 5 },
-    { gioco: "ordine", livello: "argento",  icona: "🧢", nome: "Capitano Vincente",     desc: "Vinci 3 partite mentre sei il capo della squadra",    stat: "vittorieCapo", meta: 3 },
-    { gioco: "ordine", livello: "oro",      icona: "🗓️", nome: "Amico del Tabellone",  desc: "Concludi 25 partite online",                           stat: "partiteOnline", meta: 25 },
-    { gioco: "ordine", livello: "oro",      icona: "🧠", nome: "Mente in Sintonia",     desc: "Gira 100 parole della tua squadra",                   stat: "paroleGiuste", meta: 100 },
-    { gioco: "ordine", livello: "oro",      icona: "📣", nome: "Voce Esperta",          desc: "Dai 50 indizi validi",                                stat: "indizi",       meta: 50 },
-    { gioco: "ordine", livello: "oro",      icona: "🏆", nome: "Squadra Vincente",      desc: "Vinci 15 partite con la tua squadra",                 stat: "vittorie",     meta: 15 },
-    { gioco: "ordine", livello: "oro",      icona: "👑", nome: "Capo che Trascina",    desc: "Vinci 6 partite mentre sei il capo della squadra",     stat: "vittorieCapo", meta: 6 },
-    { gioco: "ordine", livello: "diamante", icona: "💎", nome: "Leggenda di Squadra",   desc: "Gira 150 parole della tua squadra",                   stat: "paroleGiuste", meta: 150 },
-    { gioco: "ordine", livello: "diamante", icona: "🎖️", nome: "Capitano Leggendario", desc: "Vinci 12 partite da capo della squadra",              stat: "vittorieCapo", meta: 12 },
-    { gioco: "ordine", livello: "diamante", icona: "🌟", nome: "Re del Tabellone",      desc: "Vinci 25 partite con la tua squadra",                 stat: "vittorie",     meta: 25 },
-
-    // ---- Horto Muso ----
-    { gioco: "horto", livello: "bronzo",   icona: "🏇", nome: "Ai Cancelletti",       desc: "Concludi la tua prima corsa",                                      stat: "partite",         meta: 1 },
-    { gioco: "horto", livello: "bronzo",   icona: "🐎", nome: "Cinque Corse",          desc: "Concludi 5 corse",                                                stat: "partite",         meta: 5 },
-    { gioco: "horto", livello: "bronzo",   icona: "🥉", nome: "Sul Podio",              desc: "Arriva tra i primi 3 in una corsa con almeno 4 cavalli, equilibrata o online", stat: "podi", meta: 1 },
-    { gioco: "horto", livello: "bronzo",   icona: "🏁", nome: "Primo al Traguardo",    desc: "Vinci una corsa a difficoltà Media o Difficile, o online contro una persona", stat: "vittorie", meta: 1 },
-    { gioco: "horto", livello: "bronzo",   icona: "🎖️", nome: "Tre Medaglie",          desc: "Arriva tra i primi 3 in 5 corse con almeno 4 cavalli, equilibrate o online", stat: "podi", meta: 5 },
-    { gioco: "horto", livello: "bronzo",   icona: "⚡", nome: "Quattro in Pista",      desc: "Vinci una corsa con almeno 4 cavalli, senza scegliere Facile",   stat: "vinte4",           meta: 1 },
-    { gioco: "horto", livello: "argento",  icona: "📅", nome: "Quindici Partenze",     desc: "Concludi 15 corse",                                               stat: "partite",         meta: 15 },
-    { gioco: "horto", livello: "argento",  icona: "🥈", nome: "Podio Abituale",        desc: "Arriva tra i primi 3 in 15 corse con almeno 4 cavalli, equilibrate o online", stat: "podi", meta: 15 },
-    { gioco: "horto", livello: "argento",  icona: "🏆", nome: "Cinque Vittorie",       desc: "Vinci 5 corse equilibrate o online",                            stat: "vittorie",        meta: 5 },
-    { gioco: "horto", livello: "argento",  icona: "🧠", nome: "Bot di Buon Passo",     desc: "Batti i bot a difficoltà Media",                                stat: "vinteMedio",      meta: 1 },
-    { gioco: "horto", livello: "argento",  icona: "🌐", nome: "Sfida in Compagnia",   desc: "Vinci una corsa online contro almeno una persona",               stat: "vinteOnline",     meta: 1 },
-    { gioco: "horto", livello: "argento",  icona: "🐴", nome: "Otto al Via",           desc: "Vinci con 8 cavalli in gara, senza scegliere Facile",            stat: "vinte8NonFacile", meta: 1 },
-    { gioco: "horto", livello: "oro",      icona: "🏟️", nome: "Stagione Completa",     desc: "Concludi 30 corse",                                               stat: "partite",         meta: 30 },
-    { gioco: "horto", livello: "oro",      icona: "🥇", nome: "Quindici Traguardi",    desc: "Vinci 15 corse equilibrate o online",                           stat: "vittorie",        meta: 15 },
-    { gioco: "horto", livello: "oro",      icona: "⚖️", nome: "Regolarità da Campione",desc: "Batti i bot a difficoltà Media 5 volte",                       stat: "vinteMedio",      meta: 5 },
-    { gioco: "horto", livello: "oro",      icona: "🦾", nome: "Il Bot Difficile",      desc: "Batti i bot a difficoltà Difficile",                           stat: "vinteDifficile",  meta: 1 },
-    { gioco: "horto", livello: "oro",      icona: "🤝", nome: "Rivincite Online",      desc: "Vinci 5 corse online contro almeno una persona",                stat: "vinteOnline",     meta: 5 },
-    { gioco: "horto", livello: "diamante", icona: "👑", nome: "Cinque Volte Difficile",desc: "Batti i bot a difficoltà Difficile 5 volte",                    stat: "vinteDifficile",  meta: 5 },
-    { gioco: "horto", livello: "diamante", icona: "💎", nome: "Otto Frecce",           desc: "Vinci 10 corse equilibrate con 8 cavalli",                      stat: "vinte8NonFacile", meta: 10 },
-    { gioco: "horto", livello: "diamante", icona: "🌟", nome: "Leggenda dell'Ippodromo",desc: "Vinci 30 corse equilibrate o online",                          stat: "vittorie",        meta: 30 },
-
-    // ---- Scarabocchio ----
-    { gioco: "scarabocchio", livello: "bronzo",   icona: "🎨", nome: "Prima Partita",          desc: "Concludi la tua prima partita",                                                stat: "partite",                    meta: 1 },
-    { gioco: "scarabocchio", livello: "bronzo",   icona: "✏️", nome: "Matita in Mano",         desc: "Disegna la tua prima parola",                                                   stat: "turniDisegnati",             meta: 1 },
-    { gioco: "scarabocchio", livello: "bronzo",   icona: "💡", nome: "Prima Intuizione",       desc: "Indovina una parola",                                                           stat: "indovinate",                 meta: 1 },
-    { gioco: "scarabocchio", livello: "bronzo",   icona: "🔥", nome: "Ci Sei Quasi",           desc: "Vai vicino alla parola con una risposta",                                       stat: "quasi",                      meta: 1 },
-    { gioco: "scarabocchio", livello: "bronzo",   icona: "⚡", nome: "Risposta al Volo",       desc: "Indovina per primo in un turno",                                                stat: "indovinatePrimo",            meta: 1 },
-    { gioco: "scarabocchio", livello: "bronzo",   icona: "👏", nome: "Disegno Apprezzato",     desc: "Fai indovinare una parola mentre disegni",                                      stat: "disegniIndovinati",          meta: 1 },
-    { gioco: "scarabocchio", livello: "argento",  icona: "🔟", nome: "Serata tra Amici",       desc: "Concludi 10 partite",                                                           stat: "partite",                    meta: 10 },
-    { gioco: "scarabocchio", livello: "argento",  icona: "🖌️", nome: "Matita Instancabile",    desc: "Disegna 20 parole",                                                             stat: "turniDisegnati",             meta: 20 },
-    { gioco: "scarabocchio", livello: "argento",  icona: "🧠", nome: "Occhio di Falco",        desc: "Indovina 25 parole",                                                            stat: "indovinate",                 meta: 25 },
-    { gioco: "scarabocchio", livello: "argento",  icona: "👥", nome: "Disegno Corale",         desc: "Fai indovinare la stessa parola ad almeno 3 persone, per 3 volte",                stat: "disegniConTreIndovinatori", meta: 3 },
-    { gioco: "scarabocchio", livello: "argento",  icona: "🦉", nome: "Parole Coraggiose",      desc: "Indovina 5 parole difficili",                                                   stat: "indovinateDifficili",       meta: 5 },
-    { gioco: "scarabocchio", livello: "oro",      icona: "🏆", nome: "Campione di Scarabocchio",desc: "Arriva al primo posto in 3 partite",                                           stat: "vittorie",                  meta: 3 },
-    { gioco: "scarabocchio", livello: "oro",      icona: "🚀", nome: "Mani Veloci",            desc: "Indovina 10 parole quando resta almeno il 60% del tempo",                       stat: "indovinateVeloci",          meta: 10 },
-    { gioco: "scarabocchio", livello: "oro",      icona: "🌟", nome: "Artista Apprezzato",     desc: "Fai indovinare 20 parole mentre disegni",                                      stat: "disegniIndovinati",         meta: 20 },
-    { gioco: "scarabocchio", livello: "oro",      icona: "🐉", nome: "Matita Temeraria",       desc: "Disegna 10 parole difficili scelte da te",                                      stat: "paroleDifficiliDisegnate", meta: 10 },
-    { gioco: "scarabocchio", livello: "oro",      icona: "💰", nome: "Pioggia di Punti",       desc: "Ottieni 1.000 punti indovinando parole",                                       stat: "puntiIndovinando",         meta: 1000 },
-    { gioco: "scarabocchio", livello: "oro",      icona: "🧩", nome: "Parole Dure, Vittorie",  desc: "Vinci 3 partite dopo che è stata disegnata almeno una parola difficile",        stat: "vittorieDifficili",        meta: 3 },
-    { gioco: "scarabocchio", livello: "diamante", icona: "👑", nome: "Maestro del Tavolo",     desc: "Arriva al primo posto in 10 partite",                                          stat: "vittorie",                  meta: 10 },
-    { gioco: "scarabocchio", livello: "diamante", icona: "🌐", nome: "Tutta la Stanza",        desc: "Vinci 3 partite con almeno 6 giocatori rimasti",                                stat: "vittorieGruppo",            meta: 3 },
-    { gioco: "scarabocchio", livello: "diamante", icona: "💎", nome: "Maestro delle Parole",   desc: "Fai indovinare 10 parole difficili mentre disegni",                                                  stat: "paroleDifficiliIndovinate", meta: 10 },
-    { gioco: "lunghezza", livello: "bronzo",  icona: "📡", nome: "Prima Onda",         desc: "Finisci la tua prima partita",                        stat: "partite",         meta: 1 },
-    { gioco: "lunghezza", livello: "bronzo",  icona: "🎯", nome: "Centro!",            desc: "Fai centro (4 punti) indovinando",                    stat: "centri",          meta: 1 },
-    { gioco: "lunghezza", livello: "bronzo",  icona: "🔮", nome: "Sensitivo",          desc: "Fai il sensitivo per la prima volta",                 stat: "turniSensitivo",  meta: 1 },
-    { gioco: "lunghezza", livello: "argento", icona: "⬅️", nome: "Scommettitore",      desc: "Vinci 10 scommesse a sinistra o a destra",            stat: "scommesseGiuste", meta: 10 },
-    { gioco: "lunghezza", livello: "argento", icona: "🧠", nome: "Leggi nel Pensiero", desc: "Da sensitivo, fai fare centro 5 volte",               stat: "centriDati",      meta: 5 },
-    { gioco: "lunghezza", livello: "argento", icona: "📶", nome: "Stessa Frequenza",   desc: "Finisci 10 partite",                                  stat: "partite",         meta: 10 },
-    { gioco: "lunghezza", livello: "oro",     icona: "🏆", nome: "Campioni d'Onda",    desc: "Vinci 15 partite",                                    stat: "vittorie",        meta: 15 },
-    { gioco: "lunghezza", livello: "oro",     icona: "🔭", nome: "Occhio di Lince",    desc: "Fai centro 40 volte",                                 stat: "centri",          meta: 40 },
-  ];
-
-  function valoreStat(prof, gioco, chiave) {
-    var st = (window.SGNube && SGNube.statGioco) ? SGNube.statGioco(gioco) : {};
-    var v = (st && st[chiave]) || 0;
-    // il record fiches tiene conto anche del saldo attuale (es. dopo un bonus)
-    if (chiave === "recordFiches") { var ora = prof.coins || 0; if (ora > v) v = ora; }   // fiches = Speed Coins
-    return v;
-  }
-  function trofeiDi(gid) { return TROFEI.filter(function (t) { return t.gioco === gid; }); }
-  function trofeoFatto(prof, t) { return valoreStat(prof, t.gioco, t.stat) >= t.meta; }
-  function contaTrofei(prof, gid) { var l = trofeiDi(gid), n = 0; l.forEach(function (t) { if (trofeoFatto(prof, t)) n++; }); return { fatti: n, tot: l.length }; }
-  function platinato(prof, gid) { var c = contaTrofei(prof, gid); return c.tot > 0 && c.fatti === c.tot; }
-  var ICONE_LIV = { bronzo: "🥉", argento: "🥈", oro: "🥇", diamante: "💎" };
-  function perLivello(prof, gid) {   // i trofei di un gioco divisi per tipo: { bronzo: { fatti, tot }, ... }
-    var r = {}; trofeiDi(gid).forEach(function (t) { var p = r[t.livello] || (r[t.livello] = { fatti: 0, tot: 0 }); p.tot++; if (trofeoFatto(prof, t)) p.fatti++; });
-    return r;
-  }
-  function chipLivelli(prof, gid) {   // la riga "🥉 3/9  🥈 1/6 …" sotto ogni gioco
-    var pl = perLivello(prof, gid), riga = el("div", { class: "sg-livelli" });
-    ORDINE_LIV.forEach(function (l) { var p = pl[l]; if (!p) return; riga.appendChild(el("span", { class: "sg-liv " + LIVELLI[l].cls + (p.fatti === p.tot ? " pieno" : ""), html: ICONE_LIV[l] + " <b>" + p.fatti + "</b>/" + p.tot })); });
-    if (platinato(prof, gid)) riga.appendChild(el("span", { class: "sg-liv tl-platino pieno", html: "💠 <b>Platino</b>" }));
-    return riga;
-  }
-
-  // schermata principale: l'elenco di TUTTI i giochi, ognuno coi suoi trofei dentro
-  function schermataSfide() {
-    var s = schermata({ icona: "🏆", titolo: "Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: tornaHome }); s._menu = "trofei";
-    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
-    if (!prof) {
-      s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per registrare i progressi e sbloccare i trofei: i dati ti seguono su ogni telefono." }));
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👤 Crea / accedi al profilo", onclick: function () { schermataAccesso(schermataSfide); } }));
-      mostra(s); return;
-    }
-    var totFatti = 0, totTrofei = 0, platini = 0, conPlatino = 0, perLiv = {};
-    ["bronzo", "argento", "oro", "diamante"].forEach(function (l) { perLiv[l] = { fatti: 0, tot: 0 }; });
-    TROFEI.forEach(function (t) { var p = perLiv[t.livello]; if (!p) return; p.tot++; if (trofeoFatto(prof, t)) p.fatti++; });
-    giochi.forEach(function (g) { var c = contaTrofei(prof, g.id); totFatti += c.fatti; totTrofei += c.tot; if (c.tot) conPlatino++; if (platinato(prof, g.id)) platini++; });
-    var pctTot = Math.floor(totFatti * 100 / Math.max(1, totTrofei));
-    function cella(cls, ico, nome, f, t) {
-      return el("div", { class: "sm-liv " + cls }, [ el("div", { class: "sm-ico", text: ico }), el("div", { class: "sm-num", html: "<b>" + f + "</b>/" + t }), el("div", { class: "sm-nome", text: nome }) ]);
-    }
-    s._contenuto.appendChild(el("div", { class: "sfide-sommario" }, [
-      el("div", { class: "sm-testa", html: "🏆 <b>" + totFatti + "</b>/" + totTrofei + " trofei <span class='sm-pct'>" + pctTot + "%</span>" }),
-      el("div", { class: "sg-barra sm-barra" }, [ el("div", { class: "sg-fill", style: "width:" + pctTot + "%" }) ]),
-      el("div", { class: "sm-livelli" }, [
-        cella("tl-bronzo", "🥉", "Bronzo", perLiv.bronzo.fatti, perLiv.bronzo.tot),
-        cella("tl-argento", "🥈", "Argento", perLiv.argento.fatti, perLiv.argento.tot),
-        cella("tl-oro", "🥇", "Oro", perLiv.oro.fatti, perLiv.oro.tot),
-        cella("tl-diamante", "💎", "Diamante", perLiv.diamante.fatti, perLiv.diamante.tot),
-        cella("tl-platino", "💠", "Platino", platini, conPlatino)
-      ])
-    ]));
-    giochi.forEach(function (g) {
-      var c = contaTrofei(prof, g.id), plat = platinato(prof, g.id), pct = Math.floor(c.fatti * 100 / Math.max(1, c.tot));
-      s._contenuto.appendChild(el("button", { class: "sfida-gioco" + (plat ? " platinato" : ""), onclick: function () { schermataSfideGioco(g.id); } }, [
-        el("span", { class: "sg-ico", text: g.icona || "🎮" }),
-        el("div", { class: "sg-corpo" }, [
-          el("div", { class: "sg-nome", text: g.nome }),
-          el("div", { class: "sg-sub", html: c.tot ? (c.fatti + "/" + c.tot + " trofei" + (plat ? "  ·  💠 Platino!" : "") + " <span class='sg-pct'>" + pct + "%</span>") : "Trofei in arrivo" }),
-          c.tot ? el("div", { class: "sg-barra" }, [ el("div", { class: "sg-fill", style: "width:" + pct + "%" }) ]) : null,
-          c.tot ? chipLivelli(prof, g.id) : null   // quanti trofei per tipo
-        ]),
-        el("span", { class: "sg-frecc", text: plat ? "💠" : "›" })
-      ]));
-    });
-    if (!HOME_MENU_SOTTO) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: schermataHome }));   // (📱 col menu sotto è un doppione)
-    mostra(s);
-  }
-  // schermata di un singolo gioco: platino in cima + trofei per livello
-  function schermataSfideGioco(gid) {
-    var g = null; giochi.forEach(function (x) { if (x.id === gid) g = x; }); if (!g) g = { nome: gid, icona: "🎮" };
-    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
-    var s = schermata({ icona: g.icona || "🏆", titolo: g.nome, sotto: "Trofei del gioco", indietro: schermataSfide });
-    if (!prof) { s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Accedi al profilo per vedere i tuoi trofei." })); s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Tutti i giochi", onclick: schermataSfide })); mostra(s); return; }
-    var lista = trofeiDi(gid), c = contaTrofei(prof, gid);
-    // trofeo Platino (sempre mostrato: è il traguardo del gioco)
-    var plat = c.tot > 0 && c.fatti === c.tot;
-    s._contenuto.appendChild(el("div", { class: "trofeo tl-platino" + (plat ? " fatto" : "") }, [
-      el("div", { class: "tr-ico", text: plat ? "💠" : "🔒" }),
-      el("div", { class: "tr-corpo" }, [
-        el("div", { class: "tr-nome", text: "Platino" + (plat ? "  ✓" : "") }),
-        el("div", { class: "tr-desc", text: "Sblocca tutti i trofei del gioco" }),
-        el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + Math.round(c.fatti * 100 / Math.max(1, c.tot)) + "%" }) ]),
-        el("div", { class: "tr-num", text: c.fatti + " / " + c.tot })
-      ])
-    ]));
-    if (!lista.length) {
-      s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "margin-top:14px", text: "Le sfide di " + g.nome + " arrivano presto — le definiamo insieme. Intanto le tue partite vengono già registrate." }));
-    } else {
-      var pl = perLivello(prof, gid), celle = [];   // in cima: quanti trofei per tipo, come nella schermata di tutti i giochi
-      ORDINE_LIV.forEach(function (l) { var p = pl[l] || { fatti: 0, tot: 0 }; celle.push(el("div", { class: "sm-liv " + LIVELLI[l].cls }, [ el("div", { class: "sm-ico", text: ICONE_LIV[l] }), el("div", { class: "sm-num", html: "<b>" + p.fatti + "</b>/" + p.tot }), el("div", { class: "sm-nome", text: LIVELLI[l].nome }) ])); });
-      celle.push(el("div", { class: "sm-liv tl-platino" }, [ el("div", { class: "sm-ico", text: "💠" }), el("div", { class: "sm-num", html: "<b>" + (plat ? 1 : 0) + "</b>/1" }), el("div", { class: "sm-nome", text: "Platino" }) ]));
-      s._contenuto.appendChild(el("div", { class: "sfide-sommario sm-gioco" }, [ el("div", { class: "sm-livelli" }, celle) ]));
-      ORDINE_LIV.forEach(function (liv) {
-        var gruppo = lista.filter(function (t) { return t.livello === liv; });
-        if (!gruppo.length) return;
-        s._contenuto.appendChild(el("div", { class: "etichetta", text: ICONE_LIV[liv] + " " + LIVELLI[liv].nome + " · " + (pl[liv] ? pl[liv].fatti : 0) + "/" + gruppo.length }));
-        gruppo.forEach(function (t) {
-          var val = valoreStat(prof, t.gioco, t.stat), fatto = val >= t.meta;
-          var perc = Math.max(0, Math.min(100, Math.round(val * 100 / t.meta)));
-          s._contenuto.appendChild(el("div", { class: "trofeo " + LIVELLI[liv].cls + (fatto ? " fatto" : "") }, [
-            el("div", { class: "tr-ico", text: fatto ? t.icona : "🔒" }),
-            el("div", { class: "tr-corpo" }, [
-              el("div", { class: "tr-nome", text: t.nome + (fatto ? "  ✓" : "") }),
-              el("div", { class: "tr-desc", text: t.desc }),
-              el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + perc + "%" }) ]),
-              el("div", { class: "tr-num", text: Math.min(val, t.meta) + " / " + t.meta })
-            ])
-          ]));
-        });
-      });
-    }
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Tutti i giochi", onclick: schermataSfide }));
-    mostra(s);
-  }
-
-  // ---- Avviso "Trofeo sbloccato!" (pochi secondi, con suono e vibrazione) ----
-  // Ricorda i trofei già presi dal profilo: dopo ogni salvataggio controlla se ne è
-  // arrivato uno nuovo. Al primo caricamento (o cambio profilo) non avvisa di nulla.
-  var trofeiNoti = null, codaTrofei = [], avvisoAttivo = false;
-  function trofeiSbloccati(prof) {
-    var s = {};
-    TROFEI.forEach(function (t) { if (trofeoFatto(prof, t)) s[t.gioco + "|" + t.nome] = t; });
-    giochi.forEach(function (g) { if (platinato(prof, g.id)) s[g.id + "|__platino"] = { gioco: g.id, livello: "platino", icona: "💠", nome: "Platino" }; });
-    return s;
-  }
-  function controllaTrofei() {
-    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
-    if (!prof) { trofeiNoti = null; return; }
-    var ora = trofeiSbloccati(prof), nuovi = {};
-    if (trofeiNoti && trofeiNoti.uid === prof.uid) {
-      for (var k in ora) if (!trofeiNoti.set[k]) { codaTrofei.push(ora[k]); nuovi[k] = 1; }
-      // il Platino arriva per ultimo, dopo i trofei che l'hanno fatto scattare
-      codaTrofei.sort(function (a, b) { return (a.livello === "platino") - (b.livello === "platino"); });
-      prossimoAvviso();
-    }
-    trofeiNoti = { uid: prof.uid, set: ora };
-    pubblicaTrofei(prof, ora);
-    premiaTrofei(prof, ora, nuovi);
-  }
-  // ---- i premi dei trofei: ogni trofeo dà XP e Speed Coins secondo il livello, una volta sola per profilo
-  //      (anche quelli presi prima che esistessero i premi: arrivano tutti insieme in un regalo) ----
-  var PREMI_TROFEI = { bronzo: { xp: 100, monete: 100 }, argento: { xp: 250, monete: 250 }, oro: { xp: 600, monete: 600 },
-    diamante: { xp: 1500, monete: 1500 }, platino: { xp: 3000, monete: 3000 } };
-  function premioTesto(livello) { var p = PREMI_TROFEI[livello]; return p ? " · +" + cifre(p.xp) + " XP · +" + cifre(p.monete) + " 🪙" : ""; }
-  function chiaveTrofeo(k) { var h = 5381; for (var i = 0; i < k.length; i++) h = (Math.imul(h, 33) ^ k.charCodeAt(i)) >>> 0; return "t" + h.toString(36); }
-  function premiaTrofei(prof, ora, inVista) {
-    if (!(window.SGNube && SGNube.premiaTrofei && window.SGLivelli)) return;
-    var fatti = prof.premiTrofei || {}, chiavi = [], xp = 0, mon = 0, xpN = 0, monN = 0, nascosti = 0;
-    for (var k in ora) {
-      var c = chiaveTrofeo(k), p = PREMI_TROFEI[ora[k].livello];
-      if (!p || fatti[c]) continue;
-      chiavi.push(c); xp += p.xp; mon += p.monete;
-      if (!inVista[k]) { nascosti++; xpN += p.xp; monN += p.monete; }   // quelli senza il loro avviso (presi prima)
-    }
-    if (!chiavi.length) return;
-    var r = SGNube.premiaTrofei(chiavi, xp, mon); if (!r) return;
-    if (nascosti) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🎁", su: nascosti === 1 ? "Premio di un trofeo" : "Premi dei tuoi " + nascosti + " trofei",
-      nome: "+" + cifre(xpN) + " XP · +" + cifre(monN) + " Speed Coins", sotto: "Ogni trofeo ora dà XP e monete 🪙" });
-    var lv = 0, pr = 0, m2 = 0;
-    r.eventi.forEach(function (e) { m2 += e.monete; if (e.tipo === "livello") lv = e.livello; if (e.tipo === "prestigio") pr = e.prestigio; });
-    if (pr) codaTrofei.push({ tipo: "xp", cls: "tl-platino", icona: "🌟", su: "PRESTIGIO " + pr + "!", nome: "Si riparte dal livello 1", sotto: "+" + cifre(m2) + " Speed Coins 🪙" });
-    else if (lv) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🆙", su: "Coi premi dei trofei", nome: "Livello " + lv + "!", sotto: "+" + cifre(m2) + " Speed Coins 🪙" });
-    prossimoAvviso();
-  }
-  // la "scheda" che vedono gli amici: quanti trofei, per livello e per gioco
-  function pubblicaTrofei(prof, set) {
-    if (!(window.SGNube && SGNube.pubblica)) return;
-    var liv = { platino: 0, diamante: 0, oro: 0, argento: 0, bronzo: 0 }, perGioco = {}, n = 0;
-    for (var k in set) { var t = set[k]; n++; if (liv[t.livello] != null) liv[t.livello]++; perGioco[t.gioco] = (perGioco[t.gioco] || 0) + 1; }
-    SGNube.pubblica({ trofei: n, liv: liv, giochi: perGioco });
-    pubblicaCasa();
-  }
-
-  // ---- Amici e classifica trofei ----
-  // Gli amici si aggiungono scrivendo il loro nome del profilo. La classifica
-  // mette in fila te e i tuoi amici, da chi ha più trofei a chi ne ha meno.
-  var cacheAmici = null;   // ultime schede lette: la lista compare subito, poi si aggiorna
-  function totTrofeiTutti() { return TROFEI.length + giochi.filter(function (g) { return trofeiDi(g.id).length; }).length; }
-  function ordinaClassifica(l) {
-    function v(x, k) { return (x.liv && x.liv[k]) || 0; }
-    return l.slice().sort(function (a, b) {
-      return (b.trofei || 0) - (a.trofei || 0) || v(b, "platino") - v(a, "platino") || v(b, "diamante") - v(a, "diamante") ||
-        v(b, "oro") - v(a, "oro") || v(b, "argento") - v(a, "argento") || String(a.nome).localeCompare(String(b.nome));
-    });
-  }
-  function faccina(sch, cls) {
-    return el("span", { class: cls, html: sch.omino && window.SGOmino ? SGOmino.svg(sch.omino, { busto: true }) : "<span class='am-emo'>" + (sch.emoji || "🙂") + "</span>" });
-  }
-  function erroreAmici(e) {
-    var c = e && e.code || "";
-    if (c === "permission-denied") return "La lista amici non è ancora attiva sul server. Riprova tra poco.";
-    if (c === "unavailable" || (e && e.message === "offline")) return "Nessuna connessione: riprova.";
-    return "Qualcosa è andato storto, riprova.";
-  }
-  // richieste di amicizia (arrivate/inviate): lette all'apertura e ricordate
-  var cacheRich = null, richLette = 0, errRich = null;
-  function aggiornaRichieste(forza) {
-    if (!(window.SGNube && SGNube.disponibile() && SGNube.profilo() && SGNube.richieste)) return Promise.resolve(null);
-    if (!forza && cacheRich && Date.now() - richLette < 30000) return Promise.resolve(cacheRich);
-    richLette = Date.now();
-    return SGNube.richieste().then(function (r) {
-      cacheRich = r;
-      // il pallino sul tasto Amici in home, senza ridisegnare la home
-      var b = document.querySelector(".home-amici");
-      if (b) { var p = b.querySelector(".pallino"); if (r.arrivate.length && !p) b.appendChild(el("span", { class: "pallino" })); if (!r.arrivate.length && p) b.removeChild(p); }
-      return r;
-    }).catch(function (e) { errRich = e; return cacheRich; });
-  }
-  // che rapporto ho con questo giocatore
-  function rapporto(uid) {
-    var prof = SGNube.profilo();
-    if (prof && uid === prof.uid) return "io";
-    if (SGNube.amici().indexOf(uid) >= 0) return "amico";
-    if (cacheRich) {
-      if (cacheRich.arrivate.some(function (r) { return r.da === uid; })) return "arrivata";
-      if (cacheRich.inviate.some(function (r) { return r.a === uid; })) return "inviata";
-    }
-    return "nessuno";
-  }
-  // manda la richiesta (o accetta se lui l'aveva già mandata) e dice com'è andata
-  function chiediA(sch, fatto) {
-    return SGNube.chiediAmicizia(sch).then(function (esito) {
-      return aggiornaRichieste(true).then(function () {
-        if (fatto) fatto(esito === "amici" ? "✅ Tu e " + sch.nome + " ora siete amici!" : "📨 Richiesta mandata a " + sch.nome + ".");
-      });
-    });
-  }
-  function laMiaScheda(prof) {
-    var io = { uid: prof.uid, nome: prof.nome, omino: prof.omino || null, emoji: prof.emoji, io: true, giochi: {} };
-    var set = trofeiSbloccati(prof), liv = { platino: 0, diamante: 0, oro: 0, argento: 0, bronzo: 0 };
-    io.trofei = 0;
-    for (var k in set) { io.trofei++; if (liv[set[k].livello] != null) liv[set[k].livello]++; io.giochi[set[k].gioco] = (io.giochi[set[k].gioco] || 0) + 1; }
-    io.liv = liv;
-    return io;
-  }
-
-  function schermataAmici(scheda) {
-    scheda = scheda || "generale";
-    var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
-    var s = schermata({ icona: "👥", titolo: "Classifica e amici", sotto: "Chi ha più trofei", indietro: tornaHome }); s._menu = "classifica";
-    if (!prof) {
-      s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per entrare in classifica, aggiungere amici e confrontare i trofei." }));
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👤 Crea / accedi al profilo", onclick: function () { schermataAccesso(function () { schermataAmici(scheda); }); } }));
-      mostra(s); return;
-    }
-    controllaTrofei();   // la mia scheda pubblica è aggiornata prima di leggere le altre
-    var io = laMiaScheda(prof), tot = totTrofeiTutti();
-    var schede = el("div", { class: "am-schede" });
-    var tabRich = null;
-    [["generale", "🌍 Generale"], ["amici", "👥 Amici"], ["richieste", "📨 Richieste"]].forEach(function (x) {
-      var b = el("button", { class: "am-tab" + (x[0] === scheda ? " attiva" : ""), onclick: function () { if (x[0] !== scheda) schermataAmici(x[0]); } }, [ el("span", { text: x[1] }) ]);
-      if (x[0] === "richieste") tabRich = b;
-      schede.appendChild(b);
-    });
-    function segnaRichieste() {
-      var n = cacheRich ? cacheRich.arrivate.length : 0, p = tabRich.querySelector(".am-conta");
-      if (n && !p) tabRich.appendChild(el("span", { class: "am-conta", text: "" + n }));
-      else if (p) { if (n) p.textContent = "" + n; else tabRich.removeChild(p); }
-    }
-    segnaRichieste();
-    s._contenuto.appendChild(schede);
-    var corpo = el("div", { class: "am-corpo" });
-    s._contenuto.appendChild(corpo);
-    function ancoraQui() { return !!s.parentNode; }
-    function carica(testo) { corpo.appendChild(el("p", { class: "modulo-nota am-carica", text: testo })); }
-    function errore(e) { var c = corpo.querySelector(".am-carica"); if (c) c.textContent = erroreAmici(e); else corpo.appendChild(el("p", { class: "link-avviso", text: erroreAmici(e) })); }
-
-    // una riga di classifica; "azione" = il tasto a destra per chiedere/accettare l'amicizia
-    function riga(x, pos, conAzione) {
-      var medaglia = pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : pos ? pos + "°" : "–";
-      var l = x.liv || {};
-      var dett = [["💠", l.platino], ["💎", l.diamante], ["🥇", l.oro], ["🥈", l.argento], ["🥉", l.bronzo]]
-        .filter(function (d) { return d[1]; }).map(function (d) { return d[0] + " " + d[1]; }).join("   ");   // (🌙 spazio che non va a capo: il metallo resta attaccato al suo numero)
-      var rap = rapporto(x.uid), azione = null;
-      if (conAzione) {
-        if (rap === "amico") azione = el("span", { class: "am-stato", text: "👥" });
-        else if (rap === "inviata") azione = el("span", { class: "am-stato", text: "⏳" });
-        else if (rap === "arrivata" || rap === "nessuno") {
-          azione = el("button", { class: "am-piu" + (rap === "arrivata" ? " si" : ""), text: rap === "arrivata" ? "✓" : "➕", "aria-label": "Amicizia con " + x.nome, onclick: function (e) {
-            e.stopPropagation(); azione.disabled = true;
-            chiediA(x, function () { if (ancoraQui()) schermataAmici(scheda); }).catch(function (er) { azione.disabled = false; alert(erroreAmici(er)); });
-          } });
-        }
-      }
-      return el("button", { class: "am-riga" + (x.io ? " io" : "") + (pos && pos <= 3 ? " podio p" + pos : ""), onclick: function () { schermataTrofeiAmico(x, scheda); } }, [
-        el("span", { class: "am-pos", text: medaglia }),
-        faccina(x, "am-fac"),
-        el("div", { class: "am-info" }, [
-          el("div", { class: "am-nome", text: x.nome + (x.io ? " (tu)" : "") }),
-          el("div", { class: "am-dett", text: dett || "Nessun trofeo ancora" })
-        ]),
-        el("div", { class: "am-num" }, [ el("b", { text: "" + (x.trofei || 0) }), el("span", { text: "/" + tot }) ]),
-        azione
-      ]);
-    }
-    // mette in fila e numera (a pari trofei, stesso posto)
-    function classifica(lista, conAzione) {
-      var pos = 0, prec = null;
-      ordinaClassifica(lista).forEach(function (x, i) {
-        if (!prec || (x.trofei || 0) !== (prec.trofei || 0)) pos = i + 1;
-        prec = x;
-        corpo.appendChild(riga(x, pos, conAzione));
-      });
-    }
-
-    if (scheda === "generale") {
-      carica("Carico la classifica…");
-      Promise.all([SGNube.classificaGenerale(100), aggiornaRichieste()]).then(function (rr) {
-        if (!ancoraQui()) return;
-        svuota(corpo); segnaRichieste();
-        var lista = rr[0].filter(function (x) { return x.uid !== io.uid; }), dentro = rr[0].length > lista.length || rr[0].length < 100;
-        if (dentro) classifica(lista.concat([io]), true);
-        else {   // non sono tra i primi 100: la classifica e poi io in fondo
-          classifica(lista, true);
-          corpo.appendChild(el("div", { class: "am-sep", text: "…" }));
-          corpo.appendChild(riga(io, 0, false));
-        }
-        corpo.appendChild(el("p", { class: "modulo-nota am-nota", text: "Tocca ➕ per chiedere l'amicizia, o un nome per vedere i suoi trofei." }));
-      }).catch(errore);
-    } else if (scheda === "amici") {
-      var campo = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Cerca un nome…" });
-      var bCerca = el("button", { class: "btn btn-primario am-agg", text: "➕ Chiedi" });
-      var avviso = el("div", { class: "link-avviso" });
-      function cerca() {
-        var n = (campo.value || "").trim();
-        if (n.length < 2) { avviso.textContent = "Scrivi il nome del profilo del tuo amico."; return; }
-        if (SGNube.chiaveNome(n) === SGNube.chiaveNome(prof.nome)) { avviso.textContent = "Quello sei tu 😄"; return; }
-        bCerca.disabled = true; avviso.textContent = "Cerco…";
-        SGNube.cercaNome(n).then(function (sch) {
-          if (!sch) { bCerca.disabled = false; avviso.textContent = "Non trovo nessuno con questo nome. Deve aver aperto l'app almeno una volta dopo l'aggiornamento."; return; }
-          var rap = rapporto(sch.uid);
-          if (rap === "amico") { bCerca.disabled = false; avviso.textContent = sch.nome + " è già tuo amico."; return; }
-          if (rap === "inviata") { bCerca.disabled = false; avviso.textContent = "Hai già mandato la richiesta a " + sch.nome + ": aspetta che accetti."; return; }
-          return chiediA(sch, function (msg) { bCerca.disabled = false; campo.value = ""; avviso.textContent = msg; });
-        }).catch(function (e) { bCerca.disabled = false; avviso.textContent = erroreAmici(e); });
-      }
-      bCerca.onclick = cerca;
-      campo.addEventListener("keydown", function (e) { if (e.key === "Enter") cerca(); });
-      s._contenuto.insertBefore(el("div", { class: "am-cerca-box" }, [ el("div", { class: "am-cerca" }, [campo, bCerca]), avviso ]), corpo);
-      // "🟢 Fatti vedere online dagli amici" (Passo 6): spento, gli amici non ti vedono col pallino verde (gli inviti arrivano lo stesso)
-      if (window.SGAmiciOnline && SGAmiciOnline.visibile) {
-        var chkOn = el("input", { type: "checkbox", "aria-label": "Fatti vedere online dagli amici" });
-        chkOn.checked = SGAmiciOnline.visibile();
-        chkOn.addEventListener("change", function () { SGAmiciOnline.visibile(!!chkOn.checked); });
-        s._contenuto.insertBefore(el("div", { class: "sl-viva-opz am-presenza" }, [
-          el("label", { class: "sl-interruttore" }, [ el("span", { text: "🟢 Fatti vedere online dagli amici" }), chkOn ]),
-          el("small", { text: "Vedono quando hai l'app aperta e ti chiamano nella loro Sala. Spento non ti vedono, ma i loro inviti ti arrivano lo stesso." })
-        ]), corpo);
-      }
-      var mieiUid = SGNube.amici();
-      var giaNoti = (cacheAmici || []).filter(function (x) { return mieiUid.indexOf(x.uid) >= 0; });
-      function disegnaAmici(l) {
-        svuota(corpo);
-        classifica(l.concat([io]), false);
-        if (!l.length) corpo.appendChild(el("p", { class: "modulo-nota am-nota", text: "Non hai ancora amici. Cerca il loro nome qui sopra, oppure chiedi l'amicizia dalla classifica Generale." }));
-      }
-      disegnaAmici(giaNoti);
-      aggiornaRichieste().then(function () {   // intanto si sistemano le amicizie accettate/tolte dagli altri
-        segnaRichieste();
-        var uids = SGNube.amici();
-        if (!uids.length) { cacheAmici = []; if (ancoraQui()) disegnaAmici([]); return; }
-        if (!giaNoti.length) carica("Carico gli amici…");
-        return SGNube.schede(uids).then(function (l) { cacheAmici = l; if (ancoraQui()) disegnaAmici(l); });
-      }).catch(errore);
-    } else {
-      carica("Carico le richieste…");
-      aggiornaRichieste(true).then(function (r) {
-        if (!ancoraQui()) return;
-        svuota(corpo); segnaRichieste();
-        if (!r) { errore(errRich || { code: "unavailable" }); return; }
-        function persona(nome, omino, emoji) { return { nome: nome || "?", omino: omino || null, emoji: emoji }; }
-        corpo.appendChild(el("div", { class: "etichetta am-etich", text: "Arrivate a te" }));
-        if (!r.arrivate.length) corpo.appendChild(el("p", { class: "modulo-nota am-nota", text: "Nessuna richiesta nuova." }));
-        r.arrivate.forEach(function (q) {
-          var bSi = el("button", { class: "am-piu si", text: "✓", "aria-label": "Accetta", onclick: function () {
-            bSi.disabled = true;
-            SGNube.accetta(q).then(function () { return aggiornaRichieste(true); }).then(function () { schermataAmici("richieste"); })
-              .catch(function (e) { bSi.disabled = false; alert(erroreAmici(e)); });
-          } });
-          var bNo = el("button", { class: "am-togli", text: "✕", "aria-label": "Rifiuta", onclick: function () {
-            SGNube.rifiuta(q).then(function () { return aggiornaRichieste(true); }).then(function () { schermataAmici("richieste"); }).catch(function () {});
-          } });
-          corpo.appendChild(el("div", { class: "am-riga" }, [
-            faccina(persona(q.daNome, q.daOmino, q.daEmoji), "am-fac"),
-            el("div", { class: "am-info" }, [ el("div", { class: "am-nome", text: q.daNome || "?" }), el("div", { class: "am-dett", text: "vuole essere tuo amico" }) ]),
-            bNo, bSi
-          ]));
-        });
-        if (r.inviate.length) {
-          corpo.appendChild(el("div", { class: "etichetta am-etich", text: "Mandate da te" }));
-          r.inviate.forEach(function (q) {
-            corpo.appendChild(el("div", { class: "am-riga" }, [
-              el("span", { class: "am-fac" }, [ el("span", { class: "am-emo", text: "⏳" }) ]),
-              el("div", { class: "am-info" }, [ el("div", { class: "am-nome", text: q.aNome || "?" }), el("div", { class: "am-dett", text: "in attesa che accetti" }) ]),
-              el("button", { class: "am-togli", text: "✕", "aria-label": "Annulla", onclick: function () {
-                SGNube.annulla(q).then(function () { return aggiornaRichieste(true); }).then(function () { schermataAmici("richieste"); }).catch(function () {});
-              } })
-            ]));
-          });
-        }
-      });
-    }
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Torna alla home", onclick: schermataHome }));
-    mostra(s);
-  }
-  // i trofei di un giocatore, gioco per gioco (+ il tasto per l'amicizia)
-  function schermataTrofeiAmico(x, torna) {
-    torna = torna || "generale";
-    var s = schermata({ titolo: x.nome, sotto: "🏆 " + (x.trofei || 0) + " trofei", indietro: function () { schermataAmici(torna); } });
-    s._contenuto.appendChild(el("div", { class: "am-grande" }, [ faccina(x, "am-fac-grande") ]));
-    if (!x.io && CITTA_VISIBILE && window.SGCasa) s._contenuto.appendChild(el("button", { class: "btn btn-primario am-casa", text: "🏠 Vai a casa sua", onclick: function () { schermataCasaAmico(x, torna); } }));
-    var l = x.liv || {};
-    function cella(cls, ico, nome, f) {
-      return el("div", { class: "sm-liv " + cls }, [ el("div", { class: "sm-ico", text: ico }), el("div", { class: "sm-num", html: "<b>" + (f || 0) + "</b>" }), el("div", { class: "sm-nome", text: nome }) ]);
-    }
-    s._contenuto.appendChild(el("div", { class: "sfide-sommario" }, [
-      el("div", { class: "sm-livelli" }, [
-        cella("tl-bronzo", "🥉", "Bronzo", l.bronzo), cella("tl-argento", "🥈", "Argento", l.argento),
-        cella("tl-oro", "🥇", "Oro", l.oro), cella("tl-diamante", "💎", "Diamante", l.diamante), cella("tl-platino", "💠", "Platino", l.platino)
-      ])
-    ]));
-    var perGioco = x.giochi || {};
-    // prima i giochi dove ha più trofei
-    giochi.slice().sort(function (a, b) { return (perGioco[b.id] || 0) - (perGioco[a.id] || 0); }).forEach(function (g) {
-      var tot = trofeiDi(g.id).length; if (!tot) return;
-      tot++;   // + il Platino del gioco
-      var f = perGioco[g.id] || 0, pct = Math.floor(f * 100 / tot), plat = f >= tot;
-      s._contenuto.appendChild(el("div", { class: "sfida-gioco" + (plat ? " platinato" : "") }, [
-        el("span", { class: "sg-ico", text: g.icona || "🎮" }),
-        el("div", { class: "sg-corpo" }, [
-          el("div", { class: "sg-nome", text: g.nome }),
-          el("div", { class: "sg-sub", html: f + "/" + tot + " trofei" + (plat ? "  ·  💠 Platino!" : "") + " <span class='sg-pct'>" + pct + "%</span>" }),
-          el("div", { class: "sg-barra" }, [ el("div", { class: "sg-fill", style: "width:" + pct + "%" }) ])
-        ])
-      ]));
-    });
-    var rap = x.io ? "io" : rapporto(x.uid), avviso = el("div", { class: "link-avviso" });
-    if (rap === "nessuno" || rap === "arrivata") {
-      var b = el("button", { class: "btn btn-primario", text: rap === "arrivata" ? "✅ Accetta l'amicizia" : "➕ Chiedi l'amicizia", onclick: function () {
-        b.disabled = true;
-        chiediA(x, function (msg) { avviso.textContent = msg; b.textContent = msg.charAt(0) === "✅" ? "👥 Siete amici" : "⏳ Richiesta mandata"; })
-          .catch(function (e) { b.disabled = false; avviso.textContent = erroreAmici(e); });
-      } });
-      s._piede.appendChild(avviso); s._piede.appendChild(b);
-    } else if (rap === "inviata") {
-      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "⏳ Richiesta mandata, aspetta che accetti", disabled: "disabled" }));
-    } else if (rap === "amico") {
-      s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "✕ Togli dagli amici", onclick: function () {
-        chiediConferma("Togliere " + x.nome + " dagli amici?", "Sparirete dalla lista amici l'uno dell'altro. Potrai sempre richiedere l'amicizia.", "✕ Togli", function () {
-          SGNube.togliAmico(x.uid).catch(function () {});
-          cacheAmici = (cacheAmici || []).filter(function (y) { return y.uid !== x.uid; });
-          schermataAmici("amici");
-        });
-      } }));
-    }
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Indietro", onclick: function () { schermataAmici(torna); } }));
-    mostra(s);
-  }
-  // ---- 🔥 i giorni di fila: entrando col profilo si conta il giorno; al 7°, al 30° e ogni 100 giorni c'è il premio (nube.js) ----
-  function prossimoPremioGiorni(n) { var m = n < 7 ? 7 : n < 30 ? 30 : (Math.floor(n / 100) + 1) * 100; return { giorno: m, monete: SGNube.premioGiorni(m) }; }
-  function fuocoGiorni() { var p = window.SGNube && SGNube.profilo && SGNube.profilo(); return p && p.giorniFila >= 2 ? " · 🔥 " + p.giorniFila : ""; }
-  function controllaGiorno() {
-    if (!(window.SGNube && SGNube.segnaGiorno && SGNube.profilo && SGNube.profilo())) return;
-    var r = SGNube.segnaGiorno(); if (!r || (r.n < 2 && !r.premio)) return;   // il primo giorno non si festeggia
-    var pp = prossimoPremioGiorni(r.n), manca = pp.giorno - r.n;
-    codaTrofei.push({ tipo: "xp", cls: r.premio ? "tl-oro" : "tl-xp", icona: "🔥", su: r.premio ? "PREMIO GIORNI DI FILA!" : "Bentornato!", nome: r.n + " giorni di fila!",
-      sotto: r.premio ? "+" + cifre(r.premio) + " Speed Coins 🪙" : "Ancora " + manca + (manca === 1 ? " giorno" : " giorni") + " per il premio di " + cifre(pp.monete) + " 🪙" });
-    prossimoAvviso();
-  }
-  function prossimoAvviso() {
-    if (avvisoAttivo || !codaTrofei.length) return;
-    avvisoAttivo = true;
-    var t = codaTrofei.shift(), g = null, xp = t.tipo === "xp";   // xp = avviso di XP / livello / Prestigio
-    giochi.forEach(function (x) { if (x.id === t.gioco) g = x; });
-    var liv = t.livello === "platino" ? "Platino" : (LIVELLI[t.livello] ? LIVELLI[t.livello].nome : "");
-    var fatto = false, timer = null;
-    var box = el("div", { class: "avviso-trofeo " + (xp ? t.cls : "tl-" + t.livello), onclick: function () { chiudi(); } }, [
-      el("div", { class: "at-ico", text: t.icona || "🏆" }),
-      el("div", { class: "at-corpo" }, [
-        el("div", { class: "at-su", text: xp ? t.su : "🏆 Trofeo " + liv + " sbloccato!" }),
-        el("div", { class: "at-nome", text: t.nome }),
-        el("div", { class: "at-gioco", text: xp ? t.sotto : (g ? g.nome : "") + premioTesto(t.livello) })   // il premio del trofeo
-      ])
-    ]);
-    document.body.appendChild(box);   // fuori dalla schermata: resta anche se il gioco cambia pagina
-    requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add("dentro"); }); });
-    if (!xp) {
-      suonoTrofeo(t.livello === "platino");
-      try { if (navigator.vibrate) navigator.vibrate(t.livello === "platino" ? [40, 60, 40, 60, 80] : [30, 40, 30]); } catch (e) {}
-    } else if (t.cls !== "tl-xp") suonoTrofeo(t.cls === "tl-platino");   // livello salito o Prestigio: il suono del trofeo
-    timer = setTimeout(chiudi, xp && t.cls === "tl-xp" ? 3000 : 3600);
-    function chiudi() {
-      if (fatto) return; fatto = true; clearTimeout(timer);
-      box.classList.remove("dentro");
-      setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); avvisoAttivo = false; prossimoAvviso(); }, 380);
-    }
-  }
-  function suonoTrofeo(platino) {
-    var ctx = audioCtx(); if (!ctx) return;
-    try {
-      (platino ? [784, 988, 1175, 1568] : [880, 1320]).forEach(function (f, i) {
-        var t0 = ctx.currentTime + i * 0.11, o = ctx.createOscillator(), gn = ctx.createGain();
-        o.type = "sine"; o.frequency.setValueAtTime(f, t0);
-        gn.gain.setValueAtTime(0.0001, t0);
-        gn.gain.exponentialRampToValueAtTime(0.22, t0 + 0.015);
-        gn.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.38);
-        o.connect(gn); gn.connect(ctx.destination); o.start(t0); o.stop(t0 + 0.42);
-      });
-    } catch (e) {}
-  }
-  // controlla dopo ogni salvataggio dei giochi e a ogni cambio del profilo (es. bonus ritirato)
-  if (window.SGNube) {
-    ["salvaProgressi", "salvaFiches"].forEach(function (nome) {
-      var orig = SGNube[nome]; if (!orig) return;
-      SGNube[nome] = function () { var r = orig.apply(SGNube, arguments); controllaTrofei(); return r; };
-    });
-    SGNube.onCambio(controllaTrofei);
-    SGNube.onCambio(function () { setTimeout(controllaGiorno, 0); });   // i giorni di fila: appena c'è il profilo (e se l'app resta aperta dopo mezzanotte)
-  }
-
-  // ---- Proposte e segnalazioni ----
-  // I messaggi vengono spediti al sito (moduli di Netlify) e finiscono
-  // nell'area riservata del proprietario: li può leggere solo lui.
-  function inviaModulo(nomeModulo, dati) {
-    var pezzi = ["form-name=" + encodeURIComponent(nomeModulo)];
-    for (var k in dati) pezzi.push(encodeURIComponent(k) + "=" + encodeURIComponent(dati[k] == null ? "" : dati[k]));
-    return fetch("/", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: pezzi.join("&")
-    }).then(function (r) { if (!r.ok) throw new Error("invio non riuscito"); return true; });
-  }
-
-  function schermataModulo(opts) {
-    var s = schermata({ icona: opts.icona, titolo: opts.titolo, sotto: opts.sotto, indietro: schermataHome });
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: opts.nota }));
-    var nome = el("input", { class: "link-campo", type: "text", placeholder: "Il tuo nome (facoltativo)", maxlength: "24" });
-    var testo = el("textarea", { class: "modulo-testo", placeholder: opts.placeholder, rows: "6" });
-    var avviso = el("div", { class: "link-avviso" });
-    s._contenuto.appendChild(nome);
-    s._contenuto.appendChild(testo);
-    s._contenuto.appendChild(avviso);
-    var invia = el("button", { class: "btn btn-primario", text: opts.bottone, onclick: function () {
-      var msg = (testo.value || "").trim();
-      if (msg.length < 3) { avviso.textContent = "Scrivi prima il messaggio."; return; }
-      invia.disabled = true; avviso.textContent = "Invio in corso…";
-      var dati = { nome: (nome.value || "").trim() || "Anonimo", messaggio: msg };
-      if (opts.contesto) dati.contesto = opts.contesto();
-      inviaModulo(opts.modulo, dati).then(function () { grazie(opts.grazie); })
-        .catch(function () {
-          invia.disabled = false;
-          avviso.textContent = "Non sono riuscito a inviare (succede se il gioco non è aperto dal sito pubblicato). Copia il testo e mandalo a chi gestisce il gioco.";
-          testo.focus(); testo.select();
-        });
-    }});
-    s._piede.appendChild(invia);
-    mostra(s);
-  }
-
-  function grazie(testo) {
-    var s = schermata({});
-    s._contenuto.appendChild(el("div", { class: "passa" }, [
-      el("div", { class: "emoji", text: "🙏" }),
-      el("div", { class: "grande", text: "Grazie!" }),
-      el("p", { class: "tenue centro", text: testo })
-    ]));
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna ai giochi", onclick: schermataHome }));
-    mostra(s);
-  }
-
-  function schermataProposte() {
-    schermataModulo({
-      modulo: "proposte", icona: "💡", titolo: "Proposte", sotto: "Hai un'idea? Scrivila qui",
-      nota: "Un gioco nuovo, una carta da aggiungere, una regola da cambiare… scrivi pure. La legge soltanto chi gestisce il gioco.",
-      placeholder: "La mia idea è…", bottone: "Invia la proposta",
-      grazie: "La tua proposta è arrivata. Se è buona, la vedrai comparire nel gioco!"
-    });
-  }
-
-  function schermataBug() {
-    schermataModulo({
-      modulo: "bug", icona: "🐞", titolo: "Segnala un problema", sotto: "Qualcosa non funziona?",
-      nota: "Racconta cosa stavi facendo e cosa è andato storto. Più sei preciso, più in fretta lo sistemiamo.",
-      placeholder: "Stavo giocando a… e invece di… è successo…",
-      bottone: "Invia la segnalazione",
-      grazie: "Segnalazione ricevuta: ci aiuta a sistemare il gioco.",
-      contesto: function () {
-        var v = (window.SG_NOVITA && window.SG_NOVITA[0] && window.SG_NOVITA[0].v) || "?";
-        return "versione " + v + " · schermo " + window.innerWidth + "x" + window.innerHeight + " · " + navigator.userAgent;
-      }
-    });
-  }
-
+  // ---- 📊 AMICI, CLASSIFICA DEI TROFEI, PROPOSTE E SEGNALAZIONI, STATISTICHE DEI GIOCHI: in js/cuore/classifica.js ----
   function rangeGiocatori(g) {
     var base;
     if (g.etichettaGiocatori) base = g.etichettaGiocatori;   // testo su misura (es. Horto: conta i cavalli in gara, non i profili)
@@ -3539,192 +1416,13 @@
       var pc = SGNube.profilo();
       if (pc) return { id: pc.uid, nome: pc.nome, emoji: pc.emoji, omino: pc.omino || null, omini: pc.omini || null, ominoN: pc.ominoN || 0, cloud: true };
       // dentro col profilo, ma i suoi dati non arrivano (niente rete): intanto si gioca col nome e l'avatar ricordati
-      return (SGNube.utente && SGNube.utente()) || senzaRete ? profiloRicordato() : null;
+      return (SGNube.utente && SGNube.utente()) || cuore.senzaRete ? cuore.profiloRicordato() : null;
     }
     var id = leggiL(K_ATTIVO, null);
-    return profili().filter(function (p) { return p.id === id; })[0] || profiloRicordato();   // senza la parte dei profili (niente rete): quello ricordato
+    return profili().filter(function (p) { return p.id === id; })[0] || cuore.profiloRicordato();   // senza la parte dei profili (niente rete): quello ricordato
   }
-  // ---- l'ultimo profilo usato su questo telefono: { nome, omino } (mai la password). Serve se la sessione scade
-  //      (si chiede solo la password, col nome già scritto) o se all'apertura manca la rete (si entra lo stesso) ----
-  var K_ULTIMO = "sg-ultimo-profilo";
-  var senzaRete = false;   // la sessione è sparita e manca la rete: intanto si gioca col profilo ricordato (nome e avatar)
-  function ricordoProfilo() { var r = leggiL(K_ULTIMO, null); return r && r.nome ? r : null; }
-  function ricordaProfilo() {
-    var io = window.SGNube && SGNube.disponibile() && SGNube.profilo() ? profiloAttivo() : null;
-    if (!io || !io.cloud || !io.nome) return;
-    var r = { nome: io.nome, omino: io.omino || null };
-    if (JSON.stringify(r) !== JSON.stringify(ricordoProfilo())) scriviL(K_ULTIMO, r);
-  }
-  function dimenticaProfilo() { try { localStorage.removeItem(K_ULTIMO); } catch (e) {} }
-  function profiloRicordato() { var r = ricordoProfilo(); return r ? { id: "ricordo", nome: r.nome, emoji: "🙂", omino: r.omino || null, omini: null, ominoN: 0, cloud: false, ricordo: true } : null; }
-  function salvaProfilo(p) {
-    var lista = profili().filter(function (x) { return x.id !== p.id; });
-    lista.unshift(p);
-    if (lista.length > 12) lista = lista.slice(0, 12);
-    scriviL(K_PROFILI, lista); scriviL(K_ATTIVO, p.id);
-  }
-
-  function schermataCaricamento() {
-    var s = schermata({ icona: "⚡", titolo: "SPeeD GAME", sotto: "Un attimo…" });
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Sto caricando il tuo profilo…" }));
-    mostra(s);
-  }
-
-  function schermataAccesso(dopo) {
-    if (window.SGNube && SGNube.disponibile()) return schermataAccessoCloud(dopo);
-    var lista = profili();
-    var s = schermata({ icona: "👤", titolo: "Il tuo profilo", sotto: "Crea il tuo oppure accedi", indietro: schermataHome });
-    s._contenuto.appendChild(el("p", { class: "modulo-nota",
-      text: "Il profilo serve solo a non riscrivere ogni volta nome e faccina. Resta su questo telefono: non c'è nessuna password." }));
-    if (lista.length) {
-      s._contenuto.appendChild(el("div", { class: "etichetta", text: "Profili su questo telefono" }));
-      lista.slice(0, 4).forEach(function (p) {
-        s._contenuto.appendChild(el("button", { class: "profilo-riga", onclick: function () { scriviL(K_ATTIVO, p.id); dopo(); } }, [
-          el("span", { class: "av", text: p.emoji }),
-          el("span", { class: "nm", text: p.nome }),
-          el("span", { class: "frecc", text: "›" })
-        ]));
-      });
-    }
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "➕ Crea profilo", onclick: function () { schermataCreaProfilo(dopo, null); } }));
-    var bAcc = el("button", { class: "btn btn-fantasma", text: "👤 Accedi con un profilo salvato", onclick: function () { schermataScegliProfilo(dopo); } });
-    if (!lista.length) bAcc.disabled = true;
-    s._piede.appendChild(bAcc);
-    mostra(s);
-  }
-
-  function schermataScegliProfilo(dopo) {
-    var s = schermata({ icona: "👤", titolo: "Accedi", sotto: "Scegli il tuo profilo", indietro: function () { schermataAccesso(dopo); } });
-    profili().forEach(function (p) {
-      s._contenuto.appendChild(el("button", { class: "profilo-riga", onclick: function () { scriviL(K_ATTIVO, p.id); dopo(); } }, [
-        el("span", { class: "av", text: p.emoji }),
-        el("span", { class: "nm", text: p.nome }),
-        el("span", { class: "frecc", text: "›" })
-      ]));
-    });
-    mostra(s);
-  }
-
-  function schermataCreaProfilo(dopo, esistente) {
-    var scelta = { emoji: (esistente && esistente.emoji) || FACCINE[0] };
-    var s = schermata({ icona: "👤", titolo: esistente ? "Modifica profilo" : "Crea profilo",
-      indietro: function () { schermataAccesso(dopo); } });
-    var nome = el("input", { class: "link-campo", type: "text", maxlength: "16",
-      placeholder: "Come ti chiami?", value: (esistente && esistente.nome) || "" });
-    s._contenuto.appendChild(nome);
-    s._contenuto.appendChild(el("div", { class: "etichetta", text: "Scegli la faccina" }));
-    var griglia = el("div", { class: "faccine" });
-    FACCINE.forEach(function (e) {
-      griglia.appendChild(el("button", { class: "faccina" + (e === scelta.emoji ? " attiva" : ""), text: e,
-        onclick: function () {
-          scelta.emoji = e;
-          [].forEach.call(griglia.children, function (c) { c.className = "faccina" + (c.textContent === e ? " attiva" : ""); });
-        } }));
-    });
-    s._contenuto.appendChild(griglia);
-    var avviso = el("div", { class: "link-avviso" });
-    s._contenuto.appendChild(avviso);
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Salva ▶", onclick: function () {
-      var n = (nome.value || "").trim();
-      if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome."; return; }
-      salvaProfilo({ id: (esistente && esistente.id) || ("p" + Date.now() + Math.floor(Math.random() * 999)), nome: n, emoji: scelta.emoji });
-      dopo();
-    }}));
-    mostra(s);
-  }
-
-  // ---- AVATAR: il tuo personaggio stile Mii (disegno in js/omino.js; nel codice resta "omino") ----
-  // zoom: "viso" = sul palco la telecamera va sulla faccia; solo: "donna" = la scheda c'è solo per lei; look: in cima i look pronti
-  var SEZ_OMINO = [
-    { nome: "Corpo", icona: "🧍", voci: [["forma", "Maschio o femmina"], ["corpo", "Corporatura"], ["pelle", "Pelle"]],
-      sotto: [["Maschio o femmina", ["forma"]], ["Corporatura", ["corpo"]], ["Pelle", ["pelle"]]] },
-    { nome: "Viso", icona: "🙂", zoom: "viso", voci: [["viso", "Forma del viso"], ["orecchie", "Orecchie"], ["occhi", "Occhi"], ["iride", "Colore occhi"], ["sopracc", "Sopracciglia"], ["naso", "Naso"], ["bocca", "Bocca"],
-                               ["guance", "Guance"], ["segno", "Segni particolari"]],
-      sotto: [["Forma", ["viso", "orecchie"]], ["Occhi", ["occhi", "iride"]], ["Sopracciglia", ["sopracc"]], ["Naso e bocca", ["naso", "bocca"]], ["Guance e segni", ["guance", "segno"]], ["Ritocchi", ["ritocchi"]]] },
-    { nome: "Trucco", icona: "💄", zoom: "viso", solo: "donna", voci: [["ombretto", "Ombretto"], ["colOmbretto", "Colore ombretto"], ["eyeliner", "Eyeliner"], ["colEyeliner", "Colore eyeliner"], ["mascara", "Mascara"],
-                               ["rossetto", "Rossetto"], ["colRossetto", "Colore rossetto"], ["blush", "Blush"], ["colBlush", "Colore blush"]],
-      sotto: [["Occhi", ["ombretto", "colOmbretto", "eyeliner", "colEyeliner", "mascara"]], ["Labbra", ["rossetto", "colRossetto"]], ["Guance", ["blush", "colBlush"]]] },
-    { nome: "Capelli", icona: "💇", zoom: "viso", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]],
-      sotto: [["Taglio", ["capelli"]], ["Colore", ["colCap"]], ["Barba e baffi", ["barba"]]] },
-    { nome: "Vestiti", icona: "👕", look: true, voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]],
-      sotto: [["Look pronti", ["look"]], ["Parti superiori", ["capo", "maglia", "stampa"]], ["Parti inferiori", ["sotto", "pantaloni"]], ["Scarpe", ["modScarpe", "scarpe"]]] },
-    { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali e maschere"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"], ["borsa", "Borsa"], ["colBorsa", "Colore borsa"]],
-      sotto: [["In testa", ["cappello", "colAcc"]], ["Occhiali", ["occhiali"]], ["Orecchini", ["orecchini"]], ["Al collo", ["collo", "colCollo"]], ["Borsa", ["borsa", "colBorsa"]]] },
-    { nome: "Extra", icona: "🎈", voci: [["mano", "In mano"], ["colMano", "Colore"], ["schiena", "Sulla schiena"], ["colSchiena", "Colore"], ["animale", "Animaletto"], ["colAnimale", "Colore del pelo"], ["pittura", "Pittura sul viso"]],
-      sotto: [["In mano", ["mano", "colMano"]], ["Sulla schiena", ["schiena", "colSchiena"]], ["Animaletto", ["animale", "colAnimale"]], ["Pittura sul viso", ["pittura"]]] }
-  ];
-  // IL CAMERINO (l'editor nuovo): l'avatar resta grande, le scelte sono file da scorrere di lato, e i colori stanno insieme
-  // alla cosa che colorano (taglio e colore dei capelli nella stessa pagina). Tirando su la maniglia si vedono tutte le scelte.
-  var EDITOR_CAMERINO = false;   // false = per ora lo vede solo il proprietario (gli altri hanno l'editor di prima)
-  var SOTTO_CAMERINO = {   // i colori sempre presenti stanno sopra (non spostano niente); quelli che compaiono solo con certe scelte stanno sotto
-    Corpo: [["Maschio o femmina", ["forma"]], ["Corporatura e pelle", ["pelle", "corpo"]]],
-    Capelli: [["Taglio e colore", ["colCap", "capelli"]], ["Barba e baffi", ["barba"]]],
-    Vestiti: [["Look pronti", ["look"]], ["Sopra", ["maglia", "capo", "stampa"]], ["Sotto", ["pantaloni", "sotto"]], ["Scarpe", ["scarpe", "modScarpe"]]],
-    Accessori: [["In testa", ["cappello", "colAcc"]], ["Occhiali", ["occhiali"]], ["Orecchini", ["orecchini"]], ["Al collo", ["collo", "colCollo"]], ["Borsa", ["borsa", "colBorsa"]]],
-    Extra: [["In mano", ["mano", "colMano"]], ["Sulla schiena", ["schiena", "colSchiena"]], ["Animaletto", ["animale", "colAnimale"]], ["Pittura sul viso", ["pittura"]]]
-  };
-  var SEZ_CAMERINO = SEZ_OMINO.map(function (sz) { var c = {}, k; for (k in sz) c[k] = sz[k]; if (SOTTO_CAMERINO[sz.nome]) c.sotto = SOTTO_CAMERINO[sz.nome]; return c; });
-  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1, colAnimale: 1 };
-  var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush", colBorsa: "borsa" };   // il colore si vede solo se quel trucco c'è
-  var TRUCCO_VOCI = /^(ombretto|eyeliner|mascara|rossetto|blush|pittura|col(Ombretto|Eyeliner|Rossetto|Blush))$/;   // anteprime in primo piano sul viso
-  var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1, borsa: 1, mano: 1, schiena: 1, animale: 1 };   // anteprima a figura intera (le altre: solo la testa)
-  var ACC_COLORATI = /cappellino|berretto|fascia|cuffie|cilindro|cowboy|pescatore|basco|festa|gatto|cerchietto|fiocco|mollette|paglia|coppola|borsalino|visiera|mago|antenne/;   // cappelli con un colore da scegliere
-  var COLLO_COLORATI = /sciarpa|papillon|cravatta|bandana|foulard|medaglia|fischietto|cuffiecollo/;
-  var COLORE_DI = { colMano: ["mano", /palloncino|fiore|microfono|tazza|libro/], colSchiena: ["schiena", /zaino|mantello|farfalla/], colAnimale: ["animale", /gatto|cane|coniglio/] };   // colore che compare solo con certe scelte
-  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1 };   // colori dove c'è anche la tavolozza libera
-  var OMINO_RITOCCHI = [["occG", "Grandezza occhi"], ["occD", "Distanza occhi"], ["occA", "Altezza occhi"],
-    ["soprA", "Altezza sopracciglia"], ["nasoG", "Grandezza naso"], ["boccaA", "Altezza bocca"]];
-  // LOOK PRONTI: un tocco e cambiano vestiti e accessori insieme (viso, capelli e corpo restano i tuoi)
-  var LOOK_BASE = { cappello: "nessuno", occhiali: "nessuno", collo: "nessuno", mano: "nessuno", schiena: "nessuna", animale: "nessuno", pittura: "nessuna", borsa: "nessuna", stampa: "nessuna" };
-  var LOOK = [
-    { nome: "Casual", tutti: { capo: "maglietta", maglia: 1, sotto: "jeans", pantaloni: 8, modScarpe: "sneakers", scarpe: 1 }, donna: { capo: "crop", maglia: 5, sotto: "shortsjeans", pantaloni: 9 } },
-    { nome: "Elegante", tutti: { capo: "giacca", maglia: 7, sotto: "pantaloni", pantaloni: 1, modScarpe: "eleganti", scarpe: 0, collo: "papillon", colCollo: 0 },
-      donna: { capo: "vestitolungo", maglia: 0, modScarpe: "tacchi", collo: "perle", orecchini: "perla" } },
-    { nome: "Sportivo", tutti: { capo: "sportiva", maglia: 1, sotto: "tuta", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "visiera", colAcc: 8, collo: "fischietto", colCollo: 7 },
-      donna: { maglia: 5, sotto: "leggings", collo: "nessuno" } },
-    { nome: "Rock", tutti: { capo: "bomber", maglia: 7, sotto: "strappati", pantaloni: 1, modScarpe: "anfibi", scarpe: 0, occhiali: "sole", collo: "catena" } },
-    { nome: "Estate", tutti: { capo: "camicia", maglia: 6, stampa: "fiori", sotto: "bermuda", pantaloni: 10, modScarpe: "infradito", scarpe: 3, cappello: "paglia", colAcc: 6, occhiali: "sole", mano: "gelato", collo: "lei" },
-      donna: { capo: "top", stampa: "nessuna", sotto: "shortsjeans", pantaloni: 9, modScarpe: "zeppe", occhiali: "grandi" } },
-    { nome: "Inverno", tutti: { capo: "cappotto", maglia: 2, sotto: "jeans", pantaloni: 1, modScarpe: "stivali", scarpe: 5, cappello: "berretto", colAcc: 0, collo: "sciarpa", colCollo: 0 } },
-    { nome: "Tifoso", tutti: { capo: "calcio", maglia: 1, stampa: "numero", sotto: "pantaloncini", pantaloni: 8, modScarpe: "sneakers", scarpe: 1, pittura: "tricolore", mano: "bandiera" } },
-    { nome: "Rapper", tutti: { capo: "felpa", maglia: 7, sotto: "cargo", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "cappellino", colAcc: 7, occhiali: "sole", collo: "catena", mano: "microfono", colMano: 7 } },
-    { nome: "Cuoco", tutti: { capo: "grembiule", maglia: 8, sotto: "pantaloni", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "chef", mano: "pizza" } },
-    { nome: "Avventura", tutti: { capo: "camicia", maglia: 3, sotto: "cargo", pantaloni: 10, modScarpe: "anfibi", scarpe: 5, cappello: "pescatore", colAcc: 3, schiena: "zaino", colSchiena: 2, animale: "cane", colAnimale: 4 } },
-    { nome: "Musica", tutti: { capo: "maglietta", maglia: 7, stampa: "nota", sotto: "strappati", pantaloni: 8, modScarpe: "sneakers", scarpe: 0, cappello: "borsalino", colAcc: 7, schiena: "chitarra" } },
-    { nome: "Pirata", tutti: { capo: "camicia", maglia: 8, stampa: "righe", sotto: "pantaloni", pantaloni: 2, modScarpe: "stivali", scarpe: 0, cappello: "pirata", occhiali: "benda", animale: "pappagallo", collo: "bandana", colCollo: 0 } },
-    { nome: "Mago", tutti: { capo: "maglione", maglia: 4, sotto: "pantaloni", pantaloni: 6, modScarpe: "stivaletti", scarpe: 5, cappello: "mago", colAcc: 4, schiena: "mantello", colSchiena: 4, mano: "bacchetta", occhiali: "tondi" } },
-    { nome: "Supereroe", tutti: { capo: "supereroe", maglia: 1, sotto: "leggings", pantaloni: 4, modScarpe: "stivali", scarpe: 2, schiena: "mantello", colSchiena: 0, occhiali: "mascherina" } },
-    { nome: "Festa", tutti: { capo: "maglietta", maglia: 5, stampa: "stella", sotto: "jeans", pantaloni: 8, modScarpe: "sneakers", scarpe: 4, cappello: "festa", colAcc: 3, occhiali: "stelle", mano: "palloncino", colMano: 0, pittura: "cuori" } },
-    { nome: "Natale", tutti: { capo: "maglione", maglia: 0, sotto: "jeans", pantaloni: 1, modScarpe: "stivali", scarpe: 5, cappello: "babbo", collo: "sciarpa", colCollo: 2, mano: "tazza", colMano: 0 } },
-    { nome: "Vichingo", tutti: { capo: "maglione", maglia: 2, sotto: "pantaloni", pantaloni: 2, modScarpe: "stivali", scarpe: 5, cappello: "vichingo", schiena: "mantello", colSchiena: 7 } },
-    { nome: "Angioletto", tutti: { capo: "maglione", maglia: 8, sotto: "pantaloni", pantaloni: 7, modScarpe: "sneakers", scarpe: 1, cappello: "aureola", schiena: "ali" }, donna: { capo: "vestito", modScarpe: "ballerine" } },
-    { nome: "Diavoletto", tutti: { capo: "felpa", maglia: 0, sotto: "jeans", pantaloni: 1, modScarpe: "anfibi", scarpe: 0, cappello: "corna", schiena: "pipistrello" } },
-    { nome: "Fatina", tutti: { capo: "maglietta", maglia: 5, sotto: "jeans", pantaloni: 9, modScarpe: "sneakers", scarpe: 1, cappello: "tiara", schiena: "farfalla", colSchiena: 5, mano: "bacchetta" }, donna: { capo: "vestito", modScarpe: "ballerine" } }
-  ];
-  function conLook(cfg, L) {
-    var c = {}, k, pezzi = [LOOK_BASE, L.tutti, cfg.forma === "donna" ? L.donna : L.uomo];
-    for (k in cfg) c[k] = cfg[k];
-    pezzi.forEach(function (p) { if (p) for (k in p) c[k] = p[k]; });
-    return c;
-  }
-  // piccolo "pop" quando scegli qualcosa nell'editor (la vibrazione la fa già il tocco)
-  function popOmino() {
-    var ctx = audioCtx(); if (!ctx) return;
-    try {
-      var t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = "sine"; o.frequency.setValueAtTime(520, t); o.frequency.exponentialRampToValueAtTime(980, t + 0.07);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
-      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.14);
-    } catch (e) {}
-  }
-  // omini = i due avatar, n = quello in uso nei giochi (cfg)
-  function salvaOminoProfilo(cfg, omini, n) {
-    var io = profiloAttivo(); if (!io) return;
-    if (io.cloud) { SGNube.salvaOmino(cfg, omini, n); return; }
-    var p = profili().filter(function (x) { return x.id === io.id; })[0];
-    if (p) { p.omino = cfg; if (omini) { p.omini = omini; p.ominoN = n; } salvaProfilo(p); }
-  }
-  // liste personali salvate sul profilo (es. le parole di Parola d'ordine): nel cloud se il profilo è online, se no su questo telefono
+  // ---- 👤 IL PROFILO (accesso, crea profilo, profili in cloud, profilo e avatar obbligatori, benvenuto, bentornato): in js/cuore/profilo.js ----
+  // ---- AVATAR: l'editor degli avatar (e il primo avatar) sta in js/cuore/avatar.js ----
   function listaProfilo(nome) {
     var io = profiloAttivo(); if (!io) return [];
     if (io.cloud) return (window.SGNube && SGNube.lista ? SGNube.lista(nome) : []).slice();
@@ -3735,728 +1433,9 @@
     var io = profiloAttivo(); if (!io) return;
     if (io.cloud) { if (window.SGNube && SGNube.salvaLista) SGNube.salvaLista(nome, lista); return; }
     var p = profili().filter(function (x) { return x.id === io.id; })[0];
-    if (p) { p.liste = p.liste || {}; p.liste[nome] = lista; salvaProfilo(p); }
+    if (p) { p.liste = p.liste || {}; p.liste[nome] = lista; cuore.salvaProfilo(p); }
   }
   // il secondo avatar la prima volta: a caso, ma dell'altra forma (maschio <-> femmina)
-  function secondoOmino(primo, nome) {
-    return SGOmino.casuale(nome + "#2", primo.forma === "donna" ? "uomo" : "donna");
-  }
-  // bozza (facoltativa) = { nome, omino, omini, ominoN }: l'editor lavora su questa e non sul profilo
-  // (serve mentre crei il profilo: il personaggio si salva appena il profilo esiste)
-  // opz.benvenuto: subito dopo aver creato il profilo (niente ‹: l'avatar pronto c'è già, basta "✅ Fatto")
-  // IL PRIMO AVATAR (profilo appena nato): "Sei lui o lei?" → "Scegli il tuo look" → solo allora "✅ Fatto".
-  // Si aggiorna solo il pezzo che cambia; "✏️ Personalizza" apre l'editor di sempre (in modo benvenuto).
-  var LOOK_PRIMI = ["Casual", "Elegante", "Sportivo", "Rock", "Estate", "Inverno", "Rapper", "Festa"];
-  function schermataPrimoAvatar(dopo) {
-    var io = profiloAttivo(), O = window.SGOmino;
-    if (!io || !O) return dopo();
-    var nome = io.nome || "", forma = null, look = null, viso = 0, cfg = null;
-    var looks = LOOK.filter(function (L) { return LOOK_PRIMI.indexOf(L.nome) >= 0; });
-    var s = schermataProfiloBase("primo-avatar"), c = s._contenuto;
-    var titolo = el("h1", { text: "Sei lui o lei?" }), sotto = el("p", { class: "bp-sotto", text: "Tocca il tuo avatar: poi scegli il look." });
-    c.appendChild(el("div", { class: "bp-testa" }, [ el("div", { class: "bp-logo", "aria-hidden": "true", text: "⚡" }), titolo, sotto ]));
-    var corpo = el("div", { class: "pa-corpo" });
-    c.appendChild(corpo);
-    var bFatto = el("button", { class: "btn btn-primario pa-fatto", text: "✅ Fatto", disabled: "disabled", onclick: function () { salva(dopo); } });
-    var bPers = el("button", { class: "btn btn-fantasma pa-pers", text: "✏️ Personalizza di più", hidden: "hidden", onclick: function () {
-      salva(function () { schermataOmino(dopo, null, { benvenuto: true, personalizza: true }); });
-    } });
-    s._piede.appendChild(bFatto); s._piede.appendChild(bPers);
-    var salvato = false;
-    function salva(poi) {
-      if (salvato || !cfg) return; salvato = true;
-      scriviL("sg-primo-avatar", null);
-      var c0 = O.norm(cfg);
-      salvaOminoProfilo(c0, [c0, O.norm(secondoOmino(c0, nome))], 0);
-      poi();
-    }
-    function base(f) { return O.norm(O.casuale(viso ? nome + "#" + viso : nome, f)); }
-    // 1) lui o lei: due avatar grandi
-    function passoForma() {
-      forma = null; look = null; cfg = null;
-      titolo.textContent = "Sei lui o lei?"; sotto.textContent = "Tocca il tuo avatar: poi scegli il look.";
-      bFatto.disabled = true; bPers.hidden = true;
-      corpo.innerHTML = ""; corpo.className = "pa-corpo pa-forme";
-      [["uomo", "👦 Lui"], ["donna", "👧 Lei"]].forEach(function (x) {
-        var b = el("button", { class: "pa-forma", type: "button", "aria-label": x[1], onclick: function () { forma = x[0]; passoLook(); } }, [
-          el("div", { class: "pa-fig", html: O.svg(conLook(base(x[0]), looks[0]), { hd: true }) }), el("b", { text: x[1] }) ]);
-        corpo.appendChild(b);
-      });
-    }
-    // 2) il look: 8 pronti, quello scelto sul palco
-    var palco = null, griglia = null;
-    function passoLook() {
-      titolo.textContent = "Scegli il tuo look"; sotto.textContent = "Tocca quello che ti piace di più.";
-      corpo.innerHTML = ""; corpo.className = "pa-corpo pa-looks";
-      palco = el("div", { class: "pa-palco", "aria-hidden": "true" });
-      var barra = el("div", { class: "pa-barra" }, [
-        el("button", { class: "pa-mini-btn", type: "button", text: "‹ " + (forma === "donna" ? "Sono lui" : "Sono lei"), onclick: function () { forma = forma === "donna" ? "uomo" : "donna"; disegnaLook(true); } }),
-        el("button", { class: "pa-mini-btn", type: "button", text: "🎲 Altro viso", onclick: function () { viso++; disegnaLook(false); } }) ]);
-      griglia = el("div", { class: "pa-griglia" });
-      corpo.appendChild(palco); corpo.appendChild(barra); corpo.appendChild(griglia);
-      disegnaLook(true);
-    }
-    function disegnaLook(tutto) {
-      var b0 = base(forma);
-      if (tutto) {   // (cambia lui/lei: cambia anche il tasto in alto)
-        var bb = corpo.querySelector(".pa-mini-btn"); if (bb) bb.textContent = "‹ " + (forma === "donna" ? "Sono lui" : "Sono lei");
-      }
-      griglia.innerHTML = "";
-      looks.forEach(function (L) {
-        var b = el("button", { class: "pa-look" + (look === L ? " attiva" : ""), type: "button", onclick: function () {
-          look = L; [].forEach.call(griglia.children, function (x) { x.classList.toggle("attiva", x === b); }); aggiorna();
-        } }, [ el("div", { class: "pa-mini", html: O.svg(conLook(b0, L)) }), el("span", { text: L.nome }) ]);
-        griglia.appendChild(b);
-      });
-      aggiorna();
-    }
-    function aggiorna() {
-      var b0 = base(forma);
-      cfg = look ? conLook(b0, look) : null;
-      palco.innerHTML = O.svg(cfg || b0, { hd: true });
-      palco.classList.toggle("senza", !cfg);
-      bFatto.disabled = !cfg; bPers.hidden = !cfg;
-      if (cfg) popOmino();
-    }
-    passoForma();
-    mostra(s);
-  }
-  function schermataOmino(dopo, bozza, opz) {
-    if (opz && opz.benvenuto && !opz.personalizza && !bozza && window.SGOmino && profiloAttivo()) return schermataPrimoAvatar(dopo);
-    var io = bozza || profiloAttivo(), benv = !!(opz && opz.benvenuto);
-    if (!io) return schermataAccesso(function () { schermataOmino(dopo, null, opz); });
-    var salvaOminoMio = bozza ? function (c, om, n) { bozza.omino = c; bozza.omini = om; bozza.ominoN = n; } : salvaOminoProfilo;
-    var O = SGOmino, cfg = O.norm(io.omino || O.casuale(io.nome));
-    var tab = 0;
-    // più personaggi a persona: sotto il riflettore c'è il principale, scorrendo a destra/sinistra (o con le frecce) si passa agli altri
-    var principale = io.omini ? (io.ominoN || 0) : 0, slot = principale;
-    var bozze = io.omini ? [io.omini[0] || null, io.omini[1] || null] : [cfg, null];
-    bozze[slot] = cfg;
-    if (!bozze[1 - slot]) bozze[1 - slot] = secondoOmino(cfg, io.nome);
-    var s = schermata({});
-    s.classList.add("editor-avatar");   // tutto in uno schermo, senza titolo: sul palco indietro, A caso e Salva; sotto scorrono solo le scelte
-    var camerino = EDITOR_CAMERINO || eProprietario(), SEZ = camerino ? SEZ_CAMERINO : SEZ_OMINO;
-    if (camerino) s.classList.add("camerino");
-    var iniziali = bozze.map(function (b) { return O.norm(b); });   // com'erano all'ingresso (se esci senza salvare)
-    // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre (toccalo: reagisce!)
-    var figura = el("div", { class: "om-figura", title: "Toccami!" });
-    var puntini = el("div", { class: "om-puntini" });
-    var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
-      puntini,
-      benv ? el("div", { class: "om-benv", text: "👋 Ecco il tuo avatar! Cambialo come vuoi" })
-           : el("button", { class: "om-indietro", "aria-label": "Indietro", text: "‹", onclick: function () { esci(); } }),
-      el("button", { class: "om-freccia sx", "aria-label": "Personaggio precedente", text: "‹", onclick: function () { scorri(-1); } }),
-      el("button", { class: "om-freccia dx", "aria-label": "Personaggio successivo", text: "›", onclick: function () { scorri(1); } })]);
-    function disegnaCambi() {
-      puntini.innerHTML = bozze.map(function (b, n) { return "<i class='" + (n === slot ? "on" : "") + "'></i>"; }).join("");
-    }
-    // il principale (quello usato nei giochi) è quello sul palco quando esci.
-    // Con la freccia indietro le modifiche non salvate si perdono, ma la scelta del personaggio resta.
-    function esci() {
-      if (slot !== principale) salvaOminoMio(iniziali[slot], iniziali, slot);
-      dopo();
-    }
-    function scorri(dir) {   // dir: +1 = verso destra (il prossimo), -1 = verso sinistra
-      bozze[slot] = cfg; slot = (slot + dir + bozze.length) % bozze.length; cfg = O.norm(bozze[slot]);
-      storia = []; aggAnnulla();
-      if (visibile(tab) < 0) tab = 0;
-      anteprima(false); disegnaSchede(); disegnaPannello(); popOmino();
-      var sv = figura.firstChild;   // entra scivolando dal lato giusto
-      if (sv && sv.animate) sv.animate([{ transform: "translateX(" + (dir * 90) + "px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 320, easing: "cubic-bezier(.2,.8,.3,1)" });
-    }
-    // scorrimento col dito sul palco
-    var x0 = null, y0 = null;
-    palco.addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
-    palco.addEventListener("touchend", function (e) {
-      if (x0 == null) return;
-      var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
-      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) scorri(dx < 0 ? 1 : -1);   // dito verso sinistra = il prossimo
-    });
-    var schede = el("div", { class: "omino-schede" });
-    var pannello = el("div", { class: "omino-pannello" });
-    var sottoschede = el("div", { class: "omino-sotto" });   // le sottocategorie della scheda aperta (es. Vestiti: Parti superiori, Parti inferiori, Scarpe)
-    s._contenuto.appendChild(palco);
-    if (camerino) {   // la maniglia: tirata su (o toccata) si vedono tutte le scelte e l'avatar si fa piccolo; giù torna grande
-      var maniglia = el("button", { class: "om-maniglia", onclick: function () { apriTutto(!s.classList.contains("aperto")); } });
-      var apriTutto = function (si) {
-        s.classList.toggle("aperto", si); maniglia.textContent = si ? "⌄ Avatar grande" : "⌃ Vedi tutte le scelte";
-        if (!si) setTimeout(centraScelte, 50);
-      };
-      var yM = null;
-      [maniglia, schede, sottoschede].forEach(function (n) {
-        n.addEventListener("touchstart", function (e) { yM = e.touches[0].clientY; }, { passive: true });
-        n.addEventListener("touchend", function (e) { if (yM == null) return; var dy = e.changedTouches[0].clientY - yM; yM = null; if (Math.abs(dy) > 40) apriTutto(dy < 0); });
-      });
-      apriTutto(false);
-      s._contenuto.appendChild(maniglia);
-    }
-    s._contenuto.appendChild(schede); s._contenuto.appendChild(sottoschede); s._contenuto.appendChild(pannello);
-    function centraScelte() {   // nelle file da scorrere: la scelta di adesso in vista
-      if (!camerino || s.classList.contains("aperto")) return;
-      [].forEach.call(pannello.querySelectorAll(".om-griglia"), function (riga) {
-        var a = riga.querySelector(".attiva"); if (a) riga.scrollLeft = Math.max(0, a.offsetLeft - riga.offsetLeft - (riga.clientWidth - a.offsetWidth) / 2);
-      });
-    }
-    function unisci(k, v) {
-      if (k === "forma") return O.adattaForma(cfg, v);   // maschio/femmina: cambiano anche capelli, barba, trucco
-      var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c;
-    }
-    function salto() {   // saltello senza ricalcolare la pagina (le anteprime sono tante)
-      var sv = figura.firstChild;
-      if (sv && sv.animate) sv.animate([{ transform: "none" }, { transform: "translateY(-12px) scale(.96,1.05)", offset: 0.3 },
-        { transform: "scale(1.05,.95)", offset: 0.62 }, { transform: "none" }], { duration: 450, easing: "cubic-bezier(.3,1.5,.5,1)" });
-    }
-    function anteprima(conSalto) {
-      clearTimeout(tReaz);
-      figura.innerHTML = O.svg(cfg, { hd: true }); disegnaCambi();
-      if (conSalto) { salto(); popOmino(); }
-    }
-    var tSaluto = null;
-    function saluta() {   // alza il braccio e fa "ciao"
-      clearTimeout(tSaluto); figura.classList.remove("saluta"); void figura.offsetWidth; figura.classList.add("saluta");
-      tSaluto = setTimeout(function () { figura.classList.remove("saluta"); }, 1100);
-    }
-    // toccalo e reagisce: ride, fa l'occhiolino, si emoziona, saluta
-    var REAZIONI = [{ occhi: "felici", bocca: "risata" }, { occhi: "occhiolino", bocca: "linguaccia" }, null, { occhi: "stelline", bocca: "o" }], nReaz = 0, tReaz = null;
-    figura.addEventListener("click", function () {
-      var r = REAZIONI[nReaz++ % REAZIONI.length];
-      if (!r) { anteprima(false); saluta(); popOmino(); return; }
-      var c2 = {}, k; for (k in cfg) c2[k] = cfg[k]; for (k in r) c2[k] = r[k];
-      figura.innerHTML = O.svg(c2, { hd: true }); salto(); popOmino();
-      clearTimeout(tReaz); tReaz = setTimeout(function () { figura.innerHTML = O.svg(cfg, { hd: true }); }, 1200);
-    });
-    // ↩️ annulla l'ultima scelta
-    var storia = [], trascina = false;
-    function ricorda() { storia.push(JSON.stringify(cfg)); if (storia.length > 40) storia.shift(); aggAnnulla(); }
-    var bAnnulla = el("button", { class: "om-azione annulla", text: "↩️", "aria-label": "Annulla l'ultima scelta", onclick: function () {
-      if (!storia.length) return;
-      var prima = cfg.forma; cfg = JSON.parse(storia.pop()); aggAnnulla();
-      if (visibile(tab) < 0) tab = 0;
-      anteprima(true); if (prima !== cfg.forma) disegnaSchede(); disegnaPannello();
-    } });
-    function aggAnnulla() { bAnnulla.classList.toggle("spento", !storia.length); }
-    // le schede: il trucco c'è solo per lei; la telecamera va sul viso per viso, trucco e capelli
-    function visibile(i) {   // (se lui ha già del trucco salvato, la scheda resta per poterlo togliere)
-      var sz = SEZ[i], trucco = ["ombretto", "eyeliner", "mascara", "rossetto", "blush"].some(function (k) { return cfg[k] && !/^nessun/.test(cfg[k]); });
-      return sz && (!sz.solo || sz.solo === cfg.forma || (sz.nome === "Trucco" && trucco)) ? i : -1;
-    }
-    function disegnaSchede() {
-      schede.innerHTML = ""; var n = 0;
-      SEZ.forEach(function (sz, i) {
-        if (visibile(i) < 0) return; n++;
-        schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""),
-          onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); pannello.scrollTop = 0; } }, [el("span", { class: "ci", text: sz.icona }), el("span", { text: sz.nome })]));
-      });
-      schede.style.gridTemplateColumns = "repeat(" + n + ",minmax(0,1fr))";
-      schede.classList.toggle("sette", n > 6);
-      var z = SEZ[tab].zoom;
-      figura.classList.toggle("zoom-viso", z === "viso"); palco.classList.toggle("zoomato", !!z);
-    }
-    function nomeDi(k, val) {
-      if (k === "forma") return val === "donna" ? "👧 Femmina" : "👦 Maschio";
-      var n = (O.NOMI_K && O.NOMI_K[k] && O.NOMI_K[k][val]) || O.NOMI[val] || val;
-      return n.charAt(0).toUpperCase() + n.slice(1);
-    }
-    function opzMini(k, c) {   // l'anteprima giusta per ogni voce: gambe, viso da vicino, figura intera o solo la testa
-      return O.svg(c, /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: k !== "pittura" } : { busto: !OMINO_INTERO[k], senzaCappello: /^(capelli|colCap)$/.test(k) }));
-    }
-    // aggiorna solo i riquadri (niente ricostruzione della schermata: non salta lo scroll)
-    function aggiornaPannello(cambiata) {   // cambiata = voce appena scelta: le sue anteprime non cambiano, non si ridisegnano
-      [].forEach.call(pannello.querySelectorAll(".om-opz"), function (b) {
-        if (b._look) {
-          var cl = conLook(cfg, b._look), uguale = true;
-          for (var kk in cl) if (cl[kk] !== cfg[kk]) { uguale = false; break; }
-          b.classList.toggle("attiva", uguale);
-          if (b._mini) b._mini.innerHTML = O.svg(cl);
-          return;
-        }
-        var k = b._k, v = b._v;
-        if (b._libero) {   // tavolozza libera: attiva se il colore è uno scelto a mano
-          var mio = typeof cfg[k] === "string";
-          b.classList.toggle("attiva", mio); b.style.background = mio ? cfg[k] : "";
-          return;
-        }
-        b.classList.toggle("attiva", cfg[k] === v);
-        if (b._mini && k !== cambiata) b._mini.innerHTML = opzMini(k, unisci(k, v));
-      });
-    }
-    function scegli(k, v, zitto) {
-      if (cfg[k] === v) return;
-      if (zitto) { if (!trascina) { ricorda(); trascina = true; } cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
-      if (!trascina) ricorda(); trascina = false;
-      if (k === "forma") {   // maschio/femmina: si adattano capelli, barba, trucco e vestiti
-        cfg = O.adattaForma(cfg, v);
-        if (visibile(tab) < 0) tab = 0;
-        anteprima(true); disegnaSchede(); disegnaPannello(); return;
-      }
-      var rifai = /^(cappello|collo|mano|schiena|animale)$/.test(k) || (/^(ombretto|eyeliner|rossetto|blush|borsa)$/.test(k) && /^nessun/.test(cfg[k]) !== /^nessun/.test(v));   // i colori compaiono solo se servono
-      if (k === "capo" && /^vestito/.test(cfg[k]) !== /^vestito/.test(v)) rifai = true;   // col vestito spariscono le voci "Sotto"
-      cfg[k] = v;
-      // una mano sola: borsetta e oggetti in mano non vanno insieme
-      if (k === "mano" && !/^(nessuno|pallone)$/.test(v) && cfg.borsa === "borsetta") cfg.borsa = "nessuna";
-      if (k === "borsa" && v === "borsetta" && !/^(nessuno|pallone)$/.test(cfg.mano)) cfg.mano = "nessuno";
-      anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello(k);
-    }
-    function applicaLook(L) {
-      ricorda(); cfg = conLook(cfg, L);
-      anteprima(true); saluta(); disegnaPannello();
-    }
-    // le sottocategorie della scheda aperta (es. Vestiti: Look pronti, Parti superiori, Parti inferiori, Scarpe): se ne vede una alla volta
-    var subDi = {};   // scheda -> sottocategoria aperta (quando torni su una scheda ritrovi quella di prima)
-    function voceVisibile(k) {
-      if (k === "look" || k === "ritocchi") return true;
-      if (k === "colAcc" && !ACC_COLORATI.test(cfg.cappello)) return false;
-      if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return false;
-      if (COLORE_DI[k] && !COLORE_DI[k][1].test(cfg[COLORE_DI[k][0]])) return false;
-      if (TRUCCO_COL[k] && /^nessun[oa]$/.test(cfg[TRUCCO_COL[k]])) return false;
-      if ((k === "sotto" || k === "pantaloni") && /^vestito/.test(cfg.capo)) return false;   // il vestito copre anche sotto
-      if (k === "barba" && cfg.forma === "donna") return false;   // lei niente barba
-      return true;
-    }
-    function sottoVisibili() {
-      var sz = SEZ[tab], lista = sz.sotto || [[sz.nome, sz.voci.map(function (vc) { return vc[0]; })]];
-      return lista.map(function (x, j) { return { nome: x[0], chiavi: x[1], j: j }; })
-        .filter(function (x) { return x.chiavi.some(voceVisibile); });
-    }
-    function sottoAttuale() {
-      var l = sottoVisibili(), j = subDi[tab] || 0;
-      return l.filter(function (x) { return x.j === j; })[0] || l[0];
-    }
-    // 🎲 solo questa sottocategoria: il resto non cambia
-    function acasoScheda() {
-      ricorda();
-      var donna = cfg.forma === "donna", cur = sottoAttuale();
-      cur.chiavi.forEach(function (k) {
-        if (k === "look") { cfg = conLook(cfg, LOOK[Math.floor(Math.random() * LOOK.length)]); return; }
-        if (k === "ritocchi") { OMINO_RITOCCHI.forEach(function (r) { cfg[r[0]] = Math.floor(Math.random() * 5) - 2; }); return; }
-        var lista = O.OPZ[k];
-        if (k === "forma" || !lista || (k === "barba" && donna)) return;
-        if (OMINO_COLORI[k]) { cfg[k] = Math.floor(Math.random() * (k === "colCap" ? 7 : lista.length)); return; }
-        var ok = lista.filter(function (v) {
-          if (O.BLOCCATI[k] && O.BLOCCATI[k].indexOf(v) >= 0) return false;
-          if (!donna && /^(sotto|capo|modScarpe)$/.test(k) && O.SOLO_DONNA.test(v)) return false;
-          if (k === "capelli") return donna ? O.CAPELLI_UOMO.indexOf(v) < 0 : O.CAPELLI_UOMO.indexOf(v) >= 0;
-          return true;
-        });
-        var niente = /^(nessun[oa]|no)$/.test(lista[0]) ? lista[0] : null;   // le cose "in più" non sempre
-        cfg[k] = niente && Math.random() < (/^(segno|guance)$/.test(k) ? 0.6 : 0.3) ? niente : ok[Math.floor(Math.random() * ok.length)];
-      });
-      if (!/^(nessuno|pallone)$/.test(cfg.mano) && cfg.borsa === "borsetta") cfg.borsa = "nessuna";
-      anteprima(true); disegnaPannello();
-    }
-    function disegnaSotto(lista, cur) {   // la fila delle sottocategorie, sopra alle scelte
-      sottoschede.innerHTML = "";
-      sottoschede.style.display = lista.length > 1 ? "" : "none";
-      if (lista.length < 2) return;
-      lista.forEach(function (x) {
-        sottoschede.appendChild(el("button", { class: "om-sub" + (x.j === cur.j ? " attiva" : ""), text: x.nome,
-          onclick: function () { if (subDi[tab] === x.j) return; subDi[tab] = x.j; disegnaPannello(); pannello.scrollTop = 0; } }));
-      });
-      var a = sottoschede.querySelector(".om-sub.attiva");   // quella aperta sempre in vista (la fila può scorrere di lato)
-      if (a) sottoschede.scrollLeft = Math.max(0, a.offsetLeft - (sottoschede.clientWidth - a.offsetWidth) / 2);
-    }
-    function disegnaPannello() {
-      var st = pannello.scrollTop;   // ridisegnando non si torna in cima
-      pannello.innerHTML = "";
-      var sz = SEZ[tab], lista = sottoVisibili(), cur = sottoAttuale();
-      disegnaSotto(lista, cur);
-      var etichette = cur.chiavi.filter(voceVisibile).length > 1;   // con una voce sola il nome c'è già nella sottocategoria
-      if (sz.nome !== "Corpo") pannello.appendChild(el("button", { class: "om-acaso", text: "🎲 " + (lista.length > 1 ? cur.nome : sz.nome) + " a caso", onclick: acasoScheda }));
-      cur.chiavi.forEach(function (k) {
-        if (!voceVisibile(k)) return;
-        if (k === "look") {   // i look pronti: un tocco e cambiano vestiti e accessori insieme
-          var rl = el("div", { class: "om-griglia" });
-          LOOK.forEach(function (L) {
-            var b = el("button", { class: "om-opz om-forma", onclick: function () { applicaLook(L); } });
-            b._mini = el("div", { class: "om-mini intero" }); b.appendChild(b._mini);
-            b.appendChild(el("div", { class: "om-nome", text: L.nome }));
-            b._look = L; rl.appendChild(b);
-          });
-          pannello.appendChild(rl);
-          return;
-        }
-        if (k === "ritocchi") {   // ritocchi stile Mii: cursori da -2 a +2
-          OMINO_RITOCCHI.forEach(function (r) {
-            var kk = r[0], val = el("span", { class: "om-rit-val" });
-            var cur2 = el("input", { type: "range", min: "-2", max: "2", step: "1", value: String(cfg[kk] || 0), class: "om-cursore", "aria-label": r[1] });
-            function scrivi() { var n = +cur2.value; val.textContent = n > 0 ? "+" + n : String(n); }
-            cur2.addEventListener("input", function () { scrivi(); scegli(kk, +cur2.value, true); });
-            cur2.addEventListener("change", function () { trascina = false; popOmino(); aggiornaPannello(); });
-            scrivi();
-            pannello.appendChild(el("div", { class: "om-ritocco" }, [el("span", { class: "om-rit-nome", text: r[1] }), cur2, val]));
-          });
-          return;
-        }
-        var vc = sz.voci.filter(function (x) { return x[0] === k; })[0] || [k, k];
-        var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
-        if (!gruppi && etichette) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
-        var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
-        O.OPZ[k].forEach(function (val, i) {
-          if (gruppi) gruppi.forEach(function (g) {
-            if (g[1] !== i) return;
-            if (riga.children.length) pannello.appendChild(riga);
-            pannello.appendChild(el("div", { class: "etichetta", text: g[0] }));
-            riga = el("div", { class: "om-griglia" });
-          });
-          if (/^(sotto|capo|modScarpe)$/.test(k) && O.SOLO_DONNA.test(val) && cfg.forma !== "donna") return;   // gonne, vestiti, tacchi… solo per la donna
-          var v = OMINO_COLORI[k] ? i : val, b;
-          if (OMINO_COLORI[k]) {
-            b = el("button", { class: "om-opz om-colore", style: "background:" + val, "aria-label": vc[1] + " " + (i + 1), onclick: function () { scegli(k, v); } });
-          } else {
-            var bloccato = !!(O.BLOCCATI[k] && O.BLOCCATI[k].indexOf(val) >= 0);
-            b = el("button", { class: "om-opz om-forma" + (bloccato ? " bloccato" : ""), onclick: function () { if (!bloccato) scegli(k, v); } });
-            b._mini = el("div", { class: "om-mini" + (/^(sotto|modScarpe)$/.test(k) ? " gambe" : (OMINO_INTERO[k] ? " intero" : "")) });
-            b.appendChild(b._mini);
-            b.appendChild(el("div", { class: "om-nome", text: bloccato ? "🔒 coi trofei" : nomeDi(k, val) }));
-          }
-          b._k = k; b._v = v; riga.appendChild(b);
-        });
-        if (OMINO_LIBERO[k]) {   // ultimo tondo: tavolozza arcobaleno per un colore qualsiasi
-          var ultimo = typeof cfg[k] === "string" ? cfg[k] : (O.OPZ[k][cfg[k]] || "#ffffff");
-          var inp = el("input", { type: "color", value: ultimo, "aria-label": vc[1] + ": colore libero" });
-          inp.addEventListener("input", function () { scegli(k, inp.value, true); });
-          inp.addEventListener("change", function () { if (!trascina) ricorda(); cfg[k] = null; trascina = true; scegli(k, inp.value); });
-          var bl = el("label", { class: "om-opz om-colore om-libero", title: "Colore libero" }, [inp]);
-          bl._k = k; bl._libero = true; riga.appendChild(bl);
-        }
-        pannello.appendChild(riga);
-      });
-      aggiornaPannello();
-      pannello.scrollTop = st;
-      centraScelte();
-    }
-    palco.appendChild(el("button", { class: "om-azione caso", text: "🎲", "aria-label": "Personaggio a caso", onclick: function () {
-      ricorda(); cfg = O.norm(O.casuale()); if (visibile(tab) < 0) tab = 0;
-      anteprima(true); disegnaSchede(); disegnaPannello();
-    } }));
-    palco.appendChild(bAnnulla); aggAnnulla();
-    var salvato = false;
-    palco.appendChild(el("button", { class: "om-azione salva" + (benv ? " fatto" : ""), text: benv ? "✅ Fatto" : "✅ Salva", onclick: function () {
-      if (salvato) return; salvato = true;
-      this.textContent = "👋 Fatto";   // si vede subito che il tocco è arrivato
-      bozze[slot] = cfg; var tutti = bozze.map(function (b) { return O.norm(b); });
-      salvaOminoMio(tutti[slot], tutti, slot); saluta(); popOmino();   // si salvano tutti; nei giochi va quello sul palco
-      setTimeout(dopo, 1000);   // prima ti saluta, poi torna indietro
-    } }));
-    anteprima(); disegnaSchede(); disegnaPannello();
-    mostra(s);
-    setTimeout(saluta, 350);   // appena entri: "ciao!"
-  }
-
-  // ---- profili in cloud (Firebase): nome + password, ti seguono ovunque ----
-  function schermataAccessoCloud(dopo) {
-    var p = SGNube.profilo();
-    if (p) {   // già dentro: mostra il profilo, le statistiche e il tasto esci
-      var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: function () { (dopo || schermataHome)(); } });   // dalla città si torna in città
-      if (!dopo || dopo === schermataHome) sp._menu = "profilo";   // 📱 aperto dalla home o dal menu: col menu sotto
-      if (window.SGOmino) sp._contenuto.appendChild(el("div", { class: "omino-profilo" }, [
-        el("div", { class: "omino-palco" + (p.omino ? "" : " vuoto"), html: SGOmino.svg(p.omino || SGOmino.casuale(p.nome)) }),
-        el("button", { class: "btn " + (p.omino ? "btn-fantasma" : "btn-primario"), text: p.omino ? "✏️ Modifica il tuo avatar" : "🧍 Crea il tuo avatar",
-          onclick: function () { schermataOmino(function () { schermataAccessoCloud(dopo); }); } })
-      ]));
-      if (window.SGLivelli && SGNube.progressione) {
-        sp._contenuto.appendChild(el("div", { class: "etichetta", text: "⭐ Livello e Speed Coins" }));
-        sp._contenuto.appendChild(riquadroLivello(SGNube.progressione()));
-      }
-      // le statistiche di tutti i giochi stanno in una schermata a parte
-      var tot = totaliGiocato(SGNube.giocato ? SGNube.giocato() : {});
-      sp._contenuto.appendChild(el("button", { class: "st-tasto", onclick: function () { schermataStatistiche(function () { schermataAccessoCloud(dopo); }); } }, [
-        el("span", { class: "st-tasto-ico", text: "📊" }),
-        el("span", { class: "st-tasto-testo" }, [ el("b", { text: "Le tue statistiche" }), el("small", { text: tot.p ? cifre(tot.p) + (tot.p === 1 ? " partita" : " partite") + " · " + tempoGiocato(tot.t) + " giocati" : "Vittorie, sconfitte e tempo di ogni gioco" }) ]),
-        el("span", { class: "st-tasto-va", text: "›" })
-      ]));
-      // solo il proprietario: come sono fatti i bot di tutti i giochi
-      if (eProprietario() && window.SGOmino) sp._contenuto.appendChild(el("button", { class: "st-tasto st-bot", onclick: function () { schermataBot(function () { schermataAccessoCloud(dopo); }); } }, [
-        el("span", { class: "st-tasto-ico", text: "🤖" }),
-        el("span", { class: "st-tasto-testo" }, [ el("b", { text: "I Bot" }), el("small", { text: "Avatar, nomi e livelli dei bot di tutti i giochi" }) ]),
-        el("span", { class: "st-tasto-va", text: "›" })
-      ]));
-      // solo il proprietario, finché gli avatar nuovi li prova lui: si spengono e si riaccendono (l'app si riapre, così ogni gioco li ridisegna)
-      if (AVATAR_NUOVO === "proprietario" && eProprietario() && window.SGOmino) sp._contenuto.appendChild(el("button", { class: "st-tasto st-avnuovi", onclick: function () {
-        try { localStorage.setItem("sg-avatar-stile", avatarNuoviSpenti() ? "rifinito" : "classico"); } catch (e) {}
-        location.reload();
-      } }, [
-        el("span", { class: "st-tasto-ico", text: "🧍" }),
-        el("span", { class: "st-tasto-testo" }, [ el("b", { text: avatarNuoviSpenti() ? "Avatar nuovi: spenti" : "Avatar nuovi: accesi" }),
-          el("small", { text: avatarNuoviSpenti() ? "Tocca per vedere il disegno nuovo («Mii rifinito»). Lo vedi solo tu" : "Il disegno nuovo («Mii rifinito»): lo vedi solo tu. Tocca per tornare a quello di oggi" }) ]),
-        el("span", { class: "st-tasto-va", text: "›" })
-      ]));
-      sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () {
-        chiediConferma("Sei sicuro di voler uscire dal profilo?", "Se non ricordi la password non potrai più accedere.", "🚪 Esci", function () {
-          dimenticaProfilo();   // uscito apposta: questo telefono non lo ripropone
-          SGNube.esci().then(function () { schermataBenvenuto(schermataHome); });   // il profilo serve: si crea o si entra con un altro
-        });
-      } }));
-      mostra(sp); return;
-    }
-    // senza profilo: il benvenuto (o, se questo telefono ricorda il profilo, solo la password)
-    var ric = ricordoProfilo();
-    if (ric) return schermataBentornato(dopo || schermataHome, ric, { indietro: dopo || schermataHome });
-    schermataBenvenuto(dopo || schermataHome);
-  }
-
-  // ---- 📊 le statistiche di ogni gioco: partite, vinte, perse, % di vittorie, tempo giocato, serie migliore ----
-  //      (le scrive premiaPartita a fine partita; contano dal 10 ottobre 2026. Il Black Jack ha anche le sue mani di sempre)
-  function tempoGiocato(sec) {
-    var m = Math.round((sec || 0) / 60);
-    if (m < 1) return sec > 0 ? "meno di 1 min" : "0 min";
-    if (m < 60) return m + " min";
-    var h = Math.floor(m / 60), r = m % 60;
-    return cifre(h) + " h" + (r && h < 100 ? " " + r + " min" : "");
-  }
-  function quandoGiocato(ms) {
-    if (!ms) return "";
-    var oggi = new Date(); oggi.setHours(0, 0, 0, 0);
-    var giorni = Math.floor((oggi.getTime() - new Date(ms).setHours(0, 0, 0, 0)) / 86400000);
-    return giorni <= 0 ? "oggi" : giorni === 1 ? "ieri" : giorni < 7 ? giorni + " giorni fa" : giorni < 30 ? Math.floor(giorni / 7) + (giorni < 14 ? " settimana fa" : " settimane fa") : "più di un mese fa";
-  }
-  function totaliGiocato(gi) {
-    var t = { p: 0, v: 0, s: 0, t: 0 };
-    Object.keys(gi || {}).forEach(function (k) { var x = gi[k] || {}; t.p += x.p || 0; t.v += x.v || 0; t.s += x.s || 0; t.t += x.t || 0; });
-    return t;
-  }
-  function percVittorie(x) { var n = (x.v || 0) + (x.s || 0); return n ? Math.round((x.v || 0) * 100 / n) + "%" : "—"; }
-  function schermataStatistiche(dopo) {
-    var p = SGNube.profilo(); if (!p) return (dopo || schermataHome)();
-    var gi = (SGNube.giocato && SGNube.giocato()) || {}, tot = totaliGiocato(gi);
-    var s = schermata({ icona: "📊", titolo: "Statistiche", sotto: p.nome, indietro: function () { (dopo || schermataHome)(); } });
-    function cella(valore, nome, cls) { return el("div", { class: "st-cella" + (cls ? " " + cls : "") }, [ el("b", { text: "" + valore }), el("small", { text: nome }) ]); }
-    // in alto i totali
-    s._contenuto.appendChild(el("div", { class: "st-griglia st-totali" }, [ cella(tempoGiocato(tot.t), "Tempo giocato"), cella(cifre(tot.p), "Partite"), cella(percVittorie(tot), "Vittorie") ]));
-    var gf = p.giorniFila || 0, gm = p.giorniFilaMax || gf;   // 🔥 i giorni di fila in cui sei entrato
-    if (gf) {
-      var pp = prossimoPremioGiorni(gf);
-      s._contenuto.appendChild(el("div", { class: "st-fuoco" }, [
-        el("span", { class: "st-fuoco-ico", text: "🔥" }),
-        el("span", { class: "st-fuoco-testo" }, [ el("b", { text: gf + (gf === 1 ? " giorno di fila" : " giorni di fila") }), el("small", { text: "Record: " + gm + " · prossimo premio a " + pp.giorno + " giorni: " + cifre(pp.monete) + " 🪙" }) ])
-      ]));
-    }
-    var lista = giochi.filter(function (g) { return gi[g.id] && gi[g.id].p; }).sort(function (a, b) { return (gi[b.id].t || 0) - (gi[a.id].t || 0) || gi[b.id].p - gi[a.id].p; });
-    if (lista.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", html: "Il tuo gioco preferito: <b>" + lista[0].icona + " " + lista[0].nome + "</b> (" + tempoGiocato(gi[lista[0].id].t) + ")" }));
-    // un riquadro per ogni gioco giocato, dal più giocato
-    lista.forEach(function (g) {
-      var x = gi[g.id], q = quandoGiocato(x.u);
-      var r = el("div", { class: "st-gioco" }, [
-        el("div", { class: "st-testa" }, [ el("span", { class: "st-ico", text: g.icona || "🎲" }), el("b", { text: g.nome }), el("small", { text: q ? "ultima volta " + q : "" }) ]),
-        el("div", { class: "st-griglia" }, [ cella(cifre(x.p), "Partite"), cella(cifre(x.v || 0), "Vinte", "verde"), cella(cifre(x.s || 0), "Perse", "rosso"), cella(percVittorie(x), "% vittorie") ]),
-        el("div", { class: "st-riga" }, [ el("span", { text: "⏱️ " + tempoGiocato(x.t) }), x.serieMax ? el("span", { text: "🔥 Serie migliore: " + x.serieMax + (x.serieMax === 1 ? " vittoria" : " vittorie di fila") }) : null, x.rec ? el("span", { text: "🏅 Record: " + cifre(x.rec) + " punti" }) : null ])
-      ]);
-      if (g.id === "blackjack") {   // il Black Jack conta anche le mani (da sempre)
-        var bj = (p.stat && p.stat.blackjack) || {};
-        if (bj.maniGiocate) r.appendChild(el("div", { class: "st-riga" }, [ el("span", { text: "🃏 Mani: " + cifre(bj.maniVinte || 0) + " vinte su " + cifre(bj.maniGiocate) }), el("span", { text: "✨ Black Jack fatti: " + cifre(bj.blackjackFatti || 0) }), bj.vincitaMax ? el("span", { text: "💰 Vincita più alta: " + cifre(bj.vincitaMax) }) : null ]));
-      }
-      s._contenuto.appendChild(r);
-    });
-    if (!lista.length) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ancora niente qui: gioca una partita col tuo profilo e le statistiche si riempiono." }));
-    s._contenuto.appendChild(el("p", { class: "modulo-nota st-nota", text: "Contano le partite giocate col profilo dal 10 ottobre 2026. Le partite sullo stesso telefono in cui non giochi col tuo nome contano nelle partite e nel tempo, non nelle vittorie." }));
-    mostra(s);
-  }
-
-  // dopo il login il profilo (Firestore) arriva un istante dopo: aspetta che ci sia
-  function attendiProfilo(cb) {
-    var n = 0;
-    (function chk() {
-      if ((window.SGNube && SGNube.profilo()) || n++ > 30) return cb();
-      setTimeout(chk, 200);
-    })();
-  }
-
-  // =========================================================
-  //  PROFILO E AVATAR OBBLIGATORI (dal 15 ott 2026)
-  //  Chi apre l'app la prima volta crea il profilo (nome + password) e l'avatar prima di tutto, anche se arriva
-  //  dal link di un amico (dopo entra da solo nella stanza o nella Sala del link). Chi ha già usato un profilo su
-  //  questo telefono entra da solo, senza domande (la sessione di Firebase resta salvata).
-  // =========================================================
-  // dopo = dove si va (la home, o la stanza/Sala del link). o = { daLink, invito: "🎉 Ti aspettano…" }
-  function garantisciProfilo(dopo, o) {
-    o = o || {};
-    var io = profiloAttivo(), N = window.SGNube, ric = ricordoProfilo();
-    if (io) {
-      // un profilo di prima senza avatar: lo fa adesso, una volta (non arrivando da un link: lì si entra e basta)
-      if (io.cloud && !io.omino && !o.daLink && window.SGOmino) return schermataOmino(dopo, null, { benvenuto: true });
-      if (window.SGOmino && io.nome && leggiL("sg-primo-avatar", null) === io.nome) return schermataOmino(dopo, null, { benvenuto: true });   // (aveva chiuso l'app prima di scegliere l'avatar)
-      return dopo();
-    }
-    if (!N || !N.disponibile()) return ric ? dopo() : senzaInternet(dopo, o);   // la parte dei profili non si è caricata: niente rete
-    if (!N.pronto()) {   // Firebase sta ancora ritrovando la sessione: si aspetta un po', poi chi ha il profilo entra lo stesso
-      schermataCaricamento();
-      var fatto = false;
-      N.onCambio(function () { if (!fatto && N.pronto()) { fatto = true; garantisciProfilo(dopo, o); } });
-      setTimeout(function () { if (!fatto) { fatto = true; if (ric || (N.utente && N.utente())) dopo(); else senzaInternet(dopo, o); } }, 8000);
-      return;
-    }
-    if (N.utente && N.utente()) return dopo();   // dentro, ma il profilo non arriva (rete): si entra lo stesso, arriverà
-    if (ric) return navigator.onLine === false ? (senzaRete = true, dopo()) : schermataBentornato(dopo, ric, o);   // sessione scaduta: basta la password
-    schermataBenvenuto(dopo, o);
-  }
-  // il messaggio giusto per chi crea il profilo o entra
-  function erroreProfilo(e, nome) {
-    var c = (e && e.code) || "";
-    if (c === "auth/email-already-in-use") return "Il nome «" + nome + "» è già preso: scegline un altro (tocca 🎲). Se è il tuo, tocca «Hai già un profilo? Entra».";
-    if (c === "auth/network-request-failed" || (e && e.message === "offline")) return "Serve internet: controlla il Wi-Fi o i dati e riprova.";
-    if (/auth\/(invalid-credential|wrong-password|user-not-found|invalid-login-credentials|invalid-email)/.test(c)) return "Nome o password sbagliati.";
-    if (c === "auth/too-many-requests") return "Troppi tentativi: aspetta un minuto e riprova.";
-    if (c === "auth/weak-password") return "La password deve avere almeno 6 caratteri.";
-    return "Qualcosa è andato storto: riprova.";
-  }
-  // le schermate del profilo: tutto in uno schermo, anche con la tastiera aperta (si stringe l'avatar, mai il tasto)
-  function schermataProfiloBase(cls, indietro) {
-    var s = schermata({ indietro: indietro || null });
-    s.classList.add("benvenuto-profilo"); if (cls) s.classList.add(cls); if (indietro) s.classList.add("con-indietro");
-    function misura() {
-      if (!s.isConnected) { window.removeEventListener("resize", misura); if (window.visualViewport) visualViewport.removeEventListener("resize", misura); return; }
-      var h = window.visualViewport ? visualViewport.height : window.innerHeight;
-      s.classList.toggle("stretta", h < 500); s.classList.toggle("strettissima", h < 380);
-    }
-    window.addEventListener("resize", misura); if (window.visualViewport) visualViewport.addEventListener("resize", misura);
-    setTimeout(misura, 0);
-    return s;
-  }
-  function testaProfilo(titolo, sotto) {
-    return el("div", { class: "bp-testa" }, [ el("div", { class: "bp-logo", "aria-hidden": "true", text: "⚡" }), el("h1", { text: titolo }), sotto ? el("p", { class: "bp-sotto", text: sotto }) : null ]);
-  }
-  // Invio nel primo campo porta al secondo, nel secondo preme il tasto
-  function invioCampi(a, b, fai) {
-    a.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); b.focus(); } });
-    b.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); fai(); } });
-  }
-
-  // PRIMA VOLTA: "Benvenuto in SPeeD GAME!" → nome (col 🎲) + password → l'avatar → dove si doveva andare
-  function schermataBenvenuto(dopo, o) {
-    o = o || {};
-    var s = schermataProfiloBase(), c = s._contenuto;
-    c.appendChild(testaProfilo("Benvenuto in SPeeD GAME!", "Crea il tuo profilo: scegli un nome, una password e poi il tuo avatar."));
-    if (o.invito) c.appendChild(el("div", { class: "bp-invito", text: o.invito }));
-    var ant = el("div", { class: "sl-anteprima bp-anteprima", "aria-hidden": "true" });   // l'avatar che avrai (nasce dal nome: col 🎲 cambiano tutti e due)
-    var nome = el("input", { class: "link-campo", type: "text", maxlength: "16", placeholder: "Come ti chiami?", autocomplete: "username", autocapitalize: "words", enterkeyhint: "next" });
-    var pwd = el("input", { class: "link-campo bp-pwd", type: "password", maxlength: "40", placeholder: "Scegli una password (almeno 6)", autocomplete: "new-password", enterkeyhint: "go" });
-    var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
-    c.appendChild(ant); c.appendChild(nome); c.appendChild(pwd); c.appendChild(avviso);
-    if (o.nome) nome.value = o.nome;
-    dadoNome(nome, ant);   // 🎲 un nome buffo a caso (se è vuoto mette il nome dell'ultima volta)
-    var bAvanti = el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: avanti });
-    function avanti() {
-      if (bAvanti.disabled) return;
-      var n = (nome.value || "").trim().slice(0, 16), pw = pwd.value || "";
-      if (n.length < 2) { avviso.textContent = "Scrivi il tuo nome (almeno 2 lettere)."; nome.focus(); return; }
-      if (!/[a-z0-9]/i.test(n)) { avviso.textContent = "Nel nome serve almeno una lettera o un numero."; nome.focus(); return; }
-      if (pw.length < 6) { avviso.textContent = "La password deve avere almeno 6 caratteri."; pwd.focus(); return; }
-      bAvanti.disabled = true; avviso.textContent = "Creo il tuo profilo…";
-      audioCtx();   // (il tocco sblocca i suoni per dopo)
-      SGNube.crea(n, pw, "🙂").then(function () {
-        attendiProfilo(function () {
-          if (!SGNube.profilo()) { bAvanti.disabled = false; avviso.textContent = "Il profilo è creato ma non arriva: controlla la rete e tocca «Hai già un profilo? Entra»."; return; }
-          // l'avatar si salva subito (quello dell'anteprima): così nessuno resta senza, anche se chiude l'app adesso
-          if (window.SGOmino && !SGNube.profilo().omino) {
-            var cfg = SGOmino.norm(SGOmino.casuale(n));
-            SGNube.salvaOmino(cfg, [cfg, SGOmino.norm(secondoOmino(cfg, n))], 0);
-          }
-          ricordaProfilo();
-          scriviL("sg-primo-avatar", n);   // (l'avatar è ancora da scegliere: se chiude l'app adesso, alla prossima apertura glielo richiede)
-          if (!window.SGOmino) return dopo();
-          schermataOmino(function () { dopo(); pillola("benvenuto", "🎉 Benvenuto, " + n + "!", "verde", 3500); }, null, { benvenuto: true });
-        });
-      }).catch(function (e) { bAvanti.disabled = false; avviso.textContent = erroreProfilo(e, n); });
-    }
-    invioCampi(nome, pwd, avanti);
-    s._piede.appendChild(bAvanti);
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "Hai già un profilo? Entra", onclick: function () {
-      schermataEntraProfilo(dopo, Object.assign({}, o, { nome: (nome.value || "").trim() }));
-    } }));
-    mostra(s);
-  }
-
-  // "Hai già un profilo? Entra" (per chi cambia telefono): nome + password, poi dritto dove doveva andare
-  function schermataEntraProfilo(dopo, o) {
-    o = o || {};
-    var s = schermataProfiloBase("bp-entra"), c = s._contenuto;
-    c.appendChild(testaProfilo("Entra col tuo profilo", "Scrivi il nome e la password che hai scelto quando l'hai creato."));
-    if (o.invito) c.appendChild(el("div", { class: "bp-invito", text: o.invito }));
-    var nome = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Il tuo nome", autocomplete: "username", autocapitalize: "words", enterkeyhint: "next" });
-    var pwd = el("input", { class: "link-campo bp-pwd", type: "password", maxlength: "40", placeholder: "La tua password", autocomplete: "current-password", enterkeyhint: "go" });
-    var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
-    nome.value = o.nome || "";
-    c.appendChild(nome); c.appendChild(pwd); c.appendChild(avviso);
-    var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: entra });
-    function entra() {
-      if (bEntra.disabled) return;
-      var n = (nome.value || "").trim(), pw = pwd.value || "";
-      if (n.length < 2 || !pw) { avviso.textContent = "Scrivi nome e password."; (n.length < 2 ? nome : pwd).focus(); return; }
-      bEntra.disabled = true; avviso.textContent = "Un attimo…";
-      audioCtx();
-      SGNube.accedi(n, pw).then(function () { attendiProfilo(function () { ricordaProfilo(); dopo(); }); })
-        .catch(function (e) { bEntra.disabled = false; avviso.textContent = erroreProfilo(e, n); });
-    }
-    invioCampi(nome, pwd, entra);
-    s._piede.appendChild(bEntra);
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "‹ Non ho un profilo: lo creo", onclick: function () { schermataBenvenuto(dopo, o); } }));
-    mostra(s);
-  }
-
-  // il telefono ricorda il profilo ma la sessione è sparita: "Bentornato, Luca!", solo la password (una volta)
-  // o.indietro: si può tornare indietro (dalla home, quando si era entrati senza rete)
-  function schermataBentornato(dopo, ric, o) {
-    o = o || {};
-    var s = schermataProfiloBase("bp-bentornato", o.indietro), c = s._contenuto;
-    c.appendChild(testaProfilo("Bentornato, " + ric.nome + "! 👋", "Per sicurezza scrivi la tua password: poi entri da solo."));
-    if (o.invito) c.appendChild(el("div", { class: "bp-invito", text: o.invito }));
-    if (window.SGOmino) c.appendChild(el("div", { class: "sl-anteprima bp-anteprima", "aria-hidden": "true", html: SGOmino.svg(ric.omino || SGOmino.casuale(ric.nome)) }));
-    var nome = el("input", { type: "text", autocomplete: "username", value: ric.nome, hidden: "hidden", "aria-hidden": "true" });   // (per chi salva le password: il nome c'è già)
-    var pwd = el("input", { class: "link-campo bp-pwd", type: "password", maxlength: "40", placeholder: "La tua password", autocomplete: "current-password", enterkeyhint: "go" });
-    var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
-    c.appendChild(nome); c.appendChild(pwd); c.appendChild(avviso);
-    var bEntra = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: entra });
-    var bLoStesso = el("button", { class: "btn btn-fantasma bp-gia", text: "▶ Gioca lo stesso (senza rete)", hidden: "hidden", onclick: function () { senzaRete = true; dopo(); } });
-    function entra() {
-      if (bEntra.disabled) return;
-      var pw = pwd.value || "";
-      if (!pw) { avviso.textContent = "Scrivi la tua password."; pwd.focus(); return; }
-      bEntra.disabled = true; avviso.textContent = "Un attimo…";
-      audioCtx();
-      SGNube.accedi(ric.nome, pw).then(function () { attendiProfilo(function () { ricordaProfilo(); dopo(); }); })
-        .catch(function (e) {
-          bEntra.disabled = false; avviso.textContent = erroreProfilo(e, ric.nome);
-          if (e && e.code === "auth/network-request-failed") bLoStesso.hidden = false;   // senza rete si gioca lo stesso
-        });
-    }
-    pwd.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); entra(); } });
-    s._piede.appendChild(bEntra);
-    s._piede.appendChild(bLoStesso);
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "Non sei " + ric.nome + "? Cambia profilo", onclick: function () {
-      dimenticaProfilo(); schermataBenvenuto(dopo, { invito: o.invito, daLink: o.daLink });
-    } }));
-    mostra(s);
-  }
-
-  // prima apertura senza rete (o Firebase che non risponde): il profilo non si può creare
-  function senzaInternet(dopo, o) {
-    var s = schermataProfiloBase("bp-rete"), c = s._contenuto;
-    c.appendChild(el("div", { class: "bp-rete-ico", "aria-hidden": "true", text: "📶" }));
-    c.appendChild(testaProfilo("Serve internet per creare il profilo", "Il profilo ti segue su ogni telefono: per crearlo serve la rete. Controlla il Wi-Fi o i dati e tocca Riprova."));
-    var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
-    c.appendChild(avviso);
-    function riprova() {
-      window.removeEventListener("online", riprova);
-      if (!s.isConnected) return;
-      var N = window.SGNube;
-      if (N && N.disponibile()) { if (N.riprova) N.riprova(); return garantisciProfilo(dopo, o); }
-      if (navigator.onLine === false) { avviso.textContent = "Ancora niente rete: riprova tra un attimo."; window.addEventListener("online", riprova); return; }
-      avviso.textContent = "Un attimo…";
-      location.reload();   // la parte dei profili non si era caricata: si ricarica (il link aperto resta segnato: dopo si entra lo stesso)
-    }
-    window.addEventListener("online", riprova);   // torna la rete: si riprova da soli
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Riprova", onclick: riprova }));
-    mostra(s);
-  }
-  // il link aperto all'avvio, in parole per chi gioca ("🎉 Ti aspettano per giocare a ❌ Tris!")
-  function invitoDi(L) {
-    if (!L) return "";
-    if (L.gruppo) return "🎉 I tuoi amici ti aspettano" + (L.n ? " in «" + (L.e ? L.e + " " : "") + String(L.n).slice(0, 24) + "»" : " nella compagnia " + L.gruppo) + "!";
-    if (L.sala) return "🎉 I tuoi amici ti aspettano nella Sala " + String(L.sala).toUpperCase() + "!";
-    var g = L.gioco && giocoDa(L.gioco);
-    return g && L.stanza ? "🎉 Ti aspettano per giocare a " + (g.icona ? g.icona + " " : "") + g.nome + "!" : "";
-  }
-
   // =========================================================
   //  LA SALA — il gruppo resta tra una partita e l'altra
   // =========================================================
@@ -4491,7 +1470,7 @@
     var lista = el("div");
     var avanti = el("button", { class: "btn btn-primario", text: torn ? "Comincia la serata ▶" : "Avanti ▶", onclick: function () {
       if (gruppo.length < minAvanti) return;
-      if (torn) return iniziaTorneo();
+      if (torn) return cuore.iniziaTorneo();
       if (g) schermataPreGioco(g, opts && opts.modo ? { modo: opts.modo } : null); else schermataScegliGioco();
     }});
 
@@ -4542,8 +1521,8 @@
     var modo = inSala ? "online" : (opts && opts.modo) || null, M = modo ? modoDi(g, modo) : null, online = modo === "online";
     var conAmici = !torn && !inSala && (!modo || (M && M.amici));   // la lista di chi gioca serve solo se si gioca sullo stesso telefono
     var s = schermata({ icona: g.icona, titolo: g.nome,
-      sotto: torn ? ("Serata a punti · " + nomeDifficolta(pesoGioco(g))) : (inSala ? "Sala · impostazioni" : (M ? M.icona + " " + M.nome + " · impostazioni" : "Impostazioni della partita")),
-      indietro: function () { if (torn) schermataTorneoHub(); else if (inSala) salaScegliGioco(); else if (conAmici) schermataSala(g, modo ? { modo: modo } : null); else if (modiDi(g).length > 1) schermataModo(g); else tornaHome(); } });
+      sotto: torn ? ("Serata a punti · " + cuore.nomeDifficolta(cuore.pesoGioco(g))) : (inSala ? "Sala · impostazioni" : (M ? M.icona + " " + M.nome + " · impostazioni" : "Impostazioni della partita")),
+      indietro: function () { if (torn) cuore.schermataTorneoHub(); else if (inSala) salaScegliGioco(); else if (conAmici) schermataSala(g, modo ? { modo: modo } : null); else if (modiDi(g).length > 1) schermataModo(g); else tornaHome(); } });
     s.classList.add("prima-fissa");   // "Comincia" sempre a vista: se le scelte sono tante scorre solo il centro
     if (!conAmici && !torn && !inSala) {
       if (online) s._contenuto.appendChild(el("p", { class: "modulo-nota sl-prima", text: "Scegli come giocare, poi apri la stanza: inviti gli amici col tasto 📤 e vi aspettate insieme nella saletta." }));
@@ -4787,10 +1766,10 @@
     var st = (q && q.stanza) || sala.stanza || null, SVg = st ? SVH[st] : null;
     var giro = q && q.giro != null ? (+q.giro || 0) : (SVg ? (SVg.giro || 0) : 0);
     var nuova = contaGiocate(classifica, st + "|" + giro);
-    restaEsito(classifica, st);   // ("👑 Chi vince resta": chi resta, chi va in coda, la sfida dopo)
+    cuore.restaEsito(classifica, st);   // ("👑 Chi vince resta": chi resta, chi va in coda, la sfida dopo)
     var T = sala.torneo;
     if (!T) { if (nuova) sala._bcast(); return; }
-    var ass = puntiDaClassifica(g, classifica);
+    var ass = cuore.puntiDaClassifica(g, classifica);
     ass.forEach(function (r) { T.punti[r.nome] = (T.punti[r.nome] || 0) + r.punti; });
     T.n += 1; T.ultima = { gioco: g.nome, icona: g.icona || "🎲", assegnati: ass, stanza: st, giro: giro };
     sala._bcast();
@@ -4908,7 +1887,7 @@
         el("label", { class: "sl-interruttore" }, [ el("span", { text: "🏆 Classifica della serata" }), chk ]),
         el("small", { text: "A fine partita ognuno prende punti per come è arrivato: più il gioco è difficile, più punti vale. La classifica si vede nella Sala." })
       ]),
-      rigaInsieme(),   // (Passo 6: "🗳️ Scegliamo insieme")
+      cuore.rigaInsieme(),   // (Passo 6: "🗳️ Scegliamo insieme")
       el("div", { class: "sl-viva-opz", hidden: "hidden", "data-posto": "compagnia" }),   // (Passo 3: la Compagnia)
       el("p", { class: "modulo-nota", text: "Per far uscire qualcuno, tieni premuto sul suo avatar. In alto, «🔒 Chiudi» chiude la porta: non entra nessun altro." })
     ]);
@@ -4948,7 +1927,7 @@
     if (!(window.SGNet && SGNet.disponibile())) return salaSenzaRete();
     var io = profiloAttivo();
     if (!io) {
-      if (!salaSempre() && !R0) return schermataAccesso(function () { creaSala(opz); });
+      if (!salaSempre() && !R0) return cuore.schermataAccesso(function () { creaSala(opz); });
       var hostR = R0 ? (R0.membri || []).filter(function (m) { return m && m.id === "host"; })[0] : null;
       var nomeH = String((opz && opz.nomeHost) || (R0 && R0.nomeHost) || nomeOspiteSalvato() || ((gruppo[0] && gruppo[0].nome) || "")).trim().slice(0, 16);
       if (!nomeH) return schermataNomeSala(opz);   // una volta sola: poi il telefono se lo ricorda
@@ -4975,16 +1954,16 @@
       nato: (R0 && +R0.nato) || Date.now(), gen: (R0 && +R0.gen) || (+(opz && opz.gen) || 1), dev: idTelefono(), vice: [], riaperta: !!R0,
       comp: (R0 && R0.comp) || (opz && opz.comp) || (EZ && EZ.comp) || null,
       torneo: R0 ? (R0.torneo || null) : (EZ && EZ.torneo && typeof EZ.torneo === "object" ? EZ.torneo : (torn ? { punti: {}, nomi: [io.nome], n: 0, ultima: null, finito: false } : null)),
-      elim: R0 ? (R0.elim || null) : (elimG ? { gioco: elimG, iniziato: false, finito: false, turni: [], nomi: {}, campione: null, gironi: {} } : (torO ? nuovoTorneino(torO.gioco, torO.imp, torO, torO.attesi || []) : null)), inPartitaK: null, attesi: null, regole: {},
+      elim: R0 ? (R0.elim || null) : (elimG ? { gioco: elimG, iniziato: false, finito: false, turni: [], nomi: {}, campione: null, gironi: {} } : (torO ? cuore.nuovoTorneino(torO.gioco, torO.imp, torO, torO.attesi || []) : null)), inPartitaK: null, attesi: null, regole: {},
       fase: null, fuori: {}, ctx: null, sceglie: false,   // fase: del gioco in corso; fuori: { id: stanza } chi è uscito apposta dal gioco; ctx: quello del gioco lanciato; sceglie: l'host sta scegliendo il prossimo gioco
       giocate: (R0 && R0.giocate) || (EZ && EZ.giocate && typeof EZ.giocate === "object" ? EZ.giocate : {}), duello: null,   // giocate: { nome: partite } ("Chi gioca?"); duello: un gioco a due senza l'host (salaDuello)
       // "👑 Chi vince resta" (la serie e il record di stasera): restano se la pagina si ricarica, col subentro e col trasloco
-      resta: restaDaPrima(R0, EZ, "resta"), restaRec: restaDaPrima(R0, EZ, "restaRec"),
+      resta: cuore.restaDaPrima(R0, EZ, "resta"), restaRec: cuore.restaDaPrima(R0, EZ, "restaRec"),
       // "🗳️ Scegliamo insieme": l'interruttore è del telefono dell'host; i giochi di stasera restano (ricarica, subentro, trasloco)
-      insieme: insiemeSalvato(), voto: null, votoN: 0,
+      insieme: cuore.insiemeSalvato(), voto: null, votoN: 0,
       giochiFatti: (function (f) { return Array.isArray(f) ? f.filter(function (x) { return typeof x === "string"; }).slice(-30) : []; })((R0 && R0.giochiFatti) || (EZ && EZ.giochiFatti)) };
     // il voto di prima (pagina ricaricata: riparte da capo; subentro: continua) si riapre quando la Sala è di nuovo mia
-    var votoPrima = votoValido(R0 && R0.voto) ? R0.voto : (EZ && votoValido(EZ.voto) ? EZ.voto : null), votoCont = !R0 && !!votoPrima;
+    var votoPrima = cuore.votoValido(R0 && R0.voto) ? R0.voto : (EZ && cuore.votoValido(EZ.voto) ? EZ.voto : null), votoCont = !R0 && !!votoPrima;
     var S0 = sala;
     // il subentro (p3-c) con una partita che continua (il duello di due amici, o un gioco col suo host di riserva): la Sala
     // nuova la tiene com'è e chi ci gioca ci resta. Io resto nel gioco se ci stavo (EZ.ctx: il mio, diventato da host)
@@ -5041,7 +2020,7 @@
       if (Vb && Vb.fase === "voto") {
         var ciB = {}; sala.membri.forEach(function (x) { ciB[x.id] = 1; });
         Object.keys(Vb.voti).forEach(function (id) { if (!ciB[id]) delete Vb.voti[id]; });
-        votoTimer();
+        cuore.votoTimer();
       }
       // (punto: "round 3 di 5" del gioco in corso, da t.aCheSiamo; con un'altra stanza si ricomincia da vuoto)
       if (sala && sala.puntoDi !== sala.stanza) { sala.punto = ""; sala.puntoDi = sala.stanza; }
@@ -5058,17 +2037,17 @@
         // se poi sparisce, i vice aspettano di più (90 s e 120 s) prima di prendere la Sala
         cede: sala.cede || undefined, pausa: sala.pausa || undefined,
         // "👑 Chi vince resta": la serie (coda, campione, la sfida dopo, l'ora dell'host per il conto) e il record di stasera
-        resta: sala.resta ? restaFoto(sala.resta) : undefined, restaRec: sala.restaRec || undefined,
+        resta: sala.resta ? cuore.restaFoto(sala.resta) : undefined, restaRec: sala.restaRec || undefined,
         // "🗳️ Scegliamo insieme": l'interruttore (gli amici sanno che si vota), il voto o la ruota, i giochi di stasera
-        insieme: sala.insieme ? 1 : undefined, voto: sala.voto ? votoFoto(sala.voto) : undefined,
+        insieme: sala.insieme ? 1 : undefined, voto: sala.voto ? cuore.votoFoto(sala.voto) : undefined,
         giochiFatti: sala.giochiFatti && sala.giochiFatti.length ? sala.giochiFatti : undefined });
       if (!soloFoto) salva();
-      if (sala && (sala.resta || RESTA_FINE)) restaAggiorna();   // (le mie scritte: fine sfida, targhetta, coda nella Sala)
-      if (sala && sala.voto && VOTO_UI && VOTO_UI.S === sala) votoAggiornaUI();   // (la mia scheda del voto: chi ha votato, quanti siamo)
+      if (sala && (sala.resta || cuore.RESTA_FINE)) cuore.restaAggiorna();   // (le mie scritte: fine sfida, targhetta, coda nella Sala)
+      if (sala && sala.voto && cuore.VOTO_UI && cuore.VOTO_UI.S === sala) cuore.votoAggiornaUI();   // (la mia scheda del voto: chi ha votato, quanti siamo)
     }
     function agg() {
       bcast(); if (!sala) return;
-      if (sala.elim) { if (torneinoArrivati()) return; return seguiHost(); }   // torneo a eliminazione: la sala si vede solo quando non sto giocando
+      if (sala.elim) { if (cuore.torneinoArrivati()) return; return cuore.seguiHost(); }   // torneo a eliminazione: la sala si vede solo quando non sto giocando
       // (mentre l'host sceglie il gioco o chi gioca non lo riporto nella Sala perché un amico è entrato o ha ridetto "ci sono")
       if (!sala.inGioco && !(sala.torneo && sala.torneo.finito) && !hostSceglie()) disegnaSalaHost();
       else rinfrescaAttesi();   // (nella saletta del gioco: chi manca)
@@ -5090,7 +2069,7 @@
         var E = sala === S0 && sala.elim;
         if (!E || !E.torneino || E.iniziato) return;
         delete E.attesi;
-        if (sala.membri.length >= 2) return partiTorneino(E);
+        if (sala.membri.length >= 2) return cuore.partiTorneino(E);
         sala.elim = null; sala.regoleElim = null; sala._regoleBox = null; agg();
       }, 8000);
     }
@@ -5099,7 +2078,7 @@
       var Ec = sala.elim;
       if (Ec && Ec.torneino && Ec.coppie === "scelte" && Ec.scade && !Ec.iniziato) {
         Ec.scade = Math.max(Ec.scade, Date.now() + 15000);
-        sala.tCoppie = setTimeout(function () { if (sala === S0 && sala.elim === Ec && !Ec.iniziato) avviaElim(); }, Ec.scade - Date.now());
+        sala.tCoppie = setTimeout(function () { if (sala === S0 && sala.elim === Ec && !Ec.iniziato) cuore.avviaElim(); }, Ec.scade - Date.now());
       }
       // chi c'era ha 30 secondi per tornare (rientra da solo appena vede la Sala riaperta)
       sala.attesi = {}; membri.forEach(function (m) { if (m.id !== "host") sala.attesi[m.id] = 1; });
@@ -5108,8 +2087,8 @@
         var via = Object.keys(sala.attesi); sala.attesi = null;
         if (!via.length) return;
         sala.membri = sala.membri.filter(function (m) { return via.indexOf(m.id) < 0; });
-        if (sala.elim) via.forEach(function (id) { if (sala.elim.gironi) delete sala.elim.gironi[id]; elimUscito(id); });
-        via.forEach(restaVia);   // ("👑 Chi vince resta": chi non è tornato esce dalla coda)
+        if (sala.elim) via.forEach(function (id) { if (sala.elim.gironi) delete sala.elim.gironi[id]; cuore.elimUscito(id); });
+        via.forEach(cuore.restaVia);   // ("👑 Chi vince resta": chi non è tornato esce dalla coda)
         agg();
       }, 30000);
       NOMI_SEME = {}; membri.forEach(function (m) { if (!m.ex) NOMI_SEME[m.id] = m.nome; });   // i nomi già dati ("Luca 2") restano a chi li aveva
@@ -5135,10 +2114,10 @@
       onConnesso: function () {
         if (sala !== S0) return;
         sala.pronta = true;
-        if (sala.resta && !S0.restaVista) { S0.restaVista = true; restaRiprendi(); }   // ("👑 Chi vince resta" continua: Sala riaperta, subentro, trasloco)
+        if (sala.resta && !S0.restaVista) { S0.restaVista = true; cuore.restaRiprendi(); }   // ("👑 Chi vince resta" continua: Sala riaperta, subentro, trasloco)
         if (gPartenza) { var gp2 = gPartenza; gPartenza = null; bcast(); return salaPreparaGioco(gp2); }
         if (riprendiG) { var rg = riprendiG; riprendiG = null; bcast(); return salaRiprendiGioco(rg.g, rg.imp); }   // (la Sala è mia: il gioco riprende)
-        if (votoPrima && !sala.gioco) { var vp = votoPrima; votoPrima = null; if (salaVotoRiprendi(vp, votoCont)) return; }   // ("🗳️ Scegliamo insieme": il voto si riapre)
+        if (votoPrima && !sala.gioco) { var vp = votoPrima; votoPrima = null; if (cuore.salaVotoRiprendi(vp, votoCont)) return; }   // ("🗳️ Scegliamo insieme": il voto si riapre)
         agg();
       },
       // collegandomi c'è già la Sala viva di un altro su questo codice: se vince la mia parlo, se no entro da amico
@@ -5159,9 +2138,9 @@
       },
       onAddio: function (id) {
         if (sala !== S0 || S0.passa) return;   // (gli amici escono dalla Sala di prima perché sono passati nella Compagnia, o in quella dell'amico a cui la passo: restano)
-        sala.membri = sala.membri.filter(function (m) { return m.id !== id; }); if (sala.attesi) delete sala.attesi[id]; if (sala.fuori) delete sala.fuori[id]; if (sala.elim) { if (sala.elim.gironi) delete sala.elim.gironi[id]; elimUscito(id); }
-        restaVia(id);   // ("👑 Chi vince resta": via dalla coda; se giocava, vince l'altro)
-        if (sala.duello && sala.duello.a === id && sala.stanza === sala.duello.stanza) return fineDuelloSala();   // chi aveva aperto il duello è uscito dalla Sala
+        sala.membri = sala.membri.filter(function (m) { return m.id !== id; }); if (sala.attesi) delete sala.attesi[id]; if (sala.fuori) delete sala.fuori[id]; if (sala.elim) { if (sala.elim.gironi) delete sala.elim.gironi[id]; cuore.elimUscito(id); }
+        cuore.restaVia(id);   // ("👑 Chi vince resta": via dalla coda; se giocava, vince l'altro)
+        if (sala.duello && sala.duello.a === id && sala.stanza === sala.duello.stanza) return cuore.fineDuelloSala();   // chi aveva aperto il duello è uscito dalla Sala
         agg();
       },
       onMsg: function (id, m) {
@@ -5169,18 +2148,18 @@
         if (S0.passa) return;   // (la sto passando a un amico: chi bussa adesso entra nella sua, io non mando più niente)
         // un amico ha rinominato la Compagnia sul suo telefono (dalla lista delle compagnie): vince il nome più nuovo
         if (m && m.t === "comp") { if (compPiuNuova(m.comp)) agg(); return; }
-        if (m && m.t === "esito" && sala.elim) return esitoPartita(m.k, !!m.vinto, id);   // torneo a eliminazione: com'è finita una partita
-        if (m && m.t === "girone" && sala.elim) return scegliGironeElim(id, m.g);   // torneo a eliminazione: dove si siede
+        if (m && m.t === "esito" && sala.elim) return cuore.esitoPartita(m.k, !!m.vinto, id);   // torneo a eliminazione: com'è finita una partita
+        if (m && m.t === "girone" && sala.elim) return cuore.scegliGironeElim(id, m.g);   // torneo a eliminazione: dove si siede
         // il duello (gioco a due senza l'host): com'è finito e a che punto è. Vale solo da chi l'ha aperto e per la sua stanza
-        if (m && (m.t === "salaEsito" || m.t === "duelloFase")) return msgDuello(id, m);
+        if (m && (m.t === "salaEsito" || m.t === "duelloFase")) return cuore.msgDuello(id, m);
         // "🗳️ Scegliamo insieme": il voto di un amico ({ n: quale voto, g: il gioco })
-        if (m && m.t === "voto") return salaVotoSegna(id, m.n, m.g);
+        if (m && m.t === "voto") return cuore.salaVotoSegna(id, m.n, m.g);
         // un amico è uscito apposta dal gioco (non lo aspettiamo) o ci rientra ("Rientra ▶")
         if (m && (m.t === "esco" || m.t === "rientro")) {
           if (!sala.membri.some(function (x) { return x.id === id; })) return;
-          if (m.t === "esco") restaEsce(id, m.stanza);   // ("👑 Chi vince resta": uno dei due lascia la sfida, vince l'altro)
+          if (m.t === "esco") cuore.restaEsce(id, m.stanza);   // ("👑 Chi vince resta": uno dei due lascia la sfida, vince l'altro)
           // chi ha aperto il duello torna nella Sala: il duello è finito per tutti
-          if (m.t === "esco" && sala.duello && sala.duello.a === id && m.stanza && m.stanza === sala.duello.stanza && sala.stanza === m.stanza) return fineDuelloSala();
+          if (m.t === "esco" && sala.duello && sala.duello.a === id && m.stanza && m.stanza === sala.duello.stanza && sala.stanza === m.stanza) return cuore.fineDuelloSala();
           sala.fuori = sala.fuori || {};
           if (m.t === "esco") { if (!m.stanza || m.stanza !== sala.stanza || sala.fuori[id] === m.stanza) return; sala.fuori[id] = m.stanza; }
           else { if (!sala.fuori[id]) return; delete sala.fuori[id]; }
@@ -5196,7 +2175,7 @@
           var ex = sala.membri.filter(function (x) { return x.ex && stessoNome(x.nome, nome); })[0];
           if (ex) { sala.membri[sala.membri.indexOf(ex)] = nuovo; if (sala.attesi) delete sala.attesi[ex.id]; }
           else sala.membri.push(nuovo);
-          restaEntra(id, ex ? ex.id : null);   // ("👑 Chi vince resta": in fondo alla coda)
+          cuore.restaEntra(id, ex ? ex.id : null);   // ("👑 Chi vince resta": in fondo alla coda)
           segnaNomeT(sala.torneo, nome);
         } else if (!!gia.pr !== !!m.pr) gia.pr = m.pr ? 1 : 0;   // (chi ha il profilo può fare da vice)
         // la Compagnia con un nome più nuovo (rinominata dal telefono di un amico): la prendo e la mando a tutti
@@ -5226,7 +2205,7 @@
       var conRiserva = !!(partitaCorrente && partitaCorrente.viva() && riservaPer(partitaCorrente));
       lasciaPartita(); if (conRiserva && SGNet.lasciaGiochi) SGNet.lasciaGiochi(); else SGNet.chiudiGiochi();
     }
-    chiudiTabelloneElim();
+    cuore.chiudiTabelloneElim();
     sala = null; dimenticaMiaSala();
     pillola("riapro", null);
     pillola("sala", eraMia ? "👋 Bentornato! Ora la Sala la tiene " + chi + ": sei dentro come amico" : "👋 La Sala l'aveva già aperta " + chi + ": sei dentro", "verde", 3500);
@@ -5308,8 +2287,8 @@
     function id2(x) { return x === vecchio ? "host" : x; }
     var membri = (m.membri || []).filter(function (x) { return x && x.id && x.id !== "host" && x.id !== vecchio; });
     var ez = { membri: membri, torneo: m.torneo || null, giocate: m.giocate || {}, porta: porta ? 1 : 0, comp: m.comp || null,
-      resta: restaEredita(m.resta, vecchio), restaRec: m.restaRec || null,   // ("👑 Chi vince resta" continua: gli id rimappati, 6-6)
-      voto: !m.gioco ? votoEredita(m.voto, vecchio) : null, giochiFatti: Array.isArray(m.giochiFatti) ? m.giochiFatti : [] };   // ("🗳️ Scegliamo insieme": il voto continua, 6-6)
+      resta: cuore.restaEredita(m.resta, vecchio), restaRec: m.restaRec || null,   // ("👑 Chi vince resta" continua: gli id rimappati, 6-6)
+      voto: !m.gioco ? cuore.votoEredita(m.voto, vecchio) : null, giochiFatti: Array.isArray(m.giochiFatti) ? m.giochiFatti : [] };   // ("🗳️ Scegliamo insieme": il voto continua, 6-6)
     // la partita in corso: resta solo se non era sul telefono che se ne va (duello di due amici, gioco con l'host di riserva)
     var g = m.gioco && m.stanza ? giocoDa(m.gioco) : null, D = g && m.duello && m.duello.stanza === m.stanza ? m.duello : null;
     var tieni = !!(g && ((D && D.a !== "host" && D.b !== "host") || (!D && haRiserva(g))));
@@ -5338,7 +2317,7 @@
       return disegnaSalaOspite();
     }
     if (sala && codiceSala && sala.codice === codiceSala) {
-      if (sala.stanza === code && sala.duello && sala.duello.a === "host") { sala.inGioco = true; return fineDuelloSala(); }
+      if (sala.stanza === code && sala.duello && sala.duello.a === "host") { sala.inGioco = true; return cuore.fineDuelloSala(); }
       if (sala.stanza === code && !sala.duello) { sala.gioco = null; sala.stanza = null; sala.fase = null; sala.fuori = {}; sala.scelti = null; sala._bcast(); }
       sala.inGioco = false; sala.ctx = null; sala.fineDuello = null;
       return disegnaSalaHost();
@@ -5367,7 +2346,7 @@
     try { S0.rete.lascia(); } catch (e) {}
     clearInterval(S0.tVivo); clearTimeout(S0.tCoppie);
     if (S0.inGioco) { lasciaPartita(); SGNet.chiudiGiochi(); }
-    chiudiTabelloneElim();
+    cuore.chiudiTabelloneElim();
     sala = null; dimenticaMiaSala(); tieniAcceso(false);
     schermataHome();
     pillola("sala", "😴 Eri via da un po': la Sala è finita", "grigia", 4000);
@@ -5410,19 +2389,19 @@
       sotto: TN ? "Torneo a eliminazione · Sala di " + sala.membri[0].nome : (E ? "Torneo a eliminazione · " + (gE ? gE.nome : "") : (sala.comp ? "Il link vale sempre" : "Un link per tutti i giochi")),   // (il titolo dice già "Sala online" o "Torneo")
       confermaEsci: TN ? (E.finito ? "Tornare nella Sala?" : "Fermare il torneo? Si torna tutti nella Sala.") : (E ? "Chiudere il torneo per tutti?" : (T && T.n ? "Chiudere la Sala per tutti? I punti di stasera si perdono." : "Chiudere la sala per tutti?")),
       giocatori: sala.membri.map(function (m) { return { id: m.id, nome: m.nome, omino: m.omino || null, host: m.id === "host", tu: m.id === "host" }; }),
-      extra: E ? [boxElimSala(E, "host", true, sala, seguiHost)] : [boxDuelloHost(), boxInCorsoHost(), riquadroCoda(sala, true), T ? boxTorneoCorto(T, sala) : null, consiglioComp()].filter(Boolean),
+      extra: E ? [cuore.boxElimSala(E, "host", true, sala, cuore.seguiHost)] : [boxDuelloHost(), boxInCorsoHost(), cuore.riquadroCoda(sala, true), T ? boxTorneoCorto(T, sala) : null, consiglioComp()].filter(Boolean),
       testoComincia: TN ? (E.finito ? "🎮 Prossimo gioco" : (E.iniziato ? "Torneo in corso…" : "⚔️ Via al torneo"))
         : (E ? (E.finito ? "↻ Nuovo torneo (stessi amici)" : (E.iniziato ? "Torneo in corso…" : "⚔️ Comincia il torneo")) : (T ? (T.n ? "🎮 Prossimo gioco" : "🎮 Scegli il primo gioco") : "🎮 Scegli un gioco")),
       puoComincia: E ? (!E.iniziato || E.finito) : undefined,
       nota: TN ? (E.finito ? "Con «Prossimo gioco» tornate tutti nella Sala e scegli il gioco dopo." : (E.iniziato ? "Le partite si aprono da sole sul telefono di chi gioca." : (E.scade ? "Quando sono seduti, tocca «Via al torneo»." : "Quando arrivano tutti si parte da soli.")))
         : (E ? (E.iniziato && !E.finito ? "Le partite si aprono da sole sul telefono di chi gioca." : "Ognuno tocca il girone in cui vuole giocare. Quando siete pronti, fai partire il torneo.")
         : "Scegli un gioco: parte da solo sul telefono di tutti. A fine partita si torna qui."),
-      onComincia: TN ? function () { if (E.finito) { fineTorneino(); if (sala) { sala.sceglie = true; sala._bcast(); salaScegliGioco(); } } else avviaElim(); } : (E ? function () { if (E.finito) nuovoElim(); else avviaElim(); } : salaScegliGioco),
+      onComincia: TN ? function () { if (E.finito) { cuore.fineTorneino(); if (sala) { sala.sceglie = true; sala._bcast(); salaScegliGioco(); } } else cuore.avviaElim(); } : (E ? function () { if (E.finito) cuore.nuovoElim(); else cuore.avviaElim(); } : salaScegliGioco),
       onRegole: E ? function () { sala._bcast(); } : undefined,
-      onEsci: TN ? function () { fineTorneino(); } : function () { chiudiSala(); schermataHome(); },
+      onEsci: TN ? function () { cuore.fineTorneino(); } : function () { chiudiSala(); schermataHome(); },
       // (con un amico che può tenerla: "👑 Passa la Sala a Giulia" o "🚪 Chiudi per tutti")
       esciScelta: E ? null : function (esci) { esciDallaSala(T && T.n ? "Chiudere la Sala per tutti? I punti di stasera si perdono." : "Chiudere la sala per tutti?", esci); }
-    }, E ? regoleElim() : null);
+    }, E ? cuore.regoleElim() : null);
     if (sS) sS.classList.toggle("con-tabellone", !!(E && (E.iniziato || (E.torneino && E.scade))));   // (a torneo in corso la stanza si stringe: prima il tabellone)
     misuraConsiglio();
   }
@@ -5561,8 +2540,8 @@
       : "⚔️ " + D.na + " e " + D.nb + " giocano " + aGioco(g ? g.nome : "");
     var nodo = el("div", { class: "sl-incorso prossima sl-duello" }, [
       el("span", { class: "sl-inc-testo" }, [ el("b", { text: testo }) ]),
-      finito ? (sala.resta ? null : el("button", { class: "btn btn-primario btn-piccolo", text: "⚔️ Altra sfida", onclick: function () { if (g) salaAltraSfida(g); } }))
-        : el("button", { class: "btn btn-fantasma btn-piccolo", text: "👀 Guarda", onclick: function () { if (sala && sala.duello === D) guardaDuelloHost(D); } })
+      finito ? (sala.resta ? null : el("button", { class: "btn btn-primario btn-piccolo", text: "⚔️ Altra sfida", onclick: function () { if (g) cuore.salaAltraSfida(g); } }))
+        : el("button", { class: "btn btn-fantasma btn-piccolo", text: "👀 Guarda", onclick: function () { if (sala && sala.duello === D) cuore.guardaDuelloHost(D); } })
     ]);
     sala._boxD = { k: k, nodo: nodo };
     return nodo;
@@ -5636,10 +2615,10 @@
   // o.scelgoIo = "Scelgo io" (con "🗳️ Scegliamo insieme" acceso: questa volta un tocco sceglie il gioco, come prima)
   function salaScegliGioco(o) {
     o = o && !o.target ? o : {};
-    if (sala && sala.resta) restaFerma();   // (l'host sceglie un altro gioco: "👑 Chi vince resta" finisce, il record resta)
+    if (sala && sala.resta) cuore.restaFerma();   // (l'host sceglie un altro gioco: "👑 Chi vince resta" finisce, il record resta)
     var T = sala && sala.torneo;
     // "🗳️ Scegliamo insieme": 3 giochi già accesi (in cima), un tocco ne accende o spegne uno, "🗳️ Si vota!" apre il voto per tutti
-    var sel = !o.scelgoIo && votoPossibile() ? proponiTre() : null, tessere = {}, bVota = null;
+    var sel = !o.scelgoIo && cuore.votoPossibile() ? cuore.proponiTre() : null, tessere = {}, bVota = null;
     var s = schermata({ icona: sel ? "🗳️" : "🎮", titolo: sel ? "Proponi 3 giochi" : (T ? "Quale gioco?" : "Scegli un gioco"),
       sotto: T ? "Parte per tutti · più è difficile, più punti vale" : (sel ? "Poi votate tutti e decide la ruota" : "Parte per tutta la sala"),
       indietro: function () { if (sala && sala.sceglie) { sala.sceglie = false; sala._bcast(); } disegnaSalaHost(); } });   // (gli amici non leggono più "Paky sceglie…")
@@ -5667,7 +2646,7 @@
     lista.forEach(function (g) {
       // (con la Sala sempre accesa niente schermata delle impostazioni: si va dritti nella saletta, le regole stanno nel ⚙️)
       var tess = tesseraGioco(g, function () { if (sel) return tocca(g.id); if (salaSempre()) salaPreparaGioco(g); else schermataPreGioco(g, { sala: true }); }, true);
-      if (T) tess.querySelector(".info").appendChild(rigaPuntiTorneo(g));
+      if (T) tess.querySelector(".info").appendChild(cuore.rigaPuntiTorneo(g));
       // quanti giocano, detto prima di sceglierlo: i giochi a due (gli altri guardano), i posti contati, chi manca
       var et = etichettaPosti(g, sala ? sala.membri.length : 1);
       if (et) tess.querySelector(".info").appendChild(el("div", { class: "tess-adue" + (et.c ? " " + et.c : ""), text: et.t }));
@@ -5676,7 +2655,7 @@
     });
     s._contenuto.appendChild(griglia);
     if (sel) {
-      bVota = el("button", { class: "btn btn-primario sl-si-vota", type: "button", onclick: function () { if (sel.length >= 2) salaVotoApri(sel.slice()); } });
+      bVota = el("button", { class: "btn btn-primario sl-si-vota", type: "button", onclick: function () { if (sel.length >= 2) cuore.salaVotoApri(sel.slice()); } });
       s._piede.appendChild(bVota);
       segna();
     }
@@ -5692,246 +2671,7 @@
     return { t: "Fino a " + posti, c: "tutti" };
   }
 
-  // ---------- "🗳️ SCEGLIAMO INSIEME" (Passo 6, p6-e): l'host propone 3 giochi, tutti votano 20 s, la ruota decide ----------
-  // sala.insieme = l'interruttore del ⚙️ (ricordato sul telefono dell'host in sg-insieme); sala.giochiFatti = i giochi di
-  // stasera (l'ultimo in fondo); sala.voto = { n, giochi: [id], voti: { idMembro: idGioco }, fase: "voto" | "ruota",
-  //   scade (ora dell'host), ruota: { spicchi: [{ g, n }], vince, theta, parte (ora dell'host in cui gira) } }.
-  // Nella foto della Sala il voto ha anche ora (Date.now dell'host all'invio): chi la legge stima lo scarto (G8).
-  // Il disegno (scheda del voto e ruota) è di js/scegliamo.js; qui la rete e la Sala
-  var VOTO_SECONDI = 20, VOTO_UI = null;   // VOTO_UI: la scheda del voto sullo schermo { S (sala o salaG), n, s, sc }
-  function insiemeSalvato() { try { return localStorage.getItem("sg-insieme") === "1"; } catch (e) { return false; } }
-  function segnaFatto(gid) {
-    if (!sala || !gid) return;
-    var f = (sala.giochiFatti || []).filter(function (x) { return x !== gid; }); f.push(gid);
-    sala.giochiFatti = f.slice(-30);
-  }
-  // si può proporre: interruttore acceso, almeno in due, niente torneo a eliminazione né "Chi vince resta"
-  function votoPossibile() { return !!(sala && sala.insieme && !sala.elim && !sala.resta && sala.membri.length >= 2 && window.SGScegliamo); }
-  // i 3 giochi proposti: adatti a quanti siamo, non quello appena giocato, prima quelli non ancora fatti stasera,
-  // un po' a caso, al massimo uno a due
-  function proponiTre() {
-    var n = sala ? sala.membri.length : 1, fatti = (sala && sala.giochiFatti) || [], ultimo = fatti[fatti.length - 1];
-    var tutti = giochi.filter(giocoOnline);
-    var adatti = tutti.filter(function (g) { return aDue(g) ? n >= 2 : minDi(g, "online") <= n; });
-    if (adatti.length < 3) adatti = tutti;
-    var ordine = mischia(adatti.filter(function (g) { return g.id !== ultimo && fatti.indexOf(g.id) < 0; }))
-      .concat(mischia(adatti.filter(function (g) { return g.id !== ultimo && fatti.indexOf(g.id) >= 0; })), adatti.filter(function (g) { return g.id === ultimo; }));
-    var out = [], due = 0;
-    ordine.forEach(function (g) { if (out.length >= 3 || (aDue(g) && due)) return; if (aDue(g)) due++; out.push(g.id); });
-    ordine.forEach(function (g) { if (out.length < 3 && out.indexOf(g.id) < 0) out.push(g.id); });   // (pochi giochi adatti: anche un secondo a due)
-    return out;
-  }
-  // nel ⚙️ della Sala: l'interruttore "🗳️ Scegliamo insieme"
-  function rigaInsieme() {
-    var chk = el("input", { type: "checkbox", "aria-label": "Scegliamo insieme" }); chk.checked = !!(sala && sala.insieme);
-    chk.addEventListener("change", function () {
-      if (!sala) return;
-      sala.insieme = !!chk.checked;
-      try { localStorage.setItem("sg-insieme", sala.insieme ? "1" : "0"); } catch (e) {}
-      sala._bcast();
-    });
-    return el("div", { class: "sl-viva-opz sl-insieme" }, [
-      el("label", { class: "sl-interruttore" }, [ el("span", { text: "🗳️ Scegliamo insieme" }), chk ]),
-      el("small", { text: "Proponi 3 giochi, tutti votano, gira la ruota" })
-    ]);
-  }
-  function votoInfo(ids) { return (ids || []).map(function (id) { var g = giocoDa(id); return { id: id, icona: (g && g.icona) || "🎲", nome: (g && g.nome) || String(id) }; }); }
-  function votoValido(v) {
-    return !!(v && typeof v === "object" && typeof v.n === "number" && Array.isArray(v.giochi) && v.giochi.length >= 2 && v.voti && typeof v.voti === "object"
-      && (v.fase === "voto" || (v.fase === "ruota" && v.ruota && Array.isArray(v.ruota.spicchi) && v.ruota.spicchi.length)));
-  }
-  // il voto per la foto della Sala (con l'ora dell'host)
-  function votoFoto(V) { return { n: V.n, giochi: V.giochi, voti: V.voti, fase: V.fase, scade: V.scade, ruota: V.ruota || undefined, ora: Date.now() }; }
-  // (Passo 3) la Sala passa al vice: il voto continua con gli id rimappati (il suo id di prima → "host"; chi la teneva se n'è andato)
-  function votoEredita(v, vecchio) {
-    if (!votoValido(v)) return null;
-    var voti = {};
-    Object.keys(v.voti).forEach(function (id) { if (id === "host") return; voti[id === vecchio ? "host" : id] = v.voti[id]; });
-    return { n: v.n, giochi: v.giochi.slice(0, 3), voti: voti, fase: v.fase, ruota: v.ruota || null };
-  }
-  // chi può votare adesso: i membri collegati (non chi è sparito un attimo, non chi deve ancora tornare)
-  function votoVotanti() {
-    if (!sala) return [];
-    var forse = (sala.rete && sala.rete._sv && sala.rete._sv.forse) || {};
-    return sala.membri.filter(function (m) { return m && m.id && !forse[m.id] && !(sala.attesi && sala.attesi[m.id]); });
-  }
-  // l'estrazione: ogni gioco ha voti + 1 spicchi, ogni spicchio vale uguale. { spicchi: [{ g, n }], vince (indice), theta, g }
-  function votoEstrai(ids, voti, caso) {
-    caso = caso || Math.random;
-    var conti = SGScegliamo.conta(ids, voti || {}), lista = SGScegliamo.spicchi(votoInfo(ids), conti);
-    var vince = Math.min(lista.length - 1, Math.floor(caso() * lista.length));
-    return { spicchi: conti, vince: vince, theta: 0.15 + caso() * 0.7, g: lista[vince] ? lista[vince].g : ids[0] };
-  }
-  // si apre il voto (host): tutti vedono la scheda. eredita = il voto che continua (subentro del vice)
-  function salaVotoApri(ids, eredita) {
-    if (!sala || !window.SGScegliamo) return;
-    ids = (ids || []).filter(function (id, i, a) { return giocoDa(id) && a.indexOf(id) === i; }).slice(0, 3);
-    if (ids.length < 2) return salaScegliGioco({ scelgoIo: true });
-    if (sala.resta) restaFerma(true);
-    // (un gioco degli amici ancora aperto, con l'host già nella Sala: finisce, come quando si sceglie un altro gioco)
-    if (sala.gioco && !sala.inGioco) { sala.gioco = null; sala.stanza = null; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null; sala.scelti = null; SGNet.chiudiGiochi(1500); }
-    clearTimeout(sala.tVoto);
-    var V = sala.voto = eredita ? { n: eredita.n, giochi: ids, voti: eredita.voti || {}, fase: "voto", scade: eredita.scade }
-      : { n: (sala.votoN || 0) + 1, giochi: ids, voti: {}, fase: "voto", scade: Date.now() + VOTO_SECONDI * 1000 };
-    sala.votoN = Math.max(sala.votoN || 0, V.n);
-    var S0 = sala;
-    S0.votoTutti = false;
-    S0.tVoto = setTimeout(function () { if (sala === S0) salaVotoChiudi(V.n); }, Math.max(0, V.scade - Date.now()));
-    S0.votoUltimo = Date.now(); S0._bcast();
-    schermataVotoGiochi(S0, V, true);
-    votoTimer();   // (ereditato: forse hanno già votato tutti)
-  }
-  // un voto (anche il mio): uno per membro, si può cambiare
-  function salaVotoSegna(id, n, g) {
-    var V = sala && sala.voto;
-    if (!V || V.fase !== "voto" || +n !== V.n || V.giochi.indexOf(g) < 0) return;
-    if (id !== "host" && !membroSala(id)) return;
-    if (V.voti[id] === g) return;
-    V.voti[id] = g;
-    votoAggiornaUI(); votoInvia(); votoTimer();
-  }
-  // la foto della Sala col voto: al massimo una ogni 300 ms (tanti tocchi insieme vanno in una)
-  function votoInvia() {
-    var S0 = sala; if (!S0) return;
-    var d = 300 - (Date.now() - (S0.votoUltimo || 0));
-    if (d <= 0) { clearTimeout(S0.tVotoB); S0.tVotoB = null; S0.votoUltimo = Date.now(); return S0._bcast(); }
-    if (!S0.tVotoB) S0.tVotoB = setTimeout(function () { S0.tVotoB = null; if (sala !== S0) return; S0.votoUltimo = Date.now(); S0._bcast(); }, d);
-  }
-  // quando si chiude: hanno votato tutti quelli collegati (dopo un attimo, così si vede l'ultimo voto), se no allo scadere
-  function votoTimer() {
-    var S0 = sala, V = S0 && S0.voto; if (!V || V.fase !== "voto") return;
-    var vv = votoVotanti(), tutti = vv.length > 0 && vv.every(function (m) { return !!V.voti[m.id]; });
-    if (tutti === !!S0.votoTutti) return;
-    S0.votoTutti = tutti; clearTimeout(S0.tVoto);
-    var n = V.n, quando = tutti ? Math.min(V.scade, Date.now() + 700) : V.scade;
-    S0.tVoto = setTimeout(function () { if (sala === S0) salaVotoChiudi(n); }, Math.max(0, quando - Date.now()));
-  }
-  // "‹" dalla scheda del voto (host): il voto si annulla, tutti nella Sala
-  function salaVotoAnnulla() {
-    var V = sala && sala.voto;
-    if (V && V.fase !== "voto") return;   // (la ruota gira già: si aspetta lei)
-    if (sala) { clearTimeout(sala.tVoto); clearTimeout(sala.tVotoB); sala.tVotoB = null; sala.voto = null; sala.sceglie = false; sala._bcast(); }
-    VOTO_UI = null;
-    disegnaSalaHost();
-  }
-  // il voto si chiude: la ruota (spicchio e theta li decide l'host, uguali su tutti i telefoni)
-  function salaVotoChiudi(n) {
-    var V = sala && sala.voto;
-    if (!V || V.fase !== "voto" || (n != null && n !== V.n)) return;
-    clearTimeout(sala.tVoto); clearTimeout(sala.tVotoB); sala.tVotoB = null;
-    var ci = {}; sala.membri.forEach(function (m) { ci[m.id] = 1; });
-    Object.keys(V.voti).forEach(function (id) { if (!ci[id]) delete V.voti[id]; });   // (chi è uscito ha perso il voto)
-    var e = votoEstrai(V.giochi, V.voti);
-    V.fase = "ruota"; V.ruota = { spicchi: e.spicchi, vince: e.vince, theta: e.theta, parte: Date.now() + 400 };
-    if (VOTO_UI && VOTO_UI.S === sala) VOTO_UI.sc.chiudi();
-    sala.votoUltimo = Date.now(); sala._bcast();
-    salaVotoRuota();
-  }
-  function salaVotoRuota() {
-    var S0 = sala, V = S0 && S0.voto; if (!V || V.fase !== "ruota" || !V.ruota) return;
-    var R = V.ruota, n = V.n;
-    SGScegliamo.ruota({ spicchi: R.spicchi, giochi: votoInfo(V.giochi), vince: R.vince, theta: R.theta, parte: R.parte, scarto: 0,
-      poi: function (g) { salaVotoFatto(S0, n, g); } });
-  }
-  // la ruota si è fermata: il gioco parte per tutti (con "Chi gioca?" se servono posti, come quando lo tocca l'host)
-  function salaVotoFatto(S0, n, gid) {
-    if (sala !== S0 || !S0.voto || S0.voto.n !== n) return;
-    var g = giocoDa(gid) || giocoDa(S0.voto.giochi[0]);
-    S0.voto = null; VOTO_UI = null;
-    S0._bcast();
-    if (g) salaPreparaGioco(g); else disegnaSalaHost();
-  }
-  // la Sala si riapre col voto di prima: pagina ricaricata (il voto riparte da capo con gli stessi giochi) o subentro del vice
-  // (continua coi voti di prima). Se la ruota aveva già deciso si va dritti al gioco uscito
-  function salaVotoRiprendi(vp, continua) {
-    if (!sala || !votoValido(vp) || !window.SGScegliamo) return false;
-    sala.votoN = Math.max(sala.votoN || 0, vp.n);
-    if (vp.fase === "ruota") {
-      var x = SGScegliamo.spicchi(votoInfo(vp.giochi), vp.ruota.spicchi)[vp.ruota.vince | 0], g = x && giocoDa(x.g);
-      sala.voto = null; sala._bcast();
-      if (g) salaPreparaGioco(g); else disegnaSalaHost();
-      return true;
-    }
-    salaVotoApri(vp.giochi, continua ? { n: vp.n, voti: vp.voti, scade: Date.now() + 15000 } : null);
-    return true;
-  }
-  // i voti con nome e avatar di chi ha votato (per gli avatar sotto le tessere)
-  function votiPersone(S, V) {
-    var o = {};
-    Object.keys(V.voti || {}).forEach(function (id) {
-      var m = (S.membri || []).filter(function (x) { return x && x.id === id; })[0];
-      if (m) o[id] = { g: V.voti[id], nome: m.nome, omino: m.omino || null };
-    });
-    return o;
-  }
-  // la scheda del voto (host e amici): S = la Sala (sala o salaG), V = il voto
-  function schermataVotoGiochi(S, V, host) {
-    var mio = host ? "host" : mioIdSala(S), quanti = (S.membri || []).length;
-    var s = schermata({ indietro: host ? salaVotoAnnulla : function () { chiediConferma("Uscire dalla Sala?", null, "🚪 Esci", function () { VOTO_UI = null; chiudiSalaOspite(); schermataHome(); }); } });
-    s.classList.add("sala-voto");
-    var mioG = V.voti[mio] || (!host && S.votoMio && S.votoMio.n === V.n ? S.votoMio.g : null);
-    var sc = SGScegliamo.scheda({
-      giochi: V.giochi.map(function (id) { var g = giocoDa(id), et = g ? etichettaPosti(g, quanti) : null; return { id: id, icona: (g && g.icona) || "🎲", nome: (g && g.nome) || id, sotto: et ? et.t : "" }; }),
-      mio: mioG, voti: votiPersone(S, V), scade: V.scade, scarto: host ? 0 : (S.votoScarto || 0), host: host, membri: host ? votoVotanti().length : quanti,
-      onVota: function (g) {
-        if (host) return salaVotoSegna("host", V.n, g);
-        if (salaG !== S || !S.rete) return;
-        S.votoMio = { n: V.n, g: g };
-        try { S.rete.invia({ t: "voto", n: V.n, g: g }); } catch (e) {}
-      },
-      onChiudi: function () { salaVotoChiudi(V.n); }
-    });
-    s._contenuto.appendChild(sc.nodo);
-    VOTO_UI = { S: S, n: V.n, s: s, sc: sc };
-    mostra(s);
-  }
-  // la scheda sullo schermo cambia solo avatar, conto e tasto (niente lampeggio)
-  function votoAggiornaUI() {
-    var U = VOTO_UI; if (!U || !document.body.contains(U.s)) return;
-    var host = U.S === sala, V = host ? sala.voto : U.S.voto;
-    if (!V || V.n !== U.n || V.fase !== "voto") return;
-    var mio = host ? "host" : mioIdSala(U.S);
-    var ms = V.scade - (Date.now() + (host ? 0 : (U.S.votoScarto || 0)));
-    U.sc.aggiorna(votiPersone(U.S, V), V.voti[mio] !== undefined ? V.voti[mio] : undefined, ms, host ? votoVotanti().length : (U.S.membri || []).length);
-  }
-  // (amico) la foto della Sala col voto aperto o la ruota: la scheda, o la ruota che gira uguale per tutti
-  function votoOspite(S, V) {
-    // lo scarto tra l'ora dell'host e la mia: il più grande visto da questo host (una foto trattenuta vecchia lo fa più piccolo)
-    var k = (S.capo && S.capo._s) || "";
-    if (typeof V.ora === "number") { var sc = V.ora - Date.now(); if (S.votoScK !== k || !(sc <= S.votoScarto)) { S.votoScarto = sc; S.votoScK = k; } }
-    S.voto = V;
-    if (V.fase === "ruota") {
-      var R = V.ruota, fineH = R.parte + SGScegliamo.DURATA;
-      if (S.votoRuota === V.n) {
-        // (già partita: se intanto ho capito meglio l'ora dell'host e gira ancora, la rimetto al punto giusto)
-        if (S.veloV && S.veloV.isConnected && Math.abs((S.votoRuotaSc || 0) - S.votoScarto) > 500 && Date.now() + S.votoScarto < fineH) giraOspite(S, V);
-        return;
-      }
-      if (VOTO_UI && VOTO_UI.S === S) VOTO_UI.sc.chiudi();
-      else disegnaSalaOspite();   // (arrivo a ruota già partita: sotto c'è la Sala)
-      return giraOspite(S, V);
-    }
-    if (VOTO_UI && VOTO_UI.S === S && VOTO_UI.n === V.n && document.body.contains(VOTO_UI.s)) return votoAggiornaUI();
-    if (S.votoMio && S.votoMio.n !== V.n) S.votoMio = null;
-    schermataVotoGiochi(S, V, false);
-  }
-  function giraOspite(S, V) {
-    var R = V.ruota;
-    S.votoRuota = V.n; S.votoRuotaSc = S.votoScarto;
-    S.veloV = SGScegliamo.ruota({ spicchi: R.spicchi, giochi: votoInfo(V.giochi), vince: R.vince, theta: R.theta, parte: R.parte, scarto: S.votoScarto || 0,
-      poi: function () {
-        if (salaG !== S) return;
-        S.veloV = null;
-        if (VOTO_UI && VOTO_UI.S === S) VOTO_UI = null;
-        if (S.inGioco === null && document.querySelector(".sala-voto")) disegnaSalaOspite();   // (il gioco non è ancora partito: la Sala)
-      } });
-  }
-  // (amico) nella foto non c'è più il voto: via la scheda (la ruota, se gira, finisce da sola)
-  function votoVia(S) {
-    S.voto = null;
-    if (VOTO_UI && VOTO_UI.S === S) { VOTO_UI.sc.chiudi(); VOTO_UI = null; }
-  }
-
+  // ---------- «🗳️ SCEGLIAMO INSIEME» (il voto della Sala, la ruota che pesa i voti): in js/cuore/sala-voto.js (la scheda del voto e il disegno della ruota sono in js/scegliamo.js) ----------
   // ---------- CHI ARRIVA: la fase del gioco della Sala, chi è dentro, chi è uscito, chi manca ----------
   // (lo strato della rete non vede la variabile "sala": gliela passo così)
   function salaDiQui() { return sala; }
@@ -5996,8 +2736,8 @@
   function salaPreparaGioco(g, opz) {
     if (!sala || !g) return schermataHome();
     opz = opz && !opz.target ? opz : {};
-    if (sala.resta) restaFerma();   // (un gioco nuovo: "Chi vince resta" finisce, il record resta scritto)
-    segnaFatto(g.id);   // ("🗳️ Scegliamo insieme": i giochi di stasera)
+    if (sala.resta) cuore.restaFerma();   // (un gioco nuovo: "Chi vince resta" finisce, il record resta scritto)
+    cuore.segnaFatto(g.id);   // ("🗳️ Scegliamo insieme": i giochi di stasera)
     sala.regole = sala.regole || {};
     var R = sala.regole[g.id];
     if (!R) {
@@ -6012,751 +2752,33 @@
     R.imp.modo = "online";
     if (opz.stessi && R.imp.scelti) return salaLancia(g, R.imp, R.box);
     // un gioco a due e siamo almeno in 3: "🏆 Torneino: giocate tutti" (già scelto) o "⚔️ Una sfida: scegli chi gioca"
-    if (salaSempre() && !sala.elim && !opz.sfida && GIOCHI_ELIMINAZIONE[g.id] && sala.membri.length >= 3) return schermataTorneino(g, R);
+    if (salaSempre() && !sala.elim && !opz.sfida && GIOCHI_ELIMINAZIONE[g.id] && sala.membri.length >= 3) return cuore.schermataTorneino(g, R);
     // "Chi gioca a Tris?": siamo più dei posti (nel torneo a eliminazione e col percorso di prima no)
-    if (salaSempre() && !sala.elim && (sala.membri.length > postiDi(g) || (opz.sfida && sala.membri.length > 2))) return schermataChiGioca(g, function (scelti) { salaParti(g, R, scelti); }, restaOpz(g, R));
+    if (salaSempre() && !sala.elim && (sala.membri.length > postiDi(g) || (opz.sfida && sala.membri.length > 2))) return cuore.schermataChiGioca(g, function (scelti) { salaParti(g, R, scelti); }, restaOpz(g, R));
     salaParti(g, R, null);
   }
   // in "Chi gioca?" di un gioco a due con almeno 3 nella Sala anche "👑 Chi vince resta"
   function restaOpz(g, R) {
     if (!sala || !aDue(g) || !GIOCHI_ELIMINAZIONE[g.id] || sala.membri.length < 3 || sala.elim) return null;
-    return { resta: function (scelti) { restaInizia(g, R, scelti); } };
+    return { resta: function (scelti) { cuore.restaInizia(g, R, scelti); } };
   }
   // si parte con chi è stato scelto (null = tutti). L'host gioca: la sua stanza, e il gioco fa sedere solo gli scelti
   // (tavolo.scelti / puoSedersi; gli altri entrano e guardano). Gioco a due senza l'host: il duello tra i due
   function salaParti(g, R, scelti) {
     if (!sala) return schermataHome();
-    if (scelti && aDue(g) && GIOCHI_ELIMINAZIONE[g.id] && scelti.length === 2 && !scelti.some(function (x) { return x.id === "host"; })) return salaDuello(g, R, scelti);
+    if (scelti && aDue(g) && GIOCHI_ELIMINAZIONE[g.id] && scelti.length === 2 && !scelti.some(function (x) { return x.id === "host"; })) return cuore.salaDuello(g, R, scelti);
     if (scelti) R.imp.scelti = scelti.map(function (x) { return { id: x.id, nome: x.nome }; });
     else delete R.imp.scelti;
     salaLancia(g, R.imp, R.box);
   }
 
-  // ---------- IL TORNEINO: un gioco a due con 3 o più persone, giocano tutti ----------
-  // È il torneo a eliminazione dentro la Sala della serata (stessi id, nessun link nuovo): coppie a sorte, tutte le partite
-  // insieme, chi vince va avanti fino alla finale; alla fine "👥 Torna in Sala" (e i punti, se "Contiamo i punti" è acceso).
-  // T = { resto: "bot" (chi resta in più gioca col Bot, che è un partecipante vero) o "passa", livello del Bot }
-  function nuovoTorneino(gid, imp, T, attesi) {
-    T = T || {};
-    var E = { gioco: gid, torneino: true, iniziato: false, finito: false, turni: [], nomi: {}, campione: null, gironi: {}, imp: imp || {},
-      resto: T.resto === "passa" ? "passa" : "bot", livello: livelloElim(T), coppie: T.coppie === "scelte" ? "scelte" : "caso" };
-    if (attesi) E.attesi = attesi;
-    return E;
-  }
-  // si parte: "🎲 A caso" = le coppie a sorte subito; "✋ Scegliete voi" = prima ognuno si siede dove e con chi vuole
-  // (Partita 1: [ ] contro [ ]…), l'host vede "Seduti 5 su 6" e parte quando vuole; dopo TEMPO_COPPIE si parte da soli
-  // (chi non si è seduto va a caso nei posti rimasti: gironiElim)
-  var TEMPO_COPPIE = 45000;
-  function partiTorneino(E) {
-    if (!sala || sala.elim !== E) return;
-    if (E.coppie !== "scelte") return avviaElim();
-    E.iniziato = false; E.finito = false; E.turni = []; E.campione = null; E.gironi = {}; delete E.attesi;
-    E.scade = Date.now() + TEMPO_COPPIE;
-    clearTimeout(sala.tCoppie);
-    sala.tCoppie = setTimeout(function () { if (sala && sala.elim === E && !E.iniziato) avviaElim(); }, TEMPO_COPPIE);
-    lasciaTorneo(sala);
-    sala._bcast(); seguiHost();
-  }
-  // in quante partite ci si siede (torneino: quante ne servono; torneo a eliminazione di sempre: 5 gironi)
-  function partiteCoppie(E, n) { return E.torneino ? Math.max(1, Math.min(N_GIRONI, Math.ceil(Math.min(n, MAX_ELIM) / 2))) : N_GIRONI; }
-  // il conto alla rovescia delle coppie: si cambia solo la scritta (due volte al secondo), mai il tabellone
-  var tContoCoppie = null;
-  function contoCoppie() {
-    if (tContoCoppie) return;
-    tContoCoppie = setInterval(function () {
-      var l = document.querySelectorAll(".tb-conto[data-scade]");
-      if (!l.length) { clearInterval(tContoCoppie); tContoCoppie = null; return; }
-      [].forEach.call(l, function (x) { var sec = Math.max(0, Math.ceil((+x.getAttribute("data-scade") - Date.now()) / 1000)), tx = "⏱️ Si parte da soli tra " + sec + " s"; if (x.textContent !== tx) x.textContent = tx; });
-    }, 500);
-  }
-  // in quanti giocano davvero (al massimo 10: gli altri guardano)
-  function quantiTorneino(n) { return Math.min(n, MAX_ELIM); }
-  // "Tris in 5": 🏆 Torneino (già scelto) o ⚔️ Una sfida. Se si è dispari, sotto: chi resta in più (Bot o passa il turno)
-  // e la bravura del Bot. In uno schermo senza scorrere; un tocco sceglie, "▶" parte
-  function schermataTorneino(g, R) {
-    if (!sala) return schermataHome();
-    var n = sala.membri.length, T = sala.optTorneino = sala.optTorneino || { resto: "bot", livello: "medio" }, scelta = "torneino";
-    var s = schermata({ icona: g.icona || "🎲", titolo: g.nome + " in " + n, sotto: "Si gioca in 2: come fate?", indietro: function () { salaScegliGioco(); } });
-    s.classList.add("torneino-sc");
-    function carta(id, ico, tit, sotto) {
-      var b = el("button", { class: "tn-scelta", type: "button", "aria-pressed": "false", onclick: function () { scelta = id; rifai(); } }, [
-        el("span", { class: "tn-ico", text: ico }),
-        el("span", { class: "tn-testo" }, [ el("b", { text: tit }), el("small", { text: sotto }) ]),
-        el("span", { class: "tn-spunta", "aria-hidden": "true", text: "✓" }) ]);
-      b._id = id;
-      return b;
-    }
-    var m = quantiTorneino(n), dispari = m % 2 === 1;
-    var cT = carta("torneino", "⚔️", "Torneo: giocate tutti", (n > MAX_ELIM ? "Giocano in " + MAX_ELIM + ", gli altri guardano. " : "") + "Tutte le partite insieme: chi vince va avanti fino alla finale");
-    // (Passo 6) da qui anche "👑 Chi vince resta": in «Chi gioca?» (una carta in più farebbe scorrere lo schermo)
-    var cS = carta("sfida", "🤺", "Una sfida: scegli chi gioca", restaOpz(g, R) ? "In 2, gli altri guardano · anche 👑 Chi vince resta" : "Giocano in 2, gli altri guardano in diretta");
-    // un gioco che si fa anche in tre (la Scopa: g.inTre e il riquadro delle regole sa passare a tre): in tre la prima scelta
-    // è «In tre: giocate tutti», tutti allo stesso tavolo
-    var tre = n === 3 && g.inTre && R && R.box && typeof R.box._inTre === "function";
-    var cTre = tre ? carta("tre", "👥", "In tre: giocate tutti", "Tutti e tre allo stesso tavolo, ognuno per sé") : null;
-    if (tre) scelta = "tre";
-    var opz = opzioniTorneino(T, function () { rifai(); }, false, dispari);
-    var nota = el("p", { class: "modulo-nota tn-nota" });
-    s._contenuto.appendChild(el("div", { class: "tn-scelte" }, [cTre, cT, cS].filter(Boolean)));
-    if (opz) s._contenuto.appendChild(opz);
-    s._contenuto.appendChild(nota);
-    var via = el("button", { class: "btn btn-primario", type: "button", onclick: function () {
-      if (!sala) return schermataHome();
-      if (tre) try { R.box._inTre(scelta === "tre"); } catch (e) {}   // (in due per la sfida e il torneo)
-      if (scelta === "tre") return salaParti(g, R, sala.membri.map(function (x) { return { id: x.id, nome: x.nome }; }));
-      if (scelta === "sfida") return schermataChiGioca(g, function (scelti) { salaParti(g, R, scelti); }, restaOpz(g, R));
-      salaTorneino(g, R, T);
-    } });
-    // le regole del gioco (le stesse per tutte le partite): nel ⚙️, come nella saletta
-    var bReg = R && haRegole(R.box) ? el("button", { class: "btn btn-fantasma sl-regole", type: "button", text: "⚙️ Regole", onclick: function () { foglioBox("⚙️ Regole della partita", R.box); } }) : null;
-    s._piede.appendChild(bReg ? el("div", { class: "sl-tasti" }, [bReg, via]) : via);
-    // si cambiano solo le classi e le scritte: niente lampeggio
-    function rifai() {
-      [cTre, cT, cS].filter(Boolean).forEach(function (c) { var si = c._id === scelta; c.classList.toggle("scelta", si); c.setAttribute("aria-pressed", si ? "true" : "false"); });
-      if (opz) opz.hidden = scelta !== "torneino";
-      var tx = scelta === "tre" ? "Una partita sola, tutti e tre allo stesso tavolo." : scelta === "sfida" ? "Poi scegli i due che giocano." : T.coppie === "scelte" ? "Ognuno si siede dove e con chi vuole: poi parti tu." : (dispari ? (T.resto === "passa" ? "Siete dispari: uno a sorte passa il turno." : "Siete dispari: chi resta gioca col Bot. Se lo batte va avanti, se no va avanti il Bot!") : "Siete pari: giocano tutti subito.");
-      if (nota.textContent !== tx) nota.textContent = tx;
-      var tv = scelta === "tre" ? "▶ Si gioca in tre" : scelta === "sfida" ? "🤺 Scegli chi gioca" : "⚔️ Via al torneo";
-      if (via.textContent !== tv) via.textContent = tv;
-    }
-    rifai();
-    mostra(s);
-  }
-  // un foglio con dentro un riquadro di regole (lo stesso nodo: le scelte restano come le avevi lasciate)
-  function foglioBox(titolo, box) {
-    if (document.querySelector(".sl-velo")) return;
-    var velo;
-    function chiudi() { if (box.parentNode) box.parentNode.removeChild(box); if (velo.parentNode) velo.parentNode.removeChild(velo); }
-    velo = el("div", { class: "sl-velo", onclick: function (e) { if (e.target === velo) chiudi(); } }, [
-      el("div", { class: "sl-foglio" }, [
-        el("div", { class: "sl-foglio-testa" }, [ el("b", { text: titolo }), el("button", { class: "sl-foglio-x", "aria-label": "Chiudi", text: "✕", onclick: chiudi }) ]),
-        el("div", { class: "sl-foglio-corpo" }, [box]),
-        el("button", { class: "btn btn-primario", text: "✅ Fatto", onclick: chiudi })
-      ])
-    ]);
-    document.body.appendChild(velo);
-  }
-  // si parte: la Sala diventa il tabellone del torneino (per tutti, da sola), le coppie si sorteggiano e le partite si aprono
-  function salaTorneino(g, R, T) {
-    if (!sala || !g) return schermataHome();
-    restaFerma(true);   // (👑 "Chi vince resta" finisce: il record resta)
-    lasciaPartita(); FINE = null; RIV = null;
-    lasciaTorneo(sala);
-    sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null; sala.fineDuello = null; sala.sceglie = false;
-    var imp = R && R.imp ? R.imp : {};
-    delete imp.scelti; imp.modo = "online";
-    sala.elim = nuovoTorneino(g.id, imp, T || sala.optTorneino);
-    sala.regoleElim = null; sala._regoleBox = R ? R.box : null;
-    SGNet.chiudiGiochi(1500);   // (la stanza del gioco di prima, se c'era: prima gli amici passano al torneino)
-    partiTorneino(sala.elim);
-  }
-  // "🏆 Fate il torneino in 5" nella saletta di un gioco a due (host), quando nella stanza (o nella Sala) si è almeno in 3.
-  // N = in quanti (0 = niente tasto)
-  function torneinoPossibile(U) {
-    var SV = U && U.rete && U.rete._sv, P = U && U.rete && U.rete._P;
-    if (!U || !U.host || !GIOCHI_ELIMINAZIONE[U.gid] || !SV || !SV.host || !P || !P.viva() || U.via) return 0;
-    var C = P.salaCtx;
-    if (C) return C.tabellone || C.duello || !sala || sala.elim || sala.ctx !== C ? 0 : sala.membri.length;   // un gioco della Sala: tutta la Sala
-    return 1 + Object.keys(SV.dentro).filter(function (id) { return id !== "host" && id !== "__io" && !SV.fuori[id]; }).length;
-  }
-  function tastoTorneino(U) {
-    if (!U || !U.bTorneino) return;
-    var n = torneinoPossibile(U), si = n >= 3, tx = "⚔️ Fate il torneo in " + n;
-    if (U.bTorneino.hidden === si) U.bTorneino.hidden = !si;
-    if (si && U.bTorneino.textContent !== tx) U.bTorneino.textContent = tx;
-  }
-  // un tocco: la stanza diventa il torneino con tutti dentro, senza rimandare link.
-  // Gioco della Sala → il torneino della Sala. Stanza fuori dalla Sala → si apre una Sala col torneino e chi era nella stanza
-  // ci passa da solo (messaggio "__torneino" col codice della Sala, ripetuto per qualche secondo; stesso id di prima)
-  function torneinoDaSaletta(U) {
-    if (torneinoPossibile(U) < 3) return;
-    var g = giocoDa(U.gid), P = U.rete._P, SV = U.rete._sv; if (!g) return;
-    var T = (sala && sala.optTorneino) || { resto: "bot", livello: "medio" };
-    if (P.salaCtx) {
-      var R = sala.regole && sala.regole[g.id];
-      if (!R) R = sala.regole[g.id] = { box: U.R ? U.R.box : null, imp: P.tavolo ? P.tavolo.impostazioni : {} };
-      SL.ultimo = null;
-      return salaTorneino(g, R, T);
-    }
-    var C = SGNet.nuovoCodice(), h = SV.h, attesi = Object.keys(SV.dentro).filter(function (id) { return id !== "host" && id !== "__io" && !SV.fuori[id]; });
-    var imp = {}; try { imp = JSON.parse(JSON.stringify((U.R && U.R.imp) || (P.tavolo && P.tavolo.impostazioni) || {})); } catch (e) {}
-    var box = U.R && U.R.box && U.R.imp ? U.R.box : null;
-    if (box) imp = U.R.imp;   // (il riquadro delle regole scrive lì: si tiene insieme)
-    var msg = { t: "__torneino", sala: C }, volte = 0;
-    try { h.invia(msg); } catch (e) {}
-    var tRip = setInterval(function () { if (++volte > 6) return clearInterval(tRip); try { h.inviaVeloce(msg); } catch (e) {} }, 700);
-    lasciaPartita(); SL.ultimo = null;
-    SGNet.chiudiGiochi(5000);   // (la stanza del gioco si chiude quando sono passati tutti)
-    if (sala) chiudiSala();
-    creaSala({ codice: C, torneino: { gioco: g.id, imp: imp, box: box, resto: T.resto, livello: T.livello, coppie: T.coppie, attesi: attesi } });
-  }
-  // chi era nella stanza riceve "__torneino": passa nella Sala del torneino (con lo stesso id della stanza)
-  function vaiAlTorneino(R, m) {
-    var C = String((m && m.sala) || "").toUpperCase();
-    if (!/^[A-Z0-9]{4}$/.test(C) || R.torneino || !R.P || !R.P.viva() || R.P.salaCtx) return;
-    R.torneino = C;
-    var id = R.h && R.h.mioId;
-    if (id) SGNet.ricordaId(C, id);
-    lasciaPartita(); SGNet.chiudiGiochi();
-    dimenticaLinkSessione();
-    pillola("torneino", "⚔️ Si fa il torneo!", "verde", 3000);
-    salaOspite(C);
-  }
-
-  // ---------- "CHI GIOCA A TRIS?" (siamo più dei posti) ----------
+  // ---------- LE SFIDE NELLA SALA (il torneino, «Chi gioca?», il duello tra due amici, «👑 Chi vince resta»): in js/cuore/sala-sfide.js ----------
   // "a Tris", "alla Scalinata", "all'Asta", "al Poker"… (il nome del gioco con la sua preposizione)
   function aGioco(nome) {
     var n = String(nome || ""), m;
     if ((m = /^L'(.*)$/.exec(n))) return "all'" + m[1];
     if ((m = /^(La|Il|Lo|Le|I|Gli) (.*)$/.exec(n))) return { La: "alla ", Il: "al ", Lo: "allo ", Le: "alle ", I: "ai ", Gli: "agli " }[m[1]] + m[2];
     return "a " + n;
-  }
-  // chi gioca, già scelto: prima chi ha giocato meno stasera (a pari merito chi è arrivato prima nella Sala);
-  // nei giochi da 3 posti in su l'host è sempre dentro
-  function sceltiDiPartenza(posti, conHost) {
-    var G = sala.giocate || {}, ordine = sala.membri.map(function (m, i) { return { m: m, i: i, n: G[m.nome] || 0 }; });
-    var sc = conHost ? [sala.membri[0]] : [];
-    ordine.filter(function (x) { return !(conHost && x.m.id === "host"); })
-      .sort(function (a, b) { return a.n - b.n || a.i - b.i; })
-      .slice(0, posti - sc.length).forEach(function (x) { sc.push(x.m); });
-    return sc;
-  }
-  // la schermata, senza scorrere: gli avatar della Sala (5 per riga), chi gioca evidenziato, sotto chi guarda e "▶ Si gioca".
-  // Un tocco aggiunge o toglie; da pieni, chi si tocca prende il posto del più vecchio scelto (l'host no). poi(scelti)
-  // o (facoltativo, giochi a due) = { resta(scelti): "👑 Chi vince resta" con i due scelti }
-  function schermataChiGioca(g, poi, o) {
-    if (!sala) return schermataHome();
-    o = o && typeof o.resta === "function" ? o : null;
-    var posti = postiDi(g), conHost = posti >= 3, membri = sala.membri.slice();
-    var sc = sceltiDiPartenza(posti, conHost).map(function (m) { return m.id; });
-    var s = schermata({ icona: g.icona || "🎲", titolo: "Chi gioca " + aGioco(g.nome) + "?",
-      sotto: posti === 2 ? "Giocano in 2: gli altri guardano" : "Giocano in " + posti + ": gli altri guardano",
-      indietro: function () { salaScegliGioco(); } });
-    s.classList.add("chi-gioca-sc");
-    var griglia = el("div", { class: "chi-gioca" + (membri.length > 10 ? " tanti" : "") });
-    var celle = {};
-    membri.forEach(function (m) {
-      var fisso = conHost && m.id === "host";
-      var b = el("button", { class: "cg-chi" + (fisso ? " fisso" : ""), type: "button", "aria-pressed": "false", onclick: function () { tocca(m.id); } }, [
-        el("span", { class: "cg-av", html: window.SGOmino ? SGOmino.svg(m.omino || SGOmino.casuale(m.nome), { busto: true }) : "<span class='cg-emo'>🙂</span>" }),
-        el("span", { class: "cg-segno", "aria-hidden": "true", text: "✓" }),
-        el("span", { class: "cg-nome", text: m.id === "host" ? m.nome + " (tu)" : m.nome })
-      ]);
-      celle[m.id] = b;
-      griglia.appendChild(b);
-    });
-    var guardano = el("p", { class: "cg-guardano" });
-    var nota = el("p", { class: "modulo-nota cg-nota", text: conHost ? "Tu giochi sempre. Tocca un amico per farlo giocare al posto di un altro."
-      : (o ? "Tocca chi gioca. Con «👑 Chi vince resta» chi vince resta al tavolo e gli altri fanno la coda." : "Tocca chi gioca: se non giochi tu, li guardi in diretta.") });
-    s._contenuto.appendChild(griglia);
-    s._contenuto.appendChild(guardano);
-    s._contenuto.appendChild(nota);
-    function chi() { return sc.map(function (id) { var m = membri.filter(function (x) { return x.id === id; })[0]; return { id: id, nome: m ? m.nome : "" }; }); }
-    var via = el("button", { class: "btn btn-primario", type: "button", onclick: function () {
-      if (sc.length !== posti || !sala) return;
-      poi(chi());
-    } });
-    // "👑 Chi vince resta" (sotto "▶ Si gioca", con gli stessi due scelti: sono i primi)
-    var bResta = o ? el("button", { class: "btn btn-fantasma cg-resta", type: "button", text: "👑 Chi vince resta", onclick: function () {
-      if (sc.length !== posti || !sala) return;
-      o.resta(chi());
-    } }) : null;
-    s._piede.appendChild(via);
-    if (bResta) s._piede.appendChild(bResta);
-    function tocca(id) {
-      if (conHost && id === "host") return;   // (nei giochi da 3 posti in su l'host gioca sempre)
-      var k = sc.indexOf(id);
-      if (k >= 0) sc.splice(k, 1);
-      else {
-        sc.push(id);
-        if (sc.length > posti) { var j = sc.findIndex(function (x) { return x !== "host"; }); sc.splice(j < 0 ? 0 : j, 1); }
-      }
-      rifai();
-    }
-    // si cambiano solo le classi e le scritte: niente lampeggio
-    function rifai() {
-      membri.forEach(function (m) {
-        var si = sc.indexOf(m.id) >= 0, b = celle[m.id];
-        b.classList.toggle("scelto", si); b.setAttribute("aria-pressed", si ? "true" : "false");
-      });
-      var altri = membri.filter(function (m) { return sc.indexOf(m.id) < 0; }).map(function (m) { return m.id === "host" ? "tu" : m.nome; });
-      guardano.textContent = altri.length ? "👀 Gli altri guardano: " + altri.join(", ") : "";
-      var manca = posti - sc.length;
-      via.textContent = manca > 0 ? "Scegli ancora " + manca : "▶ Si gioca";
-      via.disabled = manca !== 0;
-      if (bResta) bResta.disabled = manca !== 0;
-    }
-    rifai();
-    mostra(s);
-  }
-
-  // ---------- IL DUELLO: un gioco a due tra due amici, l'host della Sala guarda ----------
-  // Come una partita del torneo a eliminazione: la stanza la apre il telefono del primo (a), il secondo (b) entra da solo,
-  // tutti gli altri (host compreso) guardano in diretta. a dice alla Sala com'è finita (salaEsito) e a che punto è (duelloFase)
-  // (stanza: il codice già deciso, "Chi vince resta")
-  function salaDuello(g, R, scelti, stanza) {
-    if (!sala) return schermataHome();
-    lasciaPartita(); FINE = null; RIV = null;
-    SGNet.chiudiGiochi(1500);   // (la stanza del gioco di prima, se c'era)
-    var imp = {};
-    try { imp = JSON.parse(JSON.stringify(R.imp || {})); } catch (e) {}
-    delete imp.scelti; imp.modo = "online";
-    var D = sala.duello = { a: scelti[0].id, b: scelti[1].id, na: scelti[0].nome, nb: scelti[1].nome, stanza: stanza || SGNet.nuovoCodice(), gioco: g.id, imp: imp, n: 0, fine: null, visti: {} };
-    sala.gioco = g.id; sala.stanza = D.stanza; sala.inGioco = true; sala.sceglie = false; sala.fase = "lobby"; sala.fuori = {};
-    sala._bcast();
-    guardaDuelloHost(D);
-  }
-  // l'host guarda il duello (anche quando ci torna da "👀 Guarda" nella Sala): in alto a destra "👥 Sala" per tornare nella Sala
-  function guardaDuelloHost(D) {
-    var g = giocoDa(D.gioco); if (!sala || sala.duello !== D || !g) return disegnaSalaHost();
-    SGNet.chiudiGiochi();
-    sala.inGioco = true; sala.fineDuello = null;   // (la Sala non si ridisegna sopra la partita)
-    var ctx = sala.ctx = {
-      duello: D.stanza,
-      esci: function () { tornaDalDuello(); }, fine: function () { tornaDalDuello(); }, risultato: function () {},
-      angolo: function (s) { tastoSala(s, function () { tornaDalDuello(); }); },
-      cambia: function () { salaCambiaGioco(); }
-    };
-    function tornaDalDuello() {
-      if (!sala || sala.ctx !== ctx) return;
-      lasciaPartita(); SGNet.chiudiGiochi(); sala.inGioco = false; sala.ctx = null;
-      disegnaSalaHost();
-    }
-    linkParams = { gioco: g.id, stanza: D.stanza, guarda: 1 };
-    avviaPartita(g, [], {}, null, ctx);
-    restaTarga();   // ("👀 Guardi · in coda: sei 2°")
-  }
-  // "👥 Sala" (o "🏠 Sala" per chi guarda soltanto) nell'angolo in alto a destra di chi guarda un duello
-  function tastoSala(s, fn) {
-    if (!s || s.querySelector(".tab-elim")) return;
-    var b = el("button", { class: "tab-elim tab-sala", "aria-label": "Torna nella Sala", text: "👥 Sala", onclick: fn });
-    var testa = s.querySelector(".testa");
-    if (testa && !s.classList.contains("senza-testa")) { b.classList.add("in-testa"); testa.appendChild(b); }
-    else s.appendChild(b);
-  }
-  // l'host della Sala riceve dal telefono di a com'è finito il duello o a che punto è
-  function msgDuello(id, m) {
-    var D = sala && sala.duello;
-    if (!D || id !== D.a || m.stanza !== D.stanza || sala.stanza !== D.stanza) return;
-    var g = giocoDa(D.gioco); if (!g) return;
-    if (sala.resta && sala.resta.sfida && sala.resta.sfida.stanza === D.stanza) sala.resta.aperta = D.stanza;   // (a ha aperto la sfida: se manca qualcuno è l'altro)
-    if (m.t === "duelloFase") {
-      var f = m.fase === "lobby" || m.fase === "gioco" || m.fase === "fine" ? m.fase : null;
-      if (!f || f === sala.fase) return;
-      var prima = sala.fase; sala.fase = f; sala._bcast(); if (!sala.inGioco) disegnaSalaHost();   // (sono nella Sala: il riquadro del duello)
-      // la rivincita del duello comincia: se sono sulla classifica, torno a guardare da solo
-      if (prima === "fine" && f !== "fine" && sala.fineDuello === D) { sala.fineDuello = null; guardaDuelloHost(D); }
-      return;
-    }
-    // la classifica (dal telefono di un amico: solo nomi e posti, controllati)
-    var cl = (Array.isArray(m.cl) ? m.cl : []).slice(0, 10).filter(function (r) { return r && typeof r.nome === "string"; })
-      .map(function (r) { var x = { nome: r.nome.slice(0, 16), pos: Math.max(1, Math.min(10, (+r.pos | 0) || 1)) }; if (typeof r.punti === "number" && isFinite(r.punti)) x.punti = r.punti; if (r.bot) x.bot = true; return x; });
-    if (!cl.length) return;
-    var k = String(m.giro | 0);
-    if (D.visti[k]) return;   // (la stessa partita detta due volte)
-    D.visti[k] = 1;
-    D.n += 1; D.fine = { n: D.n, cl: cl, giro: m.giro | 0 };
-    salaRisultato(g, cl, { stanza: D.stanza, giro: m.giro | 0 });   // (giocate e punti del torneo; manda la Sala a tutti)
-    sala._bcast(); if (!sala.inGioco) disegnaSalaHost();
-    // se sto guardando il duello: dopo un attimo (si vede la mossa finale) la classifica con "⚔️ Altra sfida" e "🎮 Cambia gioco"
-    var P = partitaCorrente;
-    if (P && P.viva() && P.salaCtx && P.salaCtx.duello === D.stanza && !P.salaCtx.gioca) setTimeout(function () {
-      if (partitaCorrente === P && P.viva() && sala && sala.duello === D && D.fine && D.fine.n === D.n) fineDuelloHost(D, g, k);
-    }, 1600);
-  }
-  // la fine del duello per l'host della Sala, che guardava
-  function fineDuelloHost(D, g, giro) {
-    // ("👑 Chi vince resta": la fine della sfida è già sullo schermo, disegnata dal gioco che guardavo: resta quella)
-    if (restaFineDi(D.stanza) && document.querySelector(".fine-resta")) return;
-    lasciaPartita(); SGNet.chiudiGiochi();
-    sala.fineDuello = D;
-    var s = schermata({ icona: "🏆", titolo: "Fine partita", sotto: g.nome + " · " + D.na + " contro " + D.nb });
-    s._contenuto.appendChild(classificaDuello(D.fine.cl));
-    sala.ctx = null;
-    if (restaFineDi(D.stanza)) {
-      bloccoResta(s._piede, D.stanza, true, { SV: { codice: D.stanza, giro: +giro || 0 }, salaHost: true, host: true });
-      tastoSala(s, function () { if (!sala) return schermataHome(); sala.fineDuello = null; sala.inGioco = false; sala.ctx = null; disegnaSalaHost(); });
-      return mostra(s);
-    }
-    var box = el("div", { class: "fine-tasti" });
-    rigaPuntiFine(box, { codice: D.stanza, giro: +giro || 0 }, true, true);   // (la Classifica della serata: "🏆 Serata: Giulia 1° · Luca 2°")
-    box.appendChild(el("button", { class: "btn btn-primario ft-primo", type: "button", text: "⚔️ Altra sfida", onclick: function () { salaAltraSfida(g); } }));
-    box.appendChild(el("button", { class: "btn btn-fantasma ft-secondo", type: "button", text: "🎮 Cambia gioco", onclick: function () { salaCambiaGioco(); } }));
-    s._piede.appendChild(box);
-    tastoSala(s, function () {
-      if (!sala) return schermataHome();
-      sala.fineDuello = null; sala.inGioco = false; sala.ctx = null; disegnaSalaHost();
-    });
-    mostra(s);
-  }
-  function classificaDuello(cl) {
-    var ol = el("ol", { class: "classifica" }), med = medaglieAPari(cl.map(function (r, i) { return r.pos || i + 1; }));
-    cl.forEach(function (r, i) {
-      ol.appendChild(el("li", { class: (r.pos || i + 1) === 1 ? "vincitore" : "" }, [ el("span", { class: "pos", text: med[i] }), el("span", { class: "nome", text: r.nome }),
-        r.punti != null ? el("span", { class: "punti", text: typeof r.punti === "number" && r.punti % 1 === 0 ? cifre(r.punti) : r.punti }) : null ]));
-    });
-    return ol;
-  }
-  // il duello è finito per tutti (chi l'aveva aperto è tornato nella Sala o è uscito): tutti nella Sala
-  function fineDuelloSala() {
-    if (!sala) return;
-    var guardavo = sala.inGioco;
-    sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null; sala.fineDuello = null;
-    sala._bcast();
-    if (guardavo) { lasciaPartita(); SGNet.chiudiGiochi(); pillola("sala", "🏁 La sfida è finita: si torna in Sala", "verde", 2600); }
-    disegnaSalaHost();
-  }
-  // "⚔️ Altra sfida": tutti nella Sala ("Paky sceglie chi gioca… ⚔️") e l'host è già su "Chi gioca?" con chi ha giocato meno
-  function salaAltraSfida(g) {
-    if (!sala) return schermataHome();
-    lasciaPartita(); FINE = null; RIV = null;
-    sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null; sala.fineDuello = null;
-    sala.sceglie = "sfida"; sala._bcast();
-    SGNet.chiudiGiochi(1500);
-    salaPreparaGioco(g, { sfida: true });
-  }
-
-  // ---------- "👑 CHI VINCE RESTA" (Passo 6): un gioco a due nella Sala, chi vince resta al tavolo, gli altri in coda ----------
-  // sala.resta = { gioco, imp, coda: [id], campione, serie, record: { id, nome, n }, sfida: { a, b, stanza }, n (la sfida),
-  //   esito: { stanza, n, vince, perde, pari } (com'è finita l'ultima), parte (ora dell'host: quando parte la sfida n),
-  //   l (l'ultima sfida lanciata), aperta (la stanza del duello che a ha già aperto) }. Va nel messaggio della Sala (con ora).
-  // Ogni sfida è una partita della Sala: se l'host è uno dei due, la sua stanza (salaLancia col codice già deciso); se no il
-  // duello aperto dal telefono di a, che è sempre il campione. Gli altri guardano da soli. Pareggio: resta il campione (alla
-  // prima sfida a). Chi perde va in fondo alla coda; tra una sfida e l'altra RESTA_PAUSA, poi si parte da soli (3-2-1)
-  var RESTA_PAUSA = 8000, RESTA_SALTA = 20000;
-  function nomeMembro(S, id) { var m = ((S && S.membri) || []).filter(function (x) { return x && x.id === id; })[0]; return m ? m.nome : ""; }
-  // la coda di partenza: tutti gli altri, prima chi ha giocato meno stasera (a pari merito chi è arrivato prima)
-  function codaDiPartenza(tranne) {
-    var G = sala.giocate || {};
-    return sala.membri.map(function (m, i) { return { id: m.id, i: i, n: G[m.nome] || 0, ex: m.ex }; })
-      .filter(function (x) { return !x.ex && tranne.indexOf(x.id) < 0; })
-      .sort(function (a, b) { return a.n - b.n || a.i - b.i; }).map(function (x) { return x.id; });
-  }
-  // "👑 Chi vince resta" con i primi due scelti in "Chi gioca?": si parte subito
-  function restaInizia(g, R, scelti) {
-    if (!sala || !g || !scelti || scelti.length !== 2) return;
-    restaFerma(true);
-    var imp = impSalvabili(R && R.imp); delete imp.scelti; imp.modo = "online";
-    var ids = scelti.map(function (x) { return x.id; });
-    sala.resta = { gioco: g.id, imp: imp, coda: codaDiPartenza(ids), campione: null, serie: 0, record: null,
-      sfida: { a: ids[0], b: ids[1], stanza: SGNet.nuovoCodice() }, n: 1, esito: null, parte: Date.now(), l: 0 };
-    restaTimer();
-    restaProssima(1);
-  }
-  // si apre la sfida n (una volta sola): l'host gioca → la sua stanza; se no il duello. Il 3-2-1 parte da solo quando
-  // l'avversario è arrivato (RIV: come la Rivincita), così tra una sfida e l'altra nessuno deve toccare niente
-  function restaProssima(n) {
-    var Rr = sala && sala.resta; if (!Rr || Rr.n !== n || Rr.l === n || !Rr.sfida || !Rr.sfida.b) return;
-    var g = giocoDa(Rr.gioco); if (!g) return restaBasta();
-    var a = Rr.sfida.a, b = Rr.sfida.b;
-    Rr.l = n; Rr.lanciata = Date.now(); Rr.aperta = null;
-    Rr.sfida.na = nomeMembro(sala, a); Rr.sfida.nb = nomeMembro(sala, b);   // (i nomi restano anche se uno se ne va)
-    sala.regole = sala.regole || {};
-    var R = sala.regole[g.id] || (sala.regole[g.id] = { box: null, imp: impSalvabili(Rr.imp) });
-    var sc = [{ id: a, nome: nomeMembro(sala, a) }, { id: b, nome: nomeMembro(sala, b) }];
-    lasciaPartita(); FINE = null; RESTA_FINE = null;
-    SGNet.chiudiGiochi(1500);   // (la stanza della sfida di prima: un attimo dopo, prima gli amici passano alla nuova)
-    if (a === "host" || b === "host") {
-      var altro = a === "host" ? b : a, nomi = {}; nomi[altro] = nomeMembro(sala, altro);
-      RIV = { codice: Rr.sfida.stanza, attesi: [altro], nomi: nomi, quando: Date.now() + 10000, auto: true, pronti: {}, daSala: true, U: null };
-      R.imp.modo = "online"; R.imp.scelti = sc;
-      SL.ultimo = null;   // (una stanza nuova: la saletta si rifà, anche se ero ancora nella saletta di prima, es. "⏭ Salta")
-      return salaLancia(g, R.imp, R.box, { codice: Rr.sfida.stanza });
-    }
-    RIV = null;
-    salaDuello(g, R, sc, Rr.sfida.stanza);
-  }
-  // com'è finita la sfida (dalla classifica, o forza = chi vince perché l'altro se n'è andato). true = contata adesso
-  function restaEsito(cl, st, forza) {
-    var Rr = sala && sala.resta, sf = Rr && Rr.sfida;
-    if (!sf || !st || sf.stanza !== st || Rr.l !== Rr.n || (Rr.esito && Rr.esito.stanza === st)) return false;
-    var a = sf.a, b = sf.b, vince = forza || null;
-    if (!vince && cl) {
-      var primi = cl.filter(function (r) { return r && !r.bot && (r.pos || 1) === 1; });
-      if (primi.length === 1) vince = stessoNome(primi[0].nome, nomeMembro(sala, a)) ? a : (stessoNome(primi[0].nome, nomeMembro(sala, b)) ? b : null);
-    }
-    var pari = !vince; if (!vince) vince = a;   // (pareggio: resta il campione, che è sempre a)
-    var perde = vince === a ? b : a;
-    var nv = (vince === a ? sf.na : sf.nb) || nomeMembro(sala, vince), np = (perde === a ? sf.na : sf.nb) || nomeMembro(sala, perde);
-    Rr.serie = Rr.campione === vince ? (Rr.serie || 0) + 1 : 1; Rr.campione = vince;
-    if (!Rr.record || Rr.serie > Rr.record.n) Rr.record = { id: vince, nome: nomeMembro(sala, vince), n: Rr.serie };
-    Rr.coda = Rr.coda.filter(function (x) { return x !== vince && x !== perde && membroSala(x); });
-    if (perde && membroSala(perde)) Rr.coda.push(perde);
-    var dopo = membroSala(vince) ? (Rr.coda.shift() || null) : null;
-    Rr.esito = { stanza: st, n: Rr.n, vince: vince, perde: perde, pari: pari ? 1 : 0, nv: nv, np: np, via: forza ? 1 : 0 };
-    Rr.sfida = { a: vince, b: dopo, stanza: dopo ? SGNet.nuovoCodice() : null };   // (nessuno dopo: rimasti in pochi, si chiude)
-    Rr.n += 1; Rr.parte = Date.now() + RESTA_PAUSA;
-    restaSaltaTasto(null);
-    // uno dei due se n'è andato: la sfida finisce per tutti, si aspetta la prossima nella Sala (la riga della coda col conto)
-    if (forza) {
-      var dentro = sala.inGioco;
-      sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null; sala.fineDuello = null; sala.scelti = null;
-      if (dentro) { lasciaPartita(); togliGuardo(); FINE = null; }
-      SGNet.chiudiGiochi(1500);
-      if (sala._bcast) sala._bcast();
-      if (sala.pronta) pillola("sala", "🚪 " + (np || "L'avversario") + " non c'è più: resta " + (nv || "l'altro"), "verde", 3000);
-      if (sala.pronta && !hostSceglie()) disegnaSalaHost();
-      return true;
-    }
-    if (sala._bcast) sala._bcast();
-    return true;
-  }
-  // il timer dell'host: a `parte` lancia la sfida; dopo 20 s di sfida senza uno dei due, "⏭ Salta Luca"
-  function restaTimer() {
-    var S0 = sala; if (!S0) return;
-    clearInterval(S0.tResta);
-    S0.tResta = setInterval(function () {
-      if (sala !== S0 || !S0.resta) { clearInterval(S0.tResta); S0.tResta = null; restaSaltaTasto(null); return; }
-      var Rr = S0.resta;
-      if (Rr.l !== Rr.n) { if (Date.now() >= (Rr.parte || 0)) { if (Rr.sfida && Rr.sfida.b) restaProssima(Rr.n); else restaBasta("pochi"); } return; }
-      restaSaltaTasto(restaChiManca());
-    }, 500);
-  }
-  // chi manca alla sfida aperta da più di 20 s (ancora in saletta): l'avversario che la stanza non vede, o nel duello chi doveva aprirla
-  function restaChiManca() {
-    var Rr = sala.resta, sf = Rr.sfida;
-    if (!sf || !sf.stanza || sala.stanza !== sf.stanza || (Rr.esito && Rr.esito.stanza === sf.stanza)) return null;
-    if (Date.now() - (Rr.lanciata || 0) < RESTA_SALTA || (sala.fase && sala.fase !== "lobby")) return null;
-    if (sf.a === "host" || sf.b === "host") {
-      var altro = sf.a === "host" ? sf.b : sf.a, SV = SVH[sf.stanza];
-      return SV && !SV.dentro[altro] ? altro : null;
-    }
-    return Rr.aperta === sf.stanza ? sf.b : sf.a;
-  }
-  // "⏭ Salta Luca" (solo l'host della Sala, in alto, sopra qualunque schermata): un nodo solo, cambia solo la scritta
-  var SALTA_R = null;
-  function restaSaltaTasto(id) {
-    if (!id || !sala) { if (SALTA_R) { togliNodo(SALTA_R.nodo); SALTA_R = null; } return; }
-    var tx = "⏭ Salta " + (nomeMembro(sala, id) || "…");
-    if (!SALTA_R) {
-      var b = el("button", { class: "sl-resta-salta", type: "button", onclick: function () { if (SALTA_R) restaSalta(SALTA_R.id); } });
-      document.body.appendChild(b);
-      SALTA_R = { nodo: b };
-    }
-    SALTA_R.id = id;
-    if (SALTA_R.nodo.textContent !== tx) SALTA_R.nodo.textContent = tx;
-  }
-  // chi non arriva va in fondo alla coda e al suo posto entra il primo della coda (se era il campione, il titolo passa all'altro)
-  function restaSalta(id) {
-    var Rr = sala && sala.resta, sf = Rr && Rr.sfida;
-    restaSaltaTasto(null);
-    if (!sf || (id !== sf.a && id !== sf.b) || Rr.l !== Rr.n) return;
-    var resta = id === sf.a ? sf.b : sf.a;
-    Rr.coda = Rr.coda.filter(function (x) { return x !== id && x !== resta && membroSala(x); });
-    if (membroSala(id)) Rr.coda.push(id);
-    if (Rr.campione === id) { Rr.campione = null; Rr.serie = 0; }
-    var dopo = Rr.coda[0] !== id ? Rr.coda.shift() : null;
-    if (!dopo) return restaBasta("pochi");
-    pillola("sala", "⏭ " + (nomeMembro(sala, id) || "Chi mancava") + " va in fondo alla coda", "blu", 3000);
-    Rr.sfida = { a: resta, b: dopo, stanza: SGNet.nuovoCodice() };
-    Rr.n += 1; Rr.parte = Date.now();
-    restaProssima(Rr.n);
-  }
-  // chi esce dalla Sala sparisce dalla coda; se giocava la sfida vince l'altro; se doveva giocare la prossima entra il primo della coda
-  function restaVia(id) {
-    var Rr = sala && sala.resta; if (!Rr) return;
-    Rr.coda = Rr.coda.filter(function (x) { return x !== id; });
-    var sf = Rr.sfida; if (!sf || (sf.a !== id && sf.b !== id)) return;
-    var altro = sf.a === id ? sf.b : sf.a;
-    if (Rr.l === Rr.n && sf.stanza && !(Rr.esito && Rr.esito.stanza === sf.stanza)) { restaEsito(null, sf.stanza, altro); return; }
-    if (Rr.campione === id) { Rr.campione = null; Rr.serie = 0; }
-    var dopo = altro ? Rr.coda.shift() || null : null;
-    Rr.sfida = { a: altro, b: dopo, stanza: dopo ? SGNet.nuovoCodice() : null };
-  }
-  // uno dei due esce apposta dalla sfida in corso (‹ dal gioco): vince l'altro
-  function restaEsce(id, st) {
-    var Rr = sala && sala.resta, sf = Rr && Rr.sfida;
-    if (!sf || !st || sf.stanza !== st || (id !== sf.a && id !== sf.b)) return false;
-    return restaEsito(null, st, id === sf.a ? sf.b : sf.a);
-  }
-  // un amico nuovo nella Sala: in fondo alla coda (chi rientra col suo id nuovo al posto di un "ex" prende il suo posto)
-  function restaEntra(id, vecchio) {
-    var Rr = sala && sala.resta; if (!Rr || !id) return;
-    if (vecchio) {
-      Rr.coda = Rr.coda.map(function (x) { return x === vecchio ? id : x; });
-      if (Rr.sfida) { if (Rr.sfida.a === vecchio) Rr.sfida.a = id; if (Rr.sfida.b === vecchio) Rr.sfida.b = id; }
-      if (Rr.campione === vecchio) Rr.campione = id;
-    }
-    if (Rr.coda.indexOf(id) < 0 && !(Rr.sfida && (Rr.sfida.a === id || Rr.sfida.b === id))) Rr.coda.push(id);
-  }
-  // finisce "Chi vince resta" (senza cambiare schermata): il record della serata resta scritto nella Sala
-  function restaFerma(muto) {
-    var Rr = sala && sala.resta;
-    if (sala) { clearInterval(sala.tResta); sala.tResta = null; }
-    restaSaltaTasto(null); RESTA_FINE = null;
-    if (!Rr) return;
-    if (Rr.record && Rr.record.n >= 2 && (!sala.restaRec || Rr.record.n >= sala.restaRec.n)) sala.restaRec = { nome: Rr.record.nome, n: Rr.record.n };
-    sala.resta = null;
-    if (!muto && sala._bcast) sala._bcast();
-  }
-  // "⏹ Basta così": tutti nella Sala
-  function restaBasta(perche) {
-    if (!sala) return;
-    restaFerma(true);
-    lasciaPartita(); FINE = null; RIV = null; togliGuardo();
-    sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null; sala.fineDuello = null; sala.scelti = null; sala.sceglie = false;
-    sala._bcast();
-    SGNet.chiudiGiochi(1500);
-    if (perche === "pochi") pillola("sala", "👑 Siete rimasti in pochi: «Chi vince resta» finisce qui", "blu", 3500);
-    disegnaSalaHost();
-  }
-  // (la Sala si riapre: pagina ricaricata, subentro del vice, trasloco nella Compagnia) la serie riprende da dov'era.
-  // Se la sfida in corso è rimasta (il duello di due amici, o la partita che riprende) si aspetta il suo esito; se si è persa:
-  // chi non c'è più ha perso, o si rigioca la stessa sfida in una stanza nuova. Poi la pausa e si riparte da soli
-  function restaRiprendi() {
-    var Rr = sala && sala.resta; if (!Rr) return;
-    restaTimer();
-    var sf = Rr.sfida || {};
-    if (sala.gioco && sala.stanza && sf.stanza === sala.stanza) return;
-    if (Rr.l === Rr.n && sf.stanza && !(Rr.esito && Rr.esito.stanza === sf.stanza)) {
-      var ca = !!sf.a && !!membroSala(sf.a), cb = !!sf.b && !!membroSala(sf.b);
-      if (ca !== cb) { restaEsito(null, sf.stanza, ca ? sf.a : sf.b); return; }
-      if (!ca) return restaBasta("pochi");
-      Rr.sfida = { a: sf.a, b: sf.b, stanza: SGNet.nuovoCodice() }; Rr.n += 1;
-    } else if (Rr.l !== Rr.n) {
-      if (!sf.a || !membroSala(sf.a)) { Rr.campione = null; Rr.serie = 0; sf.a = sf.b && membroSala(sf.b) ? sf.b : (Rr.coda.shift() || null); sf.b = null; }
-      if (!sf.b || !membroSala(sf.b) || sf.b === sf.a) sf.b = Rr.coda.shift() || null;
-      if (sf.b && !sf.stanza) sf.stanza = SGNet.nuovoCodice();
-      Rr.sfida = sf;
-    }
-    Rr.parte = Math.max(Rr.parte || 0, Date.now() + RESTA_PAUSA);
-    if (sala._bcast) sala._bcast();
-  }
-  // (Passo 3) la Sala passa al vice: gli id della serie si rimappano (il mio id di prima → "host"; chi la teneva se n'è andato)
-  function restaEredita(r, vecchio) {
-    if (!r || typeof r !== "object" || !r.sfida || !giocoDa(r.gioco)) return null;
-    function id2(x) { return x === vecchio ? "host" : (x === "host" ? "__via" : x); }
-    var R = { gioco: r.gioco, imp: r.imp && typeof r.imp === "object" ? r.imp : {}, coda: (Array.isArray(r.coda) ? r.coda : []).map(id2).filter(function (x) { return x && x !== "__via"; }),
-      campione: r.campione && id2(r.campione) !== "__via" ? id2(r.campione) : null, serie: 0, record: null,
-      sfida: { a: id2(r.sfida.a), b: id2(r.sfida.b), stanza: r.sfida.stanza || null, na: r.sfida.na, nb: r.sfida.nb }, n: +r.n || 1, l: +r.l || 0, parte: 0,
-      esito: r.esito ? { stanza: r.esito.stanza, n: r.esito.n, vince: id2(r.esito.vince), perde: id2(r.esito.perde), pari: r.esito.pari ? 1 : 0, nv: r.esito.nv, np: r.esito.np, via: r.esito.via ? 1 : 0 } : null };
-    R.serie = R.campione ? +r.serie || 0 : 0;
-    if (r.record && r.record.nome) R.record = { id: id2(r.record.id), nome: String(r.record.nome).slice(0, 16), n: +r.record.n || 0 };
-    return R;
-  }
-  // la serie (o il record) della Sala riaperta (R0: la mia salvata) o ereditata (EZ: subentro, trasloco)
-  function restaDaPrima(R0, EZ, k) {
-    var v = (R0 && R0[k]) || (EZ && EZ[k]) || null;
-    if (!v || typeof v !== "object") return null;
-    if (k === "resta" && (!v.sfida || !giocoDa(v.gioco) || !Array.isArray(v.coda))) return null;
-    return v;
-  }
-  // la serie per la foto della Sala (con l'ora dell'host: chi la riceve fa il conto alla rovescia giusto)
-  function restaFoto(r) {
-    if (!r) return undefined;
-    return { gioco: r.gioco, imp: r.imp, coda: r.coda, campione: r.campione, serie: r.serie, record: r.record, sfida: r.sfida, n: r.n,
-      esito: r.esito, parte: r.parte, l: r.l, ora: Date.now() };
-  }
-  // la serie vista da questo telefono: { R, S (la Sala: membri), io (il mio id), host (la Sala è mia) }
-  function restaMia() {
-    if (sala && sala.resta) return { R: sala.resta, S: sala, io: "host", host: true };
-    if (salaG && salaG.resta && !salaG.elim) return { R: salaG.resta, S: salaG, io: mioIdSala(salaG), host: false };
-    return null;
-  }
-  // questa stanza è una sfida della serie (quella in corso o quella appena finita)?
-  function restaFineDi(st) {
-    var M = restaMia(); if (!M || !st) return null;
-    return (M.R.sfida && M.R.sfida.stanza === st) || (M.R.esito && M.R.esito.stanza === st) ? M : null;
-  }
-  // i secondi che mancano alla prossima sfida (l'host con la sua ora; gli amici dall'ora dell'host nella foto)
-  function restaSecondi(R, host) {
-    var ms = host ? (R.parte || 0) - Date.now() : (R.parte || 0) - (R.ora || R.parte || 0) - (Date.now() - (R._ric || Date.now()));
-    return Math.max(1, Math.ceil(ms / 1000));
-  }
-  // la fine di una sfida, uguale su tutti i telefoni, in una striscia sola (sta nel posto dei tasti di fine dei giochi):
-  // [avatar di chi tocca] "👑 Resta Paky · 🔥 2 di fila" / "Ora tocca a Luca · si parte tra 8…". Sotto, l'host della Sala
-  // ha "⏹ Basta così" e "🎮 Cambia gioco" (niente Rivincita né "Ci sto"); gli altri la riga della Classifica della serata.
-  // Le scritte si cambiano quando arriva la Sala, senza ridisegnare. rp = { SV, salaHost, host } per la riga dei punti
-  var RESTA_FINE = null;   // { nodo, tit, av, nome, conto, stanza, n, avId, c }
-  function bloccoResta(piede, st, hostSala, rp) {
-    var F = { stanza: st, n: 0 };
-    F.tit = el("b", { class: "fr-tit" });
-    F.av = el("span", { class: "fr-av", "aria-hidden": "true", hidden: "hidden" });
-    F.nome = el("span", { class: "fr-ora-tx" });
-    F.conto = el("span", { class: "fr-conto" });
-    F.nodo = el("div", { class: "fine-resta", role: "status" }, [ F.av, el("span", { class: "fr-testi" }, [ F.tit, el("span", { class: "fr-sotto" }, [ F.nome, F.conto ]) ]) ]);
-    piede.appendChild(F.nodo);
-    var box = el("div", { class: "fine-tasti" });
-    if (hostSala) {
-      box.appendChild(el("button", { class: "btn btn-fantasma ft-primo", type: "button", text: "⏹ Basta così", onclick: function () { restaBasta(); } }));
-      box.appendChild(el("button", { class: "btn btn-fantasma ft-secondo", type: "button", text: "🎮 Cambia gioco", onclick: function () { restaFerma(true); salaCambiaGioco(); } }));
-    } else if (rp && rp.SV) rigaPuntiFine(box, rp.SV, !!rp.salaHost, !!rp.host);   // (la Classifica della serata: l'host la ha nella Sala)
-    if (box.firstChild) piede.appendChild(box);
-    FINE = null;
-    RESTA_FINE = F;
-    restaAggiornaFine();
-    return true;
-  }
-  function restaAggiornaFine() {
-    var F = RESTA_FINE; if (!F) return;
-    if (F.nodo.isConnected) F.visto = true;
-    else if (F.visto) { RESTA_FINE = null; return; }
-    var M = restaMia(), R = M && M.R, E = R && R.esito && R.esito.stanza === F.stanza ? R.esito : null;
-    var tit = "🏁 Fine sfida", chi = null, txOra = "";
-    if (E) {
-      tit = (E.pari ? "🤝 Pari: resta " : "👑 Resta ") + (nomeMembro(M.S, E.vince) || E.nv || "…") + (R.campione === E.vince && R.serie >= 2 ? " · 🔥 " + R.serie + " di fila" : "");
-      chi = R.sfida && R.sfida.b ? R.sfida.b : null;
-      txOra = chi ? (chi === M.io ? "Ora tocca a te!" : "Ora tocca a " + (nomeMembro(M.S, chi) || "…")) : (R.l !== R.n ? "Si torna nella Sala…" : "");
-    }
-    if (F.tit.textContent !== tit) F.tit.textContent = tit;
-    if (F.nome.textContent !== txOra) F.nome.textContent = txOra;
-    if (F.av.hidden === !!chi) F.av.hidden = !chi;
-    if (chi && F.avId !== chi) {
-      F.avId = chi;
-      var mm = (M.S.membri || []).filter(function (x) { return x && x.id === chi; })[0];
-      F.av.innerHTML = window.SGOmino && mm ? SGOmino.svg(mm.omino || SGOmino.casuale(mm.nome), { busto: true }) : "";
-    }
-    // il conto ("· si parte tra 8…"): solo quando c'è una sfida dopo
-    if (E && chi && R.l !== R.n) {
-      if (F.n !== R.n || !F.c || !F.c.vivo()) { F.n = R.n; if (F.c) F.c.ferma(); F.c = contoAvanti(F.conto, restaSecondi(R, M.host), null, "resta|" + R.n, " · si parte tra "); }
-    } else { if (F.c) { F.c.ferma(); F.c = null; } if (F.conto.textContent) F.conto.textContent = ""; }
-  }
-  // la targhetta di chi guarda una sfida: "👀 Guardi · in coda: sei 2°"
-  function restaTarga() {
-    var P = partitaCorrente; if (!P || !P.viva() || !P.tavolo || !P.tavolo.linkParams || !P.tavolo.linkParams.guarda) return;
-    var st = P.tavolo.linkParams.stanza, M = restaFineDi(st), tx = null;
-    if (M) {
-      var k = M.R.coda.indexOf(M.io);
-      if (k >= 0) tx = "Guardi · in coda: sei " + (k + 1) + "°";
-      else if (M.R.esito && M.R.esito.stanza === st && M.R.sfida && M.R.sfida.b === M.io) tx = "Guardi · ora tocca a te!";
-    }
-    if ((P.testoGuardo || null) === tx) return;
-    P.testoGuardo = tx;
-    if (GUARDO && GUARDO.P === P) chipGuardo(P);
-  }
-  // qualcosa è cambiato nella serie (foto della Sala, esito): si aggiornano solo le scritte sullo schermo
-  function restaAggiorna() {
-    restaAggiornaFine(); restaTarga();
-    var M = restaMia(), S = M ? M.S : (sala || salaG);
-    if (S && S._coda && S._coda.nodo.isConnected) riquadroCoda(S, !!(M ? M.host : sala === S));
-  }
-  // nella Sala: "👑 Paky 🔥2 · in coda: Luca, Marco, Bea" (+ "Prossima sfida tra 8…" e, per l'host, "⏹ Basta").
-  // Senza la serie, dopo "Basta così": "👑 Record di stasera: Luca, 5 di fila". Sempre lo stesso nodo (cambiano le scritte)
-  function riquadroCoda(S, host) {
-    var R = S && S.resta;
-    if (!R) {
-      var rec = S && S.restaRec;
-      if (!rec || !rec.nome || (+rec.n || 0) < 2) return null;
-      var txr = "👑 Record di stasera: " + rec.nome + ", " + rec.n + " di fila";
-      if (!S._rec || S._rec.tx !== txr) S._rec = { tx: txr, nodo: el("div", { class: "sl-coda sl-coda-rec" }, [ el("span", { class: "sl-coda-testi" }, [ el("span", { class: "sl-coda-tx", text: txr }) ]) ]) };
-      return S._rec.nodo;
-    }
-    var io = host ? "host" : mioIdSala(S);
-    function nm(id) { return id === io ? "tu" : (nomeMembro(S, id) || "…"); }
-    var tx = (R.campione ? "👑 " + nm(R.campione) + (R.serie >= 2 ? " 🔥" + R.serie : "") : "👑 Chi vince resta") + (R.coda.length ? " · in coda: " + R.coda.map(nm).join(", ") : "");
-    var C = S._coda;
-    if (!C || C.host !== host) {
-      C = S._coda = { host: host, tx: el("span", { class: "sl-coda-tx" }), conto: el("small", { class: "sl-coda-conto", hidden: "hidden" }) };
-      var kids = [ el("span", { class: "sl-coda-testi" }, [ C.tx, C.conto ]) ];
-      if (host) kids.push(el("button", { class: "btn btn-fantasma btn-piccolo", type: "button", text: "⏹ Basta", onclick: function () { restaBasta(); } }));
-      C.nodo = el("div", { class: "sl-coda" }, kids);
-    }
-    if (C.tx.textContent !== tx) C.tx.textContent = tx;
-    var attesa = R.l !== R.n && !!(R.sfida && R.sfida.b);
-    if (C.conto.hidden === attesa) C.conto.hidden = !attesa;
-    if (attesa && (C.n !== R.n || !C.c || !C.c.vivo())) { C.n = R.n; if (C.c) C.c.ferma(); C.c = contoAvanti(C.conto, restaSecondi(R, host), null, "resta|" + R.n, "Prossima sfida tra "); }
-    else if (!attesa && C.c) { C.c.ferma(); C.c = null; C.n = null; }
-    return C.nodo;
   }
 
   // opz (facoltativo) = { codice, ripresa }: la partita di prima riprende nella stessa stanza (salaRiprendiGioco): stesso
@@ -6768,7 +2790,7 @@
     var C = opz.codice ? String(opz.codice).toUpperCase() : SGNet.nuovoCodice();
     SGNet._forza = C;                         // il gioco userà QUESTO codice stanza
     sala.gioco = g.id; sala.stanza = C; sala.inGioco = true; sala.sceglie = false;
-    segnaFatto(g.id); if (sala.voto) { clearTimeout(sala.tVoto); sala.voto = null; }   // (un gioco che parte chiude anche il voto)
+    cuore.segnaFatto(g.id); if (sala.voto) { clearTimeout(sala.tVoto); sala.voto = null; }   // (un gioco che parte chiude anche il voto)
     if (!opz.ripresa) { sala.fase = "lobby"; sala.fuori = {}; }
     sala.duello = null;
     sala.impGioco = impSalvabili(impostazioni);   // (le regole di questa partita: se la pagina si ricarica, la Sala la riprende con queste)
@@ -6779,7 +2801,7 @@
     var ctx = sala.ctx = {
       // si torna in sala: prima lo dico a tutti (tornano da soli), poi chiudo la stanza del gioco
       // ("👑 Chi vince resta": se lascio la sfida in corso vince l'altro, e la serie va avanti da sola)
-      esci: function () { if (!sala) return schermataHome(); restaEsce("host", sala.stanza); sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null; sala._bcast(); SGNet.chiudiGiochi(1500); disegnaSalaHost(); },
+      esci: function () { if (!sala) return schermataHome(); cuore.restaEsce("host", sala.stanza); sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null; sala._bcast(); SGNet.chiudiGiochi(1500); disegnaSalaHost(); },
       // "🎮 Cambia gioco" dalla fine: tutti nella Sala, l'host sceglie il prossimo
       cambia: function () { salaCambiaGioco(); },
       // "↻ Rivincita" di un gioco che non sa rifarsi da solo: lo stesso gioco con le stesse regole, in una stanza nuova
@@ -6823,7 +2845,7 @@
     if (!sala) return schermataHome();
     lasciaPartita(); FINE = null; RIV = null;
     sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null;
-    restaFerma(true);   // (anche "Chi vince resta" finisce: il record resta scritto)
+    cuore.restaFerma(true);   // (anche "Chi vince resta" finisce: il record resta scritto)
     sala.sceglie = true; sala._bcast();
     SGNet.chiudiGiochi(1500);   // (prima gli amici tornano nella Sala, poi la stanza si chiude)
     salaScegliGioco();
@@ -6859,7 +2881,7 @@
     tieniAcceso(true);
     var io = profiloAttivo();
     // nella Sala si entra sempre col profilo (nome e avatar suoi): chi non ce l'ha lo crea e poi entra da solo
-    if (!io) return schermataAccesso(function () { salaOspite(codice); });
+    if (!io) return cuore.schermataAccesso(function () { salaOspite(codice); });
     entraInSala(codice, io.nome, io.emoji, io.omino || null);
   }
   // o (facoltativo) = { subito: true } lo schermo di adesso resta finché non arriva la Sala (chi cede la sua: niente
@@ -6935,7 +2957,7 @@
         if (mioS && S.rete && S.rete.riprova && !(m.membri || []).some(function (x) { return x && x.id === mioS; })) try { S.rete.riprova(); } catch (e) {}
         var eraE = S.elim;
         S.membri = m.membri || []; S.torneo = m.torneo || null; S.elim = m.elim || null;
-        if (eraE && !S.elim) lasciaTorneo(S);   // il torneino è finito (o fermato): via dalla partita e dal tabellone, si torna nella Sala
+        if (eraE && !S.elim) cuore.lasciaTorneo(S);   // il torneino è finito (o fermato): via dalla partita e dal tabellone, si torna nella Sala
         rigaPuntiOra();   // (sulla classifica di fine partita: "🏆 Paky +100 · Luca +78" appena arrivano i punti)
         // il mio nome nella Sala: se c'era già un altro con lo stesso nome, l'host me l'ha cambiato ("Luca 2") e nei giochi uso quello
         S.membri.forEach(function (x) {
@@ -6944,7 +2966,7 @@
         });
         if (S.elim) {   // torneo a eliminazione (o il torneino della Sala): si apre da sola la mia partita
           if (S.inGioco !== null) { S.inGioco = null; S.giocoSala = null; S.uscitoDa = null; S.finitoDa = null; S.duello = null; S.faseD = null; S.dFine = null; togliVia(); FINE = null; }   // (il gioco della Sala di prima non c'è più)
-          return seguiOspite();
+          return cuore.seguiOspite();
         }
         S.giocate = m.giocate && typeof m.giocate === "object" ? m.giocate : {};
         S.sc = m.gioco && m.stanza && Array.isArray(m.sc) ? { stanza: m.stanza, ids: m.sc } : null;   // (chi gioca, se l'ha scelto l'host)
@@ -6957,11 +2979,11 @@
         // (uno dei due se n'è andato a metà sfida: si torna nella Sala e si aspetta la prossima)
         var Ev = S.resta && S.resta.esito;
         if (Ev && Ev.via && S.restaViaN !== Ev.n && (S.resta.parte || 0) > (S.resta.ora || 0)) { S.restaViaN = Ev.n; pillola("sala", "🚪 " + (Ev.np || "L'avversario") + " non c'è più: resta " + (Ev.nv || "l'altro"), "verde", 3000); }
-        restaAggiorna();
+        cuore.restaAggiorna();
         // "🗳️ Scegliamo insieme": l'host l'ha acceso (dopo si vota); il voto o la ruota aperti (solo senza un gioco in corso)
         S.insieme = !!m.insieme;
-        var Vt = !m.gioco && votoValido(m.voto) ? m.voto : null;
-        if (!Vt) votoVia(S);
+        var Vt = !m.gioco && cuore.votoValido(m.voto) ? m.voto : null;
+        if (!Vt) cuore.votoVia(S);
         if (m.gioco && m.stanza) {
           // fase: a che punto è il gioco; nel: chi è dentro la sua stanza; fuori: chi ne è uscito apposta
           var fase = typeof m.fase === "string" ? m.fase : "lobby", mio = mioIdSala(S);
@@ -7003,7 +3025,7 @@
           S.inGioco = null; lasciaPartita(); SGNet.chiudiGiochi(); togliVia(); FINE = null;
           if (S.sceglie || Vt) pillola("sala", Vt ? "🗳️ Si vota il prossimo gioco!" : (S.sceglie === "sfida" ? "⚔️ Altra sfida!" : "🎮 Si cambia gioco!"), "verde", 2500);
         }
-        if (Vt) return votoOspite(S, Vt);   // (la scheda del voto, o la ruota)
+        if (Vt) return cuore.votoOspite(S, Vt);   // (la scheda del voto, o la ruota)
         if (S.torneo && S.torneo.finito) { if (!S.podio) { S.podio = true; schermataPodioT(S.torneo, false); } return; }
         S.podio = false;
         disegnaSalaOspite();
@@ -7127,7 +3149,7 @@
   // la Compagnia vuota, senza profilo: si entra col nome di questo telefono e si aspetta (se il nome non c'è, il profilo)
   function aspettaCompagnia(C, comp) {
     var nome = nomeStanza(C) || nomeOspiteSalvato();
-    if (!nome) return schermataAccesso(function () { apriCompagnia(C, comp ? { nome: comp.nome, emoji: comp.emoji } : null); });
+    if (!nome) return cuore.schermataAccesso(function () { apriCompagnia(C, comp ? { nome: comp.nome, emoji: comp.emoji } : null); });
     ricordaStanza({ sala: C }); segnaLinkSessione({ sala: C }); tieniAcceso(true);
     entraInSala(C, nome, "🙂", window.SGOmino ? SGOmino.casuale(nome) : null, { aspetta: comp || compVuota(C) });
   }
@@ -7192,7 +3214,7 @@
       el("p", { class: "cmp-attesa-sotto", text: "Appena qualcuno apre la serata entri da solo." })
     ]));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "👤 Crea il profilo e aprila tu", onclick: function () {
-      schermataAccesso(function () { if (salaG === S) chiudiSalaOspite(); apriCompagnia(C, cp.nome ? { nome: cp.nome, emoji: cp.emoji } : null); });
+      cuore.schermataAccesso(function () { if (salaG === S) chiudiSalaOspite(); apriCompagnia(C, cp.nome ? { nome: cp.nome, emoji: cp.emoji } : null); });
     } }));
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Torna alla home", onclick: function () { if (salaG === S) chiudiSalaOspite(); schermataHome(); } }));
     S._msg = null;
@@ -7203,13 +3225,13 @@
     if (!salaG) return;
     amiciStato("sala", salaG.codice);
     var T = salaG.torneo, E = salaG.elim;
-    var extra = E ? [boxElimSala(E, salaG.myId, false, salaG, seguiOspite)] : (T ? [boxTorneoCorto(T, salaG)] : []);
+    var extra = E ? [cuore.boxElimSala(E, salaG.myId, false, salaG, cuore.seguiOspite)] : (T ? [boxTorneoCorto(T, salaG)] : []);
     var TN = !!(E && E.torneino), nH = salaG.nomeHost || "L'host";
     // un gioco in corso senza di me: ne sono uscito ("Rientra ▶") o sono arrivato a partita cominciata ("entri alla prossima · 👀 Guarda")
     var gs = !E && salaG.giocoSala && salaG.inGioco === null ? salaG.giocoSala : null;
     var tipo = !gs ? null : (salaG.uscitoDa === gs.stanza ? "rientra" : (gs.fase && gs.fase !== "lobby" && salaG.finitoDa !== gs.stanza ? "prossima" : null));
     var inCorso = tipo ? boxInCorso(gs, tipo) : null;
-    var coda = !E ? riquadroCoda(salaG, false) : null;   // ("👑 Paky 🔥2 · in coda: Luca, tu")
+    var coda = !E ? cuore.riquadroCoda(salaG, false) : null;   // ("👑 Paky 🔥2 · in coda: Luca, tu")
     if (coda) extra.unshift(coda);
     if (inCorso) extra.unshift(inCorso);
     var sS = saletta(gSala(!!T, E, salaG.comp), {
@@ -7376,7 +3398,7 @@
     linkParams = { gioco: g.id, stanza: code, guarda: 1 };
     if (mio) SGNet.ricordaId(code, mio);   // (lo stesso id della Sala: quando entro a giocare l'host mi toglie dal pubblico)
     avviaPartita(g, [], {}, null, ctx);
-    restaTarga();   // ("👀 Guardi · in coda: sei 2°")
+    cuore.restaTarga();   // ("👀 Guardi · in coda: sei 2°")
   }
   // chi guardava una partita della Sala e la partita torna in saletta (Rivincita, Nuova partita): entra anche lui, da solo.
   // Nei giochi a due no: si continua a guardare (dalla classifica si torna a guardare la partita nuova)
@@ -7417,7 +3439,7 @@
     // (se intanto la Sala è passata a me, p3-c, l'esito e la fase li prende la mia Sala: io sono "host")
     function allaSala(m) {
       if (salaG === S && S.rete) { try { S.rete.invia(m); } catch (e) {} return; }
-      if (sala && sala.codice === CS && sala.duello && sala.duello.stanza === code) msgDuello("host", m);
+      if (sala && sala.codice === CS && sala.duello && sala.duello.stanza === code) cuore.msgDuello("host", m);
     }
     function esito(cl) {
       var P = partitaCorrente, SV = P && P.viva() && P.salaCtx === ctx ? svPartita(P, true) : null, giro = SV ? (SV.giro || 0) : 0;
@@ -7454,11 +3476,11 @@
     var ctx = {
       duello: D.stanza,
       esci: function () { torna(false); }, fine: function () { torna(false); }, risultato: function () {},
-      angolo: function (s) { tastoSala(s, function () { torna(false); }); }
+      angolo: function (s) { cuore.tastoSala(s, function () { torna(false); }); }
     };
     linkParams = { gioco: g.id, stanza: D.stanza, guarda: 1 };
     avviaPartita(g, [], {}, null, ctx);
-    restaTarga();   // ("👀 Guardi · in coda: sei 2°")
+    cuore.restaTarga();   // ("👀 Guardi · in coda: sei 2°")
   }
   // un messaggio della Sala mentre guardo il duello (anche dalla classifica): la fine, la rivincita
   function seguiDuello(S, D, prima, fase) {
@@ -7474,13 +3496,13 @@
   }
   function fineDuelloOspite(S, D) {
     var g = giocoDa(D.gioco); if (!g || !D.fine) return;
-    var R = restaFineDi(D.stanza);
+    var R = cuore.restaFineDi(D.stanza);
     if (R && document.querySelector(".fine-resta")) return;   // ("👑 Chi vince resta": la fine della sfida c'è già)
     lasciaPartita(); SGNet.chiudiGiochi();
     S.dFine = D.stanza;
     var s = schermata({ icona: "🏆", titolo: "Fine partita", sotto: g.nome + " · " + D.na + " contro " + D.nb });
-    s._contenuto.appendChild(classificaDuello(D.fine.cl));
-    if (R) { bloccoResta(s._piede, D.stanza, false, null); return mostra(s); }
+    s._contenuto.appendChild(cuore.classificaDuello(D.fine.cl));
+    if (R) { cuore.bloccoResta(s._piede, D.stanza, false, null); return mostra(s); }
     s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Se rigiocano, la guardi da qui. Se no " + (S.nomeHost || "l'host") + " sceglie la prossima sfida." }));
     var box = el("div", { class: "fine-tasti" });
     rigaPuntiFine(box, { codice: D.stanza, giroH: D.fine.giro || 0 }, false, false);   // (la Classifica della serata: "🏆 Serata: Giulia 1° · Luca 2°")
@@ -7492,520 +3514,10 @@
     mostra(s);
   }
 
-  // =========================================================
-  //  TORNEO A ELIMINAZIONE (giochi a due: Tris, Drop 4…)
-  //  Un link solo: si sorteggiano le coppie, chi vince va avanti.
-  //  Primo turno con un numero dispari: chi resta gioca col Bot (un partecipante vero: se vince va avanti
-  //  anche lui, fino alla finale) oppure passa il turno, come sceglie l'host (E.resto: "bot" / "passa").
-  //  Nei turni dopo, chi resta senza avversario passa il turno (a sorte, mai due volte lo stesso se si può).
-  //  Ogni partita è una stanza a parte tra i due: il primo la apre, l'altro
-  //  entra da solo; chi l'ha aperta (o chi gioca col bot) dice chi ha vinto.
-  //  L'host della sala può decidere a mano una partita bloccata.
-  //  Il TORNEINO (E.torneino) è lo stesso torneo dentro la Sala della serata: stessi id, e alla fine si torna nella Sala.
-  // =========================================================
+  // ---- ⚔️ I TORNEI (a eliminazione coi gironi, il torneino nella Sala, il torneo a punti sullo stesso telefono): in js/cuore/tornei.js. Qui restano GIOCHI_ELIMINAZIONE, MAX_ELIM e giocoDa ----
   var GIOCHI_ELIMINAZIONE = { tris: 1, drop4: 1, navale: 1, scopa: 1, calciobiliardo: 1 };
   var MAX_ELIM = 10;   // giocano i primi 10 entrati in sala; gli altri guardano
   function giocoDa(id) { return giochi.filter(function (g) { return g.id === id; })[0] || null; }
-  function nomeElim(E, id) { return id === "bot" ? "🤖 " + ((E.bot && E.bot.nome) || "Bot") : ((E.nomi && E.nomi[id]) || "…"); }
-  function livelloElim(E) { var l = E && E.livello; return l === "facile" || l === "difficile" ? l : "medio"; }
-  // il Bot del torneo per la partita (aiuti.bot del gioco): quello del gruppo fisso, col nome che c'è nel tabellone
-  function botDelTorneo(E) {
-    var b = (E && E.bot && botDaId(E.bot.id)) || botPrendi(1, { livello: livelloElim(E) })[0] || null;
-    if (b && E && E.bot && E.bot.nome) b.nome = E.bot.nome;
-    if (b) b.livello = livelloElim(E);   // (la bravura scelta all'inizio, uguale per tutto il torneo)
-    return b;
-  }
-  // è già passato al turno dopo senza giocare
-  function favoritoElim(E, id) {
-    return E.turni.some(function (tu) { return tu.some(function (p) { return p.a === id && !p.b; }); });
-  }
-  // un turno dopo il primo: chi resta senza avversario passa il turno (a sorte tra chi non è ancora passato);
-  // nella partita col Bot lui è sempre il secondo (la gioca il telefono di chi gli sta davanti)
-  function creaTurnoElim(E, ids) {
-    var r = E.turni.length, tu = [], solo = null;
-    ids = ids.slice();
-    if (ids.length % 2) {
-      var liberi = ids.filter(function (id) { return !favoritoElim(E, id); }), tra = liberi.length ? liberi : ids;
-      solo = tra[Math.floor(Math.random() * tra.length)];
-      ids.splice(ids.indexOf(solo), 1);
-    }
-    for (var i = 0; i + 1 < ids.length; i += 2) {
-      var a = ids[i], b = ids[i + 1];
-      if (a === "bot") { a = b; b = "bot"; }
-      tu.push({ a: a, b: b, stanza: SGNet.nuovoCodice(), vince: null });
-    }
-    if (solo) tu.push({ a: solo, b: null, vince: solo });
-    tu.forEach(function (p, j) { p.k = r + "-" + j; });
-    E.turni.push(tu);
-  }
-  // ---- i gironi: prima di partire ognuno sceglie dove sedersi (all'inizio sono tutti in panchina) ----
-  var N_GIRONI = MAX_ELIM / 2;   // 5 gironi da 2 posti
-  function chiNelGirone(E, n) { return Object.keys(E.gironi || {}).filter(function (id) { return E.gironi[id] === n; }); }
-  function scegliGironeElim(id, n) {   // n = 1..5, 0 = panchina
-    var E = sala && sala.elim; if (!E || E.iniziato) return;
-    if (!sala.membri.some(function (m) { return m.id === id; })) return;
-    n = Math.floor(+n) || 0; if (n < 0 || n > partiteCoppie(E, sala.membri.length)) return;
-    E.gironi = E.gironi || {};
-    if (n && E.gironi[id] !== n && chiNelGirone(E, n).length >= 2) return;   // girone pieno
-    delete E.gironi[id];   // (così chi si risiede va in fondo al girone)
-    if (n) E.gironi[id] = n;
-    sala._bcast(); seguiHost();
-  }
-  // i gironi alla partenza: chi è in panchina va a caso nei posti liberi (prima accanto a chi è solo),
-  // due rimasti soli si sfidano tra loro, e se ne resta uno solo gioca col bot. Al massimo 10: gli altri guardano.
-  function gironiElim(E) {
-    var dentro = {}; sala.membri.forEach(function (m) { dentro[m.id] = 1; });
-    var G = [];
-    for (var n = 1; n <= N_GIRONI; n++) { var g = chiNelGirone(E, n).filter(function (id) { return dentro[id]; }).slice(0, 2); g.n = n; G.push(g); }
-    var panca = mischia(sala.membri.map(function (m) { return m.id; }).filter(function (id) { return !(E.gironi && E.gironi[id]); }));
-    G.forEach(function (g) { if (g.length === 1 && panca.length) g.push(panca.shift()); });
-    G.forEach(function (g) { while (g.length < 2 && panca.length) g.push(panca.shift()); });
-    var soli = G.filter(function (g) { return g.length === 1; });
-    for (var i = 0; i + 1 < soli.length; i += 2) soli[i].push(soli[i + 1].pop());
-    return G.filter(function (g) { return g.length; });
-  }
-  function avviaElim() {
-    var E = sala && sala.elim; if (!E || (E.iniziato && !E.finito) || sala.membri.length < 2) return;
-    var G = gironiElim(E), nomi = {};
-    sala.membri.forEach(function (m) { nomi[m.id] = m.nome; });
-    E.nomi = {}; G.forEach(function (g) { g.forEach(function (id) { E.nomi[id] = nomi[id]; }); });
-    E.turni = []; E.campione = null; E.iniziato = true; E.finito = false; E.contato = false; delete E.attesi; delete E.scade;
-    clearTimeout(sala.tCoppie); sala.tCoppie = null;
-    E.k = SGNet.nuovoCodice();   // (questo torneo: i punti alla Sala si danno una volta sola)
-    sala.inPartitaK = null; sala.fuoriK = null; sala.guardaK = null;
-    // il Bot del torneo: uno del gruppo fisso (della bravura scelta), a sorte, e resta lui per tutto il torneo (nome nel tabellone e in partita).
-    // Con "⏭️ passa il turno" niente Bot: chi resta solo passa
-    var conBot = E.resto !== "passa";
-    var bt = conBot ? botPrendi(1, { livello: livelloElim(E), caso: true, escludi: sala.membri.map(function (m) { return m.nome; }) })[0] : null;
-    E.bot = bt ? { id: bt.id, nome: bt.nome } : null;
-    // primo turno: un girone = una partita (chi è rimasto solo gioca col Bot o passa); poi chi vince il girone 1 sfida chi vince il 2, ecc.
-    var tu = G.map(function (g, j) {
-      var p = { k: "0-" + j, girone: g.n, a: g[0], b: g[1] || (conBot ? "bot" : null), vince: null };
-      if (p.b) p.stanza = SGNet.nuovoCodice(); else p.vince = p.a;
-      return p;
-    });
-    E.turni.push(tu);
-    if (tu.every(function (p) { return p.vince; })) return avanzaElim();   // (in due e uno solo seduto: niente da giocare)
-    sala._bcast(); seguiHost();
-  }
-  function nuovoElim() {
-    var E = sala && sala.elim; if (!E) return;
-    E.iniziato = false; E.finito = false; E.turni = []; E.campione = null; sala.inPartitaK = null; sala.fuoriK = null; sala.guardaK = null;
-    sala._bcast(); seguiHost();
-  }
-  function trovaPartitaElim(E, k) {
-    for (var r = 0; r < E.turni.length; r++) for (var j = 0; j < E.turni[r].length; j++) if (E.turni[r][j].k === k) return E.turni[r][j];
-    return null;
-  }
-  // com'è finita una partita: lo dice chi l'ha aperta (o chi giocava col bot), oppure l'host a mano
-  function esitoPartita(k, vinto, daId) {
-    var E = sala && sala.elim; if (!E || !E.iniziato || E.finito) return;
-    var p = trovaPartitaElim(E, k); if (!p || p.vince) return;
-    if (daId !== p.a && daId !== "host") return;
-    p.vince = vinto ? p.a : p.b;
-    avanzaElim();
-  }
-  function avanzaElim() {
-    var E = sala.elim, tu = E.turni[E.turni.length - 1];
-    // (un turno in cui passano tutti senza giocare non c'è: si va avanti finché resta una partita vera o il campione)
-    while (tu && tu.every(function (p) { return p.vince; })) {
-      var dentro = {}; sala.membri.forEach(function (m) { dentro[m.id] = 1; });
-      // il Bot va avanti come tutti; chi è uscito dalla Sala no
-      var avanti = tu.map(function (p) { return p.vince; }).filter(function (v) { return v === "bot" || dentro[v]; });
-      if (avanti.length <= 1) { E.finito = true; E.campione = avanti[0] || null; break; }
-      creaTurnoElim(E, avanti);
-      tu = E.turni[E.turni.length - 1];
-    }
-    if (E.finito) puntiTorneino(E);
-    sala._bcast(); seguiHost();
-  }
-  // la classifica del torneo per i punti della Sala: chi è uscito più tardi sta più in alto (il campione primo,
-  // chi ha perso la finale secondo, chi ha perso le semifinali terzo a pari merito…). Il Bot ha la sua riga (bot: true)
-  function classificaElim(E) {
-    var fuoriA = {}, ids = Object.keys(E.nomi || {});
-    if (E.bot && E.turni.some(function (tu) { return tu.some(function (p) { return p.b === "bot" || p.a === "bot"; }); })) ids.push("bot");
-    E.turni.forEach(function (tu, r) { tu.forEach(function (p) { if (p.vince && p.b) { var perde = p.vince === p.a ? p.b : p.a; if (fuoriA[perde] == null) fuoriA[perde] = r; } }); });
-    var giro = function (id) { return id === E.campione ? 999 : (fuoriA[id] != null ? fuoriA[id] : -1); };
-    ids.sort(function (x, y) { return giro(y) - giro(x); });
-    return ids.map(function (id) {
-      var pos = 1 + ids.filter(function (o) { return giro(o) > giro(id); }).length;
-      var r = { nome: id === "bot" ? ((E.bot && E.bot.nome) || "Bot") : E.nomi[id], pos: pos };
-      if (id === "bot") r.bot = true;
-      return r;
-    });
-  }
-  // il torneino è finito: con "🏆 Contiamo i punti" acceso, i punti nella classifica della serata (una volta sola)
-  function puntiTorneino(E) {
-    if (!E || !E.torneino || E.contato || !sala) return;
-    E.contato = true;
-    var g = giocoDa(E.gioco); if (!g) return;
-    salaRisultato(g, classificaElim(E), { stanza: "torneino-" + (E.k || ""), giro: 0 });
-  }
-  // chi esce dalla sala a torneo iniziato: se stava giocando, vince l'altro (contro il bot, vince il bot)
-  function elimUscito(id) {
-    var E = sala.elim; if (!E || !E.iniziato || E.finito) return;
-    var tu = E.turni[E.turni.length - 1] || [], cambiato = false;
-    tu.forEach(function (p) { if (!p.vince && (p.a === id || p.b === id)) { p.vince = (p.a === id) ? (p.b || "bot") : p.a; cambiato = true; } });
-    if (cambiato) avanzaElim();
-  }
-  function miaPartitaElim(E, mioId) {
-    if (!E || !E.iniziato || E.finito) return null;
-    var tu = E.turni[E.turni.length - 1] || [];
-    for (var j = 0; j < tu.length; j++) { var p = tu[j]; if (!p.vince && p.b && (p.a === mioId || p.b === mioId)) return p; }
-    return null;
-  }
-  function eliminatoElim(E, id) {
-    return E.turni.some(function (tu) { return tu.some(function (p) { return p.vince && p.vince !== id && (p.a === id || p.b === id); }); });
-  }
-  // su ogni telefono: se tocca a me si apre da sola la mia partita; quando è decisa, si torna al tabellone
-  function seguiTabellone(S, mioId, mioNome, mostraSala, diEsito) {
-    S._mostra = mostraSala; S._mioId = mioId;
-    aggiornaTabelloneElim();   // il tabellone aperto sopra una partita si aggiorna da solo
-    var p = miaPartitaElim(S.elim, mioId);
-    if (S.tProssima) return;   // (sto ancora vedendo com'è finita la mia partita: la prossima si apre tra poco)
-    if (p && S.inPartitaK && S.inPartitaK !== p.k && S.fuoriK !== S.inPartitaK) {
-      // ho appena vinto e tocca già a me (l'avversario mi aspettava): prima si vede chi ha vinto e la stanza
-      // manda a tutti la fine, poi si apre la partita dopo
-      clearTimeout(S.tTorna); S.tTorna = null;
-      S.tProssima = setTimeout(function () {
-        S.tProssima = null; S.inPartitaK = null; S.fuoriK = null;
-        if (S.elim) seguiTabellone(S, mioId, mioNome, mostraSala, diEsito);
-      }, 2500);
-      return;
-    }
-    if (p) {
-      if (S.inPartitaK !== p.k) { clearTimeout(S.tTorna); S.tTorna = null; S.guardaK = null; S.inPartitaK = p.k; S.fuoriK = null; giocaPartitaElim(S, p, mioId, mioNome, mostraSala, diEsito); }
-      else if (S.fuoriK === p.k) mostraSala();   // è uscito dalla sua partita: vede il tabellone, col tasto per rientrare
-      return;
-    }
-    if (S.inPartitaK) {   // la mia partita è appena decisa: si vede chi ha vinto, poi si torna al tabellone
-      var giaFuori = S.fuoriK === S.inPartitaK;   // (se ero già uscito dalla partita, si aggiorna subito)
-      S.inPartitaK = null; S.fuoriK = null;
-      if (giaFuori) return tornaTabelloneElim(S);
-      S.tTorna = setTimeout(function () { S.tTorna = null; tornaTabelloneElim(S, 2500); }, 2500);
-      return;
-    }
-    if (S.guardaK) {   // sto guardando una partita: resto lì finché non è decisa, poi si torna al tabellone
-      var w = S.elim && S.elim.iniziato ? trovaPartitaElim(S.elim, S.guardaK) : null;
-      if (w && !w.vince && w.stanza === S.guardaStanza) return;
-      S.guardaK = null;
-      S.tTorna = setTimeout(function () { S.tTorna = null; tornaTabelloneElim(S); }, 2500);
-      return;
-    }
-    if (S.tTorna) return;
-    tornaTabelloneElim(S);
-  }
-  // si torna al tabellone: la partita lasciata non può più disegnare. ritardo: chi aveva aperto la stanza
-  // la chiude un po' dopo, così l'avversario e chi guardava tornano al tabellone prima (niente "collegamento perso")
-  function tornaTabelloneElim(S, ritardo) {
-    lasciaPartita(); chiudiTabelloneElim(); SGNet.chiudiGiochi(ritardo || 0);
-    if (window.SGMusica && SGMusica.ferma) SGMusica.ferma();   // la musica della Scopa
-    if (S._mostra) S._mostra();
-  }
-  // il torneo (o il torneino) non c'è più: niente partita del torneo, niente tabellone, niente ritorni in sospeso
-  function lasciaTorneo(S) {
-    clearTimeout(S.tTorna); S.tTorna = null; clearTimeout(S.tProssima); S.tProssima = null;
-    var P = partitaCorrente;
-    if (P && P.viva() && P.salaCtx && P.salaCtx.tabellone) {
-      lasciaPartita(); SGNet.chiudiGiochi();
-      if (window.SGMusica && SGMusica.ferma) SGMusica.ferma();
-      pillola("sala", "👥 Si torna nella Sala", "verde", 2500);
-    }
-    chiudiTabelloneElim();
-    S.inPartitaK = null; S.guardaK = null; S.fuoriK = null; S._boxE = null;
-  }
-  // il torneino finisce (o l'host lo ferma): tutti di nuovo nella Sala della serata, con gli stessi amici
-  function fineTorneino() {
-    if (!sala || !sala.elim) return;
-    lasciaTorneo(sala);
-    sala.elim = null; sala.regoleElim = null; sala._regoleBox = null;
-    sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.ctx = null; sala.duello = null; sala.sceglie = false;
-    sala._bcast();
-    SGNet.chiudiGiochi(1500);   // (le stanze delle partite: prima gli amici tornano nella Sala, poi si chiudono)
-    disegnaSalaHost();
-  }
-  // il torneino nato da una stanza: si parte appena sono arrivati tutti quelli che c'erano (true = partito)
-  function torneinoArrivati() {
-    var E = sala && sala.elim;
-    if (!E || !E.torneino || E.iniziato || !E.attesi) return false;
-    var dentro = {}; sala.membri.forEach(function (m) { dentro[m.id] = 1; });
-    if (!E.attesi.every(function (id) { return dentro[id]; })) return false;
-    partiTorneino(E);
-    return !!E.iniziato;
-  }
-  function seguiHost() { if (sala && sala.elim) seguiTabellone(sala, "host", sala.membri[0].nome, disegnaSalaHost, function (k, v) { esitoPartita(k, v, "host"); }); }
-  function seguiOspite() { if (salaG && salaG.elim) seguiTabellone(salaG, salaG.myId, salaG.nome, disegnaSalaOspite, function (k, v) { if (salaG && salaG.rete) salaG.rete.invia({ t: "esito", k: k, vinto: v }); }); }
-  // ⚙️ Regole del torneo: le impostazioni del gioco (es. i punti da raggiungere nella Scopa), uguali per tutte le partite.
-  // Il riquadro resta sul telefono dell'host; i valori (E.imp) viaggiano con la sala.
-  // In cima le regole del torneo (chi resta in più: Bot o passa il turno; la bravura del Bot): si vedono prima di partire
-  // e a torneo finito (per il prossimo). Il torneino della Sala porta le regole del gioco già scelte (sala._regoleBox, E.imp)
-  function regoleElim() {
-    var E = sala && sala.elim, g = E && giocoDa(E.gioco);
-    if (!g) return null;
-    if (!sala.regoleElim || sala.regoleElim.E !== E) {
-      var gbox = sala._regoleBox || null, imp = E.imp || {};
-      sala._regoleBox = null;
-      if (!gbox && g.impostazioni) {
-        if (!E.torneino) imp = {};   // (il torneino riaperto dopo una ricarica tiene le regole che aveva)
-        gbox = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
-        g.impostazioni(gbox, imp, { el: el, sala: true, modo: "online", giocatori: sala.membri.map(function (m) { return m.nome; }) });
-      }
-      delete imp.scelti; imp.modo = "online"; E.imp = imp;
-      var opz = opzioniTorneino(E, function () {
-        if (!sala || sala.elim !== E) return;
-        if (SL.ultimo) SL.ultimo.regR = null;   // (la riga "📜 Si gioca così" si rilegge)
-        if (E.torneino) sala.optTorneino = { resto: E.resto, livello: E.livello, coppie: E.coppie };   // (la prossima volta si parte da qui)
-        sala._bcast(); disegnaSalaHost();
-      }, true);
-      sala.regoleElim = { box: el("div", {}, [opz, gbox]), imp: imp, E: E, opz: opz };
-    }
-    var R = sala.regoleElim;
-    R.opz.hidden = !!(E.iniziato && !E.finito);   // (a torneo in corso non cambiano: valgono dall'inizio alla fine)
-    return haRegole(R.box) ? R : null;
-  }
-  // le scelte del torneo: "Chi resta in più" (🤖 Gioca col Bot / ⏭️ Passa il turno) e la bravura del Bot.
-  // T = { resto, livello } (si cambia lì dentro); poi() dopo ogni tocco. Tasti come quelli delle regole dei giochi
-  function opzioniTorneino(T, poi, sempre, dispari) {
-    var box = el("div", { class: "tn-opz" });
-    if (T.resto !== "passa") T.resto = "bot";
-    if (T.coppie !== "scelte") T.coppie = "caso";
-    T.livello = livelloElim(T);
-    function riga(titolo, chiave, voci) {
-      var et = el("div", { class: "etichetta", text: titolo });
-      var g = el("div", { class: "modo-griglia tn-chips", style: "grid-template-columns:repeat(" + voci.length + ",minmax(0,1fr))" });
-      voci.forEach(function (v) {
-        var b = el("button", { class: "modo-chip" + (T[chiave] === v[0] ? " attiva" : ""), type: "button", "aria-pressed": T[chiave] === v[0] ? "true" : "false",
-          onclick: function () {
-            if (T[chiave] === v[0]) return;
-            T[chiave] = v[0];
-            [].forEach.call(g.children, function (c) { c.classList.toggle("attiva", c === b); c.setAttribute("aria-pressed", c === b ? "true" : "false"); });
-            if (!liv._sempreNascosto) liv.hidden = T.resto === "passa";
-            if (poi) poi();
-          } }, [ el("span", { class: "mi", text: v[1] }), el("div", { class: "mt", text: v[2] }) ]);
-        g.appendChild(b);
-      });
-      return el("div", {}, [et, g]);
-    }
-    box.appendChild(riga("Le coppie", "coppie", [["caso", "🎲", "A caso"], ["scelte", "✋", "Scegliete voi"]]));
-    var resto = riga(sempre ? "Se siete dispari, chi resta in più" : "Chi resta in più", "resto", [["bot", "🤖", "Gioca col Bot"], ["passa", "⏭️", "Passa il turno"]]);
-    var liv = riga("Bravura del Bot", "livello", [["facile", "🙂", "Facile"], ["medio", "😐", "Medio"], ["difficile", "😠", "Difficile"]]);
-    liv.hidden = T.resto === "passa";
-    if (!sempre && !dispari) { resto.hidden = true; liv.hidden = true; liv._sempreNascosto = true; }
-    box.appendChild(resto); box.appendChild(liv);
-    return box;
-  }
-  function giocaPartitaElim(S, p, mioId, mioNome, mostraSala, diEsito) {
-    var g = giocoDa(S.elim.gioco); if (!g) return mostraSala();
-    chiudiTabelloneElim(); SGNet.chiudiGiochi();
-    function fuori() { S.fuoriK = p.k; tornaTabelloneElim(S); }
-    var ctx = {
-      esci: fuori, fine: fuori,
-      tabellone: function (s) { tastoTabellone(s, S); },
-      // la partita dice chi ha vinto: lo riferisce solo chi l'ha aperta (o chi gioca col bot). Pari = si rigioca
-      risultato: function (g2, cl) {
-        if (p.a !== mioId) return;
-        var primi = (cl || []).filter(function (r) { return (r.pos || 1) === 1; });
-        if (primi.length === 1) diEsito(p.k, primi[0].nome === mioNome);
-      }
-    };
-    // (il link vale per una partita sola: avviaPartita lo prende e lo azzera)
-    if (p.b === "bot") {
-      // la partita col bot la possono guardare anche gli altri: questo telefono la trasmette nella stanza della partita
-      var rete = null, ultimo = null;
-      ctx.trasmetti = function (msg) {
-        ultimo = msg;
-        if (!rete && p.stanza) { SGNet._forza = p.stanza; rete = SGNet.ospita(g.id, { onConnesso: function () { if (rete && ultimo) rete.invia(ultimo); } }); }
-        if (rete) rete.invia(msg);
-      };
-      linkParams = {}; avviaPartita(g, [mioNome], Object.assign({}, S.elim.imp || {}, { modo: "bot", difficolta: livelloElim(S.elim), bot: botDelTorneo(S.elim) }), null, ctx);
-    }
-    else if (p.a === mioId) { linkParams = {}; SGNet._forza = p.stanza; avviaPartita(g, [mioNome], Object.assign({}, S.elim.imp || {}, { modo: "online" }), null, ctx); }
-    else { linkParams = { gioco: g.id, stanza: p.stanza }; avviaPartita(g, [], {}, null, ctx); }
-  }
-  // chi non sta giocando guarda in diretta la partita di altri (anche quella col bot), senza poter toccare
-  function guardaPartitaElim(S, p) {
-    var g = giocoDa(S.elim && S.elim.gioco); if (!g || !p.stanza) return;
-    chiudiTabelloneElim(); SGNet.chiudiGiochi();
-    clearTimeout(S.tTorna); S.tTorna = null;
-    S.guardaK = p.k; S.guardaStanza = p.stanza;
-    var attivo = true;
-    function via() { if (!attivo) return; attivo = false; if (S.guardaK === p.k) S.guardaK = null; clearTimeout(S.tTorna); S.tTorna = null; tornaTabelloneElim(S); }
-    var ctx = { esci: via, fine: via, risultato: function () {}, tabellone: function (s) { tastoTabellone(s, S); } };
-    linkParams = { gioco: g.id, stanza: p.stanza, guarda: 1 };
-    avviaPartita(g, [], {}, null, ctx);
-  }
-  // il tabellone sopra la partita (tasto 🏆 in alto): si aggiorna da solo finché resta aperto
-  var FT = null;
-  function tastoTabellone(s, S) {
-    if (!s || s.querySelector(".tab-elim")) return;
-    var b = el("button", { class: "tab-elim", "aria-label": "Tabellone del torneo", text: "⚔️", onclick: function () { apriTabelloneElim(S); } });
-    var testa = s.querySelector(".testa");
-    if (testa && !s.classList.contains("senza-testa")) { b.classList.add("in-testa"); b.textContent = "🏆 Tabellone"; testa.appendChild(b); }
-    else s.appendChild(b);   // nei giochi (senza titolo): piccolo, nell'angolo in alto a destra
-  }
-  function apriTabelloneElim(S) {
-    if (FT || !S.elim) return;
-    var corpo = el("div", { class: "sl-foglio-corpo" });
-    var velo = el("div", { class: "sl-velo", onclick: function (e) { if (e.target === velo) chiudiTabelloneElim(); } }, [
-      el("div", { class: "sl-foglio" }, [
-        el("div", { class: "sl-foglio-testa" }, [ el("b", { text: "🏆 Tabellone" }), el("button", { class: "sl-foglio-x", "aria-label": "Chiudi", text: "✕", onclick: chiudiTabelloneElim }) ]),
-        corpo,
-        el("button", { class: "btn btn-primario", text: "Torna alla partita", onclick: chiudiTabelloneElim })
-      ])
-    ]);
-    FT = { S: S, corpo: corpo, velo: velo };
-    aggiornaTabelloneElim();
-    if (FT) document.body.appendChild(velo);
-  }
-  function chiudiTabelloneElim() { if (!FT) return; if (FT.velo.parentNode) FT.velo.parentNode.removeChild(FT.velo); FT = null; }
-  function aggiornaTabelloneElim() {
-    if (!FT) return;
-    var S = FT.S; if (!S.elim || !S.elim.iniziato) return chiudiTabelloneElim();
-    svuota(FT.corpo);
-    FT.corpo.appendChild(boxElim(S.elim, S._mioId, S === sala, S, S === sala ? seguiHost : seguiOspite));
-  }
-  function nomeTurnoElim(nGioc) { return nGioc <= 2 ? "Finale" : (nGioc <= 4 ? "Semifinali" : (nGioc <= 8 ? "Quarti di finale" : "Primo turno")); }
-  function giocatoriTurno(tu) { var n = 0; tu.forEach(function (p) { n += p.b ? 2 : 1; }); return n; }
-  // il tabellone nella saletta: lo stesso nodo finché non cambia niente (niente lampeggio)
-  function boxElimSala(E, mioId, host, S, segui) {
-    var k = "";
-    try { k = JSON.stringify([E, mioId, host, S.guardaK || null, S.fuoriK || null, (S.membri || []).map(function (m) { return m.id + ":" + m.nome; })]); } catch (e) {}
-    if (k && S._boxE && S._boxE.k === k) return S._boxE.nodo;
-    var nodo = boxElim(E, mioId, host, S, segui);
-    S._boxE = { k: k, nodo: nodo };
-    return nodo;
-  }
-  // il tabellone (nella saletta e nel foglio 🏆 sopra la partita), in uno schermo anche in 10: in cima il mio stato
-  // ("▶️ Tocca a te contro Sara", "🏆 Ha vinto Matt! 🤖"), poi il turno di adesso a carte su due colonne (chi gioca con chi,
-  // ✅ chi ha vinto, chi passa il turno, "👀 Guarda" sulle partite degli altri), sotto i turni di prima in una riga ciascuno
-  function boxElim(E, mioId, host, S, segui) {
-    var box = el("div", { class: "sl-torneo sl-tab" });
-    var gE = giocoDa(E.gioco), nomeG = gE ? gE.nome : "";
-    if (!E.iniziato && E.torneino && !E.scade) {   // il torneino nato da una stanza: si aspetta che arrivino tutti (pochi secondi)
-      var qui = ((S && S.membri) || []).length, tot = Math.max(qui, (E.attesi ? E.attesi.length : 0) + 1);
-      box.appendChild(el("div", { class: "sl-elim-stato", text: "⚔️ Torneo " + aGioco(nomeG) }));
-      box.appendChild(el("p", { class: "modulo-nota tb-nota", text: (E.attesi ? "Arrivano gli amici: " + qui + " su " + tot + "… " : "") + "Si comincia appena ci siete tutti: " + (E.coppie === "scelte" ? "poi ognuno sceglie dove sedersi." : "coppie a sorte, tutte le partite insieme.") }));
-      return box;
-    }
-    if (!E.iniziato && E.torneino) return boxCoppie(E, mioId, host, S, box);
-    if (!E.iniziato) {   // prima di partire: ognuno sceglie il suo girone (all'inizio sono tutti in panchina)
-      var membri = (S && S.membri) || [], gir = E.gironi || {};
-      function chiamo(m) { return m.id === mioId ? "Tu" : m.nome; }
-      function siedi(n) { if (host) scegliGironeElim(mioId, n); else if (S && S.rete) S.rete.invia({ t: "girone", g: n }); }
-      box.appendChild(el("div", { class: "etichetta", text: "🏆 Scegli il tuo girone" }));
-      var griglia = el("div", { class: "sl-gironi" });
-      for (var gN = 1; gN <= N_GIRONI; gN++) (function (n) {
-        var chi = membri.filter(function (m) { return gir[m.id] === n; }), mio = gir[mioId] === n;
-        var b = el("button", { class: "sl-girone" + (mio ? " mio" : ""), onclick: function () { siedi(mio ? 0 : n); } }, [
-          el("b", { text: "Girone " + n }),
-          el("span", { class: chi[0] ? "" : "libero", text: chi[0] ? chiamo(chi[0]) : "posto libero" }),
-          el("span", { class: chi[1] ? "" : "libero", text: chi[1] ? chiamo(chi[1]) : "posto libero" }) ]);
-        if (chi.length >= 2 && !mio) { b.disabled = true; b.classList.add("pieno"); }
-        griglia.appendChild(b);
-      })(gN);
-      var panca = membri.filter(function (m) { return !gir[m.id]; });
-      griglia.appendChild(el("button", { class: "sl-girone panca" + (!gir[mioId] ? " mio" : ""), onclick: function () { siedi(0); } }, [
-        el("b", { text: "🪑 Panchina" }), el("span", { class: panca.length ? "" : "libero", text: panca.length ? panca.map(chiamo).join(", ") : "nessuno" }) ]));
-      box.appendChild(griglia);
-      box.appendChild(el("p", { class: "modulo-nota", text: "Tocca un girone per sederti: chi vince il girone 1 sfida chi vince il 2, e così via fino alla finale. Chi resta in panchina viene messo a caso nei posti liberi; se uno resta solo, " +
-        (E.resto === "passa" ? "passa il turno." : "gioca contro il Bot (" + livelloElim(E) + ").") }));
-      if (membri.length > MAX_ELIM) box.appendChild(el("p", { class: "modulo-nota", text: "Siete in " + membri.length + ": i posti sono " + MAX_ELIM + ", chi resta in panchina guarda le partite 👀" }));
-      return box;
-    }
-    var mia = miaPartitaElim(E, mioId), stato, ult = E.turni.length - 1;
-    if (E.finito) stato = !E.campione ? "Torneo finito" : (E.campione === mioId ? "🏆 Hai vinto tu! Sei il campione"
-      : (E.campione === "bot" ? "🏆 Ha vinto " + ((E.bot && E.bot.nome) || "il Bot") + "! 🤖" : "🏆 Ha vinto " + nomeElim(E, E.campione) + "!"));
-    else if (mia) stato = "▶️ Tocca a te contro " + nomeElim(E, mia.a === mioId ? mia.b : mia.a);
-    else if (!(E.nomi && E.nomi[mioId])) stato = "👀 Guardi il torneo: tocca «Guarda» su una partita";
-    else if (eliminatoElim(E, mioId)) stato = "Sei fuori: puoi guardare le partite 👀";
-    else stato = "✅ Passi al turno dopo: intanto guarda gli altri ⏳";
-    box.appendChild(el("div", { class: "sl-elim-stato" + (E.finito && E.campione ? " campione" : ""), text: stato }));
-    if (mia && S.fuoriK === mia.k) box.appendChild(el("button", { class: "btn btn-primario tb-rientra", text: "🔁 Rientra nella tua partita", onclick: function () { S.inPartitaK = null; S.fuoriK = null; segui(); } }));
-    if (ult >= 0) {
-      var tu = E.turni[ult];
-      box.appendChild(el("div", { class: "etichetta tb-et", text: nomeTurnoElim(giocatoriTurno(tu)) + (E.finito ? "" : " · si gioca ora") }));
-      var gr = el("div", { class: "tb-griglia" + (tu.length === 1 ? " una" : "") });
-      tu.forEach(function (p) { gr.appendChild(cartaElim(E, p, mioId, host, S, mia)); });
-      box.appendChild(gr);
-    }
-    // i turni di prima: chi è andato avanti
-    for (var r = ult - 1; r >= 0; r--) {
-      var vinti = E.turni[r].map(function (p) { return nomeElim(E, p.vince); });
-      box.appendChild(el("div", { class: "tb-prima" }, [ el("b", { text: nomeTurnoElim(giocatoriTurno(E.turni[r])) }), el("span", { text: "✅ " + vinti.join(" · ") }) ]));
-    }
-    // a torneino finito l'host lo può rifare subito (stessi amici, coppie nuove); il tasto in fondo riporta tutti nella Sala
-    if (host && E.finito && E.torneino) box.appendChild(el("button", { class: "btn btn-fantasma tb-rifai", type: "button", text: "↻ Rifacciamo il torneo",
-      onclick: function () { if (sala && sala.elim === E) { if (E.coppie === "scelte") partiTorneino(E); else avviaElim(); } } }));
-    return box;
-  }
-  // "✋ Scegliete voi": le partite del primo turno coi posti vuoti ("Partita 1: [posto libero] contro [posto libero]");
-  // un tocco su un posto libero e ti siedi lì (si vede in diretta chi si siede dove), un tocco sul tuo posto e ti alzi.
-  // L'host vede "Seduti 5 su 6" e parte quando vuole (tasto della saletta); il conto alla rovescia fa partire da soli
-  function boxCoppie(E, mioId, host, S, box) {
-    var membri = ((S && S.membri) || []).slice(0, Math.max(MAX_ELIM, 0)), gir = E.gironi || {};
-    var nP = partiteCoppie(E, ((S && S.membri) || []).length);
-    function chiamo(m) { return m.id === mioId ? "Tu" : m.nome; }
-    function siedi(n) { if (host) scegliGironeElim(mioId, n); else if (S && S.rete) S.rete.invia({ t: "girone", g: n }); }
-    var seduti = membri.filter(function (m) { return gir[m.id] >= 1 && gir[m.id] <= nP; }).length, tot = ((S && S.membri) || []).length;
-    box.appendChild(el("div", { class: "sl-elim-stato", text: gir[mioId] ? "✅ Sei seduto nella Partita " + gir[mioId] : "✋ Scegli dove sederti" }));
-    box.appendChild(el("div", { class: "tb-coppie-riga" }, [
-      el("b", { class: "tb-seduti", text: "Seduti " + seduti + " su " + tot }),
-      E.scade ? el("span", { class: "tb-conto", "data-scade": String(E.scade), text: "⏱️ Si parte da soli tra " + Math.max(0, Math.ceil((E.scade - Date.now()) / 1000)) + " s" }) : null ]));
-    var gr = el("div", { class: "tb-griglia una tb-coppie" });
-    for (var n = 1; n <= nP; n++) (function (n) {
-      var chi = membri.filter(function (m) { return gir[m.id] === n; }), mio = gir[mioId] === n;
-      var c = el("div", { class: "tb-p tb-posti" + (mio ? " mia" : "") }, [ el("span", { class: "tb-stato tb-pn", text: "Partita " + n }) ]);
-      [0, 1].forEach(function (i) {
-        var m = chi[i], mioPosto = m && m.id === mioId;
-        if (i === 1) c.appendChild(el("span", { class: "tb-contro", text: "contro" }));
-        c.appendChild(el("button", { class: "tb-posto" + (m ? " preso" : "") + (mioPosto ? " mio" : ""), type: "button", disabled: m && !mioPosto ? "disabled" : null,
-          text: m ? chiamo(m) : "＋ libero", "aria-label": m ? null : "Posto libero nella Partita " + n, onclick: function () { siedi(mioPosto ? 0 : n); } }));
-      });
-      gr.appendChild(c);
-    })(n);
-    box.appendChild(gr);
-    var piedi = membri.filter(function (m) { return !(gir[m.id] >= 1 && gir[m.id] <= nP); });
-    if (piedi.length) box.appendChild(el("p", { class: "modulo-nota tb-nota", text: "In piedi: " + piedi.map(chiamo).join(", ") + (host ? ". Se parti ora vanno a caso nei posti liberi." : ".") }));
-    if (tot % 2 && tot <= MAX_ELIM) box.appendChild(el("p", { class: "modulo-nota tb-nota", text: E.resto === "passa" ? "Chi resta da solo passa il turno." : "Chi resta da solo gioca col Bot." }));
-    if (E.scade) contoCoppie();
-    return box;
-  }
-  // una partita del turno: i due nomi (✅ chi ha vinto, barrato chi ha perso) e sotto com'è messa:
-  // "👀 Guarda" per chi non gioca, "⏳ in corso", "⏭️ passa il turno". L'host ha "⋯" per decidere una partita bloccata
-  function cartaElim(E, p, mioId, host, S, mia) {
-    var mio = p.a === mioId || p.b === mioId;
-    var c = el("div", { class: "tb-p" + (mio ? " mia" : "") + (p.vince ? " decisa" : ""), "data-k": p.k });
-    function nome(id) { return el("span", { class: "tb-n" + (p.vince === id ? " vince" : (p.vince ? " perde" : "")), text: nomeElim(E, id) }); }
-    if (!p.b) { c.appendChild(el("span", { class: "tb-n", text: nomeElim(E, p.a) })); c.appendChild(el("span", { class: "tb-stato", text: "⏭️ passa il turno" })); return c; }
-    c.appendChild(nome(p.a)); c.appendChild(nome(p.b));
-    if (!p.vince) {
-      if (S && S.guardaK === p.k) c.appendChild(el("span", { class: "tb-stato", text: "👀 la stai guardando" }));
-      else if (!mia && !E.finito && p.stanza && !mio) c.appendChild(el("button", { class: "tb-guarda", type: "button", "aria-label": "Guarda " + nomeElim(E, p.a) + "–" + nomeElim(E, p.b), text: "👀 Guarda",
-        onclick: function () { guardaPartitaElim(S, p); } }));
-      else c.appendChild(el("span", { class: "tb-stato", text: mio ? "▶️ tocca a te" : "⏳ in corso" }));
-      if (host && !E.finito) c.appendChild(el("button", { class: "tb-decidi", type: "button", "aria-label": "Partita bloccata? Decidi chi passa", text: "⋯", onclick: function () { decidiElim(E, p); } }));
-    }
-    return c;
-  }
-  // l'host decide una partita bloccata: chi passa al turno dopo
-  function decidiElim(E, p) {
-    if (document.querySelector(".tb-velo")) return;
-    var velo;
-    function chiudi() { if (velo.parentNode) velo.parentNode.removeChild(velo); }
-    function passa(vA) { chiudi(); if (sala && sala.elim === E && !p.vince) esitoPartita(p.k, vA, "host"); }
-    velo = el("div", { class: "sl-velo tb-velo", onclick: function (e) { if (e.target === velo) chiudi(); } }, [
-      el("div", { class: "sl-foglio" }, [
-        el("div", { class: "sl-foglio-testa" }, [ el("b", { text: "⚖️ Partita bloccata?" }), el("button", { class: "sl-foglio-x", "aria-label": "Chiudi", text: "✕", onclick: chiudi }) ]),
-        el("div", { class: "sl-foglio-corpo" }, [
-          el("p", { class: "modulo-nota", text: nomeElim(E, p.a) + " contro " + nomeElim(E, p.b) + ": se la partita non va avanti, scegli tu chi passa al turno dopo." }),
-          el("div", { class: "tb-decidi-tasti" }, [
-            el("button", { class: "btn btn-primario", type: "button", text: "✅ Passa " + nomeElim(E, p.a), onclick: function () { passa(true); } }),
-            el("button", { class: "btn btn-primario", type: "button", text: "✅ Passa " + nomeElim(E, p.b), onclick: function () { passa(false); } }) ]) ]),
-        el("button", { class: "btn btn-fantasma", type: "button", text: "Lasciali giocare", onclick: chiudi })
-      ])
-    ]);
-    document.body.appendChild(velo);
-  }
 
   function errore(dopo, txt) {
     var s = schermata({ icona: "⚠️", titolo: "Ops" });
@@ -8105,7 +3617,7 @@
   // "Online con gli amici": nella mia Sala se è aperta, se no se ne apre una (e il gioco parte appena ha il codice)
   function apriOnlineSala(g) {
     if (sala && sala.elim && sala.elim.torneino) return chiediConferma(sala.elim.finito ? "Si torna nella Sala?" : "Fermare il torneo?", "Gli amici passano a " + g.nome + ".", sala.elim.finito ? "Vai" : "Ferma",
-      function () { if (!sala) return; fineTorneino(); salaPreparaGioco(g); });
+      function () { if (!sala) return; cuore.fineTorneino(); salaPreparaGioco(g); });
     if (sala && sala.elim) return chiediConferma("Chiudere il torneo?", "C'è il torneo a eliminazione aperto: si chiude per tutti e si apre la Sala.", "Chiudi il torneo",
       function () { chiudiSala(); creaSala({ gioco: g.id }); });
     if (sala) {
@@ -8412,7 +3924,7 @@
       U2.nota = el("p", { class: "modulo-nota sl-nota" });
       U2.R = R || null;
       // "🏆 Fate il torneino in 5": un gioco a due e nella stanza (o nella Sala) si è almeno in 3 (vedi tastoTorneino)
-      if (GIOCHI_ELIMINAZIONE[g.id]) { U2.bTorneino = el("button", { class: "btn sl-torneino", type: "button", hidden: "hidden", onclick: function () { torneinoDaSaletta(U2); } }); s._piede.appendChild(U2.bTorneino); }
+      if (GIOCHI_ELIMINAZIONE[g.id]) { U2.bTorneino = el("button", { class: "btn sl-torneino", type: "button", hidden: "hidden", onclick: function () { cuore.torneinoDaSaletta(U2); } }); s._piede.appendChild(U2.bTorneino); }
       s._piede.appendChild(U2.chip);
       // l'host può sempre cambiare le regole, anche con gli amici già dentro (e nel ⚙️ c'è "Parti da solo quando tutti sono pronti")
       var regoleGioco = !!(R && haRegole(R.box));
@@ -8495,7 +4007,7 @@
       // le regole: la riga "📜 Si gioca così" (calcolata all'apertura) prende il posto della nota di tutti i giorni;
       // restano solo le note che dicono perché non si può ancora partire, o quelle del gioco
       regoleHost(U, !!nuova);
-      tastoTorneino(U);
+      cuore.tastoTorneino(U);
       var notaTx;
       if (attesi.length && !U.goOk) notaTx = "Aspettiamo " + nomiAttesi(attesi) + "…";
       else notaTx = o.nota || (veri < min && !o.puoiDaSolo ? "Aspettiamo gli amici: " + (veri === 1 ? "per ora ci sei solo tu." : "servono almeno " + min + " giocatori.") : (veri > 1 && U.gid !== "__sala" || U.regR ? "" : "Quando ci siete tutti, fai partire la partita."));
@@ -8834,7 +4346,7 @@
       }
       // chi è nella saletta adesso: alla Rivincita si aspettano loro (non chi guardava da fuori o è arrivato a partita in corso)
       if (SV && SV.host && U.gid !== "__sala") SV.idsSaletta = Object.keys(qui);
-      tastoTorneino(U);   // ("🏆 Fate il torneino in 5": chi entra o esce dalla stanza)
+      cuore.tastoTorneino(U);   // ("🏆 Fate il torneino in 5": chi entra o esce dalla stanza)
       // dopo "↻ Rivincita": chi della partita prima manca ancora ("Comincia senza Luca"); ci sono tutti e nessuno è grigio → 3-2-1 da solo
       var R = RIV && RIV.U === U ? RIV : null, manca = R ? R.attesi.filter(function (id) { return !qui[id]; }) : [];
       var mancaK = manca.join(",");
@@ -9361,7 +4873,7 @@
     // "Prossima sfida tra 8…"; l'host della Sala "⏹ Basta così" e "🎮 Cambia gioco"
     if (ctx) {
       var SVr = svPartita(P, !!o.host) || svPartita(P, !o.host), stR = (tav && tav.linkParams && tav.linkParams.stanza) || ctx.stanza || ctx.duello || (SVr && SVr.codice) || null;
-      if (restaFineDi(stR)) return bloccoResta(piede, stR, !!(sala && sala.resta), SVr ? { SV: SVr, salaHost: !!(sala && sala.ctx === ctx), host: !!SVr.host } : null);
+      if (cuore.restaFineDi(stR)) return cuore.bloccoResta(piede, stR, !!(sala && sala.resta), SVr ? { SV: SVr, salaHost: !!(sala && sala.ctx === ctx), host: !!SVr.host } : null);
     }
     var salaHost = !!(sala && ctx && sala.ctx === ctx);   // io comando la Sala (non solo la stanza del gioco: 2-15)
     if (tav && tav.linkParams && tav.linkParams.guarda && !salaHost) return false;   // chi guarda la partita di altri
@@ -9423,7 +4935,7 @@
     if (host && salaHost && P.g && aDue(P.g) && sala.membri.length > 2) {
       box.classList.add("tre");
       var gS = P.g;
-      box.appendChild(el("button", { class: "btn btn-fantasma ft-secondo ft-sfida", type: "button", text: "⚔️ Altra sfida", onclick: function () { salaAltraSfida(gS); } }));
+      box.appendChild(el("button", { class: "btn btn-fantasma ft-secondo ft-sfida", type: "button", text: "⚔️ Altra sfida", onclick: function () { cuore.salaAltraSfida(gS); } }));
     }
     box.appendChild(secondo);
     piede.appendChild(box);
@@ -9655,7 +5167,7 @@
   }
   // porta d'ingresso a un gioco dalla home: profilo → come giocate → (amici) → impostazioni
   function apriGioco(g) {
-    if (!profiloAttivo()) return schermataAccesso(function () { apriGioco(g); });
+    if (!profiloAttivo()) return cuore.schermataAccesso(function () { apriGioco(g); });
     if (modiDi(g).length > 1 || giocoOnline(g)) return schermataModo(g);   // online c'è sempre la scelta: apro io la stanza o entro con un codice
     var solo = modiDi(g)[0];
     if (solo && !solo.amici) return schermataPreGioco(g, { modo: solo.modo });
@@ -9723,9 +5235,9 @@
     if (faccine) { faccine.classList.add("fine-faccine"); s._contenuto.appendChild(faccine); }   // partita online: le faccine anche qui
     if (tf && tf(s._piede)) return mostra(s);
     // sullo stesso telefono, più giochi di fila con lo stesso gruppo: "🏆 Classifica della serata: Paky 1° · Luca 2°" (tocco → la classifica)
-    if (!faccine && torneo && torneo.auto && torneo._fine === classifica) {
-      var clS = classificaTorneo();
-      s._piede.appendChild(el("button", { class: "fine-serata", type: "button", onclick: schermataTorneoHub,
+    if (!faccine && cuore.torneo && cuore.torneo.auto && cuore.torneo._fine === classifica) {
+      var clS = cuore.classificaTorneo();
+      s._piede.appendChild(el("button", { class: "fine-serata", type: "button", onclick: cuore.schermataTorneoHub,
         text: "🏆 Classifica della serata: " + clS.slice(0, 3).map(function (r, i) { return r.nome + " " + (i + 1) + "°"; }).join(" · ") + " ›" }));
     }
 
@@ -9738,167 +5250,6 @@
     azioni.appendChild(el("button", { class: "azione", text: "🎮 Cambia gioco", onclick: schermataScegliGioco }));
     azioni.appendChild(el("button", { class: "azione", text: "👥 La sala", onclick: function () { schermataSala(g); } }));
     azioni.appendChild(el("button", { class: "azione", text: "🏠 Home", onclick: schermataHome }));
-    s._piede.appendChild(azioni);
-    mostra(s);
-  }
-
-  // =========================================================
-  //  TORNEO — più partite di fila con gli stessi giocatori.
-  //  Ogni gioco dichiara una "difficolta" (1 facile, 2 media,
-  //  3 difficile): più è difficile, più vale vincerlo. A ogni
-  //  partita si assegnano punti dal 1° al 10° posto.
-  // =========================================================
-  var torneo = null; // { giocatori:[nomi], emoji:{}, punti:{nome:n}, storia:[], n }
-  var CURVA_TORNEO = [100, 78, 62, 50, 40, 32, 25, 19, 14, 10]; // % del 1° posto, per posizione 1..10
-
-  function pesoGioco(g) { var d = g && g.difficolta; return (d === 1 || d === 3) ? d : 2; }
-  function nomeDifficolta(d) { return d === 3 ? "Difficile" : d === 1 ? "Facile" : "Media"; }
-  // dentro la tessera, nella scelta del gioco del torneo: quanto vale ("🏅 Difficile · 300 al 1°")
-  function rigaPuntiTorneo(g) { var d = pesoGioco(g); return el("div", { class: "tess-punti", text: "🏅 " + nomeDifficolta(d) + " · " + cifre(CURVA_TORNEO[0] * d) + " al 1°" }); }
-
-  function puntiDaClassifica(g, classifica) {
-    var peso = pesoGioco(g);
-    return classifica.map(function (r, i) {
-      var k = (r.pos ? r.pos : i + 1) - 1;   // pos = il posto (a pari merito lo stesso posto, gli stessi punti)
-      var perc = k < CURVA_TORNEO.length ? CURVA_TORNEO[k] : 6;
-      return { nome: r.nome, punti: Math.round(perc * peso), pos: k + 1 };
-    });
-  }
-
-  // sullo stesso telefono, senza aprire la "Serata a punti": ogni partita con almeno due persone del gruppo somma i punti
-  // da sola nella Classifica della serata (torneo.auto). Se il gruppo cambia, la classifica riparte con il gruppo nuovo.
-  function serataLocale(g, classifica) {
-    if (!classifica || !g) return;
-    var nomi = nomiGruppo(), umani = classifica.filter(function (r) { return r && !r.bot && r.nome; });
-    if (umani.length < 2 || nomi.length < 2) return;
-    if (!umani.every(function (r) { return nomi.some(function (n) { return stessoNome(n, r.nome); }); })) return;   // (non è il gruppo di stasera)
-    var stesso = torneo && torneo.giocatori.length === nomi.length && nomi.every(function (n) { return torneo.giocatori.indexOf(n) >= 0; });
-    if (!stesso) {
-      torneo = { giocatori: nomi, emoji: {}, punti: {}, storia: [], n: 0, auto: true };
-      gruppo.forEach(function (p, i) { if (nomi[i]) torneo.emoji[nomi[i]] = p.emoji || "🙂"; });
-      nomi.forEach(function (n) { torneo.punti[n] = 0; });
-    }
-    var ass = puntiDaClassifica(g, classifica).filter(function (r) { return torneo.giocatori.indexOf(r.nome) >= 0; });
-    ass.forEach(function (r) { torneo.punti[r.nome] = (torneo.punti[r.nome] || 0) + r.punti; });
-    torneo.n += 1; torneo.storia.push({ gioco: g.nome, assegnati: ass });
-    torneo._fine = classifica;
-  }
-
-  function classificaTorneo() {
-    return torneo.giocatori.map(function (n) { return { nome: n, punti: torneo.punti[n] || 0 }; })
-      .sort(function (a, b) { return b.punti - a.punti; });
-  }
-
-  function podio(cl, evidenziaPrimo) {
-    var ol = el("ol", { class: "classifica" + (classificaFitta(cl.length) ? " fitta" : "") });
-    // a pari punti lo stesso posto e la stessa medaglia (prima della prima partita sono tutti a 0: i posti in fila)
-    var posti = [], medaglie;
-    cl.forEach(function (r, i) { posti.push(evidenziaPrimo && i && r.punti === cl[i - 1].punti ? posti[i - 1] : i + 1); });
-    medaglie = medaglieAPari(posti);
-    cl.forEach(function (r, i) {
-      ol.appendChild(el("li", { class: (posti[i] === 1 && evidenziaPrimo) ? "vincitore" : "" }, [
-        el("span", { class: "pos", text: medaglie[i] }),
-        el("span", { class: "nome", text: (torneo && torneo.emoji[r.nome] ? torneo.emoji[r.nome] + " " : "") + r.nome }),
-        el("span", { class: "punti", text: cifre(r.punti) })
-      ]));
-    });
-    return ol;
-  }
-
-  function apriTorneo() {
-    if (sala && sala.torneo) return disegnaSalaHost();   // torneo online in corso
-    if (torneo) return schermataTorneoHub();
-    if (!profiloAttivo()) return schermataAccesso(apriTorneo);
-    schermataTorneoModo();
-  }
-  // prima cosa: come giocate il torneo? Online = UN link solo per tutti i giochi
-  function schermataTorneoModo() {
-    var s = schermata({ icona: "🏆", titolo: "Serata a punti", sotto: "Come giocate?", indietro: schermataHome });
-    var griglia = el("div", { class: "modo-scelta" });
-    [{ icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono: prima aggiungi chi gioca", via: function () { schermataSala(null, { torneo: true }); } },
-     { icona: "🔗", nome: "Online", sotto: "La Sala con la Classifica della serata: ognuno dal suo telefono", online: true, via: function () { creaSala({ torneo: true }); } }
-    ].forEach(function (m) {
-      griglia.appendChild(el("button", { class: "modo-grande" + (m.online ? " online" : ""), onclick: m.via }, [
-        el("div", { class: "mg-ico", text: m.icona }),
-        el("div", { class: "mg-testo" }, [ el("div", { class: "mg-tit", text: m.nome }), el("div", { class: "mg-sotto", text: m.sotto }) ]),
-        el("div", { class: "mg-freccia", text: "›" })
-      ]));
-    });
-    s._contenuto.appendChild(griglia);
-    s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Più giochi di fila, i punti si sommano: più il gioco è difficile, più punti vale." }));
-    mostra(s);
-  }
-
-  function iniziaTorneo() {
-    var nomi = nomiGruppo();
-    torneo = { giocatori: nomi, emoji: {}, punti: {}, storia: [], n: 0 };
-    gruppo.forEach(function (p, i) { torneo.emoji[nomi[i]] = p.emoji || "🙂"; });
-    nomi.forEach(function (n) { torneo.punti[n] = 0; });
-    schermataTorneoHub();
-  }
-
-  function schermataTorneoHub() {
-    var s = schermata({ icona: "🏆", titolo: "Classifica della serata", indietro: schermataHome,
-      sotto: torneo.n === 0 ? "Nessuna partita ancora" : (torneo.n + (torneo.n === 1 ? " partita giocata" : " partite giocate")) });
-    s._contenuto.appendChild(podio(classificaTorneo(), torneo.n > 0));
-    s._piede.appendChild(el("button", { class: "btn btn-primario",
-      text: torneo.n === 0 ? "▶ Gioca la prima partita" : "▶ Gioca un'altra partita", onclick: torneoScegliGioco }));
-    var azioni = el("div", { class: "home-azioni" });
-    if (torneo.n > 0) azioni.appendChild(el("button", { class: "azione", text: "🏁 Chiudi e premia", onclick: schermataTorneoFine }));
-    azioni.appendChild(el("button", { class: "azione", text: "🏠 Home", onclick: schermataHome }));
-    s._piede.appendChild(azioni);
-    mostra(s);
-  }
-
-  function torneoScegliGioco() {
-    var s = schermata({ icona: "🎮", titolo: "Quale gioco?", sotto: "Più è difficile, più punti vale",
-      indietro: schermataTorneoHub });
-    s.classList.add("scelta-giochi");   // (📱 le tessere come in home: due per riga, senza descrizione)
-    var griglia = el("div", { class: "griglia-giochi compatta tess-due" }), n = torneo.giocatori.length, tolti = 0;
-    // sullo stesso telefono: niente giochi solo online, e solo i giochi dove giocate TUTTI (in 3 niente giochi a due:
-    // giocherebbero solo i primi due della lista e gli altri resterebbero senza punti)
-    giochi.forEach(function (g) {
-      if (g.soloOnline) return;
-      if ((g.giocatoriMax || 10) < n || (g.giocatoriMin || 1) > n) { tolti++; return; }
-      // (i giochi a due, postiOnline: 2: nel torneo si fa una partita sola, es. il Tris "chi vince resta" vale solo fuori dal torneo)
-      if (g.postiOnline && g.postiOnline < n) { tolti++; return; }
-      var tess = tesseraGioco(g, function () { schermataPreGioco(g, { torneo: true }); }, true);
-      tess.querySelector(".info").appendChild(rigaPuntiTorneo(g));
-      griglia.appendChild(tess);
-    });
-    if (tolti) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Qui trovi i giochi dove giocate tutti e " + n + " insieme." }));
-    s._contenuto.appendChild(griglia);
-    mostra(s);
-  }
-
-  function torneoRisultato(g, classifica) {
-    var assegnati = puntiDaClassifica(g, classifica);
-    assegnati.forEach(function (r) { torneo.punti[r.nome] = (torneo.punti[r.nome] || 0) + r.punti; });
-    torneo.n += 1;
-    torneo.storia.push({ gioco: g.nome, assegnati: assegnati });
-
-    var s = schermata({ icona: g.icona, titolo: "Punti di questa partita", sotto: g.nome + " · " + nomeDifficolta(pesoGioco(g)) });
-    var ol = el("ol", { class: "classifica" + (classificaFitta(assegnati.length) ? " fitta" : "") });
-    var medaglie = medaglieAPari(assegnati.map(function (r) { return r.pos; }));   // a pari merito (r.pos uguale) la stessa medaglia
-    assegnati.forEach(function (r, i) {
-      ol.appendChild(el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
-        el("span", { class: "pos", text: medaglie[i] }),
-        el("span", { class: "nome", text: r.nome }),
-        el("span", { class: "punti", text: "+" + cifre(r.punti) })
-      ]));
-    });
-    s._contenuto.appendChild(ol);
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Classifica della serata", onclick: schermataTorneoHub }));
-    mostra(s);
-  }
-
-  function schermataTorneoFine() {
-    var s = schermata({ icona: "🏆", titolo: "Fine della serata!", sotto: torneo.n + (torneo.n === 1 ? " partita" : " partite") });
-    s._contenuto.appendChild(podio(classificaTorneo(), true));
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova serata (stessi giocatori)",
-      onclick: function () { torneo.punti = {}; torneo.storia = []; torneo.n = 0; torneo.giocatori.forEach(function (n) { torneo.punti[n] = 0; }); schermataTorneoHub(); } }));
-    var azioni = el("div", { class: "home-azioni" });
-    azioni.appendChild(el("button", { class: "azione", text: "🏠 Home", onclick: function () { torneo = null; schermataHome(); } }));
     s._piede.appendChild(azioni);
     mostra(s);
   }
@@ -9952,10 +5303,10 @@
     if (!s) return;
     (r.eventi || []).forEach(function (e) { if (!e) return; monete += e.monete || 0; if (e.tipo === "livello") lv = e.livello; if (e.tipo === "prestigio") pr = e.prestigio; });
     var su = "+" + cifre(xp) + " XP" + (vinto ? " · hai vinto" : "") + (prima ? " · prima del giorno" : "");
-    if (pr) codaTrofei.push({ tipo: "xp", cls: "tl-platino", icona: "🌟", su: "PRESTIGIO " + pr + "!", nome: "Si riparte dal livello 1", sotto: "+" + cifre(monete) + " Speed Coins 🪙" });
-    else if (lv) codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🆙", su: su, nome: "Livello " + lv + "!", sotto: "+" + cifre(monete) + " Speed Coins 🪙" });
-    else codaTrofei.push({ tipo: "xp", cls: "tl-xp", icona: "⭐", su: su, nome: "Livello " + s.level, sotto: "Ancora " + cifre(SGLivelli.xpPerSalire(s.level) - s.xp) + " XP per il livello " + (s.level + 1) });
-    prossimoAvviso();
+    if (pr) cuore.codaTrofei.push({ tipo: "xp", cls: "tl-platino", icona: "🌟", su: "PRESTIGIO " + pr + "!", nome: "Si riparte dal livello 1", sotto: "+" + cifre(monete) + " Speed Coins 🪙" });
+    else if (lv) cuore.codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "🆙", su: su, nome: "Livello " + lv + "!", sotto: "+" + cifre(monete) + " Speed Coins 🪙" });
+    else cuore.codaTrofei.push({ tipo: "xp", cls: "tl-xp", icona: "⭐", su: su, nome: "Livello " + s.level, sotto: "Ancora " + cifre(SGLivelli.xpPerSalire(s.level) - s.xp) + " XP per il livello " + (s.level + 1) });
+    cuore.prossimoAvviso();
   }
   // ---- "Giocato di recente" (Passo 3, p3-e): con chi ho giocato online, solo su questo telefono (js/compagnia.js) ----
   // Chi ha il profilo online manda il suo uid nel join della stanza del gioco; l'host dice a tutti chi ha il profilo
@@ -10544,7 +5895,7 @@
           else if (m.t === "__fa") { if (R.h && m.id !== R.h.mioId && FACCINE_SL.indexOf(m.f) >= 0) mostraFaccina(SV, m.id, String(m.n || "").slice(0, 16), m.f); }
           else if (m.t === "__via") { if (!guarda) contoVia(SV, m); }
           else if (m.t === "__fuori") { if (R.h && m.to === R.h.mioId && !guarda) fuoriDallaStanza(R, m.perche); }
-          else if (m.t === "__torneino" && !sala) vaiAlTorneino(R, m);   // l'host ha fatto della stanza un torneino: si passa nella sua Sala
+          else if (m.t === "__torneino" && !sala) cuore.vaiAlTorneino(R, m);   // l'host ha fatto della stanza un torneino: si passa nella sua Sala
           else if (m.t === "__fase" && (m.f === "lobby" || m.f === "gioco" || m.f === "fine")) SV.fase = m.f;   // (Passo 6) a che punto è la partita
           // chi guarda soltanto: si torna in saletta → entra anche lui (fuori dalla Sala; vedi guardoFase)
           if (guarda && (m.t === "__fase" || m.t === "__sl")) guardoFase(R, m.t === "__fase" ? m.f : m.fa);
@@ -11092,9 +6443,9 @@
         var dato = !!(classifica && classifica.length && risultatoDato(classifica));
         if (!dato) premiaPartita(classifica, false);
         if (salaCtx) return salaCtx.fine(g, classifica, giocatori, impostazioni, dato);   // (dato: la Sala non la conta di nuovo)
-        if (opts && opts.torneo && torneo) return torneoRisultato(g, classifica);
+        if (opts && opts.torneo && cuore.torneo) return cuore.torneoRisultato(g, classifica);
         var fac = null; try { fac = tavolo.faccine(); } catch (e) {}   // partita online: la fila delle faccine anche nella classifica
-        if (!fac && !reteXp) serataLocale(g, classifica);   // sullo stesso telefono: i punti nella Classifica della serata, da soli
+        if (!fac && !reteXp) cuore.serataLocale(g, classifica);   // sullo stesso telefono: i punti nella Classifica della serata, da soli
         // partita online: i tasti di fine uguali per tutti (Nuova partita / Ci sto, Esci); se no quelli di sempre
         var host = !!(reteXp && reteXp._P === P);
         schermataFine(g, classifica, giocatori, impostazioni, fac, fac ? function (piede) { return tavolo.tastiFine(piede, { host: host }); } : null);
@@ -11195,7 +6546,7 @@
     listaProfilo: listaProfilo, salvaListaProfilo: salvaListaProfilo,   // liste salvate sul profilo di chi gioca
     // 🤖 i bot fissi, uguali in tutti i giochi: { id, nome, omino, frase, livello: "facile"|"medio"|"difficile", bot: true }
     // prendi(n, { livello, escludi: [nomi o id], caso }) = n bot diversi (stessi nello stesso ordine, se no a sorte con caso: true)
-    bot: { tutti: function () { return botTutti().map(copiaBot); }, prendi: botPrendi, daId: botDaId, livelli: BOT_LIVELLI.slice() },
+    bot: { tutti: function () { return cuore.botTutti().map(cuore.copiaBot); }, prendi: function (n, o) { return cuore.botPrendi(n, o); }, daId: function (id) { return cuore.botDaId(id); }, livelli: BOT_LIVELLI.slice() },
     avviaApp: function () {
       ordineAttivo = ordineSalvato(); ordinaGiochi();   // 🧩 l'ordine dei giochi visto l'ultima volta (subito: la home non salta)
       agganciaRete();   // lo strato comune della rete (stanze ricordate, nomi doppi, XP, host che torna…)
@@ -11216,8 +6567,8 @@
           profilo: profiloAttivo, omino: function (cfg, o) { return window.SGOmino && cfg ? SGOmino.svg(cfg, o) : ""; },
           apri: function (C) { apriCompagnia(C); }, entra: function (C) { apriCompagnia(C); }, mia: infoSalaMia,
           nomeGioco: function (id) { var g = giocoDa(id); return g ? { nome: g.nome, icona: g.icona } : ""; },
-          chiedi: function (uid, nome, fatto) { try { return chiediA({ uid: uid, nome: nome }, fatto); } catch (e) {} },
-          rapporto: function (uid) { try { return rapporto(uid); } catch (e) { return "nessuno"; } },
+          chiedi: function (uid, nome, fatto) { try { return cuore.chiediA({ uid: uid, nome: nome }, fatto); } catch (e) {} },
+          rapporto: function (uid) { try { return cuore.rapporto(uid); } catch (e) { return "nessuno"; } },
           // rinominata da "Le tue compagnie": se la sua Sala è mia la mando a tutti
           rinominata: function (C, comp) {
             // (sono nella sua Sala da amico: il nome nuovo lo passo all'host, che lo manda a tutti se è il più nuovo)
@@ -11231,7 +6582,7 @@
           } });
       } catch (e) { setTimeout(function () { throw e; }, 0); }
       if (daLink && linkParams.k) chiaveDi(linkParams.sala || linkParams.gruppo || linkParams.stanza, false, linkParams.k);   // 🔑 la chiave delle foto: solo in questa scheda
-      if (window.SGNube && SGNube.onCambio) SGNube.onCambio(ricordaProfilo);   // questo telefono ricorda l'ultimo profilo usato
+      if (window.SGNube && SGNube.onCambio) SGNube.onCambio(cuore.ricordaProfilo);   // questo telefono ricorda l'ultimo profilo usato
       if (window.SGNube && SGNube.onCambio) SGNube.onCambio(stileAvatar);   // gli avatar nuovi: per tutti, o solo per il proprietario (vedi AVATAR_NUOVO)
       stileAvatar();
       // gli amici online (Passo 6): col profilo pronto si accende la presenza; profilo cambiato o uscito: si ferma o riparte
@@ -11240,11 +6591,11 @@
       // chi l'ha già usato qui entra da solo. Il link letto qui sopra si usa dopo (la pagina ricaricata lo ritrova)
       function parti() {
         var ls0 = daLink ? linkParams : linkSessione();
-        garantisciProfilo(vai, { daLink: !!(daLink || ls0), invito: invitoDi(ls0) });
+        cuore.garantisciProfilo(vai, { daLink: !!(daLink || ls0), invito: cuore.invitoDi(ls0) });
       }
       function vai() {
         stileAvatar();   // (il profilo ora c'è di sicuro, anche se appena creato)
-        caricaBot();   // i bot come li ha fatti il proprietario (in sottofondo: intanto valgono gli ultimi visti)
+        cuore.caricaBot();   // i bot come li ha fatti il proprietario (in sottofondo: intanto valgono gli ultimi visti)
         caricaOrdine();   // e l'ordine dei giochi (stessa lettura della sua scheda; la home aperta si rimette in fila da sola)
         amiciAvvia();   // il pallino verde degli amici e i loro inviti (solo col profilo)
         // pagina ricaricata (o app riaperta) senza link: la mia stanza o la mia Sala si riaprono, o si torna in quella dell'amico
@@ -11264,10 +6615,10 @@
         else if (g) apriGioco(g);
         else schermataHome();
       }
-      [3000, 9000].forEach(function (ms) { setTimeout(function () { if (serveExtra()) caricaExtra(); try { var io0 = profiloAttivo(); if (io0 && io0.cloud) statoSfide(); } catch (e) {} }, ms); });   // chi usa la casa nuova, il casinò o la città a piedi: i loro disegni arrivano in sottofondo
+      [3000, 9000].forEach(function (ms) { setTimeout(function () { if (serveExtra()) caricaExtra(); try { var io0 = profiloAttivo(); if (io0 && io0.cloud) cuore.statoSfide(); } catch (e) {} }, ms); });   // chi usa la casa nuova, il casinò o la città a piedi: i loro disegni arrivano in sottofondo
       // col cloud, aspetta che Firebase ripristini la sessione (login automatico)
       if (window.SGNube && SGNube.disponibile() && !SGNube.pronto()) {
-        schermataCaricamento();
+        cuore.schermataCaricamento();
         var fatto = false;
         SGNube.onCambio(function () { if (!fatto && SGNube.pronto()) { fatto = true; parti(); } });
         setTimeout(function () { if (!fatto) { fatto = true; parti(); } }, 6000);   // rete lenta: parti comunque
@@ -11282,7 +6633,7 @@
       lasciaPartita(); if (window.SGNet) SGNet.chiudiGiochi(); schermataScegliGioco();
     },
     // la ruota del giorno (monete o XP, un giro al giorno): la apre anche il Black Jack quando restano poche monete
-    ruotaDelGiorno: ruotaDelGiorno,
+    ruotaDelGiorno: function (dopo) { return cuore.ruotaDelGiorno(dopo); },
     // la finestra di conferma al centro (per chi non ha il tavolo, es. lo studio): SG.conferma(domanda, nota, siTesto, siFn)
     conferma: function (domanda, nota, siTesto, siFn) { chiediConferma(domanda, nota, siTesto, siFn); },
     sala: function () { lasciaPartita(); if (window.SGNet) SGNet.chiudiGiochi(); schermataSala(null); },
@@ -11306,6 +6657,42 @@
       return base + (pezzi.length ? "#" + pezzi.join("&") : "");
     },
     // esposti perché comodi anche fuori
-    _util: { el: el, svuota: svuota, mischia: mischia, votoEstrai: function (ids, voti, caso) { return votoEstrai(ids, voti, caso); } }
+    _util: { el: el, svuota: svuota, mischia: mischia, votoEstrai: function (ids, voti, caso) { return cuore.votoEstrai(ids, voti, caso); } }
   };
+  // ==== AI PEZZI DEL CUORE (js/cuore/*.js): quello del cuore che usano. Rifatto dallo strumento di divisione; a mano: ====
+  // cuore.X = X per le cose che non cambiano; vivo("X", leggi, scrivi) per quelle che cambiano (i pezzi le leggono sempre aggiornate)
+  cuore.AVATAR_NUOVO = AVATAR_NUOVO; cuore.BOT_LIVELLI = BOT_LIVELLI; cuore.BOT_MAX_FRASE = BOT_MAX_FRASE; cuore.BOT_MAX_NOME = BOT_MAX_NOME;
+  cuore.CITTA_VISIBILE = CITTA_VISIBILE; cuore.FACCINE = FACCINE; cuore.GIOCHI_ELIMINAZIONE = GIOCHI_ELIMINAZIONE;
+  cuore.HOME_MENU_SOTTO = HOME_MENU_SOTTO; cuore.K_ATTIVO = K_ATTIVO; cuore.K_PROFILI = K_PROFILI; cuore.MAX_ELIM = MAX_ELIM;
+  cuore.PROPRIETARIO = PROPRIETARIO; cuore.SL = SL; cuore.SVH = SVH; cuore.aDue = aDue; cuore.aGioco = aGioco; cuore.apriGioco = apriGioco;
+  cuore.audioCtx = audioCtx; cuore.avatarNuoviSpenti = avatarNuoviSpenti; cuore.avviaPartita = avviaPartita; cuore.caricaExtra = caricaExtra;
+  cuore.catDi = catDi; cuore.chiediConferma = chiediConferma; cuore.chipGuardo = chipGuardo; cuore.chiudiSala = chiudiSala;
+  cuore.chiudiSalaOspite = chiudiSalaOspite; cuore.cifre = cifre; cuore.classificaFitta = classificaFitta; cuore.conCodice = conCodice;
+  cuore.contoAvanti = contoAvanti; cuore.creaSala = creaSala; cuore.dadoNome = dadoNome; cuore.dimenticaLinkSessione = dimenticaLinkSessione;
+  cuore.disegnaSalaHost = disegnaSalaHost; cuore.disegnaSalaOspite = disegnaSalaOspite; cuore.eProprietario = eProprietario; cuore.el = el;
+  cuore.entraConCodice = entraConCodice; cuore.etichettaPosti = etichettaPosti; cuore.giardinoPronto = giardinoPronto; cuore.giochi = giochi;
+  cuore.giocoDa = giocoDa; cuore.giocoOnline = giocoOnline; cuore.gruppo = gruppo; cuore.haRegole = haRegole; cuore.hostSceglie = hostSceglie;
+  cuore.impSalvabili = impSalvabili; cuore.lasciaPartita = lasciaPartita; cuore.leggiL = leggiL; cuore.listaProfilo = listaProfilo;
+  cuore.medaglieAPari = medaglieAPari; cuore.membroSala = membroSala; cuore.minDi = minDi; cuore.mioIdSala = mioIdSala; cuore.mischia = mischia;
+  cuore.modiDi = modiDi; cuore.mostra = mostra; cuore.nomiGruppo = nomiGruppo; cuore.novitaTutteViste = novitaTutteViste; cuore.oggiStr = oggiStr;
+  cuore.pillola = pillola; cuore.postiDi = postiDi; cuore.profili = profili; cuore.profiloAttivo = profiloAttivo; cuore.restaOpz = restaOpz;
+  cuore.rigaPuntiFine = rigaPuntiFine; cuore.riquadroLivello = riquadroLivello; cuore.salaCambiaGioco = salaCambiaGioco;
+  cuore.salaLancia = salaLancia; cuore.salaOspite = salaOspite; cuore.salaParti = salaParti; cuore.salaPreparaGioco = salaPreparaGioco;
+  cuore.salaRisultato = salaRisultato; cuore.salaScegliGioco = salaScegliGioco; cuore.salvaListaProfilo = salvaListaProfilo;
+  cuore.sceltoModo = sceltoModo; cuore.schedaDelProprietario = schedaDelProprietario; cuore.schermata = schermata;
+  cuore.schermataHome = schermataHome; cuore.schermataNovita = schermataNovita; cuore.schermataPreGioco = schermataPreGioco;
+  cuore.schermataRegole = schermataRegole; cuore.schermataSala = schermataSala; cuore.scriviL = scriviL; cuore.serveExtra = serveExtra;
+  cuore.stessoNome = stessoNome; cuore.svuota = svuota; cuore.tempoBreve = tempoBreve; cuore.tesseraGioco = tesseraGioco;
+  cuore.togliGuardo = togliGuardo; cuore.togliNodo = togliNodo; cuore.tornaHome = tornaHome;
+  vivo("FINE", function () { return FINE; }, function (v) { FINE = v; });
+  vivo("GUARDO", function () { return GUARDO; });
+  vivo("RIV", function () { return RIV; }, function (v) { RIV = v; });
+  vivo("linkParams", function () { return linkParams; }, function (v) { linkParams = v; });
+  vivo("partitaCorrente", function () { return partitaCorrente; });
+  vivo("rientro", function () { return rientro; }, function (v) { rientro = v; });
+  vivo("sala", function () { return sala; });
+  vivo("salaG", function () { return salaG; });
+  vivo("schedaProp", function () { return schedaProp; }, function (v) { schedaProp = v; });
+  function vivo(n, leggi, scrivi) { Object.defineProperty(cuore, n, { get: leggi, set: scrivi, configurable: true }); }
+  // ==== fine dei pezzi del cuore ====
 })();
