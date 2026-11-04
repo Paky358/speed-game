@@ -18,7 +18,7 @@ window.SG_NOVITA = [
       "Le parole già uscite continuano a non tornare per un bel po'."
     ]
   },
-{
+  {
     v: 305,
     data: "4 novembre 2026",
     titolo: "🔨 L'Asta: due temi nuovi",
