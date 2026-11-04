@@ -7,6 +7,12 @@
 
    Un gioco si "innesta" chiamando SG.registra({...}).
    Vedi docs/COME-SI-AGGIUNGE-UN-GIOCO.md
+
+   Dal 4 nov 2026 il cuore è diviso: qui restano l'avvio, gli aiuti comuni,
+   la prima schermata e il giro di partita; il resto sta nei suoi pezzi in
+   js/cuore/ (avatar, trofei, classifica, profilo, bot, mondo, tornei,
+   sala-voto, sala-sfide, sala, saletta, rete: l'elenco è in AGENTS.md).
+   Si parlano con window.SGCuore: vedi in fondo «AI PEZZI DEL CUORE».
    ========================================================= */
 (function () {
   "use strict";
