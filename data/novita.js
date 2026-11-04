@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 305,
+    data: "4 novembre 2026",
+    titolo: "🔨 L'Asta: due temi nuovi",
+    descrizione: [
+      "🌴 L'Isola Deserta: siete naufragati e all'asta ci sono l'oggetto salvato dal naufragio, il compagno di sventura, il rifugio e lo sfizio per non impazzire. C'è chi si prende il coltellino svizzero e chi resta col phon senza corrente e il pallone da pallavolo con la faccia disegnata.",
+      "🎸 La Band dei Sogni: mettete su il gruppo che riempie gli stadi (o che svuota la sagra): la voce, il musicista, il palco e il gran finale. Dal chitarrista leggendario al cugino col triangolo, dallo stadio tutto esaurito al garage dello zio.",
+      "Ognuno ha più di 260 carte e i suoi tre scenari per il voto finale: si scelgono nelle regole, tra i temi."
+    ]
+  },
+  {
     v: 304,
     data: "4 novembre 2026",
     titolo: "🥔 La Patata Bollente: 240 categorie nuove",
