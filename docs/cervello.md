@@ -22,6 +22,8 @@ Ultimo aggiornamento: **29 ott 2026, 19:10** (ora italiana).
 
 **Il ragionamento delle chat lo regola il Cervello** (il proprietario, 29 ott notte: «vai di medio per i colori, regolati tu anche per queste cose»): medio per i lavori ripetitivi (colori, liste, controlli), alto per disegno e codice delicato, il massimo solo se serve davvero. Dal 29 ott 04:55: chat Notte vivace su medio, chat Avatar su alto (prima tutte e due «molto alto»: ~2,5% della settimana all'ora in due). Quella notte lo stop è stato alzato dal 25% al 35% («se serve vai oltre il 25»).
 
+**Fine settimana (il proprietario, 4 nov):** la settimana va usata TUTTA prima dell'azzeramento del mercoledì alle 15, mai lasciare percentuale avanzata (il 4 nov si è chiusa al 95%). Dal martedì il Cervello tiene pronti lavori piccoli di contenuti (1-3%) per arrivare al 99-100% giusto in tempo; mai oltre il 100%: il consumo extra a pagamento è acceso.
+
 Regole generali: sotto il 70% lavori grandi ok · 70-85% lavori medi, aiutanti Sonnet · 85-95% solo piccole cose · sopra il 95% fermi, tranne pubblicare.
 
 ---
