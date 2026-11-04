@@ -505,6 +505,33 @@ const RITARDO_ESCA = 0.4;      // chi spegne un'Esca segnala da solo dopo 0,4 s:
 const SOGLIA_VOTO = 18;        // quanto sospetto serve a un Bot ospite per votare qualcuno (con 30 sette riunioni su dieci finivano senza nessuno fuori)
 const PROV_GIULLARE = 2;       // quante volte a partita un Giullare Bot si fa vedere uscire da una botola
 const FRASI_COMPITO = { luce:'accendere il lampadario', ingranaggio:"caricare l'orologio", fuoco:'sfornare i dolci', acqua:'annaffiare la serra' };
+// ----- le cose che arrivano insieme (vedi REGOLE-CONTEMPORANEE.md) -----
+// L'host è l'arbitro unico, ma un ospite arriva 0,1-0,3 s dopo l'host: due tocchi «insieme» arrivano in un ordine che dipende solo dalla rete.
+// FINESTRA è il tratto in cui due azioni contano come contemporanee: dentro quel tratto il risultato deve essere lo stesso in qualunque ordine arrivino.
+const FINESTRA = 0.3;
+// GRAZIA: il voto e l'acqua alta finiscono sul telefono mezzo secondo prima che sull'host. Così il sigillo o la chiusa messi all'ultimo istante visto arrivano ancora in tempo
+const GRAZIA = 0.5;
+// l'esito di una mossa, rimandato al telefono di chi l'ha fatta (con la ricevuta): ok, oppure perché non è andata.
+// Senza testo: ok, detto (il motore ha già mandato il suo avviso), fine (arriva il finale), vecchia (mossa superata da una più nuova).
+// Frasi senza maschile sui nomi
+const TESTO_ESITO = {
+  riu: 'Troppo tardi: la riunione è già cominciata.',
+  chiamata: 'La riunione era appena stata chiamata: è la stessa.',
+  spento: 'Troppo tardi: la tua lanterna si era già spenta.',
+  giaSpenta: 'Troppo tardi: quella lanterna si era già spenta.',
+  corpo: 'Troppo tardi: la lanterna spenta non c\'è più.',
+  botola: 'Troppo tardi: ora è dentro una botola.',
+  lontano: 'Troppo lontano: avvicinati e riprova.',
+  ricarica: 'Non ancora: si sta ricaricando.',
+  riparato: 'Qualcuno l\'aveva appena riparato.',
+  sabAttivo: 'C\'è già un sabotaggio in corso.',
+  chiuso: 'Troppo tardi: il voto si è chiuso, il tuo sigillo non conta.',
+  presto: 'Il voto non è ancora aperto.',
+  votato: 'Hai già votato: il sigillo non si cambia.',
+  fermo: 'Qualcuno ti controlla: adesso non puoi.',
+  no: 'Adesso non si può.',
+  rete: 'L\'host non risponde: la mossa forse non è arrivata.'
+};
 
 class Partita {
   // lista: [{ id, nome, bot }]; eventi: { privato(id,msg), tutti(msg) }
@@ -517,6 +544,8 @@ class Partita {
     this.M = ATRIO; this.fase = 'atrio'; this.t = 0; this.fineFase = this.saletta ? Infinity : DUR_ATRIO;
     this.corpi = []; this.buio = null; this.interf = null; this.acqua = null; this.cdBuio = 30; this.nebbiaFine = 0; this.bengalaFine = 0; this.pub = {};
     this.riu = null; this.esito = null; this.vincitore = null; this.chat = []; this.round = 1; this.dichiarati = {}; this.esche = [];
+    // riuInArrivo: la riunione chiamata che parte tra FINESTRA s; spariti: le lanterne a terra tolte da poco (pulite, mangiate, riaccese); nImp: cresce a ogni fatto che l'host deve salvare subito
+    this.riuInArrivo = null; this.spariti = []; this.nImp = 0; this.tFine = null; this.fineDetta = false;
     this.telecamere = TELECAMERE_BASE.map(c=>({ x:c.x, y:c.y, nome:c.nome, base:true }));
     this.cambiata = true;
     if(this.saletta){ this.ombreIniziali=1; this.celebri=[]; }
@@ -634,16 +663,18 @@ class Partita {
   foto(){
     const { tot, fatti } = this.contaCompiti();
     const sec = f => Math.max(0, Math.ceil(f-this.t-1e-9));   // (il margine: lo scarto dei conti fra secondi faceva leggere 7 invece di 6)
-    const f = { fase:this.fase, mappa:this.M===ATRIO?'atrio':'palazzo', sec:sec(this.fineFase), round:this.round,
+    // la fine decisa in gioco si annuncia FINESTRA s dopo: un ultimo compito arrivato insieme a uno spegnimento decisivo può ancora cambiarla (vedi fatto), e nessun telefono vede un vincitore che poi cambia
+    const fineNascosta = this.fase==='fine' && this.tFine!=null && this.t-this.tFine<FINESTRA;
+    const f = { fase:fineNascosta?'gioco':this.fase, mappa:this.M===ATRIO?'atrio':'palazzo', sec:sec(this.fineFase), round:this.round,
       g:this.gioc.map(p=>[p.id, p.vivo?1:0, p.uscito?1:0]), pc: tot?Math.round(fatti/tot*100):0,
-      buio: this.buio ? sec(this.buio.fine) : 0, interf: this.interf ? sec(this.interf.fine) : 0, acqua: this.acqua ? [sec(this.acqua.fine), this.acqua.a?1:0, this.acqua.b?1:0] : null, neb: this.nebbiaAttiva() ? sec(this.nebbiaFine) : 0, bengala: this.bengalaAttivo() ? sec(this.bengalaFine) : 0,
+      buio: this.buio ? sec(this.buio.fine) : 0, interf: this.interf ? sec(this.interf.fine) : 0, acqua: this.acqua ? [sec(this.acqua.fine-GRAZIA), this.acqua.a?1:0, this.acqua.b?1:0] : null, neb: this.nebbiaAttiva() ? sec(this.nebbiaFine) : 0, bengala: this.bengalaAttivo() ? sec(this.bengalaFine) : 0,
       corpi: this.corpi.map(c=>[c.id, Math.round(c.x), Math.round(c.y)]),
       segnati: this.gioc.filter(p=>p.segnato&&p.vivo).map(p=>p.id), sindaci: this.gioc.filter(p=>p.rivelato).map(p=>p.id),
       scudi: this.gioc.filter(p=>p.vivo&&p.protettoDa!=null).map(p=>p.id), cam: this.telecamere.map(c=>[Math.round(c.x),Math.round(c.y),c.base?1:0]), osservate: this.gioc.some(p=>p.osserva&&p.vivo) };
     // (di chi è la lanterna non parte più: nemmeno i telefoni con la versione vecchia in cache lo sanno. Senza il campo non vanno in errore: sotto «Lanterna spenta!» scrivono «ha suonato la campana»)
-    if(this.riu){ const R=this.riu; f.riu = { motivo:R.motivo, da:R.da, disc:sec(R.disc+R.t0), voto:sec(Math.min(R.disc+R.voto, R.conta!=null?R.conta:Infinity)+R.t0), votati:[...R.voti.keys()], zittiti:R.zittiti, chat:this.chat.slice(-MAX_CHAT) }; }
+    if(this.riu){ const R=this.riu, fv=this.fineVotoVisto(R)+R.t0; f.riu = { motivo:R.motivo, da:R.da, disc:sec(R.disc+R.t0), voto:sec(fv), df:Math.max(0,Math.round((R.disc+R.t0-this.t)*1000)), vf:Math.max(0,Math.round((fv-this.t)*1000)), votati:[...R.voti.keys()], zittiti:R.zittiti, chat:this.chat.slice(-MAX_CHAT) }; }
     if(this.esito) f.esito = this.esito;
-    if(this.vincitore) f.fine = { ...this.vincitore, ruoli:this.gioc.map(p=>[p.id, p.ruolo, p.vivo?1:0]) };
+    if(this.vincitore && !fineNascosta) f.fine = { ...this.vincitore, ruoli:this.gioc.map(p=>[p.id, p.ruolo, p.vivo?1:0]) };
     return f;
   }
   posizioni(){
@@ -685,9 +716,11 @@ class Partita {
       buio:this.buio?resta(this.buio.fine):0, interf:this.interf?resta(this.interf.fine):0, acqua:this.acqua?[resta(this.acqua.fine),this.acqua.a?1:0,this.acqua.b?1:0]:null,
       neb:this.nebbiaFine>this.t?resta(this.nebbiaFine):0, ben:this.bengalaFine>this.t?resta(this.bengalaFine):0,
       corpi:this.corpi.map(c=>[c.id,Math.round(c.x),Math.round(c.y),c.stanza,c.da]), esche:this.esche.map(e=>[e.da,e.corpo,resta(e.t)]),
+      // la riunione già chiamata che sta per partire (FINESTRA): se l'host ricarica proprio lì, parte lo stesso
+      ria:this.riuInArrivo && this.fase==='gioco' ? [this.riuInArrivo.m.tipo, this.riuInArrivo.m.da, this.riuInArrivo.m.corpo!=null?this.riuInArrivo.m.corpo:null, this.riuInArrivo.m.stanza||null, resta(this.riuInArrivo.t)] : null,
       riu:R?{ motivo:R.motivo, da:R.da, corpo:R.corpo, stanza:R.stanza, t:Math.round(R.t*10)/10, disc:R.disc, voto:R.voto, voti:[...R.voti], zittiti:R.zittiti, chiusa:R.chiusa }:null,
       chat:R?this.chat:null, esito:this.esito||null,
-      gioc:this.gioc.map(p=>({ id:p.id, nome:p.nome, bot:p.bot, ruolo:p.ruolo, vivo:p.vivo, uscito:p.uscito, usciVivo:p.usciVivo, x:Math.round(p.x), y:Math.round(p.y), dir:Math.round(p.dir*100)/100, cd:Math.round(p.cd), cdA:Math.round(p.cdA), usi:p.usi, campane:p.campane, vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati,
+      gioc:this.gioc.map(p=>({ id:p.id, nome:p.nome, bot:p.bot, ruolo:p.ruolo, vivo:p.vivo, uscito:p.uscito, usciVivo:p.usciVivo, x:Math.round(p.x), y:Math.round(p.y), dir:Math.round(p.dir*100)/100, ep:p.ep, cd:Math.round(p.cd), cdA:Math.round(p.cdA), usi:p.usi, campane:p.campane, vite:p.vite, bersaglio:p.bersaglio, mangiati:p.mangiati,
         usiRian:p.usiRian, usiBeng:p.usiBeng, campVolte:p.campVolte, rivelato:p.rivelato, camPiazzate:p.camPiazzate, usiVet:p.usiVet, usiTra:p.usiTra, mod:p.mod, imitato:p.imitato, imita:p.imita,
         indovinati:p.indovinati, tentativi:p.tentativi, fotoMostrata:p.fotoMostrata, fantasmaRuolo:p.fantasmaRuolo||null, foto:p.foto||null, morte:p.morte||null, letti:p.letti, protettoDa:p.protettoDa, zittito:p.zittito, segnato:p.segnato, campione:p.campione, trapRuoli:p.trapRuoli,
         compiti:p.compiti.map(c=>[c.post.id, c.fatto?1:0, c.extra?1:0]) })) };
@@ -704,6 +737,8 @@ class Partita {
       p.vivo=!!g.vivo; p.fantasma=!g.vivo; p.uscito=!!g.uscito; p.usciVivo=!!g.usciVivo; p.campane=g.campane|0; p.cd=g.cd!=null?+g.cd||0:18; p.cdA=g.cdA!=null?+g.cdA||0:10;
       ['usi','vite','bersaglio','mangiati','usiRian','usiBeng','campVolte','rivelato','camPiazzate','usiVet','usiTra','mod','imitato','imita','indovinati','tentativi','fotoMostrata','fantasmaRuolo','foto','morte','letti','protettoDa','zittito','segnato','campione','trapRuoli'].forEach(k=>{ if(g[k]!=null) p[k]=g[k]; });
       p.mod = g.mod || null;
+      // il numero dei salti (ep) riparte da dove era: un salto vecchio arrivato tardi non deve sembrare nuovo al telefono (vedi «tp» in gioco.js)
+      if(g.ep>0) p.ep=g.ep|0;
       p.compiti=(g.compiti||[]).map(([id,f,x])=>({ post:POSTAZIONI.find(q=>q.id===id), fatto:!!f, finto:p.squadra!=='ospiti', extra:!!x })).filter(c=>c.post);
     });
     P.M=PALAZZO; P.inCerchio();
@@ -717,6 +752,7 @@ class Partita {
       P.fase=f; P.fineFase=P.t+(+s.resto||0);
       (s.corpi||[]).forEach(([id,x,y,stanza,da])=>{ if(P.per(id)) P.corpi.push({ id, x, y, stanza, da, t:P.t }); });
       if(f==='gioco') (s.esche||[]).forEach(([da,corpo,r])=>{ P.esche.push({ da, corpo, t:P.t+(+r||0) }); });
+      if(f==='gioco' && Array.isArray(s.ria) && P.per(s.ria[1])) P.riuInArrivo={ m:{ tipo:s.ria[0], da:s.ria[1], corpo:s.ria[2], stanza:s.ria[3] }, t:P.t+(+s.ria[4]||0), t0:P.t };
       if(s.buio) P.buio={ fine:P.t+s.buio };
       if(s.interf) P.interf={ fine:P.t+s.interf };
       if(s.acqua) P.acqua={ fine:P.t+s.acqua[0], a:!!s.acqua[1], b:!!s.acqua[2] };
@@ -752,23 +788,49 @@ class Partita {
   // il telefono ha un «ep» vecchio (ha perso un tp): gli rimando posizione ed ep giusti, senza cambiarli
   ritp(p){ if(p.bot||this.t-p.tCorr<0.6) return; p.tCorr=this.t; this.ev.privato(p.id, { t:'tp', x:Math.round(p.x), y:Math.round(p.y), ep:p.ep }); }
   vicino(p,x,y,r){ return Math.hypot(x-p.x,y-p.y) <= r*TOLL; }
+  // una mossa dal telefono di p. Torna l'esito per quel telefono: 'ok', oppure perché no (le chiavi di TESTO_ESITO). Undefined vale ok.
+  // Le mosse arrivano una alla volta (JavaScript non ne fa due insieme): «insieme» vuol dire nello stesso giro o a pochi giri di distanza, e le regole qui sotto
+  // fanno in modo che dentro FINESTRA l'ordine d'arrivo non cambi il risultato.
   azione(id, m){
-    const p=this.per(id); if(!p||p.uscito) return;
+    const p=this.per(id); if(!p||p.uscito) return 'no';
     // chi è controllato dal Burattinaio è fermo: niente compiti, poteri o segnalazioni finché dura
-    if(p.controllatoDa && this.fase==='gioco' && m.k!=='chat' && m.k!=='rapida') return;
+    if(p.controllatoDa && this.fase==='gioco' && m.k!=='chat' && m.k!=='rapida') return 'fermo';
     // dentro una botola si può solo spostarsi tra le botole o uscire (sotto terra non si parla: la chat di prossimità resta spenta)
-    if(p.inBotola!=null && this.fase==='gioco' && m.k!=='botola') return;
+    if(p.inBotola!=null && this.fase==='gioco' && m.k!=='botola') return 'no';
     switch(m.k){
       case 'fatto': return this.fatto(p, m.post);
-      case 'ripara': { const cosa=m.cosa||'luci', st=STAZ_RIP[cosa]; if(this.fase==='gioco' && st && p.vivo && this.vicino(p,centro(st.tx),centro(st.ty),R_USA)) this.ripara(p, cosa); return; }   // (anche le ombre: fingono di aiutare)
-      case 'campana': if(this.fase==='gioco' && p.vivo && p.campane>0 && this.vicino(p,centro(CAMPANA.tx),centro(CAMPANA.ty),R_USA)){ p.campane--; this.priv(p); this.iniziaRiunione({ tipo:'campana', da:p.id }); } return;
-      case 'segnala': { if(this.fase!=='gioco'||!p.vivo) return; const c=this.corpi.find(c=>c.id===m.id); if(c && this.vicino(p,c.x,c.y,R_SEGNALA) && vede(this.M,p.x,p.y,c.x,c.y)) this.iniziaRiunione({ tipo:'corpo', da:p.id, corpo:c.id, stanza:c.stanza }); return; }
-      case 'spegni': { if(this.fase!=='gioco'||!p.vivo||p.squadra!=='ombre'||p.cd>0) return; const v=this.per(m.id); if(v && v.vivo && v.squadra!=='ombre' && v.inBotola==null && this.vicino(p,v.x,v.y,R_SPEGNI) && vede(this.M,p.x,p.y,v.x,v.y)) this.provaSpegni(p,v); return; }
-      case 'abil': return this.abilita(p, m.id, m.id2);
+      // RIPARAZIONE DOPPIA: due persone riparano la stessa cosa insieme. Ripara la prima che arriva, alla seconda «Qualcuno l'aveva appena riparato» (e il suo telefono non torna indietro)
+      case 'ripara': { const cosa=m.cosa||'luci', st=STAZ_RIP[cosa]; if(!st) return 'no'; if(this.fase!=='gioco') return this.tardi(); if(!p.vivo) return 'spento';   // (anche le ombre: fingono di aiutare)
+        if(!this.lavoroAttivo(cosa)) return 'riparato';
+        if(!this.vicino(p,centro(st.tx),centro(st.ty),R_USA)) return 'lontano';
+        this.ripara(p, cosa); return 'ok'; }
+      // CAMPANA E SEGNALAZIONE: la riunione parte FINESTRA s dopo la prima chiamata (chiamaRiunione). Chi è appena caduto (entro FINESTRA) chiama lo stesso: ha premuto quando era vivo
+      case 'campana': { if(this.fase!=='gioco') return this.tardi(); if(!p.vivo && !this.appenaCaduto(p)) return 'spento'; if(this.riuInArrivo && this.riuInArrivo.m.da===p.id) return 'detto'; if(p.campane<=0) return 'no';
+        if(!this.vicino(p,centro(CAMPANA.tx),centro(CAMPANA.ty),R_USA)) return 'lontano';
+        const r=this.chiamaRiunione({ tipo:'campana', da:p.id }); if(r==='ok'){ p.campane--; this.priv(p); } return r; }   // (una chiamata che si unisce a un'altra non consuma la campana)
+      // LANTERNA PULITA, MANGIATA O RIACCESA mentre la segnalano: una lanterna tolta da meno di FINESTRA s si segnala ancora (spariti)
+      case 'segnala': { if(this.fase!=='gioco') return this.tardi(); if(!p.vivo && !this.appenaCaduto(p)) return 'spento';
+        const c=this.corpi.find(c=>c.id===m.id) || this.sparito(m.id); if(!c) return 'corpo';
+        if(!this.vicino(p,c.x,c.y,R_SEGNALA) || !vede(this.M,p.x,p.y,c.x,c.y)) return 'lontano';
+        return this.chiamaRiunione({ tipo:'corpo', da:p.id, corpo:c.id, stanza:c.stanza }); }
+      // DUE OMBRE SULLA STESSA PERSONA: spegne la prima che arriva; la seconda non perde la ricarica e legge «si era già spenta». Col Gatto ognuna toglie una vita.
+      // OMBRA COLPITA DALLO SCERIFFO mentre spegne: se è caduta da meno di FINESTRA s lo spegnimento vale (e il colpo dello Sceriffo pure: cadono tutti e due, in qualunque ordine).
+      // BOTOLA: chi è entrato in una botola da meno di FINESTRA s si spegne lo stesso (esce e cade lì)
+      case 'spegni': { const ff=this.fotofinish(); if(this.fase!=='gioco' && !ff) return this.tardi(); if(p.squadra!=='ombre') return 'no'; if(!p.vivo && !this.appenaCaduto(p)) return 'spento'; if(p.cd>0) return 'ricarica';
+        const v=this.per(m.id); if(!v || v.squadra==='ombre' || v.uscito) return 'no'; if(!v.vivo) return 'giaSpenta';
+        if(v.inBotola!=null && !this.appenaInBotola(v)) return 'botola';
+        if(!this.vicino(p,v.x,v.y,R_SPEGNI) || !vede(this.M,p.x,p.y,v.x,v.y)) return 'lontano';
+        if(p.ruolo==='avvelenatore' && v.veleno) return 'no';   // (già avvelenata: si spegnerà da sola)
+        if(v.inBotola!=null) this.tiraFuori(v);
+        const fatto=this.provaSpegni(p,v); if(ff) this.riconta(); return fatto ? 'ok' : 'detto'; }
+      case 'abil': { const v0=p.vPriv, f0=this.fase, ff=this.fotofinish(); this.abilita(p, m.id, m.id2); if(ff) this.riconta(); return p.vPriv!==v0 || this.fase!==f0 ? 'ok' : this.perche(p, m); }
       case 'botola': return this.botola(p, m);
       case 'parla': return this.parla(p, m.testo);
       case 'fantasma': return this.poteriFantasma(p, m);
-      case 'buio': case 'sabota': if(this.fase==='gioco' && p.squadra==='ombre' && (p.vivo || p.ruolo==='spettro')) this.attivaSab(p, m.tipo||'buio'); return;
+      // DUE SABOTAGGI INSIEME: vale il primo, al secondo «C'è già un sabotaggio in corso»
+      case 'buio': case 'sabota': { if(this.fase!=='gioco') return this.tardi(); if(p.squadra!=='ombre' || !(p.vivo || p.ruolo==='spettro')) return 'no';
+        if(this.sabAttivo()) return 'sabAttivo'; if(this.cdBuio>0) return 'ricarica';
+        this.attivaSab(p, m.tipo||'buio'); return this.sabAttivo() ? 'ok' : 'no'; }
       case 'pc': return this.muoviControllato(p, m);
       case 'chat': return this.chatUmana(p, String(m.testo||''));
       case 'rapida': return this.rapida(p, m.tipo, m.id);
@@ -776,14 +838,61 @@ class Partita {
       case 'rivela': return this.rivela(p);
       case 'indovina': return this.indovina(p, m.id, m.ruolo);
       case 'imita': return this.imita(p, m.id);
-      case 'guardo': { const on=!!m.on && this.fase==='gioco' && this.vicino(p,centro(MONITOR.tx),centro(MONITOR.ty),R_USA*1.3); if(on!==p.osserva){ p.osserva=on; this.segna(); } return; }
+      case 'guardo': { const on=!!m.on && this.fase==='gioco' && this.vicino(p,centro(MONITOR.tx),centro(MONITOR.ty),R_USA*1.3); if(on!==p.osserva){ p.osserva=on; this.segna(); } return 'ok'; }
     }
   }
+  // perché una mossa non è andata, quando la fase è cambiata: riunione già partita, o partita finita
+  tardi(){ return this.fase==='fine' ? 'fine' : (this.fase==='riunione'||this.fase==='esito') ? 'riu' : 'no'; }
+  // perché un potere non è andato (abilita non lo dice): si guarda com'è adesso
+  perche(p, m){
+    if(this.fase!=='gioco') return this.tardi();
+    if(!p.vivo) return 'spento';
+    if(p.ruolo==='campanaro' && this.riuInArrivo) return this.riuInArrivo.m.da===p.id ? 'detto' : 'chiamata';
+    if(p.cdA>0) return 'ricarica';
+    const tipo=BERSAGLIO[p.ruolo];
+    if(tipo==='vivo' && m.id!=null){ const v=this.per(m.id); if(v && !v.vivo) return 'giaSpenta'; if(v && v.inBotola!=null) return 'botola'; if(v && !this.vicino(p,v.x,v.y,R_ABIL)) return 'lontano'; }
+    if(tipo==='corpo' && m.id!=null){ const c=this.corpi.find(k=>k.id===m.id); if(!c) return 'corpo'; if(!this.vicino(p,c.x,c.y,R_ABIL)) return 'lontano'; }
+    return 'no';
+  }
+  // caduto da meno di FINESTRA s, in gioco: le sue ultime mosse erano partite quando sul suo telefono era ancora vivo
+  appenaCaduto(p){ return !p.vivo && !p.uscito && p.tCade!=null && (this.fase==='gioco' || this.fotofinish()) && this.t-p.tCade<=FINESTRA; }
+  // FOTOFINISH: la fine decisa in gioco da meno di FINESTRA s (la foto non l'ha ancora detta). Uno spegnimento, un colpo dello Sceriffo o un compito che arrivano lì valgono ancora,
+  // come se fossero arrivati un attimo prima; il vincitore si ricalcola con riconta. Il resto risponde «fine»
+  fotofinish(){ return this.fase==='fine' && this.tFine!=null && this.t-this.tFine<FINESTRA; }
+  // ULTIMO COMPITO, ULTIMA OMBRA E SPEGNIMENTO DECISIVO INSIEME: se le ombre avevano vinto e nella fotofinish vale anche la vittoria degli ospiti
+  // (la festa pronta, o nessuna ombra viva), vincono gli ospiti: a parità vince la festa. Se avevano vinto gli ospiti, restano loro
+  riconta(){
+    if(!this.vincitore || this.vincitore.chi!=='ombre') return;
+    const om=this.gioc.filter(p=>p.vivo&&p.squadra==='ombre').length, { tot, fatti }=this.contaCompiti(), insieme=', nello stesso istante dell\'ultima lanterna spenta.';
+    if(om===0) this.vincitore={ chi:'ospiti', perche:'Tutte le ombre sono state smascherate'+insieme };
+    else if(tot>0 && fatti>=tot) this.vincitore={ chi:'ospiti', perche:'Tutti i preparativi della festa sono pronti'+insieme };
+    if(this.vincitore.chi==='ospiti') this.segna();
+  }
+  appenaInBotola(v){ return v.inBotola!=null && v.tBotola!=null && this.t-v.tBotola<=FINESTRA; }
+  // fuori dalla botola (era appena entrato): resta sulla botola, dove il telefono di chi spegne lo vedeva
+  tiraFuori(v){ v.inBotola=null; this.priv(v); this.fx('botola', v.x, v.y); }
+  // una lanterna tolta da poco: si può ancora segnalare
+  sparito(id){ return this.spariti.find(s=>s.id===id && this.t-s.t<=FINESTRA) || null; }
+  togliCorpo(c){ this.corpi=this.corpi.filter(k=>k!==c); this.spariti=this.spariti.filter(s=>this.t-s.t<=FINESTRA); this.spariti.push({ id:c.id, x:c.x, y:c.y, stanza:c.stanza, t:this.t }); this.nImp++; }
+  // RIUNIONE CHIAMATA (campana, segnalazione, Campanaro, Bot): parte FINESTRA s dopo la prima chiamata. Intanto il gioco va avanti: chi spegne, ripara o fa un compito
+  // in quel tratto conta, come se fosse arrivato un attimo prima. Una seconda chiamata nel tratto si unisce alla prima (risponde 'chiamata'). Se intanto la partita finisce, niente riunione
+  chiamaRiunione(m){
+    if(this.fase!=='gioco') return this.tardi();
+    if(this.riuInArrivo) return this.riuInArrivo.m.da===m.da ? 'detto' : 'chiamata';   // (lo stesso che ripreme mentre la sua sta partendo: niente frase, niente seconda campana)
+    this.riuInArrivo={ m, t:this.t+FINESTRA, t0:this.t }; this.nImp++; this.segna();
+    return 'ok';
+  }
+  // COMPITO E FINE INSIEME: un compito che arriva nella fotofinish vale ancora (vedi riconta: se completa la festa dopo la vittoria delle ombre, vincono gli ospiti)
   fatto(p, postId){
-    if(this.fase!=='gioco') return;
-    const c=p.compiti.find(c=>c.post.id===postId && !c.fatto); if(!c) return;
-    if(!this.vicino(p, centro(c.post.tx), centro(c.post.ty), R_USA)) return;
-    this.completaCompito(p,c);
+    if(this.fotofinish()){
+      const c=p.compiti.find(c=>c.post.id===postId && !c.fatto); if(!c || !this.vicino(p, centro(c.post.tx), centro(c.post.ty), R_USA)) return 'fine';
+      c.fatto=true; this.priv(p); this.segna(); this.nImp++; this.riconta();
+      return 'ok';
+    }
+    if(this.fase!=='gioco') return this.tardi();
+    const c=p.compiti.find(c=>c.post.id===postId && !c.fatto); if(!c) return p.compiti.some(c=>c.post.id===postId) ? 'ok' : 'no';   // (già fatto: una ripetizione)
+    if(!this.vicino(p, centro(c.post.tx), centro(c.post.ty), R_USA)) return 'lontano';
+    this.completaCompito(p,c); return 'ok';
   }
   completaCompito(p,c){
     if(c.fatto) return;
@@ -794,10 +903,12 @@ class Partita {
       if(!p.bot) this.ev.privato(p.id, { t:'fx', k:'compitoMio', x:0, y:0 });
       for(const o of this.gioc){ if(!o.bot||!o.vivo||o===p) continue; if(dist(o,p)<=this.vista(o) && vede(this.M,o.x,o.y,p.x,p.y)){ o.sosp[p.id]=(o.sosp[p.id]||0)-35; o.mem.puliti.push({ id:p.id, v:c.post.visibile }); } }
     }
+    this.nImp++;
     if(!c.finto && this.controllaVittoria()) this.chiudi();
   }
   abilita(p, bersId, bers2){
-    if(this.fase!=='gioco'||!p.vivo) return;
+    // lo Sceriffo caduto da meno di FINESTRA s spara lo stesso: aveva premuto da vivo (vedi 'spegni' in azione)
+    if((this.fase!=='gioco' && !(p.ruolo==='sceriffo' && this.fotofinish())) || (!p.vivo && !(p.ruolo==='sceriffo' && this.appenaCaduto(p)))) return;
     const tipo=BERSAGLIO[p.ruolo]; if(!tipo) return;
     if(tipo==='mutaforma'){
       if(bersId!=null){ // campiona chi ha vicino
@@ -819,7 +930,7 @@ class Partita {
       return;
     }
     let v=null, c=null;
-    if(tipo==='vivo'){ v = bersId!=null ? this.per(bersId) : null; if(!v || !v.vivo || v.inBotola!=null || !this.vicino(p,v.x,v.y,R_ABIL) || (v!==p && !vede(this.M,p.x,p.y,v.x,v.y))) return; }
+    if(tipo==='vivo'){ v = bersId!=null ? this.per(bersId) : null; if(!v || !v.vivo || (v.inBotola!=null && !(p.ruolo==='sceriffo' && this.appenaInBotola(v))) || !this.vicino(p,v.x,v.y,R_ABIL) || (v!==p && !vede(this.M,p.x,p.y,v.x,v.y))) return; }
     if(tipo==='corpo'){ c = this.corpi.find(k=>k.id===bersId); if(!c || !this.vicino(p,c.x,c.y,R_ABIL)) return; }
     if(tipo==='due'){
       const a=this.per(bersId), b=this.per(bers2);
@@ -856,6 +967,7 @@ class Partita {
       case 'sceriffo':
         if(p.cdA>0 || v===p) return;
         p.cdA=this.imp.sceriffo.ricarica; this.priv(p);
+        if(v.inBotola!=null) this.tiraFuori(v);   // (entrata da meno di FINESTRA s: il colpo era partito prima)
         this.fx('sparo', p.x, p.y, { x2:Math.round(v.x), y2:Math.round(v.y) }); this.noto(p,'sceriffo');
         if(v.squadra==='ombre' || (v.squadra==='soli' && this.imp.sceriffo.soli)){
           if(v.protettoDa!=null){ this.rompiScudo(v, p); return; }
@@ -870,8 +982,8 @@ class Partita {
         return;
       case 'campanaro':
         if(p.campVolte<=0) return;
+        if(this.chiamaRiunione({ tipo:'campana', da:p.id })!=='ok') return;   // (un'altra chiamata è già in arrivo: il tocco non si consuma)
         p.campVolte--; this.priv(p); this.fx('campana', p.x, p.y);
-        this.iniziaRiunione({ tipo:'campana', da:p.id });
         return;
       case 'bengala':
         if(p.usiBeng<=0 || this.bengalaAttivo()) return;
@@ -942,7 +1054,7 @@ class Partita {
         this.avviso(v, 'Sei ipnotizzato: non riesci a muoverti!', 'ombra'); this.fx('ipnosi', v.x, v.y);
         return;
       case 'avvoltoio':
-        this.corpi=this.corpi.filter(k=>k!==c); p.mangiati++; this.priv(p); this.segna();
+        this.togliCorpo(c); p.mangiati++; this.priv(p); this.segna();
         this.fx('mangia', c.x, c.y); this.noto(p,'avvoltoio');
         if(p.mangiati>=this.imp.avvoltoio.quanti){ this.vincitore={ chi:'avvoltoio', id:p.id, perche:`L'Avvoltoio (${p.nome}) ha fatto sparire ${p.mangiati} lanterne.` }; this.chiudi(); }
         else this.avviso(p, `Lanterne mangiate: ${p.mangiati} su ${this.imp.avvoltoio.quanti}.`);
@@ -993,7 +1105,7 @@ class Partita {
       if(k!==v && modo==='normale' && k.squadra==='ombre'){ k.cd=Math.min(k.cd, this.imp.gatto.ricarica); this.priv(k); if(k.bot){ k.insegue=v.id; k.insegueFine=this.t+25; } }
       return;
     }
-    v.vivo=false; v.fantasma=true; v.protettoDa=null; v.path=[]; v.meta=null; v.attesa=0; v.segnala=null; v.ripara=null; v.veleno=null; v.rianima=null;
+    v.vivo=false; v.fantasma=true; v.protettoDa=null; v.path=[]; v.meta=null; v.attesa=0; v.segnala=null; v.ripara=null; v.veleno=null; v.rianima=null; v.tCade=this.t; this.nImp++;
     if(v.controllo) this.fineControllo(v);
     if(v.ruolo==='medico') this.gioc.forEach(q=>{ if(q.protettoDa===v.id) q.protettoDa=null; });
     const dove=postoCorpo(this.M,v.x,v.y), c={ id:v.id, x:dove.x, y:dove.y, stanza:stanzaDi(this.M,v).in, da:k.id, t:this.t };   // (il telo steso è largo: mai a cavallo di un muro)
@@ -1039,7 +1151,9 @@ class Partita {
   }
   // chi ha spento un'Esca segnala da solo, per la stessa strada di una segnalazione normale. Se nel frattempo è caduto o la lanterna non c'è più, niente riunione a suo nome.
   // Una riunione aperta da altri svuota la coda: due spegnimenti insieme fanno una riunione sola.
+  // ESCA E UN'ALTRA CHIAMATA: se una riunione è già in arrivo, l'Esca non ne apre un'altra (è la stessa)
   scattaEsca(){
+    if(this.riuInArrivo) return false;
     while(this.esche.length && this.t>=this.esche[0].t){
       const e=this.esche.shift(), k=this.per(e.da), c=this.corpi.find(q=>q.id===e.corpo);
       if(!k || !k.vivo || !c) continue;
@@ -1070,15 +1184,16 @@ class Partita {
     else if(tipo==='acqua' && S.acquaSi){ this.acqua={ fine:this.t+S.acqua, a:false, b:false }; this.fx('acqua', centro(CHIUSA_A.tx), centro(CHIUSA_A.ty), { globale:1 }); }
     else if(tipo==='buio') return this.attivaBuio(chi);
     else return;
-    this.cdBuio=S.ricarica; this.subitoATutti();
+    this.cdBuio=S.ricarica; this.subitoATutti(); this.nImp++;
     this.gioc.forEach(p=>this.priv(p));   // (a tutti, anche se la ricarica serve solo alle ombre: sul broker non si deve vedere a chi arriva un privato subito dopo un sabotaggio)
     this.assegnaRiparatori();
   }
   ripara(p, cosa){
     if(cosa==='luci') return this.fineBuio(true, p);
-    if(cosa==='console' && this.interf){ this.interf=null; this.liberaRip('console'); this.subitoATutti(); this.ev.tutti({ t:'avviso', testo:`${p.nome} ha riparato il telegrafo.` }); this.fx('luci', centro(CONSOLE.tx), centro(CONSOLE.ty), { globale:1 }); return; }
+    if(cosa==='console' && this.interf){ this.interf=null; this.nImp++; this.liberaRip('console'); this.subitoATutti(); this.ev.tutti({ t:'avviso', testo:`${p.nome} ha riparato il telegrafo.` }); this.fx('luci', centro(CONSOLE.tx), centro(CONSOLE.ty), { globale:1 }); return; }
     if((cosa==='chiusaA'||cosa==='chiusaB') && this.acqua){
-      this.acqua[cosa==='chiusaA'?'a':'b']=true; this.liberaRip(cosa); this.subitoATutti();
+      const k=cosa==='chiusaA'?'a':'b'; if(this.acqua[k] && !(this.acqua.a && this.acqua.b)) return;   // (chiusa già chiusa: niente secondo avviso «manca l'altra»)
+      this.acqua[k]=true; this.liberaRip(cosa); this.subitoATutti(); this.nImp++;
       if(this.acqua.a && this.acqua.b){ this.acqua=null; this.ev.tutti({ t:'avviso', testo:'Le chiuse sono chiuse: l\'acqua si ritira.' }); this.fx('luci', p.x, p.y, { globale:1 }); }
       else this.ev.tutti({ t:'avviso', testo:`${p.nome} ha chiuso una chiusa: manca l'altra!` });
     }
@@ -1087,7 +1202,7 @@ class Partita {
   fineSab(p){ if(this.buio) this.fineBuio(true,p); if(this.interf) this.ripara(p,'console'); if(this.acqua){ this.acqua.a=this.acqua.b=true; this.ripara(p,'chiusaA'); } }
   attivaBuio(chi){
     if(this.sabAttivo() || this.cdBuio>0) return;
-    this.buio={ fine:this.t+40 }; this.cdBuio=this.imp.sabotaggi.ricarica; this.subitoATutti();
+    this.buio={ fine:this.t+40 }; this.cdBuio=this.imp.sabotaggi.ricarica; this.subitoATutti(); this.nImp++;
     this.gioc.forEach(p=>this.priv(p));   // (a tutti, anche se la ricarica serve solo alle ombre: sul broker non si deve vedere a chi arriva un privato subito dopo un sabotaggio)
     this.fx('buio', centro(QUADRO.tx), centro(QUADRO.ty), { globale:1 });
     const vivi=this.gioc.filter(p=>p.bot&&p.vivo&&p.squadra!=='ombre');
@@ -1095,7 +1210,7 @@ class Partita {
   }
   fineBuio(riparato, chi){
     if(!this.buio) return;
-    this.buio=null; this.liberaRip('luci'); this.subitoATutti();
+    this.buio=null; this.liberaRip('luci'); this.subitoATutti(); this.nImp++;
     if(riparato && chi){ this.ev.tutti({ t:'avviso', testo:`${chi.nome} ha riacceso le luci.` }); this.fx('luci', centro(QUADRO.tx), centro(QUADRO.ty), { globale:1 }); }
   }
   controllaVittoria(){
@@ -1107,7 +1222,8 @@ class Partita {
     else if(tot>0 && fatti>=tot) this.vincitore={ chi:'ospiti', perche:'Tutti i preparativi della festa sono pronti.' };
     return !!this.vincitore;
   }
-  chiudi(){ this.fase='fine'; this.riu=null; this.fineFase=this.t; this.segna(); }
+  // FINE PARTITA MENTRE ARRIVANO AZIONI: dopo la fine nessuna mossa vale (esito 'fine'), salvo l'ultimo compito della fotofinish (vedi fatto). La riunione in arrivo non parte
+  chiudi(){ if(this.fase==='gioco'){ this.tFine=this.t; this.fineDetta=false; } this.fase='fine'; this.riu=null; this.riuInArrivo=null; this.fineFase=this.t; this.nImp++; this.segna(); }
 
   /* ----- chi esce e chi torna ----- */
   esce(id){
@@ -1137,14 +1253,18 @@ class Partita {
     if(this.fase==='gioco') return this.passoGioco(dt);
     if(this.fase==='riunione') return this.passoRiunione(dt);
     if(this.fase==='esito'){ if(this.t>=this.fineFase) this.dopoEsito(); return; }
+    // la fine decisa in gioco si annuncia ora (vedi foto): la foto parte subito
+    if(this.fase==='fine' && this.tFine!=null && !this.fineDetta && this.t-this.tFine>=FINESTRA){ this.fineDetta=true; this.subitoATutti(); }
   }
   passoGioco(dt){
+    if(this.riuInArrivo && this.t>=this.riuInArrivo.t){ const r=this.riuInArrivo; this.riuInArrivo=null; this.iniziaRiunione(Object.assign({}, r.m, { t0:r.t0 })); if(this.fase==='riunione') this.subitoATutti(); return; }
     if(this.esche.length && this.scattaEsca()) return;
     if(this.codaBot && this.codaBot.length) this.botRispondono();
     for(const g of this.gioc){ if(g.cd>0) g.cd-=dt; if(g.cdA>0) g.cdA-=dt; if(g.cdF>0) g.cdF-=dt; }
     if(this.cdBuio>0) this.cdBuio-=dt;
     if(this.buio && this.t>this.buio.fine) this.fineBuio(false);
     if(this.interf && this.t>this.interf.fine){ this.interf=null; this.liberaRip('console'); this.segna(); }
+    // (sui telefoni l'acqua finisce GRAZIA s prima: vedi foto)
     if(this.acqua && this.t>this.acqua.fine){ this.vincitore={ chi:'ombre', perche:"Le chiuse sono rimaste aperte: il palazzo è finito sott'acqua." }; this.acqua=null; this.chiudi(); return; }
     // il Burattinaio: il controllo finisce da solo; chi è controllato vede dove lo stanno portando
     for(const p of this.gioc){
@@ -1196,14 +1316,14 @@ class Partita {
   pulisci(p, corpoId){
     const c=this.corpi.find(k=>k.id===corpoId);
     if(!c || !p.vivo || p.cdA>0 || !this.vicino(p,c.x,c.y,R_ABIL)) return;
-    this.corpi=this.corpi.filter(k=>k!==c); p.cdA=this.imp.spazzino.ricarica; p.cd=Math.max(p.cd, this.imp.ricarica); this.priv(p); this.segna(); this.noto(p,'spazzino');
+    this.togliCorpo(c); p.cdA=this.imp.spazzino.ricarica; p.cd=Math.max(p.cd, this.imp.ricarica); this.priv(p); this.segna(); this.noto(p,'spazzino');
     this.fx('sparisce', c.x, c.y);
   }
   riaccendi(r, corpoId){
     const c=this.corpi.find(k=>k.id===corpoId), v=this.per(corpoId);
     if(!c || !v || v.uscito || !r.vivo || r.usiRian<=0 || !this.vicino(r,c.x,c.y,R_ABIL)) return;
     r.usiRian--; this.priv(r);
-    this.corpi=this.corpi.filter(k=>k!==c);
+    this.togliCorpo(c);
     v.vivo=true; v.fantasma=false; this.priv(v); this.teletrasporta(v, c.x, c.y);
     this.avviso(v, `${r.nome} ti ha riacceso: sei di nuovo in gioco!`); this.avviso(r, `Hai riacceso la lanterna di ${v.nome}.`);
     this.fx('rianima', c.x, c.y); this.segna(); this.noto(r,'rianimatore');
@@ -1248,7 +1368,7 @@ class Partita {
     else if(m.tipo==='botola' && m.prov){ b.provocaz++; this.vistoInBotola(b); this.fx('botola',b.x,b.y); b.attesa=0.6; b.azione=null; }   // il Giullare non va da nessuna parte: si fa solo vedere
     else if(m.tipo==='botola'){ this.vistoInBotola(b); this.fx('botola',b.x,b.y); b.x=centro(m.bo.va[0]); b.y=centro(m.bo.va[1]); b.attesa=0.3+rnd()*0.6; b.azione=null; }
     else if(m.tipo==='giro'){ b.attesa=1.5+rnd()*3; b.azione=null; }
-    else if(m.tipo==='campana'){ b.meta=null; if(b.vivo && b.campane>0 && this.vicino(b,centro(CAMPANA.tx),centro(CAMPANA.ty),R_USA)){ b.campane--; this.iniziaRiunione({ tipo:'campana', da:b.id }); } return; }
+    else if(m.tipo==='campana'){ b.meta=null; if(b.vivo && b.campane>0 && this.vicino(b,centro(CAMPANA.tx),centro(CAMPANA.ty),R_USA) && this.chiamaRiunione({ tipo:'campana', da:b.id })==='ok') b.campane--; return; }   // (i Bot come le persone: passano dalla FINESTRA)
     else b.azione=null;
     b.meta=null;
   }
@@ -1360,17 +1480,20 @@ class Partita {
   }
   // le botole: si entra (e si resta nascosti), ci si sposta tra quelle collegate restando dentro, si esce da quella in cui si è.
   // Ombre e Ingegnere viaggiano; il Giullare entra, resta ed esce dalla stessa.
+  // Fuori dalla botola, «esci» e «verso» non fanno entrare: arrivati in ritardo (dopo l'uscita) non devono rimandare dentro
   botola(p, m){
-    if(this.fase!=='gioco'||!p.vivo) return;
-    const puo = p.squadra==='ombre' || p.ruolo==='ingegnere' || p.ruolo==='giullare'; if(!puo) return;
+    if(this.fase!=='gioco') return this.tardi(); if(!p.vivo) return 'spento';
+    const puo = p.squadra==='ombre' || p.ruolo==='ingegnere' || p.ruolo==='giullare'; if(!puo) return 'no';
     if(p.inBotola==null){
-      const i=ESTREMI.findIndex(e=>this.vicino(p,centro(e.tx),centro(e.ty),0.9*T)); if(i<0) return;
+      if(m.esci || m.verso!=null) return 'no';
+      const i=ESTREMI.findIndex(e=>this.vicino(p,centro(e.tx),centro(e.ty),0.9*T)); if(i<0) return 'lontano';
       this.vistoInBotola(p); this.fx('botola',p.x,p.y);
-      p.inBotola=i; this.teletrasporta(p, centro(ESTREMI[i].tx), centro(ESTREMI[i].ty)); this.priv(p); return;
+      p.inBotola=i; p.tBotola=this.t; this.teletrasporta(p, centro(ESTREMI[i].tx), centro(ESTREMI[i].ty)); this.priv(p); return 'ok';
     }
-    if(m.esci){ const e=ESTREMI[p.inBotola]; p.inBotola=null; this.teletrasporta(p, centro(e.tx), centro(e.ty)); this.vistoInBotola(p); this.fx('botola',p.x,p.y); this.priv(p); return; }
-    const j=+m.verso; if(p.ruolo==='giullare' || !botoleCollegate(p.inBotola).includes(j)) return;
-    p.inBotola=j; this.teletrasporta(p, centro(ESTREMI[j].tx), centro(ESTREMI[j].ty)); this.priv(p);
+    if(m.esci){ const e=ESTREMI[p.inBotola]; p.inBotola=null; this.teletrasporta(p, centro(e.tx), centro(e.ty)); this.vistoInBotola(p); this.fx('botola',p.x,p.y); this.priv(p); return 'ok'; }
+    if(m.verso==null) return 'no';
+    const j=+m.verso; if(p.ruolo==='giullare' || !botoleCollegate(p.inBotola).includes(j)) return 'no';
+    p.inBotola=j; this.teletrasporta(p, centro(ESTREMI[j].tx), centro(ESTREMI[j].ty)); this.priv(p); return 'ok';
   }
   // chi esce da una botola davanti a un ospite si fa vedere
   vistoInBotola(p){
@@ -1479,7 +1602,7 @@ class Partita {
     if(b.bloccatoFine>this.t) return;
     if(b.segnala!=null){
       b.segnala-=dt;
-      if(b.segnala<=0){ const c=b.corpoVisto; b.segnala=null; if(b.vivo && this.corpi.includes(c)){ this.iniziaRiunione({ tipo:'corpo', da:b.id, corpo:c.id, stanza:c.stanza }); return; } }
+      if(b.segnala<=0){ const c=b.corpoVisto; b.segnala=null; if(b.vivo && this.corpi.includes(c)){ this.chiamaRiunione({ tipo:'corpo', da:b.id, corpo:c.id, stanza:c.stanza }); return; } }
     }
     if(b.attesa>0){ b.attesa-=dt; if(b.attesa<=0) this.fineAttesa(b); return; }
     if(b.meta && b.meta.tipo==='caccia'){
@@ -1497,8 +1620,10 @@ class Partita {
     // il veleno non aspetta la riunione: chi era avvelenato cade adesso
     const avvelenati=[];
     for(const p of this.gioc){ if(p.veleno && p.vivo){ const k=this.per(p.veleno.da)||p; p.veleno=null; this.spegni(k,p,'veleno'); if(!p.vivo) avvelenati.push(p); } }
-    this.esche=[];   // (anche un'Esca caduta col veleno qui sopra: la riunione è già questa)
+    this.esche=[]; this.riuInArrivo=null;   // (anche un'Esca caduta col veleno qui sopra: la riunione è già questa)
     if(this.vincitore) return;
+    // chi stava riaccendendo o pulendo una lanterna: la riunione lo interrompe, e glielo si dice (prima era in silenzio)
+    for(const p of this.gioc){ if(p.rianima && !p.bot) this.avviso(p, p.rianima.pulisci ? 'È cominciata la riunione: la lanterna spenta è rimasta lì.' : 'È cominciata la riunione: la lanterna non si è riaccesa.'); }
     this.fase='riunione'; this.codaBot=[];   // (in riunione la chat di prossimità è spenta: le risposte dei Bot in attesa cadono)
     const R={ motivo:m.tipo, da:m.da, corpo:m.corpo!=null?m.corpo:null, stanza:m.stanza||null, t:0, t0:this.t, disc:this.imp.discussione, voto:this.imp.voto, voti:new Map(), coda:[], chiusa:false,
       zittiti:this.gioc.filter(p=>p.vivo&&p.zittito).map(p=>p.id) };
@@ -1508,6 +1633,8 @@ class Partita {
     this.scrivi(null, corpo ? `${da.nome} ha segnalato una lanterna spenta.` : `${da.nome} ha suonato la campana.`, { da:da.id, tuo: corpo ? 'Hai segnalato una lanterna spenta.' : 'Hai suonato la campana.' });
     for(const p of this.gioc){ if(p.fantasmaRuolo==='medium' && p.foto && p.fotoMostrata!==p.foto.seme){ p.fotoMostrata=p.foto.seme; this.scrivi(null, "Una foto dall'aldilà:", { foto:p.foto }); } }   // (senza nome: chi l'ha mandata lo sa già)
     for(const v of avvelenati) this.scrivi(null, 'Proprio adesso si è spenta un\'altra lanterna.');
+    // le lanterne spente mentre la riunione stava partendo (la FINESTRA dopo la chiamata): si dice che sono appena successe, come col veleno
+    if(m.t0!=null) for(const c of this.corpi) if(c.t>=m.t0-FINESTRA && c.id!==m.corpo) this.scrivi(null, 'Proprio adesso si è spenta un\'altra lanterna.');
     for(const c of this.celebri) this.scrivi(null, `${this.nomeDi(c.id)} era una Celebrità: la sua lanterna si è spenta ${c.stanza} circa ${Math.max(1,Math.round(this.t-c.t))} secondi fa.`);
     this.celebri=[];
     // il Bracconiere scopre chi è passato nella trappola piena (solo i ruoli, in ordine sparso)
@@ -1523,7 +1650,7 @@ class Partita {
     for(const b of parlano){ for(const l of this.frasiBot(b,m)){ R.coda.push({ t:Math.min(tt,finePar), chi:b, testo:l.testo, eff:l.eff, az:l.az }); tt+=1.2+rnd()*1.3; } }
     for(const b of this.gioc.filter(p=>p.vivo&&p.bot)) R.coda.push({ t:R.disc+1.5+rnd()*R.voto*0.6, chi:b, voto:true });
     R.coda.sort((a,b)=>a.t-b.t);
-    this.corpi=[]; this.buio=null; this.interf=null; this.acqua=null; this.nebbiaFine=0; this.bengalaFine=0;
+    this.corpi=[]; this.spariti=[]; this.buio=null; this.interf=null; this.acqua=null; this.nebbiaFine=0; this.bengalaFine=0; this.nImp++;
     this.gioc.forEach(p=>{ if(p.controllo) this.fineControllo(p); p.ripara=null; });
     this.gioc.forEach(p=>{ p.path=[]; p.meta=null; p.attesa=0; p.azione=null; p.muove=false; p.veleno=null; p.rianima=null; p.aspetto=null; p.bloccatoFine=0; p.inBotola=null;
       p.tentativi = p.ruolo==='indovino' ? this.imp.indovino.perRiunione : 0; p.osserva=false; this.priv(p); });
@@ -1696,10 +1823,20 @@ class Partita {
     this.avviso(p, `Dal prossimo round sarai ${RUOLI[v.ruolo].nome}.`);
   }
   votiPer(id){ let n=0; for(const [chi,v] of this.riu.voti) if(v===id) n+=this.peso(chi); return n; }
+  // la fine del voto come la vede il telefono: GRAZIA s prima della chiusura vera (il sigillo messo all'ultimo secondo visto arriva in tempo).
+  // Con tutti i sigilli messi vale l'attesa di DUR_SIGILLI, senza margine: nessun voto è più in viaggio
+  fineVotoVisto(R){ return Math.min(R.disc+R.voto-GRAZIA, R.conta!=null?R.conta:Infinity); }
+  // VOTO ALL'ULTIMO: vale se arriva prima della chiusura vera (GRAZIA dopo la fine vista). VOTO CAMBIATO: il primo sigillo resta, il secondo risponde 'votato'.
+  // ZITTITO: vota come gli altri (zittito vuol dire che non parla). Chi cade in riunione non vota più
   vota(p, su){
-    const R=this.riu; if(this.fase!=='riunione'||!R||R.chiusa||!p.vivo||R.t<R.disc||R.voti.has(p.id)) return;
-    if(su!=='salta'){ const x=this.per(su); if(!x||!x.vivo) return; }   // (anche se stessi: si può sempre)
-    R.voti.set(p.id, su); this.segna();
+    const R=this.riu;
+    if(this.fase==='fine') return 'fine';
+    if(this.fase!=='riunione'||!R||R.chiusa) return 'chiuso';
+    if(!p.vivo) return 'spento';
+    if(R.t<R.disc) return 'presto';
+    if(R.voti.has(p.id)) return R.voti.get(p.id)===su ? 'ok' : 'votato';
+    if(su!=='salta'){ const x=this.per(su); if(!x) return 'no'; if(!x.vivo) return 'giaSpenta'; }   // (anche se stessi: si può sempre)
+    R.voti.set(p.id, su); this.segna(); return 'ok';
   }
   // quante ombre restano secondo chi gioca: se i ruoli si vedono quando uno esce lo sanno tutti, se no si parte dal numero iniziale
   ombreNote(){
@@ -3525,6 +3662,7 @@ const bl = (o, X, Y, Z) => [(o.x + X)*T, (o.y + o.h - Y - Z)*T];
 const VIVO_SOLO_PARTICELLE = { aiuola:1 };   // l'acqua del compito (gocce): non dipende da dove sta il disegno
 // la fiamma di una candela vera, piccola: x, y è la base dello stoppino
 function fiammaBl(c, x, y, t, k, s = 1){
+  if(LUCI_ACCESE && !LUCI_ACCESE(x, y)) return;   // (luci staccate: la fiamma non c'è)
   const fl = 0.8 + 0.2*Math.sin(t*11 + k*2.3) + 0.06*Math.sin(t*27 + k);
   c.fillStyle = 'rgba(255,190,90,' + (0.14*fl).toFixed(3) + ')'; c.beginPath(); c.arc(x, y - 1.5*s, 4.2*s, 0, 7); c.fill();
   c.fillStyle = 'rgba(255,214,130,.92)'; c.beginPath(); c.ellipse(x, y - 1.3*fl*s, 1.05*s, 2.3*fl*s, 0, 0, 7); c.fill();
@@ -3600,6 +3738,7 @@ function torceVive(c, M, t, x0, y0, x1, y1){
   if(M._im && M._im.stato === 2 && M._im.fiamme && immAcceso()) return;   // (con le immagini di Blender anche le fiamme dei muri arrivano da lì, in candeleVive)
   for(const q of prepara(M).torce){
     if(q.x < x0 || q.x > x1 || q.y < y0 || q.y > y1) continue;
+    if(LUCI_ACCESE && !LUCI_ACCESE(q.x, q.y)) continue;
     const fl = 0.6 + Math.sin(t*9 + q.x)*0.2 + Math.sin(t*23 + q.y)*0.1;
     const g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, 26); g.addColorStop(0, 'rgba(255,180,80,' + (0.28*fl).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,180,80,0)');
     c.fillStyle = g; c.fillRect(q.x - 26, q.y - 26, 52, 52);
@@ -3708,6 +3847,42 @@ function barca(res){
     c.fillStyle = '#2a2420'; c.fillRect(sx + 7, sy + 1, 6, 4); c.fillStyle = '#3a3020'; c.fillRect(sx + 7, -27, 6, 9); c.fillStyle = 'rgba(246,217,153,.9)'; c.fillRect(sx + 8.5, -25.5, 3, 6); c.fillStyle = '#2a2420'; c.fillRect(sx + 6.5, -28, 7, 2);
     return { cv, px:cv.width*cv.height, ox, oy, w:W, h:H };
   });
+}
+
+// ── Le luci che si spengono: il pittore dice quali fiamme sono accese (null = tutte). Le torce e le candele spente non si disegnano ──
+let LUCI_ACCESE = null;
+function luciAccese(f){ LUCI_ACCESE = f; }
+
+// ── L'acqua alta: dove può stare e quanto dista dalle due chiuse, una volta per mappa ──
+// dA, dB: distanza in caselle dalla chiusa del Molo e da quella della Cantina, camminando sul pavimento (-1 = non ci arriva). La maschera dice dove l'acqua si vede:
+// pavimento libero, senza l'impronta dei mobili e senza la faccia dei muri (che coprono il pavimento a nord). Si fa a 12 punti per casella, con i bordi morbidi.
+const ACQUA_K = 12, ACQUA_MURO = 0.8;
+function acquaDati(M, A, B){
+  if(M._acq) return M._acq;
+  const { GW, GH, N, PAV, MURO } = M, K = ACQUA_K;
+  const dist = (sx, sy) => {   // il cammino più corto, in diagonale solo se i due lati sono liberi (l'acqua non passa negli spigoli dei muri)
+    const d = new Float32Array(N).fill(-1), q = [], ok = i => PAV[i] !== -2;
+    const s = sy*GW + sx; if(s < 0 || s >= N || !ok(s)) return d;
+    d[s] = 0; q.push(s);
+    for(let h = 0; h < q.length; h++){
+      const c = q[h], cx = c%GW, cy = (c/GW)|0;
+      for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){
+        if(!dx && !dy) continue; const nx = cx + dx, ny = cy + dy; if(nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
+        const n = ny*GW + nx; if(!ok(n)) continue;
+        if(dx && dy && (!ok(cy*GW + nx) || !ok(ny*GW + cx))) continue;
+        const w = d[c] + (dx && dy ? 1.414 : 1); if(d[n] < 0 || w < d[n] - 1e-4){ d[n] = w; q.push(n); }
+      }
+    }
+    return d;
+  };
+  const dA = dist(A.tx, A.ty), dB = dist(B.tx, B.ty); let dMax = 1; for(let i = 0; i < N; i++){ if(dA[i] > dMax) dMax = dA[i]; if(dB[i] > dMax) dMax = dB[i]; }
+  const cv = document.createElement('canvas'); cv.width = GW*K; cv.height = GH*K; const g = cv.getContext('2d');
+  g.fillStyle = '#fff';
+  for(let y = 0; y < GH; y++){ let x0 = -1; for(let x = 0; x <= GW; x++){ const p = x < GW && PAV[y*GW + x] !== -2; if(p && x0 < 0) x0 = x; if(!p && x0 >= 0){ g.fillRect(x0*K, y*K, (x - x0)*K, K); x0 = -1; } } }
+  g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000';
+  for(const o of M.ostacoli) g.fillRect((o.x - 0.06)*K, (o.y - 0.06)*K, (o.w + 0.12)*K, (o.h + 0.12)*K);
+  for(let y = 1; y < GH; y++) for(let x = 0; x < GW; x++) if(MURO[y*GW + x] && PAV[(y - 1)*GW + x] !== -2) g.fillRect(x*K, (y - ACQUA_MURO)*K, K, ACQUA_MURO*K);
+  return M._acq = { dA, dB, dMax, mask:cv, K };
 }
 
 // ===== lenzuolo.js =====
@@ -4682,6 +4857,7 @@ class Pittore {
     this.polvere = Array.from({length:26}, ()=>({ x:Math.random(), y:Math.random(), v:0.2+Math.random()*0.5, f:Math.random()*6 }));
     this.passi = {}; this.onde = []; this.ondaDi = {};
     this.fum = {};   // i fumetti della chat: lo spostamento morbido di ogni pila (per non coprirsi)
+    this.acquaOnde = []; this.ondaA = {}; this.acqCov = null; this.acqN = 0;   // i cerchi nell'acqua
     this.ridotto = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);   // chi non vuole movimento: i fumetti non scivolano
   }
   misura(){
@@ -4710,6 +4886,11 @@ class Pittore {
     this.misura();
     const c=this.ctx, W=this.cv.width, H=this.cv.height, s=(S.scala||this.SCALA)*this.DPR, M=S.M, t=S.t, io=S.io, dt=S.dt||0.016;
     const seg = S.segui || io;
+    // le luci (solo per chi gioca da ospite: le ombre vedono comunque): sfarfallio e buio; dopo la riparazione la luce torna dal quadro, una stanza dopo l'altra
+    const liv = S.buio ? livelloLuci(this.ridotto ? (S.buioE < 0.12 ? 1 : 0) : S.buioE) : 1;
+    const onda = !S.buio && S.buioR >= 0 && S.buioR < LUCI_RITORNO ? S.buioR*LUCI_ONDA*T : -1, qx = centro(QUADRO.tx), qy = centro(QUADRO.ty);
+    luciAccese(S.buio ? () => liv > 0.5 : onda >= 0 ? (x, y) => Math.hypot(x - qx, y - qy) < onda : null);
+    this.acqCov = null;
     if(!this.cam.ok){ this.cam.x=seg.x; this.cam.y=seg.y; this.cam.ok=true; }
     this.cam.x += (seg.x-this.cam.x)*0.2; this.cam.y += (seg.y-this.cam.y)*0.2;
     if(Math.hypot(seg.x-this.cam.x, seg.y-this.cam.y) > 8*T){ this.cam.x=seg.x; this.cam.y=seg.y; }
@@ -4757,6 +4938,7 @@ class Pittore {
     mareVivo(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+T, this.onde, res);
     torceVive(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+2*T);
     candeleVive(c, M, t, cx-T, cy-T, cx+W/s+T, cy+H/s+2*T);   // (con le immagini di Blender: le fiamme delle candele sul pavimento)
+    if(S.palazzo && S.acquaV) this.acquaDisegna(S, c, cx, cy, s, W, H, t);   // l'acqua alta: sul pavimento, sotto mobili e persone
     const vx0=cx-3*T, vy0=cy-3*T, vx1=cx+W/s+3*T, vy1=cy+H/s+3*T;
     const campanaImm=!!(S.palazzo && imm && immHa(M,'campana'));
     if(S.palazzo){
@@ -4764,7 +4946,6 @@ class Pittore {
       if(!campanaImm) this.postazione({ tx:CAMPANA.tx, ty:CAMPANA.ty, tipo:'campana' },false,t);   // (con l'immagine di Blender la campana sta tra i mobili, in ordine di profondità)
       this.postazione({ tx:QUADRO.tx, ty:QUADRO.ty, tipo:'quadro' },!!S.buio,t);
       [[CHIUSA_A,0],[CHIUSA_B,1]].forEach(([q,i])=>this.postazione({ tx:q.tx, ty:q.ty, tipo:'chiusa' }, !!(S.chiuse&&S.chiuse[i]), t));
-      if(S.interf){ const x=centro(CONSOLE.tx), y=centro(CONSOLE.ty), g=c.createRadialGradient(x,y,0,x,y,40); g.addColorStop(0,`rgba(255,180,90,${0.4+0.2*Math.sin(t*6)})`); g.addColorStop(1,'rgba(255,180,90,0)'); c.fillStyle=g; c.fillRect(x-40,y-40,80,80); }
       if(S.botole) for(const e of ESTREMI){ const x=centro(e.tx), y=centro(e.ty); c.fillStyle='#121019'; this.ell(x,y,12,12); c.fill(); c.strokeStyle='#4a3b52'; c.lineWidth=2; c.stroke(); c.beginPath(); c.moveTo(x-8,y); c.lineTo(x+8,y); c.moveTo(x,y-8); c.lineTo(x,y+8); c.stroke(); }
       // le telecamere (fisse e della Sentinella): la lucina rossa lampeggia quando qualcuno guarda gli schermi
       for(const k of S.telecamere||[]){ const x=k[0], y=k[1];
@@ -4821,12 +5002,17 @@ class Pittore {
         // sul bordo del molo i passi fanno cerchi nell'acqua
         if(t-(this.ondaDi[p.id]||0)>0.5 && this.onde.length<24){ const px=Math.floor(p.x/T), py=Math.floor((p.y+T*0.36)/T);
           for(const [dx,dy] of [[0,1],[1,0],[-1,0],[0,-1]]){ const n=(py+dy)*M.GW+px+dx; if(px+dx>=0 && px+dx<M.GW && py+dy>=0 && py+dy<M.GH && M.ACQUA[n] && M.PAV[n]===-2){ this.ondaDi[p.id]=t; this.onde.push({ x:(px+dx+0.5)*T-dx*10+(Math.random()-0.5)*10, y:(py+dy+0.5)*T-dy*12+(Math.random()-0.5)*6, t0:t, r:20 }); break; } } } }
+      if(this.acqCov && !this.ridotto && p.muove && !p.fantasma && t-(this.ondaA[p.id]||0)>0.26 && this.acqCov((p.x/T)|0, ((p.y+T*0.3)/T)|0)>0.4){   // chi cammina nell'acqua fa cerchi e spruzzi
+        this.ondaA[p.id]=t; if(this.acquaOnde.length<40) this.acquaOnde.push({ x:p.x, y:p.y+T*0.34, t0:t });
+        this.sparpaglia('goccia', p.x+(Math.random()-0.5)*10, p.y+T*0.3, 3, { v:46, su:70, vita:0.55, r:2.6 }); }
       const grigio=S.neb && p!==io;
       if(S.segnati && S.segnati.indexOf(p.id)>=0 && !grigio){ const g=c.createRadialGradient(p.x,p.y-T*0.4,0,p.x,p.y-T*0.4,T*1.2); g.addColorStop(0,`rgba(${ROSSO},${0.45+0.2*Math.sin(t*6)})`); g.addColorStop(1,`rgba(${ROSSO},0)`); c.fillStyle=g; c.fillRect(p.x-T*1.2,p.y-T*1.6,T*2.4,T*2.4); }
       if(S.traccia && p.id===S.traccia){ c.strokeStyle=`rgba(${ORO},.8)`; c.lineWidth=2; c.setLineDash([4,4]); this.ell(p.x,p.y+T*0.3,T*0.55,T*0.22); c.stroke(); c.setLineDash([]); }
       const ini=performance.now();
       this.persona(p,t,{ alfa:p.fantasma?0.45:1, grigio, nome:!grigio, coloreNome:p.coloreNome||(p.alleata?'#f2a7b6':null) });
       this.spesa+=performance.now()-ini;
+      if(this.acqCov && !p.fantasma && this.acqCov((p.x/T)|0, ((p.y+T*0.3)/T)|0)>0.4){   // la linea dell'acqua intorno ai piedi
+        const a=0.4+0.15*Math.sin(t*3+p.x); c.fillStyle='rgba(40,110,150,.28)'; this.ell(p.x,p.y+T*0.3,T*0.46,T*0.16); c.fill(); c.strokeStyle=`rgba(215,240,252,${a})`; c.lineWidth=1.4; this.ell(p.x,p.y+T*0.3,T*0.46,T*0.16); c.stroke(); }
       if(S.scudi && S.scudi.indexOf(p.id)>=0 && !p.fantasma){ const a=0.35+0.15*Math.sin(t*3); c.strokeStyle=`rgba(120,220,255,${a+0.25})`; c.lineWidth=2; this.ell(p.x,p.y-T*0.45,T*0.62,T*0.85); c.stroke(); c.fillStyle=`rgba(120,220,255,${a*0.25})`; c.fill(); }
     }
     if(io.mostra && !io.fantasma && coperto) this.persona(io,t,{ alfa:0.55, nome:false });   // la propria sagoma trasparente: dietro un pilastro o uno scaffale chi gioca non si perde (solo la sua, gli altri restano nascosti)
@@ -4858,9 +5044,18 @@ class Pittore {
     if(S.freccia) this.freccia(io, S.freccia, t);
     if(S.neb){ c.setTransform(1,0,0,1,0,0); for(let i=0;i<6;i++){ const x=((t*20*(i%2?1:-1)+i*W/3)%(W*1.4))-W*0.2, y=H*(0.15+i*0.14); const g=c.createRadialGradient(x,y,0,x,y,W*0.35); g.addColorStop(0,'rgba(170,175,190,.18)'); g.addColorStop(1,'rgba(170,175,190,0)'); c.fillStyle=g; c.fillRect(0,0,W,H); } c.setTransform(s,0,0,s,-cx*s,-cy*s); }
     if(!anima){
-      const o=this.octx, Rf=R*(1+0.015*Math.sin(t*7)+0.01*Math.sin(t*13)), oW=this.ombra.width, oH=this.ombra.height, k=oW/W, spento=!!S.buio;
+      const o=this.octx, Rf=R*(1+0.015*Math.sin(t*7)+0.01*Math.sin(t*13)), oW=this.ombra.width, oH=this.ombra.height, k=oW/W;
+      // il buio: sempre un velo del .8; mentre le luci sono staccate se ne aggiunge un secondo (quasi nero). Dopo la riparazione il secondo velo
+      // si apre in un cerchio che parte dal quadro e cresce: la luce arriva stanza per stanza
+      const extra = S.buio ? 1-liv : (onda >= 0 ? 1 : 0), spento = !!S.buio && extra > 0.5;
       o.setTransform(1,0,0,1,0,0); o.globalCompositeOperation='source-over'; o.clearRect(0,0,oW,oH);
-      o.fillStyle=spento?'rgba(4,6,14,.9)':'rgba(4,6,14,.8)'; o.fillRect(0,0,oW,oH);
+      if(extra>0){
+        o.fillStyle=`rgba(2,3,9,${(0.83*extra).toFixed(3)})`; o.fillRect(0,0,oW,oH);
+        if(onda>=0){ o.setTransform(s*k,0,0,s*k,-cx*s*k,-cy*s*k); o.globalCompositeOperation='destination-out';
+          const g=o.createRadialGradient(qx,qy,onda*0.6,qx,qy,onda+2.5*T); g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(1,'rgba(0,0,0,0)'); o.fillStyle=g; const q=onda+3*T; o.fillRect(qx-q,qy-q,2*q,2*q); o.setTransform(1,0,0,1,0,0); }
+        o.globalCompositeOperation='destination-over';
+      }
+      o.fillStyle='rgba(4,6,14,.8)'; o.fillRect(0,0,oW,oH); o.globalCompositeOperation='source-over';
       o.setTransform(s*k,0,0,s*k,-cx*s*k,-cy*s*k);
       // la pianta dei muri sta nel buio: oltre la lanterna si capisce dove continua la stanza e dov'è la porta (il varco nella riga). Non mostra nessuno
       if(!spento){ o.strokeStyle='rgba(216,195,160,.3)'; o.lineWidth=1.6*(this.DPR||1)/s; o.lineJoin='round'; o.stroke(this.pianta(M)); }
@@ -4896,10 +5091,17 @@ class Pittore {
       c.strokeStyle=`rgba(${ORO},.2)`; c.setLineDash([2,6]); c.beginPath(); c.arc(io.x,io.y,P.Rm,0,Math.PI*2); c.stroke(); c.setLineDash([]); c.lineDashOffset=0; }
     if(S.bolle && S.bolle.length){ c.setTransform(s,0,0,s,-cx*s,-cy*s); this.vista={ x0:cx, y0:cy, x1:cx+W/s, y1:cy+H/s }; this.bolle(S); }   // i fumetti della chat di prossimità, sopra il buio
     if(S.urlo) this.freccia(io, S.urlo, t);
+    // le scintille del quadro delle luci (buio) e del telegrafo (interferenza): si vedono anche al buio, da chi è nella stanza
+    if(S.palazzo){ c.setTransform(s,0,0,s,-cx*s,-cy*s); const vx=cx-60, vy=cy-60, vw=cx+W/s+60, vh=cy+H/s+60;
+      if(onda>=0){   // la luce che torna: un anello caldo che parte dal quadro e corre fino ai muri
+        const g=c.createRadialGradient(qx,qy,Math.max(0,onda-4*T),qx,qy,onda+0.7*T), a=0.2*(1-S.buioR/LUCI_RITORNO);
+        g.addColorStop(0,'rgba(255,205,130,0)'); g.addColorStop(0.82,`rgba(255,205,130,${a.toFixed(3)})`); g.addColorStop(1,'rgba(255,205,130,0)');
+        c.globalCompositeOperation='lighter'; c.fillStyle=g; c.fillRect(cx,cy,W/s,H/s); c.globalCompositeOperation='source-over'; }
+      if((S.buioE>=0 || (S.buioR>=0 && S.buioR<0.7)) && qx>vx && qx<vw && qy>vy && qy<vh) this.elettrico(c, qx, qy, t, '255,214,120', S.buioE>=0 ? 1 : 1.7-S.buioR*2);
+      if(S.interf){ const ex=centro(CONSOLE.tx), ey=centro(CONSOLE.ty); if(ex>vx && ex<vw && ey>vy && ey<vh) this.elettrico(c, ex, ey, t, '130,225,255', 1); } }
     c.setTransform(1,0,0,1,0,0);
     if(S.bengala){ c.fillStyle=`rgba(255,220,180,${0.08+0.04*Math.sin(t*20)})`; c.fillRect(0,0,W,H); }
-    if(S.acqua){ c.fillStyle=`rgba(40,110,190,${0.16+0.05*Math.sin(t*2)})`; c.fillRect(0,0,W,H); c.strokeStyle='rgba(150,210,255,.18)'; c.lineWidth=2*this.DPR; for(let y=((t*30)%40)*this.DPR;y<H;y+=40*this.DPR){ c.beginPath(); for(let x=0;x<=W;x+=20*this.DPR) c.lineTo(x, y+Math.sin(x/(30*this.DPR)+t*2)*4*this.DPR); c.stroke(); } }
-    if(S.buio){ const a=0.35+0.2*Math.sin(t*5); const g=c.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.75); g.addColorStop(0,`rgba(${ROSSO},0)`); g.addColorStop(1,`rgba(${ROSSO},${a})`); c.fillStyle=g; c.fillRect(0,0,W,H); }
+    if(S.interf && S.palazzo) this.disturbo(c, W, H, t);   // il disturbo vero: neve, righe che tremano
     for(const e of S.effetti||[]) if(e.schermo) this.effettoSchermo(e,t,W,H);
     if(S.cctv){ // l'aspetto delle telecamere: verde scuro, righe, scritta
       c.fillStyle='rgba(40,90,60,.22)'; c.fillRect(0,0,W,H);
@@ -4949,7 +5151,7 @@ class Pittore {
   }
   effettoSchermo(e,t,W,H){
     const c=this.ctx, f=Math.min(1,(t-e.t0)/e.dur), a=1-f;
-    if(e.k==='bengala'||e.k==='luci'){ c.fillStyle=`rgba(255,240,210,${0.7*a*a})`; c.fillRect(0,0,W,H); }
+    if(e.k==='bengala'||e.k==='luci'){ c.fillStyle=`rgba(255,240,210,${(e.k==='luci'?0.08:0.7)*a*a})`; c.fillRect(0,0,W,H); }
     else if(e.k==='spegni'){ c.fillStyle=`rgba(${ROSSO},${0.35*a})`; c.fillRect(0,0,W,H); }
   }
   // i bordi fra pavimento e muro, una volta sola per mappa: righe unite, così il disegno a ogni fotogramma è una riga sola
@@ -5066,10 +5268,15 @@ class Pittore {
   freccia(io, f, t){
     const c=this.ctx, dx=f.x-io.x, dy=f.y-io.y, d=Math.hypot(dx,dy); if(d<3*T) return;
     const a=Math.atan2(dy,dx), su=Math.max(0,-dy/d), r=(2.1+su*su*1.15)*T+Math.sin(t*5)*3, x=io.x+Math.cos(a)*r, y=io.y+Math.sin(a)*r;   // (verso l'alto gira più largo: non copre il mio nome)
-    c.save(); c.translate(x,y); c.rotate(a);
-    c.fillStyle=f.col; c.strokeStyle='rgba(9,11,22,.8)'; c.lineWidth=3; c.lineJoin='round';
-    c.beginPath(); c.moveTo(15,0); c.lineTo(-9,-7); c.lineTo(-4,0); c.lineTo(-9,7); c.closePath(); c.stroke(); c.fill();
-    c.restore();
+    let tx=x, ty=y, al=1, ghost=0;
+    if(f.glitch && !this.ridotto){   // con l'interferenza la freccia trema, sparisce a tratti e si sdoppia (cieleste e rosa)
+      const k=Math.floor(t*15), h=n=>{ const v=Math.sin(k*12.9898+n*78.233)*43758.5453; return v-Math.floor(v); };
+      tx+=(h(1)-0.5)*9; ty+=(h(2)-0.5)*9; al=h(3)<0.22?0.12:(h(4)<0.3?0.55:1); ghost=h(5)<0.5?1:0;
+    }
+    const pezzo=(px,py,col,alfa)=>{ c.save(); c.globalAlpha=alfa; c.translate(px,py); c.rotate(a); c.fillStyle=col; c.strokeStyle='rgba(9,11,22,.8)'; c.lineWidth=3; c.lineJoin='round';
+      c.beginPath(); c.moveTo(15,0); c.lineTo(-9,-7); c.lineTo(-4,0); c.lineTo(-9,7); c.closePath(); c.stroke(); c.fill(); c.restore(); };
+    if(ghost){ pezzo(tx-5,ty,'#6ef0ff',al*0.55); pezzo(tx+5,ty,'#ff5a8c',al*0.5); }
+    pezzo(tx,ty,f.col,al);
   }
   postazione(p,attiva,t){
     const c=this.ctx, x=centro(p.tx), y=centro(p.ty), tipo=p.tipo||'compito';
@@ -5263,6 +5470,139 @@ function disegnaMappa(cv, M, segni, maxW, maxH, sopra){
     m.fillStyle='rgba(241,232,214,.92)'; m.fillText(s.nome,x,y);
   }
 }
+
+// ======================================================================================================
+//  I SABOTAGGI, DA VEDERE (tutto dipende dai tempi dello stato che manda l'host: lo stesso su ogni telefono)
+// ======================================================================================================
+// Livello delle luci nel buio (e = secondi dall'inizio): un attimo di sfarfallio, poi buio per davvero. 1 = accese, 0 = spente.
+function livelloLuci(e){
+  if(e < 0.12) return 1; if(e < 0.2) return 0.1; if(e < 0.34) return 0.95; if(e < 0.42) return 0.06;
+  if(e < 0.56) return 0.8; if(e < 0.64) return 0.03; if(e < 0.74) return 0.55; if(e < 0.8) return 0.05;
+  return 0;
+}
+const LUCI_ONDA = 14, LUCI_RITORNO = 4.8;   // la luce che torna: caselle al secondo dal quadro, e quanto dura (il palazzo è lungo circa 65 caselle)
+const ACQUA_RIT = 6;                         // l'acqua che si ritira dopo la chiusa: caselle al secondo, a partire dalla chiusa
+const ACQUA_BORDO = 1.8;                     // quanto è morbido il bordo dell'acqua, in caselle
+
+// Le scintille di un quadro o di un telegrafo rotto: bagliore, archi che saltano, scintille. forza: 0..1.7
+Pittore.prototype.elettrico = function(c, x, y, t, col, forza){
+  const r = this.ridotto, k = r ? Math.floor(t*3) : Math.floor(t*18), h = n => { const v = Math.sin(k*12.9898 + n*78.233 + x*0.01)*43758.5453; return v - Math.floor(v); };
+  const f = forza*(0.55 + 0.45*h(1));
+  const g = c.createRadialGradient(x, y - 8, 0, x, y - 8, 72); g.addColorStop(0, `rgba(${col},${(0.62*f).toFixed(3)})`); g.addColorStop(1, `rgba(${col},0)`);
+  c.fillStyle = g; c.fillRect(x - 72, y - 80, 144, 144);
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  for(let a = 0; a < (r ? 1 : 3); a++){
+    if(h(2 + a) < 0.35) continue;   // non a ogni fotogramma: guizza
+    const ang = h(5 + a)*Math.PI*2, len = 20 + h(8 + a)*36; c.beginPath(); c.moveTo(x, y - 10);
+    for(let i = 1; i <= 4; i++) c.lineTo(x + Math.cos(ang)*len*i/4 + (h(11 + i + a) - 0.5)*9, y - 10 + Math.sin(ang)*len*i/4*0.8 + (h(20 + i + a) - 0.5)*9);
+    c.strokeStyle = `rgba(${col},${(0.35*f).toFixed(3)})`; c.lineWidth = 4; c.stroke(); c.strokeStyle = `rgba(255,255,255,${(0.9*f).toFixed(3)})`; c.lineWidth = 1.3; c.stroke();
+  }
+  if(!r) for(let i = 0; i < 5; i++){ const q = (t*2.2 + i*0.37)%1, a = h(30 + i)*Math.PI*2, d = q*(14 + h(40 + i)*18); c.fillStyle = `rgba(255,235,170,${((1 - q)*0.9*f).toFixed(3)})`; c.fillRect(x + Math.cos(a)*d - 1, y - 10 + Math.sin(a)*d*0.7 + q*q*16 - 1, 2, 2); }
+};
+
+// Il disturbo dell'interferenza su tutto lo schermo: neve leggera, righe che scendono, e a raffiche strisce che si spostano di lato
+Pittore.prototype.disturbo = function(c, W, H, t){
+  const D = this.DPR || 1, r = this.ridotto;
+  if(!this.neve){ const n = document.createElement('canvas'); n.width = n.height = 96; const g = n.getContext('2d'), im = g.createImageData(96, 96);
+    for(let i = 0; i < im.data.length; i += 4){ const v = Math.random()*255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; } g.putImageData(im, 0, 0); this.neve = c.createPattern(n, 'repeat'); }
+  const ph = t%3.1, raffica = !r && (ph < 0.22 || (ph > 1.4 && ph < 1.5)), k = Math.floor(t*22), h = n => { const v = Math.sin(k*12.9898 + n*78.233)*43758.5453; return v - Math.floor(v); };
+  c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
+  if(this.neve.setTransform) this.neve.setTransform(new DOMMatrix([D*1.4, 0, 0, D*1.4, r ? 0 : (h(1)*96)|0, r ? 0 : (h(2)*96)|0]));
+  c.globalAlpha = r ? 0.03 : raffica ? 0.17 : 0.05; c.fillStyle = this.neve; c.fillRect(0, 0, W, H); c.globalAlpha = 1;
+  if(raffica){
+    for(let i = 0; i < 4; i++){ const y = h(3 + i)*H, hh = (5 + h(8 + i)*26)*D, dx = (h(13 + i) - 0.5)*44*D; c.drawImage(this.cv, 0, y, W, hh, dx, y, W, hh); c.fillStyle = i%2 ? 'rgba(255,90,140,.10)' : 'rgba(110,255,240,.12)'; c.fillRect(0, y, W, hh); }
+  }
+  if(!r){ const y = ((t*80)%(H/D + 60) - 30)*D; c.fillStyle = 'rgba(190,255,240,.045)'; c.fillRect(0, y, W, 22*D); }
+  c.restore();
+};
+
+// L'acqua alta. V = { e: secondi dall'inizio, tot: durata, ea, eb: secondi trascorsi alla chiusura delle due chiuse (-1 = aperta), ca, cb: da quanto sono chiuse }.
+// Parte dalle due chiuse (Molo e Cantina) e si allarga sul pavimento, stanza dopo stanza e lungo i corridoi, alla velocità del tempo che resta; chi ha chiuso la chiusa
+// vede l'acqua ritirarsi da lì. Si disegna per caselle visibili: una piccola immagine (una casella = un punto) ingrandita con bordi morbidi, onde che scorrono e,
+// sopra, la maschera del pavimento libero (niente acqua sui mobili né sui muri).
+Pittore.prototype.acquaDisegna = function(S, c, cx, cy, s, W, H, t){
+  const M = S.M, V = S.acquaV, D = acquaDati(M, CHIUSA_A, CHIUSA_B), GW = M.GW, GH = M.GH, K = D.K, rid = this.ridotto;
+  const tx0 = Math.max(0, Math.floor(cx/T)), ty0 = Math.max(0, Math.floor(cy/T)), tx1 = Math.min(GW - 1, Math.floor((cx + W/s)/T)), ty1 = Math.min(GH - 1, Math.floor((cy + H/s)/T));
+  if(tx1 < tx0 || ty1 < ty0) return;
+  const tot = V.tot || 60, dMax = D.dMax, F = e => dMax*1.1*Math.pow(Math.min(1, Math.max(0, e)/(0.88*tot)), 0.85);
+  const frA = V.ea >= 0 ? F(V.ea) : F(V.e), frB = V.eb >= 0 ? F(V.eb) : F(V.e), recA = V.ca >= 0 ? V.ca*ACQUA_RIT : -9, recB = V.cb >= 0 ? V.cb*ACQUA_RIT : -9;
+  let dp = 0;   // la profondità dell'ultima casella calcolata (colore più scuro dove l'acqua è alta da più tempo)
+  const calc = (i, tx, ty) => {
+    let m = 0; const w = rid ? 0 : 0.45*Math.sin(tx*0.9 + ty*1.3 + t*1.5);
+    for(let q = 0; q < 2; q++){
+      const d = q ? D.dB[i] : D.dA[i]; if(d < 0) continue;
+      const fr = q ? frB : frA, rec = q ? recB : recA; let v = (fr + w - d)/ACQUA_BORDO; if(v <= 0) continue; v = Math.min(1, v);
+      if(rec > -1){ const r = (d - rec)/ACQUA_BORDO; if(r <= 0) continue; v *= Math.min(1, r); }
+      if(v > m){ m = v; dp = Math.min(1, Math.max(0, (fr - d)/14)); }
+    }
+    return m;
+  };
+  // 1) la copertura di ogni casella, in una piccola immagine (una casella = un punto)
+  const nw = tx1 - tx0 + 1, nh = ty1 - ty0 + 1;
+  if(!this.acqG || this.acqG.width !== nw || this.acqG.height !== nh){ this.acqG = document.createElement('canvas'); this.acqG.width = nw; this.acqG.height = nh; this.acqGc = this.acqG.getContext('2d'); this.acqI = this.acqGc.createImageData(nw, nh); this.acqC = new Float32Array(nw*nh); }
+  const dat = this.acqI.data, cov = this.acqC, rifa = !(this.acqN++ & 1) || this.acqX !== tx0 || this.acqY !== ty0;   // la copertura si rifà un fotogramma su due (si muove piano)
+  this.acqX = tx0; this.acqY = ty0;
+  if(rifa) for(let y = 0; y < nh; y++) for(let x = 0; x < nw; x++){
+    const tx = tx0 + x, ty = ty0 + y, i = ty*GW + tx, m = calc(i, tx, ty), o = (y*nw + x)*4; cov[y*nw + x] = m;
+    // dal verde chiaro dei bassi fondali al blu profondo dove l'acqua è alta
+    dat[o] = 118 - 100*dp; dat[o + 1] = 202 - 140*dp; dat[o + 2] = 218 - 100*dp; dat[o + 3] = 255*m*(0.34 + 0.34*dp);
+  }
+  if(rifa) this.acqGc.putImageData(this.acqI, 0, 0);
+  this.acqCov = (tx, ty) => (tx >= tx0 && tx <= tx1 && ty >= ty0 && ty <= ty1) ? cov[(ty - ty0)*nw + (tx - tx0)] : 0;
+  // 2) a mezza risoluzione: copertura ingrandita (bordi morbidi), onde che scorrono, maschera del pavimento libero
+  const Wt = Math.ceil(W*0.5), Ht = Math.ceil(H*0.5), kk = 0.5*s;
+  if(!this.acqT){ this.acqT = document.createElement('canvas'); this.acqTc = this.acqT.getContext('2d'); }
+  if(this.acqT.width !== Wt || this.acqT.height !== Ht){ this.acqT.width = Wt; this.acqT.height = Ht; }
+  const tc = this.acqTc; tc.setTransform(1, 0, 0, 1, 0, 0); tc.globalCompositeOperation = 'source-over'; tc.globalAlpha = 1; tc.clearRect(0, 0, Wt, Ht); tc.imageSmoothingEnabled = true;
+  tc.drawImage(this.acqG, 0, 0, nw, nh, (tx0*T - cx)*kk, (ty0*T - cy)*kk, nw*T*kk, nh*T*kk);
+  if(!this.acqP){   // il disegno delle onde: righe chiare e sottili che si ripetono senza giunture
+    const n = document.createElement('canvas'); n.width = n.height = 128; const g = n.getContext('2d'); g.lineCap = 'round';
+    for(let j = 0; j < 9; j++){ const y0 = 8 + j*14, ph = j*1.7, nn = 1 + (j%3); g.strokeStyle = `rgba(225,246,255,${0.5 - (j%3)*0.12})`; g.lineWidth = 1.2 + (j%2)*0.5; g.beginPath();
+      for(let x = 0; x <= 128; x += 4){ const y = y0 + Math.sin(x/128*Math.PI*2*nn + ph)*3.2; if(x) g.lineTo(x, y); else g.moveTo(x, y); } g.stroke(); }
+    for(let j = 0; j < 14; j++){ const x = (j*47)%128, y = (j*71)%128; g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(x, y, 3, 1); }
+    this.acqP = tc.createPattern(n, 'repeat');
+  }
+  tc.globalCompositeOperation = 'source-atop';
+  if(this.acqP.setTransform){
+    const dr = rid ? 0 : t;
+    for(const [sc, vx, vy, a] of [[1, 9, 4, 0.5], [1.7, -6, 7, 0.34]]){ this.acqP.setTransform(new DOMMatrix([kk*sc, 0, 0, kk*sc, -cx*kk + dr*vx*kk, -cy*kk + dr*vy*kk])); tc.globalAlpha = a; tc.fillStyle = this.acqP; tc.fillRect(0, 0, Wt, Ht); }
+  }
+  tc.globalAlpha = 1; tc.globalCompositeOperation = 'destination-in';
+  const sx0 = Math.max(0, cx*K/T), sy0 = Math.max(0, cy*K/T), sx1 = Math.min(GW*K, (cx + W/s)*K/T), sy1 = Math.min(GH*K, (cy + H/s)*K/T);
+  if(sx1 > sx0 && sy1 > sy0) tc.drawImage(D.mask, sx0, sy0, sx1 - sx0, sy1 - sy0, (sx0*T/K - cx)*kk, (sy0*T/K - cy)*kk, (sx1 - sx0)*T/K*kk, (sy1 - sy0)*T/K*kk);
+  tc.globalCompositeOperation = 'source-over';
+  c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(this.acqT, 0, 0, Wt, Ht, 0, 0, W, H); c.setTransform(s, 0, 0, s, -cx*s, -cy*s);
+  // 3) schiuma: intorno ai mobili e lungo i muri dove arriva l'acqua; luccichii; cerchi di chi cammina
+  const acq = (tx, ty) => this.acqCov(tx, ty);
+  c.lineJoin = 'round';
+  M.ostacoli.forEach((o, k) => {
+    if((o.x + o.w)*T < cx || o.x*T > cx + W/s || (o.y + o.h)*T < cy || o.y*T > cy + H/s) return;
+    const m = acq(o.x + (o.w >> 1), o.y + o.h);   // la casella davanti al mobile, dove ci si bagna
+    if(m < 0.3) return;
+    const a = (0.5*m*(0.75 + 0.25*Math.sin(t*3 + k*1.3))).toFixed(3), w = rid ? 0 : Math.sin(t*2.2 + k)*1.2;
+    c.strokeStyle = `rgba(236,248,255,${a})`; c.lineWidth = 2; c.strokeRect(o.x*T - 2.5 - w, o.y*T - 2.5 - w, o.w*T + 5 + 2*w, o.h*T + 5 + 2*w);
+    c.strokeStyle = `rgba(190,228,245,${(0.28*m).toFixed(3)})`; c.lineWidth = 1; c.strokeRect(o.x*T - 6 - w, o.y*T - 6 - w, o.w*T + 12 + 2*w, o.h*T + 12 + 2*w);
+  });
+  c.beginPath();
+  for(let ty = ty0; ty <= ty1; ty++) for(let tx = tx0; tx <= tx1; tx++){
+    const m = acq(tx, ty); if(m < 0.3) continue; const i = ty*GW + tx;
+    if(ty > 0 && M.MURO[i + GW] && ty + 1 < GH){   // un muro a sud: l'acqua finisce contro la sua faccia
+      const y0 = (ty + 1 - ACQUA_MURO)*T; c.moveTo(tx*T, y0); for(let x = 4; x <= T; x += 4) c.lineTo(tx*T + x, y0 + (rid ? 0 : Math.sin(x*0.4 + t*3 + tx)*1.2)); }
+    if(tx + 1 < GW && M.MURO[i + 1]){ c.moveTo((tx + 1)*T - 1, ty*T); for(let y = 4; y <= T; y += 4) c.lineTo((tx + 1)*T - 1 + (rid ? 0 : Math.sin(y*0.4 + t*3 + ty)*1), ty*T + y); }
+    if(tx > 0 && M.MURO[i - 1]){ c.moveTo(tx*T + 1, ty*T); for(let y = 4; y <= T; y += 4) c.lineTo(tx*T + 1 + (rid ? 0 : Math.sin(y*0.4 + t*3 + ty)*1), ty*T + y); }
+  }
+  c.strokeStyle = 'rgba(236,248,255,.4)'; c.lineWidth = 2; c.stroke();
+  if(!rid){
+    c.fillStyle = 'rgba(255,255,255,.8)';
+    for(let ty = ty0; ty <= ty1; ty++) for(let tx = tx0; tx <= tx1; tx++){
+      if(acq(tx, ty) < 0.6) continue; const h = ((tx*73856093) ^ (ty*19349663))>>>0; if(h%4) continue;
+      const f = Math.sin(t*2.4 + (h%997)*0.37); if(f > 0.82) c.fillRect(tx*T + (h%23) + 4, ty*T + ((h>>5)%23) + 4, 3, 1.2);
+    }
+    // i cerchi lasciati da chi cammina
+    for(let i = this.acquaOnde.length - 1; i >= 0; i--){ const q = this.acquaOnde[i], age = t - q.t0; if(age > 1.1 || age < 0){ this.acquaOnde.splice(i, 1); continue; }
+      c.strokeStyle = `rgba(225,245,255,${(0.55*(1 - age/1.1)).toFixed(3)})`; c.lineWidth = 1.3; this.ell(q.x, q.y, 5 + age*26, 2 + age*10); c.stroke(); }
+  }
+};
 
 // ===== minigiochi.js =====
 // I minigiochi dei compiti: si giocano sul telefono di chi li fa; all'host arriva solo «fatto».
@@ -6363,7 +6703,8 @@ function host(t) {
     var id = m.to, c = chiavi[id], p = pById(id);
     if (c && c.k) return cifra(id, m);
     if (!c && !(p && p.cif) || (CIF.fatto && !CIF.pub)) return rete.inviaVeloce(m);
-    if (m.t === "ak" || m.t === "av") return rete.inviaVeloce(m);
+    if (m.t === "ak") return rete.inviaVeloce({ t: "ak", q: m.q, to: m.to, u: m.u });   // (in chiaro senza l'esito: direbbe a chi ascolta il broker che cosa ha tentato)
+    if (m.t === "av") return rete.inviaVeloce(m);
     if (m.t === "priv") { cifConta("privFermo"); return; }
     var l = fermi[id] || (fermi[id] = []); l.push({ m: m, t: Date.now() }); if (l.length > 32) l.shift();
     cifConta("fermi");
@@ -6402,9 +6743,20 @@ function host(t) {
   function brokerLibero() { var ora = Date.now(); while (partiti.length && ora - partiti[0] >= 1000) partiti.shift(); return partiti.length < 9 || ora - posT >= 330; }
   var arrivoOspite = null;
   var eventi = {
-    privato: function (id, m) { if (id === IO) { if (UI) UI.messaggio(m); else conserva(m); return; } m.to = id; veloce(m); },
-    tutti: function (m) { veloce(m); if (UI) UI.messaggio(m); }
+    privato: function (id, m) { if (id === IO) { if (UI) UI.messaggio(m); else conserva(m); return; } m.to = id; veloce(m); if (m.t === "avviso" || m.t === "morte") ripetiUnaVolta(m, true); },
+    tutti: function (m) { veloce(m); if (UI) UI.messaggio(m); if (m.t === "avviso" || (m.t === "fx" && FX_UNA_VOLTA[m.k])) ripetiUnaVolta(m, false); }
   };
+  // gli effetti a tutto schermo dei sabotaggi e della caduta in riunione: rari, e se si perdono il telefono resta senza la sua scena
+  var FX_UNA_VOLTA = { buio: 1, luci: 1, interferenza: 1, acqua: 1, cade: 1, nebbia: 1, bengala: 1 };
+  // un avviso e la scena della morte partono una volta sola, e non si rimandano da soli come la foto e i privati: senza filo diretto (una strada sola, il broker)
+  // si ripetono dopo 300 ms con lo stesso numero u, così chi li ha già li scarta e chi li aveva persi li vede
+  function ripetiUnaVolta(m, perUno) {
+    setTimeout(function () {
+      if (!rete || fermo) return;
+      if (perUno) { var F = fili[m.to]; if (!(F && F.pronto()) && pById(m.to)) perLui(m); }
+      else if (!tuttiFilo) rete.inviaVeloce(m);
+    }, 300);
+  }
   var R = t.ripresa, riprendo = !!(R && R.stato && R.stato.fase && R.stato.fase !== "lobby" && R.stato.players);
   // il respiro: l'host riprende e la partita sta ferma finché gli ospiti tornano, così nessun tempo salta mentre si ricollegano.
   // Prima che l'host sia sul broker nessuno può tornare: i 5 s partono da lì (onConnesso; se il broker non risponde ci pensa onErrore)
@@ -6494,6 +6846,7 @@ function host(t) {
     onMsg: function arrivo(id, m, sulFilo) {
       arrivoOspite = arrivo;
       if (!m || !m.t) return;
+      if (rimescola(m, function (x) { arrivo(id, x, sulFilo); })) return;   // (solo per le prove)
       if (m.t === "fd") { if (fili[id]) fili[id].segnale(m.s); return; }   // il filo diretto: i messaggi per aprirlo
       if (m.t === "z") {   // una mossa cifrata: se non si apre si scarta, l'ospite la ripete
         var cz = chiavi[id]; if (!cz || !cz.k) return;
@@ -6518,7 +6871,7 @@ function host(t) {
         if (p) { p.forse = false; if (p.via && H.fase !== "lobby") { p.via = false; delete viaDa[id]; } if (!p.omino) p.omino = avatarValido(m.omino); if (P && H.fase === "gioco") P.rientra(id); }
         bd();
         if (p && P) {
-          inviati[id] = -1; ultimaN[id] = 0;
+          inviati[id] = -1; ultimaN[id] = 0; delete ultimaQ[id];   // (rientrato: le sue mosse ripartono da un numero nuovo)
           var g = P.per(id); if (g) perLui({ t: "tp", x: Math.round(g.x), y: Math.round(g.y), ep: g.ep, to: id });
           // gli avatar non viaggiano nella foto durante la partita: a chi rientra li mando a parte
           perLui({ t: "av", l: H.players.filter(function (q) { return q.omino; }).map(function (q) { return [q.id, q.omino]; }), to: id });
@@ -6528,18 +6881,11 @@ function host(t) {
         return;
       }
       if (m.t === "rf") { if (Date.now() - ultimaFoto >= 150) bd(); else if (!fotoDopo) fotoDopo = setTimeout(bd, 150); return; }   // ha perso una foto
+      if (m.t === "a" && m.q != null) return mossaConRicevuta(id, m, sulFilo);   // (anche a fine partita: la ricevuta dice «troppo tardi», niente silenzio)
       if (!P || !pById(id) || (H.fase !== "gioco" && H.fase !== "lobby")) return;
       if (H.fase === "lobby" && m.t !== "p" && !(m.t === "a" && (m.k === "parla" || m.k === "lenz"))) return;   // nella saletta: si cammina, si parla, si cambia lenzuolo
       if (m.t === "p") { if (m.n <= (ultimaN[id] || 0)) return; ultimaN[id] = m.n; P.muovi(id, m); }
-      else if (m.t === "a") {
-        if (m.q != null) {   // la ricevuta parte sempre (anche per un doppione: la prima può essersi persa), la mossa vale una volta sola
-          var Fq = sulFilo === true && fili[id], ak = { t: "ak", q: m.q, to: id };
-          if (Fq && Fq.pronto()) Fq.invia(JSON.stringify(ak)); else veloce(ak);   // (torna da dove è venuta: col filo aperto sul broker non si deve vedere a chi rispondo)
-          var vq = visteA[id] || (visteA[id] = []); if (vq.indexOf(m.q) >= 0) return;
-          vq.push(m.q); if (vq.length > 64) vq.shift();
-        }
-        if (m.k === "lenz") cambiaLenz(id, m.c); else P.azione(id, m);
-      }
+      else if (m.t === "a") esegui(id, m);   // (un telefono con la versione vecchia: mossa senza ricevuta)
       else if (m.t === "pc") P.azione(id, { k: "pc", x: m.x, y: m.y, d: m.d, m: m.m });   // il Burattinaio muove la sua vittima
     }
   }, { ripresa: riprendo });
@@ -6587,7 +6933,32 @@ function host(t) {
       players: H.players.map(function (p) { return { id: p.id, nome: p.nome, lenz: p.lenz, bot: !!p.bot, via: !!p.via, omino: p.bot ? p.omino : undefined, cif: p.cif ? 1 : undefined }; }),
       salvata: P && H.fase === "gioco" ? P.salva() : null });
   }
-  var visteA = {}, giroPriv = 0;   // le mosse già fatte, per ospite
+  var visteA = {}, ultimaQ = {}, giroPriv = 0, nImpDetto = 0;   // le mosse già fatte (numero q, esito, foto) e l'ultima di ogni famiglia, per ospite
+  // MOSSE CON RICEVUTA. La mossa vale una volta sola; la ricevuta parte sempre (anche per un doppione: la prima può essersi persa) e porta l'esito (e)
+  // e il numero della foto di quel momento (v): dalla foto dopo, sul telefono di chi l'ha fatta, si vede l'effetto. Torna da dove è venuta: col filo aperto sul broker non si deve vedere a chi rispondo
+  function mossaConRicevuta(id, m, sulFilo) {
+    var vq = visteA[id] || (visteA[id] = []), r = null;
+    for (var i = 0; i < vq.length; i++) if (vq[i].q === m.q) { r = vq[i]; break; }
+    if (!r) {
+      var e = "no";
+      if (P && pById(id) && (H.fase === "gioco" || H.fase === "lobby")) e = esegui(id, m);
+      else if (H.fase === "fine") e = "fine";
+      r = { q: m.q, e: e || "ok", v: H.ver || 0 }; vq.push(r); if (vq.length > 64) vq.shift();
+    }
+    var Fq = sulFilo === true && fili[id], ak = { t: "ak", q: m.q, to: id, e: r.e, v: r.v };
+    if (Fq && Fq.pronto()) Fq.invia(JSON.stringify(ak)); else veloce(ak);
+  }
+  // la mossa vera. Prima il posto da cui è partita, se è più nuovo dell'ultimo passo arrivato: i passi viaggiano a 8 al secondo, la mossa subito,
+  // e l'host non deve trovare chi preme «lontano» solo perché il suo ultimo passo è ancora per strada. Torna l'esito (vedi TESTO_ESITO in partita.js)
+  function esegui(id, m) {
+    if (H.fase === "lobby" && m.k !== "parla" && m.k !== "lenz") return "no";
+    if (m.k === "lenz") { cambiaLenz(id, m.c); return "ok"; }
+    if (m.n != null && m.x != null && m.n > (ultimaN[id] || 0)) { ultimaN[id] = m.n; P.muovi(id, { x: m.x, y: m.y, d: m.d, m: m.mv, ep: m.ep }); }
+    // botola e telecamere: l'ordine conta (entra ed esci, accendi e spegni). Una mossa più vecchia dell'ultima della stessa famiglia è arrivata tardi: non vale
+    var fam = m.k === "botola" || m.k === "guardo" ? m.k : null;
+    if (fam && m.q != null) { var uq = ultimaQ[id] || (ultimaQ[id] = {}); if (uq[fam] != null && m.q < uq[fam]) return "vecchia"; uq[fam] = m.q; }
+    return P.azione(id, m) || "ok";
+  }
   var ultimaFoto = 0, fotoDopo = null, ricordaT = 0, ricordaFase = null;   // (lo stato per la ripresa si salva ogni 2 s, e a ogni cambio di fase)
   var ultimaV = null, fotoRip = [], fotoFase = null;
   // la foto che conta (un sabotaggio aperto o chiuso, un cambio di fase) parte altre 2 volte: una perdita sul broker non costa secondi, e il numero ver evita i doppioni.
@@ -6657,6 +7028,8 @@ function host(t) {
     if (nTick % 20 === 0) filiControllo();
     if (nTick % 40 === 0 && H.fase === "gioco" && ora - ricordaT >= 2000) { ricordaT = ora; ricorda(); }   // (i posti cambiano anche senza foto nuove)
     if (P.round !== roundDetto && P.fase === "gioco") { roundDetto = P.round; t.aCheSiamo("Round " + P.round); }
+    // uno spegnimento, un compito, una riparazione, una riunione chiamata: si salva subito, non al giro dei 2 s (se l'host ricarica proprio ora non si perdono)
+    if (P.nImp !== nImpDetto && H.fase === "gioco") { nImpDetto = P.nImp; ricordaT = ora; ricorda(); }
     Object.keys(viaDa).forEach(function (id) { if (ora - viaDa[id] > 90000) { delete viaDa[id]; P.esce(id); } });
     if (P.fase === "fine" && !finePronta) { finePronta = true; setTimeout(fine, 2600); }
   }, 50);
@@ -6722,7 +7095,8 @@ function host(t) {
 
   var cbHost = { sonoHost: true, myId: IO, onComincia: comincia, onNuova: nuova, onBot: aggiungiBot, onTogliBot: togliBot,
     onVia: function () { if (P && !P.saletta) P.via(); },
-    mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") { if (m.k === "lenz") cambiaLenz(IO, m.c); else P.azione(IO, m); } else if (m.t === "pc") P.azione(IO, { k: "pc", x: m.x, y: m.y, d: m.d, m: m.m }); },
+    // (le mie mosse non viaggiano: l'esito torna subito, per la Vista è come la ricevuta di un ospite)
+    mossa: function (m) { if (!P || (H.fase !== "gioco" && H.fase !== "lobby")) return m.t === "a" ? (H.fase === "fine" ? "fine" : "no") : undefined; if (m.t === "p") P.muovi(IO, m); else if (m.t === "a") { if (m.k === "lenz") { cambiaLenz(IO, m.c); return "ok"; } return P.azione(IO, m) || "ok"; } else if (m.t === "pc") P.azione(IO, { k: "pc", x: m.x, y: m.y, d: m.d, m: m.m }); },
     onEsci: function () {
       function via() { ferma(); VOCE.chiudiStanza(); t.ricorda(null); rete.chiudi(); chiudiUI(); t.esci(); }
       if (H.fase === "gioco") return t.conferma("Chiudere la partita per tutti?", "Gli amici tornano alla home.", "Chiudi", via);
@@ -6809,12 +7183,13 @@ function ospite(t, codice) {
   }
   // le mosse (non i passi) si ripetono finché l'host non dà la ricevuta: la rete può perderne una, e un sabotaggio o una riparazione non possono sparire
   function perdo() { return window.LT_PROVA && window.LT_PERDI && Math.random() < window.LT_PERDI; }   // (solo per le prove: rete che perde messaggi)
+  // Dopo 9 volte senza ricevuta la Vista lo dice («l'host non risponde»); se la ricevuta arriva tardi, l'esito vero si legge lo stesso (S.persi)
   function mandaSicura(m) {
     S.q = (S.q || (Date.now() % 1e9)) + 1; m.q = S.q;
     var v = { n: 0, t: 0 }; S.attese = S.attese || {}; S.attese[m.q] = v;
     (function giro() {
       if (!S.attese[m.q]) return;
-      if (++v.n > 9 || !S.rete) { delete S.attese[m.q]; return; }   // (9 volte in circa 3 s)
+      if (++v.n > 9 || !S.rete) { delete S.attese[m.q]; S.persi = S.persi || {}; S.persi[m.q] = Date.now(); if (UI && UI.ricevuta) UI.ricevuta(m.q, "rete"); return; }   // (9 volte in circa 3 s)
       // col filo aperto la mossa passa da lì: sul broker si vedrebbe chi l'ha fatta un attimo prima dell'effetto per tutti. Il broker è la riserva, dopo 0,4 s senza ricevuta (il filo può perdere)
       if (!perdo()) { if (v.n > 2 || !(S.filo && S.filo.pronto())) alBroker(m); if (S.filo) S.filo.invia(JSON.stringify(m)); }
       v.t = setTimeout(giro, 130 + v.n * 50);
@@ -6870,6 +7245,7 @@ function ospite(t, codice) {
       onMsg: function dalHost(m) {
         if (!m || !m.t || S.finita) return;
         if (m.to && m.to !== S.myId) return;
+        if (rimescola(m, dalHost)) return;   // (solo per le prove)
         if (m.t === "fd") {   // il filo diretto: l'host lo apre, io rispondo
           if (window.LT_PROVA && window.LT_SALTAFD > 0) { window.LT_SALTAFD--; return; }   // (solo per le prove: il messaggio si perde)
           if (!S.filo) S.filo = new FiloDiretto(function (x) { if (S.rete) alBroker({ t: "fd", s: x }); }, dalHost);
@@ -6880,7 +7256,12 @@ function ospite(t, codice) {
         if (perdo() && (m.t === "vm" || m.t === "pos" || m.t === "priv" || m.t === "ak")) return;
         if (m.t === "vm") { if (fotoVecchia(m.vm)) return; chiaveHost(m.vm); S.vm = m.vm; miCredeVia(m.vm); disegna(t, m.vm, cb); }
         else if (m.t === "pos") { S.posT = Date.now(); if (S.tace) taceHost(false, false); if (UI) UI.posizioni(m.p, m.s); controllaFoto(m.v); }
-        else if (m.t === "ak") { var at = S.attese && S.attese[m.q]; if (at) { clearTimeout(at.t); delete S.attese[m.q]; } }
+        else if (m.t === "ak") {   // la ricevuta: la mossa è arrivata, e com'è andata (e). Anche se arriva dopo che il telefono aveva smesso di ripeterla
+          var at = S.attese && S.attese[m.q], tardi = !at && S.persi && S.persi[m.q];
+          if (at) { clearTimeout(at.t); delete S.attese[m.q]; }
+          if (tardi) delete S.persi[m.q];
+          if ((at || tardi) && UI && UI.ricevuta) UI.ricevuta(m.q, m.e || "ok", m.v);
+        }
         else if (m.t === "priv") {
           if (m.kp) { if (CIF.kp !== m.kp) CIF.kpK = null; CIF.kp = m.kp; }   // (sono un vice: serve ad aprire la copia della partita)
           if (m.r && UI && UI.priv && UI.priv.v === m.p.v) return;
@@ -6907,6 +7288,15 @@ function ospite(t, codice) {
   }
 }
 function conserva(m) { if (m.t === "tp") PENDENTI.tp = m; }
+// SOLO PER LE PROVE (window.LT_RIMESCOLA = ms): ogni messaggio in arrivo tarda a caso fino a quei ms, e tre su dieci arrivano due volte.
+// Serve a vedere che ordine rovesciato e doppioni finiscono nello stesso stato. Fuori dalle prove non fa niente
+function rimescola(m, poi) {
+  if (!window.LT_PROVA || !(window.LT_RIMESCOLA > 0) || m.__r || !/^(vm|pos|priv|ak|tp|avviso|morte|fx|bolla|a|p|pc|rf)$/.test(m.t)) return false;   // (i messaggi del filo, della voce e delle chiavi restano com'erano)
+  var x = Object.assign({}, m, { __r: 1 }), ms = window.LT_RIMESCOLA;
+  setTimeout(function () { poi(x); }, Math.random() * ms);
+  if (Math.random() < 0.3) setTimeout(function () { poi(x); }, Math.random() * ms * 2);
+  return true;
+}
 
 // =========================================================
 //  DISEGNO: saletta, partita, fine
@@ -7062,8 +7452,54 @@ var ICONE = {
   buio: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   antenna: '<path d="M12 12v9M8 21h8"/><circle cx="12" cy="10" r="2"/><path d="M8.5 6.5a5 5 0 0 0 0 7M15.5 6.5a5 5 0 0 1 0 7M5.5 3.5a9 9 0 0 0 0 13M18.5 3.5a9 9 0 0 1 0 13"/>',
   onda: '<path d="M2 9c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 14c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 19c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/>',
-  gira: '<rect x="8" y="4" width="8" height="16" rx="2"/><path d="M3.5 9.5A9 9 0 0 1 7 5M20.5 14.5A9 9 0 0 1 17 19"/><path d="M3 6.5l.5 3 3-.5M21 17.5l-.5-3-3 .5"/>'
+  gira: '<rect x="8" y="4" width="8" height="16" rx="2"/><path d="M3.5 9.5A9 9 0 0 1 7 5M20.5 14.5A9 9 0 0 1 17 19"/><path d="M3 6.5l.5 3 3-.5M21 17.5l-.5-3-3 .5"/>',
+  // --- le immagini dietro le scritte dei tasti rotondi (tabella TASTO_ICONA qui sotto) ---
+  compiti: '<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8.5l1.4 1.4 2.4-2.6M8.5 14l1.4 1.4 2.4-2.6M14.5 9h2M14.5 14.5h2"/>',
+  t_usa: '<path d="M9 11.5V5.2a1.6 1.6 0 0 1 3.2 0V10"/><path d="M12.2 9.6a1.6 1.6 0 0 1 3.1.4v1.2"/><path d="M15.3 11a1.6 1.6 0 0 1 3.1.5v4.2a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.1L4.4 15.6a1.6 1.6 0 0 1 2.4-2.1L9 15.4"/>',
+  t_computer: '<rect x="3" y="4" width="18" height="12.5" rx="1.6"/><path d="M7 8h7M7 11h4.5M8 20.5h8M12 16.5v4"/>',
+  t_ripara: '<path d="M14.8 3.8a5 5 0 0 0-4.6 6.9L3.9 17a2.2 2.2 0 0 0 3.1 3.1l6.3-6.3a5 5 0 0 0 6.9-4.6l-3.1 2.2-2.4-.5-.5-2.4z"/><circle cx="5.5" cy="18.5" r=".7"/>',
+  t_sabota: '<path d="M14.8 3.8a5 5 0 0 0-4.6 6.9L3.9 17a2.2 2.2 0 0 0 3.1 3.1l6.3-6.3"/><path d="M13.3 13.8a5 5 0 0 0 6.9-4.6l-3.1 2.2-2.4-.5-.5-2.4 2.3-3.1M19 15.5l1.5 1.5M16 17.5l.4 2.2M20.6 19.4l1 .2"/>',
+  t_segnala: '<path d="M2.5 20h19"/><path d="M8.5 14.2h9.5a3 3 0 0 1 3 3V20H8.5z"/><circle cx="5.8" cy="17" r="2.4"/><path d="M14 3.5v6M14 12.2v.4"/>',
+  t_spegni: '<path d="M9.5 5.5a2.5 2.5 0 0 1 5 0"/><path d="M8 6.5h8l1 2H7z"/><path d="M7.5 8.5h9l-.9 9.5H8.4z"/><path d="M7 18h10v2.2H7z"/><path d="M12 3.2c1.300-1 .1-1.800 1.200-2.600" transform="translate(0 0.5)"/><path d="M10.200 12.500h3.600"/>',
+  t_avvelena: '<path d="M9.2 3h5.6M10.2 3v5.4L5.6 17a3 3 0 0 0 2.7 4.3h7.4a3 3 0 0 0 2.7-4.3l-4.6-8.6V3"/><path d="M7.4 14.5h9.2"/><circle cx="10.5" cy="18" r=".8"/><circle cx="14" cy="17" r=".6"/>',
+  t_botola: '<rect x="3" y="5" width="18" height="14" rx="1.8"/><path d="M7 9.2h10M7 12h10M7 14.8h10"/><circle cx="5.3" cy="7" r=".5"/><circle cx="18.7" cy="7" r=".5"/><circle cx="5.3" cy="17" r=".5"/><circle cx="18.7" cy="17" r=".5"/>',
+  t_lenzuolo: '<path d="M5 20.5V10.5a7 7 0 0 1 14 0v10l-2.3-2-2.4 2-2.3-2-2.3 2-2.4-2z"/><circle cx="9.7" cy="10.5" r=".9"/><circle cx="14.3" cy="10.5" r=".9"/>',
+  t_schermi: '<rect x="3" y="4" width="8" height="6.5" rx="1"/><rect x="13" y="4" width="8" height="6.5" rx="1"/><rect x="3" y="13" width="8" height="6.5" rx="1"/><rect x="13" y="13" width="8" height="6.5" rx="1"/>',
+  t_plastico: '<path d="M2.5 16.5l9.5 4.5 9.5-4.5-9.5-4.5z"/><path d="M6.5 14.6V8.5l5.5-2.4 5.5 2.4v6.1M12 6.1V3M9.3 10.2h.1M14.6 10.2h.1"/>',
+  t_leggi: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r=".7"/>',
+  t_letto: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><path d="M4 4l16 16"/>',
+  t_schermo: '<rect x="3" y="4" width="18" height="12" rx="1.6"/><path d="M8.5 20h7M12 16v4"/><path d="M6 10s2-3 6-3 6 3 6 3-2 3-6 3-6-3-6-3z"/><circle cx="12" cy="10" r="1.2"/>',
+  t_trappola: '<circle cx="12" cy="12" r="8.500"/><path d="M3.500 12l2-3.200 2 3.200 2-3.200 2 3.200 2-3.200 2 3.200 2-3.200 2 3.200"/><path d="M3.500 12l2 3.200 2-3.200 2 3.200 2-3.200 2 3.200 2-3.200 2 3.200 2-3.200"/><circle cx="12" cy="12" r="1.600"/>',
+  t_scambia: '<path d="M4 8h14M14.5 4.5L18 8l-3.5 3.5M20 16H6M9.5 12.5L6 16l3.5 3.5"/>',
+  t_scudo: '<path d="M12 3l7.5 2.8v5.7c0 4.4-3 8-7.5 9.5-4.5-1.5-7.5-5.1-7.5-9.5V5.8z"/><path d="M12 7.5v9"/>',
+  t_proteggi: '<path d="M12 3l7.5 2.8v5.7c0 4.4-3 8-7.5 9.5-4.5-1.5-7.5-5.1-7.5-9.5V5.8z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  t_spara: '<circle cx="12" cy="12" r="7.5"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/><circle cx="12" cy="12" r=".9"/>',
+  t_campana: '<path d="M6 16.5v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21a2 2 0 0 0 4 0M12 3v2.5"/><path d="M3 9a10 10 0 0 1 2-3M21 9a10 10 0 0 0-2-3"/>',
+  t_segui: '<path d="M8 3.500c-2 0-3.200 2.200-3 4.700.2 2 1.200 3.300 2.700 3.300S10.200 10.200 10 8.200C9.800 5.700 9.200 3.500 8 3.500z"/><circle cx="7.300" cy="14.200" r="1.800"/><path d="M16.500 10c-2 0-3.200 2.200-3 4.700.2 2 1.200 3.300 2.700 3.300s2.800-1.300 2.600-3.300c-.2-2.500-.8-4.700-2.300-4.700z"/><circle cx="15.800" cy="20.600" r="1.600"/>',
+  t_bengala: '<path d="M10 21l4.5-9"/><path d="M14.5 12l2.5-5"/><path d="M17 7V2.5M17 7l3.5-2.5M17 7l-3.5-2.5M17 7l4 1.5M17 7l-4 1.5"/>',
+  t_telecamera: '<rect x="2.5" y="7" width="13" height="10" rx="2"/><path d="M15.5 11l6-3.5v9l-6-3.5z"/><circle cx="7" cy="12" r="1.5"/>',
+  t_allerta: '<path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.2v.3"/>',
+  t_sorveglia: '<path d="M5 21V4.5A1.5 1.5 0 0 1 6.5 3h11A1.5 1.5 0 0 1 19 4.5V21M3 21h18"/><circle cx="15.5" cy="15.5" r=".8"/><path d="M8.5 9s1.5-2 3.5-2 3.5 2 3.5 2-1.5 2-3.5 2-3.5-2-3.5-2z"/>',
+  t_riaccendi: '<path d="M9.5 5.5a2.5 2.5 0 0 1 5 0"/><path d="M8 6.5h8l1 2H7z"/><path d="M7.5 8.5h9l-.9 9.5H8.4z"/><path d="M7 18h10v2.2H7z"/><path d="M12 10.5c1.7 1.6 1.7 3.8 0 5.2-1.7-1.400-1.700-3.600 0-5.200z"/>',
+  t_ricatta: '<rect x="3" y="5.5" width="18" height="13" rx="1.8"/><path d="M3.5 7l8.5 6 8.5-6"/><circle cx="12" cy="15.5" r="1.2"/>',
+  t_nebbia: '<path d="M7 10a4 4 0 0 1 7.5-1.5A3.2 3.2 0 0 1 17 15H7a2.5 2.5 0 0 1 0-5z"/><path d="M4 18.5h8M14 18.5h6M7 21.5h10"/>',
+  t_campiona: '<path d="M3 6c3 1 6 1 9 0 3 1 6 1 9 0 0 7-3 12-9 12S3 13 3 6z"/><path d="M7.5 10.5h3M13.5 10.5h3"/><path d="M8 20.5h8M14 19l2 1.5-2 1.5"/>',
+  t_controlla: '<path d="M5 3.500h14M8 3.500l3 7.500M16 3.500l-3 7.500M12 3.500V9"/><circle cx="12" cy="13.200" r="2.200"/><path d="M12 15.400v3.600M9 17l3-.8 3 .8M10.200 21.500L12 19l1.800 2.500"/>',
+  t_pulisci: '<path d="M14 3.5l-4.5 8"/><path d="M9.5 11.5c-3 .5-5.5 3-6 9 4 .5 9 .5 12.5-1.5.5-2.5-.5-5.5-3-7.5"/><path d="M7 14.5l-.5 5M10.5 15l-.5 4.5M13.5 15.5l-1 3.5"/>',
+  t_ipnotizza: '<path d="M12 12a1.5 1.5 0 0 1 3 0 3.5 3.5 0 0 1-7 0 5.5 5.5 0 0 1 11 0 7.5 7.5 0 0 1-15 0"/>',
+  t_mangia: '<path d="M8 3v6.500a2.500 2.500 0 0 0 5 0V3M10.500 3v18"/><path d="M17.500 3c-2 1.500-3 4-3 7h3v11"/>',
+  t_foto: '<rect x="3.5" y="3.5" width="17" height="17" rx="1.8"/><circle cx="12" cy="10.5" r="3.8"/><path d="M3.5 16.5h17"/>',
+  t_potere: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.8 2.8M14.9 14.9l2.8 2.8M17.7 6.3l-2.8 2.8M9.1 14.9l-2.8 2.8"/>'
 };
+// tabella unica: scritta del tasto (senza il « ×N» dei conti) → immagine. Ogni tasto nuovo ha qui la sua riga.
+var TASTO_ICONA = {
+  usa: "t_usa", computer: "t_computer", ripara: "t_ripara", campana: "t_campana", schermi: "t_schermi", plastico: "t_plastico",
+  segnala: "t_segnala", spegni: "t_spegni", avvelena: "t_avvelena", botola: "t_botola", sabota: "t_sabota", buio: "t_sabota", lenzuolo: "t_lenzuolo",
+  leggi: "t_leggi", letto: "t_letto", schermo: "t_schermo", trappola: "t_trappola", scambia: "t_scambia", scudo: "t_scudo", proteggi: "t_proteggi", spara: "t_spara",
+  segui: "t_segui", bengala: "t_bengala", telecamera: "t_telecamera", allerta: "t_allerta", sorveglia: "t_sorveglia", riaccendi: "t_riaccendi",
+  ricatta: "t_ricatta", nebbia: "t_nebbia", campiona: "t_campiona", trasformati: "t_campiona", controlla: "t_controlla", pulisci: "t_pulisci", ipnotizza: "t_ipnotizza", mangia: "t_mangia", foto: "t_foto"
+};
+var TASTO_ICONA_K = { usa: "t_usa", segnala: "t_segnala", spegni: "t_spegni", botola: "t_botola", buio: "t_sabota", lenz: "t_lenzuolo", abil: "t_potere" };
 function icona(n) { return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + (ICONE[n] || "") + "</svg>"; }
 // un tasto con icona e scritta
 function tastoIco(cls, ico, testo) { var b = document.createElement("button"); b.type = "button"; if (cls) b.className = cls; b.innerHTML = icona(ico) + (testo ? "<span>" + testo + "</span>" : ""); return b; }
@@ -7153,7 +7589,7 @@ function Vista(t, cb) {
   V.barra = E("div", "lt-barra"); V.barra.innerHTML = '<span>Preparativi</span><div class="tr"><i></i></div>'; sx.appendChild(V.barra);
   V.info = E("div", "lt-info", ""); V.info.hidden = true; sx.appendChild(V.info);
   V.registroBox = E("div"); sx.appendChild(V.registroBox);
-  V.btnLista = E("button", "lt-lista-btn", "Compiti"); sx.appendChild(V.btnLista);
+  V.btnLista = E("button", "lt-lista-btn", "Compiti"); V.btnLista.type = "button"; sx.appendChild(V.btnLista);
   V.lista = E("ol", "lt-lista"); V.lista.hidden = true; sx.appendChild(V.lista);
   tocca(V.btnLista, function () { V.lista.hidden = !V.lista.hidden; V.aggLista(); });
   sc.appendChild(sx);
@@ -7199,7 +7635,7 @@ function Vista(t, cb) {
   V.az = E("div", "lt-azioni"); sc.appendChild(V.az);
   V.btn = {};
   [["abil", "Abilità", "viola"], ["botola", "Botola", "rosso"], ["buio", "Buio", "rosso"], ["segnala", "Segnala", ""], ["spegni", "Spegni", "rosso"], ["usa", "Usa", "oro"], ["lenz", "Lenzuolo", "telo"]].forEach(function (b) {
-    var e = E("button", "lt-az " + b[2]); e.innerHTML = '<span class="et"></span><span class="cd" hidden></span>'; e.style.gridArea = b[0] === "lenz" ? "spegni" : b[0];   // (il tasto del lenzuolo c'è solo nella saletta: accanto a «Usa»)
+    var e = E("button", "lt-az " + b[2]); e.innerHTML = '<span class="ic" aria-hidden="true"></span><span class="et"></span><span class="cd" hidden></span>'; e.dataset.k = b[0]; e.style.gridArea = b[0] === "lenz" ? "spegni" : b[0];   // (il tasto del lenzuolo c'è solo nella saletta: accanto a «Usa»)
     e.addEventListener("pointerdown", function (ev) { ev.preventDefault(); if (!e.disabled) V.azione(b[0]); });
     V.btn[b[0]] = e; V.az.appendChild(e);
   });
@@ -7306,7 +7742,8 @@ Vista.prototype.ottimista = function (cosa) {
 // ----- quello che arriva dall'host -----
 Vista.prototype.foto = function (vm) {
   var V = this; V.vm = vm; V.g = vm.g || null;
-  if (V.ottimo) { if (performance.now() > V.ottimo.fine) V.ottimo = null; else if (V.g) mascheraRip(V.g, V.ottimo.cosa); }
+  // la riparazione promessa resta finché arriva una foto partita dopo la riparazione (numero ver oltre quello della ricevuta): niente lampo del sabotaggio che torna
+  if (V.ottimo) { if (performance.now() > V.ottimo.fine || (V.ottimo.ver != null && vm.ver > V.ottimo.ver)) V.ottimo = null; else if (V.g) mascheraRip(V.g, V.ottimo.cosa); }
   if (V.compAgg) V.compAgg();
   vm.players.forEach(function (p) { var c = V.cache[p.id] = V.cache[p.id] || {}; c.nome = p.nome; c.lenz = LENZ_DI[p.id]; c.colore = COLORI_DI[p.id]; if (p.omino) avatarDi(p.id, p.omino); });
   var io = vm.players.filter(function (p) { return p.id === V.cb.myId; })[0];
@@ -7317,7 +7754,10 @@ Vista.prototype.foto = function (vm) {
   if (M !== V.M) { V.M = M; V.pit.cam.ok = false; V.buf = []; }   // la posizione nuova arriva col «tp» dell'host
   V.secFine = performance.now() + V.g.sec * 1000;
   if (V.g.acqua) V.acquaFine = performance.now() + V.g.acqua[0] * 1000;
-  if (V.g.riu) { V.discFine = performance.now() + V.g.riu.disc * 1000; V.votoFine = performance.now() + V.g.riu.voto * 1000; }
+  if (V.g.buio > 0) V.buioFine = performance.now() + V.g.buio * 1000;   // (per la vista dei sabotaggi: i secondi che restano, come li dice l'host)
+  if (V.g.interf > 0) V.interfFine = performance.now() + V.g.interf * 1000;
+  // (df e vf: i millesimi che mancano, più precisi dei secondi interi; un host con la versione vecchia manda solo i secondi)
+  if (V.g.riu) { var Rr = V.g.riu; V.discFine = performance.now() + (Rr.df != null ? Rr.df : Rr.disc * 1000); V.votoFine = performance.now() + (Rr.vf != null ? Rr.vf : Rr.voto * 1000); }
   if (V.fase !== V.g.fase) { V.fase = V.g.fase; V.cambioFase(); }
   V.aggVelo(); V.aggHud();
 };
@@ -7360,6 +7800,12 @@ Vista.prototype.privato = function (pr) {
 };
 Vista.prototype.messaggio = function (m) {
   if (m.t === "tp") {
+    // un salto più vecchio di quello che ho (broker e filo diretto possono invertire due salti vicini): lo scarto, una volta.
+    // Se l'host lo ripete (ripresa da una copia di prima, numeri ripartiti) vale il suo: è lui l'arbitro
+    if (m.ep != null && m.ep < this.me.ep) {
+      var oraTp = performance.now();
+      if (!(this.tpVecchio === m.ep && oraTp - this.tpVecchioT < 3000)) { this.tpVecchio = m.ep; this.tpVecchioT = oraTp; return; }
+    }
     var salto = Math.hypot(m.x - this.me.x, m.y - this.me.y) > 4 * T; this.me.x = m.x; this.me.y = m.y; this.me.ep = m.ep; this.me.ok = true;
     if (salto) {   // spostati lontano (Trasportatore, botola, riunione): si chiude quello che era aperto lì
       this.pit.cam.ok = false;
@@ -7459,7 +7905,7 @@ Vista.prototype.effetto = function (m) {
   var V = this, ora = V.tempo, P = V.pit;
   if (m.k === "cade") { SUONO.spegni(); vibra(60); return; }
   if (m.k === "compitoMio") { SUONO.compito(); return; }
-  if (m.k === "interferenza" || m.k === "acqua") { if (V.squadra() !== "ombre") { SUONO.allarme(); vibra(100); } V.avviso(m.k === "acqua" ? "Acqua alta! Una chiusa sul Molo, una in Cantina." : "Interferenza: telecamere, plastico e frecce sono spenti.", "morte"); return; }
+  if (m.k === "interferenza" || m.k === "acqua") { if (V.squadra() !== "ombre") { SUONO.allarme(); vibra(100); } V.avviso(m.k === "acqua" ? "Acqua alta!" : "Interferenza!", "morte"); return; }
   if (m.k === "urlo") { V.urlo = { x: m.x, y: m.y, col: "#ff5a6e", fine: V.tempo + 6 }; SUONO.corpo(); vibra(150); V.avviso("Un urlo! Segui la freccia rossa.", "morte"); return; }
   if (m.solo && m.solo !== V.cb.myId) return;
   if (m.noOmbre && V.squadra() === "ombre") return;
@@ -7614,7 +8060,35 @@ Vista.prototype.raggio = function () {
   if (this.g && this.g.bengala > 0) return 40 * T;
   if (this.squadra() === "ombre" || (this.priv && this.priv.ruolo === "giullare")) return imp.vistaOmbre * T;
   if (this.priv && this.priv.ruolo === "vedetta") return (imp.vistaOspiti + 2) * T;
-  return (this.g && this.g.buio ? Math.min(imp.vistaOspiti, 2.2) : imp.vistaOspiti) * T;
+  var liv = this.g && this.g.buio ? this.luciLivello() : 1;   // (nel buio la lanterna si restringe; durante lo sfarfallio va e viene con le luci)
+  return (imp.vistaOspiti + (Math.min(imp.vistaOspiti, 2.2) - imp.vistaOspiti) * (1 - liv)) * T;
+};
+// ---- i sabotaggi da vedere: tempi uguali su ogni telefono, perché partono dallo stato dell'host (secondi che restano, chiuse chiuse) e non da timer propri ----
+var DUR_BUIO = 40;   // come in partita.js (attivaBuio)
+Vista.prototype.luciLivello = function () { var b = this.sab && this.sab.buio; return b && b.att ? livelloLuci(performance.now() / 1000 - b.t0) : 1; };
+Vista.prototype.sabAgg = function (ora) {
+  var V = this, g = V.g, sb = V.sab || (V.sab = { buio: { att: false, t0: 0, rip: -1 }, interf: { att: false, t0: 0, rip: -1 }, acqua: { att: false, on: false, t0: 0, tot: 60, ca: -1, cb: -1, ea: -1, eb: -1 } });
+  var imp = (V.vm && V.vm.imp && V.vm.imp.sabotaggi) || {}, sec = ora / 1000;
+  var b = sb.buio, t0;
+  if (g.buio > 0 && V.buioFine) { t0 = V.buioFine / 1000 - DUR_BUIO; if (!b.att) { b.att = true; b.rip = -1; b.t0 = t0; } else if (Math.abs(t0 - b.t0) > 1.3) b.t0 = t0; }
+  else if (b.att) { b.att = false; b.rip = sec; }
+  var i = sb.interf, durI = imp.interferenza || 60;
+  if (g.interf > 0 && V.interfFine) { t0 = V.interfFine / 1000 - durI; if (!i.att) { i.att = true; i.rip = -1; i.t0 = t0; } else if (Math.abs(t0 - i.t0) > 1.3) i.t0 = t0; }
+  else if (i.att) { i.att = false; i.rip = sec; }
+  var a = sb.acqua, tot = imp.acqua || 60;
+  if (g.acqua && V.acquaFine) {
+    t0 = V.acquaFine / 1000 - tot;
+    if (!a.att) { a.att = a.on = true; a.tot = tot; a.t0 = t0; a.ca = a.cb = a.ea = a.eb = -1; } else if (Math.abs(t0 - a.t0) > 1.3) a.t0 = t0;
+    if (g.acqua[1] && a.ca < 0) { a.ca = sec - (sec - a.t0 > 1.5 && !a.visto ? 3 : 0); a.ea = a.ca - a.t0; }
+    if (g.acqua[2] && a.cb < 0) { a.cb = sec - (sec - a.t0 > 1.5 && !a.visto ? 3 : 0); a.eb = a.cb - a.t0; }
+    a.visto = true;
+  } else if (a.att) { a.att = false; if (a.ca < 0) { a.ca = sec; a.ea = sec - a.t0; } if (a.cb < 0) { a.cb = sec; a.eb = sec - a.t0; } }
+  if (a.on && !a.att && sec - Math.max(a.ca, a.cb) > 14) { a.on = false; a.visto = false; }   // l'acqua si è ritirata del tutto
+  var ombra = V.squadra() === "ombre" || !V.sonoVivo();
+  return {
+    buioE: b.att ? sec - b.t0 : -1, buioR: !b.att && b.rip >= 0 && !ombra ? sec - b.rip : -1, interfE: i.att ? sec - i.t0 : -1,
+    acquaV: a.on ? { e: sec - a.t0, tot: a.tot, ea: a.ea, eb: a.eb, ca: a.ca >= 0 ? sec - a.ca : -1, cb: a.cb >= 0 ? sec - a.cb : -1 } : null
+  };
 };
 Vista.prototype.compitiAperti = function () { var V = this; if (!V.priv) return []; return V.priv.compiti.filter(function (c) { return !c[1] && !V.fatti[c[0]]; }).map(function (c) { return POSTAZIONI.filter(function (p) { return p.id === c[0]; })[0]; }).filter(Boolean); };
 // la foto del Medium: la si guarda, la si rifà (con la ricarica); alla riunione la vedono tutti
@@ -7809,10 +8283,10 @@ Vista.prototype.meta = function () {
     var resta = Math.max(0, Math.ceil((V.acquaFine - performance.now()) / 1000)), aperte = [];
     if (!g.acqua[1]) aperte.push(CHIUSA_A); if (!g.acqua[2]) aperte.push(CHIUSA_B);
     var ch = piu(aperte.length ? aperte : [CHIUSA_A]);
-    return { x: centro(ch.tx), y: centro(ch.ty), col: "#5ab0ff", testo: "Acqua alta · chiusa " + (ch === CHIUSA_A ? "del Molo" : "della Cantina") + " · " + resta + " s", rosso: true };
+    return { x: centro(ch.tx), y: centro(ch.ty), col: "#5ab0ff", testo: "Chiusa " + (ch === CHIUSA_A ? "del Molo" : "della Cantina") + " · " + resta + " s", rosso: true };
   }
-  if (g.buio && vivo) return { x: centro(QUADRO.tx), y: centro(QUADRO.ty), col: "#f05a6e", testo: "Luci spente · al quadro", rosso: true };
-  if (g.interf && vivo) return { x: centro(CONSOLE.tx), y: centro(CONSOLE.ty), col: "#ffb35a", testo: "Interferenza · al telegrafo", rosso: true };
+  if (g.buio && vivo) return { x: centro(QUADRO.tx), y: centro(QUADRO.ty), col: "#f05a6e", testo: "Al quadro delle luci", rosso: true };
+  if (g.interf && vivo) return { x: centro(CONSOLE.tx), y: centro(CONSOLE.ty), col: "#ffb35a", testo: "Al telegrafo", rosso: true, glitch: true };
   if (g.interf) return null;   // con l'interferenza niente frecce dei compiti
   // l'Avvoltoio sente le lanterne spente: la freccia porta alla più vicina
   if (V.priv && V.priv.ruolo === "avvoltoio" && vivo && g.corpi && g.corpi.length) {
@@ -7835,9 +8309,11 @@ Vista.prototype.disegnaScena = function () {
   var oraB = performance.now(); for (var ib = V.bolle.length - 1; ib >= 0; ib--) if (V.bolle[ib].fine <= oraB) V.bolle.splice(ib, 1);   // i fumetti scaduti
   var apertaP = !V.parlaBar.hidden, vivoP = V.sonoVivo();
   V.parlaAlzaVista = V.pit.ridotto ? V.parlaAlza : V.parlaAlzaVista + (V.parlaAlza - V.parlaAlzaVista) * Math.min(1, V.dt * 10);
+  var sab = V.sabAgg(performance.now());
   var miei = new Set(g.interf ? [] : V.compitiAperti().map(function (p) { return p.id; })), meta = V.meta(), ora = performance.now();
   if (meta && meta.nessunaFreccia) meta = null;
   V.pit.disegna({ M: V.M, palazzo: g.mappa === "palazzo", saletta: !!(V.vm && V.vm.fase === "lobby"), t: V.tempo, dt: V.dt, io: ioD, altri: altri, corpi: corpi, R: V.raggio(),
+    buioE: sab.buioE, buioR: sab.buioR, interfE: sab.interfE, acquaV: g.mappa === "palazzo" ? sab.acquaV : null,
     anima: V.guardo || !V.sonoVivo() || g.mappa !== "palazzo" || g.bengala > 0, neb: g.neb > 0, buio: g.buio > 0 && V.squadra() !== "ombre" && V.sonoVivo(), bengala: g.bengala > 0,
     miei: miei, freccia: meta, acqua: !!g.acqua, chiuse: g.acqua ? [!g.acqua[1], !g.acqua[2]] : null, interf: g.interf > 0, botole: V.squadra() === "ombre" || !V.sonoVivo() || pr.ruolo === "ingegnere", segui: segui, effetti: V.effetti, segnati: g.segnati, scossa: V.scossa,
     scudi: V.squadra() !== "ombre" ? (g.scudi || []).filter(function (id) { return id !== V.cb.myId; }) : [], telecamere: g.cam, osservate: g.osservate, orme: V.orme, durOrme: (V.vm.imp.investigatore && V.vm.imp.investigatore.orme) || 10,
@@ -7960,6 +8436,9 @@ Vista.prototype.scriviChip = function (nr) { var c = this.chip; c.textContent = 
 Vista.prototype.setBtn = function (k, vis, abil, et, cd) {
   var b = this.btn[k], key = vis + "|" + abil + "|" + et + "|" + cd; if (b._k === key) return; b._k = key;
   b.hidden = !vis; b.disabled = !abil; scrittaTasto(b, et); b.classList.toggle("conta", !!cd);
+  // l'immagine grande e trasparente dietro la scritta: dalla tabella TASTO_ICONA (la scritta senza il « ×N»); cambia solo se cambia l'immagine
+  var icn = TASTO_ICONA[String(et || "").replace(/ ×\d+$/, "").toLowerCase()] || (et ? (TASTO_ICONA_K[k] || "t_potere") : ""), ic = b.querySelector(".ic");
+  if (ic && ic._n !== icn) { ic._n = icn; ic.innerHTML = icn ? icona(icn) : ""; }
   var c = b.querySelector(".cd"); c.hidden = !cd; c.textContent = cd || "";
 };
 Vista.prototype.aggHud = function () {
@@ -8145,7 +8624,7 @@ Vista.prototype.aggCarica = function () {
 Vista.prototype.aggLista = function () {
   var V = this, pr = V.priv; if (!pr) return;
   var fatti = pr.compiti.filter(function (c) { return c[1] || V.fatti[c[0]]; }).length;
-  V.btnLista.textContent = (pr.finti ? "Compiti finti " : "Compiti ") + fatti + "/" + pr.compiti.length + (V.lista.hidden ? " ▸" : " ▾");
+  V.btnLista.innerHTML = icona("compiti") + "<span>" + (pr.finti ? "Compiti finti " : "Compiti ") + fatti + "/" + pr.compiti.length + (V.lista.hidden ? " ▸" : " ▾") + "</span>";
   if (V.lista.hidden) return;
   V.lista.textContent = "";
   if (pr.finti) V.lista.appendChild(E("li", "nota", pr.squadra === "ombre" ? "Fingi di farli: non contano." : "Non contano: pensa a farti cacciare."));
@@ -8157,7 +8636,45 @@ Vista.prototype.aggLista = function () {
 };
 
 // ----- le azioni -----
-Vista.prototype.manda = function (k, extra) { var m = { t: "a", k: k }; if (extra) for (var x in extra) m[x] = extra[x]; this.cb.mossa(m); };
+// Il tasto premuto risponde subito: «in attesa» (lt-attende) finché arriva la ricevuta dell'host, poi l'esito anche quando è «troppo tardi» (ricevuta, esitoMossa).
+// Con la mossa parte il posto da cui la si fa (x, y, ep, n come un passo): l'host lo usa se il passo non gli è ancora arrivato (vedi esegui)
+var TASTO_DI = { spegni: "spegni", segnala: "segnala", abil: "abil", campana: "usa", fatto: "usa", ripara: "usa", botola: "botola", sabota: "buio", buio: "buio" };
+var ESITO_MUTO = { ok: 1, detto: 1, fine: 1, vecchia: 1 };
+Vista.prototype.manda = function (k, extra) {
+  var V = this, m = { t: "a", k: k }; if (extra) for (var x in extra) m[x] = extra[x];
+  // VOTO: sul telefono si chiude quando il tempo visto arriva a zero; l'host aspetta ancora GRAZIA s i sigilli in viaggio (vedi partita.js)
+  if (k === "voto" && V.g && V.g.fase === "riunione" && V.votoFine && performance.now() > V.votoFine + 80) return V.esitoPoi(k, extra, "chiuso", null, null);
+  if (V.g && V.g.fase === "gioco" && V.me.ok && !V.cb.sonoHost) { m.x = Math.round(V.me.x); m.y = Math.round(V.me.y); m.d = Math.round(V.me.dir * 100) / 100; m.mv = V.me.muove ? 1 : 0; m.ep = V.me.ep; m.n = ++V.me.n; }
+  var r = V.cb.mossa(m), b = V.btn[TASTO_DI[k]] || null;
+  if (r !== undefined) return V.esitoPoi(k, extra, r, null, b);   // (sull'host l'esito c'è già)
+  if (m.q == null) return;
+  var ora = performance.now(); V.attese = V.attese || {};
+  for (var q in V.attese) if (V.attese[q].persa && ora - V.attese[q].t > 15000) delete V.attese[q];
+  V.attese[m.q] = { k: k, extra: extra || null, b: b, t: ora };
+  if (b) { b.classList.remove("lt-no"); b.classList.add("lt-attende"); }
+};
+// l'esito subito (host, voto chiuso sul telefono): dopo il gestore del tocco, che intanto ha già segnato il suo voto o il suo compito
+Vista.prototype.esitoPoi = function (k, extra, e, v, b) { var V = this; Promise.resolve().then(function () { if (V.vivo) V.esitoMossa(k, extra, e, v, b); }); };
+// la ricevuta di una mossa (dalla rete dell'ospite): e = esito, v = numero della foto in quel momento. «rete»: nessuna ricevuta dopo 9 volte
+Vista.prototype.ricevuta = function (q, e, v) {
+  var V = this, a = V.attese && V.attese[q]; if (!a) return;
+  var tardiva = !!a.persa;
+  if (e === "rete") a.persa = true; else delete V.attese[q];
+  var altre = !!a.b && Object.keys(V.attese).some(function (x) { var o = V.attese[x]; return o.b === a.b && !o.persa; });
+  if (a.b && !altre) a.b.classList.remove("lt-attende");
+  if (tardiva && e === "ok") return;   // (arrivata dopo il «non risponde», ma andata: l'effetto si vede da sé)
+  V.esitoMossa(a.k, a.extra, e, v, a.b);
+};
+// com'è andata: se no, il telefono torna allo stato vero (compito non contato, riparazione, sigillo) e lo dice in una riga; il tasto fa un piccolo «no»
+Vista.prototype.esitoMossa = function (k, extra, e, v, b) {
+  var V = this, ora = performance.now(), dopoFoto = function () { if (!V.ottimo) return; V.ottimo.ver = v != null ? v : (V.vm && V.vm.ver) || 0; V.ottimo.fine = ora + 5000; };
+  if (!e || ESITO_MUTO[e]) { if (e === "ok" && k === "ripara") dopoFoto(); return; }
+  if (k === "fatto" && extra && extra.post != null) { delete V.fatti[extra.post]; V.aggLista(); }
+  if (k === "ripara" && V.ottimo) { if (e === "riparato") dopoFoto(); else { V.ottimo = null; if (!V.cb.sonoHost) V.cb.mossa({ t: "rf" }); } }   // (riparato da un altro: resta riparato. Se no, la foto vera)
+  if (k === "voto") { V.mioVoto = (V.priv && V.priv.voto) || null; V.conf = null; if (V.g && (V.g.fase === "riunione" || V.g.fase === "esito")) V.riunione(); }
+  var tx = TESTO_ESITO[e]; if (tx) V.avviso(tx);
+  if (b) { b.classList.remove("lt-no"); void b.offsetWidth; b.classList.add("lt-no"); clearTimeout(b._noT); b._noT = setTimeout(function () { b.classList.remove("lt-no"); }, 420); }
+};
 Vista.prototype.azione = function (k) {
   var V = this, pr = V.priv, comp = (pr && pr.compagni) || [];
   if (V.vm && V.vm.fase === "lobby") { if (k === "lenz") V.apriLenzuolo(); else if (k === "usa" && V.vicinoUsa() && !V.pannello) V.apriComputer(); return; }
@@ -8280,9 +8797,18 @@ Vista.prototype.disegnaSchermi = function () {
 Vista.prototype.statico = function (cv, w, h) {
   var r = cv.getBoundingClientRect(); w = w || Math.max(80, Math.round(r.width)); h = h || Math.max(60, Math.round(r.height));
   cv.width = w; cv.height = h; if (!r.width) { cv.style.width = w + "px"; cv.style.height = h + "px"; }
-  var c = cv.getContext("2d"), img = c.createImageData(w, h);
-  for (var i = 0; i < img.data.length; i += 4) { var v = Math.random() * 160; img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v + 20; img.data[i + 3] = 255; }
-  c.putImageData(img, 0, 0); c.fillStyle = "rgba(255,255,255,.85)"; c.font = "600 13px -apple-system,BlinkMacSystemFont,system-ui,sans-serif"; c.textAlign = "center"; c.fillText("NESSUN SEGNALE", w / 2, h / 2);
+  var c = cv.getContext("2d"), img = c.createImageData(w, h), ora = performance.now() / 1000;
+  // neve vera, con una barra chiara che scorre e righe che si spostano di lato; al centro un'antenna barrata, senza scritte
+  for (var i = 0; i < img.data.length; i += 4) { var v = Math.random() * 170; img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v + 18; img.data[i + 3] = 255; }
+  c.putImageData(img, 0, 0);
+  var yb = (ora * h * 0.55) % (h * 1.3) - h * 0.15; c.fillStyle = "rgba(220,235,255,.2)"; c.fillRect(0, yb, w, h * 0.11);
+  for (var k = 0; k < 4; k++) { var ys = Math.floor(Math.random() * h), hs = 3 + Math.random() * 9, dx = (Math.random() - 0.5) * w * 0.3; c.drawImage(cv, 0, ys, w, hs, dx, ys, w, hs); }
+  c.fillStyle = "rgba(0,0,0,.18)"; for (var y = 0; y < h; y += 3) c.fillRect(0, y, w, 1);
+  var m = Math.min(w, h) * 0.2, cxs = w / 2, cys = h / 2; c.save(); c.translate(cxs, cys); c.strokeStyle = "rgba(255,255,255,.88)"; c.lineWidth = Math.max(2, m * 0.09); c.lineCap = "round"; c.lineJoin = "round";
+  c.beginPath(); c.moveTo(0, m * 0.1); c.lineTo(0, m * 0.95); c.moveTo(-m * 0.4, m * 0.95); c.lineTo(m * 0.4, m * 0.95); c.stroke();
+  c.beginPath(); c.arc(0, -m * 0.1, m * 0.12, 0, 7); c.stroke(); c.beginPath(); c.arc(0, -m * 0.1, m * 0.42, Math.PI * 1.15, Math.PI * 1.85); c.arc(0, -m * 0.1, m * 0.42, Math.PI * 1.15, Math.PI * 1.85); c.stroke();
+  c.beginPath(); c.arc(0, -m * 0.1, m * 0.42, Math.PI * 0.15, Math.PI * 0.85); c.stroke(); c.beginPath(); c.arc(0, -m * 0.1, m * 0.8, Math.PI * 1.2, Math.PI * 1.8); c.stroke(); c.beginPath(); c.arc(0, -m * 0.1, m * 0.8, Math.PI * 0.2, Math.PI * 0.8); c.stroke();
+  c.strokeStyle = "rgba(255,90,110,.95)"; c.beginPath(); c.moveTo(-m * 0.95, -m * 0.95); c.lineTo(m * 0.95, m * 0.95); c.stroke(); c.restore();
 };
 Vista.prototype.apriPlastico = function (secondi) {
   var V = this, box = E("div", "lt-pannello lt-mappa lt-plastico"), cv = E("canvas"), nota = E("p", "", "");
@@ -8294,7 +8820,7 @@ Vista.prototype.apriPlastico = function (secondi) {
 };
 Vista.prototype.disegnaPlastico = function () {
   var V = this, P = V.plastico; if (!P) return; P.ultimo = V.tempo;
-  if (V.g && V.g.interf) { V.statico(P.cv, 320, 220); P.nota.textContent = "Nessun segnale: c'è un'interferenza."; return; }
+  if (V.g && V.g.interf) { V.statico(P.cv, 320, 220); P.nota.textContent = "Nessun segnale"; return; }
   var spia = V.priv && V.priv.ruolo === "spia";
   var gente = V.altri().filter(function (p) { return !p.fantasma; });
   if (V.sonoVivo() && !V.guardo) gente.push({ id: V.cb.myId, x: V.me.x, y: V.me.y, colore: (V.cache[(V.priv && V.priv.travestito) || V.cb.myId] || {}).colore });
@@ -9636,7 +10162,7 @@ function stile() {
     ".lt-ch{align-self:flex-start;max-width:100%;overflow-wrap:anywhere;font-size:.8rem;line-height:1.3;color:#f1e8d6;background:rgba(20,12,8,.7);border-radius:10px;padding:3px 9px;transition:opacity .3s var(--lt-ease);animation:ltSale .2s var(--lt-ease)}.lt-ch b{margin-right:6px;font-weight:700;color:#f6d999}.lt-ch.io b{color:#b8b1a2}",
     ".lt-scena.oriz .lt-chatst{bottom:calc(110px + env(safe-area-inset-bottom))}",
     ".lt-ch.w{font-style:italic;color:#c9c2b4}.lt-ch.a{background:rgba(110,130,200,.38);color:#dfe8ff}.lt-ch.a b{color:#c9d8ff}",
-    ".lt-lista-btn,.lt-hbtn{font:inherit;font-weight:700;font-size:.8rem;color:#f1e8d6;background:rgba(33,21,14,.85);border:1px solid rgba(241,232,214,.2);border-radius:9px;padding:5px 10px;cursor:pointer}",
+    ".lt-lista-btn{display:inline-flex;align-items:center;gap:5px}.lt-lista-btn,.lt-hbtn{font:inherit;font-weight:700;font-size:.8rem;color:#f1e8d6;background:rgba(33,21,14,.85);border:1px solid rgba(241,232,214,.2);border-radius:9px;padding:5px 10px;cursor:pointer}",
     ".lt-lista{list-style:none;margin:0;padding:7px 9px;display:grid;gap:3px;background:rgba(20,12,8,.78);border-radius:10px;font-size:.78rem;line-height:1.3}",
     ".lt-lista li.fatto{opacity:.45;text-decoration:line-through}.lt-lista b{color:#f6d999}.lt-lista .nota{color:#b8b1a2;font-style:italic}",
     ".lt-dx{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(8px + env(safe-area-inset-top))}",
@@ -9657,7 +10183,7 @@ function stile() {
     ".lt-via{position:absolute;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%)}.lt-vai{width:auto;min-width:160px;margin:0}",
     ".lt-azioni{position:absolute;right:calc(12px + env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,62px);grid-template-rows:repeat(2,62px);gap:9px;grid-template-areas:'abil botola buio' 'segnala spegni usa'}",
     ".lt-az{position:relative;width:62px;height:62px;border-radius:50%;border:1.5px solid rgba(241,232,214,.3);background:rgba(33,21,14,.85);color:#f1e8d6;font:inherit;font-weight:600;font-size:.62rem;letter-spacing:.02em;text-transform:uppercase;display:grid;place-items:center;padding:0;touch-action:manipulation;transition:transform .16s var(--lt-ease),opacity .2s var(--lt-ease)}",
-    ".lt-az:active:not(:disabled){transform:scale(.9)}.lt-az:disabled{opacity:.62;border-color:rgba(255,255,255,.35)}.lt-az .et{position:absolute;inset:0;pointer-events:none}.lt-az .et svg{display:block;width:100%;height:100%;overflow:visible;fill:currentColor;font:inherit;font-weight:600;letter-spacing:.02em;text-transform:uppercase}",
+    ".lt-az:active:not(:disabled){transform:scale(.9)}.lt-az:disabled{opacity:.62;border-color:rgba(255,255,255,.35)}.lt-az .et{position:absolute;inset:0;pointer-events:none}.lt-az .ic{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;overflow:hidden;border-radius:50%}.lt-az .ic svg.ico{width:78%;height:78%;vertical-align:baseline;opacity:.3;stroke-width:1.5;transition:opacity .2s var(--lt-ease)}.lt-az:disabled .ic svg.ico{opacity:.22}.lt-az.conta .ic svg.ico{opacity:.18}.lt-az .et text{paint-order:stroke;stroke:rgba(14,9,6,.55);stroke-width:2.4px;stroke-linejoin:round}.lt-az.oro:not(:disabled) .et text{stroke:rgba(255,236,190,.7)}.lt-az .et svg{display:block;width:100%;height:100%;overflow:visible;fill:currentColor;font:inherit;font-weight:600;letter-spacing:.02em;text-transform:uppercase}",
     ".lt-az.oro{border-color:rgba(231,183,92,.75);background:rgba(231,183,92,.22)}.lt-az.oro:not(:disabled){border-color:#f6d999;background:#e7b75c;color:#1d1508}.lt-az.rosso{border-color:rgba(208,80,106,.8);background:rgba(208,80,106,.26)}.lt-az.viola{border-color:rgba(169,147,230,.75);background:rgba(169,147,230,.2)}",
     ".lt-az.telo,.lt-az.telo:disabled{opacity:1;background:var(--telo,#7c8088);border:2px solid var(--orlo,#b4b8c0);box-shadow:0 2px 7px rgba(0,0,0,.5);transition:transform .16s var(--lt-ease),background-color .2s var(--lt-ease),border-color .2s var(--lt-ease)}",
     ".lt-az.conta .et{visibility:hidden}",
@@ -9736,6 +10262,9 @@ function stile() {
     "@keyframes ltDondola{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}",
     "@keyframes ltColpo{from{transform:scale(2.2);opacity:0}to{transform:scale(1);opacity:1}}",
     "@keyframes ltGira{from{transform:perspective(700px) rotateY(90deg) scale(.9);opacity:0}to{transform:perspective(700px) rotateY(0) scale(1);opacity:1}}",
+    // (rete) il tasto premuto aspetta la ricevuta dell'host: un alone che respira; se l'host dice di no, un piccolo «no» di lato. Solo classi lt-attende e lt-no, il resto dei tasti non si tocca
+    ".lt-az.lt-attende{animation:ltAttende .5s var(--lt-ease) infinite alternate}@keyframes ltAttende{from{box-shadow:0 0 0 0 rgba(246,217,153,0)}to{box-shadow:0 0 0 4px rgba(246,217,153,.5)}}",
+    ".lt-az.lt-no{animation:ltNo .3s var(--lt-ease)}@keyframes ltNo{0%,100%{translate:0}25%{translate:-4px 0}75%{translate:4px 0}}",
   ].join("") + cssRegistro();
   document.head.appendChild(st);
 }
