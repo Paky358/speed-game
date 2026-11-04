@@ -784,4 +784,227 @@
     if (nos.length) no(nos.join(" ||| "));
     return out.map(function (r) { return r.split(" · ")[0]; }).join(", ");
   } });
+  // ===================================================================== bu1-bu5: ✉️ IL FANTA A BUSTE (2 nov 2026, il proprietario)
+  // bu1 ⚙️ «💰 Come si compra» (3 scelte, di base l'asta normale), riassunto e regole; i conti delle buste (pari, spareggio, nessuno)
+  // bu2 stesso telefono in 3, «Tutta a buste»: buste segrete passando il telefono; 1ª: 3, 5, passo → vince 5 (apertura dalla più bassa);
+  //     2ª: tutti 2 → spareggio solo tra loro, tutti 3 → la ruota; 3ª: tutti passano → «NESSUNO!»; poi fino alla classifica
+  // bu3 da solo come IL PAPPONE, «Tutta a buste», fino alla classifica
+  // bu4 online in 3, «Tutta a buste»: nella foto mai le offerte; Giulia chiude a 4 e ricarica (ritrova «Busta chiusa: 4 💰»), Luca ricarica
+  //     mentre scrive e poi passa; spareggio (Luca guarda), ruota uguale su tutti; misure a 360x640 e 412x915; fino alla classifica
+  // bu5 stesso telefono in 3, «Buste solo per i big»: a busta solo chi vale da BIG_DA in su, gli altri all'asta normale
+  function testoDi(w, s) { var e = q(w, s); return e ? e.textContent : ""; }
+  function credDi(w, nome) { var sq = qa(w, ".st-sq").filter(function (x) { var b = x.querySelector(".st-sq-nomi b"); return b && b.textContent === nome; })[0]; var m = sq && /(\d+) 💰/.exec(sq.querySelector(".st-sq-nomi small").textContent); return m ? +m[1] : null; }
+  function righeApri(w) { return qa(w, ".st-apri .as-buste .r").map(function (r) { return [].map.call(r.childNodes, function (c) { return c.textContent; }).join(" ").replace(/\s+/g, " ").trim(); }); }
+  // (stesso telefono) chi ha il telefono scrive la sua busta: vuoi(nome, spareggio) = l'offerta (0 = passo, o «resto»)
+  async function scriviBusta(P, vuoi) {
+    var testa = testoDi(P, ".as-bus-testa"), nome = testa.replace(/^.*· /, "").trim(), sp = /Spareggio/.test(testa), x = vuoi(nome, sp);
+    if (!x) { var ps = bott(P, ".schermata .piede .btn", /Passo|Resto a/); if (!ps) no("nella busta di " + nome + " non c'è «Passo» («" + T(P).slice(-120) + "»)"); ps.click(); return nome + " 0"; }
+    var v = function () { return parseInt(testoDi(P, ".as-bst .v"), 10); }, piu = bott(P, ".as-bst button", /^\+$/);
+    if (!piu) no("nella busta di " + nome + " non c'è il + («" + T(P).slice(-120) + "»)");
+    for (var k = 0; k < 40 && v() < x; k++) piu.click();
+    var ok = bott(P, ".schermata .piede .btn", new RegExp("Chiudo: " + x + " 💰"));
+    if (!ok) no("il tasto di " + nome + " non dice «Chiudo: " + x + " 💰» (è a " + v() + ")");
+    ok.click(); return nome + " " + x;
+  }
+  async function motoreAsta(w) {   // il file del gioco con le funzioni delle buste portate fuori (solo per la prova)
+    var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {}, ag = "function costruisciMazzoFanta(n) {";
+    src = src.replace(ag, "FUORI.contaBuste = contaBuste; FUORI.apertura = apertura; FUORI.apriMs = apriMs; FUORI.righeDi = righeDi; FUORI.BIG = BIG_DA; " + ag);
+    var g = {}; new w.Function("SG", "FUORI", src)({ registra: function (x) { g[x.id] = x; }, bot: w.SG && w.SG.bot }, fuori);
+    fuori.giochi = g; return fuori;
+  }
+  COPIONE.aggiungi("bu1", { nome: "Fanta a buste: ⚙️ «💰 Come si compra», riassunto, regole e i conti delle buste", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0 }), M = await motoreAsta(w), f = M.giochi.astafanta, x = [];
+    var box = document.createElement("div"), dove = {};
+    var el = function (tag, a, figli) { var e = document.createElement(tag); a = a || {}; Object.keys(a).forEach(function (k) { if (k === "text") e.textContent = a[k]; else if (k === "class") e.className = a[k]; else if (k === "style") e.style.cssText = a[k]; else if (k === "onclick") e.onclick = a[k]; else e.setAttribute(k, a[k]); }); (figli || []).forEach(function (c) { if (c) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); }); return e; };
+    document.body.appendChild(box); f.impostazioni(box, dove, { el: el, modo: "telefono" });
+    var chips = [].slice.call(box.querySelectorAll(".modo-chip")).map(function (b) { return b.textContent; }).join(" | ");
+    if (!/💰 Come si compra/.test(box.textContent) || !/Asta normale/.test(chips) || !/Tutta a buste/.test(chips) || !/Buste solo per i big/.test(chips)) no("le tre scelte non ci sono: " + chips);
+    if (dove.compra !== "normale") no("di base non è l'asta normale: " + dove.compra);
+    [].slice.call(box.querySelectorAll(".modo-chip")).filter(function (b) { return /Tutta a buste/.test(b.textContent); })[0].click();
+    if (dove.compra !== "buste") no("toccando «Tutta a buste» resta " + dove.compra);
+    box.remove();
+    if (!/tutta a buste/.test(f.riassunto({ compra: "buste" })) || !/buste per i big/.test(f.riassunto({ compra: "big" })) || /buste/.test(f.riassunto({}))) no("i riassunti: " + f.riassunto({ compra: "buste" }) + " / " + f.riassunto({ compra: "big" }) + " / " + f.riassunto({}));
+    var reg = f.regole.join(" ");
+    if (!/Come si compra/.test(reg) || !/spareggio/.test(reg) || !/ruota/.test(reg) || !/Mai «vince chi ha chiuso prima»/.test(reg)) no("le regole non spiegano le buste");
+    var C = M.contaBuste;
+    var r1 = C([{ id: "a", q: 3 }, { id: "b", q: 5 }, { id: "c", q: 0 }], 0); if (r1.prezzo !== 5 || r1.primi.length !== 1 || r1.primi[0].id !== "b") no("3, 5, passo: " + JSON.stringify(r1));
+    var r2 = C([{ id: "a", q: 4 }, { id: "b", q: 4 }, { id: "c", q: 2 }], 0); if (r2.prezzo !== 4 || r2.primi.length !== 2) no("4, 4, 2 non è pari: " + JSON.stringify(r2));
+    var r3 = C([{ id: "a", q: 0 }, { id: "b", q: 0 }], 4); if (r3.prezzo !== 4 || r3.primi.length !== 2) no("spareggio con tutti e due «resto» non è ancora pari: " + JSON.stringify(r3));
+    var r4 = C([{ id: "a", q: 6 }, { id: "b", q: 0 }], 4); if (r4.prezzo !== 6 || r4.primi[0].id !== "a") no("spareggio 6 contro «resto a 4»: " + JSON.stringify(r4));
+    var r5 = C([{ id: "a", q: 0 }, { id: "b", q: 0 }], 0); if (!r5.nessuno) no("tutti passano non è «nessuno»: " + JSON.stringify(r5));
+    var ap = M.apertura({ n: 1, sp: 0 }, [{ id: "a", nome: "A", q: 3 }, { id: "b", nome: "B", q: 5 }, { id: "c", nome: "C", q: 0 }], r1);
+    if (ap.buste.map(function (b) { return b.q; }).join(",") !== "0,3,5" || ap.fine !== "vince") no("l'apertura non va dalla più bassa alla più alta: " + JSON.stringify(ap));
+    var ms = M.apriMs(M.righeDi(ap)), ms10 = M.apriMs(10); if (ms < 2500 || ms > 4500 || ms10 > 6500) no("l'apertura dura " + ms + " ms in 3 e " + ms10 + " ms in 10");
+    x.push("3 scelte (di base l'asta normale), riassunti e regole; conti: vince, pari, spareggio, resto, nessuno; apertura in 3 " + ms + " ms, in 10 " + ms10 + " ms; big da " + M.BIG);
+    return x.join(" · ");
+  } });
+  COPIONE.aggiungi("bu2", { nome: "Fanta a buste sullo stesso telefono in 3: buste passando il telefono, apertura, spareggio, ruota, nessuno, fino alla classifica", fai: async function () {
+    var NOMI = ["Paky", "Giulia", "Luca"], P = await partitaLocale({ formato: "fanta", compra: "buste", giornata: false }, NOMI), x = [], fase = 0, fino = Date.now() + 300000, primo = null, misure = [], prima = null, apriK = null, aperto = -1;
+    W.clicca(P, /Comincia l'asta/);
+    var piano = [function (n) { return { Paky: 3, Giulia: 5, Luca: 0 }[n]; }, function (n, sp) { return sp ? 3 : 2; }, function () { return 0; }];
+    while (Date.now() < fino && !q(P, ".st-rivela")) {
+      if (/Passa il telefono a/.test(T(P))) { W.clicca(P, /^Sono /); await W.dorme(100); continue; }
+      if (q(P, ".as-bus-testa")) {
+        if (!misure.length) misure = misure.concat(await misura("Paky", "la busta", [".as-bus-carta", ".as-bst", ".schermata .piede .btn"]), ["x"]);
+        if (fase < 3) await scriviBusta(P, piano[fase]);
+        else await scriviBusta(P, function (n) { if (primo === null) { primo = n; return 1; } return 0; });
+        await W.dorme(100); continue;
+      }
+      var ap = q(P, ".st-apri"), k = ap && (ap.classList.contains("st-ruota") ? "ruota" : testoDi(P, ".st-apri h4"));
+      if (ap && !ap.__visto) {
+        ap.__visto = true; apriK = k; primo = null; aperto = fase; await W.dorme(250);
+        var rr = righeApri(P), fine = testoDi(P, ".st-apri .fine");
+        if (fase === 0) {
+          if (rr.length !== 3 || !/Luca passa/.test(rr[0]) || !/Paky.*3 💰/.test(rr[1]) || !/🏆.*Giulia.*5 💰/.test(rr[2])) no("1ª apertura: " + JSON.stringify(rr));
+          misure = misure.concat(await misura("Paky", "l'apertura delle buste", [".st-apri"]));
+          prima = credDi(P, "Giulia"); x.push("1ª: " + rr.join(" / "));
+        } else if (fase === 1 && !/Spareggio/.test(k) && k !== "ruota") {
+          if (!/Spareggio tra/.test(fine) || rr.filter(function (r) { return /⚔️/.test(r); }).length < 2) no("2ª, tutti a 2: niente spareggio («" + fine + "», " + JSON.stringify(rr) + ")");
+          x.push("2ª: " + fine);
+        } else if (fase === 1 && /Spareggio/.test(k)) {
+          if (!/decide la ruota/.test(fine)) no("spareggio tutti a 3: niente ruota («" + fine + "», " + JSON.stringify(rr) + ")");
+          prima = NOMI.map(function (n) { return credDi(P, n); });
+        } else if (fase === 1 && k === "ruota") {
+          misure = misure.concat(await misura("Paky", "la ruota", [".st-ruota .disco"]));
+          if (qa(P, ".st-ruota .disco span").length < 2) no("la ruota non ha i nomi");
+          x.push("🎡 ruota tra " + qa(P, ".st-ruota .disco span").map(function (s) { return s.textContent; }).join(", "));
+        } else if (fase === 2) {
+          if (!/Nessuno lo vuole/.test(fine) || !/passano/.test(rr[0] || "")) no("3ª, tutti passano: «" + fine + "» " + JSON.stringify(rr));
+        }
+        continue;
+      }
+      var tb = testoDi(P, ".sa-aggiudicato");
+      if (tb && !ap && fase < 3 && aperto === fase) {
+        if (fase === 0) { if (tb !== "AGGIUDICATO!" || credDi(P, "Giulia") !== prima - 5) no("1ª: Giulia non paga 5 (" + prima + " → " + credDi(P, "Giulia") + ", «" + tb + "»)"); fase = 1; }
+        else if (fase === 1 && apriK === "ruota") {
+          var dopo = NOMI.map(function (n) { return credDi(P, n); }), pagato = NOMI.filter(function (n, i) { return prima[i] - dopo[i] === 3; });
+          if (tb !== "AGGIUDICATO!" || pagato.length !== 1) no("dopo la ruota non paga 3 uno solo: " + JSON.stringify(prima) + " → " + JSON.stringify(dopo));
+          x.push("la ruota dà il calciatore a " + pagato[0] + " per 3"); fase = 2;
+        }
+        else if (fase === 2 && apriK) { if (tb !== "NESSUNO!") no("3ª: tutti passano ma c'è «" + tb + "»"); fase = 3; }
+        aperto = -1;
+      }
+      await W.dorme(150);
+    }
+    if (!q(P, ".st-rivela")) no("il fanta a buste non arriva alla classifica (fase " + fase + ", «" + T(P).slice(0, 100) + "»)");
+    if (fase < 3) no("non sono passate tutte le buste di prova (fase " + fase + ")");
+    misure = misure.filter(function (m) { return m !== "x"; }); if (misure.length) no(misure.join(" / "));
+    return x.join(" · ") + " · classifica OK; misure a 360x640 e 412x915 OK";
+  } });
+  COPIONE.aggiungi("bu3", { nome: "Fanta a buste da solo (IL PAPPONE), fino alla classifica", fai: async function () {
+    var P = await W.apriTel("IL PAPPONE", { x: 0, pa: true, prima: function (w) { w.__imp = { formato: "fanta", compra: "buste", giornata: false }; } }), n = 0, fino = Date.now() + 120000;
+    senzaAnimazioni(P);
+    var tess = await W.aspetta(function () { return A.tessera(P, "Mini Asta Fantacalcio"); }, 6000); if (!tess) no("non trovo la tessera del fanta");
+    tess.click(); await W.dorme(400);
+    if (!W.clicca(P, /Su questo telefono/, ".modo-grande")) no("non c'è «Su questo telefono»");
+    await W.aspetta(function () { return q(P, ".sala-riga input"); }, 3000);
+    while (qa(P, ".sala-riga input").length > 1) { var tg = bott(P, ".sala-riga button", /✕|Togli|−/); if (!tg) break; tg.click(); await W.dorme(60); }
+    qa(P, ".sala-riga input").forEach(function (c) { c.value = "IL PAPPONE"; c.dispatchEvent(new P.Event("input", { bubbles: true })); });
+    for (var k = 0; k < 10 && !q(P, ".as-bus-testa") && !/Passa il telefono/.test(T(P)); k++) { await W.dorme(300); var b = qa(P, ".schermata .piede button").filter(function (x) { return /Avanti|Comincia|Gioca|Inizia|Via|▶/.test(x.textContent) && !x.disabled; })[0]; if (b) b.click(); }
+    while (Date.now() < fino && !q(P, ".st-rivela")) {
+      if (/Passa il telefono a/.test(T(P))) { W.clicca(P, /^Sono /); await W.dorme(100); continue; }
+      if (q(P, ".as-bus-testa")) { await scriviBusta(P, function () { return 1; }); n++; await W.dorme(100); continue; }
+      await W.dorme(200);
+    }
+    if (!q(P, ".st-rivela")) no("da solo non arriva alla classifica (" + n + " buste, «" + T(P).slice(0, 100) + "»)");
+    if (n !== 5) no("da solo le buste sono " + n + " (voluto 5: la rosa)");
+    return "5 buste da 1 credito, la rosa completa e la classifica";
+  } });
+  COPIONE.aggiungi("bu4", { nome: "Fanta a buste online in 3: offerte segrete, chi ricarica, spareggio, ruota, misure, fino alla classifica", fai: async function () {
+    var NOMI = ["Paky", "Giulia", "Luca"], o = await telefoniOnline({ formato: "fanta", compra: "buste", giornata: false }, NOMI), P = o.P, C = o.C, x = [], misure = [], fatto = 0, fino = Date.now() + 360000, vistoN = 0;
+    function win(n) { return n === "Paky" ? P : W.finestra(n); }
+    async function chiudiUI(n, quanto) {   // con i tasti: + fino a quanto, poi «Chiudo»; 0 = «Passo» o «Resto»
+      var w = win(n), ok;
+      if (!quanto) { ok = await W.aspetta(function () { return bott(w, ".st-bf-tasti .btn", /Passo|Resto a/); }, 4000); if (!ok) no(n + " non ha «Passo» («" + T(w).slice(-140) + "»)"); ok.click(); return; }
+      var piu = await W.aspetta(function () { return bott(w, ".st-bst button", /^\+$/); }, 4000); if (!piu) no(n + " non ha il + della busta («" + T(w).slice(-140) + "»)");
+      for (var k = 0; k < 40 && parseInt(testoDi(w, ".st-bst .v"), 10) < quanto; k++) piu.click();
+      ok = bott(w, ".st-bf-tasti .btn", new RegExp("Chiudo: " + quanto + " 💰")); if (!ok) no(n + ": il tasto non dice «Chiudo: " + quanto + " 💰» («" + T(w).slice(-140) + "»)"); ok.click();
+    }
+    async function aspettaFase(f, ms) { return W.aspetta(function () { return vm(C).fase === f; }, ms || 18000); }
+    while (Date.now() < fino && vm(C).fase !== "fine") {
+      var v = vm(C);
+      if (v.fase !== "busta" || !v.busta || v.busta.n === vistoN) { await W.dorme(150); continue; }
+      var b = v.busta, gara = b.gara.map(function (id) { return nomeDiId(C, id); });
+      vistoN = b.n;
+      if (/"q"|offert/.test(JSON.stringify(b))) no("nella foto della busta ci sono le offerte: " + JSON.stringify(b));
+      if (fatto === 0 && gara.length === 3) {
+        misure = misure.concat(await misura("Giulia", "la busta (online)", [".st-bst", ".st-bf-tasti .btn", ".st-schermo"]));
+        await chiudiUI("Giulia", 4);
+        if (!await W.aspetta(function () { return (vm(C).busta || {}).chiusi && vm(C).busta.chiusi.indexOf(idDi("Giulia")) >= 0; }, 3000)) no("la busta di Giulia non arriva all'host");
+        if (/"q"|offert/.test(JSON.stringify(vm(C).busta))) no("dopo la busta di Giulia la foto dice le offerte");
+        if (!/Giulia[\s\S]{0,40}busta chiusa/.test(T(P))) no("l'host non vede «busta chiusa» sotto Giulia");
+        await W.ricarica("Giulia"); senzaAnimazioni(W.finestra("Giulia"));
+        if (!await W.aspetta(function () { return /Busta chiusa: 4 💰/.test(T(W.finestra("Giulia"))); }, 9000)) no("Giulia ricaricata non ritrova «Busta chiusa: 4 💰» («" + T(W.finestra("Giulia")).slice(-160) + "»)");
+        await W.ricarica("Luca"); senzaAnimazioni(W.finestra("Luca"));   // (Luca ricarica mentre scrive: ritrova la busta da scrivere)
+        await chiudiUI("Luca", 0); await chiudiUI("Paky", 2);
+        if (!await aspettaFase("apri")) no("le buste non si aprono");
+        var ap = vm(C).apri;
+        if (ap.fine !== "vince" || ap.prezzo !== 4 || ap.primi[0] !== idDi("Giulia") || ap.buste.map(function (z) { return z.q; }).join(",") !== "0,2,4") no("1ª apertura: " + JSON.stringify(ap));
+        if (!await W.aspetta(function () { return righeApri(W.finestra("Luca")).length === 3; }, 3000)) no("Luca non vede le buste aperte");
+        misure = misure.concat(await misura("Luca", "l'apertura (online)", [".st-apri"]));
+        if (!await aspettaFase("esito", 9000) || vm(C).esito.chiId !== idDi("Giulia") || vm(C).esito.prezzo !== 4) no("1ª: non va a Giulia per 4 (" + JSON.stringify(vm(C).esito) + ")");
+        x.push("1ª: Giulia 4 (ricaricata), Paky 2, Luca passa (ricaricato) → Giulia per 4"); fatto = 1; continue;
+      }
+      if (fatto >= 1 && fatto <= 2 && gara.length >= 2) {
+        var a1 = gara[0], a2 = gara[1], resto = gara.slice(2), pari = fatto === 1 ? 3 : 2;
+        for (var i = 0; i < gara.length; i++) await chiudiUI(gara[i], i < 2 ? pari : 0);
+        if (!await aspettaFase("apri") || vm(C).apri.fine !== "spareggio") no("pari a " + pari + ": niente spareggio (" + JSON.stringify(vm(C).apri) + ")");
+        if (!await W.aspetta(function () { return vm(C).fase === "busta" && vm(C).busta && vm(C).busta.sp === pari; }, 9000)) no("lo spareggio non parte");
+        var sb = vm(C).busta; if (sb.gara.length !== 2) no("nello spareggio non ci sono solo i due pari: " + JSON.stringify(sb.gara));
+        if (sb.durata !== 10000) no("lo spareggio non dura 10 secondi: " + sb.durata);
+        resto.forEach(function (n) { if (q(win(n), ".st-bf-tasti")) no(n + " non era pari ma può scrivere nello spareggio"); });
+        if (fatto === 1) {   // ⚔️ il primo rilancia di 1, il secondo resta: vince il primo
+          await chiudiUI(a1, pari + 1); await chiudiUI(a2, 0);
+          if (!await aspettaFase("esito", 12000) || vm(C).esito.chiId !== idDi(a1) || vm(C).esito.prezzo !== pari + 1) no("spareggio: non vince " + a1 + " a " + (pari + 1) + " (" + JSON.stringify(vm(C).esito) + ")");
+          x.push("2ª: " + a1 + " e " + a2 + " pari a " + pari + " → spareggio (" + (resto.join(", ") || "nessuno") + " guarda) → " + a1 + " per " + (pari + 1));
+        } else {   // 🎡 tutti e due restano: la ruota, uguale su tutti
+          await chiudiUI(a1, 0); await chiudiUI(a2, 0);
+          if (!await aspettaFase("ruota", 12000)) no("ancora pari: niente ruota");
+          var ru = vm(C).ruota;
+          if (!await W.aspetta(function () { return NOMI.every(function (n) { return q(win(n), ".st-ruota .disco"); }); }, 3000)) no("la ruota non c'è su tutti i telefoni");
+          if (!await aspettaFase("esito", 9000) || vm(C).esito.chiId !== ru.ids[ru.vince] || vm(C).esito.prezzo !== pari) no("la ruota non dà il calciatore a chi ha vinto (" + JSON.stringify(vm(C).esito) + ")");
+          x.push("3ª: pari due volte → 🎡 ruota → " + ru.nomi[ru.vince] + " per " + pari);
+        }
+        fatto++; continue;
+      }
+      // le altre: chi è primo in gara offre 1, gli altri passano
+      for (var j = 0; j < gara.length; j++) {
+        var n = gara[j];
+        if (n === "Paky") await chiudiUI("Paky", j === 0 ? 1 : 0);
+        else manda(n, { t: "bustaF", n: b.n, q: j === 0 ? 1 : 0 });
+      }
+      await W.aspetta(function () { return vm(C).fase !== "busta" || (vm(C).busta || {}).n !== b.n; }, 18000);
+    }
+    if (vm(C).fase !== "fine") no("il fanta a buste online non arriva alla fine (" + vm(C).fase + ")");
+    if (fatto < 3) no("non sono passate tutte le buste di prova (" + fatto + ")");
+    if (!await W.aspetta(function () { return NOMI.every(function (n) { return q(win(n), ".st-rivela"); }); }, 8000)) no("la classifica non arriva a tutti");
+    if (misure.length) no(misure.join(" / "));
+    return x.join(" · ") + " · classifica su tutti; misure a 360x640 e 412x915 OK";
+  } });
+  COPIONE.aggiungi("bu5", { nome: "Fanta «Buste solo per i big» sullo stesso telefono in 3: a busta solo chi vale da 18 in su", fai: async function () {
+    var NOMI = ["Paky", "Giulia", "Luca"], P = await partitaLocale({ formato: "fanta", compra: "big", giornata: false }, NOMI), fino = Date.now() + 300000, nB = 0, nA = 0, primo = null, cartaA = "", ko = [];
+    W.clicca(P, /Comincia l'asta/);
+    var Q = P.SG_FANTA_QUOTAZIONI.valori, BIG = 18;
+    while (Date.now() < fino && !q(P, ".st-rivela")) {
+      if (/Passa il telefono a/.test(T(P))) { W.clicca(P, /^Sono /); await W.dorme(100); continue; }
+      if (q(P, ".as-bus-testa")) {
+        if (primo === null) { var nm = testoDi(P, ".as-bus-carta .nm"), sq = testoDi(P, ".as-bus-carta .sm").replace(/^.* · /, ""), val = Q[nm + " (" + sq + ")"]; nB++; if (!(val >= BIG)) ko.push("a busta " + nm + " (" + val + ")"); }
+        await scriviBusta(P, function (n) { if (primo === null) { primo = n; return 1; } return 0; });
+        await W.dorme(100); continue;
+      }
+      primo = q(P, ".st-apri") ? primo : null;
+      if (q(P, ".st-stadio .sa-pers") && !q(P, ".sa-aggiudicato") && !q(P, ".st-apri") && prezzo(P) != null) {
+        var k = testoDi(P, ".st-nome") + " (" + testoDi(P, ".st-squadra") + ")";
+        if (k !== cartaA) { cartaA = k; nA++; if (!(Q[k] < BIG)) ko.push("all'asta normale " + k + " (" + Q[k] + ")"); }
+        var c = capoNome(P);
+        if (!c) { var pu = q(P, ".sa-pers.puo"); if (pu) pu.click(); }
+        else qa(P, ".sa-pers").forEach(function (p) { var b = p.querySelector("b").textContent, ps = p.querySelector(".sa-passo"); if (b !== c && ps && ps.style.visibility !== "hidden" && !p.classList.contains("fuori")) ps.click(); });
+      }
+      await W.dorme(200);
+    }
+    if (!q(P, ".st-rivela")) no("«buste per i big» non arriva alla classifica (" + nB + " buste, " + nA + " aste)");
+    if (ko.length) no(ko.join(" · "));
+    if (!nB || !nA) no("in una partita " + nB + " buste e " + nA + " aste normali (volute tutte e due)");
+    return nB + " big a busta, " + nA + " all'asta normale, fino alla classifica";
+  } });
 })();

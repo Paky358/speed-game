@@ -9,6 +9,8 @@
    Ogni parola compare una volta sola in tutto il file: le
    altre parole della stessa categoria fanno da "esca"
    nell'ultima possibilità dell'impostore.
+   Una categoria con spento: true (🌶️ Serata) non entra in «Tutte»:
+   si gioca solo se l'host la sceglie.
    ========================================================= */
 window.SG_IMPOSTORE = [
   { id: "cibo", icona: "🍕", nome: "Cibo",
@@ -201,5 +203,143 @@ window.SG_IMPOSTORE = [
       "Mike Bongiorno/Pippo Baudo|Paolo Bonolis/Gerry Scotti|Amadeus/Carlo Conti|Leonardo da Vinci/Michelangelo|" +
       "Dante/Manzoni|Garibaldi/Napoleone|Galileo/Einstein|Marco Polo/Cristoforo Colombo|Giulio Cesare/Nerone|" +
       "Cleopatra/Nefertiti|Mozart/Beethoven|Picasso/Van Gogh|Michael Jackson/Elvis Presley|Shakira/Beyoncé|" +
-      "Steve Jobs/Bill Gates|Federica Pellegrini/Tania Cagnotto|Mina/Ornella Vanoni|Måneskin/Pooh|Gandhi/Martin Luther King" }
+      "Steve Jobs/Bill Gates|Federica Pellegrini/Tania Cagnotto|Mina/Ornella Vanoni|Måneskin/Pooh|Gandhi/Martin Luther King" },
+
+  // ---- 4 nov 2026: 10 temi nuovi (518 coppie, scritte e controllate da aiutanti Sonnet il 26 ott, rilette da Claude) ----
+  { id: "calcio", icona: "⚽", nome: "Calcio",
+    coppie: "Fuorigioco/Fallo di mano|Calcio d'angolo/Rimessa laterale|Calcio di rigore/Punizione|Parastinchi/Calzettoni|" +
+      "Portiere/Difensore|Attaccante/Centrocampista|VAR/Moviola|Serie A/Serie B|Champions League/Europa League|" +
+      "Scudetto/Coppa Italia|Juventus/Lazio|Fiorentina/Atalanta|Sampdoria/Genoa|Real Madrid/Barcellona|" +
+      "Manchester United/Liverpool|San Siro/Stadio Olimpico|Wembley/Camp Nou|Panchina/Tribuna|" +
+      "Tiro in porta/Colpo di testa|Rovesciata/Colpo di tacco|Gol annullato/Autogol|Scarpini/Guanti da portiere|" +
+      "Tempi supplementari/Recupero|Calciomercato/Ritiro|Curva/Gradinata|Bandiera/Striscione|" +
+      "Telecronista/Commentatore tecnico|Domenica Sportiva/Quelli che il calcio|Fantacalcio/Totocalcio|Baggio/Pirlo|" +
+      "Zidane/Ronaldinho|Buffon/Donnarumma|Maldini/Nesta|Gattuso/Materazzi|Ibrahimovic/Balotelli|" +
+      "Catenaccio/Tiki-taka|Difesa a zona/Marcatura a uomo|Contropiede/Pressing|Spogliatoio/Sala stampa|" +
+      "Retrocessione/Salvezza|Titolare/Riserva|Gazzetta dello Sport/Corriere dello Sport|DAZN/Sky|Campionato/Girone|" +
+      "Traversa/Palo|Cross/Lancio lungo|Preparatore atletico/Massaggiatore|Raccattapalle/Steward|" +
+      "Capocannoniere/Rigorista|Entrata a gamba tesa/Sgambetto|Mister/Direttore sportivo|FIFA/PES|Papera/Parata|" +
+      "Dilettanti/Professionisti|Tripletta/Doppietta|Derby della Madonnina/Derby di Roma|Mourinho/Ancelotti|" +
+      "Sacchi/Capello|Nazionale/Under 21" },
+
+  { id: "estate", icona: "🏖️", nome: "Estate e vacanze",
+    coppie: "Ombrellone/Gazebo|Sdraio/Lettino|Telo mare/Pareo|Crema solare/Doposole|Salvagente/Braccioli|Pinne/Boccaglio|" +
+      "Racchettoni/Frisbee|Materassino/Ciambella gonfiabile|Lido/Spiaggia libera|Spritz/Mojito|Birra/Prosecco|" +
+      "Abbronzatura/Scottatura|Moto d'acqua/Banana boat|Escursione/Gita fuori porta|Trekking/Rafting|" +
+      "Sentiero/Strada sterrata|Barbecue/Spiedino|Amaca/Dondolo|Pensione completa/Mezza pensione|" +
+      "Animazione/Mini club|Acquapark/Delfinario|Agriturismo/Masseria|Resort/Residence|Overbooking/Cancellazione|" +
+      "Guida turistica/Audioguida|Selfie stick/Treppiede|Luglio/Agosto|Solstizio/Equinozio|Caldo/Afa|Cono/Coppetta|" +
+      "Cucciolone/Magnum|Insalata di riso/Pasta fredda|Fritto misto/Spaghetti allo scoglio|Baia/Golfo|" +
+      "Servizio in camera/Colazione a buffet|Trolley/Bagaglio a mano|Fuso orario/Jet lag|Centro estivo/Campo scuola|" +
+      "Cinema all'aperto/Drive-in|Lungomare/Molo|Mercatino/Bancarella|Orata/Spigola|Canna da pesca/Retino|" +
+      "Snorkeling/Apnea|Gargano/Salento|Rimini/Riccione|Jesolo/Lignano|Viareggio/Forte dei Marmi|" +
+      "Cinque Terre/Portofino|Elba/Lampedusa|Maldive/Zanzibar|Ibiza/Mykonos|Gardaland/Mirabilandia|" +
+      "Dolomiti/Gran Sasso|Cortina/Courmayeur|Bungalow/Chalet|Controesodo/Bollino nero|Telepass/Pedaggio|" +
+      "Apericena/Aperitivo" },
+
+  { id: "social", icona: "📱", nome: "Internet e social",
+    coppie: "Facebook/Twitter|Snapchat/Pinterest|Spotify/Apple Music|Skype/Zoom|Gmail/Outlook|Storie/Reel|Post/Commento|" +
+      "Chat di gruppo/Chat privata|Meme/GIF|Troll/Hater|Streamer/Gamer|Maps/Waze|Booking/Airbnb|Deliveroo/Glovo|" +
+      "Foto profilo/Copertina|Nickname/Avatar|Disney+/Prime Video|Videoclip/Trailer|Codice sconto/Carta fedeltà|" +
+      "Carrello/Lista dei desideri|Spedizione/Reso|PayPal/Postepay|Carta di credito/Bancomat|" +
+      "Browser/Motore di ricerca|Chrome/Safari|Preferiti/Cronologia|Scaricare/Salvare|Link/Allegato|" +
+      "Screenshot/Registrazione schermo|Spunta blu/Spunta grigia|Ultimo accesso/Visualizzato|Phishing/Virus|" +
+      "Cloud/Backup|Sondaggio/Quiz|Sfida virale/Flash mob|E-book/Audiolibro|Fortnite/Minecraft|" +
+      "Candy Crush/Angry Birds|Alexa/Siri|Modalità aereo/Non disturbare|Richiesta di amicizia/Invito|Hotspot/Router|" +
+      "Fibra/ADSL|Tutorial/Recensione|Cliccare/Scrollare|Registrazione/Accesso|Popup/Banner" },
+
+  { id: "anni90", icona: "📼", nome: "Anni '80, '90 e 2000",
+    coppie: "Walkman/Discman|Tamagotchi/Furby|Cassetta/CD|Nokia/Motorola|SMS/MMS|Gettone/Scheda telefonica|" +
+      "Bim Bum Bam/Albero Azzurro|Striscia la notizia/Le Iene|Uomini e donne/Amici|" +
+      "Grande Fratello/L'isola dei famosi|Il Commissario Rex/Distretto di polizia|Beverly Hills 90210/Dawson's Creek|" +
+      "Baywatch/Miami Vice|Medico in famiglia/I Cesaroni|Dragon Ball/Cavalieri dello zodiaco|Lady Oscar/Candy Candy|" +
+      "Sailor Moon/Magica Doremì|Digimon/Yu-Gi-Oh!|I Simpson/South Park|Super Nintendo/Sega Mega Drive|" +
+      "Tomb Raider/Resident Evil|Space Invaders/Pong|Polly Pocket/My Little Pony|Spice Girls/Backstreet Boys|" +
+      "Nirvana/Pearl Jam|883/Articolo 31|Whitney Houston/Celine Dion|Britney Spears/Christina Aguilera|" +
+      "Eminem/50 Cent|Macarena/Lambada|Lira/Euro|Fax/Segreteria telefonica|Cordless/Telefonino|Napster/eMule|" +
+      "Windows 95/Windows XP|Modem 56k/Chiavetta internet|Diddl/Hello Kitty|Smemoranda/Comix|Fiat Panda/Fiat Uno|" +
+      "Gormiti/Power Rangers|Figurine/Tazos|Atari/Commodore 64|MTV/Deejay Television|Radio Deejay/Radio Italia|" +
+      "Titanic/Pearl Harbor|Jurassic Park/Independence Day|Ritorno al futuro/E.T.|Zelig/Colorado|Big Babol/Brooklyn|" +
+      "Paninaro/Metallaro|Invicta/Eastpak|Scaldamuscoli/Fascia per capelli" },
+
+  { id: "storia", icona: "🏛️", nome: "Storia e miti",
+    coppie: "Zeus/Poseidone|Atena/Artemide|Apollo/Dioniso|Achille/Ulisse|Ettore/Paride|Ciclope/Minotauro|Pegaso/Centauro|" +
+      "Icaro/Prometeo|Cavallo di Troia/Vaso di Pandora|Romolo/Enea|Augusto/Costantino|Spartaco/Annibale|" +
+      "Gladiatore/Legionario|Centurione/Senatore|Acquedotto/Anfiteatro|Toga/Tunica|Faraone/Sfinge|Piramide/Obelisco|" +
+      "Tutankhamon/Ramses|Geroglifici/Papiro|Spartani/Ateniesi|Partenone/Acropoli|Socrate/Platone|" +
+      "Alessandro Magno/Attila|Carlo Magno/Re Artù|Lorenzo il Magnifico/Machiavelli|Spada/Scudo|Catapulta/Balestra|" +
+      "Drago/Unicorno|Normanni/Longobardi|Maya/Aztechi|Etruschi/Fenici|Pompei/Ercolano|Magellano/Vasco da Gama|" +
+      "Odino/Thor|Valchiria/Amazzone|Tavola rotonda/Santo Graal|Aristotele/Archimede|Pitagora/Euclide|" +
+      "Maria Antonietta/Luigi XVI|Rivoluzione francese/Rivoluzione industriale|Bastiglia/Versailles|" +
+      "Vittorio Emanuele II/Cavour|Alessandro Volta/Guglielmo Marconi|Medioevo/Rinascimento|Mammut/Dinosauro|" +
+      "Tirannosauro/Velociraptor|Clava/Ascia|Crociato/Templare|Sultano/Califfo|Teseo/Perseo|Elena di Troia/Penelope|" +
+      "Cerbero/Idra|Afrodite/Ares|Ermes/Ade|Anubi/Ra|Mongoli/Unni|Zar/Kaiser|Alchimista/Astrologo|Atlantide/Eldorado|" +
+      "Foro romano/Pantheon|Mosaico/Affresco|Menestrello/Giullare|Conte/Barone|Caligola/Marco Aurelio" },
+
+  { id: "eroi", icona: "🦸", nome: "Supereroi, fumetti e videogiochi",
+    coppie: "Capitan America/Black Panther|Wonder Woman/Supergirl|Wolverine/Deadpool|Thanos/Loki|Venom/Dottor Octopus|" +
+      "X-Men/Avengers|Bowser/Donkey Kong|Principessa Peach/Zelda|Ash/Misty|Crash Bandicoot/Spyro|" +
+      "GTA/Red Dead Redemption|Goku/Vegeta|Lupin III/Detective Conan|Dylan Dog/Diabolik|Tex Willer/Lucky Luke|" +
+      "Mortal Kombat/Street Fighter|Guitar Hero/Just Dance|Joker/Lex Luthor|Luke Skywalker/Han Solo|Jedi/Sith|" +
+      "Optimus Prime/Megatron|Goldrake/Mazinga|Capitan Harlock/Jeeg robot|Ghostbusters/Men in Black|Yoshi/Toad|" +
+      "Harley Quinn/Catwoman|Gotham/Metropolis|Star Wars/Star Trek|Subway Surfers/Temple Run|" +
+      "Prince of Persia/Assassin's Creed|Yoda/Chewbacca|Gandalf/Dumbledore|Frodo/Gollum|Terminator/RoboCop|" +
+      "Rocky/Rambo|Alien/Predator|Doctor Strange/Black Widow|Wii/Nintendo DS|Paperinik/Superpippo|He-Man/Skeletor|" +
+      "Lara Croft/Indiana Jones" },
+
+  { id: "lavoro", icona: "💼", nome: "Lavoro e soldi",
+    coppie: "Bonifico/Assegno|Mutuo/Prestito|Scontrino/Fattura|Risparmio/Investimento|Pensione/Liquidazione|Tasse/Bollette|" +
+      "Banconota/Moneta|Conto corrente/Libretto di risparmio|Affitto/Condominio|Busta paga/Contratto|Aumento/Bonus|" +
+      "Licenziamento/Dimissioni|Sciopero/Manifestazione|Straordinari/Turni|Part-time/Tempo pieno|Stage/Apprendistato|" +
+      "Datore di lavoro/Dipendente|Direttore/Caporeparto|Fabbrica/Laboratorio|Cantiere/Officina|Cliente/Fornitore|" +
+      "Saldi/Sconto|Commercialista/Notaio|Codice fiscale/Tessera sanitaria|Azioni in borsa/Bitcoin|Paghetta/Mancia|" +
+      "Debito/Credito|Caparra/Rata|Prelievo/Versamento|Cassa integrazione/Disoccupazione|Eredità/Donazione|" +
+      "Permesso/Congedo|Maternità/Paternità|Operaio/Impiegato|Imprenditore/Libero professionista|" +
+      "Presentazione/Relazione|Excel/Word|Start-up/Multinazionale|Brevetto/Marchio|Volantino/Manifesto|" +
+      "Socio/Amministratore|Preventivo/Ordine|Budget/Bilancio|Inflazione/Crisi|Weekend/Vacanza|" +
+      "Cancelleria/Ferramenta|Agenzia interinale/Centro per l'impiego|Inquilino/Proprietario|Canone Rai/Bollo auto|" +
+      "Tuta da lavoro/Divisa|Vetrina/Insegna|Interessi/Commissioni|Conto in rosso/Fido|Contanti/Pagamento rateale|" +
+      "Lavoro/Hobby" },
+
+  { id: "musica", icona: "🎵", nome: "Musica e cantanti",
+    coppie: "Pop/Rap|Jazz/Blues|Techno/House|Country/Folk|Reggaeton/Bachata|Hip hop/Trap|Ritornello/Strofa|Assolo/Coro|" +
+      "Duetto/Trio|Spartito/Pentagramma|Orchestra/Banda|Tormentone/Ballata|Disco d'oro/Disco di platino|" +
+      "Playlist/Album|Singolo/Raccolta|Backstage/Palco|Autografo/Dedica|Giuria/Televoto|Cantautore/Interprete|" +
+      "Boy band/Girl band|Beatles/Rolling Stones|Queen/Pink Floyd|Elton John/Freddie Mercury|Adele/Rihanna|" +
+      "Bob Marley/Bob Dylan|Frank Sinatra/Dean Martin|Justin Bieber/Ed Sheeran|Taylor Swift/Katy Perry|Coldplay/U2|" +
+      "ABBA/Bee Gees|Lucio Dalla/Lucio Battisti|Fabrizio De André/Francesco Guccini|Renato Zero/Claudio Baglioni|" +
+      "Max Pezzali/Biagio Antonacci|Fedez/J-Ax|Elodie/Emma Marrone|Mahmood/Blanco|Andrea Bocelli/Luciano Pavarotti|" +
+      "Adriano Celentano/Domenico Modugno|Rita Pavone/Patty Pravo|Antonello Venditti/Francesco De Gregori|" +
+      "Pino Daniele/Edoardo Bennato|Negramaro/Modà|Serenata/Ninna nanna|Inno/Marcia|Colonna sonora/Sigla|" +
+      "Live/Playback|Marco Mengoni/Francesco Gabbani|Achille Lauro/Sfera Ebbasta" },
+
+  { id: "quotidiano", icona: "🏡", nome: "Vita di tutti i giorni",
+    coppie: "Vicino di casa/Coinquilino|Pianerottolo/Cortile|Raccolta differenziata/Discarica|" +
+      "Cassonetto/Sacchetto dell'umido|Raccomandata/Telegramma|Strisce blu/Strisce gialle|" +
+      "Divieto di sosta/Zona disco|Vigile/Ausiliario del traffico|Rotatoria/Incrocio|Carro attrezzi/Carrozziere|" +
+      "Revisione/Tagliando|Carie/Tartaro|Analisi del sangue/Visita medica|Medico di base/Guardia medica|" +
+      "Detersivo/Ammorbidente|Pranzo della domenica/Cena del sabato|Cugini/Cognati|Suocera/Nuora|" +
+      "Passeggiata/Giro in bici|Fruttivendolo/Pescivendolo|Tacchi sul soffitto/Trapano del vicino|" +
+      "Cane che abbaia/Musica a tutto volume|Ora di punta/Esodo estivo|Lavori in corso/Strada chiusa|" +
+      "Doppia fila/Passo carrabile|Pendolare/Turista|Sciopero dei treni/Ritardo dell'autobus|" +
+      "Francobollo/Marca da bollo|Sportello/Bancone|Caldaia/Scaldabagno|Rubinetto che gocciola/Tubo che perde|" +
+      "Salvavita/Contatore|Zanzariera/Zampirone|Ricetta rossa/Certificato medico|" +
+      "Cambio di stagione/Pulizie di primavera|Ricevuta/Garanzia|Siepe/Recinzione|Portone/Cancello|" +
+      "Zona a traffico limitato/Isola pedonale|Cartella esattoriale/Sollecito di pagamento|" +
+      "Spese condominiali/Spese di riscaldamento|Ora legale/Ora solare|Weekend lungo/Settimana bianca|" +
+      "Fila alla posta/Fila in banca|Box auto/Posto auto|Mal di schiena/Torcicollo" },
+
+  { id: "serata", icona: "🌶️", nome: "Serata", spento: true,   // 🌶️ spento di partenza: entra solo se l'host lo sceglie tra le categorie
+    coppie: "Primo appuntamento/Appuntamento al buio|Gelosia/Invidia|Tinder/Meetic|Shot/Cocktail|" +
+      "Addio al celibato/Addio al nubilato|San Valentino/Festa della donna|Cena romantica/Cena tra amici|" +
+      "Commedia romantica/Film horror|Fidanzato/Convivente|Single/Separato|Colpo di fulmine/Sbandata|" +
+      "Lite di coppia/Pace fatta|Tradimento/Bugia|Ballo lento/Ballo di gruppo|DJ/Presentatore|Minigonna/Pantaloncini|" +
+      "Dopobarba/Gel per capelli|Smoking/Frac|Anello di fidanzamento/Fede nuziale|Luna di miele/Weekend romantico|" +
+      "Testimone/Damigella|Lancio del bouquet/Taglio della torta|Enoteca/Birreria|Pub/Wine bar|Timido/Sfacciato|" +
+      "Oroscopo/Tarocchi|Numero di telefono/Profilo social|Drink offerto/Cena offerta|Alla romana/Offro io|" +
+      "Limoncello/Grappa|Vodka/Tequila|Gin tonic/Rum e cola|Piano bar/Serata cabaret|" +
+      "Amore a prima vista/Amore a distanza|Gioco della bottiglia/Obbligo o verità|Cena con delitto/Serata a quiz|" +
+      "Occhi dolci/Sorrisetto|Arrossire/Sudare freddo|Playlist romantica/Canzone dedicata|Due di picche/Ghosting|" +
+      "Mazzo di rose/Scatola di cioccolatini|Sbronza/Postumi|Fuga d'amore/Nozze segrete|Ex fidanzato/Vecchia fiamma|" +
+      "Corteggiatore/Ammiratore segreto" }
 ];

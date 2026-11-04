@@ -9,6 +9,117 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 306,
+    data: "4 novembre 2026",
+    titolo: "L'Impostore: 10 temi nuovi, 1.350 coppie di parole",
+    descrizione: [
+      "🕵️ 518 coppie di parole nuove in 10 temi: ⚽ Calcio, 🏖️ Estate e vacanze, 📱 Internet e social, 📼 Anni '80, '90 e 2000, 🏛️ Storia e miti, 🦸 Supereroi, fumetti e videogiochi, 💼 Lavoro e soldi, 🎵 Musica e cantanti, 🏡 Vita di tutti i giorni e 🌶️ Serata. In tutto ora sono 1.350.",
+      "🌶️ La Serata (appuntamenti, ex, cocktail, matrimoni: un po' piccante ma mai volgare) parte spenta: si gioca solo se chi apre la partita la sceglie tra le categorie, nelle «Altre scelte». Toccandola si aggiunge a tutte le altre.",
+      "Le parole già uscite continuano a non tornare per un bel po'."
+    ]
+  },
+  {
+    v: 305,
+    data: "4 novembre 2026",
+    titolo: "🔨 L'Asta: due temi nuovi",
+    descrizione: [
+      "📺 Il Reality Show: all'asta ci sono il concorrente, la prova della settimana, l'alleato e il colpo di scena. C'è chi si prende lo stratega e l'immunità e chi resta col concorrente che litiga con le telecamere e la mamma che racconta le figuracce in diretta.",
+      "⏳ Il Viaggio nel Tempo: scegli l'epoca, cosa portarti, chi incontrare e come tornare. Dal Rinascimento a Firenze con Leonardo da Vinci al Big Bang visto da molto vicino, dalla macchina del tempo con l'autopilota a quella coi pezzi dell'IKEA da montare.",
+      "Ognuno ha più di 260 carte e i suoi tre scenari per il voto finale: si scelgono nelle regole, tra i temi."
+    ]
+  },
+  {
+    v: 304,
+    data: "4 novembre 2026",
+    titolo: "🥔 La Patata Bollente: 240 categorie nuove",
+    descrizione: [
+      "🥔 200 categorie nuove per tutti, come «Cose che si trovano nel divano», «Scuse per non lavare i piatti», «Cose che fanno i nonni», «Superstizioni» e «Cose in un luna park». Ora sono quasi 500: in una serata lunga ritornano molto meno.",
+      "🧠 40 categorie difficili in più, come «Capoluoghi di regione», «Proverbi italiani» e «Animali estinti», per chi le accende nelle regole: ora sono 87."
+    ]
+  },
+  {
+    v: 302,
+    data: "3 novembre 2026",
+    titolo: "😏 Black Jack: il banco vi prende in giro",
+    descrizione: [
+      "Nei momenti forti il banco dice la sua in un fumetto, col vostro nome: chi sballa (anche a 22, per un punto), chi punta tutto, chi perde tre mani di fila, chi resta quasi a zero, chi divide e perde tutte e due le mani…",
+      "E quando vincete voi (Black Jack, vincita grossa, 5 carte) il banco fa l'offeso. Quando sballa lui ha sempre una scusa: resta il migliore, s'intende.",
+      "Più di 90 battute diverse, da amici al bar: escono ogni 2-3 mani al massimo, spariscono da sole in pochi secondi e non fermano il gioco. Online le vedono tutti uguali.",
+      "Non vi piacciono? Si spengono nelle regole ⚙️ con «😏 Battute del banco»."
+    ]
+  },
+  {
+    v: 301,
+    data: "2 novembre 2026",
+    titolo: "✉️ Mini Asta Fantacalcio: l'asta a busta chiusa",
+    descrizione: [
+      "Nel ⚙️ c'è «💰 Come si compra»: l'asta di sempre coi rilanci, «✉️ Tutta a buste» o «✉️ Buste solo per i big» (a busta i calciatori più forti, gli altri all'asta normale).",
+      "A busta ognuno scrive in segreto quanto offre, o passa. Si aprono le buste tutte insieme, dalla più bassa alla più alta, con un attimo di suspense sull'ultima: vince l'offerta più alta e paga quello che ha scritto.",
+      "A pari offerta non vince chi è stato più veloce: c'è lo spareggio a busta solo tra chi era pari (almeno 1 in più, o resti dov'eri). Se siete ancora pari, decide la ruota, uguale su tutti i telefoni.",
+      "Online hai 15 secondi per scrivere (10 nello spareggio). Sullo stesso telefono vi passate il telefono come nei temi."
+    ]
+  },
+  {
+    v: 300,
+    data: "2 novembre 2026",
+    titolo: "🏷️ Il Prezzo è Giusto: 11 foto nuove",
+    descrizione: [
+      "Altri 11 premi hanno la loro foto vera al posto del disegnino: la panna da cucina, la tastiera Logitech, la visita dall'oculista, la lezione di yoga, la seduta di fisioterapia, la barba dal barbiere, i leggings, l'assicurazione dell'auto, la tribuna di Monza e il LEGO Titanic."
+    ]
+  },
+  {
+    v: 299,
+    data: "2 novembre 2026",
+    titolo: "🖼️ Immagini nuove nella home",
+    descrizione: [
+      "Palla Matta, Una parola sola, Memata e Da dove viene? hanno finalmente la loro immagine nella prima schermata, nello stesso stile degli altri giochi.",
+      "La Mini Asta Fantacalcio ha un'immagine nuova: il pallone sul podio del banditore, col martelletto d'oro."
+    ]
+  },
+  {
+    v: 298,
+    data: "2 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: la giornata senza spoiler",
+    descrizione: [
+      "Nelle azioni della giornata non si capisce più prima del tiro come andrà a finire: fino al tiro tutto si muove uguale, che sia gol, parata, palo o fuori.",
+      "C'è sempre un difensore sul palo: prima c'era solo quando poi la salvava sulla linea.",
+      "Il passettino del portiere prima del tiro non dice più da che parte andrà il pallone.",
+      "Nel contropiede il portiere a volte esce anche quando non è gol: può fermarti in uscita, o ti fa tirare da posizione difficile. E anche il tiro da centrocampo, rarissimo, ora può finire fuori o essere parato."
+    ]
+  },
+  {
+    v: 297,
+    data: "2 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: listone nuovo e un portiere per squadra",
+    descrizione: [
+      "Il listone è quello del 2026/27: entrano 48 calciatori (tutti quelli da 10 in su e chi da 7 a 9 gioca davvero, come Pobega, Zalewski, Koopmeiners, Douglas Luiz e Osmajic). Escono Milik e Kelly.",
+      "All'asta esce un solo portiere per squadra: se va all'asta Martinez dell'Inter, Provedel non esce più. Così nella giornata non ci sono mai due portieri vostri con la stessa porta.",
+      "Sul maxischermo «🎯 RIGORISTA», «🦶 PUNIZIONI» e «🚩 ANGOLI» hanno sempre il numero (1°, 2° o 3° della squadra) e la scritta intera, anche quando un calciatore fa tutte e tre le cose. Stanno a destra, piccole, una sotto l'altra: la maglia resta grande.",
+      "Chi batte le punizioni e gli angoli è aggiornato: al Lecce Gallo, al Genoa gli angoli li batte Messias."
+    ]
+  },
+  {
+    v: 296,
+    data: "2 novembre 2026",
+    titolo: "🃏 Black Jack: lo zoom su di te più pulito",
+    descrizione: [
+      "Il tuo punteggio adesso sta sotto le carte: la pila delle fiches non lo copre più, nemmeno dopo Raddoppia o Dividi.",
+      "La scritta in alto («Tocca a…») non è più coperta dalle carte del banco, che stanno subito sotto, e coi nomi lunghi non viene tagliata.",
+      "Quando la telecamera è su chi gioca, nome e monete li trovi una volta sola nella scritta in alto. Con tanti giocatori le tue carte restano sempre dentro lo schermo."
+    ]
+  },
+  {
+    v: 295,
+    data: "1 novembre 2026",
+    titolo: "🤥 La Balla Colossale: la prima pagina, la Balla Finale e tante notizie nuove",
+    descrizione: [
+      "La notizia ora è il titolo della prima pagina di un giornale, «Il Colossale», col pezzo mancante in giallo. Niente più scrittura a mano: risposte e titoli si leggono al volo.",
+      "🔥 La Balla Finale: l'ultima notizia ha due pezzi mancanti. Si inventano tutti e due e vale il triplo: chi è indietro può ancora vincere.",
+      "🎯 Sceglie chi è ultimo: prima di ogni notizia chi è ultimo in classifica sceglie l'argomento tra tre (🐾 Animali, 🏛️ Storia, 🍝 Italia…). Si può spegnere nelle regole.",
+      "Le notizie sono quasi il doppio (746, più 67 per la Balla Finale), controllate una per una: via quelle che si indovinavano dalla domanda, e le balle della redazione più credibili."
+    ]
+  },
+  {
     v: 294,
     data: "1 novembre 2026",
     titolo: "📺 Lo studio TV nuovo: luci, parete LED e pavimento che riflette",
