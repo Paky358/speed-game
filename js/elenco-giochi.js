@@ -59,6 +59,20 @@
   pezzo("dadoveviene", "data/dadoveviene-paesi.js data/dadoveviene-carte.js js/games/dadoveviene.js");
   pezzo("memata", "data/memata.js js/games/memata.js");
 
+  // ---- i giochi IN PROVA (scritti a mano, fuori dalle schede) ----
+  // La tessera la vedono solo questi account; gli altri entrano lo stesso se invitati (link, codice, Sala).
+  // Sta qui e non nel gioco perché il codice del gioco arriva solo al primo tocco: prima la tessera si vedeva a tutti
+  // (Lanterne, chat di Mario De Viva, 5 nov 2026; la stessa lista è in AMMESSI di js/games/lanterne.js).
+  var IN_PROVA = { lanterne: ["IL PAPPONE", "GAY", "MARIO"] };
+  (function () {
+    var st = document.createElement("style");
+    st.textContent = Object.keys(IN_PROVA).map(function (id) { return 'html:not(.sg-prova-' + id + ') [data-gioco="' + id + '"]{display:none!important}'; }).join("\n");
+    (document.head || document.documentElement).appendChild(st);
+    function nome() { try { var p = window.SGNube && SGNube.profilo && SGNube.profilo(); return String((p && p.nome) || "").trim().toUpperCase(); } catch (e) { return ""; } }
+    function aggiorna() { var n = nome(); Object.keys(IN_PROVA).forEach(function (id) { document.documentElement.classList.toggle("sg-prova-" + id, !!window.LT_PROVA || IN_PROVA[id].indexOf(n) >= 0); }); }
+    aggiorna(); setInterval(aggiorna, 1500);
+  })();
+
   // ---- le SCHEDE (fatte da elenco-giochi.js: non toccarle a mano) ----
   // >>> SCHEDE
   scheda("timeline", "timeline", {"riprende":true,"riserva":true,"nome":"La linea del tempo","icona":"📜","descrizione":"Metti gli avvenimenti nell'ordine giusto e sfida gli amici a punti.","giocatoriMin":1,"modi":[{"modo":"telefono","icona":"📱","nome":"Su questo telefono","sotto":"Vi passate il telefono, uno alla volta","amici":true}],"giocatoriMax":10,"postiOnline":10,"ritardatari":"turno","difficolta":2});
