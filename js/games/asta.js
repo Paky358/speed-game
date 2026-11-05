@@ -287,7 +287,11 @@
     ".sa-ban-img{position:absolute;left:0;top:0;width:100%;}",
     ".sa-leggio{position:absolute;left:-4%;width:110%;top:77%;}",
     ".sa-platea.ill .sa-fila1.n1 .sa-pers,.sa-platea.ill .sa-fila1.n2 .sa-pers{width:28%;max-width:140px;}.sa-platea.ill .sa-fila1.n3 .sa-pers{width:24%;max-width:120px;}.sa-platea.ill .sa-fila1.n4 .sa-pers{width:20%;max-width:100px;}.sa-platea.ill .sa-fila1.n5 .sa-pers{width:17%;max-width:86px;}.sa-platea.ill .sa-pers>b{margin-top:6px;}",
-    ".sa-ban.ill{width:min(32%,calc(var(--alt,100dvh)*.15));max-width:150px;margin-left:2%;aspect-ratio:1/1.76;}.sa-ban.ill .sa-leggio{left:-2%;width:104%;top:55.5%;}.sa-ban.ill .sa-martello{top:50%;}",
+    ".sa-ban.ill{width:min(44%,calc(var(--alt,100dvh)*.235));max-width:172px;margin-left:10px;aspect-ratio:1/1.5;}.sa-ban.ill .sa-leggio{left:-4%;width:108%;top:66%;}.sa-ban.ill .sa-martello{top:58%;right:-6%;font-size:34px;}",
+    // 🎨 giro 4: con tanti giocatori (6 e più) il banditore resta com'era, sennò la platea non ci sta
+    ".sa-ban.ill.fitta{width:min(34%,calc(var(--alt,100dvh)*.17));max-width:130px;aspect-ratio:1/1.62;}.sa-ban.ill.fitta .sa-leggio{top:60%;}.sa-ban.ill.fitta .sa-martello{top:53%;font-size:28px;}",
+    // (una fila sola: le sedie più larghe e il nome intero)
+    ".sa-platea.ill .sa-fila0.n3 .sa-pers{width:34%;max-width:170px;margin:0 -2%;}.sa-platea.ill .sa-fila0.n4 .sa-pers{width:28%;max-width:150px;margin:0 -1.8%;}.sa-platea.ill .sa-fila0.n5 .sa-pers{width:23%;max-width:122px;margin:0 -2%;}.sa-platea.ill .sa-fila0 .sa-pers>b{margin-top:5px;}",   // (le sedie hanno margini vuoti ai lati: le caselle si sfiorano, le sedie no)
     ".sa-ban.batte .sa-ban-img{animation:saBatte .45s ease-in-out 2;}",
     "@keyframes saBatte{0%,100%{transform:none}40%{transform:translateY(-4%) rotate(-3deg)}70%{transform:translateY(2%)}}",
     ".sa-martello{position:absolute;z-index:3;right:0;top:50%;font-size:28px;transform-origin:85% 85%;transform:rotate(-20deg);}",
@@ -596,7 +600,7 @@
     ".st-gradino{display:flex;flex-direction:column;align-items:center;width:31%;max-width:130px;animation:stSale .6s cubic-bezier(.2,1.3,.4,1) both;}",
     "@keyframes stSale{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}",
     ".st-gradino img{width:82%;margin-bottom:-6%;}",
-    ".st-gradino.ill{overflow:visible;}.st-gradino.ill img{width:112%;max-width:none;margin-bottom:-11%;filter:drop-shadow(0 0 2px rgba(0,0,0,.75)) drop-shadow(0 2px 5px rgba(0,0,0,.6));}.st-gradino.ill b{margin-bottom:2px;}",
+    ".st-gradino.ill{overflow:visible;}.st-gradino.ill img{width:112%;max-width:none;margin-bottom:-11%;filter:drop-shadow(0 0 2px rgba(0,0,0,.75)) drop-shadow(0 2px 5px rgba(0,0,0,.6));}.st-gradino.ill b{margin-bottom:2px;}.st-gradino.ill small:not(.g3){margin-bottom:7px;}",
     ".st-gradino b{font-size:.8rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8);}",
     ".st-gradino small{font-size:.72rem;font-weight:900;color:#ffe066;text-shadow:0 1px 3px rgba(0,0,0,.8);}",
     ".st-gradino .blocco{width:100%;margin-top:3px;border-radius:8px 8px 0 0;display:flex;justify-content:center;padding-top:6px;font-weight:900;font-size:1.6rem;color:#3a2200;box-shadow:inset 0 2px 0 rgba(255,255,255,.5);}",
@@ -1738,7 +1742,9 @@
 
   // ---- pezzi in comune tra la sala e lo stadio ----
   // quanti nella fila davanti e in quella dietro: nella sala dai 3 in su c'è chi sta più avanti e chi più indietro
-  function fileSala(n) { if (n <= 2) return [n]; var d = Math.ceil(n / 2); return [d, n - d]; }
+  function fileSala(n, una) { if (n <= 2 || (una && n <= 5)) return [n]; var d = Math.ceil(n / 2); return [d, n - d]; }
+  // 🎨 illustrati (giro 4): sugli schermi bassi (a 360x640 due file da due diventavano piccolissime) fino a 5 giocatori stanno in una fila sola
+  function unaFila() { return (window.innerHeight || 800) < 730; }
   // una persona del pubblico: la sedia dietro, l'avatar seduto, la paletta col numero, la nuvoletta dell'offerta
   function personaAsta(el, S, p, sedia) {
     var cfg = cfgDi(p.nome, p.omino), m = manoAlzata(cfg);
@@ -1748,7 +1754,7 @@
     var nodo = el("div", { class: "sa-pers", role: "button", onclick: function () { toccaPersona(S, p.id); } }, [
       el("div", { class: "sa-figura" }, [ el("img", { class: "sa-sedia", src: sedia, alt: "" }), el("img", { class: "sa-av", src: srcAv(cfg, GIU), alt: "" }),
         el("img", { class: "sa-av sa-su", src: srcAv(cfg, SU), alt: "" }), paletta, nuvola, el("i", { class: "sa-num", text: String(p.num) }) ]),
-      el("b", { text: p.nome.length > 9 ? p.nome.slice(0, 9) + "…" : p.nome }), nota, manca, passo
+      el("b", { text: illustrati() && p.nome.length <= 12 ? p.nome : (p.nome.length > 9 ? p.nome.slice(0, 9) + "…" : p.nome) }), nota, manca, passo
     ]);
     S.pers[p.id] = { nodo: nodo, nota: nota, manca: manca, passo: passo, nuvola: nuvola, puo: false };
     return nodo;
@@ -1759,7 +1765,7 @@
   }
   function pubblico(el, S, persone, sedia, cls) {   // le file del pubblico: davanti i primi numeri, dietro (più piccoli) gli altri
     var file = el("div", { class: "sa-file" }), box = el("div", { class: cls }, [ file ]), k = 0;
-    fileSala(persone.length).map(function (quanti, r) {
+    fileSala(persone.length, / ill/.test(" " + cls) && unaFila()).map(function (quanti, r) {
       var fila = el("div", { class: "sa-fila sa-fila" + r + " n" + quanti });
       for (var i = 0; i < quanti; i++) fila.appendChild(personaAsta(el, S, persone[k++], sedia));
       return fila;
@@ -1870,7 +1876,7 @@
     S.avviso = el("div", { class: "sa-avviso" });
     S.tempo = el("i");
     S.piede = el("div", { class: "sa-piede" });
-    S.ban = el("div", { class: "sa-ban" + (illustrati() ? " ill" : "") }, [ el("img", { class: "sa-ban-img", src: srcAv(banditore(), illustrati() ? { spalle: true, vita: true } : { spalle: true }), alt: "" }),   // (illustrati: dalla vita in su, e il bancone arriva alla vita)
+    S.ban = el("div", { class: "sa-ban" + (illustrati() ? " ill" + (d.persone.length > (unaFila() ? 5 : 6) ? " fitta" : "") : "") }, [ el("img", { class: "sa-ban-img", src: srcAv(banditore(), illustrati() ? { spalle: true, vita: true } : { spalle: true }), alt: "" }),   // (illustrati: dalla vita in su, e il bancone arriva alla vita)
      
       el("img", { class: "sa-leggio", src: arte("leggio", LEGGIO_RIS), alt: "" }), S.martello, S.bolla ]);
     S.radice = el("div", { class: "schermata sa-sala" + (t.guarda ? " as-targa" : "") }, [ sfondo, testaAsta(el, S, d), S.pannello, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
@@ -4746,7 +4752,7 @@
       var blocco = el("div"); blocco.className = "blocco"; blocco.textContent = r.pos;
       if (!ill) g.appendChild(img);
       g.appendChild(b); g.appendChild(sm); if (r.prima) { var s3 = el("small"); s3.className = "g3"; s3.textContent = tre(r).join(" · "); g.appendChild(s3); }   // (🏆 3 giornate: una per una)
-      if (ill) { g.classList.add("ill"); g.appendChild(img); }
+      if (ill) { g.classList.add("ill"); g.appendChild(img); piediSulGradino(img); }
       g.appendChild(blocco);
       gradini.appendChild(g);
     });
@@ -4758,6 +4764,22 @@
     }
     FX.festa();
     piedeRivela(R);
+  }
+  // 🎨 giro 4: i piedi stanno SOPRA il gradino (non sul davanti): guardo dove finisce davvero il disegno (le pose hanno margini vuoti diversi) e appoggio quel punto sul bordo alto
+  function piediSulGradino(img) {
+    function metti() {
+      try {
+        var W = img.naturalWidth, H = img.naturalHeight, h = img.clientHeight; if (!W || !H || !h) return;
+        var c = document.createElement("canvas"); c.width = Math.min(W, 160); c.height = Math.max(1, Math.round(H * c.width / W));
+        var x = c.getContext("2d"); x.drawImage(img, 0, 0, c.width, c.height);
+        var d = x.getImageData(0, 0, c.width, c.height).data, ult = -1, y, k;
+        for (y = c.height - 1; y >= 0 && ult < 0; y--) for (k = 0; k < c.width; k++) if (d[(y * c.width + k) * 4 + 3] > 24) { ult = y; break; }
+        if (ult < 0) return;
+        img.style.marginBottom = "-" + ((c.height - 1 - ult) / c.height * h + 5).toFixed(1) + "px";
+      } catch (e) {}
+    }
+    function dopo() { requestAnimationFrame(function () { requestAnimationFrame(metti); }); }
+    if (img.complete && img.naturalWidth) dopo(); else img.addEventListener("load", dopo);
   }
   function tre(r) { return [r.prima[0].punti, r.prima[1].punti, r.gio.punti].map(function (x) { return numFanta(x); }); }   // 🏆 i punti delle 3 giornate, una per una
   function piedeRivela(R) { svuotaNodo(R.piede); (R.opz.bottoni ? R.opz.bottoni() : []).forEach(function (b) { if (b) R.piede.appendChild(b); }); }

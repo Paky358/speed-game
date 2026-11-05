@@ -1134,8 +1134,15 @@
     ".bj-wrap .bjr-matt.ill .bj-av svg{left:0;transform:none;width:100%;bottom:0}",
     ".bj-wrap .bjr-matt.ill .bj-av::after{content:'';position:absolute;left:0;right:0;bottom:0;height:8px;background:var(--t-panno);border-top:2px solid var(--t-bordo-pieno)}",
     ".bj-wrap .bjr-matt.ill .bjr-matt-nome{margin-top:-2px}",
-    ".bj-wrap .bjr-intro.ill .mg{bottom:31%;width:84%;transform:translateX(-50%) translateY(66%)}",
-    ".bj-wrap .bjr-intro.ill .banc{height:31%}",
+    // 🎨 giro 4: il banco più grande, la sua battuta SUL ritratto (sul suo gilet): non copre mai le carte né i giocatori
+    ".bj-wrap .bjr-matt.ill{width:min(34%,150px)}",
+    ".bj-wrap .bjr-matt.ill .bj-av{width:100%;height:auto;aspect-ratio:92/100}",
+    ".bj-wrap .bjr-matt.ill .bjr-fum{position:absolute;left:50%;bottom:28px;top:auto;width:calc(100% + 10px);max-width:none;transform:translateX(-50%);box-sizing:border-box;font-size:.68rem;padding:3px 6px;text-align:center;animation:bjFumM .26s cubic-bezier(.3,1.6,.5,1);pointer-events:none;z-index:3}",
+    "@keyframes bjFumM{from{transform:translateX(-50%) scale(.3);opacity:0}}",
+    // l'importo della puntata sta SULLA fiche e resta piccolo anche quando la telecamera ingrandisce (prima copriva le mani)
+    ".bj-wrap .bjr-fval.ill{transform:translate(-50%,-50%) scale(calc(1 / var(--zs,1)));transition:opacity .3s,transform .95s cubic-bezier(.45,.05,.25,1);font-size:.6rem;padding:0 4px}",
+    ".bj-wrap .bjr-intro.ill .mg{bottom:calc(26% - 12px);transform:translateX(-50%)}",
+    ".bj-wrap .bjr-intro.ill .banc{height:26%}",
     // illustrati: il fondo del disegno (la vita) sfuma, così dove il bordo del tavolo non arriva (posti di lato) non si vede un taglio netto
     ".bjr-strato.ill .bjr-gioc:not(.attivo)>svg,.bjr-strato.ill .bjr-gioc:not(.attivo)>.bjr-sal>svg{-webkit-mask-image:linear-gradient(#000 84%,transparent);mask-image:linear-gradient(#000 84%,transparent)}",
     // le braccia sopra il tavolo (mani sul panno) e il saluto che ondeggia
@@ -1728,7 +1735,7 @@
     // carte che arrivano) sale sopra di loro, a ogni fotogramma per i primi 2,5 s. Mai sopra le cose che contano.
     // (illustrati, da soli: la battuta non copre nemmeno chi festeggia; in più giocatori la sposta il solo spazio libero)
     function spostaBatt() {
-      if (!fumEl || !fumEl.classList.contains("batt") || !document.body.contains(fumEl)) return;
+      if (!fumEl || ill() || !fumEl.classList.contains("batt") || !document.body.contains(fumEl)) return;   // (illustrati: la battuta sta sul ritratto del banco)
       var zr = zBanco.getBoundingClientRect();
       for (var k = 0; k < 4; k++) {
         var a = fumEl.getBoundingClientRect(), su = null;
@@ -1769,6 +1776,17 @@
       function pt(n) { var r = n.getBoundingClientRect(); return { x: r.left + r.width / 2 - zr.left, y: r.top + r.height / 2 - zr.top, sc: r.width / 100 }; }
       var base = (N <= 4 ? 128 : (N <= 6 ? 108 : 96)) * Math.max(1, Math.min(1.4, H / 340));
       var punti = seg.map(function (s) { return pt(s.segno); });
+      // 🎨 illustrati (5 nov 2026, giro 4): fino a 6 giocatori tutti la STESSA misura, grandi quanto lo spazio tra i vicini e sempre dentro lo schermo
+      //  (prima i posti più lontani, in alto, erano minuscoli e quelli ai lati finivano sotto il bordo)
+      var altoI = N <= 4 ? 80 : 86, wComune = 0;
+      if (ill() && N > 1 && N <= 6) {
+        wComune = 1e9;
+        punti.forEach(function (p, i) {
+          var vic = 999; [i - 1, i + 1].forEach(function (j) { if (j >= 0 && j < N) vic = Math.min(vic, Math.hypot(punti[j].x - p.x, punti[j].y - p.y)); });
+          wComune = Math.min(wComune, vic * (N <= 4 ? 1.5 : 1.25), W / N * (N <= 4 ? 1.5 : 1.3), (p.y - altoI) / 0.9226, base * 0.95);
+        });
+        wComune = Math.max(40, Math.round(wComune));
+      }
       seg.forEach(function (s, i) {
         var p = punti[i], vic = 999;
         [i - 1, i + 1].forEach(function (j) { if (j >= 0 && j < N) vic = Math.min(vic, Math.hypot(punti[j].x - p.x, punti[j].y - p.y)); });
@@ -1777,8 +1795,11 @@
         var alto = N > 6 ? 70 : 96, testa = Math.round(p.y - w * 0.9); if (testa < alto) { w = Math.max(30, Math.round((p.y - alto) / 0.9)); testa = Math.round(p.y - w * 0.9); }
         // 🎨 illustrati: dalla testa alla vita, seduti DIETRO il bordo del tavolo con le mani appoggiate sul panno (prima in piedi, lontani)
         if (ill()) {
-          w = Math.round(Math.min(w * 0.8, Math.max(36, vic * 1.05)));
-          if (p.y + w * 0.17 - 1.0926 * w < alto) w = Math.max(30, Math.round((p.y - alto) / 0.9226));
+          if (wComune) { w = wComune; p = { x: Math.max(w * 0.5 + 2, Math.min(W - w * 0.5 - 2, p.x)), y: p.y, sc: p.sc }; }   // (dentro lo schermo: la figura si sposta appena, le fiches restano dove sono)
+          else {
+            w = Math.round(Math.min(w * 0.8, Math.max(36, vic * 1.05)));
+            if (p.y + w * 0.17 - 1.0926 * w < alto) w = Math.max(30, Math.round((p.y - alto) / 0.9226));
+          }
           testa = Math.round(p.y + w * 0.17 - 1.0926 * w);
         }
         s.x = p.x; s.y = p.y; s.w = w; s.testa = testa; s.carte = pt(s.mira); s.fp = pt(s.mf);
@@ -1787,10 +1808,10 @@
         strato.appendChild(s.fig);
         if (ill()) { s.br = el("div", { class: "bjr-gb", style: "left:" + Math.round(p.x - w / 2) + "px;top:" + testa + "px;width:" + w + "px;height:" + Math.round(w * 118 / 108) + "px" }); bracc.appendChild(s.br); }
         // con 7-10 giocatori: solo il nome, largo al massimo quanto lo spazio tra due vicini, e uno su e uno giù
-        var largo = N > 6 ? "max-width:" + Math.max(34, Math.round(vic * 2 - 6)) + "px;" : "";
+        var largo = N > 6 || (ill() && N > 4) ? "max-width:" + Math.max(34, Math.round(vic * 2 - 6)) + "px;" : "";
         s.top0 = testa + Math.round(w * (ill() ? -0.02 : 0.06));   // (illustrati: il cartellino sta SOPRA la testa, mai su cappello e fronte)
-        s.nome = el("div", { class: "bjr-nome" + (N > 6 ? " mini" : ""), style: largo + "left:" + Math.round(p.x) + "px;top:" + s.top0 + "px" });
-        s.fval = el("div", { class: "bjr-fval", style: "left:" + Math.round(s.fp.x) + "px;top:" + Math.round(s.fp.y - 10) + "px;opacity:0" });   // il valore sopra la pila
+        s.nome = el("div", { class: "bjr-nome" + (N > 6 || (ill() && N > 4) ? " mini" : ""), style: largo + "left:" + Math.round(p.x) + "px;top:" + s.top0 + "px" });
+        s.fval = el("div", { class: "bjr-fval" + (ill() ? " ill" : ""), style: "left:" + Math.round(s.fp.x) + "px;top:" + Math.round(s.fp.y - (ill() ? 0 : 10)) + "px;opacity:0" });   // il valore sopra la pila
         sopra.appendChild(s.nome); sopra.appendChild(s.fval);
         s.cw = N > 6 ? 22 : (N > 4 ? 31 : 40);   // (1 nov 2026: carte più grandi, avatar un po più piccoli: il tavolo prima di tutto)
         var fd = N > 6 ? 22 : 32; s.pila.style.width = s.pila.style.height = fd + "px";
@@ -1823,9 +1844,9 @@
         // si nascondono (comparivano due volte, e quello del vicino finiva sotto la scritta); tornano quando la telecamera si allarga
         s.nome.style.visibility = (vm.fase === "gioca" || (vm.fase === "assic" && !drv.mioIdx)) ? "hidden" : "";
         if (s.k.n !== kn) {
-          s.k.n = kn; nomiCambiati = true; s.nome.className = "bjr-nome" + (N > 6 ? " mini" : "") + (attivo ? " attivo" : "") + (g.via ? " via" : "");
+          s.k.n = kn; nomiCambiati = true; s.nome.className = "bjr-nome" + (N > 6 || (ill() && N > 4) ? " mini" : "") + (attivo ? " attivo" : "") + (g.via ? " via" : "");
           s.nome.innerHTML = "";
-          if (N > 6) { s.nome.textContent = (drv.mioIdx && i === mioIdx() ? "⭐" : "") + g.nome + (g.via ? " 👋" : ""); }   // le monete si leggono sotto e nello zoom
+          if (N > 6 || (ill() && N > 4)) { s.nome.textContent = (drv.mioIdx && i === mioIdx() ? "⭐" : "") + g.nome + (g.via ? " 👋" : ""); }   // le monete si leggono sotto e nello zoom
           else {
             s.nome.appendChild(el("div", { text: g.nome + (drv.mioIdx && i === mioIdx() && N > 1 ? " ⭐" : "") + (g.via ? " 👋" : "") }));
             var rf = el("div", { class: "ff", text: g.fiches == null ? "🤫" : fmt(g.fiches) + " 🪙" });
@@ -1875,7 +1896,7 @@
           s.ccW = totW * ((s.carte && s.carte.sc) || 1);   // quanto sono larghe sullo schermo (per lo zoom)
         }
       });
-      if (nomiCambiati && N > 6) sistemaNomi();
+      if (nomiCambiati && (N > 6 || (ill() && N > 4))) sistemaNomi();
       // le carte di Bot (vicino a noi): la coperta si gira solo quando la telecamera è arrivata
       var scoperta = (vm.fase === "banco" || vm.fase === "esito" || vm.fase === "fine") && !scopri.attesa;
       var kb = vm.banco.map(function (c) { return c.v + "" + c.s; }).join(",") + "|" + scoperta;
@@ -1894,12 +1915,12 @@
         R.k.m = km;
         hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "") + (ill() ? " ill" : "");
         if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(avatarBanco(vm), fm.faccia, ill() ? { vita: true, gesto: "tavolo" } : { busto: true });
-        var hn = hud.lastChild; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 " + nomeBanco(vm)));
+        var hn = hud.children[1]; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 " + nomeBanco(vm)));
         if (pB) hn.appendChild(el("b", { class: /Sball/.test(pB) ? "bust" : "", text: pB }));
         var mc = zBanco.querySelector(".bjr-matt-carte"); if (mc) mc.remove();   // (in alto a sinistra: nello zoom su chi gioca lì non c'è niente)
         if (conCarte) { mc = el("div", { class: "bjr-matt-carte" }, [ el("span", { text: "🎩" }) ]); vm.banco.forEach(function (c, k) { mc.appendChild(el("div", { class: "bjr-carta", html: BJ.cartaHTML(c, k === 1 && !scoperta) })); }); zBanco.appendChild(mc); }
         if (fumEl) fumEl.remove(); fumEl = null;
-        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " bj-doro" : "") + (fm.batt ? " batt" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); if (fm.batt) { var fino = Date.now() + 2500; (function giro() { spostaBatt(); if (Date.now() < fino && fumEl && fumEl.classList.contains("batt")) requestAnimationFrame(giro); })(); } }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
+        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " bj-doro" : "") + (fm.batt ? " batt" : ""), style: ill() ? "" : "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); (ill() ? hud : zBanco).appendChild(fumEl); if (fm.batt) { var fino = Date.now() + 2500; (function giro() { spostaBatt(); if (Date.now() < fino && fumEl && fumEl.classList.contains("batt")) requestAnimationFrame(giro); })(); } }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
       }
       // la nuvoletta della mossa sopra la testa di chi l'ha detta
       [].forEach.call(R.sopra.querySelectorAll(".bjr-bolla"), function (b) { if (!bolla || +b.dataset.id !== bollaId) b.remove(); });
@@ -1997,17 +2018,17 @@
     // ---------- LA TELECAMERA ----------
     var camK = "", sbirciaFino = 0;
     function inquadra(box, durata) {
-      var W = R.W, H = R.H, tr;
+      var W = R.W, H = R.H, tr, s = 1;
       if (!box) tr = "translate(0px,0px) scale(1)";
       else {
         var su = wrap.classList.contains("bj-in-gara") ? 70 : 40;   // (in alto la scritta grande, nella gara anche la classifica: lì la telecamera non va)
-        var s = Math.min(2.6, Math.min(W / box.w, (H - su) / box.h) * 0.92);
+        s = Math.min(2.6, Math.min(W / box.w, (H - su) / box.h) * 0.92);
         var tx = W / 2 - box.x * s, ty = (H + su) / 2 - box.y * s;
         ty = Math.max(ty, H - H * 1.1 * s);   // il bordo vicino del tavolo è a 1,1 H: sotto non c'è niente, non si scende oltre
         tr = "translate(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px) scale(" + s.toFixed(3) + ")";
       }
       if (tr === camK) return;
-      camK = tr; cam.style.transitionDuration = (durata || 0.95) + "s"; cam.style.transform = tr;
+      camK = tr; cam.style.setProperty("--zs", box ? s.toFixed(3) : "1"); cam.style.transitionDuration = (durata || 0.95) + "s"; cam.style.transform = tr;
     }
     // (2 nov 2026) l'inquadratura prende avatar, fiches, carte E il punteggio sotto le carte: con tanti giocatori i posti di lato hanno
     // le carte spostate rispetto alla testa, e prima finivano fuori dallo schermo
@@ -2076,8 +2097,9 @@
       try { if (drv.stanza) sessionStorage.setItem("bj-intro-" + drv.stanza, "1"); } catch (e) {}
       intro.corre = true;
       var N = vm.giocatori.length, velo = el("div", { class: "bjr-intro" + (ill() ? " ill" : "") }, [
-        el("div", { class: "mg", html: window.SGOmino ? (ill() ? salutoHTML(avatarBanco(vm), "esulta", false) : svgAvatar(avatarBanco(vm), "esulta", undefined)) : "" }), el("div", { class: "banc" }) ]);
+        el("div", { class: "mg", html: window.SGOmino ? (ill() ? salutoHTML(avatarBanco(vm), "esulta", true) : svgAvatar(avatarBanco(vm), "esulta", undefined)) : "" }), el("div", { class: "banc" }) ]);
       intro.velo = velo;
+      if (ill() && velo.firstChild) { var mw = Math.round(Math.min(R.W * 0.9, R.H * 0.64 / 1.09)); velo.firstChild.style.width = mw + "px"; velo.firstChild.style.maxWidth = "none"; }   // il croupier grande, dalla vita in su
       zBanco.appendChild(velo); capt.innerHTML = ""; capt.dataset.k = "";
       var passi = [];
       function poi(ms, fn) { passi.push([ms, fn]); }

@@ -11,6 +11,15 @@
    dei pezzi con SGOminoA.pezzo("capelli", "corti", function (K) { … }). K = tutto quello che serve
    per disegnare (colori, misure del corpo e della testa, aiuti). Un pezzo che non c'è ancora prende
    quello «simile» (SGOminoA.SIMILI), così ognuno resta riconoscibile finché non arriva il suo.
+
+   PIÙ LEGGERO (5 nov 2026): stesso disegno scritto con meno testo e meno elementi (−22% di testo, schermata −11%).
+   - K.cr / K.limb / K.liscio scrivono la prima curva assoluta e le altre RELATIVE («c», «s» quando il punto di controllo
+     è il riflesso del precedente): stessi punti di prima. Nei pezzi: non spostare i numeri di quei percorsi con un replace.
+   - K.soft(col, op) è un segnaposto: dentro K.El / K.ElR diventa un gradiente per colore + fill-opacity (un gradiente solo
+     per colore invece di uno per colore e intensità). Usato altrove funziona lo stesso (si aggiunge il gradiente di prima).
+   - stroke-linejoin='round' sta UNA volta sull'<svg> (si eredita): K.St non lo ripete (stroke-linecap='round' sì).
+     Un tratto che vuole spigoli vivi lo scrive: stroke-linejoin='miter'.
+   - ritagli e gradienti uguali si scrivono una volta sola; numeri corti (".5", "10-4"); un pezzo solo di dipingi = un elemento.
    ========================================================= */
 (function () {
   "use strict";
@@ -19,14 +28,35 @@
   A.pezzo = function (tipo, nome, fn) { (A[tipo] = A[tipo] || {})[nome] = fn; };
 
   // ---------- aiuti ----------
-  function h2r(h) { h = String(h).replace("#", ""); if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
-  function r2h(r) { return "#" + r.map(function (v) { return ("0" + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2); }).join(""); }
-  function mix(a, b, t) { var X = h2r(a), Y = h2r(b); return r2h(X.map(function (v, i) { return v + (Y[i] - v) * t; })); }
+  var H2R = {}, HEX = [];
+  for (var i0 = 0; i0 < 256; i0++) HEX.push(("0" + i0.toString(16)).slice(-2));
+  function h2r(h) { var k = H2R[h]; if (k) return k; var h0 = h; h = String(h).replace("#", ""); if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; return (H2R[h0] = [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]); }   // (non modificare l'array: è in memoria)
+  function hx(v) { v = Math.round(v); return v >= 0 && v <= 255 ? HEX[v] : ("0" + Math.max(0, Math.min(255, v)).toString(16)).slice(-2); }
+  function r2h(r) { return "#" + hx(r[0]) + hx(r[1]) + hx(r[2]); }
+  function mix(a, b, t) { var X = h2r(a), Y = h2r(b); return "#" + hx(X[0] + (Y[0] - X[0]) * t) + hx(X[1] + (Y[1] - X[1]) * t) + hx(X[2] + (Y[2] - X[2]) * t); }
   function lum(h) { var c = h2r(h); return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255; }
   function rnd(s) { return function () { s |= 0; s = s + 0x6D2B79F5 | 0; var t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
   function n1(v) { return Math.round(v * 10) / 10; }
+  // (leggero, 5 nov 2026) gli stessi numeri di n1 scritti corti: ".5" invece di "0.5", "-.5" invece di "-0.5";
+  // N(v) li mette in fila nei percorsi con lo spazio solo dove serve ("10-4", "1.5.5"); N(v, 1) = il primo dopo una lettera
+  // (con i numeri interi: più veloce che scrivere un numero con la virgola)
+  function q(v) { var k = Math.round(v * 10), neg = k < 0, a = neg ? -k : k, r = a % 10, i = (a - r) / 10; return r ? (neg ? "-" : "") + (i ? i : "") + "." + r : (neg ? "-" : "") + i; }
+  var qP = false;   // l ultimo numero scritto da N aveva il punto
+  function T(k, primo) { var neg = k < 0, a = neg ? -k : k, r = a % 10, i = (a - r) / 10, sp = primo || neg || (!i && r && qP) ? "" : " "; qP = r !== 0; return sp + (r ? (neg ? "-" : "") + (i ? i : "") + "." + r : (neg ? "-" : "") + i); }   // k = decimi interi
+  function N(v, primo) { return T(Math.round(v * 10), primo); }
   // curva liscia che passa per i punti (Catmull-Rom → Bézier)
-  function cr(p) { var s = ""; for (var i = 0; i < p.length - 1; i++) { var a = p[i - 1] || p[i], b = p[i], c = p[i + 1], d = p[i + 2] || c; s += "C" + n1(b[0] + (c[0] - a[0]) / 6) + " " + n1(b[1] + (c[1] - a[1]) / 6) + " " + n1(c[0] - (d[0] - b[0]) / 6) + " " + n1(c[1] - (d[1] - b[1]) / 6) + " " + n1(c[0]) + " " + n1(c[1]); } return s; }
+  function cr(p) {
+    var s = "", px = 0, py = 0, qx = 0, qy = 0;   // (in decimi) il punto dove si è e l'ultimo punto di controllo
+    for (var i = 0; i < p.length - 1; i++) {
+      var a = p[i - 1] || p[i], b = p[i], c = p[i + 1], d = p[i + 2] || c;
+      var x1 = Math.round((b[0] + (c[0] - a[0]) / 6) * 10), y1 = Math.round((b[1] + (c[1] - a[1]) / 6) * 10), x2 = Math.round((c[0] - (d[0] - b[0]) / 6) * 10), y2 = Math.round((c[1] - (d[1] - b[1]) / 6) * 10), x = Math.round(c[0] * 10), y = Math.round(c[1] * 10);
+      if (!i) s += "C" + T(x1, 1) + T(y1) + T(x2) + T(y2) + T(x) + T(y);
+      else if (2 * px - qx === x1 && 2 * py - qy === y1) s += "s" + T(x2 - px, 1) + T(y2 - py) + T(x - px) + T(y - py);
+      else s += "c" + T(x1 - px, 1) + T(y1 - py) + T(x2 - px) + T(y2 - py) + T(x - px) + T(y - py);
+      px = x; py = y; qx = x2; qy = y2;
+    }
+    return s;
+  }
   // forma rastremata lungo una linea: n = [[x, y, larghezza], …]; bulge = punta arrotondata
   function limb(n, bulge) {
     var L = [], R = [];
@@ -35,12 +65,13 @@
       L.push([n[i][0] + nx * w, n[i][1] + ny * w]); R.push([n[i][0] - nx * w, n[i][1] - ny * w]);
     }
     var Rr = R.slice().reverse(), e = L.length - 1;
-    var fine = bulge ? "Q" + n1((L[e][0] + Rr[0][0]) / 2 + (n[e][0] - n[e - 1][0]) * bulge) + " " + n1((L[e][1] + Rr[0][1]) / 2 + (n[e][1] - n[e - 1][1]) * bulge) + " " : "L";
-    return "M" + n1(L[0][0]) + " " + n1(L[0][1]) + cr(L) + fine + n1(Rr[0][0]) + " " + n1(Rr[0][1]) + cr(Rr) + "Z";
+    var s0 = "M" + N(L[0][0], 1) + N(L[0][1]) + cr(L);   // (in ordine: N ricorda l'ultimo numero scritto)
+    s0 += bulge ? "Q" + N((L[e][0] + Rr[0][0]) / 2 + (n[e][0] - n[e - 1][0]) * bulge, 1) + N((L[e][1] + Rr[0][1]) / 2 + (n[e][1] - n[e - 1][1]) * bulge) + N(Rr[0][0]) : "L" + N(Rr[0][0], 1);
+    return s0 + N(Rr[0][1]) + cr(Rr) + "Z";
   }
-  function poli(p) { return "M" + p.map(function (q) { return n1(q[0]) + " " + n1(q[1]); }).join("L") + "Z"; }
-  function liscio(p) { return "M" + n1(p[0][0]) + " " + n1(p[0][1]) + cr(p); }   // linea liscia aperta
-  function lisciaChiusa(p) { var q = p.concat([p[0]]); return "M" + n1(p[0][0]) + " " + n1(p[0][1]) + cr(q) + "Z"; }
+  function poli(p) { var s = "M", px = 0, py = 0; for (var i = 0; i < p.length; i++) { var x = Math.round(p[i][0] * 10), y = Math.round(p[i][1] * 10); s += i ? "l" + T(x - px, 1) + T(y - py) : T(x, 1) + T(y); px = x; py = y; } return s + "Z"; }
+  function liscio(p) { return "M" + N(p[0][0], 1) + N(p[0][1]) + cr(p); }   // linea liscia aperta
+  function lisciaChiusa(p) { var z = p.concat([p[0]]); return "M" + N(p[0][0], 1) + N(p[0][1]) + cr(z) + "Z"; }
   var DEG = Math.PI / 180;
 
   // ---------- le tabelle (stesse voci dell'editor di sempre) ----------
@@ -137,7 +168,7 @@
     esulta:   { due: { t: function (G) { return [G.Jd + 56, G.Jy - 168]; }, mano: "pugno" } },
     posa:     { uno: { t: function (G) { return [24, G.Y.vita - 10]; }, f: [0.88, 0.76], mano: "tiene", davanti: 1 } },
     preme:    { uno: { t: function (G) { return [G.Jd * 0.42, G.Y.vita - 16]; }, f: [0.88, 0.8], mano: "indica", davanti: 1, dirMano: 8 } },
-    leva:     { uno: { t: function (G) { return [G.Jd + 20, G.Y.petto + 36]; }, f: [0.9, 0.74], mano: "pugno", davanti: 1 } },
+    leva:     { uno: { t: function (G) { return [G.Jd + 48, G.Y.petto - 6]; }, f: [0.96, 0.9], mano: "pugno" } },   // il pugno di lato, all altezza del petto: tira una leva o gira una ruota
     batte:    { uno: { t: function (G) { return [G.Jd * 0.62, G.Y.vita - 30]; }, f: [0.9, 0.7], mano: "pugno", davanti: 1, dirMano: 0 } },
     // al tavolo (il tavolo copre dalla vita in giù): le due mani appoggiate davanti, e le carte tenute davanti al petto
     tavolo:   { due: { t: function (G) { return [G.Jd * 0.9, G.Y.vita - 24]; }, f: [0.94, 0.62], mano: "piatta", davanti: 1, dirMano: -16, schiaccia: 0.72 } },
@@ -203,7 +234,7 @@
     return { m: m, B: B, Y: Y, C: C, GN: GN, gIn: gIn, pancia: pancia, rc: rc, Jd: Jd, Jy: Jy, L1: L1, L2: L2, largTronco: largTronco, BR: { "-1": braccio(-1), "1": braccio(1) } };
   };
 
-  var cnt = 0, PREF = "oa" + Math.random().toString(36).slice(2, 6);
+  var cnt = 0, PREF = "oa" + Math.random().toString(36).slice(2, 5);
 
   // =========================================================
   //  IL DISEGNO
@@ -211,21 +242,43 @@
   A.svg = function (c, opts, OPZ) {
     opts = opts || {};
     var m = c.forma !== "donna";
-    var p = PREF + (cnt++) + "_";
+    var p = PREF + (cnt++).toString(36) + "_";
     var D = [];   // definizioni (gradienti, ritagli)
     function col(lista, v) { return typeof v === "string" && v.charAt(0) === "#" ? v : (lista[v] || lista[0]); }
-    function stops(st) { return st.map(function (s) { return "<stop offset='" + s[0] + "' stop-color='" + s[1] + "'" + (s[2] != null ? " stop-opacity='" + s[2] + "'" : "") + "/>"; }).join(""); }
-    function LG(id, x1, y1, x2, y2, st, us) { D.push("<linearGradient id='" + p + id + "' x1='" + x1 + "' y1='" + y1 + "' x2='" + x2 + "' y2='" + y2 + "'" + (us ? " gradientUnits='userSpaceOnUse'" : "") + ">" + stops(st) + "</linearGradient>"); return "url(#" + p + id + ")"; }
-    function RG(id, st, extra) { D.push("<radialGradient id='" + p + id + "' " + (extra || "") + ">" + stops(st) + "</radialGradient>"); return "url(#" + p + id + ")"; }
+    function stops(st) { return st.map(function (s) { return "<stop" + (+s[0] ? " offset='" + s[0] + "'" : "") + " stop-color='" + s[1] + "'" + (s[2] != null && +s[2] !== 1 ? " stop-opacity='" + s[2] + "'" : "") + "/>"; }).join(""); }
+    var gradC = {}, gradA = {};
+    function gradUno(id, t) { var sp = t.indexOf(" "), k = t.slice(1, sp) + t.slice(sp + p.length + id.length + 6); if (gradC[k]) { gradA[id] = gradC[k]; return gradC[k]; } D.push(t); return (gradC[k] = "url(#" + p + id + ")"); }
+    function LG(id, x1, y1, x2, y2, st, us) { return gradUno(id, "<linearGradient id='" + p + id + "'" + (us || +x1 ? " x1='" + x1 + "'" : "") + (us || +y1 ? " y1='" + y1 + "'" : "") + (us || +x2 !== 1 ? " x2='" + x2 + "'" : "") + (us || +y2 ? " y2='" + y2 + "'" : "") + (us ? " gradientUnits='userSpaceOnUse'" : "") + ">" + stops(st) + "</linearGradient>"); }
+    function RG(id, st, extra) { return gradUno(id, "<radialGradient id='" + p + id + "' " + (extra || "") + ">" + stops(st) + "</radialGradient>"); }
     var nSoft = 0;
     var softC = {};
-    function soft(col, op) { op = Math.round(op * 100) / 100; var k = col + op; return softC[k] || (softC[k] = RG("s" + (nSoft++), [[0, col, op], [1, col, 0]])); }
-    function U(id) { return "url(#" + p + id + ")"; }
+    // (leggero, 5 nov 2026) K.soft dà un segnaposto; El/ElR lo scrivono come gradiente del colore (uno per colore) + fill-opacity:
+    // stesso disegno, molti meno gradienti. Se un segnaposto finisce altrove, fine() aggiunge il gradiente di prima.
+    var softI = {}, softB = {}, nSB = 0, nSC = 0, nSR = 0;   // nSC = ombre chieste, nSR = ombre scritte da El/ElR
+    function soft(col, op) { nSC++; op = Math.round(op * 100) / 100; var k = col + op; if (softC[k]) return softC[k]; var id = p + "z" + (nSoft++).toString(36); softI["url(#" + id + ")"] = [col, op, id]; return (softC[k] = "url(#" + id + ")"); }
+    function opz(v) { var t = "" + v; return v > 0 && v < 1 ? t.slice(1) : t; }
+    function fine(sv) {
+      if (nSR >= nSC || sv.indexOf("url(#" + p + "z") < 0) return sv;   // (se ogni K.soft è finita in un'ellisse non serve cercare)
+      var g = ""; for (var k in softI) if (sv.indexOf(k) >= 0) { var si = softI[k]; g += "<radialGradient id='" + si[2] + "'><stop stop-color='" + si[0] + "' stop-opacity='" + opz(si[1]) + "'/><stop offset='1' stop-color='" + si[0] + "' stop-opacity='0'/></radialGradient>"; }
+      var i = sv.indexOf("<defs>"); return i < 0 ? sv : sv.slice(0, i + 6) + g + sv.slice(i + 6);
+    }
+    function U(id) { return gradA[id] || "url(#" + p + id + ")"; }
     function Pa(d, f, x) { return "<path d='" + d + "' fill='" + f + "'" + (x || "") + "/>"; }
-    function St(d, c2, w, op, x) { return "<path d='" + d + "' fill='none' stroke='" + c2 + "' stroke-width='" + w + "' stroke-linecap='round' stroke-linejoin='round'" + (op != null ? " opacity='" + op + "'" : "") + (x || "") + "/>"; }
-    function El(cx, cy, rx, ry, f, x) { return "<ellipse cx='" + n1(cx) + "' cy='" + n1(cy) + "' rx='" + n1(rx) + "' ry='" + n1(ry) + "' fill='" + f + "'" + (x || "") + "/>"; }
+    function St(d, c2, w, op, x) { return "<path d='" + d + "' fill='none' stroke='" + c2 + "' stroke-width='" + w + "' stroke-linecap='round'" + (op != null ? " opacity='" + op + "'" : "") + (x ? tolto(x) : "") + "/>"; }
+    // (un pezzo che passa ancora stroke-linecap/linejoin in x: valeva già il round scritto prima (la seconda copia è ignorata);
+    //  la si toglie perché un attributo doppio rompe l'SVG come immagine)
+    var RX_TOLTO = /\s*stroke-line(cap|join)=(['"])[^'"]*\2/g;
+    function tolto(x) { return x.indexOf("stroke-line") < 0 ? x : x.replace(RX_TOLTO, ""); }
+    function El(cx, cy, rx, ry, f, x) { return "<ellipse cx='" + q(cx) + "' cy='" + q(cy) + "' rx='" + q(rx) + "' ry='" + q(ry) + "' " + riempi(f) + (x || "") + "/>"; }
+    function riempi(f) {
+      var si = softI[f]; if (!si) return "fill='" + f + "'"; nSR++;
+      var b = softB[si[0]]; if (!b) { b = softB[si[0]] = p + "b" + (nSB++).toString(36); D.push("<radialGradient id='" + b + "'><stop stop-color='" + si[0] + "'/><stop offset='1' stop-color='" + si[0] + "' stop-opacity='0'/></radialGradient>"); }
+      return "fill='url(#" + b + ")' fill-opacity='" + opz(si[1]) + "'";
+    }
     var nClip = 0;
-    function clip(d) { var id = "c" + (nClip++); D.push("<clipPath id='" + p + id + "'>" + (Array.isArray(d) ? d : [d]).map(function (x) { return "<path d='" + x + "'/>"; }).join("") + "</clipPath>"); return "url(#" + p + id + ")"; }
+    var clipC = {};
+    function clip(d) { var kc = Array.isArray(d) ? d.join("|") : d; if (clipC[kc]) return clipC[kc]; return (clipC[kc] = clip0(d)); }
+    function clip0(d) { var id = "c" + (nClip++); D.push("<clipPath id='" + p + id + "'>" + (Array.isArray(d) ? d : [d]).map(function (x) { return "<path d='" + x + "'/>"; }).join("") + "</clipPath>"); return "url(#" + p + id + ")"; }
     // un cilindro: luce a sinistra, ombra a destra (sulla forma intera: braccia, gambe, maniche)
     var cilCache = {};
     function cil(colore, forza) {
@@ -282,15 +335,15 @@
       });
       var out = pts.map(function (q) { return [C + lato * (q[1] + q[2]), q[0]]; }), inn = pts.map(function (q) { return [C + lato * (q[1] - q[3]), q[0]]; }).reverse();
       var ol = out[out.length - 1], ir = inn[0], cv = o.curvaOrlo != null ? o.curvaOrlo : 5;
-      return "M" + n1(out[0][0]) + " " + n1(out[0][1]) + cr(out) + "Q" + n1((ol[0] + ir[0]) / 2) + " " + n1((ol[1] + ir[1]) / 2 + cv) + " " + n1(ir[0]) + " " + n1(ir[1]) + cr(inn) + "Z";
+      return "M" + q(out[0][0]) + " " + q(out[0][1]) + cr(out) + "Q" + q((ol[0] + ir[0]) / 2) + " " + q((ol[1] + ir[1]) / 2 + cv) + " " + q(ir[0]) + " " + q(ir[1]) + cr(inn) + "Z";
     }
     // il bacino (la parte dei pantaloni o della gonna dalla vita al cavallo)
     function bacino(o) {
       o = o || {}; var e = o.agio || 4, v = o.vita || (m ? 456 : 448), wv = Math.max(B.wt, m ? B.wt : B.wt) + e, wh = B.hp + e, yc = o.cavallo || 600;
       var gl = gIn(560);
-      return "M" + n1(C - wv) + " " + v + "L" + n1(C + wv) + " " + v + "C" + n1(C + wv + 4) + " " + (v + 30) + " " + n1(C + wh + 2) + " " + (Y.fianchi - 30) + " " + n1(C + wh) + " " + Y.fianchi +
-        "L" + n1(C + gl[0] + gl[1] + e) + " 566L" + n1(C + 4) + " " + yc + "L" + n1(C - 4) + " " + yc + "L" + n1(C - gl[0] - gl[1] - e) + " 566L" + n1(C - wh) + " " + Y.fianchi +
-        "C" + n1(C - wh - 2) + " " + (Y.fianchi - 30) + " " + n1(C - wv - 4) + " " + (v + 30) + " " + n1(C - wv) + " " + v + "Z";
+      return "M" + q(C - wv) + " " + v + "L" + q(C + wv) + " " + v + "C" + q(C + wv + 4) + " " + (v + 30) + " " + q(C + wh + 2) + " " + (Y.fianchi - 30) + " " + q(C + wh) + " " + Y.fianchi +
+        "L" + q(C + gl[0] + gl[1] + e) + " 566L" + q(C + 4) + " " + yc + "L" + q(C - 4) + " " + yc + "L" + q(C - gl[0] - gl[1] - e) + " 566L" + q(C - wh) + " " + Y.fianchi +
+        "C" + q(C - wh - 2) + " " + (Y.fianchi - 30) + " " + q(C - wv - 4) + " " + (v + 30) + " " + q(C - wv) + " " + v + "Z";
     }
     // =========================================================
     //  IL CORPO COME UN PEZZO UNICO (secondo tempo, 5 nov 2026)
@@ -332,8 +385,8 @@
         var g6 = gIn(604);
         R.push([g6[0], 606]);
         var Rabs = R.map(function (p) { return [C + p[0], p[1]]; }), Labs = R.map(function (p) { return [C - p[0], p[1]]; }).reverse();
-        return "M" + n1(Labs[Labs.length - 1][0]) + " " + n1(Labs[Labs.length - 1][1]) + "L" + n1(Rabs[0][0]) + " " + n1(Rabs[0][1]) + cr(Rabs) +
-          "L" + n1(C + 7) + " " + (Y.cavallo + 6) + "Q" + C + " " + (Y.cavallo + 12) + " " + n1(C - 7) + " " + (Y.cavallo + 6) + "L" + n1(Labs[0][0]) + " " + n1(Labs[0][1]) + cr(Labs) + "Z";
+        return "M" + q(Labs[Labs.length - 1][0]) + " " + q(Labs[Labs.length - 1][1]) + "L" + q(Rabs[0][0]) + " " + q(Rabs[0][1]) + cr(Rabs) +
+          "L" + q(C + 7) + " " + (Y.cavallo + 6) + "Q" + C + " " + (Y.cavallo + 12) + " " + q(C - 7) + " " + (Y.cavallo + 6) + "L" + q(Labs[0][0]) + " " + q(Labs[0][1]) + cr(Labs) + "Z";
       }
       var orlo = o.orlo || 508, sc2 = o.scollo || {}, prof = sc2.prof != null ? sc2.prof : 16, larg = sc2.larg != null ? sc2.larg : 3, sv = o.svasa || 0;
       var nl = B.nk + larg, ny = 240;
@@ -361,11 +414,11 @@
         R.push([Math.max(base[0], B.hp + e) + sv + (orlo - Y.fianchi) * (orlo > 700 ? 0.1 : 0.04), orlo]);
       }
       var Rabs2 = R.map(function (p) { return [C + p[0], p[1]]; }), Labs2 = R.map(function (p) { return [C - p[0], p[1]]; }).reverse();
-      var sc3 = sc2.tipo === "v" ? "L" + C + " " + (ny + prof) + "L" + n1(C + nl) + " " + ny
-        : (sc2.tipo === "quadro" ? "L" + n1(C - nl + 4) + " " + (ny + prof) + "L" + n1(C + nl - 4) + " " + (ny + prof) + "L" + n1(C + nl) + " " + ny
-        : "C" + n1(C - nl + 2) + " " + n1(ny + prof * 0.9) + " " + n1(C - nl * 0.45) + " " + (ny + prof) + " " + C + " " + (ny + prof) + "C" + n1(C + nl * 0.45) + " " + (ny + prof) + " " + n1(C + nl - 2) + " " + n1(ny + prof * 0.9) + " " + n1(C + nl) + " " + ny);
+      var sc3 = sc2.tipo === "v" ? "L" + C + " " + (ny + prof) + "L" + q(C + nl) + " " + ny
+        : (sc2.tipo === "quadro" ? "L" + q(C - nl + 4) + " " + (ny + prof) + "L" + q(C + nl - 4) + " " + (ny + prof) + "L" + q(C + nl) + " " + ny
+        : "C" + q(C - nl + 2) + " " + q(ny + prof * 0.9) + " " + q(C - nl * 0.45) + " " + (ny + prof) + " " + C + " " + (ny + prof) + "C" + q(C + nl * 0.45) + " " + (ny + prof) + " " + q(C + nl - 2) + " " + q(ny + prof * 0.9) + " " + q(C + nl) + " " + ny);
       var hl = Labs2[0];
-      return "M" + n1(C - nl) + " " + ny + sc3 + cr(Rabs2) + "Q" + C + " " + n1(orlo + (o.curvaOrlo != null ? o.curvaOrlo : 6)) + " " + n1(hl[0]) + " " + n1(hl[1]) + cr(Labs2) + "Z";
+      return "M" + q(C - nl) + " " + ny + sc3 + cr(Rabs2) + "Q" + C + " " + q(orlo + (o.curvaOrlo != null ? o.curvaOrlo : 6)) + " " + q(hl[0]) + " " + q(hl[1]) + cr(Labs2) + "Z";
     }
     function busto(o) { return tronco(o); }   // (nome di prima: lo usano i pezzi)
 
@@ -408,7 +461,7 @@
       });
       var A1 = lati[0], B1 = lati[1].slice().reverse();
       ultimiLati = { A: A1, B: B1 };
-      if (da) { var fA0 = A1[A1.length - 1], fB0 = B1[0]; return "M" + n1(A1[0][0]) + " " + n1(A1[0][1]) + cr(A1) + "L" + n1(fB0[0]) + " " + n1(fB0[1]) + cr(B1) + "Z"; }
+      if (da) { var fA0 = A1[A1.length - 1], fB0 = B1[0]; return "M" + q(A1[0][0]) + " " + q(A1[0][1]) + cr(A1) + "L" + q(fB0[0]) + " " + q(fB0[1]) + cr(B1) + "Z"; }
       // la spalla tonda dietro al perno (da B1 al primo punto di A1, girando dalla parte opposta al braccio)
       var r = rc + h * 0.7, aA = Math.atan2(-d1[0], d1[1]) /* normale +1 */, cap = [];
       var na = Math.atan2(A1[0][1] - b.J[1], A1[0][0] - b.J[0]), nb = Math.atan2(B1[B1.length - 1][1] - b.J[1], B1[B1.length - 1][0] - b.J[0]), back = Math.atan2(-d1[1], -d1[0]);
@@ -418,8 +471,8 @@
       for (var k2 = 1; k2 < 5; k2++) { var a2 = x0 + (x1 - x0) * k2 / 5; cap.push([b.J[0] + Math.cos(a2) * r, b.J[1] + Math.sin(a2) * r]); }
       var fA = A1[A1.length - 1], fB = B1[0], fd = s2p(fin), cv = curva != null ? curva : 0;
       function s2p(s) { return fin >= tot - 0.5 ? d2 : (s < b.l1 ? d1 : d2); }
-      var orloD = cv ? "Q" + n1((fA[0] + fB[0]) / 2 + fd[0] * cv) + " " + n1((fA[1] + fB[1]) / 2 + fd[1] * cv) + " " + n1(fB[0]) + " " + n1(fB[1]) : "L" + n1(fB[0]) + " " + n1(fB[1]);
-      return "M" + n1(A1[0][0]) + " " + n1(A1[0][1]) + cr(A1) + orloD + cr(B1.concat(cap).concat([A1[0]])) + "Z";
+      var orloD = cv ? "Q" + q((fA[0] + fB[0]) / 2 + fd[0] * cv) + " " + q((fA[1] + fB[1]) / 2 + fd[1] * cv) + " " + q(fB[0]) + " " + q(fB[1]) : "L" + q(fB[0]) + " " + q(fB[1]);
+      return "M" + q(A1[0][0]) + " " + q(A1[0][1]) + cr(A1) + orloD + cr(B1.concat(cap).concat([A1[0]])) + "Z";
     }
     // (nomi di prima, li usano i pezzi) una manica: fino alla frazione lung del braccio, agio sulla larghezza, svasa all'orlo
     function manica(lato2, o) { o = o || {}; manicaFino[lato2] = Math.max(manicaFino[lato2] || 0, o.lung != null ? o.lung : 1); return contornoBraccio(lato2, o.agio != null ? o.agio : 8, o.lung != null ? o.lung : 1, o.svasa || 0, o.tonda ? 6 : 0); }
@@ -441,7 +494,7 @@
       if (!luceG) luceG = LG("luceG", C - B.sho - 24, 0, C + B.sho + 24, 0, [[0, "#ffffff", 0.18], [0.3, "#ffffff", 0.04], [0.52, "#ffffff", 0], [0.74, "#000000", 0.04], [1, "#000000", 0.17]], true);
       return luceG;
     }
-    function ElR(cx, cy, rx, ry, ang, f) { return "<ellipse cx='" + n1(cx) + "' cy='" + n1(cy) + "' rx='" + n1(rx) + "' ry='" + n1(ry) + "' fill='" + f + "' transform='rotate(" + n1(ang) + " " + n1(cx) + " " + n1(cy) + ")'/>"; }
+    function ElR(cx, cy, rx, ry, ang, f) { return "<ellipse cx='" + q(cx) + "' cy='" + q(cy) + "' rx='" + q(rx) + "' ry='" + q(ry) + "' " + riempi(f) + " transform='rotate(" + q(ang) + " " + q(cx) + " " + q(cy) + ")'/>"; }
     // il volume di un tratto (P→Q, larghezza w): luce sul lato verso sinistra-alto, ombra dall'altro (ellissi morbide: niente bordi)
     function cilindro(P, Q, w, chiaro, scuro, forza) {
       var dx = Q[0] - P[0], dy = Q[1] - P[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l;
@@ -461,7 +514,7 @@
     var nNoSpalla = 0;
     function senzaSpalla(lato2, r) {   // tutto tranne il disco della spalla (per il bordo delle braccia)
       var J = BR[lato2].J, id = "ns" + (nNoSpalla++);
-      D.push("<clipPath id='" + p + id + "'><path clip-rule='evenodd' d='M0 0H400V1000H0Z" + "M" + n1(J[0] - r) + " " + n1(J[1]) + "a" + n1(r) + " " + n1(r) + " 0 1 0 " + n1(2 * r) + " 0a" + n1(r) + " " + n1(r) + " 0 1 0 " + n1(-2 * r) + " 0Z'/></clipPath>");
+      D.push("<clipPath id='" + p + id + "'><path clip-rule='evenodd' d='M0 0H400V1000H0Z" + "M" + q(J[0] - r) + " " + q(J[1]) + "a" + q(r) + " " + q(r) + " 0 1 0 " + q(2 * r) + " 0a" + q(r) + " " + q(r) + " 0 1 0 " + q(-2 * r) + " 0Z'/></clipPath>");
       return "url(#" + p + id + ")";
     }
     // pz = { tronco: [d, …], braccia: [{ d, lato, fino, e }, …], altro: [d, …] (gambe…) }
@@ -476,14 +529,17 @@
       var bordo = o.bordo || mix(colore, "#12060c", 0.5), chiaro = o.chiaro || "#ffffff", scuro = o.scuro || mix(colore, "#14080c", 0.6);
       var bL = mix(colore, bordo, 0.45), rimG = LG("rim" + (nRim++), C - B.sho - 20, 0, C + B.sho + 20, 0, [[0, bL], [0.5, mix(bL, bordo, 0.5)], [1, bordo]], true);
       var s = "";
-      tr.concat(al).forEach(function (d) { s += "<path d='" + d + "' fill='none' stroke='" + rimG + "' stroke-width='4.4' stroke-linejoin='round'/>"; });
-      al.forEach(function (d) { s += Pa(d, colore); });
-      tr.forEach(function (d) { s += Pa(d, colore); });
+      if (tr.length + al.length === 1) s += "<path d='" + tr.concat(al)[0] + "' fill='" + colore + "' stroke='" + rimG + "' stroke-width='4.4' paint-order='stroke'/>";
+      else {
+        tr.concat(al).forEach(function (d) { s += "<path d='" + d + "' fill='none' stroke='" + rimG + "' stroke-width='4.4'/>"; });
+        al.forEach(function (d) { s += Pa(d, colore); });
+        tr.forEach(function (d) { s += Pa(d, colore); });
+      }
       br.forEach(function (q) { s += Pa(q.d, colore); });
-      br.forEach(function (q) { s += "<g clip-path='" + senzaSpalla(q.lato, rc + (q.e || 0) / 2 + 1.5) + "'><path d='" + q.d + "' fill='none' stroke='" + rimG + "' stroke-width='2.2' stroke-linejoin='round'/></g>"; });
+      br.forEach(function (q) { s += "<path d='" + q.d + "' fill='none' stroke='" + rimG + "' stroke-width='2.2' clip-path='" + senzaSpalla(q.lato, rc + (q.e || 0) / 2 + 1.5) + "'/>"; });
       var cl = clip(tutti);
       if (o.volume !== false) {
-        s += "<g clip-path='" + cl + "'><rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "'" + (o.luce != null ? " opacity='" + n1(o.luce * 100) / 100 + "'" : "") + "/>";
+        s += "<g clip-path='" + cl + "'><rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "'" + (o.luce != null ? " opacity='" + opz(n1(o.luce * 100) / 100) + "'" : "") + "/>";
         br.forEach(function (q) { s += volumeBraccio(q.lato, q.fino, chiaro, scuro, q.e, o.forza); });
         if (o.dentro) s += o.dentro;
         s += "</g>";
@@ -518,7 +574,7 @@
     // capelli corti «rasati»: una trama di puntini dentro un contorno (testa)
     K.rasatura = function (d, densita, op) {
       var R = rnd(11), s = "";
-      for (var i = 0; i < (densita || 360); i++) { var x = (R() * 2 - 1) * 64, y = top - 10 + R() * 120; s += "M" + n1(x) + " " + n1(y) + "h.3"; }
+      for (var i = 0; i < (densita || 360); i++) { var x = (R() * 2 - 1) * 64, y = top - 10 + R() * 120; s += "M" + N(x, 1) + N(y) + "h.3"; }
       return "<g clip-path='" + clip(d) + "'>" + Pa(d, hc, " opacity='" + (op || 0.55) + "'") + "<path d='" + s + "' stroke='" + hDD + "' stroke-width='1.6' stroke-linecap='round' opacity='.35' fill='none'/></g>";
     };
 
@@ -587,7 +643,7 @@
           "M9.5 9C16 13 21 23 21 34C21 40 17.5 44.5 13 43C11 37 9 27 5 20Z"],
         l: ["M-12.5 30C-5 33.5 3 33 9 30", "M-8 43C-3 47.5 2 48.5 6 47"] },
       indica: { p: ["M-14.5 -6C-15.5 6 -16.5 17 -15.5 28C-14.5 38 -8.5 45 0.5 45C8.5 45 14.5 40 15.5 30C16.5 20 15 8 14.5 -6Z",
-          "M-2.5 34L-3.5 70C-3.5 75.5 4.5 75.5 4.5 70L5.5 34Z", "M12.5 11C19 15 20.5 25.5 15.5 32C11.5 35 6 33 4 28.5C8 26.5 10.5 22 10.5 17.5Z"],
+          "M-3.5 32L-4.5 72C-4.5 78.5 5.5 78.5 5.5 72L6.5 32Z", "M12.5 11C19 15 20.5 25.5 15.5 32C11.5 35 6 33 4 28.5C8 26.5 10.5 22 10.5 17.5Z"],
         l: ["M-13 24C-6 27 0 27 3 25", "M-12 32C-8 34.5 -4 35 -2 34"] },
       piatta: { p: ["M-16 -6C-17 6 -18 18 -17.5 30C-17 42 -16 51 -13.5 57C-12.5 60.5 -9 61.5 -7.5 59.5C-6.5 63 -2.5 64 -1 61.5C0.5 64.5 4.5 64 5.5 61C7 63.5 10.5 62.5 11 59C13.5 55 16 47 17 38C17.8 28 17 10 16 -6Z",
           "M14 6C21 9 26 16 27 24C27.5 28.5 22.5 30 21 26C19.5 21.5 17 18 13 16Z"],
@@ -601,7 +657,7 @@
       var tr = "translate(" + n1(b.W[0]) + " " + n1(b.W[1]) + ") rotate(" + n1(rot) + ") scale(" + n1(mir * k) + " " + n1(k * (b.schiaccia || 1)) + ")";
       var bordo = mix(sk, skDD, 0.8), s = "<g transform='" + tr + "'>";
       // il bordo dietro (solo il contorno esterno, non al polso), poi la pelle, poi luci e pieghe
-      forma.p.forEach(function (d) { s += "<path d='" + d.replace(/Z$/, "") + "' fill='none' stroke='" + bordo + "' stroke-width='" + n1(3.2 / k) + "' stroke-linejoin='round' stroke-linecap='butt'/>"; });
+      forma.p.forEach(function (d) { s += "<path d='" + d.replace(/Z$/, "") + "' fill='none' stroke='" + bordo + "' stroke-width='" + n1(3.2 / k) + "' stroke-linecap='butt'/>"; });
       forma.p.forEach(function (d) { s += Pa(d, sk); });
       var cm = clip(forma.p);
       
@@ -775,7 +831,7 @@
     // inmano: { dietro (prima della mano: il manico dentro il pugno), davanti } · animale: svg (a terra, accanto) · pittura: svg in coordinate della testa (ritagliata sul viso)
     function extra(tipo, v, vuoto) { var f = v && v !== vuoto && A[tipo] ? A[tipo][v] : null; return f ? f(K) : null; }
     var bR = BR["1"], dR = [(bR.W[0] - bR.E[0]) / bR.l2, (bR.W[1] - bR.E[1]) / bR.l2], kM = B.aw[3] / (m ? 28.6 : 27.4) / 1.06;
-    var conOgg = !!(c.mano && c.mano !== "nessuno" && !bR.davanti && !bR.canna && A.inmano[c.mano]);
+    var conOgg = !!(c.mano && c.mano !== "nessuno" && !bR.davanti && !bR.canna && !opts.busto && !opts.viso && A.inmano[c.mano]);   // nei tondini niente cose in mano (si vedevano a pezzi sul bordo)
     if (conOgg) bR.mano = "pugno";
     K.presa = { x: bR.W[0] + dR[0] * 20 * kM, y: bR.W[1] + dR[1] * 20 * kM, ang: Math.atan2(dR[0], dR[1]) / DEG, k: kM };   // dove stringe il pugno a destra nel disegno (mondo); ang = la direzione dell'avambraccio
     var xCollo = extra("collo", c.collo, "nessuno"), xSch = extra("schiena", c.schiena, "nessuna"), xBor = extra("borsa", c.borsa, "nessuna"), xAni = soloSu ? null : extra("animale", c.animale, "nessuno"), xOgg = conOgg ? A.inmano[c.mano](K) : null;
@@ -826,10 +882,10 @@
     if (PARTE === "braccio") {
       var zona = clip(contornoBraccio(LP, 46, 1, 30));
       var sB = pelleBraccio(LP) + "<g clip-path='" + zona + "'>" + (capo.corpo || "") + "</g>" + (BR[LP].davanti ? pelleAvanti(LP) : "") + (LP === 1 ? xOgg.dietro || "" : "") + manoSvg(LP) + (LP === 1 ? xOgg.davanti || "" : "");
-      return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 264'" + (opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * 1.32) + "'" : "") + " class='omino omino-a omino-braccio'><defs>" + D.join("") + "</defs><g transform='matrix(.25 0 0 .25 50 2)'>" + sB + "</g></svg>";
+      return fine("<svg xmlns='http://www.w3.org/2000/svg' stroke-linejoin='round' viewBox='0 0 200 264'" + (opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * 1.32) + "'" : "") + " class='omino omino-a omino-braccio'><defs>" + D.join("") + "</defs><g transform='matrix(.25 0 0 .25 50 2)'>" + sB + "</g></svg>");
     }
     if (PARTE === "corpo") opts = (function () { var o = {}; for (var k in opts) o[k] = opts[k]; o.senzaBraccio = LP; return o; })();
-    if (seduto) return seduto();
+    if (seduto) return fine(seduto());
     body += pelleCorpo(soloSu);
     if (!alte) body += "<g class='om-scarpe'>" + (scarpe.corpo || "") + "</g>";
     body += sotto.corpo || "";
@@ -848,14 +904,14 @@
     if (SPALLE) {
       var pOreS = c.orecchini && c.orecchini !== "nessuno" ? A.orecchini[c.orecchini] : null;
       body += "<g transform='" + HT + "'>" + testaDietro(sottoCappello(cap.fronte), sottoCappello(cap.dietro)) + (pOreS ? pOreS(K) : "") + (capp && capp.dietro ? capp.dietro : "") + (capp ? capp.svg || "" : "") + "</g>";
-      return avvolgi(body);
+      return fine(avvolgi(body));
     }
     // occhiali e orecchini (coordinate della testa): gli orecchini sotto i capelli, gli occhiali sopra i capelli e sotto il cappello
     var pOcc = c.occhiali && c.occhiali !== "nessuno" ? A.occhiali[c.occhiali] : null, pOre = c.orecchini && c.orecchini !== "nessuno" ? A.orecchini[c.orecchini] : null;
     body += "<g transform='" + HT + "'>" + testa(cap.fronte, barba, cap.ombraFronte) + (pOre ? pOre(K) : "") + sottoCappello(cap.fronte) + (pOcc ? pOcc(K) : "") + (capp ? capp.svg || "" : "") + "</g>";
     if (A.extra.dopo) body += A.extra.dopo(K);
 
-    function avvolgi(b2) { return "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='" + vb + "'" + px + " class='omino omino-a'><defs>" + D.join("") + "</defs><g transform='matrix(.25 0 0 .25 50 2)'><g class='om-tutto'>" + b2 + "</g></g></svg>"; }
+    function avvolgi(b2) { return "<svg xmlns='http://www.w3.org/2000/svg' stroke-linejoin='round' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='" + vb + "'" + px + " class='omino omino-a'><defs>" + D.join("") + "</defs><g transform='matrix(.25 0 0 .25 50 2)'><g class='om-tutto'>" + b2 + "</g></g></svg>"; }
     // seduto: il corpo (pelle, pantaloni, scarpe, tronco del vestito) si disegna una volta e si usa 4 volte a fasce: busto spostato giù,
     // cosce e stinchi accorciati, piedi fermi a terra. Braccia, maniche, mani e testa solo spostati giù.
     function seduto() {
@@ -898,7 +954,7 @@
       passo = "<style>.om-b1{transform-origin:" + n1(jx[0] * 0.25 + 50) + "px " + n1(jx[1] * 0.25 + 2) + "px;animation:omBr .42s ease-in-out infinite alternate}" +
         ".om-b2{transform-origin:" + n1(400 - jx[0]) * 0.25 + 50 + "px " + n1(jx[1] * 0.25 + 2) + "px;animation:omBr .42s ease-in-out infinite alternate-reverse}@keyframes omBr{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}</style>";
     }
-    return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + vb + "'" + px + " class='omino omino-a'>" + passo + "<defs>" + D.join("") + "</defs><g transform='matrix(.25 0 0 .25 50 2)'><g class='om-tutto'>" + body + "</g></g></svg>";
+    return fine("<svg xmlns='http://www.w3.org/2000/svg' stroke-linejoin='round' viewBox='" + vb + "'" + px + " class='omino omino-a'>" + passo + "<defs>" + D.join("") + "</defs><g transform='matrix(.25 0 0 .25 50 2)'><g class='om-tutto'>" + body + "</g></g></svg>");
   };
 
   // dove sta la mano a destra nel disegno (coordinate 200×264): per la canna il centro del pugno
