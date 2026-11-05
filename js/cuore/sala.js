@@ -1048,7 +1048,7 @@
   }
 
   // l'host della Sala sta scegliendo il gioco («Quale gioco?», «Tris in 4», «Chi gioca?»): la Sala non lo copre
-  function hostSceglie() { var s = cuore.app && cuore.app.firstElementChild; return !!(sala && s && s.classList && (s.classList.contains("sala-sceglie") || s.classList.contains("chi-gioca-sc") || s.classList.contains("torneino-sc") || s.classList.contains("sala-voto"))); }
+  function hostSceglie() { var s = cuore.app && cuore.app.firstElementChild; return !!(sala && s && s.classList && (s.classList.contains("sala-sceglie") || s.classList.contains("chi-gioca-sc") || s.classList.contains("torneino-sc") || s.classList.contains("sala-voto") || s.classList.contains("arriva-gioco"))); }   // (📦 anche «Arriva il gioco…»: la Sala non si ridisegna sopra)
   // o.scelgoIo = "Scelgo io" (con "🗳️ Scegliamo insieme" acceso: questa volta un tocco sceglie il gioco, come prima)
   function salaScegliGioco(o) {
     o = o && !o.target ? o : {};
@@ -1172,6 +1172,9 @@
   // opz.sfida = "⚔️ Altra sfida": "Chi gioca?" anche se i posti bastano (si sceglie chi gioca adesso)
   function salaPreparaGioco(g, opz) {
     if (!sala || !g) return schermataHome();
+    // 📦 le regole le prepara il gioco: se non è ancora arrivato, «Arriva il gioco…» e poi si continua (finché la Sala è questa)
+    var S0 = sala;
+    if (cuore.aspettaGioco(g, function () { if (sala === S0) salaPreparaGioco(g, opz); }, { indietro: function () { if (sala === S0) salaScegliGioco(); else schermataHome(); } })) return;
     opz = opz && !opz.target ? opz : {};
     if (sala.resta) cuore.restaFerma();   // (un gioco nuovo: "Chi vince resta" finisce, il record resta scritto)
     cuore.segnaFatto(g.id);   // ("🗳️ Scegliamo insieme": i giochi di stasera)
@@ -1264,6 +1267,9 @@
       sala.gioco = null; sala.stanza = null; sala.inGioco = false; sala.fase = null; sala.fuori = {}; sala.scelti = null; sala.ctx = null;
       sala._bcast(); return disegnaSalaHost();
     }
+    // 📦 (la copia del telefono ce l'ha quasi sempre: l'ha appena giocato) se non è ancora arrivato si aspetta, poi la partita riprende
+    var S0 = sala, st0 = sala.stanza;
+    if (cuore.aspettaGioco(g, function () { salaRiprendiGioco(g, impPrima); }, { subito: true, viva: function () { return sala === S0 && sala.gioco === g.id && sala.stanza === st0; }, indietro: disegnaSalaHost })) return;
     var imp = {}, box = null;
     if (typeof g.impostazioni === "function") {
       box = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
@@ -1421,6 +1427,9 @@
         S.insieme = !!m.insieme;
         var Vt = !m.gioco && cuore.votoValido(m.voto) ? m.voto : null;
         if (!Vt) cuore.votoVia(S);
+        // 📦 il gioco della Sala (o quelli proposti nel voto) comincia ad arrivare su questo telefono appena lo si sa
+        if (m.gioco) cuore.precarica(String(m.gioco));
+        if (Vt && Array.isArray(Vt.giochi)) Vt.giochi.forEach(function (id) { if (typeof id === "string") cuore.precarica(id); });
         if (m.gioco && m.stanza) {
           // fase: a che punto è il gioco; nel: chi è dentro la sua stanza; fuori: chi ne è uscito apposta
           var fase = typeof m.fase === "string" ? m.fase : "lobby", mio = mioIdSala(S);

@@ -1406,6 +1406,8 @@
   function schermataPreGioco(g, opts) {
     var torn = !!(opts && opts.torneo);
     var inSala = !!(opts && opts.sala);
+    // 📦 le impostazioni le disegna il gioco: se non è ancora arrivato, «Arriva il gioco…» e poi questa schermata
+    if (cuore.aspettaGioco(g, function () { schermataPreGioco(g, opts); }, { indietro: function () { if (torn) cuore.schermataTorneoHub(); else if (inSala) cuore.salaScegliGioco(); else if (modiDi(g).length > 1) schermataModo(g); else tornaHome(); } })) return;
     var modo = inSala ? "online" : (opts && opts.modo) || null, M = modo ? modoDi(g, modo) : null, online = modo === "online";
     var conAmici = !torn && !inSala && (!modo || (M && M.amici));   // la lista di chi gioca serve solo se si gioca sullo stesso telefono
     var s = schermata({ icona: g.icona, titolo: g.nome,
@@ -1593,6 +1595,7 @@
   // ==== ⏳ LA SALETTA D'ATTESA ONLINE (t.lobby), la saletta viva, il 3-2-1, la fine partita uguale per tutti (t.tastiFine), i suoni e i nomi buffi: in js/cuore/saletta.js ====
   // ---- Regole ----
   function schermataRegole(g, indietro) {
+    if (cuore.aspettaGioco(g, function () { schermataRegole(g, indietro); }, { indietro: indietro })) return;   // (📦 le regole arrivano col gioco)
     var s = schermata({ icona: g.icona, titolo: "Come si gioca", sotto: g.nome, indietro: indietro });
     var righe = g.regole || ["(regole non ancora scritte)"];
     var box = el("div", { class: "sg-dal-gioco" });   // (🤍 le regole del gioco: le sue emoji restano emoji)
@@ -2172,6 +2175,8 @@
     };
     P.tavolo = tavolo;
 
+    // 📦 il gioco si scarica quando serve (js/cuore/scarica.js): tutto è già pronto come sempre, se non è ancora arrivato si aspetta solo lui
+    if (cuore.aspettaGioco(g, function () { RIP.risFino = Date.now() + 20000; g.avvia(tavolo); }, { viva: viva, indietro: function () { tavolo.esci(); } })) return;   // (i 20 s «classifica già data» partono da quando il gioco parte davvero)
     g.avvia(tavolo);
   }
 
@@ -2193,6 +2198,8 @@
   function riapriStanza(o) {
     var g = giocoDa(o.gioco), io = profiloAttivo(), rp = cuore.ripresaValida(o) ? cuore.ripresaDi(g.id, o.codice) : null;
     if (!g || !(io || rp)) return schermataHome();
+    var nP = partitaN;
+    if (cuore.aspettaGioco(g, function () { riapriStanza(o); }, { subito: true, viva: function () { return partitaN === nP; } })) return;   // (📦 la stanza si riapre quando il gioco è arrivato: anche se intanto si è disegnata la home; non più se è partita un'altra partita)
     var mioNome = (io && io.nome) || o.nomeHost || rp.nomeHost || "Giocatore 1";
     // un gioco con l'host di riserva (Parola d'ordine) a partita iniziata: la porta avanti un amico, io rientro come giocatore
     if (hostDiRiserva(g) && o.fase && o.fase !== "lobby") {
@@ -2249,7 +2256,7 @@
   })();
 
   window.SG = {
-    registra: function (gioco) { giochiReg.push(gioco); ordinaGiochi(); },   // (va al suo posto nell'ordine del proprietario: se non c'è, in fondo)
+    registra: function (gioco) { if (cuore.unisciScheda && cuore.unisciScheda(gioco)) return; giochiReg.push(gioco); ordinaGiochi(); },   // (va al suo posto nell'ordine del proprietario: se non c'è, in fondo. 📦 Il gioco che arriva dopo la sua scheda si copia dentro la scheda: js/cuore/scarica.js)
     audioCtx: audioCtx,
     listaProfilo: listaProfilo, salvaListaProfilo: salvaListaProfilo,   // liste salvate sul profilo di chi gioca
     // 🤖 i bot fissi, uguali in tutti i giochi: { id, nome, omino, frase, livello: "facile"|"medio"|"difficile", bot: true }

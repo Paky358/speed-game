@@ -309,6 +309,7 @@
   // 237. Le impostazioni dei 6 giochi con il box fuori dalla pagina (come le prepara la Sala): niente errori, le scelte ci sono
   COPIONE.aggiungi(237, { nome: "Impostazioni del gruppo D col box fuori dalla pagina, posti online e riassunto", fai: async function () {
     var P = await W.apriTel("Paky", { x: 0, salaSempre: true });
+    if (P.SG.scaricaTutti) await P.SG.scaricaTutti();   // (📦 i giochi arrivano quando servono: prima tutti, coi loro dati)
     var presi = {}, reg = P.SG.registra;
     // (i giochi sono già registrati: si ricaricano i loro file in questa finestra per avere gli oggetti)
     P.SG.registra = function (g) { presi[g.id] = g; };

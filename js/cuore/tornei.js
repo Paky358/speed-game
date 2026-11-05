@@ -261,9 +261,20 @@
   // Il riquadro resta sul telefono dell'host; i valori (E.imp) viaggiano con la sala.
   // In cima le regole del torneo (chi resta in più: Bot o passa il turno; la bravura del Bot): si vedono prima di partire
   // e a torneo finito (per il prossimo). Il torneino della Sala porta le regole del gioco già scelte (sala._regoleBox, E.imp)
+  var SCARICA_ELIM = null;   // (📦 il torneo il cui gioco sta arrivando)
   function regoleElim() {
     var E = cuore.sala && cuore.sala.elim, g = E && giocoDa(E.gioco);
     if (!g) return null;
+    // 📦 le regole le disegna il gioco: se non è ancora arrivato si scarica e la Sala si ridisegna (intanto senza riquadro)
+    if (!cuore.giocoPronto(g)) {
+      // (uno scaricamento solo per volta; il segno sta qui fuori, MAI in E: E va nella foto della Sala)
+      if (SCARICA_ELIM !== E) {
+        SCARICA_ELIM = E;
+        var giu = function () { if (SCARICA_ELIM === E) SCARICA_ELIM = null; if (cuore.sala && cuore.sala.elim === E && !cuore.sala.inGioco && document.querySelector(".saletta-schermo")) cuore.disegnaSalaHost(); };
+        cuore.scaricaGioco(g).then(giu, function () { setTimeout(giu, 8000); });   // (senza rete si riprova dopo 8 s, al prossimo disegno)
+      }
+      return null;
+    }
     if (!cuore.sala.regoleElim || cuore.sala.regoleElim.E !== E) {
       var gbox = cuore.sala._regoleBox || null, imp = E.imp || {};
       cuore.sala._regoleBox = null;

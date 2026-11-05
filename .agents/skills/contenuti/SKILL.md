@@ -16,7 +16,7 @@ description: Usala quando devi scrivere o allungare liste di contenuti per i gio
 - `parole/ncc.js` (Nomi, Cose e Città): `window.SG_NCC_PAROLE = { "Categoria": "parola|parola|..." }`, tutto minuscolo, singolare, senza articolo. Il gioco usa le lettere A B C D E F G I L M N O P R S T V: coprile tutte.
 - Scarabocchio: le parole da disegnare sono in cima a `js/games/scarabocchio.js`, in `FACILI` e `DIFFICILI`, separate da `|`.
 - La linea del tempo: `data/eventi-*.js`, un file per categoria. Ogni avvenimento ha un titolo e un anno **verificato** (è un gioco sulle date: un anno sbagliato rovina la partita).
-- Per un gioco nuovo con tante voci (carte, domande), metti i contenuti in un file `data/<gioco>-*.js` che imposta una variabile `window.SG_...`, e caricalo in `index.html` prima del gioco.
+- Per un gioco nuovo con tante voci (carte, domande), metti i contenuti in un file `data/<gioco>-*.js` che imposta una variabile `window.SG_...`, e mettilo nel pezzo del gioco in `js/elenco-giochi.js`, prima del file del gioco (📦 dal 4 nov 2026 i giochi si scaricano quando servono: niente `<script>` in `index.html`).
 
 ## Controlli finali
 - Conta le voci e controlla i doppioni con uno script (anche ignorando maiuscole e accenti).

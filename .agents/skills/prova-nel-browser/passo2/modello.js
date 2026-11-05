@@ -24,7 +24,7 @@
       Object.defineProperty(w, "SG", { configurable: true, get: d.get, set: function (v) {
         d.set(v);
         var reg = v.registra;
-        v.registra = function (g) { if (g && g.id === opz.comeGioco && !g.__modello) return; return reg.apply(v, arguments); };
+        v.registra = function (g) { if (g && g.id === opz.comeGioco && !g.__modello && typeof g.avvia === "function") return; return reg.apply(v, arguments); };
       } });
     };
   }

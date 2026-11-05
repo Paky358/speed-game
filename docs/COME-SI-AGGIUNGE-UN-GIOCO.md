@@ -40,11 +40,12 @@ SG.registra({
 });
 ```
 
-Poi si aggiunge una riga in `index.html` che carica il file, insieme agli altri
-giochi:
+Poi (dal 4 nov 2026: i giochi si scaricano quando servono) si aggiunge in `js/elenco-giochi.js` il suo pezzo, una riga
+(i file nell'ordine, i dati prima del gioco), e si rifanno le schede con
+`.agents/skills/nuovo-gioco/elenco-giochi.js` (vedi la skill `nuovo-gioco`). Niente `<script>` in `index.html`:
 
-```html
-<script src="js/games/nome-corto.js"></script>
+```js
+pezzo("nome-corto", "data/nome-corto-carte.js js/games/nome-corto.js");
 ```
 
 ---

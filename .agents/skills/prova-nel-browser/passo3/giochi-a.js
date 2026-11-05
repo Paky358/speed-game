@@ -80,6 +80,12 @@
 
   // la musica della Scopa (SGMusica): w.__musica = true mentre suona (i suoni sono spenti sul computer di prova: si segna e basta)
   function spiaMusica(w) {
+    // (📦 la musica arriva con la Scopa, quando serve: se non c'è ancora la si aspetta)
+    if (!w.SGMusica && !w.__spiaAttesa) {
+      w.__spiaAttesa = true; var val;
+      Object.defineProperty(w, "SGMusica", { configurable: true, get: function () { return val; }, set: function (v) { val = v; spiaMusica(w); } });
+      return;
+    }
     var M = w.SGMusica; if (!M || M.__spia) return;
     var av = M.avvia, fe = M.ferma;
     M.avvia = function () { w.__musica = true; return av.apply(this, arguments); };

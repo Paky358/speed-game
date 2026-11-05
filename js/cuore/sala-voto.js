@@ -89,6 +89,7 @@
     if (!cuore.sala || !window.SGScegliamo) return;
     ids = (ids || []).filter(function (id, i, a) { return giocoDa(id) && a.indexOf(id) === i; }).slice(0, 3);
     if (ids.length < 2) return cuore.salaScegliGioco({ scelgoIo: true });
+    ids.forEach(function (id) { cuore.precarica(id); });   // (📦 i giochi proposti cominciano ad arrivare mentre si vota)
     if (cuore.sala.resta) cuore.restaFerma(true);
     // (un gioco degli amici ancora aperto, con l'host già nella Sala: finisce, come quando si sceglie un altro gioco)
     if (cuore.sala.gioco && !cuore.sala.inGioco) { cuore.sala.gioco = null; cuore.sala.stanza = null; cuore.sala.fase = null; cuore.sala.fuori = {}; cuore.sala.ctx = null; cuore.sala.duello = null; cuore.sala.scelti = null; SGNet.chiudiGiochi(1500); }

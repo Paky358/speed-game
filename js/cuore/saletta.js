@@ -1558,6 +1558,7 @@
   // porta d'ingresso a un gioco dalla home: profilo → come giocate → (amici) → impostazioni
   function apriGioco(g) {
     if (!profiloAttivo()) return cuore.schermataAccesso(function () { apriGioco(g); });
+    cuore.precarica(g);   // (📦 il gioco comincia ad arrivare già adesso: intanto si sceglie come giocare)
     if (modiDi(g).length > 1 || giocoOnline(g)) return schermataModo(g);   // online c'è sempre la scelta: apro io la stanza o entro con un codice
     var solo = modiDi(g)[0];
     if (solo && !solo.amici) return schermataPreGioco(g, { modo: solo.modo });

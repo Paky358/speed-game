@@ -3001,6 +3001,7 @@
       if (!await W.aspetta(function () { return (vm(S).membri || []).length === 5; }, 12000)) no("nella Sala non sono in 5");
       var P = W.finestra("Paky"), F = W.finestra, tab = [], rotti = [];
       // i giochi (nome, posti, impostazioni): si ricaricano i loro file in una copia, come nel 227
+      if (P.SG.scaricaTutti) await P.SG.scaricaTutti();   // (📦 dal 4 nov i giochi arrivano quando servono: qui servono tutti, con le loro liste)
       var REG = {}, FILE = { nomicose: "nomicoseecitta", scopa2v2: "scopa2" }, reg0 = P.SG.registra;
       P.SG.registra = function (x) { REG[x.id] = x; };
       try { for (var fi = 0; fi < LISTA.length; fi++) P.eval(await (await fetch("/js/games/" + (FILE[LISTA[fi]] || LISTA[fi]) + ".js?" + Date.now())).text()); }

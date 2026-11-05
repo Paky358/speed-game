@@ -9,7 +9,8 @@ Non ci sono test automatici: si prova l'app vera in un browser, anche senza sche
 
 ## Aprire l'app
 - Servi la cartella del progetto con un server statico qualsiasi (per esempio `python3 -m http.server 8000`) e apri `http://localhost:8000/`.
-- Per provare la versione da pubblicare: `bash costruisci-versione-online.sh` e apri `http://localhost:8000/dist/index.html`.
+- Per provare la versione da pubblicare: `bash costruisci-versione-online.sh` e apri `http://localhost:8000/dist/index.html` (📦 dal 4 nov 2026 sono più file: il cuore e un file per ogni gioco, scaricato quando serve).
+- 📦 I giochi si scaricano quando servono anche nella cartella: un telefono finto appena aperto ha solo le schede. Per una prova che legge le liste o il codice di un gioco prima di giocarlo: `await w.SG.scaricaGioco("asta")` (o `w.SG.scaricaTutti()`). Le prove dello scaricamento (gioco che arriva tardi, rete che non c'è, link, chi guarda) sono in `passo7/scarica.js` (`el1`, `dl1`-`dl5`).
 - La console non deve avere errori. I 404 delle foto dei giochi che mancano (`carte/giochi/<id>.jpg`) sono normali: al loro posto si vede l'emoji.
 - Prova su uno schermo da telefono piccolo (360x640) e grande (412x915): niente deve scorrere o finire fuori schermo.
 
