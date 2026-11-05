@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 307,
+    data: "5 novembre 2026",
+    titolo: "⚡ L'app si apre molto più in fretta",
+    descrizione: [
+      "La prima schermata arriva in pochi secondi anche con la rete del telefono: all'apertura si scarica circa un quinto di prima.",
+      "Ogni gioco arriva la prima volta che lo tocchi («Arriva il gioco…») e poi resta sul telefono, anche senza rete.",
+      "Quando aggiorniamo l'app si riscarica solo il gioco cambiato, non più tutto.",
+      "Online la saletta aspetta un attimo chi non ha ancora il gioco, così si parte tutti insieme."
+    ]
+  },
+  {
     v: 306,
     data: "4 novembre 2026",
     titolo: "L'Impostore: 10 temi nuovi, 1.350 coppie di parole",
