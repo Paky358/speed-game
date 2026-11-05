@@ -133,15 +133,15 @@
   var GESTI = {
     // (le mani restano dentro il taglio «vita»: dalla testa alla vita, viewBox 46 11 108 118)
     saluta:   { uno: { t: function (G) { return [G.Jd + 56, G.Jy - 128]; }, mano: "aperta" } },
-    applaude: { due: { t: function (G) { return [24, G.Y.petto - 14]; }, f: [0.96, 0.82], mano: "batti", davanti: 1, dirMano: 168 } },
+    applaude: { due: { t: function (G) { return [9, G.Y.petto - 10]; }, f: [0.96, 0.84], mano: "aperta", davanti: 1, dirMano: 172 } },
     esulta:   { due: { t: function (G) { return [G.Jd + 56, G.Jy - 168]; }, mano: "pugno" } },
     posa:     { uno: { t: function (G) { return [24, G.Y.vita - 10]; }, f: [0.88, 0.76], mano: "tiene", davanti: 1 } },
     preme:    { uno: { t: function (G) { return [G.Jd * 0.42, G.Y.vita - 16]; }, f: [0.88, 0.8], mano: "indica", davanti: 1, dirMano: 8 } },
     leva:     { uno: { t: function (G) { return [G.Jd + 20, G.Y.petto + 36]; }, f: [0.9, 0.74], mano: "pugno", davanti: 1 } },
-    batte:    { uno: { t: function (G) { return [G.Jd * 0.7, G.Y.vita - 14]; }, f: [0.9, 0.7], mano: "piatta", davanti: 1, dirMano: 2 } },
+    batte:    { uno: { t: function (G) { return [G.Jd * 0.62, G.Y.vita - 30]; }, f: [0.9, 0.7], mano: "pugno", davanti: 1, dirMano: 0 } },
     // al tavolo (il tavolo copre dalla vita in giù): le due mani appoggiate davanti, e le carte tenute davanti al petto
-    tavolo:   { due: { t: function (G) { return [G.Jd * 0.96, G.Y.vita - 18]; }, f: [0.94, 0.66], mano: "piatta", davanti: 1, dirMano: 4 } },
-    carte:    { due: { t: function (G) { return [30, G.Y.petto + 36]; }, f: [0.94, 0.76], mano: "pugno", davanti: 1, dirMano: 160 } }
+    tavolo:   { due: { t: function (G) { return [G.Jd * 0.9, G.Y.vita - 24]; }, f: [0.94, 0.62], mano: "piatta", davanti: 1, dirMano: -16, schiaccia: 0.72 } },
+    carte:    { due: { t: function (G) { return [24, G.Y.petto + 34]; }, f: [0.94, 0.76], mano: "pugno", davanti: 1, dirMano: 160, carte: 1 } }
   };
   A.GESTI = GESTI;
   // SEDUTO (front): il busto scende di dy; le cosce (da yAB a yBC) si accorciano (vengono verso chi guarda), gli stinchi pure,
@@ -174,7 +174,7 @@
     var gesto = opts.gesto && GESTI[opts.gesto], latoG = opts.lato === -1 ? -1 : 1, GG = { Jd: Jd, Jy: Jy, Y: Y, B: B, C: C, m: m };
     function cl(v, a, b) { return Math.max(a, Math.min(b, v)); }
     function braccio(lato) {
-      var J = [C + lato * Jd, Jy], br = opts.braccia, E, W, mano = "rilassata", polso = 0, davanti = false, dirMano = null;
+      var J = [C + lato * Jd, Jy], br = opts.braccia, E, W, mano = "rilassata", polso = 0, davanti = false, dirMano = null, schiaccia = 1;
       var su = br === "su" || (br === "uno" && lato === -1), canna = br === "canna" && lato === 1;
       var gd = gesto && !su && !canna ? (gesto.due || (lato === latoG ? gesto.uno : null)) : null;
       if (su || canna) {
@@ -183,7 +183,7 @@
         E = [J[0] + lato * L1 * Math.sin(a1 * DEG), J[1] + L1 * Math.cos(a1 * DEG)]; W = [E[0] + lato * L2 * Math.sin(a2 * DEG), E[1] + L2 * Math.cos(a2 * DEG)];
       } else if (gd) {
         var f = gd.f || [1, 1], T = gd.t(GG), r = ik(J, [C + lato * T[0], T[1]], L1 * f[0], L2 * f[1], lato);
-        E = r.E; W = r.W; mano = gd.mano || mano; polso = gd.polso || 0; davanti = !!gd.davanti; dirMano = gd.dirMano;
+        E = r.E; W = r.W; mano = gd.mano || mano; polso = gd.polso || 0; davanti = !!gd.davanti; dirMano = gd.dirMano; schiaccia = gd.schiaccia || 1;
       } else if (opts.seduto) {   // seduto: le mani appoggiate sulle cosce, vicino alle ginocchia
         var g7 = gIn(690), rs = ik(J, [C + lato * (g7[0] * SED.kx + 6), SED.yK - SED.dy - 18], L1, L2 * 0.72, lato);
         E = rs.E; W = rs.W; mano = "piatta"; davanti = true;
@@ -198,7 +198,7 @@
       function at(P, Q, t) { return [P[0] + (Q[0] - P[0]) * t, P[1] + (Q[1] - P[1]) * t]; }
       var nodi = [[S0[0], S0[1], aw[0] * 0.86], [J[0], J[1], aw[0]], at(J, E, 0.14).concat([aw[0]]), at(J, E, 0.5).concat([aw[0] * 0.9]), [E[0], E[1], aw[1]], at(E, W, 0.22).concat([aw[2]]), at(E, W, 0.6).concat([aw[2] * 0.86]), [W[0], W[1], aw[3]]];
       return { lato: lato, J: J, E: E, W: W, l1: l1, l2: l2, a1: Math.atan2(lato * (E[0] - J[0]), E[1] - J[1]) / DEG, a2: Math.atan2(lato * (W[0] - E[0]), W[1] - E[1]) / DEG,
-        su: su, canna: canna, nodi: nodi, mano: mano, polso: polso, davanti: davanti, dirMano: dirMano };
+        su: su, canna: canna, nodi: nodi, mano: mano, polso: polso, davanti: davanti, dirMano: dirMano, schiaccia: schiaccia };
     }
     return { m: m, B: B, Y: Y, C: C, GN: GN, gIn: gIn, pancia: pancia, rc: rc, Jd: Jd, Jy: Jy, L1: L1, L2: L2, largTronco: largTronco, BR: { "-1": braccio(-1), "1": braccio(1) } };
   };
@@ -374,7 +374,7 @@
     function larghezze(b) {
       var aw = B.aw, l1 = b.l1, l2 = b.l2, tot = l1 + l2;
       var alz = Math.max(0, Math.min(1, (b.a1 - 50) / 80));
-      return [[0, rc * 2], [l1 * 0.2, aw[0] * (1 + 0.16 * alz)], [l1 * 0.48, aw[0] * (m ? 0.98 : 0.94)], [l1 * 0.8, aw[1] * 1.02], [l1, aw[1] * 0.9], [l1 + l2 * 0.2, aw[2] * 1.08], [l1 + l2 * 0.45, aw[2] * 1.0], [l1 + l2 * 0.78, aw[2] * 0.8], [tot, aw[3]]];
+      return [[0, rc * 2], [l1 * 0.2, aw[0] * (1 + 0.28 * alz)], [l1 * 0.48, aw[0] * (m ? 0.98 : 0.94) * (1 + 0.1 * alz)], [l1 * 0.8, aw[1] * 1.02], [l1, aw[1] * 0.9], [l1 + l2 * 0.2, aw[2] * 1.08], [l1 + l2 * 0.45, aw[2] * 1.0], [l1 + l2 * 0.78, aw[2] * 0.8], [tot, aw[3]]];
     }
     function wAt(WS, s) { if (s <= 0) return WS[0][1]; for (var i = 1; i < WS.length; i++) if (s <= WS[i][0]) { var a = WS[i - 1], z = WS[i], t = (s - a[0]) / Math.max(0.01, z[0] - a[0]); return a[1] + (z[1] - a[1]) * t; } return WS[WS.length - 1][1]; }
     function ptAt(b, s) { if (s <= b.l1) { var t = s / b.l1; return [b.J[0] + (b.E[0] - b.J[0]) * t, b.J[1] + (b.E[1] - b.J[1]) * t]; } var u = Math.min(1, (s - b.l1) / b.l2); return [b.E[0] + (b.W[0] - b.E[0]) * u, b.E[1] + (b.W[1] - b.E[1]) * u]; }
@@ -483,7 +483,7 @@
       br.forEach(function (q) { s += "<g clip-path='" + senzaSpalla(q.lato, rc + (q.e || 0) / 2 + 1.5) + "'><path d='" + q.d + "' fill='none' stroke='" + rimG + "' stroke-width='2.2' stroke-linejoin='round'/></g>"; });
       var cl = clip(tutti);
       if (o.volume !== false) {
-        s += "<g clip-path='" + cl + "'><rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "'/>";
+        s += "<g clip-path='" + cl + "'><rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "'" + (o.luce != null ? " opacity='" + n1(o.luce * 100) / 100 + "'" : "") + "/>";
         br.forEach(function (q) { s += volumeBraccio(q.lato, q.fino, chiaro, scuro, q.e, o.forza); });
         if (o.dentro) s += o.dentro;
         s += "</g>";
@@ -523,19 +523,20 @@
     };
 
     // ---------- la pelle: tronco e gambe in un pezzo solo; le braccia sopra (dopo i pantaloni), stesse luci ----------
+    var luceSk = 0.35 + 0.65 * Math.min(1, Lsk * 1.15);   // pelle scura: meno luce bianca (se no diventa grigia)
     function luciSpalla(l) { var J = BR[l].J; return El(J[0] - 8, J[1] - 9, rc * 0.62, rc * 0.5, soft(skL, 0.3)) + El(J[0] + l * 3, J[1] + rc * 0.75, rc * 0.8, rc * 0.42, soft(skDD, 0.16)); }
     function pelleBraccio(l) {
       var b = BR[l], d = contornoBraccio(l, 0, 1), dx = (b.W[0] - b.E[0]) / b.l2, dy2 = (b.W[1] - b.E[1]) / b.l2, wE = B.aw[1] * 0.45, inn = -l;
       var dentro = luciSpalla(l) + St(liscio([[b.E[0] + inn * wE * 0.15 - dx * 6, b.E[1] - dy2 * 6], [b.E[0] + inn * wE * 0.55 + dx * 2, b.E[1] + dy2 * 3], [b.E[0] + inn * wE * 0.85 + dx * 7, b.E[1] + dy2 * 6]]), skD, 2, 0.45) +
         El(b.E[0] - inn * wE * 0.55, b.E[1] - 2, wE * 0.35, wE * 0.5, soft(skL, 0.25));
-      return dipingi({ braccia: [{ d: d, lato: l, fino: 1, e: 0 }] }, sk, { bordo: mix(sk, skDD, 0.8), chiaro: skL, scuro: skDD, dentro: dentro, forza: 0.85 }).svg;
+      return dipingi({ braccia: [{ d: d, lato: l, fino: 1, e: 0 }] }, sk, { bordo: mix(sk, skDD, 0.8), chiaro: skL, scuro: skDD, dentro: dentro, forza: 0.85, luce: luceSk }).svg;
     }
     // l avambraccio che passa DAVANTI al corpo (gesti): si ridisegna sopra il vestito, dalla fine della manica (o da sopra il gomito)
     function pelleAvanti(l) {
       var b = BR[l], da = manicaFino[l] != null ? manicaFino[l] : 0.06;
       if (da > 0.97) return "";
       var d = contornoBraccio(l, 0, 1, 0, 0, da), L = ultimiLati, bordo = mix(sk, skDD, 0.8);
-      return "<path d='" + d + "' fill='#000000' opacity='.2' transform='translate(5 9)'/>" + Pa(d, sk) + "<g clip-path='" + clip(d) + "'><rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "'/>" +
+      return "<path d='" + d + "' fill='#000000' opacity='.2' transform='translate(5 9)'/>" + Pa(d, sk) + "<g clip-path='" + clip(d) + "'><rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "' opacity='" + n1(luceSk * 100) / 100 + "'/>" +
         volumeBraccio(l, 1, skL, skDD, 0, 0.85) + "</g>" + St(liscio(L.A), bordo, 2.2, 0.9) + St(liscio(L.B), bordo, 2.2, 0.9);
     }
     function pelleCorpo(soloSu) {
@@ -563,7 +564,7 @@
       });
       dentro += El(C, Y.cavallo - 4, 30, 22, soft(skDD, 0.3));
       if (!SPALLE) dentro += El(C - B.wt * 0.42, Y.vita - 6, B.wt * 0.34, 46, soft("#ffffff", 0.09)) + El(C + B.wt * 0.62, Y.vita, B.wt * 0.3, 52, soft(skDD, 0.16));   // la pancia non piatta
-      return dipingi({ tronco: [tr], altro: gl, braccia: br }, sk, { bordo: mix(sk, skDD, 0.8), chiaro: skL, scuro: skDD, dentro: dentro, forza: 0.85 }).svg;
+      return dipingi({ tronco: [tr], altro: gl, braccia: br }, sk, { bordo: mix(sk, skDD, 0.8), chiaro: skL, scuro: skDD, dentro: dentro, forza: 0.85, luce: luceSk }).svg;
     }
 
     // ---------- le mani ----------
@@ -597,7 +598,7 @@
       var b = BR[lato2], k = B.aw[3] / (m ? 28.6 : 27.4) * (b.davanti ? 1.12 : 1) * (b.mano === "pugno" ? 1.14 : 1.04), forma = MANI[b.mano] || MANI.rilassata;
       if (SPALLE && forma === MANI.rilassata) forma = { p: [MANI.rilassata.p[0]], l: MANI.rilassata.l.slice(0, 2) };   // il polso della mano largo come il polso del braccio
       var rot = -lato2 * (b.dirMano != null ? b.dirMano : b.a2) + (b.polso || 0) * -lato2, mir = -lato2;
-      var tr = "translate(" + n1(b.W[0]) + " " + n1(b.W[1]) + ") rotate(" + n1(rot) + ") scale(" + n1(mir * k) + " " + n1(k) + ")";
+      var tr = "translate(" + n1(b.W[0]) + " " + n1(b.W[1]) + ") rotate(" + n1(rot) + ") scale(" + n1(mir * k) + " " + n1(k * (b.schiaccia || 1)) + ")";
       var bordo = mix(sk, skDD, 0.8), s = "<g transform='" + tr + "'>";
       // il bordo dietro (solo il contorno esterno, non al polso), poi la pelle, poi luci e pieghe
       forma.p.forEach(function (d) { s += "<path d='" + d.replace(/Z$/, "") + "' fill='none' stroke='" + bordo + "' stroke-width='" + n1(3.2 / k) + "' stroke-linejoin='round' stroke-linecap='butt'/>"; });
@@ -609,11 +610,20 @@
       D.push("<clipPath id='" + p + idc + "'>" + forma.p.map(function (d) { return "<path d='" + d + "' transform='" + tr + "'/>"; }).join("") + "</clipPath>");
       // le luci della mano sono quelle del braccio (luce da sinistra e volume lungo la mano), in coordinate del mondo: niente salto al polso
       var ar = (rot + 90) * DEG, dm = [Math.cos(ar), Math.sin(ar)], Hm = [b.W[0] + dm[0] * 60 * k, b.W[1] + dm[1] * 60 * k];
-      return s + "</g><g clip-path='url(#" + p + idc + ")'><rect x='" + n1(b.W[0] - 90) + "' y='" + n1(b.W[1] - 90) + "' width='180' height='180' fill='" + luceGlobale() + "'/>" +
+      return s + "</g><g clip-path='url(#" + p + idc + ")'><rect x='" + n1(b.W[0] - 90) + "' y='" + n1(b.W[1] - 90) + "' width='180' height='180' fill='" + luceGlobale() + "' opacity='" + n1(luceSk * 100) / 100 + "'/>" +
         cilindro([b.W[0] - dm[0] * 8, b.W[1] - dm[1] * 8], Hm, 30 * k, skL, skDD, 0.7) + "</g>";
     }
 
 
+    function ventaglio() {
+      var a = BR["-1"].W, b2 = BR["1"].W, cx = (a[0] + b2[0]) / 2, cy = Math.min(a[1], b2[1]) - 26, s = "<g transform='translate(" + n1(cx) + " " + n1(cy) + ") scale(1.25) translate(" + n1(-cx) + " " + n1(-cy) + ")'>";
+      var dorso = LG("cdorso", 0, 0, 1, 1, [[0, "#e04a4a"], [1, "#9c1f2c"]]);
+      [-30, -15, 0, 15, 30].forEach(function (g) {
+        s += "<g transform='rotate(" + g + " " + n1(cx) + " " + n1(cy + 40) + ")'><rect x='" + n1(cx - 26) + "' y='" + n1(cy - 62) + "' width='52' height='78' rx='6' fill='#fbf7ef' stroke='#7a6a5a' stroke-width='1.6'/>" +
+          "<rect x='" + n1(cx - 21) + "' y='" + n1(cy - 57) + "' width='42' height='68' rx='4' fill='" + dorso + "'/><path d='M" + n1(cx - 21) + " " + n1(cy - 23) + "L" + n1(cx) + " " + n1(cy - 50) + "L" + n1(cx + 21) + " " + n1(cy - 23) + "L" + n1(cx) + " " + n1(cy + 4) + "Z' fill='#ffffff' opacity='.22'/></g>";
+      });
+      return s + "</g>";
+    }
     // ---------- la testa ----------
     var OC = OCCHI[c.occhi] || OCCHI.tondi, kOcc = 1 + 0.07 * (+c.occG || 0), dxOcc = 26 + 2 * (+c.occD || 0), yOcc = -72 - 2.5 * (+c.occA || 0);
     K.occhiPos = { dx: dxOcc, y: yOcc, k: kOcc };   // dove stanno gli occhi (per gli occhiali)
@@ -809,7 +819,7 @@
     var piedi = opts.busto || opts.viso ? "" : El(200, 996, 120, 13, soft("#000000", 0.38));
     body += piedi;
     if (!SPALLE) body += (xSch.dietro || "");
-    if (capo.dietro && !SPALLE) body += capo.dietro + (xCollo.dietro || "");
+    if (!SPALLE) body += (capo.dietro || "") + (xCollo.dietro || "");
     if (!SPALLE) body += "<g transform='" + HT + "'>" + sottoCappello(cap.dietro) + (capp && capp.dietro ? capp.dietro : "") + "</g>";
     if (SPALLE && scarpe.corpo) { var gT = gIn(938); scarpe.corpo = "<g clip-path='" + clip(["M" + n1(C - gT[0] - 30) + " 880H" + n1(C - gT[0] + 30) + "V1010H" + n1(C - gT[0] - 30) + "Z", "M" + n1(C + gT[0] - 30) + " 880H" + n1(C + gT[0] + 30) + "V1010H" + n1(C + gT[0] - 30) + "Z"]) + "'>" + scarpe.corpo + "</g>"; }
     var cam = opts.cammina && !opts.busto;
@@ -830,10 +840,11 @@
     body += bS(-1) + bS(1);
     body += capo.corpo || "";
     [-1, 1].forEach(function (l) { if (BR[l].davanti && opts.senzaBraccio !== l && !SPALLE) body += pelleAvanti(l); });
+    if (opts.gesto === "carte" && !SPALLE) body += ventaglio();
     body += (opts.senzaBraccio === -1 ? "" : manoSvg(-1)) + (opts.senzaBraccio === 1 ? "" : (xOgg.dietro || "") + manoSvg(1) + (xOgg.davanti || ""));
     if (capo.sopra && !SPALLE) body += capo.sopra;
     if (!SPALLE) body += (xCollo.sopra || "") + (xSch.sopra || "") + (xBor.sopra || "");
-    else body += xSch.dietro || "";   // di spalle lo zaino, le ali e il mantello stanno davanti
+    else body += (xSch.dietro || "") + (xCollo.spalle || xCollo.dietro || "");   // di spalle lo zaino, le ali e il mantello stanno davanti; al collo la sciarpa vista da dietro
     if (SPALLE) {
       var pOreS = c.orecchini && c.orecchini !== "nessuno" ? A.orecchini[c.orecchini] : null;
       body += "<g transform='" + HT + "'>" + testaDietro(sottoCappello(cap.fronte), sottoCappello(cap.dietro)) + (pOreS ? pOreS(K) : "") + (capp && capp.dietro ? capp.dietro : "") + (capp ? capp.svg || "" : "") + "</g>";
