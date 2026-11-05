@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#0d1020;font-family:Segoe UI,sans-serif;color:#f4f5fb}
+.g{display:flex;flex-wrap:wrap} .c{width:var(--w,260px);height:var(--h,360px);position:relative;display:flex;align-items:flex-end;justify-content:center}
+.c svg{width:100%;height:calc(100% - 26px)} .c.b svg{width:80%;height:auto;margin-bottom:30px}
+.t{position:absolute;top:4px;left:0;right:0;text-align:center;font-size:14px;color:#a6acc8}
+</style></head><body><div class="g" id="g"></div>
+<script src="../SG-avatar-a/js/omino.js"></script><script src="../SG-avatar-a/js/omino-a.js"></script>
+<script src="pezzi/capelli-uomo.js"></script><script src="pezzi/capelli-donna.js"></script><script src="pezzi/vestiti-sopra.js"></script><script src="pezzi/vestiti-sotto.js"></script><script src="pezzi/viso.js"></script><script src="pezzi/cappelli.js"></script><script src="pezzi/accessori.js"></script>
+<script>
+// banco di prova degli avatar illustrati. Parametri: ?voce=capelli&valori=corti,lunghi&forma=uomo|donna|tutte&busto=1&stile=rifinito&w=260&h=360&extra={json}&set=base
+var q = {}; location.search.slice(1).split("&").forEach(function (x) { var p = x.split("="); if (p[0]) q[p[0]] = decodeURIComponent(p[1] || ""); });
+if (q.w) document.body.style.setProperty("--w", q.w + "px"); if (q.h) document.body.style.setProperty("--h", q.h + "px");
+SGOmino.stile(q.stile || "illustrato");
+var U = { forma: "uomo", corpo: "medio", pelle: 2, viso: "ovale", occhi: "dolci", iride: 1, sopracc: "decise", naso: "dritto", bocca: "neutro", capelli: "corti", colCap: 1, barba: "accenno", capo: "maglietta", maglia: 8, sotto: "jeans", pantaloni: 0, modScarpe: "sneakers", scarpe: 1 };
+var Dn = { forma: "donna", corpo: "medio", pelle: 1, viso: "ovale", occhi: "ciglia", iride: 3, sopracc: "arcuate", naso: "piccolo", bocca: "neutro", capelli: "lunghi", colCap: 2, capo: "maglietta", maglia: 5, sotto: "jeans", pantaloni: 9, modScarpe: "sneakers", scarpe: 1, mascara: "naturale" };
+function con(c, o) { var r = {}; for (var k in c) r[k] = c[k]; for (k in o || {}) r[k] = o[k]; return r; }
+var extra = q.extra ? JSON.parse(q.extra) : {};
+var celle = [];
+if (q.set === "corpi" || !q.voce) {
+  ["snello", "medio", "robusto"].forEach(function (b) { celle.push(["uomo " + b, con(U, con({ corpo: b }, extra)), {}]); });
+  ["snello", "medio", "robusto"].forEach(function (b) { celle.push(["donna " + b, con(Dn, con({ corpo: b }, extra)), {}]); });
+  celle.push(["uomo busto", con(U, extra), { busto: true }]); celle.push(["donna busto", con(Dn, extra), { busto: true }]);
+} else {
+  var forme = q.forma === "donna" ? [Dn] : (q.forma === "uomo" ? [U] : [U, Dn]);
+  q.valori.split(",").forEach(function (v) {
+    forme.forEach(function (base) { var o = {}; o[q.voce] = v; celle.push([v + (forme.length > 1 ? " · " + base.forma : ""), con(con(base, extra), o), q.opz ? JSON.parse(q.opz) : (q.busto ? { busto: true } : (q.viso ? { viso: true } : {}))]); });
+  });
+}
+var g = document.getElementById("g");
+celle.forEach(function (x) { var d = document.createElement("div"); d.className = "c" + (x[2].busto ? " b" : ""); d.innerHTML = "<div class=t>" + x[0] + "</div>" + SGOmino.svg(x[1], x[2]); g.appendChild(d); });
+</script></body></html>

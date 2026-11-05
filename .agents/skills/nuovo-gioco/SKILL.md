@@ -10,17 +10,30 @@ Copia `.agents/skills/nuovo-gioco/modello-gioco-online.js` in `js/games/<id>.js`
 È un gioco vero e già provato ("Il più veloce"). Saletta, ingresso col profilo, segreti a un telefono solo, "⚙️ Regole", uscite con `t.conferma`, chi ricarica o riaccende il telefono, chi arriva tardi e guarda, chi non è stato scelto in "Chi gioca?" e guarda (`t.puoSedersi`), "Prossimo giro" che va avanti da solo (`t.contoAvanti`), "Riprova" se il primo collegamento non riesce, fine partita con faccine, medaglie a pari merito e i tasti di fine del core (`t.tastiFine`: Rivincita col 3-2-1, Cambia gioco, Ci sto), torneo e "Nuova partita" (`t.onRivincita`), **l'host che ricarica e ritrova la partita** (`riprende`, `t.ricorda`, `t.ripresa`) e **l'amico che la porta avanti se l'host sparisce** (`riserva`, `t.mioId`) sono già fatti giusti: **non riscriverli a modo tuo**.
 Se il gioco ha anche un modo sullo stesso telefono (o contro il Bot), aggiungilo accanto, sempre partendo dal modello.
 
-**Online = la Sala della serata.** "Online" da un gioco apre la Sala (un codice per tutta la serata; interruttore `SALA_SEMPRE` in core.js). Il gioco non deve fare niente di speciale: apre la sua stanza come nel modello, e il core gli passa nel tavolo `t` chi gioca, i tasti di fine e la rivincita. Chi entra arriva da solo nella saletta del gioco, con lo stesso id che ha nella Sala.
+**Online = la Sala della serata.** "Online" da un gioco apre la Sala (un codice per tutta la serata; interruttore `SALA_SEMPRE` in js/cuore/sala.js). Il gioco non deve fare niente di speciale: apre la sua stanza come nel modello, e il core gli passa nel tavolo `t` chi gioca, i tasti di fine e la rivincita. Chi entra arriva da solo nella saletta del gioco, con lo stesso id che ha nella Sala.
 Il profilo è obbligatorio per tutti (nome e avatar): `t.nomeProfilo()` c'è sempre; la schermata del nome nel modello resta solo come riserva.
 
 Leggi anche `AGENTS.md` e `docs/COME-SI-AGGIUNGE-UN-GIOCO.md`. Copia lo stile di un gioco simile già fatto (carte: `js/games/scopa.js`; a turni con domande: `js/games/timeline.js`; online in tempo reale: `js/games/horto.js`; disegno: `js/games/scarabocchio.js`).
 
 ## File da toccare (tutti)
 1. `js/games/<id>.js` — il gioco, in una funzione che si chiama da sola: `(function () { "use strict"; ... SG.registra({...}); })();`
-2. `index.html` — aggiungi `<script src="js/games/<id>.js"></script>` dopo gli altri giochi.
+2. `js/elenco-giochi.js` — 📦 dal 4 nov 2026 i giochi si scaricano quando servono (#31 parte 2): **NIENTE `<script>` in index.html**.
+   Aggiungi una riga `pezzo("<id>", "data/<id>-…js js/games/<id>.js", "studio")` (i file nell'ordine, dati prima del gioco; il terzo
+   pezzo, facoltativo, sono i pezzi che servono prima: `studio` se usa lo studio TV, `scopa` per le frasi di `SGChiacchiere`…), poi
+   rifai le schede: `"C:Program Files
+odejs
+ode.exe" .agents/skills/nuovo-gioco/elenco-giochi.js` (le scrive da sola, nello stesso
+   ordine di prima; `--controlla` dice solo se vanno rifatte). Le schede vanno rifatte anche quando cambi nome, icona, descrizione,
+   giocatori, `modi`, `postiOnline`, `ritardatari`, `riprende`/`riserva`, `tema`, `soloOnline`, `senzaSala`, `provaDaSolo`,
+   `etichettaGiocatori`: la home e la Sala disegnano dalla scheda finché il gioco non è arrivato. La prova `el1`
+   (`passo7/scarica.js`) dice NO se una scheda è vecchia.
+   Il file del gioco al caricamento NON deve usare cose di un altro pezzo (es. `SGStudio` fuori da una funzione) se non sono nel suo
+   «prima»; il codice del core che usa il gioco (`g.impostazioni`, `g.avvia`, `g.regole`, `g.riassunto`) aspetta già che sia arrivato
+   (`cuore.aspettaGioco`, js/cuore/scarica.js): un posto nuovo del core che li chiama prima deve fare lo stesso.
 3. `js/core.js` — l'id in `CAT_GIOCO` (categorie: `carte`, `sfida`, `festa`, `mini`, `parole`) e, se si gioca online, in `GIOCHI_ONLINE`.
 4. `data/novita.js` — una voce in cima (`v` +1, data, titolo, righe scritte per chi gioca).
-La versione online (`costruisci-versione-online.sh`) prende da sola tutti i file di `js/games/`.
+La versione online (`costruisci-versione-online.sh`) fa da sola un file per pezzo (`dist/giochi/<pezzo>.<impronta>.js`); un file di
+`js/games/` o `data/` che non è in nessun pezzo finisce nel file principale (si carica all'apertura: funziona, ma pesa su tutti).
 
 ## SG.registra
 ```js
@@ -136,7 +149,7 @@ Ogni gioco online nuovo **riprende** (nel modello è già tutto fatto: parti da 
 ## Nella pull request: copia questa lista e spunta solo quello che hai davvero fatto
 ```
 - [ ] Partito dal modello: cambiate solo le parti "QUI"
-- [ ] id in GIOCHI_ONLINE e CAT_GIOCO (core.js), script in index.html, voce in cima a data/novita.js
+- [ ] id in GIOCHI_ONLINE e CAT_GIOCO (core.js), pezzo in js/elenco-giochi.js + schede rifatte (elenco-giochi.js), voce in cima a data/novita.js
 - [ ] Nella foto (vm) ci sono gli id dei giocatori; i segreti vanno solo con inviaVeloce + "to"
 - [ ] "Nuova partita" riporta tutti nella stessa saletta; "Esci" a partita iniziata chiede conferma con t.conferma
 - [ ] Ogni attesa di un tocco va avanti da sola (t.contoAvanti); niente chiusura della partita su onErrore
