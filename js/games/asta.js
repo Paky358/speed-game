@@ -286,6 +286,8 @@
     ".sa-ban{position:relative;flex:none;width:min(42%,calc(var(--alt,100dvh)*.21));max-width:190px;margin-left:-5%;aspect-ratio:200/236;align-self:flex-end;}",
     ".sa-ban-img{position:absolute;left:0;top:0;width:100%;}",
     ".sa-leggio{position:absolute;left:-4%;width:110%;top:77%;}",
+    ".sa-platea.ill .sa-fila1.n1 .sa-pers,.sa-platea.ill .sa-fila1.n2 .sa-pers{width:28%;max-width:140px;}.sa-platea.ill .sa-fila1.n3 .sa-pers{width:24%;max-width:120px;}.sa-platea.ill .sa-fila1.n4 .sa-pers{width:20%;max-width:100px;}.sa-platea.ill .sa-fila1.n5 .sa-pers{width:17%;max-width:86px;}.sa-platea.ill .sa-pers>b{margin-top:6px;}",
+    ".sa-ban.ill{width:min(32%,calc(var(--alt,100dvh)*.15));max-width:150px;margin-left:2%;aspect-ratio:1/1.76;}.sa-ban.ill .sa-leggio{left:-2%;width:104%;top:55.5%;}.sa-ban.ill .sa-martello{top:50%;}",
     ".sa-ban.batte .sa-ban-img{animation:saBatte .45s ease-in-out 2;}",
     "@keyframes saBatte{0%,100%{transform:none}40%{transform:translateY(-4%) rotate(-3deg)}70%{transform:translateY(2%)}}",
     ".sa-martello{position:absolute;z-index:3;right:0;top:50%;font-size:28px;transform-origin:85% 85%;transform:rotate(-20deg);}",
@@ -594,7 +596,7 @@
     ".st-gradino{display:flex;flex-direction:column;align-items:center;width:31%;max-width:130px;animation:stSale .6s cubic-bezier(.2,1.3,.4,1) both;}",
     "@keyframes stSale{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}",
     ".st-gradino img{width:82%;margin-bottom:-6%;}",
-    ".st-gradino.ill img{width:76%;margin-bottom:-6%;}.st-gradino.ill b{margin-bottom:2px;}",
+    ".st-gradino.ill{overflow:visible;}.st-gradino.ill img{width:112%;max-width:none;margin-bottom:-11%;filter:drop-shadow(0 0 2px rgba(0,0,0,.75)) drop-shadow(0 2px 5px rgba(0,0,0,.6));}.st-gradino.ill b{margin-bottom:2px;}",
     ".st-gradino b{font-size:.8rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8);}",
     ".st-gradino small{font-size:.72rem;font-weight:900;color:#ffe066;text-shadow:0 1px 3px rgba(0,0,0,.8);}",
     ".st-gradino .blocco{width:100%;margin-top:3px;border-radius:8px 8px 0 0;display:flex;justify-content:center;padding-top:6px;font-weight:900;font-size:1.6rem;color:#3a2200;box-shadow:inset 0 2px 0 rgba(255,255,255,.5);}",
@@ -1868,10 +1870,11 @@
     S.avviso = el("div", { class: "sa-avviso" });
     S.tempo = el("i");
     S.piede = el("div", { class: "sa-piede" });
-    S.ban = el("div", { class: "sa-ban" }, [ el("img", { class: "sa-ban-img", src: srcAv(banditore(), { spalle: true }), alt: "" }),
+    S.ban = el("div", { class: "sa-ban" + (illustrati() ? " ill" : "") }, [ el("img", { class: "sa-ban-img", src: srcAv(banditore(), illustrati() ? { spalle: true, vita: true } : { spalle: true }), alt: "" }),   // (illustrati: dalla vita in su, e il bancone arriva alla vita)
+     
       el("img", { class: "sa-leggio", src: arte("leggio", LEGGIO_RIS), alt: "" }), S.martello, S.bolla ]);
     S.radice = el("div", { class: "schermata sa-sala" + (t.guarda ? " as-targa" : "") }, [ sfondo, testaAsta(el, S, d), S.pannello, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
-      pubblico(el, S, d.persone, arte("sedia", SEDIA_RIS), "sa-platea"), el("div", { class: "sa-basso" }, [ S.ban, S.piede ]) ]);
+      pubblico(el, S, d.persone, arte("sedia", SEDIA_RIS), "sa-platea" + (illustrati() ? " ill" : "")), el("div", { class: "sa-basso" }, [ S.ban, S.piede ]) ]);
     S.ultimiDati = d; SALA = S;
     t.mostra(S.radice);
     aggiornaSala(d);

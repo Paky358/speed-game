@@ -810,6 +810,8 @@
       ".sc-testata > div:first-child{background:rgba(10,18,50,.72);border:1.5px solid rgba(255,255,255,.15);border-radius:999px;padding:5px 12px;box-shadow:0 3px 8px rgba(0,0,0,.35)}",
       ".sc-scena .sc-quadro{top:62px}",
       ".sc-scena .sc-targa{top:56px}",
+      ".sc-ill .sc-targa{top:44px}",   // (avatar illustrati: il cartellino sta sopra la testa, non sui capelli)
+      ".sc-ill .sc-targa4 .sc-nome{max-width:60px}",
       ".sc-targa4{position:absolute;transform:translate(-50%,-100%);z-index:4;display:flex;align-items:center;gap:4px;background:rgba(10,18,50,.85);border:2px solid rgba(255,255,255,.18);border-radius:999px;padding:2px 8px;white-space:nowrap;font-weight:800;transition:border-color .2s,box-shadow .2s}",
       ".sc-targa4 .sc-nome{font-size:.7rem;max-width:92px;overflow:hidden;text-overflow:ellipsis}",
       ".sc-targa4{background:linear-gradient(180deg,#7a1f2b,#4e0f18);border-color:#ff6b6b}",
@@ -957,6 +959,19 @@
     if (!illu() || !fig || !cfg || faccia === "esulta") return;
     scambiaFig(fig, svgAvatar(cfg, faccia, "posa")); fig.setAttribute("data-gesto", "posa");
     var nodo = fig.firstChild; clearTimeout(fig._tp);
+    // il gesto si vede: l avatar si sporge un poco verso il tavolo e una carta coperta lascia la sua mano e va verso il panno
+    try {
+      var box = fig.parentNode, fw = fig.offsetWidth, fh = fig.offsetHeight;
+      if (fig.animate) fig.animate([{ transform: "none" }, { transform: "translateY(4%) scale(1.05)", offset: 0.35 }, { transform: "translateY(4%) scale(1.05)", offset: 0.75 }, { transform: "none" }], { duration: 760, easing: "ease-out" });
+      if (box && fw > 20 && box.animate) {
+        var cw = Math.max(14, Math.round(fw * 0.15)), ch = Math.round(cw * ASP_CARTA), vc = document.createElement("div");
+        vc.className = "sc-dorso sc-volo"; vc.style.cssText = "position:absolute;z-index:9;pointer-events:none;width:" + cw + "px;height:" + ch + "px;left:" + Math.round(fw * 0.47 - cw / 2) + "px;top:" + Math.round(fh * 0.8) + "px";
+        box.appendChild(vc);
+        var an = vc.animate([{ transform: "translateY(0) scale(1) rotate(-8deg)", opacity: 1 }, { transform: "translateY(" + Math.round(fh * 0.3) + "px) scale(1.25) rotate(0deg)", opacity: 1, offset: 0.7 }, { transform: "translateY(" + Math.round(fh * 0.5) + "px) scale(1.5) rotate(4deg)", opacity: 0 }], { duration: 760, easing: "ease-in" });
+        an.onfinish = function () { if (vc.parentNode) vc.parentNode.removeChild(vc); };
+        setTimeout(function () { if (vc.parentNode) vc.parentNode.removeChild(vc); }, 1200);
+      }
+    } catch (e) {}
     fig._tp = setTimeout(function () {
       if (!document.body.contains(fig) || fig.firstChild !== nodo) return;
       scambiaFig(fig, svgAvatar(cfg, faccia, "tavolo")); fig.removeAttribute("data-gesto");
@@ -1030,8 +1045,8 @@
   // la stanza: sedie = [sinistra, compagno (di fronte), destra], ognuna { cfg, nome, n, turno, mia, faccia, fumetto }
   function stanza4(el, M, sedie) {
     var scena = el("div", { class: "sc-scena", style: "height:" + M.scH + "px" });
-    scena.appendChild(el("div", { class: "sc-quadro", style: "left:16px;top:62px;background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
-    scena.appendChild(el("div", { class: "sc-quadro", style: "right:16px;top:62px;background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
+    scena.appendChild(el("div", { class: "sc-quadro", style: (illu() ? "left:12px;top:46px;width:42px;height:30px;" : "left:16px;top:62px;") + "background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
+    scena.appendChild(el("div", { class: "sc-quadro", style: (illu() ? "right:12px;top:46px;width:42px;height:30px;" : "right:16px;top:62px;") + "background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
     var posti = sedie.map(function (p) {
       var cfg = p.cfg || facciaBot(p.nome);
       var gest = p.gesto === null ? null : (p.gesto || gestoBase(p.faccia)), vita = !!(gest && illu());   // (gesto == null: il disegno di sempre)
@@ -1061,9 +1076,9 @@
         var H = Math.round(w * 118 / 108);   // il ritaglio «vita» è 108×118
         if (vita) top = Math.round(bordo + 6 + w * 0.2 - H);   // il bordo basso (le mani) va un poco oltre il bordo lontano del panno
         s.box.style.width = w + "px"; s.box.style.left = (cx - w / 2) + "px"; s.box.style.marginLeft = "0"; s.box.style.top = top + "px";
-        s.targa.style.left = cx + "px"; s.targa.style.top = Math.round(top + w * (vita ? 0.07 : 0.1)) + "px";
-        var cw = Math.round(w * 0.16), ch = Math.round(cw * ASP_CARTA), n = s.vent.children.length, ang = n > 5 ? 6 : 12;
-        s.vent.style.left = cx + "px"; s.vent.style.top = Math.round(top + (vita ? H * 0.8 : w * 0.76)) + "px";
+        s.targa.style.left = cx + "px"; s.targa.style.top = Math.round(vita ? top - 2 : top + w * 0.1) + "px";   // (illustrati: il cartellino sta sopra la testa, mai sui capelli)
+        var cw = Math.round(w * (vita ? 0.115 : 0.16)), ch = Math.round(cw * ASP_CARTA), n = s.vent.children.length, ang = n > 5 ? 6 : 12;
+        s.vent.style.left = cx + "px"; s.vent.style.top = Math.round(top + (vita ? H * 0.92 : w * 0.76)) + "px";
         [].forEach.call(s.vent.children, function (d, k) {
           var a = (k - (n - 1) / 2) * ang;
           d.style.width = cw + "px"; d.style.height = ch + "px"; d.style.left = (-cw / 2) + "px";
@@ -1222,10 +1237,10 @@
     if (m.vita) {
       w = Math.max(90, Math.min(Math.round(Mi.scW * 0.42), 170, Math.floor((bordo + 6 - 70) / 0.8926)));
       var Hv = Math.round(w * 118 / 108);
-      topAvv = Math.round(bordo + 6 + w * 0.2 - Hv); topVent = Math.round(topAvv + Hv * 0.8);
+      topAvv = Math.round(bordo + 6 + w * 0.2 - Hv); topVent = Math.round(topAvv + Hv * 0.95);
       scena.classList.add("sc-ill");
     }
-    m.avvW = w; m.cw = Math.round(w * 0.17);
+    m.avvW = w; m.cw = Math.round(w * (m.vita ? 0.14 : 0.17));
     m.avv.style.width = w + "px"; m.avv.style.marginLeft = (-w / 2) + "px";
     m.avv.style.top = topAvv + "px";
     m.ventaglio.style.top = topVent + "px";
@@ -1322,7 +1337,7 @@
       if (fumetto) {
         var lungo = fumetto.length > 4;
         m.fum = el("div", { class: "sc-fumetto" + (faccia === "esulta" && /🧹/.test(fumetto) ? " scopa" : "") + (lungo ? " lungo" : ""), text: fumetto });
-        m.fum.style.left = Math.round(m.avvW * 0.74) + "px"; m.fum.style.top = Math.round(m.avvW * (lungo ? 0.08 : 0.2)) + "px";
+        m.fum.style.left = Math.round(m.avvW * (m.vita ? 0.9 : 0.74)) + "px"; m.fum.style.top = Math.round(m.avvW * (lungo ? 0.08 : 0.2)) + "px";
         if (lungo) m.fum.style.maxWidth = Math.max(110, Math.round(Mi.scW / 2 - m.avvW * 0.24 - 10)) + "px";
         m.avv.appendChild(m.fum);
       }

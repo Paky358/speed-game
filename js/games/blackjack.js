@@ -1132,11 +1132,21 @@
     // 🎨 avatar illustrati (solo se accesi): il banco dalla testa alla vita DIETRO il suo bancone (con le mani sul bordo), apertura col bancone alto, braccia che escono dal disegno quando esultano
     ".bj-wrap .bjr-matt.ill .bj-av{width:92px;height:100px;border-radius:16px 16px 12px 12px;overflow:hidden}",
     ".bj-wrap .bjr-matt.ill .bj-av svg{left:0;transform:none;width:100%;bottom:0}",
-    ".bj-wrap .bjr-matt.ill .bj-av::after{content:'';position:absolute;left:0;right:0;bottom:0;height:11px;background:var(--t-panno);border-top:3px solid var(--t-bordo-pieno)}",
+    ".bj-wrap .bjr-matt.ill .bj-av::after{content:'';position:absolute;left:0;right:0;bottom:0;height:8px;background:var(--t-panno);border-top:2px solid var(--t-bordo-pieno)}",
     ".bj-wrap .bjr-matt.ill .bjr-matt-nome{margin-top:-2px}",
     ".bj-wrap .bjr-intro.ill .mg{bottom:31%;width:84%;transform:translateX(-50%) translateY(66%)}",
     ".bj-wrap .bjr-intro.ill .banc{height:31%}",
-    ".bjr-gioc.ov{clip-path:inset(-75% -40% 0 -40%)}.bjr-gioc.ov svg{overflow:visible}",
+    // illustrati: il fondo del disegno (la vita) sfuma, così dove il bordo del tavolo non arriva (posti di lato) non si vede un taglio netto
+    ".bjr-strato.ill .bjr-gioc:not(.attivo)>svg,.bjr-strato.ill .bjr-gioc:not(.attivo)>.bjr-sal>svg{-webkit-mask-image:linear-gradient(#000 84%,transparent);mask-image:linear-gradient(#000 84%,transparent)}",
+    // le braccia sopra il tavolo (mani sul panno) e il saluto che ondeggia
+    ".bjr-bracc{position:absolute;inset:0;pointer-events:none;z-index:2}.bjr-gb{position:absolute}",
+    ".bjr-gb .br{position:absolute;inset:0}.bjr-gb .br svg{position:absolute;left:-42.593%;top:-9.322%;width:185.185%;height:auto;display:block;overflow:visible}",
+    ".bjr-gb .br.tap svg{animation:bjrTap .36s ease-in-out 2}@keyframes bjrTap{50%{transform:translateY(-3.6%)}}",
+    ".bjr-sal{position:relative}.bjr-sal>svg{display:block;width:100%;height:auto}",
+    ".bjr-sal .sb{position:absolute;left:0;top:0;width:100%;animation:bjrSaluta .55s ease-in-out infinite alternate}.bjr-sal .sb svg{display:block;width:100%;height:auto;overflow:visible}",
+    ".bjr-sal.v .sb{left:-42.593%;top:-9.322%;width:185.185%}",
+    "@keyframes bjrSaluta{from{transform:rotate(-10deg)}to{transform:rotate(11deg)}}",
+    "@media (prefers-reduced-motion:reduce){.bjr-sal .sb,.bjr-gb .br.tap svg{animation:none}}",
     ".bj-wrap .bj-podio{background:rgba(9,12,26,.9)}",
     ".bj-wrap .bjr-intro{background:var(--t-muro)}.bj-wrap .bjr-intro .banc{background:var(--t-panno);border-top-color:var(--t-bordo-pieno)}",
     // la lineetta della puntata: binario di vetro, la parte puntata nell'oro delle monete, il cursore è una fiche
@@ -1190,6 +1200,33 @@
     }
     return svgCache[k];
   }
+  // 🎨 (5 nov 2026, secondo giro) gesti e vestiti nostri per gli avatar illustrati: si aggiungono alla lista del motore una volta sola.
+  //  bjSaluto = il braccio piegato col gomito in fuori (si fa ondeggiare intero, come chi saluta con la mano); bjBracci = le due mani
+  //  appoggiate SUL PANNO, davanti al bordo del tavolo (le disegna un livello sopra il tavolo: dietro il bordo non si vedrebbero).
+  function gestiBJ() {
+    var A = window.SGOminoA; if (!A || !A.GESTI || A.GESTI.bjSaluto) return;
+    A.GESTI.bjSaluto = { uno: { t: function (G) { return [G.Jd + 50, G.Jy - 100]; }, f: [1, 0.82], mano: "aperta" } };
+    A.GESTI.bjBracci = { due: { t: function (G) { return [G.Jd * 1.12, G.Y.vita + 54]; }, f: [0.95, 0.52], mano: "piatta", davanti: 1 } };
+  }
+  function cfgConFaccia(cfg, faccia) { var c = {}, x = FACCE[faccia] || {}, n; for (n in cfg) c[n] = cfg[n]; for (n in x) c[n] = x[n]; return c; }
+  // chi saluta: il corpo e il braccio sono due disegni, il braccio ondeggia (solo transform) attorno alla spalla
+  function salutoHTML(cfg, faccia, vita) {
+    var k = "S|" + JSON.stringify(cfg) + "|" + faccia + "|" + (vita ? 1 : 0);
+    if (svgCache[k]) return svgCache[k];
+    gestiBJ();
+    var pp = SGOmino.parti ? SGOmino.parti(cfgConFaccia(cfg, faccia), { gesto: "bjSaluto", lato: 1, vita: !!vita }) : null;
+    if (!pp) return (svgCache[k] = svgAvatar(cfg, faccia, vita ? { vita: true, gesto: "saluta" } : { gesto: "saluta" }));
+    return (svgCache[k] = "<div class='bjr-sal" + (vita ? " v" : "") + "'>" + pp.corpo + "<div class='sb' style='transform-origin:" + (pp.perno.x / 2).toFixed(2) + "% " + (pp.perno.y / 2.64).toFixed(2) + "%'>" + pp.braccio + "</div></div>");
+  }
+  // le due braccia sul panno (livello sopra il tavolo); quello che batte il colpetto lo fa con un saltello (solo transform)
+  function bracciaTavoloHTML(cfg, faccia, batte) {
+    var k = "B|" + JSON.stringify(cfg) + "|" + faccia + "|" + (batte ? 1 : 0);
+    if (svgCache[k]) return svgCache[k];
+    gestiBJ();
+    var c = cfgConFaccia(cfg, faccia);
+    return (svgCache[k] = [-1, 1].map(function (l) { return "<div class='br" + (batte && l === 1 ? " tap" : "") + "'>" + SGOmino.svg(c, { gesto: "bjBracci", parte: "braccio", latoParte: l }) + "</div>"; }).join(""));
+  }
+  var VESTE_BANCO = { capo: "gilet", maglia: 7, collo: "papillon", colCollo: 0 };   // il banco: camicia chiara e gilet scuro (si stacca dallo sfondo notte)
   function mioAvatar(nome) {
     var p = window.SGNube && SGNube.profilo && SGNube.profilo();
     if (p && p.omino) return p.omino;
@@ -1208,7 +1245,12 @@
     return { id: b.id, nome: b.nome, omino: cfg };
   }
   function nomeBanco(vm) { return (vm && vm.croupier && vm.croupier.nome) || "Bot"; }
-  function avatarBanco(vm) { return (vm && vm.croupier && avatarValido(vm.croupier.omino)) || MATT_DEALER; }
+  function avatarBanco(vm) {
+    var b = (vm && vm.croupier && avatarValido(vm.croupier.omino)) || MATT_DEALER;
+    if (!ill()) return b;
+    var c = {}, n; for (n in b) c[n] = b[n]; for (n in VESTE_BANCO) c[n] = VESTE_BANCO[n];
+    return c;
+  }
 
   // ---- suoni (Web Audio) ----
   // la vibrazione al tocco dei tasti la fa già l'app (una sola, solo quando si sceglie): qui nessun vibra()
@@ -1598,7 +1640,7 @@
           var pg = pre.giocatori[i];
           if (pre.fase === "gioca" && v.fase === "gioca" && pg && contaCarte(g) > contaCarte(pg)) dai(i, "batte", 750);   // «Carta»: un colpetto sul panno
           else if (v.fase === "esito" && pre.fase !== "esito" && nettoDi(g) > 0) {   // vincita: se il banco ha sballato prima applaude, poi esulta
-            if (nb) { dai(i, "applaude", 1200); setTimeout(function () { if (vm && vm.fase === "esito") dai(i, "esulta", 2000); }, 1200); }
+            if (nb) { dai(i, "applaude", 1200); setTimeout(function () { if (vm && vm.fase === "esito" && !chiuso && R && document.body.contains(zBanco)) { dai(i, "esulta", 2000); disegnaScena(); } }, 1200); }
             else dai(i, "esulta", 2400);
           }
         });
@@ -1684,12 +1726,13 @@
 
     // 😏 la battuta è più lunga della frase di sempre: se tocca carte, punteggi, fiches o nomi (tante carte del banco, la
     // carte che arrivano) sale sopra di loro, a ogni fotogramma per i primi 2,5 s. Mai sopra le cose che contano.
+    // (illustrati, da soli: la battuta non copre nemmeno chi festeggia; in più giocatori la sposta il solo spazio libero)
     function spostaBatt() {
       if (!fumEl || !fumEl.classList.contains("batt") || !document.body.contains(fumEl)) return;
       var zr = zBanco.getBoundingClientRect();
       for (var k = 0; k < 4; k++) {
         var a = fumEl.getBoundingClientRect(), su = null;
-        [].forEach.call(zBanco.querySelectorAll(".bjr-carta, .bjr-cc, .bjr-punti, .bjr-fiche, .bjr-pila, .bjr-fval, .bjr-nome, .bjr-matt-carte"), function (e) {
+        [].forEach.call(zBanco.querySelectorAll(".bjr-carta, .bjr-cc, .bjr-punti, .bjr-fiche, .bjr-pila, .bjr-fval, .bjr-nome, .bjr-matt-carte" + (ill() && vm.giocatori.length === 1 ? ", .bjr-gioc" : "")), function (e) {
           var b = e.getBoundingClientRect(); if (!b.width || !b.height) return;
           if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1) su = su == null ? b.top : Math.min(su, b.top);
         });
@@ -1701,13 +1744,13 @@
       var N = vm.giocatori.length, W = zBanco.clientWidth, H = zBanco.clientHeight;
       svuota(cam); cam.style.transition = "none"; cam.style.transform = "none";
       cam.appendChild(el("div", { class: "bjr-muro" }));
-      var strato = el("div", { class: "bjr-strato" }), prosp = el("div", { class: "bjr-prosp", style: "perspective:" + Math.round(H * 1.8) + "px" });
+      var strato = el("div", { class: "bjr-strato" + (ill() ? " ill" : "") }), prosp = el("div", { class: "bjr-prosp", style: "perspective:" + Math.round(H * 1.8) + "px" });
       var PW = Math.round(W * 1.55), PH = Math.round(H * 1.0), PWi = PW - 26, PHi = PH - 26;
       var piano = el("div", { class: "bjr-piano", style: "width:" + PW + "px;height:" + PH + "px;margin-left:" + (-PW / 2) + "px;bottom:" + Math.round(-PH * 0.1) + "px" });
-      var panno = el("div", { class: "bjr-panno" }), sopra = el("div", { class: "bjr-sopra" });
+      var panno = el("div", { class: "bjr-panno" }), sopra = el("div", { class: "bjr-sopra" }), bracc = el("div", { class: "bjr-bracc" });
       piano.appendChild(panno); prosp.appendChild(piano);
       panno.insertAdjacentHTML("afterbegin", stampaPanno(PWi, PHi));   // le scritte stampate sul panno, come nei casinò
-      [strato, prosp, sopra].forEach(function (z) { cam.appendChild(z); });
+      [strato, prosp, bracc, sopra].forEach(function (z) { cam.appendChild(z); });   // (le braccia illustrate stanno sopra il tavolo: le mani sul panno)
       function su(x, y, nodo) { nodo.style.left = Math.round(x) + "px"; nodo.style.top = Math.round(y) + "px"; panno.appendChild(nodo); return nodo; }
       var cx = PWi / 2, cy = PHi / 2, rx = PWi / 2, ry = PHi / 2;
       var ampiezza = N === 1 ? 0 : Math.min(98, 40 + N * 11);   // più siete, più l'arco si allarga lungo l'ovale
@@ -1742,9 +1785,10 @@
         s.fig = el("div", { class: "bjr-gioc", style: "left:" + Math.round(p.x - w / 2) + "px;top:" + testa + "px;width:" + w + "px;z-index:" + Math.round(p.y) });
         s.fig.onclick = function () { sbircia(i); };
         strato.appendChild(s.fig);
+        if (ill()) { s.br = el("div", { class: "bjr-gb", style: "left:" + Math.round(p.x - w / 2) + "px;top:" + testa + "px;width:" + w + "px;height:" + Math.round(w * 118 / 108) + "px" }); bracc.appendChild(s.br); }
         // con 7-10 giocatori: solo il nome, largo al massimo quanto lo spazio tra due vicini, e uno su e uno giù
         var largo = N > 6 ? "max-width:" + Math.max(34, Math.round(vic * 2 - 6)) + "px;" : "";
-        s.top0 = testa + Math.round(w * 0.06);
+        s.top0 = testa + Math.round(w * (ill() ? -0.02 : 0.06));   // (illustrati: il cartellino sta SOPRA la testa, mai su cappello e fronte)
         s.nome = el("div", { class: "bjr-nome" + (N > 6 ? " mini" : ""), style: largo + "left:" + Math.round(p.x) + "px;top:" + s.top0 + "px" });
         s.fval = el("div", { class: "bjr-fval", style: "left:" + Math.round(s.fp.x) + "px;top:" + Math.round(s.fp.y - 10) + "px;opacity:0" });   // il valore sopra la pila
         sopra.appendChild(s.nome); sopra.appendChild(s.fval);
@@ -1768,7 +1812,10 @@
         var s = R.seg[i], attivo = decide(i);
         // faccia e luce di chi gioca
         var gp = ill() ? gestoDi(i) : "", kf = facciaDi(g, i) + (attivo ? "*" : "") + gp;
-        if (s.k.f !== kf) { s.k.f = kf; var cfg = avatarDi(i); s.fig.innerHTML = cfg ? svgAvatar(cfg, facciaDi(g, i), ill() ? { vita: true, gesto: gp || "tavolo" } : undefined) : ""; s.fig.className = "bjr-gioc" + (attivo ? " attivo" : "") + (gp === "esulta" ? " ov" : ""); }
+        if (s.k.f !== kf) { s.k.f = kf; var cfg = avatarDi(i); var sulPanno = !!s.br && (gp === "" || gp === "batte");   // illustrati: mani sul panno (le disegna il livello sopra il tavolo; il corpo ha la stessa posa, così non ci sono due mani)
+          if (ill()) gestiBJ();
+          s.fig.innerHTML = cfg ? svgAvatar(cfg, facciaDi(g, i), ill() ? { vita: true, gesto: sulPanno ? "bjBracci" : (gp || "tavolo") } : undefined) : ""; s.fig.className = "bjr-gioc" + (attivo ? " attivo" : "");
+          if (s.br) s.br.innerHTML = cfg && sulPanno ? bracciaTavoloHTML(cfg, facciaDi(g, i), gp === "batte") : ""; }
         // sopra la testa: il nome e le fiche che ha (a fine mano anche quanto ha vinto o perso)
         var d = vm.fase === "esito" ? nettoDi(g) : 0;
         var kn = g.nome + "|" + attivo + "|" + d + "|" + g.fiches + "|" + !!g.via + "|" + (drv.mioIdx && i === mioIdx());
@@ -1841,7 +1888,7 @@
       // Bot nell'angolo con quanto ha il banco (sempre visibile)
       var fm = faccinaMatt(), pB = testoBanco(scoperta);
       // (1 nov 2026) mentre la telecamera è su chi gioca, le carte vere del banco restano in vista accanto alla sua faccia: è la carta che serve per decidere
-      var conCarte = (vm.fase === "gioca" || vm.fase === "assic") && vm.banco.length > 0;
+      var conCarte = (vm.fase === "gioca" || vm.fase === "assic" || (vm.fase === "esito" && esitoZoom())) && vm.banco.length > 0;
       var km = (ill() ? "i" : "") + fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase + "|" + nomeBanco(vm) + "|" + (conCarte ? kb : "");
       if (R.k.m !== km) {
         R.k.m = km;
@@ -1970,6 +2017,12 @@
       var x0 = Math.min(s.x - s.w * 0.4, s.carte.x - mezze, s.fp.x - 30), x1 = Math.max(s.x + s.w * 0.4, s.carte.x + mezze, s.fp.x + 30);
       return { x: (x0 + x1) / 2, y: (top + bot) / 2, w: Math.max((x1 - x0) * (largo ? 1.6 : 1.08), s.w * (largo ? 3 : 1.3), largo ? 230 : 140), h: (bot - top) * (largo ? 1.25 : 1) };
     }
+    function esitoZoom() { return ill() && vm.giocatori.length <= 3; }
+    function suTutti() {
+      var x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      vm.giocatori.forEach(function (g, i) { var r = suGiocatore(i); x0 = Math.min(x0, r.x - r.w / 2); x1 = Math.max(x1, r.x + r.w / 2); y0 = Math.min(y0, r.y - r.h / 2); y1 = Math.max(y1, r.y + r.h / 2); });
+      return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
+    }
     // lo zoom sul banco va sulle CARTE di Bot, al centro (la sua faccia è già nell'angolo)
     function suMatt() {
       var n = Math.max(2, vm.banco.length), w = Math.max(210, (53 * n) * R.bsc + 120);
@@ -2003,6 +2056,7 @@
         else if (anim.banco && vm.banco.length >= 2) inquadra(suMatt(), 0.6);
         else if (anim.ultima >= 0 || anim.banco) inquadra(null, 0.6);
       }
+      else if (f === "esito" && esitoZoom()) inquadra(suTutti(), 0.9);   // illustrati: a fine mano si vede CHI HA VINTO che festeggia (il banco resta nell'angolo con le sue carte)
       else inquadra(null);   // puntate e fine mano: tutti al tavolo
     }
     // tocco su una faccia: la telecamera va da lui un attimo, poi torna
@@ -2022,12 +2076,12 @@
       try { if (drv.stanza) sessionStorage.setItem("bj-intro-" + drv.stanza, "1"); } catch (e) {}
       intro.corre = true;
       var N = vm.giocatori.length, velo = el("div", { class: "bjr-intro" + (ill() ? " ill" : "") }, [
-        el("div", { class: "mg", html: window.SGOmino ? svgAvatar(avatarBanco(vm), "esulta", ill() ? { gesto: "saluta" } : undefined) : "" }), el("div", { class: "banc" }) ]);
+        el("div", { class: "mg", html: window.SGOmino ? (ill() ? salutoHTML(avatarBanco(vm), "esulta", false) : svgAvatar(avatarBanco(vm), "esulta", undefined)) : "" }), el("div", { class: "banc" }) ]);
       intro.velo = velo;
       zBanco.appendChild(velo); capt.innerHTML = ""; capt.dataset.k = "";
       var passi = [];
       function poi(ms, fn) { passi.push([ms, fn]); }
-      function esulta(i) { var s = R.seg[i]; s.k.f = "x"; var cfg = avatarDi(i); if (cfg) { s.fig.innerHTML = svgAvatar(cfg, "esulta", ill() ? { vita: true, gesto: "saluta" } : undefined); if (ill()) s.fig.classList.add("ov"); } }
+      function esulta(i) { var s = R.seg[i]; s.k.f = "x"; var cfg = avatarDi(i); if (cfg) { s.fig.innerHTML = ill() ? salutoHTML(cfg, "esulta", true) : svgAvatar(cfg, "esulta", undefined); if (s.br) s.br.innerHTML = ""; } }
       poi(450, function () { velo.appendChild(el("div", { class: "benv", text: "Benvenuti al tavolo! 🎩" })); });
       poi(1500, function () { inquadra(suGiocatore(0, N > 4), 0.01); velo.classList.add("via"); });
       poi(600, function () { velo.remove(); });
