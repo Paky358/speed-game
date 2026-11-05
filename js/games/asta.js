@@ -594,6 +594,7 @@
     ".st-gradino{display:flex;flex-direction:column;align-items:center;width:31%;max-width:130px;animation:stSale .6s cubic-bezier(.2,1.3,.4,1) both;}",
     "@keyframes stSale{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}",
     ".st-gradino img{width:82%;margin-bottom:-6%;}",
+    ".st-gradino.ill img{width:76%;margin-bottom:-6%;}.st-gradino.ill b{margin-bottom:2px;}",
     ".st-gradino b{font-size:.8rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8);}",
     ".st-gradino small{font-size:.72rem;font-weight:900;color:#ffe066;text-shadow:0 1px 3px rgba(0,0,0,.8);}",
     ".st-gradino .blocco{width:100%;margin-top:3px;border-radius:8px 8px 0 0;display:flex;justify-content:center;padding-top:6px;font-weight:900;font-size:1.6rem;color:#3a2200;box-shadow:inset 0 2px 0 rgba(255,255,255,.5);}",
@@ -1698,6 +1699,7 @@
     return srcSvg(JSON.stringify(cfg) + "|" + JSON.stringify(o || {}), function () { return SGOmino.svg(cfg, o || {}); });
   }
   var GIU = { seduto: true }, SU = { seduto: true, braccia: "canna", angolo: ANG_PALETTA };
+  function illustrati() { try { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); } catch (e) { return false; } }   // gli avatar illustrati sono accesi?
   function manoAlzata(cfg) { try { return SGOmino.mano(cfg, SU); } catch (e) { return { x: 155, y: 126 }; } }
   // i disegni fissi (js/asta-sala-arte.js, js/asta-stadio-arte.js, js/asta-maglie.js); finché mancano, uno semplice di riserva
   function arte(nome, riserva, arg) {
@@ -4735,10 +4737,13 @@
     [1, 0, 2].forEach(function (i) {
       var r = R.righe[i]; if (!r) return;
       var g = el("div"); g.className = "st-gradino p" + (i + 1); g.style.animationDelay = (i === 0 ? 0.5 : i === 1 ? 0.25 : 0) + "s";
-      var img = el("img"); img.src = srcAv(cfgDi(r.nome, r.omino), i === 0 ? { braccia: "su" } : {}); img.alt = "";
+      var ill = illustrati();   // (avatar illustrati: il primo esulta con tutte e due le braccia e tutti stanno SUL gradino, col nome sopra la testa)
+      var img = el("img"); img.src = srcAv(cfgDi(r.nome, r.omino), i === 0 ? (ill ? { gesto: "esulta" } : { braccia: "su" }) : {}); img.alt = "";
       var b = el("b"); b.textContent = r.nome; var sm = el("small"); sm.textContent = gio ? numFanta(puntiFin(r)) + " punti" : r.totale + " · " + r.crediti + " 💰";
       var blocco = el("div"); blocco.className = "blocco"; blocco.textContent = r.pos;
-      g.appendChild(img); g.appendChild(b); g.appendChild(sm); if (r.prima) { var s3 = el("small"); s3.className = "g3"; s3.textContent = tre(r).join(" · "); g.appendChild(s3); }   // (🏆 3 giornate: una per una)
+      if (!ill) g.appendChild(img);
+      g.appendChild(b); g.appendChild(sm); if (r.prima) { var s3 = el("small"); s3.className = "g3"; s3.textContent = tre(r).join(" · "); g.appendChild(s3); }   // (🏆 3 giornate: una per una)
+      if (ill) { g.classList.add("ill"); g.appendChild(img); }
       g.appendChild(blocco);
       gradini.appendChild(g);
     });

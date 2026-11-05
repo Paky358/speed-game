@@ -1263,6 +1263,8 @@
   }
   function faccia(cb, p) {
     var cfg = (cb.omini() || {})[p.id] || (window.SGOmino ? SGOmino.casuale(p.nome) : null);
+    // 🎨 avatar illustrati (solo se accesi): testa e spalle un po' più grandi nel cerchio, con il cappello che resta intero (con quelli di oggi non cambia niente)
+    if (cfg && window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()) return "<div style='width:100%;height:100%;transform:scale(1.25);transform-origin:50% 22%'>" + SGOmino.svg(cfg, { busto: true }) + "</div>";
     return cfg && window.SGOmino ? SGOmino.svg(cfg, { busto: true }) : "<div style='font-size:1.6rem;line-height:46px'>🙂</div>";
   }
   function lobby(t, vm, cb) {

@@ -1129,6 +1129,14 @@
     ".bj-wrap .bjr-matt-carte{top:66px}.bj-wrap.bj-in-gara .bjr-matt-carte{top:92px}",
     ".bj-wrap .bjr-matt .bj-av{width:64px;height:64px;background:radial-gradient(circle at 50% 35%,#2a3160,#141a33);border-color:var(--o-filo-oro)}",
     ".bj-wrap .bj-av{background:radial-gradient(circle at 50% 35%,#2a3160,#141a33)}",
+    // 🎨 avatar illustrati (solo se accesi): il banco dalla testa alla vita DIETRO il suo bancone (con le mani sul bordo), apertura col bancone alto, braccia che escono dal disegno quando esultano
+    ".bj-wrap .bjr-matt.ill .bj-av{width:92px;height:100px;border-radius:16px 16px 12px 12px;overflow:hidden}",
+    ".bj-wrap .bjr-matt.ill .bj-av svg{left:0;transform:none;width:100%;bottom:0}",
+    ".bj-wrap .bjr-matt.ill .bj-av::after{content:'';position:absolute;left:0;right:0;bottom:0;height:11px;background:var(--t-panno);border-top:3px solid var(--t-bordo-pieno)}",
+    ".bj-wrap .bjr-matt.ill .bjr-matt-nome{margin-top:-2px}",
+    ".bj-wrap .bjr-intro.ill .mg{bottom:31%;width:84%;transform:translateX(-50%) translateY(66%)}",
+    ".bj-wrap .bjr-intro.ill .banc{height:31%}",
+    ".bjr-gioc.ov{clip-path:inset(-75% -40% 0 -40%)}.bjr-gioc.ov svg{overflow:visible}",
     ".bj-wrap .bj-podio{background:rgba(9,12,26,.9)}",
     ".bj-wrap .bjr-intro{background:var(--t-muro)}.bj-wrap .bjr-intro .banc{background:var(--t-panno);border-top-color:var(--t-bordo-pieno)}",
     // la lineetta della puntata: binario di vetro, la parte puntata nell'oro delle monete, il cursore è una fiche
@@ -1169,8 +1177,11 @@
     triste: { occhi: "dolci", sopracc: "preoccupate", bocca: "smorfia" }
   };
   var svgCache = {};
+  // 🎨 avatar illustrati (5 nov 2026): solo se accesi (oggi IL PAPPONE). Con quelli di oggi tutto resta come prima.
+  function ill() { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); }
   function svgAvatar(cfg, faccia, opts) {
-    var k = JSON.stringify(cfg) + "|" + faccia + "|" + (opts && opts.busto ? "b" : "");
+    if (opts && !ill()) opts = opts.busto ? { busto: true } : undefined;   // (vita e gesti esistono solo negli illustrati)
+    var k = JSON.stringify(cfg) + "|" + faccia + "|" + (opts ? (opts.busto ? "b" : "") + (opts.vita ? "v" : "") + (opts.gesto || "") : "") + (ill() ? "|i" : "");
     if (!svgCache[k]) {
       var c = {}, x = FACCE[faccia] || {}, n;
       for (n in cfg) c[n] = cfg[n];
@@ -1571,8 +1582,27 @@
         if (capo) capoPrima = capo.nome;
       }
     }
+    // 🎨 i gesti degli avatar illustrati: brevi, partono solo quando cambia il motivo (mai a ogni ridisegno) e poi torna «mani sul tavolo»
+    var gesti = {};   // posto → { g, fino }
+    function gestoDi(i) { var x = gesti[i]; return x && Date.now() < x.fino ? x.g : ""; }
+    function dai(i, g, ms) {
+      if (!ill()) return;
+      var x = gesti[i] = { g: g, fino: Date.now() + ms };
+      setTimeout(function () { if (gesti[i] === x && !chiuso && vm && R && document.body.contains(zBanco)) disegnaScena(); }, ms + 30);
+    }
     function applicaDiff(pre, v) {
       if (!pre) return;
+      if (ill()) {
+        var nb = BJ.punteggio(v.banco) > 21;
+        v.giocatori.forEach(function (g, i) {
+          var pg = pre.giocatori[i];
+          if (pre.fase === "gioca" && v.fase === "gioca" && pg && contaCarte(g) > contaCarte(pg)) dai(i, "batte", 750);   // «Carta»: un colpetto sul panno
+          else if (v.fase === "esito" && pre.fase !== "esito" && nettoDi(g) > 0) {   // vincita: se il banco ha sballato prima applaude, poi esulta
+            if (nb) { dai(i, "applaude", 1200); setTimeout(function () { if (vm && vm.fase === "esito") dai(i, "esulta", 2000); }, 1200); }
+            else dai(i, "esulta", 2400);
+          }
+        });
+      }
       var rivelato = (v.fase === "banco" || v.fase === "esito") && !(pre.fase === "banco" || pre.fase === "esito");
       if (v.banco.length > pre.banco.length || rivelato) anim.banco = true;
       if (v.banco.length > pre.banco.length) suonoCarta();
@@ -1702,6 +1732,12 @@
         var w = Math.round(Math.min(base * Math.max(0.7, Math.min(1.4, p.sc)), vic * (N > 6 ? 1.75 : 1.35)));
         // (1 nov 2026: testa e nome stanno sotto la scritta grande in alto, «Punta Luca»: prima a 360x640 si coprivano)
         var alto = N > 6 ? 70 : 96, testa = Math.round(p.y - w * 0.9); if (testa < alto) { w = Math.max(30, Math.round((p.y - alto) / 0.9)); testa = Math.round(p.y - w * 0.9); }
+        // 🎨 illustrati: dalla testa alla vita, seduti DIETRO il bordo del tavolo con le mani appoggiate sul panno (prima in piedi, lontani)
+        if (ill()) {
+          w = Math.round(Math.min(w * 0.8, Math.max(36, vic * 1.05)));
+          if (p.y + w * 0.17 - 1.0926 * w < alto) w = Math.max(30, Math.round((p.y - alto) / 0.9226));
+          testa = Math.round(p.y + w * 0.17 - 1.0926 * w);
+        }
         s.x = p.x; s.y = p.y; s.w = w; s.testa = testa; s.carte = pt(s.mira); s.fp = pt(s.mf);
         s.fig = el("div", { class: "bjr-gioc", style: "left:" + Math.round(p.x - w / 2) + "px;top:" + testa + "px;width:" + w + "px;z-index:" + Math.round(p.y) });
         s.fig.onclick = function () { sbircia(i); };
@@ -1731,8 +1767,8 @@
       vm.giocatori.forEach(function (g, i) {
         var s = R.seg[i], attivo = decide(i);
         // faccia e luce di chi gioca
-        var kf = facciaDi(g, i) + (attivo ? "*" : "");
-        if (s.k.f !== kf) { s.k.f = kf; var cfg = avatarDi(i); s.fig.innerHTML = cfg ? svgAvatar(cfg, facciaDi(g, i)) : ""; s.fig.className = "bjr-gioc" + (attivo ? " attivo" : ""); }
+        var gp = ill() ? gestoDi(i) : "", kf = facciaDi(g, i) + (attivo ? "*" : "") + gp;
+        if (s.k.f !== kf) { s.k.f = kf; var cfg = avatarDi(i); s.fig.innerHTML = cfg ? svgAvatar(cfg, facciaDi(g, i), ill() ? { vita: true, gesto: gp || "tavolo" } : undefined) : ""; s.fig.className = "bjr-gioc" + (attivo ? " attivo" : "") + (gp === "esulta" ? " ov" : ""); }
         // sopra la testa: il nome e le fiche che ha (a fine mano anche quanto ha vinto o perso)
         var d = vm.fase === "esito" ? nettoDi(g) : 0;
         var kn = g.nome + "|" + attivo + "|" + d + "|" + g.fiches + "|" + !!g.via + "|" + (drv.mioIdx && i === mioIdx());
@@ -1806,11 +1842,11 @@
       var fm = faccinaMatt(), pB = testoBanco(scoperta);
       // (1 nov 2026) mentre la telecamera è su chi gioca, le carte vere del banco restano in vista accanto alla sua faccia: è la carta che serve per decidere
       var conCarte = (vm.fase === "gioca" || vm.fase === "assic") && vm.banco.length > 0;
-      var km = fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase + "|" + nomeBanco(vm) + "|" + (conCarte ? kb : "");
+      var km = (ill() ? "i" : "") + fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase + "|" + nomeBanco(vm) + "|" + (conCarte ? kb : "");
       if (R.k.m !== km) {
         R.k.m = km;
-        hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "");
-        if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(avatarBanco(vm), fm.faccia, { busto: true });
+        hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "") + (ill() ? " ill" : "");
+        if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(avatarBanco(vm), fm.faccia, ill() ? { vita: true, gesto: "tavolo" } : { busto: true });
         var hn = hud.lastChild; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 " + nomeBanco(vm)));
         if (pB) hn.appendChild(el("b", { class: /Sball/.test(pB) ? "bust" : "", text: pB }));
         var mc = zBanco.querySelector(".bjr-matt-carte"); if (mc) mc.remove();   // (in alto a sinistra: nello zoom su chi gioca lì non c'è niente)
@@ -1985,13 +2021,13 @@
       if (introGiaVista()) { telecamera(); return; }
       try { if (drv.stanza) sessionStorage.setItem("bj-intro-" + drv.stanza, "1"); } catch (e) {}
       intro.corre = true;
-      var N = vm.giocatori.length, velo = el("div", { class: "bjr-intro" }, [
-        el("div", { class: "mg", html: window.SGOmino ? svgAvatar(avatarBanco(vm), "esulta") : "" }), el("div", { class: "banc" }) ]);
+      var N = vm.giocatori.length, velo = el("div", { class: "bjr-intro" + (ill() ? " ill" : "") }, [
+        el("div", { class: "mg", html: window.SGOmino ? svgAvatar(avatarBanco(vm), "esulta", ill() ? { gesto: "saluta" } : undefined) : "" }), el("div", { class: "banc" }) ]);
       intro.velo = velo;
       zBanco.appendChild(velo); capt.innerHTML = ""; capt.dataset.k = "";
       var passi = [];
       function poi(ms, fn) { passi.push([ms, fn]); }
-      function esulta(i) { var s = R.seg[i]; s.k.f = "x"; var cfg = avatarDi(i); if (cfg) s.fig.innerHTML = svgAvatar(cfg, "esulta"); }
+      function esulta(i) { var s = R.seg[i]; s.k.f = "x"; var cfg = avatarDi(i); if (cfg) { s.fig.innerHTML = svgAvatar(cfg, "esulta", ill() ? { vita: true, gesto: "saluta" } : undefined); if (ill()) s.fig.classList.add("ov"); } }
       poi(450, function () { velo.appendChild(el("div", { class: "benv", text: "Benvenuti al tavolo! 🎩" })); });
       poi(1500, function () { inquadra(suGiocatore(0, N > 4), 0.01); velo.classList.add("via"); });
       poi(600, function () { velo.remove(); });

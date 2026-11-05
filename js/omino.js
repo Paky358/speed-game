@@ -2431,5 +2431,18 @@
 
   window.SGOmino = { svg: svg, el: el, mano: mano, casuale: casuale, norm: norm, OPZ: OPZ, BASE: BASE, NOMI: NOMI, NOMI_K: NOMI_K, LIBERI: LIBERI, BLOCCATI: BLOCCATI, SOLO_DONNA: SOLO_DONNA, GRUPPI_CAPELLI: GRUPPI_CAPELLI,
     adattaForma: adattaForma, formaDaNome: formaDaNome, CAPELLI_UOMO: CAPELLI_UOMO,
-    stile: function (s) { if (s === "classico" || s === "rifinito" || s === "illustrato") STILE = s; return STILE; } };   // lo stile del disegno per tutta la pagina (vedi STILE)
+    stile: function (s) { if (s === "classico" || s === "rifinito" || s === "illustrato") STILE = s; return STILE; },   // lo stile del disegno per tutta la pagina (vedi STILE)
+    // gli avatar illustrati sono accesi? (i giochi cambiano tavoli e banconi SOLO in quel caso)
+    illustrato: function () { return STILE === "illustrato" && !!window.SGOminoA; },
+    // i gesti che sa fare (solo illustrati): saluta, applaude, esulta, posa, preme, leva, batte, tavolo, carte → SGOmino.svg(cfg, { gesto, lato })
+    gesti: function () { return STILE === "illustrato" && window.SGOminoA ? Object.keys(SGOminoA.GESTI) : []; },
+    // le scene grandi (solo illustrati): { corpo: svg senza il braccio «lato», braccio: svg di quel braccio solo (pelle, manica, mano), perno: {x, y} della spalla }
+    // nel riquadro 200×264: le due immagini si mettono una sopra l altra e il braccio ruota sul perno (si animano solo spostamenti e rotazioni)
+    parti: function (cfg, opts) {
+      if (STILE !== "illustrato" || !window.SGOminoA) return null;
+      opts = opts || {}; var lp = opts.lato === -1 ? -1 : 1, o1 = {}, o2 = {}, k;
+      for (k in opts) { o1[k] = opts[k]; o2[k] = opts[k]; }
+      o1.parte = "corpo"; o2.parte = "braccio"; o1.latoParte = o2.latoParte = lp;
+      return { corpo: svg(cfg, o1), braccio: svg(cfg, o2), perno: SGOminoA.perno(norm(cfg), o2), lato: lp };
+    } };   // lo stile del disegno per tutta la pagina (vedi STILE)
 })();
