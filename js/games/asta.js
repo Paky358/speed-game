@@ -292,6 +292,14 @@
     ".sa-ban.ill.fitta{width:min(34%,calc(var(--alt,100dvh)*.17));max-width:130px;aspect-ratio:1/1.62;}.sa-ban.ill.fitta .sa-leggio{top:60%;}.sa-ban.ill.fitta .sa-martello{top:53%;font-size:28px;}",
     // (una fila sola: le sedie più larghe e il nome intero)
     ".sa-platea.ill .sa-fila0.n3 .sa-pers{width:34%;max-width:170px;margin:0 -2%;}.sa-platea.ill .sa-fila0.n4 .sa-pers{width:28%;max-width:150px;margin:0 -1.8%;}.sa-platea.ill .sa-fila0.n5 .sa-pers{width:23%;max-width:122px;margin:0 -2%;}.sa-platea.ill .sa-fila0 .sa-pers>b{margin-top:5px;}",   // (le sedie hanno margini vuoti ai lati: le caselle si sfiorano, le sedie no)
+    // 🎨 giro 5: due file della stessa misura e staccate in modo uguale (la paletta della fila davanti non copre i tasti «passo» di quella dietro),
+    //  il numero del posto al centro sotto la sedia (mai sopra i vicini), nomi anche su due righe e sedie più grandi con 5 in una fila sola
+    ".sa-platea.ill .sa-fila1.n2 .sa-pers{width:31%;max-width:156px;}.sa-platea.ill .sa-fila1+.sa-fila0{margin-top:30px;}",
+    ".sa-platea.ill .sa-fila0.n5 .sa-pers{width:26%;max-width:134px;margin:0 -4%;}.sa-platea.ill .sa-fila1.n5 .sa-pers{width:20%;max-width:104px;margin:0 -2%;}",
+    ".sa-platea.ill .sa-num{left:50%;bottom:-3px;transform:translateX(-50%);min-width:18px;height:18px;line-height:18px;font-size:.66rem;}",
+    ".sa-platea.ill .sa-pers>b{white-space:normal;line-height:1.08;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}",
+    ".sa-platea.ill .sa-fila .n5 .sa-pers>b,.sa-platea.ill .sa-fila.n5 .sa-pers>b,.sa-platea.ill .sa-fila.n4 .sa-pers>b{min-height:2.2em;align-items:center;}",
+    ".sa-platea.ill .sa-fila.n5 .sa-pers>b{font-size:.68rem;}.sa-sala:not(.st-stadio) .sa-platea.ill .sa-fila.n5 .sa-pers.guida>b{padding:1px 6px;}",
     ".sa-ban.batte .sa-ban-img{animation:saBatte .45s ease-in-out 2;}",
     "@keyframes saBatte{0%,100%{transform:none}40%{transform:translateY(-4%) rotate(-3deg)}70%{transform:translateY(2%)}}",
     ".sa-martello{position:absolute;z-index:3;right:0;top:50%;font-size:28px;transform-origin:85% 85%;transform:rotate(-20deg);}",
@@ -4776,6 +4784,9 @@
         for (y = c.height - 1; y >= 0 && ult < 0; y--) for (k = 0; k < c.width; k++) if (d[(y * c.width + k) * 4 + 3] > 24) { ult = y; break; }
         if (ult < 0) return;
         img.style.marginBottom = "-" + ((c.height - 1 - ult) / c.height * h + 5).toFixed(1) + "px";
+        // 🎨 giro 5: anche in alto — il punto più alto del disegno (testa, o le mani alzate di chi vince) sta SEMPRE alla stessa distanza dai punti scritti sopra
+        var prima = -1; for (y = 0; y < c.height && prima < 0; y++) for (k = 0; k < c.width; k++) if (d[(y * c.width + k) * 4 + 3] > 24) { prima = y; break; }
+        if (prima >= 0) img.style.marginTop = (8 - prima / c.height * h).toFixed(1) + "px";
       } catch (e) {}
     }
     function dopo() { requestAnimationFrame(function () { requestAnimationFrame(metti); }); }
