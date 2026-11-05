@@ -1138,6 +1138,7 @@
     // 🎨 giro 4: il banco più grande, la sua battuta SUL ritratto (sul suo gilet): non copre mai le carte né i giocatori
     ".bj-wrap .bjr-matt.ill{width:min(27%,108px)}.bj-wrap .bjr-matt.ill .bjr-matt-nome{font-size:.64rem;padding:1px 6px}.bj-wrap .bjr-matt.ill .bjr-matt-nome b{font-size:.9rem}",
     ".bj-wrap .bjr-matt.ill .bj-av{width:100%;height:auto;aspect-ratio:92/100}",
+    ".bj-wrap .bjr-matt.ill.pic{width:min(13%,50px);left:4px;bottom:4px}.bj-wrap .bjr-matt.ill.pic .bjr-matt-nome,.bj-wrap .bjr-matt.ill.pic .bjr-fum{display:none}",
     ".bj-wrap .bjr-matt.ill .bjr-fum{position:absolute;left:50%;bottom:28px;top:auto;width:calc(100% + 10px);max-width:none;transform:translateX(-50%);box-sizing:border-box;font-size:.68rem;padding:3px 6px;text-align:center;animation:bjFumM .26s cubic-bezier(.3,1.6,.5,1);pointer-events:none;z-index:3}",
     "@keyframes bjFumM{from{transform:translateX(-50%) scale(.3);opacity:0}}",
     // l'importo della puntata sta SULLA fiche e resta piccolo anche quando la telecamera ingrandisce (prima copriva le mani)
@@ -1764,15 +1765,18 @@
       var cx = PWi / 2, cy = PHi / 2, rx = PWi / 2, ry = PHi / 2;
       var ampiezza = N === 1 ? 0 : Math.min(98, 40 + N * 11);   // più siete, più l'arco si allarga lungo l'ovale
       var rCarte = N > 6 ? 0.66 : 0.56, rFiche = N > 6 ? 0.84 : 0.78;
+      var spI = 0;   // 🎨 illustrati: ogni mazzetto sta sotto il SUO avatar (prima i raggi del tavolo li avvicinavano e si accavallavano); da 5 in su a due file
+      if (ill() && N > 1 && N <= 6) { var tA = (90 + ampiezza / 2) * Math.PI / 180, tB = (90 - ampiezza / 2) * Math.PI / 180; spI = Math.abs(rx * 1.04 * (Math.cos(tB) - Math.cos(tA))) / (N - 1) * 0.94; }
       var seg = vm.giocatori.map(function (g, i) {
         var th = (90 + ampiezza / 2 - (N === 1 ? 0 : i * ampiezza / (N - 1))) * Math.PI / 180;
         function p(r) { return [cx + rx * r * Math.cos(th), cy - ry * r * Math.sin(th)]; }
         var b = p(1.04), f = p(rFiche), c = p(rCarte);
+        if (spI) { var rc = N >= 5 ? (i % 2 ? 0.86 : 0.5) : 0.6; c = [cx + (b[0] - cx) * 0.94, cy - ry * rc * Math.sin(th)]; }
         return { segno: su(b[0], b[1], el("div", { class: "bjr-segno" })), pila: su(f[0], f[1], el("div", { class: "bjr-pila" })), mf: su(f[0], f[1], el("div", { class: "bjr-segno" })),
                  cc: su(c[0], c[1], el("div", { class: "bjr-cc cascata" })), mira: su(c[0], c[1], el("div", { class: "bjr-segno" })),
-                 spazio: N === 1 ? 999 : rx * rCarte * (ampiezza / (N - 1)) * Math.PI / 180 };
+                 spazio: N === 1 ? 999 : (spI ? spI * (N >= 5 ? 2 : 1) / 0.74 * 0.9 : rx * rCarte * (ampiezza / (N - 1)) * Math.PI / 180) };
       });
-      var yBanco = ill() ? 0.7 : 0.8;   // (illustrati: più in alto, così non finisce sotto il croupier in basso)
+      var yBanco = ill() ? (H / W > 1.5 ? 0.62 : 0.68) : 0.8;   // (illustrati: più in alto, così non finisce sotto il croupier in basso)
       var bancoCC = su(cx, PHi * yBanco, el("div", { class: "bjr-cc" })), bancoMira = su(cx, PHi * yBanco, el("div", { class: "bjr-segno" }));
       // misuro dove sono finiti (telecamera ferma) e siedo le persone dietro al bordo
       var zr = zBanco.getBoundingClientRect();
@@ -1786,7 +1790,7 @@
         wComune = 1e9; var alta = H / W > 1.5 ? 1.1 : 1;   // (schermo alto: avatar più grandi, così la metà in alto non resta vuota)
         punti.forEach(function (p, i) {
           var vic = 999; [i - 1, i + 1].forEach(function (j) { if (j >= 0 && j < N) vic = Math.min(vic, Math.hypot(punti[j].x - p.x, punti[j].y - p.y)); });
-          wComune = Math.min(wComune, vic * (N <= 4 ? 1.5 : 1.25) * alta, W / N * (N <= 4 ? 1.5 : 1.3) * alta, (p.y - altoI) / 0.9226, base * 0.95 * alta);
+          wComune = Math.min(wComune, vic * (N <= 4 ? 1.12 : 1.1) * alta, W / N * (N <= 4 ? 1.2 : 1.15) * alta, (p.y - altoI) / 0.9226, base * 0.95 * alta);   // (misura più giusta: le braccia dei vicini non si sovrappongono)
         });
         wComune = Math.max(40, Math.round(wComune));
       }
@@ -1816,7 +1820,8 @@
         s.nome = el("div", { class: "bjr-nome" + (N > 6 || (ill() && N > 4) ? " mini" : "") + (ill() ? " ill" : ""), style: largo + "left:" + Math.round(p.x) + "px;top:" + s.top0 + "px" });
         s.fval = el("div", { class: "bjr-fval" + (ill() ? " ill" : ""), style: "left:" + Math.round(s.fp.x) + "px;top:" + Math.round(s.fp.y - (ill() ? 0 : 10)) + "px;opacity:0" });   // il valore sopra la pila
         sopra.appendChild(s.nome); sopra.appendChild(s.fval);
-        s.cw = N > 6 ? 22 : (N > 4 ? 31 : 40);   // (1 nov 2026: carte più grandi, avatar un po più piccoli: il tavolo prima di tutto)
+        s.cw = N > 6 ? 22 : (N > 4 ? 31 : 40);
+        if (spI) s.cw = N >= 5 ? 36 : (N === 2 ? 56 : 48);   // 🎨 illustrati: carte più grandi, ognuno ha il suo posto sotto l'avatar   // (1 nov 2026: carte più grandi, avatar un po più piccoli: il tavolo prima di tutto)
         var fd = N > 6 ? 22 : 32; s.pila.style.width = s.pila.style.height = fd + "px";
         s.k = {};   // cosa è già disegnato (per non rifare niente che non è cambiato)
       });
@@ -1897,7 +1902,8 @@
             });
             if (n) {
               var pm = BJ.punteggio(m.carte), bj = BJ.eBJ(m);
-              box.appendChild(el("span", { class: "bjr-punti" + (pm > 21 ? " bust" : (bj || m.esito === "vince" || m.esito === "blackjack" ? " win" : "")),
+              var scc = (s.carte && s.carte.sc) || 1, gr = ill() && vm.giocatori.length > 3 ? Math.max(1, 12.5 / scc / 13) : 1;   // (illustrati, in tanti: le scritte «perde/vince» si leggono, ≥ 12 px sullo schermo)
+              box.appendChild(el("span", { class: "bjr-punti" + (pm > 21 ? " bust" : (bj || m.esito === "vince" || m.esito === "blackjack" ? " win" : "")), style: gr > 1.05 ? "font-size:" + Math.round(13 * gr) + "px;line-height:" + Math.round(20 * gr) + "px;bottom:" + (-Math.round(24 * gr)) + "px" : "",
                 text: (vm.fase === "esito" || vm.fase === "fine") && m.esito ? etichettaEsito(m) : (bj ? "BJ" : BJ.testo(m.carte, m.divisa)) }));
             }
             s.cc.appendChild(box);
@@ -1913,16 +1919,16 @@
         var pr = R.k.nb || 0, gira = R.k.cop && scoperta && pr === vm.banco.length && R.bancoCC.children[1];
         R.k.b = kb; R.k.nb = vm.banco.length; R.k.cop = !scoperta && vm.banco.length > 1;
         if (gira) giraCarta(R.bancoCC.children[1], vm.banco[1]);
-        else { svuota(R.bancoCC); var cwB = 50; if (ill() && R.bDisp) cwB = Math.max(30, Math.min(50, Math.floor((R.bDisp / R.bsc - 3 * Math.max(0, vm.banco.length - 1)) / Math.max(1, vm.banco.length)))); vm.banco.forEach(function (c, k) { R.bancoCC.appendChild(cartaR(c, cwB, k >= pr && vm.banco.length > pr, !scoperta && k === 1)); }); }
+        else { svuota(R.bancoCC); var cwB = 50; if (ill() && R.bDisp) cwB = Math.max(30, Math.min(vm.giocatori.length <= 4 ? 58 : 50, Math.floor((R.bDisp / R.bsc - 3 * Math.max(0, vm.banco.length - 1)) / Math.max(1, vm.banco.length)))); vm.banco.forEach(function (c, k) { R.bancoCC.appendChild(cartaR(c, cwB, k >= pr && vm.banco.length > pr, !scoperta && k === 1)); }); }
       }
       // Bot nell'angolo con quanto ha il banco (sempre visibile)
       var fm = faccinaMatt(), pB = testoBanco(scoperta);
       // (1 nov 2026) mentre la telecamera è su chi gioca, le carte vere del banco restano in vista accanto alla sua faccia: è la carta che serve per decidere
       var conCarte = (vm.fase === "gioca" || vm.fase === "assic" || (vm.fase === "esito" && esitoZoom())) && vm.banco.length > 0;
-      var km = (ill() ? "i" : "") + fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase + "|" + nomeBanco(vm) + "|" + (conCarte ? kb : "");
+      var km = (ill() ? "i" + (R.N > 1 && (vm.fase === "gioca" || vm.fase === "assic") ? "p" : "") : "") + fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase + "|" + nomeBanco(vm) + "|" + (conCarte ? kb : "");
       if (R.k.m !== km) {
         R.k.m = km;
-        hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "") + (ill() ? " ill" : "");
+        hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "") + (ill() ? " ill" : "") + (ill() && R.N > 1 && (vm.fase === "gioca" || vm.fase === "assic") ? " pic" : "");   // (illustrati: nello zoom il croupier si fa piccolo, non copre carte e punteggio di chi è a sinistra)
         if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(avatarBanco(vm), fm.faccia, ill() ? { vita: true, gesto: "tavolo" } : { busto: true });
         var hn = hud.children[1]; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 " + nomeBanco(vm)));
         if (pB) hn.appendChild(el("b", { class: /Sball/.test(pB) ? "bust" : "", text: pB }));

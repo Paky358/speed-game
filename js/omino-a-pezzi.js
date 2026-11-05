@@ -3912,58 +3912,75 @@
     return { d: d, tips: tips };
   }
 
-  // ---------- scodella: calotta tonda, frangia dritta, lati fino a metà orecchio ----------
+  // riflesso che si vede anche sui capelli neri: sui colori scuri vira a un grigio-azzurro chiaro (come la luce sul nero vero)
+  function lucido(K) {
+    var Lh = K.lum(K.capelli), t = Lh >= 0.4 ? 0 : (0.4 - Lh) / 0.3; t = t > 1 ? 1 : t;
+    return K.mix(K.hL, "#d2dcf5", 0.15 + 0.6 * t);
+  }
+  // filo di luce sul bordo del taglio (stacca il nero dalla pelle scura) + ombra morbida sulla pelle sotto
+  function bordoLuce(K, d, lu, op) { return "<g clip-path='" + K.clip(d) + "'>" + K.Pa(d, "none", " stroke='" + lu + "' stroke-width='2.4' stroke-opacity='" + ((op || 0.42) * 0.45) + "'") + "</g>"; }
+
+  // ---------- scodella: grande cupola tonda, FRANGIA DRITTA bassa che copre la fronte fino alle sopracciglia, lati a metà orecchio ----------
   A.pezzo("capelli", "scodella", function (K) {
-    var T = K.top, yf = -108;
-    var hlf = function (u) { var w = K.F.cw + 5; return [w * 0.9 * u, yf + 2 * u * u + (u > 0.8 ? (u - 0.8) * 20 : 0)]; };
-    var F = forma(K, { vol: 14, s: 5, sb: -78, ib: 6, hl: hlf, uu: [0, 0.25, 0.5, 0.75, 1] });
+    var T = K.top, yf = -101, lu = lucido(K);
+    var hlf = function (u) { var w = K.F.cw + 5; return [w * 0.92 * u, yf + 1.5 * u * u + (u > 0.82 ? (u - 0.82) * 24 : 0)]; };
+    var F = forma(K, { vol: 17, s: 5, sb: -78, ib: 6, hl: hlf, uu: [0, 0.25, 0.5, 0.75, 1] });
     var P = [0, T + 2], bers = [], i;
-    for (i = 0; i <= 6; i++) { var x = -F.w * 0.88 + i * F.w * 1.76 / 6; bers.push([x, yf + 7 + (x * x) / (F.w * F.w) * 4]); }
+    for (i = 0; i <= 6; i++) { var x = -F.w * 0.88 + i * F.w * 1.76 / 6; bers.push([x, yf + 6 + (x * x) / (F.w * F.w) * 3]); }
     [[-F.rx + 3, -86], [-F.rx + 1, -104], [-F.rx + 4, -124], [F.rx - 3, -86], [F.rx - 1, -104], [F.rx - 4, -124]].forEach(function (q) { bers.push(q); });
-    var s = chiudi(K, F.d, F, raggi(K, P, bers, 14, ["hg2", "hg1", "hg2", "hg1"], { bulge: 1.5 }), { vol: 14, omY: yf - 2 });
-    // lucido tondo della calotta
-    s += "<g clip-path='" + K.clip(F.d) + "'>" + K.El(-12, T + 18, 38, 7, K.soft(K.hL, 0.55)) + K.El(0, yf - 8, F.w * 0.9, 6, K.soft(K.hDD, 0.4)) + "</g>";
-    // il taglio netto della frangia
-    s += K.St("M" + K.n1(-F.w * 0.84) + " " + (yf + 1) + "Q0 " + (yf - 2) + " " + K.n1(F.w * 0.84) + " " + (yf + 4), K.hDD, 1.6, 0.4);
+    var s = chiudi(K, F.d, F, raggi(K, P, bers, 14, ["hg2", "hg1", "hg2", "hg1"], { bulge: 1.5 }), { vol: 17, omY: yf - 2 });
+    s += "<g clip-path='" + K.clip(F.d) + "'>";
+    // anello di luce sulla calotta (il «lucido» tipico del taglio a scodella) e striscia sopra la frangia
+    s += K.St("M" + K.n1(-F.w * 0.82) + " " + K.n1(T + 34) + "Q" + K.n1(-F.w * 0.3) + " " + K.n1(T + 8) + " " + K.n1(F.w * 0.18) + " " + K.n1(T + 14), lu, 3.2, 0.3);
+    s += K.El(-14, T + 20, 36, 6, K.soft(lu, 0.7)) + K.El(F.w * 0.5, T + 30, 16, 7, K.soft(lu, 0.3));
+    s += K.El(0, yf - 9, F.w * 0.92, 5, K.soft(lu, 0.4)) + K.El(0, yf + 1, F.w * 0.95, 6, K.soft(K.hDD, 0.55));
+    s += "</g>";
+    s += K.St("M" + K.n1(-F.w * 0.86) + " " + (yf + 2) + "Q0 " + (yf - 1) + " " + K.n1(F.w * 0.86) + " " + (yf + 3), K.hDD, 1.8, 0.5);
+    s += bordoLuce(K, F.d, lu, 0.4);
     return { fronte: s, dietro: nucaBack(K, { edge: function (u) { return -64 + u * u * 4; } }) };
   });
 
-  // ---------- caesar: corti, frangetta dritta a ciuffetti, basette corte ----------
+  // ---------- caesar: cortissimo e aderente al cranio, pettinato AVANTI, frangetta corta e dritta sopra la fronte ----------
   A.pezzo("capelli", "caesar", function (K) {
-    var T = K.top, w0 = K.F.cw + 3, yf = -121;
-    var hlf = function (u) { return [w0 * 0.9 * u, yf - 3 + 3 * u * u + (u > 0.88 ? (u - 0.88) * 90 : 0)]; };
-    var F = forma(K, { vol: 10, s: 3, sb: -90, ib: 8, hl: hlf, uu: [0, 0.25, 0.5, 0.75, 0.9, 1] });
-    var P = [-2, T + 2], bers = [], i;
-    for (i = 0; i <= 8; i++) { var x = -F.w * 0.9 + i * F.w * 1.8 / 8; bers.push([x, yf + 2]); }
-    [[-F.rx + 2, -96], [-F.rx + 1, -112], [F.rx - 2, -96], [F.rx - 1, -112]].forEach(function (q) { bers.push(q); });
-    var s = chiudi(K, F.d, F, raggi(K, P, bers, 11, ["hg1", "hg2", "hg1", "hg2"], { bulge: 3, punta: 3 }), { vol: 10, omY: yf - 1 });
-    // la frangetta: ciuffetti a punta, lunghi quasi uguali
-    for (i = 0; i < 9; i++) {
-      var x2 = -F.w * 0.8 + i * F.w * 1.6 / 8, tip = yf + 8 + ((i * 5) % 3) * 2.2, sl = (i - 4) * 0.5;
-      s += ciuffoPunta(K, [[x2 - sl * 2, T + 14, 10], [x2 - sl, (T + yf) / 2 + 4, 17], [x2, yf, 16], [x2 + 1.4 + (i % 2 ? 1 : -1), tip, 2.2]], i % 2 ? "hg2" : "hg1");
+    var T = K.top, w0 = K.F.cw + 2, yf = -123, lu = lucido(K);
+    var hlf = function (u) { return [w0 * 0.9 * u, yf - 2 + 2 * u * u + (u > 0.88 ? (u - 0.88) * 90 : 0)]; };
+    var F = forma(K, { vol: 3, s: 2, sb: -92, ib: 8, hl: hlf, uu: [0, 0.25, 0.5, 0.75, 0.9, 1] });
+    var P = [0, T + 1], bers = [], i;
+    for (i = 0; i <= 8; i++) { var x = -F.w * 0.9 + i * F.w * 1.8 / 8; bers.push([x, yf + 1]); }
+    [[-F.rx + 2, -98], [-F.rx + 1, -113], [F.rx - 2, -98], [F.rx - 1, -113]].forEach(function (q) { bers.push(q); });
+    var s = chiudi(K, F.d, F, raggi(K, P, bers, 8, ["hg1", "hg2", "hg1", "hg2"], { bulge: 2, punta: 2 }), { vol: 6, omY: yf - 1 });
+    // pettinato avanti: fili corti dalla sommità verso la frangetta (tutti nello stesso verso)
+    var L = [];
+    for (i = 0; i < 11; i++) { var u2 = (i - 5) / 5; L.push([[u2 * 5, T + 4, 4], [u2 * F.w * 0.55, (T + yf) / 2, 7], [u2 * F.w * 0.84, yf + 3, 1.6]]); }
+    s += "<g clip-path='" + K.clip(F.d) + "'>" + K.ciocche(L, ["hg1", "hg2"]) + K.El(-12, T + 10, 30, 5, K.soft(lu, 0.7)) + K.El(F.w * 0.4, T + 14, 14, 5, K.soft(lu, 0.35)) + "</g>";
+    // la frangetta: ciuffetti corti, dritti, tutti uguali (il bordo è una riga)
+    for (i = 0; i < 11; i++) {
+      var x2 = -F.w * 0.82 + i * F.w * 1.64 / 10;
+      s += ciuffoPunta(K, [[x2, T + 14, 7], [x2, (T + yf) / 2 + 4, 11], [x2, yf, 11], [x2 + 0.5, yf + 5.5 + (i % 3 === 1 ? 1.2 : 0), 1.6]], i % 2 ? "hg2" : "hg1");
     }
-    s += "<g clip-path='" + K.clip(F.d) + "'>" + peli(K, 6, 16, -F.w, F.w, T - 4, T + 20, 0.25, null, 6) + "</g>";
-    return { fronte: s + basette(K, F.w - 2, -86, 10), dietro: nucaBack(K, { edge: function (u) { return -50 - 18 * u * u; }, fade: 20 }) };
+    s += K.St("M" + K.n1(-F.w * 0.84) + " " + (yf + 4) + "Q0 " + (yf + 6) + " " + K.n1(F.w * 0.84) + " " + (yf + 4), K.hDD, 1.2, 0.35);
+    s += bordoLuce(K, F.d, lu, 0.45);
+    return { fronte: s + basette(K, F.w - 2, -88, 8), dietro: nucaBack(K, { edge: function (u) { return -50 - 18 * u * u; }, fade: 20 }) };
   });
 
-  // ---------- spazzola: tetto piatto, setole corte, lati sfumati ----------
+  // ---------- spazzola: ALTA, dritta in su, cima piatta e quadrata, lati rasati ----------
   A.pezzo("capelli", "spazzola", function (K) {
-    var T = K.top, w = K.F.cw + 3, yh = -121;
-    var pts = [[-(w - 8), yh + 4], [-(w - 3), -130], [-(w - 4), T + 14], [-(w - 9), T - 1], [-(w - 20), T - 8], [-(w - 40), T - 11], [0, T - 12], [w - 40, T - 11], [w - 20, T - 8], [w - 9, T - 1], [w - 4, T + 14], [w - 3, -130], [w - 8, yh + 4],
+    var T = K.top, w = K.F.cw + 1, yh = -121, lu = lucido(K), tt = T - 13;
+    var pts = [[-(w - 8), yh + 4], [-(w - 3), -130], [-(w - 3), T + 4], [-(w - 3.5), tt + 5], [-(w - 7), tt + 0.5], [-(w - 20), tt - 1], [0, tt - 1.5], [w - 20, tt - 1], [w - 7, tt + 0.5], [w - 3.5, tt + 5], [w - 3, T + 4], [w - 3, -130], [w - 8, yh + 4],
       [w - 18, yh - 1], [w * 0.5, yh - 5], [w * 0.2, yh - 6], [0, yh - 6], [-w * 0.2, yh - 6], [-w * 0.5, yh - 5], [-(w - 18), yh - 1]];
     var d = K.lisciaChiusa(pts);
     var bar = "", R = K.rnd(4), i;
-    for (i = 0; i < 230; i++) {
-      var x = (R() * 2 - 1) * (w - 6), y = T - 8 + R() * (yh - T + 4);
-      bar += "M" + K.n1(x) + " " + K.n1(y + 4) + "l" + K.n1(x * 0.02) + " -5";
+    for (i = 0; i < 190; i++) {
+      var x = (R() * 2 - 1) * (w - 5), y = tt + 2 + R() * (yh - tt - 2);
+      bar += "M" + K.n1(x) + " " + K.n1(y + 5) + "l" + K.n1(x * 0.01) + " -7";
     }
     var s = latiRasati(K, w, -121, -84, 0.3);
     s += K.Pa(d, K.U("hg3")) + "<g clip-path='" + K.clip(d) + "'>";
-    s += "<path d='" + bar + "' stroke='" + K.hL + "' stroke-width='1.3' stroke-linecap='round' fill='none' opacity='.5'/>";
-    s += "<path d='" + bar.replace(/M(-?[\d.]+) (-?[\d.]+)l/g, function (m, a, b) { return "M" + (+a + 1.4) + " " + (+b + 1) + "l"; }) + "' stroke='" + K.hDD + "' stroke-width='1.2' stroke-linecap='round' fill='none' opacity='.4'/>";
-    s += K.El(-14, T - 7, 44, 8, K.soft(K.hL, 0.65)) + K.El(w - 6, -126, 22, 38, K.soft(K.hDD, 0.5)) + K.El(0, yh - 2, w * 0.85, 8, K.soft(K.hDD, 0.4));
-    s += K.St("M" + K.n1(-(w - 20)) + " " + (T - 8) + "Q0 " + (T - 13) + " " + K.n1(w - 20) + " " + (T - 8), K.hL, 2, 0.55);
-    s += "</g>";
+    s += "<path d='" + bar + "' stroke='" + K.mix(lu, K.capelli, 0.45) + "' stroke-width='1.3' stroke-linecap='round' fill='none' opacity='.5'/>";
+    s += "<path d='" + bar.replace(/M(-?[\d.]+) (-?[\d.]+)l/g, function (m, a, b) { return "M" + (+a + 1.4) + " " + (+b + 1) + "l"; }) + "' stroke='" + K.hDD + "' stroke-width='1.2' stroke-linecap='round' fill='none' opacity='.45'/>";
+    s += K.El(-14, tt + 4, 46, 7, K.soft(lu, 0.8)) + K.El(w - 6, -134, 20, 44, K.soft(K.hDD, 0.5)) + K.El(0, yh - 2, w * 0.85, 8, K.soft(K.hDD, 0.4));
+    s += K.St("M" + K.n1(-(w - 8)) + " " + (tt + 1.5) + "L" + K.n1(w - 8) + " " + (tt + 0.5), lu, 1.8, 0.45);
+    s += "</g>" + bordoLuce(K, d, lu, 0.4);
     return { fronte: s, dietro: nucaBack(K, { edge: function (u) { return -86 - 8 * u * u; }, fade: 40 }) };
   });
 
@@ -4166,6 +4183,8 @@
 })();
 // 5 nov (ab5): banana (ciuffo dalla fronte), mullet (corto davanti e ai lati, lungo solo dietro) rifatti.
 
+// capelli-a6 (5 nov): scodella (cupola e frangia bassa), spazzola (alta, cima piatta), caesar (aderente, frangetta corta) ridisegnate con riflesso freddo `lucido` per i colori scuri e filo di luce sul bordo.
+
 
 // ---- capelli-b ----
 // pezzi: capelli-b — pettinature ricce e a treccine dell'avatar «illustrato» (coordinate della testa: mento 0, cima del cranio -148)
@@ -4272,12 +4291,12 @@
     var w = K.F.cw, R = K.rnd(o.seme), i;
     // --- dietro: la massa intera che si vede intorno e sotto
     var D = semi(0, o.cy + 2, o.rx + 6, o.ry + 4, 18);
-    var f = o.fondo + 6, rr = o.rx + 8;
+    var sv = o.sv || 0, f = o.fondo + 6, rr = o.rx + 8 + sv;
     D = D.concat([[rr, o.cy + 24], [rr + 1, (o.cy + f) / 2], [rr - 5, f - 18], [rr - 18, f - 2], [rr - 40, f + 4], [0, f + 6]], spec([[rr, o.cy + 24], [rr + 1, (o.cy + f) / 2], [rr - 5, f - 18], [rr - 18, f - 2], [rr - 40, f + 4]]).reverse());
     var dD = bumpy(K, D, o.r + 0.5, R);
     var dietro = massa(K, dD, D, { seme: o.seme + 1, lobo: o.lobo, cnt: o.cnt * 1.1, r: o.r, bassoOmbra: true });
     // --- davanti: cima + tende ai lati del viso
-    var P = semi(0, o.cy + 4, o.rx, o.ry, 18), dx = o.rx - 1, tenda = [];
+    var P = semi(0, o.cy + 4, o.rx, o.ry, 18), dx = o.rx - 1 + sv, tenda = [];
     if (o.fondo > -80) {
       var fb = o.fondo;
       tenda = [[dx, o.cy + 24], [dx + 1, (o.cy + fb) / 2], [dx - 4, fb - 18], [dx - 16, fb - 4], [dx - 34, fb + 2]];
@@ -4285,15 +4304,15 @@
     } else {
       tenda = [[dx - 2, -88], [w + 12, -82]];
     }
-    var Hs = o.frangia ? frangiaLinea(K, w, o.yc) : attacca(w, o.yc, o.ys);
+    var Hs = o.frangia ? frangiaLinea(K, w, o.fy || 0) : attacca(w, o.yc, o.ys);
     var full = P.concat(tenda, Hs, spec(tenda).reverse());
     var dF = bumpy(K, full, o.r, R);
     var s = ombraViso(K, o.frangia ? -98 : o.yc + 4, 44, o.frangia ? 0.38 : 0.3);
     s += massa(K, dF, full, { seme: o.seme + 2, lobo: o.lobo, cnt: o.cnt, r: o.r, proietta: true });
     return { D: dietro, F: s, w: w };
   }
-  function frangiaLinea(K, w, yc) {   // il bordo basso della frangia: dritto sopra le sopracciglia, appena a tende
-    var r = [[w + 1, -92], [w - 2, -100], [w * 0.8, -104], [w * 0.5, -102], [w * 0.22, -100], [0, -101]];
+  function frangiaLinea(K, w, dy) {   // il bordo basso della frangia: dritto sopra le sopracciglia, appena a tende (dy = più giù)
+    var r = [[w + 1, -92], [w - 2, -100 + dy], [w * 0.8, -104 + dy], [w * 0.5, -102 + dy], [w * 0.22, -100 + dy], [0, -101 + dy]];
     var l = r.slice(0, 5).reverse().map(function (q) { return [-q[0], q[1]]; });
     return r.concat(l);
   }
@@ -4312,7 +4331,7 @@
   //  RICCIBOB — caschetto riccio al mento
   // =========================================================
   A.pezzo("capelli", "riccibob", function (K) {
-    var n = nube(K, { rx: 76, cy: -96, ry: 80, fondo: -16, yc: -128, ys: -92, seme: 83, r: 7, lobo: 28, cnt: 56 });
+    var n = nube(K, { rx: 72, cy: -96, ry: 78, fondo: 8, sv: 16, yc: -132, ys: -92, seme: 83, r: 8, lobo: 32, cnt: 40 });
     return { dietro: n.D, fronte: n.F };
   });
 
@@ -4320,8 +4339,8 @@
   //  RICCIFRANGIA — caschetto riccio con la frangia di ricci
   // =========================================================
   A.pezzo("capelli", "riccifrangia", function (K) {
-    var n = nube(K, { rx: 86, cy: -96, ry: 82, fondo: 10, yc: -108, ys: -92, seme: 97, r: 4.6, lobo: 19, cnt: 90, frangia: true });
-    var m = molla(K, -70, 10, 32, 4.6, 12, -0.3) + molla(K, 70, 10, 32, 4.6, 12, 0.3);
+    var n = nube(K, { rx: 82, cy: -96, ry: 80, fondo: -34, yc: -108, ys: -92, seme: 97, r: 4.2, lobo: 17, cnt: 90, frangia: true, fy: 11 });
+    var m = molla(K, -70, -34, 30, 4.4, 12, -0.3) + molla(K, 70, -34, 30, 4.4, 12, 0.3);
     return { dietro: n.D, fronte: n.F + m };
   });
 
@@ -4329,7 +4348,7 @@
   //  RICCIOLETTI — ricci corti e soffici intorno alla testa, alle orecchie
   // =========================================================
   A.pezzo("capelli", "riccioletti", function (K) {
-    var n = nube(K, { rx: 80, cy: -98, ry: 78, fondo: -26, yc: -128, ys: -94, seme: 61, r: 5.4, lobo: 21, cnt: 62 });
+    var n = nube(K, { rx: 68, cy: -97, ry: 61, fondo: -68, yc: -126, ys: -94, seme: 61, r: 4.4, lobo: 16, cnt: 54 });
     return { dietro: n.D, fronte: n.F };
   });
 
@@ -4338,10 +4357,10 @@
   // =========================================================
   A.pezzo("capelli", "afro", function (K) {
     var w = K.F.cw, R = K.rnd(113);
-    var D = semi(0, -96, 110, 108, 20).concat([[110, -60], [106, -30], [94, -8], [66, 4], [30, 6], [0, 7], [-30, 6], [-66, 4], [-94, -8], [-106, -30], [-110, -60]]);
+    var D = semi(0, -96, 122, 110, 20).concat([[122, -60], [118, -30], [104, -8], [70, 4], [30, 6], [0, 7], [-30, 6], [-70, 4], [-104, -8], [-118, -30], [-122, -60]]);
     var dD = bumpy(K, D, 7, R);
     var dietro = massa(K, dD, D, { seme: 114, lobo: 28, cnt: 130, r: 7, bassoOmbra: true });
-    var cap = semi(0, -100, 101, 104, 20).concat([[100, -90], [78, -82], [w + 8, -86]]).concat(attacca(w, -130, -92)).concat([[-w - 8, -86], [-78, -82], [-100, -90]]);
+    var cap = semi(0, -100, 113, 106, 20).concat([[112, -90], [80, -82], [w + 8, -86]]).concat(attacca(w, -130, -92)).concat([[-w - 8, -86], [-80, -82], [-112, -90]]);
     var dF = bumpy(K, cap, 6.6, R);
     var fronte = ombraViso(K, -126, 46, 0.3) + massa(K, dF, cap, { seme: 115, lobo: 26, cnt: 90, r: 6.6, proietta: true });
     return { dietro: dietro, fronte: fronte };
@@ -4369,7 +4388,7 @@
     return { dietro: dietro, fronte: fronte };
   }
   A.pezzo("capelli", "afroalto", function (K) { return cimaRicci(K, { seme: 131, vol: 74, lat: 5, yc: -122, r: 6.4, lobo: 25, cnt: 90 }); });
-  A.pezzo("capelli", "ricciciuffo", function (K) { return cimaRicci(K, { seme: 151, vol: 34, lat: 4, yc: -118, r: 5.8, lobo: 22, cnt: 62 }); });
+  A.pezzo("capelli", "ricciciuffo", function (K) { return cimaRicci(K, { seme: 151, vol: 54, lat: -1, yc: -116, r: 5.8, lobo: 22, cnt: 70 }); });
 
   // =========================================================
   //  BOCCOLI / BOCCOLI MEDI — ricci a spirale, testa liscia con la riga in mezzo
@@ -4437,18 +4456,18 @@
   A.pezzo("capelli", "treccine", function (K) {
     var w = K.F.cw, n = 7, i;
     var cal = "M" + (-w - 5) + " -78C" + (-w - 10) + " -124 -50 -158 -2 -158C46 -158 " + (w + 10) + " -124 " + (w + 5) + " -78L" + (w + 1) + " -94C" + (w - 2) + " -102 " + (w * 0.8) + " -108 " + (w * 0.5) + " -112C" + (w * 0.25) + " -115 " + (-w * 0.25) + " -115 " + (-w * 0.5) + " -112C" + (-w * 0.8) + " -108 " + (-w + 2) + " -102 " + (-w - 1) + " -94Z";
-    var s = ombraViso(K, -108, 40, 0.22) + K.Pa(cal, K.mix(K.capelli, K.hDD, 0.6)) + "<g clip-path='" + K.clip(cal) + "'>";
+    var s = ombraViso(K, -108, 40, 0.22) + K.Pa(cal, K.mix(K.skDD, K.hDD, 0.55)) + "<g clip-path='" + K.clip(cal) + "'>";
     for (i = 0; i < n; i++) {
       var u = (i - (n - 1) / 2) / ((n - 1) / 2), x0 = u * (w - 2), au = Math.abs(u);
       var N = [[x0, hy(w, x0) + 5], [u * (w + 4), hy(w, x0) - 12 + 8 * au], [u * (w * 0.7), K.top - 6 + 14 * au], [u * 14, K.top - 8]];
-      s += treccina(K, N, 11, i % 2 ? "hg1" : "hg2", 7);
+      s += treccina(K, N, 9.4, i % 2 ? "hg1" : "hg2", 6.5) + K.St(K.liscio(N), K.hL, 1.6, 0.55).replace("<path ", "<path transform='translate(-2.4 0)' ");
     }
     s += K.El(60, -100, 26, 62, K.soft(K.hDD, 0.5)) + K.El(-24, -152, 44, 16, K.soft(K.hL, 0.45)) + K.St("M-40 -136C-28 -152 -4 -158 22 -152", "#ffffff", 4, 0.14) + "</g>";
     // dietro: sulla nuca le file scendono fino al collo e finiscono in treccine corte
     var d = "";
     for (i = 0; i < 9; i++) {
       var v = (i - 4) / 4, M = [[v * 10, K.top - 6], [v * (w * 0.8), -118], [v * (w * 0.96), -66], [v * (w * 0.84), -20], [v * (w * 0.72), 16], [v * (w * 0.7), 40 + (i % 2) * 6]];
-      d += treccina(K, M, 11, i % 2 ? "hg1" : "hg2", 7);
+      d += treccina(K, M, 9.4, i % 2 ? "hg1" : "hg2", 6.5) + K.St(K.liscio(M), K.hL, 1.6, 0.5).replace("<path ", "<path transform='translate(-2.4 0)' ");
     }
     return { dietro: d, fronte: s };
   });
@@ -4486,6 +4505,7 @@
 // ---------------------------------------------------------------------------
 // Voci fatte (capelli-b): ricci, riccibob, riccifrangia, riccioletti, afro, afroalto, ricciciuffo, boccolimedi, boccoli, treccine, dread
 // 5 nov (ab5): treccine e dread (attaccatura piu' bassa, niente striscia di pelle), ricci lunghi / riccibob corto / riccifrangia / afro / afroalto resi diversi.
+// 5 nov (secondo tempo, capelli-b6): sagome diverse — riccioletti (cappello stretto sopra le orecchie), riccibob (si allarga alla mascella), riccifrangia (media, frangia bassa), afro (sfera enorme), ricciciuffo (lati rasati, cima alta); treccine con scalpo scuro tra le file e riflesso per fila.
 
 
 // ---- capelli-c ----
@@ -4594,12 +4614,12 @@
     var back = "M" + (-w + 2) + " -96C" + (-w - 14) + " -52 " + (-w - 14) + " -10 " + (-w - 8) + " 22C" + (-w * 0.4) + " 34 " + (w * 0.4) + " 34 " + (w + 8) + " 22C" + (w + 14) + " -10 " + (w + 14) + " -52 " + (w - 2) + " -96C" + (w - 12) + " -150 " + (-w + 12) + " -150 " + (-w + 2) + " -96Z";
     var dietro = dorso(K, back, w, 30);
     var O = [[22, T + 2], [w * 0.62, T + 14], [w + 2, -138], [w + 8, -104], [w + 5, -66], [w, -28]];
-    var I = [[3, -136], [w * 0.28, -128], [w * 0.55, -110], [w * 0.78, -88], [w * 0.8, -56], [w * 0.92, -24]];
+    var I = [[3, -140], [w * 0.3, -134], [w * 0.58, -116], [w * 0.8, -90], [w * 0.8, -56], [w * 0.92, -24]];
     var fr = simm(K, T, O, I, -138);
     var s = massa(K, fr, flusso(I, O, 6, 16).concat(flusso(mir(I), mir(O), 6, 16)));
     s += K.St("M0 -138C1 -150 0 -160 2 -170", K.hDD, 2.2, 0.55) + K.St("M-1.5 -140C-0.5 -150 -1.5 -160 0.5 -169", K.hL, 1, 0.45);
-    var L = lato(K, [[-w + 2, -70, 14], [-w - 2, -38, 18], [-w - 4, -6, 20], [-w + 2, 18, 12], [-w + 8, 28, 2]]);
-    var R = lato(K, [[w - 2, -70, 14], [w + 2, -38, 18], [w + 4, -6, 20], [w - 2, 18, 12], [w - 8, 28, 2]], "hg1");
+    var L = lato(K, [[-w + 2, -76, 14], [-w + 4, -44, 20], [-w + 2, -10, 22], [-w + 10, 16, 16], [-w + 22, 30, 7], [-w + 30, 34, 1.5]]);
+    var R = lato(K, [[w - 2, -76, 14], [w - 4, -44, 20], [w - 2, -10, 22], [w - 10, 16, 16], [w - 22, 30, 7], [w - 30, 34, 1.5]], "hg1");
     return { dietro: dietro, fronte: L + R + s };
   });
 
@@ -4623,6 +4643,8 @@
     var ci = K.limb([[22, -146, 18], [10, -130, 22], [-12, -118, 22], [-34, -108, 15], [-48, -96, 4]]);
     s += K.Pa(ci, K.U("hg2")) + "<g clip-path='" + K.clip(ci) + "'>" + K.St("M16 -138C2 -126 -18 -116 -40 -102", K.hL, 3, 0.4) + K.El(0, -104, 40, 8, K.soft(K.hDD, 0.4)) + "</g>";
     s = lato(K, [[-w + 2, -100, 18], [-w - 2, -72, 24], [-w + 3, -44, 26], [-w - 4, -18, 22], [-w + 3, 6, 14], [-w - 3, 24, 2]]) + lato(K, [[w - 2, -100, 18], [w + 2, -72, 24], [w - 3, -44, 26], [w + 4, -18, 22], [w - 3, 6, 14], [w + 3, 24, 2]], "hg1") + s;
+    var ts = [[[-w - 2, -46, 14], [-w - 18, -38, 9], [-w - 32, -20, 1.5]], [[w + 2, -34, 14], [w + 18, -24, 9], [w + 32, -4, 1.5]], [[-w - 2, 4, 12], [-w - 20, 14, 8], [-w - 30, 34, 1.5]]];
+    ts.forEach(function (t, i) { var d = K.limb(t); s += K.Pa(d, K.U(i % 2 ? "hg1" : "hg2")) + "<g clip-path='" + K.clip(d) + "'>" + K.St(K.liscio(t.map(function (p) { return [p[0], p[1]]; })), K.hL, 1.4, 0.4) + "</g>"; });
     return { dietro: dietro, fronte: s };
   });
 
@@ -4631,7 +4653,7 @@
   // =========================================================
   A.pezzo("capelli", "caschettolungo", function (K) {
     var w = W(K), T = K.top - 24;
-    var back = "M" + (-w + 2) + " -96C" + (-w - 14) + " -50 " + (-w - 16) + " 10 " + (-w - 10) + " 58C" + (-w * 0.4) + " 72 " + (w * 0.4) + " 72 " + (w + 10) + " 58C" + (w + 16) + " 10 " + (w + 14) + " -50 " + (w - 2) + " -96C" + (w - 12) + " -150 " + (-w + 12) + " -150 " + (-w + 2) + " -96Z";
+    var back = "M" + (-w + 2) + " -96C" + (-w - 14) + " -50 " + (-w - 16) + " 10 " + (-w - 10) + " 62C" + (-w * 0.4) + " 66 " + (w * 0.4) + " 66 " + (w + 10) + " 62C" + (w + 16) + " 10 " + (w + 14) + " -50 " + (w - 2) + " -96C" + (w - 12) + " -150 " + (-w + 12) + " -150 " + (-w + 2) + " -96Z";
     var dietro = dorso(K, back, w, 56);
     var cal = "M" + (-w) + " -84C" + (-w - 10) + " -132 -50 " + T + " -4 " + T + "C44 " + (T - 2) + " " + (w + 10) + " -132 " + w + " -84L" + (w - 6) + " -96C" + (w - 12) + " -118 36 -134 -2 -140C-30 -132 " + (-w + 6) + " -112 " + (-w + 4) + " -92Z";
     var s = radice(K, w, 0, -128) + massa(K, cal, [
@@ -4640,11 +4662,11 @@
       [[-14, -140, 8], [10, -152, 14], [36, -146, 14], [w - 6, -116, 6]],
       [[-30, -132, 8], [-20, -148, 12], [0, -156, 10]]
     ]);
-    var Ln = [[-w + 4, -112, 20], [-w - 4, -80, 28], [-w - 6, -36, 30], [-w - 4, 6, 28], [-w - 2, 36, 24], [-w + 1, 50, 16], [-w + 3, 57, 5]];
-    var Rn = [[w - 4, -112, 20], [w + 4, -80, 28], [w + 6, -36, 30], [w + 4, 6, 28], [w + 2, 38, 24], [w - 1, 53, 15], [w - 3, 59, 5]];
-    var dl = K.limb(Ln), dr = K.limb(Rn);
+    var Ln = [[-w + 4, -112, 20], [-w - 6, -80, 30], [-w - 10, -36, 32], [-w - 10, 8, 32], [-w - 10, 40, 32], [-w - 10, 62, 32]];
+    var Rn = [[w - 4, -112, 20], [w + 6, -80, 30], [w + 10, -36, 32], [w + 10, 8, 32], [w + 10, 40, 32], [w + 10, 62, 32]];
+    var dl = K.limb(Ln, 0), dr = K.limb(Rn, 0);
     var sl = K.Pa(dl, K.U("hg2")) + K.Pa(dr, K.U("hg1"));
-    sl += "<g clip-path='" + K.clip([dl, dr]) + "'>" + K.St("M" + (-w - 2) + " -80C" + (-w - 6) + " -30 " + (-w - 4) + " 20 " + (-w - 2) + " 54", K.hL, 3.5, 0.35) + K.St("M" + (w + 2) + " -80C" + (w + 6) + " -30 " + (w + 4) + " 20 " + (w + 2) + " 54", K.hL, 3, 0.2) + K.El(w + 6, -20, 16, 90, K.soft(K.hDD, 0.45)) + "</g>";
+    sl += "<g clip-path='" + K.clip([dl, dr]) + "'>" + K.St("M" + (-w - 6) + " -80C" + (-w - 10) + " -30 " + (-w - 10) + " 20 " + (-w - 10) + " 58", K.hL, 3.5, 0.35) + K.St("M" + (w + 6) + " -80C" + (w + 10) + " -30 " + (w + 10) + " 20 " + (w + 10) + " 58", K.hL, 3, 0.2) + K.El(w + 6, -20, 16, 90, K.soft(K.hDD, 0.45)) + "</g>";
     return { dietro: dietro, fronte: sl + s };
   });
 
@@ -4681,7 +4703,7 @@
   // =========================================================
   A.pezzo("capelli", "scalati", function (K) {
     var w = W(K), T = K.top - 22;
-    var back = "M" + (-w + 2) + " -96C" + (-w - 14) + " -52 " + (-w - 14) + " -14 " + (-w - 10) + " 14L" + (-w + 2) + " 6L" + (-w - 2) + " 28L" + (-w * 0.6) + " 14L" + (-w * 0.6) + " 36L" + (-w * 0.25) + " 18L" + (-w * 0.1) + " 40L" + (w * 0.15) + " 20L" + (w * 0.34) + " 38L" + (w * 0.62) + " 16L" + (w * 0.74) + " 30L" + (w + 2) + " 8L" + (w + 12) + " 16C" + (w + 14) + " -14 " + (w + 14) + " -52 " + (w - 2) + " -96C" + (w - 12) + " -150 " + (-w + 12) + " -150 " + (-w + 2) + " -96Z";
+    var back = "M" + (-w + 2) + " -96C" + (-w - 14) + " -52 " + (-w - 14) + " -14 " + (-w - 18) + " 18L" + (-w + 2) + " 6L" + (-w - 8) + " 32L" + (-w * 0.6) + " 14L" + (-w * 0.7) + " 40L" + (-w * 0.25) + " 18L" + (-w * 0.1) + " 40L" + (w * 0.15) + " 20L" + (w * 0.34) + " 38L" + (w * 0.62) + " 16L" + (w * 0.74) + " 30L" + (w + 2) + " 8L" + (w + 20) + " 20C" + (w + 16) + " -14 " + (w + 14) + " -52 " + (w - 2) + " -96C" + (w - 12) + " -150 " + (-w + 12) + " -150 " + (-w + 2) + " -96Z";
     var dietro = dorso(K, back, w, 30);
     var px = -12, Ir = [[3, -141], [w * 0.3, -136], [w * 0.58, -120], [w * 0.8, -100], [w * 0.84, -76], [w * 0.92, -50]];
     var Or = [[22, T + 2], [w * 0.62, T + 14], [w + 2, -138], [w + 8, -104], [w + 5, -66], [w, -44]];
@@ -4690,10 +4712,10 @@
     var cd = K.lisciaChiusa([[px, T]].concat(Or, rev(Ir2), [[px, -143]], Il, rev(Ol)));
     var s = radice(K, w, px, -126) + massa(K, cd, flusso(Ir2, Or, 5, 15).concat(flusso(Il, Ol, 4, 15)));
     s += K.St("M" + px + " -143C" + (px - 2) + " -154 " + (px - 4) + " -162 " + (px - 2) + " -170", K.hDD, 2, 0.5);
-    var l1 = K.limb([[-w + 8, -118, 24], [-w - 2, -76, 24], [-w - 4, -36, 22], [-w + 2, -6, 12], [-w + 10, 12, 1.5]]);
-    var l2 = K.limb([[-w + 14, -100, 10], [-w + 8, -70, 14], [-w + 8, -40, 14], [-w + 16, -20, 2]]);
-    var r1 = K.limb([[w - 8, -118, 24], [w + 2, -76, 24], [w + 4, -36, 22], [w - 2, -2, 12], [w - 10, 20, 1.5]]);
-    var r2 = K.limb([[w - 14, -100, 10], [w - 8, -70, 14], [w - 8, -36, 14], [w - 16, -10, 2]]);
+    var l1 = K.limb([[-w + 8, -118, 24], [-w - 2, -76, 24], [-w - 6, -36, 22], [-w - 12, -6, 14], [-w - 24, 14, 1.5]]);
+    var l2 = K.limb([[-w + 14, -100, 10], [-w + 6, -64, 14], [-w, -30, 14], [-w - 6, -2, 9], [-w - 12, 8, 1.5]]);
+    var r1 = K.limb([[w - 8, -118, 24], [w + 2, -76, 24], [w + 6, -36, 22], [w + 12, 0, 14], [w + 24, 22, 1.5]]);
+    var r2 = K.limb([[w - 14, -100, 10], [w - 6, -62, 14], [w, -26, 14], [w + 6, 4, 9], [w + 14, 16, 1.5]]);
     var sl = K.Pa(l1, K.U("hg2")) + K.Pa(l2, K.U("hg1")) + K.Pa(r1, K.U("hg1")) + K.Pa(r2, K.U("hg2"));
     sl += "<g clip-path='" + K.clip([l1, l2, r1, r2]) + "'>" + K.El(w + 4, -30, 14, 70, K.soft(K.hDD, 0.45)) + K.El(-w - 4, -50, 6, 50, K.soft(K.hL, 0.35)) + "</g>";
     return { dietro: dietro, fronte: sl + s };
@@ -4718,8 +4740,8 @@
       [[42, -132, 7], [46, -116, 10], [44, -100, 3]]
     ]);
     s += K.El(0, -100, w * 0.85, 4, K.soft(K.hDD, 0.4));
-    var Ln = [[-w + 2, -104, 20], [-w - 1, -70, 26], [-w - 2, -36, 28], [-w + 2, -6, 26], [-w + 10, 10, 20]];
-    var Rn = [[w - 2, -104, 20], [w + 1, -70, 26], [w + 2, -36, 28], [w - 2, -6, 26], [w - 10, 10, 20]];
+    var Ln = [[-w + 2, -104, 20], [-w - 2, -70, 28], [-w - 4, -36, 32], [-w - 2, -8, 32], [-w + 6, 8, 28], [-w + 20, 14, 14], [-w + 26, 15, 3]];
+    var Rn = [[w - 2, -104, 20], [w + 2, -70, 28], [w + 4, -36, 32], [w + 2, -8, 32], [w - 6, 8, 28], [w - 20, 14, 14], [w - 26, 15, 3]];
     var dl = K.limb(Ln), dr = K.limb(Rn);
     var sl = K.Pa(dl, K.U("hg2")) + K.Pa(dr, K.U("hg1"));
     sl += "<g clip-path='" + K.clip([dl, dr]) + "'>" + K.St("M" + (-w - 2) + " -70C" + (-w - 6) + " -40 " + (-w - 4) + " -10 " + (-w) + " 6", K.hL, 3.5, 0.35) + K.El(w + 6, -40, 14, 60, K.soft(K.hDD, 0.45)) + "</g>";
@@ -4830,6 +4852,7 @@
   });
 })();
 // VOCI FATTE: tendina, surfista, caschettolungo, ciuffolaterale, scalati, bobfrangia, bobasimmetrico, sfilato, codinouomo, codinobasso
+// capelli-c6 (5 nov): sagome rese distinte — caschettolungo blocco pari a taglio netto, scalati punte aperte in fuori, tendina bande tirate al viso, surfista ciuffi sporgenti, bobfrangia a cupola con punte in dentro.
 
 
 // ---- capelli-d ----
@@ -5811,7 +5834,7 @@
 
   // ---------- girocollo (nastro nero col ciondolino) ----------
   A.pezzo("collo", "girocollo", function (K) {
-    var N = K.B.nk, hw = N + 1.5, y0 = 231, sag = 5, t = 16, col = "#1d1d25", s = "";
+    var N = K.B.nk, hw = N + 1.5, y0 = 221, sag = 5, t = 16, col = "#1d1d25", s = "";
     var d = "M" + (-hw) + " " + y0 + "Q0 " + (y0 + 2 * sag) + " " + hw + " " + y0 + "L" + (hw + 2) + " " + (y0 + t) + "Q0 " + (y0 + t + 2 * sag + 1) + " " + (-hw - 2) + " " + (y0 + t) + "Z";
     s += K.St("M" + (-hw) + " " + (y0 + t * 0.6) + "Q0 " + (y0 + t * 0.6 + 2 * sag) + " " + hw + " " + (y0 + t * 0.6), "#000", t, 0.14, " transform='translate(1 3)'");
     s += K.Pa(d, K.LG("xa_gi", 0, 0, 1, 0, [[0, "#5a5a6c"], [0.45, col], [1, "#0b0b10"]]), " stroke='#05050a' stroke-width='1' stroke-linejoin='round'");
@@ -6178,7 +6201,7 @@
     }
     s += pallina(-26, CH, 1) + pallina(-62, C, 0.94);
     s += tratto(K, "M-5 -100Q2 -110 12 -116", "#4a8a2a", 2.2) + K.El(-3, -100, 6.4, 6.4, rg(K, [[0, "#ff8a8a"], [0.5, "#e03131"], [1, "#8c1a1a"]], 0.35, 0.3, 0.8), " stroke='#701414' stroke-width='1'") + op(K.El(-5.2, -102, 1.8, 1.4, "#fff"), 0.7);
-    return tieni(K, 12, s, 1.12, null, [10, 100]);
+    return tieni(K, 16, "<g transform='translate(14 14)'>" + s + "</g>", 0.95, null, [24, 100, -4]);
   });
 
   // ---------- lecca ----------
@@ -6226,7 +6249,7 @@
     s += "<g clip-path='" + cl + "'>" + tratto(K, gr, "#5b6472", 1.4, 0.7) + ombraEl(K, 14, 12, 26, 26, "#1e2229", 0.35) + "</g>";
     s += op(K.ElR(-12, -14, 8, 4.5, -40, "#ffffff"), 0.65);
     s += K.El(0, 29, 17, 5, "#aab2c0", " stroke='#2b2f38' stroke-width='1.4'") + "</g>";
-    return tieni(K, 20, s, 1.15, null, [-20, 70, -26, 22]);
+    return tieni(K, 34, "<g transform='translate(0 -16)'>" + s + "</g>", 1.15, null, [-6, 56, -16, 22], true);
   });
 
   // ---------- telefono ----------
@@ -6249,7 +6272,7 @@
       s += "</g>" + K.Pa("M-7 " + (Y0 + 4) + "h14v3.4q-7 2.4 -14 0Z", "#0a0c12");
       s += K.St("M-26 " + (Y0 + 14) + "L-26 " + (Y0 + 70), "#fff", 1.6, 0.35);
     }
-    return tieni(K, 10, "<g transform='translate(-8 44)'>" + s + "</g>", 0.8, null, [-14, 62, -12, 32], true);
+    return tieni(K, 12, "<g transform='translate(16 28)'>" + s + "</g>", 1.1, null, [-4, 62, 2, 32], true);
   });
 
   // ---------- tazza ----------
@@ -6274,7 +6297,7 @@
     if (K.spalle) {   // di spalle si vede il dorso e il retro
       s += K.Pa("M-24 -97L36 -97L36 -7L-24 -7Z", "#f4eedd", " stroke='#b9ae96' stroke-width='1'");
       s += corpo(K, cop, C, 2) + K.Pa("M-34 -100L-22 -100L-22 -4L-34 -4Z", K.scuro(C, 0.25)) + tratto(K, "M-22 -98L-22 -6", K.scuro(C, 0.5), 1.4) + K.Pa(stella(8, -52, 9, 4), K.chiaro(C, 0.55), " opacity='.7'");
-      return tieni(K, 8, "<g transform='translate(-30 28)'>" + s + "</g>", 0.8, null, [-22, 56, -26, 40], true);
+      return tieni(K, 8, "<g transform='translate(36 50)'>" + s + "</g>", 0.9, null, [-22, 56, 20, 40], true);
     }
     s += K.Pa("M-24 -97L42 -97L42 -1L-24 -1Z", lg(K, [[0, "#fffdf4"], [1, "#d8cfb4"]]), " stroke='#a89c7e' stroke-width='1.4'") + tratto(K, "M40 -92L40 -4M38 -96L38 -2", "#b9ae96", 1, 0.7);
     s += corpo(K, cop, C, 2) + K.Pa("M-34 -100L-21 -100L-21 -4L-34 -4Z", K.scuro(C, 0.28)) + tratto(K, "M-21 -97L-21 -7", K.scuro(C, 0.55), 1.4) + tratto(K, "M-27 -94L-27 -10", K.chiaro(C, 0.4), 1.4, 0.6);
@@ -6282,7 +6305,7 @@
     s += K.Pa(stella(10, -40, 13, 5.4), "#ffd84a", " stroke='#b8860b' stroke-width='1.2' stroke-linejoin='round'") + tratto(K, "M-8 -14L28 -14", "#f7e7a8", 2, 0.8);
     s += K.Pa("M24 -4L24 12L29 8L34 12L34 -4Z", "#d6336c", " stroke='#8c1a46' stroke-width='1'");
     s += tratto(K, "M-30 -96L33 -96", "#ffffff", 1.4, 0.4);
-    return tieni(K, 8, "<g transform='translate(-30 28)'>" + s + "</g>", 0.8, null, [-22, 56, -26, 40], true);
+    return tieni(K, 8, "<g transform='translate(36 50)'>" + s + "</g>", 0.9, null, [-22, 56, 20, 40], true);
   });
 
   // ---------- pizza ----------
@@ -6621,7 +6644,7 @@
     return "<g clip-path='" + K.clip(clipD) + "'>" + tratto(K, sc, K.scuro(F, 0.4), 1.4, 0.3) + tratto(K, ch, K.chiaro(F, 0.55), 1.5, 0.45) + "</g>";
   }
   function morbidi(s) { return s.replace(/ stroke='([^']*)' stroke-width='([d.]+)'/g, function (m, c, w) { return " stroke='" + c + "' stroke-opacity='.4' stroke-width='" + n(Math.max(0.7, +w * 0.55)) + "'"; }); }
-  function ani(K, s, sc) { s = morbidi(s); return "<g transform='translate(458 996) scale(" + (sc || 1) + ")'>" + K.El(2, 0, 112, 17, K.soft("#000000", 0.3)) + K.El(0, -3, 74, 9, K.soft("#000000", 0.4)) + s + "</g>"; }
+  function ani(K, s, sc, x) { s = morbidi(s); return "<g transform='translate(" + (x || 374) + " 996) scale(" + (sc || 1) + ")'>" + K.El(2, 0, 112, 17, K.soft("#000000", 0.3)) + K.El(0, -3, 74, 9, K.soft("#000000", 0.4)) + s + "</g>"; }
   function occhioTondo(K, x, y, r) { r *= 0.86; return K.El(x, y - r * 0.5, r * 1.15, r * 0.8, K.soft('#000000', 0.18)) +  K.El(x, y, r, r * 1.1, rg(K, [[0, "#5a4636"], [0.5, "#1c1410"], [1, "#0a0605"]], 0.4, 0.4, 0.7)) + op(K.El(x - r * 0.32, y - r * 0.4, r * 0.34, r * 0.34, "#ffffff"), 0.95) + op(K.El(x + r * 0.3, y + r * 0.35, r * 0.16, r * 0.16, "#ffffff"), 0.6); }
   function baffi(K, F, y, dir) { var c = K.lum(F) > 0.55 ? "#7d8594" : "#ffffff", o = ""; for (var i = 0; i < 3; i++) o += tratto(K, "M" + dir * 34 + " " + (y + i * 5) + "Q" + dir * 62 + " " + (y - 8 + i * 9) + " " + dir * 92 + " " + (y - 10 + i * 13), c, 1.5, 0.85); return o; }
 
@@ -6636,6 +6659,7 @@
     if (sp) { [-1, 1].forEach(function (l) { s += K.El(l * 34, -10, 22, 13, K.chiaro(F, 0.12), " stroke='" + bo + "' stroke-width='1.4'"); }); for (i = 0; i < 4; i++) s += tratto(K, "M" + (-30 + i * 4) + " " + (-110 + i * 18) + "Q0 " + (-100 + i * 18) + " " + (30 - i * 4) + " " + (-110 + i * 18), dF, 4, 0.3); }
     else [-1, 1].forEach(function (l) { s += K.El(l * 24, -10, 21, 14, lF, " stroke='" + bo + "' stroke-width='1.4'") + tratto(K, "M" + (l * 24 - 8) + " -21L" + (l * 24 - 7) + " -14M" + (l * 24 + 8) + " -21L" + (l * 24 + 7) + " -14", bo, 1.2, 0.5); });
     s += pellicce(K, bd, 0, -70, 56, 64, 26, F, 11) + op(K.El(-54, -66, 9, 58, "#ffffff"), 0.16) + ombraEl(K, 0, -122, 56, 20, K.scuro(F, 0.6), 0.42);
+    s += "<g transform='rotate(-11 0 -128)'>";
     var tes = "M-66 -170C-66 -216 -34 -232 0 -232C34 -232 66 -216 66 -170C66 -134 34 -122 0 -122C-34 -122 -66 -134 -66 -170Z";
     [-1, 1].forEach(function (l) {
       var e = "M" + l * 58 + " -204L" + l * 72 + " -272L" + l * 16 + " -228Z";
@@ -6654,7 +6678,8 @@
     } else {
       s += tratto(K, "M-40 -222Q0 -240 40 -222", K.chiaro(F, 0.3), 6, 0.35);
     }
-    return ani(K, s, 0.76);
+    s += "</g>";
+    return ani(K, s, 0.98);
   });
 
   // ---------- cane ----------
@@ -6667,6 +6692,7 @@
     s += "<g clip-path='" + K.clip(bd) + "'>" + ombraEl(K, 54, -58, 26, 76, K.scuro(F, 0.45), 0.32) + (sp ? "" : op(K.El(0, -48, 32, 48, lF), 0.5)) + "</g>";
     [-1, 1].forEach(function (l) { s += K.El(l * (sp ? 36 : 26), -10, 22, 14, sp ? F : lF, " stroke='" + bo + "' stroke-width='1.4'") + (sp ? "" : tratto(K, "M" + (l * 26 - 8) + " -21L" + (l * 26 - 7) + " -14M" + (l * 26 + 8) + " -21L" + (l * 26 + 7) + " -14", bo, 1.2, 0.5)); });
     s += pellicce(K, bd, 0, -62, 60, 56, 24, F, 21) + op(K.El(-58, -60, 9, 52, "#ffffff"), 0.16) + ombraEl(K, 0, -112, 54, 18, K.scuro(F, 0.6), 0.4);
+    s += "<g transform='rotate(-11 0 -118)'>";
     var th = "M-60 -160C-60 -206 -30 -222 0 -222C30 -222 60 -206 60 -160C60 -126 30 -112 0 -112C-30 -112 -60 -126 -60 -160Z";
     s += K.Pa(th, P, " stroke='" + bo + "' stroke-width='1.7' stroke-linejoin='round'");
     s += "<g clip-path='" + K.clip(th) + "'>" + ombraEl(K, 42, -150, 30, 56, K.scuro(F, 0.45), 0.3) + op(K.El(-26, -206, 28, 12, "#ffffff"), 0.2) + "</g>" + pellicce(K, th, 0, -170, 56, 40, 18, F, 22);
@@ -6681,7 +6707,8 @@
       s += tratto(K, "M0 -144V-134M0 -134Q-12 -120 -26 -130M0 -134Q12 -120 26 -130", bo, 2.2) + K.Pa("M-9 -127Q0 -96 9 -127Z", "#ff8fa3", " stroke='#c2456a' stroke-width='1.4' stroke-linejoin='round'");
       s += occhioTondo(K, -25, -180, 8.4) + occhioTondo(K, 25, -180, 8.4) + op(K.El(-25, -198, 7, 3.4, lF), 0.9) + op(K.El(25, -198, 7, 3.4, lF), 0.9);
     }
-    return ani(K, s, 0.82);
+    s += "</g>";
+    return ani(K, s, 1.16);
   });
 
   // ---------- coniglio ----------
@@ -6706,7 +6733,7 @@
       s += K.Pa("M-7 -152Q0 -156 7 -152Q5 -144 0 -142Q-5 -144 -7 -152Z", "#ff7a9c", " stroke='#c2456a' stroke-width='1.2' stroke-linejoin='round'") + tratto(K, "M0 -142V-135M0 -135Q-9 -127 -17 -134M0 -135Q9 -127 17 -134", bo, 2);
       s += K.Pa("M-7 -134h6v14h-6ZM1 -134h6v14h-6Z", "#ffffff", " stroke='#b8bfcc' stroke-width='1.2' stroke-linejoin='round'") + baffi(K, F, -146, -1) + baffi(K, F, -146, 1);
     }
-    return ani(K, s, 0.8);
+    return ani(K, s, 0.9);
   });
 
   // ---------- pulcino ----------
@@ -6724,7 +6751,7 @@
       s += K.Pa("M-12 -76L12 -76L0 -56Z", lg(K, [[0, "#ffb347"], [1, "#e8710a"]], 0, 0, 0, 1), " stroke='#a8470a' stroke-width='1.6' stroke-linejoin='round'");
       s += op(K.Pa("M-12 -76Q0 -80 12 -76L0 -70Z", "#ffc268"), 0.8);
     } else s += tratto(K, "M0 -26L-18 -14M0 -26L0 -10M0 -26L18 -14", bo, 3);
-    return ani(K, s, 1.08);
+    return ani(K, "<g transform='rotate(-8 0 -24)'>" + s + "</g>", 1.3, 366);
   });
 
   // ---------- pappagallo ----------
@@ -6751,7 +6778,13 @@
       [-1, 1].forEach(function (l) { s += K.El(l * 20, -246, 16, 14, "#fff7ee", " stroke='#caa89a' stroke-width='1.4'") + K.El(l * 20, -246, 6.6, 6.6, "#1a0e0a") + op(K.El(l * 18, -249, 2.2, 2.2, "#ffffff"), 0.95); });
       s += K.Pa("M-18 -238C-20 -214 -8 -192 0 -186C8 -192 20 -214 18 -238Q0 -250 -18 -238Z", lg(K, [[0, "#f0ece4"], [0.55, "#bfb8ab"], [1, "#6c6558"]]), " stroke='#3a3630' stroke-width='1.4' stroke-linejoin='round'") + K.Pa("M-9 -198Q0 -186 9 -198Q0 -194 -9 -198Z", "#3a3630") + op(K.El(-6, -226, 4, 10, "#ffffff"), 0.6);
     } else s += tratto(K, "M-30 -276Q0 -296 30 -276", K.chiaro(R, 0.4), 5, 0.4);
-    return ani(K, "<g transform='scale(1.26 1)'>" + s + "</g>", 0.62);
+    // appollaiato su un trespolo di legno accanto all'avatar, a mezza altezza, con la testa girata verso di lui
+    var py = 640, W = "#8a5a32", Wd = "#4e2f18", st = "";
+    st += K.El(0, 0, 54, 9, K.soft("#000000", 0.4)) + K.Pa("M-46 0Q-46 -14 -30 -15L30 -15Q46 -14 46 0Z", lg(K, [[0, "#b07a48"], [0.5, W], [1, Wd]]), " stroke='" + Wd + "' stroke-opacity='.5' stroke-width='1.4' stroke-linejoin='round'");
+    st += K.Pa("M-6 -12L6 -12L5 " + (-(996 - py)) + "L-5 " + (-(996 - py)) + "Z", lg(K, [[0, "#b98250"], [0.5, W], [1, Wd]]), " stroke='" + Wd + "' stroke-opacity='.5' stroke-width='1.2'");
+    st += K.Pa("M-52 " + (-(996 - py) - 3) + "L56 " + (-(996 - py) - 3) + "L56 " + (-(996 - py) + 9) + "L-52 " + (-(996 - py) + 9) + "Z", lg(K, [[0, "#b98250"], [0.5, W], [1, Wd]], 0, 0, 0, 1), " stroke='" + Wd + "' stroke-opacity='.5' stroke-width='1.2' stroke-linejoin='round'");
+    var bird = morbidi(s), ptop = -(996 - py) - 3;
+    return "<g transform='translate(414 996)'>" + st + "<g transform='translate(2 " + (ptop + 8) + ") rotate(-9) scale(.92)'><g transform='scale(1.26 1)'>" + bird + "</g></g></g>";
   });
 
 })();
@@ -6762,6 +6795,9 @@
    animale (5): gatto, cane, coniglio, pulcino, pappagallo (tutti anche di spalle, K.spalle)
    Note: seduto il motore non disegna le cose in mano (braccia davanti): niente da fare nel pezzo. Pulcino e pappagallo: colori fissi come prima (colAnimale non li cambia).
    Nessun pezzo da sostituire con un simile. */
+/* SECONDO GIRO (extra6, 5 nov 2026): animali piu grandi e vicini al piede (gatto e cane alzano la testa verso l'avatar, pulcino inclinato, coniglio piu grande);
+   pappagallo su un trespolo di legno a mezza altezza accanto all'avatar; telefono grande con lo schermo libero; microfono con la testa sopra il pugno;
+   libro tenuto per il dorso e appeso fuori dal fianco; gelato staccato dal corpo. Girocollo (extra-a.js): y0 231 -> 221. Copie di sicurezza in aiutanti/extra6/*.bak.js */
 
 
 // ---- varie ----
