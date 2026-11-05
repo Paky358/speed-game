@@ -24,6 +24,7 @@
 
   // ---- i PEZZI (una riga ciascuno) ----
   pezzo("studio", "js/studio.js");   // lo studio del game show, in comune
+  pezzo("avatar-a", "js/omino-a.js js/omino-a-pezzi.js");   // gli avatar «illustrati» (strada A): solo per chi li vede (AVATAR_A in core.js)
   pezzo("timeline", "data/eventi-storia.js data/eventi-invenzioni.js data/eventi-calcio.js data/eventi-rap.js data/eventi-cinema.js data/eventi-musica.js data/eventi-tv.js data/eventi-giochi.js data/eventi-sport.js data/eventi-italia.js data/linea-foto.js js/games/timeline.js", "studio");
   pezzo("asta", "data/asta-carte.js data/asta-pizza.js data/asta-panino.js data/asta-rapina.js data/asta-supereroi.js data/asta-appuntamento.js data/asta-giardino.js data/asta-vacanza.js data/asta-coinquilino.js data/asta-calcetto.js data/asta-palestra.js data/asta-capodanno.js data/asta-universita.js data/asta-roadtrip.js data/asta-playstation.js data/asta-halloween.js data/asta-natale.js data/asta-matrimonio.js data/asta-gita.js data/asta-trasloco.js data/asta-karaoke.js data/asta-campeggio.js data/asta-reality.js data/asta-tempo.js data/asta-icone.js data/asta-fanta.js data/fanta-quotazioni.js data/fanta-statistiche.js data/fanta-squadre.js js/asta-sala-arte.js js/asta-stadio-arte.js js/asta-maglie.js js/games/asta.js");   // L'Asta e la Mini Asta Fantacalcio
   pezzo("nomicose", "data/ncc-categorie.js js/games/nomicoseecitta.js", "studio");

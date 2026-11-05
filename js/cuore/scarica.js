@@ -197,6 +197,7 @@
   SG.giocoPronto = function (id) { return giocoPronto(cuore.giocoDa(id)); };
 
   // ---- al cuore: quello di questo pezzo che usano il cuore e gli altri pezzi ----
+  cuore.caricaPezzo = caricaPezzo;   // (gli avatar illustrati: pezzo "avatar-a")
   cuore.aspettaGioco = aspettaGioco; cuore.giocoPronto = giocoPronto; cuore.precarica = precarica; cuore.scaricaGioco = scaricaGioco;
   cuore.unisciScheda = unisciScheda; cuore.schedeVecchie = VECCHIE;
 })();
