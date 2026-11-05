@@ -174,7 +174,7 @@ const PLASTICO = { tx:62, ty:7 };
 const TELECAMERE_BASE = [
   { nome:'Cortile', x:28*T, y:18.6*T, vx:33*T, vy:21.5*T },
   { nome:'Corridoio ovest', x:12.9*T, y:22*T, vx:13*T, vy:22*T },
-  { nome:'Salone delle feste', x:28.4*T, y:3.6*T, vx:33*T, vy:7*T },
+  { nome:'Salone delle feste', x:26.3*T, y:8.5*T, vx:33*T, vy:7*T },   // (5/11: sul muro di sinistra, sotto la porta: sul muro alto finiva sopra la tavola o in mezzo al lampadario)
   { nome:'Molo', x:46.6*T, y:38.6*T, vx:52*T, vy:41*T },
 ];
 const QUADRO = { id:'quadro', tx:23, ty:43, nome:'Ripara il quadro delle luci', gioco:'tieni' };
@@ -487,6 +487,7 @@ const BERSAGLIO = { veggente:'vivo', medico:'vivo', sceriffo:'vivo', segugio:'vi
 // dove si ripara ogni sabotaggio
 const STAZ_RIP = { luci:QUADRO, console:CONSOLE, chiusaA:CHIUSA_A, chiusaB:CHIUSA_B };
 const TOLL = 1.4;              // margine per chi è un po' in ritardo sulla rete
+const CREDITO_S = 1;    // quanta corsa si può «mettere da parte» quando i passi arrivano a gruppi (vedi muovi)
 const VEL_ANIMA = 1.7;  // le anime vanno più veloci: seguono meglio la partita
 const R_PARLA = 7*T;    // la chat di prossimità: si sente entro questo raggio, se non ci sono muri in mezzo
 const R_MURO = 3*T;     // attraverso un muro si sente solo da molto vicino, e più piano
@@ -647,7 +648,7 @@ class Partita {
     // i compiti in più della Sentinella le servono per le telecamere: non contano nella barra di tutti
     if(g.ruolo==='sentinella') for(let i=0;i<this.imp.sentinella.extra;i++) g.compiti.push({ post:pick(POSTAZIONI), fatto:false, finto:false, extra:true });
   }
-  teletrasporta(p,x,y){ p.x=x; p.y=y; p.ep++; p.tPos=this.t; p.path=[]; p.meta=null; if(!p.bot) this.ev.privato(p.id, { t:'tp', x:Math.round(x), y:Math.round(y), ep:p.ep }); }
+  teletrasporta(p,x,y){ p.x=x; p.y=y; p.ep++; p.tPos=this.t; p.credito=0; p.path=[]; p.meta=null; if(!p.bot) this.ev.privato(p.id, { t:'tp', x:Math.round(x), y:Math.round(y), ep:p.ep }); }
   inCerchio(){
     const vivi=this.gioc.filter(p=>!p.uscito), n=vivi.length;
     vivi.forEach((p,i)=>{ const a=i/n*Math.PI*2-Math.PI/2; p.dir=a+Math.PI; p.attesa=0; p.azione=null; this.teletrasporta(p, FONTANA.x+Math.cos(a)*3.6*T, FONTANA.y+Math.sin(a)*3.6*T); });
@@ -777,10 +778,16 @@ class Partita {
     const p=this.per(id); if(!p||p.bot||(this.fase!=='gioco'&&this.fase!=='atrio')||p.uscito) return;
     if(m.ep!==p.ep){ this.ritp(p); return; }
     if(p.inBotola!=null) return;   // dentro una botola non si cammina
-    const x=+m.x, y=+m.y; if(!isFinite(x)||!isFinite(y)) return;
-    const dt=Math.max(0.05, this.t-p.tPos), max=this.VEL*(p.fantasma?VEL_ANIMA:1)*dt*1.6+8, d=Math.hypot(x-p.x,y-p.y);
-    if(d>max || x<T || y<T || x>(this.M.GW-1)*T || y>(this.M.GH-1)*T || (!p.fantasma && !libero(this.M,x,y))){ this.correggi(p); return; }
+    let x=+m.x, y=+m.y; if(!isFinite(x)||!isFinite(y)) return;
+    // IL CREDITO DI STRADA (5/11). Prima si guardava il tempo fra due passi ARRIVATI: ma la rete li trattiene e poi li consegna a gruppi, e due passi arrivati
+    // a 20 ms l'uno dall'altro sembravano una corsa impossibile. L'host rimandava indietro chi camminava (un «tp»), e sul suo telefono si vedeva lo strappo.
+    // Ora conta quanta strada si poteva fare: il credito cresce col tempo (fino a CREDITO_S secondi di corsa) e ogni passo ne consuma
+    const vmax=this.VEL*(p.fantasma?VEL_ANIMA:1)*1.6, dt=Math.max(0.05, this.t-p.tPos), cred=Math.min(vmax*CREDITO_S, (p.credito||0)+vmax*dt), d=Math.hypot(x-p.x,y-p.y);
+    // il telefono manda la posizione arrotondata: lungo un muro mezzo pixel basta a finire «dentro». Si accetta il punto libero più vicino entro 1 pixel
+    if(!p.fantasma && !libero(this.M,x,y)){ const q=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]].find(o=>libero(this.M,x+o[0],y+o[1])); if(q){ x+=q[0]; y+=q[1]; } }
+    if(d>cred+8 || x<T || y<T || x>(this.M.GW-1)*T || y>(this.M.GH-1)*T || (!p.fantasma && !libero(this.M,x,y))){ this.correggi(p); return; }
     if(p.bloccatoFine>this.t && d>4){ this.correggi(p); return; }
+    p.credito=Math.max(0, cred-d);
     if(p.rianima && Math.hypot(x-p.rianima.x, y-p.rianima.y)>0.6*T){ const pu=p.rianima.pulisci; p.rianima=null; this.priv(p); this.avviso(p, pu ? 'Ti sei mosso: la lanterna spenta è rimasta lì.' : 'Ti sei mosso: la lanterna non si è riaccesa.'); }
     p.x=x; p.y=y; p.dir=+m.d||0; p.muove=!!m.m; p.tPos=this.t;
   }
@@ -4848,6 +4855,34 @@ for(let i=0;i<NOMI_MAX;i++) NOMI_C.push({ id:'', nome:'', col:'', x:0, y:0, a:1,
 function teliAzzera(){ TELI = {}; STESI = {}; NOMI = {}; nNomi = 0; NOMI_SU = {}; }
 function tavoletta(w, h){ const cv = document.createElement('canvas'), q = RES; cv.width = Math.ceil(w*q); cv.height = Math.ceil(h*q); return { cv, c:cv.getContext('2d'), res:q, t:-9, g:false }; }
 
+// ---- LE TELECAMERE SUI MURI (5/11, Mario: «devono esserci fisicamente sui muri nelle stanze in cui sono, che lampeggiano se uno le sta guardando e sono spente
+// se non le guardano»). Dove si attacca ognuna lo dice la pianta, una volta sola: il muro sopra (se ne vede la faccia), se no quello a sinistra o a destra
+// (quello sotto, dall'alto, non si vede). Lontana dai muri (una telecamera della Sentinella in mezzo alla stanza) sta su un treppiede.
+// m: { x, y } il perno del corpo; ax, ay il punto sul muro; px, py il punto del pavimento davanti (per sapere chi la vede); ang: dove guarda; k: grandezza
+const CAM_MONTA = new Map();
+function camMonta(M, x, y, base){
+  const chiave = x + '|' + y + '|' + (base ? 1 : 0); let m = CAM_MONTA.get(chiave); if(m) return m;
+  const sol = (tx, ty) => solidoA(M, (tx + 0.5) * T, (ty + 0.5) * T), tx = Math.floor(x / T), ty = Math.floor(y / T), k = base ? 1 : 0.72;
+  let lato = null, ax = x, ay = y, sulMuro = false;
+  if(sol(tx, ty)){ let t2 = ty; while(t2 < ty + 4 && sol(tx, t2)) t2++; lato = 'n'; ay = t2 * T; sulMuro = true; }   // il punto è già sulla faccia del muro (come le fisse del Cortile e del Salone): resta lì
+  else if(sol(tx, ty - 1) && y - ty * T < 1.25 * T){ lato = 'n'; ay = ty * T; }
+  else {
+    const o = sol(tx - 1, ty) ? x - tx * T : Infinity, e = sol(tx + 1, ty) ? (tx + 1) * T - x : Infinity;
+    if(Math.min(o, e) < 1.25 * T){ if(o <= e){ lato = 'o'; ax = tx * T; } else { lato = 'e'; ax = (tx + 1) * T; } }
+  }
+  // il perno: sulla faccia del muro di sopra, un po' in alto; sul bordo di quelli di lato; sul treppiede, all'altezza di una persona
+  const px = lato === 'o' ? ax + 0.55 * T : lato === 'e' ? ax - 0.55 * T : ax, py = lato === 'n' ? ay + 0.55 * T : ay;
+  const cx = lato === 'o' ? ax + 4 * k : lato === 'e' ? ax - 4 * k : ax, cy = sulMuro ? Math.min(y - 0.75 * T, ay - 0.42 * T) : lato === 'n' ? ay - 0.42 * T : lato ? ay - 0.5 * T : ay - 0.9 * T * k;
+  // dove guarda: le fisse verso il loro punto; le altre (e quella del corridoio, che guarda sé stessa) dritte nella stanza
+  const b = base ? TELECAMERE_BASE.find(c => Math.abs(c.x - x) < 2 && Math.abs(c.y - y) < 2) : null;
+  let ang = lato === 'o' ? 0.35 : lato === 'e' ? Math.PI - 0.35 : lato ? Math.PI / 2 : Math.PI / 2 - 0.6;   // (sul treppiede guarda in basso a destra: si capisce che è una telecamera)
+  if(b && Math.hypot(b.vx - cx, b.vy - cy) > 1.2 * T) ang = Math.atan2(b.vy - cy, b.vx - cx);
+  m = { x: cx, y: cy, ax, ay, px, py, lato, ang, k, base: !!base };
+  CAM_MONTA.set(chiave, m); return m;
+}
+// accesa: un secondo lungo, la lucina accesa per poco più di metà (chi non vuole movimento: fissa)
+function camLampo(t, ridotto){ return ridotto ? 1 : (t % 1) < 0.56 ? 1 : 0; }
+
 class Pittore {
   constructor(cv){
     this.cv = cv; this.ctx = cv.getContext('2d');
@@ -4871,6 +4906,53 @@ class Pittore {
     this.SCALA = Math.max(0.6, Math.min(1.6, Math.min(w,h)/(13*T)));
   }
   ell(x,y,rx,ry,rot){ const c=this.ctx; c.beginPath(); c.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2); }
+  // il cono di luce tenue della telecamera accesa, sul pavimento: parte dalla lente e si apre verso dove guarda
+  camCono(m, t){
+    const c=this.ctx, L=4.4*T*m.k, a=0.42, fx=m.x+Math.cos(m.ang)*13*m.k, fy=m.y+Math.sin(m.ang)*13*m.k, resp=0.85+0.15*Math.sin(t*2.4);
+    const g=c.createRadialGradient(fx,fy,0,fx,fy,L); g.addColorStop(0,`rgba(255,72,64,${(0.2*resp).toFixed(3)})`); g.addColorStop(0.55,`rgba(255,72,64,${(0.08*resp).toFixed(3)})`); g.addColorStop(1,'rgba(255,72,64,0)');
+    c.fillStyle=g; c.beginPath(); c.moveTo(fx,fy); c.arc(fx,fy,L,m.ang-a,m.ang+a); c.closePath(); c.fill();
+  }
+  // il corpo: piastra di ferro sul muro (o treppiede), braccio, corpo di lamiera brunita con la visiera, lente di vetro, lucina rossa dietro
+  camCorpo(m, accesa, t){
+    const c=this.ctx, k=m.k, ca=Math.cos(m.ang), sa=Math.sin(m.ang), on=accesa && camLampo(t, this.ridotto);
+    c.save(); c.lineJoin='round'; c.lineCap='round';
+    // l'ombra sul muro e sotto
+    const og=c.createRadialGradient(m.x+2*k,m.y+7*k,0,m.x+2*k,m.y+7*k,13*k); og.addColorStop(0,'rgba(0,0,0,.42)'); og.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=og; this.ell(m.x+2*k,m.y+7*k,14*k,8*k); c.fill();
+    if(m.lato==='n'){ c.fillStyle='#24211e'; c.fillRect(m.x-4.5*k,m.y-6*k,9*k,11*k); c.fillStyle='#4a443c'; c.fillRect(m.x-4.5*k,m.y-6*k,9*k,2*k); c.fillStyle='#8c7a58'; this.ell(m.x-2.6*k,m.y+3*k,0.9*k,0.9*k); c.fill(); this.ell(m.x+2.6*k,m.y+3*k,0.9*k,0.9*k); c.fill(); }
+    else if(m.lato){ const x0=m.lato==='o'?m.x-5*k:m.x; c.fillStyle='#24211e'; c.fillRect(x0,m.y-5*k,5*k,10*k); c.fillStyle='#4a443c'; c.fillRect(x0,m.y-5*k,5*k,2*k); }   // (la piastra dalla parte del muro)
+    else { const ly=m.y+0.9*T*k; c.strokeStyle='#6a6158'; c.lineWidth=2.2*k; c.beginPath(); c.moveTo(m.x,m.y+2*k); c.lineTo(m.x-8*k,ly); c.moveTo(m.x,m.y+2*k); c.lineTo(m.x+8*k,ly); c.moveTo(m.x,m.y+2*k); c.lineTo(m.x,ly+3*k); c.stroke(); }   // (il treppiede)
+    // il braccio, dal muro al perno
+    c.strokeStyle='#3a3530'; c.lineWidth=2.6*k; c.beginPath(); c.moveTo(m.x,m.y); c.lineTo(m.x+ca*4*k,m.y+sa*4*k); c.stroke();
+    // il corpo, girato verso dove guarda: 22 di lungo, 10 di largo (più piccolo quello della Sentinella)
+    c.translate(m.x+ca*9*k, m.y+sa*9*k); c.rotate(m.ang);
+    const Lb=22*k, Wb=10*k;
+    const gb=c.createLinearGradient(0,-Wb/2,0,Wb/2); gb.addColorStop(0,'#625d55'); gb.addColorStop(0.45,'#38342f'); gb.addColorStop(1,'#1a1816');
+    c.fillStyle=gb; c.beginPath(); if(c.roundRect) c.roundRect(-Lb*0.45,-Wb/2,Lb,Wb,2.6*k); else c.rect(-Lb*0.45,-Wb/2,Lb,Wb); c.fill();
+    c.strokeStyle='rgba(0,0,0,.6)'; c.lineWidth=0.9; c.stroke();
+    // la visiera sopra (più chiara, sporge sul davanti)
+    const gv=c.createLinearGradient(0,-Wb/2-1.5*k,0,0); gv.addColorStop(0,'#857d70'); gv.addColorStop(1,'#48423a');
+    c.fillStyle=gv; c.beginPath(); if(c.roundRect) c.roundRect(-Lb*0.38,-Wb/2-1.6*k,Lb*0.98,Wb*0.48,2*k); else c.rect(-Lb*0.38,-Wb/2-1.6*k,Lb*0.98,Wb*0.48); c.fill();
+    c.fillStyle='rgba(255,240,210,.18)'; c.fillRect(-Lb*0.34,-Wb/2-1.2*k,Lb*0.8,1*k);
+    // la lente: ghiera, vetro scuro; accesa, un riflesso rosso dentro
+    const lx=Lb*0.55+0.6*k;
+    c.fillStyle='#141210'; this.ell(lx,0,2.6*k,Wb*0.42); c.fill();
+    c.strokeStyle='#8f8a80'; c.lineWidth=0.9*k; c.stroke();
+    const gl=c.createRadialGradient(lx+0.6*k,-0.8*k,0,lx,0,Wb*0.4); gl.addColorStop(0,accesa?'rgba(255,90,80,.95)':'rgba(70,80,96,.9)'); gl.addColorStop(0.5,accesa?'rgba(120,16,20,.95)':'#0b0d12'); gl.addColorStop(1,'#050608');
+    c.fillStyle=gl; this.ell(lx,0,1.9*k,Wb*0.32); c.fill();
+    c.fillStyle='rgba(255,255,255,.75)'; this.ell(lx+0.4*k,-1.4*k,0.5*k,0.8*k); c.fill();
+    // la lucina dietro: spenta scura; accesa, rossa che lampeggia
+    c.fillStyle=on?'#ff3a32':accesa?'#5a1514':'#2c1716'; this.ell(-Lb*0.3,Wb*0.2,1.5*k,1.5*k); c.fill();
+    c.restore();
+  }
+  // la lucina che lampeggia, sopra tutto (anche sopra il buio): il punto e il suo bagliore
+  camLuce(m, t){
+    if(!camLampo(t, this.ridotto)) return;
+    const c=this.ctx, k=m.k, Lb=22*k, Wb=10*k, x=m.x+Math.cos(m.ang)*9*k+Math.cos(m.ang)*(-Lb*0.3)-Math.sin(m.ang)*Wb*0.2, y=m.y+Math.sin(m.ang)*9*k+Math.sin(m.ang)*(-Lb*0.3)+Math.cos(m.ang)*Wb*0.2;
+    c.save(); c.globalCompositeOperation='lighter';
+    const g=c.createRadialGradient(x,y,0,x,y,15*k); g.addColorStop(0,'rgba(255,70,60,.75)'); g.addColorStop(0.35,'rgba(255,50,40,.25)'); g.addColorStop(1,'rgba(255,40,30,0)');
+    c.fillStyle=g; this.ell(x,y,15*k,15*k); c.fill(); c.restore();
+    c.fillStyle='#ffd2cc'; this.ell(x,y,1.2*k,1.2*k); c.fill();
+  }
   // particelle: tipo 'polvere' | 'fumo' | 'scintilla' | 'goccia' | 'fiamma' | 'zampa'
   sparpaglia(tipo, x, y, n, opz){
     opz = opz || {};
@@ -4947,11 +5029,8 @@ class Pittore {
       this.postazione({ tx:QUADRO.tx, ty:QUADRO.ty, tipo:'quadro' },!!S.buio,t);
       [[CHIUSA_A,0],[CHIUSA_B,1]].forEach(([q,i])=>this.postazione({ tx:q.tx, ty:q.ty, tipo:'chiusa' }, !!(S.chiuse&&S.chiuse[i]), t));
       if(S.botole) for(const e of ESTREMI){ const x=centro(e.tx), y=centro(e.ty); c.fillStyle='#121019'; this.ell(x,y,12,12); c.fill(); c.strokeStyle='#4a3b52'; c.lineWidth=2; c.stroke(); c.beginPath(); c.moveTo(x-8,y); c.lineTo(x+8,y); c.moveTo(x,y-8); c.lineTo(x,y+8); c.stroke(); }
-      // le telecamere (fisse e della Sentinella): la lucina rossa lampeggia quando qualcuno guarda gli schermi
-      for(const k of S.telecamere||[]){ const x=k[0], y=k[1];
-        c.fillStyle='#1c1f26'; c.fillRect(x-7,y-20,14,9); c.fillStyle='#3a3f4c'; c.fillRect(x-2,y-11,4,8);
-        c.fillStyle='#8fb6d8'; this.ell(x+5,y-15.5,2.6,2.6); c.fill();
-        if(S.osservate && Math.sin(t*8)>0){ c.fillStyle='rgba(255,60,70,.95)'; this.ell(x-4,y-17,2,2); c.fill(); } }
+      // le telecamere (fisse e della Sentinella): sul pavimento il cono di luce di quelle accese, sotto mobili e persone. Il corpo si disegna dopo, sopra chi passa
+      if(S.osservate) for(const k of S.telecamere||[]){ const m=camMonta(M,k[0],k[1],k[2]); if(m.x>vx0-3*T && m.x<vx1+3*T && m.y>vy0-3*T && m.y<vy1+3*T) this.camCono(m,t); }
       // le lucciole della serra
       const serra=M.stanze.find(st=>st.nome==='Serra');
       if(serra) for(let i=0;i<9;i++){ const x=(serra.x+1+((i*37)%11)+Math.sin(t*0.7+i)*0.8)*T, y=(serra.y+1+((i*53)%11)+Math.cos(t*0.9+i*2)*0.8)*T, a=0.4+0.4*Math.sin(t*3+i*1.7); const g=c.createRadialGradient(x,y,0,x,y,9); g.addColorStop(0,`rgba(210,255,140,${a})`); g.addColorStop(1,'rgba(210,255,140,0)'); c.fillStyle=g; c.fillRect(x-9,y-9,18,18); }
@@ -5015,7 +5094,8 @@ class Pittore {
         const a=0.4+0.15*Math.sin(t*3+p.x); c.fillStyle='rgba(40,110,150,.28)'; this.ell(p.x,p.y+T*0.3,T*0.46,T*0.16); c.fill(); c.strokeStyle=`rgba(215,240,252,${a})`; c.lineWidth=1.4; this.ell(p.x,p.y+T*0.3,T*0.46,T*0.16); c.stroke(); }
       if(S.scudi && S.scudi.indexOf(p.id)>=0 && !p.fantasma){ const a=0.35+0.15*Math.sin(t*3); c.strokeStyle=`rgba(120,220,255,${a+0.25})`; c.lineWidth=2; this.ell(p.x,p.y-T*0.45,T*0.62,T*0.85); c.stroke(); c.fillStyle=`rgba(120,220,255,${a*0.25})`; c.fill(); }
     }
-    if(io.mostra && !io.fantasma && coperto) this.persona(io,t,{ alfa:0.55, nome:false });   // la propria sagoma trasparente: dietro un pilastro o uno scaffale chi gioca non si perde (solo la sua, gli altri restano nascosti)
+    if(io.mostra && !io.fantasma && coperto) this.persona(io,t,{ alfa:0.55, nome:false });
+    if(S.palazzo) for(const k of S.telecamere||[]){ const m=camMonta(M,k[0],k[1],k[2]); if(m.x>vx0 && m.x<vx1 && m.y>vy0 && m.y<vy1) this.camCorpo(m,!!S.osservate,t); }   // la propria sagoma trasparente: dietro un pilastro o uno scaffale chi gioca non si perde (solo la sua, gli altri restano nascosti)
     this.scriviNomi(dt);
     // chi è fuori dalla luce o dallo schermo: la stoffa non si simula, ma chi torna a guardare trova il telo giusto
     if(S.scala==null){
@@ -5079,6 +5159,14 @@ class Pittore {
         c.globalAlpha=d<R*0.8?1:0.75; this.postazione(p,true,t); c.globalAlpha=1;
         if(d<T*1.7){ const q=17*(1.06+0.06*Math.sin(t*10.5)); c.strokeStyle=`rgba(${ORO},.95)`; c.lineWidth=2.2; c.beginPath(); c.arc(px,py,q,0,Math.PI*2); c.stroke(); }
       }
+      // le telecamere si capiscono anche al buio, da dentro la stanza: fuori dalla luce una sagoma scura; accese, la lucina rossa che lampeggia col suo bagliore
+      if(S.palazzo) for(const k of S.telecamere||[]){
+        const m=camMonta(M,k[0],k[1],k[2]); if(m.x<vx0 || m.x>vx1 || m.y<vy0 || m.y>vy1) continue;
+        const dentro=Math.hypot(m.x-io.x,m.y-io.y)<R*0.7;
+        if(!dentro && !vede(M,io.x,io.y,m.px,m.py)) continue;
+        if(!dentro){ c.globalAlpha=0.5; this.camCorpo(m,!!S.osservate,t); c.globalAlpha=1; }
+        if(S.osservate) this.camLuce(m,t);
+      }
       // pulviscolo nella luce
       for(const d of this.polvere){ d.f+=dt*d.v; const ang=d.x*Math.PI*2, rr=d.y*R*0.8, px=io.x+Math.cos(ang+d.f*0.2)*rr, py=io.y+Math.sin(ang+d.f*0.2)*rr - (d.f*6%20); c.fillStyle=`rgba(255,235,190,${0.15+0.15*Math.sin(d.f*2)})`; c.fillRect(px,py,1.6,1.6); }
       if(S.traccia){ const tg=S.altri.find(p=>p.id===S.traccia); if(tg) this.freccia(io, { x:tg.x, y:tg.y, col:'#cba2ff' }, t); }
@@ -5106,7 +5194,7 @@ class Pittore {
     if(S.cctv){ // l'aspetto delle telecamere: verde scuro, righe, scritta
       c.fillStyle='rgba(40,90,60,.22)'; c.fillRect(0,0,W,H);
       c.fillStyle='rgba(0,0,0,.18)'; for(let y=(t*40)%4;y<H;y+=4) c.fillRect(0,y,W,1.5);
-      c.font=`700 ${11*this.DPR}px ${FONT}`; c.textAlign='left'; c.fillStyle='rgba(220,255,230,.9)'; c.fillText(S.cctv, 6*this.DPR, 15*this.DPR);
+      if(S.cctvScritta!==false){ c.font=`700 ${11*this.DPR}px ${FONT}`; c.textAlign='left'; c.fillStyle='rgba(220,255,230,.9)'; c.fillText(S.cctv, 6*this.DPR, 15*this.DPR); }   // (nel pannello il nome è una scritta sopra lo schermo)
       if(Math.sin(t*4)>0){ c.fillStyle='rgba(255,70,80,.95)'; this.ell(W-12*this.DPR, 11*this.DPR, 4*this.DPR, 4*this.DPR); c.fill(); }
     }
     // a fotogrammi alterni si prepara un pezzo vicino che manca; nella sala d'attesa, quelli del palazzo intorno alla fontana
@@ -6741,7 +6829,55 @@ function host(t) {
   // Le posizioni si ripetono da sole e cedono il posto agli altri messaggi: sul broker al massimo 8 al secondo, 4 se tutti hanno il filo; se nell'ultimo secondo ne sono già partiti 9 si salta, ma mai per più di 330 ms
   var tuttiFilo = false, guardaT = 0, posCr = 0, posT = 0, partiti = [];
   function brokerLibero() { var ora = Date.now(); while (partiti.length && ora - partiti[0] >= 1000) partiti.shift(); return partiti.length < 9 || ora - posT >= 330; }
+  // IL PACCHETTO (5/11, dopo la partita in 4 di Mario). Ogni messaggio dell'host era una spedizione a sé: con 3 ospiti, tra posizioni, foto, privati, ricevute, avvisi,
+  // ripetizioni e voce, si passava il tetto di EMQX e i messaggi arrivavano in ritardo o si perdevano, per tutti. Ora quello che va sul broker si mette in fila
+  // e parte insieme, in un messaggio solo: al massimo PK_AL_SEC al secondo, qualunque sia il numero dei giocatori. Le posizioni viaggiano dentro lo stesso
+  // pacchetto, ogni POS_MS (più di rado se tutti hanno il filo diretto o se nessuno si muove). Una mossa urgente parte subito se c'è un gettone libero.
+  // Lo fa solo se tutti i telefoni lo sanno aprire (lo dicono nel «join» con pk:1): con un telefono della versione di prima si torna ai messaggi uno per uno.
+  var PK_AL_SEC = 7, PK_GETTONI = 1.5, fila = [], gettoni = PK_GETTONI, gettoniT = Date.now(), posPronta = null, posUltima = "", posBrokerT = 0, nPk = 0;
+  function pacchetti() {
+    if (window.LT_PROVA && window.LT_NOPK) return false;   // (solo per le prove: come la versione di prima)
+    for (var i = 0; i < H.players.length; i++) { var p = H.players[i]; if (!p.bot && p.id !== IO && !p.via && !p.pk) return false; }
+    for (var j = 0; j < H.guarda.length; j++) if (!H.guarda[j].pk) return false;
+    return true;
+  }
+  // ogni quanto le posizioni sul broker: 160 ms se qualcuno le aspetta solo da lì (un gettone su 7 resta per le mosse urgenti), 300 se tutti hanno il filo (sul broker sono la riserva), 600 se nessuno si muove
+  function posOgni(fermi) { return fermi ? 600 : tuttiFilo ? 300 : 160; }
+  function spedisci() {
+    if (!rete || fermo) return;
+    var ora = Date.now(); gettoni = Math.min(PK_GETTONI, gettoni + (ora - gettoniT) / 1000 * PK_AL_SEC); gettoniT = ora;
+    if (fila.length && !pacchetti()) { var vecchi = fila; fila = []; posPronta = null; vecchi.forEach(function (x) { alBrokerHost(x); }); return; }   // (è appena entrato un telefono della versione di prima: uno per uno)
+    if ((!fila.length && !posPronta) || gettoni < 1) return;
+    gettoni -= 1;
+    var l = fila; fila = [];
+    if (posPronta) { l.push(posPronta); posPronta = null; posBrokerT = ora; }   // (in fondo: il suo numero v dice l'ultima foto, che è già qui sopra)
+    var m = l.length === 1 ? l[0] : { t: "pk", l: l, n: ++nPk };
+    alBrokerHost(m);
+  }
+  var alBrokerHost = null;   // (la spedizione vera sul broker: la mette qui sotto il giro che conta i messaggi partiti)
   var arrivoOspite = null;
+  // I CAMPIONI COL LORO TEMPO (5/11). Il passo di un ospite dice quando è stato fatto (ts, nel suo orologio). L'host tiene per ognuno lo scarto fra i due orologi
+  // (il più piccolo visto: il viaggio più svelto, che sale piano se la rete rallenta) e così sa quando, nel suo orologio, era in quel punto. Nelle posizioni
+  // l'età di ogni punto (ag, ms) dice agli altri telefoni il momento vero: chi guarda li mette in fila per tempo, non per pacchetto, e il passo resta uniforme
+  // (prima un punto vecchio ripetuto in due pacchetti, e poi due passi in uno, facevano fermate e strappi)
+  var campi = {};
+  function campione(id, ts) {
+    if (!(ts >= 0)) return;
+    var ora = performance.now(), d = ora - ts, c = campi[id];
+    if (!c || Math.abs(d - c.off) > 5000) c = campi[id] = { off: d, t: ora };   // (il primo, o il telefono ha ricaricato la pagina: orologio nuovo)
+    c.off = Math.min(d, c.off + (ora - c.t) * 0.01); c.t = ora; c.ult = ts + c.off;
+    var g = P && P.per(id); c.x = g ? Math.round(g.x) : null; c.y = g ? Math.round(g.y) : null;   // (dove l'ha messo davvero: se poi l'host lo sposta, il punto è nuovo)
+  }
+  function eta(pos) {
+    var ora = performance.now(), l = null;
+    for (var i = 0; i < pos.length; i++) {
+      var c = campi[pos[i][0]]; if (!c || c.ult == null) continue;
+      if (Math.abs(pos[i][1] - c.x) > 1 || Math.abs(pos[i][2] - c.y) > 1) continue;   // (l'ha spostato l'host: botola, riunione, Burattinaio, correzione. Il punto è di adesso)
+      if (!l) { l = []; for (var j = 0; j < pos.length; j++) l.push(0); }
+      l[i] = Math.max(0, Math.min(999, Math.round(ora - c.ult)));
+    }
+    return l;
+  }
   var eventi = {
     privato: function (id, m) { if (id === IO) { if (UI) UI.messaggio(m); else conserva(m); return; } m.to = id; veloce(m); if (m.t === "avviso" || m.t === "morte") ripetiUnaVolta(m, true); },
     tutti: function (m) { veloce(m); if (UI) UI.messaggio(m); if (m.t === "avviso" || (m.t === "fx" && FX_UNA_VOLTA[m.k])) ripetiUnaVolta(m, false); }
@@ -6841,7 +6977,9 @@ function host(t) {
       var p = pById(id); if (!p) return;
       p.forse = false;
       if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); riempi(); bd(); return; }
-      p.via = true; if (!viaDa[id]) viaDa[id] = Date.now(); bd();   // resta in partita: se torna entro un minuto e mezzo riprende il suo posto (dopo una ripresa il conto è già partito)
+      p.via = true; if (!viaDa[id]) viaDa[id] = Date.now();
+      if (P && P.per(id) && P.per(id).osserva) { P.per(id).osserva = false; P.segna(); }   // (uscito con gli schermi aperti: le telecamere sui muri si spengono)
+      bd();   // resta in partita: se torna entro un minuto e mezzo riprende il suo posto (dopo una ripresa il conto è già partito)
     },
     onMsg: function arrivo(id, m, sulFilo) {
       arrivoOspite = arrivo;
@@ -6864,10 +7002,10 @@ function host(t) {
       if (m.t === "join") {
         var p = pById(id), nome = String(m.nome || "Amico").slice(0, 16);
         chiaveOspite(id, m.ck);   // (chi manda la chiave sa cifrare: lo si sa da subito, senza attese. Prima di tutto il resto: anche i primi messaggi per lui devono trovarla)
-        if (p) p.cif = m.ck ? 1 : 0;
-        if (!p && !t.puoSedersi(id, nome)) { if (!H.guarda.some(function (x) { return x.id === id; })) H.guarda.push({ id: id, nome: nome }); bd(); return; }
+        if (p) { p.cif = m.ck ? 1 : 0; p.pk = m.pk ? 1 : 0; }   // (pk: sa aprire il pacchetto, vedi spedisci)
+        if (!p && !t.puoSedersi(id, nome)) { var gq = H.guarda.filter(function (x) { return x.id === id; })[0]; if (gq) gq.pk = m.pk ? 1 : 0; else H.guarda.push({ id: id, nome: nome, pk: m.pk ? 1 : 0 }); bd(); return; }
         if (!p && H.fase === "lobby" && H.players.length >= MAX && H.auto) togliBot(true);   // un Bot automatico lascia il posto
-        if (!p && H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), t0: Date.now(), lenz: lenzNuovo(m.lenz), cif: m.ck ? 1 : 0 }); riempi(); }
+        if (!p && H.fase === "lobby" && H.players.length < MAX) { H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), t0: Date.now(), lenz: lenzNuovo(m.lenz), cif: m.ck ? 1 : 0, pk: m.pk ? 1 : 0 }); riempi(); }
         if (p) { p.forse = false; if (p.via && H.fase !== "lobby") { p.via = false; delete viaDa[id]; } if (!p.omino) p.omino = avatarValido(m.omino); if (P && H.fase === "gioco") P.rientra(id); }
         bd();
         if (p && P) {
@@ -6884,7 +7022,7 @@ function host(t) {
       if (m.t === "a" && m.q != null) return mossaConRicevuta(id, m, sulFilo);   // (anche a fine partita: la ricevuta dice «troppo tardi», niente silenzio)
       if (!P || !pById(id) || (H.fase !== "gioco" && H.fase !== "lobby")) return;
       if (H.fase === "lobby" && m.t !== "p" && !(m.t === "a" && (m.k === "parla" || m.k === "lenz"))) return;   // nella saletta: si cammina, si parla, si cambia lenzuolo
-      if (m.t === "p") { if (m.n <= (ultimaN[id] || 0)) return; ultimaN[id] = m.n; P.muovi(id, m); }
+      if (m.t === "p") { if (m.n <= (ultimaN[id] || 0)) return; ultimaN[id] = m.n; P.muovi(id, m); campione(id, m.ts); }
       else if (m.t === "a") esegui(id, m);   // (un telefono con la versione vecchia: mossa senza ricevuta)
       else if (m.t === "pc") P.azione(id, { k: "pc", x: m.x, y: m.y, d: m.d, m: m.m });   // il Burattinaio muove la sua vittima
     }
@@ -6892,7 +7030,19 @@ function host(t) {
   if (!rete) return senzaRete(t);
   if (window.LT_PROVA) window.LT_RETE = rete;
   // senza rete i messaggi veloci non partono: tanto non arriverebbero, e nel collegamento fermo si accumulerebbero fino a far scattare un difetto di mqtt 4.3.7 (oltre 512 KB in coda chiama due volte la stessa funzione: «Callback called multiple times»)
-  ["invia", "inviaVeloce"].forEach(function (k) { var f = rete[k]; rete[k] = function (m) { if (k === "inviaVeloce" && navigator.onLine === false) return; if (m && m.t === "__ris" && m.s) return copiaChiusa(m, f); partiti.push(Date.now()); if (partiti.length > 64) partiti.shift(); return f.call(rete, m); }; });
+  // Col pacchetto i messaggi veloci vanno in fila (vedi spedisci); la foto trattenuta parte da sé ma consuma un gettone, così il conto torna
+  ["invia", "inviaVeloce"].forEach(function (k) {
+    var f = rete[k];
+    if (k === "inviaVeloce") alBrokerHost = function (m) { if (navigator.onLine === false) return; partiti.push(Date.now()); if (partiti.length > 64) partiti.shift(); return f.call(rete, m); };
+    rete[k] = function (m) {
+      if (k === "inviaVeloce" && navigator.onLine === false) return;
+      if (m && m.t === "__ris" && m.s) return copiaChiusa(m, f);
+      var core = !!(m && typeof m.t === "string" && m.t.slice(0, 2) === "__");   // (i messaggi dell'app, come il «__sl» della Sala: l'app li legge solo fuori dal pacchetto)
+      if (k === "inviaVeloce" && !core && pacchetti()) { fila.push(m); if (fila.length > 300) fila.shift(); return; }
+      if (k === "invia" || core) gettoni = Math.max(-1, gettoni - 1);
+      partiti.push(Date.now()); if (partiti.length > 64) partiti.shift(); return f.call(rete, m);
+    };
+  });
   if (riprendo && rete.codice) H.codice = rete.codice;
   // la voce: l'host fa da portalettere dei messaggi di collegamento fra i telefoni (non conserva niente, sono messaggi veloci)
   // Col filo aperto passano da lì: arrivano prima e non consumano i messaggi del broker (con 10 persone sono 45 collegamenti). Solo il giro dei 5 secondi resta fuori dal broker: un elenco nuovo passa da tutte e due le strade
@@ -6943,8 +7093,9 @@ function host(t) {
       var e = "no";
       if (P && pById(id) && (H.fase === "gioco" || H.fase === "lobby")) e = esegui(id, m);
       else if (H.fase === "fine") e = "fine";
-      r = { q: m.q, e: e || "ok", v: H.ver || 0 }; vq.push(r); if (vq.length > 64) vq.shift();
+      r = { q: m.q, e: e || "ok", v: H.ver || 0, t: 0 }; vq.push(r); if (vq.length > 64) vq.shift();
     }
+    var oraR = Date.now(); if (oraR - r.t < 250) return; r.t = oraR;   // (un doppione arrivato subito dopo: la ricevuta è appena partita, non serve una seconda)
     var Fq = sulFilo === true && fili[id], ak = { t: "ak", q: m.q, to: id, e: r.e, v: r.v };
     if (Fq && Fq.pronto()) Fq.invia(JSON.stringify(ak)); else veloce(ak);
   }
@@ -6953,7 +7104,7 @@ function host(t) {
   function esegui(id, m) {
     if (H.fase === "lobby" && m.k !== "parla" && m.k !== "lenz") return "no";
     if (m.k === "lenz") { cambiaLenz(id, m.c); return "ok"; }
-    if (m.n != null && m.x != null && m.n > (ultimaN[id] || 0)) { ultimaN[id] = m.n; P.muovi(id, { x: m.x, y: m.y, d: m.d, m: m.mv, ep: m.ep }); }
+    if (m.n != null && m.x != null && m.n > (ultimaN[id] || 0)) { ultimaN[id] = m.n; P.muovi(id, { x: m.x, y: m.y, d: m.d, m: m.mv, ep: m.ep }); campione(id, m.ts); }
     // botola e telecamere: l'ordine conta (entra ed esci, accendi e spegni). Una mossa più vecchia dell'ultima della stessa famiglia è arrivata tardi: non vale
     var fam = m.k === "botola" || m.k === "guardo" ? m.k : null;
     if (fam && m.q != null) { var uq = ultimaQ[id] || (ultimaQ[id] = {}); if (uq[fam] != null && m.q < uq[fam]) return "vecchia"; uq[fam] = m.q; }
@@ -6966,7 +7117,7 @@ function host(t) {
   function ripetiFoto(trattieni) {
     fotoRip.forEach(clearTimeout);
     fotoRip = [150, 400].map(function (ms, i) {
-      return setTimeout(function () { if (!rete || fermo || !ultimaV) return; veloce({ t: "vm", vm: ultimaV }); if (i && trattieni) rete.invia({ t: "vm", vm: ultimaV }); }, ms);
+      return setTimeout(function () { if (!rete || fermo || !ultimaV) return; if (tuttiFilo) soloFilo({ t: "vm", vm: ultimaV }); else veloce({ t: "vm", vm: ultimaV }); if (i && trattieni) rete.invia({ t: "vm", vm: ultimaV }); }, ms);   // (col filo aperto per tutti la ripetizione passa solo da lì: il broker l'ha già)
     });
   }
   function bd(conta) {
@@ -7008,8 +7159,8 @@ function host(t) {
   }
   // il tempo della partita: 20 volte al secondo; le posizioni a tutti 10 volte al secondo
   var ultimo = Date.now(), nTick = 0, fermo = false;
-  var loop = setInterval(function () {
-    if (fermo) return;
+  var loop = setInterval(function () { if (fermo) return; giro(); spedisci(); }, 50);
+  function giro() {
     if (rete && (rete._chiusa || (rete.stato && rete.stato().chiusa))) { ferma(); if (UI && UI.t === t) chiudiUI(); return; }   // la stanza non è più mia (il core l'ha chiusa, o la tiene un altro e io rientro da giocatore: cediPosto)
     var ora = Date.now(), dt = Math.min(0.1, (ora - ultimo) / 1000); ultimo = ora;
     if (H.fase === "lobby") seguiPrecarico();
@@ -7017,12 +7168,19 @@ function host(t) {
     if (respiro && (ora >= respiro || !H.players.some(function (p) { return p.via; }))) respiro = 0;
     if (!respiro) P.tick(dt);
     if (P.cambiata) { P.cambiata = false; if (P.subito || ora - ultimaFoto >= 250) { var urgente = !!P.subito; P.subito = false; bd(urgente); } else if (!fotoDopo) fotoDopo = setTimeout(bd, 250); }
-    var pos = P.posizioni();
-    if (UI) UI.posizioni(pos);
+    var pos = P.posizioni(), ag = eta(pos);
+    if (UI) UI.posizioni(pos, null, ag);
     nTick++; posCr += tuttiFilo ? 0.2 : 0.4;
     var mPos = { t: "pos", s: nTick, p: pos, v: H.ver };   // v: l'ultima foto: chi non ce l'ha se ne accorge al battito dopo
+    if (ag) mPos.ag = ag;
     if (nTick % 2 === 0 || !window.LT_POS10) soloFilo(mPos);   // sul filo 20 volte al secondo: si vede 26 ms prima (75 → 49) e il telefono non lavora di più (prova P, 1/11)
-    if (posCr >= 1) { posCr -= 1; if (rete && brokerLibero()) { posT = Date.now(); rete.inviaVeloce(mPos); } }
+    if (pacchetti()) {   // col pacchetto: le posizioni partono dentro il prossimo, ogni posOgni ms (e con ogni pacchetto che parte comunque, se sono passati 100 ms)
+      posCr = 0;
+      var fermi = !pos.some(function (q) { return q[4] & 1; }), firma = fermi ? pos.map(function (q) { return q[1] + "," + q[2]; }).join(";") : "";
+      if (ora - posBrokerT >= posOgni(fermi && firma === posUltima) || (fila.length && ora - posBrokerT >= 100)) posPronta = mPos;
+      posUltima = firma;
+    }
+    else if (posCr >= 1) { posCr -= 1; if (rete && brokerLibero()) { posT = Date.now(); rete.inviaVeloce(mPos); } }
     mandaPrivati(false);
     if (nTick % 30 === 0) ribadisciPrivati();
     if (nTick % 20 === 0) filiControllo();
@@ -7032,7 +7190,7 @@ function host(t) {
     if (P.nImp !== nImpDetto && H.fase === "gioco") { nImpDetto = P.nImp; ricordaT = ora; ricorda(); }
     Object.keys(viaDa).forEach(function (id) { if (ora - viaDa[id] > 90000) { delete viaDa[id]; P.esce(id); } });
     if (P.fase === "fine" && !finePronta) { finePronta = true; setTimeout(fine, 2600); }
-  }, 50);
+  }
   function ferma() { fermo = true; clearInterval(loop); clearInterval(vsT); if (fotoDopo) clearTimeout(fotoDopo); fotoRip.forEach(clearTimeout); filiChiudi(); }
 
   // il mio precarico (quello dell'host): se cambia lo dico a tutti; se si sta aspettando per cominciare, guardo se si può partire
@@ -7183,16 +7341,22 @@ function ospite(t, codice) {
   }
   // le mosse (non i passi) si ripetono finché l'host non dà la ricevuta: la rete può perderne una, e un sabotaggio o una riparazione non possono sparire
   function perdo() { return window.LT_PROVA && window.LT_PERDI && Math.random() < window.LT_PERDI; }   // (solo per le prove: rete che perde messaggi)
-  // Dopo 9 volte senza ricevuta la Vista lo dice («l'host non risponde»); se la ricevuta arriva tardi, l'esito vero si legge lo stesso (S.persi)
+  // Dopo circa 3 s senza ricevuta la Vista lo dice («l'host non risponde»); se la ricevuta arriva tardi, l'esito vero si legge lo stesso (S.persi).
+  // Quando ripetere lo dice il tempo vero di andata e ritorno (S.rtt, dalle ricevute): prima si ripeteva ogni 130-180 ms anche su un broker lento, e ogni ripetizione
+  // portava una ricevuta in più (5/11: 60 ricevute per 21 mosse, che a loro volta intasavano il broker)
   function mandaSicura(m) {
     S.q = (S.q || (Date.now() % 1e9)) + 1; m.q = S.q;
-    var v = { n: 0, t: 0 }; S.attese = S.attese || {}; S.attese[m.q] = v;
+    var v = { n: 0, t: 0, t0: Date.now() }; S.attese = S.attese || {}; S.attese[m.q] = v;
+    if (m.x != null) S.pCr = 0;   // (la mossa porta già dove sono: il prossimo passo sul broker può aspettare)
     (function giro() {
       if (!S.attese[m.q]) return;
-      if (++v.n > 9 || !S.rete) { delete S.attese[m.q]; S.persi = S.persi || {}; S.persi[m.q] = Date.now(); if (UI && UI.ricevuta) UI.ricevuta(m.q, "rete"); return; }   // (9 volte in circa 3 s)
-      // col filo aperto la mossa passa da lì: sul broker si vedrebbe chi l'ha fatta un attimo prima dell'effetto per tutti. Il broker è la riserva, dopo 0,4 s senza ricevuta (il filo può perdere)
-      if (!perdo()) { if (v.n > 2 || !(S.filo && S.filo.pronto())) alBroker(m); if (S.filo) S.filo.invia(JSON.stringify(m)); }
-      v.t = setTimeout(giro, 130 + v.n * 50);
+      if ((++v.n > 3 && Date.now() - v.t0 > 3000) || v.n > 12 || !S.rete) { delete S.attese[m.q]; S.persi = S.persi || {}; S.persi[m.q] = Date.now(); if (UI && UI.ricevuta) UI.ricevuta(m.q, "rete"); return; }
+      // col filo aperto la mossa passa da lì: sul broker si vedrebbe chi l'ha fatta un attimo prima dell'effetto per tutti. Il broker è la riserva, dopo 2 giri senza ricevuta (il filo può perdere)
+      var filo = S.filo && S.filo.pronto();
+      if (!perdo()) { if (v.n > 2 || !filo) alBroker(m); if (S.filo) S.filo.invia(JSON.stringify(m)); }
+      var rtt = S.rtt || 250;
+      // la prima ripetizione resta svelta (250 ms): una mossa dell'ultimo istante (il sigillo prima dello zero) non può aspettare il giro intero se la prima si è persa
+      v.t = setTimeout(giro, filo && v.n <= 2 ? 130 + v.n * 50 : v.n === 1 ? 250 : Math.max(250, Math.min(700, rtt * 1.4 + 60)) + v.n * 60);
     })();
   }
   // l'ultima foto dell'host (numero nel battito) non è arrivata: dopo un attimo la si chiede
@@ -7220,8 +7384,8 @@ function ospite(t, codice) {
       var sulFilo = S.filo && S.filo.pronto();
       if (sulFilo) S.filo.invia(JSON.stringify(m));
       if (sulFilo && m.t === "pc") return;   // (i passi del Burattinaio dicono chi è: col filo aperto sul broker non passano)
-      // i passi sono 10 al secondo: sul broker 8 (il tetto di EMQX, vedi l'host), 3 o 4 se c'è il filo
-      if (m.t === "p" || m.t === "pc") { S.pCr = Math.min(1.5, (S.pCr || 0) + (sulFilo ? 0.35 : 0.8)); if (S.pCr < 1) return; S.pCr -= 1; }
+      // i passi sono 10 al secondo: sul broker 6 (sotto il tetto di EMQX con margine per le mosse; l'host le rimanda a tutti 6-7 volte al secondo), 3 o 4 se c'è il filo
+      if (m.t === "p" || m.t === "pc") { S.pCr = Math.min(1.5, (S.pCr || 0) + (sulFilo ? 0.35 : 0.6)); if (S.pCr < 1) return; S.pCr -= 1; }
       if (m.t === "pc") alBroker(m); else S.rete.invia(m);   // (i passi del Burattinaio dicono chi è: gli altri passi sono nelle posizioni)
     },
     onEsci: function () {
@@ -7241,9 +7405,10 @@ function ospite(t, codice) {
   function collega() {
     attesa();
     var cbRete = S.cbRete = {   // (il core ci mette il suo onHostVia, se la riserva è accesa)
-      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { var f = S.filo && S.filo.pronto(); if (f && !m.b) S.filo.invia(JSON.stringify(m)); if (S.rete && (!f || !m.g)) S.rete.invia(m); } }); cifPronta(function () { if (S.rete) S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome), lenz: lenzMio(), ck: CIF.pub || undefined }); }); riferisci(true); fermaPr(); S.prInt = setInterval(ogniSecondo, 1000); },
+      onAperto: function (id) { S.myId = id; cb.myId = id; VOCE.apri({ io: id, manda: function (m) { var f = S.filo && S.filo.pronto(); if (f && !m.b) S.filo.invia(JSON.stringify(m)); if (S.rete && (!f || !m.g)) S.rete.invia(m); } }); cifPronta(function () { if (S.rete) S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino(S.nome), lenz: lenzMio(), ck: CIF.pub || undefined, pk: window.LT_PROVA && window.LT_NOPK ? undefined : 1 }); }); riferisci(true); fermaPr(); S.prInt = setInterval(ogniSecondo, 1000); },
       onMsg: function dalHost(m) {
         if (!m || !m.t || S.finita) return;
+        if (m.t === "pk") { var l = m.l || []; for (var i = 0; i < l.length; i++) if (l[i] && l[i].t) dalHost(l[i]); return; }   // il pacchetto dell'host: dentro, i messaggi di sempre
         if (m.to && m.to !== S.myId) return;
         if (rimescola(m, dalHost)) return;   // (solo per le prove)
         if (m.t === "fd") {   // il filo diretto: l'host lo apre, io rispondo
@@ -7255,10 +7420,10 @@ function ospite(t, codice) {
         if (m.u != null) { var uv = S.uViste || (S.uViste = []); if (uv.indexOf(m.u) >= 0) return; uv.push(m.u); if (uv.length > 80) uv.shift(); }   // già arrivato dall'altra strada
         if (perdo() && (m.t === "vm" || m.t === "pos" || m.t === "priv" || m.t === "ak")) return;
         if (m.t === "vm") { if (fotoVecchia(m.vm)) return; chiaveHost(m.vm); S.vm = m.vm; miCredeVia(m.vm); disegna(t, m.vm, cb); }
-        else if (m.t === "pos") { S.posT = Date.now(); if (S.tace) taceHost(false, false); if (UI) UI.posizioni(m.p, m.s); controllaFoto(m.v); }
+        else if (m.t === "pos") { S.posT = Date.now(); if (S.tace) taceHost(false, false); if (UI) UI.posizioni(m.p, m.s, m.ag); controllaFoto(m.v); }
         else if (m.t === "ak") {   // la ricevuta: la mossa è arrivata, e com'è andata (e). Anche se arriva dopo che il telefono aveva smesso di ripeterla
           var at = S.attese && S.attese[m.q], tardi = !at && S.persi && S.persi[m.q];
-          if (at) { clearTimeout(at.t); delete S.attese[m.q]; }
+          if (at) { clearTimeout(at.t); delete S.attese[m.q]; if (at.n === 1) { var rt = Date.now() - at.t0; S.rtt = S.rtt ? S.rtt * 0.8 + rt * 0.2 : rt; } }   // (solo le mosse partite una volta: con le ripetizioni non si sa a quale risponde)
           if (tardi) delete S.persi[m.q];
           if ((at || tardi) && UI && UI.ricevuta) UI.ricevuta(m.q, m.e || "ok", m.v);
         }
@@ -7764,7 +7929,7 @@ Vista.prototype.foto = function (vm) {
 Vista.prototype.posDi = function (id) { var B = this.buf; if (!B.length) return null; var l = B[B.length - 1].p; for (var i = 0; i < l.length; i++) if (l[i][0] === id) return l[i]; return null; };
 // le posizioni degli altri: ogni pacchetto porta il battito dell'host (s, uno ogni 50 ms), così si sa quando è partito anche se
 // la rete li consegna a raffica. Si riproducono con un piccolo ritardo che si adatta alla rete (quello che serve al 90% dei pacchetti).
-Vista.prototype.posizioni = function (p, s) {
+Vista.prototype.posizioni = function (p, s, ag) {
   var V = this, B = V.buf, ora = performance.now(), ht;
   if (s == null) { ht = ora; V.offMin = 0; V.ritardo = 60; }   // (sul telefono dell'host: niente rete)
   else {
@@ -7773,9 +7938,10 @@ Vista.prototype.posizioni = function (p, s) {
     var off = ora - ht; V.offs = V.offs || []; V.offs.push(off); if (V.offs.length > 60) V.offs.shift();
     var m = Infinity; for (var i = 0; i < V.offs.length; i++) if (V.offs[i] < m) m = V.offs[i];
     var d = V.offs.map(function (o) { return o - m; }).sort(function (a, b) { return a - b; });
-    V.offMin = m; V.ritardo = Math.max(B.length >= 30 ? 50 : 70, Math.min(350, d[Math.floor(d.length * 0.9)] + 35));   // (almeno 30 pacchetti in 2 s: sul filo arrivano 20 volte al secondo, e si può stare più vicini)
+    V.offMin = m; V.ritardo = Math.max(B.length >= 30 ? 50 : 70, Math.min(350, d[Math.floor(d.length * (ag ? 0.75 : 0.9))] + 35));   // (almeno 30 pacchetti in 2 s: sul filo arrivano 20 volte al secondo, e si può stare più vicini)
   }
-  B.push({ ht: ht, p: p });
+  var mi = {}; for (var j = 0; j < p.length; j++) mi[p[j][0]] = j;   // (dov'è ognuno nel pacchetto: per altri)
+  B.push({ ht: ht, p: p, ag: ag && ag.length === p.length ? ag : null, mi: mi });
   while (B.length > 2 && B[B.length - 1].ht - B[0].ht > 2000) B.shift();
   if (!this.me.ok) { var mio = this.posDi(this.cb.myId); if (mio) { this.me.x = mio[1]; this.me.y = mio[2]; this.me.ok = true; } }
 };
@@ -7985,10 +8151,10 @@ Vista.prototype.passo = function (dt) {
   }
   var ora = performance.now();
   if (puoMuovere && me.ok) {
-    var mosso = Math.hypot(me.x - V.ultimaPos.x, me.y - V.ultimaPos.y) > 0.5;
-    if ((mosso && ora - V.ultimoInvio >= 100) || ora - V.ultimoInvio >= 700) {
-      V.ultimoInvio = ora; V.ultimaPos.x = me.x; V.ultimaPos.y = me.y;
-      V.cb.mossa({ t: "p", x: Math.round(me.x), y: Math.round(me.y), d: Math.round(me.dir * 100) / 100, m: me.muove ? 1 : 0, ep: me.ep, n: ++me.n });
+    var mosso = Math.hypot(me.x - V.ultimaPos.x, me.y - V.ultimaPos.y) > 0.5, svolta = me.muove !== !!V.ultimoMuove;   // (fermarsi e ripartire si dicono subito: chi guarda non tira dritto oltre il punto)
+    if ((mosso && ora - V.ultimoInvio >= 100) || (svolta && ora - V.ultimoInvio >= 40) || ora - V.ultimoInvio >= 700) {
+      V.ultimoInvio = ora; V.ultimaPos.x = me.x; V.ultimaPos.y = me.y; V.ultimoMuove = me.muove;
+      V.cb.mossa({ t: "p", x: Math.round(me.x), y: Math.round(me.y), d: Math.round(me.dir * 100) / 100, m: me.muove ? 1 : 0, ep: me.ep, n: ++me.n, ts: Math.round(ora) });   // ts: quando, nell'orologio di questo telefono
     }
   }
   // le orme per l'Investigatore
@@ -8033,23 +8199,59 @@ Vista.prototype.voceAnelli = function () {
   }
   return m;
 };
+// quanto si può prolungare il moto di chi non ha ancora un pacchetto nuovo (ms); quanto più svelto del passo vero può «rincorrere» chi si mostra (vedi altri)
+var VEDI_AVANTI = 220, RINCORSA = 1.6;   // (con l'età dei punti, ag, il ritardo copre i tre quarti dei ritardi della rete invece dei nove decimi: il resto lo fa il moto prolungato)
 Vista.prototype.altri = function () {
   var B = this.buf, V = this; if (!B.length) return [];
-  // il momento da mostrare, nell'orologio dell'host; se il pacchetto dopo non è ancora arrivato si prolunga il moto (al massimo 250 ms)
-  var quando = performance.now() - (V.offMin || 0) - (V.ritardo || 110), a = B[0], b = null, f = 0;
-  for (var i = 0; i < B.length; i++) { if (B[i].ht <= quando) a = B[i]; else { b = B[i]; break; } }
-  if (b && b.ht > a.ht) f = Math.max(0, Math.min(1, (quando - a.ht) / (b.ht - a.ht)));
-  else if (!b && B.length > 1) { var a0 = B[B.length - 2]; b = a; a = a0; f = 1 + Math.min(250, quando - b.ht) / Math.max(1, b.ht - a.ht); }
-  var mb = {}; if (b) b.p.forEach(function (q) { mb[q[0]] = q; });
+  var ora = performance.now(), dtv = Math.max(0, Math.min(100, ora - (V.vedeT || ora))); V.vedeT = ora;
+  // IL RITARDO SI MUOVE PIANO (5/11). Prima il ritardo con cui si mostrano gli altri cambiava a ogni pacchetto, e con lui saltava il momento mostrato:
+  // gli altri avanzavano a strappi. Ora quello voluto (V.ritardo) si raggiunge al massimo a un quarto del tempo che passa: rallentano o accelerano un poco, mai uno strappo
+  var rv = V.ritardo || 110; if (V.ritardoL == null) V.ritardoL = rv; else V.ritardoL += Math.max(-dtv * 0.25, Math.min(dtv * 0.25, rv - V.ritardoL));
+  // il momento da mostrare, nell'orologio dell'host; se il pacchetto dopo non è ancora arrivato si prolunga il moto (al massimo VEDI_AVANTI ms)
+  var quando = ora - (V.offMin || 0) - V.ritardoL, a = B[0];
+  for (var i = 0; i < B.length; i++) { if (B[i].ht <= quando) a = B[i]; else break; }   // (chi c'è: quelli del pacchetto di quel momento)
+  var passo = VEL_BASE * T * ((V.vm && V.vm.imp && V.vm.imp.velocita) || 1) / 1000, vis = V.vis || (V.vis = {}), corsa = passo * RINCORSA;
+  // DOVE SI MOSTRA UNO: i suoi punti nel buffer, ognuno col suo momento vero (quello del pacchetto meno l'età, ag: vedi «I campioni col loro tempo» nell'host).
+  // Fra i due punti intorno a «quando» si va dritti; oltre l'ultimo si prolunga il moto (al massimo VEDI_AVANTI ms, mai più svelto del passo vero) se si stava muovendo.
+  // Chi riparte da fermo comincia a muoversi quando serve per arrivare al punto nuovo col passo vero, non dal momento (vecchio) in cui era fermo
+  function punto(id) {
+    var p0 = null, p1 = null, prima = null;
+    for (var k = 0; k < B.length; k++) {
+      var pk = B[k], j = pk.mi ? pk.mi[id] : undefined; if (j === undefined) continue;
+      var st = pk.ht - (pk.ag ? pk.ag[j] : 0), ult = p1 || p0;
+      if (ult && st <= ult.st + 0.5) continue;   // (lo stesso punto ripetuto in un pacchetto dopo: vale il primo)
+      if (st <= quando) { prima = p0; p0 = { st: st, q: pk.p[j] }; } else if (!p1) p1 = { st: st, q: pk.p[j] }; else break;
+    }
+    if (!p0) return p1 ? { x: p1.q[1], y: p1.q[2], q: p1.q } : null;
+    var q0 = p0.q, x = q0[1], y = q0[2], vmax = passo * (q0[4] & 2 ? VEL_ANIMA : 1);
+    if (p1) {
+      var dx = p1.q[1] - x, dy = p1.q[2] - y, d = Math.hypot(dx, dy);
+      if (d > 4 * T) return { x: p1.q[1], y: p1.q[2], q: p1.q };   // (un salto vero: botola, riunione, Trasportatore)
+      var t0 = p0.st; if (!(q0[4] & 1) && d > 0) t0 = Math.max(t0, p1.st - d / vmax);
+      var f = p1.st > t0 ? Math.max(0, Math.min(1, (quando - t0) / (p1.st - t0))) : 1;
+      return { x: x + dx * f, y: y + dy * f, q: f >= 0.5 ? p1.q : q0 };
+    }
+    if (prima && (q0[4] & 1) && p0.st > prima.st) {
+      var vx = (x - prima.q[1]) / (p0.st - prima.st), vy = (y - prima.q[2]) / (p0.st - prima.st), v = Math.hypot(vx, vy), lim = vmax * 1.1;
+      if (v > lim) { vx *= lim / v; vy *= lim / v; }
+      if (Math.hypot(x - prima.q[1], y - prima.q[2]) < 4 * T) { var av = Math.min(VEDI_AVANTI, quando - p0.st); x += vx * av; y += vy * av; }
+    }
+    return { x: x, y: y, q: q0 };
+  }
   var out = [], comp = V.priv && V.priv.compagni || [];
-  a.p.forEach(function (q) {
-    if (q[0] === V.cb.myId && !V.guardo) return;
-    var r = mb[q[0]], x = q[1], y = q[2];
-    if (r && f) { var ff = f > 1 && !(r[4] & 1) ? 1 : f; x += (r[1] - x) * ff; y += (r[2] - y) * ff; if (Math.hypot(r[1] - q[1], r[2] - q[2]) > 4 * T) { x = r[1]; y = r[2]; } }
+  a.p.forEach(function (qa) {
+    if (qa[0] === V.cb.myId && !V.guardo) return;
+    var pt = punto(qa[0]), q = (pt && pt.q) || qa, x = pt ? pt.x : qa[1], y = pt ? pt.y : qa[2];
     var come = q[5] || q[0];   // il Trasformista si vede con la faccia di un altro
     var c = V.cache[come] || {}, av = AVATAR[come];
     var lt = V.letti[q[0]];
     if (V.ctrl && V.ctrl.id === q[0] && V.ctrl.fine > performance.now()) { x = V.ctrl.x; y = V.ctrl.y; }
+    // LA RINCORSA: dove si mostra non va mai più svelto di RINCORSA volte il passo vero. Un pacchetto arrivato tardi diventa un passo un po' più lungo, non uno strappo;
+    // oltre 3 caselle (un salto vero: botola, riunione) si va subito
+    var o = vis[q[0]];
+    if (o && ora - o.t < 400 && dtv > 0) { var ddx = x - o.x, ddy = y - o.y, dd = Math.hypot(ddx, ddy), mxd = corsa * (q[4] & 2 ? VEL_ANIMA : 1) * dtv; if (dd > mxd && dd < 3 * T) { x = o.x + ddx / dd * mxd; y = o.y + ddy / dd * mxd; } }
+    else if (o && ora - o.t < 400) { x = o.x; y = o.y; }   // (chiamato due volte nello stesso fotogramma: lo stesso posto)
+    vis[q[0]] = { x: x, y: y, t: ora };
     out.push({ id: q[0], x: x, y: y, dir: q[3], muove: !!(q[4] & 1), fantasma: !!(q[4] & 2), nome: c.nome || "?", colore: c.colore, lenz: c.lenz, img: av && av.img, imgS: av && av.imgS, seme: (q[0].length * 7) % 11, alleata: comp.indexOf(q[0]) >= 0, coloreNome: lt === "buono" ? "#8ee6a8" : lt === "cattivo" ? "#ff7a8a" : null });
   });
   return out;
@@ -8644,7 +8846,7 @@ Vista.prototype.manda = function (k, extra) {
   var V = this, m = { t: "a", k: k }; if (extra) for (var x in extra) m[x] = extra[x];
   // VOTO: sul telefono si chiude quando il tempo visto arriva a zero; l'host aspetta ancora GRAZIA s i sigilli in viaggio (vedi partita.js)
   if (k === "voto" && V.g && V.g.fase === "riunione" && V.votoFine && performance.now() > V.votoFine + 80) return V.esitoPoi(k, extra, "chiuso", null, null);
-  if (V.g && V.g.fase === "gioco" && V.me.ok && !V.cb.sonoHost) { m.x = Math.round(V.me.x); m.y = Math.round(V.me.y); m.d = Math.round(V.me.dir * 100) / 100; m.mv = V.me.muove ? 1 : 0; m.ep = V.me.ep; m.n = ++V.me.n; }
+  if (V.g && V.g.fase === "gioco" && V.me.ok && !V.cb.sonoHost) { m.x = Math.round(V.me.x); m.y = Math.round(V.me.y); m.d = Math.round(V.me.dir * 100) / 100; m.mv = V.me.muove ? 1 : 0; m.ep = V.me.ep; m.n = ++V.me.n; m.ts = Math.round(performance.now()); }
   var r = V.cb.mossa(m), b = V.btn[TASTO_DI[k]] || null;
   if (r !== undefined) return V.esitoPoi(k, extra, r, null, b);   // (sull'host l'esito c'è già)
   if (m.q == null) return;
@@ -8760,17 +8962,35 @@ Vista.prototype.apriPannello = function (tipo, box, chiudi) {
   V.velo.textContent = ""; V.velo.appendChild(box); V.velo.hidden = false; V.veloTipo = "pannello"; V.velo.classList.toggle("passa", libero);
   V.pannello = { tipo: tipo, libero: libero, chiudi: function () { if (V.pannello === null) return; V.pannello = null; V.velo.hidden = true; V.velo.classList.remove("passa"); V.veloTipo = null; V.velo.textContent = ""; if (chiudi) chiudi(); V.aggVelo(); } };
 };
+// IL PANNELLO DELLE TELECAMERE (5/11, Mario: «le 4 cam vanno oltre la schermata, devono essere molto più piccole»). Quattro schermi 2×2 che entrano sempre
+// nello schermo, con margine, su ogni telefono: in verticale, in orizzontale e col gioco girato col tasto «gira». La grandezza la decide misura(), dallo spazio
+// vero del velo (che è già girato con la scena): al massimo CAM_MAX px per schermo. Il nome della telecamera è una scritta sopra lo schermo, sempre leggibile
+var CAM_MAX = 230;
 Vista.prototype.apriTelecamere = function () {
   var V = this, box = E("div", "lt-pannello lt-cam"), testa = E("div", "testa"), ch = E("button", "lt-chiudi", "×");
   testa.append(E("h3", "", "Telecamere"), ch); box.appendChild(testa);
   var grid = E("div", "griglia"); box.appendChild(grid);
   var nav = E("div", "nav"), prec = E("button", "", "‹"), pag = E("span", "", ""), succ = E("button", "", "›"); nav.append(prec, pag, succ); box.appendChild(nav);
-  V.feed = { pagina: 0, schermi: [], pag: pag, ultimo: -9 };
-  for (var i = 0; i < 4; i++) { var w = E("div", "schermo"), cv = E("canvas"); w.appendChild(cv); grid.appendChild(w); V.feed.schermi.push({ cv: cv, pit: new Pittore(cv), w: w }); }
+  V.feed = { pagina: 0, schermi: [], pag: pag, nav: nav, ultimo: -9 };
+  for (var i = 0; i < 4; i++) { var w = E("div", "schermo"), cv = E("canvas"), nome = E("span", "nome", ""); w.append(cv, nome); grid.appendChild(w); V.feed.schermi.push({ cv: cv, pit: new Pittore(cv), w: w, nome: nome }); }
   prec.addEventListener("click", function () { if (V.feed) V.feed.pagina = Math.max(0, V.feed.pagina - 1); });
   succ.addEventListener("click", function () { if (V.feed) V.feed.pagina++; });
   ch.addEventListener("click", function () { if (V.pannello) V.pannello.chiudi(); });
-  V.apriPannello("telecamere", box, function () { V.feed = null; V.manda("guardo", { on: 0 }); });
+  // quanto spazio c'è davvero: il velo meno i suoi margini, il pannello meno i suoi, la testata e (se servono) le frecce. Due colonne 4:3 con 6 px fra loro
+  function misura() {
+    if (!V.feed || !box.isConnected) return;
+    var cv = getComputedStyle(V.velo), cb = getComputedStyle(box), n = function (x) { return parseFloat(x) || 0; };
+    var aw = V.velo.clientWidth - n(cv.paddingLeft) - n(cv.paddingRight) - n(cb.paddingLeft) - n(cb.paddingRight) - n(cb.borderLeftWidth) - n(cb.borderRightWidth);
+    var ah = V.velo.clientHeight - n(cv.paddingTop) - n(cv.paddingBottom) - n(cb.paddingTop) - n(cb.paddingBottom) - n(cb.borderTopWidth) - n(cb.borderBottomWidth)
+      - testa.offsetHeight - (nav.hidden ? 0 : nav.offsetHeight) - n(cb.rowGap) * (nav.hidden ? 1 : 2);
+    var lato = Math.floor(Math.max(60, Math.min((aw * 0.96 - 6) / 2, (ah * 0.92 - 6) / 2 * 4 / 3, CAM_MAX)));
+    box.style.setProperty("--camw", (lato * 2 + 6) + "px");
+  }
+  V.feed.misura = misura;
+  V.apriPannello("telecamere", box, function () { if (V.feed && V.feed.oss) V.feed.oss.disconnect(); window.removeEventListener("resize", misura); V.feed = null; V.manda("guardo", { on: 0 }); });
+  if (window.ResizeObserver) { V.feed.oss = new ResizeObserver(misura); V.feed.oss.observe(V.velo); }
+  window.addEventListener("resize", misura);
+  misura();
   V.manda("guardo", { on: 1 });
 };
 // le telecamere: uno schermo per fotogramma, a giro (ognuno si aggiorna 15 volte al secondo e il lavoro non si ammucchia)
@@ -8780,6 +9000,7 @@ Vista.prototype.disegnaSchermi = function () {
   F.ultimo = V.tempo; F.giro = ((F.giro || 0) + 1) % 4;
   var cams = (g && g.cam) || [], n = Math.max(1, Math.ceil(cams.length / 4)); F.pagina = Math.min(F.pagina, n - 1);
   F.pag.textContent = (F.pagina + 1) + " / " + n;
+  if (F.nav.hidden !== (n < 2)) { F.nav.hidden = n < 2; if (F.misura) F.misura(); }   // (le frecce solo con più di 4 telecamere: la Sentinella ne aggiunge)
   var gente = V.altri().filter(function (p) { return !p.fantasma; });
   if (V.sonoVivo() && !V.guardo) { var c0 = V.cache[(V.priv && V.priv.travestito) || V.cb.myId] || {}, a0 = AVATAR[V.cb.myId]; gente.push({ id: V.cb.myId, x: V.me.x, y: V.me.y, dir: V.me.dir, muove: V.me.muove, nome: c0.nome, colore: c0.colore, lenz: c0.lenz, img: a0 && a0.img, imgS: a0 && a0.imgS }); }
   var corpi = (g.corpi || []).map(function (k) { return { id: k[0], x: k[1], y: k[2], lenz: LENZ_DI[k[0]] }; });
@@ -8789,7 +9010,8 @@ Vista.prototype.disegnaSchermi = function () {
     if (i !== F.giro && sc.fatto === F.pagina) return;
     sc.fatto = F.pagina;
     var idx = F.pagina * 4 + i, nome = k[2] ? (TELECAMERE_BASE[idx] || {}).nome || "Telecamera" : "Sentinella " + (idx - TELECAMERE_BASE.length + 1);
-    sc.pit.disegna({ M: PALAZZO, palazzo: true, t: V.tempo, dt: 0.1, io: { x: k[0], y: k[1], mostra: false }, altri: gente, corpi: corpi, R: 16 * T, anima: false, neb: g.neb > 0,
+    if (sc.nome.textContent !== nome) sc.nome.textContent = nome;
+    sc.pit.disegna({ cctvScritta: false, M: PALAZZO, palazzo: true, t: V.tempo, dt: 0.1, io: { x: k[0], y: k[1], mostra: false }, altri: gente, corpi: corpi, R: 16 * T, anima: false, neb: g.neb > 0,
       buio: false, miei: new Set(), freccia: null, botole: false, effetti: [], telecamere: [], scala: 0.5, cctv: nome,
       segui: k[2] && TELECAMERE_BASE[idx] ? { x: TELECAMERE_BASE[idx].vx, y: TELECAMERE_BASE[idx].vy } : null });
   });
@@ -10242,8 +10464,9 @@ function stile() {
     ".lt-premappa{position:absolute;z-index:1;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 180px);top:calc(52px + env(safe-area-inset-top));font-size:.68rem;font-weight:700;color:#b8b1a2;background:rgba(20,12,8,.62);border-radius:999px;padding:2px 9px;display:flex;align-items:center;gap:6px;pointer-events:none}.lt-mappa[hidden]{display:none}.lt-mappa.ok{color:#9fe3bd}",
     ".lt-premappa i{display:inline-block;width:34px;height:3px;border-radius:2px;background:rgba(241,232,214,.18);position:relative;overflow:hidden}.lt-premappa i:after{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--p,0%);background:#e7b75c;transition:width .3s var(--lt-ease,cubic-bezier(.22,1,.36,1))}.lt-mappa.ok i{display:none}",
     ".lt-info{font-size:.74rem;font-weight:700;color:#f6d999;background:rgba(20,12,8,.78);border-radius:8px;padding:4px 8px;line-height:1.3}",
-    ".lt-cam{display:flex;flex-direction:column;gap:8px;max-width:640px}.lt-cam .testa{display:flex;justify-content:space-between;align-items:center}.lt-cam .lt-chiudi{position:static}",
-    ".lt-cam .griglia{display:grid;grid-template-columns:1fr 1fr;gap:6px}.lt-cam .schermo{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:#000;border:2px solid #2f3b44}.lt-cam .schermo canvas{width:100%;height:100%;display:block}",
+    ".lt-cam{display:flex;flex-direction:column;gap:8px;width:auto;max-width:none;padding:10px 12px}.lt-cam .testa{display:flex;justify-content:space-between;align-items:center}.lt-cam .testa h3{margin:0}.lt-cam .lt-chiudi{position:static}",
+    ".lt-cam .griglia{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:var(--camw,320px);max-width:100%;margin:0 auto}.lt-cam .schermo{position:relative;aspect-ratio:4/3;border-radius:7px;overflow:hidden;background:#000;border:2px solid #2f3b44;box-sizing:border-box}.lt-cam .schermo canvas{width:100%;height:100%;display:block}",
+    ".lt-cam .schermo .nome{position:absolute;left:4px;bottom:4px;max-width:calc(100% - 8px);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:700 11px/1.25 -apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif;color:#eafff0;background:rgba(6,14,10,.72);border-radius:4px;padding:1px 5px;pointer-events:none}.lt-cam .nav[hidden]{display:none}",
     ".lt-cam .nav{display:flex;justify-content:center;align-items:center;gap:14px;font-weight:600}.lt-cam .nav button{font:inherit;font-size:1.2rem;font-weight:700;color:#f1e8d6;background:#35241a;border:1px solid rgba(241,232,214,.2);border-radius:10px;width:44px;height:36px}",
     ".lt-plastico h3{margin-bottom:6px}.lt-plastico{box-sizing:border-box;width:100%}",
     "@media (max-width:600px){.lt-plastico canvas{width:100%!important;height:auto!important}.lt-plastico p{margin-top:6px}}",
