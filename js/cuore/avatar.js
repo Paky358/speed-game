@@ -54,6 +54,8 @@
   var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1 };   // colori dove c'è anche la tavolozza libera
   var OMINO_RITOCCHI = [["occG", "Grandezza occhi"], ["occD", "Distanza occhi"], ["occA", "Altezza occhi"],
     ["soprA", "Altezza sopracciglia"], ["nasoG", "Grandezza naso"], ["boccaA", "Altezza bocca"]];
+  // 🎨 avatar illustrati (strada A): una voce che non è ancora ridisegnata (nel disegno prende quella più simile)
+  function illustratoManca(k, v) { return !!(window.SGOminoA && window.SGOmino && SGOmino.stile && SGOmino.stile() === "illustrato" && !SGOminoA.disegnato(k, v)); }
   // LOOK PRONTI: un tocco e cambiano vestiti e accessori insieme (viso, capelli e corpo restano i tuoi)
   var LOOK_BASE = { cappello: "nessuno", occhiali: "nessuno", collo: "nessuno", mano: "nessuno", schiena: "nessuna", animale: "nessuno", pittura: "nessuna", borsa: "nessuna", stampa: "nessuna" };
   var LOOK = [
@@ -401,6 +403,7 @@
         if (OMINO_COLORI[k]) { cfg[k] = Math.floor(Math.random() * (k === "colCap" ? 7 : lista.length)); return; }
         var ok = lista.filter(function (v) {
           if (O.BLOCCATI[k] && O.BLOCCATI[k].indexOf(v) >= 0) return false;
+          if (illustratoManca(k, v)) return false;   // avatar illustrati: le voci non ancora ridisegnate non escono a caso
           if (!donna && /^(sotto|capo|modScarpe)$/.test(k) && O.SOLO_DONNA.test(v)) return false;
           if (k === "capelli") return donna ? O.CAPELLI_UOMO.indexOf(v) < 0 : O.CAPELLI_UOMO.indexOf(v) >= 0;
           return true;
@@ -466,6 +469,7 @@
             riga = el("div", { class: "om-griglia" });
           });
           if (/^(sotto|capo|modScarpe)$/.test(k) && O.SOLO_DONNA.test(val) && cfg.forma !== "donna") return;   // gonne, vestiti, tacchi… solo per la donna
+          if (illustratoManca(k, val) && cfg[k] !== val) return;   // avatar illustrati: le voci non ancora ridisegnate non si vedono (la tua resta)
           var v = OMINO_COLORI[k] ? i : val, b;
           if (OMINO_COLORI[k]) {
             b = el("button", { class: "om-opz om-colore", style: "background:" + val, "aria-label": vc[1] + " " + (i + 1), onclick: function () { scegli(k, v); } });

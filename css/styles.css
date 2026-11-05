@@ -1048,6 +1048,9 @@ button.am-riga:active{ transform:scale(.985); }
 /* editor avatar: zoom sul viso, tasto annulla, "a caso" per scheda, l'avatar reagisce se lo tocchi */
 .editor-avatar .om-figura{ transition:transform .45s cubic-bezier(.3,.9,.3,1); transform-origin:50% 37%; cursor:pointer; }
 .editor-avatar .om-figura.zoom-viso{ transform:translateX(-50%) scale(1.8); }
+/* avatar «illustrati» (strada A): la testa è più in alto e più piccola, lo zoom sul viso va lì */
+.editor-avatar .om-figura:has(svg.omino-a){ transform-origin:50% 14%; }
+.editor-avatar .om-figura.zoom-viso:has(svg.omino-a){ transform:translateX(-50%) translateY(24%) scale(2.9); }
 .om-pedana{ transition:opacity .3s; }
 .omino-palco.zoomato .om-pedana{ opacity:0; }
 .editor-avatar .om-azione.annulla{ right:8px; bottom:8px; width:42px; height:42px; padding:0; border-radius:50%; font-size:1.15rem; color:#eaf0ff; background:rgba(8,16,44,.65); box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2); }

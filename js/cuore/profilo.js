@@ -13,7 +13,7 @@
   // ---- dal cuore: gli aiuti che questo pezzo usa (non cambiano mai, si prendono una volta) ----
   var el = cuore.el, chiediConferma = cuore.chiediConferma, schermata = cuore.schermata, mostra = cuore.mostra, pillola = cuore.pillola,
       schermataHome = cuore.schermataHome, riquadroLivello = cuore.riquadroLivello, eProprietario = cuore.eProprietario,
-      AVATAR_NUOVO = cuore.AVATAR_NUOVO, avatarNuoviSpenti = cuore.avatarNuoviSpenti, K_PROFILI = cuore.K_PROFILI, K_ATTIVO = cuore.K_ATTIVO,
+      AVATAR_NUOVO = cuore.AVATAR_NUOVO, avatarNuoviSpenti = cuore.avatarNuoviSpenti, AVATAR_A = cuore.AVATAR_A, avatarASpento = cuore.avatarASpento, K_PROFILI = cuore.K_PROFILI, K_ATTIVO = cuore.K_ATTIVO,
       FACCINE = cuore.FACCINE, leggiL = cuore.leggiL, scriviL = cuore.scriviL, profili = cuore.profili, profiloAttivo = cuore.profiloAttivo,
       giocoDa = cuore.giocoDa, cifre = cuore.cifre, audioCtx = cuore.audioCtx;
 
@@ -132,6 +132,16 @@
       if (eProprietario() && window.SGOmino) sp._contenuto.appendChild(el("button", { class: "st-tasto st-bot", onclick: function () { cuore.schermataBot(function () { schermataAccessoCloud(dopo); }); } }, [
         el("span", { class: "st-tasto-ico", text: "🤖" }),
         el("span", { class: "st-tasto-testo" }, [ el("b", { text: "I Bot" }), el("small", { text: "Avatar, nomi e livelli dei bot di tutti i giochi" }) ]),
+        el("span", { class: "st-tasto-va", text: "›" })
+      ]));
+      // 🎨 gli avatar «illustrati» (strada A): solo il proprietario, finché li prova lui (l'app si riapre, così ogni gioco li ridisegna)
+      if (AVATAR_A === "proprietario" && eProprietario() && window.SGOmino) sp._contenuto.appendChild(el("button", { class: "st-tasto st-avnuovi st-ava", onclick: function () {
+        try { localStorage.setItem("sg-avatar-a", avatarASpento() ? "1" : "0"); } catch (e) {}
+        location.reload();
+      } }, [
+        el("span", { class: "st-tasto-ico", text: "🎨" }),
+        el("span", { class: "st-tasto-testo" }, [ el("b", { text: avatarASpento() ? "Avatar illustrati: spenti" : "Avatar illustrati: accesi" }),
+          el("small", { text: avatarASpento() ? "Tocca per vedere il disegno nuovo (strada A). Lo vedi solo tu" : "Il disegno nuovo (strada A): lo vedi solo tu. Tocca per tornare a quello di oggi" }) ]),
         el("span", { class: "st-tasto-va", text: "›" })
       ]));
       // solo il proprietario, finché gli avatar nuovi li prova lui: si spengono e si riaccendono (l'app si riapre, così ogni gioco li ridisegna)
