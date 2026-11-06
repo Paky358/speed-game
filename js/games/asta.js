@@ -3156,7 +3156,7 @@
   function giocaGiornata(R, gk) {
     var A = R.opz.serieA, veloce = gk === 0 || gk === 1, base = {}, gia = gk > 0 && !!R.gr;   // (gia: i quadretti ci sono già, restano gli stessi)
     if (veloce) A = A.prima[gk];
-    R.gk = gk; R.fuori = {}; R.minMax = 0; R.pagFissa = false;
+    R.gk = gk; R.fuori = {}; R.minMax = 0; R.pagFissa = false; R.meteoUna = meteoUnaSola(A.partite, gk);   // (🌦️ al massimo una partita col meteo diverso)
     if (R.lineaE) { svuotaNodo(R.lineaE); R.lineaF.style.transform = "scaleX(0)"; R.linea.style.visibility = ""; }   // (📏 la linea riparte)   // (ogni giornata da capo: chi era espulso gioca di nuovo, il minuto riparte)
     var el = R.el, righe = R.righe, n = righe.length;
     righe.forEach(function (r) { base[r.id] = gk ? r.prima[0].punti + (gk > 1 ? r.prima[1].punti : 0) : 0; });
@@ -3401,7 +3401,7 @@
   var METEO_ICONA = { pioggia: "🌧️", nebbia: "🌫️", neve: "❄️" };
   // ❄️ la neve (6 nov 2026, il proprietario: «la neve la devi fare solo quando giocano in casa le squadre» del nord, con la sua tabella):
   // la probabilità dipende da chi gioca in CASA; i numeri sono la metà della tabella del proprietario (con i suoi, quasi ogni giornata
-  // avrebbe avuto una partita sotto la neve). Al sud mai. Anche pioggia (di più a Genova, Udine, Como, Venezia; poco al sud) e nebbia (solo nella
+  // avrebbe avuto una partita sotto la neve). Al sud mai (vedi sotto: in una giornata al massimo UNA partita col meteo diverso). Anche pioggia (di più a Genova, Udine, Como, Venezia; poco al sud) e nebbia (solo nella
   // pianura del nord) dipendono da chi gioca in casa. Tutto dal seme della partita: uguale su tutti i telefoni
   var NEVE_SQ = { Atalanta: 12, Juventus: 12, Torino: 12, Bologna: 10, Parma: 10, Sassuolo: 10, Como: 8, Inter: 8, Milan: 8, Monza: 8, Udinese: 6, Verona: 5, "Hellas Verona": 5, Frosinone: 4, Venezia: 3, Empoli: 2, Genoa: 2, Fiorentina: 2 };
   var PIOGGIA_SQ = { Genoa: 18, Udinese: 18, Como: 16, Venezia: 15, Atalanta: 14, Inter: 13, Milan: 13, Monza: 13, Torino: 12, Juventus: 12, Bologna: 12, Parma: 12, Sassuolo: 12, Fiorentina: 12, Frosinone: 11, Lazio: 10, Roma: 10, Napoli: 9, Lecce: 7, Cagliari: 6 };
@@ -3413,19 +3413,26 @@
     var v = Math.floor(h / 100) % 100, pg = PIOGGIA_SQ[P.c] != null ? PIOGGIA_SQ[P.c] : 12;
     return v < pg ? "pioggia" : v < pg + (NEBBIA_SQ[P.c] || 0) ? "nebbia" : "sole";
   }
-  // ☀️ il sole forte (luce calda, riflesso, ombre del tetto): il proprietario, 6 nov 2026: «magari questo lo possiamo mettere per le squadre del sud?»:
-  // sempre quando si gioca al sole in casa delle squadre del centro-sud, una volta su tre nelle altre città (dal seme: uguale su tutti i telefoni)
-  var SOLE_SQ = { Napoli: 1, Roma: 1, Lazio: 1, Lecce: 1, Cagliari: 1, Frosinone: 1 };
-  function soleForte(P, gk) {
-    if (meteoDi(P, gk) !== "sole") return false; if (SOLE_SQ[P.c]) return true;
-    var s = String(P.f) + "#" + String(P.c) + "#" + (gk || 0), h = 11; for (var i = 0; i < s.length; i++) h = (h * 37 + s.charCodeAt(i)) >>> 0;
-    return h % 3 === 0;
+  // 🌦️ UNA PARTITA SOLA DIVERSA (6 nov 2026, il proprietario dopo la prima prova: «da una parte c'era la neve, da una parte pioveva, da una parte
+  // c'era il sole, è confusionario… al massimo fai che una partita è diversa dalle altre e basta, con le percentuali che abbiamo già messo»;
+  // il sole forte della bozza è stato TOLTO: «ti concentri più su quello che dà fastidio che sulla partita»). Ogni partita tira il suo meteo come
+  // sopra (per città); se più d'una non viene col sole ne resta UNA sola, la prima in un ordine fisso dal seme: le altre col sole, senza effetti.
+  // Si decide all'inizio di ogni giornata dalle partite, che tutti hanno uguali: uguale su tutti i telefoni
+  function meteoUnaSola(partite, gk) {
+    var best = null;
+    (partite || []).forEach(function (P) {
+      var m = meteoDi(P, gk); if (m === "sole") return;
+      var s = String(P.f) + "~" + String(P.c) + "~" + (gk || 0), h = 5; for (var i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) >>> 0;
+      if (!best || h < best.h) best = { h: h, k: P.c + "|" + P.f, m: m };
+    });
+    return best;
   }
+  function meteoR(R, P) { var u = R && R.meteoUna; return u && u.k === P.c + "|" + P.f ? u.m : "sole"; }
   function barraPartita(R, x) {
     var P = x.P, g = R.risN[x.p].g, el = R.el; R.barP = P;
     R.barSc = el("b", { class: "st-bar-sc", text: g[0] + " - " + g[1] });
     svuotaNodo(R.barIn);
-    var mt = METEO_ICONA[meteoDi(P, R.gk)] || (soleForte(P, R.gk) ? "☀️" : null);
+    var mt = METEO_ICONA[meteoR(R, P)];
     [el("img", { src: maglia(P.c), alt: "" }), el("span", { text: P.c }), R.barSc, el("span", { text: P.f }), el("img", { src: maglia(P.f), alt: "" }), mt ? el("span", { class: "st-bar-meteo", text: mt }) : null].forEach(function (nd) { if (nd) R.barIn.appendChild(nd); });
     orologioCorre(R, x.e.m); rianima(R.barIn, "entra");
     R.risN.forEach(function (q, i) { q.nodo.classList.toggle("ora", i === x.p); });
@@ -3558,7 +3565,7 @@
     if (e.t === "gol" && e.v === "ribattuta" && P && P.ev[x.ei - 1]) op.lato = semeDi({ e: P.ev[x.ei - 1], p: x.p }) % 2 ? 1 : -1;   // (la ribattuta dalla stessa parte del rigore: il rigore non sa come andrà)   // (il rigore e la sua ribattuta: anche lo stesso lato)
     var gufo = gufoMomento(R, x, t, v, esito, op);   // 🦉 / 🍀 a ogni rigore e a ogni punizione dal limite (sempre, qualunque cosa succeda)
     function prepara(sc) {   // le maglie e i vostri che non c'entrano (al posto del loro ruolo)
-      sc.meteo = meteoDi(P, R.gk); sc.soleForte = soleForte(P, R.gk);   // 🌦️ (solo l'aspetto; anche nel rigore da ripetere)
+      sc.meteo = meteoR(R, P);   // 🌦️ (solo l'aspetto; anche nel rigore da ripetere)
       sc.kA = K[sqAtt]; sc.kD = K[sqAtt === P.c ? P.f : P.c]; sc.pA = kitPortiere(sc.kA, sc.kD); sc.pD = kitPortiere(sc.kA, sc.kD, sc.pA.a);
       sc.noti = noti.filter(function (y) { return !y.usato; }).map(function (y) { return { sq: y.sq === sqAtt ? "A" : "D", nome: y.nome, pr: y.pr, faccia: y.faccia, pc: y.pc, ruolo: y.ruolo, num: y.num }; });
       return sc;
@@ -4938,19 +4945,7 @@
     // il velo del meteo preparato una volta sola
     function sopraCampo(sc, p, w, h) {
       var t = Date.now() / 1000, i, x, y;
-      if (sc.meteo === "sole" && sc.soleForte) {   // ☀️ (6 nov 2026, il proprietario sulla bozza: «questo effetto di sole mi fa impazzire… quasi lo metterei di base»):
-        // luce calda dall'angolo, il riflesso del sole, le ombre del tetto dello stadio. Fatto una volta sola per misura, poi appoggiato sopra
-        if (!A.sole || A.sole.k !== Math.round(w) + "x" + Math.round(h)) {
-          var dd2 = A.d || 1, cs = document.createElement("canvas"); cs.width = Math.round(w * dd2); cs.height = Math.round(h * dd2); var c3 = cs.getContext("2d"); c3.scale(dd2, dd2);
-          var gl = c3.createLinearGradient(0, 0, w, h); gl.addColorStop(0, "rgba(255,214,120,.42)"); gl.addColorStop(0.45, "rgba(255,214,120,.08)"); gl.addColorStop(1, "rgba(30,20,0,.12)"); c3.fillStyle = gl; c3.fillRect(0, 0, w, h);
-          c3.globalCompositeOperation = "lighter"; var fl = c3.createRadialGradient(18, 18, 0, 18, 18, 120); fl.addColorStop(0, "rgba(255,250,220,.95)"); fl.addColorStop(0.2, "rgba(255,230,160,.35)"); fl.addColorStop(1, "rgba(255,230,160,0)"); c3.fillStyle = fl; c3.fillRect(0, 0, 200, 200);
-          [[0.35, 10, 0.25], [0.55, 16, 0.18], [0.75, 7, 0.3]].forEach(function (f) { c3.fillStyle = "rgba(255,240,200," + f[2] + ")"; c3.beginPath(); c3.arc(w * f[0], h * f[0], f[1], 0, Math.PI * 2); c3.fill(); });
-          c3.globalCompositeOperation = "source-over"; c3.fillStyle = "rgba(0,0,0,.18)";
-          for (i = 0; i < 6; i++) { c3.save(); c3.translate(0, h * (0.12 + i * 0.16)); c3.rotate(-0.5); c3.fillRect(-40, 0, w * 1.6, 10); c3.restore(); }
-          A.sole = cs; A.sole.k = Math.round(w) + "x" + Math.round(h);
-        }
-        ctx.drawImage(A.sole, 0, 0, w, h);
-      } else if (sc.meteo === "pioggia") {
+      if (sc.meteo === "pioggia") {
         ctx.fillStyle = "rgba(20,32,60,.26)"; ctx.fillRect(0, 0, w, h);
         ctx.strokeStyle = "rgba(210,225,255,.5)"; ctx.lineWidth = 1; ctx.lineCap = "round"; ctx.beginPath();
         for (i = 0; i < 90; i++) { var l = 8 + (i % 5) * 3; x = ((i * 97.3) + t * 40) % (w + 20) - 10; y = ((i * 57.7) + t * (520 + (i % 4) * 60)) % (h + 30) - 15; ctx.moveTo(x, y); ctx.lineTo(x - l * 0.25, y + l); }
