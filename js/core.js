@@ -16,6 +16,9 @@
    ========================================================= */
 (function () {
   "use strict";
+
+  // Niente zoom col pizzico su iPhone (Safari ignora user-scalable=no). I giochi che hanno un loro "pizzico" usano i tocchi, non questi eventi.
+  ["gesturestart", "gesturechange", "gestureend"].forEach(function (n) { document.addEventListener(n, function (e) { e.preventDefault(); }, { passive: false }); });
   var cuore = window.SGCuore = {};   // i pezzi del cuore (js/cuore/*.js) si parlano da qui: vedi in fondo «AI PEZZI DEL CUORE»
 
   // Altezza VERA dello schermo: il browser a volte (es. dopo un "ricarica" con l'app installata)
@@ -908,7 +911,7 @@
   // AVATAR_A: "nessuno" = spento · "proprietario" = solo gli account di AVATAR_A_CHI (dal profilo li spengono e riaccendono, sg-avatar-a) · "tutti".
   // AVATAR_A_CHI (6 nov 2026, il proprietario: «gli avatar per il momento solo per l'account "il pappone" e "mario"»): i nomi dei
   // profili, confrontati come per IL PAPPONE (senza spazi ai lati, maiuscole e minuscole uguali). MARIO = Mario De Viva (Lanterne).
-  var AVATAR_A = "proprietario";
+  var AVATAR_A = "tutti";
   var AVATAR_A_CHI = [PROPRIETARIO, "MARIO"];
   function avatarAAmmesso() { var io = profiloAttivo(); return AVATAR_A_CHI.indexOf(String((io && io.nome) || "").trim().toUpperCase()) >= 0; }
   function avatarASpento() { try { return localStorage.getItem("sg-avatar-a") === "0"; } catch (e) { return false; } }
