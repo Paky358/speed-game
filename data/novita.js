@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 308,
+    data: "6 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: la porta inviolata c'è da subito",
+    descrizione: [
+      "🔒 Nella giornata dopo l'asta ogni portiere parte già con il +1 della porta inviolata: lo vedi nei punti in alto dal fischio d'inizio.",
+      "🧤 Al primo gol che prende la sua squadra il +1 se ne va, insieme al −1 del gol subito, con la scritta «Porta inviolata persa».",
+      "Così la classifica dal vivo, la 👑 e i conti della Zona Cesarini sono giusti in ogni momento, e dopo il fischio finale non cambia più niente.",
+      "Vale anche nelle 🏆 3 giornate, online e sullo stesso telefono."
+    ]
+  },
+  {
     v: 307,
     data: "5 novembre 2026",
     titolo: "⚡ L'app si apre molto più in fretta",

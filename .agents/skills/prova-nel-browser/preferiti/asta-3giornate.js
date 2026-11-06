@@ -145,7 +145,7 @@
   function quadrettiG3(w, cl) {
     var x = qa(w, ".st-gio-riga").map(function (n) { return { nome: n.querySelector(".st-gio-nome").textContent, pt: n.querySelector(".st-gio-pt").textContent }; });
     var male = [];
-    cl.forEach(function (r) { var y = x.filter(function (z) { return z.nome === r.nome; })[0], atteso = num(r.prima[0].punti + r.prima[1].punti + 6 * r.kit.length); if (!y || y.pt !== atteso) male.push(r.nome + " «" + (y && y.pt) + "» invece di «" + atteso + "»"); });
+    cl.forEach(function (r) { var y = x.filter(function (z) { return z.nome === r.nome; })[0], atteso = num(r.prima[0].punti + r.prima[1].punti + 6 * r.kit.length + r.kit.filter(function (c) { return c.ruolo === "P"; }).length); /* (+1 per portiere: 🔒 la porta inviolata dal fischio d'inizio, 6 nov 2026) */ if (!y || y.pt !== atteso) male.push(r.nome + " «" + (y && y.pt) + "» invece di «" + atteso + "»"); });
     return male;
   }
 

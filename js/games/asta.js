@@ -518,6 +518,7 @@
     ".st-msg-tx{display:flex;flex-direction:column;align-items:center;text-align:center;line-height:1.2;min-width:0;}",
     ".st-msg-tx b{font-size:clamp(.9rem,4.4vw,1.08rem);font-weight:900;color:#ffe066;letter-spacing:.02em;text-wrap:balance;}.st-msg-tx span{font-size:.84rem;font-weight:800;}",
     ".st-msg-tx span.pt{margin-top:4px;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.14);}",
+    ".st-msg-tx span.inv{margin-top:4px;padding:2px 8px;border-radius:8px;background:rgba(224,34,90,.28);font-size:.8em;font-weight:800;}",   // 🧤 la porta inviolata persa
     ".st-msg.sq .st-msg-maglia{width:44px;height:44px;}.st-msg.sq.stretto{gap:6px;padding:6px 10px;}.st-msg.sq.stretto .st-msg-maglia{width:30px;height:30px;}.st-msg.sq .st-msg-tx span.az{font-size:.8rem;font-weight:900;color:#ffe066;letter-spacing:.03em;}",
     ".st-msg.sq .st-msg-tx b.sq{margin-top:3px;padding:2px 12px 3px;border-radius:10px;font-size:clamp(1.15rem,6.2vw,1.55rem);font-weight:900;letter-spacing:.02em;text-transform:uppercase;line-height:1.15;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);text-wrap:balance;}",
     ".st-pag{position:absolute;z-index:4;left:8px;right:8px;bottom:8px;display:flex;flex-direction:column;gap:7px;padding:8px;border-radius:12px;background:rgba(4,8,22,.96);box-shadow:0 0 0 2px rgba(255,255,255,.12);opacity:0;pointer-events:none;transition:opacity .4s;overflow:hidden;}",
@@ -1143,7 +1144,7 @@
       "Chi ha già l'offerta più alta <b>può rialzare da solo</b> (tocca di nuovo la sua faccina, o il tasto): è strategia, così chi ha pochi crediti non ci arriva più. Sotto ogni squadra si leggono i crediti e <b>fin dove può arrivare</b>.",
       "Sul maxischermo, accanto al calciatore all'asta: <b>🎯 RIGORISTA</b>, <b>🦶 PUNIZIONI</b> e <b>🚩 ANGOLI</b> col numero (1°, 2° o 3° della squadra), quelli veri di quest'anno.",
       "<b>💰 Come si compra</b> (nel ⚙️): 🔨 l'asta normale coi rilanci; <b>✉️ tutta a buste</b>: ognuno scrive in segreto quanto offre (o passa), si aprono le buste dalla più bassa alla più alta e vince la più alta, che paga quello che ha scritto; <b>✉️ buste solo per i big</b>: a busta solo i più forti, gli altri all'asta normale. A pari offerta più alta <b>spareggio</b> a busta solo tra loro (almeno +1); se sono ancora pari decide la <b>ruota</b>. Mai «vince chi ha chiuso prima».",
-      "Alla fine si scoprono le <b>quotazioni vere</b> dei calciatori, dalla rosa che vale meno a quella che vale di più. Poi si gioca <b>⚽ una giornata di Serie A finta</b>, come nel fantacalcio vero: i vostri calciatori non giocano tra di loro, ognuno gioca con la sua squadra contro chi capita (le 20 squadre si sorteggiano; i risultati dipendono da attacco e difesa veri dell'anno scorso). I gol li segnano soprattutto i più quotati e gli attaccanti; i rigori li tirano i <b>🎯 rigoristi</b> di quest'anno (all'asta c'è la scritta sul maxischermo); i cartellini dipendono da quanti ne ha presi davvero ognuno. Chi comprate gioca sempre. Tutti partono da 6 in pagella (il portiere di solito resta a 6), poi voti e bonus come nel fantacalcio: <b>gol +3</b>, <b>assist +1</b>, <b>giallo −0,5</b>, <b>rosso −1</b>, <b>rigore sbagliato −3</b>, <b>autogol −2</b>; per il portiere <b>gol subito −1</b>, <b>porta inviolata +1</b>, <b>rigore parato +3</b>. Sul campo si vedono con calma i momenti dei vostri calciatori (anche i pali e le parate), col nome e la faccina di chi li ha comprati; a fine primo tempo e al fischio finale arrivano le pagelle. Vince chi fa <b>più fantapunti</b> (a pari punti la rosa che vale di più, poi chi ha più crediti avanzati).",
+      "Alla fine si scoprono le <b>quotazioni vere</b> dei calciatori, dalla rosa che vale meno a quella che vale di più. Poi si gioca <b>⚽ una giornata di Serie A finta</b>, come nel fantacalcio vero: i vostri calciatori non giocano tra di loro, ognuno gioca con la sua squadra contro chi capita (le 20 squadre si sorteggiano; i risultati dipendono da attacco e difesa veri dell'anno scorso). I gol li segnano soprattutto i più quotati e gli attaccanti; i rigori li tirano i <b>🎯 rigoristi</b> di quest'anno (all'asta c'è la scritta sul maxischermo); i cartellini dipendono da quanti ne ha presi davvero ognuno. Chi comprate gioca sempre. Tutti partono da 6 in pagella (il portiere di solito resta a 6), poi voti e bonus come nel fantacalcio: <b>gol +3</b>, <b>assist +1</b>, <b>giallo −0,5</b>, <b>rosso −1</b>, <b>rigore sbagliato −3</b>, <b>autogol −2</b>; per il portiere <b>gol subito −1</b>, <b>porta inviolata +1</b> (ce l'ha già dal fischio d'inizio e la perde al primo gol subito), <b>rigore parato +3</b>. Sul campo si vedono con calma i momenti dei vostri calciatori (anche i pali e le parate), col nome e la faccina di chi li ha comprati; a fine primo tempo e al fischio finale arrivano le pagelle. Vince chi fa <b>più fantapunti</b> (a pari punti la rosa che vale di più, poi chi ha più crediti avanzati).",
       "La giornata si spegne nel ⚙️: allora vince la rosa che <b>vale di più</b> (a pari valore chi ha <b>più crediti avanzati</b>).",
       "<b>🏆 3 giornate</b> (si sceglie nel ⚙️): le stesse rose giocano tre giornate di fila, ognuna con partite sorteggiate da capo. Le prime due si vedono <b>veloci</b> (solo i momenti dei vostri calciatori), con la classifica dopo ognuna; la terza si gioca <b>intera</b>, partendo dai punti delle prime due. Vince chi fa <b>più fantapunti sommati</b>.",
       "A fine partita i <b>titoli scherzosi</b> (non sono trofei): 💸 lo sprecone, 🧊 il braccino corto, 🎯 il cecchino dell'ultimo secondo… e con <b>📸</b> mandi la foto della tua rosa nel gruppo."
@@ -2594,6 +2595,11 @@
   //  - Chi avete comprato gioca sempre (se una squadra ha due portieri nel gioco, giocano tutti e due) e prende i punti del
   //    fantacalcio: voto in pagella + gol +3, assist +1, giallo −0,5, rosso −1, rigore sbagliato −3, autogol −2; il portiere
   //    gol subito −1, porta inviolata +1, rigore parato +3. Vince chi fa più fantapunti (a pari punti la rosa che vale di più).
+  //    🔒 La porta inviolata (6 nov 2026, deciso dal proprietario: «tutti partono con la porta inviolata, non che si aggiunge alla
+  //    fine»): nei punti dal vivo ogni portiere comprato ha il +1 dal fischio d'inizio (portaIniziale) e lo perde al primo gol che la sua
+  //    squadra subisce, nello STESSO momento del 🥅 −1 (dunqueSerieA: si vede solo quando il gol si vede). I dati della giornata NON
+  //    cambiano (il momento "inv" a fine partita, e = -1, resta solo a chi non ha preso gol, come prima: stessi punti, stessa foto per
+  //    il vice e per la ripresa): cambia solo QUANDO il +1 si vede.
   //  La gioca chi tiene la partita (online l'host): va a tutti dentro la foto e la vedono tutti uguale.
   // =========================================================
   var MEDIA_QUOT = { P: 9, D: 8, C: 11, A: 13 };   // la quotazione "di metà" di ogni ruolo, tra i calciatori del gioco
@@ -2846,7 +2852,7 @@
         else if (e.t === "ann") { dai(e.chi, e.m, "ann", 0, pi, ei); dai(e.ass, e.m, "ann", 0, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "ann", 0, pi, ei); }); }
         else if (e.t === "occ") { dai(e.chi, e.m, "occ", 0, pi, ei); if (CON_PASSA[e.v]) dai(e.ass, e.m, "occ", 0, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "occ", 0, pi, ei); }); }   // (anche il portiere che difende vede il momento)
       });
-      ["c", "f"].forEach(function (s) { if (!presi[s]) por[s].forEach(function (y) { dai(y.k, 90, "inv", 1, pi, -1); }); });
+      ["c", "f"].forEach(function (s) { if (!presi[s]) por[s].forEach(function (y) { dai(y.k, 90, "inv", 1, pi, -1); }); });   // (🔒 nei punti dal vivo il +1 c'è dal fischio d'inizio: portaIniziale)
     });
     righe.forEach(function (r) {
       var cal = r.kit.map(function (c) {
@@ -2865,7 +2871,7 @@
           l.forEach(function (e) { if (ei != null ? e.e >= 0 && e.e <= ei : e.m <= m) x += VOTO_EV[e.t] || 0; });
           return Math.round(lim(x, 4, 8.5) * 2) / 2;
         }
-        l.forEach(function (e) { b += e.d; e.vv = e.e < 0 ? adesso(99) : adesso(e.m, e.e); });   // (vv: il suo voto subito dopo quel momento, per i quadretti in alto; la porta inviolata si vede dopo il fischio: il voto vero)
+        l.forEach(function (e) { b += e.d; e.vv = e.e < 0 ? adesso(99) : adesso(e.m, e.e); });   // (vv: il suo voto subito dopo quel momento, per i quadretti in alto)
         var v = adesso(99);
         return { v: v, v1: adesso(45), v75: adesso(74.9), fv: v + b, ev: l };   // (v1: il voto a fine primo tempo; v75: all'inizio della Zona Cesarini)
       }), voti = 0, bonus = 0;
@@ -3062,12 +3068,13 @@
       img.src = src; R.facce[r.id] = img; R.busti[r.id] = src;   // (la faccina sul campo, accanto al nome dei suoi calciatori)
     });
     if (gia) rimettiQuadretti(R, base);   // (🏆 la giornata dopo: stessi quadretti, i voti ripartono da 6 sopra i punti di prima)
+    righe.forEach(function (r) { portaIniziale(R, R.gr[r.id]); });   // 🔒 i portieri partono col +1 della porta inviolata
     R.pag.style.top = R.azBox.offsetTop + "px";   // (le pagelle coprono il campo e la classifica)
     // chi c'entra in ogni momento: "partita|momento" → [{ r: la rosa, c: il calciatore, k: il suo posto nella rosa, t, d }]
     var chi = {};
     righe.forEach(function (r) { gioDi(r).cal.forEach(function (x, k) { x.ev.forEach(function (e) { var key = e.p + "|" + e.e; (chi[key] = chi[key] || []).push({ r: r, c: r.kit[k], k: k, t: e.t, d: e.d, vv: e.vv }); }); }); });
     // i momenti in ordine di minuto: quelli dei vostri calciatori sul campo, i gol degli altri solo nei risultati; al 45' l'intervallo
-    // i momenti speciali (sp): l'intervallo, ⏳ la Zona Cesarini al 75', ⏱️ il recupero al 90', 🏁 il fischio finale (prima delle porte inviolate)
+    // i momenti speciali (sp): l'intervallo, ⏳ la Zona Cesarini al 75', ⏱️ il recupero al 90', 🏁 il fischio finale
     var lista = veloce ? [] : [{ intervallo: true, sp: 1, m: 45.5 }, { zona: true, sp: 1, m: 74.9 }, { recupero: true, sp: 1, m: 90.5 }, { fischio: true, sp: 1, m: 98 }];   // (le giornate veloci: niente intervallo, niente Zona Cesarini)
     R.golDi = {}; R.belli = []; R.zona = false; R.fischiato = false; R.capi = []; R.capoId = null; R.rec = A.rec || 4;
     A.partite.forEach(function (P, pi) {
@@ -3077,7 +3084,6 @@
         if (e.t === "rigP" && dopo && dopo.t === "gol" && dopo.v === "ribattuta") e.ribGol = 1;
         if (q.length || rib || e.t === "gol" || e.t === "rig" || e.t === "aut") lista.push({ P: P, p: pi, ei: ei, e: e, chi: q, m: e.m, focus: q.length > 0 || rib });
       });
-      if (chi[pi + "|-1"]) lista.push({ P: P, p: pi, e: { m: 90, t: "inv", s: null, r: [P.gc, P.gf] }, chi: chi[pi + "|-1"], m: 99, focus: true });   // (dopo il recupero)
     });
     lista.forEach(function (x) { if (x.focus && x.e && x.e.t === "aut" && x.chi.some(function (q) { return chiaveCalc(q.c) === x.e.chi; })) x.lampo = true; });   // (l'autogol di un vostro: di colpo)
     lista.sort(function (a, b) { return a.m - b.m; }); lista.forEach(function (x, k) { x.ord = k; }); R.risOrd = {};
@@ -3115,7 +3121,7 @@
       if (x.lampo) return lampoSerieA(R, x, i, prossimo);   // (le giornate veloci: cartellini, porte inviolate e i gol meno vostri si vedono di colpo)
       momentoSerieA(R, x, i, prossimo);
     }
-    avvisoCampo(R, 50, gk != null ? inizioGiornata(R, gk) : ["⚽ FISCHIO D'INIZIO!", "tutti i vostri calciatori partono da 6", "tocca il tuo quadretto per vedere i tuoi calciatori"]); if (!inRitardo(R)) SUONI.fischio(1, true);
+    avvisoCampo(R, 50, gk != null ? inizioGiornata(R, gk) : ["⚽ FISCHIO D'INIZIO!", "tutti partono da 6, i portieri anche 🔒 +1", "tocca il tuo quadretto per vedere i tuoi calciatori"]); if (!inRitardo(R)) SUONI.fischio(1, true);
     R.dopo(2000, function () { if (!vivoRivela(R)) return; viaAvviso(R); R.dopo(400, prossimo); });
   }
   // =========================================================
@@ -3137,6 +3143,14 @@
     if (gk === 0) return ["⚡ 1ª GIORNATA · HIGHLIGHTS", "solo i momenti dei vostri calciatori", "3 giornate: contano i punti sommati"];
     if (gk === 1) return ["⚡ 2ª GIORNATA · HIGHLIGHTS", "partite nuove: ogni calciatore riparte da 6", "nei quadretti i punti si sommano"];
     return ["⚽ 3ª GIORNATA: SI DECIDE TUTTO!", "intera, fino al fischio finale", "nei quadretti i punti delle prime due"];
+  }
+  // 🔒 la porta inviolata dal fischio d'inizio (6 nov 2026): il +1 di ogni portiere comprato è nei punti da subito, col 🔒 accanto
+  // (g.inv[k]: ce l'ha ancora; lo perde al primo 🥅 in dunqueSerieA). Il momento "inv" di fine partita non si mostra più: è già qui
+  function portaIniziale(R, g) {
+    if (!g) return;
+    g.inv = g.r.kit.map(function (c) { return c.ruolo === "P"; });
+    g.inv.forEach(function (si, k) { if (!si) return; g.bon[k] += 1; g.ic[k] += EV_GIO.inv; g.ev.appendChild(R.el("span", { class: "inv", text: EV_GIO.inv })); });
+    g.pt.textContent = numFanta(totGio(g));
   }
   function rimettiQuadretti(R, base) {   // la giornata dopo: stessi quadretti (niente lampeggio), voti da 6 sopra i punti di prima
     listaGio(R).forEach(function (g) {
@@ -3272,7 +3286,7 @@
       var cs = coloriSquadra(sq) || ["#2b3550", "#9aa5bd"], n = parseInt(cs[0].slice(1), 16), luce = 0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
       if (righe[0]) tx.appendChild(R.el("span", { class: "az", text: righe[0] }));
       tx.appendChild(R.el("b", { class: "sq", text: righe[1], style: "font-size:" + Math.round(Math.max(13, Math.min(25, bw * 0.062, (bw * 0.94 - (bw < 330 ? 66 : 82) - 24) / (String(righe[1]).length * 0.68)))) + "px;background:" + cs[0] + ";color:" + (luce > 150 ? "#14171f" : "#fff") + ";box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),0 0 0 2px " + cs[1] }));
-    } else righe.forEach(function (t, i) { if (t) tx.appendChild(R.el(i ? "span" : "b", { class: i === 2 ? "pt" : "", text: t })); });
+    } else righe.forEach(function (t, i) { if (t) tx.appendChild(R.el(i ? "span" : "b", { class: i === 2 ? "pt" : i === 3 ? "inv" : "", text: t })); });
     m.appendChild(tx); m.style.top = pos + "%";
     m.classList.remove("on"); void m.offsetWidth; m.classList.add("on");
   }
@@ -3403,7 +3417,7 @@
   }
   function dunqueSerieA(R, x, t, esito, sqA, pos, seme, muto) {   // l'azione è arrivata al dunque: i punti di chi c'entra, il risultato, l'esito sul campo, il suono
     if (!vivoRivela(R)) return;   // (muto: chi recupera un momento già passato: solo punti e risultati)
-    var e = x.e, chi = [], somma = {}, icone = {}, buono = false;
+    var e = x.e, chi = [], somma = {}, icone = {}, buono = false, persa = [];
     if (!muto) provaPiano(R, "d" + (x.ord != null ? x.ord : ""));
     if (t === "ann") {   // il gol c'è… per ora: niente punti finché il VAR non ha deciso
       if (!muto) { avvisoCampo(R, pos, ["⚽ GOL " + conArt(sqA, true).toUpperCase() + "!", "…ma l'arbitro si tocca l'orecchio"]); if (!inRitardo(R)) FX.tic(0.6); }
@@ -3418,12 +3432,17 @@
         icone[q.r.id] += EV_GIO.rec; return;
       }
       if (!g || !q.d) return;
-      g.bon[q.k] += q.d; g.ic[q.k] += EV_GIO[q.t] || ""; g.pt.textContent = numFanta(totGio(g)); rianima(g.pt, "batte");
+      var qd = q.d;
+      if (q.t === "sub" && g.inv && g.inv[q.k]) {   // 🔒 il primo gol subito: via il 🔒 e il suo +1, insieme al 🥅 −1 del gol
+        g.inv[q.k] = false; qd -= 1; g.ic[q.k] = g.ic[q.k].replace(EV_GIO.inv, ""); var lu = g.ev.querySelector("span.inv"); if (lu) lu.parentNode.removeChild(lu);
+        persa.push(q.r.nome);
+      }
+      g.bon[q.k] += qd; g.ic[q.k] += EV_GIO[q.t] || ""; g.pt.textContent = numFanta(totGio(g)); rianima(g.pt, "batte");
       g.ev.appendChild(R.el("span", { text: EV_GIO[q.t] || "" }));
       g.nodo.classList.remove("piu", "meno"); void g.nodo.offsetWidth; g.nodo.classList.add(q.d > 0 ? "piu" : "meno");
       (function (nd) { R.timer.push(setTimeout(function () { nd.classList.remove("piu", "meno"); }, 900)); })(g.nodo);
       if (!(q.r.id in somma)) { somma[q.r.id] = 0; icone[q.r.id] = ""; chi.push(q.r); }
-      somma[q.r.id] += q.d; icone[q.r.id] += EV_GIO[q.t] || "";
+      somma[q.r.id] += qd; icone[q.r.id] += EV_GIO[q.t] || "";
       if (q.d > 0 && (R.opz.mio == null || R.opz.mio === q.r.id) && (q.t === "gol" || q.t === "par")) buono = true;
       if (q.t === "esp") { R.fuori = R.fuori || {}; R.fuori[chiaveCalc(q.c)] = e.m; }
     });
@@ -3442,7 +3461,9 @@
     else if (t === "occ") { tit = frase(FRASI_OCC[esito], seme); sotto = "niente gol"; }
     else if (t === "rec") { tit = "👏 ENTRATA PULITA!"; sotto = frase(["Prende solo il pallone!", "Tutto regolare: solo pallone!", "Intervento perfetto, si gioca!"], seme); }
     else { tit = "🔒 PORTA INVIOLATA!"; sotto = x.P.c + " " + e.r[0] + "-" + e.r[1] + " " + x.P.f; }
-    if (!muto) avvisoCampo(R, pos, [tit, sotto, chi.map(function (r) { return r.nome + " " + icone[r.id] + " " + (t === "rec" ? "voto ↑" : segnoFanta(somma[r.id])); }).join(" · ")]);
+    if (!muto) avvisoCampo(R, pos, [tit, sotto, chi.map(function (r) { return r.nome + " " + icone[r.id] + " " + (t === "rec" ? "voto ↑" : segnoFanta(somma[r.id])); }).join(" · "),
+      persa.length ? "🧤 Porta inviolata persa" + (chi.length > persa.length || persa.length > 1 ? " (" + elencoNomi(persa.filter(function (n, i) { return persa.indexOf(n) === i; })) + ")" : "") : ""]);   // (si vede insieme al −1 del gol)
+    if (persa.length) provaPiano(R, "invPersa");
     if (muto || inRitardo(R)) {}
     else if (buono) { FX.posto(); vibra(30); }
     else if (chi.length) FX.tic(chi.some(function (r) { return somma[r.id] > 0; }) ? 0.8 : 0.1);
@@ -3652,13 +3673,13 @@
     if (!inRitardo(R)) FX.recupero();
     R.dopo(dur, function () { if (!vivoRivela(R)) return; viaAvviso(R); R.dopo(200, poi); });
   }
-  // 🏁 al fischio i voti di adesso diventano quelli veri: i quadretti dicono i punti veri (mancano solo le porte inviolate, che arrivano subito
-  // dopo) e la 👑 va su chi è davvero davanti. Non svela niente: la partita è finita, i voti in pagella sono quelli
+  // 🏁 al fischio i voti di adesso diventano quelli veri: i quadretti dicono i punti veri (la porta inviolata c'è già da inizio partita)
+  // e la 👑 va su chi è davvero davanti. Non svela niente: la partita è finita, i voti in pagella sono quelli
   function votiFinali(R, muto) {
     listaGio(R).forEach(function (g) { var d = 0; g.r.gio.cal.forEach(function (c, k) { if (c.v != null && g.vv[k] !== c.v) { d += c.v - g.vv[k]; g.vv[k] = c.v; } }); if (d && !muto) frecciaVoto(g, d); g.pt.textContent = numFanta(totGio(g)); });
     riordinaGiornata(R, null, true);
   }
-  // 🏁 il fischio finale sospeso: il campo si ferma, un attimo di silenzio, poi il triplice fischio (poi le porte inviolate e le pagelle)
+  // 🏁 il fischio finale sospeso: il campo si ferma, un attimo di silenzio, poi il triplice fischio (poi le pagelle)
   function fischioSospeso(R, poi) {
     if (!vivoRivela(R)) return;
     var dur = 3500;   // (1,4 s di attesa + 1,9 s col fischio + 0,2 s)
