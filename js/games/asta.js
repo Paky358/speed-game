@@ -296,7 +296,9 @@
     //  il numero del posto al centro sotto la sedia (mai sopra i vicini), nomi anche su due righe e sedie più grandi con 5 in una fila sola
     ".sa-platea.ill .sa-fila1.n2 .sa-pers{width:31%;max-width:156px;}.sa-platea.ill .sa-fila1+.sa-fila0{margin-top:30px;}",
     ".sa-platea.ill .sa-fila0.n5 .sa-pers{width:26%;max-width:134px;margin:0 -4%;}.sa-platea.ill .sa-fila1.n5 .sa-pers{width:20%;max-width:104px;margin:0 -2%;}",
-    ".sa-platea.ill .sa-av{transform-origin:50% 90%;transform:scale(1.2);}",
+    ".sa-platea.ill .sa-av{transform-origin:50% 79%;transform:scale(1.4);}",
+    ".sa-platea.ill .sa-sedia{transform-origin:50% 74%;transform:scale(.84);}",
+    ".sa-platea.ill .sa-figura{margin-top:16%;}",   // (la testa ingrandita esce sopra la figura: ci vuole il posto, sennò finisce sotto la barra del tempo)   // (3° tempo giro 3, 6 nov 2026: l avatar più grande e la sedia più piccola, con i fianchi a altezza del sedile: prima l avatar era piccolo e lontano dentro un trono molto più grande)
     ".sa-platea.ill .sa-num{left:50%;bottom:-3px;transform:translateX(-50%);min-width:18px;height:18px;line-height:18px;font-size:.66rem;}",
     ".sa-platea.ill .sa-pers>b{white-space:normal;line-height:1.08;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}",
     ".sa-platea.ill .sa-fila .n5 .sa-pers>b,.sa-platea.ill .sa-fila.n5 .sa-pers>b,.sa-platea.ill .sa-fila.n4 .sa-pers>b{min-height:2.2em;align-items:center;}",
@@ -1755,9 +1757,14 @@
   // 🎨 illustrati (giro 4): sugli schermi bassi (a 360x640 due file da due diventavano piccolissime) fino a 5 giocatori stanno in una fila sola
   function unaFila() { return (window.innerHeight || 800) < 730; }
   // una persona del pubblico: la sedia dietro, l'avatar seduto, la paletta col numero, la nuvoletta dell'offerta
+  function paletteXY(m) {   // dove sta la paletta: sulla mano alzata; con gli avatar illustrati (ingranditi dal CSS attorno ai fianchi) la mano si sposta con loro
+    var x = m.x / 2, y = m.y / 2.64;
+    if (illustrati()) { x = 50 + (x - 50) * 1.4; y = 79 + (y - 79) * 1.4; }
+    return [x, y];
+  }
   function personaAsta(el, S, p, sedia) {
     var cfg = cfgDi(p.nome, p.omino), m = manoAlzata(cfg);
-    var paletta = el("div", { class: "sa-paletta", style: "left:" + (m.x / 2) + "%;top:" + (m.y / 2.64) + "%" }, [ el("span", { text: String(p.num) }) ]);
+    var pxy = paletteXY(m), paletta = el("div", { class: "sa-paletta", style: "left:" + pxy[0] + "%;top:" + pxy[1] + "%" }, [ el("span", { text: String(p.num) }) ]);
     var nuvola = el("div", { class: "sa-nuvola" }), nota = el("small"), manca = el("i", { class: "sa-manca" });
     var passo = tastoPasso(el, S, p);
     var nodo = el("div", { class: "sa-pers", role: "button", onclick: function () { toccaPersona(S, p.id); } }, [
