@@ -15,7 +15,7 @@
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {};
     var aggancio = "function costruisciMazzoFanta(n) {";
     if (src.indexOf(aggancio) < 0) no("non trovo il mazzo del fanta nel file del gioco");
-    src = src.replace(aggancio, "FUORI.mazzo = costruisciMazzoFanta; FUORI.giornata = giornataSerieA; FUORI.classifica = classificaFanta; FUORI.coppie = coppieGiornate; FUORI.numero = numeroMaglia; FUORI.meteo = meteoDi; " + aggancio);
+    src = src.replace(aggancio, "FUORI.mazzo = costruisciMazzoFanta; FUORI.giornata = giornataSerieA; FUORI.classifica = classificaFanta; FUORI.coppie = coppieGiornate; FUORI.numero = numeroMaglia; FUORI.meteo = meteoDi; FUORI.meteoUna = meteoUnaSola; " + aggancio);
     new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, fuori);
     return fuori;
   }
@@ -46,7 +46,7 @@
     return Object.keys(N).length + " numeri su " + tutti.length + " calciatori (senza numero: " + senza + "), nessun doppione, 305 maglie girate disegnate";
   } });
   COPIONE.aggiungi("nm2", { nome: "Fanta: 🆚 le partite sorteggiate all'inizio dell'asta sono quelle della giornata; il meteo non cambia", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = [];
+    var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = [], spec = [];
     for (var i = 0; i < 60 && ko.length < 6; i++) {
       var n = 2 + (i % 5), m = M.mazzo(n), per = { P: [], D: [], C: [], A: [] }, gioc = [];
       m.forEach(function (c) { per[c.ruolo].push(c); });
@@ -61,6 +61,8 @@
         var sq = {}; B.partite.forEach(function (P) { sq[P.c] = (sq[P.c] || 0) + 1; sq[P.f] = (sq[P.f] || 0) + 1; });
         if (Object.keys(sq).some(function (s) { return sq[s] !== 1; })) ko.push("una squadra gioca due volte");
         B.partite.forEach(function (P) { if (M.meteo(P, gi) !== M.meteo(P, gi)) ko.push("meteo a caso"); });
+        var u = M.meteoUna(B.partite, gi), u2 = M.meteoUna(B.partite, gi), diverse = B.partite.filter(function (P) { return M.meteo(P, gi) !== "sole"; }).length; spec.push(u ? 1 : 0);
+        if (JSON.stringify(u) !== JSON.stringify(u2)) ko.push("la partita col meteo diverso cambia"); if (diverse && !u) ko.push("meteo diverso sparito"); if (u && u.m === "sole") ko.push("la partita diversa col sole");   // (6 nov: al massimo UNA partita diversa per giornata)
       });
     }
     // (6 nov 2026: il meteo dipende da chi gioca in casa: neve solo al nord, nebbia solo in pianura, mai neve al sud)
@@ -68,6 +70,6 @@
     SQ.forEach(function (c, ic) { SQ.forEach(function (f) { if (c === f) return; var mm = M.meteo({ c: c, f: f }, ic % 3); met[mm] = (met[mm] || 0) + 1; if (mm === "neve" && /Napoli|Roma|Lazio|Lecce|Cagliari/.test(c)) sud++; }); });
     if (!met.pioggia || !met.nebbia || !met.neve || met.sole < 250 || sud) ko.push("meteo sbilanciato " + JSON.stringify(met) + (sud ? " (neve al sud: " + sud + ")" : ""));
     if (ko.length) no(ko.join(" | "));
-    return "60 partite con le giornate sorteggiate prima: giocate proprio quelle; meteo su 380 partite " + JSON.stringify(met);
+    return "60 partite con le giornate sorteggiate prima: giocate proprio quelle; giornate con una partita dal meteo diverso: " + spec.filter(Boolean).length + " su " + spec.length + " (mai più di una); meteo su 380 partite " + JSON.stringify(met);
   } });
 })();

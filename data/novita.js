@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 313,
+    data: "6 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: il meteo più tranquillo",
+    descrizione: [
+      "🌦️ In una giornata al massimo UNA partita ha un meteo diverso (pioggia, nebbia o neve, a seconda della città): tutte le altre col sole. Niente più neve da una parte e pioggia dall'altra nella stessa giornata.",
+      "☀️ Tolto il sole forte (luce calda e ombre sul campo): distraeva dalla partita."
+    ]
+  },
+  {
     v: 312,
     data: "6 novembre 2026",
     titolo: "⚽ Mini Asta Fantacalcio: lo stadio si sente davvero",
