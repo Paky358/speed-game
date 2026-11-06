@@ -73,6 +73,7 @@
   var COND = {
     gol: function (r) { var a = r.az, sc = a && a.sc; return sc && !sc.replay && sc.rete != null && a.p >= sc.rete + 0.02 && sc.fest && sc.fest.chi && sc.fest.chi.faccia && sc.tipo !== "rig"; },
     azione: function (r) { var a = r.az, sc = a && a.sc; return sc && !sc.replay && sc.tipo !== "rig" && a.p > 0.35 && a.p < 0.5 && nostro(sc); },
+    parata: function (r) { var a = r.az, sc = a && a.sc; return sc && !sc.replay && sc.paf != null && a.p >= sc.paf - 0.02; },
     replay: function (r) { var a = r.az, sc = a && a.sc; return sc && sc.replay && a.p > 0.3; },
     pagella: function () { var p = q(PV.w(), ".st-pag.on:not(.live) .st-pag-tit"); return p && /La pagella/.test(p.textContent); }
   };
@@ -447,5 +448,15 @@
     C.toDataURL = function () { var u = old.apply(this, arguments); if (this.width === 1080) w.__foto = u; return u; };
     var b = [].slice.call(w.document.querySelectorAll(".st-premi button")).filter(function (x) { return /campione/.test(x.textContent); })[0]; if (b) b.click();
     return new Promise(function (res) { var t0 = Date.now(); (function giro() { if (w.__foto || Date.now() - t0 > 5000) { C.toDataURL = old; res(w.__foto); } else setTimeout(giro, 100); })(); });
+  };
+  PV.parataFinta = async function (v, seme) {   // un'azione con la parata, costruita col motore vero, sul campo della giornata (tempo fermo)
+    var w = PV.w(), src = await (await w.fetch("/js/games/asta.js?" + Date.now())).text(), F = {};
+    src = src.replace("function costruisciMazzoFanta(n) {", "FUORI.scena = scena; function costruisciMazzoFanta(n) {");
+    new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, F);
+    var sc = F.scena("occ", v, "parata", null, { tira: null, passa: null, para: null }, { verso: 1, lato: seme % 2 ? 1 : -1, seme: seme * 7919, lento: true });
+    sc.kA = { a: "#0b4ea2", b: "#111111", righe: true, pant: "#111111", calz: "#0b4ea2" }; sc.kD = { a: "#f4f4f4", b: "#f4f4f4", righe: false, pant: "#f4f4f4", calz: "#f4f4f4" };
+    sc.pA = { a: "#2fbf71", b: "#2fbf71", righe: false, pant: "#1b1b1b", calz: "#2fbf71" }; sc.pD = { a: "#f5c518", b: "#f5c518", righe: false, pant: "#1b1b1b", calz: "#f5c518" }; sc.noti = [];
+    [].slice.call(w.document.querySelectorAll(".st-msg,.st-tv,.st-linea,.st-gufo")).forEach(function (n) { n.style.visibility = "hidden"; });
+    PV.ferma(); PV.sc = sc; return "parata " + v + " a " + (sc.paf != null ? sc.paf.toFixed(2) : "?");
   };
 })();
