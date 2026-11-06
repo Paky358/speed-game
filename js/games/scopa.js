@@ -934,6 +934,8 @@
   var svgCache = {};   // disegni già pronti (un avatar per espressione): non si rifanno a ogni mossa
   // 🎨 avatar illustrati (solo se accesi): seduti al tavolo, dalla testa alla vita, con le mani sul panno. Con gli avatar di prima
   // (o con gesto == null) il disegno resta quello di sempre.
+  function aProp() { return !!(window.SGOminoA && SGOminoA.PROPORZIONE && SGOminoA.PROPORZIONE !== "attuale"); }   // (3° tempo, 6 nov 2026) le proporzioni nuove degli avatar illustrati
+  function kTav(tre) { return illu() && aProp() ? (tre ? 1 : 0.8) : 1; }   // con gli avatar illustrati le carte sul tavolo sono un po più piccole: prima erano grandi quanto il loro busto
   function illu() { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); }
   function svgAvatar(cfg, faccia, gesto) {
     var ill = !!gesto && illu();
@@ -990,8 +992,8 @@
     var scW = Math.min(window.innerWidth || 375, 600);   // la stanza va da bordo a bordo
     var manoH = righeMano * Math.round(wH * ASP_CARTA) + (righeMano - 1) * 6;
     var scH = Math.max(300, Math.min(900, Math.round(alt - (manoH + 52) + c.v)));
-    var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.6);
-    var tavAw = Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh = (pianoH - 24) * 0.87;
+    var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * (illu() && aProp() ? 0.5 : 0.6));   // (3° tempo giro 3: con gli avatar illustrati il tavolo è meno profondo e meno vuoto, e gli avatar gli stanno più vicini)
+    var tavAw = Math.min((pianoW - 24) * 0.94 - 4, scW - 22) * kTav(1), tavAh = (pianoH - 24) * 0.87 * kTav(1);
     var wT = Math.max(26, Math.min(110, Math.floor((tavAw - 15) / 4), Math.floor((tavAh - 5) / 2 / ASP_CARTA)));
     return { alt: alt, scW: scW, scH: scH, pianoW: pianoW, pianoH: pianoH, tavAw: tavAw, tavAh: tavAh, wT: wT, corr: c };
   }
@@ -1022,13 +1024,14 @@
     carte.forEach(function (c) { ids[c.id] = true; });
     for (k in stato) if (!ids[k]) delete stato[k];   // chi è andato via libera il posto (gli altri NON si muovono)
     for (k in stato) occ[stato[k]] = true;
-    carte.forEach(function (c) { if (stato[c.id] != null) return; var p = 0; while (occ[p]) p++; stato[c.id] = p; occ[p] = true; });
+    var ORD = illu() && aProp() ? [1, 2, 5, 6, 0, 3, 4, 7] : [0, 1, 2, 3, 4, 5, 6, 7];   // (3° tempo giro 3: le prime carte formano un blocco al centro del panno, non una fila lontana con metà tavolo vuoto)
+    carte.forEach(function (c) { if (stato[c.id] != null) return; var p = -1, q; for (q = 0; q < ORD.length; q++) if (!occ[ORD[q]]) { p = ORD[q]; break; } if (p < 0) { p = ORD.length; while (occ[p]) p++; } stato[c.id] = p; occ[p] = true; });
     var maxP = 0; for (k in stato) maxP = Math.max(maxP, stato[k] + 1);
     var col = 4, righe = Math.ceil(Math.max(8, maxP) / col), w = M.wT;
     if (righe > 2) w = Math.max(26, Math.min(w, Math.floor((M.tavAh - (righe - 1) * 5) / righe / ASP_CARTA)));   // solo con 9+ carte
     return {
       w: w,
-      griglia: function (el) { return el("div", { style: "display:grid;grid-template-columns:repeat(" + col + "," + w + "px);grid-template-rows:repeat(" + righe + "," + Math.round(w * ASP_CARTA) + "px);gap:5px;justify-content:center;align-content:center;height:100%" }); },
+      griglia: function (el) { return el("div", { style: "display:grid;grid-template-columns:repeat(" + col + "," + w + "px);grid-template-rows:repeat(" + righe + "," + Math.round(w * ASP_CARTA) + "px);gap:5px;justify-content:center;align-content:center;height:100%" + (illu() && aProp() ? ";box-sizing:border-box;padding-top:" + Math.round(w * 0.3) + "px" : "") }); },
       metti: function (cel, id) { var p = stato[id] || 0; cel.style.gridColumn = (p % col + 1); cel.style.gridRow = (Math.floor(p / col) + 1); return cel; }
     };
   }
@@ -1070,15 +1073,15 @@
       var bordo = piano.getBoundingClientRect().top - scena.getBoundingClientRect().top, sw = scena.clientWidth;
       var w = Math.max(70, Math.min(Math.round(sw * 0.34), 150, Math.round((bordo + 6 - 30) / 0.975)));
       var vita = posti.length > 0 && posti[0].vita;
-      if (vita) w = Math.max(70, Math.min(Math.round(sw * 0.31), 128));   // seduti e vicini: dalla testa alla vita, mani sul panno
+      if (vita) w = aProp() ? Math.max(70, Math.min(Math.round(sw * (posti.length > 2 ? 0.47 : 0.5)), 208)) : Math.max(70, Math.min(Math.round(sw * 0.31), 128));   // (3° tempo, 6 nov: più grandi e più vicini al tavolo)   // seduti e vicini: dalla testa alla vita, mani sul panno
       posti.forEach(function (s, i) {
-        var cx = Math.round(sw * xs[i]), top = Math.round(bordo + 6 - w * 0.975);
+        var xi = xs[i]; if (vita && aProp() && posti.length === 3) xi = [0.15, 0.5, 0.85][i]; var cx = Math.round(sw * xi), top = Math.round(bordo + 6 - w * 0.975);
         var H = Math.round(w * 118 / 108);   // il ritaglio «vita» è 108×118
         if (vita) top = Math.round(bordo + 6 + w * 0.2 - H);   // il bordo basso (le mani) va un poco oltre il bordo lontano del panno
         s.box.style.width = w + "px"; s.box.style.left = (cx - w / 2) + "px"; s.box.style.marginLeft = "0"; s.box.style.top = top + "px";
         s.targa.style.left = cx + "px"; s.targa.style.top = Math.round(vita ? top - 2 : top + w * 0.1) + "px";   // (illustrati: il cartellino sta sopra la testa, mai sui capelli)
-        var cw = Math.round(w * (vita ? 0.115 : 0.16)), ch = Math.round(cw * ASP_CARTA), n = s.vent.children.length, ang = n > 5 ? 6 : 12;
-        s.vent.style.left = cx + "px"; s.vent.style.top = Math.round(top + (vita ? H * 0.92 : w * 0.76)) + "px";
+        var cw = Math.round(w * (vita ? (aProp() ? 0.1 : 0.115) : 0.16)), ch = Math.round(cw * ASP_CARTA), n = s.vent.children.length, ang = n > 5 ? 6 : 12;
+        s.vent.style.left = cx + "px"; s.vent.style.top = Math.round(top + (vita ? H * (aProp() ? 0.85 : 0.92) : w * 0.76)) + "px";
         [].forEach.call(s.vent.children, function (d, k) {
           var a = (k - (n - 1) / 2) * ang;
           d.style.width = cw + "px"; d.style.height = ch + "px"; d.style.left = (-cw / 2) + "px";
@@ -1177,7 +1180,7 @@
     var scH = Math.max(300, Math.min(900, Math.round(alt - (Math.round(wH * ASP_CARTA) + 52 + sotto) + scCorr.v)));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.7);
     return { wH: wH, scW: scW, alt: alt, scH: scH, pianoW: pianoW, pianoH: pianoH, k: chiave + "|" + scCorr.v, sotto: sotto,
-      tavAw: Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh: (pianoH - 24) * 0.87 };
+      tavAw: Math.min((pianoW - 24) * 0.94 - 4, scW - 22) * kTav(), tavAh: (pianoH - 24) * 0.87 * kTav() };
   }
 
   // la stanza si costruisce UNA volta (avversario, quadri, tavolo, mensola); poi si aggiornano solo i pezzi
@@ -1235,7 +1238,7 @@
     var topAvv = Math.round(bordo + 6 - w * 0.975), topVent = Math.round(bordo + 6 - w * 0.975 + w * 0.76);
     m.vita = illu();   // 🎨 avatar illustrati: seduto vicino al tavolo, dalla testa alla vita, mani sul panno
     if (m.vita) {
-      w = Math.max(90, Math.min(Math.round(Mi.scW * 0.42), 170, Math.floor((bordo + 6 - 70) / 0.8926)));
+      w = Math.max(90, Math.min(Math.round(Mi.scW * (aProp() ? 0.48 : 0.42)), aProp() ? 196 : 170, Math.floor((bordo + 6 - 70) / 0.8926)));
       var Hv = Math.round(w * 118 / 108);
       topAvv = Math.round(bordo + 6 + w * 0.2 - Hv); topVent = Math.round(topAvv + Hv * 0.95);
       scena.classList.add("sc-ill");

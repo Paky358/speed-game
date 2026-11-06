@@ -9,7 +9,7 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 309,
+    v: 310,
     data: "6 novembre 2026",
     titolo: "⚽ Mini Asta Fantacalcio: maglie vere e giornata da TV",
     descrizione: [
@@ -20,11 +20,13 @@ window.SG_NOVITA = [
       "🌦️ Ogni partita ha il suo meteo: di solito sole, a volte pioggia, nebbia o neve (col pallone arancione). Cambia solo l'aspetto, mai i risultati.",
       "🎬 Il gol della giornata si rivede da dietro la porta, con la rete in primo piano.",
       "🏅 Sul podio ci sono «I premi della giornata» (il migliore in campo, il bidone, la saracinesca, il più fortunato, il turista) e la 📸 foto del campione da mandare su WhatsApp.",
+      "👟 L'assist è vero: nella mischia e nella doppia parata l'assist va a chi fa davvero l'ultimo passaggio prima del gol, non più a chi aveva crossato prima dei rimpalli.",
+      "🧤 Il portiere para meglio: si carica sulle gambe, vola teso con le mani sul pallone, si vede il colpo sulla parata, cade a terra e si rialza.",
       "🆚 Nuova regola nel ⚙️ (spenta di partenza): «Contro chi giocano». Le partite si sorteggiano già all'inizio dell'asta e sotto ogni calciatore c'è il suo avversario."
     ]
   },
   {
-    v: 308,
+    v: 309,
     data: "6 novembre 2026",
     titolo: "⚽ Mini Asta Fantacalcio: la porta inviolata c'è da subito",
     descrizione: [
@@ -32,6 +34,16 @@ window.SG_NOVITA = [
       "🧤 Al primo gol che prende la sua squadra il +1 se ne va, insieme al −1 del gol subito, con la scritta «Porta inviolata persa».",
       "Così la classifica dal vivo, la 👑 e i conti della Zona Cesarini sono giusti in ogni momento, e dopo il fischio finale non cambia più niente.",
       "Vale anche nelle 🏆 3 giornate, online e sullo stesso telefono."
+    ]
+  },
+  {
+    v: 308,
+    data: "6 novembre 2026",
+    titolo: "🎨 Avatar disegnati: in prova",
+    descrizione: [
+      "Stiamo provando un disegno nuovo degli avatar, più curato: proporzioni vere, luce e volumi, mani con le dita che stringono davvero le cose (il microfono, la tazza per il manico, il palloncino che galleggia col filo).",
+      "Nei giochi di carte gli avatar stanno seduti al tavolo con le mani sul panno: Black Jack, Scopa, Scopa in 4 e Scopone. All'Asta stanno seduti sulle sedie.",
+      "Il tuo avatar resta lo stesso: cambia solo il modo in cui è disegnato. Per ora lo vedono solo due account di prova: quando è pronto arriva a tutti."
     ]
   },
   {

@@ -20,11 +20,54 @@
    - stroke-linejoin='round' sta UNA volta sull'<svg> (si eredita): K.St non lo ripete (stroke-linecap='round' sì).
      Un tratto che vuole spigoli vivi lo scrive: stroke-linejoin='miter'.
    - ritagli e gradienti uguali si scrivono una volta sola; numeri corti (".5", "10-4"); un pezzo solo di dipingi = un elemento.
+
+   TERZO TEMPO (6 nov 2026). Il proprietario: «troppo secchi e lunghi», «la mano che tiene il microfono è tutta strana».
+   - LE PROPORZIONI: A.PROPORZIONE = "attuale" (com'era) | "A" | "B" | "C" (vedi PROPORZIONI più sotto). I pezzi non cambiano:
+     il motore allarga (BUILD), ingrandisce e abbassa la testa (HT), allunga le braccia, accorcia le gambe a FASCE (<use>, come
+     la posa seduta) e ingrandisce tutto intorno ai piedi. I gesti portano le mani dove erano nel riquadro (taglio «vita» e tavoli
+     dei giochi invariati); busto e viso tengono la testa al posto di prima. SGOmino.svg(cfg, { proporzione: "B" }) per un disegno solo.
+   - LA MANO CHE IMPUGNA («impugna»): il pugno che stringe davvero un manico (il manico passa DENTRO: si vede sopra il pollice e
+     sotto il mignolo). Per i pezzi «inmano» che lo dichiarano: A.impugna[voce] = { inclina: gradi, posa: "davanti"|"petto"|"alto"|"fianco" }
+     (letto PRIMA di disegnare: la posa del braccio) e K.presa = { x, y, k, inclina, qui(svg, inclina?), foro, alto, posa, ang }:
+     il pezzo disegna nelle coordinate della presa con K.presa.qui(svg) (0,0 = centro del pugno, manico lungo y, la cima verso
+     y negativi, unità della mano) e restituisce { dietro (prima della mano: il manico e la cosa), davanti (sopra le dita), inclina? }.
+     I pezzi di prima (senza A.impugna e senza inclina) restano come erano (pugno e dita loro).
+   - BRACCIA E MANI PIÙ VIVE: a riposo il gomito appena piegato e il braccio un po' staccato, la mano rilassata con le dita
+     piegate; le mani appoggiate (tavolo, cosce) con le dita unite e della misura giusta; un braccio che passa davanti al corpo
+     va sopra collane, sciarpe e tracolle.
+   - RITOCCHI DOPO IL CRITICO (6 nov 2026, notte). Le proporzioni B non cambiano.
+     · CORPORATURE (BUILD, GAMBA): lui a V (spalle larghe, anche strette), lei a clessidra (spalle strette, vita stretta, anche e cosce
+       più piene); snello davvero sottile, medio un filo più pieno; robusto con le braccia che si assottigliano verso il polso.
+       I pezzi leggono K.B: si adattano da soli.
+     · LE MANI DEI GESTI (maniNuove): pugno con le nocche, le dita piegate e il pollice che le chiude (esulta, leva, batte, carte, canna);
+       indice teso (preme); mano aperta con le dita affusolate e un po' aperte (saluta, su); «dorso» = la mano distesa vista dal dorso con
+       le unghie (posa, tavolo); «piatta» = la stessa più corta (seduto, cose appoggiate); «batti» = la mano di lato (applaude: le punte si
+       toccano, i polsi non si incrociano più). La mano lungo il fianco ha il pollice staccato, le nocche e l unghia.
+     · IL PONTE DEL POLSO (manoSvg): dalla fine dell avambraccio alla mano, largo come il braccio all inizio e come la mano alla fine:
+       niente più gradino a «polsino» né spigoli quando il polso si piega. Ogni forma comincia stretta (mezza larghezza 10 a y -2).
+       Contratto delle forme: p (riempimenti; il contorno è lo stesso senza la chiusura in alto), l (pieghe), b (linee col colore del
+       bordo, sopra), n (luci delle nocche), u (unghie), w8 (mezza larghezza a y 8, per il ponte).
+     · GESTI: leva col gomito giù e l avambraccio dritto in su (campo «ang» = angoli invece del punto, come la canna); tavolo con la mano
+       che segue l avambraccio; carte della misura di una mano (prima una volta e mezza).
+   - GIRO 3 DOPO IL SECONDO CRITICO (6 nov 2026). Le proporzioni B non cambiano.
+     · CORPORATURE PIÙ DISTANTI (BUILD): snello sottile davvero, medio più pieno, robusto più largo; lui a V, lei a clessidra.
+       La mano segue il polso ma meno (B.km, radice): lo snello non ha le mani minuscole.
+     · IL GOMITO PIEGATO FORTE (più di 100°): braccio e avambraccio sono due pezzi sovrapposti (PIEGA), l avambraccio sopra col suo
+       bordo; prima l interno del gomito si tagliava: cuneo vuoto tra braccio e avambraccio (il microfono al petto), leva storta.
+     · MANI: il pugno con quattro dita vere (gobbe, incavi, righe tra le dita «s», la piega delle punte, il pollice con l unghia);
+       la mano appoggiata (Black Jack, seduti) col dorso corto e le dita separate con le unghie (non più una paletta).
+     · POSA «petto» (microfono, telefono, libro) più giù e più avanti: il microfono non tocca più il mento.
+     · IL BRACCIO STACCATO GIRATO: il bordo sfuma verso la spalla (maschera tonda sul perno) e la luce della spalla è tonda e centrata:
+       girando, la manica resta attaccata alla spalla (prima c era una riga che la staccava e una «palla» sulla spalla); gli orli delle
+       maniche della maglietta passano da suManica (nel corpo senza quel braccio restava una riga per aria).
+     · IL BRACCIO STACCATO (parte: "braccio"): prende del vestito solo la manica (agioBr = agio + svasa della manica più larga di quel
+       braccio, segnata da K.manica); senza maniche niente vestito sul braccio. Prima un contorno largo 46 si portava dietro un pezzo
+       del busto (spalline, scollo, bretelle del top) che girando il braccio si spostava: si vedeva il salto.
    ========================================================= */
 (function () {
   "use strict";
   var A = window.SGOminoA = { capelli: {}, cappelli: {}, capo: {}, sotto: {}, scarpe: {}, bocca: {}, barba: {}, segno: {}, stampa: {}, extra: {}, inmano: {},
-    occhiali: {}, orecchini: {}, collo: {}, borsa: {}, mano: {}, schiena: {}, animale: {}, pittura: {} };
+    occhiali: {}, orecchini: {}, collo: {}, borsa: {}, mano: {}, schiena: {}, animale: {}, pittura: {}, impugna: {} };
   A.pezzo = function (tipo, nome, fn) { (A[tipo] = A[tipo] || {})[nome] = fn; };
 
   // ---------- aiuti ----------
@@ -69,6 +112,15 @@
     s0 += bulge ? "Q" + N((L[e][0] + Rr[0][0]) / 2 + (n[e][0] - n[e - 1][0]) * bulge, 1) + N((L[e][1] + Rr[0][1]) / 2 + (n[e][1] - n[e - 1][1]) * bulge) + N(Rr[0][0]) : "L" + N(Rr[0][0], 1);
     return s0 + N(Rr[0][1]) + cr(Rr) + "Z";
   }
+  // (ritocchi) i due lati di una forma di limb (per il contorno senza i bordi in cima e in fondo)
+  function latiLimb(n) {
+    var L = [], R = [];
+    for (var i = 0; i < n.length; i++) {
+      var a = n[Math.max(0, i - 1)], b = n[Math.min(n.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l, w = n[i][2] / 2;
+      L.push([n[i][0] + nx * w, n[i][1] + ny * w]); R.push([n[i][0] - nx * w, n[i][1] - ny * w]);
+    }
+    return [L, R];
+  }
   function poli(p) { var s = "M", px = 0, py = 0; for (var i = 0; i < p.length; i++) { var x = Math.round(p[i][0] * 10), y = Math.round(p[i][1] * 10); s += i ? "l" + T(x - px, 1) + T(y - py) : T(x, 1) + T(y); px = x; py = y; } return s + "Z"; }
   function liscio(p) { return "M" + N(p[0][0], 1) + N(p[0][1]) + cr(p); }   // linea liscia aperta
   function lisciaChiusa(p) { var z = p.concat([p[0]]); return "M" + N(p[0][0], 1) + N(p[0][1]) + cr(z) + "Z"; }
@@ -76,20 +128,58 @@
 
   // ---------- le tabelle (stesse voci dell'editor di sempre) ----------
   // corporature (mezze larghezze, mondo 400×1000): collo, attaccatura delle spalle, spalla, ascella, petto, vita, fianchi; braccio [spalla, gomito, avambraccio, polso]; lw = gambe
+  // (ritocchi del terzo tempo, 6 nov 2026) le corporature più diverse: lui a V (spalle larghe, anche strette), lei a clessidra (spalle
+  // strette, vita stretta, anche larghe); snello davvero sottile (spalle, vita, braccia, gambe), medio un filo più pieno; robusto con le
+  // braccia che si assottigliano verso il polso (prima erano grosse uguali fino in fondo, «a sacco») e mani non più enormi.
+  // (giro3, 6 nov 2026, dopo il critico: «snello e medio quasi identici, lui e lei poco») le distanze tra le corporature allargate:
+  // snello sottile davvero (petto, vita, fianchi, braccia e gambe; le spalle un po' meno, se no la testa sembra un lecca-lecca),
+  // medio più pieno, robusto più largo; lui a V (spalle larghe, vita e anche strette, braccia più grosse), lei a clessidra
+  // (spalle strette, vita sottile, anche e cosce piene, braccia sottili). Le mani crescono MENO delle braccia (kMano).
   var BUILD = {
-    uomo: { snello: { nk: 26, shx: 72, sho: 94, ap: 76, ch: 72, wt: 63, hp: 68, aw: [40, 33, 35, 27], lw: 0.86 },
-            medio: { nk: 29, shx: 80, sho: 104, ap: 84, ch: 82, wt: 73, hp: 77, aw: [46, 38, 40, 30], lw: 1 },
-            robusto: { nk: 34, shx: 90, sho: 118, ap: 98, ch: 100, wt: 99, hp: 98, aw: [54, 45, 46, 35], lw: 1.2, pancia: 1 } },
-    donna: { snello: { nk: 19, shx: 58, sho: 80, ap: 64, ch: 64, wt: 49, hp: 73, aw: [32, 26, 28, 22], lw: 0.88, seno: 0.8 },
-             medio: { nk: 21, shx: 64, sho: 88, ap: 70, ch: 72, wt: 55, hp: 83, aw: [36, 30, 31, 25], lw: 1, seno: 1 },
-             robusto: { nk: 25, shx: 72, sho: 96, ap: 82, ch: 90, wt: 72, hp: 105, aw: [44, 37, 38, 30], lw: 1.22, seno: 1.3, pancia: 0.5 } }
+    uomo: { snello: { nk: 23, shx: 64, sho: 85, ap: 62, ch: 57, wt: 46, hp: 52, aw: [30.5, 23.5, 25.5, 21.5], lw: 0.72 },
+            medio: { nk: 30.5, shx: 85, sho: 113, ap: 91, ch: 90, wt: 76, hp: 74, aw: [49, 39.5, 41.5, 30.5], lw: 1.02 },
+            robusto: { nk: 36, shx: 97, sho: 129, ap: 108, ch: 112, wt: 114, hp: 106, aw: [68, 53, 56, 35.5], aws: 57, lw: 1.3, pancia: 1 } },
+    donna: { snello: { nk: 16.5, shx: 47, sho: 64, ap: 50, ch: 52, wt: 36, hp: 63, aw: [23, 18.5, 20, 17], lw: 0.72, seno: 0.7 },
+             medio: { nk: 19.5, shx: 55, sho: 75, ap: 61, ch: 70, wt: 48, hp: 83, aw: [31, 24.5, 26.5, 21.5], lw: 1.1, seno: 1.12 },
+             robusto: { nk: 24, shx: 66, sho: 89, ap: 79, ch: 95, wt: 75, hp: 105, aw: [56, 43, 46, 28.5], aws: 41, lw: 1.3, seno: 1.42, pancia: 0.6 } }
   };
+  // (g5, 6 nov 2026, dopo il critico: «lei medio coi pantaloncini ha i fianchi a campana e le gambe sottili», «seduta: le cosce sono due
+  // palloni più larghi del busto», «lei robusto ha le braccia sottili rispetto al busto») lei resta a clessidra ma meno esagerata: fianchi
+  // un po' più stretti (medio 89 → 83, robusto 112 → 105) e le cosce che non escono più dai fianchi (gambeDi); lei robusto con le braccia
+  // più piene come lui robusto (il polso e la spalla tonda restano quelli di prima: aws, e la mano della stessa misura). Lui non cambia.
   ["uomo", "donna"].forEach(function (s) { for (var k in BUILD[s]) { var a = BUILD[s][k].aw; BUILD[s][k].aw = [a[0] * 1.1, a[1] * 1.1, a[2] * 1.1, a[3] * 1.15]; } });   // (secondo tempo) braccia più piene
+  // (g4, 6 nov 2026, dopo il critico: «robusto: le braccia escono larghe dal corpo e sono sottili rispetto al busto») il robusto ha le braccia
+  // più grosse (braccio e avambraccio pieni, il polso un po meno: la mano segue il polso con la radice, kMano). aws = la larghezza del braccio
+  // alla spalla per la spalla tonda (rc): resta quella di prima, così la spalla e i vestiti sulla spalla (giro manica della canotta, spallina)
+  // non si spostano; sotto la spalla il braccio si allarga piano fino ad aw[0].
+  ["uomo", "donna"].forEach(function (s) { for (var k in BUILD[s]) if (BUILD[s][k].aws) BUILD[s][k].aws *= 1.1; });
+  // (giro3) la misura della mano (medio come prima: lui 1,206, lei 0,965): segue il polso ma MENO (radice): lo snello non ha le mani minuscole, il robusto non le ha enormi
+  ["uomo", "donna"].forEach(function (s) { var K0 = s === "uomo" ? 1.206 : 0.965, m3 = BUILD[s].medio.aw[3]; for (var k in BUILD[s]) BUILD[s][k].km = K0 * Math.pow(BUILD[s][k].aw[3] / m3, 0.55); });
   // gambe: [y, distanza del centro della gamba dal centro, mezza larghezza fuori, mezza larghezza dentro]
   var GAMBA = {
     uomo: [[548, 35, 45, 36], [610, 35, 43, 34], [670, 36, 37, 29], [722, 37, 30, 25], [748, 38, 28, 24], [790, 39, 31, 27], [834, 40, 28, 28], [884, 42, 21, 20], [938, 44, 17, 16]],
-    donna: [[548, 38, 48, 36], [610, 37, 45, 33], [670, 35, 38, 27], [722, 34, 28, 23], [748, 34, 26, 22], [790, 35, 29, 25], [834, 36, 26, 24], [884, 38, 19, 18], [938, 40, 15, 14]]
+    donna: [[548, 38.5, 49, 36], [610, 37.5, 46, 33], [670, 35, 38, 27], [722, 34, 28, 23], [748, 34, 26, 22], [790, 35, 29, 25], [834, 36, 26, 24], [884, 38, 19, 18], [938, 40, 15, 14]]
   };
+  // (g5) le gambe di una corporatura: [y, centro, fuori, dentro] (la usano il disegno e la geometria).
+  // - lei: la coscia non esce più dai fianchi (prima scendendo dai fianchi la linea si allargava ancora: «fianchi a campana»);
+  // - seduti (sed): per tutti la coscia mai più larga dei fianchi, la coscia quasi dritta fino al ginocchio (vista da davanti viene verso
+  //   chi guarda: il ginocchio, più vicino, non è più stretto della coscia) e sotto il ginocchio lo stinco che non si allarga più (prima il
+  //   polpaccio schiacciato faceva un nodo: «ginocchia a bolla»). In piedi lui resta identico.
+  var GAMBA_LIM = { 548: 1, 610: 0.97, 670: 0.93 }, GAMBA_SED = { 548: 1, 610: 0.98, 670: 0.96 };
+  function gambeDi(m, B, sed) {
+    var lw = B.lw, GN = GAMBA[m ? "uomo" : "donna"].map(function (q) { return [q[0], q[1] * (1 + (lw - 1) * 0.75), q[2] * lw, q[3] * lw]; });
+    function lim(T) { GN.forEach(function (g) { var f = T[g[0]]; if (f && g[1] + g[2] > B.hp * f) g[2] = B.hp * f - g[1]; }); }
+    if (!m) lim(GAMBA_LIM);
+    if (!sed) return GN;
+    lim(GAMBA_SED);
+    var r = {}; GN.forEach(function (g) { r[g[0]] = g; });
+    var g6 = r[610], g7 = r[670], g72 = r[722], gK = r[748], fo = function (g) { return g[1] + g[2]; };
+    var kO = Math.max(fo(gK), fo(g6) * 0.9), kI = gK[1] - gK[3];   // il ginocchio: fuori e dentro
+    gK[2] = kO - gK[1];
+    g72[2] = Math.max(g72[2], (fo(g7) + kO) / 2 - g72[1]);
+    GN.forEach(function (g) { if (g[0] > 748) { g[2] = Math.min(g[2], kO - 3 - g[1]); g[3] = Math.min(g[3], g[1] - kI - 2); } });
+    return GN;
+  }
   // forme del viso (testa: origine al mento, guance a y -78): cw guance, jx/jy angolo della mascella, cx mento, L altezza della fronte
   var FACCIA = {
     tondo: { cw: 56, jx: 48, jy: -27, cx: 23, L: 0.95 }, ovale: { cw: 53, jx: 42, jy: -23, cx: 16, L: 1 },
@@ -164,22 +254,160 @@
   var GESTI = {
     // (le mani restano dentro il taglio «vita»: dalla testa alla vita, viewBox 46 11 108 118)
     saluta:   { uno: { t: function (G) { return [G.Jd + 56, G.Jy - 128]; }, mano: "aperta" } },
-    applaude: { due: { t: function (G) { return [9, G.Y.petto - 10]; }, f: [0.96, 0.84], mano: "aperta", davanti: 1, dirMano: 172 } },
+    // (ritocchi) le mani che battono si toccano in mezzo con la punta delle dita, i polsi restano separati (prima si incrociavano)
+    applaude: { due: { t: function (G) { return [20, G.Y.petto - 4]; }, f: [0.96, 0.84], mano: "batti", davanti: 1, dirMano: 185 } },
     esulta:   { due: { t: function (G) { return [G.Jd + 56, G.Jy - 168]; }, mano: "pugno" } },
-    posa:     { uno: { t: function (G) { return [24, G.Y.vita - 10]; }, f: [0.88, 0.76], mano: "tiene", davanti: 1 } },
+    posa:     { uno: { t: function (G) { return [24, G.Y.vita - 10]; }, f: [0.88, 0.76], mano: "dorso", davanti: 1 } },
     preme:    { uno: { t: function (G) { return [G.Jd * 0.42, G.Y.vita - 16]; }, f: [0.88, 0.8], mano: "indica", davanti: 1, dirMano: 8 } },
-    leva:     { uno: { t: function (G) { return [G.Jd + 48, G.Y.petto - 6]; }, f: [0.96, 0.9], mano: "pugno" } },   // il pugno di lato, all altezza del petto: tira una leva o gira una ruota
+    // (ritocchi) la leva: il braccio di lato col gomito in giù e l avambraccio dritto in su, il pugno all altezza della spalla (tira una leva,
+    // gira una ruota); prima il gomito andava in fuori e l avambraccio tornava indietro piegato. ang = gli angoli invece del punto (come la canna)
+    leva:     { uno: { ang: [24, 162], f: [0.96, 0.84], mano: "pugno" } },
     batte:    { uno: { t: function (G) { return [G.Jd * 0.62, G.Y.vita - 30]; }, f: [0.9, 0.7], mano: "pugno", davanti: 1, dirMano: 0 } },
     // al tavolo (il tavolo copre dalla vita in giù): le due mani appoggiate davanti, e le carte tenute davanti al petto
-    tavolo:   { due: { t: function (G) { return [G.Jd * 0.9, G.Y.vita - 24]; }, f: [0.94, 0.62], mano: "piatta", davanti: 1, dirMano: -16, schiaccia: 0.72 } },
+    // (ritocchi) la mano vista dal dorso (dita unite, unghie) segue l avambraccio appoggiato e si piega appena in avanti, verso chi guarda
+    // (prima il polso girava di colpo e la mano col pollice in fuori sembrava rovesciata)
+    tavolo:   { due: { t: function (G) { return [G.Jd * 0.9, G.Y.vita - 24]; }, f: [0.94, 0.62], mano: "dorso", davanti: 1, polso: 30, schiaccia: 0.74 } },
     carte:    { due: { t: function (G) { return [24, G.Y.petto + 34]; }, f: [0.94, 0.76], mano: "pugno", davanti: 1, dirMano: 160, carte: 1 } }
   };
   A.GESTI = GESTI;
+  // (ritocchi del terzo tempo, 6 nov 2026) LE MANI DEI GESTI RIDISEGNATE: il pugno con le nocche, le dita piegate e il pollice che le
+  // chiude; la mano aperta con le dita affusolate e un po' aperte; la mano appoggiata vista dal dorso (il pollice lungo il fianco, le
+  // unghie); la mano che batte vista di lato. Coordinate della mano come in MANI (polso in 0,0, dita verso +y, +x = verso il corpo
+  // col braccio giù). La cima di ogni forma è stretta (mezza larghezza 10 a y -2): il polso la copre col «ponte» (manoSvg), niente
+  // più gradino tra braccio e mano. f = la forma piena (riempimento), il contorno è lo stesso percorso senza la chiusura in alto;
+  // b = linee col colore del bordo (il pollice sopra le dita), l = pieghe, u = unghie (luce), n = nocche (luce), w8 = mezza larghezza a y 8.
+  var MANI3 = null;
+  function maniNuove() {
+    if (MANI3) return MANI3;
+    function aperto(pts) { return liscio(pts) + "Z"; }
+    function dito(n, b) { return limb(n, b == null ? 0.75 : b); }
+    // il pugno visto dal palmo: in fondo le quattro dita piegate (ognuna la sua gobba, con l incavo tra l una e l altra), il pollice
+    // che parte dal lato esterno (-x) e le chiude passandoci sopra. (giro3) Il critico: «pugni senza forma come manopole, tondi senza
+    // dita»: le dita ora sono quattro gobbe vere con le righe scure tra l una e l altra fin quasi al pollice, le punte piegate dentro il
+    // palmo (la piega), il pollice col suo bordo e l unghia.
+    var pugnoF = [[10, -2], [14.6, 6], [16.8, 16], [17.4, 25], [17.2, 31.4], [16.4, 35.8], [14.4, 39], [11.4, 40.4], [8.6, 39.6],
+      [7.4, 41.6], [5, 43.4], [1.8, 43.6], [-0.4, 42],
+      [-1.8, 44.2], [-4.8, 45.8], [-8, 45.2], [-9.8, 43.2],
+      [-11.4, 45], [-14.6, 45.2], [-17, 42.6], [-18, 37.6], [-18.2, 30], [-17.8, 21], [-16.2, 10], [-13.8, 3], [-10, -2]];
+    var pollN = [[-12.2, 9.4, 11.2], [-17.4, 15.4, 11], [-15.6, 21.8, 10.4], [-8.4, 25.6, 9.6], [-0.6, 25.8, 8.6], [4.2, 23.8, 7]];
+    var polliceP = dito(pollN, 0.85), pollL = latiLimb(pollN);
+    var polliceB = liscio(pollL[0].slice(1));
+    // l indice teso (preme un tasto): il pugno senza la gobba dell indice, e il dito lungo
+    var indicaF = [[10, -2], [14.4, 6], [16.4, 16], [16.8, 26], [16, 32.6], [13.6, 36.4], [10.8, 37.6], [8.6, 37], [6.4, 39.8], [3.6, 41.2], [0.6, 40.6],
+      [-1.8, 42.4], [-5, 43], [-8.2, 42], [-8.8, 52], [-9.4, 63], [-10.8, 69.4], [-13.4, 71.2], [-15.8, 69.4], [-17, 62], [-17.4, 50], [-17.6, 36], [-17.6, 21], [-16, 10], [-13.6, 3], [-10, -2]];
+    // la mano aperta (il palmo verso chi guarda, il pollice in fuori a -x)
+    var palmoF = [[10, -2], [14.4, 6], [16.4, 16], [16.8, 25], [16.2, 30.4], [8, 31.6], [-2, 32], [-11.4, 31.2], [-15.6, 27], [-16.4, 18], [-15.4, 9], [-13, 3], [-10, -2]];
+    var apertaP = [aperto(palmoF),
+      dito([[13.2, 26.4, 8.2], [15.2, 38, 7.4], [16.8, 48.6, 6.4]]),
+      dito([[5.6, 27.2, 8.8], [6.8, 43, 8], [7.8, 56.6, 6.8]]),
+      dito([[-2.6, 27.6, 9.2], [-2.9, 45, 8.2], [-3.2, 60.6, 7]]),
+      dito([[-10.6, 26.8, 8.8], [-12, 42, 7.8], [-13.4, 55, 6.8]]),
+      dito([[-11.6, 7, 11.4], [-18.4, 17.4, 9.6], [-24, 27, 8.2], [-26.6, 32.6, 7]])];
+    // la mano appoggiata vista dal dorso (BJ, seduto): (giro3) il critico: «palette senza dita leggibili con i polsi lunghi». Ora il dorso
+    // è corto e le quattro dita sono dita vere (separate, con l incavo tra le punte, le righe scure e le unghie), lunghe quasi quanto il dorso
+    // (le dita vengono verso chi guarda, si vedono un po' accorciate); il pollice lungo il fianco (+x)
+    var piattaF = [[-10, -2], [-14.6, 6], [-16.8, 14], [-17.4, 22], [-16.6, 27.6], [-8, 28.6], [0, 29], [8, 28.6], [13.8, 26.6], [14.6, 16], [13.6, 6], [10, -2]];
+    var piattaP = [aperto(piattaF), dito([[-13, 24, 8], [-13.5, 33, 7.6], [-13.8, 39.4, 7]]), dito([[-4.6, 25, 8.8], [-4.9, 36, 8.4], [-5.1, 43.6, 7.6]]),
+      dito([[3.8, 25, 9], [3.9, 37, 8.6], [4, 45.4, 7.8]]), dito([[11.6, 24, 8.6], [12.2, 34, 8.2], [12.6, 41.2, 7.4]]), dito([[9.8, 7, 11], [15.6, 17, 9.4], [17.6, 25.6, 8.2], [17.4, 31.6, 7]], 0.8)];
+    // la mano che batte, vista di lato (il pollice davanti, +x): stretta e lunga
+    var battiF = [[-8.6, -2], [-11.4, 8], [-12.4, 22], [-12, 38], [-10.4, 52], [-7.6, 61.4], [-4.2, 64.6], [-1, 62.6], [0.8, 54], [2.6, 42], [5, 30], [8, 16], [10, 6], [9, -2]];
+    var polliceL = dito([[6.4, 6, 10], [11.4, 17, 8.6], [13, 27, 7.2], [12.4, 32, 6.2]], 0.8);
+    // la mano distesa vista dal dorso (appoggiata sulla pancia o sul tavolo): le dita unite, le unghie in fondo, il pollice lungo il fianco (+x)
+    var dorsoF = [[-10, -2], [-14.4, 6], [-16.4, 16], [-16.8, 26], [-15.6, 32], [-8, 33], [0, 33.4], [8, 33], [14.6, 30], [15.4, 18], [14.2, 7], [10, -2]];
+    var dorsoP = [aperto(dorsoF), dito([[-12.4, 28, 7.8], [-13, 40, 7.4], [-13.4, 48.6, 6.6]]), dito([[-4.4, 29, 8.6], [-4.6, 44, 8.2], [-4.8, 55.6, 7.2]]),
+      dito([[3.8, 29, 8.8], [3.8, 45, 8.4], [3.8, 58.8, 7.4]]), dito([[11.4, 28, 8.4], [11.8, 42, 8], [12, 53.4, 7]]), dito([[10.6, 6, 11], [16.6, 16, 9.4], [19, 26.6, 8.2], [19.2, 33.6, 7]], 0.8)];
+    MANI3 = {
+      // (giro3) s = le righe tra le dita (col colore del bordo, più marcate delle pieghe: si leggono anche piccole)
+      dorso: { p: dorsoP, b: [liscio([[12.6, 12], [15.2, 20], [16.2, 28], [16.2, 33.4]])],
+        s: ["M-8.6 31.4C-8.6 37 -8.8 42 -9.2 46.6", "M-.4 32C-.4 39 -.6 46 -.8 52.6", "M7.8 31.8C7.8 39 7.9 45 8 50.6"], l: [],
+        n: [[-12.4, 29.6], [-4.4, 30.8], [3.8, 31.2], [11.4, 30]], u: [[-13.4, 46, 2.3, 2.6], [-4.8, 52.8, 2.6, 2.9], [3.8, 55.8, 2.7, 3], [12, 50.8, 2.5, 2.8]], w8: 15 },
+      pugno: { p: [aperto(pugnoF), polliceP], b: [polliceB],
+        s: ["M8 40.6C8 36.4 8.1 32.6 8.6 28.4", "M-1.1 43.2C-1.1 38.6 -1 34.6 -.6 31", "M-10.6 44C-10.6 40.4 -10.5 36.4 -10.2 31.8"],
+        l: ["M16.8 28.6C13.4 26.6 9.4 26.6 6 28"],
+        n: [[12.6, 36.2], [3.4, 39.6], [-5, 41.4], [-14, 40.4]], u: [[2.6, 23.6, 2.3, 3]], w8: 15 },
+      indica: { p: [aperto(indicaF), polliceP], b: [polliceB],
+        s: ["M8.6 37.4C8.3 33.4 8.2 30.8 8.4 28.6", "M.6 41C.4 37 .4 33.6 .7 31"], l: ["M-9.6 55.6C-12 56.6 -14.6 56.6 -17 55.6"],
+        n: [[12.4, 34.6], [3.8, 38.4], [-4.8, 40.2]], u: [[-13.2, 67, 2.4, 2.8], [2.6, 23.6, 2.3, 3]], w8: 15 },
+      aperta: { p: apertaP, l: ["M16 21.6C9.6 18.6 2.4 18.8 -4.6 22.4", "M-8.8 5.6C-6.2 11.4 -6.6 17.6 -9.8 24.6", "M14.6 27.4C8 25.6 0 25.6 -8.2 27.4"], w8: 15 },
+      piatta: { p: piattaP, b: [liscio([[11.4, 12], [13.8, 19], [14.8, 26], [14.6, 30.6]])],
+        s: ["M-8.8 39.4C-8.9 34.6 -8.9 30.4 -8.8 26.4", "M-.4 43.4C-.4 37.6 -.4 32.4 -.4 27", "M7.9 42.4C8 36.8 8 31.6 7.8 26.6"], l: [],
+        n: [[-13, 25.4], [-4.6, 26.6], [3.8, 26.8], [11.6, 25.6]], u: [[-13.8, 40.4, 2.4, 2.6], [-5.1, 44.6, 2.7, 2.9], [4, 46.4, 2.8, 3], [12.6, 42.2, 2.6, 2.8], [17.6, 32.4, 2.2, 2.4]], w8: 15 },
+      batti: { p: [aperto(battiF), polliceL], b: [liscio([[7.2, 14], [10.2, 22], [11.4, 30], [11, 33.6]])],
+        l: ["M-7.6 28C-5.6 38 -4.6 48 -4.6 58", "M-11.4 20C-6 22.4 0 21.4 4.4 18.6"], u: [[-3.6, 60.6, 2.2, 2.8]], w8: 11.5 }
+    };
+    return MANI3;
+  }
+  A.maniNuove = maniNuove;
+  // (terzo tempo) le pose del braccio che tiene una cosa (A.impugna[voce].posa): dove va il polso, quanto si accorcia il braccio che viene avanti
+  // davanti = il pugno davanti al fianco, l avambraccio che viene verso chi guarda (come chi tiene una torcia); petto = il pugno al petto
+  // (il microfono verso la bocca); alto = il braccio alzato (la bandiera, la coppa); fianco = il braccio giù (posa di riposo)
+  var POSE_PRESA = {
+    davanti: { t: function (G) { return [G.Jd + 2, G.Y.vita + 30]; }, f: [1, 0.5] },
+    // (giro3) più giù e più avanti: il microfono arrivava a toccare il mento (l avambraccio, più corto, viene verso chi guarda)
+    petto: { t: function (G) { return [G.Jd * 0.46, G.Y.petto + 34]; }, f: [0.92, 0.48], davanti: 1 },
+    alto: { t: function (G) { return [G.Jd + 52, G.Jy - 112]; }, f: [1, 0.86] }
+  };
+  A.POSE_PRESA = POSE_PRESA;
   // SEDUTO (front): il busto scende di dy; le cosce (da yAB a yBC) si accorciano (vengono verso chi guarda), gli stinchi pure,
   // i piedi restano a terra. Il sedere tocca la seduta a y 784 del mondo (198 nel riquadro, come prima).
   var SED = { dy: 188, yAB: 596, yBC: 748, sB: 0.4, yCD: 930, kx: 1 };
   SED.yA = SED.yAB + SED.dy; SED.yK = SED.yA + (SED.yBC - SED.yAB) * SED.sB; SED.sC = (SED.yCD - SED.yK) / (SED.yCD - SED.yBC);
   A.SEDUTO = SED;
+  // =========================================================
+  //  LE PROPORZIONI (terzo tempo, 6 nov 2026). Il proprietario: «sembrano troppo secchi e lunghi».
+  //  A.PROPORZIONE = "attuale" (com'era: lo stesso disegno, carattere per carattere) | "A" | "B" | "C" (proposte).
+  //  Si può chiedere anche per un disegno solo: SGOmino.svg(cfg, { proporzione: "B" }).
+  //  I pezzi NON cambiano: disegnano sempre nel mondo 400×1000 di prima (le quote fisse 560, 748, 938, 944, 999…).
+  //  Il motore poi: - allarga spalle, petto, braccia e gambe (moltiplica la tabella BUILD: i pezzi leggono K.B);
+  //   - abbassa e ingrandisce la testa (collo più corto, testa più grande: HT);
+  //   - allunga un po' le braccia (L1, L2);
+  //   - accorcia le gambe A FASCE come nella posa seduta: il disegno del corpo si usa tre volte con <use>
+  //     (sopra yL0 solo spostato giù di «gambe», da yL0 a 930 schiacciato, i piedi fermi); mani e cose in mano
+  //     sono disegnate a parte e solo spostate (non si schiacciano);
+  //   - poi tutto si ingrandisce di S intorno ai piedi (200, 999), così la figura riempie il riquadro come prima:
+  //     i piedi restano a terra in basso e la cima della testa torna circa dov'era (alto).
+  //  Seduti: niente fasce nuove (le gambe sono già piegate); il busto si ingrandisce di S intorno al sedere (200, 784),
+  //  le gambe solo in larghezza: il sedere resta a y 784 (198 nel riquadro).
+  //  Tutte le pose in piedi (anche vita, busto, viso e il braccio staccato) usano lo stesso S e lo stesso spostamento:
+  //  i giochi che mettono un braccio staccato sopra una figura «vita» trovano tutto allineato come prima.
+  // =========================================================
+  var PROPORZIONI = {
+    // gambe = quanto si accorciano (mondo); collo = quanto scende la testa; testa = ingrandimento della testa;
+    // spalle/petto/vita/fianchi/nk/braccia/cosce = larghezze (BUILD); lungBraccia = lunghezza delle braccia; alto = la cima della testa dopo
+    A: { nome: "Un po' più pieno", gambe: 34, collo: 8, testa: 1.04, spalle: 1.04, petto: 1.03, vita: 1.02, fianchi: 1.02, nk: 1.05, braccia: 1.05, lungBraccia: 1.06, cosce: 1.04, alto: 78 },
+    B: { nome: "Simpatico", gambe: 62, collo: 14, testa: 1.08, spalle: 1.05, petto: 1.04, vita: 1.03, fianchi: 1.03, nk: 1.08, braccia: 1.08, lungBraccia: 1.12, cosce: 1.07, alto: 72 },
+    C: { nome: "Cartoon", gambe: 90, collo: 19, testa: 1.15, spalle: 1.07, petto: 1.06, vita: 1.05, fianchi: 1.04, nk: 1.1, braccia: 1.1, lungBraccia: 1.16, cosce: 1.1, alto: 68 }
+  };
+  var PROP_L0 = 600, PROP_L1 = 930;   // la fascia delle gambe che si accorcia (sotto il cavallo, sopra le caviglie)
+  (function () {
+    for (var k in PROPORZIONI) {
+      var P = PROPORZIONI[k], top = 214 + P.gambe + P.collo - 148 * 0.9 * P.testa;
+      P.S = (999 - P.alto) / (999 - top);   // l ingrandimento intorno ai piedi
+      P.sL = (PROP_L1 - PROP_L0 - P.gambe) / (PROP_L1 - PROP_L0);   // quanto si schiacciano le gambe
+      P.teste = Math.round((999 - P.alto) / (148 * 0.9 * P.testa * P.S) * 10) / 10;   // quante teste è alta la figura (dal mento alla cima della testa)
+    }
+  })();
+  A.PROPORZIONI = PROPORZIONI;
+  A.PROPORZIONE = "B";
+  function propDi(opts) { var n = opts && opts.proporzione ? opts.proporzione : A.PROPORZIONE; return PROPORZIONI[n] || null; }
+  var BUILD_P = {};
+  function buildDi(m, corpo, P) {
+    var B0 = BUILD[m ? "uomo" : "donna"][corpo] || BUILD[m ? "uomo" : "donna"].medio;
+    if (!P) return B0;
+    var k = (m ? "u" : "d") + (BUILD[m ? "uomo" : "donna"][corpo] ? corpo : "medio") + P.nome;
+    if (BUILD_P[k]) return BUILD_P[k];
+    var B = {}; for (var x in B0) B[x] = B0[x];
+    B.nk = B0.nk * P.nk; B.shx = B0.shx * P.spalle; B.sho = B0.sho * P.spalle; B.ap = B0.ap * (P.spalle + P.petto) / 2; B.ch = B0.ch * P.petto;
+    B.wt = B0.wt * P.vita; B.hp = B0.hp * P.fianchi; B.aw = B0.aw.map(function (v) { return v * P.braccia; }); B.lw = B0.lw * P.cosce; B.km = B0.km * P.braccia; if (B0.aws) B.aws = B0.aws * P.braccia;
+    return (BUILD_P[k] = B);
+  }
+  // dove va un punto del busto (coordinate dei pezzi) nel disegno finito (mondo 400×1000): in piedi e seduti
+  function vistaSu(P, seduto) {
+    if (!P) return seduto ? function (x, y) { return [x, y + SED.dy]; } : function (x, y) { return [x, y]; };
+    var S = P.S;
+    return seduto ? function (x, y) { return [200 + S * (x - 200), 784 + S * (y + SED.dy - 784)]; }
+      : function (x, y) { return [200 + S * (x - 200), 999 - S * (999 - y - P.gambe)]; };
+  }
   // due ossa (braccio e avambraccio) che portano il polso su T: il gomito sta verso fuori
   function ik(J, T, l1, l2, lato) {
     var dx = T[0] - J[0], dy = T[1] - J[1], d = Math.hypot(dx, dy) || 1, dd = Math.max(Math.abs(l1 - l2) + 2, Math.min(l1 + l2 - 2, d));
@@ -190,48 +418,82 @@
   // la geometria del corpo (la usano il disegno, A.mano e i giochi): misure, gambe, braccia nella posa chiesta
   A.geometria = function (c, opts) {
     opts = opts || {};
-    var m = c.forma !== "donna", B = BUILD[m ? "uomo" : "donna"][c.corpo] || BUILD[m ? "uomo" : "donna"].medio, C = 200;
+    var PP = propDi(opts), m = c.forma !== "donna", B = buildDi(m, c.corpo, PP), C = 200;
     var Y = { collo: 246, spalla: 268, delt: 296, ascella: 336, petto: m ? 372 : 382, vita: m ? 452 : 442, fianchi: 528, cavallo: 572 };
-    var lw = B.lw, GN = GAMBA[m ? "uomo" : "donna"].map(function (q) { return [q[0], q[1] * (1 + (lw - 1) * 0.75), q[2] * lw, q[3] * lw]; });
+    var GN = gambeDi(m, B, !!opts.seduto && !opts.busto && !opts.viso && !opts.gambe);
     function gIn(y) {
       if (y <= GN[0][0]) return [GN[0][1], GN[0][2], GN[0][3]];
       for (var i = 1; i < GN.length; i++) if (y <= GN[i][0]) { var a = GN[i - 1], b = GN[i], t = (y - a[0]) / (b[0] - a[0]); return [a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t]; }
       var z = GN[GN.length - 1]; return [z[1], z[2], z[3]];
     }
-    var pancia = B.pancia ? (m ? 4 : 3) : 0, rc = B.aw[0] * 0.56, Jd = B.sho - rc, Jy = Y.delt - 4, kb = m ? 1 : 0.94, L1 = 142 * kb, L2 = 126 * kb;
+    var pancia = B.pancia ? (m ? 4 : 3) : 0, rc = (B.aws || B.aw[0]) * 0.56, Jd = B.sho - rc, Jy = Y.delt - 4, kb = (m ? 1 : 0.94) * (PP ? PP.lungBraccia : 1), L1 = 142 * kb, L2 = 126 * kb;
     // mezza larghezza del corpo a quella quota (per tenere le braccia un po' staccate dal fianco)
     var LT = [[Y.ascella, B.ap], [Y.petto, B.ch], [Y.vita, B.wt + pancia], [Y.fianchi, B.hp], [560, gIn(560)[0] + gIn(560)[1]], [640, gIn(640)[0] + gIn(640)[1]]];
     function largTronco(y) { if (y <= LT[0][0]) return LT[0][1]; for (var i = 1; i < LT.length; i++) if (y <= LT[i][0]) { var t = (y - LT[i - 1][0]) / (LT[i][0] - LT[i - 1][0]); return LT[i - 1][1] + (LT[i][1] - LT[i - 1][1]) * t; } return LT[LT.length - 1][1]; }
-    var gesto = opts.gesto && GESTI[opts.gesto], latoG = opts.lato === -1 ? -1 : 1, GG = { Jd: Jd, Jy: Jy, Y: Y, B: B, C: C, m: m };
+    var gesto = opts.gesto && GESTI[opts.gesto], latoG = opts.lato === -1 ? -1 : 1, GG = { Jd: Jd, Jy: Jy, Y: Y, B: B, C: C, m: m, P: PP };
+    var ROB = !!B.pancia;   // (g4) il robusto: braccia lungo la pancia, a riposo e seduto
+    // (terzo tempo) la cosa in mano col contratto nuovo (A.impugna[voce]): il braccio la tiene davanti, al petto, in alto o lungo il fianco
+    var regO = c.mano && c.mano !== "nessuno" && !opts.busto && !opts.viso && A.inmano[c.mano] && A.impugna[c.mano] ? A.impugna[c.mano] : null;
     function cl(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    // (terzo tempo) con le proporzioni nuove un gesto porta la mano DOVE ERA PRIMA nel riquadro (così nel taglio «vita» le mani restano
+    // dentro e i giochi che mettono le braccia sul tavolo le trovano allo stesso posto); sopra la spalla il braccio, più lungo, si allunga
+    // anche in fuori (resta disteso come prima), ma la mano non va più in alto di prima
+    function bersaglio(J, T) {
+      if (!PP) return T;
+      var yv = 999 - PP.gambe - (999 - T[1]) / PP.S;   // la quota che nel disegno finito cade dove cadeva prima
+      if (T[1] >= J[1]) return [T[0], yv];
+      return [J[0] + (T[0] - J[0]) * PP.lungBraccia, Math.max(yv, J[1] + (T[1] - J[1]) * PP.lungBraccia)];
+    }
     function braccio(lato) {
-      var J = [C + lato * Jd, Jy], br = opts.braccia, E, W, mano = "rilassata", polso = 0, davanti = false, dirMano = null, schiaccia = 1;
+      var J = [C + lato * Jd, Jy], br = opts.braccia, E, W, mano = "rilassata", polso = 0, davanti = false, dirMano = null, schiaccia = 1, tiene = false;
       var su = br === "su" || (br === "uno" && lato === -1), canna = br === "canna" && lato === 1;
       var gd = gesto && !su && !canna ? (gesto.due || (lato === latoG ? gesto.uno : null)) : null;
       if (su || canna) {
         var a1, a2;
-        if (su) { a1 = 128; a2 = 152; mano = "aperta"; } else { var an = cl(+opts.angolo || 0, -30, 175); a1 = Math.max(4, an - 14); a2 = Math.max(10, an + 10); mano = "pugno"; }
+        if (su) { a1 = 128; a2 = 152; mano = "aperta"; if (PP) { var yS = 999 - PP.gambe - (999 - (Jy + 142 * Math.cos(128 * DEG) + 126 * Math.cos(152 * DEG))) / PP.S, eS = Jy + L1 * Math.cos(a1 * DEG); a2 = cl(Math.acos(cl((yS - eS) / L2, -1, 1)) / DEG, 120, 152); } } else { var an = cl(+opts.angolo || 0, -30, 175); a1 = Math.max(4, an - 14); a2 = Math.max(10, an + 10); mano = "pugno"; }
         E = [J[0] + lato * L1 * Math.sin(a1 * DEG), J[1] + L1 * Math.cos(a1 * DEG)]; W = [E[0] + lato * L2 * Math.sin(a2 * DEG), E[1] + L2 * Math.cos(a2 * DEG)];
       } else if (gd) {
-        var f = gd.f || [1, 1], T = gd.t(GG), r = ik(J, [C + lato * T[0], T[1]], L1 * f[0], L2 * f[1], lato);
+        var f = gd.f || [1, 1], T = gd.t ? gd.t(GG) : null, r = T ? ik(J, bersaglio(J, [C + lato * T[0], T[1]]), L1 * f[0], L2 * f[1], lato) : null;
+        if (gd.ang) {   // (ritocchi) un gesto che dice gli angoli (come la canna): braccio e avambraccio, gradi da giù verso fuori
+          var e1 = [J[0] + lato * L1 * f[0] * Math.sin(gd.ang[0] * DEG), J[1] + L1 * f[0] * Math.cos(gd.ang[0] * DEG)];
+          r = { E: e1, W: [e1[0] + lato * L2 * f[1] * Math.sin(gd.ang[1] * DEG), e1[1] + L2 * f[1] * Math.cos(gd.ang[1] * DEG)] };
+        }
         E = r.E; W = r.W; mano = gd.mano || mano; polso = gd.polso || 0; davanti = !!gd.davanti; dirMano = gd.dirMano; schiaccia = gd.schiaccia || 1;
-      } else if (opts.seduto) {   // seduto: le mani appoggiate sulle cosce, vicino alle ginocchia
-        var g7 = gIn(690), rs = ik(J, [C + lato * (g7[0] * SED.kx + 6), SED.yK - SED.dy - 18], L1, L2 * 0.72, lato);
-        E = rs.E; W = rs.W; mano = "piatta"; davanti = true;
+      } else if (lato === 1 && regO && !opts.seduto && POSE_PRESA[regO.posa || "davanti"]) {   // tiene una cosa: la posa del braccio la sceglie il pezzo
+        var PO = POSE_PRESA[regO.posa || "davanti"], TP = PO.t(GG), rp = ik(J, bersaglio(J, [C + lato * TP[0], TP[1]]), L1 * PO.f[0], L2 * PO.f[1], lato);
+        E = rp.E; W = rp.W; mano = "impugna"; davanti = !!PO.davanti || (ROB && (regO.posa || "davanti") === "davanti"); tiene = true;
+      } else if (opts.seduto) {   // seduto: ogni mano appoggiata sulla SUA coscia
+        // (g5, dopo il critico: «le mani pendono giunte davanti al cavallo, gli avambracci sembrano bastoncini storti») il polso sta sulla
+        // coscia un po' verso fuori (le mani staccate tra loro), appena sotto la piega dell anca, e la mano scende lungo la coscia verso il
+        // ginocchio (non più verso il cavallo); il braccio sempre un po' piegato col gomito in fuori (mai dritto e rigido: se la coscia è
+        // troppo lontana per la lunghezza del braccio il polso si ferma un po' prima) e l avambraccio intero, largo come in piedi
+        var gS = gIn(650), PS = [C + lato * (gS[0] + gS[1] * 0.4), SED.yAB - 18], dS = Math.hypot(PS[0] - J[0], PS[1] - J[1]), dM = (L1 + L2) * 0.972;
+        if (dS > dM) PS = [J[0] + (PS[0] - J[0]) * dM / dS, J[1] + (PS[1] - J[1]) * dM / dS];
+        var rs = ik(J, PS, L1, L2, lato);
+        E = rs.E; W = rs.W; mano = "piatta"; davanti = true; dirMano = -6;
       } else {   // a riposo: le braccia un po' staccate dal fianco
-        var yE = J[1] + L1 * 0.99, ar = Math.asin(cl((largTronco(yE) + 9 + B.aw[1] / 2 - Jd) / L1, 0.03, 0.55));
+        // (terzo tempo) più vive: il braccio un po' più staccato, il gomito appena piegato (l avambraccio viene un po' avanti:
+        // visto da davanti è più corto e torna verso il fianco), la mano che segue l avambraccio
+        var rob = ROB, gE = rob ? (m ? 0 : 4) : 14, gW = rob ? (m ? 0 : 4) : 11;
+        var yE = J[1] + L1 * 0.99, ar = Math.asin(cl((largTronco(yE) + gE + B.aw[1] / 2 - Jd) / L1, 0.06, 0.55));
         E = [J[0] + lato * L1 * Math.sin(ar), J[1] + L1 * Math.cos(ar)];
-        var yW = E[1] + L2 * 0.98, aw2 = Math.max(ar * 0.6, Math.asin(cl((largTronco(yW) + 9 + B.aw[3] / 2 - (E[0] - C) * lato) / L2, 0.02, 0.55)));
-        W = [E[0] + lato * L2 * Math.sin(aw2), E[1] + L2 * Math.cos(aw2)];
+        var L2v = L2 * (rob ? 0.92 : 0.95), yW = E[1] + L2v * 0.99, aw2 = Math.asin(cl((largTronco(yW) + gW + B.aw[3] / 2 - (E[0] - C) * lato) / L2v, -0.3, 0.55));
+        if (!rob) aw2 = Math.max(ar - 10 * DEG, aw2);
+        W = [E[0] + lato * L2v * Math.sin(aw2), E[1] + L2v * Math.cos(aw2)];
+        dirMano = aw2 / DEG - 5;
+        if (lato === 1 && regO && !opts.seduto) { mano = "impugna"; tiene = true; dirMano = null; }   // (posa «fianco»: la cosa lungo il fianco)
       }
       var l1 = Math.hypot(E[0] - J[0], E[1] - J[1]), l2 = Math.hypot(W[0] - E[0], W[1] - E[1]);
       var d1 = [(E[0] - J[0]) / l1, (E[1] - J[1]) / l1], aw = B.aw, S0 = [J[0] - d1[0] * 16, J[1] - d1[1] * 16];
       function at(P, Q, t) { return [P[0] + (Q[0] - P[0]) * t, P[1] + (Q[1] - P[1]) * t]; }
       var nodi = [[S0[0], S0[1], aw[0] * 0.86], [J[0], J[1], aw[0]], at(J, E, 0.14).concat([aw[0]]), at(J, E, 0.5).concat([aw[0] * 0.9]), [E[0], E[1], aw[1]], at(E, W, 0.22).concat([aw[2]]), at(E, W, 0.6).concat([aw[2] * 0.86]), [W[0], W[1], aw[3]]];
       return { lato: lato, J: J, E: E, W: W, l1: l1, l2: l2, a1: Math.atan2(lato * (E[0] - J[0]), E[1] - J[1]) / DEG, a2: Math.atan2(lato * (W[0] - E[0]), W[1] - E[1]) / DEG,
-        su: su, canna: canna, nodi: nodi, mano: mano, polso: polso, davanti: davanti, dirMano: dirMano, schiaccia: schiaccia };
+        su: su, canna: canna, nodi: nodi, mano: mano, polso: polso, davanti: davanti, dirMano: dirMano, schiaccia: schiaccia, tiene: tiene, due: !!(gd && gesto && gesto.due) };
     }
-    return { m: m, B: B, Y: Y, C: C, GN: GN, gIn: gIn, pancia: pancia, rc: rc, Jd: Jd, Jy: Jy, L1: L1, L2: L2, largTronco: largTronco, BR: { "-1": braccio(-1), "1": braccio(1) } };
+    var sedV = !!opts.seduto && !opts.busto && !opts.viso && !opts.gambe, vs = vistaSu(PP, sedV);
+    // vedi(P) = dove sta nel riquadro 200×264 un punto del busto, delle braccia o delle mani (coordinate dei pezzi)
+    return { m: m, B: B, Y: Y, C: C, GN: GN, gIn: gIn, pancia: pancia, rob: ROB, rc: rc, Jd: Jd, Jy: Jy, L1: L1, L2: L2, largTronco: largTronco, BR: { "-1": braccio(-1), "1": braccio(1) },
+      P: PP, vedi: function (P) { var v = vs(P[0], P[1]); return [v[0] * 0.25 + 50, v[1] * 0.25 + 2]; } };
   };
 
   var cnt = 0, PREF = "oa" + Math.random().toString(36).slice(2, 5);
@@ -301,9 +563,9 @@
     if (rossetto) labbro = mix(labbro, rossetto, c.rossetto === "tinta" ? 0.5 : 0.88);
 
     // ---------- misure ----------
-    var B = BUILD[m ? "uomo" : "donna"][c.corpo] || BUILD[m ? "uomo" : "donna"].medio;
+    var PP = propDi(opts), B = buildDi(m, c.corpo, PP);
     var C = 200, Y = { collo: 246, spalla: 268, delt: 296, ascella: 336, petto: m ? 372 : 382, vita: m ? 452 : 442, fianchi: 528, cavallo: 572 };
-    var HT = "translate(200 214) rotate(-1.5) scale(.9)";
+    var HT = PP ? "translate(200 " + (214 + PP.collo) + ") rotate(-1.5) scale(" + n1(900 * PP.testa) / 1000 + ")" : "translate(200 214) rotate(-1.5) scale(.9)";
     var F = FACCIA[c.viso] || FACCIA.ovale;
     F = { cw: F.cw, jx: F.jx * (m ? 1 : 0.88), jy: F.jy, cx: F.cx * (m ? 1 : 0.8), L: F.L, k1: F.k1 || 0 };
     var top = -(78 + 70 * F.L);
@@ -315,7 +577,7 @@
       "C" + (-F.cw + 2) + " -40 " + (-F.cw) + " -56 " + (-F.cw) + " -78Z";
 
     // gambe: i punti veri di questa corporatura
-    var lw = B.lw, GN = GAMBA[m ? "uomo" : "donna"].map(function (q) { return [q[0], q[1] * (1 + (lw - 1) * 0.75), q[2] * lw, q[3] * lw]; });
+    var GN = gambeDi(m, B, !!opts.seduto && !opts.busto && !opts.viso && !opts.gambe);
     function gIn(y) {   // [cx, fuori, dentro] alla quota y
       if (y <= GN[0][0]) return [GN[0][1], GN[0][2], GN[0][3]];
       for (var i = 1; i < GN.length; i++) if (y <= GN[i][0]) { var a = GN[i - 1], b = GN[i], t = (y - a[0]) / (b[0] - a[0]); return [a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t]; }
@@ -367,7 +629,9 @@
     // il fianco destro del tronco (x = distanza dal centro) dalla spalla in giù, allargato di e
     function lato(e, o) {
       var R = [], pz = o.pancia != null ? o.pancia : pancia;
-      R.push([B.ap + e, Y.ascella + 6], [B.ch + e, Y.petto], [B.wt + e * 1.1 + pz, Y.vita], [B.hp + e, Y.fianchi]);
+      // (g4) sul robusto la maglia scende dritta dalla pancia (prima rientrava verso l orlo: sembrava corta e tirata sulla pancia)
+      var xF = B.hp + e; if (G.rob && !o.pelle && (o.orlo || 508) < 560) xF = Math.max(xF, B.wt + e * 1.1 + pz - 6);
+      R.push([B.ap + e, Y.ascella + 6], [B.ch + e, Y.petto], [B.wt + e * 1.1 + pz, Y.vita], [xF, Y.fianchi]);
       R.push([fuoriGamba(560) + e, 560], [fuoriGamba(600) + e * 0.9, 600]);
       return R;
     }
@@ -427,18 +691,60 @@
     function larghezze(b) {
       var aw = B.aw, l1 = b.l1, l2 = b.l2, tot = l1 + l2;
       var alz = Math.max(0, Math.min(1, (b.a1 - 50) / 80));
-      return [[0, rc * 2], [l1 * 0.2, aw[0] * (1 + 0.28 * alz)], [l1 * 0.48, aw[0] * (m ? 0.98 : 0.94) * (1 + 0.1 * alz)], [l1 * 0.8, aw[1] * 1.02], [l1, aw[1] * 0.9], [l1 + l2 * 0.2, aw[2] * 1.08], [l1 + l2 * 0.45, aw[2] * 1.0], [l1 + l2 * 0.78, aw[2] * 0.8], [tot, aw[3]]];
+      // (g5, dopo il critico: «col braccio alzato l avambraccio del robusto è sottile rispetto al braccio e al busto») il braccio alzato
+      // si allarga sulla spalla (alz): sul robusto si allarga anche l avambraccio (il polso resta quello: la mano non cambia)
+      var fa = G.rob && alz ? 1 + 0.2 * alz : 1, fe = G.rob && alz ? 1 + 0.12 * alz : 1;
+      return [[0, rc * 2], [l1 * 0.2, aw[0] * (1 + 0.28 * alz)], [l1 * 0.48, aw[0] * (m ? 0.98 : 0.94) * (1 + 0.1 * alz)], [l1 * 0.8, aw[1] * 1.02 * fe], [l1, aw[1] * 0.9 * fe], [l1 + l2 * 0.2, aw[2] * 1.08 * fa], [l1 + l2 * 0.45, aw[2] * 1.0 * fa], [l1 + l2 * 0.78, aw[2] * 0.8 * fe], [tot, aw[3]]];
     }
     function wAt(WS, s) { if (s <= 0) return WS[0][1]; for (var i = 1; i < WS.length; i++) if (s <= WS[i][0]) { var a = WS[i - 1], z = WS[i], t = (s - a[0]) / Math.max(0.01, z[0] - a[0]); return a[1] + (z[1] - a[1]) * t; } return WS[WS.length - 1][1]; }
     function ptAt(b, s) { if (s <= b.l1) { var t = s / b.l1; return [b.J[0] + (b.E[0] - b.J[0]) * t, b.J[1] + (b.E[1] - b.J[1]) * t]; } var u = Math.min(1, (s - b.l1) / b.l2); return [b.E[0] + (b.W[0] - b.E[0]) * u, b.E[1] + (b.W[1] - b.E[1]) * u]; }
     // il contorno chiuso del braccio fino a «fino» (0-1 della lunghezza), allargato di e (su tutta la larghezza: e/2 per lato);
     // svasa = stoffa in più all'orlo, curva = orlo curvo (maniche)
     var ultimiLati = null, manicaFino = {};
+    // (giro3) IL GOMITO PIEGATO FORTE (più di 100°: microfono al petto, leva, applauso, braccia sul tavolo, pugni in alto): un contorno solo
+    // tagliava l interno del gomito (il punto d angolo era limitato) e lasciava un cuneo vuoto tra braccio e avambraccio (si vedeva la
+    // maglia, «un pezzo di manica fuori posto»), e l avambraccio sembrava storto. Ora sono DUE pezzi che si sovrappongono: il braccio con
+    // il gomito tondo e l avambraccio che parte dal gomito tondo, nello stesso percorso (stesso verso: riempiti insieme come uno).
+    // PIEGA[d] = { a: il braccio, b: l avambraccio, la, lb: i loro bordi senza i tagli dritti }: dipingi e pelleAvanti disegnano
+    // l avambraccio SOPRA il braccio (col suo bordo), così il bordo del braccio sotto l avambraccio non si vede.
+    var PIEGA = {}, PIEGA_MIN = 100 * DEG;
+    function arco(cx, cy, r, a0, a1, n) { var o = []; for (var i = 1; i < n; i++) { var a = a0 + (a1 - a0) * i / n; o.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } return o; }
+    function piegato(b, WS, h, s0, fin, svasa, curva, da) {
+      var l1 = b.l1, d1 = [(b.E[0] - b.J[0]) / l1, (b.E[1] - b.J[1]) / l1], d2 = [(b.W[0] - b.E[0]) / b.l2, (b.W[1] - b.E[1]) / b.l2];
+      var n1 = [-d1[1], d1[0]], n2 = [-d2[1], d2[0]], wE = wAt(WS, l1) / 2 + h;
+      function lati(sa, sb, n) {   // i due lati di un tratto dritto da sa a sb (A = +n, B = -n)
+        var S = WS.map(function (x) { return x[0]; }).filter(function (s) { return s > sa + 3 && s < sb - 3; }); S.unshift(sa); S.push(sb);
+        var A2 = [], B2 = [];
+        S.forEach(function (s) { var p = ptAt(b, Math.min(s, l1 + b.l2)), w = wAt(WS, s) / 2 + h + (s === fin && svasa ? svasa / 2 : 0); if (s === 0 && !da) w = rc + h * 0.7; if (Math.abs(s - l1) < 0.5) { p = b.E; w = wE; } A2.push([p[0] + n[0] * w, p[1] + n[1] * w]); B2.push([p[0] - n[0] * w, p[1] - n[1] * w]); });
+        return [A2, B2];
+      }
+      // il braccio: dalla spalla (tonda) o da s0 (taglio dritto) fino al gomito tondo
+      var L1 = lati(s0, l1, n1), aN = Math.atan2(n1[1], n1[0]), giro1 = arco(b.E[0], b.E[1], wE, aN, aN - Math.PI, 6), B1r = L1[1].slice().reverse();
+      var bordo1 = L1[0].concat(giro1).concat(B1r), dA;
+      if (da) dA = "M" + q(bordo1[0][0]) + " " + q(bordo1[0][1]) + cr(bordo1) + "Z";
+      else {
+        var r = rc + h * 0.7, na = Math.atan2(L1[0][0][1] - b.J[1], L1[0][0][0] - b.J[0]), nb = Math.atan2(B1r[B1r.length - 1][1] - b.J[1], B1r[B1r.length - 1][0] - b.J[0]), back = Math.atan2(-d1[1], -d1[0]);
+        var x0 = nb, x1 = na; while (x1 < x0) x1 += 2 * Math.PI; var passa = back; while (passa < x0) passa += 2 * Math.PI;
+        if (passa > x1) { x1 = na; while (x1 > x0) x1 -= 2 * Math.PI; }
+        bordo1 = bordo1.concat(arco(b.J[0], b.J[1], r, x0, x1, 5)).concat([L1[0][0]]);
+        dA = "M" + q(bordo1[0][0]) + " " + q(bordo1[0][1]) + cr(bordo1) + "Z";
+      }
+      // l avambraccio: dal gomito tondo fino a fin (l orlo come prima)
+      var L2 = lati(l1, fin, n2), A2 = L2[0], B2r = L2[1].slice().reverse(), aM = Math.atan2(-n2[1], -n2[0]), giro2 = arco(b.E[0], b.E[1], wE, aM, aM - Math.PI, 6);
+      var fA = A2[A2.length - 1], fB = B2r[0], cv = curva != null ? curva : 0;
+      var orloD = cv ? "Q" + q((fA[0] + fB[0]) / 2 + d2[0] * cv) + " " + q((fA[1] + fB[1]) / 2 + d2[1] * cv) + " " + q(fB[0]) + " " + q(fB[1]) : "L" + q(fB[0]) + " " + q(fB[1]);
+      var dB = "M" + q(A2[0][0]) + " " + q(A2[0][1]) + cr(A2) + orloD + cr(B2r.concat(giro2).concat([A2[0]])) + "Z";
+      var d = dA + dB;
+      PIEGA[d] = { a: dA, b: dB, la: bordo1, lb: B2r.concat(giro2).concat(A2) };
+      ultimiLati = { A: bordo1, B: PIEGA[d].lb };
+      return d;
+    }
     // da (facoltativo, 0-1) = comincia lì con un taglio dritto, senza la spalla tonda (per ridisegnare l avambraccio che passa davanti)
     function contornoBraccio(lato2, e, fino, svasa, curva, da) {
       var b = BR[lato2], WS = larghezze(b), h = (e || 0) / 2, tot = b.l1 + b.l2, fin = tot * Math.max(0.03, Math.min(1, fino == null ? 1 : fino)), s0 = da ? tot * da : 0;
       var d1 = [(b.E[0] - b.J[0]) / b.l1, (b.E[1] - b.J[1]) / b.l1], d2 = [(b.W[0] - b.E[0]) / b.l2, (b.W[1] - b.E[1]) / b.l2];
       var cosB = Math.max(-1, Math.min(1, d1[0] * d2[0] + d1[1] * d2[1])), bend = Math.acos(cosB);
+      if (bend > PIEGA_MIN && fin > b.l1 + 4 && s0 < b.l1 - 4) return piegato(b, WS, h, s0, fin, svasa, curva, da);
       var S = larghezze(b).map(function (q) { return q[0]; }).filter(function (s) { return s > s0 + 3 && s < fin - 4; });
       S.unshift(s0); S.push(fin);
       var lati = [1, -1].map(function (sg) {
@@ -475,7 +781,8 @@
       return "M" + q(A1[0][0]) + " " + q(A1[0][1]) + cr(A1) + orloD + cr(B1.concat(cap).concat([A1[0]])) + "Z";
     }
     // (nomi di prima, li usano i pezzi) una manica: fino alla frazione lung del braccio, agio sulla larghezza, svasa all'orlo
-    function manica(lato2, o) { o = o || {}; manicaFino[lato2] = Math.max(manicaFino[lato2] || 0, o.lung != null ? o.lung : 1); return contornoBraccio(lato2, o.agio != null ? o.agio : 8, o.lung != null ? o.lung : 1, o.svasa || 0, o.tonda ? 6 : 0); }
+    var agioBr = {};   // (ritocchi) quanto è larga la manica più larga (agio + svasa) di ogni braccio: il braccio staccato prende solo quella
+    function manica(lato2, o) { o = o || {}; manicaFino[lato2] = Math.max(manicaFino[lato2] || 0, o.lung != null ? o.lung : 1); agioBr[lato2] = Math.max(agioBr[lato2] || 0, (o.agio != null ? o.agio : 8) + (o.svasa || 0)); return contornoBraccio(lato2, o.agio != null ? o.agio : 8, o.lung != null ? o.lung : 1, o.svasa || 0, o.tonda ? 6 : 0); }
     // dove finisce la manica: punto, direzione, larghezza (intera) del braccio lì
     function fineManica(lato2, lung) {
       var b = BR[lato2], tot = b.l1 + b.l2, s = tot * Math.max(0.03, Math.min(1, lung)), p = ptAt(b, s), d = s < b.l1 ? [(b.E[0] - b.J[0]) / b.l1, (b.E[1] - b.J[1]) / b.l1] : [(b.W[0] - b.E[0]) / b.l2, (b.W[1] - b.E[1]) / b.l2];
@@ -512,6 +819,15 @@
       return s;
     }
     var nNoSpalla = 0;
+    // (giro3) il bordo del braccio staccato: invisibile vicino alla spalla, pieno da 2 raggi in là (una maschera tonda: girando resta uguale)
+    var sfumaS = {};
+    function sfumaSpalla(lato2, r) {
+      var J = BR[lato2].J, k = lato2 + "|" + n1(r); if (sfumaS[k]) return sfumaS[k];
+      var id = p + "ms" + Object.keys(sfumaS).length;
+      D.push("<radialGradient id='" + id + "g' gradientUnits='userSpaceOnUse' cx='" + q(J[0]) + "' cy='" + q(J[1]) + "' r='" + q(r * 2.1) + "'><stop offset='.55' stop-color='#000'/><stop offset='1' stop-color='#fff'/></radialGradient>" +
+        "<mask id='" + id + "' maskUnits='userSpaceOnUse' x='-400' y='-600' width='1200' height='2200'><rect x='-400' y='-600' width='1200' height='2200' fill='url(#" + id + "g)'/></mask>");
+      return (sfumaS[k] = "url(#" + id + ")");
+    }
     function senzaSpalla(lato2, r) {   // tutto tranne il disco della spalla (per il bordo delle braccia)
       var J = BR[lato2].J, id = "ns" + (nNoSpalla++);
       D.push("<clipPath id='" + p + id + "'><path clip-rule='evenodd' d='M0 0H400V1000H0Z" + "M" + q(J[0] - r) + " " + q(J[1]) + "a" + q(r) + " " + q(r) + " 0 1 0 " + q(2 * r) + " 0a" + q(r) + " " + q(r) + " 0 1 0 " + q(-2 * r) + " 0Z'/></clipPath>");
@@ -535,8 +851,11 @@
         al.forEach(function (d) { s += Pa(d, colore); });
         tr.forEach(function (d) { s += Pa(d, colore); });
       }
-      br.forEach(function (q) { s += Pa(q.d, colore); });
-      br.forEach(function (q) { s += "<path d='" + q.d + "' fill='none' stroke='" + rimG + "' stroke-width='2.2' clip-path='" + senzaSpalla(q.lato, rc + (q.e || 0) / 2 + 1.5) + "'/>"; });
+      // (giro3) il gomito piegato forte: prima il braccio col suo bordo, poi l avambraccio sopra (il suo bordo dopo, con gli altri)
+      // (giro3) nel braccio staccato il bordo sfuma verso la spalla (niente riga che stacca la manica dalla spalla quando il braccio gira)
+      function bordoBr(d, q) { var r0 = rc + (q.e || 0) / 2 + 1.5; return "<path d='" + d + "' fill='none' stroke='" + rimG + "' stroke-width='2.2'" + (PARTE === "braccio" ? " mask='" + sfumaSpalla(q.lato, r0) + "'" : " clip-path='" + senzaSpalla(q.lato, r0) + "'") + "/>"; }
+      br.forEach(function (q) { var pg = PIEGA[q.d]; s += pg ? Pa(pg.a, colore) + bordoBr(pg.a, q) + Pa(pg.b, colore) : Pa(q.d, colore); });
+      br.forEach(function (q) { var pg = PIEGA[q.d]; s += bordoBr(pg ? pg.b : q.d, q); });
       var cl = clip(tutti);
       if (o.volume !== false) {
         s += "<g clip-path='" + cl + "'><rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "'" + (o.luce != null ? " opacity='" + opz(n1(o.luce * 100) / 100) + "'" : "") + "/>";
@@ -546,7 +865,7 @@
       } else if (o.dentro) s += "<g clip-path='" + cl + "'>" + o.dentro + "</g>";
       return { svg: s, clip: cl };
     }
-    var nRim = 0;
+    var nRim = 0, fasceC = {}, sfumC = {}, nM = 0;
 
 
     // ---------- il contesto per i pezzi ----------
@@ -580,7 +899,8 @@
 
     // ---------- la pelle: tronco e gambe in un pezzo solo; le braccia sopra (dopo i pantaloni), stesse luci ----------
     var luceSk = 0.35 + 0.65 * Math.min(1, Lsk * 1.15);   // pelle scura: meno luce bianca (se no diventa grigia)
-    function luciSpalla(l) { var J = BR[l].J; return El(J[0] - 8, J[1] - 9, rc * 0.62, rc * 0.5, soft(skL, 0.3)) + El(J[0] + l * 3, J[1] + rc * 0.75, rc * 0.8, rc * 0.42, soft(skDD, 0.16)); }
+    // (giro3) nel braccio staccato la luce della spalla è tonda e centrata sul perno: girando il braccio non si sposta (prima sembrava una palla)
+    function luciSpalla(l) { var J = BR[l].J; if (PARTE === "braccio") return El(J[0], J[1], rc * 0.9, rc * 0.9, soft(skL, 0.14)); return El(J[0] - 8, J[1] - 9, rc * 0.62, rc * 0.5, soft(skL, 0.3)) + El(J[0] + l * 3, J[1] + rc * 0.75, rc * 0.8, rc * 0.42, soft(skDD, 0.16)); }
     function pelleBraccio(l) {
       var b = BR[l], d = contornoBraccio(l, 0, 1), dx = (b.W[0] - b.E[0]) / b.l2, dy2 = (b.W[1] - b.E[1]) / b.l2, wE = B.aw[1] * 0.45, inn = -l;
       var dentro = luciSpalla(l) + St(liscio([[b.E[0] + inn * wE * 0.15 - dx * 6, b.E[1] - dy2 * 6], [b.E[0] + inn * wE * 0.55 + dx * 2, b.E[1] + dy2 * 3], [b.E[0] + inn * wE * 0.85 + dx * 7, b.E[1] + dy2 * 6]]), skD, 2, 0.45) +
@@ -591,9 +911,13 @@
     function pelleAvanti(l) {
       var b = BR[l], da = manicaFino[l] != null ? manicaFino[l] : 0.06;
       if (da > 0.97) return "";
-      var d = contornoBraccio(l, 0, 1, 0, 0, da), L = ultimiLati, bordo = mix(sk, skDD, 0.8);
-      return "<path d='" + d + "' fill='#000000' opacity='.2' transform='translate(5 9)'/>" + Pa(d, sk) + "<g clip-path='" + clip(d) + "'><rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "' opacity='" + n1(luceSk * 100) / 100 + "'/>" +
-        volumeBraccio(l, 1, skL, skDD, 0, 0.85) + "</g>" + St(liscio(L.A), bordo, 2.2, 0.9) + St(liscio(L.B), bordo, 2.2, 0.9);
+      var d = contornoBraccio(l, 0, 1, 0, 0, da), L = ultimiLati, bordo = mix(sk, skDD, 0.8), pg = PIEGA[d];
+      var luci = "<rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "' opacity='" + n1(luceSk * 100) / 100 + "'/>" + volumeBraccio(l, 1, skL, skDD, 0, 0.85);
+      if (pg) {   // (giro3) il gomito piegato forte: il braccio, poi l avambraccio sopra col suo bordo (niente cuneo vuoto tra i due)
+        return "<path d='" + d + "' fill='#000000' opacity='.2' transform='translate(5 9)'/>" + Pa(pg.a, sk) + "<g clip-path='" + clip(pg.a) + "'>" + luci + "</g>" + St(liscio(pg.la), bordo, 2.2, 0.9) +
+          "<path d='" + pg.b + "' fill='#000000' opacity='.12' transform='translate(3 5)'/>" + Pa(pg.b, sk) + "<g clip-path='" + clip(pg.b) + "'>" + luci + "</g>" + St(liscio(pg.lb), bordo, 2.2, 0.9);
+      }
+      return "<path d='" + d + "' fill='#000000' opacity='.2' transform='translate(5 9)'/>" + Pa(d, sk) + "<g clip-path='" + clip(d) + "'>" + luci + "</g>" + St(liscio(L.A), bordo, 2.2, 0.9) + St(liscio(L.B), bordo, 2.2, 0.9);
     }
     function pelleCorpo(soloSu) {
       var nk = B.nk, tr = tronco({ pelle: true }), gl = soloSu ? [] : [gamba(-1, { da: 540, a: 948, curvaOrlo: 2 }), gamba(1, { da: 540, a: 948, curvaOrlo: 2 })];
@@ -626,9 +950,12 @@
     // ---------- le mani ----------
     // forme in coordinate della mano: polso in (0, 0), dita verso +y, +x = verso il corpo (col braccio giù)
     var MANI = {
-      rilassata: { p: ["M-14.5 -6C-15.5 6 -16.5 18 -16.5 29C-16.5 38 -15.5 46 -13.5 51C-12.8 55 -10.5 57.5 -8.5 56.8C-7.8 59.5 -5 62.5 -2.5 62C-0.8 64.5 3 65 4.5 62.5C7 63 9.6 60.5 9.2 57C8.8 53.5 7.2 50.5 7.8 46C9 40 12.5 35 13.5 28C14.5 20 14.5 8 14.5 -6Z",
-          "M9 9C15 12 20 20 20.5 30C21 36 19.5 41 16.5 41.5C14 42 13 39.5 13.2 36C13.6 30 12 24 6.5 19Z"],
-        l: ["M-8.5 56.8C-8.5 50 -9.5 44 -10.5 40", "M-2.5 62C-2.8 54 -3.5 47 -4.5 42", "M4.5 62.5C4.2 55 3.5 49 2.6 44", "M-14 33C-8 36.5 0 36 6 33"] },
+      // (terzo tempo) rilassata: le dita un po' piegate verso il corpo, le punte raccolte (non più a paletta)
+      rilassata: { p: ["M-11 -2C-14.8 6 -16.4 17 -16.6 27C-16.8 36 -16 43 -13.8 48.4C-12.6 51.4 -10.4 53.4 -7.6 53.6C-6.4 56 -4 57.6 -1.4 57.4C.6 58.8 3.6 58.6 5.4 56.8C7.8 56.2 9.4 54.4 9.8 51.8C10.6 48.8 10.4 46 11 42.4C12 36 14 30 14.5 22C14.9 14 14.4 6 11 -2Z",
+          "M8.5 9C14.8 12.8 19.4 20.6 20 29C20.4 35 18.4 40.2 15.2 41C12.6 41.6 11.4 39.4 11.8 36C12.2 30.6 10.8 25.2 6 19.8Z"],
+        l: ["M-1.6 31C-.6 38 1.6 45 5 55.4", "M-7.4 31.6C-6.8 39 -4.6 47 -1.6 56", "M-12.6 33C-12.4 40 -10.6 46.4 -7.6 52.6", "M-15 27.4C-9 29.6 -1 30 6 28.4"],
+        // (ritocchi) il pollice si stacca dalle dita (il suo bordo), le nocche e l unghia del pollice: la mano lungo il fianco si legge anche piccola
+        b: ["M6.6 20.4C10.6 25.2 12.2 30.6 11.8 36C11.6 39 12.8 41.4 15.2 41"], n: [[-12, 29.4], [-5.6, 30.6], [.6, 31], [6.4, 30]], u: [[16.4, 37.4, 2, 2.6]] },
       pugno: { p: ["M-14.5 -6C-15.5 6 -16.5 17 -15.5 28C-14.5 38 -8.5 45 0.5 45C8.5 45 14.5 40 15.5 30C16.5 20 15 8 14.5 -6Z",
           "M12.5 11C19 15 20.5 25.5 15.5 32C11.5 35 6 33 4 28.5C8 26.5 10.5 22 10.5 17.5Z"],
         l: ["M-13 24C-6 27 3 27 9 24", "M-12.5 31.5C-6 34.5 2 34.5 7 32", "M-10 38.5C-5 41 1 41 5 39.5"] },
@@ -639,40 +966,103 @@
       batti: { p: ["M-14 -6C-15 8 -15.5 22 -14.5 36C-14 48 -11 58 -6 64C-3 67.5 2 67.5 3.5 63C5 56 5.5 46 6.5 36C7.5 24 9 10 10 -6Z",
           "M8 8C14 12 18 22 17 32C16.5 37 13 39 10.5 36C9.5 30 8 22 4.5 16Z"],
         l: ["M-11 38C-9 48 -6.5 56 -3.5 61"] },
-      tiene: { p: ["M-14.5 -6C-15.5 6 -16.5 17 -16 28C-15.5 40 -11 50 -4 55C1 58.5 7 57.5 9.5 53C11.5 49 10 45 7.5 43C10.5 38 13.5 33 14.5 26C15 18 14.8 7 14.5 -6Z",
+      tiene: { p: ["M-11 -2C-15 6 -16.5 17 -16 28C-15.5 40 -11 50 -4 55C1 58.5 7 57.5 9.5 53C11.5 49 10 45 7.5 43C10.5 38 13.5 33 14.5 26C15 18 14.6 7 11 -2Z",
           "M9.5 9C16 13 21 23 21 34C21 40 17.5 44.5 13 43C11 37 9 27 5 20Z"],
         l: ["M-12.5 30C-5 33.5 3 33 9 30", "M-8 43C-3 47.5 2 48.5 6 47"] },
       indica: { p: ["M-14.5 -6C-15.5 6 -16.5 17 -15.5 28C-14.5 38 -8.5 45 0.5 45C8.5 45 14.5 40 15.5 30C16.5 20 15 8 14.5 -6Z",
           "M-3.5 32L-4.5 72C-4.5 78.5 5.5 78.5 5.5 72L6.5 32Z", "M12.5 11C19 15 20.5 25.5 15.5 32C11.5 35 6 33 4 28.5C8 26.5 10.5 22 10.5 17.5Z"],
         l: ["M-13 24C-6 27 0 27 3 25", "M-12 32C-8 34.5 -4 35 -2 34"] },
-      piatta: { p: ["M-16 -6C-17 6 -18 18 -17.5 30C-17 42 -16 51 -13.5 57C-12.5 60.5 -9 61.5 -7.5 59.5C-6.5 63 -2.5 64 -1 61.5C0.5 64.5 4.5 64 5.5 61C7 63.5 10.5 62.5 11 59C13.5 55 16 47 17 38C17.8 28 17 10 16 -6Z",
-          "M14 6C21 9 26 16 27 24C27.5 28.5 22.5 30 21 26C19.5 21.5 17 18 13 16Z"],
-        l: ["M-7.5 59.5C-7.8 52 -8.3 46 -9 41", "M-1 61.5C-1 54 -1 48 -1.2 42", "M5.5 61C5.6 54 5.3 48 4.8 42"] }
+      // (terzo tempo) piatta = appoggiata sul tavolo o sulle cosce: dita unite e un po' piegate in giù (si vedono corte), il pollice lungo il fianco
+      piatta: { p: ["M-15.5 -6C-16.5 6 -17.8 16 -18 26C-18.2 35 -17.4 42.4 -15.4 47.4C-14.2 50.6 -11 51.6 -9.2 49.6C-7.8 52.4 -4.2 53.2 -2.4 50.8C-.8 53.4 3 53.6 4.6 51.2C6.2 53.4 9.6 52.8 10.8 49.8C13.2 45.6 15.2 39.6 16.2 31.4C17 22 16.5 8 15.5 -6Z",
+          "M13.2 6C19.4 9.4 23.8 15.4 25 22.2C25.6 26.8 21.8 29.2 19.8 25.8C18.2 22 16.2 18.8 12 16.2Z"],
+        l: ["M-9.2 49.6C-9.5 43.4 -9.8 38.6 -10.2 34", "M-2.4 50.8C-2.5 44.4 -2.6 39.6 -2.8 35", "M4.6 51.2C4.8 44.8 4.8 40 4.6 35.4", "M-15.4 30.4C-7 33.2 4 33.2 12.4 30"] }
     };
     var tipiMano = {};
+    // (terzo tempo) IMPUGNA: il pugno che stringe davvero un manico. Coordinate della presa: (0, 0) = il centro del pugno, il manico passa
+    // lungo l asse y (la cima della cosa verso y negativi) DENTRO il pugno: si vede sopra il pollice (y < -21) e sotto il mignolo (y > 21);
+    // +x = verso fuori (le nocche), -x = verso il corpo (le punte delle dita che girano intorno al manico). Il manico ci sta se è largo fino a 13.
+    var PUGNO = {
+      p: "M-11 -15C-14 -13.5 -14.5 -8 -12.5 -5.5C-15 -3.5 -15.2 2 -12.8 3.6C-14.6 6 -14.4 10.5 -11.8 12C-12.8 14.6 -11.6 19 -8 19.6C-2 21 6 21.5 11 19.5C15 18 16.5 14.5 16 11.6C18.6 10 19 5 17.4 3C19.6 .6 19.6 -4 17.6 -5.8C19.8 -8.6 19.2 -13.8 16 -15.4C9 -18 -5 -18 -11 -15Z",
+      pollice: "M17.5 -12C14.6 -19.4 4.6 -22.4 -3.6 -20.6C-9.4 -19.4 -12.8 -16.4 -11.6 -13.2C-10.6 -10.6 -7 -10.6 -3.6 -11.6C2 -13 9 -12.6 14.4 -9.6Z",
+      l: ["M-12.6 -5.2C-4 -4 6 -4.4 13.8 -5.8", "M-12.4 3.8C-4 5 6 4.6 13.6 3.2", "M-11.2 12.2C-3 13.4 5 13 12.4 11.8"],
+      sotto: "M-11.6 -13.2C-10.6 -10.6 -7 -10.6 -3.6 -11.6C2 -13 9 -12.6 14.4 -9.6"
+    };
+    function kImpugna() { return B.km * 1.1; }
+    function manoImpugna(lato2) {
+      var b = BR[lato2], P = K.presa, k = n1(P.k * 100) / 100, O = [P.x, P.y], inc = +P.inclina || 0, dF = [(b.W[0] - b.E[0]) / b.l2, (b.W[1] - b.E[1]) / b.l2];
+      var tr = "translate(" + n1(O[0]) + " " + n1(O[1]) + ") rotate(" + n1(lato2 * inc) + ") scale(" + n1(lato2 * k * 100) / 100 + " " + k + ")";
+      var bordo = mix(sk, skDD, 0.8), linea = mix(skDD, "#2a0f08", 0.25), ww = B.aw[3];
+      // il ponte dal polso al pugno (mondo): copre la fine dell avambraccio in qualunque direzione arrivi
+      var ponte = limb([[b.W[0] - dF[0] * 6, b.W[1] - dF[1] * 6, ww], [(b.W[0] + O[0]) / 2, (b.W[1] + O[1]) / 2, ww * 1.04], [O[0], O[1], ww * 0.9]], 0.4);
+      var sw = n1(3.2 / k);
+      var s = "<path d='" + ponte + "' fill='none' stroke='" + bordo + "' stroke-width='3.2'/><g transform='" + tr + "'><path d='" + PUGNO.p + "' fill='none' stroke='" + bordo + "' stroke-width='" + sw + "'/><path d='" + PUGNO.pollice + "' fill='none' stroke='" + bordo + "' stroke-width='" + sw + "'/></g>";
+      s += Pa(ponte, sk) + "<g transform='" + tr + "'>" + Pa(PUGNO.p, sk) + Pa(PUGNO.pollice, sk);
+      PUGNO.l.forEach(function (d) { s += St(d, linea, 1.3, 0.6); });
+      s += St(PUGNO.sotto, bordo, 1.6, 0.85) + "</g>";
+      var idc = "c" + (nClip++);
+      D.push("<clipPath id='" + p + idc + "'><path d='" + ponte + "'/><path d='" + PUGNO.p + "' transform='" + tr + "'/><path d='" + PUGNO.pollice + "' transform='" + tr + "'/></clipPath>");
+      // le luci: quella da sinistra di tutta la figura, una luce morbida sulle nocche in alto e l ombra sotto il mignolo
+      var a = lato2 * inc * DEG, ca = Math.cos(a), sa = Math.sin(a);
+      function q2(x, y) { return [O[0] + (x * lato2 * ca - y * sa) * k, O[1] + (x * lato2 * sa + y * ca) * k]; }
+      var L1p = q2(4, -6), L2p = q2(6, 16);
+      return s + "<g clip-path='url(#" + p + idc + ")'><rect x='" + n1(O[0] - 90) + "' y='" + n1(O[1] - 90) + "' width='180' height='180' fill='" + luceGlobale() + "' opacity='" + n1(luceSk * 100) / 100 + "'/>" +
+        El(L1p[0], L1p[1], 14 * k, 9 * k, soft(skL, 0.45)) + El(L2p[0], L2p[1], 16 * k, 8 * k, soft(skDD, 0.4)) + "</g>";
+    }
     function manoSvg(lato2) {
-      var b = BR[lato2], k = B.aw[3] / (m ? 28.6 : 27.4) * (b.davanti ? 1.12 : 1) * (b.mano === "pugno" ? 1.14 : 1.04), forma = MANI[b.mano] || MANI.rilassata;
+      var b = BR[lato2];
+      if (b.mano === "impugna") return manoImpugna(lato2);
+      // (ritocchi) le mani dei gesti ridisegnate (maniNuove); il pugno non è più ingrandito (era una palla), quella che viene avanti appena
+      var M3 = maniNuove(), nuova = M3[b.mano];
+      var k = B.km * (b.davanti && b.mano !== "piatta" ? 1.06 : 1) * ({ pugno: 1.02, indica: 1.02, piatta: 0.98, dorso: 0.96, batti: 1, aperta: 1.02 }[b.mano] || 1.04), forma = nuova || MANI[b.mano] || MANI.rilassata;
       if (SPALLE && forma === MANI.rilassata) forma = { p: [MANI.rilassata.p[0]], l: MANI.rilassata.l.slice(0, 2) };   // il polso della mano largo come il polso del braccio
-      var rot = -lato2 * (b.dirMano != null ? b.dirMano : b.a2) + (b.polso || 0) * -lato2, mir = -lato2;
-      var tr = "translate(" + n1(b.W[0]) + " " + n1(b.W[1]) + ") rotate(" + n1(rot) + ") scale(" + n1(mir * k) + " " + n1(k * (b.schiaccia || 1)) + ")";
-      var bordo = mix(sk, skDD, 0.8), s = "<g transform='" + tr + "'>";
+      var rot = -lato2 * (b.dirMano != null ? b.dirMano : b.a2) + (b.polso || 0) * -lato2, mir = -lato2, sch = b.schiaccia || 1;
+      // (giro3) col polso piegato forte (preme, batte: la mano scende ad angolo dalla fine dell avambraccio) la mano si sposta un po in avanti
+      // lungo l avambraccio: pende dalla fine della manica invece di coprirne metà (prima la manica spuntava sopra la mano come un morso)
+      var raH = rot * DEG, dH = [-Math.sin(raH), Math.cos(raH)], dF0 = [(b.W[0] - b.E[0]) / b.l2, (b.W[1] - b.E[1]) / b.l2], beta = Math.acos(Math.max(-1, Math.min(1, dH[0] * dF0[0] + dH[1] * dF0[1])));
+      var sposta = !b.due && beta > 45 * DEG ? (forma.w8 || 15) * k * 0.62 * Math.sin(beta) : 0, Wm = [b.W[0] + dF0[0] * sposta, b.W[1] + dF0[1] * sposta];
+      var tr = "translate(" + n1(Wm[0]) + " " + n1(Wm[1]) + ") rotate(" + n1(rot) + ") scale(" + n1(mir * k) + " " + n1(k * sch) + ")";
+      var bordo = mix(sk, skDD, 0.8), scura = Lsk < 0.35, linea = scura ? mix(sk, "#000000", 0.5) : mix(skDD, "#2a0f08", 0.25);
+      // (ritocchi) il PONTE dal polso alla mano (mondo): parte dalla fine dell avambraccio, largo come lui, e arriva dentro la mano
+      // larga come lei: la mano (stretta in cima) ci sta sopra, niente gradino né spigoli quando la mano si piega
+      var ra = rot * DEG, cs = Math.cos(ra), sn = Math.sin(ra);
+      function hw(x, y) { return [Wm[0] + mir * k * x * cs - k * sch * y * sn, Wm[1] + mir * k * x * sn + k * sch * y * cs]; }
+      var dF = [(b.W[0] - b.E[0]) / b.l2, (b.W[1] - b.E[1]) / b.l2], ww = B.aw[3], P1 = hw(0, 9), wEnd = 2 * (forma.w8 || 15) * k * 0.9;
+      // (i primi due punti lungo l avambraccio: l inizio del ponte combacia con la fine del braccio anche quando il polso si piega)
+      // (giro3) il ponte finisce DRITTO lungo la mano (due punti sull asse della mano): col polso piegato (preme, batte) prima finiva di sbieco e
+      // lasciava scoperti gli angoli in cima alla mano (un morso tra la mano e la manica)
+      var P0 = hw(0, 3), wMid = (ww * 1.01 + wEnd) / 2;
+      var nodiP = [[b.W[0] - dF[0] * 4, b.W[1] - dF[1] * 4, ww], [b.W[0] + dF[0] * 1.5, b.W[1] + dF[1] * 1.5, ww * 1.01], [P0[0], P0[1], wMid], [P1[0], P1[1], wEnd], [hw(0, 13)[0], hw(0, 13)[1], wEnd * 0.98]];
+      var ponte = limb(nodiP, 0), lp = latiLimb(nodiP);
+      // (giro3) il polso tondo: mezzo disco davanti alla fine dell avambraccio (largo come il polso). Col polso dritto sta dentro il ponte
+      // e non si vede; col polso piegato fa l angolo tondo del dorso del polso (prima lì restava un morso)
+      var nF = [-dF[1], dF[0]], C0 = [b.W[0] + dF[0], b.W[1] + dF[1]], rW = ww * 0.5, pdisco = [];
+      for (var iD = 0; iD <= 10; iD++) { var tD = Math.PI * iD / 10; pdisco.push([C0[0] + rW * (Math.cos(tD) * nF[0] + Math.sin(tD) * dF[0]), C0[1] + rW * (Math.cos(tD) * nF[1] + Math.sin(tD) * dF[1])]); }
+      var disco = liscio(pdisco) + "Z";
+      var s = St(liscio(lp[0]), bordo, 3.2) + St(liscio(lp[1]), bordo, 3.2) + St(liscio(pdisco), bordo, 3.2) + "<g transform='" + tr + "'>";
       // il bordo dietro (solo il contorno esterno, non al polso), poi la pelle, poi luci e pieghe
       forma.p.forEach(function (d) { s += "<path d='" + d.replace(/Z$/, "") + "' fill='none' stroke='" + bordo + "' stroke-width='" + n1(3.2 / k) + "' stroke-linecap='butt'/>"; });
+      s += "</g>" + Pa(ponte, sk) + Pa(disco, sk) + "<g transform='" + tr + "'>";
       forma.p.forEach(function (d) { s += Pa(d, sk); });
-      var cm = clip(forma.p);
-      
-      forma.l.forEach(function (d) { s += St(d, mix(skDD, "#2a0f08", 0.25), 1.35, 0.62); });
+      (forma.u || []).forEach(function (u) { s += El(u[0], u[1], u[2], u[3], mix(sk, "#ffffff", scura ? 0.22 : 0.38), " opacity='.7'"); });
+      // (giro3) righe più decise: tra le dita (s) col colore del bordo, così le dita si contano anche nelle figure piccole
+      forma.l.forEach(function (d) { s += St(d, linea, 1.5, scura ? 0.8 : 0.66); });
+      var sep = scura ? mix(sk, "#000000", 0.55) : mix(bordo, "#3a1408", 0.18);
+      (forma.s || []).forEach(function (d) { s += St(d, sep, 2.1, 0.95); });
+      (forma.b || []).forEach(function (d) { s += St(d, bordo, 2, 0.95); });
       var idc = "c" + (nClip++);
-      D.push("<clipPath id='" + p + idc + "'>" + forma.p.map(function (d) { return "<path d='" + d + "' transform='" + tr + "'/>"; }).join("") + "</clipPath>");
+      D.push("<clipPath id='" + p + idc + "'><path d='" + ponte + "'/><path d='" + disco + "'/>" + forma.p.map(function (d) { return "<path d='" + d + "' transform='" + tr + "'/>"; }).join("") + "</clipPath>");
       // le luci della mano sono quelle del braccio (luce da sinistra e volume lungo la mano), in coordinate del mondo: niente salto al polso
-      var ar = (rot + 90) * DEG, dm = [Math.cos(ar), Math.sin(ar)], Hm = [b.W[0] + dm[0] * 60 * k, b.W[1] + dm[1] * 60 * k];
+      var ar = (rot + 90) * DEG, dm = [Math.cos(ar), Math.sin(ar)], Hm = [Wm[0] + dm[0] * 60 * k, Wm[1] + dm[1] * 60 * k];
+      var luci = "";
+      (forma.n || []).forEach(function (nn) { var P = hw(nn[0], nn[1]); luci += El(P[0], P[1], 3.6 * k, 2.6 * k, soft(skL, scura ? 0.5 : 0.6)); });
       return s + "</g><g clip-path='url(#" + p + idc + ")'><rect x='" + n1(b.W[0] - 90) + "' y='" + n1(b.W[1] - 90) + "' width='180' height='180' fill='" + luceGlobale() + "' opacity='" + n1(luceSk * 100) / 100 + "'/>" +
-        cilindro([b.W[0] - dm[0] * 8, b.W[1] - dm[1] * 8], Hm, 30 * k, skL, skDD, 0.7) + "</g>";
+        cilindro([Wm[0] - dm[0] * 8, Wm[1] - dm[1] * 8], Hm, 30 * k, skL, skDD, scura ? 0.45 : 0.7) + luci + "</g>";
     }
 
 
     function ventaglio() {
-      var a = BR["-1"].W, b2 = BR["1"].W, cx = (a[0] + b2[0]) / 2, cy = Math.min(a[1], b2[1]) - 26, s = "<g transform='translate(" + n1(cx) + " " + n1(cy) + ") scale(1.25) translate(" + n1(-cx) + " " + n1(-cy) + ")'>";
+      // (ritocchi) le carte della misura giusta: una carta è larga più o meno quanto la mano (prima erano grandi una volta e mezza)
+      var a = BR["-1"].W, b2 = BR["1"].W, cx = (a[0] + b2[0]) / 2, cy = Math.min(a[1], b2[1]) - 34, s ="<g transform='translate(" + n1(cx) + " " + n1(cy) + ") scale(.86) translate(" + n1(-cx) + " " + n1(-cy) + ")'>";
       var dorso = LG("cdorso", 0, 0, 1, 1, [[0, "#e04a4a"], [1, "#9c1f2c"]]);
       [-30, -15, 0, 15, 30].forEach(function (g) {
         s += "<g transform='rotate(" + g + " " + n1(cx) + " " + n1(cy + 40) + ")'><rect x='" + n1(cx - 26) + "' y='" + n1(cy - 62) + "' width='52' height='78' rx='6' fill='#fbf7ef' stroke='#7a6a5a' stroke-width='1.6'/>" +
@@ -830,13 +1220,24 @@
     // collo: { sopra, dietro } · schiena: { dietro, sopra (spallacci) } · borsa: { sotto (la borsa, prima delle braccia), sopra (la tracolla) }
     // inmano: { dietro (prima della mano: il manico dentro il pugno), davanti } · animale: svg (a terra, accanto) · pittura: svg in coordinate della testa (ritagliata sul viso)
     function extra(tipo, v, vuoto) { var f = v && v !== vuoto && A[tipo] ? A[tipo][v] : null; return f ? f(K) : null; }
-    var bR = BR["1"], dR = [(bR.W[0] - bR.E[0]) / bR.l2, (bR.W[1] - bR.E[1]) / bR.l2], kM = B.aw[3] / (m ? 28.6 : 27.4) / 1.06;
-    var conOgg = !!(c.mano && c.mano !== "nessuno" && !bR.davanti && !bR.canna && !opts.busto && !opts.viso && A.inmano[c.mano]);   // nei tondini niente cose in mano (si vedevano a pezzi sul bordo)
-    if (conOgg) bR.mano = "pugno";
+    var bR = BR["1"], dR = [(bR.W[0] - bR.E[0]) / bR.l2, (bR.W[1] - bR.E[1]) / bR.l2], kM = B.km / 1.06;
+    var conOgg = !!(c.mano && c.mano !== "nessuno" && (!bR.davanti || bR.tiene) && !bR.canna && !opts.busto && !opts.viso && A.inmano[c.mano]);   // nei tondini niente cose in mano (si vedevano a pezzi sul bordo)
+    var regO = conOgg && A.impugna[c.mano] ? A.impugna[c.mano] : null;
+    if (conOgg) { bR.mano = regO ? "impugna" : "pugno"; if (!regO) bR.dirMano = null; }   // (i pezzi di prima: il pugno segue l avambraccio, come prima)
     K.presa = { x: bR.W[0] + dR[0] * 20 * kM, y: bR.W[1] + dR[1] * 20 * kM, ang: Math.atan2(dR[0], dR[1]) / DEG, k: kM };   // dove stringe il pugno a destra nel disegno (mondo); ang = la direzione dell'avambraccio
+    // (terzo tempo) il contratto nuovo: K.presa = { x, y: il centro del pugno · k: la misura della mano · inclina: il manico (gradi, 0 = dritto in su,
+    // + = la cima verso fuori, - = verso il corpo) · qui(svg, inclina?): mette un disegno nelle coordinate della presa · foro: quanto può essere
+    // largo il manico · alto: quanto è alto il pugno (coordinate della presa) · posa · ang (direzione dell avambraccio, come prima) }
+    function presaNuova(inc0, kI) {
+      var Oc = [bR.W[0] + dR[0] * 17 * kI, bR.W[1] + dR[1] * 17 * kI];
+      K.presa = { x: Oc[0], y: Oc[1], ang: Math.atan2(dR[0], dR[1]) / DEG, k: kI, inclina: inc0, foro: 13, alto: 42, lato: 1, posa: regO ? regO.posa || "davanti" : "fianco",
+        qui: function (s2, inc) { return "<g transform='translate(" + n1(Oc[0]) + " " + n1(Oc[1]) + ") rotate(" + n1(inc != null ? +inc : K.presa.inclina) + ") scale(" + n1(kI * 100) / 100 + ")'>" + s2 + "</g>"; } };
+    }
+    if (regO) presaNuova(+regO.inclina || 0, kImpugna());
     var xCollo = extra("collo", c.collo, "nessuno"), xSch = extra("schiena", c.schiena, "nessuna"), xBor = extra("borsa", c.borsa, "nessuna"), xAni = soloSu ? null : extra("animale", c.animale, "nessuno"), xOgg = conOgg ? A.inmano[c.mano](K) : null;
     var pittura = extra("pittura", c.pittura, "nessuna");
-    if (typeof xOgg === "string") xOgg = { davanti: xOgg }; if (typeof xCollo === "string") xCollo = { sopra: xCollo }; if (typeof xSch === "string") xSch = { dietro: xSch }; if (typeof xBor === "string") xBor = { sopra: xBor };
+    if (typeof xOgg === "string") xOgg = { davanti: xOgg };
+    if (xOgg && conOgg && xOgg.inclina != null) { if (!regO) presaNuova(+xOgg.inclina, kImpugna()); else K.presa.inclina = +xOgg.inclina; bR.mano = "impugna"; }   // il pezzo dice l inclinazione: il pugno la segue if (typeof xCollo === "string") xCollo = { sopra: xCollo }; if (typeof xSch === "string") xSch = { dietro: xSch }; if (typeof xBor === "string") xBor = { sopra: xBor };
     xOgg = xOgg || {}; xCollo = xCollo || {}; xSch = xSch || {}; xBor = xBor || {};
     var pBarba = m && c.barba && c.barba !== "no" ? pezzoDi("barba", c.barba) : null, barba = pBarba ? (pBarba.fn(K) || {}) : null;
     if (typeof barba === "string") barba = { dentro: barba };
@@ -872,48 +1273,97 @@
     var px = opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * (opts.busto ? 182 / 178 : (opts.vita ? 118 / 108 : 1.32))) + "'" : "";
     var seduto = !!opts.seduto && !opts.busto && !opts.viso && !opts.gambe && PARTE !== "braccio" ? seduto : null;
     var body = "";
+    // (terzo tempo) con le proporzioni nuove: in piedi il disegno si mette insieme a pezzi (PZ): «F» = a fasce (le gambe si accorciano:
+    // corpo, vestiti, scarpe, mantello), «T» = solo spostato e ingrandito (braccia, mani, cose in mano, testa: non si schiacciano),
+    // «0» = fermo (l animaletto a terra, che resta dentro il riquadro). Vita, busto e viso: tutto «T» (le gambe non si vedono).
+    var PZ = PP && !seduto && PARTE !== "braccio" && !opts.vita && !soloSu ? [] : null;
+    function metti(tipo, s) { if (!s) return; if (!PZ) { body += s; return; } var u = PZ[PZ.length - 1]; if (u && u[0] === tipo) u[1] += s; else PZ.push([tipo, s]); }
+    var S4 = PP ? Math.round(PP.S * 10000) / 10000 : 1, sx0 = PP ? n1(200 * (1 - PP.S)) : 0, sy0 = PP ? 999 * (1 - PP.S) : 0;
+    var matT = PP ? "matrix(" + S4 + " 0 0 " + S4 + " " + sx0 + " " + n1(sy0 + PP.S * PP.gambe) + ")" : "";
     var piedi = opts.busto || opts.viso ? "" : El(200, 996, 120, 13, soft("#000000", 0.38));
-    body += piedi;
-    if (!SPALLE) body += (xSch.dietro || "");
-    if (!SPALLE) body += (capo.dietro || "") + (xCollo.dietro || "");
-    if (!SPALLE) body += "<g transform='" + HT + "'>" + sottoCappello(cap.dietro) + (capp && capp.dietro ? capp.dietro : "") + "</g>";
+    if (PZ && xAni) metti("0", xAni);
+    metti("F", piedi);
+    if (!SPALLE) metti("F", xSch.dietro || "");
+    if (!SPALLE) metti("F", (capo.dietro || "") + (xCollo.dietro || ""));
+    if (!SPALLE) metti("F", "<g transform='" + HT + "'>" + sottoCappello(cap.dietro) + (capp && capp.dietro ? capp.dietro : "") + "</g>");
     if (SPALLE && scarpe.corpo) { var gT = gIn(938); scarpe.corpo = "<g clip-path='" + clip(["M" + n1(C - gT[0] - 30) + " 880H" + n1(C - gT[0] + 30) + "V1010H" + n1(C - gT[0] - 30) + "Z", "M" + n1(C + gT[0] - 30) + " 880H" + n1(C + gT[0] + 30) + "V1010H" + n1(C + gT[0] - 30) + "Z"]) + "'>" + scarpe.corpo + "</g>"; }
     var cam = opts.cammina && !opts.busto;
     if (PARTE === "braccio") {
-      var zona = clip(contornoBraccio(LP, 46, 1, 30));
-      var sB = pelleBraccio(LP) + "<g clip-path='" + zona + "'>" + (capo.corpo || "") + "</g>" + (BR[LP].davanti ? pelleAvanti(LP) : "") + (LP === 1 ? xOgg.dietro || "" : "") + manoSvg(LP) + (LP === 1 ? xOgg.davanti || "" : "");
+      // (ritocchi) il vestito del braccio staccato: solo la manica (prima un contorno largo 46 prendeva anche un pezzo del busto intorno alla
+      // spalla, spalline e scollo compresi: girando il braccio quel pezzo si spostava e si vedeva il salto). La spalla tonda resta un cerchio
+      // intorno al perno: girando, la manica resta attaccata alla spalla del corpo. Senza maniche (canotta, top) niente vestito sul braccio.
+      var zona = agioBr[LP] != null ? clip(contornoBraccio(LP, Math.max(14, agioBr[LP] + 10), 1, 30)) : null;
+      var sB = pelleBraccio(LP) + (zona ? "<g clip-path='" + zona + "'>" + (capo.corpo || "") + "</g>" : "") + (BR[LP].davanti ? pelleAvanti(LP) : "") + (LP === 1 ? xOgg.dietro || "" : "") + manoSvg(LP) + (LP === 1 ? xOgg.davanti || "" : "");
+      if (PP) sB = "<g transform='" + matT + "'>" + sB + "</g>";
       return fine("<svg xmlns='http://www.w3.org/2000/svg' stroke-linejoin='round' viewBox='0 0 200 264'" + (opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * 1.32) + "'" : "") + " class='omino omino-a omino-braccio'><defs>" + D.join("") + "</defs><g transform='matrix(.25 0 0 .25 50 2)'>" + sB + "</g></svg>");
     }
     if (PARTE === "corpo") opts = (function () { var o = {}; for (var k in opts) o[k] = opts[k]; o.senzaBraccio = LP; return o; })();
     if (seduto) return fine(seduto());
-    body += pelleCorpo(soloSu);
-    if (!alte) body += "<g class='om-scarpe'>" + (scarpe.corpo || "") + "</g>";
-    body += sotto.corpo || "";
-    if (alte) body += "<g class='om-scarpe'>" + (scarpe.corpo || "") + "</g>";
-    if (sotto.sopra) body += sotto.sopra;
-    body += (xBor.sotto || "") + (xAni || "");
+    metti("F", pelleCorpo(soloSu));
+    if (!alte) metti("F", "<g class='om-scarpe'>" + (scarpe.corpo || "") + "</g>");
+    metti("F", sotto.corpo || "");
+    if (alte) metti("F", "<g class='om-scarpe'>" + (scarpe.corpo || "") + "</g>");
+    if (sotto.sopra) metti("F", sotto.sopra);
+    metti("T", xBor.sotto || ""); if (!PZ) body += xAni || "";
     var bS = function (lato) { return opts.senzaBraccio === lato ? "" : "<g class='" + (cam ? (lato === -1 ? "om-b1" : "om-b2") : "") + "'>" + pelleBraccio(lato) + "</g>"; };
-    body += bS(-1) + bS(1);
-    body += capo.corpo || "";
-    [-1, 1].forEach(function (l) { if (BR[l].davanti && opts.senzaBraccio !== l && !SPALLE) body += pelleAvanti(l); });
-    if (opts.gesto === "carte" && !SPALLE) body += ventaglio();
-    body += (opts.senzaBraccio === -1 ? "" : manoSvg(-1)) + (opts.senzaBraccio === 1 ? "" : (xOgg.dietro || "") + manoSvg(1) + (xOgg.davanti || ""));
-    if (capo.sopra && !SPALLE) body += capo.sopra;
-    if (!SPALLE) body += (xCollo.sopra || "") + (xSch.sopra || "") + (xBor.sopra || "");
-    else body += (xSch.dietro || "") + (xCollo.spalle || xCollo.dietro || "");   // di spalle lo zaino, le ali e il mantello stanno davanti; al collo la sciarpa vista da dietro
+    metti("T", bS(-1) + bS(1));
+    metti("F", capo.corpo || "");
+    // (terzo tempo) un braccio che passa DAVANTI al corpo (gesti, il microfono al petto) va sopra collane, sciarpe, tracolle e spallacci:
+    // prima le mani lungo i fianchi, poi quello che sta sul petto, poi le braccia davanti con le loro mani e le cose in mano
+    var manoDi = function (l) { return opts.senzaBraccio === l ? "" : (l === 1 ? (xOgg.dietro || "") + manoSvg(1) + (xOgg.davanti || "") : manoSvg(-1)); };
+    var davanti = function (l) { return BR[l].davanti && !SPALLE; }, sulPetto = "";
+    [-1, 1].forEach(function (l) { if (!davanti(l)) metti("T", manoDi(l)); });
+    [-1, 1].forEach(function (l) { if (davanti(l) && opts.senzaBraccio !== l) sulPetto += pelleAvanti(l); });
+    if (opts.gesto === "carte" && !SPALLE) sulPetto += ventaglio();
+    [-1, 1].forEach(function (l) { if (davanti(l)) sulPetto += manoDi(l); });
+    if (capo.sopra && !SPALLE) metti("F", capo.sopra);
+    if (!SPALLE) metti("T", (xCollo.sopra || "") + (xSch.sopra || "") + (xBor.sopra || "") + sulPetto);
+    else metti("F", (xSch.dietro || "") + (xCollo.spalle || xCollo.dietro || ""));   // di spalle lo zaino, le ali e il mantello stanno davanti; al collo la sciarpa vista da dietro
     if (SPALLE) {
       var pOreS = c.orecchini && c.orecchini !== "nessuno" ? A.orecchini[c.orecchini] : null;
-      body += "<g transform='" + HT + "'>" + testaDietro(sottoCappello(cap.fronte), sottoCappello(cap.dietro)) + (pOreS ? pOreS(K) : "") + (capp && capp.dietro ? capp.dietro : "") + (capp ? capp.svg || "" : "") + "</g>";
-      return fine(avvolgi(body));
+      metti("T", "<g transform='" + HT + "'>" + testaDietro(sottoCappello(cap.fronte), sottoCappello(cap.dietro)) + (pOreS ? pOreS(K) : "") + (capp && capp.dietro ? capp.dietro : "") + (capp ? capp.svg || "" : "") + "</g>");
+      return fine(avvolgi(fasce()));
     }
     // occhiali e orecchini (coordinate della testa): gli orecchini sotto i capelli, gli occhiali sopra i capelli e sotto il cappello
     var pOcc = c.occhiali && c.occhiali !== "nessuno" ? A.occhiali[c.occhiali] : null, pOre = c.orecchini && c.orecchini !== "nessuno" ? A.orecchini[c.orecchini] : null;
-    body += "<g transform='" + HT + "'>" + testa(cap.fronte, barba, cap.ombraFronte) + (pOre ? pOre(K) : "") + sottoCappello(cap.fronte) + (pOcc ? pOcc(K) : "") + (capp ? capp.svg || "" : "") + "</g>";
-    if (A.extra.dopo) body += A.extra.dopo(K);
+    metti("T", "<g transform='" + HT + "'>" + testa(cap.fronte, barba, cap.ombraFronte) + (pOre ? pOre(K) : "") + sottoCappello(cap.fronte) + (pOcc ? pOcc(K) : "") + (capp ? capp.svg || "" : "") + "</g>");
+    if (A.extra.dopo) metti("T", A.extra.dopo(K));
 
+    // (terzo tempo) le fasce si disegnano dal basso in alto; quella sopra finisce SFUMATA (5 unità) sopra quella sotto: un taglio netto
+    // lasciava una riga sottile dove le gambe si accorciano (il bordo del ritaglio). Sotto ogni fascia, un ritaglio netto ma coperto.
+
+    function sfuma(y) {
+      var k = n1(y); if (sfumC[k]) return sfumC[k];
+      var gid = p + "fg" + nM, mid = p + "fm" + nM; nM++;
+      D.push("<linearGradient id='" + gid + "' gradientUnits='userSpaceOnUse' x1='0' y1='" + n1(y - 2.5) + "' x2='0' y2='" + n1(y + 2.5) + "'><stop stop-color='#fff'/><stop offset='1' stop-color='#000'/></linearGradient>" +
+        "<mask id='" + mid + "' maskUnits='userSpaceOnUse' x='-400' y='-600' width='1200' height='2200'><rect x='-400' y='-600' width='1200' height='2200' fill='url(#" + gid + ")'/></mask>");
+      return (sfumC[k] = "url(#" + mid + ")");
+    }
+    function fasciaNetta(y0, y1) { var k = y0 + "|" + y1; if (fasceC[k]) return fasceC[k]; var id = "c" + (nClip++); D.push("<clipPath id='" + p + id + "'><path d='M-400 " + n1(y0) + "H800V" + n1(y1) + "H-400Z'/></clipPath>"); return (fasceC[k] = "url(#" + p + id + ")"); }
+    // i pezzi messi insieme: le fasce (il disegno una volta sola, usato tre volte: sopra le gambe solo spostato, le gambe schiacciate, i piedi fermi)
+    function fasce() {
+      // busto e viso (tondini, ritratti): la testa resta grande e al posto di prima (il riquadro è fatto per lei), il corpo sotto segue le proporzioni
+      if (!PZ && PP && soloSu) { var ik2 = 1 / PP.testa; return "<g transform='matrix(" + n1(ik2 * 10000) / 10000 + " 0 0 " + n1(ik2 * 10000) / 10000 + " " + n1(200 - 200 * ik2) + " " + n1(214 - (214 + PP.collo) * ik2) + ")'>" + body + "</g>"; }
+      if (!PZ) return PP ? "<g transform='" + matT + "'>" + body + "</g>" : body;
+      var S = PP.S, Y1 = S * (PROP_L0 + PP.gambe) + sy0, Y2 = S * PROP_L1 + sy0, nF = 0;
+      var fc = fasciaNetta;   // (dal basso in alto: le gambe sotto, il busto sopra)
+      var bande = [[fc(Y2 - 4, 1600), "matrix(" + S4 + " 0 0 " + S4 + " " + sx0 + " " + n1(sy0) + ")"],
+        [fc(Y1 - 4, 1600), "matrix(" + S4 + " 0 0 " + Math.round(S * PP.sL * 10000) / 10000 + " " + sx0 + " " + n1(sy0 + S * (PROP_L0 + PP.gambe - PROP_L0 * PP.sL)) + ")"],
+        [null, matT]];
+      var sf = [null, sfuma(Y2), sfuma(Y1)];
+      var o = "";
+      PZ.forEach(function (z) {
+        if (z[0] === "0") { o += z[1]; return; }
+        if (z[0] === "T") { o += "<g transform='" + matT + "'>" + z[1] + "</g>"; return; }
+        var id = p + "fz" + (nF++); D.push("<g id='" + id + "'>" + z[1] + "</g>");
+        bande.forEach(function (b, i) { var u = "<use href='#" + id + "' xlink:href='#" + id + "' transform='" + b[1] + "'/>"; if (sf[i]) u = "<g mask='" + sf[i] + "'>" + u + "</g>"; o += b[0] ? "<g clip-path='" + b[0] + "'>" + u + "</g>" : u; });
+      });
+      return o;
+    }
     function avvolgi(b2) { return "<svg xmlns='http://www.w3.org/2000/svg' stroke-linejoin='round' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='" + vb + "'" + px + " class='omino omino-a'><defs>" + D.join("") + "</defs><g transform='matrix(.25 0 0 .25 50 2)'><g class='om-tutto'>" + b2 + "</g></g></svg>"; }
     // seduto: il corpo (pelle, pantaloni, scarpe, tronco del vestito) si disegna una volta e si usa 4 volte a fasce: busto spostato giù,
     // cosce e stinchi accorciati, piedi fermi a terra. Braccia, maniche, mani e testa solo spostati giù.
+    // (terzo tempo) con le proporzioni nuove il busto si ingrandisce di S intorno al sedere (200, 784) e le gambe solo in larghezza
     function seduto() {
       var nB = "sd" + (cnt++), dy = SED.dy, ini = PARTE, ilp = LP;
       PARTE = "corpo"; LP = 0; var cC = pCapo ? (chiama(pCapo) || {}) : {}; if (typeof cC === "string") cC = { corpo: cC };
@@ -922,18 +1372,22 @@
       var giu = pelleCorpo(false) + (!alte ? scarpe.corpo || "" : "") + (sotto.corpo || "") + (alte ? scarpe.corpo || "" : "") + (sotto.sopra || "") + (cC.corpo || "");
       D.push("<g id='" + p + nB + "'>" + giu + "</g>");
       var u = function (tr2) { return "<use href='#" + p + nB + "' xlink:href='#" + p + nB + "' transform='" + tr2 + "'/>"; };
-      var fascia = function (y0, y1) { return clip("M-200 " + n1(y0) + "H600V" + n1(y1) + "H-200Z"); };
+      var fascia = PP ? function (y0, y1) { return fasciaNetta(n1(y0), n1(y1)); } : function (y0, y1) { return clip("M-200 " + n1(y0) + "H600V" + n1(y1) + "H-200Z"); };
+      var trSu = PP ? "matrix(" + S4 + " 0 0 " + S4 + " " + sx0 + " " + n1(SED.yA - PP.S * SED.yAB) + ")" : "translate(0 " + dy + ")";
       var o = piedi + (xAni || "");
-      if (!SPALLE) o += "<g transform='translate(0 " + dy + ")'>" + (xSch.dietro || "") + (capo.dietro || "") + (xCollo.dietro || "") + "<g transform='" + HT + "'>" + sottoCappello(cap.dietro) + (capp && capp.dietro ? capp.dietro : "") + "</g></g>";
-      o += "<g clip-path='" + fascia(-400, SED.yA + 0.6) + "'>" + u("translate(0 " + dy + ")") + "</g>";
-      var kx = SED.kx, tx = n1(200 * (1 - kx));
-      o += "<g clip-path='" + fascia(SED.yA - 0.6, SED.yK + 0.6) + "'>" + u("matrix(" + kx + " 0 0 " + SED.sB + " " + tx + " " + n1(SED.yA - SED.yAB * SED.sB) + ")") + "</g>";
-      o += "<g clip-path='" + fascia(SED.yK - 0.6, SED.yCD + 0.6) + "'>" + u("matrix(" + kx + " 0 0 " + n1(SED.sC * 1000) / 1000 + " " + tx + " " + n1(SED.yK - SED.yBC * SED.sC) + ")") + "</g>";
-      o += "<g clip-path='" + fascia(SED.yCD - 0.6, 1400) + "'>" + u("matrix(" + kx + " 0 0 1 " + tx + " 0)") + "</g>";
+      if (!SPALLE) o += "<g transform='" + trSu + "'>" + (xSch.dietro || "") + (capo.dietro || "") + (xCollo.dietro || "") + "<g transform='" + HT + "'>" + sottoCappello(cap.dietro) + (capp && capp.dietro ? capp.dietro : "") + "</g></g>";
+      var kx = PP ? S4 : SED.kx, tx = PP ? sx0 : n1(200 * (1 - kx)), sf = [];
+      var mk = function (y, x) { return "<g mask='" + sfuma(y) + "'>" + x + "</g>"; };   // (anche com'era: niente riga dove le fasce si toccano)
+      sf.push(mk(SED.yA, u(trSu)));
+      sf.push("<g clip-path='" + fascia(SED.yA - 4, 1400) + "'>" + mk(SED.yK, u("matrix(" + kx + " 0 0 " + SED.sB + " " + tx + " " + n1(SED.yA - SED.yAB * SED.sB) + ")")) + "</g>");
+      sf.push("<g clip-path='" + fascia(SED.yK - 4, 1400) + "'>" + mk(SED.yCD, u("matrix(" + kx + " 0 0 " + n1(SED.sC * 1000) / 1000 + " " + tx + " " + n1(SED.yK - SED.yBC * SED.sC) + ")")) + "</g>");
+      sf.push("<g clip-path='" + fascia(SED.yCD - 4, 1400) + "'>" + u("matrix(" + kx + " 0 0 1 " + tx + " 0)") + "</g>");
+      o += sf.reverse().join("");   // dal basso in alto: ogni fascia copre sfumando quella sotto
       // il grembo: ombra sotto la pancia, luce sopra le ginocchia, ombra sotto (gli stinchi vanno indietro)
       var gK = gIn(748);
-      o += El(C, SED.yA + 5, B.hp * 0.95, 8, soft("#000000", 0.24));
-      [-1, 1].forEach(function (l) { var kx2 = C + l * gK[0] * SED.kx; o += El(kx2 - 3, SED.yK - 10, gK[1] * 0.8, 10, soft("#ffffff", 0.22)) + El(kx2 + l * 2, SED.yK + 14, gK[1] * 1.05, 13, soft("#000000", 0.38)); });
+      o += El(C, SED.yA + 5, B.hp * 0.95 * kx, 8, soft("#000000", 0.24));
+      // (g5) più morbide: prima l ombra sotto il ginocchio, più larga della gamba, faceva le ginocchia «a bolla»
+      [-1, 1].forEach(function (l) { var kx2 = C + l * (gK[0] + (gK[1] - gK[2]) / 2) * kx, kw = (gK[1] + gK[2]) / 2 * kx; o += El(kx2 - 3, SED.yK - 12, kw * 0.7, 9, soft("#ffffff", 0.16)) + El(kx2 + l * 2, SED.yK + 9, kw * 0.85, 8, soft("#000000", 0.22)); });
       var su = xBor.sotto || "";
       [-1, 1].forEach(function (l) { if (opts.senzaBraccio !== l) su += pelleBraccio(l); });
       su += cB.corpo || "";
@@ -945,24 +1399,30 @@
       su += "<g transform='" + HT + "'>" + (SPALLE ? testaDietro(sottoCappello(cap.fronte), sottoCappello(cap.dietro)) + (pOre2 ? pOre2(K) : "") + (capp && capp.dietro ? capp.dietro : "") + (capp ? capp.svg || "" : "")
         : testa(cap.fronte, barba, cap.ombraFronte) + (pOre2 ? pOre2(K) : "") + sottoCappello(cap.fronte) + (pOcc2 ? pOcc2(K) : "") + (capp ? capp.svg || "" : "")) + "</g>";
       if (A.extra.dopo) su += A.extra.dopo(K);
-      return avvolgi(o + "<g transform='translate(0 " + dy + ")'>" + su + "</g>");
+      return avvolgi(o + "<g transform='" + trSu + "'>" + su + "</g>");
     }
     // inquadrature (coordinate del riquadro 200×264)
     var passo = "";
     if (cam) {
-      var jx = BR["-1"].J;
-      passo = "<style>.om-b1{transform-origin:" + n1(jx[0] * 0.25 + 50) + "px " + n1(jx[1] * 0.25 + 2) + "px;animation:omBr .42s ease-in-out infinite alternate}" +
-        ".om-b2{transform-origin:" + n1(400 - jx[0]) * 0.25 + 50 + "px " + n1(jx[1] * 0.25 + 2) + "px;animation:omBr .42s ease-in-out infinite alternate-reverse}@keyframes omBr{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}</style>";
+      var jx = BR["-1"].J, jv = PP ? vistaSu(PP, false)(jx[0], jx[1]) : jx;
+      passo = "<style>.om-b1{transform-origin:" + n1(jv[0] * 0.25 + 50) + "px " + n1(jv[1] * 0.25 + 2) + "px;animation:omBr .42s ease-in-out infinite alternate}" +
+        ".om-b2{transform-origin:" + n1(400 - jv[0]) * 0.25 + 50 + "px " + n1(jv[1] * 0.25 + 2) + "px;animation:omBr .42s ease-in-out infinite alternate-reverse}@keyframes omBr{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}</style>";
     }
-    return fine("<svg xmlns='http://www.w3.org/2000/svg' stroke-linejoin='round' viewBox='" + vb + "'" + px + " class='omino omino-a'>" + passo + "<defs>" + D.join("") + "</defs><g transform='matrix(.25 0 0 .25 50 2)'><g class='om-tutto'>" + body + "</g></g></svg>");
+    body = fasce();
+    return fine("<svg xmlns='http://www.w3.org/2000/svg' stroke-linejoin='round'" + (PZ ? " xmlns:xlink='http://www.w3.org/1999/xlink'" : "") + " viewBox='" + vb + "'" + px + " class='omino omino-a'>" + passo + "<defs>" + D.join("") + "</defs><g transform='matrix(.25 0 0 .25 50 2)'><g class='om-tutto'>" + body + "</g></g></svg>");
   };
 
   // dove sta la mano a destra nel disegno (coordinate 200×264): per la canna il centro del pugno
   // dove sta la spalla (perno del braccio) nel riquadro 200×264
-  A.perno = function (c, opts) { var G = A.geometria(c, opts || {}), J = G.BR[(opts && opts.latoParte === -1) ? "-1" : "1"].J; return { x: +(J[0] * 0.25 + 50).toFixed(2), y: +(J[1] * 0.25 + 2).toFixed(2) }; };
+  A.perno = function (c, opts) {
+    var G = A.geometria(c, opts || {}), J = G.BR[(opts && opts.latoParte === -1) ? "-1" : "1"].J;
+    if (G.P) J = vistaSu(G.P, false)(J[0], J[1]);   // (il braccio staccato è sempre in piedi)
+    return { x: +(J[0] * 0.25 + 50).toFixed(2), y: +(J[1] * 0.25 + 2).toFixed(2) };
+  };
   A.mano = function (c, opts) {
     opts = opts || {};
     var G = A.geometria(c, opts), b = G.BR["1"], d = [(b.W[0] - b.E[0]) / b.l2, (b.W[1] - b.E[1]) / b.l2], k = opts.braccia === "canna" ? 20 : 16;
+    if (G.P) { var v = G.vedi([b.W[0] + d[0] * k, b.W[1] + d[1] * k]); return { x: +v[0].toFixed(2), y: +v[1].toFixed(2) }; }
     var sy = opts.seduto && !opts.busto ? SED.dy : 0;
     return { x: +((b.W[0] + d[0] * k) * 0.25 + 50).toFixed(2), y: +((b.W[1] + d[1] * k + sy) * 0.25 + 2).toFixed(2) };
   };
@@ -1050,12 +1510,12 @@
     // l orlo delle maniche e lo scollo a costine
     [-1, 1].forEach(function (lato) {
       var f = K.fineManica(lato, lung), w = (f.w + ea) * 0.5 - 1.5;
-      s += K.St("M" + K.n1(f.x - f.dy * w - f.dx * 6) + " " + K.n1(f.y + f.dx * w - f.dy * 6) + "L" + K.n1(f.x + f.dy * w - f.dx * 6) + " " + K.n1(f.y - f.dx * w - f.dy * 6), mdd, 1.4, 0.4);
+      s += K.suManica(lato, K.St("M" + K.n1(f.x - f.dy * w - f.dx * 6) + " " + K.n1(f.y + f.dx * w - f.dy * 6) + "L" + K.n1(f.x + f.dy * w - f.dx * 6) + " " + K.n1(f.y - f.dx * w - f.dy * 6), mdd, 1.4, 0.4));   // (giro3) suManica: nel corpo senza quel braccio restava una riga per aria
     });
     var nk = B.nk;
     s += K.St("M" + (C - nk - 5) + " 241C" + (C - nk + 2) + " 263 " + (C + nk - 2) + " 263 " + (C + nk + 5) + " 241", K.mix(mg, "#000000", 0.22), 7, 0.95);
     s += K.St("M" + (C - nk - 3) + " 238C" + (C - nk + 4) + " 259 " + (C + nk - 4) + " 259 " + (C + nk + 3) + " 238", K.chiaro(mg, 0.35), 1.8, 0.45);
-    if (lung > 0.9) [-1, 1].forEach(function (lato) { var f = K.fineManica(lato, lung); s += K.Pa(K.limb([[f.x - f.dx * 14, f.y - f.dy * 14, f.w + ea * 0.8], [f.x, f.y, f.w + ea * 0.75]]), K.scuro(mg, 0.15), " opacity='.9'"); });
+    if (lung > 0.9) [-1, 1].forEach(function (lato) { var f = K.fineManica(lato, lung); s += K.suManica(lato, K.Pa(K.limb([[f.x - f.dx * 14, f.y - f.dy * 14, f.w + ea * 0.8], [f.x, f.y, f.w + ea * 0.75]]), K.scuro(mg, 0.15), " opacity='.9'")); });
     // la stampa sulla maglia (solo sul tronco)
     var st = A.stampa[K.c.stampa]; if (st) s += "<g clip-path='" + K.clip(T) + "'>" + st(K, T) + "</g>";
     return { corpo: s };

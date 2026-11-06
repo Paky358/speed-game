@@ -905,10 +905,14 @@
   // 🎨 GLI AVATAR «ILLUSTRATI» (strada A, 5 nov 2026: chat «🧍 Avatar A»): proporzioni vere, occhi naso e bocca veri, capelli a ciocche,
   // luce e volumi («un minimo di simil 3D»). Li disegna js/omino-a.js (con i pezzi in js/omino-a-pezzi.js), che si scarica solo
   // per chi li vede (pezzo "avatar-a" in js/elenco-giochi.js). Le pose non ancora ridisegnate (seduto, di spalle) restano «rifinito».
-  // AVATAR_A: "nessuno" = spento · "proprietario" = solo IL PAPPONE (dal profilo li spegne e riaccende, sg-avatar-a) · "tutti".
+  // AVATAR_A: "nessuno" = spento · "proprietario" = solo gli account di AVATAR_A_CHI (dal profilo li spengono e riaccendono, sg-avatar-a) · "tutti".
+  // AVATAR_A_CHI (6 nov 2026, il proprietario: «gli avatar per il momento solo per l'account "il pappone" e "mario"»): i nomi dei
+  // profili, confrontati come per IL PAPPONE (senza spazi ai lati, maiuscole e minuscole uguali). MARIO = Mario De Viva (Lanterne).
   var AVATAR_A = "proprietario";
+  var AVATAR_A_CHI = [PROPRIETARIO, "MARIO"];
+  function avatarAAmmesso() { var io = profiloAttivo(); return AVATAR_A_CHI.indexOf(String((io && io.nome) || "").trim().toUpperCase()) >= 0; }
   function avatarASpento() { try { return localStorage.getItem("sg-avatar-a") === "0"; } catch (e) { return false; } }
-  function avatarAVoluto() { return AVATAR_A === "tutti" || (AVATAR_A === "proprietario" && eProprietario() && !avatarASpento()); }
+  function avatarAVoluto() { return AVATAR_A === "tutti" || (AVATAR_A === "proprietario" && avatarAAmmesso() && !avatarASpento()); }
   var avatarAChiesto = false;
   function stileAvatar() {
     if (!window.SGOmino || !SGOmino.stile) return;
@@ -2395,7 +2399,7 @@
   };
   // ==== AI PEZZI DEL CUORE (js/cuore/*.js): quello del cuore che usano. Rifatto dallo strumento di divisione; a mano: ====
   // cuore.X = X per le cose che non cambiano; vivo("X", leggi, scrivi) per quelle che cambiano (i pezzi le leggono sempre aggiornate)
-  cuore.AVATAR_NUOVO = AVATAR_NUOVO; cuore.AVATAR_A = AVATAR_A; cuore.avatarASpento = avatarASpento; cuore.BOT_LIVELLI = BOT_LIVELLI; cuore.BOT_MAX_FRASE = BOT_MAX_FRASE; cuore.BOT_MAX_NOME = BOT_MAX_NOME;
+  cuore.AVATAR_NUOVO = AVATAR_NUOVO; cuore.AVATAR_A = AVATAR_A; cuore.avatarAAmmesso = avatarAAmmesso; cuore.avatarASpento = avatarASpento; cuore.BOT_LIVELLI = BOT_LIVELLI; cuore.BOT_MAX_FRASE = BOT_MAX_FRASE; cuore.BOT_MAX_NOME = BOT_MAX_NOME;
   cuore.CITTA_VISIBILE = CITTA_VISIBILE; cuore.FACCINE = FACCINE; cuore.GIOCHI_ELIMINAZIONE = GIOCHI_ELIMINAZIONE;
   cuore.HOME_MENU_SOTTO = HOME_MENU_SOTTO; cuore.K_ATTIVO = K_ATTIVO; cuore.K_PROFILI = K_PROFILI; cuore.MAX_ELIM = MAX_ELIM;
   cuore.PILLOLE = PILLOLE; cuore.PROPRIETARIO = PROPRIETARIO; cuore.amiciStato = amiciStato; cuore.apriInvitaAmici = apriInvitaAmici;
