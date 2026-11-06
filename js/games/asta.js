@@ -713,6 +713,50 @@
     ".st-apri .tamb{position:absolute;right:12px;top:8px;font-size:1.5rem;opacity:0;animation:asTamb .9s ease-in-out both;}",
     "@keyframes asTamb{0%{opacity:0}12%{opacity:1;transform:rotate(-10deg)}30%{transform:rotate(10deg)}50%{transform:rotate(-10deg)}70%{opacity:1;transform:rotate(8deg)}100%{opacity:0;transform:none}}",
     ".st-apri .fine{margin-top:8px;font-weight:900;min-height:1.3em;opacity:0;animation:asBusta .3s ease-out forwards;}",
+    // 🃏 le buste sul tavolo: tutto lo stadio si abbassa (resta un po' di luce in alto, sul calciatore), le buste di carta coperte
+    ".st-apri.st-tavolo{left:0;top:0;right:0;bottom:0;transform:none;width:auto;padding:8px 0 14px;border-radius:0;background:none;box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;}",
+    ".st-tavolo .buio{position:absolute;inset:-4px 0 0;background:radial-gradient(90% 60% at 50% 55%,rgba(4,6,14,.18),rgba(4,6,14,.6));opacity:0;transition:opacity 1s;}",
+    ".st-tavolo.giu .buio{opacity:1;}.st-tavolo.testa .buio{opacity:1;background:radial-gradient(90% 60% at 50% 55%,rgba(4,6,14,.3),rgba(4,6,14,.72));}.st-tavolo.su .buio{opacity:.35;transition:opacity .5s;}",
+    ".st-tavolo h4,.st-tavolo .as-buste{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:0;}",
+    ".st-tavolo .ban{position:relative;z-index:2;font-weight:900;font-size:1rem;padding:6px 14px;border-radius:12px;background:rgba(10,14,30,.75);max-width:92%;text-align:center;}",
+    ".st-tavolo .cuore{position:absolute;right:12px;top:8px;z-index:2;font-size:1.3rem;opacity:.85;}.st-tavolo .cuore.bat{animation:asBat .3s ease-out;}",
+    "@keyframes asBat{30%{transform:scale(1.35)}100%{transform:none}}",
+    ".st-tavolo .tav{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;width:min(94%,420px);transition:opacity .5s,transform .5s;}",
+    ".st-tavolo .tav.c2 .bt{width:calc((100% - 8px) / 2);}.st-tavolo .tav.c3 .bt{width:calc((100% - 16px) / 3);}.st-tavolo .tav.c4 .bt{width:calc((100% - 24px) / 4);}",
+    ".st-tavolo.testa .tav,.st-tavolo.su .tav{display:none;}",
+    ".st-tavolo .bt{position:relative;aspect-ratio:1.08;border-radius:10px;}.st-tavolo .tav.c4 .bt{aspect-ratio:.86;}",
+    ".st-tavolo .bt>div{position:absolute;inset:0;border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;overflow:hidden;}",
+    ".st-tavolo .davanti{justify-content:flex-end !important;padding-bottom:7%;}",
+    ".st-tavolo .davanti{background:linear-gradient(160deg,#fbf3dd,#e3cf9f);color:#3a2a10;box-shadow:0 8px 16px rgba(0,0,0,.55),inset 0 0 0 2px rgba(255,255,255,.55);}",
+    ".st-tavolo .davanti:before{content:'';position:absolute;left:0;right:0;top:0;height:38%;background:linear-gradient(170deg,#f1e2bb,#d2b984);clip-path:polygon(0 0,100% 0,50% 100%);filter:drop-shadow(0 2px 1px rgba(0,0,0,.25));}",
+    ".st-tavolo .pal{position:absolute;left:50%;top:37%;width:19%;max-width:32px;aspect-ratio:1;transform:translate(-50%,-50%);z-index:2;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45));}",
+    ".st-tavolo .fc{position:relative;z-index:1;width:30%;max-width:52px;aspect-ratio:1;border-radius:50%;object-fit:cover;object-position:50% 20%;background:#2a3358;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);}",
+    ".st-tavolo .bt b{position:relative;z-index:1;font-size:.78rem;font-weight:900;max-width:92%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+    ".st-tavolo .dietro{opacity:0;background:#1a2142;color:#f4f5fb;border:2px solid rgba(255,255,255,.15);}.st-tavolo .dietro .fc{margin-top:0;width:30%;}",
+    ".st-tavolo .dietro .q{font-size:1.5rem;font-weight:900;line-height:1;}.st-tavolo .dietro small{font-size:.65rem;opacity:.7;}",
+    ".st-tavolo .dietro.passo .q{font-size:.8rem;background:#e5484d;color:#fff;border-radius:6px;padding:3px 7px;transform:rotate(-7deg);}",
+    ".st-tavolo .bt.aperta .davanti{opacity:0;animation:asSpar .4s linear;}.st-tavolo .bt.aperta .dietro{opacity:1;animation:asNasc .4s linear;}",
+    "@keyframes asSpar{0%,49%{opacity:1}50%,100%{opacity:0}}@keyframes asNasc{0%,49%{opacity:0}50%,100%{opacity:1}}",
+    ".st-tavolo .bt.subito,.st-tavolo .bt.subito>div{animation:none !important;}",
+    ".st-tavolo .tav .bt.aperta{animation:asGira .4s ease-in-out;}@keyframes asGira{50%{transform:scaleX(0)}}",
+    ".st-tavolo .bt.via{visibility:hidden;}",
+    ".st-tavolo .mini{position:relative;z-index:2;display:none;flex-wrap:wrap;justify-content:center;gap:5px;max-width:94%;order:5;}.st-tavolo.testa .mini,.st-tavolo.su .mini{display:flex;}",
+    ".st-tavolo .mini span{display:flex;align-items:center;gap:4px;padding:2px 8px 2px 2px;border-radius:99px;background:rgba(10,14,30,.8);font-size:.72rem;font-weight:800;}.st-tavolo .mini img{width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:50% 20%;background:#2a3358;}",
+    ".st-tavolo .mini i{font-style:normal;color:#ffc247;}.st-tavolo .mini .passo i{color:#ff8a8f;}",
+    ".st-tavolo .duo{position:relative;z-index:3;display:none;justify-content:center;align-items:center;gap:14px;order:4;}",
+    ".st-tavolo.testa .duo,.st-tavolo.su .duo{display:flex;}.st-tavolo.testa .duo{animation:asDuo .6s cubic-bezier(.2,1.3,.4,1);}@keyframes asDuo{from{opacity:0;transform:translateY(20%) scale(.6)}to{opacity:1;transform:none}}",
+    ".st-tavolo .duo .bt{width:min(38vw,150px);aspect-ratio:.8;}.st-tavolo .duo .bt:first-child{transform:rotate(-4deg);}.st-tavolo .duo .bt:last-child{transform:rotate(4deg);}.st-tavolo .duo.n1 .bt{transform:none;}",
+    ".st-tavolo .duo .bt b{font-size:.95rem;}.st-tavolo .duo .fc{max-width:68px;width:44%;}.st-tavolo .duo .davanti{padding-bottom:12%;}.st-tavolo .duo .dietro .q{font-size:2.8rem;}",
+    ".st-tavolo.testa .duo .bt:first-child{animation:asTrema 1.2s ease-in-out infinite;}.st-tavolo.testa .duo .bt:last-child{animation:asTrema 1.2s ease-in-out infinite reverse;}",
+    "@keyframes asTrema{0%,100%{translate:0 0}25%{translate:0 -3px}75%{translate:0 2px}}",
+    ".st-tavolo .duo .vs{font-weight:900;font-size:1.5rem;color:#ffc247;text-shadow:0 0 12px rgba(255,194,71,.6);}",
+    ".st-tavolo .duo .bt.vince .dietro{border-color:#ffc247;background:#3a2c08;box-shadow:0 0 0 3px #ffc247,0 0 30px rgba(255,194,71,.7);}.st-tavolo .duo .bt.vince .q{color:#ffc247;}",
+    ".st-tavolo .duo .bt.aperta{animation:asGiraD .45s ease-in-out;}@keyframes asGiraD{50%{scale:0 1.04}}",
+    ".st-tavolo .duo .bt.vince{animation:asGiraD .45s ease-in-out,asVince .5s .45s cubic-bezier(.2,1.6,.4,1);scale:1.06;}@keyframes asVince{from{scale:.85}}",
+    ".st-tavolo .duo .bt.pari .dietro{border-color:#9fb4ff;box-shadow:0 0 0 3px #9fb4ff;}.st-tavolo .duo .bt.perde{scale:.92;}.st-tavolo .duo .bt.perde .dietro{background:#252a3e;color:#9aa0b8;}.st-tavolo .duo .bt.perde .fc{filter:grayscale(.8);opacity:.7;}",
+    ".st-tavolo .fine{position:relative;z-index:3;margin:0;order:6;font-size:1.15rem;padding:7px 14px;border-radius:12px;background:rgba(10,12,24,.75);opacity:0;animation:none;visibility:hidden;}",
+    ".st-tavolo.finita .fine{visibility:visible;animation:asBusta .3s ease-out forwards;}",
+    ".st-tavolo.su .ban{visibility:hidden;}",
     ".st-ruota .rg-tutto{margin:10px auto 0;}.st-ruota .rg-gira{animation:none;display:flex;align-items:center;justify-content:center;font-size:clamp(1.3rem,6vw,1.7rem);}",
     ".st-ruota .disco span{position:absolute;left:50%;top:50%;width:80px;margin-left:-40px;margin-top:-.6em;font-size:.72rem;font-weight:900;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
     ".st-ruota .fine{animation:none;opacity:1;font-size:1.15rem;}.st-ruota .rg-tutto.vinto .rg-gira{transform:translate(-50%,-50%) scale(1.12);transition:transform .3s;}",
@@ -2295,7 +2339,7 @@
     S.avviso = el("div", { class: "sa-avviso" });
     S.tempo = el("i");
     S.piede = el("div", { class: "sa-piede st-piede" + (d.piedeAlto ? " " + d.piedeAlto : "") });
-    var board = maxischermo(el, S, false);
+    var board = maxischermo(el, S, false); S.board = board;
     S.radice = el("div", { class: "schermata sa-sala st-stadio" + (d.persone.length > 5 ? " fitta" : "") + (t.guarda ? " as-targa" : "") }, [ sfondo, testaAsta(el, S, d), board, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
       griglia(el, S, d.persone), d.io == null ? panchina(el, S, d.persone) : null, S.piede ]);   // (online si offre coi tasti: niente panchina)
     S.ultimiDati = d; STADIO = S;
@@ -2639,7 +2683,7 @@
       info: (B ? (sp ? "⚔️ Spareggio · " : "✉️ Busta chiusa · ") + ru.nome : Ap ? "✉️ Si aprono le buste" : "🎡 Sorteggio") + " · " + (vm.presi || (vm.restano + " in mazzo")),
       carta: carta, giroCarta: X.nCarta, prezzo: 0, base: false, leader: null, budget: FANTA_BUDGET, grosso: 5, piedeAlto: io ? "onl" : "",
       persone: persone, io: myId || "—", mie: mie, giro: B ? "b" + B.n : null, resta: B ? B.resta : 0, durata: B ? B.durata : 0, puoPassare: false,
-      kPiede: B ? ["bf", B.n, inGara ? 1 : 0, mia && mia.chiusa ? 1 : 0, mia && mia.q != null && mia.chiusa ? mia.q : ""].join("|") : "bf", esito: null, avviso: "", sp: sp, apri: Ap, ruota: Ru ? Object.assign({ orologio: cb.sonoHost ? null : "host" }, Ru) : null,
+      kPiede: B ? ["bf", B.n, inGara ? 1 : 0, mia && mia.chiusa ? 1 : 0, mia && mia.q != null && mia.chiusa ? mia.q : ""].join("|") : "bf", esito: null, avviso: "", sp: sp, apri: Ap ? Object.assign({ orologio: cb.sonoHost ? null : "host" }, Ap) : null, ruota: Ru ? Object.assign({ orologio: cb.sonoHost ? null : "host" }, Ru) : null,
       nota: !B ? "" : !io ? "Stai guardando la partita" : !inGara ? (sp ? "⚔️ Spareggio tra chi era pari: guardi" : "Hai già " + (carta.ruolo === "C" ? "i 2 centrocampisti" : "il " + (ru.nome || "").toLowerCase()) + " in rosa")
         : mia.chiusa ? "" : (sp ? "⚔️ Eravate pari a " + sp + " 💰: almeno " + min + " per prenderlo" : "✉️ Scrivi in segreto quanto offri: vince la più alta") + " · hai " + io.crediti + " 💰, max " + Math.max(0, max),
       onRilancia: function () {}, onPassa: function () {},
@@ -6855,19 +6899,11 @@
 
   function avatarOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function lobbyAsta(t, vm, cb) {
-    var el = t.el, info = el("div");
-    if (vm.formato === "fanta") {
-      info.appendChild(el("div", { class: "etichetta", text: "Modalità" }));
-      info.appendChild(el("p", { class: "as-msg", text: "⚽ Mini asta Fantacalcio — rosa da 5 (1 P, 1 D, 2 C, 1 A), 20 crediti a testa, rilanci +1 +2 +5. Vince la rosa che vale di più (quotazioni vere, svelate alla fine)." }));
-    } else {   // tutte le regole si cambiano da "⚙️ Regole" (l'host); qui tutti vedono come si gioca
-      var cr = (vm.giocatori && vm.giocatori[0] && vm.giocatori[0].crediti) || 15;
-      info.appendChild(el("div", { class: "etichetta", text: "Si gioca così" }));
-      info.appendChild(el("p", { class: "as-msg", text: "🎁 Temi classici · " + vm.temaIcona + " " + vm.temaNome + " · 💰 " + cr + " crediti a testa" +
-        (vm.round === "normali" ? " · 🔨 round tutti normali" : " · 🎭 round ✉️ 📦 🎁") + (vm.maledetta ? " · 🧨 carta maledetta" : "") }));
-    }
+    // (6 nov 2026: niente più il riquadro «Modalità» / «Si gioca così» qui: lo dice già la riga «📜 Si gioca così» della saletta, e lo spazio
+    // va agli avatar; il proprietario: «dobbiamo recuperare spazio… si devono vedere bene gli avatar»)
     t.lobby({ host: cb.sonoHost, codice: vm.codice, min: 2, spettatore: t.guarda ? "👀 Guardi soltanto" : false,   // (chi guarda col link)
       giocatori: vm.giocatori.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: i === 0, tu: p.id === cb.myId }; }),
-      extra: [info], attesa: "Aspetta che l'host cominci l'asta: tieni pronti i crediti! 💰",
+      extra: [], attesa: "Aspetta che l'host cominci l'asta: tieni pronti i crediti! 💰",
       onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
@@ -6989,35 +7025,110 @@
       fine: r.nessuno ? "nessuno" : r.primi.length === 1 ? "vince" : base ? "sorteggio" : "spareggio", primi: r.primi.map(function (o) { return o.id; }) };
   }
   function righeDi(ap) { return ap.buste.filter(function (b) { return b.q || ap.base; }).length + (ap.buste.some(function (b) { return !b.q && !ap.base; }) ? 1 : 0); }
-  function passoBuste(n) { return n > 1 ? Math.min(0.45, 2.4 / (n - 1)) : 0; }
-  function apriMs(n) { return Math.round(1000 * (0.5 + Math.max(0, n - 1) * passoBuste(n) + 0.9 + 1.6)); }   // quanto resta a schermo l'apertura
+  // 🃏 LE BUSTE SUL TAVOLO (6 nov 2026, il proprietario ha scelto l'idea A: «dobbiamo renderla proprio con tanta suspense»): le buste di tutti
+  // coperte sul tavolo con la faccina; le luci si abbassano e parte il battito; chi passa gira subito col cartellino rosso; poi si girano una
+  // alla volta dalla più bassa; le ultime due (o l'unica) vengono avanti insieme, grandi: 🥁 testa a testa, il battito accelera, e si aprono
+  // NELLO STESSO ISTANTE. Tutti i tempi (in secondi dalla partenza) li dà pianoApri: dipendono SOLO da quante buste ci sono e da quante
+  // passano, MAI da chi vince o dalle cifre (niente spoiler dai tempi). Online la partenza è sull'orologio di chi tiene la partita (ap.parte)
+  var APRI_VIA = 700, PALLONE_SRC = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(PALLONE_RIS);   // (online: si parte 0,7 s dopo la foto, così arriva a tutti prima)
+  function pianoApri(ap) {
+    var base = ap.base, passano = base ? [] : ap.buste.filter(function (b) { return !b.q; }), conti = ap.buste.filter(function (b) { return b.q || base; });
+    var n = conti.length, t = 1.1, P = { passa: null, giro: {}, duo: [], testa: null, apre: null };
+    if (passano.length) { P.passa = t; t += 0.9; }
+    var bassi = n >= 2 ? conti.slice(0, n - 2) : [], passo = bassi.length ? Math.min(0.75, 2.4 / bassi.length) : 0;
+    bassi.forEach(function (b) { P.giro[b.id] = t; t += passo; });
+    if (n) { if (bassi.length) t += 0.25; P.testa = t; P.duo = conti.slice(Math.max(0, n - 2)).map(function (b) { return b.id; }); t += n >= 2 ? 2.7 : 1.9; }
+    P.apre = t; P.fine = t + (n ? 0.55 : 0.2); P.dur = t + (n ? 2.3 : 1.8);
+    return P;
+  }
+  function apriMs(x) {   // quanto resta a schermo l'apertura (x: l'apertura, o solo quante buste con un'offerta)
+    if (typeof x === "number") { var l = []; for (var i = 0; i < x; i++) l.push({ id: i, q: i + 1 }); x = { base: 0, buste: l }; }
+    return Math.round(1000 * pianoApri(x).dur);
+  }
+  // 🥁 il rullo di tamburi (fatto al momento: un fruscio a colpi fitti che cresce) fino al momento in cui si aprono le ultime buste
+  function rullo(dur) {
+    var c = ctx(); if (!c || document.hidden || dur < 0.3) return;
+    try {
+      var t0 = c.currentTime, so = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), m = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+      so.buffer = rumore(c); so.loop = true; f.type = "bandpass"; f.frequency.value = 1800; f.Q.value = 0.6;
+      lfo.type = "square"; lfo.frequency.setValueAtTime(14, t0); lfo.frequency.linearRampToValueAtTime(22, t0 + dur); lg.gain.value = 0.5; m.gain.value = 0.5; lfo.connect(lg); lg.connect(m.gain);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.05, t0 + 0.2); g.gain.exponentialRampToValueAtTime(0.16, t0 + dur - 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur + 0.04);
+      so.connect(f); f.connect(m); m.connect(g); g.connect(c.destination); so.start(t0); so.stop(t0 + dur + 0.08); lfo.start(t0); lfo.stop(t0 + dur + 0.08);
+    } catch (e) {}
+  }
+  function piatto() {   // 💥 il colpo di piatto quando si aprono le ultime buste
+    var c = ctx(); if (!c || document.hidden) return;
+    try { var t = c.currentTime, so = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); so.buffer = rumore(c); f.type = "highpass"; f.frequency.value = 3500; g.gain.setValueAtTime(0.22, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1); so.connect(f); f.connect(g); g.connect(c.destination); so.start(t); so.stop(t + 1.15); } catch (e) {}
+  }
   function nd(tag, a, figli) { var e = document.createElement(tag); a = a || {}; for (var k in a) { if (k === "text") e.textContent = a[k]; else if (k === "class") e.className = a[k]; else if (k === "style") e.style.cssText = a[k]; else e.setAttribute(k, a[k]); } (figli || []).forEach(function (x) { if (x) e.appendChild(x); }); return e; }
-  function togliBuste(S) { if (S.apriNodo && S.apriNodo.parentNode) S.apriNodo.parentNode.removeChild(S.apriNodo); S.apriNodo = null; S.apriK = null; }
-  // ✉️ si aprono le buste (sopra lo stadio): chi passa tutti insieme in una riga, poi le offerte dalla più bassa alla più alta, una ogni
-  // mezzo secondo; prima dell'ultima il tamburo 🥁 (un attimo di suspense), poi si apre in grande. Poi il martello come sempre
+  function togliBuste(S) { if (S.apriNodo && S.apriNodo.__fermo) S.apriNodo.__fermo(); if (S.apriNodo && S.apriNodo.parentNode) S.apriNodo.parentNode.removeChild(S.apriNodo); S.apriNodo = null; S.apriK = null; }
+  // ✉️ si aprono le buste (sopra lo stadio): 🃏 le buste sul tavolo (vedi pianoApri). Ogni passo si mostra all'ora del piano: chi arriva
+  // o ricarica a metà vede subito com'è adesso, senza suoni per quello che è già successo
   function aperturaBuste(S, ap, myId) {
     var k = ap.n + "|" + ap.k; if (S.apriK === k && S.apriNodo && S.apriNodo.parentNode) return;
     togliBuste(S); S.apriK = k;
-    var base = ap.base, nome = function (b) { return myId != null && b.id === myId ? "Tu" : b.nome; };
-    var passano = base ? [] : ap.buste.filter(function (b) { return !b.q; }), conti = ap.buste.filter(function (b) { return b.q || base; });
-    var box = nd("div", { class: "as-buste" }), passo = passoBuste(righeDi(ap)), d = 0.5, suoni = [];
-    if (passano.length) { var r0 = nd("div", { class: "r passa" }, [ nd("span", { text: "🙅" }), nd("b", { text: passano.map(nome).join(", ") }), nd("span", { text: passano.length > 1 ? "passano" : "passa" }) ]); r0.style.animationDelay = d + "s"; box.appendChild(r0); suoni.push(d); d += passo; }
-    var tamb = null;
-    conti.forEach(function (b, i) {
-      var ultima = i === conti.length - 1, primo = ap.primi.indexOf(b.id) >= 0;
-      if (ultima) { tamb = nd("div", { class: "tamb", text: "🥁" }); tamb.style.animationDelay = d + "s"; d += 0.9; }
-      var r = nd("div", { class: "r" + (primo ? (ap.fine === "vince" ? " vince" : " pari") : "") + (ultima ? " ultima" : "") }, [ nd("span", { text: primo ? (ap.fine === "vince" ? "🏆" : "⚔️") : "✉️" }),
-        nd("b", { text: nome(b) }), nd("span", { text: (b.q || base) + " 💰" + (!b.q && base ? " (resta)" : "") }) ]);
-      r.style.animationDelay = d + "s"; box.appendChild(r); suoni.push(d);
-      if (!ultima) d += passo;
-    });
-    var np = ap.buste.filter(function (b) { return ap.primi.indexOf(b.id) >= 0; }).map(nome), nomiPrimi = np.length > 1 ? np.slice(0, -1).join(", ") + " e " + np[np.length - 1] : np.join("");
-    var fine = nd("div", { class: "fine", text: ap.fine === "spareggio" ? "⚔️ Pari a " + ap.prezzo + " 💰! Spareggio tra " + nomiPrimi : ap.fine === "sorteggio" ? "🎡 Ancora pari: decide la ruota!" : ap.fine === "nessuno" ? "Nessuno lo vuole" : "" });
-    fine.style.animationDelay = (d + 0.35) + "s";
-    S.apriNodo = nd("div", { class: "st-apri" }, [ nd("h4", { text: base ? "⚔️ Spareggio: si aprono le buste!" : "✉️ Si aprono le buste!" }), box, fine, tamb ]);
+    var base = ap.base, P = pianoApri(ap), tu = function (b) { return myId != null && b.id === myId; }, nome = function (b) { return tu(b) ? "Tu" : b.nome; };
+    var ora = ap.orologio === "host" ? oraHost : function () { return Date.now(); }, parte = ap.parte != null ? ap.parte : ora();
+    var pers = {}; ((S.ultimiDati && S.ultimiDati.persone) || []).forEach(function (p) { pers[p.id] = p; });
+    var cifra = function (b) { return b.q || base; }, primo = function (b) { return ap.primi.indexOf(b.id) >= 0; };
+    function busta(b, grande) {   // una busta: davanti (chiusa: ceralacca, faccina, nome) e dietro (aperta: la cifra o «PASSO»)
+      var p = pers[b.id] || {}, img = nd("img", { class: "fc", alt: "", src: srcAv(cfgDi(b.nome, p.omino), { busto: true }) });
+      var passa = !cifra(b), dietro = nd("div", { class: "dietro" + (passa ? " passo" : "") }, [ img.cloneNode(), nd("span", { class: "q", text: passa ? "🙅 PASSO" : cifra(b) + (grande ? "" : " 💰") }), nd("b", { text: nome(b) }), !b.q && base ? nd("small", { text: "resta" }) : null ]);
+      var nodo = nd("div", { class: "bt" + (grande ? " gr" : "") }, [ nd("div", { class: "davanti" }, [ nd("img", { class: "pal", alt: "", src: PALLONE_SRC }), img, nd("b", { text: nome(b) }) ]), dietro ]);
+      nodo.setAttribute("data-id", b.id); return nodo;
+    }
+    var col = ap.buste.length <= 4 ? 2 : ap.buste.length <= 6 ? 3 : 4, tav = nd("div", { class: "tav c" + col }), nodi = {};
+    ap.buste.forEach(function (b) { tav.appendChild(nodi[b.id] = busta(b)); });
+    var duoB = P.duo.map(function (id) { return ap.buste.filter(function (b) { return b.id === id; })[0]; }), duo = nd("div", { class: "duo n" + duoB.length }, duoB.map(function (b) { return busta(b, true); }));
+    if (duoB.length === 2) duo.insertBefore(nd("span", { class: "vs", text: "VS" }), duo.lastChild);
+    var np = ap.buste.filter(primo).map(nome), nomiPrimi = np.length > 1 ? np.slice(0, -1).join(", ") + " e " + np[np.length - 1] : np.join("");
+    var vinto = ap.buste.filter(primo)[0], titolo = nd("div", { class: "ban" }, [ nd("span", { text: base ? "⚔️ Spareggio: si aprono le buste…" : "✉️ Si aprono le buste…" }) ]);
+    var fine = nd("div", { class: "fine", text: ap.fine === "vince" ? "🏆 " + (vinto && tu(vinto) ? "È tuo" : (vinto ? vinto.nome : "")) + " a " + ap.prezzo + " 💰" : ap.fine === "spareggio" ? "⚔️ Pari a " + ap.prezzo + " 💰! Spareggio tra " + nomiPrimi : ap.fine === "sorteggio" ? "🎡 Ancora pari: decide la ruota!" : "Nessuno lo vuole" });
+    var cuore = nd("div", { class: "cuore", text: "❤️" });
+    // (nel testa a testa le altre buste, già aperte, diventano una fila piccola sotto: faccina, nome e cifra)
+    var mini = nd("div", { class: "mini" }, ap.buste.filter(function (b) { return P.duo.indexOf(b.id) < 0; }).map(function (b) { var p = pers[b.id] || {}; return nd("span", { class: cifra(b) ? "" : "passo" }, [ nd("img", { alt: "", src: srcAv(cfgDi(b.nome, p.omino), { busto: true }) }), nd("b", { text: nome(b) }), nd("i", { text: cifra(b) ? cifra(b) + " 💰" : "passa" }) ]); }));
+    // (la riga di ogni busta, per le prove e per chi legge con lo schermo: come prima)
+    var righe = nd("div", { class: "as-buste" }), passano = base ? [] : ap.buste.filter(function (b) { return !b.q; }), conti = ap.buste.filter(function (b) { return cifra(b); });
+    if (passano.length) righe.appendChild(nd("div", { class: "r passa" }, [ nd("span", { text: "🙅" }), nd("b", { text: passano.map(nome).join(", ") }), nd("span", { text: passano.length > 1 ? "passano" : "passa" }) ]));
+    conti.forEach(function (b) { righe.appendChild(nd("div", { class: "r" + (primo(b) ? (ap.fine === "vince" ? " vince" : " pari") : "") }, [ nd("span", { text: primo(b) ? (ap.fine === "vince" ? "🏆" : "⚔️") : "✉️" }), nd("b", { text: nome(b) }), nd("span", { text: cifra(b) + " 💰" + (!b.q && base ? " (resta)" : "") }) ])); });
+    var h4 = nd("h4", { text: base ? "⚔️ Spareggio: si aprono le buste!" : "✉️ Si aprono le buste!" });
+    S.apriNodo = nd("div", { class: "st-apri st-tavolo" }, [ nd("div", { class: "buio" }), h4, titolo, cuore, tav, mini, duo, fine, righe ]);
+    if (S.board && S.board.offsetHeight) S.apriNodo.style.top = (S.board.offsetTop + S.board.offsetHeight + 4) + "px";   // (sotto il maxischermo: il calciatore resta in vista, sopra le buste)
     S.radice.appendChild(S.apriNodo);
-    speaker(base ? "⚔️ Si aprono le buste dello spareggio…" : "✉️ Si aprono le buste…");
-    suoni.forEach(function (t0, i) { setTimeout(function () { if (STADIO === S && S.apriK === k) FX.tic(suoni.length > 1 ? i / (suoni.length - 1) : 1); }, t0 * 1000); });
+    var nodo = S.apriNodo, timer = [], vivo = function () { return STADIO === S && S.apriK === k && nodo.isConnected; };
+    nodo.__fermo = function () { timer.forEach(clearTimeout); timer = []; ip = 1e9; };
+    var adesso = (ora() - parte) / 1000, dalVivo = adesso < 0.6;
+    if (dalVivo) speaker(base ? "⚔️ Si aprono le buste dello spareggio…" : "✉️ Si aprono le buste…");
+    function gira(n, sub) { if (!n) return; if (sub) n.classList.add("subito"); n.classList.add("aperta"); }   // (la busta si gira: il cambio di faccia lo fa lo stile a metà giro)
+    // i passi del piano: [quando (s), cosa fare, il suono]
+    var passi = [[0, function () { nodo.classList.add("giu"); }]];
+    if (P.passa != null) passi.push([P.passa, function (sub) { passano.forEach(function (b) { gira(nodi[b.id], sub); }); }, function () { FX.tic(0.1); }]);
+    Object.keys(P.giro).forEach(function (id) { passi.push([P.giro[id], function (sub) { gira(nodi[id], sub); var b = ap.buste.filter(function (x) { return String(x.id) === id; })[0]; if (b) titolo.firstChild.textContent = nome(b) + ": " + cifra(b) + " 💰"; }, function () { FX.tic(0.4); }]); });
+    if (P.testa != null) passi.push([P.testa, function () { nodo.classList.add("testa"); P.duo.forEach(function (id) { if (nodi[id]) nodi[id].classList.add("via"); }); titolo.firstChild.textContent = P.duo.length > 1 ? "🥁 Testa a testa!" : "🥁 E l'ultima busta…"; },
+      function () { rullo(P.apre - P.testa - 0.35); }]);
+    passi.push([P.apre, function (sub) {
+      nodo.classList.add("su"); nodo.classList.remove("testa");
+      [].forEach.call(duo.querySelectorAll(".bt"), function (n) { var b = ap.buste.filter(function (x) { return String(x.id) === n.getAttribute("data-id"); })[0]; gira(n, sub); if (b && primo(b)) n.classList.add(ap.fine === "vince" ? "vince" : "pari"); else n.classList.add("perde"); });
+      P.duo.forEach(function (id) { var n = nodi[id]; if (n) { n.classList.add("aperta"); } });
+      titolo.firstChild.textContent = ap.fine === "nessuno" ? "🙅 Passano tutti" : titolo.firstChild.textContent;
+    }, function () { if (P.duo.length) { piatto(); if (ap.fine === "vince") FX.festa(); if (vinto && tu(vinto) && ap.fine === "vince") vibra([30, 40, 30]); else if (P.duo.length) vibra(20); } }]);
+    passi.push([P.fine, function () { nodo.classList.add("finita"); }]);
+    // ❤️ il battito: lento all'inizio, più veloce nel testa a testa, si ferma quando si aprono (tempi dal piano, uguali per tutti)
+    for (var tb = 0.35, ib = 0; tb < P.apre - 0.2 && ib < 40; ib++) { (function (t0, forte) { passi.push([t0, function () { cuore.classList.remove("bat"); void cuore.offsetWidth; cuore.classList.add("bat"); }, function () { SUONI.battito(forte); }]); })(tb, P.testa != null && tb >= P.testa ? 1 : 0.65);
+      tb += P.testa != null && tb >= P.testa ? Math.max(0.36, 0.62 - (tb - P.testa) * 0.12) : 0.85; }
+    passi.sort(function (a, b) { return a[0] - b[0]; });
+    // a ogni fotogramma si guarda l'orologio (quello di chi tiene la partita) e si fa tutto quello che è già arrivato: un telefono rallentato
+    // si rimette in pari subito. Quello che arriva in ritardo di più di mezzo secondo (chi entra o ricarica a metà, l'app tornata dal
+    // secondo piano) si mostra com'è adesso, senza suono
+    var ip = 0, atteso = false;
+    function passo() {
+      atteso = false; clearTimeout(timer[0]);
+      if (!vivo()) return;
+      var el = (ora() - parte) / 1000;
+      while (ip < passi.length && passi[ip][0] <= el) { var x = passi[ip++], tardi = el - x[0] > 0.5; x[1](tardi); if (!tardi && x[2] && !document.hidden) x[2](); }
+      if (ip < passi.length && !atteso) { atteso = true; requestAnimationFrame(function () { if (atteso) passo(); }); timer[0] = setTimeout(function () { if (atteso) passo(); }, 250); }   // (al prossimo fotogramma, o fra 250 ms se il fotogramma tarda: una volta sola)
+    }
+    passo();
   }
   // 🎡 LA RUOTA DELLO SPAREGGIO (6 nov 2026, il proprietario: «tanti spicchi con i due nomi… rallenta piano piano… fino all'ultimo non si capisce
   // mai di chi è»; lo stile è quello della Ruota del giorno: bordo d'oro con le lampadine, spicchi sfumati, freccia rossa che scatta a ogni spicchio).
@@ -7322,6 +7433,7 @@
   function apriBusteFantaLocale(t, st) {
     var B = st.bustaF; if (!B) return; st.bustaF = null;
     var lista = B.gara.map(function (i) { return { id: i, nome: st.giocatori[i].nome, q: B.offerte[i] || 0 }; }), r = contaBuste(lista, B.sp), ap = apertura(B, lista, r);
+    ap.parte = Date.now() + 250;
     disegnaBusteLocale(t, st, B.carta, { apri: ap });
     st.pausa = setTimeout(function () {
       if (st.finita) return;
@@ -7331,7 +7443,7 @@
       var w = Math.floor(Math.random() * r.primi.length);   // 🎡 ancora pari: la ruota
       disegnaBusteLocale(t, st, B.carta, { ruota: { n: B.n, nomi: r.primi.map(function (x) { return x.nome; }), vince: w, piano: pianoRuota(r.primi.length, w), parte: Date.now() + 300, dur: RUOTA_MS } });
       st.pausa = setTimeout(function () { if (!st.finita) vintaFantaB(t, st, r.primi[w].id, r.prezzo); }, 300 + RUOTA_MS + RUOTA_FERMA);
-    }, apriMs(righeDi(ap)));
+    }, 250 + apriMs(ap));
   }
   function vintaFantaB(t, st, i, prezzo) {
     var g = st.giocatori[i], carta = st.mazzo.shift();
@@ -7540,9 +7652,9 @@
       stopTo();
       var lista = B.gara.map(function (id) { return { id: id, nome: nomeDi(st, id), q: B.offerte[id] || 0 }; }), r = contaBuste(lista, B.sp);
       st.bustaF = null; st.scadenza = null;
-      st.apri = apertura(B, lista, r); st.apri.carta = vistaF(B.carta); st.apri.nCarta = st.nCarta;
+      st.apri = apertura(B, lista, r); st.apri.carta = vistaF(B.carta); st.apri.nCarta = st.nCarta; st.apri.parte = Date.now() + APRI_VIA;   // (🃏 parte fra 0,7 s: la foto arriva a tutti prima)
       st.fase = "apri"; bd();
-      TM.dopo(function () { dopoApertura(B, r); }, apriMs(righeDi(st.apri)));
+      TM.dopo(function () { dopoApertura(B, r); }, APRI_VIA + apriMs(st.apri));
     }
     function dopoApertura(B, r) {
       if (st.fase !== "apri") return;
