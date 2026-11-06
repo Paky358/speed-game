@@ -663,6 +663,10 @@ body::before{
 .editor-avatar .om-griglia{ grid-template-columns:repeat(3,1fr); gap:9px; }
 .editor-avatar .om-griglia.colori{ grid-template-columns:repeat(auto-fill,minmax(46px,1fr)); gap:10px; }
 .editor-avatar .om-colore{ height:46px; }
+/* (6 nov 2026) i colori a gruppi (Vivaci, Pastelli, Terra, Neutri…): una riga col nome sopra ogni gruppo */
+.om-griglia.colori .om-gruppo{ grid-column:1/-1; font-size:.76rem; font-weight:800; color:var(--testo-tenue); letter-spacing:.03em; margin:6px 0 -4px 2px; line-height:1.1; }
+.om-griglia.colori .om-gruppo:first-child{ margin-top:0; }
+.oro .om-griglia.colori .om-gruppo{ color:var(--o-tenue); }
 .editor-avatar .om-opz.om-forma{ padding:6px 4px 8px; display:flex; flex-direction:column; align-items:center; }
 .editor-avatar .om-mini{ height:78px; }
 .editor-avatar .om-mini.intero{ height:96px; }
@@ -1846,6 +1850,8 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .editor-avatar.camerino:not(.aperto) .om-griglia::-webkit-scrollbar{ display:none; }
 .editor-avatar.camerino:not(.aperto) .om-griglia > .om-opz{ flex:0 0 calc((100% - 24px) / 3.35); min-width:0; scroll-snap-align:start; }
 .editor-avatar.camerino:not(.aperto) .om-griglia.colori > .om-opz{ flex:0 0 42px; width:42px; height:42px; }
+.editor-avatar.camerino:not(.aperto) .om-griglia.colori > .om-gruppo{ flex:0 0 auto; align-self:center; writing-mode:vertical-rl; transform:rotate(180deg); font-size:.6rem; margin:0 0 0 6px; line-height:1; }
+.editor-avatar.camerino:not(.aperto) .om-griglia.colori > .om-gruppo:first-child{ margin-left:0; }
 .editor-avatar.camerino:not(.aperto) .om-mini{ height:70px; }
 .editor-avatar.camerino:not(.aperto) .om-mini.intero{ height:86px; }
 .editor-avatar.camerino:not(.aperto) .om-nome{ font-size:.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }

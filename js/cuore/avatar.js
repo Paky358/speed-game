@@ -76,12 +76,14 @@
     { nome: "Pirata", tutti: { capo: "camicia", maglia: 8, stampa: "righe", sotto: "pantaloni", pantaloni: 2, modScarpe: "stivali", scarpe: 0, cappello: "pirata", occhiali: "benda", animale: "pappagallo", collo: "bandana", colCollo: 0 } },
     { nome: "Mago", tutti: { capo: "maglione", maglia: 4, sotto: "pantaloni", pantaloni: 6, modScarpe: "stivaletti", scarpe: 5, cappello: "mago", colAcc: 4, schiena: "mantello", colSchiena: 4, mano: "bacchetta", occhiali: "tondi" } },
     { nome: "Supereroe", tutti: { capo: "supereroe", maglia: 1, sotto: "leggings", pantaloni: 4, modScarpe: "stivali", scarpe: 2, schiena: "mantello", colSchiena: 0, occhiali: "mascherina" } },
-    { nome: "Festa", tutti: { capo: "maglietta", maglia: 5, stampa: "stella", sotto: "jeans", pantaloni: 8, modScarpe: "sneakers", scarpe: 4, cappello: "festa", colAcc: 3, occhiali: "stelle", mano: "palloncino", colMano: 0, pittura: "cuori" } },
+    // (6 nov 2026, Tavola 3) lei alla festa col vestito verde smeraldo, gambe nude e ballerine dello stesso verde, la tiara (prima: la maglietta sui jeans)
+    { nome: "Festa", tutti: { capo: "maglietta", maglia: 5, stampa: "stella", sotto: "jeans", pantaloni: 8, modScarpe: "sneakers", scarpe: 4, cappello: "festa", colAcc: 3, occhiali: "stelle", mano: "palloncino", colMano: 0, pittura: "cuori" },
+      donna: { capo: "vestito", maglia: "#0f7a5a", stampa: "nessuna", sotto: "gonna", modScarpe: "ballerine", scarpe: "#0f7a5a", cappello: "tiara" } },
     { nome: "Natale", tutti: { capo: "maglione", maglia: 0, sotto: "jeans", pantaloni: 1, modScarpe: "stivali", scarpe: 5, cappello: "babbo", collo: "sciarpa", colCollo: 2, mano: "tazza", colMano: 0 } },
     { nome: "Vichingo", tutti: { capo: "maglione", maglia: 2, sotto: "pantaloni", pantaloni: 2, modScarpe: "stivali", scarpe: 5, cappello: "vichingo", schiena: "mantello", colSchiena: 7 } },
-    { nome: "Angioletto", tutti: { capo: "maglione", maglia: 8, sotto: "pantaloni", pantaloni: 7, modScarpe: "sneakers", scarpe: 1, cappello: "aureola", schiena: "ali" }, donna: { capo: "vestito", modScarpe: "ballerine" } },
+    { nome: "Angioletto", tutti: { capo: "maglione", maglia: 8, sotto: "pantaloni", pantaloni: 7, modScarpe: "sneakers", scarpe: 1, cappello: "aureola", schiena: "ali" }, donna: { capo: "vestito", sotto: "gonna", modScarpe: "ballerine" } },
     { nome: "Diavoletto", tutti: { capo: "felpa", maglia: 0, sotto: "jeans", pantaloni: 1, modScarpe: "anfibi", scarpe: 0, cappello: "corna", schiena: "pipistrello" } },
-    { nome: "Fatina", tutti: { capo: "maglietta", maglia: 5, sotto: "jeans", pantaloni: 9, modScarpe: "sneakers", scarpe: 1, cappello: "tiara", schiena: "farfalla", colSchiena: 5, mano: "bacchetta" }, donna: { capo: "vestito", modScarpe: "ballerine" } }
+    { nome: "Fatina", tutti: { capo: "maglietta", maglia: 5, sotto: "jeans", pantaloni: 9, modScarpe: "sneakers", scarpe: 1, cappello: "tiara", schiena: "farfalla", colSchiena: 5, mano: "bacchetta" }, donna: { capo: "vestito", sotto: "gonna", modScarpe: "ballerine" } }
   ];
   function conLook(cfg, L) {
     var c = {}, k, pezzi = [LOOK_BASE, L.tutti, cfg.forma === "donna" ? L.donna : L.uomo];
@@ -268,8 +270,12 @@
     }
     function unisci(k, v) {
       if (k === "forma") return O.adattaForma(cfg, v);   // maschio/femmina: cambiano anche capelli, barba, trucco
-      var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v; return c;
+      var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v;
+      var pz = partenza(k, v); if (pz) c[pz.chiave] = pz.valore;   // l'anteprima col colore con cui arriverebbe
+      return c;
     }
+    // (6 nov 2026) il colore di partenza del capo, del sotto o delle scarpe toccati (null = il colore di adesso resta: vedi SGOmino.coloreDiPartenza)
+    function partenza(k, v) { return /^(capo|sotto|modScarpe)$/.test(k) && O.coloreDiPartenza ? O.coloreDiPartenza(cfg, k, v) : null; }
     function salto() {   // saltello senza ricalcolare la pagina (le anteprime sono tante)
       var sv = figura.firstChild;
       if (sv && sv.animate) sv.animate([{ transform: "none" }, { transform: "translateY(-12px) scale(.96,1.05)", offset: 0.3 },
@@ -360,11 +366,13 @@
       }
       var rifai = /^(cappello|collo|mano|schiena|animale)$/.test(k) || (/^(ombretto|eyeliner|rossetto|blush|borsa)$/.test(k) && /^nessun/.test(cfg[k]) !== /^nessun/.test(v));   // i colori compaiono solo se servono
       if (k === "capo" && /^vestito/.test(cfg[k]) !== /^vestito/.test(v)) rifai = true;   // col vestito spariscono le voci "Sotto"
+      var pz = partenza(k, v);   // (prima di cambiare la voce: conta il capo di prima)
       cfg[k] = v;
+      if (pz) cfg[pz.chiave] = pz.valore;
       // una mano sola: borsetta e oggetti in mano non vanno insieme
       if (k === "mano" && !/^(nessuno|pallone)$/.test(v) && cfg.borsa === "borsetta") cfg.borsa = "nessuna";
       if (k === "borsa" && v === "borsetta" && !/^(nessuno|pallone)$/.test(cfg.mano)) cfg.mano = "nessuno";
-      anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello(k);
+      anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello(pz ? null : k);   // (col colore nuovo cambiano anche le anteprime della voce)
     }
     function applicaLook(L) {
       ricorda(); cfg = conLook(cfg, L);
@@ -461,6 +469,7 @@
         var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
         if (!gruppi && etichette) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
         var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
+        var gColori = OMINO_COLORI[k] && O.GRUPPI_COLORI ? O.GRUPPI_COLORI[k] : null, nomiCol = O.NOMI_COLORI ? O.NOMI_COLORI[k] : null;   // (6 nov 2026) i colori a gruppi
         O.OPZ[k].forEach(function (val, i) {
           if (gruppi) gruppi.forEach(function (g) {
             if (g[1] !== i) return;
@@ -468,11 +477,12 @@
             pannello.appendChild(el("div", { class: "etichetta", text: g[0] }));
             riga = el("div", { class: "om-griglia" });
           });
+          if (gColori) gColori.forEach(function (g) { if (g[1] === i) riga.appendChild(el("div", { class: "om-gruppo", "aria-hidden": "true", text: g[0] })); });
           if (/^(sotto|capo|modScarpe)$/.test(k) && O.SOLO_DONNA.test(val) && cfg.forma !== "donna") return;   // gonne, vestiti, tacchi… solo per la donna
           if (illustratoManca(k, val) && cfg[k] !== val) return;   // avatar illustrati: le voci non ancora ridisegnate non si vedono (la tua resta)
           var v = OMINO_COLORI[k] ? i : val, b;
           if (OMINO_COLORI[k]) {
-            b = el("button", { class: "om-opz om-colore", style: "background:" + val, "aria-label": vc[1] + " " + (i + 1), onclick: function () { scegli(k, v); } });
+            b = el("button", { class: "om-opz om-colore", style: "background:" + val, "aria-label": vc[1] + " " + (nomiCol && nomiCol[i] ? nomiCol[i].toLowerCase() : i + 1), onclick: function () { scegli(k, v); } });
           } else {
             var bloccato = !!(O.BLOCCATI[k] && O.BLOCCATI[k].indexOf(val) >= 0);
             b = el("button", { class: "om-opz om-forma" + (bloccato ? " bloccato" : ""), onclick: function () { if (!bloccato) scegli(k, v); } });
