@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 308,
+    data: "6 novembre 2026",
+    titolo: "🎨 Avatar disegnati: in prova",
+    descrizione: [
+      "Stiamo provando un disegno nuovo degli avatar, più curato: proporzioni vere, luce e volumi, mani con le dita che stringono davvero le cose (il microfono, la tazza per il manico, il palloncino che galleggia col filo).",
+      "Nei giochi di carte gli avatar stanno seduti al tavolo con le mani sul panno: Black Jack, Scopa, Scopa in 4 e Scopone. All'Asta stanno seduti sulle sedie.",
+      "Il tuo avatar resta lo stesso: cambia solo il modo in cui è disegnato. Per ora lo vedono solo due account di prova: quando è pronto arriva a tutti."
+    ]
+  },
+  {
     v: 307,
     data: "5 novembre 2026",
     titolo: "⚡ L'app si apre molto più in fretta",
