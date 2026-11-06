@@ -13,14 +13,22 @@
   var NOMI = ["Paky", "Giulia", "Luca", "Marta"], PV = W.PV = { log: [] };
 
   // ---------- la partita vera, fino alla giornata ----------
-  PV.prepara = async function () {
-    var imp = { formato: "fanta" }, fino = Date.now() + 360000, visti = {};
-    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; } }); if (P.SG && P.SG.scaricaGioco) await P.SG.scaricaGioco("asta"); await W.dorme(500); var C = await W.apriStanza(P, "L'Asta");
-    for (var i = 1; i < NOMI.length; i++) await W.apriTel(NOMI[i], { hash: "gioco=asta&stanza=" + C, x: 600 + 200 * i });
-    if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === NOMI.length; }, 15000)) no("non entrano tutti");
-    W.clicca(P, /Comincia/);
-    if (!await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 8000)) no("la partita non comincia");
+  // (6 nov, dopo la scelta del proprietario) PV.prepara("asta") si ferma alla terza carta all'asta col telefono di Paky già grande
+  // (per la foto della maglia girata); poi PV.prepara() continua da lì
+  var ST = null;
+  PV.prepara = async function (stop) {
+    var imp = { formato: "fanta", vs: !!PV.vs }, fino = Date.now() + 360000, visti = ST ? ST.visti : {}, P, C, carte = ST ? ST.carte : 0;
+    if (!ST) {
+      P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; } }); if (P.SG && P.SG.scaricaGioco) await P.SG.scaricaGioco("asta"); await W.dorme(500); C = await W.apriStanza(P, "L'Asta");
+      for (var i = 1; i < NOMI.length; i++) await W.apriTel(NOMI[i], { hash: "gioco=asta&stanza=" + C, x: 600 + 200 * i });
+      if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === NOMI.length; }, 15000)) no("non entrano tutti");
+      W.clicca(P, /Comincia/);
+      if (!await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 8000)) no("la partita non comincia");
+      var f0 = document.getElementById("tel-Paky"); f0.style.cssText = "position:absolute;top:0;left:0;width:390px;height:844px;border:0;background:#000;transform:none;z-index:9"; P.dispatchEvent(new P.Event("resize"));
+      ST = { P: P, C: C, visti: visti, carte: 0 };
+    } else { P = ST.P; C = ST.C; }
     while (Date.now() < fino && vm(C).fase !== "fine") {
+      if (stop === "asta" && vm(C).asta && vm(C).asta.nCarta >= 2 && q(P, ".st-maglia") && q(P, ".st-maglia").src) { await W.dorme(900); return "asta: carta " + vm(C).asta.nCarta; }
       var v = vm(C), a = v.asta;
       if (v.fase !== "asta" || !a || visti[a.nCarta + "|" + a.offerta + "|" + a.leaderId]) { await W.dorme(200); continue; }
       visti[a.nCarta + "|" + a.offerta + "|" + a.leaderId] = 1;
@@ -422,5 +430,22 @@
         bonusMedioCapAtt: Math.round(100 * bonusCap[0] / giocate) / 100, bonusMedioCapTop: Math.round(100 * bonusCap[1] / giocate) / 100 };
     });
     return JSON.stringify(out);
+  };
+  // ---------- (6 nov) le foto delle cose COSTRUITE davvero ----------
+  PV.maglieRetro = function () {   // un foglio con alcune maglie girate (con e senza numero)
+    var w = PV.w(), A = w.SGAstaArte, l = [["Juventus", 10, "YILDIZ"], ["Como", 10, "PAZ"], ["Inter", 10, "MARTINEZ"], ["Milan", 11, "PULISIC"], ["Roma", 21, "DYBALA"], ["Napoli", 8, "MCTOMINAY"], ["Lecce", null, "COULIBALY"], ["Genoa", 92, "EL SHAARAWY"], ["Atalanta", 13, "EDERSON"]];
+    var h = l.map(function (x) { return "<div style=\"text-align:center;color:#fff;font:800 11px system-ui\"><img src=\"" + A.magliaRetroSrc(x[0], x[1], x[2]) + "\" style=\"width:116px;height:116px\"><br>" + x[0] + "</div>"; }).join("");
+    nodo("<div style=\"display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:18px 8px\">" + h + "</div>", "left:0;top:0;width:390px;height:844px;background:#0d1020");
+  };
+  PV.istante = function (p) { if (!PV.sc) return; R().az.foto(PV.sc, p); };   // la scena vera a un istante (l'esultanza, l'abbraccio)
+  PV.fest = function () { return PV.sc && PV.sc.festT ? { t: PV.sc.festT, tipo: PV.sc.festTipo } : null; };
+  PV.meteo = function (tipo, p) { if (!PV.sc) return; var s2 = {}; for (var k in PV.sc) s2[k] = PV.sc[k]; s2.meteo = tipo; R().az.foto(s2, p != null ? p : PV.p); };
+  PV.salta = function () { var r = R(); if (r && r.salta) r.salta.click(); };
+  PV.premi = function () { var b = q(PV.w(), ".st-premi-tasto"); if (!b) return "niente tasto dei premi"; b.click(); return "premi aperti"; };
+  PV.fotoCampione = function () {
+    var w = PV.w(), C = w.HTMLCanvasElement.prototype, old = C.toDataURL; w.__foto = null;
+    C.toDataURL = function () { var u = old.apply(this, arguments); if (this.width === 1080) w.__foto = u; return u; };
+    var b = [].slice.call(w.document.querySelectorAll(".st-premi button")).filter(function (x) { return /campione/.test(x.textContent); })[0]; if (b) b.click();
+    return new Promise(function (res) { var t0 = Date.now(); (function giro() { if (w.__foto || Date.now() - t0 > 5000) { C.toDataURL = old; res(w.__foto); } else setTimeout(giro, 100); })(); });
   };
 })();

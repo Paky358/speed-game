@@ -114,8 +114,22 @@
     return s;
   }
 
+  // ---------- il colletto visto da dietro (la maglia girata dell'asta, 6 nov 2026): solo la fascia del collo ----------
+  function collettoDietro(d) {
+    var c = d.col, L = " stroke='" + LINEA + "' stroke-width='1' stroke-linejoin='round'", polo = c.t === "polo" || c.t === "aperto";
+    var s = "<path d='" + (polo ? "M38.6,8.4Q50,3.4 61.4,8.4L60.6,12.8Q50,9.2 39.4,12.8Z" : "M39.2,8.8Q50,4.8 60.8,8.8L60.2,11.2Q50,7.8 39.8,11.2Z") + "' fill='" + c.c + "'" + L + "/>";
+    if (c.f) s += "<path d='" + (polo ? "M39.6,11.6Q50,8 60.4,11.6" : "M39.9,10.3Q50,6.9 60.1,10.3") + "' fill='none' stroke='" + c.f + "' stroke-width='.8'/>";
+    return s;
+  }
+
   // ---------- la maglia intera ----------
-  function disegna(d, p) {
+  function disegna(d, p, dietro) {
+    if (dietro) {   // da dietro: le metà e le maniche si scambiano, niente fascia sul petto (ci vanno nome e numero)
+      var o = {}; for (var k in d) o[k] = d[k];
+      if (d.meta) o.meta = [d.meta[1], d.meta[0]];
+      if (typeof d.man === "object" && d.man) o.man = [d.man[1], d.man[0]];
+      delete o.fascia; d = o;
+    }
     var s = "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 100 100'><defs><clipPath id='" + p + "s'><path d='" + SAGOMA + "'/></clipPath><path id='" + p + "p' d='" + PIEGHE + "'/>";
     var reg = d.rag ? MANICA_R : MANICA, i;
     if (d.man === "righe") s += "<clipPath id='" + p + "m'><path d='" + reg + "'/></clipPath>";
@@ -168,7 +182,7 @@
     s += "<g fill='none' stroke-linecap='round'><path d='M25.9,85.3Q50,89.5 74.1,85.3' stroke='#000' stroke-width='.7' opacity='.22'/>" +
       "<path d='M37.6,11.3Q31,12.5 26,14.7' stroke='#fff' stroke-width='1.6' opacity='.5'/><path d='M22.6,17Q16.6,22.8 11.6,29.4' stroke='#fff' stroke-width='1.3' opacity='.32'/></g></g>";
     s += "<path d='" + SAGOMA + "' fill='none' stroke='" + LINEA + "' stroke-width='2.6' stroke-linejoin='round'/>";   // il contorno
-    return s + colletto(d, p) + "</svg>";
+    return s + (dietro ? collettoDietro(d) : colletto(d, p)) + "</svg>";
   }
 
   // ---------- per chi usa le maglie ----------
@@ -186,5 +200,29 @@
   A.magliaSrc = function (squadra) {   // pronta per <img src> o background-image: url("...")
     var id = chiave(squadra);
     return CACHE_SRC[id] || (CACHE_SRC[id] = "data:image/svg+xml," + encodeURIComponent(A.maglia(squadra)));
+  };
+
+  // ---------- la maglia GIRATA (6 nov 2026, il proprietario: «quando i giocatori escono all'asta possiamo mettere la maglia girata,
+  // così che si veda dietro il numero del calciatore, e magari anche in piccolo il suo nome») ----------
+  // SGAstaArte.magliaRetro(squadra, numero, nome) → SVG: il retro della maglia coi colori veri, il nome piccolo in alto e il numero grande.
+  // Il numero è quello vero della stagione (data/fanta-numeri.js); se manca, solo il nome. Colore del numero: quello della squadra
+  // dove si sa (Roma oro, Lazio e Frosinone blu, Lecce blu notte), se no bianco sulle maglie scure e quasi nero su quelle chiare, sempre col bordo.
+  var NUMERO = { Roma: "#f3b23a", Lazio: "#1b2f5c", Frosinone: "#1f4f9e", Lecce: "#1c2b4f", Juventus: "#17171b", Udinese: "#17171b", Parma: "#17171b" };
+  var CACHE_DIETRO = {};
+  function xml(t) { return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/'/g, "&apos;"); }
+  A.magliaRetro = function (squadra, numero, nome) {
+    var k = chiave(squadra), id = k < 0 ? "x" : k, d = k < 0 ? GRIGIA : DATI[A.SQUADRE[k]];
+    if (!CACHE_DIETRO[id]) CACHE_DIETRO[id] = disegna(d, "asr" + id, true).replace(/<\/svg>$/, "");
+    var base = d.meta ? d.meta[0] : d.b, num = NUMERO[A.SQUADRE[k]] || (luce(base) > 150 ? "#17171b" : "#ffffff");
+    var bordo = luce(num) > 150 ? "#141414" : "#ffffff", s = CACHE_DIETRO[id], F = " font-family='Arial Black,Arial,Helvetica,sans-serif' font-weight='900' text-anchor='middle'";
+    var N = String(nome || "").toUpperCase(), lungo = N.length > 9 ? " textLength='" + Math.min(44, 4.6 * N.length) + "' lengthAdjust='spacingAndGlyphs'" : "";
+    var conN = numero != null && numero !== "";
+    if (N) s += "<text x='50' y='" + (conN ? 30.5 : 36) + "'" + F + " font-size='" + (conN ? 7.4 : 9.5) + "' letter-spacing='.5' fill='" + num + "' stroke='" + bordo + "' stroke-width='" + (conN ? 1.1 : 1.4) + "' stroke-linejoin='round' paint-order='stroke'" + lungo + ">" + xml(N) + "</text>";
+    if (conN) s += "<text x='50' y='71'" + F + " font-size='" + (String(numero).length > 1 ? 38 : 42) + "' letter-spacing='-1' fill='" + num + "' stroke='" + bordo + "' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'>" + xml(numero) + "</text>";
+    return s + "</svg>";
+  };
+  A.magliaRetroSrc = function (squadra, numero, nome) {
+    var c = squadra + "|" + numero + "|" + nome;
+    return CACHE_SRC["r|" + c] || (CACHE_SRC["r|" + c] = "data:image/svg+xml," + encodeURIComponent(A.magliaRetro(squadra, numero, nome)));
   };
 })();

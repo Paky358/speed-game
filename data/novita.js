@@ -9,6 +9,21 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 309,
+    data: "6 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: maglie vere e giornata da TV",
+    descrizione: [
+      "👕 All'asta la maglia è girata: dietro c'è il numero VERO di quest'anno e il nome del calciatore (Yildiz 10, Nico Paz 10, Lautaro 10…). Se un numero non è sicuro c'è solo il nome.",
+      "📺 Quando segna uno dei vostri calciatori arriva da sotto la banda come in TV: maglia col numero, minuto, nome, risultato e la faccina di chi l'ha comprato. Poi il «+3» vola sul suo quadretto.",
+      "🔢 In campo i vostri calciatori hanno il loro numero vero sulla maglia. Chi segna esulta in tanti modi diversi (a volte l'aeroplanino, a volte in scivolata in ginocchio) e i compagni corrono ad abbracciarlo.",
+      "🏟️ Dopo il gol la curva fa festa coi colori della squadra: bandiere, fumogeni e tabelloni luminosi ai lati del campo.",
+      "🌦️ Ogni partita ha il suo meteo: di solito sole, a volte pioggia, nebbia o neve (col pallone arancione). Cambia solo l'aspetto, mai i risultati.",
+      "🎬 Il gol della giornata si rivede da dietro la porta, con la rete in primo piano.",
+      "🏅 Sul podio ci sono «I premi della giornata» (il migliore in campo, il bidone, la saracinesca, il più fortunato, il turista) e la 📸 foto del campione da mandare su WhatsApp.",
+      "🆚 Nuova regola nel ⚙️ (spenta di partenza): «Contro chi giocano». Le partite si sorteggiano già all'inizio dell'asta e sotto ogni calciatore c'è il suo avversario."
+    ]
+  },
+  {
     v: 308,
     data: "6 novembre 2026",
     titolo: "⚽ Mini Asta Fantacalcio: la porta inviolata c'è da subito",
