@@ -140,9 +140,13 @@
             medio: { nk: 30.5, shx: 85, sho: 113, ap: 91, ch: 90, wt: 76, hp: 74, aw: [49, 39.5, 41.5, 30.5], lw: 1.02 },
             robusto: { nk: 36, shx: 97, sho: 129, ap: 108, ch: 112, wt: 114, hp: 106, aw: [68, 53, 56, 35.5], aws: 57, lw: 1.3, pancia: 1 } },
     donna: { snello: { nk: 16.5, shx: 47, sho: 64, ap: 50, ch: 52, wt: 36, hp: 63, aw: [23, 18.5, 20, 17], lw: 0.72, seno: 0.7 },
-             medio: { nk: 19.5, shx: 55, sho: 75, ap: 61, ch: 70, wt: 48, hp: 89, aw: [31, 24.5, 26.5, 21.5], lw: 1.1, seno: 1.12 },
-             robusto: { nk: 24, shx: 66, sho: 89, ap: 79, ch: 95, wt: 75, hp: 112, aw: [48, 37.5, 40, 28.5], aws: 41, lw: 1.3, seno: 1.42, pancia: 0.6 } }
+             medio: { nk: 19.5, shx: 55, sho: 75, ap: 61, ch: 70, wt: 48, hp: 83, aw: [31, 24.5, 26.5, 21.5], lw: 1.1, seno: 1.12 },
+             robusto: { nk: 24, shx: 66, sho: 89, ap: 79, ch: 95, wt: 75, hp: 105, aw: [56, 43, 46, 28.5], aws: 41, lw: 1.3, seno: 1.42, pancia: 0.6 } }
   };
+  // (g5, 6 nov 2026, dopo il critico: «lei medio coi pantaloncini ha i fianchi a campana e le gambe sottili», «seduta: le cosce sono due
+  // palloni più larghi del busto», «lei robusto ha le braccia sottili rispetto al busto») lei resta a clessidra ma meno esagerata: fianchi
+  // un po' più stretti (medio 89 → 83, robusto 112 → 105) e le cosce che non escono più dai fianchi (gambeDi); lei robusto con le braccia
+  // più piene come lui robusto (il polso e la spalla tonda restano quelli di prima: aws, e la mano della stessa misura). Lui non cambia.
   ["uomo", "donna"].forEach(function (s) { for (var k in BUILD[s]) { var a = BUILD[s][k].aw; BUILD[s][k].aw = [a[0] * 1.1, a[1] * 1.1, a[2] * 1.1, a[3] * 1.15]; } });   // (secondo tempo) braccia più piene
   // (g4, 6 nov 2026, dopo il critico: «robusto: le braccia escono larghe dal corpo e sono sottili rispetto al busto») il robusto ha le braccia
   // più grosse (braccio e avambraccio pieni, il polso un po meno: la mano segue il polso con la radice, kMano). aws = la larghezza del braccio
@@ -156,6 +160,26 @@
     uomo: [[548, 35, 45, 36], [610, 35, 43, 34], [670, 36, 37, 29], [722, 37, 30, 25], [748, 38, 28, 24], [790, 39, 31, 27], [834, 40, 28, 28], [884, 42, 21, 20], [938, 44, 17, 16]],
     donna: [[548, 38.5, 49, 36], [610, 37.5, 46, 33], [670, 35, 38, 27], [722, 34, 28, 23], [748, 34, 26, 22], [790, 35, 29, 25], [834, 36, 26, 24], [884, 38, 19, 18], [938, 40, 15, 14]]
   };
+  // (g5) le gambe di una corporatura: [y, centro, fuori, dentro] (la usano il disegno e la geometria).
+  // - lei: la coscia non esce più dai fianchi (prima scendendo dai fianchi la linea si allargava ancora: «fianchi a campana»);
+  // - seduti (sed): per tutti la coscia mai più larga dei fianchi, la coscia quasi dritta fino al ginocchio (vista da davanti viene verso
+  //   chi guarda: il ginocchio, più vicino, non è più stretto della coscia) e sotto il ginocchio lo stinco che non si allarga più (prima il
+  //   polpaccio schiacciato faceva un nodo: «ginocchia a bolla»). In piedi lui resta identico.
+  var GAMBA_LIM = { 548: 1, 610: 0.97, 670: 0.93 }, GAMBA_SED = { 548: 1, 610: 0.98, 670: 0.96 };
+  function gambeDi(m, B, sed) {
+    var lw = B.lw, GN = GAMBA[m ? "uomo" : "donna"].map(function (q) { return [q[0], q[1] * (1 + (lw - 1) * 0.75), q[2] * lw, q[3] * lw]; });
+    function lim(T) { GN.forEach(function (g) { var f = T[g[0]]; if (f && g[1] + g[2] > B.hp * f) g[2] = B.hp * f - g[1]; }); }
+    if (!m) lim(GAMBA_LIM);
+    if (!sed) return GN;
+    lim(GAMBA_SED);
+    var r = {}; GN.forEach(function (g) { r[g[0]] = g; });
+    var g6 = r[610], g7 = r[670], g72 = r[722], gK = r[748], fo = function (g) { return g[1] + g[2]; };
+    var kO = Math.max(fo(gK), fo(g6) * 0.9), kI = gK[1] - gK[3];   // il ginocchio: fuori e dentro
+    gK[2] = kO - gK[1];
+    g72[2] = Math.max(g72[2], (fo(g7) + kO) / 2 - g72[1]);
+    GN.forEach(function (g) { if (g[0] > 748) { g[2] = Math.min(g[2], kO - 3 - g[1]); g[3] = Math.min(g[3], g[1] - kI - 2); } });
+    return GN;
+  }
   // forme del viso (testa: origine al mento, guance a y -78): cw guance, jx/jy angolo della mascella, cx mento, L altezza della fronte
   var FACCIA = {
     tondo: { cw: 56, jx: 48, jy: -27, cx: 23, L: 0.95 }, ovale: { cw: 53, jx: 42, jy: -23, cx: 16, L: 1 },
@@ -396,7 +420,7 @@
     opts = opts || {};
     var PP = propDi(opts), m = c.forma !== "donna", B = buildDi(m, c.corpo, PP), C = 200;
     var Y = { collo: 246, spalla: 268, delt: 296, ascella: 336, petto: m ? 372 : 382, vita: m ? 452 : 442, fianchi: 528, cavallo: 572 };
-    var lw = B.lw, GN = GAMBA[m ? "uomo" : "donna"].map(function (q) { return [q[0], q[1] * (1 + (lw - 1) * 0.75), q[2] * lw, q[3] * lw]; });
+    var GN = gambeDi(m, B, !!opts.seduto && !opts.busto && !opts.viso && !opts.gambe);
     function gIn(y) {
       if (y <= GN[0][0]) return [GN[0][1], GN[0][2], GN[0][3]];
       for (var i = 1; i < GN.length; i++) if (y <= GN[i][0]) { var a = GN[i - 1], b = GN[i], t = (y - a[0]) / (b[0] - a[0]); return [a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t]; }
@@ -438,9 +462,15 @@
       } else if (lato === 1 && regO && !opts.seduto && POSE_PRESA[regO.posa || "davanti"]) {   // tiene una cosa: la posa del braccio la sceglie il pezzo
         var PO = POSE_PRESA[regO.posa || "davanti"], TP = PO.t(GG), rp = ik(J, bersaglio(J, [C + lato * TP[0], TP[1]]), L1 * PO.f[0], L2 * PO.f[1], lato);
         E = rp.E; W = rp.W; mano = "impugna"; davanti = !!PO.davanti || (ROB && (regO.posa || "davanti") === "davanti"); tiene = true;
-      } else if (opts.seduto) {   // seduto: le mani appoggiate sulle cosce, vicino alle ginocchia
-        var g7 = gIn(690), rs = ik(J, [C + lato * (g7[0] * SED.kx + 6 + (ROB ? g7[1] * 0.3 : 0)), PP ? (SED.yK - 18 - 784) / PP.S + SED.yAB : SED.yK - SED.dy - 18], L1, L2 * 0.72, lato);
-        E = rs.E; W = rs.W; mano = "piatta"; davanti = true;
+      } else if (opts.seduto) {   // seduto: ogni mano appoggiata sulla SUA coscia
+        // (g5, dopo il critico: «le mani pendono giunte davanti al cavallo, gli avambracci sembrano bastoncini storti») il polso sta sulla
+        // coscia un po' verso fuori (le mani staccate tra loro), appena sotto la piega dell anca, e la mano scende lungo la coscia verso il
+        // ginocchio (non più verso il cavallo); il braccio sempre un po' piegato col gomito in fuori (mai dritto e rigido: se la coscia è
+        // troppo lontana per la lunghezza del braccio il polso si ferma un po' prima) e l avambraccio intero, largo come in piedi
+        var gS = gIn(650), PS = [C + lato * (gS[0] + gS[1] * 0.4), SED.yAB - 18], dS = Math.hypot(PS[0] - J[0], PS[1] - J[1]), dM = (L1 + L2) * 0.972;
+        if (dS > dM) PS = [J[0] + (PS[0] - J[0]) * dM / dS, J[1] + (PS[1] - J[1]) * dM / dS];
+        var rs = ik(J, PS, L1, L2, lato);
+        E = rs.E; W = rs.W; mano = "piatta"; davanti = true; dirMano = -6;
       } else {   // a riposo: le braccia un po' staccate dal fianco
         // (terzo tempo) più vive: il braccio un po' più staccato, il gomito appena piegato (l avambraccio viene un po' avanti:
         // visto da davanti è più corto e torna verso il fianco), la mano che segue l avambraccio
@@ -547,7 +577,7 @@
       "C" + (-F.cw + 2) + " -40 " + (-F.cw) + " -56 " + (-F.cw) + " -78Z";
 
     // gambe: i punti veri di questa corporatura
-    var lw = B.lw, GN = GAMBA[m ? "uomo" : "donna"].map(function (q) { return [q[0], q[1] * (1 + (lw - 1) * 0.75), q[2] * lw, q[3] * lw]; });
+    var GN = gambeDi(m, B, !!opts.seduto && !opts.busto && !opts.viso && !opts.gambe);
     function gIn(y) {   // [cx, fuori, dentro] alla quota y
       if (y <= GN[0][0]) return [GN[0][1], GN[0][2], GN[0][3]];
       for (var i = 1; i < GN.length; i++) if (y <= GN[i][0]) { var a = GN[i - 1], b = GN[i], t = (y - a[0]) / (b[0] - a[0]); return [a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t]; }
@@ -661,7 +691,10 @@
     function larghezze(b) {
       var aw = B.aw, l1 = b.l1, l2 = b.l2, tot = l1 + l2;
       var alz = Math.max(0, Math.min(1, (b.a1 - 50) / 80));
-      return [[0, rc * 2], [l1 * 0.2, aw[0] * (1 + 0.28 * alz)], [l1 * 0.48, aw[0] * (m ? 0.98 : 0.94) * (1 + 0.1 * alz)], [l1 * 0.8, aw[1] * 1.02], [l1, aw[1] * 0.9], [l1 + l2 * 0.2, aw[2] * 1.08], [l1 + l2 * 0.45, aw[2] * 1.0], [l1 + l2 * 0.78, aw[2] * 0.8], [tot, aw[3]]];
+      // (g5, dopo il critico: «col braccio alzato l avambraccio del robusto è sottile rispetto al braccio e al busto») il braccio alzato
+      // si allarga sulla spalla (alz): sul robusto si allarga anche l avambraccio (il polso resta quello: la mano non cambia)
+      var fa = G.rob && alz ? 1 + 0.2 * alz : 1, fe = G.rob && alz ? 1 + 0.12 * alz : 1;
+      return [[0, rc * 2], [l1 * 0.2, aw[0] * (1 + 0.28 * alz)], [l1 * 0.48, aw[0] * (m ? 0.98 : 0.94) * (1 + 0.1 * alz)], [l1 * 0.8, aw[1] * 1.02 * fe], [l1, aw[1] * 0.9 * fe], [l1 + l2 * 0.2, aw[2] * 1.08 * fa], [l1 + l2 * 0.45, aw[2] * 1.0 * fa], [l1 + l2 * 0.78, aw[2] * 0.8 * fe], [tot, aw[3]]];
     }
     function wAt(WS, s) { if (s <= 0) return WS[0][1]; for (var i = 1; i < WS.length; i++) if (s <= WS[i][0]) { var a = WS[i - 1], z = WS[i], t = (s - a[0]) / Math.max(0.01, z[0] - a[0]); return a[1] + (z[1] - a[1]) * t; } return WS[WS.length - 1][1]; }
     function ptAt(b, s) { if (s <= b.l1) { var t = s / b.l1; return [b.J[0] + (b.E[0] - b.J[0]) * t, b.J[1] + (b.E[1] - b.J[1]) * t]; } var u = Math.min(1, (s - b.l1) / b.l2); return [b.E[0] + (b.W[0] - b.E[0]) * u, b.E[1] + (b.W[1] - b.E[1]) * u]; }
@@ -1353,7 +1386,8 @@
       // il grembo: ombra sotto la pancia, luce sopra le ginocchia, ombra sotto (gli stinchi vanno indietro)
       var gK = gIn(748);
       o += El(C, SED.yA + 5, B.hp * 0.95 * kx, 8, soft("#000000", 0.24));
-      [-1, 1].forEach(function (l) { var kx2 = C + l * gK[0] * kx; o += El(kx2 - 3, SED.yK - 10, gK[1] * 0.8 * kx, 10, soft("#ffffff", 0.22)) + El(kx2 + l * 2, SED.yK + 14, gK[1] * 1.05 * kx, 13, soft("#000000", 0.38)); });
+      // (g5) più morbide: prima l ombra sotto il ginocchio, più larga della gamba, faceva le ginocchia «a bolla»
+      [-1, 1].forEach(function (l) { var kx2 = C + l * (gK[0] + (gK[1] - gK[2]) / 2) * kx, kw = (gK[1] + gK[2]) / 2 * kx; o += El(kx2 - 3, SED.yK - 12, kw * 0.7, 9, soft("#ffffff", 0.16)) + El(kx2 + l * 2, SED.yK + 9, kw * 0.85, 8, soft("#000000", 0.22)); });
       var su = xBor.sotto || "";
       [-1, 1].forEach(function (l) { if (opts.senzaBraccio !== l) su += pelleBraccio(l); });
       su += cB.corpo || "";

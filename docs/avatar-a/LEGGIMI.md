@@ -30,3 +30,23 @@ in js/core.js; dal suo profilo «🎨 Avatar illustrati: accesi/spenti», `sg-av
   Studio TV (Ruota, Patata, Nomi Cose) NON fatto: aspetta che il ramo studio-tv sia unito.
 - Peso: ~104 KB ad avatar in piedi (primo tempo ~65 KB, poi 140 KB; quelli di oggi ~29 KB). Ricetta dell'alleggerimento del
   motore: D:\SG-avatar-a-lavoro\leggero\applica.js. Critico: 6 giri, gli ultimi 2 senza difetti gravi (corpo, voci, giochi).
+
+# 🧍 Terzo tempo, 5-6 nov 2026 (i difetti visti dal proprietario sul telefono; ramo avatar-a, solo per IL PAPPONE)
+- Proporzioni: `A.PROPORZIONE = "B"` in `js/omino-a.js` (circa 6 teste, scelta dal proprietario tra tre proposte; restano
+  "attuale", "A", "C" nella tabella PROPORZIONI): testa più grande, gambe accorciate a fasce, corpo più largo.
+- Corporature (BUILD): snello sottile davvero, lui a V, lei a clessidra (non esagerata: da seduta la coscia non supera mai i
+  fianchi, `gambeDi`), robusto con braccia piene lungo i fianchi (non ad A) e avambraccio pieno anche col braccio alzato.
+- Mani: la mano «impugna» (il manico passa dentro il pugno, pollice davanti); pugni a quattro dita; mano sul tavolo col
+  dorso corto e le dita; gomito piegato in due pezzi sovrapposti (niente taglio); da seduti ogni mano sulla sua coscia.
+- Cose in mano: contratto `A.impugna[voce] = { inclina, posa: "davanti"|"petto"|"alto"|"fianco" }` e disegno nelle
+  coordinate della presa (`K.presa.qui`). Misura «da cartone» rispetto a un corpo di 170 cm, uguale su tutte le corporature
+  (microfono 32, telefono 20×10, tazza 14, pizza 28, palloncino 34, pallone 24, trofeo 32…; tabella in
+  D:\SG-avatar-a-lavoro\terzo\g5-pezzi\misure.md): a misura vera erano puntini, nel secondo tempo erano «enormi».
+  Palloncino che galleggia col filo accanto alla testa, tazza per il manico, pizza per la crosta.
+- Giochi (solo illustrati): Black Jack (avatar più vicino e più grande, carte e fiches in scala), Scopa, Scopa in 4 e
+  Scopone (avatar più grandi, tavolo meno profondo, carte in proporzione), Asta (avatar che riempiono le sedie, paletta
+  nella mano). Studio TV ancora no.
+- Ritocchi: microfono al petto e non sul mento, camicia di spalle senza la V, sandali leggibili sulla pelle scura.
+- Critico: 5 giri, l'ultimo senza difetti gravi. Restano medi: seduto visto di fronte poco «seduto» (gambe corte e dritte),
+  manica del braccio giù nella posa «uno», maniche lunghe del robusto gonfie, pizza e bacchetta poco visibili sui corpi larghi,
+  cose piccole a 54 px. Lavoro e foto: D:\SG-avatar-a-lavoro\terzo\ (fogli finali in g5-fogli).
