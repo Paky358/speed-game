@@ -41,6 +41,7 @@
     });
     [["Yildiz", "Juventus", 10], ["Paz N.", "Como", 10], ["Martinez L.", "Inter", 10]].forEach(function (y) { var x = M.numero({ nome: y[0], squadra: y[1] }); if (x.n !== y[2]) ko.push(y[0] + " ha il " + x.n); });
     if (M.numero({ nome: "Milinkovic-Savic V.", squadra: "Napoli" }).nome !== "MILINKOVIC-SAVIC") ko.push("Milinkovic-Savic: " + M.numero({ nome: "Milinkovic-Savic V.", squadra: "Napoli" }).nome);
+    if (senza) ko.push("(6 nov 2026: dal proprietario ci sono tutti i 305) mancano " + senza + " numeri");
     if (ko.length) no(ko.slice(0, 8).join(" | "));
     return Object.keys(N).length + " numeri su " + tutti.length + " calciatori (senza numero: " + senza + "), nessun doppione, 305 maglie girate disegnate";
   } });

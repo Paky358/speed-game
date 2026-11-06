@@ -9,6 +9,21 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 311,
+    data: "6 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: lo stadio si sente davvero",
+    descrizione: [
+      "🔊 Nella giornata i suoni sono veri, registrati negli stadi: il brusio della folla (piano dal fischio d'inizio, sempre più forte dal 75'), il boato del gol con la curva che canta e batte i tamburi, l'«ooh» sulle occasioni sprecate, il fischietto vero dell'arbitro, il calcio al pallone, la rete, il palo e l'applauso al fischio finale.",
+      "🤫 Prima di ogni rigore e punizione lo stadio si zittisce.",
+      "🧍 I calciatori in campo sono più belli: ombra morbida, luce e ombra sul corpo, capelli diversi, calzettoni coi colori veri della squadra, scarpini colorati, spalle larghe e un filo più grandi.",
+      "🏟️ Via i tifosi che dopo il gol entravano nel campo e coprivano l'area di rigore: il campo resta sempre libero.",
+      "❄️ Il meteo dipende dalla città di chi gioca in casa: la neve solo al nord (più spesso a Torino e Bergamo), la nebbia solo nella pianura del nord, la pioggia di più a Genova, Udine, Como e Venezia e poco al sud.",
+      "☀️ Quando c'è il sole forte il campo si scalda: luce calda dall'angolo, il riflesso del sole e le ombre del tetto dello stadio. Al sud sempre, nelle altre città una volta su tre.",
+      "🏷️ Nuova regola nel ⚙️ (spenta di partenza): «In campo, di chi è». Accesa, sotto il nome del calciatore compare piccolo il nome di chi l'ha comprato.",
+      "🎡 Busta chiusa: quando dopo lo spareggio siete ancora pari gira una ruota vera, coi nomi su tanti spicchi alternati. Rallenta piano piano e fino all'ultimo non si capisce di chi è; online si ferma nello stesso istante su tutti i telefoni."
+    ]
+  },
+  {
     v: 310,
     data: "6 novembre 2026",
     titolo: "⚽ Mini Asta Fantacalcio: maglie vere e giornata da TV",

@@ -865,9 +865,11 @@
           if (!/decide la ruota/.test(fine)) no("spareggio tutti a 3: niente ruota («" + fine + "», " + JSON.stringify(rr) + ")");
           prima = NOMI.map(function (n) { return credDi(P, n); });
         } else if (fase === 1 && k === "ruota") {
-          misure = misure.concat(await misura("Paky", "la ruota", [".st-ruota .disco"]));
-          if (qa(P, ".st-ruota .disco span").length < 2) no("la ruota non ha i nomi");
-          x.push("🎡 ruota tra " + qa(P, ".st-ruota .disco span").map(function (s) { return s.textContent; }).join(", "));
+          misure = misure.concat(await misura("Paky", "la ruota", [".st-ruota .rg-tutto"]));
+          var cvR = q(P, ".st-ruota canvas.disco"), nmR = cvR ? cvR.getAttribute("data-nomi").split(",") : [], kR = cvR ? +cvR.getAttribute("data-spicchi") : 0;
+          if (nmR.length !== 3) no("la ruota non ha i 3 nomi: " + nmR.join(", "));
+          if (kR < 12 || kR % 3) no("la ruota (6 nov) ha tanti spicchi coi nomi alternati: qui " + kR);
+          x.push("🎡 ruota tra " + nmR.join(", ") + " (" + kR + " spicchi)");
         } else if (fase === 2) {
           if (!/Nessuno lo vuole/.test(fine) || !/passano/.test(rr[0] || "")) no("3ª, tutti passano: «" + fine + "» " + JSON.stringify(rr));
         }
@@ -962,7 +964,8 @@
           if (!await aspettaFase("ruota", 12000)) no("ancora pari: niente ruota");
           var ru = vm(C).ruota;
           if (!await W.aspetta(function () { return NOMI.every(function (n) { return q(win(n), ".st-ruota .disco"); }); }, 3000)) no("la ruota non c'è su tutti i telefoni");
-          if (!await aspettaFase("esito", 9000) || vm(C).esito.chiId !== ru.ids[ru.vince] || vm(C).esito.prezzo !== pari) no("la ruota non dà il calciatore a chi ha vinto (" + JSON.stringify(vm(C).esito) + ")");
+          if (!ru.piano || ru.piano.K < 12 || ru.piano.sp % ru.nomi.length !== ru.vince) no("il piano della ruota non va: " + JSON.stringify(ru.piano));
+          if (!await aspettaFase("esito", 16000) || vm(C).esito.chiId !== ru.ids[ru.vince] || vm(C).esito.prezzo !== pari) no("la ruota non dà il calciatore a chi ha vinto (" + JSON.stringify(vm(C).esito) + ")");
           x.push("3ª: pari due volte → 🎡 ruota → " + ru.nomi[ru.vince] + " per " + pari);
         }
         fatto++; continue;

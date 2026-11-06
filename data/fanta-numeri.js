@@ -5,8 +5,8 @@
    Ogni numero è stato trovato da aiutanti Sonnet e vale SOLO se due fonti diverse erano d'accordo (Wikipedia
    della stagione 2026/27 + ESPN, Sky Sport, Virgilio, il sito del club, la Lega Serie A; Wikipedia da sola no).
    Chi manca qui NON ha il numero (meglio niente che sbagliato): sulla maglia girata c'è solo il nome.
-   Mancano (fonti in disaccordo o una sola): Mangas, Kouadio, Goglichidze, Akinsanmiro, Robinson J., Varela G., Ngonge (Monza);
-   Terzic, Schmid, Raimondo, Bobcek (Frosinone); Coulibaly L., Monteiro J., Fatah (Lecce); Nzola (Cagliari).
+   Ci sono tutti i 305: gli ultimi 15 (7 del Monza, 4 del Frosinone, 3 del Lecce e Nzola), dove le fonti non erano d'accordo, li ha dati
+   il proprietario il 6 nov 2026 (valgono come fonte sicura).
    Formato: "Nome (Squadra)": numero, oppure [numero, "NOME SULLA MAGLIA"] quando il nome stampato non è il cognome del listone.
    ========================================================= */
 window.SG_FANTA_NUMERI = {
@@ -15,13 +15,13 @@ window.SG_FANTA_NUMERI = {
   // Bologna
   "Skorupski (Bologna)": 1, "Miranda J. (Bologna)": 33, "Theate (Bologna)": 3, "Zortea (Bologna)": 20, "Heggem (Bologna)": 14, "Holm (Bologna)": 2, "Vitik (Bologna)": 41, "Casale (Bologna)": 16, "Orsolini (Bologna)": 7, "Bernardeschi (Bologna)": 10, "Pobega (Bologna)": 4, "Cambiaghi (Bologna)": 28, "Ferguson (Bologna)": 19, "Mbangula (Bologna)": 11, "Dovbyk (Bologna)": 9, "Piccoli (Bologna)": 91,
   // Cagliari
-  "Caprile (Cagliari)": 1, "Obert (Cagliari)": 33, "Mina (Cagliari)": 26, "Ze Pedro (Cagliari)": 2, "Adopo (Cagliari)": 8, "Romano (Cagliari)": 4, "Fazzini (Cagliari)": 10, "Winks (Cagliari)": 6, "Kevin Carlos (Cagliari)": 9, "Maldini (Cagliari)": 70, "Mendy P. (Cagliari)": 31,
+  "Caprile (Cagliari)": 1, "Obert (Cagliari)": 33, "Mina (Cagliari)": 26, "Ze Pedro (Cagliari)": 2, "Adopo (Cagliari)": 8, "Romano (Cagliari)": 4, "Fazzini (Cagliari)": 10, "Winks (Cagliari)": 6, "Kevin Carlos (Cagliari)": 9, "Maldini (Cagliari)": 70, "Mendy P. (Cagliari)": 31, "Nzola (Cagliari)": 18,   // (6 nov 2026: dal proprietario)
   // Como
   "Butez (Como)": 1, "Ramon (Como)": 4, "Chalobah T. (Como)": 99, "Couto (Como)": 27, "Kaiki (Como)": 16, "Valle (Como)": 3, "Kempf (Como)": 2, "Paz N. (Como)": 10, "Baturina (Como)": 20, "Da Cunha (Como)": 7, "Perrone (Como)": 5, "Rodriguez Je. (Como)": 17, "Caqueret (Como)": 8, "Milla (Como)": 6, "Kean (Como)": 90, "Douvikas (Como)": 9, "Diao (Como)": 11,
   // Fiorentina
   "De Gea (Fiorentina)": 43, "Dodo (Fiorentina)": 2, "Dragusin (Fiorentina)": 3, "Jimenez A. (Fiorentina)": 20, "Valdepenas (Fiorentina)": 21, "Atta (Fiorentina)": 14, "Mastantuono (Fiorentina)": 30, "Goncalves P. (Fiorentina)": 28, "Fagioli (Fiorentina)": 44, "Ndour (Fiorentina)": 27, "Njie (Fiorentina)": 25, "Pellegrino M. (Fiorentina)": 32, "Beto (Fiorentina)": 23, "Gnonto (Fiorentina)": 29,
   // Frosinone
-  "Palmisani (Frosinone)": 22, "Oyono A. (Frosinone)": 20, "Bracaglia (Frosinone)": 79, "Calvani (Frosinone)": 3, "Monterisi (Frosinone)": 30, "Calo (Frosinone)": 14, "Masini (Frosinone)": 73, "Cichella (Frosinone)": 16, "Kvernadze (Frosinone)": 17, "Ghedjemis (Frosinone)": 7,
+  "Palmisani (Frosinone)": 22, "Oyono A. (Frosinone)": 20, "Bracaglia (Frosinone)": 79, "Calvani (Frosinone)": 3, "Monterisi (Frosinone)": 30, "Calo (Frosinone)": 14, "Masini (Frosinone)": 73, "Cichella (Frosinone)": 16, "Kvernadze (Frosinone)": 17, "Ghedjemis (Frosinone)": 7, "Terzic (Frosinone)": 71, "Schmid (Frosinone)": 10, "Raimondo (Frosinone)": 9, "Bobcek (Frosinone)": 89,   // (6 nov 2026: dal proprietario)
   // Genoa
   "Bijlow (Genoa)": 1, "Ostigard (Genoa)": 5, "Vasquez (Genoa)": 22, "Baldanzi (Genoa)": 8, "Messias (Genoa)": 10, "El Shaarawy (Genoa)": 92, "Frendrup (Genoa)": 32, "Ellertsson (Genoa)": 77, "Colombo (Genoa)": 29, "Osmajic (Genoa)": 18, "Vitinha O. (Genoa)": 9,
   // Inter
@@ -31,11 +31,11 @@ window.SG_FANTA_NUMERI = {
   // Lazio
   "Mandas (Lazio)": 35, "Doekhi (Lazio)": 5, "Tavares N. (Lazio)": 17, "Pedraza (Lazio)": 23, "Marusic (Lazio)": 77, "Floriani Mussolini (Lazio)": 15, "Provstgaard (Lazio)": 25, "Sutalo J. (Lazio)": 37, "Zaccagni (Lazio)": 10, "Gudmundsson A. (Lazio)": 80, "Taylor K. (Lazio)": 24, "Frattesi (Lazio)": 16, "Cancellieri (Lazio)": 22, "Belahyane (Lazio)": 21, "Isaksen (Lazio)": 11, "Dele-Bashiru (Lazio)": 7, "Pinamonti (Lazio)": 9, "Noslin (Lazio)": 14,
   // Lecce
-  "Falcone (Lecce)": 30, "Tiago Gabriel (Lecce)": 44, "Veiga D. (Lecce)": 17, "Gallo (Lecce)": 25, "Siebert (Lecce)": 5, "Geubbels (Lecce)": 69, "Stulic (Lecce)": 9, "N'Dri (Lecce)": 11,
+  "Falcone (Lecce)": 30, "Tiago Gabriel (Lecce)": 44, "Veiga D. (Lecce)": 17, "Gallo (Lecce)": 25, "Siebert (Lecce)": 5, "Geubbels (Lecce)": 69, "Stulic (Lecce)": 9, "N'Dri (Lecce)": 11, "Coulibaly L. (Lecce)": 29, "Monteiro J. (Lecce)": 99, "Fatah (Lecce)": 7,   // (6 nov 2026: dal proprietario)
   // Milan
   "Maignan (Milan)": 16, "Pavlovic (Milan)": 31, "Gila (Milan)": 34, "Bartesaghi (Milan)": 33, "Gabbia (Milan)": 46, "Tomori (Milan)": 23, "De Winter (Milan)": 5, "Estupinan (Milan)": 2, "Pulisic (Milan)": 11, "Rabiot (Milan)": 12, "Moreira (Milan)": 22, "Modric (Milan)": 14, "Saelemaekers (Milan)": 56, "Chukwueze (Milan)": 21, "Hutchinson (Milan)": 20, "Cissè A. (Milan)": 70, "Musah (Milan)": 80, "Ramos G. (Milan)": 9, "Camarda (Milan)": 73,
   // Monza
-  "Thiam (Monza)": 20, "Birindelli (Monza)": 19, "Colpani (Monza)": 28, "Cutrone (Monza)": 10, "Mota (Monza)": 47,
+  "Thiam (Monza)": 20, "Birindelli (Monza)": 19, "Colpani (Monza)": 28, "Cutrone (Monza)": 10, "Mota (Monza)": 47, "Mangas (Monza)": 7, "Kouadio (Monza)": 60, "Goglichidze (Monza)": 2, "Akinsanmiro (Monza)": 14, "Robinson J. (Monza)": 46, "Varela G. (Monza)": 9, "Ngonge (Monza)": 16,   // (6 nov 2026: dal proprietario)
   // Napoli
   "Milinkovic-Savic V. (Napoli)": 32, "Meret (Napoli)": 1, "Rrahmani (Napoli)": 13, "Di Lorenzo (Napoli)": 22, "Spinazzola (Napoli)": 37, "Badiashile (Napoli)": 5, "Buongiorno (Napoli)": 4, "Beukema (Napoli)": 31, "Favasuli (Napoli)": 2, "Olivera (Napoli)": 17, "Marin R. (Napoli)": 16, "McTominay (Napoli)": 8, "De Bruyne (Napoli)": 11, "Lobotka (Napoli)": 68, "Politano (Napoli)": 21, "Zambo Anguissa (Napoli)": 99, "Vergara (Napoli)": 26, "Gilmour (Napoli)": 6, "Hojlund (Napoli)": 19, "Santos A. (Napoli)": 27, "Lang (Napoli)": 70, "Giovane (Napoli)": 23,
   // Parma

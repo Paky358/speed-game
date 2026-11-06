@@ -10,21 +10,21 @@
   function qa(w, s) { return [].slice.call(w.document.querySelectorAll(s)); }
   function visibile(e) { return !!e && e.getClientRects().length > 0; }
   function bott(w, sel, re) { return qa(w, sel).filter(function (b) { return re.test(b.textContent) && visibile(b); })[0] || null; }
-  var NOMI = ["Paky", "Giulia", "Luca", "Marta"], PV = W.PV = { log: [] };
+  var NOMI = W.__PV_NOMI || ["Paky", "Giulia", "Luca", "Marta"], PV = W.PV = { log: [] };
 
   // ---------- la partita vera, fino alla giornata ----------
   // (6 nov, dopo la scelta del proprietario) PV.prepara("asta") si ferma alla terza carta all'asta col telefono di Paky già grande
   // (per la foto della maglia girata); poi PV.prepara() continua da lì
   var ST = null;
   PV.prepara = async function (stop) {
-    var imp = { formato: "fanta", vs: !!PV.vs }, fino = Date.now() + 360000, visti = ST ? ST.visti : {}, P, C, carte = ST ? ST.carte : 0;
+    var imp = { formato: "fanta", vs: !!PV.vs, nomiChi: !!W.__PV_NOMECHI }, fino = Date.now() + 360000, visti = ST ? ST.visti : {}, P, C, carte = ST ? ST.carte : 0;
     if (!ST) {
       P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; } }); if (P.SG && P.SG.scaricaGioco) await P.SG.scaricaGioco("asta"); await W.dorme(500); C = await W.apriStanza(P, "L'Asta");
       for (var i = 1; i < NOMI.length; i++) await W.apriTel(NOMI[i], { hash: "gioco=asta&stanza=" + C, x: 600 + 200 * i });
       if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === NOMI.length; }, 15000)) no("non entrano tutti");
       W.clicca(P, /Comincia/);
       if (!await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 8000)) no("la partita non comincia");
-      var f0 = document.getElementById("tel-Paky"); f0.style.cssText = "position:absolute;top:0;left:0;width:390px;height:844px;border:0;background:#000;transform:none;z-index:9"; P.dispatchEvent(new P.Event("resize"));
+      var f0 = document.getElementById("tel-Paky"); f0.style.cssText = "position:absolute;top:0;left:0;width:" + (W.__PV_W || 390) + "px;height:" + (W.__PV_H || 844) + "px;border:0;background:#000;transform:none;z-index:9"; P.dispatchEvent(new P.Event("resize"));
       ST = { P: P, C: C, visti: visti, carte: 0 };
     } else { P = ST.P; C = ST.C; }
     while (Date.now() < fino && vm(C).fase !== "fine") {
@@ -40,7 +40,7 @@
     if (vm(C).fase !== "fine") no("l'asta non finisce");
     PV.C = C; PV.cl = vm(C).classifica;
     var f = document.getElementById("tel-Paky");
-    f.style.cssText = "position:absolute;top:0;left:0;width:390px;height:844px;border:0;background:#000;transform:none;z-index:9";
+    f.style.cssText = "position:absolute;top:0;left:0;width:" + (W.__PV_W || 390) + "px;height:" + (W.__PV_H || 844) + "px;border:0;background:#000;transform:none;z-index:9";
     P.dispatchEvent(new P.Event("resize"));
     for (var j = 0; j < NOMI.length; j++) { var wj = W.finestra(NOMI[j]); if (!await W.aspetta(function () { return q(wj, ".st-rivela"); }, 15000)) no("niente classifica delle rose"); W.clicca(wj, /Salta/); }   // (UN tocco: il secondo salterebbe la giornata)
     if (!await W.aspetta(function () { return q(P, ".st-gio-riga"); }, 20000)) no("la giornata non parte");
