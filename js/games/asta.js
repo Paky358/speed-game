@@ -2707,7 +2707,13 @@
   // =========================================================
   var MEDIA_QUOT = { P: 9, D: 8, C: 11, A: 13 };   // la quotazione "di metà" di ogni ruolo, tra i calciatori del gioco
   var EV_GIO = { gol: "⚽", ass: "👟", amm: "🟨", esp: "🟥", sub: "🥅", par: "🧤", inv: "🔒", rig: "❌", aut: "🙈", rec: "👏" };
-  var VOTO_EV = { gol: 0.75, ass: 0.35, esp: -1.25, rig: -0.5, aut: -0.5, sub: -0.25, par: 0.75, inv: 0, rec: 0.4 };   // quanto cambia il voto (oltre ai bonus; la porta inviolata è solo il +1)
+  // 🗳️ VOTI GIUSTI (6 nov 2026, il proprietario: «non esiste che un giocatore prende 7,5 senza aver fatto nulla, figurati se sbaglia pure un
+  // gol a porta vuota»; «il portiere, se non subisce gol, che cosa ha sbagliato? Niente»). Quanto cambia il voto (oltre ai bonus e malus, che
+  // restano a parte; la porta inviolata è solo il +1). occ: chi tira e sbaglia (fuori, alto, palo, traversa, salvato sulla linea) −0,5; chi tira
+  // e il portiere para 0 (bravo il portiere: il portiere +0,5). Il gol preso (sub) non abbassa il voto del portiere (il proprietario: «può essere anche colpa della difesa»): resta 6, e scende a 5,5 al massimo solo con un errore suo
+  var VOTO_EV = { gol: 1, ass: 0.5, esp: -1.5, rig: -1, aut: -1, sub: 0, par: 1, inv: 0, rec: 0.5 };
+  var VOTO_SBAGLIA = -0.5, VOTO_PARATA = 0.5;
+  var VOTO_TETTO = 7, VOTO_TETTO_ERRORE = 6.5, VOTO_TETTO_PORTIERE = 7;   // senza gol né assist al massimo 7 (6,5 con un errore); il portiere senza rigore parato al massimo 7
   var RIG_A_PARTITA = 0.14;   // rigori a partita per squadra (Serie A 2025/26: 106 rigori in 380 partite)
   var RIG_CHI = [0.75, 0.2, 0.05];   // chi tira il rigore: il primo della lista 3 volte su 4, il secondo 1 su 5, il terzo raramente
   var PESO_GOL = { A: 1, C: 0.32, D: 0.09, P: 0 }, PESO_ASS = { A: 0.55, C: 1, D: 0.35, P: 0.02 };
@@ -2957,7 +2963,7 @@
     if (window.SG_PROVA_SERIEA) try { window.SG_PROVA_SERIEA(A, { righe: righe, rose: rose, comprati: comprati, rifai: rifaiRisultati, chiave: chiaveCalc }); } catch (e) { if (window.console) console.error(e); }   // (solo le prove nel browser: un rigore o una punizione messi apposta)
     var maxM = 90; A.partite.forEach(function (P) { P.ev.forEach(function (e) { if (e.m > maxM) maxM = e.m; }); });
     A.rec = Math.min(6, Math.max(3 + Math.floor(caso01() * 3), maxM - 90 + 1));   // ⏱️ il recupero annunciato al 90' (sempre almeno 3': non dice se succederà ancora qualcosa)
-    function dai(k, m, t, d, p, e) { if (k && comprati[k]) (punti[k] = punti[k] || []).push({ m: m, t: t, d: d, p: p, e: e }); }
+    function dai(k, m, t, d, p, e, vo) { if (k && comprati[k]) (punti[k] = punti[k] || []).push(vo ? { m: m, t: t, d: d, p: p, e: e, vo: vo } : { m: m, t: t, d: d, p: p, e: e }); }   // (vo: quanto cambia il voto, se non è quello di VOTO_EV)
     A.partite.forEach(function (P, pi) {
       var por = { c: (rose[P.c] || []).filter(function (y) { return y.ruolo === "P"; }), f: (rose[P.f] || []).filter(function (y) { return y.ruolo === "P"; }) }, presi = { c: 0, f: 0 };
       P.ev.forEach(function (e, ei) {
@@ -2970,7 +2976,7 @@
         else if (e.t === "esp") dai(e.chi, e.m, "esp", e.dg ? -0.5 : -1, pi, ei);
         else if (e.t === "rec") dai(e.chi, e.m, "rec", 0, pi, ei);   // (l'entrata pulita: niente bonus, ma il voto sale)
         else if (e.t === "ann") { dai(e.chi, e.m, "ann", 0, pi, ei); dai(e.ass, e.m, "ann", 0, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "ann", 0, pi, ei); }); }
-        else if (e.t === "occ") { dai(e.chi, e.m, "occ", 0, pi, ei); if (CON_PASSA[e.v]) dai(e.ass, e.m, "occ", 0, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "occ", 0, pi, ei); }); }   // (anche il portiere che difende vede il momento)
+        else if (e.t === "occ") { var pa = e.esito === "parata"; dai(e.chi, e.m, "occ", 0, pi, ei, pa ? 0 : VOTO_SBAGLIA); if (CON_PASSA[e.v]) dai(e.ass, e.m, "occ", 0, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "occ", 0, pi, ei, pa ? VOTO_PARATA : 0); }); }   // (anche il portiere che difende vede il momento: se para, il voto sale)
       });
       ["c", "f"].forEach(function (s) { if (!presi[s]) por[s].forEach(function (y) { dai(y.k, 90, "inv", 1, pi, -1); }); });   // (🔒 nei punti dal vivo il +1 c'è dal fischio d'inizio: portaIniziale)
     });
@@ -2979,7 +2985,7 @@
         // il voto in pagella: tutti partono da 6, poi come gioca (primo tempo z1, secondo tempo z2), quanto è forte, se la
         // squadra vince o perde e quello che fa (un gol alza il voto, un rosso lo abbassa: oltre ai bonus e malus)
         var l = (punti[chiaveCalc(c)] || []).sort(function (a, b) { return a.m - b.m; }), d = c.valore - (MEDIA_QUOT[c.ruolo] || 10), b = 0;
-        var por = c.ruolo === "P", z1 = gauss() * (por ? 0.15 : 0.45), z2 = gauss() * (por ? 0.12 : 0.3), forte = d * (por ? 0.02 : 0.035);   // (il portiere di solito prende 6: si muove poco)
+        var por = c.ruolo === "P", z1 = gauss() * (por ? 0.1 : 0.3), z2 = gauss() * (por ? 0.08 : 0.2), forte = d * (por ? 0.02 : 0.04);   // (il portiere di solito prende 6: si muove poco)
         var P = A.partite.filter(function (x) { return x.c === c.squadra || x.f === c.squadra; })[0], casa = P && P.c === c.squadra;
         // 📈 il voto di adesso (30 ott 2026, i voti in diretta): arriva un po' alla volta (il primo tempo z1, il secondo z2, quanto è forte),
         // col risultato di quel minuto e coi suoi momenti già successi. Solo quello che è già successo: niente spoiler. A fine partita è il voto vero
@@ -2988,8 +2994,18 @@
           if (P) P.ev.forEach(function (e, j) { if (ei != null ? j <= ei : e.m <= m) r = e.r; });
           var mio = r[casa ? 0 : 1], suo = r[casa ? 1 : 0];
           x += (mio > suo ? 0.25 : mio < suo ? -0.25 : 0) * Math.min(m, 90) / 90 * (por ? 0.4 : 1);
-          l.forEach(function (e) { if (ei != null ? e.e >= 0 && e.e <= ei : e.m <= m) x += VOTO_EV[e.t] || 0; });
-          return Math.round(lim(x, 4, 8.5) * 2) / 2;
+          var fatto = 0, errore = 0, presi = 0, paraRig = 0;
+          l.forEach(function (e) {
+            if (!(ei != null ? e.e >= 0 && e.e <= ei : e.m <= m)) return;
+            var dv = e.vo != null ? e.vo : (VOTO_EV[e.t] || 0); x += dv;
+            if (e.t === "gol" || e.t === "ass") fatto = 1; else if (e.t === "sub") presi++; else if (e.t === "par") paraRig = 1;
+            if (e.t === "rig" || e.t === "aut" || e.t === "esp" || (e.t === "occ" && dv < 0)) errore = 1;
+          });
+          // i tetti: senza gol né assist al massimo 7 (6,5 dopo un errore); il portiere al massimo 7 senza rigore parato e MAI sotto il 6,
+          // anche se prende gol (5,5 al massimo con un errore suo: autogol, rosso)
+          var su = fatto ? 8.5 : errore ? VOTO_TETTO_ERRORE : VOTO_TETTO, giu = 4;
+          if (por) { if (!paraRig) su = Math.min(su, VOTO_TETTO_PORTIERE); giu = errore ? 5.5 : 6; }
+          return Math.round(lim(x, giu, su) * 2) / 2;
         }
         l.forEach(function (e) { b += e.d; e.vv = e.e < 0 ? adesso(99) : adesso(e.m, e.e); });   // (vv: il suo voto subito dopo quel momento, per i quadretti in alto)
         var v = adesso(99);
