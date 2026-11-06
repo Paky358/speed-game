@@ -1142,7 +1142,7 @@
     ".bj-wrap .bjr-matt.ill .bjr-fum{position:absolute;left:50%;bottom:28px;top:auto;width:calc(100% + 10px);max-width:none;transform:translateX(-50%);box-sizing:border-box;font-size:.68rem;padding:3px 6px;text-align:center;animation:bjFumM .26s cubic-bezier(.3,1.6,.5,1);pointer-events:none;z-index:3}",
     "@keyframes bjFumM{from{transform:translateX(-50%) scale(.3);opacity:0}}",
     // l'importo della puntata sta SULLA fiche e resta piccolo anche quando la telecamera ingrandisce (prima copriva le mani)
-    ".bj-wrap .bjr-fval.ill{transform:translate(-50%,-50%) scale(calc(1 / var(--zs,1)));transition:opacity .3s,transform .95s cubic-bezier(.45,.05,.25,1);font-size:.6rem;padding:0 4px}",
+    ".bj-wrap .bjr-fval.ill{transform:translate(-50%,calc(-50% - 12px)) scale(calc(1 / var(--zs,1)));transition:opacity .3s,transform .95s cubic-bezier(.45,.05,.25,1);font-size:.6rem;padding:0 4px}",
     ".bj-wrap .bjr-intro.ill .mg{bottom:calc(26% - 12px);transform:translateX(-50%)}",
     ".bj-wrap .bjr-intro.ill .banc{height:26%}",
     // illustrati: il fondo del disegno (la vita) sfuma, così dove il bordo del tavolo non arriva (posti di lato) non si vede un taglio netto
@@ -1197,6 +1197,7 @@
   };
   var svgCache = {};
   // 🎨 avatar illustrati (5 nov 2026): solo se accesi (oggi IL PAPPONE). Con quelli di oggi tutto resta come prima.
+  function A_PROP() { return !!(window.SGOminoA && SGOminoA.PROPORZIONE && SGOminoA.PROPORZIONE !== "attuale"); }   // (3° tempo) le proporzioni nuove degli avatar illustrati
   function ill() { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); }
   function svgAvatar(cfg, faccia, opts) {
     if (opts && !ill()) opts = opts.busto ? { busto: true } : undefined;   // (vita e gesti esistono solo negli illustrati)
@@ -1799,12 +1800,13 @@
         [i - 1, i + 1].forEach(function (j) { if (j >= 0 && j < N) vic = Math.min(vic, Math.hypot(punti[j].x - p.x, punti[j].y - p.y)); });
         var w = Math.round(Math.min(base * Math.max(0.7, Math.min(1.4, p.sc)), vic * (N > 6 ? 1.75 : 1.35)));
         // (1 nov 2026: testa e nome stanno sotto la scritta grande in alto, «Punta Luca»: prima a 360x640 si coprivano)
-        var alto = N > 6 ? 70 : 96, testa = Math.round(p.y - w * 0.9); if (testa < alto) { w = Math.max(30, Math.round((p.y - alto) / 0.9)); testa = Math.round(p.y - w * 0.9); }
+        var alto = N > 6 ? 70 : (N === 1 && ill() && A_PROP() ? 106 : 96), testa = Math.round(p.y - w * 0.9); if (testa < alto) { w = Math.max(30, Math.round((p.y - alto) / 0.9)); testa = Math.round(p.y - w * 0.9); }
         // 🎨 illustrati: dalla testa alla vita, seduti DIETRO il bordo del tavolo con le mani appoggiate sul panno (prima in piedi, lontani)
         if (ill()) {
           if (wComune) { w = wComune; p = { x: Math.max(w * 0.5 + 2, Math.min(W - w * 0.5 - 2, p.x)), y: p.y, sc: p.sc }; }   // (dentro lo schermo: la figura si sposta appena, le fiches restano dove sono)
           else {
             w = Math.round(Math.min(w * 0.8, Math.max(36, vic * 1.05)));
+            if (N === 1 && A_PROP()) w = Math.round(Math.min((p.y - alto) / 0.9226, W * 0.62));   // (3° tempo, 6 nov 2026: da solo l'avatar siede vicino, grande, non piccolo e lontano)
             if (p.y + w * 0.17 - 1.0926 * w < alto) w = Math.max(30, Math.round((p.y - alto) / 0.9226));
           }
           testa = Math.round(p.y + w * 0.17 - 1.0926 * w);
@@ -1816,13 +1818,19 @@
         if (ill()) { s.br = el("div", { class: "bjr-gb", style: "left:" + Math.round(p.x - w / 2) + "px;top:" + testa + "px;width:" + w + "px;height:" + Math.round(w * 118 / 108) + "px" }); bracc.appendChild(s.br); }
         // con 7-10 giocatori: solo il nome, largo al massimo quanto lo spazio tra due vicini, e uno su e uno giù
         var largo = N > 6 || (ill() && N > 4) ? "max-width:" + Math.max(34, Math.round(vic * 2 - 6)) + "px;" : "";
-        s.top0 = testa + Math.round(w * (ill() ? -0.02 : 0.06));   // (illustrati: il cartellino sta SOPRA la testa, mai su cappello e fronte)
+        s.top0 = testa + Math.round(w * (ill() ? -0.02 : 0.06)) - (ill() && A_PROP() ? 6 : 0);   // (illustrati: il cartellino sta SOPRA la testa, mai su cappello e fronte)
         s.nome = el("div", { class: "bjr-nome" + (N > 6 || (ill() && N > 4) ? " mini" : "") + (ill() ? " ill" : ""), style: largo + "left:" + Math.round(p.x) + "px;top:" + s.top0 + "px" });
         s.fval = el("div", { class: "bjr-fval" + (ill() ? " ill" : ""), style: "left:" + Math.round(s.fp.x) + "px;top:" + Math.round(s.fp.y - (ill() ? 0 : 10)) + "px;opacity:0" });   // il valore sopra la pila
         sopra.appendChild(s.nome); sopra.appendChild(s.fval);
         s.cw = N > 6 ? 22 : (N > 4 ? 31 : 40);
         if (spI) s.cw = N >= 5 ? 36 : (N === 2 ? 56 : 48);   // 🎨 illustrati: carte più grandi, ognuno ha il suo posto sotto l'avatar   // (1 nov 2026: carte più grandi, avatar un po più piccoli: il tavolo prima di tutto)
-        var fd = N > 6 ? 22 : 32; s.pila.style.width = s.pila.style.height = fd + "px";
+        var fd = N > 6 ? 22 : 32;
+        if (ill() && A_PROP()) {   // (3° tempo) carte e fiches in scala con l'avatar: una carta è circa un sesto del suo busto, una fiche meno (sullo schermo, col tavolo in prospettiva)
+          var scC = (s.carte && s.carte.sc) || 1, scF = (s.fp && s.fp.sc) || 1;
+          s.cw = Math.round(Math.max(26, Math.min(44, w * 0.22)) / scC);   // (carte leggibili: almeno 26 px sullo schermo, e in scala con l'avatar)
+          fd = Math.round(Math.max(14, Math.min(34, w * 0.12)) / scF);
+        }
+        s.pila.style.width = s.pila.style.height = fd + "px";
         s.k = {};   // cosa è già disegnato (per non rifare niente che non è cambiato)
       });
       var bm = pt(bancoMira), bDisp = 0;
@@ -1919,7 +1927,7 @@
         var pr = R.k.nb || 0, gira = R.k.cop && scoperta && pr === vm.banco.length && R.bancoCC.children[1];
         R.k.b = kb; R.k.nb = vm.banco.length; R.k.cop = !scoperta && vm.banco.length > 1;
         if (gira) giraCarta(R.bancoCC.children[1], vm.banco[1]);
-        else { svuota(R.bancoCC); var cwB = 50; if (ill() && R.bDisp) cwB = Math.max(30, Math.min(vm.giocatori.length <= 4 ? 58 : 50, Math.floor((R.bDisp / R.bsc - 3 * Math.max(0, vm.banco.length - 1)) / Math.max(1, vm.banco.length)))); vm.banco.forEach(function (c, k) { R.bancoCC.appendChild(cartaR(c, cwB, k >= pr && vm.banco.length > pr, !scoperta && k === 1)); }); }
+        else { svuota(R.bancoCC); var cwB = 50; if (ill() && R.bDisp) cwB = Math.max(A_PROP() ? 26 : 30, Math.min(A_PROP() ? (vm.giocatori.length <= 4 ? 44 : 40) : (vm.giocatori.length <= 4 ? 58 : 50), Math.floor((R.bDisp / R.bsc - 3 * Math.max(0, vm.banco.length - 1)) / Math.max(1, vm.banco.length)))); vm.banco.forEach(function (c, k) { R.bancoCC.appendChild(cartaR(c, cwB, k >= pr && vm.banco.length > pr, !scoperta && k === 1)); }); }
       }
       // Bot nell'angolo con quanto ha il banco (sempre visibile)
       var fm = faccinaMatt(), pB = testoBanco(scoperta);
@@ -2097,7 +2105,8 @@
       else if (f === "banco") inquadra(suMatt());
       else if (f === "distrib") {
         // primo giro largo; al secondo giro la telecamera scorre lungo il tavolo seguendo la carta
-        if (anim.ultima >= 0 && contaCarte(vm.giocatori[anim.ultima]) >= 2) inquadra(suGiocatore(anim.ultima, true), veloce ? 0.4 : 0.55);
+        if (ill() && vm.giocatori.length >= 5) inquadra(null, 0.6);   // (3° tempo: da 5 in su, durante la distribuzione si vede tutto il tavolo: i posti ai lati non restano tagliati)
+        else if (anim.ultima >= 0 && contaCarte(vm.giocatori[anim.ultima]) >= 2) inquadra(suGiocatore(anim.ultima, true), veloce ? 0.4 : 0.55);
         else if (anim.banco && vm.banco.length >= 2) inquadra(suMatt(), 0.6);
         else if (anim.ultima >= 0 || anim.banco) inquadra(null, 0.6);
       }

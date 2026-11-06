@@ -934,6 +934,8 @@
   var svgCache = {};   // disegni già pronti (un avatar per espressione): non si rifanno a ogni mossa
   // 🎨 avatar illustrati (solo se accesi): seduti al tavolo, dalla testa alla vita, con le mani sul panno. Con gli avatar di prima
   // (o con gesto == null) il disegno resta quello di sempre.
+  function aProp() { return !!(window.SGOminoA && SGOminoA.PROPORZIONE && SGOminoA.PROPORZIONE !== "attuale"); }   // (3° tempo, 6 nov 2026) le proporzioni nuove degli avatar illustrati
+  function kTav(tre) { return illu() && aProp() ? (tre ? 0.72 : 0.8) : 1; }   // con gli avatar illustrati le carte sul tavolo sono un po più piccole: prima erano grandi quanto il loro busto
   function illu() { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); }
   function svgAvatar(cfg, faccia, gesto) {
     var ill = !!gesto && illu();
@@ -991,7 +993,7 @@
     var manoH = righeMano * Math.round(wH * ASP_CARTA) + (righeMano - 1) * 6;
     var scH = Math.max(300, Math.min(900, Math.round(alt - (manoH + 52) + c.v)));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.6);
-    var tavAw = Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh = (pianoH - 24) * 0.87;
+    var tavAw = Math.min((pianoW - 24) * 0.94 - 4, scW - 22) * kTav(1), tavAh = (pianoH - 24) * 0.87 * kTav(1);
     var wT = Math.max(26, Math.min(110, Math.floor((tavAw - 15) / 4), Math.floor((tavAh - 5) / 2 / ASP_CARTA)));
     return { alt: alt, scW: scW, scH: scH, pianoW: pianoW, pianoH: pianoH, tavAw: tavAw, tavAh: tavAh, wT: wT, corr: c };
   }
@@ -1070,9 +1072,9 @@
       var bordo = piano.getBoundingClientRect().top - scena.getBoundingClientRect().top, sw = scena.clientWidth;
       var w = Math.max(70, Math.min(Math.round(sw * 0.34), 150, Math.round((bordo + 6 - 30) / 0.975)));
       var vita = posti.length > 0 && posti[0].vita;
-      if (vita) w = Math.max(70, Math.min(Math.round(sw * 0.31), 128));   // seduti e vicini: dalla testa alla vita, mani sul panno
+      if (vita) w = aProp() ? Math.max(70, Math.min(Math.round(sw * (posti.length > 2 ? 0.4 : 0.44)), 176)) : Math.max(70, Math.min(Math.round(sw * 0.31), 128));   // (3° tempo, 6 nov: più grandi e più vicini al tavolo)   // seduti e vicini: dalla testa alla vita, mani sul panno
       posti.forEach(function (s, i) {
-        var cx = Math.round(sw * xs[i]), top = Math.round(bordo + 6 - w * 0.975);
+        var xi = xs[i]; if (vita && aProp() && posti.length === 3) xi = [0.17, 0.5, 0.83][i]; var cx = Math.round(sw * xi), top = Math.round(bordo + 6 - w * 0.975);
         var H = Math.round(w * 118 / 108);   // il ritaglio «vita» è 108×118
         if (vita) top = Math.round(bordo + 6 + w * 0.2 - H);   // il bordo basso (le mani) va un poco oltre il bordo lontano del panno
         s.box.style.width = w + "px"; s.box.style.left = (cx - w / 2) + "px"; s.box.style.marginLeft = "0"; s.box.style.top = top + "px";
@@ -1177,7 +1179,7 @@
     var scH = Math.max(300, Math.min(900, Math.round(alt - (Math.round(wH * ASP_CARTA) + 52 + sotto) + scCorr.v)));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.7);
     return { wH: wH, scW: scW, alt: alt, scH: scH, pianoW: pianoW, pianoH: pianoH, k: chiave + "|" + scCorr.v, sotto: sotto,
-      tavAw: Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh: (pianoH - 24) * 0.87 };
+      tavAw: Math.min((pianoW - 24) * 0.94 - 4, scW - 22) * kTav(), tavAh: (pianoH - 24) * 0.87 * kTav() };
   }
 
   // la stanza si costruisce UNA volta (avversario, quadri, tavolo, mensola); poi si aggiornano solo i pezzi
@@ -1235,7 +1237,7 @@
     var topAvv = Math.round(bordo + 6 - w * 0.975), topVent = Math.round(bordo + 6 - w * 0.975 + w * 0.76);
     m.vita = illu();   // 🎨 avatar illustrati: seduto vicino al tavolo, dalla testa alla vita, mani sul panno
     if (m.vita) {
-      w = Math.max(90, Math.min(Math.round(Mi.scW * 0.42), 170, Math.floor((bordo + 6 - 70) / 0.8926)));
+      w = Math.max(90, Math.min(Math.round(Mi.scW * (aProp() ? 0.48 : 0.42)), aProp() ? 196 : 170, Math.floor((bordo + 6 - 70) / 0.8926)));
       var Hv = Math.round(w * 118 / 108);
       topAvv = Math.round(bordo + 6 + w * 0.2 - Hv); topVent = Math.round(topAvv + Hv * 0.95);
       scena.classList.add("sc-ill");
