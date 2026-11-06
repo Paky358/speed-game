@@ -51,9 +51,13 @@ const AGGANCI = [
     async function scatta(nome) { await page.waitForTimeout(350); await page.screenshot({ path: path.join(DOVE, nome + ".png"), clip: { x: 0, y: 0, width: 390, height: 844 } }); console.log("📸 " + nome); }
     async function prop(k, x, nome) { if (SOLO && SOLO.indexOf(nome || k) < 0 && SOLO.indexOf(k) < 0) return; await ev(([k, x]) => window.PV.mostra(k, x), [k, x]); await scatta(nome || k); }
     if (arg.capitano) { console.log(await ev(n => window.COPIONE.prova("cap1", { n: n }), +arg.capitano)); return; }
-    // (6 nov) solo il replay da dietro la porta
+    // (6 nov) solo il replay da dietro la porta: un gol vero, ridisegnato con la vista del replay (come fa golDellaGiornata)
     console.log(await ev(() => window.PV.prepara()));
     await ev(() => window.PV.veloce());
-    for (let k = 0; k < 2; k++) { const r2 = await ev(() => window.PV.aspetta("replay", 600000)); console.log(r2); if (/^NO/.test(r2)) break; await page.waitForTimeout(500); await scatta("8-replay-dietro-la-porta-" + k); await ev(() => window.PV.riparti()); await page.waitForTimeout(1500); }
+    const r = await ev(() => window.PV.aspetta("gol")); console.log(r);
+    if (!/^NO/.test(r)) for (const d of [-0.06, 0.03]) {
+      await ev(dd => { var sc = window.PV.sc; window.PV.foto(Math.max(0, sc.rete + dd), { replay: true, dietro: true, verso: 1, abb: null, zoomFine: Math.max(sc.zoomFine || 0, 0.7), tz: Math.min(sc.tz || 0.55, 0.4) }); }, d);
+      await scatta("8-replay-dietro-la-porta" + (d < 0 ? "-prima" : "-gol"));
+    }
   } finally { await browser.close().catch(() => {}); lascia(); }
 })().catch(e => { console.log("NO: " + (e && e.stack || e)); lascia(); process.exit(1); });
