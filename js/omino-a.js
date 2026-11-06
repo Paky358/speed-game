@@ -138,12 +138,17 @@
   var BUILD = {
     uomo: { snello: { nk: 23, shx: 64, sho: 85, ap: 62, ch: 57, wt: 46, hp: 52, aw: [30.5, 23.5, 25.5, 21.5], lw: 0.72 },
             medio: { nk: 30.5, shx: 85, sho: 113, ap: 91, ch: 90, wt: 76, hp: 74, aw: [49, 39.5, 41.5, 30.5], lw: 1.02 },
-            robusto: { nk: 36, shx: 97, sho: 129, ap: 108, ch: 112, wt: 114, hp: 106, aw: [57, 44, 47, 33], lw: 1.3, pancia: 1 } },
+            robusto: { nk: 36, shx: 97, sho: 129, ap: 108, ch: 112, wt: 114, hp: 106, aw: [68, 53, 56, 35.5], aws: 57, lw: 1.3, pancia: 1 } },
     donna: { snello: { nk: 16.5, shx: 47, sho: 64, ap: 50, ch: 52, wt: 36, hp: 63, aw: [23, 18.5, 20, 17], lw: 0.72, seno: 0.7 },
              medio: { nk: 19.5, shx: 55, sho: 75, ap: 61, ch: 70, wt: 48, hp: 89, aw: [31, 24.5, 26.5, 21.5], lw: 1.1, seno: 1.12 },
-             robusto: { nk: 24, shx: 66, sho: 89, ap: 79, ch: 95, wt: 75, hp: 112, aw: [41, 32, 34, 26.5], lw: 1.3, seno: 1.42, pancia: 0.6 } }
+             robusto: { nk: 24, shx: 66, sho: 89, ap: 79, ch: 95, wt: 75, hp: 112, aw: [48, 37.5, 40, 28.5], aws: 41, lw: 1.3, seno: 1.42, pancia: 0.6 } }
   };
   ["uomo", "donna"].forEach(function (s) { for (var k in BUILD[s]) { var a = BUILD[s][k].aw; BUILD[s][k].aw = [a[0] * 1.1, a[1] * 1.1, a[2] * 1.1, a[3] * 1.15]; } });   // (secondo tempo) braccia più piene
+  // (g4, 6 nov 2026, dopo il critico: «robusto: le braccia escono larghe dal corpo e sono sottili rispetto al busto») il robusto ha le braccia
+  // più grosse (braccio e avambraccio pieni, il polso un po meno: la mano segue il polso con la radice, kMano). aws = la larghezza del braccio
+  // alla spalla per la spalla tonda (rc): resta quella di prima, così la spalla e i vestiti sulla spalla (giro manica della canotta, spallina)
+  // non si spostano; sotto la spalla il braccio si allarga piano fino ad aw[0].
+  ["uomo", "donna"].forEach(function (s) { for (var k in BUILD[s]) if (BUILD[s][k].aws) BUILD[s][k].aws *= 1.1; });
   // (giro3) la misura della mano (medio come prima: lui 1,206, lei 0,965): segue il polso ma MENO (radice): lo snello non ha le mani minuscole, il robusto non le ha enormi
   ["uomo", "donna"].forEach(function (s) { var K0 = s === "uomo" ? 1.206 : 0.965, m3 = BUILD[s].medio.aw[3]; for (var k in BUILD[s]) BUILD[s][k].km = K0 * Math.pow(BUILD[s][k].aw[3] / m3, 0.55); });
   // gambe: [y, distanza del centro della gamba dal centro, mezza larghezza fuori, mezza larghezza dentro]
@@ -369,7 +374,7 @@
     if (BUILD_P[k]) return BUILD_P[k];
     var B = {}; for (var x in B0) B[x] = B0[x];
     B.nk = B0.nk * P.nk; B.shx = B0.shx * P.spalle; B.sho = B0.sho * P.spalle; B.ap = B0.ap * (P.spalle + P.petto) / 2; B.ch = B0.ch * P.petto;
-    B.wt = B0.wt * P.vita; B.hp = B0.hp * P.fianchi; B.aw = B0.aw.map(function (v) { return v * P.braccia; }); B.lw = B0.lw * P.cosce; B.km = B0.km * P.braccia;
+    B.wt = B0.wt * P.vita; B.hp = B0.hp * P.fianchi; B.aw = B0.aw.map(function (v) { return v * P.braccia; }); B.lw = B0.lw * P.cosce; B.km = B0.km * P.braccia; if (B0.aws) B.aws = B0.aws * P.braccia;
     return (BUILD_P[k] = B);
   }
   // dove va un punto del busto (coordinate dei pezzi) nel disegno finito (mondo 400×1000): in piedi e seduti
@@ -397,11 +402,12 @@
       for (var i = 1; i < GN.length; i++) if (y <= GN[i][0]) { var a = GN[i - 1], b = GN[i], t = (y - a[0]) / (b[0] - a[0]); return [a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t]; }
       var z = GN[GN.length - 1]; return [z[1], z[2], z[3]];
     }
-    var pancia = B.pancia ? (m ? 4 : 3) : 0, rc = B.aw[0] * 0.56, Jd = B.sho - rc, Jy = Y.delt - 4, kb = (m ? 1 : 0.94) * (PP ? PP.lungBraccia : 1), L1 = 142 * kb, L2 = 126 * kb;
+    var pancia = B.pancia ? (m ? 4 : 3) : 0, rc = (B.aws || B.aw[0]) * 0.56, Jd = B.sho - rc, Jy = Y.delt - 4, kb = (m ? 1 : 0.94) * (PP ? PP.lungBraccia : 1), L1 = 142 * kb, L2 = 126 * kb;
     // mezza larghezza del corpo a quella quota (per tenere le braccia un po' staccate dal fianco)
     var LT = [[Y.ascella, B.ap], [Y.petto, B.ch], [Y.vita, B.wt + pancia], [Y.fianchi, B.hp], [560, gIn(560)[0] + gIn(560)[1]], [640, gIn(640)[0] + gIn(640)[1]]];
     function largTronco(y) { if (y <= LT[0][0]) return LT[0][1]; for (var i = 1; i < LT.length; i++) if (y <= LT[i][0]) { var t = (y - LT[i - 1][0]) / (LT[i][0] - LT[i - 1][0]); return LT[i - 1][1] + (LT[i][1] - LT[i - 1][1]) * t; } return LT[LT.length - 1][1]; }
     var gesto = opts.gesto && GESTI[opts.gesto], latoG = opts.lato === -1 ? -1 : 1, GG = { Jd: Jd, Jy: Jy, Y: Y, B: B, C: C, m: m, P: PP };
+    var ROB = !!B.pancia;   // (g4) il robusto: braccia lungo la pancia, a riposo e seduto
     // (terzo tempo) la cosa in mano col contratto nuovo (A.impugna[voce]): il braccio la tiene davanti, al petto, in alto o lungo il fianco
     var regO = c.mano && c.mano !== "nessuno" && !opts.busto && !opts.viso && A.inmano[c.mano] && A.impugna[c.mano] ? A.impugna[c.mano] : null;
     function cl(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -431,16 +437,18 @@
         E = r.E; W = r.W; mano = gd.mano || mano; polso = gd.polso || 0; davanti = !!gd.davanti; dirMano = gd.dirMano; schiaccia = gd.schiaccia || 1;
       } else if (lato === 1 && regO && !opts.seduto && POSE_PRESA[regO.posa || "davanti"]) {   // tiene una cosa: la posa del braccio la sceglie il pezzo
         var PO = POSE_PRESA[regO.posa || "davanti"], TP = PO.t(GG), rp = ik(J, bersaglio(J, [C + lato * TP[0], TP[1]]), L1 * PO.f[0], L2 * PO.f[1], lato);
-        E = rp.E; W = rp.W; mano = "impugna"; davanti = !!PO.davanti; tiene = true;
+        E = rp.E; W = rp.W; mano = "impugna"; davanti = !!PO.davanti || (ROB && (regO.posa || "davanti") === "davanti"); tiene = true;
       } else if (opts.seduto) {   // seduto: le mani appoggiate sulle cosce, vicino alle ginocchia
-        var g7 = gIn(690), rs = ik(J, [C + lato * (g7[0] * SED.kx + 6), PP ? (SED.yK - 18 - 784) / PP.S + SED.yAB : SED.yK - SED.dy - 18], L1, L2 * 0.72, lato);
+        var g7 = gIn(690), rs = ik(J, [C + lato * (g7[0] * SED.kx + 6 + (ROB ? g7[1] * 0.3 : 0)), PP ? (SED.yK - 18 - 784) / PP.S + SED.yAB : SED.yK - SED.dy - 18], L1, L2 * 0.72, lato);
         E = rs.E; W = rs.W; mano = "piatta"; davanti = true;
       } else {   // a riposo: le braccia un po' staccate dal fianco
         // (terzo tempo) più vive: il braccio un po' più staccato, il gomito appena piegato (l avambraccio viene un po' avanti:
         // visto da davanti è più corto e torna verso il fianco), la mano che segue l avambraccio
-        var yE = J[1] + L1 * 0.99, ar = Math.asin(cl((largTronco(yE) + 14 + B.aw[1] / 2 - Jd) / L1, 0.06, 0.55));
+        var rob = ROB, gE = rob ? (m ? 0 : 4) : 14, gW = rob ? (m ? 0 : 4) : 11;
+        var yE = J[1] + L1 * 0.99, ar = Math.asin(cl((largTronco(yE) + gE + B.aw[1] / 2 - Jd) / L1, 0.06, 0.55));
         E = [J[0] + lato * L1 * Math.sin(ar), J[1] + L1 * Math.cos(ar)];
-        var L2v = L2 * 0.95, yW = E[1] + L2v * 0.99, aw2 = Math.max(ar - 10 * DEG, Math.asin(cl((largTronco(yW) + 11 + B.aw[3] / 2 - (E[0] - C) * lato) / L2v, -0.3, 0.55)));
+        var L2v = L2 * (rob ? 0.92 : 0.95), yW = E[1] + L2v * 0.99, aw2 = Math.asin(cl((largTronco(yW) + gW + B.aw[3] / 2 - (E[0] - C) * lato) / L2v, -0.3, 0.55));
+        if (!rob) aw2 = Math.max(ar - 10 * DEG, aw2);
         W = [E[0] + lato * L2v * Math.sin(aw2), E[1] + L2v * Math.cos(aw2)];
         dirMano = aw2 / DEG - 5;
         if (lato === 1 && regO && !opts.seduto) { mano = "impugna"; tiene = true; dirMano = null; }   // (posa «fianco»: la cosa lungo il fianco)
@@ -454,7 +462,7 @@
     }
     var sedV = !!opts.seduto && !opts.busto && !opts.viso && !opts.gambe, vs = vistaSu(PP, sedV);
     // vedi(P) = dove sta nel riquadro 200×264 un punto del busto, delle braccia o delle mani (coordinate dei pezzi)
-    return { m: m, B: B, Y: Y, C: C, GN: GN, gIn: gIn, pancia: pancia, rc: rc, Jd: Jd, Jy: Jy, L1: L1, L2: L2, largTronco: largTronco, BR: { "-1": braccio(-1), "1": braccio(1) },
+    return { m: m, B: B, Y: Y, C: C, GN: GN, gIn: gIn, pancia: pancia, rob: ROB, rc: rc, Jd: Jd, Jy: Jy, L1: L1, L2: L2, largTronco: largTronco, BR: { "-1": braccio(-1), "1": braccio(1) },
       P: PP, vedi: function (P) { var v = vs(P[0], P[1]); return [v[0] * 0.25 + 50, v[1] * 0.25 + 2]; } };
   };
 
@@ -591,7 +599,9 @@
     // il fianco destro del tronco (x = distanza dal centro) dalla spalla in giù, allargato di e
     function lato(e, o) {
       var R = [], pz = o.pancia != null ? o.pancia : pancia;
-      R.push([B.ap + e, Y.ascella + 6], [B.ch + e, Y.petto], [B.wt + e * 1.1 + pz, Y.vita], [B.hp + e, Y.fianchi]);
+      // (g4) sul robusto la maglia scende dritta dalla pancia (prima rientrava verso l orlo: sembrava corta e tirata sulla pancia)
+      var xF = B.hp + e; if (G.rob && !o.pelle && (o.orlo || 508) < 560) xF = Math.max(xF, B.wt + e * 1.1 + pz - 6);
+      R.push([B.ap + e, Y.ascella + 6], [B.ch + e, Y.petto], [B.wt + e * 1.1 + pz, Y.vita], [xF, Y.fianchi]);
       R.push([fuoriGamba(560) + e, 560], [fuoriGamba(600) + e * 0.9, 600]);
       return R;
     }
