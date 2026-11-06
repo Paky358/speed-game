@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 311,
+    data: "6 novembre 2026",
+    titolo: "🎨 Avatar disegnati per tutti",
+    descrizione: [
+      "🎨 Gli avatar hanno un disegno nuovo: proporzioni vere, capelli a ciocche, occhi e volti più curati. Il tuo avatar è lo stesso di prima, solo disegnato meglio.",
+      "🔍 Lo schermo non si ingrandisce più per sbaglio: né col doppio tocco né col pizzico."
+    ]
+  },
+  {
     v: 310,
     data: "6 novembre 2026",
     titolo: "⚽ Mini Asta Fantacalcio: maglie vere e giornata da TV",
