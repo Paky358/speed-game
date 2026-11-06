@@ -63,9 +63,11 @@
         B.partite.forEach(function (P) { if (M.meteo(P, gi) !== M.meteo(P, gi)) ko.push("meteo a caso"); });
       });
     }
-    var met = {}; for (var j = 0; j < 400; j++) { var mm = M.meteo({ c: "S" + j, f: "T" + (j * 7) }, j % 3); met[mm] = (met[mm] || 0) + 1; }
-    if (!met.pioggia || !met.nebbia || !met.neve || met.sole < 250) ko.push("meteo sbilanciato " + JSON.stringify(met));
+    // (6 nov 2026: il meteo dipende da chi gioca in casa: neve solo al nord, nebbia solo in pianura, mai neve al sud)
+    var SQ = ["Atalanta", "Bologna", "Cagliari", "Como", "Fiorentina", "Frosinone", "Genoa", "Inter", "Juventus", "Lazio", "Lecce", "Milan", "Monza", "Napoli", "Parma", "Roma", "Sassuolo", "Torino", "Udinese", "Venezia"], met = {}, sud = 0;
+    SQ.forEach(function (c, ic) { SQ.forEach(function (f) { if (c === f) return; var mm = M.meteo({ c: c, f: f }, ic % 3); met[mm] = (met[mm] || 0) + 1; if (mm === "neve" && /Napoli|Roma|Lazio|Lecce|Cagliari/.test(c)) sud++; }); });
+    if (!met.pioggia || !met.nebbia || !met.neve || met.sole < 250 || sud) ko.push("meteo sbilanciato " + JSON.stringify(met) + (sud ? " (neve al sud: " + sud + ")" : ""));
     if (ko.length) no(ko.join(" | "));
-    return "60 partite con le giornate sorteggiate prima: giocate proprio quelle; meteo su 400 partite " + JSON.stringify(met);
+    return "60 partite con le giornate sorteggiate prima: giocate proprio quelle; meteo su 380 partite " + JSON.stringify(met);
   } });
 })();
