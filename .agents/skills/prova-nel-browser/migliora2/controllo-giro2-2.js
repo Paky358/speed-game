@@ -141,7 +141,7 @@
   // ======================================================== cg2: Ruota, ❓ Mistero e il telefono spento
   function Pdi(h) { return h.__RUOTA && h.__RUOTA.ultima; }
   function tastoR(w, re) { return [].find.call(w.document.querySelectorAll(".ru-azioni button"), function (b) { return re.test(b.textContent) && !b.disabled && !b.hidden && b.getClientRects().length > 0; }) || null; }
-  function letteraR(w, L) { return [].find.call(w.document.querySelectorAll(".ru-azioni .ru-btn.lettera"), function (b) { return b.textContent === L && !b.disabled; }) || null; }
+  function letteraR(w, L) { return [].find.call(w.document.querySelectorAll(".ru-qwerty .ru-btn.lettera, .ru-azioni .ru-btn.lettera"), function (b) { return b.textContent === L && !b.disabled; }) || null; }
   function baseR(ch) { return { "À": "A", "È": "E", "É": "E", "Ì": "I", "Ò": "O", "Ù": "U" }[ch] || ch; }
   function eLR(ch) { return /^[A-ZÀÈÉÌÒÙ]$/.test(ch); }
   async function scriviR(w, frase, tab) {
