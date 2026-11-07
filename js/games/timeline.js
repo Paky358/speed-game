@@ -3390,7 +3390,9 @@
     if (!LR || LR.t !== t) {
       LR = { t: t };
       LR.btn = t.el("button", { class: "btn btn-fantasma tl-ric-btn", type: "button", onclick: function () {
-        foglioRicordi(t.el, { dopo: function (l) { cb.onRicordi(l); LR.miei = l.length; scriviLR(); }, vivo: function () { return document.body.contains(LR.btn); } });
+        // (7 nov 2026) il tasto sta dentro il foglio delle regole della saletta: prima si chiude quello (se no il foglio dei ricordi non si apre)
+        var v = document.querySelector(".sl-velo"); if (v) { if (v._chiudi) v._chiudi(); else if (v.parentNode) v.parentNode.removeChild(v); }
+        foglioRicordi(t.el, { dopo: function (l) { cb.onRicordi(l); LR.miei = l.length; scriviLR(); }, vivo: function () { return !!document.querySelector(".saletta-schermo"); } });
       } });
     }
     LR.miei = mieiRicordi().length; LR.vm = vm;
@@ -3408,7 +3410,8 @@
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 2, puoiDaSolo: true,
       giocatori: vm.giocatori.map(function (g, i) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: i === 0, tu: g.id === cb.myId }; }),
       nota: cb.sonoHost && vm.giocatori.length < 2 ? "Si gioca meglio in 2 o più: invita gli amici col tasto 📤." : null,
-      extra: [ nodoRicordiLobby(t, vm, cb) ],   // (le regole le scrive il core: «📜 Si gioca così: 5 carte a testa · …»)
+      // «📸 I nostri ricordi»: dentro il foglio delle regole della saletta (7 nov 2026, il proprietario: «lo mettiamo nel regolamento»)
+      regoleExtra: [ nodoRicordiLobby(t, vm, cb) ],
       // nella Sala: chi non è stato scelto guarda soltanto
       spettatore: !cb.sonoHost && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi" : null,
       attesa: "Aspetta che l'host faccia partire lo studio!", onComincia: cb.onComincia, onEsci: cb.onEsci });

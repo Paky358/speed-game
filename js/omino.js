@@ -47,13 +47,21 @@
     barba:     ["no", "accenno", "corta", "folta", "barbalunga", "collare", "pizzetto", "ancora", "baffi", "baffipizzetto", "baffoni", "basettoni"],
     capo:      ["maglietta", "lunga", "felpa", "camicia", "canotta", "polo", "dolcevita", "giacca", "bomber", "calcio", "gilet", "sportiva", "cappotto", "grembiule", "supereroe",
                 "crop", "top", "camicetta", "cardigan", "maglione", "vestito", "vestitolungo"],
-    maglia:    ["#e03131", "#1c7ed6", "#2f9e44", "#f59f00", "#7048e8", "#e64980", "#15aabf", "#343a40", "#f1f3f5", "#fd7e14"],
+    // (6 nov 2026, Tavola 2) i colori nuovi stanno SOLO in fondo: gli avatar salvati tengono i loro (sono indici)
+    maglia:    ["#e03131", "#1c7ed6", "#2f9e44", "#f59f00", "#7048e8", "#e64980", "#15aabf", "#343a40", "#f1f3f5", "#fd7e14",
+                "#f1c6c8", "#a9c6dd", "#b4dcc6", "#c9bde6", "#f3e3a6", "#f7c9ac",     // pastelli: rosa cipria, azzurro polvere, menta, lavanda, giallo burro, pesca
+                "#c19a6b", "#6b7040", "#6d1f33", "#d6a33a", "#c4623f", "#5a3a29",     // terra: cammello, verde oliva, bordeaux, senape, terracotta, cioccolato
+                "#f3ebd8", "#b3b5ba", "#4a6a94", "#1b2440", "#0c0c0e"],              // neutri: panna, grigio melange, denim, blu notte, nero vero
     stampa:    ["nessuna", "righe", "stella", "fulmine", "cuore", "pois", "quadri", "smile", "pallone", "numero", "fiori", "arcobaleno", "nota", "fiamme", "pizza", "luna", "gatto", "pianeta"],
     sotto:     ["jeans", "strappati", "cargo", "mimetici", "pantaloni", "tuta", "pantaloncini", "bermuda", "gonna", "gonnalunga",
                 "leggings", "zampa", "shortsjeans", "minigonna", "gonnapieghe", "gonnatubino"],
     modScarpe: ["sneakers", "stivali", "eleganti", "anfibi", "sandali", "infradito", "pantofole", "pattini", "tacchi", "ballerine", "stivaletti", "stivalialti", "zeppe"],
-    pantaloni: ["#2b3a67", "#343a40", "#6c5a3e", "#5c636a", "#1971c2", "#e64980", "#7048e8", "#f1f3f5", "#3d5a99", "#7a9bd6", "#c9b48a", "#556b2f"],
-    scarpe:    ["#2a2a31", "#f1f3f5", "#e03131", "#1c7ed6", "#f59f00", "#6c4a2e"],
+    pantaloni: ["#2b3a67", "#343a40", "#6c5a3e", "#5c636a", "#1971c2", "#e64980", "#7048e8", "#f1f3f5", "#3d5a99", "#7a9bd6", "#c9b48a", "#556b2f",
+                "#1b2440", "#0f0f12", "#efe6d2", "#a8aab0", "#b88a56", "#5f6b3a", "#5e1a2e", "#4a3326", "#b85c3a", "#cf9c2c", "#b9a679", "#3b3f48", "#dca6ab", "#9fbfd8",
+                "#4a6a94"],   // (l'ultimo, denim: il colore di partenza dei jeans, niente di abbastanza vicino nella lista)
+    scarpe:    ["#2a2a31", "#f1f3f5", "#e03131", "#1c7ed6", "#f59f00", "#6c4a2e",
+                "#b07a45", "#6d1f33", "#efe6d2", "#0c0c0e", "#1b2440", "#5f6b3a", "#dca6ab", "#8e9199", "#3f2a1e",
+                "#b3b5ba"],   // (l'ultimo, grigio melange: il colore di partenza delle pantofole)
     accessorio:["nessuno", "occhiali", "sole", "cappellino", "berretto", "fascia", "cuffie", "orecchini", "corona"],   // vecchio (solo per convertire)
     cappello:  ["nessuno", "cappellino", "berretto", "fascia", "cuffie", "cilindro", "cowboy", "pescatore", "basco", "festa", "gatto", "fiori", "cerchietto", "fiocco", "mollette", "paglia",
                 "coppola", "borsalino", "visiera", "pirata", "mago", "chef", "babbo", "vichingo", "tiara", "aureola", "corna", "coniglio", "antenne", "corona"],
@@ -71,8 +79,15 @@
     colSchiena:["#c92a2a", "#1c7ed6", "#2f9e44", "#f59f00", "#7048e8", "#e64980", "#15aabf", "#343a40", "#f1f3f5", "#fd7e14"],
     animale:   ["nessuno", "gatto", "cane", "coniglio", "pulcino", "pappagallo"],
     colAnimale:["#f0a04b", "#3a3a3f", "#9aa0a8", "#f5f1ea", "#8d5a3b", "#e8c99a"],
-    pittura:   ["nessuna", "gatto", "clown", "cuori", "tricolore", "sportivo", "fulmine"]
+    pittura:   ["nessuna", "gatto", "clown", "cuori", "tricolore", "sportivo", "fulmine"],
+    // (6 nov 2026, tappa 3 dei vestiti, Tavola 2) la fantasia su tutta la stoffa (busto, maniche, gambe) e la stoffa (luce e trama).
+    // Valgono per il capo (fant, stoffa) e per i pantaloni (fantP, stoffaP: stesse liste). Il secondo colore (maglia2, pant2) è una
+    // posizione nella tavolozza della maglia e dei pantaloni: non ha una lista sua. Campi che mancano = disegno di sempre.
+    fant:      ["nessuna", "righe", "quadri", "pois", "mimetica", "jeans", "hawaiana"],
+    stoffa:    ["normale", "lana", "pelle", "raso", "paillettes"]
   };
+  // (tappa 3) i campi nuovi e il loro valore «niente»: norm li tiene SOLO se sono scelti (gli avatar di prima restano uguali, anche nei dati)
+  var NUOVI_VESTITI = { maglia2: null, fant: "nessuna", stoffa: "normale", pant2: null, fantP: "nessuna", stoffaP: "normale" };
   var BASE = { forma: "uomo", corpo: "medio", pelle: 1, viso: "tondo", occhi: "tondi", iride: 1, sopracc: "morbide", naso: "piccolo",
                bocca: "sorriso", guance: "no", segno: "nessuno", trucco: "nessuno", colTrucco: 0, capelli: "corti", colCap: 1, barba: "no", capo: "lunga", maglia: 1, stampa: "nessuna",
                sotto: "jeans", pantaloni: 8, scarpe: 0, modScarpe: "sneakers", accessorio: "nessuno", colAcc: null,
@@ -122,6 +137,14 @@
   // nomi diversi per la stessa parola in voci diverse (es. "gatto": orecchie in testa, faccina sulla maglia, animaletto…)
   var NOMI_K = { cappello: { gatto: "Orecchie gatto", coniglio: "Orecchie coniglio" }, stampa: { gatto: "Gattino", pizza: "Pizza" }, animale: { gatto: "Gatto" },
     pittura: { gatto: "Baffi da gatto" }, mano: { pizza: "Trancio di pizza", fiore: "Fiore" } };
+  // (tappa 3) le fantasie e le stoffe (le stesse parole per il capo e per i pantaloni)
+  NOMI_K.fant = NOMI_K.fantP = { nessuna: "Nessuna", righe: "Righe", quadri: "Quadri", pois: "Pois", mimetica: "Mimetica", jeans: "Jeans", hawaiana: "Hawaiana" };
+  NOMI_K.stoffa = NOMI_K.stoffaP = { normale: "Normale", lana: "Lana", pelle: "Pelle", raso: "Raso", paillettes: "Paillettes" };
+  // (7 nov 2026, tappa 4 dei vestiti: i capi Moda) il bomber è disegnato come un chiodo di pelle: per chi gioca si chiama «Chiodo»; la voce
+  // salvata resta «bomber». Col ritocco «moda» spento (SGOminoA.RITOCCHI.moda = 0) o con gli avatar di prima (non illustrati) torna il bomber, e il suo nome
+  function modaAccesa() { var A2 = window.SGOminoA; return STILE === "illustrato" && !!(A2 && A2.RITOCCHI && A2.RITOCCHI.moda); }
+  NOMI_K.capo = {};
+  Object.defineProperty(NOMI_K.capo, "bomber", { enumerable: true, get: function () { return modaAccesa() ? "Chiodo" : "Bomber"; } });
   // oggetti che si sbloccano coi trofei (per ora bloccati)
   var BLOCCATI = { cappello: ["corona"], mano: ["trofeo"] };
   // capi solo per la forma "donna" (per l'uomo non compaiono nell'editor)
@@ -129,6 +152,41 @@
   var ALTE = /^(stivali|anfibi|pattini|stivaletti|stivalialti)$/;   // scarpe col gambale
   // i tagli divisi per lunghezza: nell'editor sono tre file separate
   var GRUPPI_CAPELLI = [["Corti", 0, 25], ["Medi", 25, 45], ["Lunghi", 45, 69]];
+  // (6 nov 2026, Tavola 2) i colori nell'editor a gruppi, così 27 tondi non sono un muro: [nome, da, a] (posizioni nella tavolozza)
+  var GRUPPI_COLORI = { maglia: [["Vivaci", 0, 10], ["Pastelli", 10, 16], ["Terra", 16, 22], ["Neutri", 22, 27]],
+    pantaloni: [["Di sempre", 0, 12], ["Moda", 12, 27]], scarpe: [["Di sempre", 0, 6], ["Moda", 6, 16]] };
+  // il nome di ogni colore (per chi usa il lettore dello schermo)
+  var NOMI_COLORI = {
+    maglia: ["Rosso", "Blu", "Verde", "Giallo", "Viola", "Rosa", "Azzurro", "Grigio scuro", "Bianco", "Arancione",
+      "Rosa cipria", "Azzurro polvere", "Menta", "Lavanda", "Giallo burro", "Pesca", "Cammello", "Verde oliva", "Bordeaux", "Senape", "Terracotta", "Cioccolato",
+      "Panna", "Grigio melange", "Denim", "Blu notte", "Nero"],
+    pantaloni: ["Blu scuro", "Grigio scuro", "Marrone", "Grigio", "Blu", "Rosa", "Viola", "Bianco", "Blu jeans", "Azzurro", "Beige", "Verde militare",
+      "Blu notte", "Nero", "Panna", "Grigio melange", "Cammello", "Verde oliva", "Bordeaux", "Cioccolato", "Terracotta", "Senape", "Kaki", "Antracite", "Rosa cipria", "Azzurro polvere", "Denim"],
+    scarpe: ["Grigio scuro", "Bianco", "Rosso", "Blu", "Giallo", "Marrone", "Cammello", "Bordeaux", "Panna", "Nero", "Blu notte", "Verde oliva", "Rosa cipria", "Grigio", "Cioccolato", "Grigio melange"] };
+  // quanti colori c'erano prima del 6 nov 2026: SGOmino.casuale pesca solo tra quelli (lo stesso seme dà lo stesso avatar di sempre: bot, pubblico, giochi)
+  var COLORI_DI_PRIMA = { maglia: 10, pantaloni: 12, scarpe: 6 };
+  // I COLORI DI PARTENZA (6 nov 2026, Tavola 2: «finisce il blu su blu»): nell'editor un capo, un sotto o un modello di scarpe toccato arriva
+  // col suo colore (posizione nella tavolozza: il colore della Tavola 2 o quello più vicino). Valgono SOLO se il colore di adesso è quello di BASE
+  // o quello di partenza del capo di prima: un colore scelto a mano non si tocca mai. BASE non cambia (lo usano bot, pubblico e giochi).
+  var PARTENZA = {
+    capo: { maglietta: 22, lunga: 11, felpa: 23, camicia: 8, canotta: 20, polo: 17, dolcevita: 16, giacca: 24, bomber: 17, calcio: 1, gilet: 21, sportiva: 1,
+      cappotto: 16, grembiule: 22, supereroe: 0, crop: 10, top: 13, camicetta: 12, cardigan: 19, maglione: 18, vestito: 18, vestitolungo: 24, chiodo: 7 },
+    sotto: { jeans: 26, strappati: 9, cargo: 17, mimetici: 17, pantaloni: 22, tuta: 15, pantaloncini: 22, bermuda: 16, leggings: 23, zampa: 19, shortsjeans: 26,
+      gonna: 18, minigonna: 23, gonnapieghe: 23, gonnatubino: 8, gonnalunga: 17 },
+    modScarpe: { sneakers: 1, stivali: 14, eleganti: 9, anfibi: 9, sandali: 6, infradito: 7, pantofole: 15, pattini: 1, tacchi: 7, ballerine: 12, stivaletti: 14, stivalialti: 9, zeppe: 6 }
+  };
+  // (tappa 4, i capi Moda) il bomber è diventato il chiodo di pelle: arriva scuro come il chiodo (grigio scuro); col ritocco «moda» spento, verde oliva come prima
+  Object.defineProperty(PARTENZA.capo, "bomber", { enumerable: true, get: function () { return modaAccesa() ? PARTENZA.capo.chiodo : 17; } });
+  var COLORE_DELLA_VOCE = { capo: "maglia", sotto: "pantaloni", modScarpe: "scarpe" };
+  // (funzione pura) cfg = l'avatar di adesso, k = "capo" | "sotto" | "modScarpe", v = la voce toccata.
+  // → { chiave: "maglia", valore: 23 } se il colore va cambiato, null se resta quello di adesso
+  function coloreDiPartenza(cfg, k, v) {
+    var ck = COLORE_DELLA_VOCE[k], P = PARTENZA[k];
+    if (!cfg || !ck || !P || P[v] == null) return null;
+    var ora = cfg[ck], prima = P[cfg[k]];
+    if (ora !== BASE[ck] && (prima == null || ora !== prima)) return null;   // scelto a mano: resta
+    return ora === P[v] ? null : { chiave: ck, valore: P[v] };
+  }
   // accessori liberi per tutti; gli altri (es. corona) si sbloccheranno coi trofei
   var LIBERI = ["nessuno", "occhiali", "sole", "cappellino", "berretto", "fascia", "cuffie", "orecchini"];
 
@@ -215,6 +273,7 @@
     ["mano", "animale"].forEach(function (k) { if (OPZ[k].indexOf(c[k]) < 0) c[k] = "nessuno"; });
     ["schiena", "pittura"].forEach(function (k) { if (OPZ[k].indexOf(c[k]) < 0) c[k] = "nessuna"; });
     if (c.colAcc == null) c.colAcc = c.maglia;   // di base il cappello ha il colore della maglia
+    if (typeof c.colAcc === "number" && c.colAcc >= OPZ.colAcc.length && OPZ.maglia[c.colAcc]) c.colAcc = OPZ.maglia[c.colAcc];   // (i colori nuovi della maglia non sono nella lista del cappello: il colore stesso)
     // trucco: i vecchi avatar avevano una voce sola ("completo" = tutto), la dividiamo nei pezzi col colore di prima
     var t = c.trucco, ct = col(OPZ.colTrucco, c.colTrucco);
     if (c.ombretto == null) c.ombretto = t === "ombretto" || t === "completo" ? "leggero" : "nessuno";
@@ -224,7 +283,48 @@
     if (c.colOmbretto == null) c.colOmbretto = t !== "nessuno" ? ct : 0;
     if (c.colRossetto == null) c.colRossetto = t !== "nessuno" ? ct : 0;
     ["ombretto", "eyeliner", "mascara", "rossetto", "blush"].forEach(function (k) { if (OPZ[k].indexOf(c[k]) < 0) c[k] = "nessuno"; });
+    // (tappa 3) secondo colore, fantasia e stoffa: solo se ci sono e sono giusti (una voce che non esiste = niente, come prima)
+    for (var kn in NUOVI_VESTITI) {
+      var vn = cfg[kn];
+      if (vn == null || vn === NUOVI_VESTITI[kn]) continue;
+      if (kn === "maglia2" || kn === "pant2") { if (typeof vn === "number" ? vn >= 0 && vn < OPZ[kn === "maglia2" ? "maglia" : "pantaloni"].length : /^#[0-9a-f]{6}$/i.test(vn)) c[kn] = vn; }
+      else if (OPZ[/^fant/.test(kn) ? "fant" : "stoffa"].indexOf(vn) >= 0) c[kn] = vn;
+    }
     return c;
+  }
+  // (tappa 3, 6 nov 2026, Tavola 2) IL SECONDO COLORE CHE ARRIVA DA SOLO: toccando una fantasia senza un secondo colore scelto, ne arriva uno
+  // che sta bene (righe bianche sul blu, blu sul bianco; quadri neri sul rosso…). Funzione pura come coloreDiPartenza: il secondo colore
+  // cambia SOLO se non c'era o se era quello arrivato da solo (un colore scelto a mano resta sempre). Anche cambiando il colore del capo
+  // (o tornando a «Nessuna») quello arrivato da solo segue. k = "fant" | "maglia" | "fantP" | "pantaloni", v = il valore nuovo.
+  // → { chiave: "maglia2" | "pant2", valore: posizione nella tavolozza o null } se cambia, null se resta
+  var SECONDO_PER = {   // [colore se il capo è scuro, se è medio, se è chiaro]; null = la fantasia non usa il secondo colore
+    righe: ["#f4f2ec", "#f4f2ec", "#1b2440"], quadri: ["#c9302c", "#14141a", "#6d1f33"], pois: ["#f4f2ec", "#f4f2ec", "#6d1f33"], mimetica: null, jeans: null, nessuna: null
+  };
+  function luminosita(h) { var c = rgb(h); return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255; }
+  function secondoAuto(lista, base, fant) {
+    var vuole;
+    if (fant === "hawaiana") {   // i fiori: gialli sui colori caldi, rosa sul giallo, corallo sugli altri
+      var c = rgb(base), mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]), h = 0;
+      if (mx !== mn) h = (mx === c[0] ? ((c[1] - c[2]) / (mx - mn) + 6) % 6 : (mx === c[1] ? (c[2] - c[0]) / (mx - mn) + 2 : (c[0] - c[1]) / (mx - mn) + 4)) * 60;
+      vuole = mx - mn < 30 ? "#ff6b57" : (h < 35 || h >= 300 ? "#ffd23f" : (h < 75 ? "#e64980" : "#ff6b57"));
+    } else {
+      var P = SECONDO_PER[fant]; if (!P) return null;
+      var L = luminosita(base); vuole = P[L < 0.22 ? 0 : (L < 0.62 ? 1 : 2)];
+    }
+    // il colore della tavolozza più vicino (mai lo stesso del capo)
+    var t = rgb(vuole), meglio = null, dm = 1e9;
+    lista.forEach(function (x, i) { if (x === base) return; var y = rgb(x), d = (y[0] - t[0]) * (y[0] - t[0]) * 0.3 + (y[1] - t[1]) * (y[1] - t[1]) * 0.59 + (y[2] - t[2]) * (y[2] - t[2]) * 0.11; if (d < dm) { dm = d; meglio = i; } });
+    return meglio;
+  }
+  function secondoDiPartenza(cfg, k, v) {
+    if (!cfg || !/^(fant|maglia|fantP|pantaloni)$/.test(k)) return null;
+    var capo = k === "fant" || k === "maglia", fk = capo ? "fant" : "fantP", ck = capo ? "maglia" : "pantaloni", k2 = capo ? "maglia2" : "pant2", L = OPZ[ck];
+    function auto(c) { var f = c[fk]; return f && f !== "nessuna" ? secondoAuto(L, col(L, c[ck] == null ? BASE[ck] : c[ck]), f) : null; }
+    var ora = cfg[k2] == null ? null : cfg[k2], prima = auto(cfg);
+    if (ora != null && ora !== prima) return null;   // scelto a mano: resta
+    var dopo = {}, x; for (x in cfg) dopo[x] = cfg[x]; dopo[k] = v;
+    var nuovo = auto(dopo);
+    return nuovo === ora ? null : { chiave: k2, valore: nuovo };
   }
 
   var TESTA = {
@@ -2417,9 +2517,9 @@
       blush: donna ? uno(["nessuno", "nessuno", "leggero", "intenso", "abbronzato"]) : "nessuno", colBlush: pick(OPZ.colBlush),
       capo: uno(ok("capo", donna ? ["maglietta", "lunga", "felpa", "camicetta", "crop", "top", "cardigan", "maglione", "vestito", "vestitolungo", "dolcevita", "canotta", "camicia", "cappotto", "gilet", "sportiva", "vestito"]
                                  : ["maglietta", "lunga", "felpa", "camicia", "canotta", "polo", "dolcevita", "giacca", "bomber", "calcio", "maglione", "gilet", "cappotto", "sportiva", "maglietta"])),
-      maglia: pick(OPZ.maglia), stampa: uno(["nessuna", "nessuna", "nessuna", "righe", "stella", "fulmine", "cuore", "pois", "quadri", "smile", "pallone", "numero"]),
+      maglia: pick(OPZ.maglia.slice(0, COLORI_DI_PRIMA.maglia)), stampa: uno(["nessuna", "nessuna", "nessuna", "righe", "stella", "fulmine", "cuore", "pois", "quadri", "smile", "pallone", "numero"]),
       modScarpe: uno(ok("modScarpe", donna ? ["sneakers", "ballerine", "tacchi", "stivaletti", "stivalialti", "zeppe", "sandali", "sneakers"] : ["sneakers", "sneakers", "stivali", "eleganti", "sandali", "anfibi", "stivaletti"])),
-      pantaloni: pick(OPZ.pantaloni), scarpe: pick(OPZ.scarpe), colAcc: pick(OPZ.colAcc),
+      pantaloni: pick(OPZ.pantaloni.slice(0, COLORI_DI_PRIMA.pantaloni)), scarpe: pick(OPZ.scarpe.slice(0, COLORI_DI_PRIMA.scarpe)), colAcc: pick(OPZ.colAcc),
       occG: uno([-1, 0, 0, 1]), occD: uno([-1, 0, 0, 1]), occA: 0, soprA: uno([0, 0, 1]), nasoG: uno([-1, 0, 0, 1]), boccaA: 0,
       cappello: pick([0, 0, 0, 1]) ? uno(ok("cappello", donna ? ["cappellino", "berretto", "basco", "fiori", "cerchietto", "fiocco", "mollette", "paglia", "fascia", "cuffie", "pescatore", "tiara"]
                                                         : ["cappellino", "berretto", "fascia", "cuffie", "cilindro", "cowboy", "pescatore", "basco", "coppola", "borsalino", "visiera"])) : "nessuno",
@@ -2430,6 +2530,8 @@
   }
 
   window.SGOmino = { svg: svg, el: el, mano: mano, casuale: casuale, norm: norm, OPZ: OPZ, BASE: BASE, NOMI: NOMI, NOMI_K: NOMI_K, LIBERI: LIBERI, BLOCCATI: BLOCCATI, SOLO_DONNA: SOLO_DONNA, GRUPPI_CAPELLI: GRUPPI_CAPELLI,
+    GRUPPI_COLORI: GRUPPI_COLORI, NOMI_COLORI: NOMI_COLORI, PARTENZA: PARTENZA, coloreDiPartenza: coloreDiPartenza,
+    NUOVI_VESTITI: NUOVI_VESTITI, secondoDiPartenza: secondoDiPartenza,
     adattaForma: adattaForma, formaDaNome: formaDaNome, CAPELLI_UOMO: CAPELLI_UOMO,
     stile: function (s) { if (s === "classico" || s === "rifinito" || s === "illustrato") STILE = s; return STILE; },   // lo stile del disegno per tutta la pagina (vedi STILE)
     // gli avatar illustrati sono accesi? (i giochi cambiano tavoli e banconi SOLO in quel caso)

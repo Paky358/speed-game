@@ -1352,7 +1352,7 @@
       if (fatto.disabled) no("scelto il look, «Fatto» resta spento");
       fatto.click();
       if (!await W.aspetta(function () { return home(N); }, 4000)) no("toccato «Fatto», non si arriva alla home");
-      if (!N.__fp.omino || N.__fp.omino.forma !== "donna" || N.__fp.omino.capo !== "vestitolungo") no("l'avatar salvato non è «Lei, Elegante» (" + JSON.stringify(N.__fp.omino || {}).slice(0, 80) + ")");
+      if (!N.__fp.omino || N.__fp.omino.forma !== "donna" || N.__fp.omino.capo !== "giacca") no("l'avatar salvato non è «Lei, Elegante» (" + JSON.stringify(N.__fp.omino || {}).slice(0, 80) + ")");
       if (!/Nina/.test(T(N))) no("nella home non c'è il nome del profilo");
       var ric = JSON.parse(N.localStorage.getItem("sg-ultimo-profilo") || "null");
       if (!ric || ric.nome !== "Nina") no("il telefono non ricorda il profilo");
@@ -1955,10 +1955,8 @@
       P.document.querySelector(".sl-regole-riga").click(); await W.dorme(200);
       var fo = P.document.querySelector(".sl-foglio");
       if (!fo || !/Regole della partita/.test(fo.textContent)) no("il tocco di Paky sulla riga non apre ⚙️");
-      if (!W.clicca(P, /Come si gioca/, ".sl-foglio button")) no("nel ⚙️ non c'è «📖 Come si gioca»");
-      await W.dorme(100);
-      var come = fo.querySelector(".sl-come");
-      if (!come || come.hidden || come.textContent.length < 40) no("«📖 Come si gioca» non mostra le regole");
+      // (7 nov 2026: «📖 Come si gioca» non sta più nel ⚙️: c'è il tasto ⓘ accanto a Regole, provato qui sotto)
+      if (fo.querySelector(".sl-come")) no("nel ⚙️ c'è ancora «📖 Come si gioca»");
       var bott = fo.querySelectorAll(".stepper button"); if (bott.length < 2) no("nel ⚙️ non c'è il numero di carte");
       bott[1].click();
       var t0 = Date.now();
@@ -1967,6 +1965,9 @@
       var ms = Date.now() - t0;
       if (ms > 1000) no("le regole nuove arrivano a Giulia dopo " + ms + " ms");
       if (!/6 carte/.test(regoleDi(P))) no("la riga di Paky dice «" + regoleDi(P) + "»");
+      // (7 nov 2026) la riga non si vede più: a Giulia lo dice il tasto «📜 Regole» («✨ Cambiate» per 2,5 s)
+      var bRG = G.document.querySelector(".sl-tasti .sl-regole");
+      if (!bRG || bRG.hidden || !/Cambiate/.test(bRG.textContent)) no("il tasto «📜 Regole» di Giulia non dice «✨ Cambiate» («" + (bRG ? bRG.textContent : "manca") + "»)");
       if (!await W.aspetta(function () { return vm(C).carte === 6; }, 3000)) no("le regole nuove non arrivano nella partita (carte " + vm(C).carte + ")");
       // dopo 2,5 s "✨ Regole cambiate" se ne va
       await W.dorme(2700);
@@ -1976,15 +1977,21 @@
       if (!await W.aspetta(function () { return dentro(M) && /6 carte/.test(regoleDi(M)); }, 9000)) no("Marco non legge le regole nuove («" + regoleDi(M) + "» · «" + T(M).slice(0, 80) + "»)");
       if (M.document.querySelector(".sl-regole-riga").classList.contains("cambiate")) no("per Marco «✨ Regole cambiate» anche se è appena arrivato");
       // Giulia tocca la riga: il foglio col riassunto intero e "📖 Come si gioca"
-      rigaG.click(); await W.dorme(200);
+      G.document.querySelector(".sl-tasti .sl-regole").click(); await W.dorme(200);
       var fg = G.document.querySelector(".sl-foglio");
       if (!fg || fg.querySelector(".sl-reg-tutto").textContent !== regoleDi(G)) no("il tocco di Giulia non apre il foglio col riassunto");
       if (fg.querySelector(".stepper")) no("nel foglio di Giulia si possono cambiare le regole");
-      if (!W.clicca(G, /Come si gioca/, ".sl-foglio button")) no("nel foglio di Giulia non c'è «📖 Come si gioca»");
-      await W.dorme(100);
-      if (fg.querySelector(".sl-come").hidden) no("«📖 Come si gioca» di Giulia non si apre");
       W.clicca(G, /Ho capito/, ".sl-foglio button"); await W.dorme(150);
       if (G.document.querySelector(".sl-velo")) no("il foglio di Giulia non si chiude");
+      // ⓘ (Giulia e Paky): come si gioca, le regole scritte del gioco
+      for (var wi of [[G, "Giulia"], [P, "Paky"]]) {
+        var bI = wi[0].document.querySelector(".sl-tasti .sl-info");
+        if (!bI) { no(wi[1] + " non ha il tasto ⓘ"); continue; }
+        bI.click(); await W.dorme(200);
+        var fI = wi[0].document.querySelector(".sl-foglio");
+        if (!fI || !/Come si gioca/.test(fI.textContent) || fI.querySelector(".sl-info-corpo").textContent.length < 40) no("il tasto ⓘ di " + wi[1] + " non mostra come si gioca");
+        W.clicca(wi[0], /Ho capito/, ".sl-foglio button"); await W.dorme(150);
+      }
       // le misure: niente scorre a 360x640 e 412x915 (Paky e Giulia, con la riga delle regole)
       var mis = [[360, 640], [412, 915]];
       for (var i = 0; i < mis.length; i++) {
