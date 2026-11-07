@@ -4227,6 +4227,73 @@ html body.tema-oro::before{ display:none; }
 .editor-avatar.ed3 .om-figura.zoom-testa{ transform:translateX(-50%) scale(1.5); }
 @media (prefers-reduced-motion: reduce){ .editor-avatar.ed3 .om-figura{ transition:none; } }
 /* =========================================================
+   🔍 IL CAMERINO GRANDE (#39, 7 nov 2026, chat «🔍 Camerino: l'avatar grande e lo zoom»; js/cuore/avatar.js, CAMERINO_GRANDE):
+   l'avatar sta dietro a tutto su tutto il palco; sopra il foglio (maniglia, schede, colori in una riga, scelte in griglia) che si tira su
+   e giù. Misure e inquadrature le mette js/cuore/avatar.js (altezza della figura, transform della figura e della pedana, --area = dove
+   finisce lo spazio libero sopra il foglio). Si animano solo transform e opacity.
+   ========================================================= */
+.oro.editor-avatar.ed3.ed4 .contenuto{ position:relative; flex:1 1 auto; min-height:0; margin:0 -16px; overflow:hidden; }
+.oro.editor-avatar.ed3.ed4 .omino-palco.editor{ position:absolute; left:0; top:0; right:0; bottom:0; height:auto; width:auto; margin:0; border:0; border-radius:0;
+  box-shadow:none; touch-action:none; -webkit-user-select:none; user-select:none;
+  background:radial-gradient(ellipse 70% 46% at 50% 30%, var(--o-palco-luce), var(--o-palco-luce-2) 55%, transparent 80%), linear-gradient(180deg, var(--o-palco-alto), var(--o-palco-basso)); }
+.oro.editor-avatar.ed3.ed4 .om-figura{ left:0; top:0; bottom:auto; height:300px; transform-origin:0 0; transition:transform .5s cubic-bezier(.25,.9,.3,1); }
+.editor-avatar.ed4:not(.misurato) .om-figura, .editor-avatar.ed4:not(.misurato) .om-pedana{ opacity:0; }
+.oro.editor-avatar.ed3.ed4 .om-figura svg{ height:100%; }
+.oro.editor-avatar.ed3.ed4 .om-pedana{ left:0; top:0; bottom:auto; width:210px; height:30px; transform-origin:0 0; transition:transform .5s cubic-bezier(.25,.9,.3,1), opacity .3s; }
+.editor-avatar.ed4 .omino-palco.zoomato .om-pedana{ opacity:0; }
+.oro.editor-avatar.ed3.ed4 .om-freccia{ top:calc(var(--area, 400px) / 2 + 4px); }
+.oro.editor-avatar.ed3.ed4 .om-puntini{ top:24px; bottom:auto; left:50%; right:auto; transform:translateX(-50%); }
+/* l'avatar intero in piccolo (da vicino, in basso a sinistra: toccato torna intero) e «🔄 gira» (in basso a destra) */
+.ed4-spec{ position:absolute; left:12px; top:calc(var(--area, 400px) - 104px); z-index:3; width:64px; height:96px; padding:4px 0 2px; border:0; border-radius:14px; cursor:pointer;
+  display:flex; align-items:flex-end; justify-content:center; overflow:hidden; background:rgba(10,13,28,.72); box-shadow:inset 0 0 0 1px rgba(255,255,255,.2), 0 6px 14px -6px rgba(0,0,0,.7);
+  opacity:0; pointer-events:none; transition:opacity .25s; -webkit-tap-highlight-color:transparent; }
+.ed4-spec svg, .ed4-spec img{ height:100%; width:auto; pointer-events:none; }
+.editor-avatar.ed4 .omino-palco.zoomato .ed4-spec{ opacity:1; pointer-events:auto; }
+.ed4-gira{ position:absolute; right:12px; top:calc(var(--area, 400px) - 50px); z-index:3; width:42px; height:42px; padding:0; border:0; border-radius:13px; cursor:pointer;
+  font-size:1.15rem; color:var(--o-testo); background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo-oro); -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.ed4-gira:active{ transform:scale(.92); }
+/* il foglio: alto quanto serve col foglio su; giù scende con transform (la parte di sotto resta fuori dallo schermo) */
+.ed4-foglio{ position:absolute; left:0; right:0; bottom:0; z-index:4; display:flex; flex-direction:column; padding:0 16px; border-radius:24px 24px 0 0;
+  background:linear-gradient(180deg, rgba(28,34,66,.98), #12162b 64px); box-shadow:0 -12px 28px -12px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.12);
+  transition:transform .38s cubic-bezier(.25,.9,.3,1); }
+.ed4-man{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; height:20px; margin:0 -16px; padding:0; border:0; background:none; cursor:grab;
+  touch-action:none; -webkit-tap-highlight-color:transparent; }
+.ed4-man::before{ content:""; width:44px; height:5px; border-radius:9px; background:rgba(255,255,255,.38); }
+.editor-avatar.ed4 .omino-schede, .editor-avatar.ed4 .ed3-dock{ touch-action:pan-x; }
+.oro.editor-avatar.ed3.ed4 .omino-schede{ margin-bottom:6px; }
+.oro.editor-avatar.ed3.ed4 .omino-pannello{ flex:1 1 auto; min-height:0; padding-top:0; -webkit-mask-image:none; mask-image:none; }
+/* i colori in una riga: le linguette e sotto la fila scelta */
+.ed4-seg{ display:flex; gap:6px; margin:0 0 3px; }
+.ed4-segb{ flex:1 1 0; min-width:0; height:28px; padding:0 4px; border:0; border-radius:10px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font:700 .76rem var(--o-tit); color:var(--o-tenue); background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo); touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.ed4-segb.on{ color:var(--o-testo); background:var(--o-carta-viva); box-shadow:inset 0 0 0 1.5px var(--n-lampone); }
+.ed3-riga[hidden]{ display:none; }
+.editor-avatar.ed4 .ed3-riga.sola .ed3-et{ display:none; }
+.editor-avatar.ed4 .ed3-riga.sola .ed3-scorre{ margin-left:-16px; padding-left:16px; }
+/* le linguette dei gruppi (restano in cima mentre si scorre) e la griglia */
+.ed4-chips{ position:sticky; top:0; z-index:2; display:flex; gap:6px; overflow-x:auto; overflow-y:hidden; margin:0 -16px 2px; padding:6px 16px 6px;
+  background:#12162b; scrollbar-width:none; touch-action:pan-x; }
+.ed4-chips::-webkit-scrollbar{ display:none; }
+.ed4-chip{ flex:0 0 auto; height:30px; padding:0 12px; border:0; border-radius:99px; cursor:pointer; white-space:nowrap; font:700 .78rem var(--o-tit); color:var(--o-tenue);
+  background:var(--o-carta); box-shadow:inset 0 0 0 1px var(--o-filo); touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.ed4-chip.on{ color:var(--o-testo); background:var(--o-carta-viva); box-shadow:inset 0 0 0 1.5px var(--n-lampone); }
+.oro.editor-avatar.ed3.ed4 .ed3-fila.griglia{ display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:8px; overflow:visible; margin:0; padding:0 0 4px; scroll-snap-type:none; }
+.oro.editor-avatar.ed3.ed4 .ed3-fila.griglia .ed3-t{ flex:none; width:auto; position:relative; }   /* (relative: l'angolo per il prezzo e il lucchetto del negozio) */
+.editor-avatar.ed4 .ed3-gr-tit{ margin:6px 0 4px; }
+.editor-avatar.ed4 .ed3-gr-tit h3{ font-size:.84rem; color:var(--o-tenue); }
+.oro.editor-avatar.ed3.ed4 .omino-palco.zoomato .om-freccia, .oro.editor-avatar.ed3.ed4 .omino-palco.zoomato .om-puntini{ opacity:0; pointer-events:none; }
+.oro.editor-avatar.ed3.ed4 .om-freccia, .oro.editor-avatar.ed3.ed4 .om-puntini{ transition:opacity .25s; }
+.oro.editor-avatar.ed3.ed4 .piede{ padding-top:6px; padding-bottom:calc(8px + env(safe-area-inset-bottom)); background:#12162b; }
+.oro.editor-avatar.ed3.ed4 .piede .btn{ min-height:46px; }
+@media (max-height:700px){
+  .ed4-seg{ margin-bottom:1px; } .ed4-segb{ height:26px; } .ed4-chip{ height:28px; }
+  .oro.editor-avatar.ed3.ed4 .omino-schede{ margin-bottom:4px; }
+  .oro.editor-avatar.ed3.ed4 .piede .btn{ min-height:42px; }
+}
+.oro.editor-avatar.ed3.ed4 .ed3-fila.griglia .om-mini.intero{ height:124px; }   /* (i look e lui o lei: nelle caselle larghe un po' più grandi) */
+@media (max-height:700px){ .oro.editor-avatar.ed3.ed4 .ed3-fila.griglia .om-mini.intero{ height:100px; } }
+@media (prefers-reduced-motion: reduce){ .oro.editor-avatar.ed3.ed4 .om-figura, .oro.editor-avatar.ed3.ed4 .om-pedana, .ed4-foglio{ transition:none; } }
+/* =========================================================
    🧍 SALETTA: SPAZIO AGLI AVATAR (6 nov 2026, il proprietario: «che serve chiudere la sala? Occupa solo spazio e il titolo poi deve
    andare sotto… dobbiamo recuperare spazio… si devono vedere bene gli avatar»; le cose restano tutte, «un po' più piccoline, non troppo»).
    Niente «🔒 Chiudi» nella testa, titolo su UNA riga (si rimpicciolisce col telefono), codice e invito più bassi, niente insegna
