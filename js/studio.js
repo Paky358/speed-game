@@ -1353,7 +1353,7 @@
     }
   }
   function inquadra(S, shot, ms) { S.shot = shot; return camera(S, shot(), ms); }
-  function suSchermo(S, ms) { return inquadra(S, function () { return S.R.schermo; }, ms); }
+  function suSchermo(S, ms) { return inquadra(S, function () { return S.senzaSchermo ? { x: 0, y: 0, w: S.W, h: S.H } : S.R.schermo; }, ms); }   // (senza maxischermo: lo studio intero)
   function largo(S, ms) { return inquadra(S, function () { return { x: 0, y: 0, w: S.W, h: S.H }; }, ms); }
   function suLeggio(S, i, ms) {
     return inquadra(S, function () {
