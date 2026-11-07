@@ -2056,7 +2056,6 @@
     // la ruota (sul pavimento dello studio, davanti ai concorrenti) e i tasti (nella barra in basso)
     ui.canvas = el("canvas", { class: "ru-disco", width: "600", height: "600" });
     ui.kRuota = (vm.regole && vm.regole.express ? "e" : "") + ":" + (vm.mist || "");
-    disegnaRuota(ui.canvas, spicchiDi(vm.regole && vm.regole.express, vm.mist));
     // ❓ la scritta grande del Mistero (si apre… / +10.000! / BANCAROTTA!)
     ui.mistIco = el("div", { class: "ico", text: "❓" }); ui.mistTx = el("div", { class: "tx" }); ui.mistSub = el("div", { class: "sub" });
     ui.mist = el("div", { class: "ru-mist" }, [ ui.mistIco, ui.mistTx, ui.mistSub ]);
@@ -2125,8 +2124,8 @@
   // Pezzi: il disco (canvas che gira, disegnato una volta), l'anello d'oro e le lampadine (fermi: le lampadine «corrono»
   // accendendosi a turno, solo trasparenza), la lancetta che batte sui chiodi, la mano di chi gira. Si anima solo transform/opacity.
   function disegnaRuota(cv, spicchi) {
-    var c = cv.getContext("2d"), Rr = 300, Rs = 274, passo = Math.PI * 2 / spicchi.length;
-    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height);   // (si ridisegna quando arriva o si apre il Mistero)
+    var c = cv.getContext("2d"), Rr = 300, Rs = 274, passo = Math.PI * 2 / spicchi.length, sc = cv.width / 600;
+    c.setTransform(sc, 0, 0, sc, 0, 0); c.clearRect(0, 0, 600, 600);   // (si ridisegna quando arriva o si apre il Mistero; tela piccola = stessa ruota in scala)
     c.translate(Rr, Rr);
     c.beginPath(); c.arc(0, 0, Rs + 2, 0, Math.PI * 2); c.fillStyle = "#1a0f00"; c.fill();
     spicchi.forEach(function (sp, i) {
@@ -2166,7 +2165,7 @@
   var N_LAMP = 48;
   function disegnaAnello(cv) {
     var c = cv.getContext("2d"), k;
-    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 600, 600); c.translate(300, 300);
+    c.setTransform(cv.width / 600, 0, 0, cv.width / 600, 0, 0); c.clearRect(0, 0, 600, 600); c.translate(300, 300);
     var g = c.createRadialGradient(0, 0, 268, 0, 0, 300);
     g.addColorStop(0, "#6a3f00"); g.addColorStop(0.18, "#ffd76a"); g.addColorStop(0.45, "#c3830f"); g.addColorStop(0.75, "#ffe9a6"); g.addColorStop(1, "#7a4c04");
     c.beginPath(); c.arc(0, 0, 299, 0, Math.PI * 2); c.arc(0, 0, 271, 0, Math.PI * 2, true); c.fillStyle = g; c.fill();
@@ -2180,7 +2179,7 @@
   // le lampadine accese: una tela per quelle pari e una per quelle dispari (girando si accendono a turno e sembrano correre)
   function disegnaLampadine(cv, par) {
     var c = cv.getContext("2d"), k;
-    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 600, 600); c.translate(300, 300);
+    c.setTransform(cv.width / 600, 0, 0, cv.width / 600, 0, 0); c.clearRect(0, 0, 600, 600); c.translate(300, 300);
     for (k = par; k < N_LAMP; k += 2) {
       var al = -Math.PI / 2 + (k + 0.5) * Math.PI * 2 / N_LAMP, x = Math.cos(al) * 285.5, y = Math.sin(al) * 285.5;
       var g = c.createRadialGradient(x, y, 0, x, y, 15); g.addColorStop(0, "rgba(255,245,200,.95)"); g.addColorStop(0.35, "rgba(255,214,110,.6)"); g.addColorStop(1, "rgba(255,190,60,0)");
@@ -2193,22 +2192,39 @@
   // la mano (un guanto del colore di chi gira) che scende sul bordo e spinge un piolo
   var SVG_MANO = "<svg viewBox='0 0 40 50'><path d='M9 3h22a4 4 0 0 1 4 4v15c0 3-1 5-2 7l-1 3v12a3.2 3.2 0 0 1-6.4 0V34h-.8v10.5a3.2 3.2 0 0 1-6.4 0V34h-.8v8a3.2 3.2 0 0 1-6.4 0V30l-3.4-4.3C5.6 23 5 21 5 18V7a4 4 0 0 1 4-4z' " +
     "style='fill:var(--col,#ffc247)' stroke='#fff' stroke-width='2.4' stroke-linejoin='round'/><rect x='7' y='1.5' width='26' height='8' rx='3' fill='#fff' opacity='.92'/></svg>";
+  // Due ruote uguali che girano insieme: quella sul pavimento dello studio (piccola, in prospettiva, ui.canvas) e quella
+  // «vista dall'alto» (ui.canvasA): quando tocca girare compare grande al centro della parte libera dello schermo e lo studio
+  // intorno si scurisce (come la telecamera che va sopra la ruota). Così è sempre intera e grande, su ogni telefono.
   function creaRuota(ui) {
     var el = ui.el, S = ui.S;
-    ui.anello = el("canvas", { class: "ru-anello", width: "600", height: "600" }); disegnaAnello(ui.anello);
-    ui.lampA = el("canvas", { class: "ru-lamp a", width: "600", height: "600" }); disegnaLampadine(ui.lampA, 0);
-    ui.lampB = el("canvas", { class: "ru-lamp b", width: "600", height: "600" }); disegnaLampadine(ui.lampB, 1);
-    ui.lancetta = el("div", { class: "ru-lancetta", html: SVG_LANCETTA });
-    ui.oro = el("div", { class: "ru-oro" });
-    ui.piatto = el("div", { class: "ru-piatto" }, [ ui.canvas, ui.anello, ui.lampA, ui.lampB, el("div", { class: "ru-centro" }), el("div", { class: "ru-invito" }), ui.oro, ui.lancetta ]);
+    // sul pavimento: tele più piccole (la ruota lì è piccola)
+    ui.canvas.width = ui.canvas.height = 300;
+    function tela(cls, w) { return el("canvas", { class: cls, width: String(w), height: String(w) }); }
+    var an = tela("ru-anello", 300), la = tela("ru-lamp a", 300), lb = tela("ru-lamp b", 300);
+    disegnaAnello(an); disegnaLampadine(la, 0); disegnaLampadine(lb, 1);
+    ui.lancPav = el("div", { class: "ru-lancetta", html: SVG_LANCETTA });
+    ui.piatto = el("div", { class: "ru-piatto" }, [ ui.canvas, an, la, lb, el("div", { class: "ru-centro" }), ui.lancPav ]);
     ui.ombra = el("div", { class: "ru-ombra" });
     ui.ruotaEl = el("div", { class: "ru-ruota" }, [ ui.ombra, ui.piatto ]);
-    ui.buio = el("div", { class: "ru-buio" });
+    S.mondo.appendChild(ui.ruotaEl);
+    // vista dall'alto: grande, sopra lo studio (sotto il tabellone e la tastiera)
+    ui.canvasA = tela("ru-disco", 600);
+    ui.anello = tela("ru-anello", 600); disegnaAnello(ui.anello);
+    ui.lampA = tela("ru-lamp a", 600); disegnaLampadine(ui.lampA, 0);
+    ui.lampB = tela("ru-lamp b", 600); disegnaLampadine(ui.lampB, 1);
+    ui.lancetta = el("div", { class: "ru-lancetta", html: SVG_LANCETTA });
+    ui.oro = el("div", { class: "ru-oro" });
+    ui.piattoA = el("div", { class: "ru-piatto-alto" }, [ ui.canvasA, ui.anello, ui.lampA, ui.lampB, el("div", { class: "ru-centro" }), el("div", { class: "ru-invito" }), ui.oro, ui.lancetta ]);
     ui.manoEl = el("div", { class: "ru-mano", html: SVG_MANO });
-    S.mondo.appendChild(ui.buio); S.mondo.appendChild(ui.ruotaEl); S.mondo.appendChild(ui.manoEl);
+    ui.buio = el("div", { class: "ru-buio" });
+    ui.altoEl = el("div", { class: "ru-alto" }, [ ui.buio, ui.piattoA, ui.manoEl ]);
+    S.vista.appendChild(ui.altoEl);
+    ridisegnaRuote(ui, spicchiDi(ui.vm.regole && ui.vm.regole.express, ui.vm.mist));
     mettiRuota(ui);
     trascinaRuota(ui);
   }
+  function ridisegnaRuote(ui, spicchi) { disegnaRuota(ui.canvas, spicchi); disegnaRuota(ui.canvasA, spicchi); }
+  function ruotaA(ui, ang) { var tr = "rotate(" + (+ang || 0).toFixed(2) + "deg)"; ui.canvas.style.transform = tr; ui.canvasA.style.transform = tr; }
   // dove sta la ruota nello studio: sul pavimento, davanti ai leggii, larga quasi tutto lo studio; schiacciata in prospettiva (k)
   function mettiRuota(ui) {
     var S = ui.S, VW = S.VW, VH = S.VH, H = S.H, W = S.W, bott = 0;
@@ -2217,14 +2233,24 @@
     ui.G = { cx: W / 2, yb: yb, D: D, k: k };
     var e = ui.ruotaEl.style; e.left = (W / 2 - D / 2).toFixed(1) + "px"; e.top = (yb - D).toFixed(1) + "px"; e.width = e.height = D.toFixed(1) + "px";
     ui.ruotaEl.style.setProperty("--k", k.toFixed(4)); ui.ruotaEl.style.setProperty("--sp", (D * 0.028).toFixed(1) + "px");
-    var b = ui.buio.style; b.left = (W / 2 - 1.5 * D).toFixed(1) + "px"; b.top = (yb - D / 2 - 1.5 * D).toFixed(1) + "px"; b.width = b.height = (3 * D).toFixed(1) + "px";
-    var m = ui.manoEl.style; m.width = m.height = (D * 0.17).toFixed(1) + "px";
+    if (ui.alta) posAlto(ui);
     if (ui.quadro && ui.quadro.classList.contains("on")) posQuadro(ui);
   }
-  // la telecamera sopra la ruota: la ruota si «alza» (da ellisse a cerchio) e intorno si fa buio
-  function ruotaAlta(ui, on) {
-    if (ui.alta === on) return;
-    ui.alta = on; ui.ruotaEl.classList.toggle("alta", on); ui.buio.classList.toggle("on", on);
+  // la ruota vista dall'alto: al centro della parte di schermo tra il tabellone e la tastiera, grande quanto ci sta
+  function posAlto(ui) {
+    var S = ui.S, b = banda(ui), h = b.bot - b.top, d = Math.max(120, Math.min(S.VW * 0.94, h * 0.95));
+    var x = (S.VW - d) / 2, y = b.top + (h - d) / 2, k = Math.round(x) + "|" + Math.round(y) + "|" + Math.round(d);
+    if (k === ui.kAlto) return;
+    ui.kAlto = k; ui.A = { x: x, y: y, d: d };
+    var p = ui.piattoA.style; p.left = x.toFixed(1) + "px"; p.top = y.toFixed(1) + "px"; p.width = p.height = d.toFixed(1) + "px";
+    ui.buio.style.background = "radial-gradient(circle at " + (x + d / 2).toFixed(0) + "px " + (y + d / 2).toFixed(0) + "px,rgba(4,5,14,.25) " + (d * 0.48).toFixed(0) + "px,rgba(4,5,14,.86) " + (d * 0.62).toFixed(0) + "px,rgba(4,5,14,.93))";
+    ui.manoEl.style.width = ui.manoEl.style.height = (d * 0.17).toFixed(1) + "px";
+  }
+  // la telecamera sopra la ruota (vicino = sulla lancetta, alla fine del giro)
+  function ruotaAlta(ui, on, vicino) {
+    if (on) posAlto(ui);
+    if (ui.alta !== on) { ui.alta = on; ui.altoEl.classList.toggle("on", on); }
+    var v = !!(on && vicino); if (ui.altoEl.classList.contains("vicino") !== v) ui.altoEl.classList.toggle("vicino", v);
   }
   // il riquadro nella scena (buste, finale): al centro della parte di studio che si vede
   function posQuadro(ui) {
@@ -2239,7 +2265,7 @@
   function fermaGiro(ui) {
     ui.giroK = (ui.giroK || 0) + 1;
     if (ui.rafGiro) cancelAnimationFrame(ui.rafGiro); clearTimeout(ui.tGiroFine); ui.rafGiro = 0;
-    if (ui.ruotaEl) ui.ruotaEl.classList.remove("gira");
+    if (ui.altoEl) { ui.altoEl.classList.remove("gira"); ui.ruotaEl.classList.remove("gira"); }
     if (ui.lancetta) { ui.lancetta.style.transition = ""; ui.lancetta.style.transform = ""; }
   }
   function giraRuota(ui, da, a, ms, dir) {
@@ -2249,14 +2275,14 @@
     function sotto(ang) { return Math.floor(((((-ang) % 360) + 360) % 360) / 15) % 24; }
     function fine() {
       if (k !== ui.giroK) return;
-      ui.canvas.style.transform = "rotate(" + a + "deg)"; ui.ruotaEl.classList.remove("gira");
+      ruotaA(ui, a); ui.altoEl.classList.remove("gira"); ui.ruotaEl.classList.remove("gira");
       lan.style.transition = "transform .25s cubic-bezier(.3,1.6,.5,1)"; lan.style.transform = "rotate(0deg)";
       ui.rafGiro = 0; clearTimeout(ui.tGiroFine);
     }
     function passo(now) {
       if (k !== ui.giroK || !S.vivo()) return;
       var u = Math.min(1, (now - t0) / ms), ang = da + D * (1 - Math.pow(1 - u, 3.2));
-      ui.canvas.style.transform = "rotate(" + ang.toFixed(2) + "deg)";
+      ruotaA(ui, ang);
       var seg = Math.floor(ang / 15);
       if (seg !== ult) {   // un chiodo passa sotto la lancetta: la spinge di lato, tic
         ult = seg; lan.style.transition = "none"; lan.style.transform = "rotate(" + (-26 * dir) + "deg)"; kick = now;
@@ -2268,34 +2294,34 @@
       if (!rullo && ms > 2400 && ms * (1 - u) < 1800) { rullo = true; try { ST.FX.rullo(1.6); } catch (e) {} inquadra(ui, "lancetta", null, 1200); }
       if (u < 1) ui.rafGiro = requestAnimationFrame(passo); else fine();
     }
-    ui.ruotaEl.classList.add("gira");
+    ui.altoEl.classList.add("gira"); ui.ruotaEl.classList.add("gira");
     ui.rafGiro = requestAnimationFrame(passo);
     ui.tGiroFine = setTimeout(fine, ms + 150);   // (arriva comunque, anche se lo schermo non ridisegna)
   }
-  // la mano di chi gira: scende dal suo lato sul bordo della ruota, spinge un piolo nel verso del giro e torna su
+  // la mano di chi gira: scende dal suo lato (i concorrenti stanno dietro la ruota, in alto) sul bordo e spinge un piolo nel verso del giro
   function mano(ui, i, dir) {
-    var S = ui.S, G = ui.G, p = S.posti && S.posti[i], m = ui.manoEl;
-    if (!p || !G || !m.animate) return;
-    var R = G.D * 0.47, cy = G.yb - G.D / 2, dx = Math.max(-0.3 * G.D, Math.min(0.3 * G.D, (p.cx - G.cx) * 0.5)), x = G.cx + dx, dy = -Math.sqrt(R * R - dx * dx), yr = cy + dy;
-    var w = G.D * 0.17, ux = -dy / R * dir, uy = dx / R * dir, push = 0.15 * G.D;
+    var A0 = ui.A, m = ui.manoEl, n = (ui.ids || []).length || 1;
+    if (!A0 || !m.animate) return;
+    var d = A0.d, R = d * 0.47, cx = A0.x + d / 2, cy = A0.y + d / 2, dx = Math.max(-0.3 * d, Math.min(0.3 * d, (i - (n - 1) / 2) * 0.22 * d)), dy = -Math.sqrt(R * R - dx * dx), yr = cy + dy;
+    var w = d * 0.17, ux = -dy / R * dir, uy = dx / R * dir, push = 0.15 * d;
     m.style.setProperty("--col", (ST.COLORI || [])[i % 10] || "#ffc247");
     function tr(X, Y, r) { return "translate(" + (X - w / 2).toFixed(1) + "px," + (Y - w * 0.92).toFixed(1) + "px) rotate(" + r + "deg)"; }
     try {
       m.animate([
-        { transform: tr(x, yr - 0.34 * G.D, 0), opacity: 0 },
-        { transform: tr(x, yr + 0.01 * G.D, 0), opacity: 1, offset: 0.38 },
-        { transform: tr(x + ux * push, yr + 0.01 * G.D + uy * push, -14 * dir), opacity: 1, offset: 0.6 },
-        { transform: tr(x + ux * push * 1.25, yr - 0.32 * G.D, 0), opacity: 0 }
+        { transform: tr(cx + dx, yr - 0.3 * d, 0), opacity: 0 },
+        { transform: tr(cx + dx, yr + 0.01 * d, 0), opacity: 1, offset: 0.38 },
+        { transform: tr(cx + dx + ux * push, yr + 0.01 * d + uy * push, -14 * dir), opacity: 1, offset: 0.6 },
+        { transform: tr(cx + dx + ux * push * 1.25, yr - 0.28 * d, 0), opacity: 0 }
       ], { duration: 980, easing: "ease-in-out" });
     } catch (e) {}
   }
   // 👆 si gira col dito: si trascina la ruota e la si lascia andare; più veloce il gesto, più forte la girata
   function trascinaRuota(ui) {
-    var g = null, R0 = ui.ruotaEl;
-    function rimetti() { ui.canvas.style.transform = "rotate(" + (ui.ang || 0) + "deg)"; }
+    var g = null, R0 = ui.piattoA;
+    function rimetti() { ruotaA(ui, ui.ang || 0); }
     R0.addEventListener("pointerdown", function (e) {
       if (!ui.puoGirare || !ui.alta || ui.trascinato != null || ui.rafGiro) return;
-      var r = ui.piatto.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      var r = R0.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       g = { id: e.pointerId, cx: cx, cy: cy, a: Math.atan2(e.clientY - cy, e.clientX - cx), tot: 0, s: [{ t: performance.now(), v: 0 }] };
       try { R0.setPointerCapture(e.pointerId); } catch (x) {}
       if (e.cancelable) e.preventDefault();
@@ -2305,7 +2331,7 @@
       var a = Math.atan2(e.clientY - g.cy, e.clientX - g.cx), d = a - g.a, now = performance.now();
       if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI;
       g.a = a; g.tot += d * 180 / Math.PI;
-      ui.canvas.style.transform = "rotate(" + ((ui.ang || 0) + Math.max(-170, Math.min(170, g.tot))).toFixed(2) + "deg)";
+      ruotaA(ui, (ui.ang || 0) + Math.max(-170, Math.min(170, g.tot)));
       g.s.push({ t: now, v: g.tot }); while (g.s.length > 2 && now - g.s[0].t > 160) g.s.shift();
     });
     function lascia(e) {
@@ -2347,8 +2373,8 @@
     var W = S.VW / s, HH = S.VH / s, ccy = cy - ((b.top + b.bot) / 2 - S.VH / 2) / s;
     return { x: cx - W / 2, y: ccy - HH / 2, w: W, h: HH };
   }
-  function shotRuota(ui) { var G = ui.G; return nellaBanda(ui, G.cx, G.yb - G.D / 2, G.D * 1.06, G.D * 1.06); }   // (vista dall'alto: la ruota grande)
-  function shotLancetta(ui) { var G = ui.G; return nellaBanda(ui, G.cx, G.yb - G.D * 0.8, G.D * 0.62, G.D * 0.62); }   // (la lancetta da vicino, alla fine del giro)
+  // (dietro la ruota vista dall'alto: i concorrenti e la ruota sul pavimento, tutti insieme)
+  function shotPavimento(ui) { var S = ui.S, G = ui.G, y0 = G.yb - G.D * G.k; (S.posti || []).forEach(function (p) { y0 = Math.min(y0, p.top - 0.05 * p.w); }); return nellaBanda(ui, G.cx, (y0 + G.yb) / 2, G.D * 1.08, (G.yb - y0) * 1.04); }
   function shotLeggio(ui, i) { var S = ui.S, p = S.posti[i] || S.posti[0]; return nellaBanda(ui, p.cx, p.top + p.w * 0.62, Math.max(0.6 * S.VW, p.w * 1.3), p.w * 1.34); }
   function shotTutti(ui) {   // tutti i concorrenti insieme (la frase lampo: si vede chi prenota)
     var S = ui.S, x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -2361,9 +2387,9 @@
     var k = cosa + ":" + (i == null ? "" : i);
     if (k === ui.inq) return;
     ui.inq = k;
-    ruotaAlta(ui, cosa === "ruota" || cosa === "lancetta");
+    ruotaAlta(ui, cosa === "ruota" || cosa === "lancetta", cosa === "lancetta");
     ui.quadro.classList.toggle("on", cosa === "quadro"); if (cosa === "quadro") posQuadro(ui);
-    ST.inquadra(ui.S, cosa === "ruota" ? function () { return shotRuota(ui); } : cosa === "lancetta" ? function () { return shotLancetta(ui); } :
+ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return shotPavimento(ui); } :
       cosa === "tutti" || cosa === "quadro" ? function () { return shotTutti(ui); } : function () { return shotLeggio(ui, i); }, ms == null ? 700 : ms);
   }
   // dove guarda la telecamera in ogni momento della partita
@@ -2447,7 +2473,7 @@
     if (ui.cat.textContent !== tc) ui.cat.textContent = tc;
     // ❓ la ruota si ridisegna solo quando cambia (Mistero che arriva o che viene aperto)
     var kr = (vm.regole && vm.regole.express ? "e" : "") + ":" + (vm.mist || "");
-    if (kr !== ui.kRuota) { ui.kRuota = kr; disegnaRuota(ui.canvas, spicchiDi(vm.regole && vm.regole.express, vm.mist)); }
+    if (kr !== ui.kRuota) { ui.kRuota = kr; ridisegnaRuote(ui, spicchiDi(vm.regole && vm.regole.express, vm.mist)); }
     misteroGrande(ui, vm);
     scriviRiga(ui, vm);
     // la frase lampo: quando questo telefono ha visto comparire ogni lettera (serve a misurare i riflessi)
@@ -2511,7 +2537,7 @@
         var durA = Math.max(1500, (vm.giroMs || T_GIRO) - 900);
         if (!mio && !vm.veloce) mano(ui, it, dir);
         dopo(ui, mio ? 0 : 600, function () { giraRuota(ui, da, ang, durA, dir); });
-      } else { fermaGiro(ui); ui.canvas.style.transform = "rotate(" + vm.angolo + "deg)"; ui.ang = vm.angolo; ui.angVis = null; }
+      } else { fermaGiro(ui); ruotaA(ui, vm.angolo); ui.ang = vm.angolo; ui.angVis = null; }
     }
     if (prec.fase) {
       if (prec.fase === "girando" && f !== "girando") {   // la ruota si è fermata: un attimo sulla ruota
@@ -2594,8 +2620,8 @@
     disegnaAzioni(ui, vm, mioTurno, att);
     // la barra ha cambiato altezza (es. è comparsa la tastiera): rimetto a fuoco l'inquadratura
     var bh = S.barraEl.offsetHeight;
-    if (bh !== ui.barraH) { var primaB = ui.barraH === -1; ui.barraH = bh; if (!primaB && S.shot) ST.camera(S, S.shot(), 350); if (ui.quadro.classList.contains("on")) posQuadro(ui); }
-    if (ui.ruotaEl.classList.contains("tocca") !== !!ui.puoGirare) ui.ruotaEl.classList.toggle("tocca", !!ui.puoGirare);
+    if (bh !== ui.barraH) { var primaB = ui.barraH === -1; ui.barraH = bh; if (!primaB && S.shot) ST.camera(S, S.shot(), 350); if (ui.quadro.classList.contains("on")) posQuadro(ui); if (ui.alta) posAlto(ui); }
+    if (ui.altoEl.classList.contains("tocca") !== !!ui.puoGirare) ui.altoEl.classList.toggle("tocca", !!ui.puoGirare);
   }
   // i fatti della partita (vm.ev): uguali su tutti i telefoni
   function effetto(ui, vm, e) {
@@ -3479,23 +3505,28 @@
       ".ru-btn.segreta{background:#1b1f3a;color:#ffd77a;box-shadow:inset 0 0 0 2px #ffc247}",
       // 🎡 giro 3: la ruota sul pavimento davanti ai concorrenti (ellisse in prospettiva); quando tocca girare si «alza» (vista dall'alto)
       ".ru-ruota{pointer-events:none;z-index:2}",
-      ".ru-ruota.tocca{pointer-events:auto;cursor:grab;touch-action:none}",
-      ".ru-piatto,.ru-ombra{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:50%;transform-origin:50% 100%;transition:transform .6s cubic-bezier(.4,0,.2,1),opacity .6s;will-change:transform}",
+      ".ru-piatto,.ru-ombra{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:50%;transform-origin:50% 100%}",
       ".ru-piatto{transform:scaleY(var(--k,.3))}",
       ".ru-ombra{background:radial-gradient(closest-side,#6a4506 0%,#3a2404 86%,rgba(0,0,0,0) 100%);transform:translateY(var(--sp,10px)) scaleY(var(--k,.3));box-shadow:0 0 50px 16px rgba(0,0,0,.55)}",
-      ".ru-ruota.alta .ru-piatto{transform:scaleY(1)}.ru-ruota.alta .ru-ombra{transform:scaleY(1);opacity:0}",
-      ".ru-ruota canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}",
+      ".ru-ruota canvas,.ru-piatto-alto canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}",
       ".ru-disco{border-radius:50%;will-change:transform}",
-      ".ru-ruota.gira .ru-lamp.a{animation:ruLampA .3s steps(1) infinite}.ru-ruota.gira .ru-lamp.b{animation:ruLampB .3s steps(1) infinite}",
+      ".ru-ruota.gira .ru-lamp.a,.ru-alto.gira .ru-lamp.a{animation:ruLampA .3s steps(1) infinite}.ru-ruota.gira .ru-lamp.b,.ru-alto.gira .ru-lamp.b{animation:ruLampB .3s steps(1) infinite}",
       "@keyframes ruLampA{0%{opacity:1}50%{opacity:.12}}@keyframes ruLampB{0%{opacity:.12}50%{opacity:1}}",
       ".ru-centro{position:absolute;left:50%;top:50%;width:16%;height:16%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2c2,#e8a91e 62%,#9a6200);box-shadow:0 0 0 5px #3a2200,0 0 0 9px #ffd76a,0 4px 12px rgba(0,0,0,.6)}",
+      ".ru-piatto .ru-centro{box-shadow:0 0 0 3px #3a2200,0 0 0 5px #ffd76a}",
       ".ru-lancetta{position:absolute;left:50%;top:-4.6%;width:10%;height:15.3%;margin-left:-5%;transform-origin:50% 20.6%;z-index:3;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5))}.ru-lancetta svg{display:block;width:100%;height:100%}",
       ".ru-invito{position:absolute;inset:-1.5%;border-radius:50%;box-shadow:0 0 0 6px rgba(255,255,255,.85),0 0 30px 8px rgba(255,214,110,.75);opacity:0;pointer-events:none}",
-      ".ru-ruota.tocca .ru-invito{animation:ruInvito 1.1s ease-in-out infinite alternate}",
+      ".ru-alto.tocca .ru-invito{animation:ruInvito 1.1s ease-in-out infinite alternate}",
       "@keyframes ruInvito{from{opacity:.1}to{opacity:.85}}",
-      ".ru-buio{pointer-events:none;border-radius:50%;background:radial-gradient(closest-side,rgba(4,5,14,0) 34%,rgba(4,5,14,.86) 46%,rgba(4,5,14,.95) 100%);opacity:0;transition:opacity .6s;z-index:1}",
-      ".ru-buio.on{opacity:1}",
-      ".ru-mano{left:0;top:0;pointer-events:none;opacity:0;z-index:4;will-change:transform,opacity}.ru-mano svg{display:block;width:100%;height:100%;filter:drop-shadow(0 4px 4px rgba(0,0,0,.5))}",
+      // la ruota vista dall'alto: sopra lo studio (che si scurisce), sotto il tabellone e la tastiera
+      ".ru-alto{position:absolute;inset:0;z-index:18;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .45s,visibility 0s .45s}",
+      ".ru-alto.on{opacity:1;visibility:visible;transition:opacity .45s}",
+      ".ru-buio{position:absolute;inset:0;pointer-events:none}",
+      ".ru-piatto-alto{position:absolute;border-radius:50%;box-shadow:0 12px 34px rgba(0,0,0,.65);transform:scale(.84);transform-origin:50% 0;transition:transform .55s cubic-bezier(.3,1.25,.5,1);will-change:transform}",
+      ".ru-alto.on .ru-piatto-alto{transform:scale(1)}",
+      ".ru-alto.on.vicino .ru-piatto-alto{transform:scale(1.42);transition:transform 1.1s cubic-bezier(.4,0,.2,1)}",
+      ".ru-alto.tocca .ru-piatto-alto{pointer-events:auto;cursor:grab;touch-action:none}",
+      ".ru-mano{position:absolute;left:0;top:0;pointer-events:none;opacity:0;z-index:4;will-change:transform,opacity}.ru-mano svg{display:block;width:100%;height:100%;filter:drop-shadow(0 4px 4px rgba(0,0,0,.5))}",
       // al posto del maxischermo: il riquadro nella scena (buste, finale) e la striscia dei giochi veloci sotto il tabellone
       ".ru-quadro-box{position:absolute;left:0;top:0;z-index:19;transform-origin:0 0;opacity:0;pointer-events:none;transition:opacity .35s;border-radius:24px;background:radial-gradient(120% 60% at 50% 0%,rgba(255,79,134,.18),rgba(13,16,32,.96) 62%);box-shadow:0 0 0 4px #0a0c18,0 0 0 7px rgba(255,194,71,.6),0 18px 40px rgba(0,0,0,.6)}",
       ".ru-quadro-box.on{opacity:1}.ru-quadro-in{position:absolute;inset:0}",

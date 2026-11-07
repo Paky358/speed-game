@@ -28,10 +28,10 @@
     no((perche || "non si arriva al punto della prova") + " (fase " + vm(C).fase + ")");
   }
   function sotto(ang) { return Math.floor(((((-ang) % 360) + 360) % 360) / 15) % 24; }
-  function angDi(w) { var c = w.document.querySelector(".ru-disco"); var m = c && /rotate\((-?[\d.]+)deg\)/.exec(c.style.transform); return m ? +m[1] : null; }
+  function angDi(w) { var c = w.document.querySelector(".ru-alto .ru-disco"); var m = c && /rotate\((-?[\d.]+)deg\)/.exec(c.style.transform); return m ? +m[1] : null; }
   // il dito: trascina la ruota da un punto del bordo per «gradi» gradi in «ms» millisecondi e la lascia andare
   async function trascina(w, gradi, ms) {
-    var R = w.document.querySelector(".ru-ruota"), pi = w.document.querySelector(".ru-piatto");
+    var R = w.document.querySelector(".ru-alto .ru-piatto-alto"), pi = R;
     if (!R || !pi) return "niente ruota";
     var r = pi.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, rr = r.width * 0.36, a0 = -90, Ev = w.PointerEvent || w.MouseEvent, n = 8;
     function ev(t, a) { var x = cx + rr * Math.cos(a * Math.PI / 180), y = cy + rr * Math.sin(a * Math.PI / 180); R.dispatchEvent(new Ev(t, { bubbles: true, cancelable: true, pointerId: 9, pointerType: "touch", isPrimary: true, clientX: x, clientY: y })); }
@@ -111,10 +111,10 @@
     });
     async function unGiro(chi, gradi, ms, dir) {
       var altri = ["Paky", "Luca", "Giulia"].filter(function (n) { return n !== chi; });
-      await W.aspetta(function () { return F[chi].document.querySelector(".ru-ruota.alta.tocca"); }, 5000);
+      await W.aspetta(function () { return F[chi].document.querySelector(".ru-alto.on.tocca") && ["Paky", "Luca", "Giulia"].every(function (n) { return F[n].document.querySelector(".ru-alto.on"); }); }, 6000);   // (la sigla finisce un po' prima o dopo su ogni telefono)
       ["Paky", "Luca", "Giulia"].forEach(function (n) {
-        var R = F[n].document.querySelector(".ru-ruota");
-        if (!R || !R.classList.contains("alta")) no("quando tocca a " + chi + " su " + n + " la ruota non è vista dall'alto");
+        var R = F[n].document.querySelector(".ru-alto");
+        if (!R || !R.classList.contains("on")) no("quando tocca a " + chi + " su " + n + " la ruota non è vista dall'alto");
         if (R.classList.contains("tocca") !== (n === chi)) no("su " + n + " la ruota " + (n === chi ? "non " : "") + "si può trascinare");
       });
       await W.dorme(900);   // (la telecamera arriva sulla ruota)
@@ -128,7 +128,7 @@
       var mia = F[chi].document.querySelector(".ru-mano"); if (mia.getAnimations && mia.getAnimations().length) no("su " + chi + " (che l'ha lanciata col dito) c'è anche la mano");
       await W.dorme(900);
       var lan = 0, t1 = Date.now(), corre = 0;
-      while (Date.now() - t1 < 1200) { var l = F[altri[0]].document.querySelector(".ru-lancetta").style.transform; if (/rotate\(-?[1-9]/.test(l)) lan++; if (F[altri[0]].document.querySelector(".ru-ruota.gira")) corre++; await W.dorme(40); }
+      while (Date.now() - t1 < 1200) { var l = F[altri[0]].document.querySelector(".ru-alto .ru-lancetta").style.transform; if (/rotate\(-?[1-9]/.test(l)) lan++; if (F[altri[0]].document.querySelector(".ru-alto.gira")) corre++; await W.dorme(40); }
       if (!lan) no("la lancetta non batte sui chiodi");
       if (!corre) no("le lampadine non corrono mentre gira");
       var dopo = await finche(C, function (x) { return x.fase !== "girando"; }, null, 9000, "la ruota non si ferma");
@@ -144,7 +144,7 @@
     L.push(chi + " la lancia col dito: " + Math.round(r1.v.angolo - (r1.v.angolo % 1)) + "°, spicchio " + r1.v.spicchio + " (" + r1.v.giroMs + " ms), mano sugli altri due, lancetta e lampadine, stesso angolo dappertutto");
     if (r1.dopo.fase === "consonante") {
       await W.dorme(1400);
-      var alta = ["Paky", "Luca", "Giulia"].filter(function (n) { return F[n].document.querySelector(".ru-ruota.alta"); });
+      var alta = ["Paky", "Luca", "Giulia"].filter(function (n) { return F[n].document.querySelector(".ru-alto.on"); });
       if (alta.length) no("mentre si sceglie la consonante la ruota è ancora vista dall'alto su " + alta.join(", "));
       L.push("poi la ruota torna sul pavimento");
       // sceglie una consonante qualunque che c'è
@@ -178,7 +178,7 @@
     while (Date.now() - t0 < 90000 && !giaBot) {
       Q = Rr.ultima; var p = Q.giocatori[Q.turno];
       if (Q.fase === "girando" && p.bot) { giaBot = true; await W.dorme(350); var m = w.document.querySelector(".ru-mano"); mano = !!(m.getAnimations && m.getAnimations().length); break; }
-      if (!p.bot && Q.fase === "gira" && w.document.querySelector(".ru-ruota.alta.tocca")) {
+      if (!p.bot && Q.fase === "gira" && w.document.querySelector(".ru-alto.on.tocca")) {
         await W.dorme(900); var g0 = Q.giroN, e = await trascina(w, 90, 100); if (e) no(e);
         if (!await W.aspetta(function () { return Rr.ultima.giroN === g0 + 1; }, 2500)) no("contro i Bot Paky trascina ma la ruota non parte");
         lanciata = true;
