@@ -164,7 +164,7 @@
       if (spezzate.length) out.push("parole a capo: " + spezzate.slice(0, 4).join(", "));
       fs.sort(function (a, b) { return a - b; });
       info.scritte = fs.length ? fs[0].toFixed(1) + "-" + fs[fs.length - 1].toFixed(1) + " px" : "?";
-      info.fsMax = fs[fs.length - 1] || 0; info.alt = r0.height;
+      info.fsMax = fs[fs.length - 1] || 0; info.fsMin = fs[0] || 0; info.alt = r0.height;
       // la chat: striscia sotto il tabellone, sopra la barra
       var ch = d.querySelector(".or-chat");
       if (ch && ch.getClientRects().length && !opz.fine) {
@@ -243,7 +243,9 @@
         if (!j) m0 = m;
         if (m.err) no(nm + " a " + M[q].join("x") + ": " + m.err);
         if (M[q][1] === 640 && m.info.alt < 44) no(nm + " a 360x640: caselle alte " + Math.round(m.info.alt) + " px");
-        if (M[q][1] === 915 && m.info.fsMax < 15) no(nm + " a 412x915: la scritta più grande è " + m.info.fsMax.toFixed(1) + " px (sui telefoni lunghi deve crescere)");
+        // (7 nov 2026, il proprietario: tutte le parole della STESSA grandezza, quella in cui ci sta la più lunga)
+        if (m.info.fsMax - m.info.fsMin > 0.15) no(nm + " a " + M[q].join("x") + ": le parole non sono tutte grandi uguali (" + m.info.scritte + ")");
+        if (M[q][1] === 915 && m.info.fsMax < 9.5) no(nm + " a 412x915: le parole sono piccole (" + m.info.fsMax.toFixed(1) + " px)");
         r.push(nm + " " + m.info.casella);
       }
       righe.push(M[q].join("x") + ": " + r[0] + ", scritte " + m0.info.scritte + ", chat " + m0.info.chat + " px");

@@ -758,6 +758,7 @@
         if (G.fila) { cuore.togliNodo(G.fila); G.fila = null; bFa.setAttribute("aria-expanded", "false"); return; }
         var f = null; try { f = P.tavolo && P.tavolo.faccine(); } catch (e) {}
         if (!f) return;
+        f.classList.add("sl-fa-fila");   // (chi guarda non ha un avatar in partita: la fila delle faccine, come prima)
         G.fila = el("div", { class: "sg-guardo-fila" }, [ f ]);
         document.body.appendChild(G.fila); bFa.setAttribute("aria-expanded", "true");
       });

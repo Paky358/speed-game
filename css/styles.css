@@ -4257,3 +4257,58 @@ html body.tema-oro::before{ display:none; }
 .saletta-schermo .piede .btn{ min-height:46px; padding-top:9px; padding-bottom:9px; }
 .saletta-schermo > .contenuto::before{ margin-bottom:-6px; } .saletta-schermo > .contenuto::after{ margin-top:-6px; }   /* (lo stesso spazio tra i pezzi: 6 px) */
 .saletta-schermo > .contenuto{ padding-top:2px; }
+
+/* =========================================================
+   🧍 SALETTA: GLI AVATAR IN GRANDE (7 nov 2026, il proprietario: «spazio, spazio, spazio per gli avatar… il corpo si deve
+   vedere tutto, ma in grande»). L'ordine resta: titolo e sottotitolo, codice e «Invita gli amici» affiancati, la stanza con gli
+   avatar (prende tutto lo spazio), in fondo ⓘ + Regole + Comincia. Via «Pronti 2 su 3» coi pallini (c'è la spunta verde
+   sugli avatar), «📜 Si gioca così», le note e la fila delle faccine: le reazioni si aprono toccando il proprio avatar.
+   ========================================================= */
+.saletta-schermo .sl-stanza{ max-height:none; }
+.saletta-schermo .sl-chip, .saletta-schermo .sl-regole-riga, .saletta-schermo .sl-consiglio{ display:none !important; }
+.saletta-schermo .sl-faccine.sl-fa-palco{ display:none !important; }
+/* la nota solo quando non si può ancora partire («Almeno 4 giocatori…»): piccola, in cima alla stanza */
+.saletta-schermo .sl-stanza > .sl-nota{ position:absolute; left:10px; right:10px; top:46px; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; z-index:8; margin:0; padding:4px 10px; border-radius:12px; text-align:center;
+  font-size:.78rem; line-height:1.25; background:rgba(13,16,32,.78); color:#c9cde2; pointer-events:none; }
+.saletta-schermo .sl-stanza > .sl-nota[hidden], .saletta-schermo .sl-stanza > .sl-nota:empty{ display:none; }
+/* chi entra: «Sei dentro!» e cosa aspetta, compatto */
+.saletta-schermo .sl-attesa{ padding:4px 12px; }
+.saletta-schermo .sl-att-testo{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* in fondo: ⓘ piccolo e tondo a sinistra, poi Regole e Comincia (o «Sono pronto!») */
+.saletta-schermo .sl-tasti .sl-info{ flex:0 0 46px; width:46px; min-width:46px; padding:0; border-radius:50%; font-size:1.35rem; font-weight:900; line-height:1;
+  background:rgba(255,255,255,.1); color:#fff; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.16); }
+.oro.saletta-schermo .sl-tasti .sl-info{ background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0)), var(--o-carta); color:var(--o-testo); box-shadow:inset 0 0 0 1px var(--o-filo-oro), var(--o-ombra); }
+.saletta-schermo .sl-tasti .sl-pronto{ flex:1 1 auto; min-width:0; }
+.saletta-schermo .sl-tasti .sl-regole[hidden]{ display:none; }
+.sl-tasti .sl-regole.salta{ animation:slRegSalta .5s cubic-bezier(.3,1.6,.5,1); }
+@keyframes slRegSalta{ 40%{ transform:translateY(-5px) scale(1.06); } }
+
+/* le reazioni fuori dalla saletta: al posto della fila, il mio viso col 😂 (un tocco apre il ventaglio).
+   Chi guarda soltanto (nella targhetta) ha ancora la fila: .sl-fa-fila */
+.sl-faccine:not(.sl-fa-fila){ display:flex; align-items:center; gap:4px; width:max-content; max-width:100%; margin-left:auto; margin-right:auto; padding:3px; overflow:visible; }
+.sl-faccine:not(.sl-fa-fila) .sl-fa-casa{ display:none; }
+.sl-faccine.sl-fa-fila .sl-fa-casa{ display:contents; }
+.sl-faccine.sl-fa-fila .sl-fa-apri{ display:none; }
+.sl-fa-apri{ position:relative; flex:0 0 auto; width:42px; height:42px; padding:0; border:0; border-radius:50%; background:#2a3150; cursor:pointer;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.22); -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.sl-fa-apri:active{ transform:scale(.92); }
+.sl-fa-viso{ position:absolute; inset:0; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+.sl-fa-viso svg{ width:100%; height:100%; display:block; }
+.sl-fa-badge{ position:absolute; right:-5px; bottom:-4px; font-size:.95rem; line-height:1; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+.sl-faccine.attesa .sl-fa-apri{ opacity:.6; }
+/* il ventaglio: le 6 faccine ad arco intorno alla testa, sopra tutto */
+.sl-ventaglio{ position:fixed; z-index:9500; width:0; height:0; }
+.sl-ventaglio .sl-fa{ position:absolute; left:-23px; top:-23px; width:46px; height:46px; flex:none; padding:0; border:0; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:1.6rem; line-height:1; color:inherit; cursor:pointer;
+  background:var(--o-carta-piena, #151a2e); box-shadow:0 0 0 1.5px rgba(255,255,255,.22), 0 6px 14px rgba(0,0,0,.55);
+  transform:translate(var(--dx), var(--dy)); animation:slVent .26s cubic-bezier(.2,1.4,.5,1) backwards; animation-delay:calc(var(--i) * 22ms);
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.sl-ventaglio .sl-fa:active{ transform:translate(var(--dx), var(--dy)) scale(.88); }
+.sl-ventaglio .sl-fa.boing{ animation:slVentBoing .3s cubic-bezier(.3,1.6,.5,1); }
+.sl-ventaglio .sl-fa:disabled{ opacity:.45; }
+@keyframes slVent{ from{ transform:translate(0, 0) scale(.3); opacity:0; } }
+@keyframes slVentBoing{ 50%{ transform:translate(var(--dx), var(--dy)) scale(1.3); } }
+@media (prefers-reduced-motion: reduce){ .sl-ventaglio .sl-fa, .sl-ventaglio .sl-fa.boing{ animation:none; } }
+/* il fumetto della prima volta («Tocca il tuo avatar per le reazioni») */
+.sl-fumetto.consiglio{ background:var(--o-lampone, #e0225a); color:#fff; font-weight:800; }
+.sl-fumetto.consiglio::after{ border-top-color:var(--o-lampone, #e0225a); }

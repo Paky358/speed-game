@@ -2098,20 +2098,28 @@
     var b0 = ui.carte[0].b, L = b0.clientWidth, H = b0.clientHeight; if (L <= 0 || H <= 0) return;
     // (caselle basse: il segno della squadra più piccolo e più nell'angolo, così non tocca la parola)
     var basse = H < 46; if (ui.basse !== basse) { ui.basse = basse; ui.tab.classList.toggle("basse", basse); }
-    var cs = getComputedStyle(ui.carte[0].w), font = (cs.fontWeight || "800") + " 100px " + cs.fontFamily, chiave = L + "x" + H + "|" + font;
+    var cs = getComputedStyle(ui.carte[0].w), font = (cs.fontWeight || "800") + " 100px " + cs.fontFamily,
+        chiave = L + "x" + H + "|" + font + "|" + ui.carte.map(function (C) { return C.parola; }).join(",");
     if (ui.misureScritte === chiave) return;   // (le stesse misure di prima: niente da rifare)
     ui.misureScritte = chiave;
     if (!misuratore) misuratore = document.createElement("canvas").getContext("2d");
     misuratore.font = font;
     var spazio = L - 3, max = Math.max(11, Math.min(17, H * 0.27)), alto = H - 9;
-    ui.carte.forEach(function (C) {
+    // (7 nov 2026, il proprietario: le parole tutte della STESSA grandezza, per chi indovina e per il capo: la misura è quella
+    // in cui ci sta la parola più lunga del tabellone. Prima ogni parola aveva la sua e il tabellone sembrava disordinato)
+    var misure = ui.carte.map(function (C) {
       var pezzi = String(C.parola).split(" "), largo = 0;
       // (la larghezza di 1 px di scritta, con lo spazio tra le lettere di .or-w: -0,02em a lettera)
       pezzi.forEach(function (p) { largo = Math.max(largo, misuratore.measureText(p).width / 100 - 0.02 * p.length); });
       var fs = Math.min(max, spazio / (largo || 1));
       if (pezzi.length > 1) fs = Math.min(fs, alto / (pezzi.length * 1.1));
-      var stringi = 1;
-      if (fs < 9) { stringi = Math.max(0.6, fs / 9); fs = 9; }
+      return fs;
+    });
+    var uguale = Math.min.apply(null, misure);
+    ui.carte.forEach(function (C, i) {
+      var fs = uguale, stringi = 1;
+      // (sotto i 9 px non si scende: lì si stringono in larghezza solo le parole che non ci stanno)
+      if (fs < 9) { stringi = Math.min(1, Math.max(0.6, misure[i] / 9)); fs = 9; }
       var tx = fs.toFixed(1) + "px", tr = stringi < 0.995 ? "scaleX(" + stringi.toFixed(3) + ")" : "";
       if (C.w.style.fontSize !== tx) C.w.style.fontSize = tx;
       if (C.w.style.transform !== tr) C.w.style.transform = tr;
@@ -2319,7 +2327,12 @@
     var cfg = (ui.cb.omini && ui.cb.omini() || {})[id];
     if (!cfg || !window.SGOmino) return null;
     var k = id + "|" + JSON.stringify(cfg).length;
-    if (!ui.facce[k]) ui.facce[k] = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SGOmino.svg(cfg, { busto: true }));
+    // (7 nov 2026: nei tondini piccoli il «viso largo», testa e collo, così la faccia si riconosce; il busto la faceva minuscola)
+    if (!ui.facce[k]) {
+      var svg = SGOmino.svg(cfg, { busto: true });
+      if (SGOmino.illustrato && SGOmino.illustrato()) svg = svg.replace("viewBox='66 13 68 69.6'", "viewBox='76 9 48 48'");
+      ui.facce[k] = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    }
     return ui.facce[k];
   }
   function faccia(ui, id, nome, cls) {

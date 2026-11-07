@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 319,
+    data: "7 novembre 2026",
+    titolo: "La saletta: gli avatar in grande 🧍",
+    descrizione: [
+      "🧍 Nella saletta prima della partita gli avatar si vedono interi e molto più grandi: in pochi riempiono la stanza, in tanti si mettono su due o tre file, chi sta dietro un po' più in alto, così si vedono tutti.",
+      "🧹 Sotto la stanza niente più scritte: via «Pronti 2 su 3» coi pallini (basta la spunta verde sugli avatar), la riga «Si gioca così» e la fila delle faccine. In fondo ci sono «i» (come si gioca), «Regole» e «Comincia»; chi entra ha «Regole» e «Sono pronto!».",
+      "😂 Le reazioni ci sono ancora: tocca il TUO avatar e le faccine si aprono a ventaglio sopra la testa. Durante e alla fine delle partite c'è un tondino col tuo viso: un tocco e si aprono lì.",
+      "📸 Linea del tempo: «I nostri ricordi» adesso stanno dentro «Regole».",
+      "🔤 Parola d'ordine: le parole sul tabellone sono tutte della stessa grandezza (quella in cui ci sta la più lunga), per chi indovina e per il capo. E nei tondini delle squadre si vede bene la faccia."
+    ]
+  },
+  {
     v: 318,
     data: "7 novembre 2026",
     titolo: "Avatar: vestiti nuovi, fantasie e un camerino tutto nuovo 👕",

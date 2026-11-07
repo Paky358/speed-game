@@ -146,7 +146,7 @@
     var C = await A.lanciaDallaSala("Paky", Z.S, "La linea del tempo"), P = W.finestra("Paky");
     await W.aspetta(function () { return (vm(C).giocatori || []).length === 2; }, 10000);
     function grande() { var f = document.getElementById("tel-Paky"); f.style.width = (larg || 360) + "px"; f.style.height = (alt || 640) + "px"; f.style.transform = "none"; f.style.zIndex = 99; P.dispatchEvent(new P.Event("resize")); }
-    if (cosa === "ricordi") { grande(); await W.dorme(400); W.clicca(P, /I nostri ricordi/, ".tl-ric-btn"); return C; }
+    if (cosa === "ricordi") { grande(); await W.dorme(400); W.clicca(P, /Regole/, ".sl-tasti .sl-regole"); await W.dorme(200); W.clicca(P, /I nostri ricordi/, ".tl-ric-btn"); return C; }
     W.clicca(P, /Comincia/, ".sl-go");
     var fino = Date.now() + 90000;
     while (Date.now() < fino) {
@@ -376,7 +376,8 @@
     if (!await W.aspetta(function () { return vm(C).nRic === 2; }, 6000)) no("l'host non ha i 2 ricordi di Giulia (nRic " + vm(C).nRic + ")");
     if (JSON.stringify(vm(C)).indexOf("Ibiza") >= 0) no("nella foto della saletta c'è il testo di un ricordo");
     // Luca scrive un ricordo dal foglio della saletta
-    if (!await W.aspetta(function () { return W.clicca(L, /I nostri ricordi/, ".tl-ric-btn"); }, 6000)) no("Luca non trova «📸 I nostri ricordi» in saletta («" + T(L).slice(0, 200) + "»)");
+    // (7 nov 2026: il tasto sta dentro «📜 Regole» della saletta)
+    if (!await W.aspetta(function () { if (!L.document.querySelector(".sl-velo")) W.clicca(L, /Regole/, ".sl-tasti .sl-regole"); return W.clicca(L, /I nostri ricordi/, ".tl-ric-btn"); }, 6000)) no("Luca non trova «📸 I nostri ricordi» in saletta («" + T(L).slice(0, 200) + "»)");
     await W.dorme(300);
     var f = L.document.querySelector(".tl-ric-velo"); if (!f) no("il foglio dei ricordi non si apre");
     var mR = await misura(L, "Luca", 360, 640); rimetti(L, "Luca"); if (mR) no("col foglio dei ricordi: " + mR);
@@ -388,7 +389,9 @@
     if (!/Aggiunto/.test(T(L))) no("il ricordo di Luca non si aggiunge («" + T(L).slice(-200) + "»)");
     W.clicca(L, /Fatto/, ".tl-ric-velo button"); await W.dorme(300);
     if (!await W.aspetta(function () { return vm(C).nRic === 3 && (vm(C).ricDa || []).indexOf("Luca") >= 0; }, 6000)) no("l'host non ha il ricordo di Luca (nRic " + vm(C).nRic + ", da " + JSON.stringify(vm(C).ricDa) + ")");
-    if (!await W.aspetta(function () { return /I nostri ricordi: 3/.test(T(B)); }, 5000)) no("Bea non legge «📸 I nostri ricordi: 3» in saletta");
+    // (7 nov 2026: «📸 I nostri ricordi» sta dentro «📜 Regole» della saletta)
+    if (!await W.aspetta(function () { if (!B.document.querySelector(".sl-velo")) W.clicca(B, /Regole/, ".sl-tasti .sl-regole"); return /I nostri ricordi: 3/.test(T(B)); }, 5000)) no("Bea non legge «📸 I nostri ricordi: 3» in saletta");
+    W.clicca(B, /Ho capito/, ".sl-foglio button"); await W.dorme(200);
     if (!await W.aspetta(function () { return /da 5 in su ⚡ tutti insieme/.test(A.regoleDi(B)); }, 6000)) no("Bea legge «" + A.regoleDi(B) + "»");
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/, ".sl-go"); }, 5000)) no("Paky non trova «Comincia»");
     if (!await W.aspetta(function () { return vm(C).fase === "tutti"; }, 40000)) no("la prima carta non arriva");

@@ -148,7 +148,12 @@
     var SV = U.rete && U.rete._sv, tx = U.host ? (U.regR || "") : ((SV && !SV.host && SV.regR) || "");
     if (U.rTesto.textContent !== tx) U.rTesto.textContent = tx;
     if (U.rRiga.hidden !== !tx) U.rRiga.hidden = !tx;
-    if (!U.host) U.s.classList.toggle("con-regole", !!tx);   // (schermi bassi: la saletta si stringe un po', vedi styles.css)
+    var conOsp = !!tx || nodiRegole(U).length > 0;
+    if (U.bRegoleOsp && U.bRegoleOsp.hidden !== !conOsp) U.bRegoleOsp.hidden = !conOsp;   // (chi entra: «📜 Regole» solo se l'host ne ha scelte)
+    if (cambiate && tx && U.bRegoleOsp) {   // l'host le ha appena cambiate: il tasto saltella e dice «✨ Cambiate» per 2,5 s
+      rianima(U.bRegoleOsp, "salta"); U.bRegoleOsp.textContent = "✨ Cambiate";
+      clearTimeout(U.tRo); U.tRo = setTimeout(function () { if (U.bRegoleOsp) U.bRegoleOsp.textContent = "📜 Regole"; }, 2500);
+    }
     if (U.rFoglioP && U.rFoglioP.textContent !== tx && tx) U.rFoglioP.textContent = tx;   // (il foglio aperto si aggiorna anche lui)
     if (cambiate && tx) {
       rianima(U.rRiga, "salta");
@@ -174,10 +179,11 @@
         el("div", { class: "sl-foglio-corpo" }, [
           U.rFoglioP = el("p", { class: "sl-reg-tutto", text: U.rTesto.textContent }),
           el("p", { class: "modulo-nota", text: "Le regole le sceglie l'host: se le cambia, qui si aggiornano da sole." }),
-          g ? comeSiGioca(g) : null ]),
+          null ].concat(nodiRegole(U))),   // (come si gioca: il tasto ⓘ accanto)
         el("button", { class: "btn btn-primario", text: "👍 Ho capito", onclick: chiudi })
       ])
     ]);
+    velo._chiudi = chiudi;   // (un tasto del gioco dentro il foglio, es. «📸 I nostri ricordi», lo chiude prima di aprire il suo)
     document.body.appendChild(velo);
     // la partita parte (o la saletta se ne va): il foglio si chiude da solo, non resta sopra il gioco
     tic = setInterval(function () { if (!document.body.contains(U.s)) chiudi(); }, 400);
@@ -202,8 +208,9 @@
     var corpo = el("div", { class: "sl-foglio-corpo" });
     if (conSaletta) corpo.appendChild(opzioniSaletta());
     if (conGioco) corpo.appendChild(R.box);
+    nodiRegole(U).forEach(function (x) { corpo.appendChild(x); });   // (i nodi del gioco che stanno nel foglio, es. «📸 I nostri ricordi»)
     // in fondo "📖 Come si gioca" (nella Sala la schermata delle regole non c'è più): si apre qui dentro
-    var gC = giocoDa(U.gid); if (gC && conGioco) corpo.appendChild(comeSiGioca(gC));
+    // (7 nov 2026: «📖 Come si gioca» non sta più qui: c'è il tasto ⓘ accanto a Regole, vedi foglioInfo)
     // la Sala nel torneo a eliminazione: in fondo la Compagnia (spenta: "Si fa tra una partita e l'altra")
     if (U.gid === "__sala" && U.host && cuore.sala && cuore.sala.elim) { var rc = cuore.rigaCompSala(function () { chiudi(); }); if (rc) corpo.appendChild(rc); }
     velo = el("div", { class: "sl-velo", onclick: function (e) { if (e.target === velo) chiudi(); } }, [
@@ -213,7 +220,28 @@
         el("button", { class: "btn btn-primario", text: "✅ Fatto", onclick: chiudi })
       ])
     ]);
+    velo._chiudi = chiudi;   // (un tasto del gioco dentro il foglio, es. «📸 I nostri ricordi», lo chiude prima di aprire il suo)
     document.body.appendChild(velo);
+  }
+  // o.regoleExtra: i nodi del gioco che stanno dentro il foglio delle regole invece che sotto la stanza (7 nov 2026: «I nostri
+  // ricordi» della Linea del tempo). Per l'host nel ⚙️, per chi entra in «📜 Regole»
+  function nodiRegole(U) { return ((U.o && U.o.regoleExtra) || []).filter(Boolean); }
+  // ⓘ: come si gioca (le regole del gioco scritte), per tutti. Si chiude da solo se parte la partita
+  function foglioInfo(U) {
+    if (document.querySelector(".sl-velo")) return;
+    var g = giocoDa(U.gid); if (!g) return;
+    var velo, tic, corpo = el("div", { class: "sl-foglio-corpo sl-info-corpo" });
+    (g.regole || []).forEach(function (r) { corpo.appendChild(el("p", { html: r })); });
+    function chiudi() { clearInterval(tic); if (velo.parentNode) velo.parentNode.removeChild(velo); }
+    velo = el("div", { class: "sl-velo", onclick: function (e) { if (e.target === velo) chiudi(); } }, [
+      el("div", { class: "sl-foglio" }, [
+        el("div", { class: "sl-foglio-testa" }, [ el("b", { text: "📖 Come si gioca" }), el("button", { class: "sl-foglio-x", "aria-label": "Chiudi", text: "✕", onclick: chiudi }) ]),
+        corpo,
+        el("button", { class: "btn btn-primario", text: "👍 Ho capito", onclick: chiudi })
+      ])
+    ]);
+    document.body.appendChild(velo);
+    tic = setInterval(function () { if (!document.body.contains(U.s)) chiudi(); }, 400);
   }
   // il sottotitolo della saletta: nei giochi della Sala "Sala · la stanza è tua" (host) o "Sala di Paky" (chi entra)
   function sottoSaletta(o) {
@@ -290,29 +318,38 @@
       U2.ro = new ResizeObserver(function () { if (!document.body.contains(U2.s)) { U2.ro.disconnect(); return; } disponiSaletta(U2, false); });
       U2.ro.observe(U2.stanza);
     }
-    // le faccine: il mio avatar le fa sui telefoni di tutti (al massimo una al secondo)
+    // le faccine: il mio avatar le fa sui telefoni di tutti (al massimo una al secondo).
+    // (7 nov 2026, il proprietario: «le reazioni mi piacciono, però occupano spazio»: niente più fila sotto la stanza.
+    // Si aprono a ventaglio toccando il PROPRIO avatar, vedi toccoAvatar e ventaglio; i tasti restano qui, nascosti)
     U2.faccine = vassoioFaccine(function () { return U2.rete && U2.rete._sv; });
-    U2.faccine.hidden = true;
+    U2.faccine.hidden = true; U2.faccine.classList.add("sl-fa-palco");
     s._contenuto.appendChild(U2.faccine);
     U2.extra = el("div", { class: "sl-extra" });
     s._contenuto.appendChild(U2.extra);
+    // (7 nov 2026, il proprietario: «spazio, spazio, spazio per gli avatar»: niente più «📜 Si gioca così», note, «Pronti 2 su 3»
+    // coi pallini (basta la spunta verde sugli avatar). In fondo ⓘ (come si gioca), Regole e Comincia)
+    var gInfo = g.id !== "__sala" && g.regole && g.regole.length ? g : null;
+    U2.bInfo = gInfo ? el("button", { class: "btn btn-fantasma sl-info", type: "button", text: "i", "aria-label": "Come si gioca", onclick: function () { foglioInfo(U2); } }) : null;
     if (!o.host) {
       // "✅ Sei dentro!" solo quando l'host mi ha davvero messo nella lista; prima "⏳ Sto entrando…"
       U2.titolo = el("div", { class: "sl-att-tit" });
       U2.attesa = el("div", { class: "sl-att-testo" });
       U2.consiglio = el("div", { class: "sl-consiglio" });
       U2.box = el("div", { class: "sl-attesa" }, [ U2.titolo, U2.attesa, U2.consiglio ]);
-      // sopra "Sei dentro" le regole scelte dall'host: "📜 Si gioca così: 5 carte · Storia, Cinema" (tocco → il foglio)
+      // le regole scelte dall'host: non più una riga, ma il tasto «📜 Regole» in fondo (il foglio col riassunto intero)
+      // (la riga resta nella pagina, nascosta: il suo testo serve al foglio e alle prove)
       if (g.id !== "__sala") { rigaRegoleNodi(U2, function () { foglioRegoleOspite(U2); }); s._contenuto.appendChild(U2.rRiga); }
       s._contenuto.appendChild(U2.box);
       // "✋ Sono pronto!" (nelle salette dei giochi; nella Sala si aspetta che l'host scelga)
       if (g.id !== "__sala") {
         U2.bPronto = el("button", { class: "btn btn-verde sl-pronto", type: "button", onclick: function () { prontoSaletta(U2); } });
-        s._piede.appendChild(U2.bPronto);
+        U2.bRegoleOsp = el("button", { class: "btn btn-fantasma sl-regole", type: "button", hidden: "hidden", text: "📜 Regole", "aria-label": "Le regole della partita", onclick: function () { foglioRegoleOspite(U2); } });
+        s._piede.appendChild(el("div", { class: "sl-tasti" }, [ U2.bInfo, U2.bRegoleOsp, U2.bPronto ].filter(Boolean)));
       }
     } else {
       U2.go = el("button", { class: "btn btn-primario sl-go", onclick: function () { partenza(U2); } });
-      U2.chip = el("div", { class: "sl-chip", hidden: "hidden", "aria-live": "polite" });   // "✋ Pronti 2 su 3"
+      U2.chip = el("div", { class: "sl-chip", hidden: "hidden", "aria-live": "polite" });   // "✋ Pronti 2 su 3" (non si vede più: serve a «parti da solo»)
+      // la nota resta solo quando non si può ancora partire («Almeno 4 giocatori…»): piccola, in cima alla stanza
       U2.nota = el("p", { class: "modulo-nota sl-nota" });
       U2.R = R || null;
       // "🏆 Fate il torneino in 5": un gioco a due e nella stanza (o nella Sala) si è almeno in 3 (vedi tastoTorneino)
@@ -323,11 +360,11 @@
       var salaPunti = g.id === "__sala" && !regoleGioco && !!cuore.sala && !cuore.sala.elim;   // (la Sala: nel ⚙️ c'è "🏆 Contiamo i punti")
       if (regoleGioco || g.id !== "__sala" || salaPunti) {
         U2.bRegole = el("button", { class: "btn btn-fantasma sl-regole", text: regoleGioco ? "⚙️ Regole" : "⚙️", "aria-label": regoleGioco ? "Regole della partita" : (salaPunti ? "La Sala" : "La saletta"), onclick: function () { foglioRegole(U2); } });
-        s._piede.appendChild(el("div", { class: "sl-tasti" }, [ U2.bRegole, U2.go ]));
+        s._piede.appendChild(el("div", { class: "sl-tasti" }, [ U2.bInfo, U2.bRegole, U2.go ].filter(Boolean)));
       } else s._piede.appendChild(U2.go);
-      // le regole della partita in una riga, al posto della nota (tocco → ⚙️): quelle che leggono anche gli amici
-      if (regoleGioco) { rigaRegoleNodi(U2, function () { foglioRegole(U2); }); s._piede.appendChild(U2.rRiga); }
-      s._piede.appendChild(U2.nota);
+      // il riassunto delle regole lo calcola regoleHost (va agli amici): la riga non si mostra più
+      if (regoleGioco) { rigaRegoleNodi(U2, function () { foglioRegole(U2); }); s._piede.appendChild(U2.rRiga); }   // (nascosta, vedi styles.css)
+      U2.stanza.appendChild(U2.nota);
     }
     SL.ultimo = U2;
     nuovoGiroSaletta(U2);   // una saletta nuova (es. "Nuova partita"): i "pronto" ripartono da zero
@@ -340,7 +377,7 @@
     musicaSaletta();
     return s;
   }
-  var CONSIGLI_SL = ["Tocca una faccina: il tuo avatar la fa sui telefoni di tutti! 😂", "Tocca il tuo avatar: ti saluta! 👋", "Tocca gli altri avatar: saltano! 🤸", "Appena l'host fa partire, il gioco si apre da solo."];
+  var CONSIGLI_SL = ["Tocca il tuo avatar: le reazioni le vedono tutti! 😂", "Tocca gli altri avatar: saltano! 🤸", "Appena l'host fa partire, il gioco si apre da solo."];
   // l'host non mi ha messo nella sua foto: nessuno nella lista sono io (niente "Tu" sbagliato, anche se il gioco lo crede)
   function senzaTuFalso(gio, st) { return st && st.foto && !st.presente ? gio.map(function (p) { return p.tu ? Object.assign({}, p, { tu: false }) : p; }) : gio; }
   // il titolo della saletta di chi entra (dice sempre la verità): "✅ Sei dentro!" solo se l'host mi ha messo nella lista;
@@ -403,7 +440,11 @@
       var notaTx;
       if (attesi.length && !U.goOk) notaTx = "Aspettiamo " + nomiAttesi(attesi) + "…";
       else notaTx = o.nota || (veri < min && !o.puoiDaSolo ? "Aspettiamo gli amici: " + (veri === 1 ? "per ora ci sei solo tu." : "servono almeno " + min + " giocatori.") : (veri > 1 && U.gid !== "__sala" || U.regR ? "" : "Quando ci siete tutti, fai partire la partita."));
+      // (7 nov 2026: in cima alla stanza solo la prima frase, quella che dice perché non si parte: le regole sono in «⚙️ Regole»)
+      var pf = String(notaTx || "").match(/^.*?[.!?](?=\s|$)/); if (pf && !U.goOk) notaTx = pf[0];
       if (U.nota.textContent !== notaTx) U.nota.textContent = notaTx;
+      var notaSi = !!notaTx && !U.goOk;   // (7 nov 2026: la nota solo quando dice perché non si parte ancora)
+      if (U.nota.hidden !== !notaSi) { U.nota.hidden = !notaSi; if (!nuova) disponiSaletta(U, false); }
     } else {
       var chiHost = gio.filter(function (p) { return p.host; })[0];
       U.attesa.textContent = o.attesa || ("Aspetta che " + (chiHost ? chiHost.nome : "l'host") + " faccia partire la partita…");
@@ -477,7 +518,7 @@
     while (U.vuoti.length > vuoti) { var vv = U.vuoti.pop(); vv.classList.add("esce"); vv._targa.classList.add("esce"); (function (x) { setTimeout(function () { togliNodo(x); togliNodo(x._targa); }, 450); })(vv); }
     while (U.vuoti.length < vuoti) {
       var nv = el("div", { class: "sl-av sl-vuoto" }, [ el("div", { class: "sl-av-in" }, [ el("div", { class: "sl-sagoma" }) ]) ]);
-      nv._targa = el("div", { class: "sl-nome vuoto", text: "posto libero" }); U.targhe.appendChild(nv._targa);
+      nv._targa = el("div", { class: "sl-nome vuoto", text: "libero" }); U.targhe.appendChild(nv._targa);   // (7 nov 2026: «posto libero» non ci stava più tra gli avatar vicini)
       U.stanza.insertBefore(nv, U.targhe); U.vuoti.push(nv);
     }
     // chi della Sala manca ancora: l'avatar grigio e trasparente (fermo, senza respiro) col nome e "…" (📶 se si sta
@@ -531,12 +572,46 @@
   function disponiSaletta(U, anima) {
     var st = U.stanza, W = st.clientWidth, H = st.clientHeight, nodi = U.ordine || [], tot = nodi.length;
     if (!W || !H || !tot) return;   // (la saletta non è ancora sullo schermo: ci pensa l'osservatore della stanza)
-    var piedi = Math.max(20, Math.round(H * 0.055)), alto = Math.max(60, H - piedi - SL_SOPRA);   // piedi: c'è la targa col nome sotto
+    var sopra = Math.max(SL_SOPRA, U.nota && !U.nota.hidden && U.nota.parentNode === st ? U.nota.offsetTop + U.nota.offsetHeight + 6 : 0);   // (la nota «Almeno 4 giocatori…» in cima)
+    var piedi = Math.max(20, Math.round(H * 0.055)), alto = Math.max(60, H - piedi - sopra);   // piedi: c'è la targa col nome sotto
     var w1 = Math.min(W / tot * 1.12, alto / 1.32, 190);
     var wA = tot >= 3 ? Math.min(1.6 * (W - 8) / (tot + 0.216), (alto - 8) / 1.93, 170) : 0;
     var wB = tot >= 3 ? Math.min(2.3 * (W - 8) / (tot + 0.748), (alto - 10) / 2.335, 170) : 0;
     var zz = Math.max(wA, wB) >= w1 * 0.9, pos = [], pav = 0.3;
-    if (!zz) nodi.forEach(function (nd, i) { pos.push({ x: (i + 0.5) * W / tot, b: piedi, w: w1, z: 4, tmax: W / tot - 6 }); });
+    // (7 nov 2026, il proprietario: «il corpo si deve vedere tutto… ma in grande»: con gli avatar illustrati si sta vicini, spalla
+    // a spalla (un avatar ogni mezza larghezza del disegno: la persona ne occupa circa i due terzi), su 1, 2 o 3 file. Si sceglie
+    // le file che danno gli avatar più grandi (una fila in più solo se li fa crescere di oltre il 12%); chi sta dietro è un po'
+    // più piccolo, sale di un terzo d'altezza e sta tra le teste di chi è davanti)
+    if (illustrati()) {
+      var RR = 1.32, best = null;
+      for (var r = 1; r <= Math.min(3, tot); r++) {
+        var k = Math.ceil(tot / r), wW = (W - 6) / ((k - 1) * 0.5 + 0.62), wH = (alto - 4) / (RR * (1 + 0.36 * (r - 1)));
+        var ww = Math.min(wW, wH, 420); if (!best || ww > best.w * 1.12) best = { r: r, k: k, w: ww };
+      }
+      var file = [], resto = tot;
+      for (var fi = 0; fi < best.r; fi++) { var q = Math.ceil(resto / (best.r - fi)); file.push(q); resto -= q; }
+      file.reverse();
+      var idx = 0, wf = best.w;
+      // chi sta dietro sale di almeno un terzo d'altezza; se sopra c'è posto, di più (fino a quasi tre quarti): si vede meglio
+      // e la stanza si riempie. I piedi restano sul pavimento (al massimo al 60% della stanza)
+      var alzo = 0.36 * RR * wf;
+      if (best.r > 1) {
+        var amax = Math.min(0.7 * RR * wf, (0.6 * H - 10 - piedi) / (best.r - 1));
+        for (var fa = 1; fa < best.r; fa++) amax = Math.min(amax, (alto - 4 - RR * wf * Math.pow(0.9, fa)) / fa);
+        alzo = Math.max(alzo, amax);
+      }
+      for (var fr = 0; fr < best.r; fr++) {
+        // la fila dietro sta tra le teste di quella davanti (mezzo passo di lato quando da sola si metterebbe proprio dietro);
+        // se così esce dalla stanza, si allarga su tutta la stanza
+        var nr = file[best.r - 1 - fr], sc = Math.pow(0.9, fr), wr = wf * sc, passo = wf * 0.5, mg = wr * 0.31,
+            sh = fr && (best.k - nr) % 2 === 0 ? passo * 0.5 * (fr % 2 ? -1 : 1) : 0, x0 = W / 2 - (nr - 1) * passo / 2 + sh, pb = passo;
+        if (nr > 1 && (x0 < mg || x0 + (nr - 1) * passo > W - mg)) { x0 = Math.max(mg, Math.min(x0, W - mg - (nr - 1) * passo)); if (x0 < mg) { x0 = mg; pb = (W - 2 * mg) / (nr - 1); } }
+        for (var j = 0; j < nr; j++) pos[idx++] = { x: Math.max(mg, Math.min(W - mg, x0 + j * pb)), b: piedi + fr * alzo, w: wr, z: 4 - fr, dietro: fr > 0, tmax: Math.max(44, pb - 3) };
+      }
+      zz = best.r > 1; pav = Math.max(0.3, Math.min(0.6, (piedi + (best.r - 1) * alzo + 10) / H));
+    }
+    if (pos.length) { /* (avatar illustrati: già al loro posto) */ }
+    else if (!zz) nodi.forEach(function (nd, i) { pos.push({ x: (i + 0.5) * W / tot, b: piedi, w: w1, z: 4, tmax: W / tot - 6 }); });
     else {
       var alzati = wB > wA, w = alzati ? wB : wA, m = w * 0.38 + 4, passo = (W - 2 * m) / (tot - 1), wb = w * 0.86;
       var bb = alzati ? piedi + 1.2 * w + 10 : piedi + 0.78 * w + 8;
@@ -721,6 +796,7 @@
       if (!p.host && !p.bot) { tot++; if (pr && !fo) pronti++; pallini.push(pr && !fo); }   // (chi si sta ricollegando non conta come pronto)
     });
     U.faccine.hidden = !SV;
+    if (SV) suggerisciReazioni(U);   // (la prima volta: «Tocca il tuo avatar per le reazioni»)
     // "👀 2": chi guarda soltanto (accanto al contatore e nella fila delle faccine)
     var nPub = contaPubblico(SV), txPub = nPub > 0 ? "👀 " + nPub : "";
     [U.guardano, U.faccine && U.faccine._pub].forEach(function (x) { if (!x) return; if (x.textContent !== txPub) x.textContent = txPub; x.hidden = !nPub; });
@@ -1063,26 +1139,106 @@
     try { if (SV.host) SV.h.inviaVeloce({ t: "__fa", id: "host", n: nome, f: emoji }); else SV.h.invia({ t: "__faccina", f: emoji }); } catch (e) {}
     return true;
   }
-  // la fila delle faccine (svFn: la stanza a cui mandarle). Dopo un tocco aspetta un secondo (la barretta si riempie)
+  // le faccine (svFn: la stanza a cui mandarle). Dopo un tocco aspetta un secondo (la barretta si riempie).
+  // (7 nov 2026, il proprietario: «le reazioni mi piacciono, però occupano spazio»: niente più fila di 6 tasti. Al loro posto
+  // il MIO avatar (il viso, con un piccolo 😂): un tocco e le faccine si aprono a ventaglio sopra, poi si chiudono da sole.
+  // Nella saletta il tasto non c'è: si tocca il proprio avatar nella stanza. Chi guarda soltanto ha ancora la fila, nella
+  // targhetta (classe sl-fa-fila). I tasti .sl-fa restano sempre nella pagina: quando il ventaglio è chiuso stanno qui, nascosti)
   function vassoioFaccine(svFn) {
-    var box = el("div", { class: "sl-faccine", role: "group", "aria-label": "Faccine: il tuo avatar le fa sui telefoni di tutti" });
+    var box = el("div", { class: "sl-faccine", role: "group", "aria-label": "Reazioni: il tuo avatar le fa sui telefoni di tutti" });
     var carica = el("i", { class: "sl-fa-carica", "aria-hidden": "true" }), tasti = [];
     // a sinistra "👀 2" quando qualcuno guarda soltanto (lo aggiorna aggiornaPubblico, solo il testo)
     box._sv = svFn; box._pub = el("span", { class: "sl-fa-pubblico", hidden: "hidden" });
     box.appendChild(box._pub);
     try { var sv0 = svFn(), n0 = contaPubblico(sv0); if (n0) { box._pub.textContent = "👀 " + n0; box._pub.hidden = false; } } catch (e) {}
-    FACCINE_SL.forEach(function (emoji) {
+    var io = null; try { var pr = profiloAttivo(); io = pr && pr.omino; } catch (e) {}
+    var visoH = "<span class='sl-fa-viso vuoto'>🙂</span>";
+    if (io && window.SGOmino) try { visoH = "<span class='sl-fa-viso'>" + visoLargo(io) + "</span>"; } catch (e) {}
+    box._apri = el("button", { class: "sl-fa-apri", type: "button", "aria-label": "Reazioni", "aria-expanded": "false",
+      html: visoH + "<b class='sl-fa-badge'>😂</b>",
+      onclick: function () { var r = box._apri.getBoundingClientRect(); ventaglio(box, { x: r.left + r.width / 2, y: r.top + r.height / 2, piccolo: true }); } });
+    box.appendChild(box._apri);
+    box._casa = el("span", { class: "sl-fa-casa" });
+    FACCINE_SL.forEach(function (emoji, i) {
       var b = el("button", { class: "sl-fa", type: "button", "aria-label": "Faccina " + emoji, text: emoji });
+      b.style.setProperty("--i", i);
       b.addEventListener("click", function () {
         if (!mandaFaccina(svFn(), emoji)) return;
         rianima(b, "boing"); rianima(carica, "va");
         box.classList.add("attesa"); tasti.forEach(function (x) { x.disabled = true; });
         clearTimeout(box._t); box._t = setTimeout(function () { box.classList.remove("attesa"); tasti.forEach(function (x) { x.disabled = false; }); }, 1000);
+        if (VENT && VENT.box === box) setTimeout(function () { if (VENT && VENT.box === box) chiudiVentaglio(); }, 260);   // (si vede il «boing», poi si chiude)
       });
-      tasti.push(b); box.appendChild(b);
+      tasti.push(b); box._casa.appendChild(b);
     });
+    box._tasti = tasti;
+    box.appendChild(box._casa);
     box.appendChild(carica);
     return box;
+  }
+  // il viso grande (testa e un po' di collo): per i tondini piccoli, dove il busto intero renderebbe la faccia minuscola
+  var VISI = {};   // (il disegno si fa una volta sola per avatar)
+  function visoLargo(cfg) {
+    var k = JSON.stringify(cfg) + (illustrati() ? "|a" : ""); if (VISI[k]) return VISI[k];
+    var s = SGOmino.svg(cfg, { busto: true });
+    return (VISI[k] = illustrati() ? s.replace("viewBox='66 13 68 69.6'", "viewBox='76 9 48 48'") : s);
+  }
+  // il ventaglio delle reazioni: le 6 faccine ad arco intorno alla testa (p: { x, y } sullo schermo; piccolo: è il tasto col viso).
+  // Sta sopra tutto (attaccato alla pagina); si chiude con un'altra faccina, toccando fuori, dopo 5 s, o se la schermata se ne va
+  var VENT = null;
+  function ventaglio(box, p) {
+    if (VENT && VENT.box === box) { chiudiVentaglio(); return; }
+    chiudiVentaglio();
+    var tasti = box._tasti || []; if (!tasti.length || !document.body.contains(box)) return;
+    try { localStorage.setItem("sg-reazioni", "1"); } catch (e) {}
+    var W = window.innerWidth || 360, H = window.innerHeight || 640, B = 46, RR = p.piccolo ? 78 : 92;
+    var su = p.y - RR * 0.8 - B / 2 > 8;   // c'è posto sopra: si apre in su; se no in giù
+    var cx = Math.max(RR + B / 2 + 4 - (p.piccolo ? 0 : 6), Math.min(W - RR - B / 2 - 4, p.x)), cy = p.y;
+    if (!su) cy = Math.min(H - RR * 0.8 - B / 2 - 8, cy);
+    var nodo = el("div", { class: "sl-ventaglio", role: "group", "aria-label": "Reazioni" });
+    nodo.style.left = cx.toFixed(1) + "px"; nodo.style.top = cy.toFixed(1) + "px";
+    tasti.forEach(function (b, i) {
+      var deg = su ? (-160 + i * 28) : (160 - i * 28), a = deg * Math.PI / 180;
+      b.style.setProperty("--dx", (Math.cos(a) * RR).toFixed(1) + "px");
+      b.style.setProperty("--dy", (Math.sin(a) * RR * 0.8).toFixed(1) + "px");
+      nodo.appendChild(b);
+    });
+    document.body.appendChild(nodo);
+    if (box._apri) box._apri.setAttribute("aria-expanded", "true");
+    VENT = { box: box, nodo: nodo };
+    VENT.t = setTimeout(chiudiVentaglio, 5000);
+    VENT.tic = setInterval(function () { if (!VENT || !document.body.contains(VENT.box) || VENT.box.hidden) chiudiVentaglio(); }, 400);
+    setTimeout(function () { if (VENT && VENT.nodo === nodo) { document.addEventListener("pointerdown", fuoriVentaglio, true); window.addEventListener("resize", chiudiVentaglio); } }, 0);
+  }
+  function fuoriVentaglio(e) {
+    if (!VENT) return;
+    if (VENT.nodo.contains(e.target) || (VENT.box._apri && VENT.box._apri.contains(e.target))) return;
+    var av = e.target && e.target.closest && e.target.closest(".sl-av.tu");   // (il tocco sul mio avatar lo chiude da sé: vedi toccoAvatar)
+    if (av) return;
+    chiudiVentaglio();
+  }
+  function chiudiVentaglio() {
+    if (!VENT) return;
+    var V = VENT; VENT = null;
+    clearTimeout(V.t); clearInterval(V.tic);
+    document.removeEventListener("pointerdown", fuoriVentaglio, true); window.removeEventListener("resize", chiudiVentaglio);
+    (V.box._tasti || []).forEach(function (b) { V.box._casa.appendChild(b); });   // i tasti tornano a casa (restano nella pagina)
+    if (V.box._apri) V.box._apri.setAttribute("aria-expanded", "false");
+    if (V.nodo.parentNode) V.nodo.parentNode.removeChild(V.nodo);
+  }
+  // la prima volta (su questo telefono) un fumetto sul mio avatar: «Tocca il tuo avatar per le reazioni»
+  function suggerisciReazioni(U) {
+    if (U.suggerito) return;
+    var visto = false; try { visto = !!localStorage.getItem("sg-reazioni"); } catch (e) { visto = true; }
+    if (visto) { U.suggerito = true; return; }
+    var mio = null; Object.keys(U.figure).forEach(function (k) { var f = U.figure[k]; if (f.p && f.p.tu) mio = f; });
+    if (!mio || !U.faccine || U.faccine.hidden) return;
+    U.suggerito = true;
+    setTimeout(function () {
+      if (SL.ultimo !== U || !document.body.contains(U.s) || !mio.nodo.parentNode || VENT) return;
+      try { if (localStorage.getItem("sg-reazioni")) return; } catch (e) {}
+      fumetto(U, mio, "Tocca il tuo avatar per le reazioni 😂", "consiglio", 5000);
+    }, 1800);
   }
 
   // ---- I FUMETTI E I TOCCHI SUGLI AVATAR ----
@@ -1133,7 +1289,16 @@
     });
     f.nodo.addEventListener("pointermove", function (e) { if (t && Math.abs(e.clientX - x0) + Math.abs(e.clientY - y0) > 14) annulla(); });
     ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) { f.nodo.addEventListener(ev, annulla); });
-    f.nodo.addEventListener("click", function () { if (lungo) { lungo = false; return; } animaAv(f.nodo, f.tu ? "saluta" : "salta"); });
+    f.nodo.addEventListener("click", function () {
+      if (lungo) { lungo = false; return; }
+      // il MIO avatar: si aprono le reazioni a ventaglio intorno alla testa (7 nov 2026); senza la stanza collegata saluta come prima
+      if (f.tu && U.faccine && !U.faccine.hidden) {
+        var r = f.nodo.getBoundingClientRect();
+        ventaglio(U.faccine, { x: r.left + r.width / 2, y: r.top + r.height * 0.13 });
+        return;
+      }
+      animaAv(f.nodo, f.tu ? "saluta" : "salta");
+    });
   }
   function menuAvatar(U, f) {
     chiudiMenuAvatar();
