@@ -25,6 +25,16 @@ window.SG_NOVITA = [
     ]
   },
   {
+    v: 316,
+    data: "7 novembre 2026",
+    titolo: "🎬 Lo Studio TV: luci da prima serata",
+    descrizione: [
+      "🌗 Il pubblico ora sta nella penombra, coi contorni accesi dai colori del gioco: il palco e i concorrenti si vedono meglio.",
+      "🏆 Alla fine della puntata chi vince ha la sua festa: parete d'oro, fari che si incrociano, coriandoli e pubblico in piedi con le braccia alzate.",
+      "🧘 Con «riduci movimento» acceso sul telefono niente coriandoli né fari che si muovono."
+    ]
+  },
+  {
     v: 315,
     data: "6 novembre 2026",
     titolo: "🧍 La Sala: più spazio agli avatar",

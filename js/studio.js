@@ -299,21 +299,23 @@
     return cacheAv[k];
   }
 
-  function coriandoli() {
+  function riduci() { return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); }
+  function coriandoli(quanti, colori) {
+    if (riduci()) return;   // «riduci movimento»: niente coriandoli
     assicuraStileStudio();
     var c = document.createElement("div"); c.className = "st-coriandoli";
-    var col = ["#ffd43b", "#37d47e", "#4dabf7", "#ff6b6b", "#cc5de8", "#fff"];
-    for (var i = 0; i < 40; i++) {
+    var col = colori || ["#ffd43b", "#37d47e", "#4dabf7", "#ff6b6b", "#cc5de8", "#fff"];
+    for (var i = 0; i < (quanti || 40); i++) {
       var p = document.createElement("i");
       p.style.left = (Math.random() * 100) + "%";
       p.style.background = col[i % col.length];
       p.style.setProperty("--dx", (Math.random() * 120 - 60) + "px");
       p.style.setProperty("--r", (Math.random() * 720 - 360) + "deg");
-      p.style.animationDelay = (Math.random() * 0.4) + "s";
+      p.style.animationDelay = (Math.random() * (quanti > 40 ? 1.3 : 0.4)) + "s";
       c.appendChild(p);
     }
     document.body.appendChild(c);
-    setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 3200);
+    setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, quanti > 40 ? 4200 : 3200);
   }
 
   var STACCO = 2600;   // ms di stacco su chi gioca prima che parta il suo tempo (online l'host lo aggiunge al timer)
@@ -502,7 +504,13 @@
       ".st-leggio.tocca .anello{opacity:1;will-change:transform,opacity;animation:stAnello 1s ease-in-out infinite}",
       "@keyframes stAnello{0%,100%{transform:scale(.92);opacity:.55}50%{transform:scale(1.06);opacity:1}}",
       ".st-leggio.fuori .alone{opacity:0}",
-      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-lucina,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}}"
+      // 🎉 tappa 3 (5 nov 2026): la festa finale (pubblico in piedi, fari che si incrociano)
+      ".st-pubwrap.inpiedi .st-fila{animation:stInPiedi .3s ease-in-out var(--rit,0s) infinite alternate}",
+      ".st-pubwrap .st-fila{transition:opacity .25s}.st-pubwrap .st-fila.su{opacity:0}",
+      ".st-pubwrap.inpiedi.su-pronti .st-fila.su{opacity:1}.st-pubwrap.inpiedi.su-pronti .st-fila:not(.su){opacity:0}",
+      "@keyframes stInPiedi{from{transform:translateY(-9px)}to{transform:translateY(-21px)}}",
+      "@keyframes stIncrocia{from{transform:rotate(var(--a0))}to{transform:rotate(var(--a1))}}",
+      "@media (prefers-reduced-motion:reduce){.st-fascio,.st-lucina,.st-fila,.st-bastone,.st-cartellone,.st-occhio{animation:none}.st-pubwrap.inpiedi .st-fila{animation:none;transform:translateY(-8px)}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -1106,22 +1114,26 @@
   }
   // il pubblico: silhouette disegnate una volta sola (poi il canvas intero "salta" quando applaude)
   // ---- il pubblico: tanti piccoli avatar veri, disegnati una volta a file (canvas) che ondeggiano ognuna per conto suo ----
-  var poolPubblico = null;   // una ventina di facce pronte (bitmap), riusate per tutta la folla
-  function preparaPoolPubblico(cb) {
-    if (poolPubblico) { if (poolPubblico.pronti) cb(); else poolPubblico.cbs.push(cb); return; }
-    poolPubblico = { pronti: false, img: [], cbs: [cb] };
+  var poolPubblico = null, poolSu = null;   // una ventina di facce pronte (bitmap), riusate per tutta la folla (poolSu: le stesse con le braccia alzate)
+  function preparaPoolPubblico(cb, su) {
+    var P = su ? poolSu : poolPubblico;
+    if (P) { if (P.pronti) cb(); else P.cbs.push(cb); return; }
+    P = { pronti: false, img: [], cbs: [cb] };
+    if (su) poolSu = P; else poolPubblico = P;
+    var poolPubblico_ = P;
     var N = 20, fatti = 0;
     function uno() {
       if (++fatti < N) return;
-      poolPubblico.pronti = true; var l = poolPubblico.cbs; poolPubblico.cbs = [];
+      poolPubblico_.img = poolPubblico_.img.filter(Boolean);   // (nello stesso ordine: seduti e in piedi sono le stesse persone)
+      poolPubblico_.pronti = true; var l = poolPubblico_.cbs; poolPubblico_.cbs = [];
       l.forEach(function (f) { try { f(); } catch (e) {} });
     }
     if (!window.SGOmino) { fatti = N - 1; uno(); return; }
     for (var i = 0; i < N; i++) (function (i) {
-      var svg; try { svg = SGOmino.svg(SGOmino.casuale("pubblico-" + i), { busto: true }); } catch (e) { uno(); return; }
+      var svg; try { svg = SGOmino.svg(SGOmino.casuale("pubblico-" + i), su ? { busto: true, braccia: "su" } : { busto: true }); } catch (e) { uno(); return; }
       var img = new Image();
       img.onload = function () {
-        try { var c = document.createElement("canvas"); c.width = 72; c.height = 74; c.getContext("2d").drawImage(img, 0, 0, 72, 74); poolPubblico.img.push(c); } catch (e) {}
+        try { var c = document.createElement("canvas"); c.width = 72; c.height = 74; c.getContext("2d").drawImage(img, 0, 0, 72, 74); poolPubblico_.img[i] = c; } catch (e) {}
         uno();
       };
       img.onerror = uno;
@@ -1129,6 +1141,12 @@
     })(i);
   }
   // rettangolo con solo gli angoli in alto arrotondati (aggiunto al percorso in corso)
+  // la folla in piedi con le braccia alzate per la festa finale: disegnata una volta, nascosta, quando la telecamera è ferma
+  function preparaInPiedi(S) {
+    if (LEGGERO || (S.strisceSu && S.strisceSu.length)) return;
+    preparaPoolPubblico(function () { if (S.vivo() && S.zonePub && !(S.strisceSu && S.strisceSu.length)) disegnaPubblico(S, true); }, true);
+  }
+  function viaInPiedi(S) { (S.strisceSu || []).forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); }); S.strisceSu = []; }
   function rettAlto(x, X, Y, w, h, r) {
     x.moveTo(X, Y + h); x.lineTo(X, Y + r); x.quadraticCurveTo(X, Y, X + r, Y); x.lineTo(X + w - r, Y);
     x.quadraticCurveTo(X + w, Y, X + w, Y + r); x.lineTo(X + w, Y + h); x.closePath();
@@ -1137,56 +1155,84 @@
     x.fillStyle = "#3a2d78"; x.beginPath(); x.ellipse(cx, y + s * 0.92, s * 0.46, s * 0.34, 0, 0, 7); x.fill();
     x.fillStyle = "#6f5cb8"; x.beginPath(); x.arc(cx, y + s * 0.38, s * 0.26, 0, 7); x.fill();
   }
-  function disegnaPubblico(S) {
+  function disegnaPubblico(S, su) {
     var W = S.W, h = S.pubH, q = Math.min(1.5, qualitaTela(S)), Z = S.zonePub;
     S.pubWrap.style.top = S.pubTop + "px"; S.pubWrap.style.width = W + "px"; S.pubWrap.style.height = h + "px";
-    S.strisce.forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); });
-    S.strisce = [];
-    var pool = (poolPubblico && poolPubblico.pronti && poolPubblico.img.length) ? poolPubblico.img : null;
+    var lista = su ? (S.strisceSu || []) : S.strisce;
+    lista.forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); });
+    lista = [];
+    if (su) S.strisceSu = lista; else S.strisce = lista;
+    if (!su) { S.pubWrap.classList.remove("su-pronti"); viaInPiedi(S); }   // la folla in piedi va rifatta sulle misure nuove
+    var P = su ? poolSu : poolPubblico, pool = (P && P.pronti && P.img.length) ? P.img : null;
+    if (su && !pool) return;
     var seme = 11; function rnd() { seme = (seme * 16807) % 2147483647; return seme / 2147483647; }
     // le file: in alto (in fondo alla sala) più piccole, in basso (davanti) più grandi
     var righe = [], y = 2;
     while (y < h - 8) { var sz = 24 + 14 * (y / h); righe.push({ y: y, s: sz }); y += sz * 0.58; }
-    var PER = 4;
+    var PER = 4, m0p = performance.now();
+    // 🌙 tappa 3 (5 nov 2026): il pubblico sta nella penombra e la parete LED dietro gli accende solo i bordi (controluce):
+    // ogni fila si disegna a parte (fila), si scurisce e prende il filo di luce in alto a sinistra e in alto a destra coi colori dello studio.
+    // Tutto una volta sola qui (canvas): mentre la telecamera si muove non costa niente.
+    var tF = document.createElement("canvas"), tA = document.createElement("canvas"), tB = document.createElement("canvas");
+    var rimA = mescola(S.tema[0], "#ffffff", 0.35), rimB = mescola(S.tema[2], "#ffffff", 0.35);
+    function fila(x, R, k, r0) {   // una fila di persone nel suo canvas, poi scurita e coi bordi accesi, poi sulla striscia
+      var s = R.s, alza = su ? s * 0.2 : 0, fy0 = Math.floor(R.y - s * 0.2 - alza), fh = Math.ceil(s * 1.45 + alza), dd = Math.max(1, s * 0.05);   // in piedi: ognuno un po' più su (si vede di più sopra chi ha davanti)
+      [tF, tA, tB].forEach(function (c) { if (c.width !== Math.ceil(W * q) || c.height < Math.ceil(fh * q)) { c.width = Math.ceil(W * q); c.height = Math.ceil(fh * q); } });
+      var f = tF.getContext("2d"); f.setTransform(1, 0, 0, 1, 0, 0); f.clearRect(0, 0, tF.width, tF.height); f.setTransform(q, 0, 0, q, 0, -fy0 * q);
+      var passo = s * 0.78, off = ((r0 + k) % 2) * passo / 2;
+      Z.forEach(function (z) {
+        if (R.y < z.y - s * 0.2 || R.y > z.y + z.h - s * 0.35) return;
+        // accanto alla scalinata la zona si stringe man mano che si scende
+        var ff = Math.max(0, Math.min(1, (R.y + s * 0.5 - z.y) / z.h)), zl = z.l0 + (z.l1 - z.l0) * ff, zr = z.r0 + (z.r1 - z.r0) * ff;
+        for (var px = zl - passo * 0.4 + off; px < zr - s * 0.3; px += passo) {
+          var ss = s * (0.9 + rnd() * 0.2), jx = (rnd() - 0.5) * s * 0.2, jy = (rnd() - 0.5) * s * 0.14;
+          if (pool) {
+            var im = pool[Math.floor(rnd() * pool.length)];
+            if (rnd() < 0.5) f.drawImage(im, px + jx, R.y + jy - alza, ss, ss * 1.03);
+            else { f.save(); f.translate(px + jx + ss, R.y + jy - alza); f.scale(-1, 1); f.drawImage(im, 0, 0, ss, ss * 1.03); f.restore(); }
+          } else sagoma(f, px + jx + ss / 2, R.y + jy, ss);
+        }
+      });
+      f.setTransform(1, 0, 0, 1, 0, 0);
+      var dietro = 1 - R.y / h;   // 1 in fondo alla sala (vicino alla parete), 0 davanti
+      // i due fili di luce: la sagoma meno la stessa sagoma spostata un poco in basso (a destra per il bordo di sinistra, a sinistra per l'altro)
+      [[tA, dd * 0.75, rimA], [tB, -dd * 0.75, rimB]].forEach(function (r) {
+        var a = r[0].getContext("2d"); a.globalCompositeOperation = "copy"; a.drawImage(tF, 0, 0);
+        a.globalCompositeOperation = "destination-out"; a.drawImage(tF, r[1] * q, dd * q);
+        a.globalCompositeOperation = "source-in"; a.fillStyle = r[2]; a.fillRect(0, 0, r[0].width, r[0].height);
+        a.globalCompositeOperation = "source-over";
+      });
+      f.globalCompositeOperation = "source-atop";   // la penombra: più buio in fondo, un filo meno davanti
+      f.fillStyle = "rgba(6,7,22," + (0.76 + 0.14 * dietro).toFixed(3) + ")"; f.fillRect(0, 0, tF.width, tF.height);
+      f.globalCompositeOperation = "lighter"; f.globalAlpha = 0.75 + 0.25 * dietro;
+      f.drawImage(tA, 0, 0); f.drawImage(tB, 0, 0);
+      f.globalAlpha = 1; f.globalCompositeOperation = "source-over";
+      x.drawImage(tF, 0, 0, tF.width, Math.ceil(fh * q), 0, fy0, tF.width / q, Math.ceil(fh * q) / q);
+    }
     for (var r0 = 0; r0 < righe.length; r0 += PER) {
       var gruppo = righe.slice(r0, r0 + PER), ult = gruppo[gruppo.length - 1];
-      var y0 = Math.max(0, Math.floor(gruppo[0].y - 3)), y1 = Math.min(h, Math.ceil(ult.y + ult.s * 1.08));
+      var y0 = Math.max(0, Math.floor(gruppo[0].y - 3 - (su ? gruppo[0].s * 0.2 : 0))), y1 = Math.min(h, Math.ceil(ult.y + ult.s * 1.08));
       if (y1 - y0 < 4) continue;
-      var c = document.createElement("canvas"); c.className = "st-fila st-anim";
+      var c = document.createElement("canvas"); c.className = "st-fila st-anim" + (su ? " su" : "");
       var x = preparaTela(c, W, y1 - y0, q);
       c.style.top = y0 + "px";
       c.style.setProperty("--dur", (1.6 + rnd() * 1.3).toFixed(2) + "s");
       c.style.setProperty("--rit", (-rnd() * 2).toFixed(2) + "s");
       x.translate(0, -y0);
       x.save(); x.beginPath(); Z.forEach(function (z) { zonaPercorso(x, z, 0); }); x.clip();
-      gruppo.forEach(function (R, k) {
-        var s = R.s, passo = s * 0.78, off = ((r0 + k) % 2) * passo / 2;
-        Z.forEach(function (z) {
-          if (R.y < z.y - s * 0.2 || R.y > z.y + z.h - s * 0.35) return;
-          // accanto alla scalinata la zona si stringe man mano che si scende
-          var f = Math.max(0, Math.min(1, (R.y + s * 0.5 - z.y) / z.h)), zl = z.l0 + (z.l1 - z.l0) * f, zr = z.r0 + (z.r1 - z.r0) * f;
-          for (var px = zl - passo * 0.4 + off; px < zr - s * 0.3; px += passo) {
-            var ss = s * (0.9 + rnd() * 0.2), jx = (rnd() - 0.5) * s * 0.2, jy = (rnd() - 0.5) * s * 0.14;
-            if (pool) {
-              var im = pool[Math.floor(rnd() * pool.length)];
-              if (rnd() < 0.5) x.drawImage(im, px + jx, R.y + jy, ss, ss * 1.03);
-              else { x.save(); x.translate(px + jx + ss, R.y + jy); x.scale(-1, 1); x.drawImage(im, 0, 0, ss, ss * 1.03); x.restore(); }
-            } else sagoma(x, px + jx + ss / 2, R.y + jy, ss);
-          }
-        });
-      });
-      // luce da palco solo sulle persone: più buio in fondo (in alto), i colori dello studio ai lati
+      gruppo.forEach(function (R, k) { fila(x, R, k, r0); });
+      // i colori dello studio ai lati, appena (le persone sono già in penombra, coi bordi accesi)
       x.globalCompositeOperation = "source-atop";
-      var sg = x.createLinearGradient(0, 0, 0, h); sg.addColorStop(0, "rgba(8,9,26,.8)"); sg.addColorStop(0.55, "rgba(8,9,26,.62)"); sg.addColorStop(1, "rgba(8,9,26,.5)");   // il pubblico sta in penombra: i concorrenti devono risaltare
-      x.fillStyle = sg; x.fillRect(0, y0, W, y1 - y0);
       var hg = x.createLinearGradient(0, 0, W, 0);
-      hg.addColorStop(0, rgbaDi(S.tema[0], 0.3)); hg.addColorStop(0.22, rgbaDi(S.tema[0], 0)); hg.addColorStop(0.78, rgbaDi(S.tema[2], 0)); hg.addColorStop(1, rgbaDi(S.tema[2], 0.3));
+      hg.addColorStop(0, rgbaDi(S.tema[0], 0.22)); hg.addColorStop(0.22, rgbaDi(S.tema[0], 0)); hg.addColorStop(0.78, rgbaDi(S.tema[2], 0)); hg.addColorStop(1, rgbaDi(S.tema[2], 0.22));
       x.fillStyle = hg; x.fillRect(0, y0, W, y1 - y0);
       x.globalCompositeOperation = "source-over";
       x.restore();
       S.pubWrap.insertBefore(c, S.pubDeco);
-      S.strisce.push(c);
+      lista.push(c);
     }
+    if (window.__studioMisura3) window.__studioMisura3[su ? "inPiedi" : "pubblico"].push(+(performance.now() - m0p).toFixed(1));   // (per le prove: quanto costa disegnare la folla)
+    if (su) { S.pubWrap.classList.add("su-pronti"); return; }   // la folla in piedi non si specchia (il riflesso resta quello seduto)
     var m0 = performance.now(); rifletti(S);   // il pubblico (e tutto il resto) specchiato nel pavimento
     if (window.__studioMisura) window.__studioMisura.riflesso.push(performance.now() - m0);
   }
@@ -1477,6 +1523,30 @@
   }
 
   // ---------- LA REGIA: i momenti dello spettacolo ----------
+  // 🎉 La festa finale (tappa 3): parete d'oro piena, i fari che si incrociano sopra la sala, il pubblico in piedi, tanti coriandoli.
+  // Corta: si accende sul campo largo e si spegne da sola. Con «riduci movimento» solo la parete d'oro e il pubblico in piedi (fermo).
+  function festa(S, on) {
+    var F = S.fasci || [], ferma = riduci() || (S.par && S.par.ferma);
+    clearTimeout(S.tFesta);
+    if (!on) {
+      S.pubWrap.classList.remove("inpiedi");
+      F.forEach(function (f) { clearTimeout(f._tFe); f._festa = false; });
+      if (S.vivo()) applicaLuci(S);   // i fari tornano sul vincitore da dove sono (puntaFascio parte dall'angolo di adesso)
+      return;
+    }
+    S.pubWrap.classList.add("inpiedi");
+    bersaglioParete(S, "#ffc247", 0.92, 1.3);
+    if (!ferma) F.forEach(function (f, k) {   // quelli a sinistra spazzano verso destra e viceversa: si incrociano in mezzo
+      var sx = (S.fasciPos && S.fasciPos[k] ? S.fasciPos[k][0] : 0) < S.W / 2, a0 = sx ? 38 : -38, a1 = sx ? -26 : 26;
+      clearTimeout(f._tLib); clearTimeout(f._tFe); f._festa = true; f._punta = false;
+      f.style.setProperty("--a0", a0 + "deg"); f.style.setProperty("--a1", a1 + "deg");
+      f.style.animation = "none"; f.style.transition = "transform .45s ease-in-out"; f.style.transform = "rotate(" + a0 + "deg)";
+      if (f._col !== "#fff1c2") { f._col = "#fff1c2"; fascio(f, rgbaDi("#fff1c2", 0.55)); }
+      f._tFe = setTimeout(function () { f.style.transition = "none"; f.style.transform = ""; f.style.animation = "stIncrocia 1.15s ease-in-out " + (-(k % 2) * 0.3) + "s infinite alternate"; }, 460);
+    });
+    coriandoli(70, ["#ffc247", "#ffe08a", "#fff", S.tema[0], S.tema[2]]);
+    S.tFesta = setTimeout(function () { if (S.vivo()) festa(S, false); }, 3200);
+  }
   async function apertura(S) {
     viaBarra(S); logoSchermo(S);
     if (S.pubPronto) await S.pubPronto;   // le facce del pubblico pronte prima di muovere la telecamera
@@ -1522,6 +1592,7 @@
     await largo(S, 1000);
     terzo(S, null, "Fine della puntata!", "E il vincitore è…", "🏁");
     FX.rullo(1.6);
+    if (vinc >= 0) setTimeout(function () { if (S.vivo()) preparaInPiedi(S); }, 200);   // la folla in piedi per la festa (telecamera ferma: non si vede)
     await dorme(1800); viaTerzo(S);
     if (vinc >= 0) {
       lampo(S); accendiSolo(S, vinc); vittoriaLuci(S, vinc);   // parete d'oro e tutti i fari sul vincitore
@@ -1529,7 +1600,10 @@
       faccia(S, vinc, "esulta");
       terzo(S, vinc, (S.gioc[vinc] ? S.gioc[vinc].nome : "") + " vince!", sotto || "", "🏆");
       pubblico(S, "ovazione"); coriandoli(); FX.fanfara();
-      await dorme(3000); viaTerzo(S);
+      await dorme(2400);
+      festa(S, true);   // 🎉 campo largo: parete d'oro, fari incrociati, pubblico in piedi, coriandoli (stessa durata di prima)
+      await largo(S, 1100); await dorme(1600); viaTerzo(S);
+      return;
     }
     await largo(S, 1400); await dorme(700);
   }
