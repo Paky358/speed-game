@@ -9,8 +9,8 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 302,
-    data: "3 novembre 2026",
+    v: 317,
+    data: "7 novembre 2026",
     titolo: "La Ruota della Fortuna come in TV, ma meglio 🎡",
     descrizione: [
       "🎬 Prima di ogni manche c'è un gioco veloce, ogni volta diverso: la frase lampo, ⏳ La ruota del tempo (vedi un anno: cosa è successo?), 🌍 GiraMondo (una parola straniera curiosa: cosa vuol dire?), 🎯 il Triplete (tre frasi sullo stesso tema, e chi le fa tutte e tre prende 2.000 in più) e 🧩 il CruciRuota (quattro parole sul tema, una per riga: prenoti e scrivi quelle che sai).",
@@ -22,6 +22,151 @@ window.SG_NOVITA = [
       "⌨️ In basso c'è sempre la tastiera come quella del telefono (Q W E R T Y), uguale per tutti: le lettere già chiamate sono colorate se ci sono e barrate se non ci sono. Per chiamare una lettera la tocchi e si accende: tutti vedono quale stai scegliendo; la tocchi di nuovo (o «✓ Chiama») e la chiami. Le vocali si comprano toccandole direttamente.",
       "✍️ Quando qualcuno risolve, gli altri vedono le lettere comparire sul tabellone mentre le scrive. Finché non hai scritto niente puoi tornare indietro; dopo la prima lettera no, e se finisce il tempo vale quello che hai scritto.",
       "💰 Sotto il tabellone, per ognuno, i soldi di questa manche in grande e il totale piccolo («tot 3.500»): a fine manche chi risolve incassa e gli altri ripartono da 0. La Bancarotta toglie solo i soldi della manche, mai il totale. La ruota fa il tic-tic mentre rallenta; il giro finale si apre con la campana; online si hanno 15 secondi per ogni mossa."
+    ]
+  },
+  {
+    v: 315,
+    data: "6 novembre 2026",
+    titolo: "🧍 La Sala: più spazio agli avatar",
+    descrizione: [
+      "🔍 Nella Sala e nella saletta dei giochi gli avatar sono molto più grandi: con 8 amici circa il 40% in più.",
+      "✂️ Tolto il tasto «Chiudi» in alto: il nome del gioco sta sempre su una riga, anche «Mini Asta Fantacalcio».",
+      "📏 Codice della sala, «Invita gli amici», faccine, «Pronti», «Sei dentro!» e tasti un po' più piccoli: c'è ancora tutto, ma lo spazio va agli avatar."
+    ]
+  },
+  {
+    v: 314,
+    data: "6 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: voti giusti e buste con la suspense",
+    descrizione: [
+      "🗳️ Voti più giusti: chi non segna e non fa assist prende al massimo 7 (e solo se gioca bene), mai più 7,5 senza aver fatto niente.",
+      "❌ Un tiro sbagliato (fuori, palo, traversa, salvato sulla linea) abbassa il voto di mezzo punto: dopo un errore, senza gol né assist, al massimo 6,5.",
+      "🧤 Il portiere non scende mai sotto il 6, nemmeno se prende gol (può essere colpa della difesa): 5,5 solo con un errore suo. Ogni parata gli alza il voto. Il +1 della porta inviolata e il −1 per ogni gol preso restano a parte, come prima.",
+      "⚽ Gol e assist alzano il voto come nel fanta vero: un gol 7, una doppietta 8.",
+      "🃏 Busta chiusa: le buste ora stanno sul tavolo, col pallone sulla punta e la faccina di chi l'ha scritta. Le luci si abbassano (il campo si vede sempre), parte il battito, chi passa gira col cartellino rosso, poi si girano una alla volta dalla più bassa.",
+      "🥁 Le ultime due vengono avanti testa a testa, rullo di tamburi… e si aprono nello stesso istante su tutti i telefoni: chi vince si illumina d'oro."
+    ]
+  },
+  {
+    v: 313,
+    data: "6 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: il meteo più tranquillo",
+    descrizione: [
+      "🌦️ In una giornata al massimo UNA partita ha un meteo diverso (pioggia, nebbia o neve, a seconda della città): tutte le altre col sole. Niente più neve da una parte e pioggia dall'altra nella stessa giornata.",
+      "☀️ Tolto il sole forte (luce calda e ombre sul campo): distraeva dalla partita."
+    ]
+  },
+  {
+    v: 312,
+    data: "6 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: lo stadio si sente davvero",
+    descrizione: [
+      "🔊 Nella giornata i suoni sono veri, registrati negli stadi: il brusio della folla (piano dal fischio d'inizio, sempre più forte dal 75'), il boato del gol con la curva che canta e batte i tamburi, l'«ooh» sulle occasioni sprecate, il fischietto vero dell'arbitro, il calcio al pallone, la rete, il palo e l'applauso al fischio finale.",
+      "🤫 Prima di ogni rigore e punizione lo stadio si zittisce.",
+      "🧍 I calciatori in campo sono più belli: ombra morbida, luce e ombra sul corpo, capelli diversi, calzettoni coi colori veri della squadra, scarpini colorati, spalle larghe e un filo più grandi.",
+      "🏟️ Via i tifosi che dopo il gol entravano nel campo e coprivano l'area di rigore: il campo resta sempre libero.",
+      "❄️ Il meteo dipende dalla città di chi gioca in casa: la neve solo al nord (più spesso a Torino e Bergamo), la nebbia solo nella pianura del nord, la pioggia di più a Genova, Udine, Como e Venezia e poco al sud.",
+      "☀️ Quando c'è il sole forte il campo si scalda: luce calda dall'angolo, il riflesso del sole e le ombre del tetto dello stadio. Al sud sempre, nelle altre città una volta su tre.",
+      "🏷️ Nuova regola nel ⚙️ (spenta di partenza): «In campo, di chi è». Accesa, sotto il nome del calciatore compare piccolo il nome di chi l'ha comprato.",
+      "🎡 Busta chiusa: quando dopo lo spareggio siete ancora pari gira una ruota vera, coi nomi su tanti spicchi alternati. Rallenta piano piano e fino all'ultimo non si capisce di chi è; online si ferma nello stesso istante su tutti i telefoni."
+    ]
+  },
+  {
+    v: 311,
+    data: "6 novembre 2026",
+    titolo: "🎨 Avatar disegnati per tutti",
+    descrizione: [
+      "🎨 Gli avatar hanno un disegno nuovo: proporzioni vere, capelli a ciocche, occhi e volti più curati. Il tuo avatar è lo stesso di prima, solo disegnato meglio.",
+      "🔍 Lo schermo non si ingrandisce più per sbaglio: né col doppio tocco né col pizzico."
+    ]
+  },
+  {
+    v: 310,
+    data: "6 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: maglie vere e giornata da TV",
+    descrizione: [
+      "👕 All'asta la maglia è girata: dietro c'è il numero VERO di quest'anno e il nome del calciatore (Yildiz 10, Nico Paz 10, Lautaro 10…). Se un numero non è sicuro c'è solo il nome.",
+      "📺 Quando segna uno dei vostri calciatori arriva da sotto la banda come in TV: maglia col numero, minuto, nome, risultato e la faccina di chi l'ha comprato. Poi il «+3» vola sul suo quadretto.",
+      "🔢 In campo i vostri calciatori hanno il loro numero vero sulla maglia. Chi segna esulta in tanti modi diversi (a volte l'aeroplanino, a volte in scivolata in ginocchio) e i compagni corrono ad abbracciarlo.",
+      "🏟️ Dopo il gol la curva fa festa coi colori della squadra: bandiere, fumogeni e tabelloni luminosi ai lati del campo.",
+      "🌦️ Ogni partita ha il suo meteo: di solito sole, a volte pioggia, nebbia o neve (col pallone arancione). Cambia solo l'aspetto, mai i risultati.",
+      "🎬 Il gol della giornata si rivede da dietro la porta, con la rete in primo piano.",
+      "🏅 Sul podio ci sono «I premi della giornata» (il migliore in campo, il bidone, la saracinesca, il più fortunato, il turista) e la 📸 foto del campione da mandare su WhatsApp.",
+      "👟 L'assist è vero: nella mischia e nella doppia parata l'assist va a chi fa davvero l'ultimo passaggio prima del gol, non più a chi aveva crossato prima dei rimpalli.",
+      "🧤 Il portiere para meglio: si carica sulle gambe, vola teso con le mani sul pallone, si vede il colpo sulla parata, cade a terra e si rialza.",
+      "🆚 Nuova regola nel ⚙️ (spenta di partenza): «Contro chi giocano». Le partite si sorteggiano già all'inizio dell'asta e sotto ogni calciatore c'è il suo avversario."
+    ]
+  },
+  {
+    v: 309,
+    data: "6 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: la porta inviolata c'è da subito",
+    descrizione: [
+      "🔒 Nella giornata dopo l'asta ogni portiere parte già con il +1 della porta inviolata: lo vedi nei punti in alto dal fischio d'inizio.",
+      "🧤 Al primo gol che prende la sua squadra il +1 se ne va, insieme al −1 del gol subito, con la scritta «Porta inviolata persa».",
+      "Così la classifica dal vivo, la 👑 e i conti della Zona Cesarini sono giusti in ogni momento, e dopo il fischio finale non cambia più niente.",
+      "Vale anche nelle 🏆 3 giornate, online e sullo stesso telefono."
+    ]
+  },
+  {
+    v: 308,
+    data: "6 novembre 2026",
+    titolo: "🎨 Avatar disegnati: in prova",
+    descrizione: [
+      "Stiamo provando un disegno nuovo degli avatar, più curato: proporzioni vere, luce e volumi, mani con le dita che stringono davvero le cose (il microfono, la tazza per il manico, il palloncino che galleggia col filo).",
+      "Nei giochi di carte gli avatar stanno seduti al tavolo con le mani sul panno: Black Jack, Scopa, Scopa in 4 e Scopone. All'Asta stanno seduti sulle sedie.",
+      "Il tuo avatar resta lo stesso: cambia solo il modo in cui è disegnato. Per ora lo vedono solo due account di prova: quando è pronto arriva a tutti."
+    ]
+  },
+  {
+    v: 307,
+    data: "5 novembre 2026",
+    titolo: "⚡ L'app si apre molto più in fretta",
+    descrizione: [
+      "La prima schermata arriva in pochi secondi anche con la rete del telefono: all'apertura si scarica circa un quinto di prima.",
+      "Ogni gioco arriva la prima volta che lo tocchi («Arriva il gioco…») e poi resta sul telefono, anche senza rete.",
+      "Quando aggiorniamo l'app si riscarica solo il gioco cambiato, non più tutto.",
+      "Online la saletta aspetta un attimo chi non ha ancora il gioco, così si parte tutti insieme."
+    ]
+  },
+  {
+    v: 306,
+    data: "4 novembre 2026",
+    titolo: "L'Impostore: 10 temi nuovi, 1.350 coppie di parole",
+    descrizione: [
+      "🕵️ 518 coppie di parole nuove in 10 temi: ⚽ Calcio, 🏖️ Estate e vacanze, 📱 Internet e social, 📼 Anni '80, '90 e 2000, 🏛️ Storia e miti, 🦸 Supereroi, fumetti e videogiochi, 💼 Lavoro e soldi, 🎵 Musica e cantanti, 🏡 Vita di tutti i giorni e 🌶️ Serata. In tutto ora sono 1.350.",
+      "🌶️ La Serata (appuntamenti, ex, cocktail, matrimoni: un po' piccante ma mai volgare) parte spenta: si gioca solo se chi apre la partita la sceglie tra le categorie, nelle «Altre scelte». Toccandola si aggiunge a tutte le altre.",
+      "Le parole già uscite continuano a non tornare per un bel po'."
+    ]
+  },
+  {
+    v: 305,
+    data: "4 novembre 2026",
+    titolo: "🔨 L'Asta: due temi nuovi",
+    descrizione: [
+      "📺 Il Reality Show: all'asta ci sono il concorrente, la prova della settimana, l'alleato e il colpo di scena. C'è chi si prende lo stratega e l'immunità e chi resta col concorrente che litiga con le telecamere e la mamma che racconta le figuracce in diretta.",
+      "⏳ Il Viaggio nel Tempo: scegli l'epoca, cosa portarti, chi incontrare e come tornare. Dal Rinascimento a Firenze con Leonardo da Vinci al Big Bang visto da molto vicino, dalla macchina del tempo con l'autopilota a quella coi pezzi dell'IKEA da montare.",
+      "Ognuno ha più di 260 carte e i suoi tre scenari per il voto finale: si scelgono nelle regole, tra i temi."
+    ]
+  },
+  {
+    v: 304,
+    data: "4 novembre 2026",
+    titolo: "🥔 La Patata Bollente: 240 categorie nuove",
+    descrizione: [
+      "🥔 200 categorie nuove per tutti, come «Cose che si trovano nel divano», «Scuse per non lavare i piatti», «Cose che fanno i nonni», «Superstizioni» e «Cose in un luna park». Ora sono quasi 500: in una serata lunga ritornano molto meno.",
+      "🧠 40 categorie difficili in più, come «Capoluoghi di regione», «Proverbi italiani» e «Animali estinti», per chi le accende nelle regole: ora sono 87."
+    ]
+  },
+  {
+    v: 302,
+    data: "3 novembre 2026",
+    titolo: "😏 Black Jack: il banco vi prende in giro",
+    descrizione: [
+      "Nei momenti forti il banco dice la sua in un fumetto, col vostro nome: chi sballa (anche a 22, per un punto), chi punta tutto, chi perde tre mani di fila, chi resta quasi a zero, chi divide e perde tutte e due le mani…",
+      "E quando vincete voi (Black Jack, vincita grossa, 5 carte) il banco fa l'offeso. Quando sballa lui ha sempre una scusa: resta il migliore, s'intende.",
+      "Più di 90 battute diverse, da amici al bar: escono ogni 2-3 mani al massimo, spariscono da sole in pochi secondi e non fermano il gioco. Online le vedono tutti uguali.",
+      "Non vi piacciono? Si spengono nelle regole ⚙️ con «😏 Battute del banco»."
     ]
   },
   {

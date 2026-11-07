@@ -1261,8 +1261,12 @@
     UI.cb = cb;
     aggiorna(UI, vm);
   }
+  // 🎨 avatar illustrati accesi? (solo allora le carte coperte stanno più giù: mento e bocca restano liberi)
+  function illPk() { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); }
   function faccia(cb, p) {
     var cfg = (cb.omini() || {})[p.id] || (window.SGOmino ? SGOmino.casuale(p.nome) : null);
+    // 🎨 avatar illustrati (solo se accesi): testa e spalle un po' più grandi nel cerchio, con il cappello che resta intero (con quelli di oggi non cambia niente)
+    if (cfg && window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()) return "<div style='width:100%;height:100%;transform:scale(1.25);transform-origin:50% 22%'>" + SGOmino.svg(cfg, { busto: true }) + "</div>";
     return cfg && window.SGOmino ? SGOmino.svg(cfg, { busto: true }) : "<div style='font-size:1.6rem;line-height:46px'>🙂</div>";
   }
   function lobby(t, vm, cb) {
@@ -1570,7 +1574,7 @@
     P.nome = el("div", { class: "pk-nome", text: p.nome });
     P.stack = el("div", { class: "pk-stack" });
     P.az = el("div", { class: "pk-az" });
-    P.nodo = el("div", { class: "pk-posto" }, [ el("div", { class: "pk-av-box" }, [ P.av, P.d, P.nuv, P.tempo, P.perc ]), P.carte, P.nome, P.stack, P.az ]);
+    P.nodo = el("div", { class: "pk-posto" + (illPk() ? " ill" : "") }, [ el("div", { class: "pk-av-box" }, [ P.av, P.d, P.nuv, P.tempo, P.perc ]), P.carte, P.nome, P.stack, P.az ]);
     return P;
   }
   // che tipo di mossa è (per il colore della nuvoletta)
@@ -1844,6 +1848,7 @@
       ".pk-dorsi{display:flex;justify-content:center;min-height:10px;margin-top:-8px;position:relative}",
       ".pk-dorso{width:12px;height:17px;border-radius:2px;background:linear-gradient(135deg,#c92a2a,#7a1414);border:1px solid #fff;margin-left:-5px;box-shadow:0 1px 2px rgba(0,0,0,.4)}",
       ".pk-dorsi.scoperte{flex-wrap:wrap;gap:2px;margin-top:2px}",
+      ".pk-posto.ill .pk-dorsi{margin-top:-1px}.pk-posto.ill .pk-dorsi.scoperte{margin-top:3px}",
       ".pk-cartina{background:#fff;color:#111;border-radius:3px;padding:0 2px;font-size:.66rem;font-weight:900;line-height:1.3}.pk-cartina.rossa{color:#d21c24}",
       ".pk-nome{font-size:.68rem;font-weight:800;max-width:76px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}",
       ".pk-stack{font-size:.66rem;font-weight:800;color:#ffe066}",

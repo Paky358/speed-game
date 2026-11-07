@@ -1,0 +1,53 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#0d1020;font-family:Segoe UI,sans-serif;color:#f4f5fb;width:1600px}
+h1{margin:0;padding:22px 30px 4px;font-size:34px} h2{margin:18px 30px 6px;font-size:24px;color:#ff6b93}
+p.n{margin:0 30px 8px;color:#a6acc8;font-size:17px}
+.r{display:flex;flex-wrap:wrap;padding:0 18px}
+.c{position:relative;display:flex;flex-direction:column;align-items:center;margin:4px}
+.c .t{font-size:15px;color:#a6acc8;margin-bottom:2px}
+.pp{display:flex;gap:2px;background:#151a2e;border-radius:14px;padding:6px 4px 2px}
+.pp svg{width:118px;height:156px}
+.pp .lab{font-size:12px;color:#7c82a0;text-align:center}
+.g svg{width:150px;height:198px} .b svg{width:118px;height:121px;background:#151a2e;border-radius:50%}
+.img{margin:6px 30px;display:flex;gap:16px;align-items:flex-start}
+.img img{height:560px;border-radius:14px;border:1px solid #2a3150}
+</style></head><body>
+<h1>🎨 Avatar «illustrati» — primo tempo</h1>
+<p class="n">Strada A con le correzioni dell'amico: gambe più vere (coscia, ginocchio, polpaccio, caviglia) e volumi «simil 3D» (luce da sinistra, ombra a destra, ombre morbide). Sinistra = come sono oggi, destra = disegno nuovo. Stessi avatar salvati, niente cambiato nei dati.</p>
+<h2>Gli stessi avatar, prima e dopo (i Bot di tutti i giochi)</h2><div class="r" id="pd"></div>
+<h2>Nei tondini (classifica, saletta, Sala)</h2><div class="r" id="bu"></div>
+<h2>Alcune pettinature nuove (26 in tutto)</h2><div class="r" id="cap"></div>
+<h2>Alcuni vestiti nuovi (21 sopra, 16 sotto, 12 scarpe, 18 cappelli)</h2><div class="r" id="ve"></div>
+<div id="foto"></div>
+<script src="../SG-avatar-a/js/omino.js"></script><script src="../SG-avatar-a/js/omino-a.js"></script><script src="../SG-avatar-a/js/omino-a-pezzi.js"></script>
+<script>
+SGOmino.stile("illustrato");
+var BOT = {
+ Matt: { forma: "uomo", corpo: "snello", pelle: 1, viso: "squadrato", occhi: "furbi", iride: 2, sopracc: "decise", naso: "dritto", bocca: "ghigno", capelli: "ciuffo", colCap: 4, barba: "accenno", capo: "giacca", maglia: 7, sotto: "pantaloni", pantaloni: 1, modScarpe: "eleganti", scarpe: 0, occhiali: "sole", collo: "catena", mano: "trofeo", cappello: "nessuno" },
+ Angela: { forma: "donna", corpo: "snello", pelle: 0, viso: "ovale", occhi: "mandorla", iride: 3, sopracc: "arcuate", naso: "piccolo", bocca: "sorrisetto", capelli: "chignon", colCap: 0, capo: "camicetta", maglia: 4, sotto: "gonnatubino", pantaloni: 1, modScarpe: "tacchi", scarpe: 0, occhiali: "felina", orecchini: "perla", collo: "perle", eyeliner: "sottile", rossetto: "pieno", colRossetto: 0, mano: "libro", colMano: 4, cappello: "nessuno" },
+ Rosa: { forma: "donna", corpo: "medio", pelle: 2, viso: "tondo", occhi: "felici", iride: 1, sopracc: "morbide", naso: "insu", bocca: "sorrisone", guance: "lentiggini", capelli: "riccilunghi", colCap: 3, capo: "vestito", maglia: 5, stampa: "pois", sotto: "gonna", pantaloni: 5, modScarpe: "ballerine", scarpe: 2, cappello: "fiori", orecchini: "cuori", blush: "leggero", mano: "palloncino", colMano: 0, occhiali: "nessuno" },
+ Peppe: { forma: "uomo", corpo: "robusto", pelle: 3, viso: "paffuto", occhi: "occhiolino", iride: 0, sopracc: "folte", naso: "patata", bocca: "sorrisetto", capelli: "stempiato", colCap: 6, barba: "baffoni", capo: "gilet", maglia: 3, sotto: "pantaloni", pantaloni: 2, modScarpe: "eleganti", scarpe: 5, cappello: "coppola", colAcc: 7, mano: "tazza", colMano: 8, occhiali: "nessuno" },
+ Gina: { forma: "donna", corpo: "robusto", pelle: 5, viso: "paffuto", occhi: "dolci", iride: 1, sopracc: "morbide", naso: "tondo", bocca: "sorrisone", capelli: "ricciraccolti", colCap: 0, capo: "grembiule", maglia: 8, sotto: "gonnalunga", pantaloni: 0, modScarpe: "sneakers", scarpe: 1, cappello: "chef", orecchini: "cerchioni", rossetto: "tinta", colRossetto: 1, mano: "pizza", occhiali: "nessuno" },
+ "Totò": { forma: "uomo", corpo: "medio", pelle: 1, viso: "lungo", occhi: "assonnati", iride: 4, sopracc: "folte", naso: "aquilino", bocca: "sorriso", segno: "rughe", capelli: "chierica", colCap: 6, barba: "barbalunga", capo: "cardigan", maglia: 2, sotto: "pantaloni", pantaloni: 0, modScarpe: "pantofole", scarpe: 5, cappello: "borsalino", colAcc: 7, occhiali: "tondi", animale: "cane", colAnimale: 4 },
+ Ciro: { forma: "uomo", corpo: "snello", pelle: 4, viso: "lungo", occhi: "grandi", iride: 0, sopracc: "alzate", naso: "largo", bocca: "risata", capelli: "riccicorti", colCap: 0, capo: "calcio", maglia: 6, stampa: "numero", sotto: "pantaloncini", pantaloni: 7, modScarpe: "sneakers", scarpe: 1, collo: "sciarpa", colCollo: 6, mano: "bandiera", colMano: 6, pittura: "sportivo", cappello: "nessuno", occhiali: "nessuno" },
+ Lella: { forma: "donna", corpo: "snello", pelle: 7, viso: "cuore", occhi: "stelline", iride: 7, sopracc: "sottili", naso: "puntino", bocca: "micio", guance: "rosse", capelli: "codini", colCap: 10, capo: "felpa", maglia: 4, stampa: "arcobaleno", sotto: "gonnapieghe", pantaloni: 8, modScarpe: "stivaletti", scarpe: 1, occhiali: "cuore", animale: "gatto", colAnimale: 3, cappello: "nessuno" }
+};
+function svg(c, o) { return SGOmino.svg(c, o || {}); }
+function add(id, html) { var d = document.createElement("div"); d.innerHTML = html; document.getElementById(id).appendChild(d.firstChild); }
+Object.keys(BOT).forEach(function (n) {
+  add("pd", "<div class='c'><div class='t'>" + n + "</div><div class='pp'><div>" + svg(BOT[n], { stile: "rifinito" }) + "<div class='lab'>oggi</div></div><div>" + svg(BOT[n]) + "<div class='lab'>nuovo</div></div></div></div>");
+  add("bu", "<div class='c b'>" + svg(BOT[n], { busto: true }) + "</div>");
+});
+var U = { forma: "uomo", corpo: "medio", pelle: 2, viso: "ovale", occhi: "dolci", iride: 1, sopracc: "decise", naso: "dritto", bocca: "sorriso", capelli: "corti", colCap: 1, capo: "maglietta", maglia: 8, sotto: "jeans", pantaloni: 0, modScarpe: "sneakers", scarpe: 1 };
+var Dn = { forma: "donna", corpo: "medio", pelle: 1, viso: "ovale", occhi: "ciglia", iride: 3, sopracc: "arcuate", naso: "piccolo", bocca: "sorriso", capelli: "lunghi", colCap: 2, capo: "maglietta", maglia: 5, sotto: "jeans", pantaloni: 9, modScarpe: "sneakers", scarpe: 1, mascara: "naturale" };
+function con(c, o) { var r = {}, k; for (k in c) r[k] = c[k]; for (k in o) r[k] = o[k]; return r; }
+[[U, { capelli: "riga", colCap: 0 }], [U, { capelli: "sfumato", pelle: 5, colCap: 0, barba: "corta" }], [U, { capelli: "riccicorti", pelle: 6, colCap: 0 }], [U, { capelli: "spettinati", colCap: 4 }], [U, { capelli: "stempiato", colCap: 6, barba: "folta" }], [U, { capelli: "afrocorto", pelle: 4, colCap: 0, barba: "pizzetto" }],
+ [Dn, { capelli: "mossi", colCap: 3 }], [Dn, { capelli: "caschetto", colCap: 0, pelle: 3 }], [Dn, { capelli: "chignon", colCap: 4 }], [Dn, { capelli: "riccilunghi", pelle: 5, colCap: 1 }], [Dn, { capelli: "codaalta", colCap: 2 }], [Dn, { capelli: "pixie", colCap: 9, pelle: 0 }]].forEach(function (x) {
+  add("cap", "<div class='c b'>" + svg(con(x[0], x[1]), { busto: true }) + "</div>");
+});
+[[U, { capo: "felpa", maglia: 7, sotto: "tuta", pantaloni: 1 }], [U, { capo: "giacca", maglia: 1, sotto: "pantaloni", pantaloni: 1, modScarpe: "eleganti", scarpe: 0, corpo: "snello" }], [U, { capo: "bomber", maglia: 2, sotto: "cargo", pantaloni: 10, modScarpe: "anfibi", scarpe: 0, cappello: "berretto", colAcc: 0 }], [U, { capo: "cappotto", maglia: 0, sotto: "jeans", modScarpe: "stivali", scarpe: 5, cappello: "borsalino", colAcc: 7, corpo: "robusto" }], [U, { capo: "camicia", maglia: 6, sotto: "bermuda", pantaloni: 10, modScarpe: "sandali", cappello: "paglia", colAcc: 6, pelle: 4 }],
+ [Dn, { capo: "vestito", maglia: 0, modScarpe: "tacchi", scarpe: 0, capelli: "onde", colCap: 0 }], [Dn, { capo: "crop", maglia: 4, sotto: "shortsjeans", pantaloni: 9, capelli: "coda", pelle: 5, colCap: 0 }], [Dn, { capo: "maglione", maglia: 3, sotto: "gonnapieghe", pantaloni: 7, modScarpe: "stivalialti", scarpe: 0, capelli: "caschetto" }], [Dn, { capo: "cardigan", maglia: 9, sotto: "leggings", pantaloni: 1, modScarpe: "ballerine", scarpe: 0, corpo: "robusto", capelli: "mossi", colCap: 4 }], [Dn, { capo: "vestitolungo", maglia: 6, modScarpe: "sandali", capelli: "chignon", colCap: 2, pelle: 2 }]].forEach(function (x) {
+  add("ve", "<div class='c g'>" + svg(con(x[0], x[1])) + "</div>");
+});
+var q = location.search.slice(1); if (q) { var f = document.getElementById("foto"); f.innerHTML = "<h2>Nell'app (profilo IL PAPPONE)</h2><div class='img'>" + decodeURIComponent(q).split(",").map(function (s) { return "<img src='" + s + "'>"; }).join("") + "</div>"; }
+</script></body></html>

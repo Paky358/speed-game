@@ -46,7 +46,7 @@
       var coppie = c.coppie.split("|").map(function (s) { return s.split("/"); })
         .filter(function (p) { return p.length === 2 && p[0].trim() && p[1].trim(); })
         .map(function (p) { return { a: p[0].trim(), b: p[1].trim(), cat: c.id }; });
-      return { id: c.id, icona: c.icona || "🏷️", nome: c.nome || c.id, coppie: coppie };
+      return { id: c.id, icona: c.icona || "🏷️", nome: c.nome || c.id, coppie: coppie, spento: !!c.spento };   // (spento: 🌶️ Serata, fuori da «Tutte»)
     }).filter(function (c) { return c.coppie.length; });
   }
 
@@ -205,7 +205,8 @@
   }
   // per le prove (.agents/skills/prova-nel-browser/migliora/impostore.js e migliora2/g1-impostore.js): le regole senza grafica
   window.__impostore = { contaVoti: contaVoti, puntiMano: puntiMano, testiEsito: testiEsito, scelteUltima: scelteUltima, svelaParola: svelaParola, pulisciIndizio: pulisciIndizio, ruoloInfo: ruoloInfo,
-    fineElim: fineElim, decidiElim: decidiElim, puntiElim: puntiElim, fraseRuolo: fraseRuolo, quantiImp: quantiImp, spiaPossibile: spiaPossibile, regoleDa: regoleDa };
+    fineElim: fineElim, decidiElim: decidiElim, puntiElim: puntiElim, fraseRuolo: fraseRuolo, quantiImp: quantiImp, spiaPossibile: spiaPossibile, regoleDa: regoleDa,
+    categorie: categorie, pescaCoppia: pescaCoppia };
 
   SG.registra({
     id: "impostore",
@@ -244,6 +245,7 @@
 
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el, cats = categorie(), online = aiuti.modo === "online";
+      var normali = cats.filter(function (c) { return !c.spento; }).map(function (c) { return c.id; });   // quelle di «Tutte»
       var r = regoleDa(Object.assign({}, leggi(CHIAVE_REGOLE) || {}, dove));
       for (var k in r) dove[k] = r[k];
       if (dove.cat) dove.cat = dove.cat.filter(function (id) { return cats.some(function (c) { return c.id === id; }); });
@@ -321,9 +323,9 @@
         var b = el("button", { class: "cat-chip", style: CHIP, onclick: function () {
           var sel = dove.cat ? dove.cat.slice() : [];
           var i = sel.indexOf(c.id);
-          if (!dove.cat) sel = [c.id];                 // da "Tutte" si passa a solo questa
+          if (!dove.cat) sel = c.spento ? normali.concat([c.id]) : [c.id];   // da "Tutte" si passa a solo questa (🌶️ Serata invece si aggiunge a tutte)
           else if (i >= 0) sel.splice(i, 1); else sel.push(c.id);
-          dove.cat = (!sel.length || sel.length === cats.length) ? null : sel;
+          dove.cat = (!sel.length || (sel.length === normali.length && normali.every(function (id) { return sel.indexOf(id) >= 0; }))) ? null : sel;
           aggiorna(); salva();
         } }, [el("span", { class: "ci", text: c.icona }), el("span", { text: c.nome })]);
         b._id = c.id; chipCat.push(b); gc.appendChild(b);
@@ -360,8 +362,10 @@
         if (notaTempo) notaTempo.hidden = dove.tempo !== 0;
         tutte.className = "cat-chip" + (!dove.cat ? " attiva" : "");
         chipCat.forEach(function (b) { b.className = "cat-chip" + (dove.cat && dove.cat.indexOf(b._id) >= 0 ? " attiva" : ""); });
-        var n = 0; cats.forEach(function (c) { if (!dove.cat || dove.cat.indexOf(c.id) >= 0) n += c.coppie.length; });
-        contaCat.textContent = n + " coppie di parole in gioco";
+        var n = 0; cats.forEach(function (c) { if (dove.cat ? dove.cat.indexOf(c.id) >= 0 : !c.spento) n += c.coppie.length; });
+        var spente = cats.filter(function (c) { return c.spento && !(dove.cat && dove.cat.indexOf(c.id) >= 0); });
+        contaCat.textContent = n.toLocaleString("it-IT") + " coppie di parole in gioco" +
+          (spente.length ? " (" + spente.map(function (c) { return c.icona + " " + c.nome; }).join(", ") + " solo se la scegli)" : "");
         var nc = dove.cat ? dove.cat.length : 0;
         riassunto.textContent = (dove.mani > 1 ? dove.mani + " mani" : "1 mano") + " · " +
           (online && dove.indizi !== "voce" && !elim ? (dove.giri > 1 ? dove.giri + " giri" : "1 giro") + " · " : "") +
@@ -397,8 +401,9 @@
   // ---- pesca una coppia: dalle categorie scelte, evitando quelle uscite di recente ----
   function pescaCoppia(st) {
     var pool = [];
-    st.cats.forEach(function (c) { if (!st.R.cat || st.R.cat.indexOf(c.id) >= 0) pool = pool.concat(c.coppie); });
-    if (!pool.length) st.cats.forEach(function (c) { pool = pool.concat(c.coppie); });
+    // («Tutte» = tutte tranne quelle spente di partenza, come 🌶️ Serata: entrano solo se l'host le sceglie)
+    st.cats.forEach(function (c) { if (st.R.cat ? st.R.cat.indexOf(c.id) >= 0 : !c.spento) pool = pool.concat(c.coppie); });
+    if (!pool.length) st.cats.forEach(function (c) { if (!c.spento) pool = pool.concat(c.coppie); });
     var usate = leggi(CHIAVE_USATE); if (!Array.isArray(usate)) usate = [];
     var nuove = pool.filter(function (p) { return usate.indexOf(p.a) < 0; });
     var c = (nuove.length ? nuove : pool)[rnd((nuove.length ? nuove : pool).length)];

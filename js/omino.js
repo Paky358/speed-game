@@ -430,6 +430,18 @@
 
   function svg(cfg, opts) {
     opts = opts || {};
+    // 🎨 lo stile «illustrato» (strada A, 5 nov 2026): lo disegna js/omino-a.js; le pose che non sa ancora fare restano col disegno «rifinito»
+    if ((opts.stile || STILE) === "illustrato") {
+      if (window.SGOminoA && SGOminoA.puo(opts)) {
+        var ca = norm(cfg);
+        if (opts.senzaCappello) ca.cappello = "nessuno";
+        if (opts.senzaOcchiali) ca.occhiali = "nessuno";
+        if (opts.braccia === "canna") ca.mano = "nessuno";
+        if (ca.forma !== "donna") { if (SOLO_DONNA.test(ca.capo)) ca.capo = "maglietta"; if (SOLO_DONNA.test(ca.modScarpe)) ca.modScarpe = "sneakers"; }
+        try { return SGOminoA.svg(ca, opts, OPZ); } catch (e) { if (window.console) console.error("avatar illustrato", e); }
+      }
+      var o3 = {}; for (var k3 in opts) o3[k3] = opts[k3]; o3.stile = "rifinito"; opts = o3;
+    }
     var c = norm(cfg), id = PREF + (++uid) + "_";
     var sed = !!opts.seduto && !opts.busto && !opts.gambe && !opts.viso, canna = opts.braccia === "canna";   // le due pose nuove
     if ((sed || canna) && opts.cammina) { var o2 = {}; for (var k2 in opts) o2[k2] = opts[k2]; o2.cammina = false; opts = o2; }   // seduto o con la canna non si cammina
@@ -2329,6 +2341,7 @@
   // dove sta la mano a destra nel disegno (coordinate 200×264): con { braccia: "canna", angolo } è il centro del pugno, dove si attacca la canna
   function mano(cfg, opts) {
     opts = opts || {};
+    if ((opts.stile || STILE) === "illustrato" && window.SGOminoA && SGOminoA.puo(opts)) return SGOminoA.mano(norm(cfg), opts);
     var c = norm(cfg), m = misure(c), sed = !!opts.seduto && !opts.busto && !opts.gambe && !opts.viso, p;
     if (opts.braccia === "canna") { var g = geoCanna(m, opts.angolo); p = [g.x, g.y + (sed ? SED_SU : 0)]; }
     else if (sed && !opts.spalle && opts.braccia !== "su" && opts.braccia !== "uno") { var gs = geoSeduto(m); p = [100 + gs.mx, gs.my]; }
@@ -2418,5 +2431,18 @@
 
   window.SGOmino = { svg: svg, el: el, mano: mano, casuale: casuale, norm: norm, OPZ: OPZ, BASE: BASE, NOMI: NOMI, NOMI_K: NOMI_K, LIBERI: LIBERI, BLOCCATI: BLOCCATI, SOLO_DONNA: SOLO_DONNA, GRUPPI_CAPELLI: GRUPPI_CAPELLI,
     adattaForma: adattaForma, formaDaNome: formaDaNome, CAPELLI_UOMO: CAPELLI_UOMO,
-    stile: function (s) { if (s === "classico" || s === "rifinito") STILE = s; return STILE; } };   // lo stile del disegno per tutta la pagina (vedi STILE)
+    stile: function (s) { if (s === "classico" || s === "rifinito" || s === "illustrato") STILE = s; return STILE; },   // lo stile del disegno per tutta la pagina (vedi STILE)
+    // gli avatar illustrati sono accesi? (i giochi cambiano tavoli e banconi SOLO in quel caso)
+    illustrato: function () { return STILE === "illustrato" && !!window.SGOminoA; },
+    // i gesti che sa fare (solo illustrati): saluta, applaude, esulta, posa, preme, leva, batte, tavolo, carte → SGOmino.svg(cfg, { gesto, lato })
+    gesti: function () { return STILE === "illustrato" && window.SGOminoA ? Object.keys(SGOminoA.GESTI) : []; },
+    // le scene grandi (solo illustrati): { corpo: svg senza il braccio «lato», braccio: svg di quel braccio solo (pelle, manica, mano), perno: {x, y} della spalla }
+    // nel riquadro 200×264: le due immagini si mettono una sopra l altra e il braccio ruota sul perno (si animano solo spostamenti e rotazioni)
+    parti: function (cfg, opts) {
+      if (STILE !== "illustrato" || !window.SGOminoA) return null;
+      opts = opts || {}; var lp = opts.lato === -1 ? -1 : 1, o1 = {}, o2 = {}, k;
+      for (k in opts) { o1[k] = opts[k]; o2[k] = opts[k]; }
+      o1.parte = "corpo"; o2.parte = "braccio"; o1.latoParte = o2.latoParte = lp;
+      return { corpo: svg(cfg, o1), braccio: svg(cfg, o2), perno: SGOminoA.perno(norm(cfg), o2), lato: lp };
+    } };   // lo stile del disegno per tutta la pagina (vedi STILE)
 })();

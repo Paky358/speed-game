@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <script>
     // prove sul computer (localhost): niente suoni, così gli aiutanti che provano i giochi non disturbano. Il sito vero non ha questa riga.
     (function () {
@@ -92,7 +92,20 @@
   <script src="js/sfondo.js"></script>   <!-- 🌙 Notte vivace: lo sfondo animato dietro le schermate del core (luci morbide e scintillii) -->
   <script src="js/stile.js"></script>   <!-- 🌙 Notte vivace: lo stile delle schermate del core e i simboli puliti al posto delle emoji -->
   <script src="js/core.js"></script>
-  <script src="js/studio.js"></script>
+  <!-- i pezzi del cuore (js/cuore/): si caricano subito dopo il cuore; la versione online li prende da qui, in quest'ordine -->
+  <script src="js/cuore/avatar.js"></script>   <!-- l'editor degli avatar -->
+  <script src="js/cuore/trofei.js"></script>   <!-- sfide e trofei, avviso «Trofeo sbloccato!», giorni di fila -->
+  <script src="js/cuore/classifica.js"></script>   <!-- amici, classifica dei trofei, proposte e segnalazioni, statistiche -->
+  <script src="js/cuore/profilo.js"></script>   <!-- il profilo: accesso, primo ingresso, benvenuto -->
+  <script src="js/cuore/bot.js"></script>   <!-- i Bot fissi e l'editor «🤖 I Bot» -->
+  <script src="js/cuore/mondo.js"></script>   <!-- il mondo (spento): ruota e sfide del giorno, città, casa, pesca, scavi, edifici -->
+  <script src="js/cuore/tornei.js"></script>   <!-- i tornei: a eliminazione, torneino, serata a punti -->
+  <script src="js/cuore/sala-voto.js"></script>   <!-- Scegliamo insieme: il voto della Sala -->
+  <script src="js/cuore/sala-sfide.js"></script>   <!-- le sfide nella Sala: torneino, Chi gioca?, duello, Chi vince resta -->
+  <script src="js/cuore/sala.js"></script>   <!-- la Sala della serata: host, ospite, Compagnia, vice, Classifica della serata -->
+  <script src="js/cuore/saletta.js"></script>   <!-- la saletta d'attesa, il 3-2-1, la fine partita uguale per tutti -->
+  <script src="js/cuore/rete.js"></script>   <!-- la rete: rientro, ripresa, strato comune, host di riserva, chi guarda -->
+  <script src="js/cuore/scarica.js"></script>   <!-- 📦 i giochi si scaricano quando servono (le schede e i pezzi: js/elenco-giochi.js) -->
   <script src="js/net.js"></script>
   <script src="js/ably-key.js"></script>
   <script src="js/net-ably.js"></script>
@@ -101,129 +114,12 @@
   <script src="js/scegliamo.js"></script>   <!-- Scegliamo insieme: scheda del voto e ruota dei giochi -->
   <script src="js/amici-online.js"></script>   <!-- amici online (pallino verde) e inviti nella Sala -->
 
-  <!-- Dati: avvenimenti divisi per categoria (aggiungerne altri = altri file qui) -->
-  <script src="data/eventi-storia.js"></script>
-  <script src="data/eventi-invenzioni.js"></script>
-  <script src="data/eventi-calcio.js"></script>
-  <script src="data/eventi-rap.js"></script>
-  <script src="data/eventi-cinema.js"></script>
-  <script src="data/eventi-musica.js"></script>
-  <script src="data/eventi-tv.js"></script>
-  <script src="data/eventi-giochi.js"></script>
-  <script src="data/eventi-sport.js"></script>
-  <script src="data/eventi-italia.js"></script>
-  <script src="data/linea-foto.js"></script>
-
-  <!-- Dati: carte del gioco "L'Asta" (temi) -->
-  <script src="data/asta-carte.js"></script>
-  <script src="data/asta-pizza.js"></script>
-  <script src="data/asta-panino.js"></script>
-  <script src="data/asta-rapina.js"></script>
-  <script src="data/asta-supereroi.js"></script>
-  <script src="data/asta-appuntamento.js"></script>
-  <script src="data/asta-giardino.js"></script>
-  <script src="data/asta-vacanza.js"></script>
-  <script src="data/asta-coinquilino.js"></script>
-  <script src="data/asta-calcetto.js"></script>
-  <script src="data/asta-palestra.js"></script>
-  <script src="data/asta-capodanno.js"></script>
-  <script src="data/asta-universita.js"></script>
-  <script src="data/asta-roadtrip.js"></script>
-  <script src="data/asta-playstation.js"></script>
-  <script src="data/asta-halloween.js"></script>
-  <script src="data/asta-natale.js"></script>
-  <script src="data/asta-matrimonio.js"></script>
-  <script src="data/asta-gita.js"></script>
-  <script src="data/asta-trasloco.js"></script>
-  <script src="data/asta-karaoke.js"></script>
-  <script src="data/asta-campeggio.js"></script>
-  <script src="data/asta-icone.js"></script>
-  <script src="data/asta-fanta.js"></script>
-  <script src="data/fanta-quotazioni.js"></script>
-  <script src="data/fanta-statistiche.js"></script>
-  <script src="data/fanta-squadre.js"></script>
-  <script src="js/asta-sala-arte.js"></script>
-  <script src="js/asta-stadio-arte.js"></script>
-  <script src="js/asta-maglie.js"></script>
-
   <!-- Diario delle novità -->
-  <script src="data/ncc-categorie.js"></script>
-  <script src="data/impostore-parole.js"></script>
-  <script src="data/sipero-carte.js"></script>
-  <script src="data/scopa-battute.js"></script>
-  <script src="data/patata-categorie.js"></script>
-  <script src="data/taboo-carte.js"></script>
-  <script src="data/ruota-frasi.js"></script>
-  <script src="data/ruota-nuove-a.js"></script>
-  <script src="data/ruota-nuove-b.js"></script>
-  <script src="data/ruota-speciali.js"></script>
-  <script src="data/ordine-parole.js"></script>
-  <script src="data/balla-domande.js"></script>
-  <script src="data/balla-finale.js"></script>
-  <script src="data/lunghezza-scale.js"></script>
-  <script src="data/lunghezza-parole.js"></script>
-  <script src="data/chidinoi-1.js"></script>
-  <script src="data/chidinoi-2.js"></script>
-  <script src="data/chidinoi-3.js"></script>
-  <script src="data/chidinoi-4.js"></script>
-  <script src="data/chidinoi-5.js"></script>
-  <script src="data/prezzo-1.js"></script>
-  <script src="data/prezzo-2.js"></script>
-  <script src="data/prezzo-3.js"></script>
-  <script src="data/prezzo-4.js"></script>
-  <script src="data/prezzo-5.js"></script>
-  <script src="data/prezzo-6.js"></script>
-  <script src="data/prezzo-7.js"></script>
-  <script src="data/prezzo-foto.js"></script>
-  <script src="data/unaparola-parole.js"></script>
-  <script src="data/dadoveviene-paesi.js"></script>
-  <script src="data/dadoveviene-carte.js"></script>
-  <script src="js/chidinoi-arte.js"></script>
-  <script src="js/chidinoi-foto.js"></script>
   <script src="data/novita.js"></script>
 
-  <!-- Giochi (ognuno si "innesta" da solo nel motore) -->
-  <script src="js/games/timeline.js"></script>
-  <script src="js/games/asta.js"></script>
-  <script src="js/games/nomicoseecitta.js"></script>
-  <script src="js/games/impostore.js"></script>
-  <script src="js/games/sipero.js"></script>
-  <script src="js/games/scalinata.js"></script>
-  <script src="js/games/horto.js"></script>
-  <script src="js/games/pendolo.js"></script>
-  <script src="js/games/patata.js"></script>
-  <script src="js/games/hockey.js"></script>
-  <script src="js/games/tris.js"></script>
-  <script src="js/games/drop4.js"></script>
-  <script src="js/games/navale.js"></script>
-  <script src="js/games/scopa.js"></script>
-  <script src="js/games/scopa2.js"></script>
-  <script src="js/games/scopone.js"></script>
-  <script src="js/games/blackjack.js"></script>
-  <script src="js/games/poker.js"></script>
-  <script src="js/games/ruota.js"></script>
-  <script src="js/games/ordine.js"></script>
-  <script src="js/games/scarabocchio.js"></script>
-  <script src="js/games/taboo.js"></script>
-  <script src="js/games/balla.js"></script>
-  <script src="js/games/calciobiliardo.js"></script>
-  <script src="js/games/pallamatta.js"></script>
-  <script src="js/games/garapesca.js"></script>
-  <script src="js/games/lanterne.js"></script>
-  <script src="js/games/lunghezza.js"></script>
-  <script src="js/games/chidinoi.js"></script>
-  <script src="js/games/prezzo-scena.js"></script>
-  <script src="js/games/prezzo.js"></script>
-  <script src="js/games/prezzo-premi-piu.js"></script>
-  <script src="js/games/prezzo-premi-a.js"></script>
-  <script src="js/games/prezzo-premi-b.js"></script>
-  <script src="js/games/prezzo-premi-c.js"></script>
-  <script src="js/games/prezzo-premi-d.js"></script>
-  <script src="js/games/prezzo-premi-e.js"></script>
-  <script src="js/games/unaparola.js"></script>
-  <script src="js/games/dadoveviene.js"></script>
-  <script src="data/memata.js"></script>
-  <script src="js/games/memata.js"></script>
+  <!-- 📦 I giochi: qui solo l'elenco (le schede per la home e i pezzi da scaricare quando si gioca). I file dei giochi
+       e le loro liste NON si mettono qui: vanno in un pezzo di js/elenco-giochi.js (vedi la skill nuovo-gioco) -->
+  <script src="js/elenco-giochi.js"></script>
 
   <!-- Avvio -->
   <script>SG.avviaApp();</script>

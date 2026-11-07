@@ -204,6 +204,64 @@
   function manoVuota(puntata) { return { carte: [], puntata: puntata, chiusa: false, raddoppiata: false, divisa: false, esito: null, vincita: 0 }; }
   var MAX_POSTI = 10;
 
+  // ---- 😏 le battute del banco (3 nov 2026, il proprietario: «il banco prende in giro chi gioca, per far ridere il tavolo») ----
+  // Nei momenti forti il banco dice UNA battuta col nome di chi c'entra: al massimo una ogni 2-3 mani. La sceglie chi tiene
+  // la partita (nel motore) e va a tutti nella foto, uguale. {n} = il nome. Battute da amici al bar: MAI offensive.
+  var BATTUTE = {
+    sballa22: ["{n}, 22! Neanche fino a 21 sai contare", "22? {n}, il 21 era lì, bastava fermarsi a salutarlo", "{n}, 22: esageri sempre, anche stasera",
+      "Un punto, {n}. UNO. Lo racconterai ai nipoti", "{n}, 22: la carta giusta era quella prima", "{n}, 22 è un bel numero… per un altro gioco",
+      "22, {n}! Così vicino che quasi ti pagavo… quasi", "{n}, hai sballato col righello: di un punto preciso"],
+    sballa: ["{n}, la carta in più la offre la casa. Grazie!", "{n}, chi troppo vuole…", "{n}, ma chi te l'ha detto di chiedere carta?",
+      "Coraggioso, {n}, ma il 21 non si prende a spallate", "{n}, sballato! Le tue fiches stanno bene qui con me", "{n}, ancora una carta e arrivavi a 40",
+      "{n}, la prossima volta chiedi a me: il consiglio è gratis", "{n}, sballato con stile, almeno"],
+    meta: ["{n}, metà delle fiches in una mano. Che generosità!", "{n}, le tue fiches hanno traslocato. Qui da me", "{n}, quella mano ti è costata come una cena fuori",
+      "{n}, hai dimezzato il bottino. Il banco ringrazia", "{n}, a questo ritmo il caffè te lo offro io", "{n}, la pila di prima era più bella",
+      "{n}, una mano così e la pila si è fatta bassina"],
+    tuttoPerso: ["{n}, tutto su una mano e… tutto a me. Grazie!", "{n}, tutto dentro! E ora tutto fuori", "{n}, il coraggio c'era. Le carte no",
+      "{n}, o la va o la spacca. Si è spaccata", "{n}, tutto dentro, tutto fuori. Che velocità", "{n}, che cuore! Peccato per il resto",
+      "{n}, tutto puntato e tutto perso: almeno sei coerente"],
+    tuttoVinto: ["{n}, tutto su una mano e l'hai vinta. Non rifarlo, mi viene l'ansia", "{n}, raddoppiato tutto. Ok, stavolta hai ragione tu",
+      "{n}, tutto e ti è andata bene. Ritenta, dai… ti prego", "{n}, che fegato! Ti ho lasciato vincere, sia chiaro", "{n} punta tutto e vince. Te le riprendo con gli interessi",
+      "{n}, va bene, applausi. Ora però basta"],
+    tre: ["{n}, tre di fila! Anche stasera offri tu?", "{n}, tre mani perse: sei il mio cliente preferito", "{n}, terza di fila. Vuoi che giochi io per te?",
+      "{n}, tre su tre… per me. Grazie della fiducia", "{n}, cambia sedia, magari porta bene", "{n}, tre di fila! Lo dico con affetto: è un record",
+      "{n}, la fortuna ti ha lasciato un biglietto: torna più tardi"],
+    zero: ["{n}, ti restano due fiches e tanta dignità", "{n}, la pila è diventata un gradino", "{n}, con quelle fiches ci giochi a tris",
+      "{n}, quasi a zero. Ma la rimonta sarà leggendaria, vero?", "{n}, le fiches stanno finendo, il sorriso no", "{n}, ti lascio qualche fiche per ricordo",
+      "{n}, dai, da qui si può solo salire"],
+    bj: ["{n}, Black Jack. Vabbè, non ti parlo più", "{n}, asso e figura… ma chi te l'ha insegnato?", "{n}, Black Jack! Lo sapevo che mi avresti tradito",
+      "{n}, 3 a 2. Te li pago, ma con dolore", "{n}, Black Jack? Fammi vedere le maniche", "Black Jack di {n}. Il banco non saluta più",
+      "{n}, ok, hai vinto. Ma io ho il papillon", "{n}, Black Jack? Fortuna del principiante, goditela"],
+    grosso: ["{n}, mi stai svuotando la cassa. Ti tengo d'occhio", "{n}, vinci tu? Ricontrolla, sarà un errore", "{n}, goditela finché dura: tra due mani torna tutto a casa",
+      "{n}, va bene, festeggia. Ma con moderazione", "{n}, queste fiches erano mie, sappilo", "{n}, mani d'oro o mazzo stregato?", "{n}, quelle fiches te le ho prestate io. Con gli interessi"],
+    resa: ["{n}, bandiera bianca? Neanche hai visto le mie carte", "{n}, ti arrendi? Metà fiches a me, metà orgoglio a te", "{n}, ritirata strategica… o paura?",
+      "{n}, scappi? Ti tengo la sedia calda", "{n}, saggio. Noioso, ma saggio", "{n}, ti sei arreso prima di me. Bravo… credo", "{n}, resa! Ma non dirlo in giro"],
+    // quando sballa il banco ha SEMPRE una scusa e fa il fenomeno (il proprietario, 3 nov 2026: «deve fare il fenomeno il banchiere»)
+    bancoSballa: ["Sballato apposta: stasera faccio beneficenza", "Vi ho lasciato vincere, se no piangevate", "Mi è scivolata la carta. A un campione capita una volta l'anno",
+      "Sballato? Era per tenervi al tavolo. Roba da professionisti", "Il mazzo l'avete mischiato voi, si vede", "Avevo la luce negli occhi. Resto comunque il migliore",
+      "Una mano di regalo. Non abituatevi: dalla prossima torno spietato", "Colpa del panno, è storto. Io sono perfetto"],
+    raddoppio: ["{n}, raddoppiato e perso: hai raddoppiato il mio sorriso", "{n}, raddoppio! E il banco ringrazia due volte", "{n}, raddoppiare era un'idea. Non buona, ma un'idea",
+      "{n}, doppia puntata, doppia figuraccia", "{n}, raddoppio perso. Te lo segno sul conto", "{n}, il raddoppio è coraggio. Il resto è storia", "{n}, due volte tanto… per me"],
+    divise: ["{n}, hai diviso e hai perso due volte. Efficiente!", "{n}, due mani, due delusioni", "{n}, dividere per perdere doppio: strategia nuova",
+      "{n}, hai diviso le carte… e io mi prendo tutte e due", "{n}, due mani perse insieme: un affare per me", "{n}, dividi et… perdi", "{n}, doppia mano, doppio regalo al banco"],
+    cinque: ["{n}, cinque carte e niente sballo. Ma sei un mago?", "{n}, cinque carte! Pensavo volessi farti un mazzo tuo", "{n}, carta, carta, carta… e hai pure vinto. Assurdo",
+      "{n}, cinque carte senza sballare: lo scrivo nel diario", "{n}, con tutte quelle carte ci giocavi a scopa", "{n}, il coraggio di un leone e la fortuna di un gatto"]
+  };
+  // l'ordine conta: se succedono più cose nella stessa mano vince la prima (le più rare e le più forti prima)
+  var ORDINE_BATTUTE = ["tuttoPerso", "divise", "raddoppio", "zero", "tre", "meta", "sballa22", "cinque", "tuttoVinto", "bj", "grosso", "bancoSballa", "resa", "sballa"];
+  var BATTUTE_LEGGERE = { bancoSballa: 1, resa: 1, sballa: 1 };   // le più comuni: una volta su due, se no sarebbero sempre loro
+  // le ultime uscite (sul telefono di chi tiene la partita), per non ripeterle presto
+  function pescaBattuta(chiave) {
+    var l = BATTUTE[chiave], rec = [];
+    try { rec = JSON.parse(localStorage.getItem("sg-bj-battute") || "[]") || []; } catch (e) { rec = []; }
+    var lib = []; l.forEach(function (x, k) { if (rec.indexOf(chiave + k) < 0) lib.push(k); });
+    if (!lib.length) { rec = rec.filter(function (x) { return x.indexOf(chiave) !== 0 || !/^\d+$/.test(x.slice(chiave.length)); }); lib = l.map(function (x, k) { return k; }); }
+    var k = lib[Math.floor(Math.random() * lib.length)];
+    rec.push(chiave + k); if (rec.length > 60) rec = rec.slice(-60);
+    try { localStorage.setItem("sg-bj-battute", JSON.stringify(rec)); } catch (e) {}
+    return l[k];
+  }
+
   // opz: { min: puntata minima, mani: quante mani si giocano (0 = senza fine) }
   var ROSSO_M = ROSSO;   // (cuori e quadri: per la «Coppia» dello stesso colore)
   function creaMotoreBJ(nomi, mischia, fichesIniz, opz) {
@@ -236,8 +294,8 @@
       // (con pochi mazzi si rimescola anche quando le carte rimaste non bastano per una mano di tutti)
       if (restaSotto(st.sabot) || st.sabot.carte.length - st.sabot.i < (st.giocatori.length + 1) * 8) { rimescolaSabot(st.sabot); st.rimescolato = true; } else st.rimescolato = false;
       st.banco = { carte: [] };
-      st.giocatori.forEach(function (g) { g.puntata = 0; g.assicura = 0; g.mani = []; g.attiva = 0; g.decisoAssic = false; g.salta = false; g.coppia = 0; g.coppiaEsito = null; g.ex = {}; g.exEsito = {}; });
-      st.fase = "punta";
+      st.giocatori.forEach(function (g) { g.puntata = 0; g.assicura = 0; g.mani = []; g.attiva = 0; g.decisoAssic = false; g.salta = false; g.coppia = 0; g.coppiaEsito = null; g.ex = {}; g.exEsito = {}; g.fIn = g.fiches; });
+      st.fase = "punta"; st.battuta = null;
       // la gara (fiches uguali, con un numero di mani): le ultime 3 mani la puntata minima raddoppia (da 6 mani in su),
       // l'ultima si punta in segreto (nessuno vede le puntate degli altri finché non hanno puntato tutti)
       var gara = !!opz.uguali && st.maniTot > 0;
@@ -536,6 +594,43 @@
       });
       st.fase = "esito";
       st.giro++; st.mano++;
+      if (opz.battute !== false) battuta(pb);
+    }
+    // 😏 la battuta del banco a fine mano: il momento più forte del tavolo, una sola, al massimo una ogni 2-3 mani
+    function battuta(pb) {
+      var cand = [], qm = st.minMano || st.min;
+      st.giocatori.forEach(function (g, i) {
+        if (!g.mani.length || g.via) return;
+        var prima = g.fIn == null ? g.fiches : g.fIn, netto = g.fiches - prima, k = {};
+        var perse = g.mani.every(function (m) { return m.esito === "perde"; }), vinte = g.mani.some(function (m) { return m.esito === "vince" || m.esito === "blackjack"; });
+        g.serieP = perse ? (g.serieP || 0) + 1 : (vinte ? 0 : (g.serieP || 0));
+        var tutto = g.puntata > 0 && g.puntata >= prima;
+        if (tutto && netto < 0) k.tuttoPerso = 1;
+        if (tutto && netto > 0) k.tuttoVinto = 1;
+        if (g.mani.length > 1 && perse) k.divise = 1;
+        if (g.mani.some(function (m) { return m.raddoppiata && m.esito === "perde"; })) k.raddoppio = 1;
+        if (netto < 0 && g.fiches < qm * 2) k.zero = 1;
+        if (g.serieP === 3) k.tre = 1;
+        if (-netto > prima / 2) k.meta = 1;
+        g.mani.forEach(function (m) {
+          var p = punteggio(m.carte);
+          if (p === 22) k.sballa22 = 1; else if (p > 21) k.sballa = 1;
+          if (m.carte.length >= 5 && m.esito === "vince") k.cinque = 1;
+          if (m.esito === "blackjack") k.bj = 1;
+          if (m.resa) k.resa = 1;
+        });
+        if (netto >= Math.max(qm * 10, prima / 2)) k.grosso = 1;
+        Object.keys(k).forEach(function (c) { cand.push({ c: c, i: i }); });
+      });
+      if (pb > 21) cand.push({ c: "bancoSballa", i: -1 });
+      if (st.mano < (st.battDa || 0)) return;   // (la serie delle mani perse si conta lo stesso)
+      cand = cand.filter(function (x) { return !BATTUTE_LEGGERE[x.c] || Math.random() < 0.5; });
+      if (!cand.length) return;
+      var c = null; ORDINE_BATTUTE.some(function (o) { c = o; return cand.some(function (x) { return x.c === o; }); });
+      var chi = cand.filter(function (x) { return x.c === c; }), x = chi[Math.floor(Math.random() * chi.length)], g = st.giocatori[x.i];
+      st.battSeq = (st.battSeq || 0) + 1;
+      st.battuta = { id: st.battSeq, c: c, testo: pescaBattuta(c).replace("{n}", g ? g.nome : "") };
+      st.battDa = st.mano + 2 + (Math.random() < 0.5 ? 1 : 0);   // la prossima tra 2 o 3 mani, mai prima
     }
 
     // la classifica della partita: chi ha guadagnato di più al tavolo (pari merito = stesso posto)
@@ -831,6 +926,7 @@
     // dopo "Dividi": un mazzetto per mano, quello che si gioca illuminato
     ".bjr-cc.cascata.divise{display:flex;align-items:flex-end;gap:9px}.bjr-mn{position:relative;flex:none;border-radius:5px;transform-style:preserve-3d}.bjr-mn.on{box-shadow:0 0 0 2px #ffd45e,0 0 12px rgba(255,212,94,.7)}",
     ".bjr-fum{position:absolute;max-width:150px;background:#fff;color:#12233a;font-weight:900;border-radius:13px;padding:5px 10px;font-size:.8rem;line-height:1.15;box-shadow:0 4px 12px rgba(0,0,0,.4);transform:translateY(-100%);animation:bjFum .26s cubic-bezier(.3,1.6,.5,1)}",
+    ".bjr-fum.batt{max-width:min(210px,62vw);font-size:.84rem;box-shadow:0 0 0 2px var(--n-lampone,#e0225a),0 4px 12px rgba(0,0,0,.45)}",
     ".bjr-fum.bj-doro{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400}",
     "@keyframes bjFum{from{transform:translateY(-100%) scale(.3);opacity:0}}",
     // apertura: Bot ci guarda, poi la telecamera passa su ognuno
@@ -882,6 +978,7 @@
     ".bj-msg:empty,.bj-wrap .bj-tavolata{display:none}",
     // con 7-10 giocatori sopra la testa solo il nome (corto); uno su e uno giù, così non si coprono
     ".bjr-nome.mini{overflow:hidden;text-overflow:ellipsis;padding:0 4px}",
+    ".bj-wrap .bjr-nome.mini.ill{font-size:11px;line-height:1.35;padding:0 5px;border-radius:8px}",
     // il tempo per decidere (lo tiene l'host): in alto a destra; rosso negli ultimi secondi
     ".bj-turno{max-width:66%}",
     ".bj-tempo{position:absolute;top:8px;right:8px;z-index:7;pointer-events:none;background:rgba(0,0,0,.62);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;padding:1px 9px;font-weight:900;font-size:.9rem;white-space:nowrap}",
@@ -1033,6 +1130,32 @@
     ".bj-wrap .bjr-matt-carte{top:66px}.bj-wrap.bj-in-gara .bjr-matt-carte{top:92px}",
     ".bj-wrap .bjr-matt .bj-av{width:64px;height:64px;background:radial-gradient(circle at 50% 35%,#2a3160,#141a33);border-color:var(--o-filo-oro)}",
     ".bj-wrap .bj-av{background:radial-gradient(circle at 50% 35%,#2a3160,#141a33)}",
+    // 🎨 avatar illustrati (solo se accesi): il banco dalla testa alla vita DIETRO il suo bancone (con le mani sul bordo), apertura col bancone alto, braccia che escono dal disegno quando esultano
+    ".bj-wrap .bjr-matt.ill .bj-av{width:92px;height:100px;border-radius:16px 16px 12px 12px;overflow:hidden}",
+    ".bj-wrap .bjr-matt.ill .bj-av svg{left:0;transform:none;width:100%;bottom:0}",
+    ".bj-wrap .bjr-matt.ill .bj-av::after{content:'';position:absolute;left:0;right:0;bottom:0;height:8px;background:var(--t-panno);border-top:2px solid var(--t-bordo-pieno)}",
+    ".bj-wrap .bjr-matt.ill .bjr-matt-nome{margin-top:-2px}",
+    // 🎨 giro 4: il banco più grande, la sua battuta SUL ritratto (sul suo gilet): non copre mai le carte né i giocatori
+    ".bj-wrap .bjr-matt.ill{width:min(27%,108px)}.bj-wrap .bjr-matt.ill .bjr-matt-nome{font-size:.64rem;padding:1px 6px}.bj-wrap .bjr-matt.ill .bjr-matt-nome b{font-size:.9rem}",
+    ".bj-wrap .bjr-matt.ill .bj-av{width:100%;height:auto;aspect-ratio:92/100}",
+    ".bj-wrap .bjr-matt.ill.pic{width:min(13%,50px);left:4px;bottom:4px}.bj-wrap .bjr-matt.ill.pic .bjr-matt-nome,.bj-wrap .bjr-matt.ill.pic .bjr-fum{display:none}",
+    ".bj-wrap .bjr-matt.ill .bjr-fum{position:absolute;left:50%;bottom:28px;top:auto;width:calc(100% + 10px);max-width:none;transform:translateX(-50%);box-sizing:border-box;font-size:.68rem;padding:3px 6px;text-align:center;animation:bjFumM .26s cubic-bezier(.3,1.6,.5,1);pointer-events:none;z-index:3}",
+    "@keyframes bjFumM{from{transform:translateX(-50%) scale(.3);opacity:0}}",
+    // l'importo della puntata sta SULLA fiche e resta piccolo anche quando la telecamera ingrandisce (prima copriva le mani)
+    ".bj-wrap .bjr-fval.ill{transform:translate(-50%,calc(-50% - 12px)) scale(calc(1 / var(--zs,1)));transition:opacity .3s,transform .95s cubic-bezier(.45,.05,.25,1);font-size:.6rem;padding:0 4px}",
+    ".bj-wrap .bjr-intro.ill .mg{bottom:calc(26% - 12px);transform:translateX(-50%)}",
+    ".bj-wrap .bjr-intro.ill .banc{height:26%}",
+    // illustrati: il fondo del disegno (la vita) sfuma, così dove il bordo del tavolo non arriva (posti di lato) non si vede un taglio netto
+    ".bjr-strato.ill .bjr-gioc:not(.attivo)>svg,.bjr-strato.ill .bjr-gioc:not(.attivo)>.bjr-sal>svg{-webkit-mask-image:linear-gradient(#000 84%,transparent);mask-image:linear-gradient(#000 84%,transparent)}",
+    // le braccia sopra il tavolo (mani sul panno) e il saluto che ondeggia
+    ".bjr-bracc{position:absolute;inset:0;pointer-events:none;z-index:2}.bjr-gb{position:absolute}",
+    ".bjr-gb .br{position:absolute;inset:0}.bjr-gb .br svg{position:absolute;left:-42.593%;top:-9.322%;width:185.185%;height:auto;display:block;overflow:visible}",
+    ".bjr-gb .br.tap svg{animation:bjrTap .36s ease-in-out 2}@keyframes bjrTap{50%{transform:translateY(-3.6%)}}",
+    ".bjr-sal{position:relative}.bjr-sal>svg{display:block;width:100%;height:auto}",
+    ".bjr-sal .sb{position:absolute;left:0;top:0;width:100%;animation:bjrSaluta .55s ease-in-out infinite alternate}.bjr-sal .sb svg{display:block;width:100%;height:auto;overflow:visible}",
+    ".bjr-sal.v .sb{left:-42.593%;top:-9.322%;width:185.185%}",
+    "@keyframes bjrSaluta{from{transform:rotate(-10deg)}to{transform:rotate(11deg)}}",
+    "@media (prefers-reduced-motion:reduce){.bjr-sal .sb,.bjr-gb .br.tap svg{animation:none}}",
     ".bj-wrap .bj-podio{background:rgba(9,12,26,.9)}",
     ".bj-wrap .bjr-intro{background:var(--t-muro)}.bj-wrap .bjr-intro .banc{background:var(--t-panno);border-top-color:var(--t-bordo-pieno)}",
     // la lineetta della puntata: binario di vetro, la parte puntata nell'oro delle monete, il cursore è una fiche
@@ -1073,8 +1196,12 @@
     triste: { occhi: "dolci", sopracc: "preoccupate", bocca: "smorfia" }
   };
   var svgCache = {};
+  // 🎨 avatar illustrati (5 nov 2026): solo se accesi (oggi IL PAPPONE). Con quelli di oggi tutto resta come prima.
+  function A_PROP() { return !!(window.SGOminoA && SGOminoA.PROPORZIONE && SGOminoA.PROPORZIONE !== "attuale"); }   // (3° tempo) le proporzioni nuove degli avatar illustrati
+  function ill() { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); }
   function svgAvatar(cfg, faccia, opts) {
-    var k = JSON.stringify(cfg) + "|" + faccia + "|" + (opts && opts.busto ? "b" : "");
+    if (opts && !ill()) opts = opts.busto ? { busto: true } : undefined;   // (vita e gesti esistono solo negli illustrati)
+    var k = JSON.stringify(cfg) + "|" + faccia + "|" + (opts ? (opts.busto ? "b" : "") + (opts.vita ? "v" : "") + (opts.gesto || "") : "") + (ill() ? "|i" : "");
     if (!svgCache[k]) {
       var c = {}, x = FACCE[faccia] || {}, n;
       for (n in cfg) c[n] = cfg[n];
@@ -1083,6 +1210,33 @@
     }
     return svgCache[k];
   }
+  // 🎨 (5 nov 2026, secondo giro) gesti e vestiti nostri per gli avatar illustrati: si aggiungono alla lista del motore una volta sola.
+  //  bjSaluto = il braccio piegato col gomito in fuori (si fa ondeggiare intero, come chi saluta con la mano); bjBracci = le due mani
+  //  appoggiate SUL PANNO, davanti al bordo del tavolo (le disegna un livello sopra il tavolo: dietro il bordo non si vedrebbero).
+  function gestiBJ() {
+    var A = window.SGOminoA; if (!A || !A.GESTI || A.GESTI.bjSaluto) return;
+    A.GESTI.bjSaluto = { uno: { t: function (G) { return [G.Jd + 50, G.Jy - 100]; }, f: [1, 0.82], mano: "aperta" } };
+    A.GESTI.bjBracci = { due: { t: function (G) { return [G.Jd * 1.12, G.Y.vita + 54]; }, f: [0.95, 0.52], mano: "piatta", davanti: 1 } };
+  }
+  function cfgConFaccia(cfg, faccia) { var c = {}, x = FACCE[faccia] || {}, n; for (n in cfg) c[n] = cfg[n]; for (n in x) c[n] = x[n]; return c; }
+  // chi saluta: il corpo e il braccio sono due disegni, il braccio ondeggia (solo transform) attorno alla spalla
+  function salutoHTML(cfg, faccia, vita) {
+    var k = "S|" + JSON.stringify(cfg) + "|" + faccia + "|" + (vita ? 1 : 0);
+    if (svgCache[k]) return svgCache[k];
+    gestiBJ();
+    var pp = SGOmino.parti ? SGOmino.parti(cfgConFaccia(cfg, faccia), { gesto: "bjSaluto", lato: 1, vita: !!vita }) : null;
+    if (!pp) return (svgCache[k] = svgAvatar(cfg, faccia, vita ? { vita: true, gesto: "saluta" } : { gesto: "saluta" }));
+    return (svgCache[k] = "<div class='bjr-sal" + (vita ? " v" : "") + "'>" + pp.corpo + "<div class='sb' style='transform-origin:" + (pp.perno.x / 2).toFixed(2) + "% " + (pp.perno.y / 2.64).toFixed(2) + "%'>" + pp.braccio + "</div></div>");
+  }
+  // le due braccia sul panno (livello sopra il tavolo); quello che batte il colpetto lo fa con un saltello (solo transform)
+  function bracciaTavoloHTML(cfg, faccia, batte) {
+    var k = "B|" + JSON.stringify(cfg) + "|" + faccia + "|" + (batte ? 1 : 0);
+    if (svgCache[k]) return svgCache[k];
+    gestiBJ();
+    var c = cfgConFaccia(cfg, faccia);
+    return (svgCache[k] = [-1, 1].map(function (l) { return "<div class='br" + (batte && l === 1 ? " tap" : "") + "'>" + SGOmino.svg(c, { gesto: "bjBracci", parte: "braccio", latoParte: l }) + "</div>"; }).join(""));
+  }
+  var VESTE_BANCO = { capo: "gilet", maglia: 7, collo: "papillon", colCollo: 0 };   // il banco: camicia chiara e gilet scuro (si stacca dallo sfondo notte)
   function mioAvatar(nome) {
     var p = window.SGNube && SGNube.profilo && SGNube.profilo();
     if (p && p.omino) return p.omino;
@@ -1101,7 +1255,12 @@
     return { id: b.id, nome: b.nome, omino: cfg };
   }
   function nomeBanco(vm) { return (vm && vm.croupier && vm.croupier.nome) || "Bot"; }
-  function avatarBanco(vm) { return (vm && vm.croupier && avatarValido(vm.croupier.omino)) || MATT_DEALER; }
+  function avatarBanco(vm) {
+    var b = (vm && vm.croupier && avatarValido(vm.croupier.omino)) || MATT_DEALER;
+    if (!ill()) return b;
+    var c = {}, n; for (n in b) c[n] = b[n]; for (n in VESTE_BANCO) c[n] = VESTE_BANCO[n];
+    return c;
+  }
 
   // ---- suoni (Web Audio) ----
   // la vibrazione al tocco dei tasti la fa già l'app (una sola, solo quando si sceglie): qui nessun vibra()
@@ -1227,6 +1386,7 @@
     return {
       fase: st.fase, giro: st.giro, mano: st.mano, maniTot: st.maniTot, rimescolato: st.rimescolato, turno: st.turno,
       annuncio: st.annuncio ? { seat: st.annuncio.seat, testo: st.annuncio.testo, id: st.annuncio.id } : null,
+      battuta: st.fase === "esito" && st.battuta ? { id: st.battuta.id, c: st.battuta.c, testo: st.battuta.testo } : null,   // 😏 la battuta del banco
       puntataMin: st.minMano || st.min, consigli: !!(extra && extra.consigli), croupier: st.croupier || null, coppia: !!(extra && extra.coppia),
       regole: extra ? { h17: !!extra.h17, r911: !!extra.r911, das: extra.das !== false, rsa: !!extra.rsa, resa: extra.resa !== false, charlie: !!extra.charlie,
         t213: !!extra.t213, buster: !!extra.buster, royal: !!extra.royal } : {},
@@ -1282,6 +1442,7 @@
 
     var vm = null, anim = { ultima: -1, banco: false }, timerPasso = null, daVolare = [], puntSel = null, chiuso = false;
     var bolla = null, bollaId = -1, bollaTimer = null;   // nuvoletta della mossa
+    var batt = null, battId = -1, battTimer = null;   // 😏 la battuta del banco: nel fumetto di Bot per 3,8 s, poi sparisce da sola (non ferma niente)
     var scopri = { attesa: false, t: null };   // la carta coperta di Bot si gira solo quando la telecamera è arrivata
     var puntataSegreta = 0;
     // le scommesse extra accese su questo telefono (la «👯 Coppia» e le altre): spente finché non le tocchi, poi le ricorda il telefono
@@ -1342,6 +1503,11 @@
       } else if (vm.fase !== "banco") { scopri.attesa = false; clearTimeout(scopri.t); }
       applicaDiff(pre, vm);
       eventi(pre, vm);
+      if (vm.battuta && vm.battuta.id !== battId) {
+        battId = vm.battuta.id; batt = vm.battuta;
+        clearTimeout(battTimer);
+        battTimer = setTimeout(function () { batt = null; if (!chiuso && vm && document.body.contains(wrap)) disegnaScena(); }, 3800);
+      }
       if (vm.annuncio && vm.annuncio.id !== bollaId) {   // nuova mossa: mostra la nuvoletta ~2,2s
         bollaId = vm.annuncio.id; bolla = { seat: vm.annuncio.seat, testo: vm.annuncio.testo };
         if (bollaTimer) clearTimeout(bollaTimer);
@@ -1468,8 +1634,27 @@
         if (capo) capoPrima = capo.nome;
       }
     }
+    // 🎨 i gesti degli avatar illustrati: brevi, partono solo quando cambia il motivo (mai a ogni ridisegno) e poi torna «mani sul tavolo»
+    var gesti = {};   // posto → { g, fino }
+    function gestoDi(i) { var x = gesti[i]; return x && Date.now() < x.fino ? x.g : ""; }
+    function dai(i, g, ms) {
+      if (!ill()) return;
+      var x = gesti[i] = { g: g, fino: Date.now() + ms };
+      setTimeout(function () { if (gesti[i] === x && !chiuso && vm && R && document.body.contains(zBanco)) disegnaScena(); }, ms + 30);
+    }
     function applicaDiff(pre, v) {
       if (!pre) return;
+      if (ill()) {
+        var nb = BJ.punteggio(v.banco) > 21;
+        v.giocatori.forEach(function (g, i) {
+          var pg = pre.giocatori[i];
+          if (pre.fase === "gioca" && v.fase === "gioca" && pg && contaCarte(g) > contaCarte(pg)) dai(i, "batte", 750);   // «Carta»: un colpetto sul panno
+          else if (v.fase === "esito" && pre.fase !== "esito" && nettoDi(g) > 0) {   // vincita: se il banco ha sballato prima applaude, poi esulta
+            if (nb) { dai(i, "applaude", 1200); setTimeout(function () { if (vm && vm.fase === "esito" && !chiuso && R && document.body.contains(zBanco)) { dai(i, "esulta", 2000); disegnaScena(); } }, 1200); }
+            else dai(i, "esulta", 2400);
+          }
+        });
+      }
       var rivelato = (v.fase === "banco" || v.fase === "esito") && !(pre.fase === "banco" || pre.fase === "esito");
       if (v.banco.length > pre.banco.length || rivelato) anim.banco = true;
       if (v.banco.length > pre.banco.length) suonoCarta();
@@ -1536,6 +1721,8 @@
         else if (giocate) r.fum = frase("pari", seme);
       }
       else if (vm.fase === "fine") { r.faccia = "esulta"; r.fum = frase("fine", seme); }
+      // 😏 la battuta del banco prende il posto della frase di sempre (una sola alla volta), finché non sparisce
+      if (batt && vm.fase !== "fine") { r.fum = batt.testo; r.oro = false; r.batt = true; r.faccia = /^(bj|grosso|tuttoVinto|cinque|bancoSballa)$/.test(batt.c) ? "triste" : "esulta"; }
       return r;
     }
     function cartaR(c, w, nuova, coperta) { var d = el("div", { class: "bjr-carta" + (nuova ? " arriva" : ""), html: BJ.cartaHTML(c, coperta) }); d.style.width = w + "px"; return d; }
@@ -1547,57 +1734,113 @@
     zBanco.appendChild(cam); zBanco.appendChild(capt); zBanco.appendChild(hud);
     var R = null;   // il mondo costruito: si rifà solo se cambia il numero di giocatori o la misura dello schermo
 
+    // 😏 la battuta è più lunga della frase di sempre: se tocca carte, punteggi, fiches o nomi (tante carte del banco, la
+    // carte che arrivano) sale sopra di loro, a ogni fotogramma per i primi 2,5 s. Mai sopra le cose che contano.
+    // (illustrati, da soli: la battuta non copre nemmeno chi festeggia; in più giocatori la sposta il solo spazio libero)
+    function spostaBatt() {
+      if (!fumEl || ill() || !fumEl.classList.contains("batt") || !document.body.contains(fumEl)) return;   // (illustrati: la battuta sta sul ritratto del banco)
+      var zr = zBanco.getBoundingClientRect();
+      for (var k = 0; k < 4; k++) {
+        var a = fumEl.getBoundingClientRect(), su = null;
+        [].forEach.call(zBanco.querySelectorAll(".bjr-carta, .bjr-cc, .bjr-punti, .bjr-fiche, .bjr-pila, .bjr-fval, .bjr-nome, .bjr-matt-carte" + (ill() && vm.giocatori.length === 1 ? ", .bjr-gioc" : "")), function (e) {
+          var b = e.getBoundingClientRect(); if (!b.width || !b.height) return;
+          if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1) su = su == null ? b.top : Math.min(su, b.top);
+        });
+        if (su == null || su - zr.top - 4 < a.height) return;
+        fumEl.style.top = Math.round(su - zr.top - 4) + "px";
+      }
+    }
+    function hudLargo(W) { return Math.round(Math.min(W * 0.27, 108)); }   // (illustrati: il croupier in basso a sinistra, piccolo)
     function costruisci() {
       var N = vm.giocatori.length, W = zBanco.clientWidth, H = zBanco.clientHeight;
       svuota(cam); cam.style.transition = "none"; cam.style.transform = "none";
       cam.appendChild(el("div", { class: "bjr-muro" }));
-      var strato = el("div", { class: "bjr-strato" }), prosp = el("div", { class: "bjr-prosp", style: "perspective:" + Math.round(H * 1.8) + "px" });
+      var strato = el("div", { class: "bjr-strato" + (ill() ? " ill" : "") }), prosp = el("div", { class: "bjr-prosp", style: "perspective:" + Math.round(H * 1.8) + "px" });
       var PW = Math.round(W * 1.55), PH = Math.round(H * 1.0), PWi = PW - 26, PHi = PH - 26;
       var piano = el("div", { class: "bjr-piano", style: "width:" + PW + "px;height:" + PH + "px;margin-left:" + (-PW / 2) + "px;bottom:" + Math.round(-PH * 0.1) + "px" });
-      var panno = el("div", { class: "bjr-panno" }), sopra = el("div", { class: "bjr-sopra" });
+      var panno = el("div", { class: "bjr-panno" }), sopra = el("div", { class: "bjr-sopra" }), bracc = el("div", { class: "bjr-bracc" });
       piano.appendChild(panno); prosp.appendChild(piano);
       panno.insertAdjacentHTML("afterbegin", stampaPanno(PWi, PHi));   // le scritte stampate sul panno, come nei casinò
-      [strato, prosp, sopra].forEach(function (z) { cam.appendChild(z); });
+      [strato, prosp, bracc, sopra].forEach(function (z) { cam.appendChild(z); });   // (le braccia illustrate stanno sopra il tavolo: le mani sul panno)
       function su(x, y, nodo) { nodo.style.left = Math.round(x) + "px"; nodo.style.top = Math.round(y) + "px"; panno.appendChild(nodo); return nodo; }
       var cx = PWi / 2, cy = PHi / 2, rx = PWi / 2, ry = PHi / 2;
       var ampiezza = N === 1 ? 0 : Math.min(98, 40 + N * 11);   // più siete, più l'arco si allarga lungo l'ovale
       var rCarte = N > 6 ? 0.66 : 0.56, rFiche = N > 6 ? 0.84 : 0.78;
+      var spI = 0;   // 🎨 illustrati: ogni mazzetto sta sotto il SUO avatar (prima i raggi del tavolo li avvicinavano e si accavallavano); da 5 in su a due file
+      if (ill() && N > 1 && N <= 6) { var tA = (90 + ampiezza / 2) * Math.PI / 180, tB = (90 - ampiezza / 2) * Math.PI / 180; spI = Math.abs(rx * 1.04 * (Math.cos(tB) - Math.cos(tA))) / (N - 1) * 0.94; }
       var seg = vm.giocatori.map(function (g, i) {
         var th = (90 + ampiezza / 2 - (N === 1 ? 0 : i * ampiezza / (N - 1))) * Math.PI / 180;
         function p(r) { return [cx + rx * r * Math.cos(th), cy - ry * r * Math.sin(th)]; }
         var b = p(1.04), f = p(rFiche), c = p(rCarte);
+        if (spI) { var rc = N >= 5 ? (i % 2 ? 0.86 : 0.5) : 0.6; c = [cx + (b[0] - cx) * 0.94, cy - ry * rc * Math.sin(th)]; }
         return { segno: su(b[0], b[1], el("div", { class: "bjr-segno" })), pila: su(f[0], f[1], el("div", { class: "bjr-pila" })), mf: su(f[0], f[1], el("div", { class: "bjr-segno" })),
                  cc: su(c[0], c[1], el("div", { class: "bjr-cc cascata" })), mira: su(c[0], c[1], el("div", { class: "bjr-segno" })),
-                 spazio: N === 1 ? 999 : rx * rCarte * (ampiezza / (N - 1)) * Math.PI / 180 };
+                 spazio: N === 1 ? 999 : (spI ? spI * (N >= 5 ? 2 : 1) / 0.74 * 0.9 : rx * rCarte * (ampiezza / (N - 1)) * Math.PI / 180) };
       });
-      var bancoCC = su(cx, PHi * 0.8, el("div", { class: "bjr-cc" })), bancoMira = su(cx, PHi * 0.8, el("div", { class: "bjr-segno" }));
+      var yBanco = ill() ? (H / W > 1.5 ? 0.62 : 0.68) : 0.8;   // (illustrati: più in alto, così non finisce sotto il croupier in basso)
+      var bancoCC = su(cx, PHi * yBanco, el("div", { class: "bjr-cc" })), bancoMira = su(cx, PHi * yBanco, el("div", { class: "bjr-segno" }));
       // misuro dove sono finiti (telecamera ferma) e siedo le persone dietro al bordo
       var zr = zBanco.getBoundingClientRect();
       function pt(n) { var r = n.getBoundingClientRect(); return { x: r.left + r.width / 2 - zr.left, y: r.top + r.height / 2 - zr.top, sc: r.width / 100 }; }
       var base = (N <= 4 ? 128 : (N <= 6 ? 108 : 96)) * Math.max(1, Math.min(1.4, H / 340));
       var punti = seg.map(function (s) { return pt(s.segno); });
+      // 🎨 illustrati (5 nov 2026, giro 4): fino a 6 giocatori tutti la STESSA misura, grandi quanto lo spazio tra i vicini e sempre dentro lo schermo
+      //  (prima i posti più lontani, in alto, erano minuscoli e quelli ai lati finivano sotto il bordo)
+      var altoI = N <= 4 ? 80 : 104, wComune = 0;   // (con più di 4 il cartellino del nome a due righe sta sopra le teste: serve posto)
+      if (ill() && N > 1 && N <= 6) {
+        wComune = 1e9; var alta = H / W > 1.5 ? 1.1 : 1;   // (schermo alto: avatar più grandi, così la metà in alto non resta vuota)
+        punti.forEach(function (p, i) {
+          var vic = 999; [i - 1, i + 1].forEach(function (j) { if (j >= 0 && j < N) vic = Math.min(vic, Math.hypot(punti[j].x - p.x, punti[j].y - p.y)); });
+          wComune = Math.min(wComune, vic * (N <= 4 ? 1.12 : 1.1) * alta, W / N * (N <= 4 ? 1.2 : 1.15) * alta, (p.y - altoI) / 0.9226, base * 0.95 * alta);   // (misura più giusta: le braccia dei vicini non si sovrappongono)
+        });
+        wComune = Math.max(40, Math.round(wComune));
+      }
       seg.forEach(function (s, i) {
         var p = punti[i], vic = 999;
         [i - 1, i + 1].forEach(function (j) { if (j >= 0 && j < N) vic = Math.min(vic, Math.hypot(punti[j].x - p.x, punti[j].y - p.y)); });
         var w = Math.round(Math.min(base * Math.max(0.7, Math.min(1.4, p.sc)), vic * (N > 6 ? 1.75 : 1.35)));
         // (1 nov 2026: testa e nome stanno sotto la scritta grande in alto, «Punta Luca»: prima a 360x640 si coprivano)
-        var alto = N > 6 ? 70 : 96, testa = Math.round(p.y - w * 0.9); if (testa < alto) { w = Math.max(30, Math.round((p.y - alto) / 0.9)); testa = Math.round(p.y - w * 0.9); }
+        var alto = N > 6 ? 70 : (N === 1 && ill() && A_PROP() ? 106 : 96), testa = Math.round(p.y - w * 0.9); if (testa < alto) { w = Math.max(30, Math.round((p.y - alto) / 0.9)); testa = Math.round(p.y - w * 0.9); }
+        // 🎨 illustrati: dalla testa alla vita, seduti DIETRO il bordo del tavolo con le mani appoggiate sul panno (prima in piedi, lontani)
+        if (ill()) {
+          if (wComune) { w = wComune; p = { x: Math.max(w * 0.5 + 2, Math.min(W - w * 0.5 - 2, p.x)), y: p.y, sc: p.sc }; }   // (dentro lo schermo: la figura si sposta appena, le fiches restano dove sono)
+          else {
+            w = Math.round(Math.min(w * 0.8, Math.max(36, vic * 1.05)));
+            if (N === 1 && A_PROP()) w = Math.round(Math.min((p.y - alto) / 0.9226, W * 0.62));   // (3° tempo, 6 nov 2026: da solo l'avatar siede vicino, grande, non piccolo e lontano)
+            if (p.y + w * 0.17 - 1.0926 * w < alto) w = Math.max(30, Math.round((p.y - alto) / 0.9226));
+          }
+          testa = Math.round(p.y + w * 0.17 - 1.0926 * w);
+        }
         s.x = p.x; s.y = p.y; s.w = w; s.testa = testa; s.carte = pt(s.mira); s.fp = pt(s.mf);
         s.fig = el("div", { class: "bjr-gioc", style: "left:" + Math.round(p.x - w / 2) + "px;top:" + testa + "px;width:" + w + "px;z-index:" + Math.round(p.y) });
         s.fig.onclick = function () { sbircia(i); };
         strato.appendChild(s.fig);
+        if (ill()) { s.br = el("div", { class: "bjr-gb", style: "left:" + Math.round(p.x - w / 2) + "px;top:" + testa + "px;width:" + w + "px;height:" + Math.round(w * 118 / 108) + "px" }); bracc.appendChild(s.br); }
         // con 7-10 giocatori: solo il nome, largo al massimo quanto lo spazio tra due vicini, e uno su e uno giù
-        var largo = N > 6 ? "max-width:" + Math.max(34, Math.round(vic * 2 - 6)) + "px;" : "";
-        s.top0 = testa + Math.round(w * 0.06);
-        s.nome = el("div", { class: "bjr-nome" + (N > 6 ? " mini" : ""), style: largo + "left:" + Math.round(p.x) + "px;top:" + s.top0 + "px" });
-        s.fval = el("div", { class: "bjr-fval", style: "left:" + Math.round(s.fp.x) + "px;top:" + Math.round(s.fp.y - 10) + "px;opacity:0" });   // il valore sopra la pila
+        var largo = N > 6 || (ill() && N > 4) ? "max-width:" + Math.max(34, Math.round(vic * 2 - 6)) + "px;" : "";
+        s.top0 = testa + Math.round(w * (ill() ? -0.02 : 0.06)) - (ill() && A_PROP() ? 6 : 0);   // (illustrati: il cartellino sta SOPRA la testa, mai su cappello e fronte)
+        s.nome = el("div", { class: "bjr-nome" + (N > 6 || (ill() && N > 4) ? " mini" : "") + (ill() ? " ill" : ""), style: largo + "left:" + Math.round(p.x) + "px;top:" + s.top0 + "px" });
+        s.fval = el("div", { class: "bjr-fval" + (ill() ? " ill" : ""), style: "left:" + Math.round(s.fp.x) + "px;top:" + Math.round(s.fp.y - (ill() ? 0 : 10)) + "px;opacity:0" });   // il valore sopra la pila
         sopra.appendChild(s.nome); sopra.appendChild(s.fval);
-        s.cw = N > 6 ? 22 : (N > 4 ? 31 : 40);   // (1 nov 2026: carte più grandi, avatar un po più piccoli: il tavolo prima di tutto)
-        var fd = N > 6 ? 22 : 32; s.pila.style.width = s.pila.style.height = fd + "px";
+        s.cw = N > 6 ? 22 : (N > 4 ? 31 : 40);
+        if (spI) s.cw = N >= 5 ? 36 : (N === 2 ? 56 : 48);   // 🎨 illustrati: carte più grandi, ognuno ha il suo posto sotto l'avatar   // (1 nov 2026: carte più grandi, avatar un po più piccoli: il tavolo prima di tutto)
+        var fd = N > 6 ? 22 : 32;
+        if (ill() && A_PROP()) {   // (3° tempo) carte e fiches in scala con l'avatar: una carta è circa un sesto del suo busto, una fiche meno (sullo schermo, col tavolo in prospettiva)
+          var scC = (s.carte && s.carte.sc) || 1, scF = (s.fp && s.fp.sc) || 1;
+          s.cw = Math.round(Math.max(26, Math.min(44, w * 0.22)) / scC);   // (carte leggibili: almeno 26 px sullo schermo, e in scala con l'avatar)
+          fd = Math.round(Math.max(14, Math.min(34, w * 0.12)) / scF);
+        }
+        s.pila.style.width = s.pila.style.height = fd + "px";
         s.k = {};   // cosa è già disegnato (per non rifare niente che non è cambiato)
       });
-      var bm = pt(bancoMira);
-      R = { N: N, W: W, H: H, seg: seg, bancoCC: bancoCC, bx: bm.x, by: bm.y, bsc: bm.sc || 1, sopra: sopra, k: {} };
+      var bm = pt(bancoMira), bDisp = 0;
+      if (ill()) {   // 🎨 le carte del banco stanno a destra del croupier (che sta in basso a sinistra), mai sotto di lui
+        var hudR = hudLargo(W) + 14, bsc0 = bm.sc || 1, bdisp = W - hudR - 10;   // spazio per le carte
+        var tx = Math.max(W / 2, hudR + 6 + Math.min(bdisp, 3 * 50 * bsc0 + 6) / 2);
+        if (Math.abs(tx - bm.x) > 1) { var dl = (tx - bm.x) / bsc0; [bancoCC, bancoMira].forEach(function (n) { n.style.left = Math.round(cx + dl) + "px"; }); bm = pt(bancoMira); }
+        bDisp = Math.max(60, Math.min(2 * (bm.x - hudR - 6), 2 * (W - bm.x - 6)));   // larghezza utile attorno al centro
+      }
+      R = { N: N, W: W, H: H, seg: seg, bancoCC: bancoCC, bx: bm.x, by: bm.y, bsc: bm.sc || 1, bDisp: bDisp, sopra: sopra, k: {} };
       requestAnimationFrame(function () { cam.style.transition = ""; });
     }
 
@@ -1611,18 +1854,21 @@
       vm.giocatori.forEach(function (g, i) {
         var s = R.seg[i], attivo = decide(i);
         // faccia e luce di chi gioca
-        var kf = facciaDi(g, i) + (attivo ? "*" : "");
-        if (s.k.f !== kf) { s.k.f = kf; var cfg = avatarDi(i); s.fig.innerHTML = cfg ? svgAvatar(cfg, facciaDi(g, i)) : ""; s.fig.className = "bjr-gioc" + (attivo ? " attivo" : ""); }
+        var gp = ill() ? gestoDi(i) : "", kf = facciaDi(g, i) + (attivo ? "*" : "") + gp;
+        if (s.k.f !== kf) { s.k.f = kf; var cfg = avatarDi(i); var sulPanno = !!s.br && (gp === "" || gp === "batte");   // illustrati: mani sul panno (le disegna il livello sopra il tavolo; il corpo ha la stessa posa, così non ci sono due mani)
+          if (ill()) gestiBJ();
+          s.fig.innerHTML = cfg ? svgAvatar(cfg, facciaDi(g, i), ill() ? { vita: true, gesto: sulPanno ? "bjBracci" : (gp || "tavolo") } : undefined) : ""; s.fig.className = "bjr-gioc" + (attivo ? " attivo" : "");
+          if (s.br) s.br.innerHTML = cfg && sulPanno ? bracciaTavoloHTML(cfg, facciaDi(g, i), gp === "batte") : ""; }
         // sopra la testa: il nome e le fiche che ha (a fine mano anche quanto ha vinto o perso)
         var d = vm.fase === "esito" ? nettoDi(g) : 0;
         var kn = g.nome + "|" + attivo + "|" + d + "|" + g.fiches + "|" + !!g.via + "|" + (drv.mioIdx && i === mioIdx());
         // (2 nov 2026) quando la telecamera è su chi gioca, nome e monete li dice la scritta grande in alto: i cartellini sulle teste
         // si nascondono (comparivano due volte, e quello del vicino finiva sotto la scritta); tornano quando la telecamera si allarga
-        s.nome.style.visibility = (vm.fase === "gioca" || (vm.fase === "assic" && !drv.mioIdx)) ? "hidden" : "";
+        s.nome.style.visibility = (vm.fase === "gioca" || (vm.fase === "assic" && !drv.mioIdx) || (ill() && (s.pr || (attivo && vm.fase === "punta" && !drv.mioIdx && N > 1)))) ? "hidden" : "";   // (illustrati: chi ha già la sua scritta grande in alto o la targa della presentazione non ha anche il cartellino: prima il nome compariva due volte)
         if (s.k.n !== kn) {
-          s.k.n = kn; nomiCambiati = true; s.nome.className = "bjr-nome" + (N > 6 ? " mini" : "") + (attivo ? " attivo" : "") + (g.via ? " via" : "");
+          s.k.n = kn; nomiCambiati = true; s.nome.className = "bjr-nome" + (N > 6 || (ill() && N > 4) ? " mini" : "") + (ill() ? " ill" : "") + (attivo ? " attivo" : "") + (g.via ? " via" : "");
           s.nome.innerHTML = "";
-          if (N > 6) { s.nome.textContent = (drv.mioIdx && i === mioIdx() ? "⭐" : "") + g.nome + (g.via ? " 👋" : ""); }   // le monete si leggono sotto e nello zoom
+          if (N > 6 || (ill() && N > 4)) { s.nome.textContent = (drv.mioIdx && i === mioIdx() ? "⭐" : "") + g.nome + (g.via ? " 👋" : ""); }   // le monete si leggono sotto e nello zoom
           else {
             s.nome.appendChild(el("div", { text: g.nome + (drv.mioIdx && i === mioIdx() && N > 1 ? " ⭐" : "") + (g.via ? " 👋" : "") }));
             var rf = el("div", { class: "ff", text: g.fiches == null ? "🤫" : fmt(g.fiches) + " 🪙" });
@@ -1664,7 +1910,8 @@
             });
             if (n) {
               var pm = BJ.punteggio(m.carte), bj = BJ.eBJ(m);
-              box.appendChild(el("span", { class: "bjr-punti" + (pm > 21 ? " bust" : (bj || m.esito === "vince" || m.esito === "blackjack" ? " win" : "")),
+              var scc = (s.carte && s.carte.sc) || 1, gr = ill() && vm.giocatori.length > 3 ? Math.max(1, 12.5 / scc / 13) : 1;   // (illustrati, in tanti: le scritte «perde/vince» si leggono, ≥ 12 px sullo schermo)
+              box.appendChild(el("span", { class: "bjr-punti" + (pm > 21 ? " bust" : (bj || m.esito === "vince" || m.esito === "blackjack" ? " win" : "")), style: gr > 1.05 ? "font-size:" + Math.round(13 * gr) + "px;line-height:" + Math.round(20 * gr) + "px;bottom:" + (-Math.round(24 * gr)) + "px" : "",
                 text: (vm.fase === "esito" || vm.fase === "fine") && m.esito ? etichettaEsito(m) : (bj ? "BJ" : BJ.testo(m.carte, m.divisa)) }));
             }
             s.cc.appendChild(box);
@@ -1672,7 +1919,7 @@
           s.ccW = totW * ((s.carte && s.carte.sc) || 1);   // quanto sono larghe sullo schermo (per lo zoom)
         }
       });
-      if (nomiCambiati && N > 6) sistemaNomi();
+      if (nomiCambiati && (N > 6 || (ill() && N > 4))) sistemaNomi();
       // le carte di Bot (vicino a noi): la coperta si gira solo quando la telecamera è arrivata
       var scoperta = (vm.fase === "banco" || vm.fase === "esito" || vm.fase === "fine") && !scopri.attesa;
       var kb = vm.banco.map(function (c) { return c.v + "" + c.s; }).join(",") + "|" + scoperta;
@@ -1680,29 +1927,29 @@
         var pr = R.k.nb || 0, gira = R.k.cop && scoperta && pr === vm.banco.length && R.bancoCC.children[1];
         R.k.b = kb; R.k.nb = vm.banco.length; R.k.cop = !scoperta && vm.banco.length > 1;
         if (gira) giraCarta(R.bancoCC.children[1], vm.banco[1]);
-        else { svuota(R.bancoCC); vm.banco.forEach(function (c, k) { R.bancoCC.appendChild(cartaR(c, 50, k >= pr && vm.banco.length > pr, !scoperta && k === 1)); }); }
+        else { svuota(R.bancoCC); var cwB = 50; if (ill() && R.bDisp) cwB = Math.max(A_PROP() ? 26 : 30, Math.min(A_PROP() ? (vm.giocatori.length <= 4 ? 44 : 40) : (vm.giocatori.length <= 4 ? 58 : 50), Math.floor((R.bDisp / R.bsc - 3 * Math.max(0, vm.banco.length - 1)) / Math.max(1, vm.banco.length)))); vm.banco.forEach(function (c, k) { R.bancoCC.appendChild(cartaR(c, cwB, k >= pr && vm.banco.length > pr, !scoperta && k === 1)); }); }
       }
       // Bot nell'angolo con quanto ha il banco (sempre visibile)
       var fm = faccinaMatt(), pB = testoBanco(scoperta);
       // (1 nov 2026) mentre la telecamera è su chi gioca, le carte vere del banco restano in vista accanto alla sua faccia: è la carta che serve per decidere
-      var conCarte = (vm.fase === "gioca" || vm.fase === "assic") && vm.banco.length > 0;
-      var km = fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase + "|" + nomeBanco(vm) + "|" + (conCarte ? kb : "");
+      var conCarte = (vm.fase === "gioca" || vm.fase === "assic" || (vm.fase === "esito" && esitoZoom())) && vm.banco.length > 0;
+      var km = (ill() ? "i" + (R.N > 1 && (vm.fase === "gioca" || vm.fase === "assic") ? "p" : "") : "") + fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase + "|" + nomeBanco(vm) + "|" + (conCarte ? kb : "");
       if (R.k.m !== km) {
         R.k.m = km;
-        hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "");
-        if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(avatarBanco(vm), fm.faccia, { busto: true });
-        var hn = hud.lastChild; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 " + nomeBanco(vm)));
+        hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "") + (ill() ? " ill" : "") + (ill() && R.N > 1 && (vm.fase === "gioca" || vm.fase === "assic") ? " pic" : "");   // (illustrati: nello zoom il croupier si fa piccolo, non copre carte e punteggio di chi è a sinistra)
+        if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(avatarBanco(vm), fm.faccia, ill() ? { vita: true, gesto: "tavolo" } : { busto: true });
+        var hn = hud.children[1]; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 " + nomeBanco(vm)));
         if (pB) hn.appendChild(el("b", { class: /Sball/.test(pB) ? "bust" : "", text: pB }));
         var mc = zBanco.querySelector(".bjr-matt-carte"); if (mc) mc.remove();   // (in alto a sinistra: nello zoom su chi gioca lì non c'è niente)
         if (conCarte) { mc = el("div", { class: "bjr-matt-carte" }, [ el("span", { text: "🎩" }) ]); vm.banco.forEach(function (c, k) { mc.appendChild(el("div", { class: "bjr-carta", html: BJ.cartaHTML(c, k === 1 && !scoperta) })); }); zBanco.appendChild(mc); }
         if (fumEl) fumEl.remove(); fumEl = null;
-        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " bj-doro" : ""), style: "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); zBanco.appendChild(fumEl); }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
+        if (fm.fum) { fumEl = el("div", { class: "bjr-fum" + (fm.oro ? " bj-doro" : "") + (fm.batt ? " batt" : ""), style: ill() ? "" : "left:8px;top:" + (R.H - 96) + "px", text: fm.fum }); (ill() ? hud : zBanco).appendChild(fumEl); if (fm.batt) { var fino = Date.now() + 2500; (function giro() { spostaBatt(); if (Date.now() < fino && fumEl && fumEl.classList.contains("batt")) requestAnimationFrame(giro); })(); } }   // il fumetto sta sopra la testa di Bot, lontano dalle carte
       }
       // la nuvoletta della mossa sopra la testa di chi l'ha detta
       [].forEach.call(R.sopra.querySelectorAll(".bjr-bolla"), function (b) { if (!bolla || +b.dataset.id !== bollaId) b.remove(); });
       if (bolla && R.seg[bolla.seat] && !R.sopra.querySelector(".bjr-bolla")) {
         var sb = R.seg[bolla.seat], tb = bolla.testo, tipo = /sball/i.test(tb) ? " rossa" : (/black|21/i.test(tb) ? " bj-doro" : "");
-        R.sopra.appendChild(el("div", { class: "bjr-bolla" + tipo, "data-id": bollaId, style: "left:" + Math.round(sb.x) + "px;top:" + Math.max(20, sb.testa - 16) + "px", text: tb }));
+        R.sopra.appendChild(el("div", { class: "bjr-bolla" + tipo, "data-id": bollaId, style: "left:" + Math.round(sb.x) + "px;top:" + (ill() && sb.nome.style.visibility !== "hidden" ? Math.max(20, Math.round(parseFloat(sb.nome.style.top) - sb.nome.offsetHeight - 3)) : Math.max(20, sb.testa - 16)) + "px", text: tb }));   // (illustrati: la nuvoletta sta SOPRA il cartellino del nome, mai sopra le lettere)
       }
       // in grande sulla parete: chi sta giocando
       var gt = vm.giocatori[vm.turno], scritta = "", sotto = "", quale = vm.maniTot ? "mano " + Math.min(vm.maniTot, vm.mano + (vm.fase === "esito" ? 0 : 1)) + " di " + vm.maniTot : "";
@@ -1794,17 +2041,18 @@
     // ---------- LA TELECAMERA ----------
     var camK = "", sbirciaFino = 0;
     function inquadra(box, durata) {
-      var W = R.W, H = R.H, tr;
+      var W = R.W, H = R.H, tr, s = 1;
       if (!box) tr = "translate(0px,0px) scale(1)";
       else {
         var su = wrap.classList.contains("bj-in-gara") ? 70 : 40;   // (in alto la scritta grande, nella gara anche la classifica: lì la telecamera non va)
-        var s = Math.min(2.6, Math.min(W / box.w, (H - su) / box.h) * 0.92);
+        s = Math.min(2.6, Math.min(W / box.w, (H - su) / box.h) * 0.92);
         var tx = W / 2 - box.x * s, ty = (H + su) / 2 - box.y * s;
+        if (ill()) tx = Math.min(0, Math.max(W - W * s, tx));   // (illustrati: dai lati non si esce dal tavolo)
         ty = Math.max(ty, H - H * 1.1 * s);   // il bordo vicino del tavolo è a 1,1 H: sotto non c'è niente, non si scende oltre
         tr = "translate(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px) scale(" + s.toFixed(3) + ")";
       }
       if (tr === camK) return;
-      camK = tr; cam.style.transitionDuration = (durata || 0.95) + "s"; cam.style.transform = tr;
+      camK = tr; cam.style.setProperty("--zs", box ? s.toFixed(3) : "1"); cam.style.transitionDuration = (durata || 0.95) + "s"; cam.style.transform = tr;
     }
     // (2 nov 2026) l'inquadratura prende avatar, fiches, carte E il punteggio sotto le carte: con tanti giocatori i posti di lato hanno
     // le carte spostate rispetto alla testa, e prima finivano fuori dallo schermo
@@ -1813,6 +2061,20 @@
       var top = s.testa - 46, bot = Math.max(s.carte.y + (s.cw * 0.8 + 34) * sc, s.fp.y + 34);   // (sopra la testa c'è posto per la nuvoletta «Raddoppio!»)
       var x0 = Math.min(s.x - s.w * 0.4, s.carte.x - mezze, s.fp.x - 30), x1 = Math.max(s.x + s.w * 0.4, s.carte.x + mezze, s.fp.x + 30);
       return { x: (x0 + x1) / 2, y: (top + bot) / 2, w: Math.max((x1 - x0) * (largo ? 1.6 : 1.08), s.w * (largo ? 3 : 1.3), largo ? 230 : 140), h: (bot - top) * (largo ? 1.25 : 1) };
+    }
+    // 🎨 illustrati, da 3 in su: la telecamera su chi gioca tiene dentro anche i VICINI (interi, mai tagliati a metà) e non esce dal tavolo
+    function suTurno(i) {
+      var b = suGiocatore(i);
+      if (!ill() || vm.giocatori.length < 3) return b;
+      var x0 = b.x - b.w / 2, x1 = b.x + b.w / 2, y0 = b.y - b.h / 2, y1 = b.y + b.h / 2;
+      [i - 1, i + 1].forEach(function (j) { var n = R.seg[j]; if (!n) return; x0 = Math.min(x0, n.x - n.w * 0.55); x1 = Math.max(x1, n.x + n.w * 0.55); y0 = Math.min(y0, n.testa - 22); });
+      return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
+    }
+    function esitoZoom() { return ill() && vm.giocatori.length <= 3; }
+    function suTutti() {
+      var x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      vm.giocatori.forEach(function (g, i) { var r = suGiocatore(i); x0 = Math.min(x0, r.x - r.w / 2); x1 = Math.max(x1, r.x + r.w / 2); y0 = Math.min(y0, r.y - r.h / 2); y1 = Math.max(y1, r.y + r.h / 2); });
+      return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
     }
     // lo zoom sul banco va sulle CARTE di Bot, al centro (la sua faccia è già nell'angolo)
     function suMatt() {
@@ -1839,14 +2101,16 @@
     function telecamera() {
       if (intro.corre || Date.now() < sbirciaFino) return;
       var f = vm.fase, veloce = vm.giocatori.length > 6;
-      if (f === "gioca" || (f === "assic" && !drv.mioIdx)) inquadra(suGiocatore(vm.turno), veloce ? 0.6 : 0.85);   // online l'assicurazione è di tutti: tavolo intero
+      if (f === "gioca" || (f === "assic" && !drv.mioIdx)) inquadra(suTurno(vm.turno), veloce ? 0.6 : 0.85);   // online l'assicurazione è di tutti: tavolo intero
       else if (f === "banco") inquadra(suMatt());
       else if (f === "distrib") {
         // primo giro largo; al secondo giro la telecamera scorre lungo il tavolo seguendo la carta
-        if (anim.ultima >= 0 && contaCarte(vm.giocatori[anim.ultima]) >= 2) inquadra(suGiocatore(anim.ultima, true), veloce ? 0.4 : 0.55);
+        if (ill() && vm.giocatori.length >= 5) inquadra(null, 0.6);   // (3° tempo: da 5 in su, durante la distribuzione si vede tutto il tavolo: i posti ai lati non restano tagliati)
+        else if (anim.ultima >= 0 && contaCarte(vm.giocatori[anim.ultima]) >= 2) inquadra(suGiocatore(anim.ultima, true), veloce ? 0.4 : 0.55);
         else if (anim.banco && vm.banco.length >= 2) inquadra(suMatt(), 0.6);
         else if (anim.ultima >= 0 || anim.banco) inquadra(null, 0.6);
       }
+      else if (f === "esito" && esitoZoom()) inquadra(suTutti(), 0.9);   // illustrati: a fine mano si vede CHI HA VINTO che festeggia (il banco resta nell'angolo con le sue carte)
       else inquadra(null);   // puntate e fine mano: tutti al tavolo
     }
     // tocco su una faccia: la telecamera va da lui un attimo, poi torna
@@ -1865,21 +2129,22 @@
       if (introGiaVista()) { telecamera(); return; }
       try { if (drv.stanza) sessionStorage.setItem("bj-intro-" + drv.stanza, "1"); } catch (e) {}
       intro.corre = true;
-      var N = vm.giocatori.length, velo = el("div", { class: "bjr-intro" }, [
-        el("div", { class: "mg", html: window.SGOmino ? svgAvatar(avatarBanco(vm), "esulta") : "" }), el("div", { class: "banc" }) ]);
+      var N = vm.giocatori.length, velo = el("div", { class: "bjr-intro" + (ill() ? " ill" : "") }, [
+        el("div", { class: "mg", html: window.SGOmino ? (ill() ? salutoHTML(avatarBanco(vm), "esulta", true) : svgAvatar(avatarBanco(vm), "esulta", undefined)) : "" }), el("div", { class: "banc" }) ]);
       intro.velo = velo;
+      if (ill() && velo.firstChild) { var mw = Math.round(Math.min(R.W * 0.9, R.H * 0.64 / 1.09)); velo.firstChild.style.width = mw + "px"; velo.firstChild.style.maxWidth = "none"; }   // il croupier grande, dalla vita in su
       zBanco.appendChild(velo); capt.innerHTML = ""; capt.dataset.k = "";
       var passi = [];
       function poi(ms, fn) { passi.push([ms, fn]); }
-      function esulta(i) { var s = R.seg[i]; s.k.f = "x"; var cfg = avatarDi(i); if (cfg) s.fig.innerHTML = svgAvatar(cfg, "esulta"); }
+      function esulta(i) { var s = R.seg[i]; s.k.f = "x"; var cfg = avatarDi(i); if (cfg) { s.fig.innerHTML = ill() ? salutoHTML(cfg, "esulta", true) : svgAvatar(cfg, "esulta", undefined); if (s.br) s.br.innerHTML = ""; } }
       poi(450, function () { velo.appendChild(el("div", { class: "benv", text: "Benvenuti al tavolo! 🎩" })); });
       poi(1500, function () { inquadra(suGiocatore(0, N > 4), 0.01); velo.classList.add("via"); });
       poi(600, function () { velo.remove(); });
       if (N <= 4) {   // pochi: uno alla volta, col nome
         vm.giocatori.forEach(function (g, i) {
           poi(0, function () { inquadra(suGiocatore(i), 0.6); });
-          poi(450, function () { esulta(i); var pr = el("div", { class: "bjr-presenta", text: vm.giocatori[i].nome }); zBanco.appendChild(pr); R.seg[i].pr = pr; });
-          poi(600, function () { var s = R.seg[i]; if (s.pr) s.pr.remove(); });
+          poi(450, function () { esulta(i); var pr = el("div", { class: "bjr-presenta", text: vm.giocatori[i].nome }); zBanco.appendChild(pr); R.seg[i].pr = pr; if (ill()) R.seg[i].nome.style.visibility = "hidden"; });
+          poi(600, function () { var s = R.seg[i]; if (s.pr) s.pr.remove(); s.pr = null; if (ill()) s.nome.style.visibility = ""; });
         });
       } else {        // tanti: una carrellata unica lungo il tavolo, tutti che salutano
         poi(0, function () { vm.giocatori.forEach(function (g, i) { esulta(i); }); });
@@ -1894,7 +2159,7 @@
       intro.corre = false; intro.stop = true;
       if (intro.velo) intro.velo.remove();
       [].forEach.call(zBanco.querySelectorAll(".bjr-presenta"), function (x) { x.remove(); });
-      if (R) R.seg.forEach(function (s) { s.k.f = null; });
+      if (R) R.seg.forEach(function (s) { s.k.f = null; s.pr = null; });
       if (vm && !chiuso) disegnaScena();
     }
     // un tocco sul tavolo durante la presentazione la salta
@@ -2215,7 +2480,8 @@
       quota: uguali ? Math.max(0, Math.floor(+imp.quota) || 0) : 0,   // la gara con le Speed Coins (solo online): la quota d'ingresso, 0 = fiches finte
       tempo: imp.tempo == null ? 25 : Math.max(0, Math.floor(+imp.tempo) || 0),   // secondi per decidere (online)
       consigli: imp.consigli == null ? true : !!imp.consigli,
-      coppia: imp.coppia == null ? true : !!imp.coppia,   // la scommessa extra «👯 Coppia» (di partenza accesa, 1 nov 2026: per provarla)
+      coppia: imp.coppia == null ? true : !!imp.coppia,
+      battute: imp.battute == null ? true : !!imp.battute,   // 😏 le battute del banco (di partenza accese, 3 nov 2026)   // la scommessa extra «👯 Coppia» (di partenza accesa, 1 nov 2026: per provarla)
       // 🎰 le regole da esperti (1 nov 2026, il proprietario: «mettiamo tutte le regole, al massimo le lasciamo disattivate»): di partenza come prima
       h17: !!imp.h17, mazzi: [1, 2, 6, 8].indexOf(+imp.mazzi) >= 0 ? +imp.mazzi : 6, r911: !!imp.r911, das: imp.das !== false, rsa: !!imp.rsa,
       resa: imp.resa !== false, charlie: !!imp.charlie, t213: !!imp.t213, buster: !!imp.buster, royal: !!imp.royal
@@ -2224,7 +2490,7 @@
   function testoRegole(r, online) {
     return (r.uguali ? (online && r.quota ? "🏆 Gara: quota " + fmt(r.quota) + " 🪙, montepremi ai primi · " : "🏆 Torneo: tutti con " + fmt(BJ.FICHES_TORNEO) + " fiches finte · ") : "") +
       "Puntata minima " + fmt(r.min) + " 🪙 · " + (r.mani ? r.mani + " mani" : "mani senza fine") +
-      (online ? " · " + (r.tempo ? r.tempo + " s per decidere" : "tempo libero") : "") + (r.consigli ? " · 💡 consigli" : "") + (r.coppia ? " · 👯 coppia" : "") +
+      (online ? " · " + (r.tempo ? r.tempo + " s per decidere" : "tempo libero") : "") + (r.consigli ? " · 💡 consigli" : "") + (r.battute ? "" : " · niente battute") + (r.coppia ? " · 👯 coppia" : "") +
       (r.t213 ? " · 🃏 21+3" : "") + (r.royal ? " · 👑 stesso seme" : "") + (r.buster ? " · 💥 il banco sballa" : "") +
       (r.h17 ? " · banco tira sul 17 morbido" : "") + (r.mazzi !== 6 ? " · " + r.mazzi + (r.mazzi === 1 ? " mazzo" : " mazzi") : "") + (r.r911 ? " · raddoppio su 9-11" : "") +
       (!r.das ? " · niente raddoppio dopo Dividi" : "") + (r.rsa ? " · assi divisi di nuovo" : "") + (!r.resa ? " · niente resa" : "") + (r.charlie ? " · 5 carte vincono" : "");
@@ -2931,6 +3197,7 @@
       "Ogni mano scegli quanto puntare con la <b>lineetta</b>: a sinistra la puntata minima, a destra tutte le tue monete. Con le Speed Coins, se punti più di metà di quello che hai, il gioco ti chiede un secondo sì.",
       "<b>🏆 Gara della serata</b> (si accende nelle regole): tutti con le stesse fiches e un numero di mani, la classifica sempre in alto, vince chi ha più fiches alla fine. L'<b>ultima mano si punta in segreto</b>: le puntate si scoprono tutte insieme. Dalle 6 mani in su c'è anche il <b>giro di boa</b> a metà, e nelle ultime 3 mani la puntata minima raddoppia.",
       "Online la gara si gioca con le <b>Speed Coins</b>: ognuno paga la quota d'ingresso (chi non ce l'ha guarda) e le quote vanno nel <b>montepremi</b>: fino a 3 giocatori tutto al primo, da 4 a 6 il 70% e il 30%, da 7 in su 60, 30 e 10%. Chi resta senza fiches può <b>rientrare</b> pagando di nuovo la quota, fino alla penultima mano. Con la quota «Gratis» e sullo stesso telefono si gioca con fiches finte.",
+      "<b>😏 Battute del banco</b> (si spengono nelle regole): ogni tanto, nei momenti forti (chi sballa, chi punta tutto, chi fa Black Jack…), il banco prende in giro chi gioca con una battuta nel suo fumetto. Per ridere, mai per offendere.",
       "<b>👯 Coppia</b> (si spegne nelle regole): mentre punti puoi aggiungere una fiche piccola, la puntata minima, che scommette sulle tue prime due carte. Se sono una coppia (due 8, due re…) vinci subito, anche se poi la mano va male: colori diversi 6 volte la fiche, stesso colore 15 volte, identiche (stesso seme) 25 volte. Se non è coppia perdi solo quella fiche.",
       "<b>🎰 Regole da esperti</b> (nelle regole, tutte come al casinò e di partenza spente): <b>🃏 21+3</b> (le tue due carte con la scoperta del banco: colore 5 volte, scala 11, tris 30, scala colore 40, tris dello stesso seme 100), <b>👑 Stesso seme</b> (le prime due carte dello stesso seme 2,5 volte, re e donna dello stesso seme 45), <b>💥 Il banco sballa</b> (il banco gioca sempre fino in fondo; se sballa paga secondo le carte che ha: 3 carte 2 volte, 4 carte 2,5, 5 carte 4, 6 carte 15, 7 carte 50, 8 e più 250); e poi il banco che tira sul 17 morbido, quanti mazzi (1, 2, 6 o 8), il raddoppio solo su 9, 10 e 11, niente raddoppio dopo Dividi, dividere di nuovo gli Assi, niente resa, 5 carte senza sballare che vincono sempre.",
       "A fine partita i <b>titoli</b>: 🍀 Il Fortunato, 🎲 Lo Spericolato, 💥 Lo Sballone, 🏳️ Il Prudente, 🧊 Il Ragioniere e 🎩 L'amico del banco."
@@ -2979,6 +3246,8 @@
       box.appendChild(notaU);
       if (online) gruppo("Tempo per decidere", "tempo", [[15, "15 s"], [25, "25 s"], [0, "Senza limite"]]);
       gruppo("💡 Consiglio della mossa giusta", "consigli", [[true, "Sì"], [false, "No"]]);
+      dove.battute = true;
+      gruppo("😏 Battute del banco", "battute", [[true, "Sì"], [false, "No"]]);
       // 🎰 le regole da esperti: chiuse in una sezione che si apre con un tocco (chi non le conosce non vede un muro di opzioni)
       dove.coppia = true; dove.h17 = false; dove.mazzi = 6; dove.r911 = false; dove.das = true; dove.rsa = false; dove.resa = true; dove.charlie = false;
       dove.t213 = false; dove.buster = false; dove.royal = false;

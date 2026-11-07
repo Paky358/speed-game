@@ -1676,7 +1676,7 @@
       var G = await W.apriTel("Giulia", { hash: "sala=" + S, x: 185, salaSempre: true });
       if (!await W.aspetta(function () { return dentro(G) && ids(C).length === 2; }, 6000)) no("Giulia non entra nella Scalinata (" + ids(C).join(",") + ")");
       var idG = mioId("Giulia");
-      if (!W.clicca(P, /Chiudi/, ".sl-porta")) no("nella saletta non c'è «🔒 Chiudi»");
+      var bp = P.document.querySelector(".sl-porta"); if (!bp || !/Chiudi/.test(bp.textContent)) no("nella saletta non c'è la porta («🔒 Chiudi», nascosta dal 6 nov 2026)"); bp.click();
       if (!await W.aspetta(function () { return /Porta chiusa/.test(statoHost(P)); }, 2000)) no("sotto il titolo non c'è «🔒 Porta chiusa» («" + statoHost(P) + "»)");
       await W.dorme(400);
       var M = await W.apriTel("Marco", { hash: "sala=" + S, x: 370, salaSempre: true });
@@ -1688,7 +1688,7 @@
       if (!await W.aspetta(function () { return W.clicca(G, /Rientra/); }, 5000)) no("nella Sala Giulia non ha «Rientra» («" + T(G).slice(0, 80) + "»)");
       if (!await W.aspetta(function () { return dentro(G) && ids(C).indexOf(idG) >= 0 && G.document.querySelector(".saletta-schermo"); }, 6000)) no("con la porta chiusa Giulia (che è nella Sala) non rientra nel gioco («" + T(G).slice(0, 80) + "»)");
       // Paky riapre: Marco riprova ed entra
-      if (!W.clicca(P, /Riapri/, ".sl-porta")) no("non c'è «🔓 Riapri»");
+      var br = P.document.querySelector(".sl-porta"); if (!br || !/Riapri/.test(br.textContent)) no("non c'è «🔓 Riapri»"); br.click();
       await W.dorme(500);
       if (!W.clicca(M, /Riprova/)) no("Marco non ha «↻ Riprova»");
       if (!await W.aspetta(function () { return dentro(M) && M.document.querySelector(".saletta-schermo") && ids(C).length === 3; }, 8000)) no("riaperta, Marco non arriva nella saletta della Scalinata («" + T(M).slice(0, 80) + "», " + ids(C).length + " giocatori)");
@@ -3001,6 +3001,7 @@
       if (!await W.aspetta(function () { return (vm(S).membri || []).length === 5; }, 12000)) no("nella Sala non sono in 5");
       var P = W.finestra("Paky"), F = W.finestra, tab = [], rotti = [];
       // i giochi (nome, posti, impostazioni): si ricaricano i loro file in una copia, come nel 227
+      if (P.SG.scaricaTutti) await P.SG.scaricaTutti();   // (📦 dal 4 nov i giochi arrivano quando servono: qui servono tutti, con le loro liste)
       var REG = {}, FILE = { nomicose: "nomicoseecitta", scopa2v2: "scopa2" }, reg0 = P.SG.registra;
       P.SG.registra = function (x) { REG[x.id] = x; };
       try { for (var fi = 0; fi < LISTA.length; fi++) P.eval(await (await fetch("/js/games/" + (FILE[LISTA[fi]] || LISTA[fi]) + ".js?" + Date.now())).text()); }
@@ -5335,7 +5336,7 @@
     if (Mk.localStorage.getItem("sg-presenza") !== "0") no("spento, sg-presenza = " + Mk.localStorage.getItem("sg-presenza"));
     if (!await W.aspetta(function () { return !P.SGAmiciOnline.online().length; }, 4000)) no("spento l'interruttore, Paky vede ancora Marco");
     var S = await apriSalaNuova("Paky");
-    if (!W.clicca(P, /Chiudi/, ".sl-porta")) no("nella Sala non c'è «🔒 Chiudi»");
+    var bs = P.document.querySelector(".sl-porta"); if (!bs || !/Chiudi/.test(bs.textContent)) no("nella Sala non c'è la porta («🔒 Chiudi», nascosta dal 6 nov 2026)"); bs.click();
     if (!await W.aspetta(function () { return /Porta chiusa/.test(statoHost(P)); }, 2000)) no("la porta non si chiude («" + statoHost(P) + "»)");
     var inv = P.document.querySelector(".sl-invito .sl-link");
     if (!/➕ Invita gli amici/.test(inv.textContent) || inv.querySelector(".ao-badge:not(.zero)")) no("con Marco nascosto la testata dice «" + inv.textContent + "»");
