@@ -81,7 +81,11 @@
   //            di spalle, il braccio staccato; sulla pelle scura le dita si separano con un filo di luce. Saluta e applaude cambiano un poco posto.
   //   cravatta: la cravatta lunga fino alla fibbia della cintura (Tavola 4, D): nodo piccolo, ali del colletto sopra, lama che si allarga;
   //            col gilet e col cappotto passa sotto; la giacca si apre a V fino al bottone e la cravatta si vede solo lì (K.cravattaV).
-  A.RITOCCHI = { scarpe: 1, collo: 1, vestito: 1, mani: 1, cravatta: 1 };
+  //   moda:    i capi «gemelli» rifatti in stile Moda (Tavola 1, colonna «Moda»): felpa col cappuccio vero, maglione da pescatore, camicia
+  //            infilata con le maniche arrotolate, giacca sartoriale, il bomber diventa il CHIODO di pelle (la voce salvata resta «bomber»),
+  //            jeans col risvolto, classici a sigaretta, cargo con le tasche a soffietto. Le voci sono quelle di sempre (in omino-a-pezzi.js,
+  //            sezione «I CAPI MODA»): a 0 tornano i disegni di prima.
+  A.RITOCCHI = { scarpe: 1, collo: 1, vestito: 1, mani: 1, cravatta: 1, moda: 1 };
 
   // ---------- aiuti ----------
   var H2R = {}, HEX = [];
@@ -909,7 +913,7 @@
       var r = rc + e * 0.55, T = tang(F, r), aF = 54 * DEG, R = [[(F[0] + T.p[0]) / 2, (F[1] + T.p[1]) / 2], T.p];
       return R.concat(arcoPts(r, T.a + (aF - T.a) / 4, aF, 3, Jd, Jy));
     }
-    // il tronco. Pelle: { pelle: true }. Vestito: { agio, orlo, scollo: {tipo, prof, larg}, smanicato, spallina, svasa, curvaOrlo, pancia }
+    // il tronco. Pelle: { pelle: true }. Vestito: { agio, orlo, scollo: {tipo, prof, larg}, smanicato, spallina, svasa, curvaOrlo, pancia, orloLinea }
     function tronco(o) {
       o = o || {};
       var e = o.agio != null ? o.agio : (o.pelle ? 0 : 5), nk = B.nk, R;
@@ -950,9 +954,15 @@
       var sc3 = sc2.tipo === "v" ? "L" + C + " " + (ny + prof) + "L" + q(C + nl) + " " + ny
         : (sc2.tipo === "quadro" ? "L" + q(C - nl + 4) + " " + (ny + prof) + "L" + q(C + nl - 4) + " " + (ny + prof) + "L" + q(C + nl) + " " + ny
         : "C" + q(C - nl + 2) + " " + q(ny + prof * 0.9) + " " + q(C - nl * 0.45) + " " + (ny + prof) + " " + C + " " + (ny + prof) + "C" + q(C + nl * 0.45) + " " + (ny + prof) + " " + q(C + nl - 2) + " " + q(ny + prof * 0.9) + " " + q(C + nl) + " " + ny);
-      var hl = Labs2[0];
-      var dT = "M" + q(C - nl) + " " + ny + sc3 + cr(Rabs2) + "Q" + C + " " + q(orlo + (o.curvaOrlo != null ? o.curvaOrlo : 6)) + " " + q(hl[0]) + " " + q(hl[1]) + cr(Labs2) + "Z";
-      orloT[dT] = orlo;   // (tappa 3) dove finisce: le cuciture del jeans sull orlo
+      var hl = Labs2[0], fondo, giu = orlo;
+      if (o.orloLinea) {   // (tappa 4, la camicia Moda) l orlo è una linea data, dal fianco destro verso il centro ([x dal centro, y]): specchiata a sinistra,
+        // in mezzo un tratto dritto (le code della camicia fuori solo sui fianchi: una sagoma sola col tronco, non tre pezzi)
+        var OL = o.orloLinea, Rr = [Rabs2[Rabs2.length - 1]].concat(OL.map(function (z) { return [C + z[0], z[1]]; })), Ll = OL.slice().reverse().map(function (z) { return [C - z[0], z[1]]; }).concat([hl]);
+        fondo = cr(Rr) + "L" + N(Ll[0][0], 1) + N(Ll[0][1]) + cr(Ll);
+        OL.forEach(function (z) { giu = Math.max(giu, z[1]); });
+      } else fondo = "Q" + C + " " + q(orlo + (o.curvaOrlo != null ? o.curvaOrlo : 6)) + " " + q(hl[0]) + " " + q(hl[1]);
+      var dT = "M" + q(C - nl) + " " + ny + sc3 + cr(Rabs2) + fondo + cr(Labs2) + "Z";
+      orloT[dT] = giu;   // (tappa 3) dove finisce: le cuciture del jeans sull orlo
       return dT;
     }
     var orloT = {};
@@ -1057,7 +1067,7 @@
     // (correzione della tappa 3, Tavola 2: «Hawaiana: maniche corte e fiori») la camicia (e la camicetta) hawaiana ha le maniche corte, a 0,38
     // del braccio come nella tavola: mentre si disegna quel capo manica e fineManica non vanno oltre manicaMax (i polsini diventano l orlo
     // della manica corta, la pelle del braccio si vede da lì in giù anche nei gesti). Gli altri capi e le altre fantasie: come prima.
-    var manicaMax = 1, corteCapo = c.fant === "hawaiana" && /^(camicia|camicetta|moda_camicia)$/.test(c.capo) ? 0.38 : 1;
+    var manicaMax = 1, corteCapo = c.fant === "hawaiana" && /^(camicia|camicetta)$/.test(c.capo) ? 0.38 : 1;
     function manica(lato2, o) { o = o || {}; var lg = o.lung != null ? o.lung : 1; if (manicaMax < 1 && lg > manicaMax) lg = manicaMax; manicaFino[lato2] = Math.max(manicaFino[lato2] || 0, lg); agioBr[lato2] = Math.max(agioBr[lato2] || 0, (o.agio != null ? o.agio : 8) + (o.svasa || 0)); return contornoBraccio(lato2, o.agio != null ? o.agio : 8, lg, o.svasa || 0, o.tonda ? 6 : 0); }
     // dove finisce la manica: punto, direzione, larghezza (intera) del braccio lì
     function fineManica(lato2, lung) {
@@ -1110,7 +1120,8 @@
       return "url(#" + p + id + ")";
     }
     // pz = { tronco: [d, …], braccia: [{ d, lato, fino, e }, …], altro: [d, …] (gambe…) }
-    // o = { bordo: colore del bordo (scuro), chiaro, scuro: colori delle luci e delle ombre, volume: false (niente ombre sopra), dentro: svg in più ritagliato (pieghe, stampe) }
+    // o = { bordo: colore del bordo (scuro), chiaro, scuro: colori delle luci e delle ombre, volume: false (niente ombre sopra), dentro: svg in più ritagliato (pieghe, stampe),
+    //       fino: la quota dove finisce il capo (tappa 4: per un capo fatto di più pezzi, così la fantasia non si scrive nelle fasce sotto l orlo) }
     function dipingi(pz, colore, o) {
       o = o || {};
       var tr = pz.tronco || [], br = pz.braccia || [], al = pz.altro || [];
@@ -1136,8 +1147,8 @@
       // (giro3) nel braccio staccato il bordo sfuma verso la spalla (niente riga che stacca la manica dalla spalla quando il braccio gira)
       // (tappa 3) la fantasia e la trama sul busto (e sulle gambe): sopra la stoffa, sotto le maniche, la luce e le ombre
       var cl = fb ? clip(tutti) : null, LS = fb ? strati(fb, colore) : null;
-      var finoA = fb && !fb.sotto && tr.length === 1 && !al.length ? orloT[tr[0]] || null : null;   // dove finisce il capo (se si sa)
-      if (fb && tr.length + al.length) s += "<g clip-path='" + cl + "'>" + LS.map(function (x) { return stratoBusto(x, finoA); }).join("") + (fb.f === "jeans" ? (fb.sotto ? jeansGambe(colore) : jeansBusto(colore, tr[0])) : "") + "</g>";
+      var finoA = fb && !fb.sotto ? (o.fino || (tr.length === 1 && !al.length ? orloT[tr[0]] || null : null)) : null;   // dove finisce il capo (se si sa; o.fino: lo dice il pezzo, tappa 4)
+      if (fb && tr.length + al.length) s += "<g clip-path='" + cl + "'>" + LS.map(function (x) { return stratoBusto(x, finoA); }).join("") + (fb.f === "jeans" && !(fb.sotto && K.jeansSuo) ? (fb.sotto ? jeansGambe(colore) : jeansBusto(colore, tr[0])) : "") + "</g>";
       function bordoBr(d, q) { var r0 = rc + (q.e || 0) / 2 + 1.5; return "<path d='" + d + "' fill='none' stroke='" + rimG + "' stroke-width='2.2'" + (PARTE === "braccio" ? " mask='" + sfumaSpalla(q.lato, r0) + "'" : " clip-path='" + senzaSpalla(q.lato, r0) + "'") + "/>"; }
       br.forEach(function (q) { var pg = PIEGA[q.d]; s += fb ? manicaStoffa(q, pg, colore, LS, bordoBr) : (pg ? Pa(pg.a, colore) + bordoBr(pg.a, q) + Pa(pg.b, colore) : Pa(q.d, colore)); });
       br.forEach(function (q) { var pg = PIEGA[q.d]; s += bordoBr(pg ? pg.b : q.d, q); });
@@ -1480,6 +1491,51 @@
       return "<g clip-path='" + clip(d) + "'>" + LS.map(function (x) { return "<rect" + TUTTO + sp + " fill='" + (x.pat ? "url(#" + x.pat + ")" : x.fill) + "'" + (x.op ? " opacity='" + x.op + "'" : "") + "/>"; }).join("") + "</g>";
     };
     K.dipingi = dipingi; K.tronco = tronco; K.braccio = contornoBraccio; K.volumeBraccio = volumeBraccio; K.cilindro = cilindro; K.ElR = ElR; K.rc = rc; K.G = G; K.luce = luceGlobale;
+    // (tappa 4 dei vestiti, i capi Moda, 7 nov 2026) aiuti per i capi che seguono il corpo più da vicino:
+    //  K.largT(y, e, orlo): la mezza larghezza del tronco di un vestito alla quota y (la stessa linea di tronco allargata di e; oltre i
+    //    fianchi segue le cosce fino a 700): fasce, tasche e orli che devono stare dentro il capo;
+    //  K.gambaSu(lato, prof, y0, y1, curva): una gamba dei pantaloni su misura dalla quota y0 all orlo y1, prof(y, gIn(y)) = [fuori, dentro]
+    //    (mezze larghezze dal centro della gamba); curva = quanto scende l orlo nel mezzo;
+    //  K.sottoBraccia(svg, e): i dettagli del petto (tasche, cerniere, revers) NON passano sopra le braccia che vengono davanti (gesti): una
+    //    maschera sola per avatar e per agio (il braccio come un tratto grosso spalla-gomito-polso: pesa poco); seduto e di spalle non serve;
+    //  K.coperto(lato, fino, agio): il braccio è coperto fino a «fino» da un pezzo disegnato a parte (un polsino lungo): coi gesti la pelle
+    //    dell avambraccio davanti al petto riparte da lì (prima ci voleva una manica finta);
+    //  K.soloDietro: seduto, la prima chiamata del capo serve solo per «dietro» (il resto lo rifanno le due passate, K.parte «corpo» e
+    //    «braccio»): il pezzo può non disegnare il resto, ma deve mettere lo stesso K.cravattaV (la cravatta lo legge subito dopo).
+    //  E ancora: tronco({ orloLinea }) = un orlo su misura (le code della camicia), K.dipingi(…, { fino }) = dove finisce un capo fatto di
+    //  più pezzi, un capo di spalle può rendere { spalle: svg } (sopra la stoffa vista da dietro: il cappuccio della felpa); i pantaloni Moda
+    //  mettono K.orloP (la calza delle scarpe parte da lì) e il jeans K.jeansSuo (la fantasia «Jeans» non rifà le sue cuciture).
+    K.largT = function (y, e, orlo) {
+      var L = lato(e, { orlo: orlo, pancia: G.pancia || 0 }).map(function (z) { return [z[1], z[0]]; });
+      L.push([700, fuoriGamba(700) + e * 0.8]);
+      if (y <= L[0][0]) return L[0][1];
+      for (var i = 1; i < L.length; i++) if (y <= L[i][0]) { var t = (y - L[i - 1][0]) / (L[i][0] - L[i - 1][0]); return L[i - 1][1] + (L[i][1] - L[i - 1][1]) * t; }
+      return L[L.length - 1][1];
+    };
+    K.gambaSu = function (l, prof, y0, y1, curva) {
+      var ys = [y0], y; for (y = y0 + 36; y < y1 - 18; y += 36) ys.push(y); ys.push(y1);
+      var P = ys.map(function (y2) { var g = gIn(y2), w = prof(y2, g); return [y2, g[0], w[0], w[1]]; });
+      var out = P.map(function (z) { return [C + l * (z[1] + z[2]), z[0]]; }), inn = P.map(function (z) { return [C + l * (z[1] - z[3]), z[0]]; }).reverse();
+      var ol = out[out.length - 1], ir = inn[0];
+      return "M" + N(out[0][0], 1) + N(out[0][1]) + cr(out) + "Q" + N((ol[0] + ir[0]) / 2, 1) + N((ol[1] + ir[1]) / 2 + (curva || 3)) + N(ir[0]) + N(ir[1]) + cr(inn) + "Z";
+    };
+    var sbC = {};
+    K.sottoBraccia = function (svg, e) {
+      if (!svg || sedS || SPALLE) return svg || "";
+      e = e || 8;
+      if (sbC[e] == null) {
+        var buchi = "";
+        [-1, 1].forEach(function (l) {
+          var b = BR[l]; if (!b.davanti || !tieni(l)) return;
+          buchi += "<path d='M" + N(b.J[0], 1) + N(b.J[1]) + "L" + N(b.E[0], 1) + N(b.E[1]) + "' stroke-width='" + q(B.aw[0] + e + 2) + "'/><path d='M" + N(b.E[0], 1) + N(b.E[1]) + "L" + N(b.W[0], 1) + N(b.W[1]) + "' stroke-width='" + q(B.aw[2] + e + 2) + "'/>";
+        });
+        sbC[e] = "";
+        if (buchi) { var id = p + "sb" + (nClip++); D.push("<mask id='" + id + "' maskUnits='userSpaceOnUse'" + TUTTO + "><rect" + TUTTO + " fill='#fff'/><g stroke='#000' stroke-linecap='round'>" + buchi + "</g></mask>"); sbC[e] = "url(#" + id + ")"; }
+      }
+      return sbC[e] ? "<g mask='" + sbC[e] + "'>" + svg + "</g>" : svg;
+    };
+    K.coperto = function (l, fino, agio) { manicaFino[l] = Math.max(manicaFino[l] || 0, Math.min(fino, manicaMax)); agioBr[l] = Math.max(agioBr[l] || 0, agio || 0); };
+    K.soloDietro = false;
     // i capelli in tre toni (gradiente obliquo) e le ciocche
     LG("hg1", 0, 0, 1, 1, [[0, hL], [0.45, hc], [1, hD]]);
     LG("hg2", 0, 0, 1, 1, [[0, mix(hL, hc, 0.45)], [0.5, mix(hc, hD, 0.35)], [1, hDD]]);
@@ -1514,6 +1570,17 @@
       if (da > 0.97) return "";
       var d = contornoBraccio(l, 0, 1, 0, 0, da), L = ultimiLati, bordo = mix(sk, skDD, 0.8), pg = PIEGA[d];
       var luci = "<rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "' opacity='" + n1(luceSk * 100) / 100 + "'/>" + volumeBraccio(l, 1, skL, skDD, 0, 0.85);
+      if (A.RITOCCHI.moda) {   // (tappa 4, leggero: le maniche arrotolate della camicia Moda lasciano l avambraccio nudo davanti al petto) stesso disegno,
+        // la sagoma scritta una volta (in defs) e usata per l ombra e per la pelle; i due bordi in un tratto solo
+        var una = function (dd) { var id = p + "pa" + (nClip++); D.push("<path id='" + id + "' d='" + dd + "'/>"); return "<use href='#" + id + "'"; };
+        if (pg) {
+          var ua = una(pg.a), ub = una(pg.b);
+          return "<g opacity='.2' transform='translate(5 9)'>" + ua + " fill='#000000'/>" + ub + " fill='#000000'/></g>" + ua + " fill='" + sk + "'/><g clip-path='" + clip(pg.a) + "'>" + luci + "</g>" + St(liscio(pg.la), bordo, 2.2, 0.9) +
+            ub + " fill='#000000' opacity='.12' transform='translate(3 5)'/>" + ub + " fill='" + sk + "'/><g clip-path='" + clip(pg.b) + "'>" + luci + "</g>" + St(liscio(pg.lb), bordo, 2.2, 0.9);
+        }
+        var u = una(d);
+        return u + " fill='#000000' opacity='.2' transform='translate(5 9)'/>" + u + " fill='" + sk + "'/><g clip-path='" + clip(d) + "'>" + luci + "</g>" + St(liscio(L.A) + liscio(L.B), bordo, 2.2, 0.9);
+      }
       if (pg) {   // (giro3) il gomito piegato forte: il braccio, poi l avambraccio sopra col suo bordo (niente cuneo vuoto tra i due)
         return "<path d='" + d + "' fill='#000000' opacity='.2' transform='translate(5 9)'/>" + Pa(pg.a, sk) + "<g clip-path='" + clip(pg.a) + "'>" + luci + "</g>" + St(liscio(pg.la), bordo, 2.2, 0.9) +
           "<path d='" + pg.b + "' fill='#000000' opacity='.12' transform='translate(3 5)'/>" + Pa(pg.b, sk) + "<g clip-path='" + clip(pg.b) + "'>" + luci + "</g>" + St(liscio(pg.lb), bordo, 2.2, 0.9);
@@ -1929,9 +1996,11 @@
       K.dipingi = function (q, col2, o2) { rec.push([q, col2, o2 || {}]); return { svg: "", clip: "none" }; };
       try { r2 = pz.fn(K); } finally { K.dipingi = vero; }
       if (!rec.length) return r2;
-      var s2 = rec.map(function (x) { var o3 = x[2]; return dipingi(x[0], x[1], { bordo: o3.bordo, chiaro: o3.chiaro, scuro: o3.scuro, forza: o3.forza, volume: o3.volume,
+      var s2 = rec.map(function (x) { var o3 = x[2]; return dipingi(x[0], x[1], { bordo: o3.bordo, chiaro: o3.chiaro, scuro: o3.scuro, forza: o3.forza, volume: o3.volume, fino: o3.fino,
         dentro: El(C - B.ch * 0.4, Y.ascella + 20, B.ch * 0.36, 60, soft("#ffffff", 0.12)) + St("M" + (C - 30) + " " + (Y.petto + 10) + "C" + (C - 10) + " " + (Y.petto + 26) + " " + (C + 10) + " " + (Y.petto + 26) + " " + (C + 30) + " " + (Y.petto + 10), mix(x[1], "#000000", 0.4), 3, 0.14) }).svg; }).join("");
       if (tipo === "capo" && m2 && K.dietro2) s2 += bordiDietro(K.dietro2, rec);   // (tappa 3) il secondo colore visto da dietro
+      // (tappa 4) un capo può dare qualcosa da mettere sopra la stoffa vista da dietro (r.spalle: il cappuccio della felpa Moda, solo i bordi e le ombre)
+      if (tipo === "capo" && r2 && typeof r2.spalle === "string" && PARTE !== "braccio") s2 += r2.spalle;
       return { corpo: s2 };
     }
     // (tappa 3) di spalle il pezzo non disegna i suoi dettagli: il secondo colore dove il pezzo l ha detto (K.dietro2 = { fasce: [[da, a], …]
@@ -1947,14 +2016,16 @@
           s += suManica(b.lato, Pa(limb([[xs, ys, w * 0.98], [f.x, f.y, w * 0.94]]), m2) + St("M" + pq(xs + px, ys + py) + "L" + pq(xs - px, ys - py), cd, 1.6, 0.5));
         });
         if (R2.fasce && q0.tronco && q0.tronco[0] && PARTE !== "braccio") R2.fasce.forEach(function (fz) {   // [da quota, a quota]: l orlo a coste, la cintura
-          s += "<g clip-path='" + clip(q0.tronco[0]) + "'><rect x='0' y='" + q(fz[0]) + "' width='400' height='" + q(fz[1] - fz[0]) + "' fill='" + m2 + "'/><rect x='-200' y='" + q(fz[0]) + "' width='800' height='" + q(fz[1] - fz[0]) + "' fill='" + luceGlobale() + "'/>" +
+          s += "<g clip-path='" + clip(q0.tronco) + "'><rect x='0' y='" + q(fz[0]) + "' width='400' height='" + q(fz[1] - fz[0]) + "' fill='" + m2 + "'/><rect x='-200' y='" + q(fz[0]) + "' width='800' height='" + q(fz[1] - fz[0]) + "' fill='" + luceGlobale() + "'/>" +
             St("M0 " + q(fz[0]) + "H400", cd, 2, 0.5) + St("M0 " + q(fz[0] + 2.5) + "H400", "#ffffff", 1.2, 0.3) + "</g>";
         });
       });
       if (R2.collo && PARTE !== "braccio") s += St("M" + pq(C - B.nk - 7, 243) + "Q" + pq(C, 251) + " " + pq(C + B.nk + 7, 243), cd, 10, 0.5) + St("M" + pq(C - B.nk - 6, 242) + "Q" + pq(C, 250) + " " + pq(C + B.nk + 6, 242), m2, 7.5, 1);
       return s;
     }
+    K.soloDietro = sedS;   // (tappa 4) seduto: da questa chiamata serve solo «dietro» (corpo e braccia li rifà seduto())
     var pCapo = pezzoDi("capo", c.capo), capo = pCapo ? (chiama(pCapo, "capo") || {}) : {};
+    K.soloDietro = false;
     if (typeof capo === "string") capo = { corpo: capo };
     if (colloDopo) {
       xCollo = extra("collo", c.collo, "nessuno") || {}; if (typeof xCollo === "string") xCollo = { sopra: xCollo };

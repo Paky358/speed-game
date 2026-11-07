@@ -140,6 +140,11 @@
   // (tappa 3) le fantasie e le stoffe (le stesse parole per il capo e per i pantaloni)
   NOMI_K.fant = NOMI_K.fantP = { nessuna: "Nessuna", righe: "Righe", quadri: "Quadri", pois: "Pois", mimetica: "Mimetica", jeans: "Jeans", hawaiana: "Hawaiana" };
   NOMI_K.stoffa = NOMI_K.stoffaP = { normale: "Normale", lana: "Lana", pelle: "Pelle", raso: "Raso", paillettes: "Paillettes" };
+  // (7 nov 2026, tappa 4 dei vestiti: i capi Moda) il bomber è disegnato come un chiodo di pelle: per chi gioca si chiama «Chiodo»; la voce
+  // salvata resta «bomber». Col ritocco «moda» spento (SGOminoA.RITOCCHI.moda = 0) o con gli avatar di prima (non illustrati) torna il bomber, e il suo nome
+  function modaAccesa() { var A2 = window.SGOminoA; return STILE === "illustrato" && !!(A2 && A2.RITOCCHI && A2.RITOCCHI.moda); }
+  NOMI_K.capo = {};
+  Object.defineProperty(NOMI_K.capo, "bomber", { enumerable: true, get: function () { return modaAccesa() ? "Chiodo" : "Bomber"; } });
   // oggetti che si sbloccano coi trofei (per ora bloccati)
   var BLOCCATI = { cappello: ["corona"], mano: ["trofeo"] };
   // capi solo per la forma "donna" (per l'uomo non compaiono nell'editor)
@@ -170,6 +175,8 @@
       gonna: 18, minigonna: 23, gonnapieghe: 23, gonnatubino: 8, gonnalunga: 17 },
     modScarpe: { sneakers: 1, stivali: 14, eleganti: 9, anfibi: 9, sandali: 6, infradito: 7, pantofole: 15, pattini: 1, tacchi: 7, ballerine: 12, stivaletti: 14, stivalialti: 9, zeppe: 6 }
   };
+  // (tappa 4, i capi Moda) il bomber è diventato il chiodo di pelle: arriva scuro come il chiodo (grigio scuro); col ritocco «moda» spento, verde oliva come prima
+  Object.defineProperty(PARTENZA.capo, "bomber", { enumerable: true, get: function () { return modaAccesa() ? PARTENZA.capo.chiodo : 17; } });
   var COLORE_DELLA_VOCE = { capo: "maglia", sotto: "pantaloni", modScarpe: "scarpe" };
   // (funzione pura) cfg = l'avatar di adesso, k = "capo" | "sotto" | "modScarpe", v = la voce toccata.
   // → { chiave: "maglia", valore: 23 } se il colore va cambiato, null se resta quello di adesso

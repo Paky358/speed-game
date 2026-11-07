@@ -62,40 +62,62 @@
     ["soprA", "Altezza sopracciglia"], ["nasoG", "Grandezza naso"], ["boccaA", "Altezza bocca"]];
   // 🎨 avatar illustrati (strada A): una voce che non è ancora ridisegnata (nel disegno prende quella più simile)
   function illustratoManca(k, v) { return !!(window.SGOminoA && window.SGOmino && SGOmino.stile && SGOmino.stile() === "illustrato" && !SGOminoA.disegnato(k, v)); }
-  // LOOK PRONTI: un tocco e cambiano vestiti e accessori insieme (viso, capelli e corpo restano i tuoi)
-  var LOOK_BASE = { cappello: "nessuno", occhiali: "nessuno", collo: "nessuno", mano: "nessuno", schiena: "nessuna", animale: "nessuno", pittura: "nessuna", borsa: "nessuna", stampa: "nessuna" };
+  // LOOK PRONTI: un tocco e cambiano vestiti e accessori insieme (viso, capelli e corpo restano i tuoi).
+  // (7 nov 2026, tappa 5 dei vestiti, Tavola 3) Casual, Sportivo, Elegante, Rock, Estate, Inverno e Festa sono quelli «di domani» della
+  // colonna Moda (capi Moda, fantasie, stoffe, secondo colore; Casual coi colori di partenza della Tavola 2: niente più blu su blu);
+  // i cinque «Colori che stanno bene» sono gli abbinamenti 9-13 della Tavola 2. I colori sono posizioni nelle tavolozze (o "#rrggbb"
+  // quando la tavolozza non ce l'ha). Un look scrive anche fantasia, stoffa e secondo colore (LOOK_BASE: di partenza niente), così non resta
+  // la fantasia del capo di prima. gruppo = la fila dell'editor nuovo: "pronti" | "colori" | "costumi".
+  // Gli avatar salvati non cambiano: un look si applica solo quando lo tocchi.
+  var LOOK_BASE = { cappello: "nessuno", occhiali: "nessuno", collo: "nessuno", mano: "nessuno", schiena: "nessuna", animale: "nessuno", pittura: "nessuna", borsa: "nessuna", stampa: "nessuna",
+    maglia2: null, fant: "nessuna", stoffa: "normale", pant2: null, fantP: "nessuna", stoffaP: "normale" };
   var LOOK = [
-    { nome: "Casual", tutti: { capo: "maglietta", maglia: 1, sotto: "jeans", pantaloni: 8, modScarpe: "sneakers", scarpe: 1 }, donna: { capo: "crop", maglia: 5, sotto: "shortsjeans", pantaloni: 9 } },
-    { nome: "Elegante", tutti: { capo: "giacca", maglia: 7, sotto: "pantaloni", pantaloni: 1, modScarpe: "eleganti", scarpe: 0, collo: "papillon", colCollo: 0 },
-      donna: { capo: "vestitolungo", maglia: 0, modScarpe: "tacchi", collo: "perle", orecchini: "perla" } },
-    { nome: "Sportivo", tutti: { capo: "sportiva", maglia: 1, sotto: "tuta", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "visiera", colAcc: 8, collo: "fischietto", colCollo: 7 },
-      donna: { maglia: 5, sotto: "leggings", collo: "nessuno" } },
-    { nome: "Rock", tutti: { capo: "bomber", maglia: 7, sotto: "strappati", pantaloni: 1, modScarpe: "anfibi", scarpe: 0, occhiali: "sole", collo: "catena" } },
-    { nome: "Estate", tutti: { capo: "camicia", maglia: 6, stampa: "fiori", sotto: "bermuda", pantaloni: 10, modScarpe: "infradito", scarpe: 3, cappello: "paglia", colAcc: 6, occhiali: "sole", mano: "gelato", collo: "lei" },
-      donna: { capo: "top", stampa: "nessuna", sotto: "shortsjeans", pantaloni: 9, modScarpe: "zeppe", occhiali: "grandi" } },
-    { nome: "Inverno", tutti: { capo: "cappotto", maglia: 2, sotto: "jeans", pantaloni: 1, modScarpe: "stivali", scarpe: 5, cappello: "berretto", colAcc: 0, collo: "sciarpa", colCollo: 0 } },
-    { nome: "Tifoso", tutti: { capo: "calcio", maglia: 1, stampa: "numero", sotto: "pantaloncini", pantaloni: 8, modScarpe: "sneakers", scarpe: 1, pittura: "tricolore", mano: "bandiera" } },
-    { nome: "Rapper", tutti: { capo: "felpa", maglia: 7, sotto: "cargo", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "cappellino", colAcc: 7, occhiali: "sole", collo: "catena", mano: "microfono", colMano: 7 } },
-    { nome: "Cuoco", tutti: { capo: "grembiule", maglia: 8, sotto: "pantaloni", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "chef", mano: "pizza" } },
-    { nome: "Avventura", tutti: { capo: "camicia", maglia: 3, sotto: "cargo", pantaloni: 10, modScarpe: "anfibi", scarpe: 5, cappello: "pescatore", colAcc: 3, schiena: "zaino", colSchiena: 2, animale: "cane", colAnimale: 4 } },
-    { nome: "Musica", tutti: { capo: "maglietta", maglia: 7, stampa: "nota", sotto: "strappati", pantaloni: 8, modScarpe: "sneakers", scarpe: 0, cappello: "borsalino", colAcc: 7, schiena: "chitarra" } },
-    { nome: "Pirata", tutti: { capo: "camicia", maglia: 8, stampa: "righe", sotto: "pantaloni", pantaloni: 2, modScarpe: "stivali", scarpe: 0, cappello: "pirata", occhiali: "benda", animale: "pappagallo", collo: "bandana", colCollo: 0 } },
-    { nome: "Mago", tutti: { capo: "maglione", maglia: 4, sotto: "pantaloni", pantaloni: 6, modScarpe: "stivaletti", scarpe: 5, cappello: "mago", colAcc: 4, schiena: "mantello", colSchiena: 4, mano: "bacchetta", occhiali: "tondi" } },
-    { nome: "Supereroe", tutti: { capo: "supereroe", maglia: 1, sotto: "leggings", pantaloni: 4, modScarpe: "stivali", scarpe: 2, schiena: "mantello", colSchiena: 0, occhiali: "mascherina" } },
-    // (6 nov 2026, Tavola 3) lei alla festa col vestito verde smeraldo, gambe nude e ballerine dello stesso verde, la tiara (prima: la maglietta sui jeans)
-    { nome: "Festa", tutti: { capo: "maglietta", maglia: 5, stampa: "stella", sotto: "jeans", pantaloni: 8, modScarpe: "sneakers", scarpe: 4, cappello: "festa", colAcc: 3, occhiali: "stelle", mano: "palloncino", colMano: 0, pittura: "cuori" },
-      donna: { capo: "vestito", maglia: "#0f7a5a", stampa: "nessuna", sotto: "gonna", modScarpe: "ballerine", scarpe: "#0f7a5a", cappello: "tiara" } },
-    { nome: "Natale", tutti: { capo: "maglione", maglia: 0, sotto: "jeans", pantaloni: 1, modScarpe: "stivali", scarpe: 5, cappello: "babbo", collo: "sciarpa", colCollo: 2, mano: "tazza", colMano: 0 } },
-    { nome: "Vichingo", tutti: { capo: "maglione", maglia: 2, sotto: "pantaloni", pantaloni: 2, modScarpe: "stivali", scarpe: 5, cappello: "vichingo", schiena: "mantello", colSchiena: 7 } },
-    { nome: "Angioletto", tutti: { capo: "maglione", maglia: 8, sotto: "pantaloni", pantaloni: 7, modScarpe: "sneakers", scarpe: 1, cappello: "aureola", schiena: "ali" }, donna: { capo: "vestito", sotto: "gonna", modScarpe: "ballerine" } },
-    { nome: "Diavoletto", tutti: { capo: "felpa", maglia: 0, sotto: "jeans", pantaloni: 1, modScarpe: "anfibi", scarpe: 0, cappello: "corna", schiena: "pipistrello" } },
-    { nome: "Fatina", tutti: { capo: "maglietta", maglia: 5, sotto: "jeans", pantaloni: 9, modScarpe: "sneakers", scarpe: 1, cappello: "tiara", schiena: "farfalla", colSchiena: 5, mano: "bacchetta" }, donna: { capo: "vestito", sotto: "gonna", modScarpe: "ballerine" } }
+    { nome: "Casual", gruppo: "pronti", tutti: { capo: "maglietta", maglia: 22, sotto: "jeans", pantaloni: 26, modScarpe: "sneakers", scarpe: 1 }, donna: { capo: "crop", maglia: 10, sotto: "shortsjeans", pantaloni: 26 } },
+    { nome: "Elegante", gruppo: "pronti", tutti: { capo: "giacca", maglia: 7, stoffa: "lana", sotto: "pantaloni", pantaloni: 23, modScarpe: "eleganti", scarpe: 9, collo: "cravatta", colCollo: "#c4623f" },
+      donna: { maglia: 18, stoffa: "raso", pantaloni: 13, modScarpe: "tacchi", collo: "perle", orecchini: "perla", borsa: "borsetta", colBorsa: 1 } },
+    { nome: "Sportivo", gruppo: "pronti", tutti: { capo: "felpa", maglia: 23, maglia2: 9, sotto: "cargo", pantaloni: 17, modScarpe: "sneakers", scarpe: 8, cappello: "visiera", colAcc: 9, collo: "fischietto", colCollo: 7, occhiali: "sportivi" },
+      donna: { maglia: 12, maglia2: 22, sotto: "leggings", pantaloni: 23, cappello: "fascia", colAcc: "#0f7a5a", collo: "nessuno" } },
+    { nome: "Rock", gruppo: "pronti", tutti: { capo: "bomber", maglia: 26, sotto: "jeans", pantaloni: 0, modScarpe: "anfibi", scarpe: 9, occhiali: "sole", collo: "catena", schiena: "chitarra", colSchiena: 0 }, donna: { orecchini: "cerchioni" } },
+    { nome: "Estate", gruppo: "pronti", tutti: { capo: "camicia", maglia: 8, fant: "righe", maglia2: 24, sotto: "bermuda", pantaloni: 22, modScarpe: "infradito", scarpe: 13, cappello: "paglia", colAcc: 3, occhiali: "sole", mano: "gelato" },
+      donna: { maglia: 22, maglia2: 25, sotto: "shortsjeans", pantaloni: 26, modScarpe: "zeppe", scarpe: 8, occhiali: "grandi" } },
+    { nome: "Inverno", gruppo: "pronti", tutti: { capo: "maglione", maglia: 16, sotto: "pantaloni", pantaloni: 23, modScarpe: "stivali", scarpe: 14, cappello: "berretto", colAcc: "#0c0c0e", collo: "sciarpa", colCollo: "#6d1f33" },
+      donna: { maglia: "#b9a679", sotto: "leggings", pantaloni: 13, modScarpe: "stivalialti", scarpe: 9, colAcc: "#f3ebd8", colCollo: "#f3ebd8" } },
+    { nome: "Tifoso", gruppo: "pronti", tutti: { capo: "calcio", maglia: 1, stampa: "numero", sotto: "pantaloncini", pantaloni: 8, modScarpe: "sneakers", scarpe: 1, pittura: "tricolore", mano: "bandiera" } },
+    { nome: "Rapper", gruppo: "pronti", tutti: { capo: "felpa", maglia: 7, sotto: "cargo", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "cappellino", colAcc: 7, occhiali: "sole", collo: "catena", mano: "microfono", colMano: 7 } },
+    { nome: "Cuoco", gruppo: "costumi", tutti: { capo: "grembiule", maglia: 8, sotto: "pantaloni", pantaloni: 1, modScarpe: "sneakers", scarpe: 1, cappello: "chef", mano: "pizza" } },
+    { nome: "Avventura", gruppo: "pronti", tutti: { capo: "camicia", maglia: 3, sotto: "cargo", pantaloni: 10, modScarpe: "anfibi", scarpe: 5, cappello: "pescatore", colAcc: 3, schiena: "zaino", colSchiena: 2, animale: "cane", colAnimale: 4 } },
+    { nome: "Musica", gruppo: "pronti", tutti: { capo: "maglietta", maglia: 7, stampa: "nota", sotto: "strappati", pantaloni: 8, modScarpe: "sneakers", scarpe: 0, cappello: "borsalino", colAcc: 7, schiena: "chitarra" } },
+    { nome: "Pirata", gruppo: "costumi", tutti: { capo: "camicia", maglia: 8, stampa: "righe", sotto: "pantaloni", pantaloni: 2, modScarpe: "stivali", scarpe: 0, cappello: "pirata", occhiali: "benda", animale: "pappagallo", collo: "bandana", colCollo: 0 } },
+    { nome: "Mago", gruppo: "costumi", tutti: { capo: "maglione", maglia: 4, sotto: "pantaloni", pantaloni: 6, modScarpe: "stivaletti", scarpe: 5, cappello: "mago", colAcc: 4, schiena: "mantello", colSchiena: 4, mano: "bacchetta", occhiali: "tondi" } },
+    { nome: "Supereroe", gruppo: "costumi", tutti: { capo: "supereroe", maglia: 1, sotto: "leggings", pantaloni: 4, modScarpe: "stivali", scarpe: 2, schiena: "mantello", colSchiena: 0, occhiali: "mascherina" } },
+    // (6 nov 2026, Tavola 3) lei alla festa col vestito verde smeraldo, gambe nude e ballerine dello stesso verde, la tiara; (7 nov) di raso,
+    // lui con la giacca bordeaux di raso e i classici neri (colonna Moda)
+    { nome: "Festa", gruppo: "pronti", tutti: { capo: "giacca", maglia: 18, stoffa: "raso", sotto: "pantaloni", pantaloni: 13, modScarpe: "eleganti", scarpe: 9, cappello: "festa", colAcc: 3, occhiali: "stelle", mano: "palloncino", colMano: 0, pittura: "cuori" },
+      donna: { capo: "vestito", maglia: "#0f7a5a", sotto: "gonna", modScarpe: "ballerine", scarpe: "#0f7a5a", cappello: "tiara" } },
+    { nome: "Natale", gruppo: "costumi", tutti: { capo: "maglione", maglia: 0, sotto: "jeans", pantaloni: 1, modScarpe: "stivali", scarpe: 5, cappello: "babbo", collo: "sciarpa", colCollo: 2, mano: "tazza", colMano: 0 } },
+    { nome: "Vichingo", gruppo: "costumi", tutti: { capo: "maglione", maglia: 2, sotto: "pantaloni", pantaloni: 2, modScarpe: "stivali", scarpe: 5, cappello: "vichingo", schiena: "mantello", colSchiena: 7 } },
+    { nome: "Angioletto", gruppo: "costumi", tutti: { capo: "maglione", maglia: 8, sotto: "pantaloni", pantaloni: 7, modScarpe: "sneakers", scarpe: 1, cappello: "aureola", schiena: "ali" }, donna: { capo: "vestito", sotto: "gonna", modScarpe: "ballerine" } },
+    { nome: "Diavoletto", gruppo: "costumi", tutti: { capo: "felpa", maglia: 0, sotto: "jeans", pantaloni: 1, modScarpe: "anfibi", scarpe: 0, cappello: "corna", schiena: "pipistrello" } },
+    { nome: "Fatina", gruppo: "costumi", tutti: { capo: "maglietta", maglia: 5, sotto: "jeans", pantaloni: 9, modScarpe: "sneakers", scarpe: 1, cappello: "tiara", schiena: "farfalla", colSchiena: 5, mano: "bacchetta" }, donna: { capo: "vestito", sotto: "gonna", modScarpe: "ballerine" } },
+    // (7 nov 2026) gli abbinamenti 9-13 della Tavola 2 «Con i colori nuovi si abbina bene»
+    { nome: "Cammello e panna", gruppo: "colori", tutti: { capo: "maglione", maglia: 16, sotto: "pantaloni", pantaloni: 14, modScarpe: "sneakers", scarpe: 0 } },
+    { nome: "Oliva e senape", gruppo: "colori", tutti: { capo: "cardigan", maglia: 19, sotto: "pantaloni", pantaloni: 17, modScarpe: "sneakers", scarpe: 0 } },
+    { nome: "Panna e bordeaux", gruppo: "colori", tutti: { capo: "camicia", maglia: 22, sotto: "pantaloni", pantaloni: 18, modScarpe: "sneakers", scarpe: 0 } },
+    { nome: "Melange e bordeaux", gruppo: "colori", tutti: { capo: "felpa", maglia: 23, sotto: "pantaloni", pantaloni: 18, modScarpe: "sneakers", scarpe: 0 } },
+    { nome: "Pastelli", gruppo: "colori", tutti: { capo: "polo", maglia: 10, sotto: "pantaloni", pantaloni: 25, modScarpe: "sneakers", scarpe: 0 } }
   ];
   function conLook(cfg, L) {
     var c = {}, k, pezzi = [LOOK_BASE, L.tutti, cfg.forma === "donna" ? L.donna : L.uomo];
     for (k in cfg) c[k] = cfg[k];
     pezzi.forEach(function (p) { if (p) for (k in p) c[k] = p[k]; });
     return c;
+  }
+  // il look è quello di adesso? (un campo nuovo che manca vale il suo «niente»: maglia2 assente = null, fant assente = "nessuna"…)
+  function lookUguale(cfg, L) {
+    var D0 = window.SGOmino && SGOmino.NUOVI_VESTITI, cl = conLook(cfg, L);
+    function v(c, k) { return c[k] == null && D0 && k in D0 ? D0[k] : c[k]; }
+    for (var k in cl) if (v(cl, k) !== v(cfg, k)) return false;
+    return true;
   }
   // piccolo "pop" quando scegli qualcosa nell'editor (la vibrazione la fa già il tocco)
   function popOmino() {
@@ -198,6 +220,86 @@
     passoForma();
     mostra(s);
   }
+  // ✨ L'EDITOR NUOVO (7 nov 2026, chat «👕 Avatar: vestiti e mani», tappa 5; Tavola 3 «E · Domani», approvata dal proprietario):
+  // in alto «‹ Il tuo avatar» e «✨ Look» (i look pronti); il palco con la luce chiara dietro l'avatar (i vestiti scuri si vedono);
+  // sotto le schede Corpo · Viso · Testa · Sopra · Sotto · Scarpe · Extra; sotto le schede, sempre a portata, i colori, il secondo
+  // colore, le fantasie e le stoffe del pezzo aperto («dock»); sotto ancora le scelte a gruppi («Giacche e cappotti», «Maglioni e
+  // felpe»…), ognuno una fila che scorre di lato, con miniature grandi inquadrate sul pezzo (il busto per i capi di sopra, le gambe per
+  // il sotto, i piedi per le scarpe). Quando scegli, l'avatar fa una piccola posa (solo transform; ferma con «riduci movimento»).
+  // In fondo «🎲 Sopra a caso» (la scheda aperta) e «Salva», l'unico tasto lampone pieno. Sul palco: ↺ annulla, 🎲 tutto a caso.
+  // EDITOR_NUOVO: "tutti" = per tutti (anche IL PAPPONE) · "proprietario" = solo lui · "nessuno" = l'editor di prima (e il camerino
+  // per il proprietario, vedi EDITOR_CAMERINO). Le miniature si disegnano solo quando si vedono (le file sono tante).
+  var EDITOR_NUOVO = "tutti";
+  function editorNuovo() { return EDITOR_NUOVO === "tutti" || (EDITOR_NUOVO === "proprietario" && eProprietario()); }
+  // le schede: dock = le voci sempre a portata sotto le schede; gruppi = [titolo, voce, scelte, colore della voce]
+  // (scelte: una lista di voci, il nome di un gruppo di GRUPPI_CAPELLI, il gruppo dei look, o niente = tutte; il colore = una fila di
+  // tondi sotto le miniature). Le voci che nessun gruppo prende (una voce nuova in OPZ) vanno da sole in «Altri», in fondo alla scheda.
+  var SEZ_NUOVO = [
+    { nome: "Corpo", dock: ["pelle"], gruppi: [["Lui o lei", "forma"], ["Corporatura", "corpo"]] },
+    { nome: "Viso", zoom: "viso", dock: ["iride"], gruppi: [["Forma del viso", "viso"], ["Orecchie", "orecchie"], ["Occhi", "occhi"], ["Sopracciglia", "sopracc"], ["Naso", "naso"],
+      ["Bocca", "bocca"], ["Guance", "guance"], ["Segni particolari", "segno"], ["Ritocchi", "ritocchi"],
+      ["Ombretto", "ombretto", null, "colOmbretto"], ["Eyeliner", "eyeliner", null, "colEyeliner"], ["Mascara", "mascara"], ["Rossetto", "rossetto", null, "colRossetto"], ["Blush", "blush", null, "colBlush"]] },
+    { nome: "Testa", zoom: "testa", dock: ["colCap"], gruppi: [["Capelli corti", "capelli", "Corti"], ["Capelli medi", "capelli", "Medi"], ["Capelli lunghi", "capelli", "Lunghi"],
+      ["Barba e baffi", "barba"], ["In testa", "cappello", null, "colAcc"], ["Occhiali e maschere", "occhiali"], ["Orecchini e piercing", "orecchini"]] },
+    { nome: "Sopra", dock: ["maglia", "maglia2", "fant", "stoffa"], gruppi: [["Giacche e cappotti", "capo", ["giacca", "bomber", "cappotto", "gilet"]],
+      ["Maglioni e felpe", "capo", ["felpa", "maglione", "dolcevita", "cardigan", "sportiva"]],
+      ["Magliette e camicie", "capo", ["maglietta", "lunga", "camicia", "polo", "canotta", "calcio", "camicetta", "crop", "top"]],
+      ["Vestiti", "capo", ["vestito", "vestitolungo"]], ["Da travestirsi", "capo", ["grembiule", "supereroe"]], ["Stampa sulla maglia", "stampa"]] },
+    { nome: "Sotto", dock: ["pantaloni", "pant2", "fantP", "stoffaP"], gruppi: [["Jeans e pantaloni", "sotto", ["jeans", "cargo", "pantaloni", "strappati", "mimetici", "zampa"]],
+      ["Corti e sportivi", "sotto", ["bermuda", "pantaloncini", "shortsjeans", "tuta", "leggings"]], ["Gonne", "sotto", ["gonna", "minigonna", "gonnapieghe", "gonnatubino", "gonnalunga"]]] },
+    { nome: "Scarpe", dock: ["scarpe"], gruppi: [["Di tutti i giorni", "modScarpe", ["sneakers", "eleganti", "ballerine", "tacchi"]], ["Stivali", "modScarpe", ["stivali", "stivaletti", "anfibi", "stivalialti"]],
+      ["D'estate", "modScarpe", ["sandali", "infradito", "zeppe"]], ["Per casa e per gioco", "modScarpe", ["pantofole", "pattini"]]] },
+    { nome: "Extra", dock: [], gruppi: [["Al collo", "collo", null, "colCollo"], ["Borsa", "borsa", null, "colBorsa"], ["In mano", "mano", null, "colMano"], ["Sulla schiena", "schiena", null, "colSchiena"],
+      ["Animaletto", "animale", null, "colAnimale"], ["Pittura sul viso", "pittura"]] },
+    { nome: "Look", nascosta: true, dock: [], gruppi: [["Look pronti", "look", "pronti"], ["Colori che stanno bene", "look", "colori"], ["Per travestirsi", "look", "costumi"]] }
+  ];
+  // il nome di ogni voce nel dock (e nelle file di tondi sotto un gruppo: «Colore»)
+  var DOCK_NOMI = { pelle: "Pelle", iride: "Occhi", colCap: "Capelli", maglia: "Colore", maglia2: "2° colore", fant: "Fantasia", stoffa: "Stoffa",
+    pantaloni: "Colore", pant2: "2° colore", fantP: "Fantasia", stoffaP: "Stoffa", scarpe: "Colore" };
+  var TRUCCO_GR = /^(ombretto|eyeliner|mascara|rossetto|blush)$/;   // i gruppi del trucco: per lei (o per lui se ce l'ha già, per poterlo togliere)
+  // le inquadrature delle miniature (avatar illustrati, riquadro 200×264): il busto per i capi di sopra, le gambe, i piedi; larghe come il corpo
+  // (e da vicino: il viso per occhi, naso, bocca…; più spazio in alto per i cappelli; le orecchie per gli orecchini)
+  var INQ = { sopra: { snello: "45 54 110 99", medio: "41 52 118 106", robusto: "37 50 126 113" }, piedi: { snello: "58 194 84 66", medio: "55 194 90 66", robusto: "51 194 98 66" },
+    viso: "72 12 56 56", trucco: "75 17 50 46", cappello: "60 -8 80 82", orecchini: "70 18 60 54" };
+  var VOLTO = /^(viso|orecchie|occhi|sopracc|naso|bocca|guance|segno|occhiali|pittura)$/;   // le voci con la miniatura sul viso
+  // la piccola posa dell'avatar quando scegli (solo transform, dai piedi): una mossa per i capi, un saltello per sotto e scarpe,
+  // un respiro per i colori, una giravolta per i look
+  var POSE = {
+    capo: [[{ transform: "none" }, { transform: "translateY(-5px) rotate(-3deg)", offset: 0.3 }, { transform: "translateY(0) rotate(2deg) scale(1.02,.99)", offset: 0.62 }, { transform: "none" }], 620],
+    gambe: [[{ transform: "none" }, { transform: "translateY(-10px) scale(.98,1.03)", offset: 0.32 }, { transform: "translateY(0) scale(1.03,.97)", offset: 0.6 }, { transform: "none" }], 520],
+    colore: [[{ transform: "none" }, { transform: "scale(1.035)", offset: 0.4 }, { transform: "none" }], 360],
+    giro: [[{ transform: "none" }, { transform: "scaleX(.06) translateY(-6px)", offset: 0.3 }, { transform: "scaleX(-1) translateY(-8px)", offset: 0.5 }, { transform: "scaleX(.06) translateY(-4px)", offset: 0.72 }, { transform: "none" }], 720]
+  };
+  function poseDi(k) {
+    if (k === "look") return "giro";
+    if (/^(capo|fant|stoffa|stampa|maglia2|collo|borsa|schiena)$/.test(k)) return "capo";
+    if (/^(sotto|fantP|stoffaP|pant2|modScarpe)$/.test(k)) return "gambe";
+    if (OMINO_COLORI[k]) return "colore";
+    return null;   // (le altre: il saltello di sempre)
+  }
+  function movimentoFermo() {   // «riduci movimento» del telefono, o l'app a riposo
+    try { if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return true; } catch (e) {}
+    return !!(document.body && document.body.classList.contains("sg-riposo"));
+  }
+  // il campione di una fantasia o di una stoffa nel dock, coi colori di adesso (solo CSS: niente avatar da disegnare)
+  function campione(k, v, c1, c2) {
+    var chiaro = "rgba(255,255,255,.55)";
+    if (/^fant/.test(k)) {
+      if (v === "righe") return "repeating-linear-gradient(0deg," + c1 + " 0 3px," + c2 + " 3px 6px)";
+      if (v === "quadri") return "linear-gradient(90deg," + c2 + "99 50%,transparent 50%) 0 0/8px 8px,linear-gradient(0deg," + c2 + "99 50%,transparent 50%) 0 0/8px 8px," + c1;
+      if (v === "pois") return "radial-gradient(" + c2 + " 28%,transparent 32%) 0 0/7px 7px," + c1;
+      if (v === "mimetica") return "radial-gradient(circle at 28% 30%,#3f4527 26%,transparent 28%),radial-gradient(circle at 72% 66%,#8a8456 24%,transparent 26%),radial-gradient(circle at 70% 20%,#2c2f1d 16%,transparent 18%),#6b7040";
+      if (v === "jeans") return "repeating-linear-gradient(45deg,rgba(255,255,255,.12) 0 1px,transparent 1px 3px),#4a6a94";
+      if (v === "hawaiana") return "radial-gradient(circle at 30% 34%," + c2 + " 20%,transparent 23%),radial-gradient(circle at 72% 70%," + c2 + " 17%,transparent 20%),radial-gradient(circle at 78% 22%,#2f9e44 10%,transparent 13%)," + c1;
+      return c1;
+    }
+    if (v === "lana") return "repeating-linear-gradient(45deg,rgba(0,0,0,.28) 0 1.5px,transparent 1.5px 4px),repeating-linear-gradient(-45deg,rgba(255,255,255,.14) 0 1.5px,transparent 1.5px 4px)," + c1;
+    if (v === "pelle") return "linear-gradient(135deg,rgba(0,0,0,.45),rgba(255,255,255,.35) 42%,rgba(0,0,0,.25) 52%,rgba(0,0,0,.55))," + c1;
+    if (v === "raso") return "linear-gradient(115deg,rgba(255,255,255,0) 20%," + chiaro + " 45%,rgba(255,255,255,0) 70%)," + c1;
+    if (v === "paillettes") return "radial-gradient(rgba(255,255,255,.85) 18%,transparent 26%) 0 0/5px 5px,radial-gradient(rgba(0,0,0,.35) 18%,transparent 26%) 2.5px 2.5px/5px 5px," + c1;
+    return c1;
+  }
+
   function schermataOmino(dopo, bozza, opz) {
     if (opz && opz.benvenuto && !opz.personalizza && !bozza && window.SGOmino && profiloAttivo()) return schermataPrimoAvatar(dopo);
     var io = bozza || profiloAttivo(), benv = !!(opz && opz.benvenuto);
@@ -210,18 +312,22 @@
     var bozze = io.omini ? [io.omini[0] || null, io.omini[1] || null] : [cfg, null];
     bozze[slot] = cfg;
     if (!bozze[1 - slot]) bozze[1 - slot] = secondoOmino(cfg, io.nome);
-    var s = schermata({});
-    s.classList.add("editor-avatar");   // tutto in uno schermo, senza titolo: sul palco indietro, A caso e Salva; sotto scorrono solo le scelte
-    var camerino = EDITOR_CAMERINO || eProprietario(), SEZ = camerino ? SEZ_CAMERINO : SEZ_OMINO;
+    var nuovo = editorNuovo();
+    // (editor nuovo) in alto «‹ Il tuo avatar» (nel benvenuto niente ‹: un saluto) e «✨ Look»
+    var s = schermata(nuovo ? { titolo: benv ? "👋 Ecco il tuo avatar!" : (bozza && bozza.nome ? "Avatar di " + bozza.nome : "Il tuo avatar"), indietro: benv ? null : function () { esci(); } } : {});   // (bozza: l'avatar di un bot)
+    s.classList.add("editor-avatar");   // tutto in uno schermo: scorrono solo le scelte
+    var camerino = !nuovo && (EDITOR_CAMERINO || eProprietario()), SEZ = nuovo ? SEZ_NUOVO : (camerino ? SEZ_CAMERINO : SEZ_OMINO);
     if (camerino) s.classList.add("camerino");
+    if (nuovo) { s.classList.add("ed3"); tab = indice("Sopra"); }   // (si apre sui vestiti: la cosa che si cambia più spesso)
+    function indice(nome) { for (var i = 0; i < SEZ.length; i++) if (SEZ[i].nome === nome) return i; return 0; }
     var iniziali = bozze.map(function (b) { return O.norm(b); });   // com'erano all'ingresso (se esci senza salvare)
     // il palco: faro dall'alto, pedana luminosa, omino che respira e sbatte le palpebre (toccalo: reagisce!)
     var figura = el("div", { class: "om-figura", title: "Toccami!" });
     var puntini = el("div", { class: "om-puntini" });
     var palco = el("div", { class: "omino-palco editor" }, [el("div", { class: "om-faro" }), el("div", { class: "om-pedana" }), figura,
       puntini,
-      benv ? el("div", { class: "om-benv", text: "👋 Ecco il tuo avatar! Cambialo come vuoi" })
-           : el("button", { class: "om-indietro", "aria-label": "Indietro", text: "‹", onclick: function () { esci(); } }),
+      nuovo ? null : (benv ? el("div", { class: "om-benv", text: "👋 Ecco il tuo avatar! Cambialo come vuoi" })
+           : el("button", { class: "om-indietro", "aria-label": "Indietro", text: "‹", onclick: function () { esci(); } })),
       el("button", { class: "om-freccia sx", "aria-label": "Personaggio precedente", text: "‹", onclick: function () { scorri(-1); } }),
       el("button", { class: "om-freccia dx", "aria-label": "Personaggio successivo", text: "›", onclick: function () { scorri(1); } })]);
     function disegnaCambi() {
@@ -235,11 +341,11 @@
     }
     function scorri(dir) {   // dir: +1 = verso destra (il prossimo), -1 = verso sinistra
       bozze[slot] = cfg; slot = (slot + dir + bozze.length) % bozze.length; cfg = O.norm(bozze[slot]);
-      storia = []; aggAnnulla();
-      if (visibile(tab) < 0) tab = 0;
+      storia = []; aggAnnulla(); aMano = {};   // (un altro avatar: i suoi colori non li hai ancora toccati)
+      if (visibile(tab) < 0) tab = nuovo ? indice("Sopra") : 0;
       anteprima(false); disegnaSchede(); disegnaPannello(); popOmino();
       var sv = figura.firstChild;   // entra scivolando dal lato giusto
-      if (sv && sv.animate) sv.animate([{ transform: "translateX(" + (dir * 90) + "px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 320, easing: "cubic-bezier(.2,.8,.3,1)" });
+      if (sv && sv.animate && !movimentoFermo()) sv.animate([{ transform: "translateX(" + (dir * 90) + "px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 320, easing: "cubic-bezier(.2,.8,.3,1)" });
     }
     // scorrimento col dito sul palco
     var x0 = null, y0 = null;
@@ -252,6 +358,7 @@
     var schede = el("div", { class: "omino-schede" });
     var pannello = el("div", { class: "omino-pannello" });
     var sottoschede = el("div", { class: "omino-sotto" });   // le sottocategorie della scheda aperta (es. Vestiti: Parti superiori, Parti inferiori, Scarpe)
+    var dock = el("div", { class: "ed3-dock" });   // (editor nuovo) i colori, il secondo colore, le fantasie e le stoffe del pezzo aperto
     s._contenuto.appendChild(palco);
     if (camerino) {   // la maniglia: tirata su (o toccata) si vedono tutte le scelte e l'avatar si fa piccolo; giù torna grande
       var maniglia = el("button", { class: "om-maniglia", onclick: function () { apriTutto(!s.classList.contains("aperto")); } });
@@ -267,13 +374,17 @@
       apriTutto(false);
       s._contenuto.appendChild(maniglia);
     }
-    s._contenuto.appendChild(schede); s._contenuto.appendChild(sottoschede); s._contenuto.appendChild(pannello);
+    if (nuovo) { s._contenuto.appendChild(schede); s._contenuto.appendChild(dock); s._contenuto.appendChild(pannello); }
+    else { s._contenuto.appendChild(schede); s._contenuto.appendChild(sottoschede); s._contenuto.appendChild(pannello); }
     function centraScelte() {   // nelle file da scorrere: la scelta di adesso in vista
+      if (nuovo) { [].forEach.call(s.querySelectorAll(".ed3-fila, .ed3-scorre"), centraFila); return; }
       if (!camerino || s.classList.contains("aperto")) return;
       [].forEach.call(pannello.querySelectorAll(".om-griglia"), function (riga) {
         var a = riga.querySelector(".attiva"); if (a) riga.scrollLeft = Math.max(0, a.offsetLeft - riga.offsetLeft - (riga.clientWidth - a.offsetWidth) / 2);
       });
     }
+    function centraFila(riga) { var a = riga.querySelector(".attiva"); if (a) riga.scrollLeft = Math.max(0, a.offsetLeft - (riga.clientWidth - a.offsetWidth) / 2); }
+    function inVista(riga) { var a = riga.querySelector(".attiva"); return !a || (a.offsetLeft >= riga.scrollLeft - 2 && a.offsetLeft + a.offsetWidth <= riga.scrollLeft + riga.clientWidth + 2); }
     function unisci(k, v) {
       if (k === "forma") return O.adattaForma(cfg, v);   // maschio/femmina: cambiano anche capelli, barba, trucco
       var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v;
@@ -283,10 +394,17 @@
     // (6 nov 2026) il colore di partenza del capo, del sotto o delle scarpe toccati (null = il colore di adesso resta: vedi SGOmino.coloreDiPartenza)
     // e (tappa 3) il secondo colore che arriva da solo con una fantasia, o che segue il colore del capo (vedi SGOmino.secondoDiPartenza).
     // → [{ chiave, valore }, …] le scelte che cambiano da sole insieme a quella toccata (null = nessuna)
+    // (correzioni 4-5) la scelta di adesso non cambia niente (la sua miniatura è l'avatar com'è: con le sneakers nere la miniatura delle
+    // sneakers era bianca); e un colore toccato a mano in questo editor resta sui capi nuovi e nelle miniature, anche quando è quello di
+    // BASE (che da solo vuol dire «mai scelto»): scegli il nero e tutte le scarpe in anteprima sono nere
+    var aMano = {};
     function partenza(k, v) {
+      if (valore(k) === v) return null;
       var r = [], pz = /^(capo|sotto|modScarpe)$/.test(k) && O.coloreDiPartenza ? O.coloreDiPartenza(cfg, k, v) : null;
+      if (pz && aMano[pz.chiave]) pz = null;
       if (pz) r.push(pz);
       var kk = pz ? pz.chiave : k, vv = pz ? pz.valore : v, s2 = O.secondoDiPartenza ? O.secondoDiPartenza(cfg, kk, vv) : null;
+      if (s2 && aMano[s2.chiave]) s2 = null;
       if (s2) r.push(s2);
       return r.length ? r : null;
     }
@@ -294,13 +412,21 @@
     function listaDi(k) { return O.OPZ[LISTA_DI[k] || k]; }
     function salto() {   // saltello senza ricalcolare la pagina (le anteprime sono tante)
       var sv = figura.firstChild;
-      if (sv && sv.animate) sv.animate([{ transform: "none" }, { transform: "translateY(-12px) scale(.96,1.05)", offset: 0.3 },
+      if (sv && sv.animate && !movimentoFermo()) sv.animate([{ transform: "none" }, { transform: "translateY(-12px) scale(.96,1.05)", offset: 0.3 },
         { transform: "scale(1.05,.95)", offset: 0.62 }, { transform: "none" }], { duration: 450, easing: "cubic-bezier(.3,1.5,.5,1)" });
     }
+    function posa(k) {   // (editor nuovo) la piccola posa quando scegli: dai piedi (col viso da vicino: solo un respiro, intorno al viso)
+      var vicino = palco.classList.contains("zoomato"), p = POSE[vicino ? "colore" : poseDi(k)], sv = figura.firstChild;
+      if (!p) return salto();
+      if (!sv || !sv.animate || movimentoFermo()) return;
+      sv.style.transformOrigin = vicino ? "50% 14%" : "50% 100%";
+      sv.animate(p[0], { duration: p[1], easing: "cubic-bezier(.3,1.3,.5,1)" });
+    }
+    // conSalto: true = il saltello; (editor nuovo) il nome della voce scelta = la sua posa
     function anteprima(conSalto) {
       clearTimeout(tReaz);
       figura.innerHTML = O.svg(cfg, { hd: true }); disegnaCambi();
-      if (conSalto) { salto(); popOmino(); }
+      if (conSalto) { if (nuovo && typeof conSalto === "string") posa(conSalto); else salto(); popOmino(); }
     }
     var tSaluto = null;
     function saluta() {   // alza il braccio e fa "ciao"
@@ -319,29 +445,45 @@
     // ↩️ annulla l'ultima scelta
     var storia = [], trascina = false;
     function ricorda() { storia.push(JSON.stringify(cfg)); if (storia.length > 40) storia.shift(); aggAnnulla(); }
-    var bAnnulla = el("button", { class: "om-azione annulla", text: "↩️", "aria-label": "Annulla l'ultima scelta", onclick: function () {
+    var bAnnulla = el("button", { class: "om-azione annulla", text: nuovo ? "↺" : "↩️", "aria-label": "Annulla l'ultima scelta", onclick: function () {
       if (!storia.length) return;
       var prima = cfg.forma; cfg = JSON.parse(storia.pop()); aggAnnulla();
-      if (visibile(tab) < 0) tab = 0;
+      if (visibile(tab) < 0) tab = nuovo ? indice("Sopra") : 0;
       anteprima(true); if (prima !== cfg.forma) disegnaSchede(); disegnaPannello();
     } });
     function aggAnnulla() { bAnnulla.classList.toggle("spento", !storia.length); }
     // le schede: il trucco c'è solo per lei; la telecamera va sul viso per viso, trucco e capelli
+    function trucco() { return ["ombretto", "eyeliner", "mascara", "rossetto", "blush"].some(function (k) { return cfg[k] && !/^nessun/.test(cfg[k]); }); }
     function visibile(i) {   // (se lui ha già del trucco salvato, la scheda resta per poterlo togliere)
-      var sz = SEZ[i], trucco = ["ombretto", "eyeliner", "mascara", "rossetto", "blush"].some(function (k) { return cfg[k] && !/^nessun/.test(cfg[k]); });
-      return sz && (!sz.solo || sz.solo === cfg.forma || (sz.nome === "Trucco" && trucco)) ? i : -1;
+      var sz = SEZ[i];
+      return sz && (!sz.solo || sz.solo === cfg.forma || (sz.nome === "Trucco" && trucco())) ? i : -1;
+    }
+    // (editor nuovo) «✨ Look» in alto a destra: i look pronti al posto delle scelte (nessuna scheda accesa); toccato di nuovo, si torna
+    var tabPrima = tab, bLook = null, bAcaso = null;
+    if (nuovo) {
+      bLook = el("button", { class: "ed3-look", type: "button", text: "✨ Look", "aria-label": "Look pronti", onclick: function () {
+        var iL = indice("Look");
+        if (tab === iL) tab = tabPrima; else { tabPrima = tab; tab = iL; }
+        disegnaSchede(); disegnaPannello(); pannello.scrollTop = 0;
+      } });
+      var testa = s.querySelector(".testa"); if (testa) testa.appendChild(bLook);
     }
     function disegnaSchede() {
       schede.innerHTML = ""; var n = 0;
       SEZ.forEach(function (sz, i) {
-        if (visibile(i) < 0) return; n++;
-        schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""),
-          onclick: function () { tab = i; disegnaSchede(); disegnaPannello(); pannello.scrollTop = 0; } }, [el("span", { class: "ci", text: sz.icona }), el("span", { text: sz.nome })]));
+        if (visibile(i) < 0 || sz.nascosta) return; n++;
+        var figli = nuovo ? [el("span", { text: sz.nome })] : [el("span", { class: "ci", text: sz.icona }), el("span", { text: sz.nome })];
+        schede.appendChild(el("button", { class: "cat-tab" + (i === tab ? " attiva" : ""), "aria-pressed": i === tab ? "true" : "false",
+          onclick: function () { if (nuovo && i === tab) return; tab = i; disegnaSchede(); disegnaPannello(); pannello.scrollTop = 0; } }, figli));
       });
       schede.style.gridTemplateColumns = "repeat(" + n + ",minmax(0,1fr))";
       schede.classList.toggle("sette", n > 6);
       var z = SEZ[tab].zoom;
-      figura.classList.toggle("zoom-viso", z === "viso"); palco.classList.toggle("zoomato", !!z);
+      figura.classList.toggle("zoom-viso", z === "viso"); figura.classList.toggle("zoom-testa", z === "testa"); palco.classList.toggle("zoomato", !!z);
+      if (nuovo) {
+        bLook.classList.toggle("attiva", SEZ[tab].nome === "Look"); bLook.setAttribute("aria-pressed", SEZ[tab].nome === "Look" ? "true" : "false");
+        if (bAcaso) { bAcaso.textContent = "🎲 " + SEZ[tab].nome + " a caso"; bAcaso.setAttribute("aria-label", (SEZ[tab].nome === "Look" ? "Un look" : SEZ[tab].nome) + " a caso"); }
+      }
     }
     function nomeDi(k, val) {
       if (k === "forma") return val === "donna" ? "👧 Femmina" : "👦 Maschio";
@@ -352,14 +494,37 @@
       if (/^(fant|stoffa)$/.test(k)) return O.svg(c, { vita: true });
       return O.svg(c, /^(sotto|modScarpe|fantP|stoffaP)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: k !== "pittura" } : { busto: !OMINO_INTERO[k], senzaCappello: /^(capelli|colCap)$/.test(k) }));
     }
+    // (editor nuovo) le miniature inquadrate sul pezzo: coi capi di sopra il busto, coi pantaloni le gambe, con le scarpe i piedi;
+    // i look, lui o lei e la corporatura a figura intera. Con gli avatar di prima (non illustrati) le inquadrature di sempre.
+    function inquadra(svg, vb) { return svg.replace(/viewBox='[^']*'/, "viewBox='" + vb + "'"); }
+    var SENZA_COSE = { mano: "nessuno", schiena: "nessuna", animale: "nessuno", borsa: "nessuna" };
+    function miniNuova(k, c) {
+      var ill = O.stile && O.stile() === "illustrato", corpo = INQ.sopra[c.corpo] ? c.corpo : "medio";
+      if (/^(capo|stampa|sotto|modScarpe)$/.test(k)) {   // sui vestiti niente chitarra, zaino, cose in mano o animaletto davanti: si vede il capo
+        var c2 = {}, x; for (x in c) c2[x] = c[x]; for (x in SENZA_COSE) c2[x] = SENZA_COSE[x]; c = c2;
+      }
+      if (k === "look" || k === "forma" || k === "corpo") return ill ? inquadra(O.svg(c), "14 0 172 264") : O.svg(c);
+      if (ill && /^(capo|stampa)$/.test(k)) return inquadra(O.svg(c), INQ.sopra[corpo]);
+      if (ill && k === "modScarpe") return inquadra(O.svg(c), INQ.piedi[corpo]);
+      // (sul viso niente cappello davanti; col trucco anche niente occhiali, come prima)
+      if (ill && (VOLTO.test(k) || TRUCCO_VOCI.test(k))) return inquadra(O.svg(c, { busto: true, senzaCappello: true, senzaOcchiali: TRUCCO_VOCI.test(k) && k !== "pittura" }), INQ[VOLTO.test(k) ? "viso" : "trucco"]);
+      if (ill && (k === "cappello" || k === "orecchini")) return inquadra(O.svg(c, { busto: true }), INQ[k]);
+      return opzMini(k, c);
+    }
+    function classeMini(k) {
+      if (k === "look" || k === "forma" || k === "corpo" || (OMINO_INTERO[k] && !/^(capo|stampa|sotto)$/.test(k))) return " intero";
+      if (/^(capo|stampa)$/.test(k)) return " sopra";
+      if (k === "sotto") return " gambe";
+      if (k === "modScarpe") return " piedi";
+      return "";
+    }
     // aggiorna solo i riquadri (niente ricostruzione della schermata: non salta lo scroll)
     function aggiornaPannello(cambiata) {   // cambiata = voce appena scelta: le sue anteprime non cambiano, non si ridisegnano
+      if (nuovo) return aggiornaNuovo(cambiata);
       [].forEach.call(pannello.querySelectorAll(".om-opz"), function (b) {
         if (b._look) {
-          var cl = conLook(cfg, b._look), uguale = true;
-          for (var kk in cl) if (cl[kk] !== cfg[kk]) { uguale = false; break; }
-          b.classList.toggle("attiva", uguale);
-          if (b._mini) b._mini.innerHTML = O.svg(cl);
+          b.classList.toggle("attiva", lookUguale(cfg, b._look));
+          if (b._mini) b._mini.innerHTML = O.svg(conLook(cfg, b._look));
           return;
         }
         var k = b._k, v = b._v;
@@ -373,6 +538,10 @@
       });
     }
     function scegli(k, v, zitto) {
+      if (v != null && /^(maglia|pantaloni|scarpe|maglia2|pant2)$/.test(k) && !aMano[k]) {   // (correzioni 4-5) un colore toccato: da qui è «scelto a mano»
+        aMano[k] = true;
+        if (valore(k) === v) { aggiornaPannello(null); return; }   // (lo stesso colore di prima: cambiano solo le miniature)
+      }
       if (valore(k) === v) return;
       if (zitto) { if (!trascina) { ricorda(); trascina = true; } cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
       if (!trascina) ricorda(); trascina = false;
@@ -391,11 +560,11 @@
       // una mano sola: borsetta e oggetti in mano non vanno insieme
       if (k === "mano" && !/^(nessuno|pallone)$/.test(v) && cfg.borsa === "borsetta") cfg.borsa = "nessuna";
       if (k === "borsa" && v === "borsetta" && !/^(nessuno|pallone)$/.test(cfg.mano)) cfg.mano = "nessuno";
-      anteprima(true); if (rifai) disegnaPannello(); else aggiornaPannello(pz ? null : k);   // (col colore nuovo cambiano anche le anteprime della voce)
+      anteprima(nuovo ? k : true); if (rifai) disegnaPannello(); else aggiornaPannello(pz ? null : k);   // (col colore nuovo cambiano anche le anteprime della voce)
     }
     function applicaLook(L) {
       ricorda(); cfg = conLook(cfg, L);
-      anteprima(true); saluta(); disegnaPannello();
+      anteprima(nuovo ? "look" : true); if (!nuovo) saluta(); disegnaPannello();
     }
     // le sottocategorie della scheda aperta (es. Vestiti: Look pronti, Parti superiori, Parti inferiori, Scarpe): se ne vede una alla volta
     var subDi = {};   // scheda -> sottocategoria aperta (quando torni su una scheda ritrovi quella di prima)
@@ -421,12 +590,12 @@
       var l = sottoVisibili(), j = subDi[tab] || 0;
       return l.filter(function (x) { return x.j === j; })[0] || l[0];
     }
-    // 🎲 solo questa sottocategoria: il resto non cambia
+    // 🎲 solo questa sottocategoria (editor nuovo: tutta la scheda aperta): il resto non cambia
     function acasoScheda() {
       ricorda();
-      var donna = cfg.forma === "donna", cur = sottoAttuale();
-      cur.chiavi.forEach(function (k) {
-        if (k === "look") { cfg = conLook(cfg, LOOK[Math.floor(Math.random() * LOOK.length)]); return; }
+      var donna = cfg.forma === "donna", chiavi = nuovo ? chiaviScheda() : sottoAttuale().chiavi;
+      chiavi.forEach(function (k) {
+        if (k === "look") { var LL = nuovo ? LOOK.filter(function (L) { return L.gruppo !== "costumi"; }) : LOOK; cfg = conLook(cfg, LL[Math.floor(Math.random() * LL.length)]); return; }
         if (k === "ritocchi") { OMINO_RITOCCHI.forEach(function (r) { cfg[r[0]] = Math.floor(Math.random() * 5) - 2; }); return; }
         var lista = listaDi(k);
         if (k === "forma" || !lista || (k === "barba" && donna)) return;
@@ -458,6 +627,7 @@
       if (a) sottoschede.scrollLeft = Math.max(0, a.offsetLeft - (sottoschede.clientWidth - a.offsetWidth) / 2);
     }
     function disegnaPannello() {
+      if (nuovo) return disegnaNuovo();
       var st = pannello.scrollTop;   // ridisegnando non si torna in cima
       pannello.innerHTML = "";
       var sz = SEZ[tab], lista = sottoVisibili(), cur = sottoAttuale();
@@ -477,18 +647,7 @@
           pannello.appendChild(rl);
           return;
         }
-        if (k === "ritocchi") {   // ritocchi stile Mii: cursori da -2 a +2
-          OMINO_RITOCCHI.forEach(function (r) {
-            var kk = r[0], val = el("span", { class: "om-rit-val" });
-            var cur2 = el("input", { type: "range", min: "-2", max: "2", step: "1", value: String(cfg[kk] || 0), class: "om-cursore", "aria-label": r[1] });
-            function scrivi() { var n = +cur2.value; val.textContent = n > 0 ? "+" + n : String(n); }
-            cur2.addEventListener("input", function () { scrivi(); scegli(kk, +cur2.value, true); });
-            cur2.addEventListener("change", function () { trascina = false; popOmino(); aggiornaPannello(); });
-            scrivi();
-            pannello.appendChild(el("div", { class: "om-ritocco" }, [el("span", { class: "om-rit-nome", text: r[1] }), cur2, val]));
-          });
-          return;
-        }
+        if (k === "ritocchi") { pannello.appendChild(cursori()); return; }
         var vc = sz.voci.filter(function (x) { return x[0] === k; })[0] || [k, k];
         var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
         if (!gruppi && etichette) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
@@ -520,35 +679,250 @@
           }
           b._k = k; b._v = v; riga.appendChild(b);
         });
-        if (OMINO_LIBERO[k]) {   // ultimo tondo: tavolozza arcobaleno per un colore qualsiasi
-          var ultimo = typeof cfg[k] === "string" ? cfg[k] : (listaDi(k)[cfg[k]] || "#ffffff");
-          var inp = el("input", { type: "color", value: ultimo, "aria-label": vc[1] + ": colore libero" });
-          inp.addEventListener("input", function () { scegli(k, inp.value, true); });
-          inp.addEventListener("change", function () { if (!trascina) ricorda(); cfg[k] = null; trascina = true; scegli(k, inp.value); });
-          var bl = el("label", { class: "om-opz om-colore om-libero", title: "Colore libero" }, [inp]);
-          bl._k = k; bl._libero = true; riga.appendChild(bl);
-        }
+        if (OMINO_LIBERO[k]) riga.appendChild(libero(k, vc[1]));   // ultimo tondo: tavolozza arcobaleno per un colore qualsiasi
         pannello.appendChild(riga);
       });
       aggiornaPannello();
       pannello.scrollTop = st;
       centraScelte();
     }
-    palco.appendChild(el("button", { class: "om-azione caso", text: "🎲", "aria-label": "Personaggio a caso", onclick: function () {
-      ricorda(); cfg = O.norm(O.casuale()); if (visibile(tab) < 0) tab = 0;
+    // ritocchi stile Mii: cursori da -2 a +2
+    function cursori() {
+      var box = el("div", { class: "om-ritocchi" });
+      OMINO_RITOCCHI.forEach(function (r) {
+        var kk = r[0], val = el("span", { class: "om-rit-val" });
+        var cur2 = el("input", { type: "range", min: "-2", max: "2", step: "1", value: String(cfg[kk] || 0), class: "om-cursore", "aria-label": r[1] });
+        function scrivi() { var n = +cur2.value; val.textContent = n > 0 ? "+" + n : String(n); }
+        cur2.addEventListener("input", function () { scrivi(); scegli(kk, +cur2.value, true); });
+        cur2.addEventListener("change", function () { trascina = false; popOmino(); aggiornaPannello(); });
+        scrivi();
+        box.appendChild(el("div", { class: "om-ritocco" }, [el("span", { class: "om-rit-nome", text: r[1] }), cur2, val]));
+      });
+      return box;
+    }
+    // l'ultimo tondo: la tavolozza arcobaleno per un colore qualsiasi
+    function libero(k, nome) {
+      var ultimo = typeof cfg[k] === "string" ? cfg[k] : (listaDi(k)[cfg[k]] || "#ffffff");
+      var inp = el("input", { type: "color", value: ultimo, "aria-label": nome + ": colore libero" });
+      inp.addEventListener("input", function () { scegli(k, inp.value, true); });
+      inp.addEventListener("change", function () { if (!trascina) ricorda(); cfg[k] = null; trascina = true; scegli(k, inp.value); });
+      var bl = el("label", { class: "om-opz om-colore om-libero", title: "Colore libero" }, [inp]);
+      bl._k = k; bl._libero = true;
+      return bl;
+    }
+
+    // ===================== l'editor nuovo: dock, gruppi in file, miniature quando si vedono =====================
+    var NOME_VOCE = {};   // (per chi usa il lettore dello schermo: «Colore rosso», «Fantasia righe»)
+    SEZ_OMINO.forEach(function (sz) { sz.voci.forEach(function (vc) { if (!NOME_VOCE[vc[0]]) NOME_VOCE[vc[0]] = vc[1]; }); });
+    function gruppiScheda(sz) {   // i gruppi della scheda + «Altri» con le voci che nessun gruppo prende
+      var g = sz.gruppi.slice(), prese = {};
+      g.forEach(function (x) { if (Array.isArray(x[2])) { prese[x[1]] = prese[x[1]] || {}; x[2].forEach(function (v) { prese[x[1]][v] = 1; }); } });
+      Object.keys(prese).forEach(function (k) {
+        var altre = (O.OPZ[k] || []).filter(function (v) { return !prese[k][v]; });
+        if (altre.length) g.push(["Altri", k, altre]);
+      });
+      return g;
+    }
+    function scelteDi(g) {   // le voci di un gruppo, già filtrate (solo per lei, non ancora ridisegnate)
+      var k = g[1], sc = g[2];
+      if (k === "look") return LOOK.filter(function (L) { return L.gruppo === sc; });
+      if (k === "ritocchi") return [];
+      var lista = O.OPZ[k] || [];
+      if (typeof sc === "string" && k === "capelli" && O.GRUPPI_CAPELLI) {
+        var gc = O.GRUPPI_CAPELLI.filter(function (x) { return x[0] === sc; })[0];
+        lista = gc ? lista.slice(gc[1], gc[2]) : [];
+      } else if (Array.isArray(sc)) lista = sc.filter(function (v) { return lista.indexOf(v) >= 0; });
+      return lista.filter(function (v) {
+        if (/^(sotto|capo|modScarpe)$/.test(k) && O.SOLO_DONNA.test(v) && cfg.forma !== "donna") return false;   // gonne, vestiti, tacchi… solo per lei
+        if (illustratoManca(k, v) && cfg[k] !== v) return false;   // avatar illustrati: le voci non ancora ridisegnate non si vedono (la tua resta)
+        return true;
+      });
+    }
+    function gruppoVisibile(g) {
+      if (!voceVisibile(g[1])) return false;
+      if (TRUCCO_GR.test(g[1]) && cfg.forma !== "donna" && !trucco()) return false;
+      return g[1] === "ritocchi" || scelteDi(g).length > 0;
+    }
+    function chiaviScheda() {   // le voci della scheda aperta (per «🎲 … a caso»)
+      var sz = SEZ[tab], ks = [];
+      (sz.dock || []).forEach(function (k) { if (voceVisibile(k)) ks.push(k); });
+      gruppiScheda(sz).forEach(function (g) {
+        if (!gruppoVisibile(g)) return;
+        if (ks.indexOf(g[1]) < 0) ks.push(g[1]);
+        if (g[3] && voceVisibile(g[3]) && ks.indexOf(g[3]) < 0) ks.push(g[3]);
+      });
+      return ks;
+    }
+    // una fila di tondi (colori): nel dock o sotto un gruppo. Prima «Nessuno» per il secondo colore, alla fine il colore libero
+    function rigaColori(k, et) {
+      var kl = LISTA_DI[k] || k, gColori = O.GRUPPI_COLORI ? O.GRUPPI_COLORI[kl] : null, nomiCol = O.NOMI_COLORI ? O.NOMI_COLORI[kl] : null, nome = NOME_VOCE[k] || et;
+      var sc = el("div", { class: "ed3-scorre" });
+      if (LISTA_DI[k]) {
+        var bN = el("button", { class: "om-opz om-colore om-nessuno", type: "button", title: "Nessuno", "aria-label": nome + ": nessuno", onclick: function () { scegli(k, null); } });
+        bN._k = k; bN._v = null; sc.appendChild(bN);
+      }
+      listaDi(k).forEach(function (val, i) {
+        if (gColori && i > 0 && gColori.some(function (g) { return g[1] === i; })) sc.appendChild(el("i", { class: "ed3-sep", "aria-hidden": "true" }));
+        var b = el("button", { class: "om-opz om-colore", type: "button", style: "background:" + val, "aria-label": nome + " " + (nomiCol && nomiCol[i] ? nomiCol[i].toLowerCase() : i + 1), onclick: function () { scegli(k, i); } });
+        b._k = k; b._v = i; sc.appendChild(b);
+      });
+      if (OMINO_LIBERO[k]) sc.appendChild(libero(k, nome));
+      return el("div", { class: "ed3-riga" }, [el("span", { class: "ed3-et", text: et }), sc]);
+    }
+    // una fila di bottoni col campione (fantasie e stoffe)
+    function rigaChip(k, et) {
+      var sc = el("div", { class: "ed3-scorre" });
+      listaDi(k).forEach(function (v) {
+        var cam = el("i", { "aria-hidden": "true" });
+        var b = el("button", { class: "ed3-chip", type: "button", "aria-label": (NOME_VOCE[k] || et) + " " + nomeDi(k, v).toLowerCase(), onclick: function () { scegli(k, v); } }, [cam, el("span", { text: v === "nessuna" ? "Liscio" : nomeDi(k, v) })]);
+        b._k = k; b._v = v; b._cam = cam; sc.appendChild(b);
+      });
+      return el("div", { class: "ed3-riga chip" }, [el("span", { class: "ed3-et", text: et }), sc]);
+    }
+    function colore(k) {   // il colore di adesso di una voce (posizione nella tavolozza o "#rrggbb")
+      var x = cfg[k], L = listaDi(k);
+      if (x == null) x = O.BASE[LISTA_DI[k] || k];
+      return typeof x === "string" ? x : (L[x] || L[0]);
+    }
+    // le file: si ricorda dove erano scorse (per scheda e gruppo), così ridisegnando non saltano.
+    // Le miniature si disegnano a poco a poco, prima quelle in vista (al massimo ~12 ms per volta): il tocco risponde subito
+    var posFile = {}, tCoda = 0;
+    if (nuovo) pannello.addEventListener("scroll", function () { programma(); }, { passive: true });   // (scorrendo arrivano le file di sotto)
+    function programma() { if (!tCoda) tCoda = setTimeout(lavora, 0); }
+    function lavora() {
+      tCoda = 0;
+      if (!document.body.contains(s)) return;   // (l'editor è chiuso, o non ancora sullo schermo)
+      var lista = daRifare(), t0 = Date.now();
+      for (var i = 0; i < lista.length; i++) {
+        rendiMini(lista[i]);
+        if (Date.now() - t0 > 12 && i < lista.length - 1) { tCoda = setTimeout(lavora, 16); return; }
+      }
+    }
+    function daRifare() {   // prima le miniature in vista, poi quelle vicine (una pagina più in là, o appena sotto)
+      var subito = [], poi = [], pp = pannello.getBoundingClientRect();
+      [].forEach.call(pannello.querySelectorAll(".ed3-fila"), function (f) {
+        var w = f.clientWidth || 360, sl = f.scrollLeft, r = f.getBoundingClientRect(), vista = r.bottom > pp.top && r.top < pp.bottom;
+        if (r.bottom < pp.top - 220 || r.top > pp.bottom + 220) return;   // (troppo lontana: quando ci si arriva)
+        [].forEach.call(f.children, function (b) {
+          if (!b._sporco) return;
+          var x = b.offsetLeft, x2 = x + b.offsetWidth;
+          if (x2 < sl - w * 0.3 || x > sl + w * 1.9) return;
+          (vista && x2 > sl && x < sl + w ? subito : poi).push(b);
+        });
+      });
+      return subito.concat(poi);
+    }
+    function disegnaNuovo() {
+      var st = pannello.scrollTop, sz = SEZ[tab], chiave = sz.nome, prima = pannello._scheda;
+      if (prima) [].forEach.call(pannello.querySelectorAll(".ed3-fila"), function (f) { if (f._id) (posFile[prima] = posFile[prima] || {})[f._id] = f.scrollLeft; });
+      pannello._scheda = chiave;
+      // niente lampeggio: le miniature già disegnate passano nelle tessere nuove (le stesse scelte) e si rifanno piano piano dopo
+      var vecchie = {};
+      if (prima === chiave) [].forEach.call(pannello.querySelectorAll(".ed3-fila"), function (f) {
+        [].forEach.call(f.children, function (b) { if (b._mini && b._mini.firstChild) vecchie[f._id + "|" + (b._look ? b._look.nome : b._v)] = b._mini.firstChild; });
+      });
+      pannello.innerHTML = ""; dock.innerHTML = "";
+      // il dock: colori e chip della scheda (sempre sotto le schede)
+      (sz.dock || []).forEach(function (k) {
+        if (!voceVisibile(k)) return;
+        dock.appendChild(/^(fant|fantP|stoffa|stoffaP)$/.test(k) ? rigaChip(k, DOCK_NOMI[k]) : rigaColori(k, DOCK_NOMI[k] || NOME_VOCE[k]));
+      });
+      dock.style.display = dock.children.length ? "" : "none";
+      var ng = 0;
+      gruppiScheda(sz).forEach(function (g) {
+        if (!gruppoVisibile(g)) return; ng++;
+        var k = g[1], sec = el("section", { class: "ed3-gr" }), tit = el("div", { class: "ed3-gr-tit" }, [el("h3", { text: g[0] })]);
+        sec.appendChild(tit);
+        if (k === "ritocchi") { sec.appendChild(cursori()); pannello.appendChild(sec); return; }
+        var fila = el("div", { class: "ed3-fila" + (k === "look" ? " look" : "") });
+        fila._id = g[0];
+        scelteDi(g).forEach(function (val) {
+          var b;
+          if (k === "look") {
+            b = el("button", { class: "om-opz om-forma ed3-t", type: "button", onclick: function () { applicaLook(val); } });
+            b._look = val; b._mini = el("div", { class: "om-mini intero" });
+            b.appendChild(b._mini); b.appendChild(el("div", { class: "om-nome", text: val.nome }));
+          } else {
+            var bloccato = !!(O.BLOCCATI[k] && O.BLOCCATI[k].indexOf(val) >= 0);
+            b = el("button", { class: "om-opz om-forma ed3-t" + (bloccato ? " bloccato" : ""), type: "button", onclick: function () { if (!bloccato) scegli(k, val); } });
+            b._k = k; b._v = val; b._mini = el("div", { class: "om-mini" + classeMini(k) });
+            b.appendChild(b._mini); b.appendChild(el("div", { class: "om-nome", text: bloccato ? "🔒 coi trofei" : nomeDi(k, val) }));
+          }
+          var gia = vecchie[g[0] + "|" + (k === "look" ? val.nome : val)]; if (gia) b._mini.appendChild(gia);
+          b._sporco = true; fila.appendChild(b);
+        });
+        // «scorri ›»: solo se la fila non ci sta (si guarda dopo il disegno); toccato, la fila va avanti di una pagina
+        var bScorri = el("button", { class: "ed3-scorri", type: "button", text: "scorri ›", "aria-label": "Scorri " + g[0], onclick: function () {
+          var dx = fila.clientWidth * 0.8;
+          try { fila.scrollBy({ left: dx, behavior: movimentoFermo() ? "auto" : "smooth" }); } catch (e) { fila.scrollLeft += dx; }
+        } });
+        bScorri.hidden = true; tit.appendChild(bScorri); fila._scorri = bScorri;
+        fila.addEventListener("scroll", programma, { passive: true });
+        sec.appendChild(fila);
+        if (g[3] && voceVisibile(g[3])) sec.appendChild(rigaColori(g[3], "Colore"));   // il colore della voce (es. del cappello), sotto le miniature
+        pannello.appendChild(sec);
+      });
+      if (!ng) pannello.appendChild(el("p", { class: "ed3-nota", text: sz.nome === "Sotto" && /^vestito/.test(cfg.capo)
+        ? "👗 Il vestito copre anche le gambe: per scegliere i pantaloni o la gonna cambia il capo in «Sopra»." : "Qui non c'è niente da scegliere." }));
+      if (bAcaso) bAcaso.disabled = !chiaviScheda().length;   // (es. «Sotto» col vestito: niente da mettere a caso)
+      aggiornaNuovo();
+      pannello.scrollTop = st;
+      var pos = posFile[chiave] || {};
+      [].forEach.call(pannello.querySelectorAll(".ed3-fila"), function (f) {
+        if (pos[f._id] != null) { f.scrollLeft = pos[f._id]; if (!inVista(f)) centraFila(f); } else centraFila(f);   // (dopo un look o «a caso» la scelta nuova in vista)
+        if (f._scorri) f._scorri.hidden = f.scrollWidth <= f.clientWidth + 4;
+      });
+      [].forEach.call(s.querySelectorAll(".ed3-scorre"), centraFila);
+      if (tCoda) { clearTimeout(tCoda); tCoda = 0; }
+      if (document.body.contains(s)) lavora(); else programma();   // (sullo schermo: le prime in vista subito, senza un fotogramma vuoto)
+    }
+    function rendiMini(b) {
+      b._sporco = false;
+      b._mini.innerHTML = b._look ? miniNuova("look", conLook(cfg, b._look)) : miniNuova(b._k, unisci(b._k, b._v));
+    }
+    function aggiornaNuovo(cambiata) {
+      var c1 = colore("maglia"), c2 = cfg.maglia2 != null ? colore("maglia2") : "#f4f5fb", p1 = colore("pantaloni"), p2 = cfg.pant2 != null ? colore("pant2") : "#f4f5fb";
+      [].forEach.call(s.querySelectorAll(".ed3-dock .om-opz, .omino-pannello .om-opz, .ed3-chip"), function (b) {
+        var k = b._k, v = b._v;
+        if (b._look) { b.classList.toggle("attiva", lookUguale(cfg, b._look)); b._sporco = true; return; }
+        if (b._libero) { var mio = typeof cfg[k] === "string"; b.classList.toggle("attiva", mio); b.style.background = mio ? cfg[k] : ""; return; }
+        if (k == null) return;
+        var on = valore(k) === v;
+        b.classList.toggle("attiva", on);
+        if (b._cam) { var sopra = /^(fant|stoffa)$/.test(k); b._cam.style.background = campione(k, v, sopra ? c1 : p1, sopra ? c2 : p2); b.setAttribute("aria-pressed", on ? "true" : "false"); }
+        if (b._mini && k !== cambiata) b._sporco = true;
+      });
+      // un colore che cambia da solo (il secondo colore che arriva con una fantasia, il colore di partenza di un capo): la sua fila lo mostra
+      [].forEach.call(s.querySelectorAll(".ed3-scorre"), function (r) {
+        var a = r.querySelector(".attiva"), id = a ? String(a._libero ? "libero" : a._v) : "";
+        if (r._att != null && r._att !== id && a && r.clientWidth && !inVista(r)) centraFila(r);
+        r._att = id;
+      });
+      programma();
+    }
+
+    var bCaso = el("button", { class: "om-azione caso", text: "🎲", "aria-label": nuovo ? "Avatar tutto a caso" : "Personaggio a caso", onclick: function () {
+      ricorda(); cfg = O.norm(O.casuale()); if (visibile(tab) < 0) tab = nuovo ? indice("Sopra") : 0;
       anteprima(true); disegnaSchede(); disegnaPannello();
-    } }));
+    } });
+    palco.appendChild(bCaso);
     palco.appendChild(bAnnulla); aggAnnulla();
     var salvato = false;
-    palco.appendChild(el("button", { class: "om-azione salva" + (benv ? " fatto" : ""), text: benv ? "✅ Fatto" : "✅ Salva", onclick: function () {
+    var bSalva = el("button", { class: (nuovo ? "btn btn-primario " : "") + "om-azione salva" + (benv ? " fatto" : ""), text: nuovo ? (benv ? "Fatto" : "Salva") : (benv ? "✅ Fatto" : "✅ Salva"), onclick: function () {
       if (salvato) return; salvato = true;
       this.textContent = "👋 Fatto";   // si vede subito che il tocco è arrivato
       bozze[slot] = cfg; var tutti = bozze.map(function (b) { return O.norm(b); });
       salvaOminoMio(tutti[slot], tutti, slot); saluta(); popOmino();   // si salvano tutti; nei giochi va quello sul palco
       setTimeout(dopo, 1000);   // prima ti saluta, poi torna indietro
-    } }));
+    } });
+    if (nuovo) {   // in fondo: «🎲 Sopra a caso» e «Salva» (l'unico tasto lampone pieno)
+      bAcaso = el("button", { class: "btn btn-fantasma ed3-acaso", type: "button", onclick: acasoScheda });
+      s._piede.appendChild(bAcaso); s._piede.appendChild(bSalva);
+    } else palco.appendChild(bSalva);
     anteprima(); disegnaSchede(); disegnaPannello();
     mostra(s);
+    if (nuovo) requestAnimationFrame(function () { centraScelte(); disegnaScorri(); });   // (le misure ci sono solo dopo mostra)
+    function disegnaScorri() { [].forEach.call(pannello.querySelectorAll(".ed3-fila"), function (f) { if (f._scorri) f._scorri.hidden = f.scrollWidth <= f.clientWidth + 4; }); programma(); }
     setTimeout(saluta, 350);   // appena entri: "ciao!"
   }
 
