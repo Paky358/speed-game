@@ -1,7 +1,7 @@
 ﻿# 🧠 Cervello di SPeeD GAME — il registro
 
 Lo tiene la chat «🧠 Cervello». Le altre chat ci scrivono solo una riga nel **🗒️ Diario** (in fondo) quando finiscono un lavoro, salvano o pubblicano.
-Ultimo aggiornamento: **29 ott 2026, 19:10** (ora italiana).
+Ultimo aggiornamento: **7 nov 2026, 20:00** (ora italiana). Dal 7 nov sera c'è un Cervello nuovo (quello di prima era diventato troppo lungo): lavora in `D:\SG-leggera` (ramo `app-leggera`) e salva su `lavori-in-corso` e `app-leggera`.
 
 ---
 
@@ -9,16 +9,16 @@ Ultimo aggiornamento: **29 ott 2026, 19:10** (ora italiana).
 
 | Limite | Usato | Si azzera |
 |---|---|---|
-| Settimana (tutti i modelli) | **0%** (azzerata mer 4 nov alle 15:00; la settimana prima si è chiusa al 95%) | **mercoledì 11 nov alle 15:00** |
-| 5 ore | 0% (2 nov mattina) | — |
-| Settimana Fable | 0% | mercoledì 4 nov alle 15:00 |
-| Crediti cloud | 250 USD il 26 ott sera, da ricontrollare | **scadono il 5 nov alle 08:59** |
+| Settimana (tutti i modelli) | **68%** (7 nov sera; la settimana prima si è chiusa al 95%) | **mercoledì 11 nov alle 15:00** |
+| 5 ore | 2% (7 nov sera) | — |
+| Settimana Fable | 0% | mercoledì 11 nov alle 15:00 |
+| Crediti cloud | scaduti il 5 nov alle 08:59 | — |
 
 - Il piano: lo strumento del Cervello dice «Pro», la chat dell'Impostore ha letto «Max» nell'app. Fa fede quello che si vede nelle impostazioni dell'app.
 - Crediti cloud: il 27 ott la chat Stile nel cloud si è fermata perché era finito il limite della settimana. Da guardare nella schermata «Utilizzo» se i 250 USD sono ancora tutti lì: se sì, il cloud ha consumato la settimana invece dei crediti.
 - Quanto costano i lavori (misurato): un modo nuovo di un gioco scritto da un aiutante Opus ≈ 4% della settimana; un giro di correzioni piccole ≈ 1%; la notte della chat Stile nel cloud (fase 2 + 16 giochi convertiti) ha portato la settimana dal 91% al 100%; la notte del 29 ott (chat Notte vivace + chat Avatar insieme, 02:25-10:50) dal 10% al 24%: ~2,5% all'ora con tutte e due a ragionamento «molto alto», ~1% all'ora dopo averlo abbassato (colori medio, avatar alto).
 
-**Regola del momento (settimana appena azzerata):** lavori grandi sì, ma la settimana deve bastare 7 giorni → **circa 14% al giorno**. Aiutanti Sonnet di base, Opus solo per il codice delicato (rete, motore di un gioco). Un lavoro grande alla volta. I lavori lunghi e separabili vanno nel cloud finché ci sono crediti (fino al 5 nov).
+**Regola del momento (7 nov sera, 68%):** restano 32 punti per 3 giorni e 19 ore → **circa 8% al giorno**. Un lavoro medio alla volta (il #39, il camerino con l'avatar grande, ~5-8%); i lavori grandi (#40, #41) si decidono prima a parole e si costruiscono dopo l'azzeramento di mercoledì, salvo che il proprietario li voglia prima. Tetto per arrivare a mercoledì: 85% entro lunedì sera, poi lavori piccoli di contenuti fino al 97-99% (mai oltre il 100%). Aiutanti Sonnet di base, Opus solo per il codice delicato.
 
 **Il ragionamento delle chat lo regola il Cervello** (il proprietario, 29 ott notte: «vai di medio per i colori, regolati tu anche per queste cose»): medio per i lavori ripetitivi (colori, liste, controlli), alto per disegno e codice delicato, il massimo solo se serve davvero. Dal 29 ott 04:55: chat Notte vivace su medio, chat Avatar su alto (prima tutte e due «molto alto»: ~2,5% della settimana all'ora in due). Quella notte lo stop è stato alzato dal 25% al 35% («se serve vai oltre il 25»).
 
@@ -30,7 +30,7 @@ Regole generali: sotto il 70% lavori grandi ok · 70-85% lavori medi, aiutanti S
 
 ## 2. 🌐 Cosa c'è online
 
-**Online adesso (2 nov sera):** fino alla **novità v300** (v295 Balla, v296 Black Jack zoom, v297-v298 Mini Asta, v299 immagini della home, v300 foto del Prezzo); prima fino alla **novità v294** (1 nov: v291-v292 Black Jack nuovo e regole da esperti, v293 Scarabocchio, v294 lo studio TV nuovo tappe 1 e 2) + Lanterne di Mario in prova. **In `lavori-in-corso`, NON online:** la Balla Colossale nuova (v295: prima pagina «Il Colossale», Balla Finale, Sceglie chi è ultimo, 746 notizie; prove ballaN1 e ballaN2 ancora da far girare). **Da fare mercoledì 4 nov dopo le 15:** studio TV tappa 3, poi #31 (app più leggera).
+**Online adesso (7 nov sera): master `037d8d0`, novità v319.** La notte del 7 nov sono andati online lo Studio TV con le luci da prima serata (v316), la Ruota della Fortuna come in TV (v317), gli avatar coi vestiti nuovi, le fantasie e il camerino (v318), la saletta con gli avatar in grande e Parola d'ordine con le parole tutte della stessa misura (v319). Prima, il 6 nov: niente zoom e avatar disegnati per tutti (v311), la Mini Asta coi suoni veri, i voti giusti e le buste sul tavolo (v312-v315), la porta inviolata e la giornata da TV (v309-v310). Lanterne di Mario resta in prova (solo per gli ammessi). Sito controllato: si apre (200). **`lavori-in-corso`** = master + solo il registro. **Tutti i rami di lavoro sono già dentro master** (asta-fanta, avatar-a, saletta-avatar, studio-tv, ruota-2 e i vecchi): niente in sospeso da unire. La sezione qui sotto è la storia del 29 ott.
 
 Prima: master del 29 ott alle 19:10 = **novità v280** (chat «🌙 Notte vivace 2»: Chi di Noi? blu notte, schede di fine di Parola d'ordine scure, riquadri dello stadio del fanta, i 6 difetti piccoli, «Contro il Bot» ovunque; più la scelta del gioco nella Sala due per riga della chat «🏠 Home compatta») + **v281** (chat «STESSA LUNGHEZZA D'ONDA»: ruota nuova, «Tutti insieme» online, chi arriva tardi, 155 scale nuove) + Lanterne di Mario in prova. Prima (15:10, `ff73096`): **novità v278 + v279** (e Lanterne in prova):
 - **Lanterne** (chat di Mario De Viva, l'amico del proprietario): il gioco nuovo «🏮 Lanterne» (alla Among Us, online da 4 a 10, 35 ruoli, Bot), pubblicato da Mario stesso direttamente su master (14:46, poi 14:56). **In prova**: la tessera la vedono solo gli account IL PAPPONE e «gay» (di Mario), solo loro aprono la stanza; chi è invitato (link, codice, Sala) entra lo stesso; la saletta si riempie di Bot fino a 6. La sua novità v277 è stata tolta. La serata vera con 4+ telefoni non c'è ancora stata (#25).
@@ -38,7 +38,7 @@ Prima: master del 29 ott alle 19:10 = **novità v280** (chat «🌙 Notte vivace
 - **v278**: avatar «Mii rifinito» **per tutti** (`AVATAR_NUOVO = "tutti"`) e le cinque proposte approvate dal proprietario sulle foto («li ho visti e vanno bene»): Horto Muso di sera, Palla a Pendolo di notte, Chi di Noi? con scene e carte in vetro scuro (fondo viola ancora), sala dei temi dell'Asta di sera (banco marrone, stadio del fanta com'era), Parola d'ordine col tavolo blu notte e le carte crema. Fatte da 5 aiutanti (uno per gioco) + un revisore; nel Pendolo l'alone della palla è un gradiente (non una sfocatura a ogni fotogramma).
 - Prima: v276 (29 ott 12:35, `b55faa7`) i giochi in stile notte; v275 (29 ott 00:30) lo stile «🌙 Notte vivace» per le schermate dell'app. Sito: https://paky358.github.io/speed-game/
 
-**`lavori-in-corso`** = uguale al sito (in più solo il registro).
+
 
 **Unito e pubblicato il 29 ott (v276), lavoro della notte:** i rami `stile-notte` (fino a `e54d20e`) e `avatar-mii` (fino a `efef25d`) sono dentro `lavori-in-corso` e `master`; le copie `SG-notte` e `SG-avatar` si possono togliere con la pulizia (#22).
 - **`stile-notte`**: tutti i giochi col vestito della notte tranne Parola d'ordine e le scene grandi.
@@ -71,22 +71,22 @@ Fuori da git: `.claude/launch.json` (il server di prova della chat della Linea d
 
 | Chat | Gioco | Ultima attività | Cosa sta facendo / in sospeso |
 |---|---|---|---|
-| 🧠 Cervello SPeeD GAME | tutto | 29 ott, ora | Registro, limiti, consigli. Non costruisce giochi. |
-| 🌙 Notte vivace 2 | il resto dello stile (#11) | 29 ott 15:40, **lavora** | Partita su D: la copia a parte `D:SG-notte2` (ramo `stile-notte-2`) l'ha creata il Cervello, perché su C non c'è spazio per le copie dell'app (#27). Ragionamento medio. Non pubblica: a fine lavoro manda le foto prima/dopo. |
-| 🏠 Home compatta | prima schermata | 29 ott 14:30, **finita** | Tessere senza descrizione due per riga, menu in basso, città spenta: online v279 (pubblicata dal Cervello insieme alla v278). |
-| 🌙 Notte vivace | stile di tutta l'app | 29 ott 10:51, **finita** | Tutto il suo lavoro è online (v275, v276 e le sue 5 proposte in v278, messe nei giochi dal Cervello con 5 aiutanti). Il resto dello stile va alla chat nuova «🌙 Notte vivace 2» (#11). Chat molto lunga: non riprenderla. |
-| 🧍 Avatar Mii rifinito | avatar «Mii rifinito» | 29 ott 06:23, **finita** | Online per tutti dalla v278. Il proprietario avrebbe preferito il «3D morbido» (#24). |
-| 🎨 Stile (cloud) | grafica di tutta l'app | 27 ott 12:36 | Ferma. Il suo Bianco e oro è stato bocciato e sostituito dalla Notte vivace: non va ripresa. |
-| IMPOSTORE | L'Impostore | 26 ott 20:56 | Telefono bloccato pubblicato (v273). **In sospeso:** 518 coppie di parole nuove in 10 temi aspettano il sì del proprietario; proposti la memoria delle parole per tutta la compagnia e la spia che non sa «in vetrina». |
-| Nome nuovo per SPeeD GAME | nome e dominio | 26 ott 18:12 | 100 idee + 10 migliori (preferiti: **Cerchia, Sodalis, Convivio**). I domini .it e .com secchi sono già presi: proposto «Cerchia Club», cerchia.app, cerchia.games. Aspetta che il proprietario scelga 3 preferiti. |
-| LINEA DEL TEMPO | Linea del tempo | 26 ott 17:26 | Pubblicato tutto (v267-v272). Restano «🤖 Gioca col Bot» (chat nuova) e la carta sbagliata nella linea. Chat lunghissima: per il Bot aprirne una nuova. |
-| Controllo skill nuove | — | gira adesso | Compito automatico ogni 3 giorni alle 10:00: propone skill nuove, non installa niente. |
-| speed 2 | chat generale | 26 ott 16:41 | Ha preparato il Cervello. **Da archiviare.** |
-| IL PREZZO è GIUSTO | Il Prezzo è Giusto | 25 ott 23:22 | Niente a metà (online v266). |
-| MINI ASTA FANTACALCIO | L'Asta | 25 ott 23:43 | Niente a metà (online v255). Aspetta la serata vera per tarare la giornata. |
-| PAROLA D ORDINE | Parola d'ordine | 22 ott 19:11 | Niente a metà (online v253). |
-| Lezioni di programmazione | — | 26 ott 18:42 | Lezioni per il proprietario, non tocca il progetto. |
-| PARTY GAME | vecchia chat lunga | 18 ott 20:22 | Finita. **Da archiviare.** |
+| 🧠 Cervello (nuovo, dal 7 nov sera) | tutto | 7 nov 20:00 | Registro, limiti, prompt per le altre chat. Non costruisce giochi. Lavora in `D:\SG-leggera`. |
+| 🧠 Cervello SPeeD GAME (quello di prima) | tutto | 7 nov 19:50 | **Finito**: troppo lungo, sostituito. Non riprenderlo. |
+| 🎡 Notte: Studio TV pronto e Ruota della Fortuna | Studio TV, Ruota | 7 nov 19:35 | Pubblicato tutto (v316, v317). Resta da decidere il tasto «🎡 Gira» accanto al dito (#42). |
+| 🧍 Saletta: avatar grandi, reazioni sul tocco | saletta | 7 nov 07:45 | Pubblicato (v319). Resta la prova o2o2 di Parola d'ordine (#42, NO anche prima). |
+| Avatar: vestiti e mani | avatar | 7 nov 06:45 | Pubblicato (v318). Conosce il camerino nuovo: è la chat giusta per il #39 se non è troppo lunga (da guardare prima di mandarle il prompt). Copia `D:\SG-avatar-a`, ramo `avatar-a`. |
+| ⚽🗳 Fanta: voti giusti e busta con suspense | Mini Asta | 6 nov 23:10 | Pubblicato (v314-v315). Niente a metà. |
+| ⚽🔊 Fanta: suoni veri, omini, nomi e ruota | Mini Asta | 6 nov 15:40 | Pubblicato (v312). Da sentire il volume dei suoni. |
+| 🔍 Niente zoom + avatar per tutti | app | 6 nov 14:00 | Pubblicato (v311). Finita. |
+| ⚽ Giornata del fanta: livello successivo | Mini Asta | 6 nov 06:10 | Pubblicato (v309-v310). Restano telecronaca scritta e notte di coppa. |
+| Avatar illustrati: corpo unico | avatar | 6 nov 04:00 | Finita (terzo tempo online). |
+| 📺 Studio TV, tappa 3 · 🧍 Avatar strada A · 🪶 App più leggera 1 e 2 · 🔨 Temi dell'Asta · 🧍 Avatar tre strade · 🥔 Patata | vari | 4-5 nov | Tutte finite e pubblicate. Da archiviare quando il proprietario vuole. |
+| IMPOSTORE · Black Jack · Battute del banco · Ruota migliorata · Mini Asta 2026/27 · Foto prodotti · Balla Colossale · Scarabocchio · Sì però · Studio TV design | i loro giochi | 1-4 nov | Lavori pubblicati, niente a metà. |
+| Nome nuovo per SPeeD GAME | nome e dominio | 3 nov | Aspetta che il proprietario scelga 3 preferiti (#8). |
+| Lezioni di programmazione | — | 2 nov | Lezioni per il proprietario, non tocca il progetto. |
+| Controllo skill nuove (ogni 3 giorni) | — | 7 nov 10:08 | Compito automatico: propone skill, non installa niente. |
+| Lanterne (chat di Mario) | Lanterne | — | Sta sul computer di Mario: unisce e pubblica da sola. Noi non tocchiamo i suoi file. |
 
 ---
 
@@ -144,6 +144,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 7 nov 20:00 · 🧠 Cervello (nuovo) · salvato · passaggio di consegne: letto tutto il registro, aggiornati limiti (68%, si azzera mer 11 nov alle 15), cosa è online (master 037d8d0, v319, tutti i rami già dentro master) e la tabella delle chat; si riparte dal #39 (camerino con l'avatar grande) · lavori-in-corso
 - 7 nov 19:45 · 🧠 Cervello · salvato · il proprietario prova il camerino nuovo («mi piace tantissimo») ma l'avatar è troppo piccolo: aperte #39 (editor con l'avatar grande), #40 (record e squadra della settimana della Mini Asta), #41 (Speed Coins a fine partita, lucchetti e avatar di prova), #42 (Gira e o2o2). Preparato il passaggio a un Cervello nuovo. Settimana 68% · lavori-in-corso
 - 7 nov 07:55 · 🧠 Cervello · salvato · controllate le quattro pubblicazioni della notte (e7e82ac Studio TV v316, 3c19800 Ruota della Fortuna v317, 98d473b avatar coi vestiti nuovi v318, 037d8d0 saletta con gli avatar in grande e Parola d'ordine con le parole tutte uguali v319): novità in ordine, Lanterne non toccata, sito 200; lavori-in-corso portato a master. Il proprietario prima di dormire: «pubblica anche» e limite della notte all'80%. Da decidere al risveglio: tasto «🎡 Gira» accanto al dito; da guardare a parte la prova o2o2 (Parola d'ordine, 3 squadre in 7: NO anche prima). Nessuna prova su telefono vero · lavori-in-corso
 - 7 nov 07:40 · 🧍 Saletta: avatar in grande (lavoro della notte) · PUBBLICATO (il proprietario tramite il Cervello: «pubblica anche… quando mi sveglio voglio vedere già tutto pubblicato») · novità v319 «La saletta: gli avatar in grande 🧍»: avatar interi e molto più grandi su 1-3 file (chi sta dietro più in alto, file sfalsate), ordine di prima (titolo su una riga, codice e «Invita gli amici» affiancati, la stanza, in fondo ⓘ + Regole + Comincia; chi entra ⓘ + «📜 Regole» + «Sono pronto!»); via «Pronti x su y» coi pallini, «Si gioca così», note (resta solo quella che dice perché non si parte, piccola in cima alla stanza) e la fila delle faccine; reazioni a ventaglio toccando il PROPRIO avatar (nelle partite e alla fine un tondino col proprio viso che le apre; chi guarda ha ancora la fila nella targhetta), la prima volta il fumetto «Tocca il tuo avatar per le reazioni»; «I nostri ricordi» della Linea del tempo dentro Regole (opzione regoleExtra di t.lobby); Parola d'ordine: parole tutte della stessa misura (quella della più lunga, capo e chi indovina) e tondini col «viso largo». Prove: copione 4, 7, 21, 24-31, 33-36, 38, 39, 42-46, 46b, 601, 604, 611-616, 670, tp2, o2t1, o2t2, o2p3, o2r4 OK (aggiornate 45, tp2, o2t1 alle regole nuove); versione costruita 25, 26, 33, 34, 45, 601 OK; o2o2 (3 squadre in 7) NO anche sulla versione online di prima: non dipende da questo lavoro; foto a 2 e 3 squadre, 360x640 e 412x915. NON provato su telefono vero · ramo saletta-avatar → master
