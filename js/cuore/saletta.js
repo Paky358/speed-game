@@ -265,7 +265,9 @@
       // "🟡 Sto aprendo la stanza…", "🔒 Porta chiusa" (così non ruba spazio alla saletta)
       var testa = s.querySelector(".testa");
       U2.porta = el("button", { class: "sl-porta", type: "button", hidden: "hidden", onclick: function () { portaSaletta(U2); } });
-      testa.appendChild(U2.porta);
+      // (6 nov 2026, il proprietario: «che serve chiudere la sala? Occupa solo spazio»: il tasto non sta più nella testa, così il titolo
+      // resta su una riga e lo spazio va agli avatar. La porta resta nel codice, nascosta: la usano solo le prove)
+      U2.porta.classList.add("via"); testa.appendChild(U2.porta);
       U2.sottoBase = U2.statoT ? U2.statoT.textContent : "";
     }
     // la saletta: muro, finestra, quadro col simbolo del gioco, orologio, pianta, divano e tappeto (uguale per tutti i giochi)
@@ -438,6 +440,7 @@
         // l'avatar ha i suoi pezzi fissi: il disegno (con l'anello verde sul pavimento quando è pronto), il nome sotto i piedi,
         // il bollino (✓ o 📶) e "si ricollega…" (nella targa, sopra il nome: non copre i nomi degli altri); quando cambia qualcosa si rifà solo il disegno o il nome
         f = { nodo: el("div", { class: "sl-av entra" }), sig: "", k: k, manoSu: false };
+        f.nodo._f = f;   // (il gesto disegnato dell'avatar illustrato ritrova la sua figura)
         f.anello = el("i", { class: "sl-anello", "aria-hidden": "true" }); f.fig = el("div", { class: "sl-fig" });
         f.bollo = el("b", { class: "sl-bollo", "aria-hidden": "true" }); f.ricollega = el("small", { class: "sl-ricollega" });   // (sta nella targa, sopra il nome)
         f.nodo.appendChild(el("div", { class: "sl-av-in" }, [f.fig, f.bollo]));
@@ -510,7 +513,7 @@
     // "Ciao Luca! 👋" a chi arriva (uno o due alla volta; se rientrano in tanti insieme, es. l'host ha riaperto la stanza,
     // bastano il saltello e il "pling": niente muro di fumetti)
     if (arrivati.length <= 2) arrivati.forEach(function (f, i) {
-      setTimeout(function () { if (f.nodo.parentNode && !f.nodo.classList.contains("va")) fumetto(U, f, "Ciao " + ((f.p && f.p.nome) || "") + "! 👋", "ciao", 2600); }, i * 500);
+      setTimeout(function () { if (f.nodo.parentNode && !f.nodo.classList.contains("va")) { fumetto(U, f, "Ciao " + ((f.p && f.p.nome) || "") + "! 👋", "ciao", 2600); if (illustrati()) gesto(f.nodo, "saluta"); } }, i * 500);   // (avatar illustrati: chi arriva saluta con la mano)
     });
     if (arrivati.length) suonoSl("pling"); else if (usciti && U.visti) suonoSl("va");
     U.visti = true;
@@ -524,7 +527,7 @@
   //  - a zig-zag "alto": chi sta dietro sale sopra le teste (quando sono tanti: si stringono di più).
   //  Si vedono tutti i visi e tutti i nomi, anche in 10. Chi cambia posto ci scivola da dov'era (solo transform: niente scatti).
   //  (w è la larghezza del disegno dell'avatar: la persona ne occupa circa i due terzi)
-  var SL_SOPRA = 46;   // sopra la testa più alta: lo spazio per i fumetti e l'insegna
+  var SL_SOPRA = 30;   // sopra la testa più alta: lo spazio per i fumetti (6 nov 2026: niente più insegna, più spazio agli avatar)
   function disponiSaletta(U, anima) {
     var st = U.stanza, W = st.clientWidth, H = st.clientHeight, nodi = U.ordine || [], tot = nodi.length;
     if (!W || !H || !tot) return;   // (la saletta non è ancora sullo schermo: ci pensa l'osservatore della stanza)
@@ -574,8 +577,16 @@
   }
   function togliNodo(n) { if (n && n.parentNode) n.parentNode.removeChild(n); }
   // il disegno dell'avatar: con la mano alzata quando è pronto (il braccio passa davanti ai capelli), l'anello sotto i piedi
-  function disegnaFigura(f) {
-    f.fig.innerHTML = f.cfg && window.SGOmino ? SGOmino.svg(f.cfg, f.manoSu ? { braccia: "uno" } : null) : "<div class='sl-emo'>🙂</div>";
+  var CACHE_GESTI = {};   // i disegni col gesto, fatti una volta sola
+  function illustrati() { try { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); } catch (e) { return false; } }
+  function disegnaFigura(f, gestoDisegnato) {
+    var o = f.manoSu ? { braccia: "uno" } : null;
+    if (gestoDisegnato && !f.manoSu && f.cfg && window.SGOmino) {   // (avatar illustrati) per un attimo il braccio si alza davvero a salutare
+      var kg = JSON.stringify(f.cfg) + "|" + gestoDisegnato;
+      if (CACHE_GESTI[kg] === undefined) { try { CACHE_GESTI[kg] = SGOmino.svg(f.cfg, { gesto: gestoDisegnato }); } catch (e) { CACHE_GESTI[kg] = ""; } }
+      if (CACHE_GESTI[kg]) { f.fig.innerHTML = CACHE_GESTI[kg]; f.fig.insertBefore(f.anello, f.fig.firstChild); return; }
+    }
+    f.fig.innerHTML = f.cfg && window.SGOmino ? SGOmino.svg(f.cfg, o) : "<div class='sl-emo'>🙂</div>";
     f.fig.insertBefore(f.anello, f.fig.firstChild);
   }
   // un'animazione dell'avatar (saltello, saluto…) quando è libero: i tocchi e l'orologio della saletta
@@ -591,7 +602,12 @@
     Object.keys(DURATA_GESTO).forEach(function (c) { nodo.classList.remove(c); });
     void nodo.offsetWidth;   // (così la stessa animazione riparte da capo)
     nodo.classList.add(cosa); nodo._gesto = cosa;
-    clearTimeout(nodo._tGesto);
+    clearTimeout(nodo._tGesto); clearTimeout(nodo._tDisegno);
+    var f = nodo._f;
+    if (cosa === "saluta" && f && f.cfg && !f.manoSu && illustrati()) {   // (illustrati) si cambia solo il disegno di questo avatar e poi si rimette il normale
+      disegnaFigura(f, "saluta");
+      nodo._tDisegno = setTimeout(function () { if (f.nodo.parentNode && f.fig) disegnaFigura(f); }, DURATA_GESTO.saluta);
+    }
     nodo._tGesto = setTimeout(function () { nodo.classList.remove(cosa); nodo._gesto = null; }, DURATA_GESTO[cosa] || 700);
   }
   function rianima(n, cls) { if (!n) return; n.classList.remove(cls); void n.offsetWidth; n.classList.add(cls); }
@@ -1234,7 +1250,7 @@
     chk.addEventListener("change", function () { try { localStorage.setItem("sg-sl-parti", chk.checked ? "1" : "0"); } catch (e) {} });
     return el("div", { class: "sl-viva-opz" }, [
       el("label", { class: "sl-interruttore" }, [ el("span", { text: "⚡ Parti da solo quando tutti sono pronti" }), chk ]),
-      el("small", { text: "Per far uscire qualcuno, tieni premuto sul suo avatar. In alto, «🔒 Chiudi» chiude la porta: non entra nessun altro." })
+      el("small", { text: "Per far uscire qualcuno, tieni premuto sul suo avatar." })
     ]);
   }
 

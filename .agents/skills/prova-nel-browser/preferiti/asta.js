@@ -834,7 +834,7 @@
     var r5 = C([{ id: "a", q: 0 }, { id: "b", q: 0 }], 0); if (!r5.nessuno) no("tutti passano non è «nessuno»: " + JSON.stringify(r5));
     var ap = M.apertura({ n: 1, sp: 0 }, [{ id: "a", nome: "A", q: 3 }, { id: "b", nome: "B", q: 5 }, { id: "c", nome: "C", q: 0 }], r1);
     if (ap.buste.map(function (b) { return b.q; }).join(",") !== "0,3,5" || ap.fine !== "vince") no("l'apertura non va dalla più bassa alla più alta: " + JSON.stringify(ap));
-    var ms = M.apriMs(M.righeDi(ap)), ms10 = M.apriMs(10); if (ms < 2500 || ms > 4500 || ms10 > 6500) no("l'apertura dura " + ms + " ms in 3 e " + ms10 + " ms in 10");
+    var ms = M.apriMs(M.righeDi(ap)), ms10 = M.apriMs(10); if (ms < 5000 || ms > 8000 || ms10 > 10500) no("l'apertura dura " + ms + " ms in 3 e " + ms10 + " ms in 10");
     x.push("3 scelte (di base l'asta normale), riassunti e regole; conti: vince, pari, spareggio, resto, nessuno; apertura in 3 " + ms + " ms, in 10 " + ms10 + " ms; big da " + M.BIG);
     return x.join(" · ");
   } });
@@ -865,9 +865,11 @@
           if (!/decide la ruota/.test(fine)) no("spareggio tutti a 3: niente ruota («" + fine + "», " + JSON.stringify(rr) + ")");
           prima = NOMI.map(function (n) { return credDi(P, n); });
         } else if (fase === 1 && k === "ruota") {
-          misure = misure.concat(await misura("Paky", "la ruota", [".st-ruota .disco"]));
-          if (qa(P, ".st-ruota .disco span").length < 2) no("la ruota non ha i nomi");
-          x.push("🎡 ruota tra " + qa(P, ".st-ruota .disco span").map(function (s) { return s.textContent; }).join(", "));
+          misure = misure.concat(await misura("Paky", "la ruota", [".st-ruota .rg-tutto"]));
+          var cvR = q(P, ".st-ruota canvas.disco"), nmR = cvR ? cvR.getAttribute("data-nomi").split(",") : [], kR = cvR ? +cvR.getAttribute("data-spicchi") : 0;
+          if (nmR.length !== 3) no("la ruota non ha i 3 nomi: " + nmR.join(", "));
+          if (kR < 12 || kR % 3) no("la ruota (6 nov) ha tanti spicchi coi nomi alternati: qui " + kR);
+          x.push("🎡 ruota tra " + nmR.join(", ") + " (" + kR + " spicchi)");
         } else if (fase === 2) {
           if (!/Nessuno lo vuole/.test(fine) || !/passano/.test(rr[0] || "")) no("3ª, tutti passano: «" + fine + "» " + JSON.stringify(rr));
         }
@@ -962,7 +964,8 @@
           if (!await aspettaFase("ruota", 12000)) no("ancora pari: niente ruota");
           var ru = vm(C).ruota;
           if (!await W.aspetta(function () { return NOMI.every(function (n) { return q(win(n), ".st-ruota .disco"); }); }, 3000)) no("la ruota non c'è su tutti i telefoni");
-          if (!await aspettaFase("esito", 9000) || vm(C).esito.chiId !== ru.ids[ru.vince] || vm(C).esito.prezzo !== pari) no("la ruota non dà il calciatore a chi ha vinto (" + JSON.stringify(vm(C).esito) + ")");
+          if (!ru.piano || ru.piano.K < 12 || ru.piano.sp % ru.nomi.length !== ru.vince) no("il piano della ruota non va: " + JSON.stringify(ru.piano));
+          if (!await aspettaFase("esito", 16000) || vm(C).esito.chiId !== ru.ids[ru.vince] || vm(C).esito.prezzo !== pari) no("la ruota non dà il calciatore a chi ha vinto (" + JSON.stringify(vm(C).esito) + ")");
           x.push("3ª: pari due volte → 🎡 ruota → " + ru.nomi[ru.vince] + " per " + pari);
         }
         fatto++; continue;

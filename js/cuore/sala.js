@@ -335,7 +335,7 @@
       ]),
       cuore.rigaInsieme(),   // (Passo 6: "🗳️ Scegliamo insieme")
       el("div", { class: "sl-viva-opz", hidden: "hidden", "data-posto": "compagnia" }),   // (Passo 3: la Compagnia)
-      el("p", { class: "modulo-nota", text: "Per far uscire qualcuno, tieni premuto sul suo avatar. In alto, «🔒 Chiudi» chiude la porta: non entra nessun altro." })
+      el("p", { class: "modulo-nota", text: "Per far uscire qualcuno, tieni premuto sul suo avatar." })
     ]);
     velo = el("div", { class: "sl-velo", onclick: function (e) { if (e.target === velo) chiudi(); } }, [
       el("div", { class: "sl-foglio" }, [

@@ -22,7 +22,7 @@
 
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-html,body{ margin:0; padding:0; }
+html,body{ margin:0; padding:0; touch-action:manipulation; }
 
 body{
   font-family:var(--font);
@@ -1048,6 +1048,9 @@ button.am-riga:active{ transform:scale(.985); }
 /* editor avatar: zoom sul viso, tasto annulla, "a caso" per scheda, l'avatar reagisce se lo tocchi */
 .editor-avatar .om-figura{ transition:transform .45s cubic-bezier(.3,.9,.3,1); transform-origin:50% 37%; cursor:pointer; }
 .editor-avatar .om-figura.zoom-viso{ transform:translateX(-50%) scale(1.8); }
+/* avatar «illustrati» (strada A): la testa è più in alto e più piccola, lo zoom sul viso va lì */
+.editor-avatar .om-figura:has(svg.omino-a){ transform-origin:50% 14%; }
+.editor-avatar .om-figura.zoom-viso:has(svg.omino-a){ transform:translateX(-50%) translateY(24%) scale(2.9); }
 .om-pedana{ transition:opacity .3s; }
 .omino-palco.zoomato .om-pedana{ opacity:0; }
 .editor-avatar .om-azione.annulla{ right:8px; bottom:8px; width:42px; height:42px; padding:0; border-radius:50%; font-size:1.15rem; color:#eaf0ff; background:rgba(8,16,44,.65); box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2); }
@@ -4101,3 +4104,35 @@ html body.tema-oro::before{ display:none; }
 .arriva-gioco .ag-barra i{ position:absolute; left:0; top:0; bottom:0; width:40%; border-radius:99px; background:var(--o-oro); animation:ag-scorre 1.1s ease-in-out infinite; }
 @keyframes ag-scorre{ from{ transform:translateX(-100%); } to{ transform:translateX(250%); } }
 @media (prefers-reduced-motion: reduce){ .arriva-gioco .ag-ico, .arriva-gioco .ag-barra i{ animation:none; } }
+
+/* =========================================================
+   🧍 SALETTA: SPAZIO AGLI AVATAR (6 nov 2026, il proprietario: «che serve chiudere la sala? Occupa solo spazio e il titolo poi deve
+   andare sotto… dobbiamo recuperare spazio… si devono vedere bene gli avatar»; le cose restano tutte, «un po' più piccoline, non troppo»).
+   Niente «🔒 Chiudi» nella testa, titolo su UNA riga (si rimpicciolisce col telefono), codice e invito più bassi, niente insegna
+   «Sala d'attesa», faccine, «Pronti», «Sei dentro!» e tasti più sottili: quello che si guadagna lo prende la stanza (flex 1000)
+   ========================================================= */
+.sl-porta.via{ display:none !important; }
+.oro.saletta-schermo > .testa{ margin-bottom:6px; }
+.oro.saletta-schermo > .testa h1{ display:block; -webkit-line-clamp:unset; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:clamp(1.15rem, 5.6vw, 1.6rem); line-height:1.1; }
+@media (max-height:700px){ .oro.saletta-schermo > .testa h1{ font-size:clamp(1.1rem, 5.2vw, 1.4rem); } }
+.oro.saletta-schermo > .testa .sotto{ font-size:.82rem; margin-top:1px; }
+.saletta-schermo > .contenuto{ gap:6px; }
+.saletta-schermo > .piede{ margin-top:6px; }
+.saletta-schermo .sl-invito{ gap:8px; }
+.saletta-schermo .sl-invito .sl-link{ min-height:42px; padding:6px 12px; font-size:.95rem; }
+.saletta-schermo .sl-cod{ padding:2px 12px; border-radius:13px; }
+.saletta-schermo .sl-cod small{ font-size:.6rem; }
+.saletta-schermo .sl-cod b{ font-size:1.32rem; line-height:1.05; }
+.saletta-schermo .sl-cod.sei b{ font-size:1.08rem; }
+.saletta-schermo .sl-insegna{ display:none; }
+.saletta-schermo .sl-stanza{ min-height:170px; }
+.saletta-schermo .sl-fa{ height:32px; font-size:1.25rem; }
+.saletta-schermo .sl-faccine{ padding:2px; }
+.saletta-schermo .sl-chip{ padding:3px 11px; font-size:.8rem; }
+.saletta-schermo .sl-regole-riga{ padding:4px 10px; }
+.saletta-schermo .sl-attesa{ padding:4px 12px; border-radius:13px; }
+.saletta-schermo .sl-att-tit{ font-size:.95rem; margin-bottom:0; }
+.saletta-schermo .sl-att-testo{ font-size:.82rem; line-height:1.25; }
+.saletta-schermo .piede .btn{ min-height:46px; padding-top:9px; padding-bottom:9px; }
+.saletta-schermo > .contenuto::before{ margin-bottom:-6px; } .saletta-schermo > .contenuto::after{ margin-top:-6px; }   /* (lo stesso spazio tra i pezzi: 6 px) */
+.saletta-schermo > .contenuto{ padding-top:2px; }

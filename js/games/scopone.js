@@ -1367,10 +1367,10 @@
     var psstF = null;   // 🤫 il fumetto del messaggio al compagno: { n, s (posto sullo schermo), txt, fino }
 
     // il disegno di un avatar con un'espressione (lo fa la stanza condivisa; si tiene da parte)
-    function figHtml(nome, cfg, faccia) {
-      var k = nome + "|" + faccia + "|" + (cfg ? JSON.stringify(cfg) : "");
+    function figHtml(nome, cfg, faccia, intero) {   // intero: il disegno di sempre, a figura intera (la festa di fine partita)
+      var k = nome + "|" + faccia + "|" + (cfg ? JSON.stringify(cfg) : "") + (intero ? "|i" : "");
       if (cacheFig[k] == null) {
-        var R0 = C().stanza4(el, { scH: 300, pianoW: 300, pianoH: 200 }, [{ nome: nome, cfg: cfg, n: 0, faccia: faccia }]);
+        var R0 = C().stanza4(el, { scH: 300, pianoW: 300, pianoH: 200 }, [{ nome: nome, cfg: cfg, n: 0, faccia: faccia, gesto: intero ? null : undefined }]);
         cacheFig[k] = R0.posti[0].fig.innerHTML;
       }
       return cacheFig[k];
@@ -1486,7 +1486,7 @@
         if (o.faccia !== faccia) {
           p.fig.innerHTML = figHtml(st.nomi[s], (st.omini && st.omini[s]) || null, faccia);
           p.box.classList.toggle("pensa", faccia === "pensa");
-          if (faccia === "esulta" && st.presa && st.presa.chi === s && p.fig.animate) p.fig.animate([{ transform: "none" }, { transform: "translateY(-18px)" }, { transform: "none" }], { duration: 650, easing: "ease-out" });
+          if (!p.vita && faccia === "esulta" && st.presa && st.presa.chi === s && p.fig.animate) p.fig.animate([{ transform: "none" }, { transform: "translateY(-18px)" }, { transform: "none" }], { duration: 650, easing: "ease-out" });
         }
         if (o.fumetto !== fumetto) {
           var vecchio = p.box.querySelector(".sc-fumetto"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
@@ -1504,6 +1504,7 @@
         if (o.turno !== turno) p.targa.classList.toggle("turno", turno);
         var n = st.mani[s].length;
         if (o.n !== n) {
+          if (p.vita && o.n != null && n < o.n && C().posaFig) C().posaFig(p.fig, p.cfg, faccia);   // ha giocato una carta: la posa sul tavolo (avatar illustrati)
           p.targa.querySelector(".sc-num").textContent = n;
           while (p.vent.children.length > n) p.vent.removeChild(p.vent.lastChild);
           ventaglio(p);
@@ -1647,7 +1648,7 @@
         var avs = el("div", { class: "sp-avs festa" });
         var io0 = (st.omini && st.omini[0]) || (online ? null : (C().mioAvatar ? C().mioAvatar(st.nomi[0]) : null));
         var chi = vinto ? [[st.nomi[0], io0], [st.nomi[2], st.omini && st.omini[2]]] : [[st.nomi[1], st.omini && st.omini[1]], [st.nomi[3], st.omini && st.omini[3]]];
-        chi.forEach(function (x) { avs.appendChild(el("div", { html: figHtml(x[0], x[1] || null, "esulta") })); });
+        chi.forEach(function (x) { avs.appendChild(el("div", { html: figHtml(x[0], x[1] || null, "esulta", true) })); });
         C0.appendChild(avs);
       }
       if (r) {

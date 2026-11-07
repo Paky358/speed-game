@@ -605,6 +605,7 @@
       var cl = "sc-targa4" + (p.turno ? " turno" : "") + (p.mia ? " mia" : "");
       if (pos.targa.className !== cl) pos.targa.className = cl;
       var num = pos.targa.querySelector(".sc-num"); if (num && num.textContent !== String(p.n)) num.textContent = p.n;
+      if (pos.vita && pos.vent.children.length > p.n && C().posaFig) C().posaFig(pos.fig, pos.cfg, p.faccia);   // ha giocato una carta: la posa sul tavolo (avatar illustrati)
       while (pos.vent.children.length > p.n) { pos.vent.removeChild(pos.vent.lastChild); rifai = true; }
       while (pos.vent.children.length < p.n) { pos.vent.appendChild(el("div", { class: "sc-dorso" })); rifai = true; }
     });

@@ -24,8 +24,9 @@
 
   // ---- i PEZZI (una riga ciascuno) ----
   pezzo("studio", "js/studio.js");   // lo studio del game show, in comune
+  pezzo("avatar-a", "js/omino-a.js js/omino-a-pezzi.js");   // gli avatar «illustrati» (strada A): solo per chi li vede (AVATAR_A in core.js)
   pezzo("timeline", "data/eventi-storia.js data/eventi-invenzioni.js data/eventi-calcio.js data/eventi-rap.js data/eventi-cinema.js data/eventi-musica.js data/eventi-tv.js data/eventi-giochi.js data/eventi-sport.js data/eventi-italia.js data/linea-foto.js js/games/timeline.js", "studio");
-  pezzo("asta", "data/asta-carte.js data/asta-pizza.js data/asta-panino.js data/asta-rapina.js data/asta-supereroi.js data/asta-appuntamento.js data/asta-giardino.js data/asta-vacanza.js data/asta-coinquilino.js data/asta-calcetto.js data/asta-palestra.js data/asta-capodanno.js data/asta-universita.js data/asta-roadtrip.js data/asta-playstation.js data/asta-halloween.js data/asta-natale.js data/asta-matrimonio.js data/asta-gita.js data/asta-trasloco.js data/asta-karaoke.js data/asta-campeggio.js data/asta-reality.js data/asta-tempo.js data/asta-icone.js data/asta-fanta.js data/fanta-quotazioni.js data/fanta-statistiche.js data/fanta-squadre.js js/asta-sala-arte.js js/asta-stadio-arte.js js/asta-maglie.js js/games/asta.js");   // L'Asta e la Mini Asta Fantacalcio
+  pezzo("asta", "data/asta-carte.js data/asta-pizza.js data/asta-panino.js data/asta-rapina.js data/asta-supereroi.js data/asta-appuntamento.js data/asta-giardino.js data/asta-vacanza.js data/asta-coinquilino.js data/asta-calcetto.js data/asta-palestra.js data/asta-capodanno.js data/asta-universita.js data/asta-roadtrip.js data/asta-playstation.js data/asta-halloween.js data/asta-natale.js data/asta-matrimonio.js data/asta-gita.js data/asta-trasloco.js data/asta-karaoke.js data/asta-campeggio.js data/asta-reality.js data/asta-tempo.js data/asta-icone.js data/asta-fanta.js data/fanta-quotazioni.js data/fanta-statistiche.js data/fanta-squadre.js data/fanta-numeri.js js/asta-sala-arte.js js/asta-stadio-arte.js js/asta-maglie.js js/games/asta.js");   // L'Asta e la Mini Asta Fantacalcio
   pezzo("nomicose", "data/ncc-categorie.js js/games/nomicoseecitta.js", "studio");
   pezzo("impostore", "data/impostore-parole.js js/games/impostore.js");
   pezzo("sipero", "data/sipero-carte.js js/games/sipero.js");
@@ -57,6 +58,20 @@
   pezzo("unaparola", "data/unaparola-parole.js js/games/unaparola.js");
   pezzo("dadoveviene", "data/dadoveviene-paesi.js data/dadoveviene-carte.js js/games/dadoveviene.js");
   pezzo("memata", "data/memata.js js/games/memata.js");
+
+  // ---- i giochi IN PROVA (scritti a mano, fuori dalle schede) ----
+  // La tessera la vedono solo questi account; gli altri entrano lo stesso se invitati (link, codice, Sala).
+  // Sta qui e non nel gioco perché il codice del gioco arriva solo al primo tocco: prima la tessera si vedeva a tutti
+  // (Lanterne, chat di Mario De Viva, 5 nov 2026; la stessa lista è in AMMESSI di js/games/lanterne.js).
+  var IN_PROVA = { lanterne: ["IL PAPPONE", "GAY", "MARIO"] };
+  (function () {
+    var st = document.createElement("style");
+    st.textContent = Object.keys(IN_PROVA).map(function (id) { return 'html:not(.sg-prova-' + id + ') [data-gioco="' + id + '"]{display:none!important}'; }).join("\n");
+    (document.head || document.documentElement).appendChild(st);
+    function nome() { try { var p = window.SGNube && SGNube.profilo && SGNube.profilo(); return String((p && p.nome) || "").trim().toUpperCase(); } catch (e) { return ""; } }
+    function aggiorna() { var n = nome(); Object.keys(IN_PROVA).forEach(function (id) { document.documentElement.classList.toggle("sg-prova-" + id, !!window.LT_PROVA || IN_PROVA[id].indexOf(n) >= 0); }); }
+    aggiorna(); setInterval(aggiorna, 1500);
+  })();
 
   // ---- le SCHEDE (fatte da elenco-giochi.js: non toccarle a mano) ----
   // >>> SCHEDE

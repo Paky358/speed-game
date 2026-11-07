@@ -787,6 +787,8 @@
       ".sc-targa-sc{font-size:.72rem;font-weight:800;color:#ffe58a}",
       ".sc-avv{position:absolute;left:50%;z-index:1}",
       ".sc-avv-fig svg{display:block;width:100%;height:auto}",
+      ".sc-ill .sc-avv{z-index:3}",   // (avatar illustrati: seduti sopra il panno, mani sul tavolo; le carte coperte restano davanti)
+      ".sc-ill .sc-avv-carte{z-index:7}",
       ".sc-avv-carte{position:absolute;left:50%;width:0;height:0;z-index:3}",
       ".sc-avv-carte .sc-dorso{position:absolute;border-radius:5px;transform-origin:50% 120%}",
       ".sc-fumetto{position:absolute;z-index:5;background:#fff;color:#1d2a5e;font-weight:900;border-radius:14px;padding:5px 10px;font-size:.85rem;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.35);transform-origin:0 100%;animation:scFum .28s cubic-bezier(.3,1.6,.5,1)}",
@@ -808,6 +810,8 @@
       ".sc-testata > div:first-child{background:rgba(10,18,50,.72);border:1.5px solid rgba(255,255,255,.15);border-radius:999px;padding:5px 12px;box-shadow:0 3px 8px rgba(0,0,0,.35)}",
       ".sc-scena .sc-quadro{top:62px}",
       ".sc-scena .sc-targa{top:56px}",
+      ".sc-ill .sc-targa{top:44px}",   // (avatar illustrati: il cartellino sta sopra la testa, non sui capelli)
+      ".sc-ill .sc-targa4 .sc-nome{max-width:60px}",
       ".sc-targa4{position:absolute;transform:translate(-50%,-100%);z-index:4;display:flex;align-items:center;gap:4px;background:rgba(10,18,50,.85);border:2px solid rgba(255,255,255,.18);border-radius:999px;padding:2px 8px;white-space:nowrap;font-weight:800;transition:border-color .2s,box-shadow .2s}",
       ".sc-targa4 .sc-nome{font-size:.7rem;max-width:92px;overflow:hidden;text-overflow:ellipsis}",
       ".sc-targa4{background:linear-gradient(180deg,#7a1f2b,#4e0f18);border-color:#ff6b6b}",
@@ -928,15 +932,52 @@
   }
   function postoRiservato(r, id) { return !!(r && r.id !== id && Date.now() < r.fino); }   // true = questo posto non è (ancora) per lui
   var svgCache = {};   // disegni già pronti (un avatar per espressione): non si rifanno a ogni mossa
-  function svgAvatar(cfg, faccia) {
-    var k = JSON.stringify(cfg) + "|" + faccia;
+  // 🎨 avatar illustrati (solo se accesi): seduti al tavolo, dalla testa alla vita, con le mani sul panno. Con gli avatar di prima
+  // (o con gesto == null) il disegno resta quello di sempre.
+  function aProp() { return !!(window.SGOminoA && SGOminoA.PROPORZIONE && SGOminoA.PROPORZIONE !== "attuale"); }   // (3° tempo, 6 nov 2026) le proporzioni nuove degli avatar illustrati
+  function kTav(tre) { return illu() && aProp() ? (tre ? 1 : 0.8) : 1; }   // con gli avatar illustrati le carte sul tavolo sono un po più piccole: prima erano grandi quanto il loro busto
+  function illu() { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); }
+  function svgAvatar(cfg, faccia, gesto) {
+    var ill = !!gesto && illu();
+    var k = JSON.stringify(cfg) + "|" + faccia + (ill ? "|v" + gesto : "");
     if (!svgCache[k]) {
       var c = {}, x = FACCE[faccia] || {}, n;
       for (n in cfg) c[n] = cfg[n];
       for (n in x) c[n] = x[n];
-      svgCache[k] = SGOmino.svg(c);
+      svgCache[k] = ill ? SGOmino.svg(c, { vita: true, gesto: gesto }) : SGOmino.svg(c);
     }
     return svgCache[k];
+  }
+  function gestoBase(faccia) { return faccia === "esulta" ? "esulta" : "tavolo"; }
+  // cambia il disegno di un avatar tenendo lo sguardo (gli occhi che seguono il turno)
+  function scambiaFig(fig, html) {
+    var oc = fig.querySelector(".om-occhi"), tr = oc ? oc.style.translate : "";
+    fig.innerHTML = html;
+    if (tr) { var n = fig.querySelector(".om-occhi"); if (n) n.style.translate = tr; }
+  }
+  // chi gioca una carta la posa sul tavolo: per 0,7 s il disegno col gesto "posa", poi torna quello di prima (se nel frattempo
+  // il disegno è cambiato per altro, non si tocca). I due disegni sono in cache: niente si rifà a ogni mossa.
+  function posaFig(fig, cfg, faccia) {
+    if (!illu() || !fig || !cfg || faccia === "esulta") return;
+    scambiaFig(fig, svgAvatar(cfg, faccia, "posa")); fig.setAttribute("data-gesto", "posa");
+    var nodo = fig.firstChild; clearTimeout(fig._tp);
+    // il gesto si vede: l avatar si sporge un poco verso il tavolo e una carta coperta lascia la sua mano e va verso il panno
+    try {
+      var box = fig.parentNode, fw = fig.offsetWidth, fh = fig.offsetHeight;
+      if (fig.animate) fig.animate([{ transform: "none" }, { transform: "translateY(4%) scale(1.05)", offset: 0.35 }, { transform: "translateY(4%) scale(1.05)", offset: 0.75 }, { transform: "none" }], { duration: 760, easing: "ease-out" });
+      if (box && fw > 20 && box.animate) {
+        var cw = Math.max(14, Math.round(fw * 0.15)), ch = Math.round(cw * ASP_CARTA), vc = document.createElement("div");
+        vc.className = "sc-dorso sc-volo"; vc.style.cssText = "position:absolute;z-index:9;pointer-events:none;width:" + cw + "px;height:" + ch + "px;left:" + Math.round(fw * 0.47 - cw / 2) + "px;top:" + Math.round(fh * 0.8) + "px";
+        box.appendChild(vc);
+        var an = vc.animate([{ transform: "translateY(0) scale(1) rotate(-8deg)", opacity: 1 }, { transform: "translateY(" + Math.round(fh * 0.3) + "px) scale(1.25) rotate(0deg)", opacity: 1, offset: 0.7 }, { transform: "translateY(" + Math.round(fh * 0.5) + "px) scale(1.5) rotate(4deg)", opacity: 0 }], { duration: 760, easing: "ease-in" });
+        an.onfinish = function () { if (vc.parentNode) vc.parentNode.removeChild(vc); };
+        setTimeout(function () { if (vc.parentNode) vc.parentNode.removeChild(vc); }, 1200);
+      }
+    } catch (e) {}
+    fig._tp = setTimeout(function () {
+      if (!document.body.contains(fig) || fig.firstChild !== nodo) return;
+      scambiaFig(fig, svgAvatar(cfg, faccia, "tavolo")); fig.removeAttribute("data-gesto");
+    }, 700);
   }
 
   // =====================================================================
@@ -951,8 +992,8 @@
     var scW = Math.min(window.innerWidth || 375, 600);   // la stanza va da bordo a bordo
     var manoH = righeMano * Math.round(wH * ASP_CARTA) + (righeMano - 1) * 6;
     var scH = Math.max(300, Math.min(900, Math.round(alt - (manoH + 52) + c.v)));
-    var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.6);
-    var tavAw = Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh = (pianoH - 24) * 0.87;
+    var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * (illu() && aProp() ? 0.5 : 0.6));   // (3° tempo giro 3: con gli avatar illustrati il tavolo è meno profondo e meno vuoto, e gli avatar gli stanno più vicini)
+    var tavAw = Math.min((pianoW - 24) * 0.94 - 4, scW - 22) * kTav(1), tavAh = (pianoH - 24) * 0.87 * kTav(1);
     var wT = Math.max(26, Math.min(110, Math.floor((tavAw - 15) / 4), Math.floor((tavAh - 5) / 2 / ASP_CARTA)));
     return { alt: alt, scW: scW, scH: scH, pianoW: pianoW, pianoH: pianoH, tavAw: tavAw, tavAh: tavAh, wT: wT, corr: c };
   }
@@ -983,13 +1024,14 @@
     carte.forEach(function (c) { ids[c.id] = true; });
     for (k in stato) if (!ids[k]) delete stato[k];   // chi è andato via libera il posto (gli altri NON si muovono)
     for (k in stato) occ[stato[k]] = true;
-    carte.forEach(function (c) { if (stato[c.id] != null) return; var p = 0; while (occ[p]) p++; stato[c.id] = p; occ[p] = true; });
+    var ORD = illu() && aProp() ? [1, 2, 5, 6, 0, 3, 4, 7] : [0, 1, 2, 3, 4, 5, 6, 7];   // (3° tempo giro 3: le prime carte formano un blocco al centro del panno, non una fila lontana con metà tavolo vuoto)
+    carte.forEach(function (c) { if (stato[c.id] != null) return; var p = -1, q; for (q = 0; q < ORD.length; q++) if (!occ[ORD[q]]) { p = ORD[q]; break; } if (p < 0) { p = ORD.length; while (occ[p]) p++; } stato[c.id] = p; occ[p] = true; });
     var maxP = 0; for (k in stato) maxP = Math.max(maxP, stato[k] + 1);
     var col = 4, righe = Math.ceil(Math.max(8, maxP) / col), w = M.wT;
     if (righe > 2) w = Math.max(26, Math.min(w, Math.floor((M.tavAh - (righe - 1) * 5) / righe / ASP_CARTA)));   // solo con 9+ carte
     return {
       w: w,
-      griglia: function (el) { return el("div", { style: "display:grid;grid-template-columns:repeat(" + col + "," + w + "px);grid-template-rows:repeat(" + righe + "," + Math.round(w * ASP_CARTA) + "px);gap:5px;justify-content:center;align-content:center;height:100%" }); },
+      griglia: function (el) { return el("div", { style: "display:grid;grid-template-columns:repeat(" + col + "," + w + "px);grid-template-rows:repeat(" + righe + "," + Math.round(w * ASP_CARTA) + "px);gap:5px;justify-content:center;align-content:center;height:100%" + (illu() && aProp() ? ";box-sizing:border-box;padding-top:" + Math.round(w * 0.3) + "px" : "") }); },
       metti: function (cel, id) { var p = stato[id] || 0; cel.style.gridColumn = (p % col + 1); cel.style.gridRow = (Math.floor(p / col) + 1); return cel; }
     };
   }
@@ -1006,11 +1048,12 @@
   // la stanza: sedie = [sinistra, compagno (di fronte), destra], ognuna { cfg, nome, n, turno, mia, faccia, fumetto }
   function stanza4(el, M, sedie) {
     var scena = el("div", { class: "sc-scena", style: "height:" + M.scH + "px" });
-    scena.appendChild(el("div", { class: "sc-quadro", style: "left:16px;top:62px;background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
-    scena.appendChild(el("div", { class: "sc-quadro", style: "right:16px;top:62px;background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
+    scena.appendChild(el("div", { class: "sc-quadro", style: (illu() ? "left:12px;top:46px;width:42px;height:30px;" : "left:16px;top:62px;") + "background:linear-gradient(135deg,#3f6b8f,#9cc4d9 60%,#e7d9a8)" }));
+    scena.appendChild(el("div", { class: "sc-quadro", style: (illu() ? "right:12px;top:46px;width:42px;height:30px;" : "right:16px;top:62px;") + "background:linear-gradient(135deg,#8f3f5c,#e3a26b 60%,#f2e3b5)" }));
     var posti = sedie.map(function (p) {
       var cfg = p.cfg || facciaBot(p.nome);
-      var box = el("div", { class: "sc-avv" + (p.faccia === "pensa" ? " pensa" : "") }), fig = el("div", { class: "sc-avv-fig", html: cfg && window.SGOmino ? svgAvatar(cfg, p.faccia || "normale") : "" });
+      var gest = p.gesto === null ? null : (p.gesto || gestoBase(p.faccia)), vita = !!(gest && illu());   // (gesto == null: il disegno di sempre)
+      var box = el("div", { class: "sc-avv" + (p.faccia === "pensa" ? " pensa" : "") }), fig = el("div", { class: "sc-avv-fig", html: cfg && window.SGOmino ? svgAvatar(cfg, p.faccia || "normale", gest) : "" });
       box.appendChild(fig);
       if (p.fumetto) box.appendChild(el("div", { class: "sc-fumetto" + (p.faccia === "esulta" ? " scopa" : ""), text: p.fumetto }));
       var targa = el("div", { class: "sc-targa4" + (p.turno ? " turno" : "") + (p.mia ? " mia" : "") }, [
@@ -1018,8 +1061,9 @@
       var vent = el("div", { class: "sc-avv-carte" });
       for (var i = 0; i < p.n; i++) vent.appendChild(el("div", { class: "sc-dorso" }));
       scena.appendChild(vent); scena.appendChild(box); scena.appendChild(targa);
-      return { box: box, fig: fig, targa: targa, vent: vent, p: p };
+      return { box: box, fig: fig, targa: targa, vent: vent, p: p, cfg: cfg, vita: vita };
     });
+    if (posti.length && posti[0].vita) scena.classList.add("sc-ill");
     var prosp = el("div", { class: "sc-prosp", style: "perspective:" + Math.max(600, Math.round(M.scH * 1.15)) + "px" });
     var piano = el("div", { class: "sc-piano", style: "width:" + M.pianoW + "px;height:" + M.pianoH + "px;margin-left:" + (-M.pianoW / 2) + "px;transform:rotateX(54deg)" });
     var feltro = el("div", { class: "sc-panno" });
@@ -1028,12 +1072,16 @@
     function siedi() {   // dopo il montaggio: ognuno seduto con la vita al bordo lontano del tavolo
       var bordo = piano.getBoundingClientRect().top - scena.getBoundingClientRect().top, sw = scena.clientWidth;
       var w = Math.max(70, Math.min(Math.round(sw * 0.34), 150, Math.round((bordo + 6 - 30) / 0.975)));
+      var vita = posti.length > 0 && posti[0].vita;
+      if (vita) w = aProp() ? Math.max(70, Math.min(Math.round(sw * (posti.length > 2 ? 0.47 : 0.5)), 208)) : Math.max(70, Math.min(Math.round(sw * 0.31), 128));   // (3° tempo, 6 nov: più grandi e più vicini al tavolo)   // seduti e vicini: dalla testa alla vita, mani sul panno
       posti.forEach(function (s, i) {
-        var cx = Math.round(sw * xs[i]), top = Math.round(bordo + 6 - w * 0.975);
+        var xi = xs[i]; if (vita && aProp() && posti.length === 3) xi = [0.15, 0.5, 0.85][i]; var cx = Math.round(sw * xi), top = Math.round(bordo + 6 - w * 0.975);
+        var H = Math.round(w * 118 / 108);   // il ritaglio «vita» è 108×118
+        if (vita) top = Math.round(bordo + 6 + w * 0.2 - H);   // il bordo basso (le mani) va un poco oltre il bordo lontano del panno
         s.box.style.width = w + "px"; s.box.style.left = (cx - w / 2) + "px"; s.box.style.marginLeft = "0"; s.box.style.top = top + "px";
-        s.targa.style.left = cx + "px"; s.targa.style.top = Math.round(top + w * 0.1) + "px";
-        var cw = Math.round(w * 0.16), ch = Math.round(cw * ASP_CARTA), n = s.vent.children.length, ang = n > 5 ? 6 : 12;
-        s.vent.style.left = cx + "px"; s.vent.style.top = Math.round(top + w * 0.76) + "px";
+        s.targa.style.left = cx + "px"; s.targa.style.top = Math.round(vita ? top - 2 : top + w * 0.1) + "px";   // (illustrati: il cartellino sta sopra la testa, mai sui capelli)
+        var cw = Math.round(w * (vita ? (aProp() ? 0.1 : 0.115) : 0.16)), ch = Math.round(cw * ASP_CARTA), n = s.vent.children.length, ang = n > 5 ? 6 : 12;
+        s.vent.style.left = cx + "px"; s.vent.style.top = Math.round(top + (vita ? H * (aProp() ? 0.85 : 0.92) : w * 0.76)) + "px";
         [].forEach.call(s.vent.children, function (d, k) {
           var a = (k - (n - 1) / 2) * ang;
           d.style.width = cw + "px"; d.style.height = ch + "px"; d.style.left = (-cw / 2) + "px";
@@ -1041,7 +1089,7 @@
         });
         var fm = s.box.querySelector(".sc-fumetto");
         if (fm) { fm.style.left = Math.round(w * (xs[i] > 0.6 ? 0.05 : 0.7)) + "px"; fm.style.top = Math.round(w * 0.15) + "px"; }
-        if (s.p.faccia === "esulta" && s.p.salta && s.fig.animate) s.fig.animate([{ transform: "none" }, { transform: "translateY(-18px)" }, { transform: "none" }], { duration: 650, easing: "ease-out" });
+        if (!vita && s.p.faccia === "esulta" && s.p.salta && s.fig.animate) s.fig.animate([{ transform: "none" }, { transform: "translateY(-18px)" }, { transform: "none" }], { duration: 650, easing: "ease-out" });
       });
     }
     // gli altri guardano chi deve giocare (solo gli occhi): verso la sedia di turno, o in basso se tocca a te
@@ -1132,7 +1180,7 @@
     var scH = Math.max(300, Math.min(900, Math.round(alt - (Math.round(wH * ASP_CARTA) + 52 + sotto) + scCorr.v)));
     var pianoW = Math.round(scW * 1.14), pianoH = Math.round(scH * 0.7);
     return { wH: wH, scW: scW, alt: alt, scH: scH, pianoW: pianoW, pianoH: pianoH, k: chiave + "|" + scCorr.v, sotto: sotto,
-      tavAw: Math.min((pianoW - 24) * 0.94 - 4, scW - 22), tavAh: (pianoH - 24) * 0.87 };
+      tavAw: Math.min((pianoW - 24) * 0.94 - 4, scW - 22) * kTav(), tavAh: (pianoH - 24) * 0.87 * kTav() };
   }
 
   // la stanza si costruisce UNA volta (avversario, quadri, tavolo, mensola); poi si aggiornano solo i pezzi
@@ -1187,10 +1235,18 @@
     // l'avversario seduto: il bordo lontano del tavolo gli arriva in vita
     var bordo = m.piano.getBoundingClientRect().top - scena.getBoundingClientRect().top;
     var w = Math.max(90, Math.min(Math.round(Mi.scW * 0.46), 190, Math.round((bordo + 6 - 22) / 0.975)));
-    m.avvW = w; m.cw = Math.round(w * 0.17);
+    var topAvv = Math.round(bordo + 6 - w * 0.975), topVent = Math.round(bordo + 6 - w * 0.975 + w * 0.76);
+    m.vita = illu();   // 🎨 avatar illustrati: seduto vicino al tavolo, dalla testa alla vita, mani sul panno
+    if (m.vita) {
+      w = Math.max(90, Math.min(Math.round(Mi.scW * (aProp() ? 0.48 : 0.42)), aProp() ? 196 : 170, Math.floor((bordo + 6 - 70) / 0.8926)));
+      var Hv = Math.round(w * 118 / 108);
+      topAvv = Math.round(bordo + 6 + w * 0.2 - Hv); topVent = Math.round(topAvv + Hv * 0.95);
+      scena.classList.add("sc-ill");
+    }
+    m.avvW = w; m.cw = Math.round(w * (m.vita ? 0.14 : 0.17));
     m.avv.style.width = w + "px"; m.avv.style.marginLeft = (-w / 2) + "px";
-    m.avv.style.top = Math.round(bordo + 6 - w * 0.975) + "px";
-    m.ventaglio.style.top = Math.round(bordo + 6 - w * 0.975 + w * 0.76) + "px";
+    m.avv.style.top = topAvv + "px";
+    m.ventaglio.style.top = topVent + "px";
     // tocchi: guardano lo stato di adesso (le carte restano le stesse fra un disegno e l'altro)
     m.aspetta = function () {   // tocco quando non è il tuo turno
       var vm = C.vm; if (cb.guarda || !vm || vm.fase !== "gioco") return;
@@ -1272,8 +1328,10 @@
     }
     var cfgAvv = (vm.avatar && vm.avatar.opp) || (window.SGOmino ? SGOmino.casuale(vm.nomi.opp) : null);
     if (cfgAvv && window.SGOmino) {
-      var kF = JSON.stringify(cfgAvv) + "|" + faccia;
-      if (m.facciaK !== kF) { m.facciaK = kF; m.avvFig.innerHTML = svgAvatar(cfgAvv, faccia); }
+      var gB = m.vita ? gestoBase(faccia) : null, kF = JSON.stringify(cfgAvv) + "|" + faccia + "|" + gB;
+      if (m.facciaK !== kF) { m.facciaK = kF; scambiaFig(m.avvFig, svgAvatar(cfgAvv, faccia, gB)); }
+      if (m.vita && m.oppPrima != null && vm.oppN < m.oppPrima) posaFig(m.avvFig, cfgAvv, faccia);   // ha giocato una carta: la posa
+      m.oppPrima = vm.oppN;
       m.avv.classList.toggle("pensa", faccia === "pensa");
     }
     if (m.fumTxt !== fumetto) {
@@ -1282,13 +1340,13 @@
       if (fumetto) {
         var lungo = fumetto.length > 4;
         m.fum = el("div", { class: "sc-fumetto" + (faccia === "esulta" && /🧹/.test(fumetto) ? " scopa" : "") + (lungo ? " lungo" : ""), text: fumetto });
-        m.fum.style.left = Math.round(m.avvW * 0.74) + "px"; m.fum.style.top = Math.round(m.avvW * (lungo ? 0.08 : 0.2)) + "px";
+        m.fum.style.left = Math.round(m.avvW * (m.vita ? 0.9 : 0.74)) + "px"; m.fum.style.top = Math.round(m.avvW * (lungo ? 0.08 : 0.2)) + "px";
         if (lungo) m.fum.style.maxWidth = Math.max(110, Math.round(Mi.scW / 2 - m.avvW * 0.24 - 10)) + "px";
         m.avv.appendChild(m.fum);
       }
     }
     // la scopa (o il settebello) dell'avversario: salta dalla gioia (una volta sola per presa)
-    if (faccia === "esulta" && chiavePresa !== m.salto && m.avvFig.animate) {
+    if (!m.vita && faccia === "esulta" && chiavePresa !== m.salto && m.avvFig.animate) {
       m.salto = chiavePresa;
       m.avvFig.animate([{ transform: "none" }, { transform: "translateY(-22px)" }, { transform: "none" }, { transform: "translateY(-10px)" }, { transform: "none" }], { duration: 800, easing: "ease-out" });
     }
@@ -3181,7 +3239,7 @@
     mazzo: mazzo, larghezza: larghezza, ASP_CARTA: ASP_CARTA,
     validaSet: validaSet, prefisso: prefisso, PRIM: PRIM,
     // stanza a 4 con gli avatar (Scopa 2 vs 2 e Scopone)
-    misureStanza4: misureStanza4, correggiStanza4: correggiStanza4, ricontrollaStanza4: ricontrollaStanza4, postiTavolo: postiTavolo, stanza4: stanza4, animaDistribuzione4: animaDistribuzione4,
+    posaFig: posaFig, misureStanza4: misureStanza4, correggiStanza4: correggiStanza4, ricontrollaStanza4: ricontrollaStanza4, postiTavolo: postiTavolo, stanza4: stanza4, animaDistribuzione4: animaDistribuzione4,
     mioAvatar: mioAvatar, avatarValido: avatarValido,
     // i punti da raggiungere (anche Scopa 2 vs 2 e Scopone)
     traguardoDa: traguardoDa, testoTraguardo: testoTraguardo, partitaFinita: partitaFinita, sceltaTraguardo: sceltaTraguardo
