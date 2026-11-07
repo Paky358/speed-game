@@ -825,6 +825,8 @@
     var iris = col(OPZ.iride, c.iride);
     var mg = col(OPZ.maglia, c.maglia), pt = col(OPZ.pantaloni, c.pantaloni), sc = col(OPZ.scarpe, c.scarpe), ac = col(OPZ.colAcc, c.colAcc == null ? mg : c.colAcc);   // (senza colore il cappello prende quello della maglia, anche dei colori nuovi)
     var cc = col(OPZ.colCollo, c.colCollo);
+    // (tappa 3) il secondo colore del capo e dei pantaloni (null = non c'è: tutto come prima)
+    var m2 = c.maglia2 != null ? col(OPZ.maglia, c.maglia2) : null, p2 = c.pant2 != null ? col(OPZ.pantaloni, c.pant2) : null;
     var labbro = m ? mix(sk, "#b5594f", Lsk < 0.35 ? 0.3 : 0.48) : mix(sk, "#c4566a", Lsk < 0.35 ? 0.35 : 0.55);
     var rossetto = c.rossetto && c.rossetto !== "nessuno" ? col(OPZ.colRossetto, c.colRossetto) : null;
     if (rossetto) labbro = mix(labbro, rossetto, c.rossetto === "tinta" ? 0.5 : 0.88);
@@ -949,8 +951,11 @@
         : (sc2.tipo === "quadro" ? "L" + q(C - nl + 4) + " " + (ny + prof) + "L" + q(C + nl - 4) + " " + (ny + prof) + "L" + q(C + nl) + " " + ny
         : "C" + q(C - nl + 2) + " " + q(ny + prof * 0.9) + " " + q(C - nl * 0.45) + " " + (ny + prof) + " " + C + " " + (ny + prof) + "C" + q(C + nl * 0.45) + " " + (ny + prof) + " " + q(C + nl - 2) + " " + q(ny + prof * 0.9) + " " + q(C + nl) + " " + ny);
       var hl = Labs2[0];
-      return "M" + q(C - nl) + " " + ny + sc3 + cr(Rabs2) + "Q" + C + " " + q(orlo + (o.curvaOrlo != null ? o.curvaOrlo : 6)) + " " + q(hl[0]) + " " + q(hl[1]) + cr(Labs2) + "Z";
+      var dT = "M" + q(C - nl) + " " + ny + sc3 + cr(Rabs2) + "Q" + C + " " + q(orlo + (o.curvaOrlo != null ? o.curvaOrlo : 6)) + " " + q(hl[0]) + " " + q(hl[1]) + cr(Labs2) + "Z";
+      orloT[dT] = orlo;   // (tappa 3) dove finisce: le cuciture del jeans sull orlo
+      return dT;
     }
+    var orloT = {};
     function busto(o) { return tronco(o); }   // (nome di prima: lo usano i pezzi)
 
     // ---------- le braccia: un contorno solo ----------
@@ -1049,10 +1054,14 @@
     }
     // (nomi di prima, li usano i pezzi) una manica: fino alla frazione lung del braccio, agio sulla larghezza, svasa all'orlo
     var agioBr = {};   // (ritocchi) quanto è larga la manica più larga (agio + svasa) di ogni braccio: il braccio staccato prende solo quella
-    function manica(lato2, o) { o = o || {}; manicaFino[lato2] = Math.max(manicaFino[lato2] || 0, o.lung != null ? o.lung : 1); agioBr[lato2] = Math.max(agioBr[lato2] || 0, (o.agio != null ? o.agio : 8) + (o.svasa || 0)); return contornoBraccio(lato2, o.agio != null ? o.agio : 8, o.lung != null ? o.lung : 1, o.svasa || 0, o.tonda ? 6 : 0); }
+    // (correzione della tappa 3, Tavola 2: «Hawaiana: maniche corte e fiori») la camicia (e la camicetta) hawaiana ha le maniche corte, a 0,38
+    // del braccio come nella tavola: mentre si disegna quel capo manica e fineManica non vanno oltre manicaMax (i polsini diventano l orlo
+    // della manica corta, la pelle del braccio si vede da lì in giù anche nei gesti). Gli altri capi e le altre fantasie: come prima.
+    var manicaMax = 1, corteCapo = c.fant === "hawaiana" && /^(camicia|camicetta|moda_camicia)$/.test(c.capo) ? 0.38 : 1;
+    function manica(lato2, o) { o = o || {}; var lg = o.lung != null ? o.lung : 1; if (manicaMax < 1 && lg > manicaMax) lg = manicaMax; manicaFino[lato2] = Math.max(manicaFino[lato2] || 0, lg); agioBr[lato2] = Math.max(agioBr[lato2] || 0, (o.agio != null ? o.agio : 8) + (o.svasa || 0)); return contornoBraccio(lato2, o.agio != null ? o.agio : 8, lg, o.svasa || 0, o.tonda ? 6 : 0); }
     // dove finisce la manica: punto, direzione, larghezza (intera) del braccio lì
     function fineManica(lato2, lung) {
-      var b = BR[lato2], tot = b.l1 + b.l2, s = tot * Math.max(0.03, Math.min(1, lung)), p = ptAt(b, s), d = s < b.l1 ? [(b.E[0] - b.J[0]) / b.l1, (b.E[1] - b.J[1]) / b.l1] : [(b.W[0] - b.E[0]) / b.l2, (b.W[1] - b.E[1]) / b.l2];
+      var b = BR[lato2], tot = b.l1 + b.l2, s = tot * Math.max(0.03, Math.min(1, lung, manicaMax)), p = ptAt(b, s), d = s < b.l1 ? [(b.E[0] - b.J[0]) / b.l1, (b.E[1] - b.J[1]) / b.l1] : [(b.W[0] - b.E[0]) / b.l2, (b.W[1] - b.E[1]) / b.l2];
       return { x: p[0], y: p[1], dx: d[0], dy: d[1], w: wAt(larghezze(b), s) };
     }
 
@@ -1106,8 +1115,13 @@
       o = o || {};
       var tr = pz.tronco || [], br = pz.braccia || [], al = pz.altro || [];
       br = br.filter(function (q) { return tieni(q.lato); });
+      if (manicaMax < 1) br = br.map(function (q0) { return q0.fino == null || q0.fino > manicaMax ? { d: q0.d, lato: q0.lato, fino: manicaMax, e: q0.e } : q0; });   // (le maniche corte)
       if (PARTE === "braccio") { tr = []; al = []; }
       if (!tr.length && !al.length && !br.length) return { svg: "", clip: "none" };
+      // (tappa 3) la stoffa del capo o dei pantaloni che si stanno disegnando: del capo SOLO le parti col colore della maglia
+      // (la camicia bianca sotto la giacca o il gilet resta com'è), dei pantaloni tutto. La stoffa cambia anche luce e volume.
+      var fb = fabOra && (fabOra.sotto || colore === mg) ? fabOra : null, SF = fb && fb.st ? STOFFE[fb.st] : null;
+      if (SF) { var o2 = {}, k2, so = SF.o(colore); for (k2 in o) o2[k2] = o[k2]; for (k2 in so) o2[k2] = so[k2]; o = o2; }
       var tutti = tr.concat(al).concat(br.map(function (q) { return q.d; }));
       var bordo = o.bordo || mix(colore, "#12060c", 0.5), chiaro = o.chiaro || "#ffffff", scuro = o.scuro || mix(colore, "#14080c", 0.6);
       var bL = mix(colore, bordo, 0.45), rimG = LG("rim" + (nRim++), C - B.sho - 20, 0, C + B.sho + 20, 0, [[0, bL], [0.5, mix(bL, bordo, 0.5)], [1, bordo]], true);
@@ -1120,17 +1134,325 @@
       }
       // (giro3) il gomito piegato forte: prima il braccio col suo bordo, poi l avambraccio sopra (il suo bordo dopo, con gli altri)
       // (giro3) nel braccio staccato il bordo sfuma verso la spalla (niente riga che stacca la manica dalla spalla quando il braccio gira)
+      // (tappa 3) la fantasia e la trama sul busto (e sulle gambe): sopra la stoffa, sotto le maniche, la luce e le ombre
+      var cl = fb ? clip(tutti) : null, LS = fb ? strati(fb, colore) : null;
+      var finoA = fb && !fb.sotto && tr.length === 1 && !al.length ? orloT[tr[0]] || null : null;   // dove finisce il capo (se si sa)
+      if (fb && tr.length + al.length) s += "<g clip-path='" + cl + "'>" + LS.map(function (x) { return stratoBusto(x, finoA); }).join("") + (fb.f === "jeans" ? (fb.sotto ? jeansGambe(colore) : jeansBusto(colore, tr[0])) : "") + "</g>";
       function bordoBr(d, q) { var r0 = rc + (q.e || 0) / 2 + 1.5; return "<path d='" + d + "' fill='none' stroke='" + rimG + "' stroke-width='2.2'" + (PARTE === "braccio" ? " mask='" + sfumaSpalla(q.lato, r0) + "'" : " clip-path='" + senzaSpalla(q.lato, r0) + "'") + "/>"; }
-      br.forEach(function (q) { var pg = PIEGA[q.d]; s += pg ? Pa(pg.a, colore) + bordoBr(pg.a, q) + Pa(pg.b, colore) : Pa(q.d, colore); });
+      br.forEach(function (q) { var pg = PIEGA[q.d]; s += fb ? manicaStoffa(q, pg, colore, LS, bordoBr) : (pg ? Pa(pg.a, colore) + bordoBr(pg.a, q) + Pa(pg.b, colore) : Pa(q.d, colore)); });
       br.forEach(function (q) { var pg = PIEGA[q.d]; s += bordoBr(pg ? pg.b : q.d, q); });
-      var cl = clip(tutti);
+      cl = cl || clip(tutti);
+      var dopo = fb ? dopoStoffa(fb, SF, colore, tr.length + al.length > 0, br) : "";
       if (o.volume !== false) {
         s += "<g clip-path='" + cl + "'><rect x='-200' y='-200' width='800' height='1400' fill='" + luceGlobale() + "'" + (o.luce != null ? " opacity='" + opz(n1(o.luce * 100) / 100) + "'" : "") + "/>";
         br.forEach(function (q) { s += volumeBraccio(q.lato, q.fino, chiaro, scuro, q.e, o.forza); });
         if (o.dentro) s += o.dentro;
-        s += "</g>";
-      } else if (o.dentro) s += "<g clip-path='" + cl + "'>" + o.dentro + "</g>";
+        s += dopo + "</g>";
+      } else if (o.dentro || dopo) s += "<g clip-path='" + cl + "'>" + (o.dentro || "") + dopo + "</g>";
       return { svg: s, clip: cl };
+    }
+
+    // =========================================================
+    //  LE STOFFE (tappa 3 dei vestiti, 6 nov 2026, Tavola 2: «secondo colore, fantasie e stoffe»)
+    //  Campi della configurazione, tutti facoltativi (senza: il disegno è IDENTICO a prima, carattere per carattere):
+    //   maglia2 / pant2 = il secondo colore (posizione nella tavolozza della maglia / dei pantaloni): colletti, polsini, coste, bordi
+    //                     (li disegnano i pezzi con K.secondo) e il colore della fantasia;
+    //   fant / fantP    = la fantasia su tutta la stoffa del capo / dei pantaloni (OPZ.fant: righe, quadri, pois, mimetica, jeans, hawaiana);
+    //   stoffa / stoffaP = la trama e la luce (OPZ.stoffa: lana opaca, pelle tesa, raso morbido, paillettes che brillano).
+    //  Si disegnano DENTRO K.dipingi (non attorno ai pezzi): valgono per ogni capo e ogni sotto che usa K.dipingi, anche quelli nuovi.
+    //  Ordine: la stoffa, la fantasia e la trama del busto (o delle gambe), poi le maniche con la LORO fantasia girata lungo il braccio
+    //  e sfalsata (la manica si stacca dal busto: la cucitura sulla spalla), i bordi delle braccia, la luce, le ombre, i riflessi.
+    //  Motivi, sfumature e forme si scrivono UNA volta per avatar (id col prefisso dell avatar) e si riusano: le maniche e le fasce
+    //  usano «varianti» (<pattern href> con un patternTransform: poche decine di caratteri). Nelle FASCE (in piedi le gambe accorciate,
+    //  seduto cosce e stinchi) il motivo si ricompone con una variante per fascia: non si schiaccia e non salta da una fascia all altra.
+    //  Di spalle (chiama) i capi si ridipingono con la stessa fantasia e la stessa stoffa; il secondo colore lo dicono i pezzi con
+    //  K.dietro2 = { orlo: [quota, altezza], pol: lunghezza dei polsini, collo: 1 }.
+    //  Per un pezzo che dipinge a parte un pezzo di stoffa del capo (cappuccio, revers, collo alto): K.motivo(d) = fantasia e trama su d.
+    //  (correzione) La camicia hawaiana ha le maniche corte (vedi manicaMax: K.manicaMax e K.manicaCorta per i pezzi).
+    // =========================================================
+    function tessuto(f, st, c2, sotto) {
+      f = f && FANT_OK[f] ? f : null; st = st && STOFFE[st] ? st : null;
+      return f || st ? { f: f, st: st, c2: c2, sotto: sotto } : null;
+    }
+    var FANT_OK = { righe: 1, quadri: 1, pois: 1, mimetica: 1, jeans: 1, hawaiana: 1 };
+    var fabOra = null;   // la stoffa del pezzo che si sta disegnando (la mette chiama)
+    // le fasce di questa posa: [fino a quota, quanto è alta lì un'unità del disegno rispetto al busto]
+    var sedS = !!opts.seduto && !opts.busto && !opts.viso && !opts.gambe && PARTE !== "braccio", FASCE = null;
+    if (sedS) { var R0 = PP ? PP.S : 1; FASCE = [[SED.yAB, 1], [SED.yBC, SED.sB / R0], [SED.yCD, SED.sC / R0], [null, 1 / R0]]; }
+    else if (PP && PARTE !== "braccio" && !opts.vita && !opts.busto && !opts.viso) FASCE = [[PROP_L0, 1], [PROP_L1, PP.sL], [null, 1]];
+    // il colore della fantasia senza secondo colore: più chiaro sui colori scuri, più scuro sui chiari
+    function coloreFant(b) { return lum(b) > 0.65 ? mix(b, "#1a1420", 0.55) : mix(b, "#ffffff", 0.7); }
+    var nMt = 0, motiviC = {}, variantiC = {}, formeC = {}, stratiC = {}, nMa = 0;
+    function motivo(k, w, h, dentro) {
+      if (motiviC[k]) return motiviC[k];
+      var id = p + "mt" + (nMt++).toString(36);
+      D.push("<pattern id='" + id + "' width='" + w + "' height='" + h + "' patternUnits='userSpaceOnUse'>" + dentro + "</pattern>");
+      return (motiviC[k] = id);
+    }
+    // lo stesso motivo spostato, girato o ricomposto (eredita il disegno: niente copie)
+    function variante(id, tr) {
+      var k = id + "|" + tr; if (variantiC[k]) return variantiC[k];
+      var v = p + "mv" + (nMt++).toString(36);
+      D.push("<pattern id='" + v + "' href='#" + id + "' patternTransform='" + tr + "'/>");
+      return (variantiC[k] = v);
+    }
+    // una forma usata da più motivi (anche del capo e dei pantaloni insieme): scritta una volta, col suo colore messo da chi la usa
+    function forma(k, fn) { if (!formeC[k]) { formeC[k] = p + "mf" + (nMt++).toString(36); D.push("<path id='" + formeC[k] + "' d='" + fn().replace(/ -/g, "-") + "'/>"); } return formeC[k]; }
+    function usaF(id, at) { return "<use href='#" + id + "'" + at + "/>"; }
+    function pq(x, y) { return q(x) + " " + q(y); }
+    // una forma nel motivo (riquadro w×w) e le sue copie SOLO dove passa oltre il bordo (bb = [x0, y0, x1, y1] attorno al suo punto)
+    function copie(x, y, w, bb, fn) { for (var a = -1; a <= 1; a++) for (var b2 = -1; b2 <= 1; b2++) { var X = x + a * w, Y = y + b2 * w; if (X + bb[2] > 0 && X + bb[0] < w && Y + bb[3] > 0 && Y + bb[1] < w) fn(X, Y); } }
+    function pi(x, y) { return Math.round(x) + " " + Math.round(y); }
+    function tondo(x, y, r) { return "M" + pq(x - r, y) + "a" + q(r) + " " + q(r) + " 0 1 0 " + q(2 * r) + " 0a" + q(r) + " " + q(r) + " 0 1 0 " + q(-2 * r) + " 0"; }
+    // ---------- le fantasie (b = il colore della stoffa, c2 = il secondo colore) ----------
+    var MW = 250, HW = 132;
+    function fantasia(f, b, c2) {
+      if (f === "righe") return motivo("r" + c2, 20, 32, "<rect width='20' height='15' fill='" + c2 + "'/><rect y='15' width='20' height='1.6' opacity='.14'/>");   // da marinaio
+      if (f === "quadri") {   // scozzesi (la flanella): bande del secondo colore che si incrociano, una riga scura e una chiara
+        var dk = mix(b, "#0a0508", 0.55);
+        return motivo("q" + b + c2, 68, 68, "<rect width='68' height='20' fill='" + c2 + "' opacity='.6'/><rect width='20' height='68' fill='" + c2 + "' opacity='.6'/>" +
+          "<path d='M0 42h68v3.4H0zM42 0h3.4v68H42z' fill='" + dk + "' opacity='.5'/><path d='M0 54h68v1.6H0zM54 0h1.6v68H54z' fill='#fff' opacity='.3'/>");
+      }
+      if (f === "pois") return motivo("p" + c2, 52, 52, "<path d='" + tondo(13, 13, 9.5) + tondo(39, 39, 9.5) + "' fill='" + c2 + "'/>");
+      if (f === "jeans") return motivo("j", 6, 6, "<path d='M0 6L6 0' stroke='#fff' stroke-width='1.2' opacity='.07'/><path d='M0 3L3 0M3 6L6 3' stroke='#000' stroke-width='.8' opacity='.06'/>");
+      if (f === "mimetica") {   // tre toni, macchie grandi che passano oltre il bordo (niente stacchi)
+        return motivo("m" + b, MW, MW, toniMimetica(b).map(function (t, l) { return usaF(formaMimetica(l), " fill='" + t + "'"); }).join(""));
+      }
+      if (f === "hawaiana") {   // fiori grandi e piccoli (il secondo colore, panna, giallo) e foglie verdi, fitti
+        var g = formeHawaiana(), ink = function (x) { return " stroke='" + mix(x, "#7a1020", 0.35) + "' stroke-width='1.2'"; };
+        return motivo("h" + c2, HW, HW, usaF(g[0], " fill='#1d6a33'") + usaF(g[1], " fill='#2f9a4a'") + usaF(g[2], " fill='none' stroke='#164a24' stroke-width='1'") +
+          usaF(g[3], " fill='" + c2 + "'" + ink(c2)) + usaF(g[4], " fill='#fff3e0'" + ink("#fff3e0")) + usaF(g[5], " fill='#ffd23f'" + ink("#ffd23f")) + usaF(g[6], ""));
+      }
+      return null;
+    }
+    // la manica ha il motivo sfalsato rispetto al busto (la cucitura si vede)
+    var SFALSA = { righe: [0, 16, 0], quadri: [34, 34, 0], pois: [26, 26, 0], mimetica: [125, 80, 40], hawaiana: [66, 66, 35], jeans: [0, 0, 0] };   // [dx, dy, gradi]
+    // la trasformazione di un motivo scritta corta: matrix(a b c d e f)
+    function mat(a, b2, c2, d, e, f) { var r3 = function (v) { var t = String(Math.round(v * 1000) / 1000); return t.replace(/^(-?)0./, "$1."); }; return "matrix(" + [r3(a), r3(b2), r3(c2), r3(d), q(e), q(f)].join(" ").replace(/ -/g, "-") + ")"; }
+    // girato di ang gradi intorno a P, poi (dentro) spostato di S[0], S[1] e girato di S[2]
+    function girato(ang, P, S) {
+      var ca = Math.cos(ang * DEG), sa = Math.sin(ang * DEG), cb = Math.cos((S ? S[2] : 0) * DEG), sb = Math.sin((S ? S[2] : 0) * DEG), ox = S ? S[0] : 0, oy = S ? S[1] : 0;
+      var re = P[0] - ca * P[0] + sa * P[1], rf = P[1] - sa * P[0] - ca * P[1];
+      return mat(ca * cb - sa * sb, sa * cb + ca * sb, -ca * sb - sa * cb, -sa * sb + ca * cb, ca * ox - sa * oy + re, sa * ox + ca * oy + rf);
+    }
+    // (correzione della tappa 3) i toni della mimetica: sui colori «di terra» (verdi, kaki, marroni, gialli spenti) e sui grigi, bianchi e neri
+    // quelli dell esercito della Tavola 2 (sabbia, marrone, verde scuro); sugli altri colori (blu, rossi, rosa, viola, bordeaux) la mimetica
+    // è DEL colore del capo: un tono chiaro, uno scuro e uno scurissimo. Prima tutti tiravano verso il kaki: sul blu le macchie sembravano
+    // velate e sporche (un velo kaki trasparente sopra il blu).
+    function toniMimetica(b) {
+      var c = h2r(b), mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]), h = 0, sat = mx ? (mx - mn) / mx : 0;
+      if (mx !== mn) h = (mx === c[0] ? ((c[1] - c[2]) / (mx - mn) + 6) % 6 : (mx === c[1] ? (c[2] - c[0]) / (mx - mn) + 2 : (c[0] - c[1]) / (mx - mn) + 4)) * 60;
+      if (sat < 0.2 || (h >= 22 && h <= 150)) return [mix(b, "#c9bc84", 0.5), mix(b, "#5a4226", 0.62), mix(b, "#0d1408", 0.72)];
+      return [mix(b, "#ffffff", lum(b) > 0.6 ? 0.55 : 0.4), mix(b, "#000000", 0.4), mix(b, "#05030a", 0.7)];
+    }
+    function formaMimetica(l) {
+      return forma("mi" + l, function () {
+        var R = rnd(7 + l * 13), cnt = [7, 8, 6][l], rad = [46, 35, 23][l], d = "";
+        for (var i = 0; i < cnt; i++) {
+          var cx = Math.round(R() * MW), cy = Math.round(R() * MW), bl = macchia(R, rad);
+          copie(cx, cy, MW, bl[3], function (X, Y) { d += "M" + (X + bl[0]) + " " + (Y + bl[1]) + bl[2]; });
+        }
+        return d;
+      });
+    }
+    function macchia(R, r) {   // una macchia morbida: 5 punti a caso intorno, la curva passa per i punti di mezzo (percorso relativo)
+      var n = 5, P = [], i, bb = [0, 0, 0, 0];
+      for (i = 0; i < n; i++) { var a = i / n * 6.2832 + R() * 0.6, rr = r * (0.42 + R() * 0.85); P.push([Math.round(Math.cos(a) * rr * 1.25), Math.round(Math.sin(a) * rr * 0.8)]); }
+      P.forEach(function (z) { bb = [Math.min(bb[0], z[0]), Math.min(bb[1], z[1]), Math.max(bb[2], z[0]), Math.max(bb[3], z[1])]; });
+      var M = P.map(function (z, j) { var w = P[(j + 1) % n]; return [Math.round((z[0] + w[0]) / 2), Math.round((z[1] + w[1]) / 2)]; });
+      var s = "", x = M[n - 1][0], y = M[n - 1][1];
+      for (i = 0; i < n; i++) { s += "q" + (P[i][0] - x) + " " + (P[i][1] - y) + " " + (M[i][0] - x) + " " + (M[i][1] - y); x = M[i][0]; y = M[i][1]; }
+      return [M[n - 1][0], M[n - 1][1], s.replace(/ -/g, "-") + "z", bb];
+    }
+    function formeHawaiana() {
+      if (formeC.hw) return formeC.hw;
+      var LF = [[10, 40, 1, -30, 0], [66, 10, 0.9, 120, 1], [100, 70, 1.05, 30, 0], [40, 100, 0.95, 200, 1], [78, 120, 0.8, -70, 0], [124, 20, 0.8, 160, 1]];
+      var FL = [[30, 30, 26, 15, 0], [92, 88, 24, -20, 1], [86, 28, 13, 40, 1], [18, 92, 12, 10, 0], [56, 64, 11, 70, 2], [118, 116, 13, 0, 0]];
+      var dL = ["", ""], dN = "", dF = ["", "", ""], dC = ["", ""], FG = [[0, 0], [9, -13], [30, -15], [44, -3], [30, 8], [9, 10]];
+      LF.forEach(function (f) {
+        var a = f[3] * DEG, cc = Math.cos(a) * f[2], ss = Math.sin(a) * f[2], gx = function (x, y) { return x * cc - y * ss; }, gy = function (x, y) { return x * ss + y * cc; };
+        var bb = [1e3, 1e3, -1e3, -1e3]; FG.forEach(function (z) { var x = gx(z[0], z[1]), y = gy(z[0], z[1]); bb = [Math.min(bb[0], x), Math.min(bb[1], y), Math.max(bb[2], x), Math.max(bb[3], y)]; });
+        copie(f[0], f[1], HW, bb, function (X, Y) {
+          var T = function (x, y) { return pi(X + gx(x, y), Y + gy(x, y)); };
+          dL[f[4]] += "M" + T(0, 0) + "C" + T(9, -13) + " " + T(30, -15) + " " + T(44, -3) + "C" + T(30, 8) + " " + T(9, 10) + " " + T(0, 0) + "Z";
+          dN += "M" + T(2, 0) + "C" + T(14, -1) + " " + T(28, -2) + " " + T(40, -3);
+        });
+      });
+      FL.forEach(function (f) {
+        var r0 = f[2] * 1.12;
+        copie(f[0], f[1], HW, [-r0, -r0, r0, r0], function (X, Y) {
+          var pt = function (an, r) { var a = (an - 90) * DEG; return pi(X + Math.cos(a) * r * f[2], Y + Math.sin(a) * r * f[2]); }, s = "";
+          for (var i = 0; i < 5; i++) { var an = f[3] + i * 72; s += (i ? "" : "M" + pt(an - 36, 0.42)) + "C" + pt(an - 34, 1.42) + " " + pt(an + 34, 1.42) + " " + pt(an + 36, 0.42); }
+          dF[f[4]] += s + "Z"; dC[f[2] > 20 ? 0 : 1] += "M" + pi(X, Y) + "h0";   // (il centro: un punto tondo, grande o piccolo)
+        });
+      });
+      var L = [dL[0], dL[1], dN, dF[0], dF[1], dF[2]].map(function (d, i) { return forma("hw" + i, function () { return d; }); }), idc = p + "mf" + (nMt++).toString(36);
+      D.push("<g id='" + idc + "' fill='none' stroke='#ffd23f' stroke-linecap='round'><path d='" + dC[0].replace(/ -/g, "-") + "' stroke-width='12'/><path d='" + dC[1].replace(/ -/g, "-") + "' stroke-width='6'/></g>");   // i centri dei fiori (il puntino arancio della tavola, sotto il pixel, non c è)
+      return (formeC.hw = L.concat([idc]));
+    }
+    // ---------- le stoffe: o = luce e volume; pre = strati sopra la fantasia (trasparenti: la fantasia si vede); post = riflessi ----------
+    // (correzione della tappa 3) i riflessi delle stoffe: tutti in un gruppo solo col loro gradiente (ogni ellisse ha solo la sua forza):
+    // cfg.netto = lampi col bordo netto (la pelle: la luce resta piena fino a metà e poi cala in fretta), cfg.largo = più larghi (il raso)
+    var rifC = {};
+    function gradRif(col, netto) {
+      var k = (netto ? "n" : "s") + col; if (rifC[k]) return rifC[k];
+      var id = p + "rf" + Object.keys(rifC).length;
+      D.push("<radialGradient id='" + id + "'><stop" + (netto ? " offset='.4'" : "") + " stop-color='" + col + "'/><stop offset='1' stop-color='" + col + "' stop-opacity='0'/></radialGradient>");
+      return (rifC[k] = id);
+    }
+    function riflessi(hi, cfg, conT, br, gambe) {
+      var s = "", sh = Math.abs(BR[1].J[0] - C), w = cfg.largo || 1;
+      function E2(cx, cy, rx, ry, ang, op) { return "<ellipse cx='" + q(cx) + "' cy='" + q(cy) + "' rx='" + q(rx) + "' ry='" + q(ry) + "' fill-opacity='" + opz(Math.round(op * 100) / 100) + "'" + (ang ? " transform='rotate(" + q(ang) + " " + q(cx) + " " + q(cy) + ")'" : "") + "/>"; }
+      if (gambe) [-1, 1].forEach(function (l) { var g = gIn(650); s += E2(C + l * g[0] - l * 3, 650, g[1] * 0.22 * w, 74, 0, (cfg.gambe || 0.35) * (l < 0 ? 1 : 0.6)); });
+      else {
+        if (conT) {
+          (cfg.fianchi || []).forEach(function (f) { s += E2(C - sh * 0.86, f[0], 6.5 * w, f[1], 0, f[2]) + E2(C + sh * 0.86, f[0] + 16, 5 * w, f[1] * 0.8, 0, f[2] * 0.55); });
+          if (cfg.spalle) [-1, 1].forEach(function (l) { s += E2(C + l * sh * 0.66, 272, 24, 7 * w, l * 14, cfg.spalle * (l < 0 ? 1 : 0.55)); });
+          if (cfg.petto) s += E2(C - sh * 0.3, 360, 15 * w, 70, 32, cfg.petto);   // (il raso) la luce larga che scende in diagonale sul petto
+        }
+        br.forEach(function (b) {
+          var r = BR[b.lato], J = r.J, E = r.E, ux = E[0] - J[0], uy = E[1] - J[1], ang = Math.atan2(-ux, uy) / DEG, vero = b.lato < 0 ? 1 : 0.6;
+          (cfg.braccia || []).forEach(function (a) { var cx = J[0] + ux * a[0] - b.lato * 4, cy = J[1] + uy * a[0]; s += E2(cx, cy, 5.5 * w, a[1], ang, a[2] * vero); });
+          if (cfg.gomiti && (b.fino == null || b.fino > 0.5)) s += E2(E[0] - b.lato * 3, E[1] - 4, 11, 9, 0, cfg.gomiti * vero);
+          if (cfg.avamb && (b.fino == null || b.fino > 0.8)) { var W2 = r.W, vx = W2[0] - E[0], vy = W2[1] - E[1]; s += E2(E[0] + vx * 0.5 - b.lato * 4, E[1] + vy * 0.5, 5 * w, 30, Math.atan2(-vx, vy) / DEG, cfg.avamb * vero); }
+        });
+      }
+      return s ? "<g fill='url(#" + gradRif(hi, cfg.netto) + ")'>" + s + "</g>" : "";
+    }
+    function stella(x, y, r, op) { return "<path transform='translate(" + q(x) + " " + q(y) + ") scale(" + r + ")' d='M0-9L1.8-1.8L9 0L1.8 1.8L0 9L-1.8 1.8L-9 0L-1.8-1.8Z' fill='#fff' opacity='" + op + "'/>"; }
+    var STOFFE = {
+      // (correzione della tappa 3) le stoffe si devono riconoscere anche piccole, nell avatar della partita e nelle anteprime dell editor:
+      // la lana è opaca e con la spina ben visibile, la pelle più scura con lampi di luce netti, il raso coi bagliori larghi e chiari,
+      // le paillettes con le squame che brillano (prima lana, pelle e raso sembravano quasi uguali alla stoffa normale)
+      lana: {   // opaca (niente luce lucida), con una spina grossa che si vede anche piccola; sopra una fantasia la spina è più leggera
+        o: function () { return { luce: 0, forza: 0.1 }; },
+        pre: function (b, fb) { return [{ fill: "#8a8a8a", op: ".1" }, { pat: motivo("lana", 16, 18, "<path d='M1.2 1.5L8 15.5L14.8 1.5' fill='none' stroke='#0a0508' stroke-width='3' stroke-linecap='round' opacity='.3'/><path d='M3 .5L8 10L13 .5' fill='none' stroke='#fff' stroke-width='1.8' stroke-linecap='round' opacity='.17'/>"), op: fb && fb.f ? ".5" : null }]; }
+      },
+      pelle: {   // scura e tesa: più scura del colore, lampi di luce stretti e netti su spalle, braccia, gomiti e fianco, pieghe al gomito
+        o: function (b) { return { forza: 1, chiaro: mix(b, "#ffffff", 0.45), scuro: mix(b, "#000000", 0.62), luce: 1 }; },
+        pre: function () { return [{ fill: "#000", op: ".26" }]; },
+        post: function (b, conT, br, gambe) {
+          var sc = mix(b, "#000000", 0.62), s = riflessi(mix(b, "#ffffff", 0.62), { netto: 1, spalle: 0.9, fianchi: [[400, 60, 0.65]], gomiti: 0.8, braccia: [[0.3, 34, 0.8]], avamb: 0.6, gambe: 0.65 }, conT, br, gambe);
+          br.forEach(function (b2) {
+            if (b2.fino != null && b2.fino < 0.6) return;
+            var r = BR[b2.lato], E = r.E, ux = r.W[0] - E[0], uy = r.W[1] - E[1], ul = Math.hypot(ux, uy) || 1; ux /= ul; uy /= ul;
+            var pg = ""; for (var i = 0; i < 3; i++) { var cx = E[0] + ux * (i * 6 - 5), cy = E[1] + uy * (i * 6 - 5); pg += "M" + pi(cx + uy * 20, cy - ux * 20) + "Q" + pi(cx + ux * 5, cy + uy * 5) + " " + pi(cx - uy * 20, cy + ux * 20); }
+            s += St(pg.replace(/ -/g, "-"), sc, 2.4, 0.55);   // le tre pieghe in un tratto
+          });
+          return s;
+        }
+      },
+      raso: {   // luce morbida che scorre: bagliori larghi e chiari (in diagonale sul petto, lungo le braccia e i fianchi) e ombre morbide
+        o: function () { return { luce: 0.8, forza: 1.1 }; },
+        pre: function (b) { var hi = mix(b, "#ffffff", 0.55), sh = mix(b, "#000000", 0.4); return [{ fill: LG("rs" + b.slice(1), C - 120, 240, C + 120, 540, [[0, hi, 0.42], [0.45, sh, 0.3], [0.75, hi, 0.36], [1, sh, 0.26]], true) }]; },
+        post: function (b, conT, br, gambe) { return riflessi(mix(b, "#ffffff", 0.6), { largo: 2, petto: 0.75, spalle: 0.5, fianchi: [[410, 90, 0.85]], braccia: [[0.42, 52, 0.95]], avamb: 0.65, gambe: 0.75 }, conT, br, gambe); }
+      },
+      paillettes: {   // squame tonde in file sfalsate col bordino scuro, qualche squama più chiara o più scura e qualche punto di luce a caso, qualche stella
+        o: function () { return { luce: 0.6, forza: 0.6 }; },
+        pre: function () {
+          var id = formeC.pl || (formeC.pl = (function () {
+            // (correzione) prima la tessera aveva 5 file: a ogni giro due file uguali si toccavano e le squame tagliate dal bordo facevano una
+            // riga dritta (sul vestito lungo sembrava una maglia a righe), e le luminosità ripetute ogni 24 unità facevano un disegno.
+            // Ora: la base sono tutte squame uguali che non si toccano (raggio 2,75 su un passo di 6 × 4,6), in una tessera piccola
+            // (6 × 9,2: una fila diritta e una sfalsata; quella che sporge sotto ricompare sopra); sopra, in una tessera grande
+            // (42 × 36,8: sette squame per otto file) qualche squama più chiara, qualche più scura e qualche punto di luce, a caso
+            var R = rnd(11), g = ["", "", ""], P = [], sc = [[], []], x, r, cc, i, j, tmp;
+            var tondo = function (x2, y2, r2) { return "<circle cx='" + q(x2) + "' cy='" + q(y2) + "' r='" + r2 + "'/>"; };
+            var base = motivo("plb", 6, 9.2, "<g fill='#fff' fill-opacity='.1' stroke='#000' stroke-opacity='.3' stroke-width='.6'>" + tondo(3, 3.05, 2.75) + tondo(0, 7.65, 2.75) + tondo(6, 7.65, 2.75) + tondo(0, -1.55, 2.75) + tondo(6, -1.55, 2.75) + "</g>");
+            for (r = 0; r < 7; r++) for (cc = 0; cc < 7; cc++) { x = cc * 6 + (r % 2 ? 0 : 3); if (x) P.push([x, 3.05 + r * 4.6]); }   // (solo le squame tutte dentro la tessera)
+            for (i = P.length - 1; i > 0; i--) { j = Math.floor(R() * (i + 1)); tmp = P[i]; P[i] = P[j]; P[j] = tmp; }
+            // mai due chiare (o due scure) vicine, anche a cavallo del bordo della tessera: se no fanno dei disegnini che si ripetono
+            var lontano = function (L, a) { return L.every(function (b) { var dx = Math.abs(a[0] - b[0]), dy = Math.abs(a[1] - b[1]); dx = Math.min(dx, 42 - dx); dy = Math.min(dy, 36.8 - dy); return dx * dx + dy * dy > 50; }); };
+            P.forEach(function (a) { if (sc[0].length < 11 && lontano(sc[0], a)) sc[0].push(a); else if (sc[1].length < 8 && lontano(sc[1], a)) sc[1].push(a); });
+            // (le squame sopra sono punti tondi: un tratto lungo zero con la punta tonda, largo quanto la squama; pesano molto meno dei cerchi)
+            var punto = function (x2, y2) { return "M" + q(x2) + " " + q(y2) + "h0"; }, tratto = function (d2, col, op, w2) { return "<path d='" + d2 + "' stroke='" + col + "' stroke-opacity='" + op + "' stroke-width='" + w2 + "'/>"; };
+            sc[0].forEach(function (a, k) { g[1] += punto(a[0], a[1]); if (k % 2) g[2] += punto(a[0] - 1.1, a[1] - 1.1); });
+            sc[1].forEach(function (a) { g[0] += punto(a[0], a[1]); });
+            return motivo("pl", 42, 36.8, "<rect width='42' height='36.8' fill='url(#" + base + ")'/><g fill='none' stroke-linecap='round'>" + tratto(g[0], "#000", ".14", 5.5) + tratto(g[1], "#fff", ".26", 5.5) + tratto(g[2], "#fff", ".85", 1.8) + "</g>");
+          })());
+          return [{ pat: id }, { fill: LG("plL", C - 120, 0, C + 120, 0, [[0, "#ffffff", 0.2], [0.5, "#ffffff", 0], [1, "#000000", 0.3]], true) }];
+        },
+        post: function (b, conT, br, gambe) {
+          if (!conT || !br.length || gambe) return "";
+          var b0 = BR[-1], sh = Math.abs(BR[1].J[0] - C);
+          return stella(C - sh * 0.9, 258, 0.8, 0.95) + stella(b0.E[0] + 5, b0.E[1] + 10, 0.7, 0.9) + stella(C + 66, 520, 0.6, 0.85);
+        }
+      }
+    };
+    var STF = { capo: tessuto(c.fant, c.stoffa, m2, false), sotto: tessuto(c.fantP, c.stoffaP, p2, true) };   // la stoffa del capo e dei pantaloni
+    function strati(fb, b) {   // gli strati della stoffa: { pat: id del motivo } o { fill, op }
+      var k = (fb.sotto ? "s" : "c") + b; if (stratiC[k]) return stratiC[k];
+      var L = [];
+      if (fb.f) L.push({ pat: fantasia(fb.f, b, fb.c2 || coloreFant(b)), f: fb.f });
+      if (fb.st) STOFFE[fb.st].pre(b, fb).forEach(function (x) { L.push(x); });
+      return (stratiC[k] = L);
+    }
+    var TUTTO = " x='-200' y='-200' width='800' height='1400'";
+    // uno strato sul busto (o sulle gambe): nelle fasce il motivo si ricompone (una variante per fascia, la prima è il motivo stesso)
+    function stratoBusto(x, finoA) {
+      if (!x.pat) return "<rect" + TUTTO + " fill='" + x.fill + "'" + (x.op ? " opacity='" + x.op + "'" : "") + "/>";
+      var op = x.op ? " opacity='" + x.op + "'" : "";   // (correzione) la trama più leggera sopra una fantasia
+      if (!FASCE) return "<rect" + TUTTO + " fill='url(#" + x.pat + ")'" + op + "/>";
+      var o = "", y0 = -200, a = -200;
+      FASCE.forEach(function (fs, i) {
+        if (finoA && y0 > finoA + 30) return;   // (il capo finisce prima: questa fascia non serve)
+        // (la trama fitta, squame o spina, si ricompone solo dove si schiaccia tanto: seduto)
+        var y1 = fs[0] == null ? 1200 : fs[0], f = fs[1], v = i && (x.f || f < 0.7 || f > 1.4) ? variante(x.pat, mat(1, 0, 0, 1 / f, 0, y0 - a / f)) : x.pat;
+        o += "<rect x='-200' y='" + q(y0) + "' width='800' height='" + q(y1 - y0) + "' fill='url(#" + v + ")'" + op + "/>";
+        a += (y1 - y0) * f; y0 = y1;
+      });
+      return o;
+    }
+    // un pezzo di manica: la stoffa, poi la fantasia girata lungo il braccio (da P verso Q) e sfalsata, e la trama (fitta: non serve girarla)
+    // (id = la stessa manica già scritta: si ridipinge solo, senza riscriverla). Un fill scritto sulla forma vincerebbe su quello delle copie
+    function pezzoManica(d, colore, LS, P, Q, id) {
+      var nuovo = !id, ang = Math.atan2(-(Q[0] - P[0]), Q[1] - P[1]) / DEG;
+      if (nuovo) id = p + "ma" + (nMa++).toString(36);
+      var st = LS.map(function (x) { return "<use href='#" + id + "' fill='" + (x.pat ? "url(#" + (x.f ? variante(x.pat, girato(ang, P, SFALSA[x.f])) : x.pat) + ")" : x.fill) + "'" + (x.op ? " opacity='" + x.op + "'" : "") + "/>"; }).join("");
+      // la forma senza colore suo (lo prende dal gruppo): così le copie la colorano col motivo
+      return (nuovo ? "<g fill='" + colore + "'><path id='" + id + "' d='" + d + "'/></g>" : "<use href='#" + id + "' fill='" + colore + "'/>") + st;
+    }
+    function manicaStoffa(q0, pg, colore, LS, bordoBr) {
+      var b = BR[q0.lato];
+      if (pg) return pezzoManica(pg.a, colore, LS, b.J, b.E) + bordoBr(pg.a, q0) + pezzoManica(pg.b, colore, LS, b.E, b.W);
+      var s2 = pezzoManica(q0.d, colore, LS, b.J, b.E);
+      // il gomito piegato (non tanto da fare due pezzi): oltre la piega l avambraccio ha il motivo girato come lui
+      var d1 = [b.E[0] - b.J[0], b.E[1] - b.J[1]], d2 = [b.W[0] - b.E[0], b.W[1] - b.E[1]], l1 = Math.hypot(d1[0], d1[1]) || 1, l2 = Math.hypot(d2[0], d2[1]) || 1;
+      d1 = [d1[0] / l1, d1[1] / l1]; d2 = [d2[0] / l2, d2[1] / l2];
+      if ((q0.fino == null || q0.fino > 0.55) && d1[0] * d2[0] + d1[1] * d2[1] < 0.9) {
+        var n = [d1[0] + d2[0], d1[1] + d2[1]], nl = Math.hypot(n[0], n[1]) || 1; n = [n[0] / nl, n[1] / nl];
+        var E = b.E, px = -n[1] * 400, py = n[0] * 400, oltre = clip("M" + pq(E[0] + px, E[1] + py) + "L" + pq(E[0] - px, E[1] - py) + "L" + pq(E[0] - px + n[0] * 600, E[1] - py + n[1] * 600) + "L" + pq(E[0] + px + n[0] * 600, E[1] + py + n[1] * 600) + "Z");
+        s2 += "<g clip-path='" + oltre + "'>" + pezzoManica(q0.d, colore, LS, b.E, b.W, p + "ma" + (nMa - 1).toString(36)) + "</g>";
+      }
+      return s2;
+    }
+    // ---------- il jeans: sbiadito, baffi e cuciture arancio (dentro la stoffa, sotto la luce) ----------
+    var CUC = " stroke='#f0a23a' stroke-dasharray='5 3.5'";
+    function jeansGambe(b) {
+      // (in pochi tratti: le cuciture di tutte e due le gambe in un percorso, i baffi in un altro)
+      var s = "", v = m ? 456 : 448, chiaro = mix(b, "#eaf2ff", 0.75), l, baffi = "", cuc = "";
+      for (var i = 0; i < 2; i++) {
+        l = i ? 1 : -1;
+        var g1 = gIn(640), g2 = gIn(770);
+        s += El(C + l * g1[0] - l * 2, 650, g1[1] * 0.3, 84, soft(chiaro, 0.55)) + El(C + l * g2[0] - l * 2, 768, g2[1] * 0.3, 30, soft(chiaro, 0.4));
+        for (var k = 0; k < 4; k++) baffi += "M" + pi(C + l * (11 + k * 2), v + 70 + k * 7) + "L" + pi(C + l * (30 + k * 3), v + 62 + k * 8);
+        for (var y = v + 20; y <= 900; y += 80) { var g = gIn(y); cuc += (y === v + 20 ? "M" : "L") + pi(C + l * (g[0] + g[1] - 6), y); }
+        var x1 = C + l * (B.wt + 2), x2 = C + l * 22;
+        cuc += "M" + pi(x1, v + 12) + "C" + pi(x1 - l * 10, v + 50) + " " + pi(x2 + l * 18, v + 64) + " " + pi(x2, v + 72);
+      }
+      return s + "<path d='" + baffi + "' stroke='#fff' stroke-width='2' stroke-linecap='round' opacity='.15'/><path d='" + cuc.replace(/ -/g, "-") + "' fill='none'" + CUC + " stroke-width='1.9' opacity='.95'/>" +
+        "<rect y='" + (v + 14) + "' width='400' height='1.6' fill='#f0a23a' opacity='.9'/>";
+    }
+    function jeansBusto(b, T) {
+      var chiaro = mix(b, "#dbe8fa", 0.58), y = orloT[T] ? orloT[T] - 8 : null, s = El(C - 70, 282, 44, 20, soft(chiaro, 0.6)) + El(C + 70, 282, 44, 20, soft(chiaro, 0.5)) + El(C, 380, 54, 52, soft(chiaro, 0.4));
+      if (y) s += "<path d='M0 " + y + "H400M" + (C - 24) + " 280V" + y + "M" + (C + 24) + " 280V" + y + "' fill='none'" + CUC + " stroke-width='1.8' opacity='.9'/>";
+      return s;
+    }
+    // dopo la luce: i riflessi della stoffa e lo sbiadito del jeans sui gomiti
+    function dopoStoffa(fb, SF, b, conT, br) {
+      var s = SF && SF.post ? SF.post(b, conT, br, fb.sotto) : "";
+      if (fb.f === "jeans" && !fb.sotto) { var chiaro = mix(b, "#dbe8fa", 0.58); br.forEach(function (q0) { if (q0.fino == null || q0.fino > 0.55) { var E = BR[q0.lato].E; s += El(E[0], E[1], 15, 20, soft(chiaro, 0.65)); } }); }
+      return s;
     }
     var nRim = 0, fasceC = {}, sfumC = {}, nM = 0;
 
@@ -1145,6 +1467,18 @@
       scuro: function (c2, t) { return mix(c2, "#14080c", t == null ? 0.35 : t); }, chiaro: function (c2, t) { return mix(c2, "#ffffff", t == null ? 0.3 : t); }
     };
     K.suManica = suManica; K.parte = PARTE; K.spalle = SPALLE;
+    // (tappa 3) il secondo colore: K.maglia2 / K.pant2 (null se non c'è). K.secondo(def, t) = il colore di colletti, polsini, coste e bordi:
+    // def senza secondo colore (com'era), col secondo colore quello (t > 0: appena scurito verso l ombra della maglia, come le coste)
+    K.maglia2 = m2; K.pant2 = p2;
+    K.secondo = function (def, t) { return m2 ? (t ? mix(m2, mix(mg, "#14080c", 0.5), t * 0.35) : m2) : def; };
+    // la fantasia del capo (o dei pantaloni) su un pezzo dipinto a parte dal pezzo (cappuccio, revers, collo alto): "" se non ce n'è
+    // (dx: il pezzo è disegnato spostato di dx, per esempio centrato in 0: il motivo torna al suo posto e combacia col resto)
+    K.motivo = function (d, dx) {
+      var fb = fabOra; if (!fb) return "";
+      // (solo la fantasia: revers, cappucci e colli restano lisci come nelle stoffe della Tavola 2, raso sulla giacca di paillettes)
+      var LS = strati(fb, fb.sotto ? pt : mg).filter(function (x) { return x.f; }), sp = dx ? " transform='translate(" + q(-dx) + " 0)'" : ""; if (!LS.length) return "";
+      return "<g clip-path='" + clip(d) + "'>" + LS.map(function (x) { return "<rect" + TUTTO + sp + " fill='" + (x.pat ? "url(#" + x.pat + ")" : x.fill) + "'" + (x.op ? " opacity='" + x.op + "'" : "") + "/>"; }).join("") + "</g>";
+    };
     K.dipingi = dipingi; K.tronco = tronco; K.braccio = contornoBraccio; K.volumeBraccio = volumeBraccio; K.cilindro = cilindro; K.ElR = ElR; K.rc = rc; K.G = G; K.luce = luceGlobale;
     // i capelli in tre toni (gradiente obliquo) e le ciocche
     LG("hg1", 0, 0, 1, 1, [[0, hL], [0.45, hc], [1, hD]]);
@@ -1582,8 +1916,14 @@
     xOgg = xOgg || {}; xCollo = xCollo || {}; xSch = xSch || {}; xBor = xBor || {};
     var pBarba = m && c.barba && c.barba !== "no" ? pezzoDi("barba", c.barba) : null, barba = pBarba ? (pBarba.fn(K) || {}) : null;
     if (typeof barba === "string") barba = { dentro: barba };
-    function chiama(pz) {
+    // (tappa 3) tipo = "capo" | "sotto": mentre il pezzo disegna, K.dipingi sa di chi è la stoffa (fantasia e trama)
+    function chiama(pz, tipo) {
       if (!pz) return null;
+      var f0 = fabOra, m0 = manicaMax; fabOra = tipo ? STF[tipo] : null; K.dietro2 = null;
+      manicaMax = tipo === "capo" ? corteCapo : 1; K.manicaMax = manicaMax; K.manicaCorta = manicaMax < 1;   // (le maniche corte della camicia hawaiana)
+      try { return chiama0(pz, tipo); } finally { fabOra = f0; manicaMax = m0; K.manicaMax = 1; K.manicaCorta = false; }
+    }
+    function chiama0(pz, tipo) {
       if (!SPALLE) return pz.fn(K);
       var rec = [], vero = K.dipingi, r2;
       K.dipingi = function (q, col2, o2) { rec.push([q, col2, o2 || {}]); return { svg: "", clip: "none" }; };
@@ -1591,9 +1931,30 @@
       if (!rec.length) return r2;
       var s2 = rec.map(function (x) { var o3 = x[2]; return dipingi(x[0], x[1], { bordo: o3.bordo, chiaro: o3.chiaro, scuro: o3.scuro, forza: o3.forza, volume: o3.volume,
         dentro: El(C - B.ch * 0.4, Y.ascella + 20, B.ch * 0.36, 60, soft("#ffffff", 0.12)) + St("M" + (C - 30) + " " + (Y.petto + 10) + "C" + (C - 10) + " " + (Y.petto + 26) + " " + (C + 10) + " " + (Y.petto + 26) + " " + (C + 30) + " " + (Y.petto + 10), mix(x[1], "#000000", 0.4), 3, 0.14) }).svg; }).join("");
+      if (tipo === "capo" && m2 && K.dietro2) s2 += bordiDietro(K.dietro2, rec);   // (tappa 3) il secondo colore visto da dietro
       return { corpo: s2 };
     }
-    var pCapo = pezzoDi("capo", c.capo), capo = pCapo ? (chiama(pCapo) || {}) : {};
+    // (tappa 3) di spalle il pezzo non disegna i suoi dettagli: il secondo colore dove il pezzo l ha detto (K.dietro2 = { fasce: [[da, a], …]
+    // (orlo a coste, cintura), pol: lunghezza dei polsini, collo: 1 }). Si disegna sopra la stoffa, con la stessa luce
+    function bordiDietro(R2, rec) {
+      var s = "", cd = mix(m2, "#14080c", 0.45);
+      rec.forEach(function (x) {
+        if (x[1] !== mg) return;
+        var q0 = x[0];
+        if (R2.pol) (q0.braccia || []).forEach(function (b) {
+          if (!tieni(b.lato)) return;
+          var f = fineManica(b.lato, b.fino == null ? 1 : b.fino), w = f.w + (b.e || 0), xs = f.x - f.dx * R2.pol, ys = f.y - f.dy * R2.pol, px = -f.dy * w * 0.47, py = f.dx * w * 0.47;
+          s += suManica(b.lato, Pa(limb([[xs, ys, w * 0.98], [f.x, f.y, w * 0.94]]), m2) + St("M" + pq(xs + px, ys + py) + "L" + pq(xs - px, ys - py), cd, 1.6, 0.5));
+        });
+        if (R2.fasce && q0.tronco && q0.tronco[0] && PARTE !== "braccio") R2.fasce.forEach(function (fz) {   // [da quota, a quota]: l orlo a coste, la cintura
+          s += "<g clip-path='" + clip(q0.tronco[0]) + "'><rect x='0' y='" + q(fz[0]) + "' width='400' height='" + q(fz[1] - fz[0]) + "' fill='" + m2 + "'/><rect x='-200' y='" + q(fz[0]) + "' width='800' height='" + q(fz[1] - fz[0]) + "' fill='" + luceGlobale() + "'/>" +
+            St("M0 " + q(fz[0]) + "H400", cd, 2, 0.5) + St("M0 " + q(fz[0] + 2.5) + "H400", "#ffffff", 1.2, 0.3) + "</g>";
+        });
+      });
+      if (R2.collo && PARTE !== "braccio") s += St("M" + pq(C - B.nk - 7, 243) + "Q" + pq(C, 251) + " " + pq(C + B.nk + 7, 243), cd, 10, 0.5) + St("M" + pq(C - B.nk - 6, 242) + "Q" + pq(C, 250) + " " + pq(C + B.nk + 6, 242), m2, 7.5, 1);
+      return s;
+    }
+    var pCapo = pezzoDi("capo", c.capo), capo = pCapo ? (chiama(pCapo, "capo") || {}) : {};
     if (typeof capo === "string") capo = { corpo: capo };
     if (colloDopo) {
       xCollo = extra("collo", c.collo, "nessuno") || {}; if (typeof xCollo === "string") xCollo = { sopra: xCollo };
@@ -1609,7 +1970,7 @@
     }
     var intero = /^(vestito|vestitolungo)$/.test(c.capo) && (A.RITOCCHI.vestito || !/^(leggings|jeans|pantaloni|strappati|zampa|tuta|cargo|mimetici)$/.test(c.sotto));   // l'abito copre gonne e pantaloncini (ritocco «vestito»: anche i pantaloni)
     var soloSu = !!(opts.busto || opts.viso);   // primo piano: gambe, pantaloni e scarpe non si vedono (non si disegnano: l'avatar pesa meno)
-    var pSotto = intero || soloSu ? null : pezzoDi("sotto", c.sotto), sotto = pSotto ? chiama(pSotto) : "";
+    var pSotto = intero || soloSu ? null : pezzoDi("sotto", c.sotto), sotto = pSotto ? chiama(pSotto, "sotto") : "";
     if (typeof sotto === "string") sotto = { corpo: sotto };
     var alte = /^(stivali|anfibi|pattini|stivaletti|stivalialti)$/.test(c.modScarpe);
     var pScarpe = soloSu ? null : pezzoDi("scarpe", c.modScarpe), scarpe = pScarpe ? pScarpe.fn(K) : "";
@@ -1720,8 +2081,8 @@
     function seduto() {
       var nB = "sd" + (cnt++), dy = SED.dy, ini = PARTE, ilp = LP;
       // (6 nov 2026) anche K.parte dice la passata giusta (il corpo, poi solo le braccia): un capo può lasciare fuori dalle braccia i dettagli del petto
-      PARTE = "corpo"; LP = 0; K.parte = PARTE; var cC = pCapo ? (chiama(pCapo) || {}) : {}; if (typeof cC === "string") cC = { corpo: cC };
-      PARTE = "braccio"; LP = 0; K.parte = PARTE; var cB = pCapo ? (chiama(pCapo) || {}) : {}; if (typeof cB === "string") cB = { corpo: cB };
+      PARTE = "corpo"; LP = 0; K.parte = PARTE; var cC = pCapo ? (chiama(pCapo, "capo") || {}) : {}; if (typeof cC === "string") cC = { corpo: cC };
+      PARTE = "braccio"; LP = 0; K.parte = PARTE; var cB = pCapo ? (chiama(pCapo, "capo") || {}) : {}; if (typeof cB === "string") cB = { corpo: cB };
       PARTE = ini; LP = ilp; K.parte = PARTE;
       var giu = pelleCorpo(false) + (!alte ? scarpe.corpo || "" : "") + (sotto.corpo || "") + (alte ? scarpe.corpo || "" : "") + (sotto.sopra || "") + (cC.corpo || "");
       D.push("<g id='" + p + nB + "'>" + giu + "</g>");
@@ -1868,10 +2229,11 @@
       var f = K.fineManica(lato, lung), w = (f.w + ea) * 0.5 - 1.5;
       s += K.suManica(lato, K.St("M" + K.n1(f.x - f.dy * w - f.dx * 6) + " " + K.n1(f.y + f.dx * w - f.dy * 6) + "L" + K.n1(f.x + f.dy * w - f.dx * 6) + " " + K.n1(f.y - f.dx * w - f.dy * 6), mdd, 1.4, 0.4));   // (giro3) suManica: nel corpo senza quel braccio restava una riga per aria
     });
-    var nk = B.nk;
-    s += K.St("M" + (C - nk - 5) + " 241C" + (C - nk + 2) + " 263 " + (C + nk - 2) + " 263 " + (C + nk + 5) + " 241", K.mix(mg, "#000000", 0.22), 7, 0.95);
-    s += K.St("M" + (C - nk - 3) + " 238C" + (C - nk + 4) + " 259 " + (C + nk - 4) + " 259 " + (C + nk + 3) + " 238", K.chiaro(mg, 0.35), 1.8, 0.45);
-    if (lung > 0.9) [-1, 1].forEach(function (lato) { var f = K.fineManica(lato, lung); s += K.suManica(lato, K.Pa(K.limb([[f.x - f.dx * 14, f.y - f.dy * 14, f.w + ea * 0.8], [f.x, f.y, f.w + ea * 0.75]]), K.scuro(mg, 0.15), " opacity='.9'")); });
+    var nk = B.nk, m2 = K.maglia2;   // (tappa 3) col secondo colore: il collo e le fasce delle maniche (anche corte: la maglietta «ringer»)
+    s += K.St("M" + (C - nk - 5) + " 241C" + (C - nk + 2) + " 263 " + (C + nk - 2) + " 263 " + (C + nk + 5) + " 241", m2 ? K.mix(m2, "#000000", 0.08) : K.mix(mg, "#000000", 0.22), 7, 0.95);
+    s += K.St("M" + (C - nk - 3) + " 238C" + (C - nk + 4) + " 259 " + (C + nk - 4) + " 259 " + (C + nk + 3) + " 238", K.chiaro(m2 || mg, 0.35), 1.8, 0.45);
+    if (lung > 0.9 || m2) [-1, 1].forEach(function (lato) { var f = K.fineManica(lato, lung); s += K.suManica(lato, K.Pa(K.limb([[f.x - f.dx * 14, f.y - f.dy * 14, f.w + ea * 0.8], [f.x, f.y, f.w + ea * 0.75]]), m2 ? K.cil(m2, 0.7) : K.scuro(mg, 0.15), " opacity='.9'")); });
+    if (m2 && K.spalle) K.dietro2 = { collo: 1, pol: 14 };
     // la stampa sulla maglia (solo sul tronco)
     var st = A.stampa[K.c.stampa]; if (st) s += "<g clip-path='" + K.clip(T) + "'>" + st(K, T) + "</g>";
     return { corpo: s };

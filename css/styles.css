@@ -589,6 +589,13 @@ body::before{
 .om-libero.attiva{ box-shadow:0 0 0 3px #ffd23b, 0 0 0 6px rgba(255,255,255,.25); }
 .om-libero.attiva::after{ content:"✓"; color:#fff; font-weight:900; }
 .om-libero input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
+/* (6 nov 2026, tappa 3) il secondo colore «Nessuno»: un tondo vuoto barrato; le anteprime di fantasie e stoffe dalla testa alla vita */
+.omino-pannello .om-opz.om-colore.om-nessuno{ background:rgba(255,255,255,.06) linear-gradient(135deg, transparent 46%, rgba(255,255,255,.55) 46%, rgba(255,255,255,.55) 54%, transparent 54%); box-shadow:inset 0 0 0 2px rgba(255,255,255,.35); }
+.oro .omino-pannello .om-opz.om-colore.om-nessuno{ box-shadow:inset 0 0 0 2px rgba(255,255,255,.35); }
+.oro .omino-pannello .om-opz.om-colore.om-nessuno.attiva{ box-shadow:inset 0 0 0 2px rgba(255,255,255,.35), 0 0 0 3px var(--o-carta), 0 0 0 4.5px var(--o-oro); }
+.om-mini.vita{ height:84px; }
+.editor-avatar .om-mini.vita{ height:96px; }
+.editor-avatar.camerino:not(.aperto) .om-mini.vita{ height:86px; }
 /* ritocchi stile Mii */
 .om-ritocco{ display:grid; grid-template-columns:1fr 1.3fr 26px; align-items:center; gap:10px; padding:7px 10px; margin-bottom:6px;
   border-radius:12px; background:rgba(255,255,255,.06); }

@@ -1322,6 +1322,7 @@
   function maniche(K, col, o) {
     o = o || {};
     var lung = o.lung == null ? 1 : o.lung, e = o.agio == null ? 7 : o.agio, k = colori(K, col), br = [], ds = [], dett = "", pol = "";
+    if (K.manicaMax < lung) lung = K.manicaMax;   // (correzione della tappa 3) le maniche corte della camicia hawaiana: niente pieghe del gomito, polsino all orlo
     [-1, 1].forEach(function (l) {
       var d = K.manica(l, { lung: lung, agio: e, svasa: o.svasa || 0, tonda: o.tonda });
       ds.push(d);
@@ -1427,12 +1428,14 @@
   //  FELPA
   // =========================================================
   A.pezzo("capo", "felpa", function (K) {
-    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", rib = K.mix(mg, k.mdd, 0.22);
+    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", rib = K.secondo(K.mix(mg, k.mdd, 0.22), 0.22);   // (tappa 3) coste e polsini col secondo colore
     var T = K.busto({ agio: 4, orlo: 512, scollo: { prof: 10, larg: 8 }, svasa: -2, pancia: B.pancia ? 8 : 0 });
+    if (K.maglia2 && K.spalle) K.dietro2 = { fasce: [[488, 530]], pol: 18 };
     var M = maniche(K, mg, { lung: 1, agio: 3.5, pol: [18, rib, k.mdd] });
     // il cappuccio dietro il collo: stoffa piena, piu scura, con l'interno in ombra e due pieghe
     var hd = "M" + (C - nk - 30) + " 266C" + (C - nk - 36) + " 232 " + (C - nk - 14) + " 204 " + C + " 202C" + (C + nk + 14) + " 204 " + (C + nk + 36) + " 232 " + (C + nk + 30) + " 266Z", hcol = K.scuro(mg, 0.2);
-    var dietro = K.Pa(hd, cilU(K, hcol, C - nk - 36, C + nk + 36, 0.9)) + "<g clip-path='" + K.clip(hd) + "'>" +
+    // (correzione della tappa 3) anche il cappuccio dietro ha la fantasia: col braccio alzato (saluta) si vede intorno al collo
+    var dietro = K.Pa(hd, cilU(K, hcol, C - nk - 36, C + nk + 36, 0.9)) + K.motivo(hd) + "<g clip-path='" + K.clip(hd) + "'>" +
       K.El(C, 250, nk + 12, 40, K.soft(K.scuro(mg, 0.62), 0.85)) + K.El(C - nk - 14, 232, 10, 28, K.soft("#ffffff", 0.14)) +
       St("M" + (C - nk - 22) + " 222C" + (C - nk - 12) + " 238 " + (C - nk - 14) + " 252 " + (C - nk - 20) + " 262", k.mdd, 2, 0.4) + St("M" + (C + nk + 22) + " 222C" + (C + nk + 12) + " 238 " + (C + nk + 14) + " 252 " + (C + nk + 20) + " 262", k.mdd, 2, 0.4) + "</g>" +
       St(hd, k.mdd, 1.6, 0.55);
@@ -1454,8 +1457,8 @@
       St("M" + (C - nk - 16) + " 250C" + (C - nk - 18) + " 274 " + (C - 20) + " 296 " + C + " 299C" + (C + 20) + " 296 " + (C + nk + 18) + " 274 " + (C + nk + 16) + " 250", k.mdd, 1.8, 0.35) +
       St("M" + (C - nk - 8) + " 246C" + (C - nk - 6) + " 262 " + (C - nk + 4) + " 276 " + (C - 14) + " 283", k.mdd, 1.6, 0.3) + St("M" + (C + nk + 8) + " 246C" + (C + nk + 6) + " 262 " + (C + nk - 4) + " 276 " + (C + 14) + " 283", k.mdd, 1.6, 0.3) +
       St("M" + (C - nk - 10) + " 250C" + (C - nk - 9) + " 264 " + (C - nk - 1) + " 275 " + (C - 18) + " 283", "#ffffff", 1.2, 0.22) + "</g>" +
-      St(hood, k.mdd, 1.5, 0.55) + St("M" + (C - nk - 18) + " 244C" + (C - nk - 25) + " 266 " + (C - nk - 12) + " 292 " + (C - 22) + " 302", "#ffffff", 1.3, 0.26);
-    var cord = K.chiaro(mg, 0.7);
+      St(hood, k.mdd, 1.5, 0.55) + K.motivo(hood) + St("M" + (C - nk - 18) + " 244C" + (C - nk - 25) + " 266 " + (C - nk - 12) + " 292 " + (C - 22) + " 302", "#ffffff", 1.3, 0.26);
+    var cord = K.secondo(K.chiaro(mg, 0.7));
     [-1, 1].forEach(function (l) {
       var x = C + l * 13, d = "M" + n1(x) + " 270C" + n1(x + l * 3) + " 290 " + n1(x - l * 2) + " 320 " + n1(x + l * 2) + " 346", il = linea(K, d);
       s += usa(il, tratto(k.mdd, 4.4, 0.35)) + usa(il, tratto(cord, 3.2, 0.95)) + St("M" + n1(x + l * 2) + " 342L" + n1(x + l * 2.4) + " 354", K.mix(cord, "#444", 0.5), 4.2, 1);
@@ -1470,7 +1473,8 @@
     o = o || {};
     var k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "";
     var T = K.busto({ agio: 4, orlo: 524, scollo: K.spalle ? { prof: 5, larg: 5 } : { tipo: "v", prof: 30, larg: 3 }, curvaOrlo: 9, pancia: B.pancia ? 5 : 0 });
-    var M = maniche(K, mg, { lung: 1, agio: 5, pol: [17, K.mix(mg, "#ffffff", 0.06), k.mdd, { liscio: true }] });
+    // (tappa 3) o.c2 = polsini e colletto col secondo colore; (correzione) con le maniche corte (camicia hawaiana) il polsino è l orlo, più basso
+    var M = maniche(K, mg, { lung: 1, agio: 5, pol: [K.manicaCorta ? 10 : 17, o.c2 || K.mix(mg, "#ffffff", 0.06), k.mdd, { liscio: true }] });
     var q = ombra(K, k, { q: 0.8 });
     // fila dei bottoni
     q += K.Pa("M" + (C - 7) + " 262L" + (C + 7) + " 262L" + (C + 7) + " 540L" + (C - 7) + " 540Z", K.mix(mg, "#ffffff", 0.1), " opacity='.7'") + St("M" + (C - 7) + " 264L" + (C - 7) + " 530", k.mdd, 1.2, 0.35) + St("M" + (C + 7) + " 264L" + (C + 7) + " 530", k.mdd, 1.2, 0.4);
@@ -1483,13 +1487,16 @@
     q += St("M" + (C - B.hp + 2) + " 506C" + (C - 20) + " 514 " + (C + 20) + " 514 " + (C + B.hp - 2) + " 506", k.mdd, 2, 0.28);
     s += veste(K, mg, T, M, inT(K, T, q)).svg + M.pol;
     var cuffs = "";
-    [-1, 1].forEach(function (l) {
+    if (!K.manicaCorta) [-1, 1].forEach(function (l) {   // (il bottone del polsino: non sulla manica corta)
       var f = K.fineManica(l, 1);
       cuffs += K.suManica(l, bottone(K, f.x - f.dx * 9 + (l > 0 ? -5 : 5), f.y - f.dy * 9, 2.8, K.chiaro(mg, 0.65)));
     });
-    return { corpo: s + cuffs, collar: colletto(K, k, { fill: mg, ty: 296, tw: 15 }), T: T, k: k };
+    return { corpo: s + cuffs, collar: colletto(K, k, { fill: o.c2 || mg, ty: 296, tw: 15 }), T: T, k: k };
   }
-  A.pezzo("capo", "camicia", function (K) { var b = buildCamicia(K, K.maglia); return { corpo: b.corpo + b.collar }; });
+  A.pezzo("capo", "camicia", function (K) {
+    if (K.maglia2 && K.spalle) K.dietro2 = { pol: 17, collo: 1 };
+    var b = buildCamicia(K, K.maglia, K.maglia2 ? { c2: K.maglia2 } : undefined); return { corpo: b.corpo + b.collar };
+  });
 
   // (6 nov 2026, ritocco «cravatta» in SGOminoA.RITOCCHI) i capi che passano SOPRA la cravatta lunga le dicono dove si vede (K.cravattaV:
   // il contratto è scritto sopra il pezzo ("collo", "cravatta"), nella parte degli extra). Il motore chiama il capo prima della cravatta.
@@ -1505,7 +1512,7 @@
     var v = "M" + iv.map(function (q) { return P(q, -1); }).join("L") + "L0 " + R(yB) + "L" + iv.slice().reverse().map(function (q) { return P(q, 1); }).join("L") + "Z";
     // il panno sulla fessura (un po più largo, copre i bordi di prima): luce a sinistra come i revers
     var gp = K.LG("vgV", 0, 0, 1, 0, [[0, K.mix(mg, "#ffffff", 0.14)], [0.5, K.mix(mg, "#ffffff", 0.05)], [1, K.mix(mg, "#000000", 0.08)]]);
-    s += K.Pa(fess, gp, " stroke='" + gp + "' stroke-width='3.4'");
+    s += K.Pa(fess, gp, " stroke='" + gp + "' stroke-width='3.4'") + K.motivo(fess, K.C);   // (tappa 3) la fantasia anche sul panno (disegno spostato al centro)
     // la camicia nella V: chiara, con l ombra dei revers ai lati
     s += K.Pa(v, K.LG("vgC", 0, 0, 1, 0, [[0, K.mix(cam, "#ffffff", 0.5)], [0.6, cam], [1, K.mix(cam, "#9aa0b8", 0.35)]]));
     s += "<g clip-path='" + K.clip(v) + "'>" + K.St("M" + P([nk + 5, 262], -1) + "L" + P([nk * 0.3 + 22, 304], -1) + "L0 " + R(yB), md, 9, 0.22) + K.St("M" + P([nk + 5, 262], 1) + "L" + P([nk * 0.3 + 22, 304], 1) + "L0 " + R(yB), md, 9, 0.3) + "</g>";
@@ -1541,7 +1548,8 @@
       var X = function (v) { return n1(C + l * v); };
       var lp = "M" + X(nk + 2) + " 240L" + X(nk + 34) + " 267L" + X(nk + 25) + " 282L" + X(22) + " 424L" + X(17) + " 420C" + X(17) + " 400 " + X(18) + " 380 " + X(18) + " 360C" + X(18) + " 336 " + X(nk * 0.3 + 22) + " 316 " + X(nk * 0.3 + 22) + " 304C" + X(nk + 7) + " 288 " + X(nk + 5) + " 272 " + X(nk + 5) + " 262Z";
       s += K.El(C + l * (nk + 16), 300, 20, 30, K.soft("#000000", 0.3));
-      s += K.Pa(lp, K.LG("vl" + (uid++), 0, 0, 1, 1, [[0, K.mix(mg, "#ffffff", l < 0 ? 0.4 : 0.26)], [0.6, K.mix(mg, "#ffffff", 0.08)], [1, mg]]));
+      var rv = K.maglia2 || mg;   // (tappa 3) i revers col secondo colore; senza, la fantasia anche sui revers
+      s += K.Pa(lp, K.LG("vl" + (uid++), 0, 0, 1, 1, [[0, K.mix(rv, "#ffffff", l < 0 ? 0.4 : 0.26)], [0.6, K.mix(rv, "#ffffff", 0.08)], [1, rv]])) + (K.maglia2 ? "" : K.motivo(lp));
       s += "<g clip-path='" + K.clip(lp) + "'>" + St("M" + X(nk + 32) + " 270L" + X(24) + " 420", "#ffffff", 4, 0.2) + St("M" + X(nk + 22) + " 290L" + X(20) + " 418", k.mdd, 3, 0.2) + "</g>" + St(lp, k.mdd, 1.5, 0.5) + St("M" + X(nk + 34) + " 267L" + X(nk + 25) + " 282L" + X(22) + " 424", k.mdd, 1.4, 0.55) + St("M" + X(nk + 31) + " 268L" + X(nk + 8) + " 246", "#ffffff", 1, 0.3) +
         St("M" + X(nk + 26) + " 285L" + X(23) + " 421", "#ffffff", 1, 0.3, " stroke-dasharray='3 3'");
     });
@@ -1568,7 +1576,8 @@
   //  BOMBER (cerniera e costine)
   // =========================================================
   A.pezzo("capo", "bomber", function (K) {
-    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", rib = K.mix(mg, k.mdd, 0.3);
+    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", rib = K.secondo(K.mix(mg, k.mdd, 0.3), 0.3);   // (tappa 3) coste, polsini e collo col secondo colore
+    if (K.maglia2 && K.spalle) K.dietro2 = { fasce: [[482, 520]], pol: 20, collo: 1 };
     var T = K.busto({ agio: 6, orlo: 506, scollo: { tipo: "v", prof: 30, larg: 6 }, svasa: -5, curvaOrlo: 5, pancia: B.pancia ? 8 : 0 });
     var M = maniche(K, mg, { lung: 1, agio: 7, forza: 1.05, pol: [20, rib, k.mdd] });
     var q = ombra(K, k, { q: 1.4, noPieghe: false });
@@ -1595,7 +1604,8 @@
   //  MAGLIONE (a maglia, con costine e treccia)
   // =========================================================
   A.pezzo("capo", "maglione", function (K) {
-    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", rib = K.mix(mg, k.mdd, 0.18);
+    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", rib = K.secondo(K.mix(mg, k.mdd, 0.18), 0.18);   // (tappa 3) coste, polsini e collo col secondo colore
+    if (K.maglia2 && K.spalle) K.dietro2 = { fasce: [[494, 540]], pol: 20, collo: 1 };
     var T = K.busto({ agio: 4, orlo: 520, scollo: { prof: 14, larg: 7 }, svasa: -2, pancia: B.pancia ? 8 : 0 });
     var M = maniche(K, mg, { lung: 1, agio: 4, pol: [20, rib, k.mdd] });
     var trama = pattern(K, 9, 10, "<path d='M0.5 1L4.5 8L8.5 1' fill='none' stroke='#1a0a10' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' opacity='.2'/><path d='M1.5 0.4L4.5 6L7.5 0.4' fill='none' stroke='#ffffff' stroke-width='1' stroke-linecap='round' opacity='.17'/>");
@@ -1623,14 +1633,15 @@
   A.pezzo("capo", "dolcevita", function (K) {
     var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "";
     var T = K.busto({ agio: 3, orlo: 512, scollo: { prof: 4, larg: 5 }, pancia: B.pancia ? 5 : 0 });
-    var M = maniche(K, mg, { lung: 1, agio: 4, pol: [14, K.mix(mg, k.mdd, 0.1), k.mdd] });
+    var M = maniche(K, mg, { lung: 1, agio: 4, pol: [14, K.secondo(K.mix(mg, k.mdd, 0.1), 0.1), k.mdd] });   // (tappa 3) polsini e collo col secondo colore
+    if (K.maglia2 && K.spalle) K.dietro2 = { pol: 14, collo: 1 };
     var trama = pattern(K, 6, 10, "<rect x='2.2' y='0' width='1.2' height='10' fill='#1a0a10' opacity='.1'/>");
     var tramM = ""; M.ds.forEach(function (d, i) { tramM += telaManica(K, i ? 1 : -1, d, trama); });
     s += veste(K, mg, T, M, tramM + inT(K, T, tela(trama) + ombra(K, k, { q: 1 }) + St("M" + (C - B.hp + 2) + " 502C" + (C - 20) + " 510 " + (C + 20) + " 510 " + (C + B.hp - 2) + " 502", k.mdd, 2, 0.3))).svg + M.pol;
     s += stampa(K, T);
     // il collo alto a rotolo (due risvolti)
     var w = nk + 8, cl = "M" + (C - w - 1) + " 258C" + (C - w - 3) + " 244 " + (C - w) + " 230 " + (C - w + 4) + " 224C" + (C - w + 12) + " 219 " + (C + w - 12) + " 219 " + (C + w - 4) + " 224C" + (C + w) + " 230 " + (C + w + 3) + " 244 " + (C + w + 1) + " 258C" + (C + w - 4) + " 268 " + (C - w + 4) + " 268 " + (C - w - 1) + " 258Z";
-    s += K.Pa(cl, cilU(K, mg, C - w - 3, C + w + 3, 0.9)) + "<g clip-path='" + K.clip(cl) + "'>" + tela(trama) +
+    s += K.Pa(cl, cilU(K, K.secondo(mg), C - w - 3, C + w + 3, 0.9)) + (K.maglia2 ? "" : K.motivo(cl)) + "<g clip-path='" + K.clip(cl) + "'>" + tela(trama) +
       St("M" + (C - w - 4) + " 241C" + (C - w + 10) + " 249 " + (C + w - 10) + " 249 " + (C + w + 4) + " 241", k.mdd, 2.4, 0.4) + St("M" + (C - w - 4) + " 244C" + (C - w + 10) + " 252 " + (C + w - 10) + " 252 " + (C + w + 4) + " 244", "#ffffff", 1.2, 0.3) +
       K.El(C - w * 0.4, 236, 12, 14, K.soft("#ffffff", 0.2)) + K.El(C, 262, w + 4, 8, K.soft(k.mdd, 0.45)) + K.El(C, 224, w, 6, K.soft(k.mdd, 0.3)) + "</g>" +
       St("M" + (C - w - 1) + " 258C" + (C - w + 4) + " 268 " + (C + w - 4) + " 268 " + (C + w + 1) + " 258", k.mdd, 1.6, 0.5);
@@ -1641,7 +1652,8 @@
   //  COLLO / POLO
   // =========================================================
   A.pezzo("capo", "polo", function (K) {
-    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", ct = contrasto(K, mg), fascia = K.lum(mg) > 0.6 ? K.mix(mg, k.mdd, 0.55) : K.mix(mg, "#ffffff", 0.7);
+    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", ct = contrasto(K, mg), fascia = K.secondo(K.lum(mg) > 0.6 ? K.mix(mg, k.mdd, 0.55) : K.mix(mg, "#ffffff", 0.7));   // (tappa 3) fasce delle maniche e colletto col secondo colore
+    if (K.maglia2 && K.spalle) K.dietro2 = { pol: 13, collo: 1 };
     var T = K.busto({ agio: 6, orlo: 514, scollo: { tipo: "v", prof: 26, larg: 3 }, pancia: B.pancia ? 6 : 0 });
     var M = maniche(K, mg, { lung: 0.32, agio: 9, pol: [13, fascia, k.mdd, { liscio: true }] });
     var piq = pattern(K, 4, 4, "<circle cx='1' cy='1' r='.8' fill='#1a0a10' opacity='.1'/><circle cx='3' cy='3' r='.8' fill='#1a0a10' opacity='.1'/>");
@@ -1651,7 +1663,7 @@
     q += bottone(K, C, 286, 3.4, K.chiaro(mg, 0.6)) + bottone(K, C, 312, 3.4, K.chiaro(mg, 0.6));
     q += St("M" + (C - B.hp + 2) + " 506C" + (C - 20) + " 514 " + (C + 20) + " 514 " + (C + B.hp - 2) + " 506", k.mdd, 2, 0.3) + K.Pa("M" + (C - 200) + " 496Q" + C + " 504 " + (C + 200) + " 496L" + (C + 200) + " 540L" + (C - 200) + " 540Z", k.md, " opacity='.16'");
     s += veste(K, mg, T, M, inT(K, T, q)).svg + M.pol + stampa(K, T);
-    s += colletto(K, { mg: mg, mdd: k.mdd }, { fill: K.mix(mg, "#ffffff", 0.06), ty: 284, tw: 12, top: 236, cy: 262 });
+    s += colletto(K, { mg: mg, mdd: k.mdd }, { fill: K.secondo(K.mix(mg, "#ffffff", 0.06)), ty: 284, tw: 12, top: 236, cy: 262 });
     return { corpo: s };
   });
 
@@ -1671,6 +1683,12 @@
     var Ra = Rr.map(function (p) { return [C + p[0], p[1]]; }), La = Rr.map(function (p) { return [C - p[0], p[1]]; }).reverse();
     var T = "M" + n1(C - nl) + " " + ny + "C" + n1(C - nl + 2) + " " + (ny + 36) + " " + n1(C - nl * 0.45) + " " + (ny + 40) + " " + C + " " + (ny + 40) + "C" + n1(C + nl * 0.45) + " " + (ny + 40) + " " + n1(C + nl - 2) + " " + (ny + 36) + " " + n1(C + nl) + " " + ny + K.cr(Ra) + "Q" + C + " 518 " + n1(La[0][0]) + " " + n1(La[0][1]) + K.cr(La) + "Z";
     s += veste(K, mg, T, null, inT(K, T, ombra(K, k, { q: 1 }) + St("M" + (C - B.hp + 2) + " 504C" + (C - 20) + " 512 " + (C + 20) + " 512 " + (C + B.hp - 2) + " 504", k.mdd, 2, 0.35)) + bordoS(K, T, k, 7)).svg + stampa(K, T);
+    if (K.maglia2) {   // (tappa 3) il bordino col secondo colore: scollo e giri manica (non i fianchi né l orlo)
+      var sco = "M" + n1(C - nl) + " " + ny + "C" + n1(C - nl + 2) + " " + (ny + 36) + " " + n1(C - nl * 0.45) + " " + (ny + 40) + " " + C + " " + (ny + 40) + "C" + n1(C + nl * 0.45) + " " + (ny + 40) + " " + n1(C + nl - 2) + " " + (ny + 36) + " " + n1(C + nl) + " " + ny;
+      var gir = sco + K.liscio(Ra.slice(0, 7)) + K.liscio(La.slice(La.length - 7));
+      s += inT(K, T, St(gir, K.scuro(K.maglia2, 0.35), 11, 0.5) + St(gir, K.maglia2, 8, 1) + St(sco, "#ffffff", 1.2, 0.3, " transform='translate(0 2.5)'"));
+      if (K.spalle) K.dietro2 = { collo: 1 };
+    }
     return { corpo: s };
   });
 
@@ -1678,7 +1696,8 @@
   //  MAGLIA DA CALCIO
   // =========================================================
   A.pezzo("capo", "calcio", function (K) {
-    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", ct = contrasto(K, mg);
+    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", ct = K.secondo(contrasto(K, mg));   // (tappa 3) colletto, fasce, numero e stemma col secondo colore
+    if (K.maglia2 && K.spalle) K.dietro2 = { pol: 13, collo: 1 };
     var T = K.busto({ agio: 5, orlo: 514, scollo: { tipo: "v", prof: 30, larg: 4 }, pancia: B.pancia ? 5 : 0 });
     var M = maniche(K, mg, { lung: 0.34, agio: 8, pol: [13, ct, k.mdd, { liscio: true }] });
     var rete = pattern(K, 5, 5, "<circle cx='1.25' cy='1.25' r='.7' fill='#000' opacity='.1'/><circle cx='3.75' cy='3.75' r='.7' fill='#000' opacity='.1'/>");
@@ -1705,7 +1724,8 @@
   //  GIACCA DELLA TUTA (cerniera, due righe sulle maniche)
   // =========================================================
   A.pezzo("capo", "sportiva", function (K) {
-    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", ct = contrasto(K, mg), rib = K.mix(mg, k.mdd, 0.22);
+    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", ct = K.secondo(contrasto(K, mg)), rib = K.secondo(K.mix(mg, k.mdd, 0.22), 0.22);   // (tappa 3) righe, coste, polsini e colletto col secondo colore
+    if (K.maglia2 && K.spalle) K.dietro2 = { fasce: [[500, 528]], pol: 15, collo: 1 };
     var T = K.busto({ agio: 6, orlo: 514, scollo: { tipo: "v", prof: 22, larg: 5 }, svasa: -2, pancia: B.pancia ? 6 : 0 });
     var M = maniche(K, mg, { lung: 1, agio: 6, pol: [15, rib, k.mdd] });
     // righe lungo le maniche (sul lato esterno) e sul fianco: dentro la stoffa, seguono il braccio
@@ -1733,11 +1753,12 @@
   A.pezzo("capo", "crop", function (K) {
     var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, s = "";
     var T = K.busto({ agio: 4, orlo: 414, scollo: { prof: 16, larg: 4 }, curvaOrlo: 5 });
-    var M = maniche(K, mg, { lung: 0.3, agio: 7, pol: [9, K.mix(mg, k.mdd, 0.08), k.mdd, { liscio: true }] });
+    var M = maniche(K, mg, { lung: 0.3, agio: 7, pol: [9, K.secondo(K.mix(mg, k.mdd, 0.08), 0.08), k.mdd, { liscio: true }] });   // (tappa 3) fasce delle maniche e collo col secondo colore
+    if (K.maglia2 && K.spalle) K.dietro2 = { pol: 9, collo: 1 };
     s += veste(K, mg, T, M, inT(K, T, ombra(K, k, { q: 0.8, noPieghe: true, noPancia: true }) +
       St("M" + (C - B.ch + 2) + " 404C" + (C - 20) + " 412 " + (C + 20) + " 412 " + (C + B.ch - 2) + " 404", k.mdd, 2, 0.4) + K.Pa("M" + (C - 200) + " 400Q" + C + " 408 " + (C + 200) + " 400L" + (C + 200) + " 440L" + (C - 200) + " 440Z", k.md, " opacity='.22'"))).svg + M.pol + stampa(K, T);
     var nk = B.nk;
-    s += St("M" + (C - nk - 5) + " 241C" + (C - nk + 2) + " 263 " + (C + nk - 2) + " 263 " + (C + nk + 5) + " 241", K.mix(mg, "#000000", 0.22), 7, 0.95) + St("M" + (C - nk - 3) + " 238C" + (C - nk + 4) + " 259 " + (C + nk - 4) + " 259 " + (C + nk + 3) + " 238", K.chiaro(mg, 0.35), 1.8, 0.45);
+    s += St("M" + (C - nk - 5) + " 241C" + (C - nk + 2) + " 263 " + (C + nk - 2) + " 263 " + (C + nk + 5) + " 241", K.maglia2 ? K.mix(K.maglia2, "#000000", 0.08) : K.mix(mg, "#000000", 0.22), 7, 0.95) + St("M" + (C - nk - 3) + " 238C" + (C - nk + 4) + " 259 " + (C + nk - 4) + " 259 " + (C + nk + 3) + " 238", K.chiaro(K.maglia2 || mg, 0.35), 1.8, 0.45);
     return { corpo: s };
   });
 
@@ -1766,7 +1787,7 @@
     sp.forEach(function (dd, i) {
       var l = i ? 1 : -1;
       var id = linea(K, dd);
-      s += usa(id, tratto(K.skDD, 7, 0.1, " transform='translate(" + (l * 1.5) + " 2)'")) + usa(id, tratto(K.scuro(mg, 0.45), 5.2, 1)) + usa(id, tratto(mg, 3.8, 1)) + usa(id, tratto("#ffffff", 1, 0.3, " transform='translate(" + (l * -1) + " 0)'"));
+      s += usa(id, tratto(K.skDD, 7, 0.1, " transform='translate(" + (l * 1.5) + " 2)'")) + usa(id, tratto(K.scuro(mg, 0.45), 5.2, 1)) + usa(id, tratto(K.secondo(mg), 3.8, 1)) + usa(id, tratto("#ffffff", 1, 0.3, " transform='translate(" + (l * -1) + " 0)'"));
     });
     var q = ombra(K, k, { q: 0.7, noPieghe: true, noPancia: true });
     // la stoffa si tende sul seno e si arriccia al centro; ombra dove il corpo gira di lato
@@ -1774,7 +1795,7 @@
     for (var i = -3; i <= 3; i++) { if (!i) continue; var x0 = C + i * 5; q += St("M" + x0 + " 362C" + (x0 + i * 6) + " 384 " + (C + i * 10) + " 410 " + (C + i * 12) + " 436", k.mdd, 2.2, 0.16) + St("M" + (x0 + 2) + " 364C" + (x0 + i * 6 + 2) + " 386 " + (C + i * 10 + 2) + " 410 " + (C + i * 12 + 2) + " 436", "#ffffff", 1, 0.14); }
     q += K.Pa("M" + (C - 200) + " 424Q" + C + " 432 " + (C + 200) + " 424L" + (C + 200) + " 460L" + (C - 200) + " 460Z", k.md, " opacity='.2'");
     // bordo alto con spessore: orlo ripiegato (una striscia piu scura sotto e un filo di luce sopra)
-    q += usa(ib, tratto(k.mdd, 11, 0.22, " transform='translate(0 4)'")) + usa(ib, tratto(K.mix(mg, "#000000", 0.1), 7, 1, " transform='translate(0 3)'")) + usa(ib, tratto("#ffffff", 1.6, 0.34, " transform='translate(0 0.5)'"));
+    q += usa(ib, tratto(k.mdd, 11, 0.22, " transform='translate(0 4)'")) + usa(ib, tratto(K.maglia2 || K.mix(mg, "#000000", 0.1), 7, 1, " transform='translate(0 3)'")) + usa(ib, tratto("#ffffff", 1.6, 0.34, " transform='translate(0 0.5)'"));
     s += veste(K, mg, d, null, q + bordoS(K, d, k, 4)).svg;
     s += usa(ib, tratto(k.mdd, 1.2, 0.35, " transform='translate(0 6.5)'")) + stampa(K, d);
     return { corpo: s };
@@ -1786,7 +1807,8 @@
   A.pezzo("capo", "camicetta", function (K) {
     var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "";
     var T = K.busto({ agio: 6, orlo: 526, scollo: { tipo: "v", prof: 34, larg: 4 }, svasa: 6, curvaOrlo: 9, pancia: B.pancia ? 6 : 0 });
-    var M = maniche(K, mg, { lung: 1, agio: 8, svasa: 2, pol: [12, K.mix(mg, "#ffffff", 0.05), k.mdd, { liscio: true }] });
+    var M = maniche(K, mg, { lung: 1, agio: 8, svasa: 2, pol: [12, K.secondo(K.mix(mg, "#ffffff", 0.05)), k.mdd, { liscio: true }] });   // (tappa 3) polsini e fiocco col secondo colore
+    if (K.maglia2 && K.spalle) K.dietro2 = { pol: 12 };
     var seta = pattern(K, 12, 12, "<path d='M0 6Q3 2 6 6T12 6' fill='none' stroke='#fff' stroke-width='.7' opacity='.1'/>");
     var setaM = ""; M.ds.forEach(function (d, i) { setaM += telaManica(K, i ? 1 : -1, d, seta); });
     var q = tela(seta) + ombra(K, k, { q: 1.1 });
@@ -1799,7 +1821,7 @@
       s += K.suManica(l, sm);
     });
     // fiocco al collo
-    var cx = C, cy = 262, col = K.mix(mg, "#ffffff", 0.08);
+    var cx = C, cy = 262, col = K.secondo(K.mix(mg, "#ffffff", 0.08));
     [-1, 1].forEach(function (l) {
       s += K.Pa("M" + (cx + l * 5) + " " + (cy + 4) + "C" + (cx + l * 8) + " " + (cy + 34) + " " + (cx + l * 14) + " " + (cy + 58) + " " + (cx + l * 20) + " " + (cy + 72) + "L" + (cx + l * 6) + " " + (cy + 64) + "C" + (cx + l * 2) + " " + (cy + 40) + " " + (cx - l * 2) + " " + (cy + 20) + " " + (cx - l * 2) + " " + (cy + 6) + "Z", K.cil(col, 0.8)) +
         K.Pa("M" + (cx + l * 4) + " " + cy + "C" + (cx + l * 22) + " " + (cy - 18) + " " + (cx + l * 40) + " " + (cy - 12) + " " + (cx + l * 38) + " " + (cy + 4) + "C" + (cx + l * 36) + " " + (cy + 18) + " " + (cx + l * 16) + " " + (cy + 10) + " " + (cx + l * 4) + " " + cy + "Z", K.cil(col, 0.8)) +
@@ -1813,7 +1835,8 @@
   //  CARDIGAN (aperto, maglietta chiara sotto)
   // =========================================================
   A.pezzo("capo", "cardigan", function (K) {
-    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", rib = K.mix(mg, k.mdd, 0.18), sotto = K.lum(mg) > 0.75 ? "#d7dae6" : "#f6f6fa";
+    var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", rib = K.secondo(K.mix(mg, k.mdd, 0.18), 0.18), sotto = K.lum(mg) > 0.75 ? "#d7dae6" : "#f6f6fa";   // (tappa 3) bande, coste e polsini col secondo colore
+    if (K.maglia2 && K.spalle) K.dietro2 = { fasce: [[506, 546]], pol: 17 };
     var T = K.busto({ agio: 6, orlo: 526, scollo: { tipo: "v", prof: 44, larg: 5 }, svasa: -1, curvaOrlo: 8, pancia: B.pancia ? 7 : 0 });
     var M = maniche(K, mg, { lung: 1, agio: 6, pol: [17, rib, k.mdd] });
     var trama = pattern(K, 7, 8, "<path d='M0.5 .8L3.5 6.5L6.5 .8' fill='none' stroke='#1a0a10' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round' opacity='.14'/>");
@@ -1844,7 +1867,7 @@
   // =========================================================
   A.pezzo("capo", "gilet", function (K) {
     var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "";
-    var cam = buildCamicia(K, K.lum(mg) > 0.8 ? "#cdd5ea" : "#f3f4f9", {});
+    var cam = buildCamicia(K, K.maglia2 || (K.lum(mg) > 0.8 ? "#cdd5ea" : "#f3f4f9"), {});   // (tappa 3) col secondo colore la camicia sotto
     s += cam.corpo;
     var T = K.busto({ agio: 5, orlo: 520, smanicato: true, spallina: 22, scollo: { tipo: "v", prof: 104, larg: 5 }, curvaOrlo: 34, pancia: B.pancia ? 5 : 0 });
     var q = ombra(K, k, { q: 1.1, noPieghe: true }) + St("M" + (C - B.ap + 4) + " 296C" + (C - B.ch + 6) + " 330 " + (C - B.ch + 8) + " 400 " + (C - B.wt + 6) + " 470", "#ffffff", 4, 0.12);
@@ -1894,7 +1917,8 @@
       var X = function (v) { return n1(C + l * v); };
       var lp = "M" + X(nk + 2) + " 238L" + X(nk + 38) + " 268L" + X(nk + 30) + " 288L" + X(24) + " 376L" + X(11) + " 372L" + X(4) + " 332C" + X(4) + " 296 " + X(nk * 0.6) + " 270 " + X(nk + 2) + " 238Z";
       s += K.El(C + l * (nk + 14), 300, 22, 34, K.soft("#000000", 0.35));
-      s += K.Pa(lp, K.LG("vl" + (uid++), 0, 0, 1, 1, [[0, K.mix(mg, "#ffffff", l < 0 ? 0.28 : 0.14)], [0.6, mg], [1, k.md]])) + "<g clip-path='" + K.clip(lp) + "'>" + tela(lana) + St("M" + X(nk + 34) + " 272L" + X(26) + " 372", "#ffffff", 4, 0.18) + K.El(C + l * (nk + 8), 308, 12, 40, K.soft(k.mdd, 0.28)) + "</g>" +
+      var rv = K.maglia2 || mg;   // (tappa 3) i revers col secondo colore; senza, la fantasia anche sui revers
+      s += K.Pa(lp, K.LG("vl" + (uid++), 0, 0, 1, 1, [[0, K.mix(rv, "#ffffff", l < 0 ? 0.28 : 0.14)], [0.6, rv], [1, K.maglia2 ? K.scuro(rv, 0.3) : k.md]])) + (K.maglia2 ? "" : K.motivo(lp)) + "<g clip-path='" + K.clip(lp) + "'>" + tela(lana) + St("M" + X(nk + 34) + " 272L" + X(26) + " 372", "#ffffff", 4, 0.18) + K.El(C + l * (nk + 8), 308, 12, 40, K.soft(k.mdd, 0.28)) + "</g>" +
         St("M" + X(nk + 38) + " 268L" + X(nk + 30) + " 288L" + X(24) + " 376", k.mdd, 1.5, 0.55) + St("M" + X(nk + 34) + " 268L" + X(nk + 6) + " 244", "#ffffff", 1, 0.3);
     });
     // bottoni in due file
@@ -1913,13 +1937,14 @@
   function abito(K, lungo) {
     var mg = K.maglia, k = colori(K, mg), C = K.C, B = K.B, Y = K.Y, nk = B.nk, s = "", ct = K.mix(mg, "#ffffff", 0.0);
     var orlo = lungo ? 942 : 742, T = K.busto(lungo ? { agio: 3, orlo: orlo, smanicato: true, spallina: 18, scollo: { tipo: "v", prof: 62, larg: 8 }, svasa: 6, curvaOrlo: 14 } : { agio: 3, orlo: orlo, scollo: { prof: 26, larg: 10 }, svasa: 8, curvaOrlo: 10, pancia: B.pancia ? 4 : 0 });
-    var M = lungo ? { br: null } : maniche(K, mg, { lung: 0.28, agio: 6, pol: [8, K.mix(mg, k.mdd, 0.05), k.mdd, { liscio: true }] });
+    var M = lungo ? { br: null } : maniche(K, mg, { lung: 0.28, agio: 6, pol: [8, K.secondo(K.mix(mg, k.mdd, 0.05), 0.05), k.mdd, { liscio: true }] });
     // le gambe (nude o con i pantaloni scelti) le disegna il motore: qui solo il vestito
     var q = ombra(K, k, { q: 1, noPieghe: true });
     // il corpetto stretto e la gonna che si apre
     q += K.El(C + 66, 640, 40, 200, K.soft("#000000", 0.17)) + K.El(C - 70, 600, 22, 140, K.soft("#ffffff", 0.1)) + pieghe(K, k, 452, orlo - 6, lungo ? 8 : 6, 1.3);
     // cintura
-    var cb = K.mix(mg, k.mdd, 0.45);
+    var cb = K.secondo(K.mix(mg, k.mdd, 0.45));   // (tappa 3) la cintura col secondo colore
+    if (K.maglia2 && K.spalle) K.dietro2 = { fasce: [[438, 457]], pol: lungo ? 0 : 8 };
     q += K.Pa("M" + (C - 200) + " 438Q" + C + " 444 " + (C + 200) + " 438L" + (C + 200) + " 456Q" + C + " 462 " + (C - 200) + " 456Z", cilU(K, cb, C - B.wt - 6, C + B.wt + 6, 0.8)) + St("M" + (C - 200) + " 439.5Q" + C + " 445.5 " + (C + 200) + " 439.5", "#ffffff", 1.1, 0.3) +
       K.Pa("M" + (C - 8) + " 438L" + (C + 8) + " 438L" + (C + 8) + " 456L" + (C - 8) + " 456Z", "#d9be78", " stroke='#7a5f24' stroke-width='1.3'") + K.Pa("M" + (C - 4) + " 442L" + (C + 4) + " 442L" + (C + 4) + " 452L" + (C - 4) + " 452Z", cb);
     q += St("M" + (C - 200) + " " + (orlo - 14) + "Q" + C + " " + (orlo - 4) + " " + (C + 200) + " " + (orlo - 14), "#ffffff", 1.2, 0.35, " stroke-dasharray='3 3'") + St("M" + (C - 200) + " " + (orlo - 4) + "Q" + C + " " + (orlo + 6) + " " + (C + 200) + " " + (orlo - 4), k.mdd, 3, 0.28);
@@ -1927,7 +1952,7 @@
     s += stampa(K, T);
     if (!lungo) s = K.El(C, orlo + 12, B.hp + 26, 12, K.soft("#000000", 0.2)) + s;
     if (lungo) {   // spalline del vestito lungo: scollo con orlo
-      s += St("M" + (C - nk - 4 - 12) + " 244L" + C + " 302L" + (C + nk + 4 + 12) + " 244", K.mix(mg, k.mdd, 0.2), 2.4, 0.9);
+      s += St("M" + (C - nk - 4 - 12) + " 244L" + C + " 302L" + (C + nk + 4 + 12) + " 244", K.secondo(K.mix(mg, k.mdd, 0.2)), 2.4, 0.9);
     }
     return { corpo: s };
   }
@@ -1968,13 +1993,13 @@
     // tasca grande: spessore, ombra sotto e cucitura
     var tk = "M" + (C - 38) + " 540L" + (C + 38) + " 540L" + (C + 42) + " 600L" + (C - 42) + " 600Z";
     var ik = linea(K, tk);
-    s += usa(ik, tratto("#000000", 6, 0.07, " transform='translate(1 3)'")) + usa(ik, " fill='" + K.mix(bianco, "#ffffff", 0.0) + "' opacity='.9'") + usa(ik, tratto(pc, 1.3, 0.55, " stroke-dasharray='4 3'")) + St("M" + (C - 38) + " 541.5L" + (C + 38) + " 541.5", mg, 3, 0.9) + St("M" + C + " 543L" + C + " 600", pc, 1.2, 0.35) + St("M" + (C - 40) + " 601L" + (C + 40) + " 601", "#000000", 2.4, 0.1);
+    s += usa(ik, tratto("#000000", 6, 0.07, " transform='translate(1 3)'")) + usa(ik, " fill='" + K.mix(bianco, "#ffffff", 0.0) + "' opacity='.9'") + usa(ik, tratto(pc, 1.3, 0.55, " stroke-dasharray='4 3'")) + St("M" + (C - 38) + " 541.5L" + (C + 38) + " 541.5", K.secondo(mg), 3, 0.9) + St("M" + C + " 543L" + C + " 600", pc, 1.2, 0.35) + St("M" + (C - 40) + " 601L" + (C + 40) + " 601", "#000000", 2.4, 0.1);
     // bordino a colore della maglia lungo i lati e in fondo, con la sua cucitura
     var bo = "M" + (C - bw) + " 317C" + (C - bw - 2) + " 360 " + (C - B.wt - 5) + " 410 " + (C - B.wt - 6) + " 452L" + (C - wb) + " 474C" + (C - sw - 4) + " 540 " + (C - sw - 8) + " 640 " + (C - sw - 14) + " 700";
     var bo2 = "M" + (C + bw) + " 317C" + (C + bw + 2) + " 360 " + (C + B.wt + 5) + " 410 " + (C + B.wt + 6) + " 452L" + (C + wb) + " 474C" + (C + sw + 4) + " 540 " + (C + sw + 8) + " 640 " + (C + sw + 14) + " 700";
     var i1 = linea(K, bo), i2 = linea(K, bo2);
-    s += usa(i1, tratto(mg, 4.6, 0.9)) + usa(i2, tratto(mg, 4.6, 0.9)) + usa(i1, tratto("#ffffff", 1, 0.45, " stroke-dasharray='3 2.5' transform='translate(2.4 0)'")) + usa(i2, tratto("#ffffff", 1, 0.45, " stroke-dasharray='3 2.5' transform='translate(-2.4 0)'"));
-    s += St("M" + (C - sw - 20) + " 698Q" + C + " 716 " + (C + sw + 20) + " 698", mg, 5, 0.9) + St("M" + (C - sw - 18) + " 692Q" + C + " 709 " + (C + sw + 18) + " 692", "#ffffff", 1, 0.45, " stroke-dasharray='3 2.5'") + St("M" + (C - bw) + " 317C" + (C - 20) + " 324 " + (C + 20) + " 324 " + (C + bw) + " 317", mg, 3.6, 0.9) + St("M" + (C - bw + 3) + " 322C" + (C - 20) + " 329 " + (C + 20) + " 329 " + (C + bw - 3) + " 322", "#ffffff", 1, 0.4, " stroke-dasharray='3 2.5'");
+    s += usa(i1, tratto(K.secondo(mg), 4.6, 0.9)) + usa(i2, tratto(K.secondo(mg), 4.6, 0.9))   /* (tappa 3) il bordino col secondo colore */ + usa(i1, tratto("#ffffff", 1, 0.45, " stroke-dasharray='3 2.5' transform='translate(2.4 0)'")) + usa(i2, tratto("#ffffff", 1, 0.45, " stroke-dasharray='3 2.5' transform='translate(-2.4 0)'"));
+    s += St("M" + (C - sw - 20) + " 698Q" + C + " 716 " + (C + sw + 20) + " 698", K.secondo(mg), 5, 0.9) + St("M" + (C - sw - 18) + " 692Q" + C + " 709 " + (C + sw + 18) + " 692", "#ffffff", 1, 0.45, " stroke-dasharray='3 2.5'") + St("M" + (C - bw) + " 317C" + (C - 20) + " 324 " + (C + 20) + " 324 " + (C + bw) + " 317", K.secondo(mg), 3.6, 0.9) + St("M" + (C - bw + 3) + " 322C" + (C - 20) + " 329 " + (C + 20) + " 329 " + (C + bw - 3) + " 322", "#ffffff", 1, 0.4, " stroke-dasharray='3 2.5'");
     // cintura: fascia con spessore
     var cn = "M" + (C - B.wt - 12) + " 448L" + (C + B.wt + 12) + " 448L" + (C + wb + 2) + " 474L" + (C - wb - 2) + " 474Z";
     s += K.Pa(cn, cilU(K, K.mix(bianco, "#b9bccb", 0.3), C - wb, C + wb, 0.9), " opacity='.97'") + St("M" + (C - B.wt - 12) + " 449.5L" + (C + B.wt + 12) + " 449.5", "#ffffff", 1.2, 0.7) + St("M" + (C - wb - 2) + " 473L" + (C + wb + 2) + " 473", pc, 2.2, 0.35) + K.El(C, 480, wb, 6, K.soft(pc, 0.22));
@@ -2157,7 +2182,7 @@
     var r = pant(K, { id: "vpc", a: 694, agio: 9, agioI: 7, curva: 6, cordino: true, cintura: true,
       dett: function (l, cx, pn, pl, pd) {
         var g = K.gIn(660), ex = C + l * (g[0] + g[1] + 9);
-        return K.Pa(K.limb([[C + l * (B.wt - 8), 462, 7], [C + l * (B.hp - 7), 528, 7], [ex - l * 8, 598, 7], [ex - l * 8, 696, 7]]), K.mix(pn, "#ffffff", 0.7), " opacity='.6'") +
+        return K.Pa(K.limb([[C + l * (B.wt - 8), 462, 7], [C + l * (B.hp - 7), 528, 7], [ex - l * 8, 598, 7], [ex - l * 8, 696, 7]]), K.pant2 || K.mix(pn, "#ffffff", 0.7), K.pant2 ? " opacity='.92'" : " opacity='.6'") +
           St("M" + K.n1(cx - 24) + " 676C" + K.n1(cx - 10) + " 683 " + K.n1(cx + 10) + " 683 " + K.n1(cx + 24) + " 675", pd, 3, 0.3) +
           St("M" + K.n1(cx - 24) + " 684C" + K.n1(cx - 10) + " 691 " + K.n1(cx + 10) + " 691 " + K.n1(cx + 24) + " 683", pl, 1.2, 0.3);
       } });
@@ -2263,7 +2288,7 @@
     var r = pant(K, { id: "vtu", a: 944, agio: 10, agioI: 7, agioB: 6, dritto: 760, orloL: 24, curva: 4, cordino: true,
       dett: function (l, cx, pn, pl, pd) {
         var g = K.gIn(700), ex = C + l * (g[0] + g[1] + 10);
-        var righe = K.mix(pn, K.lum(pn) > 0.55 ? "#2b2b33" : "#ffffff", 0.78);
+        var righe = K.pant2 || K.mix(pn, K.lum(pn) > 0.55 ? "#2b2b33" : "#ffffff", 0.78);   // (tappa 3) la riga col secondo colore dei pantaloni
         var s = K.Pa("M" + (ex - l * 3) + " 556L" + (ex - l * 11) + " 556L" + (ex - l * 13) + " 944L" + (ex - l * 4) + " 944Z", righe, " opacity='.85'");
         s += St("M" + (ex - l * 12) + " 556L" + (ex - l * 14) + " 944", K.chiaro(righe, 0.3), 1, 0.35);
         var k = K.gIn(748); s += St("M" + K.n1(cx - 24) + " 742C" + K.n1(cx - 10) + " 750 " + K.n1(cx + 10) + " 750 " + K.n1(cx + 24) + " 740", pd, 3, 0.22);

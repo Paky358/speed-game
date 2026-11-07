@@ -79,8 +79,15 @@
     colSchiena:["#c92a2a", "#1c7ed6", "#2f9e44", "#f59f00", "#7048e8", "#e64980", "#15aabf", "#343a40", "#f1f3f5", "#fd7e14"],
     animale:   ["nessuno", "gatto", "cane", "coniglio", "pulcino", "pappagallo"],
     colAnimale:["#f0a04b", "#3a3a3f", "#9aa0a8", "#f5f1ea", "#8d5a3b", "#e8c99a"],
-    pittura:   ["nessuna", "gatto", "clown", "cuori", "tricolore", "sportivo", "fulmine"]
+    pittura:   ["nessuna", "gatto", "clown", "cuori", "tricolore", "sportivo", "fulmine"],
+    // (6 nov 2026, tappa 3 dei vestiti, Tavola 2) la fantasia su tutta la stoffa (busto, maniche, gambe) e la stoffa (luce e trama).
+    // Valgono per il capo (fant, stoffa) e per i pantaloni (fantP, stoffaP: stesse liste). Il secondo colore (maglia2, pant2) è una
+    // posizione nella tavolozza della maglia e dei pantaloni: non ha una lista sua. Campi che mancano = disegno di sempre.
+    fant:      ["nessuna", "righe", "quadri", "pois", "mimetica", "jeans", "hawaiana"],
+    stoffa:    ["normale", "lana", "pelle", "raso", "paillettes"]
   };
+  // (tappa 3) i campi nuovi e il loro valore «niente»: norm li tiene SOLO se sono scelti (gli avatar di prima restano uguali, anche nei dati)
+  var NUOVI_VESTITI = { maglia2: null, fant: "nessuna", stoffa: "normale", pant2: null, fantP: "nessuna", stoffaP: "normale" };
   var BASE = { forma: "uomo", corpo: "medio", pelle: 1, viso: "tondo", occhi: "tondi", iride: 1, sopracc: "morbide", naso: "piccolo",
                bocca: "sorriso", guance: "no", segno: "nessuno", trucco: "nessuno", colTrucco: 0, capelli: "corti", colCap: 1, barba: "no", capo: "lunga", maglia: 1, stampa: "nessuna",
                sotto: "jeans", pantaloni: 8, scarpe: 0, modScarpe: "sneakers", accessorio: "nessuno", colAcc: null,
@@ -130,6 +137,9 @@
   // nomi diversi per la stessa parola in voci diverse (es. "gatto": orecchie in testa, faccina sulla maglia, animaletto…)
   var NOMI_K = { cappello: { gatto: "Orecchie gatto", coniglio: "Orecchie coniglio" }, stampa: { gatto: "Gattino", pizza: "Pizza" }, animale: { gatto: "Gatto" },
     pittura: { gatto: "Baffi da gatto" }, mano: { pizza: "Trancio di pizza", fiore: "Fiore" } };
+  // (tappa 3) le fantasie e le stoffe (le stesse parole per il capo e per i pantaloni)
+  NOMI_K.fant = NOMI_K.fantP = { nessuna: "Nessuna", righe: "Righe", quadri: "Quadri", pois: "Pois", mimetica: "Mimetica", jeans: "Jeans", hawaiana: "Hawaiana" };
+  NOMI_K.stoffa = NOMI_K.stoffaP = { normale: "Normale", lana: "Lana", pelle: "Pelle", raso: "Raso", paillettes: "Paillettes" };
   // oggetti che si sbloccano coi trofei (per ora bloccati)
   var BLOCCATI = { cappello: ["corona"], mano: ["trofeo"] };
   // capi solo per la forma "donna" (per l'uomo non compaiono nell'editor)
@@ -266,7 +276,48 @@
     if (c.colOmbretto == null) c.colOmbretto = t !== "nessuno" ? ct : 0;
     if (c.colRossetto == null) c.colRossetto = t !== "nessuno" ? ct : 0;
     ["ombretto", "eyeliner", "mascara", "rossetto", "blush"].forEach(function (k) { if (OPZ[k].indexOf(c[k]) < 0) c[k] = "nessuno"; });
+    // (tappa 3) secondo colore, fantasia e stoffa: solo se ci sono e sono giusti (una voce che non esiste = niente, come prima)
+    for (var kn in NUOVI_VESTITI) {
+      var vn = cfg[kn];
+      if (vn == null || vn === NUOVI_VESTITI[kn]) continue;
+      if (kn === "maglia2" || kn === "pant2") { if (typeof vn === "number" ? vn >= 0 && vn < OPZ[kn === "maglia2" ? "maglia" : "pantaloni"].length : /^#[0-9a-f]{6}$/i.test(vn)) c[kn] = vn; }
+      else if (OPZ[/^fant/.test(kn) ? "fant" : "stoffa"].indexOf(vn) >= 0) c[kn] = vn;
+    }
     return c;
+  }
+  // (tappa 3, 6 nov 2026, Tavola 2) IL SECONDO COLORE CHE ARRIVA DA SOLO: toccando una fantasia senza un secondo colore scelto, ne arriva uno
+  // che sta bene (righe bianche sul blu, blu sul bianco; quadri neri sul rosso…). Funzione pura come coloreDiPartenza: il secondo colore
+  // cambia SOLO se non c'era o se era quello arrivato da solo (un colore scelto a mano resta sempre). Anche cambiando il colore del capo
+  // (o tornando a «Nessuna») quello arrivato da solo segue. k = "fant" | "maglia" | "fantP" | "pantaloni", v = il valore nuovo.
+  // → { chiave: "maglia2" | "pant2", valore: posizione nella tavolozza o null } se cambia, null se resta
+  var SECONDO_PER = {   // [colore se il capo è scuro, se è medio, se è chiaro]; null = la fantasia non usa il secondo colore
+    righe: ["#f4f2ec", "#f4f2ec", "#1b2440"], quadri: ["#c9302c", "#14141a", "#6d1f33"], pois: ["#f4f2ec", "#f4f2ec", "#6d1f33"], mimetica: null, jeans: null, nessuna: null
+  };
+  function luminosita(h) { var c = rgb(h); return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255; }
+  function secondoAuto(lista, base, fant) {
+    var vuole;
+    if (fant === "hawaiana") {   // i fiori: gialli sui colori caldi, rosa sul giallo, corallo sugli altri
+      var c = rgb(base), mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]), h = 0;
+      if (mx !== mn) h = (mx === c[0] ? ((c[1] - c[2]) / (mx - mn) + 6) % 6 : (mx === c[1] ? (c[2] - c[0]) / (mx - mn) + 2 : (c[0] - c[1]) / (mx - mn) + 4)) * 60;
+      vuole = mx - mn < 30 ? "#ff6b57" : (h < 35 || h >= 300 ? "#ffd23f" : (h < 75 ? "#e64980" : "#ff6b57"));
+    } else {
+      var P = SECONDO_PER[fant]; if (!P) return null;
+      var L = luminosita(base); vuole = P[L < 0.22 ? 0 : (L < 0.62 ? 1 : 2)];
+    }
+    // il colore della tavolozza più vicino (mai lo stesso del capo)
+    var t = rgb(vuole), meglio = null, dm = 1e9;
+    lista.forEach(function (x, i) { if (x === base) return; var y = rgb(x), d = (y[0] - t[0]) * (y[0] - t[0]) * 0.3 + (y[1] - t[1]) * (y[1] - t[1]) * 0.59 + (y[2] - t[2]) * (y[2] - t[2]) * 0.11; if (d < dm) { dm = d; meglio = i; } });
+    return meglio;
+  }
+  function secondoDiPartenza(cfg, k, v) {
+    if (!cfg || !/^(fant|maglia|fantP|pantaloni)$/.test(k)) return null;
+    var capo = k === "fant" || k === "maglia", fk = capo ? "fant" : "fantP", ck = capo ? "maglia" : "pantaloni", k2 = capo ? "maglia2" : "pant2", L = OPZ[ck];
+    function auto(c) { var f = c[fk]; return f && f !== "nessuna" ? secondoAuto(L, col(L, c[ck] == null ? BASE[ck] : c[ck]), f) : null; }
+    var ora = cfg[k2] == null ? null : cfg[k2], prima = auto(cfg);
+    if (ora != null && ora !== prima) return null;   // scelto a mano: resta
+    var dopo = {}, x; for (x in cfg) dopo[x] = cfg[x]; dopo[k] = v;
+    var nuovo = auto(dopo);
+    return nuovo === ora ? null : { chiave: k2, valore: nuovo };
   }
 
   var TESTA = {
@@ -2473,6 +2524,7 @@
 
   window.SGOmino = { svg: svg, el: el, mano: mano, casuale: casuale, norm: norm, OPZ: OPZ, BASE: BASE, NOMI: NOMI, NOMI_K: NOMI_K, LIBERI: LIBERI, BLOCCATI: BLOCCATI, SOLO_DONNA: SOLO_DONNA, GRUPPI_CAPELLI: GRUPPI_CAPELLI,
     GRUPPI_COLORI: GRUPPI_COLORI, NOMI_COLORI: NOMI_COLORI, PARTENZA: PARTENZA, coloreDiPartenza: coloreDiPartenza,
+    NUOVI_VESTITI: NUOVI_VESTITI, secondoDiPartenza: secondoDiPartenza,
     adattaForma: adattaForma, formaDaNome: formaDaNome, CAPELLI_UOMO: CAPELLI_UOMO,
     stile: function (s) { if (s === "classico" || s === "rifinito" || s === "illustrato") STILE = s; return STILE; },   // lo stile del disegno per tutta la pagina (vedi STILE)
     // gli avatar illustrati sono accesi? (i giochi cambiano tavoli e banconi SOLO in quel caso)

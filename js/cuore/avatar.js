@@ -26,8 +26,9 @@
       sotto: [["Occhi", ["ombretto", "colOmbretto", "eyeliner", "colEyeliner", "mascara"]], ["Labbra", ["rossetto", "colRossetto"]], ["Guance", ["blush", "colBlush"]]] },
     { nome: "Capelli", icona: "💇", zoom: "viso", voci: [["capelli", "Taglio"], ["colCap", "Colore"], ["barba", "Barba e baffi"]],
       sotto: [["Taglio", ["capelli"]], ["Colore", ["colCap"]], ["Barba e baffi", ["barba"]]] },
-    { nome: "Vestiti", icona: "👕", look: true, voci: [["capo", "Stile"], ["maglia", "Colore"], ["stampa", "Stampa"], ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]],
-      sotto: [["Look pronti", ["look"]], ["Parti superiori", ["capo", "maglia", "stampa"]], ["Parti inferiori", ["sotto", "pantaloni"]], ["Scarpe", ["modScarpe", "scarpe"]]] },
+    { nome: "Vestiti", icona: "👕", look: true, voci: [["capo", "Stile"], ["maglia", "Colore"], ["fant", "Fantasia"], ["maglia2", "Secondo colore"], ["stoffa", "Stoffa"], ["stampa", "Stampa"],
+                               ["sotto", "Sotto"], ["pantaloni", "Colore sotto"], ["fantP", "Fantasia"], ["pant2", "Secondo colore"], ["stoffaP", "Stoffa"], ["modScarpe", "Scarpe"], ["scarpe", "Colore scarpe"]],
+      sotto: [["Look pronti", ["look"]], ["Parti superiori", ["capo", "maglia", "fant", "maglia2", "stoffa", "stampa"]], ["Parti inferiori", ["sotto", "pantaloni", "fantP", "pant2", "stoffaP"]], ["Scarpe", ["modScarpe", "scarpe"]]] },
     { nome: "Accessori", icona: "🎩", voci: [["cappello", "In testa"], ["colAcc", "Colore"], ["occhiali", "Occhiali e maschere"], ["orecchini", "Orecchini e piercing"], ["collo", "Al collo"], ["colCollo", "Colore"], ["borsa", "Borsa"], ["colBorsa", "Colore borsa"]],
       sotto: [["In testa", ["cappello", "colAcc"]], ["Occhiali", ["occhiali"]], ["Orecchini", ["orecchini"]], ["Al collo", ["collo", "colCollo"]], ["Borsa", ["borsa", "colBorsa"]]] },
     { nome: "Extra", icona: "🎈", voci: [["mano", "In mano"], ["colMano", "Colore"], ["schiena", "Sulla schiena"], ["colSchiena", "Colore"], ["animale", "Animaletto"], ["colAnimale", "Colore del pelo"], ["pittura", "Pittura sul viso"]],
@@ -39,19 +40,24 @@
   var SOTTO_CAMERINO = {   // i colori sempre presenti stanno sopra (non spostano niente); quelli che compaiono solo con certe scelte stanno sotto
     Corpo: [["Maschio o femmina", ["forma"]], ["Corporatura e pelle", ["pelle", "corpo"]]],
     Capelli: [["Taglio e colore", ["colCap", "capelli"]], ["Barba e baffi", ["barba"]]],
-    Vestiti: [["Look pronti", ["look"]], ["Sopra", ["maglia", "capo", "stampa"]], ["Sotto", ["pantaloni", "sotto"]], ["Scarpe", ["scarpe", "modScarpe"]]],
+    Vestiti: [["Look pronti", ["look"]], ["Sopra", ["maglia", "capo", "fant", "maglia2", "stoffa", "stampa"]], ["Sotto", ["pantaloni", "sotto", "fantP", "pant2", "stoffaP"]], ["Scarpe", ["scarpe", "modScarpe"]]],
     Accessori: [["In testa", ["cappello", "colAcc"]], ["Occhiali", ["occhiali"]], ["Orecchini", ["orecchini"]], ["Al collo", ["collo", "colCollo"]], ["Borsa", ["borsa", "colBorsa"]]],
     Extra: [["In mano", ["mano", "colMano"]], ["Sulla schiena", ["schiena", "colSchiena"]], ["Animaletto", ["animale", "colAnimale"]], ["Pittura sul viso", ["pittura"]]]
   };
   var SEZ_CAMERINO = SEZ_OMINO.map(function (sz) { var c = {}, k; for (k in sz) c[k] = sz[k]; if (SOTTO_CAMERINO[sz.nome]) c.sotto = SOTTO_CAMERINO[sz.nome]; return c; });
-  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1, colAnimale: 1 };
+  var OMINO_COLORI = { pelle: 1, colCap: 1, iride: 1, maglia: 1, maglia2: 1, pantaloni: 1, pant2: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1, colAnimale: 1 };
   var TRUCCO_COL = { colOmbretto: "ombretto", colEyeliner: "eyeliner", colRossetto: "rossetto", colBlush: "blush", colBorsa: "borsa" };   // il colore si vede solo se quel trucco c'è
   var TRUCCO_VOCI = /^(ombretto|eyeliner|mascara|rossetto|blush|pittura|col(Ombretto|Eyeliner|Rossetto|Blush))$/;   // anteprime in primo piano sul viso
   var OMINO_INTERO = { forma: 1, corpo: 1, sotto: 1, capo: 1, stampa: 1, borsa: 1, mano: 1, schiena: 1, animale: 1 };   // anteprima a figura intera (le altre: solo la testa)
   var ACC_COLORATI = /cappellino|berretto|fascia|cuffie|cilindro|cowboy|pescatore|basco|festa|gatto|cerchietto|fiocco|mollette|paglia|coppola|borsalino|visiera|mago|antenne/;   // cappelli con un colore da scegliere
   var COLLO_COLORATI = /sciarpa|papillon|cravatta|bandana|foulard|medaglia|fischietto|cuffiecollo/;
   var COLORE_DI = { colMano: ["mano", /palloncino|fiore|microfono|tazza|libro/], colSchiena: ["schiena", /zaino|mantello|farfalla/], colAnimale: ["animale", /gatto|cane|coniglio/] };   // colore che compare solo con certe scelte
-  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, pantaloni: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1 };   // colori dove c'è anche la tavolozza libera
+  var OMINO_LIBERO = { colCap: 1, iride: 1, maglia: 1, maglia2: 1, pantaloni: 1, pant2: 1, scarpe: 1, colAcc: 1, colCollo: 1, colOmbretto: 1, colEyeliner: 1, colRossetto: 1, colBlush: 1, colBorsa: 1, colMano: 1, colSchiena: 1 };   // colori dove c'è anche la tavolozza libera
+  // (6 nov 2026, tappa 3 dei vestiti, Tavola 2) fantasia, secondo colore e stoffa del capo e dei pantaloni: le voci dei pantaloni usano le
+  // liste del capo; il secondo colore è un colore della tavolozza della maglia (o dei pantaloni) oppure «Nessuno» (null). Quando una voce
+  // nuova manca nell avatar vale il suo «niente» (SGOmino.NUOVI_VESTITI): così gli avatar di prima restano uguali anche nei dati.
+  var LISTA_DI = { maglia2: "maglia", pant2: "pantaloni", fantP: "fant", stoffaP: "stoffa" };
+  var COL2 = /^(righe|quadri|pois|hawaiana)$/;   // le fantasie che si colorano col secondo colore
   var OMINO_RITOCCHI = [["occG", "Grandezza occhi"], ["occD", "Distanza occhi"], ["occA", "Altezza occhi"],
     ["soprA", "Altezza sopracciglia"], ["nasoG", "Grandezza naso"], ["boccaA", "Altezza bocca"]];
   // 🎨 avatar illustrati (strada A): una voce che non è ancora ridisegnata (nel disegno prende quella più simile)
@@ -271,11 +277,21 @@
     function unisci(k, v) {
       if (k === "forma") return O.adattaForma(cfg, v);   // maschio/femmina: cambiano anche capelli, barba, trucco
       var c = {}; for (var x in cfg) c[x] = cfg[x]; c[k] = v;
-      var pz = partenza(k, v); if (pz) c[pz.chiave] = pz.valore;   // l'anteprima col colore con cui arriverebbe
+      var pz = partenza(k, v); if (pz) pz.forEach(function (x) { c[x.chiave] = x.valore; });   // l'anteprima col colore con cui arriverebbe
       return c;
     }
     // (6 nov 2026) il colore di partenza del capo, del sotto o delle scarpe toccati (null = il colore di adesso resta: vedi SGOmino.coloreDiPartenza)
-    function partenza(k, v) { return /^(capo|sotto|modScarpe)$/.test(k) && O.coloreDiPartenza ? O.coloreDiPartenza(cfg, k, v) : null; }
+    // e (tappa 3) il secondo colore che arriva da solo con una fantasia, o che segue il colore del capo (vedi SGOmino.secondoDiPartenza).
+    // → [{ chiave, valore }, …] le scelte che cambiano da sole insieme a quella toccata (null = nessuna)
+    function partenza(k, v) {
+      var r = [], pz = /^(capo|sotto|modScarpe)$/.test(k) && O.coloreDiPartenza ? O.coloreDiPartenza(cfg, k, v) : null;
+      if (pz) r.push(pz);
+      var kk = pz ? pz.chiave : k, vv = pz ? pz.valore : v, s2 = O.secondoDiPartenza ? O.secondoDiPartenza(cfg, kk, vv) : null;
+      if (s2) r.push(s2);
+      return r.length ? r : null;
+    }
+    function valore(k) { var D0 = O.NUOVI_VESTITI; return cfg[k] == null && D0 && k in D0 ? D0[k] : cfg[k]; }
+    function listaDi(k) { return O.OPZ[LISTA_DI[k] || k]; }
     function salto() {   // saltello senza ricalcolare la pagina (le anteprime sono tante)
       var sv = figura.firstChild;
       if (sv && sv.animate) sv.animate([{ transform: "none" }, { transform: "translateY(-12px) scale(.96,1.05)", offset: 0.3 },
@@ -332,8 +348,9 @@
       var n = (O.NOMI_K && O.NOMI_K[k] && O.NOMI_K[k][val]) || O.NOMI[val] || val;
       return n.charAt(0).toUpperCase() + n.slice(1);
     }
-    function opzMini(k, c) {   // l'anteprima giusta per ogni voce: gambe, viso da vicino, figura intera o solo la testa
-      return O.svg(c, /^(sotto|modScarpe)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: k !== "pittura" } : { busto: !OMINO_INTERO[k], senzaCappello: /^(capelli|colCap)$/.test(k) }));
+    function opzMini(k, c) {   // l'anteprima giusta per ogni voce: gambe, viso da vicino, figura intera, dalla testa alla vita (fantasie e stoffe) o solo la testa
+      if (/^(fant|stoffa)$/.test(k)) return O.svg(c, { vita: true });
+      return O.svg(c, /^(sotto|modScarpe|fantP|stoffaP)$/.test(k) ? { gambe: true } : (TRUCCO_VOCI.test(k) ? { viso: true, senzaOcchiali: k !== "pittura" } : { busto: !OMINO_INTERO[k], senzaCappello: /^(capelli|colCap)$/.test(k) }));
     }
     // aggiorna solo i riquadri (niente ricostruzione della schermata: non salta lo scroll)
     function aggiornaPannello(cambiata) {   // cambiata = voce appena scelta: le sue anteprime non cambiano, non si ridisegnano
@@ -351,12 +368,12 @@
           b.classList.toggle("attiva", mio); b.style.background = mio ? cfg[k] : "";
           return;
         }
-        b.classList.toggle("attiva", cfg[k] === v);
+        b.classList.toggle("attiva", valore(k) === v);
         if (b._mini && k !== cambiata) b._mini.innerHTML = opzMini(k, unisci(k, v));
       });
     }
     function scegli(k, v, zitto) {
-      if (cfg[k] === v) return;
+      if (valore(k) === v) return;
       if (zitto) { if (!trascina) { ricorda(); trascina = true; } cfg[k] = v; anteprima(false); return; }   // mentre trascini (colore libero, cursori): niente saltelli
       if (!trascina) ricorda(); trascina = false;
       if (k === "forma") {   // maschio/femmina: si adattano capelli, barba, trucco e vestiti
@@ -366,9 +383,11 @@
       }
       var rifai = /^(cappello|collo|mano|schiena|animale)$/.test(k) || (/^(ombretto|eyeliner|rossetto|blush|borsa)$/.test(k) && /^nessun/.test(cfg[k]) !== /^nessun/.test(v));   // i colori compaiono solo se servono
       if (k === "capo" && /^vestito/.test(cfg[k]) !== /^vestito/.test(v)) rifai = true;   // col vestito spariscono le voci "Sotto"
+      var vis0 = voceVisibile("maglia2") + "" + voceVisibile("pant2");   // (tappa 3) il secondo colore può comparire o sparire
       var pz = partenza(k, v);   // (prima di cambiare la voce: conta il capo di prima)
       cfg[k] = v;
-      if (pz) cfg[pz.chiave] = pz.valore;
+      if (pz) pz.forEach(function (x) { cfg[x.chiave] = x.valore; });
+      if (vis0 !== voceVisibile("maglia2") + "" + voceVisibile("pant2")) rifai = true;
       // una mano sola: borsetta e oggetti in mano non vanno insieme
       if (k === "mano" && !/^(nessuno|pallone)$/.test(v) && cfg.borsa === "borsetta") cfg.borsa = "nessuna";
       if (k === "borsa" && v === "borsetta" && !/^(nessuno|pallone)$/.test(cfg.mano)) cfg.mano = "nessuno";
@@ -386,7 +405,10 @@
       if (k === "colCollo" && !COLLO_COLORATI.test(cfg.collo)) return false;
       if (COLORE_DI[k] && !COLORE_DI[k][1].test(cfg[COLORE_DI[k][0]])) return false;
       if (TRUCCO_COL[k] && /^nessun[oa]$/.test(cfg[TRUCCO_COL[k]])) return false;
-      if ((k === "sotto" || k === "pantaloni") && /^vestito/.test(cfg.capo)) return false;   // il vestito copre anche sotto
+      if (/^(sotto|pantaloni|fantP|pant2|stoffaP)$/.test(k) && /^vestito/.test(cfg.capo)) return false;   // il vestito copre anche sotto
+      // (tappa 3) il secondo colore dei pantaloni serve alle fantasie che lo usano e alle righe di tuta e corti; il supereroe ha i suoi ori
+      if (k === "pant2" && !COL2.test(valore("fantP")) && !/^(tuta|pantaloncini)$/.test(cfg.sotto) && cfg.pant2 == null) return false;
+      if (k === "maglia2" && cfg.capo === "supereroe" && !COL2.test(valore("fant")) && cfg.maglia2 == null) return false;
       if (k === "barba" && cfg.forma === "donna") return false;   // lei niente barba
       return true;
     }
@@ -406,8 +428,10 @@
       cur.chiavi.forEach(function (k) {
         if (k === "look") { cfg = conLook(cfg, LOOK[Math.floor(Math.random() * LOOK.length)]); return; }
         if (k === "ritocchi") { OMINO_RITOCCHI.forEach(function (r) { cfg[r[0]] = Math.floor(Math.random() * 5) - 2; }); return; }
-        var lista = O.OPZ[k];
+        var lista = listaDi(k);
         if (k === "forma" || !lista || (k === "barba" && donna)) return;
+        if (LISTA_DI[k] && OMINO_COLORI[k]) { cfg[k] = Math.random() < 0.5 ? null : Math.floor(Math.random() * lista.length); return; }   // (tappa 3) secondo colore: metà delle volte nessuno
+        if (/^(fant|fantP|stoffa|stoffaP)$/.test(k)) { cfg[k] = Math.random() < 0.6 ? lista[0] : lista[1 + Math.floor(Math.random() * (lista.length - 1))]; return; }   // fantasie e stoffe: spesso niente
         if (OMINO_COLORI[k]) { cfg[k] = Math.floor(Math.random() * (k === "colCap" ? 7 : lista.length)); return; }
         var ok = lista.filter(function (v) {
           if (O.BLOCCATI[k] && O.BLOCCATI[k].indexOf(v) >= 0) return false;
@@ -469,8 +493,12 @@
         var gruppi = k === "capelli" ? O.GRUPPI_CAPELLI : null;   // tagli divisi in Corti / Medi / Lunghi
         if (!gruppi && etichette) pannello.appendChild(el("div", { class: "etichetta", text: vc[1] }));
         var riga = el("div", { class: "om-griglia" + (OMINO_COLORI[k] ? " colori" : "") });
-        var gColori = OMINO_COLORI[k] && O.GRUPPI_COLORI ? O.GRUPPI_COLORI[k] : null, nomiCol = O.NOMI_COLORI ? O.NOMI_COLORI[k] : null;   // (6 nov 2026) i colori a gruppi
-        O.OPZ[k].forEach(function (val, i) {
+        var kl = LISTA_DI[k] || k, gColori = OMINO_COLORI[k] && O.GRUPPI_COLORI ? O.GRUPPI_COLORI[kl] : null, nomiCol = O.NOMI_COLORI ? O.NOMI_COLORI[kl] : null;   // (6 nov 2026) i colori a gruppi
+        if (LISTA_DI[k] && OMINO_COLORI[k]) {   // (tappa 3) il secondo colore: per primo «Nessuno» (bordi come il capo, fantasia più chiara o più scura del capo)
+          var bN = el("button", { class: "om-opz om-colore om-nessuno", title: "Nessuno", "aria-label": vc[1] + ": nessuno", onclick: function () { scegli(k, null); } });
+          bN._k = k; bN._v = null; riga.appendChild(bN);
+        }
+        listaDi(k).forEach(function (val, i) {
           if (gruppi) gruppi.forEach(function (g) {
             if (g[1] !== i) return;
             if (riga.children.length) pannello.appendChild(riga);
@@ -486,14 +514,14 @@
           } else {
             var bloccato = !!(O.BLOCCATI[k] && O.BLOCCATI[k].indexOf(val) >= 0);
             b = el("button", { class: "om-opz om-forma" + (bloccato ? " bloccato" : ""), onclick: function () { if (!bloccato) scegli(k, v); } });
-            b._mini = el("div", { class: "om-mini" + (/^(sotto|modScarpe)$/.test(k) ? " gambe" : (OMINO_INTERO[k] ? " intero" : "")) });
+            b._mini = el("div", { class: "om-mini" + (/^(sotto|modScarpe|fantP|stoffaP)$/.test(k) ? " gambe" : (/^(fant|stoffa)$/.test(k) ? " vita" : (OMINO_INTERO[k] ? " intero" : ""))) });
             b.appendChild(b._mini);
             b.appendChild(el("div", { class: "om-nome", text: bloccato ? "🔒 coi trofei" : nomeDi(k, val) }));
           }
           b._k = k; b._v = v; riga.appendChild(b);
         });
         if (OMINO_LIBERO[k]) {   // ultimo tondo: tavolozza arcobaleno per un colore qualsiasi
-          var ultimo = typeof cfg[k] === "string" ? cfg[k] : (O.OPZ[k][cfg[k]] || "#ffffff");
+          var ultimo = typeof cfg[k] === "string" ? cfg[k] : (listaDi(k)[cfg[k]] || "#ffffff");
           var inp = el("input", { type: "color", value: ultimo, "aria-label": vc[1] + ": colore libero" });
           inp.addEventListener("input", function () { scegli(k, inp.value, true); });
           inp.addEventListener("change", function () { if (!trascina) ricorda(); cfg[k] = null; trascina = true; scegli(k, inp.value); });
