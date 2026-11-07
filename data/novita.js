@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 320,
+    data: "7 novembre 2026",
+    titolo: "Il camerino: l'avatar in grande 🔍",
+    descrizione: [
+      "🧍 Nel camerino il tuo avatar adesso è grande, circa metà dello schermo, e sta sullo sfondo di tutto il camerino. Le scelte sono in un foglio sotto: tiralo su per vederne di più, giù per vedere l'avatar più grande.",
+      "🔍 La telecamera si avvicina da sola a quello che stai cambiando: il viso, i capelli, la maglia, i pantaloni, le scarpe, le cose in mano. Con zaino, mantello e ali l'avatar si gira un attimo di spalle. In un angolo resta l'avatar intero in piccolo; un tocco sul palco e torna intero.",
+      "✌️ Doppio tocco o due dita per avvicinarti dove vuoi; col dito lo sposti. Da lontano un dito di lato (o il tasto 🔄) lo gira: davanti e di spalle.",
+      "👕 I capi sono in una griglia da tre, coi gruppi in alto (Giacche, Maglioni, Magliette…): un tocco e ci arrivi. Colore, 2° colore, fantasia e stoffa stanno in una riga sola.",
+      "👔 Nelle miniature di felpe, maglioni e magliette non c'è più la cravatta disegnata sopra (né il papillon o la medaglia)."
+    ]
+  },
+  {
     v: 319,
     data: "7 novembre 2026",
     titolo: "La saletta: gli avatar in grande 🧍",
