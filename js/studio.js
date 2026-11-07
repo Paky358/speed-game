@@ -525,7 +525,8 @@
     scena.appendChild(mondo); vista.appendChild(scena);   // la scena serve per far tremare l'inquadratura (scossa) senza toccare la telecamera
     vista.addEventListener("scroll", function () { vista.scrollTop = 0; vista.scrollLeft = 0; });
     var S = { t: t, s: s, vista: vista, scena: scena, mondo: mondo, gioc: [], io: -1, L: [], shot: null, timer: null,
-      titolo: opz.titolo || "", logo: opz.logo || [opz.titolo || "GAME SHOW"], onTocca: null };
+      titolo: opz.titolo || "", logo: opz.logo || [opz.titolo || "GAME SHOW"], onTocca: null,
+      senzaSchermo: !!opz.senzaSchermo };   // (facoltativo: niente maxischermo in mezzo allo studio; lo usa la Ruota, che ha il tabellone in alto e la ruota sul pavimento)
     S.tema = temaDi(opz.tema || S.titolo);   // i tre colori dello studio per questo gioco
     function pezzo(tag, cls, dove) { var e = el(tag, { class: cls }); (dove || mondo).appendChild(e); return e; }
     // --- studio: la parete LED dietro (si muove), poi il fondo fermo (un'immagine sola, canvas), sopra solo pochi pezzi che si muovono ---
@@ -1057,10 +1058,12 @@
       x.save(); x.shadowColor = T[1]; x.shadowBlur = 22; x.fillStyle = g; rett(x, cx, R.y - 6, 0.015 * VW, sc.y0 + 0.18 * VH - R.y, 3); x.fill(); x.restore();
     });
     // 6) il maxischermo: cornice scura e filo al neon coi colori del gioco (il contenuto è del gioco e non cambia)
+    if (!S.senzaSchermo) {
     alone(x, R.x + R.w / 2, R.y + R.h * 0.5, R.w * 0.8, rgbaDi(T[1], 0.18));
     x.fillStyle = "#04050c"; rett(x, R.x - 8, R.y - 8, R.w + 16, R.h + 16, 22); x.fill();
     var lg = x.createLinearGradient(R.x, 0, R.x + R.w, 0); lg.addColorStop(0, T[0]); lg.addColorStop(0.5, T[1]); lg.addColorStop(1, T[2]);
     x.save(); x.shadowColor = T[1]; x.shadowBlur = 26; x.strokeStyle = lg; x.lineWidth = 3; rett(x, R.x - 6, R.y - 6, R.w + 12, R.h + 12, 20); x.stroke(); x.restore();
+    }
     // 7) la scalinata: gradini lucidi col filo di luce sullo spigolo
     var hs = (sc.y1 - sc.y0) / sc.n;
     for (var k = 0; k < sc.n; k++) {
@@ -1249,6 +1252,7 @@
     disegnaPubblico(S);  // (alla fine fa anche il riflesso nel pavimento)
     disegnaParete(S);
     pos(S.schermo, R.x, R.y, R.w, R.h);
+    if (S.senzaSchermo) S.schermo.style.display = "none";
     // i fari partono dall'americana (stessi punti delle teste disegnate) e sono lunghi abbastanza da arrivare ai banconi
     S.fasciPos = [];
     S.fasci.forEach(function (f, i) { var fx = W * (0.1 + i * 0.267); pos(f, fx - 0.22 * VW, 0.03 * VH, 0.44 * VW, 1.9 * VH); S.fasciPos.push([fx, 0.03 * VH]); });

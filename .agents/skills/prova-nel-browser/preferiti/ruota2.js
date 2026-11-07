@@ -39,7 +39,8 @@
   }
 
   COPIONE.aggiungi("rv1", { nome: "Ruota giro 2: il motore dei giochi veloci, «La so!», Raddoppia e la finale con 3 tabelloni", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0 }), R = w.__RUOTA, L = [];
+    var w = await W.apriTel("Paky", { x: 0 }); if (!w.__RUOTA && w.SGCuore && w.SGCuore.scaricaGioco) await w.SGCuore.scaricaGioco(w.SGCuore.giocoDa("ruota"));   // (dal 4 nov i giochi si scaricano quando servono)
+    var R = w.__RUOTA, L = [];
     if (!R || !w.SG_RUOTA_TEMPO || !w.SG_RUOTA_MONDO || !w.SG_RUOTA_CRUCI) no("mancano i contenuti nuovi (Ruota del tempo, GiraMondo, CruciRuota)");
     var tutte = w.SG_RUOTA_FRASI.length; if (tutte < 3000) no("le frasi sono solo " + tutte);
     L.push(tutte + " frasi, " + w.SG_RUOTA_TEMPO.length + " anni, " + w.SG_RUOTA_MONDO.length + " parole, " + w.SG_RUOTA_CRUCI.length + " cruciverba");
@@ -544,7 +545,8 @@
   // la SUA busta sul suo telefono e basta, Giulia niente; in classifica «Pari merito, una busta a testa».
   COPIONE.aggiungi("rv6", { nome: "Ruota: a pari merito al primo posto una busta a testa (motore e online in 3)", fai: async function () {
     var L = [];
-    var w0 = await W.apriTel("Prova", { x: 0 }), R = w0.__RUOTA;
+    var w0 = await W.apriTel("Prova", { x: 0 }); if (!w0.__RUOTA && w0.SGCuore && w0.SGCuore.scaricaGioco) await w0.SGCuore.scaricaGioco(w0.SGCuore.giocoDa("ruota"));
+    var R = w0.__RUOTA;
     var gg = [{ id: "a", nome: "Paky" }, { id: "b", nome: "Luca" }, { id: "c", nome: "Matt", bot: true }];
     function fine1(tot, prima) {
       var Q = R.creaPartita(gg, 1, { prenota: false, express: false, veloce: false, finale: false, mistero: false, modo: "online" });

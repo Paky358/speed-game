@@ -126,8 +126,9 @@
     return (Array.isArray(l) ? l : []).map(function (x) { return x && controllaFrase(x.c, x.f); }).filter(function (x) { return x && x.ok; }).slice(0, NOSTRE_MAX).map(function (x) { return { c: x.c, f: x.f }; });
   }
   function salvaNostre(l) { try { localStorage.setItem(NOSTRE_KEY, JSON.stringify(l.slice(0, NOSTRE_MAX))); } catch (e) {} }
-  var COLORI = ["#d81c57", "#d4621c", "#e3a21a", "#17936a", "#1783b3", "#6644cc"];   // notte: lampone, arancio, oro, verde notte, ciano, viola (spicchi un po' più profondi del cartone di prima)
-  var COLORI_TESTO = { "#e3a21a": "#1a1226" };   // sull'oro la scritta è scura (sennò non si legge)
+  // 🎨 giro 3: colori pieni e accesi come in TV (rosso, arancio, giallo, verde, azzurro, viola, rosa)
+  var COLORI = ["#e8262f", "#ff7f11", "#ffd21f", "#21b34c", "#1aa3ff", "#8b3dff", "#ff4fa8"];
+  var COLORI_TESTO = { "#ffd21f": "#2a1a00" };   // sul giallo la scritta è scura (sennò non si legge)
   var ACC = { "À": "A", "È": "E", "É": "E", "Ì": "I", "Ò": "O", "Ù": "U" };
   var FRASI_RISERVA = [
     { c: "Proverbi", f: "CHI DORME NON PIGLIA PESCI" }, { c: "Proverbi", f: "TRA IL DIRE E IL FARE C'È DI MEZZO IL MARE" },
@@ -367,11 +368,30 @@
       ev("bancarotta", p.id);
       P.msg = msg + " 💥 Bancarotta per " + p.nome + ": via i soldi di questa manche!"; prossimo();
     }
-    function giraVerso(i) {
+    function giraVerso(i) {   // (il giro finale: la ruota la gira il gioco e si ferma su una cifra)
       var meta = (360 - ((i + 0.5) * 15 + (Math.random() * 9 - 4.5)) % 360) % 360;   // lo spicchio i sotto la freccia (in alto)
-      var giri = 4 + Math.floor(Math.random() * 2);
+      var giri = 4 + Math.floor(Math.random() * 2), prima = P.angolo;
       P.angolo = P.angolo + giri * 360 + ((meta - (P.angolo % 360)) + 720) % 360;
+      P.giroMs = durataGiro(P.angolo - prima); P.giroDir = 1;
       P.spicchio = i; P.giroN++; P.fase = "girando"; P.ultime = [];
+    }
+    // 👆 la girata col dito: più forte = gira di più (la forza conta davvero), più un po' di caso.
+    // Una volta su tre si ferma a un soffio dal confine tra due spicchi (lo «scavalca» o no: si vede solo alla fine).
+    function giraForza(x) {
+      // (per le prove: se il caso è "fermo", due numeri uguali di fila, si va dritti sullo spicchio che dice, come prima)
+      var r1 = Math.random(), r2 = Math.random(); if (r1 === r2) return giraVerso(Math.floor(r1 * 24) % 24);
+      var f = x && isFinite(+x.f) ? Math.max(0.08, Math.min(1, +x.f)) : 0.3 + Math.random() * 0.45, dir = x && +x.d === -1 ? -1 : 1;
+      var giro = 520 + 1500 * f + Math.random() * 320, fin = P.angolo + dir * giro;
+      var rel = ((-fin % 360) + 360) % 360, idx = Math.floor(rel / 15) % 24, fr = rel / 15 - Math.floor(rel / 15);
+      if (Math.random() < 0.34) {   // a un soffio dal confine: da 0,5 a 1,4 gradi
+        var nf = (0.035 + Math.random() * 0.06) * (Math.random() < 0.5 ? 1 : -1); nf = nf > 0 ? nf : 1 + nf;
+        fin -= (nf - fr) * 15;   // (stesso spicchio: si sposta di meno di 15 gradi)
+      }
+      var prima = P.angolo;
+      P.angolo = Math.round(fin * 100) / 100; P.giroDir = dir;
+      P.spicchio = Math.floor(((((-P.angolo) % 360) + 360) % 360) / 15) % 24;
+      P.giroMs = durataGiro(Math.abs(P.angolo - prima));
+      P.giroN++; P.fase = "girando"; P.ultime = [];
     }
     P.nuovaManche = function () {
       P.manche++;
@@ -511,9 +531,9 @@
         compra: (f === "gira" || f === "express") && p.soldi >= COSTO_VOCALE && P.vocaliNascoste() > 0,
         risolvi: f === "gira" || f === "express" };
     };
-    P.gira = function () {
+    P.gira = function (x) {
       if (!P.puo().gira) return false;
-      giraVerso(Math.floor(Math.random() * P.spicchi.length));
+      giraForza(x);
       g().stat.giri++; P.msg = g().nome + " gira la ruota…";
       return true;
     };
@@ -1017,7 +1037,7 @@
       var v = { fase: f, manche: P.manche, mancheTot: P.mancheTot, cat: inLampo ? L.cat : P.cat,
         // (la finale: il tabellone «di base», uguale per tutti; quello di ognuno sta in fin.g, la frase vera solo quando il tabellone è finito)
         tab: inLampo ? P.lampoTab() : piena ? P.frase : inFin ? (P.fin.svela ? P.frase : finTab(P.fin.b === 1 ? FIN_DATE : [])) : coperta(P.frase, P.rivelate),
-        chiamate: inLampo ? [] : Object.keys(P.chiamate), ultime: inLampo ? [] : P.ultime.slice(), turno: tp ? tp.id : null, spicchio: P.spicchio, angolo: P.angolo, giroN: P.giroN, msg: P.msg, ev: P.ev,
+        chiamate: inLampo ? [] : Object.keys(P.chiamate), ultime: inLampo ? [] : P.ultime.slice(), turno: tp ? tp.id : null, spicchio: P.spicchio, angolo: P.angolo, giroN: P.giroN, giroMs: P.giroMs || T_GIRO, giroDir: P.giroDir || 1, msg: P.msg, ev: P.ev,
         puo: tp ? P.puo() : null, indietro: f === "risolvi" && !P.annullato && !P.veloce, cons: P.consonantiNascoste(), voc: P.vocaliNascoste(), vince: P.vince, classifica: P.classifica,
         statFine: P.classifica ? P.giocatori.reduce(function (a, x) { a[x.id] = x.stat; return a; }, {}) : null,
         regole: RG, veloce: P.veloce || undefined, velValore: P.velValore || undefined, exp: P.exp || undefined, expTot: P.exp ? P.expTot : undefined, decimo: P.decimo || undefined,
@@ -1156,6 +1176,8 @@
   }
   function suonoGiro() { for (var k = 0; k < 18; k++) bip(900, 0.03, "square", 0.025, k * 0.06 + k * k * 0.004); }
   // la curva con cui la ruota rallenta (la stessa della transizione: cubic-bezier(.12,.7,.18,1))
+  // quanto dura un giro (tutta la fase): più gradi = più lungo, con la coda lenta che mette l'ansia
+  function durataGiro(gradi) { return Math.round(Math.max(4300, Math.min(7000, 3900 + Math.abs(gradi) * 1.25))); }
   function curvaGiro(x) {
     var a = 0, b = 1, s = x;
     function bx(t) { return 3 * (1 - t) * (1 - t) * t * 0.12 + 3 * (1 - t) * t * t * 0.18 + t * t * t; }
@@ -1444,7 +1466,7 @@
       tTempo = setTimeout(function () { tTempo = null; H.scade = 0; if (scaduto()) { H.mosse++; dopo(); } }, ms);
     }
     // online il riepilogo di fine manche dura di più: si legge la frase e i totali (o si va avanti a maggioranza)
-    function durata(f) { return online && f === "finemanche" ? T_RIEPILOGO : DURATE[f]; }
+    function durata(f) { return online && f === "finemanche" ? T_RIEPILOGO : f === "girando" && P && P.giroMs ? P.giroMs : DURATE[f]; }
     // ---- «⏩ Avanti» sul riepilogo di fine manche: si parte subito se lo tocca più di metà di chi gioca ed è presente ----
     function kAv() { return "fm:" + String(H.gameId).slice(-6) + ":" + P.manche; }
     function umaniPresenti() { return P.giocatori.filter(function (x) { return !x.bot && !x.via; }); }
@@ -1588,7 +1610,7 @@
       }
       if (f === "gira") {
         var d = decidiBot(P, liv);
-        if (d.a === "gira") P.gira();
+        if (d.a === "gira") P.gira({ f: 0.2 + Math.random() * 0.7, d: 1 });   // (anche il Bot lancia la ruota, con la sua forza)
         else if (d.a === "compra") P.compra();
         else { P.risolvi(); p._testo = d.testo; }
       } else if (f === "sceltaexp") P.sceltaExpress(prendeExpress(P, liv));
@@ -1722,7 +1744,7 @@
         var tid = P.giocatori[P.turno].id;
         if (a === "sel") { var Lx = String(x || "").toUpperCase(); if (/^[A-Z]$/.test(Lx) && FASI_SEL.indexOf(f) >= 0) { H.sel = { id: tid, L: Lx, m: H.mosse }; bd(); } return; }
         if (a === "scr") { if (f === "risolvi") scrDi(tid, x); return; }
-        if (a === "gira") ok = P.gira();
+        if (a === "gira") ok = P.gira(x && typeof x === "object" ? x : null);
         else if (a === "compra") ok = P.compra();
         else if (a === "risolvi") ok = f === "vdecidi" ? P.velRisolvi() : P.risolvi();
         else if (a === "express") ok = P.sceltaExpress(!!x);
@@ -2005,7 +2027,9 @@
     var ui = { t: t, el: el, cb: cb, vm: vm, ids: ids, kTab: "", kTast: "", giroN: -1, scritto: [], cur: 0, prec: null, mostrati: {}, inq: "", barraH: -1, timer: [],
       fuori: {}, jolly: {}, kTempo: "", tabPrec: "", nuove: {}, lampoVisto: {}, schTipo: "", kOrol: "", finSel: [], finSelK: "" };
     ui.S = ST.crea(t, vm.giocatori.map(function (p) { return { nome: p.nome, omino: (cb.omini() || {})[p.id] || (window.SGOmino ? SGOmino.casuale(p.nome) : null) }; }),
-      { io: cb.telefono ? -1 : ids.indexOf(cb.myId), esci: function () { fermaRegia(ui); ritmo(ui, null); ui.cb.onEsci(true); }, titolo: "La Ruota della Fortuna", logo: ["LA RUOTA", "DELLA FORTUNA"] });
+      { io: cb.telefono ? -1 : ids.indexOf(cb.myId), esci: function () { fermaRegia(ui); ritmo(ui, null); ui.cb.onEsci(true); }, titolo: "La Ruota della Fortuna", logo: ["LA RUOTA", "DELLA FORTUNA"],
+        senzaSchermo: true,   // 🎡 giro 3: niente maxischermo in mezzo; la ruota sta sul pavimento davanti ai concorrenti
+        dopoLayout: function () { if (ui.ruotaEl) mettiRuota(ui); } });
     var S = ui.S;
     S.sopraLibero = 0.6;   // la telecamera può salire sopra lo studio: lassù c'è il tabellone
     S.vista.classList.add("ru-studio");
@@ -2026,10 +2050,11 @@
       var v = el("b"), tt = el("small"), c = el("span", { class: "ru-chip" }, [ el("i", { style: "background:" + ((ST.COLORI || [])[i % 10] || "#ffc247") }), el("span", { class: "n", text: p.nome }), v, tt ]);
       c._v = v; c._t = tt; ui.chip[p.id] = c; ui.punti.appendChild(c);
     });
-    ui.sopra = el("div", { class: "ru-sopra" }, [ ui.cat, ui.tab, ui.msg, ui.punti, ui.orol ]);
+    ui.striscia = el("div", { class: "ru-striscia" }); ui.striscia.hidden = true;   // 🔔 i giochi veloci: campanella e «vale…» sotto il tabellone
+    ui.sopra = el("div", { class: "ru-sopra" }, [ ui.cat, ui.tab, ui.striscia, ui.msg, ui.punti, ui.orol ]);
     S.vista.appendChild(ui.sopra);
-    // la ruota (va sul maxischermo) e i tasti (nella barra in basso)
-    ui.canvas = el("canvas", { class: "ru-disco", width: "440", height: "440" });
+    // la ruota (sul pavimento dello studio, davanti ai concorrenti) e i tasti (nella barra in basso)
+    ui.canvas = el("canvas", { class: "ru-disco", width: "600", height: "600" });
     ui.kRuota = (vm.regole && vm.regole.express ? "e" : "") + ":" + (vm.mist || "");
     disegnaRuota(ui.canvas, spicchiDi(vm.regole && vm.regole.express, vm.mist));
     // ❓ la scritta grande del Mistero (si apre… / +10.000! / BANCAROTTA!)
@@ -2041,14 +2066,13 @@
     ui.scriviBtn = el("button", { class: "ru-btn scrivi", type: "button", text: "✍️ Scrivi una frase", onclick: function () { apriFormFrase(ui); } });
     ui.scriviR = el("div", { class: "ru-scrivi-riga" }, [ ui.scriviNota, ui.scriviBtn ]);
     ui.scriviR.hidden = true;
-    ui.ruota = el("div", { class: "ru-ruota-sch" }, [ ui.canvas,
-      el("div", { class: "ru-freccia", html: "<svg viewBox='0 0 10 10'><polygon points='0,0 10,0 5,10' fill='#ffc247' stroke='#7a4a00' stroke-width='.6'/></svg>" }),
-      el("div", { class: "ru-centro" }), ui.oro = el("div", { class: "ru-oro" }) ]);
+    creaRuota(ui);
     // la frase lampo sul maxischermo: la campanella
     ui.campana = el("div", { class: "ru-campana", text: "🔔" });
     ui.lampoSub = el("div", { class: "ru-sch-sub" });
     ui.lampoTit = el("div", { class: "ru-sch-tit", text: "PRENOTA!" });
     ui.panLampo = el("div", { class: "ru-quadro ru-lampo-sch" }, [ ui.campana, ui.lampoTit, ui.lampoSub ]);
+    ui.striscia.appendChild(ui.panLampo);
     // la finale sul maxischermo: le buste
     ui.busteTit = el("div", { class: "ru-sch-tit piccolo" });
     ui.busteRiga = el("div", { class: "ru-buste" }); ui.buste = [];
@@ -2062,6 +2086,10 @@
     ui.finTit = el("div", { class: "ru-sch-tit piccolo" }); ui.finSub = el("div", { class: "ru-sch-sub" });
     ui.finLista = el("div", { class: "ru-fin-lista" }); ui.finRighe = {};
     ui.panFin = el("div", { class: "ru-quadro ru-fin-sch" }, [ ui.finTit, ui.finSub, ui.finLista ]);
+    // (il riquadro nella scena, al posto del maxischermo: le buste e chi ha risolto la finale)
+    ui.quadroIn = el("div", { class: "ru-quadro-in" });
+    ui.quadro = el("div", { class: "ru-quadro-box" }, [ ui.quadroIn ]);
+    S.vista.appendChild(ui.quadro);
     ui.azioni = el("div", { class: "ru-azioni" });
     ui.kb = creaTastiera(ui);   // ⌨️ fissa in basso per tutti
     // la barretta del tempo che resta a chi deve toccare (si accorcia da sola, senza ridisegnare i tasti)
@@ -2070,9 +2098,9 @@
     ui.jb = S.L.map(function (X) { var j = el("div", { class: "ru-jolly" }); X.el.appendChild(j); return j; });
     ui.lk = S.L.map(function (X) { var j = el("div", { class: "ru-lock", text: "🔒" }); X.el.appendChild(j); return j; });
     vm.giocatori.forEach(function (p, i) { ST.puntiLeggio(S, i, p.soldi); ui.mostrati[p.id] = p.soldi; });
-    function via() { ui.schTipo = ""; schermo(ui, ui.vm); ST.barra(S, ui.cb.guarda ? [ ui.tempo, ui.azioni, ui.kb.el ] : [ ui.tempo, ui.azioni, ui.scriviR, ui.kb.el ]); ui.sopra.classList.remove("via"); }   // (chi guarda col link non scrive frasi: la riga non c’è proprio)
+    function via() { ui.schTipo = ""; ui.kTab = ""; ui.sopra.classList.remove("sigla"); schermo(ui, ui.vm); ST.barra(S, ui.cb.guarda ? [ ui.tempo, ui.azioni, ui.kb.el ] : [ ui.tempo, ui.azioni, ui.scriviR, ui.kb.el ]); ui.sopra.classList.remove("via"); }   // (chi guarda col link non scrive frasi: la riga non c’è proprio)
     if (vm.sigla) {   // a inizio partita la sigla dello studio (il tabellone compare dopo); quando si rigioca, una corta
-      ui.sigla = true; ui.sopra.classList.add("via");
+      ui.sigla = true; ui.sopra.classList.add("sigla"); nomeSulTabellone(ui);
       Promise.resolve(vm.sigla === "corta" ? siglaCorta(S) : ST.apertura(S)).catch(function () {}).then(function () {
         if (ui.cb.onSiglaFinita) ui.cb.onSiglaFinita();
         if (ui.tagliata) return;
@@ -2092,34 +2120,218 @@
     ST.pubblico(S, "applauso");
     return new Promise(function (fatto) { setTimeout(function () { ST.viaTerzo(S); fatto(); }, SIGLA_CORTA); });
   }
-  // la ruota disegnata una volta sola; poi si fa girare tutta (transform), senza ridisegnarla
+  // 🎡 giro 3 (7 nov 2026): la ruota come nel programma vero. Sta sul pavimento DAVANTI ai concorrenti (vista in prospettiva);
+  // quando tocca girare la telecamera va SOPRA la ruota (vista dall'alto, grande) e si gira col dito: si trascina e si lancia.
+  // Pezzi: il disco (canvas che gira, disegnato una volta), l'anello d'oro e le lampadine (fermi: le lampadine «corrono»
+  // accendendosi a turno, solo trasparenza), la lancetta che batte sui chiodi, la mano di chi gira. Si anima solo transform/opacity.
   function disegnaRuota(cv, spicchi) {
-    var c = cv.getContext("2d"), Rr = 220, Rs = Rr - 15, passo = Math.PI * 2 / spicchi.length, k;
+    var c = cv.getContext("2d"), Rr = 300, Rs = 274, passo = Math.PI * 2 / spicchi.length;
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height);   // (si ridisegna quando arriva o si apre il Mistero)
     c.translate(Rr, Rr);
-    // il bordo: anello blu notte con le lampadine calde, filo d'oro fuori
-    c.beginPath(); c.arc(0, 0, Rr - 1, 0, Math.PI * 2); c.fillStyle = "#171230"; c.fill();
-    c.beginPath(); c.arc(0, 0, Rr - 2, 0, Math.PI * 2); c.lineWidth = 3; c.strokeStyle = "#ffc247"; c.stroke();
-    var lamp = Math.max(24, spicchi.length * 2);
-    for (k = 0; k < lamp; k++) {
-      var al = -Math.PI / 2 + (k + 0.5) * Math.PI * 2 / lamp, lx = Math.cos(al) * (Rr - 8.5), ly = Math.sin(al) * (Rr - 8.5);
-      c.beginPath(); c.arc(lx, ly, 6.5, 0, Math.PI * 2); c.fillStyle = "rgba(255,194,71,.18)"; c.fill();
-      c.beginPath(); c.arc(lx, ly, 3.1, 0, Math.PI * 2); c.fillStyle = k % 2 ? "#ffe3a1" : "#ffc247"; c.fill();
-    }
+    c.beginPath(); c.arc(0, 0, Rs + 2, 0, Math.PI * 2); c.fillStyle = "#1a0f00"; c.fill();
     spicchi.forEach(function (sp, i) {
-      var a0 = -Math.PI / 2 + i * passo, a1 = a0 + passo, col = sp.s === "bancarotta" ? "#08080f" : sp.s === "passa" ? "#eceffa" : sp.s === "jolly" ? "#7a3fe0" : sp.s === "express" ? "#a0126b" : sp.s === "mistero" ? "#12153a" : sp.s === "raddoppia" ? "#ffc247" : COLORI[i % COLORI.length];
+      var a0 = -Math.PI / 2 + i * passo, a1 = a0 + passo, s = sp.s;
+      var col = s === "bancarotta" ? "#0b0b12" : s === "passa" ? "#f4f5fa" : s === "jolly" ? "#14b39a" : s === "express" ? "#c2187a" : s === "mistero" ? "#10133a" : s === "raddoppia" ? "#ffc247" : COLORI[i % COLORI.length];
       c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, Rs, a0, a1); c.closePath();
       c.fillStyle = col; c.fill();
-      // luce morbida: più scuro vicino al perno, pieno verso il bordo
-      var g = c.createRadialGradient(0, 0, 10, 0, 0, Rs); g.addColorStop(0, "rgba(8,8,20,.5)"); g.addColorStop(.6, "rgba(8,8,20,.08)"); g.addColorStop(1, "rgba(8,8,20,0)");
+      if (s === "raddoppia" || s === "jolly") {   // gli spicchi speciali luccicano un po' (oro, smeraldo)
+        var gl = c.createLinearGradient(Math.cos(a0) * Rs, Math.sin(a0) * Rs, Math.cos(a1) * Rs, Math.sin(a1) * Rs);
+        gl.addColorStop(0, "rgba(255,255,255,.35)"); gl.addColorStop(0.5, "rgba(255,255,255,0)"); gl.addColorStop(1, "rgba(255,255,255,.25)");
+        c.fillStyle = gl; c.fill();
+      }
+      // luce morbida: un po' più scuro vicino al perno, un filo di luce verso il bordo (la ruota sembra in rilievo)
+      var g = c.createRadialGradient(0, 0, 20, 0, 0, Rs);
+      g.addColorStop(0, "rgba(0,0,0,.42)"); g.addColorStop(0.42, "rgba(0,0,0,.05)"); g.addColorStop(0.9, "rgba(255,255,255,.08)"); g.addColorStop(1, "rgba(0,0,0,.18)");
       c.fillStyle = g; c.fill();
-      c.strokeStyle = "rgba(255,255,255,.3)"; c.lineWidth = 2; c.stroke();
+      c.strokeStyle = "rgba(255,255,255,.7)"; c.lineWidth = 2.5; c.stroke();
+      // la scritta lungo il raggio, grande e leggibile (bordo scuro sui colori, chiaro sul bianco e sull'oro)
       c.save(); c.rotate(a0 + passo / 2); c.textAlign = "right"; c.textBaseline = "middle";
-      c.fillStyle = sp.s === "passa" || sp.s === "raddoppia" ? "#1b1f3a" : sp.s === "express" ? "#ffe9a8" : sp.s === "mistero" ? "#ffc247" : sp.s === "bancarotta" ? "#ff8ea8" : (COLORI_TESTO[col] || "#fff"); c.font = "900 " + (sp.s ? 19 : 26) + "px system-ui, sans-serif";
-      c.fillText(sp.s === "bancarotta" ? "BANCAROTTA" : sp.s === "passa" ? "PASSA" : sp.s === "jolly" ? "JOLLY" : sp.s === "express" ? "EXPRESS" : sp.s === "mistero" ? "? MISTERO ?" : sp.s === "raddoppia" ? "RADDOPPIA ×2" : fmtN(sp.v), Rs - 12, 0);
+      var tx = s === "bancarotta" ? "BANCAROTTA" : s === "passa" ? "PASSA" : s === "jolly" ? "JOLLY" : s === "express" ? "EXPRESS" : s === "mistero" ? "? MISTERO ?" : s === "raddoppia" ? "RADDOPPIA ×2" : fmtN(sp.v);
+      var chiaro = s === "passa" || s === "raddoppia" || COLORI_TESTO[col];
+      c.font = "900 " + (s ? (tx.length > 9 ? 21 : 25) : sp.v >= 1000 ? 35 : 40) + "px system-ui, sans-serif";
+      c.lineJoin = "round"; c.lineWidth = 6; c.strokeStyle = chiaro ? "rgba(255,255,255,.55)" : "rgba(0,0,0,.6)";
+      c.strokeText(tx, Rs - 22, 1);
+      c.fillStyle = s === "passa" || s === "raddoppia" ? "#1b1f3a" : s === "express" ? "#ffe9a8" : s === "mistero" ? "#ffc247" : s === "jolly" ? "#fff7d6" : (COLORI_TESTO[col] || "#fff");
+      c.fillText(tx, Rs - 22, 1);
       c.restore();
     });
-    c.beginPath(); c.arc(0, 0, Rs, 0, Math.PI * 2); c.lineWidth = 3; c.strokeStyle = "rgba(255,194,71,.85)"; c.stroke();
+    // i chiodi sul confine tra uno spicchio e l'altro: è lì che batte la lancetta
+    for (var k = 0; k < spicchi.length; k++) {
+      var al = -Math.PI / 2 + k * passo, px = Math.cos(al) * (Rs - 7), py = Math.sin(al) * (Rs - 7);
+      c.beginPath(); c.arc(px, py, 6.5, 0, Math.PI * 2); c.fillStyle = "#5a3a06"; c.fill();
+      c.beginPath(); c.arc(px - 1, py - 1, 4.6, 0, Math.PI * 2); c.fillStyle = "#ffe08a"; c.fill();
+    }
+  }
+  // l'anello d'oro intorno al disco (fermo) con gli attacchi delle lampadine
+  var N_LAMP = 48;
+  function disegnaAnello(cv) {
+    var c = cv.getContext("2d"), k;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 600, 600); c.translate(300, 300);
+    var g = c.createRadialGradient(0, 0, 268, 0, 0, 300);
+    g.addColorStop(0, "#6a3f00"); g.addColorStop(0.18, "#ffd76a"); g.addColorStop(0.45, "#c3830f"); g.addColorStop(0.75, "#ffe9a6"); g.addColorStop(1, "#7a4c04");
+    c.beginPath(); c.arc(0, 0, 299, 0, Math.PI * 2); c.arc(0, 0, 271, 0, Math.PI * 2, true); c.fillStyle = g; c.fill();
+    c.beginPath(); c.arc(0, 0, 271, 0, Math.PI * 2); c.lineWidth = 2; c.strokeStyle = "#3a2200"; c.stroke();
+    for (k = 0; k < N_LAMP; k++) {
+      var al = -Math.PI / 2 + (k + 0.5) * Math.PI * 2 / N_LAMP;
+      c.beginPath(); c.arc(Math.cos(al) * 285.5, Math.sin(al) * 285.5, 7.2, 0, Math.PI * 2); c.fillStyle = "#3a2400"; c.fill();
+      c.beginPath(); c.arc(Math.cos(al) * 285.5, Math.sin(al) * 285.5, 4.8, 0, Math.PI * 2); c.fillStyle = "#8a6a2a"; c.fill();
+    }
+  }
+  // le lampadine accese: una tela per quelle pari e una per quelle dispari (girando si accendono a turno e sembrano correre)
+  function disegnaLampadine(cv, par) {
+    var c = cv.getContext("2d"), k;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 600, 600); c.translate(300, 300);
+    for (k = par; k < N_LAMP; k += 2) {
+      var al = -Math.PI / 2 + (k + 0.5) * Math.PI * 2 / N_LAMP, x = Math.cos(al) * 285.5, y = Math.sin(al) * 285.5;
+      var g = c.createRadialGradient(x, y, 0, x, y, 15); g.addColorStop(0, "rgba(255,245,200,.95)"); g.addColorStop(0.35, "rgba(255,214,110,.6)"); g.addColorStop(1, "rgba(255,190,60,0)");
+      c.fillStyle = g; c.beginPath(); c.arc(x, y, 15, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(x, y, 4.6, 0, Math.PI * 2); c.fillStyle = "#fffbe8"; c.fill();
+    }
+  }
+  var SVG_LANCETTA = "<svg viewBox='0 0 30 46'><path d='M8.5 12 L15 44 L21.5 12 Z' fill='#e8262f' stroke='#fff' stroke-width='2.2' stroke-linejoin='round'/>" +
+    "<circle cx='15' cy='9.5' r='8' fill='#ffd76a' stroke='#7a4a00' stroke-width='2'/><circle cx='15' cy='9.5' r='3.4' fill='#7a4a00'/></svg>";
+  // la mano (un guanto del colore di chi gira) che scende sul bordo e spinge un piolo
+  var SVG_MANO = "<svg viewBox='0 0 40 50'><path d='M9 3h22a4 4 0 0 1 4 4v15c0 3-1 5-2 7l-1 3v12a3.2 3.2 0 0 1-6.4 0V34h-.8v10.5a3.2 3.2 0 0 1-6.4 0V34h-.8v8a3.2 3.2 0 0 1-6.4 0V30l-3.4-4.3C5.6 23 5 21 5 18V7a4 4 0 0 1 4-4z' " +
+    "style='fill:var(--col,#ffc247)' stroke='#fff' stroke-width='2.4' stroke-linejoin='round'/><rect x='7' y='1.5' width='26' height='8' rx='3' fill='#fff' opacity='.92'/></svg>";
+  function creaRuota(ui) {
+    var el = ui.el, S = ui.S;
+    ui.anello = el("canvas", { class: "ru-anello", width: "600", height: "600" }); disegnaAnello(ui.anello);
+    ui.lampA = el("canvas", { class: "ru-lamp a", width: "600", height: "600" }); disegnaLampadine(ui.lampA, 0);
+    ui.lampB = el("canvas", { class: "ru-lamp b", width: "600", height: "600" }); disegnaLampadine(ui.lampB, 1);
+    ui.lancetta = el("div", { class: "ru-lancetta", html: SVG_LANCETTA });
+    ui.oro = el("div", { class: "ru-oro" });
+    ui.piatto = el("div", { class: "ru-piatto" }, [ ui.canvas, ui.anello, ui.lampA, ui.lampB, el("div", { class: "ru-centro" }), el("div", { class: "ru-invito" }), ui.oro, ui.lancetta ]);
+    ui.ombra = el("div", { class: "ru-ombra" });
+    ui.ruotaEl = el("div", { class: "ru-ruota" }, [ ui.ombra, ui.piatto ]);
+    ui.buio = el("div", { class: "ru-buio" });
+    ui.manoEl = el("div", { class: "ru-mano", html: SVG_MANO });
+    S.mondo.appendChild(ui.buio); S.mondo.appendChild(ui.ruotaEl); S.mondo.appendChild(ui.manoEl);
+    mettiRuota(ui);
+    trascinaRuota(ui);
+  }
+  // dove sta la ruota nello studio: sul pavimento, davanti ai leggii, larga quasi tutto lo studio; schiacciata in prospettiva (k)
+  function mettiRuota(ui) {
+    var S = ui.S, VW = S.VW, VH = S.VH, H = S.H, W = S.W, bott = 0;
+    (S.posti || []).forEach(function (p) { bott = Math.max(bott, p.top + 1.35 * p.w); });
+    var D = Math.min(1.62 * VW, 0.9 * H), yb = H - 0.012 * VH, k = Math.max(0.24, Math.min(0.42, (yb - bott + 0.05 * VW) / D));
+    ui.G = { cx: W / 2, yb: yb, D: D, k: k };
+    var e = ui.ruotaEl.style; e.left = (W / 2 - D / 2).toFixed(1) + "px"; e.top = (yb - D).toFixed(1) + "px"; e.width = e.height = D.toFixed(1) + "px";
+    ui.ruotaEl.style.setProperty("--k", k.toFixed(4)); ui.ruotaEl.style.setProperty("--sp", (D * 0.028).toFixed(1) + "px");
+    var b = ui.buio.style; b.left = (W / 2 - 1.5 * D).toFixed(1) + "px"; b.top = (yb - D / 2 - 1.5 * D).toFixed(1) + "px"; b.width = b.height = (3 * D).toFixed(1) + "px";
+    var m = ui.manoEl.style; m.width = m.height = (D * 0.17).toFixed(1) + "px";
+    if (ui.quadro && ui.quadro.classList.contains("on")) posQuadro(ui);
+  }
+  // la telecamera sopra la ruota: la ruota si «alza» (da ellisse a cerchio) e intorno si fa buio
+  function ruotaAlta(ui, on) {
+    if (ui.alta === on) return;
+    ui.alta = on; ui.ruotaEl.classList.toggle("alta", on); ui.buio.classList.toggle("on", on);
+  }
+  // il riquadro nella scena (buste, finale): al centro della parte di studio che si vede
+  function posQuadro(ui) {
+    var S = ui.S, b = banda(ui), h = b.bot - b.top, VW = S.VW, s = Math.min(0.96 * VW, 0.96 * h) / VW;
+    var x = (VW - VW * s) / 2, y = b.top + (h - VW * s) / 2, q = ui.quadro.style;
+    q.width = q.height = VW + "px";
+    q.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) scale(" + s.toFixed(4) + ")";
+  }
+  // il giro: veloce all'inizio, poi rallenta piano piano; negli ultimi spicchi quasi al rallentatore. La lancetta batte su ogni
+  // chiodo (tic sempre più radi), «ooh» del pubblico se passa piano sulla Bancarotta, rullo di tamburi e telecamera sulla lancetta.
+  // Uguale su tutti i telefoni: partenza, arrivo e durata li decide chi tiene la partita (mai le ore dei telefoni).
+  function fermaGiro(ui) {
+    ui.giroK = (ui.giroK || 0) + 1;
+    if (ui.rafGiro) cancelAnimationFrame(ui.rafGiro); clearTimeout(ui.tGiroFine); ui.rafGiro = 0;
+    if (ui.ruotaEl) ui.ruotaEl.classList.remove("gira");
+    if (ui.lancetta) { ui.lancetta.style.transition = ""; ui.lancetta.style.transform = ""; }
+  }
+  function giraRuota(ui, da, a, ms, dir) {
+    fermaGiro(ui);
+    var S = ui.S, k = ui.giroK, t0 = performance.now(), D = a - da, ult = Math.floor(da / 15), tSuono = -1e9, kick = 0, ohh = false, rullo = false, lan = ui.lancetta;
+    var vm0 = ui.vm || {}, sp = spicchiDi(vm0.regole && vm0.regole.express, vm0.mist);
+    function sotto(ang) { return Math.floor(((((-ang) % 360) + 360) % 360) / 15) % 24; }
+    function fine() {
+      if (k !== ui.giroK) return;
+      ui.canvas.style.transform = "rotate(" + a + "deg)"; ui.ruotaEl.classList.remove("gira");
+      lan.style.transition = "transform .25s cubic-bezier(.3,1.6,.5,1)"; lan.style.transform = "rotate(0deg)";
+      ui.rafGiro = 0; clearTimeout(ui.tGiroFine);
+    }
+    function passo(now) {
+      if (k !== ui.giroK || !S.vivo()) return;
+      var u = Math.min(1, (now - t0) / ms), ang = da + D * (1 - Math.pow(1 - u, 3.2));
+      ui.canvas.style.transform = "rotate(" + ang.toFixed(2) + "deg)";
+      var seg = Math.floor(ang / 15);
+      if (seg !== ult) {   // un chiodo passa sotto la lancetta: la spinge di lato, tic
+        ult = seg; lan.style.transition = "none"; lan.style.transform = "rotate(" + (-26 * dir) + "deg)"; kick = now;
+        if (now - tSuono > 38) { bip(1650, 0.022, "square", 0.03); tSuono = now; }
+      } else if (kick && now - kick > 34) { kick = 0; lan.style.transition = "transform .16s cubic-bezier(.3,1.6,.5,1)"; lan.style.transform = "rotate(0deg)"; }
+      var vel = 3.2 * Math.abs(D) / ms * Math.pow(1 - u, 2.2) * 1000;   // gradi al secondo
+      var qui = sp[sotto(ang)];
+      if (!ohh && vel < 130 && u < 0.985 && qui && qui.s === "bancarotta") { ohh = true; try { ST.FX.ohh(); } catch (e) {} }
+      if (!rullo && ms > 2400 && ms * (1 - u) < 1800) { rullo = true; try { ST.FX.rullo(1.6); } catch (e) {} inquadra(ui, "lancetta", null, 1200); }
+      if (u < 1) ui.rafGiro = requestAnimationFrame(passo); else fine();
+    }
+    ui.ruotaEl.classList.add("gira");
+    ui.rafGiro = requestAnimationFrame(passo);
+    ui.tGiroFine = setTimeout(fine, ms + 150);   // (arriva comunque, anche se lo schermo non ridisegna)
+  }
+  // la mano di chi gira: scende dal suo lato sul bordo della ruota, spinge un piolo nel verso del giro e torna su
+  function mano(ui, i, dir) {
+    var S = ui.S, G = ui.G, p = S.posti && S.posti[i], m = ui.manoEl;
+    if (!p || !G || !m.animate) return;
+    var R = G.D * 0.47, cy = G.yb - G.D / 2, dx = Math.max(-0.3 * G.D, Math.min(0.3 * G.D, (p.cx - G.cx) * 0.5)), x = G.cx + dx, dy = -Math.sqrt(R * R - dx * dx), yr = cy + dy;
+    var w = G.D * 0.17, ux = -dy / R * dir, uy = dx / R * dir, push = 0.15 * G.D;
+    m.style.setProperty("--col", (ST.COLORI || [])[i % 10] || "#ffc247");
+    function tr(X, Y, r) { return "translate(" + (X - w / 2).toFixed(1) + "px," + (Y - w * 0.92).toFixed(1) + "px) rotate(" + r + "deg)"; }
+    try {
+      m.animate([
+        { transform: tr(x, yr - 0.34 * G.D, 0), opacity: 0 },
+        { transform: tr(x, yr + 0.01 * G.D, 0), opacity: 1, offset: 0.38 },
+        { transform: tr(x + ux * push, yr + 0.01 * G.D + uy * push, -14 * dir), opacity: 1, offset: 0.6 },
+        { transform: tr(x + ux * push * 1.25, yr - 0.32 * G.D, 0), opacity: 0 }
+      ], { duration: 980, easing: "ease-in-out" });
+    } catch (e) {}
+  }
+  // 👆 si gira col dito: si trascina la ruota e la si lascia andare; più veloce il gesto, più forte la girata
+  function trascinaRuota(ui) {
+    var g = null, R0 = ui.ruotaEl;
+    function rimetti() { ui.canvas.style.transform = "rotate(" + (ui.ang || 0) + "deg)"; }
+    R0.addEventListener("pointerdown", function (e) {
+      if (!ui.puoGirare || !ui.alta || ui.trascinato != null || ui.rafGiro) return;
+      var r = ui.piatto.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      g = { id: e.pointerId, cx: cx, cy: cy, a: Math.atan2(e.clientY - cy, e.clientX - cx), tot: 0, s: [{ t: performance.now(), v: 0 }] };
+      try { R0.setPointerCapture(e.pointerId); } catch (x) {}
+      if (e.cancelable) e.preventDefault();
+    });
+    R0.addEventListener("pointermove", function (e) {
+      if (!g || e.pointerId !== g.id) return;
+      var a = Math.atan2(e.clientY - g.cy, e.clientX - g.cx), d = a - g.a, now = performance.now();
+      if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI;
+      g.a = a; g.tot += d * 180 / Math.PI;
+      ui.canvas.style.transform = "rotate(" + ((ui.ang || 0) + Math.max(-170, Math.min(170, g.tot))).toFixed(2) + "deg)";
+      g.s.push({ t: now, v: g.tot }); while (g.s.length > 2 && now - g.s[0].t > 160) g.s.shift();
+    });
+    function lascia(e) {
+      if (!g || e.pointerId !== g.id) return;
+      var x = g; g = null;
+      var now = performance.now(), s0 = x.s[0], w = (x.tot - s0.v) / Math.max(16, now - s0.t) * 1000;   // gradi al secondo, nell'ultimo pezzo del gesto
+      if (e.type === "pointercancel" || !ui.puoGirare || (Math.abs(x.tot) < 18 && Math.abs(w) < 250)) { rimetti(); return; }   // (un tocco, non una girata)
+      var forza = Math.max(0.1, Math.min(1, Math.abs(w) / 1500)), dir = (Math.abs(w) > 60 ? w : x.tot) >= 0 ? 1 : -1;
+      ui.angVis = (ui.ang || 0) + Math.max(-170, Math.min(170, x.tot)); ui.trascinato = ui.vm ? ui.vm.giroN : 0;
+      vibra(18);
+      ui.cb.onAzione("gira", { f: Math.round(forza * 100) / 100, d: dir });
+      var kk = ui.trascinato;
+      setTimeout(function () { if (ui.trascinato === kk && ui.vm && ui.vm.giroN === kk) { ui.trascinato = null; ui.angVis = null; rimetti(); } }, 2500);   // (non è partita: torna com'era)
+    }
+    R0.addEventListener("pointerup", lascia);
+    R0.addEventListener("pointercancel", lascia);
+  }
+  // la sigla: il tabellone scrive lui il nome del gioco, una casella dopo l'altra (come in TV)
+  function nomeSulTabellone(ui) {
+    var n = 0;
+    ui.celle.forEach(function (d) { d.className = "ru-cella vuota"; d.textContent = ""; d.style.animationDelay = ""; d._buco = null; });
+    ["LA", "RUOTA", "DELLA", "FORTUNA"].forEach(function (w, r) {
+      var x0 = Math.floor((COL - w.length) / 2);
+      for (var j = 0; j < w.length; j++) { var d = ui.celle[r * COL + x0 + j]; if (!d) continue; d.className = "ru-cella nuova"; d.style.animationDelay = (0.6 + n++ * 0.09).toFixed(2) + "s"; d.textContent = w.charAt(j); }
+    });
+    ui.kTab = ""; ui.tabPrec = "";
   }
 
   // ---- la telecamera: la parte di studio che si vede sta tra il tabellone (sopra) e la barra dei tasti (sotto) ----
@@ -2135,7 +2347,8 @@
     var W = S.VW / s, HH = S.VH / s, ccy = cy - ((b.top + b.bot) / 2 - S.VH / 2) / s;
     return { x: cx - W / 2, y: ccy - HH / 2, w: W, h: HH };
   }
-  function shotRuota(ui) { var q = ui.S.R.schermo, lato = Math.min(q.w, q.h) * 0.94; return nellaBanda(ui, q.x + q.w / 2, q.y + q.h / 2, lato * 1.06, lato * 1.06); }
+  function shotRuota(ui) { var G = ui.G; return nellaBanda(ui, G.cx, G.yb - G.D / 2, G.D * 1.06, G.D * 1.06); }   // (vista dall'alto: la ruota grande)
+  function shotLancetta(ui) { var G = ui.G; return nellaBanda(ui, G.cx, G.yb - G.D * 0.8, G.D * 0.62, G.D * 0.62); }   // (la lancetta da vicino, alla fine del giro)
   function shotLeggio(ui, i) { var S = ui.S, p = S.posti[i] || S.posti[0]; return nellaBanda(ui, p.cx, p.top + p.w * 0.62, Math.max(0.6 * S.VW, p.w * 1.3), p.w * 1.34); }
   function shotTutti(ui) {   // tutti i concorrenti insieme (la frase lampo: si vede chi prenota)
     var S = ui.S, x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -2144,10 +2357,14 @@
   }
   function inquadra(ui, cosa, i, ms) {
     if (cosa === "leggio" && !(i >= 0)) return;
+    if (cosa === "ruota" && (ui.schTipo === "fin" || ui.schTipo === "buste")) cosa = "quadro";   // (le buste e la finale: il riquadro nella scena)
     var k = cosa + ":" + (i == null ? "" : i);
     if (k === ui.inq) return;
     ui.inq = k;
-    ST.inquadra(ui.S, cosa === "ruota" ? function () { return shotRuota(ui); } : cosa === "tutti" ? function () { return shotTutti(ui); } : function () { return shotLeggio(ui, i); }, ms == null ? 700 : ms);
+    ruotaAlta(ui, cosa === "ruota" || cosa === "lancetta");
+    ui.quadro.classList.toggle("on", cosa === "quadro"); if (cosa === "quadro") posQuadro(ui);
+    ST.inquadra(ui.S, cosa === "ruota" ? function () { return shotRuota(ui); } : cosa === "lancetta" ? function () { return shotLancetta(ui); } :
+      cosa === "tutti" || cosa === "quadro" ? function () { return shotTutti(ui); } : function () { return shotLeggio(ui, i); }, ms == null ? 700 : ms);
   }
   // dove guarda la telecamera in ogni momento della partita
   function inquadraFase(ui, vm, ms) {
@@ -2158,6 +2375,7 @@
       var mf = vm.miaFin, io = ids.indexOf(ui.cb.myId);
       return mf && io >= 0 && (f === "flettere" ? !mf.scelto : f === "ftempo" && !(mf.ok || mf.passo || mf.scad)) ? inquadra(ui, "leggio", io, ms) : inquadra(ui, "ruota", null, ms);
     }
+    if (f === "gira") return inquadra(ui, "ruota", null, ms);   // 🎡 tocca girare: la ruota dall'alto, grande (si gira col dito)
     if (f === "lampo") return L && L.chi ? inquadra(ui, "leggio", ids.indexOf(L.chi), ms) : inquadra(ui, "tutti", null, ms);
     if (f === "lampofine") return L && L.vince ? inquadra(ui, "leggio", ids.indexOf(L.vince), ms) : inquadra(ui, "tutti", null, ms);
     inquadra(ui, "leggio", ids.indexOf(vm.turno), ms);
@@ -2203,6 +2421,7 @@
     var S = ui.S, cb = ui.cb, prec = ui.prec || {}, f = vm.fase, ids = ui.ids, L = vm.lampo, F = vm.fin;
     var att = attore(vm), ia = ids.indexOf(att), it = ids.indexOf(vm.turno), ip = ids.indexOf(prec.turno);
     var mioTurno = !!att && (cb.telefono ? !isBot(vm, att) : att === cb.myId);
+    ui.puoGirare = mioTurno && f === "gira" && !!(vm.puo && vm.puo.gira) && !cb.guarda;   // 👆 si può trascinare la ruota
     var meF = FASI_FIN.indexOf(f) >= 0 ? vm.miaFin : null, meG = trovaG(vm, cb.myId);   // 🏆 io nella finale per tutti
     if (meF) ia = ids.indexOf(cb.myId);
     if (FASI_FIN.indexOf(f) >= 0) mioTurno = !!meF && !!meG && !meG.via && (f === "flettere" ? !meF.scelto : f === "ftempo" && !meF.ok && !meF.passo && !meF.scad);
@@ -2285,14 +2504,14 @@
       var primoGiro = ui.giroN === -1; ui.giroN = vm.giroN;
       if (!primoGiro && f === "girando") {
         fermaRegia(ui); ui.inq = ""; inquadra(ui, "ruota", null, 600);
-        var ang = vm.angolo, da = ui.ang == null ? ang - 1440 : ui.ang;
-        ui.canvas.style.transition = "none"; ui.ang = ang;
-        dopo(ui, 600, function () {
-          ui.canvas.style.transition = "transform " + (T_GIRO - 900) + "ms cubic-bezier(.12,.7,.18,1)";
-          ui.canvas.style.transform = "rotate(" + ang + "deg)";
-          suonoGiroVero(da, ang, T_GIRO - 900);
-        });
-      } else { ui.canvas.style.transition = "none"; ui.canvas.style.transform = "rotate(" + vm.angolo + "deg)"; ui.ang = vm.angolo; }
+        // 👆 l'ho lanciata io col dito: parte subito da dove l'ho lasciata; gli altri vedono la mano di chi gira che spinge un piolo
+        var ang = vm.angolo, mio = ui.trascinato != null && ui.trascinato + 1 === vm.giroN, dir = vm.giroDir === -1 ? -1 : 1;
+        var da = mio && ui.angVis != null ? ui.angVis : ui.ang == null ? ang - 1440 * dir : ui.ang;
+        ui.ang = ang; ui.angVis = null; ui.trascinato = null;
+        var durA = Math.max(1500, (vm.giroMs || T_GIRO) - 900);
+        if (!mio && !vm.veloce) mano(ui, it, dir);
+        dopo(ui, mio ? 0 : 600, function () { giraRuota(ui, da, ang, durA, dir); });
+      } else { fermaGiro(ui); ui.canvas.style.transform = "rotate(" + vm.angolo + "deg)"; ui.ang = vm.angolo; ui.angVis = null; }
     }
     if (prec.fase) {
       if (prec.fase === "girando" && f !== "girando") {   // la ruota si è fermata: un attimo sulla ruota
@@ -2375,7 +2594,8 @@
     disegnaAzioni(ui, vm, mioTurno, att);
     // la barra ha cambiato altezza (es. è comparsa la tastiera): rimetto a fuoco l'inquadratura
     var bh = S.barraEl.offsetHeight;
-    if (bh !== ui.barraH) { var primaB = ui.barraH === -1; ui.barraH = bh; if (!primaB && S.shot) ST.camera(S, S.shot(), 350); }
+    if (bh !== ui.barraH) { var primaB = ui.barraH === -1; ui.barraH = bh; if (!primaB && S.shot) ST.camera(S, S.shot(), 350); if (ui.quadro.classList.contains("on")) posQuadro(ui); }
+    if (ui.ruotaEl.classList.contains("tocca") !== !!ui.puoGirare) ui.ruotaEl.classList.toggle("tocca", !!ui.puoGirare);
   }
   // i fatti della partita (vm.ev): uguali su tutti i telefoni
   function effetto(ui, vm, e) {
@@ -2548,12 +2768,13 @@
       }
     });
   }
-  // il maxischermo: la ruota, la campanella della frase lampo, la finale (chi l'ha risolta) o le buste
+  // al posto del maxischermo: la campanella dei giochi veloci (striscia sotto il tabellone), la finale e le buste (riquadro nella scena)
   function schermo(ui, vm) {
     var f = vm.fase, tipo = f === "lampo" || f === "lampofine" ? "lampo" : FASI_FIN.indexOf(f) >= 0 && f !== "fintro" ? "fin" : FASI_BUSTA.indexOf(f) >= 0 ? "buste" : "ruota";
     if (tipo !== ui.schTipo) {
-      ui.schTipo = tipo; ST.vuota(ui.S.sch);
-      ui.S.sch.appendChild(tipo === "lampo" ? ui.panLampo : tipo === "buste" ? ui.panBuste : tipo === "fin" ? ui.panFin : ui.ruota);
+      ui.schTipo = tipo; ui.striscia.hidden = tipo !== "lampo";
+      ST.vuota(ui.quadroIn); if (tipo === "buste" || tipo === "fin") ui.quadroIn.appendChild(tipo === "buste" ? ui.panBuste : ui.panFin);
+      if (tipo !== "buste" && tipo !== "fin" && ui.quadro.classList.contains("on")) { ui.quadro.classList.remove("on"); ui.inq = ""; }
     }
     if (tipo === "lampo") {
       var L = vm.lampo, gv = L ? GIOCHI_VELOCI[L.tipo] || GIOCHI_VELOCI.classica : null, cruci = L && L.tipo === "cruci";
@@ -2906,7 +3127,7 @@
     var tp = trovaG(vm, att), jolly = tp && tp.jolly ? " · 🃏 hai " + (tp.jolly > 1 ? tp.jolly + " Jolly" : "un Jolly") : "";
     if (f === "gira") {
       var pc = vm.puo && vm.puo.compra;
-      stato((chi ? chi + "tocca a te!" : "Tocca a te!") + jolly + (pc ? " Gira, o tocca una vocale (" + fmtN(COSTO_VOCALE) + ")" : ""), "piccolo");
+      stato((chi ? chi + "tocca a te!" : "Tocca a te!") + jolly + (vm.puo && vm.puo.gira ? " 👆 Trascina la ruota" : "") + (pc ? " · o tocca una vocale (" + fmtN(COSTO_VOCALE) + ")" : ""), "piccolo");
       var bg = btn("gira", vm.cons ? "🎡 Gira" : "🎡 Finite", function () { cb.onAzione("gira"); }, !(vm.puo && vm.puo.gira));
       riga([ bg, sl ? btn("vocale si", "✓ Compro la " + sl, function () { chiamaSel(ui); }) : null,
         btn("risolvi", "💡 Risolvi", function () { cb.onAzione("risolvi"); }) ].filter(Boolean));
@@ -3256,12 +3477,34 @@
       ".st-leggio .ru-lock.scatta{animation:ruScatta .5s ease-out}",
       "@keyframes ruScatta{0%{transform:scale(1.6)}100%{transform:scale(1)}}",
       ".ru-btn.segreta{background:#1b1f3a;color:#ffd77a;box-shadow:inset 0 0 0 2px #ffc247}",
-      // la ruota sul maxischermo (senza il margine che lo studio lascia per la barra)
-      ".ru-studio .st-sch-in{padding:0!important}",
-      ".ru-ruota-sch{position:absolute;left:3%;right:3%;top:50%;aspect-ratio:1;transform:translateY(-50%)}",
-      ".ru-disco{display:block;width:100%;height:100%;border-radius:50%;box-shadow:0 8px 28px rgba(0,0,0,.55),0 0 34px rgba(255,194,71,.16);will-change:transform}",
-      ".ru-freccia{position:absolute;left:50%;top:-5%;width:12%;height:12%;transform:translateX(-50%)}.ru-freccia svg{display:block;width:100%;height:100%}",
-      ".ru-centro{position:absolute;left:50%;top:50%;width:18%;height:18%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#e0a020 70%,#a86d00);box-shadow:0 0 0 3px #171230,0 3px 8px rgba(0,0,0,.6)}",
+      // 🎡 giro 3: la ruota sul pavimento davanti ai concorrenti (ellisse in prospettiva); quando tocca girare si «alza» (vista dall'alto)
+      ".ru-ruota{pointer-events:none;z-index:2}",
+      ".ru-ruota.tocca{pointer-events:auto;cursor:grab;touch-action:none}",
+      ".ru-piatto,.ru-ombra{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:50%;transform-origin:50% 100%;transition:transform .6s cubic-bezier(.4,0,.2,1),opacity .6s;will-change:transform}",
+      ".ru-piatto{transform:scaleY(var(--k,.3))}",
+      ".ru-ombra{background:radial-gradient(closest-side,#6a4506 0%,#3a2404 86%,rgba(0,0,0,0) 100%);transform:translateY(var(--sp,10px)) scaleY(var(--k,.3));box-shadow:0 0 50px 16px rgba(0,0,0,.55)}",
+      ".ru-ruota.alta .ru-piatto{transform:scaleY(1)}.ru-ruota.alta .ru-ombra{transform:scaleY(1);opacity:0}",
+      ".ru-ruota canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}",
+      ".ru-disco{border-radius:50%;will-change:transform}",
+      ".ru-ruota.gira .ru-lamp.a{animation:ruLampA .3s steps(1) infinite}.ru-ruota.gira .ru-lamp.b{animation:ruLampB .3s steps(1) infinite}",
+      "@keyframes ruLampA{0%{opacity:1}50%{opacity:.12}}@keyframes ruLampB{0%{opacity:.12}50%{opacity:1}}",
+      ".ru-centro{position:absolute;left:50%;top:50%;width:16%;height:16%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2c2,#e8a91e 62%,#9a6200);box-shadow:0 0 0 5px #3a2200,0 0 0 9px #ffd76a,0 4px 12px rgba(0,0,0,.6)}",
+      ".ru-lancetta{position:absolute;left:50%;top:-4.6%;width:10%;height:15.3%;margin-left:-5%;transform-origin:50% 20.6%;z-index:3;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5))}.ru-lancetta svg{display:block;width:100%;height:100%}",
+      ".ru-invito{position:absolute;inset:-1.5%;border-radius:50%;box-shadow:0 0 0 6px rgba(255,255,255,.85),0 0 30px 8px rgba(255,214,110,.75);opacity:0;pointer-events:none}",
+      ".ru-ruota.tocca .ru-invito{animation:ruInvito 1.1s ease-in-out infinite alternate}",
+      "@keyframes ruInvito{from{opacity:.1}to{opacity:.85}}",
+      ".ru-buio{pointer-events:none;border-radius:50%;background:radial-gradient(closest-side,rgba(4,5,14,0) 34%,rgba(4,5,14,.86) 46%,rgba(4,5,14,.95) 100%);opacity:0;transition:opacity .6s;z-index:1}",
+      ".ru-buio.on{opacity:1}",
+      ".ru-mano{left:0;top:0;pointer-events:none;opacity:0;z-index:4;will-change:transform,opacity}.ru-mano svg{display:block;width:100%;height:100%;filter:drop-shadow(0 4px 4px rgba(0,0,0,.5))}",
+      // al posto del maxischermo: il riquadro nella scena (buste, finale) e la striscia dei giochi veloci sotto il tabellone
+      ".ru-quadro-box{position:absolute;left:0;top:0;z-index:19;transform-origin:0 0;opacity:0;pointer-events:none;transition:opacity .35s;border-radius:24px;background:radial-gradient(120% 60% at 50% 0%,rgba(255,79,134,.18),rgba(13,16,32,.96) 62%);box-shadow:0 0 0 4px #0a0c18,0 0 0 7px rgba(255,194,71,.6),0 18px 40px rgba(0,0,0,.6)}",
+      ".ru-quadro-box.on{opacity:1}.ru-quadro-in{position:absolute;inset:0}",
+      ".ru-striscia{display:flex;justify-content:center}.ru-striscia[hidden]{display:none}",
+      ".ru-striscia .ru-quadro{position:static;transform:none;aspect-ratio:auto;flex-direction:row;gap:7px;padding:2px 12px;border-radius:99px;background:rgba(7,4,26,.84);box-shadow:inset 0 0 0 1.5px rgba(77,171,247,.75);max-width:100%;min-width:0}",
+      ".ru-striscia .ru-campana{font-size:19px}.ru-striscia .ru-sch-tit{font-size:15px;text-shadow:0 2px 0 #a85c00;white-space:nowrap}",
+      ".ru-striscia .ru-sch-sub{font-size:11.5px;min-height:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}",
+      // la sigla: il tabellone scrive il nome del gioco; il resto arriva dopo
+      ".ru-sopra.sigla .ru-cat,.ru-sopra.sigla .ru-msg,.ru-sopra.sigla .ru-punti,.ru-sopra.sigla .ru-orol,.ru-sopra.sigla .ru-striscia{visibility:hidden}",
       // i quadri del maxischermo (la campanella della frase lampo, le buste della finale): nel quadrato al centro, come la ruota
       ".ru-quadro{position:absolute;left:4%;right:4%;top:50%;aspect-ratio:1;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;color:#fff}",
       ".ru-campana{font-size:110px;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));transform-origin:50% 12%}",
