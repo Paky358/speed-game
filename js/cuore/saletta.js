@@ -265,7 +265,9 @@
       // "🟡 Sto aprendo la stanza…", "🔒 Porta chiusa" (così non ruba spazio alla saletta)
       var testa = s.querySelector(".testa");
       U2.porta = el("button", { class: "sl-porta", type: "button", hidden: "hidden", onclick: function () { portaSaletta(U2); } });
-      testa.appendChild(U2.porta);
+      // (6 nov 2026, il proprietario: «che serve chiudere la sala? Occupa solo spazio»: il tasto non sta più nella testa, così il titolo
+      // resta su una riga e lo spazio va agli avatar. La porta resta nel codice, nascosta: la usano solo le prove)
+      U2.porta.classList.add("via"); testa.appendChild(U2.porta);
       U2.sottoBase = U2.statoT ? U2.statoT.textContent : "";
     }
     // la saletta: muro, finestra, quadro col simbolo del gioco, orologio, pianta, divano e tappeto (uguale per tutti i giochi)
@@ -525,7 +527,7 @@
   //  - a zig-zag "alto": chi sta dietro sale sopra le teste (quando sono tanti: si stringono di più).
   //  Si vedono tutti i visi e tutti i nomi, anche in 10. Chi cambia posto ci scivola da dov'era (solo transform: niente scatti).
   //  (w è la larghezza del disegno dell'avatar: la persona ne occupa circa i due terzi)
-  var SL_SOPRA = 46;   // sopra la testa più alta: lo spazio per i fumetti e l'insegna
+  var SL_SOPRA = 30;   // sopra la testa più alta: lo spazio per i fumetti (6 nov 2026: niente più insegna, più spazio agli avatar)
   function disponiSaletta(U, anima) {
     var st = U.stanza, W = st.clientWidth, H = st.clientHeight, nodi = U.ordine || [], tot = nodi.length;
     if (!W || !H || !tot) return;   // (la saletta non è ancora sullo schermo: ci pensa l'osservatore della stanza)
@@ -1248,7 +1250,7 @@
     chk.addEventListener("change", function () { try { localStorage.setItem("sg-sl-parti", chk.checked ? "1" : "0"); } catch (e) {} });
     return el("div", { class: "sl-viva-opz" }, [
       el("label", { class: "sl-interruttore" }, [ el("span", { text: "⚡ Parti da solo quando tutti sono pronti" }), chk ]),
-      el("small", { text: "Per far uscire qualcuno, tieni premuto sul suo avatar. In alto, «🔒 Chiudi» chiude la porta: non entra nessun altro." })
+      el("small", { text: "Per far uscire qualcuno, tieni premuto sul suo avatar." })
     ]);
   }
 
