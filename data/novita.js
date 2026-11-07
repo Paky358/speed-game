@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 318,
+    data: "7 novembre 2026",
+    titolo: "Avatar: vestiti nuovi, fantasie e un camerino tutto nuovo 👕",
+    descrizione: [
+      "👕 I vestiti degli avatar sono disegnati di nuovo, in stile moda: la felpa col cappuccio, il maglione a trecce, la camicia, la giacca col taschino, il chiodo di pelle con le zip (al posto del bomber), i jeans col risvolto, i pantaloni classici con la piega e i cargo con le tasche. Adesso si riconoscono a colpo d'occhio.",
+      "🎨 Più colori: 27 per i vestiti e i pantaloni, 16 per le scarpe, divisi a gruppi. Ogni capo arriva già col suo colore più bello; se il colore lo scegli tu, resta quello.",
+      "🌈 Secondo colore, fantasie e stoffe: coste, colletti e revers di un altro colore; righe, quadri, pois, mimetica, jeans e hawaiana; lana, pelle, raso e paillettes.",
+      "✋ Mani con 5 dita vere, la cravatta lunga che entra nella giacca e nella camicia, scarpe più grandi, collane e orecchini che si vedono, e il vestito da solo, senza i jeans sotto.",
+      "✨ Il camerino è nuovo: l'avatar su un palco con la luce, le schede Corpo, Viso, Testa, Sopra, Sotto, Scarpe ed Extra, colori e fantasie sempre a portata di dito, anteprime grandi divise a gruppi e «🎲 a caso» per ogni scheda.",
+      "👗 I look sono rifatti (Casual, Elegante, Sportivo, Rock, Estate, Inverno, Festa) e ci sono i nuovi «Colori che stanno bene»: abbinamenti pronti, basta un tocco.",
+      "🙂 Il tuo avatar resta tuo: cambiano il disegno dei vestiti, le mani e le scarpe, ma i colori e i capi che avevi scelto sono gli stessi. Fantasie e colori nuovi li metti tu, se vuoi."
+    ]
+  },
+  {
     v: 317,
     data: "7 novembre 2026",
     titolo: "La Ruota della Fortuna come in TV, ma meglio 🎡",
