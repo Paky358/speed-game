@@ -834,7 +834,7 @@
     var r5 = C([{ id: "a", q: 0 }, { id: "b", q: 0 }], 0); if (!r5.nessuno) no("tutti passano non è «nessuno»: " + JSON.stringify(r5));
     var ap = M.apertura({ n: 1, sp: 0 }, [{ id: "a", nome: "A", q: 3 }, { id: "b", nome: "B", q: 5 }, { id: "c", nome: "C", q: 0 }], r1);
     if (ap.buste.map(function (b) { return b.q; }).join(",") !== "0,3,5" || ap.fine !== "vince") no("l'apertura non va dalla più bassa alla più alta: " + JSON.stringify(ap));
-    var ms = M.apriMs(M.righeDi(ap)), ms10 = M.apriMs(10); if (ms < 2500 || ms > 4500 || ms10 > 6500) no("l'apertura dura " + ms + " ms in 3 e " + ms10 + " ms in 10");
+    var ms = M.apriMs(M.righeDi(ap)), ms10 = M.apriMs(10); if (ms < 5000 || ms > 8000 || ms10 > 10500) no("l'apertura dura " + ms + " ms in 3 e " + ms10 + " ms in 10");
     x.push("3 scelte (di base l'asta normale), riassunti e regole; conti: vince, pari, spareggio, resto, nessuno; apertura in 3 " + ms + " ms, in 10 " + ms10 + " ms; big da " + M.BIG);
     return x.join(" · ");
   } });

@@ -9,6 +9,29 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 315,
+    data: "6 novembre 2026",
+    titolo: "🧍 La Sala: più spazio agli avatar",
+    descrizione: [
+      "🔍 Nella Sala e nella saletta dei giochi gli avatar sono molto più grandi: con 8 amici circa il 40% in più.",
+      "✂️ Tolto il tasto «Chiudi» in alto: il nome del gioco sta sempre su una riga, anche «Mini Asta Fantacalcio».",
+      "📏 Codice della sala, «Invita gli amici», faccine, «Pronti», «Sei dentro!» e tasti un po' più piccoli: c'è ancora tutto, ma lo spazio va agli avatar."
+    ]
+  },
+  {
+    v: 314,
+    data: "6 novembre 2026",
+    titolo: "⚽ Mini Asta Fantacalcio: voti giusti e buste con la suspense",
+    descrizione: [
+      "🗳️ Voti più giusti: chi non segna e non fa assist prende al massimo 7 (e solo se gioca bene), mai più 7,5 senza aver fatto niente.",
+      "❌ Un tiro sbagliato (fuori, palo, traversa, salvato sulla linea) abbassa il voto di mezzo punto: dopo un errore, senza gol né assist, al massimo 6,5.",
+      "🧤 Il portiere non scende mai sotto il 6, nemmeno se prende gol (può essere colpa della difesa): 5,5 solo con un errore suo. Ogni parata gli alza il voto. Il +1 della porta inviolata e il −1 per ogni gol preso restano a parte, come prima.",
+      "⚽ Gol e assist alzano il voto come nel fanta vero: un gol 7, una doppietta 8.",
+      "🃏 Busta chiusa: le buste ora stanno sul tavolo, col pallone sulla punta e la faccina di chi l'ha scritta. Le luci si abbassano (il campo si vede sempre), parte il battito, chi passa gira col cartellino rosso, poi si girano una alla volta dalla più bassa.",
+      "🥁 Le ultime due vengono avanti testa a testa, rullo di tamburi… e si aprono nello stesso istante su tutti i telefoni: chi vince si illumina d'oro."
+    ]
+  },
+  {
     v: 313,
     data: "6 novembre 2026",
     titolo: "⚽ Mini Asta Fantacalcio: il meteo più tranquillo",
