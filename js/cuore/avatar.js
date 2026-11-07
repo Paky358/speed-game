@@ -578,6 +578,10 @@
     if (grande) {
       var aRiMisura = function () { if (!document.body.contains(s)) { window.removeEventListener("resize", aRiMisura); if (cam.stacca) cam.stacca(); return; } misura(); };
       window.addEventListener("resize", aRiMisura);
+      if (window.ResizeObserver) {   // (anche quando cambia solo lo spazio del camerino: il carattere che arriva, la barra del telefono)
+        var oss = new ResizeObserver(function () { if (!document.body.contains(s)) return oss.disconnect(); if (mis && (s._contenuto.clientHeight !== mis.cH || palco.clientWidth !== mis.cW)) misura(); });
+        oss.observe(s._contenuto);
+      }
     }
     function centraScelte() {   // nelle file da scorrere: la scelta di adesso in vista
       if (nuovo) { [].forEach.call(s.querySelectorAll(".ed3-fila, .ed3-scorre"), centraFila); return; }
