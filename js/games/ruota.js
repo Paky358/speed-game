@@ -7,7 +7,7 @@
    - "Prenota", la frase lampo in apertura di ogni manche: le lettere compaiono da sole, chi la sa prenota;
    - lo spicchio "Express": niente più giri, 1.000 a consonante, ma un errore è Bancarotta;
    - l'ultimo round veloce: la ruota gira una volta sola, una lettera a testa e 5 secondi per risolvere;
-   - la finale del campione: busta con le Speed Coins, R S T L N E, 3 consonanti + 1 vocale, 10 secondi;
+   - la finale per tutti (online e contro i Bot): 3 tabelloni, ognuno sul suo telefono; poi chi vince sceglie una busta di Speed Coins;
    - ❓ lo spicchio Mistero nelle ultime due manche normali (+10.000 o Bancarotta, lo decide l'host solo quando si apre).
    ✍️ Le frasi degli amici: quelle scritte nel ⚙️ (restano sul telefono dell'host) e quelle mandate da chi guarda
    (vanno solo all'host, mai nella foto). Online, a fine manche «⏩ Avanti» a maggioranza.
@@ -23,7 +23,8 @@
   var ID = "ruota";
   var MAX = 4;
   var COSTO_VOCALE = 300, MINIMO_RISOLVI = 1000;   // chi risolve prende almeno 1.000
-  var T_MOSSA = 30000, T_RISOLVI = 60000;          // online: tempo per decidere (poi perde il turno)
+  var BOT_SEL = 800, BOT_SCRIVE = 250;   // il Bot: quanto tiene accesa la lettera prima di chiamarla, quanto ci mette a scrivere una lettera
+  var T_MOSSA = 15000, T_RISOLVI = 45000;          // online: tempo per decidere (poi perde il turno)
   var T_GIRO = 3400;                               // quanto gira la ruota
   var SIGLA_CORTA = 2600;                          // quando si rigioca: niente presentazione lunga
   // ---- i round speciali ----
@@ -32,19 +33,34 @@
   var LAMPO_FINESTRA = 500;                        // online: dal primo "Prenoto!" arrivato si aspettano gli altri per mezzo secondo
   var LAMPO_RIFLESSI = 150;                        // nessuno è più veloce di così (un tempo più basso non vale)
   var T_LAMPO_RISOLVI = 20000, LAMPO_ULTIMA = 5000;   // tempo per scriverla; uscite tutte le lettere, quanto si aspetta ancora
+  var TRI_BONUS = 2000, CRUCI_PAROLA = 500;           // il Triplete (tutte e 3 alla stessa persona) e ogni parola del CruciRuota
+  var LAMPO_PRIMA_TEMA = 3400, CRUCI_PASSO = 1100;  // i giochi a tema: un attimo in più per leggere cosa sono; il CruciRuota ha tante lettere
+  var SCALETTA = ["classica", "tempo", "mondo", "triplete", "cruci"];
   var EXPRESS_V = 1000;                            // l'Express: ogni consonante vale 1.000
   var BONUS_VELOCE = 1000;                         // il round veloce: lo spicchio + 1.000 a consonante
   var T_VEL_LETTERA = 12000, T_VEL_DECIDI = 5000, T_VEL_RISOLVI = 20000;
   var FIN_DATE = ["R", "S", "T", "L", "N", "E"], FIN_CONS = 3, FIN_VOC = 1;   // la finale: lettere regalate e da scegliere
-  var T_FIN_BUSTA = 20000, T_FIN_LETTERE = 30000, T_FIN_RISOLVI = 10000;
-  var FIN_GRAZIA = 1500;                           // online: la soluzione arriva un po' dopo, non la si perde per la rete
-  var BUSTE = [500, 1000, 1000, 2000, 5000];       // le buste della finale, in Speed Coins (contro il computer un decimo)
+  var T_FIN_BUSTA = 20000, T_FIN_LETTERE = 10000;
+  var FIN_GRAZIA = 1500;   // online: la soluzione arriva un po' dopo, non la si perde per la rete
+  // 🏆 la finale «delle meraviglie» (come quella di adesso in TV), ma PER TUTTI INSIEME (31 ott 2026, il proprietario):
+  // dopo l'ultima manche giocano tutti, Bot compresi, ognuno sul suo telefono, 3 tabelloni con la stessa frase per tutti:
+  // 1) «Le tue lettere»: R S T L N E + 3 consonanti e 1 vocale scelte in segreto (10 s), poi 30 s per risolvere;
+  // 2) Testacoda: la prima e l'ultima lettera di ogni parola, 30 s; 3) Rubasecondi: si chiamano lettere a volontà
+  // (una vocale sola), ogni lettera che non c'è toglie 3 secondi SOLO a chi l'ha chiamata, 40 s.
+  // Ogni tabellone risolto vale 500 + 1.000 × (tempo che restava / tempo del tabellone), arrotondato a 50: va nel totale.
+  // Solo online e contro i Bot (sullo stesso telefono si vedrebbe tutto). Le buste le sceglie poi chi vince la partita.
+  var FIN_T = [30000, 30000, 40000], FIN_RUBA = 3000, FIN_TABELLONI = 3, FIN_BASE = 500, FIN_BONUS = 1000;
+  var FIN_NOMI = ["Le tue lettere", "Testacoda", "Rubasecondi"];
+  var BUSTE = [500, 1000, 1000, 2000, 5000];       // ✉️ la busta di chi vince la partita, in Speed Coins (contro il computer un decimo)
   var PREMIO_MAX = 5000;
   // i momenti che vanno avanti da soli (l'host aspetta tanto così)
-  var DURATE = { girando: T_GIRO, finemanche: 4500, lampofine: 3800, vgiro: 3000, fintro: 6000, frivela: 2600, fesito: 7500, mapre: 1800, mrivela: 3200 };
-  var FASI_FIN = ["fintro", "fbusta", "flettere", "frivela", "ftempo", "fesito"];
+  var DURATE = { girando: T_GIRO, finemanche: 4500, lampofine: 3800, vgiro: 3000, fintro: 6000, frivela: 2600, fcambio: 3200, fesito: 7500, mapre: 1800, mrivela: 3200 };
+  var FASI_FIN = ["fintro", "flettere", "frivela", "ftempo", "fcambio"];   // la finale per tutti
+  var FASI_BUSTA = ["fbusta", "fesito"];                                   // ✉️ chi vince sceglie la busta, poi si apre
   var VOCALI = ["A", "E", "I", "O", "U"];
   var CONSONANTI = "BCDFGHJKLMNPQRSTVWXYZ".split("");
+  var QWERTY = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];   // ⌨️ la tastiera fissa in basso (3 nov 2026)
+  var FASI_SEL = ["gira", "consonante", "vocale", "express", "vlettera"];   // dove chi gioca accende una lettera e tutti la vedono
   var FREQ_C = "NRTLSCDMPVGBFZHQKJWXY".split("");   // consonanti dalla più frequente in italiano
   var FREQ_V = ["E", "A", "I", "O", "U"];
   // i bot: quelli del gruppo fisso (SG.bot: sempre gli stessi nomi e avatar in tutti i giochi), scelti per la bravura;
@@ -56,9 +72,9 @@
   }
   var COL = 12, RIGHE = 4;
   var PARTITE_SALVATE = {}, INCASSI = {};
-  // la ruota: 24 spicchi (valori, 2 Bancarotta, 1 Passa, 1 Jolly; con l'Express uno dei 300 diventa "Express")
+  // la ruota: 24 spicchi (valori, 2 Bancarotta, 1 Passa, 1 Jolly, 1 Raddoppia (i soldi della manche × 2); con l'Express uno dei 300 diventa "Express")
   var SPICCHI = [
-    { v: 500 }, { v: 300 }, { s: "bancarotta" }, { v: 700 }, { v: 400 }, { v: 250 },
+    { v: 500 }, { s: "raddoppia" }, { s: "bancarotta" }, { v: 700 }, { v: 400 }, { v: 250 },
     { v: 800 }, { s: "passa" }, { v: 350 }, { v: 600 }, { v: 1000 }, { v: 300 },
     { s: "jolly" }, { v: 450 }, { v: 200 }, { v: 900 }, { s: "bancarotta" }, { v: 500 },
     { v: 650 }, { v: 2000 }, { v: 400 }, { v: 550 }, { v: 300 }, { v: 750 }
@@ -67,6 +83,16 @@
   // ❓ lo spicchio Mistero (nelle ultime due manche normali): un 300 diventa Mistero; si gioca come un 1.000 e,
   // se la consonante c'è, si può aprire: metà delle volte +10.000, metà Bancarotta. Aperto, torna un 1.000 normale.
   var POSTO_MISTERO = 22, MIST_V = 1000, MIST_PREMIO = 10000;
+  // 🔒 «La so!»: chi aspetta il suo turno blocca in segreto la soluzione (una volta per manche, mai nei giochi veloci).
+  // Si può solo finché è scoperto meno del 40% delle lettere; vale 500 a tabellone vuoto e giù dritto fino a 0 al 40%
+  // (lo decide il momento in cui la blocchi). A fine manche: giusta = + il valore; sbagliata = − metà del valore (31 ott 2026)
+  var SEG_MAX = 500, SEG_QUOTA = 0.4, SEG_GRAZIA = 2500;   // (SEG_GRAZIA: un «La so!» toccato poco prima di una lettera nuova vale ancora quanto diceva il tasto)
+  // quanto vale bloccarla adesso (q = parte delle lettere già scoperte, da 0 a 1); 0 = non si può più
+  function valoreSeg(q) { return q >= SEG_QUOTA ? 0 : Math.max(0, Math.round(SEG_MAX * (1 - q / SEG_QUOTA) / 10) * 10); }
+  function mezzoSeg(v) { return Math.round(v / 2 / 10) * 10; }
+  // la stessa quota calcolata dal tabellone della foto (sul telefono): lettere scoperte / lettere della frase
+  function quotaTab(tab) { var noti = solo(tab).length, buchi = (String(tab || "").match(/_/g) || []).length; return noti + buchi ? noti / (noti + buchi) : 0; }
+  var FASI_SEG = ["gira", "girando", "consonante", "vocale", "risolvi", "sceltaexp", "express", "mistero", "mapre", "mrivela", "vgiro", "vlettera", "vdecidi"];
   var T_RIEPILOGO = 10000;                         // online: il riepilogo di fine manche (o subito, se più di metà tocca «⏩ Avanti»)
   // mist: null (niente Mistero), "on" (da aprire), "aperto" (già aperto: vale 1.000)
   function spicchiDi(express, mist) {
@@ -100,8 +126,9 @@
     return (Array.isArray(l) ? l : []).map(function (x) { return x && controllaFrase(x.c, x.f); }).filter(function (x) { return x && x.ok; }).slice(0, NOSTRE_MAX).map(function (x) { return { c: x.c, f: x.f }; });
   }
   function salvaNostre(l) { try { localStorage.setItem(NOSTRE_KEY, JSON.stringify(l.slice(0, NOSTRE_MAX))); } catch (e) {} }
-  var COLORI = ["#d81c57", "#d4621c", "#e3a21a", "#17936a", "#1783b3", "#6644cc"];   // notte: lampone, arancio, oro, verde notte, ciano, viola (spicchi un po' più profondi del cartone di prima)
-  var COLORI_TESTO = { "#e3a21a": "#1a1226" };   // sull'oro la scritta è scura (sennò non si legge)
+  // 🎨 giro 3: colori pieni e accesi come in TV (rosso, arancio, giallo, verde, azzurro, viola, rosa)
+  var COLORI = ["#e8262f", "#ff7f11", "#ffd21f", "#21b34c", "#1aa3ff", "#8b3dff", "#ff4fa8"];
+  var COLORI_TESTO = { "#ffd21f": "#2a1a00" };   // sul giallo la scritta è scura (sennò non si legge)
   var ACC = { "À": "A", "È": "E", "É": "E", "Ì": "I", "Ò": "O", "Ù": "U" };
   var FRASI_RISERVA = [
     { c: "Proverbi", f: "CHI DORME NON PIGLIA PESCI" }, { c: "Proverbi", f: "TRA IL DIRE E IL FARE C'È DI MEZZO IL MARE" },
@@ -116,6 +143,7 @@
   function firmaTesto(f) { return f ? "✍️ di " + f : "✍️ scritta da voi"; }
   function eLettera(ch) { return /^[A-ZÀÈÉÌÒÙ]$/.test(ch); }
   function fmtN(n) { var s = String(Math.round(Math.abs(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); return (n < 0 ? "−" : "") + s; }
+  function secTx(ms) { return Math.max(1, Math.round((+ms || 0) / 1000)) + " s"; }   // "in 12 s"
   function mischiaArr(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function stessoNome(a, b) { return String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase(); }
   function profiloAttivo() {
@@ -179,6 +207,11 @@
   // le frasi giuste per la finale (le più corte: si devono poter risolvere in 10 secondi) e per la frase lampo
   function corta(x) { var s = solo(x.f); return s.length >= 8 && s.length <= 13 && String(x.f).split(" ").length <= 3 && !/[JKWXY]/.test(s); }
   function media(x) { var n = solo(x.f).length; return n >= 10 && n <= 20; }
+  function lampoOk(x) { return !!x.l || media(x); }   // le frasi lampo: quelle medie, più le famose e corte (l: 1) che nelle manche si indovinerebbero subito
+  // i contenuti dei giochi a tema (data/ruota-speciali.js) e la frase che finisce sul tabellone
+  function listaSp(tipo) { var l = tipo === "tempo" ? window.SG_RUOTA_TEMPO : tipo === "mondo" ? window.SG_RUOTA_MONDO : tipo === "cruci" ? window.SG_RUOTA_CRUCI : null; return Array.isArray(l) ? l : []; }
+  function chiaveSp(tipo, it) { return tipo === "cruci" ? it.p.join("|").toUpperCase() : String(it.f).toUpperCase(); }
+  function annoTesto(a) { a = Math.round(+a || 0); return a < 0 ? -a + " a.C." : String(a); }   // (gli anni senza il punto delle migliaia)
   // il tabellone: righe da 12 caselle, a capo tra una parola e l'altra
   function righe(frase) {
     var out = [], riga = "";
@@ -193,6 +226,7 @@
   // le stesse righe, come pezzi della frase (da dove partono e quanto sono lunghe): così ogni casella sa che lettera è
   function righeIdx(frase) {
     var out = [], i = 0, cur = null;
+    if (frase.indexOf("|") >= 0) { frase.split("|").forEach(function (w) { out.push({ start: i, len: w.length }); i += w.length + 1; }); return out; }   // il CruciRuota: una parola per riga
     frase.split(" ").forEach(function (w) {
       if (cur && cur.len + 1 + w.length <= COL) cur.len += 1 + w.length;
       else { if (cur) out.push(cur); cur = { start: i, len: w.length }; }
@@ -206,16 +240,21 @@
     return frase.split("").map(function (ch) { return eLettera(ch) && !rivelate[base(ch)] ? "_" : ch; }).join("");
   }
   // le ultime frasi uscite su questo telefono: tra una partita e l'altra non tornano subito
-  var VISTE_KEY = "sg-ruota-viste", VISTE_MAX = 150;
-  function frasiViste() {
-    var o = {};
-    try { (JSON.parse(localStorage.getItem(VISTE_KEY) || "[]") || []).forEach(function (f) { o[f] = 1; }); } catch (e) {}
-    return o;
+  // (30 ott 2026: si ricordano TUTTE, fino a 5.000, come impronte corte; online anche quelle viste dagli amici che giocano)
+  var VISTE_KEY = "sg-ruota-viste", VISTE_MAX = 5000, VISTE_AMICI = 800;
+  function impronta(frase) {   // 6-7 caratteri al posto della frase intera (le frasi vecchie salvate intere si convertono da sole)
+    var s = String(frase || "").toUpperCase(), h = 2166136261;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h >>> 0).toString(36);
   }
+  function listaViste() {
+    try { return (JSON.parse(localStorage.getItem(VISTE_KEY) || "[]") || []).map(function (f) { return String(f).length > 8 ? impronta(f) : String(f); }); } catch (e) { return []; }
+  }
+  function frasiViste() { var o = {}; listaViste().forEach(function (h) { o[h] = 1; }); return o; }
   function segnaVista(frase) {
     try {
-      var l = (JSON.parse(localStorage.getItem(VISTE_KEY) || "[]") || []).filter(function (f) { return f !== frase; });
-      l.push(frase); localStorage.setItem(VISTE_KEY, JSON.stringify(l.slice(-VISTE_MAX)));
+      var h = impronta(frase), l = listaViste().filter(function (x) { return x !== h; });
+      l.push(h); localStorage.setItem(VISTE_KEY, JSON.stringify(l.slice(-VISTE_MAX)));
     } catch (e) {}
   }
 
@@ -224,14 +263,16 @@
   // =========================================================
   function creaPartita(giocatori, mancheTot, regole) {
     var cfg = regole || {};
-    var RG = { prenota: !!cfg.prenota, express: !!cfg.express, veloce: !!cfg.veloce && mancheTot >= 2, finale: !!cfg.finale, mistero: !!cfg.mistero, frasi: cfg.frasi === "nostre" ? "nostre" : "gioco" };
+    var RG = { prenota: !!cfg.prenota, express: !!cfg.express, veloce: !!cfg.veloce && mancheTot >= 2, finale: !!cfg.finale && cfg.modo !== "telefono", mistero: !!cfg.mistero, frasi: cfg.frasi === "nostre" ? "nostre" : "gioco" };
     var P = { giocatori: giocatori.map(function (g) { return { id: g.id, nome: g.nome, bot: !!g.bot, omino: g.omino || null, totale: 0, soldi: 0, jolly: 0, via: false,
       stat: { giri: 0, consonantiIndovinate: 0, vocaliIndovinate: 0, frasiRisolte: 0, mancheVinte: 0, mancheDa5000: 0, bancarotte: 0, lampo: 0, finali: 0 } }; }),
       modo: cfg.modo || "bot", difficolta: cfg.difficolta || "medio", regole: RG, spicchi: spicchiDi(RG.express), decimo: !!cfg.decimo,
       mancheTot: mancheTot, manche: 0, turno: 0, fase: "pronti", frase: "", cat: "", rivelate: {}, chiamate: {},
       spicchio: -1, angolo: 0, giroN: 0, msg: "", ultime: [], usate: {}, catUsate: {}, vince: null, classifica: null, ev: null,
       lampo: null, exp: false, expTot: 0, veloce: false, velValore: 0, fin: null,
-      mist: null, mres: null, firma: null, ultimaAmica: false, amiche: 0 };
+      mist: null, mres: null, firma: null, ultimaAmica: false, amiche: 0, segrete: {},
+      // la scaletta dei giochi veloci: in ordine sparso, solo quelli che hanno i contenuti
+      scaletta: window.__RUOTA_SCALETTA ? window.__RUOTA_SCALETTA.slice() : mischiaArr(SCALETTA.filter(function (t) { return t === "classica" || t === "triplete" || listaSp(t).length; })) };
     // il Mistero: chi lo apre vince o va in Bancarotta, a sorte (lo decide l'host solo quando viene aperto). Per le prove si può forzare.
     P.sorteMistero = function () { return Math.random() < 0.5; };
     function g() { return P.giocatori[P.turno]; }
@@ -246,12 +287,17 @@
     P.occ = occ;
     function attivi() { return P.giocatori.filter(function (x) { return !x.via; }); }
     // una frase dalla lista (filtro: le corte per la finale, le medie per la frase lampo); mai due volte nella stessa partita
+    // le frasi già viste: su questo telefono e (online) da chi gioca con me
+    function giaVista() {
+      var v = frasiViste(), a = cfg.visteAmici ? cfg.visteAmici() || {} : {};
+      return function (testo) { var h = impronta(testo); return !!(v[h] || a[h]); };
+    }
     function pesca(filtro) {
-      var lista = frasi(), cand = [], viste = frasiViste();
+      var lista = frasi(), cand = [], vista = giaVista();
       function ok(x, i) { return !P.usate[i] && (!filtro || filtro(x)); }
       // meglio una categoria nuova per ogni manche (se ce ne sono ancora)
-      lista.forEach(function (x, i) { if (ok(x, i) && !viste[String(x.f).toUpperCase()] && !P.catUsate[x.c]) cand.push(i); });
-      if (!cand.length) lista.forEach(function (x, i) { if (ok(x, i) && !viste[String(x.f).toUpperCase()]) cand.push(i); });
+      lista.forEach(function (x, i) { if (ok(x, i) && !vista(x.f) && !P.catUsate[x.c]) cand.push(i); });
+      if (!cand.length) lista.forEach(function (x, i) { if (ok(x, i) && !vista(x.f)) cand.push(i); });
       if (!cand.length) lista.forEach(function (x, i) { if (ok(x, i)) cand.push(i); });   // viste tutte: si riparte
       if (!cand.length) lista.forEach(function (x, i) { if (!filtro || filtro(x)) cand.push(i); });
       if (!cand.length) cand = lista.map(function (x, i) { return i; });
@@ -259,6 +305,51 @@
       var f = String(lista[i].f).toUpperCase();
       segnaVista(f);
       return { f: f, c: lista[i].c };
+    }
+    // ---- i giochi veloci della scaletta (uno prima di ogni manche, come in TV) ----
+    // i contenuti dei giochi a tema (data/ruota-speciali.js): mai due volte nella stessa partita, meglio se mai visti
+    function pescaSp(tipo) {
+      var l = listaSp(tipo), cand = [], vista = giaVista();
+      P.usateSp = P.usateSp || {};
+      l.forEach(function (it, i) { if (!P.usateSp[tipo + i] && !vista(chiaveSp(tipo, it))) cand.push(i); });
+      if (!cand.length) l.forEach(function (it, i) { if (!P.usateSp[tipo + i]) cand.push(i); });
+      if (!cand.length) return null;
+      var i = cand[Math.floor(Math.random() * cand.length)]; P.usateSp[tipo + i] = 1;
+      segnaVista(chiaveSp(tipo, l[i]));
+      return l[i];
+    }
+    // il Triplete: un argomento con almeno 3 frasi lampo ancora libere (meglio uno non ancora uscito)
+    function catTriplete() {
+      var lista = frasi(), vista = giaVista(), n = {}, nuove = [], tutte = [];
+      lista.forEach(function (x, i) { if (!P.usate[i] && lampoOk(x) && !vista(x.f)) n[x.c] = (n[x.c] || 0) + 1; });
+      Object.keys(n).forEach(function (c) { if (n[c] >= 3) { tutte.push(c); if (!P.catUsate[c]) nuove.push(c); } });
+      var l = nuove.length ? nuove : tutte;
+      return l.length ? l[Math.floor(Math.random() * l.length)] : null;
+    }
+    function nuovoLampo(tipo, tri) {
+      var fr = null, cat = "", it, x;
+      if (tipo === "tempo" && (it = pescaSp("tempo"))) { fr = String(it.f).toUpperCase(); cat = annoTesto(it.anno); }
+      else if (tipo === "mondo" && (it = pescaSp("mondo"))) { fr = String(it.f).toUpperCase(); cat = it.paese + ": " + String(it.parola).toUpperCase(); }
+      else if (tipo === "cruci" && (it = pescaSp("cruci"))) { fr = chiaveSp("cruci", it); cat = it.c; }
+      else if (tipo === "triplete") {
+        var c = tri ? tri.c : catTriplete();
+        if (c) { x = pesca(function (y) { return lampoOk(y) && y.c === c; }); fr = x.f; cat = x.c; tri = tri || { n: 0, di: 3, c: c, vinti: {}, ultimo: null }; tri.n++; }
+      }
+      if (!fr) { x = pesca(lampoOk); fr = x.f; cat = x.c; tipo = "classica"; tri = null; }
+      var pos = [];
+      fr.split("").forEach(function (ch, k) { if (eLettera(ch)) pos.push(k); });
+      var L = { tipo: tipo, frase: fr, cat: cat, pos: mischiaArr(pos), n: 0, T: [Date.now()], fuori: {}, chi: null, cand: [], prove: 0, vince: null };
+      if (tri) L.tri = tri;
+      if (tipo === "cruci") { L.ok = [0, 0, 0, 0]; L.parole = {}; }
+      return L;
+    }
+    function apriLampo(L) {
+      P.lampo = L; P.fase = "lampo";
+      P.msg = L.tipo === "tempo" ? "⏳ La ruota del tempo! Cosa è successo nel " + L.cat + "? Vale " + fmtN(PREMIO_LAMPO) :
+        L.tipo === "mondo" ? "🌍 GiraMondo! Cosa vuol dire " + L.cat.split(": ")[1] + "? Vale " + fmtN(PREMIO_LAMPO) :
+        L.tipo === "cruci" ? "🧩 CruciRuota! Quattro parole sul tema: " + fmtN(CRUCI_PAROLA) + " l'una" :
+        L.tipo === "triplete" ? "🎯 Triplete, frase " + L.tri.n + " di 3: " + fmtN(PREMIO_LAMPO) + (L.tri.n === 1 ? " l'una, tutte e 3 alla stessa persona +" + fmtN(TRI_BONUS) : "") :
+        "🔔 Frase lampo! Chi la sa prenota: vale " + fmtN(PREMIO_LAMPO) + " e comincia la manche";
     }
     function avantiTurno() {
       var n = P.giocatori.length;
@@ -275,22 +366,41 @@
     function bancarottaExpress(msg) {
       var p = g(); p.soldi = 0; p.stat.bancarotte++;
       ev("bancarotta", p.id);
-      P.msg = msg + " 💥 Bancarotta per " + p.nome + "!"; prossimo();
+      P.msg = msg + " 💥 Bancarotta per " + p.nome + ": via i soldi di questa manche!"; prossimo();
     }
-    function giraVerso(i) {
+    function giraVerso(i) {   // (il giro finale: la ruota la gira il gioco e si ferma su una cifra)
       var meta = (360 - ((i + 0.5) * 15 + (Math.random() * 9 - 4.5)) % 360) % 360;   // lo spicchio i sotto la freccia (in alto)
-      var giri = 4 + Math.floor(Math.random() * 2);
+      var giri = 4 + Math.floor(Math.random() * 2), prima = P.angolo;
       P.angolo = P.angolo + giri * 360 + ((meta - (P.angolo % 360)) + 720) % 360;
+      P.giroMs = durataGiro(P.angolo - prima); P.giroDir = 1;
       P.spicchio = i; P.giroN++; P.fase = "girando"; P.ultime = [];
+    }
+    // 👆 la girata col dito: più forte = gira di più (la forza conta davvero), più un po' di caso.
+    // Una volta su tre si ferma a un soffio dal confine tra due spicchi (lo «scavalca» o no: si vede solo alla fine).
+    function giraForza(x) {
+      // (per le prove: se il caso è "fermo", due numeri uguali di fila, si va dritti sullo spicchio che dice, come prima)
+      var r1 = Math.random(), r2 = Math.random(); if (r1 === r2) return giraVerso(Math.floor(r1 * 24) % 24);
+      var f = x && isFinite(+x.f) ? Math.max(0.08, Math.min(1, +x.f)) : 0.3 + Math.random() * 0.45, dir = x && +x.d === -1 ? -1 : 1;
+      var giro = 520 + 1500 * f + Math.random() * 320, fin = P.angolo + dir * giro;
+      var rel = ((-fin % 360) + 360) % 360, idx = Math.floor(rel / 15) % 24, fr = rel / 15 - Math.floor(rel / 15);
+      if (Math.random() < 0.34) {   // a un soffio dal confine: da 0,5 a 1,4 gradi
+        var nf = (0.035 + Math.random() * 0.06) * (Math.random() < 0.5 ? 1 : -1); nf = nf > 0 ? nf : 1 + nf;
+        fin -= (nf - fr) * 15;   // (stesso spicchio: si sposta di meno di 15 gradi)
+      }
+      var prima = P.angolo;
+      P.angolo = Math.round(fin * 100) / 100; P.giroDir = dir;
+      P.spicchio = Math.floor(((((-P.angolo) % 360) + 360) % 360) / 15) % 24;
+      P.giroMs = durataGiro(Math.abs(P.angolo - prima));
+      P.giroN++; P.fase = "girando"; P.ultime = [];
     }
     P.nuovaManche = function () {
       P.manche++;
       // ✍️ una manche su due al massimo con una frase degli amici (se ce ne sono)
       var fr = RG.frasi === "nostre" && !P.ultimaAmica && cfg.amica ? cfg.amica(P) : null;
       P.ultimaAmica = !!fr; if (fr) P.amiche++;
-      if (!fr) fr = pesca(null);
+      if (!fr) fr = pesca(function (x) { return !x.l; });   // (le frasi famose e corte, l: 1, solo nei giochi veloci)
       P.frase = fr.f; P.cat = fr.c; P.firma = fr.firma != null ? fr.firma : null;
-      P.rivelate = {}; P.chiamate = {}; P.ultime = []; P.vince = null; P.spicchio = -1; P.annullato = false; P.exp = false; P.expTot = 0;
+      P.rivelate = {}; P.chiamate = {}; P.ultime = []; P.vince = null; P.spicchio = -1; P.annullato = false; P.exp = false; P.expTot = 0; P.segrete = {};
       P.veloce = RG.veloce && P.manche === P.mancheTot; P.velValore = 0;
       // ❓ il Mistero nelle ultime due manche normali (mai nel round veloce né nella finale)
       var ultimaN = RG.veloce ? P.mancheTot - 1 : P.mancheTot;
@@ -298,12 +408,8 @@
       P.spicchi = spicchiDi(RG.express, P.mist);
       P.giocatori.forEach(function (x) { x.soldi = 0; x.jolly = 0; });
       P.turno = (P.manche - 1) % P.giocatori.length; if (P.giocatori[P.turno].via) avantiTurno();
-      if (RG.prenota) {
-        var fl = pesca(media), pos = [];
-        fl.f.split("").forEach(function (ch, k) { if (eLettera(ch)) pos.push(k); });
-        P.lampo = { frase: fl.f, cat: fl.c, pos: mischiaArr(pos), n: 0, T: [Date.now()], fuori: {}, chi: null, cand: [], prove: 0, vince: null };
-        P.fase = "lampo"; P.msg = "🔔 Frase lampo! Chi la sa prenota: vale " + fmtN(PREMIO_LAMPO) + " e comincia la manche";
-      } else iniziaManche();
+      if (RG.prenota) apriLampo(nuovoLampo(P.scaletta[(P.manche - 1) % P.scaletta.length], null));
+      else iniziaManche();
     };
     function iniziaManche() {
       P.lampo = null;
@@ -316,6 +422,7 @@
     P.lampoTab = function () {
       var L = P.lampo, vis = {}, tutta = P.fase === "lampofine";
       for (var k = 0; k < L.n; k++) vis[L.pos[k]] = 1;
+      if (L.ok) { var rg = 0; L.frase.split("").forEach(function (ch, i) { if (ch === "|") rg++; else if (L.ok[rg]) vis[i] = 1; }); }
       return L.frase.split("").map(function (ch, i) { return eLettera(ch) && !vis[i] && !tutta ? "_" : ch; }).join("");
     };
     P.lampoRivela = function () {   // compare una lettera (in un posto a caso)
@@ -354,10 +461,34 @@
     P.lampoSoluzione = function (id, testo) {
       var L = P.lampo; if (P.fase !== "lampo" || !L || L.chi !== id) return false;
       var p = trova(id);
-      if (solo(testo) === solo(L.frase)) lampoChiudi(p, "🎉 " + p.nome + " indovina la frase lampo! +" + fmtN(PREMIO_LAMPO) + " e comincia la manche");
+      if (L.tipo === "cruci") { cruciSoluzione(p, testo); return true; }
+      if (solo(testo) === solo(L.frase)) lampoChiudi(p, "🎉 " + p.nome + (L.tri ? " indovina la frase " + L.tri.n + " del Triplete! +" : L.tipo === "tempo" || L.tipo === "mondo" ? " indovina! +" : " indovina la frase lampo! +") + fmtN(PREMIO_LAMPO) + (L.tri && L.tri.n < L.tri.di ? "" : " e comincia la manche"));
       else lampoFuori(id, "❌ Sbagliato!");
       return true;
     };
+    // 🧩 il CruciRuota: chi prenota scrive le parole che sa (anche una sola). Ogni parola giusta vale CRUCI_PAROLA e resta
+    // scoperta; una parola scritta tutta e sbagliata (o nessuna parola) = fuori dal CruciRuota, come nella frase lampo
+    function cruciSoluzione(p, testo) {
+      var L = P.lampo, vere = L.frase.split("|"), scritte = String(testo || "").split("|"), nuove = [], sbagliata = false;
+      vere.forEach(function (w, r) {
+        if (L.ok[r]) return;
+        var x = scritte[r] || "";
+        if (x.indexOf("?") >= 0 || x.indexOf("_") >= 0 || solo(x).length !== solo(w).length) return;   // (parola lasciata vuota o a metà)
+        if (solo(x) === solo(w)) nuove.push(r); else sbagliata = true;
+      });
+      if (sbagliata || !nuove.length) { lampoFuori(p.id, sbagliata ? "❌ Sbagliato!" : "🏳️ Nessuna parola!"); return; }
+      nuove.forEach(function (r) { L.ok[r] = p.id; });
+      // le lettere di quelle parole non escono più una per una
+      var riga = []; var rg = 0; L.frase.split("").forEach(function (ch) { riga.push(rg); if (ch === "|") rg++; });
+      L.pos = L.pos.slice(0, L.n).concat(L.pos.slice(L.n).filter(function (k) { return !L.ok[riga[k]]; }));
+      var premio = CRUCI_PAROLA * nuove.length;
+      p.totale += premio; p.stat.lampo++; L.parole[p.id] = (L.parole[p.id] || 0) + nuove.length; L.ultimo = p.id;
+      L.chi = null; L.cand = []; L.prove++;
+      ev("cruci", p.id);
+      var dette = nuove.map(function (r) { return vere[r]; }), dette1 = dette.pop(); dette = dette.length ? dette.join(", ") + " e " + dette1 : dette1;
+      if (L.ok.every(function (x) { return x; })) { lampoChiudi(null, "🧩 " + p.nome + " trova " + dette + "! +" + fmtN(premio) + " · CruciRuota finito!"); return; }
+      P.msg = "✅ " + p.nome + " trova " + dette + "! +" + fmtN(premio) + " · le lettere ripartono";
+    }
     P.lampoTempo = function () { var L = P.lampo; if (P.fase !== "lampo" || !L || !L.chi) return false; lampoFuori(L.chi, "⏰ Tempo scaduto!"); return true; };
     P.lampoRinuncia = function () { var L = P.lampo; if (P.fase !== "lampo" || !L || !L.chi) return false; lampoFuori(L.chi, "🏳️ Rinuncia!"); return true; };
     P.lampoNessuno = function () {
@@ -366,10 +497,33 @@
     };
     function lampoChiudi(p, msg) {
       var L = P.lampo; L.chi = null; L.cand = [];
+      if (L.tipo === "cruci") {   // comincia la manche chi ha trovato più parole (a pari merito chi ne ha trovata una per ultimo)
+        var best = null;
+        P.giocatori.forEach(function (x) { var n = L.parole[x.id] || 0; if (n && !x.via && (!best || n > (L.parole[best.id] || 0) || (n === (L.parole[best.id] || 0) && x.id === L.ultimo))) best = x; });
+        if (best) { L.vince = best.id; P.turno = P.giocatori.indexOf(best); }
+        P.fase = "lampofine"; P.msg = msg + (best ? " Comincia la manche " + best.nome + "." : "");
+        return;
+      }
       if (p) { p.totale += PREMIO_LAMPO; p.stat.lampo++; L.vince = p.id; P.turno = P.giocatori.indexOf(p); }
+      var T = L.tri;
+      if (T) {
+        if (p) { T.vinti[p.id] = (T.vinti[p.id] || 0) + 1; T.ultimo = p.id; }
+        if (T.n >= T.di) {   // l'ultima frase: tutte e 3 alla stessa persona = il bonus; comincia chi ne ha fatte di più
+          var tutte = p && T.vinti[p.id] === T.di;
+          if (tutte) { p.totale += TRI_BONUS; ev("triplete", p.id); msg += " 🎯 TRIPLETE! +" + fmtN(TRI_BONUS); }
+          var mx = null;
+          P.giocatori.forEach(function (x) { var n = T.vinti[x.id] || 0; if (n && !x.via && (!mx || n > (T.vinti[mx.id] || 0) || (n === (T.vinti[mx.id] || 0) && x.id === T.ultimo))) mx = x; });
+          if (mx) { P.turno = P.giocatori.indexOf(mx); if (!p || mx !== p) msg += " Comincia la manche " + mx.nome + "."; }
+        }
+      }
       P.fase = "lampofine"; P.msg = msg;
     }
-    P.dopoLampo = function () { if (P.fase === "lampofine") iniziaManche(); };
+    P.dopoLampo = function () {
+      if (P.fase !== "lampofine") return;
+      var L = P.lampo;
+      if (L && L.tri && L.tri.n < L.tri.di) return apriLampo(nuovoLampo("triplete", L.tri));   // 🎯 la prossima frase del Triplete
+      iniziaManche();
+    };
 
     P.puo = function () {   // cosa può fare chi è di turno
       var p = g(), f = P.fase;
@@ -377,9 +531,9 @@
         compra: (f === "gira" || f === "express") && p.soldi >= COSTO_VOCALE && P.vocaliNascoste() > 0,
         risolvi: f === "gira" || f === "express" };
     };
-    P.gira = function () {
+    P.gira = function (x) {
       if (!P.puo().gira) return false;
-      giraVerso(Math.floor(Math.random() * P.spicchi.length));
+      giraForza(x);
       g().stat.giri++; P.msg = g().nome + " gira la ruota…";
       return true;
     };
@@ -404,8 +558,13 @@
       if (s.s === "express") { P.fase = "sceltaexp"; P.msg = "🚂 Express! " + p.nome + ": lo prendi o giochi " + fmtN(EXPRESS_V) + " a lettera?"; }
       else if (s.s === "mistero") { P.fase = "consonante"; P.msg = "❓ Mistero! " + p.nome + ": " + fmtN(MIST_V) + " a lettera. Se la consonante c'è, puoi aprirlo!"; }
       else if (s.v) { P.fase = "consonante"; P.msg = p.nome + ": " + fmtN(s.v) + " a lettera, scegli una consonante"; }
-      else if (s.s === "bancarotta") { p.soldi = 0; p.stat.bancarotte++; P.msg = "💥 Bancarotta! " + p.nome + " perde i soldi della manche."; prossimo(); }
+      else if (s.s === "bancarotta") { p.soldi = 0; p.stat.bancarotte++; P.msg = "💥 Bancarotta! " + p.nome + " perde i soldi di questa manche (il totale resta)."; prossimo(); }
       else if (s.s === "passa") perdeTurno("⏭️ Passa! " + p.nome + " perde il turno.");
+      else if (s.s === "raddoppia") {   // ✖️2 i soldi della manche raddoppiano (e si gira ancora)
+        P.fase = "gira";
+        if (p.soldi > 0) { p.soldi *= 2; ev("raddoppia", p.id); P.msg = "✖️2 Raddoppia! " + p.nome + " ora ha " + fmtN(p.soldi) + " nella manche e gira ancora!"; }
+        else P.msg = "✖️2 Raddoppia… ma zero per due fa zero! " + p.nome + " gira ancora.";
+      }
       else { p.jolly++; P.fase = "gira"; P.msg = "🃏 Jolly per " + p.nome + "! Lo tiene e gira ancora."; }
     };
     // ---- l'Express: lo prendi o giochi lo spicchio come uno normale ----
@@ -519,7 +678,31 @@
     };
     P.velRisolvi = function () { if (P.fase !== "vdecidi") return false; P.fase = "risolvi"; P.msg = g().nome + " prova a risolvere…"; return true; };
     P.velPassa = function (tempo) { if (P.fase !== "vdecidi") return false; P.msg = (tempo ? "⏰ " : "⏭️ ") + g().nome + " passa."; prossimo(); return true; };
+    // 🔒 una soluzione bloccata in segreto (da chi non è di turno): resta solo all'host, nella foto va solo CHI l'ha bloccata
+    // (qPrima: la quota che c'era un attimo fa, quando il telefono ha mostrato il valore; la decide l'host, vedi azione)
+    P.puoSegreta = function (id, qPrima) {
+      var p = trova(id), tp = g();
+      return !!p && !p.via && FASI_SEG.indexOf(P.fase) >= 0 && P.fase !== "risolvi" && (!tp || tp.id !== id) && !P.segrete[id] && P.consonantiNascoste() + P.vocaliNascoste() > 0 &&
+        valoreSeg(qPrima != null ? qPrima : quotaNota(P)) > 0;   // (solo finché è scoperto meno del 40% delle lettere)
+    };
+    P.segreta = function (id, testo, qPrima) {
+      if (!P.puoSegreta(id, qPrima)) return false;
+      var t = String(testo || "").toUpperCase().slice(0, 80);
+      if (solo(t).length !== solo(P.frase).length) return false;
+      var q = qPrima != null ? qPrima : quotaNota(P);
+      P.segrete[id] = { t: t, q: Math.round(q * 1000) / 1000, v: valoreSeg(q) };   // (il valore scritto sul tasto quando l'ha toccato)
+      ev("segreta", id);
+      return true;
+    };
     function vinceManche(p) {
+      // 🔒 prima di scoprire tutto: chi aveva bloccato la soluzione (giusta: + il valore; sbagliata: − metà, mai sotto zero)
+      var seg = [];
+      Object.keys(P.segrete || {}).forEach(function (id) {
+        var x = trova(id), s = P.segrete[id]; if (!x || !s) return;   // (vale anche per chi è uscito: se torna, il totale è già giusto)
+        var v = s.v != null ? s.v : valoreSeg(s.q || 0);
+        if (solo(s.t) === solo(P.frase)) { x.totale += v; seg.push({ id: id, b: v, pct: Math.round((s.q || 0) * 100) }); }
+        else { var m = Math.min(x.totale, mezzoSeg(v)); x.totale -= m; seg.push({ id: id, no: 1, m: m, pct: Math.round((s.q || 0) * 100) }); }
+      });
       CONSONANTI.concat(VOCALI).forEach(function (L) { P.rivelate[L] = 1; });
       var vincita = Math.max(p.soldi, MINIMO_RISOLVI);
       p.totale += vincita;
@@ -527,80 +710,301 @@
       if (vincita >= 5000) p.stat.mancheDa5000++;
       P.giocatori.forEach(function (x) { if (x !== p) x.soldi = 0; });
       p.soldi = vincita; P.exp = false;
-      P.vince = { id: p.id, vincita: vincita, frase: P.frase };
-      P.fase = "finemanche"; P.msg = "🎉 " + p.nome + " risolve! +" + fmtN(vincita);
+      P.vince = { id: p.id, vincita: vincita, frase: P.frase, seg: seg.length ? seg : undefined };
+      P.fase = "finemanche"; P.msg = "🎉 " + p.nome + " risolve! +" + fmtN(vincita) + seg.map(function (s) {
+        return s.b ? " · 🔒 " + trova(s.id).nome + " l'aveva capita: +" + fmtN(s.b) : " · 🔒 " + trova(s.id).nome + " ha sbagliato" + (s.m ? ": −" + fmtN(s.m) : "");
+      }).join("");
     }
     P.dopoManche = function () {
       if (P.fase !== "finemanche") return;
       if (P.manche >= P.mancheTot) {
-        // chi è uscito a metà va in fondo, segnato "uscito"
-        var dentro = P.giocatori.filter(function (x) { return !x.via; }).sort(function (a, b) { return b.totale - a.totale; });
-        var fuori = P.giocatori.filter(function (x) { return x.via; });
-        P.classifica = dentro.map(function (x) { return { id: x.id, nome: x.nome, punti: x.totale, pos: 1 + dentro.filter(function (q) { return q.totale > x.totale; }).length }; })
-          .concat(fuori.map(function (x, k) { return { id: x.id, nome: x.nome, punti: x.totale, pos: dentro.length + 1 + k, uscito: true }; }));
-        var primo = dentro[0];
-        if (RG.finale && primo && !primo.bot) iniziaFinale(primo);   // se vince un bot, niente finale
-        else { P.fase = "fine"; P.msg = ""; }
+        // 🏆 la finale per tutti (online e contro i Bot): i suoi punti vanno nel totale, poi la classifica e la busta
+        if (RG.finale && attivi().length) iniziaFinale();
+        else chiudiPartita();
       } else P.nuovaManche();
     };
-    // ---- la finale del campione ----
-    function iniziaFinale(p) {
-      var fr = pesca(corta);
-      P.frase = fr.f; P.cat = fr.c; P.rivelate = {}; P.chiamate = {}; P.ultime = []; P.vince = null; P.lampo = null; P.exp = false; P.veloce = false;
-      P.firma = null; P.mist = null; P.mres = null;
-      P.turno = P.giocatori.indexOf(p);
-      P.fin = { id: p.id, nome: p.nome, premi: mischiaArr(BUSTE.map(function (v) { return P.decimo ? Math.round(v / 10) : v; })), busta: -1, scelte: [], prove: 0, vinto: null, premio: 0 };
-      P.fase = "fintro"; P.msg = "🏆 " + p.nome + " vince la partita e gioca la finale!";
+    // la classifica (chi è uscito a metà va in fondo, segnato "uscito"); poi chi vince, se è una persona, sceglie la busta
+    function chiudiPartita() {
+      P.lampo = null; P.exp = false; P.veloce = false; P.mist = null; P.mres = null; P.vince = null;
+      var dentro = attivi().sort(function (a, b) { return b.totale - a.totale; });
+      var fuori = P.giocatori.filter(function (x) { return x.via; });
+      P.classifica = dentro.map(function (x) { return { id: x.id, nome: x.nome, punti: x.totale, pos: 1 + dentro.filter(function (q) { return q.totale > x.totale; }).length }; })
+        .concat(fuori.map(function (x, k) { return { id: x.id, nome: x.nome, punti: x.totale, pos: dentro.length + 1 + k, uscito: true }; }));
+      // ✉️ chi vince, se è una persona; a pari merito al primo posto una busta a testa, una dopo l'altra in ordine di
+      // classifica (i Bot pari merito no; a 0 punti niente pari merito: sceglie solo il primo, come sempre)
+      var primo = dentro[0];
+      var vinc = !primo ? [] : primo.totale > 0 ? dentro.filter(function (x) { return x.totale === primo.totale && !x.bot; }) : primo.bot ? [] : [primo];
+      P.buste = []; P.bustaCoda = vinc.slice(1).map(function (x) { return x.id; });
+      P.bustaPari = vinc.length; P.bustaNomi = vinc.map(function (x) { return x.nome; });
+      if (vinc.length) iniziaBusta(vinc[0], true);
+      else { P.fase = "fine"; P.msg = ""; }
     }
-    P.finInizia = function () { if (P.fase !== "fintro") return false; P.fase = "fbusta"; P.msg = P.fin.nome + ": scegli una busta. Dentro c'è il premio in Speed Coins!"; return true; };
+    function nomiE(l) { return l.length > 1 ? l.slice(0, -1).join(", ") + " e " + l[l.length - 1] : l.join(""); }   // "Luca, Giulia e Bea"
+    // ---- ✉️ la busta di chi vince la partita (in tutti i modi): una sola, tra 5 mescolate ----
+    // (i premi si mescolano solo quando la busta si apre: prima, nello stato, ci sono solo i valori possibili, così nemmeno
+    // la copia per il vice dice dov'è la busta grossa)
+    function iniziaBusta(p, prima) {
+      P.busta = { id: p.id, nome: p.nome, n: BUSTE.length, valori: BUSTE.map(function (v) { return P.decimo ? Math.round(v / 10) : v; }), premi: null, scelta: null, premio: 0 };
+      P.turno = P.giocatori.indexOf(p);
+      P.fase = "fbusta";
+      P.msg = !(P.bustaPari > 1) ? "🏆 " + p.nome + " vince la partita e sceglie una busta!" :
+        prima ? "🏆 Pari merito! " + nomiE(P.bustaNomi || []) + ": una busta a testa. Comincia " + p.nome + "!" : "✉️ Ora tocca a " + p.nome + ": sceglie la sua busta!";
+    }
     P.finBusta = function (k) {
-      k = Math.floor(+k);
-      if (P.fase !== "fbusta" || !(k >= 0 && k < P.fin.premi.length)) return false;
-      P.fin.busta = k;
-      FIN_DATE.forEach(function (L) { P.chiamate[L] = 1; if (occ(L)) P.rivelate[L] = 1; });
-      P.ultime = FIN_DATE.slice();
-      P.fase = "flettere"; P.msg = "Ecco R S T L N E! " + P.fin.nome + ": scegli " + FIN_CONS + " consonanti e " + FIN_VOC + " vocale";
+      k = Math.floor(+k); var B = P.busta;
+      if (P.fase !== "fbusta" || !B || !(k >= 0 && k < B.n)) return false;
+      B.premi = mischiaArr(B.valori.slice());
+      B.scelta = k; B.premio = B.premi[k];
+      (P.buste = P.buste || []).push({ id: B.id, nome: B.nome, premio: B.premio });   // (le buste aperte: chi le incassa e la classifica)
+      P.fase = "fesito"; P.msg = "✉️ " + B.nome + " apre la busta " + (k + 1) + "…";
       return true;
     };
-    function applicaScelte(lista) {
-      P.fin.scelte = lista;
-      lista.forEach(function (L) { P.chiamate[L] = 1; if (occ(L)) P.rivelate[L] = 1; });
-      P.ultime = lista.slice();
-      P.fase = "frivela"; P.msg = "Vediamo… " + lista.join(" ");
+    P.bustaAuto = function () { var B = P.busta; if (P.fase !== "fbusta" || !B) return false; return P.finBusta(Math.floor(Math.random() * B.n)); };   // (tempo scaduto: a caso)
+    P.dopoFinale = function () {
+      if (P.fase !== "fesito") return;
+      // a pari merito: la busta del prossimo (anche se è uscito un attimo: se torna in 20 secondi sceglie lui, se no si
+      // apre a caso e la incassa quando rientra)
+      while (P.bustaCoda && P.bustaCoda.length) { var p = trova(P.bustaCoda.shift()); if (p) return iniziaBusta(p); }
+      P.fase = "fine"; P.msg = "";
+    };
+
+    // ---- 🏆 la finale per tutti: stessa frase, ognuno il suo tabellone e il suo tempo ----
+    // P.fin = { b (1-3), ids (chi gioca la finale), g: { id: { ch (le sue lettere), scelte, voc, pen (ms tolti), ok, passo, scad,
+    //   ms (in quanto l'ha risolta), punti, prove, tot, esiti, risolte } }, T (tempo del tabellone), da (ora dell'host in cui è
+    //   partito il tempo), scadeL (fine della scelta delle lettere), vis (Testacoda), svela, bot (cosa faranno i Bot) }
+    var GRAZIA = cfg.modo === "online" ? FIN_GRAZIA : 0;   // online la soluzione arriva un po' dopo: vale lo stesso
+    function iniziaFinale() {
+      P.lampo = null; P.exp = false; P.veloce = false; P.firma = null; P.mist = null; P.mres = null; P.vince = null; P.segrete = {};
+      var ids = attivi().map(function (x) { return x.id; });
+      P.fin = { b: 0, ids: ids, g: {}, T: 0, da: 0, scadeL: 0, vis: null, svela: false, bot: {} };
+      ids.forEach(function (id) { P.fin.g[id] = { tot: 0, esiti: [], risolte: 0, ch: [] }; });
+      P.frase = ""; P.cat = ""; P.rivelate = {}; P.chiamate = {}; P.ultime = [];
+      P.fase = "fintro"; P.msg = "🏆 La finale! Tre tabelloni per tutti: chi risolve prima prende di più";
     }
-    P.finLettere = function (lista) {
-      if (P.fase !== "flettere" || !Array.isArray(lista)) return false;
+    // la frase del tabellone (1: corta; 2, Testacoda: anche più lunga; 3: corta): la stessa per tutti
+    function nuovoTabellone(b) {
+      var F = P.fin, fr = pesca(b === 2 ? function (x) { return !x.l && media(x); } : corta);
+      F.b = b; F.T = FIN_T[b - 1]; F.da = 0; F.scadeL = 0; F.svela = false; F.vis = null; F.bot = {};
+      P.frase = fr.f; P.cat = fr.c; P.rivelate = {}; P.chiamate = {}; P.ultime = [];
+      if (b === 1) FIN_DATE.forEach(function (L) { P.chiamate[L] = 1; if (occ(L)) P.rivelate[L] = 1; });
+      if (b === 2) {   // Testacoda: la prima e l'ultima lettera di ogni parola
+        F.vis = {}; var inizio = -1;
+        P.frase.split("").concat([" "]).forEach(function (ch, k) {
+          if (eLettera(ch)) { if (inizio < 0) inizio = k; return; }
+          if (inizio >= 0) { F.vis[inizio] = 1; F.vis[k - 1] = 1; inizio = -1; }
+        });
+      }
+      F.ids.forEach(function (id) { var g = F.g[id]; g.ch = b === 1 ? FIN_DATE.slice() : []; g.scelte = null; g.voc = 0; g.pen = 0; g.ok = false; g.scritta = false; g.passo = false; g.scad = false; g.ms = 0; g.punti = 0; g.prove = 0; });
+    }
+    // il tabellone con queste lettere scoperte (e, nel Testacoda, la prima e l'ultima di ogni parola)
+    function finTab(lettere) {
+      var F = P.fin, o = {}; (lettere || []).forEach(function (L) { o[L] = 1; });
+      return P.frase.split("").map(function (ch, k) { return eLettera(ch) && !o[base(ch)] && !(F.vis && F.vis[k]) ? "_" : ch; }).join("");
+    }
+    P.finTab = finTab;
+    // chi ha la frase tutta davanti (l'ha risolta, o le sue lettere la scoprono tutta): il suo tabellone NON va nella foto
+    // (la vedrebbero gli altri); la frase gli arriva da sola, in un messaggio solo per lui (vedi bd)
+    function finTutta(id) {
+      var F = P.fin, g = F && F.g[id];
+      return !!g && !!F.b && !F.svela && P.fase !== "flettere" && FASI_FIN.indexOf(P.fase) >= 0 && (g.ok || finTab(g.ch).indexOf("_") < 0);
+    }
+    P.finTutta = finTutta;
+    function finResta(id, ora) { var F = P.fin, g = F && F.g[id]; if (!g) return 0; return F.da ? F.T - ((ora || Date.now()) - F.da) - (g.pen || 0) : F.T - (g.pen || 0); }
+    P.finResta = finResta;
+    function finFatto(id) { var g = P.fin.g[id], p = trova(id); return !g || !p || p.via || g.ok || g.passo || g.scad; }
+    P.finFatto = finFatto;
+    function grazia(id) { var p = trova(id); return p && p.bot ? 0 : GRAZIA; }
+    function lettereAuto(caso) {   // le più frequenti in italiano (i Bot ne cambiano qualcuna)
+      var c = FREQ_C.filter(function (L) { return FIN_DATE.indexOf(L) < 0; }), v = FREQ_V.filter(function (L) { return FIN_DATE.indexOf(L) < 0; });
+      if (caso) { c = mischiaArr(c.slice(0, 6)); v = mischiaArr(v.slice(0, 2)); }
+      return c.slice(0, FIN_CONS).concat(v.slice(0, FIN_VOC));
+    }
+    function tuttiScelto() { return P.fin.ids.every(function (id) { var p = trova(id); return !p || p.via || P.fin.g[id].scelte; }); }
+    P.finInizia = function () {
+      if (P.fase !== "fintro") return false;
+      nuovoTabellone(1);
+      P.fin.scadeL = Date.now() + T_FIN_LETTERE;
+      P.fin.ids.forEach(function (id) { var p = trova(id); if (p && p.bot) P.fin.g[id].scelte = lettereAuto(true); });
+      P.fase = "flettere"; P.msg = "Tabellone 1: ecco R S T L N E! Ognuno sceglie in segreto " + FIN_CONS + " consonanti e " + FIN_VOC + " vocale";
+      if (tuttiScelto()) applicaScelte();
+      return true;
+    };
+    // (parz: il tempo è finito a metà scelta; quelle che ha toccato restano, le altre sono le più frequenti)
+    P.finLettere = function (id, lista, parz) {
+      var g = P.fin && P.fin.g[id], p = trova(id);
+      if (P.fase !== "flettere" || !g || !p || p.via || g.scelte || !Array.isArray(lista)) return false;
       var c = [], v = [];
       lista.forEach(function (L) {
         L = String(L || "").toUpperCase();
-        if (P.chiamate[L] || c.indexOf(L) >= 0 || v.indexOf(L) >= 0) return;
+        if (FIN_DATE.indexOf(L) >= 0 || c.indexOf(L) >= 0 || v.indexOf(L) >= 0) return;
         if (CONSONANTI.indexOf(L) >= 0) c.push(L); else if (VOCALI.indexOf(L) >= 0) v.push(L);
       });
+      if (parz) { FREQ_C.forEach(function (L) { if (c.length < FIN_CONS && FIN_DATE.indexOf(L) < 0 && c.indexOf(L) < 0) c.push(L); });
+        FREQ_V.forEach(function (L) { if (v.length < FIN_VOC && FIN_DATE.indexOf(L) < 0 && v.indexOf(L) < 0) v.push(L); }); }
       if (c.length !== FIN_CONS || v.length !== FIN_VOC) return false;
-      applicaScelte(c.concat(v)); return true;
-    };
-    P.finAuto = function () {   // tempo scaduto mentre sceglie: busta a caso, lettere più frequenti
-      if (P.fase === "fbusta") return P.finBusta(Math.floor(Math.random() * P.fin.premi.length));
-      if (P.fase !== "flettere") return false;
-      var c = FREQ_C.filter(function (L) { return !P.chiamate[L]; }).slice(0, FIN_CONS), v = FREQ_V.filter(function (L) { return !P.chiamate[L]; }).slice(0, FIN_VOC);
-      applicaScelte(c.concat(v)); return true;
-    };
-    P.finVia = function () { if (P.fase !== "frivela") return false; P.fase = "ftempo"; P.msg = "⏱️ " + P.fin.nome + ": " + (T_FIN_RISOLVI / 1000) + " secondi per risolvere!"; return true; };
-    P.finSoluzione = function (testo) {
-      if (P.fase !== "ftempo") return false;
-      if (solo(testo) === solo(P.frase)) finChiudi(true, "🏆 " + P.fin.nome + " risolve la finale!");
-      else { P.fin.prove++; ev("fino", P.fin.id); P.msg = "❌ No! Riprova, " + P.fin.nome + "!"; }
+      g.scelte = c.concat(v);
+      if (tuttiScelto()) applicaScelte();
       return true;
     };
-    P.finTempo = function () { if (P.fase !== "ftempo") return false; finChiudi(false, "⏰ Tempo scaduto! La frase era…"); return true; };
-    function finChiudi(vinto, msg) {
-      CONSONANTI.concat(VOCALI).forEach(function (L) { P.rivelate[L] = 1; });
-      var F = P.fin, p = trova(F.id);
-      F.vinto = vinto; F.premio = vinto && F.busta >= 0 ? F.premi[F.busta] : 0;
-      if (vinto && p) p.stat.finali++;
-      P.fase = "fesito"; P.msg = msg;
+    P.finAuto = function () {   // finito il tempo per scegliere: a chi non ha scelto, le lettere più frequenti
+      if (P.fase !== "flettere") return false;
+      P.fin.ids.forEach(function (id) { if (!P.fin.g[id].scelte) P.fin.g[id].scelte = lettereAuto(); });
+      applicaScelte(); return true;
+    };
+    function applicaScelte() {
+      var F = P.fin;
+      F.ids.forEach(function (id) { var g = F.g[id]; g.ch = FIN_DATE.concat(g.scelte || []); });
+      P.fase = "frivela"; P.msg = "🥁 Ecco le vostre lettere…";
     }
-    P.dopoFinale = function () { if (P.fase === "fesito") { P.fase = "fine"; P.msg = ""; } };
+    function avviaTempo() { P.fase = "ftempo"; P.fin.da = Date.now(); pianoBot(); }
+    P.finVia = function () {   // il tempo comincia a scorrere (uguale per tutti; il Rubasecondi toglie secondi solo a chi sbaglia)
+      if (P.fase !== "frivela") return false;
+      avviaTempo(); P.msg = "⏱️ Via! " + (P.fin.T / 1000) + " secondi per risolvere";
+      // (tabellone 1: a chi le sue lettere scoprono tutta la frase, è già risolta, col tempo pieno)
+      var tutte = P.fin.ids.filter(function (id) { var g = P.fin.g[id]; return !finFatto(id) && finTab(g.ch).indexOf("_") < 0; });
+      tutte.forEach(function (id) { risolta(id, 0, true); });
+      if (tutte.length) finControlla();
+      return true;
+    };
+    // i Bot nella finale: quando risolvono (o se non ce la fanno) secondo la bravura; nel Rubasecondi chiamano qualche lettera
+    function pianoBot() {
+      var F = P.fin, liv = P.difficolta, prob = { facile: 0.45, medio: 0.75, difficile: 0.92 }[liv] || 0.75,
+        fr = { facile: [0.55, 0.97], medio: [0.3, 0.75], difficile: [0.12, 0.5] }[liv] || [0.3, 0.75];
+      F.bot = {};
+      F.ids.forEach(function (id) {
+        var p = trova(id); if (!p || !p.bot) return;
+        var sa = Math.random() < prob, x = { t: sa ? Math.round(F.T * (fr[0] + Math.random() * (fr[1] - fr[0]))) : null, no: null, passa: null, lettere: [] };
+        if (F.b === FIN_TABELLONI) {
+          var ll = mischiaArr(FREQ_C.slice(0, 10)).slice(0, 2 + Math.floor(Math.random() * 3));
+          if (Math.random() < 0.7) ll.splice(1, 0, mischiaArr(FREQ_V.slice())[0]);
+          x.lettere = ll.map(function (L, k) { return { t: 2200 * (k + 1) + Math.round(Math.random() * 600), L: L }; });
+          if (x.t != null) x.t = Math.max(x.t, x.lettere[x.lettere.length - 1].t + 1800);
+        }
+        if (x.t != null) { x.t = Math.min(x.t, F.T - 600); if (Math.random() < 0.25) x.no = Math.round(x.t * (0.5 + Math.random() * 0.3)); }   // ogni tanto prima sbaglia
+        else x.passa = Math.round(F.T * (0.6 + Math.random() * 0.3));   // non la sa: a un certo punto passa
+        F.bot[id] = x;
+      });
+    }
+    // il prossimo fatto dei Bot: tra quanti millisecondi (null = nessuno)
+    P.finBotProssimo = function () {
+      var F = P.fin; if (P.fase !== "ftempo" || !F || !F.da) return null;
+      var min = null, ora = Date.now() - F.da;
+      Object.keys(F.bot || {}).forEach(function (id) {
+        if (finFatto(id)) return;
+        var x = F.bot[id], tt = [x.no, x.t, x.passa].concat(x.lettere.filter(function (l) { return !l.f; }).map(function (l) { return l.t; }));
+        tt.forEach(function (t) { if (t != null && (min == null || t < min)) min = t; });
+      });
+      return min == null ? null : Math.max(0, min - ora);
+    };
+    P.finBotAgisci = function () {
+      var F = P.fin; if (P.fase !== "ftempo" || !F || !F.da) return false;
+      var ora = Date.now() - F.da, fatto = false;
+      Object.keys(F.bot || {}).forEach(function (id) {
+        var x = F.bot[id];
+        function puo() { return P.fase === "ftempo" && !finFatto(id); }
+        x.lettere.forEach(function (l) { if (!l.f && l.t <= ora && puo()) { l.f = 1; if (P.finLettera(id, l.L)) fatto = true; } });
+        if (x.no != null && x.no <= ora && puo()) { x.no = null; P.finSoluzione(id, "?"); fatto = true; }
+        if (x.t != null && x.t <= ora && puo()) { x.t = null; P.finSoluzione(id, P.frase); fatto = true; }
+        if (x.passa != null && x.passa <= ora && puo()) { x.passa = null; P.finPassa(id); fatto = true; }
+      });
+      return fatto;
+    };
+    P.finSoluzione = function (id, testo) {
+      var F = P.fin, g = F && F.g[id], ora = Date.now();
+      if (P.fase !== "ftempo" || !g || finFatto(id)) return false;
+      if (finResta(id, ora) + grazia(id) <= 0) { g.scad = true; finControlla(); return true; }
+      if (solo(testo) === solo(P.frase)) { risolta(id, ora - F.da); g.scritta = true; }   // (scritta: la frase ce l'ha già sul telefono)
+      else { g.prove++; ev("fino", id); }   // (niente penalità: si riprova finché c'è tempo)
+      return true;
+    };
+    // risolta: 500 + 1.000 × il tempo che restava / il tempo del tabellone, arrotondato a 50 (da 500 a 1.500)
+    function risolta(id, usati, quieto) {
+      var F = P.fin, g = F.g[id], p = trova(id), r = Math.max(0, Math.min(F.T, F.T - usati - (g.pen || 0)));
+      g.ok = true; g.ms = Math.max(0, Math.round(usati));
+      g.punti = Math.round((FIN_BASE + FIN_BONUS * r / F.T) / 50) * 50;
+      g.tot += g.punti; g.risolte++; g.esiti[F.b - 1] = g.punti; p.totale += g.punti;
+      ev("finok", id);
+      P.msg = "✅ " + p.nome + " l'ha risolta in " + secTx(g.ms) + "! +" + fmtN(g.punti);
+      if (!quieto) finControlla();
+    }
+    P.finPassa = function (id) {
+      var g = P.fin && P.fin.g[id]; if (P.fase !== "ftempo" || !g || finFatto(id)) return false;
+      g.passo = true; finControlla(); return true;
+    };
+    // 🕵️ Rubasecondi: si chiamano lettere (consonanti a volontà, una vocale); una lettera che non c'è toglie 3 secondi a chi l'ha chiamata
+    P.finLettera = function (id, L) {
+      var F = P.fin, g = F && F.g[id], ora = Date.now(); L = String(L || "").toUpperCase();
+      if (P.fase !== "ftempo" || !g || F.b !== FIN_TABELLONI || finFatto(id) || !/^[A-Z]$/.test(L) || g.ch.indexOf(L) >= 0) return false;
+      var voc = VOCALI.indexOf(L) >= 0; if (voc && g.voc >= 1) return false;
+      if (finResta(id, ora) + grazia(id) <= 0) { g.scad = true; finControlla(); return true; }
+      if (voc) g.voc++;
+      g.ch.push(L);
+      if (occ(L)) { if (finTab(g.ch).indexOf("_") < 0) risolta(id, ora - F.da); return true; }   // tutte le lettere fuori: è risolta
+      g.pen += FIN_RUBA; ev("ruba", id);
+      if (finResta(id, ora) <= 0) { g.scad = true; finControlla(); }
+      return true;
+    };
+    // finito il tempo di qualcuno: chi non ha risolto è fuori da questo tabellone
+    P.finTempo = function () {
+      var F = P.fin; if (P.fase !== "ftempo" || !F) return false;
+      var ora = Date.now(), cambia = false;
+      F.ids.forEach(function (id) { if (!finFatto(id) && finResta(id, ora) + grazia(id) <= 0) { F.g[id].scad = true; cambia = true; } });
+      if (cambia) finControlla();
+      return cambia;
+    };
+    // tra quanti millisecondi scade il tempo del prossimo (con la tolleranza della rete); null = hanno finito tutti
+    P.finProssimaScadenza = function () {
+      var F = P.fin; if (P.fase !== "ftempo" || !F) return null;
+      var min = null, ora = Date.now();
+      F.ids.forEach(function (id) { if (finFatto(id)) return; var r = finResta(id, ora) + grazia(id); if (min == null || r < min) min = r; });
+      return min == null ? null : Math.max(0, min);
+    };
+    function finControlla() {
+      var F = P.fin; if (P.fase !== "ftempo") return;
+      // le persone hanno finito: i Bot non si aspettano (risolvono quando l'avrebbero fatto, o passano)
+      if (F.ids.every(function (id) { var p = trova(id); return !p || p.bot || finFatto(id); })) chiudiBot();
+      if (F.ids.every(finFatto)) finFineTab();
+    }
+    // (le lettere del Rubasecondi che il Bot avrebbe chiamato prima di risolvere contano lo stesso: quelle che non ci sono
+    // gli tolgono i loro 3 secondi, come se il tabellone fosse andato avanti)
+    function chiudiBot() {
+      var F = P.fin;
+      F.ids.forEach(function (id) {
+        var p = trova(id), x = (F.bot || {})[id], g = F.g[id]; if (!p || !p.bot || finFatto(id)) return;
+        if (x && x.t != null) (x.lettere || []).forEach(function (l) {
+          if (l.f || l.t > x.t || g.ch.indexOf(l.L) >= 0) return;
+          var voc = VOCALI.indexOf(l.L) >= 0; l.f = 1;
+          if (voc && g.voc >= 1) return;
+          if (voc) g.voc++;
+          g.ch.push(l.L); if (!occ(l.L)) g.pen += FIN_RUBA;
+        });
+        if (x && x.t != null && F.T - x.t - (g.pen || 0) > 0) { var t = x.t; x.t = null; risolta(id, t, true); } else g.passo = true;
+      });
+    }
+    function finFineTab() {
+      var F = P.fin;
+      F.svela = true;
+      F.ids.forEach(function (id) { var g = F.g[id]; if (g.esiti[F.b - 1] == null) g.esiti[F.b - 1] = 0; });
+      CONSONANTI.concat(VOCALI).forEach(function (L) { P.rivelate[L] = 1; });
+      var chi = F.ids.filter(function (id) { return F.g[id].ok; }).sort(function (a, b) { return F.g[a].ms - F.g[b].ms; });
+      P.fase = "fcambio";
+      P.msg = (chi.length ? "✅ " + chi.map(function (id) { return trova(id).nome + " in " + secTx(F.g[id].ms); }).join(", ") : "Nessuno l'ha risolta") +
+        (F.b < FIN_TABELLONI ? " · ora il tabellone " + (F.b + 1) + ": " + FIN_NOMI[F.b] : " · la finale è finita!");
+    }
+    P.dopoCambio = function () {
+      if (P.fase !== "fcambio") return;
+      var F = P.fin;
+      if (F.b < FIN_TABELLONI) {
+        nuovoTabellone(F.b + 1); avviaTempo();
+        P.msg = F.b === 2 ? "🔤 Testacoda: la prima e l'ultima lettera di ogni parola. " + (F.T / 1000) + " secondi!" :
+          "🕵️ Rubasecondi: chiama le lettere che vuoi (una vocale), ma ogni lettera che non c'è ti costa 3 secondi!";
+        return;
+      }
+      // finita la finale. Il contatore «finali» (nelle statistiche della partita, oggi senza trofeo): +1 a chi ha risolto
+      // almeno 2 tabelloni su 3 (prima contava la finale vinta da soli: ora la giocano tutti)
+      F.ids.forEach(function (id) { var p = trova(id); if (p && F.g[id].risolte >= 2) p.stat.finali++; });
+      chiudiPartita();
+    };
 
     P.esce = function (id) {
       P.giocatori.forEach(function (x, i) {
@@ -613,7 +1017,9 @@
           else if (!attivi().some(function (y) { return !L.fuori[y.id]; })) lampoChiudi(null, "Nessuno l'ha indovinata: si gioca senza premio.");
           return;
         }
-        if (P.fin && P.fin.id === id && FASI_FIN.indexOf(P.fase) >= 0 && P.fase !== "fesito") { P.fin.via = true; finChiudi(false, "👋 " + x.nome + " ha lasciato la finale."); return; }
+        // la finale: chi esce non blocca gli altri (se era l'ultimo che mancava, il tabellone finisce)
+        if (P.fin && FASI_FIN.indexOf(P.fase) >= 0) { if (P.fase === "flettere" && tuttiScelto()) applicaScelte(); else if (P.fase === "ftempo") finControlla(); return; }
+        if (P.busta && P.fase === "fbusta" && P.busta.id === id) { P.bustaAuto(); return; }   // (chi vince esce prima di scegliere: busta a caso)
         if (i === P.turno && ["gira", "consonante", "vocale", "risolvi", "sceltaexp", "express", "vlettera", "vdecidi", "mistero"].indexOf(P.fase) >= 0) { P.msg = "👋 " + x.nome + " ha lasciato la partita."; prossimo(); }
         // (se esce mentre la ruota gira, il turno passa quando si ferma: vedi dopoGiro)
       });
@@ -621,27 +1027,51 @@
     // chi era stato tolto (telefono spento più di 20 secondi) e torna: tiene il totale e rientra nel giro
     P.torna = function (id) {
       var ok = false;
-      P.giocatori.forEach(function (x) { if (x.id === id && x.via) { x.via = false; x.soldi = 0; x.jolly = 0; ok = true; if (["finemanche", "lampofine"].indexOf(P.fase) < 0 && FASI_FIN.indexOf(P.fase) < 0) P.msg = "👋 " + x.nome + " è di nuovo in gioco!"; } });
+      P.giocatori.forEach(function (x) { if (x.id === id && x.via) { x.via = false; x.soldi = 0; x.jolly = 0; ok = true; if (["finemanche", "lampofine"].indexOf(P.fase) < 0 && FASI_FIN.indexOf(P.fase) < 0 && FASI_BUSTA.indexOf(P.fase) < 0) P.msg = "👋 " + x.nome + " è di nuovo in gioco!"; } });
       return ok;
     };
     // la foto: MAI la frase vera (solo coperta), finché non è risolta
     P.vista = function () {
       var tp = P.giocatori[P.turno], f = P.fase, L = P.lampo, inLampo = !!L && (f === "lampo" || f === "lampofine");
-      var piena = f === "finemanche" || f === "fine" || f === "fesito";
+      var piena = f === "finemanche" || f === "fine" || FASI_BUSTA.indexOf(f) >= 0, inFin = !!P.fin && FASI_FIN.indexOf(f) >= 0;
       var v = { fase: f, manche: P.manche, mancheTot: P.mancheTot, cat: inLampo ? L.cat : P.cat,
-        tab: inLampo ? P.lampoTab() : piena ? P.frase : coperta(P.frase, P.rivelate),
-        chiamate: inLampo ? [] : Object.keys(P.chiamate), ultime: inLampo ? [] : P.ultime.slice(), turno: tp ? tp.id : null, spicchio: P.spicchio, angolo: P.angolo, giroN: P.giroN, msg: P.msg, ev: P.ev,
+        // (la finale: il tabellone «di base», uguale per tutti; quello di ognuno sta in fin.g, la frase vera solo quando il tabellone è finito)
+        tab: inLampo ? P.lampoTab() : piena ? P.frase : inFin ? (P.fin.svela ? P.frase : finTab(P.fin.b === 1 ? FIN_DATE : [])) : coperta(P.frase, P.rivelate),
+        chiamate: inLampo ? [] : Object.keys(P.chiamate), ultime: inLampo ? [] : P.ultime.slice(), turno: tp ? tp.id : null, spicchio: P.spicchio, angolo: P.angolo, giroN: P.giroN, giroMs: P.giroMs || T_GIRO, giroDir: P.giroDir || 1, msg: P.msg, ev: P.ev,
         puo: tp ? P.puo() : null, indietro: f === "risolvi" && !P.annullato && !P.veloce, cons: P.consonantiNascoste(), voc: P.vocaliNascoste(), vince: P.vince, classifica: P.classifica,
         statFine: P.classifica ? P.giocatori.reduce(function (a, x) { a[x.id] = x.stat; return a; }, {}) : null,
         regole: RG, veloce: P.veloce || undefined, velValore: P.velValore || undefined, exp: P.exp || undefined, expTot: P.exp ? P.expTot : undefined, decimo: P.decimo || undefined,
+        lock: Object.keys(P.segrete || {}).length ? Object.keys(P.segrete) : undefined,
         mist: P.mist || undefined, mres: f === "mrivela" && P.mres ? { id: P.mres.id, vinto: P.mres.vinto } : undefined, firma: inLampo || P.firma == null ? undefined : P.firma,
         giocatori: P.giocatori.map(function (x) { return { id: x.id, nome: x.nome, bot: x.bot, totale: x.totale, soldi: x.soldi, jolly: x.jolly, via: x.via || undefined }; }) };
-      if (inLampo) v.lampo = { n: L.n, tot: L.pos.length, chi: L.chi, fuori: Object.keys(L.fuori), vince: L.vince, prove: L.prove, k: P.manche };
+      if (inLampo) v.lampo = { n: L.n, tot: L.pos.length, chi: L.chi, fuori: Object.keys(L.fuori), vince: L.vince, prove: L.prove, k: P.manche + (L.tri ? "t" + L.tri.n : ""),
+        tipo: L.tipo || "classica", tri: L.tri ? { n: L.tri.n, di: L.tri.di } : undefined, ok: L.ok ? L.ok.slice() : undefined, parole: L.parole || undefined };
       if (P.fin) {
-        var F = P.fin, aperta = f === "fesito" || f === "fine";
-        v.fin = { id: F.id, nome: F.nome, busta: F.busta, scelte: F.scelte.slice(), prove: F.prove, vinto: F.vinto, via: F.via || undefined, n: F.premi.length,
-          premio: aperta ? F.premio : undefined, premi: aperta ? F.premi.slice() : undefined };
+        // per ognuno: il SUO tabellone (solo le sue lettere; chi ha risolto non lo vede scoperto qui: la frase la sa solo lui),
+        // come sta andando e il tempo che gli resta in millisecondi (mai le ore dei telefoni)
+        var F = P.fin, ora = Date.now(), gv = {};
+        F.ids.forEach(function (id) {
+          var g = F.g[id]; if (!g) return;
+          var x = { tot: g.tot, esiti: g.esiti.slice(), risolte: g.risolte };
+          if (inFin && F.b) {
+            var mie = f === "flettere" ? FIN_DATE : g.ch;
+            if (!F.svela) x.tab = finTutta(id) ? finTab(F.b === 1 ? FIN_DATE : []) : finTab(mie);   // (frase tutta scoperta: il tabellone di base)
+            x.ch = mie.join(""); x.ok = g.ok || undefined; x.passo = g.passo || undefined; x.scad = g.scad || undefined; x.scelto = !!g.scelte || undefined;
+            if (g.ok) { x.ms = g.ms; x.punti = g.punti; }
+            if (F.b === FIN_TABELLONI) { x.voc = g.voc; x.pen = g.pen; }
+            if (f === "ftempo" && !finFatto(id)) x.resta = Math.max(0, Math.round(finResta(id, ora)));
+          }
+          gv[id] = x;
+        });
+        v.fin = { b: F.b, T: F.T, svela: F.svela || undefined, g: gv, rip: F.rip || undefined,
+          restaL: f === "flettere" ? Math.max(0, F.scadeL - ora) : undefined, restaB: f === "ftempo" && F.da ? Math.max(0, Math.round(F.T - (ora - F.da))) : undefined };
       }
+      if (P.busta) {
+        var B = P.busta, aperta = f === "fesito" || f === "fine";
+        v.busta = { id: B.id, nome: B.nome, n: B.n || BUSTE.length, scelta: B.scelta, premio: aperta ? B.premio : undefined, premi: aperta && B.premi ? B.premi.slice() : undefined,
+          pari: P.bustaPari > 1 ? P.bustaPari : undefined, dopo: P.bustaCoda && P.bustaCoda.length ? P.bustaCoda.slice() : undefined };
+      }
+      if (P.buste && P.buste.length) v.buste = P.buste.map(function (x) { return { id: x.id, nome: x.nome, premio: x.premio }; });
       return v;
     };
     return P;
@@ -745,6 +1175,23 @@
     } catch (e) {}
   }
   function suonoGiro() { for (var k = 0; k < 18; k++) bip(900, 0.03, "square", 0.025, k * 0.06 + k * k * 0.004); }
+  // la curva con cui la ruota rallenta (la stessa della transizione: cubic-bezier(.12,.7,.18,1))
+  // quanto dura un giro (tutta la fase): più gradi = più lungo, con la coda lenta che mette l'ansia
+  function durataGiro(gradi) { return Math.round(Math.max(4300, Math.min(7000, 3900 + Math.abs(gradi) * 1.25))); }
+  function curvaGiro(x) {
+    var a = 0, b = 1, s = x;
+    function bx(t) { return 3 * (1 - t) * (1 - t) * t * 0.12 + 3 * (1 - t) * t * t * 0.18 + t * t * t; }
+    for (var k = 0; k < 22; k++) { s = (a + b) / 2; if (bx(s) < x) a = s; else b = s; }
+    return 3 * (1 - s) * (1 - s) * s * 0.7 + 3 * (1 - s) * s * s + s * s * s;
+  }
+  function suonoGiroVero(da, a, dur) {
+    var ultimo = null, tPrec = -1000, n = 0;
+    for (var ms = 0; ms <= dur && n < 90; ms += 6) {
+      var k = Math.floor((da + (a - da) * curvaGiro(ms / dur)) / 15);
+      if (ultimo === null) { ultimo = k; continue; }
+      if (k !== ultimo) { ultimo = k; if (ms - tPrec >= 42) { bip(1650, 0.022, "square", 0.028, ms / 1000); tPrec = ms; n++; } }
+    }
+  }
   function suonoLettera(n) { for (var k = 0; k < Math.min(n, 10); k++) bip(1046, 0.18, "triangle", 0.08, k * 0.16); }   // un "ding" per casella
   function suonoNo() { bip(220, 0.35, "sawtooth", 0.05); }
   function suonoVinto() { [523, 659, 784, 1046].forEach(function (f, k) { bip(f, 0.25, "triangle", 0.09, k * 0.12); }); }
@@ -803,22 +1250,25 @@
       H.omini = R0.omini || H.omini;
       posti = (R0.posti || []).map(function (p) { return Object.assign({}, p, { omino: H.omini[p.id] || null }); });
       P = creaPartita(posti, mancheTot, { modo: modo, difficolta: liv, prenota: reg.prenota, express: reg.express, veloce: reg.veloce, finale: reg.finale, decimo: !!R0.P.decimo,
-        mistero: reg.mistero, frasi: reg.frasi, amica: amica });
+        mistero: reg.mistero, frasi: reg.frasi, amica: amica, visteAmici: function () { return H.visteAmici; } });
       Object.keys(R0.P).forEach(function (k) { if (typeof P[k] !== "function" && k !== "regole" && k !== "spicchi") P[k] = R0.P[k]; });
       P.spicchi = spicchiDi(P.regole.express, P.mist);   // (❓ lo spicchio Mistero c'è ancora, o è già stato aperto)
       P.giocatori.forEach(function (g) { g.omino = H.omini[g.id] || null; if (!g.bot && g.id !== IO && !g.via) attesi[g.id] = 1; });
-      H.fase = R0.fase; H.gameId = R0.gameId || ""; H.giocate = R0.giocate || 1; H.risultato = !!R0.risultato; H.pagato = !!R0.pagato;
+      H.fase = R0.fase; H.gameId = R0.gameId || ""; H.giocate = R0.giocate || 1; H.risultato = !!R0.risultato; H.pagato = +R0.pagato || 0;
+      if (window.__RUOTA) { window.__RUOTA.ultima = P; window.__RUOTA.H = H; }   // (per le prove: la partita ripresa)
     }
     H.mosse = 0;        // cresce a ogni mossa vera: il tempo per decidere riparte solo allora
     H.kFase = "";       // per quale momento è partito il timer dei momenti che vanno avanti da soli
     H.kTempo = ""; H.scade = 0;   // il tempo per decidere: per chi e fino a quando
-    H.kLampo = ""; H.risposta = {};   // frase lampo: il timer della prossima lettera, cosa scrivono i bot
+    H.kLampo = ""; H.risposta = {}; H.botSoglia = {}; H.segVisto = {};
+    H.visteAmici = {};   // le frasi già viste da chi gioca con me (online: le manda ognuno quando entra; solo qui, mai nella foto)   // frase lampo: il timer della prossima lettera, cosa scrivono i bot
     H.pronti = { k: "", ids: [] }; H.fineFase = 0;   // «⏩ Avanti» a fine manche: chi l'ha toccato (per quella manche)
     // ✍️ le frasi mandate da chi guarda: restano SOLO qui (mai nella foto) finché non escono; { id, nome, c, f }
     H.coda = []; H.nomi = {}; H.nostreUsate = {};
     if (ripresa) {   // ✍️ ⏩ le frasi degli amici (solo su questo telefono: mai al vice) e chi aveva già toccato «Avanti»
       var Q = t.ripresa.soloQui || {};
-      H.coda = Q.coda || []; H.nomi = Q.nomi || {}; H.nostreUsate = Q.nostreUsate || {};
+      H.coda = Q.coda || []; H.nomi = Q.nomi || {}; H.nostreUsate = Q.nostreUsate || {}; H.visteAmici = Q.visteAmici || {};
+      if (P) P.segrete = Q.segrete || {};   // (il vice che prende la partita non le ha: le segrete di questa manche si perdono)
       H.nostre = reg.frasi === "nostre" ? leggiNostre() : [];
       if (R0.pronti) H.pronti = R0.pronti;
     }
@@ -826,7 +1276,24 @@
     function fermaTempo() { clearTimeout(tTempo); tTempo = null; H.scade = 0; H.kTempo = ""; }
     function fermaBotLampo() { tBotL.forEach(clearTimeout); tBotL = []; H.botAspetta = {}; }
     function fermaLampo() { clearTimeout(tLampo); clearTimeout(tWin); tLampo = tWin = null; H.kLampo = ""; fermaBotLampo(); }
-    function ferma() { clearTimeout(tBot); clearTimeout(tFase); tBot = tFase = null; H.kFase = ""; fermaTempo(); fermaLampo(); }
+    function ferma() { clearTimeout(tBot); clearTimeout(tFase); tBot = tFase = null; H.kFase = ""; fermaTempo(); fermaLampo(); fermaFin(); }
+    // 🏆 la finale per tutti: l'orologio di chi finisce il tempo per primo (con la tolleranza della rete) e i Bot
+    var tFin = null, tFinBot = null, tFinRic = null;
+    function fermaFin() { clearTimeout(tFin); clearTimeout(tFinBot); clearInterval(tFinRic); tFin = tFinBot = tFinRic = null; }
+    function cicloFin() {
+      fermaFin();
+      var F = P.fin; if (!F) return;
+      // (online la partita si ricorda ogni 2 secondi: se ricarico, il tempo che restava a ognuno è quello di quel momento)
+      if (online) tFinRic = setInterval(function () { if (P && (P.fase === "ftempo" || P.fase === "flettere")) ricorda(); }, 2000);
+      if (P.fase === "flettere") {   // 10 secondi per scegliere le lettere (finisce prima, se hanno scelto tutti)
+        tFin = setTimeout(function () { tFin = null; if (P.finAuto()) { H.mosse++; dopo(); } }, Math.max(0, F.scadeL + (online ? FIN_GRAZIA : 0) - Date.now()));
+        return;
+      }
+      var ps = P.finProssimaScadenza();
+      if (ps != null) tFin = setTimeout(function () { tFin = null; if (P.finTempo()) { H.mosse++; dopo(); } else cicloFin(); }, ps + 30);
+      var pb = P.finBotProssimo();
+      if (pb != null) tFinBot = setTimeout(function () { tFinBot = null; if (P.finBotAgisci()) { H.mosse++; dopo(); } else cicloFin(); }, pb + 20);
+    }
     function vm() {
       if (H.fase !== "gioco" && H.fase !== "fine") return { fase: H.fase, codice: H.codice, pronta: H.pronta, mancheTot: mancheTot, gameId: H.gameId, modo: modo, difficolta: liv, regole: reg,
         giocatori: posti.map(function (p) { return { id: p.id, nome: p.nome, bot: !!p.bot }; }), guarda: guarda.slice(), piuBot: posti.length + mancano() < MAX };
@@ -836,10 +1303,36 @@
       if (online && H.fase === "gioco" && P.fase === "finemanche") { v.kAv = kAv(); v.pronti = prontiVeri(); v.servono = servono(); v.restaFase = Math.max(0, H.fineFase - Date.now()); }
       if (reg.frasi === "nostre") v.coda = H.coda.map(function (x) { return x.id; });   // (solo CHI ha una frase in coda, mai la frase)
       // il tempo che resta a chi deve toccare (in millisecondi: gli orologi dei telefoni non sono uguali) e quanto era in tutto
-      if (H.scade && H.fase === "gioco") { v.resta = Math.max(0, H.scade - Date.now()); v.tempoTot = H.tempoTot; v.kTempo = H.kTempo; if (online && P.fase === "ftempo") v.grazia = FIN_GRAZIA; }
+      if (H.scade && H.fase === "gioco") { v.resta = Math.max(0, H.scade - Date.now()); v.tempoTot = H.tempoTot; v.kTempo = H.kTempo; }
+      // ⌨️ la lettera accesa da chi gioca (finché non fa la mossa) e ✍️ la soluzione che sta scrivendo (finché non la manda)
+      if (H.fase === "gioco" && H.sel && H.sel.m === H.mosse && FASI_SEL.indexOf(P.fase) >= 0) v.sel = { id: H.sel.id, L: H.sel.L };
+      if (H.fase === "gioco" && H.scr && H.scr.k === kScr()) v.scr = { id: H.scr.id, s: H.scr.s };
       return v;
     }
+    // 🏆 chi ha la frase della finale tutta davanti senza averla scritta (l'ultima lettera chiamata l'ha scoperta, o le sue
+    // lettere la scoprono tutta) o chi l'aveva scritta e rientra (pagina ricaricata): gliela mando in un messaggio solo per
+    // lui («to», come i segreti degli altri giochi), prima della foto, che per lui ha il tabellone di base; a me la metto qui
+    H.finSuaInv = {}; H.finSuaRientro = {};
+    function finSua() {
+      if (!P || !P.fin || !P.fin.b || !P.finTutta) return;
+      var kk = (H.gameId || "") + ":" + P.fin.b;
+      P.fin.ids.forEach(function (id) {
+        var p = P.trova(id); if (!p || p.bot || !P.finTutta(id)) return;
+        if (id === IO) { if (cb) { cb.finSua = cb.finSua || {}; cb.finSua[kk] = P.frase; } return; }
+        if (!rete || H.finSuaInv[kk + "|" + id] || P.fin.g[id].scritta && !H.finSuaRientro[id]) return;
+        H.finSuaInv[kk + "|" + id] = 1; rete.inviaA(id, { t: "finSua", to: id, k: kk, f: P.frase });
+      });
+    }
+    // 🔒 le quote di lettere scoperte di poco fa: un «La so!» toccato un attimo prima che uscisse una lettera vale quanto
+    // c'era scritto sul tasto (la mossa arriva dopo, per la rete)
+    var segStoria = [], segQ = null;
+    function segSegna() {
+      var ora = Date.now(), q = P && P.frase && FASI_SEG.indexOf(P.fase) >= 0 ? quotaNota(P) : null;
+      if (q !== segQ && segQ != null) segStoria.push({ q: segQ, fino: ora + SEG_GRAZIA, m: P ? P.manche : 0 });
+      segQ = q; segStoria = segStoria.filter(function (x) { return x.fino > ora; });
+    }
     function bd() {
+      segSegna(); finSua();
       var v = vm(); if (rete) { rete.invia({ t: "vm", vm: v }); ricordaPosti(); ricorda(); vici(); }
       if (rete && t.aCheSiamo && H.fase === "gioco" && P) t.aCheSiamo(P.fin ? "la finale" : "manche " + Math.max(1, P.manche || 0) + " di " + mancheTot);   // (nella Sala: a che punto è, per chi è fuori)
       disegna(t, v, cb);
@@ -856,11 +1349,11 @@
     function ricorda() {
       if (H.fase !== "gioco" && H.fase !== "fine" || !P) return t.ricorda(null);
       var p = {};
-      Object.keys(P).forEach(function (k) { if (typeof P[k] !== "function" && k !== "regole" && k !== "spicchi") p[k] = P[k]; });
+      Object.keys(P).forEach(function (k) { if (typeof P[k] !== "function" && k !== "regole" && k !== "spicchi" && k !== "segrete") p[k] = P[k]; });
       p.giocatori = P.giocatori.map(senzaOmino);
       t.ricorda({ fase: H.fase, P: p, posti: posti.map(senzaOmino), guarda: guarda, mancheTot: mancheTot, liv: liv, reg: reg, omini: H.omini,
-        gameId: H.gameId, giocate: H.giocate, risultato: !!H.risultato, pagato: !!H.pagato, risposta: H.risposta, pronti: H.pronti },
-        { coda: H.coda, nomi: H.nomi, nostreUsate: H.nostreUsate });   // (le ✍️ frasi degli amici restano segrete: solo su questo telefono)
+        gameId: H.gameId, giocate: H.giocate, risultato: !!H.risultato, pagato: +H.pagato || 0, risposta: H.risposta, pronti: H.pronti },
+        { coda: H.coda, nomi: H.nomi, nostreUsate: H.nostreUsate, segrete: P.segrete || {}, visteAmici: H.visteAmici });   // (le ✍️ frasi degli amici restano segrete: solo su questo telefono)
     }
     // online: se l'host ricarica (la stanza si riapre con lo stesso codice), per 15 secondi i posti alla ruota restano
     // a chi stava giocando, non a chi guardava ed è stato più svelto a rientrare (come il Tris)
@@ -897,7 +1390,7 @@
     function attoreHost() {
       var f = P.fase;
       if (f === "lampo") return P.lampo && P.lampo.chi;
-      if (FASI_FIN.indexOf(f) >= 0) return P.fin && P.fin.id;
+      if (FASI_BUSTA.indexOf(f) >= 0) return P.busta && P.busta.id;
       var p = P.giocatori[P.turno]; return p && p.id;
     }
     // quanto tempo ha chi deve toccare (0 = senza limite: le mosse normali contro il computer e sullo stesso telefono)
@@ -907,19 +1400,31 @@
       if (f === "vdecidi") return T_VEL_DECIDI;
       if (f === "risolvi" && P.veloce) return T_VEL_RISOLVI;
       if (f === "fbusta") return T_FIN_BUSTA;
-      if (f === "flettere") return T_FIN_LETTERE;
-      if (f === "ftempo") return T_FIN_RISOLVI + (online ? FIN_GRAZIA : 0);
       if (f === "lampo") return P.lampo && P.lampo.chi ? T_LAMPO_RISOLVI : 0;
       if (!online) return 0;
       if (f === "risolvi") return T_RISOLVI;
       return ["gira", "consonante", "vocale", "express", "sceltaexp", "mistero"].indexOf(f) >= 0 ? T_MOSSA : 0;
     }
+    // ✍️ la soluzione dal vivo: vale per questo tentativo (manche, fase, chi, giro, frase lampo)
+    function kScr() { var L = P.lampo; return [P.manche, P.fase, attoreHost(), P.giroN, L && P.fase === "lampo" ? L.prove + ":" + (L.tri ? L.tri.n : 0) : ""].join("|"); }
+    function scrDi(id, s) {
+      var tab = P.fase === "lampo" ? P.lampoTab() : coperta(P.frase, P.rivelate), n = (tab.match(/_/g) || []).length;
+      s = String(s || "").toUpperCase().slice(0, n).replace(/[^A-Z_]/g, "_");
+      H.scr = { id: id, s: s, k: kScr() }; bd();
+    }
+    function scrLettere() { return !!(H.scr && H.scr.k === kScr() && /[A-Z]/.test(H.scr.s)); }
+    // allo scadere vale quello che ha scritto (incompleta = sbagliata); senza lettere scritte, come prima
+    function testoScr() {
+      if (!scrLettere()) return null;
+      var tab = P.fase === "lampo" ? P.lampoTab() : coperta(P.frase, P.rivelate), k = 0, s = H.scr.s;
+      return tab.replace(/_/g, function () { var c = s.charAt(k++); return c && c !== "_" ? c : "?"; });
+    }
     function scaduto() {
-      var f = P.fase;
-      if (f === "lampo") return P.lampoTempo();
+      var f = P.fase, tx = f === "lampo" || f === "risolvi" ? testoScr() : null;
+      if (f === "lampo") return tx && P.lampo && P.lampo.chi ? P.lampoSoluzione(P.lampo.chi, tx) : P.lampoTempo();
+      if (f === "risolvi" && tx) return P.soluzione(tx);
       if (f === "vdecidi") return P.velPassa(true);
-      if (f === "fbusta" || f === "flettere") return P.finAuto();
-      if (f === "ftempo") return P.finTempo();
+      if (f === "fbusta") return P.bustaAuto();
       return P.rinuncia(true);
     }
     // il giro: i momenti che vanno avanti da soli, i bot, la frase lampo, il tempo per decidere.
@@ -929,6 +1434,7 @@
       if (H.fase !== "gioco" || !P || H.sigla) { fermaTempo(); fermaLampo(); return; }
       var f = P.fase;
       if (f !== "lampo") fermaLampo();
+      if (f !== "flettere" && f !== "ftempo") fermaFin();
       if (DURATE[f]) {
         fermaTempo();
         var kf = f + ":" + P.manche + ":" + P.giroN;
@@ -939,6 +1445,7 @@
         return;
       }
       if (f === "fine") return;
+      if (f === "flettere" || f === "ftempo") { fermaTempo(); return cicloFin(); }
       if (f === "lampo" && !P.lampo.chi) { fermaTempo(); return cicloLampo(); }
       var chi = attoreHost(), p = P.trova(chi);
       if (!p) { fermaTempo(); return; }
@@ -952,14 +1459,14 @@
       }
       var ms = tempoPer();
       if (!ms) { fermaTempo(); return; }
-      var kt = f === "ftempo" ? "ft:" + P.manche : f === "lampo" ? "l:" + P.manche + ":" + chi + ":" + P.lampo.prove : P.manche + ":" + f + ":" + chi + ":" + H.mosse;
+      var kt = f === "lampo" ? "l:" + P.manche + ":" + chi + ":" + P.lampo.prove : P.manche + ":" + f + ":" + chi + ":" + H.mosse;
       if (H.kTempo === kt && tTempo) return;   // stesso momento: il tempo non riparte da capo
       clearTimeout(tTempo); H.kTempo = kt;
       H.tempoTot = ms; H.scade = Date.now() + ms;
       tTempo = setTimeout(function () { tTempo = null; H.scade = 0; if (scaduto()) { H.mosse++; dopo(); } }, ms);
     }
     // online il riepilogo di fine manche dura di più: si legge la frase e i totali (o si va avanti a maggioranza)
-    function durata(f) { return online && f === "finemanche" ? T_RIEPILOGO : DURATE[f]; }
+    function durata(f) { return online && f === "finemanche" ? T_RIEPILOGO : f === "girando" && P && P.giroMs ? P.giroMs : DURATE[f]; }
     // ---- «⏩ Avanti» sul riepilogo di fine manche: si parte subito se lo tocca più di metà di chi gioca ed è presente ----
     function kAv() { return "fm:" + String(H.gameId).slice(-6) + ":" + P.manche; }
     function umaniPresenti() { return P.giocatori.filter(function (x) { return !x.bot && !x.via; }); }
@@ -984,6 +1491,7 @@
       else if (f === "vgiro") P.giraVeloce();
       else if (f === "fintro") P.finInizia();
       else if (f === "frivela") P.finVia();
+      else if (f === "fcambio") P.dopoCambio();
       else if (f === "fesito") P.dopoFinale();
       else if (f === "mapre") P.mistRivela();
       else if (f === "mrivela") P.dopoMistero();
@@ -996,7 +1504,9 @@
       var kl = P.manche + ":" + L.n + ":" + L.prove;
       if (H.kLampo === kl && tLampo) return;
       clearTimeout(tLampo); H.kLampo = kl;
-      if (L.n < L.pos.length) tLampo = setTimeout(function () { tLampo = null; if (P.lampoRivela()) botLampo(); dopo(); }, L.n === 0 && !L.prove ? LAMPO_PRIMA : LAMPO_PASSO);
+      // (i giochi a tema aspettano un attimo in più all'inizio: si legge cosa sono; il CruciRuota va più svelto, ha tante lettere)
+      var prima = !L.tipo || L.tipo === "classica" || (L.tri && L.tri.n > 1) ? LAMPO_PRIMA : LAMPO_PRIMA_TEMA;
+      if (L.n < L.pos.length) tLampo = setTimeout(function () { tLampo = null; if (P.lampoRivela()) botLampo(); dopo(); }, L.n === 0 && !L.prove ? prima : L.tipo === "cruci" ? CRUCI_PASSO : LAMPO_PASSO);
       else tLampo = setTimeout(function () { tLampo = null; if (P.lampoNessuno()) { H.mosse++; dopo(); } }, LAMPO_ULTIMA);
     }
     function prenotaDa(id, n, ms) {
@@ -1012,6 +1522,7 @@
       var L = P.lampo; if (!L || P.fase !== "lampo" || L.chi) return;
       var tot = solo(L.frase).length, noti = solo(P.lampoTab().replace(/_/g, "")).length, q = tot ? noti / tot : 0, tutte = L.n >= L.pos.length;
       H.botAspetta = H.botAspetta || {};
+      if (L.tipo === "cruci") return botCruci();
       P.giocatori.forEach(function (b) {
         if (!b.bot || b.via || L.fuori[b.id] || H.botAspetta[b.id]) return;
         var sa = conosce(b.nome, L.frase, liv), soglia = ({ facile: 0.72, medio: 0.58, difficile: 0.45 }[liv] || 0.58) + (sa ? 0 : 0.2) + Math.random() * 0.12;
@@ -1025,34 +1536,94 @@
     }
     function rispostaLampoBot() {
       var L = P && P.lampo; if (!L || P.fase !== "lampo" || !L.chi) return;
-      P.lampoSoluzione(L.chi, H.risposta[L.chi] || "SBAGLIATA"); H.mosse++; dopo();
+      var tx = L.tipo === "cruci" ? (cruciBot(P.trova(L.chi)) || "") : H.risposta[L.chi] || "SBAGLIATA";
+      if (botScrive(P.trova(L.chi), tx, P.lampoTab(), rispostaLampoBot)) return;
+      P.lampoSoluzione(L.chi, tx); H.mosse++; dopo();
+    }
+    // 🧩 le parole che un bot sa scrivere adesso (le altre restano "?"): null se non ne riconosce nessuna
+    function cruciBot(b) {
+      var L = P.lampo; if (!b || !L || !L.ok) return null;
+      var vere = L.frase.split("|"), viste = P.lampoTab().split("|"), sa = false;
+      var out = vere.map(function (w, r) {
+        if (L.ok[r]) return w;
+        var noti = viste[r].replace(/_/g, "").length, q = noti / w.length;
+        if (conosce(b.nome, w, liv) && q >= ({ facile: 0.55, medio: 0.4, difficile: 0.28 }[liv] || 0.4) + (H.botSoglia[b.id + r] || 0)) { sa = true; return w; }
+        return viste[r].replace(/_/g, "?");
+      });
+      return sa ? out.join("|") : null;
+    }
+    function botCruci() {
+      var L = P.lampo; H.botSoglia = H.botSoglia || {};
+      P.giocatori.forEach(function (b) {
+        if (!b.bot || b.via || L.fuori[b.id] || H.botAspetta[b.id]) return;
+        L.frase.split("|").forEach(function (w, r) { if (H.botSoglia[b.id + r] == null) H.botSoglia[b.id + r] = Math.random() * 0.15; });
+        if (!cruciBot(b)) return;
+        var rr = { facile: [1100, 2400], medio: [800, 1800], difficile: [550, 1300] }[liv] || [800, 1800], d = rr[0] + Math.random() * (rr[1] - rr[0]), n = L.n;
+        H.botAspetta[b.id] = true;
+        tBotL.push(setTimeout(function () { H.botAspetta[b.id] = false; prenotaDa(b.id, n, d); }, d));
+      });
+    }
+    function segreteBot() {
+      if (!P || FASI_SEG.indexOf(P.fase) < 0) return;
+      P.giocatori.forEach(function (b) {
+        if (!b.bot || !P.puoSegreta(b.id) || H.segVisto[b.id + ":" + P.manche + ":" + P.giroN]) return;
+        H.segVisto[b.id + ":" + P.manche + ":" + P.giroN] = 1;   // (ci pensa una volta per giro di ruota)
+        var c = candidati(P, b.nome, liv), q = quotaNota(P);
+        // (31 ott) solo se la riconosce (una frase sola che ci sta) e finché si può: sotto il 40% di lettere scoperte; ogni tanto
+        if (c.length === 1 && q < SEG_QUOTA && Math.random() < 0.45) P.segreta(b.id, c[0].f);
+      });
     }
     function dopo() {
+      segreteBot();
       // (qualcuno è uscito durante il riepilogo: se ora più di metà ha toccato «⏩ Avanti», si va avanti)
       if (H.fase === "gioco" && !H.sigla && maggioranza()) { clearTimeout(tFase); tFase = null; H.kFase = ""; return avanza("finemanche"); }
       if (P && P.classifica && !H.risultato) { H.risultato = true; risultato(); }
-      if (P && P.fase === "fesito" && !H.pagato) { H.pagato = true; pagaQui(); }
+      if (P && P.fase === "fesito" && (+H.pagato || 0) < (P.buste || []).length) { H.pagato = (P.buste || []).length; pagaQui(); }
       if (P && P.fase === "fine" && H.fase === "gioco") return finePartita();
       ciclo(); bd();
     }
+    function botSel(p, L) { H.sel = { id: p.id, L: L, m: H.mosse, bot: 1 }; bd(); tBot = setTimeout(mossaBot, BOT_SEL); }
+    // ✍️ il Bot scrive: una lettera ogni 0,25 s nelle caselle coperte, poi manda (true = sta ancora scrivendo)
+    function botScrive(p, testo, tab, rifai) {
+      var k = kScr(), B = H.botScr;
+      if (!B || B.k !== k) {
+        var stessa = String(testo).length === tab.length, lett = [], libere = CONSONANTI.filter(function (L) { return !P.chiamate[L]; });
+        for (var i = 0; i < tab.length; i++) if (tab.charAt(i) === "_") {
+          var c = stessa ? base(String(testo).charAt(i).toUpperCase()) : "";
+          lett.push(/^[A-Z]$/.test(c) ? c : stessa ? "_" : libere[Math.floor(Math.random() * libere.length)] || "R");   // (non ci sta: lettere a caso, tanto è sbagliata)
+        }
+        B = H.botScr = { k: k, l: lett, n: 0 };
+      }
+      while (B.n < B.l.length && B.l[B.n] === "_") B.n++;
+      if (B.n < B.l.length) {
+        B.n++; H.scr = { id: p.id, s: B.l.map(function (c, j) { return j < B.n ? c : "_"; }).join(""), k: k };
+        bd(); tBot = setTimeout(rifai, BOT_SCRIVE); return true;
+      }
+      H.botScr = null; return false;
+    }
     function mossaBot() {
       var p = P.giocatori[P.turno], f = P.fase; if (!p || !p.bot) return;
+      if (H.sel && H.sel.bot && H.sel.id === p.id && H.sel.m === H.mosse && FASI_SEL.indexOf(f) >= 0) {   // la lettera accesa prima: ora la chiama
+        var Ls = H.sel.L; H.sel = null;
+        if (f === "vocale") P.vocale(Ls); else if (f === "vlettera") P.velLettera(Ls); else P.consonante(Ls);
+        H.mosse++; return dopo();
+      }
       if (f === "gira") {
         var d = decidiBot(P, liv);
-        if (d.a === "gira") P.gira();
+        if (d.a === "gira") P.gira({ f: 0.2 + Math.random() * 0.7, d: 1 });   // (anche il Bot lancia la ruota, con la sua forza)
         else if (d.a === "compra") P.compra();
         else { P.risolvi(); p._testo = d.testo; }
       } else if (f === "sceltaexp") P.sceltaExpress(prendeExpress(P, liv));
       else if (f === "express") {
         var de = decidiExpress(P, liv);
-        if (de.a === "lettera") P.consonante(de.L);
+        if (de.a === "lettera") return botSel(p, de.L);
         else if (de.a === "compra") P.compra();
         else { P.risolvi(); p._testo = de.testo; }
       }
-      else if (f === "consonante") { var L = letteraBot(P, liv, CONSONANTI, FREQ_C); if (L) P.consonante(L); else P.rinuncia(); }
-      else if (f === "vocale") { var V = letteraBot(P, liv, VOCALI, FREQ_V); if (V) P.vocale(V); else P.rinuncia(); }
-      else if (f === "risolvi") P.soluzione(p._testo || "SBAGLIATA");
-      else if (f === "vlettera") { var X = letteraBot(P, liv, CONSONANTI, FREQ_C) || letteraBot(P, liv, VOCALI, FREQ_V); if (X) P.velLettera(X); else P.rinuncia(); }
+      else if (f === "consonante") { var L = letteraBot(P, liv, CONSONANTI, FREQ_C); if (L) return botSel(p, L); P.rinuncia(); }
+      else if (f === "vocale") { var V = letteraBot(P, liv, VOCALI, FREQ_V); if (V) return botSel(p, V); P.rinuncia(); }
+      else if (f === "risolvi") { if (botScrive(p, p._testo || "SBAGLIATA", coperta(P.frase, P.rivelate), mossaBot)) return; P.soluzione(p._testo || "SBAGLIATA"); }
+      else if (f === "vlettera") { var X = letteraBot(P, liv, CONSONANTI, FREQ_C) || letteraBot(P, liv, VOCALI, FREQ_V); if (X) return botSel(p, X); P.rinuncia(); }
       else if (f === "vdecidi") { var dv = decidiVeloce(P, liv); if (dv) { P.velRisolvi(); p._testo = dv; } else P.velPassa(); }
       else if (f === "mistero") P.mistero(apreMistero(P));
       H.mosse++;
@@ -1064,12 +1635,14 @@
       salvaTrofei(v, modo === "telefono" ? null : IO, modo, liv);
       if (t.risultato && P.classifica) t.risultato(P.classifica.filter(function (r) { var x = posti.filter(function (p) { return p.id === r.id; })[0]; return x && !x.bot && !r.uscito; }).map(function (r) { return { nome: r.nome, pos: r.pos }; }));
     }
-    // la finale vinta da chi gioca su questo telefono: le Speed Coins (sullo stesso telefono solo se il campione ha il nome del profilo)
+    // ✉️ la busta di chi vince, se gioca su questo telefono: le Speed Coins (sullo stesso telefono solo se chi vince ha il nome del profilo)
     function pagaQui() {
-      var F = P.fin; if (!F || !F.vinto || !F.premio) return;
       var pr = profiloAttivo();
-      var mio = modo === "telefono" ? !!(pr && stessoNome(pr.nome, F.nome)) : F.id === IO;
-      if (mio) incassa(H.gameId, F.premio);
+      (P.buste || []).forEach(function (B) {
+        if (!B.premio) return;
+        var mio = modo === "telefono" ? !!(pr && stessoNome(pr.nome, B.nome)) : B.id === IO;
+        if (mio) incassa(H.gameId, B.premio);
+      });
     }
     function finePartita() {
       if (H.fase === "fine") return;   // una volta sola
@@ -1112,16 +1685,18 @@
       ferma();
       H.gameId = (online ? H.codice : modo) + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
       var umani = posti.filter(function (p) { return !p.bot; }).length;
-      // la finale vale tutta solo online con almeno un amico vero; contro il computer o sullo stesso telefono un decimo
+      // ✉️ la busta vale tutta solo online con almeno un amico vero; contro il computer o sullo stesso telefono un decimo
       H.nostre = reg.frasi === "nostre" ? leggiNostre() : []; H.nostreUsate = {}; H.pronti = { k: "", ids: [] };
       P = creaPartita(posti, mancheTot, { modo: modo, difficolta: liv, prenota: reg.prenota, express: reg.express, veloce: reg.veloce, finale: reg.finale, decimo: !(online && umani >= 2),
-        mistero: reg.mistero, frasi: reg.frasi, amica: amica });
+        mistero: reg.mistero, frasi: reg.frasi, amica: amica, visteAmici: function () { return H.visteAmici; } });
       if (window.__RUOTA) { window.__RUOTA.ultima = P; window.__RUOTA.H = H; }   // (per le prove: la partita di questo telefono)
       P.nuovaManche(); H.fase = "gioco"; H.ultimoTurno = null; H.mosse = 0; H.risultato = false; H.pagato = false; H.risposta = {};
       // prima la sigla dello studio (presenta i concorrenti), poi si gioca. Quando si rigioca, una sigla corta.
       H.sigla = H.giocate ? "corta" : "intera"; H.giocate = (H.giocate || 0) + 1; bd();
-      var dur = !window.SGStudio ? 0 : H.sigla === "corta" ? SIGLA_CORTA : SGStudio.durataApertura(posti.length);
-      tFase = setTimeout(function () { tFase = null; H.sigla = false; if (P && P.lampo) P.lampo.T[0] = Date.now(); dopo(); }, dur);
+      var dur = !window.SGStudio ? 0 : H.sigla === "corta" ? SIGLA_CORTA : SGStudio.durataApertura(posti.length) + 1200;   // (+1,2 s: i telefoni lenti finiscono la presentazione dopo)
+      function via() { if (!H.sigla) return; clearTimeout(tFase); tFase = null; H.sigla = false; if (P && P.lampo) P.lampo.T[0] = Date.now(); dopo(); }
+      tFase = setTimeout(via, online ? dur : dur + 15000);
+      H.siglaVia = online ? null : via;
     }
     // le mosse di chi è di turno su questo telefono (o, sullo stesso telefono, di chiunque sia di turno)
     function mia(id) {
@@ -1132,6 +1707,15 @@
       if (!P || H.fase !== "gioco" || H.sigla) return;
       var f = P.fase, ok = false, L = P.lampo;
       if (a === "avanti") return avantiDa(id, x);   // «⏩ Avanti» sul riepilogo (online)
+      if (a === "segreta") {   // 🔒 «La so!»: chi aspetta blocca in segreto la soluzione (non sullo stesso telefono: lì si vede tutto)
+        if (modo === "telefono") return;
+        var ps = P.trova(id); if (!ps || ps.bot) return;
+        // (x: la soluzione, o { t: la soluzione, v: il valore che c'era scritto sul tasto })
+        var testoS = x && typeof x === "object" ? x.t : x, vS = x && typeof x === "object" ? +x.v : 0, qS = null;
+        if (vS > 0 && valoreSeg(quotaNota(P)) !== vS) segStoria.forEach(function (e) { if (qS == null && e.m === P.manche && e.fino > Date.now() && valoreSeg(e.q) === vS) qS = e.q; });
+        if (P.segreta(id, testoS, qS)) { H.mosse++; dopo(); }
+        return;
+      }
       if (a === "prenoto") {   // la frase lampo: prenotano tutti (sullo stesso telefono x.p dice chi ha toccato)
         if (f !== "lampo") return;
         var chi = modo === "telefono" ? String((x && x.p) || "") : id, pc = P.trova(chi);
@@ -1143,28 +1727,38 @@
         if (!L || !L.chi) return;
         var lc = P.trova(L.chi);
         if (!lc || lc.bot || (modo !== "telefono" && L.chi !== id)) return;
+        if (a === "scr") return scrDi(L.chi, x);
         if (a === "soluzione") ok = P.lampoSoluzione(L.chi, x);
-        else if (a === "annulla") ok = P.lampoRinuncia();
-      } else if (FASI_FIN.indexOf(f) >= 0) {
-        if (!P.fin || (modo !== "telefono" && P.fin.id !== id)) return;
+        else if (a === "annulla") ok = !scrLettere() && P.lampoRinuncia();   // (dopo la prima lettera non si torna indietro)
+      } else if (FASI_FIN.indexOf(f) >= 0) {   // 🏆 la finale per tutti: ognuno le sue mosse (mai sullo stesso telefono)
+        var pf = P.trova(id); if (!P.fin || modo === "telefono" || !pf || pf.bot) return;
+        if (a === "passa") ok = P.finPassa(id);
+        else if (a === "lettera") ok = P.finLettera(id, x);
+        else if (a === "lettere") ok = Array.isArray(x) ? P.finLettere(id, x) : !!x && P.finLettere(id, x.l, !!x.parz);   // (parz: il tempo è finito a metà scelta)
+        else if (a === "soluzione") ok = P.finSoluzione(id, x);
+      } else if (FASI_BUSTA.indexOf(f) >= 0) {   // ✉️ la busta: solo chi ha vinto (sullo stesso telefono, chi ha il telefono)
+        if (!P.busta || (modo !== "telefono" && P.busta.id !== id)) return;
         if (a === "busta") ok = P.finBusta(x);
-        else if (a === "lettere") ok = P.finLettere(x);
-        else if (a === "soluzione") ok = P.finSoluzione(x);
       } else {
         if (!mia(id)) return;
-        if (a === "gira") ok = P.gira();
+        var tid = P.giocatori[P.turno].id;
+        if (a === "sel") { var Lx = String(x || "").toUpperCase(); if (/^[A-Z]$/.test(Lx) && FASI_SEL.indexOf(f) >= 0) { H.sel = { id: tid, L: Lx, m: H.mosse }; bd(); } return; }
+        if (a === "scr") { if (f === "risolvi") scrDi(tid, x); return; }
+        if (a === "gira") ok = P.gira(x && typeof x === "object" ? x : null);
         else if (a === "compra") ok = P.compra();
         else if (a === "risolvi") ok = f === "vdecidi" ? P.velRisolvi() : P.risolvi();
         else if (a === "express") ok = P.sceltaExpress(!!x);
         else if (a === "mistero") ok = P.mistero(!!x);
         else if (a === "passa") ok = P.velPassa(false);
         else if (a === "lettera") { var Lt = String(x || "").toUpperCase(); ok = f === "vocale" ? P.vocale(Lt) : f === "vlettera" ? P.velLettera(Lt) : P.consonante(Lt); }
+        else if (a === "vocale") { var Vx = String(x || "").toUpperCase(); if (VOCALI.indexOf(Vx) >= 0) { var cp = f !== "vocale" && P.compra(); ok = (f === "vocale" || cp) && P.vocale(Vx) || cp; } }
         else if (a === "soluzione") ok = P.soluzione(x);
-        else if (a === "annulla") ok = f === "risolvi" && (x === "vuoto" && P.annullaRisolvi() || P.rinuncia());   // senza aver scritto niente si torna indietro
+        else if (a === "annulla") ok = f === "risolvi" && !scrLettere() && (x === "vuoto" && P.annullaRisolvi() || P.rinuncia());   // senza aver scritto niente si torna indietro
       }
       if (ok) { H.mosse++; dopo(); }
     }
     var cb = { sonoHost: true, online: online, telefono: modo === "telefono", myId: IO,
+      onSiglaFinita: function () { if (H.siglaVia) { var f = H.siglaVia; H.siglaVia = null; f(); } },   // (subito: i tasti compaiono adesso, un tocco non va perso)
       omini: function () { return H.omini; },
       onAzione: function (a, x) { azione(IO, a, x); },
       onComincia: comincia,
@@ -1214,6 +1808,14 @@
         if (P.veloce) P.fase = "vgiro";   // (nel round veloce la ruota la gira il gioco)
         else { P.fase = "gira"; if (g) { if (g.stat.giri) g.stat.giri--; P.msg = "🔁 La partita è ripresa: " + g.nome + ", gira di nuovo la ruota!"; } }
       }
+      // 🏆 la finale: le ore dell'host di prima nell'orologio di questo telefono; se è l'host che ha ricaricato, il tempo che
+      // restava resta quello (mentre ricaricava nessuno poteva mandare la soluzione)
+      if (P.fin) {
+        var ferma = t.ripresa.daRiserva ? 0 : Math.min(60000, +t.ripresa.eta || 0);
+        if (P.fin.da) P.fin.da = t.ripresa.ora(P.fin.da) + (P.fase === "ftempo" ? ferma : 0);
+        if (P.fin.scadeL) P.fin.scadeL = t.ripresa.ora(P.fin.scadeL) + (P.fase === "flettere" ? ferma : 0);
+        P.fin.rip = (P.fin.rip || 0) + 1;   // (cambia la chiave del tempo: gli orologi degli amici ripartono dal tempo vero)
+      }
       var L = P.lampo;
       if (L && P.fase === "lampo") {
         L.T = (L.T || []).map(function (x) { return t.ripresa.ora(x); });
@@ -1237,8 +1839,10 @@
           if (m.t === "frase") return riceviFrase(id, m);   // ✍️ una frase da chi guarda
           if (m.t === "join") {
             delete attesi[id];   // (dopo una ripresa: è tornato)
+            H.finSuaInv = {}; H.finSuaRientro[id] = 1;   // (🏆 chi rientra nella finale ritrova la sua frase risolta)
             var gia = posti.some(function (p) { return p.id === id; }), nomeJ = String(m.nome || "Amico").slice(0, 16);
             H.nomi[id] = nomeJ;
+            if (Array.isArray(m.viste)) m.viste.slice(-VISTE_AMICI).forEach(function (h) { if (typeof h === "string" && h.length <= 8) H.visteAmici[h] = 1; });
             if (!gia && t.puoSedersi && !t.puoSedersi(id, nomeJ)) {   // nella Sala non è tra gli scelti: questa volta guarda
               if (!guarda.some(function (g) { return g.id === id; }) && guarda.length < 12) guarda.push({ id: id, nome: nomeJ });
               H.omini[id] = avatarValido(m.omino);
@@ -1272,7 +1876,7 @@
     var S = { rete: null, myId: null, nome: "", vm: null, omini: {}, ultimoJoin: 0 };
     // guardo soltanto (link con guarda=1): lo studio come chi guarda, niente tasti, niente join, niente trofei; in basso la targhetta del core
     var GUARDA = !!t.guarda;
-    var cb = { sonoHost: false, online: true, myId: null, guarda: GUARDA, targa: GUARDA && !t.eliminazione,
+    var cb = { sonoHost: false, online: true, myId: null, guarda: GUARDA, targa: GUARDA && !t.eliminazione, finSua: {},
       omini: function () { return S.omini; },
       onAzione: function (a, x) { if (S.rete) S.rete.invia({ t: "azione", a: a, x: x }); },
       onFrase: function (c, f) { if (S.rete) S.rete.invia({ t: "frase", c: c, f: f, nome: S.nome }); },   // ✍️ va solo all'host
@@ -1293,7 +1897,7 @@
       } }));
       t.mostra(s);
     }
-    function join() { S.ultimoJoin = Date.now(); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null }); }
+    function join() { S.ultimoJoin = Date.now(); S.rete.invia({ t: "join", nome: S.nome, omino: t.mioOmino ? t.mioOmino(S.nome) : null, viste: listaViste().slice(-VISTE_AMICI) }); }
     function collega() {
       var s = t.schermata({ chiara: true, icona: GUARDA ? "👀" : "🎡", titolo: GUARDA ? "Guardo la partita…" : "Entro nella partita…", sotto: "Stanza " + String(codice).toUpperCase(), indietro: t.esci });
       s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
@@ -1310,10 +1914,12 @@
             var guardo = GUARDA || (v.guarda || []).some(function (g) { return g.id === S.myId; });   // (nella Sala: non sono tra gli scelti; o guardo soltanto)
             if (S.myId && !guardo && (v.fase === "lobby" ? !me && v.giocatori.length < MAX : me && me.via && v.giocoFase === "gioco") && Date.now() - S.ultimoJoin > 2500) join();
             if (v.classifica && v.statFine && !GUARDA) salvaTrofei(v, S.myId, v.modo, v.difficolta);
-            if (v.fin && v.fin.vinto && v.fin.id === S.myId && (v.fase === "fesito" || v.fase === "fine")) incassa(v.gameId, v.fin.premio);
+            if (v.tab && v.tab.indexOf("_") < 0 && ["finemanche", "lampofine", "fcambio"].indexOf(v.fase) >= 0 && S.vistaK !== v.tab) { S.vistaK = v.tab; segnaVista(v.tab); }
+            if (v.buste && !GUARDA && (FASI_BUSTA.indexOf(v.fase) >= 0 || v.fase === "fine")) v.buste.forEach(function (b) { if (b.id === S.myId && b.premio) incassa(v.gameId, b.premio); });   // ✉️ ho vinto io: le Speed Coins sul mio telefono
             disegna(t, v, cb);
           }
           else if (m.t === "omini") { S.omini = m.omini || {}; if (S.vm) disegna(t, S.vm, cb); }
+          else if (m.t === "finSua" && m.to === S.myId && m.k) { cb.finSua[m.k] = String(m.f || ""); if (S.vm) disegna(t, S.vm, cb); }   // 🏆 la frase della finale che ho tutta davanti
           else if (m.t === "frasemsg" && m.to === S.myId && R && R.cb === cb) rispostaFrase(R, !!m.ok, String(m.msg || ""));
         },
         // chiusa apposta dall'host: sulla classifica finale la classifica resta (cambia solo la scritta), se no si avvisa
@@ -1344,8 +1950,8 @@
         var ui = R; ui.finita = true; ui.cb = cb; fermaRegia(ui); ritmo(ui, null);
         ui.sopra.classList.add("via");
         var vinc = vm.classifica && vm.classifica.length ? ui.ids.indexOf(vm.classifica[0].id) : -1;
-        // con la finale il campione l'abbiamo già festeggiato: basta un saluto
-        var chiusura = vm.fin ? fineCorta(ui.S) : ST.finale(ui.S, vinc, "Ha vinto La Ruota della Fortuna! 🎡");
+        // con la busta chi ha vinto l'abbiamo già festeggiato: basta un saluto
+        var chiusura = vm.busta || vm.fin ? fineCorta(ui.S) : ST.finale(ui.S, vinc, "Ha vinto La Ruota della Fortuna! 🎡");
         Promise.resolve(chiusura).catch(function () {}).then(function () {
           if (R === ui && ui.S.vivo()) { R = null; finale(t, vm, ui.cb); }
         });
@@ -1356,8 +1962,31 @@
     // (da capo anche se il tavolo è un altro: l'amico che prende il posto dell'host sparito, Passo 5, non usa lo studio di quando era ospite)
     if (R && R.t !== t) { try { fermaRegia(R); } catch (e) {} R = null; }
     if (!R || !R.S.vivo()) R = creaStudioRuota(t, vm, cb);
+    vm = vmMia(R, vm, cb);   // 🏆 nella finale ognuno vede il SUO tabellone e il SUO tempo
     R.cb = cb; R.vm = vm;
+    if (R.sigla && !vm.sigla && vm.fase !== "lampo" || R.sigla && vm.lampo && vm.lampo.n > 0) R.taglia();   // (la partita è già andata avanti)
     if (!R.sigla) aggiorna(R, vm);
+  }
+  // 🏆 la finale per tutti: la foto vista da questo telefono. Chi gioca la finale ha il suo tabellone (solo le sue lettere;
+  // quando l'ha risolta, la frase che ha scritto lui, che resta solo qui), le sue lettere chiamate e il suo tempo; chi guarda
+  // (o chi ha già finito) vede il tabellone di base e il tempo del tabellone
+  function vmMia(ui, vm, cb) {
+    var F = vm.fin;
+    if (!F || FASI_FIN.indexOf(vm.fase) < 0 || !F.b) return vm;
+    var me = !cb.telefono && F.g ? F.g[cb.myId] : null, x = Object.assign({}, vm), k = (vm.gameId || "") + ":" + F.b, kt = k + ":" + (F.rip || 0);   // (F.rip: l'host ha ricaricato, il tempo riparte)
+    x.ultime = []; x.resta = 0; x.kTempo = ""; x.grazia = 0; x.miaFin = me || null;
+    if (me && !F.svela) {
+      // (la frase tutta: me la manda l'host, solo a me; se no quella che ho scritto io)
+      x.tab = cb.finSua && cb.finSua[k] || (me.ok && ui.finTesto && ui.finTesto[k]) || me.tab || vm.tab;
+      x.chiamate = String(me.ch || "").split("").filter(function (c) { return c; });
+      if (vm.fase === "frivela") x.ultime = x.chiamate.filter(function (L) { return FIN_DATE.indexOf(L) < 0; });
+      else if (F.b === FIN_TABELLONI && x.chiamate.length) x.ultime = [x.chiamate[x.chiamate.length - 1]];
+    }
+    var gioca = !!me && !me.ok && !me.passo && !me.scad;
+    if (vm.fase === "flettere" && F.restaL != null) { x.resta = F.restaL; x.kTempo = "fl:" + kt; x.tempoTot = T_FIN_LETTERE; }
+    else if (vm.fase === "ftempo" && gioca && me.resta != null) { x.resta = me.resta; x.kTempo = "ft:" + kt + ":" + (me.pen || 0); x.tempoTot = F.T; }
+    else if (vm.fase === "ftempo" && F.restaB != null) { x.resta = F.restaB; x.kTempo = "fb:" + kt; x.tempoTot = F.T; }
+    return x;
   }
   function fineCorta(S) {
     ST.viaBarra(S); ST.logoSchermo(S); ST.cartelliGiu(S);
@@ -1398,7 +2027,9 @@
     var ui = { t: t, el: el, cb: cb, vm: vm, ids: ids, kTab: "", kTast: "", giroN: -1, scritto: [], cur: 0, prec: null, mostrati: {}, inq: "", barraH: -1, timer: [],
       fuori: {}, jolly: {}, kTempo: "", tabPrec: "", nuove: {}, lampoVisto: {}, schTipo: "", kOrol: "", finSel: [], finSelK: "" };
     ui.S = ST.crea(t, vm.giocatori.map(function (p) { return { nome: p.nome, omino: (cb.omini() || {})[p.id] || (window.SGOmino ? SGOmino.casuale(p.nome) : null) }; }),
-      { io: cb.telefono ? -1 : ids.indexOf(cb.myId), esci: function () { fermaRegia(ui); ritmo(ui, null); ui.cb.onEsci(true); }, titolo: "La Ruota della Fortuna", logo: ["LA RUOTA", "DELLA FORTUNA"] });
+      { io: cb.telefono ? -1 : ids.indexOf(cb.myId), esci: function () { fermaRegia(ui); ritmo(ui, null); ui.cb.onEsci(true); }, titolo: "La Ruota della Fortuna", logo: ["LA RUOTA", "DELLA FORTUNA"],
+        senzaSchermo: true,   // 🎡 giro 3: niente maxischermo in mezzo; la ruota sta sul pavimento davanti ai concorrenti
+        dopoLayout: function () { if (ui.ruotaEl) mettiRuota(ui); } });
     var S = ui.S;
     S.sopraLibero = 0.6;   // la telecamera può salire sopra lo studio: lassù c'è il tabellone
     S.vista.classList.add("ru-studio");
@@ -1414,12 +2045,17 @@
     ui.msg = el("div", { class: "ru-msg" });
     ui.orolN = el("b");
     ui.orol = el("div", { class: "ru-orol" }, [ ui.orolN ]);
-    ui.sopra = el("div", { class: "ru-sopra" }, [ ui.cat, ui.tab, ui.msg, ui.orol ]);
+    ui.punti = el("div", { class: "ru-punti" }); ui.chip = {};
+    vm.giocatori.forEach(function (p, i) {
+      var v = el("b"), tt = el("small"), c = el("span", { class: "ru-chip" }, [ el("i", { style: "background:" + ((ST.COLORI || [])[i % 10] || "#ffc247") }), el("span", { class: "n", text: p.nome }), v, tt ]);
+      c._v = v; c._t = tt; ui.chip[p.id] = c; ui.punti.appendChild(c);
+    });
+    ui.striscia = el("div", { class: "ru-striscia" }); ui.striscia.hidden = true;   // 🔔 i giochi veloci: campanella e «vale…» sotto il tabellone
+    ui.sopra = el("div", { class: "ru-sopra" }, [ ui.cat, ui.tab, ui.striscia, ui.msg, ui.punti, ui.orol ]);
     S.vista.appendChild(ui.sopra);
-    // la ruota (va sul maxischermo) e i tasti (nella barra in basso)
-    ui.canvas = el("canvas", { class: "ru-disco", width: "440", height: "440" });
+    // la ruota (sul pavimento dello studio, davanti ai concorrenti) e i tasti (nella barra in basso)
+    ui.canvas = el("canvas", { class: "ru-disco", width: "600", height: "600" });
     ui.kRuota = (vm.regole && vm.regole.express ? "e" : "") + ":" + (vm.mist || "");
-    disegnaRuota(ui.canvas, spicchiDi(vm.regole && vm.regole.express, vm.mist));
     // ❓ la scritta grande del Mistero (si apre… / +10.000! / BANCAROTTA!)
     ui.mistIco = el("div", { class: "ico", text: "❓" }); ui.mistTx = el("div", { class: "tx" }); ui.mistSub = el("div", { class: "sub" });
     ui.mist = el("div", { class: "ru-mist" }, [ ui.mistIco, ui.mistTx, ui.mistSub ]);
@@ -1429,13 +2065,13 @@
     ui.scriviBtn = el("button", { class: "ru-btn scrivi", type: "button", text: "✍️ Scrivi una frase", onclick: function () { apriFormFrase(ui); } });
     ui.scriviR = el("div", { class: "ru-scrivi-riga" }, [ ui.scriviNota, ui.scriviBtn ]);
     ui.scriviR.hidden = true;
-    ui.ruota = el("div", { class: "ru-ruota-sch" }, [ ui.canvas,
-      el("div", { class: "ru-freccia", html: "<svg viewBox='0 0 10 10'><polygon points='0,0 10,0 5,10' fill='#ffc247' stroke='#7a4a00' stroke-width='.6'/></svg>" }),
-      el("div", { class: "ru-centro" }), ui.oro = el("div", { class: "ru-oro" }) ]);
+    creaRuota(ui);
     // la frase lampo sul maxischermo: la campanella
     ui.campana = el("div", { class: "ru-campana", text: "🔔" });
     ui.lampoSub = el("div", { class: "ru-sch-sub" });
-    ui.panLampo = el("div", { class: "ru-quadro ru-lampo-sch" }, [ ui.campana, el("div", { class: "ru-sch-tit", text: "PRENOTA!" }), ui.lampoSub ]);
+    ui.lampoTit = el("div", { class: "ru-sch-tit", text: "PRENOTA!" });
+    ui.panLampo = el("div", { class: "ru-quadro ru-lampo-sch" }, [ ui.campana, ui.lampoTit, ui.lampoSub ]);
+    ui.striscia.appendChild(ui.panLampo);
     // la finale sul maxischermo: le buste
     ui.busteTit = el("div", { class: "ru-sch-tit piccolo" });
     ui.busteRiga = el("div", { class: "ru-buste" }); ui.buste = [];
@@ -1445,21 +2081,34 @@
     }
     ui.busteSub = el("div", { class: "ru-sch-sub" });
     ui.panBuste = el("div", { class: "ru-quadro ru-buste-sch" }, [ ui.busteTit, ui.busteRiga, ui.busteSub ]);
+    // 🏆 la finale per tutti sul maxischermo: che tabellone è e chi l'ha già risolta
+    ui.finTit = el("div", { class: "ru-sch-tit piccolo" }); ui.finSub = el("div", { class: "ru-sch-sub" });
+    ui.finLista = el("div", { class: "ru-fin-lista" }); ui.finRighe = {};
+    ui.panFin = el("div", { class: "ru-quadro ru-fin-sch" }, [ ui.finTit, ui.finSub, ui.finLista ]);
+    // (il riquadro nella scena, al posto del maxischermo: le buste e chi ha risolto la finale)
+    ui.quadroIn = el("div", { class: "ru-quadro-in" });
+    ui.quadro = el("div", { class: "ru-quadro-box" }, [ ui.quadroIn ]);
+    S.vista.appendChild(ui.quadro);
     ui.azioni = el("div", { class: "ru-azioni" });
+    ui.kb = creaTastiera(ui);   // ⌨️ fissa in basso per tutti
     // la barretta del tempo che resta a chi deve toccare (si accorcia da sola, senza ridisegnare i tasti)
     ui.tempoBar = el("i"); ui.tempo = el("div", { class: "ru-tempo" }, [ ui.tempoBar ]);
     // il Jolly sul leggio di chi ce l'ha
     ui.jb = S.L.map(function (X) { var j = el("div", { class: "ru-jolly" }); X.el.appendChild(j); return j; });
+    ui.lk = S.L.map(function (X) { var j = el("div", { class: "ru-lock", text: "🔒" }); X.el.appendChild(j); return j; });
     vm.giocatori.forEach(function (p, i) { ST.puntiLeggio(S, i, p.soldi); ui.mostrati[p.id] = p.soldi; });
-    function via() { ui.schTipo = ""; schermo(ui, ui.vm); ST.barra(S, ui.cb.guarda ? [ ui.tempo, ui.azioni ] : [ ui.tempo, ui.azioni, ui.scriviR ]); ui.sopra.classList.remove("via"); }   // (chi guarda col link non scrive frasi: la riga non c’è proprio)
+    function via() { ui.schTipo = ""; ui.kTab = ""; ui.sopra.classList.remove("sigla"); schermo(ui, ui.vm); ST.barra(S, ui.cb.guarda ? [ ui.tempo, ui.azioni, ui.kb.el ] : [ ui.tempo, ui.azioni, ui.scriviR, ui.kb.el ]); ui.sopra.classList.remove("via"); }   // (chi guarda col link non scrive frasi: la riga non c’è proprio)
     if (vm.sigla) {   // a inizio partita la sigla dello studio (il tabellone compare dopo); quando si rigioca, una corta
-      ui.sigla = true; ui.sopra.classList.add("via");
+      ui.sigla = true; ui.sopra.classList.add("sigla"); nomeSulTabellone(ui);
       Promise.resolve(vm.sigla === "corta" ? siglaCorta(S) : ST.apertura(S)).catch(function () {}).then(function () {
+        if (ui.cb.onSiglaFinita) ui.cb.onSiglaFinita();
+        if (ui.tagliata) return;
         ui.sigla = false;
         if (!S.vivo() || R !== ui || ui.finita) return;
         via(); aggiorna(ui, ui.vm);
       });
     } else via();
+    ui.taglia = function () { if (!ui.sigla) return; ui.sigla = false; ui.tagliata = true; ST.viaTerzo(S); via(); };
     return ui;
   }
   // quando si rigioca: un saluto veloce invece della presentazione dei concorrenti
@@ -1470,34 +2119,245 @@
     ST.pubblico(S, "applauso");
     return new Promise(function (fatto) { setTimeout(function () { ST.viaTerzo(S); fatto(); }, SIGLA_CORTA); });
   }
-  // la ruota disegnata una volta sola; poi si fa girare tutta (transform), senza ridisegnarla
+  // 🎡 giro 3 (7 nov 2026): la ruota come nel programma vero. Sta sul pavimento DAVANTI ai concorrenti (vista in prospettiva);
+  // quando tocca girare la telecamera va SOPRA la ruota (vista dall'alto, grande) e si gira col dito: si trascina e si lancia.
+  // Pezzi: il disco (canvas che gira, disegnato una volta), l'anello d'oro e le lampadine (fermi: le lampadine «corrono»
+  // accendendosi a turno, solo trasparenza), la lancetta che batte sui chiodi, la mano di chi gira. Si anima solo transform/opacity.
   function disegnaRuota(cv, spicchi) {
-    var c = cv.getContext("2d"), Rr = 220, Rs = Rr - 15, passo = Math.PI * 2 / spicchi.length, k;
-    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height);   // (si ridisegna quando arriva o si apre il Mistero)
+    var c = cv.getContext("2d"), Rr = 300, Rs = 274, passo = Math.PI * 2 / spicchi.length, sc = cv.width / 600;
+    c.setTransform(sc, 0, 0, sc, 0, 0); c.clearRect(0, 0, 600, 600);   // (si ridisegna quando arriva o si apre il Mistero; tela piccola = stessa ruota in scala)
     c.translate(Rr, Rr);
-    // il bordo: anello blu notte con le lampadine calde, filo d'oro fuori
-    c.beginPath(); c.arc(0, 0, Rr - 1, 0, Math.PI * 2); c.fillStyle = "#171230"; c.fill();
-    c.beginPath(); c.arc(0, 0, Rr - 2, 0, Math.PI * 2); c.lineWidth = 3; c.strokeStyle = "#ffc247"; c.stroke();
-    var lamp = Math.max(24, spicchi.length * 2);
-    for (k = 0; k < lamp; k++) {
-      var al = -Math.PI / 2 + (k + 0.5) * Math.PI * 2 / lamp, lx = Math.cos(al) * (Rr - 8.5), ly = Math.sin(al) * (Rr - 8.5);
-      c.beginPath(); c.arc(lx, ly, 6.5, 0, Math.PI * 2); c.fillStyle = "rgba(255,194,71,.18)"; c.fill();
-      c.beginPath(); c.arc(lx, ly, 3.1, 0, Math.PI * 2); c.fillStyle = k % 2 ? "#ffe3a1" : "#ffc247"; c.fill();
-    }
+    c.beginPath(); c.arc(0, 0, Rs + 2, 0, Math.PI * 2); c.fillStyle = "#1a0f00"; c.fill();
     spicchi.forEach(function (sp, i) {
-      var a0 = -Math.PI / 2 + i * passo, a1 = a0 + passo, col = sp.s === "bancarotta" ? "#08080f" : sp.s === "passa" ? "#eceffa" : sp.s === "jolly" ? "#7a3fe0" : sp.s === "express" ? "#a0126b" : sp.s === "mistero" ? "#12153a" : COLORI[i % COLORI.length];
+      var a0 = -Math.PI / 2 + i * passo, a1 = a0 + passo, s = sp.s;
+      var col = s === "bancarotta" ? "#0b0b12" : s === "passa" ? "#f4f5fa" : s === "jolly" ? "#14b39a" : s === "express" ? "#c2187a" : s === "mistero" ? "#10133a" : s === "raddoppia" ? "#ffc247" : COLORI[i % COLORI.length];
       c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, Rs, a0, a1); c.closePath();
       c.fillStyle = col; c.fill();
-      // luce morbida: più scuro vicino al perno, pieno verso il bordo
-      var g = c.createRadialGradient(0, 0, 10, 0, 0, Rs); g.addColorStop(0, "rgba(8,8,20,.5)"); g.addColorStop(.6, "rgba(8,8,20,.08)"); g.addColorStop(1, "rgba(8,8,20,0)");
+      if (s === "raddoppia" || s === "jolly") {   // gli spicchi speciali luccicano un po' (oro, smeraldo)
+        var gl = c.createLinearGradient(Math.cos(a0) * Rs, Math.sin(a0) * Rs, Math.cos(a1) * Rs, Math.sin(a1) * Rs);
+        gl.addColorStop(0, "rgba(255,255,255,.35)"); gl.addColorStop(0.5, "rgba(255,255,255,0)"); gl.addColorStop(1, "rgba(255,255,255,.25)");
+        c.fillStyle = gl; c.fill();
+      }
+      // luce morbida: un po' più scuro vicino al perno, un filo di luce verso il bordo (la ruota sembra in rilievo)
+      var g = c.createRadialGradient(0, 0, 20, 0, 0, Rs);
+      g.addColorStop(0, "rgba(0,0,0,.42)"); g.addColorStop(0.42, "rgba(0,0,0,.05)"); g.addColorStop(0.9, "rgba(255,255,255,.08)"); g.addColorStop(1, "rgba(0,0,0,.18)");
       c.fillStyle = g; c.fill();
-      c.strokeStyle = "rgba(255,255,255,.3)"; c.lineWidth = 2; c.stroke();
+      c.strokeStyle = "rgba(255,255,255,.7)"; c.lineWidth = 2.5; c.stroke();
+      // la scritta lungo il raggio, grande e leggibile (bordo scuro sui colori, chiaro sul bianco e sull'oro)
       c.save(); c.rotate(a0 + passo / 2); c.textAlign = "right"; c.textBaseline = "middle";
-      c.fillStyle = sp.s === "passa" ? "#1b1f3a" : sp.s === "express" ? "#ffe9a8" : sp.s === "mistero" ? "#ffc247" : sp.s === "bancarotta" ? "#ff8ea8" : (COLORI_TESTO[col] || "#fff"); c.font = "900 " + (sp.s ? 19 : 26) + "px system-ui, sans-serif";
-      c.fillText(sp.s === "bancarotta" ? "BANCAROTTA" : sp.s === "passa" ? "PASSA" : sp.s === "jolly" ? "JOLLY" : sp.s === "express" ? "EXPRESS" : sp.s === "mistero" ? "? MISTERO ?" : fmtN(sp.v), Rs - 12, 0);
+      var tx = s === "bancarotta" ? "BANCAROTTA" : s === "passa" ? "PASSA" : s === "jolly" ? "JOLLY" : s === "express" ? "EXPRESS" : s === "mistero" ? "? MISTERO ?" : s === "raddoppia" ? "RADDOPPIA ×2" : fmtN(sp.v);
+      var chiaro = s === "passa" || s === "raddoppia" || COLORI_TESTO[col];
+      c.font = "900 " + (s ? (tx.length > 9 ? 21 : 25) : sp.v >= 1000 ? 35 : 40) + "px system-ui, sans-serif";
+      c.lineJoin = "round"; c.lineWidth = 6; c.strokeStyle = chiaro ? "rgba(255,255,255,.55)" : "rgba(0,0,0,.6)";
+      c.strokeText(tx, Rs - 22, 1);
+      c.fillStyle = s === "passa" || s === "raddoppia" ? "#1b1f3a" : s === "express" ? "#ffe9a8" : s === "mistero" ? "#ffc247" : s === "jolly" ? "#fff7d6" : (COLORI_TESTO[col] || "#fff");
+      c.fillText(tx, Rs - 22, 1);
       c.restore();
     });
-    c.beginPath(); c.arc(0, 0, Rs, 0, Math.PI * 2); c.lineWidth = 3; c.strokeStyle = "rgba(255,194,71,.85)"; c.stroke();
+    // i chiodi sul confine tra uno spicchio e l'altro: è lì che batte la lancetta
+    for (var k = 0; k < spicchi.length; k++) {
+      var al = -Math.PI / 2 + k * passo, px = Math.cos(al) * (Rs - 7), py = Math.sin(al) * (Rs - 7);
+      c.beginPath(); c.arc(px, py, 6.5, 0, Math.PI * 2); c.fillStyle = "#5a3a06"; c.fill();
+      c.beginPath(); c.arc(px - 1, py - 1, 4.6, 0, Math.PI * 2); c.fillStyle = "#ffe08a"; c.fill();
+    }
+  }
+  // l'anello d'oro intorno al disco (fermo) con gli attacchi delle lampadine
+  var N_LAMP = 48;
+  function disegnaAnello(cv) {
+    var c = cv.getContext("2d"), k;
+    c.setTransform(cv.width / 600, 0, 0, cv.width / 600, 0, 0); c.clearRect(0, 0, 600, 600); c.translate(300, 300);
+    var g = c.createRadialGradient(0, 0, 268, 0, 0, 300);
+    g.addColorStop(0, "#6a3f00"); g.addColorStop(0.18, "#ffd76a"); g.addColorStop(0.45, "#c3830f"); g.addColorStop(0.75, "#ffe9a6"); g.addColorStop(1, "#7a4c04");
+    c.beginPath(); c.arc(0, 0, 299, 0, Math.PI * 2); c.arc(0, 0, 271, 0, Math.PI * 2, true); c.fillStyle = g; c.fill();
+    c.beginPath(); c.arc(0, 0, 271, 0, Math.PI * 2); c.lineWidth = 2; c.strokeStyle = "#3a2200"; c.stroke();
+    for (k = 0; k < N_LAMP; k++) {
+      var al = -Math.PI / 2 + (k + 0.5) * Math.PI * 2 / N_LAMP;
+      c.beginPath(); c.arc(Math.cos(al) * 285.5, Math.sin(al) * 285.5, 7.2, 0, Math.PI * 2); c.fillStyle = "#3a2400"; c.fill();
+      c.beginPath(); c.arc(Math.cos(al) * 285.5, Math.sin(al) * 285.5, 4.8, 0, Math.PI * 2); c.fillStyle = "#8a6a2a"; c.fill();
+    }
+  }
+  // le lampadine accese: una tela per quelle pari e una per quelle dispari (girando si accendono a turno e sembrano correre)
+  function disegnaLampadine(cv, par) {
+    var c = cv.getContext("2d"), k;
+    c.setTransform(cv.width / 600, 0, 0, cv.width / 600, 0, 0); c.clearRect(0, 0, 600, 600); c.translate(300, 300);
+    for (k = par; k < N_LAMP; k += 2) {
+      var al = -Math.PI / 2 + (k + 0.5) * Math.PI * 2 / N_LAMP, x = Math.cos(al) * 285.5, y = Math.sin(al) * 285.5;
+      var g = c.createRadialGradient(x, y, 0, x, y, 15); g.addColorStop(0, "rgba(255,245,200,.95)"); g.addColorStop(0.35, "rgba(255,214,110,.6)"); g.addColorStop(1, "rgba(255,190,60,0)");
+      c.fillStyle = g; c.beginPath(); c.arc(x, y, 15, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(x, y, 4.6, 0, Math.PI * 2); c.fillStyle = "#fffbe8"; c.fill();
+    }
+  }
+  var SVG_LANCETTA = "<svg viewBox='0 0 30 46'><path d='M8.5 12 L15 44 L21.5 12 Z' fill='#e8262f' stroke='#fff' stroke-width='2.2' stroke-linejoin='round'/>" +
+    "<circle cx='15' cy='9.5' r='8' fill='#ffd76a' stroke='#7a4a00' stroke-width='2'/><circle cx='15' cy='9.5' r='3.4' fill='#7a4a00'/></svg>";
+  // la mano (un guanto del colore di chi gira) che scende sul bordo e spinge un piolo
+  var SVG_MANO = "<svg viewBox='0 0 40 50'><path d='M9 3h22a4 4 0 0 1 4 4v15c0 3-1 5-2 7l-1 3v12a3.2 3.2 0 0 1-6.4 0V34h-.8v10.5a3.2 3.2 0 0 1-6.4 0V34h-.8v8a3.2 3.2 0 0 1-6.4 0V30l-3.4-4.3C5.6 23 5 21 5 18V7a4 4 0 0 1 4-4z' " +
+    "style='fill:var(--col,#ffc247)' stroke='#fff' stroke-width='2.4' stroke-linejoin='round'/><rect x='7' y='1.5' width='26' height='8' rx='3' fill='#fff' opacity='.92'/></svg>";
+  // Due ruote uguali che girano insieme: quella sul pavimento dello studio (piccola, in prospettiva, ui.canvas) e quella
+  // «vista dall'alto» (ui.canvasA): quando tocca girare compare grande al centro della parte libera dello schermo e lo studio
+  // intorno si scurisce (come la telecamera che va sopra la ruota). Così è sempre intera e grande, su ogni telefono.
+  function creaRuota(ui) {
+    var el = ui.el, S = ui.S;
+    // sul pavimento: tele più piccole (la ruota lì è piccola)
+    ui.canvas.width = ui.canvas.height = 300;
+    function tela(cls, w) { return el("canvas", { class: cls, width: String(w), height: String(w) }); }
+    var an = tela("ru-anello", 300), la = tela("ru-lamp a", 300), lb = tela("ru-lamp b", 300);
+    disegnaAnello(an); disegnaLampadine(la, 0); disegnaLampadine(lb, 1);
+    ui.lancPav = el("div", { class: "ru-lancetta", html: SVG_LANCETTA });
+    ui.piatto = el("div", { class: "ru-piatto" }, [ ui.canvas, an, la, lb, el("div", { class: "ru-centro" }), ui.lancPav ]);
+    ui.ombra = el("div", { class: "ru-ombra" });
+    ui.ruotaEl = el("div", { class: "ru-ruota" }, [ ui.ombra, ui.piatto ]);
+    S.mondo.appendChild(ui.ruotaEl);
+    // vista dall'alto: grande, sopra lo studio (sotto il tabellone e la tastiera)
+    ui.canvasA = tela("ru-disco", 600);
+    ui.anello = tela("ru-anello", 600); disegnaAnello(ui.anello);
+    ui.lampA = tela("ru-lamp a", 600); disegnaLampadine(ui.lampA, 0);
+    ui.lampB = tela("ru-lamp b", 600); disegnaLampadine(ui.lampB, 1);
+    ui.lancetta = el("div", { class: "ru-lancetta", html: SVG_LANCETTA });
+    ui.oro = el("div", { class: "ru-oro" });
+    ui.piattoA = el("div", { class: "ru-piatto-alto" }, [ ui.canvasA, ui.anello, ui.lampA, ui.lampB, el("div", { class: "ru-centro" }), el("div", { class: "ru-invito" }), ui.oro, ui.lancetta ]);
+    ui.manoEl = el("div", { class: "ru-mano", html: SVG_MANO });
+    ui.buio = el("div", { class: "ru-buio" });
+    ui.altoEl = el("div", { class: "ru-alto" }, [ ui.buio, ui.piattoA, ui.manoEl ]);
+    S.vista.appendChild(ui.altoEl);
+    ridisegnaRuote(ui, spicchiDi(ui.vm.regole && ui.vm.regole.express, ui.vm.mist));
+    mettiRuota(ui);
+    trascinaRuota(ui);
+  }
+  function ridisegnaRuote(ui, spicchi) { disegnaRuota(ui.canvas, spicchi); disegnaRuota(ui.canvasA, spicchi); }
+  function ruotaA(ui, ang) { var tr = "rotate(" + (+ang || 0).toFixed(2) + "deg)"; ui.canvas.style.transform = tr; ui.canvasA.style.transform = tr; }
+  // dove sta la ruota nello studio: sul pavimento, davanti ai leggii, larga quasi tutto lo studio; schiacciata in prospettiva (k)
+  function mettiRuota(ui) {
+    var S = ui.S, VW = S.VW, VH = S.VH, H = S.H, W = S.W, bott = 0;
+    (S.posti || []).forEach(function (p) { bott = Math.max(bott, p.top + 1.35 * p.w); });
+    var D = Math.min(1.62 * VW, 0.9 * H), yb = H - 0.012 * VH, k = Math.max(0.24, Math.min(0.42, (yb - bott + 0.05 * VW) / D));
+    ui.G = { cx: W / 2, yb: yb, D: D, k: k };
+    var e = ui.ruotaEl.style; e.left = (W / 2 - D / 2).toFixed(1) + "px"; e.top = (yb - D).toFixed(1) + "px"; e.width = e.height = D.toFixed(1) + "px";
+    ui.ruotaEl.style.setProperty("--k", k.toFixed(4)); ui.ruotaEl.style.setProperty("--sp", (D * 0.028).toFixed(1) + "px");
+    if (ui.alta) posAlto(ui);
+    if (ui.quadro && ui.quadro.classList.contains("on")) posQuadro(ui);
+  }
+  // la ruota vista dall'alto: al centro della parte di schermo tra il tabellone e la tastiera, grande quanto ci sta
+  function posAlto(ui) {
+    var S = ui.S, b = banda(ui), h = b.bot - b.top, d = Math.max(120, Math.min(S.VW * 0.94, h * 0.95));
+    var x = (S.VW - d) / 2, y = b.top + (h - d) / 2, k = Math.round(x) + "|" + Math.round(y) + "|" + Math.round(d);
+    if (k === ui.kAlto) return;
+    ui.kAlto = k; ui.A = { x: x, y: y, d: d };
+    var p = ui.piattoA.style; p.left = x.toFixed(1) + "px"; p.top = y.toFixed(1) + "px"; p.width = p.height = d.toFixed(1) + "px";
+    ui.buio.style.background = "radial-gradient(circle at " + (x + d / 2).toFixed(0) + "px " + (y + d / 2).toFixed(0) + "px,rgba(4,5,14,.25) " + (d * 0.48).toFixed(0) + "px,rgba(4,5,14,.86) " + (d * 0.62).toFixed(0) + "px,rgba(4,5,14,.93))";
+    ui.manoEl.style.width = ui.manoEl.style.height = (d * 0.17).toFixed(1) + "px";
+  }
+  // la telecamera sopra la ruota (vicino = sulla lancetta, alla fine del giro)
+  function ruotaAlta(ui, on, vicino) {
+    if (on) posAlto(ui);
+    if (ui.alta !== on) { ui.alta = on; ui.altoEl.classList.toggle("on", on); }
+    var v = !!(on && vicino); if (ui.altoEl.classList.contains("vicino") !== v) ui.altoEl.classList.toggle("vicino", v);
+  }
+  // il riquadro nella scena (buste, finale): al centro della parte di studio che si vede
+  function posQuadro(ui) {
+    var S = ui.S, b = banda(ui), h = b.bot - b.top, VW = S.VW, s = Math.min(0.96 * VW, 0.96 * h) / VW;
+    var x = (VW - VW * s) / 2, y = b.top + (h - VW * s) / 2, q = ui.quadro.style;
+    q.width = q.height = VW + "px";
+    q.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) scale(" + s.toFixed(4) + ")";
+  }
+  // il giro: veloce all'inizio, poi rallenta piano piano; negli ultimi spicchi quasi al rallentatore. La lancetta batte su ogni
+  // chiodo (tic sempre più radi), «ooh» del pubblico se passa piano sulla Bancarotta, rullo di tamburi e telecamera sulla lancetta.
+  // Uguale su tutti i telefoni: partenza, arrivo e durata li decide chi tiene la partita (mai le ore dei telefoni).
+  function fermaGiro(ui) {
+    ui.giroK = (ui.giroK || 0) + 1;
+    if (ui.rafGiro) cancelAnimationFrame(ui.rafGiro); clearTimeout(ui.tGiroFine); ui.rafGiro = 0;
+    if (ui.altoEl) { ui.altoEl.classList.remove("gira"); ui.ruotaEl.classList.remove("gira"); }
+    if (ui.lancetta) { ui.lancetta.style.transition = ""; ui.lancetta.style.transform = ""; }
+  }
+  function giraRuota(ui, da, a, ms, dir) {
+    fermaGiro(ui);
+    var S = ui.S, k = ui.giroK, t0 = performance.now(), D = a - da, ult = Math.floor(da / 15), tSuono = -1e9, kick = 0, ohh = false, rullo = false, lan = ui.lancetta;
+    var vm0 = ui.vm || {}, sp = spicchiDi(vm0.regole && vm0.regole.express, vm0.mist);
+    function sotto(ang) { return Math.floor(((((-ang) % 360) + 360) % 360) / 15) % 24; }
+    function fine() {
+      if (k !== ui.giroK) return;
+      ruotaA(ui, a); ui.altoEl.classList.remove("gira"); ui.ruotaEl.classList.remove("gira");
+      lan.style.transition = "transform .25s cubic-bezier(.3,1.6,.5,1)"; lan.style.transform = "rotate(0deg)";
+      ui.rafGiro = 0; clearTimeout(ui.tGiroFine);
+    }
+    function passo(now) {
+      if (k !== ui.giroK || !S.vivo()) return;
+      var u = Math.min(1, (now - t0) / ms), ang = da + D * (1 - Math.pow(1 - u, 3.2));
+      ruotaA(ui, ang);
+      var seg = Math.floor(ang / 15);
+      if (seg !== ult) {   // un chiodo passa sotto la lancetta: la spinge di lato, tic
+        ult = seg; lan.style.transition = "none"; lan.style.transform = "rotate(" + (-26 * dir) + "deg)"; kick = now;
+        if (now - tSuono > 38) { bip(1650, 0.022, "square", 0.03); tSuono = now; }
+      } else if (kick && now - kick > 34) { kick = 0; lan.style.transition = "transform .16s cubic-bezier(.3,1.6,.5,1)"; lan.style.transform = "rotate(0deg)"; }
+      var vel = 3.2 * Math.abs(D) / ms * Math.pow(1 - u, 2.2) * 1000;   // gradi al secondo
+      var qui = sp[sotto(ang)];
+      if (!ohh && vel < 130 && u < 0.985 && qui && qui.s === "bancarotta") { ohh = true; try { ST.FX.ohh(); } catch (e) {} }
+      if (!rullo && ms > 2400 && ms * (1 - u) < 1800) { rullo = true; try { ST.FX.rullo(1.6); } catch (e) {} inquadra(ui, "lancetta", null, 1200); }
+      if (u < 1) ui.rafGiro = requestAnimationFrame(passo); else fine();
+    }
+    ui.altoEl.classList.add("gira"); ui.ruotaEl.classList.add("gira");
+    ui.rafGiro = requestAnimationFrame(passo);
+    ui.tGiroFine = setTimeout(fine, ms + 150);   // (arriva comunque, anche se lo schermo non ridisegna)
+  }
+  // la mano di chi gira: scende dal suo lato (i concorrenti stanno dietro la ruota, in alto) sul bordo e spinge un piolo nel verso del giro
+  function mano(ui, i, dir) {
+    var A0 = ui.A, m = ui.manoEl, n = (ui.ids || []).length || 1;
+    if (!A0 || !m.animate) return;
+    var d = A0.d, R = d * 0.47, cx = A0.x + d / 2, cy = A0.y + d / 2, dx = Math.max(-0.3 * d, Math.min(0.3 * d, (i - (n - 1) / 2) * 0.22 * d)), dy = -Math.sqrt(R * R - dx * dx), yr = cy + dy;
+    var w = d * 0.17, ux = -dy / R * dir, uy = dx / R * dir, push = 0.15 * d;
+    m.style.setProperty("--col", (ST.COLORI || [])[i % 10] || "#ffc247");
+    function tr(X, Y, r) { return "translate(" + (X - w / 2).toFixed(1) + "px," + (Y - w * 0.92).toFixed(1) + "px) rotate(" + r + "deg)"; }
+    try {
+      m.animate([
+        { transform: tr(cx + dx, yr - 0.3 * d, 0), opacity: 0 },
+        { transform: tr(cx + dx, yr + 0.01 * d, 0), opacity: 1, offset: 0.38 },
+        { transform: tr(cx + dx + ux * push, yr + 0.01 * d + uy * push, -14 * dir), opacity: 1, offset: 0.6 },
+        { transform: tr(cx + dx + ux * push * 1.25, yr - 0.28 * d, 0), opacity: 0 }
+      ], { duration: 980, easing: "ease-in-out" });
+    } catch (e) {}
+  }
+  // 👆 si gira col dito: si trascina la ruota e la si lascia andare; più veloce il gesto, più forte la girata
+  function trascinaRuota(ui) {
+    var g = null, R0 = ui.piattoA;
+    function rimetti() { ruotaA(ui, ui.ang || 0); }
+    R0.addEventListener("pointerdown", function (e) {
+      if (!ui.puoGirare || !ui.alta || ui.trascinato != null || ui.rafGiro) return;
+      var r = R0.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      g = { id: e.pointerId, cx: cx, cy: cy, a: Math.atan2(e.clientY - cy, e.clientX - cx), tot: 0, s: [{ t: performance.now(), v: 0 }] };
+      try { R0.setPointerCapture(e.pointerId); } catch (x) {}
+      if (e.cancelable) e.preventDefault();
+    });
+    R0.addEventListener("pointermove", function (e) {
+      if (!g || e.pointerId !== g.id) return;
+      var a = Math.atan2(e.clientY - g.cy, e.clientX - g.cx), d = a - g.a, now = performance.now();
+      if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI;
+      g.a = a; g.tot += d * 180 / Math.PI;
+      ruotaA(ui, (ui.ang || 0) + Math.max(-170, Math.min(170, g.tot)));
+      g.s.push({ t: now, v: g.tot }); while (g.s.length > 2 && now - g.s[0].t > 160) g.s.shift();
+    });
+    function lascia(e) {
+      if (!g || e.pointerId !== g.id) return;
+      var x = g; g = null;
+      var now = performance.now(), s0 = x.s[0], w = (x.tot - s0.v) / Math.max(16, now - s0.t) * 1000;   // gradi al secondo, nell'ultimo pezzo del gesto
+      if (e.type === "pointercancel" || !ui.puoGirare || (Math.abs(x.tot) < 18 && Math.abs(w) < 250)) { rimetti(); return; }   // (un tocco, non una girata)
+      var forza = Math.max(0.1, Math.min(1, Math.abs(w) / 1500)), dir = (Math.abs(w) > 60 ? w : x.tot) >= 0 ? 1 : -1;
+      ui.angVis = (ui.ang || 0) + Math.max(-170, Math.min(170, x.tot)); ui.trascinato = ui.vm ? ui.vm.giroN : 0;
+      vibra(18);
+      ui.cb.onAzione("gira", { f: Math.round(forza * 100) / 100, d: dir });
+      var kk = ui.trascinato;
+      setTimeout(function () { if (ui.trascinato === kk && ui.vm && ui.vm.giroN === kk) { ui.trascinato = null; ui.angVis = null; rimetti(); } }, 2500);   // (non è partita: torna com'era)
+    }
+    R0.addEventListener("pointerup", lascia);
+    R0.addEventListener("pointercancel", lascia);
+  }
+  // la sigla: il tabellone scrive lui il nome del gioco, una casella dopo l'altra (come in TV)
+  function nomeSulTabellone(ui) {
+    var n = 0;
+    ui.celle.forEach(function (d) { d.className = "ru-cella vuota"; d.textContent = ""; d.style.animationDelay = ""; d._buco = null; });
+    ["LA", "RUOTA", "DELLA", "FORTUNA"].forEach(function (w, r) {
+      var x0 = Math.floor((COL - w.length) / 2);
+      for (var j = 0; j < w.length; j++) { var d = ui.celle[r * COL + x0 + j]; if (!d) continue; d.className = "ru-cella nuova"; d.style.animationDelay = (0.6 + n++ * 0.09).toFixed(2) + "s"; d.textContent = w.charAt(j); }
+    });
+    ui.kTab = ""; ui.tabPrec = "";
   }
 
   // ---- la telecamera: la parte di studio che si vede sta tra il tabellone (sopra) e la barra dei tasti (sotto) ----
@@ -1513,7 +2373,8 @@
     var W = S.VW / s, HH = S.VH / s, ccy = cy - ((b.top + b.bot) / 2 - S.VH / 2) / s;
     return { x: cx - W / 2, y: ccy - HH / 2, w: W, h: HH };
   }
-  function shotRuota(ui) { var q = ui.S.R.schermo, lato = Math.min(q.w, q.h) * 0.94; return nellaBanda(ui, q.x + q.w / 2, q.y + q.h / 2, lato * 1.06, lato * 1.06); }
+  // (dietro la ruota vista dall'alto: i concorrenti e la ruota sul pavimento, tutti insieme)
+  function shotPavimento(ui) { var S = ui.S, G = ui.G, y0 = G.yb - G.D * G.k; (S.posti || []).forEach(function (p) { y0 = Math.min(y0, p.top - 0.05 * p.w); }); return nellaBanda(ui, G.cx, (y0 + G.yb) / 2, G.D * 1.08, (G.yb - y0) * 1.04); }
   function shotLeggio(ui, i) { var S = ui.S, p = S.posti[i] || S.posti[0]; return nellaBanda(ui, p.cx, p.top + p.w * 0.62, Math.max(0.6 * S.VW, p.w * 1.3), p.w * 1.34); }
   function shotTutti(ui) {   // tutti i concorrenti insieme (la frase lampo: si vede chi prenota)
     var S = ui.S, x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -1522,19 +2383,27 @@
   }
   function inquadra(ui, cosa, i, ms) {
     if (cosa === "leggio" && !(i >= 0)) return;
+    if (cosa === "ruota" && (ui.schTipo === "fin" || ui.schTipo === "buste")) cosa = "quadro";   // (le buste e la finale: il riquadro nella scena)
     var k = cosa + ":" + (i == null ? "" : i);
     if (k === ui.inq) return;
     ui.inq = k;
-    ST.inquadra(ui.S, cosa === "ruota" ? function () { return shotRuota(ui); } : cosa === "tutti" ? function () { return shotTutti(ui); } : function () { return shotLeggio(ui, i); }, ms == null ? 700 : ms);
+    ruotaAlta(ui, cosa === "ruota" || cosa === "lancetta", cosa === "lancetta");
+    ui.quadro.classList.toggle("on", cosa === "quadro"); if (cosa === "quadro") posQuadro(ui);
+ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return shotPavimento(ui); } :
+      cosa === "tutti" || cosa === "quadro" ? function () { return shotTutti(ui); } : function () { return shotLeggio(ui, i); }, ms == null ? 700 : ms);
   }
   // dove guarda la telecamera in ogni momento della partita
   function inquadraFase(ui, vm, ms) {
     var f = vm.fase, ids = ui.ids, L = vm.lampo;
     if (f === "girando" || f === "finemanche" || f === "fintro") return;   // (ci pensano la ruota, la festa e lo spettacolo)
-    if (f === "vgiro" || f === "fbusta" || f === "fesito") return inquadra(ui, "ruota", null, ms);
+    if (f === "vgiro" || f === "fbusta" || f === "fesito" || f === "fcambio") return inquadra(ui, "ruota", null, ms);
+    if (FASI_FIN.indexOf(f) >= 0) {   // 🏆 la finale per tutti: mentre gioco, il mio leggio (sopra c'è la tastiera); se no il maxischermo con chi l'ha risolta
+      var mf = vm.miaFin, io = ids.indexOf(ui.cb.myId);
+      return mf && io >= 0 && (f === "flettere" ? !mf.scelto : f === "ftempo" && !(mf.ok || mf.passo || mf.scad)) ? inquadra(ui, "leggio", io, ms) : inquadra(ui, "ruota", null, ms);
+    }
+    if (f === "gira") return inquadra(ui, "ruota", null, ms);   // 🎡 tocca girare: la ruota dall'alto, grande (si gira col dito)
     if (f === "lampo") return L && L.chi ? inquadra(ui, "leggio", ids.indexOf(L.chi), ms) : inquadra(ui, "tutti", null, ms);
     if (f === "lampofine") return L && L.vince ? inquadra(ui, "leggio", ids.indexOf(L.vince), ms) : inquadra(ui, "tutti", null, ms);
-    if (FASI_FIN.indexOf(f) >= 0) return inquadra(ui, "leggio", ids.indexOf(vm.fin && vm.fin.id), ms);
     inquadra(ui, "leggio", ids.indexOf(vm.turno), ms);
   }
   function dopo(ui, ms, fn) { ui.timer.push(setTimeout(function () { if (ui.S.vivo() && !ui.finita) fn(); }, ms)); }
@@ -1548,20 +2417,49 @@
   function trovaG(vm, id) { for (var i = 0; i < vm.giocatori.length; i++) if (vm.giocatori[i].id === id) return vm.giocatori[i]; return null; }
   function conta(tab, L) { var n = 0; tab.split("").forEach(function (ch) { if (eLettera(ch) && base(ch) === L) n++; }); return n; }
   // chi deve toccare adesso (la frase lampo: chi ha prenotato; la finale: il campione)
+  var GIOCHI_VELOCI = {
+    classica: { ico: "🔔", tit: "PRENOTA!", nome: "Frase lampo!", sotto: "Chi la sa prenota: vale " + fmtN(PREMIO_LAMPO) },
+    tempo: { ico: "⏳", tit: "LA RUOTA DEL TEMPO", nome: "La ruota del tempo!", sotto: "Cosa è successo in quell'anno? Chi la sa prenota: " + fmtN(PREMIO_LAMPO) },
+    mondo: { ico: "🌍", tit: "GIRAMONDO", nome: "GiraMondo!", sotto: "Cosa vuol dire questa parola straniera? Chi la sa prenota: " + fmtN(PREMIO_LAMPO) },
+    triplete: { ico: "🎯", tit: "TRIPLETE", nome: "Triplete!", sotto: "3 frasi sullo stesso tema: " + fmtN(PREMIO_LAMPO) + " l'una, tutte e 3 +" + fmtN(TRI_BONUS) },
+    cruci: { ico: "🧩", tit: "CRUCIRUOTA", nome: "CruciRuota!", sotto: "4 parole sul tema, " + fmtN(CRUCI_PAROLA) + " l'una: prenota e scrivi quelle che sai" }
+  };
+  // la riga sopra il tabellone nei giochi veloci
+  function titoloLampo(L, cat) {
+    var t = L && L.tipo;
+    if (t === "tempo") return "⏳ LA RUOTA DEL TEMPO · " + cat;
+    if (t === "mondo") return "🌍 " + cat + " VUOL DIRE…";
+    if (t === "cruci") return "🧩 CRUCIRUOTA · " + cat;
+    if (t === "triplete") return "🎯 TRIPLETE " + (L.tri ? L.tri.n + "/" + L.tri.di : "") + " · " + cat;
+    return "🔔 " + cat + " · frase lampo";
+  }
   function attore(vm) {
     if (vm.fase === "lampo") return vm.lampo && vm.lampo.chi;
-    if (FASI_FIN.indexOf(vm.fase) >= 0) return vm.fin && vm.fin.id;
+    if (FASI_FIN.indexOf(vm.fase) >= 0) return null;   // (la finale la giocano tutti insieme)
+    if (FASI_BUSTA.indexOf(vm.fase) >= 0) return vm.busta && vm.busta.id;
     return vm.turno;
   }
   // sui leggii i totali della partita (non i soldi della manche) in questi momenti
-  function totali(f) { return f === "finemanche" || f === "lampo" || f === "lampofine" || FASI_FIN.indexOf(f) >= 0; }
-  var ACCESI = ["gira", "consonante", "vocale", "risolvi", "girando", "sceltaexp", "express", "vlettera", "vdecidi", "lampo", "fintro", "fbusta", "flettere", "frivela", "ftempo", "fesito", "mistero", "mapre", "mrivela"];
+  function totali(f) { return f === "finemanche" || f === "lampo" || f === "lampofine" || FASI_FIN.indexOf(f) >= 0 || FASI_BUSTA.indexOf(f) >= 0; }
+  var ACCESI = ["gira", "consonante", "vocale", "risolvi", "girando", "sceltaexp", "express", "vlettera", "vdecidi", "lampo", "fbusta", "fesito", "mistero", "mapre", "mrivela"];
 
   function aggiorna(ui, vm) {
     var S = ui.S, cb = ui.cb, prec = ui.prec || {}, f = vm.fase, ids = ui.ids, L = vm.lampo, F = vm.fin;
     var att = attore(vm), ia = ids.indexOf(att), it = ids.indexOf(vm.turno), ip = ids.indexOf(prec.turno);
     var mioTurno = !!att && (cb.telefono ? !isBot(vm, att) : att === cb.myId);
-    var inRisolvi = mioTurno && (f === "risolvi" || f === "ftempo" || (f === "lampo" && !!(L && L.chi)));
+    ui.puoGirare = mioTurno && f === "gira" && !!(vm.puo && vm.puo.gira) && !cb.guarda;   // 👆 si può trascinare la ruota
+    var meF = FASI_FIN.indexOf(f) >= 0 ? vm.miaFin : null, meG = trovaG(vm, cb.myId);   // 🏆 io nella finale per tutti
+    if (meF) ia = ids.indexOf(cb.myId);
+    if (FASI_FIN.indexOf(f) >= 0) mioTurno = !!meF && !!meG && !meG.via && (f === "flettere" ? !meF.scelto : f === "ftempo" && !meF.ok && !meF.passo && !meF.scad);
+    // 🔒 «La so!»: si scrive in segreto mentre gioca un altro (si chiude da solo quando tocca a me o finisce la manche)
+    var tardi = !mioTurno && FASI_SEG.indexOf(f) >= 0 && valoreSeg(quotaTab(vm.tab)) <= 0 && !(vm.lock && vm.lock.indexOf(cb.myId) >= 0);   // 🔒 ormai è scoperto il 40%
+    if (ui.segreto && ui.segreto === segK(vm) && tardi) ui.segNota = segK(vm);   // (stavo scrivendo: lo dico, se no sembra sparito tutto)
+    if (ui.segInv && (ui.segInv !== segK(vm) || vm.lock && vm.lock.indexOf(cb.myId) >= 0)) ui.segInv = null;
+    else if (ui.segInv && tardi) { ui.segNota = ui.segInv; ui.segInv = null; }   // (avevo toccato «Blocca», ma è arrivato troppo tardi)
+    if (ui.segreto && (ui.segreto !== segK(vm) || mioTurno || !puoSegretaQui(ui, vm))) { ui.segreto = null; ui.kTast = ""; ui.scritto = []; ui.cur = 0; }
+    if (ui.segreto || mioTurno && f === "ftempo") rimappaSegreto(ui, vm);   // (anche nel Rubasecondi escono lettere mentre si scrive)
+    var chiama = f === "ftempo" && F && F.b === 3 && ui.finScrivi !== (vm.gameId || "") + ":rs";   // (Rubasecondi: sto chiamando lettere)
+    var inRisolvi = mioTurno && (f === "risolvi" || f === "ftempo" && !chiama || (f === "lampo" && !!(L && L.chi))) || !!ui.segreto;
     if (!inRisolvi) { ui.scritto = []; ui.cur = 0; }
     ui.sopra.classList.toggle("scrivi", inRisolvi);
     ui.sopra.classList.toggle("express", !!vm.exp);
@@ -1570,12 +2468,12 @@
     ui.sopra.classList.toggle("lampo", f === "lampo" || f === "lampofine");
     var cat = (vm.cat || "").toUpperCase();
     var firma = vm.firma != null ? "  " + firmaTesto(vm.firma) : "";   // ✍️ la frase degli amici: la firma accanto alla categoria
-    var tc = f === "lampo" || f === "lampofine" ? "🔔 " + cat + " · frase lampo" : FASI_FIN.indexOf(f) >= 0 ? "🏆 " + cat + " · finale" :
+    var tc = f === "lampo" || f === "lampofine" ? titoloLampo(L, cat) : FASI_BUSTA.indexOf(f) >= 0 && vm.busta ? "✉️ LA BUSTA DI " + String(vm.busta.nome || "").toUpperCase() : FASI_FIN.indexOf(f) >= 0 ? (F && F.b ? "🏆 FINALE " + F.b + "/3 · " + FIN_NOMI[F.b - 1].toUpperCase() + " · " + cat : "🏆 FINALE · TRE TABELLONI PER TUTTI") :
       vm.veloce ? "⚡ " + cat + firma + " · ultimo round" : cat + firma + "  ·  " + (firma ? "" : "manche ") + vm.manche + "/" + vm.mancheTot;
     if (ui.cat.textContent !== tc) ui.cat.textContent = tc;
     // ❓ la ruota si ridisegna solo quando cambia (Mistero che arriva o che viene aperto)
     var kr = (vm.regole && vm.regole.express ? "e" : "") + ":" + (vm.mist || "");
-    if (kr !== ui.kRuota) { ui.kRuota = kr; disegnaRuota(ui.canvas, spicchiDi(vm.regole && vm.regole.express, vm.mist)); }
+    if (kr !== ui.kRuota) { ui.kRuota = kr; ridisegnaRuote(ui, spicchiDi(vm.regole && vm.regole.express, vm.mist)); }
     misteroGrande(ui, vm);
     scriviRiga(ui, vm);
     // la frase lampo: quando questo telefono ha visto comparire ogni lettera (serve a misurare i riflessi)
@@ -1595,12 +2493,26 @@
       if (ui.jb[i] && ui.jolly[id] !== nj) {
         ui.jolly[id] = nj; ui.jb[i].textContent = nj > 1 ? "🃏×" + nj : "🃏"; ui.jb[i].classList.toggle("on", nj > 0);
       }
+      var lkOn = !fu && !!vm.lock && vm.lock.indexOf(id) >= 0 && FASI_SEG.indexOf(f) >= 0;
+      if (ui.lk[i] && ui.lk[i]._on !== lkOn) { ui.lk[i]._on = lkOn; ui.lk[i].classList.toggle("on", lkOn); }
+      var ch = ui.chip[id], gf = F && F.g && FASI_FIN.indexOf(f) >= 0 ? F.g[id] : null;   // 🏆 nella finale: ✅ a chi l'ha risolta
+      if (ch) {
+        // (i soldi di questa manche grandi, il totale piccolo; a fine manche chi risolve incassa: «+1.200», e il totale è già cresciuto)
+        var soloTot = FASI_FIN.indexOf(f) >= 0 || FASI_BUSTA.indexOf(f) >= 0, inc = !fu && f === "finemanche" && !!vm.vince && vm.vince.id === id;
+        var cv = fu ? "🚪" : (inc ? "+" : "") + fmtN(soloTot ? p.totale : p.soldi) + (lkOn ? " 🔒" : "") + (gf && gf.ok ? " ✅" : gf && (gf.passo || gf.scad) ? " ⏭️" : "");
+        if (ch._v.textContent !== cv) ch._v.textContent = cv;
+        var ct = fu || soloTot ? "" : "tot " + fmtN(p.totale);
+        if (ch._t.textContent !== ct) ch._t.textContent = ct;
+        if (ch._inc !== inc) { ch._inc = inc; ch.classList.toggle("incassa", inc); }
+        var on = id === att && !tot; if (ch._on !== on) { ch._on = on; ch.classList.toggle("on", on); }
+      }
       if (fu) return;
       var val = tot ? p.totale : p.soldi;
       if (ui.mostrati[id] === val && ui.modoLeggii === tot) return;
       var d = 0;
       if (f === "finemanche" && prec.fase && prec.fase !== "finemanche") d = vm.vince && vm.vince.id === id ? vm.vince.vincita : 0;
-      else if (f === "lampofine" && prec.fase === "lampo") d = L && L.vince === id ? PREMIO_LAMPO : 0;
+      else if ((f === "lampofine" || f === "lampo") && ui.modoLeggii === tot && prec.manche === vm.manche) d = val - (ui.mostrati[id] || 0);
+      else if ((FASI_FIN.indexOf(f) >= 0 || FASI_BUSTA.indexOf(f) >= 0) && ui.modoLeggii === tot && prec.fase) d = val - (ui.mostrati[id] || 0);   // (i punti della finale)
       else if (!tot && prec.manche === vm.manche && ui.modoLeggii === tot) d = val - (ui.mostrati[id] || 0);
       ST.puntiLeggio(S, i, val, d);
       ui.mostrati[id] = val;
@@ -1609,6 +2521,7 @@
     // le luci: nella frase lampo restano accese tutte quelle di chi può ancora prenotare
     if (!ui.show) {
       if (f === "lampo" && L && !L.chi) ids.forEach(function (id, i) { var p = trovaG(vm, id); ST.accendi(S, i, !!p && !p.via && L.fuori.indexOf(id) < 0); });
+      else if (FASI_FIN.indexOf(f) >= 0 && F && F.g) ids.forEach(function (id, i) { var p = trovaG(vm, id), g = F.g[id]; ST.accendi(S, i, !!p && !p.via && !!g && (f !== "ftempo" || !(g.ok || g.passo || g.scad))); });   // 🏆 accesi quelli che giocano ancora
       else ST.accendiSolo(S, ACCESI.indexOf(f) >= 0 ? (f === "girando" ? it : ia) : -1);
     }
     // ---- cosa è successo: telecamera, suoni e facce (uguali su tutti i telefoni) ----
@@ -1617,14 +2530,14 @@
       var primoGiro = ui.giroN === -1; ui.giroN = vm.giroN;
       if (!primoGiro && f === "girando") {
         fermaRegia(ui); ui.inq = ""; inquadra(ui, "ruota", null, 600);
-        var ang = vm.angolo;
-        ui.canvas.style.transition = "none";
-        dopo(ui, 600, function () {
-          ui.canvas.style.transition = "transform " + (T_GIRO - 900) + "ms cubic-bezier(.12,.7,.18,1)";
-          ui.canvas.style.transform = "rotate(" + ang + "deg)";
-          suonoGiro();
-        });
-      } else { ui.canvas.style.transition = "none"; ui.canvas.style.transform = "rotate(" + vm.angolo + "deg)"; }
+        // 👆 l'ho lanciata io col dito: parte subito da dove l'ho lasciata; gli altri vedono la mano di chi gira che spinge un piolo
+        var ang = vm.angolo, mio = ui.trascinato != null && ui.trascinato + 1 === vm.giroN, dir = vm.giroDir === -1 ? -1 : 1;
+        var da = mio && ui.angVis != null ? ui.angVis : ui.ang == null ? ang - 1440 * dir : ui.ang;
+        ui.ang = ang; ui.angVis = null; ui.trascinato = null;
+        var durA = Math.max(1500, (vm.giroMs || T_GIRO) - 900);
+        if (!mio && !vm.veloce) mano(ui, it, dir);
+        dopo(ui, mio ? 0 : 600, function () { giraRuota(ui, da, ang, durA, dir); });
+      } else { fermaGiro(ui); ruotaA(ui, vm.angolo); ui.ang = vm.angolo; ui.angVis = null; }
     }
     if (prec.fase) {
       if (prec.fase === "girando" && f !== "girando") {   // la ruota si è fermata: un attimo sulla ruota
@@ -1636,6 +2549,7 @@
           dopo(ui, 650, function () { inquadra(ui, "leggio", ip, 600); facciaPerUnPo(ui, ip, sp.s === "bancarotta" ? "esploso" : "triste"); });
           if (ip !== it) tieni = 2300;
         } else if (sp.s === "jolly") ST.FX.applauso("piano");
+        else if (sp.s === "raddoppia") { rianima(ui.oro, "on"); tieni = 900; }
         else if (sp.s === "express") { rianima(ui.oro, "on"); suonoTreno(); ST.FX.applauso("piano"); tieni = 900; }
         else if (sp.v >= 2000 || (vm.veloce && sp.v)) {   // lo spicchio d'oro (e il valore del round veloce): luce dorata sulla ruota e applauso
           rianima(ui.oro, "on");
@@ -1649,16 +2563,30 @@
         if (n >= 3) ST.FX.applauso("piano");
       }
       if (vm.ev && (!prec.ev || prec.ev.n !== vm.ev.n)) effetto(ui, vm, vm.ev);
+      if (f === "finemanche" && prec.fase !== "finemanche" && vm.vince && vm.vince.seg) {
+        vm.vince.seg.forEach(function (s, k) {
+          var is = ids.indexOf(s.id); if (is < 0) return;
+          // 🔒 il numero sale (o scende) sul leggio; vibra solo il telefono di chi l'aveva bloccata
+          dopo(ui, 1600 + k * 900, function () {
+            facciaPerUnPo(ui, is, s.b ? "evviva" : "triste");
+            if (s.b) { ST.puntiLeggio(S, is, ui.mostrati[s.id] || 0, s.b); bip(1318, 0.2, "triangle", 0.06); if (s.id === cb.myId && !cb.telefono) vibra([25, 35, 25]); }
+            else { if (s.m) ST.puntiLeggio(S, is, ui.mostrati[s.id] || 0, -s.m); suonoNo(); if (s.id === cb.myId && !cb.telefono) vibra(70); }
+          });
+        });
+      }
       if (f === "finemanche" && prec.fase !== "finemanche") {   // qualcuno ha risolto
         var iv = ids.indexOf(vm.vince && vm.vince.id);
         fermaRegia(ui); ST.FX.applauso("forte"); ST.coriandoli(); suonoVinto();
         if (iv >= 0) { ST.lampo(S); ST.accendiSolo(S, iv); ST.faccia(S, iv, "esulta"); inquadra(ui, "leggio", iv, 800); }
       }
       // ---- i round speciali: i loro momenti di spettacolo ----
-      if (f === "lampo" && prec.fase !== "lampo") {   // si apre la frase lampo
+      if (f === "lampo" && prec.fase !== "lampo" && L) {   // si apre un gioco veloce
         suonoCampanella(); rianima(ui.campana, "suona");
-        ST.terzo(S, null, "Frase lampo!", "Chi la sa prenota: vale " + fmtN(PREMIO_LAMPO), "🔔");
-        dopo(ui, 2400, function () { ST.viaTerzo(S); });
+        var gv0 = GIOCHI_VELOCI[L.tipo] || GIOCHI_VELOCI.classica;
+        if (!L.tri || L.tri.n === 1) {
+          ST.terzo(S, null, gv0.nome, gv0.sotto, gv0.ico);
+          dopo(ui, L.tipo && L.tipo !== "classica" ? 3200 : 2400, function () { ST.viaTerzo(S); });
+        }
       }
       if (f === "lampo" && L && prec.lampoN != null && L.n > prec.lampoN && prec.lampoK === L.k) suonoTic();
       if (f === "lampofine" && prec.fase !== "lampofine") {
@@ -1668,12 +2596,19 @@
         else ST.FX.ohh();
       }
       if (f === "vgiro" && prec.fase !== "vgiro") {
-        suonoVeloce(); ST.lampo(S);
-        ST.terzo(S, null, "Ultimo round, veloce!", "La ruota gira una volta sola: ogni consonante vale la cifra + " + fmtN(BONUS_VELOCE), "⚡");
+        suonoCampanella(); suonoVeloce(); ST.lampo(S); rianima(ui.oro, "on");
+        ST.terzo(S, null, "🔔 Giro finale!", "La ruota gira una volta sola: ogni consonante vale la cifra + " + fmtN(BONUS_VELOCE), "⚡");
         dopo(ui, 2800, function () { ST.viaTerzo(S); });
       }
-      if (f === "fintro" && prec.fase !== "fintro" && F) showCampione(ui, vm);
-      if (f === "fesito" && prec.fase !== "fesito" && F) showEsito(ui);
+      if (f === "fintro" && prec.fase !== "fintro" && F) showFinale(ui, vm);
+      if (f === "fcambio" && prec.fase !== "fcambio" && F && F.g) {   // 🏆 un tabellone finito: chi l'ha risolta e in quanto (3 secondi), poi il prossimo
+        var risolta = Object.keys(F.g).filter(function (id) { return F.g[id].ok; });
+        if (risolta.length) ST.FX.applauso("forte"); else ST.FX.ohh();
+        ST.terzo(S, null, F.b < FIN_TABELLONI ? "Ora il tabellone " + (F.b + 1) + " di 3" : "La finale è finita!", F.b < FIN_TABELLONI ? FIN_NOMI[F.b] : "Vediamo la classifica…", "🏆");
+        dopo(ui, 2600, function () { ST.viaTerzo(S); });
+      }
+      if (f === "fbusta" && prec.fase !== "fbusta" && vm.busta) showVincitore(ui, vm);
+      if (f === "fesito" && prec.fase !== "fesito" && vm.busta) showEsito(ui);
       if (vm.manche !== prec.manche) ST.tutteNormali(S);
     } else if (f === "fesito") ui.bustaAperta = true;   // arrivato adesso (es. pagina ricaricata): la busta è già aperta
     // ---- poi la telecamera va su chi deve toccare ----
@@ -1685,7 +2620,8 @@
     disegnaAzioni(ui, vm, mioTurno, att);
     // la barra ha cambiato altezza (es. è comparsa la tastiera): rimetto a fuoco l'inquadratura
     var bh = S.barraEl.offsetHeight;
-    if (bh !== ui.barraH) { var primaB = ui.barraH === -1; ui.barraH = bh; if (!primaB && S.shot) ST.camera(S, S.shot(), 350); }
+    if (bh !== ui.barraH) { var primaB = ui.barraH === -1; ui.barraH = bh; if (!primaB && S.shot) ST.camera(S, S.shot(), 350); if (ui.quadro.classList.contains("on")) posQuadro(ui); if (ui.alta) posAlto(ui); }
+    if (ui.altoEl.classList.contains("tocca") !== !!ui.puoGirare) ui.altoEl.classList.toggle("tocca", !!ui.puoGirare);
   }
   // i fatti della partita (vm.ev): uguali su tutti i telefoni
   function effetto(ui, vm, e) {
@@ -1694,8 +2630,19 @@
     else if (e.t === "bancarotta") { suonoNo(); ST.FX.ohh(); ST.scossa(S); facciaPerUnPo(ui, i, "esploso"); }
     else if (e.t === "prenota") { suonoBuzzer(); ST.lampo(S); rianima(ui.campana, "suona"); facciaPerUnPo(ui, i, "pensa"); }
     else if (e.t === "lampono") { suonoNo(); ST.FX.ohh(); facciaPerUnPo(ui, i, "triste"); }
+    else if (e.t === "segreta") { bip(660, 0.08, "square", 0.05); bip(990, 0.12, "triangle", 0.05, 0.08); facciaPerUnPo(ui, i, "pensa"); if (ui.lk[i]) rianima(ui.lk[i], "scatta"); }
+    else if (e.t === "cruci") { suonoLettera(3); ST.FX.applauso("forte"); ST.lampo(S); facciaPerUnPo(ui, i, "evviva"); vibra(40); }
+    else if (e.t === "triplete") { suonoVinto(); ST.pubblico(S, "ovazione"); ST.coriandoli(); facciaPerUnPo(ui, i, "evviva"); vibra([30, 40, 70]); }
+    else if (e.t === "raddoppia") { suonoVinto(); ST.FX.applauso("forte"); ST.lampo(S); facciaPerUnPo(ui, i, "evviva"); vibra([25, 35, 25]); }
     else if (e.t === "express") { suonoTreno(); ST.FX.applauso("piano"); facciaPerUnPo(ui, i, "esulta"); }
-    else if (e.t === "fino") { suonoNo(); rianima(ui.tab, "no"); facciaPerUnPo(ui, i, "paura"); }
+    // 🏆 la finale per tutti: suono, scossa e vibrazione solo sul telefono di chi ha toccato; agli altri la faccia sul leggio
+    else if (e.t === "ruba") { facciaPerUnPo(ui, i, "paura"); if (e.id === ui.cb.myId) { suonoNo(); rianima(ui.orol, "no"); vibra(60); } }
+    else if (e.t === "fino") { facciaPerUnPo(ui, i, "paura"); if (e.id === ui.cb.myId) { suonoNo(); rianima(ui.tab, "no"); } }
+    else if (e.t === "finok") {
+      facciaPerUnPo(ui, i, "evviva");
+      if (e.id === ui.cb.myId) { suonoVinto(); ST.FX.applauso("forte"); ST.lampo(S); vibra([30, 40, 70]); }
+      else { bip(1318, 0.2, "triangle", 0.06); ST.FX.applauso("piano"); }
+    }
     // ❓ il Mistero: il rullo mentre si apre, poi l'applauso o «Ahi!» (e una vibrazione breve)
     else if (e.t === "mapre") { ST.FX.rullo(1.6); suonoMistero(); facciaPerUnPo(ui, i, "paura"); }
     else if (e.t === "mvinto") { suonoVinto(); ST.lampo(S); ST.pubblico(S, "ovazione"); ST.coriandoli(); facciaPerUnPo(ui, i, "evviva"); vibra([30, 40, 70]); }
@@ -1776,34 +2723,46 @@
     agg(vm); ui.avAgg = agg;
     ui.azioni.appendChild(el("div", { class: "ru-riga" }, [ b ]));
   }
-  // la finale: il campione festeggiato, poi si va alle buste
-  function showCampione(ui, vm) {
-    var S = ui.S, iv = ui.ids.indexOf(vm.fin.id);
+  // 🏆 la finale per tutti: si presenta (tutti i concorrenti, il rullo, la scritta), poi i tabelloni
+  function showFinale(ui, vm) {
+    var S = ui.S;
     fermaRegia(ui); ui.show = true;
     ST.accendiSolo(S, -1); ui.inq = ""; inquadra(ui, "tutti", null, 800);
     ST.FX.rullo(1.2);
     dopo(ui, 1300, function () {
-      ST.lampo(S); ST.accendiSolo(S, iv); inquadra(ui, "leggio", iv, 900); ST.faccia(S, iv, "evviva");
-      ST.terzo(S, iv, vm.fin.nome + " vince la partita!", "E ora la finale, per un premio vero", "🏆");
-      ST.pubblico(S, "ovazione"); ST.coriandoli(); ST.FX.fanfara();
+      ST.lampo(S); ui.ids.forEach(function (id, i) { var p = trovaG(ui.vm, id); ST.accendi(S, i, !!p && !p.via); });
+      ST.terzo(S, null, "La finale!", "Tre tabelloni per tutti: chi risolve prima prende di più", "🏆");
+      ST.pubblico(S, "ovazione"); ST.FX.fanfara();
     });
-    dopo(ui, 5400, function () { ST.viaTerzo(S); ST.faccia(S, iv, null); ui.show = false; });
+    dopo(ui, 5400, function () { ST.viaTerzo(S); ui.show = false; });
+  }
+  // ✉️ chi vince la partita: festa sul suo leggio, poi le buste sul maxischermo
+  function showVincitore(ui, vm) {
+    var S = ui.S, iv = ui.ids.indexOf(vm.busta.id);
+    fermaRegia(ui); ui.show = true; ui.inq = "";
+    ST.lampo(S); ST.accendiSolo(S, iv); inquadra(ui, "leggio", iv, 800); ST.faccia(S, iv, "evviva");
+    var pari = vm.busta.pari > 1, prima = !(vm.buste && vm.buste.length), fino = "fino a " + fmtN(vm.decimo ? PREMIO_MAX / 10 : PREMIO_MAX) + " Speed Coins";
+    ST.terzo(S, iv, !pari ? vm.busta.nome + " vince la partita!" : prima ? "Pari merito! Una busta a testa" : "Ora tocca a " + vm.busta.nome,
+      !pari ? "Ora sceglie una busta: " + fino : vm.busta.nome + " sceglie la sua busta: " + fino, "🏆");
+    ST.pubblico(S, "ovazione"); ST.coriandoli(); ST.FX.fanfara(); suonoVinto();
+    dopo(ui, 3000, function () { ST.viaTerzo(S); ST.faccia(S, iv, null); ui.show = false; ui.inq = ""; inquadraFase(ui, ui.vm, 700); });
   }
   function showEsito(ui) {
     var S = ui.S;
-    fermaRegia(ui); ui.bustaAperta = false; ui.inq = ""; inquadra(ui, "ruota", null, 700);
+    fermaRegia(ui); ST.viaTerzo(S); ui.bustaAperta = false; ui.inq = ""; inquadra(ui, "ruota", null, 700);
     aggiornaBuste(ui, ui.vm);
     ST.FX.rullo(1.4);
     dopo(ui, 1500, function () {
-      var F = ui.vm.fin, iv = ui.ids.indexOf(F.id);
+      var B = ui.vm.busta, iv = B ? ui.ids.indexOf(B.id) : -1;
       ui.bustaAperta = true; aggiornaBuste(ui, ui.vm);
-      if (F.vinto) { ST.lampo(S); ST.pubblico(S, "ovazione"); ST.coriandoli(); ST.FX.fanfara(); ST.faccia(S, iv, "evviva"); }
-      else { ST.FX.ohh(); ST.faccia(S, iv, "triste"); }
+      ST.lampo(S); ST.pubblico(S, "ovazione"); ST.coriandoli(); ST.FX.fanfara(); if (iv >= 0) ST.faccia(S, iv, "evviva");
+      if (B && B.id === ui.cb.myId && !ui.cb.telefono) vibra([30, 40, 70]);
     });
   }
   // il tabellone: 4 righe da 12, la frase al centro. Le caselle appena scoperte si girano una dopo l'altra.
   function tabellone(ui, vm, inRisolvi) {
-    var kt = vm.tab + "|" + (inRisolvi ? ui.scritto.join(",") + "|" + ui.cur : "");
+    var vivo = !inRisolvi && vm.scr && vm.scr.id === attore(vm) && (vm.fase === "risolvi" || vm.fase === "lampo") ? vm.scr.s : "";   // ✍️ chi risolve sta scrivendo: lo vedono tutti
+    var kt = vm.tab + "|" + (inRisolvi ? ui.scritto.join(",") + "|" + ui.cur : vivo);
     if (kt === ui.kTab) return;
     ui.kTab = kt;
     if (vm.tab !== ui.tabPrec) {   // quali caselle si sono appena scoperte (solo se è la stessa frase di prima)
@@ -1821,8 +2780,8 @@
         var k = riga.start + j, ch = vm.tab.charAt(k), d = ui.celle[(su + r) * COL + x0 + j];
         if (!d || ch === " ") continue;
         if (ch === "_") {
-          var sc = inRisolvi && ui.scritto[buco];
-          d.className = "ru-cella " + (sc ? "scritta" : "coperta") + (inRisolvi && buco === ui.cur ? " cursore" : ""); d.textContent = sc || "";
+          var sv = vivo && vivo.charAt(buco) !== "_" ? vivo.charAt(buco) : "", sc = inRisolvi && ui.scritto[buco] || sv;
+          d.className = "ru-cella " + (sc ? "scritta" + (sv ? " vivo" : "") : "coperta") + (inRisolvi && buco === ui.cur ? " cursore" : ""); d.textContent = sc || "";
           d._buco = inRisolvi ? buco : null; buco++;
         } else {
           var nu2 = !!ui.nuove[k];
@@ -1835,32 +2794,59 @@
       }
     });
   }
-  // il maxischermo: la ruota, la campanella della frase lampo o le buste della finale
+  // al posto del maxischermo: la campanella dei giochi veloci (striscia sotto il tabellone), la finale e le buste (riquadro nella scena)
   function schermo(ui, vm) {
-    var f = vm.fase, tipo = f === "lampo" || f === "lampofine" ? "lampo" : FASI_FIN.indexOf(f) >= 0 && f !== "fintro" ? "buste" : "ruota";
+    var f = vm.fase, tipo = f === "lampo" || f === "lampofine" ? "lampo" : FASI_FIN.indexOf(f) >= 0 && f !== "fintro" ? "fin" : FASI_BUSTA.indexOf(f) >= 0 ? "buste" : "ruota";
     if (tipo !== ui.schTipo) {
-      ui.schTipo = tipo; ST.vuota(ui.S.sch);
-      ui.S.sch.appendChild(tipo === "lampo" ? ui.panLampo : tipo === "buste" ? ui.panBuste : ui.ruota);
+      ui.schTipo = tipo; ui.striscia.hidden = tipo !== "lampo";
+      ST.vuota(ui.quadroIn); if (tipo === "buste" || tipo === "fin") ui.quadroIn.appendChild(tipo === "buste" ? ui.panBuste : ui.panFin);
+      if (tipo !== "buste" && tipo !== "fin" && ui.quadro.classList.contains("on")) { ui.quadro.classList.remove("on"); ui.inq = ""; }
     }
     if (tipo === "lampo") {
-      var L = vm.lampo, tx = !L ? "" : f === "lampofine" ? (L.vince ? "🎉 " + nomeDi(vm, ui.cb, L.vince, true) + " +" + fmtN(PREMIO_LAMPO) : "Nessuno l'ha indovinata") :
-        L.chi ? "✍️ " + nomeDi(vm, ui.cb, L.chi, true) + " risponde…" : "Vale " + fmtN(PREMIO_LAMPO) + " · lettera " + L.n + " di " + L.tot;
+      var L = vm.lampo, gv = L ? GIOCHI_VELOCI[L.tipo] || GIOCHI_VELOCI.classica : null, cruci = L && L.tipo === "cruci";
+      var tit = !L ? "PRENOTA!" : L.tri ? "TRIPLETE " + L.tri.n + "/" + L.tri.di : gv.tit;
+      if (ui.lampoTit.textContent !== tit) ui.lampoTit.textContent = tit;
+      var ic = gv ? gv.ico : "🔔"; if (ui.campana.textContent !== ic) ui.campana.textContent = ic;
+      var trovate = cruci && L.ok ? L.ok.filter(function (x) { return x; }).length : 0;
+      var tx = !L ? "" : f === "lampofine" ? (cruci ? (L.vince ? "🧩 " + nomeDi(vm, ui.cb, L.vince, true) + " comincia la manche" : "Nessuna parola trovata") :
+          L.vince ? "🎉 " + nomeDi(vm, ui.cb, L.vince, true) + " +" + fmtN(PREMIO_LAMPO) : "Nessuno l'ha indovinata") :
+        L.chi ? "✍️ " + nomeDi(vm, ui.cb, L.chi, true) + " risponde…" :
+        cruci ? fmtN(CRUCI_PAROLA) + " a parola · trovate " + trovate + " di 4" : "Vale " + fmtN(PREMIO_LAMPO) + " · lettera " + L.n + " di " + L.tot;
       if (ui.lampoSub.textContent !== tx) ui.lampoSub.textContent = tx;
     } else if (tipo === "buste") aggiornaBuste(ui, vm);
+    else if (tipo === "fin") aggiornaFin(ui, vm);
   }
+  // 🏆 il maxischermo della finale: che tabellone è e, per ognuno, com'è andata (✅ in quanti secondi, ⏳ ci sta provando)
+  function aggiornaFin(ui, vm) {
+    var F = vm.fin; if (!F || !F.g) return;
+    var tit = "🏆 FINALE", sub = F.b ? "TABELLONE " + F.b + " DI 3 · " + FIN_NOMI[F.b - 1].toUpperCase() : "";
+    if (ui.finTit.textContent !== tit) ui.finTit.textContent = tit;
+    if (ui.finSub.textContent !== sub) ui.finSub.textContent = sub;
+    vm.giocatori.forEach(function (p) {
+      var g = F.g[p.id], r = ui.finRighe[p.id];
+      if (!r) { r = ui.finRighe[p.id] = { el: ui.el("div", { class: "ru-fin-riga" }, [ ui.el("span", { class: "n", text: p.nome }) ]), st: ui.el("b"), pt: ui.el("i") }; r.el.appendChild(r.st); r.el.appendChild(r.pt); ui.finLista.appendChild(r.el); }
+      var st = !g ? "" : p.via ? "🚪" : g.ok ? "✅ " + secTx(g.ms) : g.passo ? "⏭️ passa" : g.scad ? "⏰ tempo" : vm.fase === "flettere" ? (g.scelto ? "✅ lettere" : "🔤 sceglie…") : vm.fase === "fcambio" ? "❌" : "⏳";
+      var pt = g && g.tot ? "+" + fmtN(g.tot) : "";
+      var cls = "ru-fin-riga" + (!g ? " via" : g.ok ? " ok" : "");
+      if (r.el.className !== cls) r.el.className = cls;
+      if (r.st.textContent !== st) r.st.textContent = st;
+      if (r.pt.textContent !== pt) r.pt.textContent = pt;
+    });
+  }
+  // ✉️ la busta di chi vince: 5 buste mescolate, se ne sceglie una; poi si aprono tutte
   function aggiornaBuste(ui, vm) {
-    var F = vm.fin; if (!F) return;
-    var aperta = vm.fase === "fesito" && ui.bustaAperta && F.premi;
-    var tit = aperta ? (F.vinto ? "🎉 HA VINTO!" : "PECCATO…") : "🏆 LA FINALE";
+    var B = vm.busta; if (!B) return;
+    var aperta = vm.fase === "fesito" && ui.bustaAperta && B.premi;
+    var tit = aperta ? "🎉 " + fmtN(B.premio || 0) + "!" : "✉️ LA BUSTA";
     if (ui.busteTit.textContent !== tit) ui.busteTit.textContent = tit;
     ui.buste.forEach(function (b, k) {
-      var cls = "ru-busta" + (k >= (F.n || BUSTE.length) ? " via" : "") + (F.busta === k ? " scelta" : F.busta >= 0 ? " spenta" : "") + (aperta ? " aperta" : "");
+      var sc = B.scelta === k, cls = "ru-busta" + (k >= (B.n || BUSTE.length) ? " via" : "") + (sc ? " scelta" : B.scelta != null ? " spenta" : "") + (aperta ? " aperta" : "") + (aperta && sc ? " vince" : "");
       if (b.className !== cls) b.className = cls;
-      var v = aperta && F.premi[k] != null ? fmtN(F.premi[k]) : "";
+      var v = aperta && B.premi[k] != null ? fmtN(B.premi[k]) : "";
       if (b._v.textContent !== v) b._v.textContent = v;
     });
-    var sub = aperta ? (F.vinto ? "+" + fmtN(F.premio) + " Speed Coins per " + F.nome + " 🪙" : "Nella busta c'erano " + fmtN(F.premi[F.busta] || 0) + " Speed Coins") :
-      F.busta >= 0 ? "Busta " + (F.busta + 1) + ": si apre alla fine!" : "Una busta con le Speed Coins: quale?";
+    var sub = aperta ? "+" + fmtN(B.premio || 0) + " Speed Coins per " + B.nome + " 🪙" :
+      vm.fase === "fbusta" ? B.nome + " sceglie una busta: da " + fmtN(vm.decimo ? 50 : 500) + " a " + fmtN(vm.decimo ? PREMIO_MAX / 10 : PREMIO_MAX) + " Speed Coins" : B.nome + " apre la busta " + (B.scelta + 1) + "…";
     if (ui.busteSub.textContent !== sub) ui.busteSub.textContent = sub;
   }
   function isBot(vm, id) { for (var i = 0; i < vm.giocatori.length; i++) if (vm.giocatori[i].id === id) return vm.giocatori[i].bot; return false; }
@@ -1886,6 +2872,8 @@
     ui.orol.classList.toggle("on", !!k);
     if (!k) return;
     var fine = Date.now() + vm.resta - (vm.grazia || 0), ultimo = -1;
+    // (nella finale ticchetta solo per chi sta ancora giocando, e solo negli ultimi 10 secondi: chi ha finito o guarda, silenzio)
+    var suona = vm.fase === "vdecidi" ? 99 : k.indexOf("ft:") === 0 ? 10 : 0;
     function tic() {
       if (!ui.S.vivo() || ui.kOrol !== k || ui.finita) { clearInterval(ui.tOrol); return; }
       var s = Math.max(0, Math.ceil((fine - Date.now()) / 1000));
@@ -1893,7 +2881,7 @@
       ultimo = s; ui.orolN.textContent = String(s);
       ui.orol.classList.toggle("urgente", s <= 3);
       rianima(ui.orol, "tic");
-      if (s > 0) bip(s <= 3 ? 1480 : 1150, 0.07, "square", 0.04);
+      if (s > 0 && s <= suona) bip(s <= 3 ? 1480 : 1150, 0.07, "square", 0.04);
     }
     tic(); ui.tOrol = setInterval(tic, 200);
   }
@@ -1916,12 +2904,91 @@
     if (!buchi || ui.vm.chiamate.indexOf(L) >= 0) return;
     ui.scritto[ui.cur] = L;
     for (var k = 1; k <= buchi; k++) { var j = (ui.cur + k) % buchi; if (!ui.scritto[j]) { ui.cur = j; break; } }
-    ui.ridisegna();
+    ui.ridisegna(); inviaScritto(ui);
   }
   function cancellaLettera(ui) {
     if (ui.scritto[ui.cur]) ui.scritto[ui.cur] = "";
     else if (ui.cur > 0) { ui.cur--; ui.scritto[ui.cur] = ""; }
-    ui.ridisegna();
+    ui.ridisegna(); inviaScritto(ui);
+  }
+  // ✍️ la soluzione dal vivo (non «La so!», che è segreta, e non la finale, dove ognuno ha la sua)
+  function inviaScritto(ui) {
+    var vm = ui.vm, f = vm.fase;
+    if (ui.segreto || !(f === "risolvi" || f === "lampo" && vm.lampo && vm.lampo.chi)) return;
+    var n = (vm.tab.match(/_/g) || []).length, s = "";
+    for (var i = 0; i < n; i++) s += ui.scritto[i] || "_";
+    if (s === ui.scrInv) return;
+    ui.scrInv = s; clearTimeout(ui.tScr);
+    function manda() { ui.tScr = null; if (R !== ui || !ui.S.vivo()) return; ui.scrT = Date.now(); ui.cb.onAzione("scr", ui.scrInv); }
+    var att = 170 - (Date.now() - (ui.scrT || 0));
+    if (att <= 0) manda(); else ui.tScr = setTimeout(manda, att);
+  }
+  // ⌨️ la tastiera QWERTY: fissa in basso, uguale per tutti per tutta la manche; si cambiano solo classi e «spento» dei tasti
+  function creaTastiera(ui) {
+    var el = ui.el, kb = { tasti: {}, modo: "off", col: "" };
+    kb.el = el("div", { class: "ru-qwerty" });
+    QWERTY.forEach(function (r, ri) {
+      var riga = el("div", { class: "ru-qr" });
+      r.split("").forEach(function (Lt) {
+        var b = el("button", { class: "ru-btn lettera" + (VOCALI.indexOf(Lt) >= 0 ? " voc" : ""), type: "button", text: Lt, onclick: function () { tastoQ(ui, Lt); } });
+        b.disabled = true; kb.tasti[Lt] = b; riga.appendChild(b);
+      });
+      if (ri === QWERTY.length - 1) {
+        kb.canc = el("button", { class: "ru-btn lettera canc nasc", type: "button", text: "⌫", onclick: function () { if (kb.modo === "scrivi") cancellaLettera(ui); } });
+        kb.canc.disabled = true; riga.appendChild(kb.canc);
+      }
+      kb.el.appendChild(riga);
+    });
+    return kb;
+  }
+  // la lettera accesa vale finché non cambia il momento (fase, turno, giro, lettere chiamate)
+  function kSel(vm) { return [vm.gameId, vm.manche, vm.giroN, vm.fase, vm.turno, (vm.chiamate || []).length].join("|"); }
+  function selMia(ui, vm) { return ui.sel && ui.sel.k === kSel(vm) ? ui.sel.L : null; }
+  function tastoQ(ui, Lt) {
+    var kb = ui.kb, b = kb.tasti[Lt];
+    if (!b || b.disabled || !ui.S.vivo()) return;
+    if (kb.modo === "scrivi") return scriviLettera(ui, Lt);
+    if (kb.modo === "fsel") { if (ui.finTocca) ui.finTocca(Lt); return; }
+    if (kb.modo === "rs") { vibra(15); ui.cb.onAzione("lettera", Lt); return; }
+    if (kb.modo !== "turno") return;
+    if (selMia(ui, ui.vm) === Lt) return chiamaSel(ui);   // il secondo tocco sulla stessa lettera la chiama
+    ui.sel = { L: Lt, k: kSel(ui.vm) }; ui.cb.onAzione("sel", Lt);   // il primo la accende: la vedono tutti
+    if (R === ui) ui.ridisegna();
+  }
+  function chiamaSel(ui) {
+    var vm = ui.vm, L = selMia(ui, vm); if (!L) return;
+    ui.sel = null; vibra(15);
+    if (VOCALI.indexOf(L) >= 0 && vm.fase !== "vlettera") ui.cb.onAzione("vocale", L);   // (si compra e si chiama in un tocco)
+    else ui.cb.onAzione("lettera", L);
+    if (R === ui) ui.ridisegna();
+  }
+  function tastieraAgg(ui, vm, mioTurno, att) {
+    var kb = ui.kb; if (!kb) return;
+    var f = vm.fase, F = vm.fin, mf = vm.miaFin;
+    var rs = mioTurno && f === "ftempo" && !!F && F.b === FIN_TABELLONI && ui.finScrivi !== (vm.gameId || "") + ":rs";   // 🕵️ Rubasecondi: si chiamano lettere
+    var modo = rs ? "rs" : ui.scrivi ? "scrivi" : mioTurno && f === "flettere" && mf && !mf.scelto ? "fsel" : mioTurno && FASI_SEL.indexOf(f) >= 0 ? "turno" : "off";
+    kb.modo = modo;
+    var nasc = FASI_BUSTA.indexOf(f) >= 0;   // (la busta: lì servono solo le buste)
+    if (kb.el.hidden !== nasc) kb.el.hidden = nasc;
+    if (kb.el.classList.contains("attiva") !== (modo !== "off")) kb.el.classList.toggle("attiva", modo !== "off");
+    var ch = {}, inTab = {}, sel = null, pc = !!(vm.puo && vm.puo.compra);
+    (vm.chiamate || []).forEach(function (L) { ch[L] = 1; });
+    String(vm.tab || "").split("").forEach(function (c) { var b = base(c); if (/^[A-Z]$/.test(b)) inTab[b] = 1; });
+    if (modo === "turno") { var sm = selMia(ui, vm); if (sm) sel = { id: att, L: sm }; }
+    else if (modo === "off" && vm.sel && vm.sel.id === att && FASI_SEL.indexOf(f) >= 0) sel = vm.sel;
+    if (sel) { var col = (ST.COLORI || [])[Math.max(0, ui.ids.indexOf(sel.id)) % 10] || "#ffc247"; if (kb.col !== col) { kb.col = col; kb.el.style.setProperty("--sel", col); } }
+    Object.keys(kb.tasti).forEach(function (L) {
+      var b = kb.tasti[L], voc = VOCALI.indexOf(L) >= 0, usata = !!ch[L], on = false;
+      if (modo === "scrivi" || modo === "fsel") on = !usata;
+      else if (modo === "rs") on = !usata && !(voc && mf && mf.voc >= 1);
+      else if (modo === "turno") on = !usata && (voc ? f === "vocale" || f === "vlettera" || (f === "gira" || f === "express") && pc : f === "consonante" || f === "vlettera" || f === "express" && vm.cons > 0);
+      var cls = "ru-btn lettera" + (voc ? " voc" : "") + (usata ? (inTab[L] ? " si" : " no") : "") + (sel && sel.L === L ? " sel" : "") +
+        (modo === "fsel" && (ui.finSel || []).indexOf(L) >= 0 ? " scelta" : "");
+      if (b.className !== cls) b.className = cls;
+      if (b.disabled !== !on) b.disabled = !on;
+    });
+    var cOn = modo === "scrivi";
+    if (kb.canc.disabled !== !cOn) { kb.canc.disabled = !cOn; kb.canc.classList.toggle("nasc", !cOn); }
   }
   // su computer si può scrivere anche con la tastiera vera
   var tastieraPronta = false;
@@ -1962,14 +3029,16 @@
     b.addEventListener("click", via);
     return b;
   }
-  function disegnaAzioni(ui, vm, mioTurno, att) {
-    var cb = ui.cb, el = ui.el, f = vm.fase, L = vm.lampo, F = vm.fin;
+  function disegnaAzioni(ui, vm, mioTurno, att) { disegnaAzioni0(ui, vm, mioTurno, att); tastieraAgg(ui, vm, mioTurno, att); }
+  function disegnaAzioni0(ui, vm, mioTurno, att) {
+    var cb = ui.cb, el = ui.el, f = vm.fase, L = vm.lampo, F = vm.fin, sl = mioTurno ? selMia(ui, vm) : null;   // sl: la lettera che ho acceso
     var me = trovaG(vm, cb.myId);
     var chiave = [f, att, vm.turno, vm.chiamate.join(""), mioTurno, JSON.stringify(vm.puo), f === "lampo" ? "" : vm.tab, me ? (me.via ? "via" : "in") : "no", vm.kTempo || "", vm.cons,
-      L ? [L.chi, L.fuori.join(","), L.prove, L.k].join("/") : "", F ? [F.busta, F.scelte.join("")].join("/") : "", ui.premuto || "", vm.kAv || "", vm.mres ? vm.mres.vinto : ""].join("|");
-    ui.scrivi = mioTurno && (f === "risolvi" || f === "ftempo" || (f === "lampo" && !!(L && L.chi)));
-    if (chiave === ui.kTast) { if (ui.scrivi) statoScritto(ui); if (ui.avAgg) ui.avAgg(vm); return; }   // (cambia solo il numero di «⏩ Avanti»)
-    ui.kTast = chiave; svuota(ui.azioni); ui.okBtn = null; ui.annBtn = null; ui.rsStato = null; ui.avAgg = null;
+      L ? [L.chi, L.fuori.join(","), L.prove, L.k].join("/") : "", ui.segreto || "", (vm.lock || []).join(","), F ? [F.b, vm.miaFin ? [vm.miaFin.ok, vm.miaFin.passo, vm.miaFin.scad, vm.miaFin.scelto, vm.miaFin.ch, vm.miaFin.voc].join(",") : "-", ui.finScrivi || ""].join("/") : "",
+      vm.busta ? vm.busta.id + "/" + vm.busta.scelta : "", ui.premuto || "", vm.kAv || "", vm.mres ? vm.mres.vinto : "", ui.segNota === segK(vm) ? "tardi" : "", sl || "", !mioTurno && vm.sel && vm.sel.id === att ? vm.sel.L : ""].join("|");
+    ui.scrivi = mioTurno && (f === "risolvi" || f === "ftempo" || (f === "lampo" && !!(L && L.chi))) || !!ui.segreto;
+    if (chiave === ui.kTast) { if (ui.scrivi) statoScritto(ui); if (ui.avAgg) ui.avAgg(vm); if (ui.finAgg) ui.finAgg(vm); return; }   // (cambia solo il numero di «⏩ Avanti», o chi ha risolto la finale)
+    ui.kTast = chiave; svuota(ui.azioni); ui.okBtn = null; ui.annBtn = null; ui.rsStato = null; ui.avAgg = null; ui.finAgg = null;
     if (ui.facc === undefined) ui.facc = cb.online && !cb.telefono && !cb.targa && ui.t.faccine ? ui.t.faccine() : null;   // la fila delle faccine (online)
     function stato(txt, cls) { var d = el("div", { class: "ru-stato" + (cls ? " " + cls : ""), text: txt }); ui.azioni.appendChild(d); return d; }
     function aspetta(txt) { stato(txt); if (ui.facc) ui.azioni.appendChild(ui.facc); }   // chi guarda: cosa succede e le faccine
@@ -1977,8 +3046,9 @@
     function riga(n) { ui.azioni.appendChild(el("div", { class: "ru-riga" }, n)); }
     ui.ridisegna = function () { ui.kTab = ""; aggiorna(ui, ui.vm); };
     var chi = cb.telefono && att ? nomeDi(vm, cb, att) + ", " : "", nAtt = att ? nomeDi(vm, cb, att, true) : "";
-    if (f === "girando") return stato(vm.veloce ? "⚡ La ruota gira una volta sola…" : "🎡 La ruota gira…");
-    if (f === "vgiro") return aspetta("⚡ Ultimo round, veloce: si gira la ruota!");
+    if (!mioTurno && ui.segreto) return tastiSegreto(ui, vm);   // 🔒 si scrive in segreto anche mentre la ruota gira
+    if (f === "girando" && (mioTurno || !puoSegretaQui(ui, vm))) return stato(vm.veloce ? "⚡ La ruota gira una volta sola…" : "🎡 La ruota gira…");   // («La so!» resta anche mentre gira)
+    if (f === "vgiro") return aspetta("🔔 Giro finale: la ruota gira una volta sola!");
     if (f === "mapre") return aspetta("❓ " + nAtt + " apre il Mistero… +" + fmtN(MIST_PREMIO) + " o Bancarotta?");
     if (f === "mrivela") return aspetta(vm.mres && vm.mres.vinto ? "💰 Mistero: +" + fmtN(MIST_PREMIO) + " per " + nAtt + "!" : "💥 Mistero: Bancarotta per " + nAtt + "!");
     if (f === "finemanche") {
@@ -1996,7 +3066,7 @@
     // ---- PRENOTA ----
     if (f === "lampo" && L && !L.chi) {
       if (cb.telefono) {   // un tasto per ognuno, col suo colore
-        stato("Chi la sa prenota! Vale " + fmtN(PREMIO_LAMPO), "piccolo");
+        stato(L.tipo === "cruci" ? "Chi ne sa una prenota! " + fmtN(CRUCI_PAROLA) + " a parola" : "Chi la sa prenota! Vale " + fmtN(PREMIO_LAMPO), "piccolo");
         var gr = el("div", { class: "ru-prenoti" + (vm.giocatori.filter(function (p) { return !p.bot; }).length > 2 ? " quattro" : "") });
         vm.giocatori.forEach(function (p, i) {
           if (p.bot) return;
@@ -2013,43 +3083,80 @@
       if (me.via) return aspetta("Rientro nella partita…");
       if (L.fuori.indexOf(cb.myId) >= 0) return aspetta("❌ Sei fuori da questa frase: tocca agli altri");
       if (ui.premuto === L.k + ":" + L.prove) { stato("⏳ Prenotato! Vediamo chi è stato più veloce…"); return; }
-      stato("La sai? Prenota! Vale " + fmtN(PREMIO_LAMPO), "piccolo");
+      stato(L.tipo === "cruci" ? "Ne sai una? Prenota! " + fmtN(CRUCI_PAROLA) + " a parola" : "La sai? Prenota! Vale " + fmtN(PREMIO_LAMPO), "piccolo");
       ui.azioni.appendChild(tastoSubito(el, "prenoto grande", "🔔 PRENOTO!", function () { prenoto(ui, null); }));
       return;
     }
-    // ---- LA FINALE ----
-    if (f === "fintro") return aspetta("🏆 " + nAtt + " gioca la finale!");
-    if (f === "fesito") return aspetta(F && F.vinto ? "🎉 " + F.nome + " vince " + fmtN(F.premio || 0) + " Speed Coins!" : "Peccato! La frase era sul tabellone");
-    if (f === "frivela") return aspetta("🥁 Ecco le lettere scelte…");
-    if (FASI_FIN.indexOf(f) >= 0 && !mioTurno) {
-      return aspetta(f === "fbusta" ? "✉️ " + nAtt + " sceglie una busta…" : f === "flettere" ? "🔤 " + nAtt + " sceglie 3 consonanti e 1 vocale…" : "⏱️ " + nAtt + " ha " + (T_FIN_RISOLVI / 1000) + " secondi! Forza!");
-    }
+    // ---- ✉️ LA BUSTA DI CHI HA VINTO ----
+    if (f === "fesito") return aspetta(vm.busta ? "🎉 " + vm.busta.nome + " vince " + fmtN(vm.busta.premio || 0) + " Speed Coins!" + (vm.busta.dopo ? (!cb.telefono && vm.busta.dopo[0] === cb.myId ? " Ora tocca a te!" : " Ora la busta di " + nomeDi(vm, cb, vm.busta.dopo[0], true) + "…") : "") : "");
     if (f === "fbusta") {
-      stato(chi + "scegli una busta: dentro c'è il premio in Speed Coins" + (vm.decimo ? " (qui vale un decimo)" : ""), "piccolo");
+      var B = vm.busta || {};
+      if (!mioTurno) return aspetta("✉️ " + (B.nome || "") + " sceglie una busta…" + (!cb.telefono && B.dopo && B.dopo.indexOf(cb.myId) >= 0 ? " Poi tocca a te!" : ""));
+      stato((chi ? chi + "hai vinto" : "Hai vinto") + "! Scegli una busta" + (vm.decimo ? " (qui valgono un decimo)" : ""), "piccolo");
       var rb = el("div", { class: "ru-riga ru-buste-tasti" });
-      for (var k = 0; k < (F.n || BUSTE.length); k++) (function (k) { rb.appendChild(btn("busta", "✉️ " + (k + 1), function () { cb.onAzione("busta", k); })); })(k);
+      for (var k = 0; k < (B.n || BUSTE.length); k++) (function (k) { rb.appendChild(btn("busta", "✉️ " + (k + 1), function () { cb.onAzione("busta", k); })); })(k);
       ui.azioni.appendChild(rb);
-      var caso = btn("annulla", "🎲 Scegli tu per me", function () { cb.onAzione("busta", Math.floor(Math.random() * (F.n || BUSTE.length))); });
+      var caso = btn("annulla", "🎲 Scegli tu per me", function () { cb.onAzione("busta", Math.floor(Math.random() * (B.n || BUSTE.length))); });
       riga([caso]); contoSu(ui, vm, caso);
       return;
     }
-    if (f === "flettere") return letterePerFinale(ui, vm, chi);
+    // ---- 🏆 LA FINALE PER TUTTI: ognuno sul suo telefono ----
+    if (FASI_FIN.indexOf(f) >= 0) {
+      var mf = vm.miaFin, gioco = !!mf && !!me && !me.via;
+      // sotto, come va agli altri (✅ chi l'ha risolta): cambia da sola, senza ridisegnare i tasti
+      var altri = function (pre) {
+        var d = stato("", "piccolo");
+        ui.finAgg = function (v) { var tx = pre + (finProgressi(v, cb) ? " · " + finProgressi(v, cb) : ""); if (d.textContent !== tx) d.textContent = tx; };
+        ui.finAgg(vm);
+        if (ui.facc) ui.azioni.appendChild(ui.facc);
+      };
+      if (f === "fintro") return aspetta("🏆 La finale! Tre tabelloni, tutti insieme" + (gioco ? ": giochi dal tuo telefono" : ""));
+      if (f === "frivela") return aspetta(gioco ? "🥁 Ecco le tue lettere…" : "🥁 Ecco le lettere…");
+      if (f === "fcambio") return aspetta(F.b < FIN_TABELLONI ? "🏆 Arriva il tabellone " + (F.b + 1) + ": " + FIN_NOMI[F.b] + "…" : "🏆 La finale è finita: vediamo la classifica…");
+      if (!gioco) return altri("👀 Finale, tabellone " + F.b + " di 3");
+      if (f === "flettere") return mf.scelto ? altri("✅ Lettere scelte! Aspettiamo gli altri") : letterePerFinale(ui, vm, "");
+      if (mf.ok) return altri("✅ Risolta in " + secTx(mf.ms) + ": +" + fmtN(mf.punti || 0) + " · aspettiamo gli altri");
+      if (mf.passo) return altri("⏭️ Hai passato · aspettiamo gli altri");
+      if (mf.scad) return altri("⏰ Tempo scaduto · aspettiamo gli altri");
+      // 🕵️ Rubasecondi: si chiamano le lettere (ogni lettera che non c'è costa 3 secondi), poi si passa a scrivere
+      if (F.b === FIN_TABELLONI && ui.finScrivi !== (vm.gameId || "") + ":rs") {
+        stato("Chiama una lettera: se non c'è perdi 3 secondi" + (mf.voc ? " (vocale già usata)" : " · una vocale sola"), "piccolo");
+        var bs = btn("risolvi", "💡 La so: scrivo", function () { ui.finScrivi = (vm.gameId || "") + ":rs"; ui.kTast = ""; ui.ridisegna(); });
+        riga([ btn("annulla", "⏭️ Passo", function () { cb.onAzione("passa"); }), bs ]);
+        return;
+      }
+      // (scrivo la soluzione: più giù, come quando si risolve una manche)
+    }
     if (!mioTurno) {
       var guarda = !cb.telefono && !cb.sonoHost && !me;   // stanza piena o partita già cominciata
+      if (puoSegretaQui(ui, vm)) {
+        var txs = f === "girando" ? "🎡 La ruota gira…" : f === "sceltaexp" ? "🚂 " + nAtt + " decide: Express o no?" : vm.exp ? "🚂 " + nAtt + " è sull'Express…" : "Tocca a " + nomeDi(vm, cb, att) + "…";
+        if (vm.sel && vm.sel.id === att && FASI_SEL.indexOf(f) >= 0) txs = "👆 " + nAtt + " sceglie… la " + vm.sel.L + "?";
+        stato(txs + " · Bloccala in segreto: se è giusta prendi i punti, se sbagli ne perdi metà", "piccolo");
+        riga([ btn("segreta", "🔒 La so! · vale " + fmtN(valoreSeg(quotaTab(vm.tab))), function () { ui.segreto = segK(vm); ui.segTab = vm.tab; ui.scritto = []; ui.cur = 0; ui.kTast = ""; ui.ridisegna(); }) ]);
+        if (ui.facc) ui.azioni.appendChild(ui.facc);
+        return;
+      }
+      if (me && !cb.telefono && vm.lock && vm.lock.indexOf(cb.myId) >= 0 && FASI_SEG.indexOf(f) >= 0)
+        return aspetta("🔒 Soluzione bloccata! A fine manche: giusta, prendi i punti; sbagliata, ne perdi metà · Tocca a " + nomeDi(vm, cb, att) + "…");
+      if (me && !cb.telefono && ui.segNota === segK(vm) && FASI_SEG.indexOf(f) >= 0 && !(vm.lock && vm.lock.indexOf(cb.myId) >= 0))
+        return aspetta("⏰ Troppo tardi per «La so!»: ormai è scoperto il 40% delle lettere · Tocca a " + nomeDi(vm, cb, att) + "…");
       if (f === "lampo" && L && L.chi) return aspetta("✍️ " + nAtt + " prova a risolvere la frase lampo…");
       if (me && me.via) return aspetta("Rientro nella partita…");
       var tx = f === "sceltaexp" ? "🚂 " + nAtt + " decide: Express o no?" : f === "mistero" ? "❓ " + nAtt + " decide: apre il Mistero?" :
         vm.exp ? "🚂 " + nAtt + " è sull'Express: +" + fmtN(vm.expTot || 0) + "… si ferma?" :
         f === "vdecidi" ? "⏱️ " + nAtt + ": risolve o passa?" : vm.veloce ? "⚡ Tocca a " + nomeDi(vm, cb, att) + "…" : "Tocca a " + nomeDi(vm, cb, att) + "…";
+      if (vm.sel && vm.sel.id === att && FASI_SEL.indexOf(f) >= 0) tx = "👆 " + nAtt + " sceglie… la " + vm.sel.L + "?";   // la lettera accesa, dal vivo
+      else if (f === "risolvi") tx = "✍️ " + nAtt + " sta risolvendo: guarda il tabellone…";
       return aspetta(guarda ? "👀 Stai guardando · " + tx : tx);
     }
     var tp = trovaG(vm, att), jolly = tp && tp.jolly ? " · 🃏 hai " + (tp.jolly > 1 ? tp.jolly + " Jolly" : "un Jolly") : "";
     if (f === "gira") {
-      stato((chi ? chi + "tocca a te!" : "Tocca a te!") + jolly, "piccolo");
+      var pc = vm.puo && vm.puo.compra;
+      stato((chi ? chi + "tocca a te!" : "Tocca a te!") + jolly + (vm.puo && vm.puo.gira ? " 👆 Trascina la ruota" : "") + (pc ? " · o tocca una vocale (" + fmtN(COSTO_VOCALE) + ")" : ""), "piccolo");
       var bg = btn("gira", vm.cons ? "🎡 Gira" : "🎡 Finite", function () { cb.onAzione("gira"); }, !(vm.puo && vm.puo.gira));
-      riga([ bg,
-        btn("vocale", "🅰️ Vocale " + COSTO_VOCALE, function () { cb.onAzione("compra"); }, !(vm.puo && vm.puo.compra)),
-        btn("risolvi", "💡 Risolvi", function () { cb.onAzione("risolvi"); }) ]);
+      riga([ bg, sl ? btn("vocale si", "✓ Compro la " + sl, function () { chiamaSel(ui); }) : null,
+        btn("risolvi", "💡 Risolvi", function () { cb.onAzione("risolvi"); }) ].filter(Boolean));
       contoSu(ui, vm, vm.puo && vm.puo.gira ? bg : null);
       return;
     }
@@ -2069,23 +3176,16 @@
     }
     if (f === "express") {
       stato(chi + "🚂 Express: +" + fmtN(vm.expTot || 0) + " finora. Sbagli una lettera: Bancarotta!", "piccolo rosso");
-      if (vm.cons) {
-        var ge = el("div", { class: "ru-lettere" });
-        CONSONANTI.forEach(function (Lt) { ge.appendChild(btn("lettera", Lt, function () { cb.onAzione("lettera", Lt); }, vm.chiamate.indexOf(Lt) >= 0)); });
-        ui.azioni.appendChild(ge);
-      } else stato("Consonanti finite: compra una vocale o risolvi", "piccolo");
+      if (!vm.cons) stato("Consonanti finite: compra una vocale o risolvi", "piccolo");
       var bf = btn("risolvi", "✋ Mi fermo e risolvo", function () { cb.onAzione("risolvi"); });
-      riga([ btn("vocale", "🅰️ Vocale " + COSTO_VOCALE, function () { cb.onAzione("compra"); }, !(vm.puo && vm.puo.compra)), bf ]);
+      riga([ sl ? btn("gira", (VOCALI.indexOf(sl) >= 0 ? "✓ Compro la " : "✓ Chiama la ") + sl, function () { chiamaSel(ui); }) : null, bf ].filter(Boolean));
       contoSu(ui, vm, bf);
       return;
     }
     if (f === "consonante" || f === "vocale" || f === "vlettera") {
-      var lista = f === "vocale" ? VOCALI : f === "vlettera" ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("") : CONSONANTI;
-      stato(chi + (f === "vocale" ? "scegli una vocale" + (vm.exp ? " (se non c'è: Bancarotta!)" : "") :
-        f === "vlettera" ? "chiama una lettera: consonante " + fmtN(vm.velValore || 0) + ", vocale gratis" : "scegli una consonante"), "piccolo");
-      var gri = el("div", { class: "ru-lettere" + (f === "vocale" ? " vocali" : "") });
-      lista.forEach(function (Lt) { gri.appendChild(btn("lettera" + (f === "vlettera" && VOCALI.indexOf(Lt) >= 0 ? " voc" : ""), Lt, function () { cb.onAzione("lettera", Lt); }, vm.chiamate.indexOf(Lt) >= 0)); });
-      ui.azioni.appendChild(gri);
+      stato(chi + (f === "vocale" ? "tocca una vocale" + (vm.exp ? " (se non c'è: Bancarotta!)" : "") :
+        f === "vlettera" ? "tocca una lettera: consonante " + fmtN(vm.velValore || 0) + ", vocale gratis" : "tocca una consonante") + " · due tocchi per chiamarla", "piccolo");
+      riga([ btn("gira", sl ? (f !== "vlettera" && VOCALI.indexOf(sl) >= 0 ? "✓ Compro la " : "✓ Chiama la ") + sl : "👆 Tocca una lettera", function () { chiamaSel(ui); }, !sl) ]);
       return;
     }
     if (f === "vdecidi") {
@@ -2099,27 +3199,34 @@
       tastiera();
       ui.rsChi = chi;
       ui.rsStato = stato("", "piccolo");
-      // le lettere già chiamate non possono stare nelle caselle coperte: sono grigie
-      var tast = el("div", { class: "ru-lettere" });
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(function (Lt) {
-        tast.appendChild(btn("lettera", Lt, function () { scriviLettera(ui, Lt); }, vm.chiamate.indexOf(Lt) >= 0));
-      });
-      tast.appendChild(btn("lettera canc", "⌫", function () { cancellaLettera(ui); }));
-      ui.azioni.appendChild(tast);
-      ui.azioni.appendChild(ui.rsStato);   // la scritta va sotto la tastiera: sopra toccava il nome sul leggio
+      // (le lettere le scrive la tastiera fissa in basso; quelle già chiamate sono spente)
+      var kS = [vm.gameId, vm.manche, f, att, vm.giroN, L ? L.prove : "", F ? F.b : ""].join("|");   // un tentativo nuovo: si può tornare indietro finché non si scrive
+      if (ui.scrK !== kS) { ui.scrK = kS; ui.haScritto = false; ui.scrInv = null; clearTimeout(ui.tScr); }
       if (f !== "ftempo") ui.annBtn = btn("annulla", "↩ Indietro", function () {
         var vuoto = !ui.scritto.some(function (x) { return x; });
         ui.scritto = []; ui.cur = 0; cb.onAzione("annulla", vuoto ? "vuoto" : "");
       });
+      if (f === "ftempo") ui.passaBtn = F && F.b === 3 ? btn("annulla", "↩ Chiamo lettere", function () { ui.finScrivi = null; ui.kTast = ""; ui.ridisegna(); }) :
+        btn("annulla", "⏭️ Passo", function () { cb.onAzione("passa"); });
       ui.okBtn = btn("gira", "✓ Risolvi", function () {
+        clearTimeout(ui.tScr); ui.tScr = null;
         var k = 0, testo = ui.vm.tab.replace(/_/g, function () { return ui.scritto[k++] || "?"; });
         if (ui.vm.fase !== "ftempo") { ui.scritto = []; ui.cur = 0; }   // nella finale le lettere restano: se è sbagliata si correggono
+        else if (ui.vm.fin) { ui.finTesto = ui.finTesto || {}; ui.finTesto[(ui.vm.gameId || "") + ":" + ui.vm.fin.b] = testo; }   // (se è giusta, la frase la vedo io e basta)
         cb.onAzione("soluzione", testo);
       }, true);
-      riga(ui.annBtn ? [ ui.annBtn, ui.okBtn ] : [ ui.okBtn ]);
+      riga(ui.annBtn ? [ ui.annBtn, ui.okBtn ] : f === "ftempo" ? [ ui.passaBtn, ui.okBtn ] : [ ui.okBtn ]);
       contoSu(ui, vm, ui.okBtn);
       statoScritto(ui);
     }
+  }
+  // 🏆 come va agli altri nella finale: «Luca ✅ · Giulia ⏳»
+  function finProgressi(vm, cb) {
+    var F = vm.fin; if (!F || !F.g) return "";
+    return vm.giocatori.filter(function (p) { return F.g[p.id] && p.id !== cb.myId && !p.via; }).map(function (p) {
+      var g = F.g[p.id];
+      return p.nome + " " + (vm.fase === "flettere" ? (g.scelto ? "✅" : "…") : g.ok ? "✅" : g.passo || g.scad ? "⏭️" : "⏳");
+    }).join(" · ");
   }
   function escapeHtml(s) { return String(s || "").replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]; }); }
   // la finale: 3 consonanti e 1 vocale da scegliere (si cambiano solo i tasti toccati, niente ridisegno)
@@ -2127,45 +3234,97 @@
     var el = ui.el, cb = ui.cb, key = (vm.gameId || "") + ":" + vm.manche;
     if (ui.finSelK !== key) { ui.finSelK = key; ui.finSel = []; }
     var st = el("div", { class: "ru-stato piccolo" }); ui.azioni.appendChild(st);
-    var gri = el("div", { class: "ru-lettere" }), tasti = {};
+    var tasti = ui.kb.tasti;
     var ok = el("button", { class: "ru-btn gira", text: "✓ Ecco le mie lettere", onclick: function () { cb.onAzione("lettere", ui.finSel.slice()); } });
     function nc() { return ui.finSel.filter(function (x) { return VOCALI.indexOf(x) < 0; }).length; }
     function nv() { return ui.finSel.length - nc(); }
     function rifai() {
       var tx = chi + "scegli " + FIN_CONS + " consonanti (" + nc() + "/" + FIN_CONS + ") e " + FIN_VOC + " vocale (" + nv() + "/" + FIN_VOC + ")";
       if (st.textContent !== tx) st.textContent = tx;
-      Object.keys(tasti).forEach(function (Lt) { tasti[Lt].classList.toggle("scelta", ui.finSel.indexOf(Lt) >= 0); });
+      Object.keys(tasti).forEach(function (Lt) { var s = ui.finSel.indexOf(Lt) >= 0; if (tasti[Lt].classList.contains("scelta") !== s) tasti[Lt].classList.toggle("scelta", s); });
       ok.disabled = !(nc() === FIN_CONS && nv() === FIN_VOC);
     }
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(function (Lt) {
-      var voc = VOCALI.indexOf(Lt) >= 0;
-      var b = el("button", { class: "ru-btn lettera" + (voc ? " voc" : ""), text: Lt, onclick: function () {
-        var i = ui.finSel.indexOf(Lt);
-        if (i >= 0) ui.finSel.splice(i, 1);
-        else if (voc) { ui.finSel = ui.finSel.filter(function (x) { return VOCALI.indexOf(x) < 0; }); ui.finSel.push(Lt); }   // la vocale si cambia con un tocco
-        else if (nc() < FIN_CONS) ui.finSel.push(Lt);
-        else { rianima(st, "no"); return; }
-        rifai();
-      } });
-      if (vm.chiamate.indexOf(Lt) >= 0) b.disabled = true;
-      tasti[Lt] = b; gri.appendChild(b);
-    });
-    ui.azioni.appendChild(gri);
+    ui.finTocca = function (Lt) {
+      var voc = VOCALI.indexOf(Lt) >= 0, i = ui.finSel.indexOf(Lt);
+      if (ui.finSelK !== key || ui.vm.chiamate.indexOf(Lt) >= 0) return;
+      if (i >= 0) ui.finSel.splice(i, 1);
+      else if (voc) { ui.finSel = ui.finSel.filter(function (x) { return VOCALI.indexOf(x) < 0; }); ui.finSel.push(Lt); }   // la vocale si cambia con un tocco
+      else if (nc() < FIN_CONS) ui.finSel.push(Lt);
+      else { rianima(st, "no"); return; }
+      rifai();
+    };
     ui.azioni.appendChild(el("div", { class: "ru-riga" }, [ ok ]));
     rifai();
     contoSu(ui, vm, ok);
+    // (il tempo finisce a metà scelta: le lettere che ho toccato le mando lo stesso, le altre le sceglie il gioco)
+    clearTimeout(ui.tSel);
+    if (vm.resta > 0) ui.tSel = setTimeout(function () {
+      var v = ui.vm;
+      if (!ui.S.vivo() || !v || v.fase !== "flettere" || !v.miaFin || v.miaFin.scelto || ui.finSelK !== key || !ui.finSel.length) return;
+      cb.onAzione("lettere", { l: ui.finSel.slice(), parz: 1 });
+    }, Math.max(0, vm.resta - (vm.grazia || 0) - 350));
   }
   // mentre scrivi la soluzione cambiano solo il contatore e i due tasti (la tastiera resta com'è)
   function statoScritto(ui) {
     if (!ui.rsStato) return;
     var buchi = (ui.vm.tab.match(/_/g) || []).length, pieni = ui.scritto.filter(function (x) { return x; }).length;
-    var tx = ui.rsChi + (ui.vm.fase === "ftempo" ? "presto! " : "") + "scrivi le lettere che mancano (" + pieni + " di " + buchi + ")";
+    var cruci = ui.vm.fase === "lampo" && ui.vm.lampo && ui.vm.lampo.tipo === "cruci", intere = cruci ? paroleIntere(ui) : 0;
+    var tx = ui.rsChi + (cruci ? "scrivi le parole che sai, anche una sola (" + intere + (intere === 1 ? " parola pronta)" : " parole pronte)") :
+      (ui.vm.fase === "ftempo" ? "presto! " : "") + "scrivi le lettere che mancano (" + pieni + " di " + buchi + ")");
     if (ui.rsStato.textContent !== tx) ui.rsStato.textContent = tx;
-    ui.okBtn.disabled = pieni < buchi;
+    ui.okBtn.disabled = cruci ? !intere : pieni < buchi;
     if (!ui.annBtn) return;
     // senza aver scritto niente si torna indietro (una volta per turno); se no si rinuncia e si perde il turno
     var tb = !pieni && ui.vm.indietro ? "↩ Indietro" : ui.vm.exp ? "🏳️ Scendo (Bancarotta)" : "🏳️ Rinuncio";
     if (ui.annBtn.textContent !== tb) ui.annBtn.textContent = tb;
+    if (pieni) ui.haScritto = true;
+    if (ui.annBtn.hidden !== !!ui.haScritto) ui.annBtn.hidden = !!ui.haScritto;
+  }
+  // 🔒 «La so!»: si può bloccare la soluzione? (online e contro i Bot, non sullo stesso telefono; una volta per manche)
+  function segK(vm) { return (vm.gameId || "") + ":" + vm.manche; }
+  function puoSegretaQui(ui, vm) {
+    var cb = ui.cb, me = trovaG(vm, cb.myId);
+    return !cb.telefono && !cb.guarda && !!me && !me.via && FASI_SEG.indexOf(vm.fase) >= 0 && vm.fase !== "risolvi" && vm.turno !== cb.myId &&
+      !(vm.lock && vm.lock.indexOf(cb.myId) >= 0) && (vm.cons + vm.voc) > 0 && valoreSeg(quotaTab(vm.tab)) > 0;   // (solo sotto il 40% di lettere scoperte)
+  }
+  // mentre scrivo in segreto escono altre lettere: le mie restano nelle caselle giuste
+  function rimappaSegreto(ui, vm) {
+    if (ui.segTab === vm.tab) return;
+    var prima = [], dopo2 = [], k;
+    for (k = 0; k < (ui.segTab || "").length; k++) if (ui.segTab.charAt(k) === "_") prima.push(k);
+    for (k = 0; k < vm.tab.length; k++) if (vm.tab.charAt(k) === "_") dopo2.push(k);
+    ui.scritto = dopo2.map(function (p) { var j = prima.indexOf(p); return j >= 0 ? ui.scritto[j] || "" : ""; });
+    ui.cur = Math.max(0, ui.scritto.indexOf("")); if (ui.cur >= dopo2.length) ui.cur = 0;
+    ui.segTab = vm.tab; ui.kTab = "";
+  }
+  function tastiSegreto(ui, vm) {
+    var el = ui.el, cb = ui.cb;
+    tastiera();
+    ui.rsChi = "🔒 In segreto: ";
+    ui.rsStato = el("div", { class: "ru-stato piccolo" });
+    ui.azioni.appendChild(ui.rsStato);
+    ui.annBtn = null;
+    var ann = el("button", { class: "ru-btn annulla", text: "↩ Lascia stare", onclick: function () { ui.segreto = null; ui.scritto = []; ui.cur = 0; ui.kTast = ""; ui.ridisegna(); } });
+    ui.okBtn = el("button", { class: "ru-btn segreta", text: "🔒 Blocca · vale " + fmtN(valoreSeg(quotaTab(vm.tab))), onclick: function () {
+      var k = 0, testo = ui.vm.tab.replace(/_/g, function () { return ui.scritto[k++] || "?"; });
+      ui.segreto = null; ui.scritto = []; ui.cur = 0; ui.kTast = ""; ui.segInv = segK(ui.vm);
+      cb.onAzione("segreta", { t: testo, v: valoreSeg(quotaTab(ui.vm.tab)) }); vibra(20);   // (il valore scritto sul tasto: l'host lo tiene, se è arrivato un attimo dopo una lettera)
+      ui.ridisegna();
+    } });
+    ui.azioni.appendChild(el("div", { class: "ru-riga" }, [ ann, ui.okBtn ]));
+    statoScritto(ui);
+  }
+  // 🧩 quante parole del CruciRuota sono scritte tutte (le caselle coperte di una riga piene)
+  function paroleIntere(ui) {
+    var tab = ui.vm.tab, b = 0, rg = 0, righe = {};
+    for (var i = 0; i < tab.length; i++) {
+      var ch = tab.charAt(i);
+      if (ch === "|") { rg++; continue; }
+      if (ch !== "_") continue;
+      var r = righe[rg] || (righe[rg] = { tot: 0, pieni: 0 });
+      r.tot++; if (ui.scritto[b]) r.pieni++; b++;
+    }
+    return Object.keys(righe).filter(function (k) { return righe[k].pieni === righe[k].tot; }).length;
   }
   function finale(t, vm, cb) {
     stile();   // (chi arriva proprio alla fine non ha mai aperto lo studio: il riquadro della finale ha bisogno delle regole di stile)
@@ -2178,21 +3337,27 @@
         t.el("span", { class: "punti", text: fmtN(r.punti) }) ]));
     });
     s._contenuto.appendChild(ol);
-    // com'è andata la finale (e, per il campione, dove sono finite le Speed Coins)
-    var F = vm.fin;
-    if (F) {
-      var righeF = [ F.vinto ? "🏆 Finale vinta da " + F.nome + ": " + fmtN(F.premio || 0) + " Speed Coins! 🪙" :
-        "🏆 Finale: " + F.nome + (F.via ? " è uscito" : " non ce l'ha fatta") + (F.premi && F.busta >= 0 ? " (nella busta c'erano " + fmtN(F.premi[F.busta]) + " Speed Coins)" : "") ];
+    // ✉️ la busta di chi ha vinto (e dove sono finite le Speed Coins) e 🏆 com'è andata la finale per tutti
+    var F = vm.fin, BB = (vm.buste || []).filter(function (b) { return b.premio; }), righeF = [];
+    if (BB.length) {
+      righeF.push(BB.length === 1 ? "✉️ " + BB[0].nome + " ha vinto e ha aperto la busta: " + fmtN(BB[0].premio) + " Speed Coins! 🪙" :
+        "✉️ Pari merito, una busta a testa: " + BB.map(function (b) { return b.nome + " " + fmtN(b.premio); }).join(" · ") + " Speed Coins! 🪙");
       var es = INCASSI[vm.gameId];
-      if (F.vinto && es === "ok" && (cb.telefono || F.id === cb.myId)) righeF.push("Sono già nel tuo salvadanaio!");
-      else if (F.vinto && es === "noprofilo") righeF.push("Per incassare le Speed Coins serve un profilo.");
-      else if (F.vinto && cb.telefono && !es) {
+      var prP = cb.telefono && BB.length > 1 && es === "ok" ? profiloAttivo() : null, suaB = prP ? BB.filter(function (b) { return stessoNome(prP.nome, b.nome); })[0] : null;
+      if (suaB) righeF.push("Le " + fmtN(suaB.premio) + " Speed Coins di " + suaB.nome + " sono già nel suo salvadanaio: vanno solo a chi ha il profilo su questo telefono.");
+      else if (es === "ok" && (cb.telefono || BB.some(function (b) { return b.id === cb.myId; }))) righeF.push("Sono già nel tuo salvadanaio!");
+      else if (es === "noprofilo") righeF.push("Per incassare le Speed Coins serve un profilo.");
+      else if (cb.telefono && !es) {
         var pr = profiloAttivo();
         righeF.push(pr && pr.nome ? "Le Speed Coins vanno solo a " + pr.nome + ", che ha il profilo su questo telefono." : "Per incassare le Speed Coins serve un profilo.");
       }
       if (vm.decimo) righeF.push("(Contro i Bot e sullo stesso telefono le buste valgono un decimo.)");
-      s._contenuto.appendChild(t.el("div", { class: "ru-fin-box" + (F.vinto ? " vinto" : "") }, righeF.map(function (x, i) { return t.el(i ? "small" : "b", { text: x }); })));
     }
+    if (F && F.g) {
+      var fl = vm.giocatori.filter(function (p) { return F.g[p.id]; }).sort(function (a, b) { return (F.g[b.id].tot || 0) - (F.g[a.id].tot || 0); });
+      righeF.push("🏆 Finale: " + fl.map(function (p) { var g = F.g[p.id]; return p.nome + " +" + fmtN(g.tot || 0) + " (" + (g.risolte || 0) + " su 3)"; }).join(" · "));
+    }
+    if (righeF.length) s._contenuto.appendChild(t.el("div", { class: "ru-fin-box" + (BB.length ? " vinto" : "") }, righeF.map(function (x, i) { return t.el(i ? "small" : "b", { text: x }); })));
     var fac = cb.online && !cb.telefono && !cb.targa && t.faccine ? t.faccine() : null;   // online: le faccine mentre si guarda la classifica
     if (fac) s._contenuto.appendChild(t.el("div", { class: "ru-fac-fine" }, [ fac ]));
     // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
@@ -2325,12 +3490,52 @@
       "@keyframes ruTempo{0%{transform:scaleX(1);background:#69db7c}60%{background:#ffd43b}100%{transform:scaleX(0);background:#ff6b6b}}",
       ".ru-msg{align-self:center;max-width:100%;text-align:center;font-weight:800;font-size:.8rem;line-height:1.2;padding:3px 10px;border-radius:99px;background:rgba(7,4,26,.75);color:#fff}",
       ".ru-msg:empty{display:none}",
-      // la ruota sul maxischermo (senza il margine che lo studio lascia per la barra)
-      ".ru-studio .st-sch-in{padding:0!important}",
-      ".ru-ruota-sch{position:absolute;left:3%;right:3%;top:50%;aspect-ratio:1;transform:translateY(-50%)}",
-      ".ru-disco{display:block;width:100%;height:100%;border-radius:50%;box-shadow:0 8px 28px rgba(0,0,0,.55),0 0 34px rgba(255,194,71,.16);will-change:transform}",
-      ".ru-freccia{position:absolute;left:50%;top:-5%;width:12%;height:12%;transform:translateX(-50%)}.ru-freccia svg{display:block;width:100%;height:100%}",
-      ".ru-centro{position:absolute;left:50%;top:50%;width:18%;height:18%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#e0a020 70%,#a86d00);box-shadow:0 0 0 3px #171230,0 3px 8px rgba(0,0,0,.6)}",
+      ".ru-punti{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 6px}",
+      ".ru-chip{display:inline-flex;align-items:center;gap:4px;max-width:46%;padding:1px 8px 1px 6px;border-radius:99px;background:rgba(7,4,26,.72);color:#dfe2f5;font-size:.72rem;font-weight:700;line-height:1.5;border:1px solid transparent;transition:border-color .25s,background .25s}",
+      ".ru-chip i{flex:none;width:7px;height:7px;border-radius:50%}",
+      ".ru-chip .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}",
+      ".ru-chip b{flex:none;color:#fff;font-weight:900;font-variant-numeric:tabular-nums}",
+      ".ru-chip small{flex:none;font-size:.6rem;font-weight:700;color:#aeb3d6;font-variant-numeric:tabular-nums}.ru-chip small:empty{display:none}",
+      ".ru-chip.incassa{border-color:var(--o-oro);background:rgba(70,48,10,.85)}.ru-chip.incassa b{color:var(--o-oro)}",
+      ".ru-chip.on{border-color:var(--o-oro);background:rgba(40,24,70,.9)}",
+      ".st-leggio .ru-lock{position:absolute;z-index:6;left:-4%;top:2%;padding:.1em .3em;border-radius:.6em;background:#1b1f3a;font-size:1.5em;line-height:1.2;box-shadow:0 0 0 .08em #ffc247,0 .1em .3em rgba(0,0,0,.5);opacity:0;transform:scale(.3);transition:opacity .3s,transform .35s cubic-bezier(.3,1.6,.5,1);pointer-events:none}",
+      ".st-leggio .ru-lock.on{opacity:1;transform:scale(1)}",
+      ".st-leggio .ru-lock.scatta{animation:ruScatta .5s ease-out}",
+      "@keyframes ruScatta{0%{transform:scale(1.6)}100%{transform:scale(1)}}",
+      ".ru-btn.segreta{background:#1b1f3a;color:#ffd77a;box-shadow:inset 0 0 0 2px #ffc247}",
+      // 🎡 giro 3: la ruota sul pavimento davanti ai concorrenti (ellisse in prospettiva); quando tocca girare si «alza» (vista dall'alto)
+      ".ru-ruota{pointer-events:none;z-index:2}",
+      ".ru-piatto,.ru-ombra{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:50%;transform-origin:50% 100%}",
+      ".ru-piatto{transform:scaleY(var(--k,.3))}",
+      ".ru-ombra{background:radial-gradient(closest-side,#6a4506 0%,#3a2404 86%,rgba(0,0,0,0) 100%);transform:translateY(var(--sp,10px)) scaleY(var(--k,.3));box-shadow:0 0 50px 16px rgba(0,0,0,.55)}",
+      ".ru-ruota canvas,.ru-piatto-alto canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}",
+      ".ru-disco{border-radius:50%;will-change:transform}",
+      ".ru-ruota.gira .ru-lamp.a,.ru-alto.gira .ru-lamp.a{animation:ruLampA .3s steps(1) infinite}.ru-ruota.gira .ru-lamp.b,.ru-alto.gira .ru-lamp.b{animation:ruLampB .3s steps(1) infinite}",
+      "@keyframes ruLampA{0%{opacity:1}50%{opacity:.12}}@keyframes ruLampB{0%{opacity:.12}50%{opacity:1}}",
+      ".ru-centro{position:absolute;left:50%;top:50%;width:16%;height:16%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2c2,#e8a91e 62%,#9a6200);box-shadow:0 0 0 5px #3a2200,0 0 0 9px #ffd76a,0 4px 12px rgba(0,0,0,.6)}",
+      ".ru-piatto .ru-centro{box-shadow:0 0 0 3px #3a2200,0 0 0 5px #ffd76a}",
+      ".ru-lancetta{position:absolute;left:50%;top:-4.6%;width:10%;height:15.3%;margin-left:-5%;transform-origin:50% 20.6%;z-index:3;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5))}.ru-lancetta svg{display:block;width:100%;height:100%}",
+      ".ru-invito{position:absolute;inset:-1.5%;border-radius:50%;box-shadow:0 0 0 6px rgba(255,255,255,.85),0 0 30px 8px rgba(255,214,110,.75);opacity:0;pointer-events:none}",
+      ".ru-alto.tocca .ru-invito{animation:ruInvito 1.1s ease-in-out infinite alternate}",
+      "@keyframes ruInvito{from{opacity:.1}to{opacity:.85}}",
+      // la ruota vista dall'alto: sopra lo studio (che si scurisce), sotto il tabellone e la tastiera
+      ".ru-alto{position:absolute;inset:0;z-index:18;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .45s,visibility 0s .45s}",
+      ".ru-alto.on{opacity:1;visibility:visible;transition:opacity .45s}",
+      ".ru-buio{position:absolute;inset:0;pointer-events:none}",
+      ".ru-piatto-alto{position:absolute;border-radius:50%;box-shadow:0 12px 34px rgba(0,0,0,.65);transform:scale(.84);transform-origin:50% 0;transition:transform .55s cubic-bezier(.3,1.25,.5,1);will-change:transform}",
+      ".ru-alto.on .ru-piatto-alto{transform:scale(1)}",
+      ".ru-alto.on.vicino .ru-piatto-alto{transform:scale(1.42);transition:transform 1.1s cubic-bezier(.4,0,.2,1)}",
+      ".ru-alto.tocca .ru-piatto-alto{pointer-events:auto;cursor:grab;touch-action:none}",
+      ".ru-mano{position:absolute;left:0;top:0;pointer-events:none;opacity:0;z-index:4;will-change:transform,opacity}.ru-mano svg{display:block;width:100%;height:100%;filter:drop-shadow(0 4px 4px rgba(0,0,0,.5))}",
+      // al posto del maxischermo: il riquadro nella scena (buste, finale) e la striscia dei giochi veloci sotto il tabellone
+      ".ru-quadro-box{position:absolute;left:0;top:0;z-index:19;transform-origin:0 0;opacity:0;pointer-events:none;transition:opacity .35s;border-radius:24px;background:radial-gradient(120% 60% at 50% 0%,rgba(255,79,134,.18),rgba(13,16,32,.96) 62%);box-shadow:0 0 0 4px #0a0c18,0 0 0 7px rgba(255,194,71,.6),0 18px 40px rgba(0,0,0,.6)}",
+      ".ru-quadro-box.on{opacity:1}.ru-quadro-in{position:absolute;inset:0}",
+      ".ru-striscia{display:flex;justify-content:center}.ru-striscia[hidden]{display:none}",
+      ".ru-striscia .ru-quadro{position:static;transform:none;aspect-ratio:auto;flex-direction:row;gap:7px;padding:2px 12px;border-radius:99px;background:rgba(7,4,26,.84);box-shadow:inset 0 0 0 1.5px rgba(77,171,247,.75);max-width:100%;min-width:0}",
+      ".ru-striscia .ru-campana{font-size:19px}.ru-striscia .ru-sch-tit{font-size:15px;text-shadow:0 2px 0 #a85c00;white-space:nowrap}",
+      ".ru-striscia .ru-sch-sub{font-size:11.5px;min-height:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}",
+      // la sigla: il tabellone scrive il nome del gioco; il resto arriva dopo
+      ".ru-sopra.sigla .ru-cat,.ru-sopra.sigla .ru-msg,.ru-sopra.sigla .ru-punti,.ru-sopra.sigla .ru-orol,.ru-sopra.sigla .ru-striscia{visibility:hidden}",
       // i quadri del maxischermo (la campanella della frase lampo, le buste della finale): nel quadrato al centro, come la ruota
       ".ru-quadro{position:absolute;left:4%;right:4%;top:50%;aspect-ratio:1;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;color:#fff}",
       ".ru-campana{font-size:110px;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));transform-origin:50% 12%}",
@@ -2348,6 +3553,14 @@
       ".ru-busta.scelta{transform:translateY(-8px) scale(1.12);box-shadow:0 0 0 4px #ffd43b,0 0 26px rgba(255,212,59,.85)}",
       ".ru-busta.aperta .v{opacity:1}.ru-busta.aperta.spenta{opacity:.7}",
       ".ru-busta.aperta.scelta .v{font-size:20px}",
+      ".ru-busta.aperta.vince{box-shadow:0 0 0 4px #51cf66,0 0 30px rgba(81,207,102,.9)}",
+      // 🏆 la finale per tutti sul maxischermo: una riga per concorrente (nome, com'è andata, punti della finale)
+      ".ru-fin-sch{box-sizing:border-box}",   // (chi ha finito o guarda vede il maxischermo da vicino: con la telecamera su tutti, metà stava dietro il tabellone)
+      ".ru-fin-lista{display:flex;flex-direction:column;gap:10px;width:92%}",
+      ".ru-fin-riga{display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:14px;background:rgba(255,255,255,.08);font-size:24px;font-weight:800;color:#e7ecff;transition:background .3s}",
+      ".ru-fin-riga .n{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".ru-fin-riga b{flex:none;font-weight:900}.ru-fin-riga i{flex:none;min-width:3.6em;text-align:right;font-style:normal;font-weight:900;color:#ffd43b;font-variant-numeric:tabular-nums}",
+      ".ru-fin-riga.ok{background:rgba(81,207,102,.22);box-shadow:inset 0 0 0 2px rgba(81,207,102,.7)}.ru-fin-riga.via{opacity:.4}",
       // i tasti, nella barra dello studio
       ".ru-studio .st-barra{gap:6px;padding:10px 8px calc(10px + env(safe-area-inset-bottom))}",
       ".ru-azioni{display:flex;flex-direction:column;gap:6px;color:#fff}",
@@ -2369,6 +3582,18 @@
       ".ru-btn.lettera{min-height:38px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo-oro);color:var(--o-testo);font-size:1.02rem}.ru-btn.lettera:disabled{opacity:.25}",
       ".ru-btn.lettera.voc{box-shadow:inset 0 0 0 1.5px var(--n-sfida)}",
       ".ru-btn.lettera.scelta{background:var(--o-tasto);color:var(--o-tasto-testo);box-shadow:0 0 0 2px #fff inset}",
+      ".ru-qwerty{display:flex;flex-direction:column;gap:4px}.ru-qwerty[hidden]{display:none}",
+      ".ru-qr{display:flex;gap:3px;justify-content:center}",
+      ".ru-qr .ru-btn.lettera{flex:0 0 calc((100% - 27px) / 10);min-width:0;min-height:36px;padding:0;border-radius:8px;font-size:.98rem;transition:background .15s,transform .15s,opacity .15s}",
+      ".ru-qr .ru-btn.canc{flex-basis:calc((100% - 27px) / 10 * 1.5)}.ru-qr .ru-btn.canc.nasc{visibility:hidden}",
+      ".ru-qwerty .ru-btn.lettera:disabled{opacity:.6}.ru-qwerty.attiva .ru-btn.lettera:disabled{opacity:.3}",
+      ".ru-qwerty .ru-btn.lettera.voc{color:#9fe7ff}",
+      ".ru-qwerty .ru-btn.lettera.si{background:rgba(255,194,71,.2);color:#ffd27a;box-shadow:inset 0 0 0 1px rgba(255,194,71,.55)}",
+      ".ru-qwerty .ru-btn.lettera.no{text-decoration:line-through;text-decoration-thickness:2px;opacity:.25}",
+      ".ru-qwerty .ru-btn.lettera.sel{background:var(--sel,#ffc247);color:#0d1020;opacity:1;box-shadow:inset 0 0 0 2px #fff,0 0 12px var(--sel,#ffc247);transform:translateY(-3px)}",
+      ".ru-cella.scritta.vivo{background:#ffe7a3;color:#a14b00}",
+      "@media (max-height:700px){.ru-qr .ru-btn.lettera{min-height:32px}.ru-azioni .ru-btn{min-height:40px}}",
+      "@media (min-height:820px){.ru-qr .ru-btn.lettera{min-height:42px}}",
       ".ru-btn.canc{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--o-rosso);color:var(--o-rosso-testo)}",
       ".ru-bot-riga{display:flex;align-items:center;gap:8px;justify-content:center;font-weight:800}",
       // la classifica: com'è andata la finale e le faccine
@@ -2422,7 +3647,7 @@
 
   SG.registra({
     id: ID, nome: "La Ruota della Fortuna", icona: "🎡",
-    descrizione: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase! Come in TV: Bancarotta, Passa, Jolly, la frase lampo da prenotare, l'Express, lo spicchio Mistero, l'ultimo round veloce e la finale per le Speed Coins. E potete metterci le vostre frasi!",
+    descrizione: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase! Come in TV: prima di ogni manche un gioco veloce (frase lampo, Ruota del tempo, GiraMondo, Triplete, CruciRuota), Raddoppia, Express, Mistero, il giro finale e la finale con 3 tabelloni per tutti insieme. Chi vince (se non è un Bot) sceglie una busta di Speed Coins. Mentre aspetti puoi bloccare la soluzione in segreto. Più di 3.000 frasi, e potete metterci le vostre!",
     giocatoriMin: 1, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 1–4 giocatori",
     postiOnline: MAX,   // 4 alla ruota: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
     riprende: true,     // online: se l'host ricarica a metà partita, la partita riprende (stessa frase, tocca a chi toccava)
@@ -2435,16 +3660,19 @@
     regole: [
       "Si indovina una <b>frase nascosta</b>: si sa solo la categoria.",
       "Nel tuo turno <b>giri la ruota</b> e chiami una <b>consonante</b>: guadagni quello che dice lo spicchio per ogni lettera che c'è. Se la lettera non c'è, il turno passa.",
-      "<b>Bancarotta</b>: perdi i soldi della manche. <b>Passa</b>: perdi il turno. <b>Jolly</b>: lo tieni (lo vedi sul tuo leggio); se chiami una lettera che non c'è, sbagli la soluzione o esce Passa, ti fa giocare ancora.",
+      "<b>Bancarotta</b>: perdi i soldi della manche. <b>Passa</b>: perdi il turno. <b>Raddoppia</b>: i soldi della manche diventano il doppio e giri ancora. <b>Jolly</b>: lo tieni (lo vedi sul tuo leggio); se chiami una lettera che non c'è, sbagli la soluzione o esce Passa, ti fa giocare ancora.",
       "Con almeno " + COSTO_VOCALE + " puoi <b>comprare una vocale</b>. Quando pensi di saperla, <b>risolvi</b>: scrivi le lettere che mancano (tocca una casella per scriverci).",
       "Chi risolve si tiene i soldi della manche (almeno " + fmtN(MINIMO_RISOLVI) + "). Vince chi alla fine ne ha di più.",
-      "🔔 <b>Prenota</b>: ogni manche si apre con una frase lampo. Le lettere compaiono da sole: chi la sa tocca <b>Prenoto!</b> e la scrive. Vale " + fmtN(PREMIO_LAMPO) + " e chi la indovina comincia la manche; chi sbaglia è fuori da quella frase. Online vince chi ha i riflessi più pronti, non chi ha internet più veloce.",
+      "🔔 <b>Giochi veloci</b>: ogni manche si apre con un gioco senza ruota, ogni volta diverso. Le lettere compaiono da sole: chi la sa tocca <b>Prenoto!</b> e la scrive; chi sbaglia è fuori da quel gioco. Online vince chi ha i riflessi più pronti, non chi ha internet più veloce.",
+      "I giochi veloci: 🔔 <b>Frase lampo</b> (vale " + fmtN(PREMIO_LAMPO) + "); ⏳ <b>La ruota del tempo</b> (vedi un anno: cosa è successo?); 🌍 <b>GiraMondo</b> (una parola straniera curiosa: cosa vuol dire?); 🎯 <b>Triplete</b> (3 frasi sullo stesso tema, " + fmtN(PREMIO_LAMPO) + " l'una, tutte e 3 alla stessa persona +" + fmtN(TRI_BONUS) + "); 🧩 <b>CruciRuota</b> (4 parole sul tema, una per riga: prenoti e scrivi quelle che sai, " + fmtN(CRUCI_PAROLA) + " l'una). Comincia la manche chi ha vinto il gioco veloce.",
+      "🔒 <b>La so!</b> Mentre gioca un altro puoi scrivere la soluzione in segreto e bloccarla (una volta per manche), ma solo all'inizio: finché è scoperto meno del 40% delle lettere. Il tasto ti dice quanto vale adesso: " + fmtN(SEG_MAX) + " a tabellone vuoto, poi sempre meno. Nessuno la vede: a fine manche, se era giusta prendi quei punti, se era sbagliata ne perdi metà. Online e contro i Bot, non sullo stesso telefono.",
       "🚂 <b>Express</b>: se la ruota si ferma lì, puoi salire sull'Express. Chiami consonanti senza girare (" + fmtN(EXPRESS_V) + " l'una), compri vocali e quando vuoi ti fermi e risolvi. Ma se sbagli una lettera o la soluzione: <b>Bancarotta</b>! Oppure giochi lo spicchio come uno normale.",
-      "⚡ <b>Ultimo round veloce</b>: la ruota gira una volta sola. Ogni consonante vale quella cifra più " + fmtN(BONUS_VELOCE) + ", le vocali sono gratis ma non valgono niente. A turno si chiama una lettera e, se c'è, hai 5 secondi per decidere se risolvere.",
-      "🏆 <b>Finale</b>: chi vince la partita sceglie una busta con un premio in Speed Coins (da 500 a 5.000), vede R S T L N E, sceglie 3 consonanti e una vocale e ha 10 secondi per risolvere. Le Speed Coins vanno a chi ha un profilo; contro i Bot e sullo stesso telefono le buste valgono un decimo.",
+      "🔔 <b>Giro finale</b>: nell'ultima manche la ruota gira una volta sola. Ogni consonante vale quella cifra più " + fmtN(BONUS_VELOCE) + ", le vocali sono gratis ma non valgono niente. A turno si chiama una lettera e, se c'è, hai 5 secondi per decidere se risolvere.",
+      "🏆 <b>Finale</b>: dopo l'ultima manche giocano tutti insieme, ognuno sul suo telefono, Bot compresi: 3 tabelloni con la stessa frase per tutti. 1) <b>Le tue lettere</b>: vedi R S T L N E e scegli in segreto 3 consonanti e una vocale (10 secondi), poi hai 30 secondi; 2) <b>Testacoda</b>: vedi la prima e l'ultima lettera di ogni parola, 30 secondi; 3) <b>Rubasecondi</b>: chiami le lettere che vuoi (una vocale sola), ma ogni lettera che non c'è ti toglie 3 secondi, 40 secondi. Ogni tabellone risolto vale da " + fmtN(FIN_BASE) + " a " + fmtN(FIN_BASE + FIN_BONUS) + ": più tempo ti restava, più prendi. Se sbagli riprovi; puoi anche passare. I punti vanno nel totale e possono cambiare chi vince. Online e contro i Bot (sullo stesso telefono non c'è).",
+      "✉️ <b>La busta</b>: alla fine chi vince la partita (se non è un Bot) sceglie una busta tra cinque: da 500 a 5.000 Speed Coins. A pari merito al primo posto, una busta a testa (uno dopo l'altro). Le Speed Coins vanno a chi ha un profilo; contro i Bot e sullo stesso telefono le buste valgono un decimo.",
       "❓ <b>Mistero</b>: nelle ultime due manche (non nel round veloce) uno spicchio è il Mistero. Ci cadi e chiami una consonante da " + fmtN(MIST_V) + ": se c'è, scegli se tenerti i soldi o <b>aprire il Mistero</b>. Metà delle volte vale " + fmtN(MIST_PREMIO) + " in più, metà delle volte è <b>Bancarotta</b>! Aperto una volta, torna uno spicchio da " + fmtN(MIST_V) + ".",
       "✍️ <b>Le vostre frasi</b>: con «Frasi: Anche le nostre» l'host scrive nelle impostazioni fino a 5 frasi della compagnia (restano sul suo telefono). Online anche chi guarda può mandarne una con «✍️ Scrivi una frase»: nessuno la vede prima e, se gioca, chi l'ha scritta non la riceve. Escono al massimo una manche su due, con la firma accanto alla categoria.",
-      "Online hai 30 secondi per ogni mossa e 60 per risolvere: la barretta sopra i tasti ti dice quanto tempo resta. A fine manche si riparte da soli dopo 10 secondi, o subito se più di metà di chi gioca tocca «⏩ Avanti». I round speciali si accendono e si spengono nelle impostazioni."
+      "Online hai " + (T_MOSSA / 1000) + " secondi per ogni mossa e " + (T_RISOLVI / 1000) + " per risolvere: la barretta sopra i tasti ti dice quanto tempo resta. A fine manche si riparte da soli dopo 10 secondi, o subito se più di metà di chi gioca tocca «⏩ Avanti». I round speciali si accendono e si spengono nelle impostazioni."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
@@ -2485,8 +3713,9 @@
       // i round speciali del programma vero: si accendono e si spengono uno per uno (accesi di base)
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Round speciali, come in TV" }));
       var gs = el("div", { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" });
-      [["prenota", "🔔 Prenota"], ["express", "🚂 Express"], ["veloce", "⚡ Round veloce"], ["finale", "🏆 Finale"], ["mistero", "❓ Mistero"]].forEach(function (r) {
+      [["prenota", "🔔 Giochi veloci"], ["express", "🚂 Express"], ["veloce", "⚡ Giro finale"], ["finale", "🏆 Finale"], ["mistero", "❓ Mistero"]].forEach(function (r) {
         dove[r[0]] = true;
+        if (r[0] === "finale" && aiuti.modo === "telefono") return;   // (la finale per tutti si gioca ognuno sul suo telefono: sullo stesso telefono non c'è)
         var b = el("button", { class: "modo-chip attiva", style: "justify-content:center;text-align:center", onclick: function () {
           dove[r[0]] = !dove[r[0]]; b.className = "modo-chip" + (dove[r[0]] ? " attiva" : "");
         } }, [ el("div", { class: "mt", text: r[1] }) ]);
@@ -2509,5 +3738,5 @@
   });
 
   // per le prove
-  window.__RUOTA = { creaPartita: creaPartita, controllaFrase: controllaFrase, spicchiDi: spicchiDi, apreMistero: apreMistero, leggiNostre: leggiNostre, righe: righe, righeIdx: righeIdx, coperta: coperta, solo: solo, corta: corta, decidiBot: decidiBot, letteraBot: letteraBot, SPICCHI: SPICCHI, BUSTE: BUSTE, INCASSI: INCASSI };
+  window.__RUOTA = { creaPartita: creaPartita, controllaFrase: controllaFrase, spicchiDi: spicchiDi, apreMistero: apreMistero, leggiNostre: leggiNostre, righe: righe, righeIdx: righeIdx, coperta: coperta, solo: solo, corta: corta, valoreSeg: valoreSeg, quotaTab: quotaTab, decidiBot: decidiBot, letteraBot: letteraBot, SPICCHI: SPICCHI, BUSTE: BUSTE, INCASSI: INCASSI };
 })();

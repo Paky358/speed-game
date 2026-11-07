@@ -1352,7 +1352,7 @@
       if (fatto.disabled) no("scelto il look, «Fatto» resta spento");
       fatto.click();
       if (!await W.aspetta(function () { return home(N); }, 4000)) no("toccato «Fatto», non si arriva alla home");
-      if (!N.__fp.omino || N.__fp.omino.forma !== "donna" || N.__fp.omino.capo !== "vestitolungo") no("l'avatar salvato non è «Lei, Elegante» (" + JSON.stringify(N.__fp.omino || {}).slice(0, 80) + ")");
+      if (!N.__fp.omino || N.__fp.omino.forma !== "donna" || N.__fp.omino.capo !== "giacca") no("l'avatar salvato non è «Lei, Elegante» (" + JSON.stringify(N.__fp.omino || {}).slice(0, 80) + ")");
       if (!/Nina/.test(T(N))) no("nella home non c'è il nome del profilo");
       var ric = JSON.parse(N.localStorage.getItem("sg-ultimo-profilo") || "null");
       if (!ric || ric.nome !== "Nina") no("il telefono non ricorda il profilo");

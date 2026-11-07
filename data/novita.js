@@ -9,6 +9,51 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 318,
+    data: "7 novembre 2026",
+    titolo: "Avatar: vestiti nuovi, fantasie e un camerino tutto nuovo 👕",
+    descrizione: [
+      "👕 I vestiti degli avatar sono disegnati di nuovo, in stile moda: la felpa col cappuccio, il maglione a trecce, la camicia, la giacca col taschino, il chiodo di pelle con le zip (al posto del bomber), i jeans col risvolto, i pantaloni classici con la piega e i cargo con le tasche. Adesso si riconoscono a colpo d'occhio.",
+      "🎨 Più colori: 27 per i vestiti e i pantaloni, 16 per le scarpe, divisi a gruppi. Ogni capo arriva già col suo colore più bello; se il colore lo scegli tu, resta quello.",
+      "🌈 Secondo colore, fantasie e stoffe: coste, colletti e revers di un altro colore; righe, quadri, pois, mimetica, jeans e hawaiana; lana, pelle, raso e paillettes.",
+      "✋ Mani con 5 dita vere, la cravatta lunga che entra nella giacca e nella camicia, scarpe più grandi, collane e orecchini che si vedono, e il vestito da solo, senza i jeans sotto.",
+      "✨ Il camerino è nuovo: l'avatar su un palco con la luce, le schede Corpo, Viso, Testa, Sopra, Sotto, Scarpe ed Extra, colori e fantasie sempre a portata di dito, anteprime grandi divise a gruppi e «🎲 a caso» per ogni scheda.",
+      "👗 I look sono rifatti (Casual, Elegante, Sportivo, Rock, Estate, Inverno, Festa) e ci sono i nuovi «Colori che stanno bene»: abbinamenti pronti, basta un tocco.",
+      "🙂 Il tuo avatar resta tuo: cambiano il disegno dei vestiti, le mani e le scarpe, ma i colori e i capi che avevi scelto sono gli stessi. Fantasie e colori nuovi li metti tu, se vuoi."
+    ]
+  },
+  {
+    v: 317,
+    data: "7 novembre 2026",
+    titolo: "La Ruota della Fortuna come in TV, ma meglio 🎡",
+    descrizione: [
+      "🎡 La ruota sta sul pavimento dello studio, davanti ai concorrenti, come nel programma vero: niente più maxischermo in mezzo. Quando tocca girare la telecamera va sopra la ruota e la vedi dall'alto, grande.",
+      "👆 Si gira col dito: la trascini e la lasci andare. Più forte la lanci, più gira (e può girare anche all'indietro). Gli altri vedono la mano del tuo colore che spinge un piolo; anche il Bot la lancia con la sua mano.",
+      "😱 Alla fine rallenta piano piano: la lancetta batte su ogni chiodo, il tic si fa sempre più lento, la telecamera si avvicina alla lancetta col rullo di tamburi, e può fermarsi a un soffio dal confine. Se passa piano sulla Bancarotta il pubblico fa «ooh».",
+      "🌈 La ruota è nuova: colori pieni e accesi (rosso, arancio, giallo, verde, azzurro, viola, rosa), cerchio d'oro con le lampadine che corrono mentre gira, numeri grandi, spicchi speciali che si riconoscono subito.",
+      "🔤 All'inizio è il tabellone a scrivere «LA RUOTA DELLA FORTUNA», casella per casella. La campanella dei giochi veloci sta sotto il tabellone; le buste e la finale in un riquadro nello studio.",
+      "🎬 Prima di ogni manche c'è un gioco veloce, ogni volta diverso: la frase lampo, ⏳ La ruota del tempo (vedi un anno: cosa è successo?), 🌍 GiraMondo (una parola straniera curiosa: cosa vuol dire?), 🎯 il Triplete (tre frasi sullo stesso tema, e chi le fa tutte e tre prende 2.000 in più) e 🧩 il CruciRuota (quattro parole sul tema, una per riga: prenoti e scrivi quelle che sai).",
+      "🔒 «La so!»: mentre gioca un altro puoi scrivere la soluzione in segreto e bloccarla, ma solo all'inizio, finché è scoperto meno del 40% delle lettere. Il tasto ti dice quanto vale in quel momento (500 a tabellone vuoto, poi sempre meno). Nessuno la vede: a fine manche, se era giusta prendi quei punti, se era sbagliata ne perdi metà. Così anche chi aspetta gioca.",
+      "✖️2 Sulla ruota c'è lo spicchio Raddoppia: i soldi della manche diventano il doppio.",
+      "🏆 La finale è per tutti: dopo l'ultima manche giocate tutti insieme, ognuno sul suo telefono, Bot compresi. Tre tabelloni con la stessa frase per tutti: prima le tue lettere (scegli in segreto 3 consonanti e una vocale), poi il Testacoda (si vedono la prima e l'ultima lettera di ogni parola), poi il Rubasecondi (chiami le lettere che vuoi, ma ogni lettera che non c'è ti toglie 3 secondi). Chi risolve prima prende di più, da 500 a 1.500 punti a tabellone: la classifica può ancora cambiare. Online e contro i Bot.",
+      "✉️ Alla fine chi vince la partita, se non è un Bot, sceglie una busta tra cinque: da 500 a 5.000 Speed Coins (contro i Bot e sullo stesso telefono valgono un decimo). A pari merito, una busta a testa. Anche sullo stesso telefono.",
+      "📖 Più di 3.000 frasi in 35 argomenti (15 nuovi, come «Al bar», «Cose della mamma», «Cosa stai facendo?»), più 192 anni, 148 parole straniere e 130 cruciverba. Il telefono ricorda tutte le frasi già uscite, e online anche quelle già viste dagli amici che giocano con te: non tornano.",
+      "⌨️ In basso c'è sempre la tastiera come quella del telefono (Q W E R T Y), uguale per tutti: le lettere già chiamate sono colorate se ci sono e barrate se non ci sono. Per chiamare una lettera la tocchi e si accende: tutti vedono quale stai scegliendo; la tocchi di nuovo (o «✓ Chiama») e la chiami. Le vocali si comprano toccandole direttamente.",
+      "✍️ Quando qualcuno risolve, gli altri vedono le lettere comparire sul tabellone mentre le scrive. Finché non hai scritto niente puoi tornare indietro; dopo la prima lettera no, e se finisce il tempo vale quello che hai scritto.",
+      "💰 Sotto il tabellone, per ognuno, i soldi di questa manche in grande e il totale piccolo («tot 3.500»): a fine manche chi risolve incassa e gli altri ripartono da 0. La Bancarotta toglie solo i soldi della manche, mai il totale. Il giro finale si apre con la campana; online si hanno 15 secondi per ogni mossa."
+    ]
+  },
+  {
+    v: 316,
+    data: "7 novembre 2026",
+    titolo: "🎬 Lo Studio TV: luci da prima serata",
+    descrizione: [
+      "🌗 Il pubblico ora sta nella penombra, coi contorni accesi dai colori del gioco: il palco e i concorrenti si vedono meglio.",
+      "🏆 Alla fine della puntata chi vince ha la sua festa: parete d'oro, fari che si incrociano, coriandoli e pubblico in piedi con le braccia alzate.",
+      "🧘 Con «riduci movimento» acceso sul telefono niente coriandoli né fari che si muovono."
+    ]
+  },
+  {
     v: 315,
     data: "6 novembre 2026",
     titolo: "🧍 La Sala: più spazio agli avatar",
