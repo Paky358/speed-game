@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 322,
+    data: "9 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: calciatori più belli, in campo e sulle figurine 🃏",
+    descrizione: [
+      "In campo i calciatori hanno la testa un po' più grande, con l'ombra sotto il mento e sotto i capelli, e un contorno leggero che li stacca dal prato: si riconoscono meglio anche da lontano.",
+      "Le figurine sono da album vero: luce dietro il calciatore, la curva dello stadio sullo sfondo, lo scudetto della squadra e il nome sulla fascia colorata.",
+      "Sulle figurine il viso ha luce e ombre morbide e occhi veri, i capelli sono a ciocche, il colletto della maglia è fatto bene e la barba folta segue la mascella senza coprire le guance."
+    ]
+  },
+  {
     v: 321,
     data: "8 novembre 2026",
     titolo: "Mini Asta Fantacalcio: i calciatori veri in campo e la figurina 🃏",

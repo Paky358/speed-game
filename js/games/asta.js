@@ -2553,7 +2553,7 @@
   var FIG_CACHE = {};
   function figurinaCanvas(c, prezzo, w) {   // c: { nome, squadra, ruolo }. Torna il canvas (w px di larghezza) o null
     if (!c || !c.squadra) return null;
-    var k = c.nome + "|" + c.squadra + "|" + prezzo + "|" + Math.round(w);
+    var k = c.nome + "|" + c.squadra + "|" + prezzo + "|" + Math.round(w) + (GRAF2.on ? "|2" : "");
     if (FIG_CACHE[k]) return FIG_CACHE[k];
     var d = Math.min(2, window.devicePixelRatio || 1), h = Math.round(w * 1.36), cv = document.createElement("canvas");
     cv.width = Math.round(w * d); cv.height = Math.round(h * d); cv.style.width = w + "px"; cv.style.height = h + "px";
@@ -2562,7 +2562,8 @@
     var ruolo = { P: "PORTIERE", D: "DIFENSORE", C: "CENTROCAMPISTA", A: "ATTACCANTE" }[c.ruolo] || "";
     function tondo(x, y, ww, hh, rr) { cx.beginPath(); cx.moveTo(x + rr, y); cx.arcTo(x + ww, y, x + ww, y + hh, rr); cx.arcTo(x + ww, y + hh, x, y + hh, rr); cx.arcTo(x, y + hh, x, y, rr); cx.arcTo(x, y, x + ww, y, rr); cx.closePath(); }
     function nomeIn(testo, x, y, maxW, fs, colore) { cx.font = "900 " + fs + "px system-ui,sans-serif"; var l = cx.measureText(testo).width; if (l > maxW) { fs = Math.floor(fs * maxW / l); cx.font = "900 " + fs + "px system-ui,sans-serif"; } cx.fillStyle = colore; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(testo, x, y); }
-    {   // la figurina da album: cartoncino crema, dentro i colori della squadra, il calciatore a mezzo busto, la fascia col nome
+    if (GRAF2.on) albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn);   // ✨ (la grafica nuova)
+    else {   // la figurina da album: cartoncino crema, dentro i colori della squadra, il calciatore a mezzo busto, la fascia col nome
       var m = w * 0.045, iw = w - 2 * m, ih = h * 0.78;
       cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07); cx.fillStyle = "#f6f1e3"; cx.fill(); cx.shadowColor = "transparent";
       cx.save(); tondo(m, m, iw, ih, w * 0.045); cx.clip();
@@ -4766,7 +4767,7 @@
     var d = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth || +cv.getAttribute("width") || 40, h = cv.clientHeight || w;
     cv.width = Math.round(w * d); cv.height = Math.round(h * d);
     var cx = cv.getContext("2d"); cx.setTransform(d, 0, 0, d, 0, 0); cx.clearRect(0, 0, w, h); cx.save(); cx.translate(w / 2, 0);
-    testaVera(cx, h * 0.54, Math.min(w, h) * 0.3, coloriAspetto(a), 1, fronte !== false); cx.restore();
+    var ca2 = coloriAspetto(a), rr2 = Math.min(w, h) * 0.3; if (!(GRAF2.on && testaBitmap(cx, 0, h * 0.54, rr2, ca2, 1, fronte !== false, true, d))) testaVera(cx, h * 0.54, rr2, ca2, 1, fronte !== false); cx.restore();
   }
   function apriPersonalizza(soloK) {
     if (!eIlProprietario()) return;
@@ -4836,13 +4837,15 @@
     elenco();
     disegnaScheda();
   }
-  window.SGAstaAspetto = { apri: function (k) { apriPersonalizza(k); }, vero: aspettoVero, colori: coloriAspetto, prop: function () { return ASP_PROP; } };   // (per le prove e per aprire l'editor da fuori)
+  window.SGAstaAspetto = { apri: function (k) { apriPersonalizza(k); }, vero: aspettoVero, colori: coloriAspetto, prop: function () { return ASP_PROP; },
+    grafica: function (v) { if (v != null) { GRAF2.on = !!v; FIG_CACHE = {}; TESTE_CACHE = {}; TESTE_N = 0; } return GRAF2.on; }, figurina: function (c, prezzo, w) { return figurinaCanvas(c, prezzo, w); } };   // (per le prove e per aprire l'editor da fuori)
   // 🧑 la TESTA con l'aspetto vero, disegnata nelle coordinate di chi la chiama: centro (0, cy), raggio r, lo (1/-1: il lato in ombra).
   // fronte: vista davanti (figurina, anteprima) con due occhi e il sorriso; se no di profilo come gli omini del campo (un occhio, verso dove guarda)
-  function testaVera(cx, cy, r, ca, lo, fronte) {
+  function testaVera(cx, cy, r, ca, lo, fronte, parte) {   // (parte: "dietro", "viso", "sopra", "occhi"; niente = tutta la testa)
     var t = ca.taglio, cap = ca.capelli, PI = Math.PI;
     function cerchio(x, y, rr) { cx.beginPath(); cx.arc(x, y, rr, 0, PI * 2); cx.fill(); }
     function calotta(alza, larga, a0, a1) { cx.beginPath(); cx.arc(0, cy - r * alza, r * larga, PI * (a0 == null ? 1.02 : a0), PI * (a1 == null ? 1.98 : a1)); cx.closePath(); cx.fill(); }
+    if (!parte || parte === "dietro") {
     cx.fillStyle = cap;   // (dietro la testa: capelli lunghi, afro, trecce)
     if (t === "afro") cerchio(fronte ? 0 : -r * 0.28, cy - r * 0.2, r * (fronte ? 1.32 : 1.22));
     if (t === "lunghi") { cx.beginPath(); cx.ellipse(fronte ? 0 : -r * 0.35, cy + r * 0.35, r * (fronte ? 1.12 : 0.8), r * 0.95, 0, 0, PI * 2); cx.fill(); }
@@ -4860,9 +4863,13 @@
     if (t === "codino" && !fronte) { cx.lineCap = "round"; cx.strokeStyle = cap; cx.lineWidth = r * 0.26; cx.beginPath(); cx.moveTo(-r * 0.92, cy - r * 0.45); cx.quadraticCurveTo(-r * 1.3, cy - r * 0.1, -r * 1.12, cy + r * 0.5); cx.stroke(); }
     if (t === "dreadlocks raccolti") cerchio(fronte ? 0 : -r * 0.72, cy - r * (fronte ? 1.12 : 0.85), r * 0.44);
     if (t === "treccine raccolte") cerchio(fronte ? 0 : -r * 0.95, cy - r * (fronte ? 1.06 : 0.5), r * 0.3);
+    }
+    if (!parte || parte === "viso") {
     if (fronte) { cx.fillStyle = scuro(ca.pelle, 0.9); cerchio(-r * 0.98, cy + r * 0.08, r * 0.2); cerchio(r * 0.98, cy + r * 0.08, r * 0.2); }   // (le orecchie)
     cx.fillStyle = ca.pelle; cx.beginPath(); cx.ellipse(0, cy, r * 0.97, r, 0, 0, PI * 2); cx.fill();
-    cx.fillStyle = "rgba(0,0,0,.14)"; cx.beginPath(); cx.arc(0, cy, r, lo > 0 ? -PI * 0.45 : PI * 0.55, lo > 0 ? PI * 0.45 : PI * 1.45); cx.closePath(); cx.fill();   // (la guancia in ombra)
+    if (parte && !fronte) { cx.beginPath(); cx.ellipse(r * 0.95, cy + r * 0.12, r * 0.15, r * 0.13, 0, 0, PI * 2); cx.fill(); cx.fillStyle = scuro(ca.pelle, 0.86); cx.beginPath(); cx.ellipse(-r * 0.12, cy + r * 0.1, r * 0.14, r * 0.18, 0, 0, PI * 2); cx.fill(); }   // ✨ (di profilo: il naso e l'orecchio dicono dove guarda)
+    if (!parte) cx.fillStyle = "rgba(0,0,0,.14)", cx.beginPath(), cx.arc(0, cy, r, lo > 0 ? -PI * 0.45 : PI * 0.55, lo > 0 ? PI * 0.45 : PI * 1.45), cx.closePath(), cx.fill();   // (la guancia in ombra: nella grafica nuova la fa la luce morbida)
+    if (!parte) {   // (nella grafica nuova la barba è uno strato a parte: barbaNuova)
     var bc = ca.colBarba, b = ca.barba;   // la barba (sotto i capelli)
     var baffi = b === "baffi" || b === "baffi e pizzetto", pizz = b === "pizzetto" || b === "baffi e pizzetto";
     if (baffi || pizz) {   // 🥸 baffi e pizzetto: piccoli, sul davanti del viso
@@ -4875,9 +4882,13 @@
       cx.beginPath(); cx.ellipse(fronte ? 0 : r * 0.38, cy + r * (b === "piena" ? 0.62 : 0.72), r * (fronte ? (b === "piena" ? 1.05 : 0.95) : (b === "piena" ? 0.8 : 0.7)), r * (b === "piena" ? 0.62 : 0.48), 0, 0, PI * 2); cx.fill();
       if (fronte) { cx.globalAlpha = 1; cx.fillStyle = ca.pelle; cx.beginPath(); cx.ellipse(0, cy + r * 0.47, r * 0.3, r * (b === "piena" ? 0.12 : 0.15), 0, 0, PI * 2); cx.fill(); }   // (la bocca libera)
       cx.restore(); }
+    }
+    }
+    if (parte === "barba") barbaNuova(cx, cy, r, ca, fronte);
+    if (!parte || parte === "sopra") {
     cx.fillStyle = cap;   // i capelli sopra
     if (t === "rasato") { cx.globalAlpha = 0.72; calotta(0.02, 1.0, 1.06, 1.94); cx.globalAlpha = 1; }
-    else if (t === "calvo") { cx.fillStyle = "rgba(255,255,255,.18)"; cerchio(-r * 0.25, cy - r * 0.55, r * 0.22); }
+    else if (t === "calvo") { if (!parte) { cx.fillStyle = "rgba(255,255,255,.18)"; cerchio(-r * 0.25, cy - r * 0.55, r * 0.22); } }
     else if (t === "ricci corti" || t === "ricci") { var nr = t === "ricci" ? 8 : 7, rr2 = r * (t === "ricci" ? 0.36 : 0.28);
       calotta(0.05, 1.0); for (var q2 = 0; q2 < nr; q2++) { var an = PI * (1.0 + q2 / (nr - 1)); cerchio(Math.cos(an) * r * 0.92, cy - r * 0.08 + Math.sin(an) * r * 0.92, rr2); } }
     else if (t === "afro") { if (fronte) calotta(0.3, 1.0, 1.0, 2.0); else calotta(0.22, 1.0, 1.0, 1.82); }
@@ -4893,14 +4904,14 @@
     else if (t === "a scodella") {   // (il taglio a scodella: tondo, dritto sopra le orecchie)
       cx.beginPath(); cx.arc(0, cy - r * 0.08, r * 1.08, PI * 0.97, PI * 2.03); cx.lineTo(r * 1.06, cy - r * 0.18); cx.lineTo(-r * 1.06, cy - r * 0.18); cx.closePath(); cx.fill(); }
     else if (t === "stempiati") {   // (la fronte che sale ai lati)
-      calotta(0.07, 1.02); cx.save(); cx.beginPath(); cx.ellipse(0, cy, r * 0.97, r, 0, 0, PI * 2); cx.clip(); cx.fillStyle = ca.pelle;
+      calotta(0.07, 1.02); cx.save(); cx.beginPath(); cx.ellipse(0, cy, r * 0.97, r, 0, 0, PI * 2); cx.clip(); cx.fillStyle = ca.pelle; if (parte) cx.globalCompositeOperation = "destination-out";   // (nella grafica nuova la fronte si buca nei capelli: sotto c'è il viso)
       if (fronte) { cx.beginPath(); cx.ellipse(-r * 0.52, cy - r * 0.22, r * 0.3, r * 0.42, 0.35, 0, PI * 2); cx.ellipse(r * 0.52, cy - r * 0.22, r * 0.3, r * 0.42, -0.35, 0, PI * 2); cx.fill(); }
       else { cx.beginPath(); cx.ellipse(r * 0.55, cy - r * 0.3, r * 0.4, r * 0.4, 0, 0, PI * 2); cx.fill(); }
       cx.restore(); cx.fillStyle = cap; if (!fronte) cerchio(-r * 0.7, cy - r * 0.2, r * 0.38); }
     else if (t === "pelato in cima") {   // (capelli solo ai lati e dietro)
       if (fronte) { cx.beginPath(); cx.ellipse(-r * 0.86, cy - r * 0.18, r * 0.2, r * 0.4, 0.15, 0, PI * 2); cx.ellipse(r * 0.86, cy - r * 0.18, r * 0.2, r * 0.4, -0.15, 0, PI * 2); cx.fill(); }
       else { cx.save(); cx.beginPath(); cx.ellipse(0, cy, r * 0.97, r, 0, 0, PI * 2); cx.clip(); cx.beginPath(); cx.ellipse(-r * 1.02, cy - r * 0.02, r * 0.42, r * 0.58, 0, 0, PI * 2); cx.fill(); cx.restore(); }
-      cx.fillStyle = "rgba(255,255,255,.18)"; cerchio(-r * 0.2, cy - r * 0.6, r * 0.2); }
+      if (!parte) { cx.fillStyle = "rgba(255,255,255,.18)"; cerchio(-r * 0.2, cy - r * 0.6, r * 0.2); } }
     else if (t === "ricci alti") {   // (lati sfumati, riccioli alti sopra)
       cx.globalAlpha = 0.55; calotta(0.02, 1.0, 1.06, 1.94); cx.globalAlpha = 1;
       for (var k7 = 0; k7 < 5; k7++) { cerchio(-r * 0.62 + k7 * r * 0.31, cy - r * 0.88, r * 0.24); cerchio(-r * 0.5 + k7 * r * 0.25, cy - r * 1.18, r * 0.22); } }
@@ -4929,10 +4940,215 @@
       if (t === "corti col ciuffo") { cx.beginPath(); cx.ellipse(fronte ? r * 0.18 : r * 0.32, cy - r * 1.02, r * 0.62, r * 0.32, fronte ? -0.25 : -0.35, 0, PI * 2); cx.fill(); }
       if (t === "lunghi" && fronte) { cx.beginPath(); cx.ellipse(-r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.fill(); cx.beginPath(); cx.ellipse(r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.fill(); }
     }
+    }
+    if (!parte || parte === "occhi") {
     cx.fillStyle = "#1a1210";   // gli occhi (semplici e uguali per tutti)
     if (fronte) { cerchio(-r * 0.34, cy + r * 0.02, r * 0.11); cerchio(r * 0.34, cy + r * 0.02, r * 0.11);
       cx.strokeStyle = scuro(ca.pelle, 0.55); cx.lineWidth = r * 0.07; cx.lineCap = "round"; cx.beginPath(); cx.arc(0, cy + r * 0.38, r * 0.22, PI * 0.2, PI * 0.8); cx.stroke(); }   // (il sorriso)
     else cerchio(r * 0.55, cy + r * 0.03, r * 0.15);
+    }
+  }
+  function barbaNuova(cx, cy, r, ca, fronte) {   // ✨ la barba della grafica nuova (9 nov 2026, il proprietario: «la barba folta sembra una maschera»):
+    // segue la mascella dalle basette al mento, le guance restano libere, i baffi sopra la bocca e la bocca scoperta; il bordo verso le guance sfuma
+    var b = ca.barba, bc = ca.colBarba, PI = Math.PI;
+    if (b === "niente") return;
+    var baffi = b === "baffi" || b === "baffi e pizzetto", pizz = b === "pizzetto" || b === "baffi e pizzetto";
+    if (baffi || pizz) {   // (baffi e pizzetto come prima, solo un po' più morbidi)
+      cx.fillStyle = bc;
+      if (baffi) { cx.beginPath(); if (fronte) { cx.ellipse(-r * 0.17, cy + r * 0.33, r * 0.2, r * 0.085, 0.18, 0, PI * 2); cx.ellipse(r * 0.17, cy + r * 0.33, r * 0.2, r * 0.085, -0.18, 0, PI * 2); } else cx.ellipse(r * 0.66, cy + r * 0.3, r * 0.26, r * 0.1, -0.1, 0, PI * 2); cx.fill(); }
+      if (pizz) { cx.beginPath(); cx.ellipse(fronte ? 0 : r * 0.62, cy + r * 0.8, r * 0.2, r * 0.17, 0, 0, PI * 2); cx.fill();
+        if (baffi && fronte) { cx.lineWidth = r * 0.07; cx.lineCap = "round"; cx.strokeStyle = bc; cx.beginPath(); cx.moveTo(-r * 0.33, cy + r * 0.36); cx.lineTo(-r * 0.14, cy + r * 0.72); cx.moveTo(r * 0.33, cy + r * 0.36); cx.lineTo(r * 0.14, cy + r * 0.72); cx.stroke(); } }
+      return;
+    }
+    var piena = b === "piena", acc = b === "accennata", giu = piena ? 1.1 : 1.02, gu = piena ? 0.3 : 0.4;   // (giu: dove arriva sotto il mento; gu: dove comincia sulle guance)
+    cx.save(); cx.beginPath(); cx.ellipse(0, cy + r * 0.04, r * 1.0, r * (piena ? 1.1 : 1.03), 0, 0, PI * 2); cx.clip();
+    cx.globalAlpha = acc ? 0.34 : piena ? 0.93 : 0.82; cx.fillStyle = bc; cx.beginPath();
+    if (fronte) {
+      cx.moveTo(-r * 0.96, cy - r * 0.12); cx.quadraticCurveTo(-r * 1.0, cy + r * 0.62, -r * 0.42, cy + r * (giu - 0.08)); cx.quadraticCurveTo(0, cy + r * (giu + 0.06), r * 0.42, cy + r * (giu - 0.08)); cx.quadraticCurveTo(r * 1.0, cy + r * 0.62, r * 0.96, cy - r * 0.12);
+      cx.lineTo(r * 0.82, cy - r * 0.1); cx.quadraticCurveTo(r * 0.78, cy + r * gu, r * 0.5, cy + r * (gu + 0.08));   // (la guancia libera)
+      cx.quadraticCurveTo(r * 0.3, cy + r * 0.3, r * 0.2, cy + r * 0.27); cx.quadraticCurveTo(0, cy + r * 0.22, -r * 0.2, cy + r * 0.27); cx.quadraticCurveTo(-r * 0.3, cy + r * 0.3, -r * 0.5, cy + r * (gu + 0.08));   // (i baffi sotto il naso)
+      cx.quadraticCurveTo(-r * 0.78, cy + r * gu, -r * 0.82, cy - r * 0.1); cx.closePath();
+    } else {
+      cx.moveTo(-r * 0.02, cy - r * 0.08); cx.quadraticCurveTo(-r * 0.32, cy + r * 0.62, r * 0.2, cy + r * (giu - 0.05)); cx.quadraticCurveTo(r * 0.75, cy + r * giu, r * 0.9, cy + r * 0.55);
+      cx.lineTo(r * 0.98, cy + r * 0.3); cx.quadraticCurveTo(r * 0.7, cy + r * 0.26, r * 0.45, cy + r * (gu + 0.08)); cx.quadraticCurveTo(r * 0.2, cy + r * (gu + 0.02), r * 0.12, cy - r * 0.06); cx.closePath();
+    }
+    cx.fill();
+    if (fronte) { cx.globalCompositeOperation = "destination-out"; cx.globalAlpha = 1; cx.beginPath(); cx.ellipse(0, cy + r * 0.47, r * 0.24, r * (piena ? 0.075 : 0.09), 0, 0, PI * 2); cx.fill(); }   // (la bocca libera, piccola)
+    else { cx.globalCompositeOperation = "destination-out"; cx.globalAlpha = 1; cx.beginPath(); cx.ellipse(r * 0.85, cy + r * 0.46, r * 0.13, r * 0.06, 0, 0, PI * 2); cx.fill(); }
+    cx.restore();
+  }
+  // ✨ LA GRAFICA NUOVA DEI CALCIATORI (8-9 nov 2026, scelta dal proprietario sulle foto prima/dopo: «le figurine nuove sono top… falle così»): solo dove si vede.
+  // In campo la testa un po' più grande, ombra sul mento e sui capelli, un contorno leggero che stacca dal prato, niente occhio (da lontano
+  // non si vede); sulla figurina il viso con luce e ombra morbide, i capelli a ciocche, il colletto fatto bene, lo sfondo da album.
+  // Le teste si disegnano UNA volta in una tela (strati: capelli dietro, viso, capelli sopra) e poi si copiano: in campo non costa di più.
+  // L'aspetto (pelle, capelli, taglio, barba) è lo stesso di sempre: le correzioni del proprietario valgono uguale
+  var GRAF2 = { on: (function () { try { return localStorage.getItem("sg-fanta-grafica") !== "1"; } catch (e) { return true; } })() };   // (accesa per tutti; "1" su un telefono = la grafica di prima, per le prove)
+  var TESTE_CACHE = {}, TESTE_N = 0;
+  var RICCI_T = { "ricci": 1, "ricci corti": 1, "afro": 1, "ricci alti": 1, "lunghi ricci": 1 }, RASI_T = { "rasato": 1, "sfumati alti": 1, "cresta": 1 };
+  function tela(w, h) { var c = document.createElement("canvas"); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; }
+  function testaStrati(R, ca, lo, fronte, ricco) {   // la testa di raggio R (pixel veri) in una tela: { c, ox, oy, S } (il centro della testa è ox, oy)
+    var S = Math.ceil(R * 3.6) + 6, X = S / 2, Y = Math.round(S * 0.54), PI = Math.PI, t = ca.taglio, calvo = t === "calvo";
+    var rnd = semeRnd(hashNome(ca.pelle + ca.capelli + t + ca.barba) % 100000 + 3);
+    function strato(parte) { var c = tela(S, S), x = c.getContext("2d"); x.translate(X, 0); testaVera(x, Y, R, ca, lo, fronte, parte); x.setTransform(1, 0, 0, 1, 0, 0); return c; }
+    function sagoma(c, col) { var d = tela(S, S), x = d.getContext("2d"); x.drawImage(c, 0, 0); x.globalCompositeOperation = "source-in"; x.fillStyle = col; x.fillRect(0, 0, S, S); return d; }
+    var hb = strato("dietro"), vi = strato("viso"), ht = strato("sopra"), v = vi.getContext("2d");
+    // il viso: la luce morbida da una parte, l'ombra dall'altra e sotto il mento
+    v.save(); v.globalCompositeOperation = "source-atop";
+    var g = v.createRadialGradient(X - R * 0.42 * lo, Y - R * 0.45, R * 0.08, X - R * 0.15 * lo, Y - R * 0.1, R * 1.4);
+    g.addColorStop(0, "rgba(255,244,228," + (ricco ? 0.34 : 0.22) + ")"); g.addColorStop(0.42, "rgba(255,244,228,0)"); g.addColorStop(0.75, "rgba(45,14,0,.08)"); g.addColorStop(1, "rgba(45,14,0,.36)");
+    v.fillStyle = g; v.fillRect(0, 0, S, S);
+    var gm = v.createLinearGradient(0, Y + R * 0.3, 0, Y + R * 1.02); gm.addColorStop(0, "rgba(45,14,0,0)"); gm.addColorStop(1, "rgba(45,14,0," + (ricco ? 0.32 : 0.45) + ")"); v.fillStyle = gm; v.fillRect(0, 0, S, S);
+    if (ricco && fronte) [-1, 1].forEach(function (s) { var gg = v.createRadialGradient(X + s * R * 0.5, Y + R * 0.3, 0, X + s * R * 0.5, Y + R * 0.3, R * 0.3); gg.addColorStop(0, "rgba(225,85,75,.16)"); gg.addColorStop(1, "rgba(225,85,75,0)"); v.fillStyle = gg; v.fillRect(0, 0, S, S); });
+    v.restore();
+    if (ca.barba !== "niente") {   // la barba: uno strato suo, più scura in basso e dalla parte in ombra, a peli corti, col bordo che sfuma
+      var ba = strato("barba"), bx = ba.getContext("2d"); bx.save(); bx.globalCompositeOperation = "source-atop";
+      var gb = bx.createLinearGradient(0, Y, 0, Y + R * 1.1); gb.addColorStop(0, "rgba(255,255,255,.1)"); gb.addColorStop(1, "rgba(0,0,0,.35)"); bx.fillStyle = gb; bx.fillRect(0, 0, S, S);
+      var gb2 = bx.createLinearGradient(X - R * lo, 0, X + R * lo, 0); gb2.addColorStop(0, "rgba(255,255,255,.08)"); gb2.addColorStop(0.5, "rgba(0,0,0,0)"); gb2.addColorStop(1, "rgba(0,0,0,.25)"); bx.fillStyle = gb2; bx.fillRect(0, 0, S, S);
+      if (ricco) { bx.lineCap = "round"; for (var p2 = 0; p2 < 220; p2++) { var qx = X + (rnd() * 2 - 1) * R, qy = Y + (rnd() * 1.4 - 0.2) * R, cl = rnd() < 0.6; bx.strokeStyle = cl ? "rgba(0,0,0,.22)" : "rgba(255,255,255,.14)"; bx.lineWidth = R * (cl ? 0.03 : 0.022); bx.beginPath(); bx.moveTo(qx, qy); bx.lineTo(qx + (qx - X) * 0.05, qy + R * 0.07); bx.stroke(); } }
+      bx.restore();
+      bx.save(); bx.globalCompositeOperation = "destination-out";   // (verso le guance e le basette la barba si fa più rada)
+      var gf = bx.createLinearGradient(0, Y - R * 0.15, 0, Y + R * 0.32); gf.addColorStop(0, "rgba(0,0,0,.6)"); gf.addColorStop(1, "rgba(0,0,0,0)"); bx.fillStyle = gf; bx.fillRect(0, Y - R * 0.15, S, R * 0.47); bx.restore();
+      v.drawImage(ba, 0, 0);
+    }
+    if (ricco && fronte) visoDettagli(v, X, Y, R, ca);
+    if (!calvo) {   // l'ombra che i capelli fanno sulla fronte
+      var om = sagoma(ht, "#2a1208"); v.save(); v.globalCompositeOperation = "source-atop"; v.globalAlpha = ricco ? 0.13 : 0.2;
+      for (var i = 1; i <= 3; i++) v.drawImage(om, R * 0.018 * i * lo, R * 0.04 * i); v.restore();
+    }
+    [hb, ht].forEach(function (c, n) {   // i capelli: luce in alto, ombra in basso e dalla parte in ombra, le ciocche sulla figurina
+      var x = c.getContext("2d"), dietro = n === 0; x.save(); x.globalCompositeOperation = "source-atop";
+      var g1 = x.createLinearGradient(0, Y - R * 1.4, 0, Y + (dietro ? R * 1.3 : R * 0.25)); g1.addColorStop(0, "rgba(255,255,255," + (ricco ? 0.2 : 0.1) + ")"); g1.addColorStop(0.42, "rgba(255,255,255,0)"); g1.addColorStop(1, "rgba(0,0,0," + (dietro ? 0.5 : 0.4) + ")");
+      x.fillStyle = g1; x.fillRect(0, 0, S, S);
+      var g2 = x.createLinearGradient(X - R * 1.3 * lo, 0, X + R * 1.3 * lo, 0); g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(0.55, "rgba(0,0,0,0)"); g2.addColorStop(1, "rgba(0,0,0,.3)"); x.fillStyle = g2; x.fillRect(0, 0, S, S);
+      if (ricco) ciocche(x, dietro);
+      x.strokeStyle = "rgba(255,255,255," + (ricco ? 0.2 : 0.1) + ")"; x.lineWidth = R * (ricco ? 0.13 : 0.08); x.lineCap = "round"; x.beginPath(); x.arc(X - R * 0.1 * lo, Y - R * 0.06, R * 0.86, lo > 0 ? PI * 1.22 : PI * 1.48, lo > 0 ? PI * 1.52 : PI * 1.78); x.stroke();   // (il riflesso)
+      x.restore();
+    });
+    function ciocche(x, dietro) {
+      var k, px, py, rr, a0; x.lineCap = "round";
+      if (RICCI_T[t]) { for (k = 0; k < 110; k++) { px = X + (rnd() * 2.9 - 1.45) * R; py = Y + (rnd() * 2.9 - 1.7) * R; rr = R * (0.07 + rnd() * 0.07); a0 = rnd() * PI * 2;
+        x.strokeStyle = "rgba(0,0,0,.3)"; x.lineWidth = R * 0.045; x.beginPath(); x.arc(px, py, rr, a0, a0 + PI * 1.25); x.stroke();
+        x.strokeStyle = "rgba(255,255,255,.2)"; x.lineWidth = R * 0.03; x.beginPath(); x.arc(px - rr * 0.25, py - rr * 0.25, rr * 0.7, a0 + PI, a0 + PI * 1.8); x.stroke(); } return; }
+      if (RASI_T[t]) { x.fillStyle = "rgba(0,0,0,.22)"; for (k = 0; k < 280; k++) { x.beginPath(); x.arc(X + (rnd() * 2.4 - 1.2) * R, Y + (rnd() * 2.4 - 1.6) * R, R * 0.02, 0, PI * 2); x.fill(); } if (t !== "cresta") return; }
+      var lungo = /lunghi|mullet|medi|mossi|codino|treccine|dreadlocks/.test(t) || dietro, onda = /mossi/.test(t), n = dietro ? 24 : 34;
+      var c0x = X + R * (fronte ? 0.15 : -0.1), c0y = Y - R * 1.08;
+      for (k = 0; k < n; k++) {
+        var a = PI * (0.06 + 0.88 * (k + rnd() * 0.7) / n), L = R * (lungo ? 2.3 : 1.3) * (0.75 + rnd() * 0.35);
+        var sx = c0x + (rnd() - 0.5) * R * 0.35, sy = c0y + (rnd() - 0.5) * R * 0.15, ex = sx + Math.cos(a) * L, ey = sy + Math.sin(a) * L;
+        var mx = (sx + ex) / 2, my = (sy + ey) / 2, dx = mx - X, dy = my - Y, dd = Math.sqrt(dx * dx + dy * dy) || 1, ox = dx / dd * R * 0.3, oy = dy / dd * R * 0.3;
+        for (var z = 0; z < 2; z++) {
+          var sp = z ? -R * 0.03 : 0; x.strokeStyle = z ? "rgba(255,255,255,.15)" : "rgba(0,0,0,.2)"; x.lineWidth = R * (z ? 0.028 : 0.04);
+          x.beginPath(); x.moveTo(sx + sp, sy + sp);
+          if (onda) x.bezierCurveTo(sx + (ex - sx) * 0.33 + ox + R * 0.12, sy + (ey - sy) * 0.33 + oy, sx + (ex - sx) * 0.66 + ox - R * 0.12, sy + (ey - sy) * 0.66 + oy, ex + sp, ey + sp);
+          else x.quadraticCurveTo(mx + ox + sp, my + oy + sp, ex + sp, ey + sp);
+          x.stroke();
+        }
+      }
+    }
+    var U = tela(S, S), u = U.getContext("2d"); u.drawImage(hb, 0, 0); u.drawImage(vi, 0, 0); u.drawImage(ht, 0, 0);
+    var F = tela(S, S), f = F.getContext("2d"), sg = sagoma(U, "#0b0e16"), sp2 = ricco ? Math.max(0.8, R * 0.03) : Math.max(1, R * 0.055);   // il contorno leggero
+    f.globalAlpha = ricco ? 0.4 : 0.6; for (var j = 0; j < 8; j++) f.drawImage(sg, Math.cos(j * PI / 4) * sp2, Math.sin(j * PI / 4) * sp2); f.globalAlpha = 1; f.drawImage(U, 0, 0);
+    return { c: F, ox: X, oy: Y, S: S };
+  }
+  function visoDettagli(v, X, Y, R, ca) {   // (solo la figurina e l'anteprima: sopracciglia, occhi veri, naso, bocca)
+    var PI = Math.PI, sc = function (p) { return scuro(ca.pelle, p); }, bf = ca.barba === "baffi" || ca.barba === "baffi e pizzetto";
+    var cig = ca.taglio === "calvo" ? sc(0.55) : scuro(ca.colBarba || ca.capelli, 0.85);
+    v.lineCap = "round"; v.strokeStyle = cig; v.lineWidth = R * 0.085;
+    [-1, 1].forEach(function (s) { v.beginPath(); v.moveTo(X + s * R * 0.18, Y - R * 0.17); v.quadraticCurveTo(X + s * R * 0.34, Y - R * 0.27, X + s * R * 0.52, Y - R * 0.18); v.stroke(); });
+    [-1, 1].forEach(function (s) {
+      var ex = X + s * R * 0.34, ey = Y + R * 0.04;
+      v.fillStyle = "#fbf7f2"; v.beginPath(); v.ellipse(ex, ey, R * 0.15, R * 0.105, 0, 0, PI * 2); v.fill();
+      v.save(); v.beginPath(); v.ellipse(ex, ey, R * 0.15, R * 0.105, 0, 0, PI * 2); v.clip();
+      v.fillStyle = "#4a3020"; v.beginPath(); v.arc(ex + s * R * 0.01, ey + R * 0.01, R * 0.088, 0, PI * 2); v.fill();
+      v.fillStyle = "#120b07"; v.beginPath(); v.arc(ex + s * R * 0.01, ey + R * 0.01, R * 0.046, 0, PI * 2); v.fill();
+      v.fillStyle = "rgba(0,0,0,.18)"; v.fillRect(ex - R * 0.16, ey - R * 0.12, R * 0.32, R * 0.05); v.restore();
+      v.fillStyle = "#fff"; v.beginPath(); v.arc(ex + s * R * 0.01 + R * 0.03, ey - R * 0.025, R * 0.024, 0, PI * 2); v.fill();
+      v.strokeStyle = sc(0.45); v.lineWidth = R * 0.035; v.beginPath(); v.ellipse(ex, ey, R * 0.15, R * 0.105, 0, PI * 1.08, PI * 1.92); v.stroke();
+    });
+    if (!bf) { v.strokeStyle = sc(0.68); v.lineWidth = R * 0.045; v.beginPath(); v.moveTo(X + R * 0.02, Y + R * 0.12); v.quadraticCurveTo(X + R * 0.13, Y + R * 0.27, X - R * 0.06, Y + R * 0.3); v.stroke(); }   // (il naso, appena accennato)
+    v.strokeStyle = sc(0.48); v.lineWidth = R * 0.055; v.beginPath(); v.arc(X, Y + R * 0.38, R * 0.22, PI * 0.22, PI * 0.78); v.stroke();   // (il sorriso)
+    v.strokeStyle = "rgba(255,255,255,.18)"; v.lineWidth = R * 0.04; v.beginPath(); v.arc(X, Y + R * 0.45, R * 0.12, PI * 0.3, PI * 0.7); v.stroke();
+  }
+  function testaBitmap(cx, x, cy, r, ca, lo, fronte, ricco, scala) {   // disegna la testa nuova (raggio r nei punti di cx; scala = pixel veri per punto)
+    var R = r * scala; if (!(R > 1)) return false;
+    var q = Math.exp(Math.round(Math.log(R) / 0.07) * 0.07), k = ca.pelle + "|" + ca.capelli + "|" + ca.taglio + "|" + ca.barba + "|" + ca.colBarba + "|" + lo + "|" + (fronte ? 1 : 0) + (ricco ? 1 : 0) + "|" + q.toFixed(2);
+    var T = TESTE_CACHE[k];
+    if (!T) { if (TESTE_N > 400) { TESTE_CACHE = {}; TESTE_N = 0; } T = TESTE_CACHE[k] = testaStrati(q, ca, lo, fronte, ricco); TESTE_N++; }
+    var f = r / q; cx.drawImage(T.c, x - T.ox * f, cy - T.oy * f, T.S * f, T.S * f);
+    return true;
+  }
+  function testaVecchia(o, pelle) {   // (gli omini senza aspetto vero, l'arbitro compreso: la stessa pelle, gli stessi capelli e lo stesso taglio di prima)
+    var cap = o.capelli || "#3b2a1e";
+    return { pelle: pelle, capelli: cap, taglio: ["corti", "rasato", "corti col ciuffo", "ricci corti", "lunghi"][o.stile || 0] || "corti", barba: "niente", colBarba: cap };
+  }
+  function testaCampo(ctx, hy, r, ca, lo) {   // in campo: la scala la dice la trasformazione del campo (telecamera, salto, schermo)
+    if (!ctx.getTransform) return false;
+    var m = ctx.getTransform(), s = Math.sqrt(m.a * m.a + m.b * m.b);
+    return s > 0 && testaBitmap(ctx, 0, hy, r, ca, lo, false, false, s);
+  }
+  function bustoBello(cx, r, hy, kit, num, pelle, giu) {   // il busto della figurina nuova: collo con l'ombra del mento, maglia morbida, il colletto fatto bene
+    var top = hy + r * 0.92, bot = giu, coll = kit.coll || kit.b, PI = Math.PI;
+    cx.lineJoin = "round"; cx.lineCap = "round";
+    cx.fillStyle = scuro(coll, 0.7); cx.beginPath(); cx.ellipse(0, top - r * 0.02, r * 0.5, r * 0.16, 0, PI, PI * 2); cx.fill();   // (il colletto dietro il collo)
+    cx.fillStyle = scuro(pelle, 0.92); cx.beginPath(); cx.moveTo(-r * 0.34, hy + r * 0.45); cx.lineTo(r * 0.34, hy + r * 0.45); cx.lineTo(r * 0.4, top + r * 0.3); cx.lineTo(-r * 0.4, top + r * 0.3); cx.closePath(); cx.fill();   // il collo
+    var gn = cx.createLinearGradient(0, hy + r * 0.6, 0, top + r * 0.2); gn.addColorStop(0, "rgba(45,14,0,.5)"); gn.addColorStop(1, "rgba(45,14,0,.08)"); cx.fillStyle = gn; cx.fill();
+    function forma() { cx.beginPath(); cx.moveTo(-r * 0.5, top); cx.quadraticCurveTo(-r * 1.5, top + r * 0.1, -r * 1.78, top + r * 0.72); cx.lineTo(-r * 1.98, bot); cx.lineTo(r * 1.98, bot); cx.lineTo(r * 1.78, top + r * 0.72); cx.quadraticCurveTo(r * 1.5, top + r * 0.1, r * 0.5, top); cx.closePath(); }
+    cx.save(); forma(); cx.fillStyle = kit.a; cx.fill(); cx.clip();
+    if (kit.righe) { cx.fillStyle = kit.b; for (var x = -r * 2; x < r * 2; x += r * 0.7) cx.fillRect(x + r * 0.17, top - r, r * 0.35, bot - top + 2 * r); }
+    var gl = cx.createLinearGradient(-r * 2, 0, r * 2, 0); gl.addColorStop(0, "rgba(255,255,255,.14)"); gl.addColorStop(0.35, "rgba(255,255,255,.05)"); gl.addColorStop(0.6, "rgba(0,0,0,.06)"); gl.addColorStop(1, "rgba(0,0,0,.34)");
+    cx.fillStyle = gl; cx.fillRect(-r * 2, top - r, r * 4, bot - top + 2 * r);
+    var gv = cx.createLinearGradient(0, top, 0, bot); gv.addColorStop(0, "rgba(255,255,255,.1)"); gv.addColorStop(0.3, "rgba(255,255,255,0)"); gv.addColorStop(1, "rgba(0,0,0,.25)"); cx.fillStyle = gv; cx.fillRect(-r * 2, top - r, r * 4, bot - top + 2 * r);
+    cx.strokeStyle = "rgba(0,0,0,.13)"; cx.lineWidth = r * 0.09;   // (le pieghe morbide)
+    cx.beginPath(); cx.moveTo(-r * 1.2, top + r * 1.0); cx.quadraticCurveTo(-r * 0.7, top + r * 1.35, -r * 0.35, top + r * 1.9); cx.moveTo(r * 1.2, top + r * 1.0); cx.quadraticCurveTo(r * 0.75, top + r * 1.3, r * 0.45, top + r * 1.95); cx.stroke();
+    [-1, 1].forEach(function (s) {   // (le cuciture delle maniche)
+      cx.strokeStyle = "rgba(0,0,0,.28)"; cx.lineWidth = r * 0.05; cx.beginPath(); cx.moveTo(s * r * 1.1, top + r * 0.18); cx.quadraticCurveTo(s * r * 1.3, top + r * 0.9, s * r * 1.22, bot); cx.stroke();
+      cx.strokeStyle = "rgba(255,255,255,.16)"; cx.lineWidth = r * 0.035; cx.beginPath(); cx.moveTo(s * r * 1.04, top + r * 0.2); cx.quadraticCurveTo(s * r * 1.22, top + r * 0.9, s * r * 1.14, bot); cx.stroke();
+    });
+    if (num != null) {
+      cx.font = "900 " + (r * 0.5).toFixed(1) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle";
+      var ch = chiaraC(kit.a); cx.lineWidth = r * 0.1; cx.strokeStyle = ch ? "rgba(255,255,255,.8)" : "rgba(0,0,0,.55)"; cx.strokeText(num, r * 0.78, top + r * 1.0); cx.fillStyle = ch ? "#16161a" : "#ffffff"; cx.fillText(num, r * 0.78, top + r * 1.0);
+    }
+    cx.restore();
+    cx.fillStyle = scuro(pelle, 0.88); cx.beginPath(); cx.moveTo(-r * 0.46, top); cx.quadraticCurveTo(-r * 0.2, top + r * 0.22, 0, top + r * 0.42); cx.quadraticCurveTo(r * 0.2, top + r * 0.22, r * 0.46, top); cx.closePath(); cx.fill();   // la pelle nella V
+    var gs = cx.createLinearGradient(0, top - r * 0.02, 0, top + r * 0.42); gs.addColorStop(0, "rgba(45,14,0,.42)"); gs.addColorStop(1, "rgba(45,14,0,.05)"); cx.fillStyle = gs; cx.fill();
+    function banda() { cx.beginPath(); cx.moveTo(-r * 0.68, top - r * 0.05); cx.quadraticCurveTo(-r * 0.3, top + r * 0.3, 0, top + r * 0.6); cx.quadraticCurveTo(r * 0.3, top + r * 0.3, r * 0.68, top - r * 0.05);
+      cx.lineTo(r * 0.46, top); cx.quadraticCurveTo(r * 0.2, top + r * 0.22, 0, top + r * 0.42); cx.quadraticCurveTo(-r * 0.2, top + r * 0.22, -r * 0.46, top); cx.closePath(); }
+    banda(); cx.fillStyle = coll; cx.fill();   // il colletto a V con la costina
+    cx.save(); banda(); cx.clip(); var gc = cx.createLinearGradient(-r * 0.7, 0, r * 0.7, 0); gc.addColorStop(0, "rgba(255,255,255,.18)"); gc.addColorStop(0.5, "rgba(0,0,0,0)"); gc.addColorStop(1, "rgba(0,0,0,.28)"); cx.fillStyle = gc; cx.fillRect(-r, top - r * 0.2, r * 2, r);
+    cx.strokeStyle = chiaraC(coll) ? "rgba(0,0,0,.18)" : "rgba(255,255,255,.3)"; cx.lineWidth = r * 0.028; cx.beginPath(); cx.moveTo(-r * 0.57, top - r * 0.02); cx.quadraticCurveTo(-r * 0.25, top + r * 0.26, 0, top + r * 0.51); cx.quadraticCurveTo(r * 0.25, top + r * 0.26, r * 0.57, top - r * 0.02); cx.stroke(); cx.restore();
+    cx.strokeStyle = "rgba(0,0,0,.35)"; cx.lineWidth = r * 0.035; cx.beginPath(); cx.moveTo(-r * 0.46, top); cx.quadraticCurveTo(-r * 0.2, top + r * 0.22, 0, top + r * 0.42); cx.quadraticCurveTo(r * 0.2, top + r * 0.22, r * 0.46, top); cx.stroke();
+    cx.strokeStyle = "rgba(0,0,0,.25)"; cx.lineWidth = r * 0.03; cx.beginPath(); cx.moveTo(-r * 0.68, top - r * 0.05); cx.quadraticCurveTo(-r * 0.3, top + r * 0.3, 0, top + r * 0.6); cx.quadraticCurveTo(r * 0.3, top + r * 0.3, r * 0.68, top - r * 0.05); cx.stroke();
+  }
+  function albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn) {   // 🃏 la figurina nuova da album
+    var m = w * 0.045, iw = w - 2 * m, ih = h * 0.76, PI = Math.PI, c0 = col[0], c1 = col[1] || "#ffffff";
+    cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07); cx.fillStyle = "#f6f1e3"; cx.fill(); cx.shadowColor = "transparent";
+    tondo(m * 0.45, m * 0.45, w - m * 0.9, h - m * 0.9, w * 0.055); cx.strokeStyle = "#c9a24a"; cx.lineWidth = Math.max(1, w * 0.008); cx.stroke();   // (il filetto d'oro)
+    cx.save(); tondo(m, m, iw, ih, w * 0.04); cx.clip();
+    var g = cx.createLinearGradient(0, m, 0, m + ih); g.addColorStop(0, scuro(c0, 1.0)); g.addColorStop(1, scuro(c0, 0.45)); cx.fillStyle = g; cx.fillRect(m, m, iw, ih);
+    var gr = cx.createRadialGradient(w / 2, m + ih * 0.36, 0, w / 2, m + ih * 0.36, iw * 0.7); gr.addColorStop(0, "rgba(255,255,255,.42)"); gr.addColorStop(0.5, "rgba(255,255,255,.1)"); gr.addColorStop(1, "rgba(255,255,255,0)"); cx.fillStyle = gr; cx.fillRect(m, m, iw, ih);   // (la luce dietro il calciatore)
+    cx.globalAlpha = 0.1; cx.fillStyle = c1; for (var a = 0; a < 14; a++) { var an = PI * (1.05 + a * 0.065); cx.beginPath(); cx.moveTo(w / 2, m + ih * 0.42); cx.lineTo(w / 2 + Math.cos(an) * iw * 1.2, m + ih * 0.42 + Math.sin(an) * iw * 1.2); cx.lineTo(w / 2 + Math.cos(an + 0.03) * iw * 1.2, m + ih * 0.42 + Math.sin(an + 0.03) * iw * 1.2); cx.closePath(); cx.fill(); } cx.globalAlpha = 1;   // (i raggi)
+    for (var fy = 0; fy < 3; fy++) { cx.fillStyle = "rgba(0,0,0," + (0.18 + fy * 0.08) + ")"; var yy = m + ih * (0.62 + fy * 0.07), rr = w * 0.028; for (var fx = m - rr; fx < m + iw + rr; fx += rr * 1.7) { cx.beginPath(); cx.arc(fx + (fy % 2) * rr * 0.85, yy, rr, PI, 0); cx.fill(); } cx.fillRect(m, yy, iw, ih); }   // (la curva sullo sfondo)
+    cx.fillStyle = "rgba(0,0,0,.09)"; var pz = w * 0.032; for (var py = m; py < m + ih; py += pz) for (var px = m + ((py / pz) % 2) * pz / 2; px < m + iw; px += pz) { var rp = pz * 0.14 * (0.5 + (py - m) / ih); cx.beginPath(); cx.arc(px, py, rp, 0, PI * 2); cx.fill(); }   // (i puntini della stampa)
+    cx.save(); cx.translate(w / 2, 0); var r = w * 0.17, hy = m + ih * 0.36;
+    bustoBello(cx, r, hy, kit, mg.n, ca.pelle, m + ih + 2);
+    if (!testaBitmap(cx, 0, hy, r, ca, 1, true, true, d)) testaVera(cx, hy, r, ca, 1, true);
+    cx.restore();
+    var gi = cx.createLinearGradient(0, m, 0, m + ih); gi.addColorStop(0, "rgba(255,255,255,.12)"); gi.addColorStop(0.08, "rgba(255,255,255,0)"); cx.fillStyle = gi; cx.fillRect(m, m, iw, ih);   // (la lucentezza della carta)
+    cx.restore();
+    var sw = w * 0.15, sh = w * 0.18, sx = m + w * 0.035, sy = m + w * 0.035;   // lo scudetto della squadra
+    function scudo() { cx.beginPath(); cx.moveTo(sx, sy); cx.lineTo(sx + sw, sy); cx.lineTo(sx + sw, sy + sh * 0.55); cx.quadraticCurveTo(sx + sw, sy + sh * 0.85, sx + sw / 2, sy + sh); cx.quadraticCurveTo(sx, sy + sh * 0.85, sx, sy + sh * 0.55); cx.closePath(); }
+    scudo(); cx.fillStyle = c0; cx.fill(); cx.save(); scudo(); cx.clip(); cx.fillStyle = c1; cx.fillRect(sx + sw / 2, sy, sw / 2, sh); cx.restore();
+    scudo(); cx.lineWidth = Math.max(1, w * 0.012); cx.strokeStyle = "#f6f1e3"; cx.stroke();
+    cx.font = "900 " + Math.round(w * 0.05) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.lineWidth = w * 0.012; cx.strokeStyle = "rgba(0,0,0,.6)";
+    var sig = c.squadra.slice(0, 3).toUpperCase(); cx.strokeText(sig, sx + sw / 2, sy + sh * 0.42); cx.fillStyle = "#fff"; cx.fillText(sig, sx + sw / 2, sy + sh * 0.42);
+    var by = m + ih - h * 0.03, bh = h * 0.088;   // la fascia col nome, sopra il bordo della foto
+    cx.save(); cx.shadowColor = "rgba(0,0,0,.35)"; cx.shadowBlur = w * 0.02; cx.shadowOffsetY = w * 0.008;
+    cx.beginPath(); cx.moveTo(m - w * 0.012, by); cx.lineTo(m + iw + w * 0.012, by); cx.lineTo(m + iw - w * 0.02, by + bh); cx.lineTo(m + w * 0.02, by + bh); cx.closePath();
+    var gb = cx.createLinearGradient(0, by, 0, by + bh); gb.addColorStop(0, scuro(c0, 1.08)); gb.addColorStop(1, scuro(c0, 0.75)); cx.fillStyle = gb; cx.fill(); cx.restore();
+    cx.fillStyle = c1; cx.fillRect(m + w * 0.02, by + bh - h * 0.009, iw - w * 0.04, h * 0.009);
+    nomeIn(mg.nome, w / 2, by + bh * 0.47, iw * 0.88, Math.round(w * 0.11), chiaraC(c0) ? "#16161a" : "#ffffff");
+    nomeIn(c.squadra.toUpperCase() + " · " + ruolo, w / 2, by + bh + h * 0.07, iw * 0.92, Math.round(w * 0.06), scuro(chiaraC(c0) ? (col[1] || "#333") : c0, 0.85));
+    if (prezzo != null) { cx.font = "900 " + Math.round(w * 0.085) + "px system-ui,sans-serif"; var pt = prezzo + " 💰", pw = cx.measureText(pt).width + w * 0.08; tondo(w - m - pw - w * 0.03, m + w * 0.03, pw, w * 0.12, w * 0.06); cx.fillStyle = "#ffc247"; cx.fill(); cx.lineWidth = Math.max(1, w * 0.008); cx.strokeStyle = "rgba(0,0,0,.25)"; cx.stroke(); cx.fillStyle = "#16161a"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(pt, w - m - pw / 2 - w * 0.03, m + w * 0.093); }
   }
   function kitDi(sq, bianco) {   // la maglia di una squadra (bianco: in trasferta, quando i colori si confondono)
     var c = coloriSquadra(sq) || ["#2b3550", "#9aa5bd"];
@@ -5104,13 +5320,14 @@
         if (pg) { mx += a * u * 0.16 * pg; my += u * 0.12 * pg; fy += u * 0.3 * pg; fx += a * u * 0.1 * pg; }   // 🧤 (carico sulle gambe: ginocchia fuori, piedi larghi e piantati)
         if (al) { fx += a * u * 0.28 * al; fy -= u * 0.06 * al * (a < 0 ? 1 : 0); }   // 🧤 (in volo: le gambe a forbice, la spinta dietro)
         if (gk) { var kY = -u * 0.55; mx += (u * (0.32 + a * 0.05) - mx) * gk; my += (kY - my) * gk; fx += (u * (-0.42 + a * 0.05) - fx) * gk; fy += (kY - u * 0.01 - fy) * gk; }   // (in ginocchio: le ginocchia a terra, i piedi dietro)
+        if (GRAF2.on) { ctx.strokeStyle = "rgba(10,14,22,.5)"; ctx.lineWidth = u * 0.33; ctx.beginPath(); ctx.moveTo(a * 0.14 * u, -u * 0.9); ctx.lineTo(mx, my); ctx.lineTo(fx, fy); ctx.stroke(); ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.ellipse(fx + u * 0.08, fy + u * 0.02, u * 0.22, u * 0.14, 0, 0, Math.PI * 2); ctx.fill(); }   // ✨ (il contorno che stacca dal prato)
         ctx.strokeStyle = a > 0 ? scuro(pelle, 0.86) : pelle; ctx.lineWidth = u * 0.2; ctx.beginPath(); ctx.moveTo(a * 0.14 * u, -u * 0.9); ctx.lineTo(mx, my); ctx.stroke();
         ctx.strokeStyle = g[1]; ctx.lineWidth = u * 0.24; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(fx, fy); ctx.stroke();
         { var bk = 0.3; ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = u * 0.07; ctx.beginPath(); ctx.moveTo(mx + (fx - mx) * bk - u * 0.1, my + (fy - my) * bk); ctx.lineTo(mx + (fx - mx) * bk + u * 0.1, my + (fy - my) * bk); ctx.stroke(); }   // (la striscia in cima al calzettone)
         ctx.fillStyle = a > 0 ? scuro(scarpa, 0.8) : scarpa; ctx.beginPath(); ctx.ellipse(fx + u * 0.08, fy + u * 0.02, u * 0.17, u * 0.09, 0, 0, Math.PI * 2); ctx.fill();
         if (scarpa !== "#141414") { ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(fx - u * 0.06, fy + u * 0.07, u * 0.3, u * 0.04); }   // (la suola)
       });
-      ctx.fillStyle = kit.pant; rr(-u * 0.33, -u * 1.12, u * 0.66, u * 0.34, u * 0.09); ctx.fill();   // i pantaloncini
+      ctx.fillStyle = kit.pant; rr(-u * 0.33, -u * 1.12, u * 0.66, u * 0.34, u * 0.09); if (GRAF2.on) { ctx.lineWidth = u * 0.1; ctx.strokeStyle = "rgba(10,14,22,.5)"; ctx.stroke(); } ctx.fill();   // i pantaloncini
       { ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.fillRect(lo > 0 ? u * 0.06 : -u * 0.33, -u * 1.1, u * 0.27, u * 0.3); }
       var sp0 = 0.33;   // (dove attaccano le braccia: le spalle larghe)
       var braccio = function (a, pelle) {
@@ -5122,6 +5339,7 @@
         if (al) { hx += (a * u * 0.17 - hx) * al; hy += (-u * 2.62 - hy) * al; }   // 🧤 in volo: le braccia tese verso il pallone, le mani vicine
         if (pr) { hx += (a * 0.62 * u - hx) * pr * (1 - kb); hy += (-u * 1.5 - hy) * pr * (1 - kb); }   // (le mani avanti, aperte)
         var ex = a * (sp0 + 0.03) * u + (hx - a * (sp0 + 0.03) * u) * 0.35, ey = -u * 1.72 + (hy + u * 1.72) * 0.35;
+        if (GRAF2.on) { ctx.strokeStyle = "rgba(10,14,22,.5)"; ctx.lineWidth = u * 0.29; ctx.beginPath(); ctx.moveTo(a * sp0 * u, -u * 1.72); ctx.lineTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke(); }   // ✨
         ctx.strokeStyle = a > 0 ? scuro(kit.a, 0.8) : kit.a; ctx.lineWidth = u * 0.2; ctx.beginPath(); ctx.moveTo(a * sp0 * u, -u * 1.72); ctx.lineTo(ex, ey); ctx.stroke();
         ctx.strokeStyle = pelle; ctx.lineWidth = u * 0.17; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
         if (o.guanti) { ctx.fillStyle = "#f4f4f4"; ctx.beginPath(); ctx.arc(hx, hy, u * (0.14 + 0.06 * al), 0, Math.PI * 2); ctx.fill(); ctx.lineWidth = u * 0.04; ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.stroke(); }
@@ -5149,7 +5367,8 @@
       ctx.restore(); busto(); ctx.lineWidth = u * 0.07; ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.stroke();
       if (!o.testa) { ctx.strokeStyle = kit.coll || kit.b; ctx.lineWidth = u * 0.08; ctx.beginPath(); ctx.moveTo(-u * 0.15, -u * 1.86); ctx.lineTo(0, -u * 1.75); ctx.lineTo(u * 0.15, -u * 1.86); ctx.stroke(); }   // il colletto
       braccio(-1, pelle);
-      if (!o.testa && o.asp) testaVera(ctx, -u * 2.2, u * 0.31, o.asp, lo, false);   // 🎨 la testa con l'aspetto vero
+      if (!o.testa && GRAF2.on && testaCampo(ctx, -u * 2.27, u * 0.38, o.asp || testaVecchia(o, pelle), lo)) {}   // ✨ (la grafica nuova: la testa più grande, con ombre e contorno; anche per chi non ha un aspetto vero)
+      else if (!o.testa && o.asp) testaVera(ctx, -u * 2.2, u * 0.31, o.asp, lo, false);   // 🎨 la testa con l'aspetto vero
       else if (!o.testa) {   // la testa normale: pelle e capelli
         var hr = 0.31, hy0 = -u * 2.2, cap = o.capelli || "#3b2a1e", st = o.stile || 0;
         if (st === 4) { ctx.fillStyle = cap; rr(-u * 0.4, hy0 - u * 0.1, u * 0.24, u * 0.36, u * 0.1); ctx.fill(); }   // (i capelli lunghi, dietro)
@@ -5176,7 +5395,7 @@
     function testaDi(x, y, u, o, faccia) {   // dove sta la testa (pixel del campo) e il punto più alto dell'omino (per il nome)
       var h = o.salto || 0, k = 1 + h * 0.25, t = o.ruota || 0, gi = o.giu || 0, px = x, py = y - h * u * 2.4 + (o.ginocchia || 0) * u * 0.5 - 1.15 * u * (1 - 0.68 * gi * (1 - Math.min(1, h * 3))), d = (faccia ? 1.3 + 0.2 * gi : 1.05) * k;
       var rot = function (lx, ly) { return [px + lx * Math.cos(t) - ly * Math.sin(t), py + lx * Math.sin(t) + ly * Math.cos(t)]; };
-      var testa = rot(0, -d * u), alto = [testa[0], testa[1] - u * (faccia ? 0.94 * k : 0.4)];
+      var testa = rot(0, -d * u), alto = [testa[0], testa[1] - u * (faccia ? 0.94 * k : GRAF2.on ? 0.5 : 0.4)];
       [rot(0.2 * u * k, 1.12 * u * k), rot(-0.2 * u * k, 1.12 * u * k)].forEach(function (q) { if (q[1] < alto[1]) alto = q; });
       return { testa: testa, alto: alto, r: u * 0.8 * k * (1 - 0.22 * gi) };   // (disteso, la faccina un po' più piccola e più in là: si vedono maglia e braccia)
     }
