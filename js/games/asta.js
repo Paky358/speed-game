@@ -511,8 +511,7 @@
     ".fa-ed-c{background:rgba(255,255,255,.07);border:2px solid transparent;color:#fff;border-radius:10px;padding:6px 9px;font-size:.82rem;font-weight:700;}",
     ".fa-ed-c.tondo{width:34px;height:34px;border-radius:50%;padding:0;border-color:rgba(255,255,255,.25);}",
     ".fa-ed-c.on{border-color:#fff;box-shadow:0 0 0 2px #e0225a;}",
-    ".fa-ed-barra{height:3px;border-radius:2px;margin-top:6px;background:#e0225a;transform:scaleX(0);transform-origin:left;}.fa-ed-barra.va{animation:faEdBar 2.5s linear forwards;}@keyframes faEdBar{from{transform:scaleX(0);}to{transform:scaleX(1);}}",
-    ".fa-ed-cerca{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:#151a2e;color:#fff;font-size:1rem;}",
+        ".fa-ed-cerca{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:#151a2e;color:#fff;font-size:1rem;}",
     ".fa-ed-schede{display:flex;gap:6px;margin:10px 0;}.fa-ed-schede button{flex:1;padding:9px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#a6acc8;font-weight:800;font-size:.85rem;}",
     ".fa-ed-schede button.on{background:rgba(224,34,90,.18);color:#fff;border-color:#e0225a;}",
     ".fa-ed-lista{display:flex;flex-direction:column;gap:4px;}",
@@ -4749,8 +4748,9 @@
       if (N && N.pubblica && C && C.eProprietario && C.eProprietario()) try { Promise.resolve(N.pubblica({ fantaAspetto: ASP_PROP })).catch(function () {}); } catch (e) {} }, 1500);
   }
   // 🎨 «PERSONALIZZA I CALCIATORI» (8 nov 2026): SOLO IL PAPPONE (dal ⚙️ della Mini Asta e dalle formazioni finali). In cima la lista
-  // «Da controllare» (in dubbio, senza foto, a caso) dalla quotazione più alta: «✓ Va bene» conferma e passa al prossimo, «🔍 Foto» apre
-  // Google Immagini in una scheda nuova; dopo una correzione, 2,5 s senza tocchi e si passa da soli al prossimo. Si può cercare chiunque.
+  // di TUTTI i calciatori dalla quotazione più alta (accanto «da controllare»: in dubbio, senza foto, a caso) e la scheda «Da controllare»;
+  // si sistemano uno a uno: un tocco sulla lista apre il calciatore, le correzioni restano su di lui (8 nov 2026, il proprietario: MAI
+  // passare da soli al prossimo); «✓ Va bene» lo conferma e apre il prossimo della lista, «🔍 Foto» apre Google Immagini. Si può cercare chiunque.
   // Si salva nella sua scheda pubblica (fantaAspetto) e vale per tutti sopra data/fanta-aspetto.js
   function eIlProprietario() { var C = window.SGCuore; return !!(C && C.eProprietario && C.eProprietario()); }
   function tuttiICalciatori() {
@@ -4770,25 +4770,26 @@
   function apriPersonalizza(soloK) {
     if (!eIlProprietario()) return;
     var vecchio = document.querySelector(".fa-ed"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
-    var tutti = tuttiICalciatori(), sel = null, filtro = "", modo = "dc", timer = null, RU = { P: "Portiere", D: "Difensore", C: "Centrocampista", A: "Attaccante" };
+    var tutti = tuttiICalciatori(), sel = null, filtro = "", modo = "tu", RU = { P: "Portiere", D: "Difensore", C: "Centrocampista", A: "Attaccante" };
     function nd(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
     function daControllare() { return tutti.filter(function (c) { return aspettoVero(c.k).dc; }); }
     var R = nd("div", "fa-ed oro"), testa = nd("div", "fa-ed-testa"), chiudi = nd("button", "fa-ed-x", "✕");
     testa.appendChild(nd("b", "", "🎨 Personalizza i calciatori")); testa.appendChild(chiudi); R.appendChild(testa);
     var scheda = nd("div", "fa-ed-scheda"); R.appendChild(scheda);
     var cerca = nd("input", "fa-ed-cerca"); cerca.type = "search"; cerca.placeholder = "🔍 Cerca un calciatore o una squadra"; R.appendChild(cerca);
-    var schede = nd("div", "fa-ed-schede"), tDc = nd("button", "on"), tTu = nd("button", "", "Tutti"); schede.appendChild(tDc); schede.appendChild(tTu); R.appendChild(schede);
+    var schede = nd("div", "fa-ed-schede"), tTu = nd("button", "on"), tDc = nd("button"); schede.appendChild(tTu); schede.appendChild(tDc); R.appendChild(schede);
     var lista = nd("div", "fa-ed-lista"); R.appendChild(lista);
     document.body.appendChild(R);
-    chiudi.onclick = function () { clearTimeout(timer); if (R.parentNode) R.parentNode.removeChild(R); };
+    chiudi.onclick = function () { if (R.parentNode) R.parentNode.removeChild(R); };
     tDc.onclick = function () { modo = "dc"; tDc.className = "on"; tTu.className = ""; elenco(); };
     tTu.onclick = function () { modo = "tu"; tTu.className = "on"; tDc.className = ""; elenco(); };
     cerca.oninput = function () { filtro = cerca.value.trim().toLowerCase(); if (filtro && modo === "dc") tTu.onclick(); else elenco(); };
-    function prossimo() {   // il prossimo da controllare dopo quello di adesso (nell'ordine della quotazione)
-      var dc = daControllare(), i = sel ? tutti.indexOf(sel) : -1;
-      return dc.filter(function (c) { return tutti.indexOf(c) > i; })[0] || dc[0] || null;
+    function prossimo() {   // il prossimo della lista che si sta guardando (Tutti o Da controllare), dopo quello di adesso
+      var l = modo === "dc" ? daControllare() : visibili(), i = sel ? tutti.indexOf(sel) : -1;
+      return l.filter(function (c) { return tutti.indexOf(c) > i; })[0] || sel;
     }
-    function scegli(c) { clearTimeout(timer); sel = c; disegnaScheda(); elenco(); }
+    function visibili() { return tutti.filter(function (c) { return !filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; }); }
+    function scegli(c) { sel = c; disegnaScheda(); elenco(); }
     function salva(a) { ASP_PROP[sel.k] = { p: a.p, c: a.c, t: a.t, b: a.b, ok: 1 }; if (a.cb) ASP_PROP[sel.k].cb = a.cb; salvaAspettoProp(); }
     function disegnaScheda() {
       scheda.textContent = "";
@@ -4804,16 +4805,13 @@
       scheda.appendChild(tasti);
       ok.onclick = function () { salva(aspettoVero(sel.k)); scegli(prossimo()); };
       foto.onclick = function () { window.open("https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(sel.nome.replace(/\s+(?:[A-Z][a-z]?\.)+$/, "") + " " + sel.sq + " calciatore"), "_blank"); };
-      var barra = nd("div", "fa-ed-barra"); scheda.appendChild(barra);
       function riga(titolo, valori, attuale, mostra, cambia) {
         scheda.appendChild(nd("div", "fa-ed-et", titolo)); var r = nd("div", "fa-ed-riga");
         valori.forEach(function (v) { var b = nd("button", "fa-ed-c" + (v === attuale ? " on" : "")); mostra(b, v); b.onclick = function () { cambia(v); }; r.appendChild(b); });
         scheda.appendChild(r);
       }
       function cambio(campo, v) {
-        var x = aspettoVero(sel.k); x[campo] = v; if (campo === "c" && v === "nessuno") x.t = "calvo"; salva(x); disegnaScheda(); elenco();
-        clearTimeout(timer); var b2 = scheda.querySelector(".fa-ed-barra"); if (b2) { b2.classList.remove("va"); void b2.offsetWidth; b2.classList.add("va"); }
-        timer = setTimeout(function () { if (R.parentNode && modo === "dc") scegli(prossimo()); }, 2500);   // (dopo la correzione: 2,5 s senza tocchi e si passa al prossimo)
+        var x = aspettoVero(sel.k); x[campo] = v; if (campo === "c" && v === "nessuno") x.t = "calvo"; salva(x); disegnaScheda(); elenco();   // (resta su questo calciatore)
       }
       riga("Pelle", [1, 2, 3, 4, 5, 6, 7], a.p, function (b, v) { b.classList.add("tondo"); b.style.background = PELLE_VERA[v]; }, function (v) { cambio("p", v); });
       riga("Capelli", Object.keys(CAPELLI_VERI), a.c, function (b, v) { b.classList.add("tondo"); b.title = v; if (CAPELLI_VERI[v]) b.style.background = CAPELLI_VERI[v]; else b.textContent = "∅"; }, function (v) { cambio("c", v); });
@@ -4824,17 +4822,17 @@
     }
     function elenco() {
       lista.textContent = "";
-      var dc = daControllare(); tDc.textContent = "Da controllare · ne restano " + dc.length;
-      var l = modo === "dc" ? dc : tutti.filter(function (c) { return !filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; });
-      l.slice(0, modo === "dc" ? 60 : 120).forEach(function (c) {
+      var dc = daControllare(); tDc.textContent = "Da controllare · " + dc.length; tTu.textContent = "Tutti · " + tutti.length;
+      var l = modo === "dc" ? dc : visibili();
+      l.forEach(function (c) {
         var r = nd("button", "fa-ed-r" + (c === sel ? " on" : "")), cv = nd("canvas"), a = aspettoVero(c.k); cv.setAttribute("width", 34); cv.style.width = cv.style.height = "34px";
         r.appendChild(cv); r.appendChild(nd("b", "", c.nome)); r.appendChild(nd("span", "", c.sq + " · " + c.q + (a.dc ? " · da controllare" : "")));
         r.onclick = function () { scegli(c); R.scrollTop = 0; }; lista.appendChild(r);
         disegnaTestina(cv, a, true);
       });
     }
-    sel = soloK ? tutti.filter(function (c) { return c.k === soloK; })[0] || null : daControllare()[0] || null;
-    if (soloK) tTu.onclick(); else elenco();
+    sel = soloK ? tutti.filter(function (c) { return c.k === soloK; })[0] || null : tutti[0] || null;
+    elenco();
     disegnaScheda();
   }
   window.SGAstaAspetto = { apri: function (k) { apriPersonalizza(k); }, vero: aspettoVero, colori: coloriAspetto, prop: function () { return ASP_PROP; } };   // (per le prove e per aprire l'editor da fuori)

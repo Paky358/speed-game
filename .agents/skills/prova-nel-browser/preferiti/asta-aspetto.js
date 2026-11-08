@@ -4,8 +4,8 @@
 // asp1 I dati (data/fanta-aspetto.js): ogni nome è nel listone, pelle 1-7, capelli/taglio/barba tra quelli che si sanno disegnare;
 //      chi non c'è ha un aspetto «a caso» FISSO (uguale rifacendo il conto) ed è da controllare; le correzioni di IL PAPPONE vincono sui dati.
 // asp2 L'editor «🎨 Personalizza i calciatori»: lo apre SOLO IL PAPPONE (nel ⚙️ della Mini Asta c'è il tasto solo per lui); in cima
-//      il primo da controllare è quello con la quotazione più alta; «✓ Va bene» lo conferma e passa al prossimo; una correzione si salva
-//      e dopo 2,5 s senza tocchi si passa al prossimo; «↩ Di partenza» torna ai dati; la ricerca trova un calciatore qualunque.
+//      sulla lista di TUTTI i calciatori (305), il primo con la quotazione più alta; «✓ Va bene» lo conferma e apre il prossimo; una
+//      correzione si salva e RESTA su quel calciatore (8 nov 2026: mai da solo al prossimo); «↩ Di partenza» torna ai dati; la ricerca.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -50,18 +50,18 @@
     var R = d.querySelector(".fa-ed"); if (!R) no("l'editor non si apre per IL PAPPONE");
     var Q = w.SG_FANTA_QUOTAZIONI.valori, nome = function () { return (d.querySelector(".fa-ed-info b") || {}).textContent; }, squad = function () { return ((d.querySelector(".fa-ed-info span") || {}).textContent || "").split(" · ")[0]; };
     var k1 = nome() + " (" + squad() + ")", maxQ = 0;
-    Object.keys(Q).forEach(function (k) { if (S.vero(k).dc) maxQ = Math.max(maxQ, Q[k]); });
-    if (Q[k1] !== maxQ) ko.push("il primo da controllare (" + k1 + ", " + Q[k1] + ") non ha la quotazione più alta (" + maxQ + ")");
-    var resta = function () { return +((d.querySelector(".fa-ed-schede button") || {}).textContent || "").replace(/\D+/g, ""); }, n0 = resta();
+    Object.keys(Q).forEach(function (k) { maxQ = Math.max(maxQ, Q[k]); });
+    if (Q[k1] !== maxQ) ko.push("il primo (" + k1 + ", " + Q[k1] + ") non ha la quotazione più alta (" + maxQ + ")");
+    if (d.querySelectorAll(".fa-ed-r").length !== 305) ko.push("nella lista ci sono " + d.querySelectorAll(".fa-ed-r").length + " calciatori invece di 305 (deve esserci TUTTA la lista)");
+    var resta = function () { return +((d.querySelectorAll(".fa-ed-schede button")[1] || {}).textContent || "").replace(/\D+/g, ""); }, n0 = resta(), eraDc = S.vero(k1).dc;
     var ok = [].slice.call(d.querySelectorAll(".fa-ed-tasti button")).filter(function (b) { return /Va bene/.test(b.textContent); })[0]; ok.click(); await W.dorme(150);
     if (!P[k1] || !P[k1].ok) ko.push("«Va bene» non salva la conferma");
-    if (resta() !== n0 - 1) ko.push("dopo «Va bene» ne restano " + resta() + " (prima " + n0 + ")");
-    var k2 = nome() + " (" + squad() + ")"; if (k2 === k1) ko.push("«Va bene» non passa al prossimo");
+    if (resta() !== n0 - (eraDc ? 1 : 0)) ko.push("dopo «Va bene» da controllare " + resta() + " (prima " + n0 + ")");
+    var k2 = nome() + " (" + squad() + ")"; if (k2 === k1) ko.push("«Va bene» non apre il prossimo");
     var pelle = [].slice.call(d.querySelectorAll(".fa-ed-riga"))[0].children[6]; pelle.click(); await W.dorme(150);
     if (!P[k2] || P[k2].p !== 7) ko.push("la pelle cambiata non si salva: " + JSON.stringify(P[k2]));
-    if (nome() + " (" + squad() + ")" !== k2) ko.push("dopo una correzione è passato subito al prossimo (deve aspettare 2,5 s)");
-    await W.dorme(2900);
-    if (nome() + " (" + squad() + ")" === k2) ko.push("2,5 s dopo la correzione non è passato al prossimo");
+    await W.dorme(3500);
+    if (nome() + " (" + squad() + ")" !== k2) ko.push("dopo una correzione è passato da solo a un altro calciatore (deve restare lì)");
     var cerca = d.querySelector(".fa-ed-cerca"); cerca.value = "maignan"; cerca.dispatchEvent(new w.Event("input")); await W.dorme(150);
     var r = d.querySelector(".fa-ed-r"); if (!r || !/Maignan/.test(r.textContent)) ko.push("la ricerca non trova Maignan"); else { r.click(); await W.dorme(150); }
     var pel = [].slice.call(d.querySelectorAll(".fa-ed-riga"))[0].children[0]; pel.click(); await W.dorme(150);
@@ -72,6 +72,6 @@
     var mis = R.scrollWidth > w.innerWidth + 1 ? "l'editor scorre di lato" : null; if (mis) ko.push(mis);
     d.querySelector(".fa-ed-x").click(); Object.keys(P).forEach(function (k) { delete P[k]; }); try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
     if (ko.length) no(ko.slice(0, 8).join(" | "));
-    return "solo IL PAPPONE; primo da controllare " + k1 + " (" + Q[k1] + "); Va bene, correzione + 2,5 s, ricerca, Di partenza: tutto a posto (" + n0 + " da controllare)";
+    return "solo IL PAPPONE; lista di 305, primo " + k1 + " (" + Q[k1] + "); Va bene apre il prossimo, la correzione resta lì, ricerca, Di partenza: tutto a posto (" + n0 + " da controllare)";
   } });
 })();
