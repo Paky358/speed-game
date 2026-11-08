@@ -10,6 +10,7 @@
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
   async function motore(w) {   // il file del gioco con tre funzioni di dentro portate fuori (solo per la prova), dentro il telefono w
+    if (w.SG && w.SG.scaricaGioco) await w.SG.scaricaGioco("asta");   // (dal 4 nov 2026 il listone arriva col gioco)
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {};
     var aggancio = "function costruisciMazzoFanta(n) {";
     if (src.indexOf(aggancio) < 0) no("non trovo il mazzo del fanta nel file del gioco");

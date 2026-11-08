@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 321,
+    data: "8 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i calciatori veri in campo e la figurina 🃏",
+    descrizione: [
+      "🃏 All'«AGGIUDICATO!» esce la figurina del calciatore: la sua testa, la maglia vera della sua squadra col numero vero sul petto e il nome. Resta un attimo in grande e poi vola nel campetto di chi l'ha preso, dove diventa la magliettina col prezzo come prima.",
+      "⚽ Nella giornata i vostri calciatori hanno la LORO testa (pelle, capelli e barba veri) invece della faccina di chi li ha comprati. Di chi sono lo dicono il colore dell'etichetta col nome e l'alone colorato sotto i piedi.",
+      "👥 Gli altri in campo non sono più comparse a caso: sono i calciatori veri di quella squadra che nessuno ha comprato, ognuno nel suo ruolo e col suo numero vero (senza nome sopra: non fanno mai punti).",
+      "🎨 I colori dei giocatori sono più diversi tra loro (giallo, azzurro, magenta, bianco, arancione…), così in campo si riconosce subito chi è di chi. Tolta la regola «In campo, di chi è»: basta il colore.",
+      "📋 Il calciatore che va d'ufficio adesso si legge: resta in vista 3 secondi con le sue scritte e «Va a Giulia per 1», poi arriva il timbro.",
+      "🆚 «Contro chi giocano» è acceso di partenza: sotto il calciatore all'asta vedi già contro chi gioca nella giornata."
+    ]
+  },
+  {
     v: 320,
     data: "7 novembre 2026",
     titolo: "Il camerino: l'avatar in grande 🔍",

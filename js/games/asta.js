@@ -519,6 +519,7 @@
     ".fa-ed-r{display:grid;grid-template-columns:34px 1fr;column-gap:10px;align-items:center;text-align:left;background:rgba(255,255,255,.04);border:1px solid transparent;border-radius:12px;padding:6px 10px;color:#fff;}",
     ".fa-ed-r canvas{grid-row:1/3;}.fa-ed-r b{font-size:.95rem;}.fa-ed-r span{font-size:.75rem;color:#a6acc8;}.fa-ed-r.on{border-color:#e0225a;}",
     ".fa-ed-fatto{text-align:center;padding:16px;font-weight:800;}",
+    ".st-fig{position:absolute;z-index:9;pointer-events:none;will-change:transform,opacity;}.st-fig canvas{display:block;}",
     ".st-uff small{font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#ffc247;}.st-uff b{font-size:1.15rem;font-weight:900;}",
     "@keyframes stUff{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}",
     // la classifica finale del fantacalcio: il contatore che sale, poi il podio
@@ -2264,7 +2265,7 @@
     if (rap !== S.rap) { S.rap = rap; var fondo = arte("campo", "", rap); if (fondo) { S.campo.style.backgroundImage = "url(\"" + fondo + "\")"; S.campo.classList.add("dipinto"); } }
   }
   function chiaro(hex) { var n = parseInt(String(hex || "#000").slice(1), 16) || 0; return ((n >> 16) * 299 + (n >> 8 & 255) * 587 + (n & 255) * 114) / 1000 > 150; }
-  function riempiSlot(s, c, valore) {   // un posto del campo: la maglia, il nome sui colori della squadra e quanto è stato pagato (o vuoto col ruolo)
+  function riempiSlot(s, c, valore, tocco) {   // un posto del campo: la maglia, il nome sui colori della squadra e quanto è stato pagato (o vuoto col ruolo)
     var k = c ? c.nome + "|" + c.squadra + "|" + (c.prezzo || "") : "";
     if (k !== s.k) {
       s.k = k; s.nodo.classList.toggle("vuoto", !c);
@@ -2274,6 +2275,7 @@
         s.nome.style.background = col[0]; s.nome.style.borderColor = col[1]; s.nome.style.color = chiaro(col[0]) ? "#141414" : "#fff";
         s.paga.textContent = c.prezzo ? c.prezzo + " 💰" : "";
       } else { s.img.removeAttribute("src"); s.nome.textContent = ""; s.paga.textContent = ""; }
+      s.nodo.onclick = c && tocco && eIlProprietario() ? function () { apriPersonalizza(chiaveCalc(c)); } : null;   // 🎨 (solo IL PAPPONE: tocca un calciatore della formazione e lo sistemi)
       s.val.classList.remove("su"); s.val.textContent = "";
     }
     if (valore != null) { s.val.textContent = valore; s.val.classList.add("su"); }
@@ -2524,8 +2526,79 @@
     disegnaSquadre(S, d, S.volo);
     setTimeout(function () {
       if (STADIO !== S || S.esitoN !== n) return;
-      volo(S, q.slot[i], function () { if (STADIO !== S) return; S.volo = null; S.festa = S.esitoN === n; disegnaSquadre(S, S.ultimiDati); rianima(q.slot[i].nodo, "arriva"); FX.pop(); });   // (arrivata la maglia, la sua squadra fa festa)
+      voloFigurina(S, q.slot[i], e.carta, e.prezzo, function () { if (STADIO !== S) return; S.volo = null; S.festa = S.esitoN === n; disegnaSquadre(S, S.ultimiDati); rianima(q.slot[i].nodo, "arriva"); FX.pop(); });   // (arrivata la maglia, la sua squadra fa festa)
     }, 450);
+  }
+  // 🃏 LA FIGURINA CHE VOLA (8 nov 2026, scelta dal proprietario tra due proposte: «da album»): all'«AGGIUDICATO!» dal tabellone esce la
+  // figurina del calciatore (testa con l'aspetto vero, busto con la maglia vista davanti coi colori veri e il numero vero piccolo sul petto,
+  // nome sotto), resta un attimo grande e vola al suo posto nel campetto di chi l'ha preso, dove diventa la magliettina col prezzo come prima.
+  // Disegnata una volta sola, si muove solo con transform/opacity
+  function chiaraC(c) { var n = /^#[0-9a-f]{6}$/i.test(c) ? parseInt(c.slice(1), 16) : 0; return 0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255) > 150; }
+  function bustoDavanti(cx, r, hy, kit, num, pelle, giu) {   // il busto visto davanti: collo, maglia (a righe se serve), colletto, il numero piccolo sul petto
+    var top = hy + r * 0.92, bot = giu;
+    cx.fillStyle = scuro(pelle, 0.9); cx.fillRect(-r * 0.36, hy + r * 0.5, r * 0.72, r * 0.6);   // il collo
+    function forma() { cx.beginPath(); cx.moveTo(-r * 0.5, top); cx.quadraticCurveTo(-r * 1.5, top + r * 0.12, -r * 1.75, top + r * 0.7); cx.lineTo(-r * 1.95, bot); cx.lineTo(r * 1.95, bot); cx.lineTo(r * 1.75, top + r * 0.7); cx.quadraticCurveTo(r * 1.5, top + r * 0.12, r * 0.5, top); cx.closePath(); }
+    cx.save(); forma(); cx.fillStyle = kit.a; cx.fill(); cx.clip();
+    if (kit.righe) { cx.fillStyle = kit.b; for (var x = -r * 2; x < r * 2; x += r * 0.7) cx.fillRect(x + r * 0.17, top - r, r * 0.35, bot - top + 2 * r); }
+    cx.fillStyle = "rgba(0,0,0,.22)"; cx.fillRect(r * 0.55, top - r, r * 2, bot - top + 2 * r);   // (l'ombra a destra)
+    cx.fillStyle = "rgba(255,255,255,.14)"; cx.fillRect(-r * 1.3, top + r * 0.2, r * 0.35, bot - top);
+    cx.strokeStyle = "rgba(0,0,0,.25)"; cx.lineWidth = r * 0.06; cx.beginPath(); cx.moveTo(-r * 1.25, top + r * 0.75); cx.lineTo(-r * 1.15, bot); cx.moveTo(r * 1.25, top + r * 0.75); cx.lineTo(r * 1.15, bot); cx.stroke();   // (le maniche)
+    if (num != null) {   // il numero vero, piccolo, sul petto (come sulle maglie vere)
+      cx.font = "900 " + (r * 0.5).toFixed(1) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle";
+      var ch = chiaraC(kit.a); cx.lineWidth = r * 0.1; cx.strokeStyle = ch ? "rgba(255,255,255,.8)" : "rgba(0,0,0,.55)"; cx.strokeText(num, r * 0.72, top + r * 0.95); cx.fillStyle = ch ? "#16161a" : "#ffffff"; cx.fillText(num, r * 0.72, top + r * 0.95);
+    }
+    cx.restore();
+    cx.strokeStyle = kit.coll || kit.b; cx.lineWidth = r * 0.16; cx.lineJoin = "round"; cx.beginPath(); cx.moveTo(-r * 0.5, top + r * 0.02); cx.lineTo(0, top + r * 0.45); cx.lineTo(r * 0.5, top + r * 0.02); cx.stroke();   // il colletto a V
+    cx.fillStyle = scuro(pelle, 0.85); cx.beginPath(); cx.moveTo(-r * 0.42, top + r * 0.04); cx.lineTo(0, top + r * 0.36); cx.lineTo(r * 0.42, top + r * 0.04); cx.closePath(); cx.fill();
+  }
+  var FIG_CACHE = {};
+  function figurinaCanvas(c, prezzo, w) {   // c: { nome, squadra, ruolo }. Torna il canvas (w px di larghezza) o null
+    if (!c || !c.squadra) return null;
+    var k = c.nome + "|" + c.squadra + "|" + prezzo + "|" + Math.round(w);
+    if (FIG_CACHE[k]) return FIG_CACHE[k];
+    var d = Math.min(2, window.devicePixelRatio || 1), h = Math.round(w * 1.36), cv = document.createElement("canvas");
+    cv.width = Math.round(w * d); cv.height = Math.round(h * d); cv.style.width = w + "px"; cv.style.height = h + "px";
+    var cx = cv.getContext("2d"); cx.setTransform(d, 0, 0, d, 0, 0);
+    var kit = kitDi(c.squadra, false), col = coloriSquadra(c.squadra) || [kit.a, kit.b], ca = coloriAspetto(aspettoVero(chiaveCalc(c))), mg = numeroMaglia(c), PI = Math.PI;
+    var ruolo = { P: "PORTIERE", D: "DIFENSORE", C: "CENTROCAMPISTA", A: "ATTACCANTE" }[c.ruolo] || "";
+    function tondo(x, y, ww, hh, rr) { cx.beginPath(); cx.moveTo(x + rr, y); cx.arcTo(x + ww, y, x + ww, y + hh, rr); cx.arcTo(x + ww, y + hh, x, y + hh, rr); cx.arcTo(x, y + hh, x, y, rr); cx.arcTo(x, y, x + ww, y, rr); cx.closePath(); }
+    function nomeIn(testo, x, y, maxW, fs, colore) { cx.font = "900 " + fs + "px system-ui,sans-serif"; var l = cx.measureText(testo).width; if (l > maxW) { fs = Math.floor(fs * maxW / l); cx.font = "900 " + fs + "px system-ui,sans-serif"; } cx.fillStyle = colore; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(testo, x, y); }
+    {   // la figurina da album: cartoncino crema, dentro i colori della squadra, il calciatore a mezzo busto, la fascia col nome
+      var m = w * 0.045, iw = w - 2 * m, ih = h * 0.78;
+      cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07); cx.fillStyle = "#f6f1e3"; cx.fill(); cx.shadowColor = "transparent";
+      cx.save(); tondo(m, m, iw, ih, w * 0.045); cx.clip();
+      var g = cx.createLinearGradient(0, m, 0, m + ih); g.addColorStop(0, col[0]); g.addColorStop(1, scuro(col[0], 0.55)); cx.fillStyle = g; cx.fillRect(m, m, iw, ih);
+      cx.globalAlpha = 0.16; cx.fillStyle = col[1] || "#fff"; for (var sx = -ih; sx < iw; sx += w * 0.16) { cx.beginPath(); cx.moveTo(m + sx, m + ih); cx.lineTo(m + sx + w * 0.07, m + ih); cx.lineTo(m + sx + ih + w * 0.07, m); cx.lineTo(m + sx + ih, m); cx.closePath(); cx.fill(); } cx.globalAlpha = 1;
+      cx.save(); cx.translate(w / 2, 0); var r = w * 0.17, hy = m + ih * 0.36;
+      bustoDavanti(cx, r, hy, kit, mg.n, ca.pelle, m + ih + 2); testaVera(cx, hy, r, ca, 1, true); cx.restore();
+      cx.restore();
+      cx.fillStyle = col[0]; cx.fillRect(m, m + ih + h * 0.012, iw, h * 0.012);
+      nomeIn(mg.nome, w / 2, m + ih + h * 0.085, iw * 0.92, Math.round(w * 0.12), "#16161a");
+      nomeIn(c.squadra.toUpperCase() + " · " + ruolo, w / 2, m + ih + h * 0.158, iw * 0.92, Math.round(w * 0.062), scuro(chiaraC(col[0]) ? (col[1] || "#333") : col[0], 0.9));
+      if (prezzo != null) { cx.font = "900 " + Math.round(w * 0.085) + "px system-ui,sans-serif"; var pt = prezzo + " 💰", pw = cx.measureText(pt).width + w * 0.08; tondo(w - m - pw - w * 0.03, m + w * 0.03, pw, w * 0.12, w * 0.06); cx.fillStyle = "#ffc247"; cx.fill(); cx.fillStyle = "#16161a"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(pt, w - m - pw / 2 - w * 0.03, m + w * 0.093); }
+    }
+    FIG_CACHE[k] = cv; return cv;
+  }
+  function voloFigurina(S, s, carta, prezzo, poi) {   // la figurina esce grande sopra lo stadio, resta un attimo e vola al suo posto (s) nel campetto
+    var a = s.img.getBoundingClientRect(), base = S.radice.getBoundingClientRect(), sch = S.schermo.getBoundingClientRect();
+    if (!a.width || !base.width) return volo(S, s, poi);
+    var w = Math.round(Math.max(110, Math.min(200, base.width * 0.44))), cv = figurinaCanvas(carta, prezzo, w);
+    if (!cv || !cv.animate) return volo(S, s, poi);
+    var fig = document.createElement("div"); fig.className = "st-fig"; fig.appendChild(cv);
+    var h = parseFloat(cv.style.height), x0 = base.width / 2 - w / 2, y0 = Math.max(sch.bottom - base.top - h * 0.18, Math.min(base.height * 0.42 - h / 2, base.height - h - 8));
+    fig.style.left = x0 + "px"; fig.style.top = y0 + "px"; fig.style.width = w + "px"; fig.style.height = h + "px";
+    S.radice.appendChild(fig);
+    var dx = (a.left + a.width / 2) - (base.left + x0 + w / 2), dy = (a.top + a.height / 2) - (base.top + y0 + h / 2), sc = Math.max(0.08, a.width / w);
+    var finito = false, fine = function () { if (finito) return; finito = true; if (fig.parentNode) fig.parentNode.removeChild(fig); poi(); };
+    var an = fig.animate([
+      { transform: "translate(0px," + (sch.top - base.top - y0) + "px) scale(.3)", opacity: 0 },
+      { transform: "translate(0px,0px) scale(1.06) rotate(-3deg)", opacity: 1, offset: 0.16 },
+      { transform: "translate(0px,0px) scale(1) rotate(0deg)", opacity: 1, offset: 0.24 },
+      { transform: "translate(0px,0px) scale(1) rotate(0deg)", opacity: 1, offset: 0.6 },
+      { transform: "translate(" + (dx * 0.5) + "px," + (dy * 0.5 - 30) + "px) scale(" + ((1 + sc) / 2.2) + ") rotate(8deg)", opacity: 1, offset: 0.8 },
+      { transform: "translate(" + dx + "px," + dy + "px) scale(" + sc + ") rotate(0deg)", opacity: 0.15 }
+    ], { duration: 2000, easing: "ease-in-out", fill: "forwards" });
+    an.onfinish = fine; setTimeout(fine, 2300);
   }
   function volo(S, s, poi) {   // la maglia vola dal maxischermo al suo posto (s) nel campetto (solo transform: niente scatti)
     var da = S.magliaImg.getBoundingClientRect(), a = s.img.getBoundingClientRect(), base = S.radice.getBoundingClientRect();
@@ -3183,7 +3256,7 @@
     R.campoNome.textContent = "La rosa di " + r.nome + " · " + r.crediti + " 💰 avanzati";
     allenatore(R, r, "giu");
     var posti = slotRosa(r.kit);
-    R.slot.forEach(function (s, i) { riempiSlot(s, posti[i]); s.nodo.classList.remove("cerca"); });
+    R.slot.forEach(function (s, i) { riempiSlot(s, posti[i], null, true); s.nodo.classList.remove("cerca"); });
     R.magliaImg.src = srcAv(cfgDi(r.nome, r.omino), {}); R.squadra.textContent = ""; R.nome.textContent = r.nome; R.prezzoN.textContent = "0"; R.chi.textContent = "valore della rosa";
     R.schermo.classList.remove("vuoto"); rianima(R.schermo, "entra");
     var pari = R.righe.filter(function (o) { return o !== r && o.totale === r.totale; });

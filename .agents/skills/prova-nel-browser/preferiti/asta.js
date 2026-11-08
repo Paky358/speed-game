@@ -996,7 +996,7 @@
         await W.dorme(100); continue;
       }
       primo = q(P, ".st-apri") ? primo : null;
-      if (q(P, ".st-stadio .sa-pers") && !q(P, ".sa-aggiudicato") && !q(P, ".st-apri") && prezzo(P) != null) {
+      if (q(P, ".st-stadio .sa-pers") && !q(P, ".sa-aggiudicato") && !q(P, ".st-uff") && !q(P, ".st-apri") && prezzo(P) != null) {   // (.st-uff: il calciatore d'ufficio, 3 s prima del timbro)
         var k = testoDi(P, ".st-nome") + " (" + testoDi(P, ".st-squadra") + ")";
         if (k !== cartaA) { cartaA = k; nA++; if (!(Q[k] < BIG)) ko.push("all'asta normale " + k + " (" + Q[k] + ")"); }
         var c = capoNome(P);
