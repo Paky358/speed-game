@@ -500,7 +500,7 @@
     ".fa-ed-testa{display:flex;align-items:center;justify-content:space-between;font-size:1.1rem;margin-bottom:8px;}",
     ".fa-ed-x{background:none;border:0;color:#fff;font-size:1.3rem;padding:6px 10px;}",
     ".fa-ed-scheda{background:#151a2e;border-radius:16px;padding:12px;margin-bottom:10px;}",
-    ".fa-ed-su{display:flex;align-items:center;gap:10px;}",
+    ".fa-ed-su{display:flex;align-items:center;gap:10px;position:sticky;top:-10px;z-index:3;background:#151a2e;margin:-12px -12px 0;padding:12px;border-radius:16px 16px 0 0;box-shadow:0 10px 14px -10px rgba(0,0,0,.7);}",
     ".fa-ed-big{width:96px;height:96px;flex:none;background:radial-gradient(circle,#3a8a42,#1f5a27);border-radius:14px;}",
     ".fa-ed-pro{width:56px;height:56px;flex:none;background:#2f7a37;border-radius:10px;}",
     ".fa-ed-info{display:flex;flex-direction:column;gap:2px;min-width:0;}.fa-ed-info b{font-size:1.15rem;}.fa-ed-info span{color:#a6acc8;font-size:.85rem;}.fa-ed-info i{font-style:normal;color:#ffc247;font-size:.82rem;}",
