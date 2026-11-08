@@ -9,7 +9,7 @@
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
-  var TAGLI = ["corti", "corti col ciuffo", "sfumati alti", "rasato", "ricci corti", "ricci", "afro", "treccine", "dreadlocks", "lunghi", "lunghi raccolti", "cresta", "calvo", "riga di lato", "mossi", "medi", "spettinati"];
+  var TAGLI = ["corti", "corti col ciuffo", "sfumati alti", "rasato", "ricci corti", "ricci", "afro", "treccine", "dreadlocks", "lunghi", "lunghi raccolti", "cresta", "calvo", "riga di lato", "mossi", "medi", "spettinati", "lunghi mossi", "lunghi ricci", "codino", "mullet", "tirati indietro", "frangia", "a scodella", "stempiati", "pelato in cima", "ricci alti", "treccine raccolte", "dreadlocks raccolti"];
   var CAP = ["nero", "castano scuro", "castano", "biondo scuro", "biondo", "biondo platino / tinto", "rosso", "grigio", "nessuno"], BAR = ["niente", "accennata", "corta", "piena", "baffi", "pizzetto", "baffi e pizzetto"];
   async function gioco(w) { if (w.SG && w.SG.scaricaGioco) await w.SG.scaricaGioco("asta"); if (!w.SGAstaAspetto) no("il gioco non espone l'aspetto"); return w.SGAstaAspetto; }
   COPIONE.aggiungi("asp1", { nome: "Fanta: l'aspetto vero dei calciatori (dati, a caso fisso, correzioni del proprietario)", fai: async function () {
