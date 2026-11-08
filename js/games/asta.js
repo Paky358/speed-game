@@ -495,6 +495,32 @@
     ".st-piede.loc{min-height:calc(96px + env(safe-area-inset-bottom));}.st-piede.onl{min-height:calc(150px + env(safe-area-inset-bottom));}",
     ".st-piede .sa-nota{width:100%;}.st-piede .btn{flex:1;width:auto;}",
     ".st-stadio .sa-aggiudicato{top:14%;font-size:1.6rem;}",
+    ".st-uff{position:absolute;left:50%;z-index:8;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;padding:6px 16px 7px;border-radius:14px;background:rgba(13,16,32,.92);border:2px solid #ffc247;color:#fff;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:stUff .3s ease-out;pointer-events:none;}",
+    ".fa-ed{position:fixed;inset:0;z-index:2000;overflow-y:auto;background:#0d1020;color:#f4f5fb;padding:10px 14px 30px;box-sizing:border-box;}",
+    ".fa-ed-testa{display:flex;align-items:center;justify-content:space-between;font-size:1.1rem;margin-bottom:8px;}",
+    ".fa-ed-x{background:none;border:0;color:#fff;font-size:1.3rem;padding:6px 10px;}",
+    ".fa-ed-scheda{background:#151a2e;border-radius:16px;padding:12px;margin-bottom:10px;}",
+    ".fa-ed-su{display:flex;align-items:center;gap:10px;}",
+    ".fa-ed-big{width:96px;height:96px;flex:none;background:radial-gradient(circle,#3a8a42,#1f5a27);border-radius:14px;}",
+    ".fa-ed-pro{width:56px;height:56px;flex:none;background:#2f7a37;border-radius:10px;}",
+    ".fa-ed-info{display:flex;flex-direction:column;gap:2px;min-width:0;}.fa-ed-info b{font-size:1.15rem;}.fa-ed-info span{color:#a6acc8;font-size:.85rem;}.fa-ed-info i{font-style:normal;color:#ffc247;font-size:.82rem;}",
+    ".fa-ed-tasti{display:flex;gap:8px;margin:10px 0 4px;flex-wrap:wrap;}.fa-ed-tasti .btn{flex:1;margin:0;}",
+    ".fa-ed-t{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;border-radius:12px;padding:10px 12px;font-weight:800;}",
+    ".fa-ed-et{font-size:.72rem;color:#a6acc8;font-weight:800;margin:9px 0 4px;text-transform:uppercase;letter-spacing:.06em;}",
+    ".fa-ed-riga{display:flex;flex-wrap:wrap;gap:6px;}",
+    ".fa-ed-c{background:rgba(255,255,255,.07);border:2px solid transparent;color:#fff;border-radius:10px;padding:6px 9px;font-size:.82rem;font-weight:700;}",
+    ".fa-ed-c.tondo{width:34px;height:34px;border-radius:50%;padding:0;border-color:rgba(255,255,255,.25);}",
+    ".fa-ed-c.on{border-color:#fff;box-shadow:0 0 0 2px #e0225a;}",
+    ".fa-ed-barra{height:3px;border-radius:2px;margin-top:6px;background:#e0225a;transform:scaleX(0);transform-origin:left;}.fa-ed-barra.va{animation:faEdBar 2.5s linear forwards;}@keyframes faEdBar{from{transform:scaleX(0);}to{transform:scaleX(1);}}",
+    ".fa-ed-cerca{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:#151a2e;color:#fff;font-size:1rem;}",
+    ".fa-ed-schede{display:flex;gap:6px;margin:10px 0;}.fa-ed-schede button{flex:1;padding:9px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#a6acc8;font-weight:800;font-size:.85rem;}",
+    ".fa-ed-schede button.on{background:rgba(224,34,90,.18);color:#fff;border-color:#e0225a;}",
+    ".fa-ed-lista{display:flex;flex-direction:column;gap:4px;}",
+    ".fa-ed-r{display:grid;grid-template-columns:34px 1fr;column-gap:10px;align-items:center;text-align:left;background:rgba(255,255,255,.04);border:1px solid transparent;border-radius:12px;padding:6px 10px;color:#fff;}",
+    ".fa-ed-r canvas{grid-row:1/3;}.fa-ed-r b{font-size:.95rem;}.fa-ed-r span{font-size:.75rem;color:#a6acc8;}.fa-ed-r.on{border-color:#e0225a;}",
+    ".fa-ed-fatto{text-align:center;padding:16px;font-weight:800;}",
+    ".st-uff small{font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#ffc247;}.st-uff b{font-size:1.15rem;font-weight:900;}",
+    "@keyframes stUff{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}",
     // la classifica finale del fantacalcio: il contatore che sale, poi il podio
     ".st-rivela .st-palco{margin-top:10px;margin-bottom:10px;}",
     // ⚽ la giornata: la classifica dal vivo (le righe si scambiano di posto solo con transform; --gh = l'altezza di una riga)
@@ -1462,6 +1488,10 @@
       wrapG3.appendChild(el("div", { class: "modo-griglia" }, [bVsNo, bVsSi]));
       scegliVs(dove.vs);
       wrapFanta.appendChild(wrapG3);
+      if (eIlProprietario()) {   // 🎨 (8 nov 2026) solo IL PAPPONE: l'aspetto dei calciatori
+        wrapFanta.appendChild(el("div", { class: "etichetta", text: "🎨 Solo per te" }));
+        wrapFanta.appendChild(el("div", { class: "modo-griglia" }, [ el("button", { class: "modo-chip", onclick: function () { apriPersonalizza(); } }, [ el("span", { class: "mi", text: "🎨" }), el("div", {}, [ el("div", { class: "mt", text: "Personalizza i calciatori" }), el("div", { class: "ms", text: "Pelle, capelli e barba (li vedono tutti)" }) ]) ]) ]));
+      }
       scegliG3(dove.giornate);
       scegliGio(dove.giornata);
       box.appendChild(wrapFanta);
@@ -2464,16 +2494,27 @@
       riempiCampo(q.slot, p.kit, volo && volo.chi === p.id ? volo.slot : -1, cerca && p.stato === "gara" ? cerca : null, ombra);   // (la maglia in trasparenza solo a chi è ancora in gara)
     });
   }
+  var UFF_MS = 3000;   // 📋 (8 nov 2026) d'ufficio: quanto resta in vista il calciatore, con le sue scritte e a chi va, prima del timbro
   function esitoStadio(S, d) {   // aggiudicato: timbro sul maxischermo e la maglia vola nel campetto di chi l'ha preso; nessuno: torna in fondo al mazzo
     var e = d.esito;
+    if (e.tipo === "forzata" && S.uffFatto !== e.n) {   // 📋 d'ufficio (il proprietario: «il timbro arriva subito e copre tutto»): prima si legge chi è e a chi va, poi il timbro
+      S.uffFatto = e.n; var n0 = S.esitoN, b = document.createElement("div"), tu = d.io != null && d.io === e.chiId;
+      b.className = "st-uff"; b.appendChild(document.createElement("small")).textContent = "📋 D'UFFICIO";
+      b.appendChild(document.createElement("b")).textContent = "Va " + (tu ? "a te" : "a " + e.chiNome) + " per " + e.prezzo;
+      b.style.top = (S.schermo.offsetTop + S.schermo.offsetHeight + 8) + "px"; S.radice.appendChild(b);
+      speaker(e.motivo === "ufficio" ? "Nessuno li ha voluti per 2 volte: questo va a caso a " + e.chiNome + " per " + e.prezzo
+        : "Solo " + e.chiNome + " cerca un " + ((FANTA_RUOLI[e.carta.ruolo] || {}).nome || "").toLowerCase() + ": è suo per " + e.prezzo + "!");
+      var pg0 = paginaDi(d.persone, e.chiId); if (pg0 >= 0 && pg0 !== S.pagina) mostraPagina(S, pg0, d.persone);
+      disegnaSquadre(S, d); piedeAsta(S, d);
+      setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); if (STADIO !== S || S.esitoN !== n0) return; esitoStadio(S, S.ultimiDati && S.ultimiDati.esito && S.ultimiDati.esito.n === n0 ? S.ultimiDati : d); }, UFF_MS);
+      return;
+    }
     S.radice.appendChild(timbro(e.tipo === "accollo" ? "NESSUNO!" : "AGGIUDICATO!")); S.radice.classList.add("chiusa");
     piedeAsta(S, d);
     if (e.tipo === "accollo") { speaker("Nessuno lo vuole" + (e.carta && e.carta.rifiuti ? " (" + e.carta.rifiuti + "ª volta)" : "") + ": torna in fondo al mazzo"); disegnaSquadre(S, d); return; }
     var g = S.squadre[e.chiId];
     // lo speaker sfotte: due della stessa squadra, il derby, l'affare da 1, la follia
-    speaker(e.tipo !== "forzata" ? (battutaRosa(e.chiNome, g && g.kit, e.carta) || battutaAggiudica(e.chiNome, e.prezzo, d.budget))
-      : e.motivo === "ufficio" ? "Nessuno li ha voluti per 2 volte: questo va a caso a " + e.chiNome + " per " + e.prezzo
-      : "Solo " + e.chiNome + " cerca un " + ((FANTA_RUOLI[e.carta.ruolo] || {}).nome || "").toLowerCase() + ": è suo per " + e.prezzo + "!");
+    if (e.tipo !== "forzata") speaker(battutaRosa(e.chiNome, g && g.kit, e.carta) || battutaAggiudica(e.chiNome, e.prezzo, d.budget));   // (d'ufficio: lo speaker l'ha già detto)
     if (e.tipo === "vinta" && (d.io == null || d.io === e.chiId)) vibra(35);   // il martello per chi l'ha vinto (sullo stesso telefono, per tutti)
     var pg = paginaDi(d.persone, e.chiId); if (pg >= 0 && pg !== S.pagina) mostraPagina(S, pg, d.persone);   // (si va alla pagina di chi l'ha preso)
     var posti = g ? slotRosa(g.kit) : [], i = -1, q = S.sq[e.chiId];
@@ -4634,6 +4675,96 @@
     ASP_SALVA.t = setTimeout(function () { ASP_SALVA.t = null; var N = window.SGNube, C = window.SGCuore;
       if (N && N.pubblica && C && C.eProprietario && C.eProprietario()) try { Promise.resolve(N.pubblica({ fantaAspetto: ASP_PROP })).catch(function () {}); } catch (e) {} }, 1500);
   }
+  // 🎨 «PERSONALIZZA I CALCIATORI» (8 nov 2026): SOLO IL PAPPONE (dal ⚙️ della Mini Asta e dalle formazioni finali). In cima la lista
+  // «Da controllare» (in dubbio, senza foto, a caso) dalla quotazione più alta: «✓ Va bene» conferma e passa al prossimo, «🔍 Foto» apre
+  // Google Immagini in una scheda nuova; dopo una correzione, 2,5 s senza tocchi e si passa da soli al prossimo. Si può cercare chiunque.
+  // Si salva nella sua scheda pubblica (fantaAspetto) e vale per tutti sopra data/fanta-aspetto.js
+  function eIlProprietario() { var C = window.SGCuore; return !!(C && C.eProprietario && C.eProprietario()); }
+  function tuttiICalciatori() {
+    var DB = window.SG_FANTA_CALCIATORI || {}, Q = (window.SG_FANTA_QUOTAZIONI || {}).valori || {}, out = [], visti = {};
+    ["P", "D", "C", "A"].forEach(function (ru) { var g = DB[ru] || {}; Object.keys(g).forEach(function (fa) { (g[fa] || []).forEach(function (s) {
+      var c = splitCalc(s), k = chiaveCalc(c); if (visti[k]) return; visti[k] = 1; out.push({ k: k, nome: c.nome, sq: c.squadra, ru: ru, q: Q[k] || 0 });
+    }); }); });
+    out.sort(function (a, b) { return b.q - a.q || (a.k < b.k ? -1 : 1); });
+    return out;
+  }
+  function disegnaTestina(cv, a, fronte) {
+    var d = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth || +cv.getAttribute("width") || 40, h = cv.clientHeight || w;
+    cv.width = Math.round(w * d); cv.height = Math.round(h * d);
+    var cx = cv.getContext("2d"); cx.setTransform(d, 0, 0, d, 0, 0); cx.clearRect(0, 0, w, h); cx.save(); cx.translate(w / 2, 0);
+    testaVera(cx, h * 0.54, Math.min(w, h) * 0.3, coloriAspetto(a), 1, fronte !== false); cx.restore();
+  }
+  function apriPersonalizza(soloK) {
+    if (!eIlProprietario()) return;
+    var vecchio = document.querySelector(".fa-ed"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
+    var tutti = tuttiICalciatori(), sel = null, filtro = "", modo = "dc", timer = null, RU = { P: "Portiere", D: "Difensore", C: "Centrocampista", A: "Attaccante" };
+    function nd(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+    function daControllare() { return tutti.filter(function (c) { return aspettoVero(c.k).dc; }); }
+    var R = nd("div", "fa-ed oro"), testa = nd("div", "fa-ed-testa"), chiudi = nd("button", "fa-ed-x", "✕");
+    testa.appendChild(nd("b", "", "🎨 Personalizza i calciatori")); testa.appendChild(chiudi); R.appendChild(testa);
+    var scheda = nd("div", "fa-ed-scheda"); R.appendChild(scheda);
+    var cerca = nd("input", "fa-ed-cerca"); cerca.type = "search"; cerca.placeholder = "🔍 Cerca un calciatore o una squadra"; R.appendChild(cerca);
+    var schede = nd("div", "fa-ed-schede"), tDc = nd("button", "on"), tTu = nd("button", "", "Tutti"); schede.appendChild(tDc); schede.appendChild(tTu); R.appendChild(schede);
+    var lista = nd("div", "fa-ed-lista"); R.appendChild(lista);
+    document.body.appendChild(R);
+    chiudi.onclick = function () { clearTimeout(timer); if (R.parentNode) R.parentNode.removeChild(R); };
+    tDc.onclick = function () { modo = "dc"; tDc.className = "on"; tTu.className = ""; elenco(); };
+    tTu.onclick = function () { modo = "tu"; tTu.className = "on"; tDc.className = ""; elenco(); };
+    cerca.oninput = function () { filtro = cerca.value.trim().toLowerCase(); if (filtro && modo === "dc") tTu.onclick(); else elenco(); };
+    function prossimo() {   // il prossimo da controllare dopo quello di adesso (nell'ordine della quotazione)
+      var dc = daControllare(), i = sel ? tutti.indexOf(sel) : -1;
+      return dc.filter(function (c) { return tutti.indexOf(c) > i; })[0] || dc[0] || null;
+    }
+    function scegli(c) { clearTimeout(timer); sel = c; disegnaScheda(); elenco(); }
+    function salva(a) { ASP_PROP[sel.k] = { p: a.p, c: a.c, t: a.t, b: a.b, ok: 1 }; if (a.cb) ASP_PROP[sel.k].cb = a.cb; salvaAspettoProp(); }
+    function disegnaScheda() {
+      scheda.textContent = "";
+      if (!sel) { scheda.appendChild(nd("div", "fa-ed-fatto", "🎉 Non ne resta nessuno da controllare")); return; }
+      var a = aspettoVero(sel.k), su = nd("div", "fa-ed-su"), cvF = nd("canvas", "fa-ed-big"), cvP = nd("canvas", "fa-ed-pro"), info = nd("div", "fa-ed-info");
+      su.appendChild(cvF); su.appendChild(cvP); su.appendChild(info); scheda.appendChild(su);
+      info.appendChild(nd("b", "", sel.nome)); info.appendChild(nd("span", "", sel.sq + " · " + RU[sel.ru] + " · " + sel.q));
+      info.appendChild(nd("i", "", a.fonte === "prop" ? "✓ sistemato da te" : a.fonte === "caso" ? "🎲 a caso: nessuna foto" : a.dc ? "🔎 dalla foto, da controllare" : "📷 dalla foto"));
+      var tasti = nd("div", "fa-ed-tasti"), ok = nd("button", "btn btn-primario", "✓ Va bene"), foto = nd("button", "fa-ed-t", "🔍 Foto");
+      tasti.appendChild(ok); tasti.appendChild(foto);
+      if (ASP_PROP[sel.k]) { var torna = nd("button", "fa-ed-t", "↩ Di partenza"); tasti.appendChild(torna);
+        torna.onclick = function () { delete ASP_PROP[sel.k]; salvaAspettoProp(); disegnaScheda(); elenco(); }; }
+      scheda.appendChild(tasti);
+      ok.onclick = function () { salva(aspettoVero(sel.k)); scegli(prossimo()); };
+      foto.onclick = function () { window.open("https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(sel.nome.replace(/\s+(?:[A-Z][a-z]?\.)+$/, "") + " " + sel.sq + " calciatore"), "_blank"); };
+      var barra = nd("div", "fa-ed-barra"); scheda.appendChild(barra);
+      function riga(titolo, valori, attuale, mostra, cambia) {
+        scheda.appendChild(nd("div", "fa-ed-et", titolo)); var r = nd("div", "fa-ed-riga");
+        valori.forEach(function (v) { var b = nd("button", "fa-ed-c" + (v === attuale ? " on" : "")); mostra(b, v); b.onclick = function () { cambia(v); }; r.appendChild(b); });
+        scheda.appendChild(r);
+      }
+      function cambio(campo, v) {
+        var x = aspettoVero(sel.k); x[campo] = v; if (campo === "c" && v === "nessuno") x.t = "calvo"; salva(x); disegnaScheda(); elenco();
+        clearTimeout(timer); var b2 = scheda.querySelector(".fa-ed-barra"); if (b2) { b2.classList.remove("va"); void b2.offsetWidth; b2.classList.add("va"); }
+        timer = setTimeout(function () { if (R.parentNode && modo === "dc") scegli(prossimo()); }, 2500);   // (dopo la correzione: 2,5 s senza tocchi e si passa al prossimo)
+      }
+      riga("Pelle", [1, 2, 3, 4, 5, 6, 7], a.p, function (b, v) { b.classList.add("tondo"); b.style.background = PELLE_VERA[v]; }, function (v) { cambio("p", v); });
+      riga("Capelli", Object.keys(CAPELLI_VERI), a.c, function (b, v) { b.classList.add("tondo"); b.title = v; if (CAPELLI_VERI[v]) b.style.background = CAPELLI_VERI[v]; else b.textContent = "∅"; }, function (v) { cambio("c", v); });
+      riga("Taglio", TAGLI, a.t, function (b, v) { b.textContent = v; }, function (v) { cambio("t", v); });
+      riga("Barba", BARBE, a.b, function (b, v) { b.textContent = v; }, function (v) { cambio("b", v); });
+      if (a.b !== "niente") riga("Colore della barba", ["", "grigio", "rosso", "biondo", "nero"], a.cb || "", function (b, v) { if (v) { b.classList.add("tondo"); b.style.background = CAPELLI_VERI[v]; } else b.textContent = "come i capelli"; }, function (v) { cambio("cb", v || null); });
+      requestAnimationFrame(function () { disegnaTestina(cvF, a, true); disegnaTestina(cvP, a, false); });
+    }
+    function elenco() {
+      lista.textContent = "";
+      var dc = daControllare(); tDc.textContent = "Da controllare · ne restano " + dc.length;
+      var l = modo === "dc" ? dc : tutti.filter(function (c) { return !filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; });
+      l.slice(0, modo === "dc" ? 60 : 120).forEach(function (c) {
+        var r = nd("button", "fa-ed-r" + (c === sel ? " on" : "")), cv = nd("canvas"), a = aspettoVero(c.k); cv.setAttribute("width", 34); cv.style.width = cv.style.height = "34px";
+        r.appendChild(cv); r.appendChild(nd("b", "", c.nome)); r.appendChild(nd("span", "", c.sq + " · " + c.q + (a.dc ? " · da controllare" : "")));
+        r.onclick = function () { scegli(c); R.scrollTop = 0; }; lista.appendChild(r);
+        disegnaTestina(cv, a, true);
+      });
+    }
+    sel = soloK ? tutti.filter(function (c) { return c.k === soloK; })[0] || null : daControllare()[0] || null;
+    if (soloK) tTu.onclick(); else elenco();
+    disegnaScheda();
+  }
+  window.SGAstaAspetto = { apri: function (k) { apriPersonalizza(k); }, vero: aspettoVero, colori: coloriAspetto, prop: function () { return ASP_PROP; } };   // (per le prove e per aprire l'editor da fuori)
   // 🧑 la TESTA con l'aspetto vero, disegnata nelle coordinate di chi la chiama: centro (0, cy), raggio r, lo (1/-1: il lato in ombra).
   // fronte: vista davanti (figurina, anteprima) con due occhi e il sorriso; se no di profilo come gli omini del campo (un occhio, verso dove guarda)
   function testaVera(cx, cy, r, ca, lo, fronte) {
@@ -4641,7 +4772,7 @@
     function cerchio(x, y, rr) { cx.beginPath(); cx.arc(x, y, rr, 0, PI * 2); cx.fill(); }
     function calotta(alza, larga, a0, a1) { cx.beginPath(); cx.arc(0, cy - r * alza, r * larga, PI * (a0 == null ? 1.02 : a0), PI * (a1 == null ? 1.98 : a1)); cx.closePath(); cx.fill(); }
     cx.fillStyle = cap;   // (dietro la testa: capelli lunghi, afro, trecce)
-    if (t === "afro") cerchio(0, cy - r * 0.18, r * 1.32);
+    if (t === "afro") cerchio(fronte ? 0 : -r * 0.28, cy - r * 0.2, r * (fronte ? 1.32 : 1.22));
     if (t === "lunghi") { cx.beginPath(); cx.ellipse(fronte ? 0 : -r * 0.35, cy + r * 0.35, r * (fronte ? 1.12 : 0.8), r * 0.95, 0, 0, PI * 2); cx.fill(); }
     if (t === "treccine" || t === "dreadlocks") { cx.lineCap = "round"; cx.strokeStyle = cap; cx.lineWidth = r * (t === "dreadlocks" ? 0.24 : 0.17);
       for (var q = 0; q < (fronte ? 6 : 4); q++) { var xa = fronte ? -r * 0.95 + q * r * 0.38 : -r * (0.15 + q * 0.24); cx.beginPath(); cx.moveTo(xa, cy - r * 0.5); cx.lineTo(xa * 1.08, cy + r * (t === "dreadlocks" ? 1.15 : 0.85)); cx.stroke(); } }
@@ -4651,7 +4782,7 @@
     cx.fillStyle = "rgba(0,0,0,.14)"; cx.beginPath(); cx.arc(0, cy, r, lo > 0 ? -PI * 0.45 : PI * 0.55, lo > 0 ? PI * 0.45 : PI * 1.45); cx.closePath(); cx.fill();   // (la guancia in ombra)
     var bc = ca.colBarba, b = ca.barba;   // la barba (sotto i capelli)
     if (b !== "niente") { cx.save(); cx.beginPath(); cx.ellipse(0, cy, r * 0.98, r * 1.01, 0, 0, PI * 2); cx.clip(); cx.fillStyle = bc; cx.globalAlpha = b === "accennata" ? 0.32 : b === "corta" ? 0.72 : 0.95;
-      cx.beginPath(); cx.ellipse(fronte ? 0 : r * 0.15, cy + r * (b === "piena" ? 0.62 : 0.72), r * (b === "piena" ? 1.05 : 0.95), r * (b === "piena" ? 0.62 : 0.48), 0, 0, PI * 2); cx.fill();
+      cx.beginPath(); cx.ellipse(fronte ? 0 : r * 0.38, cy + r * (b === "piena" ? 0.62 : 0.72), r * (fronte ? (b === "piena" ? 1.05 : 0.95) : (b === "piena" ? 0.8 : 0.7)), r * (b === "piena" ? 0.62 : 0.48), 0, 0, PI * 2); cx.fill();
       if (fronte) { cx.globalAlpha = 1; cx.fillStyle = ca.pelle; cx.beginPath(); cx.ellipse(0, cy + r * 0.47, r * 0.3, r * (b === "piena" ? 0.12 : 0.15), 0, 0, PI * 2); cx.fill(); }   // (la bocca libera)
       cx.restore(); }
     cx.fillStyle = cap;   // i capelli sopra
@@ -4659,7 +4790,7 @@
     else if (t === "calvo") { cx.fillStyle = "rgba(255,255,255,.18)"; cerchio(-r * 0.25, cy - r * 0.55, r * 0.22); }
     else if (t === "ricci corti" || t === "ricci") { var nr = t === "ricci" ? 8 : 7, rr2 = r * (t === "ricci" ? 0.36 : 0.28);
       calotta(0.05, 1.0); for (var q2 = 0; q2 < nr; q2++) { var an = PI * (1.0 + q2 / (nr - 1)); cerchio(Math.cos(an) * r * 0.92, cy - r * 0.08 + Math.sin(an) * r * 0.92, rr2); } }
-    else if (t === "afro") calotta(0.12, 1.12, 0.98, 2.02);
+    else if (t === "afro") { if (fronte) calotta(0.3, 1.0, 1.0, 2.0); else calotta(0.22, 1.0, 1.0, 1.82); }
     else if (t === "cresta") { cx.globalAlpha = 0.55; calotta(0.02, 1.0, 1.06, 1.94); cx.globalAlpha = 1; cx.beginPath(); cx.ellipse(fronte ? 0 : r * 0.1, cy - r * 0.95, r * (fronte ? 0.24 : 0.6), r * 0.34, 0, 0, PI * 2); cx.fill(); }
     else if (t === "sfumati alti") { cx.globalAlpha = 0.6; calotta(0.02, 1.0, 1.08, 1.92); cx.globalAlpha = 1; cx.beginPath(); cx.ellipse(0, cy - r * 0.78, r * 0.78, r * 0.42, 0, 0, PI * 2); cx.fill(); }
     else {   // corti, corti col ciuffo, lunghi, lunghi raccolti, treccine, dreadlocks
@@ -7498,7 +7629,7 @@
     if (st.finita) return;
     st.nEsiti = (st.nEsiti || 0) + 1;
     disegnaAstaFanta(t, st, { n: st.nEsiti, tipo: tipo, motivo: motivo || "", chiId: chi, chiNome: chi != null ? st.giocatori[chi].nome : "", carta: carta, prezzo: prezzo });
-    st.pausa = setTimeout(function () { prossimaFanta(t, st); }, tipo === "accollo" ? 2300 : 3100);
+    st.pausa = setTimeout(function () { prossimaFanta(t, st); }, tipo === "accollo" ? 2300 : tipo === "forzata" ? 3100 + UFF_MS : 3100);
   }
 
   // ✉️ (stesso telefono) la busta: ci si passa il telefono, ognuno scrive in segreto (a ogni calciatore comincia uno diverso);
@@ -7791,7 +7922,7 @@
       e.n = ++st.nEsiti; e.nCarta = st.nCarta;
       st.esito = e; st.asta = null; st.scadenza = null; st.fase = "esito";
       bd();
-      TM.dopo(prossima, e.tipo === "accollo" ? ACCOLLO_MS : ESITO_MS);
+      TM.dopo(prossima, e.tipo === "accollo" ? ACCOLLO_MS : e.tipo === "forzata" ? ESITO_MS + UFF_MS : ESITO_MS);   // (📋 d'ufficio: prima 3 s per leggerlo)
     }
     // 🦉 / 🍀 i tocchi della giornata (m: { k: "partita|momento", n: quante volte ha toccato, tipo }): tengo il conto (per «🦉 Il gufo della
     // serata», nella foto e nella copia per la ripresa) e lo giro a tutti, leggero. Il tiro è già deciso: i tocchi non cambiano niente
