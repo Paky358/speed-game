@@ -218,7 +218,7 @@
     if (campo.length && Math.random() < 0.5) return aCaso(campo);
     return aCaso(L);
   }
-  var PENSA = { medio: { ms: 120, max: 220 }, difficile: { ms: 400, max: 400000 } };
+  var PENSA = { medio: { ms: 120, max: 220 }, difficile: { ms: 340, max: 400000 } };
   // pensa a pezzetti e alla fine chiama fatto(mossa, giri). Torna { ferma() }
   function pensa(st, liv, fatto) {
     var fermo = false, h = { ferma: function () { fermo = true; } };
@@ -402,7 +402,7 @@
       ".tg-c:nth-child(1),.tg-c:nth-child(2),.tg-c:nth-child(4),.tg-c:nth-child(5){box-shadow:1px 0 0 0 var(--tgl),0 1px 0 0 var(--tgl)}",
       ".tg-c:nth-child(3),.tg-c:nth-child(6){box-shadow:0 1px 0 0 var(--tgl)}",
       ".tg-c:nth-child(7),.tg-c:nth-child(8){box-shadow:1px 0 0 0 var(--tgl)}",
-      ".tg-campo.spento .tg-c{opacity:.4}",
+      ".tg-campo.spento .tg-c{opacity:.52}",
       ".tg-campo.chiuso .tg-c{opacity:.22}",
       ".tg-c::before{content:'';position:absolute;inset:9%;border-radius:22%;background:#fff;opacity:0;pointer-events:none}",
       ".tg-c:not(:disabled):active::before{opacity:.16}",
@@ -570,7 +570,7 @@
       ui.celle.forEach(function (c) { c.disabled = true; });
       ui.tab.classList.remove("tuo");
       clearTimeout(ui.tProva);
-      ui.tProva = setTimeout(function () { togliProva(ui); if (ui.vm) aggiorna(ui, ui.vm, ui.cb, ui.vm.fase); }, 4000);   // l'host non ha risposto: si può ritoccare
+      ui.tProva = setTimeout(function () { if (!document.body.contains(ui.s)) return; togliProva(ui); if (ui.vm) aggiorna(ui, ui.vm, ui.cb, ui.vm.fase); }, 4000);   // l'host non ha risposto: si può ritoccare
     }
     ui.cb.onCella(i);
   }
@@ -601,7 +601,7 @@
   }
   function fermaLuce(ui) {
     if (!ui) return;
-    ui.luceTo.forEach(clearTimeout); ui.luceTo = []; ui.luceFino = 0;
+    ui.luceTo.forEach(clearTimeout); ui.luceTo = []; ui.luceFino = 0; clearTimeout(ui.tProva);
     if (ui.luce) ui.luce.classList.remove("on", "ferma");
   }
   function avviaLuce(ui, vm, muto) {
@@ -613,6 +613,7 @@
     via.forEach(function (b, j) {
       t += durate[j];
       ui.luceTo.push(setTimeout(function () {
+        if (!document.body.contains(ui.s)) return fermaLuce(ui);
         if (j) posLuce(ui, b);
         if (!muto) suono(j === via.length - 1 ? "ferma" : "luce");
         if (j === via.length - 1) { ui.luce.classList.remove("ferma"); void ui.luce.offsetWidth; ui.luce.classList.add("ferma"); }
@@ -630,7 +631,7 @@
     var dx = c.x - p0.x, dy = c.y - p0.y, d = Math.sqrt(dx * dx + dy * dy);
     ui.fr.classList.remove("on");
     if (d < 30) { ui.fr.innerHTML = ""; return; }   // (manda nel suo stesso campo: lo dice già la luce del campo)
-    var stop = Math.min(d * 0.45, 300 * S * 0.3), ux = dx / d, uy = dy / d;
+    var stop = Math.min(d * 0.5, 300 * S * 0.5), ux = dx / d, uy = dy / d;
     var e = { x: c.x - ux * stop, y: c.y - uy * stop };
     var curva = Math.min(26, d * 0.16), mx = (p0.x + e.x) / 2 - uy * curva, my = (p0.y + e.y) / 2 + ux * curva;
     // la punta va nella direzione dell'ultimo tratto della curva
@@ -719,7 +720,7 @@
     var tgc = col(vm.turno);
     if (ui.tgc !== tgc) { ui.tgc = tgc; ui.tab.style.setProperty("--tgc", tgc); }
     // ---- la freccia (Classica): da dove si è giocato al campo dove si manda l'altro ----
-    if (mossaNuova && vm.modalita !== "caso" && vm.fase === "gioco" && vm.manda >= 0) freccia(ui, ult, vm.manda, col(vm.turno));
+    if (mossaNuova && vm.modalita !== "caso" && vm.fase === "gioco" && vm.campo >= 0) freccia(ui, ult, vm.manda, col(vm.turno));
     else if (vm.fase !== "gioco" && ui.fr.classList.contains("on")) ui.fr.classList.remove("on");
     // ---- la linea della vittoria sul tabellone grande ----
     var lin = (vm.fine && vm.fine.linea) || [], fl = lin.join(",");
@@ -854,7 +855,7 @@
     return nome;
   }
   function esempioSvg(modalita) {
-    var s = S * 300, pass = (S + G) * 300, q = (S - 2 * PAD) / 3 * 300, pad = PAD * 300, h = "";
+    var px = modalita === "caso" ? "tgK" : "tgC", s = S * 300, pass = (S + G) * 300, q = (S - 2 * PAD) / 3 * 300, pad = PAD * 300, h = "";
     for (var b = 0; b < 9; b++) {
       var x = (b % 3) * pass, y = ((b / 3) | 0) * pass;
       h += "<rect class='r' x='" + x.toFixed(1) + "' y='" + y.toFixed(1) + "' width='" + s.toFixed(1) + "' height='" + s.toFixed(1) + "' rx='8'/>";
@@ -865,27 +866,27 @@
     }
     function anel(b, colore, nome, da, a) {
       var x = (b % 3) * pass, y = ((b / 3) | 0) * pass;
-      return "<rect class='d' style='animation:" + kf(nome, da, a) + " 6.5s infinite' x='" + (x - 1).toFixed(1) + "' y='" + (y - 1).toFixed(1) + "' width='" + (s + 2).toFixed(1) + "' height='" + (s + 2).toFixed(1) + "' rx='9' fill='rgba(255,255,255,.08)' stroke='" + colore + "' stroke-width='4'/>";
+      return "<rect class='d' style='animation:" + kf(px + nome, da, a) + " 6.5s infinite' x='" + (x - 1).toFixed(1) + "' y='" + (y - 1).toFixed(1) + "' width='" + (s + 2).toFixed(1) + "' height='" + (s + 2).toFixed(1) + "' rx='9' fill='rgba(255,255,255,.08)' stroke='" + colore + "' stroke-width='4'/>";
     }
     function segno(i, k, nome, da) {
       var c = centroCasella(i), r = q * 0.3;
       var dentro = k === "X" ? "<path d='M" + (c.x - r) + " " + (c.y - r) + "L" + (c.x + r) + " " + (c.y + r) + "M" + (c.x + r) + " " + (c.y - r) + "L" + (c.x - r) + " " + (c.y + r) + "' stroke='" + CX + "' stroke-width='5' stroke-linecap='round' fill='none'/>"
         : "<circle cx='" + c.x + "' cy='" + c.y + "' r='" + r + "' stroke='" + CO + "' stroke-width='5' fill='none'/>";
-      return "<g class='d' style='animation:" + kf(nome, da, 93, true) + " 6.5s infinite'>" + dentro + "</g>";
+      return "<g class='d' style='animation:" + kf(px + nome, da, 93, true) + " 6.5s infinite'>" + dentro + "</g>";
     }
     function frec(i, b, colore, nome, da) {
       var p0 = centroCasella(i), c = centroCampo(b), dx = c.x - p0.x, dy = c.y - p0.y, d = Math.sqrt(dx * dx + dy * dy), ux = dx / d, uy = dy / d;
       var e = { x: c.x - ux * 26, y: c.y - uy * 26 }, mx = (p0.x + e.x) / 2 - uy * 22, my = (p0.y + e.y) / 2 + ux * 22;
       var tx = e.x - mx, ty = e.y - my, tl = Math.sqrt(tx * tx + ty * ty); tx /= tl; ty /= tl;
       var bx = e.x - tx * 14, by = e.y - ty * 14;
-      return "<g class='d' style='animation:" + kf(nome, da, 93) + " 6.5s infinite'><path d='M" + p0.x.toFixed(1) + " " + p0.y.toFixed(1) + "Q" + mx.toFixed(1) + " " + my.toFixed(1) + " " + bx.toFixed(1) + " " + by.toFixed(1) + "' stroke='" + colore + "' stroke-width='4' fill='none' stroke-linecap='round'/>"
+      return "<g class='d' style='animation:" + kf(px + nome, da, 93) + " 6.5s infinite'><path d='M" + p0.x.toFixed(1) + " " + p0.y.toFixed(1) + "Q" + mx.toFixed(1) + " " + my.toFixed(1) + " " + bx.toFixed(1) + " " + by.toFixed(1) + "' stroke='" + colore + "' stroke-width='4' fill='none' stroke-linecap='round'/>"
         + "<path d='M" + e.x.toFixed(1) + " " + e.y.toFixed(1) + "L" + (bx - ty * 9).toFixed(1) + " " + (by + tx * 9).toFixed(1) + "L" + (bx + ty * 9).toFixed(1) + " " + (by - tx * 9).toFixed(1) + "Z' fill='" + colore + "'/></g>";
     }
     if (modalita === "caso") {
       h += segno(6 * 9 + 2, "X", "tgE1", 6);
       [1, 5, 3, 8, 0, 7].forEach(function (b, j) {
         var x = (b % 3) * pass, y = ((b / 3) | 0) * pass, da = 20 + j * 4;
-        h += "<rect class='d' style='animation:" + kf("tgEh" + j, da, da + 2.4, false, 0.6) + " 6.5s infinite' x='" + x.toFixed(1) + "' y='" + y.toFixed(1) + "' width='" + s.toFixed(1) + "' height='" + s.toFixed(1) + "' rx='8' fill='rgba(255,255,255,.18)' stroke='#fff' stroke-width='3'/>";
+        h += "<rect class='d' style='animation:" + kf(px + "Eh" + j, da, da + 2.4, false, 0.6) + " 6.5s infinite' x='" + x.toFixed(1) + "' y='" + y.toFixed(1) + "' width='" + s.toFixed(1) + "' height='" + s.toFixed(1) + "' rx='8' fill='rgba(255,255,255,.18)' stroke='#fff' stroke-width='3'/>";
       });
       h += anel(4, CO, "tgE3", 46, 93) + segno(4 * 9 + 0, "O", "tgE4", 62);
     } else {
@@ -905,7 +906,7 @@
     var lista = el("ul", { class: "tg-spl" });
     righe.forEach(function (r) { var li = el("li", {}); li.innerHTML = "<span>" + r[0] + "</span><div>" + r[1] + "</div>"; lista.appendChild(li); });
     var mini = el("div", {}); mini.innerHTML = esempioSvg(modalita);
-    var carta = el("div", { class: "tg-spc" }, [el("div", { class: "tg-spt", text: modalita === "caso" ? "🎲 Tris Gigante · Campo a caso" : "⭕ Tris Gigante" }), mini.firstChild, lista,
+    var carta = el("div", { class: "tg-spc" }, [el("div", { class: "tg-spt", text: modalita === "caso" ? "🎲 Tris Gigante · Campo a caso" : "❌⭕ Tris Gigante" }), mini.firstChild, lista,
       el("button", { class: "btn btn-primario", text: "Ho capito ▶" }), el("div", { class: "tg-spn", text: "Tocca dove vuoi per chiudere" })]);
     var velo = el("div", { class: "tg-sp", role: "dialog", "aria-label": "Come si gioca" }, [carta]);
     function chiudi() { if (ui.sp !== velo) return; ui.sp = null; segnaVista(modalita); velo.classList.remove("on"); setTimeout(function () { if (velo.parentNode) velo.parentNode.removeChild(velo); }, 260); }

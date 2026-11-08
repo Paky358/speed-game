@@ -147,6 +147,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 9 nov 00:38 · ⭕❌ Tris Gigante · salvato · finito: revisione finale fatta (4 ritocchi: esempio animato, timer fermi all'uscita, freccia solo verso campi aperti), Bot Difficile ~0,5 s col processore ×4, campi spenti più leggibili; prove tg1-tg7, el1, 286 e versione costruita OK; NON pubblicato, da decidere col proprietario (novità v323) · tris-gigante
 - 9 nov 00:25 · ⭕❌ Tris Gigante · salvato · gioco nuovo «Tris Gigante» (9 tris in un tris, Classica e 🎲 Campo a caso con la luce, Bot Facile/Medio/Difficile, stesso telefono, online con chi guarda, ripresa, torneo a eliminazione, Chi vince resta, spiegazione al primo avvio); prove tg1-tg7, el1, 286 OK; NON pubblicato (novità v323) · tris-gigante
 - 9 nov 00:17 · ⚽🃏 Mini Asta: figurine, d'ufficio e rose · PUBBLICATO · calciatori più belli: in campo testa più grande con ombre e contorno, figurina da album con viso a luce morbida, capelli a ciocche, colletto e barba folta rifatta; le correzioni dell'editor restano (novità v322) · asta-fanta
 - 8 nov 22:42 · ⚽🃏 Mini Asta: figurine, d'ufficio e rose · PUBBLICATO (il proprietario: «la faccina me la porto anche scorrendo») · nell'editor dei calciatori la testa in anteprima resta ferma in alto mentre si scorrono capelli e barbe · asta-fanta → master + lavori-in-corso
