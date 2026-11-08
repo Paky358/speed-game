@@ -147,6 +147,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 9 nov 00:25 · ⭕❌ Tris Gigante · salvato · gioco nuovo «Tris Gigante» (9 tris in un tris, Classica e 🎲 Campo a caso con la luce, Bot Facile/Medio/Difficile, stesso telefono, online con chi guarda, ripresa, torneo a eliminazione, Chi vince resta, spiegazione al primo avvio); prove tg1-tg7, el1, 286 OK; NON pubblicato (novità v323) · tris-gigante
 - 9 nov 00:17 · ⚽🃏 Mini Asta: figurine, d'ufficio e rose · PUBBLICATO · calciatori più belli: in campo testa più grande con ombre e contorno, figurina da album con viso a luce morbida, capelli a ciocche, colletto e barba folta rifatta; le correzioni dell'editor restano (novità v322) · asta-fanta
 - 8 nov 22:42 · ⚽🃏 Mini Asta: figurine, d'ufficio e rose · PUBBLICATO (il proprietario: «la faccina me la porto anche scorrendo») · nell'editor dei calciatori la testa in anteprima resta ferma in alto mentre si scorrono capelli e barbe · asta-fanta → master + lavori-in-corso
 - 8 nov 22:38 · ⚽🃏 Mini Asta: figurine, d'ufficio e rose · PUBBLICATO (il proprietario: «mettine il più possibile») · nell'editor dei calciatori 12 tagli nuovi (lunghi mossi, lunghi ricci, codino, mullet, tirati indietro, frangia, a scodella, stempiati, pelato in cima, ricci alti, treccine raccolte, dreadlocks raccolti): 29 in tutto · asta-fanta → master + lavori-in-corso

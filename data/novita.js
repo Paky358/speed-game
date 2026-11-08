@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 323,
+    data: "9 novembre 2026",
+    titolo: "Tris Gigante: nove tris dentro un tris ❌⭕",
+    descrizione: [
+      "❌ Gioco nuovo nella categoria «1 contro 1»: il tabellone è un tris grande fatto di 9 tris piccoli. Chi fa tris in un campo piccolo lo vince; vince la partita chi fa tris di campi (se non ci riesce nessuno, chi ne ha vinti di più).",
+      "🧠 «Classica»: la casella dove giochi decide il campo dell'altro (X in alto a destra? L'altro gioca nel campo in alto a destra). Il campo dove si deve giocare è acceso e una freccia parte dall'ultima mossa.",
+      "🎲 «Campo a caso»: dopo ogni mossa una luce passa sui campi e si ferma su quello dove gioca l'altro. Online la luce fa la stessa strada su tutti i telefoni.",
+      "🤖 Contro il Bot (Facile, Medio e Difficile, che è tosto davvero), in due sullo stesso telefono o online: chi è in più guarda, e c'è anche nel torneo a eliminazione e in «👑 Chi vince resta».",
+      "❓ Alla prima partita una spiegazione corta con un esempio che si muove: si chiude con un tocco. Il «?» in basso la riapre."
+    ]
+  },
+  {
     v: 322,
     data: "9 novembre 2026",
     titolo: "Mini Asta Fantacalcio: calciatori più belli, in campo e sulle figurine 🃏",
