@@ -9,6 +9,21 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 323,
+    data: "9 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: le facce dei calciatori dove si guarda 🧑",
+    descrizione: [
+      "Nella formazione finale ogni calciatore è a mezzo busto, con la sua faccia e la sua maglia, e ognuno ha la sua posa: braccia conserte, mani sui fianchi, pollice in su, dito alla tempia, pugno alzato. Le braccia sono tutte d'un pezzo, dalla spalla alla mano. I portieri hanno i guanti grandi e imbottiti 🧤.",
+      "Quando segna uno dei vostri, nella striscia del gol c'è lui a mezzo busto.",
+      "Nelle pagelle accanto a ogni voto c'è il calciatore.",
+      "Le facce cambiano con la posa: chi alza il pugno urla, chi fa il pollice in su ride, chi ha le braccia conserte è serio. I capelli corti ora sono da calciatore, con la fronte libera.",
+      "Anche la figurina che vola all'«AGGIUDICATO!» ha il calciatore a mezzo busto con la sua posa.",
+      "Nella giornata i quadretti in alto hanno il nome intero, i punti e sotto, su una riga loro, le icone dei bonus e dei malus più grandi: si vedono bene anche in tanti. L'assist è una scarpetta da calcio e i cartellini sono rettangolini come quelli veri.",
+      "Nei risultati delle altre partite c'è il trattino tra le due squadre (JUV - SAS).",
+      "⭐ La figurina d'oro: i calciatori più forti (che valgono da 18 in su) hanno la figurina dorata, che brilla quando vola all'«AGGIUDICATO!»."
+    ]
+  },
+  {
     v: 322,
     data: "9 novembre 2026",
     titolo: "Mini Asta Fantacalcio: calciatori più belli, in campo e sulle figurine 🃏",

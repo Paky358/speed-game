@@ -519,6 +519,11 @@
     ".fa-ed-r canvas{grid-row:1/3;}.fa-ed-r b{font-size:.95rem;}.fa-ed-r span{font-size:.75rem;color:#a6acc8;}.fa-ed-r.on{border-color:#e0225a;}",
     ".fa-ed-fatto{text-align:center;padding:16px;font-weight:800;}",
     ".st-fig{position:absolute;z-index:9;pointer-events:none;will-change:transform,opacity;}.st-fig canvas{display:block;}",
+    ".st-fig.oro canvas{border-radius:7%/5%;box-shadow:0 0 0 2px rgba(255,214,90,.7),0 0 26px 6px rgba(255,196,60,.55);}",
+    ".st-fig-luce{position:absolute;inset:0;border-radius:7%/5%;overflow:hidden;}.st-fig-luce i{position:absolute;top:-10%;bottom:-10%;left:0;width:34%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.75),rgba(255,255,255,0));transform:translateX(-140%) skewX(-18deg);}",
+    ".st-tv-sx canvas{display:block;width:50px;height:50px;}.st-pf canvas.st-pf-busto{flex:none;width:50px;height:50px;margin:-8px -2px;}",
+    ".st-slot.busto .st-slot-maglia{width:124%;height:124%;left:-12%;top:-22%;}",
+    ".st-slot.carta .st-slot-fig{width:calc(var(--mg,52px)*.94);height:calc(var(--mg,52px)*1.28);}.st-slot.carta span{display:none;}.st-slot.carta .st-slot-maglia{filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));}",
     ".st-uff small{font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#ffc247;}.st-uff b{font-size:1.15rem;font-weight:900;}",
     "@keyframes stUff{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}",
     // la classifica finale del fantacalcio: il contatore che sale, poi il podio
@@ -658,6 +663,15 @@
     ".st-gio-tab.fitto .st-gio-riga{gap:3px;padding:0 3px 0 3px;}.st-gio-tab.fitto .st-gio-faccia{width:20px;height:20px;}.st-gio-tab.fitto .st-gio-pt{font-size:1.04rem;}",
     ".st-gio-tab.fittissimo .st-gio-faccia{display:none;}.st-gio-tab.fittissimo .st-gio-riga{padding-left:5px;}",
     ".st-gio-in{display:none;}",
+    // 🔎 (9 nov 2026, il proprietario: «i voti sopra, quando uno fa gol, assist, si vede poco… rimpiccioliamo un pochino il campo») nel quadretto: in alto il nome e i punti,
+    // sotto, su una riga TUTTA loro e più grandi, le icone dei bonus e dei malus (⚽ 👟 🟨 🔒…). Il campo cede qualche punto di altezza
+    ".st-gio-nomi{display:grid;grid-template-columns:auto auto minmax(0,1fr);grid-template-rows:auto auto auto;align-items:center;justify-items:start;column-gap:3px;row-gap:0;}.st-gio-sotto{display:contents;}",
+    ".st-gio-nome{grid-column:1/-1;grid-row:1;max-width:100%;}.st-gio-pt{grid-column:1;grid-row:2;line-height:1.02;}.st-gio-fr{grid-column:2;grid-row:2;}",   // (il nome su una riga intera: mai tagliato dai punti)
+    ".st-gio-ev{grid-column:1/-1;grid-row:3;max-width:100%;min-height:1.15em;font-size:.84rem;line-height:1.15;letter-spacing:0;}.st-gio-ev span{margin-right:1px;}.st-gio-tab.fittissimo .st-gio-ev{font-size:.78rem;}",
+    ".ic{display:inline-block;font-style:normal;vertical-align:-.12em;}.ic-carta{width:.6em;height:.84em;margin:0 .12em;border-radius:.1em;transform:rotate(8deg);box-shadow:inset 0 0 0 1px rgba(0,0,0,.22),0 1px 2px rgba(0,0,0,.45);}",
+    ".ic-carta.gialla{background:linear-gradient(155deg,#fff06a,#f5c400 60%,#e0a800);}.ic-carta.rossa{background:linear-gradient(155deg,#ff6b6b,#e01a2b 60%,#b30f1c);}",
+    ".ic-scarpa{width:1.12em;height:1em;vertical-align:-.16em;background:url(\"data:image/svg+xml," + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 30'><path d='M4 21 L4 24 L12 24 L13 21 Z' fill='#2b2f3a' stroke='#0b0e16' stroke-width='1.2' stroke-linejoin='round'/><path d='M5 3 Q9 2 11.5 4 L14 11 Q20 11 26 13.5 Q32 16 31.5 19.5 Q31 21.5 28 21.5 L5 21.5 Q3 21.5 3 19 L3 6 Q3 3.4 5 3 Z' fill='#f4f5fb' stroke='#0b0e16' stroke-width='1.4' stroke-linejoin='round'/><path d='M6 12 Q14 15 22 14.5 Q27 14.3 30 17' fill='none' stroke='#e0225a' stroke-width='2.6' stroke-linecap='round'/><path d='M14.5 11.5 L16 9.2 M17.5 12 L19 9.8 M20.5 12.6 L22 10.6' stroke='#0b0e16' stroke-width='1.1' stroke-linecap='round'/><path d='M3.4 20.2 L31 20.2' stroke='#9aa3b5' stroke-width='1.2'/><g fill='#0b0e16'><rect x='5.5' y='24' width='2.4' height='3.6' rx='.8'/><rect x='9.6' y='24' width='2.4' height='3.6' rx='.8'/><rect x='17' y='21.5' width='2.4' height='3.8' rx='.8'/><rect x='22' y='21.5' width='2.4' height='3.8' rx='.8'/><rect x='27' y='21.5' width='2.4' height='3.6' rx='.8'/></g></svg>") + "\") center/contain no-repeat;}",
+    ".st-gio-zona{grid-column:1/-1;grid-row:3;max-width:100%;}.st-rivela.zona .st-gio-zona{display:block;}.st-gio-riga.incampo::after{top:auto;bottom:3px;}.st-gio-riga.incampo .st-gio-nome{padding-right:0;}",
     ".st-pag.live{pointer-events:auto;cursor:pointer;}.st-pag-nota{flex:none;text-align:center;font-size:.72rem;font-weight:700;opacity:.7;}",
     ".st-podio{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:8px 12px 0;}",
     ".st-gradini{display:flex;align-items:flex-end;justify-content:center;gap:6px;}",
@@ -2265,15 +2279,17 @@
   }
   function chiaro(hex) { var n = parseInt(String(hex || "#000").slice(1), 16) || 0; return ((n >> 16) * 299 + (n >> 8 & 255) * 587 + (n & 255) * 114) / 1000 > 150; }
   function riempiSlot(s, c, valore, tocco) {   // un posto del campo: la maglia, il nome sui colori della squadra e quanto è stato pagato (o vuoto col ruolo)
-    var k = c ? c.nome + "|" + c.squadra + "|" + (c.prezzo || "") : "";
+    var fs = tocco && GRAF2.on ? FORM_STILE : "maglia", k = c ? c.nome + "|" + c.squadra + "|" + (c.prezzo || "") + "|" + fs : "";
     if (k !== s.k) {
       s.k = k; s.nodo.classList.toggle("vuoto", !c);
       if (c) {
         var col = coloriSquadra(c.squadra) || ["#2b3550", "#9aa5bd"];
-        s.img.src = maglia(c.squadra); s.nome.textContent = nomeCampo(c.nome);
+        var fimg = fs === "busto" ? bustoURL(c, 96) : fs === "figurina" ? (function () { var fc = figurinaCanvas(c, null, 110); try { return fc && fc.toDataURL("image/png"); } catch (e) { return null; } })() : null;   // 🧑 (nella formazione finale)
+        s.img.src = fimg || maglia(c.squadra); s.nome.textContent = nomeCampo(c.nome);
+        s.nodo.classList.toggle("busto", !!fimg && fs === "busto"); s.nodo.classList.toggle("carta", !!fimg && fs === "figurina");
         s.nome.style.background = col[0]; s.nome.style.borderColor = col[1]; s.nome.style.color = chiaro(col[0]) ? "#141414" : "#fff";
         s.paga.textContent = c.prezzo ? c.prezzo + " 💰" : "";
-      } else { s.img.removeAttribute("src"); s.nome.textContent = ""; s.paga.textContent = ""; }
+      } else { s.img.removeAttribute("src"); s.nome.textContent = ""; s.paga.textContent = ""; s.nodo.classList.remove("busto", "carta"); }
       s.nodo.onclick = c && tocco && eIlProprietario() ? function () { apriPersonalizza(chiaveCalc(c)); } : null;   // 🎨 (solo IL PAPPONE: tocca un calciatore della formazione e lo sistemi)
       s.val.classList.remove("su"); s.val.textContent = "";
     }
@@ -2562,7 +2578,7 @@
     var ruolo = { P: "PORTIERE", D: "DIFENSORE", C: "CENTROCAMPISTA", A: "ATTACCANTE" }[c.ruolo] || "";
     function tondo(x, y, ww, hh, rr) { cx.beginPath(); cx.moveTo(x + rr, y); cx.arcTo(x + ww, y, x + ww, y + hh, rr); cx.arcTo(x + ww, y + hh, x, y + hh, rr); cx.arcTo(x, y + hh, x, y, rr); cx.arcTo(x, y, x + ww, y, rr); cx.closePath(); }
     function nomeIn(testo, x, y, maxW, fs, colore) { cx.font = "900 " + fs + "px system-ui,sans-serif"; var l = cx.measureText(testo).width; if (l > maxW) { fs = Math.floor(fs * maxW / l); cx.font = "900 " + fs + "px system-ui,sans-serif"; } cx.fillStyle = colore; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(testo, x, y); }
-    if (GRAF2.on) albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn);   // ✨ (la grafica nuova)
+    if (GRAF2.on) albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, valoreCalc(c) >= BIG_DA);   // ✨ (la grafica nuova)
     else {   // la figurina da album: cartoncino crema, dentro i colori della squadra, il calciatore a mezzo busto, la fascia col nome
       var m = w * 0.045, iw = w - 2 * m, ih = h * 0.78;
       cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07); cx.fillStyle = "#f6f1e3"; cx.fill(); cx.shadowColor = "transparent";
@@ -2585,6 +2601,10 @@
     var w = Math.round(Math.max(110, Math.min(200, base.width * 0.44))), cv = figurinaCanvas(carta, prezzo, w);
     if (!cv || !cv.animate) return volo(S, s, poi);
     var fig = document.createElement("div"); fig.className = "st-fig"; fig.appendChild(cv);
+    if (GRAF2.on && valoreCalc(carta) >= BIG_DA) {   // ⭐ la figurina d'oro dei big: brilla e le passa sopra un riflesso
+      fig.classList.add("oro"); var lu = document.createElement("div"); lu.className = "st-fig-luce"; var ri = document.createElement("i"); lu.appendChild(ri); fig.appendChild(lu);
+      if (ri.animate) ri.animate([{ transform: "translateX(-140%) skewX(-18deg)" }, { transform: "translateX(260%) skewX(-18deg)" }], { duration: 650, delay: 350, iterations: 2, easing: "ease-in-out", fill: "both" });
+    }
     var h = parseFloat(cv.style.height), x0 = base.width / 2 - w / 2, y0 = Math.max(sch.bottom - base.top - h * 0.18, Math.min(base.height * 0.42 - h / 2, base.height - h - 8));
     fig.style.left = x0 + "px"; fig.style.top = y0 + "px"; fig.style.width = w + "px"; fig.style.height = h + "px";
     S.radice.appendChild(fig);
@@ -2860,6 +2880,15 @@
   // =========================================================
   var MEDIA_QUOT = { P: 9, D: 8, C: 11, A: 13 };   // la quotazione "di metà" di ogni ruolo, tra i calciatori del gioco
   var EV_GIO = { gol: "⚽", ass: "👟", amm: "🟨", esp: "🟥", sub: "🥅", par: "🧤", inv: "🔒", rig: "❌", aut: "🙈", rec: "👏" };
+  // 👟🟨🟥 (9 nov 2026, il proprietario: «l'assist… la scarpetta con il tacco rialzato… il cartellino un rettangolino piuttosto che un quadrato»): nei quadretti e
+  // nelle pagelle l'assist e i cartellini sono disegnati da noi (la scarpetta da calcio grande come il pallone, i cartellini in piedi come quelli veri)
+  var ICONE_DISEGNATE = { "👟": "ic ic-scarpa", "🟨": "ic ic-carta gialla", "🟥": "ic ic-carta rossa" };
+  function iconeNodi(t) {   // il testo con le icone → i pezzi da mettere nella pagina (le icone disegnate al posto di quelle emoji)
+    var fr = document.createDocumentFragment(), buf = "";
+    Array.from(String(t || "")).forEach(function (ch) { var c = ICONE_DISEGNATE[ch]; if (!c) { buf += ch; return; } if (buf) { fr.appendChild(document.createTextNode(buf)); buf = ""; } var n = document.createElement("i"); n.className = c; n.setAttribute("aria-label", ch); fr.appendChild(n); });
+    if (buf) fr.appendChild(document.createTextNode(buf)); return fr;
+  }
+  function conIcone(n, t) { n.appendChild(iconeNodi(t)); return n; }
   // 🗳️ VOTI GIUSTI (6 nov 2026, il proprietario: «non esiste che un giocatore prende 7,5 senza aver fatto nulla, figurati se sbaglia pure un
   // gol a porta vuota»; «il portiere, se non subisce gol, che cosa ha sbagliato? Niente»). Quanto cambia il voto (oltre ai bonus e malus, che
   // restano a parte; la porta inviolata è solo il +1). occ: chi tira e sbaglia (fuori, alto, palo, traversa, salvato sulla linea) −0,5; chi tira
@@ -3333,15 +3362,15 @@
     R.campoBox.style.display = "none"; R.radice.classList.add("gio"); R.gio.style.display = ""; R.info.textContent = "⚽ La giornata di Serie A";
     // i risultati delle 10 partite
     svuotaNodo(R.ris); R.risN = A.partite.map(function (P) {
-      var tx = el("b", { text: "0-0" }), nodo = el("div", { class: "st-ris-p" }, [ el("span", { text: sigla(P.c) + " " + sigla(P.f) }), tx ]);
+      var tx = el("b", { text: "0-0" }), nodo = el("div", { class: "st-ris-p" }, [ el("span", { text: sigla(P.c) + " - " + sigla(P.f) }), tx ]);
       R.ris.appendChild(nodo); return { nodo: nodo, tx: tx, g: [0, 0] };
     });
     barraTesto(R, "0'", "⚽ Fischio d'inizio");
     // lo spazio: in alto i punteggi di ognuno a quadrettini (una fila fino a 4, poi due), il campo il più grande possibile (in verticale,
     // come lo schermo), sotto i risultati delle 10 partite
-    var cols = n <= 4 ? n : Math.ceil(n / 2), file = Math.ceil(n / cols), qh = file > 1 ? 42 : 46;
+    var cols = n <= 4 ? n : Math.ceil(n / 2), file = Math.ceil(n / cols), qh = file > 1 ? 58 : 62;   // (🔎 un po' più alti di prima, 42 e 46: le icone dei bonus su una riga loro)
     var tot = R.gio.clientHeight - R.ris.offsetHeight - R.bar.offsetHeight - 40, w = R.gio.clientWidth - 16, hc = tot - file * qh - (file - 1) * 5;
-    if (hc > w * 1.6) { qh = Math.min(file > 1 ? 50 : 56, qh + Math.floor((hc - w * 1.6) / file)); hc = Math.round(Math.min(w * 1.6, tot - file * qh - (file - 1) * 5)); }   // (avanza posto: quadrettini un po' più grandi)
+    if (hc > w * 1.6) { qh = Math.min(file > 1 ? 64 : 70, qh + Math.floor((hc - w * 1.6) / file)); hc = Math.round(Math.min(w * 1.6, tot - file * qh - (file - 1) * 5)); }   // (avanza posto: quadrettini un po' più grandi)
     hc = Math.max(140, hc);
     var lc = hc < w * 1.2 && hc >= w * 0.84 ? Math.round(hc / 1.2) : 0;   // (poca altezza, telefono piccolo e tanti: il campo un po' più stretto, ma sempre in verticale)
     R.azBox.style.height = hc + "px"; R.azBox.style.width = lc ? lc + "px" : ""; R.azBox.style.margin = lc ? "0 auto 8px" : "";
@@ -3632,7 +3661,7 @@
     var fs = Math.round(Math.max(15, Math.min(25, 290 / Math.max(6, d.nome.length))));
     R.tvPt = el("b", { class: "st-tv-pt" + (d.pt < 0 ? " meno" : ""), text: segnoFanta(d.pt) });
     R.tv = el("div", { class: "st-tv" }, [
-      el("div", { class: "st-tv-sx", style: "background:linear-gradient(160deg," + cs[0] + "," + cs[1] + ");color:" + (chiaro ? "#14171f" : "#fff") }, [ el("img", { src: d.maglia, alt: "" }), el("b", { text: d.min }) ]),
+      el("div", { class: "st-tv-sx", style: "background:linear-gradient(160deg," + cs[0] + "," + cs[1] + ");color:" + (chiaro ? "#14171f" : "#fff") }, [ (d.c && GRAF2.on && bustoNodo(d.c, 50)) || el("img", { src: d.maglia, alt: "" }), el("b", { text: d.min }) ]),   // (la faccia di chi segna, se no la maglia)
       el("div", { class: "st-tv-c" }, [ el("span", { class: "st-tv-tit", text: d.tit }), el("b", { class: "st-tv-nome", text: d.nome, style: "font-size:" + fs + "px" }),
         el("span", { class: "st-tv-sotto", text: d.sotto }), d.altri ? el("span", { class: "st-tv-altri", text: d.altri }) : null ]),
       el("div", { class: "st-tv-dx" }, [ el("img", { src: d.faccia || "", alt: "", style: "border-color:" + (d.pc || "#ffe066") }), el("span", { text: "di " + d.chi, style: "color:" + (d.pc || "#ffe066") }) ]),
@@ -3818,7 +3847,7 @@
         persa.push(q.r.nome);
       }
       g.bon[q.k] += qd; g.ic[q.k] += EV_GIO[q.t] || ""; g.pt.textContent = numFanta(totGio(g)); rianima(g.pt, "batte");
-      g.ev.appendChild(R.el("span", { text: EV_GIO[q.t] || "" }));
+      g.ev.appendChild(conIcone(R.el("span", {}), EV_GIO[q.t] || ""));
       g.nodo.classList.remove("piu", "meno"); void g.nodo.offsetWidth; g.nodo.classList.add(q.d > 0 ? "piu" : "meno");
       (function (nd) { R.timer.push(setTimeout(function () { nd.classList.remove("piu", "meno"); }, 900)); })(g.nodo);
       if (!(q.r.id in somma)) { somma[q.r.id] = 0; icone[q.r.id] = ""; chi.push(q.r); }
@@ -3850,7 +3879,7 @@
       var nm = numeroMaglia(qGol.c), dRig = t === "rig" ? (esito === "cucchiaio" ? " COL CUCCHIAIO" : " SU RIGORE") : "";
       var altri = chi.filter(function (r) { return r.id !== qGol.r.id; }).map(function (r) { return r.nome + " " + icone[r.id] + " " + segnoFanta(somma[r.id]); });
       if (persa.length) altri.push("🧤 Porta inviolata persa" + (persa.length > 1 || chi.length > persa.length + 1 ? " (" + elencoNomi(persa.filter(function (n, i) { return persa.indexOf(n) === i; })) + ")" : ""));
-      bandaTV(R, { sq: sqA, maglia: magliaDietro(qGol.c), min: minTxt(e.m), tit: (/^⚽ GOL/.test(tit) ? "⚽ GOL" + dRig : tit) + " · " + String(sqA).toUpperCase(),
+      bandaTV(R, { sq: sqA, c: qGol.c, maglia: magliaDietro(qGol.c), min: minTxt(e.m), tit: (/^⚽ GOL/.test(tit) ? "⚽ GOL" + dRig : tit) + " · " + String(sqA).toUpperCase(),
         nome: nm.nome || nomeCampo(qGol.c.nome).toUpperCase(), sotto: (sotto ? sotto + " · " : "") + x.P.c + " " + e.r[0] + "-" + e.r[1] + " " + x.P.f, altri: altri.join(" · "),
         chi: qGol.r.nome, faccia: R.busti[qGol.r.id], pc: R.colP[qGol.r.id], pt: somma[qGol.r.id] || 0 });
       if (!inRitardo(R)) chi.forEach(function (r, i) {   // i punti volano sui quadretti (prima chi ha segnato, poi gli altri)
@@ -4143,8 +4172,8 @@
     pag.appendChild(el("div", { class: "st-pag-tit", text: "📋 I calciatori di " + r.nome + (R.gk != null ? " · " + (R.gk + 1) + "ª giornata" : " · adesso") }));   // (🏆 3 giornate: i punti di questa giornata; i sommati sono nel quadretto)
     pag.appendChild(el("div", { class: "st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome, style: "color:" + R.colP[r.id] }), el("b", { class: "st-pf-tot", text: numFanta(totGio(g) - (g.base || 0)) }) ]));
     r.kit.forEach(function (cp, k) {
-      pag.appendChild(el("div", { class: "st-pf on" }, [ el("span", { class: "as-rb as-rb-" + cp.ruolo, text: (FANTA_RUOLI[cp.ruolo] || {}).breve || "" }),
-        el("div", { class: "st-pf-nome" }, [ el("b", { text: nomeCampo(cp.nome) }), el("small", { text: cp.squadra + (g.ic[k] ? " · " + g.ic[k] : "") }) ]),
+      pag.appendChild(el("div", { class: "st-pf on" }, [ el("span", { class: "as-rb as-rb-" + cp.ruolo, text: (FANTA_RUOLI[cp.ruolo] || {}).breve || "" }), GRAF2.on ? bustoNodo(cp, 50, "st-pf-busto") : null,
+        el("div", { class: "st-pf-nome" }, [ el("b", { text: nomeCampo(cp.nome) }), conIcone(el("small", {}), cp.squadra + (g.ic[k] ? " · " + g.ic[k] : "")) ]),
         el("div", { class: "st-pf-v " + classeVoto(g.vv[k]) }, [ el("small", { text: "voto" }), el("b", { text: numFanta(g.vv[k]) }) ]),
         el("div", { class: "st-pf-fv" }, [ el("small", { text: "fantavoto" }), el("b", { text: numFanta(g.vv[k] + g.bon[k]) }) ]) ]));
     });
@@ -4237,7 +4266,7 @@
           return el("div", { class: "st-pv " + classeVoto(vv) }, [ el("i", { class: "as-rb-" + c.ruolo }), el("span", { text: nomeCampo(c.nome) }),
             el("div", { class: "st-pv-num" }, [ el("div", { class: "st-pv-c" }, [ el("b", { text: numFanta(vv) }), el("small", { text: "voto" }) ]),   // (il voto e, accanto, il fantavoto: grandi uguali)
               el("div", { class: "st-pv-c fv" }, [ el("b", { text: numFanta(vv + b) }), el("small", { text: "fanta" }) ]) ]),
-            el("em", { class: "st-pv-ic", text: g.ic[kk] || "" }) ]);
+            conIcone(el("em", { class: "st-pv-ic" }), g.ic[kk] || "") ]);
         });
         pag.appendChild(el("div", { class: "st-pag-p", style: "animation-delay:" + (j * 0.15) + "s" }, [
           el("div", { class: "st-pag-testa" }, [ el("img", { src: R.busti[g.r.id], alt: "" }), el("span", { text: g.r.nome, style: "color:" + R.colP[g.r.id] }), el("b", { text: g.base ? numFanta(totGio(g) - g.base) + " · tot " + numFanta(totGio(g)) : numFanta(totGio(g)) }) ]),   // (🏆 3ª giornata: la giornata e i punti sommati)
@@ -4728,11 +4757,12 @@
     if (pr && pr.p) o = { p: pr.p, c: pr.c || z.c, t: pr.t || z.t, b: pr.b || z.b, cb: pr.cb || null, fonte: "prop", dc: false };
     else if (d && d.p) o = { p: d.p, c: d.c || z.c, t: d.t || z.t, b: d.x === "baffetti" && (!d.b || d.b === "niente") ? "baffi" : d.b || z.b, cb: d.cb || null, fonte: "dati", dc: !!d.dc || !d.c || !d.t || !d.b };
     else o = { p: z.p, c: z.c, t: z.t, b: z.b, cb: null, fonte: "caso", dc: true };
+    o.f = (pr && pr.p ? pr.f : null) || (d && d.f) || "tondo";   // (la forma del viso: tondo, ovale, squadrato; la sceglie il proprietario nell'editor)
     return o;
   }
   function coloriAspetto(a) {   // dall'aspetto ai colori per disegnare (uguale in campo, sulla figurina e nell'anteprima)
     var cap = CAPELLI_VERI[a.c]; if (cap === undefined) cap = "#3a2618";
-    return { pelle: PELLE_VERA[a.p] || "#d9a47c", capelli: cap || CAPELLI_VERI.nero, taglio: a.c === "nessuno" ? "calvo" : a.t, barba: a.b || "niente", colBarba: (a.cb && CAPELLI_VERI[a.cb]) || cap || "#2a1c12" };
+    return { pelle: PELLE_VERA[a.p] || "#d9a47c", capelli: cap || CAPELLI_VERI.nero, taglio: a.c === "nessuno" ? "calvo" : a.t, barba: a.b || "niente", colBarba: (a.cb && CAPELLI_VERI[a.cb]) || cap || "#2a1c12", forma: a.f || "tondo" };
   }
   var ASP_SALVA = { t: null };
   function caricaAspettoProp(poi) {   // le correzioni di IL PAPPONE dalla sua scheda pubblica (all'avvio del gioco): se la rete non c'è, resta l'ultima copia
@@ -4744,6 +4774,7 @@
     }).catch(function () {}); } catch (e) {}
   }
   function salvaAspettoProp() {   // (solo IL PAPPONE: sul telefono subito, nella scheda pubblica 1,5 s dopo l'ultimo tocco)
+    FIG_CACHE = {};   // (le figurine già disegnate si rifanno con l'aspetto nuovo)
     try { localStorage.setItem("sg-fanta-aspetto", JSON.stringify(ASP_PROP)); } catch (e) {}
     clearTimeout(ASP_SALVA.t);
     ASP_SALVA.t = setTimeout(function () { ASP_SALVA.t = null; var N = window.SGNube, C = window.SGCuore;
@@ -4792,7 +4823,7 @@
     }
     function visibili() { return tutti.filter(function (c) { return !filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; }); }
     function scegli(c) { sel = c; disegnaScheda(); elenco(); }
-    function salva(a) { ASP_PROP[sel.k] = { p: a.p, c: a.c, t: a.t, b: a.b, ok: 1 }; if (a.cb) ASP_PROP[sel.k].cb = a.cb; salvaAspettoProp(); }
+    function salva(a) { ASP_PROP[sel.k] = { p: a.p, c: a.c, t: a.t, b: a.b, ok: 1 }; if (a.cb) ASP_PROP[sel.k].cb = a.cb; if (a.f && a.f !== "tondo") ASP_PROP[sel.k].f = a.f; salvaAspettoProp(); }
     function disegnaScheda() {
       scheda.textContent = "";
       if (!sel) { scheda.appendChild(nd("div", "fa-ed-fatto", "🎉 Non ne resta nessuno da controllare")); return; }
@@ -4820,6 +4851,7 @@
       riga("Taglio", TAGLI, a.t, function (b, v) { b.textContent = v; }, function (v) { cambio("t", v); });
       riga("Barba", BARBE, a.b, function (b, v) { b.textContent = v; }, function (v) { cambio("b", v); });
       if (a.b !== "niente") riga("Colore della barba", ["", "grigio", "rosso", "biondo", "nero"], a.cb || "", function (b, v) { if (v) { b.classList.add("tondo"); b.style.background = CAPELLI_VERI[v]; } else b.textContent = "come i capelli"; }, function (v) { cambio("cb", v || null); });
+      riga("Forma del viso", ["tondo", "ovale", "squadrato"], a.f || "tondo", function (b, v) { b.textContent = v; }, function (v) { cambio("f", v); });
       requestAnimationFrame(function () { disegnaTestina(cvF, a, true); disegnaTestina(cvP, a, false); });
     }
     function elenco() {
@@ -4838,10 +4870,15 @@
     disegnaScheda();
   }
   window.SGAstaAspetto = { apri: function (k) { apriPersonalizza(k); }, vero: aspettoVero, colori: coloriAspetto, prop: function () { return ASP_PROP; },
-    grafica: function (v) { if (v != null) { GRAF2.on = !!v; FIG_CACHE = {}; TESTE_CACHE = {}; TESTE_N = 0; } return GRAF2.on; }, figurina: function (c, prezzo, w) { return figurinaCanvas(c, prezzo, w); } };   // (per le prove e per aprire l'editor da fuori)
+    grafica: function (v) { if (v != null) { GRAF2.on = !!v; FIG_CACHE = {}; TESTE_CACHE = {}; TESTE_N = 0; BUSTI_URL = {}; } return GRAF2.on; }, formazione: function (v) { if (v) { FORM_STILE = v; BUSTI_URL = {}; } return FORM_STILE; }, busto: function (c, w) { return bustoCanvas(c, w); }, figurina: function (c, prezzo, w) { return figurinaCanvas(c, prezzo, w); } };   // (per le prove e per aprire l'editor da fuori)
   // 🧑 la TESTA con l'aspetto vero, disegnata nelle coordinate di chi la chiama: centro (0, cy), raggio r, lo (1/-1: il lato in ombra).
   // fronte: vista davanti (figurina, anteprima) con due occhi e il sorriso; se no di profilo come gli omini del campo (un occhio, verso dove guarda)
-  function testaVera(cx, cy, r, ca, lo, fronte, parte) {   // (parte: "dietro", "viso", "sopra", "occhi"; niente = tutta la testa)
+  function testaVera(cx, cy, r, ca, lo, fronte, parte) {   // 🙂 la forma del viso (9 nov 2026): ovale un po' più stretto e lungo, squadrato più largo con la mascella; tondo com'era
+    var fo = ca.forma; if (!fo || fo === "tondo") return testaVeraBase(cx, cy, r, ca, lo, fronte, parte);
+    cx.save(); cx.translate(0, cy); cx.scale(fo === "ovale" ? 0.9 : 1.05, fo === "ovale" ? 1.05 : 0.97); cx.translate(0, -cy);
+    testaVeraBase(cx, cy, r, ca, lo, fronte, parte); cx.restore();
+  }
+  function testaVeraBase(cx, cy, r, ca, lo, fronte, parte) {   // (parte: "dietro", "viso", "sopra", "occhi"; niente = tutta la testa)
     var t = ca.taglio, cap = ca.capelli, PI = Math.PI;
     function cerchio(x, y, rr) { cx.beginPath(); cx.arc(x, y, rr, 0, PI * 2); cx.fill(); }
     function calotta(alza, larga, a0, a1) { cx.beginPath(); cx.arc(0, cy - r * alza, r * larga, PI * (a0 == null ? 1.02 : a0), PI * (a1 == null ? 1.98 : a1)); cx.closePath(); cx.fill(); }
@@ -4867,6 +4904,8 @@
     if (!parte || parte === "viso") {
     if (fronte) { cx.fillStyle = scuro(ca.pelle, 0.9); cerchio(-r * 0.98, cy + r * 0.08, r * 0.2); cerchio(r * 0.98, cy + r * 0.08, r * 0.2); }   // (le orecchie)
     cx.fillStyle = ca.pelle; cx.beginPath(); cx.ellipse(0, cy, r * 0.97, r, 0, 0, PI * 2); cx.fill();
+    if (ca.forma === "squadrato") { cx.beginPath(); if (fronte) { cx.moveTo(-r * 0.95, cy - r * 0.05); cx.lineTo(-r * 0.93, cy + r * 0.55); cx.quadraticCurveTo(-r * 0.9, cy + r * 0.92, -r * 0.42, cy + r * 0.99); cx.lineTo(r * 0.42, cy + r * 0.99); cx.quadraticCurveTo(r * 0.9, cy + r * 0.92, r * 0.93, cy + r * 0.55); cx.lineTo(r * 0.95, cy - r * 0.05); }
+      else { cx.moveTo(-r * 0.2, cy + r * 0.5); cx.lineTo(r * 0.75, cy + r * 0.55); cx.quadraticCurveTo(r * 0.92, cy + r * 0.88, r * 0.55, cy + r * 0.97); cx.lineTo(-r * 0.2, cy + r * 0.97); } cx.closePath(); cx.fill(); }   // (la mascella squadrata)
     if (parte && !fronte) { cx.beginPath(); cx.ellipse(r * 0.95, cy + r * 0.12, r * 0.15, r * 0.13, 0, 0, PI * 2); cx.fill(); cx.fillStyle = scuro(ca.pelle, 0.86); cx.beginPath(); cx.ellipse(-r * 0.12, cy + r * 0.1, r * 0.14, r * 0.18, 0, 0, PI * 2); cx.fill(); }   // ✨ (di profilo: il naso e l'orecchio dicono dove guarda)
     if (!parte) cx.fillStyle = "rgba(0,0,0,.14)", cx.beginPath(), cx.arc(0, cy, r, lo > 0 ? -PI * 0.45 : PI * 0.55, lo > 0 ? PI * 0.45 : PI * 1.45), cx.closePath(), cx.fill();   // (la guancia in ombra: nella grafica nuova la fa la luce morbida)
     if (!parte) {   // (nella grafica nuova la barba è uno strato a parte: barbaNuova)
@@ -4935,7 +4974,12 @@
       calotta(0.07, 1.03); cx.beginPath(); cx.ellipse(fronte ? r * 0.12 : r * 0.2, cy - r * 0.86, r * 0.82, r * 0.3, fronte ? 0.12 : -0.2, 0, PI * 2); cx.fill();
       if (!fronte) cerchio(-r * 0.7, cy - r * 0.2, r * 0.38);
       cx.strokeStyle = "rgba(255,255,255,.35)"; cx.lineWidth = r * 0.06; cx.beginPath(); cx.moveTo(fronte ? -r * 0.42 : -r * 0.1, cy - r * 1.02); cx.lineTo(fronte ? -r * 0.48 : -r * 0.3, cy - r * 0.66); cx.stroke(); }
-    else {   // corti, corti col ciuffo, lunghi, lunghi raccolti, treccine, dreadlocks
+    else if (fronte && (t === "corti" || t === "corti col ciuffo")) {   // ✂️ (9 nov 2026: prima sembravano un caschetto) l'attaccatura alta con la fronte libera, le tempie, le basette corte
+      cx.beginPath(); cx.moveTo(-r * 0.97, cy - r * 0.1); cx.quadraticCurveTo(-r * 1.03, cy - r * 0.95, -r * 0.35, cy - r * 1.08); cx.quadraticCurveTo(0, cy - r * 1.17, r * 0.35, cy - r * 1.08); cx.quadraticCurveTo(r * 1.03, cy - r * 0.95, r * 0.97, cy - r * 0.1);
+      cx.lineTo(r * 0.87, cy - r * 0.1); cx.quadraticCurveTo(r * 0.86, cy - r * 0.42, r * 0.62, cy - r * 0.5); cx.quadraticCurveTo(r * 0.24, cy - r * 0.64, 0, cy - r * 0.6); cx.quadraticCurveTo(-r * 0.24, cy - r * 0.64, -r * 0.62, cy - r * 0.5); cx.quadraticCurveTo(-r * 0.86, cy - r * 0.42, -r * 0.87, cy - r * 0.1); cx.closePath(); cx.fill();
+      if (t === "corti col ciuffo") { cx.beginPath(); cx.ellipse(r * 0.14, cy - r * 1.06, r * 0.56, r * 0.27, -0.2, 0, PI * 2); cx.fill(); cx.beginPath(); cx.ellipse(r * 0.3, cy - r * 0.66, r * 0.3, r * 0.12, -0.35, 0, PI * 2); cx.fill(); }   // (il ciuffo alzato e la punta sulla fronte)
+    }
+    else {   // corti e corti col ciuffo di profilo, lunghi, lunghi raccolti, treccine, dreadlocks
       calotta(0.07, 1.02); if (!fronte) cerchio(-r * 0.7, cy - r * 0.2, r * 0.38);
       if (t === "corti col ciuffo") { cx.beginPath(); cx.ellipse(fronte ? r * 0.18 : r * 0.32, cy - r * 1.02, r * 0.62, r * 0.32, fronte ? -0.25 : -0.35, 0, PI * 2); cx.fill(); }
       if (t === "lunghi" && fronte) { cx.beginPath(); cx.ellipse(-r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.fill(); cx.beginPath(); cx.ellipse(r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.fill(); }
@@ -4961,7 +5005,7 @@
       return;
     }
     var piena = b === "piena", acc = b === "accennata", giu = piena ? 1.1 : 1.02, gu = piena ? 0.3 : 0.4;   // (giu: dove arriva sotto il mento; gu: dove comincia sulle guance)
-    cx.save(); cx.beginPath(); cx.ellipse(0, cy + r * 0.04, r * 1.0, r * (piena ? 1.1 : 1.03), 0, 0, PI * 2); cx.clip();
+    cx.save(); cx.beginPath(); cx.ellipse(0, cy + r * 0.04, r * 1.0, r * (piena ? 1.1 : 1.03), 0, 0, PI * 2); if (ca.forma === "squadrato" && fronte) cx.rect(-r * 0.95, cy, r * 1.9, r * 1.05); cx.clip();
     cx.globalAlpha = acc ? 0.34 : piena ? 0.93 : 0.82; cx.fillStyle = bc; cx.beginPath();
     if (fronte) {
       cx.moveTo(-r * 0.96, cy - r * 0.12); cx.quadraticCurveTo(-r * 1.0, cy + r * 0.62, -r * 0.42, cy + r * (giu - 0.08)); cx.quadraticCurveTo(0, cy + r * (giu + 0.06), r * 0.42, cy + r * (giu - 0.08)); cx.quadraticCurveTo(r * 1.0, cy + r * 0.62, r * 0.96, cy - r * 0.12);
@@ -5053,25 +5097,38 @@
   function visoDettagli(v, X, Y, R, ca) {   // (solo la figurina e l'anteprima: sopracciglia, occhi veri, naso, bocca)
     var PI = Math.PI, sc = function (p) { return scuro(ca.pelle, p); }, bf = ca.barba === "baffi" || ca.barba === "baffi e pizzetto";
     var cig = ca.taglio === "calvo" ? sc(0.55) : scuro(ca.colBarba || ca.capelli, 0.85);
+    var es = ca.espr || "", acc = es === "serio" || es === "urlo";   // (l'espressione: serio e urlo hanno le sopracciglia aggrottate, furbo ne alza una)
     v.lineCap = "round"; v.strokeStyle = cig; v.lineWidth = R * 0.085;
-    [-1, 1].forEach(function (s) { v.beginPath(); v.moveTo(X + s * R * 0.18, Y - R * 0.17); v.quadraticCurveTo(X + s * R * 0.34, Y - R * 0.27, X + s * R * 0.52, Y - R * 0.18); v.stroke(); });
+    [-1, 1].forEach(function (s) { v.beginPath();
+      if (acc) { v.moveTo(X + s * R * 0.15, Y - R * 0.12); v.quadraticCurveTo(X + s * R * 0.32, Y - R * 0.21, X + s * R * 0.52, Y - R * 0.21); }
+      else if (es === "furbo" && s > 0) { v.moveTo(X + R * 0.18, Y - R * 0.24); v.quadraticCurveTo(X + R * 0.34, Y - R * 0.37, X + R * 0.52, Y - R * 0.27); }
+      else { v.moveTo(X + s * R * 0.18, Y - R * 0.17); v.quadraticCurveTo(X + s * R * 0.34, Y - R * 0.27, X + s * R * 0.52, Y - R * 0.18); }
+      v.stroke(); });
     [-1, 1].forEach(function (s) {
-      var ex = X + s * R * 0.34, ey = Y + R * 0.04;
-      v.fillStyle = "#fbf7f2"; v.beginPath(); v.ellipse(ex, ey, R * 0.15, R * 0.105, 0, 0, PI * 2); v.fill();
-      v.save(); v.beginPath(); v.ellipse(ex, ey, R * 0.15, R * 0.105, 0, 0, PI * 2); v.clip();
+      var ex = X + s * R * 0.34, ey = Y + R * 0.04, ry = R * (es === "urlo" ? 0.08 : es === "furbo" && s < 0 ? 0.085 : 0.105);   // (urlando gli occhi si stringono)
+      v.fillStyle = "#fbf7f2"; v.beginPath(); v.ellipse(ex, ey, R * 0.15, ry, 0, 0, PI * 2); v.fill();
+      v.save(); v.beginPath(); v.ellipse(ex, ey, R * 0.15, ry, 0, 0, PI * 2); v.clip();
       v.fillStyle = "#4a3020"; v.beginPath(); v.arc(ex + s * R * 0.01, ey + R * 0.01, R * 0.088, 0, PI * 2); v.fill();
       v.fillStyle = "#120b07"; v.beginPath(); v.arc(ex + s * R * 0.01, ey + R * 0.01, R * 0.046, 0, PI * 2); v.fill();
       v.fillStyle = "rgba(0,0,0,.18)"; v.fillRect(ex - R * 0.16, ey - R * 0.12, R * 0.32, R * 0.05); v.restore();
       v.fillStyle = "#fff"; v.beginPath(); v.arc(ex + s * R * 0.01 + R * 0.03, ey - R * 0.025, R * 0.024, 0, PI * 2); v.fill();
-      v.strokeStyle = sc(0.45); v.lineWidth = R * 0.035; v.beginPath(); v.ellipse(ex, ey, R * 0.15, R * 0.105, 0, PI * 1.08, PI * 1.92); v.stroke();
+      v.strokeStyle = sc(0.45); v.lineWidth = R * 0.035; v.beginPath(); v.ellipse(ex, ey, R * 0.15, ry, 0, PI * 1.08, PI * 1.92); v.stroke();
     });
     if (!bf) { v.strokeStyle = sc(0.68); v.lineWidth = R * 0.045; v.beginPath(); v.moveTo(X + R * 0.02, Y + R * 0.12); v.quadraticCurveTo(X + R * 0.13, Y + R * 0.27, X - R * 0.06, Y + R * 0.3); v.stroke(); }   // (il naso, appena accennato)
-    v.strokeStyle = sc(0.48); v.lineWidth = R * 0.055; v.beginPath(); v.arc(X, Y + R * 0.38, R * 0.22, PI * 0.22, PI * 0.78); v.stroke();   // (il sorriso)
-    v.strokeStyle = "rgba(255,255,255,.18)"; v.lineWidth = R * 0.04; v.beginPath(); v.arc(X, Y + R * 0.45, R * 0.12, PI * 0.3, PI * 0.7); v.stroke();
+    v.strokeStyle = sc(0.48); v.lineWidth = R * 0.055;
+    function aperta(path, denti, lingua) { path(); v.fillStyle = "#5a1414"; v.fill(); v.save(); path(); v.clip(); v.fillStyle = "#fbf7f2"; v.fillRect(X - R * 0.3, denti, R * 0.6, R * 0.085);
+      if (lingua) { v.fillStyle = "#d9606a"; v.beginPath(); v.ellipse(X, lingua, R * 0.11, R * 0.07, 0, 0, PI * 2); v.fill(); } v.restore(); path(); v.lineWidth = R * 0.03; v.stroke(); }
+    if (es === "sorriso") aperta(function () { v.beginPath(); v.moveTo(X - R * 0.25, Y + R * 0.43); v.quadraticCurveTo(X, Y + R * 0.47, X + R * 0.25, Y + R * 0.43); v.quadraticCurveTo(X + R * 0.21, Y + R * 0.72, X, Y + R * 0.74); v.quadraticCurveTo(X - R * 0.21, Y + R * 0.72, X - R * 0.25, Y + R * 0.43); v.closePath(); }, Y + R * 0.43);   // (😁 il sorriso largo)
+    else if (es === "urlo") aperta(function () { v.beginPath(); v.ellipse(X, Y + R * 0.57, R * 0.16, R * 0.2, 0, 0, PI * 2); }, Y + R * 0.36, Y + R * 0.72);   // (l'urlo dell'esultanza)
+    else if (es === "furbo") { v.beginPath(); v.moveTo(X - R * 0.16, Y + R * 0.52); v.quadraticCurveTo(X + R * 0.06, Y + R * 0.6, X + R * 0.25, Y + R * 0.41); v.stroke(); }   // (il mezzo sorriso)
+    else if (es === "serio") { v.beginPath(); v.moveTo(X - R * 0.17, Y + R * 0.53); v.quadraticCurveTo(X, Y + R * 0.5, X + R * 0.17, Y + R * 0.53); v.stroke(); }   // (la bocca chiusa, sicuro)
+    else if (es === "sicuro") { v.beginPath(); v.arc(X, Y + R * 0.37, R * 0.18, PI * 0.25, PI * 0.75); v.stroke(); }
+    else { v.beginPath(); v.arc(X, Y + R * 0.38, R * 0.22, PI * 0.22, PI * 0.78); v.stroke();   // (il sorriso)
+      v.strokeStyle = "rgba(255,255,255,.18)"; v.lineWidth = R * 0.04; v.beginPath(); v.arc(X, Y + R * 0.45, R * 0.12, PI * 0.3, PI * 0.7); v.stroke(); }
   }
   function testaBitmap(cx, x, cy, r, ca, lo, fronte, ricco, scala) {   // disegna la testa nuova (raggio r nei punti di cx; scala = pixel veri per punto)
     var R = r * scala; if (!(R > 1)) return false;
-    var q = Math.exp(Math.round(Math.log(R) / 0.07) * 0.07), k = ca.pelle + "|" + ca.capelli + "|" + ca.taglio + "|" + ca.barba + "|" + ca.colBarba + "|" + lo + "|" + (fronte ? 1 : 0) + (ricco ? 1 : 0) + "|" + q.toFixed(2);
+    var q = Math.exp(Math.round(Math.log(R) / 0.07) * 0.07), k = ca.pelle + "|" + ca.capelli + "|" + ca.taglio + "|" + ca.barba + "|" + ca.colBarba + "|" + (ca.forma || "") + "|" + (ca.espr || "") + "|" + lo + "|" + (fronte ? 1 : 0) + (ricco ? 1 : 0) + "|" + q.toFixed(2);
     var T = TESTE_CACHE[k];
     if (!T) { if (TESTE_N > 400) { TESTE_CACHE = {}; TESTE_N = 0; } T = TESTE_CACHE[k] = testaStrati(q, ca, lo, fronte, ricco); TESTE_N++; }
     var f = r / q; cx.drawImage(T.c, x - T.ox * f, cy - T.oy * f, T.S * f, T.S * f);
@@ -5119,20 +5176,150 @@
     cx.strokeStyle = "rgba(0,0,0,.35)"; cx.lineWidth = r * 0.035; cx.beginPath(); cx.moveTo(-r * 0.46, top); cx.quadraticCurveTo(-r * 0.2, top + r * 0.22, 0, top + r * 0.42); cx.quadraticCurveTo(r * 0.2, top + r * 0.22, r * 0.46, top); cx.stroke();
     cx.strokeStyle = "rgba(0,0,0,.25)"; cx.lineWidth = r * 0.03; cx.beginPath(); cx.moveTo(-r * 0.68, top - r * 0.05); cx.quadraticCurveTo(-r * 0.3, top + r * 0.3, 0, top + r * 0.6); cx.quadraticCurveTo(r * 0.3, top + r * 0.3, r * 0.68, top - r * 0.05); cx.stroke();
   }
-  function albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn) {   // 🃏 la figurina nuova da album
+  // 🧑‍🤝‍🧑 LE FACCE DOVE SI GUARDA (9 nov 2026, il proprietario: «sì, facciamo questo»): il calciatore a mezzo busto (testa vera e maglia vista
+  // davanti) nella banda del gol, nella pagella di ogni rosa e nella formazione finale. Disegnato una volta, poi si copia
+  var FORM_STILE = (function () { try { return localStorage.getItem("sg-fanta-formazione") || "busto"; } catch (e) { return "busto"; } })();   // formazione finale: "busto" | "figurina" | "maglia" (com'era)
+  var BUSTI_URL = {}, BUSTI_N = 0;
+  // le POSE del mezzo busto (9 nov 2026, il proprietario: «inventati delle pose… non farli tutti uguali», «le braccia facciamole più reali»):
+  // fissa per calciatore (dal nome), e il gesto lo fa a volte la mano destra, a volte la sinistra
+  var POSE_BUSTO = ["lungo", "conserte", "fianchi", "pollice", "tempia", "pugno"];
+  var ESPR_POSA = { lungo: "", conserte: "serio", fianchi: "sicuro", pollice: "sorriso", tempia: "furbo", pugno: "urlo", guanti: "serio" };   // (la faccia va con la posa)
+  var POSE_PORTIERE = ["guanti", "conserte", "lungo", "fianchi"];   // 🧤 (il portiere: sempre coi guanti; la maglia da portiere solo se è quella UFFICIALE, in data/fanta-portieri.js: oggi non c'è, non si inventa)
+  function kitBusto(c) {   // la maglia del busto e della figurina: il portiere con la sua maglia UFFICIALE da portiere (data/fanta-portieri.js), se no quella della squadra
+    var P = c && c.ruolo === "P" && (window.SG_FANTA_PORTIERI || {})[c.squadra];
+    if (P && P.a) return { a: P.a, b: P.b || P.a, righe: !!P.righe, pant: P.pant || "#1b1b1b", coll: P.b || P.a, por: true };
+    var k = kitDi(c.squadra, false); if (c && c.ruolo === "P") { var k2 = {}; for (var x in k) k2[x] = k[x]; k2.por = true; return k2; } return k;
+  }
+  function bustoCanvas(c, w) {   // il calciatore dalla vita in su, sfondo trasparente, w x w punti (proporzioni come un corpo vero, con la testa da cartone come gli avatar)
+    var d = Math.min(2, window.devicePixelRatio || 1), cv = tela(w * d, w * d), cx = cv.getContext("2d"); cv.style.width = cv.style.height = w + "px";
+    var k = chiaveCalc(c), kit = kitBusto(c), ca = coloriAspetto(aspettoVero(k)), mg = numeroMaglia(c), PI = Math.PI, h = hashNome(k + "|posa"), por = !!kit.por;
+    var pose = por ? POSE_PORTIERE : POSE_BUSTO, posa = pose[h % pose.length], m = (h >> 4) % 2 ? 1 : -1, u = w, pelle = ca.pelle, bordo = "rgba(12,14,24,.55)", coll = kit.coll || kit.b;
+    var guanto = por ? (chiaraC(kit.a) ? "#1d2230" : "#f4f4f4") : null, guantoB = por ? (kit.b && kit.b !== kit.a ? kit.b : chiaraC(kit.a) ? "#e8e8e8" : "#2a2f3d") : null;   // 🧤 (i guanti: chiari su maglia scura, scuri su maglia chiara)
+    cx.setTransform(d, 0, 0, d, 0, 0); cx.translate(w / 2, 0); cx.lineCap = "round"; cx.lineJoin = "round";
+    function cap(x0, y0, r0, x1, y1, r1, piatto) {   // un pezzo di corpo: largo r0 da una parte e r1 dall'altra, con le punte tonde (piatto: parte dritto e senza chiudersi, per attaccarsi sotto la manica)
+      var dx = x1 - x0, dy = y1 - y0, l = Math.sqrt(dx * dx + dy * dy) || 1, a = Math.atan2(dy, dx), nx = -dy / l, ny = dx / l;
+      cx.beginPath(); cx.moveTo(x0 + nx * r0, y0 + ny * r0); cx.lineTo(x1 + nx * r1, y1 + ny * r1); cx.arc(x1, y1, r1, a + PI / 2, a - PI / 2, true); cx.lineTo(x0 - nx * r0, y0 - ny * r0); if (!piatto) { cx.arc(x0, y0, r0, a - PI / 2, a + PI / 2, true); cx.closePath(); }
+      return { nx: nx, ny: ny };
+    }
+    function pelleSu(x0, y0, x1, y1, r, n) {   // (la pelle con la luce da una parte e l'ombra dall'altra)
+      var mx = (x0 + x1) / 2, my = (y0 + y1) / 2, g = cx.createLinearGradient(mx - n.nx * r, my - n.ny * r, mx + n.nx * r, my + n.ny * r);
+      var chi = n.nx < 0 ? 1 : 0; g.addColorStop(chi, scuro(pelle, 1.06)); g.addColorStop(0.5, pelle); g.addColorStop(1 - chi, scuro(pelle, 0.74)); return g;
+    }
+    function rot(dx, dy, a) { var c0 = Math.cos(a), s0 = Math.sin(a); return [dx * c0 - dy * s0, dx * s0 + dy * c0]; }
+    function mano(W, dir, tipo, verso, lato, fase) {   // la mano al polso W, verso dir: aperta (dita e pollice), pugno (nocche e pollice chiuso), pollice, indice. fase "bordo" o "colore"
+      if (tipo === "nascosta") return;
+      var col = guanto || scuro(pelle, 0.93), pieg = guanto ? "rgba(0,0,0,.3)" : "rgba(70,25,0,.4)", g = guanto ? 1.6 : 1, pz = [];   // 🧤 (i guanti veri da portiere: grandi e imbottiti)
+      var px = W[0] + dir[0] * u * 0.035 * g, py = W[1] + dir[1] * u * 0.035 * g, sp = -(lato || m);   // (sp: da che parte sta il pollice: verso il corpo)
+      function insieme(pezzi, col) { if (fase === "bordo") { cx.lineWidth = u * 0.02; cx.strokeStyle = bordo; pezzi.forEach(function (p) { p(); cx.stroke(); }); return; }
+        cx.fillStyle = col; pezzi.forEach(function (p) { p(); cx.fill(); });
+        if (guanto) { var gg = cx.createRadialGradient(px - dir[1] * u * 0.02, py - u * 0.03, 0, px, py, u * 0.11); gg.addColorStop(0, "rgba(255,255,255,.22)"); gg.addColorStop(1, "rgba(0,0,0,.18)"); cx.fillStyle = gg; pezzi.forEach(function (p) { p(); cx.fill(); }); } }
+      function polsino() { if (!guanto || fase === "bordo") return; var ax = -dir[1] * u * 0.075, ay = dir[0] * u * 0.075, cxp = W[0] + dir[0] * u * 0.012, cyp = W[1] + dir[1] * u * 0.012;   // (il polsino largo del guanto, con la striscia)
+        cx.lineCap = "butt"; cx.lineWidth = u * 0.062; cx.strokeStyle = bordo; cx.beginPath(); cx.moveTo(cxp - ax, cyp - ay); cx.lineTo(cxp + ax, cyp + ay); cx.stroke();
+        cx.lineWidth = u * 0.046; cx.strokeStyle = guantoB; cx.stroke(); cx.lineWidth = u * 0.012; cx.strokeStyle = col; cx.stroke(); cx.lineCap = "round"; }
+      if (tipo === "aperta") {
+        pz.push(function () { cx.beginPath(); cx.ellipse(px, py, u * 0.046 * g, u * 0.04 * g, Math.atan2(dir[1], dir[0]), 0, PI * 2); });   // il palmo
+        [-0.3, -0.1, 0.1, 0.3].forEach(function (an, i) { var v = rot(dir[0], dir[1], an * 0.22), b0 = rot(dir[0], dir[1], an * 1.05), bx = px + b0[0] * u * 0.034 * g, by = py + b0[1] * u * 0.034 * g, L = u * (i === 1 || i === 2 ? 0.042 : 0.035) * g;   // (dita unite e un po' piegate, come una mano a riposo)
+          pz.push(function () { cap(bx, by, u * (guanto ? 0.016 : 0.013) * g, bx + v[0] * L, by + v[1] * L, u * (guanto ? 0.015 : 0.011) * g); }); });   // le quattro dita (nel guanto belle grosse)
+        var vt = rot(dir[0], dir[1], sp * 0.6), tx = W[0] + dir[0] * u * 0.02 + (-dir[1]) * sp * u * 0.034 * g, ty = W[1] + dir[1] * u * 0.02 + dir[0] * sp * u * 0.034 * g;
+        pz.push(function () { cap(tx, ty, u * 0.015 * g, tx + vt[0] * u * 0.04 * g, ty + vt[1] * u * 0.04 * g, u * 0.012 * g); });   // il pollice, staccato
+        insieme(pz, col); if (fase === "bordo") return; polsino();
+        cx.strokeStyle = pieg; cx.lineWidth = u * (guanto ? 0.009 : 0.006); [-0.2, 0, 0.2].forEach(function (an) { var b0 = rot(dir[0], dir[1], an * 1.05), v = rot(dir[0], dir[1], an * 0.22); cx.beginPath(); cx.moveTo(px + b0[0] * u * 0.03 * g, py + b0[1] * u * 0.03 * g); cx.lineTo(px + b0[0] * u * 0.03 * g + v[0] * u * 0.03 * g, py + b0[1] * u * 0.03 * g + v[1] * u * 0.03 * g); cx.stroke(); });
+        return;
+      }
+      var rp = u * 0.05 * g;   // il pugno: tondo, le quattro nocche in fila, il pollice chiuso davanti
+      pz.push(function () { cx.beginPath(); cx.ellipse(px, py, rp, rp * 0.9, Math.atan2(dir[1], dir[0]), 0, PI * 2); });
+      [-1.5, -0.5, 0.5, 1.5].forEach(function (q) { var nx = px + dir[0] * rp * 0.62 - dir[1] * q * rp * 0.36, ny = py + dir[1] * rp * 0.62 + dir[0] * q * rp * 0.36; pz.push(function () { cx.beginPath(); cx.arc(nx, ny, rp * 0.3, 0, PI * 2); }); });
+      if (tipo === "pollice") { var bx = px - m * rp * 0.5, by = py - rp * 0.55; pz.push(function () { cap(bx, by, u * 0.02 * g, bx - m * u * 0.012, by - u * 0.085 * g, u * 0.018 * g); }); }   // (il pollice parte dal bordo del pugno, MAI dal centro)
+      if (tipo === "indice") { var l = Math.sqrt(verso[0] * verso[0] + verso[1] * verso[1]) || 1, vx = verso[0] / l, vy = verso[1] / l, ix = px + vx * rp * 0.5 - m * rp * 0.5, iy = py + vy * rp * 0.5;
+        pz.push(function () { cap(ix, iy, u * 0.018, ix + vx * u * 0.09, iy + vy * u * 0.09, u * 0.016); }); }   // (l'indice parte dal bordo del pugno, dalla parte della testa: MAI dal centro)
+      insieme(pz, col); if (fase === "bordo") return; polsino();
+      cx.strokeStyle = pieg; cx.lineWidth = u * 0.006;
+      [-1, 0, 1].forEach(function (q) { var nx = px + dir[0] * rp * 0.55 - dir[1] * q * rp * 0.36, ny = py + dir[1] * rp * 0.55 + dir[0] * q * rp * 0.36; cx.beginPath(); cx.moveTo(nx, ny); cx.lineTo(nx + dir[0] * rp * 0.3, ny + dir[1] * rp * 0.3); cx.stroke(); });   // (tra le nocche)
+      if (tipo === "pugno") { cx.strokeStyle = pieg; cx.lineWidth = u * 0.012; cx.beginPath(); cx.moveTo(px - dir[1] * sp * rp * 0.55, py + dir[0] * sp * rp * 0.55); cx.lineTo(px + dir[0] * rp * 0.25, py + dir[1] * rp * 0.25); cx.stroke(); }   // (il pollice chiuso)
+    }
+    function stoffa(path, nobordo) {   // un pezzo di maglia: colore, righe, luce a sinistra e ombra a destra, il contorno
+      cx.save(); path(); cx.fillStyle = kit.a; cx.fill(); cx.clip();
+      if (kit.righe) { cx.fillStyle = kit.b; for (var x = -u; x < u; x += u * 0.13) cx.fillRect(x + u * 0.032, 0, u * 0.065, u); }
+      var g = cx.createLinearGradient(-u * 0.42, 0, u * 0.42, 0); g.addColorStop(0, "rgba(255,255,255,.16)"); g.addColorStop(0.4, "rgba(255,255,255,.03)"); g.addColorStop(0.62, "rgba(0,0,0,.06)"); g.addColorStop(1, "rgba(0,0,0,.36)");
+      cx.fillStyle = g; cx.fillRect(-u, 0, 2 * u, u); cx.restore(); if (!nobordo) { path(); cx.lineWidth = u * 0.012; cx.strokeStyle = bordo; cx.stroke(); }
+    }
+    function manica(S, E) {   // la manica corta: nasce sotto la maglia (la spalla la fa il busto), arriva a metà braccio, col bordino
+      var M = [S[0] + (E[0] - S[0]) * 0.55, S[1] + (E[1] - S[1]) * 0.55], dx = M[0] - S[0], dy = M[1] - S[1], l = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / l, ny = dx / l, r0 = u * 0.096, r1 = u * 0.088, a = Math.atan2(dy, dx);
+      function p() { cx.beginPath(); cx.moveTo(S[0] + nx * r0, S[1] + ny * r0); cx.lineTo(M[0] + nx * r1, M[1] + ny * r1); cx.lineTo(M[0] - nx * r1, M[1] - ny * r1); cx.lineTo(S[0] - nx * r0, S[1] - ny * r0); cx.arc(S[0], S[1], r0, a - PI / 2, a + PI / 2, true); cx.closePath(); }
+      stoffa(p);
+      cx.strokeStyle = coll; cx.lineWidth = u * 0.014; cx.beginPath(); cx.moveTo(M[0] + nx * r1 * 0.95, M[1] + ny * r1 * 0.95); cx.lineTo(M[0] - nx * r1 * 0.95, M[1] - ny * r1 * 0.95); cx.stroke();
+    }
+    function busto(senzaInizio) {   // a V: spalle tonde, petto, vita più stretta
+      if (!senzaInizio) cx.beginPath(); cx.moveTo(-u * 0.08, u * 0.415); cx.quadraticCurveTo(-u * 0.19, u * 0.425, -u * 0.235, u * 0.46); cx.quadraticCurveTo(-u * 0.275, u * 0.5, -u * 0.262, u * 0.58);
+      cx.quadraticCurveTo(-u * 0.25, u * 0.7, -u * 0.205, u * 0.86); cx.lineTo(-u * 0.215, u * 1.02); cx.lineTo(u * 0.215, u * 1.02); cx.lineTo(u * 0.205, u * 0.86); cx.quadraticCurveTo(u * 0.25, u * 0.7, u * 0.262, u * 0.58);
+      cx.quadraticCurveTo(u * 0.275, u * 0.5, u * 0.235, u * 0.46); cx.quadraticCurveTo(u * 0.19, u * 0.425, u * 0.08, u * 0.415); cx.closePath(); }
+    // le braccia: spalla S, gomito E, polso W; dove sta l'avambraccio (dietro la maglia, davanti, sopra la testa) e la mano
+    function giu(s) { return { S: [s * 0.215, 0.49], E: [s * 0.305, 0.64], W: [s * 0.29, 0.775], mano: "aperta", dove: "dietro", lato: s }; }
+    var br = [];
+    if (posa === "lungo") br = [giu(-1), giu(1)];
+    else if (posa === "conserte") br = [{ S: [-0.215, 0.49], E: [-0.285, 0.72], W: [0.25, 0.7], mano: "nascosta", dove: "davanti" }, { S: [0.215, 0.49], E: [0.285, 0.72], W: [-0.17, 0.69], mano: "aperta", dove: "davanti", lato: 1 }];   // (la mano sinistra sparisce sotto l'avambraccio destro)
+    else if (posa === "fianchi") br = [-1, 1].map(function (s) { return { S: [s * 0.215, 0.49], E: [s * 0.37, 0.67], W: [s * 0.21, 0.83], mano: "pugno", dove: "davanti", lato: s }; });
+    else if (posa === "pollice") br = [giu(-m), { S: [m * 0.215, 0.49], E: [m * 0.29, 0.72], W: [m * 0.06, 0.635], mano: "pollice", dove: "davanti" }];
+    else if (posa === "tempia") br = [giu(-m), { S: [m * 0.215, 0.49], E: [m * 0.38, 0.54], W: [m * 0.215, 0.35], mano: "indice", verso: [-m * 0.5, -1], dove: "testa" }];
+    else if (posa === "guanti") br = [-1, 1].map(function (s) { return { S: [s * 0.215, 0.49], E: [s * 0.3, 0.72], W: [s * 0.095, 0.625], mano: "aperta", dove: "davanti", lato: -s }; });   // 🧤 (il portiere: i guanti uniti davanti al petto)
+    else br = [giu(-m), { S: [m * 0.215, 0.49], E: [m * 0.36, 0.34], W: [m * 0.34, 0.15], mano: "pugno", dove: "davanti" }];
+    br.forEach(function (b) { b.S = [b.S[0] * u, b.S[1] * u]; b.E = [b.E[0] * u, b.E[1] * u]; b.W = [b.W[0] * u, b.W[1] * u]; });
+    var RU1 = u * 0.08, RU2 = u * 0.066, RF1 = u * 0.064, RF2 = u * 0.049;   // (braccia in carne: braccio, gomito, polso)
+    function fuoriDalBusto() { cx.save(); cx.beginPath(); cx.rect(-u, -u, 2 * u, 3 * u); busto(true); cx.clip("evenodd"); }   // (la spalla nasce DIETRO la maglia)
+    function braccioSu(b) {   // dalla spalla al gomito (dietro la maglia), poi la manica
+      fuoriDalBusto(); var n = cap(b.S[0], b.S[1], RU1, b.E[0], b.E[1], RU2); cx.lineWidth = u * 0.02; cx.strokeStyle = bordo; cx.stroke(); cap(b.S[0], b.S[1], RU1, b.E[0], b.E[1], RU2); cx.fillStyle = pelleSu(b.S[0], b.S[1], b.E[0], b.E[1], RU1, n); cx.fill(); cx.restore();
+      fuoriDalBusto(); manica(b.S, b.E); cx.restore();
+    }
+    function avambraccio(b) {   // dal fondo della manica alla mano, con UN contorno solo: il gomito e il polso non si staccano
+      var dx = b.W[0] - b.E[0], dy = b.W[1] - b.E[1], l = Math.sqrt(dx * dx + dy * dy) || 1, dir = [dx / l, dy / l], M = [b.S[0] + (b.E[0] - b.S[0]) * 0.6, b.S[1] + (b.E[1] - b.S[1]) * 0.6];
+      var pz = [function () { return cap(M[0], M[1], RU1 * 0.88, b.E[0], b.E[1], RU2, true); }, function () { return cap(b.E[0], b.E[1], RF1, b.W[0], b.W[1], RF2); }];
+      cx.lineWidth = u * 0.02; cx.strokeStyle = bordo; pz.forEach(function (p) { p(); cx.stroke(); }); mano(b.W, dir, b.mano, b.verso, b.lato, "bordo");
+      pz.forEach(function (p, i) { var n = p(); cx.fillStyle = i ? pelleSu(b.E[0], b.E[1], b.W[0], b.W[1], RF1, n) : pelleSu(M[0], M[1], b.E[0], b.E[1], RU1, n); cx.fill(); });
+      var gm = cx.createRadialGradient(b.E[0], b.E[1], 0, b.E[0], b.E[1], RU2); gm.addColorStop(0, "rgba(60,20,0,.12)"); gm.addColorStop(1, "rgba(60,20,0,0)"); cx.fillStyle = gm; cx.beginPath(); cx.arc(b.E[0], b.E[1], RU2, 0, PI * 2); cx.fill();   // (la piega del gomito)
+      mano(b.W, dir, b.mano, b.verso, b.lato, "colore");
+    }
+    cx.fillStyle = scuro(pelle, 0.9); cx.fillRect(-u * 0.062, u * 0.33, u * 0.124, u * 0.12);   // il collo, con l'ombra del mento
+    var gn = cx.createLinearGradient(0, u * 0.34, 0, u * 0.44); gn.addColorStop(0, "rgba(45,14,0,.5)"); gn.addColorStop(1, "rgba(45,14,0,.1)"); cx.fillStyle = gn; cx.fillRect(-u * 0.062, u * 0.33, u * 0.124, u * 0.12);
+    stoffa(busto);
+    cx.save(); busto(); cx.clip();   // le cuciture delle spalle, il petto, le pieghe sui fianchi, il numero vero piccolo sul petto
+    cx.strokeStyle = "rgba(0,0,0,.22)"; cx.lineWidth = u * 0.009; [-1, 1].forEach(function (s) { cx.beginPath(); cx.moveTo(s * u * 0.19, u * 0.44); cx.quadraticCurveTo(s * u * 0.2, u * 0.53, s * u * 0.25, u * 0.6); cx.stroke(); });
+    var gp = cx.createRadialGradient(-u * 0.1, u * 0.55, 0, -u * 0.1, u * 0.55, u * 0.16); gp.addColorStop(0, "rgba(255,255,255,.1)"); gp.addColorStop(1, "rgba(255,255,255,0)"); cx.fillStyle = gp; cx.fillRect(-u * 0.3, u * 0.4, u * 0.4, u * 0.3);
+    cx.strokeStyle = "rgba(0,0,0,.13)"; cx.lineWidth = u * 0.012; [-1, 1].forEach(function (s) { cx.beginPath(); cx.moveTo(s * u * 0.22, u * 0.76); cx.quadraticCurveTo(s * u * 0.15, u * 0.8, s * u * 0.12, u * 0.86); cx.stroke(); });
+    cx.beginPath(); cx.moveTo(-u * 0.14, u * 0.71); cx.quadraticCurveTo(0, u * 0.745, u * 0.14, u * 0.705); cx.stroke();
+    if (mg.n != null) { cx.font = "900 " + (u * 0.075).toFixed(1) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var ch = chiaraC(kit.a); cx.lineWidth = u * 0.016; cx.strokeStyle = ch ? "rgba(255,255,255,.8)" : "rgba(0,0,0,.55)"; var nX = posa === "guanti" ? -m * u * 0.165 : -m * u * 0.115, nY = posa === "guanti" ? u * 0.51 : u * 0.56; cx.strokeText(mg.n, nX, nY); cx.fillStyle = ch ? "#16161a" : "#ffffff"; cx.fillText(mg.n, nX, nY); }   // (coi guanti uniti il numero sale, se no lo coprono)
+    cx.restore();
+    cx.fillStyle = scuro(pelle, 0.86); cx.beginPath(); cx.moveTo(-u * 0.07, u * 0.418); cx.lineTo(0, u * 0.49); cx.lineTo(u * 0.07, u * 0.418); cx.closePath(); cx.fill();   // il colletto a V
+    cx.strokeStyle = coll; cx.lineWidth = u * 0.026; cx.beginPath(); cx.moveTo(-u * 0.095, u * 0.415); cx.lineTo(0, u * 0.505); cx.lineTo(u * 0.095, u * 0.415); cx.stroke();
+    cx.strokeStyle = "rgba(0,0,0,.3)"; cx.lineWidth = u * 0.008; cx.beginPath(); cx.moveTo(-u * 0.075, u * 0.418); cx.lineTo(0, u * 0.49); cx.lineTo(u * 0.075, u * 0.418); cx.stroke();
+    br.forEach(function (b) { braccioSu(b); if (b.dove !== "testa") avambraccio(b); });   // (ogni braccio intero, uno dopo l'altro)
+    var caE = {}; for (var kq in ca) caE[kq] = ca[kq]; caE.espr = ESPR_POSA[posa] || "";
+    if (!testaBitmap(cx, 0, u * 0.235, u * 0.165, caE, 1, true, true, d)) testaVera(cx, u * 0.235, u * 0.165, caE, 1, true);
+    br.forEach(function (b) { if (b.dove === "testa") avambraccio(b); });   // (il dito alla tempia: l'avambraccio sopra la testa)
+    cx.setTransform(1, 0, 0, 1, 0, 0); cx.globalCompositeOperation = "destination-out";   // (in basso sfuma)
+    var gf = cx.createLinearGradient(0, w * d * 0.88, 0, w * d); gf.addColorStop(0, "rgba(0,0,0,0)"); gf.addColorStop(1, "rgba(0,0,0,1)"); cx.fillStyle = gf; cx.fillRect(0, w * d * 0.88, w * d, w * d * 0.12);
+    return cv;
+  }
+  function bustoURL(c, w) {   // (per le <img>: la stessa immagine come indirizzo, ricordata finché l'aspetto non cambia)
+    var k = chiaveCalc(c) + "|" + w + "|" + JSON.stringify(aspettoVero(chiaveCalc(c)));
+    if (!BUSTI_URL[k]) { if (BUSTI_N > 120) { BUSTI_URL = {}; BUSTI_N = 0; } try { BUSTI_URL[k] = bustoCanvas(c, w).toDataURL("image/png"); BUSTI_N++; } catch (e) { return null; } }
+    return BUSTI_URL[k];
+  }
+  function bustoNodo(c, w, classe) { try { var cv = bustoCanvas(c, w); cv.className = classe || ""; return cv; } catch (e) { return null; } }
+  function albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, oro) {   // 🃏 la figurina nuova da album (oro: ⭐ i big, da BIG_DA in su)
     var m = w * 0.045, iw = w - 2 * m, ih = h * 0.76, PI = Math.PI, c0 = col[0], c1 = col[1] || "#ffffff";
-    cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07); cx.fillStyle = "#f6f1e3"; cx.fill(); cx.shadowColor = "transparent";
-    tondo(m * 0.45, m * 0.45, w - m * 0.9, h - m * 0.9, w * 0.055); cx.strokeStyle = "#c9a24a"; cx.lineWidth = Math.max(1, w * 0.008); cx.stroke();   // (il filetto d'oro)
+    cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07);
+    if (oro) { var go = cx.createLinearGradient(0, 0, w, h); go.addColorStop(0, "#fff1b0"); go.addColorStop(0.35, "#f2c94c"); go.addColorStop(0.55, "#fff4c4"); go.addColorStop(0.8, "#d4a032"); go.addColorStop(1, "#f7dc7a"); cx.fillStyle = go; } else cx.fillStyle = "#f6f1e3";
+    cx.fill(); cx.shadowColor = "transparent";
+    tondo(m * 0.45, m * 0.45, w - m * 0.9, h - m * 0.9, w * 0.055); cx.strokeStyle = oro ? "#9a6b12" : "#c9a24a"; cx.lineWidth = Math.max(1, w * (oro ? 0.014 : 0.008)); cx.stroke();   // (il filetto d'oro)
     cx.save(); tondo(m, m, iw, ih, w * 0.04); cx.clip();
     var g = cx.createLinearGradient(0, m, 0, m + ih); g.addColorStop(0, scuro(c0, 1.0)); g.addColorStop(1, scuro(c0, 0.45)); cx.fillStyle = g; cx.fillRect(m, m, iw, ih);
     var gr = cx.createRadialGradient(w / 2, m + ih * 0.36, 0, w / 2, m + ih * 0.36, iw * 0.7); gr.addColorStop(0, "rgba(255,255,255,.42)"); gr.addColorStop(0.5, "rgba(255,255,255,.1)"); gr.addColorStop(1, "rgba(255,255,255,0)"); cx.fillStyle = gr; cx.fillRect(m, m, iw, ih);   // (la luce dietro il calciatore)
     cx.globalAlpha = 0.1; cx.fillStyle = c1; for (var a = 0; a < 14; a++) { var an = PI * (1.05 + a * 0.065); cx.beginPath(); cx.moveTo(w / 2, m + ih * 0.42); cx.lineTo(w / 2 + Math.cos(an) * iw * 1.2, m + ih * 0.42 + Math.sin(an) * iw * 1.2); cx.lineTo(w / 2 + Math.cos(an + 0.03) * iw * 1.2, m + ih * 0.42 + Math.sin(an + 0.03) * iw * 1.2); cx.closePath(); cx.fill(); } cx.globalAlpha = 1;   // (i raggi)
     for (var fy = 0; fy < 3; fy++) { cx.fillStyle = "rgba(0,0,0," + (0.18 + fy * 0.08) + ")"; var yy = m + ih * (0.62 + fy * 0.07), rr = w * 0.028; for (var fx = m - rr; fx < m + iw + rr; fx += rr * 1.7) { cx.beginPath(); cx.arc(fx + (fy % 2) * rr * 0.85, yy, rr, PI, 0); cx.fill(); } cx.fillRect(m, yy, iw, ih); }   // (la curva sullo sfondo)
     cx.fillStyle = "rgba(0,0,0,.09)"; var pz = w * 0.032; for (var py = m; py < m + ih; py += pz) for (var px = m + ((py / pz) % 2) * pz / 2; px < m + iw; px += pz) { var rp = pz * 0.14 * (0.5 + (py - m) / ih); cx.beginPath(); cx.arc(px, py, rp, 0, PI * 2); cx.fill(); }   // (i puntini della stampa)
-    cx.save(); cx.translate(w / 2, 0); var r = w * 0.17, hy = m + ih * 0.36;
-    bustoBello(cx, r, hy, kit, mg.n, ca.pelle, m + ih + 2);
-    if (!testaBitmap(cx, 0, hy, r, ca, 1, true, true, d)) testaVera(cx, hy, r, ca, 1, true);
-    cx.restore();
+    var B = Math.round(w * 1.03), bc = null; try { bc = bustoCanvas(c, B); } catch (e) {}   // 🧑 (9 nov 2026) lo stesso mezzo busto della formazione: braccia, posa, faccia
+    if (bc) cx.drawImage(bc, w / 2 - B / 2, m + ih * 0.36 - B * 0.235, B, B);
+    else { cx.save(); cx.translate(w / 2, 0); var r = w * 0.17, hy = m + ih * 0.36; bustoBello(cx, r, hy, kit, mg.n, ca.pelle, m + ih + 2); if (!testaBitmap(cx, 0, hy, r, ca, 1, true, true, d)) testaVera(cx, hy, r, ca, 1, true); cx.restore(); }
     var gi = cx.createLinearGradient(0, m, 0, m + ih); gi.addColorStop(0, "rgba(255,255,255,.12)"); gi.addColorStop(0.08, "rgba(255,255,255,0)"); cx.fillStyle = gi; cx.fillRect(m, m, iw, ih);   // (la lucentezza della carta)
     cx.restore();
     var sw = w * 0.15, sh = w * 0.18, sx = m + w * 0.035, sy = m + w * 0.035;   // lo scudetto della squadra
@@ -5148,6 +5335,10 @@
     cx.fillStyle = c1; cx.fillRect(m + w * 0.02, by + bh - h * 0.009, iw - w * 0.04, h * 0.009);
     nomeIn(mg.nome, w / 2, by + bh * 0.47, iw * 0.88, Math.round(w * 0.11), chiaraC(c0) ? "#16161a" : "#ffffff");
     nomeIn(c.squadra.toUpperCase() + " · " + ruolo, w / 2, by + bh + h * 0.07, iw * 0.92, Math.round(w * 0.06), scuro(chiaraC(c0) ? (col[1] || "#333") : c0, 0.85));
+    if (oro) {   // ⭐ la stellina dei big e il riflesso olografico (fermo: quello che passa lo fa il volo)
+      cx.font = "900 " + Math.round(w * 0.06) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var stx = m + w * 0.035 + w * 0.075, sty = m + w * 0.035 + w * 0.18 + w * 0.075; cx.beginPath(); cx.arc(stx, sty, w * 0.055, 0, Math.PI * 2); cx.fillStyle = "#b8860b"; cx.fill(); cx.lineWidth = Math.max(1, w * 0.01); cx.strokeStyle = "#fff4c4"; cx.stroke(); cx.fillStyle = "#fff"; cx.fillText("★", stx, sty + w * 0.004);   // (la stellina sotto lo scudetto)
+      cx.save(); tondo(0, 0, w, h, w * 0.07); cx.clip(); cx.globalAlpha = 0.1; cx.fillStyle = "#fff"; [0.18, 0.62].forEach(function (p, i) { cx.beginPath(); cx.moveTo(w * (p - 0.3), h); cx.lineTo(w * (p - 0.3 + (i ? 0.1 : 0.18)), h); cx.lineTo(w * (p + 0.5 + (i ? 0.1 : 0.18)), 0); cx.lineTo(w * (p + 0.5), 0); cx.closePath(); cx.fill(); }); cx.restore();
+    }
     if (prezzo != null) { cx.font = "900 " + Math.round(w * 0.085) + "px system-ui,sans-serif"; var pt = prezzo + " 💰", pw = cx.measureText(pt).width + w * 0.08; tondo(w - m - pw - w * 0.03, m + w * 0.03, pw, w * 0.12, w * 0.06); cx.fillStyle = "#ffc247"; cx.fill(); cx.lineWidth = Math.max(1, w * 0.008); cx.strokeStyle = "rgba(0,0,0,.25)"; cx.stroke(); cx.fillStyle = "#16161a"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(pt, w - m - pw / 2 - w * 0.03, m + w * 0.093); }
   }
   function kitDi(sq, bianco) {   // la maglia di una squadra (bianco: in trasferta, quando i colori si confondono)
@@ -5735,8 +5926,8 @@
       pag.appendChild(el("div", { class: "st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome, style: "color:" + R.colP[r.id] }), tot ]));
       r.gio.cal.forEach(function (c, kk) {
         var cp = r.kit[kk], ic = c.ev.map(function (e) { return EV_GIO[e.t] || ""; }).join("");
-        var riga = el("div", { class: "st-pf" }, [ el("span", { class: "as-rb as-rb-" + cp.ruolo, text: (FANTA_RUOLI[cp.ruolo] || {}).breve || "" }),
-          el("div", { class: "st-pf-nome" }, [ el("b", { text: nomeCampo(cp.nome) }), el("small", { text: cp.squadra + (ic ? " · " + ic : "") }) ]),
+        var riga = el("div", { class: "st-pf" }, [ el("span", { class: "as-rb as-rb-" + cp.ruolo, text: (FANTA_RUOLI[cp.ruolo] || {}).breve || "" }), GRAF2.on ? bustoNodo(cp, 50, "st-pf-busto") : null,
+          el("div", { class: "st-pf-nome" }, [ el("b", { text: nomeCampo(cp.nome) }), conIcone(el("small", {}), cp.squadra + (ic ? " · " + ic : "")) ]),
           el("div", { class: "st-pf-v " + classeVoto(c.v) }, [ el("small", { text: "voto" }), el("b", { text: numFanta(c.v) }) ]),
           el("div", { class: "st-pf-fv" }, [ el("small", { text: "fantavoto" }), el("b", { text: numFanta(c.fv) }) ]) ]);
         pag.appendChild(riga); righe.push(riga);
