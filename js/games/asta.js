@@ -523,7 +523,7 @@
     ".st-fig-luce{position:absolute;inset:0;border-radius:7%/5%;overflow:hidden;}.st-fig-luce i{position:absolute;top:-10%;bottom:-10%;left:0;width:34%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.75),rgba(255,255,255,0));transform:translateX(-140%) skewX(-18deg);}",
     ".st-tv-sx canvas{display:block;width:50px;height:50px;}.st-pf canvas.st-pf-busto{flex:none;width:50px;height:50px;margin:-8px -2px;}",
     ".st-slot.busto .st-slot-maglia{width:124%;height:124%;left:-12%;top:-22%;}",
-    ".st-slot.carta .st-slot-fig{width:calc(var(--mg,52px)*.94);height:calc(var(--mg,52px)*1.28);}.st-slot.carta span{display:none;}.st-slot.carta .st-slot-maglia{filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));}",
+    ".st-slot.carta .st-slot-fig{width:calc(var(--mg,52px)*.94);height:calc(var(--mg,52px)*1.28);}.st-slot.carta span,.st-slot.carta .st-paga,.st-slot.carta .st-val{display:none;}.st-slot.carta .st-slot-maglia{filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));}",
     ".st-uff small{font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#ffc247;}.st-uff b{font-size:1.15rem;font-weight:900;}",
     "@keyframes stUff{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}",
     // la classifica finale del fantacalcio: il contatore che sale, poi il podio
@@ -2284,7 +2284,7 @@
       s.k = k; s.nodo.classList.toggle("vuoto", !c);
       if (c) {
         var col = coloriSquadra(c.squadra) || ["#2b3550", "#9aa5bd"];
-        var fimg = fs === "busto" ? bustoURL(c, 96) : fs === "figurina" ? (function () { var fc = figurinaCanvas(c, null, 110); try { return fc && fc.toDataURL("image/png"); } catch (e) { return null; } })() : null;   // 🧑 (nella formazione finale)
+        var fimg = fs === "busto" ? bustoURL(c, 96) : fs === "figurina" ? (function () { var fc = figurinaCanvas(c, c.prezzo || null, 120); try { return fc && fc.toDataURL("image/png"); } catch (e) { return null; } })() : null;   // 🧑 (nella formazione finale)
         s.img.src = fimg || maglia(c.squadra); s.nome.textContent = nomeCampo(c.nome);
         s.nodo.classList.toggle("busto", !!fimg && fs === "busto"); s.nodo.classList.toggle("carta", !!fimg && fs === "figurina");
         s.nome.style.background = col[0]; s.nome.style.borderColor = col[1]; s.nome.style.color = chiaro(col[0]) ? "#141414" : "#fff";
@@ -2567,9 +2567,9 @@
     cx.fillStyle = scuro(pelle, 0.85); cx.beginPath(); cx.moveTo(-r * 0.42, top + r * 0.04); cx.lineTo(0, top + r * 0.36); cx.lineTo(r * 0.42, top + r * 0.04); cx.closePath(); cx.fill();
   }
   var FIG_CACHE = {};
-  function figurinaCanvas(c, prezzo, w) {   // c: { nome, squadra, ruolo }. Torna il canvas (w px di larghezza) o null
+  function figurinaCanvas(c, prezzo, w, coperto) {   // (coperto: l'overall è un «?»: all'asta il valore resta segreto fino alla fine)   // c: { nome, squadra, ruolo }. Torna il canvas (w px di larghezza) o null
     if (!c || !c.squadra) return null;
-    var k = c.nome + "|" + c.squadra + "|" + prezzo + "|" + Math.round(w) + (GRAF2.on ? "|2" : "");
+    var k = c.nome + "|" + c.squadra + "|" + prezzo + "|" + Math.round(w) + (GRAF2.on ? "|2" : "") + (OVR.on ? (coperto ? "|o?" : "|o") : "");
     if (FIG_CACHE[k]) return FIG_CACHE[k];
     var d = Math.min(2, window.devicePixelRatio || 1), h = Math.round(w * 1.36), cv = document.createElement("canvas");
     cv.width = Math.round(w * d); cv.height = Math.round(h * d); cv.style.width = w + "px"; cv.style.height = h + "px";
@@ -2578,7 +2578,7 @@
     var ruolo = { P: "PORTIERE", D: "DIFENSORE", C: "CENTROCAMPISTA", A: "ATTACCANTE" }[c.ruolo] || "";
     function tondo(x, y, ww, hh, rr) { cx.beginPath(); cx.moveTo(x + rr, y); cx.arcTo(x + ww, y, x + ww, y + hh, rr); cx.arcTo(x + ww, y + hh, x, y + hh, rr); cx.arcTo(x, y + hh, x, y, rr); cx.arcTo(x, y, x + ww, y, rr); cx.closePath(); }
     function nomeIn(testo, x, y, maxW, fs, colore) { cx.font = "900 " + fs + "px system-ui,sans-serif"; var l = cx.measureText(testo).width; if (l > maxW) { fs = Math.floor(fs * maxW / l); cx.font = "900 " + fs + "px system-ui,sans-serif"; } cx.fillStyle = colore; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(testo, x, y); }
-    if (GRAF2.on) albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, valoreCalc(c) >= BIG_DA);   // ✨ (la grafica nuova)
+    if (GRAF2.on) albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, valoreCalc(c) >= BIG_DA, coperto);   // ✨ (la grafica nuova)
     else {   // la figurina da album: cartoncino crema, dentro i colori della squadra, il calciatore a mezzo busto, la fascia col nome
       var m = w * 0.045, iw = w - 2 * m, ih = h * 0.78;
       cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07); cx.fillStyle = "#f6f1e3"; cx.fill(); cx.shadowColor = "transparent";
@@ -2598,7 +2598,7 @@
   function voloFigurina(S, s, carta, prezzo, poi) {   // la figurina esce grande sopra lo stadio, resta un attimo e vola al suo posto (s) nel campetto
     var a = s.img.getBoundingClientRect(), base = S.radice.getBoundingClientRect(), sch = S.schermo.getBoundingClientRect();
     if (!a.width || !base.width) return volo(S, s, poi);
-    var w = Math.round(Math.max(110, Math.min(200, base.width * 0.44))), cv = figurinaCanvas(carta, prezzo, w);
+    var w = Math.round(Math.max(110, Math.min(200, base.width * 0.44))), cv = figurinaCanvas(carta, prezzo, w, true);
     if (!cv || !cv.animate) return volo(S, s, poi);
     var fig = document.createElement("div"); fig.className = "st-fig"; fig.appendChild(cv);
     if (GRAF2.on && valoreCalc(carta) >= BIG_DA) {   // ⭐ la figurina d'oro dei big: brilla e le passa sopra un riflesso
@@ -2840,15 +2840,15 @@
   // giornate: 3 = 🏆 tre giornate di fila (30 ott 2026): le prime due (veloci) in serieA.prima e r.prima, la terza (intera) dove sta
   // la giornata sola di sempre (serieA.partite, r.gio); r.tot = i fantapunti sommati, che decidono la classifica
   function puntiFin(r) { return r.tot != null ? r.tot : r.gio.punti; }
-  function kitClassifica(g) { return ordinaRosa(g.kit || []).map(function (c) { return { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo, valore: valoreCalc(c), prezzo: c.prezzo || 0 }; }); }   // (la rosa nella classifica: si rifà uguale dai giocatori)
+  function kitClassifica(g) { return ordinaRosa(g.kit || []).map(function (c) { return { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo, valore: valoreCalc(c), ovr: valoreMostrato(c), prezzo: c.prezzo || 0 }; }); }   // (la rosa nella classifica: si rifà uguale dai giocatori)
   function classificaFanta(giocatori, serieA, giornate, coppie) {
     var righe = giocatori.map(function (g, i) {
       var kit = kitClassifica(g), tot = 0;
-      kit.forEach(function (c) { tot += c.valore; });
+      kit.forEach(function (c) { tot += c.ovr != null ? c.ovr : c.valore; });   // ⭐ (la somma degli overall)
       return { id: g.id != null ? g.id : i, nome: g.nome, omino: g.omino || null, crediti: g.crediti, kit: kit, totale: tot };
     });
     righe.sort(function (a, b) { return (b.totale - a.totale) || (b.crediti - a.crediti); });
-    righe.forEach(function (r, i) { var p = righe[i - 1]; r.pos = r.posV = p && p.totale === r.totale && p.crediti === r.crediti ? p.pos : i + 1; r.punti = "valore " + r.totale; });
+    righe.forEach(function (r, i) { var p = righe[i - 1]; r.pos = r.posV = p && p.totale === r.totale && p.crediti === r.crediti ? p.pos : i + 1; r.punti = valoreRosa(r); });
     if (!serieA) return righe;
     if (giornate === 3) serieA.prima = [0, 1].map(function (gi) { var A = {}; giornataSerieA(righe, A, coppie ? coppie[gi] : null); righe.forEach(function (r) { (r.prima = r.prima || []).push(r.gio); }); return A; });
     giornataSerieA(righe, serieA, coppie ? coppie[giornate === 3 ? 2 : 0] : null);
@@ -3292,8 +3292,8 @@
     rianima(R.ticker, "via", "La rosa di " + r.nome + "…");
     // le soglie: portiere, difensore, centrocampisti, attaccante; quando il contatore le passa, spunta il valore sulla maglia
     var soglie = [], somma = 0;
-    r.kit.forEach(function (c) { somma += c.valore; soglie.push({ fino: somma, i: posti.indexOf(c), v: c.valore }); });
-    var durata = Math.max(1800, Math.min(4200, 1200 + r.totale * 26)), ultimoTic = 0, mostrato = -1, k = 0;
+    r.kit.forEach(function (c) { var v = c.ovr != null ? c.ovr : c.valore; somma += v; soglie.push({ fino: somma, i: posti.indexOf(c), v: v }); });   // ⭐ (sulle maglie l'overall)
+    var durata = Math.max(1800, Math.min(4200, 1200 + (OVR.on ? r.totale / 5 : r.totale) * 26)), ultimoTic = 0, mostrato = -1, k = 0;
     function conta(p) {
       var v = Math.round(r.totale * (1 - (1 - p) * (1 - p)));
       if (v !== mostrato) { mostrato = v; R.prezzoN.textContent = v; var ora = Date.now(); if (ora - ultimoTic > 55 && !inRitardo(R, 400)) { ultimoTic = ora; FX.tic(p); } }
@@ -3308,7 +3308,7 @@
         conta(1);
         var pv = r.posV || r.pos;   // (con la giornata: il posto per valore, la classifica vera la fa la giornata)
         R.chi.textContent = r.gio ? pv + "° per valore" + (pv === 1 ? " 💎" : "") : pv + "° posto" + (pv === 1 ? "! 🏆" : "");
-        rianima(R.ticker, "via", pari.length ? "Stesso valore di " + pari.map(function (o) { return o.nome; }).join(", ") + (r.gio ? "" : ": conta chi ha più crediti avanzati") : r.nome + ": " + r.totale + " punti di valore");
+        rianima(R.ticker, "via", pari.length ? "Stesso valore di " + pari.map(function (o) { return o.nome; }).join(", ") + (r.gio ? "" : ": conta chi ha più crediti avanzati") : r.nome + ": " + r.totale + " punti di valore" + (OVR.on ? " (overall " + numFanta(Math.round(r.totale / Math.max(1, r.kit.length) * 10) / 10) + " di media)" : ""));
         if (!inRitardo(R)) { if (ultima && !r.gio) FX.festa(); else FX.posto(); }
         if (pv === 1) allenatore(R, r, "esulta", r.totale);   // (il primo: l'allenatore salta col valore della rosa sul cartellino)
         R.dopo(ultima ? 1700 : 1300, poi);
@@ -4870,7 +4870,7 @@
     disegnaScheda();
   }
   window.SGAstaAspetto = { apri: function (k) { apriPersonalizza(k); }, vero: aspettoVero, colori: coloriAspetto, prop: function () { return ASP_PROP; },
-    grafica: function (v) { if (v != null) { GRAF2.on = !!v; FIG_CACHE = {}; TESTE_CACHE = {}; TESTE_N = 0; BUSTI_URL = {}; } return GRAF2.on; }, formazione: function (v) { if (v) { FORM_STILE = v; BUSTI_URL = {}; } return FORM_STILE; }, busto: function (c, w) { return bustoCanvas(c, w); }, figurina: function (c, prezzo, w) { return figurinaCanvas(c, prezzo, w); } };   // (per le prove e per aprire l'editor da fuori)
+    grafica: function (v) { if (v != null) { GRAF2.on = !!v; FIG_CACHE = {}; TESTE_CACHE = {}; TESTE_N = 0; BUSTI_URL = {}; } return GRAF2.on; }, formazione: function (v) { if (v) { FORM_STILE = v; BUSTI_URL = {}; } return FORM_STILE; }, busto: function (c, w) { return bustoCanvas(c, w); }, overall: function (v) { if (v != null) { OVR.on = !!v; FIG_CACHE = {}; } return OVR.on; }, ovr: function (c) { return overallDi(c); }, testa: function (cv, a, fronte) { disegnaTestina(cv, a, fronte); }, figurina: function (c, prezzo, w) { return figurinaCanvas(c, prezzo, w); } };   // (per le prove e per aprire l'editor da fuori)
   // 🧑 la TESTA con l'aspetto vero, disegnata nelle coordinate di chi la chiama: centro (0, cy), raggio r, lo (1/-1: il lato in ombra).
   // fronte: vista davanti (figurina, anteprima) con due occhi e il sorriso; se no di profilo come gli omini del campo (un occhio, verso dove guarda)
   function testaVera(cx, cy, r, ca, lo, fronte, parte) {   // 🙂 la forma del viso (9 nov 2026): ovale un po' più stretto e lungo, squadrato più largo con la mascella; tondo com'era
@@ -4878,7 +4878,38 @@
     cx.save(); cx.translate(0, cy); cx.scale(fo === "ovale" ? 0.9 : 1.05, fo === "ovale" ? 1.05 : 0.97); cx.translate(0, -cy);
     testaVeraBase(cx, cy, r, ca, lo, fronte, parte); cx.restore();
   }
-  function testaVeraBase(cx, cy, r, ca, lo, fronte, parte) {   // (parte: "dietro", "viso", "sopra", "occhi"; niente = tutta la testa)
+  function testaVeraBase(cx, cy, r, ca, lo, fronte, parte) {
+    function capelliDavanti() {   // ✂️ i capelli visti davanti (figurina, mezzo busto, anteprima): l'attaccatura vera, la fronte libera, ogni taglio la sua forma. false = come prima
+      var lineaRiga = null;
+      function base(hl, tl, sb, vol, w) {   // la calotta coi capelli: hl attaccatura al centro, tl alle tempie, sb fin dove scendono le basette, vol quanto salgono sopra, w quanto sono larghi
+        w = w || 1; cx.beginPath(); cx.moveTo(-r * 0.97 * w, cy - r * sb); cx.quadraticCurveTo(-r * 1.04 * w, cy - r * 0.95, -r * 0.36, cy - r * vol); cx.quadraticCurveTo(0, cy - r * (vol + 0.09), r * 0.36, cy - r * vol); cx.quadraticCurveTo(r * 1.04 * w, cy - r * 0.95, r * 0.97 * w, cy - r * sb);
+        cx.lineTo(r * 0.87, cy - r * sb); cx.quadraticCurveTo(r * 0.86, cy - r * (tl - 0.08), r * 0.62, cy - r * tl); cx.quadraticCurveTo(r * 0.24, cy - r * (hl + 0.04), 0, cy - r * hl); cx.quadraticCurveTo(-r * 0.24, cy - r * (hl + 0.04), -r * 0.62, cy - r * tl); cx.quadraticCurveTo(-r * 0.86, cy - r * (tl - 0.08), -r * 0.87, cy - r * sb); cx.closePath(); cx.fill();
+      }
+      function sfumati(a) { cx.globalAlpha = a; base(0.62, 0.55, 0.12, 1.03); cx.globalAlpha = 1; }   // (i lati rasati: si vede la pelle sotto)
+      function riccioli(n, rr, y0, raggio, da, a) { for (var i = 0; i < n; i++) { var an = PI * (da + (a - da) * i / (n - 1)); cerchio(Math.cos(an) * r * raggio, cy - r * y0 + Math.sin(an) * r * raggio, r * rr); } }
+      function righe(n, scuro, spessa, h) { cx.save(); cx.strokeStyle = scuro; cx.lineWidth = r * spessa; cx.lineCap = "round"; for (var i = 0; i < n; i++) { var x = (i - (n - 1) / 2) * r * 0.26; cx.beginPath(); cx.moveTo(x * 1.05, cy - r * (h + 0.02)); cx.quadraticCurveTo(x * 0.98, cy - r * 0.9, x * 0.7, cy - r * 1.12); cx.stroke(); } cx.restore(); }
+      if (t === "corti") base(0.6, 0.5, 0.1, 1.08);
+      else if (t === "corti col ciuffo") { base(0.6, 0.5, 0.1, 1.08); cx.beginPath(); cx.ellipse(r * 0.14, cy - r * 1.07, r * 0.56, r * 0.28, -0.2, 0, PI * 2); cx.fill(); cx.beginPath(); cx.ellipse(r * 0.3, cy - r * 0.66, r * 0.3, r * 0.12, -0.35, 0, PI * 2); cx.fill(); }
+      else if (t === "riga di lato") { base(0.56, 0.48, 0.1, 1.12); cx.beginPath(); cx.ellipse(r * 0.18, cy - r * 0.98, r * 0.8, r * 0.27, 0.14, 0, PI * 2); cx.fill(); cx.beginPath(); cx.ellipse(r * 0.38, cy - r * 0.62, r * 0.4, r * 0.11, -0.22, 0, PI * 2); cx.fill(); lineaRiga = [-r * 0.4, cy - r * 1.1, -r * 0.46, cy - r * 0.6]; }
+      else if (t === "mossi") { base(0.5, 0.42, 0.02, 1.16, 1.05); riccioli(6, 0.2, 0.1, 1.0, 1.08, 1.92); for (var q = 0; q < 3; q++) { cx.beginPath(); cx.ellipse((q - 1) * r * 0.36, cy - r * 0.52, r * 0.2, r * 0.1, (q - 1) * 0.3, 0, PI * 2); cx.fill(); } }   // (onde larghe e qualche onda sulla fronte)
+      else if (t === "medi") { base(0.5, 0.4, -0.3, 1.12, 1.06); cx.beginPath(); cx.ellipse(-r * 0.9, cy + r * 0.02, r * 0.21, r * 0.48, 0, 0, PI * 2); cx.ellipse(r * 0.9, cy + r * 0.02, r * 0.21, r * 0.48, 0, 0, PI * 2); cx.fill(); lineaRiga = [0, cy - r * 1.12, 0, cy - r * 0.55]; }   // (fino alle orecchie, riga in mezzo)
+      else if (t === "spettinati") { base(0.55, 0.45, 0.1, 1.08); [[-0.75, -0.62, -0.95, -1.12], [-0.4, -0.88, -0.45, -1.34], [0, -0.98, 0.1, -1.4], [0.38, -0.88, 0.62, -1.27], [0.72, -0.62, 1.0, -0.95], [-0.2, -0.6, -0.3, -0.42], [0.25, -0.6, 0.4, -0.44]].forEach(function (q) { cx.beginPath(); cx.moveTo((q[0] - 0.2) * r, cy + q[1] * r + r * 0.12); cx.lineTo(q[2] * r, cy + q[3] * r); cx.lineTo((q[0] + 0.2) * r, cy + q[1] * r + r * 0.12); cx.closePath(); cx.fill(); }); }
+      else if (t === "tirati indietro" || t === "codino") { base(0.74, 0.62, 0.1, 1.12); cx.save(); cx.strokeStyle = "rgba(255,255,255,.3)"; cx.lineWidth = r * 0.045; for (var k = -2; k <= 2; k++) { cx.beginPath(); cx.moveTo(k * r * 0.22, cy - r * 0.8); cx.quadraticCurveTo(k * r * 0.24, cy - r * 1.0, k * r * 0.16, cy - r * 1.14); cx.stroke(); } cx.restore(); }   // (la fronte alta, pettinati all'indietro)
+      else if (t === "lunghi" || t === "lunghi mossi") { base(0.52, 0.42, -0.35, 1.12, 1.04); cx.beginPath(); cx.ellipse(-r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.ellipse(r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.fill(); lineaRiga = [0, cy - r * 1.14, 0, cy - r * 0.55]; if (t === "lunghi mossi") riccioli(5, 0.18, 0.1, 1.02, 1.1, 1.9); }
+      else if (t === "lunghi raccolti") { base(0.64, 0.52, 0.1, 1.06); righe(5, "rgba(255,255,255,.22)", 0.035, 0.64); }   // (raccolti dietro: lo chignon lo fa il pezzo di dietro)
+      else if (t === "treccine" || t === "dreadlocks" || t === "treccine raccolte" || t === "dreadlocks raccolti") { base(0.56, 0.46, 0.1, 1.08); righe(5, "rgba(0,0,0,.42)", /dread/.test(t) ? 0.085 : 0.06, 0.56); }   // (le file di treccine dalla fronte in su)
+      else if (t === "stempiati") { base(0.55, 0.8, 0.1, 1.08); }   // (le tempie che salgono alte: l'attaccatura a M)
+      else if (t === "ricci corti") { base(0.55, 0.45, 0.1, 1.18, 1.04); riccioli(7, 0.22, 0.12, 0.98, 1.0, 2.0); riccioli(5, 0.2, 0.62, 0.48, 1.12, 1.88); riccioli(4, 0.14, -0.08, 0.6, 1.25, 1.75); }   // (ricci corti ma pieni: due file di riccioli e qualcuno sulla fronte)
+      else if (t === "ricci" || t === "lunghi ricci") { base(0.5, 0.4, -0.05, 1.3, 1.12); riccioli(9, 0.28, 0.1, 1.05, 0.96, 2.04); riccioli(6, 0.26, 0.62, 0.62, 1.08, 1.92); riccioli(4, 0.16, -0.05, 0.62, 1.22, 1.78); }   // (ricci pieni, larghi)
+      else if (t === "ricci alti") { sfumati(0.5); riccioli(5, 0.24, 0.6, 0.38, 1.0, 2.0); riccioli(5, 0.22, 0.82, 0.5, 1.05, 1.95); riccioli(3, 0.2, 1.2, 0.2, 1.0, 2.0); }
+      else if (t === "sfumati alti") { sfumati(0.5); cx.beginPath(); cx.ellipse(0, cy - r * 0.84, r * 0.74, r * 0.36, 0, 0, PI * 2); cx.fill(); }
+      else if (t === "cresta") { sfumati(0.42); cx.beginPath(); cx.ellipse(0, cy - r * 1.0, r * 0.22, r * 0.42, 0, 0, PI * 2); cx.fill(); }
+      else if (t === "rasato") { cx.globalAlpha = 0.72; base(0.6, 0.52, 0.12, 1.02); cx.globalAlpha = 1; }
+      else if (t === "mullet") { base(0.6, 0.5, 0.1, 1.1); }
+      else return false;
+      if (lineaRiga) { cx.save(); cx.strokeStyle = scuro(ca.pelle, 0.8); cx.globalAlpha = 0.75; cx.lineWidth = r * 0.04; cx.beginPath(); cx.moveTo(lineaRiga[0], lineaRiga[1]); cx.lineTo(lineaRiga[2], lineaRiga[3]); cx.stroke(); cx.restore(); }   // (la riga: si vede la pelle)
+      return true;
+    }   // (parte: "dietro", "viso", "sopra", "occhi"; niente = tutta la testa)
     var t = ca.taglio, cap = ca.capelli, PI = Math.PI;
     function cerchio(x, y, rr) { cx.beginPath(); cx.arc(x, y, rr, 0, PI * 2); cx.fill(); }
     function calotta(alza, larga, a0, a1) { cx.beginPath(); cx.arc(0, cy - r * alza, r * larga, PI * (a0 == null ? 1.02 : a0), PI * (a1 == null ? 1.98 : a1)); cx.closePath(); cx.fill(); }
@@ -4888,7 +4919,7 @@
     if (t === "lunghi") { cx.beginPath(); cx.ellipse(fronte ? 0 : -r * 0.35, cy + r * 0.35, r * (fronte ? 1.12 : 0.8), r * 0.95, 0, 0, PI * 2); cx.fill(); }
     if (t === "treccine" || t === "dreadlocks") { cx.lineCap = "round"; cx.strokeStyle = cap; cx.lineWidth = r * (t === "dreadlocks" ? 0.24 : 0.17);
       for (var q = 0; q < (fronte ? 6 : 4); q++) { var xa = fronte ? -r * 0.95 + q * r * 0.38 : -r * (0.15 + q * 0.24); cx.beginPath(); cx.moveTo(xa, cy - r * 0.5); cx.lineTo(xa * 1.08, cy + r * (t === "dreadlocks" ? 1.15 : 0.85)); cx.stroke(); } }
-    if (t === "lunghi raccolti") cerchio(fronte ? 0 : -r * 0.95, cy - r * (fronte ? 1.02 : 0.55), r * 0.36);
+    if (t === "lunghi raccolti") { cerchio(fronte ? 0 : -r * 0.95, cy - r * (fronte ? 1.02 : 0.55), r * 0.36); cx.save(); cx.strokeStyle = "rgba(0,0,0,.4)"; cx.lineWidth = r * 0.06; cx.beginPath(); cx.arc(fronte ? 0 : -r * 0.95, cy - r * (fronte ? 1.02 : 0.55), r * 0.3, PI * 0.15, PI * 0.85); cx.stroke(); cx.restore(); cx.fillStyle = cap; }   // (lo chignon con l'elastico)
     if (t === "lunghi mossi" || t === "lunghi ricci") {   // (dietro la testa: la massa lunga, a onde o a riccioli)
       var ric = t === "lunghi ricci", rb = r * (ric ? 0.34 : 0.3);
       if (fronte) { cx.beginPath(); cx.ellipse(0, cy + r * 0.3, r * (ric ? 1.25 : 1.12), r * 0.98, 0, 0, PI * 2); cx.fill();
@@ -4898,8 +4929,22 @@
     }
     if (t === "mullet") { if (fronte) { cx.beginPath(); cx.ellipse(-r * 0.82, cy + r * 0.5, r * 0.3, r * 0.5, 0.2, 0, PI * 2); cx.ellipse(r * 0.82, cy + r * 0.5, r * 0.3, r * 0.5, -0.2, 0, PI * 2); cx.fill(); } else { cx.beginPath(); cx.ellipse(-r * 0.62, cy + r * 0.5, r * 0.44, r * 0.72, 0.15, 0, PI * 2); cx.fill(); } }
     if (t === "codino" && !fronte) { cx.lineCap = "round"; cx.strokeStyle = cap; cx.lineWidth = r * 0.26; cx.beginPath(); cx.moveTo(-r * 0.92, cy - r * 0.45); cx.quadraticCurveTo(-r * 1.3, cy - r * 0.1, -r * 1.12, cy + r * 0.5); cx.stroke(); }
-    if (t === "dreadlocks raccolti") cerchio(fronte ? 0 : -r * 0.72, cy - r * (fronte ? 1.12 : 0.85), r * 0.44);
-    if (t === "treccine raccolte") cerchio(fronte ? 0 : -r * 0.95, cy - r * (fronte ? 1.06 : 0.5), r * 0.3);
+    function ciocca(x0, y0, x1, y1, xc, yc, sp, segni) {   // 🪢 un dread o una treccia: un tubo di capelli coi segni di traverso (10 nov 2026: «i dreadlocks raccolti devono sembrare dread, non un codino»)
+      cx.lineCap = "round"; cx.strokeStyle = cap; cx.lineWidth = r * sp; cx.beginPath(); cx.moveTo(x0, y0); cx.quadraticCurveTo(xc, yc, x1, y1); cx.stroke();
+      if (!segni) return; cx.save(); cx.strokeStyle = "rgba(0,0,0,.35)"; cx.lineWidth = r * 0.03; for (var q = 1; q < segni; q++) { var tt = q / segni, mt = 1 - tt, px = mt * mt * x0 + 2 * mt * tt * xc + tt * tt * x1, py = mt * mt * y0 + 2 * mt * tt * yc + tt * tt * y1, dx = 2 * mt * (xc - x0) + 2 * tt * (x1 - xc), dy = 2 * mt * (yc - y0) + 2 * tt * (y1 - yc), l = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / l * r * sp * 0.45, ny = dx / l * r * sp * 0.45;
+        cx.beginPath(); cx.moveTo(px - nx, py - ny + r * 0.02); cx.lineTo(px + nx, py + ny - r * 0.02); cx.stroke(); } cx.restore();
+    }
+    if (t === "dreadlocks raccolti") {   // lo chignon fatto di dread e qualche dread che scende
+      if (fronte) { [-1, 1].forEach(function (s) { ciocca(s * r * 0.45, cy - r * 1.05, s * r * 1.08, cy + r * 0.5, s * r * 1.18, cy - r * 0.45, 0.17, 5); ciocca(s * r * 0.25, cy - r * 1.12, s * r * 0.95, cy + r * 0.75, s * r * 1.05, cy - r * 0.2, 0.15, 5); });
+        for (var dq = 0; dq < 5; dq++) { var da = PI * (1.1 + dq * 0.2); ciocca(0, cy - r * 1.12, Math.cos(da) * r * 0.42, cy - r * 1.18 + Math.sin(da) * r * 0.3, Math.cos(da) * r * 0.2, cy - r * 1.4, 0.18, 3); } }
+      else { cerchio(-r * 0.72, cy - r * 0.85, r * 0.34); [0, 1, 2].forEach(function (q) { ciocca(-r * (0.65 + q * 0.12), cy - r * 0.8, -r * (0.95 + q * 0.1), cy + r * (0.5 + q * 0.15), -r * (1.15 + q * 0.08), cy - r * 0.1, 0.16, 5); }); }
+    }
+    if (t === "treccine raccolte") {   // le treccine raccolte: una crocchia intrecciata e una treccia che scende dietro
+      if (fronte) { cerchio(0, cy - r * 1.08, r * 0.28); ciocca(r * 0.2, cy - r * 1.0, r * 1.02, cy + r * 0.55, r * 1.12, cy - r * 0.35, 0.13, 7); }
+      else { cerchio(-r * 0.95, cy - r * 0.5, r * 0.26); ciocca(-r * 0.95, cy - r * 0.4, -r * 1.05, cy + r * 0.85, -r * 1.25, cy + r * 0.2, 0.13, 7); }
+      cx.save(); cx.strokeStyle = "rgba(0,0,0,.35)"; cx.lineWidth = r * 0.03; var bx = fronte ? 0 : -r * 0.95, by = cy - r * (fronte ? 1.08 : 0.5); for (var tq = -1; tq <= 1; tq++) { cx.beginPath(); cx.moveTo(bx - r * 0.18, by + tq * r * 0.1); cx.lineTo(bx + r * 0.18, by + tq * r * 0.1 - r * 0.06); cx.stroke(); } cx.restore();   // (l'intreccio)
+    }
+    if (t === "codino" && fronte) ciocca(r * 0.55, cy - r * 0.55, r * 0.98, cy + r * 0.62, r * 1.1, cy, 0.2, 0);   // (il codino: davanti si vede la coda che scende dietro il collo)
     }
     if (!parte || parte === "viso") {
     if (fronte) { cx.fillStyle = scuro(ca.pelle, 0.9); cerchio(-r * 0.98, cy + r * 0.08, r * 0.2); cerchio(r * 0.98, cy + r * 0.08, r * 0.2); }   // (le orecchie)
@@ -4926,7 +4971,8 @@
     if (parte === "barba") barbaNuova(cx, cy, r, ca, fronte);
     if (!parte || parte === "sopra") {
     cx.fillStyle = cap;   // i capelli sopra
-    if (t === "rasato") { cx.globalAlpha = 0.72; calotta(0.02, 1.0, 1.06, 1.94); cx.globalAlpha = 1; }
+    if (fronte && capelliDavanti()) {}   // ✂️ (10 nov 2026: davanti ogni taglio ha la sua attaccatura e la sua forma)
+    else if (t === "rasato") { cx.globalAlpha = 0.72; calotta(0.02, 1.0, 1.06, 1.94); cx.globalAlpha = 1; }
     else if (t === "calvo") { if (!parte) { cx.fillStyle = "rgba(255,255,255,.18)"; cerchio(-r * 0.25, cy - r * 0.55, r * 0.22); } }
     else if (t === "ricci corti" || t === "ricci") { var nr = t === "ricci" ? 8 : 7, rr2 = r * (t === "ricci" ? 0.36 : 0.28);
       calotta(0.05, 1.0); for (var q2 = 0; q2 < nr; q2++) { var an = PI * (1.0 + q2 / (nr - 1)); cerchio(Math.cos(an) * r * 0.92, cy - r * 0.08 + Math.sin(an) * r * 0.92, rr2); } }
@@ -4974,11 +5020,6 @@
       calotta(0.07, 1.03); cx.beginPath(); cx.ellipse(fronte ? r * 0.12 : r * 0.2, cy - r * 0.86, r * 0.82, r * 0.3, fronte ? 0.12 : -0.2, 0, PI * 2); cx.fill();
       if (!fronte) cerchio(-r * 0.7, cy - r * 0.2, r * 0.38);
       cx.strokeStyle = "rgba(255,255,255,.35)"; cx.lineWidth = r * 0.06; cx.beginPath(); cx.moveTo(fronte ? -r * 0.42 : -r * 0.1, cy - r * 1.02); cx.lineTo(fronte ? -r * 0.48 : -r * 0.3, cy - r * 0.66); cx.stroke(); }
-    else if (fronte && (t === "corti" || t === "corti col ciuffo")) {   // ✂️ (9 nov 2026: prima sembravano un caschetto) l'attaccatura alta con la fronte libera, le tempie, le basette corte
-      cx.beginPath(); cx.moveTo(-r * 0.97, cy - r * 0.1); cx.quadraticCurveTo(-r * 1.03, cy - r * 0.95, -r * 0.35, cy - r * 1.08); cx.quadraticCurveTo(0, cy - r * 1.17, r * 0.35, cy - r * 1.08); cx.quadraticCurveTo(r * 1.03, cy - r * 0.95, r * 0.97, cy - r * 0.1);
-      cx.lineTo(r * 0.87, cy - r * 0.1); cx.quadraticCurveTo(r * 0.86, cy - r * 0.42, r * 0.62, cy - r * 0.5); cx.quadraticCurveTo(r * 0.24, cy - r * 0.64, 0, cy - r * 0.6); cx.quadraticCurveTo(-r * 0.24, cy - r * 0.64, -r * 0.62, cy - r * 0.5); cx.quadraticCurveTo(-r * 0.86, cy - r * 0.42, -r * 0.87, cy - r * 0.1); cx.closePath(); cx.fill();
-      if (t === "corti col ciuffo") { cx.beginPath(); cx.ellipse(r * 0.14, cy - r * 1.06, r * 0.56, r * 0.27, -0.2, 0, PI * 2); cx.fill(); cx.beginPath(); cx.ellipse(r * 0.3, cy - r * 0.66, r * 0.3, r * 0.12, -0.35, 0, PI * 2); cx.fill(); }   // (il ciuffo alzato e la punta sulla fronte)
-    }
     else {   // corti e corti col ciuffo di profilo, lunghi, lunghi raccolti, treccine, dreadlocks
       calotta(0.07, 1.02); if (!fronte) cerchio(-r * 0.7, cy - r * 0.2, r * 0.38);
       if (t === "corti col ciuffo") { cx.beginPath(); cx.ellipse(fronte ? r * 0.18 : r * 0.32, cy - r * 1.02, r * 0.62, r * 0.32, fronte ? -0.25 : -0.35, 0, PI * 2); cx.fill(); }
@@ -5071,17 +5112,29 @@
     function ciocche(x, dietro) {
       var k, px, py, rr, a0; x.lineCap = "round";
       if (RICCI_T[t]) { for (k = 0; k < 110; k++) { px = X + (rnd() * 2.9 - 1.45) * R; py = Y + (rnd() * 2.9 - 1.7) * R; rr = R * (0.07 + rnd() * 0.07); a0 = rnd() * PI * 2;
-        x.strokeStyle = "rgba(0,0,0,.3)"; x.lineWidth = R * 0.045; x.beginPath(); x.arc(px, py, rr, a0, a0 + PI * 1.25); x.stroke();
-        x.strokeStyle = "rgba(255,255,255,.2)"; x.lineWidth = R * 0.03; x.beginPath(); x.arc(px - rr * 0.25, py - rr * 0.25, rr * 0.7, a0 + PI, a0 + PI * 1.8); x.stroke(); } return; }
+        x.strokeStyle = "rgba(0,0,0,.38)"; x.lineWidth = R * 0.05; x.beginPath(); x.arc(px, py, rr, a0, a0 + PI * 1.25); x.stroke();
+        x.strokeStyle = "rgba(255,255,255,.3)"; x.lineWidth = R * 0.03; x.beginPath(); x.arc(px - rr * 0.25, py - rr * 0.25, rr * 0.7, a0 + PI, a0 + PI * 1.8); x.stroke(); } return; }
       if (RASI_T[t]) { x.fillStyle = "rgba(0,0,0,.22)"; for (k = 0; k < 280; k++) { x.beginPath(); x.arc(X + (rnd() * 2.4 - 1.2) * R, Y + (rnd() * 2.4 - 1.6) * R, R * 0.02, 0, PI * 2); x.fill(); } if (t !== "cresta") return; }
       var lungo = /lunghi|mullet|medi|mossi|codino|treccine|dreadlocks/.test(t) || dietro, onda = /mossi/.test(t), n = dietro ? 24 : 34;
       var c0x = X + R * (fronte ? 0.15 : -0.1), c0y = Y - R * 1.08;
+      if (fronte) {   // ✂️ (10 nov 2026) le ciocche seguono la pettinatura: davanti dall'attaccatura in su verso la cima, dietro (i capelli lunghi) giù
+        var giuL = dietro, nn = dietro ? 22 : 24, verso = /riga di lato/.test(t) ? 1 : 0;
+        for (k = 0; k < nn; k++) {
+          var fx = (k + rnd() * 0.8) / nn * 2 - 1, sx2 = X + fx * R * (giuL ? 1.15 : 0.92), sy2 = giuL ? Y - R * (0.55 + rnd() * 0.25) : Y - R * (0.32 + Math.abs(fx) * 0.12 + rnd() * 0.18);
+          var ex2 = giuL ? sx2 + fx * R * 0.12 : X + fx * R * 0.35 + verso * R * 0.35, ey2 = giuL ? Y + R * (0.6 + rnd() * 0.7) : Y - R * (1.05 + rnd() * 0.12), cmx = (sx2 + ex2) / 2 + fx * R * 0.18, cmy = (sy2 + ey2) / 2;
+          for (var z2 = 0; z2 < 2; z2++) {
+            var sp2 = z2 ? -R * 0.028 : 0; x.strokeStyle = z2 ? "rgba(255,255,255,.22)" : "rgba(0,0,0,.3)"; x.lineWidth = R * (z2 ? 0.03 : 0.042);
+            x.beginPath(); x.moveTo(sx2 + sp2, sy2); if (onda) x.bezierCurveTo(cmx + R * 0.12, (sy2 * 2 + ey2) / 3, cmx - R * 0.12, (sy2 + ey2 * 2) / 3, ex2 + sp2, ey2); else x.quadraticCurveTo(cmx + sp2, cmy, ex2 + sp2, ey2); x.stroke();
+          }
+        }
+        return;
+      }
       for (k = 0; k < n; k++) {
         var a = PI * (0.06 + 0.88 * (k + rnd() * 0.7) / n), L = R * (lungo ? 2.3 : 1.3) * (0.75 + rnd() * 0.35);
         var sx = c0x + (rnd() - 0.5) * R * 0.35, sy = c0y + (rnd() - 0.5) * R * 0.15, ex = sx + Math.cos(a) * L, ey = sy + Math.sin(a) * L;
         var mx = (sx + ex) / 2, my = (sy + ey) / 2, dx = mx - X, dy = my - Y, dd = Math.sqrt(dx * dx + dy * dy) || 1, ox = dx / dd * R * 0.3, oy = dy / dd * R * 0.3;
         for (var z = 0; z < 2; z++) {
-          var sp = z ? -R * 0.03 : 0; x.strokeStyle = z ? "rgba(255,255,255,.15)" : "rgba(0,0,0,.2)"; x.lineWidth = R * (z ? 0.028 : 0.04);
+          var sp = z ? -R * 0.03 : 0; x.strokeStyle = z ? "rgba(255,255,255,.26)" : "rgba(0,0,0,.32)"; x.lineWidth = R * (z ? 0.032 : 0.045);   // (10 nov 2026: più marcate, si leggono anche sui capelli neri)
           x.beginPath(); x.moveTo(sx + sp, sy + sp);
           if (onda) x.bezierCurveTo(sx + (ex - sx) * 0.33 + ox + R * 0.12, sy + (ey - sy) * 0.33 + oy, sx + (ex - sx) * 0.66 + ox - R * 0.12, sy + (ey - sy) * 0.66 + oy, ex + sp, ey + sp);
           else x.quadraticCurveTo(mx + ox + sp, my + oy + sp, ex + sp, ey + sp);
@@ -5178,7 +5231,7 @@
   }
   // 🧑‍🤝‍🧑 LE FACCE DOVE SI GUARDA (9 nov 2026, il proprietario: «sì, facciamo questo»): il calciatore a mezzo busto (testa vera e maglia vista
   // davanti) nella banda del gol, nella pagella di ogni rosa e nella formazione finale. Disegnato una volta, poi si copia
-  var FORM_STILE = (function () { try { return localStorage.getItem("sg-fanta-formazione") || "busto"; } catch (e) { return "busto"; } })();   // formazione finale: "busto" | "figurina" | "maglia" (com'era)
+  var FORM_STILE = (function () { try { return localStorage.getItem("sg-fanta-formazione") || "figurina"; } catch (e) { return "figurina"; } })();   // (10 nov 2026, il proprietario: nella formazione finale le figurine con l'overall, se no l'overall si vede 3 secondi)   // formazione finale: "busto" | "figurina" | "maglia" (com'era)
   var BUSTI_URL = {}, BUSTI_N = 0;
   // le POSE del mezzo busto (9 nov 2026, il proprietario: «inventati delle pose… non farli tutti uguali», «le braccia facciamole più reali»):
   // fissa per calciatore (dal nome), e il gesto lo fa a volte la mano destra, a volte la sinistra
@@ -5208,14 +5261,14 @@
     function rot(dx, dy, a) { var c0 = Math.cos(a), s0 = Math.sin(a); return [dx * c0 - dy * s0, dx * s0 + dy * c0]; }
     function mano(W, dir, tipo, verso, lato, fase) {   // la mano al polso W, verso dir: aperta (dita e pollice), pugno (nocche e pollice chiuso), pollice, indice. fase "bordo" o "colore"
       if (tipo === "nascosta") return;
-      var col = guanto || scuro(pelle, 0.93), pieg = guanto ? "rgba(0,0,0,.3)" : "rgba(70,25,0,.4)", g = guanto ? 1.6 : 1, pz = [];   // 🧤 (i guanti veri da portiere: grandi e imbottiti)
+      var col = guanto || scuro(pelle, 0.93), pieg = guanto ? "rgba(0,0,0,.3)" : "rgba(70,25,0,.4)", g = guanto ? 1.85 : 1, pz = [];   // 🧤 (i guanti veri da portiere: la mano grande e imbottita, il polso stretto — 10 nov 2026)
       var px = W[0] + dir[0] * u * 0.035 * g, py = W[1] + dir[1] * u * 0.035 * g, sp = -(lato || m);   // (sp: da che parte sta il pollice: verso il corpo)
       function insieme(pezzi, col) { if (fase === "bordo") { cx.lineWidth = u * 0.02; cx.strokeStyle = bordo; pezzi.forEach(function (p) { p(); cx.stroke(); }); return; }
         cx.fillStyle = col; pezzi.forEach(function (p) { p(); cx.fill(); });
         if (guanto) { var gg = cx.createRadialGradient(px - dir[1] * u * 0.02, py - u * 0.03, 0, px, py, u * 0.11); gg.addColorStop(0, "rgba(255,255,255,.22)"); gg.addColorStop(1, "rgba(0,0,0,.18)"); cx.fillStyle = gg; pezzi.forEach(function (p) { p(); cx.fill(); }); } }
-      function polsino() { if (!guanto || fase === "bordo") return; var ax = -dir[1] * u * 0.075, ay = dir[0] * u * 0.075, cxp = W[0] + dir[0] * u * 0.012, cyp = W[1] + dir[1] * u * 0.012;   // (il polsino largo del guanto, con la striscia)
-        cx.lineCap = "butt"; cx.lineWidth = u * 0.062; cx.strokeStyle = bordo; cx.beginPath(); cx.moveTo(cxp - ax, cyp - ay); cx.lineTo(cxp + ax, cyp + ay); cx.stroke();
-        cx.lineWidth = u * 0.046; cx.strokeStyle = guantoB; cx.stroke(); cx.lineWidth = u * 0.012; cx.strokeStyle = col; cx.stroke(); cx.lineCap = "round"; }
+      function polsino() { if (!guanto || fase === "bordo") return; var ax = -dir[1] * u * 0.052, ay = dir[0] * u * 0.052, cxp = W[0] + dir[0] * u * 0.012, cyp = W[1] + dir[1] * u * 0.012;   // (il polsino largo del guanto, con la striscia)
+        cx.lineCap = "butt"; cx.lineWidth = u * 0.044; cx.strokeStyle = bordo; cx.beginPath(); cx.moveTo(cxp - ax, cyp - ay); cx.lineTo(cxp + ax, cyp + ay); cx.stroke();
+        cx.lineWidth = u * 0.032; cx.strokeStyle = guantoB; cx.stroke(); cx.lineWidth = u * 0.009; cx.strokeStyle = col; cx.stroke(); cx.lineCap = "round"; }
       if (tipo === "aperta") {
         pz.push(function () { cx.beginPath(); cx.ellipse(px, py, u * 0.046 * g, u * 0.04 * g, Math.atan2(dir[1], dir[0]), 0, PI * 2); });   // il palmo
         [-0.3, -0.1, 0.1, 0.3].forEach(function (an, i) { var v = rot(dir[0], dir[1], an * 0.22), b0 = rot(dir[0], dir[1], an * 1.05), bx = px + b0[0] * u * 0.034 * g, by = py + b0[1] * u * 0.034 * g, L = u * (i === 1 || i === 2 ? 0.042 : 0.035) * g;   // (dita unite e un po' piegate, come una mano a riposo)
@@ -5250,11 +5303,12 @@
       cx.strokeStyle = coll; cx.lineWidth = u * 0.014; cx.beginPath(); cx.moveTo(M[0] + nx * r1 * 0.95, M[1] + ny * r1 * 0.95); cx.lineTo(M[0] - nx * r1 * 0.95, M[1] - ny * r1 * 0.95); cx.stroke();
     }
     function busto(senzaInizio) {   // a V: spalle tonde, petto, vita più stretta
-      if (!senzaInizio) cx.beginPath(); cx.moveTo(-u * 0.08, u * 0.415); cx.quadraticCurveTo(-u * 0.19, u * 0.425, -u * 0.235, u * 0.46); cx.quadraticCurveTo(-u * 0.275, u * 0.5, -u * 0.262, u * 0.58);
-      cx.quadraticCurveTo(-u * 0.25, u * 0.7, -u * 0.205, u * 0.86); cx.lineTo(-u * 0.215, u * 1.02); cx.lineTo(u * 0.215, u * 1.02); cx.lineTo(u * 0.205, u * 0.86); cx.quadraticCurveTo(u * 0.25, u * 0.7, u * 0.262, u * 0.58);
-      cx.quadraticCurveTo(u * 0.275, u * 0.5, u * 0.235, u * 0.46); cx.quadraticCurveTo(u * 0.19, u * 0.425, u * 0.08, u * 0.415); cx.closePath(); }
+      if (!senzaInizio) cx.beginPath(); cx.moveTo(-u * 0.08, u * 0.415); cx.quadraticCurveTo(-u * 0.19, u * 0.425, -u * 0.235, u * 0.46); cx.quadraticCurveTo(-u * 0.272, u * 0.5, -u * 0.256, u * 0.58);   // (10 nov 2026: sotto il petto la maglia scende dritta e si stringe, MAI si allarga: sembrava la pancia)
+      cx.quadraticCurveTo(-u * 0.215, u * 0.72, -u * 0.172, u * 0.84); cx.lineTo(-u * 0.168, u * 1.02); cx.lineTo(u * 0.168, u * 1.02); cx.lineTo(u * 0.172, u * 0.84); cx.quadraticCurveTo(u * 0.215, u * 0.72, u * 0.256, u * 0.58);
+      cx.quadraticCurveTo(u * 0.272, u * 0.5, u * 0.235, u * 0.46); cx.quadraticCurveTo(u * 0.19, u * 0.425, u * 0.08, u * 0.415); cx.closePath(); }
     // le braccia: spalla S, gomito E, polso W; dove sta l'avambraccio (dietro la maglia, davanti, sopra la testa) e la mano
-    function giu(s) { return { S: [s * 0.215, 0.49], E: [s * 0.305, 0.64], W: [s * 0.29, 0.775], mano: "aperta", dove: "dietro", lato: s }; }
+    function giu(s) { return { S: [s * 0.215, 0.49], E: [s * 0.29, 0.645], W: [s * 0.305, 0.79],   // (l'avambraccio un filo staccato dal fianco: si vede la vita, non un blocco unico)
+       mano: "aperta", dove: "dietro", lato: s }; }
     var br = [];
     if (posa === "lungo") br = [giu(-1), giu(1)];
     else if (posa === "conserte") br = [{ S: [-0.215, 0.49], E: [-0.285, 0.72], W: [0.25, 0.7], mano: "nascosta", dove: "davanti" }, { S: [0.215, 0.49], E: [0.285, 0.72], W: [-0.17, 0.69], mano: "aperta", dove: "davanti", lato: 1 }];   // (la mano sinistra sparisce sotto l'avambraccio destro)
@@ -5264,7 +5318,7 @@
     else if (posa === "guanti") br = [-1, 1].map(function (s) { return { S: [s * 0.215, 0.49], E: [s * 0.3, 0.72], W: [s * 0.095, 0.625], mano: "aperta", dove: "davanti", lato: -s }; });   // 🧤 (il portiere: i guanti uniti davanti al petto)
     else br = [giu(-m), { S: [m * 0.215, 0.49], E: [m * 0.36, 0.34], W: [m * 0.34, 0.15], mano: "pugno", dove: "davanti" }];
     br.forEach(function (b) { b.S = [b.S[0] * u, b.S[1] * u]; b.E = [b.E[0] * u, b.E[1] * u]; b.W = [b.W[0] * u, b.W[1] * u]; });
-    var RU1 = u * 0.08, RU2 = u * 0.066, RF1 = u * 0.064, RF2 = u * 0.049;   // (braccia in carne: braccio, gomito, polso)
+    var RU1 = u * 0.074, RU2 = u * 0.062, RF1 = u * 0.06, RF2 = u * 0.046;   // (braccia in carne: braccio, gomito, polso)
     function fuoriDalBusto() { cx.save(); cx.beginPath(); cx.rect(-u, -u, 2 * u, 3 * u); busto(true); cx.clip("evenodd"); }   // (la spalla nasce DIETRO la maglia)
     function braccioSu(b) {   // dalla spalla al gomito (dietro la maglia), poi la manica
       fuoriDalBusto(); var n = cap(b.S[0], b.S[1], RU1, b.E[0], b.E[1], RU2); cx.lineWidth = u * 0.02; cx.strokeStyle = bordo; cx.stroke(); cap(b.S[0], b.S[1], RU1, b.E[0], b.E[1], RU2); cx.fillStyle = pelleSu(b.S[0], b.S[1], b.E[0], b.E[1], RU1, n); cx.fill(); cx.restore();
@@ -5284,8 +5338,7 @@
     cx.save(); busto(); cx.clip();   // le cuciture delle spalle, il petto, le pieghe sui fianchi, il numero vero piccolo sul petto
     cx.strokeStyle = "rgba(0,0,0,.22)"; cx.lineWidth = u * 0.009; [-1, 1].forEach(function (s) { cx.beginPath(); cx.moveTo(s * u * 0.19, u * 0.44); cx.quadraticCurveTo(s * u * 0.2, u * 0.53, s * u * 0.25, u * 0.6); cx.stroke(); });
     var gp = cx.createRadialGradient(-u * 0.1, u * 0.55, 0, -u * 0.1, u * 0.55, u * 0.16); gp.addColorStop(0, "rgba(255,255,255,.1)"); gp.addColorStop(1, "rgba(255,255,255,0)"); cx.fillStyle = gp; cx.fillRect(-u * 0.3, u * 0.4, u * 0.4, u * 0.3);
-    cx.strokeStyle = "rgba(0,0,0,.13)"; cx.lineWidth = u * 0.012; [-1, 1].forEach(function (s) { cx.beginPath(); cx.moveTo(s * u * 0.22, u * 0.76); cx.quadraticCurveTo(s * u * 0.15, u * 0.8, s * u * 0.12, u * 0.86); cx.stroke(); });
-    cx.beginPath(); cx.moveTo(-u * 0.14, u * 0.71); cx.quadraticCurveTo(0, u * 0.745, u * 0.14, u * 0.705); cx.stroke();
+    cx.strokeStyle = "rgba(0,0,0,.1)"; cx.lineWidth = u * 0.01; [-1, 1].forEach(function (s) { cx.beginPath(); cx.moveTo(s * u * 0.03, u * 0.62); cx.quadraticCurveTo(s * u * 0.12, u * 0.645, s * u * 0.2, u * 0.615); cx.stroke(); });   // (sotto i pettorali, appena accennato: niente pieghe sulla pancia)
     if (mg.n != null) { cx.font = "900 " + (u * 0.075).toFixed(1) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var ch = chiaraC(kit.a); cx.lineWidth = u * 0.016; cx.strokeStyle = ch ? "rgba(255,255,255,.8)" : "rgba(0,0,0,.55)"; var nX = posa === "guanti" ? -m * u * 0.165 : -m * u * 0.115, nY = posa === "guanti" ? u * 0.51 : u * 0.56; cx.strokeText(mg.n, nX, nY); cx.fillStyle = ch ? "#16161a" : "#ffffff"; cx.fillText(mg.n, nX, nY); }   // (coi guanti uniti il numero sale, se no lo coprono)
     cx.restore();
     cx.fillStyle = scuro(pelle, 0.86); cx.beginPath(); cx.moveTo(-u * 0.07, u * 0.418); cx.lineTo(0, u * 0.49); cx.lineTo(u * 0.07, u * 0.418); cx.closePath(); cx.fill();   // il colletto a V
@@ -5305,7 +5358,22 @@
     return BUSTI_URL[k];
   }
   function bustoNodo(c, w, classe) { try { var cv = bustoCanvas(c, w); cv.className = classe || ""; return cv; } catch (e) { return null; } }
-  function albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, oro) {   // 🃏 la figurina nuova da album (oro: ⭐ i big, da BIG_DA in su)
+  // ⭐ L'OVERALL NOSTRO (10 nov 2026, deciso col proprietario: «proviamo così… se non piace si ritorna al vecchio metodo»; «sg-fanta-overall» = "0" lo spegne
+  // su un telefono). Dentro ogni ruolo il più quotato ha il massimo del ruolo (portieri e difensori 89, centrocampisti 91, attaccanti 93) e ogni
+  // quotazione più bassa del ruolo vale UN punto in meno, sempre uno (il proprietario: «sempre il salto di 1, mai di 2 o di 3»). Così un portiere da
+  // 17 (il più forte del suo ruolo) vale più di un attaccante da 17 (a metà). Il valore della rosa (chi vince senza la giornata) è la somma degli
+  // overall; la giornata, le buste dei big e i crediti restano sulle quotazioni. Oggi: portieri 76-89, difensori 71-89, centrocampisti 68-91, attaccanti 68-93
+  var OVR_TETTO = { P: 89, D: 89, C: 91, A: 93 }, OVR_BASSO = 65;
+  var OVR = { on: (function () { try { return localStorage.getItem("sg-fanta-overall") !== "0"; } catch (e) { return true; } })(), scala: null };
+  function overallDi(c) {
+    if (!OVR.scala) { var L = window.SG_FANTA_CALCIATORI || {}; OVR.scala = {}; Object.keys(L).forEach(function (r) { var dd = {}; Object.keys(L[r]).forEach(function (fa) { L[r][fa].forEach(function (k) { dd[valoreCalc(splitCalc(k))] = 1; }); }); OVR.scala[r] = Object.keys(dd).map(Number).sort(function (a, b) { return b - a; }); }); }
+    var sc = OVR.scala[c.ruolo], q = valoreCalc(c); if (!sc || !OVR_TETTO[c.ruolo]) return OVR_BASSO;
+    var sopra = sc.filter(function (v) { return v > q; }).length;   // (quanti gradini di quotazione del suo ruolo ci sono sopra di lui)
+    return OVR_TETTO[c.ruolo] - sopra;
+  }
+  function valoreRosa(r) { return OVR.on ? "overall " + numFanta(Math.round(r.totale / Math.max(1, (r.kit || []).length) * 10) / 10) : "valore " + r.totale; }   // ⭐ (la riga della classifica: la media degli overall)
+  function valoreMostrato(c) { return OVR.on ? overallDi(c) : valoreCalc(c); }   // (quello che si vede e che fa il valore della rosa)
+  function albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, oro, coperto) {   // 🃏 la figurina nuova da album (oro: ⭐ i big, da BIG_DA in su)
     var m = w * 0.045, iw = w - 2 * m, ih = h * 0.76, PI = Math.PI, c0 = col[0], c1 = col[1] || "#ffffff";
     cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07);
     if (oro) { var go = cx.createLinearGradient(0, 0, w, h); go.addColorStop(0, "#fff1b0"); go.addColorStop(0.35, "#f2c94c"); go.addColorStop(0.55, "#fff4c4"); go.addColorStop(0.8, "#d4a032"); go.addColorStop(1, "#f7dc7a"); cx.fillStyle = go; } else cx.fillStyle = "#f6f1e3";
@@ -5322,7 +5390,14 @@
     else { cx.save(); cx.translate(w / 2, 0); var r = w * 0.17, hy = m + ih * 0.36; bustoBello(cx, r, hy, kit, mg.n, ca.pelle, m + ih + 2); if (!testaBitmap(cx, 0, hy, r, ca, 1, true, true, d)) testaVera(cx, hy, r, ca, 1, true); cx.restore(); }
     var gi = cx.createLinearGradient(0, m, 0, m + ih); gi.addColorStop(0, "rgba(255,255,255,.12)"); gi.addColorStop(0.08, "rgba(255,255,255,0)"); cx.fillStyle = gi; cx.fillRect(m, m, iw, ih);   // (la lucentezza della carta)
     cx.restore();
-    var sw = w * 0.15, sh = w * 0.18, sx = m + w * 0.035, sy = m + w * 0.035;   // lo scudetto della squadra
+    var ovOff = 0;
+    if (OVR.on) {   // ⭐ l'overall in alto a sinistra, grande, col ruolo sotto (come nelle carte dei videogiochi)
+      var ovx = m + w * 0.11, ovy = m + w * 0.105, ovt = coperto ? "?" : String(overallDi(c));   // (10 nov 2026, il proprietario: «teniamolo nascosto fino alla fine»: all'«AGGIUDICATO!» un punto di domanda) cx.textAlign = "center"; cx.textBaseline = "middle";
+      cx.font = "900 " + Math.round(w * 0.15) + "px system-ui,sans-serif"; cx.lineJoin = "round"; cx.lineWidth = w * 0.022; cx.strokeStyle = "rgba(0,0,0,.55)"; cx.strokeText(ovt, ovx, ovy); cx.fillStyle = oro ? "#ffe9a6" : "#ffffff"; cx.fillText(ovt, ovx, ovy);
+      cx.font = "900 " + Math.round(w * 0.055) + "px system-ui,sans-serif"; cx.lineWidth = w * 0.012; var rb = { P: "POR", D: "DIF", C: "CEN", A: "ATT" }[c.ruolo] || ""; cx.strokeText(rb, ovx, ovy + w * 0.105); cx.fillText(rb, ovx, ovy + w * 0.105);
+      ovOff = w * 0.2;
+    }
+    var sw = w * 0.15, sh = w * 0.18, sx = m + w * 0.035, sy = m + w * 0.035 + ovOff;   // lo scudetto della squadra (sotto l'overall, se c'è)
     function scudo() { cx.beginPath(); cx.moveTo(sx, sy); cx.lineTo(sx + sw, sy); cx.lineTo(sx + sw, sy + sh * 0.55); cx.quadraticCurveTo(sx + sw, sy + sh * 0.85, sx + sw / 2, sy + sh); cx.quadraticCurveTo(sx, sy + sh * 0.85, sx, sy + sh * 0.55); cx.closePath(); }
     scudo(); cx.fillStyle = c0; cx.fill(); cx.save(); scudo(); cx.clip(); cx.fillStyle = c1; cx.fillRect(sx + sw / 2, sy, sw / 2, sh); cx.restore();
     scudo(); cx.lineWidth = Math.max(1, w * 0.012); cx.strokeStyle = "#f6f1e3"; cx.stroke();
@@ -5336,7 +5411,7 @@
     nomeIn(mg.nome, w / 2, by + bh * 0.47, iw * 0.88, Math.round(w * 0.11), chiaraC(c0) ? "#16161a" : "#ffffff");
     nomeIn(c.squadra.toUpperCase() + " · " + ruolo, w / 2, by + bh + h * 0.07, iw * 0.92, Math.round(w * 0.06), scuro(chiaraC(c0) ? (col[1] || "#333") : c0, 0.85));
     if (oro) {   // ⭐ la stellina dei big e il riflesso olografico (fermo: quello che passa lo fa il volo)
-      cx.font = "900 " + Math.round(w * 0.06) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var stx = m + w * 0.035 + w * 0.075, sty = m + w * 0.035 + w * 0.18 + w * 0.075; cx.beginPath(); cx.arc(stx, sty, w * 0.055, 0, Math.PI * 2); cx.fillStyle = "#b8860b"; cx.fill(); cx.lineWidth = Math.max(1, w * 0.01); cx.strokeStyle = "#fff4c4"; cx.stroke(); cx.fillStyle = "#fff"; cx.fillText("★", stx, sty + w * 0.004);   // (la stellina sotto lo scudetto)
+      cx.font = "900 " + Math.round(w * 0.06) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var stx = m + w * 0.035 + w * 0.075, sty = m + w * 0.035 + w * 0.18 + w * 0.075 + ovOff; cx.beginPath(); cx.arc(stx, sty, w * 0.055, 0, Math.PI * 2); cx.fillStyle = "#b8860b"; cx.fill(); cx.lineWidth = Math.max(1, w * 0.01); cx.strokeStyle = "#fff4c4"; cx.stroke(); cx.fillStyle = "#fff"; cx.fillText("★", stx, sty + w * 0.004);   // (la stellina sotto lo scudetto)
       cx.save(); tondo(0, 0, w, h, w * 0.07); cx.clip(); cx.globalAlpha = 0.1; cx.fillStyle = "#fff"; [0.18, 0.62].forEach(function (p, i) { cx.beginPath(); cx.moveTo(w * (p - 0.3), h); cx.lineTo(w * (p - 0.3 + (i ? 0.1 : 0.18)), h); cx.lineTo(w * (p + 0.5 + (i ? 0.1 : 0.18)), 0); cx.lineTo(w * (p + 0.5), 0); cx.closePath(); cx.fill(); }); cx.restore();
     }
     if (prezzo != null) { cx.font = "900 " + Math.round(w * 0.085) + "px system-ui,sans-serif"; var pt = prezzo + " 💰", pw = cx.measureText(pt).width + w * 0.08; tondo(w - m - pw - w * 0.03, m + w * 0.03, pw, w * 0.12, w * 0.06); cx.fillStyle = "#ffc247"; cx.fill(); cx.lineWidth = Math.max(1, w * 0.008); cx.strokeStyle = "rgba(0,0,0,.25)"; cx.stroke(); cx.fillStyle = "#16161a"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(pt, w - m - pw / 2 - w * 0.03, m + w * 0.093); }
@@ -5995,7 +6070,7 @@
     R.podio.appendChild(gradini);
     if (R.righe.length > 3) {
       var altri = el("div"); altri.className = "st-altri";
-      R.righe.slice(3).forEach(function (r) { var riga = el("div"); riga.textContent = r.pos + "° " + r.nome + (gio ? " · " + numFanta(puntiFin(r)) + " fantapunti" + (r.prima ? " (" + tre(r).join(" + ") + ")" : "") : "") + (r.prima ? "" : " · valore " + r.totale) + (gio ? "" : " · " + r.crediti + " 💰"); altri.appendChild(riga); });
+      R.righe.slice(3).forEach(function (r) { var riga = el("div"); riga.textContent = r.pos + "° " + r.nome + (gio ? " · " + numFanta(puntiFin(r)) + " fantapunti" + (r.prima ? " (" + tre(r).join(" + ") + ")" : "") : "") + (r.prima ? "" : " · " + valoreRosa(r)) + (gio ? "" : " · " + r.crediti + " 💰"); altri.appendChild(riga); });
       R.podio.appendChild(altri);
     }
     if (gio) {   // 🏅 i premi della giornata (6 nov 2026, foto 10 scelta dal proprietario): un tasto sotto il podio apre il foglio
@@ -6432,7 +6507,7 @@
     if (tit) s._contenuto.appendChild(tit);
     else s._contenuto.appendChild(el("p", { class: "as-msg", text: "Partita tirata: nessuno si è preso un titolo! 😄" }));
     var box = el("div", { class: "as-kits" });
-    righe.forEach(function (r) { box.appendChild(nodoKit(el, { nome: r.pos + "° " + r.nome + (r.gio ? " · " + numFanta(puntiFin(r)) + " fantapunti" + (r.prima ? " (" + tre(r).join(" + ") + ")" : "") : "") + " · valore " + r.totale, crediti: r.crediti, kit: r.kit }, st)); });
+    righe.forEach(function (r) { box.appendChild(nodoKit(el, { nome: r.pos + "° " + r.nome + (r.gio ? " · " + numFanta(puntiFin(r)) + " fantapunti" + (r.prima ? " (" + tre(r).join(" + ") + ")" : "") : "") + " · " + valoreRosa(r), crediti: r.crediti, kit: r.kit }, st)); });
     s._contenuto.appendChild(box);
     s._piede.appendChild(el("div", { class: "as-foto" }, [ el("button", { class: "btn btn-fantasma", text: "📸 Foto delle rose", onclick: function () { fotoRose(righe, null); } }) ]));
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Classifica finale 🏆", onclick: function () { classificaFinale(t, st, righe); } }));
@@ -6471,7 +6546,7 @@
 
   function classificaFinale(t, st, righe) {
     var classifica = st.formato === "fanta" && righe
-      ? righe.map(function (r) { return { nome: r.nome, punti: (r.gio ? numFanta(puntiFin(r)) + " fantapunti" + (r.prima ? " in 3 giornate" : "") + " · valore " + r.totale : "valore " + r.totale + " · " + r.crediti + " 💰"), pos: r.pos }; })
+      ? righe.map(function (r) { return { nome: r.nome, punti: (r.gio ? numFanta(puntiFin(r)) + " fantapunti" + (r.prima ? " in 3 giornate" : "") + " · " + valoreRosa(r) : valoreRosa(r) + " · " + r.crediti + " 💰"), pos: r.pos }; })
       : classificaStelle(st.giocatori);
     var profilo = window.SGNube && SGNube.profilo ? SGNube.profilo() : null;
     var me = profilo && st.giocatori.filter(function (g) { return String(g.nome).trim().toLowerCase() === String(profilo.nome || "").trim().toLowerCase(); })[0];
@@ -6501,7 +6576,7 @@
     var cand = [];
     function prova(icona, titolo, f, min, dett) { var p = primo(f); if (p && p.v >= min) cand.push({ icona: icona, titolo: titolo, chi: p.x.nome, dett: dett(p.v, p.x, p.d) }); }
     if (righe) prova("💎", "L'affare d'oro", function (x) { return migliorCarta(x, function (c) { return c.valore != null && c.prezzo ? c.valore - c.prezzo : null; }); }, 5,
-      function (v, x, d) { return nomeCampo(d.c.nome) + " a " + d.c.prezzo + " 💰 (vale " + d.c.valore + ")"; });
+      function (v, x, d) { return nomeCampo(d.c.nome) + " a " + d.c.prezzo + " 💰 (" + (OVR.on && d.c.ovr != null ? "overall " + d.c.ovr : "vale " + d.c.valore) + ")"; });
     if (righe && righe[0] && righe[0].gio) {   // ⚽ la giornata: chi ha in rosa il bomber (il calciatore con più gol, da solo)
       var bomber = null, pariB = false;
       righe.forEach(function (r) { r.gio.cal.forEach(function (x, k) {
@@ -6514,7 +6589,7 @@
     prova("💸", "Lo sprecone", function (x) { return x.spesi; }, 2, function (v) { return "ha speso " + v + " 💰"; });
     prova("🧊", "Il braccino corto", function (x) { return x.avanzo; }, 2, function (v) { return v === 1 ? "gli resta 1 💰" : "gli restano " + v + " 💰"; });
     if (righe) prova("🤡", "Il bidone", function (x) { return migliorCarta(x, function (c) { return c.valore != null && c.prezzo ? c.prezzo - c.valore : null; }); }, 3,
-      function (v, x, d) { return nomeCampo(d.c.nome) + " pagato " + d.c.prezzo + " 💰 (vale " + d.c.valore + ")"; });
+      function (v, x, d) { return nomeCampo(d.c.nome) + " pagato " + d.c.prezzo + " 💰 (" + (OVR.on && d.c.ovr != null ? "overall " + d.c.ovr : "vale " + d.c.valore) + ")"; });
     if (!righe) {   // temi: chi ha preso il pacco a sorpresa (fortuna o sfortuna)
       L.forEach(function (x) { x.kit.forEach(function (c) {
         if (c.pacco && c.tier === "A") cand.push({ icona: "🍀", titolo: "Il fortunello", chi: x.nome, dett: "nel pacco c'era " + c.nome });
@@ -6578,7 +6653,7 @@
       magliaTela(ctx, cx, cy, ms, c.squadra);
       ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.shadowColor = "rgba(0,0,0,.8)"; ctx.shadowBlur = 6;
       ctx.font = "900 " + Math.round(ms * 0.24) + "px " + FONT; ctx.fillText(testoCorto(ctx, nomeCampo(c.nome), w * 0.3), cx, cy + ms * 0.66);
-      var info = (c.prezzo ? c.prezzo + " 💰" : "") + (c.valore != null ? (c.prezzo ? " · " : "") + "vale " + c.valore : "");
+      var info = (c.prezzo ? c.prezzo + " 💰" : "") + (c.valore != null ? (c.prezzo ? " · " : "") + (OVR.on && c.ovr != null ? "⭐ " + c.ovr : "vale " + c.valore) : "");
       if (info) { ctx.font = "800 " + Math.round(ms * 0.19) + "px " + FONT; ctx.fillStyle = "#ffe066"; ctx.fillText(info, cx, cy + ms * 0.9); }
       ctx.shadowBlur = 0;
     });
@@ -6595,7 +6670,7 @@
       if (una) {
         ctx.font = "900 64px " + FONT; ctx.fillText(testoCorto(ctx, "⚽ La rosa di " + una.nome, W - 80), W / 2, 120);
         ctx.font = "800 38px " + FONT; ctx.fillStyle = "#ffe066";
-        ctx.fillText((una.pos ? una.pos + "° posto · " : "") + (una.gio ? numFanta(puntiFin(una)) + " fantapunti · " : "") + "valore " + una.totale + (una.crediti != null && !una.gio ? " · " + una.crediti + " 💰 avanzati" : ""), W / 2, 185);
+        ctx.fillText((una.pos ? una.pos + "° posto · " : "") + (una.gio ? numFanta(puntiFin(una)) + " fantapunti · " : "") + valoreRosa(una) + (una.crediti != null && !una.gio ? " · " + una.crediti + " 💰 avanzati" : ""), W / 2, 185);
         var hc = campoTela(ctx, 110, 215, W - 220, una.kit || [], true), yl = 215 + hc + 28;
         // sotto il campetto la rosa in lista: ruolo, nome, squadra, quanto l'hai pagato e quanto vale
         ordinaRosa(una.kit || []).forEach(function (c, i) {
@@ -6606,7 +6681,7 @@
           ctx.textAlign = "right"; ctx.font = "800 28px " + FONT; ctx.fillStyle = "#ffe066";
           var ik = (una.kit || []).indexOf(c), gk = una.gio ? una.gio.cal[ik] : null, fv = gk ? gk.fv : 0;   // (⚽ con la giornata: anche il fantavoto; 🏆 con 3 giornate quelli sommati)
           if (gk && una.prima) una.prima.forEach(function (gi) { fv += gi.cal[ik].fv; });
-          ctx.fillText((c.prezzo ? c.prezzo + " 💰" : "") + (c.valore != null ? "  vale " + c.valore : "") + (gk ? "  ⚽ " + numFanta(fv) : ""), W - 80, y + 41);
+          ctx.fillText((c.prezzo ? c.prezzo + " 💰" : "") + (c.valore != null ? (OVR.on && c.ovr != null ? "  ⭐ " + c.ovr : "  vale " + c.valore) : "") + (gk ? "  ⚽ " + numFanta(fv) : ""), W - 80, y + 41);
         });
       } else {
         ctx.font = "900 60px " + FONT; ctx.fillText("⚽ Le rose della serata", W / 2, 110);

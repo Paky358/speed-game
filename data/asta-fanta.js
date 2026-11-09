@@ -7,137 +7,153 @@
    Formato: "Nome (Squadra)".
    ========================================================= */
 window.SG_FANTA_CALCIATORI = {
+  // 10 nov 2026: le fasce rifatte sulle quotazioni di oggi (A i più quotati, poi B, poi C: stesse dimensioni di prima, i 10 nuovi aggiunti dove cadono)
   // ---------- PORTIERI ----------
   P: {
     A: [
-      "Svilar (Roma)", "Carnesecchi (Atalanta)", "Martinez Jo. (Inter)",
-      "Vicario (Juventus)", "Butez (Como)", "Maignan (Milan)"
+      "Mandas (Lazio)", "Svilar (Roma)", "Butez (Como)",
+      "Maignan (Milan)", "Caprile (Cagliari)", "Palmisani (Frosinone)"
     ],
     B: [
-      "Caprile (Cagliari)", "Mandas (Lazio)", "De Gea (Fiorentina)",
-      "Skorupski (Bologna)", "Falcone (Lecce)", "Okoye (Udinese)",
-      "Milinkovic-Savic V. (Napoli)", "Meret (Napoli)",
-      "Corvi (Parma)", "Provedel (Inter)"
+      "Vicario (Juventus)", "Carnesecchi (Atalanta)", "Skorupski (Bologna)",
+      "Bijlow (Genoa)", "Martinez Jo. (Inter)", "Stankovic F. (Venezia)",
+      "Daffara (Parma)", "Meret (Napoli)", "Milinkovic-Savic V. (Napoli)",
+      "Gollini (Roma)"
     ],
     C: [
-      "Perri (Torino)", "Bijlow (Genoa)", "Muric (Sassuolo)",
-      "Palmisani (Frosinone)", "Stankovic F. (Venezia)", "Thiam (Monza)",
-      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
-      "Gollini (Roma)"
+      "Perri (Torino)", "De Gea (Fiorentina)", "Falcone (Lecce)",
+      "Okoye (Udinese)", "Corvi (Parma)", "Provedel (Inter)",
+      "Muric (Sassuolo)", "Thiam (Monza)"
     ]
   },
 
   // ---------- DIFENSORI ----------
   D: {
     A: [
-      "Dimarco (Inter)", "Wesley (Roma)", "Bremer (Juventus)", "Akanji (Inter)",
-      "Mancini (Roma)", "Bastoni (Inter)", "Rrahmani (Napoli)", "Kalulu (Juventus)",
-      "Pavlovic (Milan)", "Solet (Udinese)", "Bisseck (Inter)", "Di Lorenzo (Napoli)",
-      "Gila (Milan)", "Ramon (Como)", "Stones (Inter)", "Hermoso (Roma)",
-      "Chalobah T. (Como)",
-      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
-      "Oyono A. (Frosinone)"
+      "Dimarco (Inter)", "Bremer (Juventus)", "Ramon (Como)",
+      "Wesley (Roma)", "Miranda J. (Bologna)", "Carlos Augusto (Inter)",
+      "Gila (Milan)", "Jimenez A. (Fiorentina)", "Tavares N. (Lazio)",
+      "Hermoso (Roma)", "Kaiki (Como)", "Molina N. (Roma)",
+      "Bisseck (Inter)", "Hainaut (Venezia)", "Kamara H. (Udinese)",
+      "Mangas (Monza)", "Balerdi (Roma)", "Belghali (Torino)"
     ],
     B: [
-      "Molina N. (Roma)", "Spence (Inter)", "Ostigard (Genoa)", "Scalvini (Atalanta)",
-      "Carlos Augusto (Inter)", "Couto (Como)", "Dodo (Fiorentina)", "Kamara H. (Udinese)",
-      "Mangas (Monza)", "Tiago Gabriel (Lecce)", "Valeri (Parma)", "Vasquez (Genoa)",
-      "Bartesaghi (Milan)", "Belghali (Torino)", "Cambiaso (Juventus)", "Comuzzo (Torino)",
-      "Delprato (Parma)", "Doekhi (Lazio)", "Dragusin (Fiorentina)", "Jimenez A. (Fiorentina)",
-      "Kaiki (Como)", "Lucumi (Juventus)", "Miranda J. (Bologna)", "Spinazzola (Napoli)",
-      "Theate (Bologna)", "Vojvoda (Udinese)", "Zappacosta (Atalanta)", "Bracaglia (Frosinone)",
-      "Celik (Juventus)", "Valle (Como)", "Tavares N. (Lazio)", "Bellanova (Atalanta)",
-      "Kossounou (Atalanta)", "Pavard (Inter)",
-      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
-      "N'Dicka (Roma)", "Abankwah (Udinese)", "Zortea (Bologna)", "Calvani (Frosinone)",
-      "Pedraza (Lazio)", "Veiga D. (Lecce)", "Kouadio (Monza)"
+      "Bastoni (Inter)", "Bracaglia (Frosinone)", "Mancini (Roma)",
+      "N'Dicka (Roma)", "Oyono A. (Frosinone)", "Rrahmani (Napoli)",
+      "Tiago Gabriel (Lecce)", "Akanji (Inter)", "Di Lorenzo (Napoli)",
+      "Pavlovic (Milan)", "Casale (Bologna)", "Comuzzo (Torino)",
+      "Doig (Sassuolo)", "Floriani Mussolini (Lazio)", "Goglichidze (Monza)",
+      "Kalulu (Juventus)", "Abankwah (Udinese)", "Alaba (Udinese)",
+      "Calvani (Frosinone)", "Coco (Torino)", "Couto (Como)",
+      "Provstgaard (Lazio)", "Theate (Bologna)", "Birindelli (Monza)",
+      "Chalobah T. (Como)", "Ehizibue (Genoa)", "Gallo (Lecce)",
+      "Gatti (Juventus)", "Ghilardi (Roma)", "Kempf (Como)",
+      "Kouadio (Monza)", "Leysen F. (Sassuolo)", "Lulli (Roma)",
+      "Ostigard (Genoa)", "Pedraza (Lazio)", "Solet (Udinese)",
+      "Spence (Inter)", "Valeri (Parma)", "Valle (Como)",
+      "Veiga D. (Lecce)", "De Winter (Milan)"
     ],
     C: [
-      "Diego Carlos (Parma)", "Obert (Cagliari)", "Balerdi (Roma)", "Coco (Torino)",
-      "Doig (Sassuolo)", "Fortini (Torino)", "Hien (Atalanta)", "Idzes (Sassuolo)",
-      "Ismajli (Torino)", "Leysen F. (Sassuolo)", "Mina (Cagliari)", "Ze Pedro (Cagliari)",
-      "Badiashile (Napoli)", "Bernasconi (Atalanta)", "Birindelli (Monza)", "Buongiorno (Napoli)",
-      "Gabbia (Milan)", "Gallo (Lecce)", "Hainaut (Venezia)", "Heggem (Bologna)",
-      "Holm (Bologna)", "Kempf (Como)", "Kolasinac (Atalanta)", "Kristensen T. (Atalanta)",
-      "Marusic (Lazio)", "Lulli (Roma)", "Tomori (Milan)", "Beukema (Napoli)",
-      "De Winter (Milan)", "Gatti (Juventus)", "Favasuli (Napoli)",
-      "Valdepenas (Fiorentina)", "Cinquegrano (Sassuolo)", "Floriani Mussolini (Lazio)", "Juan Jesus (Venezia)",
-      "Mazzocchi (Venezia)", "Olivera (Napoli)", "Provstgaard (Lazio)", "Rensch (Roma)",
-      "Vitik (Bologna)", "Estupinan (Milan)", "Marin R. (Napoli)",
-      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
-      "Terzic (Frosinone)", "Goglichidze (Monza)", "Casale (Bologna)", "Monterisi (Frosinone)",
-      "Siebert (Lecce)", "Sutalo J. (Lazio)"
+      "Doekhi (Lazio)", "Ismajli (Torino)", "Monterisi (Frosinone)",
+      "Scalvini (Atalanta)", "Terzic (Frosinone)", "Tomori (Milan)",
+      "Ze Pedro (Cagliari)", "Zortea (Bologna)", "Celik (Juventus)",
+      "Delprato (Parma)", "Kolasinac (Atalanta)", "Lucumi (Juventus)",
+      "Marin R. (Napoli)", "Mazzocchi (Venezia)", "Mina (Cagliari)",
+      "Spinazzola (Napoli)", "Stones (Inter)", "Sutalo J. (Lazio)",
+      "Vasquez (Genoa)", "Bellanova (Atalanta)", "Cambiaso (Juventus)",
+      "Cinquegrano (Sassuolo)", "Diego Carlos (Parma)", "Dodo (Fiorentina)",
+      "Dragusin (Fiorentina)", "Favasuli (Napoli)", "Fortini (Torino)",
+      "Juan Jesus (Venezia)", "Obert (Cagliari)", "Olivera (Napoli)",
+      "Siebert (Lecce)", "Valdepenas (Fiorentina)", "Vojvoda (Udinese)",
+      "Zappacosta (Atalanta)", "Badiashile (Napoli)", "Bartesaghi (Milan)",
+      "Bernasconi (Atalanta)", "Heggem (Bologna)", "Holm (Bologna)",
+      "Idzes (Sassuolo)", "Beukema (Napoli)", "Buongiorno (Napoli)",
+      "Estupinan (Milan)", "Gabbia (Milan)", "Hien (Atalanta)",
+      "Kristensen T. (Atalanta)", "Marusic (Lazio)", "Pavard (Inter)",
+      "Rensch (Roma)", "Vitik (Bologna)", "Kossounou (Atalanta)"
     ]
   },
 
   // ---------- CENTROCAMPISTI ----------
   C: {
     A: [
-      "Paz N. (Como)", "Calhanoglu (Inter)", "McTominay (Napoli)", "Orsolini (Bologna)",
-      "Pulisic (Milan)", "Rabiot (Milan)", "Baturina (Como)", "Mora (Roma)",
-      "Barella (Inter)", "Da Cunha (Como)", "De Bruyne (Napoli)", "Zaniolo (Udinese)",
-      "Atta (Fiorentina)", "McKennie (Juventus)", "Zaccagni (Lazio)", "Mastantuono (Fiorentina)"
+      "Paz N. (Como)", "Rabiot (Milan)", "Pulisic (Milan)",
+      "Calhanoglu (Inter)", "Mora (Roma)", "De Bruyne (Napoli)",
+      "Baturina (Como)", "Zaccagni (Lazio)", "Calo (Frosinone)",
+      "McTominay (Napoli)", "Orsolini (Bologna)", "Isaksen (Lazio)",
+      "Mastantuono (Fiorentina)", "Moreira (Milan)", "Barella (Inter)",
+      "Schmid (Frosinone)"
     ],
     B: [
-      "Conceicao (Juventus)", "Ekkelenkamp (Udinese)", "Gonzalez N. (Juventus)", "Gudmundsson A. (Lazio)",
-      "Moreira (Milan)", "Samardzic (Atalanta)", "Taylor K. (Lazio)", "Zielinski (Inter)",
-      "Ederson D.S. (Atalanta)", "Jones C. (Inter)", "Modric (Milan)", "Vlasic (Torino)",
-      "Alajbegovic (Juventus)", "Baldanzi (Genoa)", "Frattesi (Lazio)", "Goncalves P. (Fiorentina)",
-      "Kessie (Atalanta)", "Perrone (Como)", "Rodriguez Je. (Como)", "Bernardeschi (Bologna)",
-      "Cancellieri (Lazio)", "Diouf (Inter)", "Kone M. (Roma)", "Lobotka (Napoli)",
-      "Mandragora (Torino)", "Politano (Napoli)", "Rowe (Atalanta)", "Saelemaekers (Milan)",
-      "Thorstvedt (Sassuolo)", "Zambo Anguissa (Napoli)",
-      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
-      "Pobega (Bologna)", "Zalewski (Atalanta)", "Messias (Genoa)", "Caqueret (Como)",
-      "Belahyane (Lazio)", "Matic (Sassuolo)", "Bakola (Sassuolo)"
+      "Taylor K. (Lazio)", "Zielinski (Inter)", "Bernardeschi (Bologna)",
+      "Ekkelenkamp (Udinese)", "Politano (Napoli)", "Frattesi (Lazio)",
+      "Da Cunha (Como)", "Diouf (Inter)", "Messias (Genoa)",
+      "Pobega (Bologna)", "Alajbegovic (Juventus)", "Cambiaghi (Bologna)",
+      "Conceicao (Juventus)", "Kone M. (Roma)", "Pisilli (Roma)",
+      "Zhegrova (Juventus)", "Cristante (Roma)", "Mandragora (Torino)",
+      "Modric (Milan)", "Njie (Fiorentina)", "Zalewski (Atalanta)",
+      "Adzic (Sassuolo)", "Baldanzi (Genoa)", "Caqueret (Como)",
+      "Coulibaly L. (Lecce)", "Dele-Bashiru (Lazio)", "Gonzalez N. (Juventus)",
+      "Koopmeiners (Juventus)", "Lobotka (Napoli)", "Matic (Sassuolo)",
+      "Mbangula (Bologna)", "McKennie (Juventus)", "Romano (Cagliari)",
+      "Samardzic (Atalanta)", "Sucic P. (Inter)", "Adopo (Cagliari)",
+      "Bakola (Sassuolo)"
     ],
     C: [
-      "Adzic (Sassuolo)", "Calo (Frosinone)", "Casadei (Torino)", "Colpani (Monza)",
-      "Coulibaly L. (Lecce)", "Cristante (Roma)", "Isaksen (Lazio)", "Pellegrini Lo. (Roma)",
-      "Thuram K. (Juventus)", "Vergara (Napoli)", "Volpato (Sassuolo)", "Adopo (Cagliari)",
-      "Cambiaghi (Bologna)", "Chukwueze (Milan)", "Fagioli (Fiorentina)", "Ferguson (Bologna)",
-      "Karlstrom (Udinese)", "Kone I. (Sassuolo)", "Locatelli (Juventus)", "Ndour (Fiorentina)",
-      "Pasalic (Atalanta)", "Pisilli (Roma)", "Romano (Cagliari)", "Schmid (Frosinone)",
-      "Sucic P. (Inter)", "Zhegrova (Juventus)", "Akinsanmiro (Monza)", "Bernabe (Parma)",
-      "Braganca (Torino)", "Busio (Venezia)", "Cacciamani (Torino)", "El Shaarawy (Genoa)",
-      "Fazzini (Cagliari)", "Frendrup (Genoa)", "Gaetano (Atalanta)",
-      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
-      "Masini (Frosinone)", "Koopmeiners (Juventus)", "Dele-Bashiru (Lazio)", "Gilmour (Napoli)",
-      "Fitz-Jim (Torino)", "Hutchinson (Milan)", "Mbangula (Bologna)", "Milla (Como)",
-      "Ellertsson (Genoa)", "Njie (Fiorentina)", "Cissè A. (Milan)", "Winks (Cagliari)",
-      "Douglas Luiz (Juventus)", "Piotrowski (Udinese)", "Elmas (Atalanta)", "Cichella (Frosinone)",
-      "Mkhitaryan (Inter)", "Musah (Milan)", "Monteiro J. (Lecce)"
+      "Belahyane (Lazio)", "Cancellieri (Lazio)", "Cissè A. (Milan)",
+      "El Shaarawy (Genoa)", "Ellertsson (Genoa)", "Gilmour (Napoli)",
+      "Vergara (Napoli)", "Vlasic (Torino)", "Zaniolo (Udinese)",
+      "Cacciamani (Torino)", "Chukwueze (Milan)", "Ederson D.S. (Atalanta)",
+      "Ferguson (Bologna)", "Fitz-Jim (Torino)", "Gaetano (Atalanta)",
+      "Goncalves P. (Fiorentina)", "Gudmundsson A. (Lazio)", "Hutchinson (Milan)",
+      "Kessie (Atalanta)", "Masini (Frosinone)", "Perrone (Como)",
+      "Saelemaekers (Milan)", "Akinsanmiro (Monza)", "Atta (Fiorentina)",
+      "Braganca (Torino)", "Cichella (Frosinone)", "Colpani (Monza)",
+      "Douglas Luiz (Juventus)", "Fabbian (Parma)", "Liberali (Como)",
+      "Perez K. (Venezia)", "Zambo Anguissa (Napoli)", "Basic (Venezia)",
+      "Elmas (Atalanta)", "Fagioli (Fiorentina)", "Frendrup (Genoa)",
+      "Jones C. (Inter)", "Karlstrom (Udinese)", "Milla (Como)",
+      "Musah (Milan)", "Piotrowski (Udinese)", "Thorstvedt (Sassuolo)",
+      "Volpato (Sassuolo)", "Mkhitaryan (Inter)", "Monteiro J. (Lecce)",
+      "Ndour (Fiorentina)", "Rodriguez Je. (Como)", "Winks (Cagliari)",
+      "Busio (Venezia)", "Locatelli (Juventus)", "Rowe (Atalanta)",
+      "Casadei (Torino)", "Pasalic (Atalanta)", "Pellegrini Lo. (Roma)",
+      "Bernabe (Parma)", "Fazzini (Cagliari)", "Kone I. (Sassuolo)",
+      "Thuram K. (Juventus)"
     ]
   },
 
   // ---------- ATTACCANTI ----------
   A: {
     A: [
-      "Malen (Roma)", "Martinez L. (Inter)", "Thuram (Inter)", "Hojlund (Napoli)",
-      "Ramos G. (Milan)", "Kean (Como)", "Kolo Muani (Juventus)", "Yildiz (Juventus)",
-      "Douvikas (Como)", "Scamacca (Atalanta)"
+      "Malen (Roma)", "Thuram (Inter)", "Martinez L. (Inter)",
+      "Douvikas (Como)", "Krstovic (Atalanta)", "Hojlund (Napoli)",
+      "Esposito F.P. (Inter)", "Soule (Roma)", "Varela G. (Monza)",
+      "Esposito Se. (Sassuolo)"
     ],
     B: [
-      "Esposito F.P. (Inter)", "Woltemade (Juventus)", "Davis K. (Udinese)", "Berardi (Sassuolo)",
-      "Krstovic (Atalanta)", "De Ketelaere (Atalanta)", "Dovbyk (Bologna)", "Dybala (Roma)",
-      "Lauriente (Sassuolo)", "Pellegrino M. (Fiorentina)", "Soule (Roma)", "Beto (Fiorentina)",
-      "Castro S. (Roma)", "Diao (Como)", "Santos A. (Napoli)", "Simeone (Torino)",
-      "Esposito Se. (Sassuolo)", "Raspadori (Atalanta)", "Pinamonti (Lazio)", "Colombo (Genoa)",
-      "Adams C. (Torino)", "Kvernadze (Frosinone)", "Raimondo (Frosinone)",
-      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
-      "Ghedjemis (Frosinone)", "Osmajic (Genoa)", "Kulenovic (Torino)", "Robinson J. (Monza)"
+      "Ramos G. (Milan)", "Woltemade (Juventus)", "Adams C. (Torino)",
+      "Noslin (Lazio)", "Raimondo (Frosinone)", "Simeone (Torino)",
+      "Ghedjemis (Frosinone)", "Kolo Muani (Juventus)", "Kvernadze (Frosinone)",
+      "Maldini (Cagliari)", "Berardi (Sassuolo)", "Dybala (Roma)",
+      "Kean (Como)", "Lauriente (Sassuolo)", "Osmajic (Genoa)",
+      "Pellegrino M. (Fiorentina)", "Romero D. (Parma)", "Castro S. (Roma)",
+      "Pinamonti (Lazio)", "Davis K. (Udinese)", "De Ketelaere (Atalanta)",
+      "Lontani (Parma)", "Mendy P. (Cagliari)", "Robinson J. (Monza)",
+      "Scamacca (Atalanta)", "Yildiz (Juventus)", "Adams A. (Venezia)"
     ],
     C: [
-      "Adams A. (Venezia)", "Bowie (Sassuolo)", "Kevin Carlos (Cagliari)", "Romero D. (Parma)",
-      "Toure E. (Parma)", "Yeboah J. (Venezia)", "Bobcek (Frosinone)", "Cutrone (Monza)",
-      "Maldini (Cagliari)", "Piccoli (Bologna)", "Bonny (Inter)", "Geubbels (Lecce)",
-      "Noslin (Lazio)", "Vitinha O. (Genoa)", "Gnonto (Fiorentina)", "Mendy P. (Cagliari)",
-      "Rrahmani Al. (Venezia)", "Stulic (Lecce)", "Varela G. (Monza)", "Boga (Juventus)",
-      "Sulemana K. (Atalanta)", "Camarda (Milan)", "Lang (Napoli)",
-      "N'Dri (Lecce)", "Ngonge (Monza)", "Nzola (Cagliari)", "Elphege (Parma)",
-      "Giovane (Napoli)",
-      // 2 nov 2026: entrati col listone 2026/27 (quotazione da 10 in su, o da 7 a 9 e giocano davvero)
-      "Mota (Monza)", "Lontani (Parma)", "Fatah (Lecce)"
+      "Bonny (Inter)", "Diao (Como)", "Kulenovic (Torino)",
+      "Lang (Napoli)", "Mota (Monza)", "Raspadori (Atalanta)",
+      "Bowie (Sassuolo)", "Beto (Fiorentina)", "Dovbyk (Bologna)",
+      "N'Dri (Lecce)", "Birligea (Frosinone)", "Fatah (Lecce)",
+      "Nzola (Cagliari)", "Piccoli (Bologna)", "Boga (Juventus)",
+      "Santos A. (Napoli)", "Yeboah J. (Venezia)", "Zeballos (Monza)",
+      "Colombo (Genoa)", "Toure E. (Parma)", "Kevin Carlos (Cagliari)",
+      "Bobcek (Frosinone)", "Giovane (Napoli)", "Gnonto (Fiorentina)",
+      "Vitinha O. (Genoa)", "Cutrone (Monza)", "Elphege (Parma)",
+      "Geubbels (Lecce)", "Rrahmani Al. (Venezia)", "Ngonge (Monza)",
+      "Stulic (Lecce)", "Camarda (Milan)", "Sulemana K. (Atalanta)"
     ]
   }
 };

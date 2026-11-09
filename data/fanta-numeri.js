@@ -49,5 +49,7 @@ window.SG_FANTA_NUMERI = {
   // Udinese
   "Okoye (Udinese)": 40, "Solet (Udinese)": 28, "Kamara H. (Udinese)": 11, "Vojvoda (Udinese)": 23, "Abankwah (Udinese)": 14, "Zaniolo (Udinese)": 10, "Ekkelenkamp (Udinese)": 32, "Karlstrom (Udinese)": 8, "Piotrowski (Udinese)": 24, "Davis K. (Udinese)": 9,
   // Venezia
-  "Stankovic F. (Venezia)": 1, "Hainaut (Venezia)": 18, "Juan Jesus (Venezia)": 15, "Mazzocchi (Venezia)": 70, "Busio (Venezia)": 6, "Adams A. (Venezia)": 45, "Yeboah J. (Venezia)": 10, "Rrahmani Al. (Venezia)": 7
+  "Stankovic F. (Venezia)": 1, "Hainaut (Venezia)": 18, "Juan Jesus (Venezia)": 15, "Mazzocchi (Venezia)": 70, "Busio (Venezia)": 6, "Adams A. (Venezia)": 45, "Yeboah J. (Venezia)": 10, "Rrahmani Al. (Venezia)": 7,
+  // 10 nov 2026: i nuovi del listone (due fonti d'accordo; Birligea 11 confermato dal proprietario)
+  "Perez K. (Venezia)": 71, "Basic (Venezia)": 26, "Fabbian (Parma)": 80, "Daffara (Parma)": 30, "Ehizibue (Genoa)": 3, "Alaba (Udinese)": 5, "Liberali (Como)": 30, "Ghilardi (Roma)": 87, "Zeballos (Monza)": 22, "Birligea (Frosinone)": 11
 };

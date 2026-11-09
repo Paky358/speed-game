@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 325,
+    data: "10 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: capelli più veri e calciatori in forma ✂️",
+    descrizione: [
+      "Ogni taglio di capelli ha la sua forma: si vede la fronte, l'attaccatura, la riga, le onde, le treccine, e le ciocche seguono la pettinatura. I ricci corti sono più pieni, i dreadlocks e le treccine raccolti hanno i dread e le trecce veri, il codino si vede dietro il collo.",
+      "I calciatori a mezzo busto hanno il fisico da atleta: petto largo e vita stretta.",
+      "I guanti dei portieri sono più grandi, col polsino stretto come quelli veri.",
+      "⭐ L'overall: ogni calciatore ha il suo voto da 68 a 93. Durante l'asta resta segreto (sulla figurina che vola c'è un «?») e si scopre alla fine, nella formazione fatta di figurine. Va con la quotazione dentro il suo ruolo (il portiere più forte è 89 come il difensore più forte) e il valore della rosa è la media degli overall.",
+      "💰 Quotazioni aggiornate al listone di Fantacalcio.it del 10 novembre, e 10 calciatori nuovi all'asta: Perez K., Fabbian, Basic, Ehizibue, Daffara, Alaba, Liberali, Ghilardi, Zeballos e Birligea."
+    ]
+  },
+  {
     v: 324,
     data: "9 novembre 2026",
     titolo: "Mini Asta Fantacalcio: le facce dei calciatori dove si guarda 🧑",

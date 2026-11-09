@@ -52,7 +52,8 @@
     var k1 = nome() + " (" + squad() + ")", maxQ = 0;
     Object.keys(Q).forEach(function (k) { maxQ = Math.max(maxQ, Q[k]); });
     if (Q[k1] !== maxQ) ko.push("il primo (" + k1 + ", " + Q[k1] + ") non ha la quotazione più alta (" + maxQ + ")");
-    if (d.querySelectorAll(".fa-ed-r").length !== 305) ko.push("nella lista ci sono " + d.querySelectorAll(".fa-ed-r").length + " calciatori invece di 305 (deve esserci TUTTA la lista)");
+    var LL = w.SG_FANTA_CALCIATORI, tot = 0; Object.keys(LL).forEach(function (r) { Object.keys(LL[r]).forEach(function (f) { tot += LL[r][f].length; }); });   // (10 nov 2026: il listone cresce, si conta dai dati)
+    if (d.querySelectorAll(".fa-ed-r").length !== tot) ko.push("nella lista ci sono " + d.querySelectorAll(".fa-ed-r").length + " calciatori invece di " + tot + " (deve esserci TUTTA la lista)");
     var resta = function () { return +((d.querySelectorAll(".fa-ed-schede button")[1] || {}).textContent || "").replace(/\D+/g, ""); }, n0 = resta(), eraDc = S.vero(k1).dc;
     var ok = [].slice.call(d.querySelectorAll(".fa-ed-tasti button")).filter(function (b) { return /Va bene/.test(b.textContent); })[0]; ok.click(); await W.dorme(150);
     if (!P[k1] || !P[k1].ok) ko.push("«Va bene» non salva la conferma");
@@ -72,6 +73,6 @@
     var mis = R.scrollWidth > w.innerWidth + 1 ? "l'editor scorre di lato" : null; if (mis) ko.push(mis);
     d.querySelector(".fa-ed-x").click(); Object.keys(P).forEach(function (k) { delete P[k]; }); try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
     if (ko.length) no(ko.slice(0, 8).join(" | "));
-    return "solo IL PAPPONE; lista di 305, primo " + k1 + " (" + Q[k1] + "); Va bene apre il prossimo, la correzione resta lì, ricerca, Di partenza: tutto a posto (" + n0 + " da controllare)";
+    return "solo IL PAPPONE; lista di " + tot + ", primo " + k1 + " (" + Q[k1] + "); Va bene apre il prossimo, la correzione resta lì, ricerca, Di partenza: tutto a posto (" + n0 + " da controllare)";
   } });
 })();
