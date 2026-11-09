@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 326,
+    data: "10 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: il banditore che sfotte e le figurine da scoprire 🎙️🃏",
+    descrizione: [
+      "🎙️ Il banditore: nei momenti giusti dell'asta un fumetto sotto il maxischermo sfotte chi offre (chi rialza da solo, la guerra tra due, il campione preso per 1, nessuno che lo vuole…). Si spegne nel ⚙️ con «Battute del banditore».",
+      "🃏 Alla fine le rose arrivano con le figurine girate: si scoprono una alla volta e il colpo più caro per ultimo. Il numero grande è la media degli overall della rosa, sotto il totale."
+    ]
+  },
+  {
     v: 325,
     data: "10 novembre 2026",
     titolo: "Mini Asta Fantacalcio: capelli più veri e calciatori in forma ✂️",
