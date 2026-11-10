@@ -63,9 +63,10 @@ Ogni giocatore ha `sq` (0..nsq-1) e `ruolo` («su» = nella stanza, «giu» = gi
   nella squadra dopo (`{ t: "sposta", id }`), «🔀 Squadre a caso», e il tastino «🔄 A rotazione» (acceso/spento: `vm.rot`;
   gli altri lo vedono). Accanto una riga corta che dice cosa vuol dire («I ruoli si scambiano a ogni domanda»).
 - Chi entra va nella squadra con meno persone (a pari la prima); se la squadra non ha nessuno giù, va giù. **Fatto così:** se sono
-  tutte da 3 (e sono meno di 5) si apre da sola una squadra nuova per lui (la `nota` dice poi «La squadra Viola ha bisogno di un
-  altro giocatore»). «🔀 A caso» sistema anche il numero di squadre se quello di adesso non va bene coi presenti.
-- Quando cambia `nsq` chi è in una squadra che non c'è più va nelle squadre più piccole; nessun altro si sposta.
+  tutte da 3 (e sono meno di 5) si apre da sola una squadra nuova per lui e subito uno di una squadra da 3 lo raggiunge (le
+  squadre si bilanciano da sole: 3,3 + 1 = 3,2,2). «🔀 A caso» sistema anche il numero di squadre se quello di adesso non va bene coi presenti.
+- Quando cambia `nsq` chi è in una squadra che non c'è più va nelle squadre più piccole; poi le squadre si bilanciano da sole
+  (vedi «⚖️ Le squadre si sistemano da sole» in fondo).
 - «Comincia» solo se: almeno 2 squadre, ogni squadra da 2 o 3, ognuna con il suo «giu». La `nota` dice cosa manca
   («La squadra Viola ha bisogno di un altro giocatore»).
 - Messaggi: `{ t: "sq", s }`, `{ t: "giu" }` (ospite → host); solo da chi tiene la partita (IO): `{ t: "sposta", id }`,
@@ -185,25 +186,47 @@ Tutto come sopra, con questi pezzi in più o fatti in un modo preciso (se cambi 
   aveva acceso). L'host lo accende in saletta; gli amici leggono «🔒 Ruoli fissi: chi è giù resta giù» o «🔄 A rotazione: …».
 - **La nota della saletta dice anche come si sistema** (una frase sola, la saletta in cima ne mostra solo una): all'host «La
   squadra Viola ha bisogno di un altro giocatore: tocca un nome per spostarlo.», agli altri «…: per andarci tocca «Vengo qui».»
-  (solo a chi è in un'altra squadra). Con 7 persone e le squadre da 3 la terza squadra resta da 1 finché qualcuno non si sposta
-  (o l'host tocca «🔀 A caso»): da decidere col proprietario se spostare qualcuno da soli.
+  (solo a chi è in un'altra squadra).
+- **⚖️ Le squadre si sistemano da sole** (10 nov 2026, regola del proprietario: squadre da 2 o da 3, con un numero dispari UNA
+  squadra da 3; `bilancia(fermo)` nell'host). Dopo ogni cambio in saletta (chi entra, chi esce, il numero di squadre, «Vengo
+  qui», l'host che tocca un nome, «🔀 A caso», la «Nuova partita»): se una squadra è da 1 o vuota e un'altra è da 3, uno della
+  squadra da 3 va in quella piccola; si sposta chi è **nella stanza** ed è **arrivato per ultimo** (l'ordine di `H.players`),
+  MAI chi è giù e MAI chi ha appena scelto il posto o è stato spostato apposta dall'host (`fermo`: la sua scelta resta, si sposta
+  un altro). Anche una squadra da 4 (può nascere solo da uno spostamento dell'host) cede uno alla squadra più piccola se è da 2 o
+  meno. Così con 7 persone (2 squadre da 3 e ne arriva un altro) le squadre diventano 3,2,2 e «Comincia» è subito acceso (prima
+  nasceva una squadra da 1 e «Comincia» restava spento); passando da 2 a 3 squadre con 6 persone diventano 2,2,2. Restano da
+  sistemare a mano solo i casi senza una squadra da 3 da cui prendere (es. 5 persone in 3 squadre: 2,2,1 → si tocca «2»).
 - **I numeri nelle caselle sono tutti della stessa altezza** (prima «1.000» si rimpiccioliva e sembrava valere meno di «500»):
   una misura sola per muro; il numero più largo si stringe di lato (`c.scale`, al massimo fino al 78%) e solo se non basta cala la
   misura per tutti.
-- **I «+250» / «−250» che salgono** partono appena sopra la pallina ferma (`puntoDi` dell'ultima chiave, `translate(-50%,-100%)`):
-  non le passano più davanti.
-- **Nella stanza e nella rivelazione** domanda e risposte stanno INSIEME al centro (margini `auto` sulla carta e sotto le
-  risposte), con la carta della domanda che prende un po' d'altezza (`flex-basis` in `vh`, si stringe fino al testo se manca
-  posto) e risposte e scritte più grandi sui telefoni alti (`clamp(…vh…)`); l'esito della rivelazione resta in fondo. Prima tra
-  domanda e risposte (o sotto le risposte) restava un gran vuoto, a 412x915 mezzo schermo. Così anche i punteggi (la classifica
-  al centro, righe e numeri più grandi sui telefoni alti, «Prossima domanda» in fondo). Sui telefoni alti (da 760 px) anche
-  la classifica finale ha righe, avatar e numeri più grandi.
+- **I «+250» / «−250» che salgono** (`scritta(P)` in `cascata`) partono sopra la pallina ferma e sopra le palline già ferme
+  sotto di loro nelle caselle accanto, e quando arrivano più palline insieme in caselle vicine si **sfalsano in altezza**: ognuna
+  prende il posto libero più in basso sopra le scritte che stanno ancora salendo lì (prima si sovrapponevano tra loro e
+  coprivano le palline). Salgono tutte alla stessa velocità COSTANTE (`muSale` lineare: `VOLO.sale` = 40 px in `VOLO.ms` =
+  1,5 s, `VOLO.spazio` = 3 px tra due scritte), così due scritte che nascono separate restano separate fino alla fine.
+- **📏 Schermi pieni** (10 nov 2026, il proprietario: «non voglio spazi vuoti, una grande schermata fatta bene»). Le misure
+  crescono con l'altezza VERA dello schermo: `fl(a, b)` nello stile = `a` px a 640 di altezza, `b` px a 915, in linea retta in
+  mezzo e ferme fuori (`clamp` con `--u` = 1% di `var(--alt)`, definito su `.mu-piena` e `.mu-fine`); a 360x640 tutto resta come
+  prima. **Nella stanza** i tasti delle risposte crescono (più alti se sono solo 2: `.mu-risposte.n2`) e la **carta della
+  domanda prende tutto il posto che resta** (`flex: 1 1 0`, la sua misura non dipende dal testo) e il testo la riempie
+  (`riempiCarta`: il carattere più grande con cui ci sta fino all'86% della carta e senza parole che escono di lato, tra il
+  minimo dello stile e 2,2 volte tanto, al massimo `CARTA_MAX` = 44 px: le domande corte vengono grandi come in TV; se non ci
+  sta nemmeno col minimo si stringe fino al 70%; si rifà col ResizeObserver e quando cambia il testo, prima del disegno: niente
+  lampeggio; la nota sotto le risposte è sempre alta due righe, così rispondendo la carta non cambia misura). **Nella rivelazione** uguale: righe delle risposte che crescono (più
+  alte se sono poche: `.mu-righe.n2`/`n4`), la carta col testo che la riempie, l'esito in fondo. **Nei punteggi** le righe si
+  dividono l'altezza (`flex: 1 1 0`) fino a un massimo che dipende da quante squadre ci sono (`.mu-cl.n2`, `n3`), con
+  caratteri e palline (`palla(…, "cresce")`, diametro `--pd`) più grandi. **La classifica finale** (`.schermata.mu-fine`): il centro si allunga fino
+  ai tasti e le righe crescono in ALTEZZA fino a un massimo (in larghezza restano strette: con due persone nella squadra nomi e
+  avatar stanno su una riga sola). NIENTE altezza fissa né centro che scorre: il core mostra «👥 Avete giocato con» solo se
+  la pagina non scorre, e con un centro che scorre la toglieva sempre. Prima a 412x915 restavano 220 px vuoti sopra la carta, 240 sopra e 210 sotto i punteggi, 220 tra le
+  faccine e i tasti della classifica finale.
 - **Le prove:** `.agents/skills/prova-nel-browser/muro/muro.js` (`mu1` 4 telefoni 2 squadre da 2, partita intera e nessun
   segreto in NESSUNA foto della domanda passata sulla stanza; `mu1b` 6 telefoni 2 squadre da 3 con «su chi punti»; `mu2` l'host
   ricarica a metà domanda, nel muro e sui punteggi senza punti doppi, poi si spegne e un'amica finisce la partita; `mu3` chi
   guarda col link e chi arriva a metà con «▶ Entra»; `mu4`-`mu13` del provatore: 3 squadre da 2, 3+2 con la rotazione su tre,
   10 telefoni, muri vuoti e punti sotto zero, tempo scaduto, rotazione spenta, argomenti spenti, un amico che ricarica, squadre
-  tutte da 3 con chi arriva dopo, la settima persona in saletta). Tutte tranne `mu9` accendono la rotazione in saletta
+  tutte da 3 con chi arriva dopo; `mu13` la settima persona in saletta: le squadre diventano da sole 3,2,2 con «Comincia»
+  acceso, poi l'host sposta apposta uno di una squadra da 2 e lui resta lì mentre il gioco ribilancia, senza spostare chi è giù). Tutte tranne `mu9` accendono la rotazione in saletta
   (`accendiRotazione`, che controlla anche che di partenza sia spenta). Le foto delle schermate con 10 telefoni e 5 squadre, a 360x640 (e con
   `--grande` anche 412x915): `"C:\Program Files\nodejs\node.exe" .agents\skills\prova-nel-browser\muro\foto-muro.js 8981 D:\SG-muro\lavoro\foto-muro --fine`
   (dalla cartella della copia, col suo server acceso; le foto vanno in una cartella fuori dai file del gioco).

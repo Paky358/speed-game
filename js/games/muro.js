@@ -243,7 +243,7 @@
         var p = pById(id); if (!p) return;
         p.forse = false;
         // nella saletta si toglie e basta (le squadre degli altri restano come sono; se era giù, va giù il primo della squadra)
-        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); sistemaGiu(); bd(); return; }
+        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); sistemaGiu(); bilancia(); bd(); return; }
         p.via = true;                                   // a partita iniziata resta in classifica (con la sua squadra), ma non gioca più
         if (H.fase === "gioco" && H.stato !== "ripresa" && squadreVive() < 2) return fine();   // (nel respiro decide dopoRespiro)
         bd();
@@ -269,7 +269,7 @@
             }
             bd(); mandaOmini(); mandaOpz(); return;
           }
-          if (!p && H.fase === "lobby" && H.players.length < MAX) aggiungi({ id: id, nome: nome, omino: avatarValido(m.omino) });
+          if (!p && H.fase === "lobby" && H.players.length < MAX) { aggiungi({ id: id, nome: nome, omino: avatarValido(m.omino) }); bilancia(); }
           // chi rientra (pagina ricaricata, telefono riacceso, partita ripresa) ha lo STESSO id: ritrova il suo posto
           // (anche sulla classifica finale: così alla "Nuova partita" c'è anche lui)
           if (p) { p.forse = false; if (p.via && H.fase !== "lobby") p.via = false; if (!p.omino) p.omino = avatarValido(m.omino); }
@@ -398,6 +398,24 @@
       H.players.push({ id: x.id, nome: x.nome, omino: x.omino || null, sq: s, ruolo: membri(s).some(function (p) { return p.ruolo === "giu"; }) ? "su" : "giu" });
     }
     function squadraPiuPiccola() { var best = 0, bn = 99; for (var s = 0; s < H.nsq; s++) { var n = membri(s).length; if (n < bn) { bn = n; best = s; } } return best; }
+    // ⚖️ le squadre si sistemano da sole (10 nov 2026, regola del proprietario: squadre da 2 o da 3, con un numero dispari UNA
+    // squadra da 3): se una squadra resta da 1 (o vuota: un cambio del numero di squadre) e un'altra è da 3, uno della squadra da 3
+    // va in quella piccola. Si sposta chi è nella stanza ed è arrivato per ultimo, MAI chi è giù e MAI chi ha appena scelto il
+    // posto o è stato spostato apposta dall'host (`fermo`: la sua scelta resta). Prima con 7 persone nasceva una squadra da 1
+    // (3,3,1) e «Comincia» restava spento finché qualcuno non si spostava; ora diventano 3,2,2 da sole.
+    // (Anche una squadra da 4, che può nascere solo da uno spostamento dell'host, cede uno alla squadra più piccola se è da 2 o meno.)
+    function bilancia(fermo) {
+      for (var giro = 0; giro < 12; giro++) {
+        var piccola = 0, pn = 99, mx = 0;
+        for (var s = 0; s < H.nsq; s++) { var n = membri(s).length; if (n < pn) { pn = n; piccola = s; } if (n > mx) mx = n; }   // (prima le vuote, poi quelle da 1)
+        var da = pn < 2 && mx >= 3 ? 3 : mx >= 4 && pn <= 2 ? 4 : 0;   // da quali squadre si prende: da 3 (o più), o solo da quella da 4
+        if (!da) return;
+        var chi = null;   // (H.players è nell'ordine d'arrivo: vince l'ultimo)
+        H.players.forEach(function (p) { if (p.sq !== piccola && p.ruolo !== "giu" && p.id !== fermo && membri(p.sq).length >= da) chi = p; });
+        if (!chi) return;
+        chi.sq = piccola; chi.ruolo = "su"; sistemaGiu();
+      }
+    }
     // in ogni squadra UN SOLO «giù» (se manca, va giù il primo)
     function sistemaGiu() {
       for (var s = 0; s < H.nsq; s++) {
@@ -434,14 +452,16 @@
     // le mosse della saletta: di tutti «vengo qui» e «sto giù io»; SOLO di chi tiene la partita (anche dal suo telefono
     // senza rete) sposta, numero di squadre, rotazione e squadre a caso
     function saletta(id, m, daMe) {
-      if (m.t === "sq") vaiIn(id, m.s);
+      var fermo = null;   // (chi ha scelto il posto o è stato spostato apposta: nel bilanciamento resta dov'è)
+      if (m.t === "sq") { vaiIn(id, m.s); fermo = id; }
       else if (m.t === "giu") stoGiu(id);
       else if (!daMe) return;
-      else if (m.t === "sposta") sposta(m.id);
+      else if (m.t === "sposta") { sposta(m.id); fermo = m.id; }
       else if (m.t === "nsq") cambiaNsq(intero(m.n));
       else if (m.t === "rot") H.rot = !!m.on;
       else if (m.t === "mischia") aCaso();
       else return;
+      bilancia(fermo);
       bd();
     }
     function prontaSaletta() {
@@ -623,7 +643,7 @@
       H.prossimi.concat(H.dopo).forEach(function (x) { if (!pById(x.id) && H.players.length < MAX) aggiungi(x); });
       H.prossimi = []; H.dopo = [];
       for (var s = H.nsq - 1; s >= 2; s--) if (!membri(s).length) H.nsq--; else break;   // (le squadre vuote in fondo si tolgono)
-      sistemaGiu(); H.punti = []; bd();
+      sistemaGiu(); bilancia(); H.punti = []; bd();
     }
     // la "↻ Rivincita" dei tasti di fine del core (e la "Nuova partita" fuori dalla Sala) usa questa: tutti nella saletta,
     // e se ci sono tutti la partita riparte da sola col 3-2-1 (lo fa il core)
@@ -823,6 +843,9 @@
     return { a: "rgb(" + m.join(",") + ")", b: "rgb(" + m2.join(",") + ")", t: T };
   }
   var FONT = "'SG Testo','Plus Jakarta Sans',system-ui,sans-serif";
+  // le scritte «+500» che salgono nel muro: quanto durano (ms), quanto salgono (px, a velocità costante: muSale nello stile) e lo
+  // spazio tra due scritte vicine
+  var VOLO = { ms: 1500, sale: 40, spazio: 3 };
   function disegnaMuro(cv, W, H, o) {
     var dpr = Math.min(2, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + "px"; cv.style.height = H + "px";
@@ -923,7 +946,7 @@
     var wrap = document.createElement("div"), cv1 = document.createElement("canvas"), cv2 = document.createElement("canvas"), fx = document.createElement("div");
     wrap.className = "mu-muro-wrap"; cv1.className = cv2.className = "mu-cv"; fx.className = "mu-fx";
     wrap.appendChild(cv1); wrap.appendChild(cv2); wrap.appendChild(fx); box.appendChild(wrap);
-    var C = { g: null, raf: 0, palle: [], lampi: [], fermo: false, ro: null, tm: null };
+    var C = { g: null, raf: 0, palle: [], lampi: [], scritte: [], fermo: false, ro: null, tm: null };
     // l'ordine di partenza: la prima pallina di ogni squadra, poi le seconde… (partono insieme, con un piccolo sfasamento)
     var conta = {}, perCasa = {}, sf = sfasa(o.palle.length);
     o.palle.map(function (b) { var j = conta[b.s] = (conta[b.s] || 0) + 1; return { b: b, j: j }; })
@@ -945,6 +968,7 @@
       cv2.width = Math.round(W * dpr); cv2.height = Math.round(H * dpr); cv2.style.width = W + "px"; cv2.style.height = H + "px";
       // i lampi delle caselle
       while (fx.firstChild) fx.removeChild(fx.firstChild);
+      C.scritte = [];
       C.lampi = NUM.CASE.map(function (v, k) {
         var f = document.createElement("div"); f.className = "mu-lampo " + o.tipo;
         f.style.left = (C.g.pad + k * C.g.sw) + "px"; f.style.width = C.g.sw + "px"; f.style.top = (C.g.boxTop - C.g.bh * 1.2) + "px"; f.style.height = (C.g.bh * 2.2) + "px";
@@ -967,13 +991,38 @@
       P.giu = true;
       if (!zitto && C.g && wrap.isConnected) {
         var f = C.lampi[P.b]; if (f) { f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }
-        var v = valori(o.doppio)[P.b], pp = document.createElement("div"), fermo = puntoDi(C.g, P.kf[P.kf.length - 1]);
-        pp.className = "mu-piu " + o.tipo; pp.textContent = (o.tipo === "perdenti" ? "−" : "+") + fmtN(v);
-        // la scritta parte appena SOPRA la pallina ferma (non le passa davanti) e sale
-        pp.style.left = C.g.X(2 * P.b) + "px"; pp.style.top = (fermo.y - C.g.d * 0.5 - 2) + "px"; pp.style.color = (SQ[P.s] || SQ[0]).tx;
-        fx.appendChild(pp); setTimeout(function () { if (pp.parentNode) pp.parentNode.removeChild(pp); }, 1400);
+        scritta(P);
       }
       if (o.atterra) o.atterra(P, zitto);
+    }
+    // il «+500» / «−500» che sale dalla pallina ferma. Quando arrivano più palline insieme in caselle vicine le scritte si
+    // SFALSANO in altezza: ognuna sta sopra le palline già ferme sotto di lei e sopra le scritte che stanno ancora salendo lì
+    // (prima si sovrapponevano tra loro e coprivano le palline). Salgono tutte alla stessa velocità costante (muSale è lineare:
+    // VOLO.sale px in VOLO.ms), così due scritte che non si toccano quando nascono non si toccano mai.
+    function scritta(P) {
+      var g = C.g, v = valori(o.doppio)[P.b], pp = document.createElement("div");
+      pp.className = "mu-piu " + o.tipo; pp.textContent = (o.tipo === "perdenti" ? "−" : "+") + fmtN(v); pp.style.color = (SQ[P.s] || SQ[0]).tx;
+      fx.appendChild(pp);
+      var w = pp.offsetWidth, h = pp.offsetHeight, x = g.X(2 * P.b), ora = Date.now(), vel = VOLO.sale / VOLO.ms, sp = VOLO.spazio;
+      var l = Math.max(2, Math.min(g.W - 2 - w, x - w / 2)), r = l + w;
+      // il fondo della scritta: sopra la pallina più alta già ferma sotto di lei (la sua e quelle delle caselle accanto)
+      var y = puntoDi(g, P.kf[P.kf.length - 1]).y - g.d * 0.5 - 2;
+      C.palle.forEach(function (Q) {
+        if (!Q.giu || Q === P) return;
+        var q = puntoDi(g, Q.kf[Q.kf.length - 1]);
+        if (q.x + g.d * 0.5 > l && q.x - g.d * 0.5 < r) y = Math.min(y, q.y - g.d * 0.5 - 2);
+      });
+      // le scritte ancora vive che le stanno sopra o accanto: dove sono ADESSO (salgono tutte uguali)
+      C.scritte = C.scritte.filter(function (s) { return ora - s.t < VOLO.ms; });
+      var occ = C.scritte.filter(function (s) { return s.r + sp > l && s.l - sp < r; }).map(function (s) { var t0 = s.top - vel * (ora - s.t); return [t0, t0 + s.h]; });
+      function libero(yy) { return occ.every(function (b) { return yy + sp <= b[0] || yy - h - sp >= b[1]; }); }
+      // il posto libero più in basso (il più vicino alla pallina): al suo posto o subito sopra una delle scritte vive
+      var cand = [y].concat(occ.map(function (b) { return b[0] - sp; })).filter(function (yy) { return yy <= y; }).sort(function (a, b) { return b - a; });
+      for (var i = 0; i < cand.length; i++) if (libero(cand[i])) { y = cand[i]; break; }
+      y = Math.max(h + 2, y);   // (mai fuori dal muro in alto)
+      pp.style.left = l + "px"; pp.style.top = (y - h) + "px";
+      C.scritte.push({ l: l, r: r, top: y - h, h: h, t: ora });
+      setTimeout(function () { if (pp.parentNode) pp.parentNode.removeChild(pp); }, VOLO.ms + 100);
     }
     function frame() {
       C.raf = 0;
@@ -1206,7 +1255,7 @@
       var fatto = vm.fatto || [], io = trovaP(vm, ui.cb.myId);
       for (var s = 0; s < vm.nsq; s++) {
         var d = (vm.sqd || [])[s], c = ch[s];
-        if (!c) { c = ch[s] = { el: t.el("div", { class: "mu-ss" }), tx: t.el("span") }; c.el.appendChild(palla(t, s, 20)); c.el.appendChild(c.tx); c.el.style.setProperty("--c", SQ[s].col); box.appendChild(c.el); }
+        if (!c) { c = ch[s] = { el: t.el("div", { class: "mu-ss" }), tx: t.el("span") }; c.el.appendChild(palla(t, s, 20, "cresce")); c.el.appendChild(c.tx); c.el.style.setProperty("--c", SQ[s].col); box.appendChild(c.el); }
         var tot = d ? 1 + d.su.length : 0, fatti = d ? [d.giu].concat(d.su).filter(function (id) { return fatto.indexOf(id) >= 0; }).length : 0;
         var x = !d ? "—" : fatti >= tot ? "✅" : fatti + "/" + tot;
         if (c.tx.textContent !== x) c.tx.textContent = x;
@@ -1214,6 +1263,36 @@
         c.el.classList.toggle("mia", !!io && io.sq === s);
       }
     };
+  }
+
+  // 📏 la domanda RIEMPIE la sua carta (schermi pieni, 10 nov 2026): la carta prende il posto che resta (flex 1 1 0: la sua
+  // misura non dipende dal testo) e il testo prende il carattere più grande con cui ci sta (fino all'86% dell'altezza della
+  // carta, e senza parole che escono di lato), tra il minimo dello stile (che cresce già con l'altezza dello schermo) e 2,2 volte
+  // tanto (al massimo CARTA_MAX px: le domande corte vengono grandi come in TV). Se non ci sta nemmeno col minimo si stringe
+  // (fino al 70%). Si rifà quando cambia la misura della carta o il testo, sempre prima che lo schermo si ridisegni: niente
+  // lampeggio. Restituisce la funzione che la rifà (da chiamare quando cambia il testo)
+  var CARTA_MAX = 44;
+  function riempiCarta(carta) {
+    var dentro = carta.querySelector(".mu-carta-in"), p = carta.querySelector(".mu-testo"), ult = "";
+    function fai() {
+      if (!dentro || !p || !carta.isConnected) return;
+      var cs = getComputedStyle(carta), alt = carta.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
+      var chiave = Math.round(alt) + "|" + carta.clientWidth + "|" + p.className + "|" + p.textContent;
+      if (chiave === ult) return;
+      p.style.fontSize = "";
+      if (!(alt > 30)) return;   // (nascosta o non ancora a schermo: si rifà quando si vede)
+      ult = chiave;
+      var min = parseFloat(getComputedStyle(p).fontSize) || 18, lo, hi, lim;
+      // (l'altezza del testo; una parola lunga che esce di lato vale «non ci sta»)
+      function alto(f) { p.style.fontSize = f.toFixed(1) + "px"; return p.scrollWidth > p.clientWidth + 1 ? 1e9 : dentro.offsetHeight; }
+      if (alto(min) > alt) { lo = Math.max(11, min * 0.7); hi = min; lim = alt; }            // non ci sta: si stringe
+      else { lo = min; hi = Math.max(min, Math.min(min * 2.2, CARTA_MAX)); lim = alt * 0.86; }   // ci sta: cresce finché la riempie
+      for (var i = 0; i < 7; i++) { var m = (lo + hi) / 2; if (alto(m) <= lim) lo = m; else hi = m; }
+      p.style.fontSize = (Math.floor(lo * 2) / 2) + "px";
+    }
+    if (window.ResizeObserver) { try { var ro = new ResizeObserver(function () { if (!carta.isConnected) { ro.disconnect(); return; } fai(); }); ro.observe(carta); } catch (e) {} }
+    else window.addEventListener("resize", function rs() { if (!carta.isConnected) { window.removeEventListener("resize", rs); return; } fai(); });
+    return fai;
   }
 
   // ---- 1. la domanda: nella stanza la domanda e le risposte; giù l'argomento, le risposte e il muro piccolo ----
@@ -1227,9 +1306,10 @@
     if (R.s != null) rig.style.setProperty("--c", SQ[R.s].tx);
     p.appendChild(rig);
     if (conDom) {
-      parti.carta = el("div", { class: "mu-carta" }, [ argNodo(t, vm.arg, "mu-arg"), parti.testo = el("p", { class: "mu-testo" }) ]);
+      parti.carta = el("div", { class: "mu-carta" }, [ el("div", { class: "mu-carta-in" }, [ argNodo(t, vm.arg, "mu-arg"), parti.testo = el("p", { class: "mu-testo" }) ]) ]);
       parti.risp = el("div", { class: "mu-risposte n" + (vm.nr || 3) });
       p.appendChild(parti.carta); p.appendChild(parti.risp);
+      if (r === "su") parti.riempi = riempiCarta(parti.carta);   // (nella stanza la carta prende tutto il posto che resta: il testo la riempie)
     } else {
       p.appendChild(argNodo(t, vm.arg, "mu-argbig"));
       parti.opz = el("div", { class: "mu-opz" }); p.appendChild(parti.opz);
@@ -1273,6 +1353,7 @@
             parti.risp.appendChild(b); return b;
           });
         }
+        if (parti.riempi) parti.riempi();   // (dopo le risposte: la carta prende quello che resta)
       } else if (o && !fatteO) {
         fatteO = true;
         o.forEach(function (x, i) { parti.opz.appendChild(el("span", { class: "mu-o" }, [ el("b", { text: LETTERE[i] }), el("span", { text: x }) ])); });
@@ -1371,18 +1452,21 @@
     var p = el("div", { class: "mu-svela" });
     var rullo = el("div", { class: "mu-rullo" }, [ el("div", { class: "mu-tamburo", text: "🥁" }), el("div", { class: "mu-rullo-t", text: "La risposta giusta è…" }), argNodo(t, vm.arg, "mu-arg") ]);
     var corpo = el("div", { class: "mu-sv-corpo", hidden: "hidden" });
-    corpo.appendChild(el("div", { class: "mu-carta" }, [ argNodo(t, vm.arg, "mu-arg"), el("p", { class: "mu-testo" + (riv.testo && riv.testo.length > 110 ? " lunga" : riv.testo && riv.testo.length > 70 ? " media" : ""), text: riv.testo || "" }) ]));
+    var carta = el("div", { class: "mu-carta" }, [ el("div", { class: "mu-carta-in" }, [ argNodo(t, vm.arg, "mu-arg"), el("p", { class: "mu-testo" + (riv.testo && riv.testo.length > 110 ? " lunga" : riv.testo && riv.testo.length > 70 ? " media" : ""), text: riv.testo || "" }) ]) ]);
+    corpo.appendChild(carta);
+    var riempi = riempiCarta(carta);   // (la carta prende il posto che resta: il testo la riempie)
     var righe = el("div", { class: "mu-righe" });
     riv.opz.forEach(function (o, i) {
       var seg = el("span", { class: "mu-segni" });
-      riv.ris.forEach(function (x, s) { if (x && x.a === i) seg.appendChild(palla(t, s, 20)); });
+      riv.ris.forEach(function (x, s) { if (x && x.a === i) seg.appendChild(palla(t, s, 20, "cresce")); });
       righe.appendChild(el("div", { class: "mu-riga" + (i === riv.giusta ? " giusta" : "") }, [ el("b", { text: LETTERE[i] }), el("span", { class: "tx", text: o }), seg ]));
     });
     var senza = riv.ris.map(function (x, s) { return x && x.a < 0 ? s : -1; }).filter(function (s) { return s >= 0; });
     if (senza.length) {
-      var seg2 = el("span", { class: "mu-segni" }); senza.forEach(function (s) { seg2.appendChild(palla(t, s, 20)); });
+      var seg2 = el("span", { class: "mu-segni" }); senza.forEach(function (s) { seg2.appendChild(palla(t, s, 20, "cresce")); });
       righe.appendChild(el("div", { class: "mu-riga tempo" }, [ el("b", { text: "⏰" }), el("span", { class: "tx", text: "Nessuna risposta" }), seg2 ]));
     }
+    righe.className = "mu-righe n" + righe.childNodes.length;   // (le righe più alte se sono poche: lo schermo resta pieno)
     corpo.appendChild(righe);
     // come è andata alla mia squadra (o, per chi guarda, a tutte)
     var mio = miaS != null ? riv.ris[miaS] : null, esito;
@@ -1396,6 +1480,7 @@
     var passato = Date.now() - ui.t0;   // (chi arriva tardi: niente rullo)
     function svela(zitto) {
       rullo.hidden = true; corpo.hidden = false;
+      riempi();   // (ora che si vede: prima del disegno, niente lampeggio)
       if (zitto) { corpo.classList.add("subito"); return; }
       if (mio) { if (mio.ok) { SUONO.tada(); vibra([30, 40, 70]); } else SUONO.trombone(); }
       else if (riv.ris.some(function (x) { return x && x.ok; })) SUONO.tada();
@@ -1461,14 +1546,14 @@
   }
   function pannelloPunti(ui, vm, cb) {
     var t = ui.t, el = t.el, io = trovaP(vm, cb.myId), p = el("div", { class: "mu-punti" });
-    var ol = el("ol", { class: "mu-cl" });
-    squadreInFila(vm).forEach(function (r) {
+    var fila = squadreInFila(vm), ol = el("ol", { class: "mu-cl n" + fila.length });   // (n2, n3…: righe più alte se le squadre sono poche)
+    fila.forEach(function (r) {
       var d = (vm.delta || [])[r.s] || 0, nomi = vm.players.filter(function (x) { return x.sq === r.s && !x.via; }).map(function (x) { return x.id === cb.myId ? x.nome + " (tu)" : x.nome; }).join(" · ");
       var li = el("li", { class: (io && io.sq === r.s ? "mia" : "") }, [
-        el("span", { class: "pos", text: r.pos + "°" }), palla(t, r.s, 28),
+        el("span", { class: "pos", text: r.pos + "°" }), palla(t, r.s, 28, "cresce"),
         el("div", { class: "mu-cl-n" }, [ el("b", { text: SQ[r.s].nome }), el("span", { text: nomi || "—" }) ]),
-        el("span", { class: "mu-cl-d " + (d > 0 ? "su" : d < 0 ? "giu" : "zero"), text: fmtD(d) }),
-        el("span", { class: "mu-cl-p", text: fmtN(r.punti) }) ]);
+        // a destra i punti e sotto quanto sono cambiati (uno sopra l'altro: così il nome della squadra ha tutto il posto)
+        el("div", { class: "mu-cl-dx" }, [ el("span", { class: "mu-cl-p", text: fmtN(r.punti) }), el("span", { class: "mu-cl-d " + (d > 0 ? "su" : d < 0 ? "giu" : "zero"), text: fmtD(d) }) ]) ]);
       li.style.setProperty("--c", SQ[r.s].col);
       ol.appendChild(li);
     });
@@ -1507,15 +1592,16 @@
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale" }), el = t.el;
     // le faccine: si aspetta l'host, ci si prende in giro (chi guarda col link le ha già nella targhetta del core)
     var targa = !!t.guarda && !t.eliminazione, cl = vm.classifica || [], fac = targa ? null : t.faccine();
+    s.classList.add("mu-fine");   // (alta come lo schermo e PIENA: le righe crescono con l'altezza)
     if (targa) s.classList.add("mu-fine-targa");   // (il posto in basso per la targhetta)
-    var ol = el("ol", { class: "mu-fine-cl" + (cl.length > 3 ? " fitta" : "") }), med = medaglie(cl.map(function (r) { return r.pos; })), io = trovaP(vm, cb.myId);
+    var ol = el("ol", { class: "mu-fine-cl n" + cl.length }), med = medaglie(cl.map(function (r) { return r.pos; })), io = trovaP(vm, cb.myId);
     cl.forEach(function (r, i) {
       var mem = el("div", { class: "mu-fine-m" });
       (r.ids || []).forEach(function (id) {
         mem.appendChild(el("span", { class: "mu-fine-p" + (id === cb.myId ? " tu" : "") }, [ el("img", { alt: "", src: srcAvatar(OM[id], nomeDi(vm, id)) }), el("span", { text: nomeDi(vm, id) }) ]));
       });
       var li = el("li", { class: (r.pos === 1 ? "vince" : "") + (io && io.sq === r.s ? " mia" : "") }, [
-        el("span", { class: "pos", text: med[i] }), palla(t, r.s, 30),
+        el("span", { class: "pos", text: med[i] }), palla(t, r.s, 30, "cresce"),
         el("div", { class: "mu-fine-c" }, [ el("b", { text: SQ[r.s].nome + (io && io.sq === r.s ? " (voi)" : "") }), mem ]),
         el("span", { class: "mu-cl-p", text: fmtN(r.punti) }) ]);
       li.style.setProperty("--c", SQ[r.s].col);
@@ -1561,6 +1647,14 @@
 
   // ===================== LO STILE (🌙 Notte vivace: variabili --o-* e --n-* di css/styles.css; prefisso mu-) =====================
   var cssFatto = false;
+  // 📏 SCHERMI PIENI sui telefoni alti (10 nov 2026, il proprietario: «non voglio spazi vuoti, una grande schermata fatta bene»):
+  // fl(a, b) = una misura che vale a px su uno schermo alto 640 e b px su uno alto 915, in linea retta in mezzo e ferma fuori
+  // (clamp con --u = 1% dell'altezza VERA dello schermo, var(--alt) misurata da core.js). Così caratteri, tasti delle risposte,
+  // righe dei punteggi e della classifica crescono con l'altezza e lo spazio si riempie, e a 360x640 resta tutto com'era.
+  function fl(a, b) {
+    var K = (b - a) / 2.75, C = a - K * 6.4;
+    return "clamp(" + Math.min(a, b) + "px,calc(" + K.toFixed(3) + " * var(--u) + " + C.toFixed(2) + "px)," + Math.max(a, b) + "px)";
+  }
   function stile() {
     if (cssFatto) return; cssFatto = true;
     var st = document.createElement("style");
@@ -1589,6 +1683,9 @@
       ".mu-pl{display:inline-block;max-width:none;vertical-align:middle;flex:none;pointer-events:none;-webkit-user-drag:none}",
       // --- lo schermo di gioco ---
       ".schermata.mu-piena{padding:0!important;min-height:0;height:var(--alt,100dvh);overflow:hidden;background:var(--o-fondo)}",
+      ".schermata.mu-piena,.schermata.mu-fine{--u:calc(var(--alt,100dvh) / 100)}",   // (1% dell'altezza vera: le misure fl())
+      // le palline che crescono con lo schermo (palla(…, "cresce")): il diametro è --pd del contenitore
+      ".mu-pl.cresce{width:calc(var(--pd,20px) * 1.34)!important;height:calc(var(--pd,20px) * 1.34)!important;margin:calc(var(--pd,20px) * -0.17)!important}",
       ".schermata.mu-piena>.testa,.schermata.mu-piena>.piede{display:none}",
       ".schermata.mu-piena>.contenuto{height:100%;margin:0;padding:0}",
       ".mu-scena{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;gap:6px;padding:calc(6px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));overflow:hidden;user-select:none;-webkit-user-select:none;color:var(--o-testo)}",
@@ -1596,7 +1693,7 @@
       ".mu-scena.mu-con-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom))}",
       ".mu-barra{flex:none;display:flex;align-items:center;gap:8px;min-height:36px}",
       ".mu-esci{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:var(--o-testo);font:inherit;font-size:1.25rem;font-weight:900;cursor:pointer}",
-      ".mu-info{flex:1 1 auto;min-width:0;font-weight:900;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".mu-info{flex:1 1 auto;min-width:0;font-weight:900;font-size:" + fl(14.7, 17) + ";white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".mu-info.perd{color:#bcd4ff}.mu-info.vinc{color:#ffd978}",
       ".mu-badge{flex:none;font-weight:900;font-size:.8rem;padding:3px 9px;border-radius:99px;background:linear-gradient(135deg,#ff9a4a,#e0225a);color:#fff}",
       ".mu-mia{flex:none;display:flex;width:24px;justify-content:center}",
@@ -1610,14 +1707,23 @@
       ".mu-arg{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:900;color:var(--n-parole);text-transform:uppercase;letter-spacing:.04em}",
       ".mu-testo{margin:4px 0 0;font-size:1.18rem;font-weight:800;line-height:1.3}.mu-testo.media{font-size:1.06rem}.mu-testo.lunga{font-size:.96rem}",
       ".mu-risposte{flex:none;display:flex;flex-direction:column;gap:8px}",
-      // nella stanza: domanda e risposte INSIEME al centro (prima tra le due restava un gran vuoto), più grandi sui telefoni alti;
-      // la carta della domanda prende un po' d'altezza (si stringe fino al suo testo se manca posto)
-      ".mu-r-su .mu-carta{flex:0 1 clamp(112px,26vh,290px);margin-top:auto;display:flex;flex-direction:column;justify-content:center}",
-      ".mu-r-su .mu-carta .mu-arg,.mu-sv-corpo .mu-carta .mu-arg{align-self:flex-start}",
-      ".mu-r-su .mu-testo{font-size:clamp(1.18rem,3vh,1.55rem)}.mu-r-su .mu-testo.media{font-size:clamp(1.06rem,2.7vh,1.4rem)}.mu-r-su .mu-testo.lunga{font-size:clamp(.96rem,2.4vh,1.25rem)}",
-      ".mu-r-su .mu-risposte{flex:none;margin-bottom:auto;gap:10px}.mu-r-su .mu-ris{min-height:clamp(60px,10.5vh,100px);font-size:clamp(1.1rem,2.7vh,1.4rem)}",
-      ".mu-r-su .mu-ris b{width:clamp(26px,4.2vh,36px);height:clamp(26px,4.2vh,36px)}",
-      ".mu-r-su .mu-nota{font-size:.88rem}.mu-r-su .mu-statosq{margin-top:0}",
+      // nella stanza: lo schermo PIENO (prima a 412x915 restavano vuoti sopra la carta, dentro la carta e sotto le risposte).
+      // Le risposte sono tasti che crescono con l'altezza (più alti se sono solo 2), la carta della domanda prende tutto il resto
+      // e il testo la riempie (riempiCarta: il carattere più grande con cui ci sta, tra il minimo qui sotto e il massimo)
+      ".mu-r-su{gap:" + fl(7, 12) + "}",
+      ".mu-r-su .mu-ruolo{font-size:" + fl(13.4, 16.5) + "}",
+      ".mu-r-su .mu-carta,.mu-sv-corpo .mu-carta{flex:1 1 0;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;border-radius:" + fl(16, 22) + ";padding:" + fl(10, 18) + " " + fl(12, 18) + "}",
+      ".mu-carta-in{flex:none}",
+      ".mu-r-su .mu-arg,.mu-sv-corpo .mu-arg{font-size:" + fl(11.8, 15) + "}",
+      ".mu-r-su .mu-testo,.mu-sv-corpo .mu-testo{margin-top:" + fl(4, 8) + ";line-height:1.25;font-size:" + fl(19, 32) + "}",
+      ".mu-r-su .mu-testo.media,.mu-sv-corpo .mu-testo.media{font-size:" + fl(17, 28) + "}.mu-r-su .mu-testo.lunga,.mu-sv-corpo .mu-testo.lunga{font-size:" + fl(15.4, 25) + "}",
+      ".mu-r-su .mu-risposte{flex:none;gap:" + fl(9, 14) + "}",
+      ".mu-r-su .mu-ris{min-height:" + fl(66, 132) + ";font-size:" + fl(17.6, 24) + ";border-radius:" + fl(14, 18) + ";padding:6px " + fl(12, 18) + ";gap:" + fl(10, 14) + "}",
+      ".mu-r-su .mu-risposte.n2 .mu-ris{min-height:" + fl(80, 160) + ";font-size:" + fl(19, 28) + "}",
+      ".mu-r-su .mu-ris b{width:" + fl(27, 40) + ";height:" + fl(27, 40) + ";font-size:" + fl(12.8, 17) + "}",
+      // (la nota sempre alta due righe: quando si risponde cambia testo, e la carta non deve cambiare misura né il testo saltare)
+      ".mu-r-su .mu-nota{font-size:" + fl(14, 16.5) + ";line-height:1.25;min-height:2.5em;display:flex;align-items:center;justify-content:center}.mu-r-su .mu-statosq{margin-top:0}",
+      ".mu-statosq{--pd:" + fl(20, 25) + "}.mu-r-su .mu-ss{font-size:" + fl(12.2, 15) + ";padding:" + fl(2, 4) + " 9px " + fl(2, 4) + " 4px}",
       ".mu-ris{display:flex;align-items:center;gap:10px;min-height:48px;border:1px solid var(--o-filo-oro);border-radius:14px;padding:6px 12px;background:var(--o-carta);color:var(--o-testo);font:inherit;font-size:1rem;font-weight:800;text-align:left;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:var(--o-ombra)}",
       ".mu-ris b{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:.8rem}",
       ".mu-ris.sel{background:var(--o-carta-viva);border-color:var(--o-oro)}.mu-ris.sel b{background:var(--o-oro);color:#fff}",
@@ -1667,15 +1773,16 @@
       "@keyframes muBatti{from{transform:scale(1) rotate(-6deg)}to{transform:scale(1.12) rotate(6deg)}}",
       ".mu-rullo-t{font-size:1.3rem;font-weight:900}",
       ".mu-ripresa b{font-size:1.3rem}",
-      ".mu-sv-corpo{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:8px}",
-      // la rivelazione: domanda e risposte insieme al centro, l'esito in fondo (prima sotto le risposte restava un gran vuoto)
-      ".mu-sv-corpo .mu-carta{flex:0 1 clamp(104px,22vh,260px);margin-top:auto;display:flex;flex-direction:column;justify-content:center}",
-      ".mu-sv-corpo .mu-testo{font-size:clamp(1.18rem,2.9vh,1.5rem)}.mu-sv-corpo .mu-testo.media{font-size:clamp(1.06rem,2.6vh,1.35rem)}.mu-sv-corpo .mu-testo.lunga{font-size:clamp(.96rem,2.3vh,1.2rem)}",
-      ".mu-righe{display:flex;flex-direction:column;gap:6px}.mu-sv-corpo .mu-righe{margin-bottom:auto;gap:8px}",
-      ".mu-riga{display:flex;align-items:center;gap:9px;min-height:clamp(44px,8vh,80px);border-radius:14px;padding:5px 10px;background:var(--o-carta);border:1px solid var(--o-filo);font-weight:800;font-size:clamp(.98rem,2.4vh,1.25rem);animation:muScuro .5s .35s both}",
-      ".mu-riga>b{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:.8rem}",
+      ".mu-sv-corpo{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:" + fl(8, 12) + "}",
+      // la rivelazione: lo schermo PIENO anche qui (prima a 412x915 restavano 220 px vuoti sopra la carta e 190 tra le risposte e
+      // l'esito): righe delle risposte che crescono con l'altezza (più alte se sono poche), la carta prende il resto e il testo la
+      // riempie (riempiCarta), l'esito in fondo
+      ".mu-righe{display:flex;flex-direction:column;gap:6px}.mu-sv-corpo .mu-righe{flex:none;gap:" + fl(7, 12) + "}",
+      ".mu-riga{display:flex;align-items:center;gap:" + fl(9, 13) + ";min-height:" + fl(56, 116) + ";border-radius:" + fl(14, 18) + ";padding:5px " + fl(10, 16) + ";background:var(--o-carta);border:1px solid var(--o-filo);font-weight:800;font-size:" + fl(15.7, 24) + ";animation:muScuro .5s .35s both}",
+      ".mu-righe.n2 .mu-riga{min-height:" + fl(68, 150) + ";font-size:" + fl(17, 28) + "}.mu-righe.n4 .mu-riga{min-height:" + fl(48, 98) + "}",
+      ".mu-riga>b{flex:none;width:" + fl(26, 38) + ";height:" + fl(26, 38) + ";border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:" + fl(12.8, 16) + "}",
       ".mu-riga .tx{flex:1 1 auto;min-width:0}",
-      ".mu-segni{flex:none;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:52%}",
+      ".mu-segni{flex:none;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:52%;--pd:" + fl(20, 28) + "}",
       ".mu-riga.giusta{animation:muGiusta .5s .2s both;border-color:var(--n-monete);background:rgba(255,194,71,.16)}",
       ".mu-riga.giusta>b{background:var(--n-monete);color:#2b1d00}",
       ".mu-riga.giusta .tx::after{content:'  ✓';color:var(--n-monete);font-weight:900}",
@@ -1683,9 +1790,9 @@
       "@keyframes muGiusta{from{transform:scale(.96);opacity:.6}to{transform:none;opacity:1}}",
       "@keyframes muScuro{from{opacity:1}to{opacity:.6}}",
       ".mu-sv-corpo.subito .mu-riga{animation:none}.mu-sv-corpo.subito .mu-riga:not(.giusta){opacity:.6}",
-      ".mu-esito{flex:none;text-align:center;font-weight:900;font-size:.98rem;padding:8px 10px;border-radius:14px;background:rgba(255,255,255,.06)}",
+      ".mu-esito{flex:none;text-align:center;font-weight:900;font-size:" + fl(15.7, 20) + ";padding:" + fl(8, 13) + " 10px;border-radius:" + fl(14, 18) + ";background:rgba(255,255,255,.06)}",
       ".mu-esito.ok{background:rgba(255,194,71,.16);color:#ffd978}.mu-esito.no{background:rgba(90,130,255,.16);color:#bcd4ff}",
-      ".mu-chi-ris{text-align:center;font-size:.8rem;color:var(--o-tenue);font-weight:700}",
+      ".mu-chi-ris{flex:none;text-align:center;font-size:" + fl(12.8, 16) + ";color:var(--o-tenue);font-weight:700}",
       // i muri
       ".mu-muro{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px}",
       ".mu-muro-box{flex:1 1 auto;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}",
@@ -1697,9 +1804,10 @@
       ".mu-lampo.perdenti{background:radial-gradient(ellipse at 50% 70%,rgba(140,170,255,.7),rgba(140,170,255,0) 70%)}",
       ".mu-lampo.on{animation:muLampo .7s ease-out}",
       "@keyframes muLampo{0%{opacity:1}100%{opacity:0}}",
-      // (top = il bordo di sopra della pallina ferma: la scritta sta tutta sopra, translate −100%)
-      ".mu-piu{position:absolute;transform:translate(-50%,-100%);font-weight:900;font-size:1.05rem;line-height:1.1;white-space:nowrap;text-shadow:0 2px 6px rgba(0,0,0,.8);animation:muSale 1.35s ease-out both}",
-      "@keyframes muSale{0%{opacity:0;transform:translate(-50%,-100%) translateY(6px) scale(.8)}15%{opacity:1;transform:translate(-50%,-100%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-100%) translateY(-40px) scale(1)}}",
+      // (left/top li mette scritta(): sopra le palline ferme e sopra le altre scritte vive. Sale a velocità COSTANTE, lineare:
+      // VOLO.sale px in VOLO.ms, così due scritte che nascono separate restano separate)
+      ".mu-piu{position:absolute;left:0;top:0;font-weight:900;font-size:1.05rem;line-height:1.1;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.9),0 2px 6px rgba(0,0,0,.8);transform-origin:50% 100%;animation:muSale " + VOLO.ms + "ms linear both}",
+      "@keyframes muSale{0%{opacity:0;transform:translateY(0) scale(.75)}10%{opacity:1;transform:translateY(" + (-VOLO.sale * 0.1) + "px) scale(1.12)}22%{transform:translateY(" + (-VOLO.sale * 0.22) + "px) scale(1)}72%{opacity:1}100%{opacity:0;transform:translateY(" + (-VOLO.sale) + "px) scale(1)}}",
       ".mu-vuoto{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);width:86%;text-align:center;font-weight:900;font-size:1.15rem;padding:14px;border-radius:16px;background:rgba(13,16,32,.85);border:1px solid var(--o-filo-oro)}",
       ".mu-chips{flex:none;display:grid;gap:4px}",
       ".mu-chip{position:relative;border-radius:12px;padding:3px 2px 5px;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-top:3px solid var(--c);min-width:0}",
@@ -1710,35 +1818,51 @@
       ".mu-dl span{font-weight:900;font-size:12px;padding:1px 7px;border-radius:99px}",
       ".mu-dl .su{background:var(--n-monete);color:#2b1d00}.mu-dl .giu{background:#9fb6ff;color:#0e1840}",
       // i punteggi
-      ".mu-punti{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:8px}",
+      // (lo schermo PIENO: prima a 412x915 la lista stava al centro con 240 px vuoti sopra e 210 sotto. Ora le righe si dividono
+      // l'altezza, fino a un massimo che dipende da quante squadre ci sono, e caratteri e palline crescono con lo schermo)
+      ".mu-punti{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:" + fl(8, 12) + "}",
       ".mu-cl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}",
-      // (la classifica al centro e più grande sui telefoni alti: prima sotto restava mezzo schermo vuoto)
-      ".mu-punti .mu-cl{margin-top:auto}",
-      ".mu-cl li{display:flex;align-items:center;gap:9px;min-height:clamp(52px,8.6vh,84px);border-radius:14px;padding:5px 10px;background:var(--o-carta);border:1px solid var(--o-filo);box-shadow:inset 4px 0 var(--c)}",
+      ".mu-punti .mu-cl{flex:1 1 auto;min-height:0;justify-content:center;gap:" + fl(6, 11) + ";--pd:" + fl(28, 40) + "}",
+      ".mu-cl li{display:flex;align-items:center;gap:" + fl(9, 14) + ";min-height:" + fl(52, 66) + ";border-radius:" + fl(14, 18) + ";padding:5px " + fl(10, 16) + ";background:var(--o-carta);border:1px solid var(--o-filo);box-shadow:inset " + fl(4, 5) + " 0 var(--c)}",
+      ".mu-punti .mu-cl li{flex:1 1 0;max-height:" + fl(88, 134) + "}",
+      ".mu-punti .mu-cl.n4 li{max-height:" + fl(96, 158) + "}.mu-punti .mu-cl.n3 li{max-height:" + fl(110, 190) + "}.mu-punti .mu-cl.n2 li{max-height:" + fl(130, 220) + "}",
+      // (con poche squadre righe più alte e scritte più grandi)
+      ".mu-punti .mu-cl.n2 .mu-cl-n b,.mu-punti .mu-cl.n3 .mu-cl-n b{font-size:" + fl(17, 28) + "}.mu-punti .mu-cl.n2 .mu-cl-p,.mu-punti .mu-cl.n3 .mu-cl-p{font-size:" + fl(20, 36) + "}",
       ".mu-cl li.mia{background:rgba(255,255,255,.12)}",
-      ".mu-cl .pos{flex:none;width:24px;font-weight:900;color:var(--o-tenue)}",
-      ".mu-cl-n{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}.mu-cl-n b{font-size:clamp(.95rem,2.2vh,1.2rem)}.mu-cl-n span{font-size:clamp(.74rem,1.7vh,.9rem);color:var(--o-tenue);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-      ".mu-cl-d{flex:none;font-weight:900;font-size:.8rem;padding:2px 7px;border-radius:99px}",
+      ".mu-cl .pos{flex:none;width:" + fl(24, 34) + ";font-weight:900;font-size:" + fl(16, 21) + ";color:var(--o-tenue)}",
+      ".mu-cl-dx{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:" + fl(2, 5) + "}",
+      ".mu-cl-n{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:" + fl(0, 3) + "}.mu-cl-n b{font-size:" + fl(15.5, 24) + ";line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mu-cl-n span{font-size:" + fl(12, 16.5) + ";line-height:1.25;color:var(--o-tenue);font-weight:700;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}",
+      ".mu-cl-d{flex:none;font-weight:900;font-size:" + fl(12.8, 17) + ";padding:2px " + fl(7, 10) + ";border-radius:99px}",
       ".mu-cl-d.su{background:var(--n-monete);color:#2b1d00}.mu-cl-d.giu{background:#9fb6ff;color:#0e1840}.mu-cl-d.zero{background:rgba(255,255,255,.1);color:var(--o-tenue)}",
-      ".mu-cl-p{flex:none;min-width:58px;text-align:right;font-weight:900;font-size:clamp(1.1rem,2.5vh,1.4rem);font-variant-numeric:tabular-nums}",
-      ".mu-annuncio{display:flex;flex-direction:column;gap:3px;text-align:center;padding:10px;border-radius:16px;background:linear-gradient(135deg,rgba(255,154,74,.22),rgba(224,34,90,.22));border:1px solid rgba(255,154,74,.5);animation:muGiusta .6s both}",
-      ".mu-annuncio b{font-size:1.15rem}.mu-annuncio span{font-size:.82rem;color:var(--o-testo)}",
-      ".mu-avanti{flex:none;margin-top:auto;height:52px;display:flex;align-items:center;justify-content:center}",
-      ".mu-vai{width:auto;min-width:64%;margin:0}.mu-conto{margin:0;font-weight:800;color:var(--o-tenue)}",
+      ".mu-cl-p{flex:none;min-width:58px;text-align:right;font-weight:900;font-size:" + fl(18, 30) + ";font-variant-numeric:tabular-nums}",
+      ".mu-annuncio{flex:none;display:flex;flex-direction:column;gap:3px;text-align:center;padding:" + fl(10, 14) + ";border-radius:16px;background:linear-gradient(135deg,rgba(255,154,74,.22),rgba(224,34,90,.22));border:1px solid rgba(255,154,74,.5);animation:muGiusta .6s both}",
+      ".mu-annuncio b{font-size:" + fl(18.4, 23) + "}.mu-annuncio span{font-size:" + fl(13, 16) + ";color:var(--o-testo)}",
+      ".mu-avanti{flex:none;height:" + fl(52, 64) + ";display:flex;align-items:center;justify-content:center}",
+      ".mu-vai{width:auto;min-width:64%;margin:0;min-height:" + fl(48, 60) + ";font-size:" + fl(16.5, 20) + "}.mu-conto{margin:0;font-weight:800;color:var(--o-tenue);font-size:" + fl(16, 19) + "}",
       ".mu-punti>.sl-faccine,.mu-dom>.sl-faccine{align-self:center;flex:none}",
       // la classifica finale
-      ".mu-fine-cl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}",
-      ".mu-fine-cl li{display:flex;align-items:center;gap:9px;border-radius:16px;padding:7px 10px;background:var(--o-carta);border:1px solid var(--o-filo);box-shadow:inset 4px 0 var(--c)}",
+      // (lo schermo PIENO: prima a 412x915 restavano 220 px vuoti tra le faccine e i tasti. La schermata resta quella del core,
+      // alta almeno come lo schermo: il centro si allunga fino ai tasti, le righe si dividono l'altezza fino a un massimo e
+      // caratteri, avatar e palline crescono con lo schermo. NIENTE altezza fissa né scorrimento del centro: il core mostra
+      // «👥 Avete giocato con» solo se ci sta senza far scorrere, e con un centro che scorre la toglieva sempre)
+      ".schermata.mu-fine>.testa{margin-bottom:" + fl(10, 16) + "}",
+      ".schermata.mu-fine>.contenuto{display:flex;flex-direction:column}",
+      ".mu-fine-cl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:" + fl(7, 12) + ";--pd:" + fl(30, 34) + "}",
+      ".mu-fine .mu-fine-cl{flex:1 0 auto;justify-content:center}",
+      // (le righe crescono in ALTEZZA, non in larghezza: con due persone nella squadra nomi e avatar restano su una riga sola, e
+      // se la classifica ci sta senza scorrere il core può mostrare anche «👥 Avete giocato con»)
+      ".mu-fine-cl li{display:flex;align-items:center;gap:" + fl(9, 11) + ";border-radius:" + fl(16, 20) + ";padding:" + fl(6, 10) + " " + fl(9, 13) + ";background:var(--o-carta);border:1px solid var(--o-filo);box-shadow:inset " + fl(4, 5) + " 0 var(--c)}",
+      ".mu-fine .mu-fine-cl li{flex:1 1 auto;max-height:" + fl(96, 150) + "}",
+      ".mu-fine .mu-fine-cl.n2 li,.mu-fine .mu-fine-cl.n3 li{max-height:" + fl(120, 190) + "}",
       ".mu-fine-cl li.vince{border-color:var(--n-monete);background:rgba(255,194,71,.12)}",
       ".mu-fine-cl li.mia b{text-decoration:underline;text-decoration-color:var(--c);text-underline-offset:3px}",
-      ".mu-fine-cl .pos{flex:none;font-size:1.3rem;width:30px;text-align:center}",
-      ".mu-fine-c{flex:1 1 auto;min-width:0}.mu-fine-c b{font-size:1rem}",
-      ".mu-fine-m{display:flex;flex-wrap:wrap;gap:2px 8px;margin-top:2px}",
-      ".mu-fine-p{display:inline-flex;align-items:center;gap:3px;font-size:.78rem;font-weight:700;color:var(--o-tenue)}.mu-fine-p.tu{color:var(--o-testo)}",
-      ".mu-fine-p img{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.08)}",
-      ".mu-fine-cl.fitta li{padding:5px 9px}.mu-fine-cl.fitta .mu-fine-p img{width:18px;height:18px}",
-      // sui telefoni alti la classifica più grande (prima sotto restava mezzo schermo vuoto)
-      "@media (min-height:760px){.mu-fine-cl{gap:10px}.mu-fine-cl li,.mu-fine-cl.fitta li{min-height:74px;padding:10px 12px}.mu-fine-c b{font-size:1.15rem}.mu-fine-p{font-size:.88rem}.mu-fine-m{gap:4px 10px;margin-top:4px}.mu-fine-p img,.mu-fine-cl.fitta .mu-fine-p img{width:26px;height:26px}.mu-fine-cl .mu-cl-p{font-size:1.3rem}.mu-fine-cl .pos{font-size:1.6rem;width:36px}}",
+      ".mu-fine-cl .pos{flex:none;font-size:" + fl(20.8, 26) + ";width:" + fl(30, 36) + ";text-align:center}",
+      ".mu-fine-c{flex:1 1 auto;min-width:0}.mu-fine-c b{font-size:" + fl(16, 19.5) + "}",
+      ".mu-fine-m{display:flex;flex-wrap:wrap;gap:" + fl(2, 4) + " " + fl(8, 10) + ";margin-top:" + fl(2, 4) + "}",
+      ".mu-fine-p{display:inline-flex;align-items:center;gap:" + fl(3, 4) + ";font-size:" + fl(12.5, 14.5) + ";font-weight:700;color:var(--o-tenue)}.mu-fine-p.tu{color:var(--o-testo)}",
+      ".mu-fine-p img{width:" + fl(19, 26) + ";height:" + fl(19, 26) + ";border-radius:50%;background:rgba(255,255,255,.08)}",
+      ".mu-fine-cl .mu-cl-p{font-size:" + fl(18, 22) + "}",
+      ".mu-fine .sl-faccine.fine-faccine{flex:none;margin-top:" + fl(10, 16) + "}",
       ".schermata.mu-fine-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
       ".mu-arg-griglia .mu-cn{font-size:.72rem;font-weight:800;opacity:.75;margin-left:2px}",
       "@media (prefers-reduced-motion: reduce){.mu-tamburo,.mu-riga,.mu-annuncio,.mu-piu,.mu-lampo.on{animation:none!important}}"
@@ -1747,7 +1871,8 @@
   }
 
   // (per le prove: le regole senza grafica)
-  window.__muro = { NUM: NUM, SQ: SQ, cade: cade, percorso: percorso, posZona: posZona, chiavi: chiavi, durataMuro: durataMuro, scegliDomande: scegliDomande, domandaDi: domandaDi, idDom: idDom, impDi: impDi };
+  window.__muro = { NUM: NUM, SQ: SQ, cade: cade, percorso: percorso, posZona: posZona, chiavi: chiavi, durataMuro: durataMuro, scegliDomande: scegliDomande, domandaDi: domandaDi, idDom: idDom, impDi: impDi,
+    stile: stile, cascata: cascata };   // (stile e cascata: per le foto del muro da solo, es. le scritte «+500» che salgono)
 
   SG.registra({
     id: ID, nome: "Il Muro", icona: "🧱",

@@ -174,7 +174,8 @@
       if (JSON.stringify(vp.delta) !== JSON.stringify(delta)) no("domanda " + k + ": i punti della domanda sono " + JSON.stringify(vp.delta) + " invece di " + JSON.stringify(delta));
       punti = punti.map(function (x, s) { return x + delta[s]; });
       if (JSON.stringify(vp.punti) !== JSON.stringify(punti)) no("domanda " + k + ": i punti sono " + JSON.stringify(vp.punti) + " invece di " + JSON.stringify(punti));
-      if (vp.k === vp.tot - vp.ndop && !/Ultimo giro: punti doppi/.test(T(Z.w.Luca))) no("prima dell'ultimo giro Luca non legge «🔥 Ultimo giro: punti doppi!»");
+      // (si aspetta un attimo la foto sul telefono di Luca: l'host è già sui punteggi, Luca forse non ancora)
+      if (vp.k === vp.tot - vp.ndop && !await W.aspetta(function () { return /Ultimo giro: punti doppi/.test(T(Z.w.Luca)); }, 3000)) no("prima dell'ultimo giro Luca non legge «🔥 Ultimo giro: punti doppi!»");
       if (!await W.aspetta(function () { return /Si va avanti tra/.test(T(Z.w.Giulia)); }, 3000)) no("domanda " + k + ": Giulia non legge «Si va avanti tra…»");
       var bv = await W.aspetta(function () { return P.document.querySelector(".mu-vai"); }, 3000);
       if (!bv) no("domanda " + k + ": Paky non ha «Prossima domanda»");
@@ -716,8 +717,10 @@
     return "Ivo (entrata " + entrataDa + ") con le squadre tutte da 3: in «dopo», legge «Squadre piene: entri alla prossima partita», niente tasti, resta fuori per 2 domande (giocatori 6)";
   } });
 
-  // mu13 (k): in saletta, 6 persone in 2 squadre da 3 e ne arriva una settima: cosa succede alle squadre
-  COPIONE.aggiungi("mu13", { nome: "Il Muro: in saletta tutte le squadre da 3 e arriva una settima persona", fai: async function () {
+  // mu13 (k): in saletta, 6 persone in 2 squadre da 3 e ne arriva una settima: le squadre si sistemano da sole in 3,2,2 (si sposta
+  //           chi è nella stanza ed è arrivato per ultimo, mai chi è giù) e «Comincia» è acceso. Poi l'host sposta apposta uno di una
+  //           squadra da 2 (resterebbe una squadra da 1 con una da 3): lui resta dove l'ha messo l'host e il gioco ribilancia
+  COPIONE.aggiungi("mu13", { nome: "Il Muro: in saletta arriva la settima persona e le squadre si bilanciano da sole (3,2,2)", fai: async function () {
     var nomi = NOMI10.slice(0, 6), Z = await salaDi(nomi), S = Z.S, P = Z.w.Paky, C = await A.lanciaDallaSala("Paky", S, "Il Muro"), p6 = COPIONE.p6;
     if (!await W.aspetta(function () { return ids(C, "players").length === 6; }, 15000)) no("nella saletta non sono in 6");
     var Sw = await W.apriTel("Ivo", { hash: "sala=" + S, x: 925, salaSempre: true });
@@ -726,14 +729,35 @@
     if (!r) no("Ivo non vede né la saletta del Muro né un riquadro («" + T(Sw).slice(0, 120) + "»)");
     if (!Sw.document.querySelector(".mu-squadre")) { entrataDa = "col tasto («" + r.tasti.join(" | ") + "»)"; if (!await W.aspetta(function () { return W.clicca(Sw, /Entra/, ".sl-incorso button"); }, 4000)) no("Ivo non trova «Entra» («" + r.tasti.join(" | ") + "»)"); }
     if (!await W.aspetta(function () { return ids(C, "players").length === 7 && ids(C, "players").indexOf(idS) >= 0; }, 15000)) no("Ivo non entra nella saletta (giocatori " + ids(C, "players").length + ")");
-    await W.dorme(500);
-    var v = vm(C), tag = []; for (var s = 0; s < v.nsq; s++) tag.push(v.players.filter(function (p) { return p.sq === s; }).length);
+    function conta(v) { var tag = []; for (var s = 0; s < v.nsq; s++) tag.push(v.players.filter(function (p) { return p.sq === s; }).length); return tag; }
+    function giuOk(v) { for (var s = 0; s < v.nsq; s++) if (v.players.filter(function (p) { return p.sq === s && p.ruolo === "giu"; }).length !== 1) return false; return true; }
+    function bilanciate(v) { return v.nsq === 3 && conta(v).slice().sort().join() === "2,2,3" && giuOk(v); }
+    if (!await W.aspetta(function () { return bilanciate(vm(C)); }, 8000)) no("con 7 persone le squadre non si sono sistemate in 3,2,2 con uno giù per squadra: " + JSON.stringify(conta(vm(C))) + " (nsq " + vm(C).nsq + ") " + JSON.stringify(vm(C).players.map(function (p) { return p.nome + ":" + p.sq + p.ruolo; })));
+    var v = vm(C), tag = conta(v);
+    // chi si è spostato: non era giù, ed era nella stanza
+    var nuova = v.players.filter(function (p) { return p.sq === 2; });
+    if (!nuova.some(function (p) { return p.id === idS; })) no("Ivo non è nella squadra nuova (Viola): " + JSON.stringify(nuova.map(function (p) { return p.nome; })));
+    var spostato = nuova.filter(function (p) { return p.id !== idS; })[0];
+    if (!spostato) no("nella squadra Viola non è arrivato nessuno da una squadra da 3");
+    // il «Comincia» dell'host è acceso (niente nota «ha bisogno di un altro giocatore»)
+    if (!await W.aspetta(function () { return P.document.querySelector(".sl-go:not([disabled])"); }, 6000)) no("con le squadre 3,2,2 il «Comincia» di Paky è spento («" + T(P).slice(0, 200) + "»)");
+    if (/ha bisogno di/.test(T(P))) no("la saletta di Paky dice ancora che una squadra ha bisogno di qualcuno («" + T(P).slice(0, 200) + "»)");
     var testoP = T(P).slice(0, 400);
-    var cominciaOn = !!W.clicca ? !!P.document.querySelector(".sl-go:not([disabled])") : null;
-    if (v.nsq < 3) no("con 7 persone le squadre sono ancora " + v.nsq + " " + JSON.stringify(tag) + " (nsq " + v.nsq + "): una squadra da " + Math.max.apply(null, tag) + "?");
-    if (Math.max.apply(null, tag) > 3) no("c'è una squadra da " + Math.max.apply(null, tag) + " persone: " + JSON.stringify(tag));
+    // l'host sposta APPOSTA uno (nella stanza) di una squadra da 2 nella squadra dopo: la squadra da 2 resterebbe da 1 con una da 3.
+    // Lui resta dove l'ha messo l'host e il gioco ribilancia (si sposta un altro, mai chi è giù)
+    var da2 = null; for (var s = 0; s < 3; s++) if (tag[s] === 2) { da2 = s; break; }
+    var x = v.players.filter(function (p) { return p.sq === da2 && p.ruolo !== "giu"; })[0], dove = (da2 + 1) % 3;
+    if (!x) no("nella squadra " + da2 + " non c'è nessuno nella stanza da spostare");
+    var giuPrima = v.players.filter(function (p) { return p.ruolo === "giu"; }).map(function (p) { return p.id; }).sort().join();
+    var bx = [].filter.call(P.document.querySelectorAll(".mu-membro.b"), function (b) { return b.textContent.indexOf(x.nome) >= 0; })[0];
+    if (!bx) no("Paky non ha il nome di " + x.nome + " da toccare in saletta");
+    bx.click();
+    if (!await W.aspetta(function () { var w = vm(C), q = w.players.filter(function (p) { return p.id === x.id; })[0]; return q && q.sq === dove && bilanciate(w); }, 6000)) no("dopo lo spostamento di " + x.nome + " nella squadra " + dove + " le squadre non sono 3,2,2 con " + x.nome + " dove l'ha messo l'host: " + JSON.stringify(vm(C).players.map(function (p) { return p.nome + ":" + p.sq + p.ruolo; })));
+    var v2 = vm(C);
+    if (v2.players.filter(function (p) { return p.ruolo === "giu"; }).map(function (p) { return p.id; }).sort().join() !== giuPrima) no("ribilanciando si è spostato qualcuno che era giù: " + JSON.stringify(v2.players.map(function (p) { return p.nome + ":" + p.sq + p.ruolo; })));
+    if (!await W.aspetta(function () { return P.document.querySelector(".sl-go:not([disabled])"); }, 6000)) no("dopo lo spostamento dell'host il «Comincia» è spento");
     errori();
-    return "7 persone in saletta (Ivo entra " + entrataDa + "): squadre " + JSON.stringify(tag) + ", «Comincia» " + (cominciaOn ? "acceso" : "spento") + "; saletta di Paky: «" + testoP.replace(/\s+/g, " ").slice(0, 230) + "»";
+    return "7 persone in saletta (Ivo entra " + entrataDa + "): squadre " + JSON.stringify(tag) + " da sole (" + spostato.nome + " passa con Ivo), «Comincia» acceso; l'host sposta " + x.nome + " → " + JSON.stringify(conta(v2)) + " con " + x.nome + " dove l'ha messo; saletta di Paky: «" + testoP.replace(/\s+/g, " ").slice(0, 160) + "»";
   } });
 
 })();
