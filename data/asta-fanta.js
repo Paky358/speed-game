@@ -6,6 +6,8 @@
    Nome · Squadra · Ruolo.
    Formato: "Nome (Squadra)".
    ========================================================= */
+// 10 nov 2026: fuori dall'asta i difensori da 4 in giù e centrocampisti e attaccanti da 5 in giù (i portieri restano tutti, e Camarda: il proprietario
+// l'aveva tenuto per gli amici milanisti). Stanno nel gruppo X di ogni ruolo: solo in campo, con faccia e numero
 window.SG_FANTA_CALCIATORI = {
   // 10 nov 2026: le fasce rifatte sulle quotazioni di oggi (A i più quotati, poi B, poi C: stesse dimensioni di prima, i 10 nuovi aggiunti dove cadono)
   // ---------- PORTIERI ----------
@@ -65,12 +67,17 @@ window.SG_FANTA_CALCIATORI = {
       "Dragusin (Fiorentina)", "Favasuli (Napoli)", "Fortini (Torino)",
       "Juan Jesus (Venezia)", "Obert (Cagliari)", "Olivera (Napoli)",
       "Siebert (Lecce)", "Valdepenas (Fiorentina)", "Vojvoda (Udinese)",
-      "Zappacosta (Atalanta)", "Badiashile (Napoli)", "Bartesaghi (Milan)",
-      "Bernasconi (Atalanta)", "Heggem (Bologna)", "Holm (Bologna)",
-      "Idzes (Sassuolo)", "Beukema (Napoli)", "Buongiorno (Napoli)",
-      "Estupinan (Milan)", "Gabbia (Milan)", "Hien (Atalanta)",
-      "Kristensen T. (Atalanta)", "Marusic (Lazio)", "Pavard (Inter)",
-      "Rensch (Roma)", "Vitik (Bologna)", "Kossounou (Atalanta)"
+      "Zappacosta (Atalanta)"
+    ],
+    // X = SOLO IN CAMPO (10 nov 2026, il proprietario): fuori dall'asta per la quotazione bassa (da 4 in giù), ma giocano nella giornata
+    // con la loro squadra, con faccia e numero. Il mazzo dell'asta pesca solo da A, B e C
+    X: [
+      "Badiashile (Napoli)", "Bartesaghi (Milan)", "Bernasconi (Atalanta)",
+      "Heggem (Bologna)", "Holm (Bologna)", "Idzes (Sassuolo)",
+      "Beukema (Napoli)", "Buongiorno (Napoli)", "Estupinan (Milan)",
+      "Gabbia (Milan)", "Hien (Atalanta)", "Kristensen T. (Atalanta)",
+      "Marusic (Lazio)", "Pavard (Inter)", "Rensch (Roma)",
+      "Vitik (Bologna)", "Kossounou (Atalanta)"
     ]
   },
 
@@ -116,7 +123,11 @@ window.SG_FANTA_CALCIATORI = {
       "Musah (Milan)", "Piotrowski (Udinese)", "Thorstvedt (Sassuolo)",
       "Volpato (Sassuolo)", "Mkhitaryan (Inter)", "Monteiro J. (Lecce)",
       "Ndour (Fiorentina)", "Rodriguez Je. (Como)", "Winks (Cagliari)",
-      "Busio (Venezia)", "Locatelli (Juventus)", "Rowe (Atalanta)",
+      "Busio (Venezia)", "Locatelli (Juventus)", "Rowe (Atalanta)"
+    ],
+    // X = SOLO IN CAMPO (10 nov 2026, il proprietario): fuori dall'asta per la quotazione bassa (da 5 in giù), ma giocano nella giornata
+    // con la loro squadra, con faccia e numero. Il mazzo dell'asta pesca solo da A, B e C
+    X: [
       "Casadei (Torino)", "Pasalic (Atalanta)", "Pellegrini Lo. (Roma)",
       "Bernabe (Parma)", "Fazzini (Cagliari)", "Kone I. (Sassuolo)",
       "Thuram K. (Juventus)"
@@ -150,10 +161,15 @@ window.SG_FANTA_CALCIATORI = {
       "Nzola (Cagliari)", "Piccoli (Bologna)", "Boga (Juventus)",
       "Santos A. (Napoli)", "Yeboah J. (Venezia)", "Zeballos (Monza)",
       "Colombo (Genoa)", "Toure E. (Parma)", "Kevin Carlos (Cagliari)",
+      "Camarda (Milan)"
+    ],
+    // X = SOLO IN CAMPO (10 nov 2026, il proprietario): fuori dall'asta per la quotazione bassa (da 5 in giù), ma giocano nella giornata
+    // con la loro squadra, con faccia e numero. Il mazzo dell'asta pesca solo da A, B e C
+    X: [
       "Bobcek (Frosinone)", "Giovane (Napoli)", "Gnonto (Fiorentina)",
       "Vitinha O. (Genoa)", "Cutrone (Monza)", "Elphege (Parma)",
       "Geubbels (Lecce)", "Rrahmani Al. (Venezia)", "Ngonge (Monza)",
-      "Stulic (Lecce)", "Camarda (Milan)", "Sulemana K. (Atalanta)"
+      "Stulic (Lecce)", "Sulemana K. (Atalanta)"
     ]
   }
 };

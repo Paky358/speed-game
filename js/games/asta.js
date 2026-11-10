@@ -3119,7 +3119,7 @@
   function roseSerieA() {   // i calciatori del gioco squadra per squadra: { "Inter": [{ k: "Martinez L. (Inter)", nome, squadra, ruolo, q }] }
     if (ROSE_SA) return ROSE_SA;
     var DB = window.SG_FANTA_CALCIATORI || {}, out = {};
-    FANTA_ORD.forEach(function (r) { ["A", "B", "C"].forEach(function (t) { ((DB[r] || {})[t] || []).forEach(function (s) {
+    FANTA_ORD.forEach(function (r) { ["A", "B", "C", "X"].forEach(function (t) { ((DB[r] || {})[t] || []).forEach(function (s) {   // (X: solo in campo, fuori dall'asta dal 10 nov 2026: giocano lo stesso)
       var c = splitCalc(s); c.ruolo = r; (out[c.squadra] = out[c.squadra] || []).push({ k: chiaveCalc(c), nome: c.nome, squadra: c.squadra, ruolo: r, q: valoreCalc(c) });
     }); }); });
     return (ROSE_SA = out);
@@ -8285,7 +8285,8 @@
     return out;
   }
 
-  // il mazzo: i calciatori escono in un ordine TUTTO a caso (forti e scarsi mescolati, nessun ordine nascosto)
+  // il mazzo: i calciatori escono in un ordine TUTTO a caso (forti e scarsi mescolati, nessun ordine nascosto); solo dalle fasce A, B e C
+  // (il gruppo X, «solo in campo», non va mai all'asta: 10 nov 2026, il proprietario)
   function costruisciMazzoFanta(n) {
     var db = window.SG_FANTA_CALCIATORI || {};
     var need = { P: n, D: n, C: 2 * n, A: n }, tutti = [];

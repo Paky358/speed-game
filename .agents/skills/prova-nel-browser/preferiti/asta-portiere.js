@@ -3,6 +3,8 @@
 //
 // pu1 All'asta del fanta esce UN SOLO portiere per squadra (Inter e Napoli ne hanno due nel listone): 3.000 mazzi da 2 a 10
 //     giocatori, sempre un portiere a testa, mai due della stessa squadra; e i portieri escono tutti, prima o poi.
+//     (10 nov 2026) E il gruppo X «solo in campo» (difensori da 4 in giù, centrocampisti e attaccanti da 5 in giù, tranne Camarda)
+//     non esce MAI all'asta, ma gioca nella giornata: tutti sono nelle squadre di Serie A del gioco.
 // pu2 Sul maxischermo «🎯 1° RIGORISTA», «🦶 2° PUNIZIONI», «🚩 1° ANGOLI»: sempre il numero e la scritta per intero, piccole, una
 //     sotto l'altra a destra in basso; la maglia grande come senza scritte; nome, squadra e prezzo interi e mai sotto le scritte
 //     (360x640, 320x568, 412x915, 390x844).
@@ -14,7 +16,7 @@
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {};
     var aggancio = "function costruisciMazzoFanta(n) {";
     if (src.indexOf(aggancio) < 0) no("non trovo il mazzo del fanta nel file del gioco");
-    src = src.replace(aggancio, "FUORI.mazzo = costruisciMazzoFanta; FUORI.etichette = etichetteTiri; FUORI.maxischermo = maxischermo; " + aggancio);
+    src = src.replace(aggancio, "FUORI.mazzo = costruisciMazzoFanta; FUORI.rose = roseSerieA; FUORI.etichette = etichetteTiri; FUORI.maxischermo = maxischermo; " + aggancio);
     new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, fuori);
     return fuori;
   }
@@ -23,8 +25,17 @@
     ["A", "B", "C"].forEach(function (t) { (db[t] || []).forEach(function (s) { var sq = /\(([^)]+)\)/.exec(s)[1]; perSq[sq] = (perSq[sq] || 0) + 1; }); });
     var doppie = Object.keys(perSq).filter(function (k) { return perSq[k] > 1; });
     if (doppie.length < 2) no("nel listone non ci sono più squadre con due portieri (" + doppie.join(", ") + "): la prova non serve più così");
+    var L = w.SG_FANTA_CALCIATORI, Q = w.SG_FANTA_QUOTAZIONI.valori, SOGLIA = { D: 4, C: 5, A: 5 }, X = {}, nX = 0;
+    ["D", "C", "A"].forEach(function (r) {
+      (L[r].X || []).forEach(function (k) { var mk = /^(.*) \(([^)]+)\)$/.exec(k); X[mk[1] + "|" + mk[2]] = 1; nX++; if (!(Q[k] <= SOGLIA[r])) no(k + " è «solo in campo» ma vale " + Q[k]); });
+      ["A", "B", "C"].forEach(function (t) { (L[r][t] || []).forEach(function (k) { if (Q[k] <= SOGLIA[r] && k !== "Camarda (Milan)") no(k + " vale " + Q[k] + " ma è ancora all'asta"); }); });
+    });
+    if (nX < 30) no("il gruppo «solo in campo» ha solo " + nX + " calciatori");
+    var rose = M.rose(), inRosa = {}; Object.keys(rose).forEach(function (sq) { rose[sq].forEach(function (c) { inRosa[c.nome + "|" + c.squadra] = 1; }); });
+    Object.keys(X).forEach(function (k) { if (!inRosa[k]) no(k + " non gioca nella giornata"); });
     for (var i = 0; i < 3000; i++) {
       var n = 2 + (i % 9), m = M.mazzo(n), P = m.filter(function (c) { return c.ruolo === "P"; }), sq = {};
+      m.forEach(function (c) { if (X[c.nome + "|" + c.squadra]) no(c.nome + " (" + c.squadra + ") è «solo in campo» ma esce all'asta"); });
       if (P.length !== n) no("con " + n + " giocatori i portieri sono " + P.length);
       P.forEach(function (c) { if (sq[c.squadra]) no("due portieri del " + c.squadra + " nello stesso mazzo: " + P.map(function (y) { return y.nome; }).join(", ")); sq[c.squadra] = 1; visti[c.nome] = 1; });
     }
@@ -32,6 +43,7 @@
     if (Object.keys(visti).length !== tutti) no("escono solo " + Object.keys(visti).length + " portieri su " + tutti);
     try { Object.keys(w.localStorage).forEach(function (k) { if (/fanta_/.test(k)) w.localStorage.removeItem(k); }); } catch (e) {}
     x.push("3.000 mazzi da 2 a 10: sempre un portiere a testa, mai due della stessa squadra (" + doppie.join(", ") + " ne hanno due); escono tutti i " + tutti);
+    x.push(nX + " «solo in campo»: mai all'asta, tutti nelle squadre della giornata");
     return x.join("; ");
   } });
   COPIONE.aggiungi("pu2", { nome: "Mini Asta Fantacalcio: rigorista, punizioni e angoli sempre col numero e la scritta intera", fai: async function () {

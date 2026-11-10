@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 328,
+    data: "10 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: all'asta solo chi gioca 🔨",
+    descrizione: [
+      "All'asta non escono più i calciatori con la quotazione più bassa: i difensori da 4 in giù, i centrocampisti e gli attaccanti da 5 in giù. I portieri restano tutti, e resta Camarda.",
+      "⚽ Nella giornata dopo l'asta giocano lo stesso con la loro squadra, con la loro faccia e il loro numero."
+    ]
+  },
+  {
     v: 327,
     data: "10 novembre 2026",
     titolo: "Mini Asta Fantacalcio: le buste si aprono senza scatti ✉️",
