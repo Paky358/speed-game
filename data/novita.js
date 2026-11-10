@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 330,
+    data: "10 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: il maxischermo intero e le figurine che suonano 🃏",
+    descrizione: [
+      "Sul maxischermo dell'asta non si taglia più niente: il sacchetto 💰 accanto al prezzo è più piccolo e «🆚 Frosinone» sta nella riga del ruolo e della squadra.",
+      "🃏 Alla scoperta delle rose ogni figurina che si gira ha il suo suono, e l'ultima, il colpo più caro, suona più forte. Prima si sentiva solo la prima."
+    ]
+  },
+  {
     v: 328,
     data: "10 novembre 2026",
     titolo: "Mini Asta Fantacalcio: all'asta solo chi gioca 🔨",

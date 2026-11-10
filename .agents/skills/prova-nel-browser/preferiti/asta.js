@@ -912,6 +912,39 @@
     if (n !== 5) no("da solo le buste sono " + n + " (voluto 5: la rosa)");
     return "5 buste da 1 credito, la rosa completa e la classifica";
   } });
+  // su1 🃏 (10 nov 2026, il proprietario: «si sente solamente il suono iniziale… ed esce solamente il primo, poi gli altri sono senza suono»): alla
+  //     scoperta della rosa ogni figurina che si gira ha il suo suono (fruscio + due note che salgono), l'ultima (la più cara) il piatto e quattro
+  //     note; il «ti ti ti» della carica solo all'inizio. Da solo come IL PAPPONE, a buste, con l'orecchio finto (audioFinto: registra le note)
+  COPIONE.aggiungi("su1", { nome: "Fanta: alla scoperta della rosa un suono per ogni figurina, più forte l'ultima", fai: async function () {
+    var P = await W.apriTel("IL PAPPONE", { x: 0, pa: true, prima: function (w) { A.audioFinto(w); w.__imp = { formato: "fanta", compra: "buste", giornata: false }; } }), fino = Date.now() + 120000;
+    senzaAnimazioni(P);
+    var tess = await W.aspetta(function () { return A.tessera(P, "Mini Asta Fantacalcio"); }, 6000); if (!tess) no("non trovo la tessera del fanta");
+    tess.click(); await W.dorme(400);
+    if (!W.clicca(P, /Su questo telefono/, ".modo-grande")) no("non c'è «Su questo telefono»");
+    await W.aspetta(function () { return q(P, ".sala-riga input"); }, 3000);
+    while (qa(P, ".sala-riga input").length > 1) { var tg = bott(P, ".sala-riga button", /✕|Togli|−/); if (!tg) break; tg.click(); await W.dorme(60); }
+    qa(P, ".sala-riga input").forEach(function (c) { c.value = "IL PAPPONE"; c.dispatchEvent(new P.Event("input", { bubbles: true })); });
+    for (var k = 0; k < 10 && !q(P, ".as-bus-testa") && !/Passa il telefono/.test(T(P)); k++) { await W.dorme(300); var b = qa(P, ".schermata .piede button").filter(function (x) { return /Avanti|Comincia|Gioca|Inizia|Via|▶/.test(x.textContent) && !x.disabled; })[0]; if (b) b.click(); }
+    while (Date.now() < fino && !q(P, ".st-rivela")) {
+      if (/Passa il telefono a/.test(T(P))) { W.clicca(P, /^Sono /); await W.dorme(100); continue; }
+      if (q(P, ".as-bus-testa")) { await scriviBusta(P, function () { return 1; }); await W.dorme(100); continue; }
+      await W.dorme(200);
+    }
+    if (!q(P, ".st-rivela")) no("non arriva alla scoperta della rosa");
+    var t0 = (P.__note.length ? P.__note[P.__note.length - 1].t : 0) + 0.01;   // (le note da qui in poi: la scoperta)
+    if (!await W.aspetta(function () { return /° posto|° per valore/.test(T(P)); }, 12000)) no("la scoperta non finisce");
+    await W.dorme(500);
+    var l = P.__note.filter(function (x) { return x.t >= t0; }), vicino = function (a, b) { return Math.abs(a - b) <= 2; };
+    var carte = [0, 1, 2, 3].map(function (i) { var f = Math.round(660 * Math.pow(1.12, i)), g = Math.round(990 * Math.pow(1.12, i)); return l.filter(function (x) { return vicino(x.f, f); })[0] && l.filter(function (x) { return vicino(x.f, g); })[0] ? l.filter(function (x) { return vicino(x.f, f); })[0].t : null; });
+    var top = [784, 988, 1175, 1568].every(function (f) { return l.some(function (x) { return x.f === f; }); }) ? l.filter(function (x) { return x.f === 1568; })[0].t : null;
+    if (carte.some(function (t) { return t == null; })) no("non tutte le figurine hanno il loro suono: " + JSON.stringify(carte) + " (note: " + l.map(function (x) { return x.f; }).join(",") + ")");
+    if (top == null) no("l'ultima figurina non ha il suono forte (note: " + l.map(function (x) { return x.f; }).join(",") + ")");
+    for (var i = 1; i < 4; i++) if (!(carte[i] - carte[i - 1] > 0.4 && carte[i] - carte[i - 1] < 1.2)) no("le figurine non si girano a tempo regolare: " + JSON.stringify(carte));
+    if (!(top - carte[3] > 1)) no("l'ultima non arriva dopo una pausa: " + carte[3] + " → " + top);
+    var tic = l.filter(function (x) { return x.f >= 520 && x.f <= 600; });   // (FX.tic: 520 + 700 × p, e la carica dura i primi 420 ms: p < 0,1)
+    if (tic.some(function (x) { return x.t > carte[0] + 0.05; })) no("il «ti ti ti» della carica continua dopo la prima figurina");
+    return "4 figurine col loro suono ogni " + Math.round((carte[3] - carte[0]) / 3 * 100) / 100 + " s, l'ultima col piatto " + Math.round((top - carte[3]) * 10) / 10 + " s dopo; carica: " + tic.length + " «ti»";
+  } });
   COPIONE.aggiungi("bu4", { nome: "Fanta a buste online in 3: offerte segrete, chi ricarica, spareggio, ruota, misure, fino alla classifica", fai: async function () {
     var NOMI = ["Paky", "Giulia", "Luca"], o = await telefoniOnline({ formato: "fanta", compra: "buste", giornata: false }, NOMI), P = o.P, C = o.C, x = [], misure = [], fatto = 0, fino = Date.now() + 360000, vistoN = 0;
     function win(n) { return n === "Paky" ? P : W.finestra(n); }

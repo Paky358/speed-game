@@ -16,7 +16,7 @@
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {};
     var aggancio = "function costruisciMazzoFanta(n) {";
     if (src.indexOf(aggancio) < 0) no("non trovo il mazzo del fanta nel file del gioco");
-    src = src.replace(aggancio, "FUORI.mazzo = costruisciMazzoFanta; FUORI.rose = roseSerieA; FUORI.etichette = etichetteTiri; FUORI.maxischermo = maxischermo; " + aggancio);
+    src = src.replace(aggancio, "FUORI.mazzo = costruisciMazzoFanta; FUORI.rose = roseSerieA; FUORI.prezzo = prezzoSchermo; FUORI.etichette = etichetteTiri; FUORI.maxischermo = maxischermo; " + aggancio);
     new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, fuori);
     return fuori;
   }
@@ -59,7 +59,7 @@
     var M = await motore(P), document = P.document, f = window.document.getElementById("tel-Paky");
     var el = function (tag, a, figli) { var e = document.createElement(tag); a = a || {}; Object.keys(a).forEach(function (k) { if (k === "class") e.className = a[k]; else if (k === "style") e.style.cssText = a[k]; else e.setAttribute(k, a[k]); }); (figli || []).forEach(function (c) { if (c) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); }); return e; };
     var casi = [[0, 0, 0], [1, 1, 1], [2, 3, 1], [3, 3, 3], [1, 0, 2], [0, 2, 0]], parole = ["RIGORISTA", "PUNIZIONI", "ANGOLI"], nomi = ["Mastantuono", "Calhanoglu", "Kean"];
-    var misure = [[360, 640], [320, 568], [412, 915], [390, 844]];
+    var misure = [[360, 640], [320, 568], [412, 915], [390, 844], [360, 700], [384, 780]];   // (360x700: il Galaxy del proprietario con l'app installata, 10 nov 2026)
     for (var i = 0; i < misure.length; i++) {
       f.style.width = misure[i][0] + "px"; f.style.height = misure[i][1] + "px"; void document.documentElement.offsetHeight; P.dispatchEvent(new P.Event("resize")); await W.dorme(400);
       var vero = document.querySelector(".st-stadio .st-board"), base = null;   // (base: dove stanno nome e prezzo senza scritte, su questo telefono)
@@ -68,11 +68,16 @@
         S.schermo.classList.remove("vuoto"); S.ruolo.textContent = "CEN"; S.ruolo.className = "st-ruolo as-rb-C"; S.squadra.textContent = "FIORENTINA"; S.nome.textContent = nomi[k % 3];
         S.magliaImg.src = vero.querySelector(".st-maglia").src || "carte/giochi/astafanta.jpg";
         M.etichette(S, cs[0], cs[1], cs[2]);   // (come nel gioco: il prezzo e chi offre arrivano subito dopo)
-        S.prezzoN.textContent = "12 💰"; S.chi.textContent = S.corto ? "di IL PAPPONE" : "offerta di IL PAPPONE";
+        var conVs = k % 2 === 0; S.vs.textContent = conVs ? "🆚 Frosinone" : ""; S.vs.style.display = conVs ? "" : "none";   // (🆚 contro chi gioca: acceso di partenza dall'8 nov)
+        M.prezzo(S.prezzoN, "12"); S.chi.textContent = S.corto ? "di IL PAPPONE" : "offerta di IL PAPPONE";
         var d = S.schermo.querySelector(".st-dati").getBoundingClientRect(), sc = S.schermo.getBoundingClientRect(), dove = misure[i].join("x") + " " + cs.join("/") + " " + S.nome.textContent;
+        // (10 nov 2026, il proprietario: «il ruolo si vede tagliato»): tutto dentro lo schermo, dal ruolo in alto al prezzo in basso (sopra la scritta che scorre)
+        var dentro = S.schermo.querySelector(".st-dentro").getBoundingClientRect(), ru0 = S.ruolo.getBoundingClientRect(), pz0 = S.prezzoN.getBoundingClientRect(), chi0 = S.chi.getBoundingClientRect(), vs0 = S.vs.getBoundingClientRect();
+        // («🆚 Frosinone» sta nella riga di ruolo e squadra, sopra il nome: almeno un pezzo leggibile, mai fuori dal riquadro)
+        if (ru0.top < sc.top + 1 || pz0.bottom > dentro.bottom + 1 || chi0.bottom > dentro.bottom + 1 || (conVs && (vs0.top < ru0.top - 3 || vs0.bottom > testo(S.nome).top + 3 || vs0.right > d.right + 1 || vs0.width < 24))) ko.push(dove + (conVs ? " con 🆚" : "") + ": tagliato (ruolo " + Math.round(ru0.top - sc.top) + " px dal bordo di sopra, prezzo " + Math.round(dentro.bottom - pz0.bottom) + " px dal fondo)");
         function testo(n) { var r = document.createRange(); r.selectNodeContents(n); return r.getBoundingClientRect(); }   // (dove sta davvero la scritta)
         function sopra(a, b) { return a.width && b.width && a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1; }
-        var occupati = [["il nome", testo(S.nome)], ["il prezzo", testo(S.prezzoN)], ["chi offre", S.chi.getBoundingClientRect()], ["il ruolo", S.ruolo.getBoundingClientRect()], ["la squadra", testo(S.squadra)]];
+        var occupati = [["il nome", testo(S.nome)], ["il prezzo", testo(S.prezzoN)], ["chi offre", S.chi.getBoundingClientRect()], ["il ruolo", S.ruolo.getBoundingClientRect()], ["la squadra", testo(S.squadra)]].concat(conVs ? [["il 🆚", vs0]] : []);
         [S.rig, S.pun, S.ang].forEach(function (b, j) {
           var atteso = cs[j] ? (["🎯 ", "🦶 ", "🚩 "][j] + cs[j] + "° " + parole[j]) : "";
           if (b.textContent !== atteso) ko.push(dove + ": «" + b.textContent + "» invece di «" + atteso + "»");
@@ -89,8 +94,8 @@
       });
     }
     f.style.width = "360px"; f.style.height = "740px"; P.dispatchEvent(new P.Event("resize"));
-    if (ko.length) no(ko.slice(0, 6).join(" · ") + (ko.length > 6 ? " … (" + ko.length + ")" : ""));
-    x.push("5 casi su 4 telefoni (360x640, 320x568, 412x915, 390x844) nello stadio vero: numero e scritta sempre interi, a destra in basso; maglia grande come prima; nome, squadra e prezzo interi e scoperti");
+    if (ko.length) no(ko.slice(0, W.__tutti ? 99 : 6).join(" · ") + (ko.length > 6 ? " … (" + ko.length + ")" : ""));
+    x.push("6 casi su 6 telefoni (360x640, 320x568, 412x915, 390x844, 360x700, 384x780) nello stadio vero, con e senza «🆚»: numero e scritta sempre interi, a destra in basso; maglia grande come prima; nome, squadra e prezzo interi e scoperti; ruolo e prezzo dentro lo schermo");
     return x.join("; ");
   } });
 })();

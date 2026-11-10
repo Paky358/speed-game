@@ -375,24 +375,24 @@
     // ---- lo stadio: maxischermo, campo grande con l'allenatore, panchina ----
     ".schermata.st-stadio{background:linear-gradient(180deg,#06112b 0%,#0c2150 30%,#1a2f3e 52%,#1d5a2b 60%,#226b31 100%);}",
     ".st-board{flex:none;margin:4px 12px 0;padding:5px;border-radius:12px;background:linear-gradient(180deg,#444a54,#1d2026);box-shadow:0 0 0 2px #0b0c0f,0 14px 30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.2);}",
-    ".st-schermo{position:relative;overflow:hidden;border-radius:7px;height:clamp(92px,calc(var(--alt,100dvh)*.155),146px);background:#0c1424;}",
+    ".st-schermo{position:relative;overflow:hidden;border-radius:7px;height:clamp(100px,calc(var(--alt,100dvh)*.17),150px);background:#0c1424;}",
     ".st-colori{position:absolute;inset:0;}",
     ".st-led{position:absolute;inset:0;pointer-events:none;z-index:3;background-image:radial-gradient(circle,rgba(0,0,0,0) 52%,rgba(0,0,0,.26) 56%);background-size:4px 4px;}",
-    ".st-dentro{position:absolute;z-index:2;left:0;right:0;top:0;bottom:24px;display:flex;align-items:center;gap:8px;padding:6px 10px;transition:opacity .2s;}",
+    ".st-dentro{position:absolute;z-index:2;left:0;right:0;top:0;bottom:24px;display:flex;align-items:center;gap:8px;padding:3px 10px;transition:opacity .2s;}",
     ".st-schermo.vuoto .st-dentro{opacity:0;}",
     ".st-schermo.entra .st-dentro{animation:stEntra .5s cubic-bezier(.2,1.3,.4,1);}",
     "@keyframes stEntra{from{transform:translateX(26%);opacity:0}to{transform:none;opacity:1}}",
     ".st-magliabox{flex:0 0 27%;height:100%;display:flex;align-items:center;justify-content:center;}",
     ".st-maglia{max-height:100%;max-width:100%;}",
-    ".st-dati{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding:4px 8px;border-radius:8px;background:rgba(0,0,0,.34);text-shadow:0 2px 4px rgba(0,0,0,.7);}",
+    ".st-dati{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.34);text-shadow:0 2px 4px rgba(0,0,0,.7);}",
     ".st-dati .st-riga{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;min-width:0;margin-top:0;}",   // (st-riga c'è anche nelle statistiche dell'app, che la mandano a capo: qui sempre su una riga)
-    ".st-ruolo{flex:none;font-size:.62rem;font-weight:900;letter-spacing:.04em;padding:3px 7px;border-radius:6px;color:#0d1230;text-shadow:none;}",
+    ".st-ruolo{flex:none;font-size:.62rem;font-weight:900;letter-spacing:.04em;padding:2px 6px;border-radius:6px;color:#0d1230;text-shadow:none;}",
     ".st-ruolo-classifica{background:#ffd43b;color:#3a2200;}",
     ".st-rig,.st-pun{flex:none;font-size:.62rem;font-weight:900;letter-spacing:.03em;padding:2px 6px;border-radius:6px;background:#ffd43b;color:#3a2200;text-shadow:none;white-space:nowrap;}.st-rig:empty,.st-pun:empty{display:none;}.st-pun{background:#a5d8ff;color:#06263f;}.st-ang{background:#b2f2bb;color:#0b3d17;}.st-rig.stretta,.st-pun.stretta{font-size:.54rem;padding:2px 4px;letter-spacing:0;}",
     ".st-squadra{min-width:0;font-size:.76rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
     ".st-nome{font-size:clamp(1.2rem,6vw,1.75rem);font-weight:900;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
     ".st-prezzo{display:flex;align-items:baseline;gap:8px;min-width:0;}",
-    ".st-prezzo b{font-size:clamp(1.45rem,7vw,2rem);color:#ffe066;line-height:1;white-space:nowrap;}",
+    ".st-prezzo b{font-size:clamp(1.45rem,7vw,2rem);color:#ffe066;line-height:1;white-space:nowrap;}.st-prezzo b .st-sacco{font-size:.62em;line-height:0;vertical-align:.1em;}",
     ".st-prezzo span{font-size:.72rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
     ".st-contatore b{font-size:clamp(2rem,10vw,2.9rem);font-variant-numeric:tabular-nums;}",
     ".st-ticker{position:absolute;z-index:2;left:0;right:0;bottom:0;height:24px;line-height:24px;padding:0 10px;background:rgba(0,0,0,.6);color:#ffd43b;font-weight:900;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em;}",
@@ -560,7 +560,7 @@
     ".st-linea-f{background:#e0225a;transform-origin:0 50%;transform:scaleX(0);transition:transform .4s linear;}",
     ".st-linea-t{position:absolute;top:4px;width:1px;height:11px;background:rgba(255,255,255,.45);}.st-linea-t.z{background:rgba(255,120,150,.75);}",
     ".st-linea-e span{position:absolute;top:1px;transform:translateX(-50%);font-size:10px;line-height:1;padding:1px;border-radius:50%;background:rgba(6,12,30,.7);box-shadow:0 0 0 1.5px var(--pc);}.st-linea-e span.g{font-size:12px;top:0;}",
-    ".st-vs{font-size:.72rem;font-weight:800;opacity:.9;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:-2px;}",
+    ".st-vs{flex:0 100 auto;min-width:0;font-size:.72rem;font-weight:800;opacity:.9;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.st-riga .st-squadra{flex:0 1 auto;}",
     ".st-premi-tasto{display:block;margin:10px auto 0;}",
     ".st-premi{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(5,8,20,.6);}",
     ".st-premi-in{width:100%;max-width:420px;max-height:100%;overflow:auto;background:#151a2e;border-radius:18px;padding:14px 12px;box-shadow:0 16px 40px rgba(0,0,0,.6);color:#f4f5fb;}",
@@ -948,6 +948,15 @@
     conta: function (i) { beep([i === 2 ? 1175 : 880], 0.08, "square"); },          // "5 e uno… 5 e due… 5 e tre…"
     tic: function (p) { beep([520 + Math.round(p * 700)], 0.035, "square"); },      // il contatore del valore delle rose (sale di tono)
     pop: function () { beep([880, 1320], 0.08, "triangle"); },                       // la maglia arriva nel campetto (solo suono: niente vibrazione senza tocco)
+    // 🃏 (10 nov 2026, il proprietario: «un suono per ogni carta che ti esce, magari un suono più forte all'ultimo giocatore») la figurina che si gira:
+    // un fruscio di carta e due note che salgono carta dopo carta; l'ultima (la più cara) col colpo di piatto e quattro note
+    cartaGira: function (i) {
+      var c = ctx(); if (!c || document.hidden) return;
+      try { var t = c.currentTime, so = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(); so.buffer = rumore(c); fl.type = "bandpass"; fl.frequency.value = 2600; fl.Q.value = 0.9;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.14, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1); so.connect(fl); fl.connect(g); g.connect(c.destination); so.start(t); so.stop(t + 0.12); } catch (e) {}
+      var k = Math.pow(1.12, i || 0); beep([660 * k, 990 * k], 0.09, "triangle");
+    },
+    cartaTop: function () { if (document.hidden) return; piatto(); beep([784, 988, 1175, 1568], 0.2, "triangle"); },
     posto: function () { beep([660, 990], 0.14, "triangle"); },
     festa: function () { beep([660, 880, 1046, 1318], 0.2, "triangle"); },
     maledetta: function () { beep([392, 311, 233], 0.24, "sawtooth"); },                // 🧨 esce la carta maledetta (tre note che scendono)
@@ -2406,6 +2415,14 @@
     var p = posa !== "giu" && prezzo != null ? String(prezzo) : "";
     if (p !== S.palN.textContent) { S.palN.textContent = p; if (p) rianima(S.pal, "batte"); }
   }
+  // 💰 il prezzo sul maxischermo: la cifra grande e il sacchetto piccolo, che non allarga la riga (10 nov 2026, il proprietario: «il ruolo si vede
+  // tagliato… la soluzione potrebbe essere rimpicciolire il sacchetto con i soldi»); anche la busta ✉️ al posto del prezzo è piccola
+  function prezzoSchermo(b, n) {
+    var t = n == null ? "" : String(n); if (b.__pz === t && b.isConnected) return; b.__pz = t;
+    function sacco(x) { var e = document.createElement("span"); e.className = "st-sacco"; e.textContent = x; return e; }
+    if (t === "✉️") { b.textContent = ""; b.appendChild(sacco(t)); return; }
+    b.textContent = t; if (/^[0-9]/.test(t)) { b.appendChild(document.createTextNode(" ")); b.appendChild(sacco("💰")); }
+  }
   function etichetteTiri(S, rn, pn, an) {   // «🎯 1° RIGORISTA», «🦶 2° PUNIZIONI», «🚩 1° ANGOLI» (il proprietario, 2 nov 2026: sempre il numero e la scritta,
     // «al posto di battitore mettiamo punizioni»; mai «rigori»): piccole, una sotto l'altra a destra (dall'altezza del nome in giù), così la maglia resta grande
     function o(n) { return n + "° "; }
@@ -2415,7 +2432,7 @@
     col.style.display = ci ? "" : "none"; S.corto = false;
     badge.forEach(function (b) { b.classList.add("stretta"); b.classList.remove("media", "minima"); });
     if (!ci || !dati.clientWidth) return;
-    var pv = !S.prezzoN.textContent; if (pv) S.prezzoN.textContent = "1 💰";   // (si misura col prezzo al suo posto: arriva subito dopo)
+    var pv = !S.prezzoN.textContent; if (pv) prezzoSchermo(S.prezzoN, 1);   // (si misura col prezzo al suo posto: arriva subito dopo)
     var spazio = dati.clientHeight - S.ruolo.parentNode.offsetHeight - 6, testo = document.createRange(); testo.selectNodeContents(S.nome);   // (sotto ruolo e squadra)
     function metti() {   // la colonna parte dall'altezza del nome; restituisce quanto viene grande il nome
       var largo = col.offsetWidth + 8 + "px";
@@ -2441,19 +2458,19 @@
     }
     if (liv === 3) { liv = buono < 0 ? 2 : buono; badge.forEach(function (b) { b.classList.toggle("media", liv === 1); b.classList.toggle("minima", liv === 2); }); metti(); }
     S.corto = !!prezzo.style.paddingRight;   // (se le scritte scendono fino al prezzo, chi offre si scrive più corto: «di Giulia»)
-    if (pv) S.prezzoN.textContent = "";
+    if (pv) prezzoSchermo(S.prezzoN, "");
   }
   function maxischermo(el, S, conContatore) {   // il maxischermo: due strati di colore che sfumano, la maglia, i dati, lo speaker in basso
     S.colA = el("div", { class: "st-colori" }); S.colB = el("div", { class: "st-colori" });
     S.magliaImg = el("img", { class: "st-maglia", alt: "" });
     S.ruolo = el("span", { class: "st-ruolo" }); S.squadra = el("span", { class: "st-squadra" }); S.rig = el("span", { class: "st-rig" }); S.pun = el("span", { class: "st-pun" }); S.ang = el("span", { class: "st-pun st-ang" });   // (🎯 se tira i rigori, 🦶 se batte le punizioni, 🚩 se batte gli angoli)
-    S.nome = el("div", { class: "st-nome" }); S.vs = el("div", { class: "st-vs", style: "display:none" });   // (🆚 sotto il nome, in piccolo, solo con l'opzione)
+    S.nome = el("div", { class: "st-nome" }); S.vs = el("div", { class: "st-vs", style: "display:none" });   // (🆚 in piccolo nella riga di ruolo e squadra, solo con l'opzione: 10 nov 2026, sotto il nome non c'era posto)
     S.prezzoN = el("b"); S.chi = el("span");
     S.ticker = el("div", { class: "st-ticker" });
     S.schermo = el("div", { class: "st-schermo vuoto" }, [ S.colA, S.colB,
       el("div", { class: "st-dentro" }, [
         el("div", { class: "st-magliabox" }, [ S.magliaImg ]),
-        el("div", { class: "st-dati" }, [ el("div", { class: "st-riga" }, [ S.ruolo, S.squadra ]), S.nome, S.vs, el("div", { class: conContatore ? "st-prezzo st-contatore" : "st-prezzo" }, [ S.prezzoN, S.chi ]),
+        el("div", { class: "st-dati" }, [ el("div", { class: "st-riga" }, [ S.ruolo, S.squadra, S.vs ]), S.nome, el("div", { class: conContatore ? "st-prezzo st-contatore" : "st-prezzo" }, [ S.prezzoN, S.chi ]),
           (S.tiriD = el("div", { class: "st-tiri-d", style: "display:none" }, [ S.rig, S.pun, S.ang ])) ])
       ]), S.ticker, el("div", { class: "st-led" }) ]);
     return el("div", { class: "st-board" }, [ S.schermo ]);
@@ -2579,7 +2596,7 @@
       }
     }
     var bst = d.fase === "busta" || d.fase === "apri" || d.fase === "ruota";   // ✉️ (le buste: il prezzo non c'è)
-    S.prezzoN.textContent = !c ? "" : bst ? "✉️" : d.esito && d.esito.tipo === "accollo" && !d.prezzo ? "—" : d.prezzo + " 💰";   // (nessuno lo vuole: niente "0 💰")
+    prezzoSchermo(S.prezzoN, !c ? "" : bst ? "✉️" : d.esito && d.esito.tipo === "accollo" && !d.prezzo ? "—" : d.prezzo);   // (nessuno lo vuole: niente "0 💰")
     var capo = trova(d.persone, d.leader);
     S.chi.textContent = !c ? "" : bst ? (d.fase === "busta" ? (d.sp ? "⚔️ spareggio" : "busta chiusa") : d.fase === "apri" ? "si aprono le buste" : "🎡 sorteggio") : capo ? (d.io != null && capo.id === d.io ? (S.corto ? "👑 è tua" : "👑 l'offerta è tua") : (S.corto ? "di " : "offerta di ") + capo.nome) : (d.base ? (S.corto ? "di partenza" : "prezzo di partenza") : "");
     S.avviso.textContent = d.avviso || ""; S.avviso.style.display = d.avviso ? "" : "none";
@@ -3483,26 +3500,29 @@
     var soglie = [], somma = 0;
     r.kit.slice().sort(function (a, b) { return (a.prezzo || 0) - (b.prezzo || 0) || (a.ovr || 0) - (b.ovr || 0); }).forEach(function (c) { var v = c.ovr != null ? c.ovr : c.valore; somma += v; soglie.push({ fino: somma, i: posti.indexOf(c), v: v }); });   // ⭐ (sulle maglie l'overall; il colpo più caro si scopre per ultimo)
     var durata = OVR.on ? 4400 : Math.max(1800, Math.min(4200, 1200 + r.totale * 26)), ultimoTic = 0, mostrato = -1, k = 0;   // (con l'overall: le figurine si girano a tempo regolare, l'ultima dopo una pausa)
-    function conta(p) {
+    // (10 nov 2026) zitto: il telefono è arrivato in ritardo a questo momento (chi entra a metà, l'app tornata dal secondo piano). Si guarda quando
+    // il momento comincia, MAI durante: prima dopo 0,4 secondi di conto ogni telefono si credeva in ritardo e taceva (si sentiva solo la prima carta)
+    function conta(p, zitto) {
       var v = Math.round(r.totale * (1 - (1 - p) * (1 - p)));
-      if (v !== mostrato) { mostrato = v; if (!OVR.on) R.prezzoN.textContent = v; var ora = Date.now(); if (ora - ultimoTic > 55 && !inRitardo(R, 400)) { ultimoTic = ora; FX.tic(p); } }
-      var k0 = k, kt = p >= 1 ? soglie.length : Math.min(soglie.length - 1, Math.floor(p / 0.75 * (soglie.length - 1)) + (p > 0.03 ? 1 : 0));   // 🃏 (una alla volta nei primi tre quarti, la più cara alla fine)
-      while (k < soglie.length && (OVR.on ? k < kt : v >= soglie[k].fino)) { var s = R.slot[soglie[k].i]; if (s) { s.val.textContent = soglie[k].v; s.val.classList.add("su"); if (s.fronte) { giraSlot(s); if (!inRitardo(R, 400)) FX.tic(1); } } k++; }   // 🃏 (la figurina si gira)
+      if (v !== mostrato) { mostrato = v; if (!OVR.on) R.prezzoN.textContent = v; var ora = Date.now(); if (ora - ultimoTic > 55 && !zitto && (!OVR.on || p * durata < 420)) { ultimoTic = ora; FX.tic(p); } }   // (con l'overall il «ti ti ti» è solo la carica iniziale)
+      var k0 = k, kt = p >= 1 ? soglie.length : p < 0.1 ? 0 : Math.min(soglie.length - 1, Math.floor((p - 0.1) / 0.65 * (soglie.length - 1)) + 1);   // 🃏 (una alla volta a tempo regolare dopo la carica, la più cara alla fine)
+      while (k < soglie.length && (OVR.on ? k < kt : v >= soglie[k].fino)) { var s = R.slot[soglie[k].i]; if (s) { s.val.textContent = soglie[k].v; s.val.classList.add("su"); if (s.fronte) { giraSlot(s); if (!zitto) { if (k === soglie.length - 1) FX.cartaTop(); else FX.cartaGira(k); } } } k++; }   // 🃏 (la figurina si gira, ognuna col suo suono)
       if (OVR.on && k !== k0 && k) { var sv = 0; for (var q = 0; q < k; q++) sv += soglie[q].v; R.prezzoN.textContent = numFanta(Math.round(sv / k * 10) / 10); rianima(R.prezzoN, "batte"); }   // ⭐ (la media di quelli scoperti)
     }
     R.dopo(600, function () {   // (il contatore sale col tempo di gioco: uguale su tutti i telefoni)
       if (!vivoRivela(R)) return;
-      var g0 = R.pt;
-      R.iv = setInterval(function () { if (!vivoRivela(R)) { clearInterval(R.iv); return; } conta(Math.max(0, Math.min(1, (R.g() - g0) / durata))); }, 40);
+      var g0 = R.pt, tardi = inRitardo(R, 400);
+      R.iv = setInterval(function () { if (!vivoRivela(R)) { clearInterval(R.iv); return; } conta(Math.max(0, Math.min(0.999, (R.g() - g0) / durata)), tardi || document.hidden); }, 40);   // (la più cara si gira sempre alla fine, sotto)
       R.dopo(durata, function () {
         if (R.iv) { clearInterval(R.iv); R.iv = null; }
-        conta(1);
+        var giraUltima = OVR.on && k < soglie.length;
+        conta(1, inRitardo(R, 400));
         var pv = r.posV || r.pos;   // (con la giornata: il posto per valore, la classifica vera la fa la giornata)
         var mediaR = Math.round(r.totale / Math.max(1, r.kit.length) * 10) / 10;
         if (OVR.on) R.prezzoN.textContent = numFanta(mediaR);
         R.chi.textContent = (r.gio ? pv + "° per valore" + (pv === 1 ? " 💎" : "") : pv + "° posto" + (pv === 1 ? "! 🏆" : ""));
         rianima(R.ticker, "via", pari.length ? "Stesso valore di " + pari.map(function (o) { return o.nome; }).join(", ") + (r.gio ? "" : ": conta chi ha più crediti avanzati") : r.nome + (OVR.on ? ": overall medio " + numFanta(mediaR) + " (totale " + r.totale + ")" : ": " + r.totale + " punti di valore"));
-        if (!inRitardo(R)) { if (ultima && !r.gio) FX.festa(); else FX.posto(); }
+        if (!inRitardo(R)) { if (ultima && !r.gio) setTimeout(FX.festa, giraUltima ? 350 : 0); else if (!giraUltima) FX.posto(); }   // (con l'ultima figurina che si gira il suo suono fa già da «posto»)
         if (pv === 1) allenatore(R, r, "esulta", OVR.on ? numFanta(mediaR) : r.totale);   // (il primo: l'allenatore salta col valore della rosa sul cartellino)
         R.dopo(ultima ? 1700 : 1300, poi);
       });
