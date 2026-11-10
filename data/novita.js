@@ -18,6 +18,18 @@ window.SG_NOVITA = [
     ]
   },
   {
+    v: 329,
+    data: "10 novembre 2026",
+    titolo: "Nuovo gioco: 🧱 Il Muro",
+    descrizione: [
+      "Un quiz a squadre, tutte insieme e con le stesse domande, ognuno dal suo telefono (nella Sala). Da 4 a 10 giocatori, in squadre da 2 o 3.",
+      "🚪 Chi sta nella stanza risponde in segreto alla domanda. ⬇️ Chi sta giù non la vede: vede solo l'argomento e le risposte, e scommette su quanto la sa il compagno scegliendo quante palline far cadere (fino a 3) e da dove.",
+      "Poi la rivelazione col rullo di tamburi: chi ha risposto giusto fa cadere le palline nel 🏆 Muro dei vincitori e guadagna punti, chi ha sbagliato nel 💀 Muro dei perdenti e li perde. In mezzo vale di più!",
+      "🔥 Le ultime 3 domande valgono doppio. 🔄 A rotazione (in saletta) i ruoli si scambiano a ogni domanda.",
+      "Quasi 700 domande in 12 argomenti, da accendere e spegnere nelle regole ⚙️. È nuovo: provatelo con gli amici e diteci com'è!"
+    ]
+  },
+  {
     v: 328,
     data: "10 novembre 2026",
     titolo: "Mini Asta Fantacalcio: all'asta solo chi gioca 🔨",

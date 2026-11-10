@@ -59,6 +59,7 @@
   pezzo("unaparola", "data/unaparola-parole.js js/games/unaparola.js");
   pezzo("dadoveviene", "data/dadoveviene-paesi.js data/dadoveviene-carte.js js/games/dadoveviene.js");
   pezzo("memata", "data/memata.js js/games/memata.js");
+  pezzo("muro", "data/muro-domande.js js/games/muro.js");   // 🧱 Il Muro (10 nov 2026)
 
   // ---- i giochi IN PROVA (scritti a mano, fuori dalle schede) ----
   // La tessera la vedono solo questi account; gli altri entrano lo stesso se invitati (link, codice, Sala).
@@ -111,5 +112,6 @@
   scheda("unaparola", "unaparola", {"nome":"Una parola sola","icona":"☝️","tema":"oro","descrizione":"Uno indovina, gli altri scrivono di nascosto un indizio di una parola sola. Ma gli indizi uguali si cancellano!","giocatoriMin":3,"giocatoriMax":10,"difficolta":1,"modi":[{"modo":"telefono","icona":"📱","nome":"Su questo telefono","sotto":"Vi passate il telefono: chi indovina non guarda","amici":true,"min":3}],"postiOnline":10,"ritardatari":"turno","riprende":true,"riserva":true});
   scheda("dadoveviene", "dadoveviene", {"nome":"Da dove viene?","icona":"🍹","tema":"oro","descrizione":"Esce la foto di un piatto o di un drink da tutto il mondo: da che paese viene? Tre tentativi, con distanza e direzione.","giocatoriMin":1,"giocatoriMax":10,"difficolta":2,"modi":[{"modo":"telefono","icona":"📱","nome":"Su questo telefono","sotto":"Un telefono in mezzo al tavolo: si discute e si risponde insieme","amici":true,"min":1}],"postiOnline":10,"ritardatari":"turno","riprende":true,"riserva":true});
   scheda("memata", "memata", {"nome":"Memata","icona":"😂","descrizione":"Esce un meme famoso coi riquadri vuoti: scrivi il tuo testo, votate i meme degli altri e scoprite chi li ha fatti.","giocatoriMin":2,"giocatoriMax":10,"difficolta":1,"tema":"oro","modi":[],"soloOnline":true,"postiOnline":10,"ritardatari":"turno","riprende":true,"riserva":true});
+  scheda("muro", "muro", {"nome":"Il Muro","icona":"🧱","descrizione":"A squadre: uno risponde nella stanza, l'altro scommette le palline sul muro senza vedere la domanda.","giocatoriMin":4,"giocatoriMax":10,"difficolta":2,"tema":"oro","modi":[],"soloOnline":true,"postiOnline":10,"ritardatari":"turno","riprende":true,"riserva":true});
   // <<< SCHEDE
 })();
