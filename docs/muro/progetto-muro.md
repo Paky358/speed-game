@@ -32,9 +32,12 @@ Nome provvisorio «🧱 Il Muro» («The Wall» è un marchio). id del gioco: `m
   canvas veloci anche su un telefono lento; con 5 squadre su 360x640 palline e punti leggibili.
 - Online nella Sala prima di tutto. Niente trofei. Categoria «Quiz e parole».
 
-## Proposte di Claude (da confermare col proprietario)
-- «🔄 A rotazione» ACCESO di partenza (tutti fanno tutte e due le parti).
-- Niente «sullo stesso telefono» (passarsi il telefono 4 volte a domanda è lento) e niente Bot: da chiedere.
+## Scelte del proprietario sulle proposte (10 nov 2026, risposta «A B A A A»)
+1. Muro **A**: 9 caselle e 9 zone, palline grandi (50 · 100 · 250 · 500 · 1.000 · 500 · 250 · 100 · 50).
+2. «🔄 A rotazione» **SPENTO** di partenza (Claude lo proponeva acceso: il proprietario ha scelto spento; si accende in saletta).
+3. **Solo online** (niente «sullo stesso telefono»), niente Bot.
+4. **15 domande** di partenza (12 + 3 a punti doppi, circa 10 minuti).
+5. Punti **anche sotto zero**.
 
 ## Squadre (proposta, da rifinire nelle foto)
 | squadra   | colore    | simbolo |

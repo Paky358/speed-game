@@ -1,27 +1,31 @@
 # 🧱 Il Muro — come è fatto il gioco (per chi lo scrive)
 
-Leggi prima `D:\SG-muro\lavoro\progetto-muro.md` (le decisioni del proprietario: NON cambiarle), la skill
+Leggi prima `docs/muro/progetto-muro.md` (le decisioni del proprietario: NON cambiarle), la skill
 `.agents/skills/nuovo-gioco/SKILL.md` e il modello `.agents/skills/nuovo-gioco/modello-gioco-online.js`.
 Il gioco nasce COPIANDO il modello in `js/games/muro.js` e cambiando solo le parti «QUI» (saletta, ripresa, riserva, vici,
 ritardatari, tastiFine, risultato, contoAvanti, conferme, Riprova, chi guarda: tutto come nel modello).
 
 ## Numeri (li ha decisi la simulazione: vedi `.agents/skills/prova-nel-browser/muro/simulazione/LEGGIMI.md`)
-Valori di partenza (muro A, consigliato; il proprietario deve ancora scegliere tra A e B):
+Valori di partenza (muro A, SCELTO dal proprietario il 10 nov 2026):
 `CASE = [50, 100, 250, 500, 1000, 500, 250, 100, 50]` (uguali nei due muri: + nei vincitori, − nei perdenti), ultimo giro
 `CASE_DOPPIO` = le stesse ×2 (disegnate più grandi), `NZ = 9` zone (una sopra ogni casella, come il Plinko del Prezzo),
 `FILE = 12`, `MAXP = 3` palline per domanda (0 permesso = non cade niente), `SOTTOZERO = true` (i punti scendono anche sotto
 zero), `GIRI` = 6 + 6 domande normali + 3 dell'ultimo giro doppio (15 in tutto). «Quante domande»: Corta 9+3, Normale 12+3
 (di partenza), Lunga 15+3 (sempre 3 doppie in fondo). `TEMPO` 20 s di partenza; «Tempo»: 15 / 20 / 30 s.
-Muro B (se lo sceglie il proprietario): 13 caselle, 7 zone, 16 file, valori in LEGGIMI.md della simulazione.
+Muro B (scartato dal proprietario; resta come riserva): 13 caselle, 7 zone, 16 file, valori in LEGGIMI.md della simulazione.
 Le pagine di prova delle proposte (per i colori, i simboli disegnati e l'aspetto dei due muri) sono in
 `D:\SG-muro\lavoro\proposte\` (A.html, B.html, modello.tpl, gen.js; le foto in `foto\`): RIUSA da lì il disegno delle
 palline coi simboli e l'aspetto dei due muri (perdenti blu-viola freddo, vincitori oro), adattati a `NUM`.
 Tienili TUTTI in un oggetto `NUM` in cima al file, così si ritoccano in un posto solo:
-caselle del muro (`CASE` normali e `CASE_DOPPIO` dell'ultimo giro), `NZ` zone, `FILE` file di chiodini, `MAXP` palline
-massime per domanda, `GIRI` (es. `[{ n: 4, x: 1 }, { n: 4, x: 1 }, { n: 4, x: 2, doppio: 1 }]`), `TEMPO` (secondi per
-rispondere e scegliere), `SOTTOZERO` (sì/no), le durate delle fasi della rivelazione.
-Il muro si disegna da `NUM` (numero di caselle e zone qualsiasi): il proprietario sceglierà tra la proposta A (9 caselle,
-9 zone) e la B (13 caselle, 7 zone) nelle foto; cambiare muro deve voler dire cambiare solo `NUM`.
+caselle del muro (`CASE` normali e `CASE_DOPPIO` dell'ultimo giro), `NZ` zone, `FILE` file di chiodini (PARI: così la pallina
+finisce sempre in una casella), `MAXP` palline massime per domanda, `GIRI` (**fatto così**: `{ corta: [9, 3], normale: [12, 3],
+lunga: [15, 3] }` = [domande normali, domande dell'ultimo giro doppio]), `TEMPI` e `TEMPO` (secondi per rispondere e scegliere),
+`SOTTOZERO` (sì/no), le durate della rivelazione (`SVELA` 4,6 s col `RULLO` di 1,5 s; nei muri `INTRO` 0,65 s, `SFASA` 0,12 s tra
+una pallina e l'altra ma al massimo `SFASA_TOT` 0,9 s in tutto, `DOPO` 1,3 s, `VUOTO` 1,3 s per il muro vuoto; `PUNTI` 6 s,
+`PUNTI_ANNUNCIO` 8 s prima dell'ultimo giro) e `PASSO` (i tempi della caduta: primo chiodino, saltello, discesa, casella,
+accelerazione per fila). Un muro dura `INTRO + (n−1)·sfasamento + caduta (~2,9 s) + DOPO`: lo calcolano uguale host e telefoni.
+Il muro si disegna da `NUM` (numero di caselle e zone qualsiasi): il proprietario ha scelto la proposta A (9 caselle,
+9 zone) invece della B (13 caselle, 7 zone) guardando le foto; cambiare muro deve voler dire cambiare solo `NUM`.
 
 ## Registrazione
 `SG.registra({ id: "muro", nome: "Il Muro", icona: "🧱", tema: "oro", soloOnline: true, modi: [], giocatoriMin: 4,
@@ -45,7 +49,7 @@ uscite; mai lo stesso argomento due volte di fila se si può; si salva a ogni do
 - «Quante domande»: 3 scelte (corta / normale / lunga, coi numeri della simulazione). `dove.nd`.
 - «Tempo per rispondere»: 3 scelte (es. 20 / 30 / 45 s, di partenza quello della simulazione). `dove.tempo`.
 - `riassunto(imp)`: «12 domande · 30 s · tutti gli argomenti» (o i primi 3 + «e altri N»).
-- «🔄 A rotazione» NON sta qui: sta nella saletta, accanto alle squadre (vedi sotto). Di partenza ACCESO.
+- «🔄 A rotazione» NON sta qui: sta nella saletta, accanto alle squadre (vedi sotto). Di partenza SPENTO (scelta del proprietario, 10 nov 2026).
 
 ## Le squadre
 `SQ = [{ nome: "Blu", col, sim: "★" }, { "Arancione", ●}, { "Viola", ▲ }, { "Giallo", ■ }, { "Azzurro", ◆ }]` (colori dalle
@@ -58,7 +62,9 @@ Ogni giocatore ha `sq` (0..nsq-1) e `ruolo` («su» = nella stanza, «giu» = gi
 - L'host: «Squadre: 2 3 4 5» (solo i numeri possibili coi presenti: ogni squadra da 2 o 3), tocca un nome per spostarlo
   nella squadra dopo (`{ t: "sposta", id }`), «🔀 Squadre a caso», e il tastino «🔄 A rotazione» (acceso/spento: `vm.rot`;
   gli altri lo vedono). Accanto una riga corta che dice cosa vuol dire («I ruoli si scambiano a ogni domanda»).
-- Chi entra va nella squadra con meno persone (a pari la prima); se la squadra non ha nessuno giù, va giù.
+- Chi entra va nella squadra con meno persone (a pari la prima); se la squadra non ha nessuno giù, va giù. **Fatto così:** se sono
+  tutte da 3 (e sono meno di 5) si apre da sola una squadra nuova per lui (la `nota` dice poi «La squadra Viola ha bisogno di un
+  altro giocatore»). «🔀 A caso» sistema anche il numero di squadre se quello di adesso non va bene coi presenti.
 - Quando cambia `nsq` chi è in una squadra che non c'è più va nelle squadre più piccole; nessun altro si sposta.
 - «Comincia» solo se: almeno 2 squadre, ogni squadra da 2 o 3, ognuna con il suo «giu». La `nota` dice cosa manca
   («La squadra Viola ha bisogno di un altro giocatore»).
@@ -81,13 +87,15 @@ Ogni giocatore ha `sq` (0..nsq-1) e `ruolo` («su» = nella stanza, «giu» = gi
      il primo), e il MURO PICCOLO con le zone in cima: ogni tocco su una zona = una pallina da lì (si vede la pallina col
      simbolo), «↺» toglie l'ultima, «Palline: 2 di MAXP», «✅ Pronto». Le palline messe contano anche senza «Pronto»;
      zero palline = non cade niente.
-   - Chi guarda e chi aspetta il giro dopo: argomento e risposte, «Le squadre stanno scegliendo…».
+   - Chi guarda e chi aspetta il giro dopo: argomento e risposte, «Le squadre stanno scegliendo…». **Le risposte possibili NON
+     stanno nella foto** (c'è dentro la giusta): arrivano a tutti col messaggio `{ t: "opz", p, q, r, opz }` (inviaVeloce senza
+     `to`, mescolate, non dice quale è giusta), rimandato a chi entra o rientra e a chi guarda (`cb.onGuarda`).
    - In alto: «Domanda 3 di 12», l'argomento, la barra del tempo; nell'ultimo giro «🔥 PUNTI DOPPI».
    - Il telefono: domanda e scelte NON vanno mai nella foto. La domanda va SOLO a chi è nella stanza (e a chi è da solo)
      con `rete.inviaVeloce({ t: "dom", to: id, ... })`; le mosse (`{ t: "risp", q, s }`, `{ t: "palle", q, z: [zone…],
      su: id }`, `{ t: "pronto", q }`) vanno solo all'host. Nella foto solo CHI ha finito (✅ accanto al nome). Chi ricarica
      riceve con `to` la domanda (se è nella stanza) e le SUE scelte (`{ t: "tue", … }`).
-   - Il tempo: nella foto i secondi che mancano; il telefono chiude ANTICIPO = 1 s prima (come `fineVM` di prezzo.js) e
+   - Il tempo: nella foto i **millisecondi** che mancano (`restaMs`, e `durMs` = quanto dura la fase); il telefono chiude ANTICIPO = 1 s prima (come `fineVM` di prezzo.js) e
      l'host chiude 0,7 s dopo la sua scadenza: il tocco dell'ultimo istante arriva.
 2. **"svela"** (~4,5 s): rullo di tamburi, poi la domanda, la risposta giusta che si accende, e accanto a ogni risposta i
    simboli delle squadre che l'hanno data (nelle squadre da 3 conta la risposta di chi giù ha scelto; chi non ha risposto:
@@ -105,7 +113,9 @@ ripresa a metà rivelazione non dà punti due volte. Sotto zero: come dice `NUM.
 ## Il muro (canvas) — RIUSA il Plinko di js/games/prezzo-premi-b.js (righe 468-1000: PL, cade, percorso, geo, disegnaTavola, rivela)
 - Copia e adatta le funzioni (non riscriverle da zero), con un numero qualsiasi di caselle (`CASE.length`), di zone (`NZ`,
   in mezze caselle sopra le caselle) e di file.
-- Due strati: il muro (chiodini, caselle coi valori «+500» / «−500», cornice) disegnato UNA volta; le palline su un secondo
+- Due strati: il muro (chiodini, caselle coi valori, cornice: **fatto così**, nelle caselle il numero SENZA segno, «1.000» —
+  «−1.000» a 360 px di larghezza non ci stava leggibile —; il segno lo dicono il nome del muro in alto, i colori e i «+250» / «−250»
+  che salgono) disegnato UNA volta; le palline su un secondo
   canvas ridisegnato a ogni fotogramma con `requestAnimationFrame` (al massimo ~25 palline). Con la pagina nascosta o
   «riduci movimento» le palline vanno subito al loro posto. Ogni pallina: cerchio del colore della squadra, bordo chiaro,
   SIMBOLO della squadra in bianco/scuro ben leggibile. Partono insieme (con un piccolo sfasamento), cadono fila per fila
@@ -145,3 +155,55 @@ Niente scorrimento e niente titolo in alto: `.schermata.mu-piena{padding:0!impor
 stato costruita UNA volta, chiave `q|stato|rip`). Animazioni solo con transform e opacity. 360x640 e 412x915 senza scorrere,
 anche con 5 squadre e 10 persone. Numeri col punto delle migliaia. «avatar», mai «omino». Notte vivace: variabili `--o-*` e
 `--n-*` di css/styles.css (un solo tasto lampone pieno per schermata).
+
+## Com'è venuto davvero (10 nov 2026, la prima scrittura di js/games/muro.js)
+Tutto come sopra, con questi pezzi in più o fatti in un modo preciso (se cambi il gioco, tieni aggiornata questa parte):
+- **I messaggi.** Ospite → host: `join`; in saletta `{ t: "sq", s }`, `{ t: "giu" }` (e solo da chi tiene la partita `sposta`,
+  `nsq`, `rot`, `mischia`); nella domanda `{ t: "risp", q, r, s }`, `{ t: "palle", q, r, z: [zone], su }` (a ogni tocco: le
+  palline messe contano anche senza «Pronto»), `{ t: "pronto", q, r, z, su }` (porta anche zone e puntata: se arriva prima delle
+  palline non si perde niente). `q` = la domanda, `r` = il numero della ripresa (`vm.rip`): una mossa vecchia non vale nella
+  domanda rifatta. Host → un telefono (inviaVeloce con `to`): `{ t: "dom", p, q, r, testo, opz }` (solo a chi è nella stanza o da
+  solo), `{ t: "tue", p, q, r, a, z, su, pronto }` (le sue scelte, a chi ricarica). Host → tutti (inviaVeloce, non restano in
+  stanza): `{ t: "opz", p, q, r, opz }` (le risposte mescolate), `{ t: "omini", o: { id: avatar } }` (la foto della partita non
+  porta gli avatar: si mandano all'inizio, a chi entra o rientra e a chi guarda, al massimo uno al secondo).
+- **La foto (vm).** Sempre: `fase`, `codice`, `pronta`, `partita`, `tiene`, `rip`, `nsq`, `rot`, `nd`, `tempo`, `players`
+  (`id`, `nome`, `sq`, `ruolo`, `via`, `forse`; `omino` solo in saletta e sulla classifica), `guarda`, `prossimi`, `dopo` (chi è
+  arrivato con le squadre tutte da 3: guarda ed entra alla prossima partita), `punti` (per squadra). In partita: `stato`, `k`,
+  `tot`, `ndop`, `dop`, `restaMs`, `durMs`, `arg`, `nr` (quante risposte), `sqd` (per squadra `{ giu, su: [id], solo }` o `null`).
+  Solo nella domanda `fatto` (gli id di chi ha finito). Da «svela» a «punti» `riv` = `{ testo, opz, giusta, ris: [{ a, chi, ok }] }`
+  (`a` = −1 nessuna risposta, `chi` = di chi era la risposta che conta). Nel muro dei perdenti `palle` delle squadre che hanno
+  sbagliato, in quello dei vincitori `palle` di chi ha indovinato e `dl` (i punti già tolti nel muro dei perdenti, per i
+  punteggi sotto il muro); nei punteggi `delta`. Sulla classifica `classifica` = `[{ s, punti, pos, ids }]`.
+- **Chi si puntava ed è uscito senza rispondere** (squadre da 3): conta il compagno che ha risposto. **Chi era via all'inizio della
+  domanda e torna** legge «⏳ Rientri dalla prossima domanda» (le parti si decidono all'inizio di ogni domanda).
+- **La partita finisce da sola** se restano meno di 2 squadre con qualcuno dentro.
+- **Nella rivelazione** delle squadre da 3, sotto: «Contava la risposta di Luca». Chi guarda legge chi ha indovinato.
+- **Vibrazione:** i tasti vibrano già col core (il colpo da 10 ms al tocco); il gioco vibra alla risposta giusta della mia
+  squadra, quando una MIA pallina si ferma (breve nei vincitori, lunga nei perdenti) e alla vittoria. Mai a raffica (una ogni 0,16 s).
+- **La spiegazione della prima volta** compare su ogni telefono (anche a chi guarda) sopra la prima domanda che vede.
+- **«🔄 A rotazione» di partenza SPENTO** (`H.rot = false`, scelta del proprietario del 10 nov 2026; la prima scrittura lo
+  aveva acceso). L'host lo accende in saletta; gli amici leggono «🔒 Ruoli fissi: chi è giù resta giù» o «🔄 A rotazione: …».
+- **La nota della saletta dice anche come si sistema** (una frase sola, la saletta in cima ne mostra solo una): all'host «La
+  squadra Viola ha bisogno di un altro giocatore: tocca un nome per spostarlo.», agli altri «…: per andarci tocca «Vengo qui».»
+  (solo a chi è in un'altra squadra). Con 7 persone e le squadre da 3 la terza squadra resta da 1 finché qualcuno non si sposta
+  (o l'host tocca «🔀 A caso»): da decidere col proprietario se spostare qualcuno da soli.
+- **I numeri nelle caselle sono tutti della stessa altezza** (prima «1.000» si rimpiccioliva e sembrava valere meno di «500»):
+  una misura sola per muro; il numero più largo si stringe di lato (`c.scale`, al massimo fino al 78%) e solo se non basta cala la
+  misura per tutti.
+- **I «+250» / «−250» che salgono** partono appena sopra la pallina ferma (`puntoDi` dell'ultima chiave, `translate(-50%,-100%)`):
+  non le passano più davanti.
+- **Nella stanza e nella rivelazione** domanda e risposte stanno INSIEME al centro (margini `auto` sulla carta e sotto le
+  risposte), con la carta della domanda che prende un po' d'altezza (`flex-basis` in `vh`, si stringe fino al testo se manca
+  posto) e risposte e scritte più grandi sui telefoni alti (`clamp(…vh…)`); l'esito della rivelazione resta in fondo. Prima tra
+  domanda e risposte (o sotto le risposte) restava un gran vuoto, a 412x915 mezzo schermo. Così anche i punteggi (la classifica
+  al centro, righe e numeri più grandi sui telefoni alti, «Prossima domanda» in fondo). Sui telefoni alti (da 760 px) anche
+  la classifica finale ha righe, avatar e numeri più grandi.
+- **Le prove:** `.agents/skills/prova-nel-browser/muro/muro.js` (`mu1` 4 telefoni 2 squadre da 2, partita intera e nessun
+  segreto in NESSUNA foto della domanda passata sulla stanza; `mu1b` 6 telefoni 2 squadre da 3 con «su chi punti»; `mu2` l'host
+  ricarica a metà domanda, nel muro e sui punteggi senza punti doppi, poi si spegne e un'amica finisce la partita; `mu3` chi
+  guarda col link e chi arriva a metà con «▶ Entra»; `mu4`-`mu13` del provatore: 3 squadre da 2, 3+2 con la rotazione su tre,
+  10 telefoni, muri vuoti e punti sotto zero, tempo scaduto, rotazione spenta, argomenti spenti, un amico che ricarica, squadre
+  tutte da 3 con chi arriva dopo, la settima persona in saletta). Tutte tranne `mu9` accendono la rotazione in saletta
+  (`accendiRotazione`, che controlla anche che di partenza sia spenta). Le foto delle schermate con 10 telefoni e 5 squadre, a 360x640 (e con
+  `--grande` anche 412x915): `"C:\Program Files\nodejs\node.exe" .agents\skills\prova-nel-browser\muro\foto-muro.js 8981 D:\SG-muro\lavoro\foto-muro --fine`
+  (dalla cartella della copia, col suo server acceso; le foto vanno in una cartella fuori dai file del gioco).
