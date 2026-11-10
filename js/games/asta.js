@@ -771,8 +771,8 @@
     ".st-tavolo .bt>div{position:absolute;inset:0;border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;overflow:hidden;}",
     ".st-tavolo .davanti{justify-content:flex-end !important;padding-bottom:7%;}",
     ".st-tavolo .davanti{background:linear-gradient(160deg,#fbf3dd,#e3cf9f);color:#3a2a10;box-shadow:0 8px 16px rgba(0,0,0,.55),inset 0 0 0 2px rgba(255,255,255,.55);}",
-    ".st-tavolo .davanti:before{content:'';position:absolute;left:0;right:0;top:0;height:38%;background:linear-gradient(170deg,#f1e2bb,#d2b984);clip-path:polygon(0 0,100% 0,50% 100%);filter:drop-shadow(0 2px 1px rgba(0,0,0,.25));}",
-    ".st-tavolo .pal{position:absolute;left:50%;top:37%;width:19%;max-width:32px;aspect-ratio:1;transform:translate(-50%,-50%);z-index:2;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45));}",
+    ".st-tavolo .davanti:before{content:'';position:absolute;z-index:1;left:0;right:0;top:0;height:38%;background:linear-gradient(170deg,#f1e2bb,#d2b984);clip-path:polygon(0 0,100% 0,50% 100%);}.st-tavolo .davanti:after{content:'';position:absolute;left:0;right:0;top:0;height:calc(38% + 2px);background:rgba(90,60,20,.24);clip-path:polygon(0 0,100% 0,50% 100%);}",
+    ".st-tavolo .pal{position:absolute;left:50%;top:37%;width:19%;max-width:32px;aspect-ratio:1;transform:translate(-50%,-50%);z-index:2;}",
     ".st-tavolo .fc{position:relative;z-index:1;width:30%;max-width:52px;aspect-ratio:1;border-radius:50%;object-fit:cover;object-position:50% 20%;background:#2a3358;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);}",
     ".st-tavolo .bt b{position:relative;z-index:1;font-size:.78rem;font-weight:900;max-width:92%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
     ".st-tavolo .dietro{opacity:0;background:#1a2142;color:#f4f5fb;border:2px solid rgba(255,255,255,.15);}.st-tavolo .dietro .fc{margin-top:0;width:30%;}",
@@ -1890,6 +1890,49 @@
     if (!cfg || !window.SGOmino) return "";
     return srcSvg(JSON.stringify(cfg) + "|" + JSON.stringify(o || {}), function () { return SGOmino.svg(cfg, o || {}); });
   }
+  // 🖼️ LE FOTO AL POSTO DEI DISEGNI (10 nov 2026, il proprietario: «post-apertura di buste lagga… a me da Android e al mio amico da iPhone…
+  // fallo che non deve laggare a nessuno»): sopra le cose che si muovono (le buste che girano, il testa a testa) faccine e pallone vanno come
+  // FOTO, mai come disegno SVG: il telefono ridisegnava ogni faccina a ogni fotogramma (misurato: con le faccine in foto lo schermo va 2,5
+  // volte più fluido). Le foto si preparano una alla volta, con calma, prima che servano; finché non sono pronte resta il disegno di sempre
+  var BMP = {}, BMP_CODA = [], BMP_LAV = false;
+  function bmp(k, fai, w, h, ombra, riserva, img) {   // fai(): l'indirizzo del disegno; torna la foto se è pronta, se no la riserva (e la prepara;
+    var x = BMP[k]; if (x && x.url) return x.url;      // img: l'immagine che userà la foto appena è pronta)
+    if (!x) { x = BMP[k] = { url: null, img: [] }; BMP_CODA.push([k, fai, w, h, ombra]); if (!BMP_LAV) { BMP_LAV = true; setTimeout(bmpProssima, 60); } }
+    if (img && x.img) { img.__bmp = k; x.img.push(img); }
+    return riserva;
+  }
+  function bmpPronta(k) {   // la foto è pronta: le immagini che aspettavano la prendono (se mostrano ancora quel disegno)
+    var x = BMP[k], l = (x && x.img) || []; if (x) x.img = null;
+    if (x && x.url) l.forEach(function (im) { if (im.__bmp === k && im.isConnected) im.src = x.url; });
+  }
+  function bmpProssima() {
+    if (!schermoFermo()) return setTimeout(bmpProssima, 300);   // (mentre le buste si aprono o vola la figurina non si lavora)
+    var j = BMP_CODA.shift(); if (!j) { BMP_LAV = false; return; }
+    var x = BMP[j[0]], fatto = false, via = function () { if (fatto) return; fatto = true; bmpPronta(j[0]); setTimeout(bmpProssima, 250); };
+    var src = ""; try { src = j[1](); } catch (e) {}
+    if (!src) return via();
+    var im = new Image();
+    im.onload = function fai() {
+      if (!schermoFermo()) return setTimeout(fai, 250);   // (le buste si stanno aprendo: la foto si fa dopo)
+      try {
+        var w = j[2], h = j[3], cv = document.createElement("canvas"), c = cv.getContext("2d"); cv.width = w; cv.height = h;
+        if (j[4]) { c.shadowColor = "rgba(0,0,0,.45)"; c.shadowBlur = w * 0.06; c.shadowOffsetY = w * 0.06; }   // (l'ombra dentro la foto: niente filtri sopra)
+        c.drawImage(im, 0, 0, w, h);
+        if (cv.toBlob && window.URL && URL.createObjectURL) { cv.toBlob(function (b) { if (b) x.url = URL.createObjectURL(b); via(); }, "image/png"); return; }
+        x.url = cv.toDataURL("image/png");
+      } catch (e) {}
+      via();
+    };
+    im.onerror = via; im.src = src;
+  }
+  function aprendo(S) { return !!(S && S.apriNodo && S.apriNodo.isConnected && !S.apriNodo.classList.contains("finita")); }   // (le buste si stanno aprendo, o gira la ruota)
+  function schermoFermo() { return !aprendo(STADIO) && !(STADIO && STADIO.volo && !STADIO.volo.uff); }
+  function avBmp(cfg, img) {   // la faccina (mezzo busto) come foto (img: l'immagine da aggiornare quando la foto è pronta)
+    if (!cfg) return "";
+    return bmp("av|" + JSON.stringify(cfg), function () { return srcAv(cfg, { busto: true, px: 200 }); }, 200, Math.round(200 * 182 / 178), false, srcAv(cfg, { busto: true }), img);
+  }
+  function imgAv(el, classe, cfg) { var im = el("img", { class: classe, alt: "" }); im.src = avBmp(cfg, im); return im; }   // (un'immagine con la faccina in foto)
+  function palloneBmp() { return bmp("pallone", function () { return PALLONE_SRC; }, 64, 64, true, PALLONE_SRC); }
   var GIU = { seduto: true }, SU = { seduto: true, braccia: "canna", angolo: ANG_PALETTA };
   function illustrati() { try { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); } catch (e) { return false; } }   // gli avatar illustrati sono accesi?
   function manoAlzata(cfg) { try { return SGOmino.mano(cfg, SU); } catch (e) { return { x: 155, y: 126 }; } }
@@ -2378,7 +2421,13 @@
       var largo = col.offsetWidth + 8 + "px";
       S.nome.style.fontSize = prezzo.style.paddingRight = ""; S.nome.style.paddingRight = largo;   // il nome le lascia posto, e se è lungo si rimpicciolisce (poi i puntini, come sempre)
       var st = getComputedStyle(S.nome), fs = parseFloat(st.fontSize), posto = S.nome.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight);
-      while (testo.getBoundingClientRect().width > posto && fs > 12) { fs -= 1; S.nome.style.fontSize = fs + "px"; }
+      var fs0 = fs, lw = testo.getBoundingClientRect().width;
+      if (lw > posto && fs > 12) {   // (10 nov 2026: si stima la misura e si prova solo vicino, invece di scendere di 1 px alla volta: meno ricalcoli)
+        fs = Math.max(12, Math.min(fs0 - 1, Math.floor(fs0 * posto / lw)));
+        while (fs < fs0 - 1) { S.nome.style.fontSize = (fs + 1) + "px"; if (testo.getBoundingClientRect().width > posto) break; fs++; }
+        S.nome.style.fontSize = fs + "px";
+        while (testo.getBoundingClientRect().width > posto && fs > 12) { fs -= 1; S.nome.style.fontSize = fs + "px"; }
+      }
       var su = Math.max(0, Math.min(S.nome.offsetTop, dati.clientHeight - col.offsetHeight - 4)); col.style.top = su + "px";
       if (su + col.offsetHeight > prezzo.offsetTop + prezzo.offsetHeight * 0.4) prezzo.style.paddingRight = largo;   // (scende fino al prezzo: anche il prezzo e chi offre le lasciano posto)
       return fs;
@@ -2447,7 +2496,7 @@
     S.carte = el("div", { class: "st-gr-carte" + (n === 1 ? " uno" : n <= 2 ? " due" : "") }, persone.map(function (p) {
       var palN = el("span"), nota = el("small"), slot = postiCampo(el), campo = el("div", { class: "st-sq-campo" }, slot.map(function (s) { return s.nodo; }));
       var nodo = el("div", { class: "st-sq" }, [
-        el("div", { class: "st-sq-testa" }, [ el("img", { class: "st-sq-faccia", src: srcAv(cfgDi(p.nome, p.omino), { busto: true }), alt: "" }),
+        el("div", { class: "st-sq-testa" }, [ imgAv(el, "st-sq-faccia", cfgDi(p.nome, p.omino)),   // (🖼️ in foto: la squadra si ridisegna a ogni offerta)
           el("div", { class: "st-sq-nomi" }, [ el("b", { text: p.nome }), nota ]), el("div", { class: "st-sq-pal" }, [ palN ]) ]),
         campo ]);
       S.sq[p.id] = { nodo: nodo, nota: nota, palN: palN, campo: campo, slot: slot, k: "" };
@@ -2492,15 +2541,24 @@
     var file = el("div", { class: "sa-file st-pp-file", style: "--col:" + col }, persone.map(function (p) {
       var pal = el("span"), nuvola = el("div", { class: "sa-nuvola" }), passo = tastoPasso(el, S, p);
       var nodo = el("div", { class: "sa-pers", role: "button", onclick: function () { toccaPersona(S, p.id); } }, [
-        el("div", { class: "sa-figura" }, [ el("img", { class: "st-busto", src: srcAv(cfgDi(p.nome, p.omino), { busto: true }), alt: "" }), el("div", { class: "sa-paletta" }, [ pal ]), nuvola ]),
+        el("div", { class: "sa-figura" }, [ imgAv(el, "st-busto", cfgDi(p.nome, p.omino)), el("div", { class: "sa-paletta" }, [ pal ]), nuvola ]),
         el("b", { text: p.nome.length > 9 ? p.nome.slice(0, 9) + "…" : p.nome }), passo ]);
       S.pers[p.id] = { nodo: nodo, passo: passo, nuvola: nuvola, pal: pal, puo: false };
       return nodo;
     }));
     return (S.pubblico = el("div", { class: "st-panchina" + (n > 5 ? " fitta" : "") }, [ file ]));
   }
+  // 🪶 (10 nov 2026) quello che servirà dopo si prepara adesso, quando lo schermo è fermo: le faccine in foto (per le buste che si aprono) e la
+  // figurina del calciatore sul maxischermo (per l'«AGGIUDICATO!»): quando arriva il momento il telefono non deve disegnare niente
+  function preparaStadio(S, d) {
+    if (d.apri || d.ruota) return;   // (mentre le buste si aprono o gira la ruota no)
+    var chi = (d.persone || []).map(function (p) { return p.id + "|" + p.nome; }).join(",");
+    if (S.facceK !== chi) { S.facceK = chi; var pp = (d.persone || []).slice(); setTimeout(function () { if (STADIO === S) pp.forEach(function (p) { avBmp(cfgDi(p.nome, p.omino)); }); }, 300); }
+    var c = d.carta, k = c ? c.nome + "|" + c.squadra : "";
+    if (c && GRAF2.on && S.figK !== k) { S.figK = k; setTimeout(function () { if (S.figK === k && !aprendo(S)) preparaFigurina(S, c); }, 900); }   // (se le buste si stanno già aprendo la prepara l'apertura, nel momento fermo)
+  }
   function aggiornaStadio(d) {
-    var S = STADIO; if (!S) return; S.ultimiDati = d;
+    var S = STADIO; if (!S) return; S.ultimiDati = d; preparaStadio(S, d);
     S.info.textContent = d.info || "";
     d.persone.forEach(function (p) { S.squadre[p.id] = p; });
     // il calciatore sul maxischermo: cambia solo quando ne esce uno nuovo
@@ -2622,8 +2680,13 @@
       speaker(e.motivo === "ufficio" ? "Nessuno li ha voluti per 2 volte: questo va a caso a " + e.chiNome + " per " + e.prezzo
         : "Solo " + e.chiNome + " cerca un " + ((FANTA_RUOLI[e.carta.ruolo] || {}).nome || "").toLowerCase() + ": è suo per " + e.prezzo + "!");
       var pg0 = paginaDi(d.persone, e.chiId); if (pg0 >= 0 && pg0 !== S.pagina) mostraPagina(S, pg0, d.persone);
-      disegnaSquadre(S, d); piedeAsta(S, d);
-      setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); if (STADIO !== S || S.esitoN !== n0) return; esitoStadio(S, S.ultimiDati && S.ultimiDati.esito && S.ultimiDati.esito.n === n0 ? S.ultimiDati : d); }, UFF_MS);
+      // (10 nov 2026, il proprietario: «lo dà già in rosa di chi è, poi quando esce aggiudicato sparisce e rivola»: mentre si legge il cartello il
+      // suo posto nella rosa resta vuoto, ci arriva solo con la figurina che vola)
+      var gU = S.squadre[e.chiId], iU = -1; (gU ? slotRosa(gU.kit) : []).forEach(function (c, j) { if (c && e.carta && c.nome === e.carta.nome && c.squadra === e.carta.squadra) iU = j; });
+      S.volo = iU >= 0 ? { slot: iU, chi: e.chiId, uff: true } : null;
+      disegnaSquadre(S, d, S.volo); piedeAsta(S, d);
+      setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b);
+        if (STADIO !== S || S.esitoN !== n0) { if (S.volo && S.volo.uff) { S.volo = null; if (STADIO === S && S.ultimiDati) disegnaSquadre(S, S.ultimiDati); } return; } esitoStadio(S, S.ultimiDati && S.ultimiDati.esito && S.ultimiDati.esito.n === n0 ? S.ultimiDati : d); }, UFF_MS);
       return;
     }
     S.radice.appendChild(timbro(e.tipo === "accollo" ? "NESSUNO!" : "AGGIUDICATO!")); S.radice.classList.add("chiusa");
@@ -2674,12 +2737,29 @@
     cx.strokeStyle = kit.coll || kit.b; cx.lineWidth = r * 0.16; cx.lineJoin = "round"; cx.beginPath(); cx.moveTo(-r * 0.5, top + r * 0.02); cx.lineTo(0, top + r * 0.45); cx.lineTo(r * 0.5, top + r * 0.02); cx.stroke();   // il colletto a V
     cx.fillStyle = scuro(pelle, 0.85); cx.beginPath(); cx.moveTo(-r * 0.42, top + r * 0.04); cx.lineTo(0, top + r * 0.36); cx.lineTo(r * 0.42, top + r * 0.04); cx.closePath(); cx.fill();
   }
-  var FIG_CACHE = {};
+  var FIG_CACHE = {}, FIG_N = 0;
+  function larghezzaFig(S) { var base = S.radice.getBoundingClientRect(); return Math.round(Math.max(110, Math.min(200, base.width * 0.44))); }   // (quella che vola)
+  function preparaFigurina(S, c) {   // la figurina che volerà all'«AGGIUDICATO!», disegnata prima, nel momento fermo
+    if (!c || !c.squadra || !GRAF2.on || STADIO !== S || !S.radice.isConnected || (S.volo && !S.volo.uff)) return;
+    try { figurinaCanvas(c, null, larghezzaFig(S), true); } catch (e) {}
+  }
+  function cartellino(cx, w, prezzo) {   // il cartellino del prezzo, in alto a destra
+    var m = w * 0.045; cx.font = "900 " + Math.round(w * 0.085) + "px system-ui,sans-serif"; var pt = prezzo + " 💰", pw = cx.measureText(pt).width + w * 0.08, x = w - m - pw - w * 0.03, y = m + w * 0.03, hh = w * 0.12, rr = w * 0.06;
+    cx.beginPath(); cx.moveTo(x + rr, y); cx.arcTo(x + pw, y, x + pw, y + hh, rr); cx.arcTo(x + pw, y + hh, x, y + hh, rr); cx.arcTo(x, y + hh, x, y, rr); cx.arcTo(x, y, x + pw, y, rr); cx.closePath();
+    cx.fillStyle = "#ffc247"; cx.fill(); cx.lineWidth = Math.max(1, w * 0.008); cx.strokeStyle = "rgba(0,0,0,.25)"; cx.stroke(); cx.fillStyle = "#16161a"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(pt, w - m - pw / 2 - w * 0.03, m + w * 0.093);
+  }
   function figurinaCanvas(c, prezzo, w, coperto) {   // (coperto: l'overall è un «?»: all'asta il valore resta segreto fino alla fine)   // c: { nome, squadra, ruolo }. Torna il canvas (w px di larghezza) o null
     if (!c || !c.squadra) return null;
     var k = c.nome + "|" + c.squadra + "|" + prezzo + "|" + Math.round(w) + (GRAF2.on ? "|2" : "") + (OVR.on ? (coperto ? "|o?" : "|o") : "");
     if (FIG_CACHE[k]) return FIG_CACHE[k];
+    if (FIG_N > 30) { FIG_CACHE = {}; FIG_N = 0; }   // (non se ne tengono troppe: sono foto grandi)
     var d = Math.min(2, window.devicePixelRatio || 1), h = Math.round(w * 1.36), cv = document.createElement("canvas");
+    if (GRAF2.on && prezzo != null) {   // 🃏 (10 nov 2026) quella senza prezzo, già pronta, + il cartellino: è una copia, non un disegno nuovo
+      var b0 = figurinaCanvas(c, null, w, coperto); if (!b0) return null;
+      cv.width = b0.width; cv.height = b0.height; cv.style.width = w + "px"; cv.style.height = h + "px";
+      var c0 = cv.getContext("2d"); c0.drawImage(b0, 0, 0); c0.setTransform(d, 0, 0, d, 0, 0); cartellino(c0, w, prezzo);
+      FIG_CACHE[k] = cv; FIG_N++; return cv;
+    }
     cv.width = Math.round(w * d); cv.height = Math.round(h * d); cv.style.width = w + "px"; cv.style.height = h + "px";
     var cx = cv.getContext("2d"); cx.setTransform(d, 0, 0, d, 0, 0);
     var kit = kitDi(c.squadra, false), col = coloriSquadra(c.squadra) || [kit.a, kit.b], ca = coloriAspetto(aspettoVero(chiaveCalc(c))), mg = numeroMaglia(c), PI = Math.PI;
@@ -2701,12 +2781,12 @@
       nomeIn(c.squadra.toUpperCase() + " · " + ruolo, w / 2, m + ih + h * 0.158, iw * 0.92, Math.round(w * 0.062), scuro(chiaraC(col[0]) ? (col[1] || "#333") : col[0], 0.9));
       if (prezzo != null) { cx.font = "900 " + Math.round(w * 0.085) + "px system-ui,sans-serif"; var pt = prezzo + " 💰", pw = cx.measureText(pt).width + w * 0.08; tondo(w - m - pw - w * 0.03, m + w * 0.03, pw, w * 0.12, w * 0.06); cx.fillStyle = "#ffc247"; cx.fill(); cx.fillStyle = "#16161a"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(pt, w - m - pw / 2 - w * 0.03, m + w * 0.093); }
     }
-    FIG_CACHE[k] = cv; return cv;
+    FIG_CACHE[k] = cv; FIG_N++; return cv;
   }
   function voloFigurina(S, s, carta, prezzo, poi) {   // la figurina esce grande sopra lo stadio, resta un attimo e vola al suo posto (s) nel campetto
     var a = s.img.getBoundingClientRect(), base = S.radice.getBoundingClientRect(), sch = S.schermo.getBoundingClientRect();
     if (!a.width || !base.width) return volo(S, s, poi);
-    var w = Math.round(Math.max(110, Math.min(200, base.width * 0.44))), cv = figurinaCanvas(carta, prezzo, w, true);
+    var w = larghezzaFig(S), cv = figurinaCanvas(carta, prezzo, w, true);   // (la figurina senza prezzo è già pronta: preparaStadio)
     if (!cv || !cv.animate) return volo(S, s, poi);
     var fig = document.createElement("div"); fig.className = "st-fig"; fig.appendChild(cv);
     if (GRAF2.on && valoreCalc(carta) >= BIG_DA) {   // ⭐ la figurina d'oro dei big: brilla e le passa sopra un riflesso
@@ -3495,15 +3575,15 @@
     R.gioCols = cols; R.gioQh = qh; if (!gia) { R.gr = {}; R.facce = {}; R.busti = {}; R.colP = {}; }
     (gia ? [] : righe.slice().sort(function (a, b) { return (a.posV || a.pos) - (b.posV || b.pos); })).forEach(function (r, i) {
       var fr = el("span", { class: "st-gio-fr" }), zn = el("span", { class: "st-gio-zona" });   // (la freccina del voto che cambia; nella Zona Cesarini: cosa ti serve)
-      var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), inC = el("span", { class: "st-gio-in" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true }), pc = COLORI_PERSONE[i % COLORI_PERSONE.length];
+      var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), inC = el("span", { class: "st-gio-in" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true }), fq = imgAv(el, "st-gio-faccia", cfgDi(r.nome, r.omino)), pc = COLORI_PERSONE[i % COLORI_PERSONE.length];
       var nodo = el("div", { class: "st-gio-riga" + (R.opz.mio != null && r.id === R.opz.mio ? " mio" : ""), style: "--pc:" + pc + ";transform:" + posQ(R, i), onclick: function () { schedaLive(R, R.gr[r.id]); } }, [
-        el("img", { class: "st-gio-faccia", src: src, alt: "" }), el("div", { class: "st-gio-nomi" }, [ el("span", { class: "st-gio-nome", text: r.nome }), el("div", { class: "st-gio-sotto" }, [ pt, fr, ev, zn, inC ]) ]) ]);
+        fq, el("div", { class: "st-gio-nomi" }, [ el("span", { class: "st-gio-nome", text: r.nome }), el("div", { class: "st-gio-sotto" }, [ pt, fr, ev, zn, inC ]) ]) ]);
       R.colP[r.id] = pc;
       R.gioTab.appendChild(nodo);
       // vv: il voto di adesso di ogni calciatore (tutti partono da 6), bon: i suoi bonus e malus, ic: le loro icone
       R.gr[r.id] = { r: r, nodo: nodo, pt: pt, ev: ev, inC: inC, fr: fr, zn: zn, ord: i, vv: r.kit.map(function () { return 6; }), bon: r.kit.map(function () { return 0; }), ic: r.kit.map(function () { return ""; }) };
       var img = new Image(); img.onload = (function (id, im) { return function () { var c = document.createElement("canvas"); c.width = c.height = 96; c.getContext("2d").drawImage(im, 0, 0, 96, 96); R.facce[id] = c; }; })(r.id, img);
-      img.src = src; R.facce[r.id] = img; R.busti[r.id] = src;   // (la faccina sul campo, accanto al nome dei suoi calciatori)
+      img.src = src; R.facce[r.id] = img; R.busti[r.id] = avBmp(cfgDi(r.nome, r.omino));   // (la faccina sul campo, accanto al nome dei suoi calciatori; 🖼️ in foto se è pronta)
     });
     if (gia) rimettiQuadretti(R, base);   // (🏆 la giornata dopo: stessi quadretti, i voti ripartono da 6 sopra i punti di prima)
     righe.forEach(function (r) { portaIniziale(R, R.gr[r.id]); });   // 🔒 i portieri partono col +1 della porta inviolata
@@ -5527,7 +5607,7 @@
       cx.font = "900 " + Math.round(w * 0.06) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var stx = m + w * 0.035 + w * 0.075, sty = m + w * 0.035 + w * 0.18 + w * 0.075 + ovOff; cx.beginPath(); cx.arc(stx, sty, w * 0.055, 0, Math.PI * 2); cx.fillStyle = "#b8860b"; cx.fill(); cx.lineWidth = Math.max(1, w * 0.01); cx.strokeStyle = "#fff4c4"; cx.stroke(); cx.fillStyle = "#fff"; cx.fillText("★", stx, sty + w * 0.004);   // (la stellina sotto lo scudetto)
       cx.save(); tondo(0, 0, w, h, w * 0.07); cx.clip(); cx.globalAlpha = 0.1; cx.fillStyle = "#fff"; [0.18, 0.62].forEach(function (p, i) { cx.beginPath(); cx.moveTo(w * (p - 0.3), h); cx.lineTo(w * (p - 0.3 + (i ? 0.1 : 0.18)), h); cx.lineTo(w * (p + 0.5 + (i ? 0.1 : 0.18)), 0); cx.lineTo(w * (p + 0.5), 0); cx.closePath(); cx.fill(); }); cx.restore();
     }
-    if (prezzo != null) { cx.font = "900 " + Math.round(w * 0.085) + "px system-ui,sans-serif"; var pt = prezzo + " 💰", pw = cx.measureText(pt).width + w * 0.08; tondo(w - m - pw - w * 0.03, m + w * 0.03, pw, w * 0.12, w * 0.06); cx.fillStyle = "#ffc247"; cx.fill(); cx.lineWidth = Math.max(1, w * 0.008); cx.strokeStyle = "rgba(0,0,0,.25)"; cx.stroke(); cx.fillStyle = "#16161a"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(pt, w - m - pw / 2 - w * 0.03, m + w * 0.093); }
+    if (prezzo != null) cartellino(cx, w, prezzo);
   }
   function kitDi(sq, bianco) {   // la maglia di una squadra (bianco: in trasferta, quando i colori si confondono)
     var c = coloriSquadra(sq) || ["#2b3550", "#9aa5bd"];
@@ -7998,7 +8078,7 @@
     var bassi = n >= 2 ? conti.slice(0, n - 2) : [], passo = bassi.length ? Math.min(0.75, 2.4 / bassi.length) : 0;
     bassi.forEach(function (b) { P.giro[b.id] = t; t += passo; });
     if (n) { if (bassi.length) t += 0.25; P.testa = t; P.duo = conti.slice(Math.max(0, n - 2)).map(function (b) { return b.id; }); t += n >= 2 ? 2.7 : 1.9; }
-    P.apre = t; P.fine = t + (n ? 0.55 : 0.2); P.dur = t + (n ? 2.3 : 1.8);
+    P.apre = t; P.fine = t + (n ? 0.55 : 0.2); P.dur = t + (n ? 1.3 : 1.8);   // (10 nov 2026: chi ha vinto resta 1 s in meno, poi l'«AGGIUDICATO!»)
     return P;
   }
   function apriMs(x) {   // quanto resta a schermo l'apertura (x: l'apertura, o solo quante buste con un'offerta)
@@ -8032,9 +8112,9 @@
     var pers = {}; ((S.ultimiDati && S.ultimiDati.persone) || []).forEach(function (p) { pers[p.id] = p; });
     var cifra = function (b) { return b.q || base; }, primo = function (b) { return ap.primi.indexOf(b.id) >= 0; };
     function busta(b, grande) {   // una busta: davanti (chiusa: ceralacca, faccina, nome) e dietro (aperta: la cifra o «PASSO»)
-      var p = pers[b.id] || {}, img = nd("img", { class: "fc", alt: "", src: srcAv(cfgDi(b.nome, p.omino), { busto: true }) });
+      var p = pers[b.id] || {}, img = nd("img", { class: "fc", alt: "", src: avBmp(cfgDi(b.nome, p.omino)) });   // (🖼️ in foto: girano)
       var passa = !cifra(b), dietro = nd("div", { class: "dietro" + (passa ? " passo" : "") }, [ img.cloneNode(), nd("span", { class: "q", text: passa ? "🙅 PASSO" : cifra(b) + (grande ? "" : " 💰") }), nd("b", { text: nome(b) }), !b.q && base ? nd("small", { text: "resta" }) : null ]);
-      var nodo = nd("div", { class: "bt" + (grande ? " gr" : "") }, [ nd("div", { class: "davanti" }, [ nd("img", { class: "pal", alt: "", src: PALLONE_SRC }), img, nd("b", { text: nome(b) }) ]), dietro ]);
+      var nodo = nd("div", { class: "bt" + (grande ? " gr" : "") }, [ nd("div", { class: "davanti" }, [ nd("img", { class: "pal", alt: "", src: palloneBmp() }), img, nd("b", { text: nome(b) }) ]), dietro ]);
       nodo.setAttribute("data-id", b.id); return nodo;
     }
     var col = ap.buste.length <= 4 ? 2 : ap.buste.length <= 6 ? 3 : 4, tav = nd("div", { class: "tav c" + col }), nodi = {};
@@ -8046,7 +8126,7 @@
     var fine = nd("div", { class: "fine", text: ap.fine === "vince" ? "🏆 " + (vinto && tu(vinto) ? "È tuo" : (vinto ? vinto.nome : "")) + " a " + ap.prezzo + " 💰" : ap.fine === "spareggio" ? "⚔️ Pari a " + ap.prezzo + " 💰! Spareggio tra " + nomiPrimi : ap.fine === "sorteggio" ? "🎡 Ancora pari: decide la ruota!" : "Nessuno lo vuole" });
     var cuore = nd("div", { class: "cuore", text: "❤️" });
     // (nel testa a testa le altre buste, già aperte, diventano una fila piccola sotto: faccina, nome e cifra)
-    var mini = nd("div", { class: "mini" }, ap.buste.filter(function (b) { return P.duo.indexOf(b.id) < 0; }).map(function (b) { var p = pers[b.id] || {}; return nd("span", { class: cifra(b) ? "" : "passo" }, [ nd("img", { alt: "", src: srcAv(cfgDi(b.nome, p.omino), { busto: true }) }), nd("b", { text: nome(b) }), nd("i", { text: cifra(b) ? cifra(b) + " 💰" : "passa" }) ]); }));
+    var mini = nd("div", { class: "mini" }, ap.buste.filter(function (b) { return P.duo.indexOf(b.id) < 0; }).map(function (b) { var p = pers[b.id] || {}; return nd("span", { class: cifra(b) ? "" : "passo" }, [ nd("img", { alt: "", src: avBmp(cfgDi(b.nome, p.omino)) }), nd("b", { text: nome(b) }), nd("i", { text: cifra(b) ? cifra(b) + " 💰" : "passa" }) ]); }));
     // (la riga di ogni busta, per le prove e per chi legge con lo schermo: come prima)
     var righe = nd("div", { class: "as-buste" }), passano = base ? [] : ap.buste.filter(function (b) { return !b.q; }), conti = ap.buste.filter(function (b) { return cifra(b); });
     if (passano.length) righe.appendChild(nd("div", { class: "r passa" }, [ nd("span", { text: "🙅" }), nd("b", { text: passano.map(nome).join(", ") }), nd("span", { text: passano.length > 1 ? "passano" : "passa" }) ]));
@@ -8073,6 +8153,7 @@
       titolo.firstChild.textContent = ap.fine === "nessuno" ? "🙅 Passano tutti" : titolo.firstChild.textContent;
     }, function () { if (P.duo.length) { piatto(); if (ap.fine === "vince") FX.festa(); if (vinto && tu(vinto) && ap.fine === "vince") vibra([30, 40, 30]); else if (P.duo.length) vibra(20); } }]);
     passi.push([P.fine, function () { nodo.classList.add("finita"); }]);
+    if (ap.fine === "vince") passi.push([P.fine + 0.3, function (sub) { if (!sub) preparaFigurina(S, S.ultimiDati && S.ultimiDati.carta); }]);   // 🃏 (lo schermo è fermo)
     // ❤️ il battito: lento all'inizio, più veloce nel testa a testa, si ferma quando si aprono (tempi dal piano, uguali per tutti)
     for (var tb = 0.35, ib = 0; tb < P.apre - 0.2 && ib < 40; ib++) { (function (t0, forte) { passi.push([t0, function () { cuore.classList.remove("bat"); void cuore.offsetWidth; cuore.classList.add("bat"); }, function () { SUONI.battito(forte); }]); })(tb, P.testa != null && tb >= P.testa ? 1 : 0.65);
       tb += P.testa != null && tb >= P.testa ? Math.max(0.36, 0.62 - (tb - P.testa) * 0.12) : 0.85; }
@@ -8233,6 +8314,7 @@
     st.mazzo = costruisciMazzoFanta(st.giocatori.length);
     st.coppie = st.vs && st.giornata ? coppieGiornate(st.giornate) : null; COPPIE_ORA = st.coppie;   // 🆚 le partite si sorteggiano adesso
     NOME_CHI = st.nomiChi; BANDITORE = st.ban;
+    if (st.compra !== "normale") st.giocatori.forEach(function (g) { avBmp(cfgDi(g.nome, g.omino)); });   // 🖼️ (le faccine delle buste, in foto)
     introFanta(t, st);
   }
 

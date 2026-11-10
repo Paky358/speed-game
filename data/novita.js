@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 327,
+    data: "10 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: le buste si aprono senza scatti ✉️",
+    descrizione: [
+      "✉️ Le buste che si aprono e l'«AGGIUDICATO!» subito dopo non vanno più a scatti, su Android e su iPhone: le faccine sulle buste e nelle squadre si preparano prima, mentre si scrivono le offerte, e la figurina che vola è già pronta.",
+      "⏱️ Chi ha vinto la busta resta a schermo un secondo in meno: si passa prima all'«AGGIUDICATO!».",
+      "📋 Il calciatore che va d'ufficio entra nella rosa solo quando ci vola la figurina: prima compariva subito, spariva e poi ci rivolava."
+    ]
+  },
+  {
     v: 326,
     data: "10 novembre 2026",
     titolo: "Mini Asta Fantacalcio: il banditore che sfotte e le figurine da scoprire 🎙️🃏",
