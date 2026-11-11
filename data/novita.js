@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 334,
+    data: "11 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: ogni squadra col suo modulo 🧩",
+    descrizione: [
+      "🧩 Ogni squadra gioca col suo modulo vero: l'Inter col 3-5-2, la Roma col 3-4-2-1, il Milan col 4-3-3… In campo i difensori stanno dietro, gli attaccanti davanti, e i tuoi calciatori al loro posto: un attaccante non finisce in difesa.",
+      "💪 L'overall di una squadra è quello della sua formazione più forte nel suo modulo, anche con chi è infortunato (l'Inter con Lautaro e Thuram).",
+      "🟨 I falli si vedono al posto giusto: l'attaccante prende il giallo per un fallo in attacco, il difensore quasi sempre nella sua metà campo."
+    ]
+  },
+  {
     v: 333,
     data: "11 novembre 2026",
     titolo: "Mini Asta Fantacalcio: un rigorista per ogni squadra 🎯",

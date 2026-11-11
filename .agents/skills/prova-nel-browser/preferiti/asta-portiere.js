@@ -8,6 +8,7 @@
 // pu2 Sul maxischermo «🎯 1° RIGORISTA», «🦶 2° PUNIZIONI», «🚩 1° ANGOLI»: sempre il numero e la scritta per intero, piccole, una
 //     sotto l'altra a destra in basso; la maglia grande come senza scritte; nome, squadra e prezzo interi e mai sotto le scritte
 //     (360x640, 320x568, 412x915, 390x844).
+// mo1 Ogni squadra col suo modulo (data/fanta-moduli.js) in campo e nell'overall; i vostri attaccanti mai in difesa (11 nov 2026).
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -102,5 +103,37 @@
     if (ko.length) no(ko.slice(0, W.__tutti ? 99 : 6).join(" · ") + (ko.length > 6 ? " … (" + ko.length + ")" : ""));
     x.push("6 casi su 6 telefoni (360x640, 320x568, 412x915, 390x844, 360x700, 384x780) nello stadio vero, con e senza «🆚»: numero e scritta sempre interi, a destra in basso; maglia grande come prima; nome, squadra e prezzo interi e scoperti; ruolo e prezzo dentro lo schermo");
     return x.join("; ");
+  } });
+  // mo1 🧩 I MODULI (11 nov 2026, il proprietario: «ogni squadra ha il suo modulo… la formazione più forte possibile… e si prende l'overall di quella»;
+  //     «deve succedere molto raramente che il mio attaccante sta in difesa»): per ognuna delle 20 squadre, attaccando e difendendo, 11 posti col portiere
+  //     in porta, tanti difensori, centrocampisti e attaccanti quanti ne dice data/fanta-moduli.js, gli attaccanti sempre più avanti dei difensori; un
+  //     vostro attaccante che non c'entra non va MAI in un posto da difensore (prima i posti da attaccante, poi uno nuovo davanti, poi il centrocampo);
+  //     l'overall dell'Inter è quello della formazione più forte nel 3-5-2, con Lautaro e Thuram.
+  COPIONE.aggiungi("mo1", { nome: "Mini Asta Fantacalcio: ogni squadra col suo modulo in campo e nell'overall", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0 });
+    if (w.SG && w.SG.scaricaGioco) await w.SG.scaricaGioco("asta");
+    var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), a = src.indexOf("    var Y_LINEA = "), b = src.indexOf("    function postoNuovo(occ, xs) {");
+    if (a < 0 || b < a) no("non trovo i posti del modulo nel file del gioco");
+    var dentro = src.slice(a, b).split("\n    ").join("\n  "), fuori = {};
+    src = src.replace("  SG.registra(gioco);", dentro + " FUORI.posti = postiModulo; FUORI.ordine = ordineRuolo; FUORI.modulo = moduloDi; FUORI.ovr = overallSquadra; FUORI.ovrQ = ovrDaQ; FUORI.rose = roseSerieA; SG.registra(gioco);");
+    new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, fuori);
+    var MOD = (w.SG_FANTA_MODULI && w.SG_FANTA_MODULI.squadre) || {}, sq = Object.keys(MOD), ko = [];
+    if (sq.length !== 20) no("i moduli sono " + sq.length + " squadre invece di 20");
+    sq.forEach(function (s) {
+      var m = fuori.modulo(s), tot = 1 + m.D + m.C + m.A, linee = m.linee.reduce(function (t, x) { return t + x; }, 0);
+      if (tot !== 11 || linee !== 10) ko.push(s + ": il modulo " + m.mod + " non fa 11 (" + tot + ", linee " + linee + ")");
+      [true, false].forEach(function (att) {
+        var p = fuori.posti(s, att), c = { P: 0, D: 0, C: 0, A: 0 }; p.forEach(function (o) { c[o.ru]++; });
+        if (p.length !== 11 || c.P !== 1 || c.D !== m.D || c.C !== m.C || c.A !== m.A || p[0].ru !== "P") ko.push(s + (att ? " (attacca)" : " (difende)") + ": posti " + JSON.stringify(c));
+        var xA = p.filter(function (o) { return o.ru === "A"; }).map(function (o) { return o.x; }), xD = p.filter(function (o) { return o.ru === "D"; }).map(function (o) { return o.x; });
+        if (att ? Math.min.apply(null, xA) <= Math.max.apply(null, xD) : Math.max.apply(null, xA) >= Math.min.apply(null, xD)) ko.push(s + (att ? " (attacca)" : " (difende)") + ": un attaccante non è davanti ai difensori");
+        var o = fuori.ordine(p, "A", att), primi = o.slice(0, o.indexOf("su"));
+        if (primi.some(function (i) { return p[i].ru !== "A"; }) || o.some(function (i) { return i !== "su" && p[i].ru === "D"; })) ko.push(s + ": un vostro attaccante può finire in difesa");
+      });
+    });
+    var inter = fuori.rose()["Inter"].filter(function (c) { return c.ruolo === "A"; }).sort(function (x, y) { return y.q - x.q; }).slice(0, 2).map(function (c) { return c.nome; });
+    if (fuori.modulo("Inter").A !== 2 || inter.join(",").indexOf("Martinez L.") < 0 || inter.join(",").indexOf("Thuram") < 0) ko.push("l'Inter: le due punte più forti sono " + inter.join(", "));
+    if (ko.length) no(ko.slice(0, 6).join(" · ") + (ko.length > 6 ? " … (" + ko.length + ")" : ""));
+    return "20 squadre col loro modulo (" + sq.map(function (s) { return s + " " + MOD[s][0]; }).slice(0, 4).join(", ") + "…): 11 posti, ruoli del modulo, attaccanti sempre davanti, i vostri attaccanti mai in difesa; Inter " + fuori.ovr("Inter") + " con " + inter.join(" e ");
   } });
 })();

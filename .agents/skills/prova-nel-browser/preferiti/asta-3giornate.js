@@ -423,8 +423,12 @@
       var id = d.c + "|" + d.f + "|" + Math.round(d.m * 10) + "|" + d.sqA + "|" + (d.t === "rig" ? "r" : d.v === "punizione" ? "p" : d.v === "olimpico" ? "o" : "x");
       if (perChi[id] && perChi[id] !== k) ko.push(id + ": chi tira cambia (" + perChi[id] + " / " + k + ")"); perChi[id] = k;
     });
-    if (nonRig >= 8 && att / nonRig < 0.35) ko.push("gli attaccanti tirano poco: " + att + " su " + nonRig);
+    if (nonRig >= 10 && att / nonRig < 0.3) ko.push("gli attaccanti tirano poco: " + att + " su " + nonRig);
+    // 🟨 (11 nov 2026) i falli dei vostri: l'attaccante quasi sempre in attacco, il difensore quasi sempre dietro (solo da leggere: pochi falli a partita)
+    var falli = tiri.filter(function (d) { return /^(amm|esp|rec)$/.test(d.t) && d.ruF; }), fr = {};
+    falli.forEach(function (d) { var z = fr[d.ruF] = fr[d.ruF] || [0, 0]; z[d.difesa ? 1 : 0]++; if (d.come === "ultimo" && !d.difesa) ko.push(d.m + "' fallo da ultimo uomo fuori dalla difesa"); });
+    var falliTxt = Object.keys(fr).map(function (r) { return r + " " + fr[r][1] + " in difesa su " + (fr[r][0] + fr[r][1]); }).join(", ");
     if (ko.length) no(ko.slice(0, 6).join(" · ") + (ko.length > 6 ? " … (" + ko.length + ")" : ""));
-    return visti.length + " tiri visti in 3 giornate: " + veri.length + " di chi non è di nessuno, tutti calciatori veri con numero e faccia (" + rig + " rigori col rigorista, attaccanti " + att + " su " + nonRig + " negli altri tiri) · " + String(r0).slice(0, 60) + "…";
+    return visti.length + " tiri visti in 3 giornate: " + veri.length + " di chi non è di nessuno, tutti calciatori veri con numero e faccia (" + rig + " rigori col rigorista, attaccanti " + att + " su " + nonRig + " negli altri tiri) · falli dei vostri: " + (falliTxt || "nessuno") + " · " + String(r0).slice(0, 60) + "…";
   } });
 })();
