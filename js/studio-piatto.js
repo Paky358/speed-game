@@ -266,8 +266,8 @@
       ".st-vista{position:relative;width:100%;max-width:520px;margin:0 auto;height:var(--alt,100dvh);overflow:hidden;user-select:none;-webkit-user-select:none;",
         "background:radial-gradient(120% 38% at 50% 0%,rgba(224,34,90,.10) 0%,rgba(224,34,90,0) 100%),radial-gradient(130% 60% at 50% 0%,#1a1f3d 0%,#121630 55%,#0b0d1c 100%)}",
       ".st-scena{position:absolute;inset:0;display:flex;flex-direction:column;will-change:transform}",
-      ".st-mondo{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:6}",
-      ".st-mondo>*{position:absolute;pointer-events:auto}",
+      ".st-mondo{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:8}",   // (sopra i punteggi: es. la bomba della Patata)
+      ".st-mondo>*{position:absolute;pointer-events:none}",
       // i punteggi in alto: una fila fino a 4, poi due
       ".stp-punti{flex:0 0 auto;display:flex;flex-direction:column;gap:5px;padding:calc(6px + env(safe-area-inset-top)) 6px 0;position:relative;z-index:7}",
       ".stp-punti.via{display:none}",
@@ -559,7 +559,10 @@
     if (!S.palcoEl) { S.palcoEl = S.t.el("div", { class: "stp-palco" }); S.vista.appendChild(S.palcoEl); }
     vuota(S.palcoEl); S.palcoEl.classList.add("on"); return S.palcoEl;
   }
-  function viaPalco(S) { if (S.palcoEl) S.palcoEl.classList.remove("on"); }
+  function viaPalco(S) {   // (il velo sparisce piano, poi si svuota)
+    var p = S.palcoEl; if (!p || !p.classList.contains("on")) return;
+    p.classList.remove("on"); setTimeout(function () { if (!p.classList.contains("on")) vuota(p); }, 350);
+  }
   // all'inizio: il nome del gioco e chi gioca (le faccine entrano una dopo l'altra), poco più di 2 secondi
   async function apertura(S) {
     viaBarra(S); fermaTimer(S); viaTerzo(S);
@@ -689,7 +692,7 @@
     apertura: apertura, stacco: stacco, finale: finale,
     testoLeggio: testoLeggio, tocca: tocca, fuori: fuori, scossa: scossa, sopraTesta: sopraTesta,
     avatarDi: avatarDi, mioAvatar: mioAvatar, avatarValido: avatarValido, coriandoli: coriandoli,
-    raggi: raggi, rullo: rullo, faccina: telaFaccia,
+    raggi: raggi, rullo: rullo, faccina: telaFaccia, fineApertura: viaPalco,
     dorme: dorme, vuota: vuota, durataApertura: durataApertura, STACCO: STACCO, FX: FX, COLORI: ST_COL, piatto: true
   };
 })();

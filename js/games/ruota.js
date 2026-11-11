@@ -2103,7 +2103,7 @@
     ui.kb = creaTastiera(ui);   // ⌨️ fissa in basso per tutti
     // 📺 senza studio: se il tabellone o i tasti in basso cambiano altezza (una riga in più, una faccina che arriva), la ruota si rimette in mezzo
     if (ui.flat && window.ResizeObserver) {
-      ui.ro = new ResizeObserver(function () { if (!S.vivo()) return; if (ui.alta) posAlto(ui); if (ui.quadro.classList.contains("on")) posQuadro(ui); });
+      ui.ro = new ResizeObserver(function () { if (!S.vivo()) { ui.ro.disconnect(); return; } if (ui.alta) posAlto(ui); if (ui.quadro.classList.contains("on")) posQuadro(ui); });
       ui.ro.observe(S.barraEl); ui.ro.observe(ui.sopra);
     }
     // la barretta del tempo che resta a chi deve toccare (si accorcia da sola, senza ridisegnare i tasti)
@@ -2124,7 +2124,7 @@
         via(); aggiorna(ui, ui.vm);
       });
     } else via();
-    ui.taglia = function () { if (!ui.sigla) return; ui.sigla = false; ui.tagliata = true; ST.viaTerzo(S); via(); };
+    ui.taglia = function () { if (!ui.sigla) return; ui.sigla = false; ui.tagliata = true; ST.viaTerzo(S); if (ST.fineApertura) ST.fineApertura(S); via(); };   // (senza studio: via anche il velo della presentazione)
     return ui;
   }
   // quando si rigioca: un saluto veloce invece della presentazione dei concorrenti
