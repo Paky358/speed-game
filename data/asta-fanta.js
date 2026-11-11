@@ -6,8 +6,10 @@
    Nome · Squadra · Ruolo.
    Formato: "Nome (Squadra)".
    ========================================================= */
-// 10 nov 2026: fuori dall'asta i difensori da 4 in giù e centrocampisti e attaccanti da 5 in giù (i portieri restano tutti, e Camarda: il proprietario
-// l'aveva tenuto per gli amici milanisti). Stanno nel gruppo X di ogni ruolo: solo in campo, con faccia e numero
+// 10 nov 2026: fuori dall'asta i difensori da 4 in giù e centrocampisti e attaccanti da 5 in giù (i portieri restano tutti). Stanno nel gruppo X
+// di ogni ruolo: solo in campo, con faccia e numero. 11 nov 2026, il proprietario: «togli Camarda e inserisci Geubbels, così c'è un rigorista
+// per ogni squadra»: Geubbels (1° rigorista del Lecce) resta all'asta come eccezione, Camarda passa nel gruppo X. Ogni squadra deve avere
+// almeno un rigorista all'asta (prova pu1)
 window.SG_FANTA_CALCIATORI = {
   // 10 nov 2026: le fasce rifatte sulle quotazioni di oggi (A i più quotati, poi B, poi C: stesse dimensioni di prima, i 10 nuovi aggiunti dove cadono)
   // ---------- PORTIERI ----------
@@ -161,15 +163,15 @@ window.SG_FANTA_CALCIATORI = {
       "Nzola (Cagliari)", "Piccoli (Bologna)", "Boga (Juventus)",
       "Santos A. (Napoli)", "Yeboah J. (Venezia)", "Zeballos (Monza)",
       "Colombo (Genoa)", "Toure E. (Parma)", "Kevin Carlos (Cagliari)",
-      "Camarda (Milan)"
+      "Geubbels (Lecce)"
     ],
     // X = SOLO IN CAMPO (10 nov 2026, il proprietario): fuori dall'asta per la quotazione bassa (da 5 in giù), ma giocano nella giornata
     // con la loro squadra, con faccia e numero. Il mazzo dell'asta pesca solo da A, B e C
     X: [
       "Bobcek (Frosinone)", "Giovane (Napoli)", "Gnonto (Fiorentina)",
       "Vitinha O. (Genoa)", "Cutrone (Monza)", "Elphege (Parma)",
-      "Geubbels (Lecce)", "Rrahmani Al. (Venezia)", "Ngonge (Monza)",
-      "Stulic (Lecce)", "Sulemana K. (Atalanta)"
+      "Rrahmani Al. (Venezia)", "Ngonge (Monza)", "Stulic (Lecce)",
+      "Camarda (Milan)", "Sulemana K. (Atalanta)"
     ]
   }
 };

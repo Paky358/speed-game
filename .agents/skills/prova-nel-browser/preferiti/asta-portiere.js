@@ -3,7 +3,7 @@
 //
 // pu1 All'asta del fanta esce UN SOLO portiere per squadra (Inter e Napoli ne hanno due nel listone): 3.000 mazzi da 2 a 10
 //     giocatori, sempre un portiere a testa, mai due della stessa squadra; e i portieri escono tutti, prima o poi.
-//     (10 nov 2026) E il gruppo X «solo in campo» (difensori da 4 in giù, centrocampisti e attaccanti da 5 in giù, tranne Camarda)
+//     (10 nov 2026) E il gruppo X «solo in campo» (difensori da 4 in giù, centrocampisti e attaccanti da 5 in giù, tranne Geubbels, il rigorista del Lecce)
 //     non esce MAI all'asta, ma gioca nella giornata: tutti sono nelle squadre di Serie A del gioco.
 // pu2 Sul maxischermo «🎯 1° RIGORISTA», «🦶 2° PUNIZIONI», «🚩 1° ANGOLI»: sempre il numero e la scritta per intero, piccole, una
 //     sotto l'altra a destra in basso; la maglia grande come senza scritte; nome, squadra e prezzo interi e mai sotto le scritte
@@ -28,9 +28,14 @@
     var L = w.SG_FANTA_CALCIATORI, Q = w.SG_FANTA_QUOTAZIONI.valori, SOGLIA = { D: 4, C: 5, A: 5 }, X = {}, nX = 0;
     ["D", "C", "A"].forEach(function (r) {
       (L[r].X || []).forEach(function (k) { var mk = /^(.*) \(([^)]+)\)$/.exec(k); X[mk[1] + "|" + mk[2]] = 1; nX++; if (!(Q[k] <= SOGLIA[r])) no(k + " è «solo in campo» ma vale " + Q[k]); });
-      ["A", "B", "C"].forEach(function (t) { (L[r][t] || []).forEach(function (k) { if (Q[k] <= SOGLIA[r] && k !== "Camarda (Milan)") no(k + " vale " + Q[k] + " ma è ancora all'asta"); }); });
+      ["A", "B", "C"].forEach(function (t) { (L[r][t] || []).forEach(function (k) { if (Q[k] <= SOGLIA[r] && k !== "Geubbels (Lecce)") no(k + " vale " + Q[k] + " ma è ancora all'asta"); }); });
     });
     if (nX < 30) no("il gruppo «solo in campo» ha solo " + nX + " calciatori");
+    // (11 nov 2026, il proprietario: «così c'è un rigorista per ogni squadra») ogni squadra ha almeno uno dei suoi rigoristi all'asta
+    var SQ = w.SG_FANTA_SQUADRE.squadre, all = {}, nn = function (x) { return String(x).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z. ]/g, "").trim(); };
+    ["P", "D", "C", "A"].forEach(function (r) { ["A", "B", "C"].forEach(function (t) { (L[r][t] || []).forEach(function (k) { var mk = /^(.*) \(([^)]+)\)$/.exec(k); all[nn(mk[1]) + "|" + mk[2]] = 1; }); }); });
+    var senza = Object.keys(SQ).filter(function (sq) { return !(SQ[sq].rigori || []).some(function (x) { return all[nn(x[0]) + "|" + sq]; }); });
+    if (senza.length) no("senza nessun rigorista all'asta: " + senza.join(", "));
     var rose = M.rose(), inRosa = {}; Object.keys(rose).forEach(function (sq) { rose[sq].forEach(function (c) { inRosa[c.nome + "|" + c.squadra] = 1; }); });
     Object.keys(X).forEach(function (k) { if (!inRosa[k]) no(k + " non gioca nella giornata"); });
     for (var i = 0; i < 3000; i++) {
@@ -43,7 +48,7 @@
     if (Object.keys(visti).length !== tutti) no("escono solo " + Object.keys(visti).length + " portieri su " + tutti);
     try { Object.keys(w.localStorage).forEach(function (k) { if (/fanta_/.test(k)) w.localStorage.removeItem(k); }); } catch (e) {}
     x.push("3.000 mazzi da 2 a 10: sempre un portiere a testa, mai due della stessa squadra (" + doppie.join(", ") + " ne hanno due); escono tutti i " + tutti);
-    x.push(nX + " «solo in campo»: mai all'asta, tutti nelle squadre della giornata");
+    x.push(nX + " «solo in campo»: mai all'asta, tutti nelle squadre della giornata; ogni squadra ha almeno un rigorista all'asta");
     return x.join("; ");
   } });
   COPIONE.aggiungi("pu2", { nome: "Mini Asta Fantacalcio: rigorista, punizioni e angoli sempre col numero e la scritta intera", fai: async function () {

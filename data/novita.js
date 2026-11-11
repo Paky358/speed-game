@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 333,
+    data: "11 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: un rigorista per ogni squadra 🎯",
+    descrizione: [
+      "All'asta torna Geubbels, il rigorista del Lecce: ora ogni squadra ha almeno un rigorista da comprare. Camarda invece gioca solo in campo, col Milan."
+    ]
+  },
+  {
     v: 332,
     data: "11 novembre 2026",
     titolo: "Mini Asta Fantacalcio: in campo tutti veri 🎯",
