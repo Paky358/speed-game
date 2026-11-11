@@ -661,7 +661,7 @@
     // la tastiera: QWERTY, c'è su tutti e tre i telefoni
     var ord = "QWERTYUIOPASDFGHJKLZXCVBNM";
     ["Paky", "Luca", "Giulia"].forEach(function (n) {
-      var t = [].map.call(F[n].document.querySelectorAll(".ru-qwerty .ru-btn.lettera"), function (b) { return b.textContent; }).filter(function (x) { return /^[A-Z]$/.test(x); }).join("");
+      var t = [].map.call(F[n].document.querySelectorAll(".ru-qwerty .ru-qr .ru-btn.lettera"), function (b) { return b.textContent; }).filter(function (x) { return /^[A-Z]$/.test(x); }).join("");
       if (t !== ord) no("la tastiera di " + n + " non è QWERTY: " + t);
     });
     L.push("tastiera QWERTY su tutti e tre");

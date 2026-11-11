@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 336,
+    data: "12 novembre 2026",
+    titolo: "I giochi a tutto schermo: via lo studio TV 📺",
+    descrizione: [
+      "📺 La Ruota della Fortuna, La Balla Colossale, Il Prezzo è Giusto, La linea del tempo, Nomi Cose e Città, La Patata Bollente e Parola d'ordine non hanno più lo studio col pubblico, i podi e la telecamera: il gioco prende tutto lo schermo e si legge meglio.",
+      "⚡ Le partite partono subito e il telefono non si blocca più all'inizio: sui telefoni lenti la prima notizia della Balla arrivava dopo 30 secondi, ora dopo 7.",
+      "🧑‍🤝‍🧑 In alto i punteggi di tutti, con la faccina piccola. All'inizio una presentazione veloce di chi gioca, alla fine chi vince e la classifica coi tasti di sempre.",
+      "🎡 La Ruota: il tabellone sempre in alto; sotto, la ruota grande quando si gira e la tastiera grande quando si scelgono le lettere (le vocali da comprare sono azzurre). Quando si risolve, le lettere vanno dritte nelle caselle.",
+      "💣 La Patata: chi gioca sta in alto, in grande: si tocca per passare la bomba."
+    ]
+  },
+  {
     v: 335,
     data: "11 novembre 2026",
     titolo: "Mini Asta Fantacalcio: in campo i titolari veri 👕",

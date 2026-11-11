@@ -58,6 +58,10 @@ const GUIDA = `
       if (w.__scritto && w.__scritto !== v.giro + "|" + (v.rif || 0)) w.__scritto = null;
       if (v.fase === "punti" && k % 10 === 5) { var av = [].filter.call(d.querySelectorAll("button"), function (x) { return /Avanti/.test(x.textContent) && vis(x); })[0]; tocca(av); }
     }
+    if (g === "patata") {   // chi ha la bomba la passa toccando un altro (dopo un attimo: così si vede)
+      if (k % 6 === 4) { var c = d.querySelector(".stp-chip.tocca"); if (c) c.click(); }
+      return;
+    }
     if (g === "ruota") {   // chi è di turno: gira, poi chiama una consonante (due tocchi), ogni tanto compra una vocale
       var mio = (v.giocatori || []).filter(function (p) { return p.nome === n; })[0];
       if (!mio || v.turno !== mio.id || k % 4 !== 1) return;
@@ -80,7 +84,7 @@ const SCEN = `
     if (!await W.aspetta(function () { var v = vmC(); return (v.players || v.giocatori || []).length >= amici.length + 1; }, 15000)) no("nella saletta non ci sono tutti");
     await W.dorme(1200);
     W.__pronto = 1; await W.aspetta(function () { return W.__misura; }, 60000);
-    if (!W.clicca(P, /Comincia/)) no("non trovo Comincia");
+    if (!W.clicca(P, /Comincia|Via ▶|Continua ▶/)) no("non trovo Comincia");
     var t0 = Date.now(), k = 0, ult = -1;
     while (Date.now() - t0 < W.__durata * 1000) {
       var v = vmC();

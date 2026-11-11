@@ -46,7 +46,7 @@
       for (var n of amici) await W.apriTel(n, { hash: "gioco=" + G.id + "&stanza=" + C, x: 185 });
       if (!await W.aspetta(function () { var v = vm(C); return (v.players || v.giocatori || []).length >= amici.length + 1; }, 15000)) no(G.nome + ": in saletta non ci sono tutti");
       await W.dorme(600);
-      if (!W.clicca(P, /Comincia/)) no(G.nome + ": non trovo «Comincia»");
+      if (!W.clicca(P, /Comincia|Via ▶|Continua ▶/)) no(G.nome + ": non trovo «Comincia»");
       var t0 = Date.now();
       // parte: la fase del gioco (non più saletta, presentazione o sigla) e sul telefono la presentazione è finita
       var ok = await W.aspetta(function () {
@@ -80,7 +80,7 @@
     F.Giulia = await W.apriTel("Giulia", { hash: "gioco=ruota&stanza=" + C, x: 370 });
     if (!await W.aspetta(function () { return A.contaDentro(vm(C)) === 3; }, 10000)) no("in saletta non sono in 3");
     await W.dorme(400);
-    if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 5000)) no("l'host non ha «Comincia»");
+    if (!await W.aspetta(function () { return W.clicca(P, /Comincia|Via ▶|Continua ▶/); }, 5000)) no("l'host non ha «Comincia»");
     var tutti = ["Paky", "Luca", "Giulia"];
     function idDi(n) { return n === "Paky" ? "host" : ((vm(C).giocatori || []).filter(function (g) { return g.nome === n; })[0] || {}).id; }
     function nomeDi(id) { return tutti.filter(function (n) { return idDi(n) === id; })[0]; }

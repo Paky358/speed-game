@@ -2217,7 +2217,7 @@
     ui.canvas.width = ui.canvas.height = 300;
     function tela(cls, w) { return el("canvas", { class: cls, width: String(w), height: String(w) }); }
     var an = tela("ru-anello", 300), la = tela("ru-lamp a", 300), lb = tela("ru-lamp b", 300);
-    disegnaAnello(an); disegnaLampadine(la, 0); disegnaLampadine(lb, 1);
+    if (!ui.flat) { disegnaAnello(an); disegnaLampadine(la, 0); disegnaLampadine(lb, 1); }   // (senza studio la ruota sul pavimento non c'è: niente disegni inutili)
     ui.lancPav = el("div", { class: "ru-lancetta", html: SVG_LANCETTA });
     ui.piatto = el("div", { class: "ru-piatto" }, [ ui.canvas, an, la, lb, el("div", { class: "ru-centro" }), ui.lancPav ]);
     ui.ombra = el("div", { class: "ru-ombra" });
@@ -2239,7 +2239,7 @@
     mettiRuota(ui);
     trascinaRuota(ui);
   }
-  function ridisegnaRuote(ui, spicchi) { disegnaRuota(ui.canvas, spicchi); disegnaRuota(ui.canvasA, spicchi); }
+  function ridisegnaRuote(ui, spicchi) { if (!ui.flat) disegnaRuota(ui.canvas, spicchi); disegnaRuota(ui.canvasA, spicchi); }
   function ruotaA(ui, ang) { var tr = "rotate(" + (+ang || 0).toFixed(2) + "deg)"; ui.canvas.style.transform = tr; ui.canvasA.style.transform = tr; }
   // dove sta la ruota nello studio: sul pavimento, davanti ai leggii, larga quasi tutto lo studio; schiacciata in prospettiva (k)
   function mettiRuota(ui) {

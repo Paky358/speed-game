@@ -471,6 +471,12 @@
       ".pt-chi{font-size:34px;font-weight:800;color:#fff}",
       ".pt-chi b{color:var(--o-oro-testo)}",
       ".pt-regola{font-size:22px;font-weight:700;color:#cdd6ff;opacity:.85}",
+      // 📺 senza studio (11 nov 2026): in alto chi gioca, grande; qui sotto categoria, bomba e secondi stanno nello spazio che resta
+      ".st-piatto .pt-sch{gap:2px;padding:4px 4px 0}.st-piatto .pt-cat{font-size:15px}",
+      ".st-piatto .pt-catnome{font-size:clamp(26px,calc(var(--alt,640px) * .05),44px)}",
+      ".st-piatto .pt-bombona{font-size:clamp(54px,calc(var(--alt,640px) * .105),110px)}",
+      ".st-piatto .pt-conto{font-size:clamp(70px,calc(var(--alt,640px) * .145),150px)}",
+      ".st-piatto .pt-chi{font-size:clamp(20px,calc(var(--alt,640px) * .038),34px)}.st-piatto .pt-regola{font-size:16px}",
       ".pt-boomtxt{font-size:96px;font-weight:900;color:#ff5d6c;text-shadow:0 6px 0 rgba(0,0,0,.35);animation:ptEsce .45s cubic-bezier(.3,1.5,.5,1) both}",
       // voto della categoria (si vede da vicino)
       ".pt-voto{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:8px 4px}",

@@ -276,7 +276,7 @@
       ".stp-riga{display:flex;gap:5px;min-width:0}",
       ".stp-chip{position:relative;flex:1 1 0;min-width:0;display:flex;align-items:center;gap:5px;height:40px;padding:0 6px 0 3px;border-radius:13px;",
         "background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0)),var(--o-carta,rgba(22,27,50,.72));box-shadow:inset 0 0 0 1px var(--o-filo,rgba(255,255,255,.1));",
-        "color:var(--o-testo,#f4f5fb);transition:box-shadow .25s,background-color .25s;-webkit-tap-highlight-color:transparent}",
+        "color:var(--o-testo,#f4f5fb);-webkit-tap-highlight-color:transparent}",
       ".stp-chip canvas{flex:0 0 auto;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.06);box-shadow:0 0 0 2px var(--col)}",
       ".stp-chip .tx{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;line-height:1.08}",
       ".stp-chip .n{font-size:11px;font-weight:700;color:var(--o-tenue,#a6acc8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",

@@ -56,7 +56,7 @@ const SCEN = (g) => `
     try { new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { lt.push(Math.round(e.duration)); }); }).observe({ entryTypes: ["longtask"] }); } catch (e) {}
     (function f(t) { if (!reg) return; if (ult) fr.push(t - ult); ult = t; requestAnimationFrame(f); })(0);
     var t0 = performance.now();
-    if (!W.clicca(P, /Comincia/)) no("non trovo Comincia");
+    if (!W.clicca(P, /Comincia|Via ▶|Continua ▶/)) no("non trovo Comincia");
     var parte = 0, v, visto = {};
     while (performance.now() - t0 < 40000) {
       v = vmC(); var fa = (v.fase || "") + (v.sigla ? "+sigla" : ""); if (fa !== uf) { uf = fa; fasi.push(Math.round(performance.now() - t0) + " " + fa); }
