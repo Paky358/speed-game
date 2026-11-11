@@ -1309,6 +1309,7 @@
   // ---------------- la sigla: «Paky, vieni giù!» ----------------
   async function apertura(R) {
     var S = R.S, vm = R.vm, k = vm.k, n = vm.players.length;
+    if (ST.piatto) { await ST.apertura(S); return; }   // 📺 senza studio: la presentazione veloce di chi gioca (niente pubblico, niente «vieni giù!»)
     ST.logoSchermo(S);
     if (S.pubPronto) await S.pubPronto;
     if (!vivoK(R, k)) return;

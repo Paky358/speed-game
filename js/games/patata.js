@@ -808,7 +808,8 @@
         var rientro = !cb._presentato && vm.fase !== "voto";
         RP = { t: t, ids: ids, cb: cb, presentato: !!cb._presentato || rientro, rientro: rientro, rientroFine: rientro && vm.fase === "fine" };
         if (rientro) { cb._presentato = true; RP.kCat = vm.categoria; }
-        RP.S = ST.crea(t, vm.players, { io: cb.locale ? -1 : idxP(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: "La Patata Bollente", logo: ["LA PATATA", "BOLLENTE"] });
+        RP.S = ST.crea(t, vm.players, { io: cb.locale ? -1 : idxP(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: "La Patata Bollente", logo: ["LA PATATA", "BOLLENTE"],
+          punti: "grandi" });   // 📺 senza studio: in alto chi gioca, grande, da toccare per passare la bomba (con lo studio non conta)
         if (conTargaP(t)) RP.S.vista.classList.add("st-con-targa");   // chi guarda soltanto: il posto della targhetta del core
         RP.S.onTocca = function (i) { var p = RP.vm && RP.vm.players[i]; if (p) { swishP(); RP.cb.onPassa(p.id); } };
         vm.players.forEach(function (p, i) { ST.testoLeggio(RP.S, i, p.eliminato ? testoFuori(p) : testoInGara(vm, p), p.eliminato); if (p.eliminato) { ST.fuori(RP.S, i, true); if (!p.via) ST.faccia(RP.S, i, "esploso"); } });
@@ -1156,8 +1157,9 @@
   }
   // metà del leggio, ma mai troppo piccola: con 10 giocatori deve vedersi bene da lontano
   // (lo studio intero si vede a metà grandezza: un quarto dello schermo nel mondo = almeno ~44 px sul telefono)
-  function misuraBomba(R) { var p = R.S.posti[0]; return Math.round(Math.max((p ? p.w : 120) * 0.5, (R.S.VW || 360) * 0.25)); }
-  function puntoBomba(R, i) { var q = ST.sopraTesta(R.S, i), d = misuraBomba(R); return { x: q.x, y: q.y - d * 0.45 }; }
+  function misuraBomba(R) { var p = R.S.posti[0]; if (ST.piatto) return Math.round(p && p.h ? p.h * 0.95 : 48); return Math.round(Math.max((p ? p.w : 120) * 0.5, (R.S.VW || 360) * 0.25)); }
+  // (senza studio la bomba sta sul punteggio di chi ce l'ha, a destra della faccina)
+  function puntoBomba(R, i) { var q = ST.sopraTesta(R.S, i), d = misuraBomba(R), p = (R.S.posti || [])[i]; if (ST.piatto && p) return { x: q.x + q.w / 2 - d * 0.42, y: q.y + (p.h || d) / 2 }; return { x: q.x, y: q.y - d * 0.45 }; }
   function trasfBomba(R, p, giro) { var d = misuraBomba(R); return "translate(" + (p.x - d / 2).toFixed(1) + "px," + (p.y - d / 2).toFixed(1) + "px) rotate(" + (giro || 0) + "deg)"; }
   function posaBomba(R, i) {
     var b = R.bomba, d = misuraBomba(R); if (!b || i < 0) return;
@@ -1167,7 +1169,7 @@
   function voloBomba(R, da, a, ms) {
     var b = R.bomba, d = misuraBomba(R); if (!b) return Promise.resolve();
     b.style.width = b.style.height = d + "px"; b.style.fontSize = (d * 0.8) + "px"; b.style.opacity = 1;
-    var mezzo = { x: (da.x + a.x) / 2, y: Math.min(da.y, a.y) - R.S.VH * 0.22 };   // parabola
+    var mezzo = { x: (da.x + a.x) / 2, y: ST.piatto ? Math.max(da.y, a.y) + R.S.VH * 0.1 : Math.min(da.y, a.y) - R.S.VH * 0.22 };   // parabola (senza studio i punteggi sono in alto: la bomba passa da sotto)
     var fine = trasfBomba(R, a);
     b.style.transform = fine;
     try { b.animate([{ transform: trasfBomba(R, da) }, { transform: trasfBomba(R, mezzo, 200) }, { transform: trasfBomba(R, a, 360) }], { duration: ms, easing: "cubic-bezier(.3,.1,.3,1)" }); } catch (e) {}

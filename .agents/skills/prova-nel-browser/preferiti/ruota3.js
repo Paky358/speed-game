@@ -107,7 +107,7 @@
     var ID = { Paky: "host", Luca: idDi("Luca"), Giulia: idDi("Giulia") };
     function nomeDi(id) { return Object.keys(ID).filter(function (n) { return ID[n] === id; })[0]; }
     ["Paky", "Luca", "Giulia"].forEach(function (n) {
-      var s = F[n].document.querySelector(".st-schermo"); if (s && s.style.display !== "none") no("su " + n + " c'è ancora il maxischermo");
+      var s = F[n].document.querySelector(".st-schermo"); if (s && F[n].getComputedStyle(s).display !== "none") no("su " + n + " c'è ancora il maxischermo");
     });
     async function unGiro(chi, gradi, ms, dir) {
       var altri = ["Paky", "Luca", "Giulia"].filter(function (n) { return n !== chi; });
@@ -144,9 +144,21 @@
     L.push(chi + " la lancia col dito: " + Math.round(r1.v.angolo - (r1.v.angolo % 1)) + "°, spicchio " + r1.v.spicchio + " (" + r1.v.giroMs + " ms), mano sugli altri due, lancetta e lampadine, stesso angolo dappertutto");
     if (r1.dopo.fase === "consonante") {
       await W.dorme(1400);
+      if (P.SGStudio && P.SGStudio.piatto) {   // 📺 senza studio (11 nov 2026): la ruota resta, piccola sopra la tastiera (o nascosta se non ci sta), e compare la tastiera
+        ["Paky", "Luca", "Giulia"].forEach(function (n) {
+          var d = F[n].document, pa = d.querySelector(".ru-alto .ru-piatto-alto"), q = d.querySelector(".ru-qwerty .ru-qr"), w = F[n].innerWidth;
+          var picc = d.querySelector(".ru-alto.nascosta") || (pa && pa.getBoundingClientRect().width < 0.75 * w);
+          if (!picc) no("mentre si sceglie la consonante su " + n + " la ruota è ancora grande");
+          if (!q || !q.getClientRects().length) no("mentre si sceglie la consonante su " + n + " non c'è la tastiera");
+          var b = d.querySelector(".st-barra"), r = pa && pa.getBoundingClientRect();
+          if (b && r && !d.querySelector(".ru-alto.nascosta") && r.bottom > b.getBoundingClientRect().top + 2 + 0.06 * r.height) no("su " + n + " la ruota piccola finisce sotto i tasti");
+        });
+        L.push("poi la ruota si rimpicciolisce e compare la tastiera");
+      } else {
       var alta = ["Paky", "Luca", "Giulia"].filter(function (n) { return F[n].document.querySelector(".ru-alto.on"); });
       if (alta.length) no("mentre si sceglie la consonante la ruota è ancora vista dall'alto su " + alta.join(", "));
       L.push("poi la ruota torna sul pavimento");
+      }
       // sceglie una consonante qualunque che c'è
       var Pp = P.__RUOTA.ultima, Lc = Pp.frase.split("").filter(function (ch) { return "BCDFGHLMNPRSTVZ".indexOf(ch) >= 0 && !Pp.chiamate[ch]; })[0] || "Q";
       if (chi === "Paky") { if (P.__cbR) P.__cbR.onMsg("host", { t: "azione", a: "lettera", x: Lc }); } else W.reteDi(chi).invia({ t: "azione", a: "lettera", x: Lc });

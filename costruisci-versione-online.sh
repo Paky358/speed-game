@@ -22,6 +22,9 @@ impronta() { md5sum "$1" | cut -c1-10; }
 # 🏙️ la città (casa, casinò, circolo, scavi): se in js/core.js c'è «var CITTA_VISIBILE = false» la versione online non la contiene
 # (nessuno la scarica: niente extra.js e niente citta.js, casino.js, casa.js, scavi.js). La pesca resta: serve alla Gara di pesca.
 CITTA=si; grep -q "var CITTA_VISIBILE = false" js/core.js && CITTA=no
+# 📺 lo Studio TV: il pezzo «studio» di js/elenco-giochi.js dice quale file va online (js/studio-piatto.js = studio spento,
+# js/studio.js = acceso). L'altro non va da nessuna parte: nessuno lo scarica.
+STUDIO_NO=js/studio.js; grep -qE 'pezzo\("studio", "js/studio\.js"' "$ELENCO" && STUDIO_NO=js/studio-piatto.js
 
 # I disegni della casa nuova (come The Sims), del casinò e della città a piedi: un file a parte, scaricato solo da chi li usa
 # (così l'app si apre più in fretta). Il nome porta un pezzo dell'impronta del contenuto: cambia a ogni versione e il telefono non usa quella vecchia.
@@ -96,7 +99,7 @@ CUORE="$TMP/cuore.js"
   cat js/amici-online.js   # amici online (pallino verde) e inviti nella Sala
   echo ''
   # (questi di solito stanno in un pezzo: qui solo se nessun pezzo li ha)
-  for f in js/studio.js js/asta-sala-arte.js js/asta-stadio-arte.js js/asta-maglie.js js/chidinoi-arte.js js/chidinoi-foto.js; do aggiungi "$f"; done
+  for f in js/studio.js js/studio-piatto.js js/asta-sala-arte.js js/asta-stadio-arte.js js/asta-maglie.js js/chidinoi-arte.js js/chidinoi-foto.js; do [ "$f" = "$STUDIO_NO" ] || aggiungi "$f"; done
   for f in data/*.js; do [ -e "$f" ] && [ "$f" != data/novita.js ] && aggiungi "$f"; done
   for f in js/games/*.js; do [ -e "$f" ] && aggiungi "$f"; done
   cat "$ELENCO"   # 📦 l'elenco dei giochi: le schede (per la home) e i pezzi da scaricare quando si gioca

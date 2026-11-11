@@ -1196,7 +1196,7 @@
   function schermoGioco(S, o) {
     var el = S.t.el, sch = S.sch;
     fermaTimer(S); vuota(sch);
-    sch.appendChild(nodoTop(el, o.giocatori, o.turnoId));
+    if (!ST.piatto) sch.appendChild(nodoTop(el, o.giocatori, o.turnoId));   // (📺 senza studio i punteggi con le faccine stanno già in alto)
     sch.appendChild(el("div", { class: "tl-stato" }, [ el("div", {}, [ el("span", { text: o.stato }), o.sotto ? el("small", { text: o.sotto }) : null ]) ]));
     if (o.rimMs != null) { var tot = o.totMs || TEMPO * 1000; S.timer = barraTimer(el, Math.min(tot, Math.max(0, o.rimMs)), tot, o.onScaduto || null); sch.appendChild(S.timer); }
     sch.appendChild(o.pannello || nodoCartaMano(el, o.carta || { titolo: "" }, null, o.cambia || null));   // pannello: al posto della carta (si ruba tutti insieme)
