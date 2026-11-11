@@ -114,7 +114,7 @@
     if (w.SG && w.SG.scaricaGioco) await w.SG.scaricaGioco("asta");
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {};
     if (src.indexOf("function postiModulo(") < 0) no("non trovo i posti del modulo nel file del gioco");
-    src = src.replace("  SG.registra(gioco);", " FUORI.reparti = repartiSquadra; FUORI.posti = postiModulo; FUORI.ordine = ordineRuolo; FUORI.modulo = moduloDi; FUORI.ovr = overallSquadra; FUORI.ovrQ = ovrDaQ; FUORI.rose = roseSerieA; SG.registra(gioco);");
+    src = src.replace("  SG.registra(gioco);", " FUORI.titolari = titolariIn; FUORI.reparti = repartiSquadra; FUORI.posti = postiModulo; FUORI.ordine = ordineRuolo; FUORI.modulo = moduloDi; FUORI.ovr = overallSquadra; FUORI.ovrQ = ovrDaQ; FUORI.rose = roseSerieA; SG.registra(gioco);");
     new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, fuori);
     var MOD = (w.SG_FANTA_MODULI && w.SG_FANTA_MODULI.squadre) || {}, sq = Object.keys(MOD), ko = [];
     if (sq.length !== 20) no("i moduli sono " + sq.length + " squadre invece di 20");
@@ -137,6 +137,12 @@
     var rp = {}; sq.forEach(function (s) { var r = fuori.reparti(s); rp[s] = r; ["att", "cen", "dif"].forEach(function (k) { if (!(r[k] >= 60 && r[k] <= 95)) ko.push(s + ": " + k + " " + r[k]); }); });
     var milA = fuori.rose()["Milan"].filter(function (c) { return c.ruolo === "A"; }).sort(function (x, y) { return y.q - x.q; })[0];
     if (fuori.modulo("Milan").A === 1 && (!milA || Math.abs(rp.Milan.att - fuori.ovrQ("A", milA.q)) > 0.01)) ko.push("il Milan: l'attacco è " + rp.Milan.att + ", non quello di " + (milA && milA.nome));
+    // 👕 (11 nov notte, il proprietario: «il Milan con il 4-3-3, chi sta a destra e a sinistra?») in campo i titolari al loro posto: chi gioca davanti
+    // nella linea d'attacco, gli esterni a tutta fascia sulle fasce (mai in mezzo alla difesa), l'attaccante più forte di punta; tutti diversi
+    var linea = function (s, nomi) { var p = fuori.posti(s, true), t = fuori.titolari(s, p), n = fuori.modulo(s).linee.length, l = {}; p.forEach(function (o, i) { if (t[i]) l[t[i].nome] = o; }); return { l: l, n: n, t: t }; };
+    var M1 = linea("Milan"); ["Pulisic", "Moreira"].forEach(function (x) { if (!M1.l[x] || M1.l[x].li !== M1.n - 1) ko.push("il Milan: " + x + " non è nella linea d'attacco"); });
+    var I1 = linea("Inter"); if (!I1.l["Dimarco"] || I1.l["Dimarco"].li !== 1 || Math.abs(I1.l["Dimarco"].y - 0.5) < 0.3) ko.push("l'Inter: Dimarco non è esterno sulla fascia");
+    sq.forEach(function (s) { var T = linea(s).t, visti = {}; T.forEach(function (x) { if (!x) return; if (visti[x.k]) ko.push(s + ": " + x.nome + " in campo due volte"); visti[x.k] = 1; }); if (T.filter(Boolean).length !== 11) ko.push(s + ": in campo " + T.filter(Boolean).length + " titolari"); });
     if (ko.length) no(ko.slice(0, 6).join(" · ") + (ko.length > 6 ? " … (" + ko.length + ")" : ""));
     return "Inter attacco " + Math.round(rp.Inter.att) + ", centrocampo " + Math.round(rp.Inter.cen) + ", difesa " + Math.round(rp.Inter.dif) + "; Milan attacco " + Math.round(rp.Milan.att) + " · 20 squadre col loro modulo (" + sq.map(function (s) { return s + " " + MOD[s][0]; }).slice(0, 4).join(", ") + "…): 11 posti, ruoli del modulo, attaccanti sempre davanti, i vostri attaccanti mai in difesa; Inter " + fuori.ovr("Inter") + " con " + inter.join(" e ");
   } });

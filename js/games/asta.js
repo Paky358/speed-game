@@ -4184,7 +4184,8 @@
     function primoBattitore(sq, tipo) { var b = tiratoriDi(sq, tipo)[0]; return b ? (b.c ? b.c.k : trovaK(sq, b.nome)) : null; }
     function tiratoreVero(sq) {
       var presi = {}; noti.forEach(function (y) { presi[y.k] = 1; });
-      var PESO = { A: 10, C: 3, D: 1 }, l = tuttiDi(sq).filter(function (c) { return !presi[c.k] && PESO[c.ruolo]; }), tot = 0;
+      var PESO = { A: 10, C: 3, D: 1 }, l = undiciPiuForti(sq).map(function (x) { return { k: x.k, ruolo: x.r, q: x.q }; }).filter(function (c) { return !presi[c.k] && PESO[c.ruolo]; }), tot = 0;   // 👕 (tra i titolari)
+      if (!l.length) l = tuttiDi(sq).filter(function (c) { return !presi[c.k] && PESO[c.ruolo]; });
       l.forEach(function (c) { tot += PESO[c.ruolo] * ((c.q || 1) + 2); });
       if (!tot) return null;
       var z = ((hashNome(P.c + "|" + P.f + "|" + Math.round(e.m * 10) + "|" + sq) >>> 0) % 100000) / 100000 * tot;
@@ -4215,7 +4216,7 @@
       sc.meteo = meteoR(R, P);   // 🌦️ (solo l'aspetto; anche nel rigore da ripetere)
       sc.kA = K[sqAtt]; sc.kD = K[sqAtt === P.c ? P.f : P.c]; sc.pA = kitPortiere(sc.kA, sc.kD); sc.pD = kitPortiere(sc.kA, sc.kD, sc.pA.a);
       sc.sqN = { A: sqAtt, D: sqAtt === P.c ? P.f : P.c };   // 🧩 (per il modulo di ognuna)
-      sc.noti = noti.filter(function (y) { return !y.usato; }).map(function (y) { return { sq: y.sq === sqAtt ? "A" : "D", nome: y.nome, pr: y.pr, faccia: y.faccia, pc: y.pc, ruolo: y.ruolo, num: y.num, asp: y.asp }; });
+      sc.noti = noti.filter(function (y) { return !y.usato; }).map(function (y) { return { sq: y.sq === sqAtt ? "A" : "D", k: y.k, nome: y.nome, pr: y.pr, faccia: y.faccia, pc: y.pc, ruolo: y.ruolo, num: y.num, asp: y.asp }; });
       sc.altri = { A: altriDi(sqAtt), D: altriDi(sqAtt === P.c ? P.f : P.c) };   // 👥 i posti degli altri: chi nessuno ha comprato (solo l'aspetto e il numero)
       return sc;
     }
@@ -5819,7 +5820,7 @@
   // 🧩 IL MODULO DI OGNI SQUADRA (11 nov 2026, il proprietario: «ogni squadra ha il suo modulo… la formazione più forte possibile… e si prende
   // l'overall di quella»; data/fanta-moduli.js): le linee del modulo (3-5-2: 3, 5, 2) e quanti difensori, centrocampisti e attaccanti CON I RUOLI
   // DEL FANTACALCIO ci sono negli 11 (gli esterni a tutta fascia spesso D, le ali spesso C). Senza dati: 4-3-3
-  function moduloDi(sq) { var M = (((window.SG_FANTA_MODULI || {}).squadre) || {})[sq]; return M ? { mod: M[0], linee: String(M[0]).split("-").map(Number), D: M[1], C: M[2], A: M[3] } : { mod: "4-3-3", linee: [4, 3, 3], D: 4, C: 3, A: 3 }; }
+  function moduloDi(sq) { var M = (((window.SG_FANTA_MODULI || {}).squadre) || {})[sq]; return M ? { mod: M[0], linee: String(M[0]).split("-").map(Number), D: M[1], C: M[2], A: M[3], davanti: M[4] || [], esterni: M[5] || [] } : { mod: "4-3-3", linee: [4, 3, 3], D: 4, C: 3, A: 3, davanti: [], esterni: [] }; }
   // 🧩 (11 nov 2026) i posti in campo dal modulo della squadra: le linee dalla difesa all'attacco, i difensori nella prima (quelli in più, gli
   // esterni, ai lati della seconda), gli attaccanti nell'ultima (quelli in più ai lati della penultima), i centrocampisti nel resto. Chi attacca
   // ha le linee alte, chi difende basse; il portiere per primo. Ogni posto sa il suo ruolo (ru): gli attaccanti stanno davanti, i difensori dietro
@@ -5863,9 +5864,8 @@
   var OVR_SQ = {}, XI_SQ = {}, REP_SQ = {}, REP_MED = null;
   function undiciPiuForti(sq) {   // la formazione più forte nel suo modulo: [{ r: ruolo, o: overall }]
     if (!XI_SQ[sq]) {
-      var l = (roseSerieA()[sq] || []).map(function (c) { return { r: c.ruolo, o: ovrDaQ(c.ruolo, c.q) }; })
-        .concat(campoDi(sq).map(function (c) { return { r: c.ruolo, o: ovrDaQ(c.ruolo, c.q) }; }));
-      var mo = moduloDi(sq), NUM = { P: 1, D: mo.D, C: mo.C, A: mo.A }, xi = [], resto = [], giu = function (a, b) { return b.o - a.o; };   // 🧩 (nel suo modulo)
+      var l = (roseSerieA()[sq] || []).concat(campoDi(sq)).map(function (c) { return { k: c.k, nome: c.nome, q: c.q, r: c.ruolo, o: ovrDaQ(c.ruolo, c.q) }; });
+      var mo = moduloDi(sq), NUM = { P: 1, D: mo.D, C: mo.C, A: mo.A }, xi = [], resto = [], giu = function (a, b) { return b.o - a.o || (a.k < b.k ? -1 : 1); };   // 🧩 (nel suo modulo)
       ["P", "D", "C", "A"].forEach(function (r) { var lr = l.filter(function (x) { return x.r === r; }).sort(giu); xi = xi.concat(lr.slice(0, NUM[r])); resto = resto.concat(lr.slice(NUM[r])); });
       XI_SQ[sq] = xi.concat(resto.filter(function (x) { return x.r !== "P"; }).sort(giu).slice(0, Math.max(0, 11 - xi.length)));
     }
@@ -5887,6 +5887,24 @@
       REP_SQ[sq] = { att: med(g.att), cen: med(g.cen), dif: med(g.dif) };
     }
     return REP_SQ[sq];
+  }
+  // 👕 I TITOLARI AL LORO POSTO (11 nov 2026, il proprietario: «il Milan con il 4-3-3, chi sta a destra e a sinistra, dato che in attacco c'è solo
+  // Ramos?»): nei posti del modulo la formazione più forte (la stessa dell'overall), ognuno nel suo ruolo; i centrocampisti che giocano davanti
+  // (data/fanta-moduli.js: Pulisic e Moreira nel Milan) nei posti di centrocampo della linea d'attacco o dei trequartisti, gli altri in mezzo.
+  // Torna, posto per posto, { k, nome, asp, num } (null se non c'è nessuno)
+  function titolariIn(sq, posti) {
+    var m = moduloDi(sq), n = m.linee.length, dav = m.davanti.map(normNome), per = { P: [], D: [], C: [], A: [] }, out = [];
+    undiciPiuForti(sq).forEach(function (x) { per[x.r].push(x); });
+    var cDav = per.C.filter(function (x) { return dav.indexOf(normNome(x.nome)) >= 0; }), cAltri = per.C.filter(function (x) { return cDav.indexOf(x) < 0; });
+    var est = m.esterni.map(normNome), dEst = per.D.filter(function (x) { return est.indexOf(normNome(x.nome)) >= 0; }), dAltri = per.D.filter(function (x) { return dEst.indexOf(x) < 0; });   // (gli esterni a tutta fascia sulle fasce)
+    var avanti = function (p) { return p.li != null && (p.li === n - 1 || (n >= 4 && p.li === n - 2)); };
+    posti.forEach(function (p, i) { out[i] = p.ru === "C" && avanti(p) ? cDav.shift() || null : p.ru === "D" && p.li > 0 ? dEst.shift() || null : null; });
+    posti.map(function (p, i) { return i; }).filter(function (i) { return posti[i].ru === "A"; }).sort(function (a, b) { return (posti[b].li || 0) - (posti[a].li || 0) || Math.abs(posti[a].y - 0.5) - Math.abs(posti[b].y - 0.5); })
+      .forEach(function (i) { out[i] = per.A.shift() || null; });   // (l'attaccante più forte il più avanti: la punta)
+    posti.forEach(function (p, i) { if (!out[i]) out[i] = p.ru === "C" ? cAltri.shift() || cDav.shift() || null : p.ru === "D" ? dAltri.shift() || dEst.shift() || null : (per[p.ru] || []).shift() || null; });
+    var resto = dAltri.concat(dEst, per.A, cAltri, cDav);   // (se un ruolo non bastava: il migliore rimasto, mai il portiere)
+    posti.forEach(function (p, i) { if (!out[i] && p.ru !== "P") out[i] = resto.shift() || null; });
+    return out.map(function (x) { return x ? { k: x.k, nome: x.nome, asp: coloriAspetto(aspettoVero(x.k)), num: numeroMaglia(splitCalc(x.k)).n } : null; });
   }
   function repartiMedi() {   // la media delle 20 squadre, reparto per reparto
     if (!REP_MED) { var l = Object.keys(((window.SG_FANTA_SQUADRE || {}).squadre) || {}), t = { att: 0, cen: 0, dif: 0 }; l.forEach(function (sq) { var r = repartiSquadra(sq); t.att += r.att; t.cen += r.cen; t.dif += r.dif; }); REP_MED = { att: t.att / Math.max(1, l.length), cen: t.cen / Math.max(1, l.length), dif: t.dif / Math.max(1, l.length) }; }
@@ -6240,6 +6258,7 @@
       var rig = sc.tipo === "rig" || sc.v === "ribattuta", out = [];
       [["A", rig ? BASE_RIG_ATT : BASE_ATT], ["D", rig ? BASE_RIG_DIF : BASE_DIF]].forEach(function (q) {
         var sqQ = sc.sqN ? sc.sqN[q[0]] : null, posti = rig ? postiRig(q[1], sqQ, q[0] === "A") : postiModulo(sqQ, q[0] === "A");   // 🧩 (il modulo della squadra)
+        var asse = sqQ ? titolariIn(sqQ, posti) : [];   // 👕 (chi sta in ogni posto: i titolari)
         sc.attori.forEach(function (a) {
           if (a.sq === "p" + q[0]) { posti[0].via = true; return; }
           if (a.sq !== q[0]) return;
@@ -6250,6 +6269,7 @@
         (sc.noti || []).forEach(function (nt) {
           if (nt.sq !== q[0]) return;
           var ord = ordineRuolo(posti, nt.ruolo, q[0] === "A"), o = null, i;
+          asse.forEach(function (t, j) { if (!o && t && t.k === nt.k && posti[j] && !posti[j].via && !posti[j].nome) o = posti[j]; });   // 👕 (un vostro titolare: al suo posto)
           for (i = 0; i < ord.length && !o; i++) {
             if (ord[i] === "su") {   // (i posti del suo ruolo sono presi: uno nuovo più avanti, lontano da tutti)
               var occ = posti.filter(function (z) { return !z.via; }).map(function (z) { return [z.x, z.y]; });
@@ -6261,7 +6281,13 @@
         });
         var al = sc.altri && sc.altri[q[0]], usati = { P: 0, D: 0, C: 0, A: 0 }, giaIn = {};   // 👥 gli altri posti: chi nessuno ha comprato, nel suo ruolo (se non bastano, anonimi come prima)
         sc.attori.forEach(function (a) { if (a.chi && a.chi.vero && a.sq === q[0]) giaIn[a.chi.k] = 1; });   // (🎯 chi tira vero non compare una seconda volta)
-        if (al) posti.forEach(function (o, i) { if (o.nome || i > 10) return; var ru = o.ru || (i === 0 ? "P" : "C"), c = al[ru][usati[ru]++]; while (c && giaIn[c.k]) c = al[ru][usati[ru]++]; if (c && !o.via) { o.asp = c.asp; o.numA = c.num; } });
+        var vostri = {}, nelleSq = {}; (sc.noti || []).forEach(function (nt) { vostri[nt.k] = 1; }); asse.forEach(function (t) { if (t) nelleSq[t.k] = 1; });
+        posti.forEach(function (o, i) {   // 👕 i titolari che nessuno ha comprato; dove non c'è un titolare libero, uno della panchina nel suo ruolo
+          if (o.nome || i > 10) return;
+          var t = asse[i]; if (t && !vostri[t.k] && !giaIn[t.k]) { if (!o.via) { o.asp = t.asp; o.numA = t.num; } return; }
+          if (!al) return;
+          var ru = o.ru || (i === 0 ? "P" : "C"), c = al[ru][usati[ru]++]; while (c && (giaIn[c.k] || nelleSq[c.k])) c = al[ru][usati[ru]++]; if (c && !o.via) { o.asp = c.asp; o.numA = c.num; }
+        });
         posti.forEach(function (o, i) { if (!o.via) out.push({ sq: i === 0 ? "p" + q[0] : q[0], x: o.x, y: o.y, k: i * 1.7 + (q[0] === "A" ? 0 : 0.9), nome: o.nome || "", pr: o.pr || "", faccia: o.faccia || null, pc: o.pc || null, num: o.num != null ? o.num : null, numA: o.numA != null ? o.numA : null, asp: o.asp || null, n: i + (q[0] === "A" ? 0 : 11) }); });
       });
       return out;

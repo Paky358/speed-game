@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 335,
+    data: "11 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: in campo i titolari veri 👕",
+    descrizione: [
+      "👕 In campo ogni squadra schiera i suoi titolari al loro posto: nel Milan Pulisic e Moreira sulle fasce ai lati di Ramos, nell'Inter Dimarco esterno a tutta fascia, l'attaccante più forte sempre di punta.",
+      "🎯 Chi tira, se non è di nessuno, è uno dei titolari della sua squadra."
+    ]
+  },
+  {
     v: 334,
     data: "11 novembre 2026",
     titolo: "Mini Asta Fantacalcio: ogni squadra col suo modulo 🧩",
