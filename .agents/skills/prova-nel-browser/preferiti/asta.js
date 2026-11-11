@@ -213,19 +213,23 @@
       // l'esito del pacco e del lotto doppio
       if (/Dentro il pacco c'era/.test(tx) && !visto.pacco) { var nm = (q(P, ".as-big .nm") || {}).textContent; if (!nm || /Pacco a sorpresa/.test(nm)) no("il pacco vinto non si scopre: «" + nm + "»"); visto.pacco = nm; }
       if (/Lotto doppio: tutte e due nel kit/.test(tx) && !visto.doppio) visto.doppio = (q(P, ".as-big .nm") || {}).textContent;
-      // il voto a un tocco
-      if (q(P, ".as-vk")) {
-        if (!q(P, ".as-scen")) no("nel voto non c'è la carta-scenario");
-        if (qa(P, ".as-vk").length !== 2) no("nel voto ci sono " + qa(P, ".as-vk").length + " kit invece di 2 (il proprio non si vota)");
-        if (!visto.voto) visto.misure = visto.misure.concat(await misura("Paky", "il voto", [".as-scen", ".as-vk"]));
-        qa(P, ".as-vk")[visto.voto === 1 ? 1 : 0].click(); visto.voto++;
-        await W.dorme(700); continue;
+      // ⭐ la passerella (11 nov 2026): un kit alla volta in grande, i due giudici danno da 1 a 5 stelle (il primo kit 5 da tutti, gli altri 3)
+      if (q(P, ".as-pas")) {
+        if (!q(P, ".as-pas .as-scen")) no("nella passerella non c'è la carta-scenario");
+        if (qa(P, ".as-giudice").length !== 2) no("nella passerella ci sono " + qa(P, ".as-giudice").length + " giudici invece di 2 (chi ha il kit non vota)");
+        if (qa(P, ".as-pas-o").length < 4) no("il kit in passerella ha " + qa(P, ".as-pas-o").length + " oggetti");
+        if (!visto.voto) visto.misure = visto.misure.concat(await misura("Paky", "la passerella", [".as-pas .as-scen", ".as-pas-o", ".as-giudice", ".schermata .piede .btn"]));
+        var av0 = bott(P, ".schermata .piede .btn", /Mancano 2 voti/); if (!av0) no("prima dei voti il tasto non dice «Mancano 2 voti»");
+        qa(P, ".as-giudice").forEach(function (gd) { gd.querySelectorAll(".as-stelle button")[visto.voto === 0 ? 4 : 2].click(); });
+        await W.dorme(150);
+        var av1 = bott(P, ".schermata .piede .btn", /Prossimo kit|Classifica/); if (!av1 || av1.disabled) no("votato tutti, il tasto non va avanti");
+        av1.click(); visto.voto++;
+        await W.dorme(500); continue;
       }
-      if (q(P, ".as-scen") && /Si vota/.test(tx)) { W.clicca(P, /Si vota/); await W.dorme(200); continue; }
       // la scelta della carta: prima il lotto doppio e il pacco (se ci sono)
       var carte = qa(P, ".as-carta:not([disabled])");
       if (carte.length) {
-        var dp = q(P, ".as-carta.doppio"), pc = q(P, ".as-carta.pacco");
+        var dp = q(P, ".as-carta.doppio:not([disabled])"), pc = q(P, ".as-carta.pacco:not([disabled])");   // (dall'11 nov 2026 la carta venduta resta al suo posto, spenta)
         if (pc && /🎁/.test(pc.textContent) && !/Pacco a sorpresa/.test(pc.textContent)) no("il pacco non è coperto");
         (dp || pc || carte[0]).click(); await W.dorme(250); continue;
       }
@@ -261,9 +265,9 @@
     // le fasce svelate: chi ha votato chi, un kit da 5 carte (il lotto doppio), i titoli, la foto
     var kits = qa(P, ".as-kit").map(function (k) { return k.querySelectorAll(".riga").length; });
     if (kits.indexOf(5) < 0) no("nessun kit ha 5 carte (lotto doppio): " + kits.join(","));
-    if (qa(P, ".as-voti-da").length !== 3) no("«⭐ da…» non c'è in tutti i kit");
-    var tot = qa(P, ".as-voti-da").reduce(function (a, e) { var m = e.textContent.match(/da (.*)$/); return a + (m ? m[1].split(",").length : 0); }, 0);
-    if (tot !== 3) no("le stelle date sono " + tot + " invece di 3");
+    if (qa(P, ".as-voti-da").length !== 3) no("«5 ⭐ da…» non c'è in tutti i kit");
+    var tot = qa(P, ".as-voti-da").reduce(function (a, e) { var m = e.textContent.match(/5 ⭐ da (.*)$/); return a + (m ? m[1].split(",").length : 0); }, 0);
+    if (tot !== 2) no("i 5 ⭐ dati sono " + tot + " invece di 2 (il primo kit in passerella)");
     var titoli = qa(P, ".as-tit").map(function (t) { return t.textContent; });
     if (!titoli.length) no("non c'è nessun titolo scherzoso");
     visto.misure = visto.misure.concat(await misura("Paky", "le fasce svelate", [".schermata .piede .btn-primario"]));
@@ -271,6 +275,7 @@
     W.clicca(P, /Classifica finale/); await W.dorme(400);
     if (qa(P, ".classifica li").length !== 3) no("la classifica non ha 3 righe («" + T(P).slice(0, 120) + "»)");
     if (!/⭐/.test(T(P))) no("la classifica non dice le stelle");
+    if (!/^5 ⭐/.test((q(P, ".classifica li .punti") || {}).textContent || "")) no("il primo in classifica non ha la media 5 ⭐: «" + ((q(P, ".classifica li") || {}).textContent || "") + "»");
     if (visto.misure.length) no(visto.misure.join(" / "));
     return "salti " + visto.salti + " · buste " + visto.buste.join(" ") + " · doppio «" + visto.doppio + "» · pacco «" + visto.pacco + "» · titoli: " + titoli.join(" | ") + " · " + foto;
   } });
@@ -450,31 +455,50 @@
     if (!fatto.doppio) no("il lotto doppio non si è visto");
     if (!fatto.pacco) no("il pacco a sorpresa non si è visto");
     if (GUARDA.indexOf("Bea") >= 0 && fatto.guarda.length < 2) no("Bea non ha guardato asta e busta: " + fatto.guarda.join(","));
-    // ---- il voto a un tocco ----
+    // ---- ⭐ la passerella (11 nov 2026): un kit alla volta in grande, tutti gli altri danno da 1 a 5 stelle ----
     var V = vm(C);
-    if (!V.scenario || !V.scenario.testo) no("nel voto non c'è lo scenario");
-    var Gw = W.finestra("Giulia"), Lw = W.finestra("Luca"), Bw = W.finestra("Bea");
-    if (!await W.aspetta(function () { return qa(Gw, ".as-vk:not(.mio)").length === NOMI.length - 1; }, 4000)) no("Giulia non vede " + (NOMI.length - 1) + " kit da votare");
-    misure = misure.concat(await misura("Luca", "il voto", [".as-scen", ".schermata .piede .as-msg"]));
-    if (Bw && !/Stai guardando/.test(T(Bw))) no("Bea nel voto non legge «Stai guardando»");
-    if (Bw && qa(Bw, ".as-vk:not([disabled])").length) no("Bea può votare");
-    var kG = qa(Gw, ".as-vk:not(.mio)"); kG[0].click(); await W.dorme(300);
-    var per1 = (vm(C).hannoVotato || []).indexOf(idDi("Giulia")) >= 0;
-    if (!per1) no("il voto di Giulia non arriva");
-    kG[1].click(); await W.dorme(300);   // cambia idea
-    var nomeScelto = kG[1].querySelector(".n span").textContent;
-    await W.ricarica("Giulia"); Gw = W.finestra("Giulia"); senzaAnimazioni(Gw);
-    if (!await W.aspetta(function () { return new RegExp("La tua ⭐ va a " + nomeScelto).test(T(Gw)); }, 8000)) no("Giulia ricaricata non ritrova «La tua ⭐ va a " + nomeScelto + "» («" + T(Gw).slice(0, 160) + "»)");
-    var bL = qa(Lw, ".as-vk:not(.mio)")[0]; if (bL) bL.click();
-    NOMI.slice(3).forEach(function (n) { manda(n, { t: "voto", per: "host", s: V.sessione }); });
-    var bP = qa(P, ".as-vk:not(.mio)")[0]; if (bP) bP.click();
-    if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 8000)) no("votato tutti, il voto non si chiude");
-    var F = vm(C), stelle = F.giocatori.reduce(function (s, g) { return s + g.stelle; }, 0);
-    if (stelle !== NOMI.length) no("le stelle date sono " + stelle + " invece di " + NOMI.length);
-    var gNome = F.giocatori.filter(function (g) { return g.nome === nomeScelto; })[0];
-    if (!gNome || gNome.votiDa.indexOf("Giulia") < 0) no("il voto (cambiato) di Giulia non va a " + nomeScelto + ": " + JSON.stringify(gNome && gNome.votiDa));
+    if (!V.scenario || !V.scenario.testo) no("nella passerella non c'è lo scenario");
+    if (!V.voto || V.voto.n !== NOMI.length) no("la passerella non ha " + NOMI.length + " kit: " + JSON.stringify(V.voto));
+    var Gw = W.finestra("Giulia"), Lw = W.finestra("Luca"), Bw = W.finestra("Bea"), atteso = {}, giri = 0, cambiato = false;
+    while (vm(C).fase === "voto" && giri < NOMI.length + 2) {
+      var Q = vm(C).voto, k0 = Q.k, per = nomeDiId(C, Q.per), dai = k0 === 1 ? 5 : 4; giri++;
+      atteso[per] = dai;
+      var Ow = W.finestra(per);
+      if (!await W.aspetta(function () { return q(Ow, ".as-pas") && /È il tuo kit/.test(T(Ow)); }, 5000)) no(per + " non legge «È il tuo kit» («" + T(Ow).slice(0, 120) + "»)");
+      if (q(Ow, ".as-pas .as-stelle")) no(per + " può votare il suo kit");
+      var chi = NOMI.filter(function (n) { return n !== per; }), Vw = W.finestra(chi.indexOf("Luca") >= 0 ? "Luca" : "Giulia");
+      if (!await W.aspetta(function () { return qa(Vw, ".as-pas-o").length >= 4 && qa(Vw, ".as-stelle button").length === 5; }, 4000)) no("il kit di " + per + " non si vede in grande con le 5 stelle");
+      if (k0 === 0) {
+        misure = misure.concat(await misura(chi.indexOf("Luca") >= 0 ? "Luca" : "Giulia", "la passerella", [".as-pas .as-scen", ".as-pas-o", ".as-stelle", ".schermata .piede"]));
+        if (Bw && !/Stai guardando/.test(T(Bw))) no("Bea nella passerella non legge «Stai guardando»");
+        if (Bw && qa(Bw, ".as-stelle button:not([disabled])").length) no("Bea può votare");
+      }
+      for (var j = 0; j < chi.length; j++) {
+        var n = chi[j];
+        if (n === "Giulia" && !cambiato) {   // Giulia: 2 stelle, poi cambia idea, ricarica e ritrova il suo voto
+          cambiato = true;
+          qa(Gw, ".as-stelle button")[1].click(); await W.dorme(300);
+          if (!(vm(C).hannoVotato || []).some(function (x) { return x === idDi("Giulia"); })) no("il voto di Giulia non arriva");
+          qa(Gw, ".as-stelle button")[dai - 1].click(); await W.dorme(300);
+          await W.ricarica("Giulia"); Gw = W.finestra("Giulia"); senzaAnimazioni(Gw);
+          if (!await W.aspetta(function () { return new RegExp("Hai dato " + dai + " ⭐").test(T(Gw)) && qa(Gw, ".as-stelle button.on").length === dai; }, 8000)) no("Giulia ricaricata non ritrova «Hai dato " + dai + " ⭐» («" + T(Gw).slice(0, 160) + "»)");
+          continue;
+        }
+        var w = W.finestra(n);
+        if (n === "Paky" || n === "Luca" || n === "Giulia") { var bs = qa(w, ".as-stelle button"); if (bs.length !== 5) no(n + " non ha le 5 stelle"); else bs[dai - 1].click(); }
+        else manda(n, { t: "voto", per: Q.per, v: dai, s: V.sessione });
+        await W.dorme(60);
+      }
+      if (!await W.aspetta(function () { var z = vm(C); return z.fase !== "voto" || (z.voto && z.voto.k !== k0); }, 5000)) no("votato tutti, il kit di " + per + " non va avanti (" + JSON.stringify(vm(C).voto) + ")");
+    }
+    if (vm(C).fase !== "fine") no("finita la passerella non si arriva alla classifica (fase " + vm(C).fase + ")");
+    var F = vm(C), x5 = null;
+    F.giocatori.forEach(function (g) { if (g.stelle !== atteso[g.nome]) no(g.nome + " ha la media " + g.stelle + " invece di " + atteso[g.nome]); if (atteso[g.nome] === 5) x5 = g; });
+    if (!x5 || x5.votiDa.length !== NOMI.length - 1 || x5.cinque !== NOMI.length - 1) no("i 5 ⭐ non sono contati: " + JSON.stringify(x5 && [x5.votiDa, x5.cinque]));
+    var nomeScelto = x5 ? x5.nome : "";
+    if (F.classifica[0].nome !== nomeScelto) no("in testa non c'è chi ha avuto 5 da tutti: " + F.classifica[0].nome);
     if (!F.titoli) no("nella foto di fine non ci sono i titoli");
-    if (!await W.aspetta(function () { return /Classifica finale/.test(T(Lw)) && q(Lw, ".as-voti-da"); }, 4000)) no("Luca non vede la classifica con «⭐ da…»");
+    if (!await W.aspetta(function () { return /Classifica finale/.test(T(Lw)) && q(Lw, ".as-voti-da") && q(Lw, ".classifica .as-cl-kit"); }, 4000)) no("Luca non vede la classifica coi kit e «5 ⭐ da…»");
     var foto = bott(Lw, ".as-foto .btn", /📸 Foto/); if (!foto || !/Manda il tuo kit/.test(foto.title)) no("Luca non ha «📸 Foto» (manda il tuo kit)");
     foto.click(); x.push(await fotoFatta(Lw, "del kit di Luca"));
     misure = misure.concat(await misura("Luca", "la classifica", [".classifica", ".schermata .piede .btn"]));
@@ -558,11 +582,11 @@
         }
         await W.dorme(200); continue;
       }
-      if (q(P, ".as-vk")) {
-        var mr = q(P, ".as-vk.maled"); if (mr && !voto) voto = { badge: (mr.querySelector(".as-malus") || {}).textContent, carta: !!mr.querySelector(".as-mal-in") };
-        qa(P, ".as-vk")[0].click(); await W.dorme(700); continue;
+      if (q(P, ".as-pas")) {   // ⭐ la passerella (11 nov 2026): i giudici danno 3 stelle a ogni kit
+        var mr = q(P, ".as-pas-o.maled"); if (mr && !voto) voto = { badge: (mr.querySelector(".ml") || {}).textContent, carta: true };
+        qa(P, ".as-giudice").forEach(function (gd) { gd.querySelectorAll(".as-stelle button")[2].click(); });
+        await W.dorme(100); var avP = bott(P, ".schermata .piede .btn", /Prossimo kit|Classifica/); if (avP) avP.click(); await W.dorme(400); continue;
       }
-      if (q(P, ".as-scen") && /Si vota/.test(tx)) { W.clicca(P, /Si vota/); await W.dorme(200); continue; }
       var carte = qa(P, ".as-carta:not([disabled])");
       if (carte.length) { carte[0].click(); await W.dorme(250); continue; }
       if (q(P, ".sa-pers") && prezzo(P) != null && !q(P, ".sa-aggiudicato")) {
@@ -636,11 +660,10 @@
         var g0 = M.giro; await W.aspetta(function () { var z = vm(C); return z.fase !== "maledetta" || (z.mal && z.mal.giro !== g0); }, 4000);
         continue;
       }
-      if (v.fase === "voto") {
+      if (v.fase === "voto" && v.voto) {   // ⭐ la passerella: 3 stelle da tutti al kit che sfila
         v.giocatori.forEach(function (g) {
-          if ((v.hannoVotato || []).indexOf(g.id) >= 0) return;
-          var per = v.giocatori.filter(function (o) { return o.id !== g.id; })[0].id;
-          if (g.nome === "Paky") { var kk = q(P, ".as-vk:not([disabled]):not(.mio)"); if (kk) kk.click(); } else manda(g.nome, { t: "voto", per: per, s: v.sessione });
+          if ((v.hannoVotato || []).indexOf(g.id) >= 0 || g.id === v.voto.per) return;
+          if (g.nome === "Paky") { var kk = qa(P, ".as-pas-sc .as-stelle button")[2]; if (kk) kk.click(); } else manda(g.nome, { t: "voto", per: v.voto.per, v: 3, s: v.sessione });
         });
         await W.dorme(600); continue;
       }
@@ -735,20 +758,24 @@
         v.giocatori.forEach(function (g) { if (g.haCarta || g.id === a.leaderId || a.passati.indexOf(g.id) >= 0) return; if (g.nome === "Paky") { var bp = bott(P, ".sa-piede .btn", /^Passo$/); if (bp) bp.click(); } else manda(g.nome, { t: "passa", n: a.n }); });
         await W.dorme(400); continue;
       }
-      if (v.fase === "voto") {
-        if (!fatto.voto) {
+      if (v.fase === "voto" && v.voto) {   // ⭐ la passerella: 4 stelle da tutti a ogni kit
+        if (!fatto.voto && v.voto.per !== idDi("Giulia")) {
           fatto.voto = true;
-          manda("Giulia", { t: "voto", per: idDi("Luca"), s: v.sessione });
+          var k0 = v.voto.k;
+          manda("Giulia", { t: "voto", per: v.voto.per, v: 4, s: v.sessione });
           if (!await W.aspetta(function () { return (vm(C).hannoVotato || []).indexOf(idDi("Giulia")) >= 0; }, 3000)) no("il voto di Giulia non arriva");
           await W.ricarica("Giulia"); var G2 = W.finestra("Giulia"); senzaAnimazioni(G2);
           var R3 = await ricaricaHost("voto");
-          if (R3.fase !== "voto") no("la copia ricordata non è nel voto: " + R3.fase);
-          if (!await W.aspetta(function () { var z = vm(C); return z.fase === "voto" && (z.hannoVotato || []).indexOf(idDi("Giulia")) >= 0 && z.restaVoto > 0; }, 8000)) no("dopo la ricarica il voto non continua col voto di Giulia (" + JSON.stringify({ fase: vm(C).fase, hv: vm(C).hannoVotato }) + ")");
-          x.push("voto ripreso (" + Math.round(vm(C).restaVoto / 1000) + " s)");
+          if (R3.fase !== "voto") no("la copia ricordata non è nella passerella: " + R3.fase);
+          if (!await W.aspetta(function () { var z = vm(C); return z.fase === "voto" && z.voto && z.voto.k === k0 && (z.hannoVotato || []).indexOf(idDi("Giulia")) >= 0 && z.restaVoto > 0; }, 8000)) no("dopo la ricarica la passerella non continua dallo stesso kit col voto di Giulia (" + JSON.stringify({ fase: vm(C).fase, voto: vm(C).voto }) + ")");
+          if (!await W.aspetta(function () { return /Hai dato 4 ⭐/.test(T(W.finestra("Giulia"))); }, 6000)) no("Giulia ricaricata non ritrova «Hai dato 4 ⭐»");
+          x.push("passerella ripresa (" + Math.round(vm(C).restaVoto / 1000) + " s)");
         }
         var vv = vm(C);
-        if ((vv.hannoVotato || []).indexOf(idDi("Luca")) < 0) manda("Luca", { t: "voto", per: idDi("Giulia"), s: vv.sessione });
-        if ((vv.hannoVotato || []).indexOf("host") < 0) { var kk = q(P, ".as-vk:not([disabled]):not(.mio)"); if (kk) kk.click(); }
+        if (vv.fase === "voto" && vv.voto) vv.giocatori.forEach(function (g) {
+          if (g.id === vv.voto.per || (vv.hannoVotato || []).indexOf(g.id) >= 0) return;
+          if (g.nome === "Paky") { var kk = qa(P, ".as-pas-sc .as-stelle button")[3]; if (kk) kk.click(); } else manda(g.nome, { t: "voto", per: vv.voto.per, v: 4, s: vv.sessione });
+        });
         await W.dorme(500); continue;
       }
       await W.dorme(300);
@@ -758,7 +785,7 @@
     var cl = vm(C).classifica || [];
     if (cl.length !== 3) no("la classifica ha " + cl.length + " righe");
     var sl = cl.map(function (r) { return r.nome + " " + r.stelle; }).join(", ");
-    if (cl.reduce(function (s, r) { return s + r.stelle; }, 0) !== 3) no("le stelle non sono 3: " + sl);
+    if (cl.some(function (r) { return r.stelle !== 4; })) no("le medie non sono tutte 4: " + sl);
     x.push("classifica " + sl);
     return x.join(" · ");
   } });
@@ -941,9 +968,9 @@
     if (top == null) no("l'ultima figurina non ha il suono forte (note: " + l.map(function (x) { return x.f; }).join(",") + ")");
     for (var i = 1; i < 4; i++) if (!(carte[i] - carte[i - 1] > 0.4 && carte[i] - carte[i - 1] < 1.2)) no("le figurine non si girano a tempo regolare: " + JSON.stringify(carte));
     if (!(top - carte[3] > 1)) no("l'ultima non arriva dopo una pausa: " + carte[3] + " → " + top);
-    var tic = l.filter(function (x) { return x.f >= 520 && x.f <= 600; });   // (FX.tic: 520 + 700 × p, e la carica dura i primi 420 ms: p < 0,1)
-    if (tic.some(function (x) { return x.t > carte[0] + 0.05; })) no("il «ti ti ti» della carica continua dopo la prima figurina");
-    return "4 figurine col loro suono ogni " + Math.round((carte[3] - carte[0]) / 3 * 100) / 100 + " s, l'ultima col piatto " + Math.round((top - carte[3]) * 10) / 10 + " s dopo; carica: " + tic.length + " «ti»";
+    var tic = l.filter(function (x) { return x.f >= 520 && x.f <= 1220 && x.f !== 784 && x.f !== 988 && x.f !== 1175 && x.t < top - 0.05 && !carte.some(function (t) { return x.t > t - 0.02 && x.t < t + 0.2; }); });   // (FX.tic: 520 + 700 × p, prima dell'ultima figurina)
+    if (tic.length) no("si sente ancora il «ti ti ti» della carica (11 nov 2026, il proprietario: «non mettiamolo proprio»): " + tic.map(function (x) { return x.f; }).join(","));
+    return "4 figurine col loro suono ogni " + Math.round((carte[3] - carte[0]) / 3 * 100) / 100 + " s, l'ultima col piatto " + Math.round((top - carte[3]) * 10) / 10 + " s dopo; niente «ti ti ti»";
   } });
   COPIONE.aggiungi("bu4", { nome: "Fanta a buste online in 3: offerte segrete, chi ricarica, spareggio, ruota, misure, fino alla classifica", fai: async function () {
     var NOMI = ["Paky", "Giulia", "Luca"], o = await telefoniOnline({ formato: "fanta", compra: "buste", giornata: false }, NOMI), P = o.P, C = o.C, x = [], misure = [], fatto = 0, fino = Date.now() + 360000, vistoN = 0;

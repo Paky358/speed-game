@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 331,
+    data: "11 novembre 2026",
+    titolo: "L'Asta dei temi: la passerella dei kit, tutta di sera 🔨",
+    descrizione: [
+      "🌙 Tutte le schermate dell'Asta dei temi (inizio del round, scelta della carta, busta chiusa, carta maledetta, il foglio «🃏 Carte» e il voto) hanno i colori della notte come il resto dell'app: niente più blu di prima.",
+      "🃏 Gli oggetti hanno una carta nuova: l'emoji grande dentro un medaglione che prende la luce del round. Se un telefono un po' vecchio non sa disegnare un'emoji, compare ✨ al posto del quadratino vuoto.",
+      "🧱 Quando un oggetto viene venduto gli altri restano fermi: stessa grandezza, stesso posto. Al posto di quello venduto resta il suo spazio vuoto. Sui telefoni alti le carte riempiono lo schermo.",
+      "⭐ Alla fine i kit sfilano in passerella: uno alla volta, a tutto schermo, con tutti gli oggetti in grande. Mentre il kit è lì, tutti gli altri gli danno da 1 a 5 stelle (online in segreto; sullo stesso telefono come i giudici dei talent, ognuno accanto al suo nome). Vince la media più alta. In classifica, sotto ogni nome, gli oggetti del suo kit.",
+      "✉️ Quando si aprono tante buste insieme stanno su due colonne, così si vede anche l'oggetto vinto.",
+      "⚽ Mini Asta Fantacalcio: alla scoperta delle rose niente più «ti ti ti» prima delle figurine."
+    ]
+  },
+  {
     v: 330,
     data: "10 novembre 2026",
     titolo: "Mini Asta Fantacalcio: il maxischermo intero e le figurine che suonano 🃏",
