@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 332,
+    data: "11 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: in campo tutti veri 🎯",
+    descrizione: [
+      "🎯 Chi tira è sempre un calciatore vero, con la sua faccia e il suo numero, anche se non l'ha comprato nessuno: sul dischetto va il rigorista vero (Berardi per il Sassuolo), sulle punizioni chi le batte.",
+      "➕ 18 calciatori nuovi solo per il campo, così ogni squadra ha 11 titolari veri e ci sono tutti i battitori. All'asta non escono.",
+      "💪 Ogni squadra ha il suo overall, la media dei suoi 11 migliori: all'asta lo leggi accanto all'avversaria, «🆚 Inter (86)».",
+      "⚽ Nella giornata conta soprattutto l'overall delle squadre: le più forti vincono più spesso, ma chiunque può segnare, anche il più scarso."
+    ]
+  },
+  {
     v: 331,
     data: "11 novembre 2026",
     titolo: "L'Asta dei temi: la passerella dei kit, tutta di sera 🔨",

@@ -53,7 +53,11 @@
     Object.keys(Q).forEach(function (k) { maxQ = Math.max(maxQ, Q[k]); });
     if (Q[k1] !== maxQ) ko.push("il primo (" + k1 + ", " + Q[k1] + ") non ha la quotazione più alta (" + maxQ + ")");
     var LL = w.SG_FANTA_CALCIATORI, tot = 0; Object.keys(LL).forEach(function (r) { Object.keys(LL[r]).forEach(function (f) { tot += LL[r][f].length; }); });   // (10 nov 2026: il listone cresce, si conta dai dati)
+    var CC = (w.SG_FANTA_CAMPO && w.SG_FANTA_CAMPO.calciatori) || {}, nC = Object.keys(CC).length; tot += nC;   // (➕ 11 nov 2026: e quelli solo per il campo, nella loro sezione in fondo)
     if (d.querySelectorAll(".fa-ed-r").length !== tot) ko.push("nella lista ci sono " + d.querySelectorAll(".fa-ed-r").length + " calciatori invece di " + tot + " (deve esserci TUTTA la lista)");
+    var sez = d.querySelector(".fa-ed-sez");
+    if (nC && (!sez || !/solo per il campo/.test(sez.textContent))) ko.push("manca la sezione «➕ Giocatori aggiunti solo per il campo»");
+    if (nC && sez) { var dopo = [], x = sez.nextElementSibling; while (x) { if (x.classList.contains("fa-ed-r")) dopo.push(x); x = x.nextElementSibling; } if (dopo.length !== nC) ko.push("nella sezione solo per il campo ci sono " + dopo.length + " calciatori invece di " + nC); }
     var resta = function () { return +((d.querySelectorAll(".fa-ed-schede button")[1] || {}).textContent || "").replace(/\D+/g, ""); }, n0 = resta(), eraDc = S.vero(k1).dc;
     var ok = [].slice.call(d.querySelectorAll(".fa-ed-tasti button")).filter(function (b) { return /Va bene/.test(b.textContent); })[0]; ok.click(); await W.dorme(150);
     if (!P[k1] || !P[k1].ok) ko.push("«Va bene» non salva la conferma");

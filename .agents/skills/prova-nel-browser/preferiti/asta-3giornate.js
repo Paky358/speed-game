@@ -18,6 +18,7 @@
 //     allineata con gli altri (scarto sotto i 150 ms, fuori dai 3 secondi dopo il ritorno) e arriva al podio con tutti.
 // tg4 Online in 3, rete a 300 ms: Paky (chi tiene la partita) si spegne a metà della seconda giornata e non torna: Giulia la porta
 //     avanti (la 2ª, la classifica, la 3ª) e lei e Luca restano allineati fino al podio.
+// ct1 Chi tira e non è di nessuno è un calciatore vero (il rigorista sul dischetto): la partita di tg2 coi tiri annotati (11 nov 2026).
 // tg5 Online in 3, rete a 300 ms: Paky (chi tiene la partita) ricarica la pagina a metà della seconda giornata; la partita riprende
 //     dallo stesso punto e tutti arrivano al podio allineati.
 (function () {
@@ -395,5 +396,35 @@
     var li = qa(P, ".classifica li").map(function (l) { return l.textContent.replace(/\s+/g, " ").trim(); });
     if (li.length !== 3 || !li.every(function (l) { return /fantapunti in 3 giornate/.test(l); })) no("la classifica finale: " + JSON.stringify(li));
     return "Paky (" + (lento ? "senza ⏩, «Avanti ▶» dopo qualche secondo" : "col ⏩") + ", dalle rose al podio " + tutto + " s): " + dur + " · " + x.join(" · ") + " · sotto le pagelle: " + righeG3.join(" | ") + " · podio: " + nome1 + " " + tot1 + " · classifica: " + li.join(" | ");
+  } });
+  // ct1 🎯 CHI TIRA È VERO (11 nov 2026, il proprietario col Cervello: «sul dischetto va il rigorista vero… anche se non l'ha nessuno»): la stessa
+  //     partita di tg2 (3 giornate sullo stesso telefono), e ogni tiro che si vede viene annotato. Chi tira e non è di nessuno è sempre un
+  //     calciatore vero della sua squadra (listone, gruppo «solo in campo» o data/fanta-campo.js) con numero e faccia; sul rigore è il
+  //     rigorista che la partita aveva scelto; chi tira dipende solo da partita, minuto e squadra (mai dall'esito); più spesso un attaccante.
+  COPIONE.aggiungi("ct1", { nome: "Mini Asta Fantacalcio: chi tira e non è di nessuno è un calciatore vero (il rigorista sul dischetto)", fai: async function () {
+    var tiri = [], orig = W.apriTel, telefono = null;
+    W.apriTel = async function (nome, o) { o = Object.assign({}, o || {}); var pr = o.prima; o.prima = function (w) { telefono = w; w.SG_PROVA_TIRA = function (d) { tiri.push(d); }; if (pr) pr(w); }; return orig.call(this, nome, o); };
+    var r0;
+    try { r0 = await COPIONE.scenari.tg2.fai({}); } finally { W.apriTel = orig; }
+    var w = telefono, L = w.SG_FANTA_CALCIATORI, C = (w.SG_FANTA_CAMPO && w.SG_FANTA_CAMPO.calciatori) || {}, ruolo = {};
+    Object.keys(L).forEach(function (r) { Object.keys(L[r]).forEach(function (f) { L[r][f].forEach(function (k) { ruolo[k] = r; }); }); });
+    Object.keys(C).forEach(function (k) { ruolo[k] = C[k][0]; });
+    var norm = function (s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 .]/g, "").trim(); };
+    var visti = tiri.filter(function (d) { return /^(gol|ann|occ|rig)$/.test(d.t); }), veri = visti.filter(function (d) { return d.tira && d.tira.vero; }), ko = [], perChi = {}, att = 0, nonRig = 0, rig = 0;
+    if (visti.length < 10) no("troppi pochi tiri annotati: " + visti.length + " (il gancio SG_PROVA_TIRA non arriva?)");
+    visti.forEach(function (d) { if (!d.tira) ko.push(d.m + "' " + d.sqA + " " + d.t + ": chi tira non ha faccia (anonimo)"); });
+    veri.forEach(function (d) {
+      var k = d.tira.k, sq = /\(([^)]+)\)$/.exec(k || "");
+      if (!k || !ruolo[k]) ko.push(d.m + "' " + d.sqA + ": «" + k + "» non è un calciatore vero del gioco");
+      else if (!sq || sq[1] !== d.sqA) ko.push(d.m + "' " + d.sqA + ": tira «" + k + "», di un'altra squadra");
+      if (d.tira.num == null || !d.tira.asp) ko.push(d.m + "' " + k + ": senza numero o senza faccia");
+      if (d.t === "rig") { rig++; if (d.chi && norm(d.chi.replace(/ \(.*$/, "")) !== norm((k || "").replace(/ \(.*$/, "")) && C[d.chi] === undefined && ruolo[d.chi] !== undefined) ko.push(d.m + "' rigore " + d.sqA + ": sul dischetto «" + k + "» invece del rigorista «" + d.chi + "»"); }
+      else { nonRig++; if (ruolo[k] === "A") att++; }
+      var id = d.c + "|" + d.f + "|" + Math.round(d.m * 10) + "|" + d.sqA + "|" + (d.t === "rig" ? "r" : d.v === "punizione" ? "p" : d.v === "olimpico" ? "o" : "x");
+      if (perChi[id] && perChi[id] !== k) ko.push(id + ": chi tira cambia (" + perChi[id] + " / " + k + ")"); perChi[id] = k;
+    });
+    if (nonRig >= 8 && att / nonRig < 0.35) ko.push("gli attaccanti tirano poco: " + att + " su " + nonRig);
+    if (ko.length) no(ko.slice(0, 6).join(" · ") + (ko.length > 6 ? " … (" + ko.length + ")" : ""));
+    return visti.length + " tiri visti in 3 giornate: " + veri.length + " di chi non è di nessuno, tutti calciatori veri con numero e faccia (" + rig + " rigori col rigorista, attaccanti " + att + " su " + nonRig + " negli altri tiri) · " + String(r0).slice(0, 60) + "…";
   } });
 })();

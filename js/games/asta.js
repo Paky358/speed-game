@@ -384,7 +384,7 @@
     ".st-magliabox{flex:0 0 27%;height:100%;display:flex;align-items:center;justify-content:center;}",
     ".st-maglia{max-height:100%;max-width:100%;}",
     ".st-dati{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.34);text-shadow:0 2px 4px rgba(0,0,0,.7);}",
-    ".st-dati .st-riga{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;min-width:0;margin-top:0;}",   // (st-riga c'è anche nelle statistiche dell'app, che la mandano a capo: qui sempre su una riga)
+    ".st-dati .st-riga{display:flex;flex-wrap:nowrap;align-items:center;gap:4px;min-width:0;margin-top:0;}",   // (st-riga c'è anche nelle statistiche dell'app, che la mandano a capo: qui sempre su una riga)
     ".st-ruolo{flex:none;font-size:.62rem;font-weight:900;letter-spacing:.04em;padding:2px 6px;border-radius:6px;color:#0d1230;text-shadow:none;}",
     ".st-ruolo-classifica{background:#ffd43b;color:#3a2200;}",
     ".st-rig,.st-pun{flex:none;font-size:.62rem;font-weight:900;letter-spacing:.03em;padding:2px 6px;border-radius:6px;background:#ffd43b;color:#3a2200;text-shadow:none;white-space:nowrap;}.st-rig:empty,.st-pun:empty{display:none;}.st-pun{background:#a5d8ff;color:#06263f;}.st-ang{background:#b2f2bb;color:#0b3d17;}.st-rig.stretta,.st-pun.stretta{font-size:.54rem;padding:2px 4px;letter-spacing:0;}",
@@ -559,7 +559,7 @@
     ".st-linea-f{background:#e0225a;transform-origin:0 50%;transform:scaleX(0);transition:transform .4s linear;}",
     ".st-linea-t{position:absolute;top:4px;width:1px;height:11px;background:rgba(255,255,255,.45);}.st-linea-t.z{background:rgba(255,120,150,.75);}",
     ".st-linea-e span{position:absolute;top:1px;transform:translateX(-50%);font-size:10px;line-height:1;padding:1px;border-radius:50%;background:rgba(6,12,30,.7);box-shadow:0 0 0 1.5px var(--pc);}.st-linea-e span.g{font-size:12px;top:0;}",
-    ".st-vs{flex:0 100 auto;min-width:0;font-size:.72rem;font-weight:800;opacity:.9;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.st-riga .st-squadra{flex:0 1 auto;}",
+    ".st-vs{flex:0 100 auto;min-width:0;font-size:.72rem;font-weight:800;opacity:.9;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.st-riga .st-squadra{flex:0 1 auto;font-size:.74rem;letter-spacing:.03em;}",
     ".st-premi-tasto{display:block;margin:10px auto 0;}",
     ".st-premi{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(5,8,20,.6);}",
     ".st-premi-in{width:100%;max-width:420px;max-height:100%;overflow:auto;background:#151a2e;border-radius:18px;padding:14px 12px;box-shadow:0 16px 40px rgba(0,0,0,.6);color:#f4f5fb;}",
@@ -2128,8 +2128,15 @@
   // i numeri di maglia VERI 2026/27 (data/fanta-numeri.js, 6 nov 2026, il proprietario: «devono essere quelli reali: non si può vedere
   // Yildiz con la 15»). Chi non ha un numero sicuro (due fonti d'accordo) non ce l'ha: meglio niente che sbagliato.
   // { n: numero o null, nome: il nome scritto sulla maglia (quello vero se si sa, se no il cognome del listone senza le iniziali) }
+  // ➕ I GIOCATORI SOLO PER IL CAMPO (11 nov 2026, deciso dal proprietario col Cervello; data/fanta-campo.js, la lista l'approva lui): calciatori
+  // veri 2026/27, col numero vero e la loro faccia, per avere 11 titolari in ogni squadra (1-4-3-3) e i battitori veri. MAI all'asta, MAI nel
+  // valore delle rose, MAI nei fatti della giornata (gol, voti, fantapunti: la giornata li ignora). Servono solo a disegnarli in campo e all'overall
+  // della squadra. Formato: "Nome (Squadra)": [ruolo, quotazione, numero]
+  function campoSolo() { var C = window.SG_FANTA_CAMPO; return (C && C.calciatori) || {}; }
+  function campoDi(sq) { var C = campoSolo(), l = []; Object.keys(C).forEach(function (k) { var c = splitCalc(k); if (c.squadra === sq) l.push({ k: k, nome: c.nome, squadra: sq, ruolo: C[k][0], q: C[k][1] }); }); return l; }
   function numeroMaglia(c) {
     var N = window.SG_FANTA_NUMERI || {}, v = c ? N[c.nome + " (" + c.squadra + ")"] : null;
+    if (v == null && c) { var cs = campoSolo()[c.nome + " (" + c.squadra + ")"]; if (cs && cs[2] != null) v = cs[2]; }
     var n = v == null ? null : typeof v === "number" ? v : v[0];
     var nome = v && typeof v === "object" && v[1] ? v[1] : String(c && c.nome || "").replace(/\s+(?:[A-Z][a-z]?\.)+$/, "");
     return { n: n == null ? null : n, nome: nome.toUpperCase() };
@@ -2592,6 +2599,8 @@
   function etichetteTiri(S, rn, pn, an) {   // «🎯 1° RIGORISTA», «🦶 2° PUNIZIONI», «🚩 1° ANGOLI» (il proprietario, 2 nov 2026: sempre il numero e la scritta,
     // «al posto di battitore mettiamo punizioni»; mai «rigori»): piccole, una sotto l'altra a destra (dall'altezza del nome in giù), così la maglia resta grande
     function o(n) { return n + "° "; }
+    // («🆚 Inter (88)», 11 nov 2026: se nella riga non ci sta intero, si rimpicciolisce un poco, come il nome; sotto i 9,5 px i puntini)
+    if (S.vs && S.vs.textContent && S.vs.style.display !== "none") { S.vs.style.fontSize = ""; var fv = parseFloat(getComputedStyle(S.vs).fontSize) || 11; while (S.vs.scrollWidth > S.vs.clientWidth + 1 && fv > 9.5) { fv -= 0.5; S.vs.style.fontSize = fv + "px"; } }
     var badge = [S.rig, S.pun, S.ang], col = S.tiriD, dati = col.parentNode, prezzo = S.prezzoN.parentNode, ci = rn || pn || an;
     S.rig.textContent = rn ? "🎯 " + o(rn) + "RIGORISTA" : ""; S.pun.textContent = pn ? "🦶 " + o(pn) + "PUNIZIONI" : ""; S.ang.textContent = an ? "🚩 " + o(an) + "ANGOLI" : "";
     S.nome.style.fontSize = S.nome.style.paddingRight = prezzo.style.paddingRight = "";
@@ -2757,7 +2766,7 @@
         var ru = FANTA_RUOLI[c.ruolo] || {};
         S.magliaImg.src = magliaDietro(c); S.ruolo.textContent = ru.breve || ""; S.ruolo.className = "st-ruolo as-rb-" + c.ruolo;
         S.squadra.textContent = c.squadra || ""; S.nome.textContent = c.nome; rianima(S.schermo, "entra");
-        var vsA = avversariDi(c.squadra); S.vs.textContent = vsA ? "🆚 " + vsA : ""; S.vs.style.display = vsA ? "" : "none";
+        var vsA = avversariDi(c.squadra); S.vs.textContent = vsTesto(vsA); S.vs.style.display = vsA ? "" : "none";
         etichetteTiri(S, rigoristaN(c), tiroN(c, "punizioni"), tiroN(c, "angoli"));   // i rigoristi e chi batte le punizioni quest'anno: all'asta lo sanno tutti, come nel fantacalcio vero
       }
     }
@@ -3347,8 +3356,14 @@
   }
   function marcatore(rosa, peso, tranne) {   // chi segna (o fa l'assist) tra i calciatori del gioco di quella squadra; null = uno che nel gioco non c'è
     if (caso01() < 0.15) return null;
-    return pescaPeso(rosa.filter(function (y) { return y !== tranne; }), function (y) { return peso[y.ruolo] * Math.pow(y.q + 2, 2); });   // (più è quotato, più segna: 30 ott 2026, la rosa più forte vince un po' più spesso)
+    var esp = forza().esp;   // (più è quotato, più segna: 30 ott 2026, la rosa più forte vince un po' più spesso; 11 nov: «chiunque può fare gol, pure il più scarso»)
+    return pescaPeso(rosa.filter(function (y) { return y !== tranne; }), function (y) { return peso[y.ruolo] * Math.pow(y.q + 2, esp); });
   }
+  // 💪 LA FORZA DELLE SQUADRE NELLA GIORNATA (11 nov 2026, il proprietario col Cervello: «più realistico»): soprattutto l'overall della squadra
+  // (ovr: la parte che conta l'overall, il resto dai gol veri dell'anno scorso; k: quanto pesa un punto di overall di differenza), e chi segna
+  // dentro la squadra (esp: prima 2, un calciatore da 5 di quotazione non segnava quasi mai). La forza sposta le probabilità, non le decide
+  var FORZA = { ovr: 0.7, k: 0.09, esp: 1 };   // (simulazioni dell'11 nov: la rosa più forte vince sempre ~55%; le 4 squadre più forti battono le 4 più deboli 79% invece di 66%; chi vale 6 o meno segna o fa assist 6 giornate su 100 invece di 4)
+  function forza() { return window.SG_FORZA_PROVA || FORZA; }   // (le simulazioni la cambiano per confrontare)
   // una partita: { c: squadra di casa, f: fuori casa, gc, gf: i gol, ev: [{ m: minuto (91-95 = recupero), t: "gol"|"rig"|"rigP"|"rigF"|"aut"|
   //   "amm"|"esp"|"occ"|"ann" (gol annullato dal VAR), s: "c"|"f" (la squadra di chi fa la cosa), chi: chiave del calciatore (o nome, o
   //   null), ass, v: la scena ("cross", "fuori", "rovesciata"…), fin: com'entra o come esce ("palo", "dev", "traversa"…), esito
@@ -3371,7 +3386,8 @@
     var P = { c: casa, f: fuori, gc: 0, gf: 0, ev: [] }, lato = { c: casa, f: fuori };
     ["c", "f"].forEach(function (s) {
       var io = infoSquadra(lato[s]) || med, lui = infoSquadra(lato[s === "c" ? "f" : "c"]) || med, rosa = rose[lato[s]] || [], k;
-      var att = io.gf * (lui.gs / med.gs) * (s === "c" ? 1.08 : 0.92), gol = morbido(lim(att - RIG_A_PARTITA * 0.76, 0.12, 4));
+      var F = forza(), dO = overallSquadra(lato[s], true) - overallSquadra(lato[s === "c" ? "f" : "c"], true), attVero = io.gf * (lui.gs / med.gs);
+      var att = (F.ovr * med.gf * Math.exp(F.k * dO) + (1 - F.ovr) * attVero) * (s === "c" ? 1.08 : 0.92), gol = morbido(lim(att - RIG_A_PARTITA * 0.76, 0.12, 4));   // 💪 (overall + gol veri)
       for (k = 0; k < gol; k++) {
         var mm = minuto(), m = marcatore(rosa, PESO_GOL), as = caso01() < 0.7 ? marcatore(rosa, PESO_ASS, m) : null, v = scenaGol(!!as), tp = tiriPiazzati(lato[s], v, m, as);
         m = tp[0]; as = tp[1];
@@ -4135,6 +4151,31 @@
         c0 === "proteste" || c0 === "simula" ? "un giocatore " + conArt(sqA, true) : "di un giocatore " + conArt(sqA, true)];
     }
     else { et = { para: tag(chiaveCalc(x.chi[0].c)) }; ann = ["🔒 PORTA INVIOLATA", "finisce " + P.c + " " + e.r[0] + "-" + e.r[1] + " " + P.f]; sqAtt = sqB; }
+    // 🎯 (11 nov 2026, il proprietario col Cervello: «sul dischetto va il rigorista vero… anche se non l'ha nessuno»): chi tira e non è di nessuno
+    // è un calciatore VERO della sua squadra, con la sua faccia e il suo numero (solo l'aspetto: niente nome sopra, niente punti a lui). Il rigore:
+    // il rigorista che la partita ha già scelto PRIMA di sapere come va; la punizione: chi le batte; il gol dall'angolo: chi batte gli angoli; gli
+    // altri tiri: dal seme della partita e del minuto (più spesso un attaccante, e chi è più forte), MAI da come finisce (prova sp1)
+    if (et && !et.tira && (t === "gol" || t === "ann" || t === "occ" || t === "rig")) {
+      var kT = t === "rig" ? trovaK(sqA, e.chi) : v === "punizione" ? primoBattitore(sqA, "punizioni") : v === "olimpico" ? primoBattitore(sqA, "angoli") : null;
+      if (!kT || noti.some(function (y) { return y.k === kT; })) kT = tiratoreVero(sqA);
+      if (kT) et.tira = { vero: true, k: kT, asp: coloriAspetto(aspettoVero(kT)), num: numeroMaglia(splitCalc(kT)).n };
+    }
+    if (window.SG_PROVA_TIRA) try { window.SG_PROVA_TIRA({ t: t, v: v, sqA: sqA, chi: e.chi || null, m: e.m, c: P.c, f: P.f, esito: esito, tira: et && et.tira ? { vero: !!et.tira.vero, k: et.tira.k || null, nome: et.tira.nome || null, num: et.tira.num != null ? et.tira.num : null, asp: !!et.tira.asp } : null }); } catch (x0) {}   // (solo le prove: ct1)
+    function tuttiDi(sq) { return (roseSerieA()[sq] || []).concat(campoDi(sq)); }
+    function trovaK(sq, chi) {   // chi: la chiave «Nome (Squadra)», o solo il nome (un battitore che nel listone non c'è)
+      if (!chi) return null; if (chi.charAt(chi.length - 1) === ")") return chi;
+      var n = normNome(chi), c = tuttiDi(sq).filter(function (y) { return normNome(y.nome) === n; })[0]; return c ? c.k : null;
+    }
+    function primoBattitore(sq, tipo) { var b = tiratoriDi(sq, tipo)[0]; return b ? (b.c ? b.c.k : trovaK(sq, b.nome)) : null; }
+    function tiratoreVero(sq) {
+      var presi = {}; noti.forEach(function (y) { presi[y.k] = 1; });
+      var PESO = { A: 6, C: 3, D: 1 }, l = tuttiDi(sq).filter(function (c) { return !presi[c.k] && PESO[c.ruolo]; }), tot = 0;
+      l.forEach(function (c) { tot += PESO[c.ruolo] * ((c.q || 1) + 2); });
+      if (!tot) return null;
+      var z = ((hashNome(P.c + "|" + P.f + "|" + Math.round(e.m * 10) + "|" + sq) >>> 0) % 100000) / 100000 * tot;
+      for (var i = 0; i < l.length; i++) { z -= PESO[l[i].ruolo] * ((l[i].q || 1) + 2); if (z < 0) return l[i].k; }
+      return l[l.length - 1].k;
+    }
     // il rallentatore prima del tiro: deciso dal minuto e dal seme, MAI da come finisce (prima partiva solo sui non-gol: era uno spoiler).
     // Sempre sui rigori e dal 75', prima un tiro su tre
     if (e.v === "assedio" || e.v === "ultimo") T = [T[0], T[1], T[2] * 1.3, T[3]];
@@ -4150,7 +4191,9 @@
       ["P", "D", "C", "A"].forEach(function (ru) { var g = DB[ru] || {}; Object.keys(g).forEach(function (fa) { (g[fa] || []).forEach(function (s) {
         var c = splitCalc(s), k = chiaveCalc(c); if (c.squadra !== sq || presi[k]) return;
         out[ru].push({ k: k, h: hashNome(k + "|" + P.c + "|" + P.f), num: numeroMaglia(c).n, asp: coloriAspetto(aspettoVero(k)) });
-      }); }); out[ru].sort(function (a, b) { return a.h - b.h || (a.k < b.k ? -1 : 1); }); });
+      }); }); });
+      campoDi(sq).forEach(function (c) { if (out[c.ruolo] && !presi[c.k]) out[c.ruolo].push({ k: c.k, h: hashNome(c.k + "|" + P.c + "|" + P.f), num: numeroMaglia(c).n, asp: coloriAspetto(aspettoVero(c.k)) }); });   // (➕ solo per il campo)
+      ["P", "D", "C", "A"].forEach(function (ru) { out[ru].sort(function (a, b) { return a.h - b.h || (a.k < b.k ? -1 : 1); }); });
       return out;
     }
     function prepara(sc) {   // le maglie e i vostri che non c'entrano (al posto del loro ruolo)
@@ -5171,7 +5214,9 @@
       var c = splitCalc(s), k = chiaveCalc(c); if (visti[k]) return; visti[k] = 1; out.push({ k: k, nome: c.nome, sq: c.squadra, ru: ru, q: Q[k] || 0 });
     }); }); });
     out.sort(function (a, b) { return b.q - a.q || (a.k < b.k ? -1 : 1); });
-    return out;
+    var C = campoSolo(), ca = Object.keys(C).map(function (k) { var c = splitCalc(k); return { k: k, nome: c.nome, sq: c.squadra, ru: C[k][0], q: C[k][1], campo: true }; });   // ➕ (in fondo, nella loro sezione)
+    ca.sort(function (a, b) { return a.sq < b.sq ? -1 : a.sq > b.sq ? 1 : b.q - a.q; });
+    return out.concat(ca.filter(function (c) { return !visti[c.k]; }));
   }
   function disegnaTestina(cv, a, fronte) {
     var d = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth || +cv.getAttribute("width") || 40, h = cv.clientHeight || w;
@@ -5208,7 +5253,7 @@
       if (!sel) { scheda.appendChild(nd("div", "fa-ed-fatto", "🎉 Non ne resta nessuno da controllare")); return; }
       var a = aspettoVero(sel.k), su = nd("div", "fa-ed-su"), cvF = nd("canvas", "fa-ed-big"), cvP = nd("canvas", "fa-ed-pro"), info = nd("div", "fa-ed-info");
       su.appendChild(cvF); su.appendChild(cvP); su.appendChild(info); scheda.appendChild(su);
-      info.appendChild(nd("b", "", sel.nome)); info.appendChild(nd("span", "", sel.sq + " · " + RU[sel.ru] + " · " + sel.q));
+      info.appendChild(nd("b", "", sel.nome)); info.appendChild(nd("span", "", sel.sq + " · " + RU[sel.ru] + " · " + sel.q + (sel.campo ? " · ➕ solo per il campo" : "")));
       info.appendChild(nd("i", "", a.fonte === "prop" ? "✓ sistemato da te" : a.fonte === "caso" ? "🎲 a caso: nessuna foto" : a.dc ? "🔎 dalla foto, da controllare" : "📷 dalla foto"));
       var tasti = nd("div", "fa-ed-tasti"), ok = nd("button", "btn btn-primario", "✓ Va bene"), foto = nd("button", "fa-ed-t", "🔍 Foto");
       tasti.appendChild(ok); tasti.appendChild(foto);
@@ -5236,8 +5281,9 @@
     function elenco() {
       lista.textContent = "";
       var dc = daControllare(); tDc.textContent = "Da controllare · " + dc.length; tTu.textContent = "Tutti · " + tutti.length;
-      var l = modo === "dc" ? dc : visibili();
+      var l = modo === "dc" ? dc : visibili(), sez = false;
       l.forEach(function (c) {
+        if (c.campo && !sez) { sez = true; lista.appendChild(nd("div", "fa-ed-sez", "➕ Giocatori aggiunti solo per il campo")); }   // (11 nov 2026: mai all'asta, solo in campo con faccia e numero)
         var r = nd("button", "fa-ed-r" + (c === sel ? " on" : "")), cv = nd("canvas"), a = aspettoVero(c.k); cv.setAttribute("width", 34); cv.style.width = cv.style.height = "34px";
         r.appendChild(cv); r.appendChild(nd("b", "", c.nome)); r.appendChild(nd("span", "", c.sq + " · " + c.q + (a.dc ? " · da controllare" : "")));
         r.onclick = function () { scegli(c); R.scrollTop = 0; }; lista.appendChild(r);
@@ -5746,10 +5792,30 @@
   var OVR = { on: (function () { try { return localStorage.getItem("sg-fanta-overall") !== "0"; } catch (e) { return true; } })(), scala: null };
   function overallDi(c) {
     if (!OVR.scala) { var L = window.SG_FANTA_CALCIATORI || {}; OVR.scala = {}; Object.keys(L).forEach(function (r) { var dd = {}; Object.keys(L[r]).forEach(function (fa) { L[r][fa].forEach(function (k) { dd[valoreCalc(splitCalc(k))] = 1; }); }); OVR.scala[r] = Object.keys(dd).map(Number).sort(function (a, b) { return b - a; }); }); }
-    var sc = OVR.scala[c.ruolo], q = valoreCalc(c); if (!sc || !OVR_TETTO[c.ruolo]) return OVR_BASSO;
-    var sopra = sc.filter(function (v) { return v > q; }).length;   // (quanti gradini di quotazione del suo ruolo ci sono sopra di lui)
-    return OVR_TETTO[c.ruolo] - sopra;
+    return ovrDaQ(c.ruolo, valoreCalc(c));
   }
+  function ovrDaQ(r, q) {   // l'overall da ruolo e quotazione (anche per chi è solo per il campo: stessa scala del listone)
+    if (!OVR.scala) overallDi({ ruolo: "P", nome: "", squadra: "" });
+    var sc = OVR.scala[r]; if (!sc || !OVR_TETTO[r]) return OVR_BASSO;
+    var sopra = sc.filter(function (v) { return v > q; }).length;   // (quanti gradini di quotazione del suo ruolo ci sono sopra di lui)
+    return OVR_TETTO[r] - sopra;
+  }
+  // 💪 L'OVERALL DELLA SQUADRA (11 nov 2026, il proprietario col Cervello): la media degli overall dei suoi 11 titolari, per ogni ruolo i migliori
+  // (1 portiere, 4 difensori, 3 centrocampisti, 3 attaccanti), compresi quelli solo per il campo; se in un ruolo non ce ne sono abbastanza, il
+  // posto va al migliore rimasto (mai un portiere fuori dalla porta). Si rifà da solo con le quotazioni nuove. Con un decimale (q1: vero)
+  var OVR_SQ = {};
+  function overallSquadra(sq, q1) {
+    if (OVR_SQ[sq] == null) {
+      var l = (roseSerieA()[sq] || []).map(function (c) { return { r: c.ruolo, o: ovrDaQ(c.ruolo, c.q) }; })
+        .concat(campoDi(sq).map(function (c) { return { r: c.ruolo, o: ovrDaQ(c.ruolo, c.q) }; }));
+      var NUM = { P: 1, D: 4, C: 3, A: 3 }, xi = [], resto = [], giu = function (a, b) { return b.o - a.o; };
+      ["P", "D", "C", "A"].forEach(function (r) { var lr = l.filter(function (x) { return x.r === r; }).sort(giu); xi = xi.concat(lr.slice(0, NUM[r])); resto = resto.concat(lr.slice(NUM[r])); });
+      xi = xi.concat(resto.filter(function (x) { return x.r !== "P"; }).sort(giu).slice(0, Math.max(0, 11 - xi.length)));
+      OVR_SQ[sq] = xi.length ? xi.reduce(function (t, x) { return t + x.o; }, 0) / xi.length : OVR_BASSO;
+    }
+    return q1 ? Math.round(OVR_SQ[sq] * 10) / 10 : Math.round(OVR_SQ[sq]);
+  }
+  function vsTesto(vsA) { return !vsA ? "" : "🆚 " + vsA.split(" · ").map(function (n) { return OVR.on && n !== "?" ? n + " (" + overallSquadra(n) + ")" : n; }).join(" · "); }   // («🆚 Inter (88)»)
   function valoreRosa(r) { return OVR.on ? "overall " + numFanta(Math.round(r.totale / Math.max(1, (r.kit || []).length) * 10) / 10) : "valore " + r.totale; }   // ⭐ (la riga della classifica: la media degli overall)
   function valoreMostrato(c) { return OVR.on ? overallDi(c) : valoreCalc(c); }   // (quello che si vede e che fa il valore della rosa)
   function albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, oro, coperto) {   // 🃏 la figurina nuova da album (oro: ⭐ i big, da BIG_DA in su)
@@ -6116,8 +6182,9 @@
           }
           if (o) { o.nome = nt.nome; o.pr = nt.pr; o.faccia = nt.faccia; o.pc = nt.pc; o.num = nt.num; o.asp = nt.asp; }
         });
-        var al = sc.altri && sc.altri[q[0]], usati = { P: 0, D: 0, C: 0, A: 0 };   // 👥 gli altri posti: chi nessuno ha comprato, nel suo ruolo (se non bastano, anonimi come prima)
-        if (al) posti.forEach(function (o, i) { if (o.nome || i > 10) return; var ru = i === 0 ? "P" : i <= 4 ? "D" : i <= 7 ? "C" : "A", c = al[ru][usati[ru]++]; if (c && !o.via) { o.asp = c.asp; o.numA = c.num; } });
+        var al = sc.altri && sc.altri[q[0]], usati = { P: 0, D: 0, C: 0, A: 0 }, giaIn = {};   // 👥 gli altri posti: chi nessuno ha comprato, nel suo ruolo (se non bastano, anonimi come prima)
+        sc.attori.forEach(function (a) { if (a.chi && a.chi.vero && a.sq === q[0]) giaIn[a.chi.k] = 1; });   // (🎯 chi tira vero non compare una seconda volta)
+        if (al) posti.forEach(function (o, i) { if (o.nome || i > 10) return; var ru = i === 0 ? "P" : i <= 4 ? "D" : i <= 7 ? "C" : "A", c = al[ru][usati[ru]++]; while (c && giaIn[c.k]) c = al[ru][usati[ru]++]; if (c && !o.via) { o.asp = c.asp; o.numA = c.num; } });
         posti.forEach(function (o, i) { if (!o.via) out.push({ sq: i === 0 ? "p" + q[0] : q[0], x: o.x, y: o.y, k: i * 1.7 + (q[0] === "A" ? 0 : 0.9), nome: o.nome || "", pr: o.pr || "", faccia: o.faccia || null, pc: o.pc || null, num: o.num != null ? o.num : null, numA: o.numA != null ? o.numA : null, asp: o.asp || null, n: i + (q[0] === "A" ? 0 : 11) }); });
       });
       return out;
@@ -6174,12 +6241,12 @@
         var po = posa(a.pose, p), dir = guarda(sc, a, staccato(a, po, p));
         var ruota = (po.tuffo >= 0 ? tP * po.tuffo : tM * -po.tuffo) + (po.cade >= 0 ? tP * po.cade : tM * -po.cade) - dir * po.capriola * Math.PI * 0.85, giu = Math.min(1, Math.abs(Math.sin(ruota)));   // (la capriola all'indietro, rispetto a dove guarda)
         var corre = Math.min(1, vel / (u * 0.25)) * (1 - Math.min(1, giu * 1.6)), ph = strada(sc, a, p) / (u * 2.4) * Math.PI * 2, lato = vel > 0.01 ? Math.abs(dx) / vel : 0, n = i + 30;
-        var gkA = !(a.chi && a.chi.nome) && (a.sq === "pA" || a.sq === "pD") && sc.altri ? sc.altri[a.sq.slice(1)].P[0] || null : null, asA = a.chi && a.chi.nome ? a.chi.asp || null : gkA ? gkA.asp : null;   // (il portiere senza nome: quello vero della squadra, se nessuno l'ha comprato)   // (un passo ogni 1,2 omini di strada)
+        var gkA = !(a.chi && a.chi.nome) && (a.sq === "pA" || a.sq === "pD") && sc.altri ? sc.altri[a.sq.slice(1)].P[0] || null : null, asA = a.chi && a.chi.nome ? a.chi.asp || null : gkA ? gkA.asp : a.chi && a.chi.vero ? a.chi.asp : null;   // (il portiere senza nome: quello vero della squadra, se nessuno l'ha comprato)   // (un passo ogni 1,2 omini di strada)
         figure.push({ x: s[0], y: s[1], kit: kitDiSq(sc, a.sq), dir: dir,
           o: { sw: Math.sin(ph) * 0.45 * corre, sv: Math.cos(ph) * corre, vr: vel > 0.01 ? Math.abs(dy) / vel : 0, salto: po.salto + corre * 0.03 * Math.abs(Math.sin(ph)), ruota: ruota + dir * (corre * 0.1 * lato + po.inclina * 0.28), giu: giu,
             calcio: po.calcio, braccia: Math.max(po.braccia, Math.min(0.6, giu)), carta: po.carta, ali: po.ali, ginocchia: po.ginocchia, piega: po.piega, allunga: po.allunga, guanti: a.sq === "pA" || a.sq === "pD",
             pronto: (a.sq === "pA" || a.sq === "pD") && giu < 0.05 && po.salto < 0.05 && po.braccia < 0.05 ? 1 - corre : 0, pelle: asA ? asA.pelle : aspetto(n).pelle, capelli: aspetto(n).capelli, stile: aspetto(n).stile, scarpe: aspetto(n).scarpe, asp: asA },
-          chi: a.chi && a.chi.nome ? a.chi : null, numA: gkA ? gkA.num : null });
+          chi: a.chi && a.chi.nome ? a.chi : null, numA: gkA ? gkA.num : a.chi && a.chi.vero ? a.chi.num : null });
       });
       figure.sort(function (a, b) { return a.y - b.y; });
       var nomi = [];
