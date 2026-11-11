@@ -15,7 +15,9 @@ window.SG_NOVITA = [
     descrizione: [
       "🧩 Ogni squadra gioca col suo modulo vero: l'Inter col 3-5-2, la Roma col 3-4-2-1, il Milan col 4-3-3… In campo i difensori stanno dietro, gli attaccanti davanti, e i tuoi calciatori al loro posto: un attaccante non finisce in difesa.",
       "💪 L'overall di una squadra è quello della sua formazione più forte nel suo modulo, anche con chi è infortunato (l'Inter con Lautaro e Thuram).",
-      "🟨 I falli si vedono al posto giusto: l'attaccante prende il giallo per un fallo in attacco, il difensore quasi sempre nella sua metà campo."
+      "⚔️ Ogni squadra ha attacco, centrocampo e difesa (l'Inter 92, 84 e 84): nella giornata il suo attacco sfida la difesa avversaria e i centrocampi si sfidano tra loro. Chi ha un grande attacco segna di più, chi ha una grande difesa subisce meno.",
+      "🟨 I falli si vedono al posto giusto: l'attaccante prende il giallo per un fallo in attacco, il difensore quasi sempre nella sua metà campo.",
+      "➕ Al Parma e al Venezia arrivano Britschgi e Haps, solo per il campo: gli esterni che mancavano al loro 3-5-2."
     ]
   },
   {

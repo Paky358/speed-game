@@ -3362,7 +3362,7 @@
   // 💪 LA FORZA DELLE SQUADRE NELLA GIORNATA (11 nov 2026, il proprietario col Cervello: «più realistico»): soprattutto l'overall della squadra
   // (ovr: la parte che conta l'overall, il resto dai gol veri dell'anno scorso; k: quanto pesa un punto di overall di differenza), e chi segna
   // dentro la squadra (esp: prima 2, un calciatore da 5 di quotazione non segnava quasi mai). La forza sposta le probabilità, non le decide
-  var FORZA = { ovr: 0.7, k: 0.09, esp: 1 };   // (simulazioni dell'11 nov: la rosa più forte vince sempre ~55%; le 4 squadre più forti battono le 4 più deboli 79% invece di 66%; chi vale 6 o meno segna o fa assist 6 giornate su 100 invece di 4)
+  var FORZA = { ovr: 0.7, k: 0.09, esp: 1, rep: { a: 0.6, d: 0.6, c: 0.35 } };   // ⚔️ rep (11 nov sera, reparti coi ruoli del fantacalcio): attacco contro difesa avversaria e centrocampo contro centrocampo; simulazioni: i 4 attacchi migliori segnano 2,04 a partita e i 4 peggiori 1,00, le 4 difese migliori subiscono 0,98 e le 4 peggiori 1,65, le 4 squadre più forti battono le 4 più deboli 80%, la rosa più forte vince sempre ~55%.
   function forza() { return window.SG_FORZA_PROVA || FORZA; }   // (le simulazioni la cambiano per confrontare)
   // una partita: { c: squadra di casa, f: fuori casa, gc, gf: i gol, ev: [{ m: minuto (91-95 = recupero), t: "gol"|"rig"|"rigP"|"rigF"|"aut"|
   //   "amm"|"esp"|"occ"|"ann" (gol annullato dal VAR), s: "c"|"f" (la squadra di chi fa la cosa), chi: chiave del calciatore (o nome, o
@@ -3386,7 +3386,9 @@
     var P = { c: casa, f: fuori, gc: 0, gf: 0, ev: [] }, lato = { c: casa, f: fuori };
     ["c", "f"].forEach(function (s) {
       var io = infoSquadra(lato[s]) || med, lui = infoSquadra(lato[s === "c" ? "f" : "c"]) || med, rosa = rose[lato[s]] || [], k;
-      var F = forza(), dO = overallSquadra(lato[s], true) - overallSquadra(lato[s === "c" ? "f" : "c"], true), attVero = io.gf * (lui.gs / med.gs);
+      var F = forza(), noi = lato[s], loro = lato[s === "c" ? "f" : "c"], attVero = io.gf * (lui.gs / med.gs), dO;
+      if (F.rep) { var rN = repartiSquadra(noi), rL = repartiSquadra(loro), mR = repartiMedi(); dO = F.rep.a * (rN.att - mR.att) - F.rep.d * (rL.dif - mR.dif) + F.rep.c * (rN.cen - rL.cen); }   // ⚔️ (il nostro attacco contro la loro difesa, e chi comanda a centrocampo)
+      else dO = overallSquadra(noi, true) - overallSquadra(loro, true);
       var att = (F.ovr * med.gf * Math.exp(F.k * dO) + (1 - F.ovr) * attVero) * (s === "c" ? 1.08 : 0.92), gol = morbido(lim(att - RIG_A_PARTITA * 0.76, 0.12, 4));   // 💪 (overall + gol veri)
       for (k = 0; k < gol; k++) {
         var mm = minuto(), m = marcatore(rosa, PESO_GOL), as = caso01() < 0.7 ? marcatore(rosa, PESO_ASS, m) : null, v = scenaGol(!!as), tp = tiriPiazzati(lato[s], v, m, as);
@@ -5818,20 +5820,77 @@
   // l'overall di quella»; data/fanta-moduli.js): le linee del modulo (3-5-2: 3, 5, 2) e quanti difensori, centrocampisti e attaccanti CON I RUOLI
   // DEL FANTACALCIO ci sono negli 11 (gli esterni a tutta fascia spesso D, le ali spesso C). Senza dati: 4-3-3
   function moduloDi(sq) { var M = (((window.SG_FANTA_MODULI || {}).squadre) || {})[sq]; return M ? { mod: M[0], linee: String(M[0]).split("-").map(Number), D: M[1], C: M[2], A: M[3] } : { mod: "4-3-3", linee: [4, 3, 3], D: 4, C: 3, A: 3 }; }
+  // 🧩 (11 nov 2026) i posti in campo dal modulo della squadra: le linee dalla difesa all'attacco, i difensori nella prima (quelli in più, gli
+  // esterni, ai lati della seconda), gli attaccanti nell'ultima (quelli in più ai lati della penultima), i centrocampisti nel resto. Chi attacca
+  // ha le linee alte, chi difende basse; il portiere per primo. Ogni posto sa il suo ruolo (ru): gli attaccanti stanno davanti, i difensori dietro
+  var Y_LINEA = { 1: [0.5], 2: [0.36, 0.64], 3: [0.24, 0.5, 0.76], 4: [0.18, 0.4, 0.6, 0.82], 5: [0.12, 0.31, 0.5, 0.69, 0.88], 6: [0.1, 0.26, 0.42, 0.58, 0.74, 0.9] };
+  function postiModulo(sq, att) {
+    var m = moduloDi(sq), L = m.linee, n = L.length, x0 = att ? 0.3 : 0.855, x1 = att ? 0.735 : 0.57, out = [{ x: att ? 0.05 : 0.965, y: 0.5, gk: true, ru: "P" }];
+    var linee = L.map(function (k, i) {
+      var x = n > 1 ? x0 + (x1 - x0) * i / (n - 1) : x0;
+      return (Y_LINEA[k] || Y_LINEA[4]).map(function (y) { var lato = Math.abs(y - 0.5); return { x: x + (lato > 0.3 ? (att ? -0.02 : 0.02) : 0), y: y, ru: null, lato: lato, li: i }; });   // (i più larghi un filo più dietro)
+    });
+    function metti(lin, ru, quanti, daiLati) {
+      var l = lin.filter(function (o) { return !o.ru; }).sort(function (p, q) { return daiLati ? q.lato - p.lato : p.lato - q.lato; });
+      for (var i = 0; i < l.length && quanti > 0; i++, quanti--) l[i].ru = ru;
+      return quanti;
+    }
+    var restoD = metti(linee[0], "D", m.D, false); if (restoD > 0 && n > 1) metti(linee[1], "D", restoD, true);
+    var restoA = metti(linee[n - 1], "A", m.A, false); if (restoA > 0 && n > 1) metti(linee[n - 2], "A", restoA, true);
+    linee.forEach(function (lin) { lin.forEach(function (o) { out.push({ x: o.x, y: o.y, ru: o.ru || "C", li: o.li }); }); });
+    return out;
+  }
+  function postiRig(base, sq, att) {   // sul rigore i posti di sempre (tutti fuori dall'area), coi ruoli del modulo: i più arretrati ai difensori
+    var m = moduloDi(sq), ord = base.slice(1).map(function (b, i) { return { x: b[0], y: b[1], i: i }; }).sort(function (p, q) { return att ? p.x - q.x : q.x - p.x; });
+    ord.forEach(function (o, k) { o.ru = k < m.D ? "D" : k < m.D + m.C ? "C" : "A"; });
+    ord.sort(function (p, q) { return p.i - q.i; });
+    return [{ x: base[0][0], y: base[0][1], gk: true, ru: "P" }].concat(ord.map(function (o) { return { x: o.x, y: o.y, ru: o.ru }; }));
+  }
+  function ordineRuolo(posti, ruolo, att) {   // dove va un vostro calciatore che non c'entra: prima i posti del suo ruolo, poi i vicini; MAI un attaccante in difesa
+    var giro = { P: ["P"], D: ["D", "C", "A"], C: ["C", "A", "su", "D"], A: ["A", "su", "C"] }[ruolo] || ["C"], out = [];
+    giro.forEach(function (r) {
+      if (r === "su") return out.push("su");
+      var l = []; posti.forEach(function (o, i) { if (o.ru === r) l.push(i); });
+      if (r === "A") l.sort(function (p, q) { return att ? posti[q].x - posti[p].x : posti[p].x - posti[q].x; });   // (l'attaccante il più avanti possibile)
+      if (r === "D") l.sort(function (p, q) { return att ? posti[p].x - posti[q].x : posti[q].x - posti[p].x; });   // (il difensore il più dietro possibile)
+      out = out.concat(l);
+    });
+    return out;
+  }
   // 💪 L'OVERALL DELLA SQUADRA (11 nov 2026, il proprietario col Cervello): la media degli overall dei suoi 11 titolari, per ogni ruolo i migliori
   // (1 portiere e i difensori, centrocampisti e attaccanti del suo modulo: la formazione più forte, anche con chi è infortunato), compresi quelli solo per il campo; se in un ruolo non ce ne sono abbastanza, il
   // posto va al migliore rimasto (mai un portiere fuori dalla porta). Si rifà da solo con le quotazioni nuove. Con un decimale (q1: vero)
-  var OVR_SQ = {};
-  function overallSquadra(sq, q1) {
-    if (OVR_SQ[sq] == null) {
+  var OVR_SQ = {}, XI_SQ = {}, REP_SQ = {}, REP_MED = null;
+  function undiciPiuForti(sq) {   // la formazione più forte nel suo modulo: [{ r: ruolo, o: overall }]
+    if (!XI_SQ[sq]) {
       var l = (roseSerieA()[sq] || []).map(function (c) { return { r: c.ruolo, o: ovrDaQ(c.ruolo, c.q) }; })
         .concat(campoDi(sq).map(function (c) { return { r: c.ruolo, o: ovrDaQ(c.ruolo, c.q) }; }));
       var mo = moduloDi(sq), NUM = { P: 1, D: mo.D, C: mo.C, A: mo.A }, xi = [], resto = [], giu = function (a, b) { return b.o - a.o; };   // 🧩 (nel suo modulo)
       ["P", "D", "C", "A"].forEach(function (r) { var lr = l.filter(function (x) { return x.r === r; }).sort(giu); xi = xi.concat(lr.slice(0, NUM[r])); resto = resto.concat(lr.slice(NUM[r])); });
-      xi = xi.concat(resto.filter(function (x) { return x.r !== "P"; }).sort(giu).slice(0, Math.max(0, 11 - xi.length)));
-      OVR_SQ[sq] = xi.length ? xi.reduce(function (t, x) { return t + x.o; }, 0) / xi.length : OVR_BASSO;
+      XI_SQ[sq] = xi.concat(resto.filter(function (x) { return x.r !== "P"; }).sort(giu).slice(0, Math.max(0, 11 - xi.length)));
     }
+    return XI_SQ[sq];
+  }
+  function overallSquadra(sq, q1) {
+    if (OVR_SQ[sq] == null) { var xi = undiciPiuForti(sq); OVR_SQ[sq] = xi.length ? xi.reduce(function (t, x) { return t + x.o; }, 0) / xi.length : OVR_BASSO; }
     return q1 ? Math.round(OVR_SQ[sq] * 10) / 10 : Math.round(OVR_SQ[sq]);
+  }
+  // ⚔️ ATTACCO, CENTROCAMPO E DIFESA (11 nov 2026, il proprietario: «vogliamo dividere l'overall… Inter attacco 90, centrocampo 85, difesa 80?»;
+  // poi: «Pulisic fa il centrocampista, quindi ha solo Ramos in attacco»): la formazione più forte del suo modulo divisa coi RUOLI DEL FANTACALCIO:
+  // attacco = la media degli attaccanti, centrocampo = dei centrocampisti, difesa = del portiere e dei difensori. Conta quanto sono forti, non quanti
+  // sono: il Milan con un attaccante solo ma buono attacca lo stesso, e il suo centrocampo pesa nella sfida a centrocampo
+  function repartiSquadra(sq) {
+    if (!REP_SQ[sq]) {
+      var g = { att: [], cen: [], dif: [] };
+      undiciPiuForti(sq).forEach(function (x) { (x.r === "A" ? g.att : x.r === "C" ? g.cen : g.dif).push(x.o); });
+      var med = function (l) { return l.length ? l.reduce(function (t, x) { return t + x; }, 0) / l.length : overallSquadra(sq, true); };
+      REP_SQ[sq] = { att: med(g.att), cen: med(g.cen), dif: med(g.dif) };
+    }
+    return REP_SQ[sq];
+  }
+  function repartiMedi() {   // la media delle 20 squadre, reparto per reparto
+    if (!REP_MED) { var l = Object.keys(((window.SG_FANTA_SQUADRE || {}).squadre) || {}), t = { att: 0, cen: 0, dif: 0 }; l.forEach(function (sq) { var r = repartiSquadra(sq); t.att += r.att; t.cen += r.cen; t.dif += r.dif; }); REP_MED = { att: t.att / Math.max(1, l.length), cen: t.cen / Math.max(1, l.length), dif: t.dif / Math.max(1, l.length) }; }
+    return REP_MED;
   }
   function vsTesto(vsA) { return !vsA ? "" : "🆚 " + vsA.split(" · ").map(function (n) { return OVR.on && n !== "?" ? n + " (" + overallSquadra(n) + ")" : n; }).join(" · "); }   // («🆚 Inter (88)»)
   function valoreRosa(r) { return OVR.on ? "overall " + numFanta(Math.round(r.totale / Math.max(1, (r.kit || []).length) * 10) / 10) : "valore " + r.totale; }   // ⭐ (la riga della classifica: la media degli overall)
@@ -6169,43 +6228,6 @@
     // presi chi fa l'azione, un attaccante va in un posto libero più avanti o a centrocampo, MAI in difesa (22 ott, il proprietario:
     // «il mio Thuram sta proprio in difesa mentre l'Inter attacca»)
     // (11 nov 2026: al posto della lista fissa dei posti, ordineRuolo: i posti del modulo col loro ruolo)
-    // 🧩 (11 nov 2026) i posti in campo dal modulo della squadra: le linee dalla difesa all'attacco, i difensori nella prima (quelli in più, gli
-    // esterni, ai lati della seconda), gli attaccanti nell'ultima (quelli in più ai lati della penultima), i centrocampisti nel resto. Chi attacca
-    // ha le linee alte, chi difende basse; il portiere per primo. Ogni posto sa il suo ruolo (ru): gli attaccanti stanno davanti, i difensori dietro
-    var Y_LINEA = { 1: [0.5], 2: [0.36, 0.64], 3: [0.24, 0.5, 0.76], 4: [0.18, 0.4, 0.6, 0.82], 5: [0.12, 0.31, 0.5, 0.69, 0.88], 6: [0.1, 0.26, 0.42, 0.58, 0.74, 0.9] };
-    function postiModulo(sq, att) {
-      var m = moduloDi(sq), L = m.linee, n = L.length, x0 = att ? 0.3 : 0.855, x1 = att ? 0.735 : 0.57, out = [{ x: att ? 0.05 : 0.965, y: 0.5, gk: true, ru: "P" }];
-      var linee = L.map(function (k, i) {
-        var x = n > 1 ? x0 + (x1 - x0) * i / (n - 1) : x0;
-        return (Y_LINEA[k] || Y_LINEA[4]).map(function (y) { var lato = Math.abs(y - 0.5); return { x: x + (lato > 0.3 ? (att ? -0.02 : 0.02) : 0), y: y, ru: null, lato: lato }; });   // (i più larghi un filo più dietro)
-      });
-      function metti(lin, ru, quanti, daiLati) {
-        var l = lin.filter(function (o) { return !o.ru; }).sort(function (p, q) { return daiLati ? q.lato - p.lato : p.lato - q.lato; });
-        for (var i = 0; i < l.length && quanti > 0; i++, quanti--) l[i].ru = ru;
-        return quanti;
-      }
-      var restoD = metti(linee[0], "D", m.D, false); if (restoD > 0 && n > 1) metti(linee[1], "D", restoD, true);
-      var restoA = metti(linee[n - 1], "A", m.A, false); if (restoA > 0 && n > 1) metti(linee[n - 2], "A", restoA, true);
-      linee.forEach(function (lin) { lin.forEach(function (o) { out.push({ x: o.x, y: o.y, ru: o.ru || "C" }); }); });
-      return out;
-    }
-    function postiRig(base, sq, att) {   // sul rigore i posti di sempre (tutti fuori dall'area), coi ruoli del modulo: i più arretrati ai difensori
-      var m = moduloDi(sq), ord = base.slice(1).map(function (b, i) { return { x: b[0], y: b[1], i: i }; }).sort(function (p, q) { return att ? p.x - q.x : q.x - p.x; });
-      ord.forEach(function (o, k) { o.ru = k < m.D ? "D" : k < m.D + m.C ? "C" : "A"; });
-      ord.sort(function (p, q) { return p.i - q.i; });
-      return [{ x: base[0][0], y: base[0][1], gk: true, ru: "P" }].concat(ord.map(function (o) { return { x: o.x, y: o.y, ru: o.ru }; }));
-    }
-    function ordineRuolo(posti, ruolo, att) {   // dove va un vostro calciatore che non c'entra: prima i posti del suo ruolo, poi i vicini; MAI un attaccante in difesa
-      var giro = { P: ["P"], D: ["D", "C", "A"], C: ["C", "A", "su", "D"], A: ["A", "su", "C"] }[ruolo] || ["C"], out = [];
-      giro.forEach(function (r) {
-        if (r === "su") return out.push("su");
-        var l = []; posti.forEach(function (o, i) { if (o.ru === r) l.push(i); });
-        if (r === "A") l.sort(function (p, q) { return att ? posti[q].x - posti[p].x : posti[p].x - posti[q].x; });   // (l'attaccante il più avanti possibile)
-        if (r === "D") l.sort(function (p, q) { return att ? posti[p].x - posti[q].x : posti[q].x - posti[p].x; });   // (il difensore il più dietro possibile)
-        out = out.concat(l);
-      });
-      return out;
-    }
     function postoNuovo(occ, xs) {   // un posto nella zona xs (lungo il campo), il più lontano da tutti quelli che ci sono già
       var best = null, bd = -1;
       xs.forEach(function (x) { [0.18, 0.3, 0.42, 0.58, 0.7, 0.82].forEach(function (y) {

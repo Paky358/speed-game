@@ -112,10 +112,9 @@
   COPIONE.aggiungi("mo1", { nome: "Mini Asta Fantacalcio: ogni squadra col suo modulo in campo e nell'overall", fai: async function () {
     var w = await W.apriTel("Paky", { x: 0 });
     if (w.SG && w.SG.scaricaGioco) await w.SG.scaricaGioco("asta");
-    var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), a = src.indexOf("    var Y_LINEA = "), b = src.indexOf("    function postoNuovo(occ, xs) {");
-    if (a < 0 || b < a) no("non trovo i posti del modulo nel file del gioco");
-    var dentro = src.slice(a, b).split("\n    ").join("\n  "), fuori = {};
-    src = src.replace("  SG.registra(gioco);", dentro + " FUORI.posti = postiModulo; FUORI.ordine = ordineRuolo; FUORI.modulo = moduloDi; FUORI.ovr = overallSquadra; FUORI.ovrQ = ovrDaQ; FUORI.rose = roseSerieA; SG.registra(gioco);");
+    var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {};
+    if (src.indexOf("function postiModulo(") < 0) no("non trovo i posti del modulo nel file del gioco");
+    src = src.replace("  SG.registra(gioco);", " FUORI.reparti = repartiSquadra; FUORI.posti = postiModulo; FUORI.ordine = ordineRuolo; FUORI.modulo = moduloDi; FUORI.ovr = overallSquadra; FUORI.ovrQ = ovrDaQ; FUORI.rose = roseSerieA; SG.registra(gioco);");
     new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, fuori);
     var MOD = (w.SG_FANTA_MODULI && w.SG_FANTA_MODULI.squadre) || {}, sq = Object.keys(MOD), ko = [];
     if (sq.length !== 20) no("i moduli sono " + sq.length + " squadre invece di 20");
@@ -133,7 +132,12 @@
     });
     var inter = fuori.rose()["Inter"].filter(function (c) { return c.ruolo === "A"; }).sort(function (x, y) { return y.q - x.q; }).slice(0, 2).map(function (c) { return c.nome; });
     if (fuori.modulo("Inter").A !== 2 || inter.join(",").indexOf("Martinez L.") < 0 || inter.join(",").indexOf("Thuram") < 0) ko.push("l'Inter: le due punte più forti sono " + inter.join(", "));
+    // ⚔️ (11 nov sera) attacco, centrocampo e difesa coi ruoli del fantacalcio (il proprietario: «Pulisic fa il centrocampista, quindi ha solo Ramos
+    // in attacco»): l'attacco del Milan (un attaccante solo nel suo 4-3-3) è l'overall del suo attaccante più forte
+    var rp = {}; sq.forEach(function (s) { var r = fuori.reparti(s); rp[s] = r; ["att", "cen", "dif"].forEach(function (k) { if (!(r[k] >= 60 && r[k] <= 95)) ko.push(s + ": " + k + " " + r[k]); }); });
+    var milA = fuori.rose()["Milan"].filter(function (c) { return c.ruolo === "A"; }).sort(function (x, y) { return y.q - x.q; })[0];
+    if (fuori.modulo("Milan").A === 1 && (!milA || Math.abs(rp.Milan.att - fuori.ovrQ("A", milA.q)) > 0.01)) ko.push("il Milan: l'attacco è " + rp.Milan.att + ", non quello di " + (milA && milA.nome));
     if (ko.length) no(ko.slice(0, 6).join(" · ") + (ko.length > 6 ? " … (" + ko.length + ")" : ""));
-    return "20 squadre col loro modulo (" + sq.map(function (s) { return s + " " + MOD[s][0]; }).slice(0, 4).join(", ") + "…): 11 posti, ruoli del modulo, attaccanti sempre davanti, i vostri attaccanti mai in difesa; Inter " + fuori.ovr("Inter") + " con " + inter.join(" e ");
+    return "Inter attacco " + Math.round(rp.Inter.att) + ", centrocampo " + Math.round(rp.Inter.cen) + ", difesa " + Math.round(rp.Inter.dif) + "; Milan attacco " + Math.round(rp.Milan.att) + " · 20 squadre col loro modulo (" + sq.map(function (s) { return s + " " + MOD[s][0]; }).slice(0, 4).join(", ") + "…): 11 posti, ruoli del modulo, attaccanti sempre davanti, i vostri attaccanti mai in difesa; Inter " + fuori.ovr("Inter") + " con " + inter.join(" e ");
   } });
 })();
