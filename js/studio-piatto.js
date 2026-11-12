@@ -270,7 +270,7 @@
       ".st-mondo>*{position:absolute;pointer-events:none}",
       // i punteggi in alto: una fila fino a 4, poi due
       ".stp-punti{flex:0 0 auto;display:flex;flex-direction:column;gap:5px;padding:calc(6px + env(safe-area-inset-top)) 6px 0;position:relative;z-index:7}",
-      ".stp-punti.via{display:none}",
+      ".stp-punti.via{display:none}.stp-esci-flt{display:none}",
       ".stp-punti.due{gap:4px;padding-top:calc(4px + env(safe-area-inset-top))}.stp-punti.due .stp-chip{height:34px;gap:4px}.stp-punti.due .stp-chip canvas{width:27px;height:27px}",
       ".stp-punti.due .stp-chip .n{font-size:10.5px}.stp-punti.due .stp-chip .p{font-size:13.5px}.stp-punti.due .stp-esci{height:34px}",
       ".stp-punti.riga .stp-riga{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.stp-punti.riga .stp-riga::-webkit-scrollbar{display:none}",
@@ -412,6 +412,7 @@
     scena.appendChild(S.puntiEl); scena.appendChild(S.schermo);
     S.mondo = el("div", { class: "st-mondo" }); scena.appendChild(S.mondo);
     if (opz.punti === false) vista.appendChild(el("button", { class: "st-esci", text: "‹", "aria-label": "Esci", onclick: esci }));   // (senza punteggi: il tasto di sempre, in alto a sinistra)
+    else vista.appendChild(el("button", { class: "st-esci stp-esci-flt", text: "‹", "aria-label": "Esci", onclick: esci }));   // (se un gioco nasconde i punteggi per un momento, es. il pannello del Prezzo: l'uscita resta)
     // (pezzi che c'erano nello studio e che qualche gioco tocca: restano, ma non si vedono)
     S.fumetto = el("div", { class: "st-nascosto" }); S.rec = el("div", { class: "st-nascosto" }); vista.appendChild(S.fumetto); vista.appendChild(S.rec);
     S.terzoEl = el("div", { class: "st-terzo" }); vista.appendChild(S.terzoEl);
