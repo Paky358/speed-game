@@ -92,7 +92,9 @@
 
   // ===================== balla1: le regole =====================
   COPIONE.aggiungi("balla1", { nome: "Balla: regole di «Che balla!» e «Parliamo di te», domande sugli amici", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0, spiaBalla: true }), B = w.__balla, note = [];
+    var w = await W.apriTel("Paky", { x: 0, spiaBalla: true }), note = [];
+    if (w.SG.scaricaGioco) await w.SG.scaricaGioco("balla");   // (dal 4 nov 2026 il gioco arriva quando serve: prima di leggere le regole si scarica)
+    var B = w.__balla;
     if (!B || !B.calcolaOro) no("non vedo le regole della Balla (window.__balla)");
     // scelte: 0 = verità, 1 = balla di Luca (posto 1), 2 = balla di Sara (posto 2), 3 = della redazione
     var sc = [{ testo: "vero", vera: true, autori: [] }, { testo: "a", vera: false, autori: [1] }, { testo: "b", vera: false, autori: [2] }, { testo: "c", vera: false, autori: [], casa: true }];
@@ -541,7 +543,9 @@
 
   // ===================== ballaN2: le regole nuove e le notizie =====================
   COPIONE.aggiungi("ballaN2", { nome: "Balla: regole della Balla Finale e di chi sceglie, notizie (argomenti, lunghezze, doppioni, due pezzi)", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0, spiaBalla: true }), B = w.__balla, male = [];
+    var w = await W.apriTel("Paky", { x: 0, spiaBalla: true }), male = [];
+    if (w.SG.scaricaGioco) await w.SG.scaricaGioco("balla");   // (il gioco arriva quando serve: prima si scarica)
+    var B = w.__balla;
     if (!B || !B.pulisciR) no("non vedo le regole nuove (window.__balla)");
     if (B.pulisciR("  il capanno ‖ la tempura. ", true) !== "il capanno ‖ la tempura") male.push("pulisciR due pezzi: " + B.pulisciR("  il capanno ‖ la tempura. ", true));
     if (B.pulisciR("solo uno", true) !== "") male.push("pulisciR con un pezzo solo");
