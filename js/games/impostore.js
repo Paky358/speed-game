@@ -1664,8 +1664,9 @@
     var me = trova(vm, cb.myId), guardo = !me;
     var passo = (vm.passo === "indizi" && vm.giri > 1 ? "✍️ Indizio " + vm.giro + " di " + vm.giri : vm.passo === "voto" && vm.ballo ? "⚖️ Ballottaggio" : (TESTI_PASSO[vm.passo] || "")) +
       (vm.passo === "discuti" && vm.indizi === "voce" ? " a voce" : "");
-    if (vm.elim && vm.passo !== "esito") passo = "🔪 Giro " + vm.turno + " · " + passo;   // a eliminazione: il giro
-    setTx(ui.stato, (guardo ? "👀 Guardi · " : me.fuori ? "🚪 Fuori · " : "") + (vm.mani > 1 ? "Mano " + vm.mano + "/" + vm.mani + " · " : "") + passo);
+    var corta = guardo || me.fuori;   // (chi guarda o è fuori ha già la sua icona davanti: si tolgono le parole)
+    if (vm.elim && vm.passo !== "esito") passo = (corta ? "🔪" + vm.turno : "🔪 Giro " + vm.turno) + " · " + passo;   // a eliminazione: il giro
+    setTx(ui.stato, (guardo ? "👀 · " : me.fuori ? "🚪 · " : "") + (vm.mani > 1 ? (corta ? vm.mano + "/" + vm.mani : "Mano " + vm.mano + "/" + vm.mani) + " · " : "") + passo);
     // il tempo: si riparte a ogni momento nuovo (e si corregge se l'host l'ha accorciato)
     var conTempo = vm.passo === "indizi" || vm.passo === "discuti" || vm.passo === "voto" || (vm.passo === "ultima" && vm.ultima && vm.ultima.scelto == null);
     if (!conTempo) ui.tempoFine = 0;
@@ -2201,7 +2202,7 @@
       ".im-input:focus{outline:none;border-color:var(--o-oro);box-shadow:0 0 0 3px rgba(255,79,134,.18)}",
       ".btn.im-invia{width:auto;margin:0;flex:none;padding:0 18px;min-height:48px}",
       ".im-fatto{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:0 6px 0 12px;border-radius:14px;background:var(--o-verde-tenue);box-shadow:inset 0 0 0 1px rgba(52,209,122,.35);font-weight:800;overflow:hidden}",
-      ".im-fatto span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".im-fatto span{min-width:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.2;overflow-wrap:anywhere}",
       ".im-cambia{flex:none;border:0;border-radius:10px;padding:8px 10px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro);color:inherit;font:inherit;font-weight:800;cursor:pointer}",
       ".im-lista{display:grid;gap:5px;align-content:start;min-height:0;overflow:hidden}.im-lista.fitta{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}",
       ".im-riga{display:flex;align-items:center;gap:4px 8px;padding:5px 10px;border-radius:12px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo);min-width:0}",

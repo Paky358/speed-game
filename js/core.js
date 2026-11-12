@@ -1376,7 +1376,7 @@
       if (io) gruppo.push({ nome: io.nome, emoji: io.emoji });
     }
     var s = schermata({ icona: torn ? "🏆" : "🎉", titolo: torn ? "Serata a punti" : "La sala",
-      sotto: torn ? "Chi gioca stasera" : (g ? ("Si gioca a " + g.nome) : "Chi partecipa"),
+      sotto: torn ? "Chi gioca stasera" : (g ? ("Si gioca " + (cuore.aGioco ? cuore.aGioco(g.nome) : "a " + g.nome)) : "Chi partecipa"),
       indietro: function () { if (!torn && g && modiDi(g).length > 1) schermataModo(g); else tornaHome(); } });   // tornaHome: torna anche nell'edificio da cui si è entrati
 
     s.classList.add("prima-fissa");   // "Avanti" sempre a vista: con tanti giocatori scorre solo la lista

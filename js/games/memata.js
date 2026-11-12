@@ -921,7 +921,7 @@
         if (fatto) mostraSe(ui.invia.parentNode, false);
         mostraSe(ui.modifica.parentNode, fatto);
         var manca = vm.players.filter(function (p) { return !p.via && !p.fatto && p.id !== cb.myId; }).map(function (p) { return p.nome; });
-        tx(ui.aspetta, manca.length ? "⏳ Scrivono: " + manca.join(", ") : "🎉 Tutti pronti!");
+        tx(ui.aspetta, manca.length ? (manca.length > 3 ? "⏳ Scrivono ancora in " + manca.length : "⏳ Scrivono: " + manca.join(", ")) : "🎉 Tutti pronti!");
       } else {
         ui.P.metti(null);
         var n = vm.players.filter(function (p) { return !p.via; }).length, f = vm.players.filter(function (p) { return !p.via && p.fatto; }).length;
