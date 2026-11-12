@@ -9,7 +9,7 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 337,
+    v: 336,
     data: "12 novembre 2026",
     titolo: "Mini Asta Fantacalcio: 16 azioni nuove e parate vere 🧤",
     descrizione: [
