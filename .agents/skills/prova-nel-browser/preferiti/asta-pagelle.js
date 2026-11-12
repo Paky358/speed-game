@@ -7,8 +7,9 @@
 //     All'intervallo Paky ha «Avanti ▶ (…)», Luca e Giulia «⏳ Aspettiamo Paky…» e restano fermi finché Paky non tocca; poi
 //     vanno avanti anche loro. Al fischio finale lo stesso, pagella per pagella: Luca aspetta Paky, e quando Paky va avanti
 //     anche Luca passa alla pagella dopo; alla fine il podio per tutti.
-// pg2 Come pg1, ma Paky tocca «Salta ⏭» e va al podio durante la giornata: la foto dice «libero» e Luca guida le pagelle da
-//     solo col suo «Avanti ▶» (niente «⏳ Aspettiamo Paky…»), all'intervallo e al fischio finale.
+// pg2 (12 nov 2026, il proprietario: «nessuno deve vedere chi ha vinto prima degli altri») Online in 3: nella giornata chi tiene la
+//     partita NON ha più «Salta ⏭» (nascosto; anche toccato apposta non porta al podio né libera gli amici); col ⏩ e i suoi «Avanti ▶»
+//     Paky arriva al podio insieme a Luca e Giulia, mai prima.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -79,8 +80,8 @@
     return x.join(" · ");
   } });
 
-  // pg2: chi tiene la partita tocca «Salta ⏭» e va al podio: gli amici non lo aspettano più, hanno il loro «Avanti ▶»
-  COPIONE.aggiungi("pg2", { nome: "Asta fantacalcio online in 3: Paky salta al podio durante la giornata, Luca e Giulia guidano le pagelle da soli (niente «Aspettiamo»)", fai: async function () {
+  // pg2: online nella giornata niente «Salta» per chi tiene la partita: arriva al podio con gli amici, mai prima
+  COPIONE.aggiungi("pg2", { nome: "Asta fantacalcio online in 3: nella giornata chi tiene la partita non ha «Salta» e non vede il podio prima degli amici", fai: async function () {
     var NOMI = ["Paky", "Giulia", "Luca"], o = await telefoniOnline({ formato: "fanta" }, NOMI), P = o.P, C = o.C, x = [], fino = Date.now() + 300000, visti = {};
     while (Date.now() < fino && vm(C).fase !== "fine") {
       var v = vm(C), a = v.asta;
@@ -95,22 +96,25 @@
     var L = W.finestra("Luca"), G = W.finestra("Giulia"), tutti = [P, G, L];
     for (var i = 0; i < tutti.length; i++) { var w = tutti[i]; if (!await W.aspetta(function () { return q(w, ".st-rivela"); }, 15000)) no("niente classifica delle rose"); W.clicca(w, /Salta/); }
     if (!await W.aspetta(function () { return tutti.every(function (w) { return q(w, ".st-bar-vel"); }); }, 8000)) no("la giornata non parte su tutti i telefoni");
-    [G, L].forEach(function (w) { var b = q(w, ".st-bar-vel"); if (b && !b.classList.contains("on")) b.click(); });
-    await W.dorme(2000);
-    W.clicca(P, /Salta/);   // Paky salta al podio
-    if (!await W.aspetta(function () { return q(P, ".st-gradini"); }, 6000)) no("Paky non arriva al podio col «Salta»");
-    if (!await W.aspetta(function () { return (vm(C).passi || {}).libero; }, 4000)) no("dopo il «Salta» di Paky la foto non dice agli amici che non devono più aspettarlo (passi.libero)");
-    if (!await W.aspetta(function () { return pagelle(L); }, 120000)) no("le pagelle del primo tempo non arrivano a Luca");
-    if (q(L, ".st-pag-attesa")) no("Luca aspetta ancora Paky anche se Paky è sul podio: «" + q(L, ".st-pag-attesa").textContent + "»");
-    var av = await W.aspetta(function () { return bott(L, ".st-pag-av", /Avanti/); }, 3000);
-    if (!av) no("Luca non ha il suo «Avanti ▶» all'intervallo");
-    av.click();
-    if (!await W.aspetta(function () { return !pagelle(L); }, 4000)) no("il «Avanti ▶» di Luca non lo porta al secondo tempo");
-    x.push("intervallo: Luca col suo «" + av.textContent.trim() + "»");
-    if (!await W.aspetta(function () { return pagelle(L) && pagelle(L).classList.contains("uno"); }, 150000)) no("le pagelle finali non arrivano a Luca");
-    var avF = await W.aspetta(function () { return bott(L, ".st-pag-av", /Avanti/); }, 15000);
-    if (!avF || q(L, ".st-pag-attesa")) no("nelle pagelle finali Luca non guida da solo");
-    x.push("fischio finale: Luca col suo «Avanti ▶», niente «Aspettiamo»");
+    await W.dorme(1500);
+    var bs = qa(P, ".sa-testa .sa-tasto").filter(function (b) { return /Salta/.test(b.textContent); })[0];
+    if (!bs) no("non trovo il tasto in alto di Paky");
+    if (getComputedStyle(bs).visibility !== "hidden") no("nella giornata Paky ha ancora «Salta ⏭»");
+    bs.click(); await W.dorme(2500);   // (anche toccato apposta)
+    if (q(P, ".st-gradini")) no("col «Salta» nascosto Paky arriva lo stesso al podio");
+    if ((vm(C).passi || {}).libero) no("il «Salta» nascosto ha liberato gli amici (passi.libero)");
+    x.push("giornata: «Salta» nascosto, toccato apposta non fa niente");
+    var bv = q(P, ".st-bar-vel"); if (bv && !bv.classList.contains("on")) bv.click();
+    var finoP = Date.now() + 360000, prima = null;
+    while (Date.now() < finoP && !q(P, ".st-gradini")) {
+      var avP = bott(P, ".st-pag-av", /Avanti|Mostra tutta/); if (avP && !avP.disabled) avP.click();
+      await W.dorme(150);
+    }
+    if (!q(P, ".st-gradini")) no("Paky non arriva al podio");
+    var tP = performance.now();
+    if (!await W.aspetta(function () { return q(L, ".st-gradini") && q(G, ".st-gradini"); }, 6000)) no("Paky è sul podio ma Luca e Giulia no (dopo 6 secondi)");
+    prima = Math.round(performance.now() - tP);
+    x.push("podio: Luca e Giulia ci arrivano " + prima + " ms dopo Paky (col ⏩ e gli «Avanti ▶» di Paky)");
     return x.join(" · ");
   } });
 })();

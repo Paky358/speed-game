@@ -13,6 +13,7 @@ window.SG_NOVITA = [
     data: "12 novembre 2026",
     titolo: "Mini Asta Fantacalcio: tutto leggibile anche sul telefono piccolo 📱",
     descrizione: [
+      "🚫 Online, durante la giornata, chi tiene la partita non ha più «Salta ⏭»: prima lo portava da solo al podio e vedeva chi aveva vinto mentre gli amici guardavano ancora la partita. Ora si arriva al podio tutti insieme (restano ⏩ e «Avanti ▶»).",
       "🏆 Il podio non finisce più sopra il maxischermo: i gradini si rimpiccioliscono quanto serve, anche in 8 e con le 3 giornate, e il tasto «🏅 I premi della giornata» resta libero. A pari punti si legge perché ha vinto il primo (la rosa più forte, o più crediti avanzati).",
       "📋 Nelle pagelle voto e fantavoto non si attaccano più («5,5 | 5,5», mai «5,55,5»).",
       "⚽ Sul telefono piccolo le rose sotto il maxischermo mostrano i nomi interi col prezzo, senza maglie una sopra l'altra.",

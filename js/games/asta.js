@@ -565,7 +565,7 @@
     ".st-linea-t{position:absolute;top:4px;width:1px;height:11px;background:rgba(255,255,255,.45);}.st-linea-t.z{background:rgba(255,120,150,.75);}",
     ".st-linea-e span{position:absolute;top:1px;transform:translateX(-50%);font-size:10px;line-height:1;padding:1px;border-radius:50%;background:rgba(6,12,30,.7);box-shadow:0 0 0 1.5px var(--pc);}.st-linea-e span.g{font-size:12px;top:0;}",
     ".st-vs{flex:0 100 auto;min-width:0;font-size:.72rem;font-weight:800;opacity:.9;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.st-riga .st-squadra{flex:0 0 auto;font-size:.74rem;letter-spacing:.03em;}",
-    ".st-premi-tasto{display:block;margin:10px auto 0;}",
+    ".st-premi-tasto{display:block;margin:10px auto 22px;}",   // (sotto c'è la faccina delle reazioni, che sale un po' sopra la sua riga)
     ".st-premi{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(5,8,20,.6);}",
     ".st-premi-in{width:100%;max-width:420px;max-height:100%;overflow:auto;background:#151a2e;border-radius:18px;padding:14px 12px;box-shadow:0 16px 40px rgba(0,0,0,.6);color:#f4f5fb;}",
     ".st-premi-tit{font-size:1.2rem;font-weight:900;text-align:center;}.st-premi-sotto{font-size:.78rem;font-weight:700;color:#a6acc8;text-align:center;margin-bottom:8px;}",
@@ -693,7 +693,7 @@
     ".st-gradino img{width:82%;margin-bottom:-6%;}",
     ".st-gradino.ill{overflow:visible;}.st-gradino.ill img{width:112%;max-width:none;margin-bottom:-11%;filter:drop-shadow(0 0 2px rgba(0,0,0,.75)) drop-shadow(0 2px 5px rgba(0,0,0,.6));}.st-gradino.ill b{margin-bottom:2px;}.st-gradino.ill small:not(.g3){margin-bottom:7px;}",
     ".st-gradino b{font-size:.8rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8);}",
-    ".st-gradino small{font-size:.72rem;font-weight:900;color:#ffe066;text-shadow:0 1px 3px rgba(0,0,0,.8);}",
+    ".st-gradino small{font-size:calc(.72rem * clamp(.8, var(--pk,1) + .15, 1));font-weight:900;color:#ffe066;text-shadow:0 1px 3px rgba(0,0,0,.8);white-space:nowrap;}",
     ".st-gradino .blocco{width:100%;margin-top:3px;border-radius:8px 8px 0 0;display:flex;justify-content:center;padding-top:6px;font-weight:900;font-size:1.6rem;color:#3a2200;box-shadow:inset 0 2px 0 rgba(255,255,255,.5);}",
     ".st-gradino.p1 .blocco{height:calc(96px * var(--pk,1));background:linear-gradient(180deg,#ffe066,#e0a90a);}",
     ".st-gradino.p2 .blocco{height:calc(70px * var(--pk,1));background:linear-gradient(180deg,#f1f3f5,#adb5bd);}",
@@ -2628,7 +2628,7 @@
     // «al posto di battitore mettiamo punizioni»; mai «rigori»): piccole, una sotto l'altra a destra (dall'altezza del nome in giù), così la maglia resta grande
     function o(n) { return n + "° "; }
     // («🆚 Inter (88)», 11 nov 2026: se nella riga non ci sta intero, si rimpicciolisce un poco, come il nome; sotto i 9,5 px i puntini)
-    if (S.vs && S.vs.textContent && S.vs.style.display !== "none") { S.vs.style.fontSize = ""; var fv = parseFloat(getComputedStyle(S.vs).fontSize) || 11; while (S.vs.scrollWidth > S.vs.clientWidth + 1 && fv > 9.5) { fv -= 0.5; S.vs.style.fontSize = fv + "px"; } }
+    if (S.vs && S.vs.textContent && S.vs.style.display !== "none") { S.vs.style.fontSize = ""; var fv = parseFloat(getComputedStyle(S.vs).fontSize) || 11; var fMin = S.vs.textContent.split(" · ").length > 2 ? 8 : 9.5; while (S.vs.scrollWidth > S.vs.clientWidth + 1 && fv > fMin) { fv -= 0.5; S.vs.style.fontSize = fv + "px"; } }   // (con 3 avversari fino a 8 px: ripasso del 12 nov 2026)
     var badge = [S.rig, S.pun, S.ang], col = S.tiriD, dati = col.parentNode, prezzo = S.prezzoN.parentNode, ci = rn || pn || an;
     S.rig.textContent = rn ? "🎯 " + o(rn) + "RIGORISTA" : ""; S.pun.textContent = pn ? "🦶 " + o(pn) + "PUNIZIONI" : ""; S.ang.textContent = an ? "🚩 " + o(an) + "ANGOLI" : "";
     S.nome.style.fontSize = S.nome.style.paddingRight = prezzo.style.paddingRight = "";
@@ -3680,10 +3680,13 @@
     R.piede = el("div", { class: "sa-piede st-piede" });
     R.salta = el("button", { class: "sa-tasto", text: "Salta ⏭", onclick: function () {
       if (conGio && R.fase !== "giornata") {   // (le rose: si salta alla giornata; online tutti insieme, quando lo dice chi tiene la partita)
-        if (R.saltato) { R.alPodio = true; return; }   // (un secondo «Salta» prima che parta la giornata: dritti al podio, come prima)
+        if (R.saltato) { if (!R.opz.cron) R.alPodio = true; return; }   // (sullo stesso telefono un secondo «Salta» prima che parta la giornata: dritti al podio; online no, vedi sotto)
         var h = R.opz.cron ? (R.opz.onSalta ? R.opz.onSalta() : null) : R.ora(); if (h == null) return;
         R.saltato = true; fermaTempi(R); R.alleOra(h, function () { giornataRivela(R); }); return R.tic();
       }
+      // 🚫 (12 nov 2026, il proprietario dopo il ripasso: «nessuno deve vedere chi ha vinto prima degli altri») online durante la giornata «Salta» non c'è
+      // più: portava al podio SOLO chi tiene la partita, mentre gli amici guardavano ancora la partita. Restano il ⏩ e gli «Avanti ▶» delle pagelle
+      if (conGio && R.opz.cron) return;
       if (conGio && R.opz.capo !== false && R.opz.onPasso && !R.finito) R.opz.onPasso("libero", 1);   // (chi tiene la partita salta: gli amici non lo aspettano più nelle pagelle)
       podioRivela(R);
     } });
@@ -3796,6 +3799,7 @@
     var A = R.opz.serieA; if (!A || !A.partite) return podioRivela(R);
     if (R.alPodio) { if (R.opz.capo !== false && R.opz.onPasso) R.opz.onPasso("libero", 1); return podioRivela(R); }   // (chi tiene la partita ha toccato «Salta» due volte)
     fermaTempi(R); R.fase = "giornata"; R.saltato = true; provaPiano(R, "giornata");
+    if (R.opz.cron) R.salta.style.visibility = "hidden";   // 🚫 (online: niente «Salta» nella giornata; sul podio torna «📸 Foto»)
     giocaGiornata(R, A.prima && A.prima.length ? 0 : null);   // (🏆 3 giornate: si comincia dalla prima, veloce)
   }
   // una giornata sullo schermo. gk: null = la giornata sola di sempre; con le 🏆 3 giornate 0 e 1 = le due veloci (solo i momenti dei
