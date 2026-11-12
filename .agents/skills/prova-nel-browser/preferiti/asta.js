@@ -138,7 +138,7 @@
   COPIONE.aggiungi("pa0", { nome: "Asta: riassunto, regole, ⚙️ «🎭 I round», scenari dei temi", fai: async function () {
     var g = await caricaGioco(), x = [];
     var r0 = g.riassunto({ crediti: 15 }), r1 = g.riassunto({ crediti: 15, round: "normali" }), r2 = g.riassunto({ formato: "fanta" });
-    if (!/🎭 round ✉️ 📦 🎁/.test(r0) || !/🔨 round tutti normali/.test(r1) || !/rilanci \+1 \+2 \+5/.test(r2)) no("riassunti: «" + r0 + "» / «" + r1 + "» / «" + r2 + "»");
+    if (!/🎭 round ✉️ 📦 🎁/.test(r0) || !/🔨 round tutti normali/.test(r1) || !/^⚽ 20 crediti · rosa da 5/.test(r2)) no("riassunti: «" + r0 + "» / «" + r1 + "» / «" + r2 + "»");
     var reg = g.regole.join(" ");
     [/<b>\+1<\/b> o <b>\+3<\/b>/, /busta chiusa/, /lotto doppio/, /pacco a sorpresa/, /carta-scenario/, /rialzare da solo/, /titoli scherzosi/].forEach(function (re) { if (!re.test(reg)) no("le regole non dicono " + re); });
     var tieni = localStorage.getItem("sg_asta_formato"); localStorage.removeItem("sg_asta_formato");
