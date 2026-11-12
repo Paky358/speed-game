@@ -27,7 +27,7 @@
   COPIONE.aggiungi("as1", { nome: "Fanta, la giornata: l'assist è vero (l'ultimo a toccare il pallone prima di chi segna è chi fa l'assist)", fai: async function () {
     var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = {}, prove = 0;
     var SCENE = ["cross", "rovesciata", "angolo", "unodue", "contro", "pallonetto", "mischia", "testa", "incrocio", "miracolo", "assedio", "ultimo",
-      "secondopalo", "presa", "tuffo", "vuota", "tre", "filtrante", "rasoterra"];   // (11 nov 2026: le azioni nuove con chi passa)
+      "secondopalo", "presa", "tuffo", "vuota", "tre", "filtrante", "rasoterra", "laterale"];   // (11-12 nov 2026: le azioni nuove con chi passa)
     SCENE.forEach(function (v) {
       for (var seme = 1; seme <= 300; seme++) {
         var et = { tira: "Tira", passa: "Passa", para: "Para" }, op = { verso: 1, lato: seme % 2 ? 1 : -1, seme: seme * 7919, lento: true };
