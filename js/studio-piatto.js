@@ -271,6 +271,8 @@
       // i punteggi in alto: una fila fino a 4, poi due
       ".stp-punti{flex:0 0 auto;display:flex;flex-direction:column;gap:5px;padding:calc(6px + env(safe-area-inset-top)) 6px 0;position:relative;z-index:7}",
       ".stp-punti.via{display:none}",
+      ".stp-punti.riga .stp-riga{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.stp-punti.riga .stp-riga::-webkit-scrollbar{display:none}",
+      ".stp-punti.riga .stp-chip{flex:1 0 84px;max-width:150px}.stp-punti.riga .stp-esci{position:sticky;left:0;z-index:3}",
       ".stp-punti.grandi .stp-chip{height:54px;gap:7px;padding-left:5px;border-radius:15px}.stp-punti.grandi .stp-chip canvas{width:42px;height:42px}",
       ".stp-punti.grandi .stp-chip .n{font-size:13px;color:var(--o-testo)}.stp-punti.grandi .stp-chip .p{font-size:14px;color:var(--o-tenue)}.stp-punti.grandi .stp-esci{height:54px}",
       ".stp-riga{display:flex;gap:5px;min-width:0}",
@@ -400,8 +402,8 @@
       else if (window.confirm("Uscire dalla partita?")) via();
     }
     // (punti: false = niente punteggi; "grandi" = punteggi alti e larghi, da toccare: es. a chi passare la bomba della Patata)
-    S.grandi = opz.punti === "grandi";
-    S.puntiEl = el("div", { class: "stp-punti" + (opz.punti === false ? " via" : "") + (S.grandi ? " grandi" : "") });
+    S.grandi = opz.punti === "grandi"; S.riga = opz.punti === "riga";   // ("riga" = tutti su una riga sola che scorre di lato)
+    S.puntiEl = el("div", { class: "stp-punti" + (opz.punti === false ? " via" : "") + (S.grandi ? " grandi" : "") + (S.riga ? " riga" : "") });
     S.esciEl = el("button", { class: "stp-esci", text: "‹", "aria-label": "Esci", onclick: esci });
     S.schermo = el("div", { class: "st-schermo" + (S.senzaSchermo ? " via" : "") });
     S.sch = el("div", { class: "st-sch-in" }); S.schermo.appendChild(S.sch);
@@ -437,6 +439,7 @@
   function costruisciPunti(S) {
     var el = S.t.el, n = S.gioc.length, perRiga = n <= 4 ? n : Math.ceil(n / 2), righe = [];
     if (S.grandi) perRiga = n <= 4 ? 2 : 3;   // (grandi: due o tre per riga)
+    if (S.riga) perRiga = Math.max(1, n);
     var nRighe = Math.max(1, Math.ceil(n / Math.max(1, perRiga)));
     vuota(S.puntiEl); S.L = [];
     for (var r = 0; r < nRighe; r++) { var rg = el("div", { class: "stp-riga" }); righe.push(rg); S.puntiEl.appendChild(rg); }
@@ -514,14 +517,20 @@
   }
   function lampo(S) { var l = S.lampoEl; l.classList.remove("on"); void l.offsetWidth; l.classList.add("on"); }
   function accendi(S, i, on) { var X = S.L[i]; if (X) X.el.classList.toggle("acceso", !!on); }
-  function accendiSolo(S, i) { S.L.forEach(function (X, k) { X.el.classList.toggle("acceso", k === i); }); }
+  function accendiSolo(S, i) { S.L.forEach(function (X, k) { X.el.classList.toggle("acceso", k === i); }); inVista(S, i); }
+  // (punteggi su una riga che scorre: chi è acceso si porta a vista)
+  function inVista(S, i) {
+    var X = S.L[i]; if (!S.riga || !X) return; var r = X.el.parentNode; if (!r) return;
+    var a = X.el.offsetLeft, b = a + X.el.offsetWidth, l = r.scrollLeft, w = r.clientWidth;
+    if (a < l + 40) r.scrollLeft = Math.max(0, a - 40); else if (b > l + w) r.scrollLeft = b - w + 4;
+  }
   function faccia(S, i, f) { var X = S.L[i]; if (!X || X.faccia === (f || null)) return; X.faccia = f || null; mettiFaccia(S, X, i); }
   function tutteNormali(S) { S.L.forEach(function (X, i) { faccia(S, i, null); }); }
   function scriviDisp(X) { if (X.pt.textContent !== X.disp.t) X.pt.textContent = X.disp.t; X.pt.classList.toggle("neg", !!X.disp.neg); X.pt.classList.toggle("testo", !!X.disp.testo); }
   function puntiLeggio(S, i, valore, delta) {
     var X = S.L[i]; if (!X) return;
     var da = X.valore; X.valore = valore;
-    function scrivi(v) { var tx = punti(v); if (X.disp && !X.disp.testo && X.disp.t === tx) return; X.disp = { t: tx, neg: v < 0, testo: false }; scriviDisp(X); }
+    function scrivi(v) { var tx = punti(v) + (X.dopo || ""); if (X.disp && !X.disp.testo && X.disp.t === tx) return; X.disp = { t: tx, neg: v < 0, testo: false }; scriviDisp(X); }   // (X.dopo: un pezzo dopo il numero, es. «/5»)
     if (!delta) return scrivi(valore);
     X.delta.textContent = (delta > 0 ? "+" : "−") + punti(Math.abs(delta));
     X.delta.style.color = delta > 0 ? "#6ff0a6" : "#ff8d98";

@@ -32,7 +32,7 @@
     var v = w.document.querySelector(".st-vista");
     if (!pb && v) {
       var r = v.getBoundingClientRect(); if (r.bottom > w.innerHeight + 1 || r.right > w.innerWidth + 1) pb = lw + "x" + lh + ": lo schermo del gioco esce (" + Math.round(r.right) + "x" + Math.round(r.bottom) + ")";
-      [].forEach.call(w.document.querySelectorAll(".stp-chip"), function (c) { var q = c.getBoundingClientRect(); if (!pb && q.width && (q.right > w.innerWidth + 1 || q.left < -1)) pb = lw + "x" + lh + ": un punteggio esce di lato"; });
+      if (!w.document.querySelector(".stp-punti.riga")) [].forEach.call(w.document.querySelectorAll(".stp-chip"), function (c) { var q = c.getBoundingClientRect(); if (!pb && q.width && (q.right > w.innerWidth + 1 || q.left < -1)) pb = lw + "x" + lh + ": un punteggio esce di lato"; });
     }
     f.style.cssText = css; w.dispatchEvent(new w.Event("resize")); await W.dorme(200);
     return pb;
