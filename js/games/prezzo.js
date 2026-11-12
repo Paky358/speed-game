@@ -1126,7 +1126,8 @@
   // la barra del pannello, legata al passo in cui si apre (solo quella si accorcia)
   function barraDi(R, tb) { tb._k = R.vm.k; return tb; }
   function nuovaRegia(t, vm, cb) {
-    var S = ST.crea(t, vm.players.map(function (p) { return { nome: p.nome, omino: p.omino }; }), { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(true); }, titolo: NOME, logo: LOGO });
+    var S = ST.crea(t, vm.players.map(function (p) { return { nome: p.nome, omino: p.omino }; }), { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(true); }, titolo: NOME, logo: LOGO,
+      punti: "riga" });   // (📺 senza studio: i punteggi su una riga sola, che scorre di lato se si è in tanti: il pannello dell'offerta ha bisogno di posto)
     var X = { t: t, cb: cb, S: S, vm: vm, vmTs: Date.now(), pan: Z().pannello(S), kFatto: null, ui: {}, mie: {}, usciti: {}, attese: [],
       ids: vm.players.map(function (p) { return p.id; }).join("|") };
     vm.players.forEach(function (p, i) { ST.puntiLeggio(S, i, p.punti, 0); });
