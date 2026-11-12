@@ -19,7 +19,9 @@ window.SG_NOVITA = [
       "🤨 Sì... però: il giudice ha tutto il tavolo per leggere, le carte non scendono sotto una misura leggibile e si capisce chi è in quale squadra e chi è il capo.",
       "🏠 La Sala: le targhette dei nomi in saletta non finiscono più sull'avatar sbagliato; chi teneva la partita e torna dopo essere sparito ritrova il suo posto con «Rientra ▶»; «Avete giocato con» coi nomi interi.",
       "🃏 Black Jack: gli annunci grandi vanno a capo e la vincita si legge; la fine partita non è più tagliata; il tavolo è più leggero sui telefoni lenti. ♣️ Poker: fiori in verde nelle carte piccole, per non confonderli con le picche. A chi guarda una partita a due la scritta in alto sparisce dopo pochi secondi e non copre più il punteggio.",
-      "🤥 La Balla Colossale: al voto la notizia resta sempre sullo schermo, anche sul telefono piccolo; la classifica del round in tanti non è più coperta."
+      "🤥 La Balla Colossale: al voto la notizia resta sempre sullo schermo, anche sul telefono piccolo; la classifica del round in tanti non è più coperta; niente più barre strane nelle virgolette; chi riaccende il telefono mentre gli altri votano vota anche lui.",
+      "🏆 A fine partita, anche in 8 sul telefono piccolo, i tasti «Rivincita» e «Cambia gioco» restano sempre in vista.",
+      "🏷️ Il Prezzo è Giusto: nella Spesa, in Mettili in ordine, nella Prova del 5 e in Togli la cifra la faccina in alto ha di nuovo la testa."
     ]
   },
   {

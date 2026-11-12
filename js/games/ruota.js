@@ -2266,7 +2266,7 @@
   // 📺 senza studio: la ruota ha una grandezza sola (larga quasi quanto lo schermo) e si rimpicciolisce con transform (niente scatti):
   // grande quando c'è posto (si gira), piccola sopra la tastiera quando si scelgono le lettere, nascosta se non ci sta
   function posAltoFlat(ui) {
-    var S = ui.S, b = banda(ui), h = Math.max(0, b.bot - b.top), D0 = Math.round(S.VW * 0.94), d = Math.min(D0, h * 0.95);
+    var S = ui.S, b = banda(ui, true), h = Math.max(0, b.bot - b.top), D0 = Math.round(S.VW * 0.94), d = Math.min(D0, h * 0.95);
     var x = (S.VW - d) / 2, y = b.top + (h - d) / 2, k = Math.round(x) + "|" + Math.round(y) + "|" + Math.round(d) + "|" + D0;
     if (k === ui.kAlto) return;
     ui.kAlto = k; ui.A = { x: x, y: y, d: d };
@@ -2393,10 +2393,10 @@
   }
 
   // ---- la telecamera: la parte di studio che si vede sta tra il tabellone (sopra) e la barra dei tasti (sotto) ----
-  function banda(ui) {
+  function banda(ui, vera) {
     var S = ui.S, top = ui.sopra.offsetTop + ui.sopra.offsetHeight + 4;
     var bar = S.barraEl.classList.contains("on") ? S.barraEl.offsetHeight : 0, bot = S.VH - bar - 2;
-    if (bot - top < S.VH * 0.22) { top = S.VH * 0.32; bot = S.VH * 0.72; }
+    if (!vera && bot - top < S.VH * 0.22) { top = S.VH * 0.32; bot = S.VH * 0.72; }
     return { top: top, bot: bot };
   }
   // l'inquadratura che mette il soggetto (centro cx,cy; largo w, alto h, in misure dello studio) al centro di quella parte
