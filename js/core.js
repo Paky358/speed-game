@@ -25,17 +25,56 @@
   // crede che lo schermo sia più alto di quello che si vede, e i tasti in fondo finiscono fuori.
   // La misuro io e la rimisuro appena cambia qualcosa.
   (function altezzaVera() {
-    function misura() {
-      var h = Math.round((window.visualViewport ? window.visualViewport.height : window.innerHeight) || window.innerHeight || 0);
-      if (h > 0) document.documentElement.style.setProperty("--alt", h + "px");   // con la pagina nascosta vale 0: non lo segno (resta l'altezza di prima)
+    // ⌨️ La tastiera (11 nov 2026, serata in 8: Balla e Scarabocchio illeggibili con la tastiera aperta).
+    // --alt = l'altezza che si vede DAVVERO (sopra la tastiera); --alt-piena = quella senza tastiera.
+    // Con un campo attivo e lo schermo che si abbassa di colpo: <html class="tastiera"> (i giochi tengono
+    // grande la cosa da leggere), e la pagina NON scorre: niente vuoto sotto la tastiera, si torna sempre su.
+    var vv = window.visualViewport, piena = 0, largo = 0, ferma = false;   // ferma = la schermata stava tutta nello schermo (i giochi): solo lì la pagina si blocca
+    function scrive() {
+      var a = document.activeElement; if (!a || a === document.body) return false;
+      var tag = (a.tagName || "").toLowerCase();
+      if (tag === "textarea" || a.isContentEditable) return true;
+      return tag === "input" && !/^(button|checkbox|radio|range|submit|reset|file|color|image|hidden)$/i.test(a.type || "");
     }
+    function suInCima() {   // la pagina sta ferma: il telefono a volte la fa scorrere per mostrare il campo
+      if (!ferma) return;   // una pagina lunga (es. le regole) scorre come sempre: il telefono porta il campo a vista
+      if (window.scrollY || window.pageYOffset) window.scrollTo(0, 0);
+      var su = vv && document.documentElement.classList.contains("tastiera") ? Math.max(0, Math.round(vv.offsetTop)) : 0;
+      document.documentElement.style.setProperty("--vv-su", su + "px");   // iPhone: la parte visibile può restare spostata in giù anche a pagina ferma
+    }
+    function misura() {
+      var h = Math.round((vv ? vv.height : window.innerHeight) || window.innerHeight || 0);
+      if (!(h > 0)) return;   // con la pagina nascosta vale 0: non lo segno (resta l'altezza di prima)
+      var w = Math.round(window.innerWidth || 0);
+      if (Math.abs(w - largo) > 40) { largo = w; piena = 0; }   // telefono girato: si rimisura da capo
+      var su = scrive() && piena > 0 && h < piena * 0.82;
+      if (!su) piena = h;   // senza tastiera l'altezza piena è quella di adesso (anche se cambia la barra del browser)
+      var de = document.documentElement;
+      de.style.setProperty("--alt", h + "px");
+      de.style.setProperty("--alt-piena", (su ? piena : h) + "px");
+      if (de.classList.contains("tastiera") !== su) {
+        if (su) ferma = fermaPrima;
+        de.classList.toggle("tastiera", su);
+        de.classList.toggle("tastiera-ferma", su && ferma);
+        try { window.dispatchEvent(new CustomEvent("sg-tastiera", { detail: { su: su, alt: h, piena: piena } })); } catch (e) {}
+      }
+      if (su) suInCima(); else de.style.setProperty("--vv-su", "0px");
+    }
+    var fermaPrima = false;   // misurata quando si tocca il campo, PRIMA che la tastiera salga (dopo iPhone ha già fatto scorrere la pagina)
+    function guarda() { if (document.documentElement.classList.contains("tastiera")) return; var se = document.scrollingElement || document.documentElement; fermaPrima = !(window.scrollY || window.pageYOffset) && se.scrollHeight <= Math.max(piena, window.innerHeight || 0) + 4; }
+    function presto() { guarda(); misura(); [60, 200, 450, 800].forEach(function (ms) { setTimeout(misura, ms); }); }
     misura();
     window.addEventListener("resize", misura);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) misura(); });
     window.addEventListener("orientationchange", function () { setTimeout(misura, 250); });
     window.addEventListener("pageshow", misura);
-    if (window.visualViewport) window.visualViewport.addEventListener("resize", misura);
+    document.addEventListener("focusin", presto);
+    document.addEventListener("pointerdown", guarda, true);
+    document.addEventListener("focusout", function () { setTimeout(misura, 80); setTimeout(misura, 400); });
+    window.addEventListener("scroll", function () { if (document.documentElement.classList.contains("tastiera")) suInCima(); }, { passive: true });   // (suInCima guarda ferma)
+    if (vv) { vv.addEventListener("resize", misura); vv.addEventListener("scroll", function () { if (document.documentElement.classList.contains("tastiera")) suInCima(); }); }
     [100, 400, 1000].forEach(function (ms) { setTimeout(misura, ms); });   // dopo il caricamento le barre si assestano
+    cuore.tastieraSu = function () { return document.documentElement.classList.contains("tastiera"); };
   })();
 
   var giochi = [];            // giochi registrati, nell'ordine scelto dal proprietario (🧩 Ordine dei giochi: vedi ordinaGiochi)

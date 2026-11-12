@@ -807,7 +807,9 @@
     var vv = window.visualViewport;
     function segui() {
       if (!s.isConnected) { if (vv) { vv.removeEventListener("resize", segui); vv.removeEventListener("scroll", segui); } window.removeEventListener("resize", segui); clearInterval(ui.tick); return; }
-      ui.root.style.transform = vv && vv.offsetTop ? "translateY(" + vv.offsetTop + "px)" : "";
+      // (con la tastiera la pagina la tiene già ferma il core, attaccata a quello che si vede: html.tastiera-ferma; spostarla di nuovo la manderebbe giù due volte)
+      var ferma = document.documentElement.classList.contains("tastiera-ferma");
+      ui.root.style.transform = vv && vv.offsetTop && !ferma ? "translateY(" + vv.offsetTop + "px)" : "";
       ui.P.adatta();
     }
     if (vv) { vv.addEventListener("resize", segui); vv.addEventListener("scroll", segui); }
@@ -1159,6 +1161,8 @@
       ".me-aspetta{flex:1;min-width:0;font-size:.88rem;color:var(--o-tenue);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       // con la tastiera aperta: via il titolo e la riga dei crediti, il meme si stringe
       ".me-scena.scrive .me-titolo,.me-scena.scrive .me-cred{display:none}",
+      // ⌨️ con la tastiera aperta (12 nov 2026): solo il campo col suo tasto (Avanti / Invia); i riquadri si scelgono toccando il meme, «Cambia» e «Invia meme» tornano chiudendo la tastiera: il meme resta più grande
+      "html.tastiera .me-scena.scrive .me-scrivi>.me-riga:first-child,html.tastiera .me-scena.scrive .me-riga-invia{display:none}",
       // votare
       ".me-vota{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}",
       ".me-voto{height:76px;border-radius:18px;background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:transform .12s,opacity .2s}",

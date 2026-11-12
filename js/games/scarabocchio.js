@@ -334,13 +334,13 @@
       ".sb-tempo{flex:0 0 auto;min-width:60px;text-align:center;font-weight:900;font-size:.95rem;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.12)}",
       ".sb-tempo.poco{background:#e03131;color:#fff;animation:sbPulsa .5s ease-in-out infinite alternate}",
       ".sb-tempo[hidden]{display:none}",
-      ".sb-centro{flex:1 1 auto;min-width:0;text-align:center;font-weight:800;font-size:.92rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-      ".sb-centro b{color:#ffe066;font-size:1.15rem;letter-spacing:.04em;text-transform:uppercase}",
+      ".sb-centro{flex:1 1 auto;min-width:0;text-align:center;font-weight:800;font-size:.92rem;line-height:1.2;overflow:hidden;overflow-wrap:normal}",
+      ".sb-centro b{color:#ffe066;font-size:1.25em;letter-spacing:.04em;text-transform:uppercase}",
       ".sb-giro{flex:0 0 auto;font-size:.72rem;font-weight:800;opacity:.75;text-align:right;line-height:1.15}",
-      ".sb-lettere{display:inline-flex;gap:3px;align-items:flex-end;justify-content:center}",
-      ".sb-lettere i{display:inline-block;width:.8em;border-bottom:3px solid #fff;font-style:normal;font-weight:900;font-size:1.05rem;line-height:1.1;text-transform:uppercase;color:#ffe066;text-align:center}",
-      ".sb-lettere i.sp{border:0;width:.45em}",
-      ".sb-lettere small{margin-left:6px;opacity:.7;font-size:.72rem;align-self:center}",
+      ".sb-lettere{display:inline-flex;flex-wrap:wrap;column-gap:.55em;row-gap:3px;align-items:flex-end;justify-content:center;max-width:100%}",
+      ".sb-lettere .pa{display:inline-flex;gap:.2em;align-items:flex-end;flex:0 0 auto}",   // (una parola non si spezza: si va a capo tra una parola e l'altra)
+      ".sb-lettere i{display:inline-block;width:.8em;border-bottom:3px solid #fff;font-style:normal;font-weight:900;font-size:1.14em;line-height:1.1;text-transform:uppercase;color:#ffe066;text-align:center}",
+      ".sb-lettere small{opacity:.7;font-size:.78em;align-self:center;white-space:nowrap}",
       ".sb-lav{position:relative;flex:0 0 auto;display:flex;justify-content:center}",
       ".sb-cv{display:block;background:#fff;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.45);touch-action:none}",
       ".sb-cv.matita{cursor:crosshair}",
@@ -400,6 +400,13 @@
       "@keyframes sbPrimo{0%{transform:translate(-50%,-30px) scale(.6);opacity:0}12%{transform:translate(-50%,0) scale(1.06);opacity:1}20%{transform:translate(-50%,0) scale(1)}85%{opacity:1}100%{transform:translate(-50%,0) scale(1);opacity:0}}",
       "@keyframes sbSalta{from{transform:translateY(0)}to{transform:translateY(-9px)}}",
       ".sb-scena.scrive .sb-riga{display:none}",
+      // ⌨️ tastiera aperta (12 nov 2026, serata in 8: «il disegno diventa piccolissimo»): se la lavagna viene più grande, chat a destra della lavagna
+      ".sb-scena.fianco{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto}",
+      ".sb-scena.fianco>.sb-barra{grid-column:1/-1;grid-row:1}.sb-scena.fianco>.sb-lav{grid-column:1;grid-row:2;align-self:start;padding-left:5px}",
+      ".sb-scena.fianco>.sb-chat{grid-column:2;grid-row:2;align-self:stretch;padding:2px 8px 2px 6px}.sb-scena.fianco>.sb-scrivi{grid-column:1/-1;grid-row:3}",
+      ".sb-scena.fianco>.sb-riga,.sb-scena.fianco>.sb-basso,.sb-scena.fianco>.sb-posto-targa{display:none}",
+      ".sb-scena.fianco .sb-msg{font-size:.86rem;line-height:1.25}",
+      ".sb-scena.scrive .sb-scrivi{padding:5px 8px}.sb-scena.scrive .sb-inp{padding:9px 14px}.sb-scena.scrive .sb-invia{width:42px}",
       ".sb-gente{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}",
       ".sb-gente::-webkit-scrollbar{display:none}",
       ".sb-chip{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(255,255,255,.1);font-size:.78rem;font-weight:800;line-height:1.1}",
@@ -785,22 +792,43 @@
       if (!document.body.contains(scena)) return;
       var W = scena.clientWidth, Ht = scena.clientHeight; if (!W || !Ht) return;
       var scrive = document.activeElement === inp && !inp.disabled;
-      scena.classList.toggle("scrive", scrive);   // tastiera aperta: via le figurine, la chat al minimo
+      scena.classList.toggle("scrive", scrive);   // tastiera aperta: via le figurine
+      scena.classList.remove("fianco");
+      if (W !== largoParola) fittaParola();
       var fisso = barra.offsetHeight + riga.offsetHeight + form.offsetHeight + basso.offsetHeight + (postoTarga ? postoTarga.offsetHeight : 0);
-      var hMax = Ht - fisso - (scrive ? 44 : (puoi ? 40 : 84)) - 8;   // chi disegna non scrive: a lui basta meno chat
+      var hMax = Ht - fisso - (scrive ? 66 : (puoi ? 40 : 84)) - 8;   // chi disegna non scrive: a lui basta meno chat; con la tastiera almeno 3 righe di chat
       var cw = Math.min(W - 10, 720), ch = Math.round(cw * LH / LW);
       if (ch > hMax) { ch = Math.max(110, hMax); cw = Math.round(ch * LW / LH); }
+      if (scrive) {   // ⌨️ con la tastiera: a fianco (chat a destra, larga almeno 136) se la lavagna viene più grande
+        var hF = Ht - fisso - 8, wF = W - 10 - 136, chF = Math.round(wF * LH / LW);
+        if (chF > hF) { chF = hF; wF = Math.round(chF * LW / LH); }
+        if (wF * chF > cw * ch * 1.08) { scena.classList.add("fianco"); cw = wF; ch = chF; }
+      }
       var dpr = Math.min(2.5, window.devicePixelRatio || 1);
       cv.style.width = cw + "px"; cv.style.height = ch + "px"; lav.style.height = ch + "px"; sopra.style.width = cw + "px";
       cv.width = Math.round(cw * dpr); cv.height = Math.round(cw * dpr * LH / LW);
       mostraTutto();   // basta ricopiare la tela: il disegno non cambia
+      if (chatGiu) chat.scrollTop = chat.scrollHeight;   // la chat è cambiata di misura (tastiera): resta sull'ultimo messaggio
+    }
+    // la parola (o le lineette) sempre intera: le scritte si rimpiccioliscono finché ogni parola sta nella riga, al massimo su due righe
+    var largoParola = 0;
+    function fittaParola() {
+      centro.style.fontSize = "";
+      if (!centro.firstChild || !centro.clientWidth) { largoParola = 0; return; }   // (schermata non ancora a vista: si rifà alla prossima misura)
+      largoParola = scena.clientWidth;
+      var base = parseFloat(getComputedStyle(centro).fontSize) || 15, f = base;
+      var riga1 = Math.ceil(base * 1.25 * 1.2 + 6);
+      for (var k = 0; k < 14; k++) {
+        if (centro.scrollWidth <= centro.clientWidth + 1 && centro.scrollHeight <= riga1 * 2 + 4) break;
+        f = Math.max(8, f - 1); centro.style.fontSize = f + "px";
+      }
     }
     var ro = window.ResizeObserver ? new ResizeObserver(function () { misura(); }) : null;
     if (ro) ro.observe(scena);
     window.addEventListener("resize", misura);
     requestAnimationFrame(misura);
     var tMisura = setInterval(function () { if (cv.style.width) clearInterval(tMisura); else misura(); }, 300);   // pagina ancora nascosta: riprovo finché ho le misure
-    function smonta() { clearInterval(tSped); clearInterval(tTempo); clearInterval(tMisura); if (ro) ro.disconnect(); window.removeEventListener("resize", misura); }
+    function smonta() { clearInterval(tSped); clearInterval(tTempo); clearInterval(tMisura); if (ro) ro.disconnect(); if (roChat) roChat.disconnect(); window.removeEventListener("resize", misura); }
 
     // ----- tempo -----
     var scad = 0, faseOra = null, ultimoTic = -1;
@@ -837,11 +865,13 @@
     }
 
     // ----- chat -----
-    var ultimoMsg = 0, avviata = false;
+    var ultimoMsg = 0, avviata = false, chatGiu = true;
+    chat.addEventListener("scroll", function () { chatGiu = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 30; }, { passive: true });
+    if (window.ResizeObserver) { var roChat = new ResizeObserver(function () { if (chatGiu) chat.scrollTop = chat.scrollHeight; }); roChat.observe(chat); }
     function riga1(testo, classe) { var n = el("div", { class: "sb-msg " + classe, text: testo }); chat.appendChild(n); return n; }
-    function inFondoChat() { while (chat.childNodes.length > 70) chat.removeChild(chat.firstChild); chat.scrollTop = chat.scrollHeight; }
+    function inFondoChat() { while (chat.childNodes.length > 70) chat.removeChild(chat.firstChild); chat.scrollTop = chat.scrollHeight; chatGiu = true; }
     function aggChat(vm) {
-      var inFondo = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 50;
+      var inFondo = chatGiu || chat.scrollHeight - chat.scrollTop - chat.clientHeight < 50;
       (vm.chat || []).forEach(function (m) {
         if (m.i <= ultimoMsg) return;
         ultimoMsg = m.i;
@@ -850,7 +880,7 @@
         if (avviata && m.k === "ok" && m.id !== io) FX.altri();
       });
       while (chat.childNodes.length > 70) chat.removeChild(chat.firstChild);
-      if (inFondo || !avviata) chat.scrollTop = chat.scrollHeight;
+      if (inFondo || !avviata) { chat.scrollTop = chat.scrollHeight; chatGiu = true; }
     }
     function evviva(testo) { var n = el("div", { class: "sb-evviva", text: testo }); lav.appendChild(n); setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 1900); }
     // chi indovina per primo: la sua faccina salta in cima alla lavagna su tutti i telefoni (a lui anche una vibrazione)
@@ -907,15 +937,17 @@
       else if (ok && priv.parola) { chiave = "k|" + priv.parola; html = "✅ <b>" + esc(priv.parola) + "</b>"; }   // chi ha indovinato vede la parola
       else if (vm.fase === "disegno") {
         chiave = "i|" + vm.indizio;
-        var lett = String(vm.indizio || "").split("").map(function (ch) { return ch === " " ? "<i class='sp'></i>" : "<i>" + (ch === "_" ? "&nbsp;" : esc(ch)) + "</i>"; }).join("");
+        var lett = String(vm.indizio || "").split(" ").map(function (w) { return "<span class='pa'>" + w.split("").map(function (ch) { return "<i>" + (ch === "_" ? "&nbsp;" : esc(ch)) + "</i>"; }).join("") + "</span>"; }).join("");
         var lung = String(vm.indizio || "").split(" ").map(function (w) { return w.length; }).join(", ");
         html = "<span class='sb-lettere'>" + lett + "<small>(" + lung + ")</small></span>";
       }
       else if (vm.fase === "scelta") { chiave = "s|" + dis + vm.disegnatore; html = dis ? "Scegli cosa disegnare!" : "✏️ " + esc(nomeDi(vm, vm.disegnatore)) + " sceglie…"; }
       else if (vm.fase === "punti" && vm.ultimo) { chiave = "p|" + vm.ultimo.parola; html = "Era: <b>" + esc(vm.ultimo.parola) + "</b>"; }
       else { chiave = "x"; html = ""; }
-      if (chiave !== chiaveCentro) { chiaveCentro = chiave; centro.innerHTML = html; }
-      var g = "Giro<br>" + vm.giro + "/" + vm.giri; if (giro.innerHTML !== g) giro.innerHTML = g;
+      var rifai = false;
+      if (chiave !== chiaveCentro) { chiaveCentro = chiave; centro.innerHTML = html; rifai = true; }
+      var g = "Giro<br>" + vm.giro + "/" + vm.giri; if (giro.innerHTML !== g) { giro.innerHTML = g; rifai = true; }
+      if (rifai) { fittaParola(); misura(); }   // (dopo il giro: cambia lo spazio della parola)
       // chi disegna ha gli strumenti e, al posto del campo per scrivere, chi gioca; gli altri vedono chi gioca sotto la lavagna
       var primaPuoi = puoi;
       puoi = vm.fase === "disegno" && dis;

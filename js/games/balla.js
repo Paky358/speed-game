@@ -697,19 +697,30 @@
         });
         ok.disabled = !valore();
         avviso.classList.remove("on");
+        grandeNotizia();
       }
       function chiudi(v) {
         if (chiuso) return; chiuso = true; ok.disabled = true; clearTimeout(toFine);
         if (vv) vv.removeEventListener("resize", tastiera);
+        window.removeEventListener("sg-tastiera", tastiera);
         v0.chiudi(function () { fine(v); });
       }
-      // con la tastiera aperta lo schermo si abbassa: la notizia si fa piccola, il campo e "Fatto" restano a vista
+      // ⌨️ con la tastiera aperta (12 nov 2026, serata in 8: «il giornale diventa piccolissimo»): lo dice il core (html.tastiera);
+      // la notizia prende TUTTO il posto sopra il campo e si scrive grande quanto ci sta; il campo e «Fatto» stanno in una riga sotto
       var vv = window.visualViewport;
       function tastiera() {
-        var giu = vv.height < window.innerHeight * 0.8;
-        v0.carta.classList.toggle("tastiera", giu);
-        v0.velo.style.paddingBottom = giu ? Math.max(12, window.innerHeight - vv.height - vv.offsetTop + 12) + "px" : "";
-        if (giu) try { ok.scrollIntoView({ block: "nearest" }); } catch (e) {}
+        if (chiuso) return;
+        var su = document.documentElement.classList.contains("tastiera");
+        v0.carta.classList.toggle("tastiera", su); v0.velo.classList.toggle("tastiera", su);
+        ok.textContent = su ? "✅ Fatto" : o.ms ? "✅ Fatto!" : "✅ Fatto, nascondi";
+        grandeNotizia();
+      }
+      function grandeNotizia() {   // la scritta più grande con cui la notizia (con la balla dentro) sta tutta nel suo riquadro
+        var n = anteprima.querySelector(".bc-notizia"); if (!n || !v0) return;
+        if (!v0.carta.classList.contains("tastiera")) { n.style.fontSize = ""; return; }
+        var lo = 14, hi = 40;
+        while (hi - lo > 1) { var m = (lo + hi) >> 1; n.style.fontSize = m + "px"; if (anteprima.scrollHeight > anteprima.clientHeight + 1) hi = m; else lo = m; }
+        n.style.fontSize = lo + "px";
       }
       function finito() {
         if (chiuso) return;
@@ -740,6 +751,7 @@
       var v0 = apriVelo(S, el, [ testaSegreta(el, g), anteprima, scrivi, avviso, ok ], doppia ? "doppia" : "", o.ms);
       if (o.avviso) { avviso.textContent = o.avviso; avviso.classList.add("on"); }
       if (vv) vv.addEventListener("resize", tastiera);
+      window.addEventListener("sg-tastiera", tastiera);
       S._chiudiVelo = function () { chiudi(valore()); };   // il tempo è finito: vale quello che c'è scritto (nella Balla Finale, se ci sono tutti e due i pezzi)
       if (o.ms) toFine = setTimeout(S._chiudiVelo, o.ms);
       setTimeout(function () { try { inp.focus({ preventScroll: true }); } catch (e) {} }, 650);
@@ -1950,8 +1962,12 @@
       ".bc-ok{width:100%;margin:0;position:sticky;bottom:0;z-index:2;box-shadow:0 -6px 16px rgba(10,12,24,.6)}",   // il tasto resta sempre a vista
       ".bc-tempo-riga{display:flex;align-items:center;gap:8px}.bc-tempo-riga .bc-tempo{flex:1}",
       ".bc-sec{min-width:30px;text-align:right;font-size:17px;font-weight:900;color:var(--o-oro-testo);font-variant-numeric:tabular-nums}.bc-sec.poco{color:var(--o-rosso-testo)}",
-      // con la tastiera aperta: la notizia si fa piccola
-      ".bc-carta.tastiera{gap:8px}.bc-carta.tastiera .bc-testata,.bc-carta.tastiera .bc-griga,.bc-carta.tastiera .bc-occhio,.bc-carta.tastiera .bc-chi small{display:none}.bc-carta.tastiera .bc-notizia{font-size:15px}.bc-carta.tastiera .bc-chi{font-size:16px}.bc-carta.tastiera .bc-chi .fac{width:30px;height:30px}.bc-carta.tastiera .bc-penna{font-size:20px}",
+      // ⌨️ con la tastiera aperta: niente scorrere, la notizia riempie lo spazio (la scritta la regola grandeNotizia), sotto il campo e «Fatto» in una riga
+      ".bc-velo.tastiera{overflow:hidden;display:flex;flex-direction:column;padding:8px}",
+      ".bc-carta.tastiera{flex:1;min-height:0;width:100%;max-width:520px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto auto;grid-template-areas:'t t' 'n n' 's k' 'a a';gap:6px;animation:none}",
+      ".bc-carta.tastiera>.bc-tempo-riga{grid-area:t}.bc-carta.tastiera>.bc-ritaglio{grid-area:n;min-height:0;overflow:hidden;max-width:none;display:flex;flex-direction:column;justify-content:center;padding:8px 12px}.bc-carta.tastiera>.bc-scrivi{grid-area:s;min-width:0}.bc-carta.tastiera>.bc-ok{grid-area:k;width:auto;align-self:stretch;position:static;padding:0 14px;box-shadow:none}.bc-carta.tastiera>.bc-avviso{grid-area:a;padding:6px 10px;font-size:14px}",
+      ".bc-carta.tastiera>.bc-chi,.bc-carta.tastiera .bc-testata,.bc-carta.tastiera .bc-griga,.bc-carta.tastiera .bc-occhio,.bc-carta.tastiera .bc-colonne,.bc-carta.tastiera .bc-et{display:none}",
+      ".bc-carta.tastiera .bc-notizia{line-height:1.14}.bc-carta.tastiera .bc-scrivi{padding:6px 10px 4px;border-radius:12px}.bc-carta.tastiera .bc-penna{font-size:18px;line-height:1.25}.bc-carta.tastiera .bc-conta{font-size:11px;margin-top:1px}.bc-carta.tastiera .bc-scrivi.doppia .bc-penna{font-size:17px}",
       // le scelte da votare
       ".bc-scelte{display:flex;flex-direction:column;gap:8px}",
       ".bc-scelta .n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#1b1610;color:#f5efe0;font-family:" + TESTO + ";font-weight:800;font-size:13px}",

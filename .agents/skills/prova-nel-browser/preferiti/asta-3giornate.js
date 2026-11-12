@@ -288,7 +288,7 @@
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), g = {};
     new Function("SG", src)({ registra: function (x) { if (x.id === "astafanta") Object.assign(g, x); }, bot: W.SG && SG.bot });
     var r1 = g.riassunto({ formato: "fanta" }), r3 = g.riassunto({ formato: "fanta", giornate: 3 }), rNo = g.riassunto({ formato: "fanta", giornata: false, giornate: 3 });
-    if (!/poi la giornata ⚽$/.test(r1) || !/poi 🏆 3 giornate ⚽$/.test(r3) || !/vince la rosa che vale di più$/.test(rNo)) no("riassunti: «" + r1 + "» / «" + r3 + "» / «" + rNo + "»");
+    if (!/· ⚽ 1 giornata/.test(r1) || !/· 🏆 3 giornate/.test(r3) || !/vince la rosa più forte$/.test(rNo) || r3.length > 90) no("riassunti: «" + r1 + "» / «" + r3 + "» / «" + rNo + "»");
     if (!/🏆 3 giornate<\/b> \(si sceglie nel ⚙️\)/.test(g.regole.join(" "))) no("le regole non parlano delle 3 giornate");
     var box = document.createElement("div"), dove = {};
     g.impostazioni(box, dove, { el: mk, modo: "online" });

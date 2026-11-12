@@ -9,7 +9,7 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 338,
+    v: 340,
     data: "12 novembre 2026",
     titolo: "Sistemati i difetti visti in serata 🔧",
     descrizione: [
@@ -20,6 +20,36 @@ window.SG_NOVITA = [
       "🏠 La Sala: le targhette dei nomi in saletta non finiscono più sull'avatar sbagliato; chi teneva la partita e torna dopo essere sparito ritrova il suo posto con «Rientra ▶»; «Avete giocato con» coi nomi interi.",
       "🃏 Black Jack: gli annunci grandi vanno a capo e la vincita si legge; la fine partita non è più tagliata; il tavolo è più leggero sui telefoni lenti. ♣️ Poker: fiori in verde nelle carte piccole, per non confonderli con le picche. A chi guarda una partita a due la scritta in alto sparisce dopo pochi secondi e non copre più il punteggio.",
       "🤥 La Balla Colossale: al voto la notizia resta sempre sullo schermo, anche sul telefono piccolo; la classifica del round in tanti non è più coperta."
+    ]
+  },
+  {
+    v: 339,
+    data: "12 novembre 2026",
+    titolo: "La tastiera non rovina più i giochi ⌨️",
+    descrizione: [
+      "⌨️ Quando si apre la tastiera per scrivere, la pagina resta ferma: niente più vuoto da far scorrere sotto la tastiera, in tutti i giochi.",
+      "🤥 La Balla Colossale: mentre scrivi la balla la notizia resta GRANDE e riempie lo schermo sopra il campo, con la tua balla già dentro; «Fatto» sta accanto a dove scrivi.",
+      "🎨 Scarabocchio: con la tastiera aperta la lavagna resta grande e la chat le sta accanto; la chat va da sola sull'ultimo messaggio (se non stai leggendo più su) e la parola, anche lunga, si vede sempre tutta.",
+      "🤨 Sì... però: il foglio per scrivere la tua carta sta tutto sopra la tastiera, coi tasti a vista.",
+      "😂 Memata e 🕵️ L’Impostore: con la tastiera aperta il meme e gli indizi degli altri restano più grandi (le righe che servono meno tornano chiudendo la tastiera)."
+    ]
+  },
+  {
+    v: 338,
+    data: "12 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: tutto leggibile anche sul telefono piccolo 📱",
+    descrizione: [
+      "🚫 Online, durante la giornata, chi tiene la partita non ha più «Salta ⏭»: prima lo portava da solo al podio e vedeva chi aveva vinto mentre gli amici guardavano ancora la partita. Ora si arriva al podio tutti insieme (restano ⏩ e «Avanti ▶»).",
+      "🏆 Il podio non finisce più sopra il maxischermo: i gradini si rimpiccioliscono quanto serve, anche in 8 e con le 3 giornate, e il tasto «🏅 I premi della giornata» resta libero. A pari punti si legge perché ha vinto il primo (la rosa più forte, o più crediti avanzati).",
+      "📋 Nelle pagelle voto e fantavoto non si attaccano più («5,5 | 5,5», mai «5,55,5»).",
+      "⚽ Sul telefono piccolo le rose sotto il maxischermo mostrano i nomi interi col prezzo, senza maglie una sopra l'altra.",
+      "📜 Le frasi lunghe sulla riga gialla del maxischermo scorrono invece di finire coi puntini.",
+      "🆚 Con le 3 giornate gli avversari si leggono tutti e tre con le sigle («🆚 GEN 77 · FRO 81 · TOR 79») e il nome della squadra resta intero; le scritte 🎯 🦶 🚩 non coprono più l'avversario.",
+      "🔝 In alto prima quanti calciatori sono stati presi («13/15 presi · Centrocampista all'asta»), il fumetto del banditore sparisce quando arriva il calciatore dopo, il cartello «📋 D'UFFICIO» non copre più prezzo e frase.",
+      "📺 Nel gol in TV la frase va a capo e il risultato ha una riga sua; nella barra della partita, se i nomi non ci stanno, le sigle. In 5 o più sul telefono piccolo il campo della giornata è più largo.",
+      "🎙️ Le frasi dell'«AGGIUDICATO!» sono le stesse su tutti i telefoni; «1 💰 avanzato».",
+      "⚙️ Nelle regole le scelte Sì/No stanno una accanto all'altra (il foglio è molto più corto) e «🎙️ Battute del banditore» c'è anche senza la giornata. In saletta «Si gioca così» si legge tutto.",
+      "📖 Le regole parlano dell'overall (quanto vale davvero ogni calciatore) e non più delle quotazioni vere. Sullo stesso telefono «Comincia l'asta» è sempre in fondo allo schermo e sulla busta di carta ci sono avversario e 🎯 🦶 🚩."
     ]
   },
   {

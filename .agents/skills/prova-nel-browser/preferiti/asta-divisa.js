@@ -35,7 +35,7 @@
     if (pa.dove.formato !== "temi" || pf.dove.formato !== "fanta" || pf.dove.crediti !== 20) no("formato o crediti: " + JSON.stringify(pa.dove) + " / " + JSON.stringify(pf.dove));
     if (/Modalità|giornata dopo l'asta/i.test(pa.testo) || !/Crediti a testa/.test(pa.testo) || !/I round/.test(pa.testo) || !/carta maledetta/i.test(pa.testo)) no("le impostazioni dell'Asta: «" + pa.testo.replace(/\s+/g, " ").slice(0, 200) + "»");
     if (/Modalità|Crediti a testa|Tema|I round|maledetta/.test(pf.testo) || !/giornata dopo l'asta/i.test(pf.testo)) no("le impostazioni del fanta: «" + pf.testo.replace(/\s+/g, " ").slice(0, 200) + "»");
-    if (!/^🎁 Temi classici/.test(a.riassunto({})) || !/^⚽ Mini asta Fantacalcio/.test(f.riassunto({})) || !/^⚽/.test(a.riassunto({ formato: "fanta" }))) no("riassunti: " + a.riassunto({}) + " / " + f.riassunto({}));
+    if (!/^🎁 Temi classici/.test(a.riassunto({})) || !/^⚽ \d+ crediti · rosa da 5/.test(f.riassunto({})) || !/^⚽/.test(a.riassunto({ formato: "fanta" }))) no("riassunti: " + a.riassunto({}) + " / " + f.riassunto({}));
     var ra = a.regole.join(" "), rf = f.regole.join(" ");
     if (/Fantacalcio|fantapunti/.test(ra) || !/RIGORISTA/.test(rf) || !/rialzare da solo/.test(rf) || /carta-scenario/.test(rf)) no("le regole non sono divise bene");
     x.push("registrazioni, impostazioni, riassunti e regole a parte");

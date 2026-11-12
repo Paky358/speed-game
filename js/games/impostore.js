@@ -2197,6 +2197,7 @@
       // il corpo del momento
       ".im-corpo{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:8px;overflow:hidden}",
       ".im-tit{display:flex;flex-direction:column;gap:2px;text-align:center;flex:none}.im-tit b{font-size:1.12rem;line-height:1.2}.im-tit small{font-size:.84rem;opacity:.8;line-height:1.25}",
+      "html.tastiera .g-impostore .im-tit{display:none}",   // ⌨️ con la tastiera aperta (12 nov 2026): via il titolo, più posto agli indizi degli altri
       ".im-scrivi{display:flex;gap:8px;flex:none}",
       ".im-input{flex:1;min-width:0;height:48px;box-sizing:border-box;border-radius:14px;border:1.5px solid var(--o-filo-oro);background:var(--o-carta);color:var(--o-testo);font:inherit;font-size:1.1rem;font-weight:700;padding:0 12px}",
       ".im-input:focus{outline:none;border-color:var(--o-oro);box-shadow:0 0 0 3px rgba(255,79,134,.18)}",

@@ -417,6 +417,8 @@
       ".sp-scrivi .sp-chis button.attiva{border-color:#ffca3a;background:rgba(255,202,58,.2)}",
       ".sp-scrivi .sp-due{display:flex;gap:8px}.sp-scrivi .sp-due .btn{flex:1;margin:0}",
       ".sp-scrivi .sp-nota-s{font-size:.82rem;color:var(--testo-tenue);margin:0 0 8px;line-height:1.35}",
+      // ⌨️ con la tastiera aperta (12 nov 2026): il foglio sta tutto sopra la tastiera, coi tasti a vista
+      "html.tastiera .sp-lente{padding:8px;align-items:flex-start}html.tastiera .sp-lente-box{max-height:100%;padding:10px 12px;animation:none}html.tastiera .sp-scrivi .sp-nota-s{display:none}html.tastiera .sp-scrivi .sp-lente-tit{margin-bottom:6px}html.tastiera .sp-scrivi textarea{min-height:64px}html.tastiera .sp-scrivi .sp-conta{margin:2px 2px 6px}",
       // ⏩ Avanti a maggioranza
       ".btn.sp-pronto{display:flex;align-items:center;justify-content:center;gap:8px}.sp-pronto .quanti{font-size:.82rem;opacity:.8;font-weight:700}",
       ".sp-piede .sp-nota.sp-conto{flex:0 1 auto;font-size:.78rem}",

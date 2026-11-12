@@ -113,7 +113,7 @@ HN=$(impronta data/novita.js); cp data/novita.js "dist/novita.$HN.js"
 {
   echo '<!doctype html>'
   echo '<meta charset="utf-8">'
-  echo '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">'
+  echo '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content">'
   echo '<meta name="theme-color" content="#0d1020">'
   echo '<title>SPeeD GAME</title>'
   # app installabile: icona sulla Home e niente barra dell'indirizzo
