@@ -637,7 +637,7 @@
       ".pza-ord{display:flex;flex-direction:column;gap:5px}",
       ".st-vista.pz-con-pan .pz-sch .pza-lista,.st-vista.pz-con-pan .pz-sch .pza-aiuto{display:none}",
       // mentre si gioca il pannello sale fin sotto il titolo: sopra niente nomi, le righe si dividono tutto lo spazio
-      ".pz-pan.su:has(.pza-ord){top:calc(56px + env(safe-area-inset-top))}.st-vista.pz-con-pan:has(.pza-ord) .pz-sch [data-sacr]{display:none}",
+      ".pz-pan.su:has(.pza-ord){top:calc(56px + env(safe-area-inset-top))}.st-vista.pz-con-pan:has(.pza-ord) .pz-sch [data-sacr]{position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;visibility:hidden!important;pointer-events:none!important;margin:0!important;padding:0!important}",
       ".pz-pan:has(.pza-ord) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pza-ord{flex:1 1 0;min-height:0}.pz-pan .pza-ord .pza-or{flex:1 1 auto}",
       ".pza-or{position:relative;display:flex;align-items:center;gap:8px;min-height:clamp(40px,calc(var(--alt,640px) * .062),52px);padding:4px 10px 4px 4px;box-sizing:border-box;border:0;border-radius:12px;font:inherit;text-align:left;color:#1d1b3a;background:linear-gradient(#fff,#eceef8);box-shadow:inset 0 -3px 0 rgba(14,18,44,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .28s cubic-bezier(.3,1.3,.5,1),box-shadow .15s;will-change:transform}",
       ".pza-or .nb{flex:0 0 46px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#b0184f}.pza-or .nb b{font-size:17px}.pza-or .nb small{font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;margin-top:2px}",

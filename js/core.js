@@ -1705,6 +1705,7 @@
   // tf (partita online): i tasti di fine uguali per tutti (tastiFineCore); se non li mette, quelli di sempre
   function schermataFine(g, classifica, giocatori, impostazioni, faccine, tf) {
     var s = schermata({ icona: "🏆", titolo: "Fine partita", sotto: g.nome });
+    s.classList.add("fine-piede-giu");   // (in tanti, sul telefono piccolo: i tasti restano in vista anche se la classifica è lunga)
     var ol = el("ol", { class: "classifica" + (classificaFitta(classifica.length, faccine ? 56 : 0) ? " fitta" : "") });
     var posti = classifica.map(function (r, i) { return r.pos || i + 1; });   // a pari merito il gioco dà la stessa posizione: stessa medaglia
     var medaglie = medaglieAPari(posti);

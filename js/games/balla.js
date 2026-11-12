@@ -753,6 +753,7 @@
       if (vv) vv.addEventListener("resize", tastiera);
       window.addEventListener("sg-tastiera", tastiera);
       S._chiudiVelo = function () { chiudi(valore()); };   // il tempo è finito: vale quello che c'è scritto (nella Balla Finale, se ci sono tutti e due i pezzi)
+      S._veloFase = "scrittura";
       if (o.ms) toFine = setTimeout(S._chiudiVelo, o.ms);
       setTimeout(function () { try { inp.focus({ preventScroll: true }); } catch (e) {} }, 650);
     });
@@ -797,6 +798,7 @@
         el("div", { class: "bc-et", text: "🔍 Qual è la risposta VERA?" }), lista, ok ], st.scelte.length > 5 ? "stretta" : "", o.ms);
       adatta(v0, tante, notizia, st.scelte.reduce(function (a, sc) { return sc.testo.length > a.length ? sc.testo : a; }, ""));
       S._chiudiVelo = function () { chiudi(null); };   // il tempo è finito: niente voto
+      S._veloFase = "voto";
       if (o.ms) toFine = setTimeout(S._chiudiVelo, o.ms);
     });
   }
@@ -1538,7 +1540,8 @@
       if (RB.S.shot) ST.camera(RB.S, RB.S.shot(), 0);
     }
     RB.vm = vm; RB.cb = cb; RB.vmTs = Date.now();
-    if (vm.fase !== "scrittura" && vm.fase !== "voto" && RB.S._chiudiVelo) RB.S._chiudiVelo();   // il tempo è finito per tutti: il foglio si chiude
+    // il tempo è finito per tutti (o, col telefono riacceso, si è già passati al voto): il foglio della fase di prima si chiude
+    if (RB.S._chiudiVelo && (vm.fase !== "scrittura" && vm.fase !== "voto" || (RB.S._veloFase && vm.fase !== RB.S._veloFase))) RB.S._chiudiVelo();
     aggiornaRisate(RB); aggiornaAvanti(RB);   // (i 😂 degli altri e i tocchi di «⏩ Avanti»: solo i numeri, senza ridisegnare)
     regiaTick(RB);
   }

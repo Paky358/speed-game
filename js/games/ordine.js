@@ -775,7 +775,7 @@
       if (m.t === "esco") {
         if (H.fase !== "gioco" || id === IO || H.esce[id]) return;
         H.esce[id] = 1;
-        scrivi({ t: "sis", testo: "🚪 " + p.nome + (H.capo[p.team] === id && H.fuori.indexOf(p.team) < 0 ? ", il capo dei " + SQ[p.team].nome + "," : "") + " è uscito dalla partita" });
+        scrivi({ t: "sis", testo: "🚪 " + p.nome + (H.capo[p.team] === id && H.fuori.indexOf(p.team) < 0 ? ", il capo dei " + SQ[p.team].nome + "," : "") + " ha lasciato la partita" });
         if (p.via && H.capo[p.team] === id) controllaTurno();
         bd(); return;
       }
@@ -2440,7 +2440,7 @@
         I.appendChild(el("div", { class: "or-ind-stato" }, (capoT ? [ facciaEspr(ui, capoT.id, capoT.nome, "pensa", capoT.via ? "via" : "") ] : [])
           .concat([ el("span", { text: r.mioTurno && r.capo ? "👑 Tocca a te: dai l'indizio"
             // (il capo non c'è: uscito apposta, o si aspetta che torni)
-            : capoT && capoT.via ? (capoT.esc ? "🚪 Il capo dei " + SQ[vm.turno].nome + " è uscito dalla partita" : "⏳ Si aspetta il capo dei " + SQ[vm.turno].nome + "…")
+            : capoT && capoT.via ? (capoT.esc ? "🚪 Il capo dei " + SQ[vm.turno].nome + " ha lasciato la partita" : "⏳ Si aspetta il capo dei " + SQ[vm.turno].nome + "…")
             : "Il capo dei " + SQ[vm.turno].nome + " pensa all'indizio…" }) ])));
         if (vm.cless) I.appendChild(el("div", { class: "or-ind-tent" }, [ cl() ]));
       }
@@ -2873,8 +2873,8 @@
     if (vm.attesa) {
       // 🚪 il capo è uscito apposta: nessuna attesa, i compagni scelgono chi lo sostituisce
       if (vm.attesa.usc && vm.attesa.capo) {
-        stato(vm.attesa.k === r.team ? "🚪 " + vm.attesa.chi + ", il vostro capo, è uscito dalla partita: uno di voi prende il suo posto."
-          : "🚪 I " + SQ[vm.attesa.k].nome + ": il capo è uscito, ne scelgono un altro…");
+        stato(vm.attesa.k === r.team ? "🚪 " + vm.attesa.chi + ", il vostro capo, ha lasciato la partita: uno di voi prende il suo posto."
+          : "🚪 I " + SQ[vm.attesa.k].nome + ": il capo ha lasciato la partita, ne scelgono un altro…");
         return fineServizio();
       }
       // (il capo: lo si aspetta; passati i 3 minuti niente più conto, e i suoi compagni possono fare loro il capo)
@@ -2886,7 +2886,7 @@
     if (vm.passo === "bot") { stato("🤖 Tocca a " + nomeBot(vm) + ": scopre una sua parola…" + (r.capo ? " Intanto pensa al prossimo indizio." : "")); faccine(); return fineServizio(); }
     if (!r.mioTurno) {
       // (🚪 il nostro capo è uscito apposta mentre giocano gli altri: lo sostituiamo subito, senza aspettare il nostro turno)
-      if (r.prendi && r.capoEsc) stato("🚪 " + capoN + ", il vostro capo, è uscito dalla partita: uno di voi prende il suo posto.");
+      if (r.prendi && r.capoEsc) stato("🚪 " + capoN + ", il vostro capo, ha lasciato la partita: uno di voi prende il suo posto.");
       else stato("Tocca ai " + SQ[vm.turno].nome + "…" + (r.capo ? " Intanto pensa al prossimo indizio." : ""));
       faccine(); return fineServizio();
     }

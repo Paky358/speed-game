@@ -513,7 +513,7 @@
       ".pze-lista{display:flex;flex-direction:column;gap:4px}",
       ".pze-lista.chiuso{opacity:.75}",
       // mentre si gioca il pannello sale fin sotto il titolo e i prodotti stanno solo lì, una volta sola (sopra niente doppioni né nomi)
-      ".st-vista.pz-con-pan .pz-sch .pze-tes,.st-vista.pz-con-pan:has(.pze-lista) .pz-sch [data-sacr]{display:none}",
+      ".st-vista.pz-con-pan .pz-sch .pze-tes,.st-vista.pz-con-pan:has(.pze-lista) .pz-sch [data-sacr]{position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;visibility:hidden!important;pointer-events:none!important;margin:0!important;padding:0!important}",
       ".pz-pan.su:has(.pze-lista){top:calc(56px + env(safe-area-inset-top))}",
       ".pz-pan:has(.pze-lista) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pze-lista{flex:1 1 0;min-height:0}.pz-pan .pze-lista .pze-r5,.pz-pan .pze-lista .pze-r3{flex:1 1 auto}",
       ".pze-r5{display:flex;align-items:center;gap:8px;min-height:clamp(44px,calc(var(--alt,640px) * .068),56px);box-sizing:border-box;padding:4px 6px 4px 4px;border-radius:12px;background:linear-gradient(#fff,#eceef8);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(14,18,44,.25)}",

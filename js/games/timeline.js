@@ -3417,7 +3417,7 @@
       regoleExtra: [ nodoRicordiLobby(t, vm, cb) ],
       // nella Sala: chi non è stato scelto guarda soltanto
       spettatore: !cb.sonoHost && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi" : null,
-      attesa: "Aspetta che l'host faccia partire lo studio!", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      attesa: "Aspetta l'host: la partita parte da sola!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
 
   function schermataNoNet(t) {

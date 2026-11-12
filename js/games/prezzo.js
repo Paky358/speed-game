@@ -1315,7 +1315,7 @@
     if (S.pubPronto) await S.pubPronto;
     if (!vivoK(R, k)) return;
     await ST.suPubblico(S, 0, 0);
-    ST.terzo(S, null, "In diretta dallo studio", vm.formato === "solo" ? "🎯 Solo il prezzo" : "📺 Come in TV", "📺");
+    ST.terzo(S, null, "Si comincia!", vm.formato === "solo" ? "🎯 Solo il prezzo" : "📺 Come in TV", "📺");
     ST.pubblico(S, "applauso");
     await ST.dorme(600); if (!vivoK(R, k)) return;
     await ST.suSchermo(S, 1600); if (!vivoK(R, k)) return;

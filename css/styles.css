@@ -4386,3 +4386,6 @@ html body.tema-oro::before{ display:none; }
    transform: le finestre fisse sopra il gioco (inset:0) si misurano sul body, cioè sulla parte che si vede (su iPhone se no restano centrate sotto la tastiera). */
 html.tastiera-ferma, html.tastiera-ferma body{ height:var(--alt); max-height:var(--alt); overflow:hidden; overscroll-behavior:none; }
 html.tastiera-ferma body{ position:fixed; left:0; right:0; top:var(--vv-su, 0px); width:100%; transform:translateZ(0); }
+
+/* fine partita in tanti (ripasso B16, 12 nov 2026): i tasti attaccati al fondo, la classifica scorre sopra */
+.schermata.fine-piede-giu > .piede{ position:sticky; bottom:0; z-index:3; padding:8px 0 calc(6px + env(safe-area-inset-bottom)); background:var(--o-fondo, #0d1020); box-shadow:0 -12px 14px -8px var(--o-fondo, #0d1020); }

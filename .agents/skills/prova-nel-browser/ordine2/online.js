@@ -162,9 +162,9 @@
     if (!pl || !pl.via || !pl.esc) no("nella foto Luca non risulta uscito apposta (" + JSON.stringify(pl) + ")");
     if (!v.attesa || !v.attesa.usc || !v.attesa.capo || v.attesa.k !== 0) no("la foto non dice «il capo dei Rossi è uscito» (" + JSON.stringify(v.attesa) + ")");
     if (bottone(G, /Faccio io il capo/) || bottone(S, /Faccio io il capo/)) no("anche i Blu hanno «👑 Faccio io il capo»");
-    if (!/Luca, il vostro capo, è uscito dalla partita/.test(sottoTx(U))) no("Ugo legge «" + sottoTx(U) + "»");
-    if (!/I Rossi: il capo è uscito/.test(sottoTx(G))) no("Giulia legge «" + sottoTx(G) + "»");
-    if (!await W.aspetta(function () { return /Luca, il capo dei Rossi, è uscito dalla partita/.test(logTx(G)); }, 3000)) no("in chat non c'è «🚪 Luca, il capo dei Rossi, è uscito dalla partita»");
+    if (!/Luca, il vostro capo, ha lasciato la partita/.test(sottoTx(U))) no("Ugo legge «" + sottoTx(U) + "»");
+    if (!/I Rossi: il capo ha lasciato la partita/.test(sottoTx(G))) no("Giulia legge «" + sottoTx(G) + "»");
+    if (!await W.aspetta(function () { return /Luca, il capo dei Rossi, ha lasciato la partita/.test(logTx(G)); }, 3000)) no("in chat non c'è «🚪 Luca, il capo dei Rossi, è uscito dalla partita»");
     nota(N, "«👑 Faccio io il capo» a Paky e Ugo dopo " + dt + " s; Ugo legge «" + sottoTx(U).slice(0, 70) + "», Giulia «" + sottoTx(G).slice(0, 50) + "»");
     // Ugo fa il capo: vede la mappa (Paky no) e dà l'indizio
     bottone(U, /Faccio io il capo/).click();
