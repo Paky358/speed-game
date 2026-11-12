@@ -21,7 +21,7 @@
   function nomiDi(tm) { var s = {}; tm.round.forEach(function (r) { ["A", "B", "C"].forEach(function (k) { r[k].forEach(function (c) { s[norm(c.nome)] = 1; }); }); }); return s; }
   async function temi() {
     if (!(W.SG_ASTA_TEMI || []).some(function (t) { return t.id === "reality"; })) {
-      var src = await (await fetch("/index.html?" + Date.now())).text(), fs = src.match(/data\/asta-[a-z]+\.js/g).filter(function (f) { return !/fanta|icone/.test(f); });
+      var src = (await (await fetch("/index.html?" + Date.now())).text()) + (await (await fetch("/js/elenco-giochi.js?" + Date.now())).text()), fs = src.match(/data\/asta-[a-z]+\.js/g).filter(function (f, i, l) { return !/fanta|icone/.test(f) && l.indexOf(f) === i; });   // (dal 4 nov 2026 i file dei temi stanno nell'elenco dei giochi, non in index.html)
       var salva = W.SG_ASTA_TEMI; W.SG_ASTA_TEMI = [];
       for (var i = 0; i < fs.length; i++) (0, eval)(await (await fetch("/" + fs[i] + "?" + Date.now())).text());
       var tt = W.SG_ASTA_TEMI; W.SG_ASTA_TEMI = salva; return tt;
@@ -65,8 +65,11 @@
         var ok = bott(P, ".schermata .piede button", /Chiudo la busta|Non offro/); if (ok) ok.click(); await W.dorme(200); continue;
       }
       if (q(P, ".as-buste") && !P.__bv) { P.__bv = true; W.clicca(P, /Avanti/); await W.dorme(200); P.__bv = false; continue; }
-      if (q(P, ".as-vk")) { qa(P, ".as-vk")[0].click(); voti++; await W.dorme(600); continue; }
-      if (q(P, ".as-scen") && /Si vota/.test(tx)) { W.clicca(P, /Si vota/); await W.dorme(200); continue; }
+      if (q(P, ".as-pas")) {   // ⭐ la passerella (11 nov 2026): i giudici danno 4 stelle, poi il prossimo kit
+        qa(P, ".as-giudice").forEach(function (gd) { gd.querySelectorAll(".as-stelle button")[3].click(); });
+        await W.dorme(100); var avK = qa(P, ".schermata .piede .btn").filter(function (b) { return /Prossimo kit|Classifica/.test(b.textContent) && !b.disabled; })[0];
+        if (avK) { avK.click(); voti++; } await W.dorme(500); continue;
+      }
       var carte = qa(P, ".as-carta:not([disabled])");
       if (carte.length) {
         carte.forEach(function (c) {
@@ -74,7 +77,7 @@
           if (/Pacco a sorpresa/.test(nm)) return;
           nm.split(" + ").forEach(function (p) { if (viste.indexOf(p) < 0) { viste.push(p); if (!tutte[norm(p)]) estranee.push(p); } });
         });
-        (q(P, ".as-carta.doppio") || q(P, ".as-carta.pacco") || carte[0]).click(); await W.dorme(250); continue;
+        (q(P, ".as-carta.doppio:not([disabled])") || q(P, ".as-carta.pacco:not([disabled])") || carte[0]).click(); await W.dorme(250); continue;
       }
       if (q(P, ".sa-pers") && prezzo(P) != null && !q(P, ".sa-aggiudicato")) {   // chi guida si tiene la carta, gli altri passano
         var c2 = capoNome(P);

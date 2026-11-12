@@ -217,7 +217,7 @@
       var pm = pDi(v2, idM);
       if (!pm || pm.via || pm.punti !== 0) no("al " + parola + " 2 Marco non è dentro con 0 punti (" + JSON.stringify(pm) + ")");
       if ((v2.prossimi || []).length) no("al " + parola + " 2 ci sono ancora dei «prossimi»");
-      if (!await W.aspetta(function () { return wM.document.querySelectorAll(".st-leggio").length === 4; }, 8000)) no("lo studio di Marco ha " + wM.document.querySelectorAll(".st-leggio").length + " leggii invece di 4");
+      if (!await W.aspetta(function () { return wM.document.querySelectorAll(".st-leggio, .stp-chip").length === 4; }, 8000)) no("lo studio di Marco ha " + wM.document.querySelectorAll(".st-leggio, .stp-chip").length + " leggii invece di 4");
       X.aMano[idM] = 1;   // (Marco scrive dal suo foglio)
       if (!await W.aspetta(function () { return vm(C).fase === "scrittura" && vm(C).giro === 1; }, 30000)) no("il " + parola + " 2 non arriva a scrivere");
       var foglio = await W.aspetta(function () { return wM.document.querySelector(balla ? ".bc-velo.on:not(.via)" : ".nc-foglio.on:not(.via)"); }, 15000);

@@ -531,9 +531,9 @@
           if (Nn.document.querySelectorAll(".tl-slot").length) no("Nino (guarda) può mettere la carta");
           x.push("Nino arriva tardi e guarda");
         }
-        var t1 = Date.now();
-        for (var k = 0; k < NOMI.length; k++) {
-          var n = NOMI[k]; if (viaT[n]) continue;
+        var t1 = Date.now(), CHI = NOMI.concat(F.nino && gTl(C, "Nino") ? ["Nino"] : []);   // (dal 26 ott 2026 chi arriva tardi gioca dalla carta dopo: anche Nino sceglie)
+        for (var k = 0; k < CHI.length; k++) {
+          var n = CHI[k]; if (viaT[n]) continue;
           if (vm(C).fase !== "tutti" || vm(C).n !== v.n) break;
           if (v.giro === 3 && n === "Sara" && !F.ricarica) {
             F.ricarica = true; await W.ricarica("Sara");
@@ -569,7 +569,7 @@
         if (!F.misE) { await W.aspetta(function () { return bott(W.finestra("Giulia"), ".st-barra button", /Avanti/); }, 15000); F.misE = true; mis = mis.concat(await misura("Giulia", "risultato tutti insieme", [".st-barra.on button"])); }
         await W.aspetta(function () {
           if (vm(C).fase !== "tEsito" || vm(C).n !== v.n) return true;
-          NOMI.forEach(function (n) { if (viaT[n]) return; var w = W.finestra(n), b = w && bott(w, ".st-barra button", /Avanti/); if (b && (vm(C).avanti || []).indexOf(idTl(n)) < 0) b.click(); });
+          (CHI || NOMI).forEach(function (n) { if (viaT[n]) return; var w = W.finestra(n), b = w && bott(w, ".st-barra button", /Avanti/); if (b && (vm(C).avanti || []).indexOf(idTl(n)) < 0) b.click(); });
           return false;
         }, 30000, 400);
         F.avanti.push(Math.round((Date.now() - ta) / 100) / 10);

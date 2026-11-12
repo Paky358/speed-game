@@ -205,7 +205,7 @@
     var t0 = Date.now(), wG = W.finestra("Giulia"), wP = W.finestra("Paky"), tf = 0;
     // i tasti di fine subito (guardati insieme all'esplosione), e l'esplosione del capo prima della festa
     function tasti() { if (!tf && bottone(wP, /Nuova partita|Rivincita/) && bottone(wG, /Ci sto/)) tf = Date.now() - t0 || 1; }
-    var boom = await W.aspetta(function () { tasti(); var v = wG.document.querySelector(".or-vignetta.su"); return v && /Noooo/.test(v.textContent) && Date.now() - t0; }, 1500, 30);
+    var boom = await W.aspetta(function () { tasti(); var v = wG.document.querySelector(".or-vignetta.su") || (wG.SGStudio && wG.SGStudio.piatto && wG.document.querySelector(".or-cart")); return v && /Noooo/.test(v.textContent) && Date.now() - t0; }, 1500, 30);
     if (!boom) no("niente «💣 Noooo!» del capo che esplode");
     if (wG.document.querySelector(".st-coriandoli")) no("i coriandoli partono insieme all'esplosione");
     var cor = await W.aspetta(function () { tasti(); return wG.document.querySelector(".st-coriandoli") && Date.now() - t0; }, 4000, 40);

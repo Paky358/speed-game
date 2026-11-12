@@ -1619,7 +1619,7 @@
     var dentro = function () { var me = vm.players[idxDi(vm, R.cb.myId)]; return !!me && !me.via; };
     if (vm.fase === "scrittura") {
       if (R.kS !== kG || R.vera || (R.fuoriS === kG && dentro())) { R.kS = R.kN = kG; R.fuoriS = dentro() ? null : kG; await scriviOnline(R, st); return true; }
-      aggiornaFatti(R, vm, "scrive"); return false;
+      aggiornaFatti(R, vm, "scrive"); aggiornaAttesa(R); return false;
     }
     if (vm.fase === "risposte") {
       if (R.kR === kG) return false;
@@ -1628,7 +1628,7 @@
     }
     if (vm.fase === "voto") {
       if (R.kV !== kG || R.tua || (R.fuoriV === kG && dentro())) { R.kV = R.kR = R.kS = R.kN = kG; R.fuoriV = dentro() ? null : kG; await votaOnline(R, st); return true; }
-      aggiornaFatti(R, vm, "vota"); return false;
+      aggiornaFatti(R, vm, "vota"); aggiornaAttesa(R); return false;
     }
     if (vm.fase === "voti") {
       if (R.kVo === kG) return false;
@@ -1714,6 +1714,13 @@
     var S = R.S, el = R.t.el, f = R.vm.fase;
     if (!S.vivo() || (f !== "scrittura" && f !== "voto")) return;
     ST.barra(S, [ el("p", { class: "bc-attesa", text: !guardo ? "Fatto! Aspettiamo gli altri…" : testoGuardo(R) }), faccineB(R.t) ]);
+  }
+  // chi guarda: se intanto l'host l'ha messo tra chi gioca dal round dopo, la riga lo dice (cambia solo la scritta)
+  // (12 nov 2026: senza la telecamera la riga si scrive prima che arrivi la foto con «prossimi»)
+  function aggiornaAttesa(R) {
+    var me = R.vm.players[idxDi(R.vm, R.cb.myId)]; if (me && !me.via) return;
+    var p = R.S.barraEl.querySelector(".bc-attesa"), tx = testoGuardo(R);
+    if (p && /^(👀|✋)/.test(p.textContent) && p.textContent !== tx) p.textContent = tx;
   }
   // la riga di chi non gioca questo round: aspetta il round dopo, guarda nella Sala, o guarda soltanto
   function testoGuardo(R) {

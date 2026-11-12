@@ -1426,7 +1426,7 @@
       // ho consegnato ma l'host non mi ha ancora tra i "fatti" (messaggio perso, o ero fuori per un attimo): lo rimando
       var mio = vm.players[idxN(vm, R.cb.myId)], inv = R.inviate;
       if (mio && !mio.via && inv && inv.giro === vm.sessioneTrofei + "|" + vm.giro && (vm.fatti || []).indexOf(R.cb.myId) < 0 && Date.now() - inv.ts > 2000) { inv.ts = Date.now(); (inv.stop ? R.cb.onStop : R.cb.onRisposte)(inv.r); }
-      aggiornaFatti(R, vm); return false;
+      aggiornaFatti(R, vm); aggiornaAttesaN(R, vm); return false;
     }
     if (vm.fase === "tabellone") {
       var kT = kG + "|" + vm.ci, kP = vm.players.map(function (p) { return p.via ? 0 : 1; }).join("");
@@ -1445,6 +1445,13 @@
       return false;
     }
     return false;
+  }
+  // chi guarda: se intanto l'host l'ha messo tra chi gioca dal giro dopo, la riga lo dice (cambia solo la scritta)
+  // (12 nov 2026: senza la telecamera la riga si scrive prima che arrivi la foto con «prossimi»)
+  function aggiornaAttesaN(R, vm) {
+    if (idxN(vm, R.cb.myId) >= 0 || (vm.prossimi || []).indexOf(R.cb.myId) < 0) return;
+    var p = R.S.barraEl.querySelector(".nc-attesa"), tx = "✋ Giochi dal prossimo giro: intanto guarda!";
+    if (p && /^👀/.test(p.textContent)) p.textContent = tx;
   }
   // tutti scrivono insieme: la telecamera va sul mio leggio e si apre il MIO foglio
   async function scriviOnline(R) {

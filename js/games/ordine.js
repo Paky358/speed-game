@@ -1814,6 +1814,7 @@
     aggiornaBanchi(ui, vm);
   }
   function fumettoCapo(ui, k, testo) {   // il capo dice qualcosa dal suo podio (la stessa vignetta dell'indizio)
+    if (ST.piatto) { var nc = trova(ui.vm, ui.vm && ui.vm.capo[k]); return cartello(ui, testo, nc ? nc.nome : "", SQ[k] ? SQ[k].col : null, 1500); }   // 📺 senza studio: la scritta grande sul tabellone
     var S = ui.S, p = S.posti[k] || S.posti[0], V = ui.vignetta;
     V.style.left = p.cx + "px"; V.style.top = (p.top + p.w * 0.04) + "px"; V.style.fontSize = (p.w * 0.12).toFixed(1) + "px";
     while (V.firstChild) V.removeChild(V.firstChild);
@@ -2001,7 +2002,8 @@
     ui.kCapi = capi.k;
     if (window.__ORDINE) window.__ORDINE.ui = ui;   // (per le prove)
     ui.S = ST.crea(t, capi.lista, { io: capi.io, esci: function () { ui.cb.onEsci(true); }, titolo: "Parola d'ordine", logo: ["PAROLA", "D'ORDINE"],
-      posti: function (S) { return postiCapi(S, ui.nsq); }, dopoLayout: function (S) { posizionaBanchi(ui, S); adattaScritte(ui); } });
+      posti: function (S) { return postiCapi(S, ui.nsq); }, dopoLayout: function (S) { posizionaBanchi(ui, S); adattaScritte(ui); },
+      punti: false });   // 📺 senza studio: le squadre con le faccine sono già sul tabellone (niente podi dei capi né banconi)
     var S = ui.S;
     S.vista.classList.add("or-studio");
     // (c1) il ‹ dello studio chiede sempre «Uscire dalla partita?»: qui lo chiede il gioco, con la domanda giusta (l'host: «👑 Lascia
@@ -2053,7 +2055,7 @@
     try { if (window.ResizeObserver) { ui.roTab = new ResizeObserver(function () { if (!ui.S.vivo()) { ui.roTab.disconnect(); return; } adattaScritte(ui); }); ui.roTab.observe(ui.tab); } } catch (e) {}
     // i banconi delle squadre e la vignetta del capo, nello studio
     ui.banchiEl = el("div", { class: "or-banchi" }); S.mondo.appendChild(ui.banchiEl);
-    for (k = 0; k < vm.nsq; k++) {
+    for (k = 0; k < (ST.piatto ? 0 : vm.nsq); k++) {   // (senza studio niente banconi: le squadre sono sul tabellone)
       if (vm.vsBot && k === 1) continue;   // (il Bot non ha un bancone: sta sul suo podio)
       var B = { gente: el("div", { class: "or-banco-gente" }), facce: {}, k: "" };
       B.el = el("div", { class: "or-banco", style: "--c:" + SQ[k].col }, [ B.gente, el("div", { class: "or-banco-fronte" }, [ el("span", { text: SQ[k].nome.toUpperCase() }) ]) ]);

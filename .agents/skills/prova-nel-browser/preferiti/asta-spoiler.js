@@ -27,7 +27,9 @@
   function diversi(a, b) { if (!a || !b) return a !== b; for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 1e-6) return true; return false; }
   COPIONE.aggiungi("sp1", { nome: "Fanta, la giornata: fino al tiro ogni azione è identica qualunque cosa succeda (niente spoiler)", fai: async function () {
     var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = [], prove = 0;
-    var SCENE = ["cross", "angolo", "unodue", "contro", "pallonetto", "fuori", "slalom", "punizione", "tapin", "centrocampo", "mischia", "testa", "incrocio", "miracolo", "assedio", "ultimo"];
+    var SCENE = ["cross", "angolo", "unodue", "contro", "pallonetto", "fuori", "slalom", "punizione", "tapin", "centrocampo", "mischia", "testa", "incrocio", "miracolo", "assedio", "ultimo",
+      "secondopalo", "presa", "tuffo", "vuota", "tre", "filtrante", "rasoterra", "giro", "muro", "corta", "volee",
+      "pressing", "laterale", "papera", "glt"];   // (11-12 nov 2026: le azioni nuove; la punizione sotto la barriera è dentro «punizione», un seme su cinque)
     var ESITI = ["gol", "parata", "palo", "traversa", "fuori", "alto", "linea"];
     SCENE.forEach(function (v) {
       for (var seme = 1; seme <= 300; seme++) {

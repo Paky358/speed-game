@@ -9,6 +9,84 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 337,
+    data: "12 novembre 2026",
+    titolo: "I giochi a tutto schermo: via lo studio TV 📺",
+    descrizione: [
+      "📺 La Ruota della Fortuna, La Balla Colossale, Il Prezzo è Giusto, La linea del tempo, Nomi Cose e Città, La Patata Bollente e Parola d'ordine non hanno più lo studio col pubblico, i podi e la telecamera: il gioco prende tutto lo schermo e si legge meglio.",
+      "⚡ Le partite partono subito e il telefono non si blocca più all'inizio: sui telefoni lenti la prima notizia della Balla arrivava dopo 30 secondi, ora dopo 7.",
+      "🧑‍🤝‍🧑 In alto i punteggi di tutti, con la faccina piccola. All'inizio una presentazione veloce di chi gioca, alla fine chi vince e la classifica coi tasti di sempre.",
+      "🎡 La Ruota: il tabellone sempre in alto; sotto, la ruota grande quando si gira e la tastiera grande quando si scelgono le lettere (le vocali da comprare sono azzurre). Quando si risolve, le lettere vanno dritte nelle caselle.",
+      "💣 La Patata: chi gioca sta in alto, in grande: si tocca per passare la bomba."
+    ]
+  },
+  {
+    v: 336,
+    data: "12 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: 16 azioni nuove e parate vere 🧤",
+    descrizione: [
+      "🎬 Nella giornata 16 azioni nuove: il cross al secondo palo, il colpo di testa in tuffo, il portiere che esce sul cross, la porta vuota, il tre contro uno, il filtrante, la palla dal fondo all'indietro, il tiro a giro sul palo lontano, il tiro murato in calcio d'angolo, il portiere che non trattiene, il tiro al volo, il pressing alto, la punizione dalla fascia messa in mezzo, la punizione rasoterra sotto la barriera e la papera del portiere.",
+      "⌚ Quando un tiro prende la traversa e rimbalza sulla linea decide la goal-line technology: GOL o non è entrata, per pochi centimetri.",
+      "🧤 Le parate sono vere e diverse: il portiere la blocca in tuffo o in alto, para col piede, la toglie dall'incrocio in calcio d'angolo, e quando si tuffa arriva davvero sul pallone.",
+      "🦵 Il salvataggio sulla linea è diventato raro (prima usciva un tiro sbagliato su otto), e il difensore sul palo non sta più fermo come una statua.",
+      "👕 Tutti quelli che fanno l'azione hanno la faccia e il numero veri, anche chi passa e chi difende quando non sono di nessuno. E il tuo calciatore che fa l'azione non ha più un «doppione» al suo posto in formazione.",
+      "📺 Sul gol annullato per fuorigioco il VAR mostra il fermo immagine del passaggio, con chi ha segnato cerchiato di rosso."
+    ]
+  },
+  {
+    v: 335,
+    data: "11 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: in campo i titolari veri 👕",
+    descrizione: [
+      "👕 In campo ogni squadra schiera i suoi titolari al loro posto: nel Milan Pulisic e Moreira sulle fasce ai lati di Ramos, nell'Inter Dimarco esterno a tutta fascia, l'attaccante più forte sempre di punta.",
+      "🎯 Chi tira, se non è di nessuno, è uno dei titolari della sua squadra."
+    ]
+  },
+  {
+    v: 334,
+    data: "11 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: ogni squadra col suo modulo 🧩",
+    descrizione: [
+      "🧩 Ogni squadra gioca col suo modulo vero: l'Inter col 3-5-2, la Roma col 3-4-2-1, il Milan col 4-3-3… In campo i difensori stanno dietro, gli attaccanti davanti, e i tuoi calciatori al loro posto: un attaccante non finisce in difesa.",
+      "💪 L'overall di una squadra è quello della sua formazione più forte nel suo modulo, anche con chi è infortunato (l'Inter con Lautaro e Thuram).",
+      "⚔️ Ogni squadra ha attacco, centrocampo e difesa (l'Inter 92, 84 e 84): nella giornata il suo attacco sfida la difesa avversaria e i centrocampi si sfidano tra loro. Chi ha un grande attacco segna di più, chi ha una grande difesa subisce meno.",
+      "🟨 I falli si vedono al posto giusto: l'attaccante prende il giallo per un fallo in attacco, il difensore quasi sempre nella sua metà campo.",
+      "➕ Al Parma e al Venezia arrivano Britschgi e Haps, solo per il campo: gli esterni che mancavano al loro 3-5-2."
+    ]
+  },
+  {
+    v: 333,
+    data: "11 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: un rigorista per ogni squadra 🎯",
+    descrizione: [
+      "All'asta torna Geubbels, il rigorista del Lecce: ora ogni squadra ha almeno un rigorista da comprare. Camarda invece gioca solo in campo, col Milan."
+    ]
+  },
+  {
+    v: 332,
+    data: "11 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: in campo tutti veri 🎯",
+    descrizione: [
+      "🎯 Chi tira è sempre un calciatore vero, con la sua faccia e il suo numero, anche se non l'ha comprato nessuno: sul dischetto va il rigorista vero (Berardi per il Sassuolo), sulle punizioni chi le batte.",
+      "➕ 18 calciatori nuovi solo per il campo, così ogni squadra ha 11 titolari veri e ci sono tutti i battitori. All'asta non escono.",
+      "💪 Ogni squadra ha il suo overall, la media dei suoi 11 migliori: all'asta lo leggi accanto all'avversaria, «🆚 Inter (86)».",
+      "⚽ Nella giornata conta soprattutto l'overall delle squadre: le più forti vincono più spesso, ma chiunque può segnare, anche il più scarso."
+    ]
+  },
+  {
+    v: 331,
+    data: "11 novembre 2026",
+    titolo: "L'Asta dei temi: la passerella dei kit, tutta di sera 🔨",
+    descrizione: [
+      "🌙 Tutte le schermate dell'Asta dei temi (inizio del round, scelta della carta, busta chiusa, carta maledetta, il foglio «🃏 Carte» e il voto) hanno i colori della notte come il resto dell'app: niente più blu di prima.",
+      "🃏 Gli oggetti hanno una carta nuova: l'emoji grande dentro un medaglione che prende la luce del round. Se un telefono un po' vecchio non sa disegnare un'emoji, compare ✨ al posto del quadratino vuoto.",
+      "🧱 Quando un oggetto viene venduto gli altri restano fermi: stessa grandezza, stesso posto. Al posto di quello venduto resta il suo spazio vuoto. Sui telefoni alti le carte riempiono lo schermo.",
+      "⭐ Alla fine i kit sfilano in passerella: uno alla volta, a tutto schermo, con tutti gli oggetti in grande. Mentre il kit è lì, tutti gli altri gli danno da 1 a 5 stelle (online in segreto; sullo stesso telefono come i giudici dei talent, ognuno accanto al suo nome). Vince la media più alta. In classifica, sotto ogni nome, gli oggetti del suo kit.",
+      "✉️ Quando si aprono tante buste insieme stanno su due colonne, così si vede anche l'oggetto vinto.",
+      "⚽ Mini Asta Fantacalcio: alla scoperta delle rose niente più «ti ti ti» prima delle figurine."
+    ]
+  },
+  {
     v: 330,
     data: "10 novembre 2026",
     titolo: "Mini Asta Fantacalcio: il maxischermo intero e le figurine che suonano 🃏",

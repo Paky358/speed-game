@@ -940,6 +940,7 @@
   COPIONE.aggiungi("tp10", { nome: "Linea del tempo sullo stesso telefono, solo Storia e Invenzioni: le foto vere sulla carta in mano e sulla linea, si caricano, misure, foto che non arriva = carta senza foto (opz.cat: altre categorie)", fai: async function (opz) {
     var CAT = new RegExp((opz && opz.cat) || "Storia|Invenzioni");
     var P = await W.apriTel("Paky", { x: 0 }), viste = 0, conFoto = 0, rotta = false, fino = Date.now() + 260000, kOld = "", turni = 0, linea = 0;
+    if (P.SG.scaricaGioco) await P.SG.scaricaGioco("timeline");   // (dal 4 nov 2026 il gioco e le sue foto arrivano quando servono)
     var F = P.SG_TL_FOTO || {};
     if (Object.keys(F).length < 100) no("le foto nel gioco sono solo " + Object.keys(F).length);
     await localeTl(P, ["Paky", "Giulia"], false, { prima: async function () {
@@ -1130,7 +1131,7 @@
       return "";
     };
   }
-  function hudDi(w) { return [].map.call(w.document.querySelectorAll(".st-sch-in .tl-hud .tl-pl .p"), function (p) { return p.textContent; }).join(" "); }
+  function hudDi(w) { return [].map.call(w.document.querySelectorAll(".st-sch-in .tl-hud .tl-pl .p, .stp-chip .p"), function (p) { return p.textContent; }).join(" "); }
   // le regole del modo nuovo dal ⚙️ della saletta: «🧍 Ognuno la sua linea» e la lineetta (le righe che non servono spariscono)
   async function regolaLinee(P, vinci) {
     await regola(P, async function (f) {
@@ -1322,7 +1323,7 @@
       scelto: async function () { if (visto.misScelta) return; visto.misScelta = true; var m = await misure(W.finestra("Paky"), "Paky"); if (m) no("mentre sceglie: " + m); },
       prima: async function (v, ctx) {
         // la barra in alto dice le carte messe bene ("3/5")
-        function hud() { return [].map.call(P.document.querySelectorAll(".st-sch-in .tl-hud .tl-pl .p"), function (p) { return p.textContent; }).join(" "); }
+        function hud() { return [].map.call(P.document.querySelectorAll(".st-sch-in .tl-hud .tl-pl .p, .stp-chip .p"), function (p) { return p.textContent; }).join(" "); }
         if (!await W.aspetta(function () { return /\d\/5/.test(hud()); }, 8000)) no("la barra in alto non dice le carte messe bene («" + hud() + "»)");
         // chi gioca non ha la fila di chi guarda
         if (G.document.querySelector(".tl-spia")) no("Giulia, che gioca, ha la fila degli avatar di chi guarda");

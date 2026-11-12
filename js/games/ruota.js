@@ -2029,8 +2029,13 @@
     ui.S = ST.crea(t, vm.giocatori.map(function (p) { return { nome: p.nome, omino: (cb.omini() || {})[p.id] || (window.SGOmino ? SGOmino.casuale(p.nome) : null) }; }),
       { io: cb.telefono ? -1 : ids.indexOf(cb.myId), esci: function () { fermaRegia(ui); ritmo(ui, null); ui.cb.onEsci(true); }, titolo: "La Ruota della Fortuna", logo: ["LA RUOTA", "DELLA FORTUNA"],
         senzaSchermo: true,   // 🎡 giro 3: niente maxischermo in mezzo; la ruota sta sul pavimento davanti ai concorrenti
+        punti: false,         // 📺 senza studio: i punteggi sono quelli della Ruota (sotto il tabellone)
         dopoLayout: function () { if (ui.ruotaEl) mettiRuota(ui); } });
     var S = ui.S;
+    // 📺 SENZA STUDIO (11 nov 2026, idea del proprietario): il tabellone sempre in alto; sotto, la ruota grande quando si gira
+    // e la tastiera disegnata quando si scelgono le lettere (la ruota resta piccola sopra, se c'è posto)
+    ui.flat = !!ST.piatto;
+    if (ui.flat) S.vista.classList.add("ru-flat");
     S.sopraLibero = 0.6;   // la telecamera può salire sopra lo studio: lassù c'è il tabellone
     S.vista.classList.add("ru-studio");
     if (cb.targa) S.vista.classList.add("ru-targa");   // chi guarda soltanto: la barra in basso lascia il posto alla targhetta del core
@@ -2047,7 +2052,12 @@
     ui.orol = el("div", { class: "ru-orol" }, [ ui.orolN ]);
     ui.punti = el("div", { class: "ru-punti" }); ui.chip = {};
     vm.giocatori.forEach(function (p, i) {
-      var v = el("b"), tt = el("small"), c = el("span", { class: "ru-chip" }, [ el("i", { style: "background:" + ((ST.COLORI || [])[i % 10] || "#ffc247") }), el("span", { class: "n", text: p.nome }), v, tt ]);
+      var colI = (ST.COLORI || [])[i % 10] || "#ffc247", v = el("b"), tt = el("small"), c = el("span", { class: "ru-chip" }, [ el("i", { style: "background:" + colI }), el("span", { class: "n", text: p.nome }), v, tt ]);
+      if (ui.flat && ST.faccina) {   // 📺 senza studio: la faccina piccola al posto del pallino (col suo colore intorno)
+        var fc = ST.faccina({ nome: p.nome, omino: (cb.omini() || {})[p.id] || null }, null, 48, true); fc.className = "fac"; fc.style.boxShadow = "0 0 0 2px " + colI;
+        c.replaceChild(fc, c.firstChild);
+        c._d = el("span", { class: "ru-delta" }); c.appendChild(c._d);   // il «+800» che salta fuori quando si incassa
+      }
       c._v = v; c._t = tt; ui.chip[p.id] = c; ui.punti.appendChild(c);
     });
     ui.striscia = el("div", { class: "ru-striscia" }); ui.striscia.hidden = true;   // 🔔 i giochi veloci: campanella e «vale…» sotto il tabellone
@@ -2091,11 +2101,17 @@
     S.vista.appendChild(ui.quadro);
     ui.azioni = el("div", { class: "ru-azioni" });
     ui.kb = creaTastiera(ui);   // ⌨️ fissa in basso per tutti
+    // 📺 senza studio: se il tabellone o i tasti in basso cambiano altezza (una riga in più, una faccina che arriva), la ruota si rimette in mezzo
+    if (ui.flat && window.ResizeObserver) {
+      ui.ro = new ResizeObserver(function () { if (!S.vivo()) { ui.ro.disconnect(); return; } if (ui.alta) posAlto(ui); if (ui.quadro.classList.contains("on")) posQuadro(ui); });
+      ui.ro.observe(S.barraEl); ui.ro.observe(ui.sopra);
+    }
     // la barretta del tempo che resta a chi deve toccare (si accorcia da sola, senza ridisegnare i tasti)
     ui.tempoBar = el("i"); ui.tempo = el("div", { class: "ru-tempo" }, [ ui.tempoBar ]);
     // il Jolly sul leggio di chi ce l'ha
-    ui.jb = S.L.map(function (X) { var j = el("div", { class: "ru-jolly" }); X.el.appendChild(j); return j; });
-    ui.lk = S.L.map(function (X) { var j = el("div", { class: "ru-lock", text: "🔒" }); X.el.appendChild(j); return j; });
+    // (senza studio: sui punteggi della Ruota)
+    ui.jb = S.L.map(function (X, i) { var j = el("div", { class: "ru-jolly" }); (ui.flat && ui.chip[ids[i]] || X.el).appendChild(j); return j; });
+    ui.lk = S.L.map(function (X, i) { var j = el("div", { class: "ru-lock", text: "🔒" }); if (!ui.flat) X.el.appendChild(j); return j; });   // (senza studio il 🔒 sta già nei punti)
     vm.giocatori.forEach(function (p, i) { ST.puntiLeggio(S, i, p.soldi); ui.mostrati[p.id] = p.soldi; });
     function via() { ui.schTipo = ""; ui.kTab = ""; ui.sopra.classList.remove("sigla"); schermo(ui, ui.vm); ST.barra(S, ui.cb.guarda ? [ ui.tempo, ui.azioni, ui.kb.el ] : [ ui.tempo, ui.azioni, ui.scriviR, ui.kb.el ]); ui.sopra.classList.remove("via"); }   // (chi guarda col link non scrive frasi: la riga non c’è proprio)
     if (vm.sigla) {   // a inizio partita la sigla dello studio (il tabellone compare dopo); quando si rigioca, una corta
@@ -2108,7 +2124,7 @@
         via(); aggiorna(ui, ui.vm);
       });
     } else via();
-    ui.taglia = function () { if (!ui.sigla) return; ui.sigla = false; ui.tagliata = true; ST.viaTerzo(S); via(); };
+    ui.taglia = function () { if (!ui.sigla) return; ui.sigla = false; ui.tagliata = true; ST.viaTerzo(S); if (ST.fineApertura) ST.fineApertura(S); via(); };   // (senza studio: via anche il velo della presentazione)
     return ui;
   }
   // quando si rigioca: un saluto veloce invece della presentazione dei concorrenti
@@ -2201,12 +2217,12 @@
     ui.canvas.width = ui.canvas.height = 300;
     function tela(cls, w) { return el("canvas", { class: cls, width: String(w), height: String(w) }); }
     var an = tela("ru-anello", 300), la = tela("ru-lamp a", 300), lb = tela("ru-lamp b", 300);
-    disegnaAnello(an); disegnaLampadine(la, 0); disegnaLampadine(lb, 1);
+    if (!ui.flat) { disegnaAnello(an); disegnaLampadine(la, 0); disegnaLampadine(lb, 1); }   // (senza studio la ruota sul pavimento non c'è: niente disegni inutili)
     ui.lancPav = el("div", { class: "ru-lancetta", html: SVG_LANCETTA });
     ui.piatto = el("div", { class: "ru-piatto" }, [ ui.canvas, an, la, lb, el("div", { class: "ru-centro" }), ui.lancPav ]);
     ui.ombra = el("div", { class: "ru-ombra" });
     ui.ruotaEl = el("div", { class: "ru-ruota" }, [ ui.ombra, ui.piatto ]);
-    S.mondo.appendChild(ui.ruotaEl);
+    if (!ui.flat) S.mondo.appendChild(ui.ruotaEl);   // (senza studio non c'è il pavimento: la ruota è solo quella grande)
     // vista dall'alto: grande, sopra lo studio (sotto il tabellone e la tastiera)
     ui.canvasA = tela("ru-disco", 600);
     ui.anello = tela("ru-anello", 600); disegnaAnello(ui.anello);
@@ -2223,7 +2239,7 @@
     mettiRuota(ui);
     trascinaRuota(ui);
   }
-  function ridisegnaRuote(ui, spicchi) { disegnaRuota(ui.canvas, spicchi); disegnaRuota(ui.canvasA, spicchi); }
+  function ridisegnaRuote(ui, spicchi) { if (!ui.flat) disegnaRuota(ui.canvas, spicchi); disegnaRuota(ui.canvasA, spicchi); }
   function ruotaA(ui, ang) { var tr = "rotate(" + (+ang || 0).toFixed(2) + "deg)"; ui.canvas.style.transform = tr; ui.canvasA.style.transform = tr; }
   // dove sta la ruota nello studio: sul pavimento, davanti ai leggii, larga quasi tutto lo studio; schiacciata in prospettiva (k)
   function mettiRuota(ui) {
@@ -2238,6 +2254,7 @@
   }
   // la ruota vista dall'alto: al centro della parte di schermo tra il tabellone e la tastiera, grande quanto ci sta
   function posAlto(ui) {
+    if (ui.flat) return posAltoFlat(ui);
     var S = ui.S, b = banda(ui), h = b.bot - b.top, d = Math.max(120, Math.min(S.VW * 0.94, h * 0.95));
     var x = (S.VW - d) / 2, y = b.top + (h - d) / 2, k = Math.round(x) + "|" + Math.round(y) + "|" + Math.round(d);
     if (k === ui.kAlto) return;
@@ -2245,6 +2262,21 @@
     var p = ui.piattoA.style; p.left = x.toFixed(1) + "px"; p.top = y.toFixed(1) + "px"; p.width = p.height = d.toFixed(1) + "px";
     ui.buio.style.background = "radial-gradient(circle at " + (x + d / 2).toFixed(0) + "px " + (y + d / 2).toFixed(0) + "px,rgba(4,5,14,.25) " + (d * 0.48).toFixed(0) + "px,rgba(4,5,14,.86) " + (d * 0.62).toFixed(0) + "px,rgba(4,5,14,.93))";
     ui.manoEl.style.width = ui.manoEl.style.height = (d * 0.17).toFixed(1) + "px";
+  }
+  // 📺 senza studio: la ruota ha una grandezza sola (larga quasi quanto lo schermo) e si rimpicciolisce con transform (niente scatti):
+  // grande quando c'è posto (si gira), piccola sopra la tastiera quando si scelgono le lettere, nascosta se non ci sta
+  function posAltoFlat(ui) {
+    var S = ui.S, b = banda(ui), h = Math.max(0, b.bot - b.top), D0 = Math.round(S.VW * 0.94), d = Math.min(D0, h * 0.95);
+    var x = (S.VW - d) / 2, y = b.top + (h - d) / 2, k = Math.round(x) + "|" + Math.round(y) + "|" + Math.round(d) + "|" + D0;
+    if (k === ui.kAlto) return;
+    ui.kAlto = k; ui.A = { x: x, y: y, d: d };
+    var p = ui.piattoA.style; p.left = "0px"; p.top = "0px"; p.width = p.height = D0 + "px";
+    var s = d / D0;
+    p.setProperty("--tx", x.toFixed(1) + "px"); p.setProperty("--ty", y.toFixed(1) + "px"); p.setProperty("--s", s.toFixed(4));
+    p.setProperty("--txv", (x - 0.21 * d).toFixed(1) + "px"); p.setProperty("--sv", (s * 1.42).toFixed(4));   // (vicino: sulla lancetta, in alto al centro)
+    ui.altoEl.classList.toggle("nascosta", d < 72);
+    ui.manoEl.style.width = ui.manoEl.style.height = (d * 0.17).toFixed(1) + "px";
+    var vs = S.vista.style; vs.setProperty("--ru-mezzo", b.top.toFixed(0) + "px");   // (le scritte di passaggio stanno qui, sotto il tabellone)
   }
   // la telecamera sopra la ruota (vicino = sulla lancetta, alla fine del giro)
   function ruotaAlta(ui, on, vicino) {
@@ -2387,7 +2419,7 @@
     var k = cosa + ":" + (i == null ? "" : i);
     if (k === ui.inq) return;
     ui.inq = k;
-    ruotaAlta(ui, cosa === "ruota" || cosa === "lancetta", cosa === "lancetta");
+    ruotaAlta(ui, ui.flat ? cosa !== "quadro" : cosa === "ruota" || cosa === "lancetta", cosa === "lancetta");   // (senza studio la ruota c'è sempre, tranne quando c'è il riquadro)
     ui.quadro.classList.toggle("on", cosa === "quadro"); if (cosa === "quadro") posQuadro(ui);
 ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return shotPavimento(ui); } :
       cosa === "tutti" || cosa === "quadro" ? function () { return shotTutti(ui); } : function () { return shotLeggio(ui, i); }, ms == null ? 700 : ms);
@@ -2466,6 +2498,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     ui.sopra.classList.toggle("veloce", !!vm.veloce && f !== "finemanche");
     ui.sopra.classList.toggle("finale", FASI_FIN.indexOf(f) >= 0);
     ui.sopra.classList.toggle("lampo", f === "lampo" || f === "lampofine");
+    if (ui.flat) modoMezzo(ui, vm, inRisolvi, mioTurno);
     var cat = (vm.cat || "").toUpperCase();
     var firma = vm.firma != null ? "  " + firmaTesto(vm.firma) : "";   // ✍️ la frase degli amici: la firma accanto alla categoria
     var tc = f === "lampo" || f === "lampofine" ? titoloLampo(L, cat) : FASI_BUSTA.indexOf(f) >= 0 && vm.busta ? "✉️ LA BUSTA DI " + String(vm.busta.nome || "").toUpperCase() : FASI_FIN.indexOf(f) >= 0 ? (F && F.b ? "🏆 FINALE " + F.b + "/3 · " + FIN_NOMI[F.b - 1].toUpperCase() + " · " + cat : "🏆 FINALE · TRE TABELLONI PER TUTTI") :
@@ -2514,7 +2547,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       else if ((f === "lampofine" || f === "lampo") && ui.modoLeggii === tot && prec.manche === vm.manche) d = val - (ui.mostrati[id] || 0);
       else if ((FASI_FIN.indexOf(f) >= 0 || FASI_BUSTA.indexOf(f) >= 0) && ui.modoLeggii === tot && prec.fase) d = val - (ui.mostrati[id] || 0);   // (i punti della finale)
       else if (!tot && prec.manche === vm.manche && ui.modoLeggii === tot) d = val - (ui.mostrati[id] || 0);
-      ST.puntiLeggio(S, i, val, d);
+      ST.puntiLeggio(S, i, val, d); popChip(ui, id, d);
       ui.mostrati[id] = val;
     });
     ui.modoLeggii = tot;
@@ -2569,8 +2602,8 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
           // 🔒 il numero sale (o scende) sul leggio; vibra solo il telefono di chi l'aveva bloccata
           dopo(ui, 1600 + k * 900, function () {
             facciaPerUnPo(ui, is, s.b ? "evviva" : "triste");
-            if (s.b) { ST.puntiLeggio(S, is, ui.mostrati[s.id] || 0, s.b); bip(1318, 0.2, "triangle", 0.06); if (s.id === cb.myId && !cb.telefono) vibra([25, 35, 25]); }
-            else { if (s.m) ST.puntiLeggio(S, is, ui.mostrati[s.id] || 0, -s.m); suonoNo(); if (s.id === cb.myId && !cb.telefono) vibra(70); }
+            if (s.b) { ST.puntiLeggio(S, is, ui.mostrati[s.id] || 0, s.b); popChip(ui, s.id, s.b); bip(1318, 0.2, "triangle", 0.06); if (s.id === cb.myId && !cb.telefono) vibra([25, 35, 25]); }
+            else { if (s.m) { ST.puntiLeggio(S, is, ui.mostrati[s.id] || 0, -s.m); popChip(ui, s.id, -s.m); } suonoNo(); if (s.id === cb.myId && !cb.telefono) vibra(70); }
           });
         });
       }
@@ -2622,6 +2655,27 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     var bh = S.barraEl.offsetHeight;
     if (bh !== ui.barraH) { var primaB = ui.barraH === -1; ui.barraH = bh; if (!primaB && S.shot) ST.camera(S, S.shot(), 350); if (ui.quadro.classList.contains("on")) posQuadro(ui); if (ui.alta) posAlto(ui); }
     if (ui.altoEl.classList.contains("tocca") !== !!ui.puoGirare) ui.altoEl.classList.toggle("tocca", !!ui.puoGirare);
+  }
+  // 📺 senza studio: cosa c'è sotto il tabellone. «ruota» (si gira: la ruota grande, niente tastiera), «lettere» (si scelgono o si
+  // scrivono le lettere: la tastiera grande, la ruota piccola sopra se c'è posto), «quadro» (buste e finale), «lampo» (si prenota)
+  var LETTERE_F = ["consonante", "vocale", "vlettera", "express", "risolvi", "vdecidi"];
+  function modoMezzo(ui, vm, inRisolvi, mioTurno) {
+    var f = vm.fase, m = "ruota";
+    if (inRisolvi || ui.segreto || mioTurno && (f === "flettere" || f === "ftempo")) m = "lettere";
+    else if (FASI_BUSTA.indexOf(f) >= 0 || FASI_FIN.indexOf(f) >= 0 && f !== "fintro") m = "quadro";
+    else if (f === "lampo" || f === "lampofine") m = "lampo";
+    else if (LETTERE_F.indexOf(f) >= 0) m = "lettere";
+    var gv = f === "gira" && !!(vm.puo && vm.puo.compra);   // si può comprare una vocale: sotto la ruota la fila delle vocali
+    if (m === ui.modo && gv === ui.modoVoc) return;
+    ui.modo = m; ui.modoVoc = gv;
+    var v = ui.S.vista; ["ruota", "lettere", "quadro", "lampo"].forEach(function (x) { v.classList.toggle("ru-m-" + x, x === m); });
+    v.classList.toggle("ru-m-voc", gv);
+  }
+  // il «+800» (o «−400») che salta fuori sul punteggio di chi incassa o perde
+  function popChip(ui, id, d) {
+    var ch = ui.chip[id]; if (!ui.flat || !d || !ch || !ch._d) return;
+    ch._d.textContent = (d > 0 ? "+" : "−") + fmtN(Math.abs(d)); ch._d.className = "ru-delta " + (d > 0 ? "su" : "giu");
+    rianima(ch._d, "on");
   }
   // i fatti della partita (vm.ev): uguali su tutti i telefoni
   function effetto(ui, vm, e) {
@@ -2939,6 +2993,11 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       }
       kb.el.appendChild(riga);
     });
+    if (ui.flat) {   // 📺 senza studio: quando si gira la tastiera non c'è, ma se si può comprare una vocale resta la fila delle vocali
+      kb.voc = {}; var rv = el("div", { class: "ru-qv" });
+      VOCALI.forEach(function (Lt) { var b = el("button", { class: "ru-btn lettera voc", type: "button", text: Lt, onclick: function () { tastoQ(ui, Lt); } }); b.disabled = true; kb.voc[Lt] = b; rv.appendChild(b); });
+      kb.el.appendChild(rv);
+    }
     return kb;
   }
   // la lettera accesa vale finché non cambia il momento (fase, turno, giro, lettere chiamate)
@@ -2986,6 +3045,8 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
         (modo === "fsel" && (ui.finSel || []).indexOf(L) >= 0 ? " scelta" : "");
       if (b.className !== cls) b.className = cls;
       if (b.disabled !== !on) b.disabled = !on;
+      var bv = kb.voc && kb.voc[L];   // (la fila delle vocali, senza studio: uguale ai tasti della tastiera)
+      if (bv) { if (bv.className !== cls) bv.className = cls; if (bv.disabled !== !on) bv.disabled = !on; }
     });
     var cOn = modo === "scrivi";
     if (kb.canc.disabled !== !cOn) { kb.canc.disabled = !cOn; kb.canc.classList.toggle("nasc", !cOn); }
@@ -3640,7 +3701,41 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-n-tasto{flex:0 0 auto;width:38px;height:38px;border:0;border-radius:10px;background:rgba(127,127,127,.25);font-size:1rem;cursor:pointer;color:inherit}",
       ".ru-n-in{width:100%;box-sizing:border-box;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid rgba(127,127,127,.4);font:inherit;font-size:16px;font-weight:700;background:#fff;color:#14113a}",
       ".ru-n-in.maiu{text-transform:uppercase}",
-      ".ru-n-nota{font-size:.82rem;font-weight:700;min-height:1.2em}.ru-n-nota.err{color:#e03131}"
+      ".ru-n-nota{font-size:.82rem;font-weight:700;min-height:1.2em}.ru-n-nota.err{color:#e03131}",
+      // 📺 SENZA STUDIO (11 nov 2026): tabellone in alto (subito sotto il tasto per uscire), sotto la ruota o la tastiera, in fondo i tasti
+      ".ru-flat .st-esci{left:6px;top:calc(4px + env(safe-area-inset-top));width:30px;height:30px;font-size:1.05rem;background:var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".ru-flat .ru-sopra{top:calc(4px + env(safe-area-inset-top));left:6px;right:6px}",
+      ".ru-flat .ru-cat{min-height:30px;line-height:30px;padding:0 36px;font-size:.86rem}",
+      ".ru-flat .ru-buio{display:none}",
+      ".ru-flat .ru-alto{transition:opacity .3s,visibility 0s .3s}.ru-flat .ru-alto.on{transition:opacity .3s}.ru-flat .ru-alto.on.nascosta{opacity:0}",
+      ".ru-flat .ru-piatto-alto{transform-origin:0 0;transform:translate(var(--tx,0),var(--ty,0)) scale(var(--s,1));transition:transform .45s cubic-bezier(.3,1.1,.5,1)}",
+      ".ru-flat .ru-alto.on .ru-piatto-alto{transform:translate(var(--tx,0),var(--ty,0)) scale(var(--s,1))}",
+      ".ru-flat .ru-alto.on.vicino .ru-piatto-alto{transform:translate(var(--txv,0),var(--ty,0)) scale(var(--sv,1));transition:transform 1.1s cubic-bezier(.4,0,.2,1)}",
+      ".ru-flat .st-terzo{bottom:auto;top:calc(var(--ru-mezzo,40%) + 8px)}",
+      // i punteggi: la faccina piccola al posto del pallino, il Jolly accanto, il «+800» che salta fuori
+      ".ru-flat .ru-punti{flex-wrap:nowrap;gap:5px}",
+      ".ru-flat .ru-chip{position:relative;flex:1 1 0;min-width:0;max-width:none;height:38px;display:flex;flex-wrap:wrap;align-content:center;column-gap:4px;row-gap:0;padding:0 6px 0 33px;border-radius:12px;",
+        "font-size:.78rem;line-height:1.15;background:var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo)}",
+      ".ru-flat .ru-chip canvas.fac{position:absolute;left:4px;top:50%;margin-top:-13px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.08)}",
+      ".ru-flat .ru-chip .n{flex:0 0 100%;font-size:.7rem;font-weight:700;color:var(--o-tenue)}",
+      ".ru-flat .ru-chip b{font-size:.95rem}.ru-flat .ru-chip small{align-self:center;font-size:.6rem}",
+      ".ru-flat .ru-chip.on{border-color:var(--o-oro);box-shadow:inset 0 0 0 1.5px var(--o-oro),0 0 12px -2px rgba(255,194,71,.6);background:rgba(40,30,70,.95)}.ru-flat .ru-chip.on .n{color:var(--o-testo)}",
+      ".ru-flat .ru-chip .ru-jolly{position:absolute;right:-3px;top:-6px;font-size:.7rem;line-height:1;padding:2px 4px;border-radius:6px;background:#7048e8;color:#fff;display:none}.ru-flat .ru-chip .ru-jolly.on{display:inline-block}",
+      ".ru-delta{position:absolute;left:50%;top:100%;z-index:3;font-weight:900;font-size:15px;white-space:nowrap;pointer-events:none;opacity:0;text-shadow:0 2px 0 rgba(0,0,0,.5);transform:translate(-50%,-40%)}",
+      ".ru-delta.su{color:#6ff0a6}.ru-delta.giu{color:#ff8d98}",
+      ".ru-delta.on{animation:ruDelta 1.5s ease-out}",
+      "@keyframes ruDelta{0%{opacity:0;transform:translate(-50%,-70%) scale(.6)}15%{opacity:1;transform:translate(-50%,0) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,30%)}}",
+      // la tastiera: c'è solo quando si scelgono o si scrivono le lettere, coi tasti grandi; le vocali (da comprare) azzurre
+      ".ru-flat.ru-m-ruota .ru-qwerty .ru-qr,.ru-flat.ru-m-quadro .ru-qwerty .ru-qr,.ru-flat.ru-m-lampo .ru-qwerty .ru-qr{display:none}",
+      ".ru-flat .ru-qwerty{gap:6px}.ru-flat .ru-qr{gap:4px}",
+      ".ru-flat .ru-qr .ru-btn.lettera{flex-basis:calc((100% - 36px) / 10);min-height:calc(var(--alt,640px) * .068);font-size:clamp(1.05rem,calc(var(--alt,640px) * .028),1.5rem);border-radius:10px}",
+      ".ru-flat .ru-qr .ru-btn.canc{flex-basis:calc((100% - 36px) / 10 * 1.5)}",
+      ".ru-flat .ru-qwerty .ru-btn.lettera.voc{background:linear-gradient(180deg,rgba(63,216,255,.2),rgba(63,216,255,.1));box-shadow:inset 0 0 0 1.5px #3fd8ff;color:#c8f4ff}",
+      ".ru-flat .ru-qwerty .ru-btn.lettera.voc.si{background:rgba(255,194,71,.2);color:#ffd27a;box-shadow:inset 0 0 0 1px rgba(255,194,71,.55)}",
+      ".ru-flat .ru-qwerty .ru-btn.lettera.sel{background:var(--sel,#ffc247);color:#0d1020;box-shadow:inset 0 0 0 2px #fff,0 0 12px var(--sel,#ffc247)}",
+      ".ru-qv{display:none;gap:6px;justify-content:center}.ru-flat.ru-m-ruota.ru-m-voc .ru-qv{display:flex}",
+      ".ru-qv .ru-btn.lettera{flex:0 0 calc((100% - 24px) / 5);max-width:64px;min-height:44px;padding:0;border-radius:10px;font-size:1.25rem}",
+      ".ru-flat .ru-btn.prenoto.grande{min-height:calc(var(--alt,640px) * .13)}"
     ].join("");
     document.head.appendChild(st);
   }

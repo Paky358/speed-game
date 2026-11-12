@@ -400,7 +400,7 @@
     apertura = ST.apertura, stacco = ST.stacco, avatarDi = ST.avatarDi, mioAvatar = ST.mioAvatar, avatarValido = ST.avatarValido,
     coriandoli = ST.coriandoli, dorme = ST.dorme, vuota = ST.vuota, durataApertura = ST.durataApertura, STACCO = ST.STACCO;
   FX.applauso = ST.FX.applauso; FX.ohh = ST.FX.ohh; FX.rullo = ST.FX.rullo;
-  var OPZ_STUDIO = { titolo: "La linea del tempo", logo: ["LA LINEA", "DEL TEMPO"] };
+  var OPZ_STUDIO = { titolo: "La linea del tempo", logo: ["LA LINEA", "DEL TEMPO"], punti: "riga" };   // (📺 senza studio: i punteggi su una riga sola che scorre di lato, come la vecchia barra: la linea resta alta anche in 10)
 
   function ordina(linea) { linea.sort(function (a, b) { return a.anno - b.anno; }); }
   // «📆 Scegli l'epoca» (26 ott 2026): gli anni delle carte in gioco. imp.epoca = "tutta", "antica", "900", "80" o "mia"
@@ -625,7 +625,10 @@
   function leggioL(S, i, g, delta) {
     if (!S.L[i]) return;
     if (g.fin > 0) ST.testoLeggio(S, i, postoL(g.fin));
-    else puntiLeggio(S, i, S.vinciL ? okVista(g.ok, S.vinciL) : g.ok || 0, delta || 0);
+    else {
+      if (ST.piatto) S.L[i].dopo = S.vinciL ? "/" + S.vinciL + (inSparL(g, S.vinciL) ? " ⚔️" : "") : "";   // (📺 senza studio: «3/5» sul punteggio in alto)
+      puntiLeggio(S, i, S.vinciL ? okVista(g.ok, S.vinciL) : g.ok || 0, delta || 0);
+    }
   }
   function leggiiL(S, giocatori) { giocatori.forEach(function (g, i) { leggioL(S, i, g, 0); }); }
   // "Paky, Giulia e Luca"
@@ -1196,7 +1199,7 @@
   function schermoGioco(S, o) {
     var el = S.t.el, sch = S.sch;
     fermaTimer(S); vuota(sch);
-    sch.appendChild(nodoTop(el, o.giocatori, o.turnoId));
+    if (!ST.piatto) sch.appendChild(nodoTop(el, o.giocatori, o.turnoId));   // (📺 senza studio i punteggi con le faccine stanno già in alto)
     sch.appendChild(el("div", { class: "tl-stato" }, [ el("div", {}, [ el("span", { text: o.stato }), o.sotto ? el("small", { text: o.sotto }) : null ]) ]));
     if (o.rimMs != null) { var tot = o.totMs || TEMPO * 1000; S.timer = barraTimer(el, Math.min(tot, Math.max(0, o.rimMs)), tot, o.onScaduto || null); sch.appendChild(S.timer); }
     sch.appendChild(o.pannello || nodoCartaMano(el, o.carta || { titolo: "" }, null, o.cambia || null));   // pannello: al posto della carta (si ruba tutti insieme)
@@ -1632,7 +1635,7 @@
     stato._T = stato._io >= 0 ? creaTraccia({ online: false, carte: carte, tutteCat: tutteLeCategorie(t.impostazioni) }) : null;
     ordina(stato.linea);
     // lo studio: tutti sullo stesso telefono, quindi nessun "TU"
-    stato.S = creaStudio(t, stato.giocatori, { io: -1, esci: t.esci, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo });
+    stato.S = creaStudio(t, stato.giocatori, { io: -1, esci: t.esci, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo, punti: OPZ_STUDIO.punti });
     apertura(stato.S).then(function () { turnoTel(t, stato); });
   }
   // chi gioca ancora: ha carte e non è scollegato (online)
@@ -1761,7 +1764,7 @@
     stato._io = -1;
     if (prof) stato.giocatori.forEach(function (g, i) { if (stato._io < 0 && g.nome === prof.nome) stato._io = i; });
     stato._T = stato._io >= 0 ? creaTraccia({ online: false, carte: vinci, tutteCat: tutteLeCategorie(imp) }) : null;
-    stato.S = creaStudio(t, stato.giocatori, { io: -1, esci: t.esci, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo });
+    stato.S = creaStudio(t, stato.giocatori, { io: -1, esci: t.esci, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo, punti: OPZ_STUDIO.punti });
     stato.S.vinciL = vinci;   // (i leggii non leggono mai più carte di quelle per vincere)
     leggiiL(stato.S, stato.giocatori);
     apertura(stato.S).then(function () { cartaTel(t, stato); });
@@ -2795,7 +2798,7 @@
     // regia nuova: la prima volta, in un'altra stanza o in una partita nuova (la regia vecchia non serve più)
     if (!REG || REG.codice !== vm.codice || REG.partita !== vm.partita || (!REG.S.vivo() && !REG.fineFatta)) {
       REG = { t: t, cb: cb, vm: vm, ids: ids, codice: vm.codice, partita: vm.partita };
-      REG.S = creaStudio(t, vm.giocatori, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo });
+      REG.S = creaStudio(t, vm.giocatori, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(); }, titolo: OPZ_STUDIO.titolo, logo: OPZ_STUDIO.logo, punti: OPZ_STUDIO.punti });
       if (conTarga(t)) REG.S.vista.classList.add("st-con-targa");   // (il posto della targhetta di chi guarda)
       if (vm.linee) REG.S.vinciL = vm.vinci;   // (i leggii non leggono mai più carte di quelle per vincere)
       if (vm.linee) leggiiL(REG.S, vm.giocatori); else vm.giocatori.forEach(function (g, i) { puntiLeggio(REG.S, i, g.punti, 0); });

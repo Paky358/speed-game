@@ -383,7 +383,7 @@
       if (!await W.aspetta(function () { return /Entri al prossimo oggetto/.test(T(Sw)); }, 30000)) no("Sara non legge «Entri al prossimo oggetto» (" + T(Sw).slice(-160) + ")");
       await giocaTutti(["Paky", "Luca"], function () { return (vm(C).players || []).some(function (p) { return p.nome === "Sara"; }); }, { ms: 90000 });
       if (!(vm(C).players || []).some(function (p) { return p.nome === "Sara"; })) no("Sara non entra al prossimo oggetto");
-      if (!await W.aspetta(function () { return Sw.document.querySelectorAll(".st-leggio").length === 3; }, 8000)) no("sul telefono di Sara i leggii non sono 3");
+      if (!await W.aspetta(function () { return Sw.document.querySelectorAll(".st-leggio, .stp-chip").length === 3; }, 8000)) no("sul telefono di Sara i leggii non sono 3");
       // l'host ricarica: la partita riprende (stesso codice, niente saletta, Sara ancora in partita coi punti di prima)
       await W.dorme(900);
       var punti0 = JSON.stringify((vm(C).players || []).map(function (p) { return [p.nome, p.punti]; })), salette = {};
@@ -411,7 +411,7 @@
     if (pan && pan.querySelector(".pz-giochi-pan,.pzc-spesa,.pza-ord,.pze-lista")) { if (pan.getBoundingClientRect().top < 50) guai.push("il pannello copre i tasti in alto"); }
     else if (pan && pan.offsetHeight > h * 0.66) guai.push("pannello alto " + pan.offsetHeight + " su " + h);
     var sch = d.querySelector(".st-sch-in .pz-sch");
-    if (sch && !d.querySelector(".st-mondo.st-quieto")) return guai;   // (la telecamera non è sul maxischermo)
+    if (sch && !d.querySelector(".st-mondo.st-quieto, .st-piatto")) return guai;   // (la telecamera non è sul maxischermo)
     if (sch) [].forEach.call(sch.querySelectorAll(".pz-scheda,.pz-riga,.pz-cl,.pz-car,.pz-te,.pz-och,.pz-rg,.pz-rcard,.pz-rpag,.pz-conta,.pz-banner,.pz-gioco,.pz-intro,.pz-testa"), function (e) {
       var r = e.getBoundingClientRect(); if (!r.height) return;
       if (r.bottom > basso + 2) guai.push((e.className.split(" ")[0]) + " sotto il pannello (" + Math.round(r.bottom) + ">" + Math.round(basso) + ")");

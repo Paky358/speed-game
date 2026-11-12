@@ -415,7 +415,7 @@
         visti[k] = (visti[k] || 0) + 1;
         PZ.controllaVista(w).forEach(function (g) { guai[k + ": " + g] = 1; });
         var t = w.document.querySelector(".st-sch-in .pz-testa"), sch = w.document.querySelector(".st-sch-in");
-        if (t && sch && w.document.querySelector(".st-mondo.st-quieto")) { var r = t.getBoundingClientRect(), rs = sch.getBoundingClientRect(); if (r.height && r.top < rs.top - 2) guai[k + ": la testata esce in alto (" + Math.round(r.top) + "<" + Math.round(rs.top) + ")"] = 1; }
+        if (t && sch && w.document.querySelector(".st-mondo.st-quieto, .st-piatto")) { var r = t.getBoundingClientRect(), rs = sch.getBoundingClientRect(); if (r.height && r.top < rs.top - 2) guai[k + ": la testata esce in alto (" + Math.round(r.top) + "<" + Math.round(rs.top) + ")"] = 1; }
       } });
       esiti.push(wh.join("x") + ": " + (Object.keys(guai).length ? Object.keys(guai).slice(0, 8).join(" | ") : "ok") + " (passi " + Object.keys(visti).length + ", premi " + Object.keys(premi).join(",") + ")");
     }

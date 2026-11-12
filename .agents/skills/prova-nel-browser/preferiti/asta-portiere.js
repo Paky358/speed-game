@@ -3,11 +3,12 @@
 //
 // pu1 All'asta del fanta esce UN SOLO portiere per squadra (Inter e Napoli ne hanno due nel listone): 3.000 mazzi da 2 a 10
 //     giocatori, sempre un portiere a testa, mai due della stessa squadra; e i portieri escono tutti, prima o poi.
-//     (10 nov 2026) E il gruppo X «solo in campo» (difensori da 4 in giù, centrocampisti e attaccanti da 5 in giù, tranne Camarda)
+//     (10 nov 2026) E il gruppo X «solo in campo» (difensori da 4 in giù, centrocampisti e attaccanti da 5 in giù, tranne Geubbels, il rigorista del Lecce)
 //     non esce MAI all'asta, ma gioca nella giornata: tutti sono nelle squadre di Serie A del gioco.
 // pu2 Sul maxischermo «🎯 1° RIGORISTA», «🦶 2° PUNIZIONI», «🚩 1° ANGOLI»: sempre il numero e la scritta per intero, piccole, una
 //     sotto l'altra a destra in basso; la maglia grande come senza scritte; nome, squadra e prezzo interi e mai sotto le scritte
 //     (360x640, 320x568, 412x915, 390x844).
+// mo1 Ogni squadra col suo modulo (data/fanta-moduli.js) in campo e nell'overall; i vostri attaccanti mai in difesa (11 nov 2026).
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -28,9 +29,14 @@
     var L = w.SG_FANTA_CALCIATORI, Q = w.SG_FANTA_QUOTAZIONI.valori, SOGLIA = { D: 4, C: 5, A: 5 }, X = {}, nX = 0;
     ["D", "C", "A"].forEach(function (r) {
       (L[r].X || []).forEach(function (k) { var mk = /^(.*) \(([^)]+)\)$/.exec(k); X[mk[1] + "|" + mk[2]] = 1; nX++; if (!(Q[k] <= SOGLIA[r])) no(k + " è «solo in campo» ma vale " + Q[k]); });
-      ["A", "B", "C"].forEach(function (t) { (L[r][t] || []).forEach(function (k) { if (Q[k] <= SOGLIA[r] && k !== "Camarda (Milan)") no(k + " vale " + Q[k] + " ma è ancora all'asta"); }); });
+      ["A", "B", "C"].forEach(function (t) { (L[r][t] || []).forEach(function (k) { if (Q[k] <= SOGLIA[r] && k !== "Geubbels (Lecce)") no(k + " vale " + Q[k] + " ma è ancora all'asta"); }); });
     });
     if (nX < 30) no("il gruppo «solo in campo» ha solo " + nX + " calciatori");
+    // (11 nov 2026, il proprietario: «così c'è un rigorista per ogni squadra») ogni squadra ha almeno uno dei suoi rigoristi all'asta
+    var SQ = w.SG_FANTA_SQUADRE.squadre, all = {}, nn = function (x) { return String(x).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z. ]/g, "").trim(); };
+    ["P", "D", "C", "A"].forEach(function (r) { ["A", "B", "C"].forEach(function (t) { (L[r][t] || []).forEach(function (k) { var mk = /^(.*) \(([^)]+)\)$/.exec(k); all[nn(mk[1]) + "|" + mk[2]] = 1; }); }); });
+    var senza = Object.keys(SQ).filter(function (sq) { return !(SQ[sq].rigori || []).some(function (x) { return all[nn(x[0]) + "|" + sq]; }); });
+    if (senza.length) no("senza nessun rigorista all'asta: " + senza.join(", "));
     var rose = M.rose(), inRosa = {}; Object.keys(rose).forEach(function (sq) { rose[sq].forEach(function (c) { inRosa[c.nome + "|" + c.squadra] = 1; }); });
     Object.keys(X).forEach(function (k) { if (!inRosa[k]) no(k + " non gioca nella giornata"); });
     for (var i = 0; i < 3000; i++) {
@@ -43,7 +49,7 @@
     if (Object.keys(visti).length !== tutti) no("escono solo " + Object.keys(visti).length + " portieri su " + tutti);
     try { Object.keys(w.localStorage).forEach(function (k) { if (/fanta_/.test(k)) w.localStorage.removeItem(k); }); } catch (e) {}
     x.push("3.000 mazzi da 2 a 10: sempre un portiere a testa, mai due della stessa squadra (" + doppie.join(", ") + " ne hanno due); escono tutti i " + tutti);
-    x.push(nX + " «solo in campo»: mai all'asta, tutti nelle squadre della giornata");
+    x.push(nX + " «solo in campo»: mai all'asta, tutti nelle squadre della giornata; ogni squadra ha almeno un rigorista all'asta");
     return x.join("; ");
   } });
   COPIONE.aggiungi("pu2", { nome: "Mini Asta Fantacalcio: rigorista, punizioni e angoli sempre col numero e la scritta intera", fai: async function () {
@@ -67,14 +73,14 @@
         var S = {}, b2 = M.maxischermo(el, S, true); vero.parentNode.insertBefore(b2, vero); vero.style.display = "none";
         S.schermo.classList.remove("vuoto"); S.ruolo.textContent = "CEN"; S.ruolo.className = "st-ruolo as-rb-C"; S.squadra.textContent = "FIORENTINA"; S.nome.textContent = nomi[k % 3];
         S.magliaImg.src = vero.querySelector(".st-maglia").src || "carte/giochi/astafanta.jpg";
+        var conVs = k % 2 === 0; S.vs.textContent = conVs ? (k % 4 === 0 ? "🆚 Frosinone (81)" : "🆚 Inter (86) · Milan (82) · Roma (85)") : ""; S.vs.style.display = conVs ? "" : "none";   // (🆚 contro chi gioca, con l'overall della squadra dall'11 nov: prima delle scritte, come nel gioco)
         M.etichette(S, cs[0], cs[1], cs[2]);   // (come nel gioco: il prezzo e chi offre arrivano subito dopo)
-        var conVs = k % 2 === 0; S.vs.textContent = conVs ? "🆚 Frosinone" : ""; S.vs.style.display = conVs ? "" : "none";   // (🆚 contro chi gioca: acceso di partenza dall'8 nov)
         M.prezzo(S.prezzoN, "12"); S.chi.textContent = S.corto ? "di IL PAPPONE" : "offerta di IL PAPPONE";
         var d = S.schermo.querySelector(".st-dati").getBoundingClientRect(), sc = S.schermo.getBoundingClientRect(), dove = misure[i].join("x") + " " + cs.join("/") + " " + S.nome.textContent;
         // (10 nov 2026, il proprietario: «il ruolo si vede tagliato»): tutto dentro lo schermo, dal ruolo in alto al prezzo in basso (sopra la scritta che scorre)
         var dentro = S.schermo.querySelector(".st-dentro").getBoundingClientRect(), ru0 = S.ruolo.getBoundingClientRect(), pz0 = S.prezzoN.getBoundingClientRect(), chi0 = S.chi.getBoundingClientRect(), vs0 = S.vs.getBoundingClientRect();
         // («🆚 Frosinone» sta nella riga di ruolo e squadra, sopra il nome: almeno un pezzo leggibile, mai fuori dal riquadro)
-        if (ru0.top < sc.top + 1 || pz0.bottom > dentro.bottom + 1 || chi0.bottom > dentro.bottom + 1 || (conVs && (vs0.top < ru0.top - 3 || vs0.bottom > testo(S.nome).top + 3 || vs0.right > d.right + 1 || vs0.width < 24))) ko.push(dove + (conVs ? " con 🆚" : "") + ": tagliato (ruolo " + Math.round(ru0.top - sc.top) + " px dal bordo di sopra, prezzo " + Math.round(dentro.bottom - pz0.bottom) + " px dal fondo)");
+        if (ru0.top < sc.top + 1 || pz0.bottom > dentro.bottom + 1 || chi0.bottom > dentro.bottom + 1 || (conVs && (vs0.top < ru0.top - 3 || vs0.bottom > testo(S.nome).top + 3 || vs0.right > d.right + 1 || vs0.width < 24 || (k % 4 === 0 && misure[i][0] >= 360 && S.vs.scrollWidth > S.vs.clientWidth + 1)))) ko.push(dove + (conVs ? " con 🆚" : "") + ": tagliato (ruolo " + Math.round(ru0.top - sc.top) + " px dal bordo di sopra, prezzo " + Math.round(dentro.bottom - pz0.bottom) + " px dal fondo" + (conVs ? ", 🆚 " + S.vs.scrollWidth + " su " + S.vs.clientWidth + " px, squadra " + S.squadra.scrollWidth + "/" + S.squadra.clientWidth + ", riga " + Math.round(S.ruolo.parentNode.getBoundingClientRect().width) : "") + ")");
         function testo(n) { var r = document.createRange(); r.selectNodeContents(n); return r.getBoundingClientRect(); }   // (dove sta davvero la scritta)
         function sopra(a, b) { return a.width && b.width && a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1; }
         var occupati = [["il nome", testo(S.nome)], ["il prezzo", testo(S.prezzoN)], ["chi offre", S.chi.getBoundingClientRect()], ["il ruolo", S.ruolo.getBoundingClientRect()], ["la squadra", testo(S.squadra)]].concat(conVs ? [["il 🆚", vs0]] : []);
@@ -97,5 +103,47 @@
     if (ko.length) no(ko.slice(0, W.__tutti ? 99 : 6).join(" · ") + (ko.length > 6 ? " … (" + ko.length + ")" : ""));
     x.push("6 casi su 6 telefoni (360x640, 320x568, 412x915, 390x844, 360x700, 384x780) nello stadio vero, con e senza «🆚»: numero e scritta sempre interi, a destra in basso; maglia grande come prima; nome, squadra e prezzo interi e scoperti; ruolo e prezzo dentro lo schermo");
     return x.join("; ");
+  } });
+  // mo1 🧩 I MODULI (11 nov 2026, il proprietario: «ogni squadra ha il suo modulo… la formazione più forte possibile… e si prende l'overall di quella»;
+  //     «deve succedere molto raramente che il mio attaccante sta in difesa»): per ognuna delle 20 squadre, attaccando e difendendo, 11 posti col portiere
+  //     in porta, tanti difensori, centrocampisti e attaccanti quanti ne dice data/fanta-moduli.js, gli attaccanti sempre più avanti dei difensori; un
+  //     vostro attaccante che non c'entra non va MAI in un posto da difensore (prima i posti da attaccante, poi uno nuovo davanti, poi il centrocampo);
+  //     l'overall dell'Inter è quello della formazione più forte nel 3-5-2, con Lautaro e Thuram.
+  COPIONE.aggiungi("mo1", { nome: "Mini Asta Fantacalcio: ogni squadra col suo modulo in campo e nell'overall", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0 });
+    if (w.SG && w.SG.scaricaGioco) await w.SG.scaricaGioco("asta");
+    var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {};
+    if (src.indexOf("function postiModulo(") < 0) no("non trovo i posti del modulo nel file del gioco");
+    src = src.replace("  SG.registra(gioco);", " FUORI.titolari = titolariIn; FUORI.reparti = repartiSquadra; FUORI.posti = postiModulo; FUORI.ordine = ordineRuolo; FUORI.modulo = moduloDi; FUORI.ovr = overallSquadra; FUORI.ovrQ = ovrDaQ; FUORI.rose = roseSerieA; SG.registra(gioco);");
+    new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, fuori);
+    var MOD = (w.SG_FANTA_MODULI && w.SG_FANTA_MODULI.squadre) || {}, sq = Object.keys(MOD), ko = [];
+    if (sq.length !== 20) no("i moduli sono " + sq.length + " squadre invece di 20");
+    sq.forEach(function (s) {
+      var m = fuori.modulo(s), tot = 1 + m.D + m.C + m.A, linee = m.linee.reduce(function (t, x) { return t + x; }, 0);
+      if (tot !== 11 || linee !== 10) ko.push(s + ": il modulo " + m.mod + " non fa 11 (" + tot + ", linee " + linee + ")");
+      [true, false].forEach(function (att) {
+        var p = fuori.posti(s, att), c = { P: 0, D: 0, C: 0, A: 0 }; p.forEach(function (o) { c[o.ru]++; });
+        if (p.length !== 11 || c.P !== 1 || c.D !== m.D || c.C !== m.C || c.A !== m.A || p[0].ru !== "P") ko.push(s + (att ? " (attacca)" : " (difende)") + ": posti " + JSON.stringify(c));
+        var xA = p.filter(function (o) { return o.ru === "A"; }).map(function (o) { return o.x; }), xD = p.filter(function (o) { return o.ru === "D"; }).map(function (o) { return o.x; });
+        if (att ? Math.min.apply(null, xA) <= Math.max.apply(null, xD) : Math.max.apply(null, xA) >= Math.min.apply(null, xD)) ko.push(s + (att ? " (attacca)" : " (difende)") + ": un attaccante non è davanti ai difensori");
+        var o = fuori.ordine(p, "A", att), primi = o.slice(0, o.indexOf("su"));
+        if (primi.some(function (i) { return p[i].ru !== "A"; }) || o.some(function (i) { return i !== "su" && p[i].ru === "D"; })) ko.push(s + ": un vostro attaccante può finire in difesa");
+      });
+    });
+    var inter = fuori.rose()["Inter"].filter(function (c) { return c.ruolo === "A"; }).sort(function (x, y) { return y.q - x.q; }).slice(0, 2).map(function (c) { return c.nome; });
+    if (fuori.modulo("Inter").A !== 2 || inter.join(",").indexOf("Martinez L.") < 0 || inter.join(",").indexOf("Thuram") < 0) ko.push("l'Inter: le due punte più forti sono " + inter.join(", "));
+    // ⚔️ (11 nov sera) attacco, centrocampo e difesa coi ruoli del fantacalcio (il proprietario: «Pulisic fa il centrocampista, quindi ha solo Ramos
+    // in attacco»): l'attacco del Milan (un attaccante solo nel suo 4-3-3) è l'overall del suo attaccante più forte
+    var rp = {}; sq.forEach(function (s) { var r = fuori.reparti(s); rp[s] = r; ["att", "cen", "dif"].forEach(function (k) { if (!(r[k] >= 60 && r[k] <= 95)) ko.push(s + ": " + k + " " + r[k]); }); });
+    var milA = fuori.rose()["Milan"].filter(function (c) { return c.ruolo === "A"; }).sort(function (x, y) { return y.q - x.q; })[0];
+    if (fuori.modulo("Milan").A === 1 && (!milA || Math.abs(rp.Milan.att - fuori.ovrQ("A", milA.q)) > 0.01)) ko.push("il Milan: l'attacco è " + rp.Milan.att + ", non quello di " + (milA && milA.nome));
+    // 👕 (11 nov notte, il proprietario: «il Milan con il 4-3-3, chi sta a destra e a sinistra?») in campo i titolari al loro posto: chi gioca davanti
+    // nella linea d'attacco, gli esterni a tutta fascia sulle fasce (mai in mezzo alla difesa), l'attaccante più forte di punta; tutti diversi
+    var linea = function (s, nomi) { var p = fuori.posti(s, true), t = fuori.titolari(s, p), n = fuori.modulo(s).linee.length, l = {}; p.forEach(function (o, i) { if (t[i]) l[t[i].nome] = o; }); return { l: l, n: n, t: t }; };
+    var M1 = linea("Milan"); ["Pulisic", "Moreira"].forEach(function (x) { if (!M1.l[x] || M1.l[x].li !== M1.n - 1) ko.push("il Milan: " + x + " non è nella linea d'attacco"); });
+    var I1 = linea("Inter"); if (!I1.l["Dimarco"] || I1.l["Dimarco"].li !== 1 || Math.abs(I1.l["Dimarco"].y - 0.5) < 0.3) ko.push("l'Inter: Dimarco non è esterno sulla fascia");
+    sq.forEach(function (s) { var T = linea(s).t, visti = {}; T.forEach(function (x) { if (!x) return; if (visti[x.k]) ko.push(s + ": " + x.nome + " in campo due volte"); visti[x.k] = 1; }); if (T.filter(Boolean).length !== 11) ko.push(s + ": in campo " + T.filter(Boolean).length + " titolari"); });
+    if (ko.length) no(ko.slice(0, 6).join(" · ") + (ko.length > 6 ? " … (" + ko.length + ")" : ""));
+    return "Inter attacco " + Math.round(rp.Inter.att) + ", centrocampo " + Math.round(rp.Inter.cen) + ", difesa " + Math.round(rp.Inter.dif) + "; Milan attacco " + Math.round(rp.Milan.att) + " · 20 squadre col loro modulo (" + sq.map(function (s) { return s + " " + MOD[s][0]; }).slice(0, 4).join(", ") + "…): 11 posti, ruoli del modulo, attaccanti sempre davanti, i vostri attaccanti mai in difesa; Inter " + fuori.ovr("Inter") + " con " + inter.join(" e ");
   } });
 })();

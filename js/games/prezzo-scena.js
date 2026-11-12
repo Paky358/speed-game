@@ -761,6 +761,8 @@
       ".pz-giochi{flex-direction:column;max-width:440px}.pz-gioco{max-width:none;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;row-gap:2px;align-items:center;text-align:left;padding:10px 14px}",
       ".pz-gioco .i{grid-row:1/3;font-size:40px}.pz-gioco b{font-size:18px;color:var(--o-oro-testo)}.pz-gioco small{font-size:13px;font-weight:600}",
       ".pz-pan.su:has(.pz-giochi-pan){top:calc(56px + env(safe-area-inset-top))}",
+      // 📺 senza studio (12 nov 2026): col pannello su i punteggi in alto si tolgono (chi ha offerto lo dicono il pannello e il maxischermo): più posto
+      ".st-piatto.pz-con-pan .stp-punti{display:none}.st-piatto.pz-con-pan .stp-esci-flt{display:block}",
       ".pz-scelte.pz-giochi-pan{flex:1 1 0;min-height:0;grid-template-columns:minmax(0,1fr);grid-auto-rows:minmax(0,1fr);gap:10px}",
       ".pz-sc.pz-scgioco{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:14px;row-gap:4px;align-content:center;align-items:center;text-align:left;min-height:0;padding:12px 16px}",
       ".pz-sc.pz-scgioco .i{grid-row:1/3;font-size:clamp(40px,calc(var(--alt,640px) * .07),64px)}.pz-sc.pz-scgioco b{font-size:clamp(19px,calc(var(--alt,640px) * .03),26px)}",

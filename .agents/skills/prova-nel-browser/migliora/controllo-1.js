@@ -159,7 +159,7 @@
   } });
 
   // =================== ck3: Patata, miccia segreta, telefono spento e chi arriva tardi ===================
-  function passaBomba(w) { var L = w && w.document.querySelector(".st-leggio.tocca"); if (!L) return false; L.click(); return true; }
+  function passaBomba(w) { var L = w && w.document.querySelector(".st-leggio.tocca, .stp-chip.tocca"); if (!L) return false; L.click(); return true; }
   COPIONE.aggiungi("ck3", { nome: "Patata online con la miccia segreta: chi ha la bomba spegne il telefono, chi arriva tardi guarda", fai: async function () {
     var P = await W.apriTel("Paky", { x: 0 });
     var C = await stanza(P, "La Patata Bollente", "patata", ["Giulia", "Luca"]), note = [];

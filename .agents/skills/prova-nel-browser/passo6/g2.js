@@ -234,7 +234,7 @@
         while (Date.now() < fino) {
           var v = vm(C);
           if (v.fase === "fine") break;
-          if (B.document.querySelector(".st-barra .ru-btn")) nTasti++;
+          if (B.document.querySelector(".st-barra .ru-btn:not(.lettera)")) nTasti++;   // (la tastiera delle lettere c'è per tutti dal 3 nov 2026, spenta per chi guarda: non conta)
           var R = ripresaDi("Paky"), Pz = R && R.stato && R.stato.P, chi = nomeDi(v, v.turno), k = v.fase + "|" + v.turno + "|" + v.giroN;
           if (Pz && chi && !v.sigla && !fatti[k]) {
             if (v.fase === "gira") { fatti[k] = 1; manda("ruota", chi, { t: "azione", a: "risolvi" }); }
