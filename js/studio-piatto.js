@@ -271,6 +271,8 @@
       // i punteggi in alto: una fila fino a 4, poi due
       ".stp-punti{flex:0 0 auto;display:flex;flex-direction:column;gap:5px;padding:calc(6px + env(safe-area-inset-top)) 6px 0;position:relative;z-index:7}",
       ".stp-punti.via{display:none}",
+      ".stp-punti.due{gap:4px;padding-top:calc(4px + env(safe-area-inset-top))}.stp-punti.due .stp-chip{height:34px;gap:4px}.stp-punti.due .stp-chip canvas{width:27px;height:27px}",
+      ".stp-punti.due .stp-chip .n{font-size:10.5px}.stp-punti.due .stp-chip .p{font-size:13.5px}.stp-punti.due .stp-esci{height:34px}",
       ".stp-punti.riga .stp-riga{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.stp-punti.riga .stp-riga::-webkit-scrollbar{display:none}",
       ".stp-punti.riga .stp-chip{flex:1 0 84px;max-width:150px}.stp-punti.riga .stp-esci{position:sticky;left:0;z-index:3}",
       ".stp-punti.grandi .stp-chip{height:54px;gap:7px;padding-left:5px;border-radius:15px}.stp-punti.grandi .stp-chip canvas{width:42px;height:42px}",
@@ -442,6 +444,7 @@
     if (S.riga) perRiga = Math.max(1, n);
     var nRighe = Math.max(1, Math.ceil(n / Math.max(1, perRiga)));
     vuota(S.puntiEl); S.L = [];
+    S.puntiEl.classList.toggle("due", nRighe > 1 && !S.grandi);   // (su due righe i punteggi sono più bassi: più posto al gioco)
     for (var r = 0; r < nRighe; r++) { var rg = el("div", { class: "stp-riga" }); righe.push(rg); S.puntiEl.appendChild(rg); }
     if (righe.length) righe[0].appendChild(S.esciEl);
     S.gioc.forEach(function (g, i) {
