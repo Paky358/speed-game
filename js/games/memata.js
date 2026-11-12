@@ -779,7 +779,9 @@
     var vv = window.visualViewport;
     function segui() {
       if (!s.isConnected) { if (vv) { vv.removeEventListener("resize", segui); vv.removeEventListener("scroll", segui); } window.removeEventListener("resize", segui); clearInterval(ui.tick); return; }
-      ui.root.style.transform = vv && vv.offsetTop ? "translateY(" + vv.offsetTop + "px)" : "";
+      // (con la tastiera la pagina la tiene già ferma il core, attaccata a quello che si vede: html.tastiera-ferma; spostarla di nuovo la manderebbe giù due volte)
+      var ferma = document.documentElement.classList.contains("tastiera-ferma");
+      ui.root.style.transform = vv && vv.offsetTop && !ferma ? "translateY(" + vv.offsetTop + "px)" : "";
       ui.P.adatta();
     }
     if (vv) { vv.addEventListener("resize", segui); vv.addEventListener("scroll", segui); }

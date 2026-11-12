@@ -4382,6 +4382,7 @@ html body.tema-oro::before{ display:none; }
 
 /* ⌨️ Tastiera aperta (11 nov 2026): la pagina sta ferma, alta quanto la parte che si vede sopra la tastiera.
    Niente vuoto da far scorrere sotto. Solo se la schermata stava tutta nello schermo (html.tastiera-ferma): le pagine lunghe scorrono come sempre.
-   core.js mette html.tastiera, --alt (sopra la tastiera), --alt-piena, --vv-su. */
+   core.js mette html.tastiera, --alt (sopra la tastiera), --alt-piena, --vv-su.
+   transform: le finestre fisse sopra il gioco (inset:0) si misurano sul body, cioè sulla parte che si vede (su iPhone se no restano centrate sotto la tastiera). */
 html.tastiera-ferma, html.tastiera-ferma body{ height:var(--alt); max-height:var(--alt); overflow:hidden; overscroll-behavior:none; }
-html.tastiera-ferma body{ position:fixed; left:0; right:0; top:var(--vv-su, 0px); width:100%; }
+html.tastiera-ferma body{ position:fixed; left:0; right:0; top:var(--vv-su, 0px); width:100%; transform:translateZ(0); }

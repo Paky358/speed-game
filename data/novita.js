@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 338,
+    data: "12 novembre 2026",
+    titolo: "La tastiera non rovina più i giochi ⌨️",
+    descrizione: [
+      "⌨️ Quando si apre la tastiera per scrivere, la pagina resta ferma: niente più vuoto da far scorrere sotto la tastiera, in tutti i giochi.",
+      "🤥 La Balla Colossale: mentre scrivi la balla la notizia resta GRANDE e riempie lo schermo sopra il campo, con la tua balla già dentro; «Fatto» sta accanto a dove scrivi.",
+      "🎨 Scarabocchio: con la tastiera aperta la lavagna resta grande e la chat le sta accanto; la chat va da sola sull'ultimo messaggio (se non stai leggendo più su) e la parola, anche lunga, si vede sempre tutta.",
+      "🤨 Sì... però: il foglio per scrivere la tua carta sta tutto sopra la tastiera, coi tasti a vista."
+    ]
+  },
+  {
     v: 337,
     data: "12 novembre 2026",
     titolo: "I giochi a tutto schermo: via lo studio TV 📺",
