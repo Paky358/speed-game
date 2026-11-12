@@ -59,7 +59,7 @@
   // =================== PATATA ===================
   // chi ha la bomba tocca il primo leggio che si può toccare (come col dito)
   function passaBomba(w) {
-    var L = w && w.document.querySelector(".st-leggio.tocca"); if (!L) return false;
+    var L = w && w.document.querySelector(".st-leggio.tocca, .stp-chip.tocca"); if (!L) return false;   // (senza studio: i punteggi in alto)
     L.click(); return true;
   }
   async function patataFinoAllaFine(C, ms, ogni) {

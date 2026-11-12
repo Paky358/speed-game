@@ -265,7 +265,7 @@
 
   // ---------- PATATA ----------
   // nella finestra dell'host: tocca il leggio di chi deve ricevere la bomba
-  function toccaLeggio(w, i) { var L = w.document.querySelectorAll(".st-leggio")[i]; if (L && L.classList.contains("tocca")) { L.click(); return true; } return false; }
+  function toccaLeggio(w, i) { var L = w.document.querySelectorAll(".st-leggio, .stp-chip")[i]; if (L && L.classList.contains("tocca")) { L.click(); return true; } return false; }
   aggiungi(564, { nome: "Patata: l'host ricarica con la bomba in mano a un amico → resta a lui col tempo intero, non scoppia", fai: async function () {
     var r = await A.provaRipresa({ gioco: "patata", nomeTessera: "La Patata Bollente", amici: ["Giulia", "Luca"],
       comincia: async function (C, P) {
@@ -300,7 +300,7 @@
     if (vm(C).fase !== "gioco" || vm(C).holder !== chi) no("dopo il respiro la bomba non è più a " + nome + " (fase " + vm(C).fase + ")");
     W.reteDi(nome).invia({ t: "passa", target: A.mioId(altro) });
     if (!await W.aspetta(function () { return vm(C).holder === A.mioId(altro); }, 4000)) no(nome + " non riesce a passare la bomba a " + altro + " dopo la ripresa");
-    if (!W.finestra(nome).document.querySelector(".st-leggio")) no(nome + " non vede più lo studio");
+    if (!W.finestra(nome).document.querySelector(".st-leggio, .stp-chip")) no(nome + " non vede più lo studio");
     errori();
     return "ripresa in " + r.dt + " s: la bomba resta a " + nome + " col tempo intero (" + r.dopo.cap / 1000 + " s) e " + Math.round(r.dopo.attesaMs / 100) / 10 + " s di respiro; poi " + nome + " la passa a " + altro;
   } });

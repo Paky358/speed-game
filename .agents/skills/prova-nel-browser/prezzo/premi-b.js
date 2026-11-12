@@ -337,7 +337,7 @@
         // le cose nostre: la parete, la scala, il bottone, le chip
         var h = w.innerHeight, pan = w.document.querySelector(".pz-pan.su"), basso = h - (pan ? pan.offsetHeight : 0);
         [].forEach.call(w.document.querySelectorAll(".st-sch-in .pzb-pl-in, .st-sch-in .pzb-rg, .st-sch-in .pzb-tr-p, .st-sch-in .pzb-pl-ch, .st-sch-in .pzb-tr-tacche, .st-sch-in .pzb-mai"), function (e) {
-          var r = e.getBoundingClientRect(); if (!r.height || !w.document.querySelector(".st-mondo.st-quieto")) return;
+          var r = e.getBoundingClientRect(); if (!r.height || !w.document.querySelector(".st-mondo.st-quieto, .st-piatto")) return;
           if (r.bottom > basso + 2) guai[k + ": " + e.className.split(" ")[0] + " sotto il pannello (" + Math.round(r.bottom) + ">" + Math.round(basso) + ")"] = 1;
           if (r.left < -1 || r.right > w.innerWidth + 1) guai[k + ": " + e.className.split(" ")[0] + " esce di lato"] = 1;
         });
