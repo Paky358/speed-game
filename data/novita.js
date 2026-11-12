@@ -9,6 +9,23 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 338,
+    data: "12 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: tutto leggibile anche sul telefono piccolo 📱",
+    descrizione: [
+      "🏆 Il podio non finisce più sopra il maxischermo: i gradini si rimpiccioliscono quanto serve, anche in 8 e con le 3 giornate, e il tasto «🏅 I premi della giornata» resta libero. A pari punti si legge perché ha vinto il primo (la rosa più forte, o più crediti avanzati).",
+      "📋 Nelle pagelle voto e fantavoto non si attaccano più («5,5 | 5,5», mai «5,55,5»).",
+      "⚽ Sul telefono piccolo le rose sotto il maxischermo mostrano i nomi interi col prezzo, senza maglie una sopra l'altra.",
+      "📜 Le frasi lunghe sulla riga gialla del maxischermo scorrono invece di finire coi puntini.",
+      "🆚 Con le 3 giornate gli avversari si leggono tutti e tre con le sigle («🆚 GEN 77 · FRO 81 · TOR 79») e il nome della squadra resta intero; le scritte 🎯 🦶 🚩 non coprono più l'avversario.",
+      "🔝 In alto prima quanti calciatori sono stati presi («13/15 presi · Centrocampista all'asta»), il fumetto del banditore sparisce quando arriva il calciatore dopo, il cartello «📋 D'UFFICIO» non copre più prezzo e frase.",
+      "📺 Nel gol in TV la frase va a capo e il risultato ha una riga sua; nella barra della partita, se i nomi non ci stanno, le sigle. In 5 o più sul telefono piccolo il campo della giornata è più largo.",
+      "🎙️ Le frasi dell'«AGGIUDICATO!» sono le stesse su tutti i telefoni; «1 💰 avanzato».",
+      "⚙️ Nelle regole le scelte Sì/No stanno una accanto all'altra (il foglio è molto più corto) e «🎙️ Battute del banditore» c'è anche senza la giornata. In saletta «Si gioca così» si legge tutto.",
+      "📖 Le regole parlano dell'overall (quanto vale davvero ogni calciatore) e non più delle quotazioni vere. Sullo stesso telefono «Comincia l'asta» è sempre in fondo allo schermo e sulla busta di carta ci sono avversario e 🎯 🦶 🚩."
+    ]
+  },
+  {
     v: 337,
     data: "12 novembre 2026",
     titolo: "I giochi a tutto schermo: via lo studio TV 📺",
