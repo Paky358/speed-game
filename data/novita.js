@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 337,
+    data: "11 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: 11 azioni nuove e parate vere 🧤",
+    descrizione: [
+      "🎬 Nella giornata 11 azioni nuove: il cross al secondo palo, il colpo di testa in tuffo, il portiere che esce sul cross, la porta vuota, il tre contro uno, il filtrante, la palla dal fondo all'indietro, il tiro a giro sul palo lontano, il tiro murato in calcio d'angolo, il portiere che non trattiene e il tiro al volo.",
+      "🧤 Le parate sono vere e diverse: il portiere la blocca in tuffo o in alto, para col piede, la toglie dall'incrocio in calcio d'angolo, e quando si tuffa arriva davvero sul pallone.",
+      "🦵 Il salvataggio sulla linea è diventato raro (prima usciva un tiro sbagliato su otto), e il difensore sul palo non sta più fermo come una statua.",
+      "👕 Tutti quelli che fanno l'azione hanno la faccia e il numero veri, anche chi passa e chi difende quando non sono di nessuno. E il tuo calciatore che fa l'azione non ha più un «doppione» al suo posto in formazione.",
+      "📺 Sul gol annullato per fuorigioco il VAR mostra il fermo immagine del passaggio, con chi ha segnato cerchiato di rosso."
+    ]
+  },
+  {
     v: 335,
     data: "11 novembre 2026",
     titolo: "Mini Asta Fantacalcio: in campo i titolari veri 👕",
