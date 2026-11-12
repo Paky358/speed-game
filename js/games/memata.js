@@ -1129,6 +1129,8 @@
       ".me-aspetta{flex:1;min-width:0;font-size:.88rem;color:var(--o-tenue);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       // con la tastiera aperta: via il titolo e la riga dei crediti, il meme si stringe
       ".me-scena.scrive .me-titolo,.me-scena.scrive .me-cred{display:none}",
+      // ⌨️ con la tastiera aperta (12 nov 2026): solo il campo col suo tasto (Avanti / Invia); i riquadri si scelgono toccando il meme, «Cambia» e «Invia meme» tornano chiudendo la tastiera: il meme resta più grande
+      "html.tastiera .me-scena.scrive .me-scrivi>.me-riga:first-child,html.tastiera .me-scena.scrive .me-riga-invia{display:none}",
       // votare
       ".me-vota{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}",
       ".me-voto{height:76px;border-radius:18px;background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:transform .12s,opacity .2s}",
