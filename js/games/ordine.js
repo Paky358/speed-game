@@ -1657,7 +1657,7 @@
       extra: [ box ], puoComincia: ok,
       spettatore: !cb.sonoHost && !io && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi" : null,   // nella Sala: non scelto, guarda
       nota: ok ? notaOk : nota, testoComincia: "Comincia ▶",
-      attesa: "Scegli la tua squadra e aspetta che l'host cominci!", onComincia: cb.onComincia, onEsci: cb.onEsci });
+      attesa: "Scegli la squadra: comincia l'host!", onComincia: cb.onComincia, onEsci: cb.onEsci });
   }
   // Lo schermo di gioco nello STUDIO TV (come gli altri giochi di Quiz & parole):
   // - in alto, ai lati del maxischermo, i capi sui loro podi (del colore della squadra);

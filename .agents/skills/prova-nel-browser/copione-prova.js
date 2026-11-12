@@ -2203,7 +2203,7 @@
         if (!ass.some(function (a) { return a.pos === 1 && a.punti === 100 * peso; })) no(gioco + ": il primo non prende " + 100 * peso);
       }
       // 1) la Classifica della serata è già accesa (riga corta su tutti); nel ⚙️ niente interruttore, «🔄 Azzera» spento
-      if (!await W.aspetta(function () { return vm(S).torneo && tel.every(function (w) { return /Classifica della serata: ancora nessuna partita/.test(corto(w)); }); }, 5000))
+      if (!await W.aspetta(function () { return vm(S).torneo && tel.every(function (w) { return /Serata: ancora nessuna partita/.test(corto(w)); }); }, 5000))
         no("la Classifica della serata non è accesa da sola su tutti («" + tel.map(corto).join(" / ") + "»)");
       var bReg = P.document.querySelector(".saletta-schermo .sl-regole");
       if (!bReg) no("nella Sala non c'è il ⚙️");

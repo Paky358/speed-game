@@ -1683,7 +1683,8 @@
     if (!faccine && cuore.torneo && cuore.torneo.auto && cuore.torneo._fine === classifica) {
       var clS = cuore.classificaTorneo();
       s._piede.appendChild(el("button", { class: "fine-serata", type: "button", onclick: cuore.schermataTorneoHub,
-        text: "🏆 Classifica della serata: " + clS.slice(0, 3).map(function (r, i) { return r.nome + " " + (i + 1) + "°"; }).join(" · ") + " ›" }));
+        // (a pari punti, stesso posto: prima diceva 1°, 2°, 3° anche se erano tutti pari)
+        text: "🏆 Classifica della serata: " + clS.slice(0, 3).map(function (r, i) { var p = r.punti != null ? 1 + clS.filter(function (q) { return q.punti > r.punti; }).length : i + 1; return r.nome + " " + p + "°"; }).join(" · ") + " ›" }));
     }
 
     // Dalla fine partita si resta nella stessa sala: rigioca, cambia gioco o modifica il gruppo

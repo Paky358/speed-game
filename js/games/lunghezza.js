@@ -15,6 +15,7 @@
 
   var ID = "lunghezza";
   var MIN = 2, MAX = 16;
+  var ATTESA_DORME = 180000;       // 📱 chi blocca il telefono quando si resterebbe in meno di 2: lo si aspetta 3 minuti
   var FASCE = [2, 6, 10];          // distanza dal centro del bersaglio (scala 0-100): fino a 2 → 4 punti, fino a 6 → 3, fino a 10 → 2
   var T_COSA = 45, T_CLASSICO = 75, T_SCOMMESSA = 15, T_RIVELA = 11, T_SALTA = 5;   // secondi
   var MANO_MS = 1500;              // la lancetta comune: chi la muove la tiene finché è fermo da più di 1,5 s
@@ -525,12 +526,13 @@
   }
   // un tasto che risponde al primo tocco (pointerup), vibra solo al tocco
   function bottone(t, classe, testo, fn) {
-    var b = t.el("button", { class: "lu-btn " + (classe || ""), type: "button", text: testo }), giu = false;
+    var b = t.el("button", { class: "lu-btn " + (classe || ""), type: "button", text: testo }), giu = false, ult = 0;
+    function via() { var ora = Date.now(); if (ora - ult < 350) return; ult = ora; fn(); }   // (se arrivano sia il dito sia il click, il tasto parte una volta sola)
     b.addEventListener("pointerdown", function (e) { if (b.disabled) return; giu = true; e.preventDefault(); });
-    b.addEventListener("pointerup", function (e) { if (!giu || b.disabled) return; giu = false; e.preventDefault(); try { SG.audioCtx && SG.audioCtx(); } catch (_) {} vibra(10); fn(); });
+    b.addEventListener("pointerup", function (e) { if (!giu || b.disabled) return; giu = false; e.preventDefault(); try { SG.audioCtx && SG.audioCtx(); } catch (_) {} vibra(10); via(); });
     b.addEventListener("pointercancel", function () { giu = false; });
     b.addEventListener("pointerleave", function () { giu = false; });
-    b.addEventListener("click", function (e) { if (e.detail === 0 && !b.disabled) fn(); });   // (tastiera / lettore di schermo: il tocco è già passato da pointerup)
+    b.addEventListener("click", function (e) { if (e.detail === 0 && !b.disabled) via(); });   // (tastiera / lettore di schermo: il tocco è già passato da pointerup)
     return b;
   }
   // il cerchio del tempo
@@ -656,7 +658,7 @@
           var p = pById(id), nome = String(m.nome || "Amico").trim().slice(0, 16) || "Amico";
           // chi rientra (pagina ricaricata, telefono riacceso, partita ripresa) ha lo STESSO id: ritrova il suo posto, la sua squadra e (se è il sensitivo) il bersaglio
           if (p) {
-            p.forse = false; if (p.via && H.fase === "gioco") p.via = false;
+            p.forse = false; p.dorme = null; if (p.via && H.fase === "gioco") p.via = false;
             if (!p.omino) p.omino = avatarValido(m.omino);
             if (H.pausa && !H.respiro && id === H.sens) riprendi();
             bd(true); mandaSegreto(true);
@@ -692,9 +694,18 @@
       if (inGuarda(id)) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
       if (inProssimi(id)) { H.prossimi = H.prossimi.filter(function (x) { return x.id !== id; }); bd(); return; }
       var p = pById(id); if (!p) return;
+      var bloccato = p.forse;   // sparito senza salutare (telefono bloccato, app in secondo piano), non uscito apposta
       p.forse = false;
       if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
       if (p.via) return;
+      // 📱 se andarsene lui chiuderebbe la partita (in 2), chi ha solo bloccato il telefono resta dentro (📶 accanto al nome)
+      // e lo si aspetta fino a 3 minuti: prima la partita finiva da sola dopo 20 secondi di schermo spento
+      if (bloccato && H.fase === "gioco" && !H.respiro && presenti().length - 1 < MIN) {
+        p.forse = true; p.dorme = Date.now(); bd();
+        setTimeout(function () { var q = pById(id); if (q && q.dorme && !q.via && H.fase === "gioco") { q.dorme = null; q.forse = false; q.via = true; controlla(id); } }, ATTESA_DORME);
+        return;
+      }
+      p.dorme = null;
       p.via = true;   // a partita iniziata resta in classifica, ma non gioca più (se torna, ritrova il suo posto)
       if (H.fase !== "gioco" || H.respiro) return bd();   // (nel respiro dopo una ripresa decide fineRespiro)
       controlla(id);
@@ -1521,8 +1532,10 @@
     var k = JSON.stringify(lista);
     if (k === ui.kGente) return;
     ui.kGente = k; svuota(ui.gente);
+    // in tanti (da 9) solo le faccine coi segni: con i nomi ne entravano 7-10 e gli altri sparivano senza dirlo
+    ui.gente.classList.toggle("tanti", lista.length > 8);
     lista.forEach(function (x) {
-      ui.gente.appendChild(t.el("div", { class: "lu-p " + x.cls }, [t.el("img", { alt: "", src: srcAvatar(ui.omini[x.id], x.nome) }), t.el("span", { text: x.nome }), x.badge ? t.el("i", { text: x.badge }) : null]));
+      ui.gente.appendChild(t.el("div", { class: "lu-p " + x.cls, title: x.nome }, [t.el("img", { alt: "", src: srcAvatar(ui.omini[x.id], x.nome) }), t.el("span", { text: x.nome }), x.badge ? t.el("i", { text: x.badge }) : null]));
     });
   }
   // la lancetta comune che si muove (dal telefono di chi la tiene)
@@ -1569,7 +1582,7 @@
   function pannello(ui, vm, r, seg) {
     var t = ui.t, cb = ui.cb, Q = ui.Q, tipo = tipoPannello(vm, r);
     if (tipo === "s-cosa-parola" && ui.scrivo) tipo = "s-cosa-scrivo";
-    var k = tipo + "|" + vm.partita + "|" + vm.turno + (tipo === "s-cosa-parola" && seg ? "|" + (seg.parole || []).join(",") : "") + (tipo === "s-classico-scala" ? "|" + !!seg : "") + (tipo === "rivela" ? "|" + (vm.rip || 0) : "");   // (rivelazione: dopo una ripresa il conto riparte)
+    var k = tipo + "|" + vm.partita + "|" + vm.turno + (tipo === "s-cosa-parola" && seg ? "|" + (seg.parole || []).join(",") : "") + (tipo === "s-classico-scala" ? "|" + !!seg : "") + (tipo === "attesa" ? "|" + !!vm.scala : "") + (tipo === "rivela" ? "|" + (vm.rip || 0) : "");   // (rivelazione: dopo una ripresa il conto riparte)
     if (k !== ui.kPan) {
       ui.kPan = k; svuota(ui.pan); ui.panEl = {}; ui.root.classList.remove("scrive");
       var P = ui.panEl, el = t.el;
@@ -2153,17 +2166,17 @@
       ".lu-box b{display:block;font-size:clamp(16px,5.4vw,22px);font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".lu-box.a.sq{box-shadow:inset 0 -3px #f06595}.lu-box.b.sq{box-shadow:inset 0 -3px #5c7cfa}.lu-box.mia{outline:2px solid #ffd43b;outline-offset:-2px}.lu-box.tocca{background:rgba(255,212,59,.2)}",
       ".lu-box.sale b{animation:luSale .35s ease infinite alternate}@keyframes luSale{from{transform:scale(1)}to{transform:scale(1.18)}}",
-      ".lu-centro{display:flex;flex-direction:column;align-items:center;gap:1px}.lu-turno{font-size:10px;font-weight:800;opacity:.75;white-space:nowrap}",
+      ".lu-centro{display:flex;flex-direction:column;align-items:center;gap:1px}.lu-turno{font-size:11.5px;font-weight:800;opacity:.75;white-space:nowrap}",
       ".lu-timer{position:relative;width:36px;height:36px}.lu-timer svg{width:100%;height:100%;transform:rotate(-90deg)}.lu-timer circle{fill:none;stroke-width:3.5}.lu-timer .f{stroke:rgba(255,255,255,.15)}.lu-timer .p{stroke:#69db7c;stroke-linecap:round;stroke-dasharray:97.4}.lu-timer.rosso .p{stroke:#ff6b6b}.lu-timer.rosso span{color:#ff8787}.lu-timer span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:1000;font-size:13px}.lu-timer.spento{opacity:.25}",
       ".lu-testa{flex:none;display:flex;align-items:center;gap:8px;min-height:40px}",
       ".lu-av{flex:none;width:40px;height:40px;border-radius:50%;overflow:hidden;background:linear-gradient(#7048e8,#4c2fb0);box-shadow:0 0 0 2px #b197fc,0 0 14px #845ef788}.lu-av img{width:100%;height:100%;object-fit:cover;object-position:50% 6%}",
-      ".lu-chi{min-width:0;display:flex;flex-direction:column;line-height:1.18}.lu-chi b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lu-chi span{font-size:13px;font-weight:700;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".lu-chi{min-width:0;display:flex;flex-direction:column;line-height:1.18}.lu-chi b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lu-chi span{font-size:13px;font-weight:700;opacity:.85;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.2}",
       ".lu-parola{flex:none;margin:auto 0;text-align:center;font-weight:1000;font-size:clamp(22px,8vw,34px);line-height:1.12;min-height:1.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 14px #b197fcaa}.lu-parola.media{font-size:clamp(18px,6vw,27px)}.lu-parola.lunga{font-size:clamp(15px,4.7vw,21px)}.lu-parola.pensa{font-size:clamp(14px,4.3vw,18px);font-weight:800;opacity:.85;text-shadow:none;line-height:1.5}",
       ".lu-dial{flex:1 1 auto;min-height:200px;position:relative;touch-action:none;background:radial-gradient(var(--dr,300px) var(--dr,300px) at 50% var(--dy,50%),rgba(122,84,255,.2) 0%,rgba(224,34,90,.08) 45%,rgba(224,34,90,0) 70%)}.lu-dial>svg{position:absolute;left:0;top:0;width:100%;height:50%;overflow:visible}.lu-dial.tocca{cursor:pointer}",
       // la metà di sotto del disco: la stessa ghiera, a mezza ellisse quando lo spazio è poco
       ".lu-corpo{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;gap:2px;padding:5px 9px 8px;border:var(--gh,8px) solid transparent;border-top:0;border-radius:0 0 50% 50%/0 0 100% 100%;background:radial-gradient(130% 100% at 50% 0%,#222a5c 0%,#151a39 55%,#0d1025 100%) padding-box,linear-gradient(180deg,#262d58,#1a1f42 60%,#141836) border-box;box-shadow:0 0 0 .7px rgba(255,255,255,.14),0 26px 44px -22px rgba(0,0,0,.95),inset 0 0 0 1px rgba(255,79,134,.5),inset 0 -14px 30px rgba(0,0,0,.4)}",
       ".lu-corpo .lu-estremi{column-gap:var(--pe,22px)}",
-      ".lu-corpo .lu-parola{flex:1 1 auto;min-height:0;margin:0;padding:0 7%;display:flex;align-items:center;justify-content:center;white-space:normal;overflow:hidden}",
+      ".lu-corpo .lu-parola{flex:1 0 auto;min-height:1.2em;margin:0;padding:0 7%;display:flex;align-items:center;justify-content:center;white-space:normal;overflow:hidden}",
       ".lu-perno{position:absolute;left:0;top:0;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#ffe1ea 0,#ff4f86 28%,#c0164a 66%,#5c0a22 100%);box-shadow:0 0 0 2px rgba(255,255,255,.92),0 0 0 4px rgba(13,16,32,.85),0 0 18px rgba(255,61,115,.75),0 4px 10px rgba(0,0,0,.6)}",
       // il radar che gira sulla tendina chiusa mentre il sensitivo pensa (solo transform/opacity)
       ".lu-radar{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .4s;background:conic-gradient(from -16deg,rgba(179,155,255,0) 0deg,rgba(179,155,255,.09) 14deg,rgba(255,255,255,.26) 15.5deg,rgba(179,155,255,0) 16deg);transform:rotate(-72deg)}",
@@ -2193,6 +2206,7 @@
       ".lu-gente{flex:none;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;max-height:50px;overflow:hidden}.lu-gente:empty{display:none}",
       ".lu-p{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 2px;border-radius:999px;background:rgba(255,255,255,.1);font-size:12px;font-weight:800;max-width:46%}",
       ".lu-p img{flex:none;width:20px;height:20px;border-radius:50%;object-fit:cover;object-position:50% 6%;background:#e9e4ff}.lu-p span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lu-p i{font-style:normal;white-space:nowrap}",
+      ".lu-gente.tanti .lu-p:not(.tu) span{display:none}.lu-gente.tanti .lu-p{padding-right:5px;max-width:none}.lu-gente.tanti{max-height:none}",
       ".lu-p.a{box-shadow:inset 0 -2px #f06595}.lu-p.b{box-shadow:inset 0 -2px #5c7cfa}.lu-p.si{background:rgba(105,219,124,.28)}.lu-p.via{opacity:.4}.lu-p.tu{outline:1.5px solid #ffd43b}",
       ".lu-pan{flex:none;display:flex;flex-direction:column;gap:6px}",
       ".lu-btn{min-height:50px;border:0;border-radius:16px;background:#69db7c;color:#0f2d14;font:inherit;font-size:clamp(16px,4.8vw,20px);font-weight:1000;box-shadow:0 5px 0 #0004;touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:6px 10px;cursor:pointer}",
@@ -2399,7 +2413,7 @@
         esito.textContent = (messe ? "✅ Aggiunte: " + fmtN(messe) + ". " : "") +
           (scartate.length ? "Non valgono (servono due lati, al massimo " + MAX_LATO + " lettere l'uno): " + scartate.slice(0, 3).join(" · ") + (scartate.length > 3 ? "…" : "") : "");
       }
-      box.appendChild(el("div", { class: "lu-nostre-agg" }, [ area, el("button", { class: "btn btn-primario btn-piccolo", type: "button", text: "➕ Aggiungi", onclick: aggiungi }) ]));
+      box.appendChild(el("div", { class: "lu-nostre-agg" }, [ area, el("button", { class: "btn btn-piccolo", type: "button", text: "➕ Aggiungi", onclick: aggiungi }) ]));
       area.addEventListener("blur", function () { if (area.value.trim()) aggiungi(); });   // (scritte e non aggiunte: non si perdono uscendo dal campo)
       box.appendChild(esito); box.appendChild(conta); box.appendChild(elenco);
       box.appendChild(el("div", { class: "lu-nostre-tasti" }, [ bCopia, bSvuota ]));

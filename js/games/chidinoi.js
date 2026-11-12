@@ -1381,7 +1381,7 @@
     var P = vm.posto ? posto(vm.posto) : null;
     var dove = vm.passo === "sfilata" ? "🎬 Stasera giocano…" : vm.passo === "classifica" ? "🏆 Classifica" :
       FINALE[vm.passo] ? "🎨 Gran finale" : vm.passo === "premi" ? "🏅 I titoli" :
-      P ? (P.emoji + " " + nomeCorto(P) + (vm.passo === "arrivo" ? "" : " · " + (vm.iD + 1) + "/" + vm.nD)) : "";
+      P ? (P.emoji + " " + (vm.passo === "arrivo" ? "" : (vm.iD + 1) + "/" + vm.nD + " · ") + nomeCorto(P)) : "";   // (il numero della domanda prima del nome: se il nome si taglia, resta)
     tx(u.dove, (u.guardo ? "👀 " : "") + dove);
     var nj = io ? io.jolly : 0;
     if (u.nJolly !== nj) { u.nJolly = nj; svuota(u.jolly); for (var i = 0; i < 3; i++) u.jolly.appendChild(u.t.el("i", { class: i < nj ? "su" : "", text: "🃏" })); }
@@ -1658,7 +1658,7 @@
     bMan.disabled = !campo.value.trim(); tx(conta, campo.value.length + "/40");
     var el = t.el("div", { class: "cn-scr" }, [strisciaScena(t, vm), cartaDomanda(t, String(d.q || "").replace(/_{3,}/g, "______"), "✍️ Tutti scrivono una battuta (anche " + (vm.prot === u.cb.myId ? "tu" : nomeVm(vm, vm.prot)) + ")"),
       t.el("div", { class: "cn-scr-box" }, [campo, t.el("div", { class: "cn-scr-riga" }, [conta, bMan])]), fatto]);
-    if (u.guardo) { campo.disabled = true; bMan.style.visibility = "hidden"; campo.placeholder = "👀 Gli altri stanno scrivendo…"; }
+    if (u.guardo) { campo.disabled = true; bMan.style.visibility = "hidden"; conta.style.visibility = "hidden"; campo.placeholder = "👀 Gli altri stanno scrivendo…"; }
     function tua() { if (TUA.k === vm.k && TUA.tx) { campo.value = TUA.tx; mostraFatto(TUA.tx); } }
     tua();
     return { el: el, tua: tua, agg: function () {},
@@ -2502,7 +2502,7 @@
       ".cn-cella canvas{width:100%;height:100%;display:block}.cn-cella.vuota{background:rgba(255,255,255,.15)}.cn-cella.vuota canvas{opacity:0}",
       ".cn-cella .tag{position:absolute;left:4px;bottom:4px;font-style:normal;font-size:10px;font-weight:800;background:rgba(0,0,0,.7);border-radius:6px;padding:1px 5px;color:#fff}.cn-cella .tag:empty{display:none}",
       ".cn-cella.mia{opacity:.55}.cn-cella.sel{box-shadow:0 0 0 4px #ffcf3f}.cn-cella.vince{box-shadow:0 0 0 4px #37d47e}",
-      ".cn-cella .sotto{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.72);color:#fff;font-size:10px;font-weight:800;text-align:center;padding:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cn-cella .sotto:empty{display:none}",
+      ".cn-cella .sotto{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.72);color:#fff;font-size:10px;font-weight:800;text-align:center;padding:2px;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.2;overflow-wrap:anywhere}.cn-cella .sotto:empty{display:none}",
       ".cn-cella .voti{position:absolute;top:3px;left:3px;right:3px;display:flex;flex-wrap:wrap;gap:2px}.cn-cella .cn-mini{width:20px;height:20px}",
       ".cn-zoom{display:flex;flex-direction:column;align-items:center;gap:10px;max-height:100%}",
       ".cn-zoom-cv{width:min(86vw,calc((var(--alt,100dvh) - 190px) * .75));height:auto;aspect-ratio:3/4;border-radius:16px;background:#fff}",
@@ -2510,7 +2510,7 @@
       ".cn-strisc{flex:none;text-align:center;font-weight:900;font-size:20px;color:#ffcf3f;opacity:0}.cn-strisc:empty{display:none}",
       ".cn-strisc.su{opacity:1;animation:cnPop .5s both}.cn-strisc.tutti{font-size:21px;color:#7ff0a8;text-shadow:0 0 12px rgba(127,240,168,.6)}",
       ".cn-mioesito{flex:none;align-self:center;font-weight:900;font-size:20px;padding:3px 16px;border-radius:999px;opacity:0;margin-top:4px}.cn-mioesito:empty{display:none}",
-      ".cn-mioesito.su{opacity:1;animation:cnPop .5s both}.cn-mioesito.si{background:#37d47e}.cn-mioesito.no{background:rgba(255,255,255,.18)}",
+      ".cn-mioesito.su{opacity:1;animation:cnPop .5s both}.cn-mioesito.si{background:#37d47e;color:#04321c}.cn-mioesito.no{background:rgba(255,255,255,.18)}",
       ".cn-voce-gioco{flex:none;text-align:center;font-style:italic;font-size:13px;opacity:0;padding-top:3px}.cn-voce-gioco:empty{display:none}.cn-voce-gioco.su{opacity:.9;transition:opacity .4s}",
       ".cn-verdetto{flex:none;text-align:center;padding:6px 0 2px;transition:opacity .3s}.cn-verdetto small{display:block;font-size:12px;opacity:.8}.cn-verdetto b{font-size:17px;font-weight:900;color:#ffcf3f}",
       ".cn-verdetto.su{animation:cnPop .45s both}.cn-verdetto:empty{display:none}",

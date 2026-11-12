@@ -224,9 +224,9 @@
     difficolta: 2,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono per scrivere e votare", amici: true }],
     regole: [
-      "Sul maxischermo esce una <b>notizia vera</b> ma incredibile, con un pezzo mancante.",
-      "A turno ognuno, in segreto, scrive una <b>balla</b> per completarla: deve sembrare vera, per ingannare gli altri.",
-      "Poi tutte le balle e la risposta vera si mescolano e a turno ognuno <b>vota</b> in segreto quella che crede vera. La propria balla non si può votare.",
+      "Esce una <b>notizia vera</b> ma incredibile, con un pezzo mancante.",
+      "Ognuno, in segreto, scrive una <b>balla</b> per completarla: deve sembrare vera, per ingannare gli altri (sullo stesso telefono a turno, passandovi il telefono).",
+      "Poi tutte le balle e la risposta vera si mescolano e ognuno <b>vota</b> in segreto quella che crede vera. La propria balla non si può votare.",
       "Quando le risposte sono poche, anche la <b>redazione</b> aggiunge qualche balla sua: occhio a non cascarci!",
       "<b>+2 punti</b> a chi trova la risposta vera. <b>+1 punto</b> a chi ha scritto una balla, per ogni amico che ci è cascato.",
       "👥 <b>Parliamo di te</b>: in certi round la domanda è su uno di voi («Il cibo che Luca non mangerebbe mai è…»). Lui scrive la <b>verità</b>, gli altri le balle. Lui non vota e prende <b>+1</b> per ogni amico che trova la sua verità.",
@@ -526,8 +526,8 @@
     };
     while (troppo() && fs > 12) { fs--; box.style.setProperty("--fs", fs + "px"); }
     if (troppo()) box.classList.add("soloFacce");   // ancora troppo: chi ha finito si vede solo dall'avatar
-    if (troppo()) box.classList.add("corto");       // e poi via la notizia (l'hanno già letta)
     if (troppo()) box.classList.add("minimo");      // e le righe più fitte
+    if (troppo()) box.classList.add("corto");       // e solo alla fine via la notizia (prima andava via subito: in 6 sul telefono piccolo la domanda spariva)
   }
   function tic(freq) {
     var c = SG.audioCtx && SG.audioCtx(); if (!c) return;
@@ -540,7 +540,7 @@
     var S = st.S;
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
     await ST.largo(S, 800);
-    ST.terzo(S, null, "Tutte le balle sono pronte!", "Guardate il tabellone…", "🤥");
+    ST.terzo(S, null, "Le balle sono pronte!", "Ecco le risposte…", "🤥");
     ST.pubblico(S, "applauso");
     await ST.dorme(1500); ST.viaTerzo(S);
     await ST.suSchermo(S, 800);
@@ -661,6 +661,11 @@
       stringi(); if (!troppo()) return;
       v.carta.classList.add("piccola"); if (!troppo()) return;
       if (tante) { v.carta.classList.add("due"); stringi(); if (!troppo()) return; }
+      if (window.SGStudio && SGStudio.piatto) {   // (senza studio: notizia piccola, scritte fino a 11 px, mai la notizia nascosta)
+        v.carta.classList.add("mini"); fs = 12; v.carta.style.setProperty("--fs", fs + "px");
+        while (troppo() && fs > 11) { fs -= 0.5; v.carta.style.setProperty("--fs", fs + "px"); }
+        return;
+      }
       v.carta.classList.add("senza"); stringi();   // senza la notizia c'è più posto: le scritte tornano grandi quanto si può
     })();
     if (buchi.length && lungo) buchi.forEach(function (b, n) { b.textContent = prima[n][0]; b.classList.toggle("pieno", prima[n][1]); });
@@ -979,7 +984,7 @@
     }
     await ST.suSchermo(S, 800);
     ST.fermaTimer(S); ST.vuota(S.sch);
-    var box = el("div", { class: "bc-clas" }, [ el("h2", { text: "🏁 Classifica dopo " + (st.giro + 1) + " round" }) ]);
+    var box = el("div", { class: "bc-clas" + (st.g.length > 4 ? " tanti" : "") }, [ el("h2", { text: "🏁 Classifica dopo " + (st.giro + 1) + " round" }) ]);
     ordine.forEach(function (g, k) {
       var r = el("div", { class: "bc-cl" + (pos(g) === 1 ? " primo" : "") }, [
         el("span", { class: "pos", text: medaglia(pos(g)) }), fac(el, g), el("span", { class: "nm", text: g.nome }),
@@ -1538,7 +1543,7 @@
     var am = vm.modoAmici === "solo" ? " Ogni round una domanda su uno di voi: lui scrive la verità, gli altri le balle."
       : vm.modoAmici === "no" ? "" : " Ogni tanto la domanda è su uno di voi (👥 Parliamo di te).";
     return "Si gioca con " + (vm.giri === 1 ? "1 round" : vm.giri + " round") + "." + am + (vm.sceglie === false ? "" : " 🎯 L'argomento lo sceglie chi è ultimo.")
-      + " 🔥 L'ultima notizia è la Balla Finale, coi punti tripli." + (vm.ride === false ? "" : " 😂 Alle balle più divertenti va la Balla d'oro.");
+      + (vm.modoAmici === "solo" ? "" : " 🔥 L'ultima notizia è la Balla Finale, coi punti tripli.") + (vm.ride === false ? "" : " 😂 Alle balle più divertenti va la Balla d'oro.");
   }
   function lobbyB(t, vm, cb) {
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN_ON,
@@ -1701,13 +1706,14 @@
       else ST.terzo(S, io, "Scrivete tutti la vostra balla!", st.d.amici ? "Su " + st.d.protNome + ": deve sembrare vera" : "Deve sembrare vera", "✍️");
       await ST.suLeggio(S, io, 700); ST.viaTerzo(S); ST.lampo(S);
     }
+    if (riprova && ST.viaBarra) ST.viaBarra(S);
     var testo = await apriBiglietto(st, io, { ms: tempoRimasto(R), verita: false, vero: vero, avviso: riprova ? avvisoVera(st) : null });
     if (!S.vivo()) return;
     if (testo && R.vm.fase === "scrittura") { if (!vero) MIA = { dom: vm.domanda, testo: testo }; cb.onBalla(testo); }   // (l'host poi conferma, o dice "è la verità")
     ST.testoLeggio(S, io, testo ? "✅ fatto" : "😶 niente"); ST.faccia(S, io, testo ? "esulta" : "triste");
     await ST.suSchermo(S, 800);
     ST.faccia(S, io, null);
-    if (R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "bc-attesa", text: "Fatto! Aspettiamo gli altri…" }), faccineB(R.t) ]);
+    if (R.vm.fase === "scrittura") ST.barra(S, [ el("p", { class: "bc-attesa", text: testo ? "Fatto! Aspettiamo gli altri…" : "⏰ Tempo scaduto: salti questa balla, ma puoi votare" }), faccineB(R.t) ]);
   }
   // chi non scrive/vota adesso (guarda, oppure ha già finito): una riga e le faccine, mentre gli altri finiscono
   function attesaOnline(R, guardo) {
@@ -1792,7 +1798,7 @@
     var S = R.S, el = R.t.el, cb = R.cb, tot = vm.ultimo || {};
     await ST.suSchermo(S, 800);
     ST.fermaTimer(S); ST.vuota(S.sch);
-    var box = el("div", { class: "bc-clas" }, [ el("h2", { text: "🏁 Classifica dopo " + (vm.giro + 1) + " round" }) ]);
+    var box = el("div", { class: "bc-clas" + ((vm.players || []).length > 4 ? " tanti" : "") }, [ el("h2", { text: "🏁 Classifica dopo " + (vm.giro + 1) + " round" }) ]);
     var lista = ordineB(vm);
     lista.forEach(function (p, k) {
       var pos = 1 + lista.filter(function (q) { return q.punti > p.punti; }).length;   // a pari punti, stessa medaglia
@@ -1967,6 +1973,7 @@
       ".bc-carta.due .bc-scelte{display:grid;grid-template-columns:1fr 1fr;gap:6px}.bc-carta.due .bc-scelta{padding:5px 7px;gap:5px;align-items:flex-start}.bc-carta.due .bc-scelta .n{width:20px;height:20px;font-size:11px}",
       ".bc-carta.due .bc-scelta .tag{position:absolute;right:4px;bottom:-7px;font-size:9px;padding:1px 5px}.bc-carta.due .bc-scelta{position:relative}",
       ".bc-carta.senza .bc-ritaglio{display:none}",
+      ".bc-carta.mini .bc-notizia{font-size:12px;line-height:1.25}.bc-carta.mini .bc-scelta{padding-top:3px;padding-bottom:3px}",
       ".bc-carta.stretta{gap:8px}.bc-carta.stretta .bc-ritaglio{padding:8px 12px 10px}.bc-carta.stretta .bc-notizia{font-size:15px}.bc-carta.stretta .bc-scelte{gap:6px}.bc-carta.stretta .bc-chi{font-size:17px}.bc-carta.stretta .bc-chi .fac{width:36px;height:36px}",
       // la rivelazione
       ".bc-sch.riv{gap:22px}",
@@ -2010,6 +2017,7 @@
       ".bc-cl.primo{background:color-mix(in srgb,var(--n-monete) 18%,transparent);border:1px solid color-mix(in srgb,var(--n-monete) 50%,transparent)}",
       ".bc-cl .pos{width:28px;text-align:center;font-weight:900}",
       ".bc-cl .fac{width:40px;height:40px}",
+      ".bc-clas.tanti{gap:4px;justify-content:flex-start;padding-bottom:6px}.bc-clas.tanti h2{font-size:19px;margin:0 0 2px}.bc-clas.tanti .bc-cl{padding:3px 10px 3px 4px}.bc-clas.tanti .bc-cl .fac{width:28px;height:28px}",
       ".bc-cl .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".bc-cl .pt{font-weight:900;color:var(--n-monete)}",
       ".bc-cl .pi{font-size:12px;font-weight:800;color:var(--o-verde);margin-left:4px}",

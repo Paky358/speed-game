@@ -164,7 +164,7 @@
     }
     var cl = classificaT(T), tx;
     if (T.finito && cl.length) tx = "🏆 Serata finita · 👑 " + cl[0].nome + " " + cifre(cl[0].punti);
-    else if (!T.n) tx = "🏆 Classifica della serata: ancora nessuna partita";
+    else if (!T.n) tx = "🏆 Serata: ancora nessuna partita";
     else tx = "🏆 " + cl.slice(0, 3).map(function (r) { return r.nome + " " + cifre(r.punti); }).join(" · ");
     if (K.tx.textContent !== tx) { K.tx.textContent = tx; K.nodo.setAttribute("aria-label", "Classifica della serata: " + tx.replace(/^🏆\s*/, "")); }
     return K.nodo;
@@ -1689,9 +1689,9 @@
       attesa: TN ? (E.finito ? nH + " vi riporta nella Sala: non devi toccare niente." : (E.iniziato ? "Quando tocca a te, la partita si apre da sola." : (E.scade ? "Tocca un posto libero: ti siedi lì, con chi vuoi." : "Si comincia appena ci siete tutti.")))
         : E ? (E.iniziato ? "Quando tocca a te, la partita si apre da sola." : "Tocca il girone in cui vuoi giocare, poi aspetta che l'host faccia partire il torneo.")
         : salaG.resta && tipo !== "rientra" ? "👑 Le sfide partono da sole: quando tocca a te, entri da solo."
-        : (tipo === "rientra" ? "Gli altri stanno giocando: rientra quando vuoi, oppure aspetta qui il prossimo gioco."
+        : (tipo === "rientra" ? "Gli altri giocano: rientra quando vuoi."
           : (tipo === "prossima" ? attesaInCorso(salaG, gs)
-            : (salaG.sceglie && !gs ? (salaG.nomeHost || "L'host") + (salaG.sceglie === "sfida" ? " sceglie chi gioca… ⚔️" : (salaG.insieme ? " propone 3 giochi: poi votate tutti… 🗳️" : " sceglie il prossimo gioco… 🎲")) : "Aspetta che l'host scelga un gioco: parte da solo sul tuo telefono."))),
+            : (salaG.sceglie && !gs ? (salaG.nomeHost || "L'host") + (salaG.sceglie === "sfida" ? " sceglie chi gioca… ⚔️" : (salaG.insieme ? " propone 3 giochi: poi votate tutti… 🗳️" : " sceglie il prossimo gioco… 🎲")) : "Aspetta l'host: il gioco parte da solo."))),
       onEsci: function () { chiudiSalaOspite(); schermataHome(); }
     });
     if (sS) sS.classList.toggle("con-tabellone", !!(E && (E.iniziato || (E.torneino && E.scade))));
@@ -1712,7 +1712,7 @@
     if (modo === "entra") return g && g.ritardatari === "subito" ? "✋ Puoi entrare: giochi subito." : "✋ Puoi entrare subito: giochi " + (g && g.ritardatari === "mano" ? "dalla prossima mano" : "dal prossimo turno") + ".";
     if (modo === "due") return "Giocano in due: guardali in diretta quando vuoi.";
     if (modo === "scelti") return "Giocano quelli scelti da " + (S.nomeHost || "l'host") + ": guardali quando vuoi.";
-    return "Alla prossima partita entri da solo: non devi toccare niente.";
+    return "Entri da solo alla prossima partita.";
   }
   function modoInCorso(S, gs) {
     var g = giocoDa(gs.gioco), mio = mioIdSala(S);
@@ -1723,7 +1723,9 @@
   }
   function boxInCorso(gs, tipo) {
     var S0 = salaG, D = S0.duello && S0.duello.stanza === gs.stanza ? S0.duello : null, mio = mioIdSala(S0);
-    var modo = D && mio !== D.a && mio !== D.b ? "duello" : (tipo === "rientra" ? "rientra" : modoInCorso(S0, gs));
+    // (la partita la teneva questo telefono, poi è sparito e l'ha presa un amico: «Rientra ▶» col mio posto di prima. Ripasso S7)
+    var exHost = !D && gs.fase === "gioco" && eroHostDi(gs.gioco, gs.stanza);
+    var modo = D && mio !== D.a && mio !== D.b ? "duello" : (tipo === "rientra" || exHost ? "rientra" : modoInCorso(S0, gs));
     var g = giocoDa(gs.gioco), nome = g ? g.nome : "un gioco";
     // la prima riga: il gioco (o chi gioca la sfida) e, a partita in corso, a che punto è
     var punto = gs.fase === "gioco" && gs.punto ? " · " + gs.punto : "", testa;
@@ -1770,6 +1772,11 @@
     S0._inCorso = { k: k, nodo: nodo, b: b, sm: sm };
     return nodo;
   }
+  // questa partita la tenevo io (la memoria della ripresa lo dice): il mio id in quella stanza, o null
+  function eroHostDi(gid, code) {
+    var rp = cuore.ripresaDi ? cuore.ripresaDi(gid, code) : null;
+    return rp && rp.io && Date.now() - (+rp.t || 0) < 20 * 60000 ? rp.io : null;
+  }
   // il mio id nella Sala (subito, anche prima che il collegamento dica "aperto")
   function mioIdSala(S) { return (S && (S.myId || (S.rete && S.rete.mioId))) || null; }
 
@@ -1786,9 +1793,13 @@
     var D = salaG && salaG.duello && salaG.duello.stanza === code ? salaG.duello : null, mio = mioIdSala(salaG);
     if (D && mio === D.a) return giocaDuello(g, D, torna);
     if (D && mio !== D.b) return guardaDuello(g, D, torna);
-    if (o && o.guarda && salaG) return guardaInSala(g, code, codiceSala, mio);
+    // la partita la tenevo io e ora la tiene un amico: rientro col mio id di quella stanza, così ritrovo posto, punti e segreti
+    // (S7 del ripasso: prima rientravo con l'id nuovo della Sala ed ero uno appena arrivato)
+    var exHost = !D && eroHostDi(gid, code);
+    if (o && o.guarda && salaG && !exHost) return guardaInSala(g, code, codiceSala, mio);
     cuore.linkParams = { gioco: gid, stanza: code };   // il gioco lo legge subito (t.linkParams)
-    if (mio) SGNet.ricordaId(code, mio);   // nel gioco lo stesso id che ho nella Sala
+    if (exHost) SGNet.ricordaId(code, exHost);
+    else if (mio) SGNet.ricordaId(code, mio);   // nel gioco lo stesso id che ho nella Sala
     // (se intanto la Sala è passata a me e questa partita è rimasta, p3-c: i punti li conto io, una volta per partita)
     var contati = {};
     function contaSeHost(g2, cl) {

@@ -231,16 +231,16 @@
         con ? (r.spia === "sa" ? "🎭 con la spia" : "🤫 con la spia (che non lo sa)") : null, r.mani > 1 ? r.mani + " mani" : "1 mano"].filter(Boolean).join(" · ");
     },
     regole: [
+      "Uno di voi è l'<b>impostore</b>: non ha la parola. Tutti gli altri hanno la stessa parola segreta. <b>Sullo stesso telefono</b> il telefono passa di mano: ognuno <b>tiene premuto</b> per vederla in segreto.",
+      "L'host sceglie cosa sa l'impostore: una parola <b>simile</b>, solo la <b>categoria</b> oppure <b>niente</b>.",
+      "L'app dice <b>chi inizia</b>: a turno ognuno dice a voce UNA parola legata alla sua, senza svelarla. Poi discutete e <b>votate in segreto</b> chi è l'impostore.",
+      "L'impostore scoperto ha un'<b>ultima possibilità</b>: se indovina la parola degli altri si salva e prende <b>+2</b>.",
+      "Punti: chi vota l'impostore <b>+2</b>, chi vota la spia <b>+1</b>. L'impostore prende <b>+3</b> se non è il più votato (basta un pareggio per salvarsi); la spia <b>+2</b> se non è la più votata.",
+      "Da 4 giocatori può esserci anche la <b>spia</b>: riceve una parola simile a quella degli altri (mare/lago). L'host decide se la spia <b>sa</b> di esserlo oppure <b>no</b>: in quel caso crede di avere la parola giusta!",
       "<b>Online</b>: ognuno vede la sua parola sul suo telefono. Gli <b>indizi</b> si scrivono di nascosto e si svelano <b>tutti insieme</b> (oppure si dicono a voce, se l'host sceglie così). Poi si discute e si vota sul telefono.",
       "<b>🔪 A eliminazione</b> (se l'host lo sceglie): dopo ogni voto il più votato <b>esce</b> e si scopre chi era. Chi resta fa un altro giro di indizi con la <b>stessa parola</b>, finché l'impostore è fuori (vincono i cittadini) o restate in 2 con l'impostore dentro (vince lui). L'impostore scoperto ha l'ultima possibilità: se indovina la parola, vince lui. Pareggio: nessuno esce e si rifà il giro; al secondo pareggio di fila, <b>ballottaggio</b> solo tra i pari. Chi esce non vota più: guarda.",
       "Punti a eliminazione: <b>+2</b> a ogni cittadino se vincono (anche a chi è uscito). L'impostore <b>+1</b> per ogni giro in cui resta dentro e <b>+3</b> se vince; la spia <b>+2</b> se arriva alla fine.",
-      "<b>👥 Due impostori</b> (a eliminazione, da 7 giocatori): l'host sceglie se <b>si conoscono</b> (ognuno vede chi è l'altro) o no. I cittadini vincono quando sono fuori tutti e due; gli impostori quando sono tanti quanti i cittadini rimasti. Con 2 impostori la spia c'è da 8 giocatori.",
-      "Il telefono passa di mano: ognuno <b>tiene premuto</b> per vedere in segreto la sua parola. Uno di voi è l'<b>impostore</b>: non ha la parola.",
-      "L'host sceglie cosa sa l'impostore: una parola <b>simile</b>, solo la <b>categoria</b> oppure <b>niente</b>.",
-      "Da 4 giocatori può esserci anche la <b>spia</b>: riceve una parola simile a quella degli altri (mare/lago). L'host decide se la spia <b>sa</b> di esserlo oppure <b>no</b>: in quel caso crede di avere la parola giusta!",
-      "L'app dice <b>chi inizia</b>: a turno ognuno dice a voce UNA parola legata alla sua, senza svelarla. Poi discutete e <b>votate in segreto</b> chi è l'impostore.",
-      "Punti: chi vota l'impostore <b>+2</b>, chi vota la spia <b>+1</b>. L'impostore prende <b>+3</b> se non è il più votato (basta un pareggio per salvarsi); la spia <b>+2</b> se non è la più votata.",
-      "L'impostore scoperto ha un'<b>ultima possibilità</b>: se indovina la parola degli altri si salva e prende <b>+2</b>."
+      "<b>👥 Due impostori</b> (a eliminazione, da 7 giocatori): l'host sceglie se <b>si conoscono</b> (ognuno vede chi è l'altro) o no. I cittadini vincono quando sono fuori tutti e due; gli impostori quando sono tanti quanti i cittadini rimasti. Con 2 impostori la spia c'è da 8 giocatori."
     ],
 
     impostazioni: function (box, dove, aiuti) {
@@ -364,7 +364,7 @@
         chipCat.forEach(function (b) { b.className = "cat-chip" + (dove.cat && dove.cat.indexOf(b._id) >= 0 ? " attiva" : ""); });
         var n = 0; cats.forEach(function (c) { if (dove.cat ? dove.cat.indexOf(c.id) >= 0 : !c.spento) n += c.coppie.length; });
         var spente = cats.filter(function (c) { return c.spento && !(dove.cat && dove.cat.indexOf(c.id) >= 0); });
-        contaCat.textContent = n.toLocaleString("it-IT") + " coppie di parole in gioco" +
+        contaCat.textContent = fmtN(n) + " coppie di parole in gioco" +
           (spente.length ? " (" + spente.map(function (c) { return c.icona + " " + c.nome; }).join(", ") + " solo se la scegli)" : "");
         var nc = dove.cat ? dove.cat.length : 0;
         riassunto.textContent = (dove.mani > 1 ? dove.mani + " mani" : "1 mano") + " · " +
@@ -737,12 +737,14 @@
     var lista = el("div", { style: "display:flex;flex-direction:column;gap:" + (n > 6 ? "3px" : "4px") });
     st.g.forEach(function (gg, k) {
       var segno = k === st.impostore ? "🕵️" : k === st.spia ? "🎭" : "";
-      var voto = gg.voto == null ? "" : "→ " + st.g[gg.voto].nome +
-        (k === st.impostore ? "" : gg.voto === st.impostore ? " ✅" : gg.voto === st.spia ? " 🎭" : " ❌");
-      lista.appendChild(el("div", { class: "im-es-r", style: "grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) auto" + (R.mani > 1 ? " auto" : "") +
+      var voto = gg.voto == null ? "" : "→ " + st.g[gg.voto].nome;
+      // ✅/❌ in una colonnina sua: coi nomi lunghi il voto si taglia, il segno no
+      var esitoV = gg.voto == null || k === st.impostore ? "" : gg.voto === st.impostore ? "✅" : gg.voto === st.spia ? "🎭" : "❌";
+      lista.appendChild(el("div", { class: "im-es-r", style: "grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 1.4em auto" + (R.mani > 1 ? " auto" : "") +
         ";padding:" + (n > 6 ? "3px" : "7px") + " 10px;font-size:" + (n > 6 ? ".9rem" : "1rem") }, [
         el("span", { style: "font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", text: (segno ? segno + " " : "") + gg.nome }),
         el("span", { class: "modulo-nota", style: "margin:0;font-size:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", text: voto }),
+        el("span", { style: "text-align:center", text: esitoV }),
         el("span", { style: "font-weight:900;color:" + (gg.piu ? "var(--verde)" : "var(--testo-tenue)"), text: "+" + gg.piu }),
         R.mani > 1 ? el("span", { style: "font-weight:900;min-width:2ch;text-align:right", text: String(gg.punti) }) : null
       ]));
@@ -1098,7 +1100,10 @@
       var socio = imp && due && H.R.conosce === "si" ? (pById(S.imps[0] === id ? S.imps[1] : S.imps[0]) || {}).nome || "?" : null;
       var info = ruoloInfo({ imp: imp, spia: spia, spiaSa: H.R.spia === "sa", aiuto: S.aiuto, parola: S.parola, simile: S.simile, cat: catDi(S.cat), due: due, socio: socio });
       // "mia": la parola che ha in mano (serve al suo telefono per non fargliela scrivere come indizio)
-      return { t: "seg", k: H.partita + "|" + H.mano, info: info, mia: imp ? (S.aiuto === "simile" ? S.simile : null) : spia ? S.simile : S.parola };
+      var m = { t: "seg", k: H.partita + "|" + H.mano, info: info, mia: imp ? (S.aiuto === "simile" ? S.simile : null) : spia ? S.simile : S.parola };
+      // 🎯 le 6 parole dell'ultima possibilità, quando non vanno nella foto per tutti (vedi ultimaSegreta)
+      if (ultimaSegreta() && H.ultima.chi === id) m.ult = { k: chiave(), scelte: H.ultima.scelte };
+      return m;
     }
     // chi guarda (e chi è fuori) vede tutto tenendo premuto: la parola e chi è l'impostore
     function segretoGuarda(fuori) {
@@ -1116,9 +1121,15 @@
       if (id === IO) { riceviPrivato(cbHost, m); return; }
       m.to = id; rete.inviaVeloce(m);   // (con "to": non resta in stanza e gli altri telefoni lo ignorano)
     }
+    // 🔪👥 a eliminazione, se dentro c'è ancora un altro impostore, le 6 parole dell'ultima possibilità NON vanno nella foto:
+    // le vedrebbe anche lui (e saprebbe che la parola è una di quelle). Vanno solo a chi deve scegliere, col suo segreto
+    function ultimaSegreta() {
+      var u = H.ultima;
+      return !!(H.elim && u && H.seg && !u.svela && H.seg.imps.some(function (id) { return id !== u.chi && !eFuori(id); }));
+    }
     // la "foto" per tutti: SEMPRE con gli id e con "fase"; MAI le parole (solo a fine mano, nell'esito)
     function vm() {
-      var u = H.ultima;
+      var u = H.ultima, us = ultimaSegreta();
       return { fase: H.fase, codice: H.codice, pronta: H.pronta, partita: H.partita, mano: H.mano, mani: H.R.mani,
         tiene: IO, rip: H.rip,   // chi tiene la partita (la corona in saletta) e quante volte è ripresa (nelle chiavi dei conti)
         indizi: H.R.indizi, giri: H.elim ? 1 : H.R.giri, passo: H.passo, giro: H.giro, k: chiave(),
@@ -1129,7 +1140,7 @@
         // 🔪 a eliminazione: chi è fuori e il suo ruolo (svelato a tutti), il giro, il ballottaggio, l'ultimo uscito
         elim: H.elim, turno: H.turno, fuori: H.fuori, ballo: H.ballo, ultimoFuori: H.ultimoFuori,
         spoglio: H.spoglio,
-        ultima: u ? { chi: u.chi, scelte: u.scelte, scelto: u.scelto, giusto: u.giusto, parola: u.scelto != null && u.svela && H.seg ? H.seg.parola : null } : null,
+        ultima: u ? { chi: u.chi, scelte: us ? null : u.scelte, scelto: us && u.scelto ? "?" : u.scelto, giusto: u.giusto, segreta: us || undefined, parola: u.scelto != null && u.svela && H.seg ? H.seg.parola : null } : null,
         esito: H.esito, classifica: H.classifica,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, piu: p.piu || 0, via: !!p.via, forse: !!p.forse, dorme: !!p.dorme || undefined, fuori: eFuori(p.id) || undefined,
           omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }),
@@ -1336,6 +1347,7 @@
       H.passo = "ultima"; H.giro = 0;
       var q = pById(chi), sec = q && !q.via ? T_ULTIMA + (q.dorme ? T_DORME : 0) : 4;   // (se è uscito, si aspetta poco; 📱 se ha il telefono bloccato, di più)
       scade(sec); dopo(sec * 1000, function () { indovina(chi, null, true); }); bd();
+      if (ultimaSegreta()) privato(chi, segretoDi(chi));   // le 6 parole solo a lui
     }
     function indovina(id, w, scaduto) {
       var u = H.ultima;
@@ -1395,14 +1407,15 @@
     }
     // qualcuno ha finito (o è uscito): se ci sono tutti si va avanti senza aspettare il tempo
     // (dopo una ripresa, nei primi secondi di respiro nessun momento si chiude: si ricontrolla quando il respiro finisce)
-    var tRespiro = null, uscito = false;
+    var tRespiro = null, uscito = false, chiudo = null;
     function controlla() {
       if (H.fase !== "gioco") return;
       var presto = (H.respiro || 0) - Date.now();
       if (presto > 0) { clearTimeout(tRespiro); tRespiro = setTimeout(function () { tRespiro = null; if (!uscito) controlla(); }, presto + 60); return; }
       var att = attivi();
-      if (H.passo === "indizi" && att.every(function (p) { return H.cor[p.id] != null; })) { scade(1); dopo(900, chiudiIndizi); }
-      else if (H.passo === "voto" && att.every(function (p) { return H.voti[p.id] != null; })) { scade(2); dopo(1500, chiudiVoto); }
+      // (la chiusura parte UNA volta: chi cambia voto a ripetizione non la sposta più in là)
+      if (H.passo === "indizi" && att.every(function (p) { return H.cor[p.id] != null; })) { if (chiudo !== chiave() || !H.to) { chiudo = chiave(); scade(1); dopo(900, chiudiIndizi); } }
+      else if (H.passo === "voto" && att.every(function (p) { return H.voti[p.id] != null; })) { if (chiudo !== chiave() || !H.to) { chiudo = chiave(); scade(2); dopo(1500, chiudiVoto); } }
       else if ((H.passo === "discuti" || H.passo === "esito" || H.passo === "fuori") && prontiVeri().length >= servono()) passoPronti();
     }
     function fine() {
@@ -1535,7 +1548,11 @@
 
   // un messaggio solo per questo telefono: il segreto della mano, o "non puoi scrivere la tua parola"
   function riceviPrivato(cb, m) {
-    if (m.t === "seg") { cb.seg = m; if (UI && UI.cb === cb && cb.vm && cb.vm.fase === "gioco") aggiornaCarta(UI, cb.vm, cb); return; }
+    if (m.t === "seg") {
+      cb.seg = m;
+      if (UI && UI.cb === cb && cb.vm && cb.vm.fase === "gioco") { aggiornaCarta(UI, cb.vm, cb); if (m.ult && UI.fase && UI.fase.agg) UI.fase.agg(cb.vm); }
+      return;
+    }
     if (m.t === "no") {
       cb.mio.ind = null; avviso(m.testo); vibra(30);
       if (UI && UI.cb === cb && UI.fase && UI.fase.zona) UI.fase.zona();
@@ -1704,7 +1721,11 @@
     return { agg: agg };
   }
   function riempiIndizi(el, box, lista, nuovo, k) {
-    lista.forEach(function (w, g) {
+    // da 3 indizi il più nuovo va per primo: se la riga si taglia, sparisce uno vecchio e non quello appena svelato
+    var ordine = lista.map(function (w, g) { return g; });
+    if (lista.length > 2) ordine.reverse();
+    ordine.forEach(function (g) {
+      var w = lista[g];
       var ch = el("b", { class: "im-w" + (nuovo && g === lista.length - 1 ? " nuova" : "") + (g === lista.length - 1 && lista.length > 1 ? " ultimo" : "") + (w ? "" : " vuota"), text: w || "—" });
       if (nuovo && g === lista.length - 1) ch.style.animationDelay = (k * 0.22) + "s";   // svelati tutti insieme, uno dopo l'altro
       box.appendChild(ch);
@@ -1837,13 +1858,14 @@
     ui.corpo.appendChild(vm.ballo ? titolo(el, "⚖️ Ballottaggio!", "Di nuovo pari: si vota solo tra loro, in " + T_BALLO + " secondi")
       : vm.elim ? titolo(el, "🗳️ Chi esce?", me ? "Il più votato esce. Vota in segreto: puoi cambiare finché non votano tutti" : sotto)
       : titolo(el, "🗳️ Chi è l'impostore?", sotto));
-    var griglia = el("div", { class: "im-voti" + (cand.length > 4 ? " due" : "") }), bot = {};
+    // due colonne solo se una non ci sta in altezza (così gli indizi sotto i nomi si leggono interi)
+    var griglia = el("div", { class: "im-voti" + (cand.length > 4 && cand.length * 66 + 260 > (window.innerHeight || 640) ? " due" : "") }), bot = {};
     cand.forEach(function (id) {
       var p = trova(vm, id), ind = (vm.ind && vm.ind[id]) || [];
       var b = el("button", { class: "im-vb", type: "button", onclick: function () {
         if (!me || b.disabled) return;
         cb.mio.voto = { k: k, chi: id, quando: Date.now() }; agg(cb.vm || vm); cb.onVoto(id);
-      } }, [el("b", { text: p.nome }), ind.length ? el("small", { text: ind.map(function (w) { return w || "—"; }).join(" · ") }) : null]);
+      } }, [el("b", { text: p.nome }), ind.length ? el("small", { text: (ind.length > 2 ? ind.slice().reverse() : ind).map(function (w) { return w || "—"; }).join(" · ") }) : null]);   // da 3 indizi il più nuovo per primo
       if (!me) b.disabled = true;
       bot[id] = b; griglia.appendChild(b);
     });
@@ -1922,28 +1944,41 @@
     } else
     ui.corpo.appendChild(io ? titolo(el, "🎯 Ultima possibilità!", "Indovina la parola degli altri: se ci riesci ti salvi e prendi 2 punti")
       : titolo(el, "🎯 " + chi.nome + " è l'impostore!", "Ultima possibilità: prova a indovinare la vostra parola…"));
-    var griglia = el("div", { class: "im-scelte" }), bot = [];
-    u.scelte.forEach(function (w) {
-      var b = el("button", { class: "im-sc", type: "button", text: w, onclick: function () {
-        if (!io || b.disabled) return;
-        bot.forEach(function (x) { x.disabled = true; }); b.classList.add("mia");
-        cb.onIndovina(w);
-      } });
-      b._w = w; if (!io || u.scelto != null) b.disabled = true;
-      bot.push(b); griglia.appendChild(b);
-    });
+    var griglia = el("div", { class: "im-scelte" }), bot = [], mia = null, piene = false;
+    // le 6 parole: nella foto, o (con l'altro impostore ancora dentro) solo a chi sceglie, col suo segreto
+    function scelteDi(v) {
+      var x = v.ultima || {};
+      if (x.scelte) return x.scelte;
+      return io && cb.seg && cb.seg.ult && cb.seg.ult.k === v.k ? cb.seg.ult.scelte : null;
+    }
+    function riempi(v) {
+      var sc = scelteDi(v); if (piene || !sc) return;
+      piene = true; ui.t.svuota(griglia);
+      sc.forEach(function (w) {
+        var b = el("button", { class: "im-sc", type: "button", text: w, onclick: function () {
+          if (!io || b.disabled) return;
+          bot.forEach(function (x) { x.disabled = true; }); b.classList.add("mia"); mia = w;
+          cb.onIndovina(w);
+        } });
+        b._w = w; if (!io || (v.ultima || {}).scelto != null) b.disabled = true;
+        bot.push(b); griglia.appendChild(b);
+      });
+    }
+    riempi(vm);
+    if (!piene && !io) griglia.appendChild(el("p", { class: "im-conto", style: "grid-column:1/-1", text: "🤫 Sceglie tra 6 parole: non si vedono, c'è ancora un impostore in gioco" }));
     ui.corpo.appendChild(griglia);
     var ris = el("div", { class: "im-ris" });
     ui.corpo.appendChild(ris);
     if (!io) faccine(ui);
     var mostrato = false;
     return { agg: function (v) {
+      riempi(v);
       var x = v.ultima; if (!x || x.scelto == null || mostrato) return;
       mostrato = true;
       bot.forEach(function (b) {
         b.disabled = true;
         if (b._w === x.parola) b.classList.add("giusta");
-        else if (b._w === x.scelto) b.classList.add("sbagliata");
+        else if (b._w === x.scelto || (x.segreta && b._w === mia)) b.classList.add("sbagliata");
       });
       ris.textContent = x.giusto ? (v.elim ? ((v.nImp || 1) > 1 ? "🎯 Indovinata! Vincono gli impostori!" : "🎯 Indovinata! Vince l'impostore!") : "🎯 Indovinata! Si salva!") : x.scelto ? "❌ Sbagliato!" + (x.parola ? " La parola era «" + x.parola + "»" : " La parola resta segreta") : "⌛ Tempo scaduto!" + (x.parola ? " La parola era «" + x.parola + "»" : " La parola resta segreta");
       fanfara(!x.giusto);
@@ -1964,12 +1999,16 @@
     // una riga a testa: chi ha votato chi e i punti presi
     var ids = (e.giocano || []).filter(function (id) { return trova(vm, id); }), fitta = ids.length > 6;
     var lista = el("div", { class: "im-es" + (fitta ? " fitta" : "") });
+    lista.appendChild(el("div", { class: "im-es-t" }, [el("span"), el("span"), el("span"), el("span", { text: "mano" }), el("span", { text: "tot." })]));
     ids.forEach(function (id) {
       var p = trova(vm, id), segno = id === e.imp ? "🕵️ " : id === e.spia ? "🎭 " : "", vo = e.voti ? e.voti[id] : null, vp = vo ? trova(vm, vo) : null;
-      var voto = vp ? "→ " + (vo === cb.myId ? "te" : vp.nome) + (id === e.imp ? "" : vo === e.imp ? " ✅" : vo === e.spia ? " 🎭" : " ❌") : "";
-      lista.appendChild(el("div", { class: "im-es-r" + (id === cb.myId ? " io" : "") }, [
-        el("span", { class: "nm", text: segno + (id === cb.myId ? "Tu" : p.nome) }),
+      var voto = vp ? "→ " + (vo === cb.myId ? "te" : vp.nome) : "";
+      // ✅/❌ in una colonnina sua: coi nomi lunghi il voto si taglia, il segno no
+      var esitoV = !vp || id === e.imp ? "" : vo === e.imp ? "✅" : vo === e.spia ? "🎭" : "❌";
+      lista.appendChild(el("div", { class: "im-es-r cse" + (id === cb.myId ? " io" : "") }, [
+        el("span", { class: "nm", text: segno +(id === cb.myId ? "Tu" : p.nome) }),
         el("span", { class: "vo", text: voto }),
+        el("span", { class: "se", text: esitoV }),
         el("span", { class: "pi" + (p.piu ? "" : " zero"), text: "+" + p.piu }),
         el("span", { class: "tot", text: fmtN(p.punti) })]));
     });
@@ -2164,7 +2203,7 @@
       ".im-fatto{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:0 6px 0 12px;border-radius:14px;background:var(--o-verde-tenue);box-shadow:inset 0 0 0 1px rgba(52,209,122,.35);font-weight:800;overflow:hidden}",
       ".im-fatto span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".im-cambia{flex:none;border:0;border-radius:10px;padding:8px 10px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo-oro);color:inherit;font:inherit;font-weight:800;cursor:pointer}",
-      ".im-lista{display:grid;gap:5px;align-content:start;min-height:0;overflow:hidden}.im-lista.fitta{grid-template-columns:1fr 1fr;gap:4px}",
+      ".im-lista{display:grid;gap:5px;align-content:start;min-height:0;overflow:hidden}.im-lista.fitta{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}",
       ".im-riga{display:flex;align-items:center;gap:4px 8px;padding:5px 10px;border-radius:12px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo);min-width:0}",
       ".im-lista.fitta .im-riga{flex-wrap:wrap;padding:4px 7px;font-size:.88rem;gap:2px 5px}.im-lista.fitta .im-nome{flex:1;max-width:none}.im-lista.fitta .im-ind{order:3;flex:1 1 100%}.im-lista.fitta .im-ind:empty{display:none}.im-riga.via{opacity:.45}.im-riga.io{background:var(--o-carta-viva);box-shadow:inset 0 0 0 1.5px var(--o-oro)}",
       ".im-nome{flex:none;max-width:42%;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
@@ -2183,13 +2222,13 @@
       ".im-ordine span{padding:4px 10px;border-radius:999px;background:var(--carta);font-weight:700;font-size:.88rem;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".im-ordine span.primo{background:var(--o-scuro);color:var(--o-scuro-testo)}",
       // il voto
-      ".im-voti{display:grid;gap:6px;align-content:start;min-height:0}.im-voti.due{grid-template-columns:1fr 1fr}",
+      ".im-voti{display:grid;gap:6px;align-content:start;min-height:0}.im-voti.due{grid-template-columns:repeat(2,minmax(0,1fr))}",
       ".im-vb{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;min-height:48px;min-width:0;padding:5px 10px;border-radius:14px;border:2px solid transparent;background:var(--carta);color:inherit;font:inherit;text-align:left;cursor:pointer}",
       ".im-vb b{font-size:1rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".im-vb small{font-size:.76rem;opacity:.8;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".im-vb small{font-size:.76rem;opacity:.8;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow-wrap:anywhere;line-height:1.2}",
       ".im-vb.scelto{border-color:var(--accento);background:var(--carta-2)}.im-vb:disabled{cursor:default;color:inherit}.im-vb.via{opacity:.45}",
       // lo spoglio
-      ".im-sp{display:grid;gap:5px}.im-sp.fitta{grid-template-columns:1fr 1fr;gap:4px}",
+      ".im-sp{display:grid;gap:5px}.im-sp.fitta{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.im-sp-r .im-nome{flex:1;min-width:0;max-width:none}.im-sp-r .im-bolla{flex:none}",
       ".im-sp-r{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:12px;background:var(--carta);border:2px solid transparent}",
       ".im-sp.fitta .im-sp-r{padding:3px 8px}.im-sp-r.piu{border-color:var(--accento)}",
       ".im-bolla{min-width:30px;text-align:center;padding:1px 8px;border-radius:999px;background:var(--carta-2);font-weight:900;transition:transform .2s}",
@@ -2210,6 +2249,9 @@
       ".im-es-r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) auto 2.6ch;gap:8px;align-items:center;padding:5px 10px;border-radius:10px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo);font-size:.94rem}",
       ".im-es.fitta .im-es-r{padding:2px 8px;font-size:.85rem}.im-es-r.io{background:var(--o-carta-viva);box-shadow:inset 0 0 0 1.5px var(--o-oro)}",
       ".im-es-r span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.im-es-r .nm{font-weight:800}.im-es-r .vo{opacity:.85}",
+      ".im-es-r .se{text-align:center;overflow:visible}.im-es-t{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 1.4em auto 2.6ch;gap:8px;padding:0 10px;font-size:.68rem;font-weight:800;opacity:.6;text-align:right;line-height:1;flex:none}",
+      ".im-es-r.cse{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 1.4em auto 2.6ch}",
+      "@media (max-height:700px){.im-es.fitta .im-es-r{padding:1px 8px;font-size:.82rem}}.im-es{overflow-y:auto}",
       ".im-es-r .pi{font-weight:900;color:var(--verde)}.im-es-r .pi.zero{color:var(--testo-tenue)}.im-es-r .tot{font-weight:900;text-align:right}",
       ".im-avviso{position:absolute;left:12px;right:12px;top:42%;text-align:center;font-weight:900;font-size:1.05rem;width:fit-content;max-width:calc(100% - 24px);margin:0 auto;padding:10px 18px;border-radius:999px;background:var(--o-scuro);color:var(--o-scuro-testo);box-shadow:var(--o-ombra-alta);opacity:0;pointer-events:none}",
       ".im-avviso.su{animation:imAvviso 1.8s ease}",

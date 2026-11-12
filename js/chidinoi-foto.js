@@ -348,7 +348,7 @@
       ".cnf-piede .riga{display:flex;gap:8px}",
       ".cnf-b{flex:1;min-height:52px;border:0;border-radius:16px;font-weight:900;font-size:16px;color:#fff;background:rgba(255,255,255,.16);cursor:pointer;padding:6px 8px}",
       ".cnf-b.oro{background:linear-gradient(#ffd84d,#f2a900);color:#2a1458;box-shadow:0 4px 0 #b37d00}",
-      ".cnf-b.verde{background:linear-gradient(#4be08a,#21a35a);box-shadow:0 4px 0 #13703b}",
+      ".cnf-b.verde{background:linear-gradient(#4be08a,#21a35a);box-shadow:0 4px 0 #13703b;color:#04321c}",
       ".cnf-b:disabled{opacity:.45}",
       ".cnf-scatto{flex:none;width:78px;height:78px;border-radius:50%;border:6px solid #fff;background:#ff4d6d;box-shadow:0 0 0 4px rgba(255,77,109,.4);cursor:pointer;margin:0 6px;font-size:26px}",
       ".cnf-zoom{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px}",

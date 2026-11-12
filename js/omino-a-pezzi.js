@@ -5167,7 +5167,7 @@
     var w = K.F.cw, k;
     // dietro: massa liscia ampia e molle fitte e grosse (si vedono ai lati del collo e, di spalle, su tutta la schiena)
     var back = "M" + (-w - 6) + " -92C" + (-w - 14) + " -40 " + (-w - 16) + " " + (lungD - 30) + " " + (-w - 6) + " " + (lungD - 64) + "L" + (w + 6) + " " + (lungD - 64) + "C" + (w + 16) + " " + (lungD - 30) + " " + (w + 14) + " -40 " + (w + 6) + " -92C" + (w - 6) + " -154 " + (-w + 6) + " -154 " + (-w - 6) + " -92Z";
-    var dietro = K.Pa(back, K.U("hg3")) + "<g clip-path= + K.clip(back) + >" + K.El(70, -20, 44, 160, K.soft(K.hDD, 0.5)) + "</g>";
+    var dietro = K.Pa(back, K.U("hg3")) + "<g clip-path='" + K.clip(back) + "'>" + K.El(70, -20, 44, 160, K.soft(K.hDD, 0.5)) + "</g>";
     var N = 13;
     for (k = 0; k < N; k++) {
       var x = -w - 24 + (2 * w + 48) * k / (N - 1);
@@ -5179,7 +5179,7 @@
       s += molla(K, l * (w + 7), -92, lungF + 4, 7.2, 21, l * 0.4, 10.5) + molla(K, l * (w + 17), -86, lungF - 18, 6.6, 20, l * 0.7, 9.6) + molla(K, l * (w - 1), -90, lungF - 34, 6, 19, l * 0.2, 9);
     });
     var cal = "M" + (-w - 8) + " -78C" + (-w - 14) + " -130 -56 -168 -2 -168C52 -168 " + (w + 14) + " -130 " + (w + 8) + " -78L" + (w + 2) + " -92C" + (w - 4) + " -112 30 -128 0 -132C-30 -128 " + (-w + 4) + " -112 " + (-w - 2) + " -92Z";
-    s += ombraViso(K, -126, 40, 0.3) + K.Pa(cal, K.U("hg3")) + "<g clip-path= + K.clip(cal) + >";
+    s += ombraViso(K, -126, 40, 0.3) + K.Pa(cal, K.U("hg3")) + "<g clip-path='" + K.clip(cal) + "'>";
     s += K.ciocche([
       [[0, -132, 7], [-16, -150, 14], [-44, -148, 18], [-w - 8, -118, 16], [-w - 14, -84, 5]],
       [[0, -134, 7], [-10, -158, 14], [-40, -168, 16], [-w - 20, -134, 16], [-w - 24, -92, 4]],

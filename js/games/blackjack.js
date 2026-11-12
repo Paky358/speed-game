@@ -975,6 +975,7 @@
     ".bj-wrap{position:fixed;top:0;bottom:0;left:0;right:0;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:6px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:5;border-radius:0}",
     ".bj-sala{flex:1 1 auto;min-height:0;margin:0}",
     ".bj-hero{flex:0 0 150px;height:150px;min-height:0;justify-content:center;overflow:hidden}",
+    ".bj-hero.fine{flex:0 0 auto;height:auto;max-height:62%;overflow-y:auto}",
     ".bj-msg:empty,.bj-wrap .bj-tavolata{display:none}",
     // con 7-10 giocatori sopra la testa solo il nome (corto); uno su e uno giù, così non si coprono
     ".bjr-nome.mini{overflow:hidden;text-overflow:ellipsis;padding:0 4px}",
@@ -1080,7 +1081,7 @@
     ".bj-m-assic{--m:#b39bff;--m-alone:rgba(179,155,255,.55);--ico:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 13c0 5-3.5 7.5-7.7 9a1 1 0 0 1-.6 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1.2 1.2 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z'/%3E%3C/svg%3E\")}",
     ".bj-m-resa{--m:#d5d9ea;--m-alone:rgba(213,217,234,.45);--ico:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 22V3M5 4h11l-2 4 2 4H5'/%3E%3C/svg%3E\")}",
     // «Resa»: piccolo, accanto al punteggio della mano (così i quattro tasti grandi restano dove sono)
-    ".bj-evento{position:absolute;left:50%;top:40%;z-index:7;pointer-events:none;transform:translate(-50%,-50%);max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px 18px;border-radius:16px;background:rgba(9,11,22,.9);font-family:var(--o-tit);font-weight:800;font-size:1.45rem;animation:bjEvento 2s ease forwards}",
+    ".bj-evento{position:absolute;left:50%;top:40%;z-index:7;pointer-events:none;transform:translate(-50%,-50%);width:max-content;max-width:92%;box-sizing:border-box;text-align:center;line-height:1.18;white-space:normal;overflow-wrap:anywhere;padding:8px 14px;border-radius:16px;background:rgba(9,11,22,.9);font-family:var(--o-tit);font-weight:800;font-size:1.45rem;animation:bjEvento 2s ease forwards}",
     ".bj-evento.oro{color:#ffc247;box-shadow:0 0 0 1.5px #ffc247,0 0 26px rgba(255,194,71,.5)}.bj-evento.fuoco{color:#ff8a4a;box-shadow:0 0 0 1.5px #ff8a4a,0 0 26px rgba(255,138,74,.45)}",
     "@keyframes bjEvento{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}14%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}24%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-62%) scale(1)}}",
     // la gara: la classifica corta in alto (la scritta grande scende un po'), la fiche coperta della puntata segreta
@@ -1598,6 +1599,7 @@
     function prossimoEvento() {
       var x = codaEv.shift(); if (!x || chiuso) { eventoEl = null; return; }
       eventoEl = el("div", { class: "bj-evento " + x[1], text: x[0] }); zBanco.appendChild(eventoEl);
+      if (x[0].length > 22) eventoEl.style.fontSize = x[0].length > 34 ? "1.05rem" : "1.22rem";   // (le frasi lunghe un po' più piccole: stanno in due righe)
       eventoT = setTimeout(function () { if (eventoEl) eventoEl.remove(); eventoEl = null; prossimoEvento(); }, codaEv.length ? 1500 : 2000);
     }
     function eventi(pre, v) {
@@ -1854,10 +1856,11 @@
       vm.giocatori.forEach(function (g, i) {
         var s = R.seg[i], attivo = decide(i);
         // faccia e luce di chi gioca
-        var gp = ill() ? gestoDi(i) : "", kf = facciaDi(g, i) + (attivo ? "*" : "") + gp;
+        var gp = ill() ? gestoDi(i) : "", kf = facciaDi(g, i) + "|" + gp;
+        var cls = "bjr-gioc" + (attivo ? " attivo" : ""); if (s.fig.className !== cls) s.fig.className = cls;
         if (s.k.f !== kf) { s.k.f = kf; var cfg = avatarDi(i); var sulPanno = !!s.br && (gp === "" || gp === "batte");   // illustrati: mani sul panno (le disegna il livello sopra il tavolo; il corpo ha la stessa posa, così non ci sono due mani)
           if (ill()) gestiBJ();
-          s.fig.innerHTML = cfg ? svgAvatar(cfg, facciaDi(g, i), ill() ? { vita: true, gesto: sulPanno ? "bjBracci" : (gp || "tavolo") } : undefined) : ""; s.fig.className = "bjr-gioc" + (attivo ? " attivo" : "");
+          s.fig.innerHTML = cfg ? svgAvatar(cfg, facciaDi(g, i), ill() ? { vita: true, gesto: sulPanno ? "bjBracci" : (gp || "tavolo") } : undefined) : "";
           if (s.br) s.br.innerHTML = cfg && sulPanno ? bracciaTavoloHTML(cfg, facciaDi(g, i), gp === "batte") : ""; }
         // sopra la testa: il nome e le fiche che ha (a fine mano anche quanto ha vinto o perso)
         var d = vm.fase === "esito" ? nettoDi(g) : 0;
@@ -2199,6 +2202,7 @@
       if (bloccoT) { clearTimeout(bloccoT); bloccoT = null; }
       svuota(zHero);
       var mio = drv.puoAgire(vm);
+      zHero.classList.toggle("fine", vm.fase === "fine");
       if (vm.fase === "fine") return heroFine();
       var gtx = drv.mioIdx && !vm.giocatori[mioIdx()] ? (drv.guardo && drv.guardo(vm)) || "" : "";
       if (drv.mioIdx && !vm.giocatori[mioIdx()] && !gtx) return heroInfo("🪑", "Ti stai sedendo al tavolo…");   // appena arrivato: il posto sta arrivando

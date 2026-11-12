@@ -534,9 +534,10 @@
       ".cmp-piu{appearance:none;-webkit-appearance:none;border:0;cursor:pointer;width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:rgba(255,255,255,.14);color:inherit;font-size:.8rem;padding:0;line-height:1;touch-action:manipulation}",
       ".cmp-piu:disabled{opacity:1}",
       ".cmp-segno{width:28px;text-align:center;font-size:.85rem;color:var(--verde,#37d47e)}",
-      ".cmp-fine{display:flex;align-items:center;gap:5px;height:30px;max-height:30px;overflow:hidden;white-space:nowrap;font-size:.82rem;font-weight:700;color:var(--testo-tenue,#cdd6ff);min-width:0}",
+      ".cmp-fine{display:flex;align-items:center;gap:5px;height:30px;max-height:30px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;white-space:nowrap;font-size:.82rem;font-weight:700;color:var(--testo-tenue,#cdd6ff);min-width:0}",
       ".cmp-fine-t{flex:0 0 auto}",
-      ".cmp-fine-p{display:flex;align-items:center;gap:3px;min-width:0;color:var(--testo,#fff)}",
+      ".cmp-fine-p{display:flex;align-items:center;gap:3px;flex:none;color:var(--testo,#fff)}",   // (in tanti la riga scorre di lato: prima i nomi diventavano una lettera)
+      ".cmp-fine::-webkit-scrollbar{display:none}.cmp-fine-sep{flex:none}",
       ".cmp-fine-n{overflow:hidden;text-overflow:ellipsis;max-width:90px}",
       ".cmp-fine .cmp-piu,.cmp-fine .cmp-segno{width:24px;height:24px;flex:0 0 24px;font-size:.72rem}"
     ].join("\n");

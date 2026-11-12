@@ -345,7 +345,7 @@
       // sovrimpressioni
       ".st-terzo{position:absolute;left:12px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:22;display:flex;align-items:center;gap:10px;max-width:calc(100% - 24px);padding:6px 16px 6px 6px;",
         "border-radius:16px;border-left:7px solid var(--col,#ff3ea5);background:linear-gradient(100deg,#1d2343,var(--o-carta-piena));color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),0 10px 24px -10px rgba(0,0,0,.85);",
-        "transform:translateX(-120%);transition:transform .4s cubic-bezier(.3,1.3,.5,1)}",
+        "transform:translateX(calc(-100% - 40px));transition:transform .4s cubic-bezier(.3,1.3,.5,1)}",
       ".st-terzo.on{transform:none}",
       ".st-terzo .fac{width:42px;height:42px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.06);flex:0 0 auto}",
       ".st-terzo .fac canvas{width:100%;height:100%;display:block}",

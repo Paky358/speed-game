@@ -325,6 +325,7 @@
       ".sp-mini{flex:0 0 auto;line-height:1.25;padding:4px 6px;border-radius:7px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;color:#fff}",
       ".sp-mini.b{background:rgba(55,212,126,.24)}.sp-mini.m{background:rgba(255,93,108,.28)}",
       ".sp-scena.largo .sp-mini{display:block;-webkit-line-clamp:unset;padding:3px 5px}",
+      ".sp-col{position:relative}.sp-col.altre::after{content:'altre ↓';position:absolute;left:6px;right:6px;bottom:4px;padding:10px 0 2px;text-align:center;font-size:.72rem;font-weight:900;color:var(--o-oro-testo,#ffca3a);background:linear-gradient(rgba(21,26,46,0),var(--o-carta-piena,#151a2e) 70%);border-radius:0 0 10px 10px;pointer-events:none}",
       ".sp-mini.nuova{animation:spPop .5s cubic-bezier(.2,1.4,.4,1) both}",
       "@keyframes spPop{from{opacity:0;transform:scale(.5) translateY(-8px)}to{opacity:1;transform:none}}",
       ".sp-vuoto{margin:auto 0;text-align:center;font-size:.72rem;color:var(--testo-tenue)}",
@@ -332,6 +333,7 @@
       ".sp-turno:empty{display:none}",
       ".sp-azione{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px}",
       ".sp-scena.largo .sp-azione{flex:0 0 auto}",
+      ".sp-giud-nota{text-align:center;font-weight:800;font-size:.86rem;color:var(--o-tenue)}",
       ".sp-azione:empty{display:none}",
       ".sp-msg{margin:auto 0;text-align:center;color:var(--testo-tenue);font-size:.92rem;line-height:1.4;padding:2px 8px}",
       ".sp-msg .sp-emo{display:block;font-size:2rem;margin-bottom:2px}",
@@ -399,7 +401,7 @@
       ".sp-ruoli button.attiva{border-color:#ffca3a;background:rgba(255,202,58,.2)}",
       // la testa delle colonne (con l'avatar di chi presenta, in «Ognuno per sé»)
       ".sp-col-testa{display:flex;align-items:center;gap:6px}",
-      ".sp-col-tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".sp-col-tx{min-width:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;line-height:1.2;overflow-wrap:anywhere}",
       ".sp-col-testa .sp-av{width:26px;height:26px}.sp-av[hidden]{display:none}",
       // 🃏 la carta bianca: bordo tratteggiato d'oro e la firma
       ".sp-mini.scritta,.sp-lente-r.scritta{box-shadow:inset 0 0 0 2px #ffca3a}",
@@ -735,7 +737,7 @@
     if (c.facceSig === sig) return;
     c.facceSig = sig; svuota(c.facce);
     (lista || []).forEach(function (x) { c.facce.appendChild(c.t.el("span", { class: "sp-fa" + (x.via ? " via" : ""), html: avatarHtml(x.nome, x.omino) })); });
-    c.facce.hidden = !(lista || []).length;
+    c.facce.hidden = !(lista || []).length || (lista || []).length > 2;   // (in tanti bastano i nomi: le faccine li coprivano)
   }
   // ⭐ la carta che ha convinto il giudice (i = la sua posizione nello scenario; null = nessuna)
   function segnaStella(c, i) {
@@ -768,7 +770,15 @@
     if (!lista || !document.body.contains(lista)) return;
     var f = max || 14;
     lista.style.fontSize = f + "px";
-    while (lista.scrollHeight > lista.clientHeight + 1 && f > 9) { f -= 0.5; lista.style.fontSize = f + "px"; }
+    while (lista.scrollHeight > lista.clientHeight + 1 && f > 12) { f -= 0.5; lista.style.fontSize = f + "px"; }
+    segnaAltre(lista);
+  }
+  // la lista non ci sta tutta: in fondo «altre ↓» (sparisce quando si arriva giù)
+  function segnaAltre(lista) {
+    var col = lista.parentNode; if (!col) return;
+    function agg() { var resta = lista.scrollHeight - lista.clientHeight - lista.scrollTop > 4; col.classList.toggle("altre", resta); }
+    if (!lista._altre) { lista._altre = 1; lista.addEventListener("scroll", agg, { passive: true }); }
+    agg();
   }
   function colonneUi(ui) { return ui.scheda ? ui.cols.concat([ui.scheda]) : ui.cols; }
   function adattaTavolo(ui) { colonneUi(ui).forEach(function (c) { if (!c.nodo.hidden) adattaLista(c.lista, c === ui.scheda && ui.scena.classList.contains("largo") ? 19 : 14); }); }
@@ -1146,7 +1156,7 @@
     } });
   }
   function membri(st, k) { return st.squadre[k].join(", "); }
-  function titoloColonna(k, nomi) { return emoSq(k) + " " + nomeSq(k) + (nomi ? " · " + nomi : ""); }
+  function titoloColonna(k, nomi) { return emoSq(k) + " " + (nomi || nomeSq(k)); }   // (senza la parola «Squadra»: sui telefoni stretti si tagliavano i nomi)
 
   function iniziaRound(t, st) {
     st.round += 1;
@@ -2391,11 +2401,14 @@
       "⚖️ " + (me.giudice ? "Tu" : vm.giudiceNome || "—") + (vm.giudiceVia ? " 💤" : ""), vm.giudiceId ? { nome: vm.giudiceNome, omino: cb.omino(vm.giudiceId) } : null);
 
     // il tavolo (in testa a ogni scenario le faccine di chi lo gioca, 👑 accanto al capo)
-    largo(ui, vm.fase !== "gioco");
+    // (il giudice, mentre si giocano le carte, ha il tavolo grande: deve solo leggere, e prima aveva mezzo schermo vuoto)
+    var giudTavolo = vm.fase === "gioco" && !!step && !!me.giudice;
+    largo(ui, vm.fase !== "gioco" || giudTavolo);
     var aggiunte = 0, ultimoTipo = null;
     [0, 1].forEach(function (k) {
       var capo = capoDi(k);
-      var nomi = sqs[k].map(function (m) { return (m.id === cb.myId ? "Tu" : m.nome) + (capo && capo.id === m.id && vm.fase === "gioco" ? " 👑" : "") + (m.via ? " 💤" : ""); }).join(", ");
+      var ordinati = sqs[k].slice().sort(function (a, b) { return (capo && b.id === capo.id ? 1 : 0) - (capo && a.id === capo.id ? 1 : 0); });   // (il capo per primo: la corona non si taglia)
+      var nomi = ordinati.map(function (m) { return (capo && capo.id === m.id && vm.fase === "gioco" ? "👑 " : "") + (m.id === cb.myId ? "Tu" : m.nome) + (m.via ? " 💤" : ""); }).join(", ");
       var a = aggiornaColonna(ui.cols[k], { titolo: titoloColonna(k, nomi), voci: vm.scen[k].voci, anima: !ui.nuova,
         turno: (vm.fase === "gioco" && step && step.sq === k) || (vm.fase === "arringa" && vm.parla === k),
         mia: me.sq === k, vince: vm.fase === "esito" && !susp && vm.vincitore === k });
@@ -2428,7 +2441,7 @@
       if (me.giudice) {
         chiave = "giud";
         fai = function () {
-          messaggioAv(ui, io ? io.nome : "", cb.omino(cb.myId), "Sei il giudice ⚖️", "Le carte arrivano sul tavolo man mano: leggile e ridi! Alla fine scegli tu lo scenario migliore da vivere.");
+          ui.azione.appendChild(ui.t.el("div", { class: "sp-nota sp-giud-nota", text: "⚖️ Sei il giudice: le carte arrivano man mano, leggile e ridi! Alla fine scegli tu." }));
           faccine(ui.azione);
         };
       }
@@ -2567,7 +2580,7 @@
       ui.manoM.marche(mappa);
     }
     if (vm.fase === "esito" && ui.pronti) ui.pronti.agg(vm);   // ⏩ si aggiorna solo il numero
-    if (vm.fase !== "gioco") adattaTavolo(ui);
+    if (vm.fase !== "gioco" || giudTavolo) adattaTavolo(ui);
   }
 
   // ---------- 🙋 Ognuno per sé online (uguale per host e ospiti) ----------

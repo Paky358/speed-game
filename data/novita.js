@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 338,
+    data: "12 novembre 2026",
+    titolo: "Sistemati i difetti visti in serata 🔧",
+    descrizione: [
+      "🧍 Gli avatar coi capelli «Boccoli» si vedono dappertutto: in Chi di Noi? la carta della zia non è più vuota.",
+      "🕵️ L'Impostore: le regole partono dalla cosa più semplice; al voto gli indizi si leggono interi; il segno ✅/❌ di chi ha votato giusto non sparisce coi nomi lunghi; con due impostori l'altro non vede più le 6 parole dell'ultima possibilità; il voto non resta aperto all'infinito se uno continua a cambiarlo.",
+      "😂 Memata e 📡 Stessa Lunghezza d'Onda: in due, se uno blocca il telefono la partita non si chiude più da sola: lo si aspetta. Nei meme l'ultima lettera non si taglia più, e le scritte minuscole si leggono anche sotto il meme.",
+      "🤨 Sì... però: il giudice ha tutto il tavolo per leggere, le carte non scendono sotto una misura leggibile e si capisce chi è in quale squadra e chi è il capo.",
+      "🏠 La Sala: le targhette dei nomi in saletta non finiscono più sull'avatar sbagliato; chi teneva la partita e torna dopo essere sparito ritrova il suo posto con «Rientra ▶»; «Avete giocato con» coi nomi interi.",
+      "🃏 Black Jack: gli annunci grandi vanno a capo e la vincita si legge; la fine partita non è più tagliata; il tavolo è più leggero sui telefoni lenti. ♣️ Poker: fiori in verde nelle carte piccole, per non confonderli con le picche. A chi guarda una partita a due la scritta in alto sparisce dopo pochi secondi e non copre più il punteggio.",
+      "🤥 La Balla Colossale: al voto la notizia resta sempre sullo schermo, anche sul telefono piccolo; la classifica del round in tanti non è più coperta."
+    ]
+  },
+  {
     v: 337,
     data: "12 novembre 2026",
     titolo: "I giochi a tutto schermo: via lo studio TV 📺",

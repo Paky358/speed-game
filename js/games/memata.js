@@ -115,7 +115,9 @@
     var box = t.el("div", { class: "me-meme" }), quadro = t.el("div", { class: "me-quadro" }), img = t.el("img", { class: "me-img", alt: "", draggable: "false" });
     img.crossOrigin = "anonymous"; img.decoding = "async";
     var stato = t.el("div", { class: "me-carica", text: "Carico il meme…" });
-    quadro.appendChild(img); box.appendChild(quadro); box.appendChild(stato);
+    // le scritte troppo piccole (riquadri minuscoli) si leggono anche in chiaro, sotto il meme
+    var chiaro = t.el("div", { class: "me-chiaro" });
+    quadro.appendChild(img); box.appendChild(quadro); box.appendChild(stato); box.appendChild(chiaro);
     var P = { el: box, quadro: quadro, img: img, rec: null, testi: [], q: [], sel: -1, pronta: false, onRotta: null, onTocco: null };
     img.addEventListener("load", function () { P.pronta = true; stato.style.display = "none"; quadro.style.visibility = ""; quadro.classList.remove("senza"); P.adatta(); });
     // l'immagine non arriva: i riquadri restano (si scrive lo stesso) e chi tiene la partita, se può, dà un altro meme
@@ -151,6 +153,21 @@
     P.adatta = function () {
       if (!P.rec || !box.isConnected) return;
       var aw = box.clientWidth, ah = box.clientHeight; if (!aw || !ah) return;
+      var fsMin = disponi(aw, ah);
+      // sotto gli 11 px le scritte sul meme sono una macchia: si ripetono in chiaro sotto (una volta accese restano per quel meme)
+      var chiave = P.rec[0] + "|" + P.testi.join("|");
+      if (!P.modifica && (fsMin < 11 || P.chiaroK === chiave)) {
+        P.chiaroK = chiave;
+        var vere = P.testi.map(function (x) { return pulisci(x || "").replace(/\s+/g, " ").trim(); });
+        var piene = vere.filter(Boolean).length;
+        chiaro.textContent = vere.map(function (x, i) { return x ? (piene > 1 ? (i + 1) + " · " : "") + x : ""; }).filter(Boolean).join("   ");
+        chiaro.style.display = "block";
+        var ch = chiaro.offsetHeight + 4;
+        if (ah - ch > 40) { disponi(aw, ah - ch); box.classList.add("con-chiaro"); }
+      } else { chiaro.style.display = "none"; box.classList.remove("con-chiaro"); }
+    };
+    function disponi(aw, ah) {
+      var fsMin = 99;
       var sc = Math.min(aw / P.rec[2], ah / P.rec[3]), w = Math.max(1, Math.floor(P.rec[2] * sc)), h = Math.max(1, Math.floor(P.rec[3] * sc));
       quadro.style.width = w + "px"; quadro.style.height = h + "px";
       P.q.forEach(function (v, i) {
@@ -159,15 +176,18 @@
         v.el.classList.toggle("modifica", !!P.modifica);
         v.el.classList.toggle("sel", P.modifica && P.sel === i);
         var k = tx + "|" + w + "|" + h;
-        if (v.k === k) return; v.k = k;
+        if (v.k === k) { if (tx.trim() && v.fs < fsMin) fsMin = v.fs; return; }
+        v.k = k;
         if (!tx.trim()) { v.sp.textContent = ""; return; }
         var lay = impagina(tx, Math.max(4, bw - pad * 2), Math.max(4, bh - pad * 2), v.st, w);
+        v.fs = lay.fs; if (lay.fs < fsMin) fsMin = lay.fs;
         v.sp.textContent = lay.righe.join("\n");
         v.sp.style.fontSize = lay.fs + "px";
         v.sp.style.textShadow = bordo(v.st.o, lay.fs);
         v.sp.style.padding = pad + "px";
       });
-    };
+      return fsMin;
+    }
     return P;
   }
 
@@ -344,9 +364,12 @@
         if (H.guarda.some(function (x) { return x.id === id; })) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
         if (inProssimi(id)) { H.prossimi = H.prossimi.filter(function (x) { return x.id !== id; }); bd(); return; }
         var p = pById(id); if (!p) return;
-        p.forse = false;
-        if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
-        p.via = true;
+        var bloccato = p.forse;   // sparito senza salutare (telefono bloccato, app in secondo piano), non uscito apposta
+        if (H.fase === "lobby") { p.forse = false; H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
+        // 📱 a partita iniziata chi ha bloccato il telefono resta in partita (col 📶 accanto al nome) fino alla fine del round dopo:
+        // prima, in 2, bastava bloccare il telefono 20 secondi per chiudere la partita a tutti e due (come ne L'Impostore, 26 ott)
+        if (bloccato && H.fase === "gioco" && !p.via) { if (p.dorme == null) p.dorme = H.giro; bd(); return; }
+        p.forse = false; p.via = true; p.dorme = null;
         if (H.fase === "gioco" && H.stato !== "ripresa" && presenti().length < 2) return fine();
         bd(); controlla();
       },
@@ -364,7 +387,7 @@
           }
           if (!p && H.fase === "lobby" && H.players.length < MAX)
             H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), punti: 0 });
-          if (p) { p.forse = false; if (p.via && H.fase !== "lobby") p.via = false; if (!p.omino) p.omino = avatarValido(m.omino); }
+          if (p) { p.forse = false; p.dorme = null; if (p.via && H.fase !== "lobby") p.via = false; if (!p.omino) p.omino = avatarValido(m.omino); }
           // era uscito prima del round e torna mentre si scrive: ha anche lui il suo meme (nell'ultimo round quello di tutti)
           if (p && H.fase === "gioco" && H.stato === "scrivi" && !H.mem[id] && H.scadenza - Date.now() > 15000) {
             var unoDi = H.fin && Object.keys(H.mem)[0];
@@ -415,7 +438,7 @@
       if (H.fase === "lobby") return t.ricorda(null);
       var s = {};
       Object.keys(H).forEach(function (k) { if (k !== "to" && k !== "prossimi") s[k] = H[k]; });
-      s.players = H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, cu: p.cu || 0 }; });
+      s.players = H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, cu: p.cu || 0, dorme: p.dorme != null ? p.dorme : undefined }; });
       t.ricorda(s);
     }
     function bd() { if (morto) return; var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegna(t, v, CB); }
@@ -458,6 +481,9 @@
     }
     function prossimoGiro() {
       ferma();
+      // 📱 chi ha il telefono bloccato da un round intero ora è fuori (se torna, rientra)
+      H.players.forEach(function (p) { if (p.dorme != null && !p.via && H.giro > p.dorme) { p.via = true; p.forse = false; p.dorme = null; } });
+      if (H.fase === "gioco" && presenti().length < 2) return fine();
       H.giro++;
       if (H.giro > H.giri) return fine();
       entrano();
@@ -556,6 +582,8 @@
       // si svelano prima tutti insieme quelli sotto il podio, poi il 3°, il 2° e il 1°
       // ogni meme del podio in due tempi: prima si vede (passo pari), poi si scopre di chi è (passo dispari)
       var prima = Math.max(0, lista.length - 3);
+      // chi è a pari punti col 3° (e ha preso qualcosa) sale sul podio anche lui: se no il suo meme non si rivede mai
+      while (prima > 0 && lista.length - prima < 5 && lista[prima].pt > 0 && lista[prima - 1].pt === lista[prima].pt) prima--;
       H.riv = { lista: lista, passo: 0, podio: prima, tot: 2 * (lista.length - prima) };
       H.stato = "rivela"; H.scadenza = 0;
       bd(); passoRivela();
@@ -1033,11 +1061,13 @@
       window.addEventListener("resize", function rs() { if (!s.isConnected) return window.removeEventListener("resize", rs); P.adatta(); });
     }
     var fitta = cl.length > 4 || (!!(vm.serata && vm.serata.rec) && cl.length > 2);   // (col meme della serata: su due colonne, il meme resta grande)
-    var ol = t.el("ol", { class: "classifica" + (fitta ? " fitta" : "") }), med = medaglie(cl.map(function (r) { return r.pos; }));
+    // in tanti col meme della serata: tre colonne basse, così il meme resta grande anche sul telefono piccolo
+    var tre = fitta && !!(vm.serata && vm.serata.rec) && cl.length > 6;
+    var ol = t.el("ol", { class: "classifica" + (fitta ? " fitta" : "") + (tre ? " me-tre" : "") }), med = medaglie(cl.map(function (r) { return r.pos; }));
     cl.forEach(function (r, i) {
-      ol.appendChild(t.el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
+      ol.appendChild(t.el("li", { class: (r.pos === 1 ? "vincitore" : "") + (r.id === cb.myId ? " me-io" : "") }, [
         t.el("span", { class: "pos", text: med[i] }),
-        t.el("span", { class: "nome", text: r.id === cb.myId ? r.nome + " (tu)" : r.nome }),
+        t.el("span", { class: "nome", text: r.id === cb.myId ? (fitta ? "Tu" : r.nome + " (tu)") : r.nome }),
         t.el("span", { class: "punti", text: fmtN(r.punti) }) ]));
     });
     s._contenuto.appendChild(ol);
@@ -1099,7 +1129,9 @@
       ".me-carica{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--o-tenue);font-weight:800;pointer-events:none}",
       ".me-quadro.senza{background:var(--o-carta-2)}.me-quadro.senza .me-img{visibility:hidden}",
       ".me-q{position:absolute;display:flex;box-sizing:border-box;transform-origin:50% 50%}",
-      ".me-qt{display:block;white-space:pre;box-sizing:border-box;max-width:100%;max-height:100%;overflow:hidden;letter-spacing:.2px}",
+      ".me-qt{display:block;white-space:pre;box-sizing:border-box}",   // (niente letter-spacing né overflow: la misura col canvas non li conta e l'ultima lettera spariva)
+      ".me-chiaro{display:none;position:absolute;left:0;right:0;bottom:0;padding:2px 6px;text-align:center;font-weight:800;font-size:.86rem;line-height:1.25;color:var(--o-testo);white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none}",
+      ".me-meme.con-chiaro{align-items:flex-start}",
       ".me-qn{display:none;position:absolute;left:3px;top:3px;min-width:18px;height:18px;border-radius:9px;background:var(--n-lampone);color:#fff;font:800 11px/18px var(--o-tit);text-align:center;padding:0 3px}",
       ".me-q.modifica{outline:2px dashed rgba(255,255,255,.75);outline-offset:-2px;background:rgba(13,16,32,.12);cursor:text}",
       ".me-q.modifica .me-qn{display:block}",
@@ -1113,7 +1145,7 @@
       ".me-btn{border:0;font:inherit;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}",
       ".me-chip{width:40px;height:36px;border-radius:12px;background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}",
       ".me-chip.pieno{background:var(--o-carta-2)}.me-chip.pieno::after{content:'✓';font-size:.7rem;margin-left:2px;color:var(--o-verde)}",
-      ".me-chip.on{background:var(--o-tasto);color:#fff;box-shadow:none}",
+      ".me-chip.on{background:var(--o-carta-viva,var(--o-carta));color:var(--n-lampone);box-shadow:inset 0 0 0 2px var(--n-lampone)}",
       ".me-cambia{flex:none;margin-left:auto;padding:8px 12px;border-radius:12px;background:var(--o-carta);color:var(--o-oro-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro);font-size:.88rem}",
       ".me-campo{flex:1;min-width:0;resize:none;box-sizing:border-box;height:56px;padding:9px 12px;border-radius:14px;border:0;background:var(--o-carta-piena);color:var(--o-testo);box-shadow:inset 0 0 0 1.5px var(--o-filo-oro);font:600 1rem/1.3 var(--o-tit);user-select:text;-webkit-user-select:text}",
       ".me-campo:focus{outline:none;box-shadow:inset 0 0 0 2px var(--o-oro)}",
@@ -1157,10 +1189,12 @@
       // la fine: il meme della serata in alto, la classifica sotto
       ".schermata.me-fine>.contenuto{display:flex;flex-direction:column;min-height:0}",
       ".schermata.me-fine-meme>.testa{display:none}",
-      ".me-serata{display:flex;flex-direction:column;gap:8px;flex:1 1 0;min-height:170px;margin-bottom:10px}",
+      ".me-serata{display:flex;flex-direction:column;gap:8px;flex:1 1 0;min-height:max(170px,calc(var(--alt,100vh) * .4));margin-bottom:10px}",
+      ".classifica.me-tre{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.classifica.me-tre li{padding:4px 6px}.classifica.me-tre .pos{font-size:.9rem;width:1.3em}.classifica.me-tre .nome{font-size:.82rem}",
+      ".classifica.fitta li.me-io{box-shadow:inset 0 0 0 1.5px var(--o-oro)}",
       ".me-serata-riga{display:flex;align-items:center;gap:10px;flex:none}",
       ".me-serata-tit{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}",
-      ".me-serata-tit b{color:var(--n-monete);font-size:1.05rem}.me-serata-tit span{color:var(--o-tenue);font-weight:700;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".me-serata-tit b{color:var(--n-monete);font-size:1.05rem}.me-serata-tit span{color:var(--o-tenue);font-weight:700;font-size:.85rem;overflow-wrap:anywhere}",
       ".me-serata .me-meme{width:100%}",
       ".me-foto{flex:none;padding:9px 12px;font-size:.9rem}",
       ".schermata.me-fine-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}"
@@ -1183,28 +1217,32 @@
     riserva: true,
     riassunto: function (imp) { var c = imp.cambi != null ? imp.cambi : 3; return (imp.giri || 3) + " round · " + (imp.tempo || 75) + " secondi per scrivere · " + (c ? c + (c === 1 ? " cambio" : " cambi") + " di meme" : "cambi di meme senza limite"); },
     regole: [
-      "A ogni round ognuno riceve un <b>meme famoso coi riquadri vuoti</b>: tocca un riquadro, scrivi il tuo testo e guarda subito come viene. Se non ti ispira, una volta per round puoi toccare <b>🔄 Cambia meme</b>.",
+      "A ogni round ognuno riceve un <b>meme famoso coi riquadri vuoti</b>: tocca un riquadro, scrivi il tuo testo e guarda subito come viene. Se non ti ispira, puoi toccare <b>🔄 Cambia meme</b> (quante volte in tutta la partita lo sceglie l'host: di solito 3).",
       "Poi i meme passano uno alla volta, <b>senza nome</b>: vota quanto fa ridere (😂 fortissimo 200 punti, 🙂 carino 100, 😐 meh 0). Il tuo non lo voti. Se piace a tutti con 😂: <b>💯 +200</b>.",
       "Alla rivelazione si scopre chi li ha scritti, dal meno votato al più votato. L'<b>ultimo round</b> è uguale per tutti: lo stesso meme, punti doppi!",
       "Alla fine il <b>⭐ meme della serata</b> si manda su WhatsApp. I modelli dei meme arrivano da imgflip.com."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el;
-      dove.giri = 3; dove.tempo = 75; dove.cambi = 3;
+      // (le regole scelte l'ultima volta restano per la partita dopo, come negli altri giochi)
+      var pr = leggi("sg-memata-regole", {}) || {};
+      dove.giri = [3, 5, 7].indexOf(pr.giri) >= 0 ? pr.giri : 3; dove.tempo = [45, 75, 120].indexOf(pr.tempo) >= 0 ? pr.tempo : 75;
+      dove.cambi = [1, 3, 5, 10, 50, 0].indexOf(pr.cambi) >= 0 ? pr.cambi : 3;
+      function salva() { scrivi("sg-memata-regole", { giri: dove.giri, tempo: dove.tempo, cambi: dove.cambi }); }
       function scelta(tit, chiave, valori, testo, pre) {
         box.appendChild(el("div", { class: "etichetta", text: tit }));
-        var g = el("div", { class: "modo-griglia", style: "grid-template-columns:repeat(3,1fr)" });
+        var g = el("div", { class: "modo-griglia", style: "display:grid;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))" });
         valori.forEach(function (n) {
           var b = el("button", { class: "modo-chip" + (n === pre ? " attiva" : ""), style: "justify-content:center", onclick: function () {
-            dove[chiave] = n; [].forEach.call(g.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
+            dove[chiave] = n; salva(); [].forEach.call(g.children, function (c) { c.className = "modo-chip"; }); b.className = "modo-chip attiva";
           } }, [el("div", { class: "mt", text: testo(n) })]);
           g.appendChild(b);
         });
         box.appendChild(g);
       }
-      scelta("Quanti round", "giri", [3, 5, 7], function (n) { return n + " round"; }, 3);
-      scelta("Tempo per scrivere", "tempo", [45, 75, 120], function (n) { return n + " secondi"; }, 75);
-      scelta("Meme da cambiare (in tutta la partita)", "cambi", [1, 3, 5, 10, 50, 0], function (n) { return n ? String(n) : "∞ Senza limite"; }, 3);
+      scelta("Quanti round", "giri", [3, 5, 7], function (n) { return n + " round"; }, dove.giri);
+      scelta("Tempo per scrivere", "tempo", [45, 75, 120], function (n) { return n + " secondi"; }, dove.tempo);
+      scelta("Meme da cambiare (in tutta la partita)", "cambi", [1, 3, 5, 10, 50, 0], function (n) { return n ? String(n) : "∞ Senza limite"; }, dove.cambi);
     },
     avvia: function (t) {
       if (t.linkParams && t.linkParams.stanza) return ospite(t, t.linkParams.stanza);
