@@ -1503,7 +1503,7 @@
     }
     if (inSala) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "In una sala si gioca sempre online: appena cominci, gli altri entrano da soli." }));
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
-      onclick: function () { schermataRegole(g, function () { schermataPreGioco(g, opts); }); } }));
+      onclick: function () { schermataRegole(g, function () { mostra(s); }); } }));   // (ripasso X1: al ritorno la STESSA schermata, con le scelte fatte; prima si rifaceva da capo e le scelte si azzeravano)
     function comincia() {
       if (inSala) { impostazioni.modo = "online"; return cuore.salaLancia(g, impostazioni, box); }
       if (modo) impostazioni.modo = modo;

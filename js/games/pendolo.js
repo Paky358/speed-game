@@ -967,7 +967,7 @@
         var vinti = [], persi = [];
         if (lanc && nomi[lanc]) (vintoLanc ? vinti : persi).push(nomi[lanc]);
         for (var sv = 0; sv < NSEAT; sv++) if (posti[sv] && nomi[posti[sv]]) (!vintoLanc && survSeat[sv] ? vinti : persi).push(nomi[posti[sv]]);
-        try { t.risultato(vinti.map(function (n) { return { nome: n, pos: 1 }; }).concat(persi.map(function (n) { return { nome: n, pos: vinti.length + 1 }; }))); } catch (e) {}
+        try { t.risultato(vinti.map(function (n) { return { nome: n, pos: 1 }; }).concat(persi.map(function (n) { return { nome: n, pos: vinti.length ? vinti.length + 1 : 2 }; }))); } catch (e) {}   // (ripasso PP5: se vincono solo i Bot nessuno è 1°: prima chi perdeva prendeva il primo posto della serata)
       }
       if (ref) { ref.rimuovi(); ref = null; }
       var hs = hostSeat >= 0 ? ST.chars[hostSeat] : null;
@@ -1184,7 +1184,7 @@
     s._contenuto.appendChild(t.el("p", { text: txt, style: "font-size:1.05rem;line-height:1.5" }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🏠 Torna all'inizio", onclick: t.esci })); t.mostra(s); }
   function senzaRete(t) { var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
-    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "L'online funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile: intanto gioca da solo contro i bot." }));
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "L'online funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile: intanto gioca da solo contro i Bot." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci })); t.mostra(s); }
 
   SG.registra({
@@ -1192,7 +1192,7 @@
     modi: [{ modo: "bot", icona: "🎯", nome: "Da solo", sotto: "Contro i Bot: lanci tu o schivi sulla trave" }],
     nome: "Palla a Pendolo",
     icona: "🎯",
-    descrizione: "Mira e lancia la palla-pendolo per buttare in acqua chi sta sulla trave. Da solo contro i bot, oppure online: uno lancia, gli altri scappano e saltano.",
+    descrizione: "Mira e lancia la palla-pendolo per buttare in acqua chi sta sulla trave. Da solo contro i Bot, oppure online: uno lancia, gli altri scappano e saltano.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
     etichettaGiocatori: "👥 1–4 giocatori",   // (da solo, o online: chi lancia più 3 posti)
     postiOnline: 4,   // chi lancia più 3 sulla trave: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano
@@ -1204,7 +1204,7 @@
       "La palla colpisce <b>all'andata e al ritorno</b>: chi è sotto e non è in aria finisce in acqua.",
       "<b>Sulla trave</b>: scappi <b>◀ ▶</b> o <b>SALTI</b> quando arriva la palla. Dopo un salto serve un attimo prima di saltare di nuovo.",
       "Vince il <b>lanciatore</b> se li butta giù <b>tutti</b> entro il tempo; altrimenti vince <b>chi resta</b> sulla trave.",
-      "<b>Online</b>: in sala d'attesa ognuno sceglie se lanciare o stare sulla trave (i posti liberi li giocano i bot)."
+      "<b>Online</b>: in sala d'attesa ognuno sceglie se lanciare o stare sulla trave (i posti liberi li giocano i Bot)."
     ],
     impostazioni: function (box, dove, aiuti) {
       var el = aiuti.el; dove.modo = "bot"; dove.difficolta = "medio"; dove.ruolo = "lanciatore"; dove.collisioni = false; dove.mirino = vuoiMirino();
@@ -1220,8 +1220,8 @@
       }
       boxRuolo = el("div", {});
       boxRuolo.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Il tuo ruolo (da solo)" }));
-      bLanc = el("button", { class: "modo-chip attiva", onclick: function () { selR("lanciatore"); } }, [el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Lanci tu" }), el("div", { class: "ms", text: "Butti giù 3 bot" })])]);
-      bTrave = el("button", { class: "modo-chip", onclick: function () { selR("trave"); } }, [el("span", { class: "mi", text: "🏃" }), el("div", {}, [el("div", { class: "mt", text: "Sulla trave" }), el("div", { class: "ms", text: "Schivi il bot che lancia" })])]);
+      bLanc = el("button", { class: "modo-chip attiva", onclick: function () { selR("lanciatore"); } }, [el("span", { class: "mi", text: "🎯" }), el("div", {}, [el("div", { class: "mt", text: "Lanci tu" }), el("div", { class: "ms", text: "Butti giù 3 Bot" })])]);
+      bTrave = el("button", { class: "modo-chip", onclick: function () { selR("trave"); } }, [el("span", { class: "mi", text: "🏃" }), el("div", {}, [el("div", { class: "mt", text: "Sulla trave" }), el("div", { class: "ms", text: "Schivi il Bot che lancia" })])]);
       boxRuolo.appendChild(el("div", { class: "modo-griglia", style: "grid-template-columns:1fr 1fr" }, [bLanc, bTrave]));
       box.appendChild(boxRuolo);
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei Bot" }));
