@@ -50,6 +50,20 @@
         capelli: "codini", colCap: 10, capo: "felpa", maglia: 4, stampa: "arcobaleno", sotto: "gonnapieghe", pantaloni: 8, modScarpe: "stivaletti", scarpe: 1,
         occhiali: "cuore", animale: "gatto", colAnimale: 3, cappello: "nessuno" } }
   ];
+  // 😀 i gettoni dei Bot (13 nov 2026, avatar spenti: GETTONI in core.js): emoji e colore fissi, sempre uguali, così si riconoscono
+  var BOT_GETTONE = {
+    matt: { g: 1, e: "😎", c: ["oro", "arancio", "rosso"] }, angela: { g: 1, e: "🤓", c: ["viola", "blu", "lilla"] },
+    rosa: { g: 1, e: "🥳", c: ["magenta", "lampone", "rosso"] }, peppe: { g: 1, e: "😏", c: ["verde", "lime", "acqua"] },
+    gina: { g: 1, e: "🍕", c: ["arancio", "oro", "rosso"] }, toto: { g: 1, e: "🦉", c: ["blu", "ciano", "viola"] },
+    ciro: { g: 1, e: "⚽", c: ["ciano", "acqua", "blu"] }, lella: { g: 1, e: "🦄", c: ["lampone", "magenta", "viola"] }
+  };
+  function gtOn() { return !!(cuore.GETTONI && window.SGGettone); }
+  function gettoneBot(id, salvato) {
+    var G = window.SGGettone; if (!G) return null;
+    var g = G.eGettone(salvato) ? G.norm(salvato) : (BOT_GETTONE[id] ? G.norm(BOT_GETTONE[id]) : G.riserva(id));
+    if (g) { delete g.r; if (g.c && g.c[0]) g.k = g.c[0]; }   // (il colore del Bot è sempre il suo 1°)
+    return g;
+  }
   var botCast = null, botSalvatoA = 0;
   // i bot salvati (dalla scheda del proprietario o da questo telefono) sopra quelli di partenza: per id, con ogni campo controllato
   function botDaSalvati(lista) {
@@ -59,7 +73,7 @@
       var nome = typeof s.nome === "string" ? s.nome.replace(/\s+/g, " ").trim().slice(0, BOT_MAX_NOME) : "";
       var frase = typeof s.frase === "string" ? s.frase.replace(/\s+/g, " ").trim().slice(0, BOT_MAX_FRASE) : "";
       return { id: b.id, nome: nome.length >= 2 ? nome : b.nome, livello: BOT_LIVELLI.indexOf(s.livello) >= 0 ? s.livello : b.livello,
-        frase: frase || b.frase, omino: s.omino && typeof s.omino === "object" ? s.omino : b.omino };
+        frase: frase || b.frase, omino: s.omino && typeof s.omino === "object" ? s.omino : b.omino, gettone: gettoneBot(b.id, s.gettone) };
     });
   }
   function botTutti() {
@@ -67,6 +81,7 @@
     return botCast;
   }
   function copiaBot(b) {
+    if (gtOn()) return { id: b.id, nome: b.nome, livello: b.livello, frase: b.frase, bot: true, omino: gettoneBot(b.id, b.gettone) };   // 😀
     return { id: b.id, nome: b.nome, livello: b.livello, frase: b.frase, bot: true,
       omino: window.SGOmino ? SGOmino.norm(b.omino) : JSON.parse(JSON.stringify(b.omino || null)) };
   }
@@ -121,7 +136,7 @@
       svuota(griglia);
       botTutti().forEach(function (b) {
         griglia.appendChild(el("button", { class: "bc-bot liv-" + b.livello, type: "button", onclick: function () { schermataUnBot(b.id, function () { schermataBot(indietro); }); } }, [
-          el("span", { class: "bc-av", "aria-hidden": "true", html: window.SGOmino ? SGOmino.svg(b.omino, { busto: true }) : "🤖" }),
+          el("span", { class: "bc-av", "aria-hidden": "true", html: gtOn() ? SGGettone.svg(gettoneBot(b.id, b.gettone), { quadrato: true }) : window.SGOmino ? SGOmino.svg(b.omino, { busto: true }) : "🤖" }),
           el("b", { text: b.nome }), el("small", { text: BOT_LIV[b.livello] }) ]));
       });
     }
@@ -136,17 +151,23 @@
   // la scheda di un bot: avatar (col camerino), nome, frase e livello. b = la bozza (resta mentre si cambia l'avatar)
   function schermataUnBot(id, indietro, b) {
     var orig = botDaId(id); if (!orig) return indietro();
-    b = b || { nome: orig.nome, frase: orig.frase, livello: orig.livello, omino: orig.omino };
+    var origG = (botTutti().filter(function (x) { return x.id === id; })[0] || {}).gettone || gettoneBot(id);
+    b = b || { nome: orig.nome, frase: orig.frase, livello: orig.livello, omino: orig.omino, gettone: origG };
+    var disegnoBot = function () { return gtOn() ? SGGettone.svg(b.gettone || gettoneBot(id), { quadrato: true }) : SGOmino.svg(b.omino); };
     var parti = BOT_PARTENZA.filter(function (x) { return x.id === id; })[0];
-    var cambiato = function () { return b.nome !== orig.nome || b.frase !== orig.frase || b.livello !== orig.livello || JSON.stringify(SGOmino.norm(b.omino)) !== JSON.stringify(orig.omino); };
+    var cambiato = function () { return b.nome !== orig.nome || b.frase !== orig.frase || b.livello !== orig.livello || (gtOn() ? JSON.stringify(b.gettone) !== JSON.stringify(origG) : JSON.stringify(SGOmino.norm(b.omino)) !== JSON.stringify(orig.omino)); };
     var s = schermata({ icona: "🤖", titolo: orig.nome, sotto: "Come lo vedono tutti", indietro: function () {
       leggi();
       if (cambiato()) chiediConferma("Uscire senza salvare?", "Le modifiche a " + orig.nome + " si perdono.", "Esci", indietro); else indietro();
     } });
     s.classList.add("bot-scheda");
-    var palco = el("div", { class: "bc-palco", "aria-hidden": "true", html: SGOmino.svg(b.omino) });
-    var tAv = el("button", { class: "btn btn-fantasma bc-cambia", type: "button", text: "✏️ Cambia avatar", onclick: function () {
+    var palco = el("div", { class: "bc-palco", "aria-hidden": "true", html: disegnoBot() });
+    var tAv = el("button", { class: "btn btn-fantasma bc-cambia", type: "button", text: gtOn() ? "✏️ Cambia emoji e colore" : "✏️ Cambia avatar", onclick: function () {
       leggi();
+      if (gtOn()) {   // 😀 la stessa scelta delle persone: emoji e 3 colori (il Bot usa sempre il 1°)
+        var bz = { gettone: b.gettone, nome: b.nome };
+        return cuore.schermataGettone(function () { b.gettone = gettoneBot(id, bz.gettone); schermataUnBot(id, indietro, b); }, function () { schermataUnBot(id, indietro, b); }, { bozza: bz });
+      }
       var bozza = { nome: b.nome, omino: b.omino, omini: null };
       cuore.schermataOmino(function () { b.omino = bozza.omino || b.omino; schermataUnBot(id, indietro, b); }, bozza);
     } });
@@ -167,8 +188,8 @@
     s._contenuto.appendChild(el("div", { class: "bc-testa" }, [ palco, el("div", { class: "bc-lato" }, [ tAv,
       el("button", { class: "btn btn-fantasma bc-cambia", type: "button", text: "↺ Come all'inizio", onclick: function () {
         if (!parti) return;
-        b.nome = parti.nome; b.frase = parti.frase; b.livello = parti.livello; b.omino = parti.omino;
-        nome.value = b.nome; frase.value = b.frase; aggLivelli(); palco.innerHTML = SGOmino.svg(b.omino); avviso.textContent = "";
+        b.nome = parti.nome; b.frase = parti.frase; b.livello = parti.livello; b.omino = parti.omino; b.gettone = gettoneBot(id);
+        nome.value = b.nome; frase.value = b.frase; aggLivelli(); palco.innerHTML = disegnoBot(); avviso.textContent = "";
       } }) ]) ]));
     s._contenuto.appendChild(el("label", { class: "bc-etich", text: "Nome" })); s._contenuto.appendChild(nome);
     s._contenuto.appendChild(el("label", { class: "bc-etich", text: "Carattere" })); s._contenuto.appendChild(frase);
@@ -179,7 +200,7 @@
       if (b.nome.length < 2) { avviso.textContent = "Il nome deve avere almeno 2 lettere."; nome.focus(); return; }
       if (/^bot\b/i.test(b.nome)) { avviso.textContent = "«Bot» resta per i tasti: dagli un nome vero."; nome.focus(); return; }
       if (botTutti().some(function (x) { return x.id !== id && stessoNome(x.nome, b.nome); })) { avviso.textContent = "C'è già un bot che si chiama così."; nome.focus(); return; }
-      salvaBot(botTutti().map(function (x) { return x.id === id ? { id: id, nome: b.nome, frase: b.frase || (parti && parti.frase) || "", livello: b.livello, omino: SGOmino.norm(b.omino) } : x; }));
+      salvaBot(botTutti().map(function (x) { return x.id === id ? { id: id, nome: b.nome, frase: b.frase || (parti && parti.frase) || "", livello: b.livello, omino: (SGOmino.__avatar && SGOmino.__avatar.norm ? SGOmino.__avatar.norm(b.omino) : SGOmino.norm(b.omino)), gettone: b.gettone || null } : x; }));
       pillola("bot", "🤖 " + b.nome + " salvato: lo vedono tutti così", "verde", 2500);
       indietro();
     } }));

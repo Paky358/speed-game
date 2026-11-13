@@ -662,6 +662,7 @@
       if (CACHE_GESTI[kg]) { f.fig.innerHTML = CACHE_GESTI[kg]; f.fig.insertBefore(f.anello, f.fig.firstChild); return; }
     }
     f.fig.innerHTML = f.cfg && window.SGOmino ? SGOmino.svg(f.cfg, o) : "<div class='sl-emo'>🙂</div>";
+    if (window.SGGettone && SGGettone.acceso()) f.fig.style.setProperty("--gt", SGGettone.colore(SGGettone.daQualsiasi(f.cfg)));   // 😀 l'alone di «pronto» del suo colore
     f.fig.insertBefore(f.anello, f.fig.firstChild);
   }
   // un'animazione dell'avatar (saltello, saluto…) quando è libero: i tocchi e l'orologio della saletta

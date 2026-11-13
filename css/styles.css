@@ -4386,3 +4386,33 @@ html body.tema-oro::before{ display:none; }
    transform: le finestre fisse sopra il gioco (inset:0) si misurano sul body, cioè sulla parte che si vede (su iPhone se no restano centrate sotto la tastiera). */
 html.tastiera-ferma, html.tastiera-ferma body{ height:var(--alt); max-height:var(--alt); overflow:hidden; overscroll-behavior:none; }
 html.tastiera-ferma body{ position:fixed; left:0; right:0; top:var(--vv-su, 0px); width:100%; transform:translateZ(0); }
+
+/* =========================================================
+   😀 I GETTONI AL POSTO DEGLI AVATAR (13 nov 2026): la scelta (emoji + 3 colori in ordine) e il gettone nelle salette.
+   Il disegno del gettone: js/gettone.js (SVG: contorno del colore, fondo blu notte, l'emoji 3D dentro).
+   ========================================================= */
+.gt-testa{ position:sticky; top:0; z-index:3; display:flex; gap:12px; align-items:center; margin:0 -2px; padding:6px 2px 12px; background:var(--o-fondo, #0d1020); box-shadow:0 10px 14px -12px rgba(0,0,0,.7); }
+.gt-anteprima{ flex:0 0 auto; width:92px; height:92px; }
+.gt-anteprima svg{ width:100%; height:100%; display:block; }
+.gt-vuoto{ width:92px; height:92px; border-radius:50%; box-sizing:border-box; border:7px solid var(--c); display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:900; color:var(--o-tenue, #a6acc8); background:#161b33; }
+.gt-testa-dx{ flex:1; min-width:0; }
+.gt-aiuto{ font-size:.84rem; font-weight:800; color:var(--o-tenue, #a6acc8); margin-bottom:8px; line-height:1.3; min-height:2.6em; }
+.gt-colori{ display:grid; grid-template-columns:repeat(6, 1fr); gap:7px; }
+.gt-col{ position:relative; aspect-ratio:1/1; min-height:28px; border-radius:50%; border:0; padding:0; background:var(--c); cursor:pointer; box-shadow:inset 0 -3px 0 rgba(0,0,0,.2); touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.gt-col.on{ box-shadow:0 0 0 3px var(--o-fondo, #0d1020), 0 0 0 5px #fff; }
+.gt-col .gt-n{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:.92rem; font-weight:900; color:#0d1020; }
+.gt-gruppo{ margin-top:14px; }
+.gt-griglia{ display:grid; grid-template-columns:repeat(auto-fill, minmax(54px, 1fr)); gap:6px; }
+.gt-em{ aspect-ratio:1/1; border:0; border-radius:16px; background:var(--o-carta, rgba(255,255,255,.06)); padding:7px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:30px; line-height:1; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.gt-em img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
+.gt-em.on{ background:var(--o-carta-viva, rgba(255,255,255,.16)); box-shadow:inset 0 0 0 3px var(--o-tasto, #e0225a); }
+.gt-licenza{ margin-top:16px; font-size:.74rem; opacity:.85; }
+.gt-licenza a{ color:inherit; }
+.gt-palco svg{ width:132px; height:132px; display:block; margin:0 auto; }
+/* il gettone dove prima c'era l'avatar: niente ombre pesanti (filtri) */
+.gettoni svg.gettone{ filter:none !important; overflow:visible; }
+/* «pronto» nella saletta: un saltello, l'alone del suo colore dietro e la mano ✋ (solo transform e opacity) */
+.gettoni .sl-anello{ left:2%; right:2%; top:24%; bottom:-1%; height:auto; border-radius:50%; background:radial-gradient(closest-side, var(--gt, #34d17a) 62%, transparent 100%) !important; opacity:0; transform:scale(.7); transition:opacity .3s ease, transform .35s cubic-bezier(.3,1.6,.5,1); }
+.gettoni .sl-av.pronto .sl-anello{ opacity:.55; transform:scale(1.08); }
+.gettoni .sl-fig::after{ content:"✋"; position:absolute; right:-8%; top:14%; z-index:5; font-size:calc(var(--w, 80px) * .36); line-height:1; opacity:0; transform:scale(.3) rotate(-20deg); transition:opacity .2s ease, transform .35s cubic-bezier(.3,1.7,.5,1); pointer-events:none; }
+.gettoni .sl-av.pronto .sl-fig::after{ opacity:1; transform:scale(1) rotate(8deg); }

@@ -112,7 +112,14 @@
     if (p) {   // già dentro: mostra il profilo, le statistiche e il tasto esci
       var sp = schermata({ icona: p.emoji || "👤", titolo: p.nome, sotto: "Il tuo profilo", indietro: function () { (dopo || schermataHome)(); } });   // dalla città si torna in città
       if (!dopo || dopo === schermataHome) sp._menu = "profilo";   // 📱 aperto dalla home o dal menu: col menu sotto
-      if (window.SGOmino) sp._contenuto.appendChild(el("div", { class: "omino-profilo" }, [
+      if (cuore.GETTONI && window.SGGettone) {   // 😀 il gettone e il tasto per cambiarlo
+        var gP = cuore.mioGettone && cuore.mioGettone();
+        sp._contenuto.appendChild(el("div", { class: "omino-profilo gt-profilo" }, [
+          el("div", { class: "omino-palco gt-palco", html: SGGettone.svg(gP || SGGettone.riserva(p.nome), { quadrato: true }) }),
+          el("button", { class: "btn btn-fantasma", text: "✏️ Cambia emoji e colori", onclick: function () { cuore.schermataGettone(function () { schermataAccessoCloud(dopo); }, function () { schermataAccessoCloud(dopo); }); } })
+        ]));
+      }
+      else if (window.SGOmino) sp._contenuto.appendChild(el("div", { class: "omino-profilo" }, [
         el("div", { class: "omino-palco" + (p.omino ? "" : " vuoto"), html: SGOmino.svg(p.omino || SGOmino.casuale(p.nome)) }),
         el("button", { class: "btn " + (p.omino ? "btn-fantasma" : "btn-primario"), text: p.omino ? "✏️ Modifica il tuo avatar" : "🧍 Crea il tuo avatar",
           onclick: function () { cuore.schermataOmino(function () { schermataAccessoCloud(dopo); }); } })
@@ -187,6 +194,9 @@
     o = o || {};
     var io = profiloAttivo(), N = window.SGNube, ric = ricordoProfilo();
     if (io) {
+      // 😀 i gettoni (13 nov 2026): TUTTI, anche chi ha già il profilo, scelgono emoji e colori prima di entrare (anche dal link di un amico)
+      if (cuore.GETTONI && cuore.schermataGettone && !cuore.haGettone()) return cuore.schermataGettone(dopo, null, { benvenuto: true, daLink: !!o.daLink });
+      if (cuore.GETTONI) return dopo();
       // un profilo di prima senza avatar: lo fa adesso, una volta (non arrivando da un link: lì si entra e basta)
       if (io.cloud && !io.omino && !o.daLink && window.SGOmino) return cuore.schermataOmino(dopo, null, { benvenuto: true });
       if (window.SGOmino && io.nome && leggiL("sg-primo-avatar", null) === io.nome) return cuore.schermataOmino(dopo, null, { benvenuto: true });   // (aveva chiuso l'app prima di scegliere l'avatar)
@@ -267,6 +277,7 @@
             SGNube.salvaOmino(cfg, [cfg, SGOmino.norm(cuore.secondoOmino(cfg, n))], 0);
           }
           ricordaProfilo();
+          if (cuore.GETTONI && cuore.schermataGettone) return cuore.schermataGettone(function () { dopo(); pillola("benvenuto", "🎉 Benvenuto, " + n + "!", "verde", 3500); }, null, { benvenuto: true });   // 😀 (se chiude l'app adesso, alla prossima apertura glielo richiede: niente gettone scelto)
           scriviL("sg-primo-avatar", n);   // (l'avatar è ancora da scegliere: se chiude l'app adesso, alla prossima apertura glielo richiede)
           if (!window.SGOmino) return dopo();
           cuore.schermataOmino(function () { dopo(); pillola("benvenuto", "🎉 Benvenuto, " + n + "!", "verde", 3500); }, null, { benvenuto: true });

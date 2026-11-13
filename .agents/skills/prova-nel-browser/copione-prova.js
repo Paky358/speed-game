@@ -215,6 +215,7 @@
   // forma: 0 = lui, 1 = lei; look: il numero del look (0-7). Controlla che Fatto sia spento prima della scelta.
   async function primoAvatar(w, forma, look) {
     var d = w.document;
+    if (w.SGGettone && w.SGGettone.acceso()) return primoGettone(w, (forma || 0) * 8 + (look || 0));   // 😀 (13 nov 2026) al posto dell'avatar si sceglie il gettone
     var pa = await W.aspetta(function () { return d.querySelector(".primo-avatar .pa-forma"); }, 4000);
     if (!pa) no("dopo «Avanti» non si apre «Sei lui o lei?» (" + T(w).slice(0, 80) + ")");
     if (d.querySelector(".editor-avatar")) no("nel benvenuto si apre ancora l'editor intero");
@@ -229,6 +230,20 @@
     if (fatto.disabled) no("scelto il look, «✅ Fatto» resta spento");
     fatto.click();
     if (!await W.aspetta(function () { return !d.querySelector(".primo-avatar"); }, 4000)) no("toccato «Fatto», l'avatar resta aperto");
+  }
+  // 😀 il primo gettone (13 nov 2026): «Scegli la tua emoji» → un'emoji (la n-esima) e 3 colori in ordine → «▶ Fatto» (spento finché manca qualcosa)
+  async function primoGettone(w, n, colori) {
+    var d = w.document;
+    var sc = await W.aspetta(function () { return d.querySelector(".gt-scelta .gt-em"); }, 6000);
+    if (!sc) no("non si apre «Scegli la tua emoji» (" + T(w).slice(0, 80) + ")");
+    var fatto = [].find.call(d.querySelectorAll(".gt-scelta button"), function (b) { return /Fatto/.test(b.textContent); });
+    if (!fatto || !fatto.disabled) no("«▶ Fatto» acceso prima di scegliere");
+    var em = d.querySelectorAll(".gt-scelta .gt-em"); em[(n || 0) % em.length].click();
+    if (!fatto.disabled) no("«▶ Fatto» acceso con l'emoji ma senza i colori");
+    (colori || ["Oro", "Blu", "Verde"]).forEach(function (k) { var b = [].find.call(d.querySelectorAll(".gt-col"), function (x) { return x.getAttribute("aria-label") === k; }); if (b) b.click(); });
+    if (fatto.disabled) no("scelti emoji e 3 colori, «▶ Fatto» resta spento");
+    fatto.click();
+    if (!await W.aspetta(function () { return !d.querySelector(".gt-scelta"); }, 4000)) no("toccato «Fatto», la scelta resta aperta");
   }
   // la schermata del profilo a misura (larg x alt; alt piccola = tastiera aperta): niente scorre, il tasto e i campi si
   // vedono tutti. "" = tutto bene, se no il perché
@@ -5818,7 +5833,7 @@
       apriSala: apriSala, salaLanciaGioco: salaLanciaGioco, scalinataFinoAllaFine: scalinataFinoAllaFine,
       audioFinto: audioFinto, nomeTarga: nomeTarga, targaDi: targaDi, avatarDi: avatarDi, pronto: pronto, statoHost: statoHost,
       contaFaccine: contaFaccine, controllaSchermo: controllaSchermo,
-      spiaProfilo: spiaProfilo, creaProfilo: creaProfilo, primoAvatar: primoAvatar, misuraProfilo: misuraProfilo, misureProfilo: misureProfilo,
+      spiaProfilo: spiaProfilo, creaProfilo: creaProfilo, primoAvatar: primoAvatar, primoGettone: primoGettone, misuraProfilo: misuraProfilo, misureProfilo: misureProfilo,
       codiceSala: codiceSala, tessera: tessera, modiVisti: modiVisti, spiaTesto: spiaTesto, salaDaGioco: salaDaGioco, idInSala: idInSala,
       apriSalaNuova: apriSalaNuova, misuraHome: misuraHome, batti: batti, incolla: incolla, caselle: caselle,
       salaConAmici: salaConAmici, lanciaDallaSala: lanciaDallaSala, contaSl: contaSl, sagome: sagome, regoleDi: regoleDi,

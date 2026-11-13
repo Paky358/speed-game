@@ -1926,7 +1926,7 @@
         tema: tema, crediti: crediti, sessione: nuovaSessione(), roundIdx: 0, chooserPtr: 0, tavolo: [], senzaCarta: [], asta: null,
         tipi: tipiPartita(t.impostazioni), salto: 1,   // 🎭 i round diversi; di quanto rilancia chi tocca il suo avatar
         malPiano: t.impostazioni && t.impostazioni.maledetta ? pianoMaledetta(t.giocatori.length) : null,   // 🧨 la carta maledetta (regola dell'host)
-        giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: crediti, kit: [], stelle: 0, asteVinte: 0, st: statNuove(), omino: ominoLocale(n) }; })
+        giocatori: (function (OL) { return t.giocatori.map(function (n, i) { return { nome: n, crediti: crediti, kit: [], stelle: 0, asteVinte: 0, st: statNuove(), omino: OL[i] }; }); })(ominiLocali(t.giocatori))
       };
       iniziaRound(t, st);
   }
@@ -2146,6 +2146,14 @@
   function ominoLocale(nome) {
     try { var p = window.SGNube && SGNube.profilo && SGNube.profilo(); if (p && p.omino && String(p.nome || "").trim().toLowerCase() === String(nome || "").trim().toLowerCase()) return p.omino; } catch (e) {}
     return null;
+  }
+  // 😀 i gettoni (13 nov 2026): il colore di ognuno è quello del suo gettone (deciso da chi tiene la partita; sullo stesso
+  // telefono in ordine di nome: chi è scritto prima tiene il suo 1° colore)
+  function gtColore(om) { return window.SGGettone && SGGettone.acceso() && SGGettone.eGettone(om) ? SGGettone.colore(om) : null; }
+  function ominiLocali(nomi) {
+    if (!(window.SGGettone && SGGettone.acceso())) return nomi.map(ominoLocale);
+    var M = SGGettone.nuovaMappa();
+    return nomi.map(function (n) { return SGGettone.assegna(M, n, ominoLocale(n) || SGGettone.riserva(n)); });
   }
   function cfgDi(nome, omino) { return omino || (window.SGOmino ? SGOmino.casuale(nome || "Giocatore") : null); }
   function srcSvg(k, fn) {   // un disegno SVG come immagine (fatto una volta e tenuto da parte)
@@ -3938,7 +3946,7 @@
     R.gioCols = cols; R.gioQh = qh; if (!gia) { R.gr = {}; R.facce = {}; R.busti = {}; R.colP = {}; }
     (gia ? [] : righe.slice().sort(function (a, b) { return (a.posV || a.pos) - (b.posV || b.pos); })).forEach(function (r, i) {
       var fr = el("span", { class: "st-gio-fr" }), zn = el("span", { class: "st-gio-zona" });   // (la freccina del voto che cambia; nella Zona Cesarini: cosa ti serve)
-      var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), inC = el("span", { class: "st-gio-in" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true }), fq = imgAv(el, "st-gio-faccia", cfgDi(r.nome, r.omino)), pc = COLORI_PERSONE[(r.ord != null ? r.ord : i) % COLORI_PERSONE.length];   // 🎨 (13 nov 2026, il proprietario: a ogni «Gioca ancora» lo stesso colore; prima andava con la classifica)
+      var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), inC = el("span", { class: "st-gio-in" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true }), fq = imgAv(el, "st-gio-faccia", cfgDi(r.nome, r.omino)), pc = gtColore(r.omino) || COLORI_PERSONE[(r.ord != null ? r.ord : i) % COLORI_PERSONE.length];   // 🎨 (13 nov 2026, il proprietario: a ogni «Gioca ancora» lo stesso colore; prima andava con la classifica)
       var nodo = el("div", { class: "st-gio-riga" + (R.opz.mio != null && r.id === R.opz.mio ? " mio" : ""), style: "--pc:" + pc + ";transform:" + posQ(R, i), onclick: function () { schedaLive(R, R.gr[r.id]); } }, [
         fq, el("div", { class: "st-gio-nomi" }, [ el("span", { class: "st-gio-nome", text: r.nome }), el("div", { class: "st-gio-sotto" }, [ pt, fr, ev, zn, inC ]) ]) ]);
       R.colP[r.id] = pc;
@@ -6719,6 +6727,11 @@
       return { testa: testa, alto: alto, r: u * 0.8 * k * (1 - 0.22 * gi) };   // (disteso, la faccina un po' più piccola e più in là: si vedono maglia e braccia)
     }
     function faccia(img, x, y, r, pc) {   // la faccina di chi l'ha comprato, al posto della testa, sempre dritta, con l'alone del suo colore
+      if (window.SGGettone && SGGettone.acceso()) {   // 😀 il gettone ha già il suo anello colorato: si disegna così com'è, un po' più grande
+        if (img && (img.tagName === "CANVAS" || (img.complete && img.naturalWidth))) ctx.drawImage(img, x - r * 1.22, y - r * 1.22, r * 2.44, r * 2.44);
+        else { ctx.beginPath(); ctx.arc(x, y, r * 1.17, 0, Math.PI * 2); ctx.fillStyle = pc || "#ffe066"; ctx.fill(); }
+        return;
+      }
       ctx.beginPath(); ctx.arc(x, y, r * 1.17, 0, Math.PI * 2); ctx.fillStyle = pc || "#ffe066"; ctx.fill();
       if (!img || !(img.tagName === "CANVAS" || (img.complete && img.naturalWidth))) return;
       ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill(); ctx.clip(); ctx.drawImage(img, x - r, y - r * 1.02, r * 2, r * 2); ctx.restore();
@@ -9315,7 +9328,7 @@
       ovrAsta: !!(t.impostazioni && t.impostazioni.ovrAsta),   // ⭐ l'overall all'asta (di partenza no)
       scambiOn: scambiOn(t.impostazioni),   // 🔄 gli scambi a fine asta (di partenza sì)
       compra: compraDi(t.impostazioni),   // 💰 come si compra: l'asta normale (di partenza), tutta a buste, buste solo per i big
-      giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove(), omino: ominoLocale(n) }; })
+      giocatori: (function (OL) { return t.giocatori.map(function (n, i) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove(), omino: OL[i] }; }); })(ominiLocali(t.giocatori))
     };
     st.mazzo = costruisciMazzoFanta(st.giocatori.length);
     st.coppie = st.vs && st.giornata ? coppieGiornate(st.giornate) : null; COPPIE_ORA = st.coppie;   // 🆚 le partite si sorteggiano adesso

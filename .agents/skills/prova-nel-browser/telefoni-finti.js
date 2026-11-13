@@ -213,7 +213,16 @@ window.preparaFinestra = function (w, nome, opz) {
     const errore = code => Promise.reject(Object.assign(new Error(code), { code }));
     // w.__offline = true: la parte dei profili non si è caricata (niente internet all'apertura)
     v.disponibile = () => !w.__offline; v.pronto = () => true; v.utente = () => (mem.fp ? { uid: mem.fp.uid || "finto-" + nome } : null);
-    v.profilo = () => { const fp = mem.fp; if (fp && !fp.omino && !fp.__nuovo && w.SGOmino) fp.omino = w.SGOmino.casuale(nome); return fp; };
+    // 😀 i gettoni (13 nov 2026): ogni profilo finto ha già scelto il suo gettone (emoji e 3 colori dal nome, sempre gli stessi),
+    // così le prove di prima non si fermano su «Scegli la tua emoji»; opz.senzaGettone = deve ancora sceglierlo (le prove della scelta)
+    const gtFinto = () => { const G = w.SGGettone; if (!G || !G.acceso()) return null; const r = G.riserva(nome), i = Math.max(0, G.COLORI.findIndex(x => x.k === r.c[0])); return { g: 1, e: r.e, c: [0, 4, 8].map(d => G.COLORI[(i + d) % G.COLORI.length].k) }; };
+    v.profilo = () => {
+      const fp = mem.fp;
+      if (fp && !fp.__nuovo && !opz.senzaGettone && !fp.gettone) { const g = gtFinto(); if (g) fp.gettone = g; }
+      if (fp && w.SGGettone && w.SGGettone.acceso()) { fp.omino = fp.gettone || null; return fp; }
+      if (fp && !fp.omino && !fp.__nuovo && w.SGOmino) fp.omino = w.SGOmino.casuale(nome); return fp;
+    };
+    v.salvaGettone = g => { if (!mem.fp) return Promise.resolve(); mem.fp.gettone = g; mem.fp.omino = g; BR.log.push("GETTONE di " + nome + ": " + g.e + " " + g.c.join(",")); setTimeout(avvisa, 5); return Promise.resolve(); };
     v.onCambio = cb => { ascolta.push(cb); try { cb(v.profilo()); } catch (e) {} };
     // creare il profilo ed entrare: i conti finti stanno in BR.conti (contoFinto(nome, password) ne prepara uno)
     v.crea = (n, pwd, emoji) => {

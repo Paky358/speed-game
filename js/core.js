@@ -956,7 +956,15 @@
   function avatarASpento() { try { return localStorage.getItem("sg-avatar-a") === "0"; } catch (e) { return false; } }
   function avatarAVoluto() { return AVATAR_A === "tutti" || (AVATAR_A === "proprietario" && avatarAAmmesso() && !avatarASpento()); }
   var avatarAChiesto = false;
+  // 😀 I GETTONI AL POSTO DEGLI AVATAR (13 nov 2026, il proprietario: «per far laggare di meno… se li devo tenere brutti preferisco
+  // non tenerli»): GETTONI = true spegne gli avatar per tutti. Ognuno ha un gettone (un cerchio col suo colore e dentro la sua
+  // emoji 3D): lo disegna js/gettone.js, che fa disegnare a SGOmino.svg il gettone al posto dell avatar (i giochi non cambiano).
+  // Il codice degli avatar resta (e l avatar salvato di ognuno anche: false = tornano come prima); con GETTONI il disegno
+  // «illustrato» (il pezzo avatar-a, quasi 1 MB) non si scarica più. La scelta: cuore.schermataGettone (js/cuore/gettone.js).
+  var GETTONI = true;
+  if (GETTONI && window.SGGettone) { SGGettone.accendi(); setTimeout(function () { try { SGGettone.preparaTutte(); } catch (e) {} }, 2500); }   // (le immagini, piano piano: nelle partite sono già pronte)
   function stileAvatar() {
+    if (GETTONI) return;   // (i gettoni: niente avatar da disegnare né da scaricare)
     if (!window.SGOmino || !SGOmino.stile) return;
     var base = AVATAR_NUOVO === "tutti" || (AVATAR_NUOVO === "proprietario" && eProprietario() && !avatarNuoviSpenti()) ? "rifinito" : "classico";
     if (avatarAVoluto()) {
@@ -2066,6 +2074,10 @@
       },
       // l'avatar di questo telefono (da mandare quando si entra in una stanza online)
       mioOmino: function (nome) {
+        if (GETTONI && window.SGGettone) {   // 😀 il gettone (emoji + 3 colori); se tengo io la serata, col colore deciso
+          var gm = (cuore.mioGettone && cuore.mioGettone()) || SGGettone.riserva(nome || (profiloAttivo() || {}).nome || "io");
+          return cuore.gtMio ? cuore.gtMio(gm, nome || (profiloAttivo() || {}).nome) : gm;
+        }
         var p = profiloAttivo(); if (p && p.omino) return p.omino;
         if (salaCtx && cuore.salaG && cuore.salaG.omino) return cuore.salaG.omino;
         return window.SGOmino ? SGOmino.casuale(nome || (p && p.nome) || "io") : null;
@@ -2448,6 +2460,7 @@
   cuore.apriOnlineSala = apriOnlineSala; cuore.audioCtx = audioCtx; cuore.avatarNuoviSpenti = avatarNuoviSpenti; cuore.avviaPartita = avviaPartita;
   cuore.caricaExtra = caricaExtra; cuore.catDi = catDi; cuore.chiDa = chiDa; cuore.chiediConferma = chiediConferma;
   cuore.chiediScelta = chiediScelta; cuore.cifre = cifre; cuore.classificaFitta = classificaFitta; cuore.conCodice = conCodice;
+  cuore.GETTONI = GETTONI;
   cuore.contoAvanti = contoAvanti; cuore.eProprietario = eProprietario; cuore.el = el; cuore.entraConCodice = entraConCodice; cuore.errore = errore;
   cuore.giardinoPronto = giardinoPronto; cuore.giochi = giochi; cuore.giocoDa = giocoDa; cuore.giocoOnline = giocoOnline; cuore.gruppo = gruppo;
   cuore.hostDiRiserva = hostDiRiserva; cuore.hostVia = hostVia; cuore.inviaChi = inviaChi; cuore.lasciaPartita = lasciaPartita;

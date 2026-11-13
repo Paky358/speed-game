@@ -68,9 +68,19 @@
       window.addEventListener("online", function () { if (utente && !profilo) caricaProfilo(utente.uid); });
     } catch (e) { auth = null; pronto = true; }
   }
+  // 😀 i gettoni (13 nov 2026): con gli avatar spenti (window.SGGettone acceso) il profilo mostra il gettone al posto dell avatar:
+  // .omino = il gettone (tutto il resto dell app lo usa come prima l avatar), .ominoAvatar = l avatar vero, che resta salvato
+  // in Firestore (il campo omino non si riscrive mai): se gli avatar si riaccendono ognuno ritrova il suo
+  function gtAcceso() { return !!(window.SGGettone && SGGettone.acceso()); }
+  function conGettone(d) {
+    if (!d || !gtAcceso()) return d;
+    if (!("ominoAvatar" in d)) d.ominoAvatar = d.omino || null;
+    d.omino = d.gettone && SGGettone.eGettone(d.gettone) ? SGGettone.norm(d.gettone) : null;
+    return d;
+  }
   function caricaProfilo(uid) {
     db.collection("profili").doc(uid).get().then(function (doc) {
-      profilo = doc.exists ? doc.data() : null;
+      profilo = conGettone(doc.exists ? doc.data() : null);
       unisciMonete();
       pronto = true; notifica();
     }).catch(function () { pronto = true; notifica(); });
@@ -123,7 +133,7 @@
           level: 1, xp: 0, coins: MONETE_START, prestige: 0,   // livello, XP, Speed Coins e Prestigio (regole in livelli.js)
           moneteUnite: true   // una moneta sola: niente fiches a parte
         };
-        return db.collection("profili").doc(cred.user.uid).set(p).then(function () { profilo = p; notifica(); return p; });
+        return db.collection("profili").doc(cred.user.uid).set(p).then(function () { profilo = conGettone(p); notifica(); return p; });
       });
     },
     accedi: function (nome, pwd) {
@@ -158,6 +168,18 @@
       var doc = db.collection("profili").doc(utente.uid);
       // in due passi: l'avatar in uso si salva comunque anche se il secondo pezzo non passasse
       return doc.update({ omino: cfg }).then(function () { if (omini) return doc.update({ omini: omini, ominoN: n || 0 }); }).catch(function () {});
+    },
+
+    // ---- 😀 il gettone (emoji + 3 colori in ordine): nel profilo e nella scheda pubblica (gli amici lo vedono uguale) ----
+    salvaGettone: function (g) {
+      if (!auth || !utente || !profilo || !window.SGGettone) return Promise.resolve();
+      g = SGGettone.norm(g); if (!g) return Promise.resolve();
+      delete g.k; delete g.r;
+      profilo.gettone = g; if (gtAcceso()) profilo.omino = g;
+      notifica();
+      var pr = db.collection("profili").doc(utente.uid).update({ gettone: g }).catch(function () {});
+      db.collection("pubblici").doc(utente.uid).set({ gettone: g }, { merge: true }).catch(function () {});
+      return pr;
     },
 
     // ---- livello, XP, Speed Coins e Prestigio (i profili di prima partono da livello 1 e 0 XP) ----
@@ -323,10 +345,11 @@
     chiaveNome: function (nome) { return emailDa(nome).replace("@sg.local", ""); },
     pubblica: function (dati) {
       if (!auth || !utente || !profilo) return Promise.resolve();
-      var sch = { uid: utente.uid, nome: profilo.nome, chiave: SGNube.chiaveNome(profilo.nome), omino: profilo.omino || null, emoji: profilo.emoji || "🙂",
+      var sch = { uid: utente.uid, nome: profilo.nome, chiave: SGNube.chiaveNome(profilo.nome), omino: ("ominoAvatar" in profilo ? profilo.ominoAvatar : profilo.omino) || null, emoji: profilo.emoji || "🙂",
         livello: profilo.level || 1, prestigio: profilo.prestige || 0 };   // il livello lo vedono anche gli amici
       for (var k in dati) sch[k] = dati[k];
-      if (profilo.commessa) sch.commessa = profilo.commessa;   // (solo il proprietario: la commessa del negozio)
+      if (profilo.commessa) sch.commessa = profilo.commessa;
+      if (profilo.gettone) sch.gettone = profilo.gettone;   // (solo il proprietario: la commessa del negozio)
       var firma = JSON.stringify(sch);
       if (firma === ultimaScheda) return Promise.resolve();   // niente di nuovo: non riscrive
       ultimaScheda = firma;
@@ -349,7 +372,7 @@
     cercaNome: function (nome) {
       if (!auth || !utente) return Promise.reject(new Error("offline"));
       return db.collection("pubblici").where("chiave", "==", SGNube.chiaveNome(nome)).limit(1).get()
-        .then(function (q) { return q.empty ? null : q.docs[0].data(); });
+        .then(function (q) { return q.empty ? null : conGettone(q.docs[0].data()); });
     },
     // aggiunge/toglie un uid dalla MIA lista amici (solo il mio profilo)
     mettiAmico: function (uid) {
@@ -367,14 +390,14 @@
     schede: function (uids) {
       if (!auth || !utente) return Promise.reject(new Error("offline"));
       return Promise.all((uids || []).map(function (u) {
-        return db.collection("pubblici").doc(u).get().then(function (d) { return d.exists ? d.data() : null; });
+        return db.collection("pubblici").doc(u).get().then(function (d) { return d.exists ? conGettone(d.data()) : null; });
       })).then(function (l) { return l.filter(Boolean); });
     },
     // classifica di TUTTI: chi ha più trofei (i primi n)
     classificaGenerale: function (n) {
       if (!auth || !utente) return Promise.reject(new Error("offline"));
       return db.collection("pubblici").orderBy("trofei", "desc").limit(n || 100).get()
-        .then(function (q) { return q.docs.map(function (d) { return d.data(); }); });
+        .then(function (q) { return q.docs.map(function (d) { return conGettone(d.data()); }); });
     },
 
     // ---- richieste di amicizia ----

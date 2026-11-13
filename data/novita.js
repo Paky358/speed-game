@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 343,
+    data: "13 novembre 2026",
+    titolo: "Ognuno ha la sua emoji 3D e il suo colore 😀",
+    descrizione: [
+      "😀 Al posto dell'avatar ora ognuno ha un gettone: un cerchio del suo colore con dentro la sua emoji 3D. Si sceglie una volta (anche chi ha già il profilo) e si cambia quando vuoi dal profilo.",
+      "🎨 Scegli 3 colori in ordine: se un amico nella stessa serata ha già il tuo 1° colore, prendi il 2° (o il 3°). Così in partita ognuno ha un colore diverso, uguale su tutti i telefoni e per tutta la serata.",
+      "⚡ Le emoji 3D sono uguali su ogni telefono, iPhone e Android: niente più personaggi neri o storti.",
+      "🪶 L'app è più leggera: si apre e parte più in fretta, e il «pronto» nella saletta non va più a scatti (il gettone fa un saltello, si accende del suo colore e compare la ✋).",
+      "🤖 Anche i Bot hanno la loro emoji e il loro colore, sempre gli stessi: Matt è 😎."
+    ]
+  },
+  {
     v: 342,
     data: "13 novembre 2026",
     titolo: "Mini Asta Fantacalcio: fino a 12 giocatori 👥",
