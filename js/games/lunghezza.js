@@ -526,13 +526,12 @@
   }
   // un tasto che risponde al primo tocco (pointerup), vibra solo al tocco
   function bottone(t, classe, testo, fn) {
-    var b = t.el("button", { class: "lu-btn " + (classe || ""), type: "button", text: testo }), giu = false, ult = 0;
-    function via() { var ora = Date.now(); if (ora - ult < 350) return; ult = ora; fn(); }   // (se arrivano sia il dito sia il click, il tasto parte una volta sola)
+    var b = t.el("button", { class: "lu-btn " + (classe || ""), type: "button", text: testo }), giu = false, ultDito = 0;
     b.addEventListener("pointerdown", function (e) { if (b.disabled) return; giu = true; e.preventDefault(); });
-    b.addEventListener("pointerup", function (e) { if (!giu || b.disabled) return; giu = false; e.preventDefault(); try { SG.audioCtx && SG.audioCtx(); } catch (_) {} vibra(10); via(); });
+    b.addEventListener("pointerup", function (e) { if (!giu || b.disabled) return; giu = false; e.preventDefault(); try { SG.audioCtx && SG.audioCtx(); } catch (_) {} vibra(10); ultDito = Date.now(); fn(); });
     b.addEventListener("pointercancel", function () { giu = false; });
     b.addEventListener("pointerleave", function () { giu = false; });
-    b.addEventListener("click", function (e) { if (e.detail === 0 && !b.disabled) via(); });   // (tastiera / lettore di schermo: il tocco è già passato da pointerup)
+    b.addEventListener("click", function (e) { if (e.detail === 0 && !b.disabled && Date.now() - ultDito > 400) fn(); });   // (se arrivano sia il dito sia il click, il tasto parte una volta sola)   // (tastiera / lettore di schermo: il tocco è già passato da pointerup)
     return b;
   }
   // il cerchio del tempo
