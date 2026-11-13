@@ -21,7 +21,11 @@ window.SG_NOVITA = [
       "🃏 Black Jack: gli annunci grandi vanno a capo e la vincita si legge; la fine partita non è più tagliata; il tavolo è più leggero sui telefoni lenti. ♣️ Poker: fiori in verde nelle carte piccole, per non confonderli con le picche. A chi guarda una partita a due la scritta in alto sparisce dopo pochi secondi e non copre più il punteggio.",
       "🤥 La Balla Colossale: al voto la notizia resta sempre sullo schermo, anche sul telefono piccolo; la classifica del round in tanti non è più coperta; niente più barre strane nelle virgolette; chi riaccende il telefono mentre gli altri votano vota anche lui.",
       "🏆 A fine partita, anche in 8 sul telefono piccolo, i tasti «Rivincita» e «Cambia gioco» restano sempre in vista.",
-      "🏷️ Il Prezzo è Giusto: nella Spesa, in Mettili in ordine, nella Prova del 5 e in Togli la cifra la faccina in alto ha di nuovo la testa."
+      "🏷️ Il Prezzo è Giusto: nella Spesa, in Mettili in ordine, nella Prova del 5 e in Togli la cifra la faccina in alto ha di nuovo la testa; in 8 i nomi in classifica si leggono interi.",
+      "📜 La linea del tempo: «240 a.C.» non diventa più «240 …». 💣 La Patata: la scritta dice di toccare in alto, dove sono i giocatori. 🎡 La Ruota: chi blocca il telefono non perde più i soldi della manche.",
+      "❌⭕ Tris e Tris Gigante: se l'avversario blocca il telefono, il tavolo resta e si legge «⏳ Aspettiamo Giulia 📱»: quando riaccende si continua. 🚢 Battaglia Navale: «il Cacciatorpediniere», «l'Incrociatore».",
+      "⚙️ Le scelte fatte prima della partita non si azzerano più se apri «Come si gioca». 🐎 Horto Muso: al traguardo il posto giusto, non più «1°» per tutti.",
+      "🗣️ Taboo: la fine partita non esce più dallo schermo e nei tre round il riassunto non svela le carte che tornano nel cesto. 🔨 L'Asta dei temi: il tasto della busta mostra una cifra sola."
     ]
   },
   {
