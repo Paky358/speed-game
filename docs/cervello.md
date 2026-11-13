@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 13 nov 23:30 · 😀 Emoji 3D al posto degli avatar · salvato (in corso) · gettoni al posto degli avatar: interruttore GETTONI in core.js, js/gettone.js (SGOmino disegna il gettone), scelta obbligatoria emoji + 3 colori (js/cuore/gettone.js), 118 emoji Fluent 3D (353 KB, carte/emoji), colori della serata decisi da chi tiene la stanza (rete.js), Bot con emoji e colore fissi, Mini Asta col colore del gettone; prove e misure ancora da fare (novità v343) · emoji-avatar 46ff8ec
 - 13 nov 2026 20:37 · ⚽🃏 Mini Asta · PUBBLICATO · Mini Asta fino a 12 giocatori, punteggi della giornata 7 + «👥 Gli altri», mercato a misura di telefono (rose uguali, la mia per prima, si scorre sotto la grandezza minima), scritta «IL MOMENTO CHE HA DECISO», altezze di Gueye e Mendy (novità v342) · asta-fanta → master e lavori-in-corso
 - 13 nov 2026 19:20 · ⚽🃏 Mini Asta · salvato · mercato: niente pagine, quando le rose non ci stanno grandi come il «duce» si scorrono col dito (partite ferme sotto), i miei da dare anche nella barra di «Proponi» (novità v342, non online) · asta-fanta
 - 13 nov 2026 18:55 · ⚽🃏 Mini Asta · salvato · mercato: le rose mai più piccole di quella del «duce» (nomi 10,5 px, campo 104 px): sul telefono del proprietario fino a 8 in una schermata, 9-10 su due pagine (novità v342, non online) · asta-fanta
