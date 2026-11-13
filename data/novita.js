@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 340,
+    data: "13 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: dopo la serata vera ⚽",
+    descrizione: [
+      "🆚 L'overall dell'avversario si vede SEMPRE intero, con 1 e con 3 giornate e su ogni telefono: se non c'è posto si accorcia il resto (i nomi in sigla), mai il numero.",
+      "⏱️ Quando il banditore parla il suo fumetto sta sotto la barra del tempo: il conto alla rovescia dell'asta non si copre più.",
+      "🃏 Nella formazione finale i calciatori si scoprono dal più scarso al più forte.",
+      "📋 Nelle pagelle del primo tempo tutti i voti hanno la stessa misura, e bonus e malus si vedono sempre interi.",
+      "📊 Nei quadretti della giornata il totale è più piccolo e le icone dei bonus e dei malus ci stanno tutte.",
+      "⭐ Nuova regola nel ⚙️: «L'overall all'asta». Di partenza resta segreto fino alla fine, come prima; se la accendete, l'overall di ogni calciatore si vede già sul maxischermo mentre è all'asta e, comprato, nella rosa e nella formazione.",
+      "📏 In campo i calciatori hanno la loro altezza vera (differenze leggere: Woltemade, il gigante, si vede più alto degli altri). Solo l'aspetto: la partita non cambia."
+    ]
+  },
+  {
     v: 339,
     data: "12 novembre 2026",
     titolo: "La tastiera non rovina più i giochi ⌨️",
