@@ -9,8 +9,8 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 340,
-    data: "12 novembre 2026",
+    v: 343,
+    data: "13 novembre 2026",
     titolo: "Sistemati i difetti visti in serata 🔧",
     descrizione: [
       "🧍 Gli avatar coi capelli «Boccoli» si vedono dappertutto: in Chi di Noi? la carta della zia non è più vuota.",
@@ -26,6 +26,51 @@ window.SG_NOVITA = [
       "❌⭕ Tris e Tris Gigante: se l'avversario blocca il telefono, il tavolo resta e si legge «⏳ Aspettiamo Giulia 📱»: quando riaccende si continua. 🚢 Battaglia Navale: «il Cacciatorpediniere», «l'Incrociatore».",
       "⚙️ Le scelte fatte prima della partita non si azzerano più se apri «Come si gioca». 🐎 Horto Muso: al traguardo il posto giusto, non più «1°» per tutti.",
       "🗣️ Taboo: la fine partita non esce più dallo schermo e nei tre round il riassunto non svela le carte che tornano nel cesto. 🔨 L'Asta dei temi: il tasto della busta mostra una cifra sola."
+    ]
+  },
+  {
+    v: 342,
+    data: "13 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: fino a 12 giocatori 👥",
+    descrizione: [
+      "👥 La Mini Asta Fantacalcio ora si gioca fino a 12 (prima 10).",
+      "🏟️ Nella giornata, in alto, al massimo 8 punteggi: da 9 in su vedi i 7 più avanti (il tuo c'è sempre) e l'ottavo è «👥 Gli altri». Toccalo e vedi la classifica di tutti; se qualcuno degli altri ha un calciatore in campo, si accende col 👟.",
+      "📐 Nel mercato degli scambi le rose sono tutte grandi uguali e la tua è la prima. La schermata si divide da sola in base a quanti siete: in 2 le due rose prendono tutto lo schermo, una sotto l'altra; da 3 in su due per riga (in 3 resta un posto vuoto a destra), grandi fino alle partite; fino a 8 stanno tutte in una schermata coi nomi che si leggono bene.",
+      "📜 Le rose non diventano mai troppo piccole: quando siete tanti (su un telefono normale da 9 in su) si scorrono col dito, e le partite restano ferme sotto. In fondo alla lista una scritta «⬇ altre rose» ti dice che ce ne sono ancora.",
+      "👆 Mentre scegli i calciatori le rose non si spostano più: «📨 Proponi» sale sopra le partite e si chiude quando hai proposto. Se devi scegliere quale tuo calciatore dare (per esempio tra due centrocampisti), li trovi anche lì come tasti, senza tornare su alla tua rosa.",
+      "🎬 Quando a fine partita si rivede il momento che ha deciso la giornata, ora c'è scritto «IL MOMENTO CHE HA DECISO» e non più «IL GOL DELLA GIORNATA».",
+      "📏 Altezze: Gueye è alto 185 cm (prima era sbagliata) e c'è anche Mendy, 196 cm. Ora tutti i 335 calciatori hanno la loro altezza vera."
+    ]
+  },
+  {
+    v: 341,
+    data: "13 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: gli scambi a fine asta 🔄",
+    descrizione: [
+      "🔄 Finita l'asta, prima di scoprire le rose, tutti entrano nel mercato: in alto la tua rosa, sotto le rose degli altri (4 per pagina) e tutte le partite della giornata, così sai contro chi gioca il calciatore che vuoi prendere.",
+      "👆 Tocchi i calciatori che vuoi di un altro e i tuoi dello stesso ruolo si scelgono da soli; se ne hai più di uno (per esempio due centrocampisti) lampeggiano e scegli tu quale dai.",
+      "📨 «Proponi»: all'altro arriva un avviso con la tua proposta, «✅ Accetta» o «❌ Rifiuta». Se accetta i calciatori cambiano rosa volando al loro posto, e lo scambio si annuncia in grande a tutti. Le rose restano sempre giuste: portiere per portiere, e lo stesso numero di difensori, centrocampisti e attaccanti.",
+      "⏱️ Il mercato dura 3 minuti col conto sempre in vista; chi tiene la partita lo chiude prima o dà un minuto in più. Si spegne nel ⚙️ («🔄 Scambi a fine asta»); sullo stesso telefono c'è la versione semplice.",
+      "🙈 L'overall non si vede più: si vedono di nuovo le quotazioni (anche nel mercato, accanto a ogni calciatore). L'overall resta solo dietro le quinte, per decidere quanto sono forti le squadre in partita.",
+      "⚽ Dopo gli scambi niente sfilata delle rose: si sono già viste tutte nel mercato, quindi si va dritti alla giornata.",
+      "🎨 Con «Gioca ancora» ognuno tiene lo stesso colore dei suoi calciatori, partita dopo partita.",
+      "🔀 Le partite della giornata non si ripetono mai: ogni telefono ricorda le ultime giornate sorteggiate e una nuova ne ha al massimo una uguale.",
+      "🎬 Il replay del gol della giornata resta nella metà campo dove è stato fatto il gol (prima, un gol nella metà di sopra si rivedeva in quella di sotto).",
+      "📏 Altre 35 altezze vere: ora ce l'hanno 334 calciatori su 335."
+    ]
+  },
+  {
+    v: 340,
+    data: "13 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: dopo la serata vera ⚽",
+    descrizione: [
+      "🆚 L'overall dell'avversario si vede SEMPRE intero, con 1 e con 3 giornate e su ogni telefono: se non c'è posto si accorcia il resto (i nomi in sigla), mai il numero.",
+      "⏱️ Quando il banditore parla il suo fumetto sta sotto la barra del tempo: il conto alla rovescia dell'asta non si copre più.",
+      "🃏 Nella formazione finale i calciatori si scoprono dal più scarso al più forte.",
+      "📋 Nelle pagelle del primo tempo tutti i voti hanno la stessa misura, e bonus e malus si vedono sempre interi.",
+      "📊 Nei quadretti della giornata il totale è più piccolo e le icone dei bonus e dei malus ci stanno tutte.",
+      "⭐ Nuova regola nel ⚙️: «L'overall all'asta». Di partenza resta segreto fino alla fine, come prima; se la accendete, l'overall di ogni calciatore si vede già sul maxischermo mentre è all'asta e, comprato, nella rosa e nella formazione.",
+      "📏 In campo i calciatori hanno la loro altezza vera (differenze leggere: Woltemade, il gigante, si vede più alto degli altri). Solo l'aspetto: la partita non cambia."
     ]
   },
   {
