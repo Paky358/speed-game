@@ -14,8 +14,8 @@ window.SG_NOVITA = [
     titolo: "Mini Asta Fantacalcio: il mercato a misura di telefono 📐",
     descrizione: [
       "📐 Nel mercato degli scambi le rose sono tutte grandi uguali e la tua è la prima. La schermata si divide da sola in base a quanti siete: in 2 le due rose prendono tutto lo schermo, una sotto l'altra; da 3 in su due per riga (in 3 resta un posto vuoto a destra), grandi fino alle partite; fino a 8 stanno tutte in una schermata coi nomi che si leggono bene.",
-      "📄 Le rose non diventano mai troppo piccole: quando siete tanti (su un telefono normale da 9 in su) quelle degli altri si dividono in due pagine con le frecce ‹ ›, e la tua resta sempre la prima.",
-      "👆 Mentre scegli i calciatori le rose non si spostano più: «📨 Proponi» sale sopra le partite e si chiude quando hai proposto.",
+      "📜 Le rose non diventano mai troppo piccole: quando siete tanti (su un telefono normale da 9 in su) si scorrono col dito, e le partite restano ferme sotto. In fondo alla lista una scritta «⬇ altre rose» ti dice che ce ne sono ancora.",
+      "👆 Mentre scegli i calciatori le rose non si spostano più: «📨 Proponi» sale sopra le partite e si chiude quando hai proposto. Se devi scegliere quale tuo calciatore dare (per esempio tra due centrocampisti), li trovi anche lì come tasti, senza tornare su alla tua rosa.",
       "🎬 Quando a fine partita si rivede il momento che ha deciso la giornata, ora c'è scritto «IL MOMENTO CHE HA DECISO» e non più «IL GOL DELLA GIORNATA»."
     ]
   },

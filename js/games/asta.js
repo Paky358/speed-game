@@ -624,7 +624,8 @@
     ".mc .contenuto{gap:7px;}.mc-capo{display:flex;gap:6px;margin-left:auto;}.mc-mini{border:0;border-radius:10px;min-height:30px;padding:3px 9px;background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:.8rem;font-weight:800;}.mc-mini.on{background:#e0225a;}",
     // (13 nov 2026, dopo la prova del proprietario: tutte le rose della stessa grandezza, la mia per prima; la schermata non scorre e le rose si dividono lo spazio che resta)
     ".sc-merc.mc{position:relative;flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0;overflow:hidden;padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));padding-bottom:calc(8px + env(safe-area-inset-bottom));}.mc>.contenuto{flex:1 1 auto;min-height:0;}.mc>.piede{flex:none;height:38px;margin-top:6px;}",
-    ".mc-rose{flex:1 1 0;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:4px;}",
+    ".mc-rose{flex:1 1 0;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:4px;}.mc-rose.scorre{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}",
+    ".mc-giu{position:sticky;bottom:4px;align-self:center;z-index:3;margin-top:-30px;padding:4px 12px;border-radius:12px;background:rgba(13,16,32,.9);box-shadow:0 0 0 1px rgba(255,255,255,.25),0 4px 12px rgba(0,0,0,.5);font-size:.7rem;font-weight:800;color:#fff;white-space:nowrap;pointer-events:none;transition:opacity .2s;}.mc-giu.via{opacity:0;}",
     ".mc-rosa{display:flex;flex-direction:column;gap:3px;min-width:0;}.mc-rosa-t{display:flex;align-items:center;gap:6px;min-width:0;height:var(--mca,22px);font-size:var(--mct,.82rem);}.mc-rosa-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.mc-rosa-t small{margin-left:auto;font-size:.82em;opacity:.8;white-space:nowrap;}.mc-rosa-t .sc-faccia{width:var(--mca,22px);height:var(--mca,22px);}",
     ".mc-mia .mc-rosa-t b{color:#ffe066;}.mc-mia .mc-campo{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 0 0 2px rgba(255,224,102,.55);}",
     ".mc-campo{position:relative;height:var(--mch,108px);border-radius:10px;background:repeating-linear-gradient(180deg,#3d9b49 0 14px,#358a41 14px 28px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}",
@@ -635,7 +636,7 @@
     ".mc-part-t{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:.8rem;}.mc-ris{margin:0;}.mc-ris .st-ris-p{padding:4px 0;}.mc-ris .st-ris-p span{font-size:.62rem;}",
     // (la barra: in basso una riga sola; quando si scelgono i calciatori sale sopra le partite col «📨 Proponi», così le rose non si spostano mai)
     ".mc-barra{display:flex;flex-direction:column;justify-content:center;gap:6px;width:100%;height:100%;}.mc-barra.su{position:absolute;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:calc(8px + env(safe-area-inset-bottom));z-index:20;width:auto;height:auto;padding:10px;border-radius:18px;background:#151a2e;box-shadow:0 0 0 1.5px rgba(52,209,122,.6),0 -12px 30px rgba(0,0,0,.6);animation:mcSu .2s ease-out;}@keyframes mcSu{from{opacity:0}to{opacity:1}}",
-    ".mc-att{display:flex;align-items:center;gap:8px;}.mc-att .mc-riass{flex:1;min-width:0;text-align:left;font-size:.78rem;line-height:1.25;}.mc-att .mc-mini{flex:none;}",
+    ".mc-att{display:flex;align-items:center;gap:8px;}.mc-scelta{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;}.mc-scelta .mc-mini{min-height:36px;display:inline-flex;align-items:center;gap:4px;}.mc-scelta i{width:7px;height:7px;border-radius:50%;}.mc-scelta small{color:#ffe066;}.mc-scelta .mc-mini.on{background:#25a95d;box-shadow:0 0 0 2px #34d17a;}.mc-att .mc-riass{flex:1;min-width:0;text-align:left;font-size:.78rem;line-height:1.25;}.mc-att .mc-mini{flex:none;}",
     ".mc-riass{margin:0;text-align:center;font-size:.84rem;line-height:1.3;}.mc-riass.no{color:#ffe066;font-weight:800;}.mc-riass.invito{font-size:.8rem;line-height:1.25;}.mc-riass.attesa{color:#a5d8ff;}.mc-riga{display:flex;gap:8px;}.mc-riga .sc-ok{flex:1;}.mc-annulla{flex:none;width:52px;min-height:52px;}",
     ".mc-pop{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,20,.62);}.mc-pop-in{width:100%;max-width:380px;display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:18px;background:#151a2e;color:#fff;box-shadow:0 0 0 2px #34d17a,0 18px 40px rgba(0,0,0,.6);animation:mcPop .35s cubic-bezier(.2,1.3,.4,1);}@keyframes mcPop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}",
     ".mc-pop-t{display:flex;align-items:center;gap:8px;font-size:1.05rem;}.mc-pop-et{margin-top:4px;font-size:.7rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;opacity:.7;}.mc-pop-c{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.07);}",
@@ -9559,12 +9560,7 @@
     [n <= 2 ? 1 : 2].forEach(function (c) {   // (dopo la prova: in 2 una sotto l'altra; da 3 in su due per riga, in 3 un posto vuoto a destra)
       var righe = Math.ceil(n / c), wR = (W - (c - 1) * 6) / c;
       Object.keys(MC_FILE).forEach(function (fi) {
-        var Fi = MC_FILE[fi], fW = 99;
-        lista.forEach(function (g) { slotRosa(g.kit || []).forEach(function (cp, i) {
-          if (!cp) return; var nm = nomeCampo(cp.nome); if (nm.length > 10) nm = nm.slice(0, 9) + "…";   // (i nomi lunghissimi si accorciano coi puntini: non rimpiccioliscono tutti gli altri)
-          var w10 = mcLargo(nm, fam) + 0.88 * mcLargo(String(valoreMostrato(cp)), fam);
-          fW = Math.min(fW, (Fi.mw[i] * wR - 27) / w10 * 10);   // (27: il pallino, i margini e il bordo della targhetta)
-        }); });
+        var Fi = MC_FILE[fi], fW = mcFW(lista, Fi, wR, fam);
         var hT = 16, f = 0, hC = 0;
         [[22, 12], [19, 10], [16, 0]].some(function (z) {   // (il nome sopra la rosa: più grande se le scritte sono grandi; l'altezza del campo sempre giusta per quel nome)
           var h = (H - (righe - 1) * 6) / righe - z[0] - 3, ff = Math.min((Fi.k * h - 7) / 1.25, fW, MC_MAX);
@@ -9577,15 +9573,34 @@
     });
     return meglio;
   }
-  function mcLayout(M) {   // quante colonne, che formazione, quanto grandi le scritte e (se servono) le pagine
+  function mcFW(lista, Fi, wR, fam) {   // la scritta più grande che ci sta in larghezza, coi nomi veri di queste rose
+    var fW = 99;
+    lista.forEach(function (g) { slotRosa(g.kit || []).forEach(function (cp, i) {
+      if (!cp) return; var nm = nomeCampo(cp.nome); if (nm.length > 10) nm = nm.slice(0, 9) + "…";   // (i nomi lunghissimi si accorciano coi puntini: non rimpiccioliscono tutti gli altri)
+      var w10 = mcLargo(nm, fam) + 0.88 * mcLargo(String(valoreMostrato(cp)), fam);
+      fW = Math.min(fW, (Fi.mw[i] * wR - 27) / w10 * 10);   // (27: il pallino, i margini e il bordo della targhetta)
+    }); });
+    return fW;
+  }
+  function mcLayout(M) {   // quante colonne, che formazione, quanto grandi le scritte; se non ci stanno grandi almeno come il duce, si scorre
     var R = M.rose, W = R.clientWidth, H = R.clientHeight; if (!W || !H) return null;
-    var fam = getComputedStyle(R).fontFamily, tutte = M.ordine, primo = M.mioPrimo ? 1 : 0, altri = tutte.length - primo;
-    var L = mcPiano(tutte, tutte.length, W, H, fam); L.per = altri; L.pagine = 1;
-    if (!mcBasta(L) && altri > 1) for (var k = altri - 1; k >= 1; k--) {   // (troppi per un telefono piccolo: le rose degli altri su più pagine)
-      var q = mcPiano(tutte, primo + k, W, H - 36, fam);
-      if (mcBasta(q) || k === 1) { var pg = Math.ceil(altri / k), per = Math.ceil(altri / pg); L = mcPiano(tutte, primo + per, W, H - 36, fam); L.per = per; L.pagine = pg; break; }   // (pagine pari: 9 altri = 5 + 4)
-    }
+    var fam = getComputedStyle(R).fontFamily, tutte = M.ordine;
+    var L = mcPiano(tutte, tutte.length, W, H, fam); L.scorre = false;
+    if (!mcBasta(L) && tutte.length > 2) L = mcScorre(tutte, W, H, fam);
     return L;
+  }
+  // (13 nov 2026 sera, il proprietario: «meglio che si scorre fino in fondo piuttosto che switchare pagina… da 7 a salire tutte le formazioni
+  // raggiungono la grandezza minima») due per riga, grandi almeno il minimo; si vedono righe intere (lo spazio in più le allunga un po') e le
+  // altre si scorrono col dito. Le partite e la barra restano ferme sotto
+  function mcScorre(lista, W, H, fam) {
+    var wR = (W - 6) / 2, meglio = null;
+    Object.keys(MC_FILE).forEach(function (fi) {
+      var Fi = MC_FILE[fi], fW = mcFW(lista, Fi, wR, fam), hT = 19, hMin = Math.max(MC_HMIN, Math.ceil((1.25 * MC_MIN + 7) / Fi.k));
+      var r = Math.max(1, Math.floor((H + 6) / (hT + 3 + hMin + 6))), hC = Math.max(hMin, Math.floor((H - (r - 1) * 6) / r - hT - 3));
+      var f = Math.min((Fi.k * hC - 7) / 1.25, fW, MC_MAX), cand = { c: 2, file: fi, f: f, hT: f >= 12 ? 22 : hT, hC: hC, righe: Math.ceil(lista.length / 2), scorre: true };
+      if (!meglio || f > meglio.f + 0.3) meglio = cand;
+    });
+    return meglio;
   }
   function campettoMerc(el, g, opz) {   // una rosa in formazione: le 5 targhette al loro posto (il ruolo lo dice il posto)
     var posti = slotRosa(g.kit || []), campo = el("div", { class: "mc-campo" }), Fi = MC_FILE[opz.file] || MC_FILE.larga;
@@ -9608,6 +9623,7 @@
       M.tempo = el("span", { class: "sc-tempo" }); M.capo = el("span", { class: "mc-capo" });
       M.s._contenuto.appendChild(el("div", { class: "sc-testa" }, [ el("b", { text: "🔄 Scambi" }), M.capo, M.tempo ]));
       M.rose = el("div", { class: "mc-rose" }); M.mia = el("div"); M.partite = el("div", { class: "mc-partite" });
+      M.rose.addEventListener("scroll", function () { mcGiu(M); }, { passive: true });
       M.s._contenuto.appendChild(M.rose); M.s._contenuto.appendChild(M.partite);
       M.barra = el("div", { class: "mc-barra" }); M.s._piede.appendChild(M.barra);
       t.mostra(M.s);
@@ -9653,17 +9669,11 @@
       b.classList.add("volato"); setTimeout(function () { b.classList.remove("volato"); }, 1600);
     });
   }
-  function roseMerc(M) {   // le rose (tutte uguali, la mia per prima) con le misure di M.lay; se servono, le pagine con ‹ ›
-    var el = M.t.el, vm = M.vm, S = vm.scambi || {}, L = M.lay, me = M.mioPrimo ? M.ordine[0] : null, guarda = !!M.t.guarda || !me;
-    svuotaNodo(M.rose); M.mia = el("div");
-    var altri = M.ordine.slice(me ? 1 : 0); if (M.pag >= L.pagine) M.pag = 0;
-    var vis = (me ? [me] : []).concat(L.pagine > 1 ? altri.slice(M.pag * L.per, M.pag * L.per + L.per) : altri);
-    if (L.pagine > 1) M.rose.appendChild(el("div", { class: "mc-pag" }, [
-      el("button", { class: "mc-mini", text: "‹", "aria-label": "Rose di prima", onclick: function () { M.pag = (M.pag + L.pagine - 1) % L.pagine; roseMerc(M); } }),
-      el("span", { text: "Rose degli altri " + (M.pag * L.per + 1) + "–" + Math.min(altri.length, M.pag * L.per + L.per) + " di " + altri.length }),
-      el("button", { class: "mc-mini", text: "›", "aria-label": "Altre rose", onclick: function () { M.pag = (M.pag + 1) % L.pagine; roseMerc(M); } }) ]));
+  function roseMerc(M) {   // le rose (tutte uguali, la mia per prima) con le misure di M.lay; se non ci stanno, si scorrono
+    var el = M.t.el, vm = M.vm, S = vm.scambi || {}, L = M.lay, me = M.mioPrimo ? M.ordine[0] : null, guarda = !!M.t.guarda || !me, su = M.rose.scrollTop || 0;
+    svuotaNodo(M.rose); M.mia = el("div"); M.rose.classList.toggle("scorre", !!L.scorre);
     var griglia = el("div", { class: "mc-griglia" });
-    vis.forEach(function (g) {
+    M.ordine.forEach(function (g) {
       var mia = g === me, inv = mia ? 0 : (S.prop || []).filter(function (p) { return p.a === g.id || p.da === g.id; }).length;
       var r = campettoMerc(el, g, { mia: mia, file: L.file, nota: mia ? "" : g.via ? "📶 non c'è" : inv ? "🤝 tratta…" : "",
         onTocca: mia ? function (k, c) { toccaMio(M, k, c); } : guarda || g.via ? null : function (k, c) { toccaLoro(M, g, k, c); } });
@@ -9671,8 +9681,10 @@
       griglia.appendChild(r);
     });
     M.rose.appendChild(griglia);
-    mcMisure(M); segnaSel(M);
+    M.giu = L.scorre ? el("div", { class: "mc-giu", text: "⬇ altre rose" }) : null; if (M.giu) M.rose.appendChild(M.giu);
+    mcMisure(M); barraSu(M); M.rose.scrollTop = su; mcGiu(M); segnaSel(M);   // (ridisegnando non si torna su: si resta dove si era)
   }
+  function mcGiu(M) { if (M.giu) M.giu.classList.toggle("via", M.rose.scrollTop + M.rose.clientHeight >= M.rose.scrollHeight - 8); }   // (in fondo la scritta sparisce)
   function mcMisure(M) {   // le misure di M.lay sulla schermata (colonne, altezza dei campi, scritte)
     var L = M.lay, st = M.rose.style;
     st.setProperty("--mcc", L.c); st.setProperty("--mch", L.hC + "px"); st.setProperty("--mcf", Math.max(7, L.f).toFixed(1) + "px");
@@ -9732,9 +9744,16 @@
       Object.keys(serve).forEach(function (r) { var miei = me.kit.filter(function (x) { return x.ruolo === r; }), presi = miei.filter(function (x) { return sel.miei.indexOf(chiaveKit(x)) >= 0; }).length; if (miei.length > serve[r] && presi < serve[r]) miei.forEach(function (x) { sceglie[chiaveKit(x)] = 1; }); }); }
     [].forEach.call(M.mia.querySelectorAll(".mc-p"), function (b) { b.classList.toggle("scegli", !!sceglie[b.getAttribute("data-k")]); });
   }
+  function barraSu(M) {   // (rose che si scorrono e barra aperta: sotto le rose tanto spazio quanto la barra ne copre)
+    var R = M.rose; if (!R) return;
+    R.style.paddingBottom = "";
+    if (!M.lay || !M.lay.scorre || !M.barra.classList.contains("su")) return mcGiu(M);
+    var o = R.getBoundingClientRect().bottom - M.barra.getBoundingClientRect().top; if (o > 0) R.style.paddingBottom = Math.ceil(o + 6) + "px";
+    mcGiu(M);
+  }
   function barraMerc(M) {
     var el = M.t.el, cb = M.cb, vm = M.vm, S = vm.scambi || {}, io = cb.myId, me = trova(vm.giocatori, io), sel = M.sel, b = M.barra;
-    svuotaNodo(b); b.classList.remove("su");
+    svuotaNodo(b); b.classList.remove("su"); if (M.rose) M.rose.style.paddingBottom = "";
     if (M.t.guarda || !me) { b.appendChild(el("p", { class: "mc-riass invito", text: "👀 Si scambiano i calciatori: poi si scoprono le rose" })); return; }
     var mia = (S.prop || []).filter(function (p) { return p.da === io; })[0];
     var g = sel.con && trova(vm.giocatori, sel.con);
@@ -9742,11 +9761,18 @@
     if (g && sel.loro.length) {
       var v = scambioValido(me, g, sel.miei, sel.loro), manca = null;
       if (!v.ok) { var serve = {}; sel.loro.forEach(function (kk) { var c = g.kit.filter(function (x) { return chiaveKit(x) === kk; })[0]; if (c) serve[c.ruolo] = (serve[c.ruolo] || 0) + 1; }); Object.keys(serve).forEach(function (r) { if (!manca && me.kit.filter(function (x) { return x.ruolo === r; }).length > serve[r]) manca = r; }); }
-      b.appendChild(el("p", { class: "mc-riass" + (v.ok ? "" : " no") }, v.ok ? [ "Dai ", el("b", { text: nomi(me, sel.miei) }), " · ricevi ", el("b", { text: nomi(g, sel.loro) }) ] : [ manca ? "👆 Tocca nella tua rosa quale " + (FANTA_RUOLI[manca] || {}).nome.toLowerCase() + " dai" : v.msg ]));
+      b.appendChild(el("p", { class: "mc-riass" + (v.ok ? "" : " no") }, v.ok ? [ "Dai ", el("b", { text: nomi(me, sel.miei) }), " · ricevi ", el("b", { text: nomi(g, sel.loro) }) ] : [ manca ? "👆 Tocca quale " + (FANTA_RUOLI[manca] || {}).nome.toLowerCase() + " dai" : v.msg ]));
+      // (13 nov 2026 sera: con le rose che si scorrono la mia può essere andata su) i miei da scegliere sono anche qui, come tasti
+      var serveR = {}; sel.loro.forEach(function (kk) { var c = g.kit.filter(function (x) { return chiaveKit(x) === kk; })[0]; if (c) serveR[c.ruolo] = (serveR[c.ruolo] || 0) + 1; });
+      var daScegliere = me.kit.filter(function (x) { return serveR[x.ruolo] && me.kit.filter(function (y) { return y.ruolo === x.ruolo; }).length > serveR[x.ruolo]; });
+      if (daScegliere.length) b.appendChild(el("div", { class: "mc-scelta" }, daScegliere.map(function (c) {
+        var kk = chiaveKit(c);
+        return el("button", { class: "mc-mini" + (sel.miei.indexOf(kk) >= 0 ? " on" : ""), onclick: function () { toccaMio(M, kk, c); } }, [ el("i", { class: "as-rb-" + c.ruolo }), " " + nomeCampo(c.nome) + " ", el("small", { text: String(valoreMostrato(c)) }) ]);
+      })));
       var bp = el("button", { class: "btn btn-verde sc-ok", text: "📨 Proponi a " + g.nome, onclick: function () { if (!v.ok) return; var mossa = { a: "proponi", con: g.id, dai: sel.miei.slice(), vuoi: sel.loro.slice() }; sel.con = null; sel.loro = []; sel.miei = []; segnaSel(M); barraMerc(M); cb.onScambio(mossa); } });   // (prima si toglie la scelta: chi tiene la partita ridisegna subito)
       bp.disabled = !v.ok; b.classList.add("su");   // (sale sopra le partite)
       b.appendChild(el("div", { class: "mc-riga" }, [ el("button", { class: "btn btn-fantasma mc-annulla", text: "✕", "aria-label": "Annulla", onclick: function () { sel.con = null; sel.loro = []; sel.miei = []; segnaSel(M); barraMerc(M); } }), bp ]));
-      return;
+      return barraSu(M);
     }
     if (mia) {
       var ga = trova(vm.giocatori, mia.a);
@@ -9774,7 +9800,7 @@
     if (!M || !M.s || !document.body.contains(M.s) || !M.ordine || !M.lay) return;
     var v = M.lay, L = mcLayout(M); if (!L) return;
     M.lay = L;
-    if (v.c !== L.c || v.file !== L.file || v.per !== L.per || v.pagine !== L.pagine) roseMerc(M); else mcMisure(M);
+    if (v.c !== L.c || v.file !== L.file || !v.scorre !== !L.scorre) roseMerc(M); else { mcMisure(M); mcGiu(M); }
   }
   function avvisoMerc(M, testo, piccolo) {
     var n = M.t.el("div", { class: "mc-avviso" + (piccolo ? " piccolo" : ""), text: testo });

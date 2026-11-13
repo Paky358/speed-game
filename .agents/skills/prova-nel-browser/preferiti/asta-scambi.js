@@ -17,9 +17,9 @@
 // sc5 (13 nov 2026, dopo la prova del proprietario, il proprietario: «le squadre sono piccolissime… la mia squadra la prima che si vede, ma della stessa grandezza delle altre…
 //     adattiamo lo schermo in base a quanti giocatori siamo») Senza asta: il mercato disegnato con rose finte in 2, 3, 4, 6, 8 e 10 su un
 //     telefono piccolo (360×640), su uno come quello del proprietario (360×697) e su uno grande (412×800): rose tutte della stessa grandezza, la mia per prima, niente
-//     scorrere, targhette dentro il campo, mai più piccole della rosa del duce (nomi da 10,5 px, campo da 104 px); in 2 una colonna sola e campi alti; da 3 in su due rose per riga (in 3 un
+//     scorrere la schermata, targhette dentro il campo, mai più piccole della rosa del duce (nomi da 10,5 px, campo da 104 px); in 2 una colonna sola e campi alti; da 3 in su due rose per riga (in 3 un
 //     posto vuoto a destra: il proprietario non vuole le tre una sotto l'altra); sul telefono grande fino a 8 tutti in una schermata; quando
-//     servono le pagine ‹ › la mia rosa resta per prima e le altre ci sono tutte (sul telefono del proprietario e su quello grande fino a 8 senza pagine).
+//     non ci stanno si scorrono col dito (il proprietario: «meglio che si scorre fino in fondo piuttosto che switchare pagina»): ci sono tutte, la mia per prima, «⬇ altre rose» fino in fondo, le partite ferme sotto (sul telefono del proprietario e su quello grande fino a 8 senza scorrere).
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -73,7 +73,7 @@
     var r0 = campi[0].getBoundingClientRect(), diversi = campi.filter(function (c) { var r = c.getBoundingClientRect(); return Math.abs(r.width - r0.width) > 1.5 || Math.abs(r.height - r0.height) > 1.5; });
     if (diversi.length) return "le rose non sono tutte della stessa grandezza";
     if (s.scrollHeight > s.clientHeight + 1 || w.document.documentElement.scrollHeight > w.innerHeight + 1) return "il mercato scorre (" + s.scrollHeight + " > " + s.clientHeight + ")";
-    if (rose[rose.length - 1].getBoundingClientRect().bottom > box.getBoundingClientRect().bottom + 1) return "l'ultima rosa è tagliata";
+    if (!box.classList.contains("scorre") && rose[rose.length - 1].getBoundingClientRect().bottom > box.getBoundingClientRect().bottom + 1) return "l'ultima rosa è tagliata";
     var fuori = qa(w, ".mc-p").filter(function (b) { var r = b.getBoundingClientRect(), c = b.parentNode.getBoundingClientRect(); return r.left < c.left - 1 || r.right > c.right + 1 || r.top < c.top - 1 || r.bottom > c.bottom + 1; });
     if (fuori.length) return fuori.length + " targhette escono dal campo (" + fuori[0].textContent + ")";
     var sovra = 0; campi.forEach(function (c) { var pp = [].map.call(c.querySelectorAll(".mc-p"), function (b) { return b.getBoundingClientRect(); }); pp.forEach(function (a, i) { pp.slice(i + 1).forEach(function (b) { if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) sovra++; }); }); });
@@ -138,6 +138,7 @@
     if (!bott(P, ".mc-barra .sc-ok", /Proponi/).disabled) no("con due centrocampisti miei «Proponi» è acceso prima di sceglierne uno");
     if (!/quale centrocampista/.test(q(P, ".mc-barra").textContent)) no("non dice di toccare quale centrocampista dai («" + q(P, ".mc-barra").textContent + "»)");
     if (qa(P, ".mc-mia .mc-p.scegli").length !== 2) no("i miei due centrocampisti non lampeggiano");
+    if (qa(P, ".mc-barra .mc-scelta .mc-mini").length !== 2) no("nella barra non ci sono i miei due centrocampisti da scegliere");
     qa(P, ".mc-mia .mc-p").filter(function (b) { return b.getAttribute("data-k") === kPC; })[0].click(); await W.dorme(300);
     var bp2 = bott(P, ".mc-barra .sc-ok", /Proponi/); if (!bp2 || bp2.disabled) no("scelto il centrocampista, «Proponi» resta spento");
     x.push("attaccante scelto da solo, centrocampista scelto a mano");
@@ -209,7 +210,7 @@
     return "dopo «⏹ Fine» tutti nella giornata in " + Math.round((performance.now() - t0) / 100) / 10 + " s, senza la sfilata delle rose";
   } });
 
-  COPIONE.aggiungi("sc5", { nome: "Mini Asta Fantacalcio, il mercato in 2, 3, 4, 6, 8 e 10 su un telefono piccolo e su uno grande: rose tutte uguali, la mia per prima, niente scorrere, scritte grandi, le pagine solo quando servono", fai: async function () {
+  COPIONE.aggiungi("sc5", { nome: "Mini Asta Fantacalcio, il mercato in 2, 3, 4, 6, 8 e 10 su un telefono piccolo e su uno grande: rose tutte uguali, la mia per prima, mai più piccole del minimo, si scorre solo quando serve (le partite ferme sotto)", fai: async function () {
     var P = await W.apriTel("Paky", { x: 0 }), x = [];
     P.SGCuore.precarica("astafanta");
     if (!await W.aspetta(function () { return P.SG_FANTA_CALCIATORI && P.SG_FANTA_SQUADRE && P.SG_FANTA_QUOTAZIONI; }, 20000)) no("i dati del fanta non arrivano");
@@ -237,24 +238,25 @@
         F.mercatoVM(t, { codice: "SC5" + giro, sessione: giro, fase: "scambi", giocatori: gio, scambi: { resta: 170000, prop: [], esiti: [], nf: 0, coppie: [F.sorteggio()] } }, { myId: "host", sonoHost: true, onScambio: function () {} });
         await W.dorme(350);
         var dove = wh.join("×") + " in " + n + ": ", e = misureMercato(P); if (e) no(dove + e);
-        var pag = q(P, ".mc-pag"), vis = qa(P, ".mc-rosa"), f = parseFloat(P.getComputedStyle(q(P, ".mc-p")).fontSize), giri = 0;
-        if (!pag && vis.length !== n) no(dove + "si vedono " + vis.length + " rose");
+        var scorre = !!q(P, ".mc-rose.scorre"), vis = qa(P, ".mc-rosa"), f = parseFloat(P.getComputedStyle(q(P, ".mc-p")).fontSize);
+        if (vis.length !== n) no(dove + "ci sono " + vis.length + " rose");
         var c0 = q(P, ".mc-campo").getBoundingClientRect(), b0 = q(P, ".mc-rose").getBoundingClientRect();
         if (n === 2 && (c0.width < b0.width - 2 || c0.height < wh[1] * 0.3)) no(dove + "le due rose non prendono lo schermo (" + Math.round(c0.width) + "×" + Math.round(c0.height) + ")");
         if (n >= 3 && Math.abs(c0.width - (b0.width - 6) / 2) > 2) no(dove + "le rose non sono due per riga (" + Math.round(c0.width) + " su " + Math.round(b0.width) + ")");
         if (n >= 3 && n <= 4 && c0.height < wh[1] * 0.27) no(dove + "le rose non prendono lo schermo (alte " + Math.round(c0.height) + ")");
-        if (ti >= 1 && n <= 8 && pag) no(dove + "su questo telefono fino a 8 devono stare tutti in una schermata");
-        if (pag) {   // le pagine: la mia sempre per prima, e girandole ci sono tutti
-          var visti = {};
-          do {
-            var l = qa(P, ".mc-rosa"); if (!l[0].classList.contains("mc-mia")) no(dove + "girando le pagine la mia rosa non è più la prima");
-            l.forEach(function (r) { visti[r.getAttribute("data-g")] = 1; });
-            var e2 = misureMercato(P); if (e2) no(dove + "(pagina " + (giri + 1) + ") " + e2);
-            qa(P, ".mc-pag .mc-mini")[1].click(); await W.dorme(150); giri++;
-          } while (giri < 5 && !/^Rose degli altri 1–/.test(q(P, ".mc-pag span").textContent));
-          if (Object.keys(visti).length !== n) no(dove + "girando le pagine si vedono " + Object.keys(visti).length + " rose su " + n);
+        if (ti >= 1 && n <= 8 && scorre) no(dove + "su questo telefono fino a 8 devono stare tutti senza scorrere");
+        if (scorre) {   // si scorre: in fondo c'è l'ultima rosa intera, la scritta «⬇ altre rose» se ne va, le partite restano ferme sotto
+          var box = q(P, ".mc-rose"), bb = box.getBoundingClientRect(), giu = q(P, ".mc-giu");
+          if (box.scrollHeight <= box.clientHeight + 1) no(dove + "dice che si scorre ma non scorre");
+          if (!giu || giu.classList.contains("via")) no(dove + "manca «⬇ altre rose»");
+          box.scrollTop = 99999; box.dispatchEvent(new P.Event("scroll")); await W.dorme(150);
+          if (!q(P, ".mc-giu").classList.contains("via")) no(dove + "in fondo «⬇ altre rose» resta");
+          if (vis[vis.length - 1].getBoundingClientRect().bottom > bb.bottom + 1) no(dove + "in fondo l'ultima rosa resta tagliata");
+          var pt = q(P, ".mc-partite").getBoundingClientRect(); if (pt.top < bb.bottom - 1 || pt.bottom > wh[1] + 1) no(dove + "le partite non restano ferme sotto le rose");
+          if (P.document.documentElement.scrollHeight > P.innerHeight + 1) no(dove + "scorre tutta la pagina, non solo le rose");
+          box.scrollTop = 0; box.dispatchEvent(new P.Event("scroll")); await W.dorme(100);
         }
-        righe.push(n + (pag ? " (" + giri + " pagine)" : "") + " " + f.toFixed(1) + " px");
+        righe.push(n + (scorre ? " (si scorre)" : "") + " " + f.toFixed(1) + " px");
       }
       x.push(wh.join("×") + ": " + righe.join(", "));
     }
