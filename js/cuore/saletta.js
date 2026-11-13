@@ -1444,6 +1444,8 @@
     var P = K.P, tav = K.tavolo || (P && P.tavolo), ctx = K.ctx || (P && P.salaCtx) || null;
     if (!piede || !P || !P.viva()) return false;
     if (ctx && ctx.tabellone) return false;   // torneo a eliminazione: il tabellone ha i suoi tasti
+    // (ripasso B16/N5: in 8 sul telefono piccolo i tasti di fine finivano sotto lo schermo: il piede resta attaccato al fondo)
+    if (piede.classList && piede.classList.contains("piede") && piede.parentNode && piede.parentNode.classList && piede.parentNode.classList.contains("schermata")) piede.parentNode.classList.add("fine-piede-giu");
     // "👑 Chi vince resta": la fine di una sfida è uguale per tutti, anche per chi guarda (6-7): chi resta, chi tocca adesso,
     // "Prossima sfida tra 8…"; l'host della Sala "⏹ Basta così" e "🎮 Cambia gioco"
     if (ctx) {

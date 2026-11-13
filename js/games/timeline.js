@@ -128,6 +128,7 @@
     ".tl-ev,.tl-slot{position:relative;display:grid;grid-template-columns:68px 26px 1fr;align-items:center}",
     ".tl-ev .anno{justify-self:end;font-weight:900;font-size:.95rem;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));",
       "border-radius:10px;padding:4px 8px;box-shadow:0 3px 10px rgba(0,0,0,.35);white-space:nowrap;max-width:68px;overflow:hidden;text-overflow:ellipsis}",
+    ".tl-ev .anno.ac{text-align:center;line-height:1.05;padding:3px 7px}.tl-ev .anno.ac small{display:block;font-size:.66rem;font-weight:800;letter-spacing:0}",
     ".tl-ev .punto{justify-self:center;width:13px;height:13px;border-radius:50%;background:var(--c1);box-shadow:0 0 0 3px #12162b,0 0 10px var(--c1)}",
     ".tl-ev .card{min-width:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-left:4px solid var(--c1);border-radius:14px;padding:9px 11px;",
       "box-shadow:0 4px 14px rgba(0,0,0,.25);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}",
@@ -845,7 +846,8 @@
   function nodoEvento(el, ev, tent, cls, chi) {
     var cat = ev._cat || ev.cat, ic = infoCat(cat);
     return el("div", { class: "tl-ev" + (tent ? " tent" : "") + (cls ? " " + cls : ""), style: stileCat(cat) }, [
-      el("span", { class: "anno", text: tent ? "?" : annoTesto(ev.anno) }),
+      tent || ev.anno >= 0 ? el("span", { class: "anno", text: tent ? "?" : annoTesto(ev.anno) })
+        : el("span", { class: "anno ac" }, [ document.createTextNode(String(Math.abs(ev.anno))), el("small", { text: "a.C." }) ]),
       el("span", { class: "punto" }),
       el("div", { class: "card" }, [
         nodoFoto(el, ev, "ft"),

@@ -1006,10 +1006,11 @@
       chiudiPartita();
     };
 
-    P.esce = function (id) {
+    P.esce = function (id, sparito) {
       P.giocatori.forEach(function (x, i) {
         if (x.id !== id || x.via) return;
-        x.via = true; x.soldi = 0; x.jolly = 0;
+        x.via = true; x.sparito = !!sparito;
+        if (!sparito) { x.soldi = 0; x.jolly = 0; }
         var L = P.lampo;
         if (P.fase === "lampo" && L) {   // la frase lampo: chi esce non conta più
           L.cand = L.cand.filter(function (c) { return c.id !== id; });
@@ -1027,7 +1028,7 @@
     // chi era stato tolto (telefono spento più di 20 secondi) e torna: tiene il totale e rientra nel giro
     P.torna = function (id) {
       var ok = false;
-      P.giocatori.forEach(function (x) { if (x.id === id && x.via) { x.via = false; x.soldi = 0; x.jolly = 0; ok = true; if (["finemanche", "lampofine"].indexOf(P.fase) < 0 && FASI_FIN.indexOf(P.fase) < 0 && FASI_BUSTA.indexOf(P.fase) < 0) P.msg = "👋 " + x.nome + " è di nuovo in gioco!"; } });
+      P.giocatori.forEach(function (x) { if (x.id === id && x.via) { x.via = false; if (!x.sparito) { x.soldi = 0; x.jolly = 0; } x.sparito = false; ok = true; if (["finemanche", "lampofine"].indexOf(P.fase) < 0 && FASI_FIN.indexOf(P.fase) < 0 && FASI_BUSTA.indexOf(P.fase) < 0) P.msg = "👋 " + x.nome + " è di nuovo in gioco!"; } });
       return ok;
     };
     // la foto: MAI la frase vera (solo coperta), finché non è risolta
@@ -1827,12 +1828,15 @@
       var cbRete = {
         onCodice: function (c) { H.codice = c; if (!riserva) riserva = leggiRiserva(c); bd(); },
         onConnesso: function () { H.pronta = true; bd(); },
+        onForse: function (id) { H.forseR = H.forseR || {}; H.forseR[id] = 1; },
+        onTornato: function (id) { if (H.forseR) delete H.forseR[id]; },
         onAddio: function (id) {
+          var sparito = !!(H.forseR && H.forseR[id]); if (H.forseR) delete H.forseR[id];   // (sparito senza salutare: non ha toccato «Esci»)
           delete attesi[id];
           var g0 = guarda.length; guarda = guarda.filter(function (g) { return g.id !== id; });
           if (H.fase === "lobby") { posti = posti.filter(function (p) { return p.id !== id; }); bd(); return; }
           if (guarda.length !== g0) return bd();
-          if (P) { P.esce(id); dopo(); }
+          if (P) { P.esce(id, sparito); dopo(); }
         },
         onMsg: function (id, m) {
           if (!m || !m.t) return;

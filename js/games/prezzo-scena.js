@@ -724,6 +724,7 @@
       ".pz-riga.giusto{background:rgba(255,79,134,.3);box-shadow:0 0 0 2px var(--o-oro)}.pz-riga.giusto .bd{background:var(--n-lampone);color:#fff}",
       ".pz-riga.vince{background:rgba(52,209,122,.3);box-shadow:0 0 0 2px var(--o-verde)}",
       ".pz-riga .pt{position:absolute;right:6px;top:-9px;font-size:12px;font-weight:900;color:var(--o-verde-testo);background:var(--o-verde);border-radius:99px;padding:0 6px;animation:pzPop .35s both}",
+      ".pz-righe.due .pz-riga{flex-wrap:wrap;row-gap:0}.pz-righe.due .pz-riga .nm{flex:1 1 calc(100% - 30px)}.pz-clas.due .pz-cl{flex-wrap:wrap;row-gap:0}.pz-clas.due .pz-cl .nm{flex:1 1 calc(100% - 52px)}.pz-clas.due .pz-cl .pt{margin-left:auto}",
       ".pz-righe.due .pz-riga .nm{font-size:12.5px}.pz-righe.due .pz-riga .v{font-size:13px}.pz-righe.due .pz-riga .fac{width:22px;height:22px}.pz-righe.due .pz-riga .bd{font-size:9.5px;padding:1px 5px}",
       ".pz-banner{font-size:24px;font-weight:900;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4);animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both}",
       ".pz-banner.oro{color:var(--o-oro-testo);font-size:30px;font-family:inherit}.pz-banner.no{color:var(--o-rosso-testo)}",
