@@ -8636,7 +8636,12 @@
     nota.textContent = (chooser ? "Hai scelto tu la carta: offri almeno 1. " : "0 = non la vuoi. ") + "Hai " + io.crediti + " 💰 · puoi offrire fino a " + max;
     var v = el("div", { class: "v" }), meno, piu, piu3, ok;
     function agg() { mia.q = Math.max(min, Math.min(max, mia.q || 0)); v.textContent = mia.q + " 💰"; meno.disabled = mia.q <= min; piu.disabled = piu3.disabled = mia.q >= max;
-      var tx = mia.q ? "✉️ Chiudo la busta: " + mia.q + " 💰" : "✉️ Non offro niente", nt = ok.firstChild; if (nt && nt.nodeType === 3) nt.nodeValue = tx; else ok.insertBefore(document.createTextNode(tx), ok.firstChild); }
+      var tx = mia.q ? "✉️ Chiudo la busta: " + mia.q + " 💰" : "✉️ Non offro niente", sp = ok.querySelector(".as-ok-tx");
+      if (!sp) {   // (la prima volta: via le scritte sciolte, poi lo span; il conto alla rovescia che segue resta)
+        while (ok.firstChild && (ok.firstChild.nodeType === 3 || (ok.firstChild.classList && ok.firstChild.classList.contains("emo-r")))) ok.removeChild(ok.firstChild);
+        sp = el("span", { class: "as-ok-tx" }); ok.insertBefore(sp, ok.firstChild);
+      }
+      if (sp.textContent !== tx) sp.textContent = tx; }
     meno = el("button", { type: "button", text: "−", onclick: function () { mia.q--; agg(); } });
     piu = el("button", { type: "button", text: "+", onclick: function () { mia.q++; agg(); } });
     piu3 = el("button", { type: "button", class: "p3", text: "+3", onclick: function () { mia.q += 3; agg(); } });

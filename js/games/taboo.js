@@ -135,7 +135,7 @@
       ".tb-btn.grigio{background:var(--o-fondo-2);color:var(--o-tenue);box-shadow:inset 0 0 0 1px var(--o-filo);min-height:56px;font-size:clamp(15px,4.4vw,18px);font-weight:650}",
       ".tb-btn.blu:not(.largo){background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1.5px var(--o-filo-oro),var(--o-ombra)}",
       ".tb-nota{grid-column:1/-1;text-align:center;font-size:clamp(13px,3.8vw,16px);font-weight:600;color:var(--o-tenue);min-height:1.2em}",
-      ".tb-banner{position:absolute;left:8px;right:8px;top:8px;z-index:3;border-radius:16px;background:var(--o-rosso);color:#fff;padding:10px 12px;text-align:center;box-shadow:0 10px 26px rgba(214,60,74,.35);opacity:0;transform:translateY(-12px);transition:opacity .2s,transform .2s;pointer-events:none}.tb-banner.vis{opacity:1;transform:none;pointer-events:auto}.tb-banner.verde{background:var(--o-verde);color:var(--o-verde-testo);box-shadow:0 10px 26px rgba(52,209,122,.3)}.tb-banner b{display:block;font-size:clamp(19px,5.6vw,25px)}.tb-banner small{display:block;font-size:clamp(13px,3.7vw,16px);font-weight:650;opacity:.95}.tb-banner .tb-btn{min-height:44px;margin-top:8px;width:100%;font-size:17px;background:var(--o-carta-piena);color:var(--o-rosso-testo);box-shadow:none}",
+      ".tb-banner{position:absolute;left:8px;right:8px;top:8px;z-index:3;border-radius:16px;background:var(--o-rosso);color:#fff;padding:10px 12px;text-align:center;box-shadow:0 10px 26px rgba(214,60,74,.35);opacity:0;transform:translateY(-12px);transition:opacity .2s,transform .2s;pointer-events:none}.tb-banner.vis{opacity:1;transform:none;pointer-events:auto}.tb-banner.riga{display:flex;align-items:center;gap:8px;padding:6px 8px;text-align:left}.tb-banner.riga b{display:inline;font-size:17px;flex:none}.tb-banner.riga small{flex:1;min-width:0;font-size:12.5px;line-height:1.2}.tb-banner.riga .tb-btn{width:auto;flex:none;margin:0;min-height:40px;padding:6px 10px;font-size:14px}.tb-banner.verde{background:var(--o-verde);color:var(--o-verde-testo);box-shadow:0 10px 26px rgba(52,209,122,.3)}.tb-banner b{display:block;font-size:clamp(19px,5.6vw,25px)}.tb-banner small{display:block;font-size:clamp(13px,3.7vw,16px);font-weight:650;opacity:.95}.tb-banner .tb-btn{min-height:44px;margin-top:8px;width:100%;font-size:17px;background:var(--o-carta-piena);color:var(--o-rosso-testo);box-shadow:none}",
       ".tb-volo{position:absolute;left:50%;top:42%;z-index:2;pointer-events:none;font-size:clamp(30px,9vw,46px);font-weight:900;text-shadow:0 2px 10px rgba(0,0,0,.6);animation:tbVolo .9s ease-out forwards}.tb-volo.ok{color:var(--o-verde)}.tb-volo.no{color:var(--o-rosso-testo)}.tb-volo.pa{color:var(--o-ambra)}@keyframes tbVolo{0%{transform:translate(-50%,10px) scale(.7);opacity:0}25%{transform:translate(-50%,0) scale(1.1);opacity:1}100%{transform:translate(-50%,-70px) scale(1);opacity:0}}",
       ".tb-riep{flex:1 1 auto;min-height:0;overflow:hidden;border-radius:18px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo),var(--o-ombra);padding:12px;display:flex;flex-direction:column;gap:6px}.tb-riep h3{margin:0;font-family:var(--o-tit);font-size:clamp(18px,5vw,23px);font-weight:700;display:flex;justify-content:space-between;gap:8px}.tb-riep h3 em{font-style:normal;white-space:nowrap;color:var(--o-oro-testo);font-variant-numeric:lining-nums}",
       ".tb-chips{min-height:0;overflow:hidden;line-height:1.15}.tb-chip{display:inline-block;border-radius:999px;padding:4px 10px;margin:2px 2px;font-weight:700;font-size:clamp(12px,3.4vw,15px)}.tb-chip.ok{background:var(--o-verde);color:var(--o-verde-testo)}.tb-chip.no{background:var(--o-rosso);color:#fff}.tb-chip.pa{background:var(--o-crema);color:var(--o-ambra);box-shadow:inset 0 0 0 1px var(--o-filo-oro)}.tb-chip.altre{background:var(--o-fondo-2);color:var(--o-tenue)}",
@@ -147,6 +147,7 @@
       // la saletta (le squadre da scegliere): vive nella schermata chiara del core, che ha già le sue regole; qui i colori di base
       ".tb-squad-box{display:flex;flex-direction:column;gap:4px;margin:2px 0}.tb-sq-testa{display:flex;align-items:center;gap:8px;min-height:28px}.tb-squad-lista{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;align-items:center;border-radius:12px;padding:4px 6px;background:var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo)}.tb-squad-lista::-webkit-scrollbar{display:none}.tb-squad-lista>*{flex:none}.tb-squad-lista.a{border-left:4px solid var(--tb-a-l)}.tb-squad-lista.b{border-left:4px solid var(--tb-b-l)}.tb-squad-lista b{font-size:13px;min-width:2.4em;white-space:nowrap}.tb-scelta{border:0;border-radius:999px;padding:4px 10px;color:var(--o-testo);font:inherit;font-size:13px;font-weight:700;line-height:1.25;background:var(--o-carta-2);box-shadow:inset 0 0 0 1px var(--o-filo-oro);max-width:9.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tb-scelta.a{background:var(--tb-a);color:#fff;box-shadow:none}.tb-scelta.b{background:var(--tb-b);color:#fff;box-shadow:none}.tb-scelta.tu{outline:2px solid var(--o-scuro)}.tb-entra-sq{border:1.5px dashed currentColor;border-radius:999px;padding:3px 9px;background:transparent;font:inherit;font-size:12px;font-weight:700;line-height:1.25;color:inherit;opacity:.75}.tb-casuale{flex:none;border:0;border-radius:999px;padding:5px 11px;background:var(--o-tasto);color:var(--o-tasto-testo);font:inherit;font-size:13px;font-weight:800}.tb-sq-nota{min-width:0;font-size:12px;font-weight:600;line-height:1.25;color:var(--o-tenue)}",
       ".tb-tasti .sl-faccine{grid-column:1/-1}",
+      ".tb-tasti>:not(.tb-btn){grid-column:1/-1;min-width:0}",   // (ripasso TB1: la riga «Avete giocato con», la Serata e i tasti di fine del cuore prendono tutta la larghezza: prima finivano ognuno in mezza casella)
       // su questo telefono: le squadre da toccare, chi controlla, le carte del riepilogo che si correggono
       ".tb-loc-squadre{justify-content:flex-start;padding-top:4px}.tb-loc-squadre .tb-colonne{flex:1;min-height:0}.tb-loc-squadre .tb-col{display:flex;flex-direction:column;min-height:0;overflow:hidden}",
       ".tb-loc-nomi{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-content:flex-start;min-height:0;overflow:hidden;padding-top:4px}.tb-loc-nomi .tb-scelta{font-size:clamp(14px,4vw,17px);padding:7px 12px;max-width:100%}",
@@ -373,8 +374,14 @@
       var box = t.el("div", { class: "tb-riep" }, [t.el("h3", {}, [t.el("span", { text: r.nome + (r.uscito ? " (uscito)" : "") + " · Squadra " + SQUADRE[r.team] }), t.el("em", { text: (delta > 0 ? "+" : "") + delta })])]);
       var chips = t.el("div", { class: "tb-chips" }), voci = [];
       r.giuste.forEach(function (p) { voci.push(["ok", "✅ " + p]); });
-      r.buzz.forEach(function (p) { voci.push(["no", "❌ " + p]); });
-      r.passate.forEach(function (p) { voci.push(["pa", "⏭️ " + p]); });
+      var tornano = !!(v.tre && v.tre.n === 1);   // (tornano nel cesto: niente nomi)
+      if (tornano) {
+        if (r.buzz.length) voci.push(["no", "❌ " + r.buzz.length + (r.buzz.length > 1 ? " BUZZ · tornano nel cesto" : " BUZZ · torna nel cesto")]);
+        if (r.passate.length) voci.push(["pa", "⏭️ " + r.passate.length + (r.passate.length > 1 ? " passate · tornano nel cesto" : " passata · torna nel cesto")]);
+      } else {
+        r.buzz.forEach(function (p) { voci.push(["no", "❌ " + p]); });
+        r.passate.forEach(function (p) { voci.push(["pa", "⏭️ " + p]); });
+      }
       if (r.rubata) voci.push(["ru", "🫳 " + r.rubata.p + " · rubata da " + SQUADRE[r.rubata.team]]);
       if (!voci.length) chips.appendChild(t.el("span", { class: "tb-chip altre", text: "Nessuna carta in questo turno" }));
       var max = window.innerHeight < 700 ? 9 : 14;
@@ -1469,7 +1476,7 @@
       setTimeout(function () { if (L.T === T && T.corre && !T.carta) pesca(); }, 380);   // dopo il BUZZ la carta trema, poi arriva la nuova
     }
     function bannerBuzz(rec) {
-      var b = L.ui.banner; b.innerHTML = ""; b.classList.remove("verde");
+      var b = L.ui.banner; b.innerHTML = ""; b.classList.remove("verde"); b.classList.add("riga");
       b.appendChild(t.el("b", { text: "🚨 BUZZ!" }));
       b.appendChild(t.el("small", { text: (nR() === 2 ? "Più di una parola" : nR() === 3 ? "Ha parlato" : "Parola vietata") + " · carta: " + rec.p }));
       b.appendChild(tasto("", "↩️ Annulla BUZZ", function () {
