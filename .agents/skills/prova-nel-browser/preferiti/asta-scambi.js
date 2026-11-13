@@ -16,10 +16,10 @@
 //     «Fine scambi ▶» porta alla classifica delle rose.
 // sc5 (13 nov 2026, dopo la prova del proprietario, il proprietario: «le squadre sono piccolissime… la mia squadra la prima che si vede, ma della stessa grandezza delle altre…
 //     adattiamo lo schermo in base a quanti giocatori siamo») Senza asta: il mercato disegnato con rose finte in 2, 3, 4, 6, 8 e 10 su un
-//     telefono piccolo (360×640) e su uno come quello del proprietario (412×800): rose tutte della stessa grandezza, la mia per prima, niente
+//     telefono piccolo (360×640), su uno come quello del proprietario (360×697) e su uno grande (412×800): rose tutte della stessa grandezza, la mia per prima, niente
 //     scorrere, targhette dentro il campo, scritte da 9 px in su; in 2 una colonna sola e campi alti; da 3 in su due rose per riga (in 3 un
 //     posto vuoto a destra: il proprietario non vuole le tre una sotto l'altra); sul telefono grande fino a 8 tutti in una schermata; quando
-//     servono le pagine ‹ › la mia rosa resta per prima e le altre ci sono tutte.
+//     servono le pagine ‹ › la mia rosa resta per prima e le altre ci sono tutte (sul telefono del proprietario e su quello grande fino a 8 senza pagine).
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -227,8 +227,8 @@
       return NOMI.slice(0, n).map(function (nm, i) { return { id: i ? "g" + i : "host", nome: nm, omino: null, crediti: 3, kit: ["P", "D", "C", "C", "A"].map(prendi) }; });
     }
     var fr = document.getElementById("tel-Paky"), giro = 0;
-    for (var ti = 0; ti < 2; ti++) {
-      var wh = [[360, 640], [412, 800]][ti], righe = [];
+    for (var ti = 0; ti < 3; ti++) {
+      var wh = [[360, 640], [360, 697], [412, 800]][ti], righe = [];
       fr.style.cssText = "position:absolute;top:0;left:0;width:" + wh[0] + "px;height:" + wh[1] + "px;border:0;background:#000;transform:none;z-index:9";
       P.dispatchEvent(new P.Event("resize")); await W.dorme(300);
       for (var ni = 0; ni < 6; ni++) {
@@ -242,7 +242,7 @@
         if (n === 2 && (c0.width < b0.width - 2 || c0.height < wh[1] * 0.3)) no(dove + "le due rose non prendono lo schermo (" + Math.round(c0.width) + "×" + Math.round(c0.height) + ")");
         if (n >= 3 && Math.abs(c0.width - (b0.width - 6) / 2) > 2) no(dove + "le rose non sono due per riga (" + Math.round(c0.width) + " su " + Math.round(b0.width) + ")");
         if (n >= 3 && n <= 4 && c0.height < wh[1] * 0.27) no(dove + "le rose non prendono lo schermo (alte " + Math.round(c0.height) + ")");
-        if (ti === 1 && n <= 8 && pag) no(dove + "sul telefono grande fino a 8 devono stare tutti in una schermata");
+        if (ti >= 1 && n <= 8 && pag) no(dove + "su questo telefono fino a 8 devono stare tutti in una schermata");
         if (pag) {   // le pagine: la mia sempre per prima, e girandole ci sono tutti
           var visti = {};
           do {
