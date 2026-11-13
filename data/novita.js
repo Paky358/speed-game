@@ -9,6 +9,23 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 341,
+    data: "13 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: gli scambi a fine asta 🔄",
+    descrizione: [
+      "🔄 Finita l'asta, prima di scoprire le rose, tutti entrano nel mercato: in alto la tua rosa, sotto le rose degli altri (4 per pagina) e tutte le partite della giornata, così sai contro chi gioca il calciatore che vuoi prendere.",
+      "👆 Tocchi i calciatori che vuoi di un altro e i tuoi dello stesso ruolo si scelgono da soli; se ne hai più di uno (per esempio due centrocampisti) lampeggiano e scegli tu quale dai.",
+      "📨 «Proponi»: all'altro arriva un avviso con la tua proposta, «✅ Accetta» o «❌ Rifiuta». Se accetta i calciatori cambiano rosa volando al loro posto, e lo scambio si annuncia in grande a tutti. Le rose restano sempre giuste: portiere per portiere, e lo stesso numero di difensori, centrocampisti e attaccanti.",
+      "⏱️ Il mercato dura 3 minuti col conto sempre in vista; chi tiene la partita lo chiude prima o dà un minuto in più. Si spegne nel ⚙️ («🔄 Scambi a fine asta»); sullo stesso telefono c'è la versione semplice.",
+      "🙈 L'overall non si vede più: si vedono di nuovo le quotazioni (anche nel mercato, accanto a ogni calciatore). L'overall resta solo dietro le quinte, per decidere quanto sono forti le squadre in partita.",
+      "⚽ Dopo gli scambi niente sfilata delle rose: si sono già viste tutte nel mercato, quindi si va dritti alla giornata.",
+      "🎨 Con «Gioca ancora» ognuno tiene lo stesso colore dei suoi calciatori, partita dopo partita.",
+      "🔀 Le partite della giornata non si ripetono mai: ogni telefono ricorda le ultime giornate sorteggiate e una nuova ne ha al massimo una uguale.",
+      "🎬 Il replay del gol della giornata resta nella metà campo dove è stato fatto il gol (prima, un gol nella metà di sopra si rivedeva in quella di sotto).",
+      "📏 Altre 30 altezze vere: ora sono 329 calciatori su 335."
+    ]
+  },
+  {
     v: 340,
     data: "13 novembre 2026",
     titolo: "Mini Asta Fantacalcio: dopo la serata vera ⚽",

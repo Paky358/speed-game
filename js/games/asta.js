@@ -602,6 +602,42 @@
     ".st-pag-attesa{flex:none;margin:auto auto 6px;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.1);font-weight:800;font-size:.92rem;text-align:center;}",
     ".st-pag:not(.on),.st-pag:not(.on) *{pointer-events:none!important;}",   // (le pagelle nascoste non prendono i tocchi)
     // (ripasso del 12 nov 2026: il foglio delle regole era lungo tre schermi) le scelte a due nel ⚙️, una accanto all'altra
+    // 🔄 il mercato degli scambi (13 nov 2026)
+    ".sc-merc .contenuto{display:flex;flex-direction:column;gap:10px;min-height:0;}.sc-corpo{display:flex;flex-direction:column;gap:9px;flex:1;min-height:0;}",
+    ".sc-testa{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:1.15rem;font-weight:900;}.sc-tempo{padding:3px 11px;border-radius:12px;background:rgba(255,255,255,.1);font-size:1rem;font-weight:900;font-variant-numeric:tabular-nums;}.sc-tempo.poco{background:#e0225a;color:#fff;}",
+    ".sc-domanda{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:18px 14px;border-radius:18px;background:var(--o-carta-piena,#151a2e);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);}.sc-dom-ic{font-size:2.6rem;line-height:1;}.sc-domanda b{font-size:1.35rem;}.sc-domanda p{margin:0;font-size:.92rem;opacity:.85;}.sc-domanda .btn{width:100%;}",
+    ".sc-nota{margin:0;text-align:center;font-size:.86rem;opacity:.85;}.sc-entra{width:100%;}.sc-lista{display:flex;flex-direction:column;gap:6px;}",
+    ".sc-riga{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:14px;background:var(--o-carta,rgba(255,255,255,.06));color:inherit;font:inherit;text-align:left;}.sc-riga.spenta{opacity:.78;}.sc-riga.sel{box-shadow:inset 0 0 0 2px #34d17a;background:rgba(52,209,122,.14);}",
+    ".sc-faccia{flex:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.12);}.sc-chi{flex:1;min-width:0;display:flex;flex-direction:column;}.sc-chi b{font-size:.95rem;}.sc-chi small{font-size:.74rem;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+    ".sc-tratta{flex:none;width:auto;min-height:36px;padding:0 12px;border-radius:12px;font-size:.85rem;background:rgba(52,209,122,.18);color:#fff;box-shadow:inset 0 0 0 1.5px #34d17a;}.sc-tratta:disabled{opacity:.35;}",
+    ".sc-tavolo{display:flex;flex-direction:column;gap:8px;}.sc-tav-t{text-align:center;font-weight:900;font-size:1.05rem;}.sc-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.sc-col{display:flex;flex-direction:column;gap:5px;min-width:0;}",
+    ".sc-col-t{display:flex;align-items:center;gap:6px;min-width:0;font-size:.85rem;}.sc-col-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.sc-col-t .sc-faccia{width:26px;height:26px;}",
+    ".sc-carta{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:6px;align-items:center;min-height:46px;padding:6px 8px 6px 10px;border:0;border-radius:12px;background:rgba(255,255,255,.07);color:inherit;font:inherit;text-align:left;box-shadow:inset 3px 0 0 var(--sq,#888);cursor:pointer;transition:background .15s;}",
+    ".sc-carta i{grid-row:1/3;font-style:normal;font-size:.6rem;font-weight:900;padding:2px 4px;border-radius:6px;color:#fff;}.sc-carta .sc-nome{font-weight:900;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.sc-carta small{font-size:.64rem;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+    ".sc-carta.sel{background:rgba(52,209,122,.24);box-shadow:inset 3px 0 0 var(--sq,#888),inset 0 0 0 2px #34d17a;}.sc-carta.sel::after{content:'⇄';position:absolute;right:6px;top:4px;font-size:.8rem;font-weight:900;color:#34d17a;}",
+    ".sc-msg{margin:0;text-align:center;font-size:.86rem;font-weight:800;color:#ffb3c4;}.sc-msg.ok{color:#8ce99a;}",
+    ".sc-ok{width:100%;min-height:52px;border:0;border-radius:16px;background:linear-gradient(180deg,#45d483,#25a95d);color:#fff;font-size:1.05rem;font-weight:900;box-shadow:0 6px 16px -6px rgba(37,169,93,.7);}.sc-ok:disabled{background:rgba(255,255,255,.12);color:rgba(255,255,255,.55);box-shadow:none;}.sc-ok.fatto:disabled{background:rgba(52,209,122,.25);color:#c6f6d5;}",
+    ".sc-chiudi{min-height:38px;font-size:.85rem;}.sc-piede{display:flex;gap:8px;width:100%;}.sc-piede .btn{flex:1;}",
+    ".sc-annuncio{position:fixed;left:16px;right:16px;top:30%;z-index:60;display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center;padding:16px;border-radius:18px;background:rgba(13,16,32,.96);color:#fff;box-shadow:0 0 0 2px #34d17a,0 18px 40px rgba(0,0,0,.6);animation:scAnn 4.2s ease both;pointer-events:none;}",
+    ".sc-annuncio small{font-weight:900;letter-spacing:.12em;color:#34d17a;}.sc-annuncio b{font-size:1.15rem;line-height:1.3;}@keyframes scAnn{0%{opacity:0;transform:scale(.85)}8%{opacity:1;transform:scale(1.04)}14%{transform:none}88%{opacity:1}100%{opacity:0}}",
+    // 🔄 il mercato nuovo (13 nov 2026 sera): la mia rosa, 4 rose per pagina, le partite; il pop-up della proposta
+    ".mc .contenuto{gap:7px;}.mc-capo{display:flex;gap:6px;margin-left:auto;}.mc-mini{border:0;border-radius:10px;min-height:30px;padding:3px 9px;background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:.8rem;font-weight:800;}.mc-mini.on{background:#e0225a;}",
+    ".mc-rosa{display:flex;flex-direction:column;gap:3px;min-width:0;}.mc-rosa-t{display:flex;align-items:center;gap:6px;min-width:0;font-size:.82rem;}.mc-rosa-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.mc-rosa-t small{margin-left:auto;font-size:.68rem;opacity:.8;white-space:nowrap;}.mc-rosa-t .sc-faccia{width:22px;height:22px;}",
+    ".mc-campo{position:relative;height:var(--mch,108px);border-radius:10px;background:repeating-linear-gradient(180deg,#3d9b49 0 14px,#358a41 14px 28px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}.mc-mia .mc-campo{height:var(--mch1,128px);}",
+    ".mc-griglia{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.mc-pag{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:.8rem;font-weight:800;}",
+    ".mc-p{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:3px;max-width:49%;padding:2px 6px 2px 3px;border:1.5px solid var(--sq2,#fff);border-radius:8px;background:var(--sq,#2b3550);color:#fff;font:inherit;font-size:.66rem;font-weight:900;line-height:1.25;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.85);box-shadow:0 2px 5px rgba(0,0,0,.45);cursor:pointer;transition:box-shadow .15s;}",
+    ".mc-mia .mc-p{font-size:.74rem;}.mc-p span{min-width:0;overflow:hidden;text-overflow:ellipsis;}.mc-p i{flex:none;width:7px;height:7px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.7);}.mc-p small{font-size:.58rem;color:#ffe066;}",
+    ".mc-p.sel{z-index:2;box-shadow:0 0 0 2.5px #34d17a,0 0 12px rgba(52,209,122,.85);}.mc-p.scegli{animation:mcScegli .8s ease-in-out infinite alternate;}@keyframes mcScegli{from{box-shadow:0 0 0 0 rgba(255,224,102,0)}to{box-shadow:0 0 0 3px #ffe066,0 0 10px rgba(255,224,102,.8)}}.mc-p.volato{box-shadow:0 0 0 2.5px #ffe066,0 0 14px rgba(255,224,102,.9);}",
+    ".mc-part-t{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:.8rem;}.mc-ris{margin:0;}.mc-ris .st-ris-p{padding:4px 0;}.mc-ris .st-ris-p span{font-size:.62rem;}",
+    ".mc-barra{display:flex;flex-direction:column;gap:6px;width:100%;}.mc-riass{margin:0;text-align:center;font-size:.86rem;}.mc-riass.no{color:#ffe066;font-weight:800;}.mc-riass.attesa{color:#a5d8ff;}.mc-riga{display:flex;gap:8px;}.mc-riga .sc-ok{flex:1;}.mc-annulla{flex:none;width:52px;min-height:52px;}",
+    ".mc-pop{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,20,.62);}.mc-pop-in{width:100%;max-width:380px;display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:18px;background:#151a2e;color:#fff;box-shadow:0 0 0 2px #34d17a,0 18px 40px rgba(0,0,0,.6);animation:mcPop .35s cubic-bezier(.2,1.3,.4,1);}@keyframes mcPop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}",
+    ".mc-pop-t{display:flex;align-items:center;gap:8px;font-size:1.05rem;}.mc-pop-et{margin-top:4px;font-size:.7rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;opacity:.7;}.mc-pop-c{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.07);}",
+    ".mc-pop-c i{grid-row:1/3;font-style:normal;font-size:.6rem;font-weight:900;padding:2px 5px;border-radius:6px;color:#fff;}.mc-pop-c small{font-size:.7rem;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.mc-pop-tasti{display:flex;gap:8px;margin-top:6px;}.mc-pop-tasti .btn{flex:1;min-height:52px;}",
+    // (i tasti verdi e rossi del mercato vincono sul vetro dei tasti dell'app)
+    ".sc-merc button.btn.sc-ok{background:linear-gradient(180deg,#45d483,#25a95d);color:#fff;box-shadow:0 6px 16px -6px rgba(37,169,93,.7);}.sc-merc button.btn.sc-ok:disabled{background:rgba(255,255,255,.12);color:rgba(255,255,255,.55);box-shadow:none;}.sc-merc button.btn.sc-ok.fatto:disabled{background:rgba(52,209,122,.25);color:#c6f6d5;}",
+    ".sc-merc button.btn.mc-no{background:rgba(255,107,120,.18);color:#fff;box-shadow:inset 0 0 0 1.5px #ff6b78;}",
+    ".mc-no{border:0;border-radius:16px;background:rgba(255,107,120,.18);color:#fff;font-weight:900;box-shadow:inset 0 0 0 1.5px #ff6b78;}",
+    ".mc-avviso{position:fixed;left:16px;right:16px;bottom:120px;z-index:65;padding:12px 14px;border-radius:14px;background:rgba(13,16,32,.95);color:#fff;text-align:center;font-weight:800;box-shadow:0 0 0 1.5px rgba(255,255,255,.2),0 10px 24px rgba(0,0,0,.5);animation:mcPop .3s ease;pointer-events:none;}.mc-avviso.piccolo{font-size:.86rem;}",
     ".modo-griglia.as-coppia{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.as-coppia .modo-chip{flex-direction:column;justify-content:center;gap:2px;padding:9px 8px;text-align:center;}",
     ".as-coppia .modo-chip .mi{font-size:1.35rem;}.as-coppia .modo-chip .mt{font-size:.98rem;}.as-coppia .modo-chip .ms{font-size:.74rem;line-height:1.2;}",
     "@media (max-width:380px){.st-bar-in{font-size:.76rem;gap:5px;letter-spacing:0}.st-bar-in img{width:22px;height:22px}.st-bar-sc{font-size:.98rem}}",
@@ -1480,7 +1516,7 @@
       "<b>🧨 La carta maledetta</b> (se l'host la accende): una volta a partita, nel 2° o nel 3° round, esce una carta che <b>nessuno vuole</b>. A turno ognuno sceglie: <b>💸 paga</b> 1 credito in più dell'ultimo per scansarla, oppure <b>😩 se la prende</b>. Chi non decide in tempo se la prende. Il <b>primo che se la prende</b> la mette nel kit e non paga niente; <b>tutti gli altri pagano</b> quello che hanno offerto. Nel voto finale chi ce l'ha perde <b>mezza stella</b> (🧨 −0,5 ⭐).",
       "A fine partita i <b>titoli scherzosi</b> (non sono trofei): 💸 lo sprecone, 🧊 il braccino corto, 🎯 il cecchino dell'ultimo secondo… e con <b>📸</b> mandi la foto del tuo kit nel gruppo."
   ];
-  function ovrAcceso() { try { return localStorage.getItem("sg-fanta-overall") !== "0"; } catch (e) { return true; } }   // (⭐ l'overall: lo spegne solo «sg-fanta-overall» = "0")
+  function ovrAcceso() { try { return localStorage.getItem("sg-fanta-overall") === "1"; } catch (e) { return false; } }   // (⭐ l'overall si vede solo con «sg-fanta-overall» = "1": dal 13 nov sera si vedono le quotazioni)
   var REGOLE_FANTA = [
       "Online ognuno offre dal suo telefono. <b>Sullo stesso telefono</b> il telefono sta appoggiato al tavolo: tutti vedono il maxischermo e ognuno offre toccando <b>la sua faccina</b> in panchina.",
       "<b>20 crediti</b> a testa per una rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono a caso uno alla volta e partono da <b>1 credito</b>; si offre a salto: <b>+1</b>, <b>+2</b> o <b>+5</b>. Ci sono <b>6 secondi</b> per la prima offerta e <b>8</b> dopo ogni rilancio, poi chi offre di più se lo prende. Se nessuno lo vuole <b>torna in fondo al mazzo</b> e si va avanti; solo quando tutti quelli rimasti di un ruolo sono stati rifiutati <b>2 volte</b>, vanno a caso a chi ne ha ancora bisogno.",
@@ -1490,6 +1526,7 @@
       (ovrAcceso() ? "Alla fine si scopre l'<b>overall</b> di ogni calciatore (quanto vale davvero, da 68 a 93, come nei videogiochi di calcio), dalla rosa più debole alla più forte." : "Alla fine si scoprono le <b>quotazioni vere</b> dei calciatori, dalla rosa che vale meno a quella che vale di più.") + " Poi si gioca <b>⚽ una giornata di Serie A finta</b>, come nel fantacalcio vero: i vostri calciatori non giocano tra di loro, ognuno gioca con la sua squadra contro chi capita (le 20 squadre si sorteggiano; i risultati dipendono soprattutto da quanto sono forti le squadre, cioè dall'overall dei loro titolari, e un po' dai gol veri dell'anno scorso). I gol li segnano soprattutto i più quotati e gli attaccanti; i rigori li tirano i <b>🎯 rigoristi</b> di quest'anno (all'asta c'è la scritta sul maxischermo); i cartellini dipendono da quanti ne ha presi davvero ognuno. Chi comprate gioca sempre. Tutti partono da 6 in pagella (il portiere di solito resta a 6), poi voti e bonus come nel fantacalcio: <b>gol +3</b>, <b>assist +1</b>, <b>giallo −0,5</b>, <b>rosso −1</b>, <b>rigore sbagliato −3</b>, <b>autogol −2</b>; per il portiere <b>gol subito −1</b>, <b>porta inviolata +1</b> (ce l'ha già dal fischio d'inizio e la perde al primo gol subito), <b>rigore parato +3</b>. Sul campo si vedono con calma i momenti dei vostri calciatori (anche i pali e le parate), col nome e la faccina di chi li ha comprati; a fine primo tempo e al fischio finale arrivano le pagelle. Vince chi fa <b>più fantapunti</b> (a pari punti la rosa che vale di più, poi chi ha più crediti avanzati).",
       "La giornata si spegne nel ⚙️: allora vince la rosa che <b>vale di più</b> (a pari valore chi ha <b>più crediti avanzati</b>).",
       "<b>🆚 Contro chi giocano</b> (nel ⚙️, acceso di partenza): le partite della giornata si sorteggiano già all'inizio dell'asta e sotto ogni calciatore c'è in piccolo il suo avversario (con 🏆 3 giornate tutti e tre).",
+      "<b>🔄 Scambi a fine asta</b> (nel ⚙️, accesi di partenza): finita l'asta, prima di scoprire le rose, tutti entrano nel mercato: in alto la tua rosa, sotto quelle degli altri (4 per pagina) e le partite della giornata. Tocchi i calciatori che vuoi di un altro e i tuoi dello stesso ruolo si scelgono da soli (se ne hai più di uno, tocchi tu quale dai); «📨 Proponi» e all'altro arriva la proposta, che accetta o rifiuta. Le rose restano sempre giuste (portiere per portiere, e lo stesso numero per reparto). Il mercato ha un tempo; chi tiene la partita lo chiude o lo allunga.",
       "<b>⭐ L'overall all'asta</b> (nel ⚙️, spento di partenza): se lo accendete, l'overall di ogni calciatore si vede già sul maxischermo mentre è all'asta e, una volta comprato, nella rosa e nella formazione finale. Spento resta segreto fino alla fine.",
       "<b>🏆 3 giornate</b> (si sceglie nel ⚙️): le stesse rose giocano tre giornate di fila, ognuna con partite sorteggiate da capo. Le prime due si vedono <b>veloci</b> (solo i momenti dei vostri calciatori), con la classifica dopo ognuna; la terza si gioca <b>intera</b>, partendo dai punti delle prime due. Vince chi fa <b>più fantapunti sommati</b>.",
       "A fine partita i <b>titoli scherzosi</b> (non sono trofei): 💸 lo sprecone, 🧊 il braccino corto, 🎯 il cecchino dell'ultimo secondo… e con <b>📸</b> mandi la foto della tua rosa nel gruppo."
@@ -1514,7 +1551,7 @@
       // (ripasso del 12 nov 2026: la saletta taglia oltre 90 lettere, e si perdeva proprio quello che cambia da una sera all'altra: niente nome del gioco, prima le scelte)
       if ((imp.formato || f) === "fanta") {
         var rf = ["⚽ " + FANTA_BUDGET + " crediti", "rosa da 5", imp.compra === "buste" ? "✉️ tutta a buste" : imp.compra === "big" ? "✉️ buste per i big" : "",
-          imp.giornata === false ? "💎 vince la rosa più forte" : imp.giornate === 3 ? "🏆 3 giornate" : "⚽ 1 giornata", imp.giornata !== false && vsDi(imp) ? "🆚 avversari già all'asta" : "", imp.ovrAsta ? "⭐ overall all'asta" : ""].filter(Boolean);
+          imp.giornata === false ? "💎 vince la rosa più forte" : imp.giornate === 3 ? "🏆 3 giornate" : "⚽ 1 giornata", imp.giornata !== false && vsDi(imp) ? "🆚 avversari già all'asta" : "", imp.ovrAsta ? "⭐ overall all'asta" : "", imp.scambi === false ? "🔒 niente scambi" : ""].filter(Boolean);
         // (la saletta taglia oltre 90 caratteri: se non ci sta, prima via «rosa da 5», poi le scritte più corte)
         var corte = [["rosa da 5", ""], ["🆚 avversari già all'asta", "🆚 avversari noti"], ["✉️ buste per i big", "✉️ big a busta"], ["⭐ overall all'asta", "⭐ overall visibile"]], rr = rf.join(" · ");
         for (var ci = 0; rr.length > 90 && ci < corte.length; ci++) { rf = rf.map(function (x) { return x === corte[ci][0] ? corte[ci][1] : x; }).filter(Boolean); rr = rf.join(" · "); }
@@ -1711,6 +1748,13 @@
       wrapG3.appendChild(el("div", { class: "etichetta", text: "🆚 Contro chi giocano" }));
       wrapG3.appendChild(el("div", { class: "modo-griglia as-coppia" }, [bVsNo, bVsSi]));
       scegliVs(dove.vs);
+      var bScSi, bScNo;   // 🔄 gli scambi a fine asta (accesi di partenza)
+      function scegliSc(v) { dove.scambi = v; bScSi.className = "modo-chip" + (v ? " attiva" : ""); bScNo.className = "modo-chip" + (!v ? " attiva" : ""); }
+      bScSi = el("button", { class: "modo-chip", onclick: function () { scegliSc(true); } }, [ el("span", { class: "mi", text: "🔄" }), el("div", {}, [ el("div", { class: "mt", text: "Sì" }), el("div", { class: "ms", text: "«Dammelo, ti do questo»" }) ]) ]);
+      bScNo = el("button", { class: "modo-chip", onclick: function () { scegliSc(false); } }, [ el("span", { class: "mi", text: "🔒" }), el("div", {}, [ el("div", { class: "mt", text: "No" }), el("div", { class: "ms", text: "Le rose dell'asta restano quelle" }) ]) ]);
+      wrapFanta.appendChild(el("div", { class: "etichetta", text: "🔄 Scambi a fine asta" }));
+      wrapFanta.appendChild(el("div", { class: "modo-griglia as-coppia" }, [bScSi, bScNo]));
+      scegliSc(dove.scambi !== false);
       var bBanSi, bBanNo;   // 🎙️ le battute del banditore (accese di partenza)
       function scegliBan(v) { dove.ban = v; bBanSi.className = "modo-chip" + (v ? " attiva" : ""); bBanNo.className = "modo-chip" + (!v ? " attiva" : ""); }
       bBanSi = el("button", { class: "modo-chip", onclick: function () { scegliBan(true); } }, [ el("span", { class: "mi", text: "🎙️" }), el("div", {}, [ el("div", { class: "mt", text: "Sì" }), el("div", { class: "ms", text: "Ogni tanto il banditore sfotte chi offre" }) ]) ]);
@@ -2255,7 +2299,7 @@
     var h = box.clientHeight, c = f.offsetHeight;
     if (h > 0 && c > h) f.style.transform = "scale(" + Math.max(0.5, (h - 2) / c).toFixed(3) + ")";
   }
-  window.addEventListener("resize", function () { if (SALA) adattaPubblico(SALA.pubblico); if (STADIO) { adattaPubblico(STADIO.pubblico); misuraGriglia(STADIO); vsAdatta(STADIO); } if (RIVELA) { misuraPalco(RIVELA); if (RIVELA.adPodio) RIVELA.adPodio(); if (RIVELA.gr) Object.keys(RIVELA.gr).forEach(function (k) { evAdatta(RIVELA.gr[k].ev); }); if (RIVELA.pag && RIVELA.pag.classList.contains("on")) misuraPv(RIVELA.pag); } });
+  window.addEventListener("resize", function () { if (SALA) adattaPubblico(SALA.pubblico); if (STADIO) { adattaPubblico(STADIO.pubblico); misuraGriglia(STADIO); vsAdatta(STADIO); } if (MERC) adattaMerc(MERC); if (RIVELA) { misuraPalco(RIVELA); if (RIVELA.adPodio) RIVELA.adPodio(); if (RIVELA.gr) Object.keys(RIVELA.gr).forEach(function (k) { evAdatta(RIVELA.gr[k].ev); }); if (RIVELA.pag && RIVELA.pag.classList.contains("on")) misuraPv(RIVELA.pag); } });
   function pulisciCache() { Object.keys(CACHE_AV).forEach(function (k) { if (k.indexOf("arte|") !== 0) delete CACHE_AV[k]; }); }   // le pose degli avatar della partita prima (i disegni fissi restano)
   function fermaTutto() { fermaConta(SALA); fermaConta(STADIO); fermaRivela(RIVELA); fermaMal(); fermaBus(); SALA = null; STADIO = null; RIVELA = null; }   // si esce dalla partita: niente più timer che ridisegnano
   function testaAsta(el, S, d) {
@@ -3279,7 +3323,7 @@
     var righe = giocatori.map(function (g, i) {
       var kit = kitClassifica(g), tot = 0;
       kit.forEach(function (c) { tot += c.ovr != null ? c.ovr : c.valore; });   // ⭐ (la somma degli overall)
-      return { id: g.id != null ? g.id : i, nome: g.nome, omino: g.omino || null, crediti: g.crediti, kit: kit, totale: tot };
+      return { id: g.id != null ? g.id : i, ord: i, nome: g.nome, omino: g.omino || null, crediti: g.crediti, kit: kit, totale: tot };   // (ord: il posto nella stanza, per il colore)
     });
     righe.sort(function (a, b) { return (b.totale - a.totale) || (b.crediti - a.crediti); });
     righe.forEach(function (r, i) { var p = righe[i - 1]; r.pos = r.posV = p && p.totale === r.totale && p.crediti === r.crediti ? p.pos : i + 1; r.punti = valoreRosa(r); });
@@ -3553,10 +3597,23 @@
   var COPPIE_ORA = null;   // (le partite già sorteggiate della partita che si sta guardando, per il maxischermo)
   var OVR_ASTA = false;   // ⭐ (13 nov 2026) ⚙️ «L'overall all'asta»: si vede già all'asta, nella rosa e nella formazione (di partenza no: segreto fino alla fine)
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", function () { if (STADIO) vsAdatta(STADIO); });   // (misurato col carattere vero)
+  // (13 nov 2026, gli amici del proprietario: «quando fai gioca ancora le partite si ripetono… devono essere cambiate tutta la giornata, non si deve
+  // mai ripetere») le ultime giornate sorteggiate su questo telefono si ricordano (sg-fanta-giornate, le ultime 6): una giornata nuova ha al massimo
+  // 1 partita uguale a ognuna di quelle (si riprova fino a 80 volte e si tiene la più diversa). Vale anche per le 3 giornate tra di loro
+  function giornateViste() { try { var l = JSON.parse(localStorage.getItem("sg-fanta-giornate") || "[]"); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function chiaviCoppie(cp) { return cp.map(function (c) { return c.slice().sort().join("-"); }); }
   function sorteggioCoppie() {
-    var sq = Object.keys(((window.SG_FANTA_SQUADRE || {}).squadre) || {}); if (sq.length < 2) sq = Object.keys(COLORI_SQUADRE);
-    sq = mischia(sq); var coppie = []; for (var i = 0; i + 1 < sq.length; i += 2) coppie.push([sq[i], sq[i + 1]]);
-    stadiGiusti(coppie); return coppie;
+    var sq0 = Object.keys(((window.SG_FANTA_SQUADRE || {}).squadre) || {}); if (sq0.length < 2) sq0 = Object.keys(COLORI_SQUADRE);
+    var viste = giornateViste(), meglio = null, mU = 99;
+    for (var tent = 0; tent < 80 && mU > 1; tent++) {
+      var sq = mischia(sq0), coppie = []; for (var i = 0; i + 1 < sq.length; i += 2) coppie.push([sq[i], sq[i + 1]]);
+      var ch = chiaviCoppie(coppie), u = 0;
+      viste.forEach(function (v) { var n = ch.filter(function (k) { return v.indexOf(k) >= 0; }).length; if (n > u) u = n; });
+      if (u < mU) { meglio = coppie; mU = u; }
+    }
+    stadiGiusti(meglio);
+    try { viste.push(chiaviCoppie(meglio)); localStorage.setItem("sg-fanta-giornate", JSON.stringify(viste.slice(-6))); } catch (e) {}
+    return meglio;
   }
   function coppieGiornate(n) { var l = []; for (var i = 0; i < (n === 3 ? 3 : 1); i++) l.push(sorteggioCoppie()); return l; }
   function avversariDi(sq) {
@@ -3570,7 +3627,7 @@
     A.partite = [];
     var coppie;
     if (cpFisse && cpFisse.length) coppie = cpFisse.map(function (c) { return c.slice(); });   // 🆚 (le partite sorteggiate all'inizio dell'asta)
-    else { sq = mischia(sq); coppie = []; for (var i = 0; i + 1 < sq.length; i += 2) coppie.push([sq[i], sq[i + 1]]); stadiGiusti(coppie); }
+    else coppie = sorteggioCoppie();   // (mai una giornata uguale a quelle di prima)
     coppie.forEach(function (c) { A.partite.push(partitaSA(c[0], c[1], med, rose, comprati)); });
     // ⏳ la Zona Cesarini (30 ott 2026): dal 75' almeno 3 momenti dei vostri calciatori (se mancano si aggiungono occasioni senza punti:
     // pali, parate, salvataggi), e una volta su due una in più. Non cambiano né i punti né i risultati
@@ -3726,6 +3783,7 @@
     R.radice.insertBefore(R.flash, sfondo.nextSibling);   // 🧪 la scritta di prova del proprietario
     RIVELA = R; t.mostra(R.radice); misuraPalco(R);
     avviaPiano(R);
+    if (opz.saltaRose && conGio && !opz.cron) { R.saltato = true; fermaTempi(R); return R.alleOra(R.ora(), function () { giornataRivela(R); }); }   // 🔄 (stesso telefono, dopo gli scambi)
     var ordine = righe.slice().sort(function (a, b) { return (b.posV || b.pos) - (a.posV || a.pos); }), j = 0;
     preparaFigurine(R, ordine);   // 🃏 (le figurine si preparano adesso, una alla volta, nell'ordine in cui si scoprono)   // dalla rosa che vale meno
     rianima(R.ticker, "via", (OVR.on ? "Si scopre l'overall: dalla rosa più debole alla più forte!" : "Si scoprono le quotazioni vere: dalla rosa che vale meno a quella che vale di più!") + (conGio ? (opz.serieA && opz.serieA.prima ? " Poi si giocano 3 giornate 🏆" : " Poi si gioca la giornata ⚽") : ""));
@@ -3864,7 +3922,7 @@
     R.gioCols = cols; R.gioQh = qh; if (!gia) { R.gr = {}; R.facce = {}; R.busti = {}; R.colP = {}; }
     (gia ? [] : righe.slice().sort(function (a, b) { return (a.posV || a.pos) - (b.posV || b.pos); })).forEach(function (r, i) {
       var fr = el("span", { class: "st-gio-fr" }), zn = el("span", { class: "st-gio-zona" });   // (la freccina del voto che cambia; nella Zona Cesarini: cosa ti serve)
-      var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), inC = el("span", { class: "st-gio-in" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true }), fq = imgAv(el, "st-gio-faccia", cfgDi(r.nome, r.omino)), pc = COLORI_PERSONE[i % COLORI_PERSONE.length];
+      var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), inC = el("span", { class: "st-gio-in" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true }), fq = imgAv(el, "st-gio-faccia", cfgDi(r.nome, r.omino)), pc = COLORI_PERSONE[(r.ord != null ? r.ord : i) % COLORI_PERSONE.length];   // 🎨 (13 nov 2026, il proprietario: a ogni «Gioca ancora» lo stesso colore; prima andava con la classifica)
       var nodo = el("div", { class: "st-gio-riga" + (R.opz.mio != null && r.id === R.opz.mio ? " mio" : ""), style: "--pc:" + pc + ";transform:" + posQ(R, i), onclick: function () { schedaLive(R, R.gr[r.id]); } }, [
         fq, el("div", { class: "st-gio-nomi" }, [ el("span", { class: "st-gio-nome", text: r.nome }), el("div", { class: "st-gio-sotto" }, [ pt, fr, ev, zn, inC ]) ]) ]);
       R.colP[r.id] = pc;
@@ -4693,7 +4751,9 @@
     if (!b || !b.x.sc || !vivoRivela(R)) return poi();
     var x = b.x, e = x.e, q = x.chi.filter(function (y) { return y.t === "gol"; })[0], sc = {};
     for (var k in x.sc) sc[k] = x.sc[k];
-    sc.replay = true; sc.dietro = true; sc.verso = 1; sc.abb = null; sc.zoomFine = Math.max(sc.zoomFine || 0, 0.7); sc.tz = Math.min(sc.tz || 0.55, 0.4); sc.lento = sc.lento || [Math.max(0, sc.dunque - 0.2), Math.min(1, sc.dunque + 0.12), 0.42];   // (🎬 da dietro la porta: la porta in basso, davanti a chi guarda)
+    // (13 nov 2026, il proprietario: «se il gol viene fatto nella metà campo di sopra, il replay viene mostrato nella metà campo sotto… non deve
+    // succedere mai») il replay resta nella metà campo del gol vero (sc.verso come nell'azione); la rete in primo piano sta dalla parte della porta
+    sc.replay = true; sc.dietro = true; sc.abb = null; sc.zoomFine = Math.max(sc.zoomFine || 0, 0.7); sc.tz = Math.min(sc.tz || 0.55, 0.4); sc.lento = sc.lento || [Math.max(0, sc.dunque - 0.2), Math.min(1, sc.dunque + 0.12), 0.42];   // (🎬 da dietro la porta: la porta in basso, davanti a chi guarda)
     barraPartita(R, x); orologio(R, e.m, true); if (R.barSc && e.r) R.barSc.textContent = e.r[0] + " - " + e.r[1];
     var lungo = 1400 + R.az.durata(sc, 4200) + 2200 + 400;
     if (R.g() > R.pt + lungo + 250) return R.dopo(lungo, poi);   // (chi recupera: il replay è già passato)
@@ -6193,7 +6253,10 @@
   // 17 (il più forte del suo ruolo) vale più di un attaccante da 17 (a metà). Il valore della rosa (chi vince senza la giornata) è la somma degli
   // overall; la giornata, le buste dei big e i crediti restano sulle quotazioni. Oggi: portieri 76-89, difensori 71-89, centrocampisti 68-91, attaccanti 68-93
   var OVR_TETTO = { P: 89, D: 89, C: 91, A: 93 }, OVR_BASSO = 65;
-  var OVR = { on: (function () { try { return localStorage.getItem("sg-fanta-overall") !== "0"; } catch (e) { return true; } })(), scala: null };
+  // (13 nov 2026 sera, il proprietario: «eliminare l'overall perché la gente si lamenta molto… vedono Mora 80 e qualcosa quasi a pari con Thuram…
+  // l'overall serve a noi per capire chi deve fare gol… gli altri non lo devono vedere… torniamo alle quotazioni») OVR.on = l'overall SI VEDE: di
+  // partenza NO (si vedono le quotazioni, come prima del 10 nov); la giornata usa l'overall delle squadre lo stesso (overallSquadra, sempre)
+  var OVR = { on: (function () { try { return localStorage.getItem("sg-fanta-overall") === "1"; } catch (e) { return false; } })(), scala: null };
   function overallDi(c) {
     if (!OVR.scala) { var L = window.SG_FANTA_CALCIATORI || {}; OVR.scala = {}; Object.keys(L).forEach(function (r) { var dd = {}; Object.keys(L[r]).forEach(function (fa) { L[r][fa].forEach(function (k) { dd[valoreCalc(splitCalc(k))] = 1; }); }); OVR.scala[r] = Object.keys(dd).map(Number).sort(function (a, b) { return b - a; }); }); }
     return ovrDaQ(c.ruolo, valoreCalc(c));
@@ -6830,8 +6893,9 @@
         ctx.fillStyle = "rgba(10,10,20,.86)"; ctx.fillRect(vx - lv / 2, vy - fs * 1.6, lv, fs * 1.8); scritta("📺 FUORIGIOCO", vx, vy - fs * 0.32, fs, "#ff3b5c");
       }
       if (sc.replay) {
-        ctx.fillStyle = "rgba(6,12,30,.78)"; ctx.fillRect(0, 0, w, 34); scritta("🎬 IL GOL DELLA GIORNATA", w / 2, 23, Math.round(Math.min(17, w * 0.045)), "#ffe066");
-        ctx.fillStyle = "#e03131"; ctx.beginPath(); ctx.arc(14, 48, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.font = "900 11px system-ui,sans-serif"; ctx.textAlign = "left"; ctx.fillStyle = "#fff"; ctx.fillText(sc.dietro ? "REPLAY · DA DIETRO LA PORTA" : "REPLAY · RALLENTATORE", 23, 52);
+        var rSu = (sc.verso || 1) < 0, yR = rSu ? h - 34 : 0;   // (la porta in alto: le scritte del replay vanno giù, così non coprono la porta)
+        ctx.fillStyle = "rgba(6,12,30,.78)"; ctx.fillRect(0, yR, w, 34); scritta("🎬 IL GOL DELLA GIORNATA", w / 2, yR + 23, Math.round(Math.min(17, w * 0.045)), "#ffe066");
+        ctx.fillStyle = "#e03131"; ctx.beginPath(); ctx.arc(14, rSu ? h - 48 : 48, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.font = "900 11px system-ui,sans-serif"; ctx.textAlign = "left"; ctx.fillStyle = "#fff"; ctx.fillText(sc.dietro ? "REPLAY · DA DIETRO LA PORTA" : "REPLAY · RALLENTATORE", 23, rSu ? h - 44 : 52);
       }
       var ultima = null; sc.scritte.forEach(function (s) { if (p >= s.t && (!ultima || s.t >= ultima.t)) ultima = s; });
       [ultima].forEach(function (s) {   // GOL!, PARATO!… che entrano grandi (solo l'ultima)
@@ -6875,11 +6939,11 @@
         [0, w - 7].forEach(function (lx) { for (var ly = -34 + off; ly < h; ly += 34) { ctx.fillStyle = ca; ctx.fillRect(lx, ly, 7, 26); ctx.fillStyle = cb2; ctx.fillRect(lx, ly + 26, 7, 4); ctx.fillStyle = "#ffd76a"; ctx.fillRect(lx, ly + 30, 7, 4); } });
         ctx.restore();
       }
-      if (sc.dietro && A.vert) {   // 🎬 da dietro la porta: la rete in primo piano, in basso
-        var hb = Math.round(Math.min(46, h * 0.11)); ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,.1)"; ctx.fillRect(0, h - hb, w, hb); ctx.strokeStyle = "rgba(255,255,255,.38)"; ctx.lineWidth = 1; ctx.beginPath();
-        for (x = 0; x <= w; x += w / 26) { ctx.moveTo(x, h - hb); ctx.lineTo(x, h); } for (y = h - hb; y <= h; y += hb / 4) { ctx.moveTo(0, y); ctx.lineTo(w, y); } ctx.stroke();
-        ctx.fillStyle = "#fff"; ctx.fillRect(0, h - hb - 3, w, 4); ctx.restore();
+      if (sc.dietro && A.vert) {   // 🎬 da dietro la porta: la rete in primo piano, dalla parte della porta (in basso, o in alto se il gol era di sopra)
+        var hb = Math.round(Math.min(46, h * 0.11)), y0 = (sc.verso || 1) < 0 ? 0 : h - hb; ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,.1)"; ctx.fillRect(0, y0, w, hb); ctx.strokeStyle = "rgba(255,255,255,.38)"; ctx.lineWidth = 1; ctx.beginPath();
+        for (x = 0; x <= w; x += w / 26) { ctx.moveTo(x, y0); ctx.lineTo(x, y0 + hb); } for (y = y0; y <= y0 + hb; y += hb / 4) { ctx.moveTo(0, y); ctx.lineTo(w, y); } ctx.stroke();
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, (sc.verso || 1) < 0 ? hb - 1 : h - hb - 3, w, 4); ctx.restore();
       }
     }
     function suoniDi(sc) {   // quando suonano il pallone, il palo, la rete, la folla e il fischietto in questa azione
@@ -7540,7 +7604,7 @@
       if (!st.classifica) { st.serieA = st.giornata ? {} : null; st.classifica = classificaFanta(st.giocatori, st.serieA, st.giornate, st.vs && st.giornata ? st.coppie : null); }   // (⚽ la giornata si gioca una volta sola)
       var righe = st.classifica;
       st.titoli = titoliFine(st.giocatori, FANTA_BUDGET, righe);
-      return rivelaFanta(t, righe, { chiave: "rl|" + st.sessione, onEsci: function () { esciAsta(t, st); }, titoli: st.titoli, serieA: st.serieA,
+      return rivelaFanta(t, righe, { chiave: "rl|" + st.sessione, onEsci: function () { esciAsta(t, st); }, titoli: st.titoli, serieA: st.serieA, saltaRose: !!(st.scambiFatto && st.giornata),   // 🔄 (dopo gli scambi: dritti alla giornata)
         foto: function () { fotoRose(righe, null); },
         bottoni: function () { return [t.el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () { titoliFanta(t, st, righe); } })]; } });
     }
@@ -8423,6 +8487,7 @@
       onVoto: function (x) { manda({ t: "voto", per: x.per, v: x.v, s: S.vm && S.vm.sessione }); },
       onMal: function (x) { manda({ t: "mal", n: x.n, a: x.a, prezzo: x.prezzo, g: x.g }); },
       onGufo: function (x) { manda({ t: "gufo", k: x.k, n: x.n, tipo: x.tipo }); },   // 🦉 / 🍀 (fanta: quante volte ho toccato in questo momento)
+      onScambio: function (x) { manda({ t: "sc", a: x.a, n: x.n, con: x.con, dai: x.dai, vuoi: x.vuoi }); },   // 🔄 (fanta) una mossa negli scambi
       onEsci: function () { cb._uscito = true; fermaTutto(); if (S.rete) S.rete.chiudi(); t.esci(); }
     };
     function disegna() {
@@ -8799,6 +8864,7 @@
     if (vm.fase === "round") return vm.roundNome || "Round";
     if (vm.fase === "scelta") return vm.sceglieId === myId ? "Scegli tu" : ("Sceglie " + vm.sceglieNome);
     if (vm.fase === "asta") return "Asta in corso";
+    if (vm.fase === "scambi") return "🔄 Scambi a fine asta";
     if (vm.fase === "esito") return vm.esito && vm.esito.buste ? "✉️ Buste aperte!" : "Aggiudicata!";
     if (vm.fase === "voto") return "I kit in passerella";
     return "L'Asta";
@@ -9177,6 +9243,7 @@
       nomiChi: false,   // 🏷️ (tolta l'8 nov 2026: in campo solo il colore)
       ban: !(t.impostazioni && t.impostazioni.ban === false),   // 🎙️ le battute del banditore (di partenza sì)
       ovrAsta: !!(t.impostazioni && t.impostazioni.ovrAsta),   // ⭐ l'overall all'asta (di partenza no)
+      scambiOn: scambiOn(t.impostazioni),   // 🔄 gli scambi a fine asta (di partenza sì)
       compra: compraDi(t.impostazioni),   // 💰 come si compra: l'asta normale (di partenza), tutta a buste, buste solo per i big
       giocatori: t.giocatori.map(function (n) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove(), omino: ominoLocale(n) }; })
     };
@@ -9215,7 +9282,7 @@
 
   function prossimaFanta(t, st) {
     if (st.finita) return;
-    if (!st.mazzo.length) return finePartita(t, st);   // finito il mazzo: si scoprono i valori delle rose
+    if (!st.mazzo.length) return st.scambiOn !== false && !st.scambiFatto && st.giocatori.length >= 2 ? scambiLocale(t, st) : finePartita(t, st);   // finito il mazzo: 🔄 gli scambi, poi si scoprono i valori delle rose
     var carta = st.mazzo[0], elegg = eleggibiliFanta(st, carta.ruolo);
     if (!elegg.length) { st.mazzo.shift(); return prossimaFanta(t, st); }        // carta di troppo: la salto
     st.nCarta = (st.nCarta || 0) + 1;
@@ -9385,6 +9452,293 @@
 
   // ---------- ONLINE — L'HOST ----------
   var ESITO_MS = 3100, ACCOLLO_MS = 2300;   // quanto resta a schermo l'esito prima del prossimo calciatore
+  // =========================================================
+  //  🔄 GLI SCAMBI A FINE ASTA (13 nov 2026, il proprietario dopo la serata vera: uno prendeva un difensore buono, poi usciva il suo pupillo
+  //  che non poteva più prendere e tartassava gli altri: «dammelo, ti do quello più forte»; «fa molto ridere e va reso facilissimo»).
+  //  Finita l'asta, PRIMA della classifica delle rose e della giornata: a tutti «🔄 Chi vuole scambiare?»; chi dice sì entra nel mercato, gli altri
+  //  quando vogliono («🔄 Entra negli scambi»). Due persone aprono un tavolo (un tavolo a testa, coppie diverse insieme); TUTTI E DUE toccano i
+  //  calciatori di tutti e due (uno può preparare lo scambio da solo); ogni cambiamento azzera gli «Accetta»; vale solo se le rose restano giuste
+  //  (gli stessi ruoli dati e ricevuti: portiere per portiere); «✅ Accetta scambio 0 di 2» → 2 di 2 e si scambia, annunciato in grande a tutti.
+  //  Online le mosse passano da chi tiene la partita (st.scambi; nella foto vm.scambi; si ricorda come il resto: ricarica, vice, chi guarda).
+  //  Il mercato ha un tempo (SCAMBI_MS) con il conto in vista; chi tiene la partita lo chiude («⏹ Fine scambi») o lo allunga («＋1 minuto»).
+  //  Regola del ⚙️ «🔄 Scambi a fine asta», accesa di partenza (imp.scambi). La giornata NON cambia: cambiano solo le rose prima di giocarla.
+  // =========================================================
+  var SCAMBI_MS = 180000, SCAMBI_PIU = 60000;
+  function chiaveKit(c) { return c.nome + "|" + c.squadra; }
+  function scambiOn(im) { return !(im && im.scambi === false); }
+  // lo scambio lascia le rose giuste? (da: chi dà A, db: chi dà B, come chiavi) → { ok, msg }
+  function scambioValido(ga, gb, da, db) {
+    var ka = {}, kb = {}; (ga.kit || []).forEach(function (c) { ka[chiaveKit(c)] = c; }); (gb.kit || []).forEach(function (c) { kb[chiaveKit(c)] = c; });
+    da = (da || []).filter(function (k) { return ka[k]; }); db = (db || []).filter(function (k) { return kb[k]; });
+    if (!da.length && !db.length) return { ok: false, msg: "Toccate i calciatori da scambiare" };
+    var cnt = { P: 0, D: 0, C: 0, A: 0 }, art = { P: "un portiere", D: "un difensore", C: "un centrocampista", A: "un attaccante" }, manca = [];
+    da.forEach(function (k) { cnt[ka[k].ruolo]--; }); db.forEach(function (k) { cnt[kb[k].ruolo]++; });   // (cnt > 0: B dà più di quel ruolo di quanti ne dia A)
+    ["P", "D", "C", "A"].forEach(function (r) { var n = cnt[r]; if (!n) return; manca.push((Math.abs(n) === 1 ? art[r] : Math.abs(n) + " " + FANTA_RUOLI[r].plurale) + " di " + (n > 0 ? ga.nome : gb.nome)); });
+    if (manca.length) return { ok: false, msg: "Serve " + manca.join(" e ") + " in cambio" };
+    return { ok: true, msg: "" };
+  }
+  function faiScambio(ga, gb, da, db) {   // i calciatori passano di rosa (col prezzo pagato); i ruoli restano giusti, i crediti non si toccano
+    var va = ga.kit.filter(function (c) { return da.indexOf(chiaveKit(c)) >= 0; }), vb = gb.kit.filter(function (c) { return db.indexOf(chiaveKit(c)) >= 0; });
+    ga.kit = ga.kit.filter(function (c) { return da.indexOf(chiaveKit(c)) < 0; }).concat(vb);
+    gb.kit = gb.kit.filter(function (c) { return db.indexOf(chiaveKit(c)) < 0; }).concat(va);
+    return { va: va, vb: vb };
+  }
+  function fraseScambio(f) { return f.na + " dà " + elencoNomi(f.ca) + " a " + f.nb + " per " + elencoNomi(f.cb); }
+  // il tavolo dello scambio, uguale sui due telefoni (e sullo stesso telefono): a sinistra quello che dà A, a destra quello che dà B
+  // o: { A, B, da, db, ok, io, locale, onTocca(k), onOk(), onChiudi() }
+  function tavoloScambio(el, o) {
+    var v = scambioValido(o.A, o.B, o.da, o.db), ok = o.ok || {}, nOk = (ok[o.A.id] ? 1 : 0) + (ok[o.B.id] ? 1 : 0), hoOk = !o.locale && o.io != null && !!ok[o.io];
+    function colonna(g, sel, lato) {
+      return el("div", { class: "sc-col " + lato }, [ el("div", { class: "sc-col-t" }, [ imgAv(el, "sc-faccia", cfgDi(g.nome, g.omino)), el("b", { text: g.nome + " dà" }) ]) ].concat(ordinaRosa(g.kit || []).map(function (c) {
+        var k = chiaveKit(c), cs = coloriSquadra(c.squadra) || ["#2b3550", "#9aa5bd"], ru = FANTA_RUOLI[c.ruolo] || {};
+        var b = el("button", { class: "sc-carta" + (sel.indexOf(k) >= 0 ? " sel" : ""), onclick: function () { b.classList.toggle("sel"); o.onTocca(k); } }, [
+          el("i", { class: "as-rb-" + c.ruolo, text: ru.breve || "" }), el("span", { class: "sc-nome", text: nomeCampo(c.nome) }),
+          el("small", { text: c.squadra + (OVR_ASTA && OVR.on ? " · ⭐" + overallDi(c) : "") + (c.prezzo ? " · " + c.prezzo + " 💰" : "") }) ]);
+        b.setAttribute("data-k", k); b.style.setProperty("--sq", cs[0]); return b;
+      })));
+    }
+    var bOk = el("button", { class: "btn btn-verde sc-ok" + (hoOk ? " fatto" : ""), text: o.locale ? "✅ Scambiate" : hoOk ? "✔ Accettato · " + nOk + " di 2" : "✅ Accetta scambio " + nOk + " di 2", onclick: function () { if (v.ok && !hoOk) o.onOk(); } });
+    bOk.disabled = !v.ok || hoOk;
+    return el("div", { class: "sc-tavolo" }, [
+      el("div", { class: "sc-tav-t", text: "🤝 " + o.A.nome + " ⇄ " + o.B.nome }),
+      el("div", { class: "sc-cols" }, [ colonna(o.A, o.da || [], "a"), colonna(o.B, o.db || [], "b") ]),
+      el("p", { class: "sc-msg" + (v.ok ? " ok" : ""), text: !v.ok ? v.msg : o.locale ? "Le rose restano giuste: si può scambiare" : hoOk ? "Aspettiamo " + (o.io === o.A.id ? o.B.nome : o.A.nome) + "…" : "Le rose restano giuste: accettate tutti e due" }),
+      bOk,
+      el("button", { class: "btn btn-fantasma sc-chiudi", text: o.locale ? "✕ Annulla" : "✕ Chiudi la trattativa", onclick: o.onChiudi })
+    ]);
+  }
+  // l'annuncio di uno scambio fatto, in grande per tutti (vibra per i due che hanno scambiato); sul tavolo le figurine volano dall'altra parte
+  function annunciaScambio(M, f, tocca) {
+    var el = M.t.el, n = el("div", { class: "sc-annuncio" }, [ el("small", { text: "🔄 SCAMBIO FATTO" }), el("b", { text: fraseScambio(f) }) ]);
+    M.s.appendChild(n); setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 4200);
+    if (tocca) vibra([70, 50, 140]);
+    try { FX.aggiudicato(); } catch (e) {}
+    if (M.tavN != null && M.tavN === f.tav && M.corpo) {
+      var cols = M.corpo.querySelectorAll(".sc-col"); if (cols.length !== 2) return;
+      var dx = cols[1].getBoundingClientRect().left - cols[0].getBoundingClientRect().left;
+      [[cols[0], dx], [cols[1], -dx]].forEach(function (p) { [].forEach.call(p[0].querySelectorAll(".sc-carta.sel"), function (b) { b.style.transition = "transform .7s cubic-bezier(.3,1.2,.5,1)"; b.style.zIndex = 3; b.style.transform = "translateX(" + p[1] + "px)"; }); });
+      M.blocca = Date.now() + 900;
+    }
+  }
+  // (online) IL MERCATO (13 nov 2026, rifatto come l'hanno pensato il proprietario e i suoi amici: «il pass non deve esistere… si vede la tua
+  // formazione in alto… 4 formazioni a schermata… cliccando su quei giocatori vengono selezionati in automatico il mio difensore e attaccante…
+  // al mio avversario arriva una notifica stile pop-up… accettare o rifiutare… se seleziono un centrocampista fammi cliccare quale cedere…
+  // sotto tutte le partite della giornata»). Finita l'asta tutti sono subito nel mercato: in alto la MIA rosa, sotto le rose degli altri (4 per
+  // pagina), in fondo le partite. Tocco i calciatori di UN altro: i miei dello stesso ruolo si scelgono da soli (se ne ho di più, li tocco io);
+  // «📨 Proponi»: all'altro il pop-up «Accetta / Rifiuta». Le proposte e gli scambi li decide chi tiene la partita (vm.scambi)
+  var MERC = null;
+  function campettoMerc(el, g, opz) {   // una rosa in formazione: le 5 targhette al loro posto (il ruolo lo dice il posto)
+    var posti = slotRosa(g.kit || []), campo = el("div", { class: "mc-campo" });
+    POSTI_CAMPO.forEach(function (p, i) {
+      var c = posti[i]; if (!c) return;
+      var k = chiaveKit(c), cs = coloriSquadra(c.squadra) || ["#2b3550", "#9aa5bd"];
+      var b = el("button", { class: "mc-p", style: "left:" + p.x + "%;top:" + p.y + "%", onclick: function () { if (opz.onTocca) opz.onTocca(k, c, g); } }, [ el("i", { class: "as-rb-" + c.ruolo }), el("span", { text: nomeCampo(c.nome) }), el("small", { text: String(valoreMostrato(c)) }) ]);   // (la quotazione: a fine asta si vede)
+      b.setAttribute("data-k", k); b.style.setProperty("--sq", cs[0]); b.style.setProperty("--sq2", cs[1] || cs[0]);
+      campo.appendChild(b);
+    });
+    return el("div", { class: "mc-rosa" + (opz.mia ? " mia" : "") }, [ el("div", { class: "mc-rosa-t" }, [ imgAv(el, "sc-faccia", cfgDi(g.nome, g.omino)), el("b", { text: opz.mia ? "La tua rosa" : g.nome }), opz.nota ? el("small", { text: opz.nota }) : null ]), campo ]);
+  }
+  function mercatoVM(t, vm, cb) {
+    fermaConta(STADIO); STADIO = null;
+    var S = vm.scambi || { resta: 0, prop: [], esiti: [], nf: 0 }, io = cb.myId, el = t.el, kM = (vm.codice || "") + "|" + vm.sessione;
+    var M = MERC && MERC.chiave === kM && document.body.contains(MERC.s) ? MERC : null;
+    if (!M) {
+      M = MERC = { chiave: kM, nf: S.nf || 0, pag: 0, gio: 0, sel: { con: null, loro: [], miei: [] }, visti: {} };
+      M.s = t.schermata({ chiara: true }); M.s.classList.add("sc-merc", "mc");
+      M.tempo = el("span", { class: "sc-tempo" }); M.capo = el("span", { class: "mc-capo" });
+      M.s._contenuto.appendChild(el("div", { class: "sc-testa" }, [ el("b", { text: "🔄 Scambi" }), M.capo, M.tempo ]));
+      M.mia = el("div", { class: "mc-mia" }); M.altri = el("div", { class: "mc-altri" }); M.partite = el("div", { class: "mc-partite" });
+      M.s._contenuto.appendChild(M.mia); M.s._contenuto.appendChild(M.altri); M.s._contenuto.appendChild(M.partite);
+      M.barra = el("div", { class: "mc-barra" }); M.s._piede.appendChild(M.barra);
+      t.mostra(M.s);
+      M.iv = setInterval(function () {
+        if (!document.body.contains(M.s)) return clearInterval(M.iv);
+        var r = Math.max(0, Math.ceil((M.fine - Date.now()) / 1000)); M.tempo.textContent = "⏱ " + Math.floor(r / 60) + ":" + ("0" + r % 60).slice(-2); M.tempo.classList.toggle("poco", r <= 20);
+      }, 250);
+    }
+    M.vm = vm; M.cb = cb; M.t = t; M.fine = Date.now() + (S.resta || 0);
+    var nuovi = (S.esiti || []).filter(function (f) { return f.n > M.nf; }); M.nf = Math.max(M.nf, S.nf || 0);
+    var k = JSON.stringify([S.prop, (vm.giocatori || []).map(function (g) { return [g.id, g.via ? 1 : 0, (g.kit || []).map(chiaveKit)]; }), !!t.guarda, io, !!cb.sonoHost, S.coppie ? 1 : 0]);
+    if (k !== M.ultima) { M.ultima = k; disegnaMercato(M, nuovi); }
+    nuovi.forEach(function (f) {
+      if (f.ok) annunciaScambio(M, f, io != null && (io === f.da || io === f.a));
+      else if (io != null && io === f.da && !f.perso) avvisoMerc(M, "😅 " + f.nb + " ha rifiutato lo scambio");
+      else if (io != null && io === f.da && f.perso) avvisoMerc(M, "La tua proposta a " + f.nb + " non vale più: quei calciatori sono già stati scambiati");
+    });
+    popupMerc(M);
+  }
+  function disegnaMercato(M, nuovi) {
+    var vm = M.vm, cb = M.cb, t = M.t, el = t.el, S = vm.scambi || {}, io = cb.myId, me = trova(vm.giocatori, io), guarda = !!t.guarda || !me;
+    var primaK = {}; [].forEach.call(M.s.querySelectorAll(".mc-p"), function (b) { primaK[b.getAttribute("data-k")] = b.getBoundingClientRect(); });
+    // la selezione resta valida solo coi calciatori che ci sono ancora
+    var sel = M.sel, con = sel.con && trova(vm.giocatori, sel.con);
+    if (!con || con.via) { sel.con = null; sel.loro = []; sel.miei = []; }
+    else { sel.loro = sel.loro.filter(function (k) { return con.kit.some(function (c) { return chiaveKit(c) === k; }); }); sel.miei = me ? sel.miei.filter(function (k) { return me.kit.some(function (c) { return chiaveKit(c) === k; }); }) : []; if (!sel.loro.length) { sel.con = null; sel.miei = []; } }
+    svuotaNodo(M.mia); svuotaNodo(M.altri); svuotaNodo(M.capo);
+    if (cb.sonoHost) {
+      M.capo.appendChild(el("button", { class: "mc-mini", text: "＋1'", onclick: function () { cb.onScambio({ a: "piu" }); } }));
+      M.capo.appendChild(el("button", { class: "mc-mini", text: "⏹ Fine", onclick: function () { M.t.conferma("Chiudere gli scambi per tutti?", "Poi si scoprono le rose e si gioca.", "⏹ Chiudi", function () { cb.onScambio({ a: "fine" }); }); } }));
+    }
+    if (me) { var mia = campettoMerc(el, me, { mia: true, onTocca: function (k, c) { toccaMio(M, k, c); } }); mia.setAttribute("data-g", me.id); M.mia.appendChild(mia); }
+    var altri = (vm.giocatori || []).filter(function (g) { return g.id !== io; }), per = 4, pagine = Math.max(1, Math.ceil(altri.length / per));
+    if (M.pag >= pagine) M.pag = 0;
+    var griglia = el("div", { class: "mc-griglia" + (altri.length <= 2 ? " due" : "") });
+    altri.slice(M.pag * per, M.pag * per + per).forEach(function (g) {
+      var inv = (S.prop || []).filter(function (p) { return p.a === g.id || p.da === g.id; }).length;
+      var r = campettoMerc(el, g, { nota: g.via ? "📶 non c'è" : inv ? "🤝 tratta…" : "", onTocca: guarda || g.via ? null : function (k, c) { toccaLoro(M, g, k, c); } });
+      r.setAttribute("data-g", g.id); griglia.appendChild(r);
+    });
+    if (pagine > 1) M.altri.appendChild(el("div", { class: "mc-pag" }, [ el("button", { class: "mc-mini", text: "‹", onclick: function () { M.pag = (M.pag + pagine - 1) % pagine; M.ultima = null; disegnaMercato(M, []); } }), el("span", { text: "Rose " + (M.pag * per + 1) + "–" + Math.min(altri.length, M.pag * per + per) + " di " + altri.length }), el("button", { class: "mc-mini", text: "›", onclick: function () { M.pag = (M.pag + 1) % pagine; M.ultima = null; disegnaMercato(M, []); } }) ]));
+    M.altri.appendChild(griglia);
+    disegnaPartite(M);
+    segnaSel(M); barraMerc(M); adattaMerc(M);
+    // 🎬 le figurine scambiate volano dal posto di prima al posto nuovo
+    var volano = {}; (nuovi || []).forEach(function (f) { if (f.ok) (f.kd || []).concat(f.kv || []).forEach(function (kk) { volano[kk] = 1; }); });
+    [].forEach.call(M.s.querySelectorAll(".mc-p"), function (b) {
+      var kk = b.getAttribute("data-k"), r0 = primaK[kk]; if (!volano[kk] || !r0) return;
+      var r1 = b.getBoundingClientRect(); if (!r1.width) return;
+      b.style.transition = "none"; b.style.transform = "translate(calc(-50% + " + (r0.left - r1.left) + "px), calc(-50% + " + (r0.top - r1.top) + "px))"; b.style.zIndex = 5;
+      void b.offsetWidth; b.style.transition = "transform .8s cubic-bezier(.3,1.2,.5,1)"; b.style.transform = ""; setTimeout(function () { b.style.zIndex = ""; }, 850);
+      b.classList.add("volato"); setTimeout(function () { b.classList.remove("volato"); }, 1600);
+    });
+  }
+  function disegnaPartite(M) {   // ⚽ le partite della giornata (con 3 giornate una alla volta), così si sa contro chi gioca chi si vuole prendere
+    var el = M.t.el, cp = (M.vm.scambi || {}).coppie || M.vm.coppie || null;
+    svuotaNodo(M.partite); if (!cp || !cp.length) return;
+    if (M.gio >= cp.length) M.gio = 0;
+    var testa = el("div", { class: "mc-part-t" }, [ el("b", { text: cp.length > 1 ? "⚽ Le partite" : "⚽ Le partite della giornata" }) ]);
+    if (cp.length > 1) cp.forEach(function (x, i) { testa.appendChild(el("button", { class: "mc-mini" + (i === M.gio ? " on" : ""), text: (i + 1) + "ª", onclick: function () { M.gio = i; disegnaPartite(M); } })); });
+    M.partite.appendChild(testa);
+    M.partite.appendChild(el("div", { class: "st-ris mc-ris" }, cp[M.gio].map(function (p) { return el("div", { class: "st-ris-p" }, [ el("span", { text: sigla(p[0]) + " - " + sigla(p[1]) }) ]); })));
+  }
+  // i tocchi: un calciatore di un altro (si propone a lui solo) e, se serve scegliere, i miei dello stesso ruolo
+  function toccaLoro(M, g, k, c) {
+    var sel = M.sel, me = trova(M.vm.giocatori, M.cb.myId); if (!me) return;
+    if (sel.con !== g.id) { sel.con = g.id; sel.loro = []; sel.miei = []; }
+    var i = sel.loro.indexOf(k); if (i >= 0) sel.loro.splice(i, 1); else sel.loro.push(k);
+    if (!sel.loro.length) { sel.con = null; sel.miei = []; }
+    autoMiei(M, me, g); segnaSel(M); barraMerc(M);
+  }
+  function toccaMio(M, k, c) {
+    var sel = M.sel, me = trova(M.vm.giocatori, M.cb.myId), g = sel.con && trova(M.vm.giocatori, sel.con); if (!me) return;
+    if (!g) return avvisoMerc(M, "Prima tocca i calciatori che vuoi dagli altri", true);
+    var serve = sel.loro.filter(function (kk) { return (g.kit.filter(function (x) { return chiaveKit(x) === kk; })[0] || {}).ruolo === c.ruolo; }).length;
+    var miei = me.kit.filter(function (x) { return x.ruolo === c.ruolo; });
+    if (!serve) return avvisoMerc(M, "Per questo scambio non serve un " + (FANTA_RUOLI[c.ruolo] || {}).nome.toLowerCase(), true);
+    if (miei.length <= serve) return;   // (scelto da solo: non c'è altro da scegliere)
+    var i = sel.miei.indexOf(k);
+    if (i >= 0) sel.miei.splice(i, 1);
+    else { var stessi = sel.miei.filter(function (kk) { return (me.kit.filter(function (x) { return chiaveKit(x) === kk; })[0] || {}).ruolo === c.ruolo; }); if (stessi.length >= serve) sel.miei.splice(sel.miei.indexOf(stessi[0]), 1); sel.miei.push(k); }
+    segnaSel(M); barraMerc(M);
+  }
+  function autoMiei(M, me, g) {   // per ogni ruolo voluto: se ho proprio quanti ne servono, sono quelli; se ne ho di più li tocco io
+    var sel = M.sel, serve = { P: 0, D: 0, C: 0, A: 0 };
+    sel.loro.forEach(function (kk) { var c = g.kit.filter(function (x) { return chiaveKit(x) === kk; })[0]; if (c) serve[c.ruolo]++; });
+    var nuovi = [];
+    ["P", "D", "C", "A"].forEach(function (r) {
+      if (!serve[r]) return;
+      var miei = me.kit.filter(function (x) { return x.ruolo === r; }).map(chiaveKit);
+      if (miei.length <= serve[r]) nuovi = nuovi.concat(miei);
+      else nuovi = nuovi.concat(sel.miei.filter(function (kk) { return miei.indexOf(kk) >= 0; }).slice(-serve[r]));
+    });
+    sel.miei = nuovi;
+  }
+  function segnaSel(M) {
+    var sel = M.sel;
+    [].forEach.call(M.s.querySelectorAll(".mc-p"), function (b) {
+      var gid = b.closest(".mc-rosa") ? b.closest(".mc-rosa").getAttribute("data-g") : null, kk = b.getAttribute("data-k");
+      var su = gid === String(M.cb.myId) ? sel.miei.indexOf(kk) >= 0 : gid === String(sel.con) && sel.loro.indexOf(kk) >= 0;
+      b.classList.toggle("sel", su);
+    });
+    // i miei da scegliere a mano (es. quale centrocampista dai): lampeggiano
+    var me = trova(M.vm.giocatori, M.cb.myId), g = sel.con && trova(M.vm.giocatori, sel.con), sceglie = {};
+    if (me && g) { var serve = {}; sel.loro.forEach(function (kk) { var c = g.kit.filter(function (x) { return chiaveKit(x) === kk; })[0]; if (c) serve[c.ruolo] = (serve[c.ruolo] || 0) + 1; });
+      Object.keys(serve).forEach(function (r) { var miei = me.kit.filter(function (x) { return x.ruolo === r; }), presi = miei.filter(function (x) { return sel.miei.indexOf(chiaveKit(x)) >= 0; }).length; if (miei.length > serve[r] && presi < serve[r]) miei.forEach(function (x) { sceglie[chiaveKit(x)] = 1; }); }); }
+    [].forEach.call(M.mia.querySelectorAll(".mc-p"), function (b) { b.classList.toggle("scegli", !!sceglie[b.getAttribute("data-k")]); });
+  }
+  function barraMerc(M) {
+    var el = M.t.el, cb = M.cb, vm = M.vm, S = vm.scambi || {}, io = cb.myId, me = trova(vm.giocatori, io), sel = M.sel, b = M.barra;
+    svuotaNodo(b);
+    if (M.t.guarda || !me) { b.appendChild(el("p", { class: "sa-nota", text: "👀 Si scambiano i calciatori: poi si scoprono le rose" })); return; }
+    var mia = (S.prop || []).filter(function (p) { return p.da === io; })[0];
+    var g = sel.con && trova(vm.giocatori, sel.con);
+    function nomi(gg, keys) { return elencoNomi(keys.map(function (kk) { var c = gg.kit.filter(function (x) { return chiaveKit(x) === kk; })[0]; return c ? nomeCampo(c.nome) : "?"; })); }
+    if (g && sel.loro.length) {
+      var v = scambioValido(me, g, sel.miei, sel.loro), manca = null;
+      if (!v.ok) { var serve = {}; sel.loro.forEach(function (kk) { var c = g.kit.filter(function (x) { return chiaveKit(x) === kk; })[0]; if (c) serve[c.ruolo] = (serve[c.ruolo] || 0) + 1; }); Object.keys(serve).forEach(function (r) { if (!manca && me.kit.filter(function (x) { return x.ruolo === r; }).length > serve[r]) manca = r; }); }
+      b.appendChild(el("p", { class: "mc-riass" + (v.ok ? "" : " no") }, v.ok ? [ "Dai ", el("b", { text: nomi(me, sel.miei) }), " · ricevi ", el("b", { text: nomi(g, sel.loro) }) ] : [ manca ? "👆 Tocca nella tua rosa quale " + (FANTA_RUOLI[manca] || {}).nome.toLowerCase() + " dai" : v.msg ]));
+      var bp = el("button", { class: "btn btn-verde sc-ok", text: "📨 Proponi a " + g.nome, onclick: function () { if (!v.ok) return; var mossa = { a: "proponi", con: g.id, dai: sel.miei.slice(), vuoi: sel.loro.slice() }; sel.con = null; sel.loro = []; sel.miei = []; segnaSel(M); barraMerc(M); cb.onScambio(mossa); } });   // (prima si toglie la scelta: chi tiene la partita ridisegna subito)
+      bp.disabled = !v.ok;
+      b.appendChild(el("div", { class: "mc-riga" }, [ el("button", { class: "btn btn-fantasma mc-annulla", text: "✕", "aria-label": "Annulla", onclick: function () { sel.con = null; sel.loro = []; sel.miei = []; segnaSel(M); barraMerc(M); } }), bp ]));
+      return adattaMerc(M);
+    }
+    if (mia) {
+      var ga = trova(vm.giocatori, mia.a);
+      b.appendChild(el("p", { class: "mc-riass attesa" }, [ "⏳ Hai proposto a ", el("b", { text: ga ? ga.nome : "…" }), ": ", el("b", { text: nomi(me, mia.dai) }), " per ", el("b", { text: ga ? nomi(ga, mia.vuoi) : "…" }) ]));
+      b.appendChild(el("button", { class: "btn btn-fantasma sc-chiudi", text: "✕ Ritira la proposta", onclick: function () { cb.onScambio({ a: "ritira", n: mia.n }); } }));
+      return adattaMerc(M);
+    }
+    b.appendChild(el("p", { class: "mc-riass" }, [ "Vuoi un calciatore di un altro? ", el("b", { text: "Toccalo nella sua rosa" }) ]));
+    adattaMerc(M);
+  }
+  function popupMerc(M) {   // la proposta che mi arriva: «Accetta / Rifiuta» (una alla volta, la più vecchia)
+    var vm = M.vm, cb = M.cb, el = M.t.el, io = cb.myId, me = trova(vm.giocatori, io), S = vm.scambi || {};
+    var p = M.t.guarda || !me ? null : (S.prop || []).filter(function (x) { return x.a === io; })[0] || null;
+    if (M.pop && (!p || M.pop.n !== p.n)) { if (M.pop.nodo.parentNode) M.pop.nodo.parentNode.removeChild(M.pop.nodo); M.pop = null; }
+    if (!p || M.pop) return;
+    var da = trova(vm.giocatori, p.da); if (!da) return;
+    function righe(gg, keys) { return keys.map(function (kk) { var c = gg.kit.filter(function (x) { return chiaveKit(x) === kk; })[0]; if (!c) return null; var ru = FANTA_RUOLI[c.ruolo] || {}; return el("div", { class: "mc-pop-c" }, [ el("i", { class: "as-rb-" + c.ruolo, text: ru.breve || "" }), el("b", { text: nomeCampo(c.nome) }), el("small", { text: c.squadra + (avversariDi(c.squadra) ? " · 🆚 " + avversariDi(c.squadra) : "") + " · quotazione " + valoreMostrato(c) }) ]); }); }
+    var nodo = el("div", { class: "mc-pop" }, [ el("div", { class: "mc-pop-in" }, [
+      el("div", { class: "mc-pop-t" }, [ imgAv(el, "sc-faccia", cfgDi(da.nome, da.omino)), el("b", { text: da.nome + " ti propone uno scambio" }) ]),
+      el("small", { class: "mc-pop-et", text: "Ti dà" }) ].concat(righe(da, p.dai)).concat([ el("small", { class: "mc-pop-et", text: "Vuole" }) ]).concat(righe(me, p.vuoi)).concat([
+      el("div", { class: "mc-pop-tasti" }, [ el("button", { class: "btn btn-rosso mc-no", text: "❌ Rifiuta", onclick: function () { cb.onScambio({ a: "rifiuta", n: p.n }); } }), el("button", { class: "btn btn-verde sc-ok", text: "✅ Accetta", onclick: function () { cb.onScambio({ a: "accetta", n: p.n }); } }) ]) ])) ]);
+    M.s.appendChild(nodo); M.pop = { n: p.n, nodo: nodo };
+    if (!M.visti[p.n]) { M.visti[p.n] = 1; vibra(60); }
+  }
+  function adattaMerc(M) {   // tutto in una schermata, senza scorrere: i campetti si abbassano quanto serve (dal telefono piccolo al grande)
+    if (!M || !M.s || !document.body.contains(M.s)) return;
+    var hMax = window.innerHeight || 640, a = 128, b = 108;
+    M.s.style.setProperty("--mch1", a + "px"); M.s.style.setProperty("--mch", b + "px");
+    while (M.s.offsetHeight > hMax + 1 && b > 58) { a -= 5; b -= 5; M.s.style.setProperty("--mch1", a + "px"); M.s.style.setProperty("--mch", b + "px"); }
+  }
+  function avvisoMerc(M, testo, piccolo) {
+    var n = M.t.el("div", { class: "mc-avviso" + (piccolo ? " piccolo" : ""), text: testo });
+    M.s.appendChild(n); setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, piccolo ? 2200 : 3200);
+  }
+  // (stesso telefono) la versione semplice: si toccano le due rose, poi i calciatori, «✅ Scambiate»; «Fine scambi ▶» porta alla classifica
+  function scambiLocale(t, st) {
+    var el = t.el, L = { a: null, b: null, da: [], db: [] };
+    st.scambiFatto = true;
+    var s = t.schermata({ chiara: true }); s.classList.add("sc-merc");
+    s._contenuto.appendChild(el("div", { class: "sc-testa" }, [ el("b", { text: "🔄 Scambi a fine asta" }) ]));
+    var corpo = el("div", { class: "sc-corpo" }); s._contenuto.appendChild(corpo);
+    var M = { t: t, s: s, corpo: corpo, tavN: null };
+    function lista() {
+      svuotaNodo(corpo); svuotaNodo(s._piede);
+      corpo.appendChild(el("p", { class: "sc-nota", text: L.a == null ? "Chi vuole scambiare? Tocca la sua rosa, poi quella dell'altro" : "Con chi scambia " + st.giocatori[L.a].nome + "?" }));
+      var ls = el("div", { class: "sc-lista" });
+      st.giocatori.forEach(function (g, i) {
+        ls.appendChild(el("button", { class: "sc-riga" + (L.a === i ? " sel" : ""), onclick: function () { if (L.a == null) L.a = i; else if (L.a === i) L.a = null; else { L.b = i; L.da = []; L.db = []; return tavolo(); } lista(); } }, [
+          imgAv(el, "sc-faccia", cfgDi(g.nome, g.omino)), el("div", { class: "sc-chi" }, [ el("b", { text: g.nome }), el("small", { text: ordinaRosa(g.kit || []).map(function (c) { return nomeCampo(c.nome); }).join(" · ") }) ]) ]));
+      });
+      corpo.appendChild(ls);
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Fine scambi ▶", onclick: function () { finePartita(t, st); } }));
+    }
+    function tavolo() {
+      svuotaNodo(corpo); svuotaNodo(s._piede);
+      var A = st.giocatori[L.a], B = st.giocatori[L.b];
+      corpo.appendChild(tavoloScambio(el, { A: A, B: B, da: L.da, db: L.db, locale: true,
+        onTocca: function (k) { var l = A.kit.some(function (c) { return chiaveKit(c) === k; }) ? L.da : L.db, i = l.indexOf(k); if (i >= 0) l.splice(i, 1); else l.push(k); tavolo(); },
+        onOk: function () {
+          var r = faiScambio(A, B, L.da, L.db);
+          M.tavN = 1; annunciaScambio(M, { tav: 1, na: A.nome, nb: B.nome, ca: r.va.map(function (c) { return nomeCampo(c.nome); }), cb: r.vb.map(function (c) { return nomeCampo(c.nome); }) }, true);
+          L.a = L.b = null; setTimeout(function () { M.tavN = null; lista(); }, 900);
+        },
+        onChiudi: function () { L.a = L.b = null; lista(); } }));
+    }
+    lista(); t.mostra(s);
+  }
+
   function hostFanta(t) {
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
@@ -9396,6 +9750,7 @@
       nomiChi: false,   // 🏷️ (tolta l'8 nov 2026: in campo solo il colore)
       ban: !(t.impostazioni && t.impostazioni.ban === false),   // 🎙️
       ovrAsta: !!(t.impostazioni && t.impostazioni.ovrAsta),   // ⭐
+      scambiOn: scambiOn(t.impostazioni),   // 🔄 gli scambi a fine asta (di partenza sì)
       compra: compraDi(t.impostazioni),   // 💰 come si compra: l'asta normale (di partenza), tutta a buste, buste solo per i big
       fase: "lobby", iniziata: false, codice: "…", scadenza: null, _to: null, giriVuoti: 0, giro: 0, nCarta: 0, nEsiti: 0,
       giocatori: [{ id: IO, nome: (t.giocatori && t.giocatori[0]) || "Host", crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove(), omino: t.mioOmino ? t.mioOmino() : null }]
@@ -9414,7 +9769,7 @@
     // "⚙️ Regole" in saletta: se torni ai Temi classici cambia motore (stessa stanza, stessi amici)
     t.onRegole = function (im) {
       if (!st.iniziata && formatoDi(t, im) !== "fanta") { st.morto = true; TM.smetti(); avviaAsta(t); return; }
-      if (!st.iniziata) { st.giornata = im.giornata !== false; st.giornate = im.giornate === 3 ? 3 : 1; st.vs = vsDi(im); st.nomiChi = false; st.ban = im.ban !== false; st.compra = compraDi(im); st.ovrAsta = im.ovrAsta === true; }   // ⚽ la giornata (e 🏆 quante): si decide in saletta
+      if (!st.iniziata) { st.giornata = im.giornata !== false; st.giornate = im.giornate === 3 ? 3 : 1; st.vs = vsDi(im); st.nomiChi = false; st.ban = im.ban !== false; st.compra = compraDi(im); st.ovrAsta = im.ovrAsta === true; st.scambiOn = scambiOn(im); }   // ⚽ la giornata (e 🏆 quante): si decide in saletta
     };
     t.onRivincita = function () { if (st.fase === "fine" && !st.morto) nuovaInLobby(); };   // la Rivincita: tutti di nuovo nella saletta
 
@@ -9429,6 +9784,7 @@
         g.via = true;
         if (st.fase === "asta" && verifica()) return;
         if (st.fase === "busta" && bustaFPiena()) return chiudiBustaF();   // ✉️ (chi se n'è andato non scrive: se mancava solo lui si aprono)
+        if (st.fase === "scambi" && st.scambi) st.scambi.prop = st.scambi.prop.filter(function (x) { return x.da !== id && x.a !== id; });   // 🔄 (le sue proposte si chiudono)
         bd();
       },
       onMsg: function (id, m) {
@@ -9447,6 +9803,7 @@
         else if (m.t === "bustaF") bustaFO(id, m);   // ✉️ la sua busta
         else if (m.t === "ora") rete.inviaVeloce({ t: "ora", a: id, c: m.c, h: Date.now() });   // ⏱️ il botta e risposta dell'orologio
         else if (m.t === "gufo") gufoO(id, m);   // 🦉 / 🍀 un tocco nella giornata (solo spettacolo)
+        else if (m.t === "sc") scambioO(id, m);   // 🔄 una mossa negli scambi a fine asta
       },
       onErrore: function (e) {
         // un errore di rete passeggero: la rete si ricollega da sola e rimanda l'ultima foto, quindi la partita NON si ferma
@@ -9469,6 +9826,9 @@
       var f = st.fase, ms = Math.max(5000, ((t.ripresa.ora(R0.toAt) || 0) - Date.now()));
       st.scadenza = null;
       if (f === "esito") { bd(); return TM.dopo(prossima, ms); }
+      if (f === "scambi" && st.scambi) {   // 🔄 il mercato riprende (almeno 30 secondi), con le proposte di prima
+        var rs = Math.max(30000, ms); st.scambi.fine = Date.now() + rs; TM.dopo(fineScambi, rs); return bd();
+      }
       if ((f === "busta" || f === "apri" || f === "ruota") && st.mazzo.length) {   // ✉️ la busta si riapre da capo (le offerte segrete non si ricordano)
         var cB = st.mazzo[0]; st.bustaF = st.apri = st.ruota = st.esito = null;
         return apriBustaF(st.giocatori.filter(function (g) { return !ruoloPieno(g, cB.ruolo); }).map(function (g) { return g.id; }), 0);
@@ -9630,13 +9990,57 @@
       gufoArriva({ k: m.k, l: l });   // (sul mio campo: i gufetti degli amici)
       if (!gufoRic) gufoRic = setTimeout(function () { gufoRic = null; if (!st.morto && !cb._uscito) ricorda(); }, 1500);
     }
+    // 🔄 GLI SCAMBI A FINE ASTA: finito il mazzo, prima della classifica (se la regola è accesa e ci sono almeno due persone). Tutti sono subito nel
+    // mercato (niente «Sì/No»); una proposta (dai, vuoi) va a una persona sola, che accetta o rifiuta; una proposta a testa (la nuova prende il posto)
+    function apriScambi() {
+      stopTo(); st.asta = null; st.esito = null; st.scadenza = null;
+      if (st.giornata && !st.coppie) st.coppie = coppieGiornate(st.giornate);   // ⚽ (le partite si vedono già nel mercato: sono quelle che si giocheranno)
+      st.scambi = { fine: Date.now() + SCAMBI_MS, durata: SCAMBI_MS, prop: [], esiti: [], n: 0, nf: 0 };
+      st.fase = "scambi"; TM.dopo(fineScambi, SCAMBI_MS); bd();
+    }
+    function fineScambi() { if (st.fase !== "scambi" || !st.scambi) return; stopTo(); st.scambi.prop = []; st.scambi.chiuso = true; fine(); }
+    // una mossa (m.a): proponi (con, dai, vuoi), ritira (n), accetta (n), rifiuta (n); chi tiene la partita: fine, piu
+    function scambioO(id, m) {
+      var S = st.scambi, g = perId(st, id); if (st.fase !== "scambi" || !S || !m || !g) return;
+      function chiavi(gg, l) { return Array.isArray(l) ? l.filter(function (k, i) { return typeof k === "string" && l.indexOf(k) === i && gg.kit.some(function (c) { return chiaveKit(c) === k; }); }) : []; }
+      function nc(c) { return nomeCampo(c.nome); }
+      function esito(p, ok, perso, r) {
+        var ga = perId(st, p.da), gb = perId(st, p.a);
+        S.esiti.push({ n: ++S.nf, ok: ok, perso: !!perso, da: p.da, a: p.a, na: ga ? ga.nome : "", nb: gb ? gb.nome : "", ca: r ? r.va.map(nc) : [], cb: r ? r.vb.map(nc) : [], kd: p.dai, kv: p.vuoi });
+        if (S.esiti.length > 8) S.esiti.shift();
+      }
+      var a = m.a;
+      if (a === "proponi") {
+        var gc = perId(st, m.con); if (!gc || gc.via || m.con === id) return bd();
+        var dai = chiavi(g, m.dai), vuoi = chiavi(gc, m.vuoi);
+        if (!vuoi.length || dai.length !== (m.dai || []).length || vuoi.length !== (m.vuoi || []).length || !scambioValido(g, gc, dai, vuoi).ok) return bd();
+        S.prop = S.prop.filter(function (p) { return p.da !== id; });   // (una proposta a testa: la nuova prende il posto di quella di prima)
+        S.prop.push({ n: ++S.n, da: id, a: m.con, dai: dai, vuoi: vuoi });
+      }
+      else if (a === "ritira") S.prop = S.prop.filter(function (p) { return !(p.n === m.n && p.da === id); });
+      else if (a === "rifiuta") { var pr = S.prop.filter(function (p) { return p.n === m.n && p.a === id; })[0]; if (!pr) return bd(); S.prop = S.prop.filter(function (p) { return p !== pr; }); esito(pr, false); }
+      else if (a === "accetta") {
+        var pa = S.prop.filter(function (p) { return p.n === m.n && p.a === id; })[0]; if (!pa) return bd();
+        var gd = perId(st, pa.da); S.prop = S.prop.filter(function (p) { return p !== pa; });
+        if (!gd || gd.via || chiavi(gd, pa.dai).length !== pa.dai.length || chiavi(g, pa.vuoi).length !== pa.vuoi.length || !scambioValido(gd, g, pa.dai, pa.vuoi).ok) { esito(pa, false, true); return bd(); }
+        var r = faiScambio(gd, g, pa.dai, pa.vuoi); esito(pa, true, false, r);
+        var via = {}; pa.dai.concat(pa.vuoi).forEach(function (k) { via[k] = 1; });   // (le altre proposte con quei calciatori non valgono più)
+        S.prop = S.prop.filter(function (p) { if (p.dai.concat(p.vuoi).some(function (k) { return via[k]; })) { esito(p, false, true); return false; } return true; });
+      }
+      else if (a === "fine") { if (id === IO) return fineScambi(); return; }
+      else if (a === "piu") { if (id !== IO) return; S.fine = Math.max(S.fine, Date.now()) + SCAMBI_PIU; TM.dopo(fineScambi, S.fine - Date.now()); }
+      else return;
+      bd();
+    }
     function fine() {   // finito il mazzo: la classifica per valore delle rose (le quotazioni si scoprono solo ora)
+      if (st.scambiOn !== false && !st.scambi && st.giocatori.filter(function (g) { return !g.via; }).length >= 2) return apriScambi();   // 🔄 prima gli scambi
       st.asta = null; st.esito = null; st.scadenza = null; st.gufi = {};
       st.serieA = st.giornata ? {} : null;
-      st.classifica = classificaFanta(st.giocatori, st.serieA, st.giornate, st.vs && st.giornata ? st.coppie : null);   // (⚽ con la giornata: la gioca l'host e la vedono tutti uguale)
+      st.classifica = classificaFanta(st.giocatori, st.serieA, st.giornate, st.giornata && st.coppie ? st.coppie : null);   // (⚽ con la giornata: la gioca l'host e la vedono tutti uguale; le partite già sorteggiate, per il 🆚 o per il mercato)
       st.titoli = titoliFine(st.giocatori, FANTA_BUDGET, st.classifica);   // 🏅 i titoli scherzosi
       st.passi = {}; st.nomeCapo = nomeDi(st, IO);   // (le pagelle: fin dove sono arrivato, e il mio nome per «Aspettiamo…»)
       st.cron = pianoNuovo(Date.now() + PARTENZA_MS, velPref());   // ⏱️ il piano: tutti i telefoni (anche il mio) cominciano tra 2 secondi, insieme
+      if (st.scambi && st.giornata) st.cron.salta = Date.now() + PARTENZA_MS;   // 🔄 (13 nov 2026: con gli scambi le rose si sono già viste tutte: niente sfilata, dritti alla giornata, tutti insieme)
       st.fase = "fine"; bd();
       if (t.risultato) t.risultato(st.classifica.map(function (r) { return { nome: r.nome, pos: r.pos }; }));   // per il torneo online
     }
@@ -9646,7 +10050,7 @@
       st.giocatori = st.giocatori.filter(function (g) { return !g.via; });   // chi non c'è più esce dalla stanza
       st.giocatori.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });   // (chi tiene la partita è il primo: in saletta ha la corona)
       st.giocatori.forEach(function (g) { g.crediti = FANTA_BUDGET; g.kit = []; g.conta = { P: 0, D: 0, C: 0, A: 0 }; g.stelle = 0; g.asteVinte = 0; g.st = statNuove(); });
-      st.titoli = null; st.gufi = null;
+      st.titoli = null; st.gufi = null; st.scambi = null;   // 🔄
       bd();
     }
     var cb = {
@@ -9655,6 +10059,7 @@
       onRilancia: function (x) { rilanciaO(IO, x); }, onPassa: function (x) { passaO(IO, x); },
       onBustaF: function (x) { bustaFO(IO, x); },   // ✉️ la mia busta
       onGufo: function (x) { gufoO(IO, x); },   // 🦉 / 🍀 i miei tocchi
+      onScambio: function (x) { scambioO(IO, x); },   // 🔄 le mie mosse negli scambi
       onFischio: function () { if (st.fase === "fine" && !st.morto && !cb._uscito) bd(); },   // (fischio finale: la foto col gufo della serata, anche per il mio podio)
       // (le pagelle: sono andato avanti) torna l'ora dell'host in cui la pagina gira per tutti (anche per me): ANTICIPO_PASSO dopo il tocco
       onPasso: function (quale, n) {
@@ -9717,6 +10122,7 @@
       ruota: st.fase === "ruota" && st.ruota ? { n: st.ruota.n, carta: st.ruota.carta, nCarta: st.ruota.nCarta, ids: st.ruota.ids, nomi: st.ruota.nomi, vince: st.ruota.vince, piano: st.ruota.piano, parte: st.ruota.parte, dur: RUOTA_MS, resta: Math.max(0, st.ruota.fine - Date.now()) } : null,
       restano: st.mazzo ? st.mazzo.length : 0, presi: postiPresi(st.giocatori),
       coppie: st.vs && st.giornata && st.coppie ? st.coppie : null,   // 🆚 le partite già sorteggiate (solo con l'opzione accesa)
+      scambi: st.fase === "scambi" && st.scambi ? { resta: Math.max(0, st.scambi.fine - Date.now()), durata: st.scambi.durata, prop: st.scambi.prop, esiti: st.scambi.esiti, nf: st.scambi.nf, coppie: st.coppie || null } : null,   // 🔄 (i millisecondi che mancano, non l'ora; le partite della giornata)
       nomiChi: st.nomiChi ? 1 : 0,   // 🏷️
       ban: st.ban === false ? 0 : 1,   // 🎙️
       ovrAsta: st.ovrAsta ? 1 : 0,   // ⭐
@@ -9738,6 +10144,7 @@
     OVR_ASTA = !!vm.ovrAsta;   // ⭐
     cb._vmA = vm;   // (l'ultima foto: un tocco in arrivo si ridisegna solo se si è ancora in quell'asta)
     if (vm.fase === "lobby") { fermaConta(STADIO); STADIO = null; cb._bustaF = null; return lobbyAsta(t, vm, cb); }
+    if (vm.fase === "scambi") return mercatoVM(t, vm, cb);   // 🔄 gli scambi a fine asta
     if (vm.fase === "fine") {
       salvaTrofeiAsta(t, vm, cb.myId, true);
       var io = trova(vm.giocatori, cb.myId);

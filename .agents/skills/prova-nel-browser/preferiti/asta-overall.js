@@ -8,7 +8,8 @@
 //     c'è il suo overall; il fumetto del banditore sta sempre SOTTO la barra del tempo; nella formazione finale le figurine sono già
 //     scoperte e i valori arrivano dal più scarso al più forte; nella giornata (col ⏩) le icone dei quadretti ci stanno tutte e nelle
 //     pagelle del primo tempo tutti i voti hanno la stessa misura e bonus e malus si vedono interi.
-// ov3 Online in 3 come sempre (overall segreto): niente «⭐» sul maxischermo né nei campetti, e nella formazione finale i valori arrivano
+// (13 nov 2026 sera: l'overall di partenza NON si vede più, si vedono le quotazioni; ov1 e ov2 lo accendono con «sg-fanta-overall» = "1")
+// ov3 Online in 3 come sempre (overall nascosto): niente «⭐» sul maxischermo né nei campetti, e nella formazione finale i valori arrivano
 //     lo stesso dal più scarso al più forte.
 (function () {
   "use strict";
@@ -21,7 +22,11 @@
   function idDi(nome) { return nome === "Paky" ? "host" : A.mioId(nome); }
   function mk(tag, a, figli) { var e = document.createElement(tag); a = a || {}; Object.keys(a).forEach(function (k) { if (k === "class") e.className = a[k]; else if (k === "text") e.textContent = a[k]; else if (k === "style") e.style.cssText = a[k]; else if (k.slice(0, 2) === "on") e[k] = a[k]; else e.setAttribute(k, a[k]); }); (figli || []).forEach(function (c) { if (c) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); }); return e; }
 
+  function conOverall(si) { try { if (si) localStorage.setItem("sg-fanta-overall", "1"); else localStorage.removeItem("sg-fanta-overall"); } catch (e) {} }
   COPIONE.aggiungi("ov1", { nome: "Mini Asta Fantacalcio, ⚙️ «⭐ L'overall all'asta»: di partenza segreto, si accende, riassunto e regole", fai: async function () {
+    conOverall(true); try { return await ov1(); } finally { conOverall(false); }
+  } });
+  async function ov1() {
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), g = {};
     new Function("SG", src)({ registra: function (x) { if (x.id === "astafanta") Object.assign(g, x); }, bot: W.SG && SG.bot });
     var box = document.createElement("div"), dove = {};
@@ -34,12 +39,13 @@
     if (!/⭐ overall all'asta/.test(r1) || !/⭐ overall all'asta/.test(r2) || r2.length > 90 || /⭐/.test(r0)) no("riassunti: «" + r0 + "» / «" + r1 + "» / «" + r2 + "» (" + r2.length + ")");
     if (!/L'overall all'asta<\/b> \(nel ⚙️, spento di partenza\)/.test(g.regole.join(" "))) no("le regole non parlano dell'overall all'asta");
     return "di partenza «Segreto», «Visibile» si accende · «" + r2 + "» (" + r2.length + ")";
-  } });
+  }
 
-  async function telefoni(imp) {
+  async function telefoni(imp, ovr) {   // (ovr: l'overall si vede, dentro ogni telefono: ognuno ha la sua memoria)
     var NOMI = ["Paky", "Giulia", "Luca"];
-    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; } }), C = await W.apriStanza(P, "Mini Asta Fantacalcio");
-    for (var i = 1; i < NOMI.length; i++) await W.apriTel(NOMI[i], { hash: "gioco=astafanta&stanza=" + C, x: 200 * i });
+    function acceso(w) { if (ovr) try { w.localStorage.setItem("sg-fanta-overall", "1"); } catch (e) {} }
+    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { acceso(w); w.__imp = imp; } }), C = await W.apriStanza(P, "Mini Asta Fantacalcio");
+    for (var i = 1; i < NOMI.length; i++) await W.apriTel(NOMI[i], { hash: "gioco=astafanta&stanza=" + C, x: 200 * i, prima: acceso });
     if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === NOMI.length; }, 15000)) no("non entrano tutti");
     W.clicca(P, /Comincia/);
     if (!await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 8000)) no("la partita non comincia");
@@ -75,7 +81,10 @@
   }
 
   COPIONE.aggiungi("ov2", { nome: "Mini Asta Fantacalcio online in 3 con «⭐ L'overall all'asta»: maxischermo, campetti, fumetto sotto il tempo, formazione in ordine, icone dei quadretti, voti delle pagelle", fai: async function () {
-    var o = await telefoni({ formato: "fanta", ovrAsta: true, giornate: 3 }), G = o.G, P = o.P, x = [], visto = { ovr: 0, campo: 0, fum: 0, vs: 0 }, carta = {};
+    conOverall(true); try { return await ov2(); } finally { conOverall(false); }
+  } });
+  async function ov2() {
+    var o = await telefoni({ formato: "fanta", ovrAsta: true, giornate: 3 }, true), G = o.G, P = o.P, x = [], visto = { ovr: 0, campo: 0, fum: 0, vs: 0 }, carta = {};
     await asta(o, function () {
       // (13 nov 2026) l'overall degli avversari sempre intero: guardato un secondo e mezzo dopo che il calciatore è arrivato
       [P, G].forEach(function (w, j) {
@@ -114,16 +123,18 @@
     qa(G, ".st-pag.on .st-pv-ic").forEach(function (e) { if (e.textContent && e.scrollWidth > e.clientWidth + 1) no("nelle pagelle bonus e malus tagliati: «" + e.textContent + "»"); });
     x.push("quadretti: fino a " + icone + " icone, tutte dentro · pagelle: voti tutti a " + uno[0]);
     return x.join(" · ");
-  } });
+  }
 
-  COPIONE.aggiungi("ov3", { nome: "Mini Asta Fantacalcio online in 3 come sempre: overall segreto all'asta, formazione finale dal più scarso al più forte", fai: async function () {
+  COPIONE.aggiungi("ov3", { nome: "Mini Asta Fantacalcio online in 3 come sempre: l'overall non si vede mai (quotazioni), formazione finale dal più scarso al più forte", fai: async function () {
+    conOverall(false);
     var o = await telefoni({ formato: "fanta" }), G = o.G, x = [];
     await asta(o, function () {
       var b = q(G, ".st-ovr-asta"); if (b && b.textContent) no("con l'overall segreto il maxischermo dice «" + b.textContent + "»");
       if (qa(G, ".st-sq .st-slot .st-val.su").length) no("con l'overall segreto nei campetti si vede un overall");
     });
-    x.push("asta: niente overall prima della fine");
+    x.push("asta: niente overall");
     await formazione(G, x);
+    if (/overall/i.test((q(G, ".st-schermo") || {}).textContent || "") || /overall/i.test((q(G, ".st-ticker") || {}).textContent || "")) no("nella classifica delle rose si legge ancora «overall»");
     return x.join(" · ");
   } });
 })();

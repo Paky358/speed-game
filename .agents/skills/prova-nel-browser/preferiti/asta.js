@@ -55,6 +55,8 @@
             g.avvia = function (t) {
               w.__t = t;
               if (w.__imp && t.impostazioni) Object.keys(w.__imp).forEach(function (k) { t.impostazioni[k] = w.__imp[k]; });
+              // 🔄 (13 nov 2026) gli scambi a fine asta: le prove di prima vanno dritte alla classifica delle rose; li accendono solo le prove degli scambi (scambi: true)
+              if (t.impostazioni && !(w.__imp && w.__imp.scambi === true)) t.impostazioni.scambi = false;
               // la ripresa di Passo 5 finta (questo core non ha ancora t.ricorda / t.ripresa): la copia va in W.__ricordo
               // (col core di Passo 5 la copia si legge lo stesso, e il t.ricorda vero continua a lavorare)
               if (w.__ricordaSpia) { var ric0 = t.ricorda; t.ricorda = function (s) { W.__ricordo = s ? JSON.parse(JSON.stringify(s)) : null; if (ric0) return ric0.apply(t, arguments); }; }
