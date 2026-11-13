@@ -35,8 +35,8 @@
   // le emoji: quasi tutte quelle di Fluent Emoji 3D (circa 1.500). Il file di ognuna si ricava dall'emoji stessa (i codici
   // esadecimali senza fe0f: ⚡ → 26a1.webp), così l'app non ha bisogno dell'elenco: lo scarica solo la scelta (pezzo «emoji»).
   // RISERVA: poche emoji allegre per il gettone di chi non ha ancora scelto (o manda l'avatar di prima)
-  var RISERVA = ["⚡", "😀", "😎", "🤩", "🥳", "🤠", "🤓", "🤖", "👽", "👻", "🐱", "🐶", "🦊", "🐻", "🐼", "🐨", "🦁", "🐯", "🐸", "🐵", "🐧", "🦉", "🦄", "🐙",
-    "🐢", "🐬", "🍕", "🍔", "🍩", "🍉", "🍓", "🍿", "⚽", "🏀", "🎾", "🎲", "🎮", "🚀", "🎸", "🎧", "👑", "💎", "🎈", "🌈", "🌻", "🍀", "🌵", "🍄", "🪐", "⭐", "🔥", "🌙"];
+  var RISERVA = ["⚡", "🔥", "👑", "🚀", "⚽", "🏆", "💎", "🛡️", "🦁", "🐯", "🦊", "🐺", "🐉", "🦄", "🦈", "🦅", "🐻", "🐼", "🐨", "🐸", "🐵", "🐧", "🦉", "🐙",
+    "🐢", "🐬", "🍕", "🍔", "🍩", "🍉", "🍓", "🍿", "🏀", "🎾", "🎲", "🎮", "🎸", "🎧", "🎈", "🌈", "🌻", "🍀", "🌵", "🍄", "🪐", "⭐", "🌙", "👻", "👽", "🤖", "🏎️", "🏍️"];
   function lista() { return RISERVA.map(function (e) { return { e: e }; }); }
   function codice(e) { var r = []; Array.from(String(e || "")).forEach(function (c) { var h = c.codePointAt(0).toString(16); if (h !== "fe0f") r.push(h); }); return r.join("-"); }
   var RE_EMO = null; try { RE_EMO = new RegExp("\\p{Extended_Pictographic}|\\p{Regional_Indicator}|[#*0-9]\\uFE0F?\\u20E3", "u"); } catch (x) {}

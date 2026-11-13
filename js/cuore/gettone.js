@@ -16,9 +16,9 @@
   var el = cuore.el, schermata = cuore.schermata, mostra = cuore.mostra, pillola = cuore.pillola, leggiL = cuore.leggiL, scriviL = cuore.scriviL;
 
   var K_GETTONE = "sg-gettone";   // il gettone su questo telefono, uno per profilo (vale anche senza rete; col profilo online si salva anche lì)
-  var GRUPPI = [["belle", "⭐ Le più belle"], ["facce", "😀 Facce e persone"], ["animali", "🐶 Animali"], ["cibo", "🍕 Cibo"], ["sport", "⚽ Sport e giochi"],
+  var GRUPPI = [["belle", "⭐ Le più belle"], ["mostri", "👻 Mostri e buffi"], ["animali", "🦁 Animali"], ["cibo", "🍕 Cibo"], ["sport", "⚽ Sport e giochi"],
     ["viaggi", "🚗 Viaggi e posti"], ["oggetti", "🎸 Oggetti"], ["natura", "🌈 Natura"], ["simboli", "❤️ Simboli"]];
-  var PROPOSTE = ["cane", "pizza", "calcio", "cuore", "razzo", "festa", "gatto", "fuoco"];
+  var PROPOSTE = ["leone", "spada", "razzo", "calcio", "fuoco", "corona", "pizza", "drago"];
 
   // il mio gettone: dal profilo online, se no da questo telefono (null = non l'ho ancora scelto)
   function chiaveNome() { var p = cuore.profiloAttivo && cuore.profiloAttivo(); return String((p && p.nome) || "").trim().toLowerCase() || "?"; }
@@ -98,7 +98,7 @@
     var bozzaBot = o.bozza || null;
     var parti = bozzaBot ? G.daQualsiasi(bozzaBot.gettone, bozzaBot.nome) : mioGettone();
     var scelta = { e: parti && !parti.r ? parti.e : null, c: parti && !parti.r ? (parti.c || []).slice(0, 3) : [] };
-    var s = schermata({ icona: "😀", titolo: bozzaBot ? "Emoji di " + bozzaBot.nome : o.benvenuto ? "Scegli la tua emoji" : "La tua emoji",
+    var s = schermata({ icona: "⚡", titolo: bozzaBot ? "Emoji di " + bozzaBot.nome : o.benvenuto ? "Scegli la tua emoji" : "La tua emoji",
       sotto: bozzaBot ? "La vedono tutti, in tutti i giochi" : "Al posto dell'avatar: la vedono gli amici in tutti i giochi",
       indietro: o.benvenuto ? null : indietro });
     s.classList.add("gt-scelta");
@@ -109,7 +109,7 @@
       var b = el("button", { class: "gt-col", type: "button", style: "--c:" + x.c, "aria-label": x.n, onclick: function () { toccaColore(x.k); } }, [ el("b", { class: "gt-n" }) ]);
       colori.appendChild(b); return b;
     });
-    var cerca = el("input", { class: "link-campo gt-cerca", type: "search", placeholder: "Cerca: razzo, cane, pizza…", autocomplete: "off", autocorrect: "off",
+    var cerca = el("input", { class: "link-campo gt-cerca", type: "search", placeholder: "Cerca: razzo, leone, spada…", autocomplete: "off", autocorrect: "off",
       autocapitalize: "none", spellcheck: "false", enterkeyhint: "search", "aria-label": "Cerca un'emoji", disabled: "disabled" });
     var bVia = el("button", { class: "gt-cerca-via", type: "button", "aria-label": "Cancella la ricerca", text: "✕", hidden: "hidden", onclick: function () { cerca.value = ""; aggCerca(); try { cerca.focus(); } catch (e) {} } });
     var testa = el("div", { class: "gt-testa" }, [

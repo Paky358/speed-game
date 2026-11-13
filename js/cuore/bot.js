@@ -52,8 +52,8 @@
   ];
   // 😀 i gettoni dei Bot (13 nov 2026, avatar spenti: GETTONI in core.js): emoji e colore fissi, sempre uguali, così si riconoscono
   var BOT_GETTONE = {
-    matt: { g: 1, e: "😎", c: ["oro", "arancio", "rosso"] }, angela: { g: 1, e: "🤓", c: ["viola", "blu", "lilla"] },
-    rosa: { g: 1, e: "🥳", c: ["magenta", "lampone", "rosso"] }, peppe: { g: 1, e: "😏", c: ["verde", "lime", "acqua"] },
+    matt: { g: 1, e: "🦁", c: ["oro", "arancio", "rosso"] }, angela: { g: 1, e: "🔮", c: ["viola", "blu", "lilla"] },
+    rosa: { g: 1, e: "🌺", c: ["magenta", "lampone", "rosso"] }, peppe: { g: 1, e: "🦊", c: ["verde", "lime", "acqua"] },
     gina: { g: 1, e: "🍕", c: ["arancio", "oro", "rosso"] }, toto: { g: 1, e: "🦉", c: ["blu", "ciano", "viola"] },
     ciro: { g: 1, e: "⚽", c: ["ciano", "acqua", "blu"] }, lella: { g: 1, e: "🦄", c: ["lampone", "magenta", "viola"] }
   };
