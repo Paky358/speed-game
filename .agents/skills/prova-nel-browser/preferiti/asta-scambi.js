@@ -17,7 +17,7 @@
 // sc5 (13 nov 2026, dopo la prova del proprietario, il proprietario: «le squadre sono piccolissime… la mia squadra la prima che si vede, ma della stessa grandezza delle altre…
 //     adattiamo lo schermo in base a quanti giocatori siamo») Senza asta: il mercato disegnato con rose finte in 2, 3, 4, 6, 8 e 10 su un
 //     telefono piccolo (360×640), su uno come quello del proprietario (360×697) e su uno grande (412×800): rose tutte della stessa grandezza, la mia per prima, niente
-//     scorrere, targhette dentro il campo, scritte da 9 px in su; in 2 una colonna sola e campi alti; da 3 in su due rose per riga (in 3 un
+//     scorrere, targhette dentro il campo, mai più piccole della rosa del duce (nomi da 10,5 px, campo da 104 px); in 2 una colonna sola e campi alti; da 3 in su due rose per riga (in 3 un
 //     posto vuoto a destra: il proprietario non vuole le tre una sotto l'altra); sul telefono grande fino a 8 tutti in una schermata; quando
 //     servono le pagine ‹ › la mia rosa resta per prima e le altre ci sono tutte (sul telefono del proprietario e su quello grande fino a 8 senza pagine).
 (function () {
@@ -78,7 +78,8 @@
     if (fuori.length) return fuori.length + " targhette escono dal campo (" + fuori[0].textContent + ")";
     var sovra = 0; campi.forEach(function (c) { var pp = [].map.call(c.querySelectorAll(".mc-p"), function (b) { return b.getBoundingClientRect(); }); pp.forEach(function (a, i) { pp.slice(i + 1).forEach(function (b) { if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) sovra++; }); }); });
     if (sovra) return sovra + " targhette una sopra l'altra";
-    var f = parseFloat(w.getComputedStyle(q(w, ".mc-p")).fontSize); if (f < 8.9) return "scritte troppo piccole (" + f + " px)";
+    var f = parseFloat(w.getComputedStyle(q(w, ".mc-p")).fontSize); if (f < 10.45) return "scritte più piccole di quelle del duce (" + f + " px)";   // (il proprietario: «più piccolo di così non ci può stare»)
+    if (r0.height < 103.5) return "rose più basse di quella del duce (" + Math.round(r0.height) + " px)";
     return null;
   }
   async function telefoni(nomi, imp) {

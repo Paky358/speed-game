@@ -9546,7 +9546,10 @@
     larga: { p: [ { x: 50, y: 13 }, { x: 26, y: 37 }, { x: 74, y: 37 }, { x: 50, y: 61 }, { x: 50, y: 86 } ], mw: [0.94, 0.47, 0.47, 0.94, 0.94], k: 0.23 },
     stretta: { p: [ { x: 50, y: 10 }, { x: 38, y: 30 }, { x: 62, y: 50 }, { x: 50, y: 70 }, { x: 50, y: 90 } ], mw: [0.94, 0.74, 0.74, 0.94, 0.94], k: 0.19 }
   };
-  var MC_MIN = 9, MC_MAX = 15, MC_MIS = {}, mcCtx = null;
+  // (13 nov 2026 sera, il proprietario: «con questa grandezza che c'è su il duce ce ne entrano solo 8… questa è la grandezza minima giusta, più
+  // piccolo di così non ci può stare») MAI rose più piccole di quella del duce nella v341 sul suo telefono: nomi da MC_MIN px, campo da MC_HMIN px
+  var MC_MIN = 10.5, MC_HMIN = 104, MC_MAX = 15, MC_MIS = {}, mcCtx = null;
+  function mcBasta(L) { return L.f >= MC_MIN && L.hC >= MC_HMIN; }
   function mcLargo(t, fam) {   // quanto è larga una scritta a 10 px (col carattere vero delle targhette)
     var k = fam + "|" + t; if (MC_MIS[k] == null) { if (!mcCtx) mcCtx = document.createElement("canvas").getContext("2d"); mcCtx.font = "900 10px " + fam; MC_MIS[k] = mcCtx.measureText(t).width; }
     return MC_MIS[k];
@@ -9578,9 +9581,9 @@
     var R = M.rose, W = R.clientWidth, H = R.clientHeight; if (!W || !H) return null;
     var fam = getComputedStyle(R).fontFamily, tutte = M.ordine, primo = M.mioPrimo ? 1 : 0, altri = tutte.length - primo;
     var L = mcPiano(tutte, tutte.length, W, H, fam); L.per = altri; L.pagine = 1;
-    if (L.f < MC_MIN && altri > 1) for (var k = altri - 1; k >= 1; k--) {   // (troppi per un telefono piccolo: le rose degli altri su più pagine)
+    if (!mcBasta(L) && altri > 1) for (var k = altri - 1; k >= 1; k--) {   // (troppi per un telefono piccolo: le rose degli altri su più pagine)
       var q = mcPiano(tutte, primo + k, W, H - 36, fam);
-      if (q.f >= MC_MIN || k === 1) { var pg = Math.ceil(altri / k), per = Math.ceil(altri / pg); L = mcPiano(tutte, primo + per, W, H - 36, fam); L.per = per; L.pagine = pg; break; }   // (pagine pari: 9 altri = 5 + 4)
+      if (mcBasta(q) || k === 1) { var pg = Math.ceil(altri / k), per = Math.ceil(altri / pg); L = mcPiano(tutte, primo + per, W, H - 36, fam); L.per = per; L.pagine = pg; break; }   // (pagine pari: 9 altri = 5 + 4)
     }
     return L;
   }
