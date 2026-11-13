@@ -57,7 +57,8 @@
     return (E.tutte || []).map(function (v, i) {
       var w = {}, n = norma(v[2]);
       [v[2]].concat(v[3] || []).forEach(function (x) { norma(x).split(" ").forEach(function (t) { if (t) w[t] = 1; }); });
-      return { e: v[0], g: v[1], n: n, w: Object.keys(w), b: belle[v[0]] || 0, i: i };
+      var top = {}; [v[2]].concat((v[3] || []).slice(0, 3)).forEach(function (x) { top[norma(x)] = 1; });   // (il nome e le prime parole: quelle che contano di più)
+      return { e: v[0], g: v[1], n: n, w: Object.keys(w), top: top, b: belle[v[0]] || 0, i: i };
     });
   }
   function cercaIn(IX, q) {
@@ -80,12 +81,14 @@
         if (!best) return;
         tot += best;
       }
-      if (v.n === norma(q)) tot += 40; else if (v.n.indexOf(norma(q)) === 0) tot += 15;
+      var nq = norma(q);
+      if (v.top[nq]) tot += 45; else if (v.n.indexOf(nq) === 0) tot += 15;
       if (v.b) tot += 10;
       out.push({ v: v, p: tot });
     });
     out.sort(function (a, b) { return b.p - a.p || (b.v.b ? 1 : 0) - (a.v.b ? 1 : 0) || a.v.i - b.v.i; });
-    return out.slice(0, 160).map(function (x) { return x.v.e; });
+    var soglia = out.length ? Math.max(25, out[0].p * 0.5) : 0;   // (via quelle che c'entrano poco rispetto alla migliore)
+    return out.filter(function (x) { return x.p >= soglia; }).slice(0, 160).map(function (x) { return x.v.e; });
   }
 
   // «Scegli la tua emoji»: in alto (fermo) il gettone come lo vedranno gli altri, i colori (1° 2° 3°) e la ricerca; sotto le emoji
