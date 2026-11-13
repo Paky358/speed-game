@@ -22,7 +22,7 @@ window.SG_NOVITA = [
       "🎨 Con «Gioca ancora» ognuno tiene lo stesso colore dei suoi calciatori, partita dopo partita.",
       "🔀 Le partite della giornata non si ripetono mai: ogni telefono ricorda le ultime giornate sorteggiate e una nuova ne ha al massimo una uguale.",
       "🎬 Il replay del gol della giornata resta nella metà campo dove è stato fatto il gol (prima, un gol nella metà di sopra si rivedeva in quella di sotto).",
-      "📏 Altre 30 altezze vere: ora sono 329 calciatori su 335."
+      "📏 Altre 35 altezze vere: ora ce l'hanno 334 calciatori su 335."
     ]
   },
   {
