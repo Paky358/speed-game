@@ -71,7 +71,6 @@ CUORE="$TMP/cuore.js"
   echo ''
   cat js/omino.js
   echo ''
-  [ -e data/emoji-gettone.js ] && { cat data/emoji-gettone.js; echo ''; }   # 😀 le emoji dei gettoni (prima di js/gettone.js)
   cat js/gettone.js   # 😀 il gettone al posto dell avatar
   echo ''
   if [ "$CITTA" = si ]; then
@@ -103,7 +102,7 @@ CUORE="$TMP/cuore.js"
   echo ''
   # (questi di solito stanno in un pezzo: qui solo se nessun pezzo li ha)
   for f in js/studio.js js/studio-piatto.js js/asta-sala-arte.js js/asta-stadio-arte.js js/asta-maglie.js js/chidinoi-arte.js js/chidinoi-foto.js; do [ "$f" = "$STUDIO_NO" ] || aggiungi "$f"; done
-  for f in data/*.js; do [ -e "$f" ] && [ "$f" != data/novita.js ] && [ "$f" != data/emoji-gettone.js ] && aggiungi "$f"; done
+  for f in data/*.js; do [ -e "$f" ] && [ "$f" != data/novita.js ] && aggiungi "$f"; done
   for f in js/games/*.js; do [ -e "$f" ] && aggiungi "$f"; done
   cat "$ELENCO"   # 📦 l'elenco dei giochi: le schede (per la home) e i pezzi da scaricare quando si gioca
   echo ''

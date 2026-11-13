@@ -32,15 +32,16 @@
   var PER_K = {}; COLORI.forEach(function (x) { PER_K[x.k] = x; });
   var GRIGIO = "#8a90ad";   // (solo se un colore non si riconosce)
 
-  function lista() { return window.SG_EMOJI_GETTONE || []; }
-  var PER_E = null;
-  function perE() {
-    if (PER_E && PER_E._n === lista().length) return PER_E;
-    PER_E = { _n: lista().length };
-    lista().forEach(function (x) { PER_E[x.e] = x; PER_E[x.e.replace(/️/g, "")] = x; });
-    return PER_E;
-  }
-  function infoE(e) { return e ? perE()[e] || perE()[String(e).replace(/️/g, "")] || null : null; }
+  // le emoji: quasi tutte quelle di Fluent Emoji 3D (circa 1.500). Il file di ognuna si ricava dall'emoji stessa (i codici
+  // esadecimali senza fe0f: ⚡ → 26a1.webp), così l'app non ha bisogno dell'elenco: lo scarica solo la scelta (pezzo «emoji»).
+  // RISERVA: poche emoji allegre per il gettone di chi non ha ancora scelto (o manda l'avatar di prima)
+  var RISERVA = ["⚡", "😀", "😎", "🤩", "🥳", "🤠", "🤓", "🤖", "👽", "👻", "🐱", "🐶", "🦊", "🐻", "🐼", "🐨", "🦁", "🐯", "🐸", "🐵", "🐧", "🦉", "🦄", "🐙",
+    "🐢", "🐬", "🍕", "🍔", "🍩", "🍉", "🍓", "🍿", "⚽", "🏀", "🎾", "🎲", "🎮", "🚀", "🎸", "🎧", "👑", "💎", "🎈", "🌈", "🌻", "🍀", "🌵", "🍄", "🪐", "⭐", "🔥", "🌙"];
+  function lista() { return RISERVA.map(function (e) { return { e: e }; }); }
+  function codice(e) { var r = []; Array.from(String(e || "")).forEach(function (c) { var h = c.codePointAt(0).toString(16); if (h !== "fe0f") r.push(h); }); return r.join("-"); }
+  var RE_EMO = null; try { RE_EMO = new RegExp("\\p{Extended_Pictographic}|\\p{Regional_Indicator}|[#*0-9]\\uFE0F?\\u20E3", "u"); } catch (x) {}
+  function emojiOk(e) { return typeof e === "string" && e.length >= 1 && e.length <= 16 && (!RE_EMO || RE_EMO.test(e)); }
+  function infoE(e) { return emojiOk(e) ? { e: e, f: codice(e) } : null; }
 
   // ---- com'è fatto un gettone ----
   function eGettone(cfg) { return !!(cfg && typeof cfg === "object" && cfg.g === 1 && typeof cfg.e === "string"); }
@@ -48,7 +49,7 @@
   // pulito: solo i campi che servono, l'emoji tra quelle della lista (se no la prima), i colori validi e diversi (al massimo 3)
   function norm(cfg) {
     if (!eGettone(cfg)) return null;
-    var e = infoE(cfg.e) ? infoE(cfg.e).e : (lista()[0] ? lista()[0].e : "⚡");
+    var e = emojiOk(cfg.e) ? cfg.e : "⚡";
     var c = [];
     (Array.isArray(cfg.c) ? cfg.c : []).forEach(function (k) { if (coloreOk(k) && c.indexOf(k) < 0 && c.length < 3) c.push(k); });
     var r = { g: 1, e: e, c: c };
@@ -59,7 +60,7 @@
   function hash(s) { s = String(s || ""); var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   // il gettone di riserva: per chi non ha ancora scelto (o manda l'avatar di prima). Sempre lo stesso per lo stesso «seme»
   function riserva(seme) {
-    var l = lista(), h = hash(seme), e = l.length ? l[h % l.length].e : "🙂";
+    var h = hash(seme), e = RISERVA[h % RISERVA.length];
     var c0 = COLORI[(h >>> 8) % COLORI.length].k;
     return { g: 1, e: e, c: [c0], r: 1 };
   }
@@ -103,19 +104,11 @@
       });
     } catch (x) {}
   }
-  // tutte, piano piano (una alla volta), dopo l'apertura: così nelle partite sono già pronte
-  var tutteAvviate = false;
-  function preparaTutte() {
-    if (tutteAvviate) return; tutteAvviate = true;
-    var l = lista().map(function (x) { return x.e; }), i = 0;
-    (function una() {
-      if (i >= l.length) return;
-      if (document.hidden || (navigator.onLine === false)) { setTimeout(una, 3000); return; }
-      var e = l[i++]; if (DATI[e]) return una();
-      prepara(e);
-      setTimeout(una, 120);
-    })();
-  }
+  // (niente si scarica in più all'apertura: un'immagine arriva solo quando un gettone la mostra o la griglia della scelta la fa vedere;
+  // il telefono la tiene: service worker, cassa «sg-emoji»)
+  function preparaTutte() {}
+  // le emoji della gente nella stanza: si preparano appena si sa chi c'è (così nei disegni-immagine dei giochi c'è già quella 3D)
+  function preparaGente(l) { (l || []).forEach(function (cfg) { if (eGettone(cfg)) prepara(cfg.e); }); }
 
   // ---- il disegno: SVG quadrato (o alto come l'avatar intero, col gettone in basso) ----
   // opts come SGOmino.svg: px (larghezza), busto/viso (inquadratura quadrata); senza: alto come l'avatar in piedi (200×264)
@@ -175,7 +168,7 @@
 
   window.SGGettone = {
     COLORI: COLORI, colore: colore, chiaveColore: chiaveColore, coloreDi: function (k) { return PER_K[k] ? PER_K[k].c : GRIGIO; }, nomeColore: function (k) { return PER_K[k] ? PER_K[k].n : ""; },
-    lista: lista, info: infoE, url: url, prepara: prepara, preparaTutte: preparaTutte,
+    lista: lista, info: infoE, url: url, codice: codice, emojiOk: emojiOk, prepara: prepara, preparaTutte: preparaTutte, preparaGente: preparaGente,
     eGettone: eGettone, norm: norm, riserva: riserva, daQualsiasi: daQualsiasi,
     svg: svg, nuovaMappa: nuovaMappa, assegna: assegna, accendi: accendi, acceso: function () { return acceso; }
   };

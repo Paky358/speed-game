@@ -4391,7 +4391,23 @@ html.tastiera-ferma body{ position:fixed; left:0; right:0; top:var(--vv-su, 0px)
    😀 I GETTONI AL POSTO DEGLI AVATAR (13 nov 2026): la scelta (emoji + 3 colori in ordine) e il gettone nelle salette.
    Il disegno del gettone: js/gettone.js (SVG: contorno del colore, fondo blu notte, l'emoji 3D dentro).
    ========================================================= */
-.gt-testa{ position:sticky; top:0; z-index:3; display:flex; gap:12px; align-items:center; margin:0 -2px; padding:6px 2px 12px; background:var(--o-fondo, #0d1020); box-shadow:0 10px 14px -12px rgba(0,0,0,.7); }
+.gt-testa{ position:sticky; top:0; z-index:3; margin:0 -2px; padding:6px 2px 10px; background:var(--o-fondo, #0d1020); box-shadow:0 10px 14px -12px rgba(0,0,0,.7); }
+.gt-testa-sopra{ display:flex; gap:12px; align-items:center; }
+.gt-cerca-riga{ position:relative; display:flex; align-items:center; margin-top:10px; }
+.gt-lente{ position:absolute; left:12px; font-size:16px; pointer-events:none; opacity:.8; }
+.gt-cerca{ flex:1; min-width:0; margin:0; padding-left:38px !important; padding-right:40px !important; font-size:16px; }
+.gt-cerca::-webkit-search-cancel-button{ -webkit-appearance:none; appearance:none; }
+.gt-cerca-via{ position:absolute; right:6px; width:32px; height:32px; border:0; border-radius:50%; background:var(--o-carta, rgba(255,255,255,.1)); color:var(--o-testo, #fff); font-size:15px; font-weight:900; cursor:pointer; }
+.gt-cerca-via[hidden]{ display:none; }
+.gt-risultati[hidden], .gt-zona[hidden]{ display:none; }
+.gt-risultati{ padding-top:10px; }
+.gt-niente{ margin:18px 4px 8px; font-weight:800; font-size:1rem; color:var(--o-testo, #fff); text-align:center; }
+.gt-proposte{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center; color:var(--o-tenue, #a6acc8); font-size:.85rem; font-weight:700; }
+.gt-prop{ border:0; border-radius:999px; padding:7px 14px; background:var(--o-carta, rgba(255,255,255,.08)); color:var(--o-testo, #fff); font:inherit; font-weight:800; cursor:pointer; }
+.gt-carica{ text-align:center; margin-top:20px; }
+/* ⌨️ con la tastiera aperta (regole della v339): in alto resta solo la ricerca, le emoji trovate subito sotto */
+html.tastiera .gt-testa-sopra{ display:none; }
+html.tastiera .gt-cerca-riga{ margin-top:0; }
 .gt-anteprima{ flex:0 0 auto; width:92px; height:92px; }
 .gt-anteprima svg{ width:100%; height:100%; display:block; }
 .gt-vuoto{ width:92px; height:92px; border-radius:50%; box-sizing:border-box; border:7px solid var(--c); display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:900; color:var(--o-tenue, #a6acc8); background:#161b33; }

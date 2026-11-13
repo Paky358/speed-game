@@ -962,7 +962,7 @@
   // Il codice degli avatar resta (e l avatar salvato di ognuno anche: false = tornano come prima); con GETTONI il disegno
   // «illustrato» (il pezzo avatar-a, quasi 1 MB) non si scarica più. La scelta: cuore.schermataGettone (js/cuore/gettone.js).
   var GETTONI = true;
-  if (GETTONI && window.SGGettone) { SGGettone.accendi(); setTimeout(function () { try { SGGettone.preparaTutte(); } catch (e) {} }, 2500); }   // (le immagini, piano piano: nelle partite sono già pronte)
+  if (GETTONI && window.SGGettone) SGGettone.accendi();   // (all'apertura non si scarica nessuna immagine: arrivano solo quando un gettone le mostra)
   function stileAvatar() {
     if (GETTONI) return;   // (i gettoni: niente avatar da disegnare né da scaricare)
     if (!window.SGOmino || !SGOmino.stile) return;

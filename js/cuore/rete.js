@@ -199,7 +199,7 @@
   function gtAssegnaJoin(SV, nome, omino) {
     if (!gtOn()) return omino;
     var ioN = SV && SV.nomi && SV.nomi.__io, M = gtMappa(gtChiave(SV), ioN);
-    var g = SGGettone.assegna(M, nome, omino); gtSalva(); return g;
+    var g = SGGettone.assegna(M, nome, omino); gtSalva(); try { SGGettone.prepara(g.e); } catch (e) {} return g;   // (la sua immagine arriva già in saletta)
   }
   // il mio gettone col colore della serata che tengo (per chi entra: quello che ho scelto, il colore lo decide l host)
   function gtMio(g, nome) {

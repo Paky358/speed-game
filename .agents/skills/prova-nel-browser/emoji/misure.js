@@ -40,10 +40,15 @@
     var media = Math.round(fr.reduce(function (a, b) { return a + b; }, 0) / Math.max(1, fr.length));
     // partenza: «Comincia» dell'host, fino a quando nessuno è più nella saletta
     await W.dorme(1000);
-    var t1 = performance.now();
+    var t1 = performance.now(), tutti = ["Paky"].concat(amici), arrivati = {};
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 8000)) no("l'host non ha «Comincia»");
-    if (!await W.aspetta(function () { return ["Paky"].concat(amici).every(function (n) { var f = W.finestra(n); return f && !f.document.querySelector(".saletta-schermo"); }); }, 90000)) no("la partita non parte per tutti");
-    var partenza = Math.round(performance.now() - t1);
-    return "apertura " + apertura + " ms · pronto: " + fr.length + " fotogrammi in 3 s, " + lunghi + " più lunghi di 50 ms, il più lungo " + max + " ms, media " + media + " ms · partenza " + partenza + " ms (3-2-1 compreso)";
+    await W.aspetta(function () {
+      var ora = Math.round(performance.now() - t1);
+      tutti.forEach(function (n) { var f = W.finestra(n); if (!arrivati[n] && f && !f.document.querySelector(".saletta-schermo")) arrivati[n] = ora; });
+      return Object.keys(arrivati).length === tutti.length;
+    }, 150000);
+    var tempi = tutti.map(function (n) { return arrivati[n]; }).filter(function (x) { return x != null; });
+    var partenza = tempi.length ? Math.max.apply(null, tempi) + " ms per " + tempi.length + " su 8 (il primo " + Math.min.apply(null, tempi) + " ms)" : "nessuno è partito in 150 s («" + A.T(P).slice(0, 80) + "»)";
+    return "apertura " + apertura + " ms · pronto: " + fr.length + " fotogrammi in 3 s, " + lunghi + " più lunghi di 50 ms, il più lungo " + max + " ms, media " + media + " ms · partenza " + partenza + " (3-2-1 compreso)";
   } });
 })();
