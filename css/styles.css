@@ -4428,7 +4428,7 @@ html.tastiera .gt-cerca-riga{ margin-top:0; }
 /* il gettone dove prima c'era l'avatar: niente ombre pesanti (filtri) */
 .gettoni svg.gettone{ filter:none !important; overflow:visible; }
 /* «pronto» nella saletta: un saltello, l'alone del suo colore dietro e la mano ✋ (solo transform e opacity) */
-.gettoni .sl-anello{ left:2%; right:2%; top:24%; bottom:-1%; height:auto; border-radius:50%; background:radial-gradient(closest-side, var(--gt, #34d17a) 62%, transparent 100%) !important; opacity:0; transform:scale(.7); transition:opacity .3s ease, transform .35s cubic-bezier(.3,1.6,.5,1); }
+.gettoni .sl-anello{ left:9%; right:9%; top:38%; bottom:-1%; height:auto; border-radius:50%; background:radial-gradient(closest-side, var(--gt, #34d17a) 62%, transparent 100%) !important; opacity:0; transform:scale(.7); transition:opacity .3s ease, transform .35s cubic-bezier(.3,1.6,.5,1); }
 .gettoni .sl-av.pronto .sl-anello{ opacity:.55; transform:scale(1.08); }
-.gettoni .sl-fig::after{ content:"✋"; position:absolute; right:-8%; top:14%; z-index:5; font-size:calc(var(--w, 80px) * .36); line-height:1; opacity:0; transform:scale(.3) rotate(-20deg); transition:opacity .2s ease, transform .35s cubic-bezier(.3,1.7,.5,1); pointer-events:none; }
+.gettoni .sl-fig::after{ content:"✋"; position:absolute; right:-4%; top:30%; z-index:5; font-size:calc(var(--w, 80px) * .36); line-height:1; opacity:0; transform:scale(.3) rotate(-20deg); transition:opacity .2s ease, transform .35s cubic-bezier(.3,1.7,.5,1); pointer-events:none; }
 .gettoni .sl-av.pronto .sl-fig::after{ opacity:1; transform:scale(1) rotate(8deg); }

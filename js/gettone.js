@@ -115,19 +115,20 @@
   function svg(cfg, opts) {
     opts = opts || {};
     var g = daQualsiasi(cfg), col = colore(g), quad = !!(opts.busto || opts.viso || opts.quadrato || opts.gambe);
-    var H = quad ? 100 : 132, cy = quad ? 50 : 82;
+    // quadrato: il cerchio riempie tutto; al posto dell'avatar in piedi (alto 132): più piccolo e in basso, largo come un omino
+    var H = quad ? 100 : 132, cy = quad ? 50 : 92, R = quad ? 47 : 39, K = R / 47;
     var px = opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * H / 100) + "'" : "";
     var info = infoE(g.e), d = info ? DATI[info.e] : null;
     if (info && !d) prepara(info.e);
-    var x = 21, y = cy - 29, w = 58, dentro;
+    var w = Math.round(58 * K), x = 50 - w / 2, y = cy - w / 2, dentro;
     if (d) dentro = "<image href='" + d + "' xlink:href='" + d + "' x='" + x + "' y='" + y + "' width='" + w + "' height='" + w + "'/>";
-    else dentro = "<text class='gt-tx' data-x='" + x + "' data-y='" + y + "' data-w='" + w + "' x='50' y='" + (cy + 1) + "' text-anchor='middle' dominant-baseline='central' font-size='46'" +
+    else dentro = "<text class='gt-tx' data-x='" + x + "' data-y='" + y + "' data-w='" + w + "' x='50' y='" + (cy + 1) + "' text-anchor='middle' dominant-baseline='central' font-size='" + Math.round(46 * K) + "'" +
       " font-family='Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif'>" + esc(g.e) + "</text>";
     return "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 100 " + H + "'" + px +
       " class='omino gettone' data-gt='" + esc(info ? info.e : g.e) + "' style='--gt:" + col + "'>" +
-      "<circle cx='50' cy='" + cy + "' r='47' fill='" + col + "'/>" +
-      "<circle cx='50' cy='" + cy + "' r='39.5' fill='#161b33'/>" +
-      "<circle cx='50' cy='" + (cy - 10) + "' r='30' fill='#ffffff' opacity='.07'/>" +
+      "<circle cx='50' cy='" + cy + "' r='" + R + "' fill='" + col + "'/>" +
+      "<circle cx='50' cy='" + cy + "' r='" + (R - 7.5 * K).toFixed(1) + "' fill='#161b33'/>" +
+      "<circle cx='50' cy='" + (cy - 10 * K).toFixed(1) + "' r='" + (30 * K).toFixed(1) + "' fill='#ffffff' opacity='.07'/>" +
       dentro + "</svg>";
   }
   function esc(s) { return String(s).replace(/[&<>'"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[c]; }); }

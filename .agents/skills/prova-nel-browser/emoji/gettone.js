@@ -63,7 +63,12 @@
     var L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 185, prima: function (w) {
       // l'app vecchia: quando entra manda l'avatar di prima (il disegno vero degli avatar c'è ancora in SGOmino.__avatar)
       avatarDiPrima = w.SGOmino.__avatar.norm(w.SGOmino.__avatar.casuale("Luca"));
-      w.SGCuore.gtMio = function () { return avatarDiPrima; };
+      var ent = w.SGNet.entra;   // (quello che manda entrando: il «join» col vecchio avatar)
+      w.SGNet.entra = function () {
+        var h = ent.apply(this, arguments);
+        if (h && h.invia) { var inv = h.invia; h.invia = function (m) { if (m && m.t === "join") m = Object.assign({}, m, { omino: avatarDiPrima }); return inv.apply(h, [m].concat([].slice.call(arguments, 1))); }; }
+        return h;
+      };
     } });
     if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 2; }, 8000)) no("Luca non entra");
     var gL = (vm(C).giocatori || []).filter(function (x) { return x.nome === "Luca"; })[0];
