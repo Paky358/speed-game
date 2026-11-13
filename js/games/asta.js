@@ -622,14 +622,21 @@
     ".sc-annuncio small{font-weight:900;letter-spacing:.12em;color:#34d17a;}.sc-annuncio b{font-size:1.15rem;line-height:1.3;}@keyframes scAnn{0%{opacity:0;transform:scale(.85)}8%{opacity:1;transform:scale(1.04)}14%{transform:none}88%{opacity:1}100%{opacity:0}}",
     // 🔄 il mercato nuovo (13 nov 2026 sera): la mia rosa, 4 rose per pagina, le partite; il pop-up della proposta
     ".mc .contenuto{gap:7px;}.mc-capo{display:flex;gap:6px;margin-left:auto;}.mc-mini{border:0;border-radius:10px;min-height:30px;padding:3px 9px;background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:.8rem;font-weight:800;}.mc-mini.on{background:#e0225a;}",
-    ".mc-rosa{display:flex;flex-direction:column;gap:3px;min-width:0;}.mc-rosa-t{display:flex;align-items:center;gap:6px;min-width:0;font-size:.82rem;}.mc-rosa-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.mc-rosa-t small{margin-left:auto;font-size:.68rem;opacity:.8;white-space:nowrap;}.mc-rosa-t .sc-faccia{width:22px;height:22px;}",
-    ".mc-campo{position:relative;height:var(--mch,108px);border-radius:10px;background:repeating-linear-gradient(180deg,#3d9b49 0 14px,#358a41 14px 28px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}.mc-mia .mc-campo{height:var(--mch1,128px);}",
-    ".mc-griglia{display:grid;grid-template-columns:1fr 1fr;gap:8px;}.mc-pag{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:.8rem;font-weight:800;}",
-    ".mc-p{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:3px;max-width:49%;padding:2px 6px 2px 3px;border:1.5px solid var(--sq2,#fff);border-radius:8px;background:var(--sq,#2b3550);color:#fff;font:inherit;font-size:.66rem;font-weight:900;line-height:1.25;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.85);box-shadow:0 2px 5px rgba(0,0,0,.45);cursor:pointer;transition:box-shadow .15s;}",
-    ".mc-mia .mc-p{font-size:.74rem;}.mc-p span{min-width:0;overflow:hidden;text-overflow:ellipsis;}.mc-p i{flex:none;width:7px;height:7px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.7);}.mc-p small{font-size:.58rem;color:#ffe066;}",
+    // (13 nov 2026, dopo la prova del proprietario: tutte le rose della stessa grandezza, la mia per prima; la schermata non scorre e le rose si dividono lo spazio che resta)
+    ".sc-merc.mc{position:relative;flex:0 0 auto;height:var(--alt,100dvh);max-height:var(--alt,100dvh);min-height:0;overflow:hidden;padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));padding-bottom:calc(8px + env(safe-area-inset-bottom));}.mc>.contenuto{flex:1 1 auto;min-height:0;}.mc>.piede{flex:none;height:38px;margin-top:6px;}",
+    ".mc-rose{flex:1 1 0;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:4px;}",
+    ".mc-rosa{display:flex;flex-direction:column;gap:3px;min-width:0;}.mc-rosa-t{display:flex;align-items:center;gap:6px;min-width:0;height:var(--mca,22px);font-size:var(--mct,.82rem);}.mc-rosa-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.mc-rosa-t small{margin-left:auto;font-size:.82em;opacity:.8;white-space:nowrap;}.mc-rosa-t .sc-faccia{width:var(--mca,22px);height:var(--mca,22px);}",
+    ".mc-mia .mc-rosa-t b{color:#ffe066;}.mc-mia .mc-campo{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 0 0 2px rgba(255,224,102,.55);}",
+    ".mc-campo{position:relative;height:var(--mch,108px);border-radius:10px;background:repeating-linear-gradient(180deg,#3d9b49 0 14px,#358a41 14px 28px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);}",
+    ".mc-griglia{display:grid;grid-template-columns:repeat(var(--mcc,2),minmax(0,1fr));gap:6px;}.mc-pag{flex:none;display:flex;align-items:center;justify-content:space-between;font-size:.8rem;font-weight:800;}",
+    ".mc-p{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:3px;max-width:49%;padding:2px 6px 2px 3px;border:1.5px solid var(--sq2,#fff);border-radius:8px;background:var(--sq,#2b3550);color:#fff;font:inherit;font-size:var(--mcf,11px);font-weight:900;line-height:1.25;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.85);box-shadow:0 2px 5px rgba(0,0,0,.45);cursor:pointer;transition:box-shadow .15s;}",
+    ".mc-p span{min-width:0;overflow:hidden;text-overflow:ellipsis;}.mc-p i{flex:none;width:7px;height:7px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.7);}.mc-p small{font-size:.88em;color:#ffe066;}",
     ".mc-p.sel{z-index:2;box-shadow:0 0 0 2.5px #34d17a,0 0 12px rgba(52,209,122,.85);}.mc-p.scegli{animation:mcScegli .8s ease-in-out infinite alternate;}@keyframes mcScegli{from{box-shadow:0 0 0 0 rgba(255,224,102,0)}to{box-shadow:0 0 0 3px #ffe066,0 0 10px rgba(255,224,102,.8)}}.mc-p.volato{box-shadow:0 0 0 2.5px #ffe066,0 0 14px rgba(255,224,102,.9);}",
     ".mc-part-t{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:.8rem;}.mc-ris{margin:0;}.mc-ris .st-ris-p{padding:4px 0;}.mc-ris .st-ris-p span{font-size:.62rem;}",
-    ".mc-barra{display:flex;flex-direction:column;gap:6px;width:100%;}.mc-riass{margin:0;text-align:center;font-size:.86rem;}.mc-riass.no{color:#ffe066;font-weight:800;}.mc-riass.attesa{color:#a5d8ff;}.mc-riga{display:flex;gap:8px;}.mc-riga .sc-ok{flex:1;}.mc-annulla{flex:none;width:52px;min-height:52px;}",
+    // (la barra: in basso una riga sola; quando si scelgono i calciatori sale sopra le partite col «📨 Proponi», così le rose non si spostano mai)
+    ".mc-barra{display:flex;flex-direction:column;justify-content:center;gap:6px;width:100%;height:100%;}.mc-barra.su{position:absolute;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:calc(8px + env(safe-area-inset-bottom));z-index:20;width:auto;height:auto;padding:10px;border-radius:18px;background:#151a2e;box-shadow:0 0 0 1.5px rgba(52,209,122,.6),0 -12px 30px rgba(0,0,0,.6);animation:mcSu .2s ease-out;}@keyframes mcSu{from{opacity:0}to{opacity:1}}",
+    ".mc-att{display:flex;align-items:center;gap:8px;}.mc-att .mc-riass{flex:1;min-width:0;text-align:left;font-size:.78rem;line-height:1.25;}.mc-att .mc-mini{flex:none;}",
+    ".mc-riass{margin:0;text-align:center;font-size:.84rem;line-height:1.3;}.mc-riass.no{color:#ffe066;font-weight:800;}.mc-riass.invito{font-size:.8rem;line-height:1.25;}.mc-riass.attesa{color:#a5d8ff;}.mc-riga{display:flex;gap:8px;}.mc-riga .sc-ok{flex:1;}.mc-annulla{flex:none;width:52px;min-height:52px;}",
     ".mc-pop{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,20,.62);}.mc-pop-in{width:100%;max-width:380px;display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:18px;background:#151a2e;color:#fff;box-shadow:0 0 0 2px #34d17a,0 18px 40px rgba(0,0,0,.6);animation:mcPop .35s cubic-bezier(.2,1.3,.4,1);}@keyframes mcPop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}",
     ".mc-pop-t{display:flex;align-items:center;gap:8px;font-size:1.05rem;}.mc-pop-et{margin-top:4px;font-size:.7rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;opacity:.7;}.mc-pop-c{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.07);}",
     ".mc-pop-c i{grid-row:1/3;font-style:normal;font-size:.6rem;font-weight:900;padding:2px 5px;border-radius:6px;color:#fff;}.mc-pop-c small{font-size:.7rem;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.mc-pop-tasti{display:flex;gap:8px;margin-top:6px;}.mc-pop-tasti .btn{flex:1;min-height:52px;}",
@@ -4757,7 +4764,8 @@
     barraPartita(R, x); orologio(R, e.m, true); if (R.barSc && e.r) R.barSc.textContent = e.r[0] + " - " + e.r[1];
     var lungo = 1400 + R.az.durata(sc, 4200) + 2200 + 400;
     if (R.g() > R.pt + lungo + 250) return R.dopo(lungo, poi);   // (chi recupera: il replay è già passato)
-    R.provaM = "gol della giornata"; provaPiano(R, "replay");
+    sc.titRep = b.dec ? "🎬 IL MOMENTO CHE HA DECISO" : "🎬 IL GOL DELLA GIORNATA";   // (13 nov 2026, dopo la prova del proprietario, il proprietario: «esce scritto il gol della giornata quando in realtà è il momento decisivo»)
+    R.provaM = b.dec ? "momento che ha deciso" : "gol della giornata"; provaPiano(R, "replay");
     avvisoCampo(R, 50, [b.dec ? "🎬 IL MOMENTO CHE HA DECISO" : "🎬 IL GOL DELLA GIORNATA", x.P.c + " – " + x.P.f + " · " + minTxt(e.m)]);
     R.az.fermo(sc); if (R.linea) R.linea.style.visibility = "hidden";   // (📏 durante il replay la linea si toglie: c'è la scritta del replay)
     R.dopo(1400, function () {
@@ -6894,7 +6902,8 @@
       }
       if (sc.replay) {
         var rSu = (sc.verso || 1) < 0, yR = rSu ? h - 34 : 0;   // (la porta in alto: le scritte del replay vanno giù, così non coprono la porta)
-        ctx.fillStyle = "rgba(6,12,30,.78)"; ctx.fillRect(0, yR, w, 34); scritta("🎬 IL GOL DELLA GIORNATA", w / 2, yR + 23, Math.round(Math.min(17, w * 0.045)), "#ffe066");
+        var tR = sc.titRep || "🎬 IL GOL DELLA GIORNATA", fR = Math.round(Math.min(17, w * 0.045)); ctx.font = "900 " + fR + "px system-ui,sans-serif"; var lR = ctx.measureText(tR).width; if (lR > w - 16) fR = Math.floor(fR * (w - 16) / lR);   // (sempre intera)
+        ctx.fillStyle = "rgba(6,12,30,.78)"; ctx.fillRect(0, yR, w, 34); scritta(tR, w / 2, yR + 23, fR, "#ffe066");
         ctx.fillStyle = "#e03131"; ctx.beginPath(); ctx.arc(14, rSu ? h - 48 : 48, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.font = "900 11px system-ui,sans-serif"; ctx.textAlign = "left"; ctx.fillStyle = "#fff"; ctx.fillText(sc.dietro ? "REPLAY · DA DIETRO LA PORTA" : "REPLAY · RALLENTATORE", 23, rSu ? h - 44 : 52);
       }
       var ultima = null; sc.scritte.forEach(function (s) { if (p >= s.t && (!ultima || s.t >= ultima.t)) ultima = s; });
@@ -9527,12 +9536,60 @@
   // pagina), in fondo le partite. Tocco i calciatori di UN altro: i miei dello stesso ruolo si scelgono da soli (se ne ho di più, li tocco io);
   // «📨 Proponi»: all'altro il pop-up «Accetta / Rifiuta». Le proposte e gli scambi li decide chi tiene la partita (vm.scambi)
   var MERC = null;
+  // 📐 (13 nov 2026, dopo la prova del proprietario, il proprietario: «le squadre sono piccolissime… non voglio più la mia squadra in grande, la mia squadra deve essere la prima
+  // che si vede, ma deve avere la stessa grandezza delle altre… adattiamo lo schermo in base a quanti giocatori siamo, se siamo due occupa tutto
+  // lo schermo… fino a 8 ci entrano sicuro, ce ne entrano anche 10?») tutte le rose uguali, la mia per prima; la schermata si divide da sola:
+  // 1, 2 o 3 colonne e due formazioni (larga: i due centrocampisti affiancati; stretta: uno sotto l'altro, quando la rosa è stretta) e si tiene
+  // quella con le scritte più grandi, misurate coi nomi veri. Se nemmeno così le scritte arrivano a MC_MIN px (10 rose su un telefono piccolo)
+  // le rose degli altri vanno su due pagine, con la mia sempre per prima
+  var MC_FILE = {
+    larga: { p: [ { x: 50, y: 13 }, { x: 26, y: 37 }, { x: 74, y: 37 }, { x: 50, y: 61 }, { x: 50, y: 86 } ], mw: [0.94, 0.47, 0.47, 0.94, 0.94], k: 0.23 },
+    stretta: { p: [ { x: 50, y: 10 }, { x: 38, y: 30 }, { x: 62, y: 50 }, { x: 50, y: 70 }, { x: 50, y: 90 } ], mw: [0.94, 0.74, 0.74, 0.94, 0.94], k: 0.19 }
+  };
+  var MC_MIN = 9, MC_MAX = 15, MC_MIS = {}, mcCtx = null;
+  function mcLargo(t, fam) {   // quanto è larga una scritta a 10 px (col carattere vero delle targhette)
+    var k = fam + "|" + t; if (MC_MIS[k] == null) { if (!mcCtx) mcCtx = document.createElement("canvas").getContext("2d"); mcCtx.font = "900 10px " + fam; MC_MIS[k] = mcCtx.measureText(t).width; }
+    return MC_MIS[k];
+  }
+  function mcPiano(lista, n, W, H, fam) {   // la divisione migliore per n rose in W×H (le scritte più grandi: alte quanto le file, larghe quanto i nomi)
+    var meglio = null;
+    [n <= 2 ? 1 : 2].forEach(function (c) {   // (dopo la prova: in 2 una sotto l'altra; da 3 in su due per riga, in 3 un posto vuoto a destra)
+      var righe = Math.ceil(n / c), wR = (W - (c - 1) * 6) / c;
+      Object.keys(MC_FILE).forEach(function (fi) {
+        var Fi = MC_FILE[fi], fW = 99;
+        lista.forEach(function (g) { slotRosa(g.kit || []).forEach(function (cp, i) {
+          if (!cp) return; var nm = nomeCampo(cp.nome); if (nm.length > 10) nm = nm.slice(0, 9) + "…";   // (i nomi lunghissimi si accorciano coi puntini: non rimpiccioliscono tutti gli altri)
+          var w10 = mcLargo(nm, fam) + 0.88 * mcLargo(String(valoreMostrato(cp)), fam);
+          fW = Math.min(fW, (Fi.mw[i] * wR - 27) / w10 * 10);   // (27: il pallino, i margini e il bordo della targhetta)
+        }); });
+        var hT = 16, f = 0, hC = 0;
+        [[22, 12], [19, 10], [16, 0]].some(function (z) {   // (il nome sopra la rosa: più grande se le scritte sono grandi; l'altezza del campo sempre giusta per quel nome)
+          var h = (H - (righe - 1) * 6) / righe - z[0] - 3, ff = Math.min((Fi.k * h - 7) / 1.25, fW, MC_MAX);
+          if (ff >= z[1]) { hT = z[0]; hC = h; f = ff; return true; }
+          return false;
+        });
+        var cand = { c: c, file: fi, f: f, hT: hT, hC: Math.floor(hC), righe: righe };
+        if (!meglio || f > meglio.f + 0.3) meglio = cand;   // (a pari: meno colonne, rose più larghe)
+      });
+    });
+    return meglio;
+  }
+  function mcLayout(M) {   // quante colonne, che formazione, quanto grandi le scritte e (se servono) le pagine
+    var R = M.rose, W = R.clientWidth, H = R.clientHeight; if (!W || !H) return null;
+    var fam = getComputedStyle(R).fontFamily, tutte = M.ordine, primo = M.mioPrimo ? 1 : 0, altri = tutte.length - primo;
+    var L = mcPiano(tutte, tutte.length, W, H, fam); L.per = altri; L.pagine = 1;
+    if (L.f < MC_MIN && altri > 1) for (var k = altri - 1; k >= 1; k--) {   // (troppi per un telefono piccolo: le rose degli altri su più pagine)
+      var q = mcPiano(tutte, primo + k, W, H - 36, fam);
+      if (q.f >= MC_MIN || k === 1) { var pg = Math.ceil(altri / k), per = Math.ceil(altri / pg); L = mcPiano(tutte, primo + per, W, H - 36, fam); L.per = per; L.pagine = pg; break; }   // (pagine pari: 9 altri = 5 + 4)
+    }
+    return L;
+  }
   function campettoMerc(el, g, opz) {   // una rosa in formazione: le 5 targhette al loro posto (il ruolo lo dice il posto)
-    var posti = slotRosa(g.kit || []), campo = el("div", { class: "mc-campo" });
-    POSTI_CAMPO.forEach(function (p, i) {
+    var posti = slotRosa(g.kit || []), campo = el("div", { class: "mc-campo" }), Fi = MC_FILE[opz.file] || MC_FILE.larga;
+    Fi.p.forEach(function (p, i) {
       var c = posti[i]; if (!c) return;
       var k = chiaveKit(c), cs = coloriSquadra(c.squadra) || ["#2b3550", "#9aa5bd"];
-      var b = el("button", { class: "mc-p", style: "left:" + p.x + "%;top:" + p.y + "%", onclick: function () { if (opz.onTocca) opz.onTocca(k, c, g); } }, [ el("i", { class: "as-rb-" + c.ruolo }), el("span", { text: nomeCampo(c.nome) }), el("small", { text: String(valoreMostrato(c)) }) ]);   // (la quotazione: a fine asta si vede)
+      var b = el("button", { class: "mc-p", style: "left:" + p.x + "%;top:" + p.y + "%;max-width:" + Math.round(Fi.mw[i] * 100) + "%", onclick: function () { if (opz.onTocca) opz.onTocca(k, c, g); } }, [ el("i", { class: "as-rb-" + c.ruolo }), el("span", { text: nomeCampo(c.nome) }), el("small", { text: String(valoreMostrato(c)) }) ]);   // (la quotazione: a fine asta si vede)
       b.setAttribute("data-k", k); b.style.setProperty("--sq", cs[0]); b.style.setProperty("--sq2", cs[1] || cs[0]);
       campo.appendChild(b);
     });
@@ -9547,10 +9604,11 @@
       M.s = t.schermata({ chiara: true }); M.s.classList.add("sc-merc", "mc");
       M.tempo = el("span", { class: "sc-tempo" }); M.capo = el("span", { class: "mc-capo" });
       M.s._contenuto.appendChild(el("div", { class: "sc-testa" }, [ el("b", { text: "🔄 Scambi" }), M.capo, M.tempo ]));
-      M.mia = el("div", { class: "mc-mia" }); M.altri = el("div", { class: "mc-altri" }); M.partite = el("div", { class: "mc-partite" });
-      M.s._contenuto.appendChild(M.mia); M.s._contenuto.appendChild(M.altri); M.s._contenuto.appendChild(M.partite);
+      M.rose = el("div", { class: "mc-rose" }); M.mia = el("div"); M.partite = el("div", { class: "mc-partite" });
+      M.s._contenuto.appendChild(M.rose); M.s._contenuto.appendChild(M.partite);
       M.barra = el("div", { class: "mc-barra" }); M.s._piede.appendChild(M.barra);
       t.mostra(M.s);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (MERC === M) adattaMerc(M); });   // (col carattere vero le misure cambiano)
       M.iv = setInterval(function () {
         if (!document.body.contains(M.s)) return clearInterval(M.iv);
         var r = Math.max(0, Math.ceil((M.fine - Date.now()) / 1000)); M.tempo.textContent = "⏱ " + Math.floor(r / 60) + ":" + ("0" + r % 60).slice(-2); M.tempo.classList.toggle("poco", r <= 20);
@@ -9574,24 +9632,14 @@
     var sel = M.sel, con = sel.con && trova(vm.giocatori, sel.con);
     if (!con || con.via) { sel.con = null; sel.loro = []; sel.miei = []; }
     else { sel.loro = sel.loro.filter(function (k) { return con.kit.some(function (c) { return chiaveKit(c) === k; }); }); sel.miei = me ? sel.miei.filter(function (k) { return me.kit.some(function (c) { return chiaveKit(c) === k; }); }) : []; if (!sel.loro.length) { sel.con = null; sel.miei = []; } }
-    svuotaNodo(M.mia); svuotaNodo(M.altri); svuotaNodo(M.capo);
+    svuotaNodo(M.capo);
     if (cb.sonoHost) {
       M.capo.appendChild(el("button", { class: "mc-mini", text: "＋1'", onclick: function () { cb.onScambio({ a: "piu" }); } }));
       M.capo.appendChild(el("button", { class: "mc-mini", text: "⏹ Fine", onclick: function () { M.t.conferma("Chiudere gli scambi per tutti?", "Poi si scoprono le rose e si gioca.", "⏹ Chiudi", function () { cb.onScambio({ a: "fine" }); }); } }));
     }
-    if (me) { var mia = campettoMerc(el, me, { mia: true, onTocca: function (k, c) { toccaMio(M, k, c); } }); mia.setAttribute("data-g", me.id); M.mia.appendChild(mia); }
-    var altri = (vm.giocatori || []).filter(function (g) { return g.id !== io; }), per = 4, pagine = Math.max(1, Math.ceil(altri.length / per));
-    if (M.pag >= pagine) M.pag = 0;
-    var griglia = el("div", { class: "mc-griglia" + (altri.length <= 2 ? " due" : "") });
-    altri.slice(M.pag * per, M.pag * per + per).forEach(function (g) {
-      var inv = (S.prop || []).filter(function (p) { return p.a === g.id || p.da === g.id; }).length;
-      var r = campettoMerc(el, g, { nota: g.via ? "📶 non c'è" : inv ? "🤝 tratta…" : "", onTocca: guarda || g.via ? null : function (k, c) { toccaLoro(M, g, k, c); } });
-      r.setAttribute("data-g", g.id); griglia.appendChild(r);
-    });
-    if (pagine > 1) M.altri.appendChild(el("div", { class: "mc-pag" }, [ el("button", { class: "mc-mini", text: "‹", onclick: function () { M.pag = (M.pag + pagine - 1) % pagine; M.ultima = null; disegnaMercato(M, []); } }), el("span", { text: "Rose " + (M.pag * per + 1) + "–" + Math.min(altri.length, M.pag * per + per) + " di " + altri.length }), el("button", { class: "mc-mini", text: "›", onclick: function () { M.pag = (M.pag + 1) % pagine; M.ultima = null; disegnaMercato(M, []); } }) ]));
-    M.altri.appendChild(griglia);
-    disegnaPartite(M);
-    segnaSel(M); barraMerc(M); adattaMerc(M);
+    M.mioPrimo = !!me; M.ordine = (me ? [me] : []).concat((vm.giocatori || []).filter(function (g) { return g.id !== io; }));   // (la mia rosa per prima)
+    disegnaPartite(M); barraMerc(M);
+    M.lay = mcLayout(M) || M.lay || { c: 2, file: "larga", f: 11, hT: 22, hC: 108, per: 99, pagine: 1 }; roseMerc(M);
     // 🎬 le figurine scambiate volano dal posto di prima al posto nuovo
     var volano = {}; (nuovi || []).forEach(function (f) { if (f.ok) (f.kd || []).concat(f.kv || []).forEach(function (kk) { volano[kk] = 1; }); });
     [].forEach.call(M.s.querySelectorAll(".mc-p"), function (b) {
@@ -9601,6 +9649,31 @@
       void b.offsetWidth; b.style.transition = "transform .8s cubic-bezier(.3,1.2,.5,1)"; b.style.transform = ""; setTimeout(function () { b.style.zIndex = ""; }, 850);
       b.classList.add("volato"); setTimeout(function () { b.classList.remove("volato"); }, 1600);
     });
+  }
+  function roseMerc(M) {   // le rose (tutte uguali, la mia per prima) con le misure di M.lay; se servono, le pagine con ‹ ›
+    var el = M.t.el, vm = M.vm, S = vm.scambi || {}, L = M.lay, me = M.mioPrimo ? M.ordine[0] : null, guarda = !!M.t.guarda || !me;
+    svuotaNodo(M.rose); M.mia = el("div");
+    var altri = M.ordine.slice(me ? 1 : 0); if (M.pag >= L.pagine) M.pag = 0;
+    var vis = (me ? [me] : []).concat(L.pagine > 1 ? altri.slice(M.pag * L.per, M.pag * L.per + L.per) : altri);
+    if (L.pagine > 1) M.rose.appendChild(el("div", { class: "mc-pag" }, [
+      el("button", { class: "mc-mini", text: "‹", "aria-label": "Rose di prima", onclick: function () { M.pag = (M.pag + L.pagine - 1) % L.pagine; roseMerc(M); } }),
+      el("span", { text: "Rose degli altri " + (M.pag * L.per + 1) + "–" + Math.min(altri.length, M.pag * L.per + L.per) + " di " + altri.length }),
+      el("button", { class: "mc-mini", text: "›", "aria-label": "Altre rose", onclick: function () { M.pag = (M.pag + 1) % L.pagine; roseMerc(M); } }) ]));
+    var griglia = el("div", { class: "mc-griglia" });
+    vis.forEach(function (g) {
+      var mia = g === me, inv = mia ? 0 : (S.prop || []).filter(function (p) { return p.a === g.id || p.da === g.id; }).length;
+      var r = campettoMerc(el, g, { mia: mia, file: L.file, nota: mia ? "" : g.via ? "📶 non c'è" : inv ? "🤝 tratta…" : "",
+        onTocca: mia ? function (k, c) { toccaMio(M, k, c); } : guarda || g.via ? null : function (k, c) { toccaLoro(M, g, k, c); } });
+      r.setAttribute("data-g", g.id); if (mia) { r.classList.add("mc-mia"); M.mia = r; }
+      griglia.appendChild(r);
+    });
+    M.rose.appendChild(griglia);
+    mcMisure(M); segnaSel(M);
+  }
+  function mcMisure(M) {   // le misure di M.lay sulla schermata (colonne, altezza dei campi, scritte)
+    var L = M.lay, st = M.rose.style;
+    st.setProperty("--mcc", L.c); st.setProperty("--mch", L.hC + "px"); st.setProperty("--mcf", Math.max(7, L.f).toFixed(1) + "px");
+    st.setProperty("--mct", Math.max(11, Math.min(14.5, L.f)).toFixed(1) + "px"); st.setProperty("--mca", L.hT + "px");
   }
   function disegnaPartite(M) {   // ⚽ le partite della giornata (con 3 giornate una alla volta), così si sa contro chi gioca chi si vuole prendere
     var el = M.t.el, cp = (M.vm.scambi || {}).coppie || M.vm.coppie || null;
@@ -9658,8 +9731,8 @@
   }
   function barraMerc(M) {
     var el = M.t.el, cb = M.cb, vm = M.vm, S = vm.scambi || {}, io = cb.myId, me = trova(vm.giocatori, io), sel = M.sel, b = M.barra;
-    svuotaNodo(b);
-    if (M.t.guarda || !me) { b.appendChild(el("p", { class: "sa-nota", text: "👀 Si scambiano i calciatori: poi si scoprono le rose" })); return; }
+    svuotaNodo(b); b.classList.remove("su");
+    if (M.t.guarda || !me) { b.appendChild(el("p", { class: "mc-riass invito", text: "👀 Si scambiano i calciatori: poi si scoprono le rose" })); return; }
     var mia = (S.prop || []).filter(function (p) { return p.da === io; })[0];
     var g = sel.con && trova(vm.giocatori, sel.con);
     function nomi(gg, keys) { return elencoNomi(keys.map(function (kk) { var c = gg.kit.filter(function (x) { return chiaveKit(x) === kk; })[0]; return c ? nomeCampo(c.nome) : "?"; })); }
@@ -9668,18 +9741,17 @@
       if (!v.ok) { var serve = {}; sel.loro.forEach(function (kk) { var c = g.kit.filter(function (x) { return chiaveKit(x) === kk; })[0]; if (c) serve[c.ruolo] = (serve[c.ruolo] || 0) + 1; }); Object.keys(serve).forEach(function (r) { if (!manca && me.kit.filter(function (x) { return x.ruolo === r; }).length > serve[r]) manca = r; }); }
       b.appendChild(el("p", { class: "mc-riass" + (v.ok ? "" : " no") }, v.ok ? [ "Dai ", el("b", { text: nomi(me, sel.miei) }), " · ricevi ", el("b", { text: nomi(g, sel.loro) }) ] : [ manca ? "👆 Tocca nella tua rosa quale " + (FANTA_RUOLI[manca] || {}).nome.toLowerCase() + " dai" : v.msg ]));
       var bp = el("button", { class: "btn btn-verde sc-ok", text: "📨 Proponi a " + g.nome, onclick: function () { if (!v.ok) return; var mossa = { a: "proponi", con: g.id, dai: sel.miei.slice(), vuoi: sel.loro.slice() }; sel.con = null; sel.loro = []; sel.miei = []; segnaSel(M); barraMerc(M); cb.onScambio(mossa); } });   // (prima si toglie la scelta: chi tiene la partita ridisegna subito)
-      bp.disabled = !v.ok;
+      bp.disabled = !v.ok; b.classList.add("su");   // (sale sopra le partite)
       b.appendChild(el("div", { class: "mc-riga" }, [ el("button", { class: "btn btn-fantasma mc-annulla", text: "✕", "aria-label": "Annulla", onclick: function () { sel.con = null; sel.loro = []; sel.miei = []; segnaSel(M); barraMerc(M); } }), bp ]));
-      return adattaMerc(M);
+      return;
     }
     if (mia) {
       var ga = trova(vm.giocatori, mia.a);
-      b.appendChild(el("p", { class: "mc-riass attesa" }, [ "⏳ Hai proposto a ", el("b", { text: ga ? ga.nome : "…" }), ": ", el("b", { text: nomi(me, mia.dai) }), " per ", el("b", { text: ga ? nomi(ga, mia.vuoi) : "…" }) ]));
-      b.appendChild(el("button", { class: "btn btn-fantasma sc-chiudi", text: "✕ Ritira la proposta", onclick: function () { cb.onScambio({ a: "ritira", n: mia.n }); } }));
-      return adattaMerc(M);
+      b.appendChild(el("div", { class: "mc-att" }, [ el("p", { class: "mc-riass attesa" }, [ "⏳ Hai proposto a ", el("b", { text: ga ? ga.nome : "…" }), ": ", el("b", { text: nomi(me, mia.dai) }), " per ", el("b", { text: ga ? nomi(ga, mia.vuoi) : "…" }) ]),
+        el("button", { class: "mc-mini sc-chiudi", text: "✕ Ritira", "aria-label": "Ritira la proposta", onclick: function () { cb.onScambio({ a: "ritira", n: mia.n }); } }) ]));   // (una riga sola: le partite restano in vista)
+      return;
     }
-    b.appendChild(el("p", { class: "mc-riass" }, [ "Vuoi un calciatore di un altro? ", el("b", { text: "Toccalo nella sua rosa" }) ]));
-    adattaMerc(M);
+    b.appendChild(el("p", { class: "mc-riass invito" }, [ "Vuoi un calciatore di un altro? ", el("b", { text: "Toccalo nella sua rosa" }) ]));
   }
   function popupMerc(M) {   // la proposta che mi arriva: «Accetta / Rifiuta» (una alla volta, la più vecchia)
     var vm = M.vm, cb = M.cb, el = M.t.el, io = cb.myId, me = trova(vm.giocatori, io), S = vm.scambi || {};
@@ -9695,11 +9767,11 @@
     M.s.appendChild(nodo); M.pop = { n: p.n, nodo: nodo };
     if (!M.visti[p.n]) { M.visti[p.n] = 1; vibra(60); }
   }
-  function adattaMerc(M) {   // tutto in una schermata, senza scorrere: i campetti si abbassano quanto serve (dal telefono piccolo al grande)
-    if (!M || !M.s || !document.body.contains(M.s)) return;
-    var hMax = window.innerHeight || 640, a = 128, b = 108;
-    M.s.style.setProperty("--mch1", a + "px"); M.s.style.setProperty("--mch", b + "px");
-    while (M.s.offsetHeight > hMax + 1 && b > 58) { a -= 5; b -= 5; M.s.style.setProperty("--mch1", a + "px"); M.s.style.setProperty("--mch", b + "px"); }
+  function adattaMerc(M) {   // lo schermo cambia (rotazione, barra del browser, carattere arrivato): si rifanno le misure, e le rose solo se cambia la divisione
+    if (!M || !M.s || !document.body.contains(M.s) || !M.ordine || !M.lay) return;
+    var v = M.lay, L = mcLayout(M); if (!L) return;
+    M.lay = L;
+    if (v.c !== L.c || v.file !== L.file || v.per !== L.per || v.pagine !== L.pagine) roseMerc(M); else mcMisure(M);
   }
   function avvisoMerc(M, testo, piccolo) {
     var n = M.t.el("div", { class: "mc-avviso" + (piccolo ? " piccolo" : ""), text: testo });

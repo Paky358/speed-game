@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 342,
+    data: "13 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: il mercato a misura di telefono 📐",
+    descrizione: [
+      "📐 Nel mercato degli scambi le rose sono tutte grandi uguali e la tua è la prima. La schermata si divide da sola in base a quanti siete: in 2 le due rose prendono tutto lo schermo, una sotto l'altra; da 3 in su due per riga (in 3 resta un posto vuoto a destra), grandi fino alle partite; fino a 8 stanno tutte in una schermata coi nomi che si leggono bene.",
+      "📄 Sui telefoni grandi ci state tutti anche in 10. Sui telefoni piccoli, quando siete tanti, le rose degli altri si dividono in due pagine con le frecce ‹ ›, e la tua resta sempre la prima.",
+      "👆 Mentre scegli i calciatori le rose non si spostano più: «📨 Proponi» sale sopra le partite e si chiude quando hai proposto.",
+      "🎬 Quando a fine partita si rivede il momento che ha deciso la giornata, ora c'è scritto «IL MOMENTO CHE HA DECISO» e non più «IL GOL DELLA GIORNATA»."
+    ]
+  },
+  {
     v: 341,
     data: "13 novembre 2026",
     titolo: "Mini Asta Fantacalcio: gli scambi a fine asta 🔄",

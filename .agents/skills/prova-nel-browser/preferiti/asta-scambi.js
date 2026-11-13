@@ -14,6 +14,12 @@
 //     mercato riprende con la proposta e il tempo; «＋1'» allunga.
 // sc3 Sullo stesso telefono in 3: dopo l'asta la schermata degli scambi; due rose, un centrocampista a testa, «✅ Scambiate», l'annuncio;
 //     «Fine scambi ▶» porta alla classifica delle rose.
+// sc5 (13 nov 2026, dopo la prova del proprietario, il proprietario: «le squadre sono piccolissime… la mia squadra la prima che si vede, ma della stessa grandezza delle altre…
+//     adattiamo lo schermo in base a quanti giocatori siamo») Senza asta: il mercato disegnato con rose finte in 2, 3, 4, 6, 8 e 10 su un
+//     telefono piccolo (360×640) e su uno come quello del proprietario (412×800): rose tutte della stessa grandezza, la mia per prima, niente
+//     scorrere, targhette dentro il campo, scritte da 9 px in su; in 2 una colonna sola e campi alti; da 3 in su due rose per riga (in 3 un
+//     posto vuoto a destra: il proprietario non vuole le tre una sotto l'altra); sul telefono grande fino a 8 tutti in una schermata; quando
+//     servono le pagine ‹ › la mia rosa resta per prima e le altre ci sono tutte.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -59,6 +65,22 @@
     return x.join(" · ");
   } });
 
+  // il mercato ben diviso: la mia rosa per prima, tutte della stessa grandezza, niente scorrere, targhette dentro il campo, scritte leggibili
+  function misureMercato(w) {
+    var rose = qa(w, ".mc-rosa"), campi = qa(w, ".mc-campo"), s = q(w, ".sc-merc"), box = q(w, ".mc-rose");
+    if (!rose.length || !s || !box) return "il mercato non c'è";
+    if (!rose[0].classList.contains("mc-mia") || !/La tua rosa/.test(rose[0].textContent)) return "la prima rosa non è la mia";
+    var r0 = campi[0].getBoundingClientRect(), diversi = campi.filter(function (c) { var r = c.getBoundingClientRect(); return Math.abs(r.width - r0.width) > 1.5 || Math.abs(r.height - r0.height) > 1.5; });
+    if (diversi.length) return "le rose non sono tutte della stessa grandezza";
+    if (s.scrollHeight > s.clientHeight + 1 || w.document.documentElement.scrollHeight > w.innerHeight + 1) return "il mercato scorre (" + s.scrollHeight + " > " + s.clientHeight + ")";
+    if (rose[rose.length - 1].getBoundingClientRect().bottom > box.getBoundingClientRect().bottom + 1) return "l'ultima rosa è tagliata";
+    var fuori = qa(w, ".mc-p").filter(function (b) { var r = b.getBoundingClientRect(), c = b.parentNode.getBoundingClientRect(); return r.left < c.left - 1 || r.right > c.right + 1 || r.top < c.top - 1 || r.bottom > c.bottom + 1; });
+    if (fuori.length) return fuori.length + " targhette escono dal campo (" + fuori[0].textContent + ")";
+    var sovra = 0; campi.forEach(function (c) { var pp = [].map.call(c.querySelectorAll(".mc-p"), function (b) { return b.getBoundingClientRect(); }); pp.forEach(function (a, i) { pp.slice(i + 1).forEach(function (b) { if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) sovra++; }); }); });
+    if (sovra) return sovra + " targhette una sopra l'altra";
+    var f = parseFloat(w.getComputedStyle(q(w, ".mc-p")).fontSize); if (f < 8.9) return "scritte troppo piccole (" + f + " px)";
+    return null;
+  }
   async function telefoni(nomi, imp) {
     var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; } }), C = await W.apriStanza(P, "Mini Asta Fantacalcio");
     for (var i = 1; i < nomi.length; i++) await W.apriTel(nomi[i], { hash: "gioco=astafanta&stanza=" + C, x: 190 * i });
@@ -94,18 +116,21 @@
     var NOMI = ["Paky", "Giulia", "Luca", "Sara"], o = await telefoni(NOMI, { formato: "fanta", scambi: true }), P = o.P, C = o.C, x = [];
     await asta(P, C);
     var G = W.finestra("Giulia"), L = W.finestra("Luca"), iG = idDi("Giulia");
-    if (!await W.aspetta(function () { return [P, G, L].every(function (w) { return q(w, ".mc-mia .mc-p") && qa(w, ".mc-griglia .mc-rosa").length === 3; }); }, 8000)) no("il mercato non arriva a tutti con la propria rosa e le 3 rose degli altri");
+    if (!await W.aspetta(function () { return [P, G, L].every(function (w) { return q(w, ".mc-mia .mc-p") && qa(w, ".mc-griglia .mc-rosa").length === 4; }); }, 8000)) no("il mercato non arriva a tutti con la propria rosa e le 3 rose degli altri");
+    [P, G, L].forEach(function (w) { var e = misureMercato(w); if (e) no(e); });
     if (q(P, ".sc-domanda")) no("c'è ancora la domanda «Chi vuole scambiare?»");
     if (qa(P, ".mc-ris .st-ris-p").length !== 10) no("sotto il mercato non ci sono le 10 partite della giornata");
     var nums = qa(P, ".mc-p small").map(function (e) { return e.textContent; });
     if (!nums.length || !nums.every(function (t) { return /^\d+$/.test(t); }) || /overall|⭐/.test(q(P, ".sc-merc").textContent)) no("nel mercato non ci sono le quotazioni (o c'è l'overall): " + nums.slice(0, 5).join(", "));
-    x.push("mercato: la mia rosa, le 3 rose degli altri (con le quotazioni), le 10 partite");
+    x.push("mercato: la mia rosa per prima e le 3 rose degli altri, tutte uguali (con le quotazioni), le 10 partite");
     // un attaccante di Giulia: il mio attaccante si sceglie da solo
     var kGA = kDi(C, "Giulia", "A"), kPA = kDi(C, "Paky", "A");
     await clic(P, iG, kGA);
     var mioA = qa(P, ".mc-mia .mc-p").filter(function (b) { return b.getAttribute("data-k") === kPA; })[0];
     if (!mioA || !mioA.classList.contains("sel")) no("toccato l'attaccante di Giulia, il mio attaccante non si sceglie da solo");
     var bp = bott(P, ".mc-barra .sc-ok", /Proponi/); if (!bp || bp.disabled) no("«📨 Proponi» spento con uno scambio giusto");
+    var su = q(P, ".mc-barra.su"); if (!su || su.getBoundingClientRect().top < qa(P, ".mc-rosa").pop().getBoundingClientRect().bottom - 1) no("la barra di «📨 Proponi» copre le rose (o non sale)");
+    var e1 = misureMercato(P); if (e1) no("con la scelta: " + e1);
     // e un suo centrocampista: io ne ho due, scelgo io quale
     var kGC = kDi(C, "Giulia", "C"), kPC = kDi(C, "Paky", "C", 1);
     await clic(P, iG, kGC);
@@ -181,6 +206,58 @@
     if (!ok) no("dopo il mercato la giornata non parte su tutti i telefoni");
     if (visto) no("dopo il mercato c'è ancora la sfilata delle rose");
     return "dopo «⏹ Fine» tutti nella giornata in " + Math.round((performance.now() - t0) / 100) / 10 + " s, senza la sfilata delle rose";
+  } });
+
+  COPIONE.aggiungi("sc5", { nome: "Mini Asta Fantacalcio, il mercato in 2, 3, 4, 6, 8 e 10 su un telefono piccolo e su uno grande: rose tutte uguali, la mia per prima, niente scorrere, scritte grandi, le pagine solo quando servono", fai: async function () {
+    var P = await W.apriTel("Paky", { x: 0 }), x = [];
+    P.SGCuore.precarica("astafanta");
+    if (!await W.aspetta(function () { return P.SG_FANTA_CALCIATORI && P.SG_FANTA_SQUADRE && P.SG_FANTA_QUOTAZIONI; }, 20000)) no("i dati del fanta non arrivano");
+    var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), F = {}, ag = "  var MERC = null;";
+    if (src.indexOf(ag) < 0) no("non trovo il mercato nel file del gioco");
+    new P.Function("SG", "FUORI", src.replace(ag, "FUORI.mercatoVM = mercatoVM; FUORI.sorteggio = sorteggioCoppie;" + ag))({ registra: function () {}, bot: P.SG && P.SG.bot }, F);
+    var el = P.SGCuore.el, app = P.document.getElementById("app"), CA = P.SG_FANTA_CALCIATORI;
+    var t = { el: el, guarda: false, conferma: function () {},
+      schermata: function () { var s = el("div", { class: "schermata oro senza-testa g-astafanta" }, [ el("div", { class: "testa" }), el("div", { class: "contenuto" }), el("div", { class: "piede" }) ]); s._contenuto = s.children[1]; s._piede = s.children[2]; return s; },
+      mostra: function (s) { while (app.firstChild) app.removeChild(app.firstChild); app.appendChild(s); } };
+    var NOMI = ["Paky", "Giulia", "Luca", "Sara", "Bea", "Massimiliano", "Maria Antonietta", "Gianfrancesco", "Ale", "Ugo"];
+    function rose(n, seme) {
+      var usati = {}; function rnd() { seme = (seme * 9301 + 49297) % 233280; return seme / 233280; }
+      function tutti(r) { var l = []; Object.keys(CA[r]).forEach(function (f) { l = l.concat(CA[r][f]); }); return l; }
+      function prendi(r) { var l = tutti(r); for (;;) { var s = l[Math.floor(rnd() * l.length)]; if (usati[s]) continue; usati[s] = 1; var m = /^(.*) \((.*)\)$/.exec(s); return { nome: m[1], squadra: m[2], ruolo: r, prezzo: 1 + Math.floor(rnd() * 20) }; } }
+      return NOMI.slice(0, n).map(function (nm, i) { return { id: i ? "g" + i : "host", nome: nm, omino: null, crediti: 3, kit: ["P", "D", "C", "C", "A"].map(prendi) }; });
+    }
+    var fr = document.getElementById("tel-Paky"), giro = 0;
+    for (var ti = 0; ti < 2; ti++) {
+      var wh = [[360, 640], [412, 800]][ti], righe = [];
+      fr.style.cssText = "position:absolute;top:0;left:0;width:" + wh[0] + "px;height:" + wh[1] + "px;border:0;background:#000;transform:none;z-index:9";
+      P.dispatchEvent(new P.Event("resize")); await W.dorme(300);
+      for (var ni = 0; ni < 6; ni++) {
+        var n = [2, 3, 4, 6, 8, 10][ni], gio = rose(n, 11 + n * 7 + ti); giro++;
+        F.mercatoVM(t, { codice: "SC5" + giro, sessione: giro, fase: "scambi", giocatori: gio, scambi: { resta: 170000, prop: [], esiti: [], nf: 0, coppie: [F.sorteggio()] } }, { myId: "host", sonoHost: true, onScambio: function () {} });
+        await W.dorme(350);
+        var dove = wh.join("×") + " in " + n + ": ", e = misureMercato(P); if (e) no(dove + e);
+        var pag = q(P, ".mc-pag"), vis = qa(P, ".mc-rosa"), f = parseFloat(P.getComputedStyle(q(P, ".mc-p")).fontSize), giri = 0;
+        if (!pag && vis.length !== n) no(dove + "si vedono " + vis.length + " rose");
+        var c0 = q(P, ".mc-campo").getBoundingClientRect(), b0 = q(P, ".mc-rose").getBoundingClientRect();
+        if (n === 2 && (c0.width < b0.width - 2 || c0.height < wh[1] * 0.3)) no(dove + "le due rose non prendono lo schermo (" + Math.round(c0.width) + "×" + Math.round(c0.height) + ")");
+        if (n >= 3 && Math.abs(c0.width - (b0.width - 6) / 2) > 2) no(dove + "le rose non sono due per riga (" + Math.round(c0.width) + " su " + Math.round(b0.width) + ")");
+        if (n >= 3 && n <= 4 && c0.height < wh[1] * 0.27) no(dove + "le rose non prendono lo schermo (alte " + Math.round(c0.height) + ")");
+        if (ti === 1 && n <= 8 && pag) no(dove + "sul telefono grande fino a 8 devono stare tutti in una schermata");
+        if (pag) {   // le pagine: la mia sempre per prima, e girandole ci sono tutti
+          var visti = {};
+          do {
+            var l = qa(P, ".mc-rosa"); if (!l[0].classList.contains("mc-mia")) no(dove + "girando le pagine la mia rosa non è più la prima");
+            l.forEach(function (r) { visti[r.getAttribute("data-g")] = 1; });
+            var e2 = misureMercato(P); if (e2) no(dove + "(pagina " + (giri + 1) + ") " + e2);
+            qa(P, ".mc-pag .mc-mini")[1].click(); await W.dorme(150); giri++;
+          } while (giri < 5 && !/^Rose degli altri 1–/.test(q(P, ".mc-pag span").textContent));
+          if (Object.keys(visti).length !== n) no(dove + "girando le pagine si vedono " + Object.keys(visti).length + " rose su " + n);
+        }
+        righe.push(n + (pag ? " (" + giri + " pagine)" : "") + " " + f.toFixed(1) + " px");
+      }
+      x.push(wh.join("×") + ": " + righe.join(", "));
+    }
+    return x.join(" · ");
   } });
 
   COPIONE.aggiungi("sc3", { nome: "Mini Asta Fantacalcio sullo stesso telefono in 3: gli scambi dopo l'asta, «✅ Scambiate», l'annuncio, «Fine scambi ▶»", fai: async function () {
