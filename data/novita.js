@@ -11,12 +11,15 @@ window.SG_NOVITA = [
   {
     v: 342,
     data: "13 novembre 2026",
-    titolo: "Mini Asta Fantacalcio: il mercato a misura di telefono 📐",
+    titolo: "Mini Asta Fantacalcio: fino a 12 giocatori 👥",
     descrizione: [
+      "👥 La Mini Asta Fantacalcio ora si gioca fino a 12 (prima 10).",
+      "🏟️ Nella giornata, in alto, al massimo 8 punteggi: da 9 in su vedi i 7 più avanti (il tuo c'è sempre) e l'ottavo è «👥 Gli altri». Toccalo e vedi la classifica di tutti; se qualcuno degli altri ha un calciatore in campo, si accende col 👟.",
       "📐 Nel mercato degli scambi le rose sono tutte grandi uguali e la tua è la prima. La schermata si divide da sola in base a quanti siete: in 2 le due rose prendono tutto lo schermo, una sotto l'altra; da 3 in su due per riga (in 3 resta un posto vuoto a destra), grandi fino alle partite; fino a 8 stanno tutte in una schermata coi nomi che si leggono bene.",
       "📜 Le rose non diventano mai troppo piccole: quando siete tanti (su un telefono normale da 9 in su) si scorrono col dito, e le partite restano ferme sotto. In fondo alla lista una scritta «⬇ altre rose» ti dice che ce ne sono ancora.",
       "👆 Mentre scegli i calciatori le rose non si spostano più: «📨 Proponi» sale sopra le partite e si chiude quando hai proposto. Se devi scegliere quale tuo calciatore dare (per esempio tra due centrocampisti), li trovi anche lì come tasti, senza tornare su alla tua rosa.",
-      "🎬 Quando a fine partita si rivede il momento che ha deciso la giornata, ora c'è scritto «IL MOMENTO CHE HA DECISO» e non più «IL GOL DELLA GIORNATA»."
+      "🎬 Quando a fine partita si rivede il momento che ha deciso la giornata, ora c'è scritto «IL MOMENTO CHE HA DECISO» e non più «IL GOL DELLA GIORNATA».",
+      "📏 Altezze: Gueye è alto 185 cm (prima era sbagliata) e c'è anche Mendy, 196 cm. Ora tutti i 335 calciatori hanno la loro altezza vera."
     ]
   },
   {

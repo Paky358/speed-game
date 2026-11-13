@@ -37,6 +37,7 @@
   var BIG_DA = 18;   // ✉️ «Buste solo per i big»: a busta i calciatori con quotazione da 18 in su (in 4 circa 3 a partita, sempre almeno 1)
   var VALORE_FASCIA = { A: 3, B: 2, C: 1 };   // a pari stelle vince il kit che vale di più (le fasce svelate), poi chi ha più crediti
   var MAX_GIOCATORI = 10;
+  var MAX_FANTA = 12;   // (13 nov 2026 sera, il proprietario: «portiamo la mini asta a 12»; il tetto vero sarebbe 20: un portiere per squadra di Serie A)
   var PARTITE_SALVATE = Object.create(null);
 
   function nuovaSessione() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
@@ -721,6 +722,10 @@
     ".st-gio-sotto{display:flex;align-items:baseline;gap:3px;min-width:0;}.st-gio-sotto .st-gio-ev{flex:1;min-width:0;}",
     ".st-gio-tab.fitto .st-gio-riga{gap:3px;padding:0 3px 0 3px;}.st-gio-tab.fitto .st-gio-faccia{width:20px;height:20px;}.st-gio-tab.fitto .st-gio-pt{font-size:.9rem;}",
     ".st-gio-tab.fittissimo .st-gio-faccia{display:none;}.st-gio-tab.fittissimo .st-gio-riga{padding-left:5px;}",
+    // 👥 «Gli altri» (da 9 in su) e la classifica di tutti che si apre toccandolo
+    ".st-gio-riga.fuori{opacity:0;visibility:hidden;pointer-events:none;}.st-gio-altri .st-gio-nome{color:#fff!important;}.st-gio-altri .st-gio-pt{font-size:.82rem;}.st-gio-altri::after{content:'▾';position:absolute;right:6px;top:4px;font-size:.7rem;opacity:.7;}",
+    ".st-tl{flex:1 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}.st-tl-r{flex:none;display:flex;align-items:center;gap:7px;min-height:28px;padding:2px 8px;border-radius:9px;background:rgba(255,255,255,.06);font-weight:800;font-size:.86rem;}",
+    ".st-tl-r.mio{box-shadow:inset 0 0 0 1.5px #ffe066;}.st-tl-r img{width:24px;height:24px;border-radius:50%;}.st-tl-r span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.st-tl-pos{width:24px;opacity:.75;font-size:.78rem;}.st-tl-pt{font-variant-numeric:tabular-nums;}",
     ".st-gio-in{display:none;}",
     ".st-gio-tab.basso .st-gio-faccia{width:22px;height:22px;}.st-gio-tab.basso .st-gio-ev,.st-gio-tab.basso .st-gio-zona{grid-column:3;grid-row:2;min-height:0;font-size:.74rem;}.st-gio-tab.basso .st-gio-nome{font-size:.7rem;}",
     // 🔎 (9 nov 2026, il proprietario: «i voti sopra, quando uno fa gol, assist, si vede poco… rimpiccioliamo un pochino il campo») nel quadretto: in alto il nome e i punti,
@@ -1548,8 +1553,8 @@
     giocatoriMin: 2,
     provaDaSolo: true,   // il proprietario (IL PAPPONE) la prova da solo sullo stesso telefono
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: f === "fanta" ? "In mezzo al tavolo: ognuno tocca la sua faccina" : "Vi passate il telefono per rilanciare", amici: true }],
-    giocatoriMax: MAX_GIOCATORI,
-    postiOnline: MAX_GIOCATORI,   // posti online (10)
+    giocatoriMax: f === "fanta" ? MAX_FANTA : MAX_GIOCATORI,
+    postiOnline: f === "fanta" ? MAX_FANTA : MAX_GIOCATORI,   // posti online (10; la Mini Asta 12)
     ritardatari: "partita",   // chi arriva ad asta cominciata la guarda ed entra alla prossima partita
     riprende: true,   // se l'host ricarica a metà partita, la partita riprende (il lotto all'asta riparte da capo, nessuno paga niente)
     riserva: true,   // online: se l'host sparisce del tutto (telefono spento), un amico porta avanti la partita
@@ -3869,7 +3874,7 @@
   var TEMPI_AZ = {   // [annuncio, pausa, azione, esito] in millisecondi
     gol: [1800, 300, 4200, 900], ann: [1800, 300, 4200, 1500], occ: [1800, 300, 4200, 1400], aut: [1800, 300, 4200, 900], rig: [2000, 300, 4000, 1300],
     amm: [1500, 300, 2900, 800], esp: [1500, 300, 2900, 900], rec: [1500, 300, 2900, 800], inv: [1100, 200, 1700, 700] };   // (l'esito si vede già durante l'esultanza: dopo resta poco)
-  var COLORI_PERSONE = ["#ffd43b", "#4dabf7", "#f06595", "#f8f9fa", "#ff922b", "#69db7c", "#9775fa", "#ff6b6b", "#3bc9db", "#d9a066"];   // il colore di ognuno (in classifica e sul campo). 8 nov 2026: in campo si riconosce SOLO dal colore, quindi 10 colori lontani tra loro (i primi 4 i più diversi, anche per chi confonde rosso e verde): giallo, azzurro, magenta, bianco, arancione, verde, viola, rosso, ciano, sabbia
+  var COLORI_PERSONE = ["#ffd43b", "#4dabf7", "#f06595", "#f8f9fa", "#ff922b", "#69db7c", "#9775fa", "#ff6b6b", "#3bc9db", "#d9a066", "#a9e34b", "#fcc2d7"];   // (13 nov 2026 sera: la Mini Asta fino a 12, altri due colori: lime e rosa chiaro)   // il colore di ognuno (in classifica e sul campo). 8 nov 2026: in campo si riconosce SOLO dal colore, quindi 10 colori lontani tra loro (i primi 4 i più diversi, anche per chi confonde rosso e verde): giallo, azzurro, magenta, bianco, arancione, verde, viola, rosso, ciano, sabbia
   var DURATA_GIORNATA = 120000;   // (tutti i momenti insieme: se sono di più, saltano prima le occasioni mancate, poi si va un po' più svelti)
   var SQ_FEMM = { Juventus: 1, Lazio: 1, Roma: 1, Fiorentina: 1, Atalanta: 1, Udinese: 1, Inter: 1 };
   function conArt(sq, di) {   // "l'Inter", "la Roma", "il Milan" (di: "dell'Inter", "della Roma", "del Milan")
@@ -3913,7 +3918,10 @@
     barraTesto(R, "0'", "⚽ Fischio d'inizio");
     // lo spazio: in alto i punteggi di ognuno a quadrettini (una fila fino a 4, poi due), il campo il più grande possibile (in verticale,
     // come lo schermo), sotto i risultati delle 10 partite
-    var cols = n <= 4 ? n : Math.ceil(n / 2), file = Math.ceil(n / cols), qh = file > 1 ? 58 : 62;   // (🔎 un po' più alti di prima, 42 e 46: le icone dei bonus su una riga loro)
+    // (13 nov 2026 sera, il proprietario: «al posto di rimpicciolirli tutti… all'ottavo posto c'è scritto gli altri, che per aprirli basta
+    // cliccarci sopra») al massimo QUADRETTI_MAX quadretti: da 9 in su 7 (i più avanti in classifica, e il mio sempre) + «👥 Gli altri»
+    var nq = Math.min(n, QUADRETTI_MAX); R.gioMax = n > QUADRETTI_MAX ? QUADRETTI_MAX : 0;
+    var cols = nq <= 4 ? nq : Math.ceil(nq / 2), file = Math.ceil(nq / cols), qh = file > 1 ? 58 : 62;   // (🔎 un po' più alti di prima, 42 e 46: le icone dei bonus su una riga loro)
     var tot = R.gio.clientHeight - R.ris.offsetHeight - R.bar.offsetHeight - 40, w = R.gio.clientWidth - 16, hc = tot - file * qh - (file - 1) * 5;
     if (hc > w * 1.6) { qh = Math.min(file > 1 ? 64 : 70, qh + Math.floor((hc - w * 1.6) / file)); hc = Math.round(Math.min(w * 1.6, tot - file * qh - (file - 1) * 5)); }   // (avanza posto: quadrettini un po' più grandi)
     var basso = file > 1 && hc < w * 1.2;   // (ripasso del 12 nov 2026: da 5 sul telefono basso il campo restava stretto) quadretti su due righe, il campo cresce
@@ -3940,7 +3948,14 @@
       var img = new Image(); img.onload = (function (id, im) { return function () { var c = document.createElement("canvas"); c.width = c.height = 96; c.getContext("2d").drawImage(im, 0, 0, 96, 96); R.facce[id] = c; }; })(r.id, img);
       img.src = src; R.facce[r.id] = img; R.busti[r.id] = avBmp(cfgDi(r.nome, r.omino));   // (la faccina sul campo, accanto al nome dei suoi calciatori; 🖼️ in foto se è pronta)
     });
+    if (!gia && R.gioMax) {   // 👥 «Gli altri»: l'ultimo posto dei quadretti; toccandolo la classifica di tutti adesso
+      var altN = el("b", { class: "st-gio-pt" }), altIn = el("span", { class: "st-gio-in" });
+      R.altri = { nodo: el("div", { class: "st-gio-riga st-gio-altri", style: "--pc:#a6acc8;transform:" + posQ(R, R.gioMax - 1), onclick: function () { tuttiLive(R); } }, [
+        el("div", { class: "st-gio-nomi" }, [ el("span", { class: "st-gio-nome", text: "👥 Gli altri" }), el("div", { class: "st-gio-sotto" }, [ altN, altIn ]) ]) ]), n: altN, inC: altIn };
+      R.gioTab.appendChild(R.altri.nodo);
+    } else if (!gia) R.altri = null;
     if (gia) rimettiQuadretti(R, base);   // (🏆 la giornata dopo: stessi quadretti, i voti ripartono da 6 sopra i punti di prima)
+    if (R.gioMax) ordinaGiornata(R, perTotale);   // (da 9 in su: subito al loro posto, gli altri dentro «Gli altri»)
     righe.forEach(function (r) { portaIniziale(R, R.gr[r.id]); });   // 🔒 i portieri partono col +1 della porta inviolata
     R.pag.style.top = R.azBox.offsetTop + "px";   // (le pagelle coprono il campo e la classifica)
     // chi c'entra in ogni momento: "partita|momento" → [{ r: la rosa, c: il calciatore, k: il suo posto nella rosa, t, d }]
@@ -4787,6 +4802,7 @@
       g.inC.textContent = miei.length ? "👟 in campo: " + miei.join(", ") : "";
       g.nodo.classList.toggle("incampo", miei.length > 0);
     });
+    altriQuadretto(R);
   }
   // toccando una riga della classifica: i 5 calciatori di quella rosa coi voti e i bonus di adesso (si chiude da sola, o toccandola)
   function schedaLive(R, g) {
@@ -7043,9 +7059,45 @@
   }
   if (window.SG_PROVA) window.SG_PROVA.asta = { campoAzioni: campoAzioni, scena: scena, kitDi: kitDi, kitPortiere: kitPortiere, giornataSerieA: giornataSerieA, roseSerieA: roseSerieA, tiroN: tiroN, rigoristaN: rigoristaN };   // (solo per le prove nel browser)
   function posQ(R, i) { var c = i % R.gioCols, f = Math.floor(i / R.gioCols); return "translate(calc(" + c + " * (100% + 5px))," + f * (R.gioQh + 5) + "px)"; }   // (il quadrettino al posto i: da sinistra a destra, poi la fila sotto)
-  function ordinaGiornata(R, f) {   // i quadrettini al loro posto (solo transform: niente scatti)
-    var l = Object.keys(R.gr).map(function (k) { return R.gr[k]; }).sort(f);
-    l.forEach(function (g, i) { var tr = posQ(R, i); if (g.tr !== tr) { g.tr = tr; g.nodo.style.transform = tr; } });
+  var QUADRETTI_MAX = 8;
+  function ordinaGiornata(R, f) {   // i quadrettini al loro posto (solo transform: niente scatti); da 9 in su chi non ci sta va dentro «Gli altri»
+    var l = Object.keys(R.gr).map(function (k) { return R.gr[k]; }).sort(f), vis = l;
+    if (R.gioMax && l.length > R.gioMax) {
+      vis = l.slice(0, R.gioMax - 1);
+      var mio = R.opz.mio != null ? R.gr[R.opz.mio] : null;
+      if (mio && vis.indexOf(mio) < 0) vis[vis.length - 1] = mio;   // (il mio quadretto si vede sempre: al posto del settimo)
+    }
+    l.forEach(function (g) {
+      var i = vis.indexOf(g), dentro = i >= 0, tr = posQ(R, dentro ? i : R.gioMax - 1);   // (chi esce va nel posto di «Gli altri»: i punti che prende volano lì)
+      if (g.tr !== tr) { g.tr = tr; g.nodo.style.transform = tr; }
+      g.nodo.classList.toggle("fuori", !dentro); g.fuori = !dentro;
+    });
+    altriQuadretto(R);
+  }
+  function altriQuadretto(R) {   // 👥 quanti sono e, se hanno calciatori in campo adesso, chi
+    if (!R.altri || !R.gr) return;
+    var fuori = listaGio(R).filter(function (g) { return g.fuori; }), inc = fuori.filter(function (g) { return g.nodo.classList.contains("incampo"); });
+    R.altri.n.textContent = fuori.length + (fuori.length === 1 ? " altro" : " altri");
+    R.altri.inC.textContent = inc.length ? "👟 " + inc.map(function (g) { return g.r.nome; }).join(", ") : "";
+    R.altri.nodo.classList.toggle("incampo", inc.length > 0);
+  }
+  // 👥 «Gli altri»: la classifica di tutti adesso (toccando un nome, i suoi calciatori coi voti)
+  function tuttiLive(R) {
+    if (!vivoRivela(R) || R.fase !== "giornata" || R.pagFissa) return;
+    var pag = R.pag, el = R.el, tok = (R.pagTok || 0) + 1; R.pagTok = tok;
+    svuotaNodo(pag); pag.className = "st-pag uno live tutti";
+    pag.appendChild(el("div", { class: "st-pag-tit", text: "👥 La classifica di adesso" + (R.gk ? " · punti sommati" : "") }));
+    var lista = el("div", { class: "st-tl" });
+    listaGio(R).sort(perTotale).forEach(function (g, i) {
+      lista.appendChild(el("div", { class: "st-tl-r" + (R.opz.mio != null && g.r.id === R.opz.mio ? " mio" : "") + (g.fuori ? "" : " su"), onclick: function (ev) { ev.stopPropagation(); schedaLive(R, g); } }, [
+        el("b", { class: "st-tl-pos", text: (i + 1) + "°" }), el("img", { src: R.busti[g.r.id], alt: "" }), el("span", { text: g.r.nome, style: "color:" + R.colP[g.r.id] }),
+        g.nodo.classList.contains("incampo") ? el("i", { text: "👟" }) : null, el("b", { class: "st-tl-pt", text: numFanta(totGio(g)) }) ]));
+    });
+    pag.appendChild(lista);
+    pag.appendChild(el("div", { class: "st-pag-nota", text: "tocca un nome per i suoi calciatori · tocca qui per chiudere" }));
+    pag.onclick = function () { chiudiLive(R, tok); };
+    void pag.offsetWidth; pag.classList.add("on");
+    R.timer.push(setTimeout(function () { chiudiLive(R, tok); }, 9000));
   }
   function fischioFinale(R) {   // 90': le pagelle vere, una rosa alla volta, da chi ha fatto meno a chi ha fatto di più; poi il podio
     if (!vivoRivela(R)) return;
@@ -7965,10 +8017,18 @@
     if (s.bustaF) s.bustaF = { n: s.bustaF.n, carta: s.bustaF.carta, gara: s.bustaF.gara, offerte: {}, sp: s.bustaF.sp, fine: s.bustaF.fine, durata: s.bustaF.durata };   // ✉️ (fanta) le offerte segrete no
     if (s.busta) s.busta = { n: s.busta.n, carta: s.busta.carta, chooser: s.busta.chooser, gara: s.busta.gara, offerte: {}, ord: 0, fine: s.busta.fine };
     if (s.classifica) s.classifica = s.classifica.map(function (r) { var c = {}; Object.keys(r).forEach(function (k) { if (k !== "omino" && k !== "kit") c[k] = r[k]; }); return c; });   // (l'avatar e la rosa ci sono già nei giocatori: la copia resta sotto i 60.000 caratteri)
+    delete s.senzaOmini;
+    // (13 nov 2026 sera: la Mini Asta fino a 12; in 12 con le 3 giornate la copia arrivava a 60.291 caratteri) se la copia è grande, gli avatar
+    // (circa 700 caratteri l'uno) escono: chi tiene la partita li tiene in soloQui, il vice li ha dalle foto che ha visto (OMINI_VISTI)
+    if (formato === "fanta" && s.giocatori && JSON.stringify(s).length > (window.__astaCopiaMax || COPIA_MAX)) {   // (__astaCopiaMax: solo per le prove)
+      s.giocatori = s.giocatori.map(function (g) { var c = {}; Object.keys(g).forEach(function (k) { if (k !== "omino") c[k] = g[k]; }); return c; }); s.senzaOmini = 1; }
     return s;
   }
-  function ripristina(st, R0) {
-    Object.keys(R0).forEach(function (k) { if (k !== "formato" && k !== "toAt" && k !== "temaId") st[k] = R0[k]; });
+  var COPIA_MAX = 52000, OMINI_VISTI = {};
+  function ominiDi(st) { var o = {}; (st.giocatori || []).forEach(function (g) { if (g.omino) o[g.id] = g.omino; }); return o; }
+  function ripristina(st, R0, omini) {
+    Object.keys(R0).forEach(function (k) { if (k !== "formato" && k !== "toAt" && k !== "temaId" && k !== "senzaOmini") st[k] = R0[k]; });
+    if (R0.senzaOmini && st.giocatori) st.giocatori.forEach(function (g) { if (!g.omino) g.omino = (omini && omini[g.id]) || OMINI_VISTI[g.id] || null; });   // (gli avatar tolti dalla copia)
     if (st.classifica && st.giocatori) st.classifica.forEach(function (r) { var g = st.giocatori.filter(function (x) { return x.id === r.id; })[0]; if (!r.omino) r.omino = g ? g.omino || null : null; if (!r.kit) r.kit = g ? kitClassifica(g) : []; });
     st.pronta = false;
   }
@@ -9859,7 +9919,8 @@
     // la partita di prima (t.ripresa): stesse rose, stessi crediti, stesso mazzo (vedi riprendi)
     var R0 = prendiRipresa(t, "fanta"), ripresa = !!R0, attesi = {}, tAttesi = null;
     if (ripresa) {
-      ripristina(st, R0);
+      ripristina(st, R0, t.ripresa && t.ripresa.soloQui && t.ripresa.soloQui.omini);
+      var mioG = perId(st, IO); if (mioG && !mioG.omino && t.mioOmino) mioG.omino = avatarOk(t.mioOmino(mioG.nome));   // (il mio avatar, se la copia non l'aveva)
       st.giocatori.forEach(function (g) { if (g.id !== IO && !g.via) attesi[g.id] = 1; });
     }
     // ⏱️ l'orologio della partita adesso è il mio (il vice che prende il posto porta sul suo orologio le ore scritte da quello di prima)
@@ -9893,8 +9954,8 @@
         if (m.t === "join") {
           delete attesi[id];   // (dopo una ripresa: è tornato)
           var gj = perId(st, id);
-          if (gj) gj.via = false;   // chi rientra (stesso id) riprende il suo posto e la sua rosa
-          else if (!st.iniziata && st.giocatori.length < MAX_GIOCATORI && (!t.puoSedersi || t.puoSedersi(id, m.nome)))   // (chi non è tra chi gioca guarda)
+          if (gj) { gj.via = false; if (!gj.omino && m.omino) gj.omino = avatarOk(m.omino); }   // chi rientra (stesso id) riprende il suo posto e la sua rosa (e il suo avatar, se la copia non l'aveva)
+          else if (!st.iniziata && st.giocatori.length < MAX_FANTA && (!t.puoSedersi || t.puoSedersi(id, m.nome)))   // (chi non è tra chi gioca guarda)
             st.giocatori.push({ id: id, nome: String(m.nome || "Amico").slice(0, 16), crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove(), omino: avatarOk(m.omino) });
           bd();
           if (gj && st.fase === "busta" && st.bustaF && st.bustaF.offerte[id] != null) rete.inviaA(id, { t: "tuaBustaF", a: id, n: st.bustaF.n, q: st.bustaF.offerte[id] });   // ✉️ (rientrato, dopo la foto) la busta che aveva già chiuso
@@ -9917,7 +9978,11 @@
 
     function invia() { rete.invia({ t: "vm", vm: vmFanta(st) }); ricorda(); }
     // la partita com'è adesso, per riprenderla se ricarico la pagina o se un amico prende il mio posto (in saletta niente)
-    function ricorda() { if (!st.morto && t.ricorda) t.ricorda(st.iniziata && st.fase !== "lobby" ? statoDaRicordare(st, "fanta") : null); }
+    function ricorda() {
+      if (st.morto || !t.ricorda) return;
+      if (!(st.iniziata && st.fase !== "lobby")) return t.ricorda(null);
+      var s = statoDaRicordare(st, "fanta"); t.ricorda(s, s.senzaOmini ? { omini: ominiDi(st) } : null);   // (gli avatar tolti dalla copia restano su questo telefono)
+    }
     var dopoTM = TM.dopo; TM.dopo = function (fn, ms) { dopoTM(fn, ms); ricorda(); };   // (anche l'ora del prossimo passo)
     function bd() { invia(); disegna(); }
     // la ripresa: rose e crediti restano; il calciatore all'asta riparte da capo (nessuno l'ha ancora pagato),
@@ -10239,6 +10304,7 @@
 
   // ---------- DISEGNO CONDIVISO FANTACALCIO (host e ospiti) ----------
   function disegnaFantaVM(t, vm, cb) {
+    (vm.giocatori || []).forEach(function (g) { if (g.omino) OMINI_VISTI[g.id] = g.omino; });   // (se divento io il vice, gli avatar ce li ho già)
     COPPIE_ORA = vm.coppie || null;   // 🆚
     NOME_CHI = false;   // 🏷️ (tolta l'8 nov 2026)
     BANDITORE = vm.ban !== 0;   // 🎙️
