@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 346,
+    data: "14 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: quattro ritocchi 🧹",
+    descrizione: [
+      "🎬 Nel replay del gol della giornata non c'è più la rete sopra il campo quando il gol è nella porta di sopra.",
+      "🧍 Quando si scoprono le rose non c'è più l'avatar a bordo campo col cartellino del valore.",
+      "🧤 Quando il portiere prende gol c'è scritto −1, il gol subito, e a parte «Porta inviolata persa»: il punteggio scende di 2 come prima, ma ora si capisce perché.",
+      "⭕ Nel tabellone della classifica e delle formazioni il cerchietto è centrato."
+    ]
+  },
+  {
     v: 345,
     data: "14 novembre 2026",
     titolo: "Mini Asta Fantacalcio: ognuno al suo posto, e azioni per tutti ⚽",

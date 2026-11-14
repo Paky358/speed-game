@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 14 nov 2026 20:53 · ⚽🃏 Mini Asta · salvato · quattro ritocchi: niente rete sopra il campo nel replay, via l'allenatore col cartellino del valore, il portiere che prende gol mostra −1 (e «Porta inviolata persa» a parte), cerchietto centrato nel tabellone (novità v346, non online) · asta-fanta
 - 14 nov 2026 20:09 · ⚽🃏 Mini Asta · PUBBLICATO (il proprietario: «pubblica la novità») · ruoli precisi Mantra e interventi in difesa per ruolo, gialli da attaccante in pressing, proteste, simulazione o reazione, minimo di 3 azioni a testa, il nome di chi ha il pallone (novità v345) · asta-fanta → master e lavori-in-corso
 - 14 nov 2026 19:15 · ⚽🃏 Mini Asta · salvato · il nome di chi ha il pallone (se non è di nessuno, piccolo sotto i piedi, con la dissolvenza; anche il portiere quando para o prende gol), dentro la novità v345, non online · asta-fanta
 - 14 nov 2026 18:54 · ⚽🃏 Mini Asta · salvato · ruoli precisi Mantra e interventi in difesa per ruolo (punte 0%, ali e trequartisti meno dell'1%), gialli di punte, ali e trequartisti in pressing, proteste, simulazione o reazione, minimo di 3 azioni a testa (1 nelle veloci) con l'equilibrio di prima (novità v345, non online) · asta-fanta

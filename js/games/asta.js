@@ -2683,7 +2683,11 @@
   // l'allenatore: la persona che ha la squadra che si guarda, in piedi a bordo campo. posa: "giu", "paletta" (il cartellino alzato col
   // prezzo: l'offerta più alta è sua) o "esulta" (il calciatore è suo: salta col cartellino ancora su). Quando cambia squadra entra da destra
   var IN_PIEDI_SU = { braccia: "canna", angolo: ANG_PALETTA };
+  // (14 nov 2026, il proprietario: «il nostro personaggino che prende tipo un'asticella in mano per dire quant'è la quotazione: eliminiamolo») MISTER = false:
+  // l'allenatore a bordo campo non si vede più (il codice resta, true lo rimette)
+  var MISTER = false;
   function allenatore(S, g, posa, prezzo) {
+    if (!MISTER) { if (S.mister) S.mister.style.display = "none"; return; }
     var cfg = g ? cfgDi(g.nome, g.omino) : null, chi = g ? g.nome + JSON.stringify(g.omino || "") : "";
     S.mister.style.visibility = cfg ? "" : "hidden";
     if (!cfg) { S.misterChi = S.misterK = ""; return; }
@@ -3928,7 +3932,7 @@
     allenatore(R, r, "giu");
     var posti = slotRosa(r.kit);
     R.slot.forEach(function (s, i) { riempiSlot(s, posti[i], null, true); s.nodo.classList.remove("cerca"); });
-    R.magliaImg.src = srcAv(cfgDi(r.nome, r.omino), {}); R.squadra.textContent = ""; R.nome.textContent = r.nome; R.prezzoN.textContent = OVR.on ? "?" : "0"; R.chi.textContent = OVR.on ? "media overall" : "valore della rosa";
+    R.magliaImg.src = srcAv(cfgDi(r.nome, r.omino), { quadrato: true }); R.squadra.textContent = "";   // (14 nov 2026: il gettone quadrato, al centro del suo lato: quello «in piedi» stava in basso) R.nome.textContent = r.nome; R.prezzoN.textContent = OVR.on ? "?" : "0"; R.chi.textContent = OVR.on ? "media overall" : "valore della rosa";
     R.schermo.classList.remove("vuoto"); rianima(R.schermo, "entra");
     var pari = R.righe.filter(function (o) { return o !== r && o.totale === r.totale; });
     rianima(R.ticker, "via", "La rosa di " + r.nome + "…");
@@ -4603,7 +4607,7 @@
       g.nodo.classList.remove("piu", "meno"); void g.nodo.offsetWidth; g.nodo.classList.add(q.d > 0 ? "piu" : "meno");
       (function (nd) { R.timer.push(setTimeout(function () { nd.classList.remove("piu", "meno"); }, 900)); })(g.nodo);
       if (!(q.r.id in somma)) { somma[q.r.id] = 0; icone[q.r.id] = ""; chi.push(q.r); }
-      somma[q.r.id] += qd; icone[q.r.id] += EV_GIO[q.t] || "";
+      somma[q.r.id] += q.d; icone[q.r.id] += EV_GIO[q.t] || "";   // (14 nov 2026, il proprietario: il gol subito è −1 e si scrive −1; il +1 della porta inviolata che se ne va si dice a parte, «🧤 Porta inviolata persa», e il quadretto scende di 2)
       if (q.d > 0 && (R.opz.mio == null || R.opz.mio === q.r.id) && (q.t === "gol" || q.t === "par")) buono = true;
       if (q.t === "esp") { R.fuori = R.fuori || {}; R.fuori[chiaveCalc(q.c)] = e.m; }
     });
@@ -7123,7 +7127,7 @@
         var rSu = (sc.verso || 1) < 0, yR = rSu ? h - 34 : 0;   // (la porta in alto: le scritte del replay vanno giù, così non coprono la porta)
         var tR = sc.titRep || "🎬 IL GOL DELLA GIORNATA", fR = Math.round(Math.min(17, w * 0.045)); ctx.font = "900 " + fR + "px system-ui,sans-serif"; var lR = ctx.measureText(tR).width; if (lR > w - 16) fR = Math.floor(fR * (w - 16) / lR);   // (sempre intera)
         ctx.fillStyle = "rgba(6,12,30,.78)"; ctx.fillRect(0, yR, w, 34); scritta(tR, w / 2, yR + 23, fR, "#ffe066");
-        ctx.fillStyle = "#e03131"; ctx.beginPath(); ctx.arc(14, rSu ? h - 48 : 48, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.font = "900 11px system-ui,sans-serif"; ctx.textAlign = "left"; ctx.fillStyle = "#fff"; ctx.fillText(sc.dietro ? "REPLAY · DA DIETRO LA PORTA" : "REPLAY · RALLENTATORE", 23, rSu ? h - 44 : 52);
+        ctx.fillStyle = "#e03131"; ctx.beginPath(); ctx.arc(14, rSu ? h - 48 : 48, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.font = "900 11px system-ui,sans-serif"; ctx.textAlign = "left"; ctx.fillStyle = "#fff"; ctx.fillText(sc.dietro && !rSu ? "REPLAY · DA DIETRO LA PORTA" : "REPLAY · RALLENTATORE", 23, rSu ? h - 44 : 52);
       }
       var ultima = null; sc.scritte.forEach(function (s) { if (p >= s.t && (!ultima || s.t >= ultima.t)) ultima = s; });
       [ultima].forEach(function (s) {   // GOL!, PARATO!… che entrano grandi (solo l'ultima)
@@ -7167,7 +7171,9 @@
         [0, w - 7].forEach(function (lx) { for (var ly = -34 + off; ly < h; ly += 34) { ctx.fillStyle = ca; ctx.fillRect(lx, ly, 7, 26); ctx.fillStyle = cb2; ctx.fillRect(lx, ly + 26, 7, 4); ctx.fillStyle = "#ffd76a"; ctx.fillRect(lx, ly + 30, 7, 4); } });
         ctx.restore();
       }
-      if (sc.dietro && A.vert) {   // 🎬 da dietro la porta: la rete in primo piano, dalla parte della porta (in basso, o in alto se il gol era di sopra)
+      // (14 nov 2026, il proprietario: «questa cosa che si vede una rete sopra… fa schifo, non deve vedersi») la rete in primo piano SOLO con la porta
+      // in basso, da dietro la porta come nella foto scelta il 6 nov; col gol nella porta di sopra niente rete (il replay resta lo stesso, al rallentatore)
+      if (sc.dietro && A.vert && (sc.verso || 1) > 0) {   // 🎬 da dietro la porta: la rete in primo piano, in basso
         var hb = Math.round(Math.min(46, h * 0.11)), y0 = (sc.verso || 1) < 0 ? 0 : h - hb; ctx.save();
         ctx.fillStyle = "rgba(255,255,255,.1)"; ctx.fillRect(0, y0, w, hb); ctx.strokeStyle = "rgba(255,255,255,.38)"; ctx.lineWidth = 1; ctx.beginPath();
         for (x = 0; x <= w; x += w / 26) { ctx.moveTo(x, y0); ctx.lineTo(x, y0 + hb); } for (y = y0; y <= y0 + hb; y += hb / 4) { ctx.moveTo(0, y); ctx.lineTo(w, y); } ctx.stroke();
@@ -7384,7 +7390,7 @@
     R.radice.classList.remove("gio"); R.info.textContent = "La classifica delle rose";
     R.campoBox.style.display = "none"; R.gio.style.display = "none"; R.podio.style.display = "";
     var primi = R.righe.filter(function (r) { return r.pos === 1; });   // (a pari punti (o valore) e pari crediti vincono insieme)
-    if (w) { R.magliaImg.src = srcAv(cfgDi(w.nome, w.omino), {}); R.nome.textContent = primi.map(function (r) { return r.nome; }).join(" e "); R.prezzoN.textContent = gio ? numFanta(puntiFin(w)) : w.totale; R.chi.textContent = (gio ? "fantapunti · " : "") + (primi.length > 1 ? "pari merito! 🏆" : "vince! 🏆"); R.squadra.textContent = ""; rianima(R.schermo, "entra"); }
+    if (w) { R.magliaImg.src = srcAv(cfgDi(w.nome, w.omino), { quadrato: true }); R.nome.textContent = primi.map(function (r) { return r.nome; }).join(" e "); R.prezzoN.textContent = gio ? numFanta(puntiFin(w)) : w.totale; R.chi.textContent = (gio ? "fantapunti · " : "") + (primi.length > 1 ? "pari merito! 🏆" : "vince! 🏆"); R.squadra.textContent = ""; rianima(R.schermo, "entra"); }
     R.ruolo.className = "st-ruolo st-ruolo-classifica"; R.ruolo.textContent = "CLASSIFICA"; R.chi.style.whiteSpace = "normal"; R.chi.style.lineHeight = "1.1";
     var pariTx = pariPodio(R.righe, gio);
     rianima(R.ticker, "via", pariTx ? pariTx : gio ? "Vince chi fa più fantapunti " + (w.prima ? "in 3 giornate" : "nella giornata") + "! A pari punti, la rosa che vale di più." : "Vince la rosa che vale di più! A pari valore, chi ha più crediti avanzati.");
