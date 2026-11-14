@@ -123,10 +123,15 @@
     var bFatto = el("button", { class: "btn btn-primario", type: "button", text: "▶ Fatto", onclick: fatto });
     s._piede.appendChild(bFatto);
 
-    // un'emoji della griglia: l'immagine arriva solo quando si vede (lazy); se non arriva resta l'emoji del telefono
+    // un'emoji della griglia: l'immagine si chiede solo quando sta per comparire mentre si scorre (il «lazy» del browser ne chiede
+    // centinaia in anticipo: il proprietario vuole che si scarichino solo quelle viste); se non arriva resta l'emoji del telefono
+    var vede = window.IntersectionObserver ? new IntersectionObserver(function (l) {
+      l.forEach(function (x) { if (!x.isIntersecting) return; var im = x.target; vede.unobserve(im); if (im.getAttribute("data-src")) { im.src = im.getAttribute("data-src"); im.removeAttribute("data-src"); } });
+    }, { rootMargin: "200px 0px" }) : null;
     function bottone(e) {
-      return el("button", { class: "gt-em" + (e === scelta.e ? " on" : ""), type: "button", "data-e": e, "aria-label": e, onclick: function () { scegli(e); } }, [
-        el("img", { src: G.url(e), alt: e, loading: "lazy", decoding: "async", draggable: "false", onerror: function () { this.replaceWith(document.createTextNode(this.alt)); } }) ]);
+      var im = el("img", { alt: e, decoding: "async", draggable: "false", onerror: function () { this.replaceWith(document.createTextNode(this.alt)); } });
+      if (vede) { im.setAttribute("data-src", G.url(e)); vede.observe(im); } else im.src = G.url(e);
+      return el("button", { class: "gt-em" + (e === scelta.e ? " on" : ""), type: "button", "data-e": e, "aria-label": e, onclick: function () { scegli(e); } }, [ im ]);
     }
     function scegli(e) {
       scelta.e = e;
