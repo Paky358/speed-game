@@ -6627,6 +6627,71 @@
   }
   function scuro(c, f) { var n = parseInt(String(c).slice(1), 16) || 0; return "rgb(" + Math.round((n >> 16) * f) + "," + Math.round((n >> 8 & 255) * f) + "," + Math.round((n & 255) * f) + ")"; }
   function liscio(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
+  function lungo(pts, p, palla) {   // dove si trova lungo la strada al tempo p: si parte e si arriva piano solo dove ci si ferma, i punti in mezzo si passano di corsa
+    if (!pts || !pts.length) return null;
+    if (p <= pts[0][0]) return pts[0];
+    var n = pts.length;
+    function vel(q, r) { var dt = r[0] - q[0]; return dt > 1e-4 ? Math.sqrt(Math.pow(r[1] - q[1], 2) + Math.pow(r[2] - q[2], 2)) / dt : 0; }
+    for (var i = 1; i < n; i++) if (p <= pts[i][0]) {
+      var a = pts[i - 1], b = pts[i], h = Math.max(1e-6, b[0] - a[0]), x = (p - a[0]) / h, o = [p], k, x2 = x * x, x3 = x2 * x;
+      var calcio = palla && vel(a, b) > 1.1;   // (il pallone calciato: parte forte e rallenta un po')
+      var prima = i > 1 && a[0] - pts[i - 2][0] > 1e-4 && !(palla && vel(pts[i - 2], a) > 1.1), dopo = i < n - 1 && pts[i + 1][0] - b[0] > 1e-4 && !(palla && vel(b, pts[i + 1]) > 1.1);
+      for (k = 1; k < a.length; k++) {
+        if (b[k] === a[k]) { o.push(a[k]); continue; }   // (fermo: esatto)
+        var d = (b[k] - a[k]) / h, v, m0 = 0, m1 = 0, dp, dn;
+        if (palla && k === 3) v = a[3] + (b[3] - a[3]) * (b[3] > a[3] ? 1 - (1 - x) * (1 - x) : x * x);   // (l'altezza: sale piano, scende sempre più svelto)
+        else if (calcio) v = a[k] + (b[k] - a[k]) * x * (1.25 - 0.25 * x);
+        else {
+          if (prima) { dp = (a[k] - pts[i - 2][k]) / (a[0] - pts[i - 2][0]); if (dp * d > 0) m0 = 2 * dp * d / (dp + d); }
+          else if (palla && i > 1) m0 = d;   // (subito dopo un calcio il pallone rotola, non riparte da fermo)
+          if (dopo) { dn = (pts[i + 1][k] - b[k]) / (pts[i + 1][0] - b[0]); if (dn * d > 0) m1 = 2 * dn * d / (dn + d); }
+          else if (palla && i < n - 1) m1 = d;   // (e arriva sul piede di chi calcia senza fermarsi)
+          v = (2 * x3 - 3 * x2 + 1) * a[k] + (x3 - 2 * x2 + x) * h * m0 + (3 * x2 - 2 * x3) * b[k] + (x3 - x2) * h * m1;
+        }
+        o.push(v);
+      }
+      return o;
+    }
+    return pts[n - 1];
+  }
+  // 🏷️ IL NOME DI CHI HA IL PALLONE (14 nov 2026, il proprietario col Cervello): in campo i titolari veri hanno già faccia e numero; chi ha il
+  // pallone, se non è di nessuno, ha anche il NOME, piccolo, bianco un po' trasparente, sotto i piedi. Compare quando prende il pallone e svanisce
+  // piano (circa mezzo secondo) quando lo passa o tira; un nome alla volta. Il portiere quando para o prende gol. I vostri no: hanno la loro
+  // etichetta grande. Chi ha il pallone lo dicono solo dove sono lui e il pallone (il più vicino, entro 1,4 m, col pallone basso): fino al tiro
+  // è uguale in tutti gli esiti (prova sp1)
+  var NOME_PALLA = { dist: 1.4, alto: 0.8, via: 0.1, entra: 0.025, passo: 0.005, por: 0.3 };
+  function palloneDi(sc, p) {   // l'attore che ha il pallone al tempo p (il più vicino, entro NOME_PALLA.dist metri, col pallone basso), o -1
+    var b = lungo(sc.palla, p, true); if (!b || (b[3] || 0) > NOME_PALLA.alto) return -1;
+    var best = -1, bd = NOME_PALLA.dist;
+    sc.attori.forEach(function (a, i) {
+      if (a.sq === "arb") return;
+      var q = lungo(a.pts, p); if (!q) return;
+      var d = Math.sqrt(Math.pow((q[1] - b[1]) * 64.9, 2) + Math.pow((q[2] - b[2]) * 55.4, 2));   // (in metri: la larghezza e la profondità della metà campo)
+      if (d < bd) { bd = d; best = i; }
+    });
+    return best;
+  }
+  function nomeSottoPiedi(sc, p, ok) {   // a chi va il nome piccolo al tempo p: { i: l'attore, al: quanto si vede } o null (ok(i): ha un nome da scrivere)
+    var N = NOME_PALLA, t0 = sc.paf != null ? sc.paf : sc.rete != null ? sc.rete : null, d;
+    if (t0 != null && p >= t0) {   // (il portiere che para o prende gol)
+      var gi = -1; sc.attori.forEach(function (a, k) { if (a.sq === "pD") gi = k; });
+      if (gi >= 0 && ok(gi)) { d = p - t0; return d <= N.por ? { i: gi, al: Math.min(1, (d + N.passo) / N.entra) } : d <= N.por + N.via ? { i: gi, al: 1 - (d - N.por) / N.via } : null; }
+    }
+    var i = palloneDi(sc, p);
+    if (i >= 0) {
+      if (!ok(i)) return null;
+      var dentro = 0; for (d = N.passo; d <= N.entra; d += N.passo) { if (palloneDi(sc, p - d) !== i) break; dentro = d; }
+      return { i: i, al: Math.min(1, (dentro + N.passo) / N.entra) };
+    }
+    for (d = N.passo; d <= N.via + 1e-9; d += N.passo) { var j = palloneDi(sc, p - d); if (j >= 0) return ok(j) ? { i: j, al: Math.max(0, 1 - d / N.via) } : null; }
+    return null;
+  }
+  function nomeVero(sc, a) {   // il nome di chi non è di nessuno (il titolare vero, con la sua faccia e il suo numero); null per i vostri e per gli anonimi
+    if (!a || a.sq === "arb" || (a.chi && a.chi.nome)) return null;
+    var por = (a.sq === "pA" || a.sq === "pD") && sc.altri && sc.altri[a.sq.slice(1)] ? sc.altri[a.sq.slice(1)].P[0] : null;
+    var k = a.chi && a.chi.vero ? a.chi.k : a.fig && a.fig.k ? a.fig.k : por ? por.k : null;
+    return k ? nomeCampo(splitCalc(k).nome) : null;
+  }
   function campoAzioni(el, box) {
     var cv = el("canvas", { class: "st-az" }), ctx = cv.getContext("2d"), A = { raf: 0, sc: null };
     box.appendChild(cv);
@@ -6644,33 +6709,6 @@
     function pieno(sc, hx, hy) { var X = 0.5 + hy * 0.496, Y = 0.08 + hx * 0.84; return [sc.verso < 0 ? 1 - X : X, Y]; }
     function P(sc, hx, hy) { var f = pieno(sc, hx, hy); return base(f[0], f[1]); }
     A.lontano = function (sc) { return A.vert ? (sc.verso > 0 ? 18 : 82) : 24; };   // dove vanno le scritte: nella metà campo lontana dall'azione (in %)
-    function lungo(pts, p, palla) {   // dove si trova lungo la strada al tempo p: si parte e si arriva piano solo dove ci si ferma, i punti in mezzo si passano di corsa
-      if (!pts || !pts.length) return null;
-      if (p <= pts[0][0]) return pts[0];
-      var n = pts.length;
-      function vel(q, r) { var dt = r[0] - q[0]; return dt > 1e-4 ? Math.sqrt(Math.pow(r[1] - q[1], 2) + Math.pow(r[2] - q[2], 2)) / dt : 0; }
-      for (var i = 1; i < n; i++) if (p <= pts[i][0]) {
-        var a = pts[i - 1], b = pts[i], h = Math.max(1e-6, b[0] - a[0]), x = (p - a[0]) / h, o = [p], k, x2 = x * x, x3 = x2 * x;
-        var calcio = palla && vel(a, b) > 1.1;   // (il pallone calciato: parte forte e rallenta un po')
-        var prima = i > 1 && a[0] - pts[i - 2][0] > 1e-4 && !(palla && vel(pts[i - 2], a) > 1.1), dopo = i < n - 1 && pts[i + 1][0] - b[0] > 1e-4 && !(palla && vel(b, pts[i + 1]) > 1.1);
-        for (k = 1; k < a.length; k++) {
-          if (b[k] === a[k]) { o.push(a[k]); continue; }   // (fermo: esatto)
-          var d = (b[k] - a[k]) / h, v, m0 = 0, m1 = 0, dp, dn;
-          if (palla && k === 3) v = a[3] + (b[3] - a[3]) * (b[3] > a[3] ? 1 - (1 - x) * (1 - x) : x * x);   // (l'altezza: sale piano, scende sempre più svelto)
-          else if (calcio) v = a[k] + (b[k] - a[k]) * x * (1.25 - 0.25 * x);
-          else {
-            if (prima) { dp = (a[k] - pts[i - 2][k]) / (a[0] - pts[i - 2][0]); if (dp * d > 0) m0 = 2 * dp * d / (dp + d); }
-            else if (palla && i > 1) m0 = d;   // (subito dopo un calcio il pallone rotola, non riparte da fermo)
-            if (dopo) { dn = (pts[i + 1][k] - b[k]) / (pts[i + 1][0] - b[0]); if (dn * d > 0) m1 = 2 * dn * d / (dn + d); }
-            else if (palla && i < n - 1) m1 = d;   // (e arriva sul piede di chi calcia senza fermarsi)
-            v = (2 * x3 - 3 * x2 + 1) * a[k] + (x3 - 2 * x2 + x) * h * m0 + (3 * x2 - 2 * x3) * b[k] + (x3 - x2) * h * m1;
-          }
-          o.push(v);
-        }
-        return o;
-      }
-      return pts[n - 1];
-    }
     function strada(sc, a, p) {   // quanta strada ha fatto (pixel del campo) fino al tempo p: le gambe vanno a tempo coi metri, mai a vuoto
       var K = A.w + "x" + A.h + "x" + sc.verso, j;
       if (a._sk !== K) {
@@ -6956,7 +6994,7 @@
           for (i = 1; i < asse.length && !t; i++) if (lib(asse[i]) && posti[i] && posti[i].ru === ru) t = asse[i];
           for (i = 1; i < asse.length && !t; i++) if (lib(asse[i])) t = asse[i];
           var l = (al && al[ru]) || []; for (i = 0; i < l.length && !t; i++) if (!giaIn[l[i].k] && !nelleSq[l[i].k]) t = l[i];
-          a.fig = t ? { asp: t.asp || null, num: t.num != null ? t.num : null } : null; if (t) giaIn[t.k] = 1;
+          a.fig = t ? { asp: t.asp || null, num: t.num != null ? t.num : null, k: t.k || null } : null; if (t) giaIn[t.k] = 1;
         });
         posti.forEach(function (o, i) {   // 👕 i titolari che nessuno ha comprato; dove non c'è un titolare libero, uno della panchina nel suo ruolo
           if (o.nome || i > 10) return;
@@ -7025,7 +7063,7 @@
           o: { sw: Math.sin(ph) * 0.45 * corre, sv: Math.cos(ph) * corre, vr: vel > 0.01 ? Math.abs(dy) / vel : 0, salto: po.salto + corre * 0.03 * Math.abs(Math.sin(ph)), ruota: ruota + dir * (corre * 0.1 * lato + po.inclina * 0.28), giu: giu,
             calcio: po.calcio, braccia: Math.max(po.braccia, Math.min(0.6, giu)), carta: po.carta, ali: po.ali, ginocchia: po.ginocchia, piega: po.piega, allunga: po.allunga, guanti: a.sq === "pA" || a.sq === "pD",
             pronto: (a.sq === "pA" || a.sq === "pD") && giu < 0.05 && po.salto < 0.05 && po.braccia < 0.05 ? 1 - corre : 0, pelle: asA ? asA.pelle : aspetto(n).pelle, capelli: aspetto(n).capelli, stile: aspetto(n).stile, scarpe: aspetto(n).scarpe, asp: asA },
-          chi: a.chi && a.chi.nome ? a.chi : null, numA: gkA ? gkA.num : a.chi && a.chi.vero ? a.chi.num : a.fig ? a.fig.num : null });
+          chi: a.chi && a.chi.nome ? a.chi : null, numA: gkA ? gkA.num : a.chi && a.chi.vero ? a.chi.num : a.fig ? a.fig.num : null, ai: i });
       });
       figure.sort(function (a, b) { return a.y - b.y; });
       var nomi = [];
@@ -7065,6 +7103,18 @@
       // sopra a tutto, nei pixel dello schermo: i nomi dei vostri (con la punta sulla testa), le scritte, il replay
       var fs = Math.round(Math.max(9, Math.min(12, Math.min(w, h) * 0.032)));
       nomi.forEach(function (n) { var sx = w / 2 + (n.alto[0] - cam.cx) * cam.z, sy = h / 2 + (n.alto[1] - cam.cy) * cam.z; if (sx < -8 || sx > w + 8 || sy < 0 || sy > h + 40) return; etichetta(n.chi.nome, sx, sy - 6, n.chi.pc || "#ffe066", fs, n.chi.pr); });
+      var np = nomeSottoPiedi(sc, p, function (k) { return !!nomeVero(sc, sc.attori[k]); });   // 🏷️ il nome di chi ha il pallone (se non è di nessuno)
+      if (np && np.al > 0.02) {
+        var fN = figure.filter(function (f) { return f.ai === np.i; })[0], tN = nomeVero(sc, sc.attori[np.i]);
+        if (fN && tN) {
+          var sxN = w / 2 + (fN.x - cam.cx) * cam.z, syN = h / 2 + (fN.y - cam.cy) * cam.z, fsN = Math.max(8, Math.round(fs * 0.82));
+          if (sxN > -40 && sxN < w + 40 && syN > -10 && syN < h + 20) {
+            ctx.save(); ctx.font = "700 " + fsN + "px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.lineJoin = "round"; ctx.lineWidth = 2.5;
+            ctx.strokeStyle = "rgba(0,0,0," + (0.45 * np.al).toFixed(3) + ")"; ctx.fillStyle = "rgba(255,255,255," + (0.82 * np.al).toFixed(3) + ")";
+            var yN = syN + fsN * 1.2; ctx.strokeText(tN, sxN, yN); ctx.fillText(tN, sxN, yN); ctx.restore();
+          }
+        }
+      }
       if (sc.segnaVar && A.doveVar) {   // 📺 la scritta del VAR (sopra i nomi, mai tagliata dal bordo)
         var lv = fs * 10.4, vx = Math.max(lv / 2 + 4, Math.min(w - lv / 2 - 4, A.doveVar[0])), vy = Math.min(h - 6, A.doveVar[1] + fs * 1.8);
         ctx.fillStyle = "rgba(10,10,20,.86)"; ctx.fillRect(vx - lv / 2, vy - fs * 1.6, lv, fs * 1.8); scritta("📺 FUORIGIOCO", vx, vy - fs * 0.32, fs, "#ff3b5c");

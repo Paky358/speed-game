@@ -17,6 +17,7 @@ window.SG_NOVITA = [
       "🛡️ Gli interventi in difesa li fanno soprattutto difensori e mediani; ali e trequartisti poco, le punte quasi mai. Niente più attaccanti a fare entrate davanti alla loro area.",
       "🟨 I cartellini restano quelli veri, ma una punta, un'ala o un trequartista li prende da attaccante: fallo in pressing nella metà campo degli altri, proteste, simulazione o fallo di reazione. Il pressing a volte finisce col giallo e a volte con la palla rubata: dall'annuncio non si capisce.",
       "🎯 Ognuno vede almeno 3 azioni dei suoi calciatori nella giornata (almeno 1 in ognuna delle due giornate veloci delle «3 giornate»). Possono finire in gol, parata, palo o fuori, come tutte le altre.",
+      "🏷️ In campo chi ha il pallone, se non è di nessuno, ha il suo nome, piccolo e bianco sotto i piedi: compare quando prende palla e svanisce quando passa o tira. Anche il portiere quando para o prende gol. I vostri calciatori tengono la loro etichetta grande.",
       "⚖️ L'equilibrio è quello di prima: la rosa più forte vince quanto prima, e i punti sono gli stessi."
     ]
   },
