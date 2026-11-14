@@ -100,6 +100,7 @@
       if (!c.ruota || c.ruota.width < 0.7 * c.vw) no("si gira: su " + n + " la ruota non è grande (" + (c.ruota ? Math.round(c.ruota.width) : 0) + " px)");
       if (c.righe) no("si gira: su " + n + " c'è la tastiera");
       if (c.ruota.top < c.tab.bottom - 2) no("si gira: su " + n + " la ruota copre il tabellone");
+      var ra = c.d.querySelector(".ru-alto").getBoundingClientRect(); if (c.barra && ra.bottom > c.barra.top + 2) no("si gira: su " + n + " la ruota finisce sopra le scritte in basso");
     });
     L.push("si gira: ruota grande, niente tastiera");
     // chi gira la trascina: col tasto «🎡 Gira» (va bene anche così)
@@ -110,8 +111,15 @@
     if (!dopo) no("la ruota non si ferma");
     if (dopo.fase === "consonante") {
       await W.dorme(1300);
+      var sceglie = nomeDi(dopo.turno);
       tutti.forEach(function (n) {
         var c = controlla(n, "si sceglie la consonante");
+        if (n !== sceglie) {   // 📺 14 nov 2026 (il proprietario): la tastiera solo a chi sceglie; chi aspetta vede la ruota grande, ferma, mai sopra le scritte
+          if (c.righe) no("si sceglie la consonante: su " + n + " (aspetta) c'è la tastiera");
+          if (c.nascosta || !c.ruota || c.ruota.width < 0.6 * c.vw) no("si sceglie la consonante: su " + n + " (aspetta) la ruota non è grande");
+          var ra = c.d.querySelector(".ru-alto").getBoundingClientRect(); if (c.barra && ra.bottom > c.barra.top + 2) no("su " + n + " (aspetta) la ruota finisce sopra le scritte");
+          return;
+        }
         if (c.righe !== 3) no("si sceglie la consonante: su " + n + " la tastiera ha " + c.righe + " righe a vista");
         var k = c.d.querySelector(".ru-qr .ru-btn.lettera"), hk = k ? k.getBoundingClientRect().height : 0;
         if (hk < 40) no("su " + n + " i tasti sono alti solo " + Math.round(hk) + " px");
@@ -119,7 +127,7 @@
         if (!c.nascosta && c.ruota && c.barra && c.ruota.bottom > c.barra.top + 2 + 0.06 * c.ruota.height) no("su " + n + " la ruota piccola finisce sotto i tasti");
         var voc = c.d.querySelector(".ru-qr .ru-btn.lettera.voc"); if (!voc || !/63, 216, 255|rgba\(63/.test(w0(F[n]).getComputedStyle(voc).backgroundImage + w0(F[n]).getComputedStyle(voc).boxShadow)) no("su " + n + " le vocali non sono azzurre");
       });
-      L.push("si sceglie: tastiera a 3 righe, tasti alti, ruota piccola sopra");
+      L.push("si sceglie: tastiera a 3 righe solo a chi sceglie, tasti alti, ruota piccola sopra; chi aspetta la ruota grande");
     } else L.push("(la ruota si è fermata su «" + dopo.fase + "»: niente consonante questa volta)");
     // ---- le misure ----
     for (var m of [[360, 640], [412, 915]]) {

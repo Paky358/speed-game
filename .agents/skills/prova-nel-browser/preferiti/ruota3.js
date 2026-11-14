@@ -68,7 +68,7 @@
       if (d === 1 && giro <= 0) no("in avanti l'angolo scende (" + giro + ")");
       if (sotto(P.angolo) !== P.spicchio) no("lo spicchio " + P.spicchio + " non è quello sotto la lancetta (" + sotto(P.angolo) + ", angolo " + P.angolo + ")");
       var fr = ((((-P.angolo) % 360) + 360) % 360) / 15 % 1; if (fr < 0.1 || fr > 0.9) confine++;
-      if (P.giroMs < 4300 || P.giroMs > 7000) no("durata del giro " + P.giroMs + " ms");
+      if (P.giroMs < 5200 || P.giroMs > 8000) no("durata del giro " + P.giroMs + " ms");
       if (P.vista().giroMs !== P.giroMs || P.vista().giroDir !== d) no("nella foto mancano durata e verso del giro");
       if (f === 0.1) piano.push(Math.abs(giro)); else if (f === 1) forte.push(Math.abs(giro));
       durate.push(P.giroMs); visti[P.spicchio] = 1; n++;
@@ -131,7 +131,7 @@
       while (Date.now() - t1 < 1200) { var l = F[altri[0]].document.querySelector(".ru-alto .ru-lancetta").style.transform; if (/rotate\(-?[1-9]/.test(l)) lan++; if (F[altri[0]].document.querySelector(".ru-alto.gira")) corre++; await W.dorme(40); }
       if (!lan) no("la lancetta non batte sui chiodi");
       if (!corre) no("le lampadine non corrono mentre gira");
-      var dopo = await finche(C, function (x) { return x.fase !== "girando"; }, null, 9000, "la ruota non si ferma");
+      var dopo = await finche(C, function (x) { return x.fase !== "girando"; }, null, 10000, "la ruota non si ferma");
       await W.dorme(500);
       var angs = ["Paky", "Luca", "Giulia"].map(function (n) { return angDi(F[n]); });
       if (angs.some(function (a) { return a === null || Math.abs(a - vv.angolo) > 0.01; })) no("i dischi non sono fermi sull'angolo della foto: " + angs.join(", ") + " invece di " + vv.angolo);
@@ -147,13 +147,20 @@
       if (P.SGStudio && P.SGStudio.piatto) {   // 📺 senza studio (11 nov 2026): la ruota resta, piccola sopra la tastiera (o nascosta se non ci sta), e compare la tastiera
         ["Paky", "Luca", "Giulia"].forEach(function (n) {
           var d = F[n].document, pa = d.querySelector(".ru-alto .ru-piatto-alto"), q = d.querySelector(".ru-qwerty .ru-qr"), w = F[n].innerWidth;
+          if (n !== chi) {   // 📺 14 nov 2026 (il proprietario): la tastiera solo a chi sceglie; chi aspetta la ruota grande, mai sopra le scritte
+            if (q && q.getClientRects().length) no("mentre " + chi + " sceglie la consonante su " + n + " c'è la tastiera");
+            var ra = d.querySelector(".ru-alto").getBoundingClientRect(), bb = d.querySelector(".st-barra");
+            if (!pa || pa.getBoundingClientRect().width < 0.6 * w) no("mentre " + chi + " sceglie su " + n + " la ruota non è grande");
+            if (bb && ra.bottom > bb.getBoundingClientRect().top + 2) no("su " + n + " la ruota finisce sopra le scritte");
+            return;
+          }
           var picc = d.querySelector(".ru-alto.nascosta") || (pa && pa.getBoundingClientRect().width < 0.75 * w);
           if (!picc) no("mentre si sceglie la consonante su " + n + " la ruota è ancora grande");
           if (!q || !q.getClientRects().length) no("mentre si sceglie la consonante su " + n + " non c'è la tastiera");
           var b = d.querySelector(".st-barra"), r = pa && pa.getBoundingClientRect();
           if (b && r && !d.querySelector(".ru-alto.nascosta") && r.bottom > b.getBoundingClientRect().top + 2 + 0.06 * r.height) no("su " + n + " la ruota piccola finisce sotto i tasti");
         });
-        L.push("poi la ruota si rimpicciolisce e compare la tastiera");
+        L.push("poi a " + chi + " la ruota si rimpicciolisce e compare la tastiera; gli altri la ruota grande");
       } else {
       var alta = ["Paky", "Luca", "Giulia"].filter(function (n) { return F[n].document.querySelector(".ru-alto.on"); });
       if (alta.length) no("mentre si sceglie la consonante la ruota è ancora vista dall'alto su " + alta.join(", "));

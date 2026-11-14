@@ -25,6 +25,7 @@ window.SG_NOVITA = [
       "📜 La linea del tempo: «240 a.C.» non diventa più «240 …». 💣 La Patata: la scritta dice di toccare in alto, dove sono i giocatori. 🎡 La Ruota: chi blocca il telefono non perde più i soldi della manche.",
       "❌⭕ Tris e Tris Gigante: se l'avversario blocca il telefono, il tavolo resta e si legge «⏳ Aspettiamo Giulia 📱»: quando riaccende si continua. 🚢 Battaglia Navale: «il Cacciatorpediniere», «l'Incrociatore».",
       "⚙️ Le scelte fatte prima della partita non si azzerano più se apri «Come si gioca». 🐎 Horto Muso: al traguardo il posto giusto, non più «1°» per tutti.",
+      "🎡 La Ruota della Fortuna: la tastiera c'è solo sul telefono di chi deve scegliere o scrivere le lettere. Quando si gira la ruota prende tutto lo spazio sotto il tabellone, grande anche sul telefono piccolo, e non copre mai le scritte. Il giro ha più suspense: la linguetta si piega sui pioli col suo tic sempre più lento, a volte si ferma a un soffio dalla Bancarotta o dal premio grosso, lo spicchio vinto si illumina e il telefono vibra un attimo. Le lettere chiamate che non ci sono stanno rosse e sbarrate sotto il tabellone; dove la ruota non serve il tabellone diventa più grande.",
       "🗣️ Taboo: la fine partita non esce più dallo schermo e nei tre round il riassunto non svela le carte che tornano nel cesto. 🔨 L'Asta dei temi: il tasto della busta mostra una cifra sola."
     ]
   },
