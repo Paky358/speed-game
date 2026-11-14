@@ -30,7 +30,7 @@
     var G = await giochi(), a = G.asta, f = G.astafanta;
     if (!a || !f) no("non ci sono tutte e due le registrazioni (" + Object.keys(G).join(", ") + ")");
     if (a.nome !== "L'Asta" || f.nome !== "Mini Asta Fantacalcio" || f.icona !== "⚽") no("nomi o icone sbagliati: " + a.nome + " / " + f.icona + " " + f.nome);
-    if (!f.provaDaSolo || !f.riprende || !f.riserva || f.postiOnline !== a.postiOnline) no("il fanta non ha prova da solo, ripresa, riserva o i posti dell'Asta");
+    if (!f.provaDaSolo || !f.riprende || !f.riserva || f.postiOnline !== 12 || a.postiOnline !== 10) no("il fanta non ha prova da solo, ripresa, riserva o i suoi 12 posti (L'Asta 10): " + f.postiOnline + "/" + a.postiOnline);   // (13 nov 2026: la Mini Asta fino a 12)
     var pa = prova(a, "telefono"), pf = prova(f, "telefono");
     if (pa.dove.formato !== "temi" || pf.dove.formato !== "fanta" || pf.dove.crediti !== 20) no("formato o crediti: " + JSON.stringify(pa.dove) + " / " + JSON.stringify(pf.dove));
     if (/Modalità|giornata dopo l'asta/i.test(pa.testo) || !/Crediti a testa/.test(pa.testo) || !/I round/.test(pa.testo) || !/carta maledetta/i.test(pa.testo)) no("le impostazioni dell'Asta: «" + pa.testo.replace(/\s+/g, " ").slice(0, 200) + "»");

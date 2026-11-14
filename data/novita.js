@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 345,
+    data: "14 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: ognuno al suo posto, e azioni per tutti ⚽",
+    descrizione: [
+      "🧭 Nella giornata ogni calciatore fa il suo mestiere: i ruoli precisi di Fantacalcio.it (quelli del Mantra) dicono chi è mediano, centrale, trequartista, ala o punta.",
+      "🛡️ Gli interventi in difesa li fanno soprattutto difensori e mediani; ali e trequartisti poco, le punte quasi mai. Niente più attaccanti a fare entrate davanti alla loro area.",
+      "🟨 I cartellini restano quelli veri, ma una punta, un'ala o un trequartista li prende da attaccante: fallo in pressing nella metà campo degli altri, proteste, simulazione o fallo di reazione. Il pressing a volte finisce col giallo e a volte con la palla rubata: dall'annuncio non si capisce.",
+      "🎯 Ognuno vede almeno 3 azioni dei suoi calciatori nella giornata (almeno 1 in ognuna delle due giornate veloci delle «3 giornate»). Possono finire in gol, parata, palo o fuori, come tutte le altre.",
+      "⚖️ L'equilibrio è quello di prima: la rosa più forte vince quanto prima, e i punti sono gli stessi."
+    ]
+  },
+  {
     v: 344,
     data: "13 novembre 2026",
     titolo: "Ognuno ha la sua emoji 3D e il suo colore ⚡",
