@@ -25,7 +25,7 @@
     var P = await W.apriTel("Paky", { x: 0, senzaGettone: true });
     if (!await W.aspetta(function () { return P.document.querySelector(".gt-scelta .gt-em"); }, 8000)) no("senza gettone non si apre «Scegli la tua emoji» («" + T(P).slice(0, 80) + "»)");
     if ([].some.call(P.document.querySelectorAll(".gt-scelta button"), function (b) { return b.textContent.trim() === "‹"; })) no("nella scelta obbligatoria c'è «‹»: si potrebbe saltare");
-    if (P.document.querySelectorAll(".gt-scelta .gt-em").length < 100) no("meno di 100 emoji nella griglia");
+    if (!await W.aspetta(function () { return P.document.querySelectorAll(".gt-scelta .gt-em").length >= 1000; }, 15000)) no("meno di 1.000 emoji nella griglia (" + P.document.querySelectorAll(".gt-scelta .gt-em").length + ")");   // (la griglia arriva a pezzi)
     if (P.document.querySelectorAll(".gt-scelta .gt-col").length !== 12) no("i colori non sono 12");
     await A.primoGettone(P, 0, ["Oro", "Blu", "Verde"]);
     if (!await W.aspetta(function () { return P.document.querySelector(".tessera"); }, 8000)) no("dopo la scelta non arriva la home («" + T(P).slice(0, 80) + "»)");
