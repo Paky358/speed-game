@@ -1,6 +1,6 @@
 // PROVE DEI GETTONI (13 nov 2026, chat «😀 Emoji 3D al posto degli avatar»): al posto degli avatar ognuno ha un gettone
-// (emoji 3D + 3 colori in ordine). Uso: await COPIONE.carica("emoji/gettone.js"); await COPIONE.prova("gt1")
-// gt1: la scelta è obbligatoria (profilo senza gettone: «Scegli la tua emoji», niente «‹», «Fatto» solo con emoji + 3 colori),
+// (emoji 3D + 2 colori in ordine). Uso: await COPIONE.carica("emoji/gettone.js"); await COPIONE.prova("gt1")
+// gt1: la scelta è obbligatoria (profilo senza gettone: «Scegli la tua emoji», niente «‹», «Fatto» solo con emoji + 2 colori),
 //      poi la home; il gettone resta nel profilo e sul telefono (ricaricando non si richiede).
 // gt2: il cambio dal profilo («✏️ Cambia emoji e colori»): emoji e colori nuovi, salvati.
 // gt3: un amico con l'app vecchia (manda l'avatar di prima): nella saletta un gettone di riserva, niente errori.
@@ -27,14 +27,14 @@
     if ([].some.call(P.document.querySelectorAll(".gt-scelta button"), function (b) { return b.textContent.trim() === "‹"; })) no("nella scelta obbligatoria c'è «‹»: si potrebbe saltare");
     if (!await W.aspetta(function () { return P.document.querySelectorAll(".gt-scelta .gt-em").length >= 1000; }, 15000)) no("meno di 1.000 emoji nella griglia (" + P.document.querySelectorAll(".gt-scelta .gt-em").length + ")");   // (la griglia arriva a pezzi)
     if (P.document.querySelectorAll(".gt-scelta .gt-col").length !== 12) no("i colori non sono 12");
-    await A.primoGettone(P, 0, ["Oro", "Blu", "Verde"]);
+    await A.primoGettone(P, 0, ["Oro", "Blu"]);
     if (!await W.aspetta(function () { return P.document.querySelector(".tessera"); }, 8000)) no("dopo la scelta non arriva la home («" + T(P).slice(0, 80) + "»)");
     var g = gettoneNelProfilo(P);
-    if (!g || g.e !== "⚡" || g.c.join() !== "oro,blu,verde") no("nel profilo il gettone è " + JSON.stringify(g));
+    if (!g || g.e !== "⚡" || g.c.join() !== "oro,blu") no("nel profilo il gettone è " + JSON.stringify(g));
     P = await W.ricarica("Paky");
     if (!await W.aspetta(function () { return P.document.querySelector(".tessera"); }, 8000)) no("ricaricando non arriva la home");
     if (P.document.querySelector(".gt-scelta")) no("ricaricando richiede la scelta");
-    return "scelta obbligatoria (niente «‹», 12 colori, «Fatto» solo con emoji + 3 colori), ⚡ oro-blu-verde nel profilo, ricaricando si entra";
+    return "scelta obbligatoria (niente «‹», 12 colori, «Fatto» solo con emoji + 2 colori), ⚡ oro-blu nel profilo, ricaricando si entra";
   } });
 
   COPIONE.aggiungi("gt2", { nome: "Gettone: si cambia dal profilo", fai: async function () {
@@ -48,13 +48,13 @@
     // i colori di prima sono già segnati: si tolgono e si rimettono in un ordine nuovo
     [].forEach.call(P.document.querySelectorAll(".gt-col.on"), function (b) { b.click(); });
     [].forEach.call(P.document.querySelectorAll(".gt-col.on"), function (b) { b.click(); });
-    ["Rosso", "Viola", "Acqua"].forEach(function (k) { var b = [].find.call(P.document.querySelectorAll(".gt-col"), function (x) { return x.getAttribute("aria-label") === k; }); b.click(); });
+    ["Rosso", "Viola"].forEach(function (k) { var b = [].find.call(P.document.querySelectorAll(".gt-col"), function (x) { return x.getAttribute("aria-label") === k; }); b.click(); });
     if (!W.clicca(P, /Fatto/)) no("non c'è «Fatto»");
     if (!await W.aspetta(function () { return P.document.querySelector(".gt-profilo svg.gettone"); }, 4000)) no("dopo «Fatto» non torna al profilo col gettone");
     var g = gettoneNelProfilo(P);
-    if (!g || g.e !== scelta || g.c.join() !== "rosso,viola,acqua") no("nel profilo il gettone è " + JSON.stringify(g) + " (atteso " + scelta + " rosso,viola,acqua)");
+    if (!g || g.e !== scelta || g.c.join() !== "rosso,viola") no("nel profilo il gettone è " + JSON.stringify(g) + " (atteso " + scelta + " rosso,viola)");
     if (P.document.querySelector(".gt-profilo svg.gettone").getAttribute("data-gt") !== scelta) no("il profilo mostra ancora il gettone di prima");
-    return "cambiato in " + scelta + " rosso-viola-acqua, il profilo lo mostra";
+    return "cambiato in " + scelta + " rosso-viola, il profilo lo mostra";
   } });
 
   COPIONE.aggiungi("gt3", { nome: "Gettone: un amico con l'app vecchia (manda l'avatar) vede e si vede con un gettone di riserva", fai: async function () {
@@ -80,13 +80,13 @@
   } });
 
   COPIONE.aggiungi("gt4", { nome: "Gettone: i colori della stanza (chi entra prima tiene il suo 1°), uguali su tutti i telefoni", fai: async function () {
-    // Paky (host) oro-blu-verde; Giulia oro-blu-rosso; Luca oro-blu-lime: Giulia prende blu (il 2°), Luca lime (il 3°)
-    var P = await W.apriTel("Paky", { x: 0, profilo: { gettone: { g: 1, e: "⚡", c: ["oro", "blu", "verde"] } } }), C = await W.apriStanza(P, "La linea del tempo");
-    var G = await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185, profilo: { gettone: { g: 1, e: "🦊", c: ["oro", "blu", "rosso"] } } });
+    // Paky (host) oro-blu; Giulia oro-blu; Luca oro-blu: Giulia prende blu (il suo 2°), Luca il primo colore libero (rosso)
+    var P = await W.apriTel("Paky", { x: 0, profilo: { gettone: { g: 1, e: "⚡", c: ["oro", "blu"] } } }), C = await W.apriStanza(P, "La linea del tempo");
+    var G = await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185, profilo: { gettone: { g: 1, e: "🦊", c: ["oro", "blu"] } } });
     if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 2; }, 8000)) no("Giulia non entra");
-    var L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370, profilo: { gettone: { g: 1, e: "🐸", c: ["oro", "blu", "lime"] } } });
+    var L = await W.apriTel("Luca", { hash: "gioco=timeline&stanza=" + C, x: 370, profilo: { gettone: { g: 1, e: "🐸", c: ["oro", "blu"] } } });
     if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3; }, 8000)) no("Luca non entra");
-    var atteso = { Paky: "oro", Giulia: "blu", Luca: "lime" };
+    var atteso = { Paky: "oro", Giulia: "blu", Luca: "rosso" };
     var ok = await W.aspetta(function () {
       return [["Paky", P], ["Giulia", G], ["Luca", L]].every(function (t) {
         return ["Paky", "Giulia", "Luca"].every(function (n) { var vede = coloreSaletta(t[1], t[0] === n ? "Tu" : n) || coloreSaletta(t[1], n); return vede === atteso[n]; });
@@ -94,14 +94,14 @@
     }, 6000);
     if (!ok) {
       var visti = [["Paky", P], ["Giulia", G], ["Luca", L]].map(function (t) { return t[0] + ": " + ["Paky", "Giulia", "Luca"].map(function (n) { return n + "=" + (coloreSaletta(t[1], t[0] === n ? "Tu" : n) || coloreSaletta(t[1], n)); }).join(","); });
-      no("colori diversi da quelli attesi (Paky oro, Giulia blu, Luca lime): " + visti.join(" · "));
+      no("colori diversi da quelli attesi (Paky oro, Giulia blu, Luca rosso): " + visti.join(" · "));
     }
     // Giulia esce e rientra: tiene il blu (anche se intanto il blu sarebbe libero per un altro)
     W.clicca(G, /‹/);
     if (!await W.aspetta(function () { return (vm(C).giocatori || []).filter(function (x) { return x.nome === "Giulia" && !x.via; }).length === 0 || !A.avatarDi(P, "Giulia"); }, 6000)) {}
     G = await W.apriTel("Giulia", { hash: "gioco=timeline&stanza=" + C, x: 185 });
     if (!await W.aspetta(function () { return coloreSaletta(P, "Giulia") === "blu"; }, 8000)) no("Giulia rientrata non ha più il blu (" + coloreSaletta(P, "Giulia") + ")");
-    return "Paky oro, Giulia blu (2°), Luca lime (3°) su tutti e tre i telefoni; Giulia rientra e tiene il blu";
+    return "Paky oro, Giulia blu (il suo 2°), Luca rosso (il primo libero) su tutti e tre i telefoni; Giulia rientra e tiene il blu";
   } });
 
   COPIONE.aggiungi("gt5", { nome: "Gettone nei posti stretti: Sala in 8 a 360x740, ogni gettone a vista e grande almeno 24 px", fai: async function () {

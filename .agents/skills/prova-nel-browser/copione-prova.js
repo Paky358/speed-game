@@ -231,7 +231,7 @@
     fatto.click();
     if (!await W.aspetta(function () { return !d.querySelector(".primo-avatar"); }, 4000)) no("toccato «Fatto», l'avatar resta aperto");
   }
-  // 😀 il primo gettone (13 nov 2026): «Scegli la tua emoji» → un'emoji (la n-esima) e 3 colori in ordine → «▶ Fatto» (spento finché manca qualcosa)
+  // 😀 il primo gettone (13 nov 2026): «Scegli la tua emoji» → un'emoji (la n-esima) e 2 colori in ordine → «▶ Fatto» (spento finché manca qualcosa)
   async function primoGettone(w, n, colori) {
     var d = w.document;
     var sc = await W.aspetta(function () { return d.querySelector(".gt-scelta .gt-em"); }, 6000);
@@ -240,8 +240,8 @@
     if (!fatto || !fatto.disabled) no("«▶ Fatto» acceso prima di scegliere");
     var em = d.querySelectorAll(".gt-scelta .gt-em"); em[(n || 0) % em.length].click();
     if (!fatto.disabled) no("«▶ Fatto» acceso con l'emoji ma senza i colori");
-    (colori || ["Oro", "Blu", "Verde"]).forEach(function (k) { var b = [].find.call(d.querySelectorAll(".gt-col"), function (x) { return x.getAttribute("aria-label") === k; }); if (b) b.click(); });
-    if (fatto.disabled) no("scelti emoji e 3 colori, «▶ Fatto» resta spento");
+    (colori || ["Oro", "Blu"]).forEach(function (k) { var b = [].find.call(d.querySelectorAll(".gt-col"), function (x) { return x.getAttribute("aria-label") === k; }); if (b) b.click(); });
+    if (fatto.disabled) no("scelti emoji e 2 colori, «▶ Fatto» resta spento");
     fatto.click();
     if (!await W.aspetta(function () { return !d.querySelector(".gt-scelta"); }, 4000)) no("toccato «Fatto», la scelta resta aperta");
   }
@@ -1286,7 +1286,7 @@
       var gio = [].concat(vm(C).posti || [], vm(C).giocatori || [], vm(C).players || []).filter(function (g) { return g && g.nome === nome; })[0];
       if (L.SGGettone && L.SGGettone.acceso()) {   // 😀 (13 nov 2026) i gettoni: quello scelto (la prima emoji, oro-blu-verde) è nel profilo e lo vede l'host, col colore della stanza
         var gL = L.__fp.gettone;
-        if (!gL || gL.c.join() !== "oro,blu,verde") no("il gettone del profilo non è quello scelto (" + JSON.stringify(gL) + ")");
+        if (!gL || gL.c.join() !== "oro,blu") no("il gettone del profilo non è quello scelto (" + JSON.stringify(gL) + ")");
         if (!gio || !gio.omino || gio.omino.e !== gL.e || !gio.omino.k) no("il gettone che vede l'host non è quello del profilo (" + JSON.stringify(gio && gio.omino) + ")");
         return "nomi proposti: " + Object.keys(visti).join(", ") + "; è entrato «" + nome + "» col profilo e il gettone scelto (" + gL.e + ", colore " + gio.omino.k + ")";
       }
@@ -1357,13 +1357,13 @@
       campi[1].value = "segreto1"; W.clicca(N, /^Avanti/);
       if (N.SGGettone && N.SGGettone.acceso()) {   // 😀 (13 nov 2026) al posto dell'avatar: la scelta del gettone, poi la home
         if (!W.BR.conti.nina) no("il profilo non è stato creato");
-        await primoGettone(N, 3, ["Rosso", "Lime", "Blu"]);
+        await primoGettone(N, 3, ["Rosso", "Lime"]);
         if (!await W.aspetta(function () { return home(N); }, 6000)) no("scelto il gettone, non si arriva alla home");
-        if (!N.__fp.gettone || N.__fp.gettone.c.join() !== "rosso,lime,blu") no("il gettone salvato non è quello scelto (" + JSON.stringify(N.__fp.gettone) + ")");
+        if (!N.__fp.gettone || N.__fp.gettone.c.join() !== "rosso,lime") no("il gettone salvato non è quello scelto (" + JSON.stringify(N.__fp.gettone) + ")");
         N = await W.ricarica("Nina");
         if (!await W.aspetta(function () { return home(N); }, 4000)) no("ricaricando non si torna alla home");
         if (N.document.querySelector(".gt-scelta")) no("ricaricando richiede la scelta del gettone");
-        return "benvenuto ok (" + mis + "), scelta del gettone (emoji + rosso-lime-blu) → home; ricaricando: home senza domande";
+        return "benvenuto ok (" + mis + "), scelta del gettone (emoji + rosso-lime) → home; ricaricando: home senza domande";
       }
       var ed = await W.aspetta(function () { return N.document.querySelector(".primo-avatar .pa-forma"); }, 4000);
       if (!ed) no("dopo «Avanti» non si apre «Sei lui o lei?»");

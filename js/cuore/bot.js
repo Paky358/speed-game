@@ -167,7 +167,7 @@
     var palco = el("div", { class: "bc-palco", "aria-hidden": "true", html: disegnoBot() });
     var tAv = el("button", { class: "btn btn-fantasma bc-cambia", type: "button", text: gtOn() ? "✏️ Cambia emoji e colore" : "✏️ Cambia avatar", onclick: function () {
       leggi();
-      if (gtOn()) {   // 😀 la stessa scelta delle persone: emoji e 3 colori (il Bot usa sempre il 1°)
+      if (gtOn()) {   // 😀 la stessa scelta delle persone: emoji e 2 colori (il Bot usa il 1°, se è libero)
         var bz = { gettone: b.gettone, nome: b.nome };
         return cuore.schermataGettone(function () { b.gettone = gettoneBot(id, bz.gettone); schermataUnBot(id, indietro, b); }, function () { schermataUnBot(id, indietro, b); }, { bozza: bz });
       }

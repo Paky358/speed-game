@@ -171,7 +171,7 @@
   // due con lo stesso nome nella stessa stanza: il secondo diventa "Luca 2". Lo stesso telefono tiene il nome che ha avuto;
   // due profili con lo stesso nome sono la stessa persona (niente numero). true = nome nuovo da ricordare
   // ---- 😀 i colori dei gettoni nella serata (13 nov 2026): li decide chi tiene la Sala o la partita, quando uno entra
-  // (SGGettone.assegna: chi è entrato prima tiene il suo 1° colore, poi il 2°, il 3°, il primo libero) e restano per tutta la
+  // (SGGettone.assegna: chi è entrato prima tiene il suo 1° colore, poi il suo 2°, poi il primo libero) e restano per tutta la
   // serata anche se uno esce e rientra. Una mappa per serata: il codice della Sala (tutti i suoi giochi), se no quello della stanza.
   // Si tiene in sessionStorage (l host che ricarica la ritrova); un host nuovo (vice) la riparte da chi c è già, coi loro colori.
   var GT_MAPPE = {}; try { GT_MAPPE = JSON.parse(localStorage.getItem("sg-gt-mappe") || "{}") || {}; } catch (e) { GT_MAPPE = {}; }

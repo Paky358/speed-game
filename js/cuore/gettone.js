@@ -1,7 +1,7 @@
 /* =========================================================
    PEZZO DEL CUORE — 😀 LA SCELTA DEL GETTONE (13 nov 2026)
-   Al posto degli avatar ognuno sceglie (per forza, mai a caso) la sua emoji 3D e 3 colori del contorno in ordine:
-   in una stanza, se due hanno lo stesso 1° colore, lo tiene chi è entrato prima e l'altro prende il 2°, poi il 3°
+   Al posto degli avatar ognuno sceglie (per forza, mai a caso) la sua emoji 3D e 2 colori del contorno in ordine:
+   in una stanza, se due hanno lo stesso 1° colore, lo tiene chi è entrato prima e l'altro prende il suo 2°, se no il primo libero
    (lo decide chi tiene la Sala o la partita: vedi js/cuore/rete.js e SGGettone.assegna).
    Le emoji sono quasi tutte quelle di Fluent Emoji 3D (circa 1.500): l'elenco con le parole italiane per cercarle
    (data/emoji-tutte.js, pezzo «emoji») si scarica SOLO quando si apre la scelta; le immagini solo quando si vedono nella griglia.
@@ -97,7 +97,7 @@
     var G = window.SGGettone; if (!G) return dopo();
     var bozzaBot = o.bozza || null;
     var parti = bozzaBot ? G.daQualsiasi(bozzaBot.gettone, bozzaBot.nome) : mioGettone();
-    var scelta = { e: parti && !parti.r ? parti.e : null, c: parti && !parti.r ? (parti.c || []).slice(0, 3) : [] };
+    var scelta = { e: parti && !parti.r ? parti.e : null, c: parti && !parti.r ? (parti.c || []).slice(0, 2) : [] };
     var s = schermata({ icona: "⚡", titolo: bozzaBot ? "Emoji di " + bozzaBot.nome : o.benvenuto ? "Scegli la tua emoji" : "La tua emoji",
       sotto: bozzaBot ? "La vedono tutti, in tutti i giochi" : "Al posto dell'avatar: la vedono gli amici in tutti i giochi",
       indietro: o.benvenuto ? null : indietro });
@@ -189,8 +189,8 @@
     function toccaColore(k) {
       var i = scelta.c.indexOf(k);
       if (i >= 0) scelta.c.splice(i, 1);   // toccato di nuovo: si toglie (quelli dopo salgono di un posto)
-      else if (scelta.c.length < 3) scelta.c.push(k);
-      else { scelta.c[2] = k; }   // già 3: cambia il 3°
+      else if (scelta.c.length < 2) scelta.c.push(k);
+      else { scelta.c[1] = k; }   // già 2: cambia il 2°
       try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
       aggiorna();
     }
@@ -202,11 +202,11 @@
         var i = scelta.c.indexOf(x.k), b = bColori[n];
         b.classList.toggle("on", i >= 0); b.firstChild.textContent = i >= 0 ? String(i + 1) : "";
       });
-      aiuto.textContent = !scelta.e ? "Tocca la tua emoji qui sotto (o cercala)" : scelta.c.length < 3 ? "Ora tocca 3 colori, in ordine: " + ["il 1°", "il 2°", "il 3°"][scelta.c.length] : "Fatto! Se un amico ha il tuo 1° colore, prendi il 2°";
-      bFatto.disabled = !(scelta.e && scelta.c.length === 3);
+      aiuto.textContent = !scelta.e ? "Tocca la tua emoji qui sotto (o cercala)" : scelta.c.length < 2 ? "Ora tocca 2 colori, in ordine: " + ["il 1°", "il 2°"][scelta.c.length] : "Fatto! Se un amico ha il tuo 1° colore, prendi il 2°";
+      bFatto.disabled = !(scelta.e && scelta.c.length === 2);
     }
     function fatto() {
-      if (!(scelta.e && scelta.c.length === 3)) return;
+      if (!(scelta.e && scelta.c.length === 2)) return;
       var g = { g: 1, e: scelta.e, c: scelta.c.slice() };
       if (bozzaBot) { bozzaBot.gettone = G.norm(g); return dopo(); }
       salvaMio(g);

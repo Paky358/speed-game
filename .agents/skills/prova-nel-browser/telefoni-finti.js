@@ -213,9 +213,9 @@ window.preparaFinestra = function (w, nome, opz) {
     const errore = code => Promise.reject(Object.assign(new Error(code), { code }));
     // w.__offline = true: la parte dei profili non si è caricata (niente internet all'apertura)
     v.disponibile = () => !w.__offline; v.pronto = () => true; v.utente = () => (mem.fp ? { uid: mem.fp.uid || "finto-" + nome } : null);
-    // 😀 i gettoni (13 nov 2026): ogni profilo finto ha già scelto il suo gettone (emoji e 3 colori dal nome, sempre gli stessi),
+    // 😀 i gettoni (13 nov 2026): ogni profilo finto ha già scelto il suo gettone (emoji e 2 colori dal nome, sempre gli stessi),
     // così le prove di prima non si fermano su «Scegli la tua emoji»; opz.senzaGettone = deve ancora sceglierlo (le prove della scelta)
-    const gtFinto = () => { const G = w.SGGettone; if (!G || !G.acceso()) return null; const r = G.riserva(nome), i = Math.max(0, G.COLORI.findIndex(x => x.k === r.c[0])); return { g: 1, e: r.e, c: [0, 4, 8].map(d => G.COLORI[(i + d) % G.COLORI.length].k) }; };
+    const gtFinto = () => { const G = w.SGGettone; if (!G || !G.acceso()) return null; const r = G.riserva(nome), i = Math.max(0, G.COLORI.findIndex(x => x.k === r.c[0])); return { g: 1, e: r.e, c: [0, 6].map(d => G.COLORI[(i + d) % G.COLORI.length].k) }; };
     v.profilo = () => {
       const fp = mem.fp;
       if (fp && !fp.__nuovo && !opz.senzaGettone && !fp.gettone) { const g = gtFinto(); if (g) fp.gettone = g; }

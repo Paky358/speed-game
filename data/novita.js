@@ -14,7 +14,7 @@ window.SG_NOVITA = [
     titolo: "Ognuno ha la sua emoji 3D e il suo colore ⚡",
     descrizione: [
       "😀 Al posto dell'avatar ora ognuno ha un gettone: un cerchio del suo colore con dentro la sua emoji 3D. Si sceglie una volta (anche chi ha già il profilo) e si cambia quando vuoi dal profilo.",
-      "🎨 Scegli 3 colori in ordine: se un amico nella stessa serata ha già il tuo 1° colore, prendi il 2° (o il 3°). Così in partita ognuno ha un colore diverso, uguale su tutti i telefoni e per tutta la serata.",
+      "🎨 Scegli 2 colori in ordine: se un amico nella stessa serata ha già il tuo 1° colore, prendi il 2°. Così in partita ognuno ha un colore diverso, uguale su tutti i telefoni e per tutta la serata.",
       "⚡ Le emoji 3D sono uguali su ogni telefono, iPhone e Android: niente più personaggi neri o storti.",
       "🪶 L'app è più leggera: si apre e parte più in fretta, e il «pronto» nella saletta non va più a scatti (il gettone fa un saltello, si accende del suo colore e compare la ✋).",
       "🔍 Le emoji sono più di mille (animali, oggetti, cibo, sport, mezzi, simboli…): si cercano scrivendo in italiano, anche solo un pezzo di parola: «razzo», «leone», «spada».",

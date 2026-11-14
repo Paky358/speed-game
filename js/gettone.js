@@ -2,11 +2,11 @@
    😀 IL GETTONE (13 nov 2026, chat «😀 Emoji 3D al posto degli avatar»)
    Al posto degli avatar ognuno ha un gettone: un cerchio col contorno del suo colore e dentro la sua emoji 3D
    (Fluent Emoji 3D di Microsoft, licenza MIT, le immagini in carte/emoji/, la lista in data/emoji-gettone.js).
-   La scelta (emoji + 3 colori in ordine) è di ognuno; in una stanza il colore lo decide chi tiene la Sala o la partita
-   (vedi SGGettone.assegna): chi è entrato prima tiene il suo 1° colore, l'altro prende il 2°, poi il 3°, poi il primo libero.
+   La scelta (emoji + 2 colori in ordine) è di ognuno; in una stanza il colore lo decide chi tiene la Sala o la partita
+   (vedi SGGettone.assegna): chi è entrato prima tiene il suo 1° colore, l'altro prende il suo 2°, se no il primo libero.
 
    Il gettone viaggia come l'avatar di prima, al posto suo: { g: 1, e: "⚡", c: ["oro", "blu", "verde"], k: "oro" }
-     g = è un gettone · e = l'emoji · c = i 3 colori scelti, in ordine · k = il colore deciso nella stanza (se c'è).
+     g = è un gettone · e = l'emoji · c = i 2 colori scelti, in ordine · k = il colore deciso nella stanza (se c'è).
    Con gli avatar spenti (GETTONI in core.js) SGGettone.accendi() fa disegnare a SGOmino.svg il gettone: così TUTTI i giochi,
    che disegnano gli avatar con SGOmino.svg / SGOmino.casuale, mostrano i gettoni senza cambiare niente. Un avatar di prima
    (un amico con l'app vecchia ancora aperta) diventa un gettone «di riserva», sempre lo stesso per lo stesso avatar.
@@ -52,7 +52,7 @@
     if (!eGettone(cfg)) return null;
     var e = emojiOk(cfg.e) ? cfg.e : "⚡";
     var c = [];
-    (Array.isArray(cfg.c) ? cfg.c : []).forEach(function (k) { if (coloreOk(k) && c.indexOf(k) < 0 && c.length < 3) c.push(k); });
+    (Array.isArray(cfg.c) ? cfg.c : []).forEach(function (k) { if (coloreOk(k) && c.indexOf(k) < 0 && c.length < 2) c.push(k); });   // (2 colori: dal 14 nov 2026; prima erano 3)
     var r = { g: 1, e: e, c: c };
     if (coloreOk(cfg.k)) r.k = cfg.k;
     if (cfg.r) r.r = 1;
@@ -134,7 +134,7 @@
   }
   function esc(s) { return String(s).replace(/[&<>'"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[c]; }); }
 
-  // ---- i colori di una stanza: chi entra prima tiene il suo 1°; poi il 2°, poi il 3°, poi il primo libero ----
+  // ---- i colori di una stanza: chi entra prima tiene il suo 1°; poi il suo 2°, poi il primo libero ----
   // mappa = { ordine: [nome, …], col: { nome: chiave } } (chi tiene la Sala o la partita la tiene per tutta la serata)
   function nuovaMappa() { return { ordine: [], col: {} }; }
   function assegna(mappa, nome, cfg) {
