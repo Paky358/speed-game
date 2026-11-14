@@ -8,7 +8,6 @@
    (prima la copia, poi la rete) e una versione nuova butta via quella vecchia dello stesso file.
    Così ogni gioco si scarica una volta sola, e a una pubblicazione solo quello che è cambiato. */
 var CASSA = "sg-file-v1";
-var CASSA_EMOJI = "sg-emoji-v1";   // 😀 (13 nov 2026) le emoji 3D dei gettoni (carte/emoji/): si tengono sul telefono, prima la copia poi la rete
 // "giochi/asta.0123456789.js" → { nome: "giochi/asta", imp: "0123456789" } (null = un file senza impronta)
 function conImpronta(url) {
   var m = /\/((?:giochi\/)?[a-z0-9-]+)\.([0-9a-f]{10})\.(js|css)$/.exec(url.pathname);
@@ -18,7 +17,7 @@ self.addEventListener("install", function () { self.skipWaiting(); });
 self.addEventListener("activate", function (e) {
   e.waitUntil(Promise.all([
     self.clients.claim(),
-    caches.keys().then(function (l) { return Promise.all(l.filter(function (k) { return (/^sg-file-/.test(k) && k !== CASSA) || (/^sg-emoji-/.test(k) && k !== CASSA_EMOJI); }).map(function (k) { return caches.delete(k); })); })
+    caches.keys().then(function (l) { return Promise.all(l.filter(function (k) { return /^sg-file-/.test(k) && k !== CASSA; }).map(function (k) { return caches.delete(k); })); })
   ]));
 });
 self.addEventListener("fetch", function (e) {
@@ -29,14 +28,6 @@ self.addEventListener("fetch", function (e) {
     return;
   }
   var url = new URL(e.request.url), F = conImpronta(url);
-  if (/\/carte\/emoji\/[0-9a-f-]+\.webp$/.test(url.pathname) && self.caches) {
-    e.respondWith(caches.open(CASSA_EMOJI).then(function (C) {
-      return C.match(url.pathname).then(function (c) {
-        return c || fetch(e.request).then(function (r) { if (r && r.ok && r.status === 200) C.put(url.pathname, r.clone()).catch(function () {}); return r; });
-      });
-    }).catch(function () { return fetch(e.request); }));
-    return;
-  }
   if (!F || !self.caches) { e.respondWith(fetch(e.request)); return; }
   e.respondWith(caches.open(CASSA).then(function (C) {
     return C.match(url.pathname).then(function (c) {
