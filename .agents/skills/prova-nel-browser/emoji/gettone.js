@@ -111,7 +111,7 @@
     var rs = st.getBoundingClientRect(), g = [].slice.call(P.document.querySelectorAll(".sl-av:not(.sl-vuoto) svg.gettone"));
     if (g.length < 8) no("nella Sala dell'host ci sono " + g.length + " gettoni su 8");
     var piccoli = [], fuori = [];
-    g.forEach(function (s) { var b = s.getBoundingClientRect(), d = Math.min(b.width, b.height * (s.viewBox.baseVal.height > 110 ? 100 / 132 : 1)); if (d < 24) piccoli.push(Math.round(d)); if (b.left < rs.left - 2 || b.right > rs.right + 2) fuori.push(Math.round(b.left)); });
+    g.forEach(function (s) { var b = (s.querySelector("circle") || s).getBoundingClientRect(), d = Math.min(b.width, b.height);   // (il cerchio del gettone, non il riquadro dell'avatar) if (d < 24) piccoli.push(Math.round(d)); if (b.left < rs.left - 2 || b.right > rs.right + 2) fuori.push(Math.round(b.left)); });
     if (piccoli.length) no("gettoni troppo piccoli: " + piccoli.join(", ") + " px");
     if (fuori.length) no("gettoni fuori dalla stanza");
     var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" | "));

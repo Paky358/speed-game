@@ -4432,3 +4432,8 @@ html.tastiera .gt-cerca-riga{ margin-top:0; }
 .gettoni .sl-av.pronto .sl-anello{ opacity:.55; transform:scale(1.08); }
 .gettoni .sl-fig::after{ content:"✋"; position:absolute; right:-4%; top:30%; z-index:5; font-size:calc(var(--w, 80px) * .36); line-height:1; opacity:0; transform:scale(.3) rotate(-20deg); transition:opacity .2s ease, transform .35s cubic-bezier(.3,1.7,.5,1); pointer-events:none; }
 .gettoni .sl-av.pronto .sl-fig::after{ opacity:1; transform:scale(1) rotate(8deg); }
+.gettoni .sl-bollo{ top:33%; left:6%; right:auto; }
+/* la scelta del gettone: «▶ Fatto» sempre a vista in basso (la griglia è lunga) */
+.gt-scelta > .piede{ position:sticky; bottom:0; z-index:4; margin-top:0; padding:10px 0 calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, rgba(13,16,32,0), var(--o-fondo, #0d1020) 28%); }
+/* il gettone ha già il suo anello colorato: nei quadretti della Mini Asta niente secondo anello né fondo */
+.gettoni .st-gio-faccia{ box-shadow:none !important; background:none !important; }
