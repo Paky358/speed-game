@@ -2302,8 +2302,8 @@
   // in fondo (si vede grande la parte che conta, in alto sotto la lancetta). Piccola e intera sopra la tastiera, nascosta se non ci sta.
   function posAltoFlat(ui) {
     var S = ui.S, b = banda(ui, true), h = Math.max(0, b.bot - b.top), D0 = Math.round(S.VW * 0.98);
-    var su = 0.06, giu = 0.02, taglio = ui.modo === "ruota" ? 0.26 : 0;   // (la lancetta sporge sopra la ruota del 5%)
-    var d = Math.max(0, Math.min(D0, h / (1 + su + giu - taglio)));
+    var su = 0.06, giu = 0.02;   // (la lancetta sporge sopra la ruota del 5%; 15 nov 2026, il proprietario: «tagliata in basso non mi va bene»: sempre INTERA)
+    var d = Math.max(0, Math.min(D0, h / (1 + su + giu)));
     if (ui.modo !== "ruota") d = Math.min(d, S.VW * 0.8);   // (sopra la tastiera: piccola, è solo un promemoria dello spicchio)
     var serve = d * (1 + su + giu), y = (serve <= h ? (h - serve) / 2 : 0) + d * su, x = (S.VW - d) / 2;   // (y: dentro la striscia)
     var k = [Math.round(b.top), Math.round(h), Math.round(x), Math.round(y), Math.round(d), D0].join("|");
@@ -2493,7 +2493,7 @@
     var k = cosa + ":" + (i == null ? "" : i);
     if (k === ui.inq) return;
     ui.inq = k;
-    ruotaAlta(ui, ui.flat ? !!ui.ruotaSi && cosa !== "quadro" : cosa === "ruota" || cosa === "lancetta", cosa === "lancetta");   // (senza studio la ruota c'è quando serve: la decide modoMezzo; mai col riquadro)
+    ruotaAlta(ui, ui.flat ? !!ui.ruotaSi && cosa !== "quadro" : cosa === "ruota" || cosa === "lancetta", !ui.flat && cosa === "lancetta");   // (senza studio la ruota c'è quando serve: la decide modoMezzo; mai col riquadro)
     ui.quadro.classList.toggle("on", cosa === "quadro"); if (cosa === "quadro") posQuadro(ui);
 ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return shotPavimento(ui); } :
       cosa === "tutti" || cosa === "quadro" ? function () { return shotTutti(ui); } : function () { return shotLeggio(ui, i); }, ms == null ? 700 : ms);
@@ -3301,7 +3301,9 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
         var txs = f === "girando" ? "🎡 La ruota gira…" : f === "sceltaexp" ? "🚂 " + nAtt + " decide: Express o no?" : vm.exp ? "🚂 " + nAtt + " è sull'Express…" : "Tocca a " + nomeDi(vm, cb, att) + "…";
         if (vm.sel && vm.sel.id === att && FASI_SEL.indexOf(f) >= 0) txs = "👆 " + nAtt + " sceglie… la " + vm.sel.L + "?";
         stato(txs + " · Bloccala in segreto: se è giusta prendi i punti, se sbagli ne perdi metà", "piccolo");
-        riga([ btn("segreta", "🔒 La so! · vale " + fmtN(valoreSeg(quotaTab(vm.tab))), function () { ui.segreto = segK(vm); ui.segTab = vm.tab; ui.scritto = []; ui.cur = 0; ui.kTast = ""; ui.ridisegna(); }) ]);
+        var bSeg = btn("segreta", "🔒 La so! · vale " + fmtN(valoreSeg(quotaTab(vm.tab))), function () { ui.segreto = segK(vm); ui.segTab = vm.tab; ui.scritto = []; ui.cur = 0; ui.kTast = ""; ui.ridisegna(); });
+        if (ui.flat && ui.facc) { riga([ bSeg, ui.facc ]); return; }   // (senza studio la faccina accanto al tasto: più posto alla ruota intera)
+        riga([ bSeg ]);
         if (ui.facc) ui.azioni.appendChild(ui.facc);
         return;
       }
@@ -3740,7 +3742,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}",
       ".ru-stato{text-align:center;font-weight:800;font-size:.92rem;padding:4px 0}.ru-stato.piccolo{padding:0;font-size:.85rem}.ru-stato.rosso{color:#ffa8b8}",
       ".ru-stato.no{animation:ruNo .45s ease-in-out}",
-      ".ru-riga{display:flex;gap:6px}",
+      ".ru-riga{display:flex;gap:6px}.ru-riga>:not(.ru-btn){flex:0 0 auto;align-self:center;margin:0}",
       ".ru-btn{flex:1;min-height:48px;border:0;border-radius:14px;font:inherit;font-weight:900;font-size:.88rem;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}",
       ".ru-btn:disabled{opacity:.35}",
       ".ru-btn.gira{background:var(--o-tasto);color:var(--o-tasto-testo)}.ru-btn.vocale{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--n-sfida)}.ru-btn.risolvi{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1.5px var(--o-verde)}.ru-btn.annulla{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta-piena);box-shadow:inset 0 0 0 1px var(--o-filo)}",
@@ -3841,7 +3843,6 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-flat.ru-m-ruota .ru-qwerty .ru-qr,.ru-flat.ru-m-quadro .ru-qwerty .ru-qr,.ru-flat.ru-m-lampo .ru-qwerty .ru-qr,.ru-flat.ru-m-tab .ru-qwerty .ru-qr{display:none}",
       // 📺 la ruota sta solo nella striscia libera (14 nov 2026): quello che esce si taglia, mai sopra le scritte
       ".ru-flat .ru-alto{bottom:auto;overflow:hidden}",
-      ".ru-flat .ru-alto:after{content:'';position:absolute;left:0;right:0;bottom:0;height:18px;pointer-events:none;background:linear-gradient(rgba(14,17,36,0),rgba(14,17,36,.96))}",
       // il tabellone che si allunga quando la ruota non c'è
       ".ru-tab.alta .ru-cella{aspect-ratio:auto;height:var(--ru-ch);font-size:min(calc(var(--ru-ch) * .56),6.4vw,2.1rem)}",
       ".ru-flat .ru-qwerty{gap:6px}.ru-flat .ru-qr{gap:4px}",

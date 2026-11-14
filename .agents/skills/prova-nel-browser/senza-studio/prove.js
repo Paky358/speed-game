@@ -101,6 +101,7 @@
       if (c.righe) no("si gira: su " + n + " c'è la tastiera");
       if (c.ruota.top < c.tab.bottom - 2) no("si gira: su " + n + " la ruota copre il tabellone");
       var ra = c.d.querySelector(".ru-alto").getBoundingClientRect(); if (c.barra && ra.bottom > c.barra.top + 2) no("si gira: su " + n + " la ruota finisce sopra le scritte in basso");
+      if (c.ruota && c.ruota.bottom > ra.bottom + 1) no("si gira: su " + n + " la ruota è tagliata in basso");   // (15 nov 2026, il proprietario: sempre intera)
     });
     L.push("si gira: ruota grande, niente tastiera");
     // chi gira la trascina: col tasto «🎡 Gira» (va bene anche così)
@@ -118,6 +119,7 @@
           if (c.righe) no("si sceglie la consonante: su " + n + " (aspetta) c'è la tastiera");
           if (c.nascosta || !c.ruota || c.ruota.width < 0.6 * c.vw) no("si sceglie la consonante: su " + n + " (aspetta) la ruota non è grande");
           var ra = c.d.querySelector(".ru-alto").getBoundingClientRect(); if (c.barra && ra.bottom > c.barra.top + 2) no("su " + n + " (aspetta) la ruota finisce sopra le scritte");
+          if (c.ruota && c.ruota.bottom > ra.bottom + 1) no("su " + n + " (aspetta) la ruota è tagliata in basso");
           return;
         }
         if (c.righe !== 3) no("si sceglie la consonante: su " + n + " la tastiera ha " + c.righe + " righe a vista");

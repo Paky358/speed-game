@@ -152,6 +152,7 @@
             var ra = d.querySelector(".ru-alto").getBoundingClientRect(), bb = d.querySelector(".st-barra");
             if (!pa || pa.getBoundingClientRect().width < 0.6 * w) no("mentre " + chi + " sceglie su " + n + " la ruota non è grande");
             if (bb && ra.bottom > bb.getBoundingClientRect().top + 2) no("su " + n + " la ruota finisce sopra le scritte");
+            if (pa && pa.getBoundingClientRect().bottom > ra.bottom + 1) no("su " + n + " la ruota è tagliata in basso");   // (15 nov 2026: sempre intera)
             return;
           }
           var picc = d.querySelector(".ru-alto.nascosta") || (pa && pa.getBoundingClientRect().width < 0.75 * w);
