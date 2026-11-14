@@ -956,7 +956,15 @@
   function avatarASpento() { try { return localStorage.getItem("sg-avatar-a") === "0"; } catch (e) { return false; } }
   function avatarAVoluto() { return AVATAR_A === "tutti" || (AVATAR_A === "proprietario" && avatarAAmmesso() && !avatarASpento()); }
   var avatarAChiesto = false;
+  // 😀 I GETTONI AL POSTO DEGLI AVATAR (13 nov 2026, il proprietario: «per far laggare di meno… se li devo tenere brutti preferisco
+  // non tenerli»): GETTONI = true spegne gli avatar per tutti. Ognuno ha un gettone (un cerchio col suo colore e dentro la sua
+  // emoji 3D): lo disegna js/gettone.js, che fa disegnare a SGOmino.svg il gettone al posto dell avatar (i giochi non cambiano).
+  // Il codice degli avatar resta (e l avatar salvato di ognuno anche: false = tornano come prima); con GETTONI il disegno
+  // «illustrato» (il pezzo avatar-a, quasi 1 MB) non si scarica più. La scelta: cuore.schermataGettone (js/cuore/gettone.js).
+  var GETTONI = true;
+  if (GETTONI && window.SGGettone) SGGettone.accendi();   // (all'apertura non si scarica nessuna immagine: arrivano solo quando un gettone le mostra)
   function stileAvatar() {
+    if (GETTONI) return;   // (i gettoni: niente avatar da disegnare né da scaricare)
     if (!window.SGOmino || !SGOmino.stile) return;
     var base = AVATAR_NUOVO === "tutti" || (AVATAR_NUOVO === "proprietario" && eProprietario() && !avatarNuoviSpenti()) ? "rifinito" : "classico";
     if (avatarAVoluto()) {
@@ -1415,7 +1423,7 @@
       if (io) gruppo.push({ nome: io.nome, emoji: io.emoji });
     }
     var s = schermata({ icona: torn ? "🏆" : "🎉", titolo: torn ? "Serata a punti" : "La sala",
-      sotto: torn ? "Chi gioca stasera" : (g ? ("Si gioca a " + g.nome) : "Chi partecipa"),
+      sotto: torn ? "Chi gioca stasera" : (g ? ("Si gioca " + (cuore.aGioco ? cuore.aGioco(g.nome) : "a " + g.nome)) : "Chi partecipa"),
       indietro: function () { if (!torn && g && modiDi(g).length > 1) schermataModo(g); else tornaHome(); } });   // tornaHome: torna anche nell'edificio da cui si è entrati
 
     s.classList.add("prima-fissa");   // "Avanti" sempre a vista: con tanti giocatori scorre solo la lista
@@ -1503,7 +1511,7 @@
     }
     if (inSala) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "In una sala si gioca sempre online: appena cominci, gli altri entrano da soli." }));
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
-      onclick: function () { schermataRegole(g, function () { schermataPreGioco(g, opts); }); } }));
+      onclick: function () { schermataRegole(g, function () { mostra(s); }); } }));   // (ripasso X1: al ritorno la STESSA schermata, con le scelte fatte; prima si rifaceva da capo e le scelte si azzeravano)
     function comincia() {
       if (inSala) { impostazioni.modo = "online"; return cuore.salaLancia(g, impostazioni, box); }
       if (modo) impostazioni.modo = modo;
@@ -1705,6 +1713,7 @@
   // tf (partita online): i tasti di fine uguali per tutti (tastiFineCore); se non li mette, quelli di sempre
   function schermataFine(g, classifica, giocatori, impostazioni, faccine, tf) {
     var s = schermata({ icona: "🏆", titolo: "Fine partita", sotto: g.nome });
+    s.classList.add("fine-piede-giu");   // (in tanti, sul telefono piccolo: i tasti restano in vista anche se la classifica è lunga)
     var ol = el("ol", { class: "classifica" + (classificaFitta(classifica.length, faccine ? 56 : 0) ? " fitta" : "") });
     var posti = classifica.map(function (r, i) { return r.pos || i + 1; });   // a pari merito il gioco dà la stessa posizione: stessa medaglia
     var medaglie = medaglieAPari(posti);
@@ -1722,7 +1731,8 @@
     if (!faccine && cuore.torneo && cuore.torneo.auto && cuore.torneo._fine === classifica) {
       var clS = cuore.classificaTorneo();
       s._piede.appendChild(el("button", { class: "fine-serata", type: "button", onclick: cuore.schermataTorneoHub,
-        text: "🏆 Classifica della serata: " + clS.slice(0, 3).map(function (r, i) { return r.nome + " " + (i + 1) + "°"; }).join(" · ") + " ›" }));
+        // (a pari punti, stesso posto: prima diceva 1°, 2°, 3° anche se erano tutti pari)
+        text: "🏆 Classifica della serata: " + clS.slice(0, 3).map(function (r, i) { var p = r.punti != null ? 1 + clS.filter(function (q) { return q.punti > r.punti; }).length : i + 1; return r.nome + " " + p + "°"; }).join(" · ") + " ›" }));
     }
 
     // Dalla fine partita si resta nella stessa sala: rigioca, cambia gioco o modifica il gruppo
@@ -2066,6 +2076,10 @@
       },
       // l'avatar di questo telefono (da mandare quando si entra in una stanza online)
       mioOmino: function (nome) {
+        if (GETTONI && window.SGGettone) {   // 😀 il gettone (emoji + 3 colori); se tengo io la serata, col colore deciso
+          var gm = (cuore.mioGettone && cuore.mioGettone()) || SGGettone.riserva(nome || (profiloAttivo() || {}).nome || "io");
+          return cuore.gtMio ? cuore.gtMio(gm, nome || (profiloAttivo() || {}).nome) : gm;
+        }
         var p = profiloAttivo(); if (p && p.omino) return p.omino;
         if (salaCtx && cuore.salaG && cuore.salaG.omino) return cuore.salaG.omino;
         return window.SGOmino ? SGOmino.casuale(nome || (p && p.nome) || "io") : null;
@@ -2448,6 +2462,7 @@
   cuore.apriOnlineSala = apriOnlineSala; cuore.audioCtx = audioCtx; cuore.avatarNuoviSpenti = avatarNuoviSpenti; cuore.avviaPartita = avviaPartita;
   cuore.caricaExtra = caricaExtra; cuore.catDi = catDi; cuore.chiDa = chiDa; cuore.chiediConferma = chiediConferma;
   cuore.chiediScelta = chiediScelta; cuore.cifre = cifre; cuore.classificaFitta = classificaFitta; cuore.conCodice = conCodice;
+  cuore.GETTONI = GETTONI;
   cuore.contoAvanti = contoAvanti; cuore.eProprietario = eProprietario; cuore.el = el; cuore.entraConCodice = entraConCodice; cuore.errore = errore;
   cuore.giardinoPronto = giardinoPronto; cuore.giochi = giochi; cuore.giocoDa = giocoDa; cuore.giocoOnline = giocoOnline; cuore.gruppo = gruppo;
   cuore.hostDiRiserva = hostDiRiserva; cuore.hostVia = hostVia; cuore.inviaChi = inviaChi; cuore.lasciaPartita = lasciaPartita;

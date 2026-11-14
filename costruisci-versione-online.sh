@@ -71,6 +71,8 @@ CUORE="$TMP/cuore.js"
   echo ''
   cat js/omino.js
   echo ''
+  cat js/gettone.js   # 😀 il gettone al posto dell avatar
+  echo ''
   if [ "$CITTA" = si ]; then
   cat js/citta.js   # la città nuova (anteprima coi lavori in corso)
   echo ''

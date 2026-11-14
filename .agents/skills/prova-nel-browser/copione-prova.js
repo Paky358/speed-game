@@ -215,6 +215,7 @@
   // forma: 0 = lui, 1 = lei; look: il numero del look (0-7). Controlla che Fatto sia spento prima della scelta.
   async function primoAvatar(w, forma, look) {
     var d = w.document;
+    if (w.SGGettone && w.SGGettone.acceso()) return primoGettone(w, (forma || 0) * 8 + (look || 0));   // 😀 (13 nov 2026) al posto dell'avatar si sceglie il gettone
     var pa = await W.aspetta(function () { return d.querySelector(".primo-avatar .pa-forma"); }, 4000);
     if (!pa) no("dopo «Avanti» non si apre «Sei lui o lei?» (" + T(w).slice(0, 80) + ")");
     if (d.querySelector(".editor-avatar")) no("nel benvenuto si apre ancora l'editor intero");
@@ -229,6 +230,20 @@
     if (fatto.disabled) no("scelto il look, «✅ Fatto» resta spento");
     fatto.click();
     if (!await W.aspetta(function () { return !d.querySelector(".primo-avatar"); }, 4000)) no("toccato «Fatto», l'avatar resta aperto");
+  }
+  // 😀 il primo gettone (13 nov 2026): «Scegli la tua emoji» → un'emoji (la n-esima) e 2 colori in ordine → «▶ Fatto» (spento finché manca qualcosa)
+  async function primoGettone(w, n, colori) {
+    var d = w.document;
+    var sc = await W.aspetta(function () { return d.querySelector(".gt-scelta .gt-em"); }, 6000);
+    if (!sc) no("non si apre «Scegli la tua emoji» (" + T(w).slice(0, 80) + ")");
+    var fatto = [].find.call(d.querySelectorAll(".gt-scelta button"), function (b) { return /Fatto/.test(b.textContent); });
+    if (!fatto || !fatto.disabled) no("«▶ Fatto» acceso prima di scegliere");
+    var em = d.querySelectorAll(".gt-scelta .gt-em"); em[(n || 0) % em.length].click();
+    if (!fatto.disabled) no("«▶ Fatto» acceso con l'emoji ma senza i colori");
+    (colori || ["Oro", "Blu"]).forEach(function (k) { var b = [].find.call(d.querySelectorAll(".gt-col"), function (x) { return x.getAttribute("aria-label") === k; }); if (b) b.click(); });
+    if (fatto.disabled) no("scelti emoji e 2 colori, «▶ Fatto» resta spento");
+    fatto.click();
+    if (!await W.aspetta(function () { return !d.querySelector(".gt-scelta"); }, 4000)) no("toccato «Fatto», la scelta resta aperta");
   }
   // la schermata del profilo a misura (larg x alt; alt piccola = tastiera aperta): niente scorre, il tasto e i campi si
   // vedono tutti. "" = tutto bene, se no il perché
@@ -1269,6 +1284,12 @@
       if (!await W.aspetta(function () { return JSON.stringify(vm(C)).indexOf("\"" + nome + "\"") >= 0; }, 6000)) no("l'host non vede entrare «" + nome + "»");
       if (!await W.aspetta(function () { return avatarDi(P, nome); }, 3000)) no("nella saletta dell'host non c'è «" + nome + "»");
       var gio = [].concat(vm(C).posti || [], vm(C).giocatori || [], vm(C).players || []).filter(function (g) { return g && g.nome === nome; })[0];
+      if (L.SGGettone && L.SGGettone.acceso()) {   // 😀 (13 nov 2026) i gettoni: quello scelto (la prima emoji, oro-blu-verde) è nel profilo e lo vede l'host, col colore della stanza
+        var gL = L.__fp.gettone;
+        if (!gL || gL.c.join() !== "oro,blu") no("il gettone del profilo non è quello scelto (" + JSON.stringify(gL) + ")");
+        if (!gio || !gio.omino || gio.omino.e !== gL.e || !gio.omino.k) no("il gettone che vede l'host non è quello del profilo (" + JSON.stringify(gio && gio.omino) + ")");
+        return "nomi proposti: " + Object.keys(visti).join(", ") + "; è entrato «" + nome + "» col profilo e il gettone scelto (" + gL.e + ", colore " + gio.omino.k + ")";
+      }
       if (!L.__fp.omino || L.__fp.omino.forma !== "uomo" || L.__fp.omino.capo !== "maglietta") no("l'avatar del profilo non è quello scelto (lui, look Casual)");   // (dal 15 ott: lui/lei e il look, primoAvatar)
       if (!gio || JSON.stringify(gio.omino) !== JSON.stringify(L.__fp.omino)) no("l'avatar che vede l'host non è quello del profilo");
       return "nomi proposti: " + Object.keys(visti).join(", ") + "; è entrato «" + nome + "» col profilo e l'avatar scelto (lui, Casual)";
@@ -1334,6 +1355,16 @@
       campi[0].value = "Nina"; campi[0].dispatchEvent(new N.Event("input", { bubbles: true })); campi[1].value = "abc"; W.clicca(N, /^Avanti/);
       if (!/almeno 6 caratteri/.test(T(N))) no("password corta: nessun avviso");
       campi[1].value = "segreto1"; W.clicca(N, /^Avanti/);
+      if (N.SGGettone && N.SGGettone.acceso()) {   // 😀 (13 nov 2026) al posto dell'avatar: la scelta del gettone, poi la home
+        if (!W.BR.conti.nina) no("il profilo non è stato creato");
+        await primoGettone(N, 3, ["Rosso", "Lime"]);
+        if (!await W.aspetta(function () { return home(N); }, 6000)) no("scelto il gettone, non si arriva alla home");
+        if (!N.__fp.gettone || N.__fp.gettone.c.join() !== "rosso,lime") no("il gettone salvato non è quello scelto (" + JSON.stringify(N.__fp.gettone) + ")");
+        N = await W.ricarica("Nina");
+        if (!await W.aspetta(function () { return home(N); }, 4000)) no("ricaricando non si torna alla home");
+        if (N.document.querySelector(".gt-scelta")) no("ricaricando richiede la scelta del gettone");
+        return "benvenuto ok (" + mis + "), scelta del gettone (emoji + rosso-lime) → home; ricaricando: home senza domande";
+      }
       var ed = await W.aspetta(function () { return N.document.querySelector(".primo-avatar .pa-forma"); }, 4000);
       if (!ed) no("dopo «Avanti» non si apre «Sei lui o lei?»");
       if (!W.BR.conti.nina) no("il profilo non è stato creato");
@@ -2203,7 +2234,7 @@
         if (!ass.some(function (a) { return a.pos === 1 && a.punti === 100 * peso; })) no(gioco + ": il primo non prende " + 100 * peso);
       }
       // 1) la Classifica della serata è già accesa (riga corta su tutti); nel ⚙️ niente interruttore, «🔄 Azzera» spento
-      if (!await W.aspetta(function () { return vm(S).torneo && tel.every(function (w) { return /Classifica della serata: ancora nessuna partita/.test(corto(w)); }); }, 5000))
+      if (!await W.aspetta(function () { return vm(S).torneo && tel.every(function (w) { return /Serata: ancora nessuna partita/.test(corto(w)); }); }, 5000))
         no("la Classifica della serata non è accesa da sola su tutti («" + tel.map(corto).join(" / ") + "»)");
       var bReg = P.document.querySelector(".saletta-schermo .sl-regole");
       if (!bReg) no("nella Sala non c'è il ⚙️");
@@ -2981,6 +3012,15 @@
       var b = await W.aspetta(function () { return N.document.querySelector(".benvenuto-profilo:not(.bp-entra):not(.bp-bentornato):not(.bp-rete)"); }, 5000);
       if (!b) no("Nina non vede il benvenuto");
       var campi = b.querySelectorAll("input.link-campo"); campi[0].value = "Nina"; campi[1].value = "segreto1"; W.clicca(N, /^Avanti/);
+      if (N.SGGettone && N.SGGettone.acceso()) {   // 😀 (13 nov 2026) al posto di lui/lei: la scelta del gettone (si scorre la griglia; il «Fatto» resta a vista)
+        if (!await W.aspetta(function () { return N.document.querySelector(".gt-scelta .gt-em"); }, 8000)) no("non si apre «Scegli la tua emoji»");
+        var fG = document.getElementById("tel-Nina"), misG = [];
+        [[360, 640], [412, 915]].forEach(function (m) { fG.style.width = m[0] + "px"; fG.style.height = m[1] + "px"; N.dispatchEvent(new N.Event("resize")); var b = [].find.call(N.document.querySelectorAll(".gt-scelta button"), function (x) { return /Fatto/.test(x.textContent); }), r = b && b.getBoundingClientRect(); if (!r || r.bottom > N.innerHeight + 1) misG.push(m.join("x")); });
+        fG.style.width = "360px"; fG.style.height = "740px";
+        if (misG.length) no("«Fatto» della scelta del gettone fuori dallo schermo a " + misG.join(", "));
+        esiti.push("scelta del gettone");
+        return esiti.join(" · ") + " — tutto a 360x640 e 412x915";
+      }
       if (!await W.aspetta(function () { return N.document.querySelector(".primo-avatar .pa-forma"); }, 4000)) no("non si apre «Sei lui o lei?»");
       var m2 = await misuraProfilo(N, "Nina", 360, 640) || await misuraProfilo(N, "Nina", 412, 915); if (m2) no("«Sei lui o lei?»: " + m2);
       N.document.querySelectorAll(".primo-avatar .pa-forma")[0].click(); await W.dorme(100);
@@ -5818,7 +5858,7 @@
       apriSala: apriSala, salaLanciaGioco: salaLanciaGioco, scalinataFinoAllaFine: scalinataFinoAllaFine,
       audioFinto: audioFinto, nomeTarga: nomeTarga, targaDi: targaDi, avatarDi: avatarDi, pronto: pronto, statoHost: statoHost,
       contaFaccine: contaFaccine, controllaSchermo: controllaSchermo,
-      spiaProfilo: spiaProfilo, creaProfilo: creaProfilo, primoAvatar: primoAvatar, misuraProfilo: misuraProfilo, misureProfilo: misureProfilo,
+      spiaProfilo: spiaProfilo, creaProfilo: creaProfilo, primoAvatar: primoAvatar, primoGettone: primoGettone, misuraProfilo: misuraProfilo, misureProfilo: misureProfilo,
       codiceSala: codiceSala, tessera: tessera, modiVisti: modiVisti, spiaTesto: spiaTesto, salaDaGioco: salaDaGioco, idInSala: idInSala,
       apriSalaNuova: apriSalaNuova, misuraHome: misuraHome, batti: batti, incolla: incolla, caselle: caselle,
       salaConAmici: salaConAmici, lanciaDallaSala: lanciaDallaSala, contaSl: contaSl, sagome: sagome, regoleDi: regoleDi,

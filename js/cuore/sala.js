@@ -114,6 +114,8 @@
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ok", onclick: schermataHome }));
     mostra(s);
   }
+  // 😀 coi gettoni: il mio gettone scelto (anche se è solo su questo telefono), se no quello di riserva
+  function mioOm(nome, altro) { if (cuore.GETTONI && window.SGGettone) return (cuore.mioGettone && cuore.mioGettone()) || SGGettone.riserva(nome || "?"); return altro; }
   function ominoOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   // la sala usa la saletta d'attesa dei giochi (stessi personaggi, stesso divano).
   // Col torneo a punti il titolo resta "Sala online": il torneo si accende e si spegne dal ⚙️ senza cambiare schermata
@@ -164,7 +166,7 @@
     }
     var cl = classificaT(T), tx;
     if (T.finito && cl.length) tx = "🏆 Serata finita · 👑 " + cl[0].nome + " " + cifre(cl[0].punti);
-    else if (!T.n) tx = "🏆 Classifica della serata: ancora nessuna partita";
+    else if (!T.n) tx = "🏆 Serata: ancora nessuna partita";
     else tx = "🏆 " + cl.slice(0, 3).map(function (r) { return r.nome + " " + cifre(r.punti); }).join(" · ");
     if (K.tx.textContent !== tx) { K.tx.textContent = tx; K.nodo.setAttribute("aria-label", "Classifica della serata: " + tx.replace(/^🏆\s*/, "")); }
     return K.nodo;
@@ -377,7 +379,7 @@
       var hostR = R0 ? (R0.membri || []).filter(function (m) { return m && m.id === "host"; })[0] : null;
       var nomeH = String((opz && opz.nomeHost) || (R0 && R0.nomeHost) || nomeOspiteSalvato() || ((gruppo[0] && gruppo[0].nome) || "")).trim().slice(0, 16);
       if (!nomeH) return schermataNomeSala(opz);   // una volta sola: poi il telefono se lo ricorda
-      io = { nome: nomeH, emoji: "🙂", omino: (hostR && ominoOk(hostR.omino)) || (window.SGOmino ? SGOmino.casuale(nomeH) : null) };
+      io = { nome: nomeH, emoji: "🙂", omino: mioOm(nomeH, (hostR && ominoOk(hostR.omino)) || (window.SGOmino ? SGOmino.casuale(nomeH) : null)) };
     }
     cuore.tieniAcceso(true);   // la Sala: lo schermo resta acceso finché si gioca
     if (sala && sala.tVivo) clearInterval(sala.tVivo);
@@ -385,7 +387,7 @@
     // Compagnia (p3-b) la lascia da sé
     if (sala && !(opz && opz.trasloco)) chiudiSala();
     var conPr = !!profiloAttivo();
-    var membri = [{ id: "host", nome: String((opz && opz.nome) || io.nome).slice(0, 16), emoji: io.emoji, omino: io.omino || null, pr: conPr ? 1 : 0 }];
+    var membri = [{ id: "host", nome: String((opz && opz.nome) || io.nome).slice(0, 16), emoji: io.emoji, omino: mioOm(io.nome, io.omino || null), pr: conPr ? 1 : 0 }];
     if (R0) (R0.membri || []).forEach(function (m) { if (m && m.id && m.id !== "host") membri.push(m); });
     // una Sala che continua (riaperta da un amico): io non ci sono due volte; chi la teneva prima diventa uno che deve
     // rientrare (ex: quando entra col suo id nuovo e lo stesso nome prende il suo posto)
@@ -658,7 +660,7 @@
     var io = profiloAttivo();
     cuore.ricordaStanza({ sala: C }); cuore.segnaLinkSessione({ sala: C });
     // (lo schermo resta quello di adesso finché non arriva la Sala dell'amico: si cambia una volta sola)
-    entraInSala(C, (io && io.nome) || io0.nome, (io && io.emoji) || io0.emoji || "🙂", (io && io.omino) || io0.omino || null, { subito: true });
+    entraInSala(C, (io && io.nome) || io0.nome, (io && io.emoji) || io0.emoji || "🙂", mioOm((io && io.nome) || io0.nome, (io && io.omino) || io0.omino || null), { subito: true });
   }
 
   // ---------- L'HOST CHE SE NE VA (Passo 3, p3-c): "Passa la Sala", il vice, chi torna ----------
@@ -1325,7 +1327,7 @@
     var io = profiloAttivo();
     // nella Sala si entra sempre col profilo (nome e avatar suoi): chi non ce l'ha lo crea e poi entra da solo
     if (!io) return cuore.schermataAccesso(function () { salaOspite(codice); });
-    entraInSala(codice, io.nome, io.emoji, io.omino || null);
+    entraInSala(codice, io.nome, io.emoji, mioOm(io.nome, io.omino || null));
   }
   // o (facoltativo) = { subito: true } lo schermo di adesso resta finché non arriva la Sala (chi cede la sua: niente
   //   "Entro nella sala…" in mezzo); { aspetta: comp } la Compagnia vuota, senza profilo: "🕐 Nessuno ancora" (aspettaCompagnia)
@@ -1689,9 +1691,9 @@
       attesa: TN ? (E.finito ? nH + " vi riporta nella Sala: non devi toccare niente." : (E.iniziato ? "Quando tocca a te, la partita si apre da sola." : (E.scade ? "Tocca un posto libero: ti siedi lì, con chi vuoi." : "Si comincia appena ci siete tutti.")))
         : E ? (E.iniziato ? "Quando tocca a te, la partita si apre da sola." : "Tocca il girone in cui vuoi giocare, poi aspetta che l'host faccia partire il torneo.")
         : salaG.resta && tipo !== "rientra" ? "👑 Le sfide partono da sole: quando tocca a te, entri da solo."
-        : (tipo === "rientra" ? "Gli altri stanno giocando: rientra quando vuoi, oppure aspetta qui il prossimo gioco."
+        : (tipo === "rientra" ? "Gli altri giocano: rientra quando vuoi."
           : (tipo === "prossima" ? attesaInCorso(salaG, gs)
-            : (salaG.sceglie && !gs ? (salaG.nomeHost || "L'host") + (salaG.sceglie === "sfida" ? " sceglie chi gioca… ⚔️" : (salaG.insieme ? " propone 3 giochi: poi votate tutti… 🗳️" : " sceglie il prossimo gioco… 🎲")) : "Aspetta che l'host scelga un gioco: parte da solo sul tuo telefono."))),
+            : (salaG.sceglie && !gs ? (salaG.nomeHost || "L'host") + (salaG.sceglie === "sfida" ? " sceglie chi gioca… ⚔️" : (salaG.insieme ? " propone 3 giochi: poi votate tutti… 🗳️" : " sceglie il prossimo gioco… 🎲")) : "Aspetta l'host: il gioco parte da solo."))),
       onEsci: function () { chiudiSalaOspite(); schermataHome(); }
     });
     if (sS) sS.classList.toggle("con-tabellone", !!(E && (E.iniziato || (E.torneino && E.scade))));
@@ -1712,7 +1714,7 @@
     if (modo === "entra") return g && g.ritardatari === "subito" ? "✋ Puoi entrare: giochi subito." : "✋ Puoi entrare subito: giochi " + (g && g.ritardatari === "mano" ? "dalla prossima mano" : "dal prossimo turno") + ".";
     if (modo === "due") return "Giocano in due: guardali in diretta quando vuoi.";
     if (modo === "scelti") return "Giocano quelli scelti da " + (S.nomeHost || "l'host") + ": guardali quando vuoi.";
-    return "Alla prossima partita entri da solo: non devi toccare niente.";
+    return "Entri da solo alla prossima partita.";
   }
   function modoInCorso(S, gs) {
     var g = giocoDa(gs.gioco), mio = mioIdSala(S);
@@ -1723,7 +1725,9 @@
   }
   function boxInCorso(gs, tipo) {
     var S0 = salaG, D = S0.duello && S0.duello.stanza === gs.stanza ? S0.duello : null, mio = mioIdSala(S0);
-    var modo = D && mio !== D.a && mio !== D.b ? "duello" : (tipo === "rientra" ? "rientra" : modoInCorso(S0, gs));
+    // (la partita la teneva questo telefono, poi è sparito e l'ha presa un amico: «Rientra ▶» col mio posto di prima. Ripasso S7)
+    var exHost = !D && gs.fase === "gioco" && eroHostDi(gs.gioco, gs.stanza);
+    var modo = D && mio !== D.a && mio !== D.b ? "duello" : (tipo === "rientra" || exHost ? "rientra" : modoInCorso(S0, gs));
     var g = giocoDa(gs.gioco), nome = g ? g.nome : "un gioco";
     // la prima riga: il gioco (o chi gioca la sfida) e, a partita in corso, a che punto è
     var punto = gs.fase === "gioco" && gs.punto ? " · " + gs.punto : "", testa;
@@ -1770,6 +1774,11 @@
     S0._inCorso = { k: k, nodo: nodo, b: b, sm: sm };
     return nodo;
   }
+  // questa partita la tenevo io (la memoria della ripresa lo dice): il mio id in quella stanza, o null
+  function eroHostDi(gid, code) {
+    var rp = cuore.ripresaDi ? cuore.ripresaDi(gid, code) : null;
+    return rp && rp.io && Date.now() - (+rp.t || 0) < 20 * 60000 ? rp.io : null;
+  }
   // il mio id nella Sala (subito, anche prima che il collegamento dica "aperto")
   function mioIdSala(S) { return (S && (S.myId || (S.rete && S.rete.mioId))) || null; }
 
@@ -1786,9 +1795,13 @@
     var D = salaG && salaG.duello && salaG.duello.stanza === code ? salaG.duello : null, mio = mioIdSala(salaG);
     if (D && mio === D.a) return giocaDuello(g, D, torna);
     if (D && mio !== D.b) return guardaDuello(g, D, torna);
-    if (o && o.guarda && salaG) return guardaInSala(g, code, codiceSala, mio);
+    // la partita la tenevo io e ora la tiene un amico: rientro col mio id di quella stanza, così ritrovo posto, punti e segreti
+    // (S7 del ripasso: prima rientravo con l'id nuovo della Sala ed ero uno appena arrivato)
+    var exHost = !D && eroHostDi(gid, code);
+    if (o && o.guarda && salaG && !exHost) return guardaInSala(g, code, codiceSala, mio);
     cuore.linkParams = { gioco: gid, stanza: code };   // il gioco lo legge subito (t.linkParams)
-    if (mio) SGNet.ricordaId(code, mio);   // nel gioco lo stesso id che ho nella Sala
+    if (exHost) SGNet.ricordaId(code, exHost);
+    else if (mio) SGNet.ricordaId(code, mio);   // nel gioco lo stesso id che ho nella Sala
     // (se intanto la Sala è passata a me e questa partita è rimasta, p3-c: i punti li conto io, una volta per partita)
     var contati = {};
     function contaSeHost(g2, cl) {

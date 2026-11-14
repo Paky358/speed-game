@@ -9,6 +9,40 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 344,
+    data: "13 novembre 2026",
+    titolo: "Ognuno ha la sua emoji 3D e il suo colore ⚡",
+    descrizione: [
+      "😀 Al posto dell'avatar ora ognuno ha un gettone: un cerchio del suo colore con dentro la sua emoji 3D. Si sceglie una volta (anche chi ha già il profilo) e si cambia quando vuoi dal profilo.",
+      "🎨 Scegli 2 colori in ordine: se un amico nella stessa serata ha già il tuo 1° colore, prendi il 2°. Così in partita ognuno ha un colore diverso, uguale su tutti i telefoni e per tutta la serata.",
+      "⚡ Le emoji 3D sono uguali su ogni telefono, iPhone e Android: niente più personaggi neri o storti.",
+      "🪶 L'app è più leggera: si apre e parte più in fretta, e il «pronto» nella saletta non va più a scatti (il gettone fa un saltello, si accende del suo colore e compare la ✋).",
+      "🔍 Le emoji sono più di mille (animali, oggetti, cibo, sport, mezzi, simboli…): si cercano scrivendo in italiano, anche solo un pezzo di parola: «razzo», «leone», «spada».",
+      "🤖 Anche i Bot hanno la loro emoji e il loro colore, sempre gli stessi: Matt è 🦁."
+    ]
+  },
+  {
+    v: 343,
+    data: "13 novembre 2026",
+    titolo: "Sistemati i difetti visti in serata 🔧",
+    descrizione: [
+      "🧍 Gli avatar coi capelli «Boccoli» si vedono dappertutto: in Chi di Noi? la carta della zia non è più vuota.",
+      "🕵️ L'Impostore: le regole partono dalla cosa più semplice; al voto gli indizi si leggono interi; il segno ✅/❌ di chi ha votato giusto non sparisce coi nomi lunghi; con due impostori l'altro non vede più le 6 parole dell'ultima possibilità; il voto non resta aperto all'infinito se uno continua a cambiarlo.",
+      "😂 Memata e 📡 Stessa Lunghezza d'Onda: in due, se uno blocca il telefono la partita non si chiude più da sola: lo si aspetta. Nei meme l'ultima lettera non si taglia più, e le scritte minuscole si leggono anche sotto il meme.",
+      "🤨 Sì... però: il giudice ha tutto il tavolo per leggere, le carte non scendono sotto una misura leggibile e si capisce chi è in quale squadra e chi è il capo.",
+      "🏠 La Sala: le targhette dei nomi in saletta non finiscono più sull'avatar sbagliato; chi teneva la partita e torna dopo essere sparito ritrova il suo posto con «Rientra ▶»; «Avete giocato con» coi nomi interi.",
+      "🃏 Black Jack: gli annunci grandi vanno a capo e la vincita si legge; la fine partita non è più tagliata; il tavolo è più leggero sui telefoni lenti. ♣️ Poker: fiori in verde nelle carte piccole, per non confonderli con le picche. A chi guarda una partita a due la scritta in alto sparisce dopo pochi secondi e non copre più il punteggio.",
+      "🤥 La Balla Colossale: al voto la notizia resta sempre sullo schermo, anche sul telefono piccolo; la classifica del round in tanti non è più coperta; niente più barre strane nelle virgolette; chi riaccende il telefono mentre gli altri votano vota anche lui.",
+      "🏆 A fine partita, anche in 8 sul telefono piccolo, i tasti «Rivincita» e «Cambia gioco» restano sempre in vista.",
+      "🏷️ Il Prezzo è Giusto: nella Spesa, in Mettili in ordine, nella Prova del 5 e in Togli la cifra la faccina in alto ha di nuovo la testa; in 8 i nomi in classifica si leggono interi.",
+      "📜 La linea del tempo: «240 a.C.» non diventa più «240 …». 💣 La Patata: la scritta dice di toccare in alto, dove sono i giocatori. 🎡 La Ruota: chi blocca il telefono non perde più i soldi della manche.",
+      "❌⭕ Tris e Tris Gigante: se l'avversario blocca il telefono, il tavolo resta e si legge «⏳ Aspettiamo Giulia 📱»: quando riaccende si continua. 🚢 Battaglia Navale: «il Cacciatorpediniere», «l'Incrociatore».",
+      "⚙️ Le scelte fatte prima della partita non si azzerano più se apri «Come si gioca». 🐎 Horto Muso: al traguardo il posto giusto, non più «1°» per tutti.",
+      "🎡 La Ruota della Fortuna: la tastiera c'è solo sul telefono di chi deve scegliere o scrivere le lettere. Quando si gira la ruota prende tutto lo spazio sotto il tabellone, sempre intera e grande quanto ci sta, anche sul telefono piccolo, e non copre mai le scritte. Il giro ha più suspense: la linguetta si piega sui pioli col suo tic sempre più lento, a volte si ferma a un soffio dalla Bancarotta o dal premio grosso, lo spicchio vinto si illumina e il telefono vibra un attimo. Le lettere chiamate che non ci sono stanno rosse e sbarrate sotto il tabellone; dove la ruota non serve il tabellone diventa più grande.",
+      "🗣️ Taboo: la fine partita non esce più dallo schermo e nei tre round il riassunto non svela le carte che tornano nel cesto. 🔨 L'Asta dei temi: il tasto della busta mostra una cifra sola."
+    ]
+  },
+  {
     v: 342,
     data: "13 novembre 2026",
     titolo: "Mini Asta Fantacalcio: fino a 12 giocatori 👥",

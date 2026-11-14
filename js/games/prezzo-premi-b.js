@@ -812,7 +812,7 @@
         var conta = {}; S.lanci.forEach(function (x) { conta[x] = (conta[x] || 0) + 1; });
         u.zs.forEach(function (z, i) { var b = z.querySelector(".k"); if (conta[i]) { if (!b) { b = el("span", { class: "k" }); z.appendChild(b); } b.textContent = conta[i]; } else if (b) z.removeChild(b); });
         if (resta > 0) { u.nota.textContent = S.sel == null ? "⬇ Tocca in alto dove lasciarlo" : "⬇ Cade dal posto " + (S.sel + 1); u.ok.disabled = S.sel == null; u.ok.textContent = "🟡 Lascia!" + (S.lanci.length ? " (ancora " + resta + ")" : ""); }
-        else { u.nota.textContent = "👀 Guardate il maxischermo!"; u.ok.disabled = true; u.ok.textContent = "✅ Fatto"; u.zs.forEach(function (z) { z.disabled = true; }); }
+        else { u.nota.textContent = "👀 Guardate come va!"; u.ok.disabled = true; u.ok.textContent = "✅ Fatto"; u.zs.forEach(function (z) { z.disabled = true; }); }
       }
       function privato(m) {
         if (!m) return;

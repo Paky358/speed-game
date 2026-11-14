@@ -4386,3 +4386,56 @@ html body.tema-oro::before{ display:none; }
    transform: le finestre fisse sopra il gioco (inset:0) si misurano sul body, cioè sulla parte che si vede (su iPhone se no restano centrate sotto la tastiera). */
 html.tastiera-ferma, html.tastiera-ferma body{ height:var(--alt); max-height:var(--alt); overflow:hidden; overscroll-behavior:none; }
 html.tastiera-ferma body{ position:fixed; left:0; right:0; top:var(--vv-su, 0px); width:100%; transform:translateZ(0); }
+
+/* =========================================================
+   😀 I GETTONI AL POSTO DEGLI AVATAR (13 nov 2026): la scelta (emoji + 3 colori in ordine) e il gettone nelle salette.
+   Il disegno del gettone: js/gettone.js (SVG: contorno del colore, fondo blu notte, l'emoji 3D dentro).
+   ========================================================= */
+.gt-testa{ position:sticky; top:0; z-index:3; margin:0 -2px; padding:6px 2px 10px; background:var(--o-fondo, #0d1020); box-shadow:0 10px 14px -12px rgba(0,0,0,.7); }
+.gt-testa-sopra{ display:flex; gap:12px; align-items:center; }
+.gt-cerca-riga{ position:relative; display:flex; align-items:center; margin-top:10px; }
+.gt-lente{ position:absolute; left:12px; font-size:16px; pointer-events:none; opacity:.8; }
+.gt-cerca{ flex:1; min-width:0; margin:0; padding-left:38px !important; padding-right:40px !important; font-size:16px; }
+.gt-cerca::-webkit-search-cancel-button{ -webkit-appearance:none; appearance:none; }
+.gt-cerca-via{ position:absolute; right:6px; width:32px; height:32px; border:0; border-radius:50%; background:var(--o-carta, rgba(255,255,255,.1)); color:var(--o-testo, #fff); font-size:15px; font-weight:900; cursor:pointer; }
+.gt-cerca-via[hidden]{ display:none; }
+.gt-risultati[hidden], .gt-zona[hidden]{ display:none; }
+.gt-risultati{ padding-top:10px; }
+.gt-niente{ margin:18px 4px 8px; font-weight:800; font-size:1rem; color:var(--o-testo, #fff); text-align:center; }
+.gt-proposte{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center; color:var(--o-tenue, #a6acc8); font-size:.85rem; font-weight:700; }
+.gt-prop{ border:0; border-radius:999px; padding:7px 14px; background:var(--o-carta, rgba(255,255,255,.08)); color:var(--o-testo, #fff); font:inherit; font-weight:800; cursor:pointer; }
+.gt-carica{ text-align:center; margin-top:20px; }
+/* ⌨️ con la tastiera aperta (regole della v339): in alto resta solo la ricerca, le emoji trovate subito sotto */
+html.tastiera .gt-testa-sopra{ display:none; }
+html.tastiera .gt-cerca-riga{ margin-top:0; }
+.gt-anteprima{ flex:0 0 auto; width:92px; height:92px; }
+.gt-anteprima svg{ width:100%; height:100%; display:block; }
+.gt-vuoto{ width:92px; height:92px; border-radius:50%; box-sizing:border-box; border:7px solid var(--c); display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:900; color:var(--o-tenue, #a6acc8); background:#161b33; }
+.gt-testa-dx{ flex:1; min-width:0; }
+.gt-aiuto{ font-size:.84rem; font-weight:800; color:var(--o-tenue, #a6acc8); margin-bottom:8px; line-height:1.3; min-height:2.6em; }
+.gt-colori{ display:grid; grid-template-columns:repeat(6, 1fr); gap:7px; }
+.gt-col{ position:relative; aspect-ratio:1/1; min-height:28px; border-radius:50%; border:0; padding:0; background:var(--c); cursor:pointer; box-shadow:inset 0 -3px 0 rgba(0,0,0,.2); touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.gt-col.on{ box-shadow:0 0 0 3px var(--o-fondo, #0d1020), 0 0 0 5px #fff; }
+.gt-col .gt-n{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:.92rem; font-weight:900; color:#0d1020; }
+.gt-gruppo{ margin-top:14px; }
+.gt-griglia{ display:grid; grid-template-columns:repeat(auto-fill, minmax(54px, 1fr)); gap:6px; }
+.gt-em{ aspect-ratio:1/1; border:0; border-radius:16px; background:var(--o-carta, rgba(255,255,255,.06)); padding:7px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:30px; line-height:1; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.gt-em img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
+.gt-em.on{ background:var(--o-carta-viva, rgba(255,255,255,.16)); box-shadow:inset 0 0 0 3px var(--o-tasto, #e0225a); }
+.gt-licenza{ margin-top:16px; font-size:.74rem; opacity:.85; }
+.gt-licenza a{ color:inherit; }
+.gt-palco svg{ width:132px; height:132px; display:block; margin:0 auto; }
+/* il gettone dove prima c'era l'avatar: niente ombre pesanti (filtri) */
+.gettoni svg.gettone{ filter:none !important; overflow:visible; }
+/* «pronto» nella saletta: un saltello, l'alone del suo colore dietro e la mano ✋ (solo transform e opacity) */
+.gettoni .sl-anello{ left:9%; right:9%; top:38%; bottom:-1%; height:auto; border-radius:50%; background:radial-gradient(closest-side, var(--gt, #34d17a) 62%, transparent 100%) !important; opacity:0; transform:scale(.7); transition:opacity .3s ease, transform .35s cubic-bezier(.3,1.6,.5,1); }
+.gettoni .sl-av.pronto .sl-anello{ opacity:.55; transform:scale(1.08); }
+.gettoni .sl-fig::after{ content:"✋"; position:absolute; right:-4%; top:30%; z-index:5; font-size:calc(var(--w, 80px) * .36); line-height:1; opacity:0; transform:scale(.3) rotate(-20deg); transition:opacity .2s ease, transform .35s cubic-bezier(.3,1.7,.5,1); pointer-events:none; }
+.gettoni .sl-av.pronto .sl-fig::after{ opacity:1; transform:scale(1) rotate(8deg); }
+.gettoni .sl-bollo{ top:33%; left:6%; right:auto; }
+/* la scelta del gettone: «▶ Fatto» sempre a vista in basso (la griglia è lunga) */
+.gt-scelta > .piede{ position:sticky; bottom:0; z-index:4; margin-top:0; padding:10px 0 calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, rgba(13,16,32,0), var(--o-fondo, #0d1020) 28%); }
+/* il gettone ha già il suo anello colorato: nei quadretti della Mini Asta niente secondo anello né fondo */
+.gettoni .st-gio-faccia{ box-shadow:none !important; background:none !important; }
+/* fine partita in tanti (ripasso B16, 12 nov 2026): i tasti attaccati al fondo, la classifica scorre sopra */
+.schermata.fine-piede-giu > .piede{ position:sticky; bottom:0; z-index:3; padding:8px 0 calc(6px + env(safe-area-inset-bottom)); background:var(--o-fondo, #0d1020); box-shadow:0 -12px 14px -8px var(--o-fondo, #0d1020); }

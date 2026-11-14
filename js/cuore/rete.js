@@ -170,6 +170,70 @@
   function impSalvabili(imp) { try { return JSON.parse(JSON.stringify(imp || {})); } catch (e) { return {}; } }
   // due con lo stesso nome nella stessa stanza: il secondo diventa "Luca 2". Lo stesso telefono tiene il nome che ha avuto;
   // due profili con lo stesso nome sono la stessa persona (niente numero). true = nome nuovo da ricordare
+  // ---- 😀 i colori dei gettoni nella serata (13 nov 2026): li decide chi tiene la Sala o la partita, quando uno entra
+  // (SGGettone.assegna: chi è entrato prima tiene il suo 1° colore, poi il suo 2°, poi il primo libero) e restano per tutta la
+  // serata anche se uno esce e rientra. Una mappa per serata: il codice della Sala (tutti i suoi giochi), se no quello della stanza.
+  // Si tiene in sessionStorage (l host che ricarica la ritrova); un host nuovo (vice) la riparte da chi c è già, coi loro colori.
+  var GT_MAPPE = {}; try { GT_MAPPE = JSON.parse(localStorage.getItem("sg-gt-mappe") || "{}") || {}; } catch (e) { GT_MAPPE = {}; }
+  (function () { var ora = Date.now(); Object.keys(GT_MAPPE).forEach(function (k) { if (!GT_MAPPE[k] || !(ora - (GT_MAPPE[k].t || 0) < 12 * 3600 * 1000)) delete GT_MAPPE[k]; }); })();   // (una serata: 12 ore)
+  var GT_ATTIVA = null;   // la serata che tengo adesso (per il mio gettone: cuore.gtMio)
+  function gtOn() { return !!(cuore.GETTONI && window.SGGettone); }
+  function gtChiave(SV) { var S = cuore.sala || cuore.salaG; return (S && S.codice && S.codice !== "…" ? S.codice : null) || (SV && SV.codice) || "?"; }
+  function gtSalva() {
+    try {
+      var k = Object.keys(GT_MAPPE).sort(function (a, b) { return (GT_MAPPE[a].t || 0) - (GT_MAPPE[b].t || 0); });   // (via le meno usate, non la Sala)
+      if (k.length > 8) k.slice(0, k.length - 8).forEach(function (x) { delete GT_MAPPE[x]; });
+      localStorage.setItem("sg-gt-mappe", JSON.stringify(GT_MAPPE));
+    } catch (e) {}
+  }
+  function gtMettiCon(M, nome, g) {   // (un colore già deciso, di un host di prima: si tiene se è libero)
+    if (!g || !g.k || M.col[nome]) return;
+    for (var n in M.col) if (M.col[n] === g.k) return;
+    M.col[nome] = g.k; M.ordine.push(nome);
+  }
+  function gtMappa(k, ioNome) {
+    var M = GT_MAPPE[k];
+    if (!M || !M.col || !M.ordine) {
+      M = GT_MAPPE[k] = SGGettone.nuovaMappa(); M.t = Date.now();
+      // prima i colori già decisi stasera (chi è nella Sala, nell'ordine in cui è entrato: così un vice o un trasloco non li cambia),
+      // poi io, se non c'ero (chi tiene la serata)
+      [cuore.sala, cuore.salaG].forEach(function (S) { if (S && S.membri) S.membri.forEach(function (m) { if (m && m.nome && SGGettone.eGettone(m.omino)) gtMettiCon(M, String(m.nome).trim().slice(0, 16), m.omino); }); });
+      var io = profiloAttivo(), nIo = ioNome || (io && io.nome) || "";
+      if (nIo) SGGettone.assegna(M, String(nIo).trim().slice(0, 16), (cuore.mioGettone && cuore.mioGettone()) || SGGettone.riserva(nIo));
+      gtSalva();
+    }
+    return M;
+  }
+  function gtAssegnaJoin(SV, nome, omino) {
+    if (!gtOn()) return omino;
+    var ioN = SV && SV.nomi && SV.nomi.__io, M = gtMappa(gtChiave(SV), ioN);
+    if (SGGettone.eGettone(omino)) gtMettiCon(M, nome, omino);   // (ha già un colore stasera e nessuno l'ha preso: lo tiene)
+    var g = SGGettone.assegna(M, nome, omino); M.t = Date.now(); gtSalva(); try { SGGettone.prepara(g.e); } catch (e) {} return g;   // (la sua immagine arriva già in saletta)
+  }
+  // il mio gettone col colore della serata che tengo (per chi entra: quello che ho scelto, il colore lo decide l host)
+  function gtMio(g, nome) {
+    if (GT_ATTIVA && cuore.SVH[GT_ATTIVA.codice] !== GT_ATTIVA) GT_ATTIVA = null;   // (la stanza che tenevo è chiusa)
+    if (!gtOn() || !GT_ATTIVA || !g) return g;
+    var M = gtMappa(gtChiave(GT_ATTIVA), nome); return SGGettone.assegna(M, String(nome || (profiloAttivo() || {}).nome || "").trim().slice(0, 16), g);
+  }
+  // i Bot nella serata che tengo: il loro colore se è libero, se no il primo libero (mai quello di una persona entrata prima)
+  function gtBot(nome, g) {
+    if (GT_ATTIVA && cuore.SVH[GT_ATTIVA.codice] !== GT_ATTIVA) GT_ATTIVA = null;
+    if (!gtOn() || !GT_ATTIVA || !g) return g;
+    var M = gtMappa(gtChiave(GT_ATTIVA)), b = SGGettone.assegna(M, "🤖 " + nome, g); gtSalva(); return b;
+  }
+  // chi entra da amico: le emoji di chi c'è si preparano appena arriva una foto (così nei disegni-immagine dei giochi c'è già quella 3D)
+  var GT_SCAN = 0;
+  function gtPreparaDa(m) {
+    if (!gtOn() || Date.now() - GT_SCAN < 2000 || !m || typeof m !== "object") return;
+    GT_SCAN = Date.now();
+    (function giu(o, d) {
+      if (!o || typeof o !== "object" || d > 4) return;
+      if (o.g === 1 && typeof o.e === "string") { SGGettone.prepara(o.e); return; }
+      if (Array.isArray(o)) { for (var i = 0; i < o.length && i < 30; i++) giu(o[i], d + 1); return; }
+      for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) giu(o[k], d + 1);
+    })(m, 0);
+  }
   function nomeUnico(nomi, conPr, id, m) {
     var n = String(m.nome || "").trim().slice(0, 16);
     if (!n) return false;
@@ -486,6 +550,7 @@
       var io = profiloAttivo(); if (io && io.nome) { nomi.__io = String(io.nome).trim().slice(0, 16); conPr.__io = 1; }   // il nome dell'host è suo
       // la saletta viva di questa stanza: chi è dentro, chi è pronto, chi si ricollega, chi è stato fatto uscire, la porta
       var SV = cuore.nuovoSV(true, "", sala); SV.nomi = nomi; SV.porta = portaSeme;
+      GT_ATTIVA = SV;   // 😀 (i colori dei gettoni: questa serata la tengo io)
       if (!sala && cb.onGuarda) SV.onGuardo = function (id, n) { cb.onGuarda(id, n); };   // (chi guarda soltanto: vedi svGuardo)
       Object.keys(nomi).forEach(function (k) { if (k !== "__io") SV.dentro[k] = 1; });   // stanza riaperta: chi c'era rientra anche con la porta chiusa
       var onMsg = cb.onMsg, onAddio = cb.onAddio;
@@ -496,6 +561,7 @@
         if (m && m.t === "join") {
           if (cuore.svRifiuta(SV, id)) return;   // fatto uscire, o nuovo con la porta chiusa: il gioco non lo vede
           if (nomeUnico(nomi, conPr, id, m) && salva) salva();
+          if (gtOn() && m.nome) { m.omino = gtAssegnaJoin(SV, String(m.nome).trim().slice(0, 16), m.omino); if (m.gettone) delete m.gettone; }   // 😀 il colore della serata
           var nuovo = !SV.dentro[id];
           SV.dentro[id] = 1; delete SV.andati[id];
           if (SV.pubblico[id]) { delete SV.pubblico[id]; cuore.fermaPubblico(SV); }   // guardava e adesso gioca
@@ -587,6 +653,7 @@
       var SV = cuore.nuovoSV(false, C, sala);   // la saletta viva vista da qui: chi è pronto, chi si ricollega, i nomi, la porta
       var onMsg = cb.onMsg;
       cb.onMsg = function (m) {
+        gtPreparaDa(m);   // 😀
         if (RR && m && typeof m === "object") {
           if (m.t === "__ris") { prendiCopia(R, m); return; }
           if (m.t === "__rp") { RR.pausaVista = m.p ? Date.now() : 0; return; }
@@ -833,7 +900,10 @@
     // "partita" (di partenza) = guarda ed entra alla prossima partita
     var rit = R.P.g.ritardatari, dal = rit === "turno" ? "dal prossimo turno" : (rit === "mano" ? "dalla prossima mano" : (rit === "subito" ? "già da adesso" : null));
     var txF = cuore.aDue(R.P.g) ? "👀 Giocano in due: tu guardi" : (dal ? "✋ Partita in corso: giochi " + dal : "👀 Partita in corso: la guardi ed entri alla prossima");
-    pillola("prossima", fuori ? txF : null, "grigia");
+    // (nei giochi a due la pillola resta 4 secondi e poi sparisce: per tutta la partita copriva il punteggio in alto, Scopa C1)
+    var mostraP = fuori;
+    if (fuori && cuore.aDue(R.P.g)) { if (!R.pillDue) R.pillDue = Date.now(); else if (Date.now() - R.pillDue > 4000) mostraP = false; }
+    pillola("prossima", mostraP ? txF : null, "grigia");
     if (fuori) R.tardi = true;
     // l'host mi ha messo nella partita in corso (non ci ero già stato: chi ricarica non lo legge): una volta "🎉 Sei dentro!"
     if (dal && !R.guarda && !R.dentroDetto && st.dentro) {
@@ -858,6 +928,7 @@
   cuore.ricordaMiaSala = ricordaMiaSala; cuore.ricordaNomeStanza = ricordaNomeStanza; cuore.ricordaSalaIeri = ricordaSalaIeri;
   cuore.ricordaStanza = ricordaStanza; cuore.rientraStanza = rientraStanza; cuore.ripresaDi = ripresaDi; cuore.ripresaValida = ripresaValida;
   cuore.riservaPer = riservaPer; cuore.salaDiIeri = salaDiIeri; cuore.scordaRipresa = scordaRipresa; cuore.scriviRipresa = scriviRipresa;
+  cuore.gtMio = gtMio; cuore.gtBot = gtBot;   // 😀 il mio gettone col colore della serata che tengo
   cuore.segnaLinkSessione = segnaLinkSessione; cuore.stanzaRecente = stanzaRecente; cuore.tieniAcceso = tieniAcceso; cuore.togliGuardo = togliGuardo;
   Object.defineProperty(cuore, "GUARDO", { get: function () { return GUARDO; }, configurable: true });
   Object.defineProperty(cuore, "NOMI_SEME", { get: function () { return NOMI_SEME; }, set: function (v) { NOMI_SEME = v; }, configurable: true });

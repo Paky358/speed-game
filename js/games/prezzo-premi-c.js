@@ -449,7 +449,7 @@
       ".pzc-spesa{display:flex;flex-direction:column;gap:4px}",
       ".st-vista.pz-con-pan .pz-sch .pzc-lista{display:none}",
       // mentre si gioca il pannello sale fin sotto il titolo: sopra niente nomi né scritte, le righe si dividono tutto lo spazio
-      ".pz-pan.su:has(.pzc-spesa){top:calc(56px + env(safe-area-inset-top))}.st-vista.pz-con-pan:has(.pzc-spesa) .pz-sch [data-sacr]{display:none}",
+      ".pz-pan.su:has(.pzc-spesa){top:calc(56px + env(safe-area-inset-top))}.st-vista.pz-con-pan:has(.pzc-spesa) .pz-sch [data-sacr]{position:absolute!important;width:0!important;height:0!important;overflow:hidden!important;visibility:hidden!important;pointer-events:none!important;margin:0!important;padding:0!important}",
       ".pz-pan:has(.pzc-spesa) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pzc-spesa{flex:1 1 0;min-height:0}.pz-pan .pzc-spesa .pzc-sr{flex:1 1 auto}.pz-pan .pzc-spesa .pzc-pm{width:clamp(36px,calc(var(--alt,640px) * .052),48px);height:clamp(32px,calc(var(--alt,640px) * .047),44px);font-size:clamp(20px,calc(var(--alt,640px) * .03),26px)}",
       ".pzc-sr{display:flex;align-items:center;gap:8px;min-height:clamp(40px,calc(var(--alt,640px) * .062),52px);padding:4px 6px 4px 4px;box-sizing:border-box;border-radius:12px;background:linear-gradient(#fff,#eceef8);color:#1d1b3a;box-shadow:inset 0 -3px 0 rgba(14,18,44,.25)}",
       ".pzc-sr.preso{background:linear-gradient(#ffe6ee,#ffc4d6)}",

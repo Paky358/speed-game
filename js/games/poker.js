@@ -1272,7 +1272,7 @@
   function lobby(t, vm, cb) {
     stile();   // (gli stili dei pezzi della saletta: la riga «Bot al tavolo» − + e il box delle fiches si dispongono giusti fin dalla prima volta)
     var el = t.el, extra = [], umani = vm.players.filter(function (p) { return !p.bot; }).length;
-    extra.push(el("p", { class: "modulo-nota", text: vm.torneo
+    if (vm.torneo) extra.push(el("p", { class: "modulo-nota", text: vm.torneo
       ? "🏆 Torneo della serata · " + NOME_VAR[vm.variante] + ": tutti partono con " + fmtN(vm.torneo.fiches) + " fiches finte, i bui salgono ogni " + vm.torneo.ogni + " mani e chi resta senza fiches esce." +
         (vm.torneo.bomba ? " 💣 Una mano ogni " + vm.torneo.bomba + " è una Mano bomba." : "") + " Le Speed Coins non si toccano."
       : NOME_VAR[vm.variante] + " · da 2 a " + MAX[vm.variante] + " giocatori. Ognuno si siede con le sue Speed Coins, che al tavolo diventano fiches (al massimo " + fmtN(BUYIN) + ")." }));
@@ -1615,7 +1615,7 @@
     var kc = p.carte ? p.carte.map(testoCarta).join(" ") : (p.inMano && !p.lascia ? "x" + Math.min(p.nCarte, 5) : "");
     if (P.kc !== kc) {
       P.kc = kc; svuota(P.carte); P.carte.className = "pk-dorsi" + (p.carte ? " scoperte" : "");
-      if (p.carte) p.carte.forEach(function (c) { P.carte.appendChild(ui.el("span", { class: "pk-cartina" + (ROSSO[c.s] ? " rossa" : "") + (vincenti[c.v + "-" + c.s] ? " conta" : ""), text: testoCarta(c) })); });
+      if (p.carte) p.carte.forEach(function (c) { P.carte.appendChild(ui.el("span", { class: "pk-cartina" + (ROSSO[c.s] ? " rossa" : "") + (c.s === 3 ? " fiori" : "") + (vincenti[c.v + "-" + c.s] ? " conta" : "") }, [ document.createTextNode(FIGURE[c.v] || String(c.v)), ui.el("i", { text: SEMI[c.s] }) ])); });
       else if (p.inMano && !p.lascia) for (var k = 0; k < Math.min(p.nCarte, 5); k++) P.carte.appendChild(ui.el("span", { class: "pk-dorso" }));
     }
   }
@@ -1749,7 +1749,7 @@
     var el = ui.el, v = (ui.vm && ui.vm.variante) || "he";
     var righe = ORDINE[v].slice().reverse().map(function (tipo, k) {
       return el("div", { class: "pk-g-riga" }, [ el("b", { text: (k + 1) + ". " + NOMI_MANO[tipo] }),
-        el("span", { class: "pk-g-carte" }, ESEMPI[tipo].split(" ").map(function (x) { return el("span", { class: "pk-cartina" + (/[♥♦]/.test(x) ? " rossa" : ""), text: x }); })) ]);
+        el("span", { class: "pk-g-carte" }, ESEMPI[tipo].split(" ").map(function (x) { return el("span", { class: "pk-cartina" + (/[♥♦]/.test(x) ? " rossa" : "") + (/♣/.test(x) ? " fiori" : ""), text: x }); })) ]);
     });
     var nota = v === "it" ? "All'italiana il colore batte il full; a parità vince il seme più forte: cuori, quadri, fiori, picche."
       : "Conta la combinazione migliore di 5 carte tra le tue 2 e le 5 in mezzo.";
@@ -1849,7 +1849,7 @@
       ".pk-dorso{width:12px;height:17px;border-radius:2px;background:linear-gradient(135deg,#c92a2a,#7a1414);border:1px solid #fff;margin-left:-5px;box-shadow:0 1px 2px rgba(0,0,0,.4)}",
       ".pk-dorsi.scoperte{flex-wrap:wrap;gap:2px;margin-top:2px}",
       ".pk-posto.ill .pk-dorsi{margin-top:-1px}.pk-posto.ill .pk-dorsi.scoperte{margin-top:3px}",
-      ".pk-cartina{background:#fff;color:#111;border-radius:3px;padding:0 2px;font-size:.66rem;font-weight:900;line-height:1.3}.pk-cartina.rossa{color:#d21c24}",
+      ".pk-cartina{background:#fff;color:#111;border-radius:3px;padding:0 2px;font-size:.66rem;font-weight:900;line-height:1.3}.pk-cartina.rossa{color:#d21c24}.pk-cartina.fiori{color:#0b7a3b}.pk-cartina i{font-style:normal;font-size:1.25em;line-height:1;margin-left:1px}",
       ".pk-nome{font-size:.68rem;font-weight:800;max-width:76px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}",
       ".pk-stack{font-size:.66rem;font-weight:800;color:#ffe066}",
       ".pk-az{font-size:.64rem;font-weight:800;min-height:1.1em;white-space:nowrap}.pk-az.punta{color:#ffd8a8}.pk-az.punta:before{content:\"\";display:inline-block;width:8px;height:8px;border-radius:50%;background:#e67700;border:2px dotted #fff;margin-right:3px;vertical-align:-1px}.pk-az.vinto{color:#69db7c;font-size:.76rem}",
