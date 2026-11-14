@@ -114,6 +114,8 @@
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ok", onclick: schermataHome }));
     mostra(s);
   }
+  // 😀 coi gettoni: il mio gettone scelto (anche se è solo su questo telefono), se no quello di riserva
+  function mioOm(nome, altro) { if (cuore.GETTONI && window.SGGettone) return (cuore.mioGettone && cuore.mioGettone()) || SGGettone.riserva(nome || "?"); return altro; }
   function ominoOk(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   // la sala usa la saletta d'attesa dei giochi (stessi personaggi, stesso divano).
   // Col torneo a punti il titolo resta "Sala online": il torneo si accende e si spegne dal ⚙️ senza cambiare schermata
@@ -377,7 +379,7 @@
       var hostR = R0 ? (R0.membri || []).filter(function (m) { return m && m.id === "host"; })[0] : null;
       var nomeH = String((opz && opz.nomeHost) || (R0 && R0.nomeHost) || nomeOspiteSalvato() || ((gruppo[0] && gruppo[0].nome) || "")).trim().slice(0, 16);
       if (!nomeH) return schermataNomeSala(opz);   // una volta sola: poi il telefono se lo ricorda
-      io = { nome: nomeH, emoji: "🙂", omino: (hostR && ominoOk(hostR.omino)) || (window.SGOmino ? SGOmino.casuale(nomeH) : null) };
+      io = { nome: nomeH, emoji: "🙂", omino: mioOm(nomeH, (hostR && ominoOk(hostR.omino)) || (window.SGOmino ? SGOmino.casuale(nomeH) : null)) };
     }
     cuore.tieniAcceso(true);   // la Sala: lo schermo resta acceso finché si gioca
     if (sala && sala.tVivo) clearInterval(sala.tVivo);
@@ -385,7 +387,7 @@
     // Compagnia (p3-b) la lascia da sé
     if (sala && !(opz && opz.trasloco)) chiudiSala();
     var conPr = !!profiloAttivo();
-    var membri = [{ id: "host", nome: String((opz && opz.nome) || io.nome).slice(0, 16), emoji: io.emoji, omino: io.omino || null, pr: conPr ? 1 : 0 }];
+    var membri = [{ id: "host", nome: String((opz && opz.nome) || io.nome).slice(0, 16), emoji: io.emoji, omino: mioOm(io.nome, io.omino || null), pr: conPr ? 1 : 0 }];
     if (R0) (R0.membri || []).forEach(function (m) { if (m && m.id && m.id !== "host") membri.push(m); });
     // una Sala che continua (riaperta da un amico): io non ci sono due volte; chi la teneva prima diventa uno che deve
     // rientrare (ex: quando entra col suo id nuovo e lo stesso nome prende il suo posto)
@@ -658,7 +660,7 @@
     var io = profiloAttivo();
     cuore.ricordaStanza({ sala: C }); cuore.segnaLinkSessione({ sala: C });
     // (lo schermo resta quello di adesso finché non arriva la Sala dell'amico: si cambia una volta sola)
-    entraInSala(C, (io && io.nome) || io0.nome, (io && io.emoji) || io0.emoji || "🙂", (io && io.omino) || io0.omino || null, { subito: true });
+    entraInSala(C, (io && io.nome) || io0.nome, (io && io.emoji) || io0.emoji || "🙂", mioOm((io && io.nome) || io0.nome, (io && io.omino) || io0.omino || null), { subito: true });
   }
 
   // ---------- L'HOST CHE SE NE VA (Passo 3, p3-c): "Passa la Sala", il vice, chi torna ----------
@@ -1325,7 +1327,7 @@
     var io = profiloAttivo();
     // nella Sala si entra sempre col profilo (nome e avatar suoi): chi non ce l'ha lo crea e poi entra da solo
     if (!io) return cuore.schermataAccesso(function () { salaOspite(codice); });
-    entraInSala(codice, io.nome, io.emoji, io.omino || null);
+    entraInSala(codice, io.nome, io.emoji, mioOm(io.nome, io.omino || null));
   }
   // o (facoltativo) = { subito: true } lo schermo di adesso resta finché non arriva la Sala (chi cede la sua: niente
   //   "Entro nella sala…" in mezzo); { aspetta: comp } la Compagnia vuota, senza profilo: "🕐 Nessuno ancora" (aspettaCompagnia)

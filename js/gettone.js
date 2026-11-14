@@ -29,7 +29,7 @@
     { k: "lampone", c: "#ff2e88", n: "Lampone" },
     { k: "bianco", c: "#f2f3fa", n: "Bianco" }
   ];
-  var PER_K = {}; COLORI.forEach(function (x) { PER_K[x.k] = x; });
+  var PER_K = Object.create(null); COLORI.forEach(function (x) { PER_K[x.k] = x; });
   var GRIGIO = "#8a90ad";   // (solo se un colore non si riconosce)
 
   // le emoji: quasi tutte quelle di Fluent Emoji 3D (circa 1.500). Il file di ognuna si ricava dall'emoji stessa (i codici
@@ -39,8 +39,9 @@
     "🐢", "🐬", "🍕", "🍔", "🍩", "🍉", "🍓", "🍿", "🏀", "🎾", "🎲", "🎮", "🎸", "🎧", "🎈", "🌈", "🌻", "🍀", "🌵", "🍄", "🪐", "⭐", "🌙", "👻", "👽", "🤖", "🏎️", "🏍️"];
   function lista() { return RISERVA.map(function (e) { return { e: e }; }); }
   function codice(e) { var r = []; Array.from(String(e || "")).forEach(function (c) { var h = c.codePointAt(0).toString(16); if (h !== "fe0f") r.push(h); }); return r.join("-"); }
-  var RE_EMO = null; try { RE_EMO = new RegExp("\\p{Extended_Pictographic}|\\p{Regional_Indicator}|[#*0-9]\\uFE0F?\\u20E3", "u"); } catch (x) {}
-  function emojiOk(e) { return typeof e === "string" && e.length >= 1 && e.length <= 16 && (!RE_EMO || RE_EMO.test(e)); }
+  // (solo caratteri emoji, dall'inizio alla fine: un telefono modificato non può scrivere parole dentro il gettone degli altri)
+  var RE_EMO = null; try { RE_EMO = new RegExp("^(?:\\p{Extended_Pictographic}|\\p{Emoji_Modifier}|\\p{Regional_Indicator}|[#*0-9]\\uFE0F?\\u20E3|\\u200D|\\uFE0F)+$", "u"); } catch (x) {}
+  function emojiOk(e) { return typeof e === "string" && e.length >= 1 && e.length <= 16 && (RE_EMO ? RE_EMO.test(e) : RISERVA.indexOf(e) >= 0); }
   function infoE(e) { return emojiOk(e) ? { e: e, f: codice(e) } : null; }
 
   // ---- com'è fatto un gettone ----

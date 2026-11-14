@@ -52,7 +52,7 @@
   ];
   // 😀 i gettoni dei Bot (13 nov 2026, avatar spenti: GETTONI in core.js): emoji e colore fissi, sempre uguali, così si riconoscono
   var BOT_GETTONE = {
-    matt: { g: 1, e: "🦁", c: ["oro", "arancio", "rosso"] }, angela: { g: 1, e: "🔮", c: ["viola", "blu", "lilla"] },
+    matt: { g: 1, e: "🦁", c: ["oro", "arancio", "rosso"] }, angela: { g: 1, e: "🔮", c: ["viola", "blu", "lampone"] },
     rosa: { g: 1, e: "🌺", c: ["magenta", "lampone", "rosso"] }, peppe: { g: 1, e: "🦊", c: ["verde", "lime", "acqua"] },
     gina: { g: 1, e: "🍕", c: ["arancio", "oro", "rosso"] }, toto: { g: 1, e: "🦉", c: ["blu", "ciano", "viola"] },
     ciro: { g: 1, e: "⚽", c: ["ciano", "acqua", "blu"] }, lella: { g: 1, e: "🦄", c: ["lampone", "magenta", "viola"] }
@@ -81,7 +81,10 @@
     return botCast;
   }
   function copiaBot(b) {
-    if (gtOn()) return { id: b.id, nome: b.nome, livello: b.livello, frase: b.frase, bot: true, omino: gettoneBot(b.id, b.gettone) };   // 😀
+    if (gtOn()) {   // 😀 il suo gettone; online, se il suo colore ce l'ha già una persona della serata, il primo libero (lo decide chi tiene la partita)
+      var gb = gettoneBot(b.id, b.gettone);
+      return { id: b.id, nome: b.nome, livello: b.livello, frase: b.frase, bot: true, omino: cuore.gtBot ? cuore.gtBot(b.nome, gb) : gb };
+    }
     return { id: b.id, nome: b.nome, livello: b.livello, frase: b.frase, bot: true,
       omino: window.SGOmino ? SGOmino.norm(b.omino) : JSON.parse(JSON.stringify(b.omino || null)) };
   }

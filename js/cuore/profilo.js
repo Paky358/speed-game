@@ -272,7 +272,7 @@
         attendiProfilo(function () {
           if (!SGNube.profilo()) { bAvanti.disabled = false; avviso.textContent = "Il profilo è creato ma non arriva: controlla la rete e tocca «Hai già un profilo? Entra»."; return; }
           // l'avatar si salva subito (quello dell'anteprima): così nessuno resta senza, anche se chiude l'app adesso
-          if (window.SGOmino && !SGNube.profilo().omino) {
+          if (!cuore.GETTONI && window.SGOmino && !SGNube.profilo().omino) {   // (😀 coi gettoni il campo omino, l'avatar vero, non si scrive)
             var cfg = SGOmino.norm(SGOmino.casuale(n));
             SGNube.salvaOmino(cfg, [cfg, SGOmino.norm(cuore.secondoOmino(cfg, n))], 0);
           }
