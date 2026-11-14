@@ -358,6 +358,7 @@
       return "🤝 Pareggio!";
     }
     if (cb.hostVia) return "⏳ Aspettiamo " + esc(vm.nomi.X) + "…";   // (è uscito un attimo dall'app: lo dice anche la pillola in alto)
+    if (vm.dorme && vm.fase === "gioco") return "⏳ Aspettiamo " + esc(vm.nomi.O) + " 📱";   // (ha bloccato il telefono: lo si aspetta al tavolo)
     if (cb.mio && cb.mio === vm.turno) return "Tocca a <b>te</b>";
     if (cb.bot && vm.turno === "O") return "🤖 " + nome("O") + " sta pensando…";
     return "Tocca a " + nome(vm.turno);
@@ -773,8 +774,14 @@
     }
     function avvUscito(id) {
       if (id !== st.avvId) return;   // (uno che guardava e basta: niente da fare)
-      st.avvVia = false;
-      st.uscito = st.nomiO || ""; st.uscitoId = id; st.uscitoT = Date.now(); st.avvId = null; st.avviso = "😕 " + (st.nomiO || "L'avversario") + " è uscito.";
+      // 📱 sparito senza salutare a partita in corso: lo si aspetta al tavolo (fino a 3 minuti)
+      if (st.avvForse && st.fase === "gioco" && !st.avvDorme) {
+        st.avvForse = false; st.avvDorme = true; bd();
+        setTimeout(function () { if (!chiuso && st.avvDorme && st.avvId === id) { st.avvDorme = false; avvUscito(id); } }, 180000);
+        return;
+      }
+      st.avvVia = false; st.avvDorme = false; st.avvForse = false;
+      st.uscito = st.nomiO || ""; st.uscitoId = id; st.uscitoT = Date.now(); st.avvId = null; st.avviso = "😕 " + (st.nomiO || "L'avversario") + " ha lasciato la partita.";
       if (st.fase === "gioco") st.sospesa = true;   // la partita a metà resta lì: si può riprendere
       st.fase = "lobby"; st.nomiO = null; bd();
     }
@@ -785,8 +792,11 @@
       onCodice: function (c) { st.codice = c; st.riserva = riservaAvv("tris", c); bd(); },
       onConnesso: function () { st.pronta = true; bd(); },
       onAddio: avvUscito,
+      onForse: function (id) { if (id === st.avvId) st.avvForse = true; },
+      onTornato: function (id) { if (id === st.avvId) st.avvForse = false; },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
+        if (st.avvDorme && id === st.avvId) { st.avvDorme = false; bd(); }   // 📱 ha riacceso il telefono: si continua
         if (st.avvVia && id === st.avvId) st.avvVia = false;   // (ripresa) l'avversario si è rifatto vivo
         if (m.t === "join") {
           // la partita a metà resta per un po' a chi è uscito (telefono spento, app chiusa): se torna, riprende lui;
@@ -796,7 +806,7 @@
           // (nella Sala gioca solo chi è stato scelto: gli altri guardano)
           if (!st.avvId && !tienePosto && !postoRiservato(st.riserva, id) && (!t.puoSedersi || t.puoSedersi(id, nome))) {
             if (nome !== st.ultimoO) st.punti = { X: 0, O: 0, pari: 0 };   // un avversario nuovo: il conto riparte
-            st.avviso = st.uscito && st.uscito !== nome ? "🔄 " + st.uscito + " è uscito: ora gioca " + nome + "." : "";   // chi prende il posto di chi è uscito
+            st.avviso = st.uscito && st.uscito !== nome ? "🔄 " + st.uscito + " ha lasciato la partita: ora gioca " + nome + "." : "";   // chi prende il posto di chi è uscito
             st.avvId = id; st.nomiO = nome; st.ultimoO = nome; st.ominoO = avatarOk(m.omino); st.uscito = ""; st.uscitoId = null;
           }
           bd();   // (chi rientra o chi guarda riceve la foto)
@@ -814,7 +824,7 @@
       var p = st.p;
       return { fase: st.fase, codice: st.codice, pronta: st.pronta, board: p.board, turno: p.turno, fine: p.fine, ord: p.ord, mosse: p.mosse, variante: p.variante,
         nomi: { X: st.nomiX, O: st.nomiO || st.ultimoO || "Avversario" }, avversario: !!st.avvId, avvId: st.avvId,
-        omini: { X: st.ominoX, O: st.ominoO }, punti: st.punti, n: st.n, sospesa: st.sospesa, avviso: st.avviso, prossima: st.variante, ch: st.ch ? 1 : 0 };
+        omini: { X: st.ominoX, O: st.ominoO }, punti: st.punti, n: st.n, sospesa: st.sospesa, avviso: st.avviso, dorme: st.avvDorme ? 1 : 0, prossima: st.variante, ch: st.ch ? 1 : 0 };
     }
     function bd() {
       if (chiuso) return;

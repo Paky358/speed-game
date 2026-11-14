@@ -168,12 +168,12 @@
     var box = w.document.createElement("div"), dove = {}, normali = tot - ser.coppie.length;
     g.impostazioni(box, dove, { el: w.SG._util.el, sala: true, modo: "online", giocatori: ["Paky"] });
     if (dove.cat) no("di partenza le categorie non sono «Tutte»: " + JSON.stringify(dove.cat));
-    if (box.textContent.indexOf(normali.toLocaleString("it-IT") + " coppie di parole in gioco") < 0 || !/Serata solo se la scegli/.test(box.textContent)) no("con «Tutte» non si legge «" + normali.toLocaleString("it-IT") + " coppie … (🌶️ Serata solo se la scegli)»");
+    if (box.textContent.indexOf(String(normali).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " coppie di parole in gioco") < 0 || !/Serata solo se la scegli/.test(box.textContent)) no("con «Tutte» non si legge «" + normali.toLocaleString("it-IT") + " coppie … (🌶️ Serata solo se la scegli)»");
     var chip = [].filter.call(box.querySelectorAll(".cat-chip"), function (b) { return /Serata/.test(b.textContent); })[0];
     if (!chip) no("manca il tasto della Serata");
     chip.click();
     if (!dove.cat || dove.cat.length !== cats.length || dove.cat.indexOf("serata") < 0) no("toccando la Serata da «Tutte» non si aggiunge alle altre: " + JSON.stringify(dove.cat));
-    if (box.textContent.indexOf(tot.toLocaleString("it-IT") + " coppie di parole in gioco") < 0) no("con la Serata non si legge «" + tot.toLocaleString("it-IT") + " coppie»");
+    if (box.textContent.indexOf(String(tot).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " coppie di parole in gioco") < 0) no("con la Serata non si legge «" + tot.toLocaleString("it-IT") + " coppie»");
     chip.click();
     if (dove.cat) no("ritoccando la Serata non si torna a «Tutte»: " + JSON.stringify(dove.cat));
     try { w.localStorage.removeItem("sg_impostore_regole"); w.localStorage.removeItem("sg_impostore_usate"); } catch (e) {}

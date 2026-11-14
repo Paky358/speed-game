@@ -4437,3 +4437,5 @@ html.tastiera .gt-cerca-riga{ margin-top:0; }
 .gt-scelta > .piede{ position:sticky; bottom:0; z-index:4; margin-top:0; padding:10px 0 calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, rgba(13,16,32,0), var(--o-fondo, #0d1020) 28%); }
 /* il gettone ha già il suo anello colorato: nei quadretti della Mini Asta niente secondo anello né fondo */
 .gettoni .st-gio-faccia{ box-shadow:none !important; background:none !important; }
+/* fine partita in tanti (ripasso B16, 12 nov 2026): i tasti attaccati al fondo, la classifica scorre sopra */
+.schermata.fine-piede-giu > .piede{ position:sticky; bottom:0; z-index:3; padding:8px 0 calc(6px + env(safe-area-inset-bottom)); background:var(--o-fondo, #0d1020); box-shadow:0 -12px 14px -8px var(--o-fondo, #0d1020); }

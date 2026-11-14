@@ -274,7 +274,7 @@
       ".stp-punti.due{gap:4px;padding-top:calc(4px + env(safe-area-inset-top))}.stp-punti.due .stp-chip{height:34px;gap:4px}.stp-punti.due .stp-chip canvas{width:27px;height:27px}",
       ".stp-punti.due .stp-chip .n{font-size:10.5px}.stp-punti.due .stp-chip .p{font-size:13.5px}.stp-punti.due .stp-esci{height:34px}",
       ".stp-punti.riga .stp-riga{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.stp-punti.riga .stp-riga::-webkit-scrollbar{display:none}",
-      ".stp-punti.riga .stp-chip{flex:1 0 72px;max-width:150px}.stp-punti.riga .stp-esci{position:sticky;left:0;z-index:3}",
+      ".stp-punti.riga .stp-chip{flex:1 0 auto;min-width:84px;max-width:150px}.stp-punti.riga .stp-chip .tx{flex:0 1 auto}.stp-punti.riga .stp-chip .p{overflow:visible;text-overflow:clip}.stp-punti.riga .stp-chip .n{max-width:76px}.stp-punti.riga .stp-esci{position:sticky;left:0;z-index:3}",
       ".stp-punti.grandi .stp-chip{height:54px;gap:7px;padding-left:5px;border-radius:15px}.stp-punti.grandi .stp-chip canvas{width:42px;height:42px}",
       ".stp-punti.grandi .stp-chip .n{font-size:13px;color:var(--o-testo)}.stp-punti.grandi .stp-chip .p{font-size:14px;color:var(--o-tenue)}.stp-punti.grandi .stp-esci{height:54px}",
       ".stp-riga{display:flex;gap:5px;min-width:0}",
@@ -345,7 +345,7 @@
       // sovrimpressioni
       ".st-terzo{position:absolute;left:12px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:22;display:flex;align-items:center;gap:10px;max-width:calc(100% - 24px);padding:6px 16px 6px 6px;",
         "border-radius:16px;border-left:7px solid var(--col,#ff3ea5);background:linear-gradient(100deg,#1d2343,var(--o-carta-piena));color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),0 10px 24px -10px rgba(0,0,0,.85);",
-        "transform:translateX(-120%);transition:transform .4s cubic-bezier(.3,1.3,.5,1)}",
+        "transform:translateX(calc(-100% - 40px));transition:transform .4s cubic-bezier(.3,1.3,.5,1)}",
       ".st-terzo.on{transform:none}",
       ".st-terzo .fac{width:42px;height:42px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.06);flex:0 0 auto}",
       ".st-terzo .fac canvas{width:100%;height:100%;display:block}",

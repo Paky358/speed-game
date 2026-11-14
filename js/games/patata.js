@@ -485,6 +485,7 @@
       ".pt-catbtn{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;padding:18px;border-radius:18px;border:3px solid transparent;cursor:pointer;color:#fff;font:inherit;font-size:21px;font-weight:900;",
         "background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));box-shadow:0 6px 16px rgba(0,0,0,.3)}",
       ".pt-catbtn small{font-size:13px;font-weight:700;opacity:.8}",
+      "@media (max-height:760px){.pt-voto{gap:7px;padding-top:4px;padding-bottom:4px}.pt-catbtn{padding:9px 12px;font-size:17px;gap:2px;border-radius:14px}.pt-catbtn small{font-size:12px}}",
       ".pt-catbtn.sorpresa{background:linear-gradient(135deg,rgba(160,107,255,.42),rgba(255,62,165,.2))}",
       ".pt-rullo{width:100%;max-width:380px;border-radius:20px;background:var(--o-carta-piena);box-shadow:0 0 0 2px var(--o-oro),0 10px 26px rgba(0,0,0,.45)}",
       ".pt-rullo .st-cella{padding:0 14px;font-size:34px;font-weight:900;line-height:1.1;color:var(--o-oro-testo);text-shadow:0 3px 0 rgba(0,0,0,.35)}",
@@ -1073,8 +1074,8 @@
     if (R.barraK !== chiave) {
       R.barraK = chiave;
       var nodi = [];
-      if (mia && vm.soloDare) { var chiRi = null; vm.players.forEach(function (p) { if (p.id === vm.soloDare) chiRi = p; }); nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Te l'hanno rimandata: di' la parola e ridàlla a " + (chiRi ? chiRi.nome : "chi te l'ha rimandata") + " 👇" })); }
-      else if (mia) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Di' una parola su «" + vm.categoria + "» e tocca chi la riceve 👇" }));
+      if (mia && vm.soloDare) { var chiRi = null; vm.players.forEach(function (p) { if (p.id === vm.soloDare) chiRi = p; }); nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Te l'hanno rimandata: di' la parola e ridàlla a " + (chiRi ? chiRi.nome : "chi te l'ha rimandata") + " 👆 (in alto)" })); }
+      else if (mia) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "Di' una parola su «" + vm.categoria + "» e tocca chi la riceve: in alto 👆" }));
       else if (cb.guardo) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: cb.scartato ? "👀 Questa volta guardi: gioca chi è stato scelto." : "👀 Stai guardando: entri nella prossima partita" }), faccineP(R.t));
       else if (ioFuori) nodi.push(el("p", { class: "tl-attesa pt-guardi", text: "💀 Sei fuori: guarda chi resta in piedi!" }), faccineP(R.t));
       else if (!cb.locale && hi >= 0) nodi.push(el("p", { class: "tl-attesa pt-hint", text: "💣 Ce l'ha " + vm.players[hi].nome + "… occhio che può toccare a te!" }));

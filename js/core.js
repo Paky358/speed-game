@@ -1423,7 +1423,7 @@
       if (io) gruppo.push({ nome: io.nome, emoji: io.emoji });
     }
     var s = schermata({ icona: torn ? "🏆" : "🎉", titolo: torn ? "Serata a punti" : "La sala",
-      sotto: torn ? "Chi gioca stasera" : (g ? ("Si gioca a " + g.nome) : "Chi partecipa"),
+      sotto: torn ? "Chi gioca stasera" : (g ? ("Si gioca " + (cuore.aGioco ? cuore.aGioco(g.nome) : "a " + g.nome)) : "Chi partecipa"),
       indietro: function () { if (!torn && g && modiDi(g).length > 1) schermataModo(g); else tornaHome(); } });   // tornaHome: torna anche nell'edificio da cui si è entrati
 
     s.classList.add("prima-fissa");   // "Avanti" sempre a vista: con tanti giocatori scorre solo la lista
@@ -1511,7 +1511,7 @@
     }
     if (inSala) s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "In una sala si gioca sempre online: appena cominci, gli altri entrano da soli." }));
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca",
-      onclick: function () { schermataRegole(g, function () { schermataPreGioco(g, opts); }); } }));
+      onclick: function () { schermataRegole(g, function () { mostra(s); }); } }));   // (ripasso X1: al ritorno la STESSA schermata, con le scelte fatte; prima si rifaceva da capo e le scelte si azzeravano)
     function comincia() {
       if (inSala) { impostazioni.modo = "online"; return cuore.salaLancia(g, impostazioni, box); }
       if (modo) impostazioni.modo = modo;
@@ -1713,6 +1713,7 @@
   // tf (partita online): i tasti di fine uguali per tutti (tastiFineCore); se non li mette, quelli di sempre
   function schermataFine(g, classifica, giocatori, impostazioni, faccine, tf) {
     var s = schermata({ icona: "🏆", titolo: "Fine partita", sotto: g.nome });
+    s.classList.add("fine-piede-giu");   // (in tanti, sul telefono piccolo: i tasti restano in vista anche se la classifica è lunga)
     var ol = el("ol", { class: "classifica" + (classificaFitta(classifica.length, faccine ? 56 : 0) ? " fitta" : "") });
     var posti = classifica.map(function (r, i) { return r.pos || i + 1; });   // a pari merito il gioco dà la stessa posizione: stessa medaglia
     var medaglie = medaglieAPari(posti);
@@ -1730,7 +1731,8 @@
     if (!faccine && cuore.torneo && cuore.torneo.auto && cuore.torneo._fine === classifica) {
       var clS = cuore.classificaTorneo();
       s._piede.appendChild(el("button", { class: "fine-serata", type: "button", onclick: cuore.schermataTorneoHub,
-        text: "🏆 Classifica della serata: " + clS.slice(0, 3).map(function (r, i) { return r.nome + " " + (i + 1) + "°"; }).join(" · ") + " ›" }));
+        // (a pari punti, stesso posto: prima diceva 1°, 2°, 3° anche se erano tutti pari)
+        text: "🏆 Classifica della serata: " + clS.slice(0, 3).map(function (r, i) { var p = r.punti != null ? 1 + clS.filter(function (q) { return q.punti > r.punti; }).length : i + 1; return r.nome + " " + p + "°"; }).join(" · ") + " ›" }));
     }
 
     // Dalla fine partita si resta nella stessa sala: rigioca, cambia gioco o modifica il gruppo

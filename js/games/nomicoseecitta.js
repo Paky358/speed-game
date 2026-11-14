@@ -421,6 +421,7 @@
       ".nc-riga .c{display:block;font-size:13px;font-weight:800;color:#5a6aa0;text-transform:uppercase;letter-spacing:.06em}",
       ".nc-riga input{width:100%;border:0;border-bottom:2px dashed rgba(29,42,92,.3);background:transparent;font-family:" + MANO + ";font-size:26px;color:#1d2a5c;padding:2px 2px 4px;outline:none;border-radius:0}",
       ".nc-riga input:focus{border-bottom-color:#e53935}",
+      "@media (max-height:760px){.nc-foglio.fitto .nc-carta{padding-top:10px;padding-bottom:12px}.nc-foglio.fitto .nc-riga{margin-bottom:2px}.nc-foglio.fitto .nc-riga .c{font-size:11.5px}.nc-foglio.fitto .nc-riga input{font-size:21px;padding:0 2px 2px}.nc-foglio.fitto .nc-lett{width:48px;height:48px;font-size:34px}.nc-foglio.fitto .nc-chi2{font-size:19px}.nc-foglio.fitto .nc-chi2 .fac{width:32px;height:32px}.nc-foglio.fitto .nc-chi2 span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nc-foglio.fitto .nc-tempo{margin-bottom:6px}}",
       // il foglietto sul leggio
       ".nc-foglietto{position:absolute;left:15%;top:-.5em;width:2.3em;height:1.5em;border-radius:.1em;transform:rotate(-8deg);box-shadow:0 .1em .25em rgba(0,0,0,.35);",
         "background:repeating-linear-gradient(#fffdf4 0 .3em,#bcd5f0 .3em .34em)}",
@@ -681,7 +682,7 @@
   function apriFoglio(S, el, g, lettera, cats, ms, opz) {
     opz = opz || {};
     return new Promise(function (fine) {
-      var foglio = el("div", { class: "nc-foglio" }), campi = [], chiuso = false;
+      var foglio = el("div", { class: "nc-foglio" + (cats.length > 5 ? " fitto" : "") }), campi = [], chiuso = false;
       function parole() { return campi.map(function (inp) { return (inp.value || "").trim(); }); }
       var barraT = el("i"), tempo = el("div", { class: "nc-tempo" }, [barraT]);
       var carta = el("div", { class: "nc-carta" }, [
@@ -1676,7 +1677,7 @@
   }
   function fineN(t, vm, cb, ordine, R) {
     var el = t.el, primi = ordine.filter(function (o) { return o.pos === 1; }).map(function (o) { return o.p.nome; });
-    var titolo = vm.interrotta ? "Partita interrotta" : primi.length > 1 ? "Pareggio tra " + nomiInsieme(primi) + "!" : primi.length ? "Vince " + primi[0] + "!" : "Fine partita";
+    var titolo = vm.interrotta ? "Partita interrotta" : primi.length > 2 ? "Pareggio in " + primi.length + "!" : primi.length > 1 ? "Pareggio tra " + nomiInsieme(primi) + "!" : primi.length ? "Vince " + primi[0] + "!" : "Fine partita";
     var s = t.schermata({ chiara: true, icona: vm.interrotta ? "👋" : primi.length > 1 ? "🤝" : "🏆", titolo: titolo, sotto: vm.interrotta ? "Sono usciti gli altri giocatori" : "Nomi, Cose e Città" });
     var box = el("div", { style: "display:flex;flex-direction:column;gap:8px" });
     ordine.forEach(function (o) {

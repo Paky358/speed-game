@@ -632,7 +632,11 @@
       nd.style.zIndex = p.z; nd.style.setProperty("--w", p.w.toFixed(1) + "px");
       nd.classList.toggle("dietro", !!p.dietro);
       if (t) {
-        t.style.bottom = (p.b - 9).toFixed(1) + "px"; t.style.maxWidth = Math.max(40, Math.round(p.tmax)) + "px"; t.style.setProperty("--w", p.w.toFixed(1) + "px");
+        // (avatar illustrati su più file: il nome di chi sta dietro va sopra la sua testa; ai piedi cadeva sul petto di chi
+        // sta davanti e sembrava il suo nome. Ripasso del 12 nov 2026, S4)
+        var suTesta = p.dietro && illustrati() && nd.offsetHeight > 20;
+        t.classList.toggle("su-testa", !!suTesta);
+        t.style.bottom = (suTesta ? p.b + nd.offsetHeight * 0.97 : p.b - 9).toFixed(1) + "px"; t.style.maxWidth = Math.max(40, Math.round(p.tmax)) + "px"; t.style.setProperty("--w", p.w.toFixed(1) + "px");
         // il nome di chi sta sul bordo non esce dalla stanza (stanza bassa: gli avatar piccoli vanno vicino al bordo)
         var mz = (t.offsetWidth || 0) / 2 + 2, tx = mz * 2 < W ? Math.max(mz, Math.min(W - mz, p.x)) : p.x;
         t.style.left = tx.toFixed(1) + "px";
@@ -1441,6 +1445,8 @@
     var P = K.P, tav = K.tavolo || (P && P.tavolo), ctx = K.ctx || (P && P.salaCtx) || null;
     if (!piede || !P || !P.viva()) return false;
     if (ctx && ctx.tabellone) return false;   // torneo a eliminazione: il tabellone ha i suoi tasti
+    // (ripasso B16/N5: in 8 sul telefono piccolo i tasti di fine finivano sotto lo schermo: il piede resta attaccato al fondo)
+    if (piede.classList && piede.classList.contains("piede") && piede.parentNode && piede.parentNode.classList && piede.parentNode.classList.contains("schermata")) piede.parentNode.classList.add("fine-piede-giu");
     // "👑 Chi vince resta": la fine di una sfida è uguale per tutti, anche per chi guarda (6-7): chi resta, chi tocca adesso,
     // "Prossima sfida tra 8…"; l'host della Sala "⏹ Basta così" e "🎮 Cambia gioco"
     if (ctx) {

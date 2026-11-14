@@ -15,11 +15,11 @@
   "use strict";
   var N = 10;
   var FLOTTA = [
-    { nome: "Portaerei", len: 5 },
-    { nome: "Corazzata", len: 4 },
-    { nome: "Incrociatore", len: 3 },
-    { nome: "Sommergibile", len: 3 },
-    { nome: "Cacciatorpediniere", len: 2 }
+    { nome: "Portaerei", len: 5, art: "la " },
+    { nome: "Corazzata", len: 4, art: "la " },
+    { nome: "Incrociatore", len: 3, art: "l'" },
+    { nome: "Sommergibile", len: 3, art: "il " },
+    { nome: "Cacciatorpediniere", len: 2, art: "il " }
   ];
   var NTOT = FLOTTA.length;
   var LET = "ABCDEFGHIJ".split(""); // lettere per le RIGHE (a sinistra); numeri 1-10 per le COLONNE (in alto)
@@ -640,9 +640,9 @@
         U.sub.textContent = "Puoi ancora cambiare (Togli, A caso), poi premi Pronto.";
       } else {
         U.tit.textContent = "Sistema le tue navi";
-        U.sub.textContent = !a ? "Tocca il mare dove mettere la " + f.nome + " (" + f.len + " caselle)."
+        U.sub.textContent = !a ? "Tocca il mare dove mettere " + (f.art || "la ") + f.nome + " (" + f.len + " caselle)."
           : a.ok ? f.nome + ": ritocca la nave verde (o premi Metti qui) per metterla lì."
-          : "Qui la " + f.nome + " non ci sta" + (pz.o.staccate ? " (le navi non si toccano)" : "") + ": sposta o gira la nave.";
+          : "Qui " + (f.art || "la ") + f.nome + " non ci sta" + (pz.o.staccate ? " (le navi non si toccano)" : "") + ": sposta o gira la nave.";
       }
       U.tasti.className = "nav-tasti" + (pz.fatto ? " via" : "");
       U.bRuota.textContent = pz.oriz ? "↕️ Gira in verticale" : "↔️ Gira in orizzontale";
@@ -650,7 +650,7 @@
       U.bTogli.disabled = pz.prossima === 0;
       if (pz.fatto) { U.bVai.textContent = "⏳ Aspetto " + opt.nomeAvv() + "…"; U.bVai.disabled = true; }
       else if (pz.prossima >= NTOT) { U.bVai.textContent = "✅ Pronto, si combatte!"; U.bVai.disabled = false; }
-      else if (a && a.ok) { U.bVai.textContent = "✅ Metti qui la " + f.nome; U.bVai.disabled = false; }
+      else if (a && a.ok) { U.bVai.textContent = "✅ Metti qui " + (f.art || "la ") + f.nome; U.bVai.disabled = false; }
       else { U.bVai.textContent = "Tocca il mare per mettere la nave"; U.bVai.disabled = true; }
     }
     function bozza() { var pz = U.pz; if (pz && pz.o.onBozza) try { pz.o.onBozza(pz.st); } catch (e) {} }   // (la flotta a metà, da ritrovare)

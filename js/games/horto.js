@@ -9,7 +9,7 @@
    SFINIMENTO (rallenta e frusta bloccata 3s). Vince il primo al traguardo.
    Modalità: contro i bot (1–7) oppure ONLINE (host-autoritativo: l'host
    simula tutto e trasmette le posizioni ~15 volte al secondo; gli ospiti
-   mandano solo le frustate). I posti liberi online li giocano i bot.
+   mandano solo le frustate). I posti liberi online li giocano i Bot.
    Cavalli disegnati in SVG (zampe snodate che galoppano con il CSS) con
    l'avatar di ogni giocatore in sella; si aggiorna solo la posizione.
    ========================================================= */
@@ -659,6 +659,11 @@
     if (corre && !ref.boato && mx >= 0.86) { ref.boato = true; follaFX(); }
     // posizione e metri che mancano
     var davanti = 0; for (k = 0; k < N; k++) if (k !== ref.io && sn.cav[k].p > me.p) davanti++;
+    // l'ordine d'arrivo come lo si vede: chi taglia il traguardo entra in fila (a corsa nuova la fila si svuota)
+    var nArr = 0; for (k = 0; k < N; k++) if (sn.cav[k].a) nArr++;
+    if (!nArr || !ref.ordArr) ref.ordArr = [];
+    for (k = 0; k < N; k++) if (sn.cav[k].a && ref.ordArr.indexOf(k) < 0) ref.ordArr.push(k);
+    if (me.a && ref.ordArr.indexOf(ref.io) >= 0) davanti = ref.ordArr.indexOf(ref.io);
     scrivi(ref.hudB, guardo ? "👀" : (davanti + 1) + "°");
     scrivi(ref.hudS, me.a ? "🏁 arrivato" : "mancano " + cifre(Math.max(0, Math.round((1 - me.p) * METRI))) + " m");
     var b = ref.frusta, stato, testo, info, presto = false;
@@ -1514,7 +1519,7 @@
     // nella Sala: chi non è stato scelto guarda la corsa (niente cavallo e niente "Sono pronto")
     var fuori = vm.fuori || [], guardo = !gio.some(function (g) { return g.tu; }) && fuori.some(function (g) { return g.id === vm.myId; });
     t.lobby({ host: vm.sonoHost, codice: vm.codice, pronta: vm.pronta, min: 1, puoiDaSolo: true, vuoti: vuoti, giocatori: gio, testoComincia: "Comincia la corsa ▶",
-      nota: vm.sonoHost ? "Puoi cominciare quando vuoi: i posti liberi li corrono i bot." : null,
+      nota: vm.sonoHost ? "Puoi cominciare quando vuoi: i posti liberi li corrono i Bot." : null,
       extra: fuori.length ? [t.el("p", { class: "modulo-nota", text: "👀 Guardano: " + fuori.map(function (g) { return g.id === vm.myId ? "tu" : g.nome; }).join(", ") })] : null,
       spettatore: vm.guarda ? "👀 Guardi la corsa" : guardo ? "👀 Questa volta guardi" : null,   // (vm.guarda: guardo soltanto, dal link)
       attesa: vm.guarda ? "Guardi la corsa: si parte tra poco! 🐎" : guardo ? "Corrono gli amici scelti: questa corsa la guardi! 🐎" : "Aspetta che l'host dia il via alla corsa! 🐎", onComincia: cb.onComincia, onEsci: cb.onEsci });
@@ -1529,7 +1534,7 @@
   function senzaRete(t) {
     var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
     s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5",
-      text: "La modalità online funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile: intanto corri contro i bot." }));
+      text: "La modalità online funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile: intanto corri contro i Bot." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
@@ -1541,7 +1546,7 @@
     icona: "🐎",
     descrizione: "Corsa di cavalli: frusta a ritmo per accelerare, ma occhio all'energia! Contro i bot o online, ognuno dal suo telefono.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,
-    etichettaGiocatori: "👥 1–8 giocatori",   // 1 da solo contro i bot, fino a 8 online (i cavalli in gara)
+    etichettaGiocatori: "👥 1–8 giocatori",   // 1 da solo contro i Bot, fino a 8 online (i cavalli in gara)
     postiOnline: 8,   // 8 cavalli al massimo: nella Sala, se siete di più, corre chi sceglie l'host e gli altri guardano
     riprende: true,   // se l'host ricarica la pagina restano iscritti e punti: la corsa a metà riparte dai cancelletti (t.ripresa)
     ritardatari: "partita",   // chi arriva a corsa partita la guarda ed entra alla prossima
@@ -1558,8 +1563,8 @@
       "Tocca <b>a ritmo, non a raffica</b>: toccare di nuovo mentre la spinta dura spreca energia (vedi ⚠️ Troppo presto).",
       "Ogni frustata consuma <b>energia</b> (la barra sopra il tasto). Se non frusti, l'energia si <b>ricarica</b>.",
       "Se l'energia arriva a <b>zero</b> il cavallo è <b>sfinito</b>: rallenta e per <b>3 secondi</b> non puoi frustare. Tieni qualcosa per lo <b>scatto finale</b>!",
-      "Vince il <b>primo</b> che taglia il traguardo: se è testa a testa decide il <b>photo finish</b>.",
-      "Da <b>2 a 8 cavalli</b>: <b>contro i bot</b> oppure <b>online</b> (ognuno dal suo telefono; i posti liberi li corrono i bot).",
+      "Vince il <b>primo</b> che taglia il traguardo: se è testa a testa decide il <b>foto-finish</b>.",
+      "Da <b>2 a 8 cavalli</b>: <b>contro i Bot</b> oppure <b>online</b> (ognuno dal suo telefono; i posti liberi li corrono i Bot).",
       "<b>🏆 Gran Premio</b> (si sceglie nelle regole): 3 corse di fila, <b>10, 6, 4, 3, 2, 1 punti</b> per il posto, e l'<b>ultima corsa vale doppio</b>. Tra una corsa e l'altra la classifica: si riparte da soli, o subito se più di metà tocca «⏩ Avanti»."
     ],
     impostazioni: function (box, dove, aiuti) {
@@ -1590,7 +1595,7 @@
       segna(4);
       segnaCavalli = segna;   // online: se entrano più amici dei cavalli scelti, qui si vede il numero vero
       box.appendChild(wR);
-      notaPosti = el("p", { class: "modulo-nota", style: "margin-top:6px", text: "Online: i posti liberi li corrono i bot; se entrano più amici, i cavalli aumentano da soli." });
+      notaPosti = el("p", { class: "modulo-nota", style: "margin-top:6px", text: "Online: i posti liberi li corrono i Bot; se entrano più amici, i cavalli aumentano da soli." });
       box.appendChild(notaPosti);
       box.appendChild(el("div", { class: "etichetta", style: "margin-top:10px", text: "Bravura dei Bot" }));
       var wD = el("div", { style: "display:flex;gap:8px" });
@@ -1616,7 +1621,7 @@
       box.appendChild(wG); box.appendChild(notaGp);
       notaOnline = el("div", { class: "link-avviso", hidden: "hidden" });
       notaOnline.textContent = (window.SGNet && SGNet.disponibile())
-        ? "Apri la stanza e invita gli amici col tasto 📤: gli altri corrono dal loro telefono. I posti liberi li corrono i bot."
+        ? "Apri la stanza e invita gli amici col tasto 📤: gli altri corrono dal loro telefono. I posti liberi li corrono i Bot."
         : "Qui il collegamento non è disponibile: funziona quando il gioco è aperto dal sito pubblicato online.";
       box.appendChild(notaOnline);
       selM(aiuti.sala ? "online" : dove.modo);
