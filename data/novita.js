@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 347,
+    data: "14 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: niente più finali già scritti 🙈",
+    descrizione: [
+      "📺 Il VAR dopo un gol a volte lo annulla e a volte lo convalida: «✅ GOL CONVALIDATO!» e solo allora arrivano i punti.",
+      "📺 Quando il VAR richiama l'arbitro per un rigore, a volte il rigore non c'è: «❌ NIENTE RIGORE!».",
+      "✋ Fallo tattico, proteste, «si butta in area» e nervi tesi non vogliono più dire per forza giallo: a volte l'arbitro lascia correre.",
+      "🏃 Il fallo da ultimo uomo a volte è rosso e a volte solo giallo; «era già ammonito» a volte finisce col rosso e a volte si salva.",
+      "😱 Dopo un rigore parato, anche la ribattuta può finire in gol o con un'altra parata.",
+      "I punti sono quelli di prima: cambia solo che la scritta non svela più come va a finire."
+    ]
+  },
+  {
     v: 346,
     data: "14 novembre 2026",
     titolo: "Mini Asta Fantacalcio: quattro ritocchi 🧹",
