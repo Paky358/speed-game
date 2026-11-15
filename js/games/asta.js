@@ -715,7 +715,7 @@
     ".st-gufo.dita .st-gufo-c{display:none;}.st-gufo.dita .st-gufo-et{padding:6px 12px;border-radius:12px;font-size:13px;}",
     ".st-gufo.batte .st-gufo-c,.st-gufo-ch.batte{animation:stGufoBatte .24s ease-out;}@keyframes stGufoBatte{from{transform:scale(.84)}to{transform:none}}",
     ".st-gufo-top{position:absolute;z-index:4;display:none;align-items:center;gap:5px;max-width:calc(100% - 20px);pointer-events:none;}.st-gufo-top.on{display:flex;}",
-    ".st-gufo-top.b{bottom:10px;}.st-gufo-top.a{top:10px;}.st-gufo-top.sx{left:10px;}.st-gufo-top.dx{right:10px;flex-direction:row-reverse;}.st-gufo.conta.b{bottom:36px;}.st-gufo.conta.a{top:36px;}",
+    ".st-gufo-top.b{bottom:10px;}.st-gufo-top.a{top:24px;}.st-gufo-top.sx{left:10px;}.st-gufo-top.dx{right:10px;flex-direction:row-reverse;}",
     ".st-gufo-ch{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;background:rgba(21,26,46,.92);color:var(--o-testo);font:900 .74rem/1 var(--o-tit);font-variant-numeric:tabular-nums;white-space:nowrap;}",
     ".st-gufo-ch.g{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1.5px rgba(224,34,90,.8);}.st-gufo-ch.f{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1.5px rgba(62,224,168,.75);}",
     ".st-gufo-es{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;max-width:100%;height:38px;padding:0 12px;border-radius:12px;background:rgba(21,26,46,.95);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1.5px var(--gc,#e0225a),0 6px 16px rgba(0,0,0,.45);text-align:center;animation:stGufoEs .35s cubic-bezier(.2,1.3,.4,1);}",
@@ -4510,7 +4510,8 @@
       tx.appendChild(R.el("b", { class: "sq", text: righe[1], style: "font-size:" + Math.round(Math.max(13, Math.min(25, bw * 0.062, (bw * 0.94 - (bw < 330 ? 66 : 82) - 24) / (String(righe[1]).length * 0.68)))) + "px;background:" + cs[0] + ";color:" + (luce > 150 ? "#14171f" : "#fff") + ";box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),0 0 0 2px " + cs[1] }));
     } else righe.forEach(function (t, i) { if (t) tx.appendChild(R.el(i ? "span" : "b", { class: i === 2 ? "pt" : i === 3 ? "inv" : "", text: t })); });
     m.appendChild(tx); m.style.top = pos + "%";
-    if (R.gufoBasso && pos > 50) { var hB = R.azBox.clientHeight, mh = m.offsetHeight, lim = hB - R.gufoBasso - 8 - mh / 2; if (hB * pos / 100 > lim) m.style.top = Math.round(Math.max(mh / 2 + 4, lim)) + "px"; }   // 🦉 (la scritta in basso sale sopra il tasto del gufo)
+    if (R.gufoBasso && pos > 50) { var hB = R.azBox.clientHeight, mh = m.offsetHeight, lim = hB - R.gufoBasso - 8 - mh / 2; if (hB * pos / 100 > lim) m.style.top = Math.round(Math.max(mh / 2 + 4, lim)) + "px"; }
+    if (R.gufoAlto && pos < 50) { var hA = R.azBox.clientHeight, ma = m.offsetHeight, da = R.gufoAlto + 6 + ma / 2; if (hA * pos / 100 < da) m.style.top = Math.round(da) + "px"; }   // 🦉 (la scritta in alto scende sotto il conto)   // 🦉 (la scritta in basso sale sopra il tasto del gufo)
     m.classList.remove("on"); void m.offsetWidth; m.classList.add("on");
   }
   function viaAvviso(R) { R.msg.classList.remove("on"); if (R.tv) R.tv.classList.remove("on"); }
@@ -4697,7 +4698,7 @@
     if (e.t === "ribP" && P && P.ev[x.ei]) op.lato = semeDi({ e: P.ev[x.ei], p: x.p }) % 2 ? 1 : -1;   // (come la ribattuta che entra: x.ei è il rigore)
     if (e.t === "gol" && e.v === "ribattuta" && P && P.ev[x.ei - 1]) op.lato = semeDi({ e: P.ev[x.ei - 1], p: x.p }) % 2 ? 1 : -1;   // (la ribattuta dalla stessa parte del rigore: il rigore non sa come andrà)   // (il rigore e la sua ribattuta: anche lo stesso lato)
     var gufo = nega ? null : gufoMomento(R, x, t, v, esito, op);
-    R.gufoBasso = gufo ? (gufo.locale ? 46 : 124) : 0;   // (quanto spazio prende in basso il gufo: le scritte di questo momento stanno sopra)   // 🦉 / 🍀 a ogni rigore e a ogni punizione dal limite (sempre, qualunque cosa succeda)
+    R.gufoBasso = gufo ? (gufo.locale ? 46 : 96) : 0; R.gufoAlto = gufo && !gufo.locale ? 48 : 0;   // (quanto spazio prendono il tasto in basso e il conto in alto: le scritte di questo momento stanno in mezzo)   // 🦉 / 🍀 a ogni rigore e a ogni punizione dal limite (sempre, qualunque cosa succeda)
     // 👥 (8 nov 2026) i calciatori del listone di questa squadra che NESSUNO ha comprato, per ruolo, in un ordine fisso dalla partita
     // (dal nome e dalle due squadre: MAI dall'esito). Riempiono i posti degli altri col loro aspetto e il loro numero, senza nome:
     // non fanno MAI gol, assist o altro a loro nome
@@ -4883,7 +4884,7 @@
     var tasto = el("div", { class: "st-gufo" }, [ el("div", { class: "st-gufo-c" }, [ em, n ]), et ]);
     tasto.addEventListener("pointerdown", function (ev) { if (ev.cancelable) ev.preventDefault(); gufoTocco(R); });
     R.azBox.appendChild(tasto);
-    var top = el("div", { class: "st-gufo-top" }); R.azBox.appendChild(top);   // 📐 (15 nov 2026) il conto sta sul campo, nell'angolo del tasto: in alto non occupa più una riga
+    var top = el("div", { class: "st-gufo-top" }); R.azBox.appendChild(top);   // 📐 (15 nov 2026, il proprietario) il conto sta sul campo in alto a destra, sotto la linea della partita (in alto non occupa più una riga); dopo il tiro lì sotto, al posto del tasto, la scritta dell'esito
     var volo = el("div", { class: "st-gufo-volo" }); R.radice.appendChild(volo);
     return (R.gufoQ = { tasto: tasto, em: em, n: n, et: et, top: top, volo: volo });
   }
@@ -4891,7 +4892,7 @@
     if (!vivoRivela(R) || R.fase !== "giornata" || R.finito) return;
     var q = gufoNodi(R); R.gufoOra = G; G.aperta = true;
     var ang = (G.basso ? "b " : "a ") + (G.sx ? "sx" : "dx");
-    q.tasto.className = "st-gufo " + ang + (G.locale ? "" : " conta"); q.top.className = "st-gufo-top " + ang;   // (il conto nell'angolo, il tasto subito dentro)
+    q.tasto.className = "st-gufo " + ang; q.top.className = "st-gufo-top a dx"; G.ang = ang;   // (il tasto in basso, il conto in alto a destra)
     if (G.locale) { q.tasto.classList.add("dita"); q.et.textContent = "🤞 Dita incrociate!"; void q.tasto.offsetWidth; q.tasto.classList.add("on"); return provaGufo(R, "apri", G); }
     if (G.mio) {
       var f = G.mio === "f";
@@ -4971,7 +4972,7 @@
     if (G.gol && (s.g || s.f)) { var fo = chi("f"); tit = "🍀 Il portafortuna ha vinto!"; sotto = fo.length ? "tifava " + elencoNomi(fo) : "i gufi non sono bastati"; if (fo.length > 1) sotto = "tifavano " + elencoNomi(fo); col = "#3ee0a8"; }
     else if (!G.gol && s.g) { tit = "🦉 Gufata riuscita!"; sotto = elencoNomi(chi("g")); }
     else if (!G.gol && s.f) { tit = "🍀 Il portafortuna non è bastato"; sotto = elencoNomi(chi("f")); col = "#3ee0a8"; }
-    svuotaNodo(q.top); q.chG = null;
+    svuotaNodo(q.top); q.chG = null; q.top.className = "st-gufo-top " + (G.ang || "b dx");   // (la scritta dell'esito dove c'era il tasto)
     if (!tit) { q.top.classList.remove("on"); return provaGufo(R, "esito", { k: G.k, testo: "" }); }   // (nessuno ha toccato: niente scritta)
     q.top.appendChild(R.el("div", { class: "st-gufo-es", style: "--gc:" + col }, [ R.el("b", { text: tit }), R.el("span", { text: sotto }) ]));
     q.top.classList.add("on");

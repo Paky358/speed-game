@@ -25,7 +25,7 @@ window.SG_NOVITA = [
       "🔄 Negli scambi niente più campo: ogni squadra è un rettangolo col colore di chi la possiede, coi calciatori in fila per ruolo e la quotazione; ci stanno tutte in una schermata anche in 8.",
       "🔄 Negli scambi i tasti di chi tiene la partita si capiscono: «⏱ +1 minuto» e «⚽ Si gioca!».",
       "🏆 Finita l'asta (e gli scambi) le rose si scoprono in una schermata sola, a figurine e in formazione, dalla più scarsa (in basso a destra) alla più forte (in alto a sinistra), con la quotazione totale; lo schermo sale da solo, poi si gioca. Al posto della sfilata una alla volta.",
-      "⚽ Nella giornata il campo è più grande: niente riga in alto (‹ e ⏭ stanno nella barra del minuto), le partite giù in fondo, e a rigori e punizioni il gufo e il portafortuna stanno sempre in basso sul campo, piccoli, col loro conto sotto il tasto.",
+      "⚽ Nella giornata il campo è più grande: niente riga in alto (‹ e ⏭ stanno nella barra del minuto), le partite giù in fondo, e a rigori e punizioni il tasto del gufo e del portafortuna sta sempre in basso sul campo e il loro conto piccolo in alto a destra.",
       "⏱ Sparita la scritta del tempo in basso."
     ]
   },
