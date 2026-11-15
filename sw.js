@@ -29,7 +29,7 @@ self.addEventListener("fetch", function (e) {
     return;
   }
   var url = new URL(e.request.url), F = conImpronta(url);
-  if (/\/carte\/emoji\/[0-9a-f-]+\.webp$/.test(url.pathname) && self.caches) {
+  if (/\/carte\/emoji(-grandi)?\/[0-9a-f-]+\.webp$/.test(url.pathname) && self.caches) {   // (anche le grandi della saletta, 15 nov 2026)
     e.respondWith(caches.open(CASSA_EMOJI).then(function (C) {
       return C.match(url.pathname).then(function (c) {
         return c || fetch(e.request).then(function (r) { if (r && r.ok && r.status === 200) C.put(url.pathname, r.clone()).catch(function () {}); return r; });

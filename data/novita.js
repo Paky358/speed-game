@@ -18,6 +18,18 @@ window.SG_NOVITA = [
     ]
   },
   {
+    v: 352,
+    data: "15 novembre 2026",
+    titolo: "La saletta prima della partita: gettoni di vetro sul piedistallo ✨",
+    descrizione: [
+      "🏛️ Nella saletta ognuno ha il suo gettone di vetro che galleggia sopra una pedana luminosa del suo colore, con un fascio di luce: più bello e più vivo del cerchio piatto di prima.",
+      "➕ Quando siete in pochi il palco non resta vuoto: ci sono i posti liberi col «+». Toccane uno per invitare gli amici.",
+      "🔍 Le emoji nella saletta adesso sono nitide (prima erano piccole e ingrandite, quindi sgranate).",
+      "⬇️ Chi entra scende sulla sua pedana con un piccolo rimbalzo.",
+      "✅ Chi è pronto non alza più la manina gialla: nel suo gettone si accendono una lineetta verde e un bollino con la ✓, e ognuno tiene il suo colore."
+    ]
+  },
+  {
     v: 351,
     data: "15 novembre 2026",
     titolo: "Mini Asta Fantacalcio: arbitro vero, difesa vera e pagelle finali in ordine 📋",
