@@ -26,6 +26,7 @@
     if (nota && nota.offsetParent) { var rn = nota.getBoundingClientRect(); dischi.forEach(function (d, i) { if (d.top < rn.bottom - 2 && d.bottom > rn.top) r.push("il gettone " + i + " copre la nota"); }); }
     return r.join("; ");
   }
+  W.__controllaPosti = controllaPosti;   // (anche per il programma che fotografa: lo rifà a ogni misura del telefono)
   COPIONE.aggiungi("sv1", { nome: "Saletta: gettoni sul piedistallo, posti liberi, pronto, in 10", fai: async function () {
     var w = { Paky: await W.apriTel("Paky", { x: 0, salaSempre: true }) };
     var S = await A.apriSalaNuova("Paky");
@@ -73,6 +74,13 @@
     await pausa(1200);
     var e10 = controllaPosti(P); if (e10) no("in 10: " + e10);
     await foto("dieci");
-    return "da solo 1 gettone + 3 posti liberi (l'invito si apre), in 3 col rimbalzo e Giulia pronta (✓ nel gettone, niente ✋), in 10 senza posti liberi, nessuno si sovrappone";
+    // in 12 (il massimo della Mini Asta e di altri giochi)
+    w.Ugo = await W.apriTel("Ugo", { hash: "sala=" + S, x: 1000, salaSempre: true });
+    w.Vera = await W.apriTel("Vera", { hash: "sala=" + S, x: 1060, salaSempre: true });
+    if (!await W.aspetta(function () { return palchi(P) === 12 && liberi(P) === 0; }, 20000)) no("in 12: " + palchi(P) + " gettoni e " + liberi(P) + " posti liberi");
+    await pausa(1500);
+    var e12 = controllaPosti(P); if (e12) no("in 12: " + e12);
+    await foto("dodici");
+    return "da solo 1 gettone + 3 posti liberi (l'invito si apre), in 3 col rimbalzo e Giulia pronta (✓ nel gettone, niente ✋), in 10 e in 12 senza posti liberi, nessuno si sovrappone";
   } });
 })();
