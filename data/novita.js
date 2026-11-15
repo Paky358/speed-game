@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 349,
+    data: "15 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: barbe e capelli più veri 🧔",
+    descrizione: [
+      "🧔 Le barbe dei calciatori sono rifatte: la barba di qualche giorno è un velo di puntini, quella corta e quella piena seguono la mascella col bordo che sfuma sulla guancia, i baffi sono una striscia sotto il naso, il pizzetto è un pizzetto vero sul mento (non più una pallina) e «baffi e pizzetto» sono uniti ai lati della bocca.",
+      "💇 I capelli sono fatti di tanti fili sottili nel verso della pettinatura, con l'attaccatura che sfuma sulla fronte: niente più righe chiare a pettine né lucido da casco. Il ciuffo è un ciuffo alzato, i ricci sono più fitti, i capelli lunghi non sembrano più delle cuffie.",
+      "✅ Ogni calciatore ha la barba e il taglio di prima, solo disegnati meglio: le correzioni già fatte restano."
+    ]
+  },
+  {
     v: 348,
     data: "15 novembre 2026",
     titolo: "Mini Asta Fantacalcio: fuorigioco vero, guardalinee e rimesse 🚩",
