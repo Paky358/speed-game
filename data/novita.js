@@ -9,12 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 353,
-    data: "15 novembre 2026",
-    titolo: "Mini Asta Fantacalcio: di nuovo i nomi di chi porta palla 🏷️",
+    v: 354,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i nomi di nuovo, e ogni squadra dalla sua parte del campo ⚽",
     descrizione: [
       "🏷️ Si vede di nuovo il nome di chi porta palla anche se non è di nessuno (era sparito con l'ultima novità): adesso piccolo sopra la testa, bianco, diverso dalle etichette colorate dei vostri calciatori, e mai sopra la porta.",
-      "🎯 Anche chi batte il rigore o la punizione ha il suo nome, dall'inizio fino al calcio."
+      "🎯 Anche chi batte il rigore o la punizione ha il suo nome, dall'inizio fino al calcio.",
+      "⚽ Come nel calcio vero: in ogni partita un sorteggio decide da che parte attacca ogni squadra nel primo tempo, e nel secondo tempo si cambia lato. Prima nello stesso tempo una squadra attaccava una volta la porta di sopra e una volta quella di sotto.",
+      "🧤 Se avete il portiere, il rigore contro di lui si vede sempre: anche quando chi tira la manda fuori o sul palo (prima quel rigore non si vedeva)."
     ]
   },
   {

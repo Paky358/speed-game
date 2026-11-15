@@ -3902,7 +3902,7 @@
         var avv = e.s === "c" ? "f" : "c";
         if (e.t === "gol" || e.t === "rig") { dai(e.chi, e.m, "gol", 3, pi, ei); dai(e.ass, e.m, "ass", 1, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "sub", -1, pi, ei); }); presi[avv]++; }
         else if (e.t === "rigP") { dai(e.chi, e.m, "rig", -3, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "par", 3, pi, ei); }); }
-        else if (e.t === "rigF") dai(e.chi, e.m, "rig", -3, pi, ei);
+        else if (e.t === "rigF") { dai(e.chi, e.m, "rig", -3, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "rigF", 0, pi, ei); }); }   // 🧤 (15 nov 2026 notte, il proprietario: «se qualcuno ha il portiere, quel rigore deve vedersi»: il rigore contro un vostro portiere si vede in OGNI esito, se no vederlo voleva dire «non va fuori»)
         else if (e.t === "aut") { dai(e.chi, e.m, "aut", -2, pi, ei); por[e.s].forEach(function (y) { dai(y.k, e.m, "sub", -1, pi, ei); }); presi[e.s]++; }
         else if (e.t === "amm") dai(e.chi, e.m, "amm", -0.5, pi, ei);
         else if (e.t === "esp") dai(e.chi, e.m, "esp", e.dg ? -0.5 : -1, pi, ei);
@@ -4336,7 +4336,7 @@
   function listaMomenti(A, righe, gioDi, veloce) {
     var chi = {};
     righe.forEach(function (r) { gioDi(r).cal.forEach(function (x, k) { x.ev.forEach(function (e) { var key = e.p + "|" + e.e; (chi[key] = chi[key] || []).push({ r: r, c: r.kit[k], k: k, t: e.t, d: e.d, vv: e.vv }); }); }); });
-    var lista = veloce ? [] : [{ intervallo: true, sp: 1, m: 45.5 }, { zona: true, sp: 1, m: 74.9 }, { recupero: true, sp: 1, m: 90.5 }, { fischio: true, sp: 1, m: 98 }];   // (le giornate veloci: niente intervallo, niente Zona Cesarini)
+    var lista = veloce ? [] : [{ intervallo: true, sp: 1, m: FINE_PRIMO }, { zona: true, sp: 1, m: 74.9 }, { recupero: true, sp: 1, m: 90.5 }, { fischio: true, sp: 1, m: 98 }];   // (le giornate veloci: niente intervallo, niente Zona Cesarini)
     A.partite.forEach(function (P, pi) {
       P.ev.forEach(function (e, ei) {
         var q = chi[pi + "|" + ei] || [], dopo = P.ev[ei + 1], prima = P.ev[ei - 1];
@@ -4658,6 +4658,17 @@
   function semeDi(x) { return Math.round(x.e.m * 131 + x.p * 17 + (/^rig/.test(x.e.t || "") ? 3 : x.e.t === "ribP" ? 3 : (x.e.t || "").length) * 7 + ((x.e.chi || "").length * 3)); }   // (un rigore ha lo stesso seme comunque vada)
   // un momento con i vostri calciatori, in passi: 1) l'annuncio (col VAR prima, se il rigore arriva dal VAR), col campo fermo e i vostri
   // in formazione; 2) l'azione (due volte, se il rigore si ripete); 3) l'esito che resta coi punti (col gol annullato: il VAR e poi «annullato»)
+  // ⚽ DA CHE PARTE SI ATTACCA (15 nov 2026 notte, il proprietario: «nello stesso tempo la stessa squadra attacca una volta la porta di sopra
+  // e una volta quella di sotto»; prima la metà campo cambiava col minuto pari o dispari). Come nel calcio vero: per ogni partita un sorteggio
+  // fisso (dalle due squadre e dalla giornata: uguale su tutti i telefoni, MAI dall'esito) dice verso quale porta attacca la squadra di casa
+  // nel primo tempo; nel secondo tempo si cambia lato. sq: la squadra che attacca nell'azione (anche nell'autogol e nel fallo in difesa: chi
+  // ha le maglie «A» in campo). Il primo tempo finisce all'intervallo (FINE_PRIMO, come il momento dell'intervallo in listaMomenti): i minuti
+  // del recupero (91-95) sono del secondo tempo. verso +1: la porta in basso, −1: in alto
+  var FINE_PRIMO = 45.5;
+  function versoDi(P, gk, sq, m) {
+    var casa = (hashNome(P.c + "|" + P.f + "|" + (gk || 0) + "|campo") >>> 11) & 1 ? 1 : -1;
+    return (sq === P.c ? casa : -casa) * (m < FINE_PRIMO ? 1 : -1);
+  }
   function momentoSerieA(R, x, n, poi) {
     var e = x.e, P = x.P, nega = e.t === "rigN", t = e.t === "rigP" || e.t === "rigF" || nega ? "rig" : e.t === "ribP" ? "occ" : e.t, T = tempiAz(e.t), vv = R.gioVel, seme = semeDi(x);   // (vv: uguale su tutti i telefoni; nega: 📺 il rigore che il VAR non dà)
     // ⏳ nella Zona Cesarini il ritmo è serrato, ma UGUALE fino al tiro per tutto quello che si annuncia allo stesso modo (gol, gol annullato,
@@ -4737,7 +4748,7 @@
     // il rallentatore prima del tiro: deciso dal minuto e dal seme, MAI da come finisce (prima partiva solo sui non-gol: era uno spoiler).
     // Sempre sui rigori e dal 75', prima un tiro su tre
     if (e.v === "assedio" || e.v === "ultimo") T = [T[0], T[1], T[2] * 1.3, T[3]];
-    var op = { verso: (Math.round(e.m) + x.p) % 2 === 1 ? -1 : 1, lato: seme % 2 ? 1 : -1, seme: seme, rib: e.rib, ribGol: e.ribGol, come: e.come, noAng: e.noAng, difesa: difesa, lento: t === "rig" || zona || semeRnd(seme + 11)() < 0.33 };   // (stessa partita e stesso minuto: stessa metà campo)
+    var op = { verso: versoDi(P, R.gk, sqAtt, e.m), lato: seme % 2 ? 1 : -1, seme: seme, rib: e.rib, ribGol: e.ribGol, come: e.come, noAng: e.noAng, difesa: difesa, lento: t === "rig" || zona || semeRnd(seme + 11)() < 0.33 };   // (⚽ la porta che si attacca: la squadra e il tempo, versoDi)
     if ((t === "ann" && e.perche === "fuorigioco") || (t === "gol" && e.varOk === "fuorigioco")) { op.bandiera = true; op.fgOltre = t === "ann"; }   // 🚩 (gol annullato o convalidato: uguali fino alla decisione)
     if (e.t === "ribP" && P && P.ev[x.ei]) op.lato = semeDi({ e: P.ev[x.ei], p: x.p }) % 2 ? 1 : -1;   // (come la ribattuta che entra: x.ei è il rigore)
     if (e.t === "gol" && e.v === "ribattuta" && P && P.ev[x.ei - 1]) op.lato = semeDi({ e: P.ev[x.ei - 1], p: x.p }) % 2 ? 1 : -1;   // (la ribattuta dalla stessa parte del rigore: il rigore non sa come andrà)   // (il rigore e la sua ribattuta: anche lo stesso lato)
@@ -4805,6 +4816,7 @@
           if (q.sc.calcio != null) R.dopo(R.az.fino(q.sc, dq, q.sc.calcio), function () { gufoChiudi(R, gufo); });
           if (q.dunque && t !== "ann" && !varOk) R.dopo(R.az.fino(q.sc, dq, q.sc.dunque) + 700 * vv, function () { gufoEsito(R, gufo); });
         }
+        if (window.SG_PROVA_LATO) try { window.SG_PROVA_LATO({ p: x.p, c: P.c, f: P.f, gk: R.gk, m: e.m, t: e.t, A: q.sc.sqN && q.sc.sqN.A, verso: q.sc.verso }); } catch (er) {}   // (solo le prove nel browser)
         R.az.giocaPiano(q.sc, dq, R, q.dunque || function () {}, function () { esegui(i + 1); }); return;
       }
       if (q.varFg && !inRitardo(R) && R.az.fotoVar) R.az.fotoVar(sc);
@@ -5154,6 +5166,7 @@
     R.dopo(1400, function () {
       if (!vivoRivela(R)) return;
       viaAvviso(R);
+      if (window.SG_PROVA_LATO) try { window.SG_PROVA_LATO({ p: x.p, c: x.P.c, f: x.P.f, gk: R.gk, m: e.m, t: e.t, A: sc.sqN && sc.sqN.A, verso: sc.verso, replay: true }); } catch (er) {}   // (solo le prove nel browser)
       R.az.giocaPiano(sc, 4200, R, function () {}, function () {
         if (!vivoRivela(R)) return;
         if (b.dec && !q) avvisoCampo(R, 50, ["🔁 " + String(R.gr[w].r.nome).toUpperCase() + " PASSA IN TESTA", minTxt(e.m), "e resta in testa fino al fischio!"]);
