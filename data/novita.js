@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 353,
+    data: "16 novembre 2026",
+    titolo: "Il gettone di vetro in tutta l'app ✨",
+    descrizione: [
+      "🪟 Il gettone di vetro della saletta adesso c'è ovunque: in «Come giocate?» galleggia sulla sua pedana luminosa, e nel profilo, nella Sala, nelle classifiche e in alto dentro i giochi c'è il disco di vetro col bordo del tuo colore.",
+      "🎨 In alto nei giochi ognuno ha il colore del suo gettone, l'emoji si vede intera e non c'è più il doppio anello.",
+      "🏆 Sul podio della Linea del tempo niente più cerchione giallo: al primo resta una luce d'oro.",
+      "🔍 Dove il gettone è grande l'emoji è nitida."
+    ]
+  },
+  {
     v: 352,
     data: "15 novembre 2026",
     titolo: "La saletta prima della partita: gettoni di vetro sul piedistallo ✨",
