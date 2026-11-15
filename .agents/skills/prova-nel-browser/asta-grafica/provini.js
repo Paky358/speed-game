@@ -42,6 +42,7 @@
     var f = document.getElementById("tel-Paky");
     f.style.cssText = "position:absolute;top:0;left:0;width:" + (W.__PV_W || 390) + "px;height:" + (W.__PV_H || 844) + "px;border:0;background:#000;transform:none;z-index:9";
     P.dispatchEvent(new P.Event("resize"));
+    if (W.__PV_NOSALTA) { if (!await W.aspetta(function () { return q(P, ".st-rivela"); }, 60000)) no("niente classifica delle rose"); return "rose"; }   // (15 nov 2026: per fotografare la classifica delle rose, senza saltarla)
     for (var j = 0; j < NOMI.length; j++) { var wj = W.finestra(NOMI[j]); if (!await W.aspetta(function () { return q(wj, ".st-rivela"); }, 15000)) no("niente classifica delle rose"); W.clicca(wj, /Salta/); }   // (UN tocco: il secondo salterebbe la giornata)
     if (!await W.aspetta(function () { return q(P, ".st-gio-riga"); }, 20000)) no("la giornata non parte");
     tempo(P);

@@ -354,6 +354,14 @@
     var t0 = performance.now(), fatto = {}, righeG3 = [], fino2 = Date.now() + 900000;
     while (Date.now() < fino2 && !q(P, ".st-gradini")) {
       var bv = q(P, ".st-bar-vel"); if (!lento && !fatto.vel && bv && visibile(bv)) { fatto.vel = 1; if (!bv.classList.contains("on")) bv.click(); }
+      // 📐 (15 nov 2026) nella giornata niente riga in alto: ‹ e ⏭ nella barra, e la partita nella barra ci sta lo stesso (a 360x640)
+      var bin = q(P, ".st-bar-in"), bsc = bin && bin.querySelector(".st-bar-sc");
+      if (bsc && visibile(bin) && !fatto["bar" + bin.textContent]) {
+        fatto["bar" + bin.textContent] = 1;
+        [].slice.call(bin.querySelectorAll("span")).forEach(function (sp) { if (sp.offsetWidth && sp.scrollWidth > sp.clientWidth + 1) misure.push("nella barra «" + sp.textContent + "» è tagliato"); });
+        ["‹", "⏭"].forEach(function (t, i) { var b = qa(P, ".st-bar .st-bar-x")[i]; if (!b || b.textContent !== t || !visibile(b)) misure.push("nella barra non c'è " + t); });
+        var tt = q(P, ".st-rivela .sa-testa"); if (tt && tt.offsetHeight > 0) misure.push("nella giornata c'è ancora la riga in alto");
+      }
       var cl3 = q(P, ".st-pag.on.st-cl3");
       if (cl3 && !fatto["cl" + cl3.textContent.slice(0, 40)]) {
         fatto["cl" + cl3.textContent.slice(0, 40)] = 1;

@@ -113,6 +113,16 @@
             if (msg) { var rm = msg.getBoundingClientRect(), bx = { l: ra.left + x0, t: ra.top + y0, r: ra.left + x0 + lg, b: ra.top + y0 + al };
               if (bx.l < rm.right && bx.r > rm.left && bx.t < rm.bottom && bx.b > rm.top) sbagli.push(kk + " " + nome + ": il tasto copre l'annuncio «" + msg.textContent + "»"); }
             if (de.scrollHeight > w.innerHeight + 1 || de.scrollWidth > w.innerWidth + 1) sbagli.push(kk + " " + nome + ": la pagina scorre (" + de.scrollWidth + "x" + de.scrollHeight + " su " + w.innerWidth + "x" + w.innerHeight + ")");
+            // 📐 (15 nov 2026) il conto 🦉/🍀 sta sul campo, nell'angolo del tasto: dentro il campo, senza coprire il tasto né l'annuncio; in alto niente riga
+            var tp = q(w, ".st-gufo-top.on"), testa = q(w, ".st-rivela .sa-testa");
+            if (!tp || !az.contains(tp)) sbagli.push(kk + " " + nome + ": il conto dei gufi non è sul campo");
+            else {
+              var rt = tp.getBoundingClientRect(), bt = { l: ra.left + x0, t: ra.top + y0, r: ra.left + x0 + lg, b: ra.top + y0 + al };
+              if (rt.left < ra.left - 0.5 || rt.right > ra.right + 0.5 || rt.top < ra.top - 0.5 || rt.bottom > ra.bottom + 0.5) sbagli.push(kk + " " + nome + ": il conto esce dal campo");
+              if (rt.left < bt.r && rt.right > bt.l && rt.top < bt.b && rt.bottom > bt.t) sbagli.push(kk + " " + nome + ": il conto copre il tasto");
+              if (msg) { var rm3 = msg.getBoundingClientRect(); if (rt.left < rm3.right && rt.right > rm3.left && rt.top < rm3.bottom && rt.bottom > rm3.top) sbagli.push(kk + " " + nome + ": il conto copre l'annuncio «" + msg.textContent + "»"); }
+            }
+            if (testa && testa.offsetHeight > 0) sbagli.push(kk + " " + nome + ": nella giornata c'è ancora la riga in alto");
             if (nome === "Paky") e.annuncio = msg ? msg.textContent : "";
             if (kk !== "K3") scatta(nome, "gf1-" + kk + "-tasto-" + nome + ".png", 650);
             var n = (TOCCHI[kk] || {})[nome] || 0;

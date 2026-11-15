@@ -196,18 +196,25 @@
     return x.join(" · ");
   } });
 
-  COPIONE.aggiungi("sc4", { nome: "Mini Asta Fantacalcio online in 3: dopo il mercato niente sfilata delle rose, tutti dritti alla giornata", fai: async function () {
+  COPIONE.aggiungi("sc4", { nome: "Mini Asta Fantacalcio online in 3: dopo il mercato la classifica delle rose a figurine (dalla più scarsa, uguale su tutti i telefoni), poi tutti nella giornata", fai: async function () {
     var NOMI = ["Paky", "Giulia", "Luca"], o = await telefoni(NOMI, { formato: "fanta", scambi: true }), P = o.P, C = o.C;
     await asta(P, C);
-    var G = W.finestra("Giulia"), L = W.finestra("Luca");
+    var G = W.finestra("Giulia"), L = W.finestra("Luca"), tutti = [P, G, L];
     if (!await W.aspetta(function () { return q(P, ".mc-mia .mc-p"); }, 8000)) no("il mercato non arriva");
     W.clicca(P, /Inizia la giornata|Si gioca!/); await W.dorme(400); W.clicca(P, /Iniziamo/);
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 8000)) no("il mercato non finisce");
-    var t0 = performance.now(), visto = false;
-    var ok = await W.aspetta(function () { [P, G, L].forEach(function (w) { var n = q(w, ".st-campo-nome"); if (n && /La rosa di/.test(n.textContent) && n.getClientRects().length && n.offsetParent && q(w, ".st-rivela") && !q(w, ".st-rivela").classList.contains("gio")) { var c = q(w, ".st-campo"); if (c && c.getClientRects().length && getComputedStyle(c).display !== "none" && c.offsetHeight > 50) visto = true; } }); return [P, G, L].every(function (w) { return q(w, ".st-gio-riga"); }); }, 8000);
-    if (!ok) no("dopo il mercato la giornata non parte su tutti i telefoni");
-    if (visto) no("dopo il mercato c'è ancora la sfilata delle rose");
-    return "dopo «⏹ Fine» tutti nella giornata in " + Math.round((performance.now() - t0) / 100) / 10 + " s, senza la sfilata delle rose";
+    // 🏆 (15 nov 2026) la classifica a figurine: su tutti, la più scarsa per prima (in basso a destra), la più forte per ultima (in alto a sinistra)
+    if (!await W.aspetta(function () { return tutti.every(function (w) { return w.document.querySelectorAll(".cr-r").length === 3; }); }, 15000)) no("la classifica a figurine non arriva su tutti");
+    var ordini = tutti.map(function () { return []; }), t0 = performance.now();
+    var fine = await W.aspetta(function () {
+      tutti.forEach(function (w, i) { [].forEach.call(w.document.querySelectorAll(".cr-r.su"), function (c) { var nm = c.querySelector(".cr-t b").textContent; if (ordini[i].indexOf(nm) < 0) ordini[i].push(nm); }); });
+      return tutti.every(function (w) { return q(w, ".st-gio-riga"); });
+    }, 40000);
+    if (!fine) no("dopo la classifica la giornata non parte su tutti i telefoni");
+    var cl = vm(C).classifica || [], attesi = cl.slice().sort(function (a, b) { return (b.posV || b.pos) - (a.posV || a.pos); }).map(function (r) { return r.nome; });
+    ordini.forEach(function (l, i) { if (JSON.stringify(l) !== JSON.stringify(attesi)) no(NOMI[i] + ": le rose escono in un altro ordine (" + l.join(", ") + " invece di " + attesi.join(", ") + ")"); });
+    var c0 = q(P, ".cr-r"), ult = [].filter.call(P.document.querySelectorAll(".cr-r"), function (c) { return c.querySelector(".cr-t b").textContent === attesi[attesi.length - 1]; })[0];
+    return "dopo «Inizia la giornata» la classifica a figurine su tutti, nello stesso ordine (" + attesi.join(" → ") + "), poi la giornata in " + Math.round((performance.now() - t0) / 100) / 10 + " s";
   } });
 
   COPIONE.aggiungi("sc5", { nome: "Mini Asta Fantacalcio, il mercato in 2, 3, 4, 6, 8 e 10 su un telefono piccolo e su uno grande: rose tutte uguali, la mia per prima, mai più piccole del minimo, si scorre solo quando serve (le partite ferme sotto)", fai: async function () {
