@@ -369,17 +369,18 @@
         if (e1 || e2) misure.push("classifica: " + e1 + " " + e2);
         x.push((cl3.querySelector(".st-pag-tit") || {}).textContent + ": " + [].slice.call(cl3.querySelectorAll(".st-cl3-r")).map(function (r) { return r.textContent.replace(/\s+/g, " ").trim(); }).join(" | "));
       }
-      var g3 = q(P, ".st-pag.on .st-pag-g3");
-      if (g3 && righeG3.indexOf(g3.textContent) < 0) {
+      qa(P, ".st-pag.on .st-pag-g3").forEach(function (g3) {   // (15 nov 2026: più rose per pagina: ogni riga delle 3 giornate della pagina)
+      if (righeG3.indexOf(g3.textContent) < 0) {
         righeG3.push(g3.textContent);
-        var nome = (q(P, ".st-pag.on .st-pf-testa span") || {}).textContent, parti = g3.textContent.match(/1ª ([\d,]+) \+ 2ª ([\d,]+) \+ 3ª ([\d,]+)= ([\d,]+)/);
+        var blk = g3.closest(".st-pfb") || g3.parentNode, nome = (blk.querySelector(".st-pf-testa span") || {}).textContent, parti = g3.textContent.match(/1ª ([\d,]+) \+ 2ª ([\d,]+) \+ 3ª ([\d,]+)= ([\d,]+)/);
         if (!parti) no("la riga delle 3 giornate sotto la pagella di " + nome + " è strana: «" + g3.textContent + "»");
         var somma = [1, 2, 3].reduce(function (s, i) { return s + parseFloat(parti[i].replace(",", ".")); }, 0);
         if (Math.abs(somma - parseFloat(parti[4].replace(",", "."))) > 1e-9) no("sotto la pagella di " + nome + " la somma non torna: «" + g3.textContent + "»");
-        var tot3 = (q(P, ".st-pag.on .st-pf-tot") || {}).textContent;
+        var tot3 = (blk.querySelector(".st-pf-tot") || {}).textContent;   // (15 nov 2026: più rose per pagina: il totale della stessa rosa)
         if (tot3 !== parti[3]) no("la pagella di " + nome + " dice " + tot3 + " ma la 3ª giornata nella riga è " + parti[3]);
         var e3 = dentroSchermo(P, [".st-pag.on .st-pag-g3", ".st-pag.on .st-pag-av"]); if (e3) misure.push("pagella: " + e3);
       }
+      });
       var av = bott(P, ".st-pag-av", /Avanti|Mostra tutta/); if (av && !av.disabled && Math.random() < pAv) av.click();
       await W.dorme(200);
     }

@@ -29,7 +29,7 @@
     return { P: P, C: C };
   }
   function pagelle(w) { var p = q(w, ".st-pag.on"); return p && !p.classList.contains("live") ? p : null; }   // (le pagelle aperte, non la scheda toccata)
-  function titoloPag(w) { var p = pagelle(w), t = p && p.querySelector(".st-pag-tit"), n = p && p.querySelector(".st-pf-testa span"); return p ? (t ? t.textContent : "") + (n ? " · " + n.textContent : "") : ""; }
+  function titoloPag(w) { var p = pagelle(w), t = p && p.querySelector(".st-pag-tit"), nn = p ? p.querySelectorAll(".st-pf-testa span") : [], n = nn.length ? nn[nn.length - 1] : null; return p ? (t ? t.textContent : "") + (n ? " · " + n.textContent : "") : ""; }
 
   COPIONE.aggiungi("pg1", { nome: "Asta fantacalcio online in 3: le pagelle (intervallo e fischio finale) aspettano «Avanti ▶» di chi tiene la partita, gli altri «⏳ Aspettiamo Paky…»", fai: async function () {
     var NOMI = ["Paky", "Giulia", "Luca"], o = await telefoniOnline({ formato: "fanta" }, NOMI), P = o.P, C = o.C, x = [], fino = Date.now() + 300000, visti = {};
@@ -62,7 +62,7 @@
     if (!await W.aspetta(function () { return !pagelle(L) || titoloPag(L) !== pagP; }, 10000)) no("Paky va avanti ma Luca resta alle pagelle del primo tempo");   // (chi aspetta ha almeno qualche secondo per leggere la sua pagina: fino a 8 s)
     x.push("intervallo: Paky «" + avP.textContent.trim() + "», Luca «" + attL.textContent.trim() + "», poi tutti avanti al tocco di Paky");
     // 🏁 il fischio finale: pagella per pagella, Luca aspetta Paky
-    if (!await W.aspetta(function () { return pagelle(P) && pagelle(P).classList.contains("uno") && pagelle(L) && pagelle(L).classList.contains("uno"); }, 150000)) no("le pagelle finali non arrivano su Paky e Luca");
+    if (!await W.aspetta(function () { return pagelle(P) && pagelle(P).classList.contains("fin") && pagelle(L) && pagelle(L).classList.contains("fin"); }, 150000)) no("le pagelle finali non arrivano su Paky e Luca");
     var carte = 0;
     for (var giro = 0; giro < 6; giro++) {
       var av = await W.aspetta(function () { return bott(P, ".st-pag-av", /Avanti/); }, 15000);   // (dopo che i voti sono usciti tutti)

@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 351,
+    data: "15 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: arbitro vero, difesa vera e pagelle finali in ordine 📋",
+    descrizione: [
+      "👨‍⚖️ L'arbitro si muove come un arbitro vero: segue l'azione da dietro e di lato, con calma, corre solo quando serve e mai più veloce dei giocatori; niente più giravolte. Dopo il gol si ferma e va piano verso il centro.",
+      "🦵 Niente più difensore appiccicato al portiere mentre l'azione è ancora a centrocampo: la difesa sta alta e in linea, e il difensore torna sul palo correndo all'indietro solo quando l'attacco arriva negli ultimi 30 metri.",
+      "📋 Le pagelle finali come quelle del primo tempo: tutto lo schermo, niente campo sotto, più rose in una pagina, i calciatori in fila con voto, fantavoto e bonus, mai sovrapposti. Dalla rosa che ha fatto meno a quella che ha fatto di più, col posto accanto al totale."
+    ]
+  },
+  {
     v: 350,
     data: "15 novembre 2026",
     titolo: "Mini Asta Fantacalcio: l'altezza conta nei colpi di testa, e i difensori segnano un po' di più ⚽",
