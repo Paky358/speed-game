@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 350,
+    data: "15 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i difensori segnano un po' di più ⚽",
+    descrizione: [
+      "🧱 I difensori segnano un po' di più: prima facevano circa 6 gol su 100, adesso circa 9 (in Serie A sono anche di più, ma non esageriamo). Tra difensori conta la quotazione, come sempre.",
+      "🎯 I loro gol arrivano soprattutto di testa: sul calcio d'angolo, sulla punizione dalla fascia, sul cross e sulla rimessa lunga, oppure sulla ribattuta in area. Quasi mai in slalom o in contropiede.",
+      "🤞 Anche i tiri sbagliati dei difensori arrivano dalle stesse azioni: quando il tuo difensore va di testa sull'angolo può essere gol o no, non si sa prima.",
+      "⚖️ I punti medi e quanto vince la rosa più forte restano quelli di prima."
+    ]
+  },
+  {
     v: 349,
     data: "15 novembre 2026",
     titolo: "Mini Asta Fantacalcio: barbe e capelli più veri 🧔",
