@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 353,
+    data: "15 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: di nuovo i nomi di chi porta palla 🏷️",
+    descrizione: [
+      "🏷️ Si vede di nuovo il nome di chi porta palla anche se non è di nessuno (era sparito con l'ultima novità): adesso piccolo sopra la testa, bianco, diverso dalle etichette colorate dei vostri calciatori, e mai sopra la porta.",
+      "🎯 Anche chi batte il rigore o la punizione ha il suo nome, dall'inizio fino al calcio."
+    ]
+  },
+  {
     v: 351,
     data: "15 novembre 2026",
     titolo: "Mini Asta Fantacalcio: arbitro vero, difesa vera e pagelle finali in ordine 📋",

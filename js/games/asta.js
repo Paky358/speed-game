@@ -6104,6 +6104,7 @@
       if (tB != null) { gl.pose.push([tB, {}], [tB + 0.03, { bandiera: 1 }]); sc.bandiera = tB + 0.02; sc.gl = gl; sc.fgOltre = !!op.fgOltre; }
       sc.attori.push(gl, gl2);
     }
+    if (sc.calcio != null && tira) sc.batte = sc.attori.indexOf(tira);   // 🎯 (chi batte il rigore o la punizione: il suo nome fino al calcio)
     sc.parti = tipo === "rig" ? 0.14 : (v === "angolo" || v === "olimpico" || v === "portiere") ? 0.12 : v === "punizione" || v === "laterale" ? 0.1 : 0;   // (rigori e piazzati: si parte già pronti a battere)
     return sc;
   }
@@ -7235,6 +7236,7 @@
   }
   function nomeSottoPiedi(sc, p, ok) {   // a chi va il nome piccolo al tempo p: { i: l'attore, al: quanto si vede } o null (ok(i): ha un nome da scrivere)
     var N = NOME_PALLA, t0 = sc.paf != null ? sc.paf : sc.rete != null ? sc.rete : null, d;
+    if (sc.batte != null && sc.calcio != null && p <= sc.calcio + N.passo && ok(sc.batte)) return { i: sc.batte, al: Math.min(1, (p + N.passo) / N.entra) };   // 🎯 (15 nov 2026: chi batte il rigore o la punizione, dall'inizio fino al calcio)
     if (t0 != null && p >= t0) {   // (il portiere che para o prende gol)
       var gi = -1; sc.attori.forEach(function (a, k) { if (a.sq === "pD") gi = k; });
       if (gi >= 0 && ok(gi)) { d = p - t0; return d <= N.por ? { i: gi, al: Math.min(1, (d + N.passo) / N.entra) } : d <= N.por + N.via ? { i: gi, al: 1 - (d - N.por) / N.via } : null; }
@@ -7652,7 +7654,8 @@
         else if (f.numA != null) f.o.num = f.numA;
         var uk = u * ((f.o.asp && f.o.asp.alt) || 1);   // 📏 (l'altezza vera: l'omino e il nome sulla sua testa; l'alone a terra resta com'è)
         omino(f.x, f.y, uk, f.dir, f.kit, f.o);
-        if (f.chi) { var td = testaDi(f.x, f.y, uk, f.o, false); nomi.push({ chi: f.chi, alto: td.alto }); }
+        f.alto = testaDi(f.x, f.y, uk, f.o, false).alto;   // (la cima della testa: lì va il nome, anche di chi non è di nessuno)
+        if (f.chi) nomi.push({ chi: f.chi, alto: f.alto });
       });
       if (sc.paf != null && p >= sc.paf && p < sc.paf + 0.06) {   // 🧤 il colpo sul pallone: un lampo che si allarga e svanisce
         var qp = lungo(sc.palla, sc.paf, true), sp2 = qp ? P(sc, qp[1], qp[2]) : null, kp = (p - sc.paf) / 0.06;
@@ -7690,11 +7693,18 @@
       if (np && np.al > 0.02) {
         var fN = figure.filter(function (f) { return f.ai === np.i; })[0], tN = nomeVero(sc, sc.attori[np.i]);
         if (fN && tN) {
-          var sxN = w / 2 + (fN.x - cam.cx) * cam.z, syN = h / 2 + (fN.y - cam.cy) * cam.z, fsN = Math.max(8, Math.round(fs * 0.82));
-          if (sxN > -40 && sxN < w + 40 && syN > -10 && syN < h + 20) {
+          // 🏷️ (15 nov 2026, il proprietario) SOPRA la testa, piccolo, bianco col filo scuro e senza riquadro (le etichette dei vostri hanno il loro
+          // colore e la punta): non si confondono. Se sopra la testa cadrebbe sulla porta va sotto i piedi (mai sopra la porta)
+          var aN = fN.alto || [fN.x, fN.y - u * 3], sxN = w / 2 + (aN[0] - cam.cx) * cam.z, syN = h / 2 + (aN[1] - cam.cy) * cam.z, pyN = h / 2 + (fN.y - cam.cy) * cam.z, fsN = Math.max(8, Math.round(fs * 0.82));
+          if (sxN > -40 && sxN < w + 40 && syN > -10 && pyN < h + 20) {
             ctx.save(); ctx.font = "700 " + fsN + "px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.lineJoin = "round"; ctx.lineWidth = 2.5;
-            ctx.strokeStyle = "rgba(0,0,0," + (0.45 * np.al).toFixed(3) + ")"; ctx.fillStyle = "rgba(255,255,255," + (0.82 * np.al).toFixed(3) + ")";
-            var gkN = sc.attori[np.i] && /^p[AD]$/.test(sc.attori[np.i].sq), yN = gkN ? syN - u * 3.15 * cam.z : syN + fsN * 1.2;   // (15 nov 2026: il portiere col nome sopra la testa, mai sulla rete) ctx.strokeText(tN, sxN, yN); ctx.fillText(tN, sxN, yN); ctx.restore();
+            ctx.strokeStyle = "rgba(0,0,0," + (0.5 * np.al).toFixed(3) + ")"; ctx.fillStyle = "rgba(255,255,255," + (0.85 * np.al).toFixed(3) + ")";
+            var yN = syN - 3, lN = ctx.measureText(tN).width / 2 + 2;
+            var gA = P(sc, 0.4, GL - 0.01), gB = P(sc, 0.6, NET + 0.01), gx0 = w / 2 + (Math.min(gA[0], gB[0]) - cam.cx) * cam.z, gx1 = w / 2 + (Math.max(gA[0], gB[0]) - cam.cx) * cam.z;
+            var gy0 = h / 2 + (Math.min(gA[1], gB[1]) - cam.cy) * cam.z - fsN * 0.4, gy1 = h / 2 + (Math.max(gA[1], gB[1]) - cam.cy) * cam.z + fsN * 0.4;
+            var suPorta = function (y) { return sxN + lN > gx0 && sxN - lN < gx1 && y > gy0 && y - fsN < gy1; };
+            if (suPorta(yN) && !suPorta(pyN + fsN * 1.2)) yN = pyN + fsN * 1.2;
+            ctx.strokeText(tN, sxN, yN); ctx.fillText(tN, sxN, yN); ctx.restore();
           }
         }
       }
