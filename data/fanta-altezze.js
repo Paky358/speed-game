@@ -2,7 +2,9 @@
    DATI — l'ALTEZZA VERA (in cm) dei calciatori della Mini Asta Fantacalcio (13 nov 2026)
    Il proprietario: «Woltemade, il gigante di Brema, si deve vedere più alto degli altri»; il peso no.
    Serve SOLO a disegnarli in campo un po' più alti o più bassi (dal 92% al 108%: altezzaK in js/games/asta.js);
-   MAI nei fatti della giornata (gol, voti, fantapunti), MAI all'asta.
+   MAI all'asta, MAI nei voti e nei fantapunti. Dal 15 nov 2026 (il proprietario: «l'altezza conta nei colpi di testa») decide anche COME si
+   segna nella giornata (chi è alto più spesso di testa, chi è basso di piede; i gol in più dei difensori soprattutto ai più alti) e le frasi
+   sull'altezza («svetta») solo da 188 cm in su: CHI segna resta deciso da ruolo e quotazione.
    Vale SOLO se due fonti diverse erano d'accordo (come i numeri di maglia; Wikipedia e Wikidata contano come una).
    Chi manca qui resta con l'altezza di sempre: meglio niente che sbagliato.
    Raccolte il 13 nov 2026 da un aiutante Sonnet: Wikidata, ESPN (rose, in pollici interi: vale se coincide), TheSportsDB; 299 su 335. Il 13 nov sera altre 30 (il proprietario: «se due fonti diverse danno altezze simili, metti quella che ti ispira di più»: entro 3 cm, la fonte più affidabile; Bayo V. è Vakoun Bayo, Perez K. è Kike Pérez): 329 su 335. Palmisani 196, Baldanzi 170, Daffara 194, Lontani 181 li ha dati il proprietario (13 nov 2026: valgono come fonte sicura); poi Gueye 185 (prima c'era 174, sbagliata) e Mendy P. 196, sempre dal proprietario: 335 su 335.

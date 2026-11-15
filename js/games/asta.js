@@ -3438,6 +3438,12 @@
   // 🧱 (15 nov 2026, il proprietario: «i difensori segnano un po' di più, non di tanto ma comunque sono da aumentare») D da 0,09 a 0.15: prima
   // i difensori facevano circa 6 gol su 100, ora circa 9 (in Serie A sono un po' di più: si resta un po' sotto). Tra difensori decide la quotazione
   var PESO_GOL = { A: 1, C: 0.32, D: 0.15, P: 0 }, PESO_ASS = { A: 0.55, C: 1, D: 0.35, P: 0.02 };
+  // 📏 (15 nov 2026, il proprietario: «i gol in più dei difensori soprattutto ai difensori alti, di testa sull'angolo: il gol alla Bremer») il peso
+  // di un difensore tra chi segna è 0,09 (com'era) + 0,06 solo per i centimetri sopra i 180: fino a 180 cm 0,09, 183 cm 0,118, 186 cm 0,145,
+  // 188 cm 0,163, 190 cm 0,182, 193 cm 0,209, 196 cm 0,237 (in media 0,15, PESO_GOL.D: i difensori fanno circa 9 gol su 100 e quelli da
+  // 188 cm in su ne fanno quasi la metà). ALT_D_NORM: la media di max(0, cm − 180) / 10 sui 110 difensori del listone (15 nov 2026)
+  var PESO_D_BASE = 0.09, PESO_D_ALTI = 0.06, ALT_D_NORM = 0.6545;
+  function pesoGolDi(peso, y) { return peso === PESO_GOL && y.ruolo === "D" ? PESO_D_BASE + PESO_D_ALTI * Math.max(0, cmDi(y) - 180) / 10 / ALT_D_NORM : peso[y.ruolo]; }
   var OCC_DIF = 0.07;   // (i tiri sbagliati dei vostri difensori a giornata, più un po' per ogni punto di quotazione: così il loro tiro non vuol dire gol)
   function lim(x, a, b) { return Math.max(a, Math.min(b, x)); }
   function numFanta(x) { return String(Math.round(x * 2) / 2).replace(".", ","); }   // 32,5
@@ -3463,16 +3469,28 @@
   var CON_PASSA = { cross: 1, angolo: 1, unodue: 1, contro: 1, pallonetto: 1, mischia: 1, testa: 1, incrocio: 1, miracolo: 1, assedio: 1, ultimo: 1,
     secondopalo: 1, presa: 1, tre: 1, vuota: 1, filtrante: 1, rasoterra: 1, tuffo: 1, laterale: 1, fuga: 1, rimessa: 1, rimessalunga: 1 };   // (le scene dove si vede chi passa)
   var SCENE_OCC = SCENE_ASS.concat(SCENE_SOLO).filter(function (x) { return x[1] >= 1; });   // (le rarità hanno le loro occasioni a parte)
-  function scenaGol(conAss) { return pescaPeso(conAss ? SCENE_ASS : SCENE_SOLO, function (x) { return x[1]; })[0]; }
+  // 📏 L'ALTEZZA NEI GOL (15 nov 2026, il proprietario: «l'altezza conta nei colpi di testa… nessuno si deve lamentare»): CHI segna lo decidono
+  // ruolo e quotazione come sempre; l'altezza cambia COME: chi è alto va più spesso di testa (cross, angolo, secondo palo, uscita del portiere,
+  // tuffo, punizione dalla fascia, rimesse, palla lunga, ultimo assalto), chi è basso più spesso col tiro da fuori, a giro, al volo, lo slalom,
+  // il rasoterra, l'uno-due. Altezze vere di data/fanta-altezze.js; chi non c'è ha l'altezza media (183 cm), mai inventata. Lo STESSO peso per i
+  // gol e per i tiri che non entrano (anti-spoiler: «l'alto va di testa» non vuol dire gol). Di testa ×2,7 a 193 cm e ×0,37 a 173; di piede ×0,67 e ×1,5
+  var ALT_MEDIA = 183, ALTO_CM = 188;   // (ALTO_CM: da qui in su, e solo da qui, le frasi sull'altezza: «svetta», «sovrasta», «stacco imperioso»)
+  var SC_TESTA = { cross: 1, angolo: 1, secondopalo: 1, presa: 1, tuffo: 1, laterale: 1, rimessa: 1, rimessalunga: 1, testa: 1, ultimo: 1 };
+  var SC_PIEDE = { fuori: 1, giro: 1, volee: 1, slalom: 1, rasoterra: 1, unodue: 1, glt: 1, incrocio: 1 };
+  function cmDi(y) { var cm = y && (window.SG_FANTA_ALTEZZE || {})[typeof y === "string" ? y : y.k]; return cm || ALT_MEDIA; }
+  function pesoAlt(v, y) { if (!y) return 1; var d = (cmDi(y) - ALT_MEDIA) / 10; return SC_TESTA[v] ? Math.exp(1.0 * d) : SC_PIEDE[v] ? Math.exp(-0.4 * d) : 1; }
+  function scenaGol(conAss, y) { return pescaPeso(conAss ? SCENE_ASS : SCENE_SOLO, function (x) { return x[1] * pesoAlt(x[0], y); })[0]; }
   // 🧱 LE SCENE DEI DIFENSORI (15 nov 2026): il loro gol tipico è di testa sull'angolo, sulla punizione dalla fascia, sul cross e sulla rimessa
   // lunga, o la ribattuta in area; quasi mai lo slalom o il contropiede. Le STESSE scene con gli STESSI pesi per i gol e per i tiri che non
   // entrano (anti-spoiler: «il difensore va di testa sull'angolo» deve poter finire in tutti e due i modi)
   var SCENE_DIF_ASS = [["angolo", 34], ["laterale", 14], ["cross", 14], ["secondopalo", 10], ["tuffo", 7], ["rimessalunga", 6], ["unodue", 4], ["rasoterra", 4], ["presa", 4], ["tre", 3]];
   var SCENE_DIF_SOLO = [["tapin", 40], ["fuori", 22], ["volee", 14], ["muro", 12], ["corta", 6], ["giro", 6]];
-  function scenaDif(conAss, senzaPiazzati) { return pescaPeso(conAss ? SCENE_DIF_ASS : SCENE_DIF_SOLO, function (x) { return senzaPiazzati && (x[0] === "angolo" || x[0] === "laterale") ? 0 : x[1]; })[0]; }
-  function scenaDi(y, conAss) { return y && y.ruolo === "D" ? scenaDif(conAss) : scenaGol(conAss); }   // (la scena di un gol: quella dei difensori se segna un difensore)
-  function scenaOcc(senza) { return pescaPeso(SCENE_OCC, function (x) { return x[0] === senza ? 0 : x[1]; })[0]; }   // (senza: una scena da saltare)
-  function scenaPassa() { return pescaPeso(SCENE_ASS, function (x) { return CON_PASSA[x[0]] && x[0] !== "angolo" && x[0] !== "laterale" && x[1] >= 1 ? x[1] : 0; })[0]; }   // (dove si vede chi passa, mai l'angolo né la punizione laterale: li batte chi li batte)
+  function scenaDif(conAss, senzaPiazzati, y) { return pescaPeso(conAss ? SCENE_DIF_ASS : SCENE_DIF_SOLO, function (x) { return senzaPiazzati && (x[0] === "angolo" || x[0] === "laterale") ? 0 : x[1] * pesoAlt(x[0], y); })[0]; }
+  function scenaDi(y, conAss) { return y && y.ruolo === "D" ? scenaDif(conAss, false, y) : scenaGol(conAss, y); }   // (la scena di un gol: quella dei difensori se segna un difensore)
+  function scenaOcc(senza, y) { return pescaPeso(SCENE_OCC, function (x) { return x[0] === senza ? 0 : x[1] * pesoAlt(x[0], y); })[0]; }   // (senza: una scena da saltare; y: chi tira)
+  // (i tiri che non entrano scelgono la scena come i gol: 7 volte su 10 con chi passa, le stesse liste e gli stessi pesi; le rarità a parte)
+  function scenaOccDi(conAss, y, senza) { return pescaPeso(conAss ? SCENE_ASS : SCENE_SOLO, function (x) { return x[1] >= 1 && x[0] !== senza ? x[1] * pesoAlt(x[0], y) : 0; })[0]; }
+  function scenaPassa(y) { return pescaPeso(SCENE_ASS, function (x) { return CON_PASSA[x[0]] && x[0] !== "angolo" && x[0] !== "laterale" && x[1] >= 1 ? x[1] * pesoAlt(x[0], y) : 0; })[0]; }   // (dove si vede chi passa, mai l'angolo né la punizione laterale: li batte chi li batte)
   // 🧤 come finisce un tiro che non entra (11 nov 2026, il proprietario: «il salvataggio sulla linea esce troppo spesso… mettiamo più parate
   // vere»): il salvataggio sulla linea circa una volta su 40, le parate quasi la metà. Un numero solo a caso, come prima
   var ESITI_OCC = [["parata", 40], ["fuori", 24], ["alto", 14], ["palo", 10], ["traversa", 9.5], ["linea", 2.5]];
@@ -3535,6 +3553,16 @@
     if (!l.length && tipo === "angoli" && S) l = S.punizioni || [];   // (se non si sa chi batte gli angoli: chi batte le punizioni)
     return l.map(function (n) { return { nome: n, c: rosa.filter(function (y) { return normNome(y.nome) === normNome(n); })[0] || null }; });
   }
+  // 📏 LA SCENA DI UN TIRO DI y (15 nov 2026): la stessa per i gol e per i tiri che non entrano, così né la scena né l'altezza dicono come finisce.
+  // Chi passa 7 volte su 10 (se c'è: uno che nel gioco non c'è = senza), le scene dei difensori per i difensori, l'altezza di chi tira; la
+  // punizione diretta solo per chi la batte; sull'angolo e sulla punizione dalla fascia passa chi li batte. Le rarità (rovesciata, da
+  // centrocampo, gol dall'angolo) hanno le loro occasioni a parte. Torna [scena, chi passa]
+  function scenaTiro(sq, rosa, y, fuori) {
+    var as = caso01() < 0.7 ? marcatore(rosa, PESO_ASS, y) : null; if (as && fuori && fuori(as.k)) as = null;
+    var v = y && y.ruolo === "D" ? scenaDif(!!as, false, y) : scenaOccDi(!!as, y);
+    if (v === "punizione" && !(y && tiroN(y, "punizioni"))) v = scenaOccDi(!!as, y, "punizione");
+    return [v, tiriPiazzati(sq, v, y, as)[1]];
+  }
   function tiroN(c, tipo) {   // 1, 2, 3 se batte le punizioni (o gli angoli) per la sua squadra (per la scritta all'asta), se no 0
     var l = tiratoriDi(c.squadra, tipo);
     for (var i = 0; i < l.length; i++) if (normNome(l[i].nome) === normNome(c.nome)) return i + 1;
@@ -3568,7 +3596,7 @@
   function marcatore(rosa, peso, tranne) {   // chi segna (o fa l'assist) tra i calciatori del gioco di quella squadra; null = uno che nel gioco non c'è
     if (caso01() < 0.15) return null;
     var esp = forza().esp;   // (più è quotato, più segna: 30 ott 2026, la rosa più forte vince un po' più spesso; 11 nov: «chiunque può fare gol, pure il più scarso»)
-    return pescaPeso(rosa.filter(function (y) { return y !== tranne; }), function (y) { return peso[y.ruolo] * Math.pow(y.q + 2, esp); });
+    return pescaPeso(rosa.filter(function (y) { return y !== tranne; }), function (y) { return pesoGolDi(peso, y) * Math.pow(y.q + 2, esp); });
   }
   // 💪 LA FORZA DELLE SQUADRE NELLA GIORNATA (11 nov 2026, il proprietario col Cervello: «più realistico»): soprattutto l'overall della squadra
   // (ovr: la parte che conta l'overall, il resto dai gol veri dell'anno scorso; k: quanto pesa un punto di overall di differenza), e chi segna
@@ -3632,7 +3660,7 @@
       if (caso01() < 0.07) {   // 📺 un gol annullato dal VAR: non conta, solo il brivido
         var fgA = caso01() < ANN_FG, ma = marcatore(rosa, PESO_GOL), aa = fgA || caso01() < 0.6 ? marcatore(rosa, PESO_ASS, ma) : null;
         var va = fgA ? pescaPeso(SCENE_ASS.filter(function (x) { return FUORIGIOCO_SC[x[0]]; }), function (x) { return x[1]; })[0] : scenaDi(ma, !!aa);   // (🚩 il fuorigioco: solo filtrante e lancio in profondità)
-        for (var gv = 0; !fgA && SENZA_VAR[va] && gv < 30; gv++) va = scenaGol(!!aa);   // (niente VAR su punizioni dirette, angoli diretti, ribattute…)
+        for (var gv = 0; !fgA && SENZA_VAR[va] && gv < 30; gv++) va = scenaGol(!!aa, ma);   // (niente VAR su punizioni dirette, angoli diretti, ribattute…)
         var ta = tiriPiazzati(lato[s], va, ma, aa);
         ma = ta[0]; aa = ta[1];
         P.ev.push({ m: minuto(), t: "ann", s: s, chi: ma ? ma.k : null, ass: aa ? aa.k : null, v: va, perche: fgA ? "fuorigioco" : aCaso(["fallo", "mano"]) });
@@ -3685,23 +3713,18 @@
         // (DIF_RUOLO); e chi fa i falli in pressing ha anche i pressing puliti (palla rubata), tanti quanti i suoi gialli in pressing
         if (caso01() < (ca[0] * 0.5 + ca[1]) * (DIF_RUOLO[rf] != null ? DIF_RUOLO[rf] : 1)) P.ev.push({ m: minuto(), t: "rec", s: s, chi: y.k });
         var qp = quotaPressing(rf); if (qp && caso01() < ca[0] * qp) P.ev.push({ m: minuto(), t: "rec", s: s, chi: y.k, come: "pressing" });
-        var occ = y.ruolo === "A" ? 0.25 + 0.012 * y.q : y.ruolo === "C" ? 0.1 + 0.006 * y.q : y.ruolo === "D" ? OCC_DIF + 0.003 * y.q : 0, vo, ao;
-        if (y.ruolo === "D") { var dA = caso01() < 0.7; vo = scenaDif(dA); ao = dA ? marcatore(rosa, PESO_ASS, y) : null; ao = tiriPiazzati(lato[s], vo, y, ao)[1]; }   // 🧱 (15 nov 2026: le scene dei difensori, come i loro gol; sull'angolo passa chi lo batte)
-        else {
-        vo = caso01() < 0.004 ? "centrocampo" : scenaOcc();   // (da centrocampo anche le occasioni, rare: se no quel tiro voleva dire sempre gol)
-        if (vo === "punizione" && !tiroN(y, "punizioni")) vo = scenaOcc("punizione");   // (la punizione la tira chi la batte)
-        ao = caso01() < 0.6 ? marcatore(rosa, PESO_ASS, y) : null;   // (anche le occasioni hanno chi passa, come i gol: il nome di chi passa non svela niente)
-        if (vo === "laterale") { var bo = battitore(lato[s], "punizioni"); if (bo !== undefined) ao = bo && bo !== y ? bo : null; }   // (la punizione laterale la mette in mezzo chi la batte)
-        }
+        var occ = y.ruolo === "A" ? 0.25 + 0.012 * y.q : y.ruolo === "C" ? 0.1 + 0.006 * y.q : y.ruolo === "D" ? OCC_DIF + 0.003 * y.q : 0;
+        var st0 = scenaTiro(lato[s], rosa, y), vo = st0[0], ao = st0[1];   // 📏 (15 nov 2026) la scena come i suoi gol: chi passa, le scene dei difensori, l'altezza
+        if (y.ruolo !== "D" && caso01() < 0.004) vo = "centrocampo";   // (da centrocampo anche le occasioni, rare: se no quel tiro voleva dire sempre gol)
         if (caso01() < occ) P.ev.push({ m: minuto(), t: "occ", s: s, chi: y.k, ass: ao ? ao.k : null, esito: esitoOcc(ESITI_OCC), v: vo });
         // 🎭 chi passa (30 ott 2026, revisione): occasioni sbagliate con lui che passa, quante l'85% degli assist che ci si aspettano da lui (MAI legate ai
         // suoi assist veri: se no dall'una si capiva l'altro). Così «c'è solo il vostro che passa» può finire in gol o no. Scene dove si vede chi passa (mai l'angolo)
         var lp = 0.85 * 0.7 * 0.85 * lim(att - RIG_A_PARTITA * 0.76, 0.12, 4) * PESO_ASS[y.ruolo] * Math.pow(y.q + 2, 2) / Math.max(1e-9, wAss);
-        for (var op3 = poisson(lp); op3 > 0; op3--) { var tq = marcatore(rosa, PESO_GOL, y); P.ev.push({ m: minuto(), t: "occ", s: s, chi: tq ? tq.k : null, ass: y.k, esito: esitoOcc(ESITI_OCC), v: tq && tq.ruolo === "D" ? scenaDif(true, true) : scenaPassa() }); }
+        for (var op3 = poisson(lp); op3 > 0; op3--) { var tq = marcatore(rosa, PESO_GOL, y); P.ev.push({ m: minuto(), t: "occ", s: s, chi: tq ? tq.k : null, ass: y.k, esito: esitoOcc(ESITI_OCC), v: tq && tq.ruolo === "D" ? scenaDif(true, true, tq) : scenaPassa(tq) }); }
       });
       // contro un vostro portiere ogni tanto anche un tiro che non entra (se no «azione pericolosa» contro di lui voleva dire sempre gol)
       if ((rose[lato[s === "c" ? "f" : "c"]] || []).some(function (y) { return y.ruolo === "P" && comprati[y.k]; })) {
-        for (var o2 = poisson(0.9); o2 > 0; o2--) { var tz = marcatore(rosa, PESO_GOL), vz = tz && tz.ruolo === "D" ? scenaDif(caso01() < 0.7) : scenaOcc(); if (vz === "punizione") { var bz = battitore(lato[s], "punizioni"); if (bz !== undefined) tz = bz; } P.ev.push({ m: minuto(), t: "occ", s: s, chi: tz ? tz.k : null, esito: esitoOcc(ESITI_PORT), v: vz }); }
+        for (var o2 = poisson(0.9); o2 > 0; o2--) { var tz = marcatore(rosa, PESO_GOL), stz = scenaTiro(lato[s], rosa, tz), vz = stz[0]; if (vz === "punizione") { var bz = battitore(lato[s], "punizioni"); if (bz !== undefined) tz = bz; } P.ev.push({ m: minuto(), t: "occ", s: s, chi: tz ? tz.k : null, ass: stz[1] && stz[1] !== tz ? stz[1].k : null, esito: esitoOcc(ESITI_PORT), v: vz }); }
       }
     });
     P.ev.sort(function (a, b) { return a.m - b.m; });
@@ -3790,23 +3813,17 @@
     var passa = caso01() < ({ A: 0.15, C: 0.45, D: 0.6 }[y.ruolo] || 0.3);
     if (passa) {   // passa lui: chi tira è un compagno (o uno che nel gioco non c'è)
       var tq = marcatore(rosa, PESO_GOL, y); if (tq && fuori(tq.k)) tq = null;
-      var vp = tq && tq.ruolo === "D" ? scenaDif(true, true) : scenaPassa();
+      var vp = tq && tq.ruolo === "D" ? scenaDif(true, true, tq) : scenaPassa(tq);
       if (caso01() < golProb(tq)) P.ev.push({ m: m, t: "gol", s: s, chi: tq ? tq.k : null, ass: y.k, v: vp });
       else P.ev.push({ m: m, t: "occ", s: s, chi: tq ? tq.k : null, ass: y.k, esito: esitoOcc(porLoro ? ESITI_PORT : ESITI_OCC), v: vp });
     } else if (caso01() < golProb(y)) {   // tira lui ed è gol (come i gol di sempre: 7 volte su 10 con l'assist; mai la punizione o l'angolo diretto, li tira chi li batte)
-      var as = caso01() < 0.7 ? marcatore(rosa, PESO_ASS, y) : null; if (as && fuori(as.k)) as = null;
-      var v = scenaGol(!!as), giri = 0; while (/^(punizione|olimpico|laterale|angolo)$/.test(v) && giri++ < 20) v = scenaGol(!!as);
-      if (/^(punizione|olimpico|laterale|angolo)$/.test(v)) v = as ? "cross" : "fuori";
-      if (y.ruolo === "D") { v = scenaDif(!!as); as = tiriPiazzati(sq, v, y, as)[1]; }   // 🧱 (il difensore: le sue scene; sull'angolo passa chi lo batte)
+      var stg = scenaTiro(sq, rosa, y, fuori), v = stg[0], as = stg[1];   // 📏 (15 nov 2026) la scena come i tiri che non entrano: la stessa scelta
       var eg = { m: m, t: "gol", s: s, chi: y.k, ass: as ? as.k : null, v: v };
       if (caso01() < 0.1) eg.fin = "palo"; else if (v === "fuori" && caso01() < 0.2) eg.fin = "dev";
       varBuono(eg);
       P.ev.push(eg);
     } else {   // tira lui e non entra (come le occasioni di sempre)
-      var vo = scenaOcc(); if (vo === "punizione" && !tiroN(y, "punizioni")) vo = scenaOcc("punizione");
-      var ao = caso01() < 0.6 ? marcatore(rosa, PESO_ASS, y) : null; if (ao && fuori(ao.k)) ao = null;
-      if (vo === "laterale") { var bo = battitore(sq, "punizioni"); if (bo !== undefined) ao = bo && bo !== y ? bo : null; }
-      if (y.ruolo === "D") { var dA2 = caso01() < 0.7; vo = scenaDif(dA2); ao = dA2 ? marcatore(rosa, PESO_ASS, y) : null; if (ao && fuori(ao.k)) ao = null; ao = tiriPiazzati(sq, vo, y, ao)[1]; }   // 🧱 (il difensore: le sue scene, come i suoi gol)
+      var sto = scenaTiro(sq, rosa, y, fuori), vo = sto[0], ao = sto[1];   // 📏 (15 nov 2026) la stessa scelta del gol
       P.ev.push({ m: m, t: "occ", s: s, chi: y.k, ass: ao ? ao.k : null, esito: esitoOcc(porLoro ? ESITI_PORT : ESITI_OCC), v: vo });
     }
     P.ev.sort(function (a, b) { return a.m - b.m; }); rifaiRisultati(P);
@@ -3845,9 +3862,7 @@
     for (var vz = Math.max(0, 3 - tardi) + (caso01() < 0.5 ? 1 : 0); vz > 0 && cand.length;) {
       var cq = pescaPeso(cand, function (x) { return x.y.ruolo === "A" ? 3 : x.y.ruolo === "C" ? 2 : 1; }), mz = caso01() < 0.75 ? 75 + Math.floor(caso01() * 15) : 91 + Math.floor(caso01() * 4);
       if (cq.P.ev.some(function (e) { return e.t === "esp" && e.chi === cq.y.k && e.m <= mz; })) { cand.splice(cand.indexOf(cq), 1); continue; }   // (chi è espulso non tira più)
-      var sz = scenaOcc(); if (sz === "punizione" && !tiroN(cq.y, "punizioni")) sz = "fuori";
-      var aq = caso01() < 0.6 ? marcatore(rose[cq.s === "c" ? cq.P.c : cq.P.f] || [], PESO_ASS, cq.y) : null;
-      if (sz === "laterale") { var bq = battitore(cq.s === "c" ? cq.P.c : cq.P.f, "punizioni"); if (bq !== undefined) aq = bq && bq !== cq.y ? bq : null; }
+      var sqz = cq.s === "c" ? cq.P.c : cq.P.f, stq = scenaTiro(sqz, rose[sqz] || [], cq.y), sz = stq[0], aq = stq[1];   // 📏 (15 nov 2026) la scena come i suoi gol
       cq.P.ev.push({ m: mz, t: "occ", s: cq.s, chi: cq.y.k, ass: aq ? aq.k : null, esito: esitoOcc(ESITI_TARDI), v: sz });
       cq.P.ev.sort(function (a, b) { return a.m - b.m; }); rifaiRisultati(cq.P); vz--;
     }
@@ -3868,7 +3883,7 @@
         var sqA = e.s === "c" ? P.c : P.f, ang = tiratoriDi(sqA, "angoli"), yA = e.ass ? (rose[sqA] || []).filter(function (y) { return y.k === e.ass; })[0] : null;
         if (e.ass && ang.length && !(yA && ang.some(function (x) { return normNome(x.nome) === normNome(yA.nome); }))) { l = l.filter(function (x) { return x !== "ultimo"; }); e.noAng = 1; }   // (l'angolo lo batte chi batte gli angoli)
         l = l.filter(function (x) { return !usate[x]; }); if (!l.length) return;
-        e.v = aCaso(l); usate[e.v] = 1;
+        e.v = pescaPeso(l, function (x) { return pesoAlt(x, e.chi); }); usate[e.v] = 1;   // (📏 15 nov 2026: l'altezza di chi tira, uguale per gol e occasioni)
         if (e.perche === "fuorigioco") e.perche = aCaso(["fallo", "mano"]);   // 🚩 (15 nov 2026: le scene da finale non sono fatte per il fuorigioco: resta il VAR per un fallo o un tocco di mano)
         if (e.varOk === "fuorigioco") e.varOk = aCaso(["fallo", "mano"]);
       });
@@ -4584,11 +4599,11 @@
     pressing: "🔥 PRESSING ALTO", laterale: "🎯 PUNIZIONE DALLA FASCIA", papera: "⚡ CI PROVA DA FUORI", glt: "⚡ CI PROVA DA FUORI",
     fuga: "🏃 FUGA DA CENTROCAMPO!", rimessa: "🙌 RIMESSA LATERALE", rimessalunga: "🚀 RIMESSA LUNGA IN AREA" };
   var FRASI_GOL = {
-    fuga: ["Scappa via da centrocampo e la mette dentro!", "Fuga solitaria e gol!", "Brucia tutti in velocità!"],
+    fuga: ["Scappa via da centrocampo e la mette dentro!", "Fuga solitaria e gol!", "Se ne va da solo e non sbaglia!"],
     rimessa: ["Rimessa, palla in mezzo e gol!", "Dalla rimessa laterale al gol!", "Rimessa, cross e testa vincente!"],
     rimessalunga: ["Rimessa lunga, spizzata e gol!", "La rimessa lunga fa male!", "Dalla rimessa lunga, gol in mischia!"],
     cross: ["Di testa, su cross dalla fascia!", "Incornata perfetta sul cross!", "Cross al bacio e testa vincente!"],
-    angolo: ["Di testa su calcio d'angolo!", "Svetta più in alto di tutti!", "Stacco imperioso sull'angolo!"],
+    angolo: ["Di testa su calcio d'angolo!", "Angolo, colpo di testa e gol!", "Sul calcio d'angolo arriva lui di testa!"],
     unodue: ["Dopo un uno-due al limite!", "Triangolo perfetto e gol!", "Scambio stretto e via!"],
     contro: ["In contropiede, scarta anche il portiere!", "Contropiede micidiale!", "Ripartenza da manuale!"],
     pallonetto: ["Pallonetto delizioso sul portiere!", "Lo scavalca con un pallonetto!"],
@@ -4600,7 +4615,7 @@
     rovesciata: ["IN ROVESCIATA! Gol da cineteca!"], centrocampo: ["DA CENTROCAMPO! Incredibile!"], olimpico: ["DIRETTAMENTE DAL CALCIO D'ANGOLO!"], portiere: ["IL PORTIERE! Di testa all'ultimo respiro!"],
     rig: ["Dal dischetto, spiazza il portiere!", "Rigore perfetto!", "Freddo dal dischetto!"], cucchiaio: ["Col cucchiaio! Che coraggio!"],
     mischia: ["Batti e ribatti in area: alla fine la spinge dentro!", "Nella mischia è il più lesto di tutti!", "Un flipper in area… e la butta dentro!"],
-    testa: ["Palla lunga e stacco di testa vincente!", "Svetta più in alto di tutti e la mette dentro!", "Vince il duello aereo: gol di testa!"],
+    testa: ["Palla lunga e colpo di testa vincente!", "Palla lunga in area: di testa, gol!", "Vince il duello aereo: gol di testa!"],
     incrocio: ["Tiro a giro, dritto all'incrocio!", "Una parabola perfetta sotto l'incrocio dei pali!", "Il pallone gira e si infila all'incrocio!"],
     miracolo: ["Il portiere fa il miracolo, ma sulla ribattuta è gol!", "Prima parata strepitosa, poi la ribattuta vincente!", "Non basta il miracolo del portiere!"],
     assedio: ["Dopo una mischia infinita, la butta dentro!", "Ci provano in tutti i modi: alla fine è gol!", "L'assedio è premiato!"],
@@ -4621,6 +4636,15 @@
     papera: ["Che papera del portiere!", "Gli passa sotto: papera clamorosa!", "Il portiere se la fa passare sotto il corpo!"],
     glt: ["Botta da fuori, imprendibile!", "Un siluro da fuori area!", "Tiro da fuori, che gol!"]
   };
+  // 📏 (15 nov 2026, il proprietario: «una scritta che parla di altezza SOLO per chi è alto davvero… se esce Wesley e si legge "il gigante salta
+  // di testa", la gente si lamenta») le frasi sull'altezza solo per chi è alto da ALTO_CM in su (188 cm); a chi è più basso solo quelle normali
+  var FRASI_ALTO = {
+    angolo: ["Svetta più in alto di tutti!", "Stacco imperioso sull'angolo!", "Sovrasta tutti sul calcio d'angolo!"],
+    testa: ["Svetta più in alto di tutti e la mette dentro!", "Stacco imperioso sulla palla lunga!"],
+    cross: ["Svetta sul cross: gol di testa!"], secondopalo: ["Sovrasta il difensore sul secondo palo!"], laterale: ["Svetta sulla punizione dalla fascia!"],
+    rimessalunga: ["Sulla rimessa lunga svetta più in alto di tutti!"], ultimo: ["Svetta su tutti all'ultimo assalto!"]
+  };
+  function fraseGolDi(kind, seme, chi) { var l = FRASI_GOL[kind] || []; if (chi && FRASI_ALTO[kind] && (window.SG_FANTA_ALTEZZE || {})[chi] >= ALTO_CM) l = l.concat(FRASI_ALTO[kind]); return frase(l, seme); }
   var FRASI_OCC = { palo: ["😱 PALO!", "😱 CHE SFORTUNA, IL PALO!"], traversa: ["😱 TRAVERSA!", "😱 COLPISCE LA TRAVERSA!"], fuori: ["💨 FUORI DI POCO!", "💨 SFIORA IL PALO!"],
     alto: ["💨 ALTO SOPRA LA TRAVERSA!", "💨 TROPPO ALTO!"], parata: ["🧤 CHE PARATA!", "🧤 PARATA!", "🧤 IL PORTIERE DICE DI NO!"], linea: ["🦵 SALVATAGGIO SULLA LINEA!"] };
   var BELLEZZA = { rovesciata: 10, centrocampo: 10, olimpico: 9, portiere: 9, cucchiaio: 7, punizione: 6, fuori: 5, slalom: 5, pallonetto: 5, contro: 4, unodue: 3, cross: 3, angolo: 3, ribattuta: 2, tapin: 1, rig: 1, incrocio: 7, ultimo: 6, testa: 4, assedio: 4, miracolo: 3, mischia: 2,
@@ -4834,7 +4858,7 @@
     var vostro = x.chi.some(function (q) { return q.t === "gol"; });
     if (t === "gol" || (t === "rig" && (esito === "gol" || esito === "cucchiaio"))) {
       tit = vostro && nGol >= 4 ? "🃏 POKER!" : vostro && nGol === 3 ? "🎩 TRIPLETTA!" : vostro && nGol === 2 ? "⚽ DOPPIETTA!" : "⚽ GOL " + conArt(sqA, true).toUpperCase() + "!";
-      sotto = x.sc && x.sc.fraseGol ? x.sc.fraseGol : x.sc && x.sc.paloDentro ? "Palo e dentro!" : x.sc && x.sc.deviato ? "Deviazione decisiva di un difensore!" : frase(FRASI_GOL[kind], seme);   // (solo se si è visto davvero)
+      sotto = x.sc && x.sc.fraseGol ? x.sc.fraseGol : x.sc && x.sc.paloDentro ? "Palo e dentro!" : x.sc && x.sc.deviato ? "Deviazione decisiva di un difensore!" : fraseGolDi(kind, seme, e.chi);   // (solo se si è visto davvero)
       if (vostro && e.chi) R.belli.push({ x: x, b: (BELLEZZA[kind] || 1) + (x.sc && x.sc.paloDentro ? 1 : 0) + (nGol > 1 ? 1 : 0) });
     }
     else if (t === "rig") { tit = esito === "parata" ? "🧤 RIGORE PARATO!" : { palo: "😱 RIGORE SUL PALO!", traversa: "😱 RIGORE SULLA TRAVERSA!", alto: "❌ RIGORE ALTO!" }[esito] || "❌ RIGORE SBAGLIATO!"; sotto = x.P.c + " " + e.r[0] + "-" + e.r[1] + " " + x.P.f; }
@@ -5129,7 +5153,7 @@
       R.az.giocaPiano(sc, 4200, R, function () {}, function () {
         if (!vivoRivela(R)) return;
         if (b.dec && !q) avvisoCampo(R, 50, ["🔁 " + String(R.gr[w].r.nome).toUpperCase() + " PASSA IN TESTA", minTxt(e.m), "e resta in testa fino al fischio!"]);
-        else avvisoCampo(R, 50, [q ? "⚽ " + nomeCampo(q.c.nome) + " (" + q.c.squadra + ")" : "⚽ Che gol!", q ? "di " + q.r.nome : "", b.dec ? "🔁 " + R.gr[w].r.nome + " passa in testa e ci resta fino al fischio!" : frase(FRASI_GOL[e.v || (e.t === "rig" ? "rig" : "cross")], semeDi(x))]);
+        else avvisoCampo(R, 50, [q ? "⚽ " + nomeCampo(q.c.nome) + " (" + q.c.squadra + ")" : "⚽ Che gol!", q ? "di " + q.r.nome : "", b.dec ? "🔁 " + R.gr[w].r.nome + " passa in testa e ci resta fino al fischio!" : fraseGolDi(e.v || (e.t === "rig" ? "rig" : "cross"), semeDi(x), e.chi)]);
         if (q && !inRitardo(R)) { FX.posto(); vibra(25); }
         R.dopo(2200, function () { if (!vivoRivela(R)) return; viaAvviso(R); R.risN.forEach(function (z) { z.nodo.classList.remove("ora"); }); R.dopo(400, poi); });
       });
