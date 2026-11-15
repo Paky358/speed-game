@@ -82,6 +82,9 @@
   // gli avatar che i giochi trasformano in immagine: lì un indirizzo esterno non si carica) ----
   var DATI = {}, IN_ARRIVO = {}, VIA = {};
   function url(e) { var i = infoE(e); return i ? "carte/emoji/" + i.f + ".webp" : null; }
+  // (la stessa emoji più grande, 240 px: solo dove il gettone si vede in grande, la saletta. Le immagini stanno SOLO in queste due righe:
+  // per cambiare pacchetto di emoji si rifanno le due cartelle con gli stessi nomi)
+  function urlGrande(e) { var i = infoE(e); return i ? "carte/emoji-grandi/" + i.f + ".webp" : null; }
   function prepara(e) {
     var i = infoE(e); if (!i || DATI[i.e] || IN_ARRIVO[i.e] || VIA[i.e] || !window.fetch || !window.FileReader) return;
     IN_ARRIVO[i.e] = 1;
@@ -132,6 +135,56 @@
       "<circle cx='50' cy='" + (cy - 10 * K).toFixed(1) + "' r='" + (30 * K).toFixed(1) + "' fill='#ffffff' opacity='.07'/>" +
       dentro + "</svg>";
   }
+  // ---- 🏛️ il gettone sul palco della saletta (15 nov 2026, chat «🪟 Saletta di vetro»; scelto dal proprietario: «C · Piedistallo»)
+  // un gettone di vetro (disco scuro con la luce dall'alto, riflesso curvo in cima, bordo sottile del suo colore) che galleggia sopra
+  // una pedana luminosa del suo colore, con un fascio di luce. Tre strati HTML (pedana, disco, segno di «pronto») così i movimenti
+  // (galleggia, rimbalzo, saltello) sono solo transform del disco e la pedana resta ferma. È solo una cornice: dentro va l'immagine
+  // dell'emoji, quella GRANDE (carte/emoji-grandi/, 240 px: nella saletta il gettone è grande e quella piccola si vedeva sgranata).
+  // Sotto c'è quella piccola, se è già arrivata: si vede subito e anche senza rete. Il «pronto» è già disegnato: lo accende il CSS.
+  function gradi(col) { return String(col).replace(/[^0-9a-f]/gi, ""); }
+  function palco(cfg) {
+    var g = daQualsiasi(cfg), col = colore(g), id = "gtp" + gradi(col), info = infoE(g.e), d = info ? DATI[info.e] : null;
+    if (info && !d) prepara(info.e);
+    var img = (d ? "<image href='" + d + "' x='21' y='21' width='58' height='58'/>" : "") +
+      (info ? "<image href='" + urlGrande(info.e) + "' x='21' y='21' width='58' height='58'/>" : "<text x='50' y='51' text-anchor='middle' dominant-baseline='central' font-size='46'>" + esc(g.e) + "</text>");
+    return "<div class='gtp' style='--gt:" + col + "' data-gt='" + esc(info ? info.e : g.e) + "'>" +
+      // la pedana: il fascio di luce che sale, il fianco, il piano luminoso e l'ombra del gettone sul piano
+      "<svg class='gtp-pedana' viewBox='0 0 100 128' preserveAspectRatio='none' aria-hidden='true'><defs>" +
+      "<linearGradient id='" + id + "s' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='" + col + "' stop-opacity='.55'/><stop offset='1' stop-color='#0b0e1d' stop-opacity='.9'/></linearGradient>" +
+      "<radialGradient id='" + id + "a' cx='50%' cy='50%' r='50%'><stop offset='0' stop-color='#fff' stop-opacity='.9'/><stop offset='.35' stop-color='" + col + "' stop-opacity='.9'/><stop offset='1' stop-color='" + col + "' stop-opacity='.25'/></radialGradient>" +
+      "<linearGradient id='" + id + "b' x1='0' y1='1' x2='0' y2='0'><stop offset='0' stop-color='" + col + "' stop-opacity='.32'/><stop offset='1' stop-color='" + col + "' stop-opacity='0'/></linearGradient>" +
+      "<radialGradient id='" + id + "o' cx='50%' cy='50%' r='50%'><stop offset='0' stop-color='#000' stop-opacity='.55'/><stop offset='1' stop-color='#000' stop-opacity='0'/></radialGradient></defs>" +
+      "<path class='gtp-fascio' d='M14 104 L28 30 L72 30 L86 104 Z' fill='url(#" + id + "b)'/>" +
+      "<path d='M10 104 L10 115 A40 9 0 0 0 90 115 L90 104 Z' fill='url(#" + id + "s)'/>" +
+      "<ellipse cx='50' cy='104' rx='40' ry='9' fill='url(#" + id + "a)'/>" +
+      "<ellipse class='gtp-ombra' cx='50' cy='103.5' rx='22' ry='4' fill='url(#" + id + "o)'/></svg>" +
+      // il disco di vetro (galleggia: .gtp-galla; i gesti muovono .gtp-disco)
+      "<div class='gtp-galla'><div class='gtp-disco'><svg viewBox='0 0 100 100' aria-hidden='true'><defs>" +
+      "<radialGradient id='" + id + "l' cx='50%' cy='50%' r='50%'><stop offset='.82' stop-color='" + col + "' stop-opacity='.38'/><stop offset='1' stop-color='" + col + "' stop-opacity='0'/></radialGradient>" +
+      "<radialGradient id='gtpf' cx='50%' cy='28%' r='78%'><stop offset='0' stop-color='#323b6e'/><stop offset='.55' stop-color='#171c38'/><stop offset='1' stop-color='#0a0d1c'/></radialGradient>" +
+      "<radialGradient id='" + id + "t' cx='50%' cy='100%' r='62%'><stop offset='0' stop-color='" + col + "' stop-opacity='.42'/><stop offset='1' stop-color='" + col + "' stop-opacity='0'/></radialGradient>" +
+      "<linearGradient id='gtpr' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#fff' stop-opacity='.42'/><stop offset='1' stop-color='#fff' stop-opacity='0'/></linearGradient></defs>" +
+      "<circle cx='50' cy='50' r='50' fill='url(#" + id + "l)'/>" +
+      "<circle cx='50' cy='50' r='43' fill='url(#gtpf)'/>" +
+      "<circle cx='50' cy='50' r='43' fill='url(#" + id + "t)'/>" + img +
+      "<path d='M15.5 40 C19 22 33 11.5 50 11.5 C67 11.5 81 22 84.5 40 C75 31 63 27.5 50 27.5 C37 27.5 25 31 15.5 40 Z' fill='url(#gtpr)'/>" +
+      "<circle cx='50' cy='50' r='43' fill='none' stroke='" + col + "' stroke-width='2.6'/>" +
+      "<circle cx='50' cy='50' r='41.2' fill='none' stroke='#fff' stroke-opacity='.13' stroke-width='.8'/>" +
+      "<path d='M24 80 A36 36 0 0 0 76 80' fill='none' stroke='#fff' stroke-opacity='.18' stroke-width='1.2' stroke-linecap='round'/>" +
+      // ✓ pronto: una lineetta verde dentro il suo colore e il bollino verde in basso a destra (lo accende il CSS)
+      "<g class='gtp-pronto'><circle cx='50' cy='50' r='39.6' fill='none' stroke='#34d17a' stroke-width='2.2'/>" +
+      "<circle cx='81' cy='80' r='11' fill='#0d1020'/><circle cx='81' cy='80' r='9' fill='#2fc46b'/>" +
+      "<path d='M76.6 80.3 l3.1 3.1 l5.8 -6.4' fill='none' stroke='#fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></g>" +
+      "</svg></div></div></div>";
+  }
+  // il posto libero: un cerchio tratteggiato col «+» (toccandolo si invita)
+  function palcoVuoto() {
+    return "<div class='gtp gtp-libero'><svg class='gtp-pedana' viewBox='0 0 100 128' preserveAspectRatio='none' aria-hidden='true'>" +
+      "<path d='M10 104 L10 115 A40 9 0 0 0 90 115 L90 104' fill='rgba(255,255,255,.025)' stroke='#fff' stroke-opacity='.16' stroke-width='1.2' stroke-dasharray='5 4'/>" +
+      "<ellipse cx='50' cy='104' rx='40' ry='9' fill='rgba(255,255,255,.04)' stroke='#fff' stroke-opacity='.3' stroke-width='1.4' stroke-dasharray='5 4'/></svg><div class='gtp-galla'><div class='gtp-disco'><svg viewBox='0 0 100 100' aria-hidden='true'>" +
+      "<circle cx='50' cy='50' r='42' fill='rgba(255,255,255,.03)' stroke='#fff' stroke-opacity='.3' stroke-width='1.6' stroke-dasharray='6 5.2'/>" +
+      "<path d='M50 39 V61 M39 50 H61' stroke='#fff' stroke-opacity='.5' stroke-width='3' stroke-linecap='round'/></svg></div></div></div>";
+  }
   function esc(s) { return String(s).replace(/[&<>'"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[c]; }); }
 
   // ---- i colori di una stanza: chi entra prima tiene il suo 1°; poi il suo 2°, poi il primo libero ----
@@ -172,6 +225,6 @@
     COLORI: COLORI, colore: colore, chiaveColore: chiaveColore, coloreDi: function (k) { return PER_K[k] ? PER_K[k].c : GRIGIO; }, nomeColore: function (k) { return PER_K[k] ? PER_K[k].n : ""; },
     lista: lista, info: infoE, url: url, codice: codice, emojiOk: emojiOk, prepara: prepara, preparaTutte: preparaTutte, preparaGente: preparaGente,
     eGettone: eGettone, norm: norm, riserva: riserva, daQualsiasi: daQualsiasi,
-    svg: svg, nuovaMappa: nuovaMappa, assegna: assegna, accendi: accendi, acceso: function () { return acceso; }
+    svg: svg, palco: palco, palcoVuoto: palcoVuoto, urlGrande: urlGrande, nuovaMappa: nuovaMappa, assegna: assegna, accendi: accendi, acceso: function () { return acceso; }
   };
 })();
