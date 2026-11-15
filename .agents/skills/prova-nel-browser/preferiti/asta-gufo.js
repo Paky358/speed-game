@@ -210,6 +210,8 @@
     if (!await W.aspetta(function () { if (q(P, ".st-stadio .sa-pers")) return true; var b = qa(P, ".schermata .piede button, .btn").filter(function (x) { return /Avanti|Comincia|Gioca|Inizia|Via|▶/.test(x.textContent) && !x.disabled && visibile(x); })[0]; if (b) b.click(); return false; }, 12000)) no("non arrivo allo stadio");
     var fino = Date.now() + 200000;
     while (Date.now() < fino && !q(P, ".st-rivela")) {
+      var bFs = qa(P, "button").filter(function (b) { return /Fine scambi/.test(b.textContent) && visibile(b); })[0];   // (15 nov 2026: dopo l'asta ci sono gli «🔄 Scambi a fine asta»: si va avanti)
+      if (bFs) { bFs.click(); P.__scambiati = true; await W.dorme(500); continue; }
       var pz = q(P, ".sa-prezzo b, .st-prezzo b");
       if (q(P, ".st-stadio .sa-pers") && !q(P, ".sa-aggiudicato") && pz) {
         var cp = qa(P, ".sa-pers.guida")[0];
@@ -219,7 +221,7 @@
       await W.dorme(250);
     }
     if (!q(P, ".st-rivela")) no("il fanta non arriva alla classifica delle rose");
-    W.clicca(P, /Salta/);   // (le rose: dritti alla giornata)
+    if (!P.__scambiati) W.clicca(P, /Salta/);   // (dopo gli scambi la giornata parte subito: «Salta» la salterebbe tutta)   // (le rose: dritti alla giornata)
     if (!await W.aspetta(function () { return visti.length >= 2; }, 90000)) no("il rigore e la punizione non arrivano (" + visti.length + ")");
     var err = W.erroriTel(); if (err.length) sbagli.push("errori: " + err.slice(0, 3).join(" | "));
     if (sbagli.length) no(sbagli.join(" / "));

@@ -1,7 +1,7 @@
 // PROVE «OGNI SCRITTA HA PIÙ DI UN ESITO» NELLA GIORNATA DELLA MINI ASTA (14 nov 2026, il proprietario: «se un'azione con una scritta ha
 // come risultato sempre la stessa cosa, vuol dire che è uno spoiler»).
 // Uso (dopo copione-prova.js): await COPIONE.carica("preferiti/asta-esiti.js"); await COPIONE.prova("es1")
-// Con Edge invisibile: prova.js --porta 8991 --carica preferiti/asta-esiti.js --prova es1,es2,es3
+// Con Edge invisibile: prova.js --porta 8991 --carica preferiti/asta-esiti.js --prova es1,es2,fg1,es3
 //
 // es1 Senza telefoni, 400 giornate in 4 e 150 in 2 con le 3 giornate: ogni scritta che si vede finisce in almeno due modi, e ognuno almeno
 //     1 volta su 5: «📺 IL VAR CONTROLLA…» dopo un gol (annullato / convalidato), «📺 IL VAR RICHIAMA L'ARBITRO…» (rigore / niente rigore),
@@ -11,6 +11,10 @@
 // es2 Le scene, 200 semi: fallo tattico, proteste, si butta e nervi tesi col cartellino e senza (e col rosso) identici fino al cartellino
 //     (giocatori, arbitro, pallone, telecamera, tempo dell'esito); l'ultimo uomo col giallo e col rosso identici; la ribattuta col gol e
 //     parata identiche fino al tiro; il rigore parato con la ribattuta che entra e con quella parata IDENTICO dall'inizio alla fine.
+// fg1 Senza telefoni (15 nov 2026, il proprietario: «come si fa ad annullare una punizione per fuorigioco?»): su 300 giornate il fuorigioco solo su
+//     palla filtrante e lancio in profondità, mai il VAR dopo il gol su punizioni, angoli diretti, ribattute e tiri da centrocampo; la bandierina
+//     finisce annullato o convalidato; due guardalinee in ogni scena (fuori dalle linee laterali, uno per metà campo); la bandierina solo dopo il gol
+//     e fino al gol il guardalinee uguale col fuorigioco e senza; quando parte il passaggio l'attaccante è in linea col penultimo difendente.
 // es3 Online in 2 (Paky tiene la partita, Giulia): nei primi 20 minuti solo i momenti messi apposta (aggancio SG_PROVA_SERIEA): un gol di
 //     Paky che passa dal VAR e viene convalidato, un rigore di Giulia che il VAR non dà, un fallo tattico senza cartellino di Paky, un
 //     fallo da ultimo uomo di Giulia col giallo, un giallo a Paky e poi «era già ammonito» che si salva, un rigore di Giulia parato con la
@@ -52,7 +56,7 @@
     if (!await W.aspetta(function () { return w.SG_FANTA_CALCIATORI && w.SG_FANTA_SQUADRE && w.SG_FANTA_STATISTICHE && w.SG_FANTA_RUOLI; }, 20000)) no("i dati del fanta (con i ruoli) non arrivano");
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), F = {}, ag = "  function costruisciMazzoFanta(n) {";
     if (src.indexOf(ag) < 0) no("non trovo il mazzo del fanta nel file del gioco");
-    src = src.replace(ag, "FUORI.cl = classificaFanta; FUORI.lista = listaMomenti; FUORI.taglio = taglioGiornata; FUORI.veloce = sceltaVeloce; FUORI.scena = scena;" + ag);
+    src = src.replace(ag, "FUORI.cl = classificaFanta; FUORI.lista = listaMomenti; FUORI.taglio = taglioGiornata; FUORI.veloce = sceltaVeloce; FUORI.scena = scena; FUORI.campo = campoAzioni; FUORI.kit = kitDi; FUORI.kitP = kitPortiere;" + ag);
     new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, F);
     F.w = w; return F;
   }
@@ -180,13 +184,14 @@
         ev.s = Pq.c === c.squadra ? "c" : "f"; ev.chi = h.chiave(c); if (usati.indexOf(ev.chi) < 0) usati.push(ev.chi);
         Pq.ev.push(ev); Pq.ev.sort(function (a, b) { return a.m - b.m; }); h.rifai(Pq); messi.push(ev.prova + " " + nome + " " + c.nome); return c;
       }
-      metti("Paky", { m: 2, t: "gol", ass: null, v: "cross", varOk: "fuorigioco", prova: "V1" });
+      metti("Paky", { m: 2, t: "gol", ass: null, v: "filtrante", varOk: "fuorigioco", prova: "V1" });
       metti("Giulia", { m: 4, t: "rigN", come: "var", prova: "V2" });
       metti("Paky", { m: 6, t: "rec", come: "tattico", nv: 1, prova: "V3" });
       metti("Giulia", { m: 8, t: "amm", come: "ultimo", prova: "V4" });
       var c5 = metti("Paky", { m: 10, t: "amm", come: "entrata", prova: "V5a" });
       if (c5) metti("Paky", { m: 12, t: "rec", come: "entrata", dg: 1, nv: 1, prova: "V5b" }, c5);
       metti("Giulia", { m: 15, t: "rigP", come: "fallo", rib: 1, ribChi: null, prova: "V6" });
+      metti("Paky", { m: 17, t: "ann", ass: null, v: "pallonetto", perche: "fuorigioco", prova: "V7" });   // (🚩 15 nov 2026: il fuorigioco annullato, su un lancio in profondità)
     };
     await astaVeloce(P, C);
     await W.aspetta(function () { return W.clicca(P, /Salta/); }, 30000);   // (le rose: dritti alla giornata; Salta lo tocca chi tiene la partita)
@@ -197,7 +202,7 @@
     while (Date.now() < fino) {
       var m = q(P, ".st-msg"), tv = q(P, ".st-tv"), tx = (m && m.classList.contains("on") ? m.textContent : "") + (tv && tv.classList.contains("on") ? " [TV] " + tv.textContent : "");
       if (tx && tx !== ultima) { ultima = tx; scritte.push({ t: tx, p: punti(), ora: Date.now() }); }
-      if (!fineAt && /PARA ANCHE LA RIBATTUTA/.test(tx)) fineAt = Date.now() + 2500;
+      if (!fineAt && /GOL ANNULLATO/.test(tx)) fineAt = Date.now() + 2500;
       if (fineAt && Date.now() > fineAt) break;
       await W.dorme(60);
     }
@@ -207,7 +212,7 @@
     }
     var x;
     // V1 il gol che passa dal VAR: «ma l'arbitro si tocca l'orecchio», il VAR, «convalidato», poi i punti
-    x = dopo(/si tocca l'orecchio/, /IL VAR CONTROLLA/); if (x[1] < 0) sbagli.push("V1: dopo il gol niente «📺 IL VAR CONTROLLA»");
+    x = dopo(/bandierina/, /IL VAR CONTROLLA/); if (x[1] >= 0 && !/linee del fuorigioco/.test(scritte[x[1]].t)) sbagli.push("V1: il VAR non dice che traccia le linee"); if (x[1] < 0) sbagli.push("V1: dopo il gol niente «📺 IL VAR CONTROLLA»");
     else {
       var y = dopo(/IL VAR CONTROLLA/, /GOL CONVALIDATO/, 2);
       if (y[1] < 0) sbagli.push("V1: dopo il VAR non arriva «✅ GOL CONVALIDATO» (" + (scritte[y[0] + 1] || {}).t + ")");
@@ -217,7 +222,7 @@
         if (!(pMax - p0 >= 2.5)) sbagli.push("V1: dopo «convalidato» i punti del gol non arrivano (" + p0 + " → " + pMax + ")");
       }
     }
-    if (scritte.some(function (s) { return /GOL ANNULLATO/.test(s.t); })) sbagli.push("V1: c'è un gol annullato che non avevo messo");
+    if (scritte.filter(function (s) { return /GOL ANNULLATO/.test(s.t); }).length > 2) sbagli.push("c'è più di un gol annullato");
     // V2 il rigore che il VAR non dà
     x = dopo(/RICHIAMA L'ARBITRO/, /NIENTE RIGORE/, 3); if (x[1] < 0) sbagli.push("V2: dopo «📺 IL VAR RICHIAMA» niente «❌ NIENTE RIGORE» (" + (x[0] >= 0 ? (scritte[x[0] + 1] || {}).t : "il VAR non c'è") + ")");
     else if (JSON.stringify(scritte[x[0]].p) !== JSON.stringify(scritte[x[1]].p)) sbagli.push("V2: col rigore negato i punti cambiano");
@@ -233,9 +238,85 @@
     x = dopo(/RIGORE PARATO/, /RIBATTUTA!/, 3); if (x[1] < 0) sbagli.push("V6: dopo «🧤 RIGORE PARATO» non arriva «😱 RIBATTUTA!»");
     else { var z = dopo(/😱 RIBATTUTA!/, /PARA ANCHE LA RIBATTUTA/, 3); if (z[1] < 0) sbagli.push("V6: la ribattuta non finisce con «🧤 PARA ANCHE LA RIBATTUTA»"); }
     if (scritte.some(function (s) { return /PARA IL RIGORE E ANCHE/.test(s.t); })) sbagli.push("V6: c'è ancora la scritta vecchia dentro il rigore");
+    // V7 il fuorigioco annullato: bandierina, VAR con le linee, «annullato per fuorigioco», nessun punto
+    var i7 = -1; scritte.forEach(function (s, i) { if (/bandierina/.test(s.t)) i7 = i; });
+    if (i7 < 0 || i7 === x[0]) sbagli.push("V7: nel gol in fuorigioco non c'è la bandierina");
+    else {
+      var j7 = -1; for (var k7 = i7 + 1; k7 < Math.min(scritte.length, i7 + 6); k7++) if (/GOL ANNULLATO/.test(scritte[k7].t)) { j7 = k7; break; }
+      if (j7 < 0) sbagli.push("V7: dopo la bandierina non arriva «❌ GOL ANNULLATO»");
+      else {
+        if (!/per fuorigioco/.test(scritte[j7].t)) sbagli.push("V7: annullato ma non «per fuorigioco»");
+        var dopo7 = scritte.slice(j7).filter(function (s) { return s.ora - scritte[j7].ora < 2000; }).map(function (s) { return s.p.Paky; });
+        if (dopo7.some(function (v) { return v !== scritte[i7].p.Paky; })) sbagli.push("V7: col gol annullato i punti di Paky cambiano");
+      }
+    }
     var err = W.erroriTel(); if (err.length) sbagli.push("errori: " + err.slice(0, 3).join(" | "));
     var riass = scritte.map(function (s) { return s.t.replace(/\s+/g, " ").slice(0, 60); }).join(" ⟶ ");
     if (sbagli.length) no(sbagli.join(" / ") + " — messi: " + messi.join(", ") + " — visti: " + riass);
     return "messi: " + messi.join(", ") + " — visti: " + riass;
+  } });
+
+  COPIONE.aggiungi("fg1", { nome: "Mini Asta, il fuorigioco: solo su palla filtrante e lancio in profondità, mai su punizioni, angoli diretti, ribattute; i guardalinee in ogni scena e la bandierina solo dopo il gol", fai: async function () {
+    var F = await motore(), w = F.w, ko = [], fg = { ann: 0, ok: 0 }, doveFg = {}, n = 0;
+    for (var i = 0; i < 300; i++) {
+      var g = rose(w, 4), SA = {}; F.cl(g, SA, 1, null);
+      SA.partite.forEach(function (P) { P.ev.forEach(function (e) {
+        var fgE = (e.t === "ann" && e.perche === "fuorigioco") || (e.t === "gol" && e.varOk === "fuorigioco"), vE = e.t === "ann" || (e.t === "gol" && e.varOk);
+        if (fgE) { n++; fg[e.t === "ann" ? "ann" : "ok"]++; doveFg[e.v] = (doveFg[e.v] || 0) + 1; if (e.v !== "filtrante" && e.v !== "pallonetto" && e.v !== "fuga") ko.push("fuorigioco su «" + e.v + "»"); }
+        if (vE && /^(punizione|olimpico|portiere|ribattuta|centrocampo)$/.test(e.v || "")) ko.push("VAR dopo il gol su «" + e.v + "»");
+      }); });
+    }
+    if (!n) ko.push("il fuorigioco non c'è mai");
+    else if (fg.ann / n < 0.2 || fg.ok / n < 0.2) ko.push("la bandierina finisce quasi sempre allo stesso modo: " + JSON.stringify(fg));
+    // le scene: due guardalinee sempre, sulle linee laterali (uno per metà campo)
+    var et = { tira: "Tira", passa: "Passa", para: "Para", fallo: "Fallo" }, prove = [["gol", "cross", "gol"], ["occ", "filtrante", "parata"], ["ann", "pallonetto", "gol"], ["rig", null, "gol"], ["aut", "cross", "gol"], ["amm", null, null], ["rec", null, null], ["esp", null, null]];
+    prove.forEach(function (pv) { for (var seme = 1; seme <= 40; seme++) {
+      var sc = F.scena(pv[0], pv[1], pv[2], null, et, { verso: 1, lato: seme % 2 ? 1 : -1, seme: seme * 7919, come: "entrata" }), gl = sc.attori.filter(function (a) { return a.sq === "gl"; });
+      if (gl.length !== 2) { ko.push(pv[0] + ": " + gl.length + " guardalinee"); return; }
+      var x0 = gl[0].pts[0][1], y0 = gl[1].pts[0][2];
+      if (Math.abs(x0 - 0.5) < 0.5 || Math.abs(gl[1].pts[0][1] - 0.5) < 0.5) ko.push(pv[0] + ": un guardalinee dentro il campo");
+      if (y0 >= 0) ko.push(pv[0] + ": il secondo guardalinee non è nell'altra metà campo");
+      if (gl.some(function (a) { return a.pose.some(function (q) { return q[1].bandiera; }); })) ko.push(pv[0] + ": la bandierina senza fuorigioco");
+    } });
+    // la bandierina: solo dopo il gol, e fino al gol il guardalinee fa le stesse cose col fuorigioco e senza
+    // 📏 (15 nov 2026, il proprietario: «sono tutti compresi nel fuorigioco, non solo chi marca») quando parte il passaggio TUTTI i difensori (anche quelli
+    // di contorno, disegnati dal campo) sono sulla linea o più avanti; l'attaccante è nella metà campo avversaria e davanti al pallone (mai un passaggio all'indietro)
+    var box = w.document.createElement("div"); box.style.cssText = "position:fixed;left:0;top:0;width:360px;height:520px;"; w.document.body.appendChild(box);
+    var Ac = null; try { Ac = F.campo(w.SGCuore.el, box); if (Ac.misura) Ac.misura(); } catch (e) { ko.push("il campo per la prova non parte: " + e.message); }
+    var contorno = 0;
+    for (var s3 = 1; s3 <= 60; s3++) ["filtrante", "pallonetto", "fuga"].forEach(function (v) {
+      ["gol", "parata", "fuori"].forEach(function (es) {
+        var sc = F.scena(es === "gol" ? "gol" : "occ", v, es, null, et, { verso: s3 % 2 ? 1 : -1, lato: s3 % 3 ? 1 : -1, seme: s3 * 7919, lento: true }), tv = sc.varT, lin = sc.lineaFG;
+        if (tv == null || lin == null) { ko.push(v + ": manca la linea"); return; }
+        var at = sc.attori.filter(function (q) { return q.chi === "Tira"; })[0], ya = at ? dove(at.pts, tv, 3)[1] : null, yb = dove(sc.palla, tv, 4)[1];
+        if (!(lin > 0)) ko.push(v + ": la linea nella propria metà campo");
+        if (ya == null || Math.abs(ya - lin) > 0.002) ko.push(v + ": l'attaccante non è in linea quando parte il passaggio");
+        if (!(yb < ya)) ko.push(v + ": il passaggio non va in avanti (il pallone è più avanti dell'attaccante)");
+        sc.attori.forEach(function (q) { if (q.sq === "D") { var y = dove(q.pts, tv, 3)[1]; if (y > lin + 0.002) ko.push(v + " seme " + s3 + ": un difensore dietro la linea (" + y.toFixed(3) + " > " + lin + ")"); } });
+        if (!at || !at.pts.some(function (q) { return Math.abs(q[0] - tv) < 1e-9; })) ko.push(v + ": l'attaccante non ha un punto proprio quando parte il passaggio (sulla curva può finire dietro la linea)");
+        sc.attori.forEach(function (q) { if (q.sq === "D" && !q.pts.some(function (z) { return Math.abs(z[0] - tv) < 1e-9; })) ko.push(v + ": un difensore senza un punto proprio quando parte il passaggio"); });
+        if (Ac && Ac.fermo) {
+          sc.kA = F.kit("Inter", false); sc.kD = F.kit("Milan", false); sc.pA = F.kitP(sc.kA, sc.kD); sc.pD = F.kitP(sc.kA, sc.kD, sc.pA.a);
+          Ac.fermo(sc); var fX = 0.5 + yb * 0.496;
+          (sc.folla || []).forEach(function (o) { if (o.sq !== "D") return; contorno++; var y = (o.x + (fX - o.x) * (sc.segui || 0.14) - 0.5) / 0.496; if (y > lin + 0.002) ko.push(v + " seme " + s3 + ": un difensore di contorno dietro la linea (" + y.toFixed(3) + " > " + lin + ")"); });
+        }
+      });
+    });
+    if (box.parentNode) box.parentNode.removeChild(box);
+    if (Ac && !contorno) ko.push("i difensori di contorno non si vedono");
+    for (var s2 = 1; s2 <= 100; s2++) ["filtrante", "pallonetto", "fuga"].forEach(function (v) {
+      var op = { verso: 1, lato: s2 % 2 ? 1 : -1, seme: s2 * 7919, lento: true }, a = F.scena("gol", v, "gol", null, et, op), b = F.scena("ann", v, "gol", null, et, Object.assign({ bandiera: true, fgOltre: true }, op));
+      var ga = a.attori.filter(function (q) { return q.sq === "gl"; })[0], gb = b.attori.filter(function (q) { return q.sq === "gl"; })[0];
+      var tb = gb.pose.filter(function (q) { return q[1].bandiera; })[0];
+      if (!tb) { ko.push(v + ": nel fuorigioco niente bandierina"); return; }
+      if (tb[0] < b.rete) ko.push(v + ": la bandierina prima del gol");
+      for (var t = 0; t <= b.rete; t += 0.01) { var pa = dove(ga.pts, t, 3), pb = dove(gb.pts, t, 3); if (diversi(pa, pb)) { ko.push(v + " seme " + s2 + ": il guardalinee si muove diverso già a " + t.toFixed(2)); break; } }
+      if (b.varT == null) ko.push(v + ": manca l'istante del passaggio per il VAR");
+      else { var at = b.attori.filter(function (q) { return q.chi === "Tira"; })[0], yA = at ? dove(at.pts, b.varT, 3)[1] : null, yD = null;
+        b.attori.forEach(function (q) { if (q.sq !== "D") return; var y = dove(q.pts, b.varT, 3)[1]; if (y <= 0.88 && (yD == null || y > yD)) yD = y; });
+        if (yA == null || Math.abs(yA - yD) > 0.002) ko.push(v + ": quando parte il passaggio l'attaccante non è in linea (" + yA + " / " + yD + ")"); }
+    });
+    if (ko.length) no(ko.length + " problemi: " + ko.slice(0, 6).join(" · "));
+    return n + " fuorigioco in 300 giornate, tutti su " + JSON.stringify(doveFg) + " (annullati " + fg.ann + ", convalidati " + fg.ok + "); guardalinee in ogni scena; bandierina solo dopo il gol; quando parte il passaggio tutta la difesa (" + contorno + " difensori di contorno controllati) in linea o più avanti";
   } });
 })();

@@ -79,7 +79,7 @@
     var sovra = 0; campi.forEach(function (c) { var pp = [].map.call(c.querySelectorAll(".mc-p"), function (b) { return b.getBoundingClientRect(); }); pp.forEach(function (a, i) { pp.slice(i + 1).forEach(function (b) { if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) sovra++; }); }); });
     if (sovra) return sovra + " targhette una sopra l'altra";
     var f = parseFloat(w.getComputedStyle(q(w, ".mc-p")).fontSize); if (f < 10.45) return "scritte più piccole di quelle del duce (" + f + " px)";   // (il proprietario: «più piccolo di così non ci può stare»)
-    if (r0.height < 103.5) return "rose più basse di quella del duce (" + Math.round(r0.height) + " px)";
+    if (r0.height < 5 * 10.45 / 0.6 - 1) return "rose più basse del minimo (" + Math.round(r0.height) + " px)";   // (15 nov 2026: senza il campo conta la scritta; 5 file alte almeno 1,7 volte la scritta più piccola)
     return null;
   }
   async function telefoni(nomi, imp) {
@@ -160,7 +160,7 @@
     if (!await W.aspetta(function () { var a = q(L, ".sc-annuncio"); return a && /Paky dà/.test(a.textContent); }, 4000)) no("Luca non vede l'annuncio dello scambio");
     x.push("Rifiuta, poi Accetta: «" + q(L, ".sc-annuncio").textContent.replace("🔄 SCAMBIO FATTO", "") + "»");
     await W.dorme(1000);
-    W.clicca(P, /⏹ Fine/); await W.dorme(400); W.clicca(P, /⏹ Chiudi/);
+    W.clicca(P, /Inizia la giornata|Si gioca!/); await W.dorme(400); W.clicca(P, /Iniziamo/);
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 8000)) no("«⏹ Fine» non porta alla classifica");
     var rp = (vm(C).classifica || []).filter(function (r) { return r.nome === "Paky"; })[0];
     if (!rp || !rp.kit.some(function (k) { return k.nome + "|" + k.squadra === kGA; })) no("la classifica non usa la rosa nuova di Paky");
@@ -183,12 +183,12 @@
     var s1 = vm(C).scambi; if (!s1 || s1.resta < 25000 || (s1.prop || []).length !== 1) no("dopo la ricarica il mercato non riprende come prima (" + JSON.stringify(s1 && { resta: s1.resta, prop: (s1.prop || []).length }) + ")");
     if (!q(G, ".mc-pop")) no("dopo la ricarica di Paky il pop-up di Giulia sparisce");
     x.push("Paky ricarica: proposta e tempo (" + Math.round(s1.resta / 1000) + " s) ripresi");
-    var r0 = s1.resta; W.clicca(P, /＋1'/);
+    var r0 = s1.resta; W.clicca(P, /Prolunga|1 minuto/);
     if (!await W.aspetta(function () { var s = vm(C).scambi; return s && s.resta > r0 + 40000; }, 5000)) no("«＋1'» non allunga il mercato");
     x.push("«＋1'» allunga");
     W.clicca(G, /Accetta/);
     if (!await W.aspetta(function () { return !(vm(C).scambi.prop || []).length; }, 5000)) no("Giulia accetta ma la proposta resta");
-    W.clicca(P, /⏹ Fine/); await W.dorme(400); W.clicca(P, /⏹ Chiudi/);
+    W.clicca(P, /Inizia la giornata|Si gioca!/); await W.dorme(400); W.clicca(P, /Iniziamo/);
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 8000)) no("il mercato non finisce");
     var gio = ((vm(C).serieA || {}).partite || []).map(function (p) { return [p.c, p.f].sort().join("-"); }).sort().join(","), merc = mercato.map(function (p) { return p.slice().sort().join("-"); }).sort().join(",");
     if (gio !== merc) no("le partite del mercato non sono quelle della giornata");
@@ -201,7 +201,7 @@
     await asta(P, C);
     var G = W.finestra("Giulia"), L = W.finestra("Luca");
     if (!await W.aspetta(function () { return q(P, ".mc-mia .mc-p"); }, 8000)) no("il mercato non arriva");
-    W.clicca(P, /⏹ Fine/); await W.dorme(400); W.clicca(P, /⏹ Chiudi/);
+    W.clicca(P, /Inizia la giornata|Si gioca!/); await W.dorme(400); W.clicca(P, /Iniziamo/);
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 8000)) no("il mercato non finisce");
     var t0 = performance.now(), visto = false;
     var ok = await W.aspetta(function () { [P, G, L].forEach(function (w) { var n = q(w, ".st-campo-nome"); if (n && /La rosa di/.test(n.textContent) && n.getClientRects().length && n.offsetParent && q(w, ".st-rivela") && !q(w, ".st-rivela").classList.contains("gio")) { var c = q(w, ".st-campo"); if (c && c.getClientRects().length && getComputedStyle(c).display !== "none" && c.offsetHeight > 50) visto = true; } }); return [P, G, L].every(function (w) { return q(w, ".st-gio-riga"); }); }, 8000);

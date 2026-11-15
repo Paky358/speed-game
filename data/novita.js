@@ -9,6 +9,25 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 348,
+    data: "15 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: fuorigioco vero, guardalinee e rimesse 🚩",
+    descrizione: [
+      "🚩 Il fuorigioco c'è solo dove ha senso: palla filtrante, lancio in profondità e la nuova fuga da centrocampo. Mai su punizioni, angoli, rimesse o ribattute.",
+      "📏 Quando parte il passaggio tutta la difesa sale in linea e l'attaccante è lì con lei: se era oltre lo dice solo il VAR, col fermo immagine e le due linee (azzurra il difensore, rossa l'attaccante).",
+      "🚩 Ci sono i guardalinee: dopo un gol in fuorigioco alzano la bandierina e l'arbitro fischia; poi il VAR annulla o convalida.",
+      "🏃 La fuga da centrocampo: la difesa è alta, l'attaccante scappa da solo coi difensori alle spalle.",
+      "🙌 Le rimesse laterali: corte vicino all'area o lunghe in mezzo all'area, con chi batte che lancia con due mani sopra la testa.",
+      "👨‍⚖️ L'arbitro segue l'azione anche dove prima non c'era.",
+      "🎬 Nel replay del gol della giornata non c'è più la fascia di rete in fondo allo schermo; il nome del portiere sta sopra la testa.",
+      "🃏 Nei quadretti i bonus partono subito dopo i punti e si vedono tutti, anche se sono tanti (quelli uguali si sovrappongono a ventaglio); niente più 👏 per l'intervento pulito.",
+      "📋 Le pagelle del primo tempo usano tutto lo schermo: in 4 stanno in una pagina sola.",
+      "🔄 Negli scambi niente più campo: ogni squadra è un rettangolo col colore di chi la possiede, coi calciatori in fila per ruolo e la quotazione; ci stanno tutte in una schermata anche in 8.",
+      "🔄 Negli scambi i tasti di chi tiene la partita si capiscono: «⏱ +1 minuto» e «⚽ Si gioca!».",
+      "⏱ Sparita la scritta del tempo in basso."
+    ]
+  },
+  {
     v: 347,
     data: "14 novembre 2026",
     titolo: "Mini Asta Fantacalcio: niente più finali già scritti 🙈",
