@@ -4024,6 +4024,7 @@ html body.tema-oro::before{ display:none; }
 .oro .modo-scelta + .modulo-nota{ margin-top:14px; }
 /* l'avatar in fondo: una luce lampone sotto i piedi, come nella saletta */
 .oro .modo-avatar{ position:relative; }
+.gettoni .oro .modo-avatar::before{ content:none; }   /* (il gettone ha già la sua pedana luminosa) */
 .oro .modo-avatar::before{ content:""; position:absolute; z-index:-1; left:-26%; right:-26%; bottom:1%; height:15%; border-radius:50%; pointer-events:none;
   background:radial-gradient(closest-side, rgba(255,79,134,.5), rgba(255,79,134,0)); }
 
@@ -4493,3 +4494,10 @@ html.tastiera .gt-cerca-riga{ margin-top:0; }
 .gettoni .sl-av.dorme .gtp-disco{ animation:slDorme 1.7s ease-in-out; }
 @keyframes gtpSaluta{ 0%, 100%{ transform:none; } 20%, 60%{ transform:rotate(-9deg); } 40%, 80%{ transform:rotate(9deg); } }
 @media (prefers-reduced-motion: reduce){ .gtp-galla, .gettoni .sl-av .gtp-disco, .gettoni .sl-av.entra > .sl-av-in{ animation:none !important; } }
+/* 🪟 il gettone di vetro ovunque (16 nov 2026): sotto l'emoji grande c'è l'emoji del telefono, che si vede solo nei disegni-immagine */
+.gettoni svg.gettone .gt-tx.sotto{ opacity:0; }
+/* i punteggi in alto nei giochi: il gettone ha già il suo bordo, niente secondo anello intorno */
+.gettoni .stp-chip canvas, .gettoni .stp-uno canvas{ box-shadow:none; background:none; }
+/* il podio della Linea del tempo: il gettone ha già il suo bordo, al primo solo una luce d'oro morbida (niente cerchione giallo) */
+html.gettoni .oro.tl-fine .tl-gradino .fac, html.gettoni .oro.tl-fine .tl-riga .fac, .gettoni .tl-gradino .fac, .gettoni .tl-riga .fac, .gettoni .tl-lobby .fac, .gettoni .tl-pl .av, .gettoni .tl-gv .av{ background:none; overflow:visible; }
+html.gettoni .tl-gradino.p1 .fac, html.gettoni .oro.tl-fine .tl-gradino.p1 .fac{ box-shadow:0 0 30px -4px rgba(255,212,59,.55); border-radius:50%; }

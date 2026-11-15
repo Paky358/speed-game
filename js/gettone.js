@@ -116,24 +116,64 @@
 
   // ---- il disegno: SVG quadrato (o alto come l'avatar intero, col gettone in basso) ----
   // opts come SGOmino.svg: px (larghezza), busto/viso (inquadratura quadrata); senza: alto come l'avatar in piedi (200×264)
+  // 🪟 (16 nov 2026, il proprietario: «il gettone nuovo ovunque») il gettone di vetro come nella saletta: disco scuro con la luce
+  // dall'alto, il suo colore che sale dal basso, riflesso curvo in cima, bordo sottile del suo colore. In piedi (al posto dell'avatar
+  // intero: «Come giocate?», podi…) galleggia sopra una piccola pedana luminosa del suo colore col fascio di luce; quadrato (teste
+  // nelle testate, classifiche, profilo) solo il disco. Le luci sfumate (gradienti) stanno in due piccole immagini a parte
+  // (data: URL, uno per colore, fatte una volta sola): dentro un'immagine i nomi dei gradienti non si mescolano con quelli degli altri
+  // disegni, così lo stesso SVG va bene ripetuto mille volte, in schermate nascoste e trasformato in immagine dai giochi.
+  // L'emoji: sopra quella GRANDE (nitida anche in grande), sotto quella piccola già arrivata (o l'emoji del telefono): si vede
+  // subito, e nei disegni-immagine dei giochi (dove le immagini esterne non si caricano) resta quella piccola.
+  var STRATI = {};
+  function strato(chiave, corpo) {
+    if (!STRATI[chiave]) STRATI[chiave] = "data:image/svg+xml," + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>" + corpo + "</svg>").replace(/'/g, "%27");
+    return STRATI[chiave];
+  }
+  // sotto l'emoji: il disco scuro con la luce dall'alto e il suo colore che sale dal basso
+  function fondoUrl(col) {
+    return strato("f" + col, "<defs><radialGradient id='f' cx='50%' cy='28%' r='78%'><stop offset='0' stop-color='#323b6e'/><stop offset='.55' stop-color='#171c38'/><stop offset='1' stop-color='#0a0d1c'/></radialGradient>" +
+      "<radialGradient id='t' cx='50%' cy='100%' r='62%'><stop offset='0' stop-color='" + col + "' stop-opacity='.42'/><stop offset='1' stop-color='" + col + "' stop-opacity='0'/></radialGradient></defs>" +
+      "<circle cx='50' cy='50' r='50' fill='url(#f)'/><circle cx='50' cy='50' r='50' fill='url(#t)'/>");
+  }
+  // sopra l'emoji: il riflesso curvo, il bordo sottile del suo colore, il filo di luce e il riflesso in basso
+  function vetroUrl(col, sw) {
+    return strato("v" + col + sw, "<defs><linearGradient id='r' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#fff' stop-opacity='.42'/><stop offset='1' stop-color='#fff' stop-opacity='0'/></linearGradient></defs>" +
+      "<path d='M9.9 41.9 C14 21 30.7 8.7 50 8.7 C69.3 8.7 86 21 90.1 41.9 C79 31.4 65.1 27.3 50 27.3 C34.9 27.3 21 31.4 9.9 41.9 Z' fill='url(#r)'/>" +
+      "<circle cx='50' cy='50' r='" + (50 - sw / 2) + "' fill='none' stroke='" + col + "' stroke-width='" + sw + "'/>" +
+      "<circle cx='50' cy='50' r='" + (47.9 - sw / 2) + "' fill='none' stroke='#fff' stroke-opacity='.13' stroke-width='.9'/>" +
+      "<path d='M22 85 A42 42 0 0 0 78 85' fill='none' stroke='#fff' stroke-opacity='.18' stroke-width='1.4' stroke-linecap='round'/>");
+  }
+  function disco(col, cx, cy, R, dentro, sottile) {
+    var f = function (n) { return (+n).toFixed(1); }, box = "x='" + f(cx - R) + "' y='" + f(cy - R) + "' width='" + f(2 * R) + "' height='" + f(2 * R) + "'";
+    return "<image href='" + fondoUrl(col) + "' " + box + "/>" + dentro + "<image href='" + vetroUrl(col, sottile ? 3 : 3.8) + "' " + box + "/>";
+  }
   function svg(cfg, opts) {
     opts = opts || {};
     var g = daQualsiasi(cfg), col = colore(g), quad = !!(opts.busto || opts.viso || opts.quadrato || opts.gambe);
-    // quadrato: il cerchio riempie tutto; al posto dell'avatar in piedi (alto 132): più piccolo e in basso, largo come un omino
-    var H = quad ? 100 : 132, cy = quad ? 50 : 92, R = quad ? 47 : 39, K = R / 47;
+    // quadrato: il disco riempie tutto; in piedi (alto 132, come l'avatar intero): il disco in alto e la pedana sotto
+    var H = quad ? 100 : 132, cy = quad ? 50 : 62, R = quad ? 46.5 : 33;
     var px = opts.px ? " width='" + opts.px + "' height='" + Math.round(opts.px * H / 100) + "'" : "";
     var info = infoE(g.e), d = info ? DATI[info.e] : null;
     if (info && !d) prepara(info.e);
-    var w = Math.round(58 * K), x = 50 - w / 2, y = cy - w / 2, dentro;
+    // la grande solo se il gettone non è minuscolo (le teste piccole nelle testate restano leggere)
+    var grande = info && (!quad || !opts.px || opts.px >= 56);
+    var w = +(R * 1.32).toFixed(1), x = +(50 - w / 2).toFixed(1), y = +(cy - w / 2).toFixed(1), dentro;
     if (d) dentro = "<image href='" + d + "' xlink:href='" + d + "' x='" + x + "' y='" + y + "' width='" + w + "' height='" + w + "'/>";
-    else dentro = "<text class='gt-tx' data-x='" + x + "' data-y='" + y + "' data-w='" + w + "' x='50' y='" + (cy + 1) + "' text-anchor='middle' dominant-baseline='central' font-size='" + Math.round(46 * K) + "'" +
+    else dentro = "<text class='gt-tx" + (grande ? " sotto" : "") + "' data-x='" + x + "' data-y='" + y + "' data-w='" + w + "' x='50' y='" + (cy + 1) + "' text-anchor='middle' dominant-baseline='central' font-size='" + Math.round(R * 1.0) + "'" +
       " font-family='Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif'>" + esc(g.e) + "</text>";
+    if (grande) dentro += "<image class='gt-grande' href='" + urlGrande(info.e) + "' x='" + x + "' y='" + y + "' width='" + w + "' height='" + w + "'/>";
+    var pedana = quad ? "" :
+      "<path d='M23 118 L33 62 L67 62 L77 118 Z' fill='" + col + "' opacity='.13'/>" +
+      "<path d='M31 118 L39 70 L61 70 L69 118 Z' fill='" + col + "' opacity='.1'/>" +
+      "<path d='M15 118 L15 125 A35 6.5 0 0 0 85 125 L85 118 Z' fill='" + col + "' opacity='.5'/>" +
+      "<path d='M15 120.5 L15 125 A35 6.5 0 0 0 85 125 L85 120.5 A35 6.5 0 0 1 15 120.5 Z' fill='#0b0e1d' opacity='.45'/>" +
+      "<ellipse cx='50' cy='118' rx='35' ry='6.5' fill='" + col + "' opacity='.92'/>" +
+      "<ellipse cx='50' cy='118' rx='22' ry='3.8' fill='#fff' opacity='.42'/>" +
+      "<ellipse cx='50' cy='118' rx='13' ry='2.4' fill='#000' opacity='.28'/>" +
+      "<circle cx='50' cy='" + cy + "' r='" + (R + 3.5) + "' fill='" + col + "' opacity='.13'/>";
     return "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 100 " + H + "'" + px +
-      " class='omino gettone' data-gt='" + esc(info ? info.e : g.e) + "' style='--gt:" + col + "'>" +
-      "<circle cx='50' cy='" + cy + "' r='" + R + "' fill='" + col + "'/>" +
-      "<circle cx='50' cy='" + cy + "' r='" + (R - 7.5 * K).toFixed(1) + "' fill='#161b33'/>" +
-      "<circle cx='50' cy='" + (cy - 10 * K).toFixed(1) + "' r='" + (30 * K).toFixed(1) + "' fill='#ffffff' opacity='.07'/>" +
-      dentro + "</svg>";
+      " class='omino gettone vetro' data-gt='" + esc(info ? info.e : g.e) + "' style='--gt:" + col + "'>" +
+      pedana + disco(col, 50, cy, R, dentro, !quad) + "</svg>";
   }
   // ---- 🏛️ il gettone sul palco della saletta (15 nov 2026, chat «🪟 Saletta di vetro»; scelto dal proprietario: «C · Piedistallo»)
   // un gettone di vetro (disco scuro con la luce dall'alto, riflesso curvo in cima, bordo sottile del suo colore) che galleggia sopra
@@ -141,9 +181,10 @@
   // (galleggia, rimbalzo, saltello) sono solo transform del disco e la pedana resta ferma. È solo una cornice: dentro va l'immagine
   // dell'emoji, quella GRANDE (carte/emoji-grandi/, 240 px: nella saletta il gettone è grande e quella piccola si vedeva sgranata).
   // Sotto c'è quella piccola, se è già arrivata: si vede subito e anche senza rete. Il «pronto» è già disegnato: lo accende il CSS.
+  var N_PALCO = 0;   // (ogni pedana ha i suoi id: mai un riferimento a un disegno nascosto o tolto)
   function gradi(col) { return String(col).replace(/[^0-9a-f]/gi, ""); }
   function palco(cfg) {
-    var g = daQualsiasi(cfg), col = colore(g), id = "gtp" + gradi(col), info = infoE(g.e), d = info ? DATI[info.e] : null;
+    var g = daQualsiasi(cfg), col = colore(g), id = "gtp" + gradi(col) + "-" + (++N_PALCO), info = infoE(g.e), d = info ? DATI[info.e] : null;
     if (info && !d) prepara(info.e);
     var img = (d ? "<image href='" + d + "' x='21' y='21' width='58' height='58'/>" : "") +
       (info ? "<image href='" + urlGrande(info.e) + "' x='21' y='21' width='58' height='58'/>" : "<text x='50' y='51' text-anchor='middle' dominant-baseline='central' font-size='46'>" + esc(g.e) + "</text>");
@@ -161,13 +202,13 @@
       // il disco di vetro (galleggia: .gtp-galla; i gesti muovono .gtp-disco)
       "<div class='gtp-galla'><div class='gtp-disco'><svg viewBox='0 0 100 100' aria-hidden='true'><defs>" +
       "<radialGradient id='" + id + "l' cx='50%' cy='50%' r='50%'><stop offset='.82' stop-color='" + col + "' stop-opacity='.38'/><stop offset='1' stop-color='" + col + "' stop-opacity='0'/></radialGradient>" +
-      "<radialGradient id='gtpf' cx='50%' cy='28%' r='78%'><stop offset='0' stop-color='#323b6e'/><stop offset='.55' stop-color='#171c38'/><stop offset='1' stop-color='#0a0d1c'/></radialGradient>" +
+      "<radialGradient id='" + id + "f' cx='50%' cy='28%' r='78%'><stop offset='0' stop-color='#323b6e'/><stop offset='.55' stop-color='#171c38'/><stop offset='1' stop-color='#0a0d1c'/></radialGradient>" +
       "<radialGradient id='" + id + "t' cx='50%' cy='100%' r='62%'><stop offset='0' stop-color='" + col + "' stop-opacity='.42'/><stop offset='1' stop-color='" + col + "' stop-opacity='0'/></radialGradient>" +
-      "<linearGradient id='gtpr' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#fff' stop-opacity='.42'/><stop offset='1' stop-color='#fff' stop-opacity='0'/></linearGradient></defs>" +
+      "<linearGradient id='" + id + "r' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#fff' stop-opacity='.42'/><stop offset='1' stop-color='#fff' stop-opacity='0'/></linearGradient></defs>" +
       "<circle cx='50' cy='50' r='50' fill='url(#" + id + "l)'/>" +
-      "<circle cx='50' cy='50' r='43' fill='url(#gtpf)'/>" +
+      "<circle cx='50' cy='50' r='43' fill='url(#" + id + "f)'/>" +
       "<circle cx='50' cy='50' r='43' fill='url(#" + id + "t)'/>" + img +
-      "<path d='M15.5 40 C19 22 33 11.5 50 11.5 C67 11.5 81 22 84.5 40 C75 31 63 27.5 50 27.5 C37 27.5 25 31 15.5 40 Z' fill='url(#gtpr)'/>" +
+      "<path d='M15.5 40 C19 22 33 11.5 50 11.5 C67 11.5 81 22 84.5 40 C75 31 63 27.5 50 27.5 C37 27.5 25 31 15.5 40 Z' fill='url(#" + id + "r)'/>" +
       "<circle cx='50' cy='50' r='43' fill='none' stroke='" + col + "' stroke-width='2.6'/>" +
       "<circle cx='50' cy='50' r='41.2' fill='none' stroke='#fff' stroke-opacity='.13' stroke-width='.8'/>" +
       "<path d='M24 80 A36 36 0 0 0 76 80' fill='none' stroke='#fff' stroke-opacity='.18' stroke-width='1.2' stroke-linecap='round'/>" +

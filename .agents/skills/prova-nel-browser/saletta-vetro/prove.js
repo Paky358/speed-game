@@ -84,3 +84,47 @@
     return "da solo 1 gettone + 3 posti liberi (l'invito si apre), in 3 col rimbalzo e Giulia pronta (✓ nel gettone, niente ✋), in 10 e in 12 senza posti liberi, nessuno si sovrappone";
   } });
 })();
+
+// sv2: il giro delle schermate dove si vede il gettone (per le foto prima/dopo del gettone di vetro ovunque):
+//      «Come giocate?» della Linea del tempo, il profilo, la Sala con 6, la partita della Linea del tempo (testata), il podio.
+(function () {
+  "use strict";
+  var W = window, A = COPIONE.aiuti;
+  function no(p) { throw new Error(p); }
+  async function foto(nome) { if (!W.__foto) return; W.__fotoOra = nome; await W.aspetta(function () { return W.__fotoFatta === nome; }, 60000); }
+  function pausa(ms) { return W.aspetta(function () { return false; }, ms); }
+  COPIONE.aggiungi("sv2", { nome: "Il gettone ovunque: Come giocate?, profilo, Sala, partita, podio", fai: async function () {
+    A.spiaTavolo();
+    var P = await W.apriTel("Paky", { x: 0, salaSempre: true, spiaTav: ["timeline"] });
+    var t = await W.aspetta(function () { return A.tessera(P, "La linea del tempo"); }, 6000);
+    if (!t) no("non trovo la Linea del tempo in home");
+    t.click();
+    if (!await W.aspetta(function () { return P.document.querySelector(".modo-grande"); }, 5000)) no("non si apre «Come giocate?»");
+    await pausa(1500); await foto("come");
+    await W.ricarica("Paky"); P = W.finestra("Paky");
+    await A.apriProfilo(P); await pausa(1500); await foto("profilo");
+    await W.ricarica("Paky"); P = W.finestra("Paky");
+    var amici = ["Giulia", "Luca", "Marco", "Bea", "Sara"], w = { Paky: P };
+    var S = await A.apriSalaNuova("Paky");
+    for (var i = 0; i < amici.length; i++) w[amici[i]] = await W.apriTel(amici[i], { hash: "sala=" + S, x: 120 * (i + 1), salaSempre: true, spiaTav: ["timeline"] });
+    if (!await W.aspetta(function () { return ((A.vm(S).membri) || []).length === 6; }, 15000)) no("nella Sala non sono entrati in 6");
+    await pausa(1500); await foto("sala");
+    var C = await A.lanciaDallaSala("Paky", S, "La linea del tempo");
+    if (!await W.aspetta(function () { return A.ids(C, "giocatori").length === 6; }, 15000)) no("non sono in 6 nella saletta");
+    W.clicca(P, /Comincia/, ".sl-go");
+    await W.aspetta(function () { return A.vm(C).fase && A.vm(C).fase !== "lobby"; }, 15000);
+    await pausa(5000); await foto("gioco");
+    // il podio della Linea del tempo (disegnato qui sopra la partita con le stesse classi del gioco: la fine vera richiede 10 carte)
+    var gg = (A.vm(C).giocatori || []).slice(0, 6);
+    var html = "<div class='schermata oro tl-fine' style='position:fixed;inset:0;z-index:9999;background:#0d1020;padding:20px 16px'><h2 style='color:#fff;margin:0 0 6px'>🏆 Classifica finale</h2><div class='tl-podio'>" +
+      [1, 0, 2].map(function (p) { var g = gg[p]; return g ? "<div class='tl-gradino p" + (p + 1) + "' style='animation:none;opacity:1'><div class='fac'>" + P.SGOmino.svg(g.omino, { busto: true }) + "</div><div class='nm'>" + g.nome + "</div><div class='pt'>" + (300 - p * 50) + "</div><div class='blocco'>" + ["🥇", "🥈", "🥉"][p] + "</div></div>" : ""; }).join("") +
+      "</div><div class='tl-fila'>" + gg.slice(3).map(function (g, i) { return "<div class='tl-riga'><span class='pos'>" + (i + 4) + "°</span><span class='fac'>" + P.SGOmino.svg(g.omino, { busto: true }) + "</span><span class='nm'>" + g.nome + "</span></div>"; }).join("") + "</div></div>";
+    P.document.body.insertAdjacentHTML("beforeend", html);
+    await pausa(1500); await foto("podiotl");
+    P.document.body.removeChild(P.document.body.lastElementChild);
+    var cl = ["Paky", "Giulia", "Luca", "Marco", "Bea", "Sara"].map(function (n, k) { return { nome: n, punti: 12 - k * 2, pos: k + 1 }; });
+    P.__tav.fine(cl);
+    await pausa(2500); await foto("podio");
+    return "foto: come, profilo, sala, gioco, podio";
+  } });
+})();
