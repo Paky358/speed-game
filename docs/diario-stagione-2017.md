@@ -54,6 +54,14 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - Prove ridotte a quelle che contano (il giro intero di ~70 prove durava ore): pa2, pa4, tg1, gs2 con «Oggi»; pa2, pa4, tg1, gs2, tg5 con la 2017-18;
   più le nuove st0-st4.
 
+### 16 nov, fine notte
+- Unito origin/master (2e5b935, novità fino alla v355 della Mini Asta e del gettone di vetro): la stagione è la **novità v356**.
+- Altezze: 264 dalle pagine 2017-18 di fantacalcio.it (una al secondo), Widmer dall'aiutante (la sua pagina non la scrive), Astori senza.
+- Prove (Edge invisibile): st0-st4 OK (dati, online in 3 con chi scarica il pezzo, ripresa, vice, ritorno a oggi); con «Oggi» pa2, tg1,
+  gs2 OK; con la 2017-18 pa2, tg1, gs2, tg5 OK. **pa4 NO con tutte e due le stagioni, e NO anche su master pulito** («i titoli non girano sul
+  maxischermo»): non dipende da questo lavoro, è da guardare nella chat della Mini Asta (la prova o il ticker di fine partita).
+- Foto: `D:\SG-stagione-lavoro\foto\` (asta e giornata di Paky e Giulia), si rifanno con `asta-grafica/foto-stagione.js`.
+
 ## Come è fatto (per chi riprende)
 - `data/fanta-2017.js` (si rifà da `D:\SG-stagione-lavoro\gen.js`, NON a mano): `window.SG_FANTA_STAGIONI["2017-18"]` con le stesse forme dei
   file di oggi (CALCIATORI, QUOTAZIONI, STATISTICHE, SQUADRE, NUMERI, ALTEZZE, ASPETTO, CAMPO, MODULI, RUOLI) più `squadre20` (colori, righe,
@@ -68,4 +76,19 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   per primo (ogni Mini Asta senza stagione scritta gioca con la 2017-18).
 
 ## Domande per domattina
-1. Benevento e SPAL senza portiere all'asta (vedi sopra): va bene così o si fa un'eccezione (come Geubbels oggi)?
+1. ~~Benevento e SPAL senza portiere all'asta~~ → deciso dal proprietario (16 nov notte, via Cervello): almeno un portiere per squadra,
+   sempre; entra quello con più partite: **Puggioni (Benevento) 23 partite** e **Gomis A. (SPAL) 25** (eccezione alla regola delle partite).
+   Da decidere: al loro posto i più famosi con meno partite? **Brignoli (Benevento) 13 partite**, quotazione finale 1 (il gol di testa al
+   Milan); **Meret (SPAL) 13 partite**, quotazione finale 9. Non li ho messi.
+2. Maglie da controllare (non lette dalle figure): Sampdoria, Chievo, Cagliari (messo a metà e metà come oggi), Crotone, SPAL, Verona,
+   Benevento (messo rosso tinta unita con colletto giallo). Moduli scelti dall'aiutante (nessuna fonte li scrive): i più dubbi Juventus,
+   Genoa, Benevento, Verona, Cagliari, Crotone.
+3. **Il controllino sugli esclusi** (i nomi noti o con quotazione alta rimasti fuori dall'asta; NON aggiunti):
+   - In listone con la squadra ma 0 partite (andati via in estate: dati di fantacalcio.it rimasti sulla squadra vecchia): **Keita B.** (Lazio,
+     quot. 24, era al Monaco), **Bacca** (Milan, 21, al Villarreal), **Jovetic** (Inter, 12, al Monaco). Giusto che restino fuori.
+   - Arrivati a gennaio o infortunati, sotto le 19 partite: **Rafinha** (Inter, 16 partite, quot. 17), **Bernardeschi** (Juve, 16, quot. 16),
+     **Pazzini** (Verona, 18, andato al Levante a gennaio, quot. 14), **Simy** (Crotone, 17, 7 gol, quot. 11), **Milik** (Napoli, 12, 5 gol,
+     quot. 11), **Schick** (Roma, 17, quot. 10), **Dzemaili** (Bologna, 15), **Nani** (Lazio, 14), **Borriello** (SPAL, 12), **Defrel**
+     (Roma, 12), **Diabaté** (Benevento, 10 partite e 8 gol, arrivato a gennaio), **Ciciretti** (Benevento, 12), **Bajic** (Udinese, 3),
+     **Ceravolo** (Benevento, 1).
+   - Errori di copia: nessuno trovato (nessun nome doppio, ogni calciatore in una squadra sola, ruoli classic di fantacalcio.it).

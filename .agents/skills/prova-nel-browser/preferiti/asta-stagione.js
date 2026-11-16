@@ -2,7 +2,7 @@
 // 2017-18; ⚙️ «📅 Stagione» = «Oggi» di partenza o «2017-18»; i dati di quell'anno in un pezzo a parte che si scarica solo se serve).
 // Uso: prova.js --porta 8941 --carica preferiti/asta.js,preferiti/asta-stagione.js --prova st0,st1,st2,st3,st4 --timeout 900
 //
-// st0 I dati della 2017-18: NON arrivano col gioco (solo col pezzo "asta-2017"); 194 all'asta (P 18, D 58, C 75, A 43), le 20 squadre di
+// st0 I dati della 2017-18: NON arrivano col gioco (solo col pezzo "asta-2017"); 196 all'asta (P 20: uno per squadra, D 58, C 75, A 43), le 20 squadre di
 //     allora con gol fatti e subiti, colori e maglie, Chievo e Verona (Bentegodi) e Genoa e Sampdoria (Marassi) mai in casa insieme, ogni
 //     calciatore all'asta con la sua quotazione, il gruppo «solo in campo» mai all'asta, numeri di maglia da 1 a 99 e mai doppi in una squadra,
 //     un portiere per squadra in 3.000 mazzi; usaStagione cambia i dati e torna a oggi.
@@ -53,7 +53,8 @@
     if (w.SG_FANTA_STAGIONI) no("la 2017-18 arriva insieme al gioco: deve arrivare solo quando la si sceglie");
     var S = await dati(w); if (!S) no("il pezzo asta-2017 non porta la 2017-18");
     var K = chiaviAsta(S), conta = { P: 0, D: 0, C: 0, A: 0 }; Object.keys(K).forEach(function (k) { conta[K[k]]++; });
-    if (conta.P !== 18 || conta.D !== 58 || conta.C !== 75 || conta.A !== 43) no("all'asta " + JSON.stringify(conta) + " (attesi P 18, D 58, C 75, A 43)");
+    if (conta.P !== 20 || conta.D !== 58 || conta.C !== 75 || conta.A !== 43) no("all'asta " + JSON.stringify(conta) + " (attesi P 20, D 58, C 75, A 43)");
+    ["Puggioni (Benevento)", "Gomis A. (SPAL)"].forEach(function (k) { if (K[k] !== "P") no(k + " non è all'asta (il portiere della squadra)"); });
     Object.keys(K).forEach(function (k) { if (!(S.QUOTAZIONI.valori[k] > 0)) no(k + " è all'asta senza quotazione"); });
     ["D", "C", "A", "P"].forEach(function (r) { (S.CALCIATORI[r].X || []).forEach(function (k) { if (K[k]) no(k + " è «solo in campo» ma anche all'asta"); }); });
     var SQ = Object.keys(S.SQUADRE.squadre).sort();
@@ -84,7 +85,7 @@
     F.usa(null);
     if (w.SG_FANTA_QUOTAZIONI !== oggiQ || F.rose().Benevento) no("usaStagione(null) non torna a oggi");
     try { Object.keys(w.localStorage).forEach(function (k) { if (/fanta_/.test(k)) w.localStorage.removeItem(k); }); } catch (e) {}
-    x.push("pezzo a parte; all'asta P 18, D 58, C 75, A 43; 20 squadre; gol " + gf.toFixed(1) + "/" + gs.toFixed(1) + " a giornata; " + Object.keys(S.NUMERI).length + " numeri; 3.000 mazzi da 2 a 12: un portiere per squadra, solo calciatori del listone; ritorno a oggi");
+    x.push("pezzo a parte; all'asta P 20 (uno per squadra), D 58, C 75, A 43; 20 squadre; gol " + gf.toFixed(1) + "/" + gs.toFixed(1) + " a giornata; " + Object.keys(S.NUMERI).length + " numeri; 3.000 mazzi da 2 a 12: un portiere per squadra, solo calciatori del listone; ritorno a oggi");
     return x.join("; ");
   } });
 

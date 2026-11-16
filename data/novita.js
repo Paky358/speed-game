@@ -15,7 +15,7 @@ window.SG_NOVITA = [
     descrizione: [
       "📅 Nelle regole della Mini Asta c'è «Stagione»: «Oggi» (come sempre) oppure «2017-18». La sceglie chi apre la partita e vale per tutti.",
       "⚽ Con la 2017-18 si rivive quell'anno: Higuain e Dybala alla Juve, il Napoli di Sarri con Mertens, Insigne, Callejon e Hamsik, Icardi e Immobile capocannonieri, e le squadre di allora (Benevento, Crotone, SPAL, Chievo, Verona…).",
-      "📊 Tutto da fantacalcio.it: i calciatori nella squadra dove hanno finito la stagione, con la quotazione finale e i loro numeri di quell'anno (gol, assist, cartellini, rigori). All'asta escono quelli che hanno giocato davvero: 194 calciatori.",
+      "📊 Tutto da fantacalcio.it: i calciatori nella squadra dove hanno finito la stagione, con la quotazione finale e i loro numeri di quell'anno (gol, assist, cartellini, rigori). All'asta escono quelli che hanno giocato davvero: 196 calciatori, con almeno un portiere per squadra.",
       "👕 Le maglie e i numeri di maglia di quell'anno, e i rigoristi veri di allora. Chievo e Verona hanno lo stesso stadio, come Inter e Milan: mai in casa nella stessa giornata (il derby sì).",
       "🏷️ All'asta e nella giornata la scritta «⚽ Serie A 2017-18», così si capisce subito che anno è. Coppe e statistiche restano insieme a quelle di sempre."
     ]
