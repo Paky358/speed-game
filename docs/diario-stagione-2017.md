@@ -105,3 +105,9 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   Pazzini 14, Schick 10, Diabaté 10). Numeri: Bernardeschi 33, Pazzini 11, Diabaté 25 (due fonti: inter.it/Eurosport/Wikipedia/Calciomercato);
   Schick senza (il 14 si trova solo nella stagione dopo). Pazzini diventa il primo rigorista del Verona (4 su 4 quell'anno).
   All'asta adesso **203**: P 20, D 58, C 77, A 48.
+
+### 16 nov: PUBBLICATO (il proprietario: «Pubblica»)
+- Costruita la versione online (pezzo `giochi/asta-2017.<impronta>.js` a parte) e controllata in Edge: il pezzo NON arriva col gioco, arriva
+  quando serve, 203 calciatori, 20 squadre, riassunto «🕰️ Serie A 2017-18 · …», nessun errore. Messo su master (novità v356).
+- Restano da fare: le facce dei calciatori (IL PAPPONE, da «🎨 Personalizza i calciatori»), i numeri di Simy, Brignoli e Schick, le maglie di
+  7 squadre da controllare, la prova pa4 che non passa anche su master (non nostra).
