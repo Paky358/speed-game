@@ -1634,7 +1634,7 @@
       dove.giornata = dove.giornata !== false;   // ⚽ la giornata dopo l'asta (fantacalcio): di base sì
       dove.vs = vsDi(dove);   // 🆚 contro chi giocano già all'asta: di base SÌ dall'8 nov 2026 (prima no; vale la scelta solo di chi l'ha toccata da allora)
       dove.nomiChi = false;   // 🏷️ (8 nov 2026, il proprietario: in campo SOLO il colore) la regola «In campo, di chi è» non c'è più: chi l'aveva accesa torna come tutti
-      dove.giornate = giornateDi(dove);   // 🏆 quante giornate (30 ott 2026): di base 1, com'era; 3 = due veloci e la terza intera (spente dal 17 nov 2026: sempre 1, vedi TRE_GIORNATE)
+      dove.giornate = giornateDi(dove);   // 🏆 quante giornate (30 ott 2026): di base 1, com'era; 3 = due veloci e la terza intera (spente dal 16 nov 2026: sempre 1, vedi TRE_GIORNATE)
       dove.compra = compraDi(dove);   // 💰 come si compra (2 nov 2026): di base l'asta normale
       dove.stagione = stagioneDi(dove);   // 📅 la stagione (16 nov 2026): di base oggi (null)
       // contenitori che compaiono/spariscono in base alla modalità scelta
@@ -1808,7 +1808,7 @@
       bG3 = el("button", { class: "modo-chip", onclick: function () { scegliG3(3); } }, [
         el("span", { class: "mi", text: "🏆" }), el("div", {}, [
           el("div", { class: "mt", text: "3 giornate" }), el("div", { class: "ms", text: "Due veloci, la terza intera: contano i punti sommati" })])]);
-      if (TRE_GIORNATE) {   // (🏆 spente dal 17 nov 2026: la scelta non si vede)
+      if (TRE_GIORNATE) {   // (🏆 spente dal 16 nov 2026: la scelta non si vede)
         wrapG3.appendChild(el("div", { class: "etichetta", text: "🏆 Quante giornate" }));
         wrapG3.appendChild(el("div", { class: "modo-griglia as-coppia" }, [bG1, bG3]));
       }
@@ -3911,7 +3911,7 @@
     try { viste.push(chiaviCoppie(meglio)); localStorage.setItem("sg-fanta-giornate", JSON.stringify(viste.slice(-6))); } catch (e) {}
     return meglio;
   }
-  // 🏆 LE 3 GIORNATE SONO SPENTE (17 nov 2026, il proprietario, per risparmiare: «la voglio provare prima di persona»): nel ⚙️ la scelta
+  // 🏆 LE 3 GIORNATE SONO SPENTE (16 nov 2026, il proprietario, per risparmiare: «la voglio provare prima di persona»): nel ⚙️ la scelta
   // «Quante giornate» non si vede e si gioca sempre 1 giornata, anche per chi aveva le regole ricordate con 3. Il codice resta tutto:
   // TRE_GIORNATE = true per riaccenderle (e rifare le prove tg0-tg5)
   var TRE_GIORNATE = false;
@@ -10378,7 +10378,7 @@
   function avviaFanta(t) {
     var st = {
       formato: "fanta", stagione: stagioneDi(t.impostazioni), sessione: nuovaSessione(), asta: null, giriVuoti: 0, salto: 1, giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
-      giornate: giornateDi(t.impostazioni),   // 🏆 1 giornata o 3 (di partenza 1; le 3 spente dal 17 nov 2026)
+      giornate: giornateDi(t.impostazioni),   // 🏆 1 giornata o 3 (di partenza 1; le 3 spente dal 16 nov 2026)
       vs: vsDi(t.impostazioni),   // 🆚 contro chi giocano, già all'asta (di partenza sì dall'8 nov 2026)
       nomiChi: false,   // 🏷️ (tolta l'8 nov 2026: in campo solo il colore)
       ban: !(t.impostazioni && t.impostazioni.ban === false),   // 🎙️ le battute del banditore (di partenza sì)
@@ -11013,7 +11013,7 @@
     var st = {
       formato: "fanta", stagione: stagioneDi(t.impostazioni), crediti: FANTA_BUDGET, sessione: null, mazzo: [], asta: null, esito: null, classifica: null,
       giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
-      giornate: giornateDi(t.impostazioni),   // 🏆 1 giornata o 3 (di partenza 1; le 3 spente dal 17 nov 2026)
+      giornate: giornateDi(t.impostazioni),   // 🏆 1 giornata o 3 (di partenza 1; le 3 spente dal 16 nov 2026)
       vs: vsDi(t.impostazioni),   // 🆚 contro chi giocano, già all'asta (di partenza sì dall'8 nov 2026)
       nomiChi: false,   // 🏷️ (tolta l'8 nov 2026: in campo solo il colore)
       ban: !(t.impostazioni && t.impostazioni.ban === false),   // 🎙️
