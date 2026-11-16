@@ -9,7 +9,7 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 352,
+    v: 356,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: si gioca anche con la Serie A 2017-18 🕰️",
     descrizione: [
@@ -18,6 +18,49 @@ window.SG_NOVITA = [
       "📊 Tutto da fantacalcio.it: i calciatori nella squadra dove hanno finito la stagione, con la quotazione finale e i loro numeri di quell'anno (gol, assist, cartellini, rigori). All'asta escono quelli che hanno giocato davvero: 194 calciatori.",
       "👕 Le maglie e i numeri di maglia di quell'anno, e i rigoristi veri di allora. Chievo e Verona hanno lo stesso stadio, come Inter e Milan: mai in casa nella stessa giornata (il derby sì).",
       "🏷️ All'asta e nella giornata la scritta «⚽ Serie A 2017-18», così si capisce subito che anno è. Coppe e statistiche restano insieme a quelle di sempre."
+    ]
+  },
+  {
+    v: 355,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: chi subisce il rigore 🤕",
+    descrizione: [
+      "🤕 Nei rigori adesso si vede chi ha subito il fallo: è ancora a terra nella lunetta e si rialza prima del tiro. Se è uno dei vostri calciatori ha il suo nome sopra la testa (niente punti per il rigore procurato, come nel fantacalcio vero). Il rigore si vede come sempre quando qualcuno ha chi lo tira o il portiere.",
+      "🎯 Il rigore lo batte sempre il rigorista vero. Ma se il fallo l'ha subito il secondo o il terzo rigorista della squadra, una volta su tre lo tira lui."
+    ]
+  },
+  {
+    v: 354,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i nomi di nuovo, e ogni squadra dalla sua parte del campo ⚽",
+    descrizione: [
+      "🏷️ Si vede di nuovo il nome di chi porta palla anche se non è di nessuno (era sparito con l'ultima novità): adesso piccolo sopra la testa, bianco, diverso dalle etichette colorate dei vostri calciatori, e mai sopra la porta.",
+      "🎯 Anche chi batte il rigore o la punizione ha il suo nome, dall'inizio fino al calcio.",
+      "⚽ Come nel calcio vero: in ogni partita un sorteggio decide da che parte attacca ogni squadra nel primo tempo, e nel secondo tempo si cambia lato. Prima nello stesso tempo una squadra attaccava una volta la porta di sopra e una volta quella di sotto.",
+      "🧤 Se avete il portiere, il rigore contro di lui si vede sempre: anche quando chi tira la manda fuori o sul palo (prima quel rigore non si vedeva)."
+    ]
+  },
+  {
+    v: 353,
+    data: "16 novembre 2026",
+    titolo: "Il gettone di vetro in tutta l'app ✨",
+    descrizione: [
+      "🪟 Il gettone di vetro della saletta adesso c'è ovunque: in «Come giocate?» galleggia sulla sua pedana luminosa, e nel profilo, nella Sala, nelle classifiche e in alto dentro i giochi c'è il disco di vetro col bordo del tuo colore.",
+      "🎨 In alto nei giochi ognuno ha il colore del suo gettone, l'emoji si vede intera e non c'è più il doppio anello.",
+      "🏆 Sul podio della Linea del tempo niente più cerchione giallo: al primo resta una luce d'oro.",
+      "🔍 Dove il gettone è grande l'emoji è nitida."
+    ]
+  },
+  {
+    v: 352,
+    data: "15 novembre 2026",
+    titolo: "La saletta prima della partita: gettoni di vetro sul piedistallo ✨",
+    descrizione: [
+      "🏛️ Nella saletta ognuno ha il suo gettone di vetro che galleggia sopra una pedana luminosa del suo colore, con un fascio di luce: più bello e più vivo del cerchio piatto di prima.",
+      "➕ Quando siete in pochi il palco non resta vuoto: ci sono i posti liberi col «+». Toccane uno per invitare gli amici.",
+      "🔍 Le emoji nella saletta adesso sono nitide (prima erano piccole e ingrandite, quindi sgranate).",
+      "⬇️ Chi entra scende sulla sua pedana con un piccolo rimbalzo.",
+      "✅ Chi è pronto non alza più la manina gialla: nel suo gettone si accendono una lineetta verde e un bollino con la ✓, e ognuno tiene il suo colore."
     ]
   },
   {

@@ -224,14 +224,22 @@
     })();
   }
   // disegna la faccina su una tela: "testa" = solo il viso (i punteggi), altrimenti il mezzo busto intero
+  // 🪟 (16 nov 2026) coi gettoni la «testa» è il gettone intero (il disco di vetro col suo bordo), non un pezzo in alto;
+  // e il colore di ognuno nei punteggi è quello del suo gettone
+  function gettoni() { return !!(window.SGGettone && SGGettone.acceso()); }
+  function gtCol(g) { try { return gettoni() && g ? SGGettone.colore(SGGettone.daQualsiasi(avatarValido(g.omino), g.nome)) : null; } catch (e) { return null; } }
+  function metti(x, img, testa, w, h) {
+    if (testa && gettoni()) x.drawImage(img, 0, 2, 178, 178, 0, 0, w, h);
+    else if (testa) x.drawImage(img, 0.17 * 178, 0.02 * 182, 0.66 * 178, 0.66 * 178, 0, 0, w, h);
+    else x.drawImage(img, 0, 0, w, h);
+  }
   function disegnaFaccia(cv, img, testa, grigio) {
     var x = cv.getContext("2d"), w = cv.width, h = cv.height;
     x.clearRect(0, 0, w, h);
-    if (testa) x.drawImage(img, 0.17 * 178, 0.02 * 182, 0.66 * 178, 0.66 * 178, 0, 0, w, h);
-    else x.drawImage(img, 0, 0, w, h);
+    metti(x, img, testa, w, h);
     if (grigio) {   // chi è fuori: in bianco e nero (disegnato qui una volta: un filtro peserebbe a ogni fotogramma)
       x.save(); x.globalCompositeOperation = "saturation"; x.fillStyle = "#808080"; x.fillRect(0, 0, w, h);
-      x.globalCompositeOperation = "destination-in"; if (testa) x.drawImage(img, 0.17 * 178, 0.02 * 182, 0.66 * 178, 0.66 * 178, 0, 0, w, h); else x.drawImage(img, 0, 0, w, h);
+      x.globalCompositeOperation = "destination-in"; metti(x, img, testa, w, h);
       x.restore();
     }
   }
@@ -449,7 +457,7 @@
     for (var r = 0; r < nRighe; r++) { var rg = el("div", { class: "stp-riga" }); righe.push(rg); S.puntiEl.appendChild(rg); }
     if (righe.length) righe[0].appendChild(S.esciEl);
     S.gioc.forEach(function (g, i) {
-      var col = g.col || ST_COL[i % ST_COL.length], cv = el("canvas", { width: "64", height: "64" });
+      var col = g.col || gtCol(g) || ST_COL[i % ST_COL.length], cv = el("canvas", { width: "64", height: "64" });
       var nome = el("span", { class: "n", text: g.nome }), pt = el("span", { class: "p", text: "0" });
       var C = el("div", { class: "stp-chip" + (i === S.io ? " tu" : "") }, [ cv, el("div", { class: "tx" }, [ nome, pt ]), el("div", { class: "cart" }, [ el("span", { class: "f", text: "?" }), el("span", { class: "f r" }) ]), el("div", { class: "delta" }), el("div", { class: "lp" }), el("div", { class: "anello" }) ]);
       C.style.setProperty("--col", col);

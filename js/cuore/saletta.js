@@ -475,6 +475,12 @@
     // chi esce saluta e sfuma. Dove sta ognuno (e quanto è grande) lo decide disponiSaletta, qui sotto
     var tieni = {}, n = gio.length, vuoti = Math.max(0, o.vuoti || 0), arrivati = [], usciti = 0, ordine = [];
     vuoti = Math.max(0, vuoti - attesi.length);   // (le sagome di chi manca prendono il posto dei posti liberi)
+    // 🏛️ coi gettoni (15 nov 2026): in pochi il palco non resta vuoto, ci sono posti liberi col «+» fino a 4 (toccandoli si invita),
+    // mai più di quanti ne può avere il gioco; solo dove c'è «Invita gli amici»
+    if (gettoniSl() && U.link && !o.spettatore) {
+      var gO = U.gObj || {}, maxP = gO.postiOnline || gO.giocatoriMax || 99;
+      vuoti = Math.max(vuoti, Math.min(4, maxP) - n - attesi.length);
+    }
     gio.forEach(function (p, i) {
       var k = chiavePers(p, i), f = U.figure[k], cfg = p.omino || (window.SGOmino ? SGOmino.casuale(p.nome || k) : null), sig = JSON.stringify(cfg) + "|" + p.nome + "|" + !!p.tu + "|" + !!p.host + "|" + !!p.bot;
       if (!f) {
@@ -495,7 +501,7 @@
       f.p = p;
       if (f.sig !== sig) {
         f.sig = sig; f.tu = !!p.tu; f.cfg = cfg;
-        disegnaFigura(f);
+        disegnaFigura(f); if (gettoniSl()) f.targa.style.setProperty("--pc", SGGettone.colore(SGGettone.daQualsiasi(cfg, p.nome)));   // (il filo del nome: il suo colore)
         svuota(f.targa); f.targa.classList.toggle("tu", !!p.tu);
         [ f.ricollega, p.host ? el("span", { class: "sl-cor", text: "👑" }) : null, document.createTextNode(p.tu ? "Tu" : (p.nome || "…")), p.bot ? el("span", { text: " 🤖" }) : null ].forEach(function (x) { if (x) f.targa.appendChild(x); });
       }
@@ -517,8 +523,10 @@
     U.vuoti = U.vuoti || [];
     while (U.vuoti.length > vuoti) { var vv = U.vuoti.pop(); vv.classList.add("esce"); vv._targa.classList.add("esce"); (function (x) { setTimeout(function () { togliNodo(x); togliNodo(x._targa); }, 450); })(vv); }
     while (U.vuoti.length < vuoti) {
-      var nv = el("div", { class: "sl-av sl-vuoto" }, [ el("div", { class: "sl-av-in" }, [ el("div", { class: "sl-sagoma" }) ]) ]);
-      nv._targa = el("div", { class: "sl-nome vuoto", text: "libero" }); U.targhe.appendChild(nv._targa);   // (7 nov 2026: «posto libero» non ci stava più tra gli avatar vicini)
+      var gtV = gettoniSl(), nv = el("div", { class: "sl-av sl-vuoto" + (gtV ? " entra" : "") }, [ el("div", { class: "sl-av-in" }, [ gtV ? el("div", { class: "sl-fig", html: SGGettone.palcoVuoto() }) : el("div", { class: "sl-sagoma" }) ]) ]);
+      nv._targa = el("div", { class: "sl-nome vuoto", text: gtV && U.link ? "Invita" : "libero" }); U.targhe.appendChild(nv._targa);   // (7 nov 2026: «posto libero» non ci stava più tra gli avatar vicini)
+      if (gtV && U.link) { nv.classList.add("invita"); nv.setAttribute("role", "button"); nv.setAttribute("aria-label", "Invita gli amici"); nv.addEventListener("click", function () { if (U.link && !U.link.disabled) U.link.click(); }); }
+      if (gtV) (function (x) { setTimeout(function () { x.classList.remove("entra"); }, 700); })(nv);
       U.stanza.insertBefore(nv, U.targhe); U.vuoti.push(nv);
     }
     // chi della Sala manca ancora: l'avatar grigio e trasparente (fermo, senza respiro) col nome e "…" (📶 se si sta
@@ -532,7 +540,7 @@
         U.stanza.insertBefore(x, U.targhe);
       }
       var cfg = a.omino || (window.SGOmino ? SGOmino.casuale(a.nome || a.id) : null), sigF = JSON.stringify(cfg);
-      if (x._sigF !== sigF) { x._sigF = sigF; x.firstChild.firstChild.innerHTML = cfg && window.SGOmino ? SGOmino.svg(cfg) : "<div class='sl-emo'>🙂</div>"; }
+      if (x._sigF !== sigF) { x._sigF = sigF; x.firstChild.firstChild.innerHTML = gettoniSl() ? SGGettone.palco(cfg) : cfg && window.SGOmino ? SGOmino.svg(cfg) : "<div class='sl-emo'>🙂</div>"; }
       var tx = (a.forse ? "📶 " : "") + (a.nome || "") + "…";
       if (x._targa.textContent !== tx) x._targa.textContent = tx;
       x._targa.classList.toggle("forse", !!a.forse);
@@ -610,7 +618,23 @@
       }
       zz = best.r > 1; pav = Math.max(0.3, Math.min(0.6, (piedi + (best.r - 1) * alzo + 10) / H));
     }
-    if (pos.length) { /* (avatar illustrati: già al loro posto) */ }
+    // 🏛️ coi gettoni (15 nov 2026): una griglia di pedane, tutte uguali, centrata nella stanza. Si sceglie il numero di colonne che
+    // dà i gettoni più grandi (al massimo 150 px); l'ultima fila, se è più corta, sta al centro. La nota in cima non va coperta
+    if (gettoniSl()) {
+      var GA = 1.28, NOME = 18, aW = W - 16, sopraG = Math.max(sopra, 44), aH = H - sopraG - 10, migl = null;
+      for (var gc = 1; gc <= tot; gc++) {
+        var gr = Math.ceil(tot / gc), gd = Math.min(aW / gc - 12, (aH / gr - NOME) / GA, 150);
+        if (!migl || gd > migl.d + 0.5) migl = { c: gc, r: gr, d: gd };
+      }
+      var gdd = Math.max(30, Math.floor(migl.d)), cella = gdd * GA + NOME, yTop = sopraG + Math.max(0, (aH - migl.r * cella) / 2), passoG = aW / migl.c;
+      for (var gi = 0; gi < tot; gi++) {
+        var riga = Math.floor(gi / migl.c), inRiga = Math.min(migl.c, tot - riga * migl.c), col = gi % migl.c;
+        var gx = W / 2 + (col - (inRiga - 1) / 2) * passoG, piediG = H - (yTop + riga * cella + gdd * GA);
+        pos.push({ x: gx, b: piediG, w: gdd, z: 4, tmax: Math.max(44, passoG - 6) });
+      }
+      zz = false; pav = 0.3;
+    }
+    if (pos.length) { /* (avatar illustrati o gettoni: già al loro posto) */ }
     else if (!zz) nodi.forEach(function (nd, i) { pos.push({ x: (i + 0.5) * W / tot, b: piedi, w: w1, z: 4, tmax: W / tot - 6 }); });
     else {
       var alzati = wB > wA, w = alzati ? wB : wA, m = w * 0.38 + 4, passo = (W - 2 * m) / (tot - 1), wb = w * 0.86;
@@ -623,7 +647,7 @@
       pav = Math.max(0.3, Math.min(0.55, (bb + 10) / H));   // il pavimento arriva fin dietro a chi sta dietro
     }
     st.style.setProperty("--pav", (pav * 100).toFixed(1) + "%");
-    st.classList.toggle("zz", zz);
+    st.classList.toggle("zz", zz); st.classList.toggle("tanti", tot >= 7);
     // ognuno al suo posto (e il suo nome sotto i piedi); chi si è spostato parte da dov'era (transform) e ci scivola
     var mossi = [];
     nodi.forEach(function (nd, i) {
@@ -658,7 +682,14 @@
   // il disegno dell'avatar: con la mano alzata quando è pronto (il braccio passa davanti ai capelli), l'anello sotto i piedi
   var CACHE_GESTI = {};   // i disegni col gesto, fatti una volta sola
   function illustrati() { try { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); } catch (e) { return false; } }
+  // 🏛️ i gettoni sul palco (15 nov 2026): la saletta li disegna con SGGettone.palco (pedana luminosa + disco di vetro)
+  function gettoniSl() { return !!(window.SGGettone && SGGettone.acceso() && SGGettone.palco); }
   function disegnaFigura(f, gestoDisegnato) {
+    if (gettoniSl()) {   // (il «pronto» lo accende il CSS: il disegno si rifà solo se cambia il gettone)
+      var sg = JSON.stringify(f.cfg || null);
+      if (f._gtSig !== sg) { f._gtSig = sg; f.fig.innerHTML = SGGettone.palco(f.cfg || SGGettone.riserva((f.p && f.p.nome) || f.k)); }
+      return;
+    }
     var o = f.manoSu ? { braccia: "uno" } : null;
     if (gestoDisegnato && !f.manoSu && f.cfg && window.SGOmino) {   // (avatar illustrati) per un attimo il braccio si alza davvero a salutare
       var kg = JSON.stringify(f.cfg) + "|" + gestoDisegnato;

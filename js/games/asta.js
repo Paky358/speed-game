@@ -3544,6 +3544,23 @@
   var VOTO_TETTO = 7, VOTO_TETTO_ERRORE = 6.5, VOTO_TETTO_PORTIERE = 7;   // senza gol né assist al massimo 7 (6,5 con un errore); il portiere senza rigore parato al massimo 7
   var RIG_A_PARTITA = 0.14;   // rigori a partita per squadra (Serie A 2025/26: 106 rigori in 380 partite)
   var RIG_CHI = [0.75, 0.2, 0.05];   // chi tira il rigore: il primo della lista 3 volte su 4, il secondo 1 su 5, il terzo raramente
+  // 🤕 CHI SUBISCE IL RIGORE (16 nov 2026, il proprietario col Cervello): si sceglie come chi segna (marcatore con PESO_GOL: gli attaccanti più
+  // spesso; null = uno che nel gioco non c'è), PRIMA di chi batte e di come va, MAI guardando l'esito. Chi batte resta il rigorista vero (il
+  // primo 3 volte su 4…); l'unica eccezione voluta dal proprietario: se il fallo l'ha subito il 2° o il 3° rigorista, lo batte lui 1 volta su 3
+  // (RIG_SUBITO; le altre 2 uno degli altri rigoristi, come sempre). Chi non è tra i rigoristi non lo batte mai. Niente bonus per il rigore
+  // procurato (fanta classico) e NON è un suo momento (16 nov 2026, il proprietario): il rigore si vede solo se qualcuno ha chi lo batte o il
+  // portiere che lo deve parare; quando si vede, chi l'ha subito c'è col suo nome se è vostro
+  var RIG_SUBITO = 1 / 3;
+  function chiBatte(l, sb) {   // l: rigoristiDi(squadra), sb: chi ha subito il fallo (o null). Torna un elemento di l (o null se la lista è vuota)
+    var i = -1; if (sb && sb.k) l.forEach(function (y, j) { if (i < 0 && y.k === sb.k) i = j; });
+    if (i > 0 && i <= 2 && caso01() < RIG_SUBITO) return l[i];
+    var p = l.map(function (y, j) { return j < l.length - 1 ? (RIG_CHI[j] || 0) : 0; }); if (l.length) p[l.length - 1] = Math.max(0, 1 - p.reduce(function (a, b) { return a + b; }, 0));   // (le probabilità di sempre: il primo 0,75, il secondo 0,2, l'ultimo il resto)
+    if (i > 0 && i <= 2) p[i] = 0;   // (il 2° o il 3° che ha subito il fallo e non lo batte: uno degli altri)
+    var tot = p.reduce(function (a, b) { return a + b; }, 0), z = caso01() * tot;
+    for (var j = 0; j < l.length; j++) { z -= p[j]; if (z < 0 && p[j] > 0) return l[j]; }
+    for (j = l.length - 1; j >= 0; j--) if (p[j] > 0) return l[j];
+    return l[0] || null;
+  }
   // 🧱 (15 nov 2026, il proprietario: «i difensori segnano un po' di più, non di tanto ma comunque sono da aumentare») D da 0,09 a 0.15: prima
   // i difensori facevano circa 6 gol su 100, ora circa 9 (in Serie A sono un po' di più: si resta un po' sotto). Tra difensori decide la quotazione
   var PESO_GOL = { A: 1, C: 0.32, D: 0.15, P: 0 }, PESO_ASS = { A: 0.55, C: 1, D: 0.35, P: 0.02 };
@@ -3775,10 +3792,8 @@
         P.ev.push({ m: minuto(), t: "ann", s: s, chi: ma ? ma.k : null, ass: aa ? aa.k : null, v: va, perche: fgA ? "fuorigioco" : aCaso(["fallo", "mano"]) });
       }
       if (caso01() < RIG_A_PARTITA) {   // 🎯 un rigore
-        var l = rigoristiDi(lato[s]), x = 0, z = caso01();
-        while (x < l.length - 1 && z > RIG_CHI[x]) { z -= RIG_CHI[x]; x++; }
-        var tir = l[x] || null, dentro = caso01() < (tir ? tir.conv : 0.76);
-        var er = { m: minuto(), t: dentro ? "rig" : caso01() < 0.65 ? "rigP" : "rigF", s: s, chi: tir ? (tir.k || tir.nome) : null, come: aCaso(["fallo", "fallo", "fallo", "mano", "var", "var"]) };
+        var l = rigoristiDi(lato[s]), sbR = marcatore(rosa, PESO_GOL), tir = chiBatte(l, sbR), dentro = caso01() < (tir ? tir.conv : 0.76);   // 🤕 (prima chi subisce, poi chi batte, poi come va)
+        var er = { m: minuto(), t: dentro ? "rig" : caso01() < 0.65 ? "rigP" : "rigF", s: s, chi: tir ? (tir.k || tir.nome) : null, sub: sbR ? sbR.k : null, come: aCaso(["fallo", "fallo", "fallo", "mano", "var", "var"]) };
         if (er.t === "rig" && caso01() < 0.06) er.v = "cucchiaio";
         if (er.t === "rigF") er.fin = aCaso(["fuori", "fuori", "palo", "traversa", "alto"]);
         if (caso01() < 0.06) er.rip = 1;   // (il portiere si era mosso prima: si tira due volte)
@@ -3789,9 +3804,8 @@
         }
       }
       if (caso01() < RIG_A_PARTITA * 2 / 6) {   // 📺 (14 nov 2026 sera) il VAR richiama l'arbitro per un rigore… e NON lo dà (tanti quanti i rigori dati dal VAR: «il VAR richiama» non vuol dire per forza rigore)
-        var ln = rigoristiDi(lato[s]), xn = 0, zn = caso01();
-        while (xn < ln.length - 1 && zn > RIG_CHI[xn]) { zn -= RIG_CHI[xn]; xn++; }
-        var tn = ln[xn] || null; P.ev.push({ m: minuto(), t: "rigN", s: s, chi: tn ? (tn.k || tn.nome) : null, come: "var" });
+        var ln = rigoristiDi(lato[s]), sbN = marcatore(rosa, PESO_GOL), tn = chiBatte(ln, sbN);   // 🤕 (anche qui chi ha subito il fallo: se no vederlo voleva dire «il VAR lo dà»)
+        P.ev.push({ m: minuto(), t: "rigN", s: s, chi: tn ? (tn.k || tn.nome) : null, sub: sbN ? sbN.k : null, come: "var" });
       }
       if (caso01() < 0.05) {   // 🙈 un autogol (il gol va agli altri)
         var dif = pescaPeso(rosa.filter(function (y) { return y.ruolo === "D"; }), function (y) { return y.q + 2; });
@@ -3846,6 +3860,7 @@
       if (dopo(e.chi)) e.chi = null;
       if (dopo(e.ass)) e.ass = null;
       if (dopo(e.ribChi)) e.ribChi = null;
+      if (e.sub && rossi[e.sub] != null && e.m >= rossi[e.sub]) e.sub = null;   // (🤕 chi è già fuori non subisce il rigore: uno che nel gioco non c'è)
       return true;
     });
     rifaiRisultati(P);
@@ -4007,7 +4022,7 @@
         var avv = e.s === "c" ? "f" : "c";
         if (e.t === "gol" || e.t === "rig") { dai(e.chi, e.m, "gol", 3, pi, ei); dai(e.ass, e.m, "ass", 1, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "sub", -1, pi, ei); }); presi[avv]++; }
         else if (e.t === "rigP") { dai(e.chi, e.m, "rig", -3, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "par", 3, pi, ei); }); }
-        else if (e.t === "rigF") dai(e.chi, e.m, "rig", -3, pi, ei);
+        else if (e.t === "rigF") { dai(e.chi, e.m, "rig", -3, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "rigF", 0, pi, ei); }); }   // 🧤 (15 nov 2026 notte, il proprietario: «se qualcuno ha il portiere, quel rigore deve vedersi»: il rigore contro un vostro portiere si vede in OGNI esito, se no vederlo voleva dire «non va fuori»)
         else if (e.t === "aut") { dai(e.chi, e.m, "aut", -2, pi, ei); por[e.s].forEach(function (y) { dai(y.k, e.m, "sub", -1, pi, ei); }); presi[e.s]++; }
         else if (e.t === "amm") dai(e.chi, e.m, "amm", -0.5, pi, ei);
         else if (e.t === "esp") dai(e.chi, e.m, "esp", e.dg ? -0.5 : -1, pi, ei);
@@ -4443,7 +4458,7 @@
   function listaMomenti(A, righe, gioDi, veloce) {
     var chi = {};
     righe.forEach(function (r) { gioDi(r).cal.forEach(function (x, k) { x.ev.forEach(function (e) { var key = e.p + "|" + e.e; (chi[key] = chi[key] || []).push({ r: r, c: r.kit[k], k: k, t: e.t, d: e.d, vv: e.vv }); }); }); });
-    var lista = veloce ? [] : [{ intervallo: true, sp: 1, m: 45.5 }, { zona: true, sp: 1, m: 74.9 }, { recupero: true, sp: 1, m: 90.5 }, { fischio: true, sp: 1, m: 98 }];   // (le giornate veloci: niente intervallo, niente Zona Cesarini)
+    var lista = veloce ? [] : [{ intervallo: true, sp: 1, m: FINE_PRIMO }, { zona: true, sp: 1, m: 74.9 }, { recupero: true, sp: 1, m: 90.5 }, { fischio: true, sp: 1, m: 98 }];   // (le giornate veloci: niente intervallo, niente Zona Cesarini)
     A.partite.forEach(function (P, pi) {
       P.ev.forEach(function (e, ei) {
         var q = chi[pi + "|" + ei] || [], dopo = P.ev[ei + 1], prima = P.ev[ei - 1];
@@ -4765,6 +4780,17 @@
   function semeDi(x) { return Math.round(x.e.m * 131 + x.p * 17 + (/^rig/.test(x.e.t || "") ? 3 : x.e.t === "ribP" ? 3 : (x.e.t || "").length) * 7 + ((x.e.chi || "").length * 3)); }   // (un rigore ha lo stesso seme comunque vada)
   // un momento con i vostri calciatori, in passi: 1) l'annuncio (col VAR prima, se il rigore arriva dal VAR), col campo fermo e i vostri
   // in formazione; 2) l'azione (due volte, se il rigore si ripete); 3) l'esito che resta coi punti (col gol annullato: il VAR e poi «annullato»)
+  // ⚽ DA CHE PARTE SI ATTACCA (15 nov 2026 notte, il proprietario: «nello stesso tempo la stessa squadra attacca una volta la porta di sopra
+  // e una volta quella di sotto»; prima la metà campo cambiava col minuto pari o dispari). Come nel calcio vero: per ogni partita un sorteggio
+  // fisso (dalle due squadre e dalla giornata: uguale su tutti i telefoni, MAI dall'esito) dice verso quale porta attacca la squadra di casa
+  // nel primo tempo; nel secondo tempo si cambia lato. sq: la squadra che attacca nell'azione (anche nell'autogol e nel fallo in difesa: chi
+  // ha le maglie «A» in campo). Il primo tempo finisce all'intervallo (FINE_PRIMO, come il momento dell'intervallo in listaMomenti): i minuti
+  // del recupero (91-95) sono del secondo tempo. verso +1: la porta in basso, −1: in alto
+  var FINE_PRIMO = 45.5;
+  function versoDi(P, gk, sq, m) {
+    var casa = (hashNome(P.c + "|" + P.f + "|" + (gk || 0) + "|campo") >>> 11) & 1 ? 1 : -1;
+    return (sq === P.c ? casa : -casa) * (m < FINE_PRIMO ? 1 : -1);
+  }
   function momentoSerieA(R, x, n, poi) {
     var e = x.e, P = x.P, nega = e.t === "rigN", t = e.t === "rigP" || e.t === "rigF" || nega ? "rig" : e.t === "ribP" ? "occ" : e.t, T = tempiAz(e.t), vv = R.gioVel, seme = semeDi(x);   // (vv: uguale su tutti i telefoni; nega: 📺 il rigore che il VAR non dà)
     // ⏳ nella Zona Cesarini il ritmo è serrato, ma UGUALE fino al tiro per tutto quello che si annuncia allo stesso modo (gol, gol annullato,
@@ -4803,6 +4829,13 @@
       var kT = t === "rig" ? trovaK(sqA, e.chi) : v === "punizione" ? primoBattitore(sqA, "punizioni") : v === "olimpico" ? primoBattitore(sqA, "angoli") : null;
       if (!kT || noti.some(function (y) { return y.k === kT; })) kT = tiratoreVero(sqA);
       if (kT) et.tira = { vero: true, k: kT, asp: aspCampo(kT), num: numeroMaglia(splitCalc(kT)).n };
+    }
+    // 🤕 (16 nov 2026, il proprietario) chi ha subito il rigore: nella lunetta, col suo nome sopra la testa se è vostro (NON è un suo momento: il
+    // rigore si vede solo per chi lo batte o per il portiere), se no il calciatore vero con la sua faccia e il suo numero; nessuno (null: uno che nel gioco non c'è) = uno qualunque. Se è
+    // lui a batterlo non c'è un altro. Uguale in ogni esito e anche nel rigore che il VAR non dà
+    if (et && t === "rig") {
+      var kS = e.sub || null, kTi = et.tira && et.tira.k;
+      if (!kS || kS !== kTi) et.sub = !kS ? null : noti.some(function (y) { return y.k === kS && !y.usato; }) ? tag(kS) : { vero: true, k: kS, asp: aspCampo(kS), num: numeroMaglia(splitCalc(kS)).n };
     }
     if (et && (v === "rimessa" || v === "rimessalunga")) { var kR = lanciatore(sqA); if (kR) et.rim = { vero: true, k: kR, asp: aspCampo(kR), num: numeroMaglia(splitCalc(kR)).n }; }   // 🙌 chi batte la rimessa
     function lanciatore(sq) {   // (di solito un terzino o un'ala: un difensore o un centrocampista titolare, dal seme della partita, mai chi segna o passa)
@@ -4844,7 +4877,7 @@
     // il rallentatore prima del tiro: deciso dal minuto e dal seme, MAI da come finisce (prima partiva solo sui non-gol: era uno spoiler).
     // Sempre sui rigori e dal 75', prima un tiro su tre
     if (e.v === "assedio" || e.v === "ultimo") T = [T[0], T[1], T[2] * 1.3, T[3]];
-    var op = { verso: (Math.round(e.m) + x.p) % 2 === 1 ? -1 : 1, lato: seme % 2 ? 1 : -1, seme: seme, rib: e.rib, ribGol: e.ribGol, come: e.come, noAng: e.noAng, difesa: difesa, lento: t === "rig" || zona || semeRnd(seme + 11)() < 0.33 };   // (stessa partita e stesso minuto: stessa metà campo)
+    var op = { verso: versoDi(P, R.gk, sqAtt, e.m), lato: seme % 2 ? 1 : -1, seme: seme, rib: e.rib, ribGol: e.ribGol, come: e.come, noAng: e.noAng, difesa: difesa, lento: t === "rig" || zona || semeRnd(seme + 11)() < 0.33 };   // (⚽ la porta che si attacca: la squadra e il tempo, versoDi)
     if ((t === "ann" && e.perche === "fuorigioco") || (t === "gol" && e.varOk === "fuorigioco")) { op.bandiera = true; op.fgOltre = t === "ann"; }   // 🚩 (gol annullato o convalidato: uguali fino alla decisione)
     if (e.t === "ribP" && P && P.ev[x.ei]) op.lato = semeDi({ e: P.ev[x.ei], p: x.p }) % 2 ? 1 : -1;   // (come la ribattuta che entra: x.ei è il rigore)
     if (e.t === "gol" && e.v === "ribattuta" && P && P.ev[x.ei - 1]) op.lato = semeDi({ e: P.ev[x.ei - 1], p: x.p }) % 2 ? 1 : -1;   // (la ribattuta dalla stessa parte del rigore: il rigore non sa come andrà)   // (il rigore e la sua ribattuta: anche lo stesso lato)
@@ -4912,6 +4945,7 @@
           if (q.sc.calcio != null) R.dopo(R.az.fino(q.sc, dq, q.sc.calcio), function () { gufoChiudi(R, gufo); });
           if (q.dunque && t !== "ann" && !varOk) R.dopo(R.az.fino(q.sc, dq, q.sc.dunque) + 700 * vv, function () { gufoEsito(R, gufo); });
         }
+        if (window.SG_PROVA_LATO) try { window.SG_PROVA_LATO({ p: x.p, c: P.c, f: P.f, gk: R.gk, m: e.m, t: e.t, A: q.sc.sqN && q.sc.sqN.A, verso: q.sc.verso }); } catch (er) {}   // (solo le prove nel browser)
         R.az.giocaPiano(q.sc, dq, R, q.dunque || function () {}, function () { esegui(i + 1); }); return;
       }
       if (q.varFg && !inRitardo(R) && R.az.fotoVar) R.az.fotoVar(sc);
@@ -5261,6 +5295,7 @@
     R.dopo(1400, function () {
       if (!vivoRivela(R)) return;
       viaAvviso(R);
+      if (window.SG_PROVA_LATO) try { window.SG_PROVA_LATO({ p: x.p, c: x.P.c, f: x.P.f, gk: R.gk, m: e.m, t: e.t, A: sc.sqN && sc.sqN.A, verso: sc.verso, replay: true }); } catch (er) {}   // (solo le prove nel browser)
       R.az.giocaPiano(sc, 4200, R, function () {}, function () {
         if (!vivoRivela(R)) return;
         if (b.dec && !q) avvisoCampo(R, 50, ["🔁 " + String(R.gr[w].r.nome).toUpperCase() + " PASSA IN TESTA", minTxt(e.m), "e resta in testa fino al fischio!"]);
@@ -6084,6 +6119,7 @@
       if (tipo === "gol" || tipo === "ann") sc.gol = true;
     } else if (tipo === "rig") {   // il rigore: la rincorsa, il tiro, il tuffo; con la ribattuta parata (rib) anche il secondo tiro
       tira = att("A", et.tira, [[0, 0.44, 0.66], [0.3, 0.45, 0.68], [0.42, 0.494, 0.741]]);
+      if (et.sub !== undefined) att("A", et.sub, [[0, 0.545, 0.6], [0.43, 0.545, 0.6], [0.6, 0.56, 0.66]], [[0, { cade: -0.8 }], [0.17, { cade: -0.8 }], [0.29, {}]]);   // 🤕 chi ha subito il fallo: nella lunetta (fuori dall'area, dove sul rigore non c'è nessuno: i posti degli altri sono BASE_RIG_*), ancora a terra, si rialza prima del tiro, poi entra con gli altri (uguale in ogni esito)
       att("arb", null, [[0, 0.3, 0.74]]); sc.fischi = [0.3];   // (l'arbitro fischia: si può tirare)
       palla([[0, 0.5, 0.75, 0], [0.42, 0.5, 0.75, 0]]);
       var qR = rnd() < 0.3 ? 1.9 : 0.3, lR = rnd() < 0.5 ? 1 : -1;   // (14 nov 2026 sera: i numeri a caso sempre gli stessi, con la ribattuta o senza: fino al calcio identico)
@@ -6211,6 +6247,7 @@
       if (tB != null) { gl.pose.push([tB, {}], [tB + 0.03, { bandiera: 1 }]); sc.bandiera = tB + 0.02; sc.gl = gl; sc.fgOltre = !!op.fgOltre; }
       sc.attori.push(gl, gl2);
     }
+    if (sc.calcio != null && tira) sc.batte = sc.attori.indexOf(tira);   // 🎯 (chi batte il rigore o la punizione: il suo nome fino al calcio)
     sc.parti = tipo === "rig" ? 0.14 : (v === "angolo" || v === "olimpico" || v === "portiere") ? 0.12 : v === "punizione" || v === "laterale" ? 0.1 : 0;   // (rigori e piazzati: si parte già pronti a battere)
     return sc;
   }
@@ -7346,6 +7383,7 @@
   }
   function nomeSottoPiedi(sc, p, ok) {   // a chi va il nome piccolo al tempo p: { i: l'attore, al: quanto si vede } o null (ok(i): ha un nome da scrivere)
     var N = NOME_PALLA, t0 = sc.paf != null ? sc.paf : sc.rete != null ? sc.rete : null, d;
+    if (sc.batte != null && sc.calcio != null && p <= sc.calcio + N.passo && ok(sc.batte)) return { i: sc.batte, al: Math.min(1, (p + N.passo) / N.entra) };   // 🎯 (15 nov 2026: chi batte il rigore o la punizione, dall'inizio fino al calcio)
     if (t0 != null && p >= t0) {   // (il portiere che para o prende gol)
       var gi = -1; sc.attori.forEach(function (a, k) { if (a.sq === "pD") gi = k; });
       if (gi >= 0 && ok(gi)) { d = p - t0; return d <= N.por ? { i: gi, al: Math.min(1, (d + N.passo) / N.entra) } : d <= N.por + N.via ? { i: gi, al: 1 - (d - N.por) / N.via } : null; }
@@ -7763,7 +7801,8 @@
         else if (f.numA != null) f.o.num = f.numA;
         var uk = u * ((f.o.asp && f.o.asp.alt) || 1);   // 📏 (l'altezza vera: l'omino e il nome sulla sua testa; l'alone a terra resta com'è)
         omino(f.x, f.y, uk, f.dir, f.kit, f.o);
-        if (f.chi) { var td = testaDi(f.x, f.y, uk, f.o, false); nomi.push({ chi: f.chi, alto: td.alto }); }
+        f.alto = testaDi(f.x, f.y, uk, f.o, false).alto;   // (la cima della testa: lì va il nome, anche di chi non è di nessuno)
+        if (f.chi) nomi.push({ chi: f.chi, alto: f.alto });
       });
       if (sc.paf != null && p >= sc.paf && p < sc.paf + 0.06) {   // 🧤 il colpo sul pallone: un lampo che si allarga e svanisce
         var qp = lungo(sc.palla, sc.paf, true), sp2 = qp ? P(sc, qp[1], qp[2]) : null, kp = (p - sc.paf) / 0.06;
@@ -7801,11 +7840,18 @@
       if (np && np.al > 0.02) {
         var fN = figure.filter(function (f) { return f.ai === np.i; })[0], tN = nomeVero(sc, sc.attori[np.i]);
         if (fN && tN) {
-          var sxN = w / 2 + (fN.x - cam.cx) * cam.z, syN = h / 2 + (fN.y - cam.cy) * cam.z, fsN = Math.max(8, Math.round(fs * 0.82));
-          if (sxN > -40 && sxN < w + 40 && syN > -10 && syN < h + 20) {
+          // 🏷️ (15 nov 2026, il proprietario) SOPRA la testa, piccolo, bianco col filo scuro e senza riquadro (le etichette dei vostri hanno il loro
+          // colore e la punta): non si confondono. Se sopra la testa cadrebbe sulla porta va sotto i piedi (mai sopra la porta)
+          var aN = fN.alto || [fN.x, fN.y - u * 3], sxN = w / 2 + (aN[0] - cam.cx) * cam.z, syN = h / 2 + (aN[1] - cam.cy) * cam.z, pyN = h / 2 + (fN.y - cam.cy) * cam.z, fsN = Math.max(8, Math.round(fs * 0.82));
+          if (sxN > -40 && sxN < w + 40 && syN > -10 && pyN < h + 20) {
             ctx.save(); ctx.font = "700 " + fsN + "px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.lineJoin = "round"; ctx.lineWidth = 2.5;
-            ctx.strokeStyle = "rgba(0,0,0," + (0.45 * np.al).toFixed(3) + ")"; ctx.fillStyle = "rgba(255,255,255," + (0.82 * np.al).toFixed(3) + ")";
-            var gkN = sc.attori[np.i] && /^p[AD]$/.test(sc.attori[np.i].sq), yN = gkN ? syN - u * 3.15 * cam.z : syN + fsN * 1.2;   // (15 nov 2026: il portiere col nome sopra la testa, mai sulla rete) ctx.strokeText(tN, sxN, yN); ctx.fillText(tN, sxN, yN); ctx.restore();
+            ctx.strokeStyle = "rgba(0,0,0," + (0.5 * np.al).toFixed(3) + ")"; ctx.fillStyle = "rgba(255,255,255," + (0.85 * np.al).toFixed(3) + ")";
+            var yN = syN - 3, lN = ctx.measureText(tN).width / 2 + 2;
+            var gA = P(sc, 0.4, GL - 0.01), gB = P(sc, 0.6, NET + 0.01), gx0 = w / 2 + (Math.min(gA[0], gB[0]) - cam.cx) * cam.z, gx1 = w / 2 + (Math.max(gA[0], gB[0]) - cam.cx) * cam.z;
+            var gy0 = h / 2 + (Math.min(gA[1], gB[1]) - cam.cy) * cam.z - fsN * 0.4, gy1 = h / 2 + (Math.max(gA[1], gB[1]) - cam.cy) * cam.z + fsN * 0.4;
+            var suPorta = function (y) { return sxN + lN > gx0 && sxN - lN < gx1 && y > gy0 && y - fsN < gy1; };
+            if (suPorta(yN) && !suPorta(pyN + fsN * 1.2)) yN = pyN + fsN * 1.2;
+            ctx.strokeText(tN, sxN, yN); ctx.fillText(tN, sxN, yN); ctx.restore();
           }
         }
       }
