@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 367,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: ricci, mossi e dreadlocks raccolti con le orecchie libere ✂️",
+    descrizione: [
+      "✂️ Anche i ricci, i mossi, i dreadlocks raccolti e le treccine raccolte lasciano libere le orecchie: i ricci restano pieni sopra e ai lati, i mossi hanno le punte all'insù sopra l'orecchio, i raccolti non hanno più ciocche che scendono ai lati."
+    ]
+  },
+  {
     v: 366,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: i tagli dei calciatori rifatti ✂️",
