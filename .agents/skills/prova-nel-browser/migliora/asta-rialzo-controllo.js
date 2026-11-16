@@ -190,8 +190,18 @@
     if (vm(C).fase !== "voto") no("la partita non arriva al voto (fase " + vm(C).fase + ")");
     var gs = vm(C).giocatori;
     gs.forEach(function (g) { if (g.crediti < 0) no(g.nome + " ha crediti negativi: " + g.crediti); });
-    NOMI.forEach(function (nm) { if (nm !== "Paky") W.reteDi(nm).invia({ t: "voto", voti: {}, s: vm(C).sessione }); });
-    if (!await W.aspetta(function () { return vm(C).fase === "fine" || W.clicca(P, /Chiudi il voto/); }, 8000)) no("il voto non si chiude");
+    // ⭐ (dall'11 nov 2026) la passerella dei kit: per ogni kit tutti gli altri danno 3 stelle, il kit va avanti da solo
+    for (var giro = 0; giro < NOMI.length + 2 && vm(C).fase === "voto"; giro++) {
+      var Q = vm(C).voto; if (!Q) { await W.dorme(200); continue; }
+      var k0 = Q.k;
+      vm(C).giocatori.forEach(function (g) {
+        if (g.id === Q.per) return;
+        if (g.nome === "Paky") { var st = P.document.querySelectorAll(".as-pas-sc .as-stelle button")[2]; if (st) st.click(); }
+        else W.reteDi(g.nome).invia({ t: "voto", per: Q.per, v: 3, s: vm(C).sessione });
+      });
+      if (!await W.aspetta(function () { var z = vm(C); return z.fase !== "voto" || (z.voto && z.voto.k !== k0); }, 8000)) no("votato tutti, il kit in passerella non va avanti");
+    }
+    if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 8000)) no("il voto non si chiude");
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 6000)) no("niente classifica");
     if (conti.rialzi < 3) no("troppo pochi rialzi da soli provati (" + conti.rialzi + ")");
     if (!aspettato) no("non ho provato l'asta che scade a tempo");
