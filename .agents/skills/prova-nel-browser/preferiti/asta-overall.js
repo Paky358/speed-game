@@ -66,17 +66,29 @@
     }
     if (vm(C).fase !== "fine") no("l'asta non finisce");
   }
-  // la formazione finale di Giulia: l'ordine in cui compaiono i valori sulle figurine (deve salire), e se partono coperte
+  // la classifica delle rose di Giulia (16 nov 2026: dal 15 nov è a figurine, «cr»: il vecchio campo grande coi bollini «.st-val» è nascosto, per
+  // questo la prova di prima non vedeva più niente): le rose escono una alla volta dalla più scarsa alla più forte (il totale, o la media
+  // dell'overall, deve salire), ognuna con le sue 5 figurine disegnate (col valore dentro), e nessun bollino del campo vecchio
   async function formazione(w, x) {
-    if (!await W.aspetta(function () { return q(w, ".st-rivela .st-campo"); }, 15000)) no("niente classifica delle rose");
-    var visti = [], fino = Date.now() + 9000;
-    while (Date.now() < fino && visti.length < 5) {
-      qa(w, ".st-campo .st-slot").forEach(function (s, i) { var v = s.querySelector(".st-val"); if (v && v.classList.contains("su") && !visti.some(function (y) { return y.i === i; })) visti.push({ i: i, v: +v.textContent }); });
+    if (!await W.aspetta(function () { return q(w, ".st-rivela .cr .cr-r"); }, 15000)) no("niente classifica delle rose a figurine");
+    var tutte = qa(w, ".cr .cr-r").length, visti = [], fino = Date.now() + 20000;
+    while (Date.now() < fino && visti.length < tutte) {
+      qa(w, ".cr .cr-r").forEach(function (r, i) {
+        if (!r.classList.contains("su") || visti.some(function (y) { return y.i === i; })) return;
+        var b = r.querySelector(".cr-tot b"), figs = [].slice.call(r.querySelectorAll(".cr-fimg, .cr-fnome"));
+        visti.push({ i: i, v: b ? +b.textContent.replace(",", ".") : NaN, nome: (r.querySelector(".cr-t b") || {}).textContent, figs: figs });
+      });
       await W.dorme(60);
     }
-    if (visti.length < 5) no("nella formazione finale non compaiono 5 valori (" + visti.length + ")");
-    for (var k = 1; k < visti.length; k++) if (visti[k].v < visti[k - 1].v) no("la formazione non va dal più scarso al più forte: " + visti.map(function (y) { return y.v; }).join(", "));
-    x.push("formazione: " + visti.map(function (y) { return y.v; }).join(" → "));
+    if (visti.length < tutte) no("nella classifica delle rose ne escono " + visti.length + " su " + tutte);
+    await W.dorme(400);
+    visti.forEach(function (y) {
+      if (y.figs.length !== 5) no("la rosa di " + y.nome + " ha " + y.figs.length + " figurine");
+      y.figs.forEach(function (fg) { if (fg.tagName === "IMG" && !(fg.getAttribute("src") || "").length) no("una figurina della rosa di " + y.nome + " non è disegnata"); });
+    });
+    for (var k = 1; k < visti.length; k++) if (visti[k].v < visti[k - 1].v) no("le rose non escono dalla più scarsa alla più forte: " + visti.map(function (y) { return y.v; }).join(", "));
+    if (qa(w, ".st-campo .st-slot .st-val.su").length) no("nella classifica si vedono ancora i bollini del campo vecchio");
+    x.push("classifica delle rose a figurine: " + visti.map(function (y) { return y.nome + " " + y.v; }).join(" → ") + ", 5 figurine disegnate per rosa");
     return visti;
   }
 

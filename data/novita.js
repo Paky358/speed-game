@@ -9,13 +9,22 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 360,
+    v: 361,
     data: "16 novembre 2026",
     titolo: "La linea del tempo: la spiegazione si legge prima, e si parte con due carte 🗓️",
     descrizione: [
       "📖 La spiegazione della carta adesso si legge PRIMA di scegliere dove metterla, sulla carta in mano, sotto il titolo. Abbiamo ricontrollato tutte le 1.920 spiegazioni: quelle che facevano capire l'anno (anni scritti, «trent'anni dopo», «durante il Covid»…) sono state riscritte.",
       "🃏🃏 La linea parte con due carte invece di una, in ogni modo di gioco (a turno, tutti insieme, «Ognuno la sua linea», online e sullo stesso telefono): chi gioca per primo non ha più una scelta troppo facile.",
       "📅 La scritta nella casella dell'anno non si taglia più: sui telefoni piccoli diventa più corta da sola."
+    ]
+  },
+  {
+    v: 360,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: si vede l'azione che porta al rigore 🤕",
+    descrizione: [
+      "🤕 Prima del rigore adesso si vede l'azione che lo provoca: chi lo subisce entra in area palla al piede e viene steso, oppure il tiro finisce sul braccio di un difensore. L'arbitro fischia e indica il dischetto, poi il rigore come sempre.",
+      "📺 Quando il rigore lo decide il VAR si vede il contatto e si continua a giocare, poi arriva «IL VAR RICHIAMA L'ARBITRO»: l'azione è la stessa sia quando il rigore viene dato sia quando no."
     ]
   },
   {
