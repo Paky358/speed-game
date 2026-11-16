@@ -36,6 +36,7 @@
   pezzo("asta-2018", "data/fanta-2018.js");   // 📅 la Serie A 2018-19 (solo se si sceglie quella stagione)
   pezzo("asta-2015", "data/fanta-2015.js");   // 📅 la Serie A 2015-16 (solo se si sceglie quella stagione)
   pezzo("asta-2016", "data/fanta-2016.js");   // 📅 la Serie A 2016-17 (solo se si sceglie quella stagione)
+  pezzo("asta-2020", "data/fanta-2020.js");   // 📅 la Serie A 2020-21 (solo se si sceglie quella stagione)
   pezzo("nomicose", "data/ncc-categorie.js js/games/nomicoseecitta.js", "studio");
 
   pezzo("impostore", "data/impostore-parole.js js/games/impostore.js");
