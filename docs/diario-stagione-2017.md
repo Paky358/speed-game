@@ -238,3 +238,22 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   **ov2** e **ov3** «nella formazione finale non compaiono 5 valori».
 - **dz1** (12 giocatori, scambi): passa con le 3 giornate accese; con 1 giornata (spente) dice «nel mercato in 12 le rose sono più piccole
   del minimo (89 px)». Forse il mercato in 12 con 1 giornata (la partita normale) è davvero troppo stretto: da guardare nella chat della Mini Asta.
+
+## 16 nov, giorno: IL CONTROLLO DEI DATI (il proprietario via Cervello: «facciamolo proprio bene, non voglio vedere errori»)
+### Numeri di maglia — fatto, tutte le stagioni
+- Seconda fonte: **FootballSquads** (archivio storico delle rose coi numeri; Transfermarkt blocca i programmi con una sfida anti-bot e non
+  l'abbiamo aggirata). Rose in `D:\SG-stagione-lavoro\ricerca\tm\<stagione>.json`; in `genera.js` il numero resta SOLO se FootballSquads dice
+  lo stesso (abbinamento per cognome e squadra, coi soprannomi brasiliani «Danilo», «Arthur» e le lettere speciali ø, č…).
+- Tolti perché la seconda fonte non li conferma (9): 2015-16 e 2016-17 Andelkovic (Palermo) 4; 2018-19 Ruiz (Napoli) 8, Nzonzi (Roma) 42;
+  2019-20 e 2020-21 Ruiz (Napoli) 8; 2023-24 Martin (Genoa) 3; 2025-26 Floriani Mussolini (Cremonese) 22. Tutti gli altri confermati.
+- 2017-18 (già con due fonti, Transfermarkt + Wikipedia inglese): ricontrollata anche con FootballSquads, nessun numero diverso.
+- Controlli automatici (`D:\SG-stagione-lavoro\controlli.js`): nessun numero doppio nella stessa squadra, nessuno oltre il 99, nessun
+  calciatore in due squadre, nessuna quotazione 0. 98 numeri diversi tra due stagioni per lo stesso calciatore nella stessa squadra: sono
+  confermati da due fonti in ogni stagione (cambi veri, es. Dybala 21 → 10).
+### Squadre con meno di 11 in campo — sistemate
+- Pescara ed Empoli 2016-17, Benevento 2017-18, Monza 2024-25 avevano meno di 10 calciatori di movimento: aggiunti SOLO per il campo i loro
+  calciatori veri con meno partite (da fantacalcio.it: Marilungo; Brignola, Parigini, Lombardi; Ciurria, D'Ambrosio).
+### Rigoristi
+- Il 1° rigorista ha tirato 0 rigori quell'anno (nessuno nei dati li ha tirati, si prende il più quotato): Udinese 2019-20 (De Paul),
+  Sampdoria 2022-23 (Gabbiadini). Da guardare.
+- Portieri con un gol: Brignoli (Benevento 2017-18, il colpo di testa al Milan): giusto.
