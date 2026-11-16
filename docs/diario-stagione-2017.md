@@ -101,3 +101,7 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - Numeri di maglia da Google (due fonti d'accordo): Milik 99, Rafinha 8, Meret 97 (formazioni ufficiali su inter.it + elenco dei numeri di
   Calciomercato). Brignoli (22 o 23) e Simy (99 solo su Wikipedia) senza numero. Altezze da fantacalcio.it.
 - All'asta adesso 199: P 20, D 58, C 76, A 45.
+- Poi: «Diabaté e Schick, Bernardeschi, Pazzini pure, basta che hanno alta quotazione»: aggiunti anche loro (Bernardeschi quot. 16,
+  Pazzini 14, Schick 10, Diabaté 10). Numeri: Bernardeschi 33, Pazzini 11, Diabaté 25 (due fonti: inter.it/Eurosport/Wikipedia/Calciomercato);
+  Schick senza (il 14 si trova solo nella stagione dopo). Pazzini diventa il primo rigorista del Verona (4 su 4 quell'anno).
+  All'asta adesso **203**: P 20, D 58, C 77, A 48.
