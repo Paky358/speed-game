@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 369,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i capelli in campo come sulle figurine ✂️",
+    descrizione: [
+      "⚽ In campo, dove i calciatori si vedono di profilo, i capelli non scendono più fino agli occhi come un casco: la fronte resta libera, l'orecchio pure, con la basetta sottile davanti. Come sulle figurine.",
+      "💇 Restano coperti solo dove deve essere: la frangia e il taglio a scodella sulla fronte, i capelli lunghi sulle orecchie."
+    ]
+  },
+  {
     v: 368,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la riga di lato e il mullet rifatti ✂️",

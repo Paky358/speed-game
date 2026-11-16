@@ -6870,6 +6870,14 @@
       if (t === "corti col ciuffo") { cx.beginPath(); cx.ellipse(fronte ? r * 0.18 : r * 0.32, cy - r * 1.02, r * 0.62, r * 0.32, fronte ? -0.25 : -0.35, 0, PI * 2); cx.fill(); }
       if (t === "lunghi" && fronte) { cx.beginPath(); cx.ellipse(-r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.fill(); cx.beginPath(); cx.ellipse(r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.fill(); }
     }
+    if (!fronte && parte === "sopra" && t !== "calvo" && t !== "pelato in cima") {   // ✂️ (16 nov 2026) di profilo come davanti: la fronte libera (tranne frangia e scodella), l'orecchio libero (tranne i capelli lunghi), la basetta sottile
+      var lungo = { "lunghi": 1, "lunghi mossi": 1, "lunghi ricci": 1, "afro": 1, "treccine": 1, "dreadlocks": 1 }[t];
+      cx.save(); cx.globalCompositeOperation = "destination-out"; cx.fillStyle = "#000";
+      if (t !== "frangia" && t !== "a scodella") { cx.beginPath(); cx.moveTo(r * 1.5, cy - r * 0.62); cx.lineTo(r * 0.66, cy - r * 0.62); cx.quadraticCurveTo(r * 0.3, cy - r * 0.54, r * 0.2, cy - r * 0.24); cx.lineTo(r * 0.17, cy + r * 0.4); cx.lineTo(r * 1.5, cy + r * 0.4); cx.closePath(); cx.fill(); }
+      if (!lungo) { cx.beginPath(); cx.ellipse(-r * 0.12, cy + r * 0.08, r * 0.21, r * 0.25, 0, 0, PI * 2); cx.fill(); }
+      cx.restore();
+      if (!lungo) { cx.fillStyle = cap; if (t === "rasato" || t === "sfumati alti" || t === "cresta" || t === "ricci alti") cx.globalAlpha = 0.5; cx.beginPath(); cx.moveTo(r * 0.08, cy - r * 0.26); cx.lineTo(r * 0.2, cy - r * 0.26); cx.lineTo(r * 0.17, cy + r * 0.06); cx.lineTo(r * 0.11, cy + r * 0.06); cx.closePath(); cx.fill(); cx.globalAlpha = 1; }
+    }
     }
     if (!parte || parte === "occhi") {
     cx.fillStyle = "#1a1210";   // gli occhi (semplici e uguali per tutti)
