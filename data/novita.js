@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 359,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i simboli delle pagelle disegnati, come nel fantacalcio vero ⚽",
+    descrizione: [
+      "⚽ Sotto ogni calciatore un simbolo per ogni bonus e malus, ripetuto quante volte serve, come nel fantacalcio vero: due gol sono due palloni, due gol subiti due porticine (niente più numeri).",
+      "🎨 I simboli sono disegnati da noi (pallone, scarpino, cartellini, porticina, lucchetto, guanto): si vedono uguali su iPhone e Android, più grandi di prima. Quando sono tanti si rimpiccioliscono un po' e vanno a capo, mai tagliati."
+    ]
+  },
+  {
     v: 358,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: nelle pagelle si vedono tutti i bonus e i malus 🧾",
