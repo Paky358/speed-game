@@ -150,6 +150,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
 <<<<<<< HEAD
+- 16 nov 2026 05:44 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2023-24, 232 all'asta) · master
 - 16 nov 2026 05:40 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2019-20, 194 all'asta) · master
 - 16 nov 2026 05:39 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2021-22, 225 all'asta) · master
 =======
