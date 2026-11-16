@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 366,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i tagli dei calciatori rifatti ✂️",
+    descrizione: [
+      "✂️ I tagli più usati sono rifatti come li portano i calciatori veri: le orecchie restano libere, le basette sono sottili, niente più capelli a casco.",
+      "👀 Ogni taglio si riconosce anche sulle figurine piccole: il rasato è quasi pelle, gli sfumati alti hanno i lati chiari e il blocco sopra, i medi sono pettinati di lato con la riga, i corti col ciuffo hanno il ciuffo alzato, i ricci corti hanno i riccioli piccoli sopra.",
+      "🔍 Le facce nell'editor e sulle figurine si disegnano alla risoluzione vera del telefono: più nitide."
+    ]
+  },
+  {
     v: 365,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: sui calci piazzati tutti in area ⚽",
