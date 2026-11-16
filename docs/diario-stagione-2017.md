@@ -227,3 +227,14 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - Un incidente della notte: alla 2019-20 l'unione con master (la v358 della Mini Asta, pubblicata nello stesso momento) ha avuto un conflitto
   nel registro docs/cervello.md e il programma è andato avanti lo stesso: i segni del conflitto sono rimasti nel registro su master per
   qualche minuto (solo il registro, il gioco no). Sistemato e corretto il programma (pipefail).
+
+### Il giro completo finale (16 nov, mattina presto): 58 OK, 10 NO su 68 — nessuno è un guasto delle stagioni
+- Miei, sistemati: **asp2** (l'editor delle facce: la prova cercava la faccia sul nome, ora si salva sul calciatore «fc<numero>»: prova
+  aggiornata, OK); **ct1** (continua la partita di tg2: con le 3 giornate spente si salta con lei).
+- Già sbagliate PRIMA delle stagioni (rifatte su una copia di master 2e5b935), da guardare nella chat della Mini Asta:
+  **pa4** «i titoli non girano sul maxischermo»; **paR** «ac1: il voto non si chiude» (asta dei temi; nel giro completo si ferma prima perché
+  `preferiti/asta-arbitro.js` usa gli stessi nomi ar1/ar2 delle prove vecchie del rialzo che paR richiama); **su1** «la scoperta (della rosa)
+  non finisce»; **gs3** «Giulia non ha visto le pagelle del primo tempo»; **tv2** «i telefoni non vanno insieme» (testa a testa, scarto 3,2 s);
+  **ov2** e **ov3** «nella formazione finale non compaiono 5 valori».
+- **dz1** (12 giocatori, scambi): passa con le 3 giornate accese; con 1 giornata (spente) dice «nel mercato in 12 le rose sono più piccole
+  del minimo (89 px)». Forse il mercato in 12 con 1 giornata (la partita normale) è davvero troppo stretto: da guardare nella chat della Mini Asta.

@@ -60,11 +60,12 @@
     if (nC && sez) { var dopo = [], x = sez.nextElementSibling; while (x) { if (x.classList.contains("fa-ed-r")) dopo.push(x); x = x.nextElementSibling; } if (dopo.length !== nC) ko.push("nella sezione solo per il campo ci sono " + dopo.length + " calciatori invece di " + nC); }
     var resta = function () { return +((d.querySelectorAll(".fa-ed-schede button")[1] || {}).textContent || "").replace(/\D+/g, ""); }, n0 = resta(), eraDc = S.vero(k1).dc;
     var ok = [].slice.call(d.querySelectorAll(".fa-ed-tasti button")).filter(function (b) { return /Va bene/.test(b.textContent); })[0]; ok.click(); await W.dorme(150);
-    if (!P[k1] || !P[k1].ok) ko.push("«Va bene» non salva la conferma");
+    var ch = function (k) { return (S.persona && S.persona(k)) || k; };   // 🧑 (16 nov 2026, facce condivise: la faccia si salva sul calciatore, «fc<numero>», non più sul nome)
+    if (!P[ch(k1)] || !P[ch(k1)].ok) ko.push("«Va bene» non salva la conferma");
     if (resta() !== n0 - (eraDc ? 1 : 0)) ko.push("dopo «Va bene» da controllare " + resta() + " (prima " + n0 + ")");
     var k2 = nome() + " (" + squad() + ")"; if (k2 === k1) ko.push("«Va bene» non apre il prossimo");
     var pelle = [].slice.call(d.querySelectorAll(".fa-ed-riga"))[0].children[6]; pelle.click(); await W.dorme(150);
-    if (!P[k2] || P[k2].p !== 7) ko.push("la pelle cambiata non si salva: " + JSON.stringify(P[k2]));
+    if (!P[ch(k2)] || P[ch(k2)].p !== 7) ko.push("la pelle cambiata non si salva: " + JSON.stringify(P[ch(k2)]));
     await W.dorme(3500);
     if (nome() + " (" + squad() + ")" !== k2) ko.push("dopo una correzione è passato da solo a un altro calciatore (deve restare lì)");
     var cerca = d.querySelector(".fa-ed-cerca"); cerca.value = "maignan"; cerca.dispatchEvent(new w.Event("input")); await W.dorme(150);
@@ -72,8 +73,9 @@
     var pel = [].slice.call(d.querySelectorAll(".fa-ed-riga"))[0].children[0]; pel.click(); await W.dorme(150);
     if (S.vero("Maignan (Milan)").p !== 1) ko.push("Maignan non cambia");
     var torna = [].slice.call(d.querySelectorAll(".fa-ed-tasti button")).filter(function (b) { return /Di partenza/.test(b.textContent); })[0];
-    if (!torna) ko.push("manca «↩ Di partenza»"); else { torna.click(); await W.dorme(150); if (S.vero("Maignan (Milan)").p !== 6 || P["Maignan (Milan)"]) ko.push("«Di partenza» non torna ai dati"); }
-    var salvato = JSON.parse(w.localStorage.getItem("sg-fanta-aspetto") || "{}"); if (!salvato[k1]) ko.push("la conferma non è sul telefono");
+    if (!torna) ko.push("manca «↩ Di partenza»"); else { torna.click(); await W.dorme(150); if (S.vero("Maignan (Milan)").p !== 6 || P["Maignan (Milan)"] || P[ch("Maignan (Milan)")]) ko.push("«Di partenza» non torna ai dati"); }
+    var salvato = JSON.parse(w.localStorage.getItem("sg-fanta-aspetto") || "{}"); if (!salvato[ch(k1)]) ko.push("la conferma non è sul telefono");
+
     var mis = R.scrollWidth > w.innerWidth + 1 ? "l'editor scorre di lato" : null; if (mis) ko.push(mis);
     d.querySelector(".fa-ed-x").click(); Object.keys(P).forEach(function (k) { delete P[k]; }); try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
     if (ko.length) no(ko.slice(0, 8).join(" | "));
