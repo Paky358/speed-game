@@ -2215,9 +2215,9 @@
   // =========================================================
   // le stagioni che ci sono (una alla volta, ognuna col suo pezzo "asta-<primo anno>" e il suo file data/fanta-<primo anno>.js). Una stagione
   // nuova: il suo nome qui, la riga pezzo(...) in js/elenco-giochi.js e il file dei dati (D:\SG-stagione-lavoro\genera.js <stagione>)
-  var ELENCO_STAGIONI = ["2015-16", "2016-17", "2017-18", "2018-19", "2020-21", "2022-23"];
+  var ELENCO_STAGIONI = ["2015-16", "2016-17", "2017-18", "2018-19", "2020-21", "2021-22", "2022-23"];
   var STAGIONI = {}; ELENCO_STAGIONI.forEach(function (s) { STAGIONI[s] = { pezzo: "asta-" + s.slice(0, 4), nome: "Serie A " + s, corto: s }; });
-  var DETTO_STAGIONE = { "2017-18": "Higuain, Mertens, Icardi, il primo VAR", "2022-23": "Il Napoli di Osimhen e Kvara" , "2018-19": "Cristiano Ronaldo alla Juve, Piatek e Quagliarella", "2015-16": "Higuain record a 36 gol, la Juve della rimonta", "2016-17": "La Juve del sesto scudetto, Dzeko capocannoniere", "2020-21": "L'Inter di Conte, lo scudetto dopo 11 anni"};
+  var DETTO_STAGIONE = { "2017-18": "Higuain, Mertens, Icardi, il primo VAR", "2022-23": "Il Napoli di Osimhen e Kvara" , "2018-19": "Cristiano Ronaldo alla Juve, Piatek e Quagliarella", "2015-16": "Higuain record a 36 gol, la Juve della rimonta", "2016-17": "La Juve del sesto scudetto, Dzeko capocannoniere", "2020-21": "L'Inter di Conte, lo scudetto dopo 11 anni", "2021-22": "Il Milan di Pioli campione d'Italia"};
    // (la riga sotto il nome nelle regole, dove c'è)
   var STAG_ATT = null, STAG_OGGI = null;
   var DATI_FANTA = ["CALCIATORI", "QUOTAZIONI", "STATISTICHE", "SQUADRE", "NUMERI", "ALTEZZE", "ASPETTO", "CAMPO", "MODULI", "RUOLI", "IDS"];   // (IDS: chi è ogni calciatore, per le facce condivise)
