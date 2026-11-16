@@ -92,3 +92,12 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
      (Roma, 12), **Diabaté** (Benevento, 10 partite e 8 gol, arrivato a gennaio), **Ciciretti** (Benevento, 12), **Bajic** (Udinese, 3),
      **Ceravolo** (Benevento, 1).
    - Errori di copia: nessuno trovato (nessun nome doppio, ogni calciatore in una squadra sola, ruoli classic di fantacalcio.it).
+
+### 16 nov, mattina: le risposte del proprietario
+- «Brignoli e Meret mettili, pure Milik, Simy, Rafinha se sono alti di quotazione mettili»: aggiunti all'asta (sotto le 19 partite), in
+  `D:\SG-stagione-lavoro\raccolta\fc1718-aggiunti.txt` (stessi dati di fantacalcio.it): Milik (Napoli, 12 partite, quot. 11), Simy (Crotone,
+  17, quot. 11), Rafinha (Inter, 16, quot. 17), Meret (SPAL, 13, quot. 9), Brignoli (Benevento, 13, quot. 1). Brignoli e Meret sono i portieri
+  all'asta di Benevento e SPAL al posto di Puggioni e Gomis (la risposta a «vuoi cambiarli?»), che restano in campo.
+- Numeri di maglia da Google (due fonti d'accordo): Milik 99, Rafinha 8, Meret 97 (formazioni ufficiali su inter.it + elenco dei numeri di
+  Calciomercato). Brignoli (22 o 23) e Simy (99 solo su Wikipedia) senza numero. Altezze da fantacalcio.it.
+- All'asta adesso 199: P 20, D 58, C 76, A 45.
