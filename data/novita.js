@@ -13,7 +13,7 @@ window.SG_NOVITA = [
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: chi subisce il rigore 🤕",
     descrizione: [
-      "🤕 Nei rigori adesso si vede chi ha subito il fallo: è ancora a terra nella lunetta e si rialza prima del tiro. Se è uno dei vostri calciatori ha il suo nome sopra la testa e il rigore diventa anche un suo momento (senza punti, come nel fantacalcio vero).",
+      "🤕 Nei rigori adesso si vede chi ha subito il fallo: è ancora a terra nella lunetta e si rialza prima del tiro. Se è uno dei vostri calciatori ha il suo nome sopra la testa (niente punti per il rigore procurato, come nel fantacalcio vero). Il rigore si vede come sempre quando qualcuno ha chi lo tira o il portiere.",
       "🎯 Il rigore lo batte sempre il rigorista vero. Ma se il fallo l'ha subito il secondo o il terzo rigorista della squadra, una volta su tre lo tira lui."
     ]
   },

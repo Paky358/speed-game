@@ -9,8 +9,9 @@
 //     fa), anche il nome di chi ha il pallone; chi ha subito il fallo c'è in ogni esito, fuori dall'area.
 // rs2 Senza telefoni, 4.000 giornate con rose a caso da 2 a 10: chi subisce il rigore non è mai un portiere, più spesso un attaccante; il 2°
 //     e il 3° rigorista che lo subiscono lo battono circa 1 volta su 3, il 1° circa 3 su 4, chi non è tra i rigoristi mai; chi subisce non
-//     dice niente sull'esito (quando è vostro i rigori finiscono in gol, parati e fuori come quando non lo è); ogni rigore (anche quello che
-//     il VAR non dà) che ha subito un vostro calciatore che non lo batte è un suo momento a 0 punti e si vede in campo.
+//     dice niente sull'esito (quando è vostro i rigori finiscono in gol, parati e fuori come quando non lo è); il rigore si vede SOLO se
+//     qualcuno ha chi lo batte o il portiere che lo deve parare: subito da un vostro, senza chi batte né portiere = NON si vede (16 nov
+//     2026, il proprietario); chi l'ha subito non ha mai un momento suo.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -66,16 +67,16 @@
     return prove + " rigori × 9 esiti: chi ha subito il fallo (vostro, vero o nessuno) c'è sempre, fuori dall'area, e fino al calcio tutto è identico";
   } });
 
-  COPIONE.aggiungi("rs2", { nome: "Mini Asta, chi subisce il rigore: come chi segna, mai un portiere; il 2° e il 3° rigorista lo battono 1 volta su 3; non dice l'esito; il suo momento senza punti", fai: async function () {
+  COPIONE.aggiungi("rs2", { nome: "Mini Asta, chi subisce il rigore: come chi segna, mai un portiere; il 2° e il 3° rigorista lo battono 1 volta su 3; non dice l'esito; si vede solo per chi batte o per il portiere", fai: async function () {
     var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = [], RU = {}, giornate = 4000;
     Object.keys(M.rose()).forEach(function (sq) { M.rose()[sq].forEach(function (y) { RU[y.k] = y.ruolo; }); });
-    var ruoli = { A: 0, C: 0, D: 0, P: 0, X: 0 }, tira = [[0, 0], [0, 0], [0, 0], [0, 0]], esV = {}, esN = {}, tot = 0, momenti = 0, nN = 0;
+    var ruoli = { A: 0, C: 0, D: 0, P: 0, X: 0 }, tira = [[0, 0], [0, 0], [0, 0], [0, 0]], esV = {}, esN = {}, tot = 0, momenti = 0, nN = 0, conSub = 0;
     function conta(o, t) { o[t] = (o[t] || 0) + 1; o.tot = (o.tot || 0) + 1; }
     for (var i = 0; i < giornate && ko.length < 20; i++) {
       var n = 2 + (i % 9), m = M.mazzo(n), righe = [], per = { P: [], D: [], C: [], A: [] }, Aq = {}, miei = {};
       m.forEach(function (c) { c.valore = 4 + (i * 7 + c.nome.length) % 20; (per[c.ruolo] = per[c.ruolo] || []).push(c); });
       for (var k = 0; k < n; k++) righe.push({ id: "g" + k, nome: "G" + k, kit: [per.P[k], per.D[k], per.C[2 * k], per.C[2 * k + 1], per.A[k]].filter(Boolean), totale: 50, crediti: 0 });
-      righe.forEach(function (r) { r.kit.forEach(function (c, kk) { miei[M.chiave(c)] = { r: r, k: kk }; }); });
+      var porDi = {}; righe.forEach(function (r) { r.kit.forEach(function (c, kk) { miei[M.chiave(c)] = { r: r, k: kk }; if (c.ruolo === "P") porDi[c.squadra] = 1; }); });
       M.giornata(righe, Aq);
       var lista = M.lista(Aq, righe, function (r) { return r.gio; }, false), vista = {};
       lista.forEach(function (x) { if (x.e && x.focus && x.e.t !== "ribP") vista[x.p + "|" + x.ei] = x; });
@@ -88,13 +89,14 @@
         tira[js < 0 ? 3 : Math.min(js, 2)][0]++; if (e.sub && e.sub === e.chi) tira[js < 0 ? 3 : Math.min(js, 2)][1]++;
         if (js < 0 && e.sub && e.sub === e.chi) ko.push("giornata " + i + ": batte il rigore chi l'ha subito ma non è tra i rigoristi (" + e.sub + ")");
         if (e.t !== "rigN") conta(e.sub && miei[e.sub] ? esV : esN, e.t);
-        var g = e.sub && miei[e.sub];
+        // si vede SOLO se qualcuno ha chi lo batte o il portiere che lo deve parare (16 nov 2026, il proprietario: chi l'ha subito non basta)
+        var g = e.sub && miei[e.sub], dif = e.s === "c" ? P.f : P.c, vedi = !!(e.chi && miei[e.chi]) || !!porDi[dif], visto = !!vista[pi + "|" + ei];
+        if (visto !== vedi) ko.push("giornata " + i + ": il rigore (" + e.t + ") " + (visto ? "si vede ma nessuno ha chi lo batte né il portiere" : "non si vede ma qualcuno ha chi lo batte o il portiere"));
         if (g && e.sub !== e.chi) {
           var mio = g.r.gio.cal[g.k].ev.filter(function (z) { return z.p === pi && z.e === ei; });
-          if (!mio.length) { ko.push("giornata " + i + ": il vostro che ha subito il rigore (" + e.t + ") non ha il suo momento"); return; }
-          if (mio.some(function (z) { return z.t === "rigS" && (z.d !== 0 || z.vo != null); })) ko.push("giornata " + i + ": il rigore subito dà qualcosa (" + JSON.stringify(mio) + ")");
-          if (!vista[pi + "|" + ei] || !vista[pi + "|" + ei].chi.some(function (y) { return y.r === g.r && y.k === g.k; })) ko.push("giornata " + i + ": il rigore (" + e.t + ") subito da un vostro non si vede");
-          momenti++; if (e.t === "rigN") nN++;
+          if (mio.length) ko.push("giornata " + i + ": il vostro che ha subito il rigore ha un momento suo (" + JSON.stringify(mio) + ")");
+          if (visto && vista[pi + "|" + ei].chi.some(function (y) { return y.r === g.r && y.k === g.k; })) ko.push("giornata " + i + ": chi ha subito il rigore è tra chi c'entra");
+          if (!vedi) { momenti++; if (e.t === "rigN") nN++; } else conSub++;
         }
       }); });
     }
@@ -105,9 +107,9 @@
     if (t1 < 68 || t1 > 82) no("il 1° rigorista che subisce lo batte il " + t1 + "% (deve essere circa 75%)");
     if (t2 < 27 || t2 > 40) no("il 2° rigorista che subisce lo batte il " + t2 + "% (deve essere circa 1 su 3)");
     if (tira[2][0] > 100 && (t3 < 25 || t3 > 42)) no("il 3° rigorista che subisce lo batte il " + t3 + "% (deve essere circa 1 su 3)");
-    if (!momenti || !nN) no("pochi casi: " + momenti + " momenti, " + nN + " col VAR");
+    if (!momenti || !nN || !conSub) no("pochi casi: " + momenti + " rigori subiti da un vostro senza chi batte né portiere, " + nN + " col VAR, " + conSub + " visti per chi batte o per il portiere");
     var gV = pc(esV.rig || 0, esV.tot), gN = pc(esN.rig || 0, esN.tot), pV = pc(esV.rigP || 0, esV.tot), pN = pc(esN.rigP || 0, esN.tot);
     if (Math.abs(gV - gN) > 4 || Math.abs(pV - pN) > 4) no("quando il rigore l'ha subito un vostro finisce diversamente: gol " + gV + "% / " + gN + "%, parati " + pV + "% / " + pN + "%");
-    return giornate + " giornate, " + tot + " rigori: chi subisce A " + pc(ruoli.A, tot) + "%, C " + pc(ruoli.C, tot) + "%, D " + pc(ruoli.D, tot) + "%, uno che nel gioco non c'è " + pc(ruoli.X, tot) + "%, portieri mai; chi subisce lo batte: 1° rigorista " + t1 + "%, 2° " + t2 + "%, 3° " + t3 + "%, gli altri mai; subito da un vostro: gol " + gV + "% (gli altri " + gN + "%), parati " + pV + "% (" + pN + "%); " + momenti + " momenti senza punti (" + nN + " col VAR che non lo dà), tutti visti";
+    return giornate + " giornate, " + tot + " rigori: chi subisce A " + pc(ruoli.A, tot) + "%, C " + pc(ruoli.C, tot) + "%, D " + pc(ruoli.D, tot) + "%, uno che nel gioco non c'è " + pc(ruoli.X, tot) + "%, portieri mai; chi subisce lo batte: 1° rigorista " + t1 + "%, 2° " + t2 + "%, 3° " + t3 + "%, gli altri mai; subito da un vostro: gol " + gV + "% (gli altri " + gN + "%), parati " + pV + "% (" + pN + "%); " + momenti + " rigori subiti da un vostro senza che nessuno abbia chi batte né il portiere (" + nN + " col VAR): NON visti; " + conSub + " visti per chi batte o per il portiere, con lui in campo ma senza un momento suo";
   } });
 })();

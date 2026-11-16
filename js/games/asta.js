@@ -3443,7 +3443,8 @@
   // spesso; null = uno che nel gioco non c'è), PRIMA di chi batte e di come va, MAI guardando l'esito. Chi batte resta il rigorista vero (il
   // primo 3 volte su 4…); l'unica eccezione voluta dal proprietario: se il fallo l'ha subito il 2° o il 3° rigorista, lo batte lui 1 volta su 3
   // (RIG_SUBITO; le altre 2 uno degli altri rigoristi, come sempre). Chi non è tra i rigoristi non lo batte mai. Niente bonus per il rigore
-  // procurato (fanta classico): se è comprato il rigore è anche un suo momento, senza punti («rigS»)
+  // procurato (fanta classico) e NON è un suo momento (16 nov 2026, il proprietario): il rigore si vede solo se qualcuno ha chi lo batte o il
+  // portiere che lo deve parare; quando si vede, chi l'ha subito c'è col suo nome se è vostro
   var RIG_SUBITO = 1 / 3;
   function chiBatte(l, sb) {   // l: rigoristiDi(squadra), sb: chi ha subito il fallo (o null). Torna un elemento di l (o null se la lista è vuota)
     var i = -1; if (sb && sb.k) l.forEach(function (y, j) { if (i < 0 && y.k === sb.k) i = j; });
@@ -3914,7 +3915,6 @@
       var por = { c: (rose[P.c] || []).filter(function (y) { return y.ruolo === "P"; }), f: (rose[P.f] || []).filter(function (y) { return y.ruolo === "P"; }) }, presi = { c: 0, f: 0 };
       P.ev.forEach(function (e, ei) {
         var avv = e.s === "c" ? "f" : "c";
-        if (/^rig[PFN]?$/.test(e.t) && e.sub && e.sub !== e.chi) dai(e.sub, e.m, "rigS", 0, pi, ei);   // 🤕 (chi ha subito il rigore: il momento è anche suo, senza punti; in ogni esito, anche se il VAR non lo dà)
         if (e.t === "gol" || e.t === "rig") { dai(e.chi, e.m, "gol", 3, pi, ei); dai(e.ass, e.m, "ass", 1, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "sub", -1, pi, ei); }); presi[avv]++; }
         else if (e.t === "rigP") { dai(e.chi, e.m, "rig", -3, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "par", 3, pi, ei); }); }
         else if (e.t === "rigF") { dai(e.chi, e.m, "rig", -3, pi, ei); por[avv].forEach(function (y) { dai(y.k, e.m, "rigF", 0, pi, ei); }); }   // 🧤 (15 nov 2026 notte, il proprietario: «se qualcuno ha il portiere, quel rigore deve vedersi»: il rigore contro un vostro portiere si vede in OGNI esito, se no vederlo voleva dire «non va fuori»)
@@ -4723,8 +4723,8 @@
       if (!kT || noti.some(function (y) { return y.k === kT; })) kT = tiratoreVero(sqA);
       if (kT) et.tira = { vero: true, k: kT, asp: aspCampo(kT), num: numeroMaglia(splitCalc(kT)).n };
     }
-    // 🤕 (16 nov 2026, il proprietario) chi ha subito il rigore: fuori dall'area, col suo nome sopra la testa se è vostro (il rigore è anche un
-    // suo momento), se no il calciatore vero con la sua faccia e il suo numero; nessuno (null: uno che nel gioco non c'è) = uno qualunque. Se è
+    // 🤕 (16 nov 2026, il proprietario) chi ha subito il rigore: nella lunetta, col suo nome sopra la testa se è vostro (NON è un suo momento: il
+    // rigore si vede solo per chi lo batte o per il portiere), se no il calciatore vero con la sua faccia e il suo numero; nessuno (null: uno che nel gioco non c'è) = uno qualunque. Se è
     // lui a batterlo non c'è un altro. Uguale in ogni esito e anche nel rigore che il VAR non dà
     if (et && t === "rig") {
       var kS = e.sub || null, kTi = et.tira && et.tira.k;
