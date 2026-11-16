@@ -22,12 +22,12 @@
 // tg5 Online in 3, rete a 300 ms: Paky (chi tiene la partita) ricarica la pagina a metà della seconda giornata; la partita riprende
 //     dallo stesso punto e tutti arrivano al podio allineati.
 // 🏆 (16 nov 2026) le 3 giornate sono SPENTE (TRE_GIORNATE = false in js/games/asta.js, il proprietario le vuole provare prima di persona):
-// finché l'interruttore è spento le prove tg0-tg5 si saltano da sole, con la riga «saltata: 3 giornate spente». Riaccese, tornano a girare.
+// finché l'interruttore è spento le prove tg0-tg5 (e ct1, che continua la partita di tg2) si saltano da sole, con la riga «saltata: 3 giornate spente». Riaccese, tornano a girare.
 (function () {
   var agg = COPIONE.aggiungi;
   COPIONE.__aggTG = agg;
   COPIONE.aggiungi = function (id, sc) {
-    if (/^tg[0-9]/.test(id) && sc && sc.fai) { var fai = sc.fai; sc.fai = async function () {
+    if (/^(tg[0-9]|ct1)$/.test(id) && sc && sc.fai) { var fai = sc.fai; sc.fai = async function () {
       var src = await (await fetch("/js/games/asta.js?" + Date.now())).text();
       if (/var TRE_GIORNATE = false/.test(src)) return "saltata: 3 giornate spente (TRE_GIORNATE in js/games/asta.js)";
       return fai.apply(this, arguments); }; }
