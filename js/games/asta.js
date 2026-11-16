@@ -604,11 +604,14 @@
     ".st-pag-av{pointer-events:auto;flex:none;margin:auto auto 2px;min-width:62%;width:auto;}",
     ".st-pv-num{display:flex;align-items:stretch;justify-content:center;width:100%;margin-top:2px;}.st-pv-c{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;}",
     ".st-pv-c+.st-pv-c{border-left:1.5px solid rgba(255,255,255,.28);}.st-pv .st-pv-c b{font-size:1.08rem;line-height:1.05;}.st-pv .st-pv-c.fv b{color:#ffe066;}",
-    ".st-pv .st-pv-c small{min-height:0;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.03em;}.st-pv-ic{min-height:1.05em;font-style:normal;font-size:.62rem;line-height:1.3;}",
+    ".st-pv .st-pv-c small{min-height:0;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.03em;}.st-pv-ic{min-height:1.05em;font-style:normal;font-size:.78rem;line-height:1.3;}",
     // (13 nov 2026, il proprietario: «i voti a volte sono grandi e a volte piccoli… a volte non si vedono bonus e malus») TUTTI i voti della stessa misura:
     // quella che fa stare «10,5» nella sua metà di casella (--pvf, la misura misuraPv); bonus e malus su una riga sola, che si rimpicciolisce se serve
     ".st-pv .st-pv-c{padding:0 1px;}.st-pv .st-pv-c b{white-space:nowrap;font-size:var(--pvf,1.08rem);letter-spacing:-.02em;}.st-pv>span{letter-spacing:-.02em;}",
     ".st-pv .st-pv-ic{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-align:center;letter-spacing:-.04em;}",
+    // 🧾 (16 nov 2026, il proprietario: «la gente gioca, vede sta cosa e si incazza») ogni bonus e malus si vede, raggruppato col numero (iconeConte):
+    // ⚽×2, 👟, 🟨, 🥅−2, 🔒; il numero un po' più piccolo, i cartellini un po' più grandi
+    ".st-pv-ic small{font-size:.8em;font-weight:900;color:#fff;letter-spacing:0;margin-left:.04em;}.st-pv-ic .sep{display:inline-block;width:.22em;}.st-pv-ic .ic-carta{width:.62em;height:.86em;}",
     ".st-pag-attesa{flex:none;margin:auto auto 6px;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.1);font-weight:800;font-size:.92rem;text-align:center;}",
     ".st-pag:not(.on),.st-pag:not(.on) *{pointer-events:none!important;}",   // (le pagelle nascoste non prendono i tocchi)
     // (ripasso del 12 nov 2026: il foglio delle regole era lungo tre schermi) le scelte a due nel ⚙️, una accanto all'altra
@@ -676,7 +679,7 @@
     ".st-pag-testa span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.st-pag-testa b{color:#ffe066;font-size:1rem;font-variant-numeric:tabular-nums;}",
     ".st-pag-voti{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;}",
     ".st-pv{position:relative;display:flex;flex-direction:column;align-items:center;padding:5px 2px 3px;border-radius:7px;background:rgba(255,255,255,.09);overflow:hidden;min-width:0;line-height:1.1;}",
-    ".st-pv i{position:absolute;left:0;right:0;top:0;height:3px;}",
+    ".st-pv>i{position:absolute;left:0;right:0;top:0;height:3px;}",   // (🏷️ 16 nov 2026: SOLO la barretta del ruolo; prima «.st-pv i» prendeva anche le icone di assist e cartellini, che sparivano)
     ".st-pv span{max-width:100%;font-size:.6rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
     ".st-pv b{font-size:1.15rem;font-weight:900;font-variant-numeric:tabular-nums;}.st-pv small{min-height:1.1em;font-size:.6rem;font-weight:800;color:#ffe066;white-space:nowrap;}",
     ".st-pv.v7 b,.st-pf-v.v7 b{color:#69db7c;}.st-pv.v65 b,.st-pf-v.v65 b{color:#c0eb75;}.st-pv.v6 b,.st-pf-v.v6 b{color:#fff;}.st-pv.v55 b,.st-pf-v.v55 b{color:#ffc078;}.st-pv.v5 b,.st-pf-v.v5 b{color:#ff6b6b;}",
@@ -3535,6 +3538,22 @@
     if (buf) fr.appendChild(document.createTextNode(buf)); return fr;
   }
   function conIcone(n, t) { n.appendChild(iconeNodi(t)); return n; }
+  // 🧾 I BONUS E MALUS DELLE PAGELLE (16 nov 2026, il proprietario): dal testo coi simboli (uno per ogni momento: «⚽⚽👟🥅🥅») a gruppi col numero,
+  // nell'ordine del fantacalcio: ⚽×2 👟 🧤 ❌ 🙈 🟨 🟥 🥅−2 🔒. Il conto torna sempre: voto + simboli = fantavoto (⚽ +3, 👟 +1, 🧤 +3, ❌ −3,
+  // 🙈 −2, 🟨 −0,5, 🟥 −1, 🥅 −1 a gol, 🔒 +1). Il rosso per il secondo giallo è −1 in tutto: lì si mostra solo 🟥 (chi lo compone toglie il 🟨)
+  var ORDINE_BONUS = ["⚽", "👟", "🧤", "❌", "🙈", "🟨", "🟥", "🥅", "🔒"];
+  function bonusIcone(n, t) {
+    var conta = {}; Array.from(String(t || "")).forEach(function (ch) { if (ORDINE_BONUS.indexOf(ch) >= 0) conta[ch] = (conta[ch] || 0) + 1; });
+    var primo = true;
+    ORDINE_BONUS.forEach(function (ch) {
+      var k = conta[ch]; if (!k) return;
+      if (!primo) n.appendChild(document.createElement("span")).className = "sep"; primo = false;
+      n.appendChild(iconeNodi(ch));
+      if (ch === "🥅") n.appendChild(document.createElement("small")).textContent = "−" + k;   // (i gol subiti: il numero col meno, mai una fila di porticine)
+      else if (k > 1) n.appendChild(document.createElement("small")).textContent = "×" + k;
+    });
+    return n;
+  }
   // 🗳️ VOTI GIUSTI (6 nov 2026, il proprietario: «non esiste che un giocatore prende 7,5 senza aver fatto nulla, figurati se sbaglia pure un
   // gol a porta vuota»; «il portiere, se non subisce gol, che cosa ha sbagliato? Niente»). Quanto cambia il voto (oltre ai bonus e malus, che
   // restano a parte; la porta inviolata è solo il +1). occ: chi tira e sbaglia (fuori, alto, palo, traversa, salvato sulla linea) −0,5; chi tira
@@ -4985,6 +5004,7 @@
         g.inv[q.k] = false; qd -= 1; g.ic[q.k] = g.ic[q.k].replace(EV_GIO.inv, ""); var lu = g.ev.querySelector("span.inv"); if (lu) lu.parentNode.removeChild(lu);
         persa.push(q.r.nome);
       }
+      if (q.t === "esp" && q.d === -0.5) g.ic[q.k] = g.ic[q.k].replace(EV_GIO.amm, "");   // 🧾 (16 nov 2026: il rosso per il secondo giallo vale −1 in tutto, giallo compreso: nelle pagelle solo 🟥, così il conto torna)
       g.bon[q.k] += qd; g.ic[q.k] += EV_GIO[q.t] || ""; g.pt.textContent = numFanta(totGio(g)); rianima(g.pt, "batte");
       g.ev.appendChild(conIcone(R.el("span", {}), EV_GIO[q.t] || "")); evAdatta(g.ev);
       g.nodo.classList.remove("piu", "meno"); void g.nodo.offsetWidth; g.nodo.classList.add(q.d > 0 ? "piu" : "meno");
@@ -5407,7 +5427,7 @@
     cv.font = cs.fontWeight + " 100px " + cs.fontFamily; var lw = (cv.measureText("10,5").width - 100 * 0.02 * 4) / 100;
     var fs = Math.max(9, Math.min(17.5, Math.floor((c.clientWidth - 3) / Math.max(1, lw) * 2) / 2));
     if (pag.__pvf !== fs) { pag.__pvf = fs; pag.style.setProperty("--pvf", fs + "px"); }
-    [].forEach.call(pag.querySelectorAll(".st-pv-ic"), function (e) { e.style.fontSize = ""; var f = parseFloat(getComputedStyle(e).fontSize) || 10; while (e.scrollWidth > e.clientWidth + 1 && f > 6.5) { f -= 0.5; e.style.fontSize = f + "px"; } });   // (bonus e malus: tutti visibili)
+    [].forEach.call(pag.querySelectorAll(".st-pv-ic"), function (e) { e.style.fontSize = ""; var f = parseFloat(getComputedStyle(e).fontSize) || 10; while (e.scrollWidth > e.clientWidth + 1 && f > 7) { f -= 0.5; e.style.fontSize = f + "px"; } });   // (bonus e malus: tutti visibili)
   }
   function pagelle(R, titolo, poi) {   // tutte le rose in pagina (a gruppi, se non ci stanno): ogni calciatore col suo voto
     var gs = listaGio(R).sort(perTotale), pag = R.pag, el = R.el, pagine = [], k = 0;
@@ -5427,7 +5447,7 @@
           return el("div", { class: "st-pv " + classeVoto(vv) }, [ el("i", { class: "as-rb-" + c.ruolo }), el("span", { text: nomeCampo(c.nome) }),
             el("div", { class: "st-pv-num" }, [ el("div", { class: "st-pv-c" }, [ numPv(el, vv), el("small", { text: "voto" }) ]),   // (il voto e, accanto, il fantavoto: grandi uguali)
               el("div", { class: "st-pv-c fv" }, [ numPv(el, vv + b), el("small", { text: "fanta" }) ]) ]),
-            conIcone(el("em", { class: "st-pv-ic" }), g.ic[kk] || "") ]);
+            bonusIcone(el("em", { class: "st-pv-ic" }), g.ic[kk] || "") ]);
         });
         return el("div", { class: "st-pag-p", style: "animation-delay:" + (j * 0.15) + "s" }, [
           el("div", { class: "st-pag-testa" }, [ el("img", { src: R.busti[g.r.id], alt: "" }), el("span", { text: g.r.nome, style: "color:" + R.colP[g.r.id] }), el("b", { text: g.base ? numFanta(totGio(g) - g.base) + " · tot " + numFanta(totGio(g)) : numFanta(totGio(g)) }) ]),   // (🏆 3ª giornata: la giornata e i punti sommati)
@@ -8079,10 +8099,10 @@
     function blocco(g) {
       var r = g.r, tot = el("b", { class: "st-pf-tot", text: "0" }), pos = el("i", { class: "st-pf-pos" });
       var tiles = r.gio.cal.map(function (c, kk) {
-        var cp = r.kit[kk], ic = c.ev.map(function (e) { return EV_GIO[e.t] || ""; }).join("");
+        var cp = r.kit[kk], dg = c.ev.some(function (e) { return e.t === "esp" && e.d === -0.5; }), ic = c.ev.map(function (e) { return dg && e.t === "amm" ? "" : EV_GIO[e.t] || ""; }).join("");   // 🧾 (il secondo giallo: solo 🟥, −1 in tutto)
         return el("div", { class: "st-pv nasc " + classeVoto(c.v) }, [ el("i", { class: "as-rb-" + cp.ruolo }), el("span", { text: nomeCampo(cp.nome) }),
           el("div", { class: "st-pv-num" }, [ el("div", { class: "st-pv-c" }, [ numPv(el, c.v), el("small", { text: "voto" }) ]), el("div", { class: "st-pv-c fv" }, [ numPv(el, c.fv), el("small", { text: "fanta" }) ]) ]),
-          conIcone(el("em", { class: "st-pv-ic" }), ic) ]);
+          bonusIcone(el("em", { class: "st-pv-ic" }), ic) ]);
       });
       var nodo = el("div", { class: "st-pag-p st-pfb" }, [ el("div", { class: "st-pag-testa st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome, style: "color:" + R.colP[r.id] }), pos, tot ]), el("div", { class: "st-pag-voti" }, tiles) ]);
       return { nodo: nodo, tot: tot, pos: pos, tiles: tiles };
