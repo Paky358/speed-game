@@ -112,4 +112,38 @@
     if (Math.abs(gV - gN) > 4 || Math.abs(pV - pN) > 4) no("quando il rigore l'ha subito un vostro finisce diversamente: gol " + gV + "% / " + gN + "%, parati " + pV + "% / " + pN + "%");
     return giornate + " giornate, " + tot + " rigori: chi subisce A " + pc(ruoli.A, tot) + "%, C " + pc(ruoli.C, tot) + "%, D " + pc(ruoli.D, tot) + "%, uno che nel gioco non c'è " + pc(ruoli.X, tot) + "%, portieri mai; chi subisce lo batte: 1° rigorista " + t1 + "%, 2° " + t2 + "%, 3° " + t3 + "%, gli altri mai; subito da un vostro: gol " + gV + "% (gli altri " + gN + "%), parati " + pV + "% (" + pN + "%); " + momenti + " rigori subiti da un vostro senza che nessuno abbia chi batte né il portiere (" + nN + " col VAR): NON visti; " + conSub + " visti per chi batte o per il portiere, con lui in campo ma senza un momento suo";
   } });
+
+  // rs3 (16 nov 2026, il proprietario: «l'azione che ha portato al rigore e poi il rigore») l'azione del fallo prima del dischetto (scena «frig»):
+  //     per come è nato il rigore (fallo, mano, VAR), 300 semi e chi l'ha subito (vostro, vero, nessuno, o lo batte lui): la scena è IDENTICA
+  //     qualunque cosa succeda dopo (gol, parata, fuori, rigore negato: la scena non lo sa); sul fallo chi lo subisce è in area e va giù al contatto;
+  //     col fallo e col mano l'arbitro fischia e indica il dischetto, col VAR niente fischio (si gioca, poi lo chiama il VAR)
+  COPIONE.aggiungi("rs3", { nome: "Mini Asta, l'azione che porta al rigore: identica in ogni esito, il fallo in area, il fischio e il dischetto (col VAR si gioca)", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = [], prove = 0, fischi = { fallo: 0, mano: 0, var: 0 };
+    var SUB = [["vostro", { nome: "Subito", faccia: "x", pc: "#ff0", pr: "Giulia", k: "Subito (Napoli)" }], ["vero", { vero: true, k: "Politano (Napoli)", num: 21 }], ["nessuno", null], ["lo batte lui", undefined]];
+    function firma(sc) { return JSON.stringify([sc.attori.map(function (a) { return [a.sq, a.chi && (a.chi.k || a.chi), a.pts, a.pose]; }), sc.palla, sc.fischi || null, sc.lento, sc.dunque]); }
+    ["fallo", "mano", "var"].forEach(function (cm) {
+      SUB.forEach(function (sb) {
+        for (var seme = 1; seme <= 300; seme++) {
+          var op = { verso: seme % 3 ? 1 : -1, lato: seme % 2 ? 1 : -1, seme: seme * 7919, lento: true, come: cm }, et = { tira: { vero: true, k: "Tira (Napoli)", num: 9 }, para: "Para" };
+          if (sb[1] !== undefined) et.sub = sb[1];
+          var l = [null, "gol", "parata", "fuori", "palo"].map(function (es) { var o = {}; for (var k in op) o[k] = op[k]; return M.scena("frig", null, es, es === "palo" ? "palo" : null, et, o); }), f0 = firma(l[0]);
+          prove++;
+          l.forEach(function (sc, i) { if (i && firma(sc) !== f0) ko.push(cm + " " + sb[0] + " seme " + seme + ": l'azione cambia con l'esito"); });
+          var sc = l[0], chiS = sb[1] !== undefined ? sb[1] : et.tira, a = sc.attori.filter(function (x) { return x.sq === "A" && x.chi === chiS; })[0];
+          if (!a) { ko.push(cm + " " + sb[0] + " seme " + seme + ": non c'è chi subisce"); continue; }
+          if (cm !== "mano") {
+            var q = dove(a.pts, 0.5), giu = a.pose.filter(function (p) { return p[0] <= 0.56; }).pop();
+            if (!q || q[1] < 0.63) ko.push(cm + " seme " + seme + ": al contatto chi subisce non è in area (" + (q && q[1].toFixed(2)) + ")");
+            if (!giu || !giu[1].cade) ko.push(cm + " seme " + seme + ": chi subisce non va giù");
+          }
+          var ar = sc.attori.filter(function (x) { return x.sq === "arb"; })[0], pu = ar && ar.pose.some(function (p) { return p[1].punta; });
+          if (cm === "var") { if (sc.fischi && sc.fischi.length) ko.push("VAR seme " + seme + ": l'arbitro fischia"); if (pu) ko.push("VAR seme " + seme + ": l'arbitro indica il dischetto"); }
+          else { if (!sc.fischi || !sc.fischi.length) ko.push(cm + " seme " + seme + ": niente fischio"); else fischi[cm]++; if (!pu) ko.push(cm + " seme " + seme + ": l'arbitro non indica il dischetto"); }
+          if (ko.length > 20) break;
+        }
+      });
+    });
+    if (ko.length) no(ko.length + " problemi: " + ko.slice(0, 5).join(" · "));
+    return prove + " azioni (fallo, mano, VAR × 4 modi di chi subisce × 300 semi): identiche con gol, parata, fuori, palo e senza esito; sul fallo in area e giù al contatto; fischio e dischetto " + (fischi.fallo + fischi.mano) + " volte, col VAR mai";
+  } });
 })();

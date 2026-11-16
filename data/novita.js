@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 360,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: si vede l'azione che porta al rigore 🤕",
+    descrizione: [
+      "🤕 Prima del rigore adesso si vede l'azione che lo provoca: chi lo subisce entra in area palla al piede e viene steso, oppure il tiro finisce sul braccio di un difensore. L'arbitro fischia e indica il dischetto, poi il rigore come sempre.",
+      "📺 Quando il rigore lo decide il VAR si vede il contatto e si continua a giocare, poi arriva «IL VAR RICHIAMA L'ARBITRO»: l'azione è la stessa sia quando il rigore viene dato sia quando no."
+    ]
+  },
+  {
     v: 359,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: i simboli delle pagelle disegnati, come nel fantacalcio vero ⚽",
