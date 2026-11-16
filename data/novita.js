@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 364,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: il pressing alto rivisto 🔥",
+    descrizione: [
+      "🔥 «PRESSING ALTO» davanti alla porta adesso vuol dire solo gol, tiro o fallo, e i gol col pressing escono un po' più spesso: finisce in gol come le altre azioni.",
+      "👏 Quando uno dei vostri ruba il pallone pulito, si vede come un'entrata nella metà campo degli altri (può finire col giallo o con la palla rubata), poi si riparte: niente più tiri che non entrano mai."
+    ]
+  },
+  {
     v: 363,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: nel pressing alto chi ruba palla tira 🏃",
