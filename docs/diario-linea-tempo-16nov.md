@@ -1,0 +1,381 @@
+# La linea del tempo — lavoro della notte del 16 nov 2026
+
+Chiesto dal proprietario dopo la prova del 15 nov sera (tramite il Cervello). Cartella `D:\SG-linea-tempo`, ramo `linea-tempo`.
+
+## Cosa è stato fatto
+1. **La spiegazione prima**: sulla carta in mano, sotto il titolo e larga quanto la carta (sotto la foto). Online la carta viaggia senza spiegazione: ogni telefono la prende dalle sue carte (`fattoDi`). I ricordi del gruppo non hanno spiegazione (c'è già «📸 Un ricordo di…»).
+2. **Le spiegazioni che svelavano l'anno**: lette tutte le 1.920 da 4 aiutanti Sonnet (480 a testa), proposte 117 da cambiare, rilette tutte da me (4 corrette: Bain era scozzese, l'Alexandra Palace, Diodato, il voto delle donne), poi una seconda ricerca automatica (anni, decenni, secoli, «X anni dopo») e altre 3 cambiate. In tutto **120**, elenco sotto. I TITOLI non sono stati toccati (le foto si ritrovano col titolo).
+3. **Due carte di partenza** in ogni modo: a turno e tutti insieme (stesso telefono e online), «Ognuno la sua linea» (due a testa, stesso telefono e online, anche chi arriva tardi). Le due carte sono di anni diversi quando si può. Le scritte «la carta di partenza non conta» sono diventate «le 2 carte di partenza non contano». Il numero di carte a testa tiene conto delle due (mazzo piccolo con l'Epoca).
+4. **La scritta dell'anno**: la casella misura quanto spazio ha e sceglie la scritta più lunga che ci sta («📅 L'anno? (facoltativo)», poi «L'anno? (facoltativo)», «… (se vuoi)», «L'anno?»), mai tagliata.
+5. **La linea di lato**: solo le foto di due proposte (A di lato, B in verticale) a 390×844 e 360×640 con 2, 6 e 15 carte, mandate al proprietario. Niente costruito.
+
+## Scelte piccole mie
+- La spiegazione sulla carta in mano è un po' più grande e più bianca di quella delle carte della linea, per leggerla bene.
+- Le due carte di partenza: le prime due del mazzo con anni diversi (il mazzo mette prima quelle mai viste).
+
+## Domande per il proprietario
+- La linea di lato: A o B (foto mandate)?
+- Sui telefoni piccoli (360×640) con la spiegazione sopra la linea che si vede si accorcia: va bene così o la spiegazione si apre toccando la carta?
+
+## Le spiegazioni cambiate
+
+- **L'Italia di Mancini vince l'Europeo a Wembley** (calcio#15)
+  - prima: A Wembley gli azzurri di Mancini battono l'Inghilterra ai rigori e riconquistano il titolo continentale: è l'Europeo «2020», rinviato di un anno per il Covid.
+  - dopo: A Wembley gli azzurri di Mancini battono l'Inghilterra ai rigori e riconquistano il titolo continentale: decide la parata di Donnarumma sull'ultimo tiro.
+- **Il Milan conquista il suo primo scudetto del dopoguerra** (calcio#60)
+  - prima: Il successo interrompe un'attesa di 44 anni per i rossoneri.
+  - dopo: Il successo riporta lo scudetto a Milano dopo una lunga attesa: in squadra c'è il celebre trio svedese Gre-No-Li.
+- **Il Napoli di Maradona vince il suo secondo scudetto** (calcio#170)
+  - prima: Il Milan si ferma nella «Fatal Verona» e gli azzurri festeggiano il secondo titolo in quattro anni.
+  - dopo: Il Milan si ferma nella «Fatal Verona» e gli azzurri di Maradona festeggiano il secondo titolo.
+- **Il portiere non può più prendere con le mani un passaggio di piede di un compagno** (calcio#171)
+  - prima: La regola del retropassaggio arriva subito dopo gli Europei in Svezia, per togliere le perdite di tempo.
+  - dopo: La regola nasce per togliere le perdite di tempo: prima i portieri potevano bloccare con le mani ogni pallone che un compagno gli passava col piede.
+- **In Serie A la vittoria comincia a valere tre punti invece di due** (calcio#175)
+  - prima: La regola arriva dopo i Mondiali americani, per spingere le squadre ad attaccare.
+  - dopo: La novità serve a spingere le squadre ad attaccare: vincere conviene di più, mentre il pareggio resta a un solo punto.
+- **Zidane passa dalla Juventus al Real Madrid** (calcio#181)
+  - prima: Per una cifra record: l'anno dopo segna al volo il gol che vale la Champions.
+  - dopo: Zidane lascia Torino per una cifra record: a Madrid segnerà un gol al volo diventato leggendario in una finale di Champions.
+- **Paolo Maldini gioca la sua ultima partita** (calcio#186)
+  - prima: Dopo quasi venticinque anni, tutti con la maglia del Milan.
+  - dopo: Tutta la carriera con la maglia del Milan, capitano per anni: il suo numero 3 viene ritirato dalla società.
+- **Francesco Totti dà l'addio alla Roma all'Olimpico** (calcio#192)
+  - prima: Dopo 25 anni in giallorosso legge una lettera commossa ai tifosi, con lo stadio in lacrime.
+  - dopo: Legge una lettera commossa ai tifosi, con lo stadio in lacrime: in carriera ha giocato solo con la maglia giallorossa.
+- **L'Italia perde lo spareggio con la Svezia e non va al Mondiale** (calcio#194)
+  - prima: Gli azzurri restano fuori dal Mondiale per la prima volta in sessant'anni.
+  - dopo: Dopo lo 0-0 di San Siro, gli azzurri restano fuori dal Mondiale: un'assenza che sembrava impossibile per quattro volte campioni del mondo.
+- **Luka Modrić vince il Pallone d'oro** (calcio#196)
+  - prima: Il croato interrompe dieci anni di premi divisi tra Messi e Cristiano Ronaldo.
+  - dopo: Il croato spezza il dominio di Messi e Cristiano Ronaldo, che si dividevano il premio da anni.
+- **Lo stadio della Juventus applaude la rovesciata di Cristiano Ronaldo** (calcio#197)
+  - prima: Gioca ancora con il Real Madrid: pochi mesi dopo passerà proprio alla Juventus.
+  - dopo: È la rovesciata in Champions contro la Juventus: l'intero stadio si alza ad applaudire l'avversario.
+- **La Macedonia del Nord elimina l'Italia negli spareggi per il Mondiale** (calcio#200)
+  - prima: A Palermo, all'ultimo minuto: gli azzurri campioni d'Europa restano fuori per la seconda volta di fila.
+  - dopo: A Palermo, all'ultimo minuto, il gol di Trajkovski lascia gli azzurri fuori dal Mondiale.
+- **Gianluigi Buffon annuncia il ritiro** (calcio#205)
+  - prima: Chiude al Parma, dove aveva cominciato quasi trent'anni prima.
+  - dopo: Chiude al Parma, dove aveva esordito da ragazzo: in carriera ha giocato anche con la Juventus e il Paris Saint-Germain.
+- **Il Napoli di Conte vince il quarto scudetto** (calcio#209)
+  - prima: Due anni dopo quello di Spalletti: decide l'ultima giornata, contro il Cagliari.
+  - dopo: Il Napoli di Conte vince lo scudetto all'ultima giornata, contro il Cagliari.
+- **Si tiene il primo Festival di Cannes** (cinema#153)
+  - prima: Doveva partire già nel 1939, ma fu annullato per lo scoppio della guerra.
+  - dopo: Il festival si tiene sulla Costa Azzurra, in Francia: ancora oggi il premio più ambito è la Palma d'oro.
+- **Debutta «Cenerentola» animato della Disney** (cinema#154)
+  - prima: Il suo successo rimette in sesto i conti della Disney dopo gli anni difficili della guerra.
+  - dopo: La storia della ragazza con la scarpetta di cristallo riporta la Disney al successo: ci sono i topolini Giac e Gus e la fata madrina.
+- **Debutta «Notte prima degli esami»** (cinema#194)
+  - prima: È ambientato nell'estate della maturità del 1989, con Giorgio Faletti nei panni del professore.
+  - dopo: È ambientato nell'estate della maturità, con Giorgio Faletti nei panni del professore.
+- **Debutta «C'è ancora domani» di Paola Cortellesi** (cinema#204)
+  - prima: È il suo primo film da regista, in bianco e nero: in Italia batte perfino «Barbie» negli incassi dell'anno.
+  - dopo: È il suo primo film da regista, girato in bianco e nero: racconta il riscatto di una madre di famiglia a Roma. Cortellesi è anche la protagonista.
+- **Debutta il «Lilo & Stitch» con gli attori in carne e ossa** (cinema#206)
+  - prima: Il rifacimento del cartone del 2002 supera il miliardo di dollari d'incasso.
+  - dopo: Il rifacimento del cartone animato con gli attori veri supera il miliardo di dollari d'incasso.
+- **Atari seppellisce nel deserto migliaia di cartucce invendute** (giochi#14)
+  - prima: Tra queste c'era il gioco di «E.T.»: le hanno ritrovate e dissotterrate trent'anni dopo.
+  - dopo: Tra queste c'era il gioco di «E.T.», considerato uno dei peggiori di sempre: le cartucce sono state ritrovate in una discarica nel deserto del New Mexico.
+- **Esce il primo «FIFA» di EA Sports** (giochi#33)
+  - prima: La serie di calcio cambierà nome solo trent'anni dopo.
+  - dopo: Il nome è quello della federazione internazionale: la serie di calcio più famosa dei videogiochi cambierà nome solo molti anni dopo.
+- **Minecraft esce nella versione completa** (giochi#64)
+  - prima: Il mondo fatto di cubi era in prova già da un paio d'anni.
+  - dopo: Il mondo fatto di cubi: si scava, si costruisce e si sopravvive alla notte, e ognuno ci fa quello che vuole.
+- **Esce «Skyrim»** (giochi#65)
+  - prima: Draghi e montagne innevate: esce in una data tutta di «1», l'11/11/11.
+  - dopo: Draghi e montagne innevate: si gioca nel gelido Skyrim, dove si può fare qualunque mestiere.
+- **Esce «Animal Crossing: New Horizons»** (giochi#77)
+  - prima: L'isola da arredare tiene compagnia a tutti durante il Covid.
+  - dopo: L'isola deserta da arredare, tra pesca, insetti e vicini animali, diventa il rifugio di milioni di giocatori.
+- **«Among Us» diventa un fenomeno mondiale** (giochi#78)
+  - prima: Il gioco dell'impostore sull'astronave: era uscito due anni prima quasi senza successo.
+  - dopo: Il gioco dell'impostore sull'astronave: basta un gruppo di amici per accusarsi a vicenda.
+- **Esce «Zelda: Breath of the Wild»** (giochi#111)
+  - prima: Esce insieme alla Switch: si può andare dovunque si vede.
+  - dopo: Un mondo aperto dove si può scalare qualsiasi montagna e planare giù col parapendio.
+- **Esce «Cuphead»** (giochi#167)
+  - prima: Disegnato a mano come i cartoni animati degli anni Trenta, e difficilissimo.
+  - dopo: Disegnato a mano come i vecchi cartoni animati, con un eroe che ha una tazza al posto della testa: difficilissimo.
+- **Esce «Hollow Knight: Silksong»** (giochi#174)
+  - prima: Atteso per più di sei anni: il giorno dell'uscita mandò in tilt i negozi online di videogiochi.
+  - dopo: Il seguito dell'amatissimo cavaliere-insetto: l'attesa è stata lunghissima e il giorno dell'uscita mandò in tilt i negozi online di videogiochi.
+- **Viene brevettato il fax** (invenzioni#3)
+  - prima: Sorpresa: la macchina per inviare immagini a distanza è più vecchia del telefono.
+  - dopo: Il brevetto è dello scozzese Alexander Bain: un pendolo scorre su un foglio e trasmette l'immagine a distanza.
+- **La BBC avvia il servizio televisivo regolare** (invenzioni#14)
+  - prima: A Londra parte la prima TV regolare ad alta definizione: Berlino trasmetteva già dall'anno prima.
+  - dopo: A Londra parte la prima TV regolare ad alta definizione: si trasmette dall'Alexandra Palace.
+- **Compaiono testimonianze dell'uso della ruota per il trasporto** (invenzioni#46)
+  - prima: I reperti collocano questa innovazione nel quarto millennio prima dell'era comune.
+  - dopo: I reperti più antichi mostrano carri con le ruote: cambia il modo di trasportare merci e persone.
+- **Martin Behaim realizza il globo Erdapfel** (invenzioni#73)
+  - prima: Il globo terrestre precede l'inclusione delle Americhe nella cartografia europea.
+  - dopo: Il globo terrestre, costruito a Norimberga, è il più antico globo ancora esistente.
+- **LIGO rileva direttamente onde gravitazionali** (invenzioni#160)
+  - prima: Il segnale proviene dalla fusione di due buchi neri; l'annuncio avverrà l'anno seguente.
+  - dopo: Il segnale proviene dalla fusione di due buchi neri lontanissimi: lo spazio si è increspato.
+- **In Inghilterra viene brevettata la scatoletta di latta per il cibo** (invenzioni#165)
+  - prima: Per decenni si aprì con martello e scalpello: l'apriscatole arrivò quasi cinquant'anni dopo.
+  - dopo: Per decenni si aprì con martello e scalpello: l'apriscatole arrivò molto più tardi.
+- **Antonio Meucci deposita la domanda provvisoria per il suo telettrofono** (invenzioni#171)
+  - prima: Non aveva i soldi per rinnovarla: nel 2002 la Camera americana ha riconosciuto il suo lavoro sul telefono.
+  - dopo: Non aveva i soldi per rinnovarla, e il suo lavoro sul telefono è stato riconosciuto solo molto tempo dopo dal Parlamento americano.
+- **Apple presenta il primo Macintosh** (invenzioni#199)
+  - prima: Lo annuncia con uno spot ispirato al romanzo '1984', trasmesso durante il Super Bowl.
+  - dopo: Lo annuncia con uno spot ispirato a un famoso romanzo di George Orwell, trasmesso durante il Super Bowl.
+- **In Italia arriva la legge sul divorzio** (italia#84)
+  - prima: Quattro anni dopo gli italiani votano per tenerla con un referendum.
+  - dopo: In Italia arriva la legge sul divorzio: gli italiani votano poi con un referendum per tenerla.
+- **Arrivano le domeniche a piedi** (italia#85)
+  - prima: Per la crisi del petrolio è vietato usare l'auto: si va in bici e coi pattini in autostrada.
+  - dopo: Per risparmiare benzina è vietato usare l'auto: si va in bici e coi pattini in autostrada.
+- **La Torre di Pisa riapre ai turisti** (italia#101)
+  - prima: Era chiusa da più di dieci anni per raddrizzarla un pochino.
+  - dopo: Dopo un lungo restauro per raddrizzarla un pochino, si può di nuovo salire fin sulla cima.
+- **Francesco Illy fonda a Trieste la sua ditta di caffè** (italia#104)
+  - prima: Secondo la Bialetti, è anche l'anno in cui nasce la moka.
+  - dopo: Trieste è da sempre la città italiana del caffè: da qui il marchio parte per tutto il mondo.
+- **Esce la Ferrari Testarossa** (italia#117)
+  - prima: Famosa per le «branchie» sulle fiancate: la guidano anche i poliziotti di «Miami Vice».
+  - dopo: Famosa per le «branchie» sulle fiancate e per il motore a dodici cilindri.
+- **Esce la nuova Fiat 500** (italia#121)
+  - prima: La presentano il 4 luglio, esattamente cinquant'anni dopo la prima Nuova 500.
+  - dopo: Rifà in grande lo stile della Nuova 500 di una volta: la presentano il 4 luglio.
+- **Alitalia fa il suo ultimo volo** (italia#123)
+  - prima: Dopo 75 anni di storia: dal giorno dopo, il 15 ottobre, al suo posto vola ITA Airways.
+  - dopo: Dal giorno dopo, il 15 ottobre, al suo posto vola ITA Airways: finisce la compagnia di bandiera italiana.
+- **Il festival dei fumetti si tiene per la prima volta a Lucca** (italia#129)
+  - prima: Era nato l'anno prima a Bordighera: oggi Lucca Comics è tra i più grandi del mondo.
+  - dopo: Oggi Lucca Comics è tra i più grandi del mondo, con migliaia di cosplayer in giro per la città.
+- **Il 2 giugno torna a essere un giorno di festa** (italia#137)
+  - prima: Dal 1977 la Festa della Repubblica si faceva la prima domenica di giugno, per non perdere un giorno di lavoro.
+  - dopo: Era stata spostata alla prima domenica di giugno per non perdere un giorno di lavoro: ora torna al suo giorno.
+- **L'Inno di Mameli diventa per legge l'inno ufficiale d'Italia** (italia#139)
+  - prima: Fino ad allora era «provvisorio», dal 1946: lo è rimasto per più di settant'anni.
+  - dopo: Fino ad allora era solo «provvisorio»: lo è rimasto per moltissimi anni.
+- **A Napoli si inaugura il Teatro San Carlo** (italia#142)
+  - prima: È il teatro d'opera più antico d'Europa ancora in attività: ha 41 anni più della Scala.
+  - dopo: È il teatro d'opera più antico d'Europa ancora in attività: più vecchio della Scala.
+- **All'Arena di Verona va in scena la prima opera: l'«Aida»** (italia#145)
+  - prima: Per festeggiare i cent'anni dalla nascita di Giuseppe Verdi.
+  - dopo: Per omaggiare Giuseppe Verdi, il grande compositore dell'opera italiana.
+- **Apre l'Acquario di Genova** (italia#149)
+  - prima: Nasce per la festa dei 500 anni del viaggio di Colombo, nel Porto Antico ridisegnato da Renzo Piano.
+  - dopo: Sorge nel Porto Antico di Genova, ridisegnato da Renzo Piano: oggi è tra gli acquari più visitati d'Italia.
+- **A Venezia riapre il teatro La Fenice dopo l'incendio** (italia#151)
+  - prima: Era bruciato nel 1996: ricostruito «com'era, dov'era».
+  - dopo: Un terribile incendio l'aveva distrutto: viene ricostruito «com'era, dov'era».
+- **I Pooh vincono Sanremo con «Uomini soli»** (musica#21)
+  - prima: Il gruppo è sulla scena da oltre vent'anni.
+  - dopo: Il gruppo è sulla scena da moltissimo tempo ed è uno dei più amati d'Italia.
+- **Povia vince Sanremo con «Vorrei avere il becco»** (musica#39)
+  - prima: Un anno prima era diventato famoso con «I bambini fanno ooh».
+  - dopo: È il cantautore di «I bambini fanno ooh», il suo primo grande successo.
+- **Diodato vince Sanremo con «Fai rumore»** (musica#53)
+  - prima: Poche settimane dopo l'Italia si chiude in casa per il Covid.
+  - dopo: Una ballata intensa, cantata quasi senza effetti, che conquista pubblico e giuria.
+- **Toto Cutugno vince l'Eurovision** (musica#59)
+  - prima: È la seconda vittoria dell'Italia: l'anno dopo il concorso si tiene a Roma.
+  - dopo: È la seconda vittoria dell'Italia al concorso: la canzone si intitola «Insieme».
+- **L'Eurovision si tiene a Torino** (musica#61)
+  - prima: L'Italia ospita la gara dopo la vittoria dei Måneskin.
+  - dopo: L'Italia ospita la gara in un grande palasport di Torino.
+- **Bennato e Nannini cantano «Un'estate italiana»** (musica#88)
+  - prima: Le «notti magiche» dei Mondiali giocati in Italia.
+  - dopo: Le «notti magiche» diventano il simbolo di un'estate di calcio vissuta davanti alla TV.
+- **Pavarotti, Domingo e Carreras cantano insieme a Caracalla** (musica#89)
+  - prima: Nasce il fenomeno dei Tre Tenori, la sera prima della finale mondiale.
+  - dopo: Nasce il fenomeno dei Tre Tenori, con un concerto nelle antiche terme romane.
+- **Antonello Venditti canta «Grazie Roma»** (musica#141)
+  - prima: Tutti pensano che sia scritta per lo scudetto della Roma, ma Venditti l'aveva incisa prima: diventa un inno da stadio.
+  - dopo: Tutti pensano che sia scritta per una grande festa giallorossa, ma Venditti l'aveva incisa prima: diventa un inno da stadio.
+- **Annalisa Minetti vince Sanremo con «Senza te o con te»** (musica#153)
+  - prima: L'anno prima aveva partecipato a Miss Italia.
+  - dopo: Prima di cantare era stata concorrente a Miss Italia: ora vince con la sua voce.
+- **Gli Eiffel 65 pubblicano in Italia «Blue (Da Ba Dee)»** (musica#154)
+  - prima: All'inizio va male: l'anno dopo la ballano in tutto il mondo.
+  - dopo: All'inizio va male, poi diventa un successo mondiale e la ballano ovunque.
+- **I Måneskin aprono il concerto dei Rolling Stones a Las Vegas** (musica#168)
+  - prima: Pochi mesi prima avevano vinto l'Eurovision.
+  - dopo: Una band italiana apre il concerto di una delle più grandi rock band di sempre, nella città dei casinò.
+- **I Sottotono portano «Mezze verità» a Sanremo** (rap#162)
+  - prima: Poco dopo il gruppo si scioglie: tornerà insieme solo vent'anni più tardi.
+  - dopo: Poco dopo il gruppo si scioglie e per molto tempo ognuno va per la sua strada.
+- **Dargen D'Amico canta «Dove si balla» a Sanremo** (rap#186)
+  - prima: Una canzone da ballare che ricorda gli anni Novanta: diventa un tormentone.
+  - dopo: Una canzone da pista da ballo, piena di ritmo: diventa un tormentone.
+- **Gli Articolo 31 cantano «Un bel viaggio» a Sanremo** (rap#190)
+  - prima: Per J-Ax e DJ Jad è il primo pezzo nuovo dopo quasi vent'anni.
+  - dopo: Per J-Ax e DJ Jad è il primo pezzo nuovo dopo una lunga pausa del duo.
+- **Gino Bartali vince il suo primo Tour de France** (sport#12)
+  - prima: Ne vincerà un altro a distanza di dieci anni.
+  - dopo: Il campione toscano, poi riconosciuto «Giusto tra le nazioni», vince la corsa a tappe più famosa del mondo.
+- **Bartali vince il Tour mentre l'Italia è in subbuglio** (sport#14)
+  - prima: Si racconta che la sua vittoria abbia aiutato a calmare il Paese dopo l'attentato a Togliatti.
+  - dopo: Si racconta che la sua vittoria abbia aiutato a calmare un Paese diviso.
+- **Alberto Ascari vince il primo Mondiale di Formula 1 per la Ferrari** (sport#17)
+  - prima: L'anno dopo fa il bis.
+  - dopo: Il pilota milanese conquista il titolo con la Ferrari e poi lo rivince.
+- **Niki Lauda vince il suo primo Mondiale con la Ferrari** (sport#35)
+  - prima: Riporta il titolo a Maranello dopo undici anni.
+  - dopo: Riporta il titolo a Maranello dopo una lunga attesa.
+- **Sara Simeoni vince l'oro olimpico nel salto in alto** (sport#42)
+  - prima: A Mosca: due anni prima aveva fatto il record del mondo.
+  - dopo: A Mosca: aveva già stabilito il record del mondo.
+- **Michael Schumacher vince il suo primo Mondiale con la Ferrari** (sport#60)
+  - prima: Il titolo piloti mancava a Maranello da ventun anni.
+  - dopo: Il titolo piloti mancava a Maranello da moltissimo tempo.
+- **Valentino Rossi vince l'ultimo Mondiale della classe 500** (sport#62)
+  - prima: L'anno dopo la classe regina si chiamerà MotoGP.
+  - dopo: Quella classe poi cambierà nome e diventerà la MotoGP.
+- **L'Italia vince la Coppa Davis per la seconda volta** (sport#79)
+  - prima: Trascinata da Jannik Sinner, quasi cinquant'anni dopo la prima.
+  - dopo: Trascinata da Jannik Sinner, torna sul tetto del mondo dopo una lunghissima attesa.
+- **Milano e Cortina ospitano le Olimpiadi invernali** (sport#82)
+  - prima: Per Cortina è la seconda volta, settant'anni dopo.
+  - dopo: Per Cortina è la seconda volta ad ospitare i Giochi.
+- **Borg e McEnroe giocano la finale di Wimbledon col tie-break infinito** (sport#93)
+  - prima: Vince Borg, il quinto Wimbledon di fila; il tie-break del quarto set finisce 18-16.
+  - dopo: Vince Borg, che si conferma re dell'erba; il tie-break del quarto set finisce 18-16.
+- **Australia II batte gli americani in America's Cup** (sport#94)
+  - prima: Gli Stati Uniti non perdevano la coppa da 132 anni.
+  - dopo: Per la prima volta nella storia, gli Stati Uniti perdono la coppa.
+- **Alex Zanardi vince l'oro paralimpico a Londra** (sport#103)
+  - prima: Sulla handbike, undici anni dopo l'incidente in cui aveva perso le gambe.
+  - dopo: Sulla handbike: l'ex pilota di Formula 1 che aveva perso le gambe in un incidente in pista vince due ori nella stessa edizione.
+- **Sebastian Vettel vince il quarto Mondiale di Formula 1 di fila** (sport#104)
+  - prima: Con la Red Bull, a soli 26 anni.
+  - dopo: Con la Red Bull: è il più giovane pilota ad aver vinto quattro titoli mondiali.
+- **Fausto Coppi batte il record dell'ora** (sport#122)
+  - prima: Al velodromo Vigorelli di Milano, in piena guerra.
+  - dopo: Al velodromo Vigorelli di Milano: l'impresa di Fausto Coppi, il «Campionissimo».
+- **Mike Tyson diventa il più giovane campione del mondo dei pesi massimi** (sport#131)
+  - prima: Ha 20 anni e batte Trevor Berbick in due round.
+  - dopo: Batte Trevor Berbick in due round a Las Vegas: il suo soprannome è «Iron Mike».
+- **Fernando Alonso vince il suo primo Mondiale di Formula 1** (sport#142)
+  - prima: A 24 anni è il più giovane campione fino a quel momento: interrompe la serie di Schumacher.
+  - dopo: Con la Renault: interrompe la serie di titoli di Schumacher ed è il più giovane campione fino a quel momento.
+- **Le Olimpiadi di Tokyo vengono rinviate di un anno** (sport#153)
+  - prima: Per la pandemia: si giocheranno l'anno dopo ma con il nome di prima, «Tokyo 2020».
+  - dopo: Il Giappone deve rimandare il più grande evento sportivo del mondo: non era mai successo in tempo di pace.
+- **Federica Brignone vince per la prima volta la Coppa del Mondo generale di sci** (sport#154)
+  - prima: In una stagione chiusa in anticipo per la pandemia: è la prima italiana a riuscirci.
+  - dopo: Vince la classifica generale di tutte le specialità, dal gigante al supergigante: è la prima italiana a riuscirci.
+- **Valentino Rossi corre la sua ultima gara nel Mondiale** (sport#156)
+  - prima: A Valencia, dopo 26 stagioni e nove titoli.
+  - dopo: A Valencia: si ritira dopo nove titoli mondiali, con il numero 46 sulla moto.
+- **La pallavolo maschile italiana vince il suo quarto Mondiale** (sport#158)
+  - prima: In finale batte la Polonia padrona di casa, ventiquattro anni dopo l'ultima volta, con una squadra giovanissima.
+  - dopo: In finale batte la Polonia padrona di casa, con una squadra giovanissima.
+- **LeBron James diventa il miglior marcatore della storia NBA** (sport#161)
+  - prima: Supera il record di Kareem Abdul-Jabbar, che resisteva da quasi 39 anni.
+  - dopo: Supera il record di Kareem Abdul-Jabbar, che sembrava imbattibile: lo fa con un tiro dalla media distanza contro Oklahoma City.
+- **Lewis Hamilton corre il suo primo Gran Premio con la Ferrari** (sport#164)
+  - prima: In Australia: il pilota dei sette Mondiali passa in rosso dopo dodici anni alla Mercedes.
+  - dopo: In Australia: il pilota dei sette Mondiali passa in rosso, lasciando la Mercedes.
+- **Marc Márquez torna campione del mondo con la Ducati** (sport#165)
+  - prima: In Giappone: è il suo nono titolo, sei anni dopo l'ultimo.
+  - dopo: In Giappone: è il suo nono titolo mondiale, dopo un lungo periodo difficile pieno di infortuni.
+- **Jasmine Paolini vince gli Internazionali d'Italia in singolare** (sport#166)
+  - prima: Al Foro Italico: un'italiana non li vinceva da quarant'anni.
+  - dopo: Al Foro Italico, davanti al pubblico di casa: in finale batte Coco Gauff.
+- **Prime notizie di lezioni a Oxford** (storia#8)
+  - prima: Si insegnava a Oxford già prima che nascesse l'impero azteco.
+  - dopo: È la più antica università del mondo di lingua inglese.
+- **Magellano parte per il giro del mondo** (storia#16)
+  - prima: La spedizione tornerà tre anni dopo: la prima a circumnavigare il pianeta.
+  - dopo: Cinque navi partono dalla Spagna: ne tornerà una sola, e senza Magellano, morto nelle Filippine.
+- **Nasce Galileo Galilei** (storia#17)
+  - prima: Il padre della scienza moderna nasce a Pisa lo stesso anno di Shakespeare.
+  - dopo: Il padre della scienza moderna nasce a Pisa: da adulto guarderà il cielo con il telescopio.
+- **Abraham Lincoln viene assassinato** (storia#26)
+  - prima: Il presidente USA è ucciso a teatro, pochi giorni dopo la fine della guerra civile.
+  - dopo: Il presidente USA è ucciso a teatro dall'attore John Wilkes Booth.
+- **Finisce la Prima guerra mondiale** (storia#35)
+  - prima: L'armistizio dell'11 novembre mette fine a quattro anni di trincee.
+  - dopo: L'armistizio dell'11 novembre mette fine al conflitto: milioni di soldati lasciano le trincee.
+- **Ultima esecuzione pubblica con la ghigliottina** (storia#39)
+  - prima: Sorpresa: in Francia accade ancora nel Novecento, non nei secoli lontani.
+  - dopo: Eugen Weidmann viene giustiziato a Versailles: le foto della folla fanno scandalo e da allora la ghigliottina si usa a porte chiuse.
+- **Viene assassinato il Mahatma Gandhi** (storia#43)
+  - prima: Il leader della non violenza indiana è ucciso pochi mesi dopo l'indipendenza.
+  - dopo: Il leader della non violenza indiana è ucciso a Nuova Delhi da un fanatico.
+- **Si dissolve l'Unione Sovietica** (storia#55)
+  - prima: L'URSS si scioglie in tanti Stati indipendenti dopo settant'anni.
+  - dopo: L'URSS si scioglie in tanti Stati indipendenti: Gorbaciov è l'ultimo leader sovietico.
+- **Mandela diventa presidente del Sudafrica** (storia#56)
+  - prima: Dopo 27 anni di carcere guida il Paese alla fine dell'apartheid.
+  - dopo: È il primo presidente nero del Sudafrica, eletto nelle prime elezioni aperte a tutti.
+- **Nasce Napoleone Bonaparte ad Ajaccio** (storia#184)
+  - prima: Genova aveva ceduto la Corsica alla Francia appena l'anno prima: per poco non nasce genovese.
+  - dopo: Nasce in Corsica da una famiglia di origini italiane: il cognome originale era Buonaparte.
+- **Goffredo Mameli scrive «Il Canto degli Italiani»** (storia#191)
+  - prima: Ha solo 20 anni; la musica la scrive Michele Novaro.
+  - dopo: La musica la scrive Michele Novaro: nasce come canto patriottico e oggi è l'inno nazionale.
+- **Comincia la guerra civile americana tra Nord e Sud** (storia#192)
+  - prima: È lo stesso anno in cui nasce il Regno d'Italia.
+  - dopo: Gli Stati del Sud si staccano dall'Unione e il presidente Lincoln guida il Nord: le prime cannonate sono a Fort Sumter.
+- **Firenze diventa la capitale d'Italia** (storia#194)
+  - prima: Lo resta solo sei anni, fino al trasferimento a Roma.
+  - dopo: Lascia Torino come capitale: ma solo per poco, perché la meta finale era Roma.
+- **Le donne italiane votano per la prima volta** (storia#204)
+  - prima: Prima alle elezioni comunali di primavera, poi al referendum tra monarchia e repubblica.
+  - dopo: Per la prima volta anche le italiane vanno alle urne e mettono la loro croce sulla scheda.
+- **Karol Wojtyła diventa papa Giovanni Paolo II** (storia#212)
+  - prima: È il primo papa non italiano dopo oltre 450 anni: «Se mi sbaglio mi corrigerete».
+  - dopo: È il primo papa polacco della storia: «Se mi sbaglio mi corrigerete».
+- **Nelson Mandela esce di prigione** (storia#214)
+  - prima: Dopo 27 anni di carcere esce camminando mano nella mano con la moglie Winnie.
+  - dopo: Esce camminando mano nella mano con la moglie Winnie: è il simbolo della lotta all'apartheid.
+- **La Germania torna a essere un solo Stato** (storia#215)
+  - prima: Succede il 3 ottobre, meno di un anno dopo la caduta del Muro: oggi è la festa nazionale tedesca.
+  - dopo: Succede il 3 ottobre, oggi festa nazionale tedesca: Est e Ovest tornano a essere un solo Paese.
+- **Il principe William sposa Kate Middleton** (storia#217)
+  - prima: Nell'abbazia di Westminster, trent'anni dopo il matrimonio dei genitori di lui.
+  - dopo: Nell'abbazia di Westminster, davanti a milioni di spettatori: lei viene da una famiglia borghese, non nobile.
+- **Muore la regina Elisabetta II** (storia#220)
+  - prima: Aveva regnato per 70 anni, più di qualunque altro sovrano britannico.
+  - dopo: Aveva regnato più di qualunque altro sovrano britannico: il funerale nell'abbazia di Westminster è seguito in tutto il mondo.
+- **Carlo III viene incoronato nell'abbazia di Westminster** (storia#221)
+  - prima: Era già re da otto mesi: l'incoronazione arriva dopo, con la corona di Sant'Edoardo.
+  - dopo: Si mette in testa la corona di Sant'Edoardo, e sua moglie Camilla diventa regina.
+- **La cattedrale di Notre-Dame a Parigi riapre dopo l'incendio** (storia#222)
+  - prima: Il tetto e la guglia erano bruciati cinque anni prima: ricostruiti in tempi da record.
+  - dopo: Il tetto e la guglia erano bruciati nell'incendio: ricostruiti in tempi da record.
+- **«Carosello» va in onda per l'ultima volta** (tv#5)
+  - prima: Dopo vent'anni chiude la pubblicità più amata dagli italiani.
+  - dopo: Chiude la pubblicità più amata dagli italiani, quella delle scenette dopo cui i bambini andavano a letto.
+- **Debutta «Uomini e donne»** (tv#16)
+  - prima: Maria De Filippi nel pomeriggio di Canale 5. Il trono dei tronisti arriva solo nel 2001.
+  - dopo: Maria De Filippi nel pomeriggio di Canale 5: in studio si parla d'amore e si scelgono i corteggiatori.
+- **Debutta «Chi vuol essere miliardario?» con Gerry Scotti** (tv#21)
+  - prima: Si vince in lire: con l'euro, nel 2002, diventa «milionario». «È la sua risposta definitiva?»
+  - dopo: Tre aiuti, quindici domande e la frase cult: «È la sua risposta definitiva?»
+- **Debutta il «Maurizio Costanzo Show»** (tv#44)
+  - prima: Il talk show andrà avanti per circa quarant'anni.
+  - dopo: Il talk show va avanti per moltissime puntate, da un teatro di Roma, il Parioli.
+- **Debutta «Happy Days»** (tv#58)
+  - prima: Fonzie e Richie Cunningham negli anni Cinquanta americani.
+  - dopo: Fonzie con il giubbotto di pelle, la moto e il jukebox che fa partire con un colpo.
+- **Mike Bongiorno porta «La ruota della fortuna» su Canale 5** (tv#145)
+  - prima: Il quiz americano diventa uno dei preferiti di Mike, che lo conduce fino al 2003.
+  - dopo: Il quiz americano diventa uno dei preferiti di Mike, che lo conduce per tanti anni.
+- **Debutta la serie «Romanzo criminale»** (tv#169)
+  - prima: Il Libanese, il Freddo e il Dandi nella Roma tra gli anni Settanta e Ottanta; prima c'era stato il film.
+  - dopo: Il Libanese, il Freddo e il Dandi e la loro banda che conquista Roma; prima c'era stato il film.
+- **Gerry Scotti riporta in TV «La ruota della fortuna»** (tv#186)
+  - prima: Torna per festeggiare i cento anni dalla nascita di Mike Bongiorno e piace tanto da diventare un appuntamento fisso.
+  - dopo: Torna per omaggiare Mike Bongiorno, che l'aveva condotta; piace tanto da diventare un appuntamento fisso.
+- **eventi-cinema.js** (eventi-cinema.js)
+  - prima: diventa un film di culto, con un seguito nel 2002.
+  - dopo: diventa un film di culto, con un seguito molti anni dopo.
+- **eventi-sport.js** (eventi-sport.js)
+  - prima: A Roma, a 18 anni: più tardi si chiamerà Muhammad Ali.
+  - dopo: A Roma, giovanissimo: più tardi si chiamerà Muhammad Ali.
+- **eventi-sport.js** (eventi-sport.js)
+  - prima: L'anno dopo fa il bis: al Foro Italico gli hanno dedicato un campo.
+  - dopo: Poi fa il bis: al Foro Italico gli hanno dedicato un campo.
