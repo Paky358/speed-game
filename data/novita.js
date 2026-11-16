@@ -9,6 +9,33 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 365,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: sui calci piazzati tutti in area ⚽",
+    descrizione: [
+      "⚽ Sugli angoli, le punizioni e le azioni in area chi attacca va tutto in area o al limite, coi vostri calciatori pronti a colpire: non si sa chi segnerà. Dietro restano solo uno o due difensori (i più bassi più spesso). Chi difende sta tutto nella sua area, tranne la punta che aspetta il contropiede.",
+      "🏷️ Con tanti vostri calciatori vicini, i nomi non si coprono più tra loro e non coprono la porta né il pallone. Nelle azioni manovrate i vostri attaccanti stanno al limite dell'area, pronti a ricevere."
+    ]
+  },
+  {
+    v: 364,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: il pressing alto rivisto 🔥",
+    descrizione: [
+      "🔥 «PRESSING ALTO» davanti alla porta adesso vuol dire solo gol, tiro o fallo, e i gol col pressing escono un po' più spesso: finisce in gol come le altre azioni.",
+      "👏 Quando uno dei vostri ruba il pallone pulito, si vede come un'entrata nella metà campo degli altri (può finire col giallo o con la palla rubata), poi si riparte: niente più tiri che non entrano mai."
+    ]
+  },
+  {
+    v: 363,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: nel pressing alto chi ruba palla tira 🏃",
+    descrizione: [
+      "🏃 Nel pressing alto, quando uno dei vostri ruba il pallone pulito al difensore, adesso fa due passi verso la porta e TIRA: parata, fuori, palo o salvataggio sulla linea (niente punti in più: resta il voto più alto per il recupero).",
+      "🎬 Il pressing alto ha una scena sola e una scritta sola, «🔥 PRESSING ALTO», che finisca in gol, in un tiro, in un fallo o in un pallone rubato: fino al contrasto non si capisce come va a finire."
+    ]
+  },
+  {
     v: 362,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: buste insieme su tutti i telefoni e mercato più leggibile ⏱️",
