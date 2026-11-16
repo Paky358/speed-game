@@ -34,6 +34,7 @@
   pezzo("asta-2017", "data/fanta-2017.js");   // 📅 la Serie A 2017-18 della Mini Asta: solo quando chi tiene la partita sceglie quella stagione
   pezzo("asta-2022", "data/fanta-2022.js");   // 📅 la Serie A 2022-23 (come sopra: solo se si sceglie quella stagione)
   pezzo("asta-2018", "data/fanta-2018.js");   // 📅 la Serie A 2018-19 (solo se si sceglie quella stagione)
+  pezzo("asta-2015", "data/fanta-2015.js");   // 📅 la Serie A 2015-16 (solo se si sceglie quella stagione)
   pezzo("nomicose", "data/ncc-categorie.js js/games/nomicoseecitta.js", "studio");
 
   pezzo("impostore", "data/impostore-parole.js js/games/impostore.js");
