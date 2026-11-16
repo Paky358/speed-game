@@ -314,3 +314,59 @@
     return ST + ": " + Object.keys(carte).length + " calciatori all'asta, tutti di quell'anno; giornata con le " + Object.keys(sqG).length + " squadre di allora; scritta dell'anno all'asta e nella giornata";
   } });
 })();
+
+// fe1 (16 nov 2026) «🎨 Facce dei calciatori» dal profilo di IL PAPPONE: il tasto c'è solo per lui; l'editor ha TUTTI i calciatori unici di oggi
+//     e di tutte le stagioni (uno per numero di fantacalcio.it: Barella una volta sola), dal più quotato; «Da fare» di partenza; la pelle a tasti
+//     grandi; «Salva e avanti ▶» salva sul calciatore e passa al prossimo da fare; contatore «fatte X su Y»; filtri stagione e squadra, «Fatte»;
+//     la faccia salvata si vede uguale con «Oggi» e nella 2017-18 (Barella dell'Inter e del Cagliari).
+(function () {
+  var W = window, A = COPIONE.aiuti, no = A.no;
+  function qa(w, s) { return [].slice.call(w.document.querySelectorAll(s)); }
+  COPIONE.aggiungi("fe1", { nome: "«🎨 Facce dei calciatori» nel profilo di IL PAPPONE: tutti i calciatori di tutte le stagioni, Salva e avanti, contatore, filtri", fai: async function () {
+    var x = [], ko = [];
+    var w0 = await W.apriTel("Paky", { x: 0 }); await w0.SG.scaricaGioco("asta"); w0.SGAstaAspetto.facce(); await W.dorme(1500);
+    if (w0.document.querySelector(".fa-ed")) ko.push("l'editor si apre anche per Paky");
+    var w = await W.apriTel("IL PAPPONE", { x: 420 }), d = w.document;
+    try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
+    // il tasto nel profilo
+    if (!await W.aspetta(function () { return W.clicca(w, /Profilo/, ".menu-sotto button, .ms-menu button, button"); }, 6000)) ko.push("non trovo il Profilo");
+    await W.dorme(800);
+    var tasto = qa(w, ".st-tasto").filter(function (b) { return /Facce dei calciatori/.test(b.textContent); })[0];
+    if (!tasto) ko.push("nel profilo di IL PAPPONE non c'è «🎨 Facce dei calciatori»"); else tasto.click();
+    if (!await W.aspetta(function () { return d.querySelector(".fa-ed.fa-ovunque .fa-ed-r"); }, 30000)) no("l'editor di tutte le stagioni non si apre (" + ko.join(" | ") + ")");
+    var S = w.SGAstaAspetto, P = S.prop(); Object.keys(P).forEach(function (k) { delete P[k]; });
+    var conta = function () { return (d.querySelector(".fa-ed-conta") || {}).textContent || ""; };
+    var tot = +(conta().replace(/\./g, "").match(/su (\d+)/) || [])[1];
+    if (!(tot > 1000)) ko.push("i calciatori in tutto sono " + tot + " (attesi più di 1.000)");
+    var schede = qa(w, ".fa-ed-schede button").map(function (b) { return b.textContent; });
+    if (!/^Da fare/.test(schede[0]) || !/on/.test(qa(w, ".fa-ed-schede button")[0].className)) ko.push("di partenza non è «Da fare»: " + schede.join(" / "));
+    var pelle = qa(w, ".fa-ed-riga.pelle .fa-ed-c"); if (pelle.length !== 7 || pelle[0].getBoundingClientRect().width < 40) ko.push("la pelle non ha 7 tasti grandi");
+    var nome = function () { return (d.querySelector(".fa-ed-info b") || {}).textContent; };
+    var n1 = nome(); pelle[6].click(); await W.dorme(200);
+    var avanti = qa(w, ".fa-ed-tasti button").filter(function (b) { return /Salva e avanti/.test(b.textContent); })[0];
+    if (!avanti) no("manca «Salva e avanti ▶»");
+    avanti.click(); await W.dorme(300);
+    var n2 = nome(); if (n2 === n1) ko.push("«Salva e avanti» non passa al prossimo");
+    pelle = qa(w, ".fa-ed-riga.pelle .fa-ed-c"); pelle[0].click(); await W.dorme(150); qa(w, ".fa-ed-tasti button").filter(function (b) { return /Salva e avanti/.test(b.textContent); })[0].click(); await W.dorme(300);
+    if (!/fatte 2 su/.test(conta())) ko.push("il contatore dice «" + conta() + "» dopo 2");
+    var fatte = Object.keys(P).filter(function (k) { return /^fc\d+$/.test(k); }); if (fatte.length !== 2) ko.push("salvate " + JSON.stringify(Object.keys(P)) + " (attese 2 sul calciatore fc<numero>)");
+    // un calciatore che c'è in più stagioni: Barella (oggi Inter, 2017-18 Cagliari) una volta sola, e la sua faccia vale in tutte e due
+    var cerca = d.querySelector(".fa-ed-cerca"); cerca.value = "barella"; cerca.dispatchEvent(new w.Event("input")); await W.dorme(200);
+    qa(w, ".fa-ed-schede button")[2].click(); await W.dorme(200);
+    var righe = qa(w, ".fa-ed-r").filter(function (r) { return /Barella/.test(r.textContent); });
+    if (righe.length !== 1) ko.push("Barella compare " + righe.length + " volte (deve essere una)"); else { righe[0].click(); await W.dorme(200); }
+    if (!/2017-18/.test((d.querySelector(".fa-ed-stag") || {}).textContent || "")) ko.push("nella scheda di Barella non c'è la 2017-18: «" + ((d.querySelector(".fa-ed-stag") || {}).textContent) + "»");
+    pelle = qa(w, ".fa-ed-riga.pelle .fa-ed-c"); pelle[1].click(); await W.dorme(200);
+    if (S.vero("Barella (Inter)").p !== 2) ko.push("la faccia di Barella non vale con «Oggi»");
+    S.stagione("2017-18"); if (S.vero("Barella (Cagliari)").p !== 2) ko.push("la faccia di Barella non vale nella 2017-18"); S.stagione(null);
+    // filtri
+    cerca.value = ""; cerca.dispatchEvent(new w.Event("input"));
+    var sel = d.querySelectorAll(".fa-ed-fil select"); sel[0].value = "2017-18"; sel[0].dispatchEvent(new w.Event("change")); sel[1].value = "Chievo"; sel[1].dispatchEvent(new w.Event("change")); await W.dorme(200);
+    var r2 = qa(w, ".fa-ed-r"); if (!r2.length || r2.some(function (r) { return !/Chievo/.test(r.textContent); })) ko.push("il filtro 2017-18 + Chievo non funziona (" + r2.length + ")");
+    qa(w, ".fa-ed-schede button")[1].click(); await W.dorme(200);
+    var mis = d.querySelector(".fa-ed").scrollWidth > w.innerWidth + 1; if (mis) ko.push("l'editor scorre di lato");
+    Object.keys(P).forEach(function (k) { delete P[k]; }); try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
+    if (ko.length) no(ko.slice(0, 8).join(" | "));
+    return "solo IL PAPPONE; " + tot + " calciatori unici; Da fare di partenza; pelle a 7 tasti grandi; Salva e avanti; contatore; Barella una volta, faccia uguale oggi e 2017-18; filtri stagione e squadra";
+  } });
+})();

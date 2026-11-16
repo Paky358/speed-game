@@ -266,3 +266,14 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   giallo: nel 2020-21 giallo con maniche rosse, forse giallorosso a righe), Salernitana 2021-22 e 2022-23 (corpo bianco nel template: forse
   è la maglia della festa), Verona e Sampdoria 2022-23 (corpo bianco), Spezia, Pisa 2025-26 (pagina non trovata). Le maglie sono una per
   squadra in tutte le stagioni (non cambiano di anno in anno).
+
+## 16 nov: «🎨 FACCE DEI CALCIATORI» (l'editor comodo per IL PAPPONE) — PUBBLICATO
+- Gemini fermato (la versione gratuita era intasata: 503/429). La pelle la fa il proprietario a mano; i battitori li cerca lui con Gemini Deep
+  Research e li manda (si cambia un battitore SOLO con la fonte e se il calciatore è nel gioco). Programmi pronti ma fermi:
+  `D:\SG-stagione-lavoro\gemini-pelle.js`, `gemini-battitori.js` (la chiave si legge dal file e non si scrive mai).
+- Nel PROFILO di IL PAPPONE il tasto «🎨 Facce dei calciatori» (resta anche «🎨 Personalizza i calciatori» nelle regole): TUTTI i calciatori
+  unici di oggi e delle 11 stagioni (1.271, uno per numero di fantacalcio.it anche se ha cambiato squadra), dal più quotato. In alto «fatte X
+  su 1.271»; schede «Da fare» (di partenza) / «Fatte» / «Tutti»; filtri stagione e squadra; ricerca. Nella scheda la figurina che cambia, la
+  PELLE a 7 tasti grandi su una riga, capelli, taglio, barba, forma; «Salva e avanti ▶» salva sul calciatore (fc<numero>: vale in tutte le
+  stagioni) e passa al prossimo da fare. Nella lista al massimo 60 righe (il telefono non si ferma): per gli altri, ricerca e filtri.
+- Prova fe1 (in preferiti/asta-stagione.js) OK, asp2 e st5 OK. Foto: `.agents/skills/prova-nel-browser/asta-grafica/foto-facce.js`.

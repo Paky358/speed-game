@@ -141,6 +141,18 @@
         el("span", { class: "st-tasto-testo" }, [ el("b", { text: "I Bot" }), el("small", { text: "Avatar, nomi e livelli dei bot di tutti i giochi" }) ]),
         el("span", { class: "st-tasto-va", text: "›" })
       ]));
+      // 🎨 (16 nov 2026) solo il proprietario: le facce di TUTTI i calciatori della Mini Asta, oggi e tutte le stagioni (l'editor sta nel gioco: si scarica)
+      if (eProprietario()) sp._contenuto.appendChild(el("button", { class: "st-tasto st-facce", onclick: function () {
+        var g = cuore.giocoDa && cuore.giocoDa("astafanta");
+        var apri = function () { if (window.SGAstaAspetto && SGAstaAspetto.facce) SGAstaAspetto.facce(); };
+        if (!cuore.aspettaGioco(g, apri, { indietro: function () { schermataAccessoCloud(dopo); } })) apri();
+
+      } }, [
+        el("span", { class: "st-tasto-ico", text: "🎨" }),
+        el("span", { class: "st-tasto-testo" }, [ el("b", { text: "Facce dei calciatori" }), el("small", { text: "Tutti i calciatori della Mini Asta, di oggi e di tutte le stagioni" }) ]),
+        el("span", { class: "st-tasto-va", text: "›" })
+      ]));
+
       // 🎨 gli avatar «illustrati» (strada A): solo gli account di prova (IL PAPPONE e MARIO), finché li provano loro (l'app si riapre, così ogni gioco li ridisegna)
       if (AVATAR_A === "proprietario" && avatarAAmmesso() && window.SGOmino) sp._contenuto.appendChild(el("button", { class: "st-tasto st-avnuovi st-ava", onclick: function () {
         try { localStorage.setItem("sg-avatar-a", avatarASpento() ? "1" : "0"); } catch (e) {}
