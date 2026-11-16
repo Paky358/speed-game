@@ -257,3 +257,12 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - Il 1° rigorista ha tirato 0 rigori quell'anno (nessuno nei dati li ha tirati, si prende il più quotato): Udinese 2019-20 (De Paul),
   Sampdoria 2022-23 (Gabbiadini). Da guardare.
 - Portieri con un gol: Brignoli (Benevento 2017-18, il colpo di testa al Milan): giusto.
+### Maglie — ricontrollate
+- Divise di casa VERE per squadra e stagione dalle pagine inglesi delle stagioni (template della divisa: colori di corpo, maniche,
+  pantaloncini, calzettoni) in `D:\SG-stagione-lavoro\ricerca\maglie\maglie.json` (59 squadre-stagioni, 48 complete). Il disegno del petto
+  (righe, metà e metà, banda) era già giusto; corretti pantaloncini e calzettoni: Chievo gialli (non blu), Crotone blu, Empoli pantaloncini
+  blu, Cremonese pantaloncini rossi, Carpi e Pescara calzettoni bianchi, Palermo calzettoni neri; SPAL maniche azzurre.
+- Da guardare (il template ha il corpo bianco o vuoto e i colori stanno solo nel disegno su Commons): Benevento (noi rosso col colletto
+  giallo: nel 2020-21 giallo con maniche rosse, forse giallorosso a righe), Salernitana 2021-22 e 2022-23 (corpo bianco nel template: forse
+  è la maglia della festa), Verona e Sampdoria 2022-23 (corpo bianco), Spezia, Pisa 2025-26 (pagina non trovata). Le maglie sono una per
+  squadra in tutte le stagioni (non cambiano di anno in anno).
