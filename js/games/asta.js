@@ -1871,13 +1871,22 @@
   // dell'host con un botta e risposta ({ t: "ora", c } → { t: "ora", a, c, h }) e tiene il viaggio più corto (il più preciso).
   var OROLOGIO = { off: 0, misurato: false, campioni: [], di: null, rtt: null, da: 0 };
   function oraHost() { return Date.now() + OROLOGIO.off; }
-  function azzeraOrologio(di) { OROLOGIO = { off: 0, misurato: false, campioni: [], di: di || null, rtt: null, da: Date.now() }; }   // (da: le risposte a domande fatte prima non valgono: erano per l'orologio di prima)
+  function azzeraOrologio(di) { var rm = OROLOGIO.rimisura; OROLOGIO = { off: 0, misurato: false, campioni: [], di: di || null, rtt: null, da: Date.now(), rimisura: rm }; }   // (da: le risposte a domande fatte prima non valgono: erano per l'orologio di prima)
   function campioneOra(c, h) {   // c: quando ho chiesto (ora mia), h: l'ora dell'host quando ha risposto
+    if (orologioSaltato()) return;   // (le risposte a domande fatte prima del salto non valgono)
     var ora = Date.now(), rtt = ora - c; if (!(rtt >= 0 && rtt < 8000) || typeof h !== "number" || c < OROLOGIO.da) return;
     OROLOGIO.campioni.push({ rtt: rtt, off: h + rtt / 2 - ora });
     if (OROLOGIO.campioni.length > 16) OROLOGIO.campioni.shift();
     var b = OROLOGIO.campioni.reduce(function (a, x) { return !a || x.rtt < a.rtt ? x : a; }, null);
     OROLOGIO.off = b.off; OROLOGIO.rtt = b.rtt; OROLOGIO.misurato = true;
+  }
+  // ⏱️ (16 nov 2026, dalle prove: tv2) se l'orologio del telefono SALTA (si rimette l'ora da solo a partita in corso) le misure di prima sono
+  // sbagliate, ma la più precisa (il viaggio più corto) restava per un minuto: le buste si aprivano in ritardo o in anticipo di secondi su quel
+  // telefono. Il salto si vede confrontando Date.now con performance.now (che non salta): si buttano le misure e si rimisura subito
+  function orologioSaltato() {
+    var dp = Date.now() - performance.now(), s = OROLOGIO.dp != null && Math.abs(dp - OROLOGIO.dp) > 300; OROLOGIO.dp = dp;
+    if (s) { OROLOGIO.campioni = []; OROLOGIO.da = Date.now(); OROLOGIO.misurato = false; OROLOGIO.stima = null; if (OROLOGIO.rimisura) OROLOGIO.rimisura(); }
+    return s;
   }
   function stimaOra(h) {   // (prima del botta e risposta: l'ora scritta nella foto; una foto vecchia, come quella trattenuta che arriva per prima, è più indietro: si tiene la più avanti)
     if (OROLOGIO.misurato || typeof h !== "number") return;
@@ -9655,6 +9664,8 @@
     azzeraOrologio(null);
     function chiediOra(n) { for (var k = 0; k < n; k++) setTimeout(function () { if (!cb._uscito && S.rete) manda({ t: "ora", c: Date.now() }); }, k * 300); }
     var ivOra = setInterval(function () { if (cb._uscito) return clearInterval(ivOra); if (S.vm && S.vm.formato === "fanta") chiediOra(1); }, 4000);
+    OROLOGIO.rimisura = function () { if (!cb._uscito && S.vm && S.vm.formato === "fanta") chiediOra(5); };   // ⏱️ (l'orologio del telefono è saltato: si rimisura subito)
+    var ivSalto = setInterval(function () { if (cb._uscito) return clearInterval(ivSalto); orologioSaltato(); }, 500);
     document.addEventListener("visibilitychange", function () { if (!document.hidden && !cb._uscito && S.vm && S.vm.formato === "fanta") chiediOra(3); });
     var cb = {
       myId: null, sonoHost: false,
@@ -10761,7 +10772,7 @@
   // raggiungono la grandezza minima») due per riga, grandi almeno il minimo; si vedono righe intere (lo spazio in più le allunga un po') e le
   // altre si scorrono col dito. Le partite e la barra restano ferme sotto
   function mcScorre(lista, W, H, fam) {
-    var wR = (W - 6) / 2, fW = mcFW(lista, wR, fam), hT = 21, hMin = Math.ceil(5 * MC_MIN / MC_FILA);
+    var wR = (W - 6) / 2, fW = mcFW(lista, wR, fam), hT = 21, hMin = Math.max(MC_HMIN, Math.ceil(5 * MC_MIN / MC_FILA));   // (16 nov 2026, dalle prove: dz1) mai sotto il campo del duce, MC_HMIN (prima solo le scritte: 88 px)
     var r = Math.max(1, Math.floor((H + 6) / (hT + hMin + 6))), hC = Math.max(hMin, Math.floor((H - (r - 1) * 6) / r - hT));
     var f = Math.min(hC / 5 * MC_FILA, fW, MC_MAX);
     return { c: 2, f: f, hT: f >= 12 ? 24 : hT, hC: hC, righe: Math.ceil(lista.length / 2), scorre: true };

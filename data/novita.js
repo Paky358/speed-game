@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 362,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: buste insieme su tutti i telefoni e mercato più leggibile ⏱️",
+    descrizione: [
+      "⏱️ Se l'orologio di un telefono cambia ora da solo a partita in corso, l'app se ne accorge e si rimette subito in pari con chi tiene la partita: le buste si aprono nello stesso istante per tutti (prima quel telefono poteva andare avanti o indietro di qualche secondo).",
+      "🔄 Nel mercato degli scambi, quando siete in tanti, le rose non diventano mai più piccole della misura minima: si scorre un po' di più."
+    ]
+  },
+  {
     v: 360,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: si vede l'azione che porta al rigore 🤕",
