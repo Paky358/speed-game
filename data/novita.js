@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 363,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: nel pressing alto chi ruba palla tira 🏃",
+    descrizione: [
+      "🏃 Nel pressing alto, quando uno dei vostri ruba il pallone pulito al difensore, adesso fa due passi verso la porta e TIRA: parata, fuori, palo o salvataggio sulla linea (niente punti in più: resta il voto più alto per il recupero).",
+      "🎬 Il pressing alto ha una scena sola e una scritta sola, «🔥 PRESSING ALTO», che finisca in gol, in un tiro, in un fallo o in un pallone rubato: fino al contrasto non si capisce come va a finire."
+    ]
+  },
+  {
     v: 362,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: buste insieme su tutti i telefoni e mercato più leggibile ⏱️",
