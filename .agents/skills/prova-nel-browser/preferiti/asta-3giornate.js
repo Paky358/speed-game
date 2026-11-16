@@ -21,6 +21,19 @@
 // ct1 Chi tira e non è di nessuno è un calciatore vero (il rigorista sul dischetto): la partita di tg2 coi tiri annotati (11 nov 2026).
 // tg5 Online in 3, rete a 300 ms: Paky (chi tiene la partita) ricarica la pagina a metà della seconda giornata; la partita riprende
 //     dallo stesso punto e tutti arrivano al podio allineati.
+// 🏆 (16 nov 2026) le 3 giornate sono SPENTE (TRE_GIORNATE = false in js/games/asta.js, il proprietario le vuole provare prima di persona):
+// finché l'interruttore è spento le prove tg0-tg5 si saltano da sole, con la riga «saltata: 3 giornate spente». Riaccese, tornano a girare.
+(function () {
+  var agg = COPIONE.aggiungi;
+  COPIONE.__aggTG = agg;
+  COPIONE.aggiungi = function (id, sc) {
+    if (/^tg[0-9]/.test(id) && sc && sc.fai) { var fai = sc.fai; sc.fai = async function () {
+      var src = await (await fetch("/js/games/asta.js?" + Date.now())).text();
+      if (/var TRE_GIORNATE = false/.test(src)) return "saltata: 3 giornate spente (TRE_GIORNATE in js/games/asta.js)";
+      return fai.apply(this, arguments); }; }
+    return agg.apply(this, arguments);
+  };
+})();
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -441,3 +454,4 @@
     return visti.length + " tiri visti in 3 giornate: " + veri.length + " di chi non è di nessuno, tutti calciatori veri con numero e faccia (" + rig + " rigori col rigorista, attaccanti " + att + " su " + nonRig + " negli altri tiri) · falli dei vostri: " + (falliTxt || "nessuno") + " · " + String(r0).slice(0, 60) + "…";
   } });
 })();
+COPIONE.aggiungi = COPIONE.__aggTG || COPIONE.aggiungi;   // (fine delle prove delle 3 giornate: aggiungi torna com'era)
