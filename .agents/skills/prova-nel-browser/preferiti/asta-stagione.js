@@ -340,7 +340,7 @@
     if (!(tot > 1000)) ko.push("i calciatori in tutto sono " + tot + " (attesi più di 1.000)");
     var schede = qa(w, ".fa-ed-schede button").map(function (b) { return b.textContent; });
     if (!/^Da fare/.test(schede[0]) || !/on/.test(qa(w, ".fa-ed-schede button")[0].className)) ko.push("di partenza non è «Da fare»: " + schede.join(" / "));
-    var pelle = qa(w, ".fa-ed-riga.pelle .fa-ed-c"); if (pelle.length !== 7 || pelle[0].getBoundingClientRect().width < 40) ko.push("la pelle non ha 7 tasti grandi");
+    var pelle = qa(w, ".fa-ed-riga.pelle .fa-ed-c"); if (pelle.length !== 7 || pelle[0].offsetHeight < 40 || pelle[0].offsetWidth < 34 || pelle[6].offsetTop !== pelle[0].offsetTop) ko.push("la pelle non ha 7 tasti grandi su una riga (" + pelle.length + ", " + (pelle[0] || {}).offsetWidth + "x" + (pelle[0] || {}).offsetHeight + ")");
     var nome = function () { return (d.querySelector(".fa-ed-info b") || {}).textContent; };
     var n1 = nome(); pelle[6].click(); await W.dorme(200);
     var avanti = qa(w, ".fa-ed-tasti button").filter(function (b) { return /Salva e avanti/.test(b.textContent); })[0];
