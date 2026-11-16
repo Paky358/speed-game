@@ -125,3 +125,21 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - Senza faccia sua: i dati dalle foto di quell'anno, se no quelli di un'altra stagione o di oggi dello stesso calciatore, se no a caso.
 - Prova st5 (facce condivise) OK.
 - L'archivio di fantacalcio.it arriva fino alla **2015-16**: prima (2014-15 e indietro) la pagina mostra sempre lo stesso listone (603 righe).
+
+### Passo 2 — le stagioni (una alla volta, pubblicata appena pronta)
+- Strumenti in D:SG-stagione-lavoro: `copia-stagione.js` + `copia-altezze.js` (da incollare nel browser su fantacalcio.it: li usa
+  l'aiutante copista), `genera.js <stagione>` (il pezzo data/fanta-<anno>.js), `squadre-tutte.js` (colori, maglie, stadi e meteo delle
+  squadre che oggi non ci sono), `controllino.js <stagione>` (i famosi fuori), `novita-stagioni.js` (la voce unica v357), `pubblica.sh`.
+  Una stagione nuova nel gioco: il nome in ELENCO_STAGIONI (js/games/asta.js) e la riga pezzo("asta-<anno>", …) in js/elenco-giochi.js.
+- Scelte piccole: numeri di maglia da UNA fonte (la rosa della squadra su Wikipedia, abbinata per cognome e squadra; chi non si abbina resta
+  senza); punizioni = i 2 centrocampisti/trequartisti con più assist e gol, angoli = i 2 con più assist tra centrocampisti ed esterni
+  (fantacalcio.it non lo dice); modulo 4-3-3 del gioco per tutti; le facce: quelle di oggi e della 2017-18 dello stesso calciatore, il resto
+  a caso finché IL PAPPONE non le sistema.
+- 🏆 Le 3 giornate SPENTE (17 nov, il proprietario via Cervello): TRE_GIORNATE = false in js/games/asta.js; la prova tg0 (che cerca la
+  scelta nel ⚙️) ora dice NO apposta.
+
+#### 2022-23 — PUBBLICATA (v357)
+- All'asta 241 (P 20, D 74, C 93, A 54), in campo 59; numeri 290 su 300; altezze 300; portiere per eccezione: Audero (Sampdoria, 25 partite).
+- Prove stD e stG (online in 3) OK; con «Oggi» pa2, st0, st5 OK; versione online controllata.
+- Controllino: 2022-23 · fuori per le partite: Scamacca (Sassuolo, 0 partite, quot. 28), Ruiz (Napoli, 0 partite, quot. 18), Boga (Atalanta, 18 partite, quot. 18), Simeone (Napoli, 12 partite, quot. 17), Molina N. (Udinese, 0 partite, quot. 15), Karamoh (Torino, 15 partite, quot. 15), Deulofeu (Udinese, 15 partite, quot. 14), Malinovskyi (Atalanta, 12 partite, quot. 14), Sansone (Bologna, 15 partite, quot. 14), Thauvin (Udinese, 11 partite, quot. 13), Wijnaldum (Roma, 11 partite, quot. 13), Damsgaard (Sampdoria, 0 partite, quot. 13), Pogba (Juventus, 5 partite, quot. 12), Lukic (Torino, 15 partite, quot. 12), Sanchez (Inter, 0 partite, quot. 12), Tsadjout (Cremonese, 18 partite, quot. 12), Zirkzee (Bologna, 18 partite, quot. 12), Brekalo (Fiorentina, 6 partite, quot. 11), Veretout (Roma, 0 partite, quot. 11), Rebic (Milan, 18 partite, quot. 10), Bastoni S. (Spezia, 18 partite, quot. 10), Nestorovski (Udinese, 11 partite, quot. 10), Ilicic (Atalanta, 0 partite, quot. 10), Zakaria (Juventus, 2 partite, quot. 10), Theate (Bologna, 0 partite, quot. 10), Castrovilli (Fiorentina, 12 partite, quot. 10), Iling Junior (Juventus, 8 partite, quot. 10), Zaniolo (Roma, 13 partite, quot. 9, a inizio anno 19), Traoré Hj. (Sassuolo, 11 partite, quot. 9, a inizio anno 18), Bonucci (Juventus, 11 partite, quot. 7, a inizio anno 15), Alvarez A. (Sassuolo, 10 partite, quot. 6, a inizio anno 14), Henry (Verona, 15 partite, quot. 5, a inizio anno 18), Destro (Empoli, 10 partite, quot. 2, a inizio anno 18), Sabiri (Sampdoria, 18 partite, quot. 2, a inizio anno 15)
+  2022-23 · solo in campo ma quotati a inizio anno: Origi (Milan, 21 partite, quot. 7/17), Belotti (Roma, 22 partite, quot. 6/16)

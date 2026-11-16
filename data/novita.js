@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 357,
+    data: "17 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: arrivano le altre stagioni 🕰️",
+    descrizione: [
+      "📅 In «Stagione», nelle regole della Mini Asta, oltre a «Oggi» e alla 2017-18 adesso ci sono anche: 2022-23. La sceglie chi apre la partita e vale per tutti.",
+      "📊 Sempre da fantacalcio.it: i calciatori nella squadra dove hanno finito quella stagione, la quotazione finale, i loro numeri di quell'anno (gol, assist, cartellini, rigori) e l'altezza. All'asta chi ha giocato davvero, con almeno un portiere per squadra; le squadre di allora coi loro gol fatti e subiti e i rigoristi veri.",
+      "🧑 Lo stesso calciatore ha la stessa faccia in tutte le stagioni: quando ne sistemi una vale per tutti gli anni (e se quell'anno aveva un'altra faccia, si può fare solo per quell'anno).",
+      "🏷️ All'asta e nella giornata la scritta con l'anno, così si capisce subito che stagione è.",
+      "🏆 Le «3 giornate» per ora sono spente: si gioca sempre una giornata (torneranno dopo una prova)."
+    ]
+  },
+  {
     v: 356,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: si gioca anche con la Serie A 2017-18 🕰️",
