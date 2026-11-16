@@ -157,12 +157,12 @@
       W.BR.ritardo = 300;
       var o = await telefoni({ formato: "fanta" }, NOMI), P = o.P, C = o.C;
       function misura(nome, w, h) { var f = document.getElementById("tel-" + nome), win = W.finestra(nome); f.style.width = w + "px"; f.style.height = h + "px"; win.dispatchEvent(new win.Event("resize")); }
-      misura("Paky", 360, 900); misura("Giulia", 360, 560);
+      misura("Paky", 360, 900); misura("Giulia", 340, 430);   // (16 nov 2026: dal 15 nov le pagelle prendono tutta l'altezza e in 360x560 stavano tutte in una pagina: il telefono di Giulia è più basso)
       await astaVeloce(P, C);
       var G = W.finestra("Giulia"), pagG = 0, pagP = 0, fino = Date.now() + 240000;
       while (Date.now() < fino) {
         var tg = q(G, ".st-pag.on:not(.live) .st-pag-tit"), tp = q(P, ".st-pag.on:not(.live) .st-pag-tit");
-        if (tg && /primo tempo · (\d+)\/(\d+)/.test(tg.textContent)) pagG = Math.max(pagG, +RegExp.$2);
+        if (tg && /primo tempo/.test(tg.textContent)) pagG = Math.max(pagG, /· \d+\/(\d+)/.test(tg.textContent) ? +RegExp.$1 : 1);   // (una pagina sola: il titolo senza «1/2»)
         if (tp && /primo tempo/.test(tp.textContent)) pagP = Math.max(pagP, /· \d+\/(\d+)/.test(tp.textContent) ? +RegExp.$1 : 1);
         if (/SI RIPARTE/.test((q(G, ".st-msg.on") || {}).textContent || "")) break;
         await W.dorme(150);

@@ -9,6 +9,43 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 362,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: buste insieme su tutti i telefoni e mercato più leggibile ⏱️",
+    descrizione: [
+      "⏱️ Se l'orologio di un telefono cambia ora da solo a partita in corso, l'app se ne accorge e si rimette subito in pari con chi tiene la partita: le buste si aprono nello stesso istante per tutti (prima quel telefono poteva andare avanti o indietro di qualche secondo).",
+      "🔄 Nel mercato degli scambi, quando siete in tanti, le rose non diventano mai più piccole della misura minima: si scorre un po' di più."
+    ]
+  },
+  {
+    v: 361,
+    data: "16 novembre 2026",
+    titolo: "La linea del tempo: la spiegazione si legge prima, e si parte con due carte 🗓️",
+    descrizione: [
+      "📖 La spiegazione della carta adesso si legge PRIMA di scegliere dove metterla, sulla carta in mano, sotto il titolo. Abbiamo ricontrollato tutte le 1.920 spiegazioni: quelle che facevano capire l'anno (anni scritti, «trent'anni dopo», «durante il Covid»…) sono state riscritte.",
+      "🃏🃏 La linea parte con due carte invece di una, in ogni modo di gioco (a turno, tutti insieme, «Ognuno la sua linea», online e sullo stesso telefono): chi gioca per primo non ha più una scelta troppo facile.",
+      "📅 La scritta nella casella dell'anno non si taglia più: sui telefoni piccoli diventa più corta da sola."
+    ]
+  },
+  {
+    v: 360,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: si vede l'azione che porta al rigore 🤕",
+    descrizione: [
+      "🤕 Prima del rigore adesso si vede l'azione che lo provoca: chi lo subisce entra in area palla al piede e viene steso, oppure il tiro finisce sul braccio di un difensore. L'arbitro fischia e indica il dischetto, poi il rigore come sempre.",
+      "📺 Quando il rigore lo decide il VAR si vede il contatto e si continua a giocare, poi arriva «IL VAR RICHIAMA L'ARBITRO»: l'azione è la stessa sia quando il rigore viene dato sia quando no."
+    ]
+  },
+  {
+    v: 359,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i simboli delle pagelle disegnati, come nel fantacalcio vero ⚽",
+    descrizione: [
+      "⚽ Sotto ogni calciatore un simbolo per ogni bonus e malus, ripetuto quante volte serve, come nel fantacalcio vero: due gol sono due palloni, due gol subiti due porticine (niente più numeri).",
+      "🎨 I simboli sono disegnati da noi (pallone, scarpino, cartellini, porticina, lucchetto, guanto): si vedono uguali su iPhone e Android, più grandi di prima. Quando sono tanti si rimpiccioliscono un po' e vanno a capo, mai tagliati."
+    ]
+  },
+  {
     v: 358,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: nelle pagelle si vedono tutti i bonus e i malus 🧾",

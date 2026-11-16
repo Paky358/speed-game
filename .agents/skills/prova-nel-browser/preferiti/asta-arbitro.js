@@ -1,13 +1,13 @@
 // PROVE DELL'ARBITRO E DEL DIFENSORE SUL PALO NELLA GIORNATA DELLA MINI ASTA (15 nov 2026 sera, il proprietario sulla v350 online: l'arbitro
 // «sembra una trottola… dopo il gol corre dappertutto a caso come un cane»; «un difensore vicino al portiere quando chi attacca è ancora a
 // centrocampo: nel calcio non esiste»).
-// Uso (dopo copione-prova.js): await COPIONE.carica("preferiti/asta-arbitro.js"); await COPIONE.prova("ar1")
-// Con Edge invisibile: prova.js --porta 8991 --carica preferiti/asta-arbitro.js --prova ar1,ar2
+// Uso (dopo copione-prova.js): await COPIONE.carica("preferiti/asta-arbitro.js"); await COPIONE.prova("arb1")
+// Con Edge invisibile: prova.js --porta 8991 --carica preferiti/asta-arbitro.js --prova arb1,arb2
 //
-// ar1 L'arbitro, in tutte le azioni (35 scene × 40 semi × gol e parata, più i falli): mai più veloce di chi corre (7 m al secondo, il conto
+// arb1 L'arbitro, in tutte le azioni (35 scene × 40 semi × gol e parata, più i falli): mai più veloce di chi corre (7 m al secondo, il conto
 //     sulla strada che si vede), niente giravolte (cambi di direzione da più di 120° mentre corre: al massimo 2 in un'azione), dopo il gol
 //     al massimo 2,5 m al secondo (si ferma, poi va piano verso il centro), mai a meno di 1,5 metri da un giocatore mentre si gioca.
-// ar2 Il difensore sul palo: quando il pallone è ancora a più di 30 metri dalla porta, il difensore che poi va sul palo sta lontano dalla porta
+// arb2 Il difensore sul palo: quando il pallone è ancora a più di 30 metri dalla porta, il difensore che poi va sul palo sta lontano dalla porta
 //     (col pallone a più di 40 metri ad almeno 12 metri dalla linea, tra 30 e 40 ad almeno 8: in linea con la difesa o di corsa all'indietro, mai accanto al portiere); arriva sul palo prima del tiro; e fino al tiro sta nello stesso posto in tutti gli esiti.
 (function () {
   "use strict";
@@ -28,7 +28,7 @@
   }
   function metri(a, b) { return Math.sqrt(Math.pow((a[1] - b[1]) * MX, 2) + Math.pow((a[2] - b[2]) * MY, 2)); }
 
-  COPIONE.aggiungi("ar1", { nome: "Mini Asta, l'arbitro: mai più veloce di chi corre, niente giravolte, dopo il gol piano, mai addosso ai giocatori", fai: async function () {
+  COPIONE.aggiungi("arb1", { nome: "Mini Asta, l'arbitro: mai più veloce di chi corre, niente giravolte, dopo il gol piano, mai addosso ai giocatori", fai: async function () {
     var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = [], prove = 0, vMaxVisto = 0, girVisti = 0;
     function guarda(sc, qui, durS, falli) {
       var ar = sc.attori.filter(function (a) { return a.sq === "arb"; })[0]; if (!ar) { ko.push(qui + ": niente arbitro"); return; }
@@ -59,7 +59,7 @@
     return prove + " azioni: l'arbitro al massimo a " + vMaxVisto.toFixed(1) + " m/s, al massimo " + girVisti + " giravolte, dopo il gol piano, mai addosso ai giocatori";
   } });
 
-  COPIONE.aggiungi("ar2", { nome: "Mini Asta, il difensore sul palo: in linea con la difesa finché l'azione è lontana, sul palo prima del tiro, uguale in tutti gli esiti", fai: async function () {
+  COPIONE.aggiungi("arb2", { nome: "Mini Asta, il difensore sul palo: in linea con la difesa finché l'azione è lontana, sul palo prima del tiro, uguale in tutti gli esiti", fai: async function () {
     var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = [], prove = 0, lontane = 0, ESITI = ["gol", "parata", "palo", "fuori", "linea"];
     SCENE.forEach(function (v) {
       for (var seme = 1; seme <= 60; seme++) {

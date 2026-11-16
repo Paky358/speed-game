@@ -555,7 +555,11 @@
     }
     if (!await W.aspetta(function () { return bott(L, ".sa-testa .sa-tasto", /📸 Foto/); }, 6000)) no("sul podio di Luca non c'è «📸 Foto»");
     bott(L, ".sa-testa .sa-tasto", /📸 Foto/).click(); x.push(await fotoFatta(L, "della rosa di Luca"));
-    if ((F.titoli || []).length) { var tk = await W.aspetta(function () { var t = (q(L, ".st-ticker") || {}).textContent || ""; return /^(💎|🎯|💸|🧊|🤡|🔥|🛍️|🚀|📣|⚽) /.test(t) && t; }, 9000); if (!tk) no("i titoli non girano sul maxischermo"); else x.push("ticker «" + tk + "»"); }
+    if ((F.titoli || []).length) {   // (16 nov 2026: chiusa la foto; i titoli di Luca, 🦉 e 🍀 compresi; se non girano si dice cosa c'è sul maxischermo)
+      var chiudiF = qa(L, ".sg-foglio button, .foto-chiudi, button").filter(function (b) { return /Chiudi|✕/.test(b.textContent) && visibile(b); })[0]; if (chiudiF) chiudiF.click();
+      var visto = [], tk = await W.aspetta(function () { var t = qa(L, ".st-ticker").map(function (e) { return e.textContent || ""; }).join(" | "); if (visto.indexOf(t) < 0) visto.push(t); return /(^|\| )(💎|🎯|💸|🧊|🤡|🔥|🛍️|🚀|📣|⚽|🍀|🦉) /.test(t) && t; }, 15000);
+      if (!tk) no("i titoli non girano sul maxischermo (visto: «" + visto.slice(0, 4).join("» «").slice(0, 300) + "»; titoli: " + (F.titoli || []).map(function (t) { return t.icona + " " + t.titolo; }).join(", ") + ")"); else x.push("ticker «" + tk + "»");
+    }
     x.push("titoli: " + (F.titoli || []).map(function (t) { return t.icona + " " + t.titolo + " " + t.chi + " (" + t.dett + ")"; }).join(" | "));
     return x.join(" · ");
   } });
@@ -961,18 +965,17 @@
     }
     if (!q(P, ".st-rivela")) no("non arriva alla scoperta della rosa");
     var t0 = (P.__note.length ? P.__note[P.__note.length - 1].t : 0) + 0.01;   // (le note da qui in poi: la scoperta)
-    if (!await W.aspetta(function () { return /° posto|° per valore/.test(T(P)); }, 12000)) no("la scoperta non finisce");
+    // (16 nov 2026: dal 15 nov la scoperta è la classifica delle rose a figurine, «.cr»: ogni rosa esce intera col suo suono, l'ultima, la più
+    // forte, col piatto e quattro note; la scoperta di prima, una figurina alla volta col «° posto», non c'è più. Da solo: una rosa, la più forte)
+    if (!await W.aspetta(function () { var r = qa(P, ".cr .cr-r"); return r.length && r.every(function (x) { return x.classList.contains("su"); }); }, 12000)) no("la scoperta non finisce");
     await W.dorme(500);
-    var l = P.__note.filter(function (x) { return x.t >= t0; }), vicino = function (a, b) { return Math.abs(a - b) <= 2; };
-    var carte = [0, 1, 2, 3].map(function (i) { var f = Math.round(660 * Math.pow(1.12, i)), g = Math.round(990 * Math.pow(1.12, i)); return l.filter(function (x) { return vicino(x.f, f); })[0] && l.filter(function (x) { return vicino(x.f, g); })[0] ? l.filter(function (x) { return vicino(x.f, f); })[0].t : null; });
+    var l = P.__note.filter(function (x) { return x.t >= t0; });
     var top = [784, 988, 1175, 1568].every(function (f) { return l.some(function (x) { return x.f === f; }); }) ? l.filter(function (x) { return x.f === 1568; })[0].t : null;
-    if (carte.some(function (t) { return t == null; })) no("non tutte le figurine hanno il loro suono: " + JSON.stringify(carte) + " (note: " + l.map(function (x) { return x.f; }).join(",") + ")");
-    if (top == null) no("l'ultima figurina non ha il suono forte (note: " + l.map(function (x) { return x.f; }).join(",") + ")");
-    for (var i = 1; i < 4; i++) if (!(carte[i] - carte[i - 1] > 0.4 && carte[i] - carte[i - 1] < 1.2)) no("le figurine non si girano a tempo regolare: " + JSON.stringify(carte));
-    if (!(top - carte[3] > 1)) no("l'ultima non arriva dopo una pausa: " + carte[3] + " → " + top);
-    var tic = l.filter(function (x) { return x.f >= 520 && x.f <= 1220 && x.f !== 784 && x.f !== 988 && x.f !== 1175 && x.t < top - 0.05 && !carte.some(function (t) { return x.t > t - 0.02 && x.t < t + 0.2; }); });   // (FX.tic: 520 + 700 × p, prima dell'ultima figurina)
+    if (top == null) no("la rosa più forte non ha il suono forte (note: " + l.map(function (x) { return x.f; }).join(",") + ")");
+    var tic = l.filter(function (x) { return x.f >= 520 && x.f <= 1220 && x.f !== 784 && x.f !== 988 && x.f !== 1175 && x.t < top - 0.05; });   // (FX.tic: 520 + 700 × p, prima della rosa)
     if (tic.length) no("si sente ancora il «ti ti ti» della carica (11 nov 2026, il proprietario: «non mettiamolo proprio»): " + tic.map(function (x) { return x.f; }).join(","));
-    return "4 figurine col loro suono ogni " + Math.round((carte[3] - carte[0]) / 3 * 100) / 100 + " s, l'ultima col piatto " + Math.round((top - carte[3]) * 10) / 10 + " s dopo; niente «ti ti ti»";
+    var figs = qa(P, ".cr .cr-r.su .cr-fimg, .cr .cr-r.su .cr-fnome").length; if (figs !== 5) no("nella rosa ci sono " + figs + " figurine");
+    return "la rosa esce intera con le 5 figurine e il suono forte (piatto e quattro note); niente «ti ti ti»";
   } });
   COPIONE.aggiungi("bu4", { nome: "Fanta a buste online in 3: offerte segrete, chi ricarica, spareggio, ruota, misure, fino alla classifica", fai: async function () {
     var NOMI = ["Paky", "Giulia", "Luca"], o = await telefoniOnline({ formato: "fanta", compra: "buste", giornata: false }, NOMI), P = o.P, C = o.C, x = [], misure = [], fatto = 0, fino = Date.now() + 360000, vistoN = 0;

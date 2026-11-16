@@ -28,16 +28,17 @@
     if (!await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 8000)) no("la partita non comincia");
     return { P: P, C: C };
   }
-  // 🧾 (16 nov 2026, il proprietario: gli assist e i gialli non si vedevano) sotto ogni calciatore uscito: ogni simbolo si vede (nessuno ridotto a
-  // una riga in cima al riquadro), niente simboli tagliati, il numero dei gol subiti e non una fila di porticine, e il conto torna: voto + simboli = fantavoto
+  // 🧾 (16 nov 2026, il proprietario: gli assist e i gialli non si vedevano; poi «niente numeri, come nel fantacalcio vero») sotto ogni calciatore
+  // uscito: ogni simbolo è DISEGNATO (niente emoji del telefono, niente numeri), si vede (nessuno ridotto a una riga in cima al riquadro), niente
+  // simboli tagliati, ripetuto quante volte serve, e il conto torna: voto + simboli = fantavoto
   var VAL_BONUS = { "⚽": 3, "👟": 1, "🧤": 3, "❌": -3, "🙈": -2, "🟨": -0.5, "🟥": -1, "🥅": -1, "🔒": 1 }, simboliVisti = {};
   function bonusOk(w, dove) {
     var ko = [], n = 0;
     qa(w, ".st-pag.on .st-pv").forEach(function (t) {
       if (t.classList.contains("nasc")) return; var em = t.querySelector(".st-pv-ic"), bs = t.querySelectorAll(".st-pv-c b"); if (!em || bs.length < 2) return; n++;
-      [].slice.call(em.querySelectorAll("i")).forEach(function (i) { var cs = w.getComputedStyle(i), r = i.getBoundingClientRect(); if (cs.position === "absolute" || r.height < 5 || r.width < 4) ko.push("simbolo invisibile " + i.getAttribute("aria-label")); });
-      if (em.scrollWidth > em.clientWidth + 1) ko.push("simboli tagliati «" + em.textContent + "»");
-      if (/🥅🥅/.test(em.textContent)) ko.push("i gol subiti sono ancora una fila di porticine");
+      [].slice.call(em.querySelectorAll("i")).forEach(function (i) { var cs = w.getComputedStyle(i), r = i.getBoundingClientRect(); if (cs.position === "absolute" || r.height < 8 || r.width < 6) ko.push("simbolo invisibile o troppo piccolo " + i.getAttribute("aria-label") + " (" + Math.round(r.width) + "x" + Math.round(r.height) + ")"); if (!/ic-(carta|scarpa|b)/.test(i.className)) ko.push("simbolo non disegnato " + i.getAttribute("aria-label")); });
+      if (em.scrollWidth > em.clientWidth + 1 || em.scrollHeight > em.clientHeight + 1) ko.push("simboli tagliati (" + em.querySelectorAll("i").length + ")");
+      if (em.textContent.trim()) ko.push("nei simboli c'è del testo o un'emoji del telefono («" + em.textContent.trim() + "»)");
       var somma = 0, cur = null;
       [].slice.call(em.childNodes).forEach(function (x) { var tx = x.nodeType === 3 ? x.textContent : x.tagName === "I" ? x.getAttribute("aria-label") : x.tagName === "SMALL" ? x.textContent : "";
         if (x.tagName === "SMALL") { var k = +tx.replace(/[^0-9]/g, ""); if (cur) somma += VAL_BONUS[cur] * (k - 1); return; }
