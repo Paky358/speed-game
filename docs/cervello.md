@@ -149,12 +149,12 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
-<<<<<<< HEAD
+- 16 nov 2026 05:40 · ⚽🃏 Mini Asta · PUBBLICATO · v358 (le pagelle: sotto ogni calciatore si vedono tutti i bonus e i malus, anche assist 👟 e cartellini 🟨 🟥 che non comparivano: la regola della barretta del ruolo «.st-pv i» prendeva anche le loro icone, ora «.st-pv>i»; simboli raggruppati col numero ⚽×2, 🥅−2 al posto delle porticine, più grandi; il rosso del secondo giallo solo 🟥, così voto + simboli = fantavoto sempre). Prove pg1 (ora controlla simboli e conto: 90 calciatori OK), pg2, tg2 OK; pagelle finali senza problemi a 360x640 con 2, 4, 6, 8 rose, 390x844 con 8, 412x915 con 4. ov2 NO, ma per un'altra cosa (la formazione della classifica delle rose non scopre i 5 valori, non le pagelle: da guardare). Versione online ricostruita e controllata (novità 358) · master, lavori-in-corso, asta-fanta
+- 16 nov 2026 05:54 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2025-26, 234 all'asta) · master
+- 16 nov 2026 05:50 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2024-25, 233 all'asta) · master
+- 16 nov 2026 05:44 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2023-24, 232 all'asta) · master
 - 16 nov 2026 05:40 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2019-20, 194 all'asta) · master
 - 16 nov 2026 05:39 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2021-22, 225 all'asta) · master
-=======
-- 16 nov 2026 05:40 · ⚽🃏 Mini Asta · PUBBLICATO · v358 (le pagelle: sotto ogni calciatore si vedono tutti i bonus e i malus, anche assist 👟 e cartellini 🟨 🟥 che non comparivano: la regola della barretta del ruolo «.st-pv i» prendeva anche le loro icone, ora «.st-pv>i»; simboli raggruppati col numero ⚽×2, 🥅−2 al posto delle porticine, più grandi; il rosso del secondo giallo solo 🟥, così voto + simboli = fantavoto sempre). Prove pg1 (ora controlla simboli e conto: 90 calciatori OK), pg2, tg2 OK; pagelle finali senza problemi a 360x640 con 2, 4, 6, 8 rose, 390x844 con 8, 412x915 con 4. ov2 NO, ma per un'altra cosa (la formazione della classifica delle rose non scopre i 5 valori, non le pagelle: da guardare). Versione online ricostruita e controllata (novità 358) · master, lavori-in-corso, asta-fanta
->>>>>>> origin/master
 - 16 nov 2026 05:34 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2020-21, 226 all'asta) · master
 - 16 nov 2026 05:23 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2016-17, 198 all'asta) · master
 - 16 nov 2026 04:51 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2015-16, 189 all'asta) · master
