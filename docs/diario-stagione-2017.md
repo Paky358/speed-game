@@ -202,3 +202,28 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - Prove stD e stG (online in 3) OK; versione online controllata.
 - Controllino: 2025-26 · fuori per le partite: Malen (Roma, 18 partite, quot. 25), De Bruyne (Napoli, 17 partite, quot. 21), Ndoye (Bologna, 0 partite, quot. 19), Castellanos (Lazio, 11 partite, quot. 18), Vlahovic (Juventus, 18 partite, quot. 16), Thauvin (Udinese, 0 partite, quot. 16), Lukaku (Napoli, 1 partite, quot. 15), Zambo Anguissa (Napoli, 18 partite, quot. 15), Raspadori (Atalanta, 13 partite, quot. 15), Lookman (Atalanta, 10 partite, quot. 14), Taylor K. (Lazio, 17 partite, quot. 14), Lang (Napoli, 14 partite, quot. 13), Guendouzi (Lazio, 16 partite, quot. 13), Strefezza (Parma, 14 partite, quot. 13), Vazquez (Cremonese, 13 partite, quot. 13), Kilicsoy (Cagliari, 16 partite, quot. 13), Gimenez (Milan, 15 partite, quot. 12), Diao (Como, 16 partite, quot. 12), Santos A. (Napoli, 13 partite, quot. 12), Gonzalez N. (Juventus, 0 partite, quot. 11), Man (Parma, 0 partite, quot. 11), Harrison (Fiorentina, 15 partite, quot. 11), Boga (Juventus, 13 partite, quot. 11), Athekame (Milan, 17 partite, quot. 11), Dovbyk (Roma, 13 partite, quot. 10), Ferguson E. (Roma, 14 partite, quot. 10), Durosinmi (Pisa, 10 partite, quot. 10), Neres (Napoli, 16 partite, quot. 10), Maldini (Lazio, 18 partite, quot. 10), Holm (Juventus, 16 partite, quot. 10), Brescianini (Fiorentina, 18 partite, quot. 10), Bowie (Verona, 14 partite, quot. 10), Obrador (Torino, 16 partite, quot. 10), Mazzitelli (Cagliari, 14 partite, quot. 10), Okereke (Cremonese, 10 partite, quot. 10), Zhegrova (Juventus, 12 partite, quot. 9, a inizio anno 19), Ratkov (Lazio, 7 partite, quot. 9, a inizio anno 15), Bailey (Roma, 5 partite, quot. 8, a inizio anno 16), Angelino (Roma, 6 partite, quot. 7, a inizio anno 15), Lucca (Napoli, 9 partite, quot. 5, a inizio anno 15), Kuhn (Como, 14 partite, quot. 5, a inizio anno 14), Openda (Juventus, 14 partite, quot. 4, a inizio anno 22), Immobile (Bologna, 6 partite, quot. 4, a inizio anno 19), Frattesi (Inter, 14 partite, quot. 4, a inizio anno 14), Dzeko (Fiorentina, 8 partite, quot. 3, a inizio anno 15), Morata (Como, 17 partite, quot. 2, a inizio anno 18)
   2025-26 · solo in campo ma quotati a inizio anno: Dia (Lazio, 25 partite, quot. 6/20)
+
+## ☀️ PER DOMATTINA (16 nov 2026): tutte le stagioni sono ONLINE (novità v357)
+| Stagione | All'asta | P | D | C | A | Solo in campo | Numeri di maglia | Altezze |
+|---|---|---|---|---|---|---|---|---|
+| 2015-16 | 189 | 20 | 48 | 66 | 55 | 83 | 264 | 267 |
+| 2016-17 | 198 | 20 | 55 | 76 | 47 | 59 | 252 | 252 |
+| 2017-18 | 203 | 20 | 58 | 77 | 48 | 72 | 272 | 274 |
+| 2018-19 | 225 | 20 | 71 | 80 | 54 | 41 | 263 | 265 |
+| 2019-20 | 194 | 20 | 53 | 73 | 48 | 85 | 267 | 279 |
+| 2020-21 | 226 | 20 | 62 | 82 | 62 | 80 | 300 | 306 |
+| 2021-22 | 225 | 20 | 65 | 79 | 61 | 63 | 281 | 288 |
+| 2022-23 | 241 | 20 | 74 | 93 | 54 | 59 | 290 | 300 |
+| 2023-24 | 232 | 20 | 71 | 88 | 53 | 74 | 291 | 306 |
+| 2024-25 | 233 | 20 | 82 | 84 | 47 | 55 | 277 | 288 |
+| 2025-26 | 234 | 20 | 78 | 87 | 49 | 60 | 284 | 294 |
+
+- Ogni stagione: prove stD (dati) e stG (online in 3) OK; la versione online di tutte e 11 controllata insieme alla fine (pezzo a parte, calciatori e squadre giusti).
+- Il controllino dei famosi fuori di ogni stagione è sopra, sotto la stagione (#### …). Nessuno aggiunto da solo.
+- Maglie da guardare (disegnate coi colori della squadra, senza foto): Empoli, Carpi, Palermo, Pescara, Spezia, Salernitana, Cremonese,
+  Brescia, Pisa; e quelle della 2017-18 già dette (Sampdoria, Chievo, Cagliari, Crotone, SPAL, Verona, Benevento: le stesse per tutte le stagioni).
+- Per le stagioni nuove: modulo 4-3-3 del gioco; punizioni e angoli scelti dai numeri di quell'anno; facce: quelle di oggi e della
+  2017-18 dello stesso calciatore, il resto a caso finché IL PAPPONE non le sistema (ora valgono in tutte le stagioni).
+- Un incidente della notte: alla 2019-20 l'unione con master (la v358 della Mini Asta, pubblicata nello stesso momento) ha avuto un conflitto
+  nel registro docs/cervello.md e il programma è andato avanti lo stesso: i segni del conflitto sono rimasti nel registro su master per
+  qualche minuto (solo il registro, il gioco no). Sistemato e corretto il programma (pipefail).
