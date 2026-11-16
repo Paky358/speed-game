@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 365,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: sui calci piazzati tutti in area ⚽",
+    descrizione: [
+      "⚽ Sugli angoli, le punizioni e le azioni in area chi attacca va tutto in area o al limite, coi vostri calciatori pronti a colpire: non si sa chi segnerà. Dietro restano solo uno o due difensori (i più bassi più spesso). Chi difende sta tutto nella sua area, tranne la punta che aspetta il contropiede.",
+      "🏷️ Con tanti vostri calciatori vicini, i nomi non si coprono più tra loro e non coprono la porta né il pallone. Nelle azioni manovrate i vostri attaccanti stanno al limite dell'area, pronti a ricevere."
+    ]
+  },
+  {
     v: 364,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: il pressing alto rivisto 🔥",

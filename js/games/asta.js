@@ -5514,7 +5514,7 @@
   var GL = 0.948, NET = 0.98;   // (la porta è più grande del vero: i pali a 0,5 ± 0,084)
   function semeRnd(s) { var x = (Math.abs(Math.floor(s)) % 2147483646) + 1, r = function () { x = x * 16807 % 2147483647; return (x - 1) / 2147483646; }; r(); return r; }   // (il primo numero si butta: era quasi sempre lo stesso)
   function scena(tipo, v, esito, fin, et, op) {
-    var sc = { tipo: tipo, v: v, attori: [], palla: [], scritte: [], rete: null, dunque: 0.7, verso: op.verso || 1, zoomFine: 0, tz: 0.55, lento: null }, L = op.lato || 1, rnd = semeRnd(op.seme || 7);
+    var sc = { semeC: op.seme || 7, tipo: tipo, v: v, attori: [], palla: [], scritte: [], rete: null, dunque: 0.7, verso: op.verso || 1, zoomFine: 0, tz: 0.55, lento: null }, L = op.lato || 1, rnd = semeRnd(op.seme || 7);
     if (/^rimessa/.test(v || "")) L = (op.verso || 1) > 0 ? 1 : -1;   // 🙌 (la rimessa sul lato del guardalinee della metà dove si gioca: lui la indica)
     et = et || {};
     function X(hx) { return 0.5 + (hx - 0.5) * L; }
@@ -7357,6 +7357,44 @@
   // Ramos?»): nei posti del modulo la formazione più forte (la stessa dell'overall), ognuno nel suo ruolo; i centrocampisti che giocano davanti
   // (data/fanta-moduli.js: Pulisic e Moreira nel Milan) nei posti di centrocampo della linea d'attacco o dei trequartisti, gli altri in mezzo.
   // Torna, posto per posto, { k, nome, asp, num } (null se non c'è nessuno)
+  // ⚽ CHI NON FA L'AZIONE, SUI PIAZZATI E NELLE AZIONI IN AREA (16 nov 2026 sera, il proprietario: «queste cose le abbiamo dette un milione di volte»;
+  // «bisogna creare suspense»): prima tutti stavano ai posti del modulo normale (la punta del Napoli a centrocampo sul suo calcio d'angolo).
+  // Chi ATTACCA: tutti in area o al limite, i vostri (col nome) ai posti più vicini alla porta, così non si sa chi segna; dietro a coprire solo 1 o
+  // 2 DIFENSORI (MAI una punta o un centrocampista), scelti dal seme (comprati o no), i più bassi più spesso (data/fanta-altezze.js). Chi DIFENDE:
+  // tutti nella sua area, fuori solo la sua punta (1, a volte 2) verso centrocampo per il contropiede. Nelle azioni manovrate i vostri attaccanti
+  // della squadra che attacca stanno almeno al limite dell'area (pronti a ricevere o tirare). Deciso SOLO dalla scena (sc.v), dal seme (sc.semeC)
+  // e da chi gioca: identico in ogni esito. Coordinate del campo intero: chi attacca va verso x = 1, chi difende difende la porta a x = 1
+  var AREA_SC = { angolo: 1, olimpico: 1, laterale: 1, punizione: 1, mischia: 1, testa: 1, ultimo: 1, assedio: 1, rimessalunga: 1 };
+  var AREA_ATT = [[0.905, 0.43], [0.905, 0.58], [0.928, 0.5], [0.885, 0.35], [0.885, 0.66], [0.936, 0.63], [0.936, 0.37], [0.866, 0.5], [0.862, 0.27], [0.862, 0.74], [0.832, 0.41], [0.832, 0.6], [0.82, 0.5]];
+  var AREA_DIF = [[0.922, 0.46], [0.922, 0.56], [0.944, 0.51], [0.9, 0.34], [0.9, 0.68], [0.952, 0.61], [0.952, 0.4], [0.882, 0.52], [0.874, 0.26], [0.874, 0.75], [0.842, 0.44], [0.842, 0.58]];
+  function piazzaArea(posti, lato, sc, asse) {
+    var R = semeRnd((sc.semeC || 7) + (lato === "A" ? 41 : 43)), alt = window.SG_FANTA_ALTEZZE || {}, area = !!AREA_SC[sc.v];
+    var liberi = []; posti.forEach(function (o, i) { if (i > 0 && !o.via && !o.gk) liberi.push({ o: o, i: i }); });
+    if (!area) {   // (manovrata: i vostri attaccanti di chi attacca almeno al limite dell'area)
+      if (lato === "A" && sc.tipo !== "rig") liberi.forEach(function (z) { if (z.o.nome && z.o.ru === "A" && z.o.x < 0.8) z.o.x = 0.8 + 0.01 * (z.i % 3); });
+      return;
+    }
+    var occ = []; (sc.attori || []).forEach(function (a) { if (a.sq === "A" || a.sq === "D") a.pts.forEach(function (pt) { occ.push([0.5 + pt[2] * 0.496, 0.08 + pt[1] * 0.84]); }); });   // (dove si muove chi fa l'azione, nel campo intero: lì non si mettono)
+    var libero = function (p) { return !occ.some(function (q) { return Math.abs(q[0] - p[0]) < 0.022 && Math.abs(q[1] - p[1]) < 0.06; }); };
+    var cm = function (z) { var k = z.o.kk || (asse[z.i] && asse[z.i].k); return alt[k] || 183; };
+    var slot = (lato === "A" ? AREA_ATT : AREA_DIF).filter(libero).concat((lato === "A" ? AREA_ATT : AREA_DIF).filter(function (p) { return !libero(p); }));
+    var fuori = [], resto = liberi.slice();
+    if (lato === "A") {   // dietro 1 o 2 difensori, dal seme: i più bassi più spesso
+      var nB = R() < 0.5 ? 1 : 2, dif = liberi.filter(function (z) { return z.o.ru === "D"; });
+      for (var b = 0; b < nB && dif.length; b++) {
+        var tot = 0; dif.forEach(function (z) { z.p = Math.exp(-(cm(z) - 183) / 6); tot += z.p; });
+        var r = R() * tot, sc2 = dif[0]; for (var j = 0; j < dif.length; j++) { r -= dif[j].p; if (r <= 0) { sc2 = dif[j]; break; } }
+        fuori.push(sc2); dif.splice(dif.indexOf(sc2), 1);
+      }
+    } else {   // fuori la punta (1, a volte 2), verso centrocampo
+      var pu = liberi.filter(function (z) { return z.o.ru === "A"; }); if (!pu.length) pu = liberi.filter(function (z) { return z.o.ru === "C"; }).slice(-1);
+      fuori = pu.slice(0, R() < 0.75 ? 1 : 2);
+    }
+    resto = liberi.filter(function (z) { return fuori.indexOf(z) < 0; }).sort(function (a, b) { return (b.o.nome ? 1 : 0) - (a.o.nome ? 1 : 0) || a.i - b.i; });   // (i vostri ai posti più vicini alla porta)
+    var dietroA = [[0.6, 0.38], [0.6, 0.63]], fuoriD = [[0.66, 0.47], [0.62, 0.6]];
+    fuori.forEach(function (z, k) { var p = (lato === "A" ? dietroA : fuoriD)[k] || [0.6, 0.5]; z.o.x = p[0]; z.o.y = p[1] + (R() - 0.5) * 0.04; z.o.dietro = true; });
+    resto.forEach(function (z, k) { var p = slot[k % slot.length]; z.o.x = p[0] + (R() - 0.5) * 0.012; z.o.y = p[1] + (R() - 0.5) * 0.03; });
+  }
   function titolariIn(sq, posti) {
     var m = moduloDi(sq), n = m.linee.length, dav = m.davanti.map(normNome), per = { P: [], D: [], C: [], A: [] }, out = [];
     undiciPiuForti(sq).forEach(function (x) { per[x.r].push(x); });
@@ -7834,7 +7872,7 @@
               var nu = postoNuovo(occ, q[0] === "A" ? [0.6, 0.64, 0.68] : [0.5, 0.54, 0.58]); if (nu) { posti.push(nu); o = nu; }
             } else if (posti[ord[i]] && !posti[ord[i]].via && !posti[ord[i]].nome) o = posti[ord[i]];
           }
-          if (o) { o.nome = nt.nome; o.pr = nt.pr; o.faccia = nt.faccia; o.pc = nt.pc; o.num = nt.num; o.asp = nt.asp; }
+          if (o) { o.nome = nt.nome; o.pr = nt.pr; o.faccia = nt.faccia; o.pc = nt.pc; o.num = nt.num; o.asp = nt.asp; o.kk = nt.k; }
         });
         var al = sc.altri && sc.altri[q[0]], usati = { P: 0, D: 0, C: 0, A: 0 }, giaIn = {};   // 👥 gli altri posti: chi nessuno ha comprato, nel suo ruolo (se non bastano, anonimi come prima)
         sc.attori.forEach(function (a) { if (a.chi && a.chi.k && a.sq === q[0]) giaIn[a.chi.k] = 1; });   // (🎯 chi fa l'azione, vostro o vero, non compare una seconda volta al suo posto)
@@ -7855,6 +7893,7 @@
           if (!al) return;
           var ru = o.ru || (i === 0 ? "P" : "C"), c = al[ru][usati[ru]++]; while (c && (giaIn[c.k] || nelleSq[c.k])) c = al[ru][usati[ru]++]; if (c && !o.via) { o.asp = c.asp; o.numA = c.num; }
         });
+        piazzaArea(posti, q[0], sc, asse);   // ⚽ (16 nov 2026) sui piazzati e nelle azioni in area: tutti in area (vedi piazzaArea)
         if (sc.lineaFG != null && sc.varT != null) {   // 🚩 (15 nov 2026, il proprietario: «sono tutti compresi nel fuorigioco, non solo chi marca») la difesa sale in linea
           var bq = lungo(sc.palla, sc.varT, true) || [0, 0.5, 0.5, 0], ffX = pieno({ verso: 1 }, bq[1], bq[2])[0], kS = sc.segui || 0.14, limX = (0.5 + sc.lineaFG * 0.496 - kS * ffX) / (1 - kS) - 0.004;   // (seguono il pallone di 0,14)
           posti.forEach(function (o, i) {
@@ -7969,7 +8008,20 @@
       sopraCampo(sc, p, w, h);
       // sopra a tutto, nei pixel dello schermo: i nomi dei vostri (con la punta sulla testa), le scritte, il replay
       var fs = Math.round(Math.max(9, Math.min(12, Math.min(w, h) * 0.032)));
-      nomi.forEach(function (n) { var sx = w / 2 + (n.alto[0] - cam.cx) * cam.z, sy = h / 2 + (n.alto[1] - cam.cy) * cam.z; if (sx < -8 || sx > w + 8 || sy < 0 || sy > h + 40) return; etichetta(n.chi.nome, sx, sy - 6, n.chi.pc || "#ffe066", fs, n.chi.pr); });
+      // 🏷️ (16 nov 2026 sera, il proprietario: tanti vostri in area) le etichette non si sovrappongono e non coprono porta e pallone: se toccano,
+      // salgono (al massimo 3 volte) con un filo fino alla testa
+      var piazzate = [], gA2 = P(sc, 0.38, GL - 0.02), gB2 = P(sc, 0.62, NET + 0.02), bq2 = lungo(sc.palla, p, true), bp2 = bq2 ? P(sc, bq2[1], bq2[2]) : null;
+      var scr = function (q) { return [w / 2 + (q[0] - cam.cx) * cam.z, h / 2 + (q[1] - cam.cy) * cam.z]; }, g1 = scr(gA2), g2 = scr(gB2), bS = bp2 ? scr(bp2) : null;
+      var porta = { x0: Math.min(g1[0], g2[0]), x1: Math.max(g1[0], g2[0]), y0: Math.min(g1[1], g2[1]), y1: Math.max(g1[1], g2[1]) };
+      var tocca = function (r, q) { return r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0; };
+      nomi.slice().sort(function (a, b) { return b.alto[1] - a.alto[1]; }).forEach(function (n) {
+        var sx = w / 2 + (n.alto[0] - cam.cx) * cam.z, sy = h / 2 + (n.alto[1] - cam.cy) * cam.z; if (sx < -8 || sx > w + 8 || sy < 0 || sy > h + 40) return;
+        ctx.font = "900 " + fs + "px system-ui,sans-serif"; var lw = ctx.measureText(n.chi.nome).width + fs * 0.9, lh = fs * (n.chi.pr && NOME_CHI ? 2.55 : 1.45) + 5, yb = sy - 6, su = 0;
+        var rect = function () { return { x0: sx - lw / 2 - 2, x1: sx + lw / 2 + 2, y0: yb - lh, y1: yb }; };
+        while (su < 3 && (piazzate.some(function (q) { return tocca(rect(), q); }) || tocca(rect(), porta) || (bS && tocca(rect(), { x0: bS[0] - 6, x1: bS[0] + 6, y0: bS[1] - 6, y1: bS[1] + 6 })))) { yb -= lh * 0.8; su++; }
+        if (su) { ctx.save(); ctx.strokeStyle = n.chi.pc || "#ffe066"; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.8; ctx.beginPath(); ctx.moveTo(sx, yb); ctx.lineTo(sx, sy - 4); ctx.stroke(); ctx.restore(); }
+        piazzate.push(rect()); etichetta(n.chi.nome, sx, yb, n.chi.pc || "#ffe066", fs, n.chi.pr);
+      });
       var np = nomeSottoPiedi(sc, p, function (k) { return !!nomeVero(sc, sc.attori[k]); });   // 🏷️ il nome di chi ha il pallone (se non è di nessuno)
       if (np && np.al > 0.02) {
         var fN = figure.filter(function (f) { return f.ai === np.i; })[0], tN = nomeVero(sc, sc.attori[np.i]);
