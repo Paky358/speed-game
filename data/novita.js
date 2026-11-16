@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 368,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la riga di lato e il mullet rifatti ✂️",
+    descrizione: [
+      "✂️ La riga di lato adesso si vede: una riga netta da una parte e i capelli pettinati verso l'altra, con più volume da quel lato.",
+      "🦁 Il mullet ha tutta la parte lunga dietro, da un orecchio all'altro, con le punte sul collo: prima si vedevano solo due ciuffi ai lati. Davanti e ai lati resta corto, con le orecchie libere."
+    ]
+  },
+  {
     v: 367,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: ricci, mossi e dreadlocks raccolti con le orecchie libere ✂️",

@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 16 nov 2026 22:45 · ⚽🃏 Mini Asta · PUBBLICATO · v368 (dal proprietario: la riga di lato che si capisce, il mullet con tutta la parte lunga dietro; prove asp1, asp2 OK; foto D:SG-asta-prove	agli-C-prima.png e tagli-C-dopo.png) · master
 - 16 nov 2026 22:15 · ⚽🃏 Mini Asta · PUBBLICATO · v367 (ricci, mossi, dreadlocks raccolti e treccine raccolte con le orecchie libere; prove asp1, asp2 OK; foto D:SG-asta-prove	agli-B-dopo.png; resta la vista di profilo in campo) · master
 - 16 nov 2026 21:50 · ⚽🃏 Mini Asta · PUBBLICATO · v366 (i tagli dei calciatori rifatti: orecchie libere, basette sottili, niente casco; corti, corti col ciuffo, medi con la riga, sfumati alti, rasato, ricci corti diversi anche in piccolo; teste dell'editor e figurine fino a 3 pixel per punto; prove asp1, asp2, ov1-ov3, su1 OK; foto D:SG-asta-prove	agli-prima-e-dopo.png; restano ricci, mossi, dreadlocks raccolti e il profilo in campo) · master
 - 16 nov 09:50 · 🔨 L'Asta dei temi senza vergogna · salvato · paR/ac1 «il voto non si chiude»: era solo la prova (mandava ancora il voto vecchio e cercava «Chiudi il voto», che con la passerella dei kit non c'è più); ora vota la passerella kit per kit: ac1 OK. Il gioco non cambia, niente da pubblicare · asta-voto-prova (da origin/master)
