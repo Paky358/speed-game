@@ -1302,10 +1302,10 @@
     var ris0 = tav.risultato; tav.risultato = function (l) { P.__risultati.push(JSON.parse(JSON.stringify(l))); return ris0 ? ris0.apply(this, arguments) : undefined; };
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/, ".sl-go"); }, 5000)) no("Paky non trova «Comincia»");
     if (!await W.aspetta(function () { return vm(C).fase === "lp"; }, 40000)) no("la prima carta non arriva (fase " + vm(C).fase + ")");
-    // la carta di partenza: una a testa, diversa per ognuno
+    // le carte di partenza: due a testa (16 nov 2026), diverse per ognuno
     var v = vm(C), tit = {};
-    v.giocatori.forEach(function (g) { var l = v.lin[g.id] || []; if (l.length !== 1) no(g.nome + " parte con " + l.length + " carte"); tit[l[0] && l[0].titolo] = 1; });
-    if (Object.keys(tit).length !== nomi.length) no("le carte di partenza non sono diverse: " + JSON.stringify(v.lin));
+    v.giocatori.forEach(function (g) { var l = v.lin[g.id] || []; if (l.length !== 2) no(g.nome + " parte con " + l.length + " carte"); l.forEach(function (e) { tit[e.titolo] = 1; }); });
+    if (Object.keys(tit).length !== 2 * nomi.length) no("le carte di partenza non sono diverse: " + JSON.stringify(v.lin));
     return { C: C, P: P };
   }
   function risultatoDi(P) { return (P.__risultati || []).slice(-1)[0] || null; }
@@ -1537,7 +1537,7 @@
       if (mT && mano && slots.length && P.document.querySelector(".tl-conferma") && kOld !== mano.textContent + "|" + mT[1]) {
         chi = mT[1]; kOld = mano.textContent + "|" + chi;
         var tit = mano.textContent, vista = lineaVista(P), Y = annoDi(P, tit);
-        if (!lin[chi]) { lin[chi] = vista.split(" | "); partenza[chi] = lin[chi][0]; if (lin[chi].length !== 1) no(chi + " parte con " + lin[chi].length + " carte"); }
+        if (!lin[chi]) { lin[chi] = vista.split(" | "); partenza[chi] = lin[chi][0]; if (lin[chi].length !== 2) no(chi + " parte con " + lin[chi].length + " carte"); }
         else if (vista.split(" | ").sort().join(" | ") !== lin[chi].slice().sort().join(" | ")) no(chi + " vede la linea «" + vista + "» invece di «" + lin[chi].join(" | ") + "»");
         // la carta di partenza dell'altro non c'è nella mia linea
         Object.keys(partenza).forEach(function (n) { if (n !== chi && vista.split(" | ").indexOf(partenza[n]) >= 0) no(chi + " vede nella sua linea la carta di partenza di " + n); });

@@ -158,8 +158,8 @@
     { anno: 1937, titolo: "Viene inaugurata Cinecittà a Roma", fatto: "I grandi studi sulla via Tuscolana: qui sono stati girati «Ben-Hur», «La dolce vita» e tanti altri film." },
     { anno: 1940, titolo: "Debutta «Pinocchio» animato della Disney", fatto: "È il secondo lungometraggio della Disney dopo Biancaneve: la canzone «When You Wish Upon a Star» vince l'Oscar." },
     { anno: 1942, titolo: "Debutta «Bambi» animato della Disney", fatto: "È tratto dal romanzo dello scrittore austriaco Felix Salten; il coniglietto Tamburino ruba la scena a tutti." },
-    { anno: 1946, titolo: "Si tiene il primo Festival di Cannes", fatto: "Doveva partire già nel 1939, ma fu annullato per lo scoppio della guerra." },
-    { anno: 1950, titolo: "Debutta «Cenerentola» animato della Disney", fatto: "Il suo successo rimette in sesto i conti della Disney dopo gli anni difficili della guerra." },
+    { anno: 1946, titolo: "Si tiene il primo Festival di Cannes", fatto: "Il festival si tiene sulla Costa Azzurra, in Francia: ancora oggi il premio più ambito è la Palma d'oro." },
+    { anno: 1950, titolo: "Debutta «Cenerentola» animato della Disney", fatto: "La storia della ragazza con la scarpetta di cristallo riporta la Disney al successo: ci sono i topolini Giac e Gus e la fata madrina." },
     { anno: 1955, titolo: "Debutta «Lilli e il vagabondo» animato della Disney", fatto: "La cena a lume di candela con gli spaghetti che finiscono in un bacio è tra le scene più famose dei cartoni." },
     { anno: 1956, titolo: "Debutta «Totò, Peppino e la... malafemmina»", fatto: "È il film della lettera alla «signorina» e del vigile di Milano: «Noio volevàn savuàr...»." },
     { anno: 1958, titolo: "Debutta «I soliti ignoti» di Mario Monicelli", fatto: "Una banda di ladri pasticcioni con Gassman, Mastroianni e Totò: per molti è l'inizio della commedia all'italiana." },
@@ -172,7 +172,7 @@
     { anno: 1970, titolo: "Debutta «Lo chiamavano Trinità» con Terence Hill e Bud Spencer", fatto: "Fagioli in padella e schiaffoni: lancia il western comico all'italiana." },
     { anno: 1974, titolo: "Debutta «...altrimenti ci arrabbiamo!» con Bud Spencer e Terence Hill", fatto: "I due vincono insieme una dune buggy in una gara e, quando gliela distruggono, la rivogliono uguale: rossa con la cappottina gialla." },
     { anno: 1975, titolo: "Debutta il primo «Amici miei»", fatto: "Le zingarate e le supercazzole del Conte Mascetti, interpretato da Ugo Tognazzi." },
-    { anno: 1976, titolo: "Debutta il primo «Febbre da cavallo» con Gigi Proietti", fatto: "Scommettitori squattrinati all'ippodromo di Roma: diventa un film di culto, con un seguito nel 2002." },
+    { anno: 1976, titolo: "Debutta il primo «Febbre da cavallo» con Gigi Proietti", fatto: "Scommettitori squattrinati all'ippodromo di Roma: diventa un film di culto, con un seguito molti anni dopo." },
     { anno: 1977, titolo: "Debutta «La febbre del sabato sera» con John Travolta", fatto: "Il completo bianco e le canzoni dei Bee Gees fanno scoppiare la mania della disco music." },
     { anno: 1980, titolo: "Debutta «Un sacco bello», il primo film di Carlo Verdone", fatto: "Tra i produttori c'è Sergio Leone, che crede subito nel giovane comico romano." },
     { anno: 1980, titolo: "Debutta «The Blues Brothers»", fatto: "Jake ed Elwood, «in missione per conto di Dio», distruggono decine di auto della polizia." },
@@ -199,7 +199,7 @@
     { anno: 2002, titolo: "Debutta il primo «L'era glaciale»", fatto: "Lo scoiattolo Scrat insegue la sua ghianda dall'inizio alla fine." },
     { anno: 2004, titolo: "Debutta il film «Tre metri sopra il cielo» con Riccardo Scamarcio", fatto: "È tratto dal romanzo di Federico Moccia: Step e Babi fanno innamorare gli adolescenti di tutta Italia." },
     { anno: 2005, titolo: "Debutta «La fabbrica di cioccolato» di Tim Burton", fatto: "Johnny Depp è Willy Wonka e tutti gli Umpa Lumpa sono interpretati da un solo attore, Deep Roy." },
-    { anno: 2006, titolo: "Debutta «Notte prima degli esami»", fatto: "È ambientato nell'estate della maturità del 1989, con Giorgio Faletti nei panni del professore." },
+    { anno: 2006, titolo: "Debutta «Notte prima degli esami»", fatto: "È ambientato nell'estate della maturità, con Giorgio Faletti nei panni del professore." },
     { anno: 2007, titolo: "Debutta «I Simpson - Il film»", fatto: "Homer adotta un maialino, Spider-Maiale, e combina un disastro a Springfield." },
     { anno: 2008, titolo: "Debutta il primo «Iron Man» con Robert Downey Jr.", fatto: "È il primo film dell'Universo Cinematografico Marvel, quello che porterà agli Avengers." },
     { anno: 2010, titolo: "Debutta «Benvenuti al Sud» con Claudio Bisio", fatto: "Un direttore delle Poste viene trasferito dalla Brianza a Castellabate, nel Cilento: è il rifacimento del francese «Giù al Nord»." },
@@ -209,8 +209,8 @@
     { anno: 2018, titolo: "Debutta «Bohemian Rhapsody» sui Queen", fatto: "Rami Malek è Freddie Mercury e vince l'Oscar come miglior attore." },
     { anno: 2020, titolo: "Debutta «Tolo Tolo» di Checco Zalone", fatto: "È il primo film che Checco Zalone dirige da solo, senza Gennaro Nunziante." },
     { anno: 2022, titolo: "Will Smith dà uno schiaffo a Chris Rock alla notte degli Oscar", fatto: "Poco dopo lo schiaffo, Will Smith vince l'Oscar come miglior attore per «Una famiglia vincente»." },
-    { anno: 2023, titolo: "Debutta «C'è ancora domani» di Paola Cortellesi", fatto: "È il suo primo film da regista, in bianco e nero: in Italia batte perfino «Barbie» negli incassi dell'anno." },
+    { anno: 2023, titolo: "Debutta «C'è ancora domani» di Paola Cortellesi", fatto: "È il suo primo film da regista, girato in bianco e nero: racconta il riscatto di una madre di famiglia a Roma. Cortellesi è anche la protagonista." },
     { anno: 2024, titolo: "Debutta «Deadpool & Wolverine»", fatto: "Ryan Reynolds e Hugh Jackman insieme, tra battute e citazioni: incassa più di 1,3 miliardi di dollari." },
-    { anno: 2025, titolo: "Debutta il «Lilo & Stitch» con gli attori in carne e ossa", fatto: "Il rifacimento del cartone del 2002 supera il miliardo di dollari d'incasso." }
+    { anno: 2025, titolo: "Debutta il «Lilo & Stitch» con gli attori in carne e ossa", fatto: "Il rifacimento del cartone animato con gli attori veri supera il miliardo di dollari d'incasso." }
   ]
 });

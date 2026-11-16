@@ -22,7 +22,7 @@
   function rivelazioneT(n) { return n > 4 ? 9000 : 6300 + 300 * n; }
   var TANTI = 5;               // online da 5 in su la partita parte "⚡ Tutti insieme" (regola «✨ Decide il gioco»)
   // «🧍 Ognuno la sua linea» (26 ott 2026, come Hitster ma tutti insieme): ognuno ha la SUA linea, esce una carta per tutti e
-  // ognuno la mette nella sua. Vince chi arriva per primo a VINCI carte messe bene (la carta di partenza non conta)
+  // ognuno la mette nella sua. Vince chi arriva per primo a VINCI carte messe bene (le carte di partenza non contano)
   var VINCI = 10, VINCI_MIN = 5, VINCI_MAX = 15;
   function vinciDi(imp) { var v = Math.round(+((imp && imp.vinci) || VINCI)); return isFinite(v) ? Math.max(VINCI_MIN, Math.min(VINCI_MAX, v)) : VINCI; }
   var MEDAGLIE = ["🥇", "🥈", "🥉"];
@@ -120,6 +120,10 @@
     ".tl-mano .cambia:active{transform:scale(.94)}.tl-mano .cambia:disabled{opacity:.5}",
     ".tl-mano .tit{position:relative;font-size:1.18rem;font-weight:900;line-height:1.2;margin-top:6px;text-shadow:0 1px 2px rgba(0,0,0,.25)}",
     ".tl-mano .desc{position:relative;font-size:.84rem;line-height:1.35;margin-top:6px;opacity:.92}",
+    // (la spiegazione sulla carta in mano: sotto la foto, larga quanto la carta)
+    ".tl-mano.con-foto .alto{min-height:74px}",
+    ".tl-mano.con-foto .desc{margin-left:-86px}",
+    ".tl-mano.con-desc .desc{font-size:.88rem;font-weight:600;line-height:1.32;opacity:1;color:var(--o-testo,#fff)}",
     // la linea del tempo verticale
     ".tl-scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;margin:0 -12px;padding:4px 12px 16px;",
       "-webkit-mask:linear-gradient(transparent,#000 14px);mask:linear-gradient(transparent,#000 14px)}",
@@ -246,7 +250,7 @@
     ".tl-anno .pa{flex:0 0 auto;min-width:40px;height:38px;border-radius:12px;border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-weight:900;font-size:.85rem;cursor:pointer;padding:0 6px}",
     ".tl-anno .pa:active{transform:scale(.94)}",
     ".tl-anno .v{flex:1;min-width:0;height:38px;border-radius:12px;border:2px solid rgba(255,109,151,.55);background:var(--o-carta-piena);color:#fff;font:inherit;font-weight:900;font-size:1.15rem;text-align:center;letter-spacing:.06em;padding:0 4px}",
-    ".tl-anno .v::placeholder{color:var(--o-tenue);font-size:.9rem;letter-spacing:0;font-weight:800}",
+    ".tl-anno .v::placeholder{color:var(--o-tenue);font-size:.86rem;letter-spacing:0;font-weight:800}",
     ".tl-anno.ha .v{border-color:var(--accento);background:rgba(224,34,90,.18)}",
     ".tl-anno .sl{width:100%;height:22px;margin:0;accent-color:#ff4f86;cursor:pointer}",
     ".tl-anno .tt{font-size:.78rem;font-weight:800;color:var(--o-tenue);text-align:center;line-height:1.2}",
@@ -464,9 +468,19 @@
     return n || cats.length;
   }
   // carte a testa: se il mazzo non basta per tutti, meno carte (sempre uguali per tutti)
-  function carteGiuste(carte, mazzo, n) { return Math.max(1, Math.min(carte, Math.floor((mazzo - 1) / Math.max(1, n)))); }
+  function carteGiuste(carte, mazzo, n) { return Math.max(1, Math.min(carte, Math.floor((mazzo - PARTENZA) / Math.max(1, n)))); }
+  // 🃏🃏 16 nov 2026 (il proprietario): la linea parte con DUE carte (con una sola chi gioca per primo ha una scelta troppo facile).
+  // Dal mazzo le prime due di anni diversi (se non ce ne sono, quello che c'è), già in ordine; le guarda come «viste»
+  var PARTENZA = 2;
+  function cartePartenza(mazzo) {
+    var out = [];
+    for (var i = mazzo.length - 1; i >= 0 && out.length < PARTENZA; i--) if (!out.some(function (e) { return e.anno === mazzo[i].anno; })) out.push(mazzo.splice(i, 1)[0]);
+    while (out.length < PARTENZA && mazzo.length) out.push(mazzo.pop());
+    out.forEach(segnaVista); ordina(out);
+    return out;
+  }
   // "⚡ Tutti insieme": le carte sono in comune (una per giro), basta che il mazzo ne abbia abbastanza
-  function carteInsieme(carte, mazzo) { return Math.max(1, Math.min(carte, mazzo - 1)); }
+  function carteInsieme(carte, mazzo) { return Math.max(1, Math.min(carte, mazzo - PARTENZA)); }
 
   // ---- Statistiche per i trofei: conta SOLO le giocate di chi ha il profilo attivo ----
   // Tutto in memoria durante la partita; a fine partita un solo salvataggio sul profilo.
@@ -831,14 +845,19 @@
   // cambia: la funzione del tasto «🔄 Cambia» (una volta a partita, al proprio turno), o niente
   function nodoCartaMano(el, carta, occhiello, cambia) {
     var cat = carta._cat || carta.cat, ic = infoCat(cat), ft = nodoFoto(el, { cat: cat, titolo: carta.titolo }, "ft");
-    return el("div", { class: "tl-mano" + (ft ? " con-foto" : "") + (cambia ? " con-cambia" : ""), style: stileCat(cat) }, [
+    // 📖 16 nov 2026 (il proprietario): la spiegazione si legge PRIMA di scegliere il posto (le spiegazioni non svelano l'anno:
+    // controllate tutte). Online la carta viaggia senza: ogni telefono la prende dalle sue carte (fattoDi)
+    var ds = cat === "noi" || !carta.titolo ? "" : fattoDi({ titolo: carta.titolo, cat: cat, fatto: carta.fatto });
+    return el("div", { class: "tl-mano" + (ft ? " con-foto" : "") + (cambia ? " con-cambia" : "") + (ds ? " con-desc" : ""), style: stileCat(cat) }, [
       ft,
       el("div", { class: "fil", text: ic.icona }),
-      el("div", { class: "testa" }, [ el("span", { class: "cat" }, [ ic.icona, el("span", { class: "cn", text: " " + ic.nome }) ]),
-        cambia ? el("button", { class: "cambia", type: "button", text: "🔄 Cambia", "aria-label": "Cambia carta (una volta a partita)",
-          onclick: function (e) { e.currentTarget.disabled = true; cambia(); } }) : null,
-        el("span", { class: "anno", text: "????" }) ]),
-      el("div", { class: "tit", text: carta.titolo }),   // la spiegazione si legge solo dopo il risultato (a volte suggerisce la data)
+      el("div", { class: "alto" }, [
+        el("div", { class: "testa" }, [ el("span", { class: "cat" }, [ ic.icona, el("span", { class: "cn", text: " " + ic.nome }) ]),
+          cambia ? el("button", { class: "cambia", type: "button", text: "🔄 Cambia", "aria-label": "Cambia carta (una volta a partita)",
+            onclick: function (e) { e.currentTarget.disabled = true; cambia(); } }) : null,
+          el("span", { class: "anno", text: "????" }) ]),
+        el("div", { class: "tit", text: carta.titolo }) ]),
+      ds ? el("div", { class: "desc", text: ds }) : null,
       cat === "noi" ? el("div", { class: "tl-ricordo", text: carta.autoreNome ? "📸 Un ricordo di " + carta.autoreNome : "📸 Un vostro ricordo" }) : null
     ]);
   }
@@ -981,6 +1000,24 @@
       return val;
     };
     box.accendi = function (si) { box.classList.toggle("spento", !si); };
+    // la scritta nella casella non si taglia mai (16 nov 2026: «L'anno? (facoltativo)» era tagliata): appena la casella è
+    // nella pagina si misura e, se non ci sta, si prende la più corta che ci sta (si rifà se cambia la larghezza)
+    if (!opz.segnaposto) {
+      var SEGNI = ["📅 L'anno? (facoltativo)", "L'anno? (facoltativo)", "📅 L'anno? (se vuoi)", "L'anno? (se vuoi)", "📅 L'anno?", "L'anno?"], cv = null, largo = -1;
+      var adatta = function () {
+        if (!inp.isConnected) return;
+        var w = inp.clientWidth - 10; if (!(w > 0) || w === largo) return;
+        largo = w;
+        try {
+          var cs = getComputedStyle(inp, "::placeholder"); cv = cv || document.createElement("canvas");
+          var c = cv.getContext("2d"); c.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+          var ok = SEGNI.filter(function (s) { return c.measureText(s).width <= w; })[0] || SEGNI[SEGNI.length - 1];
+          if (inp.placeholder !== ok) inp.placeholder = ok;
+        } catch (e) {}
+      };
+      requestAnimationFrame(function () { requestAnimationFrame(adatta); });
+      if (window.ResizeObserver) { var ro = new ResizeObserver(function () { if (!inp.isConnected) { ro.disconnect(); return; } requestAnimationFrame(adatta); }); ro.observe(inp); }
+    }
     return box;
   }
   // «📆 Scegli tu gli anni»: la linea con due maniglie (dal… al…), più ‹ › per gli aggiustamenti. Gli anni non sono larghi
@@ -1398,7 +1435,7 @@
       "La <b>classifica</b> è sempre in alto. Vince chi ha più punti quando tutti hanno finito le carte.",
       "Online c'è anche <b>⚡ Tutti insieme</b> (da " + TANTI + " giocatori in su si parte così): esce una carta e la piazzate <b>tutti nello stesso momento</b>, ognuno dal suo telefono (" + TEMPO_T + " secondi). Chi la mette giusta prende <b>100 punti</b>, il più veloce dei giusti <b>50 in più</b>, e il bonus dell'anno va a chi ci va più vicino; chi sbaglia non perde niente. Poi la carta entra nella linea per tutti. L'<b>ultima carta vale doppio</b>!",
       "🧍 <b>Ognuno la sua linea</b> (si sceglie in «🎲 Che partita?»): ognuno parte con <b>una carta sua</b>, già girata. A ogni giro esce una carta, <b>la stessa per tutti</b>, e ognuno la mette nella <b>sua</b> linea, in segreto (online tutti insieme, ognuno dal suo telefono; sullo stesso telefono ve lo passate). Poi la carta si gira: se è al posto giusto entra nella tua linea, se no per te va via.",
-      "🏁 Vince chi arriva per primo a <b>10 carte</b> messe bene (la carta di partenza non conta; nelle regole scegli da " + VINCI_MIN + " a " + VINCI_MAX + " con la lineetta). La partita continua finché c'è il <b>podio</b>. Se in tanti arrivano insieme al primo posto c'è lo <b>⚔️ spareggio</b>: le carte dopo le giocano solo loro, finché uno solo la mette giusta.",
+      "🏁 Vince chi arriva per primo a <b>10 carte</b> messe bene (le 2 carte di partenza non contano; nelle regole scegli da " + VINCI_MIN + " a " + VINCI_MAX + " con la lineetta). La partita continua finché c'è il <b>podio</b>. Se in tanti arrivano insieme al primo posto c'è lo <b>⚔️ spareggio</b>: le carte dopo le giocano solo loro, finché uno solo la mette giusta.",
       "👀 Chi ha finito (e chi guarda) tocca gli avatar di chi gioca ancora e vede la <b>sua linea</b> e dove mette la carta. Niente suggerimenti! 🤫"
     ],
 
@@ -1424,7 +1461,7 @@
       slV.addEventListener("input", function () { dove.vinci = vinciDi({ vinci: +slV.value }); scriviV(); });
       var boxV = el("div", { class: "tl-vinci-box", hidden: "hidden" }, [ el("div", { class: "etichetta", text: "🏁 Carte per vincere" }),
         el("div", { class: "tl-vinci" }, [ nV, slV ]),
-        el("div", { class: "tl-vinci-tt", text: "Sposta la lineetta: da " + VINCI_MIN + " a " + VINCI_MAX + " carte (la carta di partenza non conta)" }) ]);
+        el("div", { class: "tl-vinci-tt", text: "Sposta la lineetta: da " + VINCI_MIN + " a " + VINCI_MAX + " carte (le 2 carte di partenza non contano)" }) ]);
       box.appendChild(boxV);
       function scriviV() {
         var tx = String(dove.vinci), ms = "Vince chi arriva prima a " + dove.vinci + " carte";
@@ -1620,7 +1657,7 @@
     if (imp.linee) return partenzaLinee(t);   // «🧍 Ognuno la sua linea»
     var mazzo = mazzoNuovo(imp);   // prima le carte mai viste su questo telefono
     var carte = carteGiuste(imp.carte || 5, mazzo.length, t.giocatori.length);
-    var linea = [mazzo.pop()]; segnaVista(linea[0]);
+    var linea = cartePartenza(mazzo);
     // «📸 I nostri ricordi» scritti su questo telefono, sparsi tra le carte
     // (anche i ricordi stanno negli anni scelti: «📆 Epoca»)
     if (imp.ricordi !== "no") mazzo = mescolaRicordi(mazzo, mieiRicordi().map(function (s) { return cartaRicordo(s, null, null); })
@@ -1754,14 +1791,14 @@
   }
 
   // ---------- «🧍 Ognuno la sua linea» sullo stesso telefono ----------
-  // Ognuno parte con una carta sua (già girata). A ogni giro esce una carta: il telefono passa di mano e ognuno la mette nella
+  // Ognuno parte con due carte sue (già girate). A ogni giro esce una carta: il telefono passa di mano e ognuno la mette nella
   // SUA linea (vede solo la sua), poi tutti insieme si vede il risultato. Vince chi arriva prima a vinci carte messe bene
   function partenzaLinee(t) {
     var imp = t.impostazioni || {}, vinci = vinciDi(imp);
     var stato = { mazzo: mazzoNuovo(imp), linee: true, vinci: vinci, lin: {}, spar: null, giro: 0, carta: null,
       giocatori: t.giocatori.map(function (n, i) { return { id: "p" + i, nome: n, ok: 0, fin: 0, punti: 0, restano: 1 }; }) };
-    // la carta di partenza: una a testa, diversa per ognuno
-    stato.giocatori.forEach(function (g) { var c = stato.mazzo.pop(); stato.lin[g.id] = c ? [c] : []; if (c) segnaVista(c); });
+    // le carte di partenza: due a testa, diverse per ognuno
+    stato.giocatori.forEach(function (g) { stato.lin[g.id] = cartePartenza(stato.mazzo); });
     var prof = window.SGNube && SGNube.disponibile() && SGNube.profilo();
     stato._io = -1;
     if (prof) stato.giocatori.forEach(function (g, i) { if (stato._io < 0 && g.nome === prof.nome) stato._io = i; });
@@ -2233,7 +2270,7 @@
       st.annoDetto = null; st.doppio = false;
       st.carte = st.insieme ? carteInsieme(carteIns, st.mazzo.length) : carteGiuste(st.carte, st.mazzo.length, st.giocatori.length);
       st.giocatori.forEach(function (g) { g.restano = st.carte; g.punti = 0; g.via = false; g.cambio = false; });
-      st.linea = [st.mazzo.pop()]; ordina(st.linea); segnaVista(st.linea[0]);
+      st.linea = cartePartenza(st.mazzo);
       // «📸 I nostri ricordi» di chi c'è (anche di chi guarda), sparsi tra le carte che si giocheranno
       st.ricPool = [];
       if (st.ricordiOn && st.giocatori.length >= 2) {   // (da soli i propri ricordi non si giocano: l'anno lo sai già)
@@ -2373,21 +2410,21 @@
       st.insieme = false; st.iniziata = true; st.giro = 0; st.mosse = {}; st.avanti = {}; st.esitoT = null; st.esitoL = null;
       st.spar = null; st.lin = {}; st.linea = []; st.ricPool = []; st.annoOn = false; st.annoDetto = null; st.doppio = false;
       st.vinci = vinciDi(imp); st.carte = st.vinci;
-      // la carta di partenza: una a testa, già girata, diversa per ognuno (non conta per vincere)
+      // le carte di partenza: due a testa, già girate, diverse per ognuno (non contano per vincere)
       st.giocatori.forEach(function (g) {
         g.ok = 0; g.punti = 0; g.fin = 0; g.restano = 1; g.via = false; g.cambio = false;
-        var c = st.mazzo.pop(); st.lin[g.id] = c ? [c] : []; if (c) segnaVista(c);
+        st.lin[g.id] = cartePartenza(st.mazzo);
       });
       st.anni = null;
       st.T = creaTraccia({ online: true, carte: st.vinci, tutteCat: st.tutteCat });
       st.fase = "apertura"; st.scadenza = null; st.durata = null; bd();
       clearTo(); st._to = setTimeout(iniziaTurno, durataApertura(st.giocatori.length));
     }
-    // chi aspettava in «prossimi» entra alla carta dopo: con la sua carta di partenza e 0 carte messe bene
+    // chi aspettava in «prossimi» entra alla carta dopo: con le sue carte di partenza e 0 carte messe bene
     function entranoL() {
       st.prossimi.forEach(function (x) {
         if (gDi(x.id) || st.giocatori.length >= MAX_GIOCATORI || !st.mazzo.length) return;
-        var c = st.mazzo.pop(); segnaVista(c); st.lin[x.id] = [c];
+        st.lin[x.id] = cartePartenza(st.mazzo);
         st.giocatori.push({ id: x.id, nome: x.nome, restano: 1, punti: 0, ok: 0, fin: 0, omino: x.omino || null, cambio: false });
       });
       st.prossimi = [];
