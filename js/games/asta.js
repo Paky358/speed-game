@@ -6397,7 +6397,8 @@
     function nd(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
     function daControllare() { return tutti.filter(function (c) { return aspettoVero(c.k).dc; }); }
     var R = nd("div", "fa-ed oro"), testa = nd("div", "fa-ed-testa"), chiudi = nd("button", "fa-ed-x", "✕");
-    testa.appendChild(nd("b", "", "🎨 Personalizza i calciatori")); testa.appendChild(chiudi); R.appendChild(testa);
+    testa.appendChild(nd("b", "", "🎨 Personalizza i calciatori" + (STAG_ATT ? " · " + STAG_ATT : ""))); testa.appendChild(chiudi); R.appendChild(testa);   // (📅 i calciatori della stagione scelta nelle regole)
+
     var scheda = nd("div", "fa-ed-scheda"); R.appendChild(scheda);
     var cerca = nd("input", "fa-ed-cerca"); cerca.type = "search"; cerca.placeholder = "🔍 Cerca un calciatore o una squadra"; R.appendChild(cerca);
     var schede = nd("div", "fa-ed-schede"), tTu = nd("button", "on"), tDc = nd("button"); schede.appendChild(tTu); schede.appendChild(tDc); R.appendChild(schede);
@@ -6427,7 +6428,8 @@
         torna.onclick = function () { delete ASP_PROP[sel.k]; salvaAspettoProp(); disegnaScheda(); elenco(); }; }
       scheda.appendChild(tasti);
       ok.onclick = function () { salva(aspettoVero(sel.k)); scegli(prossimo()); };
-      foto.onclick = function () { window.open("https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(sel.nome.replace(/\s+(?:[A-Z][a-z]?\.)+$/, "") + " " + sel.sq + " calciatore"), "_blank"); };
+      foto.onclick = function () { window.open("https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(sel.nome.replace(/\s+(?:[A-Z][a-z]?\.)+$/, "") + " " + sel.sq + " calciatore" + (STAG_ATT ? " " + STAG_ATT : "")), "_blank"); };   // (📅 con la 2017-18: le foto di quell'anno)
+
       function riga(titolo, valori, attuale, mostra, cambia) {
         scheda.appendChild(nd("div", "fa-ed-et", titolo)); var r = nd("div", "fa-ed-riga");
         valori.forEach(function (v) { var b = nd("button", "fa-ed-c" + (v === attuale ? " on" : "")); mostra(b, v); b.onclick = function () { cambia(v); }; r.appendChild(b); });

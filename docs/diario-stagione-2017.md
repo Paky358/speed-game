@@ -45,6 +45,15 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - Cartellini: % a partita a voto, con 6 partite «finte» della media del ruolo (così chi ha giocato poco non ha numeri pazzi).
 - Rigoristi: i 3 che hanno tirato più rigori nel 2017-18 (con segnati/tirati veri); chi ne ha meno di 2 aggiunge i più quotati.
 
+### 16 nov, il proprietario durante la notte («se ci metti tutto questo tempo…»)
+- **Le facce le fa lui** (come per oggi): niente più aiutanti sull'aspetto. Fermato il gruppo A-L; restano le 81 del gruppo M-V come
+  punto di partenza (quelle con un dubbio sono «da controllare»). In «🎨 Personalizza i calciatori» (regole della Mini Asta, solo IL PAPPONE)
+  con «📅 Stagione: 2017-18» scelta si vedono i calciatori di quell'anno; «🔍 Foto» cerca su Google «Nome Squadra calciatore 2017-18».
+- **Altezze da fantacalcio.it** (la pagina di ogni calciatore 2017-18 ha «Altezza»): fermato l'aiutante delle due fonti, prese tutte da lì.
+- Maglie: le pagine 2017-18 di fantacalcio.it NON hanno l'immagine della maglia (solo il segnaposto): restano quelle della ricerca.
+- Prove ridotte a quelle che contano (il giro intero di ~70 prove durava ore): pa2, pa4, tg1, gs2 con «Oggi»; pa2, pa4, tg1, gs2, tg5 con la 2017-18;
+  più le nuove st0-st4.
+
 ## Come è fatto (per chi riprende)
 - `data/fanta-2017.js` (si rifà da `D:\SG-stagione-lavoro\gen.js`, NON a mano): `window.SG_FANTA_STAGIONI["2017-18"]` con le stesse forme dei
   file di oggi (CALCIATORI, QUOTAZIONI, STATISTICHE, SQUADRE, NUMERI, ALTEZZE, ASPETTO, CAMPO, MODULI, RUOLI) più `squadre20` (colori, righe,
