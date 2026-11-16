@@ -21,12 +21,32 @@
   function idDi(nome) { return nome === "Paky" ? "host" : A.mioId(nome); }
   function manda(nome, m) { if (nome === "Paky") return false; W.reteDi(nome).invia(m); return true; }
   async function telefoniOnline(imp, nomi) {
-    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; } }), C = await W.apriStanza(P, "L'Asta");
-    for (var i = 1; i < nomi.length; i++) await W.apriTel(nomi[i], { hash: "gioco=asta&stanza=" + C, x: 185 * i });
+    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; } }), C = await W.apriStanza(P, "Mini Asta Fantacalcio");   // (16 nov 2026: la Mini Asta è un gioco a sé dal 29 ott; dalla Stagione 2017-18 «L'Asta» apre i temi)
+    for (var i = 1; i < nomi.length; i++) await W.apriTel(nomi[i], { hash: "gioco=astafanta&stanza=" + C, x: 185 * i });
     if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === nomi.length; }, 12000)) no("non sono entrati in " + nomi.length + " (" + (vm(C).giocatori || []).length + ")");
     W.clicca(P, /Comincia/);
     if (!await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 8000)) no("la partita non comincia");
     return { P: P, C: C };
+  }
+  // 🧾 (16 nov 2026, il proprietario: gli assist e i gialli non si vedevano) sotto ogni calciatore uscito: ogni simbolo si vede (nessuno ridotto a
+  // una riga in cima al riquadro), niente simboli tagliati, il numero dei gol subiti e non una fila di porticine, e il conto torna: voto + simboli = fantavoto
+  var VAL_BONUS = { "⚽": 3, "👟": 1, "🧤": 3, "❌": -3, "🙈": -2, "🟨": -0.5, "🟥": -1, "🥅": -1, "🔒": 1 }, simboliVisti = {};
+  function bonusOk(w, dove) {
+    var ko = [], n = 0;
+    qa(w, ".st-pag.on .st-pv").forEach(function (t) {
+      if (t.classList.contains("nasc")) return; var em = t.querySelector(".st-pv-ic"), bs = t.querySelectorAll(".st-pv-c b"); if (!em || bs.length < 2) return; n++;
+      [].slice.call(em.querySelectorAll("i")).forEach(function (i) { var cs = w.getComputedStyle(i), r = i.getBoundingClientRect(); if (cs.position === "absolute" || r.height < 5 || r.width < 4) ko.push("simbolo invisibile " + i.getAttribute("aria-label")); });
+      if (em.scrollWidth > em.clientWidth + 1) ko.push("simboli tagliati «" + em.textContent + "»");
+      if (/🥅🥅/.test(em.textContent)) ko.push("i gol subiti sono ancora una fila di porticine");
+      var somma = 0, cur = null;
+      [].slice.call(em.childNodes).forEach(function (x) { var tx = x.nodeType === 3 ? x.textContent : x.tagName === "I" ? x.getAttribute("aria-label") : x.tagName === "SMALL" ? x.textContent : "";
+        if (x.tagName === "SMALL") { var k = +tx.replace(/[^0-9]/g, ""); if (cur) somma += VAL_BONUS[cur] * (k - 1); return; }
+        Array.from(tx).forEach(function (ch) { if (VAL_BONUS[ch] != null) { cur = ch; somma += VAL_BONUS[ch]; simboliVisti[ch] = (simboliVisti[ch] || 0) + 1; } }); });
+      var v = +bs[0].textContent.replace(",", "."), f = +bs[1].textContent.replace(",", ".");   // (il rosso per il secondo giallo: solo 🟥, −1 in tutto)
+      if (!(Math.abs(v + somma - f) < 0.01)) ko.push("il conto non torna: " + bs[0].textContent + " + «" + [].slice.call(em.childNodes).map(function (x) { return x.nodeType === 3 ? x.textContent : x.getAttribute("aria-label") || x.textContent; }).join("") + "» ≠ " + bs[1].textContent);
+    });
+    if (ko.length) no(dove + ": " + ko.slice(0, 4).join(" · "));
+    return n;
   }
   function pagelle(w) { var p = q(w, ".st-pag.on"); return p && !p.classList.contains("live") ? p : null; }   // (le pagelle aperte, non la scheda toccata)
   function titoloPag(w) { var p = pagelle(w), t = p && p.querySelector(".st-pag-tit"), nn = p ? p.querySelectorAll(".st-pf-testa span") : [], n = nn.length ? nn[nn.length - 1] : null; return p ? (t ? t.textContent : "") + (n ? " · " + n.textContent : "") : ""; }
@@ -51,7 +71,7 @@
     tutti.forEach(function (w) { var b = q(w, ".st-bar-vel"); if (b && !b.classList.contains("on")) b.click(); });
     // ⏸️ l'intervallo: Paky ha «Avanti ▶», Luca e Giulia aspettano
     if (!await W.aspetta(function () { return pagelle(P) && pagelle(L) && pagelle(G); }, 120000)) no("le pagelle del primo tempo non arrivano su tutti (Paky " + !!pagelle(P) + ", Luca " + !!pagelle(L) + ", Giulia " + !!pagelle(G) + ")");
-    var avP = bott(P, ".st-pag-av", /Avanti/), attL = q(L, ".st-pag-attesa"), attG = q(G, ".st-pag-attesa");
+    var avP = bott(P, ".st-pag-av", /Avanti/), attL = q(L, ".st-pag-attesa"), attG = q(G, ".st-pag-attesa"), nBon = bonusOk(P, "pagelle del primo tempo (Paky)") + bonusOk(L, "pagelle del primo tempo (Luca)");
     if (!avP) no("all'intervallo Paky non ha «Avanti ▶»");
     if (!attL || !/Aspettiamo Paky/.test(attL.textContent) || bott(L, ".st-pag-av", /Avanti/)) no("all'intervallo Luca non legge «⏳ Aspettiamo Paky…» (o ha un «Avanti»): " + (attL ? attL.textContent : "niente"));
     if (!attG) no("all'intervallo Giulia non aspetta");
@@ -68,6 +88,7 @@
       var av = await W.aspetta(function () { return bott(P, ".st-pag-av", /Avanti/); }, 15000);   // (dopo che i voti sono usciti tutti)
       if (!av) { if (q(P, ".st-gradini")) break; no("nelle pagelle finali Paky non ha «Avanti ▶»"); }
       if (!await W.aspetta(function () { return q(L, ".st-pag-attesa"); }, 12000)) no("nelle pagelle finali Luca non aspetta Paky");
+      nBon += bonusOk(P, "pagelle finali (Paky)") + bonusOk(L, "pagelle finali (Luca)");
       var prima = titoloPag(L);
       await W.dorme(2000);
       if (titoloPag(L) !== prima) no("Luca è andato avanti da solo nelle pagelle finali");
@@ -77,6 +98,7 @@
     }
     if (!await W.aspetta(function () { return q(P, ".st-gradini") && q(L, ".st-gradini"); }, 15000)) no("alla fine il podio non arriva per tutti");
     x.push("fischio finale: " + carte + " pagelle, ognuna aspettata da Luca e passata al tocco di Paky; podio per tutti");
+    x.push("bonus e malus: " + nBon + " calciatori controllati, ogni simbolo visibile e il conto torna (" + Object.keys(simboliVisti).map(function (k) { return k + " " + simboliVisti[k]; }).join(", ") + ")");
     return x.join(" · ");
   } });
 

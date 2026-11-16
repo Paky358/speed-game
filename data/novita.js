@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 358,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: nelle pagelle si vedono tutti i bonus e i malus 🧾",
+    descrizione: [
+      "🧾 Sotto ogni calciatore adesso si vedono tutti i bonus e i malus: anche gli assist 👟 e i cartellini 🟨 🟥, che prima non comparivano.",
+      "🔢 I simboli sono più grandi e col numero: ⚽×2 per due gol, 🥅−2 per due gol subiti (prima era una fila di porticine minuscole). Il conto torna sempre: voto più simboli fa il fantavoto."
+    ]
+  },
+  {
     v: 357,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: arrivano le altre stagioni 🕰️",
