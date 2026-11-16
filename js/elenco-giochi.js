@@ -33,6 +33,7 @@
   pezzo("asta", "data/asta-carte.js data/asta-pizza.js data/asta-panino.js data/asta-rapina.js data/asta-supereroi.js data/asta-appuntamento.js data/asta-giardino.js data/asta-vacanza.js data/asta-coinquilino.js data/asta-calcetto.js data/asta-palestra.js data/asta-capodanno.js data/asta-universita.js data/asta-roadtrip.js data/asta-playstation.js data/asta-halloween.js data/asta-natale.js data/asta-matrimonio.js data/asta-gita.js data/asta-trasloco.js data/asta-karaoke.js data/asta-campeggio.js data/asta-reality.js data/asta-tempo.js data/asta-icone.js data/asta-fanta.js data/fanta-quotazioni.js data/fanta-statistiche.js data/fanta-squadre.js data/fanta-numeri.js data/fanta-altezze.js data/fanta-ruoli.js data/fanta-aspetto.js data/fanta-ids.js data/fanta-campo.js data/fanta-moduli.js js/asta-sala-arte.js js/asta-stadio-arte.js js/asta-maglie.js js/games/asta.js");   // L'Asta e la Mini Asta Fantacalcio
   pezzo("asta-2017", "data/fanta-2017.js");   // 📅 la Serie A 2017-18 della Mini Asta: solo quando chi tiene la partita sceglie quella stagione
   pezzo("asta-2022", "data/fanta-2022.js");   // 📅 la Serie A 2022-23 (come sopra: solo se si sceglie quella stagione)
+  pezzo("asta-2018", "data/fanta-2018.js");   // 📅 la Serie A 2018-19 (solo se si sceglie quella stagione)
   pezzo("nomicose", "data/ncc-categorie.js js/games/nomicoseecitta.js", "studio");
 
   pezzo("impostore", "data/impostore-parole.js js/games/impostore.js");
