@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 16 nov 2026 05:39 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2021-22, 225 all'asta) · master
 - 16 nov 2026 05:34 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2020-21, 226 all'asta) · master
 - 16 nov 2026 05:23 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2016-17, 198 all'asta) · master
 - 16 nov 2026 04:51 · 📅 Stagioni del passato · PUBBLICATO · v357 (Mini Asta: la Serie A 2015-16, 189 all'asta) · master
