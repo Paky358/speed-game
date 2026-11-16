@@ -111,3 +111,52 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   quando serve, 203 calciatori, 20 squadre, riassunto «🕰️ Serie A 2017-18 · …», nessun errore. Messo su master (novità v356).
 - Restano da fare: le facce dei calciatori (IL PAPPONE, da «🎨 Personalizza i calciatori»), i numeri di Simy, Brignoli e Schick, le maglie di
   7 squadre da controllare, la prova pa4 che non passa anche su master (non nostra).
+
+## 16-17 nov, notte: TUTTE LE STAGIONI (dal Cervello, il proprietario dorme)
+### Passo 1 — le facce condivise (come funziona, per IL PAPPONE e per chi riprende)
+- Ogni calciatore ha il suo **numero di fantacalcio.it** (lo stesso in tutte le stagioni anche se cambia squadra: Meret è 572 alla SPAL nel
+  2017-18 e al Napoli oggi). Per «Oggi» stanno in `data/fanta-ids.js` (335 su 335, dal listone 2026-27 di fantacalcio.it; si rifà con
+  `D:\SG-stagione-lavoro\ids-oggi.js`); per ogni stagione nel suo pezzo (`IDS`).
+- **Quando IL PAPPONE sistema una faccia** in «🎨 Personalizza i calciatori» si salva sul calciatore («fc1870» = Barella) e vale in TUTTE le
+  stagioni e con «Oggi». Le facce salvate prima col nome («Barella (Inter)», «Hamsik (Napoli)») valgono ancora, anche nelle altre stagioni
+  dello stesso calciatore; quando le risistema passano sul numero.
+- **Eccezione per un anno** («quell'anno aveva i capelli diversi»): con una stagione scelta nelle regole, nell'editor c'è «📅 Solo nel 2017-18»:
+  acceso, la faccia vale solo per quell'anno («fc1870|2017-18»); «↩ Come gli altri anni» la toglie.
+- Senza faccia sua: i dati dalle foto di quell'anno, se no quelli di un'altra stagione o di oggi dello stesso calciatore, se no a caso.
+- Prova st5 (facce condivise) OK.
+- L'archivio di fantacalcio.it arriva fino alla **2015-16**: prima (2014-15 e indietro) la pagina mostra sempre lo stesso listone (603 righe).
+
+### Passo 2 — le stagioni (una alla volta, pubblicata appena pronta)
+- Strumenti in D:SG-stagione-lavoro: `copia-stagione.js` + `copia-altezze.js` (da incollare nel browser su fantacalcio.it: li usa
+  l'aiutante copista), `genera.js <stagione>` (il pezzo data/fanta-<anno>.js), `squadre-tutte.js` (colori, maglie, stadi e meteo delle
+  squadre che oggi non ci sono), `controllino.js <stagione>` (i famosi fuori), `novita-stagioni.js` (la voce unica v357), `pubblica.sh`.
+  Una stagione nuova nel gioco: il nome in ELENCO_STAGIONI (js/games/asta.js) e la riga pezzo("asta-<anno>", …) in js/elenco-giochi.js.
+- Scelte piccole: numeri di maglia da UNA fonte (la rosa della squadra su Wikipedia, abbinata per cognome e squadra; chi non si abbina resta
+  senza); punizioni = i 2 centrocampisti/trequartisti con più assist e gol, angoli = i 2 con più assist tra centrocampisti ed esterni
+  (fantacalcio.it non lo dice); modulo 4-3-3 del gioco per tutti; le facce: quelle di oggi e della 2017-18 dello stesso calciatore, il resto
+  a caso finché IL PAPPONE non le sistema.
+- 🏆 Le 3 giornate SPENTE (16 nov, il proprietario via Cervello): TRE_GIORNATE = false in js/games/asta.js; la prova tg0 (che cerca la
+  scelta nel ⚙️) ora dice NO apposta.
+
+#### 2022-23 — PUBBLICATA (v357)
+- All'asta 241 (P 20, D 74, C 93, A 54), in campo 59; numeri 290 su 300; altezze 300; portiere per eccezione: Audero (Sampdoria, 25 partite).
+- Prove stD e stG (online in 3) OK; con «Oggi» pa2, st0, st5 OK; versione online controllata.
+- Controllino: 2022-23 · fuori per le partite: Scamacca (Sassuolo, 0 partite, quot. 28), Ruiz (Napoli, 0 partite, quot. 18), Boga (Atalanta, 18 partite, quot. 18), Simeone (Napoli, 12 partite, quot. 17), Molina N. (Udinese, 0 partite, quot. 15), Karamoh (Torino, 15 partite, quot. 15), Deulofeu (Udinese, 15 partite, quot. 14), Malinovskyi (Atalanta, 12 partite, quot. 14), Sansone (Bologna, 15 partite, quot. 14), Thauvin (Udinese, 11 partite, quot. 13), Wijnaldum (Roma, 11 partite, quot. 13), Damsgaard (Sampdoria, 0 partite, quot. 13), Pogba (Juventus, 5 partite, quot. 12), Lukic (Torino, 15 partite, quot. 12), Sanchez (Inter, 0 partite, quot. 12), Tsadjout (Cremonese, 18 partite, quot. 12), Zirkzee (Bologna, 18 partite, quot. 12), Brekalo (Fiorentina, 6 partite, quot. 11), Veretout (Roma, 0 partite, quot. 11), Rebic (Milan, 18 partite, quot. 10), Bastoni S. (Spezia, 18 partite, quot. 10), Nestorovski (Udinese, 11 partite, quot. 10), Ilicic (Atalanta, 0 partite, quot. 10), Zakaria (Juventus, 2 partite, quot. 10), Theate (Bologna, 0 partite, quot. 10), Castrovilli (Fiorentina, 12 partite, quot. 10), Iling Junior (Juventus, 8 partite, quot. 10), Zaniolo (Roma, 13 partite, quot. 9, a inizio anno 19), Traoré Hj. (Sassuolo, 11 partite, quot. 9, a inizio anno 18), Bonucci (Juventus, 11 partite, quot. 7, a inizio anno 15), Alvarez A. (Sassuolo, 10 partite, quot. 6, a inizio anno 14), Henry (Verona, 15 partite, quot. 5, a inizio anno 18), Destro (Empoli, 10 partite, quot. 2, a inizio anno 18), Sabiri (Sampdoria, 18 partite, quot. 2, a inizio anno 15)
+  2022-23 · solo in campo ma quotati a inizio anno: Origi (Milan, 21 partite, quot. 7/17), Belotti (Roma, 22 partite, quot. 6/16)
+
+#### 2018-19 — PUBBLICATA (v357)
+- 2018-19: 20 squadre · all'asta 225 (P 20, D 71, C 80, A 54) · in campo 41 · numeri 263/266 · altezze 265 · gol a partita 1.34 · portieri per eccezione: Dragowski (Empoli) 17 partite, Ospina (Napoli) 17 partite, Gomis A. (SPAL) 20 partite
+- Prove stD e stG (online in 3) OK; versione online controllata.
+- Controllino: 2018-19 · fuori per le partite: Higuain (Milan, 15 partite, quot. 26), Boateng (Sassuolo, 13 partite, quot. 20), Gabbiadini (Sampdoria, 16 partite, quot. 19), Douglas Costa (Juventus, 13 partite, quot. 17), Bonaventura (Milan, 8 partite, quot. 17), Pastore (Roma, 12 partite, quot. 16), Okaka (Udinese, 14 partite, quot. 16), Kalinic (Milan, 0 partite, quot. 15), Khedira (Juventus, 10 partite, quot. 14), Ljajic (Torino, 1 partite, quot. 14), Verdi (Napoli, 18 partite, quot. 13), Perotti (Roma, 13 partite, quot. 13), Destro (Bologna, 9 partite, quot. 13), Paquetà (Milan, 13 partite, quot. 13), Sansone (Bologna, 14 partite, quot. 13), Kucka (Parma, 18 partite, quot. 12), Cuadrado (Juventus, 16 partite, quot. 11), Pjaca (Fiorentina, 15 partite, quot. 11), Hamsik (Napoli, 13 partite, quot. 11), Di Francesco F. (Sassuolo, 16 partite, quot. 11), Vrsaljko (Inter, 9 partite, quot. 11), La Gumina (Empoli, 17 partite, quot. 11), Niang (Torino, 0 partite, quot. 11), Sanabria (Genoa, 14 partite, quot. 11), André Silva (Milan, 0 partite, quot. 11), Castro (Cagliari, 12 partite, quot. 10), De Rossi (Roma, 18 partite, quot. 10), Kean (Juventus, 10 partite, quot. 10), Gagliardini (Inter, 15 partite, quot. 10), Demiral (Sassuolo, 14 partite, quot. 10), Falcinelli (Bologna, 11 partite, quot. 9, a inizio anno 16), Jankto (Sampdoria, 17 partite, quot. 8, a inizio anno 15), Barak (Udinese, 5 partite, quot. 8, a inizio anno 15)
+
+#### 2015-16 — PUBBLICATA (v357)
+- 2015-16: 20 squadre · all'asta 189 (P 20, D 48, C 66, A 55) · in campo 83 · numeri 264/272 · altezze 267 · gol a partita 1.29 · portieri per eccezione: Gollini (Verona) 26 partite
+- Prove stD e stG (online in 3) OK; versione online controllata.
+- Controllino: 2015-16 · fuori per le partite: Immobile (Torino, 14 partite, quot. 21), El Shaarawy (Roma, 16 partite, quot. 21), Gabbiadini (Napoli, 13 partite, quot. 18), Denis (Atalanta, 14 partite, quot. 17), Gervinho (Roma, 14 partite, quot. 17), Iturbe (Roma, 9 partite, quot. 16), Totti (Roma, 11 partite, quot. 15), Kovacic (Inter, 0 partite, quot. 14), Tello C. (Fiorentina, 15 partite, quot. 14), Moralez (Atalanta, 17 partite, quot. 14), Rossi (Fiorentina, 9 partite, quot. 13), Diamanti (Atalanta, 14 partite, quot. 13), Coman (Juventus, 1 partite, quot. 13), Shaqiri (Inter, 0 partite, quot. 13), Llorente (Juventus, 0 partite, quot. 13), Babacar (Fiorentina, 14 partite, quot. 12), Ibarbo (Roma, 0 partite, quot. 12), Boakye (Atalanta, 0 partite, quot. 12), Lopez N. (Udinese, 0 partite, quot. 12), Zarate (Fiorentina, 13 partite, quot. 12), Joaquin (Fiorentina, 0 partite, quot. 11), Bianchi (Bologna, 0 partite, quot. 11), Pinilla (Atalanta, 18 partite, quot. 10), Menez (Milan, 8 partite, quot. 10), Trotta (Sassuolo, 6 partite, quot. 10), Alvarez R (Sampdoria, 13 partite, quot. 10), Balotelli (Milan, 15 partite, quot. 9, a inizio anno 20), Zaza (Juventus, 17 partite, quot. 9, a inizio anno 14), Guarin (Inter, 13 partite, quot. 8, a inizio anno 14), Pandev (Genoa, 14 partite, quot. 7, a inizio anno 18), Mpoku (Chievo, 15 partite, quot. 7, a inizio anno 17), Hernanes (Juventus, 13 partite, quot. 7, a inizio anno 15), Matri (Lazio, 18 partite, quot. 6, a inizio anno 14), Acquafresca (Bologna, 4 partite, quot. 3, a inizio anno 14)
+  2015-16 · solo in campo ma quotati a inizio anno: Bertolacci (Milan, 25 partite, quot. 7/15)
+
+#### 2016-17 — PUBBLICATA (v357)
+- 2016-17: 20 squadre · all'asta 198 (P 20, D 55, C 76, A 47) · in campo 59 · numeri 252/257 · altezze 252 · gol a partita 1.48 · portieri per eccezione: Lamanna (Genoa) 21 partite, Strakosha (Lazio) 21 partite, Puggioni (Sampdoria) 21 partite
+- Prove stD e stG (online in 3) OK; versione online controllata.
+- Controllino: 2016-17 · fuori per le partite: Pogba (Juventus, 0 partite, quot. 21), Zaza (Juventus, 0 partite, quot. 17), Sansone (Sassuolo, 0 partite, quot. 17), Rossi (Fiorentina, 0 partite, quot. 15), Gabbiadini (Napoli, 12 partite, quot. 14), Pavoletti (Napoli, 13 partite, quot. 13), Milik (Napoli, 10 partite, quot. 13), Niang (Milan, 14 partite, quot. 13), Marcos Alonso (Fiorentina, 2 partite, quot. 13), Deulofeu (Milan, 17 partite, quot. 12), Marchisio (Juventus, 18 partite, quot. 10), Di Francesco F. (Bologna, 18 partite, quot. 10), Jovetic (Inter, 3 partite, quot. 9, a inizio anno 17), Barbosa (Inter, 7 partite, quot. 8, a inizio anno 18), Paloschi (Atalanta, 8 partite, quot. 6, a inizio anno 21), Florenzi (Roma, 9 partite, quot. 6, a inizio anno 17), Pjaca (Juventus, 9 partite, quot. 5, a inizio anno 17), Gilardino (Pescara, 13 partite, quot. 5, a inizio anno 17)
+  2016-17 · solo in campo ma quotati a inizio anno: Rodriguez Go (Fiorentina, 26 partite, quot. 7/14)

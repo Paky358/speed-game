@@ -1610,7 +1610,7 @@
       if ((imp.formato || f) === "fanta") {
         var rf = [stagioneDi(imp) ? "🕰️ Serie A " + stagioneDi(imp) : "", "⚽ " + FANTA_BUDGET + " crediti",
  "rosa da 5", imp.compra === "buste" ? "✉️ tutta a buste" : imp.compra === "big" ? "✉️ buste per i big" : "",
-          imp.giornata === false ? "💎 vince la rosa più forte" : imp.giornate === 3 ? "🏆 3 giornate" : "⚽ 1 giornata", imp.giornata !== false && vsDi(imp) ? "🆚 avversari già all'asta" : "", imp.ovrAsta ? "⭐ overall all'asta" : "", imp.scambi === false ? "🔒 niente scambi" : ""].filter(Boolean);
+          imp.giornata === false ? "💎 vince la rosa più forte" : giornateDi(imp) === 3 ? "🏆 3 giornate" : "⚽ 1 giornata", imp.giornata !== false && vsDi(imp) ? "🆚 avversari già all'asta" : "", imp.ovrAsta ? "⭐ overall all'asta" : "", imp.scambi === false ? "🔒 niente scambi" : ""].filter(Boolean);
         // (la saletta taglia oltre 90 caratteri: se non ci sta, prima via «rosa da 5», poi le scritte più corte)
         var corte = [["rosa da 5", ""], ["🕰️ Serie A " + stagioneDi(imp), "🕰️ " + stagioneDi(imp)],
  ["🆚 avversari già all'asta", "🆚 avversari noti"], ["✉️ buste per i big", "✉️ big a busta"], ["⭐ overall all'asta", "⭐ overall visibile"]], rr = rf.join(" · ");
@@ -1637,7 +1637,7 @@
       dove.giornata = dove.giornata !== false;   // ⚽ la giornata dopo l'asta (fantacalcio): di base sì
       dove.vs = vsDi(dove);   // 🆚 contro chi giocano già all'asta: di base SÌ dall'8 nov 2026 (prima no; vale la scelta solo di chi l'ha toccata da allora)
       dove.nomiChi = false;   // 🏷️ (8 nov 2026, il proprietario: in campo SOLO il colore) la regola «In campo, di chi è» non c'è più: chi l'aveva accesa torna come tutti
-      dove.giornate = dove.giornate === 3 ? 3 : 1;   // 🏆 quante giornate (30 ott 2026): di base 1, com'era; 3 = due veloci e la terza intera
+      dove.giornate = giornateDi(dove);   // 🏆 quante giornate (30 ott 2026): di base 1, com'era; 3 = due veloci e la terza intera (spente dal 16 nov 2026: sempre 1, vedi TRE_GIORNATE)
       dove.compra = compraDi(dove);   // 💰 come si compra (2 nov 2026): di base l'asta normale
       dove.stagione = stagioneDi(dove);   // 📅 la stagione (16 nov 2026): di base oggi (null)
       // contenitori che compaiono/spariscono in base alla modalità scelta
@@ -1758,11 +1758,12 @@
       // quell'anno comincia ad arrivare appena la si sceglie (e si aspetta prima di cominciare, vedi conStagione)
       var bS = {};
       function scegliStagione(v) { dove.stagione = v; STAG_IMP = v; Object.keys(bS).forEach(function (k) { bS[k].className = "modo-chip" + ((k === "oggi" ? null : k) === v ? " attiva" : ""); }); if (v) caricaStagione(v); }
-      [["oggi", "📅", "Oggi", "I calciatori di quest'anno"], ["2017-18", "🕰️", "2017-18", "Higuain, Mertens, Icardi, il primo VAR"]].forEach(function (o) {
+      [["oggi", "📅", "Oggi", "I calciatori di quest'anno"]].concat(ELENCO_STAGIONI.slice().sort().reverse().map(function (s) { return [s, "🕰️", s, DETTO_STAGIONE[s] || "Serie A " + s]; })).forEach(function (o) {
         bS[o[0]] = el("button", { class: "modo-chip", onclick: function () { scegliStagione(o[0] === "oggi" ? null : o[0]); } }, [ el("span", { class: "mi", text: o[1] }), el("div", {}, [ el("div", { class: "mt", text: o[2] }), el("div", { class: "ms", text: o[3] }) ]) ]);
       });
       wrapFanta.appendChild(el("div", { class: "etichetta", text: "📅 Stagione" }));
-      wrapFanta.appendChild(el("div", { class: "modo-griglia as-coppia" }, [ bS.oggi, bS["2017-18"] ]));
+      wrapFanta.appendChild(el("div", { class: "modo-griglia as-coppia" }, Object.keys(bS).map(function (k) { return bS[k]; })));   // (Oggi, poi le stagioni dalla più recente)
+
       scegliStagione(dove.stagione);
       // 💰 come si compra (2 nov 2026, il proprietario): l'asta di sempre, tutta a buste chiuse, o le buste solo per i più forti
       var bC = {};
@@ -1810,8 +1811,10 @@
       bG3 = el("button", { class: "modo-chip", onclick: function () { scegliG3(3); } }, [
         el("span", { class: "mi", text: "🏆" }), el("div", {}, [
           el("div", { class: "mt", text: "3 giornate" }), el("div", { class: "ms", text: "Due veloci, la terza intera: contano i punti sommati" })])]);
-      wrapG3.appendChild(el("div", { class: "etichetta", text: "🏆 Quante giornate" }));
-      wrapG3.appendChild(el("div", { class: "modo-griglia as-coppia" }, [bG1, bG3]));
+      if (TRE_GIORNATE) {   // (🏆 spente dal 16 nov 2026: la scelta non si vede)
+        wrapG3.appendChild(el("div", { class: "etichetta", text: "🏆 Quante giornate" }));
+        wrapG3.appendChild(el("div", { class: "modo-griglia as-coppia" }, [bG1, bG3]));
+      }
       var bVsSi, bVsNo;
       function scegliVs(v, tocco) { dove.vs = v; if (tocco) dove.vsScelto = true; bVsSi.className = "modo-chip" + (v ? " attiva" : ""); bVsNo.className = "modo-chip" + (!v ? " attiva" : ""); }
       bVsNo = el("button", { class: "modo-chip", onclick: function () { scegliVs(false, true); } }, [ el("span", { class: "mi", text: "🤫" }), el("div", {}, [ el("div", { class: "mt", text: "Sorpresa" }), el("div", { class: "ms", text: "Le partite si scoprono dopo l'asta" }) ]) ]);
@@ -2213,9 +2216,15 @@
   //  pantaloncini, calzettoni, stadi, stadi in comune, derby, meteo, maglie) quelle di quell'anno; poi svuota i conti già fatti (rose, overall,
   //  reparti, figurine, teste). Il motore della giornata NON cambia: legge gli stessi nomi e trova l'anno giusto. usaStagione(null) = oggi.
   // =========================================================
-  var STAGIONI = { "2017-18": { pezzo: "asta-2017", nome: "Serie A 2017-18", corto: "2017-18" } };
+  // le stagioni che ci sono (una alla volta, ognuna col suo pezzo "asta-<primo anno>" e il suo file data/fanta-<primo anno>.js). Una stagione
+  // nuova: il suo nome qui, la riga pezzo(...) in js/elenco-giochi.js e il file dei dati (D:\SG-stagione-lavoro\genera.js <stagione>)
+  var ELENCO_STAGIONI = ["2015-16", "2016-17", "2017-18", "2018-19", "2022-23"];
+  var STAGIONI = {}; ELENCO_STAGIONI.forEach(function (s) { STAGIONI[s] = { pezzo: "asta-" + s.slice(0, 4), nome: "Serie A " + s, corto: s }; });
+  var DETTO_STAGIONE = { "2017-18": "Higuain, Mertens, Icardi, il primo VAR", "2022-23": "Il Napoli di Osimhen e Kvara" , "2018-19": "Cristiano Ronaldo alla Juve, Piatek e Quagliarella", "2015-16": "Higuain record a 36 gol, la Juve della rimonta", "2016-17": "La Juve del sesto scudetto, Dzeko capocannoniere"};
+   // (la riga sotto il nome nelle regole, dove c'è)
   var STAG_ATT = null, STAG_OGGI = null;
-  var DATI_FANTA = ["CALCIATORI", "QUOTAZIONI", "STATISTICHE", "SQUADRE", "NUMERI", "ALTEZZE", "ASPETTO", "CAMPO", "MODULI", "RUOLI"];
+  var DATI_FANTA = ["CALCIATORI", "QUOTAZIONI", "STATISTICHE", "SQUADRE", "NUMERI", "ALTEZZE", "ASPETTO", "CAMPO", "MODULI", "RUOLI", "IDS"];   // (IDS: chi è ogni calciatore, per le facce condivise)
+
   function stagioneDi(im) {   // (dalle regole, dalla foto o dalla copia: null = oggi)
     var s = im && im.stagione;
     if (im && !("stagione" in im)) s = stagioneProva();   // 🧪 (solo le prove: tutte le prove dell'asta rifatte con la 2017-18, vedi preferiti/asta-stagione.js)
@@ -3921,6 +3930,11 @@
     try { viste.push(chiaviCoppie(meglio)); localStorage.setItem("sg-fanta-giornate", JSON.stringify(viste.slice(-6))); } catch (e) {}
     return meglio;
   }
+  // 🏆 LE 3 GIORNATE SONO SPENTE (16 nov 2026, il proprietario, per risparmiare: «la voglio provare prima di persona»): nel ⚙️ la scelta
+  // «Quante giornate» non si vede e si gioca sempre 1 giornata, anche per chi aveva le regole ricordate con 3. Il codice resta tutto:
+  // TRE_GIORNATE = true per riaccenderle (e rifare le prove tg0-tg5)
+  var TRE_GIORNATE = false;
+  function giornateDi(im) { return TRE_GIORNATE && im && im.giornate === 3 ? 3 : 1; }
   function coppieGiornate(n) { var l = []; for (var i = 0; i < (n === 3 ? 3 : 1); i++) l.push(sorteggioCoppie()); return l; }
   function avversariDi(sq) {
     if (!COPPIE_ORA || !sq) return "";
@@ -6389,8 +6403,45 @@
     var bb = ["niente", "niente", "accennata", "corta", "niente", "accennata", "piena"];
     return { p: p, c: cl[Math.floor(r() * cl.length)], t: tl[Math.floor(r() * tl.length)], b: bb[Math.floor(r() * bb.length)] };
   }
+  // 🧑 LE FACCE CONDIVISE (16 nov 2026, il proprietario col Cervello: «lo stesso calciatore deve avere SEMPRE la stessa faccia in tutte le
+  // stagioni»). Ogni calciatore ha il suo numero di fantacalcio.it (data/fanta-ids.js per «Oggi», IDS nel pezzo di ogni stagione): non cambia
+  // quando cambia squadra. Le facce di IL PAPPONE si salvano su quel numero, «fc<numero>», e valgono in TUTTE le stagioni; una faccia solo per
+  // un anno («quell'anno aveva i capelli diversi») è «fc<numero>|2017-18» e la sceglie lui a mano («📅 Solo nel 2017-18» nell'editor). Le facce
+  // salvate prima col nome e la squadra («Hamsik (Napoli)») valgono ancora, anche nelle altre stagioni dello stesso calciatore.
+  // L'ordine: la faccia solo di quest'anno, poi quella di sempre, poi quella col nome (anche di un'altra stagione); se lui non l'ha fatta,
+  // i dati dalle foto di quest'anno, se no quelli di un'altra stagione (o di oggi) dello stesso calciatore, se no una faccia a caso.
+  function personaDi(k) { var id = (window.SG_FANTA_IDS || {})[k]; return id ? "fc" + id : null; }
+  var PID_IDX = { n: -1, m: null };
+  function mappeIds() {   // tutte le mappe chiave → numero che il telefono conosce: oggi e le stagioni già arrivate
+    var l = [STAG_OGGI ? STAG_OGGI.IDS : window.SG_FANTA_IDS], S = window.SG_FANTA_STAGIONI || {};
+    Object.keys(S).forEach(function (s) { if (S[s] && S[s].IDS) l.push(S[s].IDS); });
+    return l.filter(Boolean);
+  }
+  function chiaviDi(pid) {   // tutte le chiavi «Nome (Squadra)» dello stesso calciatore, in tutte le stagioni conosciute
+    var mm = mappeIds();
+    if (PID_IDX.n !== mm.length || !PID_IDX.m) { var m = {}; mm.forEach(function (M) { Object.keys(M).forEach(function (k) { var p = "fc" + M[k]; (m[p] = m[p] || []).push(k); }); }); PID_IDX = { n: mm.length, m: m }; }
+    return PID_IDX.m[pid] || [];
+  }
+  function datiAspettoAltrove(pid) {   // l'aspetto dalle foto di un'altra stagione (o di oggi) dello stesso calciatore
+    if (!pid) return null;
+    var basi = [STAG_OGGI ? STAG_OGGI.ASPETTO : window.SG_FANTA_ASPETTO], S = window.SG_FANTA_STAGIONI || {};
+    Object.keys(S).forEach(function (s) { if (S[s] && S[s].ASPETTO) basi.push(S[s].ASPETTO); });
+    var ch = chiaviDi(pid);
+    for (var i = 0; i < basi.length; i++) for (var j = 0; j < ch.length; j++) { var d = (basi[i] || {})[ch[j]]; if (d && d.p) return d; }
+    return null;
+  }
+  function facciaProp(k) {   // la faccia fatta da IL PAPPONE per questo calciatore, e su quale chiave sta: { a, chiave, anno }
+    var pid = personaDi(k), x;
+    if (pid && STAG_ATT && (x = ASP_PROP[pid + "|" + STAG_ATT]) && x.p) return { a: x, chiave: pid + "|" + STAG_ATT, anno: true };
+    if (pid && (x = ASP_PROP[pid]) && x.p) return { a: x, chiave: pid };
+    if ((x = ASP_PROP[k]) && x.p) return { a: x, chiave: k };
+    var ch = pid ? chiaviDi(pid) : [];
+    for (var i = 0; i < ch.length; i++) if ((x = ASP_PROP[ch[i]]) && x.p) return { a: x, chiave: ch[i] };
+    return null;
+  }
   function aspettoVero(k) {   // → { p, c, t, b, cb, fonte: "prop"|"dati"|"caso", dc: da controllare }
-    var pr = ASP_PROP[k], d = (window.SG_FANTA_ASPETTO || {})[k], z = aspettoACaso(k), o;
+    var fp = facciaProp(k), pr = fp ? fp.a : null, d = (window.SG_FANTA_ASPETTO || {})[k], z = aspettoACaso(k), o;
+    if (!(d && d.p)) d = datiAspettoAltrove(personaDi(k)) || d;
     if (pr && pr.p) o = { p: pr.p, c: pr.c || z.c, t: pr.t || z.t, b: pr.b || z.b, cb: pr.cb || null, fonte: "prop", dc: false };
     else if (d && d.p) o = { p: d.p, c: d.c || z.c, t: d.t || z.t, b: d.x === "baffetti" && (!d.b || d.b === "niente") ? "baffi" : d.b || z.b, cb: d.cb || null, fonte: "dati", dc: !!d.dc || !d.c || !d.t || !d.b };
     else o = { p: z.p, c: z.c, t: z.t, b: z.b, cb: null, fonte: "caso", dc: true };
@@ -6471,7 +6522,14 @@
     }
     function visibili() { return tutti.filter(function (c) { return !filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; }); }
     function scegli(c) { sel = c; disegnaScheda(); elenco(); }
-    function salva(a) { ASP_PROP[sel.k] = { p: a.p, c: a.c, t: a.t, b: a.b, ok: 1 }; if (a.cb) ASP_PROP[sel.k].cb = a.cb; if (a.f && a.f !== "tondo") ASP_PROP[sel.k].f = a.f; salvaAspettoProp(); }
+    // 🧑 (16 nov 2026) si salva sul calciatore (fc<numero>: vale in tutte le stagioni) o, con «📅 Solo nel …», solo per quest'anno
+    function chiaveSalva() { var pid = personaDi(sel.k); return pid ? (soloAnno && STAG_ATT ? pid + "|" + STAG_ATT : pid) : sel.k; }
+    function salva(a) {
+      var ch = chiaveSalva(), pid = personaDi(sel.k);
+      if (pid && ch === pid) { delete ASP_PROP[sel.k]; chiaviDi(pid).forEach(function (k) { delete ASP_PROP[k]; }); }   // (le facce vecchie col nome dello stesso calciatore: ora vale questa)
+      ASP_PROP[ch] = { p: a.p, c: a.c, t: a.t, b: a.b, ok: 1 }; if (a.cb) ASP_PROP[ch].cb = a.cb; if (a.f && a.f !== "tondo") ASP_PROP[ch].f = a.f; salvaAspettoProp();
+    }
+    var soloAnno = false;
     function disegnaScheda() {
       scheda.textContent = "";
       if (!sel) { scheda.appendChild(nd("div", "fa-ed-fatto", "🎉 Non ne resta nessuno da controllare")); return; }
@@ -6481,8 +6539,15 @@
       info.appendChild(nd("i", "", a.fonte === "prop" ? "✓ sistemato da te" : a.fonte === "caso" ? "🎲 a caso: nessuna foto" : a.dc ? "🔎 dalla foto, da controllare" : "📷 dalla foto"));
       var tasti = nd("div", "fa-ed-tasti"), ok = nd("button", "btn btn-primario", "✓ Va bene"), foto = nd("button", "fa-ed-t", "🔍 Foto");
       tasti.appendChild(ok); tasti.appendChild(foto);
-      if (ASP_PROP[sel.k]) { var torna = nd("button", "fa-ed-t", "↩ Di partenza"); tasti.appendChild(torna);
-        torna.onclick = function () { delete ASP_PROP[sel.k]; salvaAspettoProp(); disegnaScheda(); elenco(); }; }
+      var fpS = facciaProp(sel.k);
+      if (fpS) { var torna = nd("button", "fa-ed-t", fpS.anno ? "↩ Come gli altri anni" : "↩ Di partenza"); tasti.appendChild(torna);
+        torna.onclick = function () { delete ASP_PROP[fpS.chiave]; if (!fpS.anno) delete ASP_PROP[sel.k]; salvaAspettoProp(); disegnaScheda(); elenco(); }; }
+      if (STAG_ATT && personaDi(sel.k)) {   // 📅 una faccia solo per quest'anno (eccezione: di solito vale per tutte le stagioni)
+        soloAnno = !!(fpS && fpS.anno);
+        var anno = nd("button", "fa-ed-t" + (soloAnno ? " on" : ""), (soloAnno ? "✓ " : "") + "📅 Solo nel " + STAG_ATT); tasti.appendChild(anno);
+        anno.onclick = function () { soloAnno = !soloAnno; anno.className = "fa-ed-t" + (soloAnno ? " on" : ""); anno.textContent = (soloAnno ? "✓ " : "") + "📅 Solo nel " + STAG_ATT; };
+      }
+
       scheda.appendChild(tasti);
       ok.onclick = function () { salva(aspettoVero(sel.k)); scegli(prossimo()); };
       foto.onclick = function () { window.open("https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(sel.nome.replace(/\s+(?:[A-Z][a-z]?\.)+$/, "") + " " + sel.sq + " calciatore" + (STAG_ATT ? " " + STAG_ATT : "")), "_blank"); };   // (📅 con la 2017-18: le foto di quell'anno)
@@ -6520,6 +6585,8 @@
     disegnaScheda();
   }
   window.SGAstaAspetto = { apri: function (k) { apriPersonalizza(k); }, vero: aspettoVero, colori: coloriAspetto, prop: function () { return ASP_PROP; },
+    stagione: function (id) { if (id !== undefined) usaStagione(id); return STAG_ATT; }, persona: personaDi,   // (📅🧑 per le prove delle facce condivise)
+
     grafica: function (v) { if (v != null) { GRAF2.on = !!v; FIG_CACHE = {}; TESTE_CACHE = {}; TESTE_N = 0; BUSTI_URL = {}; } return GRAF2.on; }, formazione: function (v) { if (v) { FORM_STILE = v; BUSTI_URL = {}; } return FORM_STILE; }, busto: function (c, w) { return bustoCanvas(c, w); }, overall: function (v) { if (v != null) { OVR.on = !!v; FIG_CACHE = {}; } return OVR.on; }, ovr: function (c) { return overallDi(c); }, testa: function (cv, a, fronte) { disegnaTestina(cv, a, fronte); }, figurina: function (c, prezzo, w) { return figurinaCanvas(c, prezzo, w); } };   // (per le prove e per aprire l'editor da fuori)
   // 🧑 la TESTA con l'aspetto vero, disegnata nelle coordinate di chi la chiama: centro (0, cy), raggio r, lo (1/-1: il lato in ombra).
   // fronte: vista davanti (figurina, anteprima) con due occhi e il sorriso; se no di profilo come gli omini del campo (un occhio, verso dove guarda)
@@ -10331,7 +10398,7 @@
   function avviaFanta(t) {
     var st = {
       formato: "fanta", stagione: stagioneDi(t.impostazioni), sessione: nuovaSessione(), asta: null, giriVuoti: 0, salto: 1, giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
-      giornate: t.impostazioni && t.impostazioni.giornate === 3 ? 3 : 1,   // 🏆 1 giornata o 3 (di partenza 1)
+      giornate: giornateDi(t.impostazioni),   // 🏆 1 giornata o 3 (di partenza 1; le 3 spente dal 16 nov 2026)
       vs: vsDi(t.impostazioni),   // 🆚 contro chi giocano, già all'asta (di partenza sì dall'8 nov 2026)
       nomiChi: false,   // 🏷️ (tolta l'8 nov 2026: in campo solo il colore)
       ban: !(t.impostazioni && t.impostazioni.ban === false),   // 🎙️ le battute del banditore (di partenza sì)
@@ -10966,7 +11033,7 @@
     var st = {
       formato: "fanta", stagione: stagioneDi(t.impostazioni), crediti: FANTA_BUDGET, sessione: null, mazzo: [], asta: null, esito: null, classifica: null,
       giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
-      giornate: t.impostazioni && t.impostazioni.giornate === 3 ? 3 : 1,   // 🏆 1 giornata o 3 (di partenza 1)
+      giornate: giornateDi(t.impostazioni),   // 🏆 1 giornata o 3 (di partenza 1; le 3 spente dal 16 nov 2026)
       vs: vsDi(t.impostazioni),   // 🆚 contro chi giocano, già all'asta (di partenza sì dall'8 nov 2026)
       nomiChi: false,   // 🏷️ (tolta l'8 nov 2026: in campo solo il colore)
       ban: !(t.impostazioni && t.impostazioni.ban === false),   // 🎙️
@@ -10992,7 +11059,8 @@
     t.onRegole = function (im) {
       if (!st.iniziata && formatoDi(t, im) !== "fanta") { st.morto = true; TM.smetti(); avviaAsta(t); return; }
       if (!st.iniziata) { st.stagione = stagioneDi(im); caricaStagione(st.stagione); }   // 📅 (il pezzo della stagione comincia ad arrivare subito)
-      if (!st.iniziata) { st.giornata = im.giornata !== false; st.giornate = im.giornate === 3 ? 3 : 1; st.vs = vsDi(im); st.nomiChi = false; st.ban = im.ban !== false; st.compra = compraDi(im); st.ovrAsta = im.ovrAsta === true; st.scambiOn = scambiOn(im); }   // ⚽ la giornata (e 🏆 quante): si decide in saletta
+      if (!st.iniziata) { st.giornata = im.giornata !== false; st.giornate = giornateDi(im);
+ st.vs = vsDi(im); st.nomiChi = false; st.ban = im.ban !== false; st.compra = compraDi(im); st.ovrAsta = im.ovrAsta === true; st.scambiOn = scambiOn(im); }   // ⚽ la giornata (e 🏆 quante): si decide in saletta
     };
     t.onRivincita = function () { if (st.fase === "fine" && !st.morto) nuovaInLobby(); };   // la Rivincita: tutti di nuovo nella saletta
 

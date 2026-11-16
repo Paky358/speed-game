@@ -197,3 +197,120 @@
     return "pronti: " + cartaDi(C);
   } });
 })();
+
+// st5 (16 nov 2026) LE FACCE CONDIVISE: la faccia fatta da IL PAPPONE per un calciatore di oggi (salvata col nome, come prima) vale anche
+//     nella 2017-18 per lo stesso calciatore in un'altra squadra (Barella: Inter oggi, Cagliari allora); una faccia salvata sul calciatore
+//     (fc<numero>) vale in tutte e due; una «solo nel 2017-18» vale solo lì; senza faccia sua, una stagione senza foto prende i dati di oggi.
+(function () {
+  var W = window, A = COPIONE.aiuti, no = A.no;
+  COPIONE.aggiungi("st5", { nome: "Stagioni: le facce condivise (stesso calciatore, stessa faccia in tutte le stagioni; eccezione solo per un anno)", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0 }); await w.SG.scaricaGioco("asta"); await w.SGCuore.caricaPezzo("asta-2017");
+    var G = w.SGAstaAspetto, P = G.prop(), x = [];
+    if (G.persona("Barella (Inter)") !== "fc1870") no("Barella di oggi non ha il suo numero (" + G.persona("Barella (Inter)") + ")");
+    G.stagione(null); P["Barella (Inter)"] = { p: 7, c: "rosso", t: "cresta", b: "piena", ok: 1 };
+    G.stagione("2017-18");
+    if (G.persona("Barella (Cagliari)") !== "fc1870") no("Barella del 2017-18 non ha lo stesso numero");
+    var a = G.vero("Barella (Cagliari)"); if (a.p !== 7 || a.t !== "cresta" || a.fonte !== "prop") no("nel 2017-18 Barella non ha la faccia fatta oggi: " + JSON.stringify(a));
+    x.push("faccia di oggi anche nel 2017-18");
+    delete P["Barella (Inter)"]; P.fc1870 = { p: 6, c: "nero", t: "ricci", b: "corta", ok: 1 };
+    if (G.vero("Barella (Cagliari)").p !== 6) no("la faccia sul calciatore non vale nel 2017-18");
+    P["fc1870|2017-18"] = { p: 2, c: "biondo", t: "lunghi", b: "niente", ok: 1 };
+    if (G.vero("Barella (Cagliari)").p !== 2) no("la faccia «solo nel 2017-18» non vale nel 2017-18");
+    G.stagione(null);
+    if (G.vero("Barella (Inter)").p !== 6) no("la faccia «solo nel 2017-18» vale anche oggi (o quella di sempre no): " + JSON.stringify(G.vero("Barella (Inter)")));
+    x.push("faccia sul calciatore in tutte e due; «solo nel 2017-18» solo lì");
+    delete P.fc1870; delete P["fc1870|2017-18"];
+    // un calciatore della 2017-18 senza foto quell'anno ma con la foto oggi: prende i dati di oggi (stesso numero)
+    var oggi = w.SG_FANTA_IDS; G.stagione("2017-18");
+    var S = w.SG_FANTA_STAGIONI["2017-18"], inv = {};
+ Object.keys(oggi || {}).forEach(function (k) { inv[oggi[k]] = k; });
+    var dopp = Object.keys(S.IDS).filter(function (k) { return inv[S.IDS[k]] && !(S.ASPETTO[k] && S.ASPETTO[k].p); });
+    x.push(dopp.length + " calciatori del 2017-18 che giocano anche oggi senza foto di allora");
+    G.stagione(null);
+    try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
+    return x.join("; ");
+  } });
+})();
+
+// PROVE PER OGNI STAGIONE (16-17 nov 2026, «tutte le stagioni»): la stagione si sceglie con --opz '{"stagione":"2022-23"}'.
+// stD I dati: pezzo a parte (non arriva col gioco), abbastanza calciatori per giocare in 12 (P 12 di squadre diverse, D 12, C 24, A 12),
+//     un portiere per squadra all'asta, ogni calciatore all'asta con la quotazione, «solo in campo» mai all'asta, squadre con gol, rigoristi,
+//     colori e maglia (di oggi o della stagione), stadi in comune giusti, 2.000 mazzi da 2 a 12 solo con calciatori di quell'anno, ritorno a oggi.
+// stG Online in 3 con quella stagione: chi entra scarica il pezzo in saletta, stessi calciatori, scritta dell'anno all'asta e nella giornata,
+//     asta fino in fondo, giornata con tutte le squadre di quell'anno, nessun errore.
+(function () {
+  var W = window, A = COPIONE.aiuti, no = A.no;
+  function vm(C) { return W.vmDi(C) || {}; }
+  function q(w, s) { return w.document.querySelector(s); }
+  function qa(w, s) { return [].slice.call(w.document.querySelectorAll(s)); }
+  function visibile(e) { return !!e && e.getClientRects().length > 0; }
+  function bott(w, sel, re) { return qa(w, sel).filter(function (b) { return re.test(b.textContent) && visibile(b); })[0] || null; }
+  function idDi(nome) { return nome === "Paky" ? "host" : A.mioId(nome); }
+  function manda(nome, m) { if (nome === "Paky") return false; W.reteDi(nome).invia(m); return true; }
+  function chiaviAsta(S) { var o = {}; ["P", "D", "C", "A"].forEach(function (r) { ["A", "B", "C"].forEach(function (t) { (S.CALCIATORI[r][t] || []).forEach(function (k) { o[k] = r; }); }); }); return o; }
+  function stag(opz) { return (opz && opz.stagione) || "2017-18"; }
+  COPIONE.aggiungi("stD", { nome: "Stagione (--opz stagione): i dati, abbastanza per giocare in 12, un portiere per squadra, squadre complete, mazzi giusti", fai: async function (opz) {
+    var ST = stag(opz), w = await W.apriTel("Paky", { x: 0 });
+    await w.SG.scaricaGioco("asta");
+    if (w.SG_FANTA_STAGIONI && w.SG_FANTA_STAGIONI[ST]) no("la " + ST + " arriva insieme al gioco");
+    await w.SGCuore.caricaPezzo("asta-" + ST.slice(0, 4));
+    var S = w.SG_FANTA_STAGIONI && w.SG_FANTA_STAGIONI[ST]; if (!S) no("il pezzo asta-" + ST.slice(0, 4) + " non porta la " + ST);
+    var K = chiaviAsta(S), conta = { P: 0, D: 0, C: 0, A: 0 }, portSq = {}; Object.keys(K).forEach(function (k) { conta[K[k]]++; if (K[k] === "P") portSq[/\(([^)]+)\)$/.exec(k)[1]] = 1; });
+    if (conta.D < 12 || conta.C < 24 || conta.A < 12 || Object.keys(portSq).length < 12) no("non bastano per giocare in 12: " + JSON.stringify(conta) + ", portieri di " + Object.keys(portSq).length + " squadre");
+    var SQ = Object.keys(S.SQUADRE.squadre); if (SQ.length !== 20) no(SQ.length + " squadre: " + SQ.join(", "));
+    SQ.forEach(function (s) { if (!portSq[s]) no(s + " senza portiere all'asta"); });
+    Object.keys(K).forEach(function (k) { if (!(S.QUOTAZIONI.valori[k] > 0)) no(k + " all'asta senza quotazione"); if (!S.IDS[k]) no(k + " senza numero di fantacalcio.it"); });
+    ["P", "D", "C", "A"].forEach(function (r) { (S.CALCIATORI[r].X || []).forEach(function (k) { if (K[k]) no(k + " è sia in campo sia all'asta"); }); });
+    var gf = 0, gs = 0, colOggi = ["Napoli", "Juventus", "Inter", "Atalanta", "Roma", "Milan", "Como", "Lazio", "Torino", "Sassuolo", "Fiorentina", "Bologna", "Cagliari", "Parma", "Venezia", "Udinese", "Monza", "Genoa", "Lecce", "Frosinone"];
+    SQ.forEach(function (s) { var d = S.SQUADRE.squadre[s]; gf += d.gf; gs += d.gs; if (!(d.gf > 0 && d.gs > 0)) no(s + " senza gol fatti o subiti"); if (!(d.rigori || []).length) no(s + " senza rigoristi");
+      if (colOggi.indexOf(s) < 0 && (!S.squadre20.colori[s] || !S.squadre20.maglie[s])) no(s + " senza colori o maglia"); });
+    if (Math.abs(gf - gs) > 0.15) no("gol fatti " + gf.toFixed(2) + " e subiti " + gs.toFixed(2) + " non tornano");
+    var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), F = {}, ag = "function costruisciMazzoFanta(n) {";
+    src = src.replace(ag, "FUORI.mazzo = costruisciMazzoFanta; FUORI.usa = usaStagione; FUORI.rose = roseSerieA; FUORI.stadi = function () { return STADI_COMUNI; }; " + ag);
+    new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, F);
+    var oggiQ = w.SG_FANTA_QUOTAZIONI; F.usa(ST);
+    if (w.SG_FANTA_QUOTAZIONI !== S.QUOTAZIONI) no("usaStagione non mette i dati della " + ST);
+    var rs = Object.keys(F.rose()).sort().join(","); if (rs !== SQ.slice().sort().join(",")) no("le rose della giornata non sono le squadre della " + ST + ": " + rs);
+    var stc = JSON.stringify(F.stadi()); [["Inter", "Milan"], ["Roma", "Lazio"], ["Chievo", "Verona"], ["Genoa", "Sampdoria"]].forEach(function (c) { if (SQ.indexOf(c[0]) >= 0 && SQ.indexOf(c[1]) >= 0 && stc.indexOf(JSON.stringify(c)) < 0) no("stadio in comune mancante: " + c.join("-")); });
+    for (var i = 0; i < 2000; i++) {
+      var n = 2 + (i % 11), m = F.mazzo(n), P = m.filter(function (c) { return c.ruolo === "P"; }), sq = {};
+      if (P.length !== n) no("con " + n + " giocatori i portieri sono " + P.length);
+      P.forEach(function (c) { if (sq[c.squadra]) no("due portieri del " + c.squadra); sq[c.squadra] = 1; });
+      m.forEach(function (c) { if (!K[c.nome + " (" + c.squadra + ")"]) no(c.nome + " (" + c.squadra + ") esce all'asta ma non è nel listone"); });
+    }
+    F.usa(null); if (w.SG_FANTA_QUOTAZIONI !== oggiQ) no("usaStagione(null) non torna a oggi");
+    try { Object.keys(w.localStorage).forEach(function (k) { if (/fanta_/.test(k)) w.localStorage.removeItem(k); }); } catch (e) {}
+    return ST + ": all'asta " + Object.keys(K).length + " " + JSON.stringify(conta) + ", portieri di " + Object.keys(portSq).length + " squadre; gol " + gf.toFixed(1) + "/" + gs.toFixed(1) + "; " + Object.keys(S.NUMERI).length + " numeri, " + Object.keys(S.ALTEZZE).length + " altezze; 2.000 mazzi giusti; ritorno a oggi";
+  } });
+  COPIONE.aggiungi("stG", { nome: "Stagione (--opz stagione) online in 3: pezzo in saletta, stessi calciatori, scritta dell'anno, asta e giornata con le squadre di allora", fai: async function (opz) {
+    var ST = stag(opz), NOMI = ["Paky", "Giulia", "Luca"];
+    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = { formato: "fanta", stagione: ST }; } }), C = await W.apriStanza(P, "Mini Asta Fantacalcio");
+    for (var i = 1; i < 3; i++) await W.apriTel(NOMI[i], { hash: "gioco=astafanta&stanza=" + C, x: 185 * i });
+    if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3; }, 15000)) no("non entrano in 3");
+    if (vm(C).stagione !== ST) no("nella foto della saletta la stagione è " + vm(C).stagione);
+    if (!await W.aspetta(function () { return NOMI.every(function (n) { var w = W.finestra(n); return w && w.SG_FANTA_STAGIONI && w.SG_FANTA_STAGIONI[ST]; }); }, 15000)) no("in saletta il pezzo non arriva a tutti");
+    W.clicca(P, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase && vm(C).fase !== "lobby"; }, 15000)) no("la partita non comincia");
+    var S = W.finestra("Paky").SG_FANTA_STAGIONI[ST], K = chiaviAsta(S), re = new RegExp("Serie A " + ST);
+    if (!await W.aspetta(function () { return NOMI.every(function (n) { var w = W.finestra(n), b = w && q(w, ".st-stadio .as-stagione"); return b && visibile(b) && re.test(b.textContent); }); }, 10000)) no("all'asta la scritta dell'anno non c'è su tutti");
+    var visti = {}, carte = {}, fino = Date.now() + 360000;
+    while (Date.now() < fino && vm(C).fase !== "fine") {
+      var v = vm(C), a = v.asta;
+      if (v.fase === "asta" && a && !visti[a.nCarta + "|" + a.offerta + "|" + a.leaderId]) {
+        visti[a.nCarta + "|" + a.offerta + "|" + a.leaderId] = 1; if (a.carta) carte[a.carta.nome + " (" + a.carta.squadra + ")"] = 1;
+        var el = v.giocatori.filter(function (g) { return (g.conta[a.ruolo] || 0) < { P: 1, D: 1, C: 2, A: 1 }[a.ruolo]; }).map(function (g) { return g.nome; });
+        if (!a.leaderId) { var pr = v.giocatori.filter(function (g) { return el.indexOf(g.nome) >= 0 && g.max >= a.offerta; })[0]; if (pr) { if (pr.nome === "Paky") { var bt = bott(P, ".st-piede .btn", /Lo prendo a/); if (bt) bt.click(); } else manda(pr.nome, { t: "rilancia", n: a.nCarta, prezzo: a.offerta, vista: a.offerta }); } }
+        else el.forEach(function (nn) { if (idDi(nn) === a.leaderId) return; if (nn === "Paky") { var bp = bott(P, ".st-piede .btn", /^Passo$/); if (bp) bp.click(); } else manda(nn, { t: "passa", n: a.nCarta }); });
+      }
+      await W.dorme(300);
+    }
+    if (vm(C).fase !== "fine") no("l'asta non finisce (" + vm(C).fase + ")");
+    Object.keys(carte).forEach(function (k) { if (!K[k]) no(k + " è uscito all'asta ma non è della " + ST); });
+    var sa = vm(C).serieA; if (!sa || !sa.partite) no("niente giornata");
+    var sqG = {}; sa.partite.forEach(function (p) { sqG[p.c] = 1; sqG[p.f] = 1; });
+    if (Object.keys(sqG).sort().join() !== Object.keys(S.SQUADRE.squadre).sort().join()) no("le squadre della giornata: " + Object.keys(sqG).join(", "));
+    if (!await W.aspetta(function () { return ["Giulia", "Luca"].every(function (n) { var w = W.finestra(n), b = w && q(w, ".st-gio .as-stagione"); return b && visibile(b); }); }, 60000)) no("nella giornata la scritta dell'anno non si vede");
+    var er = W.erroriTel(); if (er.length) no("errori: " + er.slice(0, 3).join(" | "));
+    return ST + ": " + Object.keys(carte).length + " calciatori all'asta, tutti di quell'anno; giornata con le " + Object.keys(sqG).length + " squadre di allora; scritta dell'anno all'asta e nella giornata";
+  } });
+})();
