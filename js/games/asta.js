@@ -2212,7 +2212,8 @@
   // =========================================================
   var STAGIONI = { "2017-18": { pezzo: "asta-2017", nome: "Serie A 2017-18", corto: "2017-18" } };
   var STAG_ATT = null, STAG_OGGI = null;
-  var DATI_FANTA = ["CALCIATORI", "QUOTAZIONI", "STATISTICHE", "SQUADRE", "NUMERI", "ALTEZZE", "ASPETTO", "CAMPO", "MODULI", "RUOLI"];
+  var DATI_FANTA = ["CALCIATORI", "QUOTAZIONI", "STATISTICHE", "SQUADRE", "NUMERI", "ALTEZZE", "ASPETTO", "CAMPO", "MODULI", "RUOLI", "IDS"];   // (IDS: chi è ogni calciatore, per le facce condivise)
+
   function stagioneDi(im) {   // (dalle regole, dalla foto o dalla copia: null = oggi)
     var s = im && im.stagione;
     if (im && !("stagione" in im)) s = stagioneProva();   // 🧪 (solo le prove: tutte le prove dell'asta rifatte con la 2017-18, vedi preferiti/asta-stagione.js)
@@ -6369,8 +6370,45 @@
     var bb = ["niente", "niente", "accennata", "corta", "niente", "accennata", "piena"];
     return { p: p, c: cl[Math.floor(r() * cl.length)], t: tl[Math.floor(r() * tl.length)], b: bb[Math.floor(r() * bb.length)] };
   }
+  // 🧑 LE FACCE CONDIVISE (16 nov 2026, il proprietario col Cervello: «lo stesso calciatore deve avere SEMPRE la stessa faccia in tutte le
+  // stagioni»). Ogni calciatore ha il suo numero di fantacalcio.it (data/fanta-ids.js per «Oggi», IDS nel pezzo di ogni stagione): non cambia
+  // quando cambia squadra. Le facce di IL PAPPONE si salvano su quel numero, «fc<numero>», e valgono in TUTTE le stagioni; una faccia solo per
+  // un anno («quell'anno aveva i capelli diversi») è «fc<numero>|2017-18» e la sceglie lui a mano («📅 Solo nel 2017-18» nell'editor). Le facce
+  // salvate prima col nome e la squadra («Hamsik (Napoli)») valgono ancora, anche nelle altre stagioni dello stesso calciatore.
+  // L'ordine: la faccia solo di quest'anno, poi quella di sempre, poi quella col nome (anche di un'altra stagione); se lui non l'ha fatta,
+  // i dati dalle foto di quest'anno, se no quelli di un'altra stagione (o di oggi) dello stesso calciatore, se no una faccia a caso.
+  function personaDi(k) { var id = (window.SG_FANTA_IDS || {})[k]; return id ? "fc" + id : null; }
+  var PID_IDX = { n: -1, m: null };
+  function mappeIds() {   // tutte le mappe chiave → numero che il telefono conosce: oggi e le stagioni già arrivate
+    var l = [STAG_OGGI ? STAG_OGGI.IDS : window.SG_FANTA_IDS], S = window.SG_FANTA_STAGIONI || {};
+    Object.keys(S).forEach(function (s) { if (S[s] && S[s].IDS) l.push(S[s].IDS); });
+    return l.filter(Boolean);
+  }
+  function chiaviDi(pid) {   // tutte le chiavi «Nome (Squadra)» dello stesso calciatore, in tutte le stagioni conosciute
+    var mm = mappeIds();
+    if (PID_IDX.n !== mm.length || !PID_IDX.m) { var m = {}; mm.forEach(function (M) { Object.keys(M).forEach(function (k) { var p = "fc" + M[k]; (m[p] = m[p] || []).push(k); }); }); PID_IDX = { n: mm.length, m: m }; }
+    return PID_IDX.m[pid] || [];
+  }
+  function datiAspettoAltrove(pid) {   // l'aspetto dalle foto di un'altra stagione (o di oggi) dello stesso calciatore
+    if (!pid) return null;
+    var basi = [STAG_OGGI ? STAG_OGGI.ASPETTO : window.SG_FANTA_ASPETTO], S = window.SG_FANTA_STAGIONI || {};
+    Object.keys(S).forEach(function (s) { if (S[s] && S[s].ASPETTO) basi.push(S[s].ASPETTO); });
+    var ch = chiaviDi(pid);
+    for (var i = 0; i < basi.length; i++) for (var j = 0; j < ch.length; j++) { var d = (basi[i] || {})[ch[j]]; if (d && d.p) return d; }
+    return null;
+  }
+  function facciaProp(k) {   // la faccia fatta da IL PAPPONE per questo calciatore, e su quale chiave sta: { a, chiave, anno }
+    var pid = personaDi(k), x;
+    if (pid && STAG_ATT && (x = ASP_PROP[pid + "|" + STAG_ATT]) && x.p) return { a: x, chiave: pid + "|" + STAG_ATT, anno: true };
+    if (pid && (x = ASP_PROP[pid]) && x.p) return { a: x, chiave: pid };
+    if ((x = ASP_PROP[k]) && x.p) return { a: x, chiave: k };
+    var ch = pid ? chiaviDi(pid) : [];
+    for (var i = 0; i < ch.length; i++) if ((x = ASP_PROP[ch[i]]) && x.p) return { a: x, chiave: ch[i] };
+    return null;
+  }
   function aspettoVero(k) {   // → { p, c, t, b, cb, fonte: "prop"|"dati"|"caso", dc: da controllare }
-    var pr = ASP_PROP[k], d = (window.SG_FANTA_ASPETTO || {})[k], z = aspettoACaso(k), o;
+    var fp = facciaProp(k), pr = fp ? fp.a : null, d = (window.SG_FANTA_ASPETTO || {})[k], z = aspettoACaso(k), o;
+    if (!(d && d.p)) d = datiAspettoAltrove(personaDi(k)) || d;
     if (pr && pr.p) o = { p: pr.p, c: pr.c || z.c, t: pr.t || z.t, b: pr.b || z.b, cb: pr.cb || null, fonte: "prop", dc: false };
     else if (d && d.p) o = { p: d.p, c: d.c || z.c, t: d.t || z.t, b: d.x === "baffetti" && (!d.b || d.b === "niente") ? "baffi" : d.b || z.b, cb: d.cb || null, fonte: "dati", dc: !!d.dc || !d.c || !d.t || !d.b };
     else o = { p: z.p, c: z.c, t: z.t, b: z.b, cb: null, fonte: "caso", dc: true };
@@ -6451,7 +6489,14 @@
     }
     function visibili() { return tutti.filter(function (c) { return !filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; }); }
     function scegli(c) { sel = c; disegnaScheda(); elenco(); }
-    function salva(a) { ASP_PROP[sel.k] = { p: a.p, c: a.c, t: a.t, b: a.b, ok: 1 }; if (a.cb) ASP_PROP[sel.k].cb = a.cb; if (a.f && a.f !== "tondo") ASP_PROP[sel.k].f = a.f; salvaAspettoProp(); }
+    // 🧑 (16 nov 2026) si salva sul calciatore (fc<numero>: vale in tutte le stagioni) o, con «📅 Solo nel …», solo per quest'anno
+    function chiaveSalva() { var pid = personaDi(sel.k); return pid ? (soloAnno && STAG_ATT ? pid + "|" + STAG_ATT : pid) : sel.k; }
+    function salva(a) {
+      var ch = chiaveSalva(), pid = personaDi(sel.k);
+      if (pid && ch === pid) { delete ASP_PROP[sel.k]; chiaviDi(pid).forEach(function (k) { delete ASP_PROP[k]; }); }   // (le facce vecchie col nome dello stesso calciatore: ora vale questa)
+      ASP_PROP[ch] = { p: a.p, c: a.c, t: a.t, b: a.b, ok: 1 }; if (a.cb) ASP_PROP[ch].cb = a.cb; if (a.f && a.f !== "tondo") ASP_PROP[ch].f = a.f; salvaAspettoProp();
+    }
+    var soloAnno = false;
     function disegnaScheda() {
       scheda.textContent = "";
       if (!sel) { scheda.appendChild(nd("div", "fa-ed-fatto", "🎉 Non ne resta nessuno da controllare")); return; }
@@ -6461,8 +6506,15 @@
       info.appendChild(nd("i", "", a.fonte === "prop" ? "✓ sistemato da te" : a.fonte === "caso" ? "🎲 a caso: nessuna foto" : a.dc ? "🔎 dalla foto, da controllare" : "📷 dalla foto"));
       var tasti = nd("div", "fa-ed-tasti"), ok = nd("button", "btn btn-primario", "✓ Va bene"), foto = nd("button", "fa-ed-t", "🔍 Foto");
       tasti.appendChild(ok); tasti.appendChild(foto);
-      if (ASP_PROP[sel.k]) { var torna = nd("button", "fa-ed-t", "↩ Di partenza"); tasti.appendChild(torna);
-        torna.onclick = function () { delete ASP_PROP[sel.k]; salvaAspettoProp(); disegnaScheda(); elenco(); }; }
+      var fpS = facciaProp(sel.k);
+      if (fpS) { var torna = nd("button", "fa-ed-t", fpS.anno ? "↩ Come gli altri anni" : "↩ Di partenza"); tasti.appendChild(torna);
+        torna.onclick = function () { delete ASP_PROP[fpS.chiave]; if (!fpS.anno) delete ASP_PROP[sel.k]; salvaAspettoProp(); disegnaScheda(); elenco(); }; }
+      if (STAG_ATT && personaDi(sel.k)) {   // 📅 una faccia solo per quest'anno (eccezione: di solito vale per tutte le stagioni)
+        soloAnno = !!(fpS && fpS.anno);
+        var anno = nd("button", "fa-ed-t" + (soloAnno ? " on" : ""), (soloAnno ? "✓ " : "") + "📅 Solo nel " + STAG_ATT); tasti.appendChild(anno);
+        anno.onclick = function () { soloAnno = !soloAnno; anno.className = "fa-ed-t" + (soloAnno ? " on" : ""); anno.textContent = (soloAnno ? "✓ " : "") + "📅 Solo nel " + STAG_ATT; };
+      }
+
       scheda.appendChild(tasti);
       ok.onclick = function () { salva(aspettoVero(sel.k)); scegli(prossimo()); };
       foto.onclick = function () { window.open("https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(sel.nome.replace(/\s+(?:[A-Z][a-z]?\.)+$/, "") + " " + sel.sq + " calciatore" + (STAG_ATT ? " " + STAG_ATT : "")), "_blank"); };   // (📅 con la 2017-18: le foto di quell'anno)
@@ -6500,6 +6552,8 @@
     disegnaScheda();
   }
   window.SGAstaAspetto = { apri: function (k) { apriPersonalizza(k); }, vero: aspettoVero, colori: coloriAspetto, prop: function () { return ASP_PROP; },
+    stagione: function (id) { if (id !== undefined) usaStagione(id); return STAG_ATT; }, persona: personaDi,   // (📅🧑 per le prove delle facce condivise)
+
     grafica: function (v) { if (v != null) { GRAF2.on = !!v; FIG_CACHE = {}; TESTE_CACHE = {}; TESTE_N = 0; BUSTI_URL = {}; } return GRAF2.on; }, formazione: function (v) { if (v) { FORM_STILE = v; BUSTI_URL = {}; } return FORM_STILE; }, busto: function (c, w) { return bustoCanvas(c, w); }, overall: function (v) { if (v != null) { OVR.on = !!v; FIG_CACHE = {}; } return OVR.on; }, ovr: function (c) { return overallDi(c); }, testa: function (cv, a, fronte) { disegnaTestina(cv, a, fronte); }, figurina: function (c, prezzo, w) { return figurinaCanvas(c, prezzo, w); } };   // (per le prove e per aprire l'editor da fuori)
   // 🧑 la TESTA con l'aspetto vero, disegnata nelle coordinate di chi la chiama: centro (0, cy), raggio r, lo (1/-1: il lato in ombra).
   // fronte: vista davanti (figurina, anteprima) con due occhi e il sorriso; se no di profilo come gli omini del campo (un occhio, verso dove guarda)

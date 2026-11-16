@@ -197,3 +197,37 @@
     return "pronti: " + cartaDi(C);
   } });
 })();
+
+// st5 (16 nov 2026) LE FACCE CONDIVISE: la faccia fatta da IL PAPPONE per un calciatore di oggi (salvata col nome, come prima) vale anche
+//     nella 2017-18 per lo stesso calciatore in un'altra squadra (Barella: Inter oggi, Cagliari allora); una faccia salvata sul calciatore
+//     (fc<numero>) vale in tutte e due; una «solo nel 2017-18» vale solo lì; senza faccia sua, una stagione senza foto prende i dati di oggi.
+(function () {
+  var W = window, A = COPIONE.aiuti, no = A.no;
+  COPIONE.aggiungi("st5", { nome: "Stagioni: le facce condivise (stesso calciatore, stessa faccia in tutte le stagioni; eccezione solo per un anno)", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0 }); await w.SG.scaricaGioco("asta"); await w.SGCuore.caricaPezzo("asta-2017");
+    var G = w.SGAstaAspetto, P = G.prop(), x = [];
+    if (G.persona("Barella (Inter)") !== "fc1870") no("Barella di oggi non ha il suo numero (" + G.persona("Barella (Inter)") + ")");
+    G.stagione(null); P["Barella (Inter)"] = { p: 7, c: "rosso", t: "cresta", b: "piena", ok: 1 };
+    G.stagione("2017-18");
+    if (G.persona("Barella (Cagliari)") !== "fc1870") no("Barella del 2017-18 non ha lo stesso numero");
+    var a = G.vero("Barella (Cagliari)"); if (a.p !== 7 || a.t !== "cresta" || a.fonte !== "prop") no("nel 2017-18 Barella non ha la faccia fatta oggi: " + JSON.stringify(a));
+    x.push("faccia di oggi anche nel 2017-18");
+    delete P["Barella (Inter)"]; P.fc1870 = { p: 6, c: "nero", t: "ricci", b: "corta", ok: 1 };
+    if (G.vero("Barella (Cagliari)").p !== 6) no("la faccia sul calciatore non vale nel 2017-18");
+    P["fc1870|2017-18"] = { p: 2, c: "biondo", t: "lunghi", b: "niente", ok: 1 };
+    if (G.vero("Barella (Cagliari)").p !== 2) no("la faccia «solo nel 2017-18» non vale nel 2017-18");
+    G.stagione(null);
+    if (G.vero("Barella (Inter)").p !== 6) no("la faccia «solo nel 2017-18» vale anche oggi (o quella di sempre no): " + JSON.stringify(G.vero("Barella (Inter)")));
+    x.push("faccia sul calciatore in tutte e due; «solo nel 2017-18» solo lì");
+    delete P.fc1870; delete P["fc1870|2017-18"];
+    // un calciatore della 2017-18 senza foto quell'anno ma con la foto oggi: prende i dati di oggi (stesso numero)
+    var oggi = w.SG_FANTA_IDS; G.stagione("2017-18");
+    var S = w.SG_FANTA_STAGIONI["2017-18"], inv = {};
+ Object.keys(oggi || {}).forEach(function (k) { inv[oggi[k]] = k; });
+    var dopp = Object.keys(S.IDS).filter(function (k) { return inv[S.IDS[k]] && !(S.ASPETTO[k] && S.ASPETTO[k].p); });
+    x.push(dopp.length + " calciatori del 2017-18 che giocano anche oggi senza foto di allora");
+    G.stagione(null);
+    try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
+    return x.join("; ");
+  } });
+})();

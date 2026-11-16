@@ -111,3 +111,17 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   quando serve, 203 calciatori, 20 squadre, riassunto «🕰️ Serie A 2017-18 · …», nessun errore. Messo su master (novità v356).
 - Restano da fare: le facce dei calciatori (IL PAPPONE, da «🎨 Personalizza i calciatori»), i numeri di Simy, Brignoli e Schick, le maglie di
   7 squadre da controllare, la prova pa4 che non passa anche su master (non nostra).
+
+## 16-17 nov, notte: TUTTE LE STAGIONI (dal Cervello, il proprietario dorme)
+### Passo 1 — le facce condivise (come funziona, per IL PAPPONE e per chi riprende)
+- Ogni calciatore ha il suo **numero di fantacalcio.it** (lo stesso in tutte le stagioni anche se cambia squadra: Meret è 572 alla SPAL nel
+  2017-18 e al Napoli oggi). Per «Oggi» stanno in `data/fanta-ids.js` (335 su 335, dal listone 2026-27 di fantacalcio.it; si rifà con
+  `D:\SG-stagione-lavoro\ids-oggi.js`); per ogni stagione nel suo pezzo (`IDS`).
+- **Quando IL PAPPONE sistema una faccia** in «🎨 Personalizza i calciatori» si salva sul calciatore («fc1870» = Barella) e vale in TUTTE le
+  stagioni e con «Oggi». Le facce salvate prima col nome («Barella (Inter)», «Hamsik (Napoli)») valgono ancora, anche nelle altre stagioni
+  dello stesso calciatore; quando le risistema passano sul numero.
+- **Eccezione per un anno** («quell'anno aveva i capelli diversi»): con una stagione scelta nelle regole, nell'editor c'è «📅 Solo nel 2017-18»:
+  acceso, la faccia vale solo per quell'anno («fc1870|2017-18»); «↩ Come gli altri anni» la toglie.
+- Senza faccia sua: i dati dalle foto di quell'anno, se no quelli di un'altra stagione o di oggi dello stesso calciatore, se no a caso.
+- Prova st5 (facce condivise) OK.
+- L'archivio di fantacalcio.it arriva fino alla **2015-16**: prima (2014-15 e indietro) la pagina mostra sempre lo stesso listone (603 righe).
