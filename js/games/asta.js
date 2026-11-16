@@ -398,6 +398,11 @@
     ".st-contatore b{font-size:clamp(2rem,10vw,2.9rem);font-variant-numeric:tabular-nums;}",
     ".st-ticker{position:absolute;z-index:2;left:0;right:0;bottom:0;height:24px;line-height:24px;padding:0 10px;background:rgba(0,0,0,.6);color:#ffd43b;font-weight:900;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em;}",
     ".st-ticker.via{animation:stTicker .35s ease-out;}",
+    // 📅 la scritta dell'anno (le stagioni del passato): piccola, sempre in vista, mai sopra a quello che si tocca
+    ".as-stagione{position:absolute;z-index:6;left:50%;transform:translateX(-50%);pointer-events:none;white-space:nowrap;font-size:.66rem;font-weight:900;letter-spacing:.04em;color:#ffe066;background:rgba(10,14,30,.72);border:1px solid rgba(255,224,102,.45);border-radius:999px;padding:1px 9px;line-height:1.45;}",
+    ".as-stagione.st{top:calc(var(--sa-testa,52px) - 4px);}.as-stagione.gio{position:static;transform:none;grid-column:1/-1;justify-self:center;font-size:.6rem;padding:0 8px;line-height:1.4;}",
+
+    ".as-attesa-stag{font-size:1.1rem;font-weight:800;margin-top:44px;text-align:center;}",
     ".st-ticker.scorre{text-overflow:clip;}.st-tk-scorre{display:inline-block;animation:stTkScorre var(--td,6s) linear both;}@keyframes stTkScorre{0%,18%{transform:none}82%,100%{transform:translateX(var(--d,0))}}",
     "@keyframes stTicker{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}",
     ".st-ticker.conta{color:#fff;background:#c92a2a;font-size:.95rem;text-align:center;}",
@@ -1600,10 +1605,12 @@
       imp = imp || {};
       // (ripasso del 12 nov 2026: la saletta taglia oltre 90 lettere, e si perdeva proprio quello che cambia da una sera all'altra: niente nome del gioco, prima le scelte)
       if ((imp.formato || f) === "fanta") {
-        var rf = ["⚽ " + FANTA_BUDGET + " crediti", "rosa da 5", imp.compra === "buste" ? "✉️ tutta a buste" : imp.compra === "big" ? "✉️ buste per i big" : "",
+        var rf = [stagioneDi(imp) ? "🕰️ Serie A " + stagioneDi(imp) : "", "⚽ " + FANTA_BUDGET + " crediti",
+ "rosa da 5", imp.compra === "buste" ? "✉️ tutta a buste" : imp.compra === "big" ? "✉️ buste per i big" : "",
           imp.giornata === false ? "💎 vince la rosa più forte" : imp.giornate === 3 ? "🏆 3 giornate" : "⚽ 1 giornata", imp.giornata !== false && vsDi(imp) ? "🆚 avversari già all'asta" : "", imp.ovrAsta ? "⭐ overall all'asta" : "", imp.scambi === false ? "🔒 niente scambi" : ""].filter(Boolean);
         // (la saletta taglia oltre 90 caratteri: se non ci sta, prima via «rosa da 5», poi le scritte più corte)
-        var corte = [["rosa da 5", ""], ["🆚 avversari già all'asta", "🆚 avversari noti"], ["✉️ buste per i big", "✉️ big a busta"], ["⭐ overall all'asta", "⭐ overall visibile"]], rr = rf.join(" · ");
+        var corte = [["rosa da 5", ""], ["🕰️ Serie A " + stagioneDi(imp), "🕰️ " + stagioneDi(imp)],
+ ["🆚 avversari già all'asta", "🆚 avversari noti"], ["✉️ buste per i big", "✉️ big a busta"], ["⭐ overall all'asta", "⭐ overall visibile"]], rr = rf.join(" · ");
         for (var ci = 0; rr.length > 90 && ci < corte.length; ci++) { rf = rf.map(function (x) { return x === corte[ci][0] ? corte[ci][1] : x; }).filter(Boolean); rr = rf.join(" · "); }
         return rr;
       }
@@ -1629,6 +1636,7 @@
       dove.nomiChi = false;   // 🏷️ (8 nov 2026, il proprietario: in campo SOLO il colore) la regola «In campo, di chi è» non c'è più: chi l'aveva accesa torna come tutti
       dove.giornate = dove.giornate === 3 ? 3 : 1;   // 🏆 quante giornate (30 ott 2026): di base 1, com'era; 3 = due veloci e la terza intera
       dove.compra = compraDi(dove);   // 💰 come si compra (2 nov 2026): di base l'asta normale
+      dove.stagione = stagioneDi(dove);   // 📅 la stagione (16 nov 2026): di base oggi (null)
       // contenitori che compaiono/spariscono in base alla modalità scelta
       var wrapCrediti = el("div", {}), wrapTema = el("div", {}), wrapFanta = el("div", { hidden: "hidden" }), wrapMal = el("div", {}), wrapRound = el("div", {});
 
@@ -1743,6 +1751,16 @@
       // --- Nota Fantacalcio e ⚽ la giornata dopo l'asta (solo modalità Fantacalcio) ---
       wrapFanta.appendChild(el("div", { class: "link-avviso",
         text: "⚽ 20 crediti a testa · rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono dal mazzo uno alla volta, in ordine tutto a caso, e si rilancia di +1, +2 o +5. " + (ovrAcceso() ? "Alla fine si scopre l'overall di ogni calciatore (quanto vale davvero, da 68 a 93)." : "Alla fine si scoprono le quotazioni vere.") }));
+      // 📅 la stagione (16 nov 2026, il proprietario: «rivivere» un anno di Serie A): oggi (di partenza) o la 2017-18. Il pezzo coi dati di
+      // quell'anno comincia ad arrivare appena la si sceglie (e si aspetta prima di cominciare, vedi conStagione)
+      var bS = {};
+      function scegliStagione(v) { dove.stagione = v; STAG_IMP = v; Object.keys(bS).forEach(function (k) { bS[k].className = "modo-chip" + ((k === "oggi" ? null : k) === v ? " attiva" : ""); }); if (v) caricaStagione(v); }
+      [["oggi", "📅", "Oggi", "I calciatori di quest'anno"], ["2017-18", "🕰️", "2017-18", "Higuain, Mertens, Icardi, il primo VAR"]].forEach(function (o) {
+        bS[o[0]] = el("button", { class: "modo-chip", onclick: function () { scegliStagione(o[0] === "oggi" ? null : o[0]); } }, [ el("span", { class: "mi", text: o[1] }), el("div", {}, [ el("div", { class: "mt", text: o[2] }), el("div", { class: "ms", text: o[3] }) ]) ]);
+      });
+      wrapFanta.appendChild(el("div", { class: "etichetta", text: "📅 Stagione" }));
+      wrapFanta.appendChild(el("div", { class: "modo-griglia as-coppia" }, [ bS.oggi, bS["2017-18"] ]));
+      scegliStagione(dove.stagione);
       // 💰 come si compra (2 nov 2026, il proprietario): l'asta di sempre, tutta a buste chiuse, o le buste solo per i più forti
       var bC = {};
       function scegliCompra(v) { dove.compra = v; Object.keys(bC).forEach(function (k) { bC[k].className = "modo-chip" + (k === v ? " attiva" : ""); }); }
@@ -1950,8 +1968,11 @@
       var rs = RIP_USATA !== t && t.ripresa && t.ripresa.stato;
       if (rs && rs.formato && t.impostazioni && t.impostazioni.modo === "online") formato = rs.formato;   // (la partita ripresa decide la modalità)
       if (formato === "fanta") {
-        if (t.impostazioni && t.impostazioni.modo === "online") return hostFanta(t);
-        return avviaFanta(t);
+        var sgF = stagioneDi(rs && rs.formato === "fanta" ? rs : t.impostazioni);   // 📅 la stagione (la partita ripresa decide la sua)
+        return conStagione(t, sgF, function () {
+          if (t.impostazioni && t.impostazioni.modo === "online") return hostFanta(t);
+          return avviaFanta(t);
+        });
       }
       var temi = window.SG_ASTA_TEMI || [];
       if (!temi.length) return niente(t, "Mancano le carte del gioco.");
@@ -2179,6 +2200,90 @@
     Monza: ["#d7141f", "#f4f4f4"], Genoa: ["#ae1e2e", "#0a2240"], Lecce: ["#f2d200", "#d9001a"], Frosinone: ["#ffd400", "#0b46a6"]
   };
   function coloriSquadra(sq) { return COLORI_SQUADRE[sq] || null; }
+  // =========================================================
+  //  📅 LE STAGIONI DEL PASSATO (15-16 nov 2026, il proprietario: «rivivere» un anno di Serie A, si parte dalla 2017-18)
+  //  ⚙️ «📅 Stagione» nelle regole della Mini Asta: "oggi" (di partenza, tutto come prima) o "2017-18". La sceglie chi tiene la partita
+  //  e vale per tutti (st.stagione: nella foto, nella ripresa e nella copia per il vice). I dati di quell'anno stanno in un pezzo a parte
+  //  (data/fanta-2017.js, pezzo "asta-2017" in js/elenco-giochi.js) che si scarica SOLO quando serve: window.SG_FANTA_STAGIONI["2017-18"].
+  //  Come funziona: usaStagione(id) mette al posto dei dati di oggi (window.SG_FANTA_CALCIATORI, _QUOTAZIONI, _STATISTICHE, _SQUADRE,
+  //  _NUMERI, _ALTEZZE, _ASPETTO, _CAMPO, _MODULI, _RUOLI) quelli della stagione, e sopra le tabelle delle squadre (colori, righe,
+  //  pantaloncini, calzettoni, stadi, stadi in comune, derby, meteo, maglie) quelle di quell'anno; poi svuota i conti già fatti (rose, overall,
+  //  reparti, figurine, teste). Il motore della giornata NON cambia: legge gli stessi nomi e trova l'anno giusto. usaStagione(null) = oggi.
+  // =========================================================
+  var STAGIONI = { "2017-18": { pezzo: "asta-2017", nome: "Serie A 2017-18", corto: "2017-18" } };
+  var STAG_ATT = null, STAG_OGGI = null;
+  var DATI_FANTA = ["CALCIATORI", "QUOTAZIONI", "STATISTICHE", "SQUADRE", "NUMERI", "ALTEZZE", "ASPETTO", "CAMPO", "MODULI", "RUOLI"];
+  function stagioneDi(im) {   // (dalle regole, dalla foto o dalla copia: null = oggi)
+    var s = im && im.stagione;
+    if (im && !("stagione" in im)) s = stagioneProva();   // 🧪 (solo le prove: tutte le prove dell'asta rifatte con la 2017-18, vedi preferiti/asta-stagione.js)
+    return s && STAGIONI[s] ? s : null;
+  }
+  function stagioneProva() { try { return (window.top && window.top.__SG_STAGIONE_PROVA) || null; } catch (e) { return null; } }
+
+  function datiStagione(id) { return id ? ((window.SG_FANTA_STAGIONI || {})[id] || null) : null; }
+  function stagionePronta(id) { return !id || !!datiStagione(id); }
+  function caricaStagione(id, fatto) {   // scarica il pezzo della stagione (se non c'è già); fatto(ok)
+    if (stagionePronta(id)) { if (fatto) fatto(true); return; }
+    var C = window.SGCuore, info = STAGIONI[id];
+    if (!(C && C.caricaPezzo && info)) { if (fatto) fatto(false); return; }
+    C.caricaPezzo(info.pezzo).then(function () { if (fatto) fatto(stagionePronta(id)); }, function () { if (fatto) fatto(false); });
+  }
+  function nomeStagione(id) { return id && STAGIONI[id] ? STAGIONI[id].nome : ""; }
+  function tabelleSquadre() {   // (le tabelle delle squadre che una stagione può cambiare: copia di quelle di oggi la prima volta)
+    return { colori: COLORI_SQUADRE, righe: RIGHE_SQ, pant: PANT_SQ, calz: CALZ_SQ, stadi: STADI, stadiComuni: STADI_COMUNI, derby: DERBY, neve: NEVE_SQ, pioggia: PIOGGIA_SQ, nebbia: NEBBIA_SQ };
+  }
+  function sopra(base, nuovo) { var o = {}; Object.keys(base || {}).forEach(function (k) { o[k] = base[k]; }); Object.keys(nuovo || {}).forEach(function (k) { o[k] = nuovo[k]; }); return o; }
+  function usaStagione(id) {
+    id = stagioneDi({ stagione: id });
+    if (id && !stagionePronta(id)) id = null;   // (il pezzo non c'è ancora: chi chiama aspetta prima con caricaStagione)
+    if (id === STAG_ATT && STAG_OGGI) return;
+    if (!STAG_OGGI) { STAG_OGGI = { tab: tabelleSquadre() }; DATI_FANTA.forEach(function (n) { STAG_OGGI[n] = window["SG_FANTA_" + n]; }); }
+    var S = datiStagione(id), T = S ? S.squadre20 || {} : {}, O = STAG_OGGI.tab;
+    DATI_FANTA.forEach(function (n) { window["SG_FANTA_" + n] = S ? (S[n] || (n === "CAMPO" ? { calciatori: {} } : {})) : STAG_OGGI[n]; });
+    COLORI_SQUADRE = sopra(O.colori, T.colori); RIGHE_SQ = S ? sopra({}, T.righe) : O.righe; PANT_SQ = sopra(O.pant, T.pant); CALZ_SQ = sopra(O.calz, T.calz);
+    STADI = sopra(O.stadi, T.stadi); NEVE_SQ = sopra(O.neve, T.neve); PIOGGIA_SQ = sopra(O.pioggia, T.pioggia); NEBBIA_SQ = sopra(O.nebbia, T.nebbia);
+    STADI_COMUNI = (S && T.stadiComuni) || O.stadiComuni; DERBY = (S && T.derby) || O.derby;
+    if (window.SGAstaArte && SGAstaArte.stagione) SGAstaArte.stagione(S ? T.maglie || null : null, S ? T.numero || null : null);
+    Object.keys(CACHE_AV).forEach(function (k) { if (k.indexOf("arte|maglia|") === 0) delete CACHE_AV[k]; });   // (le maglie disegnate con l'anno di prima)
+
+    // (i conti già fatti con i dati di prima)
+    ROSE_SA = null; OVR.scala = null; OVR_SQ = {}; XI_SQ = {}; REP_SQ = {}; REP_MED = null; FIG_URL = {}; FIG_CACHE = {}; BUSTI_URL = {}; TESTE_CACHE = {}; TESTE_N = 0; COPPIE_ORA = null;
+    STAG_ATT = id;
+  }
+  // 📅 la scritta dell'anno («⚽ Serie A 2017-18»): all'asta e nella giornata, così si capisce subito che anno è (niente con la stagione di oggi)
+  function bollinoStagione(el, id, classe) { return id && STAGIONI[id] ? el("div", { class: "as-stagione " + (classe || ""), text: "⚽ " + STAGIONI[id].nome }) : null; }
+  // ⏳ (online, chi entra) la foto dice una stagione che su questo telefono non è ancora arrivata: si aspetta una volta sola (le foto che
+  // arrivano intanto non ridisegnano niente), poi si ridisegna l'ultima foto. Senza rete: «↻ Riprova»
+  function aspettaStagioneVM(t, id, cb) {
+    if (cb._attStag === id) return;
+    cb._attStag = id;
+    var s = t.schermata({ chiara: true, indietro: t.esci }), riga = t.el("p", { class: "as-attesa-stag", text: "⏳ Arriva la " + nomeStagione(id) + "…" });
+    s._contenuto.appendChild(riga); t.mostra(s);
+    (function prova() {
+      caricaStagione(id, function (ok) {
+        if (cb._attStag !== id || cb._uscito) return;
+        if (ok) { cb._attStag = null; if (cb._vmA) disegnaFantaVM(t, cb._vmA, cb); return; }
+        riga.textContent = "📶 La " + nomeStagione(id) + " non arriva: controlla la rete";
+        svuotaNodo(s._piede); s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Riprova", onclick: function () { riga.textContent = "⏳ Arriva la " + nomeStagione(id) + "…"; svuotaNodo(s._piede); prova(); } }));
+      });
+    })();
+  }
+  // ⏳ prima di cominciare con una stagione del passato: se il pezzo non è ancora arrivato si aspetta («⏳ Arriva la Serie A 2017-18…»)
+
+  function conStagione(t, id, fn) {
+    if (stagionePronta(id)) { usaStagione(id); return fn(); }
+    var s = t.schermata({ chiara: true, indietro: t.esci }), riga = t.el("p", { class: "as-attesa-stag", text: "⏳ Arriva la " + nomeStagione(id) + "…" });
+    s._contenuto.appendChild(riga); t.mostra(s);
+    (function prova() {
+      caricaStagione(id, function (ok) {
+        if (!s.isConnected) return;   // (si è usciti nel frattempo)
+        if (ok) { usaStagione(id); return fn(); }
+        riga.textContent = "📶 La " + nomeStagione(id) + " non arriva: controlla la rete";
+        svuotaNodo(s._piede); s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Riprova", onclick: function () { riga.textContent = "⏳ Arriva la " + nomeStagione(id) + "…"; svuotaNodo(s._piede); prova(); } }));
+        s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "Esci", onclick: function () { t.esci(); } }));
+      });
+    })();
+  }
   // sullo stesso telefono chi ha il nome del profilo ha il SUO avatar (29 ott 2026, il proprietario: «il mio avatar è diverso da quello
   // del mio profilo»); gli altri quello che nasce dal nome, sempre uguale
   function ominoLocale(nome) {
@@ -2825,7 +2930,7 @@
     S.tempo = el("i");
     S.piede = el("div", { class: "sa-piede st-piede" + (d.piedeAlto ? " " + d.piedeAlto : "") });
     var board = maxischermo(el, S, false); S.board = board;
-    S.radice = el("div", { class: "schermata sa-sala st-stadio" + (d.persone.length > 5 ? " fitta" : "") + (t.guarda ? " as-targa" : "") }, [ sfondo, testaAsta(el, S, d), board, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
+    S.radice = el("div", { class: "schermata sa-sala st-stadio" + (d.persone.length > 5 ? " fitta" : "") + (t.guarda ? " as-targa" : "") }, [ sfondo, testaAsta(el, S, d), bollinoStagione(el, STAG_ATT, "st"), board, S.avviso, el("div", { class: "sa-tempo" }, [ S.tempo ]),
       griglia(el, S, d.persone), d.io == null ? panchina(el, S, d.persone) : null, S.piede ]);   // (online si offre coi tasti: niente panchina)
     S.ultimiDati = d; STADIO = S;
     t.mostra(S.radice);
@@ -3989,6 +4094,7 @@
     R.azBox.appendChild(R.linea);   // l'annuncio e l'esito, sul campo
     R.pag = el("div", { class: "st-pag" });   // le pagelle (a fine primo tempo e al fischio finale)
     R.gio = el("div", { class: "st-gio", style: "display:none" }, [ R.gioTab, R.bar, R.azBox, R.ris, R.pag ]);   // ⚽ la giornata: i punteggi di ognuno, il minuto, le azioni e sotto i risultati delle partite
+   // ⚽ la giornata: i punteggi di ognuno, il minuto, le azioni e sotto i risultati delle partite
     R.podio = el("div", { class: "st-podio", style: "display:none" });
     R.piede = el("div", { class: "sa-piede st-piede" });
     R.saltaFn = function () {
@@ -4201,6 +4307,7 @@
       var tx = el("b", { text: "0-0" }), nodo = el("div", { class: "st-ris-p" }, [ el("span", { text: sigla(P.c) + " - " + sigla(P.f) }), tx ]);
       R.ris.appendChild(nodo); return { nodo: nodo, tx: tx, g: [0, 0] };
     });
+    var bS = bollinoStagione(el, STAG_ATT, "gio"); if (bS) R.ris.insertBefore(bS, R.ris.firstChild);   // 📅 la scritta dell'anno sopra i risultati (una riga piccola: non copre niente)
     barraTesto(R, "0'", "⚽ Fischio d'inizio");
     // lo spazio: in alto i punteggi di ognuno a quadrettini (una fila fino a 4, poi due), il campo il più grande possibile (in verticale,
     // come lo schermo), sotto i risultati delle 10 partite
@@ -6281,8 +6388,10 @@
     var cx = cv.getContext("2d"); cx.setTransform(d, 0, 0, d, 0, 0); cx.clearRect(0, 0, w, h); cx.save(); cx.translate(w / 2, 0);
     var ca2 = coloriAspetto(a), rr2 = Math.min(w, h) * 0.3; if (!(GRAF2.on && testaBitmap(cx, 0, h * 0.54, rr2, ca2, 1, fronte !== false, true, d))) testaVera(cx, h * 0.54, rr2, ca2, 1, fronte !== false); cx.restore();
   }
+  var STAG_IMP = null;   // 📅 (la stagione scelta nelle regole: «🎨 Personalizza i calciatori» mostra i calciatori di quell'anno)
   function apriPersonalizza(soloK) {
     if (!eIlProprietario()) return;
+    usaStagione(stagionePronta(STAG_IMP) ? STAG_IMP : null);
     var vecchio = document.querySelector(".fa-ed"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
     var tutti = tuttiICalciatori(), sel = null, filtro = "", modo = "tu", RU = { P: "Portiere", D: "Difensore", C: "Centrocampista", A: "Attaccante" };
     function nd(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
@@ -10153,7 +10262,7 @@
   // ---------- SINGOLO TELEFONO ----------
   function avviaFanta(t) {
     var st = {
-      formato: "fanta", sessione: nuovaSessione(), asta: null, giriVuoti: 0, salto: 1, giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
+      formato: "fanta", stagione: stagioneDi(t.impostazioni), sessione: nuovaSessione(), asta: null, giriVuoti: 0, salto: 1, giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
       giornate: t.impostazioni && t.impostazioni.giornate === 3 ? 3 : 1,   // 🏆 1 giornata o 3 (di partenza 1)
       vs: vsDi(t.impostazioni),   // 🆚 contro chi giocano, già all'asta (di partenza sì dall'8 nov 2026)
       nomiChi: false,   // 🏷️ (tolta l'8 nov 2026: in campo solo il colore)
@@ -10163,6 +10272,7 @@
       compra: compraDi(t.impostazioni),   // 💰 come si compra: l'asta normale (di partenza), tutta a buste, buste solo per i big
       giocatori: (function (OL) { return t.giocatori.map(function (n, i) { return { nome: n, crediti: FANTA_BUDGET, kit: [], conta: { P: 0, D: 0, C: 0, A: 0 }, stelle: 0, asteVinte: 0, st: statNuove(), omino: OL[i] }; }); })(ominiLocali(t.giocatori))
     };
+    usaStagione(st.stagione);   // 📅 (i dati dell'anno scelto: il pezzo è già arrivato, vedi conStagione)
     st.mazzo = costruisciMazzoFanta(st.giocatori.length);
     st.coppie = st.vs && st.giornata ? coppieGiornate(st.giornate) : null; COPPIE_ORA = st.coppie;   // 🆚 le partite si sorteggiano adesso
     NOME_CHI = st.nomiChi; BANDITORE = st.ban; OVR_ASTA = !!st.ovrAsta;
@@ -10786,7 +10896,7 @@
     if (!(window.SGNet && SGNet.disponibile())) return senzaRete(t);
     var IO = t.mioId || "host";   // io che tengo la partita ("host", o l'amico che ha preso il posto dell'host)
     var st = {
-      formato: "fanta", crediti: FANTA_BUDGET, sessione: null, mazzo: [], asta: null, esito: null, classifica: null,
+      formato: "fanta", stagione: stagioneDi(t.impostazioni), crediti: FANTA_BUDGET, sessione: null, mazzo: [], asta: null, esito: null, classifica: null,
       giornata: !(t.impostazioni && t.impostazioni.giornata === false),   // ⚽ la giornata dopo l'asta (di partenza sì)
       giornate: t.impostazioni && t.impostazioni.giornate === 3 ? 3 : 1,   // 🏆 1 giornata o 3 (di partenza 1)
       vs: vsDi(t.impostazioni),   // 🆚 contro chi giocano, già all'asta (di partenza sì dall'8 nov 2026)
@@ -10813,6 +10923,7 @@
     // "⚙️ Regole" in saletta: se torni ai Temi classici cambia motore (stessa stanza, stessi amici)
     t.onRegole = function (im) {
       if (!st.iniziata && formatoDi(t, im) !== "fanta") { st.morto = true; TM.smetti(); avviaAsta(t); return; }
+      if (!st.iniziata) { st.stagione = stagioneDi(im); caricaStagione(st.stagione); }   // 📅 (il pezzo della stagione comincia ad arrivare subito)
       if (!st.iniziata) { st.giornata = im.giornata !== false; st.giornate = im.giornate === 3 ? 3 : 1; st.vs = vsDi(im); st.nomiChi = false; st.ban = im.ban !== false; st.compra = compraDi(im); st.ovrAsta = im.ovrAsta === true; st.scambiOn = scambiOn(im); }   // ⚽ la giornata (e 🏆 quante): si decide in saletta
     };
     t.onRivincita = function () { if (st.fase === "fine" && !st.morto) nuovaInLobby(); };   // la Rivincita: tutti di nuovo nella saletta
@@ -10898,6 +11009,8 @@
 
     function comincia() {
       if (st.iniziata || st.giocatori.length < 2) return;
+      if (!stagionePronta(st.stagione)) { if (!st._aspettoStag) { st._aspettoStag = 1; caricaStagione(st.stagione, function () { st._aspettoStag = 0; if (!st.morto) comincia(); }); } return; }   // 📅 (prima arriva la stagione)
+      usaStagione(st.stagione);
       st.iniziata = true; st.sessione = nuovaSessione(); st.mazzo = costruisciMazzoFanta(st.giocatori.length);
       st.coppie = st.vs && st.giornata ? coppieGiornate(st.giornate) : null;   // 🆚 le partite si sorteggiano adesso (le decide chi tiene la partita)
       FX.round(); prossima();
@@ -11174,7 +11287,9 @@
       nomiChi: st.nomiChi ? 1 : 0,   // 🏷️
       ban: st.ban === false ? 0 : 1,   // 🎙️
       ovrAsta: st.ovrAsta ? 1 : 0,   // ⭐
+      stagione: st.stagione || null,   // 📅 l'anno della Serie A (null = oggi)
       classifica: st.classifica || null,
+
       serieA: st.fase === "fine" ? (st.serieA || null) : null,   // ⚽ la giornata di Serie A finta (la vedono tutti uguale)
       titoli: st.fase === "fine" ? titoliConGufo(st) : null,   // (🦉 il gufo della serata si aggiunge quando c'è)
       gufi: st.fase === "fine" ? (st.gufi || null) : null,   // 🦉 / 🍀 i tocchi di ognuno nella giornata (per chi ricarica a metà)
@@ -11192,6 +11307,14 @@
     BANDITORE = vm.ban !== 0;   // 🎙️
     OVR_ASTA = !!vm.ovrAsta;   // ⭐
     cb._vmA = vm;   // (l'ultima foto: un tocco in arrivo si ridisegna solo se si è ancora in quell'asta)
+    // 📅 la stagione della partita: in saletta il pezzo comincia ad arrivare; dopo, finché non c'è si aspetta (e poi si ridisegna l'ultima foto)
+    var sgV = stagioneDi(vm);
+    if (!stagionePronta(sgV)) {
+      if (vm.fase === "lobby") caricaStagione(sgV);   // (in saletta si disegna come sempre: intanto arriva)
+      else { aspettaStagioneVM(t, sgV, cb); return; }
+    } else usaStagione(sgV);
+
+
     if (vm.fase === "lobby") { fermaConta(STADIO); STADIO = null; cb._bustaF = null; return lobbyAsta(t, vm, cb); }
     if (vm.fase === "scambi") return mercatoVM(t, vm, cb);   // 🔄 gli scambi a fine asta
     if (vm.fase === "fine") {

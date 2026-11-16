@@ -157,7 +157,11 @@
       var su = "M22,35.9C34,33.2 44,36.4 56,34.2S72,32.2 78,33.2";
       s += "<path d='" + su + "L78,45.9C72,45 64,47.2 56,46.6S34,47.6 22,48.6Z' fill='" + d.fascia[1] + "' stroke='#000' stroke-opacity='.3' stroke-width='.6'/><path d='" + su + "L78,42.4C64,41.6 40,38.6 22,36.7Z' fill='" + d.fascia[0] + "'/>";
     }
+    if (d.banda) {   // 📅 (16 nov 2026, la Sampdoria 2017-18) la banda dritta sul petto: bianca, con dentro una riga rossa e una nera
+      s += "<rect x='0' y='36' width='100' height='12' fill='" + d.banda[0] + "'/><rect x='0' y='39.6' width='100' height='2.2' fill='" + d.banda[1] + "'/><rect x='0' y='42.2' width='100' height='2.2' fill='" + d.banda[2] + "'/>";
+    }
     // le maniche: tinta unita, di colori opposti (Genoa, Cagliari) o a righe lungo la manica
+
     if (d.man) for (i = 0; i < 2; i++) {
       var tr = i ? SPECCHIO : "", col = typeof d.man === "object" ? d.man[i] : d.man;
       if (col === "righe") {   // manC: manica scura con una sola riga chiara al centro (Udinese), se no righe lungo la manica
@@ -221,7 +225,18 @@
     if (conN) s += "<text x='50' y='71'" + F + " font-size='" + (String(numero).length > 1 ? 38 : 42) + "' letter-spacing='-1' fill='" + num + "' stroke='" + bordo + "' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'>" + xml(numero) + "</text>";
     return s + "</svg>";
   };
+  // 📅 LE MAGLIE DI UN'ALTRA STAGIONE (16 nov 2026, la Serie A 2017-18 della Mini Asta): dati = { "Chievo": { …come DATI… } } sopra quelle
+  // di oggi, numero = i colori dei numeri sulla schiena; null = di nuovo le maglie di oggi. Si rifanno i disegni (le cache si svuotano)
+  var OGGI = null;
+  A.stagione = function (dati, numero) {
+    if (!OGGI) OGGI = { dati: DATI, numero: NUMERO, squadre: A.SQUADRE };
+    DATI = {}; Object.keys(OGGI.dati).forEach(function (k) { DATI[k] = OGGI.dati[k]; }); Object.keys(dati || {}).forEach(function (k) { DATI[k] = dati[k]; });
+    NUMERO = {}; Object.keys(OGGI.numero).forEach(function (k) { NUMERO[k] = OGGI.numero[k]; }); Object.keys(numero || {}).forEach(function (k) { NUMERO[k] = numero[k]; });
+    A.SQUADRE = OGGI.squadre.concat(Object.keys(dati || {}).filter(function (k) { return OGGI.squadre.indexOf(k) < 0; }));
+    CACHE = {}; CACHE_SRC = {}; CACHE_DIETRO = {};
+  };
   A.magliaRetroSrc = function (squadra, numero, nome) {
+
     var c = squadra + "|" + numero + "|" + nome;
     return CACHE_SRC["r|" + c] || (CACHE_SRC["r|" + c] = "data:image/svg+xml," + encodeURIComponent(A.magliaRetro(squadra, numero, nome)));
   };
