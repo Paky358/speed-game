@@ -9,6 +9,42 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 369,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i capelli in campo come sulle figurine ✂️",
+    descrizione: [
+      "⚽ In campo, dove i calciatori si vedono di profilo, i capelli non scendono più fino agli occhi come un casco: la fronte resta libera, l'orecchio pure, con la basetta sottile davanti. Come sulle figurine.",
+      "💇 Restano coperti solo dove deve essere: la frangia e il taglio a scodella sulla fronte, i capelli lunghi sulle orecchie."
+    ]
+  },
+  {
+    v: 368,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la riga di lato e il mullet rifatti ✂️",
+    descrizione: [
+      "✂️ La riga di lato adesso si vede: una riga netta da una parte e i capelli pettinati verso l'altra, con più volume da quel lato.",
+      "🦁 Il mullet ha tutta la parte lunga dietro, da un orecchio all'altro, con le punte sul collo: prima si vedevano solo due ciuffi ai lati. Davanti e ai lati resta corto, con le orecchie libere."
+    ]
+  },
+  {
+    v: 367,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: ricci, mossi e dreadlocks raccolti con le orecchie libere ✂️",
+    descrizione: [
+      "✂️ Anche i ricci, i mossi, i dreadlocks raccolti e le treccine raccolte lasciano libere le orecchie: i ricci restano pieni sopra e ai lati, i mossi hanno le punte all'insù sopra l'orecchio, i raccolti non hanno più ciocche che scendono ai lati."
+    ]
+  },
+  {
+    v: 366,
+    data: "16 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i tagli dei calciatori rifatti ✂️",
+    descrizione: [
+      "✂️ I tagli più usati sono rifatti come li portano i calciatori veri: le orecchie restano libere, le basette sono sottili, niente più capelli a casco.",
+      "👀 Ogni taglio si riconosce anche sulle figurine piccole: il rasato è quasi pelle, gli sfumati alti hanno i lati chiari e il blocco sopra, i medi sono pettinati di lato con la riga, i corti col ciuffo hanno il ciuffo alzato, i ricci corti hanno i riccioli piccoli sopra.",
+      "🔍 Le facce nell'editor e sulle figurine si disegnano alla risoluzione vera del telefono: più nitide."
+    ]
+  },
+  {
     v: 365,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: sui calci piazzati tutti in area ⚽",

@@ -3247,7 +3247,7 @@
     var k = c.nome + "|" + c.squadra + "|" + prezzo + "|" + Math.round(w) + (GRAF2.on ? "|2" : "") + (OVR.on ? (coperto ? "|o?" : "|o") : "");
     if (FIG_CACHE[k]) return FIG_CACHE[k];
     if (FIG_N > 30) { FIG_CACHE = {}; FIG_N = 0; }   // (non se ne tengono troppe: sono foto grandi)
-    var d = Math.min(2, window.devicePixelRatio || 1), h = Math.round(w * 1.36), cv = document.createElement("canvas");
+    var d = Math.min(3, window.devicePixelRatio || 1), h = Math.round(w * 1.36), cv = document.createElement("canvas");
     if (GRAF2.on && prezzo != null) {   // 🃏 (10 nov 2026) quella senza prezzo, già pronta, + il cartellino: è una copia, non un disegno nuovo
       var b0 = figurinaCanvas(c, null, w, coperto); if (!b0) return null;
       cv.width = b0.width; cv.height = b0.height; cv.style.width = w + "px"; cv.style.height = h + "px";
@@ -6548,8 +6548,9 @@
     ca.sort(function (a, b) { return a.sq < b.sq ? -1 : a.sq > b.sq ? 1 : b.q - a.q; });
     return out.concat(ca.filter(function (c) { return !visti[c.k]; }));
   }
+  // ✂️ (16 nov 2026) la testa dell'editor e le figurine alla risoluzione vera del telefono (fino a 3: prima a 2 erano morbide)
   function disegnaTestina(cv, a, fronte) {
-    var d = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth || +cv.getAttribute("width") || 40, h = cv.clientHeight || w;
+    var d = Math.min(3, window.devicePixelRatio || 1), w = cv.clientWidth || +cv.getAttribute("width") || 40, h = cv.clientHeight || w;
     cv.width = Math.round(w * d); cv.height = Math.round(h * d);
     var cx = cv.getContext("2d"); cx.setTransform(d, 0, 0, d, 0, 0); cx.clearRect(0, 0, w, h); cx.save(); cx.translate(w / 2, 0);
     var ca2 = coloriAspetto(a), rr2 = Math.min(w, h) * 0.3; if (!(GRAF2.on && testaBitmap(cx, 0, h * 0.54, rr2, ca2, 1, fronte !== false, true, d))) testaVera(cx, h * 0.54, rr2, ca2, 1, fronte !== false); cx.restore();
@@ -6712,24 +6713,40 @@
       function sfumati(a) { cx.globalAlpha = a; base(0.62, 0.55, 0.12, 1.03); cx.globalAlpha = 1; }   // (i lati rasati: si vede la pelle sotto)
       function riccioli(n, rr, y0, raggio, da, a) { for (var i = 0; i < n; i++) { var an = PI * (da + (a - da) * i / (n - 1)); cerchio(Math.cos(an) * r * raggio, cy - r * y0 + Math.sin(an) * r * raggio, r * rr); } }
       function righe(n, scuro, spessa, h) { cx.save(); cx.strokeStyle = scuro; cx.lineWidth = r * spessa; cx.lineCap = "round"; for (var i = 0; i < n; i++) { var x = (i - (n - 1) / 2) * r * 0.26; cx.beginPath(); cx.moveTo(x * 1.05, cy - r * (h + 0.02)); cx.quadraticCurveTo(x * 0.98, cy - r * 0.9, x * 0.7, cy - r * 1.12); cx.stroke(); } cx.restore(); }
-      if (t === "corti") base(0.6, 0.66, 0.1, 1.1);   // (15 nov 2026: l'attaccatura un po' più alta, le tempie appena più su: non più a casco)
-      else if (t === "corti col ciuffo") { base(0.62, 0.68, 0.1, 1.1); cx.beginPath(); cx.moveTo(-r * 0.66, cy - r * 0.6); cx.bezierCurveTo(-r * 0.66, cy - r * 1.02, -r * 0.28, cy - r * 1.3, r * 0.12, cy - r * 1.28); cx.bezierCurveTo(r * 0.5, cy - r * 1.25, r * 0.74, cy - r * 1.06, r * 0.82, cy - r * 0.8); cx.lineTo(r * 0.56, cy - r * 0.72); cx.bezierCurveTo(r * 0.3, cy - r * 0.76, -r * 0.05, cy - r * 0.72, -r * 0.66, cy - r * 0.6); cx.closePath(); cx.fill(); }   // (15 nov 2026: il ciuffo alzato davanti e tirato su, non una palla sulla testa)
-      else if (t === "riga di lato") { base(0.56, 0.48, 0.1, 1.12); cx.beginPath(); cx.ellipse(r * 0.18, cy - r * 0.98, r * 0.8, r * 0.27, 0.14, 0, PI * 2); cx.fill(); cx.beginPath(); cx.ellipse(r * 0.38, cy - r * 0.62, r * 0.4, r * 0.11, -0.22, 0, PI * 2); cx.fill(); lineaRiga = [-r * 0.4, cy - r * 1.1, -r * 0.46, cy - r * 0.6]; }
-      else if (t === "mossi") { base(0.5, 0.42, 0.02, 1.16, 1.05); riccioli(6, 0.2, 0.1, 1.0, 1.08, 1.92); for (var q = 0; q < 3; q++) { cx.beginPath(); cx.ellipse((q - 1) * r * 0.36, cy - r * 0.52, r * 0.2, r * 0.1, (q - 1) * 0.3, 0, PI * 2); cx.fill(); } }   // (onde larghe e qualche onda sulla fronte)
-      else if (t === "medi") { base(0.5, 0.4, -0.3, 1.12, 1.06); cx.beginPath(); cx.ellipse(-r * 0.9, cy + r * 0.02, r * 0.21, r * 0.48, 0, 0, PI * 2); cx.ellipse(r * 0.9, cy + r * 0.02, r * 0.21, r * 0.48, 0, 0, PI * 2); cx.fill(); lineaRiga = [0, cy - r * 1.12, 0, cy - r * 0.55]; }   // (fino alle orecchie, riga in mezzo)
+      if (t === "corti") { base(0.6, 0.6, 0.22, 1.08, 0.99); cx.beginPath(); cx.moveTo(-r * 0.93, cy - r * 0.24); cx.lineTo(-r * 0.84, cy - r * 0.24); cx.lineTo(-r * 0.85, cy + r * 0.02); cx.lineTo(-r * 0.91, cy + r * 0.02); cx.closePath(); cx.moveTo(r * 0.93, cy - r * 0.24); cx.lineTo(r * 0.84, cy - r * 0.24); cx.lineTo(r * 0.85, cy + r * 0.02); cx.lineTo(r * 0.91, cy + r * 0.02); cx.closePath(); cx.fill(); }   // ✂️ (16 nov 2026) corti veri: lati sopra l'orecchio, basette sottili
+      else if (t === "corti col ciuffo") { base(0.64, 0.6, 0.24, 1.04, 0.98); cx.beginPath(); cx.moveTo(-r * 0.93, cy - r * 0.24); cx.lineTo(-r * 0.84, cy - r * 0.24); cx.lineTo(-r * 0.85, cy + r * 0.02); cx.lineTo(-r * 0.91, cy + r * 0.02); cx.closePath(); cx.moveTo(r * 0.93, cy - r * 0.24); cx.lineTo(r * 0.84, cy - r * 0.24); cx.lineTo(r * 0.85, cy + r * 0.02); cx.lineTo(r * 0.91, cy + r * 0.02); cx.closePath(); cx.fill();
+        cx.beginPath(); cx.moveTo(-r * 0.62, cy - r * 0.62); cx.bezierCurveTo(-r * 0.56, cy - r * 1.12, -r * 0.1, cy - r * 1.5, r * 0.36, cy - r * 1.44); cx.bezierCurveTo(r * 0.74, cy - r * 1.36, r * 0.86, cy - r * 1.04, r * 0.76, cy - r * 0.78);
+        cx.quadraticCurveTo(r * 0.36, cy - r * 0.98, r * 0.06, cy - r * 0.66); cx.quadraticCurveTo(-r * 0.3, cy - r * 0.86, -r * 0.62, cy - r * 0.62); cx.closePath(); cx.fill();   // ✂️ (16 nov 2026) il ciuffo alzato davanti, verso un lato
+        cx.save(); cx.strokeStyle = "rgba(255,255,255,.22)"; cx.lineWidth = r * 0.045; cx.lineCap = "round"; [[-0.3, -0.78, 0.1, -1.22], [0.05, -0.74, 0.46, -1.14], [-0.5, -0.7, -0.22, -1.08]].forEach(function (q) { cx.beginPath(); cx.moveTo(q[0] * r, cy + q[1] * r); cx.quadraticCurveTo((q[0] + 0.1) * r, cy + (q[1] - 0.3) * r, q[2] * r, cy + q[3] * r); cx.stroke(); }); cx.restore(); }
+      else if (t === "riga di lato") { base(0.72, 0.62, 0.2, 1.06, 0.99);   // ✂️ (16 nov 2026, il proprietario: «non si capisce che è una riga di lato») la riga netta a sinistra, i capelli pettinati verso destra col volume da quella parte
+        cx.beginPath(); cx.moveTo(-r * 0.4, cy - r * 1.16); cx.bezierCurveTo(r * 0.1, cy - r * 1.36, r * 0.86, cy - r * 1.2, r * 0.98, cy - r * 0.62); cx.lineTo(r * 0.92, cy - r * 0.3); cx.quadraticCurveTo(r * 0.55, cy - r * 0.44, 0, cy - r * 0.64);
+        cx.quadraticCurveTo(-r * 0.24, cy - r * 0.74, -r * 0.42, cy - r * 0.82); cx.closePath(); cx.fill();
+        cx.save(); cx.lineCap = "round"; cx.strokeStyle = "rgba(255,255,255,.24)"; cx.lineWidth = r * 0.04; [0.86, 0.98, 1.08].forEach(function (h, i) { cx.beginPath(); cx.moveTo(-r * 0.3, cy - r * h); cx.quadraticCurveTo(r * 0.3, cy - r * (h + 0.1), r * (0.86 - i * 0.06), cy - r * (h - 0.36)); cx.stroke(); });
+        cx.strokeStyle = "rgba(0,0,0,.28)"; cx.lineWidth = r * 0.05; cx.beginPath(); cx.moveTo(-r * 0.37, cy - r * 0.84); cx.lineTo(-r * 0.34, cy - r * 1.08); cx.stroke();
+        cx.strokeStyle = ca.pelle; cx.globalAlpha = 0.92; cx.lineWidth = r * 0.06; cx.beginPath(); cx.moveTo(-r * 0.44, cy - r * 0.8); cx.lineTo(-r * 0.4, cy - r * 1.08); cx.stroke(); cx.restore(); }
+      else if (t === "mossi") { base(0.5, 0.42, 0.2, 1.18, 1.05); riccioli(6, 0.2, 0.12, 1.0, 1.1, 1.9); [-1, 1].forEach(function (s) { cx.beginPath(); cx.ellipse(s * r * 0.98, cy - r * 0.3, r * 0.15, r * 0.09, s * 0.5, 0, PI * 2); cx.fill(); }); for (var q = 0; q < 3; q++) { cx.beginPath(); cx.ellipse((q - 1) * r * 0.36, cy - r * 0.52, r * 0.2, r * 0.1, (q - 1) * 0.3, 0, PI * 2); cx.fill(); } }   // (onde larghe e qualche onda sulla fronte)
+      else if (t === "medi") { base(0.5, 0.42, 0.16, 1.26, 1.05);   // ✂️ (16 nov 2026) medi: più lunghi e pieni sopra, i lati fino all'orecchio (libero), pettinati di lato con la riga
+        cx.beginPath(); cx.moveTo(-r * 0.9, cy - r * 0.46); cx.bezierCurveTo(-r * 0.76, cy - r * 1.12, r * 0.24, cy - r * 1.14, r * 0.88, cy - r * 0.6); cx.quadraticCurveTo(r * 0.56, cy - r * 0.5, r * 0.3, cy - r * 0.4);
+        cx.quadraticCurveTo(-r * 0.2, cy - r * 0.36, -r * 0.52, cy - r * 0.44); cx.quadraticCurveTo(-r * 0.74, cy - r * 0.44, -r * 0.9, cy - r * 0.46); cx.closePath(); cx.fill();
+        cx.beginPath(); cx.moveTo(-r * 0.96, cy - r * 0.42); cx.quadraticCurveTo(-r * 1.0, cy - r * 0.2, -r * 0.92, cy - r * 0.06); cx.lineTo(-r * 0.84, cy - r * 0.08); cx.quadraticCurveTo(-r * 0.86, cy - r * 0.26, -r * 0.82, cy - r * 0.42); cx.closePath();
+        cx.moveTo(r * 0.96, cy - r * 0.42); cx.quadraticCurveTo(r * 1.0, cy - r * 0.2, r * 0.92, cy - r * 0.06); cx.lineTo(r * 0.84, cy - r * 0.08); cx.quadraticCurveTo(r * 0.86, cy - r * 0.26, r * 0.82, cy - r * 0.42); cx.closePath(); cx.fill();   // (le punte sopra l'orecchio)
+        lineaRiga = [-r * 0.42, cy - r * 1.2, -r * 0.5, cy - r * 0.78]; }
       else if (t === "spettinati") { base(0.55, 0.45, 0.1, 1.08); [[-0.75, -0.62, -0.95, -1.12], [-0.4, -0.88, -0.45, -1.34], [0, -0.98, 0.1, -1.4], [0.38, -0.88, 0.62, -1.27], [0.72, -0.62, 1.0, -0.95], [-0.2, -0.6, -0.3, -0.42], [0.25, -0.6, 0.4, -0.44]].forEach(function (q) { cx.beginPath(); cx.moveTo((q[0] - 0.2) * r, cy + q[1] * r + r * 0.12); cx.lineTo(q[2] * r, cy + q[3] * r); cx.lineTo((q[0] + 0.2) * r, cy + q[1] * r + r * 0.12); cx.closePath(); cx.fill(); }); }
       else if (t === "tirati indietro" || t === "codino") { base(0.74, 0.62, 0.1, 1.12); }   // (la fronte alta, pettinati all'indietro)
       else if (t === "lunghi" || t === "lunghi mossi") { base(0.52, 0.42, -0.35, 1.12, 1.04); cx.beginPath(); cx.ellipse(-r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.ellipse(r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.fill(); lineaRiga = [0, cy - r * 1.14, 0, cy - r * 0.55]; if (t === "lunghi mossi") riccioli(5, 0.18, 0.1, 1.02, 1.1, 1.9); }
       else if (t === "lunghi raccolti") { base(0.64, 0.52, 0.1, 1.06); righe(5, "rgba(255,255,255,.22)", 0.035, 0.64); }   // (raccolti dietro: lo chignon lo fa il pezzo di dietro)
-      else if (t === "treccine" || t === "dreadlocks" || t === "treccine raccolte" || t === "dreadlocks raccolti") { base(0.56, 0.46, 0.1, 1.08); righe(5, "rgba(0,0,0,.42)", /dread/.test(t) ? 0.085 : 0.06, 0.56); }   // (le file di treccine dalla fronte in su)
+      else if (t === "treccine" || t === "dreadlocks" || t === "treccine raccolte" || t === "dreadlocks raccolti") { base(0.56, 0.46, /raccolt/.test(t) ? 0.22 : 0.1, 1.08); righe(5, "rgba(0,0,0,.42)", /dread/.test(t) ? 0.085 : 0.06, 0.56); }   // (le file di treccine dalla fronte in su)
       else if (t === "stempiati") { base(0.55, 0.8, 0.1, 1.08); }   // (le tempie che salgono alte: l'attaccatura a M)
-      else if (t === "ricci corti") { base(0.55, 0.45, 0.1, 1.18, 1.04); riccioli(7, 0.22, 0.12, 0.98, 1.0, 2.0); riccioli(5, 0.2, 0.62, 0.48, 1.12, 1.88); riccioli(4, 0.14, -0.08, 0.6, 1.25, 1.75); }   // (ricci corti ma pieni: due file di riccioli e qualcuno sulla fronte)
-      else if (t === "ricci" || t === "lunghi ricci") { base(0.5, 0.4, -0.05, 1.3, 1.12); riccioli(9, 0.28, 0.1, 1.05, 0.96, 2.04); riccioli(6, 0.26, 0.62, 0.62, 1.08, 1.92); riccioli(4, 0.16, -0.05, 0.62, 1.22, 1.78); }   // (ricci pieni, larghi)
+      else if (t === "ricci corti") { base(0.58, 0.52, 0.24, 1.12, 1.0); riccioli(7, 0.17, 0.66, 0.5, 1.06, 1.94); riccioli(5, 0.15, 0.94, 0.3, 1.1, 1.9); riccioli(5, 0.13, 0.5, 0.62, 1.2, 1.8); }   // ✂️ (16 nov 2026) ricci corti: riccioli piccoli e fitti sopra, i lati corti, orecchie libere
+      else if (t === "ricci") { base(0.5, 0.42, 0.2, 1.32, 1.1); riccioli(9, 0.26, 0.14, 1.04, 1.1, 1.9); riccioli(7, 0.25, 0.6, 0.66, 1.06, 1.94); riccioli(4, 0.16, -0.05, 0.62, 1.22, 1.78); }   // ✂️ (16 nov 2026) ricci pieni sopra e ai lati, ma sopra l'orecchio
+      else if (t === "lunghi ricci") { base(0.5, 0.4, -0.05, 1.3, 1.12); riccioli(9, 0.28, 0.1, 1.05, 0.96, 2.04); riccioli(6, 0.26, 0.62, 0.62, 1.08, 1.92); riccioli(4, 0.16, -0.05, 0.62, 1.22, 1.78); }   // (ricci pieni, larghi)
       else if (t === "ricci alti") { sfumati(0.5); riccioli(5, 0.24, 0.6, 0.38, 1.0, 2.0); riccioli(5, 0.22, 0.82, 0.5, 1.05, 1.95); riccioli(3, 0.2, 1.2, 0.2, 1.0, 2.0); }
-      else if (t === "sfumati alti") { sfumati(0.5); cx.beginPath(); cx.ellipse(0, cy - r * 0.84, r * 0.74, r * 0.36, 0, 0, PI * 2); cx.fill(); }
+      else if (t === "sfumati alti") { cx.globalAlpha = 0.2; base(0.62, 0.55, 0.26, 1.01, 0.99); cx.globalAlpha = 1;   // ✂️ (16 nov 2026) sfumati alti: i lati chiari, quasi pelle, sopra un blocco netto
+        cx.beginPath(); cx.moveTo(-r * 0.7, cy - r * 0.6); cx.quadraticCurveTo(-r * 0.78, cy - r * 1.14, -r * 0.3, cy - r * 1.22); cx.quadraticCurveTo(0, cy - r * 1.27, r * 0.3, cy - r * 1.22); cx.quadraticCurveTo(r * 0.78, cy - r * 1.14, r * 0.7, cy - r * 0.6);
+        cx.quadraticCurveTo(r * 0.36, cy - r * 0.66, 0, cy - r * 0.62); cx.quadraticCurveTo(-r * 0.36, cy - r * 0.66, -r * 0.7, cy - r * 0.62); cx.closePath(); cx.fill(); }
       else if (t === "cresta") { sfumati(0.42); cx.beginPath(); cx.ellipse(0, cy - r * 1.0, r * 0.22, r * 0.42, 0, 0, PI * 2); cx.fill(); }
-      else if (t === "rasato") { cx.globalAlpha = 0.72; base(0.6, 0.52, 0.12, 1.02); cx.globalAlpha = 1; }
-      else if (t === "mullet") { base(0.6, 0.5, 0.1, 1.1); }
+      else if (t === "rasato") { cx.globalAlpha = 0.42; base(0.6, 0.56, 0.24, 1.0, 0.985); cx.globalAlpha = 1; }   // ✂️ (16 nov 2026) rasato: quasi pelle, un velo scuro aderente, orecchie libere
+      else if (t === "mullet") { base(0.6, 0.52, 0.2, 1.08, 0.99); }   // ✂️ (16 nov 2026) corti davanti e ai lati (orecchie libere): il lungo è tutto dietro
       else return false;
       if (lineaRiga) { cx.save(); cx.strokeStyle = scuro(ca.pelle, 0.8); cx.globalAlpha = 0.75; cx.lineWidth = r * 0.04; cx.beginPath(); cx.moveTo(lineaRiga[0], lineaRiga[1]); cx.lineTo(lineaRiga[2], lineaRiga[3]); cx.stroke(); cx.restore(); }   // (la riga: si vede la pelle)
       return true;
@@ -6751,7 +6768,11 @@
       else { cx.beginPath(); cx.ellipse(-r * 0.4, cy + r * 0.35, r * (ric ? 0.92 : 0.82), r * 0.98, 0, 0, PI * 2); cx.fill();
         for (var k5 = 0; k5 < (ric ? 5 : 4); k5++) cerchio(-r * (ric ? 1.15 : 1.05) + k5 * r * 0.08, cy - r * 0.25 + k5 * r * 0.32, rb); }
     }
-    if (t === "mullet") { if (fronte) { cx.beginPath(); cx.ellipse(-r * 0.74, cy + r * 0.62, r * 0.24, r * 0.48, 0.12, 0, PI * 2); cx.ellipse(r * 0.74, cy + r * 0.62, r * 0.24, r * 0.48, -0.12, 0, PI * 2); cx.fill(); } else { cx.beginPath(); cx.ellipse(-r * 0.62, cy + r * 0.5, r * 0.44, r * 0.72, 0.15, 0, PI * 2); cx.fill(); } }   // (15 nov 2026 mullet: i capelli lunghi sul collo, dietro la mascella)
+    if (t === "mullet") { if (fronte) {   // ✂️ (16 nov 2026, il proprietario: «non ha le uscite solo a destra e a sinistra… facciamo che si vede tutto dietro») la tenda intera dietro il collo, con le punte
+        cx.beginPath(); cx.moveTo(-r * 0.86, cy - r * 0.05); cx.quadraticCurveTo(-r * 1.1, cy + r * 0.55, -r * 1.02, cy + r * 1.12); [[-0.82, 1.0], [-0.64, 1.22], [-0.42, 1.06], [-0.2, 1.26], [0, 1.1], [0.2, 1.26], [0.42, 1.06], [0.64, 1.22], [0.82, 1.0], [1.02, 1.12]].forEach(function (q) { cx.lineTo(r * q[0], cy + r * q[1]); });
+        cx.quadraticCurveTo(r * 1.1, cy + r * 0.55, r * 0.86, cy - r * 0.05); cx.closePath(); cx.fill();
+        cx.save(); cx.clip(); var gm = cx.createLinearGradient(-r, 0, r, 0); gm.addColorStop(0, "rgba(0,0,0,0)"); gm.addColorStop(0.5, "rgba(0,0,0,.3)"); gm.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = gm; cx.fillRect(-r * 1.2, cy - r * 0.1, r * 2.4, r * 1.5);
+        cx.strokeStyle = "rgba(255,255,255,.2)"; cx.lineWidth = r * 0.04; cx.lineCap = "round"; [-0.9, -0.7, 0.7, 0.9].forEach(function (x) { cx.beginPath(); cx.moveTo(r * x, cy + r * 0.2); cx.quadraticCurveTo(r * x * 1.08, cy + r * 0.65, r * x * 0.92, cy + r * 1.05); cx.stroke(); }); cx.restore(); cx.fillStyle = cap; } else { cx.beginPath(); cx.ellipse(-r * 0.62, cy + r * 0.5, r * 0.44, r * 0.72, 0.15, 0, PI * 2); cx.fill(); } }   // (15 nov 2026 mullet: i capelli lunghi sul collo, dietro la mascella)
     if (t === "codino" && !fronte) { cx.lineCap = "round"; cx.strokeStyle = cap; cx.lineWidth = r * 0.26; cx.beginPath(); cx.moveTo(-r * 0.92, cy - r * 0.45); cx.quadraticCurveTo(-r * 1.3, cy - r * 0.1, -r * 1.12, cy + r * 0.5); cx.stroke(); }
     function ciocca(x0, y0, x1, y1, xc, yc, sp, segni) {   // 🪢 un dread o una treccia: un tubo di capelli coi segni di traverso (10 nov 2026: «i dreadlocks raccolti devono sembrare dread, non un codino»)
       cx.lineCap = "round"; cx.strokeStyle = cap; cx.lineWidth = r * sp; cx.beginPath(); cx.moveTo(x0, y0); cx.quadraticCurveTo(xc, yc, x1, y1); cx.stroke();
@@ -6759,7 +6780,7 @@
         cx.beginPath(); cx.moveTo(px - nx, py - ny + r * 0.02); cx.lineTo(px + nx, py + ny - r * 0.02); cx.stroke(); } cx.restore();
     }
     if (t === "dreadlocks raccolti") {   // lo chignon fatto di dread e qualche dread che scende
-      if (fronte) { [-1, 1].forEach(function (s) { ciocca(s * r * 0.45, cy - r * 1.05, s * r * 1.08, cy + r * 0.5, s * r * 1.18, cy - r * 0.45, 0.17, 5); ciocca(s * r * 0.25, cy - r * 1.12, s * r * 0.95, cy + r * 0.75, s * r * 1.05, cy - r * 0.2, 0.15, 5); });
+      if (fronte) {   // ✂️ (16 nov 2026) raccolti davvero: niente dread che scendono ai lati, le orecchie restano libere
         for (var dq = 0; dq < 5; dq++) { var da = PI * (1.1 + dq * 0.2); ciocca(0, cy - r * 1.12, Math.cos(da) * r * 0.42, cy - r * 1.18 + Math.sin(da) * r * 0.3, Math.cos(da) * r * 0.2, cy - r * 1.4, 0.18, 3); } }
       else { cerchio(-r * 0.72, cy - r * 0.85, r * 0.34); [0, 1, 2].forEach(function (q) { ciocca(-r * (0.65 + q * 0.12), cy - r * 0.8, -r * (0.95 + q * 0.1), cy + r * (0.5 + q * 0.15), -r * (1.15 + q * 0.08), cy - r * 0.1, 0.16, 5); }); }
     }
@@ -6848,6 +6869,14 @@
       calotta(0.07, 1.02); if (!fronte) cerchio(-r * 0.7, cy - r * 0.2, r * 0.38);
       if (t === "corti col ciuffo") { cx.beginPath(); cx.ellipse(fronte ? r * 0.18 : r * 0.32, cy - r * 1.02, r * 0.62, r * 0.32, fronte ? -0.25 : -0.35, 0, PI * 2); cx.fill(); }
       if (t === "lunghi" && fronte) { cx.beginPath(); cx.ellipse(-r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.fill(); cx.beginPath(); cx.ellipse(r * 0.86, cy + r * 0.05, r * 0.24, r * 0.7, 0, 0, PI * 2); cx.fill(); }
+    }
+    if (!fronte && parte === "sopra" && t !== "calvo" && t !== "pelato in cima") {   // ✂️ (16 nov 2026) di profilo come davanti: la fronte libera (tranne frangia e scodella), l'orecchio libero (tranne i capelli lunghi), la basetta sottile
+      var lungo = { "lunghi": 1, "lunghi mossi": 1, "lunghi ricci": 1, "afro": 1, "treccine": 1, "dreadlocks": 1 }[t];
+      cx.save(); cx.globalCompositeOperation = "destination-out"; cx.fillStyle = "#000";
+      if (t !== "frangia" && t !== "a scodella") { cx.beginPath(); cx.moveTo(r * 1.5, cy - r * 0.62); cx.lineTo(r * 0.66, cy - r * 0.62); cx.quadraticCurveTo(r * 0.3, cy - r * 0.54, r * 0.2, cy - r * 0.24); cx.lineTo(r * 0.17, cy + r * 0.4); cx.lineTo(r * 1.5, cy + r * 0.4); cx.closePath(); cx.fill(); }
+      if (!lungo) { cx.beginPath(); cx.ellipse(-r * 0.12, cy + r * 0.08, r * 0.21, r * 0.25, 0, 0, PI * 2); cx.fill(); }
+      cx.restore();
+      if (!lungo) { cx.fillStyle = cap; if (t === "rasato" || t === "sfumati alti" || t === "cresta" || t === "ricci alti") cx.globalAlpha = 0.5; cx.beginPath(); cx.moveTo(r * 0.08, cy - r * 0.26); cx.lineTo(r * 0.2, cy - r * 0.26); cx.lineTo(r * 0.17, cy + r * 0.06); cx.lineTo(r * 0.11, cy + r * 0.06); cx.closePath(); cx.fill(); cx.globalAlpha = 1; }
     }
     }
     if (!parte || parte === "occhi") {
