@@ -279,7 +279,7 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - Prova fe1 (in preferiti/asta-stagione.js) OK, asp2 e st5 OK. Foto: `.agents/skills/prova-nel-browser/asta-grafica/foto-facce.js`.
 
 ## 17 nov: BATTITORI DELLA 2015-16 dal Deep Research di Gemini del proprietario — PUBBLICATO
-- Fonte: `D:\SG-stagione-lavoroicerca\gemini-dr�5-16.txt` (seconda versione, basata sulle partite; controllata dal Cervello). In
+- Fonte: `D:\SG-stagione-lavoroicerca\gemini-dr�5-16.txt` (seconda versione, basata sulle partite; controllata dal Cervello). In
   `genera.js` ogni posto (1°, 2°, 3°) prende il nome di Gemini SOLO se il calciatore è nel gioco con QUELLA squadra (chi ha cambiato squadra a
   gennaio vale dove ha finito); «non so» o fuori dal gioco = resta la stima. Prove stD e stG OK. I 29 cambi:
   - Atalanta punizioni: Gomez, D'Alessandro → Cigarini, D'Alessandro, Kurtic
@@ -464,18 +464,18 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 
 ## 17 nov: REGOLA NUOVA per tutte le stagioni — quotazione finale ≥ 16 e almeno 10 partite a voto (decisa dal proprietario col Cervello)
 - «La gente mi bastona se non trova questi nomi»: entra all'asta anche chi ha meno partite se ha quotazione finale ≥ 16 e almeno 10 partite a voto in quella squadra (lib.js, `q16`). Restano le regole di prima (≥ 29, o ≥ 19 con quotazione ≥ 8; un portiere per squadra) e le eccezioni (Ibrahimović 2019-20). Sotto le 10 partite resta fuori.
-- Numeri all'asta per ruolo dopo la regola:
-  - 2015-16: 193 (P 19, D 48, C 66, A 60)
-  - 2016-17: 195 (P 17, D 55, C 76, A 47)
+- Numeri all'asta per ruolo dopo la regola (come nel gioco: un portiere per squadra c'è sempre):
+  - 2015-16: 194 (P 20, D 48, C 66, A 60)
+  - 2016-17: 198 (P 20, D 55, C 76, A 47)
   - 2017-18: 203 (P 20, D 58, C 77, A 48)
-  - 2018-19: 228 (P 17, D 71, C 83, A 57)
-  - 2019-20: 194 (P 16, D 54, C 73, A 51)
+  - 2018-19: 231 (P 20, D 71, C 83, A 57)
+  - 2019-20: 198 (P 20, D 54, C 73, A 51)
   - 2020-21: 231 (P 20, D 62, C 84, A 65)
-  - 2021-22: 226 (P 18, D 65, C 80, A 63)
-  - 2022-23: 242 (P 19, D 74, C 93, A 56)
-  - 2023-24: 232 (P 18, D 71, C 89, A 54)
-  - 2024-25: 236 (P 18, D 82, C 84, A 52)
-  - 2025-26: 236 (P 18, D 78, C 88, A 52)
+  - 2021-22: 228 (P 20, D 65, C 80, A 63)
+  - 2022-23: 243 (P 20, D 74, C 93, A 56)
+  - 2023-24: 234 (P 20, D 71, C 89, A 54)
+  - 2024-25: 238 (P 20, D 82, C 84, A 52)
+  - 2025-26: 238 (P 20, D 78, C 88, A 52)
 - Entrati per questa regola (stagione | calciatore | squadra | partite a voto | quotazione finale):
   - 2015-16 | El Shaarawy | Roma | 16 | 21
   - 2015-16 | Immobile | Torino | 14 | 21
@@ -513,3 +513,36 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   - 2025-26 | Castellanos | Lazio | 11 | 18
   - 2025-26 | Vlahovic | Juventus | 18 | 16
 - Dati dei nuovi: altezza da fantacalcio.it (tutti tranne Denis 2015-16: la sua scheda non la dice); numero da Wikipedia + FootballSquads, e per chi è andato via a metà anno controllato a mano con due fonti (ricerca/numeri-a-mano.json). Senza numero: Boateng (Sassuolo 2018-19, le fonti dicono 27 o 19) e Morata (Milan 2024-25: il 7 da gennaio è di Giménez).
+
+## 17 nov: REGOLA — chi a gennaio ha lasciato la Serie A non c'è in quella stagione (decisa dal proprietario col Cervello)
+- Né all'asta né in campo, qualunque quotazione abbia (anche gli aggiunti a mano: Pazzini 2017-18). Restano chi è arrivato a gennaio e ha finito lì e chi ha cambiato squadra dentro la Serie A (con la squadra dove ha finito). Andare in Serie B conta come lasciare la Serie A (Strefezza, Pohjanpalo, Pandev).
+- Fonte: Wikipedia, «List of Italian football transfers winter <stagione>» (ricerca/gennaio/w*.json, letta da gennaio.js); i nomi trovati sono stati guardati uno per uno: 19 erano omonimi o ceduti da altre squadre (es. Roberto Insigne, Vanja Milinković-Savić). Boga 2022-23 resta: al Nizza a luglio 2023. Chi è andato via dopo il 31 gennaio (campionati che chiudono dopo) la lista non lo ha.
+- Tolti (16):
+  - 2015-16 · Denis (Atalanta) · Germán Denis: Atalanta → Independiente [Club Atlético Independiente]
+  - 2015-16 · Paloschi (Chievo) · Alberto Paloschi: Chievo → Swansea City [Swansea City A.F.C.]
+  - 2015-16 · Gervinho (Roma) · Gervinho: Roma → Hebei China Fortune [Hebei China Fortune F.C.]
+  - 2017-18 · Pazzini (Verona) · Giampaolo Pazzini: Verona → Levante [Levante UD]
+  - 2018-19 · Higuain (Milan) · Gonzalo Higuaín: Juventus (in prestito altrove) → Chelsea [Chelsea F.C.]
+  - 2018-19 · Boateng (Sassuolo) · Kevin-Prince Boateng: Sassuolo → Barcelona [FC Barcelona]
+  - 2018-19 · Zajc (Empoli) · Miha Zajc: Empoli → Fenerbahçe [Fenerbahçe S.K. (football)]
+  - 2020-21 · Gomez (Atalanta) · Alejandro Gómez: Atalanta → Sevilla [Sevilla FC]
+  - 2021-22 · Pandev (Genoa) · Goran Pandev: Genoa → Parma [Parma Calcio 1913]
+  - 2023-24 · Strefezza (Lecce) · Gabriel Strefezza: Lecce → Como [Como 1907]
+  - 2023-24 · Dragusin (Genoa) · Radu Drăgușin: Genoa → Tottenham Hotspur [Tottenham Hotspur F.C.]
+  - 2024-25 · Morata (Milan) · Álvaro Morata: Milan → Galatasaray [Galatasaray S.K. (football)]
+  - 2024-25 · Pohjanpalo (Venezia) · Joel Pohjanpalo: Venezia → Palermo [Palermo FC]
+  - 2024-25 · Kvaratskhelia (Napoli) · Khvicha Kvaratskhelia: Napoli → Paris Saint-Germain [Paris Saint-Germain FC]
+  - 2024-25 · Dorgu (Lecce) · Patrick Dorgu: Lecce → Manchester United [Manchester United F.C.]
+  - 2025-26 · Castellanos (Lazio) · Taty Castellanos: Lazio → West Ham [West Ham United F.C.]
+- Numeri all'asta per ruolo dopo la regola (come nel gioco: un portiere per squadra c'è sempre):
+  - 2015-16: 191 (P 20, D 48, C 66, A 57)
+  - 2016-17: 198 (P 20, D 55, C 76, A 47)
+  - 2017-18: 202 (P 20, D 58, C 77, A 47)
+  - 2018-19: 228 (P 20, D 71, C 81, A 56)
+  - 2019-20: 198 (P 20, D 54, C 73, A 51)
+  - 2020-21: 230 (P 20, D 62, C 83, A 65)
+  - 2021-22: 228 (P 20, D 65, C 80, A 63)
+  - 2022-23: 243 (P 20, D 74, C 93, A 56)
+  - 2023-24: 232 (P 20, D 70, C 88, A 54)
+  - 2024-25: 234 (P 20, D 81, C 84, A 49)
+  - 2025-26: 237 (P 20, D 78, C 88, A 51)

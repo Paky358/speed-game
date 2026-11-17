@@ -13,8 +13,9 @@ window.SG_NOVITA = [
     data: "17 novembre 2026",
     titolo: "Mini Asta Fantacalcio: i campioni che mancavano nelle stagioni passate ⭐",
     descrizione: [
-      "⭐ All'asta delle stagioni passate adesso ci sono anche i nomi forti che avevano giocato solo metà stagione con quella squadra: per esempio Higuaín nel Milan 2018-19, Ibrahimović nel Milan 2020-21 e 2021-22, il Papu Gómez nell'Atalanta 2020-21, Kvaratskhelia e Raspadori nel Napoli 2024-25, De Bruyne nel Napoli e Malen nella Roma 2025-26.",
-      "📏 Entra chi aveva una quotazione finale da 16 in su e almeno 10 partite con quella squadra: 35 calciatori in più in tutto, con la loro altezza e il numero di maglia quando è sicuro."
+      "⭐ All'asta delle stagioni passate adesso ci sono anche i nomi forti che avevano giocato solo metà stagione con quella squadra: per esempio Ibrahimović nel Milan 2020-21 e 2021-22, Kolo Muani nella Juve e Giménez nel Milan 2024-25, Raspadori nel Napoli 2024-25, De Bruyne nel Napoli e Malen nella Roma 2025-26.",
+      "📏 Entra chi aveva una quotazione finale da 16 in su e almeno 10 partite con quella squadra: 27 calciatori in più in tutto, con la loro altezza e il numero di maglia quando è sicuro.",
+      "✈️ Chi a gennaio ha lasciato la Serie A (all'estero o in Serie B) non c'è più in quella stagione, né all'asta né in campo: per esempio Kvaratskhelia e Morata nel 2024-25, Higuaín e Boateng nel 2018-19, il Papu Gómez nel 2020-21. Chi a gennaio ha solo cambiato squadra in Serie A gioca con quella dove ha finito."
     ]
   },
   {
