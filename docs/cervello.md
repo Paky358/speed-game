@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 17 nov 2026 19:33 · 📅 Stagioni del passato · PUBBLICATO · 2015-16: angoli e punizioni dal Deep Research di Gemini (29 cambi, solo calciatori nel gioco) · master
 - 16 nov 2026 23:10 · ⚽🃏 Mini Asta · PUBBLICATO · v369 (i capelli di profilo in campo come davanti: fronte e orecchio liberi, basetta sottile; frangia e scodella coprono la fronte, i lunghi le orecchie; prove asp1, asp2 OK; foto D:SG-asta-prove	agli-profilo-prima.png e tagli-profilo-dopo.png) · master
 - 16 nov 2026 22:45 · ⚽🃏 Mini Asta · PUBBLICATO · v368 (dal proprietario: la riga di lato che si capisce, il mullet con tutta la parte lunga dietro; prove asp1, asp2 OK; foto D:SG-asta-prove	agli-C-prima.png e tagli-C-dopo.png) · master
 - 16 nov 2026 22:15 · ⚽🃏 Mini Asta · PUBBLICATO · v367 (ricci, mossi, dreadlocks raccolti e treccine raccolte con le orecchie libere; prove asp1, asp2 OK; foto D:SG-asta-prove	agli-B-dopo.png; resta la vista di profilo in campo) · master
