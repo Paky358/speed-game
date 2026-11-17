@@ -458,3 +458,6 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   - Verona punizioni: Lazovic, Zaccagni → Miguel Veloso, Lazovic, Zaccagni
   - Verona rigori: Verre, Di Carmine, Amrabat → Verre, Amrabat, Di Carmine
   - Fuori dal gioco perché non arrivano alle partite del listone (scartati da Gemini): Ibrahimović (Milan, da gennaio), Iago Falque (Genoa), Saponara (Lecce), Sensi e Alexis Sánchez (Inter), Perotti (Roma), Cataldi (Lazio), Birsa (Cagliari): resta la stima.
+
+## 17 nov: ECCEZIONE nella 2019-20 — Ibrahimović all'asta (deciso dal proprietario col Cervello)
+- Ibrahimović (Milan) ha 18 partite a voto, una sotto la regola (≥ 29, o ≥ 19 con quotazione finale ≥ 8), ma 10 gol e quotazione finale 35: «è un nome che la gente vuole». Entra all'asta come gli aggiunti della 2017-18 (`raccolta/fc2019-20-aggiunti.txt`). Numero 21, altezza 195 (fantacalcio.it). Ora è 1° rigorista (3 tirati nei dati) e 3° alle punizioni del Milan (Gemini).
