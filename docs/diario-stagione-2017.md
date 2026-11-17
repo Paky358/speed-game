@@ -426,3 +426,35 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   - Torino angoli: De Silvestri, Meité → Iago Falque, De Silvestri, Meité
 
 - **Ricerca dell'aiutante Sonnet sulle caselle «non so»** (17 nov, 2 tentativi; FBref bloccato, non aggirato): 7 trovate con una fonte, 6 applicate (`ricerca/gemini-dr/non-so-applica.txt`), tolta Milan 2018-19 1° angoli Suso (un corner solo: fonte debole). Cambiano: 2017-18 Sassuolo punizioni Politano 1° (gol su punizione a Inter-Sassuolo, inter.it); 2018-19 Fiorentina punizioni Muriel 2° (classifica Sky Sport dei gol su punizione). Le altre 4 c'erano già (Suso 2° punizioni Milan 2017-18; De Roon, Birsa, Meggiorini rigoristi 2018-19). Restano 271 caselle «non so»: resta la stima.
+
+## 17 nov: BATTITORI 2019-20 dal Deep Research (con rigoristi)
+- Regole: angoli e punizioni da Gemini solo se il calciatore è nel gioco con quella squadra in quella stagione (chi ha cambiato squadra a gennaio vale dove ha finito);
+  «non so» o fuori dal gioco = resta la stima (il primo nome della stima non ancora usato). Rigori: il 1° resta chi ne ha tirati di più nei dati di fantacalcio.it
+  (Gemini solo se nessuno ne ha tirati); 2° e 3° da Gemini. Le caselle ancora «non so» e i nomi scartati: `D:\SG-stagione-lavoro\ricerca\gemini-dr\non-so.txt`.
+- **2019-20**: 25 cambi; 91 caselle «non so» (di cui 17 nomi scartati)
+  - Atalanta angoli: Gomez, Gosens → Gomez, Ilicic, Gosens
+  - Atalanta punizioni: Gomez, Ilicic → Muriel, Ilicic, Malinovskyi
+  - Bologna angoli: Soriano, Tomiyasu → Orsolini, Soriano, Tomiyasu
+  - Bologna punizioni: Orsolini, Palacio → Orsolini, Barrow, Palacio
+  - Brescia rigori: Gemini dice 1° Donnarumma Al., resta Torregrossa (ne ha tirati di più nei dati)
+  - Cagliari punizioni: Joao Pedro, Nainggolan → Joao Pedro, Lykogiannis, Nainggolan
+  - Genoa angoli: Ghiglione, Schone → Schone, Ghiglione
+  - Genoa punizioni: Pandev, Schone → Schone, Pandev
+  - Genoa rigori: Criscito, Pinamonti, Schone → Criscito, Schone, Pinamonti
+  - Juventus angoli: Bentancur, Pjanic → Pjanic, Bentancur
+  - Juventus punizioni: Dybala, Bentancur → Ronaldo, Dybala, Pjanic
+  - Lecce angoli: Petriccione, Mancosu → Falco, Petriccione, Mancosu
+  - Lecce punizioni: Mancosu, Falco → Falco, Mancosu
+  - Napoli angoli: Callejon, Ruiz → Politano, Callejon, Ruiz
+  - Napoli punizioni: Callejon, Insigne → Insigne, Callejon
+  - Roma punizioni: Mkhitaryan, Pellegrini Lo. → Kolarov, Mkhitaryan, Pellegrini Lo.
+  - Roma rigori: Veretout, Kolarov, Diawara → Veretout, Diawara, Kolarov
+  - SPAL punizioni: Valdifiori, Strefezza → Petagna, Strefezza, Valdifiori
+  - Sampdoria angoli: Jankto, Linetty → Vieira, Ramirez, Gabbiadini
+  - Sampdoria punizioni: Gabbiadini, Ramirez → Gabbiadini, Ramirez, Quagliarella
+  - Torino angoli: Verdi, Ansaldi → Verdi, Berenguer, Ansaldi
+  - Udinese angoli: Fofana, De Paul → De Paul, Fofana
+  - Verona angoli: Lazovic, Zaccagni → Miguel Veloso, Lazovic, Zaccagni
+  - Verona punizioni: Lazovic, Zaccagni → Miguel Veloso, Lazovic, Zaccagni
+  - Verona rigori: Verre, Di Carmine, Amrabat → Verre, Amrabat, Di Carmine
+  - Fuori dal gioco perché non arrivano alle partite del listone (scartati da Gemini): Ibrahimović (Milan, da gennaio), Iago Falque (Genoa), Saponara (Lecce), Sensi e Alexis Sánchez (Inter), Perotti (Roma), Cataldi (Lazio), Birsa (Cagliari): resta la stima.
