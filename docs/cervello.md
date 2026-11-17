@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 17 nov 2026 23:32 · 📅 Stagioni del passato · PUBBLICATO · 2019-20: battitori veri dal Deep Research di Gemini con rigoristi (25 cambi, solo calciatori nel gioco; Ibrahimović, Iago Falque, Saponara fuori perché sotto le partite del listone; novità v370 aggiornata) · master
 - 17 nov 2026 19:58 · 📅 Stagioni del passato · PUBBLICATO · 🎨 Sery💗🎀 aiuta a fare le facce: SOLO l'editor (Profilo → «🎨 Facce dei calciatori» e «Personalizza i calciatori» nelle regole), le sue facce nella SUA scheda pubblica, vince la modifica più recente, «fatto da Sery / da te», Lista Paky e Lista Sery alternate e fisse (salvate dal telefono di IL PAPPONE alla prima apertura); + Politano e Muriel alle punizioni (ricerca); prove sy1-sy3, fe1, asp1, asp2, stF OK · master
 - 17 nov 2026 19:46 · 📅 Stagioni del passato · PUBBLICATO · battitori veri dal Deep Research di Gemini anche per 2016-17, 2017-18, 2018-19 (angoli, punizioni; 2° e 3° rigorista nelle ultime due) e 2015-16 riempita, solo calciatori nel gioco (novità v370); caselle «non so» in D:\SG-stagione-lavoro\ricerca\gemini-dr\non-so.txt · master
 - 17 nov 2026 19:33 · 📅 Stagioni del passato · PUBBLICATO · 2015-16: angoli e punizioni dal Deep Research di Gemini (29 cambi, solo calciatori nel gioco) · master
