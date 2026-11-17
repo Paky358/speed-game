@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 17 nov 2026 23:56 · 📅 Stagioni del passato · PUBBLICATO · regola: chi a gennaio ha lasciato la Serie A (estero o Serie B) non c'è in quella stagione, né all'asta né in campo (16 tolti, fonte Wikipedia, elenco nel diario; Boga 2022-23 resta) (novità v371 aggiornata) · master
 - 17 nov 2026 23:46 · 📅 Stagioni del passato · PUBBLICATO · regola nuova in tutte le 11 stagioni: all'asta anche chi ha quotazione finale ≥ 16 e almeno 10 partite (35 in più, con altezza e numero quando è sicuro; elenco nel diario) (novità v371) · master
 - 17 nov 2026 23:38 · 📅 Stagioni del passato · PUBBLICATO · 2019-20: Ibrahimović all'asta del Milan (eccezione del proprietario: 18 partite, 10 gol, quot. 35; n. 21, 195 cm; 1° rigorista) · master
 - 17 nov 2026 23:32 · 📅 Stagioni del passato · PUBBLICATO · 2019-20: battitori veri dal Deep Research di Gemini con rigoristi (25 cambi, solo calciatori nel gioco; Ibrahimović, Iago Falque, Saponara fuori perché sotto le partite del listone; novità v370 aggiornata) · master
