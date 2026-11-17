@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 370,
+    data: "17 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i battitori veri delle stagioni passate 🎯",
+    descrizione: [
+      "🚩 Nelle stagioni dalla 2015-16 alla 2018-19 chi batte angoli e punizioni è chi li batteva davvero quell'anno: per esempio Cristiano Ronaldo le punizioni nella Juve 2018-19, Milik nel Napoli, Kolarov nella Roma.",
+      "🎯 Nella 2017-18 e nella 2018-19 anche il secondo e il terzo rigorista sono quelli veri; il primo resta chi ne ha tirati di più quell'anno.",
+      "🔄 Chi ha cambiato squadra a gennaio batte per la squadra dove ha finito la stagione."
+    ]
+  },
+  {
     v: 369,
     data: "16 novembre 2026",
     titolo: "Mini Asta Fantacalcio: i capelli in campo come sulle figurine ✂️",

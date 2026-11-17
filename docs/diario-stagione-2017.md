@@ -311,3 +311,116 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   - Udinese angoli: Bruno Fernandes, Widmer → Bruno Fernandes, Lodi
   - Udinese punizioni: Thereau, Bruno Fernandes → Lodi, Adnan
   - Verona punizioni: Viviani, Ionita → Siligardi, Greco, Viviani
+## 17 nov: BATTITORI 2016-17, 2017-18, 2018-19 dal Deep Research (e la 2015-16 riempita)
+- Regole: angoli e punizioni da Gemini solo se il calciatore è nel gioco con quella squadra in quella stagione (chi ha cambiato squadra a gennaio vale dove ha finito);
+  «non so» o fuori dal gioco = resta la stima (il primo nome della stima non ancora usato). Rigori: il 1° resta chi ne ha tirati di più nei dati di fantacalcio.it
+  (Gemini solo se nessuno ne ha tirati); 2° e 3° da Gemini. Le caselle ancora «non so» e i nomi scartati: `D:\SG-stagione-lavoro\ricerca\gemini-dr\non-so.txt`.
+- **2015-16**: 30 cambi; 46 caselle «non so» (di cui 19 nomi scartati)
+  - Atalanta punizioni: Gomez, D'Alessandro → Cigarini, D'Alessandro, Kurtic
+  - Bologna angoli: Brienza, Masina → Brienza, Mounier, Masina
+  - Bologna punizioni: Brienza, Mounier → Brienza, Giaccherini, Destro
+  - Carpi punizioni: Di Gaudio, Pasciuti → Lasagna, Di Gaudio, Pasciuti
+  - Chievo angoli: Birsa, Cacciatore → Birsa, Castro, Cacciatore
+  - Chievo punizioni: Birsa, Meggiorini → Birsa, Pepe S., Meggiorini
+  - Empoli angoli: Saponara, Zielinski → Paredes, Zielinski, Saponara
+  - Empoli punizioni: Saponara, Zielinski → Saponara, Paredes, Mario Rui
+  - Fiorentina angoli: Borja Valero, Ilicic → Ilicic, Borja Valero
+  - Fiorentina punizioni: Ilicic, Borja Valero → Ilicic, Marcos Alonso, Borja Valero
+  - Frosinone angoli: Pavlovic D., Paganini → Soddimo, Gucher, Pavlovic D.
+  - Frosinone punizioni: Paganini, Sammarco → Paganini, Pavlovic D., Soddimo
+  - Genoa angoli: Rincon, Ansaldi → Laxalt, Suso, Rincon
+  - Genoa punizioni: Rincon, Laxalt → Dzemaili, Suso, Rincon
+  - Inter angoli: Perisic, Brozovic → Telles, Brozovic, Perisic
+  - Inter punizioni: Perisic, Eder → Ljajic, Jovetic, Perisic
+  - Juventus angoli: Pogba, Cuadrado → Dybala, Cuadrado, Marchisio
+  - Lazio angoli: Felipe Anderson, Candreva → Biglia, Candreva, Felipe Anderson
+  - Lazio punizioni: Candreva, Felipe Anderson → Parolo, Biglia, Candreva
+  - Milan punizioni: Bonaventura, Honda → Bonaventura, Honda, Montolivo
+  - Napoli angoli: Hamsik, Allan → Jorginho, Callejon, Hamsik
+  - Napoli punizioni: Insigne, Hamsik → Insigne, Ghoulam, Hamsik
+  - Palermo angoli: Quaison, Hiljemark → Vazquez, Quaison, Hiljemark
+  - Roma angoli: Pjanic, Perotti → Pjanic, Florenzi, Perotti
+  - Sassuolo angoli: Vrsaljko, Duncan → Berardi, Sansone, Politano
+  - Sassuolo punizioni: Berardi, Sansone → Berardi, Sansone, Politano
+  - Torino angoli: Bruno Peres, Acquah → Baselli, Bruno Peres, Acquah
+  - Udinese angoli: Bruno Fernandes, Widmer → Bruno Fernandes, Lodi, Widmer
+  - Udinese punizioni: Thereau, Bruno Fernandes → Lodi, Adnan, Thereau
+  - Verona punizioni: Viviani, Ionita → Siligardi, Greco, Viviani
+- **2016-17**: 31 cambi; 47 caselle «non so» (di cui 13 nomi scartati)
+  - Atalanta angoli: Gomez, Conti → Gomez, Freuler, Conti
+  - Bologna punizioni: Krejci, Verdi → Verdi, Krejci, Dzemaili
+  - Cagliari angoli: Isla, Tachtsidis → Di Gennaro D, Isla, Tachtsidis
+  - Cagliari punizioni: Farias, Joao Pedro → Bruno Alves, Borriello, Joao Pedro
+  - Chievo angoli: Birsa, Castro → Birsa, De Guzman, Castro
+  - Chievo punizioni: Birsa, Castro → Birsa, De Guzman, Radovanovic
+  - Crotone angoli: Rohden, Barberis → Crisetig, Rohden, Barberis
+  - Crotone punizioni: Rohden, Stoian → Barberis, Crisetig, Stoian
+  - Empoli punizioni: Marilungo, Pucciarelli → Pasqual, Marilungo, Krunic
+  - Fiorentina angoli: Borja Valero, Tello C. → Ilicic, Borja Valero, Tello C.
+  - Fiorentina punizioni: Bernardeschi, Borja Valero → Bernardeschi, Ilicic, Borja Valero
+  - Genoa angoli: Lazovic, Laxalt → Lazovic, Miguel Veloso, Laxalt
+  - Genoa punizioni: Lazovic, Laxalt → Miguel Veloso, Lazovic, Cataldi
+  - Inter angoli: Candreva, Perisic → Banega, Candreva, Brozovic
+  - Inter punizioni: Perisic, Candreva → Banega, Eder, Brozovic
+  - Juventus angoli: Pjanic, Cuadrado → Pjanic, Dybala, Cuadrado
+  - Lazio angoli: Felipe Anderson, Lulic → Biglia, Felipe Anderson, Lulic
+  - Lazio punizioni: Keita B., Felipe Anderson → Biglia, Keita B., Felipe Anderson
+  - Milan punizioni: Suso, Pasalic → Suso, Bonaventura, Pasalic
+  - Napoli angoli: Zielinski, Ghoulam → Callejon, Ghoulam, Mertens
+  - Napoli punizioni: Mertens, Callejon → Mertens, Ghoulam, Insigne
+  - Palermo angoli: Diamanti, Rispoli → Diamanti, Jajalo, Rispoli
+  - Palermo punizioni: Diamanti, Chochev → Diamanti, Jajalo, Chochev
+  - Pescara angoli: Zampano, Biraghi → Caprari, Memushaj, Zampano
+  - Roma angoli: Perotti, Strootman → Strootman, Perotti
+  - Sampdoria angoli: Linetty, Regini → Torreira, Linetty, Regini
+  - Sampdoria punizioni: Schick, Bruno Fernandes → Muriel, Quagliarella, Bruno Fernandes
+  - Sassuolo angoli: Pellegrini Lo., Lirola → Pellegrini Lo., Politano, Lirola
+  - Torino angoli: Zappacosta, Baselli → Ljajic, Zappacosta, Baselli
+  - Torino punizioni: Iago Falque, Ljajic → Ljajic, Iago Falque
+  - Udinese angoli: Jankto, Widmer → De Paul, Kums, Jankto
+- **2017-18**: 21 cambi; 88 caselle «non so» (di cui 9 nomi scartati)
+  - Benevento angoli: Ciciretti, Cataldi, Viola → Viola, Cataldi
+  - Benevento punizioni: Cataldi, Viola → Viola, Cataldi
+  - Benevento rigori: Gemini dice 1° Viola, resta Coda M. (ne ha tirati di più nei dati)
+  - Cagliari punizioni: Joao Pedro, Cigarini → Cigarini, Joao Pedro
+  - Cagliari rigori: Barella, Joao Pedro, Sau → Barella, Joao Pedro, Farias
+  - Inter angoli: Candreva, Borja Valero, Brozovic → Brozovic, Candreva, Cancelo
+  - Inter punizioni: Candreva, Perisic, Borja Valero → Cancelo, Candreva, Perisic
+  - Juventus angoli: Pjanic, Dybala, Douglas Costa → Pjanic, Alex Sandro, Dybala
+  - Juventus punizioni: Pjanic, Dybala → Dybala, Pjanic
+  - Lazio punizioni: Luis Alberto, Felipe Anderson → Luis Alberto, Milinkovic-Savic, Felipe Anderson
+  - Napoli angoli: Callejon, Insigne, Hamsik → Callejon, Mario Rui, Insigne
+  - Roma angoli: Perotti, Florenzi, Kolarov → Kolarov, Pellegrini Lo., Under
+  - Roma punizioni: Kolarov, Perotti → Kolarov, Florenzi, Perotti
+  - Sampdoria angoli: Ramirez, Torreira → Torreira, Ramirez
+  - Sampdoria punizioni: Ramirez, Torreira → Torreira, Ramirez
+  - Sassuolo rigori: Berardi, Babacar, Matri → Berardi, Matri, Politano
+  - Torino angoli: Iago Falque, Baselli, Ljajic → Ljajic, Iago Falque, Baselli
+  - Udinese punizioni: De Paul, Jankto → Adnan, De Paul, Jankto
+  - Udinese rigori: De Paul, Fofana, Maxi Lopez → De Paul, Maxi Lopez, Fofana
+  - Verona angoli: Bessa, Verde, Cerci → Verde, Cerci
+  - Verona punizioni: Cerci, Verde → Verde, Cerci
+- **2018-19**: 23 cambi; 100 caselle «non so» (di cui 15 nomi scartati)
+  - Atalanta angoli: Ilicic, Hateboer → Gomez, Ilicic, Hateboer
+  - Atalanta rigori: Zapata D., De Roon, Ilicic → Zapata D., Ilicic, De Roon
+  - Bologna angoli: Pulgar, Soriano → Orsolini, Pulgar, Soriano
+  - Bologna punizioni: Orsolini, Palacio → Pulgar, Orsolini, Palacio
+  - Cagliari angoli: Barella, Srna → Srna, Barella
+  - Cagliari punizioni: Joao Pedro, Barella → Barella, Joao Pedro
+  - Cagliari rigori: Joao Pedro, Birsa, Barella → Joao Pedro, Barella, Birsa
+  - Chievo punizioni: Depaoli, Giaccherini → Giaccherini, Depaoli
+  - Empoli angoli: Krunic, Di Lorenzo → Pasqual, Bennacer, Krunic
+  - Fiorentina punizioni: Chiesa, Veretout → Biraghi, Chiesa, Veretout
+  - Frosinone angoli: Beghetto, Zampano → Ciano, Beghetto, Zampano
+  - Genoa punizioni: Lazovic, Pandev → Miguel Veloso, Lazovic, Pandev
+  - Juventus angoli: Pjanic, Alex Sandro → Pjanic, Bernardeschi, Alex Sandro
+  - Juventus punizioni: Pjanic, Dybala → Ronaldo, Pjanic, Dybala
+  - Lazio punizioni: Correa, Luis Alberto → Milinkovic-Savic, Immobile, Correa
+  - Napoli angoli: Ruiz, Zielinski → Ruiz, Mertens, Zielinski
+  - Napoli punizioni: Mertens, Callejon → Milik, Mertens, Insigne
+  - Parma punizioni: Gervinho, Barillà → Bruno Alves, Gervinho, Barillà
+  - Roma angoli: Pellegrini Lo., Cristante → Under, Pellegrini Lo., Cristante
+  - Roma punizioni: El Shaarawy, Under → Kolarov, El Shaarawy, Under
+  - SPAL angoli: Lazzari, Kurtic → Lazzari, Schiattarella, Kurtic
+  - SPAL punizioni: Lazzari, Kurtic → Petagna, Schiattarella, Fares
+  - Torino angoli: De Silvestri, Meité → Iago Falque, De Silvestri, Meité
