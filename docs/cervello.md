@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 17 nov 2026 19:46 · 📅 Stagioni del passato · PUBBLICATO · battitori veri dal Deep Research di Gemini anche per 2016-17, 2017-18, 2018-19 (angoli, punizioni; 2° e 3° rigorista nelle ultime due) e 2015-16 riempita, solo calciatori nel gioco (novità v370); caselle «non so» in D:\SG-stagione-lavoro\ricerca\gemini-dr\non-so.txt · master
 - 17 nov 2026 19:33 · 📅 Stagioni del passato · PUBBLICATO · 2015-16: angoli e punizioni dal Deep Research di Gemini (29 cambi, solo calciatori nel gioco) · master
 - 16 nov 2026 23:10 · ⚽🃏 Mini Asta · PUBBLICATO · v369 (i capelli di profilo in campo come davanti: fronte e orecchio liberi, basetta sottile; frangia e scodella coprono la fronte, i lunghi le orecchie; prove asp1, asp2 OK; foto D:SG-asta-prove	agli-profilo-prima.png e tagli-profilo-dopo.png) · master
 - 16 nov 2026 22:45 · ⚽🃏 Mini Asta · PUBBLICATO · v368 (dal proprietario: la riga di lato che si capisce, il mullet con tutta la parte lunga dietro; prove asp1, asp2 OK; foto D:SG-asta-prove	agli-C-prima.png e tagli-C-dopo.png) · master
