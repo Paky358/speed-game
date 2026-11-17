@@ -533,6 +533,7 @@
         ".fa-ed-cerca{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:#151a2e;color:#fff;font-size:1rem;}",
     ".fa-ed-schede{display:flex;gap:6px;margin:10px 0;}.fa-ed-schede button{flex:1;padding:9px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#a6acc8;font-weight:800;font-size:.85rem;}",
     ".fa-ed-schede button.on{background:rgba(224,34,90,.18);color:#fff;border-color:#e0225a;}",
+    ".fa-ed-liste{display:flex;gap:6px;margin:10px 0 0;}.fa-ed-liste button{flex:1;padding:8px 4px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#a6acc8;font-weight:800;font-size:.78rem;line-height:1.2;}.fa-ed-liste button.on{background:rgba(79,216,255,.16);color:#fff;border-color:#4fd8ff;}",
     ".fa-ed-lista{display:flex;flex-direction:column;gap:4px;}",
     ".fa-ed-r{display:grid;grid-template-columns:34px 1fr;column-gap:10px;align-items:center;text-align:left;background:rgba(255,255,255,.04);border:1px solid transparent;border-radius:12px;padding:6px 10px;color:#fff;}",
     ".fa-ed-r canvas{grid-row:1/3;}.fa-ed-r b{font-size:.95rem;}.fa-ed-r span{font-size:.75rem;color:#a6acc8;}.fa-ed-r.on{border-color:#e0225a;}",
@@ -1852,7 +1853,7 @@
       wrapFanta.appendChild(el("div", { class: "etichetta", text: "🎙️ Battute del banditore" }));   // (fuori dalla giornata: valgono per l'asta, anche senza giornata)
       wrapFanta.appendChild(el("div", { class: "modo-griglia as-coppia" }, [bBanSi, bBanNo]));
       scegliBan(dove.ban !== false);
-      if (eIlProprietario()) {   // 🎨 (8 nov 2026) solo IL PAPPONE: l'aspetto dei calciatori
+      if (puoFacce()) {   // 🎨 (8 nov 2026) solo IL PAPPONE (dal 17 nov anche chi lo aiuta, Sery): l aspetto dei calciatori
         wrapFanta.appendChild(el("div", { class: "etichetta", text: "🎨 Solo per te" }));
         wrapFanta.appendChild(el("div", { class: "modo-griglia" }, [ el("button", { class: "modo-chip", onclick: function () { apriPersonalizza(); } }, [ el("span", { class: "mi", text: "🎨" }), el("div", {}, [ el("div", { class: "mt", text: "Personalizza i calciatori" }), el("div", { class: "ms", text: "Pelle, capelli e barba (li vedono tutti)" }) ]) ]) ]));
       }
@@ -2854,7 +2855,7 @@
         s.nome.style.background = col[0]; s.nome.style.borderColor = col[1]; s.nome.style.color = chiaro(col[0]) ? "#141414" : "#fff";
         s.paga.textContent = c.prezzo ? c.prezzo + " 💰" : ""; if (c.prezzo) s.nome.setAttribute("data-p", c.prezzo); else s.nome.removeAttribute("data-p");
       } else { s.img.removeAttribute("src"); s.nome.textContent = ""; s.paga.textContent = ""; s.nome.removeAttribute("data-p"); s.nodo.classList.remove("busto", "carta"); }
-      s.nodo.onclick = c && tocco && eIlProprietario() ? function () { apriPersonalizza(chiaveCalc(c)); } : null;   // 🎨 (solo IL PAPPONE: tocca un calciatore della formazione e lo sistemi)
+      s.nodo.onclick = c && tocco && puoFacce() ? function () { apriPersonalizza(chiaveCalc(c)); } : null;   // 🎨 (solo IL PAPPONE: tocca un calciatore della formazione e lo sistemi)
       s.val.classList.remove("su"); s.val.textContent = "";
     }
     if (valore != null) { s.val.textContent = valore; s.val.classList.add("su"); if (c && !tocco) s.nome.setAttribute("data-p", (c.prezzo ? c.prezzo + " " : "") + "⭐" + valore); }   // (nel campetto basso: prezzo e overall sulla targhetta)
@@ -6438,7 +6439,27 @@
   var TAGLI = ["corti", "corti col ciuffo", "sfumati alti", "rasato", "ricci corti", "ricci", "afro", "treccine", "dreadlocks", "lunghi", "lunghi raccolti", "cresta", "calvo", "riga di lato", "mossi", "medi", "spettinati",   // (8 nov 2026, il proprietario: «qualche capello in più», «mettine il più possibile»)
     "lunghi mossi", "lunghi ricci", "codino", "mullet", "tirati indietro", "frangia", "a scodella", "stempiati", "pelato in cima", "ricci alti", "treccine raccolte", "dreadlocks raccolti"];
   var BARBE = ["niente", "accennata", "corta", "piena", "baffi", "pizzetto", "baffi e pizzetto"];   // (8 nov 2026: «il pizzetto o solo i baffi»)
-  var ASP_PROP = (function () { try { return JSON.parse(localStorage.getItem("sg-fanta-aspetto") || "null") || {}; } catch (e) { return {}; } })();   // (l'ultima copia letta: va anche senza rete)
+  // 🎨 LE FACCE DI DUE PERSONE (17 nov 2026, il proprietario col Cervello: «la mia fidanzata mi aiuta a fare le facce»): le facce di IL PAPPONE
+  // stanno nella sua scheda pubblica (fantaAspetto), quelle di chi lo aiuta (Sery, cuore.aiutaFacce) nella SUA (le regole di Firebase fanno
+  // scrivere a ognuno solo la sua). ASP_MAPPE.p e .s sono le due mappe così come sono salvate; ASP_PROP è la vista unita che usa il gioco:
+  // per ogni chiave vince la modifica più recente (ts, l'ora del salvataggio; le facce di prima non l'hanno = 0); «↩ Di partenza» lascia
+  // una voce { del: 1, ts } che toglie anche la faccia dell'altro, se più vecchia. Ogni voce della vista ha .da = "p" o "s" (chi l'ha fatta)
+  function leggiAsp(k) { try { return JSON.parse(localStorage.getItem(k) || "null") || {}; } catch (e) { return {}; } }
+  var ASP_MAPPE = { p: leggiAsp("sg-fanta-aspetto"), s: leggiAsp("sg-fanta-aspetto-s") };   // (l'ultima copia letta: va anche senza rete)
+  var ASP_PROP = {};
+  function unisciAspetto() {
+    var o = {};
+    ["p", "s"].forEach(function (w) { var M = ASP_MAPPE[w] || {}; Object.keys(M).forEach(function (k) {
+      var x = M[k]; if (!x || typeof x !== "object" || k.charAt(0) === "_") return;   // (_liste: le due liste, non è una faccia)
+      var y = o[k]; if (!y || (x.ts || 0) > (y.ts || 0)) { var c = {}; for (var q in x) c[q] = x[q]; c.da = w; o[k] = c; }
+    }); });
+    Object.keys(o).forEach(function (k) { if (o[k].del) delete o[k]; });
+    ASP_PROP = o; FIG_CACHE = {};
+  }
+  unisciAspetto();
+  function mioAsp() { var C = window.SGCuore; return eIlProprietario() ? "p" : C && C.aiutaFacce && C.aiutaFacce() ? "s" : null; }
+  function puoFacce() { return !!mioAsp(); }
+  var NOMI_ASP = { p: "Paky", s: "Sery" };
   // 🟨 (11 nov 2026, poi 14 nov coi ruoli precisi) il fallo (giallo, rosso o intervento pulito) si vede nella metà campo giusta per chi lo fa:
   // il pressing e la reazione sempre nella metà campo degli altri, l'ultimo uomo sempre in difesa; le entrate in difesa quanto il ruolo
   // (difensore 85 su 100, mediano 70, centrale 45, trequartista e ala 20, punta 3). Dal ruolo e dal seme, MAI dall'esito
@@ -6517,20 +6538,36 @@
     return { pelle: PELLE_VERA[a.p] || "#d9a47c", capelli: cap || CAPELLI_VERI.nero, taglio: a.c === "nessuno" ? "calvo" : a.t, barba: a.b || "niente", colBarba: (a.cb && CAPELLI_VERI[a.cb]) || cap || "#2a1c12", forma: a.f || "tondo" };
   }
   var ASP_SALVA = { t: null };
-  function caricaAspettoProp(poi) {   // le correzioni di IL PAPPONE dalla sua scheda pubblica (all'avvio del gioco): se la rete non c'è, resta l'ultima copia
-    var C = window.SGCuore; if (!C || !C.schedaDelProprietario) return;
-    try { C.schedaDelProprietario().then(function (sch) {
-      if (!sch || !sch.fantaAspetto || typeof sch.fantaAspetto !== "object" || ASP_SALVA.t) return;
-      ASP_PROP = sch.fantaAspetto; try { localStorage.setItem("sg-fanta-aspetto", JSON.stringify(ASP_PROP)); } catch (e) {}
-      if (poi) poi();
-    }).catch(function () {}); } catch (e) {}
+  var ASP_LS = { p: "sg-fanta-aspetto", s: "sg-fanta-aspetto-s" };
+  function caricaAspettoProp(poi) {   // le facce di IL PAPPONE e di Sery dalle loro schede pubbliche (all'avvio del gioco): se la rete non c'è, resta l'ultima copia
+    var C = window.SGCuore, fatto = false; function fine() { if (!fatto) { fatto = true; if (poi) poi(); } }
+    if (!C || !C.schedaDelProprietario) return fine();
+    var chi = [["p", C.schedaDelProprietario]]; if (C.schedaAiutoFacce) chi.push(["s", C.schedaAiutoFacce]);
+    setTimeout(fine, 4000);   // (la rete lenta non tiene fermo l'editor)
+    Promise.all(chi.map(function (w) { var p; try { p = Promise.resolve(w[1]()); } catch (e) { p = Promise.resolve(null); }
+      return p.then(function (sch) {
+        if (!sch || !sch.fantaAspetto || typeof sch.fantaAspetto !== "object" || (ASP_SALVA.t && mioAsp() === w[0])) return;   // (la mia, mentre la sto salvando, resta quella del telefono)
+        ASP_MAPPE[w[0]] = sch.fantaAspetto; try { localStorage.setItem(ASP_LS[w[0]], JSON.stringify(sch.fantaAspetto)); } catch (e) {}
+      }, function () {}); })).then(function () { unisciAspetto(); fine(); }, fine);
   }
-  function salvaAspettoProp() {   // (solo IL PAPPONE: sul telefono subito, nella scheda pubblica 1,5 s dopo l'ultimo tocco)
-    FIG_CACHE = {};   // (le figurine già disegnate si rifanno con l'aspetto nuovo)
-    try { localStorage.setItem("sg-fanta-aspetto", JSON.stringify(ASP_PROP)); } catch (e) {}
+  // ✍️ si scrive SOLO nella propria mappa (IL PAPPONE la sua, Sery la sua). «prima»: il calciatore era già fatto prima delle due liste
+  // (le facce senza ora): resta segnato anche se lo si rifà o lo si toglie, così le due liste non cambiano mai
+  function eraPrima(pid, k) {
+    var M = ASP_MAPPE.p || {}, l = [k]; if (pid) { l.push(pid); ELENCO_STAGIONI.forEach(function (s) { l.push(pid + "|" + s); }); l = l.concat(chiaviDi(pid)); }
+    return l.some(function (c) { var x = M[c]; return x && typeof x === "object" && (!x.ts || x.prima); });
+  }
+  function mettiAsp(ch, val, prima) { var M = ASP_MAPPE[mioAsp()]; if (!M) return; val.ts = Date.now(); if (prima) val.prima = 1; M[ch] = val; }
+  function togliAsp(ch, prima) {   // (se c'è anche una faccia dell'altro, resta la voce «tolta» che vale più di lei)
+    var w = mioAsp(), M = ASP_MAPPE[w], altra = ASP_MAPPE[w === "p" ? "s" : "p"] || {}; if (!M) return;
+    if (altra[ch] || prima) M[ch] = prima ? { del: 1, ts: Date.now(), prima: 1 } : { del: 1, ts: Date.now() }; else delete M[ch];
+  }
+  function salvaAspettoProp() {   // (IL PAPPONE o Sery: sul telefono subito, nella propria scheda pubblica 1,5 s dopo l'ultimo tocco)
+    unisciAspetto();   // (e le figurine già disegnate si rifanno con l'aspetto nuovo)
+    var w = mioAsp(); if (!w) return;
+    try { localStorage.setItem(ASP_LS[w], JSON.stringify(ASP_MAPPE[w])); } catch (e) {}
     clearTimeout(ASP_SALVA.t);
-    ASP_SALVA.t = setTimeout(function () { ASP_SALVA.t = null; var N = window.SGNube, C = window.SGCuore;
-      if (N && N.pubblica && C && C.eProprietario && C.eProprietario()) try { Promise.resolve(N.pubblica({ fantaAspetto: ASP_PROP })).catch(function () {}); } catch (e) {} }, 1500);
+    ASP_SALVA.t = setTimeout(function () { ASP_SALVA.t = null; var N = window.SGNube;
+      if (N && N.pubblica && mioAsp() === w) try { Promise.resolve(N.pubblica({ fantaAspetto: ASP_MAPPE[w] })).catch(function () {}); } catch (e) {} }, 1500);
   }
   // 🎨 «PERSONALIZZA I CALCIATORI» (8 nov 2026): SOLO IL PAPPONE (dal ⚙️ della Mini Asta e dalle formazioni finali). In cima la lista
   // di TUTTI i calciatori dalla quotazione più alta (accanto «da controllare»: in dubbio, senza foto, a caso) e la scheda «Da controllare»;
@@ -6561,9 +6598,23 @@
   // squadra), dal più importante (la quotazione più alta che ha avuto). Di partenza «Da fare» (quelli che lui non ha ancora sistemato); la pelle
   // per prima coi 7 toni a tasti grandi, poi «Salva e avanti ▶» = salva così e passa al prossimo da fare. Si salva sul calciatore (vale ovunque)
   function apriFacce() {
-    if (!eIlProprietario()) return;
+    if (!puoFacce()) return;
     var l = ELENCO_STAGIONI.slice(), i = 0;
-    (function prossima() { if (i >= l.length) return apriPersonalizza(null, true); caricaStagione(l[i++], prossima); })();   // (prima arrivano i pezzi di tutte le stagioni)
+    caricaAspettoProp(function () {   // (le facce più nuove di tutti e due, poi i pezzi di tutte le stagioni)
+      (function prossima() { if (i >= l.length) return apriPersonalizza(null, true); caricaStagione(l[i++], prossima); })();
+    });
+  }
+  // 📋 LE DUE LISTE (17 nov 2026, il proprietario: «dividili in due liste, Lista Paky e Lista Sery, così non fanno mai gli stessi»): i calciatori
+  // ancora da fare quando sono nate le liste (cioè senza una faccia di prima: eraPrima), dal più importante, uno a Paky e uno a Sery a turno,
+  // così tutti e due hanno metà dei forti. La divisione è FISSA: la salva il telefono di IL PAPPONE nella sua mappa (_liste, la prima volta che
+  // apre l'editor); prima di allora ogni telefono la calcola uguale. I calciatori arrivati dopo (stagioni nuove) stanno solo in «Tutti»
+  function listeFacce(tutti) {
+    var sv = (ASP_MAPPE.p || {})._liste;
+    if (sv && sv.p && sv.s) { var o = { p: {}, s: {} }; sv.p.forEach(function (x) { o.p[x] = 1; }); sv.s.forEach(function (x) { o.s[x] = 1; }); return o; }
+    var L = { p: [], s: [] }, n = 0;
+    tutti.forEach(function (c) { if (!eraPrima(personaDi(c.k), c.k)) L[n++ % 2 ? "s" : "p"].push(c.pid); });
+    if (mioAsp() === "p" && ASP_MAPPE.p) { ASP_MAPPE.p._liste = { p: L.p, s: L.s, ts: Date.now() }; salvaAspettoProp(); }
+    var r = { p: {}, s: {} }; L.p.forEach(function (x) { r.p[x] = 1; }); L.s.forEach(function (x) { r.s[x] = 1; }); return r;
   }
   function tuttiOvunque() {   // [{ k, pid, nome, sq, ru, q (la più alta), stagioni: ["Oggi", "2022-23"…], squadre }] dal più importante
     var per = {}, out = [];
@@ -6582,7 +6633,7 @@
     return out.sort(function (a, b) { return b.q - a.q || (a.nome < b.nome ? -1 : 1); });
   }
   function apriPersonalizza(soloK, ovunque) {
-    if (!eIlProprietario()) return;
+    if (!puoFacce()) return;
     usaStagione(ovunque ? null : stagionePronta(STAG_IMP) ? STAG_IMP : null);
     var vecchio = document.querySelector(".fa-ed"); if (vecchio) vecchio.parentNode.removeChild(vecchio);
     var tutti = ovunque ? tuttiOvunque() : tuttiICalciatori(), sel = null, filtro = "", modo = ovunque ? "dc" : "tu", RU = { P: "Portiere", D: "Difensore", C: "Centrocampista", A: "Attaccante" };
@@ -6590,7 +6641,9 @@
     function nd(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
     function fatta(c) { return !!facciaProp(c.k); }
     function passaFiltri(c) { return (!fStag || c.stagioni.indexOf(fStag) >= 0) && (!fSq || c.squadre.indexOf(fSq) >= 0) && (!filtro || (c.nome + " " + c.squadre.join(" ")).toLowerCase().indexOf(filtro) >= 0); }
-    function daControllare() { return tutti.filter(function (c) { return ovunque ? !fatta(c) && passaFiltri(c) : aspettoVero(c.k).dc; }); }   // (🎨: «Da fare» = non ancora sistemati da lui)
+    var LISTE = ovunque ? listeFacce(tutti) : null, qLista = ovunque ? mioAsp() : "t";   // 📋 di partenza la propria lista
+    function inLista(c) { return qLista === "t" || !LISTE || !!LISTE[qLista][c.pid]; }
+    function daControllare() { return tutti.filter(function (c) { return ovunque ? !fatta(c) && passaFiltri(c) && inLista(c) : aspettoVero(c.k).dc; }); }   // (🎨: «Da fare» = non ancora sistemati da nessuno dei due)
     var R = nd("div", "fa-ed oro" + (ovunque ? " fa-ovunque" : "")), testa = nd("div", "fa-ed-testa"), chiudi = nd("button", "fa-ed-x", "✕"), conta = nd("small", "fa-ed-conta");
     testa.appendChild(nd("b", "", ovunque ? "🎨 Facce dei calciatori" : "🎨 Personalizza i calciatori" + (STAG_ATT ? " · " + STAG_ATT : ""))); if (ovunque) testa.appendChild(conta); testa.appendChild(chiudi); R.appendChild(testa);   // (📅 i calciatori della stagione scelta nelle regole)
 
@@ -6603,6 +6656,14 @@
       sQ.appendChild(new Option("Tutte le squadre", "")); Object.keys(sqT).sort().forEach(function (q) { sQ.appendChild(new Option(q, q)); });
       sS.onchange = function () { fStag = sS.value; elenco(); }; sQ.onchange = function () { fSq = sQ.value; elenco(); };
       fil.appendChild(sS); fil.appendChild(sQ); R.appendChild(fil);
+    }
+    var bListe = {};
+    if (ovunque) {   // 📋 Lista Paky · Lista Sery · Tutti
+      var rl = nd("div", "fa-ed-liste");
+      [["p", "📋 Lista Paky"], ["s", "📋 Lista Sery"], ["t", "👥 Tutte e due"]].forEach(function (x) {
+        var b = nd("button", qLista === x[0] ? "on" : ""); b.onclick = function () { qLista = x[0]; for (var q in bListe) bListe[q].className = q === qLista ? "on" : ""; var d = daControllare(); if (modo === "dc" && d.length && d.indexOf(sel) < 0) { sel = d[0]; disegnaScheda(); } elenco(); };
+        bListe[x[0]] = b; b.dataset.lista = x[0]; b._t = x[1]; rl.appendChild(b); });
+      R.appendChild(rl);
     }
     var schede = nd("div", "fa-ed-schede"), tTu = nd("button", ovunque ? "" : "on"), tDc = nd("button", ovunque ? "on" : ""), tFa = nd("button");
     if (ovunque) { schede.appendChild(tDc); schede.appendChild(tFa); schede.appendChild(tTu); } else { schede.appendChild(tTu); schede.appendChild(tDc); }
@@ -6619,29 +6680,30 @@
       var l = modo === "dc" ? daControllare() : visibili(), i = sel ? tutti.indexOf(sel) : -1;
       return l.filter(function (c) { return tutti.indexOf(c) > i; })[0] || (ovunque && modo === "dc" ? l[0] : null) || sel;
     }
-    function visibili() { return tutti.filter(function (c) { return ovunque ? passaFiltri(c) && (modo !== "fa" || fatta(c)) : !filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; }); }
+    function visibili() { return tutti.filter(function (c) { return ovunque ? passaFiltri(c) && inLista(c) && (modo !== "fa" || fatta(c)) :!filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; }); }
     function scegli(c) { sel = c; disegnaScheda(); elenco(); }
     // 🧑 (16 nov 2026) si salva sul calciatore (fc<numero>: vale in tutte le stagioni) o, con «📅 Solo nel …», solo per quest'anno
     function chiaveSalva() { var pid = personaDi(sel.k); return pid ? (soloAnno && STAG_ATT ? pid + "|" + STAG_ATT : pid) : sel.k; }
     function salva(a) {
-      var ch = chiaveSalva(), pid = personaDi(sel.k);
-      if (pid && ch === pid) { delete ASP_PROP[sel.k]; chiaviDi(pid).forEach(function (k) { delete ASP_PROP[k]; }); }   // (le facce vecchie col nome dello stesso calciatore: ora vale questa)
-      ASP_PROP[ch] = { p: a.p, c: a.c, t: a.t, b: a.b, ok: 1 }; if (a.cb) ASP_PROP[ch].cb = a.cb; if (a.f && a.f !== "tondo") ASP_PROP[ch].f = a.f; salvaAspettoProp();
+      var ch = chiaveSalva(), pid = personaDi(sel.k), M = ASP_MAPPE[mioAsp()], prima = eraPrima(pid, sel.k); if (!M) return;
+      if (pid && ch === pid) { delete M[sel.k]; chiaviDi(pid).forEach(function (k) { delete M[k]; }); }   // (le facce vecchie col nome dello stesso calciatore: ora vale questa)
+      var v = { p: a.p, c: a.c, t: a.t, b: a.b, ok: 1 }; if (a.cb) v.cb = a.cb; if (a.f && a.f !== "tondo") v.f = a.f; mettiAsp(ch, v, prima); salvaAspettoProp();
     }
     var soloAnno = false;
     function disegnaScheda() {
       scheda.textContent = "";
       if (!sel) { scheda.appendChild(nd("div", "fa-ed-fatto", "🎉 Non ne resta nessuno da controllare")); return; }
-      var a = aspettoVero(sel.k), su = nd("div", "fa-ed-su"), cvF = nd("canvas", "fa-ed-big"), cvP = nd("canvas", "fa-ed-pro"), info = nd("div", "fa-ed-info");
+      var a = aspettoVero(sel.k), fpS0 = facciaProp(sel.k), su = nd("div", "fa-ed-su"), cvF = nd("canvas", "fa-ed-big"), cvP = nd("canvas", "fa-ed-pro"), info = nd("div", "fa-ed-info");
       su.appendChild(cvF); su.appendChild(cvP); su.appendChild(info); scheda.appendChild(su);
       info.appendChild(nd("b", "", sel.nome)); info.appendChild(nd("span", "", (ovunque ? sel.squadre.join(", ") : sel.sq) + " · " + RU[sel.ru] + " · " + sel.q + (sel.campo ? " · ➕ solo per il campo" : "")));
       if (ovunque) info.appendChild(nd("span", "fa-ed-stag", sel.stagioni.join(" · ")));   // (🎨 in quali stagioni c'è)
-      info.appendChild(nd("i", "", a.fonte === "prop" ? "✓ sistemato da te" : a.fonte === "caso" ? "🎲 a caso: nessuna foto" : a.dc ? "🔎 dalla foto, da controllare" : "📷 dalla foto"));
+      var daChi = fpS0 && fpS0.a.da;   // ✍️ (17 nov 2026) chi l'ha fatto: tu o l'altro (Paky / Sery)
+      info.appendChild(nd("i", "fa-ed-da", a.fonte === "prop" ? (daChi && daChi !== mioAsp() ? "✓ fatto da " + NOMI_ASP[daChi] : "✓ fatto da te") :a.fonte === "caso" ? "🎲 a caso: nessuna foto" : a.dc ? "🔎 dalla foto, da controllare" : "📷 dalla foto"));
       var tasti = nd("div", "fa-ed-tasti"), ok = nd("button", "btn btn-primario", ovunque ? "Salva e avanti ▶" : "✓ Va bene"), foto = nd("button", "fa-ed-t", "🔍 Foto");
       tasti.appendChild(ok); tasti.appendChild(foto);
       var fpS = facciaProp(sel.k);
       if (fpS) { var torna = nd("button", "fa-ed-t", fpS.anno ? "↩ Come gli altri anni" : "↩ Di partenza"); tasti.appendChild(torna);
-        torna.onclick = function () { delete ASP_PROP[fpS.chiave]; if (!fpS.anno) delete ASP_PROP[sel.k]; salvaAspettoProp(); disegnaScheda(); elenco(); }; }
+        torna.onclick = function () { var pr = eraPrima(personaDi(sel.k), sel.k); togliAsp(fpS.chiave, pr); if (!fpS.anno && fpS.chiave !== sel.k && ASP_PROP[sel.k]) togliAsp(sel.k, pr); salvaAspettoProp(); disegnaScheda(); elenco(); }; }
       if (STAG_ATT && personaDi(sel.k)) {   // 📅 una faccia solo per quest'anno (eccezione: di solito vale per tutte le stagioni)
         soloAnno = !!(fpS && fpS.anno);
         var anno = nd("button", "fa-ed-t" + (soloAnno ? " on" : ""), (soloAnno ? "✓ " : "") + "📅 Solo nel " + STAG_ATT); tasti.appendChild(anno);
@@ -6672,8 +6734,9 @@
       lista.textContent = "";
       var dc = daControllare();
       if (ovunque) {   // 🎨 il contatore e le tre liste
-        var nF = tutti.filter(fatta).length; conta.textContent = "fatte " + cifreA(nF) + " su " + cifreA(tutti.length);
-        tDc.textContent = "Da fare · " + cifreA(dc.length); tFa.textContent = "Fatte · " + cifreA(nF); tTu.textContent = "Tutti · " + cifreA(tutti.length);
+        var tl = tutti.filter(inLista), nF = tl.filter(fatta).length; conta.textContent = "fatte " + cifreA(nF) + " su " + cifreA(tl.length);   // (📋 nella lista che guardi)
+        for (var q in bListe) { var lq = tutti.filter(function (c) { return q === "t" || LISTE[q][c.pid]; }); bListe[q].textContent = bListe[q]._t + " · " + cifreA(lq.filter(fatta).length) + "/" + cifreA(lq.length); }
+        tDc.textContent = "Da fare · " + cifreA(dc.length); tFa.textContent = "Fatte · " + cifreA(nF); tTu.textContent = "Tutti · " + cifreA(tl.length);
       } else { tDc.textContent = "Da controllare · " + dc.length; tTu.textContent = "Tutti · " + tutti.length; }
       var l = modo === "dc" ? dc : visibili(), sez = false;
       if (l.length > MAX_RIGHE) { var resto = l.length - MAX_RIGHE; l = l.slice(0, MAX_RIGHE); setTimeout(function () { lista.appendChild(nd("div", "fa-ed-sez", "… e altri " + cifreA(resto) + ": usa la ricerca o i filtri")); }, 0); }
@@ -6692,6 +6755,7 @@
   function cifreA(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }   // (1.000)
   window.SGAstaAspetto = { apri: function (k) { apriPersonalizza(k); }, facce: apriFacce, vero: aspettoVero, colori: coloriAspetto, prop: function () { return ASP_PROP; },
 
+    mappe: function () { return ASP_MAPPE; }, unisci: unisciAspetto, carica: caricaAspettoProp, mio: mioAsp,   // (🎨 per le prove delle facce di Paky e Sery)
     stagione: function (id) { if (id !== undefined) usaStagione(id); return STAG_ATT; }, persona: personaDi,   // (📅🧑 per le prove delle facce condivise)
 
     grafica: function (v) { if (v != null) { GRAF2.on = !!v; FIG_CACHE = {}; TESTE_CACHE = {}; TESTE_N = 0; BUSTI_URL = {}; } return GRAF2.on; }, formazione: function (v) { if (v) { FORM_STILE = v; BUSTI_URL = {}; } return FORM_STILE; }, busto: function (c, w) { return bustoCanvas(c, w); }, overall: function (v) { if (v != null) { OVR.on = !!v; FIG_CACHE = {}; } return OVR.on; }, ovr: function (c) { return overallDi(c); }, testa: function (cv, a, fronte) { disegnaTestina(cv, a, fronte); }, figurina: function (c, prezzo, w) { return figurinaCanvas(c, prezzo, w); } };   // (per le prove e per aprire l'editor da fuori)

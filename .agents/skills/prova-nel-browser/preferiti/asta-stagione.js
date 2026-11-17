@@ -334,9 +334,9 @@
     var tasto = qa(w, ".st-tasto").filter(function (b) { return /Facce dei calciatori/.test(b.textContent); })[0];
     if (!tasto) ko.push("nel profilo di IL PAPPONE non c'è «🎨 Facce dei calciatori»"); else tasto.click();
     if (!await W.aspetta(function () { return d.querySelector(".fa-ed.fa-ovunque .fa-ed-r"); }, 30000)) no("l'editor di tutte le stagioni non si apre (" + ko.join(" | ") + ")");
-    var S = w.SGAstaAspetto, P = S.prop(); Object.keys(P).forEach(function (k) { delete P[k]; });
+    var S = w.SGAstaAspetto, M0 = S.mappe(); M0.p = {}; M0.s = {}; S.unisci();   // (🎨 17 nov: le facce di Paky e Sery stanno in due mappe)
     var conta = function () { return (d.querySelector(".fa-ed-conta") || {}).textContent || ""; };
-    var tot = +(conta().replace(/\./g, "").match(/su (\d+)/) || [])[1];
+    var tot = +(((d.querySelector(".fa-ed-liste button[data-lista=t]") || {}).textContent || "").replace(/\./g, "").match(/\/(\d+)/) || [])[1];   // (📋 17 nov: il contatore conta la propria lista; tutti = «Tutte e due»)
     if (!(tot > 1000)) ko.push("i calciatori in tutto sono " + tot + " (attesi più di 1.000)");
     var schede = qa(w, ".fa-ed-schede button").map(function (b) { return b.textContent; });
     if (!/^Da fare/.test(schede[0]) || !/on/.test(qa(w, ".fa-ed-schede button")[0].className)) ko.push("di partenza non è «Da fare»: " + schede.join(" / "));
@@ -349,7 +349,8 @@
     var n2 = nome(); if (n2 === n1) ko.push("«Salva e avanti» non passa al prossimo");
     pelle = qa(w, ".fa-ed-riga.pelle .fa-ed-c"); pelle[0].click(); await W.dorme(150); qa(w, ".fa-ed-tasti button").filter(function (b) { return /Salva e avanti/.test(b.textContent); })[0].click(); await W.dorme(300);
     if (!/fatte 2 su/.test(conta())) ko.push("il contatore dice «" + conta() + "» dopo 2");
-    var fatte = Object.keys(P).filter(function (k) { return /^fc\d+$/.test(k); }); if (fatte.length !== 2) ko.push("salvate " + JSON.stringify(Object.keys(P)) + " (attese 2 sul calciatore fc<numero>)");
+    var fatte = Object.keys(S.prop()).filter(function (k) { return /^fc\d+$/.test(k); }); if (fatte.length !== 2) ko.push("salvate " + JSON.stringify(Object.keys(S.prop())) + " (attese 2 sul calciatore fc<numero>)");
+    var liT = d.querySelector(".fa-ed-liste button[data-lista=t]"); if (!liT) ko.push("mancano le liste Paky / Sery / Tutte e due"); else { liT.click(); await W.dorme(200); }
     // un calciatore che c'è in più stagioni: Barella (oggi Inter, 2017-18 Cagliari) una volta sola, e la sua faccia vale in tutte e due
     var cerca = d.querySelector(".fa-ed-cerca"); cerca.value = "barella"; cerca.dispatchEvent(new w.Event("input")); await W.dorme(200);
     qa(w, ".fa-ed-schede button")[2].click(); await W.dorme(200);
@@ -365,7 +366,7 @@
     var r2 = qa(w, ".fa-ed-r"); if (!r2.length || r2.some(function (r) { return !/Chievo/.test(r.textContent); })) ko.push("il filtro 2017-18 + Chievo non funziona (" + r2.length + ")");
     qa(w, ".fa-ed-schede button")[1].click(); await W.dorme(200);
     var mis = d.querySelector(".fa-ed").scrollWidth > w.innerWidth + 1; if (mis) ko.push("l'editor scorre di lato");
-    Object.keys(P).forEach(function (k) { delete P[k]; }); try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
+    M0 = S.mappe(); M0.p = {}; M0.s = {}; S.unisci(); try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
     if (ko.length) no(ko.slice(0, 8).join(" | "));
     return "solo IL PAPPONE; " + tot + " calciatori unici; Da fare di partenza; pelle a 7 tasti grandi; Salva e avanti; contatore; Barella una volta, faccia uguale oggi e 2017-18; filtri stagione e squadra";
   } });

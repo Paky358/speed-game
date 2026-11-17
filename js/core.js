@@ -938,6 +938,20 @@
   function giardinoPronto() { return !!window.SGGiardino && (GIARDINO_PRONTO || eProprietario()); }
   var PROPRIETARIO = "IL PAPPONE";
   function eProprietario() { var io = profiloAttivo(); return String((io && io.nome) || "").trim().toUpperCase() === PROPRIETARIO; }
+  // 🎨 (17 nov 2026, il proprietario col Cervello) chi lo aiuta a fare le facce dei calciatori della Mini Asta: SOLO l'editor delle facce,
+  // nessun altro potere del proprietario. È la chiave del nome del profilo (quella del login: unica come l'uid), «Sery💗🎀» → "sery".
+  // Le facce che fa si salvano nella SUA scheda pubblica; il gioco le legge da lì (cuore.schedaAiutoFacce)
+  var AIUTO_FACCE = "Sery💗🎀";
+  function chiaveDi(nome) { return window.SGNube && SGNube.chiaveNome ? SGNube.chiaveNome(nome) : String(nome || "").trim().toLowerCase(); }
+  function aiutaFacce() { var io = profiloAttivo(); return !!(io && io.nome) && chiaveDi(io.nome) === chiaveDi(AIUTO_FACCE); }
+  var schedaAiuto = null;
+  function schedaAiutoFacce() {   // (come la scheda del proprietario: una lettura per 5 s)
+    var N = window.SGNube;
+    if (!(N && N.cercaNome)) return Promise.resolve(null);
+    if (schedaAiuto && Date.now() - schedaAiuto.t < 5000) return schedaAiuto.p;
+    var p; try { p = Promise.resolve(N.cercaNome(AIUTO_FACCE)); } catch (e) { p = Promise.reject(e); }
+    p.catch(function () {}); schedaAiuto = { t: Date.now(), p: p }; return p;
+  }
   // 🧍 GLI AVATAR NUOVI «Mii rifinito» (29 ott 2026): lo stesso avatar di ognuno, disegnato senza contorni scuri e con occhi più veri
   // (lo stile "rifinito" di SGOmino). Dal 29 ott 2026 pomeriggio lo vedono TUTTI (il proprietario li ha guardati: «vanno bene»);
   // con "proprietario" lo vedrebbe solo IL PAPPONE, che dal suo profilo lo spegne e lo riaccende («🧍 Avatar nuovi», sg-avatar-stile).
@@ -2471,6 +2485,7 @@
   cuore.novitaTutteViste = novitaTutteViste; cuore.oggiStr = oggiStr; cuore.pillola = pillola; cuore.premiaPartita = premiaPartita;
   cuore.profili = profili; cuore.profiloAttivo = profiloAttivo; cuore.riempiRigaRec = riempiRigaRec; cuore.riquadroLivello = riquadroLivello;
   cuore.salvaListaProfilo = salvaListaProfilo; cuore.sceltoModo = sceltoModo; cuore.schedaDelProprietario = schedaDelProprietario;
+  cuore.aiutaFacce = aiutaFacce; cuore.schedaAiutoFacce = schedaAiutoFacce; cuore.AIUTO_FACCE = AIUTO_FACCE;   // 🎨 (chi aiuta a fare le facce della Mini Asta)
   cuore.schermata = schermata; cuore.schermataHome = schermataHome; cuore.schermataModo = schermataModo; cuore.schermataNovita = schermataNovita;
   cuore.schermataPreGioco = schermataPreGioco; cuore.schermataRegole = schermataRegole; cuore.schermataSala = schermataSala; cuore.scriviL = scriviL;
   cuore.segnaRecentiDa = segnaRecentiDa; cuore.serveExtra = serveExtra; cuore.stessoNome = stessoNome; cuore.svuota = svuota;

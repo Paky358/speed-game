@@ -45,7 +45,8 @@
     S0.apri(); await W.dorme(200); if (w0.document.querySelector(".fa-ed")) ko.push("l'editor si apre anche per Paky");
     var w = await W.apriTel("IL PAPPONE", { x: 420 }), S = await gioco(w), d = w.document;
     try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
-    var P = S.prop(); Object.keys(P).forEach(function (k) { delete P[k]; });
+    var M0 = S.mappe ? S.mappe() : null; if (M0) { M0.p = {}; M0.s = {}; S.unisci(); } else { var P0 = S.prop(); Object.keys(P0).forEach(function (k) { delete P0[k]; }); }   // (🎨 17 nov: le facce di Paky e Sery in due mappe)
+    var P = new Proxy({}, { get: function (o, k) { return S.prop()[k]; } });   // (la vista unita si rifà a ogni salvataggio)
     S.apri(); await W.dorme(300);
     var R = d.querySelector(".fa-ed"); if (!R) no("l'editor non si apre per IL PAPPONE");
     var Q = w.SG_FANTA_QUOTAZIONI.valori, nome = function () { return (d.querySelector(".fa-ed-info b") || {}).textContent; }, squad = function () { return ((d.querySelector(".fa-ed-info span") || {}).textContent || "").split(" · ")[0]; };
@@ -77,7 +78,7 @@
     var salvato = JSON.parse(w.localStorage.getItem("sg-fanta-aspetto") || "{}"); if (!salvato[ch(k1)]) ko.push("la conferma non è sul telefono");
 
     var mis = R.scrollWidth > w.innerWidth + 1 ? "l'editor scorre di lato" : null; if (mis) ko.push(mis);
-    d.querySelector(".fa-ed-x").click(); Object.keys(P).forEach(function (k) { delete P[k]; }); try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
+    d.querySelector(".fa-ed-x").click(); if (M0) { M0.p = {}; M0.s = {}; S.unisci(); } try { w.localStorage.removeItem("sg-fanta-aspetto"); } catch (e) {}
     if (ko.length) no(ko.slice(0, 8).join(" | "));
     return "solo IL PAPPONE; lista di " + tot + ", primo " + k1 + " (" + Q[k1] + "); Va bene apre il prossimo, la correzione resta lì, ricerca, Di partenza: tutto a posto (" + n0 + " da controllare)";
   } });
