@@ -277,3 +277,37 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   PELLE a 7 tasti grandi su una riga, capelli, taglio, barba, forma; «Salva e avanti ▶» salva sul calciatore (fc<numero>: vale in tutte le
   stagioni) e passa al prossimo da fare. Nella lista al massimo 60 righe (il telefono non si ferma): per gli altri, ricerca e filtri.
 - Prova fe1 (in preferiti/asta-stagione.js) OK, asp2 e st5 OK. Foto: `.agents/skills/prova-nel-browser/asta-grafica/foto-facce.js`.
+
+## 17 nov: BATTITORI DELLA 2015-16 dal Deep Research di Gemini del proprietario — PUBBLICATO
+- Fonte: `D:\SG-stagione-lavoroicerca\gemini-dr�5-16.txt` (seconda versione, basata sulle partite; controllata dal Cervello). In
+  `genera.js` ogni posto (1°, 2°, 3°) prende il nome di Gemini SOLO se il calciatore è nel gioco con QUELLA squadra (chi ha cambiato squadra a
+  gennaio vale dove ha finito); «non so» o fuori dal gioco = resta la stima. Prove stD e stG OK. I 29 cambi:
+  - Atalanta punizioni: Gomez, D'Alessandro → Cigarini, D'Alessandro, Kurtic
+  - Bologna angoli: Brienza, Masina → Brienza, Mounier
+  - Bologna punizioni: Brienza, Mounier → Brienza, Giaccherini, Destro
+  - Carpi punizioni: Di Gaudio, Pasciuti → Lasagna, Pasciuti
+  - Chievo angoli: Birsa, Cacciatore → Birsa, Castro
+  - Chievo punizioni: Birsa, Meggiorini → Birsa, Pepe S.
+  - Empoli angoli: Saponara, Zielinski → Paredes, Zielinski
+  - Empoli punizioni: Saponara, Zielinski → Saponara, Paredes, Mario Rui
+  - Fiorentina punizioni: Ilicic, Borja Valero → Ilicic, Marcos Alonso
+  - Frosinone angoli: Pavlovic D., Paganini → Soddimo, Gucher
+  - Frosinone punizioni: Paganini, Sammarco → Paganini, Pavlovic D., Soddimo
+  - Genoa angoli: Rincon, Ansaldi → Laxalt, Suso
+  - Genoa punizioni: Rincon, Laxalt → Dzemaili, Suso
+  - Inter angoli: Perisic, Brozovic → Telles, Brozovic
+  - Inter punizioni: Perisic, Eder → Ljajic, Jovetic
+  - Juventus angoli: Pogba, Cuadrado → Dybala, Cuadrado, Marchisio
+  - Lazio angoli: Felipe Anderson, Candreva → Biglia, Candreva
+  - Lazio punizioni: Candreva, Felipe Anderson → Parolo, Biglia
+  - Milan punizioni: Bonaventura, Honda → Bonaventura, Honda, Montolivo
+  - Napoli angoli: Hamsik, Allan → Jorginho, Callejon
+  - Napoli punizioni: Insigne, Hamsik → Insigne, Ghoulam
+  - Palermo angoli: Quaison, Hiljemark → Vazquez, Quaison
+  - Roma angoli: Pjanic, Perotti → Pjanic, Florenzi, Perotti
+  - Sassuolo angoli: Vrsaljko, Duncan → Berardi, Sansone, Politano
+  - Sassuolo punizioni: Berardi, Sansone → Berardi, Sansone, Politano
+  - Torino angoli: Bruno Peres, Acquah → Baselli, Acquah
+  - Udinese angoli: Bruno Fernandes, Widmer → Bruno Fernandes, Lodi
+  - Udinese punizioni: Thereau, Bruno Fernandes → Lodi, Adnan
+  - Verona punizioni: Viviani, Ionita → Siligardi, Greco, Viviani
