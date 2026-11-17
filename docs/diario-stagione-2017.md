@@ -424,3 +424,5 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   - SPAL angoli: Lazzari, Kurtic → Lazzari, Schiattarella, Kurtic
   - SPAL punizioni: Lazzari, Kurtic → Petagna, Schiattarella, Fares
   - Torino angoli: De Silvestri, Meité → Iago Falque, De Silvestri, Meité
+
+- **Ricerca dell'aiutante Sonnet sulle caselle «non so»** (17 nov, 2 tentativi; FBref bloccato, non aggirato): 7 trovate con una fonte, 6 applicate (`ricerca/gemini-dr/non-so-applica.txt`), tolta Milan 2018-19 1° angoli Suso (un corner solo: fonte debole). Cambiano: 2017-18 Sassuolo punizioni Politano 1° (gol su punizione a Inter-Sassuolo, inter.it); 2018-19 Fiorentina punizioni Muriel 2° (classifica Sky Sport dei gol su punizione). Le altre 4 c'erano già (Suso 2° punizioni Milan 2017-18; De Roon, Birsa, Meggiorini rigoristi 2018-19). Restano 271 caselle «non so»: resta la stima.
