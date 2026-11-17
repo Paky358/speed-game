@@ -461,3 +461,55 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 
 ## 17 nov: ECCEZIONE nella 2019-20 — Ibrahimović all'asta (deciso dal proprietario col Cervello)
 - Ibrahimović (Milan) ha 18 partite a voto, una sotto la regola (≥ 29, o ≥ 19 con quotazione finale ≥ 8), ma 10 gol e quotazione finale 35: «è un nome che la gente vuole». Entra all'asta come gli aggiunti della 2017-18 (`raccolta/fc2019-20-aggiunti.txt`). Numero 21, altezza 195 (fantacalcio.it). Ora è 1° rigorista (3 tirati nei dati) e 3° alle punizioni del Milan (Gemini).
+
+## 17 nov: REGOLA NUOVA per tutte le stagioni — quotazione finale ≥ 16 e almeno 10 partite a voto (decisa dal proprietario col Cervello)
+- «La gente mi bastona se non trova questi nomi»: entra all'asta anche chi ha meno partite se ha quotazione finale ≥ 16 e almeno 10 partite a voto in quella squadra (lib.js, `q16`). Restano le regole di prima (≥ 29, o ≥ 19 con quotazione ≥ 8; un portiere per squadra) e le eccezioni (Ibrahimović 2019-20). Sotto le 10 partite resta fuori.
+- Numeri all'asta per ruolo dopo la regola:
+  - 2015-16: 193 (P 19, D 48, C 66, A 60)
+  - 2016-17: 195 (P 17, D 55, C 76, A 47)
+  - 2017-18: 203 (P 20, D 58, C 77, A 48)
+  - 2018-19: 228 (P 17, D 71, C 83, A 57)
+  - 2019-20: 194 (P 16, D 54, C 73, A 51)
+  - 2020-21: 231 (P 20, D 62, C 84, A 65)
+  - 2021-22: 226 (P 18, D 65, C 80, A 63)
+  - 2022-23: 242 (P 19, D 74, C 93, A 56)
+  - 2023-24: 232 (P 18, D 71, C 89, A 54)
+  - 2024-25: 236 (P 18, D 82, C 84, A 52)
+  - 2025-26: 236 (P 18, D 78, C 88, A 52)
+- Entrati per questa regola (stagione | calciatore | squadra | partite a voto | quotazione finale):
+  - 2015-16 | El Shaarawy | Roma | 16 | 21
+  - 2015-16 | Immobile | Torino | 14 | 21
+  - 2015-16 | Gabbiadini | Napoli | 13 | 18
+  - 2015-16 | Gervinho | Roma | 14 | 17
+  - 2015-16 | Denis | Atalanta | 14 | 17
+  - 2018-19 | Higuain | Milan | 15 | 26
+  - 2018-19 | Boateng | Sassuolo | 13 | 20
+  - 2018-19 | Gabbiadini | Sampdoria | 16 | 19
+  - 2018-19 | Douglas Costa | Juventus | 13 | 17
+  - 2018-19 | Okaka | Udinese | 14 | 16
+  - 2018-19 | Pastore | Roma | 12 | 16
+  - 2019-20 | Sanchez | Inter | 17 | 21
+  - 2019-20 | Young | Inter | 17 | 21
+  - 2019-20 | Kouamé | Fiorentina | 18 | 19
+  - 2020-21 | Ibrahimovic | Milan | 18 | 29
+  - 2020-21 | Gomez | Atalanta | 10 | 26
+  - 2020-21 | Viola | Benevento | 17 | 20
+  - 2020-21 | Gabbiadini | Sampdoria | 15 | 18
+  - 2020-21 | Petagna | Napoli | 16 | 16
+  - 2021-22 | Ibrahimovic | Milan | 18 | 23
+  - 2021-22 | Verdi | Salernitana | 17 | 21
+  - 2021-22 | Cabral | Fiorentina | 12 | 19
+  - 2022-23 | Boga | Atalanta | 18 | 18
+  - 2022-23 | Simeone | Napoli | 12 | 17
+  - 2023-24 | Berardi | Sassuolo | 17 | 24
+  - 2023-24 | Gaetano | Cagliari | 17 | 16
+  - 2024-25 | Kvaratskhelia | Napoli | 17 | 26
+  - 2024-25 | Gimenez | Milan | 12 | 25
+  - 2024-25 | Kolo Muani | Juventus | 16 | 20
+  - 2024-25 | Morata | Milan | 16 | 20
+  - 2024-25 | Raspadori | Napoli | 18 | 19
+  - 2025-26 | Malen | Roma | 18 | 25
+  - 2025-26 | De Bruyne | Napoli | 17 | 21
+  - 2025-26 | Castellanos | Lazio | 11 | 18
+  - 2025-26 | Vlahovic | Juventus | 18 | 16
+- Dati dei nuovi: altezza da fantacalcio.it (tutti tranne Denis 2015-16: la sua scheda non la dice); numero da Wikipedia + FootballSquads, e per chi è andato via a metà anno controllato a mano con due fonti (ricerca/numeri-a-mano.json). Senza numero: Boateng (Sassuolo 2018-19, le fonti dicono 27 o 19) e Morata (Milan 2024-25: il 7 da gennaio è di Giménez).

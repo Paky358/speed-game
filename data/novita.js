@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 371,
+    data: "17 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i campioni che mancavano nelle stagioni passate ⭐",
+    descrizione: [
+      "⭐ All'asta delle stagioni passate adesso ci sono anche i nomi forti che avevano giocato solo metà stagione con quella squadra: per esempio Higuaín nel Milan 2018-19, Ibrahimović nel Milan 2020-21 e 2021-22, il Papu Gómez nell'Atalanta 2020-21, Kvaratskhelia e Raspadori nel Napoli 2024-25, De Bruyne nel Napoli e Malen nella Roma 2025-26.",
+      "📏 Entra chi aveva una quotazione finale da 16 in su e almeno 10 partite con quella squadra: 35 calciatori in più in tutto, con la loro altezza e il numero di maglia quando è sicuro."
+    ]
+  },
+  {
     v: 370,
     data: "17 novembre 2026",
     titolo: "Mini Asta Fantacalcio: i battitori veri delle stagioni passate 🎯",
