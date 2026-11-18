@@ -703,7 +703,18 @@
     ".st-pf-testa img{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.16);}.st-pf-testa span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
     ".st-pf-tot{font-size:1.6rem;color:#ffe066;font-variant-numeric:tabular-nums;}.st-pf-tot.batte{animation:stPal .3s ease-out;}",
     ".st-pf{flex:none;display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,.07);opacity:0;transform:translateX(-14%);transition:opacity .35s,transform .35s cubic-bezier(.2,1.3,.4,1);}",
-    ".st-pf.on{opacity:1;transform:none;}.st-pf .as-rb{padding:3px 6px;font-size:.6rem;}.st-pag.uno .st-pf{flex:1 1 0;min-height:0;max-height:76px;}",
+    ".st-pf.on{opacity:1;transform:none;}.st-pf .as-rb{padding:3px 6px;font-size:.6rem;}",
+    ".st-pf-anno{flex:none;align-self:center;margin-top:-4px;font-size:.62rem;font-weight:900;letter-spacing:.04em;color:#ffe066;}",   // 📅 (la stagione: sotto il titolo, mai in mezzo alle righe)
+    ".st-pf-lista{flex:none;display:flex;flex-direction:column;gap:4px;min-height:0;}",
+    ".st-pag.uno .st-pf{flex:none;height:var(--rh,52px);min-height:0;display:grid;grid-template-columns:38px var(--bw,42px) minmax(0,1fr) 42px 56px;align-items:center;column-gap:5px;padding:0 6px 0 5px;}",
+    ".st-pag.uno .st-pf .as-rb{justify-self:start;}.st-pag.uno .st-pf canvas.st-pf-busto{width:var(--bw,42px)!important;height:var(--bw,42px)!important;margin:0!important;}",
+    ".st-pag.uno .st-pf-int{height:auto;padding-top:0;padding-bottom:0;background:none;opacity:1;transform:none;}.st-pf-int small{font-size:.54rem;font-weight:800;opacity:.75;text-transform:uppercase;text-align:center;letter-spacing:.02em;white-space:nowrap;}",
+    ".st-pf .st-pf-nome{justify-content:center;line-height:1.15;}.st-pf .st-pf-nome b{font-size:var(--fn,1rem);}",
+    ".st-pf-sq{display:flex;align-items:center;gap:4px;min-width:0;font-size:var(--fs,.7rem);font-weight:700;line-height:1.2;}.st-pf-sq span{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85;}",
+    ".st-pf-ic{flex:none;font-style:normal;white-space:nowrap;font-size:1.05em;}.st-pf-ic .ic{margin:0 .03em;}.st-pf-ic .ic-carta{width:.66em;height:.92em;margin:0 .1em;}.st-pf-ic .ic-scarpa{width:1.2em;height:1.08em;}",
+    ".st-pag.uno .st-pf-v,.st-pag.uno .st-pf-fv{min-width:0;}.st-pag.uno .st-pf-v b,.st-pag.uno .st-pf-fv b{font-size:var(--fv,1.4rem);line-height:1;}",
+    ".st-pag.rh-m{--bw:34px;--fn:.92rem;--fs:.66rem;--fv:1.2rem;gap:5px;}.st-pag.rh-m .st-pf-testa img{width:34px;height:34px;}.st-pag.rh-m .st-pf-testa{font-size:1rem;padding:0 4px;}.st-pag.rh-m .st-pf-tot{font-size:1.35rem;}",
+    ".st-pag.rh-s{--bw:26px;--fn:.84rem;--fs:.62rem;--fv:1.06rem;gap:4px;}.st-pag.rh-s .st-pf-testa img{width:26px;height:26px;}.st-pag.rh-s .st-pf-tot{font-size:1.15rem;}.st-pag.rh-s .st-pf-lista{gap:3px;}",
     ".st-pf-nome{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15;}.st-pf-nome b{font-size:1.02rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
     ".st-pf-nome small{font-size:.68rem;font-weight:700;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
     ".st-pf-v,.st-pf-fv{flex:none;display:flex;flex-direction:column;align-items:center;min-width:46px;line-height:1.05;}",
@@ -780,6 +791,7 @@
     // 🃏 (15 nov 2026) i bonus subito dopo i punti, a capo sotto se non ci stanno, mai tagliati; quelli uguali a ventaglio (evAdatta)
     ".st-gio-nomi{display:flex!important;flex-direction:column;justify-content:center;align-items:flex-start;min-width:0;}.st-gio-nomi>.st-gio-nome{align-self:flex-start;max-width:100%;}.st-gio-nomi>.st-gio-sotto{align-self:stretch;}.st-gio-sotto{display:flex!important;flex-wrap:wrap;align-items:center;align-content:flex-start;column-gap:0;row-gap:0;min-width:0;max-width:100%;}",
     ".st-gio-sotto .st-gio-pt{margin-right:3px;}.st-gio-sotto .st-gio-fr{margin-right:2px;}.st-gio-sotto .st-gio-ev{display:contents!important;}.st-gio-sotto .st-gio-zona{flex-basis:100%;}",
+    ".st-gio-riga{padding-left:7px;}.st-gio-nome{font-size:.88rem;}.st-gio-pt{font-size:1.16rem;}.st-gio-tab.fitto .st-gio-riga{padding-left:5px;}.st-gio-tab.fitto .st-gio-nome{font-size:.82rem;}.st-gio-tab.fitto .st-gio-pt{font-size:1.06rem;}.st-gio-tab.fittissimo .st-gio-nome{font-size:.78rem;}.st-gio-tab.fittissimo .st-gio-pt{font-size:1rem;}.st-gio-tab.basso .st-gio-nome{font-size:.8rem;}.st-gio-tab.basso .st-gio-pt{font-size:1.02rem;}.st-rivela.zona .st-gio-tab.fitto .st-gio-pt{font-size:.98rem;}.st-rivela.zona .st-gio-tab.fittissimo .st-gio-pt{font-size:.92rem;}.st-gio-altri .st-gio-pt{font-size:.96rem;}",   // 🔎 (18 nov 2026) senza la faccina: nome e punti più grandi
     ".st-gio-ev>span{flex:none;position:relative;margin:0 0 0 var(--ova,0em);line-height:1.15;}.st-gio-ev>span.rip{margin-left:var(--ovr,0em);}.st-gio-ev>span:first-child{margin-left:0;}",
     ".st-gio.pag-int .st-gio-tab{visibility:hidden;}",
     // 📋 (15 nov 2026 sera) le pagelle finali come quelle del primo tempo: i calciatori escono uno alla volta, il posto accanto al totale
@@ -4406,9 +4418,9 @@
     R.gioCols = cols; R.gioQh = qh; if (!gia) { R.gr = {}; R.facce = {}; R.busti = {}; R.colP = {}; }
     (gia ? [] : righe.slice().sort(function (a, b) { return (a.posV || a.pos) - (b.posV || b.pos); })).forEach(function (r, i) {
       var fr = el("span", { class: "st-gio-fr" }), zn = el("span", { class: "st-gio-zona" });   // (la freccina del voto che cambia; nella Zona Cesarini: cosa ti serve)
-      var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), inC = el("span", { class: "st-gio-in" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true }), fq = imgAv(el, "st-gio-faccia", cfgDi(r.nome, r.omino)), pc = gtColore(r.omino) || COLORI_PERSONE[(r.ord != null ? r.ord : i) % COLORI_PERSONE.length];   // 🎨 (13 nov 2026, il proprietario: a ogni «Gioca ancora» lo stesso colore; prima andava con la classifica)
-      var nodo = el("div", { class: "st-gio-riga" + (R.opz.mio != null && r.id === R.opz.mio ? " mio" : ""), style: "--pc:" + pc + ";transform:" + posQ(R, i), onclick: function () { schedaLive(R, R.gr[r.id]); } }, [
-        fq, el("div", { class: "st-gio-nomi" }, [ el("span", { class: "st-gio-nome", text: r.nome }), el("div", { class: "st-gio-sotto" }, [ pt, fr, ev, zn, inC ]) ]) ]);
+      var pt = el("b", { class: "st-gio-pt", text: numFanta(6 * r.kit.length) }), ev = el("span", { class: "st-gio-ev" }), inC = el("span", { class: "st-gio-in" }), src = srcAv(cfgDi(r.nome, r.omino), { busto: true }), pc = gtColore(r.omino) || COLORI_PERSONE[(r.ord != null ? r.ord : i) % COLORI_PERSONE.length];   // 🎨 (13 nov 2026, il proprietario: a ogni «Gioca ancora» lo stesso colore; prima andava con la classifica)
+      var nodo = el("div", { class: "st-gio-riga" + (R.opz.mio != null && r.id === R.opz.mio ? " mio" : ""), style: "--pc:" + pc + ";transform:" + posQ(R, i), onclick: function () { schedaLive(R, R.gr[r.id]); } }, [   // 🔎 (18 nov 2026, il proprietario: «per massimizzare lo spazio non facciamo vedere le emoji dove stanno i voti») niente faccina: di chi è lo dicono il bordo e il nome col suo colore
+        el("div", { class: "st-gio-nomi" }, [ el("span", { class: "st-gio-nome", text: r.nome }), el("div", { class: "st-gio-sotto" }, [ pt, fr, ev, zn, inC ]) ]) ]);
       R.colP[r.id] = pc;
       R.gioTab.appendChild(nodo);
       // vv: il voto di adesso di ogni calciatore (tutti partono da 6), bon: i suoi bonus e malus, ic: le loro icone
@@ -4629,7 +4641,7 @@
   }
   function classificaVeloce(R, gk, cl, poi) {   // 📊 «La classifica dopo 1 giornata» (o 2): i punti sommati, la giornata e chi sale o scende
     var pag = R.pag, el = R.el, prima = R.posDopo || {}, box = el("div", { class: "st-cl3-righe" });
-    svuotaNodo(pag); pag.className = "st-pag st-cl3";
+    svuotaNodo(pag); pag.className = "st-pag st-cl3"; pagSopra(R, pag, false);
     pag.appendChild(el("div", { class: "st-pag-tit", text: "📊 La classifica dopo " + (gk ? "2 giornate" : "1 giornata") }));
     cl.forEach(function (x, j) {
       var r = x.g.r, su = prima[r.id] != null ? prima[r.id] - x.pos : 0;
@@ -5385,22 +5397,46 @@
     altriQuadretto(R);
   }
   // toccando una riga della classifica: i 5 calciatori di quella rosa coi voti e i bonus di adesso (si chiude da sola, o toccandola)
+  // 📐 (18 nov 2026, il proprietario dal suo iPhone: «vergognoso», tutto sovrapposto) la finestra sopra il campo e i risultati, misurata ADESSO
+  // (le misure prese all'inizio della giornata su iPhone possono non valere più: la finestra restava bassa e le righe si schiacciavano). su = dall'alto
+  function pagSopra(R, pag, su) {
+    var gio = R.gio, top = 8;
+    if (!su && R.azBox) { var g = gio.getBoundingClientRect(), a = R.azBox.getBoundingClientRect(); top = Math.max(8, Math.round(a.top - g.top - (gio.clientTop || 0))); }
+    pag.style.top = top + "px"; pag.style.bottom = "auto"; pag.style.height = Math.max(140, gio.clientHeight - top - 8) + "px";
+  }
+  function pagLibera(pag) { pag.style.height = ""; pag.style.bottom = ""; }   // (le pagelle dell'intervallo e della fine: dall'alto fino in fondo)
+  // toccando una riga della classifica: i calciatori di quella rosa coi voti e i bonus di adesso (si chiude da sola, o toccandola). Una riga per
+  // calciatore alta il giusto (ruolo, figurina, nome e squadra su due righe, voto e fantavoto in colonna sotto «VOTO» e «FANTAVOTO» scritti una
+  // volta sola), i bonus coi simboli disegnati delle pagelle, la stagione sotto il titolo. Sta in una pagina da 360x640 in su, anche con 11 calciatori
   function schedaLive(R, g) {
     if (!vivoRivela(R) || R.fase !== "giornata" || R.pagFissa || !g) return;
     var pag = R.pag, el = R.el, r = g.r, tok = (R.pagTok || 0) + 1; R.pagTok = tok;
     svuotaNodo(pag); pag.className = "st-pag uno live";
+    pagSopra(R, pag, false);
     pag.appendChild(el("div", { class: "st-pag-tit", text: "📋 I calciatori di " + r.nome + (R.gk != null ? " · " + (R.gk + 1) + "ª giornata" : " · adesso") }));   // (🏆 3 giornate: i punti di questa giornata; i sommati sono nel quadretto)
+    if (STAG_ATT && STAGIONI[STAG_ATT]) pag.appendChild(el("div", { class: "st-pf-anno", text: "⚽ " + STAGIONI[STAG_ATT].nome }));
     pag.appendChild(el("div", { class: "st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome, style: "color:" + R.colP[r.id] }), el("b", { class: "st-pf-tot", text: numFanta(totGio(g) - (g.base || 0)) }) ]));
+    var lista = el("div", { class: "st-pf-lista" });
+    lista.appendChild(el("div", { class: "st-pf st-pf-int" }, [ el("i"), el("i"), el("i"), el("small", { text: "voto" }), el("small", { text: "fantavoto" }) ]));
     r.kit.forEach(function (cp, k) {
-      pag.appendChild(el("div", { class: "st-pf on" }, [ el("span", { class: "as-rb as-rb-" + cp.ruolo, text: (FANTA_RUOLI[cp.ruolo] || {}).breve || "" }), GRAF2.on ? bustoNodo(cp, 50, "st-pf-busto") : null,
-        el("div", { class: "st-pf-nome" }, [ el("b", { text: nomeCampo(cp.nome) }), conIcone(el("small", {}), cp.squadra + (g.ic[k] ? " · " + g.ic[k] : "")) ]),
-        el("div", { class: "st-pf-v " + classeVoto(g.vv[k]) }, [ el("small", { text: "voto" }), el("b", { text: numFanta(g.vv[k]) }) ]),
-        el("div", { class: "st-pf-fv" }, [ el("small", { text: "fantavoto" }), el("b", { text: numFanta(g.vv[k] + g.bon[k]) }) ]) ]));
+      lista.appendChild(el("div", { class: "st-pf on" }, [ el("span", { class: "as-rb as-rb-" + cp.ruolo, text: (FANTA_RUOLI[cp.ruolo] || {}).breve || "" }), GRAF2.on ? bustoNodo(cp, 50, "st-pf-busto") : el("i"),
+        el("div", { class: "st-pf-nome" }, [ el("b", { text: nomeCampo(cp.nome) }), el("div", { class: "st-pf-sq" }, [ el("span", { text: cp.squadra }), bonusIcone(el("em", { class: "st-pf-ic" }), g.ic[k] || "") ]) ]),
+        el("div", { class: "st-pf-v " + classeVoto(g.vv[k]) }, [ el("b", { text: numFanta(g.vv[k]) }) ]),
+        el("div", { class: "st-pf-fv" }, [ el("b", { text: numFanta(g.vv[k] + g.bon[k]) }) ]) ]));
     });
+    pag.appendChild(lista);
     pag.appendChild(el("div", { class: "st-pag-nota", text: "tocca per chiudere" }));
+    adattaScheda(R, pag, r.kit.length);
     pag.onclick = function () { chiudiLive(R, tok); };
     void pag.offsetWidth; pag.classList.add("on");
     R.timer.push(setTimeout(function () { chiudiLive(R, tok); }, 6000));
+  }
+  function adattaScheda(R, pag, n) {   // l'altezza delle righe: la più comoda che ci sta (58 → 30 px); se non basta nemmeno così, la finestra sale fino in cima
+    function prova(rh) { pag.style.setProperty("--rh", rh + "px"); pag.classList.toggle("rh-m", rh < 48); pag.classList.toggle("rh-s", rh < 38); return pag.scrollHeight - pag.clientHeight; }
+    var rh = 58, extra = prova(rh);
+    if (extra > 0) { rh = Math.max(30, rh - Math.ceil(extra / Math.max(1, n))); extra = prova(rh); }
+    if (extra > 0 && rh > 30) { rh = Math.max(30, rh - Math.ceil(extra / Math.max(1, n))); extra = prova(rh); }
+    if (extra > 0) { pagSopra(R, pag, true); rh = 58; extra = prova(rh); if (extra > 0) { rh = Math.max(30, rh - Math.ceil(extra / Math.max(1, n))); prova(rh); } }
   }
   function chiudiLive(R, tok) { if (R.pagTok !== tok || R.pagFissa) return; R.pag.classList.remove("on", "live"); R.pag.onclick = null; }
   function pagFissa(R) { R.pagFissa = true; R.pagTok = (R.pagTok || 0) + 1; R.pag.onclick = null; R.pag.classList.remove("on", "live"); segnaInCampo(R, []); }   // (intervallo e fischio finale: le pagelle le mostra il gioco)
@@ -5483,7 +5519,7 @@
   function pagelle(R, titolo, poi) {   // tutte le rose in pagina (a gruppi, se non ci stanno): ogni calciatore col suo voto
     var gs = listaGio(R).sort(perTotale), pag = R.pag, el = R.el, pagine = [], k = 0;
     // 📏 (15 nov 2026) tutta l'altezza della giornata, quadretti compresi (le pagelle ci stanno sopra); quante rose per pagina: misurando una rosa vera
-    pag.style.top = "8px"; svuotaNodo(pag); pag.className = "st-pag"; if (R.gio) R.gio.classList.add("pag-int");   // (i quadretti dei punteggi spariscono: i punti sono nelle pagelle)
+    pag.style.top = "8px"; pagLibera(pag); svuotaNodo(pag); pag.className = "st-pag"; if (R.gio) R.gio.classList.add("pag-int");   // (i quadretti dei punteggi spariscono: i punti sono nelle pagelle)
     var tM = el("div", { class: "st-pag-tit", text: titolo + " · 1/2" }), pM = blocco(gs[0], 0), bM = el("button", { class: "btn st-pag-av", text: "Avanti ▶ (25)" });
     [tM, pM, bM].forEach(function (n) { pag.appendChild(n); });
     var cs = getComputedStyle(pag), gap = parseFloat(cs.rowGap) || 7, hTot = pag.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
@@ -7745,6 +7781,7 @@
     var k = a.chi && a.chi.vero ? a.chi.k : a.fig && a.fig.k ? a.fig.k : por ? por.k : null;
     return k ? nomeCampo(splitCalc(k).nome) : null;
   }
+  var BARRA_GIU = 24;   // 📏 la barra del minuto in cima al campo finisce qui (top 3 + 18, più un filo)
   function campoAzioni(el, box) {
     var cv = el("canvas", { class: "st-az" }), ctx = cv.getContext("2d"), A = { raf: 0, sc: null };
     box.appendChild(cv);
@@ -8190,7 +8227,8 @@
         ctx.font = "900 " + fs + "px system-ui,sans-serif"; var lw = ctx.measureText(n.chi.nome).width + fs * 0.9, lh = fs * (n.chi.pr && NOME_CHI ? 2.55 : 1.45) + 5, yb = sy - 6, su = 0;
         var rect = function () { return { x0: sx - lw / 2 - 2, x1: sx + lw / 2 + 2, y0: yb - lh, y1: yb }; };
         while (su < 3 && (piazzate.some(function (q) { return tocca(rect(), q); }) || tocca(rect(), porta) || (bS && tocca(rect(), { x0: bS[0] - 6, x1: bS[0] + 6, y0: bS[1] - 6, y1: bS[1] + 6 })))) { yb -= lh * 0.8; su++; }
-        if (su) { ctx.save(); ctx.strokeStyle = n.chi.pc || "#ffe066"; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.8; ctx.beginPath(); ctx.moveTo(sx, yb); ctx.lineTo(sx, sy - 4); ctx.stroke(); ctx.restore(); }
+        if (yb - lh < BARRA_GIU) yb = BARRA_GIU + lh;   // 📏 (18 nov 2026, il proprietario: «Handanovic» copriva la barra del minuto e i suoi eventi) sotto la barra
+        if (su && yb < sy - 4) { ctx.save(); ctx.strokeStyle = n.chi.pc || "#ffe066"; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.8; ctx.beginPath(); ctx.moveTo(sx, yb); ctx.lineTo(sx, sy - 4); ctx.stroke(); ctx.restore(); }
         piazzate.push(rect()); etichetta(n.chi.nome, sx, yb, n.chi.pc || "#ffe066", fs, n.chi.pr);
       });
       var np = nomeSottoPiedi(sc, p, function (k) { return !!nomeVero(sc, sc.attori[k]); });   // 🏷️ il nome di chi ha il pallone (se non è di nessuno)
@@ -8208,6 +8246,7 @@
             var gy0 = h / 2 + (Math.min(gA[1], gB[1]) - cam.cy) * cam.z - fsN * 0.4, gy1 = h / 2 + (Math.max(gA[1], gB[1]) - cam.cy) * cam.z + fsN * 0.4;
             var suPorta = function (y) { return sxN + lN > gx0 && sxN - lN < gx1 && y > gy0 && y - fsN < gy1; };
             if (suPorta(yN) && !suPorta(pyN + fsN * 1.2)) yN = pyN + fsN * 1.2;
+            if (yN - fsN < BARRA_GIU) yN = pyN + fsN * 1.2;   // 📏 (sotto la barra del minuto: il nome va sotto i piedi)
             ctx.strokeText(tN, sxN, yN); ctx.fillText(tN, sxN, yN); ctx.restore();
           }
         }
@@ -8402,7 +8441,7 @@
   function tuttiLive(R) {
     if (!vivoRivela(R) || R.fase !== "giornata" || R.pagFissa) return;
     var pag = R.pag, el = R.el, tok = (R.pagTok || 0) + 1; R.pagTok = tok;
-    svuotaNodo(pag); pag.className = "st-pag uno live tutti";
+    svuotaNodo(pag); pag.className = "st-pag uno live tutti"; pagSopra(R, pag, false);
     pag.appendChild(el("div", { class: "st-pag-tit", text: "👥 La classifica di adesso" + (R.gk ? " · punti sommati" : "") }));
     var lista = el("div", { class: "st-tl" });
     listaGio(R).sort(perTotale).forEach(function (g, i) {
@@ -8445,7 +8484,7 @@
       return { nodo: nodo, tot: tot, pos: pos, tiles: tiles };
     }
     function misura() {   // quante rose stanno in una pagina, su questo telefono (con la riga delle 3 giornate, se c'è)
-      pag.style.top = "8px"; svuotaNodo(pag); pag.className = "st-pag fin"; if (R.gio) { R.gio.classList.add("pag-int"); R.gio.classList.add("pag-fin"); }   // (tutta l'altezza: il campo, i risultati e i quadretti non si vedono)
+      pag.style.top = "8px"; pagLibera(pag); svuotaNodo(pag); pag.className = "st-pag fin"; if (R.gio) { R.gio.classList.add("pag-int"); R.gio.classList.add("pag-fin"); }   // (tutta l'altezza: il campo, i risultati e i quadretti non si vedono)
       var tM = el("div", { class: "st-pag-tit", text: "📋 La pagella della 3ª giornata · 1/2" }), b0 = blocco(ordine[0]).nodo, aM = el("button", { class: "btn st-pag-av", text: "Avanti ▶ (20)" });
       if (ordine[0].r.prima) b0.appendChild(el("div", { class: "st-pag-g3" }, [ el("span", { text: "1ª 30 + 2ª 30 + 3ª 30" }), el("b", { text: "= 90" }) ]));
       [tM, b0, aM].forEach(function (n) { pag.appendChild(n); }); misuraPv(pag);
