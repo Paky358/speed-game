@@ -695,7 +695,9 @@
     ".st-pag-testa span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.st-pag-testa b{color:#ffe066;font-size:1rem;font-variant-numeric:tabular-nums;}",
     ".st-pag-voti{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;}",
     ".st-pv{position:relative;display:flex;flex-direction:column;align-items:center;padding:5px 2px 3px;border-radius:7px;background:rgba(255,255,255,.09);overflow:hidden;min-width:0;line-height:1.1;}",
-    ".st-pv>i{position:absolute;left:0;right:0;top:0;height:3px;}",   // (🏷️ 16 nov 2026: SOLO la barretta del ruolo; prima «.st-pv i» prendeva anche le icone di assist e cartellini, che sparivano)
+    ".st-pv>i{position:absolute;left:0;right:0;top:0;height:3px;}",
+    ".st-pag.stretta{gap:5px;padding:6px 8px;}.st-pag.stretta .st-pag-p{gap:2px;}.st-pag.stretta .st-pag-testa{font-size:.8rem;}.st-pag.stretta .st-pag-testa img{width:20px;height:20px;}.st-pag.stretta .st-pag-voti{gap:3px;}.st-pag.stretta .st-pv{padding:4px 2px 2px;}.st-pag.stretta .st-pv-ic{font-size:.7rem;line-height:1.2;}.st-pag.stretta .st-pag-g3{padding:3px 8px;}",   // 📄 (le pagelle strette: fino a 6 rose in una pagina)
+    ".st-pag.strettissima{gap:4px;padding:5px 7px;}.st-pag.strettissima .st-pag-tit{font-size:.85rem;}.st-pag.strettissima .st-pag-p{gap:1px;}.st-pag.strettissima .st-pag-testa{font-size:.74rem;}.st-pag.strettissima .st-pag-testa img{width:16px;height:16px;}.st-pag.strettissima .st-pag-testa b{font-size:.9rem;}.st-pag.strettissima .st-pag-voti{gap:2px;}.st-pag.strettissima .st-pv{padding:3px 1px 1px;line-height:1.02;}.st-pag.strettissima .st-pv span{font-size:.55rem;}.st-pag.strettissima .st-pv .st-pv-c small{display:none;}.st-pag.strettissima .st-pv-ic{font-size:.64rem;line-height:1.15;min-height:1em;}.st-pag.strettissima .st-pag-g3{padding:2px 8px;font-size:.72rem;}",   // (🏷️ 16 nov 2026: SOLO la barretta del ruolo; prima «.st-pv i» prendeva anche le icone di assist e cartellini, che sparivano)
     ".st-pv span{max-width:100%;font-size:.6rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
     ".st-pv b{font-size:1.15rem;font-weight:900;font-variant-numeric:tabular-nums;}.st-pv small{min-height:1.1em;font-size:.6rem;font-weight:800;color:#ffe066;white-space:nowrap;}",
     ".st-pv.v7 b,.st-pf-v.v7 b{color:#69db7c;}.st-pv.v65 b,.st-pf-v.v65 b{color:#c0eb75;}.st-pv.v6 b,.st-pf-v.v6 b{color:#fff;}.st-pv.v55 b,.st-pf-v.v55 b{color:#ffc078;}.st-pv.v5 b,.st-pf-v.v5 b{color:#ff6b6b;}",
@@ -5521,16 +5523,39 @@
     if (pag.__pvf !== fs) { pag.__pvf = fs; pag.style.setProperty("--pvf", fs + "px"); }
     [].forEach.call(pag.querySelectorAll(".st-pv-ic"), function (e) { e.style.fontSize = ""; e.style.whiteSpace = ""; var f = parseFloat(getComputedStyle(e).fontSize) || 10; while (e.scrollWidth > e.clientWidth + 1 && f > 9) { f -= 0.5; e.style.fontSize = f + "px"; } if (e.scrollWidth > e.clientWidth + 1) e.style.whiteSpace = "normal"; });   // (🧾 tanti simboli: prima tutti un po' più piccoli, poi a capo; mai tagliati)   // (bonus e malus: tutti visibili)
   }
+  // 📄 (18 nov 2026, il proprietario: «a volte stanno tutte in una pagina e a volte no»: si misurava UNA rosa sola, e quando i simboli dei bonus
+  // andavano a capo la misura cambiava) le pagine delle pagelle: si misurano TUTTE le rose vere. Fino a 6 rose sempre una pagina sola (se serve
+  // «stretta», poi «strettissima»: righe, figurine e simboli un po' più piccoli); più pagine, a gruppi pari, solo quando non ci stanno davvero
+  var PAG_STRETTE = ["", "stretta", "strettissima"];
+  function pagineRose(pag, blocchi, tM, bM, base) {   // base: la classe della pagina («st-pag» o «st-pag fin»). Torna { per: rose per pagina, liv }
+    var n = blocchi.length, scelta = null, voluto = n;   // (voluto: quante per pagina; fino a 6 tutte, se no quelle che ci stanno senza bonus: sempre le stesse su questo telefono)
+    for (var li = 0; li < PAG_STRETTE.length; li++) {
+      var liv = PAG_STRETTE[li]; svuotaNodo(pag); pag.className = base + (liv ? " " + liv : "");
+      pag.appendChild(tM); blocchi.forEach(function (b) { pag.appendChild(b); }); pag.appendChild(bM); misuraPv(pag);
+      var cs = getComputedStyle(pag), gap = parseFloat(cs.rowGap) || 7, hTot = pag.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
+      var libero = hTot - tM.offsetHeight - bM.offsetHeight - (parseFloat(getComputedStyle(bM).marginBottom) || 0) - 2 * gap, h = blocchi.map(function (b) { return b.offsetHeight; }), per = 1;   // (le misure vere: mai quelle dell'animazione che fa entrare le rose)
+      if (!li && n > 6) {   // (una rosa senza bonus: la misura che non cambia da una partita all'altra)
+        var rif = blocchi[0].cloneNode(true); [].forEach.call(rif.querySelectorAll(".st-pv-ic"), function (e) { e.textContent = ""; e.style.cssText = ""; }); pag.appendChild(rif); var hR = rif.offsetHeight; pag.removeChild(rif);
+        voluto = 1; for (var q = n; q >= 1; q--) { var qq = Math.ceil(n / Math.ceil(n / q)); if (qq * hR + (qq - 1) * gap <= libero + 0.5) { voluto = qq; break; } }
+      }
+      for (var k = n; k >= 1; k--) {
+        var kk = Math.ceil(n / Math.ceil(n / k)), ok = true;   // (gruppi pari: 3 e 3, non 4 e 2)
+        for (var i = 0; i < n && ok; i += kk) { var tot = 0, c = 0; for (var j = i; j < Math.min(n, i + kk); j++) { tot += h[j]; c++; } if (tot + (c - 1) * gap > libero + 0.5) ok = false; }
+        if (ok) { per = kk; break; }
+      }
+      if (per > voluto) per = voluto;   // (mai più rose per pagina di quelle volute: le pagine non cambiano coi bonus)
+      if (!scelta || per > scelta.per) scelta = { per: per, liv: liv };
+      if (per >= voluto) break;
+    }
+    svuotaNodo(pag); pag.className = base + (scelta.liv ? " " + scelta.liv : "");
+    return scelta;
+  }
   function pagelle(R, titolo, poi) {   // tutte le rose in pagina (a gruppi, se non ci stanno): ogni calciatore col suo voto
     var gs = listaGio(R).sort(perTotale), pag = R.pag, el = R.el, pagine = [], k = 0;
     // 📏 (15 nov 2026) tutta l'altezza della giornata, quadretti compresi (le pagelle ci stanno sopra); quante rose per pagina: misurando una rosa vera
     pag.style.top = "8px"; pagLibera(pag); svuotaNodo(pag); pag.className = "st-pag"; if (R.gio) R.gio.classList.add("pag-int");   // (i quadretti dei punteggi spariscono: i punti sono nelle pagelle)
-    var tM = el("div", { class: "st-pag-tit", text: titolo + " · 1/2" }), pM = blocco(gs[0], 0), bM = el("button", { class: "btn st-pag-av", text: "Avanti ▶ (25)" });
-    [tM, pM, bM].forEach(function (n) { pag.appendChild(n); });
-    var cs = getComputedStyle(pag), gap = parseFloat(cs.rowGap) || 7, hTot = pag.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
-    var hB = pM.getBoundingClientRect().height || 102, per = Math.max(1, Math.floor((hTot - tM.getBoundingClientRect().height - bM.getBoundingClientRect().height - 2 * gap + gap) / (hB + gap)));
-    svuotaNodo(pag);
-    per = Math.ceil(gs.length / Math.ceil(gs.length / per));   // (gruppi pari: 4 e 4, non 7 e 1)
+    var tM = el("div", { class: "st-pag-tit", text: titolo + " · 1/2" }), bM = el("button", { class: "btn st-pag-av", text: "Avanti ▶ (25)" });
+    var scI = pagineRose(pag, gs.map(function (g, j) { return blocco(g, j); }), tM, bM, "st-pag"), per = scI.per; R.livInt = scI.liv;   // 📄 (tutte le rose misurate)
     R.perPag = per;   // (per le prove: quante rose in una pagina su questo telefono)
     for (var i = 0; i < gs.length; i += per) pagine.push(gs.slice(i, i + per));
     function blocco(g, j) {
@@ -5548,7 +5573,7 @@
     function mostra() {
       if (!vivoRivela(R)) return;
       if (k >= pagine.length) { pag.classList.remove("on"); R.dopo(450, function () { pag.style.top = ""; if (R.gio) R.gio.classList.remove("pag-int"); poi(); }); return; }   // (poi le pagelle tornano come prima)
-      var pg = pagine[k++]; svuotaNodo(pag); pag.className = "st-pag";
+      var pg = pagine[k++]; svuotaNodo(pag); pag.className = "st-pag" + (R.livInt ? " " + R.livInt : "");
       pag.appendChild(el("div", { class: "st-pag-tit", text: titolo + (pagine.length > 1 ? " · " + k + "/" + pagine.length : "") }));
       pg.forEach(function (g, j) { pag.appendChild(blocco(g, j)); });
       // «Avanti ▶» di chi tiene la partita (al massimo dopo 25 secondi si va avanti da soli)
@@ -8488,16 +8513,12 @@
       var nodo = el("div", { class: "st-pag-p st-pfb" }, [ el("div", { class: "st-pag-testa st-pf-testa" }, [ el("img", { src: R.busti[r.id], alt: "" }), el("span", { text: r.nome, style: "color:" + R.colP[r.id] }), pos, tot ]), el("div", { class: "st-pag-voti" }, tiles) ]);
       return { nodo: nodo, tot: tot, pos: pos, tiles: tiles };
     }
-    function misura() {   // quante rose stanno in una pagina, su questo telefono (con la riga delle 3 giornate, se c'è)
+    function misura() {   // 📄 quante rose in una pagina, su questo telefono: misurate TUTTE (con la riga delle 3 giornate, se c'è); fino a 6 sempre una pagina
       pag.style.top = "8px"; pagLibera(pag); svuotaNodo(pag); pag.className = "st-pag fin"; if (R.gio) { R.gio.classList.add("pag-int"); R.gio.classList.add("pag-fin"); }   // (tutta l'altezza: il campo, i risultati e i quadretti non si vedono)
-      var tM = el("div", { class: "st-pag-tit", text: "📋 La pagella della 3ª giornata · 1/2" }), b0 = blocco(ordine[0]).nodo, aM = el("button", { class: "btn st-pag-av", text: "Avanti ▶ (20)" });
-      if (ordine[0].r.prima) b0.appendChild(el("div", { class: "st-pag-g3" }, [ el("span", { text: "1ª 30 + 2ª 30 + 3ª 30" }), el("b", { text: "= 90" }) ]));
-      [tM, b0, aM].forEach(function (n) { pag.appendChild(n); }); misuraPv(pag);
-      var cs = getComputedStyle(pag), gap = parseFloat(cs.rowGap) || 7, hTot = pag.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
-      var hB = b0.getBoundingClientRect().height || 110, n = Math.max(1, Math.floor((hTot - tM.getBoundingClientRect().height - aM.getBoundingClientRect().height - 2 * gap + gap) / (hB + gap)));
-      svuotaNodo(pag);
-      n = Math.ceil(ordine.length / Math.ceil(ordine.length / n));   // (gruppi pari: 3 e 3, non 4 e 2)
-      totPag = Math.ceil(ordine.length / n); R.perPagFin = n; return n;
+      var tM = el("div", { class: "st-pag-tit", text: "📋 La pagella della 3ª giornata · 1/2" }), aM = el("button", { class: "btn st-pag-av", text: "Avanti ▶ (20)" });
+      var bl = ordine.map(function (g) { var b = blocco(g).nodo; if (g.r.prima) b.appendChild(el("div", { class: "st-pag-g3" }, [ el("span", { text: "1ª 30 + 2ª 30 + 3ª 30" }), el("b", { text: "= 90" }) ])); return b; });
+      var sc = pagineRose(pag, bl, tM, aM, "st-pag fin"); R.livFin = sc.liv;
+      totPag = Math.ceil(ordine.length / sc.per); R.perPagFin = sc.per; return sc.per;
     }
     R.dopo(1700, function () {   // (prima il gol della giornata, poi le pagelle)
       if (!vivoRivela(R)) return; viaAvviso(R);
@@ -8519,7 +8540,7 @@
       if (!per) per = misura();
       var g = ordine[j++], r = g.r, ultima = j === ordine.length, somma = 0, k = 0, mia = R.carta = (R.carta || 0) + 1;
       if ((j - 1) % per === 0) {   // una pagina nuova
-        nPag++; svuotaNodo(pag); pag.className = "st-pag fin";
+        nPag++; svuotaNodo(pag); pag.className = "st-pag fin" + (R.livFin ? " " + R.livFin : "");
         pag.appendChild(el("div", { class: "st-pag-tit", text: (R.gk != null ? "📋 La pagella della 3ª giornata" : "📋 La pagella") + (totPag > 1 ? " · " + nPag + "/" + totPag : "") }));
       } else [].slice.call(pag.querySelectorAll(".st-pag-av,.st-pag-attesa")).forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });   // (la rosa nuova va sotto: via il tasto di quella di prima)
       var B = blocco(g), righe = B.tiles, tot = B.tot; pag.appendChild(B.nodo); misuraPv(pag);
