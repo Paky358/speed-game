@@ -45,9 +45,9 @@ window.SG_NOVITA = [
   {
     v: 372,
     data: "18 novembre 2026",
-    titolo: "Mini Asta Fantacalcio: le facce vere dei 60 calciatori più forti 🧑",
+    titolo: "Mini Asta Fantacalcio: le facce vere dei calciatori più forti 🧑",
     descrizione: [
-      "📷 Immobile, Lautaro, Osimhen, Leão, Dybala, Kvaratskhelia e gli altri 60 calciatori più importanti hanno la faccia presa dalla loro foto: pelle, capelli, taglio e barba come nella realtà, in tutte le stagioni."
+      "📷 Immobile, Lautaro, Osimhen, Leão, Dybala, Kvaratskhelia e gli altri calciatori più importanti (per ora 91, e ne arrivano altri) hanno la faccia presa dalla loro foto: pelle, capelli, taglio e barba come nella realtà, in tutte le stagioni."
     ]
   },
   {
@@ -65,8 +65,8 @@ window.SG_NOVITA = [
     data: "17 novembre 2026",
     titolo: "Mini Asta Fantacalcio: i battitori veri delle stagioni passate 🎯",
     descrizione: [
-      "🚩 Nelle stagioni dalla 2015-16 alla 2019-20 chi batte angoli e punizioni è chi li batteva davvero quell'anno: per esempio Cristiano Ronaldo le punizioni nella Juve 2018-19, Milik nel Napoli, Kolarov nella Roma.",
-      "🎯 Dalla 2017-18 alla 2019-20 anche il secondo e il terzo rigorista sono quelli veri; il primo resta chi ne ha tirati di più quell'anno.",
+      "🚩 Nelle stagioni dalla 2015-16 alla 2021-22 chi batte angoli e punizioni è chi li batteva davvero quell'anno: per esempio Cristiano Ronaldo le punizioni nella Juve 2018-19, Milik nel Napoli, Kolarov nella Roma.",
+      "🎯 Dalla 2017-18 alla 2021-22 anche il secondo e il terzo rigorista sono quelli veri; il primo resta chi ne ha tirati di più quell'anno.",
       "🔄 Chi ha cambiato squadra a gennaio batte per la squadra dove ha finito la stagione."
     ]
   },
