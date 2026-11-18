@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 18 nov 2026 23:00 · 📅 Stagioni del passato · PUBBLICATO · facce dalle foto sui da fare: lotti 14-15 (+38) · master
 - 18 nov 2026 20:58 · 📅 Stagioni del passato · PUBBLICATO · facce dalle foto sui da fare: lotto 13 (+15, 70 proposte nel gioco); Wikimedia limita: pausa di un'ora · master
 - 18 nov 2026 20:32 · 📅 Stagioni del passato · PUBBLICATO · facce dalle foto sui da fare: lotti 11-12 (+30, 52 proposte nel gioco) · master
 - 18 nov 2026 19:43 · 📅 Stagioni del passato · PUBBLICATO · numeri di maglia: 66 trovati (aiutante Sonnet, due fonti), ora TUTTI quelli all'asta li hanno in tutte le stagioni, nessun doppione; facce dalle foto: lotto 10 sui da fare veri (+18) · master
