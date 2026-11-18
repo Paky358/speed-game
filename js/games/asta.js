@@ -6518,13 +6518,16 @@
     for (var i = 0; i < ch.length; i++) if ((x = ASP_PROP[ch[i]]) && x.p) return { a: x, chiave: ch[i] };
     return null;
   }
-  function aspettoVero(k) {   // → { p, c, t, b, cb, fonte: "prop"|"dati"|"caso", dc: da controllare }
+  function facciaBot(k) { var B = window.SG_FANTA_FACCE_BOT, pid = personaDi(k), x = B && pid ? B[pid] : null; return x && x.p ? x : null; }   // 🤖 (data/fanta-facce-bot.js)
+  function aspettoVero(k) {   // → { p, c, t, b, cb, fonte: "prop"|"bot"|"dati"|"caso", dc: da controllare }
     var fp = facciaProp(k), pr = fp ? fp.a : null, d = (window.SG_FANTA_ASPETTO || {})[k], z = aspettoACaso(k), o;
     if (!(d && d.p)) d = datiAspettoAltrove(personaDi(k)) || d;
+    var bt = pr && pr.p ? null : facciaBot(k);   // 🤖 (18 nov 2026) la faccia proposta dalla foto: vale finché uno dei due non la conferma o la corregge
     if (pr && pr.p) o = { p: pr.p, c: pr.c || z.c, t: pr.t || z.t, b: pr.b || z.b, cb: pr.cb || null, fonte: "prop", dc: false };
+    else if (bt) o = { p: bt.p, c: bt.c || z.c, t: bt.t || z.t, b: bt.b || z.b, cb: bt.cb || null, fonte: "bot", dc: true };
     else if (d && d.p) o = { p: d.p, c: d.c || z.c, t: d.t || z.t, b: d.x === "baffetti" && (!d.b || d.b === "niente") ? "baffi" : d.b || z.b, cb: d.cb || null, fonte: "dati", dc: !!d.dc || !d.c || !d.t || !d.b };
     else o = { p: z.p, c: z.c, t: z.t, b: z.b, cb: null, fonte: "caso", dc: true };
-    o.f = (pr && pr.p ? pr.f : null) || (d && d.f) || "tondo";   // (la forma del viso: tondo, ovale, squadrato; la sceglie il proprietario nell'editor)
+    o.f = (pr && pr.p ? pr.f : null) || (bt && bt.f) || (d && d.f) || "tondo";   // (la forma del viso: tondo, ovale, squadrato; la sceglie il proprietario nell'editor)
     return o;
   }
   // 📏 L'ALTEZZA VERA (13 nov 2026, il proprietario: «Woltemade, il gigante di Brema, si deve vedere più alto degli altri»; il peso no, rischia di
@@ -6665,22 +6668,24 @@
         bListe[x[0]] = b; b.dataset.lista = x[0]; b._t = x[1]; rl.appendChild(b); });
       R.appendChild(rl);
     }
-    var schede = nd("div", "fa-ed-schede"), tTu = nd("button", ovunque ? "" : "on"), tDc = nd("button", ovunque ? "on" : ""), tFa = nd("button");
-    if (ovunque) { schede.appendChild(tDc); schede.appendChild(tFa); schede.appendChild(tTu); } else { schede.appendChild(tTu); schede.appendChild(tDc); }
+    var schede = nd("div", "fa-ed-schede"), tTu = nd("button", ovunque ? "" : "on"), tDc = nd("button", ovunque ? "on" : ""), tFa = nd("button"), tBo = nd("button");
+    if (ovunque) { schede.appendChild(tDc); schede.appendChild(tFa); schede.appendChild(tTu); schede.appendChild(tBo); }   // (🤖 18 nov: le facce proposte dalle foto, da controllare) else { schede.appendChild(tTu); schede.appendChild(tDc); }
     R.appendChild(schede);
     var lista = nd("div", "fa-ed-lista"); R.appendChild(lista);
     document.body.appendChild(R);
     chiudi.onclick = function () { if (R.parentNode) R.parentNode.removeChild(R); };
-    function schedaOn(m) { modo = m; tDc.className = m === "dc" ? "on" : ""; tTu.className = m === "tu" ? "on" : ""; tFa.className = m === "fa" ? "on" : ""; elenco(); }
+    function schedaOn(m) { modo = m; tDc.className = m === "dc" ? "on" : ""; tTu.className = m === "tu" ? "on" : ""; tFa.className = m === "fa" ? "on" : ""; tBo.className = m === "bo" ? "on" : ""; elenco(); }
     tDc.onclick = function () { schedaOn("dc"); };
     tTu.onclick = function () { schedaOn("tu"); };
     tFa.onclick = function () { schedaOn("fa"); };
+    tBo.onclick = function () { schedaOn("bo"); };
+    function daBot(c) { return !fatta(c) && !!facciaBot(c.k); }   // 🤖 proposta dalla foto, nessuno dei due l'ha ancora confermata
     cerca.oninput = function () { filtro = cerca.value.trim().toLowerCase(); if (filtro && modo === "dc" && !ovunque) tTu.onclick(); else elenco(); };
     function prossimo() {   // il prossimo della lista che si sta guardando (Tutti o Da controllare), dopo quello di adesso
       var l = modo === "dc" ? daControllare() : visibili(), i = sel ? tutti.indexOf(sel) : -1;
-      return l.filter(function (c) { return tutti.indexOf(c) > i; })[0] || (ovunque && modo === "dc" ? l[0] : null) || sel;
+      return l.filter(function (c) { return tutti.indexOf(c) > i; })[0] || (ovunque && (modo === "dc" || modo === "bo") ? l[0] : null) || sel;
     }
-    function visibili() { return tutti.filter(function (c) { return ovunque ? passaFiltri(c) && inLista(c) && (modo !== "fa" || fatta(c)) :!filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; }); }
+    function visibili() { return tutti.filter(function (c) { return ovunque ? passaFiltri(c) && inLista(c) && (modo !== "fa" || fatta(c)) && (modo !== "bo" || daBot(c)) :!filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; }); }
     function scegli(c) { sel = c; disegnaScheda(); elenco(); }
     // 🧑 (16 nov 2026) si salva sul calciatore (fc<numero>: vale in tutte le stagioni) o, con «📅 Solo nel …», solo per quest'anno
     function chiaveSalva() { var pid = personaDi(sel.k); return pid ? (soloAnno && STAG_ATT ? pid + "|" + STAG_ATT : pid) : sel.k; }
@@ -6698,7 +6703,7 @@
       info.appendChild(nd("b", "", sel.nome)); info.appendChild(nd("span", "", (ovunque ? sel.squadre.join(", ") : sel.sq) + " · " + RU[sel.ru] + " · " + sel.q + (sel.campo ? " · ➕ solo per il campo" : "")));
       if (ovunque) info.appendChild(nd("span", "fa-ed-stag", sel.stagioni.join(" · ")));   // (🎨 in quali stagioni c'è)
       var daChi = fpS0 && fpS0.a.da;   // ✍️ (17 nov 2026) chi l'ha fatto: tu o l'altro (Paky / Sery)
-      info.appendChild(nd("i", "fa-ed-da", a.fonte === "prop" ? (daChi && daChi !== mioAsp() ? "✓ fatto da " + NOMI_ASP[daChi] : "✓ fatto da te") :a.fonte === "caso" ? "🎲 a caso: nessuna foto" : a.dc ? "🔎 dalla foto, da controllare" : "📷 dalla foto"));
+      info.appendChild(nd("i", "fa-ed-da", a.fonte === "prop" ? (daChi && daChi !== mioAsp() ? "✓ fatto da " + NOMI_ASP[daChi] : "✓ fatto da te") :a.fonte === "bot" ? "🤖 proposta dalla foto: da controllare" : a.fonte === "caso" ? "🎲 a caso: nessuna foto" : a.dc ? "🔎 dalla foto, da controllare" : "📷 dalla foto"));
       var tasti = nd("div", "fa-ed-tasti"), ok = nd("button", "btn btn-primario", ovunque ? "Salva e avanti ▶" : "✓ Va bene"), foto = nd("button", "fa-ed-t", "🔍 Foto");
       tasti.appendChild(ok); tasti.appendChild(foto);
       var fpS = facciaProp(sel.k);
@@ -6736,14 +6741,14 @@
       if (ovunque) {   // 🎨 il contatore e le tre liste
         var tl = tutti.filter(inLista), nF = tl.filter(fatta).length; conta.textContent = "fatte " + cifreA(nF) + " su " + cifreA(tl.length);   // (📋 nella lista che guardi)
         for (var q in bListe) { var lq = tutti.filter(function (c) { return q === "t" || LISTE[q][c.pid]; }); bListe[q].textContent = bListe[q]._t + " · " + cifreA(lq.filter(fatta).length) + "/" + cifreA(lq.length); }
-        tDc.textContent = "Da fare · " + cifreA(dc.length); tFa.textContent = "Fatte · " + cifreA(nF); tTu.textContent = "Tutti · " + cifreA(tl.length);
+        tDc.textContent = "Da fare · " + cifreA(dc.length); tFa.textContent = "Fatte · " + cifreA(nF); tTu.textContent = "Tutti · " + cifreA(tl.length); tBo.textContent = "🤖 Da controllare · " + cifreA(tl.filter(daBot).length);
       } else { tDc.textContent = "Da controllare · " + dc.length; tTu.textContent = "Tutti · " + tutti.length; }
       var l = modo === "dc" ? dc : visibili(), sez = false;
       if (l.length > MAX_RIGHE) { var resto = l.length - MAX_RIGHE; l = l.slice(0, MAX_RIGHE); setTimeout(function () { lista.appendChild(nd("div", "fa-ed-sez", "… e altri " + cifreA(resto) + ": usa la ricerca o i filtri")); }, 0); }
       l.forEach(function (c) {
         if (c.campo && !sez) { sez = true; lista.appendChild(nd("div", "fa-ed-sez", "➕ Giocatori aggiunti solo per il campo")); }   // (11 nov 2026: mai all'asta, solo in campo con faccia e numero)
         var r = nd("button", "fa-ed-r" + (c === sel ? " on" : "")), cv = nd("canvas"), a = aspettoVero(c.k); cv.setAttribute("width", 34); cv.style.width = cv.style.height = "34px";
-        r.appendChild(cv); r.appendChild(nd("b", "", c.nome)); r.appendChild(nd("span", "", (ovunque && fSq ? fSq : c.sq) + " · " + c.q + (a.dc && !ovunque ? " · da controllare" : "")));
+        r.appendChild(cv); r.appendChild(nd("b", "", c.nome)); r.appendChild(nd("span", "", (ovunque && fSq ? fSq : c.sq) + " · " + c.q + (a.dc && !ovunque ? " · da controllare" : "") + (a.fonte === "bot" && ovunque ? " · 🤖" : "")));
         r.onclick = function () { scegli(c); R.scrollTop = 0; }; lista.appendChild(r);
         disegnaTestina(cv, a, true);
       });

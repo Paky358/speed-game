@@ -135,4 +135,32 @@
     if (ko.length) no(ko.join(" | "));
     return "vince il più recente in tutti e due i versi; Sery rifà sopra Paky senza toccare la sua mappa; Di partenza toglie anche la sua; liste fisse (" + testi0 + "); le liste salvate da IL PAPPONE valgono";
   } });
+
+  // sy4 (18 nov 2026) le facce proposte dalle foto (data/fanta-facce-bot.js): valgono in partita, nell'editor «🤖 da controllare» (scheda e
+  //     segno nella riga), e con «Salva e avanti» diventano di chi le conferma; una faccia fatta a mano vince sempre sulla proposta.
+  COPIONE.aggiungi("sy4", { nome: "Facce: le proposte 🤖 dalle foto valgono in partita, si vedono «da controllare» e si confermano", fai: async function () {
+    var ko = []; W.BR.pubblici = {};
+    var w = await apri("IL PAPPONE", 0); await w.SG.scaricaGioco("asta"); var S = w.SGAstaAspetto, M = S.mappe(); M.p = {}; M.s = {}; S.unisci();
+    var pB = pidDi(w, "Barella (Inter)"), pT = pidDi(w, "Thuram (Inter)");
+    w.SG_FANTA_FACCE_BOT = w.SG_FANTA_FACCE_BOT || {}; var vecchie = JSON.stringify(w.SG_FANTA_FACCE_BOT);
+    w.SG_FANTA_FACCE_BOT[pB] = { p: 6, c: "biondo", t: "cresta", b: "piena", f: "squadrato" };
+    w.SG_FANTA_FACCE_BOT[pT] = { p: 7, c: "nero", t: "rasato", b: "corta" };
+    var v = S.vero("Barella (Inter)"); if (v.p !== 6 || v.t !== "cresta" || v.fonte !== "bot" || v.f !== "squadrato") ko.push("la proposta non vale in partita: " + JSON.stringify(v));
+    M.p[pT] = { p: 2, c: "castano", t: "corti", b: "niente", ok: 1, ts: Date.now() }; S.unisci();
+    if (S.vero("Thuram (Inter)").p !== 2) ko.push("la faccia fatta a mano non vince sulla proposta");
+    var e = await editor(w); if (e) no(e);
+    lista(w, "t"); await W.dorme(200);
+    var tBo = qa(w, ".fa-ed-schede button")[3]; if (!tBo || !/Da controllare · 1$/.test(tBo.textContent)) ko.push("la scheda dice «" + (tBo && tBo.textContent) + "» (attesa «🤖 Da controllare · 1»)");
+    if (tBo) { tBo.click(); await W.dorme(200); }
+    var righe = qa(w, ".fa-ed-r"); if (righe.length !== 1 || !/Barella/.test(righe[0].textContent) || !/🤖/.test(righe[0].textContent)) ko.push("righe: " + righe.map(function (r) { return r.textContent; }).join(" / "));
+    if (righe[0]) { righe[0].click(); await W.dorme(200); }
+    if (!/proposta dalla foto/.test(scritta(w))) ko.push("nella scheda: «" + scritta(w) + "»");
+    var av = qa(w, ".fa-ed-tasti button").filter(function (b) { return /Salva e avanti/.test(b.textContent); })[0]; if (av) { av.click(); await W.dorme(300); }
+    if (!(M.p[pB] && M.p[pB].p === 6 && M.p[pB].t === "cresta")) ko.push("confermata, non è nella mappa di IL PAPPONE: " + JSON.stringify(M.p[pB]));
+    if (S.vero("Barella (Inter)").fonte !== "prop") ko.push("confermata, la fonte è " + S.vero("Barella (Inter)").fonte);
+    if (!/Da controllare · 0$/.test(qa(w, ".fa-ed-schede button")[3].textContent)) ko.push("dopo la conferma: «" + qa(w, ".fa-ed-schede button")[3].textContent + "»");
+    w.SG_FANTA_FACCE_BOT = JSON.parse(vecchie); M.p = {}; S.unisci();
+    if (ko.length) no(ko.join(" | "));
+    return "la proposta vale in partita (pelle, taglio, forma); la faccia a mano vince; «🤖 Da controllare · 1» con il segno nella riga e la scritta nella scheda; Salva e avanti la conferma (va nella mappa di IL PAPPONE, poi 0)";
+  } });
 })();
