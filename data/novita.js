@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 380,
+    data: "18 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: pari al massimo? Subito la ruota 🎡",
+    descrizione: [
+      "🎡 Nell'asta a buste, se l'offerta più alta è pari e nessuno dei pari può alzare (hanno già offerto il loro massimo), non si fa più lo spareggio a busta, che non serviva a niente: si va subito alla ruota, con la scritta «Tutti al massimo: decide la ruota!». Se almeno uno dei pari può alzare, lo spareggio resta come prima."
+    ]
+  },
+  {
     v: 379,
     data: "18 novembre 2026",
     titolo: "Mini Asta Fantacalcio: le buste si aprono a caso ✉️👑",
