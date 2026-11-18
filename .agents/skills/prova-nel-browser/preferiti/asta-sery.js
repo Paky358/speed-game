@@ -55,9 +55,13 @@
     if (!/fatte 0 su/.test((d.querySelector(".fa-ed-conta") || {}).textContent)) ko.push("contatore: " + (d.querySelector(".fa-ed-conta") || {}).textContent);
     // la divisione alternata: il primo calciatore di tutti è di Paky, il secondo di Sery
     lista(w, "t"); await W.dorme(200); qa(w, ".fa-ed-schede button")[2].click(); await W.dorme(200);
-    var righe = qa(w, ".fa-ed-r").map(function (r) { return r.querySelector("b").textContent; });
+    var righe = qa(w, ".fa-ed-r").map(function (r) { return { n: r.querySelector("b").textContent, foto: /📷|🤖/.test(r.textContent) }; });
+    var atteso = righe.filter(function (x, i) { return i % 2 === 1 && !x.foto; })[0];   // (il 1° «da fare» di Sery: posto pari di tutti, senza faccia dalla foto)
     lista(w, "s"); await W.dorme(200); qa(w, ".fa-ed-schede button")[0].click(); await W.dorme(200);
-    var primoS = nome(w); if (primoS !== righe[1]) ko.push("il primo della Lista Sery è " + primoS + " (atteso il 2° di tutti: " + righe[1] + ")");
+    var primoS = nome(w);   // (il 1° «da fare» di Sery non è nel «Da fare» di Paky: le liste non si toccano)
+    lista(w, "p"); await W.dorme(150); cerca(w, primoS.toLowerCase()); await W.dorme(200);
+    if (qa(w, ".fa-ed-r").some(function (r) { return r.querySelector("b").textContent === primoS; })) ko.push(primoS + " è sia nel «Da fare» di Sery sia in quello di Paky");
+    cerca(w, ""); lista(w, "s"); await W.dorme(200); if (nome(w) !== primoS) { var rr = qa(w, ".fa-ed-r")[0]; if (rr) { rr.click(); await W.dorme(150); } }
     var n1 = nome(w); pelle(w, 5); await W.dorme(200);
     if (!/fatto da te/.test(scritta(w))) ko.push("nella scheda: «" + scritta(w) + "» (atteso «fatto da te»)");
     qa(w, ".fa-ed-tasti button").filter(function (b) { return /Salva e avanti/.test(b.textContent); })[0].click(); await W.dorme(300);
@@ -71,7 +75,7 @@
     if (sP) ko.push("Sery ha scritto nella scheda di IL PAPPONE");
     if (d.querySelector(".fa-ed").scrollWidth > w.innerWidth + 1) ko.push("l'editor scorre di lato");
     if (ko.length) no(ko.join(" | "));
-    return "Luca senza tasto; Sery: editor sì, Bot no; Lista Sery di partenza (" + testi.join(" / ") + "), il 1° è il 2° di tutti; «fatto da te»; salvata nella sua scheda (" + pid[0] + "), niente in quella di IL PAPPONE; sparisce dal Da fare";
+    return "Luca senza tasto; Sery: editor sì, Bot no; Lista Sery di partenza (" + testi.join(" / ") + "), il 1° da fare è al posto giusto (uno a Paky e uno a Sery); «fatto da te»; salvata nella sua scheda (" + pid[0] + "), niente in quella di IL PAPPONE; sparisce dal Da fare";
   } });
 
   COPIONE.aggiungi("sy2", { nome: "Facce: la partita legge le facce di Paky e di Sery; IL PAPPONE vede «fatto da Sery» e il calciatore non è nel suo Da fare", fai: async function () {
@@ -150,15 +154,21 @@
     if (S.vero("Thuram (Inter)").p !== 2) ko.push("la faccia fatta a mano non vince sulla proposta");
     var e = await editor(w); if (e) no(e);
     lista(w, "t"); await W.dorme(200);
-    var tBo = qa(w, ".fa-ed-schede button")[3]; if (!tBo || !/Da controllare · 1$/.test(tBo.textContent)) ko.push("la scheda dice «" + (tBo && tBo.textContent) + "» (attesa «🤖 Da controllare · 1»)");
+    var nBo = function () { return +((qa(w, ".fa-ed-schede button")[3] || {}).textContent || "").replace(/\./g, "").replace(/^\D*/, ""); };
+    var tBo = qa(w, ".fa-ed-schede button")[3], n0 = nBo(); if (!tBo || !/Da controllare/.test(tBo.textContent) || !(n0 >= 1)) ko.push("la scheda dice «" + (tBo && tBo.textContent) + "»");
+    if (qa(w, ".fa-ed-schede button")[0].textContent.indexOf("Da fare") < 0) ko.push("manca «Da fare»");
+    // (18 nov: una faccia dalla foto non confermata è in «Da controllare», NON in «Da fare»)
+    qa(w, ".fa-ed-schede button")[0].click(); await W.dorme(150); cerca(w, "barella"); await W.dorme(200);
+    if (qa(w, ".fa-ed-r").some(function (r) { return /Barella/.test(r.textContent); })) ko.push("Barella (proposta 🤖) è anche in «Da fare»");
     if (tBo) { tBo.click(); await W.dorme(200); }
-    var righe = qa(w, ".fa-ed-r"); if (righe.length !== 1 || !/Barella/.test(righe[0].textContent) || !/🤖/.test(righe[0].textContent)) ko.push("righe: " + righe.map(function (r) { return r.textContent; }).join(" / "));
+    var righe = qa(w, ".fa-ed-r").filter(function (r) { return /Barella/.test(r.textContent); }); if (righe.length !== 1 || !/🤖/.test(righe[0].textContent)) ko.push("righe: " + righe.map(function (r) { return r.textContent; }).join(" / "));
     if (righe[0]) { righe[0].click(); await W.dorme(200); }
     if (!/proposta dalla foto/.test(scritta(w))) ko.push("nella scheda: «" + scritta(w) + "»");
     var av = qa(w, ".fa-ed-tasti button").filter(function (b) { return /Salva e avanti/.test(b.textContent); })[0]; if (av) { av.click(); await W.dorme(300); }
     if (!(M.p[pB] && M.p[pB].p === 6 && M.p[pB].t === "cresta")) ko.push("confermata, non è nella mappa di IL PAPPONE: " + JSON.stringify(M.p[pB]));
     if (S.vero("Barella (Inter)").fonte !== "prop") ko.push("confermata, la fonte è " + S.vero("Barella (Inter)").fonte);
-    if (!/Da controllare · 0$/.test(qa(w, ".fa-ed-schede button")[3].textContent)) ko.push("dopo la conferma: «" + qa(w, ".fa-ed-schede button")[3].textContent + "»");
+    if (nBo() !== n0 - 1) ko.push("dopo la conferma: «" + qa(w, ".fa-ed-schede button")[3].textContent + "» (prima " + n0 + ")");
+    var cp = w.document.querySelector(".fa-ed-liste + .fa-ed-copia"); if (!cp || cp.getBoundingClientRect().height < 20) ko.push("il tasto «📋 Copia l'elenco dei fatti» non è subito sotto le liste");
     w.SG_FANTA_FACCE_BOT = JSON.parse(vecchie); M.p = {}; S.unisci();
     if (ko.length) no(ko.join(" | "));
     return "la proposta vale in partita (pelle, taglio, forma); la faccia a mano vince; «🤖 Da controllare · 1» con il segno nella riga e la scritta nella scheda; Salva e avanti la conferma (va nella mappa di IL PAPPONE, poi 0)";
