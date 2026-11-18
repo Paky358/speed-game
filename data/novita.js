@@ -47,7 +47,7 @@ window.SG_NOVITA = [
     data: "18 novembre 2026",
     titolo: "Mini Asta Fantacalcio: le facce vere dei calciatori più forti 🧑",
     descrizione: [
-      "📷 Immobile, Lautaro, Osimhen, Leão, Dybala, Kvaratskhelia e gli altri calciatori più importanti (per ora 91, e ne arrivano altri) hanno la faccia presa dalla loro foto: pelle, capelli, taglio e barba come nella realtà, in tutte le stagioni."
+      "📷 Immobile, Lautaro, Osimhen, Leão, Dybala, Kvaratskhelia e gli altri calciatori più importanti (per ora 145, e ne arrivano altri) hanno la faccia presa dalla loro foto: pelle, capelli, taglio e barba come nella realtà, in tutte le stagioni."
     ]
   },
   {
