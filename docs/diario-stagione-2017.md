@@ -546,3 +546,5 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   - 2023-24: 232 (P 20, D 70, C 88, A 54)
   - 2024-25: 234 (P 20, D 81, C 84, A 49)
   - 2025-26: 237 (P 20, D 78, C 88, A 51)
+
+- **Ricerca dell'aiutante Sonnet sui «non so» della 2019-20** (18 nov): 9 trovate su 89, applicate 3 (rigori di Genoa e Roma, già così, e punizioni della Lazio: Milinković-Savić 1°, gol su punizione a Verona, classifica Sky Sport). Scartate le 5 sugli angoli (la fonte conta insieme angoli e punizioni) e Verdi alle punizioni del Torino (nessun gol su punizione: fonte debole). Restano 80 caselle «non so»: resta la stima.
