@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 18 nov 2026 19:17 · 📅 Stagioni del passato · PUBBLICATO · editor delle facce: «📋 Copia l'elenco dei fatti» (in alto, accanto al contatore; solo IL PAPPONE e Sery) · master
 - 18 nov 2026 19:14 · 📅 Stagioni del passato · PUBBLICATO · facce dalle foto: 184 (fino al 210° calciatore per importanza; 26 senza foto libera restano da fare a mano) · master
 - 18 nov 2026 · 🪟 Saletta di vetro · PUBBLICATO · v378 colori fissi per tutta la serata (il colore di chi tiene la Sala ora è scritto nella foto; la foto della Sala porta la tabella dei colori di tutta la serata, anche di chi è uscito, e un vice la eredita; ognuno ricorda il suo colore e lo riporta quando rientra; .omino del profilo col colore della serata, così anche chi tiene la partita nei giochi lo manda giusto; prova cf1 in prova-nel-browser/colori: entra, esce, ricarica, gioco, vice, nuovo col giallo mentre l'host è via, ritorno) · master
 - 18 nov 2026 19:00 · 📅 Stagioni del passato · PUBBLICATO · facce dalle foto: 145 (fino al 160° calciatore per importanza; 15 senza foto libera restano da fare a mano) · master
