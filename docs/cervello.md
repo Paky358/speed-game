@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 18 nov 2026 19:43 · 📅 Stagioni del passato · PUBBLICATO · numeri di maglia: 66 trovati (aiutante Sonnet, due fonti), ora TUTTI quelli all'asta li hanno in tutte le stagioni, nessun doppione; facce dalle foto: lotto 10 sui da fare veri (+18) · master
 - 18 nov 2026 19:28 · 📅 Stagioni del passato · PUBBLICATO · 2022-23: battitori veri dal Deep Research di Gemini (45 cambi, 12 nomi scartati); tolte le 180 facce proposte che cadevano su calciatori già fatti a mano (spreco segnato nel diario) · master
 - 18 nov 2026 19:23 · 📅 Stagioni del passato · PUBBLICATO · editor delle facce: facce dalla foto non confermate in «📷 Da controllare» (non più in «Da fare»); «📋 Copia l'elenco dei fatti» subito sotto Lista Paky / Lista Sery / Tutte e due · master
 - 18 nov 2026 19:17 · 📅 Stagioni del passato · PUBBLICATO · editor delle facce: «📋 Copia l'elenco dei fatti» (in alto, accanto al contatore; solo IL PAPPONE e Sery) · master
