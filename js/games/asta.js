@@ -526,6 +526,7 @@
     ".fa-ovunque .fa-ed-riga.pelle .fa-ed-c.tondo{flex:1 1 0;min-width:0;width:auto;max-width:52px;height:44px;}",
     ".fa-ovunque .fa-ed-riga.pelle{flex-wrap:nowrap;gap:6px;justify-content:space-between;}",
     ".fa-ed-conta{flex:1;text-align:center;font-size:.8rem;font-weight:800;color:#ffc247;}",
+    ".fa-ed-copia{display:block;width:100%;margin:6px 0 0;background:rgba(255,194,71,.1);border:1px solid rgba(255,194,71,.45);border-radius:12px;color:#ffc247;font-size:.82rem;font-weight:800;padding:8px;}",
     ".fa-ed-fil{display:flex;gap:6px;margin-top:8px;}.fa-ed-fil select{flex:1;min-width:0;padding:9px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:#151a2e;color:#f4f5fb;font-weight:700;font-size:.85rem;}",
     ".fa-ed-stag{display:block;font-size:.72rem;color:#a6acc8;margin-top:2px;}",
     ".fa-ovunque .fa-ed-tasti .btn-primario{flex:1;min-height:48px;font-size:1rem;}",
@@ -6728,7 +6729,21 @@
     function passaFiltri(c) { return (!fStag || c.stagioni.indexOf(fStag) >= 0) && (!fSq || c.squadre.indexOf(fSq) >= 0) && (!filtro || (c.nome + " " + c.squadre.join(" ")).toLowerCase().indexOf(filtro) >= 0); }
     var LISTE = ovunque ? listeFacce(tutti) : null, qLista = ovunque ? mioAsp() : "t";   // 📋 di partenza la propria lista
     function inLista(c) { return qLista === "t" || !LISTE || !!LISTE[qLista][c.pid]; }
-    function daControllare() { return tutti.filter(function (c) { return ovunque ? !fatta(c) && passaFiltri(c) && inLista(c) : aspettoVero(c.k).dc; }); }   // (🎨: «Da fare» = non ancora sistemati da nessuno dei due)
+    // 📷 (18 nov 2026, il proprietario: una faccia presa dalla foto e non ancora confermata va in «Da controllare», non in «Da fare») c._foto: "bot"
+    // (proposta degli aiutanti, data/fanta-facce-bot.js) o "dati" (dalle foto di prima, data/fanta-aspetto.js, senza dubbi); si calcola una volta
+    if (ovunque) tutti.forEach(function (c) { var d = (window.SG_FANTA_ASPETTO || {})[c.k]; if (!(d && d.p)) d = datiAspettoAltrove(personaDi(c.k)) || d;
+      c._foto = facciaBot(c.k) ? "bot" : d && d.p && !(d.dc || !d.c || !d.t || !d.b) ? "dati" : null; });
+    function daControllare() { return tutti.filter(function (c) { return ovunque ? !fatta(c) && !c._foto && passaFiltri(c) && inLista(c) : aspettoVero(c.k).dc; }); }   // (🎨: «Da fare» = non ancora sistemati da nessuno dei due)
+    // 📋 (18 nov 2026, il proprietario: «quelle che ho già fatto io non ricontrollarle neanche») copia negli appunti i numeri fantacalcio.it
+    // (fc<numero>, con «|stagione» se è una faccia solo per quell'anno) dei calciatori che hanno una faccia fatta a mano da Paky o da Sery
+    var copiaFatti = nd("button", "fa-ed-copia", "📋 Copia l'elenco dei fatti");
+    copiaFatti.onclick = function () {
+      var visti = {}; Object.keys(ASP_PROP).forEach(function (k) { var x = ASP_PROP[k]; if (!x || !x.p) return; var pid = /^fc\d+/.test(k) ? k : (personaDi(k) || k); visti[pid] = 1; });
+      var l = Object.keys(visti).sort(), testo = "facce fatte a mano (" + l.length + "):\n" + l.join("\n");
+      function fatto(ok) { copiaFatti.textContent = ok ? "✓ Copiati " + l.length : "⚠️ Non copiato"; setTimeout(function () { copiaFatti.textContent = "📋 Copia l'elenco dei fatti"; }, 2500); }
+      function vecchio() { try { var ta = document.createElement("textarea"); ta.value = testo; ta.style.cssText = "position:fixed;left:-9999px;top:0"; document.body.appendChild(ta); ta.select(); var ok = document.execCommand("copy"); ta.remove(); fatto(ok); } catch (e) { fatto(false); } }
+      try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(testo).then(function () { fatto(true); }, vecchio); else vecchio(); } catch (e) { vecchio(); }
+    };
     var R = nd("div", "fa-ed oro" + (ovunque ? " fa-ovunque" : "")), testa = nd("div", "fa-ed-testa"), chiudi = nd("button", "fa-ed-x", "✕"), conta = nd("small", "fa-ed-conta");
     testa.appendChild(nd("b", "", ovunque ? "🎨 Facce dei calciatori" : "🎨 Personalizza i calciatori" + (STAG_ATT ? " · " + STAG_ATT : ""))); if (ovunque) testa.appendChild(conta); testa.appendChild(chiudi); R.appendChild(testa);   // (📅 i calciatori della stagione scelta nelle regole)
 
@@ -6748,7 +6763,7 @@
       [["p", "📋 Lista Paky"], ["s", "📋 Lista Sery"], ["t", "👥 Tutte e due"]].forEach(function (x) {
         var b = nd("button", qLista === x[0] ? "on" : ""); b.onclick = function () { qLista = x[0]; for (var q in bListe) bListe[q].className = q === qLista ? "on" : ""; var d = daControllare(); if (modo === "dc" && d.length && d.indexOf(sel) < 0) { sel = d[0]; disegnaScheda(); } elenco(); };
         bListe[x[0]] = b; b.dataset.lista = x[0]; b._t = x[1]; rl.appendChild(b); });
-      R.appendChild(rl);
+      R.appendChild(rl); R.appendChild(copiaFatti);   // 📋 (subito sotto le liste)
     }
     var schede = nd("div", "fa-ed-schede"), tTu = nd("button", ovunque ? "" : "on"), tDc = nd("button", ovunque ? "on" : ""), tFa = nd("button"), tBo = nd("button");
     if (ovunque) { schede.appendChild(tDc); schede.appendChild(tFa); schede.appendChild(tTu); schede.appendChild(tBo); }   // (🤖 18 nov: le facce proposte dalle foto, da controllare) else { schede.appendChild(tTu); schede.appendChild(tDc); }
@@ -6761,7 +6776,7 @@
     tTu.onclick = function () { schedaOn("tu"); };
     tFa.onclick = function () { schedaOn("fa"); };
     tBo.onclick = function () { schedaOn("bo"); };
-    function daBot(c) { return !fatta(c) && !!facciaBot(c.k); }   // 🤖 proposta dalla foto, nessuno dei due l'ha ancora confermata
+    function daBot(c) { return !fatta(c) && !!c._foto; }   // 📷🤖 faccia dalla foto, nessuno dei due l'ha ancora confermata
     cerca.oninput = function () { filtro = cerca.value.trim().toLowerCase(); if (filtro && modo === "dc" && !ovunque) tTu.onclick(); else elenco(); };
     function prossimo() {   // il prossimo della lista che si sta guardando (Tutti o Da controllare), dopo quello di adesso
       var l = modo === "dc" ? daControllare() : visibili(), i = sel ? tutti.indexOf(sel) : -1;
@@ -6823,14 +6838,14 @@
       if (ovunque) {   // 🎨 il contatore e le tre liste
         var tl = tutti.filter(inLista), nF = tl.filter(fatta).length; conta.textContent = "fatte " + cifreA(nF) + " su " + cifreA(tl.length);   // (📋 nella lista che guardi)
         for (var q in bListe) { var lq = tutti.filter(function (c) { return q === "t" || LISTE[q][c.pid]; }); bListe[q].textContent = bListe[q]._t + " · " + cifreA(lq.filter(fatta).length) + "/" + cifreA(lq.length); }
-        tDc.textContent = "Da fare · " + cifreA(dc.length); tFa.textContent = "Fatte · " + cifreA(nF); tTu.textContent = "Tutti · " + cifreA(tl.length); tBo.textContent = "🤖 Da controllare · " + cifreA(tl.filter(daBot).length);
+        tDc.textContent = "Da fare · " + cifreA(dc.length); tFa.textContent = "Fatte · " + cifreA(nF); tTu.textContent = "Tutti · " + cifreA(tl.length); tBo.textContent = "📷 Da controllare · " + cifreA(tl.filter(daBot).length);
       } else { tDc.textContent = "Da controllare · " + dc.length; tTu.textContent = "Tutti · " + tutti.length; }
       var l = modo === "dc" ? dc : visibili(), sez = false;
       if (l.length > MAX_RIGHE) { var resto = l.length - MAX_RIGHE; l = l.slice(0, MAX_RIGHE); setTimeout(function () { lista.appendChild(nd("div", "fa-ed-sez", "… e altri " + cifreA(resto) + ": usa la ricerca o i filtri")); }, 0); }
       l.forEach(function (c) {
         if (c.campo && !sez) { sez = true; lista.appendChild(nd("div", "fa-ed-sez", "➕ Giocatori aggiunti solo per il campo")); }   // (11 nov 2026: mai all'asta, solo in campo con faccia e numero)
         var r = nd("button", "fa-ed-r" + (c === sel ? " on" : "")), cv = nd("canvas"), a = aspettoVero(c.k); cv.setAttribute("width", 34); cv.style.width = cv.style.height = "34px";
-        r.appendChild(cv); r.appendChild(nd("b", "", c.nome)); r.appendChild(nd("span", "", (ovunque && fSq ? fSq : c.sq) + " · " + c.q + (a.dc && !ovunque ? " · da controllare" : "") + (a.fonte === "bot" && ovunque ? " · 🤖" : "")));
+        r.appendChild(cv); r.appendChild(nd("b", "", c.nome)); r.appendChild(nd("span", "", (ovunque && fSq ? fSq : c.sq) + " · " + c.q + (a.dc && !ovunque ? " · da controllare" : "") + (ovunque && !fatta(c) && c._foto ? (c._foto === "bot" ? " · 🤖" : " · 📷") : "")));
         r.onclick = function () { scegli(c); R.scrollTop = 0; }; lista.appendChild(r);
         disegnaTestina(cv, a, true);
       });

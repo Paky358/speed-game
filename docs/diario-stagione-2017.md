@@ -668,3 +668,64 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
   - Controllati e NON andati via a gennaio (Wikipedia non li aveva, ma era giusto così): Manaj (al Watford a luglio 2022), Torregrossa (alla Samp a gennaio 2021).
 - 18 nov: facce dalle foto, calciatori dal 61° al 110°: 44 fatte (104 in tutto nel gioco); senza foto libera Yildiz, Mancosu, Keinan Davis, Pinamonti, Politano; tolto Mora (foto di un Mora di una squadra minore del 2015: forse un altro). Wikimedia ha bloccato per un po' con due aiutanti insieme: d'ora in poi un aiutante solo, una richiesta ogni 5 s.
 - 18 nov: facce dalle foto, calciatori dal 111° al 160°: 41 fatte (145 in tutto nel gioco); senza foto libera sicura Lauriente, Verde, Strefezza, Beto, Esposito Se., Defrel, Aramu, Cambiaghi, Calò (restano da fare a mano). Un aiutante solo, una richiesta ogni 5-6 s: nessun blocco.
+- 18 nov: facce dalle foto, dal 161° al 210°: 39 fatte (184 in tutto); senza foto libera sicura Ciurria, Da Cunha, Torregrossa, Benjamín Domínguez, Falco, Ngonge, Samardžić, Isaksen, Kouamé, Mastantuono, Zaniolo (restano da fare a mano).
+- 18 nov: nell'editor «🎨 Facce dei calciatori» il tasto «📋 Copia l'elenco dei fatti» (IL PAPPONE e Sery): copia negli appunti i fc<numero> di chi ha una faccia fatta a mano da uno dei due (con «|stagione» per quelle solo di un anno); le proposte 🤖 e quelle tolte no. Serve per non rifare con gli aiutanti chi è già fatto. Prova sy5. Lotti delle facce in pausa dopo il 9.
+- 18 nov (dalla foto del proprietario): nell'editor le facce prese dalla foto e non ancora confermate (🤖 proposte degli aiutanti e 📷 «dalla foto» dei dati di prima) stanno in «📷 Da controllare», NON più in «Da fare» (che ora ha solo chi non ha nessuna faccia dalla foto); il segno 🤖 o 📷 nella riga. Il tasto «📋 Copia l'elenco dei fatti» è subito sotto i tasti Lista Paky / Lista Sery / Tutte e due, largo e giallo (prima era in alto accanto al contatore e scorrendo spariva). Prove sy1, sy4, sy5, fe1.
+- 18 nov: arrivato l'elenco delle facce fatte a mano (tasto «📋 Copia l'elenco dei fatti», D:\SG-stagione-lavoro\fatte-a-mano.txt): 618 calciatori (nessuna proposta 🤖 contata per sbaglio: il tasto copia solo quelle a mano; la differenza col contatore «617» sono calciatori che non stanno nell'elenco delle stagioni, per esempio solo in campo). **Spreco**: delle 184 proposte già fatte, 180 cadevano su calciatori già fatti a mano (i lotti partivano dai più importanti, che lui aveva già sistemato): tolte dal gioco, restano 4. I «da fare» veri (senza faccia a mano, senza 📷 dalle foto di prima, non ancora provati dagli aiutanti): 638, dal più importante (Djurić, quotazione 18) in giù (facce-da-fare.js → ricerca/facce/da-fare.json, lotti 10-35).
+
+## 18 nov: BATTITORI 2022-23 dal Deep Research (messaggio nuovo)
+- Regole: angoli e punizioni da Gemini solo se il calciatore è nel gioco con quella squadra in quella stagione (chi ha cambiato squadra a gennaio vale dove ha finito);
+  «non so» o fuori dal gioco = resta la stima (il primo nome della stima non ancora usato). Rigori: il 1° resta chi ne ha tirati di più nei dati di fantacalcio.it
+  (Gemini solo se nessuno ne ha tirati); 2° e 3° da Gemini. Le caselle ancora «non so» e i nomi scartati: `D:\SG-stagione-lavoro\ricerca\gemini-dr\non-so.txt`.
+- **2022-23**: 45 cambi; 27 caselle «non so» (di cui 12 nomi scartati)
+  - Atalanta angoli: Koopmeiners, Maehle → Koopmeiners, Muriel, Lookman
+  - Atalanta punizioni: Lookman, Koopmeiners → Koopmeiners, Muriel, Lookman
+  - Bologna angoli: Moro N., Kyriakopoulos → Orsolini, Barrow, Moro N.
+  - Bologna punizioni: Orsolini, Barrow → Orsolini, Lykogiannis, Barrow
+  - Cremonese angoli: Valeri, Sernicola → Buonaiuto, Castagnetti, Valeri
+  - Cremonese punizioni: Okereke, Castagnetti → Buonaiuto, Castagnetti, Valeri
+  - Cremonese rigori: Ciofani D., Okereke, Buonaiuto → Ciofani D., Okereke, Dessers
+  - Empoli angoli: Ebuehi, Marin → Marin, Henderson L., Ebuehi
+  - Empoli punizioni: Marin, Cambiaghi → Marin, Henderson L., Cambiaghi
+  - Fiorentina angoli: Mandragora, Biraghi → Biraghi, Bonaventura, Mandragora
+  - Fiorentina punizioni: Kouamé, Saponara → Biraghi, Bonaventura, Mandragora
+  - Fiorentina rigori: Gemini dice 1° Gonzalez N., resta Cabral (ne ha tirati di più nei dati)
+  - Inter angoli: Barella, Calhanoglu → Calhanoglu, Dimarco, Brozovic
+  - Inter punizioni: Barella, Calhanoglu → Calhanoglu, Dimarco, Barella
+  - Juventus angoli: Kostic, Chiesa → Kostic, Di Maria, Cuadrado
+  - Juventus punizioni: Kostic, Rabiot → Vlahovic, Milik, Paredes
+  - Lazio angoli: Milinkovic-Savic, Luis Alberto → Luis Alberto, Cataldi, Zaccagni
+  - Lazio punizioni: Milinkovic-Savic, Zaccagni → Milinkovic-Savic, Luis Alberto, Cataldi
+  - Lecce angoli: Strefezza, Hjulmand → Strefezza, Oudin, Di Francesco F.
+  - Lecce punizioni: Strefezza, Di Francesco F. → Strefezza, Oudin, Di Francesco F.
+  - Milan angoli: Tonali, Diaz B. → Tonali, Bennacer, Hernandez T.
+  - Milan punizioni: Leao, Diaz B. → Hernandez T., Tonali, Messias
+  - Monza angoli: Ciurria, Carlos Augusto → Sensi, Caprari, Ciurria
+  - Monza punizioni: Ciurria, Pessina → Sensi, Ciurria, Caprari
+  - Napoli angoli: Kvaratskhelia, Zielinski → Zielinski, Politano, Mario Rui
+  - Napoli punizioni: Kvaratskhelia, Zielinski → Zielinski, Mario Rui, Kvaratskhelia
+  - Napoli rigori: Gemini dice 1° Politano, resta Osimhen (ne ha tirati di più nei dati)
+  - Roma angoli: Pellegrini Lo., Spinazzola → Pellegrini Lo., Dybala, Zalewski
+  - Roma punizioni: Dybala, Pellegrini Lo. → Pellegrini Lo., Dybala
+  - Roma rigori: Dybala, Pellegrini Lo., Cristante → Dybala, Pellegrini Lo., Belotti
+  - Salernitana angoli: Candreva, Mazzocchi → Candreva, Vilhena, Kastanos
+  - Salernitana punizioni: Candreva, Coulibaly L. → Candreva, Vilhena, Coulibaly L.
+  - Salernitana rigori: Gemini dice 1° Piatek, resta Dia (ne ha tirati di più nei dati)
+  - Sampdoria angoli: Augello, Zanoli → Zanoli, Augello, Winks
+  - Sampdoria punizioni: Gabbiadini, Rincon → Rincon, Gabbiadini
+  - Sassuolo angoli: Rogerio, Matheus Henrique → Berardi, Laurienté, Lopez M.
+  - Sassuolo punizioni: Berardi, Laurienté → Berardi, Laurienté, Bajrami
+  - Sassuolo rigori: Berardi, Laurienté, Pinamonti → Berardi, Pinamonti, Laurienté
+  - Spezia angoli: Bourabia, Agudelo → Verde, Bourabia, Agudelo
+  - Torino angoli: Vlasic, Miranchuk → Miranchuk, Ilic, Rodriguez R.
+  - Torino punizioni: Vlasic, Miranchuk → Miranchuk, Rodriguez R., Ilic
+  - Udinese angoli: Pereyra, Lovric → Samardzic, Pereyra, Lovric
+  - Udinese punizioni: Pereyra, Lovric → Pereyra, Samardzic, Lovric
+  - Verona angoli: Lazovic, Doig → Lazovic, Verdi, Miguel Veloso
+  - Verona punizioni: Lazovic, Verdi → Verdi, Miguel Veloso, Lazovic
+  - Malinovskyi (via a gennaio) e Vieira (al Torino a gennaio) non sono nel gioco 2022-23 (poche partite); Ilić al Torino, Bajrami al Sassuolo, Caputo all'Empoli come nei dati. 12 nomi scartati (non nel gioco con quella squadra), resta la stima.
+- 18 nov: NUMERI DI MAGLIA che mancavano (D:\SG-stagione-lavoro\numeri-trovati.txt, aiutante Sonnet: it.wikipedia + en.wikipedia o una terza fonte): 66 messi in ricerca/numeri-a-mano.json (61 all'asta + 5 solo in campo), ora valgono anche nella 2017-18. Controllati: Bijol (Udinese 2024-25) 29 e Alfred Duncan (Fiorentina 2019-20) 88 confermati anche da FootballSquads; Soualiho Meité (Cremonese 2022-23) 28; Fabián Ruiz 8 dal 2018-19 (preso dopo che Jorginho era andato via). Nessun doppione nella stessa squadra. Adesso tutti quelli all'asta hanno il numero in tutte le stagioni; restano senza solo 17 «solo in campo».
+- 18 nov: facce, lotto 9 (partito prima dell'elenco: quasi tutto su calciatori già fatti a mano, buttato) e lotto 10 (il primo sui «da fare» veri: 18 su 25 con foto). Nel gioco 22 facce proposte, tutte su calciatori non fatti a mano. Senza foto libera sicura (da fare a mano): Djurić, Oudin, Żurkowski, Palestra, Henry, Đuričić, Baselli, Inglese, Ederson, Pellegrino, Raimondo, Ramon, Schmid, Success, Odgaard.
+- 18 nov: facce, lotti 11 e 12 sui da fare: 16 + 14 (tolti Viviano e Babacar: capelli non visibili, valori a memoria). Nel gioco 52 facce proposte. Senza foto libera sicura (da fare a mano): Izzo, Maggiore, Aarón Martín, Okereke, Orban, Di Carmine, Lukić, Rispoli, Gyasi, Cordaz, De Silvestri, Tengstedt, Lucas Castro, Nicolás Domínguez, Alfredo Donnarumma. Wikimedia rispondeva 429: ritmo portato a una richiesta ogni 8 s.
+- 18 nov: facce, lotto 13: 15 con foto (70 proposte nel gioco); senza foto libera sicura Montipò, Mosquera, Sarr A., Silvestri, Zanoli, Bastoni S.; Wikimedia ha risposto 429 anche dopo 15 minuti: pausa di un'ora, i 4 rimasti passano nel lotto 14.
+- 18 nov: facce, lotti 14 e 15: 19 + 19 (tolti Ilić e Danilo Larangeira: non sicuro che la foto fosse lui). Senza foto libera sicura (da fare a mano): Martella, Matheus Henrique, Croce, Folorunsho, Nestorovski, Pussetto, Rômulo, Skov Olsen, Agudelo, Drągowski, Gian Marco Ferrari, Črnigoj, Gagliolo, Gendrey. Ritmo una richiesta ogni 10 s, qualche 429 con attesa di 20 minuti.
