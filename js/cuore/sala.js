@@ -473,8 +473,10 @@
       // (punto: "round 3 di 5" del gioco in corso, da t.aCheSiamo; con un'altra stanza si ricomincia da vuoto)
       if (sala && sala.puntoDi !== sala.stanza) { sala.punto = ""; sala.puntoDi = sala.stanza; }
       // (nato, gen, dev: chi tiene la Sala, per la regola "una Sala sola"; vice: chi la prende se me ne vado; comp: la Compagnia)
+      // 🎨 (18 nov 2026) chi tiene la Sala ha il suo colore scritto nella foto: se la Sala passa a un vice, lui lo lascia a lui
+      if (sala && sala.membri[0] && sala.codice && sala.codice !== "…" && cuore.gtMio && cuore.GETTONI && window.SGGettone && SGGettone.eGettone(sala.membri[0].omino)) sala.membri[0].omino = cuore.gtMio(sala.membri[0].omino, sala.membri[0].nome);
       if (sala && sala.rete) sala.rete.invia({ t: "sala", codice: sala.codice, nato: sala.nato, gen: sala.gen, dev: sala.dev, vice: sala.vice, comp: sala.comp || null,
-        membri: sala.membri, gioco: sala.gioco, stanza: sala.stanza, torneo: sala.torneo, elim: sala.elim,
+        membri: sala.membri, col: cuore.gtMappaFoto ? cuore.gtMappaFoto(sala.codice) : undefined, gioco: sala.gioco, stanza: sala.stanza, torneo: sala.torneo, elim: sala.elim,
         fase: sala.gioco ? (sala.fase || "lobby") : null, nel: sala.gioco ? nelGiocoSala(sala) : [], fuori: sala.gioco ? fuoriSala(sala) : [],
         sceglie: !sala.gioco && sala.sceglie ? (sala.sceglie === "sfida" ? 2 : 1) : undefined, giocate: sala.giocate || {},
         sc: sala.gioco && sala.scelti ? sala.scelti : undefined,

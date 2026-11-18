@@ -219,7 +219,10 @@ window.preparaFinestra = function (w, nome, opz) {
     v.profilo = () => {
       const fp = mem.fp;
       if (fp && !fp.__nuovo && !opz.senzaGettone && !fp.gettone) { const g = gtFinto(); if (g) fp.gettone = g; }
-      if (fp && w.SGGettone && w.SGGettone.acceso()) { fp.omino = fp.gettone || null; return fp; }
+      if (fp && w.SGGettone && w.SGGettone.acceso()) {   // (come js/nube.js: .omino col colore della serata)
+        if (!fp.__gtOm) { fp.__gtOm = 1; let base = fp.gettone || null; Object.defineProperty(fp, "omino", { configurable: true, enumerable: true, get: () => { const c = w.SGCuore; try { return base && c && c.gtMio ? c.gtMio(base, fp.nome) : base; } catch (e) { return base; } }, set: v => { base = v; } }); }
+        return fp;
+      }
       if (fp && !fp.omino && !fp.__nuovo && w.SGOmino) fp.omino = w.SGOmino.casuale(nome); return fp;
     };
     v.salvaGettone = g => { if (!mem.fp) return Promise.resolve(); mem.fp.gettone = g; mem.fp.omino = g; BR.log.push("GETTONE di " + nome + ": " + g.e + " " + g.c.join(",")); setTimeout(avvisa, 5); return Promise.resolve(); };

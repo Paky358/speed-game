@@ -9,6 +9,24 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 378,
+    data: "18 novembre 2026",
+    titolo: "Il tuo colore resta tuo per tutta la serata 🎨",
+    descrizione: [
+      "🎨 Il colore del tuo gettone non cambia più durante la serata: neanche quando qualcuno entra, esce, ricarica la pagina o torna.",
+      "👑 Se chi tiene la Sala esce e la Sala passa a un amico, i colori restano uguali. Chi torna ritrova il suo.",
+      "🆕 Chi arriva dopo si adatta: se il suo colore è già preso prende il suo secondo, se no il primo libero. Il tuo non te lo porta via nessuno."
+    ]
+  },
+  {
+    v: 377,
+    data: "18 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: le pagelle sempre nelle stesse pagine 📄",
+    descrizione: [
+      "📄 Le pagelle (all'intervallo e alla fine) si dividono in pagine sempre allo stesso modo: fino a 6 giocatori stanno sempre tutte in una pagina (se serve, righe e simboli si stringono un po'); con di più, le pagine sono sempre le stesse su quel telefono, qualunque bonus ci sia. Prima a volte in 5 venivano 3 + 2 pagine anche se il posto c'era."
+    ]
+  },
+  {
     v: 376,
     data: "18 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la scheda dei calciatori in ordine e i punti più grandi 📋",
