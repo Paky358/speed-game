@@ -830,6 +830,12 @@
   //     sempre per primo; le altre in ordine a caso e chi vince esce in OGNI posizione, circa una volta su n (mai sempre l'ultima); la 👑 del
   //     piano sempre sulla busta più alta finora (pari: «pari»), l'ultima busta contro la 👑 e chi vince è una delle due; stesso tempo tra una
   //     busta e l'altra; ogni apertura col suo seme
+  // bu7 🎡 (18 nov 2026, il proprietario: lo spareggio è inutile se nessuno dei pari può alzare, «fa solo perdere tempo») i conti (tuttiAlMax) e
+  //     stesso telefono in 3: 1ª Paky e Giulia scrivono il loro massimo, Luca passa → NIENTE spareggio, subito la ruota («Tutti al massimo»),
+  //     chi vince paga il massimo; 2ª pari tra chi ha vinto (ora al massimo) e uno che può ancora alzare → lo spareggio come prima; poi fino
+  //     alla classifica
+  // bu8 🎡 online in 3: chi tiene la partita (Paky) ricarica mentre si scrive la prima busta (la busta riparte da capo), poi Paky e Giulia
+  //     al massimo e Luca passa → subito la ruota su tutti i telefoni («Tutti al massimo»), mai la busta dello spareggio; fino alla classifica
   function testoDi(w, s) { var e = q(w, s); return e ? e.textContent : ""; }
   function credDi(w, nome) { var sq = qa(w, ".st-sq").filter(function (x) { var b = x.querySelector(".st-sq-nomi b"); return b && b.textContent === nome; })[0]; var m = sq && /(\d+) 💰/.exec(sq.querySelector(".st-sq-nomi small").textContent); return m ? +m[1] : null; }
   function righeApri(w) { return qa(w, ".st-apri .as-buste .r").map(function (r) { return [].map.call(r.childNodes, function (c) { return c.textContent; }).join(" ").replace(/\s+/g, " ").trim(); }); }
@@ -846,7 +852,7 @@
   }
   async function motoreAsta(w) {   // il file del gioco con le funzioni delle buste portate fuori (solo per la prova)
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {}, ag = "function costruisciMazzoFanta(n) {";
-    src = src.replace(ag, "FUORI.contaBuste = contaBuste; FUORI.apertura = apertura; FUORI.apriMs = apriMs; FUORI.righeDi = righeDi; FUORI.pianoApri = pianoApri; FUORI.BIG = BIG_DA; " + ag);
+    src = src.replace(ag, "FUORI.contaBuste = contaBuste; FUORI.apertura = apertura; FUORI.apriMs = apriMs; FUORI.righeDi = righeDi; FUORI.pianoApri = pianoApri; FUORI.tuttiAlMax = tuttiAlMax; FUORI.maxFanta = maxFanta; FUORI.BIG = BIG_DA; " + ag);
     var g = {}; new w.Function("SG", "FUORI", src)({ registra: function (x) { g[x.id] = x; }, bot: w.SG && w.SG.bot }, fuori);
     fuori.giochi = g; return fuori;
   }
@@ -1119,5 +1125,100 @@
     });
     if (ko.length) no(ko.slice(0, 6).join(" · "));
     return N + " aperture: chi passa sempre per primo, 👑 sempre sulla più alta finora, l'ultima busta sempre contro la 👑, stesso tempo tra le buste, un seme per apertura; in che posizione esce chi vince (% dalla 1ª all'ultima, per quante buste): " + righe.join(" · ");
+  } });
+  function maxDa(w) { var m = /fino a (\d+)/.exec(((w.document.querySelectorAll(".as-bus-regola")[1] || {}).textContent) || ""); return m ? +m[1] : null; }
+  COPIONE.aggiungi("bu7", { nome: "Fanta a buste: pari e tutti al massimo = subito la ruota (niente spareggio); se uno dei pari può alzare, lo spareggio come prima", fai: async function () {
+    var E = await W.apriTel("Bea", { x: 700 }), M = await motoreAsta(E), x = [], P;
+    var gs = { a: { crediti: 20, conta: {} }, b: { crediti: 20, conta: {} }, c: { crediti: 21, conta: {} } }, g = function (id) { return gs[id]; };
+    if (M.maxFanta(gs.a) !== 16) no("all'inizio il massimo non è 16: " + M.maxFanta(gs.a));
+    var r1 = M.contaBuste([{ id: "a", q: 16 }, { id: "b", q: 16 }, { id: "x", q: 0 }], 0), r2 = M.contaBuste([{ id: "a", q: 16 }, { id: "c", q: 16 }], 0), r3 = M.contaBuste([{ id: "a", q: 16 }, { id: "b", q: 0 }], 15), r4 = M.contaBuste([{ id: "a", q: 16 }, { id: "b", q: 9 }], 0);
+    if (!M.tuttiAlMax(r1, 0, g)) no("16 e 16, tutti e due al massimo: non va subito alla ruota");
+    if (M.tuttiAlMax(r2, 0, g)) no("16 e 16 ma uno può arrivare a 17: salta lo spareggio");
+    if (M.tuttiAlMax(r3, 15, g)) no("già nello spareggio: la regola nuova non c'entra");
+    if (M.tuttiAlMax(r4, 0, g)) no("uno solo con l'offerta più alta: non è un pari");
+    if (!M.tuttiAlMax(M.contaBuste([{ id: "a", q: 16 }, { id: "via", q: 16 }], 0), 0, g)) no("chi non c'è più non può alzare: dev'essere subito la ruota");
+    r1.max = true; r2.max = false;
+    if (M.apertura({ n: 1, sp: 0 }, [{ id: "a", nome: "A", q: 16 }, { id: "b", nome: "B", q: 16 }], r1).fine !== "massimo" || M.apertura({ n: 1, sp: 0 }, [{ id: "a", nome: "A", q: 16 }, { id: "c", nome: "C", q: 16 }], r2).fine !== "spareggio") no("la fine dell'apertura non è «massimo» / «spareggio»");
+    x.push("conti: tutti al massimo → ruota; uno può alzare, già spareggio o vincitore solo → come prima");
+    var NOMI = ["Paky", "Giulia", "Luca"]; P = await partitaLocale({ formato: "fanta", compra: "buste", giornata: false }, NOMI);
+    W.clicca(P, /Comincia l'asta/);
+    var fase = 0, fino = Date.now() + 300000, W1 = null, altro = null, spVista = false, ruote = [], prima = null, aperto = -1, fini = [];
+    while (Date.now() < fino && !q(P, ".st-rivela")) {
+      if (/Passa il telefono a/.test(T(P))) { W.clicca(P, /^Sono /); await W.dorme(100); continue; }
+      if (q(P, ".as-bus-testa")) {
+        var sp = /Spareggio/.test(testoDi(P, ".as-bus-testa"));
+        if (fase === 0) { if (sp) no("1ª: tutti al massimo ma parte lo spareggio"); await scriviBusta(P, function (n) { return n === "Luca" ? 0 : maxDa(P); }); }
+        else if (fase === 1) {
+          if (sp) { spVista = true; await scriviBusta(P, function () { return 0; }); }
+          else await scriviBusta(P, function (n) { if (n !== W1 && !altro) altro = n; return 1; });   // (tutti a 1: chi ha vinto la 1ª è al suo massimo, gli altri possono alzare)
+        }
+        else await scriviBusta(P, function (n) { if (prima === null) { prima = n; return 1; } return 0; });
+        await W.dorme(100); continue;
+      }
+      var ap = q(P, ".st-apri");
+      if (ap && !ap.__visto) {
+        ap.__visto = true; aperto = fase; prima = null;
+        if (ap.classList.contains("st-ruota")) { await W.dorme(200); ruote.push(fase + ": " + testoDi(P, ".st-apri h4")); }
+        else { await W.dorme(250); fini.push(fase + ": " + testoDi(P, ".st-apri .fine")); }
+        continue;
+      }
+      var tb = testoDi(P, ".sa-aggiudicato");
+      if (tb && !ap && aperto === fase && fase < 2) {
+        if (fase === 0) {
+          var cr = NOMI.map(function (n) { return credDi(P, n); }), paga = NOMI.filter(function (n, i) { return cr[i] === 4; });
+          if (paga.length !== 1 || paga[0] === "Luca") no("1ª: non paga 16 uno solo tra Paky e Giulia (" + cr.join(", ") + ")");
+          if (!ruote.length || !/Tutti al massimo/.test(ruote[0])) no("1ª: niente ruota «Tutti al massimo» (" + ruote.join(" | ") + ")");
+          if (!/tutti al massimo/.test(fini[0] || "")) no("1ª: alla fine dell'apertura non c'è «tutti al massimo» (" + fini.join(" | ") + ")");
+          W1 = paga[0]; x.push("1ª: Paky e Giulia a 16 (il loro massimo), Luca passa → subito la ruota («" + ruote[0].replace(/^0: /, "") + "») → " + W1 + " paga 16"); fase = 1;
+        } else if (fase === 1) {
+          if (!spVista) no("2ª: un pari poteva alzare ma lo spareggio non c'è (" + fini.join(" | ") + ")");
+          if (ruote.length > 1 && /Tutti al massimo/.test(ruote[1])) no("2ª: dopo lo spareggio la ruota dice «Tutti al massimo»");
+          x.push("2ª: " + W1 + " al massimo e " + altro + " pari → spareggio come prima" + (ruote.length > 1 ? ", poi " + ruote[1].replace(/^1: /, "") : ""));
+          fase = 2;
+        }
+        aperto = -1;
+      }
+      await W.dorme(120);
+    }
+    if (!q(P, ".st-rivela")) no("non arriva alla classifica (fase " + fase + ", «" + T(P).slice(0, 100) + "»)");
+    if (fase < 2) no("non sono passate le due buste di prova (fase " + fase + ")");
+    return x.join(" · ") + " · classifica OK";
+  } });
+  COPIONE.aggiungi("bu8", { nome: "Fanta a buste online in 3: chi tiene la partita ricarica, poi pari tutti al massimo = subito la ruota su tutti i telefoni", fai: async function () {
+    var NOMI = ["Paky", "Giulia", "Luca"], o = await telefoniOnline({ formato: "fanta", compra: "buste", giornata: false }, NOMI), C = o.C, x = [];
+    function win(n) { return W.finestra(n); }
+    if (!await W.aspetta(function () { return vm(C).fase === "busta" && vm(C).busta && vm(C).busta.gara.length === 3; }, 15000)) no("la prima busta non arriva");
+    var n0 = vm(C).busta.n; await W.dorme(800);
+    await W.ricarica("Paky"); senzaAnimazioni(win("Paky"));
+    if (!await W.aspetta(function () { var w = win("Paky"); return w && bott(w, ".st-bf-tasti .btn", /Passo/); }, 20000)) no("dopo la ricarica Paky non ritrova la busta da scrivere («" + T(win("Paky")).slice(-140) + "»)");
+    var b = vm(C).busta; if (!b || b.sp) no("dopo la ricarica non c'è la busta: " + JSON.stringify(b));
+    x.push("Paky ricarica: la busta riparte (" + n0 + " → " + b.n + ")");
+    var ru = null, spareggio = false, t0 = Date.now();
+    var w = win("Paky"), piu = await W.aspetta(function () { return bott(w, ".st-bst button", /^\+$/); }, 4000), mx = 16;
+    for (var k = 0; k < 40 && parseInt(testoDi(w, ".st-bst .v"), 10) < mx; k++) piu.click();
+    var ok = bott(w, ".st-bf-tasti .btn", /Chiudo: 16 /); if (!ok) no("Paky non arriva a «Chiudo: 16» (" + testoDi(w, ".st-bst .v") + ")"); ok.click();
+    manda("Giulia", { t: "bustaF", n: b.n, q: 16 }); manda("Luca", { t: "bustaF", n: b.n, q: 0 });
+    while (Date.now() - t0 < 30000) { var v = vm(C); if (v.fase === "busta" && v.busta && v.busta.sp) spareggio = true; if (v.fase === "ruota" && v.ruota) { ru = v.ruota; break; } await W.dorme(100); }
+    if (spareggio) no("tutti al massimo ma parte la busta dello spareggio");
+    if (!ru) no("tutti al massimo: la ruota non parte (fase " + vm(C).fase + ")");
+    if (!ru.massimo) no("nella foto della ruota manca «massimo»: " + JSON.stringify(ru).slice(0, 200));
+    if (!await W.aspetta(function () { return NOMI.every(function (n) { return /Tutti al massimo/.test(testoDi(win(n), ".st-ruota h4")); }); }, 4000)) no("non tutti vedono «Tutti al massimo: decide la ruota!»: " + NOMI.map(function (n) { return n + " «" + testoDi(win(n), ".st-ruota h4") + "»"; }).join(", "));
+    if (!await W.aspetta(function () { return vm(C).fase === "esito"; }, 16000) || vm(C).esito.chiId !== ru.ids[ru.vince] || vm(C).esito.prezzo !== 16) no("la ruota non dà il calciatore a chi vince per 16 (" + JSON.stringify(vm(C).esito) + ")");
+    x.push("Paky e Giulia a 16, Luca passa → subito la ruota su tutti («Tutti al massimo») → " + ru.nomi[ru.vince] + " per 16");
+    async function chiudiUI(n, quanto) {
+      var w = win(n), ok; if (!quanto) { ok = await W.aspetta(function () { return bott(w, ".st-bf-tasti .btn", /Passo|Resto a/); }, 4000); if (ok) ok.click(); return; }
+      var piu = await W.aspetta(function () { return bott(w, ".st-bst button", /^\+$/); }, 4000); if (!piu) no(n + " non ha il + della busta");
+      for (var k = 0; k < 40 && parseInt(testoDi(w, ".st-bst .v"), 10) < quanto; k++) piu.click();
+      ok = bott(w, ".st-bf-tasti .btn", new RegExp("Chiudo: " + quanto + " ")); if (!ok) no(n + " non arriva a «Chiudo: " + quanto + "»"); ok.click();
+    }
+    var vistoN = -1, fino = Date.now() + 240000;
+    while (Date.now() < fino && vm(C).fase !== "fine") {
+      var v2 = vm(C); if (v2.fase !== "busta" || !v2.busta || v2.busta.n === vistoN) { await W.dorme(150); continue; }
+      var b2 = v2.busta, gara = b2.gara.map(function (id) { return nomeDiId(C, id); }); vistoN = b2.n;
+      for (var j = 0; j < gara.length; j++) { var n = gara[j]; if (n === "Paky") await chiudiUI("Paky", j === 0 ? 1 : 0); else manda(n, { t: "bustaF", n: b2.n, q: j === 0 ? 1 : 0 }); }
+      await W.aspetta(function () { return vm(C).fase !== "busta" || (vm(C).busta || {}).n !== b2.n; }, 18000);
+    }
+    if (vm(C).fase !== "fine") no("non arriva alla fine (" + vm(C).fase + ")");
+    return x.join(" · ") + " · fino alla classifica";
   } });
 })();
