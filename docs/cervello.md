@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 18 nov 2026 19:00 · 📅 Stagioni del passato · PUBBLICATO · facce dalle foto: 145 (fino al 160° calciatore per importanza; 15 senza foto libera restano da fare a mano) · master
 - 18 nov 2026 18:46 · 📅 Stagioni del passato · PUBBLICATO · facce dalle foto: 104 (fino al 110° calciatore per importanza; 6 senza foto libera restano da fare a mano) · master
 - 18 nov 2026 18:35 · 📅 Stagioni del passato · PUBBLICATO · battitori veri di Gemini per 2020-21 (47 cambi) e 2021-22 (48; Vlahović solo Juve, rigori Juve 1° Dybala); facce dalle foto 91 (31 in più); impronte dei file uguali in ogni cartella (costruisci-versione-online.sh: così una pubblicazione non cambia i file che non cambiano) · master
 - 18 nov 2026 18:28 · ⚽🃏 Mini Asta · PUBBLICATO · v376 (la finestra «📋 I calciatori di …» rifatta: misurata quando si apre, righe di altezza fissa, VOTO/FANTAVOTO una volta, simboli dei bonus, stagione sotto il titolo, da 360x640 a 412x915 anche con 11 calciatori; quadretti dei punti senza faccina con nome e punti più grandi; i nomi in campo sotto la barra del minuto; prova nuova sc1 + pg1, pg2, ov2 OK; foto in D:\SG-asta-prove\scheda, quadretti, barra) · master
