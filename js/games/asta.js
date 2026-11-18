@@ -4890,7 +4890,7 @@
     // il rigorista che la partita ha già scelto PRIMA di sapere come va; la punizione: chi le batte; il gol dall'angolo: chi batte gli angoli; gli
     // altri tiri: dal seme della partita e del minuto (più spesso un attaccante: in media 64 tiri su 100; e chi è più forte), MAI da come finisce (prova sp1)
     if (et && !et.tira && (t === "gol" || t === "ann" || t === "occ" || t === "rig")) {
-      var kT = t === "rig" ? trovaK(sqA, e.chi) : v === "punizione" ? primoBattitore(sqA, "punizioni") : v === "olimpico" ? primoBattitore(sqA, "angoli") : null;
+      var kT = t === "rig" || v === "portiere" ? trovaK(sqA, e.chi) : v === "punizione" ? primoBattitore(sqA, "punizioni") : v === "olimpico" ? primoBattitore(sqA, "angoli") : null;
       if (!kT || noti.some(function (y) { return y.k === kT; })) kT = tiratoreVero(sqA);
       if (kT) et.tira = { vero: true, k: kT, asp: aspCampo(kT), num: numeroMaglia(splitCalc(kT)).n };
     }
@@ -4965,6 +4965,9 @@
       sc.meteo = meteoR(R, P);   // 🌦️ (solo l'aspetto; anche nel rigore da ripetere)
       sc.kA = K[sqAtt]; sc.kD = K[sqAtt === P.c ? P.f : P.c]; sc.pA = kitPortiere(sc.kA, sc.kD); sc.pD = kitPortiere(sc.kA, sc.kD, sc.pA.a);
       sc.sqN = { A: sqAtt, D: sqAtt === P.c ? P.f : P.c };   // 🧩 (per il modulo di ognuna)
+      // 🧤 (18 nov 2026, il proprietario: il portiere comprato che sale in area «lo dà come un bot») ogni portiere che si muove nell'azione
+      // (l'ultimo assalto, il portiere che segna, le uscite, i cartellini) è il portiere vero: se è di qualcuno ha il suo nome e il suo colore. Solo dai vostri, mai dall'esito
+      portieriVeri(sc, noti, sqAtt, sqAtt === P.c ? P.f : P.c);
       sc.noti = noti.filter(function (y) { return !y.usato; }).map(function (y) { return { sq: y.sq === sqAtt ? "A" : "D", k: y.k, nome: y.nome, pr: y.pr, faccia: y.faccia, pc: y.pc, ruolo: y.ruolo, num: y.num, asp: y.asp }; });
       sc.altri = { A: altriDi(sqAtt), D: altriDi(sqAtt === P.c ? P.f : P.c) };   // 👥 i posti degli altri: chi nessuno ha comprato (solo l'aspetto e il numero)
       return sc;
@@ -5525,6 +5528,13 @@
   // (entrata, fallo tattico, proteste, simulazione, ultimo uomo), la porta inviolata
   var GL = 0.948, NET = 0.98;   // (la porta è più grande del vero: i pali a 0,5 ± 0,084)
   function semeRnd(s) { var x = (Math.abs(Math.floor(s)) % 2147483646) + 1, r = function () { x = x * 16807 % 2147483647; return (x - 1) / 2147483646; }; r(); return r; }   // (il primo numero si butta: era quasi sempre lo stesso)
+  function portieriVeri(sc, noti, sqA, sqD) {   // 🧤 i portieri che si muovono nell'azione (attori pA e pD senza nome): se sono di qualcuno, il loro nome e il loro colore
+    sc.attori.forEach(function (a) {
+      if ((a.sq !== "pA" && a.sq !== "pD") || (a.chi && (a.chi.nome || a.chi.vero))) return;
+      var sqT = a.sq === "pA" ? sqA : sqD, g = noti.filter(function (y) { return y.sq === sqT && y.ruolo === "P"; })[0];   // (anche se è già stato usato: il rigore da ripetere si disegna due volte)
+      if (g) { g.usato = true; a.chi = { k: g.k, nome: g.nome, pr: g.pr, faccia: g.faccia, pc: g.pc, num: g.num, asp: g.asp }; }
+    });
+  }
   function scena(tipo, v, esito, fin, et, op) {
     var sc = { semeC: op.seme || 7, tipo: tipo, v: v, attori: [], palla: [], scritte: [], rete: null, dunque: 0.7, verso: op.verso || 1, zoomFine: 0, tz: 0.55, lento: null }, L = op.lato || 1, rnd = semeRnd(op.seme || 7);
     if (/^rimessa/.test(v || "")) L = (op.verso || 1) > 0 ? 1 : -1;   // 🙌 (la rimessa sul lato del guardalinee della metà dove si gioca: lui la indica)
