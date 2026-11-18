@@ -1,11 +1,12 @@
 // 🃏 LE BUSTE SUL TAVOLO (6 nov 2026, il proprietario ha scelto l'idea A: le buste di tutti coperte con la faccina e il pallone, le luci
-// che si abbassano col battito, chi passa col cartellino rosso, poi una alla volta dalla più bassa, le ultime due testa a testa e aperte
-// NELLO STESSO ISTANTE).
+// che si abbassano col battito, chi passa col cartellino rosso, poi una alla volta; dal 18 nov 2026 IN ORDINE A CASO con la 👑 su chi è in
+// testa, e l'ultima busta, qualunque sia, contro la 👑: «spargi le buste a caso, così non si capisce prima»).
 // tv1 I tempi del piano (pianoApri) dipendono solo da quante buste ci sono e da quante passano, MAI da chi vince o dalle cifre: 2.000 aperture
 //     a caso (da 2 a 10, spareggi compresi) confrontate con le stesse buste rimescolate. Durata in 3 e in 10.
 // tv2 Online in 8 (rete a 300 ms, orologi sfasati): stessa sequenza su tutti gli 8 telefoni negli stessi istanti (luci giù, chi passa,
 //     ogni busta girata, testa a testa, apertura, la scritta finale: scarto entro 150 ms), e niente spoiler prima dell'apertura (né la
-//     scritta di chi vince, né la busta d'oro, né il nome di chi vince in alto); poi il calciatore a chi vince.
+//     scritta di chi vince, né la busta d'oro, né l'ultima busta aperta prima); sul tavolo l'ordine di chi tiene la partita, la 👑 sulla
+//     più alta tra quelle girate e nel testa a testa la 👑 contro l'ultima; poi il calciatore a chi vince.
 // Si carica dopo preferiti/asta.js (usa gli stessi telefoni finti).
 (function () {
   "use strict";
@@ -86,8 +87,8 @@
           if (/\bfinita\b/.test(c)) segna(n, "fine");
           if (!/\bsu\b/.test(c)) {   // prima dell'apertura: niente che dica chi vince
             var f = q(w, ".st-tavolo .fine"); if (f && w.getComputedStyle(f).visibility !== "hidden") spoiler.push(n + ": la scritta finale si vede prima");
-            if (q(w, ".st-tavolo .duo .bt.vince, .st-tavolo .duo .bt.aperta")) spoiler.push(n + ": una busta del testa a testa aperta prima");
-            if ((n === "Giulia" ? /Tu:/ : /Giulia/).test(ban)) spoiler.push(n + ": in alto «" + ban + "»");
+            if (q(w, ".st-tavolo .duo .bt.vince, .st-tavolo .duo .bt:last-child.aperta")) spoiler.push(n + ": l'ultima busta aperta prima");
+            if (/🏆|È tuo/.test(ban)) spoiler.push(n + ": in alto «" + ban + "»");
           }
         });
         await new Promise(function (r) { requestAnimationFrame(r); });
@@ -97,16 +98,20 @@
       // vicenda; chi arriva tardi si rimette in pari da solo. Insieme entro 150 ms devono essere le ultime buste girate, il testa a testa,
       // l'apertura e la scritta finale)
       var chiavi = Object.keys(mom.Paky), peggio = 0, dove = "";
-      ["aperte5", "aperte6", "testa", "apre", "fine"].forEach(function (k) {
+      ["aperte6", "aperte7", "testa", "apre", "fine"].forEach(function (k) {
         var ts = NOMI.map(function (n) { return mom[n][k]; });
         if (ts.some(function (v) { return v == null; })) no("«" + k + "» non si vede su tutti: " + NOMI.filter(function (n, j) { return ts[j] == null; }).join(", ") + " (Paky ha visto: " + chiavi.join(", ") + "); " + NOMI.filter(function (n, j) { return ts[j] == null; }).map(function (n) { return n + ": " + Object.keys(mom[n]).map(function (kk) { return kk + " " + Math.round(mom[n][kk] - mom.Paky.giu); }).join(", ") + " ora " + Math.round(performance.now() - mom.Paky.giu) + " tavolo " + !!q(win(n), ".st-tavolo") + " fase " + vm(C).fase; }).join(" | "));
         var sc = Math.max.apply(null, ts) - Math.min.apply(null, ts); if (sc > peggio) { peggio = sc; dove = k; }
       });
-      x.push("2 passano, 4 girate una alla volta, testa a testa Luca 8 contro Giulia 9: stessi momenti su 8 telefoni, lo scarto più grande " + Math.round(peggio) + " ms («" + dove + "»)");
-      x.push("momenti di Paky (ms dall'inizio): " + Object.keys(mom.Paky).map(function (k) { return k + " " + Math.round(mom.Paky[k] - mom.Paky.giu); }).join(", ") + "; il più indietro per momento: " + ["giu", "aperte2", "aperte3", "aperte4", "aperte5", "aperte6", "testa", "apre", "fine"].map(function (k) { var ts = NOMI.map(function (n) { return mom[n][k]; }); return k + " " + Math.round(Math.max.apply(null, ts) - Math.min.apply(null, ts)); }).join(", "));
+      x.push("2 passano, 5 girate una alla volta in ordine a caso (" + ap.buste.map(function (b) { return b.nome + " " + b.q; }).join(", ") + "), poi la 👑 contro l'ultima: stessi momenti su 8 telefoni, lo scarto più grande " + Math.round(peggio) + " ms («" + dove + "»)");
+      x.push("momenti di Paky (ms dall'inizio): " + Object.keys(mom.Paky).map(function (k) { return k + " " + Math.round(mom.Paky[k] - mom.Paky.giu); }).join(", ") + "; il più indietro per momento: " + ["giu", "aperte2", "aperte3", "aperte4", "aperte5", "aperte6", "aperte7", "testa", "apre", "fine"].map(function (k) { var ts = NOMI.map(function (n) { return mom[n][k]; }); return k + " " + Math.round(Math.max.apply(null, ts) - Math.min.apply(null, ts)); }).join(", "));
       if (peggio > 150) no("i telefoni non vanno insieme: " + x.join(" · "));
-      var duo = qa(P, ".st-tavolo .duo .bt b").map(function (b) { return b.textContent; }).filter(function (s, i, l) { return l.indexOf(s) === i; });
-      if (duo.join(",") !== "Luca,Giulia") no("nel testa a testa non ci sono Luca e Giulia: " + duo.join(","));
+      var conti = ap.buste.filter(function (b) { return b.q; }), capo = null; conti.slice(0, -1).forEach(function (b) { if (!capo || b.q > capo.q) capo = b; });
+      var ordP = qa(P, ".st-tavolo .tav .bt").map(function (b) { return b.getAttribute("data-id"); }).join(","); if (ordP !== ap.buste.map(function (b) { return b.id; }).join(",")) no("sul tavolo non c'è l'ordine di chi tiene la partita: " + ordP);
+      var reP = qa(P, ".st-tavolo .tav .bt.capo").map(function (b) { return b.getAttribute("data-id"); }); if (reP.indexOf(capo.id) < 0) no("la 👑 non è su " + capo.nome + " (la più alta tra quelle girate): " + reP.join(","));
+      var duo = qa(P, ".st-tavolo .duo .bt").map(function (b) { return b.getAttribute("data-id"); });
+      if (duo.join(",") !== capo.id + "," + conti[conti.length - 1].id) no("nel testa a testa non c'è la 👑 " + capo.nome + " contro l'ultima " + conti[conti.length - 1].nome + ": " + duo.join(","));
+      x.push("👑 " + capo.nome + " " + capo.q + " contro l'ultima busta " + conti[conti.length - 1].nome + " " + conti[conti.length - 1].q);
       var gv = q(win("Giulia"), ".st-tavolo .duo .bt.vince"), fg = (q(win("Giulia"), ".st-tavolo .fine") || {}).textContent || "", fl = (q(win("Luca"), ".st-tavolo .fine") || {}).textContent || "";
       if (!gv || !/È tuo a 9/.test(fg) || !/Giulia a 9/.test(fl)) no("alla fine: Giulia «" + fg + "», Luca «" + fl + "»");
       x.push("fine: Giulia «" + fg + "», gli altri «" + fl + "»; nessuno spoiler prima dell'apertura");

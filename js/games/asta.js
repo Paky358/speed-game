@@ -920,6 +920,8 @@
     ".st-tavolo .bt.subito,.st-tavolo .bt.subito>div{animation:none !important;}",
     ".st-tavolo .tav .bt.aperta{animation:asGira .4s ease-in-out;}@keyframes asGira{50%{transform:scaleX(0)}}",
     ".st-tavolo .bt.via{visibility:hidden;}",
+    ".st-tavolo .bt>.re{position:absolute;z-index:4;right:3px;top:-12px;font-size:1.3rem;font-style:normal;line-height:1;display:none;transform:rotate(14deg);filter:drop-shadow(0 2px 3px rgba(0,0,0,.65));}.st-tavolo .bt.capo>.re{display:block;animation:asRe .45s cubic-bezier(.2,1.6,.4,1);}@keyframes asRe{from{transform:rotate(14deg) scale(.2);opacity:0}}",   // 👑 (18 nov 2026: chi è in testa mentre si aprono le buste a caso)
+    ".st-tavolo .bt.capo .dietro{border-color:#ffc247;box-shadow:0 0 0 2px #ffc247,0 0 14px rgba(255,194,71,.45);}.st-tavolo .bt.capo .dietro .q{color:#ffc247;}.st-tavolo .duo .bt>.re{font-size:1.7rem;right:-10px;top:-18px;}",
     ".st-tavolo .mini{position:relative;z-index:2;display:none;flex-wrap:wrap;justify-content:center;gap:5px;max-width:94%;order:5;}.st-tavolo.testa .mini,.st-tavolo.su .mini{display:flex;}",
     ".st-tavolo .mini span{display:flex;align-items:center;gap:4px;padding:2px 8px 2px 2px;border-radius:99px;background:rgba(10,14,30,.8);font-size:.72rem;font-weight:800;}.st-tavolo .mini img{width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:50% 20%;background:#2a3358;}",
     ".st-tavolo .mini i{font-style:normal;color:#ffc247;}.st-tavolo .mini .passo i{color:#ff8a8f;}",
@@ -933,6 +935,7 @@
     ".st-tavolo .duo .bt.vince .dietro{border-color:#ffc247;background:#3a2c08;box-shadow:0 0 0 3px #ffc247,0 0 30px rgba(255,194,71,.7);}.st-tavolo .duo .bt.vince .q{color:#ffc247;}",
     ".st-tavolo .duo .bt.aperta{animation:asGiraD .45s ease-in-out;}@keyframes asGiraD{50%{scale:0 1.04}}",
     ".st-tavolo .duo .bt.vince{animation:asGiraD .45s ease-in-out,asVince .5s .45s cubic-bezier(.2,1.6,.4,1);scale:1.06;}@keyframes asVince{from{scale:.85}}",
+    ".st-tavolo .duo .bt.gia{animation:none;}.st-tavolo .duo .bt.gia.vince{animation:asVince .5s cubic-bezier(.2,1.6,.4,1);}",   // (la 👑 è già aperta: all'apertura dell'ultima non si rigira)
     ".st-tavolo .duo .bt.pari .dietro{border-color:#9fb4ff;box-shadow:0 0 0 3px #9fb4ff;}.st-tavolo .duo .bt.perde{scale:.92;}.st-tavolo .duo .bt.perde .dietro{background:#252a3e;color:#9aa0b8;}.st-tavolo .duo .bt.perde .fc{filter:grayscale(.8);opacity:.7;}",
     ".st-tavolo .fine{position:relative;z-index:3;margin:0;order:6;font-size:1.15rem;padding:7px 14px;border-radius:12px;background:rgba(10,12,24,.75);opacity:0;animation:none;visibility:hidden;}",
     ".st-tavolo.finita .fine{visibility:visible;animation:asBusta .3s ease-out forwards;}",
@@ -1610,7 +1613,7 @@
       "<b>20 crediti</b> a testa per una rosa da 5 (1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante). I calciatori escono a caso uno alla volta e partono da <b>1 credito</b>; si offre a salto: <b>+1</b>, <b>+2</b> o <b>+5</b>. Ci sono <b>6 secondi</b> per la prima offerta e <b>8</b> dopo ogni rilancio, poi chi offre di più se lo prende. Se nessuno lo vuole <b>torna in fondo al mazzo</b> e si va avanti; solo quando tutti quelli rimasti di un ruolo sono stati rifiutati <b>2 volte</b>, vanno a caso a chi ne ha ancora bisogno.",
       "Chi ha già l'offerta più alta <b>può rialzare da solo</b> (tocca di nuovo la sua faccina, o il tasto): è strategia, così chi ha pochi crediti non ci arriva più. Sotto ogni squadra si leggono i crediti e <b>fin dove può arrivare</b>.",
       "Sul maxischermo, accanto al calciatore all'asta: <b>🎯 RIGORISTA</b>, <b>🦶 PUNIZIONI</b> e <b>🚩 ANGOLI</b> col numero (1°, 2° o 3° della squadra), quelli veri di quest'anno.",
-      "<b>💰 Come si compra</b> (nel ⚙️): 🔨 l'asta normale coi rilanci; <b>✉️ tutta a buste</b>: ognuno scrive in segreto quanto offre (o passa), si aprono le buste dalla più bassa alla più alta e vince la più alta, che paga quello che ha scritto; <b>✉️ buste solo per i big</b>: a busta solo i più forti, gli altri all'asta normale. A pari offerta più alta <b>spareggio</b> a busta solo tra loro (almeno +1); se sono ancora pari decide la <b>ruota</b>. Mai «vince chi ha chiuso prima».",
+      "<b>💰 Come si compra</b> (nel ⚙️): 🔨 l'asta normale coi rilanci; <b>✉️ tutta a buste</b>: ognuno scrive in segreto quanto offre (o passa), si aprono le buste una alla volta <b>in ordine a caso</b> (👑 su chi è in testa, 🥁 il rullo sull'ultima) e vince la più alta, che paga quello che ha scritto; <b>✉️ buste solo per i big</b>: a busta solo i più forti, gli altri all'asta normale. A pari offerta più alta <b>spareggio</b> a busta solo tra loro (almeno +1); se sono ancora pari decide la <b>ruota</b>. Mai «vince chi ha chiuso prima».",
       (ovrAcceso() ? "Alla fine si scopre l'<b>overall</b> di ogni calciatore (quanto vale davvero, da 68 a 93, come nei videogiochi di calcio), dalla rosa più debole alla più forte." : "Alla fine si scoprono le <b>quotazioni vere</b> dei calciatori, dalla rosa che vale meno a quella che vale di più.") + " Poi si gioca <b>⚽ una giornata di Serie A finta</b>, come nel fantacalcio vero: i vostri calciatori non giocano tra di loro, ognuno gioca con la sua squadra contro chi capita (le 20 squadre si sorteggiano; i risultati dipendono soprattutto da quanto sono forti le squadre, cioè dall'overall dei loro titolari, e un po' dai gol veri dell'anno scorso). I gol li segnano soprattutto i più quotati e gli attaccanti; i rigori li tirano i <b>🎯 rigoristi</b> di quest'anno (all'asta c'è la scritta sul maxischermo); i cartellini dipendono da quanti ne ha presi davvero ognuno. Chi comprate gioca sempre. Tutti partono da 6 in pagella (il portiere di solito resta a 6), poi voti e bonus come nel fantacalcio: <b>gol +3</b>, <b>assist +1</b>, <b>giallo −0,5</b>, <b>rosso −1</b>, <b>rigore sbagliato −3</b>, <b>autogol −2</b>; per il portiere <b>gol subito −1</b>, <b>porta inviolata +1</b> (ce l'ha già dal fischio d'inizio e la perde al primo gol subito), <b>rigore parato +3</b>. Sul campo si vedono con calma i momenti dei vostri calciatori (anche i pali e le parate), col nome e la faccina di chi li ha comprati; a fine primo tempo e al fischio finale arrivano le pagelle. Vince chi fa <b>più fantapunti</b> (a pari punti la rosa che vale di più, poi chi ha più crediti avanzati).",
       "La giornata si spegne nel ⚙️: allora vince la rosa che <b>vale di più</b> (a pari valore chi ha <b>più crediti avanzati</b>).",
       "<b>🆚 Contro chi giocano</b> (nel ⚙️, acceso di partenza): le partite della giornata si sorteggiano già all'inizio dell'asta e sotto ogni calciatore c'è in piccolo il suo avversario (con 🏆 3 giornate tutti e tre).",
@@ -10475,7 +10478,7 @@
   // ---------- ✉️ LE BUSTE DEL FANTA (2 nov 2026, il proprietario) ----------
   // «💰 Come si compra» nel ⚙️: «🔨 Asta normale» (di partenza), «✉️ Tutta a buste», «✉️ Buste solo per i big» (quotazione da BIG_DA in su).
   // Ognuno scrive in segreto quanto offre (o passa; chi ha il reparto pieno non offre; al massimo quello che lascia 1 credito per ogni posto
-  // vuoto), si aprono insieme dalla più bassa alla più alta e vince la più alta, che paga quello che ha scritto. MAI «vince chi ha chiuso
+  // vuoto), si aprono una alla volta in ordine a caso e vince la più alta, che paga quello che ha scritto. MAI «vince chi ha chiuso
   // prima»: a pari offerta più alta spareggio a busta solo tra loro (almeno +1, o resto dov'ero), poi la ruotina. Nessuno offre: torna in fondo al mazzo
   function compraDi(imp) { return imp && (imp.compra === "buste" || imp.compra === "big") ? imp.compra : "normale"; }
   function aBusta(compra, carta) { return compra === "buste" || (compra === "big" && valoreCalc(carta) >= BIG_DA); }
@@ -10487,27 +10490,33 @@
     if (!top) return { nessuno: true, prezzo: 0, primi: [] };
     return { prezzo: top, primi: l.filter(function (o) { return val(o) === top; }) };
   }
-  // l'apertura (uguale su tutti i telefoni): le buste dalla più bassa alla più alta e come va a finire
+  // l'apertura (uguale su tutti i telefoni: va nella foto): prima chi passa, poi le buste in ORDINE A CASO (🎲 18 nov 2026, il proprietario:
+  // «spargi le buste a caso, così non si capisce prima: è la nostra regola di non fare spoiler»; prima si aprivano dalla più bassa alla più
+  // alta e l'ultima era SEMPRE chi vince). L'ordine lo decide chi tiene la partita col seme (`seme`) e come va a finire
   function apertura(B, lista, r) {
-    var base = B.sp || 0, val = function (o) { return o.q || base; };
-    return { n: B.n, k: base ? 2 : 1, base: base, prezzo: r.prezzo,
-      buste: lista.slice().sort(function (x, y) { return val(x) - val(y); }).map(function (o) { return { id: o.id, nome: o.nome, q: o.q }; }),
+    var base = B.sp || 0, val = function (o) { return o.q || base; }, seme = 1 + Math.floor(Math.random() * 2000000000), rnd = semeRnd(seme);
+    var passa = lista.filter(function (o) { return !val(o); }), conti = lista.filter(function (o) { return val(o); });
+    for (var i = conti.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)), x = conti[i]; conti[i] = conti[j]; conti[j] = x; }
+    return { n: B.n, k: base ? 2 : 1, base: base, prezzo: r.prezzo, seme: seme,
+      buste: passa.concat(conti).map(function (o) { return { id: o.id, nome: o.nome, q: o.q }; }),
       fine: r.nessuno ? "nessuno" : r.primi.length === 1 ? "vince" : base ? "sorteggio" : "spareggio", primi: r.primi.map(function (o) { return o.id; }) };
   }
   function righeDi(ap) { return ap.buste.filter(function (b) { return b.q || ap.base; }).length + (ap.buste.some(function (b) { return !b.q && !ap.base; }) ? 1 : 0); }
   // 🃏 LE BUSTE SUL TAVOLO (6 nov 2026, il proprietario ha scelto l'idea A: «dobbiamo renderla proprio con tanta suspense»): le buste di tutti
   // coperte sul tavolo con la faccina; le luci si abbassano e parte il battito; chi passa gira subito col cartellino rosso; poi si girano una
-  // alla volta dalla più bassa; le ultime due (o l'unica) vengono avanti insieme, grandi: 🥁 testa a testa, il battito accelera, e si aprono
-  // NELLO STESSO ISTANTE. Tutti i tempi (in secondi dalla partenza) li dà pianoApri: dipendono SOLO da quante buste ci sono e da quante
-  // passano, MAI da chi vince o dalle cifre (niente spoiler dai tempi). Online la partenza è sull'orologio di chi tiene la partita (ap.parte)
+  // alla volta IN ORDINE A CASO (18 nov 2026: prima dalla più bassa, e l'ultima era sempre chi vince), tutte con lo stesso tempo, e su quella
+  // più alta finora la 👑 «in testa» (pari: 👑 su tutte e due), che può passare a una busta dopo; l'ULTIMA busta, qualunque sia, viene avanti
+  // grande contro la 👑 (già aperta): 🥁 il rullo, il battito accelera, e si apre. Tutti i tempi (in secondi dalla partenza) li dà pianoApri:
+  // dipendono SOLO da quante buste ci sono e da quante passano, MAI da chi vince o dalle cifre (niente spoiler dai tempi). Online la partenza
+  // è sull'orologio di chi tiene la partita (ap.parte)
   var APRI_VIA = 700, PALLONE_SRC = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(PALLONE_RIS);   // (online: si parte 0,7 s dopo la foto, così arriva a tutti prima)
-  function pianoApri(ap) {
-    var base = ap.base, passano = base ? [] : ap.buste.filter(function (b) { return !b.q; }), conti = ap.buste.filter(function (b) { return b.q || base; });
-    var n = conti.length, t = 1.1, P = { passa: null, giro: {}, duo: [], testa: null, apre: null };
+  function pianoApri(ap) {   // P.giro: quando si gira ogni busta; P.re: 👑 «testa» (la più alta finora) o «pari»; P.duo: [la 👑, l'ultima] (o solo l'ultima)
+    var base = ap.base, val = function (b) { return b.q || base; }, passano = base ? [] : ap.buste.filter(function (b) { return !b.q; }), conti = ap.buste.filter(function (b) { return val(b); });
+    var n = conti.length, t = 1.1, P = { passa: null, giro: {}, re: {}, duo: [], testa: null, apre: null };
     if (passano.length) { P.passa = t; t += 0.9; }
-    var bassi = n >= 2 ? conti.slice(0, n - 2) : [], passo = bassi.length ? Math.min(0.75, 2.4 / bassi.length) : 0;
-    bassi.forEach(function (b) { P.giro[b.id] = t; t += passo; });
-    if (n) { if (bassi.length) t += 0.25; P.testa = t; P.duo = conti.slice(Math.max(0, n - 2)).map(function (b) { return b.id; }); t += n >= 2 ? 2.7 : 1.9; }
+    var prima = n >= 2 ? conti.slice(0, n - 1) : [], passo = prima.length ? Math.min(0.85, 3.2 / prima.length) : 0, top = 0, capo = null;
+    prima.forEach(function (b) { P.giro[b.id] = t; t += passo; var v = val(b); if (v > top) { top = v; capo = b; P.re[b.id] = "testa"; } else if (v === top) P.re[b.id] = "pari"; });
+    if (n) { if (prima.length) t += 0.25; P.testa = t; P.duo = (capo ? [capo.id] : []).concat([conti[n - 1].id]); t += n >= 2 ? 2.7 : 1.9; }
     P.apre = t; P.fine = t + (n ? 0.55 : 0.2); P.dur = t + (n ? 1.3 : 1.8);   // (10 nov 2026: chi ha vinto resta 1 s in meno, poi l'«AGGIUDICATO!»)
     return P;
   }
@@ -10544,19 +10553,20 @@
     function busta(b, grande) {   // una busta: davanti (chiusa: ceralacca, faccina, nome) e dietro (aperta: la cifra o «PASSO»)
       var p = pers[b.id] || {}, img = nd("img", { class: "fc", alt: "", src: avBmp(cfgDi(b.nome, p.omino)) });   // (🖼️ in foto: girano)
       var passa = !cifra(b), dietro = nd("div", { class: "dietro" + (passa ? " passo" : "") }, [ img.cloneNode(), nd("span", { class: "q", text: passa ? "🙅 PASSO" : cifra(b) + (grande ? "" : " 💰") }), nd("b", { text: nome(b) }), !b.q && base ? nd("small", { text: "resta" }) : null ]);
-      var nodo = nd("div", { class: "bt" + (grande ? " gr" : "") }, [ nd("div", { class: "davanti" }, [ nd("img", { class: "pal", alt: "", src: palloneBmp() }), img, nd("b", { text: nome(b) }) ]), dietro ]);
+      var nodo = nd("div", { class: "bt" + (grande ? " gr" : "") }, [ nd("div", { class: "davanti" }, [ nd("img", { class: "pal", alt: "", src: palloneBmp() }), img, nd("b", { text: nome(b) }) ]), dietro, nd("i", { class: "re", text: "👑" }) ]);   // (👑 si vede su chi è in testa)
       nodo.setAttribute("data-id", b.id); return nodo;
     }
     var col = ap.buste.length <= 4 ? 2 : ap.buste.length <= 6 ? 3 : 4, tav = nd("div", { class: "tav c" + col }), nodi = {};
     ap.buste.forEach(function (b) { tav.appendChild(nodi[b.id] = busta(b)); });
-    var duoB = P.duo.map(function (id) { return ap.buste.filter(function (b) { return b.id === id; })[0]; }), duo = nd("div", { class: "duo n" + duoB.length }, duoB.map(function (b) { return busta(b, true); }));
+    var duoB = P.duo.map(function (id) { return ap.buste.filter(function (b) { return b.id === id; })[0]; }), duo = nd("div", { class: "duo n" + duoB.length }, duoB.map(function (b, i) { var x = busta(b, true); if (duoB.length === 2 && !i) x.className += " aperta gia capo"; return x; }));   // (la 👑, già aperta, contro l'ultima busta)
     if (duoB.length === 2) duo.insertBefore(nd("span", { class: "vs", text: "VS" }), duo.lastChild);
     var np = ap.buste.filter(primo).map(nome), nomiPrimi = np.length > 1 ? np.slice(0, -1).join(", ") + " e " + np[np.length - 1] : np.join("");
     var vinto = ap.buste.filter(primo)[0], titolo = nd("div", { class: "ban" }, [ nd("span", { text: base ? "⚔️ Spareggio: si aprono le buste…" : "✉️ Si aprono le buste…" }) ]);
     var fine = nd("div", { class: "fine", text: ap.fine === "vince" ? "🏆 " + (vinto && tu(vinto) ? "È tuo" : (vinto ? vinto.nome : "")) + " a " + ap.prezzo + " 💰" : ap.fine === "spareggio" ? "⚔️ Pari a " + ap.prezzo + " 💰! Spareggio tra " + nomiPrimi : ap.fine === "sorteggio" ? "🎡 Ancora pari: decide la ruota!" : "Nessuno lo vuole" });
     var cuore = nd("div", { class: "cuore", text: "❤️" });
     // (nel testa a testa le altre buste, già aperte, diventano una fila piccola sotto: faccina, nome e cifra)
-    var mini = nd("div", { class: "mini" }, ap.buste.filter(function (b) { return P.duo.indexOf(b.id) < 0; }).map(function (b) { var p = pers[b.id] || {}; return nd("span", { class: cifra(b) ? "" : "passo" }, [ nd("img", { alt: "", src: avBmp(cfgDi(b.nome, p.omino)) }), nd("b", { text: nome(b) }), nd("i", { text: cifra(b) ? cifra(b) + " 💰" : "passa" }) ]); }));
+    var capoB = duoB.length === 2 ? duoB[0] : null, pariCapo = function (b) { return !!capoB && P.giro[b.id] != null && cifra(b) === cifra(capoB); };   // (👑 anche su chi è pari con lei)
+    var mini = nd("div", { class: "mini" }, ap.buste.filter(function (b) { return P.duo.indexOf(b.id) < 0; }).map(function (b) { var p = pers[b.id] || {}; return nd("span", { class: cifra(b) ? "" : "passo" }, [ nd("img", { alt: "", src: avBmp(cfgDi(b.nome, p.omino)) }), nd("b", { text: nome(b) }), nd("i", { text: cifra(b) ? (pariCapo(b) ? "👑 " : "") + cifra(b) + " 💰" : "passa" }) ]); }));
     // (la riga di ogni busta, per le prove e per chi legge con lo schermo: come prima)
     var righe = nd("div", { class: "as-buste" }), passano = base ? [] : ap.buste.filter(function (b) { return !b.q; }), conti = ap.buste.filter(function (b) { return cifra(b); });
     if (passano.length) righe.appendChild(nd("div", { class: "r passa" }, [ nd("span", { text: "🙅" }), nd("b", { text: passano.map(nome).join(", ") }), nd("span", { text: passano.length > 1 ? "passano" : "passa" }) ]));
@@ -10573,12 +10583,20 @@
     // i passi del piano: [quando (s), cosa fare, il suono]
     var passi = [[0, function () { nodo.classList.add("giu"); }]];
     if (P.passa != null) passi.push([P.passa, function (sub) { passano.forEach(function (b) { gira(nodi[b.id], sub); }); }, function () { FX.tic(0.1); }]);
-    Object.keys(P.giro).forEach(function (id) { passi.push([P.giro[id], function (sub) { gira(nodi[id], sub); var b = ap.buste.filter(function (x) { return String(x.id) === id; })[0]; if (b) titolo.firstChild.textContent = nome(b) + ": " + cifra(b) + " 💰"; }, function () { FX.tic(0.4); }]); });
-    if (P.testa != null) passi.push([P.testa, function () { nodo.classList.add("testa"); P.duo.forEach(function (id) { if (nodi[id]) nodi[id].classList.add("via"); }); titolo.firstChild.textContent = P.duo.length > 1 ? "🥁 Testa a testa!" : "🥁 E l'ultima busta…"; },
+    Object.keys(P.giro).forEach(function (id) {   // una busta alla volta (in ordine a caso): la cifra e, se è la più alta finora, la 👑 «in testa»
+      var re = P.re[id];
+      passi.push([P.giro[id], function (sub) {
+        gira(nodi[id], sub); var b = ap.buste.filter(function (x) { return String(x.id) === id; })[0];
+        if (re === "testa") Object.keys(nodi).forEach(function (j) { nodi[j].classList.remove("capo"); });
+        if (re && nodi[id]) nodi[id].classList.add("capo");
+        if (b) titolo.firstChild.textContent = nome(b) + ": " + cifra(b) + " 💰" + (re === "testa" ? " · 👑 in testa" : re === "pari" ? " · 👑 pari in testa" : "");
+      }, function () { FX.tic(re ? 0.55 : 0.4); }]);
+    });
+    if (P.testa != null) passi.push([P.testa, function () { nodo.classList.add("testa"); P.duo.forEach(function (id) { if (nodi[id]) nodi[id].classList.add("via"); }); titolo.firstChild.textContent = P.duo.length > 1 ? "🥁 E ora l'ultima busta…" : "🥁 E l'ultima busta…"; },
       function () { rullo(P.apre - P.testa - 0.35); }]);
     passi.push([P.apre, function (sub) {
       nodo.classList.add("su"); nodo.classList.remove("testa");
-      [].forEach.call(duo.querySelectorAll(".bt"), function (n) { var b = ap.buste.filter(function (x) { return String(x.id) === n.getAttribute("data-id"); })[0]; gira(n, sub); if (b && primo(b)) n.classList.add(ap.fine === "vince" ? "vince" : "pari"); else n.classList.add("perde"); });
+      [].forEach.call(duo.querySelectorAll(".bt"), function (n) { var b = ap.buste.filter(function (x) { return String(x.id) === n.getAttribute("data-id"); })[0]; gira(n, sub); n.classList.remove("capo"); if (b && primo(b)) n.classList.add(ap.fine === "vince" ? "vince" : "pari"); else n.classList.add("perde"); });
       P.duo.forEach(function (id) { var n = nodi[id]; if (n) { n.classList.add("aperta"); } });
       titolo.firstChild.textContent = ap.fine === "nessuno" ? "🙅 Passano tutti" : titolo.firstChild.textContent;
     }, function () { if (P.duo.length) { piatto(); if (ap.fine === "vince") FX.festa(); if (vinto && tu(vinto) && ap.fine === "vince") vibra([30, 40, 30]); else if (P.duo.length) vibra(20); } }]);
@@ -10914,7 +10932,7 @@
     tasti[tasti.length - 1].childNodes.forEach && [].slice.call(tasti[tasti.length - 1].childNodes).forEach(function (b) { s._piede.appendChild(b); });
     t.mostra(s);
   }
-  // tutti hanno scritto: si aprono le buste nello stadio (dalla più bassa alla più alta), poi aggiudicato, spareggio, ruota o «nessuno»
+  // tutti hanno scritto: si aprono le buste nello stadio (in ordine a caso), poi aggiudicato, spareggio, ruota o «nessuno»
   function apriBusteFantaLocale(t, st) {
     var B = st.bustaF; if (!B) return; st.bustaF = null;
     var lista = B.gara.map(function (i) { return { id: i, nome: st.giocatori[i].nome, q: B.offerte[i] || 0 }; }), r = contaBuste(lista, B.sp), ap = apertura(B, lista, r);
