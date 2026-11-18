@@ -9,6 +9,24 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 376,
+    data: "18 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la scheda dei calciatori in ordine e i punti più grandi 📋",
+    descrizione: [
+      "📋 Toccando il quadretto di un amico durante la giornata, la finestra coi suoi calciatori è in ordine su ogni telefono (anche iPhone): una riga per calciatore con ruolo, figurina, nome e squadra, voto e fantavoto sotto «VOTO» e «FANTAVOTO» scritti una volta sola, i bonus coi simboli delle pagelle e la stagione sotto il titolo. Prima su iPhone le righe finivano una sopra l'altra.",
+      "🔎 Nei quadretti in alto con i punti di ognuno non c'è più la faccina: di chi è lo dicono il colore e il nome, e nome e punti sono più grandi.",
+      "🏷️ I nomi dei calciatori in campo non coprono più la barra del minuto in alto."
+    ]
+  },
+  {
+    v: 375,
+    data: "18 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la stagione scelta parte sempre 🔧",
+    descrizione: [
+      "🔄 Se l'app era aperta da prima di un aggiornamento, una stagione del passato (per esempio la 2019-20) poteva restare su «non arriva»: adesso l'app si ricarica da sola una volta e l'asta parte."
+    ]
+  },
+  {
     v: 374,
     data: "18 novembre 2026",
     titolo: "Mini Asta Fantacalcio: il vostro portiere ha sempre il suo nome 🧤",
