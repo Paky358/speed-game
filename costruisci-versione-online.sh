@@ -18,7 +18,7 @@ EXTRA=dist/extra.js
 ELENCO=js/elenco-giochi.js
 TMP=dist/.costruzione
 rm -rf "$TMP"; mkdir -p "$TMP"
-impronta() { md5sum "$1" | cut -c1-10; }
+impronta() { tr -d '\r' < "$1" | md5sum | cut -c1-10; }   # (18 nov 2026: senza i ritorni a capo di Windows, così la stessa versione ha sempre la stessa impronta in ogni cartella e i telefoni con l'app aperta non chiedono file che non ci sono più)
 # 🏙️ la città (casa, casinò, circolo, scavi): se in js/core.js c'è «var CITTA_VISIBILE = false» la versione online non la contiene
 # (nessuno la scarica: niente extra.js e niente citta.js, casino.js, casa.js, scavi.js). La pesca resta: serve alla Gara di pesca.
 CITTA=si; grep -q "var CITTA_VISIBILE = false" js/core.js && CITTA=no

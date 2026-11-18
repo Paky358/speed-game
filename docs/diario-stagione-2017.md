@@ -555,3 +555,114 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - **Corrette a mano** 5 proposte con la foto di un altro periodo: Ibrahimović (al Milan capelli lunghi raccolti), Icardi e Scamacca (non biondi in Serie A), Dimarco (castano scuro, corti), Salah (alla Roma ricci folti).
 - **Costo**: il limite settimanale era al 2% prima e al 2% dopo i 60 (meno dell'1%; 4 aiutanti Sonnet: prova da 3, taratura da 7, due lotti da 25). Nessuno senza foto. Wikimedia ha rallentato le richieste per un po': gli aiutanti hanno aspettato.
 - **Nel gioco**: `data/fanta-facce-bot.js` (chiave fc<numero>, vale in tutte le stagioni), nel pezzo "asta". Valgono subito in partita; nell'editor «🎨 Facce dei calciatori» la scheda «🤖 Da controllare» e il segno 🤖 nella riga; «Salva e avanti» le conferma (diventano di chi le conferma). Una faccia fatta a mano vince sempre sulla proposta. Prova sy4 (novità v372).
+
+## 18 nov: BATTITORI 2020-21 dal Deep Research (messaggio nuovo: senza chi è andato via a gennaio)
+- Regole: angoli e punizioni da Gemini solo se il calciatore è nel gioco con quella squadra in quella stagione (chi ha cambiato squadra a gennaio vale dove ha finito);
+  «non so» o fuori dal gioco = resta la stima (il primo nome della stima non ancora usato). Rigori: il 1° resta chi ne ha tirati di più nei dati di fantacalcio.it
+  (Gemini solo se nessuno ne ha tirati); 2° e 3° da Gemini. Le caselle ancora «non so» e i nomi scartati: `D:\SG-stagione-lavoro\ricerca\gemini-dr\non-so.txt`.
+- **2020-21**: 47 cambi; 23 caselle «non so» (di cui 23 nomi scartati)
+  - Atalanta angoli: Malinovskyi, Gosens → Malinovskyi, Ilicic, Gosens
+  - Atalanta punizioni: Malinovskyi, Ilicic → Malinovskyi, Muriel, Ilicic
+  - Benevento angoli: Hetemaj, Barba → Viola, Caprari, Hetemaj
+  - Benevento punizioni: Caprari, Insigne R. → Viola, Caprari, Insigne R.
+  - Benevento rigori: Viola, Sau, Caprari → Viola, Lapadula, Caprari
+  - Bologna angoli: Soriano, Svanberg → Barrow, Orsolini, Skov Olsen
+  - Bologna punizioni: Barrow, Soriano → Orsolini, Barrow, Sansone
+  - Bologna rigori: Orsolini, Barrow → Orsolini, Barrow, Sansone
+  - Cagliari angoli: Marin, Zappa → Marin, Lykogiannis, Nainggolan
+  - Cagliari punizioni: Joao Pedro, Marin → Lykogiannis, Joao Pedro, Nainggolan
+  - Cagliari rigori: Joao Pedro, Pavoletti, Simeone → Joao Pedro, Simeone, Pavoletti
+  - Crotone angoli: Pereira P., Reca → Pereira P., Reca, Molina S.
+  - Fiorentina angoli: Biraghi, Castrovilli → Biraghi, Pulgar, Ribery
+  - Fiorentina punizioni: Ribery, Castrovilli → Pulgar, Biraghi, Bonaventura
+  - Fiorentina rigori: Vlahovic, Castrovilli, Ribery → Vlahovic, Pulgar, Ribery
+  - Genoa angoli: Ghiglione, Badelj → Zajc, Badelj, Criscito
+  - Genoa punizioni: Pandev, Badelj → Criscito, Zajc, Badelj
+  - Genoa rigori: Gemini dice 1° Criscito, resta Scamacca (ne ha tirati di più nei dati)
+  - Genoa rigori: Scamacca, Pandev, Criscito → Scamacca, Criscito, Pandev
+  - Inter angoli: Hakimi, Brozovic → Brozovic, Eriksen, Hakimi
+  - Inter punizioni: Sanchez, Brozovic → Eriksen, Sanchez, Hakimi
+  - Juventus angoli: Cuadrado, Chiesa → Cuadrado, Dybala, Chiesa
+  - Juventus punizioni: Chiesa, Kulusevski → Ronaldo, Dybala, Kulusevski
+  - Lazio angoli: Milinkovic-Savic, Lazzari → Luis Alberto, Correa, Milinkovic-Savic
+  - Lazio punizioni: Milinkovic-Savic, Correa → Milinkovic-Savic, Luis Alberto, Correa
+  - Milan angoli: Calhanoglu, Hernandez T. → Calhanoglu, Hernandez T., Tonali
+  - Milan punizioni: Calhanoglu, Kessié → Calhanoglu, Ibrahimovic, Kessié
+  - Napoli angoli: Zielinski, Politano → Insigne, Mario Rui, Politano
+  - Napoli punizioni: Insigne, Zielinski → Mertens, Insigne, Politano
+  - Napoli rigori: Insigne, Osimhen, Mertens → Insigne, Mertens, Politano
+  - Parma angoli: Pezzella Giu., Hernani → Hernani, Brugman, Kurtic
+  - Parma punizioni: Hernani, Kucka → Brugman, Bruno Alves, Kucka
+  - Parma rigori: Kucka, Hernani → Kucka, Hernani, Cornelius
+  - Roma angoli: Mkhitaryan, Karsdorp → Pellegrini Lo., Veretout, Mkhitaryan
+  - Roma punizioni: Mkhitaryan, Pellegrini Lo. → Pellegrini Lo., Veretout, Mkhitaryan
+  - Roma rigori: Veretout, Mkhitaryan, Pellegrini Lo. → Veretout, Pellegrini Lo., Mkhitaryan
+  - Sampdoria angoli: Candreva, Damsgaard → Candreva, Ramirez, Jankto
+  - Sampdoria punizioni: Candreva, Jankto → Gabbiadini, Candreva, Quagliarella
+  - Sassuolo angoli: Djuricic, Traoré Hj. → Berardi, Djuricic, Locatelli
+  - Spezia angoli: Bastoni S., Estevez → Ricci M., Bastoni S., Verde
+  - Spezia punizioni: Gyasi, Verde → Ricci M., Gyasi, Farias
+  - Spezia rigori: Nzola, Verde, Maggiore → Nzola, Verde, Ricci M.
+  - Torino punizioni: Verdi, Mandragora → Verdi, Mandragora, Belotti
+  - Torino rigori: Belotti, Ansaldi → Belotti, Ansaldi, Zaza
+  - Udinese rigori: De Paul, Pereyra → De Paul, Pereyra, Okaka
+  - Verona angoli: Lazovic, Zaccagni → Dimarco, Miguel Veloso, Zaccagni
+  - Verona punizioni: Zaccagni, Lazovic → Miguel Veloso, Lazovic, Dimarco
+  - Nomi scartati perché non sono nel gioco con quella squadra (sotto le partite del listone o andati via): 23, tra cui Miranchuk (Atalanta), Iago Falque (Benevento), Cigarini e Benali (Crotone), Sensi e Kolarov (Inter), Cataldi (Lazio), El Shaarawy (Roma), Saponara (Spezia), Deulofeu (Udinese). Đuričić ora si riconosce (Đ = Dj).
+
+## 18 nov: BATTITORI 2021-22 dal Deep Research (messaggio nuovo)
+- Regole: angoli e punizioni da Gemini solo se il calciatore è nel gioco con quella squadra in quella stagione (chi ha cambiato squadra a gennaio vale dove ha finito);
+  «non so» o fuori dal gioco = resta la stima (il primo nome della stima non ancora usato). Rigori: il 1° resta chi ne ha tirati di più nei dati di fantacalcio.it
+  (Gemini solo se nessuno ne ha tirati); 2° e 3° da Gemini. Le caselle ancora «non so» e i nomi scartati: `D:\SG-stagione-lavoro\ricerca\gemini-dr\non-so.txt`.
+- **2021-22**: 48 cambi; 24 caselle «non so» (di cui 23 nomi scartati)
+  - Atalanta angoli: Pasalic, Malinovskyi → Malinovskyi, Koopmeiners, Pasalic
+  - Atalanta punizioni: Pasalic, Malinovskyi → Malinovskyi, Muriel, Pasalic
+  - Bologna angoli: Soriano, Orsolini → Orsolini, Barrow, Sansone
+  - Bologna punizioni: Barrow, Orsolini → Orsolini, Svanberg, Arnautovic
+  - Bologna rigori: Arnautovic, Orsolini → Arnautovic, Orsolini, Sansone
+  - Cagliari angoli: Marin, Nandez → Marin, Lykogiannis, Nandez
+  - Cagliari punizioni: Joao Pedro, Marin → Joao Pedro, Lykogiannis, Marin
+  - Cagliari rigori: Joao Pedro, Pavoletti, Deiola → Joao Pedro, Pavoletti, Keita B.
+  - Empoli angoli: Bajrami, Henderson L. → Bajrami, Stulac, Henderson L.
+  - Empoli punizioni: Bajrami, Zurkowski → Bajrami, Stulac, Henderson L.
+  - Empoli rigori: Pinamonti, Bajrami → Pinamonti, Bajrami, Cutrone
+  - Fiorentina angoli: Bonaventura, Saponara → Biraghi, Callejon, Bonaventura
+  - Fiorentina punizioni: Gonzalez N., Bonaventura → Biraghi, Torreira, Bonaventura
+  - Genoa angoli: Cambiaso, Rovella → Rovella, Cambiaso, Badelj
+  - Genoa punizioni: Rovella, Ekuban → Rovella, Ekuban, Criscito
+  - Inter angoli: Calhanoglu, Barella → Calhanoglu, Dimarco, Brozovic
+  - Inter punizioni: Calhanoglu, Barella → Calhanoglu, Dimarco, Brozovic
+  - Juventus angoli: Cuadrado, Locatelli → Cuadrado, Dybala, Bernardeschi
+  - Juventus punizioni: Dybala, Locatelli → Dybala, Vlahovic, Bernardeschi
+  - Juventus rigori: Vlahovic, Bonucci, Dybala → Dybala, Bonucci, Morata
+  - Lazio angoli: Milinkovic-Savic, Luis Alberto → Luis Alberto, Cataldi, Felipe Anderson
+  - Lazio punizioni: Milinkovic-Savic, Luis Alberto → Luis Alberto, Milinkovic-Savic, Cataldi
+  - Lazio rigori: Immobile, Zaccagni → Immobile, Luis Alberto, Felipe Anderson
+  - Milan angoli: Hernandez T., Diaz B. → Tonali, Hernandez T., Bennacer
+  - Milan punizioni: Rafael Leao, Tonali → Ibrahimovic, Tonali, Florenzi
+  - Napoli angoli: Zielinski, Mario Rui → Insigne, Mario Rui, Politano
+  - Napoli punizioni: Insigne, Zielinski → Insigne, Mertens, Mario Rui
+  - Napoli rigori: Insigne, Mertens → Insigne, Mertens, Zielinski
+  - Roma angoli: Veretout, Mkhitaryan → Pellegrini Lo., Veretout, Mkhitaryan
+  - Roma punizioni: Veretout, Mkhitaryan → Pellegrini Lo., Veretout, Mkhitaryan
+  - Roma rigori: Gemini dice 1° Pellegrini Lo., resta Abraham (ne ha tirati di più nei dati)
+  - Salernitana angoli: Mazzocchi, Zortea → Verdi, Ribery, Mazzocchi
+  - Salernitana punizioni: Verdi, Ribery → Verdi, Kastanos, Ribery
+  - Sampdoria rigori: Gemini dice 1° Quagliarella, resta Candreva (ne ha tirati di più nei dati)
+  - Sassuolo angoli: Kyriakopoulos, Frattesi → Berardi, Traoré Hj., Kyriakopoulos
+  - Sassuolo punizioni: Berardi, Frattesi → Berardi, Scamacca, Frattesi
+  - Sassuolo rigori: Berardi, Scamacca → Berardi, Scamacca, Defrel
+  - Spezia angoli: Bastoni S., Maggiore → Verde, Bastoni S., Kovalenko
+  - Spezia punizioni: Verde, Maggiore → Verde, Bastoni S., Kovalenko
+  - Spezia rigori: Gemini dice 1° Verde, resta Manaj (ne ha tirati di più nei dati)
+  - Torino angoli: Singo, Lukic → Singo, Rodriguez R., Brekalo
+  - Udinese angoli: Pereyra, Udogie → Deulofeu, Pereyra, Arslan
+  - Udinese punizioni: Deulofeu, Success → Deulofeu, Molina N., Pereyra
+  - Venezia angoli: Aramu, Crnigoj → Aramu, Busio, Vacca
+  - Venezia punizioni: Aramu, Okereke → Aramu, Kiyine, Vacca
+  - Venezia rigori: Aramu, Kiyine → Aramu, Kiyine, Henry
+  - Verona angoli: Lazovic, Faraoni → Miguel Veloso, Caprari, Ilic
+  - Verona punizioni: Caprari, Barak → Miguel Veloso, Caprari, Barak
+  - Rigori: chi è arrivato a gennaio da un'altra squadra di Serie A ha nei dati i rigori di tutte e due: per lui vale il 1° di Gemini (ricerca/gennaio/arrivati.json da gennaio.js). Cambia solo la Juventus 2021-22: 1° Dybala (Vlahović aveva tirato anche con la Fiorentina).
+  - Vlahović c'è solo nella Juventus, Verdi solo nella Salernitana; Sensi, Piątek, Sérgio Oliveira, Iličić e Mandragora non sono nel gioco con quella squadra (poche partite): 23 nomi scartati, resta la stima.
+  - Controllati e NON andati via a gennaio (Wikipedia non li aveva, ma era giusto così): Manaj (al Watford a luglio 2022), Torregrossa (alla Samp a gennaio 2021).
