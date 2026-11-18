@@ -197,30 +197,72 @@
       M = GT_MAPPE[k] = SGGettone.nuovaMappa(); M.t = Date.now();
       // prima i colori già decisi stasera (chi è nella Sala, nell'ordine in cui è entrato: così un vice o un trasloco non li cambia),
       // poi io, se non c'ero (chi tiene la serata)
-      [cuore.sala, cuore.salaG].forEach(function (S) { if (S && S.membri) S.membri.forEach(function (m) { if (m && m.nome && SGGettone.eGettone(m.omino)) gtMettiCon(M, String(m.nome).trim().slice(0, 16), m.omino); }); });
-      var io = profiloAttivo(), nIo = ioNome || (io && io.nome) || "";
-      if (nIo) SGGettone.assegna(M, String(nIo).trim().slice(0, 16), (cuore.mioGettone && cuore.mioGettone()) || SGGettone.riserva(nIo));
+      // (18 nov 2026: anche chi non ha ancora il colore scritto, es. chi ha aperto la Sala, prende il suo nell'ordine d'arrivo,
+      // prima di chi arriva dopo: così il primo arrivato non perde mai il suo)
+      // 🎨 prima di tutto i colori di tutta la serata, anche di chi è uscito (arrivano nella foto della Sala: campo col),
+      // così se la Sala passa a me nessuno cambia colore e chi torna ritrova il suo
+      var F = GT_FOTO[k];
+      if (F && F.o && F.c) F.o.forEach(function (n) { var x = F.c[n]; if (typeof n !== "string" || M.col[n] || !SGGettone.COLORI.some(function (c) { return c.k === x; })) return; for (var q in M.col) if (M.col[q] === x) return; if (x) { M.col[n] = x; M.ordine.push(n); } });
+      var io = profiloAttivo(), nIo = String(ioNome || (io && io.nome) || "").trim().slice(0, 16);
+      var gia = [];
+      [cuore.sala, cuore.salaG].forEach(function (S) { if (S && S.membri) S.membri.forEach(function (m) { if (m && m.nome && SGGettone.eGettone(m.omino)) gia.push({ nome: String(m.nome).trim().slice(0, 16), omino: m.omino }); }); });
+      gia.forEach(function (m) { if (m.nome === nIo) m.omino = gtConMio(m.omino, k); });   // (io: col colore che mi avevano dato stasera)
+      gia.forEach(function (m) { gtMettiCon(M, m.nome, m.omino); });
+      gia.forEach(function (m) { if (!M.col[m.nome]) SGGettone.assegna(M, m.nome, m.omino); });
+      if (nIo) gtColore(M, nIo, gtConMio((cuore.mioGettone && cuore.mioGettone()) || SGGettone.riserva(nIo), k));
       gtSalva();
     }
     return M;
   }
+  // la serata che tengo io: la Sala che tengo (anche mentre apro la stanza di un gioco), se no la stanza che tengo
+  function gtChiaveMia() {
+    if (cuore.sala && cuore.sala.codice && cuore.sala.codice !== "…") return cuore.sala.codice;
+    if (!GT_ATTIVA) return null;
+    var k = gtChiave(GT_ATTIVA); return k === "?" ? null : k;
+  }
+  function gtColore(M, nome, g) { gtMettiCon(M, nome, g); return SGGettone.assegna(M, nome, g); }
+  // 🎨 il colore che mi hanno dato stasera (lo leggo nelle foto di chi tiene la serata) e lo riporto quando rientro, così un host
+  // nuovo (vice, duello, ripresa) me lo lascia. Una memoria per serata: il codice della Sala (18 nov 2026)
+  var GT_MIO = {}; try { GT_MIO = JSON.parse(sessionStorage.getItem("sg-gt-mio") || "{}") || {}; } catch (e) { GT_MIO = {}; }
+  var GT_FOTO = {}; try { GT_FOTO = JSON.parse(sessionStorage.getItem("sg-gt-foto") || "{}") || {}; } catch (e) { GT_FOTO = {}; }   // i colori della serata visti nella Sala
+  // per la foto della Sala: i colori di tutta la serata (ordine d'arrivo + colore), anche di chi è uscito
+  function gtMappaFoto(k) { var M = GT_MAPPE[k]; return M && M.ordine && M.ordine.length ? { o: M.ordine.slice(-40), c: M.col } : undefined; }
+  function gtSerataOspite() { var S = cuore.salaG; return S && S.codice && S.codice !== "…" ? S.codice : null; }
+  function gtNomeMio() { var S = cuore.salaG; return String((S && S.nome) || (profiloAttivo() || {}).nome || "").trim().slice(0, 16); }
+  function gtConMio(g, kk) {
+    var k = kk || (cuore.sala && cuore.sala.codice && cuore.sala.codice !== "…" ? cuore.sala.codice : gtSerataOspite()), x = k && GT_MIO[k];
+    if (!g || !x || !x.k || !(Date.now() - (x.t || 0) < 12 * 3600 * 1000)) return g;
+    var c = {}; for (var p in g) c[p] = g[p]; c.k = x.k; return c;
+  }
+  function gtRicordaMio(m) {
+    var k = gtSerataOspite(), io = gtNomeMio();
+    if (!k || !m || m.t !== "sala") return;
+    if (m.col && Array.isArray(m.col.o) && m.col.c && typeof m.col.c === "object") { GT_FOTO = {}; GT_FOTO[k] = { o: m.col.o.slice(-40), c: m.col.c }; try { sessionStorage.setItem("sg-gt-foto", JSON.stringify(GT_FOTO)); } catch (e) {} }
+    if (!io || !Array.isArray(m.membri)) return;
+    var id = cuore.salaG && cuore.salaG.myId, me = m.membri.filter(function (x) { return x && (id ? x.id === id : x.nome === io); })[0];
+    if (!me || !me.omino || !me.omino.k || (GT_MIO[k] && GT_MIO[k].k === me.omino.k)) return;
+    GT_MIO[k] = { k: me.omino.k, t: Date.now() };
+    try { sessionStorage.setItem("sg-gt-mio", JSON.stringify(GT_MIO)); } catch (e) {}
+  }
   function gtAssegnaJoin(SV, nome, omino) {
     if (!gtOn()) return omino;
     var ioN = SV && SV.nomi && SV.nomi.__io, M = gtMappa(gtChiave(SV), ioN);
-    if (SGGettone.eGettone(omino)) gtMettiCon(M, nome, omino);   // (ha già un colore stasera e nessuno l'ha preso: lo tiene)
-    var g = SGGettone.assegna(M, nome, omino); M.t = Date.now(); gtSalva(); try { SGGettone.prepara(g.e); } catch (e) {} return g;   // (la sua immagine arriva già in saletta)
+    var g = gtColore(M, nome, omino); M.t = Date.now(); gtSalva(); try { SGGettone.prepara(g.e); } catch (e) {} return g;   // (la sua immagine arriva già in saletta)
   }
   // il mio gettone col colore della serata che tengo (per chi entra: quello che ho scelto, il colore lo decide l host)
   function gtMio(g, nome) {
     if (GT_ATTIVA && cuore.SVH[GT_ATTIVA.codice] !== GT_ATTIVA) GT_ATTIVA = null;   // (la stanza che tenevo è chiusa)
-    if (!gtOn() || !GT_ATTIVA || !g) return g;
-    var M = gtMappa(gtChiave(GT_ATTIVA), nome); return SGGettone.assegna(M, String(nome || (profiloAttivo() || {}).nome || "").trim().slice(0, 16), g);
+    if (!gtOn() || !g) return g;
+    var kS = gtChiaveMia(); if (!kS) return gtConMio(g);   // (la stanza non ha ancora il codice: niente mappa «?»)
+    var n = String(nome || (profiloAttivo() || {}).nome || "").trim().slice(0, 16), M = gtMappa(kS, nome), prima = M.col[n], r = gtColore(M, n, gtConMio(g));
+    if (M.col[n] !== prima) gtSalva();   // (si legge spesso: si salva solo quando cambia)
+    return r;
   }
   // i Bot nella serata che tengo: il loro colore se è libero, se no il primo libero (mai quello di una persona entrata prima)
   function gtBot(nome, g) {
     if (GT_ATTIVA && cuore.SVH[GT_ATTIVA.codice] !== GT_ATTIVA) GT_ATTIVA = null;
-    if (!gtOn() || !GT_ATTIVA || !g) return g;
-    var M = gtMappa(gtChiave(GT_ATTIVA)), b = SGGettone.assegna(M, "🤖 " + nome, g); gtSalva(); return b;
+    var kS = gtChiaveMia(); if (!gtOn() || !g || !kS) return g;
+    var M = gtMappa(kS), b = gtColore(M, "🤖 " + nome, g); gtSalva(); return b;
   }
   // chi entra da amico: le emoji di chi c'è si preparano appena arriva una foto (così nei disegni-immagine dei giochi c'è già quella 3D)
   var GT_SCAN = 0;
@@ -654,6 +696,7 @@
       var onMsg = cb.onMsg;
       cb.onMsg = function (m) {
         gtPreparaDa(m);   // 😀
+        if (sala) gtRicordaMio(m);   // 🎨 il colore che mi hanno dato stasera
         if (RR && m && typeof m === "object") {
           if (m.t === "__ris") { prendiCopia(R, m); return; }
           if (m.t === "__rp") { RR.pausaVista = m.p ? Date.now() : 0; return; }
@@ -928,7 +971,7 @@
   cuore.ricordaMiaSala = ricordaMiaSala; cuore.ricordaNomeStanza = ricordaNomeStanza; cuore.ricordaSalaIeri = ricordaSalaIeri;
   cuore.ricordaStanza = ricordaStanza; cuore.rientraStanza = rientraStanza; cuore.ripresaDi = ripresaDi; cuore.ripresaValida = ripresaValida;
   cuore.riservaPer = riservaPer; cuore.salaDiIeri = salaDiIeri; cuore.scordaRipresa = scordaRipresa; cuore.scriviRipresa = scriviRipresa;
-  cuore.gtMio = gtMio; cuore.gtBot = gtBot;   // 😀 il mio gettone col colore della serata che tengo
+  cuore.gtMio = gtMio; cuore.gtBot = gtBot; cuore.gtMappaFoto = gtMappaFoto;   // 😀 il mio gettone col colore della serata che tengo
   cuore.segnaLinkSessione = segnaLinkSessione; cuore.stanzaRecente = stanzaRecente; cuore.tieniAcceso = tieniAcceso; cuore.togliGuardo = togliGuardo;
   Object.defineProperty(cuore, "GUARDO", { get: function () { return GUARDO; }, configurable: true });
   Object.defineProperty(cuore, "NOMI_SEME", { get: function () { return NOMI_SEME; }, set: function (v) { NOMI_SEME = v; }, configurable: true });

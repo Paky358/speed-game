@@ -75,7 +75,12 @@
   function conGettone(d) {
     if (!d || !gtAcceso()) return d;
     if (!("ominoAvatar" in d)) d.ominoAvatar = d.omino || null;
-    d.omino = d.gettone && SGGettone.eGettone(d.gettone) ? SGGettone.norm(d.gettone) : null;
+    var base = d.gettone && SGGettone.eGettone(d.gettone) ? SGGettone.norm(d.gettone) : null;
+    // 🎨 (18 nov 2026) .omino col colore della serata: i giochi che prendono il mio gettone dal profilo (chi tiene la partita)
+    // lo mandano col colore deciso stasera, non col 1° scelto (vedi cuore.gtMio in js/cuore/rete.js)
+    Object.defineProperty(d, "omino", { configurable: true, enumerable: true,
+      get: function () { var c = window.SGCuore; try { return base && c && c.gtMio ? c.gtMio(base, d.nome) : base; } catch (e) { return base; } },
+      set: function (v) { base = v; } });
     return d;
   }
   function caricaProfilo(uid) {
