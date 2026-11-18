@@ -19,6 +19,14 @@ window.SG_NOVITA = [
     ]
   },
   {
+    v: 375,
+    data: "18 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la stagione scelta parte sempre 🔧",
+    descrizione: [
+      "🔄 Se l'app era aperta da prima di un aggiornamento, una stagione del passato (per esempio la 2019-20) poteva restare su «non arriva»: adesso l'app si ricarica da sola una volta e l'asta parte."
+    ]
+  },
+  {
     v: 374,
     data: "18 novembre 2026",
     titolo: "Mini Asta Fantacalcio: il vostro portiere ha sempre il suo nome 🧤",

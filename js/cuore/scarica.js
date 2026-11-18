@@ -198,6 +198,7 @@
 
   // ---- al cuore: quello di questo pezzo che usano il cuore e gli altri pezzi ----
   cuore.caricaPezzo = caricaPezzo;   // (gli avatar illustrati: pezzo "avatar-a")
+  cuore.ricaricaSeNuova = ricaricaSeNuova;   // (18 nov 2026: anche i pezzi delle stagioni della Mini Asta, che non passano da aspettaGioco)
   cuore.aspettaGioco = aspettaGioco; cuore.giocoPronto = giocoPronto; cuore.precarica = precarica; cuore.scaricaGioco = scaricaGioco;
   cuore.unisciScheda = unisciScheda; cuore.schedeVecchie = VECCHIE;
 })();
