@@ -375,6 +375,7 @@
   // stL (18 nov 2026, «la 2019-20 non parte») la stagione (--opz stagione, e nomi: ["IL PAPPONE"] = da solo) SULLO STESSO TELEFONO:
   //     dalla home alla prima chiamata dell'asta, con la scritta dell'anno, e senza errori nella pagina
   COPIONE.aggiungi("stL", { nome: "Stagione (--opz stagione) sullo stesso telefono: l'asta parte", fai: async function (opz) {
+    var q = function (w, s) { return w.document.querySelector(s); }, S17 = "2017-18";
     var ST = (opz && opz.stagione) || S17, nomi = (opz && opz.nomi) || ["Paky", "Giulia", "Luca"];
     var P = await W.apriTel(nomi[0], { x: 0, pa: true, prima: function (w) { w.__imp = { formato: "fanta", stagione: ST }; } });
     var err = []; P.addEventListener("error", function (e) { err.push(e.message); }); P.addEventListener("unhandledrejection", function (e) { err.push(String(e.reason && (e.reason.stack || e.reason))); });
@@ -388,7 +389,7 @@
       var b = qa(P, ".schermata .piede button").filter(function (x) { return /Avanti|Comincia|Gioca|Inizia|Via|▶|Prova da solo/.test(x.textContent) && !x.disabled; })[0]; if (b) b.click(); }
     if (!await W.aspetta(function () { return P.__t; }, 5000)) no("la partita non parte («" + A.T(P).slice(0, 120) + "») " + err.join(" / "));
     await W.aspetta(function () { return W.clicca(P, /Comincia l.asta/); }, 8000); await W.dorme(800);
-    var ok = await W.aspetta(function () { return q(P, ".as-stagione") && /\d/.test(A.T(P)); }, 15000);
+    var ok = await W.aspetta(function () { return /Serie A \d{4}-\d{2}/.test(A.T(P)) && /Chi offre|prezzo di partenza/.test(A.T(P)); }, 15000);
     await W.dorme(2500);
     if (err.length) no("errori nella pagina: " + err.slice(0, 3).join(" / "));
     if (!ok) no("l'asta non parte o manca la scritta dell'anno («" + A.T(P).slice(0, 160) + "»)");

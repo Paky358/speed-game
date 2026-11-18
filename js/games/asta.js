@@ -2263,7 +2263,12 @@
     if (stagionePronta(id)) { if (fatto) fatto(true); return; }
     var C = window.SGCuore, info = STAGIONI[id];
     if (!(C && C.caricaPezzo && info)) { if (fatto) fatto(false); return; }
-    C.caricaPezzo(info.pezzo).then(function () { if (fatto) fatto(stagionePronta(id)); }, function () { if (fatto) fatto(false); });
+    // (18 nov 2026, «la 2019-20 non parte»: con l'app aperta da prima di una pubblicazione il pezzo della stagione ha l'impronta vecchia, 404:
+    // come per i giochi, la pagina si ricarica una volta e prende la versione nuova; prima restava «non arriva» con Riprova che falliva sempre)
+    C.caricaPezzo(info.pezzo).then(function () { if (fatto) fatto(stagionePronta(id)); }, function (e) {
+      if (!C.ricaricaSeNuova) { if (fatto) fatto(false); return; }
+      C.ricaricaSeNuova(e).then(function (si) { if (!si && fatto) fatto(false); }, function () { if (fatto) fatto(false); });
+    });
   }
   function nomeStagione(id) { return id && STAGIONI[id] ? STAGIONI[id].nome : ""; }
   function tabelleSquadre() {   // (le tabelle delle squadre che una stagione può cambiare: copia di quelle di oggi la prima volta)
