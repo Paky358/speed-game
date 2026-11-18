@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 372,
+    data: "18 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: le facce vere dei 60 calciatori più forti 🧑",
+    descrizione: [
+      "📷 Immobile, Lautaro, Osimhen, Leão, Dybala, Kvaratskhelia e gli altri 60 calciatori più importanti hanno la faccia presa dalla loro foto: pelle, capelli, taglio e barba come nella realtà, in tutte le stagioni."
+    ]
+  },
+  {
     v: 371,
     data: "17 novembre 2026",
     titolo: "Mini Asta Fantacalcio: i campioni che mancavano nelle stagioni passate ⭐",

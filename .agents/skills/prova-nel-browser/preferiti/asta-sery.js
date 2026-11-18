@@ -142,7 +142,7 @@
     var ko = []; W.BR.pubblici = {};
     var w = await apri("IL PAPPONE", 0); await w.SG.scaricaGioco("asta"); var S = w.SGAstaAspetto, M = S.mappe(); M.p = {}; M.s = {}; S.unisci();
     var pB = pidDi(w, "Barella (Inter)"), pT = pidDi(w, "Thuram (Inter)");
-    w.SG_FANTA_FACCE_BOT = w.SG_FANTA_FACCE_BOT || {}; var vecchie = JSON.stringify(w.SG_FANTA_FACCE_BOT);
+    var vecchie = JSON.stringify(w.SG_FANTA_FACCE_BOT || {}); w.SG_FANTA_FACCE_BOT = {};   // (solo le due di prova: quelle vere le rimette alla fine)
     w.SG_FANTA_FACCE_BOT[pB] = { p: 6, c: "biondo", t: "cresta", b: "piena", f: "squadrato" };
     w.SG_FANTA_FACCE_BOT[pT] = { p: 7, c: "nero", t: "rasato", b: "corta" };
     var v = S.vero("Barella (Inter)"); if (v.p !== 6 || v.t !== "cresta" || v.fonte !== "bot" || v.f !== "squadrato") ko.push("la proposta non vale in partita: " + JSON.stringify(v));
