@@ -3064,11 +3064,14 @@
         var ru = FANTA_RUOLI[c.ruolo] || {};
         S.magliaImg.src = magliaDietro(c); S.ruolo.textContent = ru.breve || ""; S.ruolo.className = "st-ruolo as-rb-" + c.ruolo;
         S.squadra.textContent = S.squadraPiena = c.squadra || ""; S.nome.textContent = c.nome; rianima(S.schermo, "entra");
-        vsMetti(S, avversariDi(c.squadra));   // 🆚 (13 nov 2026: l'overall dell'avversario sempre intero, vsAdatta)
+        S.vsOra = avversariDi(c.squadra); vsMetti(S, S.vsOra);   // 🆚 (13 nov 2026: l'overall dell'avversario sempre intero, vsAdatta)
         if (S.ovrB) S.ovrB.textContent = OVR_ASTA && OVR.on ? "⭐ " + overallDi(c) : "";   // ⭐ (⚙️ «L'overall all'asta»: si vede già adesso)
         [350, 1200].forEach(function (ms) { setTimeout(function () { if (STADIO === S && S.carta === k) vsAdatta(S); }, ms); });   // 🆚 (di nuovo quando è arrivato il carattere vero: prima si misurava col carattere di riserva, più stretto)
         etichetteTiri(S, rigoristaN(c), tiroN(c, "punizioni"), tiroN(c, "angoli"));   // i rigoristi e chi batte le punizioni quest'anno: all'asta lo sanno tutti, come nel fantacalcio vero
       }
+    }
+    if (c && avversariDi(c.squadra) !== S.vsOra) {   // 🆚 (18 nov 2026) le partite arrivate col calciatore già sul maxischermo: cambia solo la riga «🆚», niente lampeggio
+      S.vsOra = avversariDi(c.squadra); vsMetti(S, S.vsOra); vsAdatta(S); setTimeout(function () { if (STADIO === S) vsAdatta(S); }, 400);
     }
     var bst = d.fase === "busta" || d.fase === "apri" || d.fase === "ruota";   // ✉️ (le buste: il prezzo non c'è)
     prezzoSchermo(S.prezzoN, !c ? "" : bst ? "✉️" : d.esito && d.esito.tipo === "accollo" && !d.prezzo ? "—" : d.prezzo);   // (nessuno lo vuole: niente "0 💰")
@@ -11708,6 +11711,7 @@
       if (vm.fase === "lobby") caricaStagione(sgV);   // (in saletta si disegna come sempre: intanto arriva)
       else { aspettaStagioneVM(t, sgV, cb); return; }
     } else usaStagione(sgV);
+    COPPIE_ORA = vm.coppie || null;   // 🆚 (18 nov 2026, il proprietario: sugli iPhone il PRIMO calciatore non diceva contro chi gioca) di nuovo DOPO la stagione: usaStagione le azzera quando la stagione cambia
 
 
     if (vm.fase === "lobby") { fermaConta(STADIO); STADIO = null; cb._bustaF = null; return lobbyAsta(t, vm, cb); }
