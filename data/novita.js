@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 379,
+    data: "18 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: le buste si aprono a caso ✉️👑",
+    descrizione: [
+      "✉️ Nell'asta a buste le buste non si aprono più dalla più bassa alla più alta (l'ultima era sempre quella che vinceva): dopo chi passa si aprono una alla volta in ordine a caso, tutte con lo stesso tempo.",
+      "👑 Sulla busta più alta finora compare la corona «in testa»: chi è in testa può essere superato da una busta dopo.",
+      "🥁 L'ultima busta, qualunque sia, viene avanti grande contro quella con la corona, col rullo di tamburi: può vincere, pareggiare o perdere."
+    ]
+  },
+  {
     v: 378,
     data: "18 novembre 2026",
     titolo: "Il tuo colore resta tuo per tutta la serata 🎨",
