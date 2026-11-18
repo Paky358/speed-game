@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 18 nov 2026 16:30 · 📅 Stagioni del passato · PUBBLICATO · 🤖 facce dei 60 calciatori più importanti prese dalle foto libere (aiutanti Sonnet; taratura su 10: pelle 9/10, capelli 9/10, taglio 8/10, barba 9/10; meno dell'1% del limite), da controllare nell'editor (novità v372); + Milinković-Savić alle punizioni della Lazio 2019-20 · master
 - 17 nov 2026 23:56 · 📅 Stagioni del passato · PUBBLICATO · regola: chi a gennaio ha lasciato la Serie A (estero o Serie B) non c'è in quella stagione, né all'asta né in campo (16 tolti, fonte Wikipedia, elenco nel diario; Boga 2022-23 resta) (novità v371 aggiornata) · master
 - 17 nov 2026 23:46 · 📅 Stagioni del passato · PUBBLICATO · regola nuova in tutte le 11 stagioni: all'asta anche chi ha quotazione finale ≥ 16 e almeno 10 partite (35 in più, con altezza e numero quando è sicuro; elenco nel diario) (novità v371) · master
 - 17 nov 2026 23:38 · 📅 Stagioni del passato · PUBBLICATO · 2019-20: Ibrahimović all'asta del Milan (eccezione del proprietario: 18 partite, 10 gol, quot. 35; n. 21, 195 cm; 1° rigorista) · master
