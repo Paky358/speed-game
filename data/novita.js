@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 377,
+    data: "18 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: le pagelle sempre nelle stesse pagine 📄",
+    descrizione: [
+      "📄 Le pagelle (all'intervallo e alla fine) si dividono in pagine sempre allo stesso modo: fino a 6 giocatori stanno sempre tutte in una pagina (se serve, righe e simboli si stringono un po'); con di più, le pagine sono sempre le stesse su quel telefono, qualunque bonus ci sia. Prima a volte in 5 venivano 3 + 2 pagine anche se il posto c'era."
+    ]
+  },
+  {
     v: 376,
     data: "18 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la scheda dei calciatori in ordine e i punti più grandi 📋",
