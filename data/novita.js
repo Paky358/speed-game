@@ -9,6 +9,22 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 374,
+    data: "18 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: il vostro portiere ha sempre il suo nome 🧤",
+    descrizione: [
+      "🧤 Quando il portiere che avete comprato esce dalla porta (sale in area nell'ultimo assalto, va a saltare sul calcio d'angolo, segna di testa, esce sui falli e sui cartellini) ha il nome e il colore di chi l'ha comprato, come gli altri vostri: prima sembrava un calciatore di nessuno."
+    ]
+  },
+  {
+    v: 373,
+    data: "18 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: contro chi gioca già dal primo calciatore 🆚",
+    descrizione: [
+      "🆚 Online, sui telefoni degli amici il primo calciatore dell'asta non diceva contro chi gioca (dal secondo sì): ora la riga «🆚» c'è da subito, anche con le stagioni passate e anche per chi ricarica la pagina a metà asta."
+    ]
+  },
+  {
     v: 372,
     data: "18 novembre 2026",
     titolo: "Mini Asta Fantacalcio: le facce vere dei 60 calciatori più forti 🧑",
