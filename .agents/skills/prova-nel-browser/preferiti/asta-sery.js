@@ -163,4 +163,25 @@
     if (ko.length) no(ko.join(" | "));
     return "la proposta vale in partita (pelle, taglio, forma); la faccia a mano vince; «🤖 Da controllare · 1» con il segno nella riga e la scritta nella scheda; Salva e avanti la conferma (va nella mappa di IL PAPPONE, poi 0)";
   } });
+
+  // sy5 (18 nov 2026) «📋 Copia l'elenco dei fatti»: copia i fc<numero> di chi ha una faccia fatta a mano da Paky o da Sery (anche quelle
+  //     vecchie col nome, e quelle solo per un anno con «|stagione»), MAI le proposte 🤖 né quelle tolte con «Di partenza»
+  COPIONE.aggiungi("sy5", { nome: "Facce: «📋 Copia l'elenco dei fatti» copia i numeri di chi è fatto a mano da Paky o Sery", fai: async function () {
+    var ko = []; W.BR.pubblici = {};
+    var w = await apri("IL PAPPONE", 0); var e = await editor(w); if (e) no(e);
+    var S = w.SGAstaAspetto, M = S.mappe(), pB = pidDi(w, "Barella (Inter)"), pT = pidDi(w, "Thuram (Inter)"), pD = pidDi(w, "Dimarco (Inter)");
+    M.p = { "Martinez L. (Inter)": { p: 3, c: "nero", t: "corti", b: "niente", ok: 1 } }; M.p[pB] = { p: 2, ok: 1, ts: 5 }; M.p[pD + "|2017-18"] = { p: 2, ok: 1, ts: 5 };
+    M.s = {}; M.s[pT] = { p: 7, ok: 1, ts: 6 }; M.s["fc999999"] = { del: 1, ts: 9 }; S.unisci();
+    var preso = null; try { Object.defineProperty(w.navigator, "clipboard", { value: { writeText: function (x) { preso = x; return Promise.resolve(); } }, configurable: true }); } catch (x) { ko.push("non riesco a finta-copiare"); }
+    var b = w.document.querySelector(".fa-ed-copia"); if (!b) no("manca il tasto «📋 Copia l'elenco dei fatti»");
+    b.click(); await W.dorme(300);
+    var pL = pidDi(w, "Martinez L. (Inter)"), righe = String(preso || "").split("\n").slice(1);
+    [pB, pT, pL, pD + "|2017-18"].forEach(function (x) { if (righe.indexOf(x) < 0) ko.push("manca " + x); });
+    if (righe.indexOf("fc999999") >= 0) ko.push("c'è anche quello tolto");
+    if (Object.keys(w.SG_FANTA_FACCE_BOT || {}).some(function (x) { return righe.indexOf(x) >= 0 && [pB, pT, pL].indexOf(x) < 0; })) ko.push("ci sono anche le proposte 🤖");
+    if (!/Copiati 4/.test(b.textContent)) ko.push("il tasto dice «" + b.textContent + "»");
+    M.p = {}; M.s = {}; S.unisci();
+    if (ko.length) no(ko.join(" | ") + " · copiato: " + String(preso).slice(0, 200));
+    return "copiati 4: Barella (Paky), Thuram (Sery), Lautaro (faccia vecchia col nome → " + pL + "), Dimarco solo 2017-18; niente tolti né proposte 🤖";
+  } });
 })();

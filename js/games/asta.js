@@ -526,6 +526,7 @@
     ".fa-ovunque .fa-ed-riga.pelle .fa-ed-c.tondo{flex:1 1 0;min-width:0;width:auto;max-width:52px;height:44px;}",
     ".fa-ovunque .fa-ed-riga.pelle{flex-wrap:nowrap;gap:6px;justify-content:space-between;}",
     ".fa-ed-conta{flex:1;text-align:center;font-size:.8rem;font-weight:800;color:#ffc247;}",
+    ".fa-ed-copia{background:none;border:1px solid rgba(255,255,255,.18);border-radius:10px;color:#a6acc8;font-size:.7rem;font-weight:800;padding:4px 7px;margin-right:6px;white-space:nowrap;}",
     ".fa-ed-fil{display:flex;gap:6px;margin-top:8px;}.fa-ed-fil select{flex:1;min-width:0;padding:9px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:#151a2e;color:#f4f5fb;font-weight:700;font-size:.85rem;}",
     ".fa-ed-stag{display:block;font-size:.72rem;color:#a6acc8;margin-top:2px;}",
     ".fa-ovunque .fa-ed-tasti .btn-primario{flex:1;min-height:48px;font-size:1rem;}",
@@ -6726,8 +6727,18 @@
     var LISTE = ovunque ? listeFacce(tutti) : null, qLista = ovunque ? mioAsp() : "t";   // 📋 di partenza la propria lista
     function inLista(c) { return qLista === "t" || !LISTE || !!LISTE[qLista][c.pid]; }
     function daControllare() { return tutti.filter(function (c) { return ovunque ? !fatta(c) && passaFiltri(c) && inLista(c) : aspettoVero(c.k).dc; }); }   // (🎨: «Da fare» = non ancora sistemati da nessuno dei due)
+    // 📋 (18 nov 2026, il proprietario: «quelle che ho già fatto io non ricontrollarle neanche») copia negli appunti i numeri fantacalcio.it
+    // (fc<numero>, con «|stagione» se è una faccia solo per quell'anno) dei calciatori che hanno una faccia fatta a mano da Paky o da Sery
+    var copiaFatti = nd("button", "fa-ed-copia", "📋 Copia l'elenco dei fatti");
+    copiaFatti.onclick = function () {
+      var visti = {}; Object.keys(ASP_PROP).forEach(function (k) { var x = ASP_PROP[k]; if (!x || !x.p) return; var pid = /^fc\d+/.test(k) ? k : (personaDi(k) || k); visti[pid] = 1; });
+      var l = Object.keys(visti).sort(), testo = "facce fatte a mano (" + l.length + "):\n" + l.join("\n");
+      function fatto(ok) { copiaFatti.textContent = ok ? "✓ Copiati " + l.length : "⚠️ Non copiato"; setTimeout(function () { copiaFatti.textContent = "📋 Copia l'elenco dei fatti"; }, 2500); }
+      function vecchio() { try { var ta = document.createElement("textarea"); ta.value = testo; ta.style.cssText = "position:fixed;left:-9999px;top:0"; document.body.appendChild(ta); ta.select(); var ok = document.execCommand("copy"); ta.remove(); fatto(ok); } catch (e) { fatto(false); } }
+      try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(testo).then(function () { fatto(true); }, vecchio); else vecchio(); } catch (e) { vecchio(); }
+    };
     var R = nd("div", "fa-ed oro" + (ovunque ? " fa-ovunque" : "")), testa = nd("div", "fa-ed-testa"), chiudi = nd("button", "fa-ed-x", "✕"), conta = nd("small", "fa-ed-conta");
-    testa.appendChild(nd("b", "", ovunque ? "🎨 Facce dei calciatori" : "🎨 Personalizza i calciatori" + (STAG_ATT ? " · " + STAG_ATT : ""))); if (ovunque) testa.appendChild(conta); testa.appendChild(chiudi); R.appendChild(testa);   // (📅 i calciatori della stagione scelta nelle regole)
+    testa.appendChild(nd("b", "", ovunque ? "🎨 Facce dei calciatori" : "🎨 Personalizza i calciatori" + (STAG_ATT ? " · " + STAG_ATT : ""))); if (ovunque) testa.appendChild(conta); if (ovunque) testa.appendChild(copiaFatti); testa.appendChild(chiudi); R.appendChild(testa);   // (📅 i calciatori della stagione scelta nelle regole)
 
     var scheda = nd("div", "fa-ed-scheda"); R.appendChild(scheda);
     var cerca = nd("input", "fa-ed-cerca"); cerca.type = "search"; cerca.placeholder = "🔍 Cerca un calciatore o una squadra"; R.appendChild(cerca);
