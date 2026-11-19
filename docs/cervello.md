@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 19 nov 2026 17:55 · 🕰️ Stagioni del passato · PUBBLICATO · Mini Asta: altre 102 facce dalle foto (494 in tutto, «📷 da controllare») · fogli 17-23
 - 19 nov 2026 17:39 · 🕰️ Stagioni del passato · PUBBLICATO · Mini Asta: altre 158 facce dalle foto (392 in tutto, «📷 da controllare»), fogli da 16 con miniature di Google Immagini · 7f3c47d + pubblicazione
 - 19 nov 2026 17:32 · ⚽🃏 Mini Asta · PUBBLICATO (solo IL PAPPONE, niente novità) · la giornata in prospettiva forte: interruttore PROSPETTIVA = "proprietario"; telecamera dietro la porta dove va l'azione, porta vera in piedi (pali e traversa dove li colpisce il pallone, rete con la profondità, il legno che trema), misure vere rispetto ai calciatori, nomi più piccoli; gli altri vedono il campo di sempre; prove nuove pr1, pr2 + sp1, as1, fg1, pg1, gs1 OK; costo ×4 come oggi; foto D:\SG-asta-prove\prosp9\prima-dopo.png e prosp6\tutte.png · master
 - 19 nov 2026 17:10 · 🕰️ Stagioni del passato · PUBBLICATO · Mini Asta: 120 facce in più dalle foto (234 in tutto, «📷 da controllare»): fogli da 16 visi letti da un aiutante Sonnet + Google Immagini guardate a occhio per i 46 senza foto libera · e1c5b1e + pubblicazione
