@@ -11,8 +11,9 @@
 // mz1 Senza telefoni: in 2, 8 e 12, giornata sola e 3 giornate (300 partite per tipo): nei dati ognuno ha almeno 3 azioni d'attacco nella
 //     giornata intera e almeno 1 nelle veloci; e anche dopo i tagli (giornata troppo lunga, scelta delle veloci) nessuno scende sotto;
 //     le azioni non stanno tutte alla fine (almeno il 20% nel primo tempo).
-// sp3 Le scene dei falli, 300 semi: il pressing col giallo, col rosso e pulito (palla rubata), e l'entrata col giallo e pulita, sono
-//     IDENTICHE fino a quando il pallone cambia strada (tutti i giocatori, l'arbitro e la telecamera): l'esito si vede solo dopo il contatto.
+// sp3 Le scene dei falli, 300 semi: il «🔥 PRESSING ALTO» (giallo, rosso, e il pressing che finisce col tiro, gol o parata) e l'«😤 ENTRATA
+//     DURA» (giallo, rosso, pulita, e il recupero pulito in pressing, che dal 16 nov 2026 sera si mostra come un'entrata pulita) sono IDENTICI
+//     fino a quando il pallone cambia strada (tutti i giocatori, l'arbitro e la telecamera): l'esito si vede solo dopo il contatto.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -116,19 +117,20 @@
   }
   function posa(pose, t) { var q = {}; pose.forEach(function (p) { if (p[0] <= t) q = p[1]; }); return JSON.stringify(q); }
   function diversi(a, b) { if (!a || !b) return a !== b; for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 1e-6) return true; return false; }
-  COPIONE.aggiungi("sp3", { nome: "Mini Asta, le scene dei falli: pressing (giallo, rosso, pulito) ed entrata (giallo, pulita) identici fino al contatto", fai: async function () {
+  COPIONE.aggiungi("sp3", { nome: "Mini Asta, le scene dei falli: pressing (giallo, rosso, tiro) ed entrata (giallo, rosso, pulita, recupero in pressing) identici fino al contatto", fai: async function () {
     var F = await motore(), ko = [], prove = 0, x = [];
-    [["pressing", ["amm", "esp", "rec"]], ["entrata", ["amm", "esp", "rec"]]].forEach(function (cp) {
+    // (19 nov 2026: la prova era rimasta a prima del 16 nov sera, quando il recupero pulito in pressing aveva la scena del pressing)
+    [["pressing", [["amm"], ["esp"], ["gol", "pressing", "gol"], ["occ", "pressing", "parata"]]], ["entrata", [["amm"], ["esp"], ["rec"], ["rec", null, null, "pressing"]]]].forEach(function (cp) {
       var come = cp[0], tipi = cp[1], tPalla0 = 1;
       for (var seme = 1; seme <= 300; seme++) {
         [false, true].forEach(function (difesa) {
           if (come === "pressing" && difesa) return;
-          var et = { fallo: "Fallo" }, sc = tipi.map(function (t) { return F.scena(t, null, null, null, et, { verso: 1, lato: seme % 2 ? 1 : -1, seme: seme * 7919, come: come, difesa: difesa, lento: false }); });
+          var et = { fallo: "Fallo" }, sc = tipi.map(function (q) { return F.scena(q[0], q[1] || null, q[2] || null, null, q[1] ? { tira: "Fallo" } : et, { verso: 1, lato: seme % 2 ? 1 : -1, seme: seme * 7919, come: q[3] || come, difesa: difesa, lento: false }); });
           prove++;
           sc.forEach(function (s, i) {
             if (!i) return;
-            var g = sc[0], qui = come + (difesa ? " in difesa" : "") + " seme " + seme + " " + tipi[0] + "/" + tipi[i];
-            var cam = function (z) { return JSON.stringify([z.lento && z.lento[0], z.lento && z.lento[2], z.zoomFine, z.tz, z.dunque]); };
+            var g = sc[0], qui = come + (difesa ? " in difesa" : "") + " seme " + seme + " " + tipi[0].join("/") + " contro " + tipi[i].filter(Boolean).join("/"), tiro = !!tipi[i][1];
+            var cam = function (z) { return JSON.stringify([z.lento && z.lento[0], z.lento && z.lento[2], z.zoomFine, z.tz, tiro ? null : z.dunque]); };   // (il tiro ha il suo momento dell'esito, dopo il contatto)
             if (cam(s) !== cam(g)) ko.push(qui + ": rallentatore, telecamera o tempo dell'esito diversi " + cam(g) + " / " + cam(s));
             if (s.attori.length !== g.attori.length) { ko.push(qui + ": " + g.attori.length + " in campo contro " + s.attori.length); return; }
             var tPalla = 1;
