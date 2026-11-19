@@ -5,11 +5,11 @@
 //
 // pr1 Sul campo vero del gioco (360x560) in prospettiva, per 35 azioni × 3 semi × verso in su e in giù × 7 esiti: nel momento in cui il
 //     pallone arriva sulla porta, sullo schermo il palo è ESATTAMENTE sul palo disegnato, la traversa sulla traversa, il gol tra i pali e
-//     sotto la traversa, il fuori fuori dai pali, l'alto sopra la traversa; la porta è sempre in basso (telecamera dietro la porta dove va
-//     l'azione, anche quando l'azione andava verso l'altra porta); fino al tiro la telecamera è identica per tutti gli esiti (niente spoiler);
-//     l'interruttore: IL PAPPONE sì, gli altri no.
-// pr2 Online in 2 (IL PAPPONE tiene la partita, Giulia entra): l'asta veloce, poi la giornata dal vivo per 30 secondi. Sul telefono di
-//     IL PAPPONE il campo è in prospettiva, su quello di Giulia come sempre; nessun errore sui due telefoni; le azioni vanno avanti su tutti e due.
+//     sotto la traversa, il fuori fuori dai pali, l'alto sopra la traversa; verso il basso la porta è in basso (da dietro la porta), verso
+//     l'alto è nella metà di sopra (da dietro chi attacca, sotto la barra del minuto); fino al tiro la telecamera è identica per tutti gli
+//     esiti (niente spoiler); l'interruttore (dal 19 nov 2026 sera «tutti»: tutti in prospettiva).
+// pr2 Online in 2 (IL PAPPONE tiene la partita, Giulia entra): l'asta veloce, poi la giornata dal vivo per 30 secondi. Il campo è in
+//     prospettiva su tutti e due i telefoni se PROSPETTIVA è «tutti» (se è «proprietario», solo su quello di IL PAPPONE); nessun errore; le azioni vanno avanti su tutti e due.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -17,7 +17,7 @@
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), F = {}, ag = "function costruisciMazzoFanta(n) {";
     if (src.indexOf(ag) < 0) no("non trovo il mazzo del fanta nel file del gioco");
     if (src.indexOf("function porta3D(") < 0) no("nel gioco non c'è la porta in prospettiva");
-    src = src.replace(ag, "FUORI.scena = scena; FUORI.campo = campoAzioni; FUORI.prosp = prospettivaPer; FUORI.GL = GL; " + ag);
+    src = src.replace(ag, "FUORI.scena = scena; FUORI.campo = campoAzioni; FUORI.prosp = prospettivaPer; FUORI.GL = GL; FUORI.PROSPETTIVA = PROSPETTIVA; " + ag);
     new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, F);
     return F;
   }
@@ -30,11 +30,11 @@
     return pts[pts.length - 1].slice(1, 4);
   }
   function diversi(a, b) { for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 1e-6) return true; return false; }
-  COPIONE.aggiungi("pr1", { nome: "📐 La giornata in prospettiva: palo, traversa, gol, fuori e alto proprio sui legni disegnati, porta sempre in basso, telecamera uguale fino al tiro", fai: async function () {
+  COPIONE.aggiungi("pr1", { nome: "📐 La giornata in prospettiva: palo, traversa, gol, fuori e alto proprio sui legni disegnati, verso la porta in basso e quella in alto, telecamera uguale fino al tiro", fai: async function () {
     var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), d = w.document, ko = [], conti = { palo: 0, traversa: 0, gol: 0, fuori: 0, alto: 0 }, cam = 0;
     // l'interruttore
     var tP = { nomeProfilo: function () { return "IL PAPPONE"; } }, tA = { nomeProfilo: function () { return "Paky"; } };
-    if (!M.prosp(tP) || M.prosp(tA)) no("l'interruttore: IL PAPPONE " + M.prosp(tP) + ", Paky " + M.prosp(tA) + " (voluto: sì e no)");
+    if (!M.prosp(tP) || M.prosp(tA) !== (M.PROSPETTIVA === "tutti")) no("l'interruttore («" + M.PROSPETTIVA + "»): IL PAPPONE " + M.prosp(tP) + ", Paky " + M.prosp(tA));
     var box = d.createElement("div"); box.style.cssText = "position:fixed;left:0;top:0;width:360px;height:560px;z-index:99999"; d.body.appendChild(box);
     var el = function (tag, a) { var e = d.createElement(tag); if (a && a.class) e.className = a.class; return e; };
     var az = M.campo(el, box); az.ps = true; az.misura();
@@ -62,7 +62,8 @@
           var es = ESITI[i], b = primoSullaPorta(s); if (!b || !(es in conti)) return;
           az.foto(s, b[0]); var P = az.porta, q = az.dove; if (!P || !q) { ko.push(qui + " " + es + ": niente porta o pallone"); return; }
           var sx = P.pali[0] < P.pali[1] ? P.pali : [P.pali[1], P.pali[0]], dx = Math.abs(b[1] - 0.5), mezzo = P.sp / 2;
-          if (P.terra < az.h * 0.55) ko.push(qui + " " + es + ": la porta non è in basso (" + Math.round(P.terra) + " su " + az.h + ")");
+          if (verso > 0 && P.terra < az.h * 0.55) ko.push(qui + " " + es + ": la porta non è in basso (" + Math.round(P.terra) + " su " + az.h + ")");
+          if (verso < 0 && (P.terra > az.h * 0.62 || P.trav < 24)) ko.push(qui + " " + es + ": la porta in alto non è nella metà di sopra, sotto la barra (traversa " + Math.round(P.trav) + ", terra " + Math.round(P.terra) + " su " + az.h + ")");
           if (es === "palo" && Math.abs(dx - 0.084) < 0.002) { conti.palo++; var dp = Math.min(Math.abs(q[0] - sx[0]), Math.abs(q[0] - sx[1])); if (dp > 0.6 || q[1] < P.trav || q[1] > P.terra) ko.push(qui + " palo: il pallone a " + Math.round(q[0]) + "," + Math.round(q[1]) + ", i pali a " + sx.map(Math.round) + " (traversa " + Math.round(P.trav) + ", terra " + Math.round(P.terra) + ")"); }
           if (es === "traversa") { conti.traversa++; if (Math.abs(q[1] - P.trav) > 0.6 || q[0] < sx[0] || q[0] > sx[1]) ko.push(qui + " traversa: il pallone a " + Math.round(q[0]) + "," + Math.round(q[1]) + ", la traversa a " + Math.round(P.trav)); }
           if (es === "gol" && dx < 0.084 && Math.abs((b[3] || 0) - 2.44) < 0.03) { conti.traversa++; if (Math.abs(q[1] - P.trav) > 0.6) ko.push(qui + " traversa e dentro: il pallone a " + Math.round(q[1]) + ", la traversa a " + Math.round(P.trav)); return; }   // (traversa e dentro, come nella goal-line: il pallone sulla traversa)
@@ -75,14 +76,14 @@
     box.remove();
     if (ko.length) no(ko.slice(0, 6).join(" · "));
     if (conti.palo < 30 || conti.traversa < 30 || conti.gol < 30 || conti.fuori < 30 || conti.alto < 30) no("troppo pochi casi: " + JSON.stringify(conti));
-    return "interruttore: IL PAPPONE sì, gli altri no · sui legni disegnati: " + conti.palo + " pali, " + conti.traversa + " traverse, " + conti.gol + " gol tra i pali, " + conti.fuori + " fuori, " + conti.alto + " alti (verso tutte e due le porte: la porta sempre in basso) · telecamera uguale per i 7 esiti finché il pallone è lo stesso in " + cam + " momenti";
+    return "interruttore «" + M.PROSPETTIVA + "»: IL PAPPONE sì, gli altri " + (M.prosp(tA) ? "sì" : "no") + " · sui legni disegnati: " + conti.palo + " pali, " + conti.traversa + " traverse, " + conti.gol + " gol tra i pali, " + conti.fuori + " fuori, " + conti.alto + " alti (verso la porta in basso e verso quella in alto) · telecamera uguale per i 7 esiti finché il pallone è lo stesso in " + cam + " momenti";
   } });
   function vm(C) { return W.vmDi(C) || {}; }
   function q(w, s2) { return w.document.querySelector(s2); }
   function qa(w, s2) { return [].slice.call(w.document.querySelectorAll(s2)); }
   function visibile(e) { return !!e && e.getClientRects().length > 0; }
   function bott(w, sel, re) { return qa(w, sel).filter(function (b) { return re.test(b.textContent) && visibile(b); })[0] || null; }
-  COPIONE.aggiungi("pr2", { nome: "📐 La giornata online in 2: IL PAPPONE la vede in prospettiva, Giulia come sempre, nessun errore", fai: async function () {
+  COPIONE.aggiungi("pr2", { nome: "📐 La giornata online in 2: la prospettiva su chi deve averla (con «tutti» su tutti e due), nessun errore", fai: async function () {
     var NOMI = ["IL PAPPONE", "Giulia"], errori = [], imp = { formato: "fanta" };
     var prima = function (w) { w.addEventListener("error", function (e) { errori.push((e.message || "errore") + " @" + (e.lineno || "")); }); };
     var P = await W.apriTel(NOMI[0], { x: 0, pa: true, prima: function (w) { w.__imp = imp; prima(w); } }), C = await W.apriStanza(P, "Mini Asta Fantacalcio");
@@ -105,12 +106,12 @@
     for (var k2 = 0; k2 < 20 && !q(P, ".st-gio-riga"); k2++) { W.clicca(P, /Salta/); await W.dorme(500); }
     var G = W.finestra("Giulia");
     if (!await W.aspetta(function () { return q(P, "canvas.st-az[data-prosp]") && q(G, "canvas.st-az[data-prosp]"); }, 30000)) no("la giornata non parte su tutti e due");
-    var cP = q(P, "canvas.st-az"), cG = q(G, "canvas.st-az");
+    var cP = q(P, "canvas.st-az"), cG = q(G, "canvas.st-az"), src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), TUTTI = /var PROSPETTIVA = "tutti"/.test(src);
     var foto = function (c) { var x = c.getContext("2d").getImageData(0, 0, c.width, c.height).data, s3 = 0; for (var i = 0; i < x.length; i += 4000) s3 = (s3 * 31 + x[i] + x[i + 1] * 3 + x[i + 2] * 7) % 1000000007; return s3; };
     var f0 = [foto(cP), foto(cG)], cambiP = 0, cambiG = 0;
-    for (var t = 0; t < 30; t++) { await W.dorme(1000); var f1 = [foto(cP), foto(cG)]; if (f1[0] !== f0[0]) cambiP++; if (f1[1] !== f0[1]) cambiG++; f0 = f1; if (cP.getAttribute("data-prosp") !== "1") no("sul telefono di IL PAPPONE il campo non è in prospettiva"); if (cG.getAttribute("data-prosp") !== "0") no("Giulia vede il campo in prospettiva"); }
+    for (var t = 0; t < 30; t++) { await W.dorme(1000); var f1 = [foto(cP), foto(cG)]; if (f1[0] !== f0[0]) cambiP++; if (f1[1] !== f0[1]) cambiG++; f0 = f1; if (cP.getAttribute("data-prosp") !== "1") no("sul telefono di IL PAPPONE il campo non è in prospettiva"); if (cG.getAttribute("data-prosp") !== (TUTTI ? "1" : "0")) no("Giulia vede il campo " + (TUTTI ? "di sempre" : "in prospettiva")); }
     if (errori.length) no("errori: " + errori.slice(0, 4).join(" · "));
     if (cambiP < 8 || cambiG < 8) no("le azioni non vanno avanti (secondi in cui il campo cambia: IL PAPPONE " + cambiP + ", Giulia " + cambiG + " su 30)");
-    return "IL PAPPONE in prospettiva, Giulia come sempre; in 30 secondi di giornata il campo è cambiato " + cambiP + " e " + cambiG + " volte, nessun errore";
+    return "IL PAPPONE in prospettiva, Giulia " + (TUTTI ? "anche (PROSPETTIVA «tutti»)" : "come sempre") + "; in 30 secondi di giornata il campo è cambiato " + cambiP + " e " + cambiG + " volte, nessun errore";
   } });
 })();
