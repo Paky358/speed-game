@@ -399,7 +399,7 @@
       var prima = P.angolo;
       P.angolo = Math.round(fin * 100) / 100; P.giroDir = dir;
       P.spicchio = Math.floor(((((-P.angolo) % 360) + 360) % 360) / 15) % 24;
-      P.giroMs = durataGiro(Math.abs(P.angolo - prima));
+      P.giroMs = durataGiro(Math.abs(P.angolo - prima), g().bot);
       P.giroN++; P.fase = "girando"; P.ultime = [];
     }
     P.nuovaManche = function () {
@@ -1187,7 +1187,11 @@
   function suonoGiro() { for (var k = 0; k < 18; k++) bip(900, 0.03, "square", 0.025, k * 0.06 + k * k * 0.004); }
   // la curva con cui la ruota rallenta (la stessa della transizione: cubic-bezier(.12,.7,.18,1))
   // quanto dura un giro (tutta la fase): più gradi = più lungo, con la coda lenta che mette l'ansia
-  function durataGiro(gradi) { return Math.round(Math.max(5200, Math.min(8000, 4400 + Math.abs(gradi) * 1.45))); }   // (14 nov 2026: un po' più lunga, per la suspense del finale)
+  function durataGiro(gradi, bot) {
+    // 🤖 (19 nov 2026, il proprietario: «giri dei Bot più corti») il giro lungo con la suspense è per le persone; i Bot girano in fretta
+    if (bot) return Math.round(Math.max(3800, Math.min(4800, 3300 + Math.abs(gradi) * 0.75)));
+    return Math.round(Math.max(5200, Math.min(8000, 4400 + Math.abs(gradi) * 1.45)));
+  }   // (14 nov 2026: un po' più lunga, per la suspense del finale)
   function curvaGiro(x) {
     var a = 0, b = 1, s = x;
     function bx(t) { return 3 * (1 - t) * (1 - t) * t * 0.12 + 3 * (1 - t) * t * t * 0.18 + t * t * t; }
@@ -2066,6 +2070,7 @@
     ui.punti = el("div", { class: "ru-punti" }); ui.chip = {};
     vm.giocatori.forEach(function (p, i) {
       var colI = (ST.COLORI || [])[i % 10] || "#ffc247", v = el("b"), tt = el("small"), c = el("span", { class: "ru-chip" }, [ el("i", { style: "background:" + colI }), el("span", { class: "n", text: p.nome }), v, tt ]);
+      c._col = colI;
       if (ui.flat && ST.faccina) {   // 📺 senza studio: la faccina piccola al posto del pallino (col suo colore intorno)
         var fc = ST.faccina({ nome: p.nome, omino: (cb.omini() || {})[p.id] || null }, null, 48, true); fc.className = "fac"; fc.style.boxShadow = "0 0 0 2px " + colI;
         c.replaceChild(fc, c.firstChild);
@@ -2075,7 +2080,10 @@
     });
     ui.striscia = el("div", { class: "ru-striscia" }); ui.striscia.hidden = true;   // 🔔 i giochi veloci: campanella e «vale…» sotto il tabellone
     ui.sbagli = el("div", { class: "ru-sbagli" }); ui.sbagli.hidden = true;   // ❌ le lettere chiamate che non ci sono (14 nov 2026: la tastiera non c'è sempre)
-    ui.sopra = el("div", { class: "ru-sopra" }, [ ui.cat, ui.tab, ui.sbagli, ui.striscia, ui.msg, ui.punti, ui.orol ]);
+    // 🎡 (19 nov 2026, il proprietario: «il tabellone non si deve muovere da là… fisso sopra»): categoria, tabellone e punteggi
+    // SEMPRE nello stesso posto e della stessa misura; sotto cambia solo ruota ↔ tastiera (e la fine manche)
+    ui.fm = el("div", { class: "ru-fm" }); ui.fm.hidden = true;   // 🏁 la fine manche: chi incassa, chi perde i soldi in gioco
+    ui.sopra = el("div", { class: "ru-sopra" }, ST.piatto ? [ ui.cat, ui.tab, ui.punti, ui.sbagli, ui.striscia, ui.msg, ui.orol, ui.fm ] : [ ui.cat, ui.tab, ui.sbagli, ui.striscia, ui.msg, ui.punti, ui.orol ]);
     S.vista.appendChild(ui.sopra);
     // la ruota (sul pavimento dello studio, davanti ai concorrenti) e i tasti (nella barra in basso)
     ui.canvas = el("canvas", { class: "ru-disco", width: "600", height: "600" });
@@ -2120,7 +2128,7 @@
       ui.ro = new ResizeObserver(function () {
         if (!S.vivo()) { ui.ro.disconnect(); return; }
         if (ui.rafMis) return;   // (le misure al fotogramma dopo: cambiare il tabellone dentro la notifica la farebbe ripartire in tondo)
-        ui.rafMis = requestAnimationFrame(function () { ui.rafMis = 0; if (!S.vivo()) return; adattaTab(ui); if (ui.alta) posAlto(ui); if (ui.quadro.classList.contains("on")) posQuadro(ui); });
+        ui.rafMis = requestAnimationFrame(function () { ui.rafMis = 0; if (!S.vivo()) return; if (ui.kCatW !== ui.cat.clientWidth) { ui.kCatW = ui.cat.clientWidth; catInDueRighe(ui); ui.kCatW = ui.cat.clientWidth; } adattaTab(ui); if (ui.alta) posAlto(ui); if (ui.quadro.classList.contains("on")) posQuadro(ui); });
       });
       ui.ro.observe(S.barraEl); ui.ro.observe(ui.sopra);
     }
@@ -2131,7 +2139,7 @@
     ui.jb = S.L.map(function (X, i) { var j = el("div", { class: "ru-jolly" }); (ui.flat && ui.chip[ids[i]] || X.el).appendChild(j); return j; });
     ui.lk = S.L.map(function (X, i) { var j = el("div", { class: "ru-lock", text: "🔒" }); if (!ui.flat) X.el.appendChild(j); return j; });   // (senza studio il 🔒 sta già nei punti)
     vm.giocatori.forEach(function (p, i) { ST.puntiLeggio(S, i, p.soldi); ui.mostrati[p.id] = p.soldi; });
-    function via() { ui.schTipo = ""; ui.kTab = ""; ui.sopra.classList.remove("sigla"); schermo(ui, ui.vm); ST.barra(S, ui.cb.guarda ? [ ui.tempo, ui.azioni, ui.kb.el ] : [ ui.tempo, ui.azioni, ui.scriviR, ui.kb.el ]); ui.sopra.classList.remove("via"); }   // (chi guarda col link non scrive frasi: la riga non c’è proprio)
+    function via() { ui.schTipo = ""; ui.kTab = ""; ui.sopra.classList.remove("sigla"); schermo(ui, ui.vm); if (ui.flat) ui.sopra.appendChild(ui.kb.el); var kbGiu = ui.flat ? ui.kb.vocEl : ui.kb.el; ST.barra(S, ui.cb.guarda ? [ ui.tempo, ui.azioni, kbGiu ] : [ ui.tempo, ui.azioni, ui.scriviR, kbGiu ]); ui.sopra.classList.remove("via"); }   // (chi guarda col link non scrive frasi: la riga non c’è proprio)
     if (vm.sigla) {   // a inizio partita la sigla dello studio (il tabellone compare dopo); quando si rigioca, una corta
       ui.sigla = true; ui.sopra.classList.add("sigla"); nomeSulTabellone(ui);
       Promise.resolve(vm.sigla === "corta" ? siglaCorta(S) : ST.apertura(S)).catch(function () {}).then(function () {
@@ -2270,9 +2278,10 @@
   }
   function ridisegnaRuote(ui, spicchi) { if (!ui.flat) disegnaRuota(ui.canvas, spicchi); disegnaRuota(ui.canvasA, spicchi); }
   // ✨ la luce sullo spicchio vinto: si disegna una volta quando la ruota si ferma (rossa sulla Bancarotta), poi solo trasparenza
-  function luceSu(ui, s) {
+  function luceSu(ui, s, off) {
     var cv = ui.luce; if (!cv || !cv.getContext) return;
-    var c = cv.getContext("2d"), col = s && s.s === "bancarotta" ? "255,70,95" : s && s.s === "passa" ? "200,206,230" : "255,232,150", a0 = -Math.PI / 2 - Math.PI / 24, a1 = -Math.PI / 2 + Math.PI / 24;
+    var o = (+off || 0) * Math.PI / 180;
+    var c = cv.getContext("2d"), col = s && s.s === "bancarotta" ? "255,70,95" : s && s.s === "passa" ? "200,206,230" : "255,232,150", a0 = -Math.PI / 2 - Math.PI / 24 + o, a1 = -Math.PI / 2 + Math.PI / 24 + o;
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 600, 600); c.translate(300, 300);
     c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, 272, a0, a1); c.closePath();
     var g = c.createRadialGradient(0, 0, 50, 0, 0, 272);
@@ -2315,6 +2324,7 @@
     var su = 0.06, giu = 0.02;   // (la lancetta sporge sopra la ruota del 5%; 15 nov 2026, il proprietario: «tagliata in basso non mi va bene»: sempre INTERA)
     var d = Math.max(0, Math.min(D0, h / (1 + su + giu)));
     if (ui.modo !== "ruota") d = Math.min(d, S.VW * 0.8);   // (sopra la tastiera: piccola, è solo un promemoria dello spicchio)
+    else if (!ui.girando) d = Math.min(d, S.VW * 0.74);    // 🎡 (19 nov 2026) mentre si pensa la ruota è media: intera solo quando gira
     var serve = d * (1 + su + giu), y = (serve <= h ? (h - serve) / 2 : 0) + d * su, x = (S.VW - d) / 2;   // (y: dentro la striscia)
     var k = [Math.round(b.top), Math.round(h), Math.round(x), Math.round(y), Math.round(d), D0].join("|");
     if (k === ui.kAlto) return;
@@ -2323,7 +2333,9 @@
     var p = ui.piattoA.style; p.left = "0px"; p.top = "0px"; p.width = p.height = D0 + "px";
     var s = d / D0;
     p.setProperty("--tx", x.toFixed(1) + "px"); p.setProperty("--ty", y.toFixed(1) + "px"); p.setProperty("--s", s.toFixed(4));
-    p.setProperty("--txv", (x - 0.21 * d).toFixed(1) + "px"); p.setProperty("--sv", (s * 1.42).toFixed(4));   // (vicino: sulla lancetta, in alto al centro)
+    // 🔍 vicino (lo zoom degli ultimi 1,5 s): la ruota grande più di due volte, la lancetta in alto al centro della striscia
+    var sv = Math.min(D0 * 2.3, Math.max(D0 * 1.6, h * 1.9)) / D0, dv = D0 * sv;
+    p.setProperty("--txv", ((S.VW - dv) / 2).toFixed(1) + "px"); p.setProperty("--tyv", (dv * su + 6).toFixed(1) + "px"); p.setProperty("--sv", sv.toFixed(4));
     ui.altoEl.classList.toggle("nascosta", d < 72);
     ui.manoEl.style.width = ui.manoEl.style.height = (d * 0.17).toFixed(1) + "px";
     var vs = S.vista.style; vs.setProperty("--ru-mezzo", b.top.toFixed(0) + "px");   // (le scritte di passaggio stanno qui, sotto il tabellone)
@@ -2331,14 +2343,9 @@
   // 📺 senza studio, quando la ruota non c'è: il tabellone si allunga nello spazio libero (caselle più alte, lettere più grandi)
   function adattaTab(ui) {
     if (!ui.flat) return;
-    var S = ui.S, grande = !ui.ruotaSi && ui.modo !== "quadro", ch = 0;
-    if (grande) {
-      var bar = S.barraEl.classList.contains("on") ? S.barraEl.offsetHeight : 0, cella = ui.celle[0];
-      var resto = ui.sopra.offsetHeight - ui.tab.offsetHeight, libero = S.VH - bar - 10 - ui.sopra.offsetTop - resto;
-      var cw = cella ? cella.offsetWidth : 0, cw0 = cw * 1.08;
-      ch = Math.floor(Math.min(cw * 1.75, (libero - 10 - 3 * (RIGHE - 1)) / RIGHE));
-      if (!(cw > 0) || ch < cw0 + 2) ch = 0;
-    }
+    // 🎡 (19 nov 2026) una misura sola per tutta la partita: caselle alte una volta e mezza, mai più di un dodicesimo dello schermo
+    var S = ui.S, cella = ui.celle[0], cw = cella ? cella.offsetWidth : 0;
+    var ch = cw > 0 ? Math.floor(Math.min(cw * 1.42, S.VH * 0.082)) : 0;
     if (ch === ui.chTab) return;
     ui.chTab = ch;
     ui.tab.classList.toggle("alta", ch > 0);
@@ -2346,6 +2353,7 @@
   }
   // la telecamera sopra la ruota (vicino = sulla lancetta, alla fine del giro)
   function ruotaAlta(ui, on, vicino) {
+    if (ui.flat) vicino = !!ui.zoomOn;   // (senza studio lo zoom lo decide solo il giro, sempre 1,5 s prima della fine)
     if (on) posAlto(ui);
     if (ui.alta !== on) { ui.alta = on; ui.altoEl.classList.toggle("on", on); }
     var v = !!(on && vicino); if (ui.altoEl.classList.contains("vicino") !== v) ui.altoEl.classList.toggle("vicino", v);
@@ -2362,6 +2370,7 @@
   // Uguale su tutti i telefoni: partenza, arrivo e durata li decide chi tiene la partita (mai le ore dei telefoni).
   function fermaGiro(ui) {
     ui.giroK = (ui.giroK || 0) + 1;
+    if (ui.flat && (ui.girando || ui.zoomOn)) { ui.girando = false; ui.zoomOn = false; ui.kAlto = ""; if (ui.alta) { posAlto(ui); ruotaAlta(ui, true, false); } }
     if (ui.rafGiro) cancelAnimationFrame(ui.rafGiro); clearTimeout(ui.tGiroFine); ui.rafGiro = 0;
     if (ui.altoEl) { ui.altoEl.classList.remove("gira"); ui.ruotaEl.classList.remove("gira"); }
     if (ui.lancetta) { ui.lancetta.style.transition = ""; ui.lancetta.style.transform = ""; }
@@ -2391,7 +2400,9 @@
       ruotaA(ui, a); ui.altoEl.classList.remove("gira"); ui.ruotaEl.classList.remove("gira");
       linguetta(a, true);   // (col piolo che preme resta piegata: si è fermata a un soffio)
       ui.rafGiro = 0; clearTimeout(ui.tGiroFine);
-      luceSu(ui, sp[sotto(a)]);
+      // ✨ la luce copre ESATTAMENTE lo spicchio vinto (19 nov 2026): si gira della distanza tra il centro dello spicchio e la lancetta
+      var off = ((((sotto(a) + 0.5) * 15 + a) % 360) + 540) % 360 - 180;
+      luceSu(ui, sp[sotto(a)], off);
       vibra(30);
       var arriva = sp[(sotto(a) + (dir === 1 ? 23 : 1)) % 24];   // (fermata col piolo sulla linguetta proprio prima della Bancarotta: sospiro di sollievo)
       if (manca(a) < PIEGA && arriva && arriva.s === "bancarotta") { try { ST.FX.applauso("piano"); } catch (e) {} }
@@ -2411,9 +2422,12 @@
       var qui = sp[sotto(ang)];
       if (!ohh && vel < 130 && u < 0.985 && qui && qui.s === "bancarotta") { ohh = true; try { ST.FX.ohh(); } catch (e) {} }
       if (!rullo && ms > 2400 && ms * (1 - u) < 2300) { rullo = true; try { ST.FX.rullo(2.1); } catch (e) {} inquadra(ui, "lancetta", null, 1200); }
+      // 🔍 lo zoom sulla lancetta: SEMPRE a 1,5 s dalla fine del giro (mai deciso da dove si ferma), uguale per Bot e online
+      if (ui.flat && !ui.zoomOn && ms > 1800 && ms * (1 - u) < 1500) { ui.zoomOn = true; ruotaAlta(ui, true, true); }
       if (u < 1) ui.rafGiro = requestAnimationFrame(passo); else fine();
     }
     ui.altoEl.classList.add("gira"); ui.ruotaEl.classList.add("gira");
+    if (ui.flat) { ui.girando = true; ui.zoomOn = false; ui.kAlto = ""; posAlto(ui); ruotaAlta(ui, !!ui.ruotaSi, false); }   // 🎡 intera mentre gira
     ui.rafGiro = requestAnimationFrame(passo);
     ui.tGiroFine = setTimeout(fine, ms + 150);   // (arriva comunque, anche se lo schermo non ridisegna)
   }
@@ -2590,7 +2604,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     var firma = vm.firma != null ? "  " + firmaTesto(vm.firma) : "";   // ✍️ la frase degli amici: la firma accanto alla categoria
     var tc = f === "lampo" || f === "lampofine" ? titoloLampo(L, cat) : FASI_BUSTA.indexOf(f) >= 0 && vm.busta ? "✉️ LA BUSTA DI " + String(vm.busta.nome || "").toUpperCase() : FASI_FIN.indexOf(f) >= 0 ? (F && F.b ? "🏆 FINALE " + F.b + "/3 · " + FIN_NOMI[F.b - 1].toUpperCase() + " · " + cat : "🏆 FINALE · TRE TABELLONI PER TUTTI") :
       vm.veloce ? "⚡ " + cat + firma + " · ultimo round" : cat + firma + "  ·  " + (firma ? "" : "manche ") + vm.manche + "/" + vm.mancheTot;
-    if (ui.cat.textContent !== tc) ui.cat.textContent = tc;
+    if (ui.cat.textContent !== tc) { ui.cat.textContent = tc; if (ui.flat) catInDueRighe(ui); }
     // ❓ la ruota si ridisegna solo quando cambia (Mistero che arriva o che viene aperto)
     var kr = (vm.regole && vm.regole.express ? "e" : "") + ":" + (vm.mist || "");
     if (kr !== ui.kRuota) { ui.kRuota = kr; ridisegnaRuote(ui, spicchiDi(vm.regole && vm.regole.express, vm.mist)); }
@@ -2620,10 +2634,19 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       if (ch) {
         // (i soldi di questa manche grandi, il totale piccolo; a fine manche chi risolve incassa: «+1.200», e il totale è già cresciuto)
         var soloTot = FASI_FIN.indexOf(f) >= 0 || FASI_BUSTA.indexOf(f) >= 0, inc = !fu && f === "finemanche" && !!vm.vince && vm.vince.id === id;
-        var cv = fu ? "🚪" : (inc ? "+" : "") + fmtN(soloTot ? p.totale : p.soldi) + (lkOn ? " 🔒" : "") + (gf && gf.ok ? " ✅" : gf && (gf.passo || gf.scad) ? " ⏭️" : "");
+        var cv, ct, ctCls = "";
+        if (ui.flat) {   // 🎡 (19 nov 2026) il TOTALE grande, i soldi di questa manche a parte: «in gioco 1.800» (quelli che la Bancarotta porta via)
+          cv = fu ? "🚪" : fmtN(p.totale) + (lkOn ? " 🔒" : "") + (gf && gf.ok ? " ✅" : gf && (gf.passo || gf.scad) ? " ⏭️" : "");
+          var ban = ch._banca && ch._banca.fino > Date.now() ? ch._banca : null;
+          ct = fu ? "" : ban ? "💥 −" + fmtN(ban.v) : inc ? "+" + fmtN(vm.vince.vincita) : soloTot || tot ? "" : "in gioco " + fmtN(p.soldi);
+          ctCls = ban ? "banca" : inc ? "inc" : p.soldi > 0 && !tot ? "su" : "";
+        } else {
+          cv = fu ? "🚪" : (inc ? "+" : "") + fmtN(soloTot ? p.totale : p.soldi) + (lkOn ? " 🔒" : "") + (gf && gf.ok ? " ✅" : gf && (gf.passo || gf.scad) ? " ⏭️" : "");
+          ct = fu || soloTot ? "" : "tot " + fmtN(p.totale);
+        }
         if (ch._v.textContent !== cv) ch._v.textContent = cv;
-        var ct = fu || soloTot ? "" : "tot " + fmtN(p.totale);
         if (ch._t.textContent !== ct) ch._t.textContent = ct;
+        if (ch._tc !== ctCls) { ch._tc = ctCls; ch._t.className = ctCls; }
         if (ch._inc !== inc) { ch._inc = inc; ch.classList.toggle("incassa", inc); }
         var on = id === att && !tot; if (ch._on !== on) { ch._on = on; ch.classList.toggle("on", on); }
       }
@@ -2740,6 +2763,8 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     }
     ui.prec = { fase: f, turno: vm.turno, manche: vm.manche, ultime: vm.ultime.slice(), msg: vm.msg, ev: vm.ev, lampoN: L ? L.n : null, lampoK: L ? L.k : null };
     disegnaAzioni(ui, vm, mioTurno, att);
+    if (ui.flat) fineManche(ui, vm);
+    if (!totali(f)) { ui.soldiPrec = {}; vm.giocatori.forEach(function (p) { ui.soldiPrec[p.id] = p.soldi || 0; }); }
     // la barra ha cambiato altezza (es. è comparsa la tastiera): rimetto a fuoco l'inquadratura
     var bh = S.barraEl.offsetHeight;
     if (bh !== ui.barraH) { var primaB = ui.barraH === -1; ui.barraH = bh; if (!primaB && S.shot) ST.camera(S, S.shot(), 350); if (ui.quadro.classList.contains("on")) posQuadro(ui); if (ui.alta) posAlto(ui); }
@@ -2771,14 +2796,46 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     else if (f === "lampo" || f === "lampofine") m = "lampo";
     else if (f === "gira" || f === "girando" || f === "vgiro" || normale && SENZA_RUOTA.indexOf(f) < 0) m = "ruota";
     else m = "tab";
-    var ruota = m === "ruota" || m === "lettere" && normale && (f === "consonante" || f === "gira" || f === "girando");
+    var ruota = m === "ruota" || !ui.flat && m === "lettere" && normale && (f === "consonante" || f === "gira" || f === "girando");   // (19 nov 2026: senza studio, mentre si sceglie la lettera la ruota sparisce)
     var gv = f === "gira" && kbm === "turno" && !!(vm.puo && vm.puo.compra);   // si può comprare una vocale: sotto la ruota la fila delle vocali
+    if (ui.flat && f === "gira" && !ui.rafGiro && (ui.girando || ui.zoomOn)) { ui.girando = false; ui.zoomOn = false; ui.kAlto = ""; if (ui.alta) { posAlto(ui); ruotaAlta(ui, true, false); } }
     if (m === ui.modo && gv === ui.modoVoc && ruota === ui.ruotaSi) return;
     var cambia = m !== ui.modo || ruota !== ui.ruotaSi;
     ui.modo = m; ui.modoVoc = gv; ui.ruotaSi = ruota;
     var v = ui.S.vista; ["ruota", "lettere", "quadro", "lampo", "tab"].forEach(function (x) { v.classList.toggle("ru-m-" + x, x === m); });
     v.classList.toggle("ru-m-voc", gv);
-    if (cambia) { ui.kAlto = ""; ruotaAlta(ui, ruota && !ui.quadro.classList.contains("on"), ruota && ui.altoEl.classList.contains("vicino")); }
+    if (cambia) { ui.kAlto = ""; if (!ruota) ui.zoomOn = false; ruotaAlta(ui, ruota && !ui.quadro.classList.contains("on"), ruota && ui.altoEl.classList.contains("vicino")); }
+  }
+  // 🎡 la categoria ha sempre il posto per due righe (così il tabellone non si sposta mai): se non ci sta, il carattere si rimpicciolisce
+  function catInDueRighe(ui) {
+    var c = ui.cat; if (!c || !c.isConnected) return;
+    c.style.fontSize = ""; c.style.height = "";
+    var fs0 = parseFloat(getComputedStyle(c).fontSize) || 16, alt = c.getBoundingClientRect().height || fs0 * 2.36 + 2;   // (l'altezza di due righe del carattere normale, dal CSS)
+    c.style.height = alt + "px";
+    var fz = fs0;
+    while (c.scrollHeight > alt + 1 && fz > 10) { fz -= 1; c.style.fontSize = fz + "px"; }
+  }
+  // 🏁 la fine manche (19 nov 2026, il proprietario: «niente mezzo schermo vuoto»): sotto il tabellone che resta lì, chi ha risolto e
+  // quanto incassa, chi perde i soldi in gioco, la classifica. Si disegna una volta per manche (niente lampeggio).
+  function fineManche(ui, vm) {
+    var on = vm.fase === "finemanche" && !!vm.vince, k = on ? (vm.gameId || "") + ":" + vm.manche : "";
+    if (ui.fm.hidden !== !on) ui.fm.hidden = !on;
+    if (!on || ui.fmK === k) return;
+    ui.fmK = k;
+    var el = ui.el, cb = ui.cb, V = vm.vince, pv = trovaG(vm, V.id) || {}, prima = ui.soldiPrec || {};
+    function fac(p, px) { var c = ST.faccina ? ST.faccina({ nome: p.nome, omino: (cb.omini() || {})[p.id] || null }, null, px, true) : el("span"); c.className = "fac"; return c; }
+    ui.fm.textContent = "";
+    var tot1 = pv.totale || 0, tot0 = Math.max(0, tot1 - (V.vincita || 0));
+    ui.fm.appendChild(el("div", { class: "ru-fm-box" }, [
+      el("div", { class: "ru-fm-tit", text: "MANCHE " + vm.manche + " · RISOLTA DA" }),
+      el("div", { class: "ru-fm-chi" }, [ fac(pv, 56), el("div", {}, [ el("b", { class: "nm", text: pv.nome || "" }), el("b", { class: "piu", text: "+" + fmtN(V.vincita || 0) }) ]) ]),
+      el("div", { class: "ru-fm-nota", html: "i soldi in gioco vanno nel totale: <b>" + fmtN(tot0) + " → " + fmtN(tot1) + "</b>" }) ]));
+    var persi = vm.giocatori.filter(function (p) { return p.id !== V.id && !p.via && (prima[p.id] || 0) > 0; });
+    if (persi.length) ui.fm.appendChild(el("div", { class: "ru-fm-box ru-fm-persi" }, persi.slice(0, 3).map(function (p) {
+      return el("div", {}, [ el("small", { text: p.nome.toUpperCase() + " perde" }), el("b", { text: "−" + fmtN(prima[p.id]) + " in gioco" }) ]); })));
+    var cl = vm.giocatori.filter(function (p) { return !p.via; }).slice().sort(function (a, b) { return (b.totale || 0) - (a.totale || 0); });
+    ui.fm.appendChild(el("div", { class: "ru-fm-box ru-fm-cl" }, [ el("div", { class: "ru-fm-tit", text: "CLASSIFICA" }) ].concat(cl.map(function (p, i) {
+      return el("div", { class: "riga" }, [ el("b", { class: "pos", text: (i + 1) + "°" }), fac(p, 30), el("span", { class: "nm", text: p.nome }), el("b", { class: "v", text: fmtN(p.totale || 0) }) ]); }))));
   }
   // il «+800» (o «−400») che salta fuori sul punteggio di chi incassa o perde
   function popChip(ui, id, d) {
@@ -2790,7 +2847,12 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
   function effetto(ui, vm, e) {
     var S = ui.S, i = ui.ids.indexOf(e.id);
     if (e.t === "no") { suonoNo(); facciaPerUnPo(ui, i, "triste"); }
-    else if (e.t === "bancarotta") { suonoNo(); ST.FX.ohh(); ST.scossa(S); facciaPerUnPo(ui, i, "esploso"); }
+    else if (e.t === "bancarotta") {
+      suonoNo(); ST.FX.ohh(); ST.scossa(S); facciaPerUnPo(ui, i, "esploso");
+      var chB = ui.chip[e.id], persi = (ui.soldiPrec || {})[e.id] || 0;   // 💥 (19 nov 2026) i soldi in gioco che se ne vanno, sul suo punteggio
+      if (ui.flat && chB && persi > 0) { chB._banca = { v: persi, fino: Date.now() + 4000 }; chB._t.textContent = "💥 −" + fmtN(persi); chB._tc = "banca"; chB._t.className = "banca"; rianima(chB, "scuoti");
+        dopo(ui, 4100, function () { if (R === ui) aggiorna(ui, ui.vm); }); }
+    }
     else if (e.t === "prenota") { suonoBuzzer(); ST.lampo(S); rianima(ui.campana, "suona"); facciaPerUnPo(ui, i, "pensa"); }
     else if (e.t === "lampono") { suonoNo(); ST.FX.ohh(); facciaPerUnPo(ui, i, "triste"); }
     else if (e.t === "segreta") { bip(660, 0.08, "square", 0.05); bip(990, 0.12, "triangle", 0.05, 0.08); facciaPerUnPo(ui, i, "pensa"); if (ui.lk[i]) rianima(ui.lk[i], "scatta"); }
@@ -3098,33 +3160,40 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     if (att <= 0) manda(); else ui.tScr = setTimeout(manda, att);
   }
   // ⌨️ la tastiera QWERTY: fissa in basso, uguale per tutti per tutta la manche; si cambiano solo classi e «spento» dei tasti
+  // ⌨️ (19 nov 2026, il proprietario) per SCEGLIERE la lettera la tastiera in ordine alfabetico, 7 per riga (lettere grandi, vocali gialle);
+  // per RISOLVERE la QWERTY, sempre nostra (mai quella del telefono). In tutte e due le lettere già chiamate sono spente e non si toccano.
+  var ALFA = ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ"];
   function creaTastiera(ui) {
-    var el = ui.el, kb = { tasti: {}, modo: "off", col: "" };
-    kb.el = el("div", { class: "ru-qwerty" });
-    QWERTY.forEach(function (r, ri) {
-      var riga = el("div", { class: "ru-qr" });
-      r.split("").forEach(function (Lt) {
-        var b = el("button", { class: "ru-btn lettera" + (VOCALI.indexOf(Lt) >= 0 ? " voc" : ""), type: "button", text: Lt, onclick: function () { tastoQ(ui, Lt); } });
-        b.disabled = true; kb.tasti[Lt] = b; riga.appendChild(b);
+    var el = ui.el, kb = { tasti: {}, Q: {}, A: {}, modo: "off", col: "" };
+    kb.el = el("div", { class: "ru-qwerty" + (ui.flat ? " alfa" : "") });
+    function righe(lista, mappa, cls, conCanc) {
+      lista.forEach(function (r, ri) {
+        var riga = el("div", { class: "ru-qr " + cls });
+        r.split("").forEach(function (Lt) {
+          var b = el("button", { class: "ru-btn lettera" + (VOCALI.indexOf(Lt) >= 0 ? " voc" : ""), type: "button", text: Lt, onclick: function () { tastoQ(ui, Lt, mappa); } });
+          b.disabled = true; mappa[Lt] = b; riga.appendChild(b);
+        });
+        if (conCanc && ri === lista.length - 1) {
+          kb.canc = el("button", { class: "ru-btn lettera canc nasc", type: "button", text: "⌫", onclick: function () { if (kb.modo === "scrivi") cancellaLettera(ui); } });
+          kb.canc.disabled = true; riga.appendChild(kb.canc);
+        }
+        kb.el.appendChild(riga);
       });
-      if (ri === QWERTY.length - 1) {
-        kb.canc = el("button", { class: "ru-btn lettera canc nasc", type: "button", text: "⌫", onclick: function () { if (kb.modo === "scrivi") cancellaLettera(ui); } });
-        kb.canc.disabled = true; riga.appendChild(kb.canc);
-      }
-      kb.el.appendChild(riga);
-    });
-    if (ui.flat) {   // 📺 senza studio: quando si gira la tastiera non c'è, ma se si può comprare una vocale resta la fila delle vocali
-      kb.voc = {}; var rv = el("div", { class: "ru-qv" });
-      VOCALI.forEach(function (Lt) { var b = el("button", { class: "ru-btn lettera voc", type: "button", text: Lt, onclick: function () { tastoQ(ui, Lt); } }); b.disabled = true; kb.voc[Lt] = b; rv.appendChild(b); });
-      kb.el.appendChild(rv);
+    }
+    righe(QWERTY, kb.Q, "q", true);
+    if (ui.flat) righe(ALFA, kb.A, "a", false);
+    kb.tasti = kb.Q;
+    if (ui.flat) {   // 📺 senza studio: quando si gira la tastiera non c'è, ma se si può comprare una vocale c'è la fila delle vocali (in basso, vicino a «Gira»)
+      kb.voc = {}; kb.vocEl = el("div", { class: "ru-qv" });
+      VOCALI.forEach(function (Lt) { var b = el("button", { class: "ru-btn lettera voc", type: "button", text: Lt, onclick: function () { tastoQ(ui, Lt, kb.voc); } }); b.disabled = true; kb.voc[Lt] = b; kb.vocEl.appendChild(b); });
     }
     return kb;
   }
   // la lettera accesa vale finché non cambia il momento (fase, turno, giro, lettere chiamate)
   function kSel(vm) { return [vm.gameId, vm.manche, vm.giroN, vm.fase, vm.turno, (vm.chiamate || []).length].join("|"); }
   function selMia(ui, vm) { return ui.sel && ui.sel.k === kSel(vm) ? ui.sel.L : null; }
-  function tastoQ(ui, Lt) {
-    var kb = ui.kb, b = kb.tasti[Lt];
+  function tastoQ(ui, Lt, mappa) {
+    var kb = ui.kb, b = (mappa || kb.tasti)[Lt];
     if (!b || b.disabled || !ui.S.vivo()) return;
     if (kb.modo === "scrivi") return scriviLettera(ui, Lt);
     if (kb.modo === "fsel") { if (ui.finTocca) ui.finTocca(Lt); return; }
@@ -3147,6 +3216,9 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     var rs = mioTurno && f === "ftempo" && !!F && F.b === FIN_TABELLONI && ui.finScrivi !== (vm.gameId || "") + ":rs";   // 🕵️ Rubasecondi: si chiamano lettere
     var modo = rs ? "rs" : ui.scrivi ? "scrivi" : mioTurno && f === "flettere" && mf && !mf.scelto ? "fsel" : mioTurno && FASI_SEL.indexOf(f) >= 0 ? "turno" : "off";
     kb.modo = modo;
+    var alfa = !!ui.flat && modo !== "scrivi";
+    kb.tasti = alfa ? kb.A : kb.Q;
+    if (kb.el.classList.contains("alfa") !== alfa) kb.el.classList.toggle("alfa", alfa);
     var nasc = FASI_BUSTA.indexOf(f) >= 0;   // (la busta: lì servono solo le buste)
     if (kb.el.hidden !== nasc) kb.el.hidden = nasc;
     if (kb.el.classList.contains("attiva") !== (modo !== "off")) kb.el.classList.toggle("attiva", modo !== "off");
@@ -3156,8 +3228,9 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     if (modo === "turno") { var sm = selMia(ui, vm); if (sm) sel = { id: att, L: sm }; }
     else if (modo === "off" && vm.sel && vm.sel.id === att && FASI_SEL.indexOf(f) >= 0) sel = vm.sel;
     if (sel) { var col = (ST.COLORI || [])[Math.max(0, ui.ids.indexOf(sel.id)) % 10] || "#ffc247"; if (kb.col !== col) { kb.col = col; kb.el.style.setProperty("--sel", col); } }
-    Object.keys(kb.tasti).forEach(function (L) {
-      var b = kb.tasti[L], voc = VOCALI.indexOf(L) >= 0, usata = !!ch[L], on = false;
+    var tutte = [kb.Q]; if (kb.A && Object.keys(kb.A).length) tutte.push(kb.A);
+    tutte.forEach(function (mappa) { Object.keys(mappa).forEach(function (L) {
+      var b = mappa[L], voc = VOCALI.indexOf(L) >= 0, usata = !!ch[L], on = false;
       if (modo === "scrivi" || modo === "fsel") on = !usata;
       else if (modo === "rs") on = !usata && !(voc && mf && mf.voc >= 1);
       else if (modo === "turno") on = !usata && (voc ? f === "vocale" || f === "vlettera" || (f === "gira" || f === "express") && pc : f === "consonante" || f === "vlettera" || f === "express" && vm.cons > 0);
@@ -3165,9 +3238,9 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
         (modo === "fsel" && (ui.finSel || []).indexOf(L) >= 0 ? " scelta" : "");
       if (b.className !== cls) b.className = cls;
       if (b.disabled !== !on) b.disabled = !on;
-      var bv = kb.voc && kb.voc[L];   // (la fila delle vocali, senza studio: uguale ai tasti della tastiera)
+      var bv = mappa === kb.Q && kb.voc && kb.voc[L];   // (la fila delle vocali, senza studio: uguale ai tasti della tastiera)
       if (bv) { if (bv.className !== cls) bv.className = cls; if (bv.disabled !== !on) bv.disabled = !on; }
-    });
+    }); });
     var cOn = modo === "scrivi";
     if (kb.canc.disabled !== !cOn) { kb.canc.disabled = !cOn; kb.canc.classList.toggle("nasc", !cOn); }
   }
@@ -3837,7 +3910,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-flat .ru-alto{transition:opacity .3s,visibility 0s .3s}.ru-flat .ru-alto.on{transition:opacity .3s}.ru-flat .ru-alto.on.nascosta{opacity:0}",
       ".ru-flat .ru-piatto-alto{transform-origin:0 0;transform:translate(var(--tx,0),var(--ty,0)) scale(var(--s,1));transition:transform .45s cubic-bezier(.3,1.1,.5,1)}",
       ".ru-flat .ru-alto.on .ru-piatto-alto{transform:translate(var(--tx,0),var(--ty,0)) scale(var(--s,1))}",
-      ".ru-flat .ru-alto.on.vicino .ru-piatto-alto{transform:translate(var(--txv,0),var(--ty,0)) scale(var(--sv,1));transition:transform 1.1s cubic-bezier(.4,0,.2,1)}",
+      ".ru-flat .ru-alto.on.vicino .ru-piatto-alto{transform:translate(var(--txv,0),var(--tyv,0)) scale(var(--sv,1));transition:transform .55s cubic-bezier(.3,0,.2,1)}",
       ".ru-flat .st-terzo{bottom:auto;top:calc(var(--ru-mezzo,40%) + 8px)}",
       // i punteggi: la faccina piccola al posto del pallino, il Jolly accanto, il «+800» che salta fuori
       ".ru-flat .ru-punti{flex-wrap:nowrap;gap:5px}",
@@ -3866,7 +3939,47 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-flat .ru-qwerty .ru-btn.lettera.sel{background:var(--sel,#ffc247);color:#0d1020;box-shadow:inset 0 0 0 2px #fff,0 0 12px var(--sel,#ffc247)}",
       ".ru-qv{display:none;gap:6px;justify-content:center}.ru-flat.ru-m-ruota.ru-m-voc .ru-qv{display:flex}",
       ".ru-qv .ru-btn.lettera{flex:0 0 calc((100% - 24px) / 5);max-width:64px;min-height:44px;padding:0;border-radius:10px;font-size:1.25rem}",
-      ".ru-flat .ru-btn.prenoto.grande{min-height:calc(var(--alt,640px) * .13)}"
+      ".ru-flat .ru-btn.prenoto.grande{min-height:calc(var(--alt,640px) * .13)}",
+      ".ru-flat .ru-cat{white-space:normal;overflow:hidden;text-overflow:clip;min-height:0;height:calc(2.36em + 2px);box-sizing:border-box;line-height:1.18;font-size:clamp(.95rem,4.6vw,1.18rem);display:flex;align-items:center;justify-content:center;padding:0 38px;color:#ffd0dd;letter-spacing:.03em;text-shadow:0 0 14px rgba(224,34,90,.45),0 2px 4px rgba(0,0,0,.9);text-wrap:balance}",
+      ".ru-flat .ru-tab{background:linear-gradient(180deg,#171d38,#0f1328);box-shadow:0 0 0 1.5px rgba(224,34,90,.55),0 0 22px rgba(224,34,90,.25),inset 0 1px 0 rgba(255,255,255,.1);padding:6px;gap:3px;border-radius:16px}",
+      ".ru-flat .ru-cella{border-radius:6px;background:linear-gradient(180deg,#fbf8f1,#e6e0d1);color:#14182c;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}",
+      ".ru-flat .ru-cella.vuota{background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}",
+      ".ru-flat .ru-cella.coperta{background:linear-gradient(180deg,#fbf8f1,#e6e0d1)}",
+      ".ru-flat .ru-cella.scritta{background:linear-gradient(180deg,#ffe7ef,#ffd0de);color:#9c0f3c}",
+      ".ru-flat .ru-cella.scritta.vivo{background:linear-gradient(180deg,#fff2c8,#ffe3a0);color:#8a4b00}",
+      ".ru-flat .ru-tab.alta .ru-cella{font-size:min(calc(var(--ru-ch) * .62),7vw,2.2rem)}",
+      ".ru-flat .ru-chip{height:62px;padding:5px 6px 5px 40px;row-gap:1px;align-content:center}",
+      ".ru-flat .ru-chip canvas.fac{left:5px;width:31px;height:31px;margin-top:-15.5px}",
+      ".ru-flat .ru-chip .n{font-size:.7rem;line-height:1.1}",
+      ".ru-flat .ru-chip b{flex:0 0 100%;font-size:clamp(1.12rem,5.4vw,1.45rem);line-height:1.08;white-space:nowrap}",
+      ".ru-flat .ru-chip small{flex:0 0 auto;align-self:flex-start;margin-top:1px;font-size:.56rem;font-weight:800;line-height:1.5;padding:0 5px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--o-tenue);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}",
+      ".ru-flat .ru-chip small.su{background:rgba(224,34,90,.3);color:#ffd3df}",
+      ".ru-flat .ru-chip small.banca{background:#d4204f;color:#fff}",
+      ".ru-flat .ru-chip small.inc{background:rgba(111,240,166,.2);color:#6ff0a6}",
+      ".ru-flat .ru-chip.scuoti{animation:pzScuotiR .45s}@keyframes pzScuotiR{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}",
+      ".ru-flat .ru-chip.incassa b{color:var(--o-oro)}",
+      ".ru-msg.nascosto{display:none}",
+      ".ru-flat .ru-sopra .ru-qwerty{pointer-events:auto;margin-top:6px}",
+      ".ru-qwerty.alfa .ru-qr.q,.ru-qwerty:not(.alfa) .ru-qr.a{display:none}",
+      ".ru-flat .ru-qr.a{gap:6px}",
+      ".ru-flat .ru-qr.a .ru-btn.lettera{flex:0 0 calc((100% - 36px) / 7);min-height:calc(var(--alt,640px) * .064);font-size:clamp(1.3rem,calc(var(--alt,640px) * .034),1.9rem);border-radius:12px}",
+      ".ru-flat .ru-qr.q .ru-btn.lettera{font-size:clamp(1.12rem,calc(var(--alt,640px) * .03),1.6rem)}",
+      ".ru-flat .ru-qwerty .ru-btn.lettera.voc,.ru-flat .ru-qv .ru-btn.lettera.voc{background:linear-gradient(180deg,rgba(255,194,71,.18),rgba(255,194,71,.06));box-shadow:inset 0 0 0 1.5px rgba(255,194,71,.6);color:#ffc247}",
+      ".ru-flat .ru-qwerty .ru-btn.lettera.si,.ru-flat .ru-qwerty .ru-btn.lettera.no,.ru-flat .ru-qv .ru-btn.lettera.si,.ru-flat .ru-qv .ru-btn.lettera.no{opacity:.18;text-decoration:none;background:var(--o-carta-piena);box-shadow:none;color:var(--o-testo)}",
+      ".ru-flat .ru-qwerty .ru-btn.lettera.sel,.ru-flat .ru-qv .ru-btn.lettera.sel{opacity:1;background:linear-gradient(180deg,#f0306a,#c81a4e);color:#fff;box-shadow:0 0 0 2.5px #fff,0 0 18px rgba(224,34,90,.8);transform:translateY(-2px)}",
+      ".ru-fm{display:flex;flex-direction:column;gap:7px;margin-top:4px;pointer-events:auto}.ru-fm[hidden]{display:none}",
+      ".ru-fm-box{padding:9px 12px;border-radius:18px;background:var(--o-carta-piena);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 1px var(--o-filo);text-align:center;color:var(--o-testo)}",
+      ".ru-fm-tit{font-size:.7rem;letter-spacing:.12em;font-weight:800;color:var(--o-tenue)}",
+      ".ru-fm-chi{display:flex;align-items:center;justify-content:center;gap:12px;margin:5px 0 2px}",
+      ".ru-fm-chi .fac{width:52px;height:52px;border-radius:50%}",
+      ".ru-fm-chi .nm{display:block;font-size:1.2rem;text-align:left}.ru-fm-chi .piu{display:block;font-size:1.65rem;line-height:1.05;color:#6ff0a6;text-align:left}",
+      ".ru-fm-nota{font-size:.78rem;color:var(--o-tenue);font-weight:700}.ru-fm-nota b{color:var(--o-testo)}",
+      ".ru-fm-persi{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px;text-align:left}",
+      ".ru-fm-persi small{display:block;font-size:.64rem;color:var(--o-tenue);font-weight:800}.ru-fm-persi b{font-size:1rem;color:#ff6b8b}",
+      ".ru-fm-cl .riga{display:flex;align-items:center;gap:8px;padding:2px}",
+      ".ru-fm-cl .pos{width:24px;color:var(--o-oro)}.ru-fm-cl .fac{width:28px;height:28px;border-radius:50%}",
+      ".ru-fm-cl .nm{flex:1;text-align:left;font-weight:800}.ru-fm-cl .v{font-size:1.08rem}",
+      "@media (max-height:740px){.ru-fm-cl{display:none}.ru-fm-chi .fac{width:40px;height:40px}.ru-fm-chi .piu{font-size:1.35rem}}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -3964,5 +4077,5 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
   });
 
   // per le prove
-  window.__RUOTA = { creaPartita: creaPartita, controllaFrase: controllaFrase, spicchiDi: spicchiDi, apreMistero: apreMistero, leggiNostre: leggiNostre, righe: righe, righeIdx: righeIdx, coperta: coperta, solo: solo, corta: corta, valoreSeg: valoreSeg, quotaTab: quotaTab, decidiBot: decidiBot, letteraBot: letteraBot, SPICCHI: SPICCHI, BUSTE: BUSTE, INCASSI: INCASSI };
+  window.__RUOTA = { ui: function () { return R; }, fitCat: function () { if (R) catInDueRighe(R); }, creaPartita: creaPartita, controllaFrase: controllaFrase, spicchiDi: spicchiDi, apreMistero: apreMistero, leggiNostre: leggiNostre, righe: righe, righeIdx: righeIdx, coperta: coperta, solo: solo, corta: corta, valoreSeg: valoreSeg, quotaTab: quotaTab, decidiBot: decidiBot, letteraBot: letteraBot, SPICCHI: SPICCHI, BUSTE: BUSTE, INCASSI: INCASSI };
 })();
