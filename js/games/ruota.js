@@ -2183,17 +2183,27 @@
       var chiaro = s === "passa" || s === "raddoppia" || COLORI_TESTO[col];
       c.font = "900 " + (s ? (tx.length > 9 ? 21 : 25) : sp.v >= 1000 ? 35 : 40) + "px system-ui, sans-serif";
       c.lineJoin = "round"; c.lineWidth = 6; c.strokeStyle = chiaro ? "rgba(255,255,255,.55)" : "rgba(0,0,0,.6)";
-      c.strokeText(tx, Rs - 22, 1);
+      c.strokeText(tx, Rs - 33, 1);
       c.fillStyle = s === "passa" || s === "raddoppia" ? "#1b1f3a" : s === "express" ? "#ffe9a8" : s === "mistero" ? "#ffc247" : s === "jolly" ? "#fff7d6" : (COLORI_TESTO[col] || "#fff");
-      c.fillText(tx, Rs - 22, 1);
+      c.fillText(tx, Rs - 33, 1);
       c.restore();
     });
-    // i chiodi sul confine tra uno spicchio e l'altro: è lì che batte la lancetta
-    for (var k = 0; k < spicchi.length; k++) {
-      var al = -Math.PI / 2 + k * passo, px = Math.cos(al) * (Rs - 7), py = Math.sin(al) * (Rs - 7);
-      c.beginPath(); c.arc(px, py, 6.5, 0, Math.PI * 2); c.fillStyle = "#5a3a06"; c.fill();
-      c.beginPath(); c.arc(px - 1, py - 1, 4.6, 0, Math.PI * 2); c.fillStyle = "#ffe08a"; c.fill();
+    // i chiodi: quelli grandi sul confine tra uno spicchio e l'altro, quelli piccoli (metà) a metà spicchio. La lancetta batte
+    // su tutti e due, e il tic si sente SOLO quando passa un chiodo che si vede (19 nov 2026, il proprietario: «crea suspense»).
+    // Stesso stile dei pallini della ruotina della Mini Asta (oro con la luce in alto a sinistra, ombra, filo scuro)
+    pallini(c, spicchi.length * 2, 12, Rs - 5 - 12);
+  }
+  function pallini(c, n, pg, rp) {
+    var h, an, rr, px, py, gp;
+    c.save(); c.shadowColor = "rgba(0,0,0,.5)"; c.shadowBlur = 3; c.shadowOffsetY = 1;
+    for (h = 0; h < n; h++) {
+      an = -Math.PI / 2 + h * Math.PI * 2 / n; rr = h % 2 ? pg / 2 : pg; px = Math.cos(an) * rp; py = Math.sin(an) * rp;
+      gp = c.createRadialGradient(px - rr * 0.35, py - rr * 0.35, rr * 0.1, px, py, rr);
+      gp.addColorStop(0, "#fffbe6"); gp.addColorStop(0.55, "#ffd66b"); gp.addColorStop(1, "#d99a12");
+      c.beginPath(); c.arc(px, py, rr, 0, Math.PI * 2); c.fillStyle = gp; c.fill();
     }
+    c.restore();
+    for (h = 0; h < n; h++) { an = -Math.PI / 2 + h * Math.PI * 2 / n; rr = h % 2 ? pg / 2 : pg; c.beginPath(); c.arc(Math.cos(an) * rp, Math.sin(an) * rp, rr, 0, Math.PI * 2); c.lineWidth = 1.5; c.strokeStyle = "rgba(110,64,0,.6)"; c.stroke(); }
   }
   // l'anello d'oro intorno al disco (fermo) con gli attacchi delle lampadine
   var N_LAMP = 48;
@@ -2361,16 +2371,18 @@
   // la linguetta si piega quando il piolo che arriva la tocca e torna a posto con un colpo di molla quando lo scavalca (si vede
   // e si sente sempre più lento); se la ruota si ferma col piolo che preme, resta piegata: «a un soffio!». Poi la luce sullo
   // spicchio vinto e una vibrazione breve. Tutto viene dall'angolo deciso da chi tiene la partita: uguale su ogni telefono.
-  var PIEGA = 5.5;   // (gradi: da quanto prima il piolo tocca la linguetta)
+  var PIEGA = 5.5, PIEGA_P = 3;   // (gradi: da quanto prima il piolo grande / quello piccolo tocca la linguetta)
   function giraRuota(ui, da, a, ms, dir) {
     fermaGiro(ui);
-    var S = ui.S, k = ui.giroK, t0 = performance.now(), D = a - da, ult = Math.floor(da / 15), tSuono = -1e9, ohh = false, rullo = false, lan = ui.lancetta, piegata = false, finito = false;
+    var S = ui.S, k = ui.giroK, t0 = performance.now(), D = a - da, ult = Math.floor(da / 7.5), tSuono = -1e9, ohh = false, rullo = false, lan = ui.lancetta, piegata = false, finito = false;
     var vm0 = ui.vm || {}, sp = spicchiDi(vm0.regole && vm0.regole.express, vm0.mist);
     function sotto(ang) { return Math.floor(((((-ang) % 360) + 360) % 360) / 15) % 24; }
-    function manca(ang) { return dir === 1 ? (((-ang) % 15) + 15) % 15 : ((ang % 15) + 15) % 15; }   // gradi prima che il prossimo piolo arrivi alla lancetta
+    function manca(ang) { return dir === 1 ? (((-ang) % 15) + 15) % 15 : ((ang % 15) + 15) % 15; }   // gradi prima che il prossimo piolo GRANDE arrivi alla lancetta
+    // il prossimo piolo, grande o piccolo (ce n'è uno ogni 7,5 gradi): quanto manca, da quando piega la linguetta e di quanto
+    function prossimo(ang) { var q = manca(ang); return q > 7.5 ? { q: q - 7.5, p: PIEGA_P, g: 18 } : { q: q, p: PIEGA, g: 30 }; }
     function linguetta(ang, molla) {
-      var q = manca(ang);
-      if (q < PIEGA) { piegata = true; lan.style.transition = "none"; lan.style.transform = "rotate(" + (-30 * dir * (1 - q / PIEGA)).toFixed(1) + "deg)"; }
+      var pr = prossimo(ang), q = pr.q;
+      if (q < pr.p) { piegata = true; lan.style.transition = "none"; lan.style.transform = "rotate(" + (-pr.g * dir * (1 - q / pr.p)).toFixed(1) + "deg)"; }
       else if (piegata || molla) { piegata = false; lan.style.transition = "transform .2s cubic-bezier(.3,1.7,.5,1)"; lan.style.transform = "rotate(0deg)"; }
     }
     function fine() {
@@ -2389,10 +2401,11 @@
       var u = Math.min(1, (now - t0) / ms), ang = da + D * (1 - Math.pow(1 - u, 3.6));
       ruotaA(ui, ang);
       var vel = 3.6 * Math.abs(D) / ms * Math.pow(1 - u, 2.6) * 1000;   // gradi al secondo
-      var seg = Math.floor(ang / 15);
-      if (seg !== ult) {   // un piolo scavalca la linguetta: tic (quando va piano è un «toc» più forte)
+      var seg = Math.floor(ang / 7.5);
+      if (seg !== ult) {   // un piolo scavalca la linguetta: tic (quando va piano è un «toc» più forte; il piolo piccolo un filo più leggero)
+        var grande = Math.max(seg, ult) % 2 === 0;   // (i pioli grandi sono sui multipli di 15 gradi)
         ult = seg;
-        if (now - tSuono > 38) { var lento = vel < 160; bip(1650, 0.022, "square", lento ? 0.045 : 0.03); if (lento) bip(380, 0.05, "triangle", 0.06); tSuono = now; }
+        if (now - tSuono > 45) { var lento = vel < 160, vol = grande ? 1 : 0.7; bip(grande ? 1650 : 1900, 0.022, "square", (lento ? 0.045 : 0.03) * vol); if (lento) bip(grande ? 380 : 460, 0.05, "triangle", 0.06 * vol); tSuono = now; }
       }
       linguetta(ang, false);
       var qui = sp[sotto(ang)];

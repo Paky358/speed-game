@@ -819,12 +819,28 @@
   } });
   // ===================================================================== bu1-bu5: ✉️ IL FANTA A BUSTE (2 nov 2026, il proprietario)
   // bu1 ⚙️ «💰 Come si compra» (3 scelte, di base l'asta normale), riassunto e regole; i conti delle buste (pari, spareggio, nessuno)
-  // bu2 stesso telefono in 3, «Tutta a buste»: buste segrete passando il telefono; 1ª: 3, 5, passo → vince 5 (apertura dalla più bassa);
+  // bu2 stesso telefono in 3, «Tutta a buste»: buste segrete passando il telefono; 1ª: 3, 5, passo → vince 5 (chi passa per primo, poi a caso);
   //     2ª: tutti 2 → spareggio solo tra loro, tutti 3 → la ruota; 3ª: tutti passano → «NESSUNO!»; poi fino alla classifica
   // bu3 da solo come IL PAPPONE, «Tutta a buste», fino alla classifica
   // bu4 online in 3, «Tutta a buste»: nella foto mai le offerte; Giulia chiude a 4 e ricarica (ritrova «Busta chiusa: 4 💰»), Luca ricarica
   //     mentre scrive e poi passa; spareggio (Luca guarda), ruota uguale su tutti; misure a 360x640 e 412x915; fino alla classifica
   // bu5 stesso telefono in 3, «Buste solo per i big»: a busta solo chi vale da BIG_DA in su, gli altri all'asta normale
+  // bu6 🎲 (18 nov 2026, il proprietario: «spargi le buste a caso, così non si capisce prima: è la nostra regola di non fare spoiler»; prima si
+  //     aprivano dalla più bassa e l'ultima era SEMPRE chi vince): 6.000 aperture a caso (da 2 a 10 in gara, chi passa, spareggi): chi passa
+  //     sempre per primo; le altre in ordine a caso e chi vince esce in OGNI posizione, circa una volta su n (mai sempre l'ultima); la 👑 del
+  //     piano sempre sulla busta più alta finora (pari: «pari»), l'ultima busta contro la 👑 e chi vince è una delle due; stesso tempo tra una
+  //     busta e l'altra; ogni apertura col suo seme
+  // bu7 🎡 (18 nov 2026, il proprietario: lo spareggio è inutile se nessuno dei pari può alzare, «fa solo perdere tempo») i conti (tuttiAlMax) e
+  //     stesso telefono in 3: 1ª Paky e Giulia scrivono il loro massimo, Luca passa → NIENTE spareggio, subito la ruota («Tutti al massimo»),
+  //     chi vince paga il massimo; 2ª pari tra chi ha vinto (ora al massimo) e uno che può ancora alzare → lo spareggio come prima; poi fino
+  //     alla classifica
+  // bu8 🎡 online in 3: chi tiene la partita (Paky) ricarica mentre si scrive la prima busta (la busta riparte da capo), poi Paky e Giulia
+  //     al massimo e Luca passa → subito la ruota su tutti i telefoni («Tutti al massimo»), mai la busta dello spareggio; fino alla classifica
+  // ru2 ● LA RUOTINA, PALLINI E TIC (19 nov 2026, il proprietario: il tic si sentiva anche dove non c'era nessun pallino; «crea suspense»).
+  //     ru2 online in 3 (Paky e Giulia al massimo, Luca passa → subito la ruota; tutti e 3 i telefoni), ru3 sullo stesso telefono: sul disco un
+  //     pallino GRANDE dove cambia lo spicchio e uno PICCOLO (metà) a metà spicchio (si guardano i pixel); fotogramma per fotogramma la
+  //     lancetta scatta SOLO e SEMPRE quando un pallino le passa sotto, anche quando rallenta; il suono del tic solo nei fotogrammi del tic e,
+  //     quando rallenta (tic a più di 55 ms l'uno dall'altro), su ogni pallino. (ru1, la ruota online uguale su tutti, sta in asta-ruota.js)
   function testoDi(w, s) { var e = q(w, s); return e ? e.textContent : ""; }
   function credDi(w, nome) { var sq = qa(w, ".st-sq").filter(function (x) { var b = x.querySelector(".st-sq-nomi b"); return b && b.textContent === nome; })[0]; var m = sq && /(\d+) 💰/.exec(sq.querySelector(".st-sq-nomi small").textContent); return m ? +m[1] : null; }
   function righeApri(w) { return qa(w, ".st-apri .as-buste .r").map(function (r) { return [].map.call(r.childNodes, function (c) { return c.textContent; }).join(" ").replace(/\s+/g, " ").trim(); }); }
@@ -841,7 +857,7 @@
   }
   async function motoreAsta(w) {   // il file del gioco con le funzioni delle buste portate fuori (solo per la prova)
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {}, ag = "function costruisciMazzoFanta(n) {";
-    src = src.replace(ag, "FUORI.contaBuste = contaBuste; FUORI.apertura = apertura; FUORI.apriMs = apriMs; FUORI.righeDi = righeDi; FUORI.BIG = BIG_DA; " + ag);
+    src = src.replace(ag, "FUORI.contaBuste = contaBuste; FUORI.apertura = apertura; FUORI.apriMs = apriMs; FUORI.righeDi = righeDi; FUORI.pianoApri = pianoApri; FUORI.tuttiAlMax = tuttiAlMax; FUORI.maxFanta = maxFanta; FUORI.BIG = BIG_DA; " + ag);
     var g = {}; new w.Function("SG", "FUORI", src)({ registra: function (x) { g[x.id] = x; }, bot: w.SG && w.SG.bot }, fuori);
     fuori.giochi = g; return fuori;
   }
@@ -866,7 +882,7 @@
     var r4 = C([{ id: "a", q: 6 }, { id: "b", q: 0 }], 4); if (r4.prezzo !== 6 || r4.primi[0].id !== "a") no("spareggio 6 contro «resto a 4»: " + JSON.stringify(r4));
     var r5 = C([{ id: "a", q: 0 }, { id: "b", q: 0 }], 0); if (!r5.nessuno) no("tutti passano non è «nessuno»: " + JSON.stringify(r5));
     var ap = M.apertura({ n: 1, sp: 0 }, [{ id: "a", nome: "A", q: 3 }, { id: "b", nome: "B", q: 5 }, { id: "c", nome: "C", q: 0 }], r1);
-    if (ap.buste.map(function (b) { return b.q; }).join(",") !== "0,3,5" || ap.fine !== "vince") no("l'apertura non va dalla più bassa alla più alta: " + JSON.stringify(ap));
+    if (ap.buste[0].q !== 0 || ap.buste.slice(1).map(function (b) { return b.q; }).sort().join(",") !== "3,5" || ap.fine !== "vince") no("l'apertura: chi passa non è per primo, o le buste non sono quelle scritte: " + JSON.stringify(ap));
     var ms = M.apriMs(M.righeDi(ap)), ms10 = M.apriMs(10); if (ms < 5000 || ms > 8000 || ms10 > 10500) no("l'apertura dura " + ms + " ms in 3 e " + ms10 + " ms in 10");
     x.push("3 scelte (di base l'asta normale), riassunti e regole; conti: vince, pari, spareggio, resto, nessuno; apertura in 3 " + ms + " ms, in 10 " + ms10 + " ms; big da " + M.BIG);
     return x.join(" · ");
@@ -888,7 +904,7 @@
         ap.__visto = true; apriK = k; primo = null; aperto = fase; await W.dorme(250);
         var rr = righeApri(P), fine = testoDi(P, ".st-apri .fine");
         if (fase === 0) {
-          if (rr.length !== 3 || !/Luca passa/.test(rr[0]) || !/Paky.*3 💰/.test(rr[1]) || !/🏆.*Giulia.*5 💰/.test(rr[2])) no("1ª apertura: " + JSON.stringify(rr));
+          if (rr.length !== 3 || !/Luca passa/.test(rr[0]) || !rr.some(function (r) { return /Paky.*3 💰/.test(r); }) || !rr.some(function (r) { return /🏆.*Giulia.*5 💰/.test(r); })) no("1ª apertura: " + JSON.stringify(rr));
           misure = misure.concat(await misura("Paky", "l'apertura delle buste", [".st-apri"]));
           prima = credDi(P, "Giulia"); x.push("1ª: " + rr.join(" / "));
         } else if (fase === 1 && !/Spareggio/.test(k) && k !== "ruota") {
@@ -1006,8 +1022,12 @@
         await chiudiUI("Luca", 0); await chiudiUI("Paky", 2);
         if (!await aspettaFase("apri")) no("le buste non si aprono");
         var ap = vm(C).apri;
-        if (ap.fine !== "vince" || ap.prezzo !== 4 || ap.primi[0] !== idDi("Giulia") || ap.buste.map(function (z) { return z.q; }).join(",") !== "0,2,4") no("1ª apertura: " + JSON.stringify(ap));
+        if (ap.fine !== "vince" || ap.prezzo !== 4 || ap.primi[0] !== idDi("Giulia") || ap.buste[0].q !== 0 || ap.buste.slice(1).map(function (z) { return z.q; }).sort().join(",") !== "2,4") no("1ª apertura: " + JSON.stringify(ap));
         if (!await W.aspetta(function () { return righeApri(W.finestra("Luca")).length === 3; }, 3000)) no("Luca non vede le buste aperte");
+        var ordL = qa(W.finestra("Luca"), ".st-tavolo .tav .bt").map(function (z) { return z.getAttribute("data-id"); }).join(","), ordH = ap.buste.map(function (z) { return z.id; }).join(",");
+        if (ordL !== ordH) no("sul tavolo di Luca le buste non sono nell'ordine di chi tiene la partita: " + ordL + " / " + ordH);
+        var duoL = qa(W.finestra("Luca"), ".st-tavolo .duo .bt").map(function (z) { return z.getAttribute("data-id"); }).sort().join(",");
+        if (duoL !== [idDi("Paky"), idDi("Giulia")].sort().join(",")) no("su Luca l'ultima busta non va contro la 👑: " + duoL);
         misure = misure.concat(await misura("Luca", "l'apertura (online)", [".st-apri"]));
         if (!await aspettaFase("esito", 9000) || vm(C).esito.chiId !== idDi("Giulia") || vm(C).esito.prezzo !== 4) no("1ª: non va a Giulia per 4 (" + JSON.stringify(vm(C).esito) + ")");
         x.push("1ª: Giulia 4 (ricaricata), Paky 2, Luca passa (ricaricato) → Giulia per 4"); fatto = 1; continue;
@@ -1074,5 +1094,212 @@
     if (ko.length) no(ko.join(" · "));
     if (!nB || !nA) no("in una partita " + nB + " buste e " + nA + " aste normali (volute tutte e due)");
     return nB + " big a busta, " + nA + " all'asta normale, fino alla classifica";
+  } });
+  COPIONE.aggiungi("bu6", { nome: "Fanta a buste: le buste si aprono in ordine a caso (chi vince esce in ogni posizione), 👑 su chi è in testa, l'ultima contro la 👑", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0 }), M = await motoreAsta(w), pos = {}, ko = [], semi = {}, N = 6000;
+    function rnd(n) { return Math.floor(Math.random() * n); }
+    for (var k = 0; k < N && ko.length < 6; k++) {
+      var n = 2 + rnd(9), sp = rnd(4) === 0 ? 1 + rnd(5) : 0, l = [];
+      for (var i = 0; i < n; i++) l.push({ id: "g" + i, nome: "G" + i, q: rnd(3) === 0 ? 0 : (sp ? sp + 1 : 1) + rnd(12) });
+      var r = M.contaBuste(l, sp), ap = M.apertura({ n: 1, sp: sp }, l, r), P = M.pianoApri(ap), val = function (b) { return b.q || sp; };
+      if (!ap.seme) ko.push("l'apertura non ha il seme"); else semi[ap.seme] = 1;
+      var passano = ap.buste.filter(function (b) { return !val(b); }), conti = ap.buste.filter(function (b) { return val(b); });
+      if (ap.buste.slice(0, passano.length).some(function (b) { return val(b); })) ko.push("chi passa non è per primo: " + JSON.stringify(ap.buste));
+      if (ap.buste.length !== n || l.some(function (o) { return !ap.buste.filter(function (b) { return b.id === o.id && b.q === o.q; }).length; })) ko.push("le buste non sono quelle scritte");
+      if (r.nessuno || conti.length < 2) continue;
+      var m = conti.length, top = 0, capo = null;   // la 👑: sempre sulla più alta finora
+      conti.slice(0, m - 1).forEach(function (b) { var v = val(b), re = P.re[b.id]; if (v > top) { top = v; capo = b; if (re !== "testa") ko.push("busta da " + v + ", la più alta finora, senza «testa» (" + re + ")"); } else if (v === top) { if (re !== "pari") ko.push("busta pari con la 👑 senza «pari» (" + re + ")"); } else if (re) ko.push("busta da " + v + " più bassa della 👑 con «" + re + "»"); });
+      if (P.duo.length !== 2 || P.duo[0] !== capo.id || P.duo[1] !== conti[m - 1].id) ko.push("il testa a testa non è la 👑 contro l'ultima: " + JSON.stringify(P.duo));
+      if (!r.primi.some(function (x) { return x.id === capo.id || x.id === conti[m - 1].id; })) ko.push("chi vince non è né la 👑 né l'ultima busta");
+      var tg = conti.slice(0, m - 1).map(function (b) { return P.giro[b.id]; }), d = tg.slice(1).map(function (t, j) { return Math.round((t - tg[j]) * 1000); });
+      if (d.some(function (x) { return x !== d[0]; })) ko.push("il tempo tra una busta e l'altra cambia: " + d.join(","));
+    }
+    if (Object.keys(semi).length < N * 0.95) ko.push("i semi si ripetono: " + Object.keys(semi).length + " su " + N);
+    for (var m2 = 2; m2 <= 10; m2++) for (var k2 = 0; k2 < 800; k2++) {   // in che posizione esce chi vince: 800 aperture per ogni numero di buste
+      var l2 = []; for (var i2 = 0; i2 < m2; i2++) l2.push({ id: "g" + i2, nome: "G" + i2, q: 1 + rnd(30) });
+      var r2 = M.contaBuste(l2, 0); if (r2.primi.length !== 1) continue;
+      var a2 = M.apertura({ n: 1, sp: 0 }, l2, r2), iw = a2.buste.map(function (b) { return b.id; }).indexOf(r2.primi[0].id);
+      pos[m2] = pos[m2] || []; while (pos[m2].length < m2) pos[m2].push(0); pos[m2][iw]++;
+    }
+    var righe = [];
+    Object.keys(pos).forEach(function (m) {
+      var c = pos[m], tot = c.reduce(function (a, b) { return a + b; }, 0);
+      if (tot < 400) { ko.push("con " + m + " buste solo " + tot + " aperture"); return; }
+      c.forEach(function (v, j) { if (v / tot < 0.4 / m || v / tot > 2 / m) ko.push("con " + m + " buste chi vince esce il " + Math.round(100 * v / tot) + "% delle volte per " + (j + 1) + "ª"); });
+      righe.push(m + ": " + c.map(function (v) { return Math.round(100 * v / tot); }).join("/"));
+    });
+    if (ko.length) no(ko.slice(0, 6).join(" · "));
+    return N + " aperture: chi passa sempre per primo, 👑 sempre sulla più alta finora, l'ultima busta sempre contro la 👑, stesso tempo tra le buste, un seme per apertura; in che posizione esce chi vince (% dalla 1ª all'ultima, per quante buste): " + righe.join(" · ");
+  } });
+  function maxDa(w) { var m = /fino a (\d+)/.exec(((w.document.querySelectorAll(".as-bus-regola")[1] || {}).textContent) || ""); return m ? +m[1] : null; }
+  COPIONE.aggiungi("bu7", { nome: "Fanta a buste: pari e tutti al massimo = subito la ruota (niente spareggio); se uno dei pari può alzare, lo spareggio come prima", fai: async function () {
+    var E = await W.apriTel("Bea", { x: 700 }), M = await motoreAsta(E), x = [], P;
+    var gs = { a: { crediti: 20, conta: {} }, b: { crediti: 20, conta: {} }, c: { crediti: 21, conta: {} } }, g = function (id) { return gs[id]; };
+    if (M.maxFanta(gs.a) !== 16) no("all'inizio il massimo non è 16: " + M.maxFanta(gs.a));
+    var r1 = M.contaBuste([{ id: "a", q: 16 }, { id: "b", q: 16 }, { id: "x", q: 0 }], 0), r2 = M.contaBuste([{ id: "a", q: 16 }, { id: "c", q: 16 }], 0), r3 = M.contaBuste([{ id: "a", q: 16 }, { id: "b", q: 0 }], 15), r4 = M.contaBuste([{ id: "a", q: 16 }, { id: "b", q: 9 }], 0);
+    if (!M.tuttiAlMax(r1, 0, g)) no("16 e 16, tutti e due al massimo: non va subito alla ruota");
+    if (M.tuttiAlMax(r2, 0, g)) no("16 e 16 ma uno può arrivare a 17: salta lo spareggio");
+    if (M.tuttiAlMax(r3, 15, g)) no("già nello spareggio: la regola nuova non c'entra");
+    if (M.tuttiAlMax(r4, 0, g)) no("uno solo con l'offerta più alta: non è un pari");
+    if (!M.tuttiAlMax(M.contaBuste([{ id: "a", q: 16 }, { id: "via", q: 16 }], 0), 0, g)) no("chi non c'è più non può alzare: dev'essere subito la ruota");
+    r1.max = true; r2.max = false;
+    if (M.apertura({ n: 1, sp: 0 }, [{ id: "a", nome: "A", q: 16 }, { id: "b", nome: "B", q: 16 }], r1).fine !== "massimo" || M.apertura({ n: 1, sp: 0 }, [{ id: "a", nome: "A", q: 16 }, { id: "c", nome: "C", q: 16 }], r2).fine !== "spareggio") no("la fine dell'apertura non è «massimo» / «spareggio»");
+    x.push("conti: tutti al massimo → ruota; uno può alzare, già spareggio o vincitore solo → come prima");
+    var NOMI = ["Paky", "Giulia", "Luca"]; P = await partitaLocale({ formato: "fanta", compra: "buste", giornata: false }, NOMI);
+    W.clicca(P, /Comincia l'asta/);
+    var fase = 0, fino = Date.now() + 300000, W1 = null, altro = null, spVista = false, ruote = [], prima = null, aperto = -1, fini = [];
+    while (Date.now() < fino && !q(P, ".st-rivela")) {
+      if (/Passa il telefono a/.test(T(P))) { W.clicca(P, /^Sono /); await W.dorme(100); continue; }
+      if (q(P, ".as-bus-testa")) {
+        var sp = /Spareggio/.test(testoDi(P, ".as-bus-testa"));
+        if (fase === 0) { if (sp) no("1ª: tutti al massimo ma parte lo spareggio"); await scriviBusta(P, function (n) { return n === "Luca" ? 0 : maxDa(P); }); }
+        else if (fase === 1) {
+          if (sp) { spVista = true; await scriviBusta(P, function () { return 0; }); }
+          else await scriviBusta(P, function (n) { if (n !== W1 && !altro) altro = n; return 1; });   // (tutti a 1: chi ha vinto la 1ª è al suo massimo, gli altri possono alzare)
+        }
+        else await scriviBusta(P, function (n) { if (prima === null) { prima = n; return 1; } return 0; });
+        await W.dorme(100); continue;
+      }
+      var ap = q(P, ".st-apri");
+      if (ap && !ap.__visto) {
+        ap.__visto = true; aperto = fase; prima = null;
+        if (ap.classList.contains("st-ruota")) { await W.dorme(200); ruote.push(fase + ": " + testoDi(P, ".st-apri h4")); }
+        else { await W.dorme(250); fini.push(fase + ": " + testoDi(P, ".st-apri .fine")); }
+        continue;
+      }
+      var tb = testoDi(P, ".sa-aggiudicato");
+      if (tb && !ap && aperto === fase && fase < 2) {
+        if (fase === 0) {
+          var cr = NOMI.map(function (n) { return credDi(P, n); }), paga = NOMI.filter(function (n, i) { return cr[i] === 4; });
+          if (paga.length !== 1 || paga[0] === "Luca") no("1ª: non paga 16 uno solo tra Paky e Giulia (" + cr.join(", ") + ")");
+          if (!ruote.length || !/Tutti al massimo/.test(ruote[0])) no("1ª: niente ruota «Tutti al massimo» (" + ruote.join(" | ") + ")");
+          if (!/tutti al massimo/.test(fini[0] || "")) no("1ª: alla fine dell'apertura non c'è «tutti al massimo» (" + fini.join(" | ") + ")");
+          W1 = paga[0]; x.push("1ª: Paky e Giulia a 16 (il loro massimo), Luca passa → subito la ruota («" + ruote[0].replace(/^0: /, "") + "») → " + W1 + " paga 16"); fase = 1;
+        } else if (fase === 1) {
+          if (!spVista) no("2ª: un pari poteva alzare ma lo spareggio non c'è (" + fini.join(" | ") + ")");
+          if (ruote.length > 1 && /Tutti al massimo/.test(ruote[1])) no("2ª: dopo lo spareggio la ruota dice «Tutti al massimo»");
+          x.push("2ª: " + W1 + " al massimo e " + altro + " pari → spareggio come prima" + (ruote.length > 1 ? ", poi " + ruote[1].replace(/^1: /, "") : ""));
+          fase = 2;
+        }
+        aperto = -1;
+      }
+      await W.dorme(120);
+    }
+    if (!q(P, ".st-rivela")) no("non arriva alla classifica (fase " + fase + ", «" + T(P).slice(0, 100) + "»)");
+    if (fase < 2) no("non sono passate le due buste di prova (fase " + fase + ")");
+    return x.join(" · ") + " · classifica OK";
+  } });
+  COPIONE.aggiungi("bu8", { nome: "Fanta a buste online in 3: chi tiene la partita ricarica, poi pari tutti al massimo = subito la ruota su tutti i telefoni", fai: async function () {
+    var NOMI = ["Paky", "Giulia", "Luca"], o = await telefoniOnline({ formato: "fanta", compra: "buste", giornata: false }, NOMI), C = o.C, x = [];
+    function win(n) { return W.finestra(n); }
+    if (!await W.aspetta(function () { return vm(C).fase === "busta" && vm(C).busta && vm(C).busta.gara.length === 3; }, 15000)) no("la prima busta non arriva");
+    var n0 = vm(C).busta.n; await W.dorme(800);
+    await W.ricarica("Paky"); senzaAnimazioni(win("Paky"));
+    if (!await W.aspetta(function () { var w = win("Paky"); return w && bott(w, ".st-bf-tasti .btn", /Passo/); }, 20000)) no("dopo la ricarica Paky non ritrova la busta da scrivere («" + T(win("Paky")).slice(-140) + "»)");
+    var b = vm(C).busta; if (!b || b.sp) no("dopo la ricarica non c'è la busta: " + JSON.stringify(b));
+    x.push("Paky ricarica: la busta riparte (" + n0 + " → " + b.n + ")");
+    var ru = null, spareggio = false, t0 = Date.now();
+    var w = win("Paky"), piu = await W.aspetta(function () { return bott(w, ".st-bst button", /^\+$/); }, 4000), mx = 16;
+    for (var k = 0; k < 40 && parseInt(testoDi(w, ".st-bst .v"), 10) < mx; k++) piu.click();
+    var ok = bott(w, ".st-bf-tasti .btn", /Chiudo: 16 /); if (!ok) no("Paky non arriva a «Chiudo: 16» (" + testoDi(w, ".st-bst .v") + ")"); ok.click();
+    manda("Giulia", { t: "bustaF", n: b.n, q: 16 }); manda("Luca", { t: "bustaF", n: b.n, q: 0 });
+    while (Date.now() - t0 < 30000) { var v = vm(C); if (v.fase === "busta" && v.busta && v.busta.sp) spareggio = true; if (v.fase === "ruota" && v.ruota) { ru = v.ruota; break; } await W.dorme(100); }
+    if (spareggio) no("tutti al massimo ma parte la busta dello spareggio");
+    if (!ru) no("tutti al massimo: la ruota non parte (fase " + vm(C).fase + ")");
+    if (!ru.massimo) no("nella foto della ruota manca «massimo»: " + JSON.stringify(ru).slice(0, 200));
+    if (!await W.aspetta(function () { return NOMI.every(function (n) { return /Tutti al massimo/.test(testoDi(win(n), ".st-ruota h4")); }); }, 4000)) no("non tutti vedono «Tutti al massimo: decide la ruota!»: " + NOMI.map(function (n) { return n + " «" + testoDi(win(n), ".st-ruota h4") + "»"; }).join(", "));
+    if (!await W.aspetta(function () { return vm(C).fase === "esito"; }, 16000) || vm(C).esito.chiId !== ru.ids[ru.vince] || vm(C).esito.prezzo !== 16) no("la ruota non dà il calciatore a chi vince per 16 (" + JSON.stringify(vm(C).esito) + ")");
+    x.push("Paky e Giulia a 16, Luca passa → subito la ruota su tutti («Tutti al massimo») → " + ru.nomi[ru.vince] + " per 16");
+    async function chiudiUI(n, quanto) {
+      var w = win(n), ok; if (!quanto) { ok = await W.aspetta(function () { return bott(w, ".st-bf-tasti .btn", /Passo|Resto a/); }, 4000); if (ok) ok.click(); return; }
+      var piu = await W.aspetta(function () { return bott(w, ".st-bst button", /^\+$/); }, 4000); if (!piu) no(n + " non ha il + della busta");
+      for (var k = 0; k < 40 && parseInt(testoDi(w, ".st-bst .v"), 10) < quanto; k++) piu.click();
+      ok = bott(w, ".st-bf-tasti .btn", new RegExp("Chiudo: " + quanto + " ")); if (!ok) no(n + " non arriva a «Chiudo: " + quanto + "»"); ok.click();
+    }
+    var vistoN = -1, fino = Date.now() + 240000;
+    while (Date.now() < fino && vm(C).fase !== "fine") {
+      var v2 = vm(C); if (v2.fase !== "busta" || !v2.busta || v2.busta.n === vistoN) { await W.dorme(150); continue; }
+      var b2 = v2.busta, gara = b2.gara.map(function (id) { return nomeDiId(C, id); }); vistoN = b2.n;
+      for (var j = 0; j < gara.length; j++) { var n = gara[j]; if (n === "Paky") await chiudiUI("Paky", j === 0 ? 1 : 0); else manda(n, { t: "bustaF", n: b2.n, q: j === 0 ? 1 : 0 }); }
+      await W.aspetta(function () { return vm(C).fase !== "busta" || (vm(C).busta || {}).n !== b2.n; }, 18000);
+    }
+    if (vm(C).fase !== "fine") no("non arriva alla fine (" + vm(C).fase + ")");
+    return x.join(" · ") + " · fino alla classifica";
+  } });
+  function osservaRuota(w) {   // ogni fotogramma della ruota: l'angolo che si vede, se la lancetta scatta, le note del tic suonate fin lì
+    var cv = w.document.querySelector(".st-ruota canvas.disco"), fr = w.document.querySelector(".st-ruota .rg-freccia"), tt = w.document.querySelector(".st-ruota .rg-tutto"), d = { f: [], cv: cv };
+    var mo = new w.MutationObserver(function (l) {
+      var a = null, tic = false, fine = false;
+      l.forEach(function (m) { if (m.target === cv) { var x = /rotate\(([-\d.]+)deg\)/.exec(cv.style.transform || ""); if (x) a = +x[1]; } if (m.target === fr) tic = true; if (m.target === tt && tt.classList.contains("vinto")) fine = true; });
+      d.f.push({ a: a, tic: tic, fine: fine, t: w.Date.now(), note: (w.__note || []).filter(function (n) { return n.f === 1900; }).length });
+    });
+    mo.observe(cv, { attributes: true, attributeFilter: ["style"] }); mo.observe(fr, { attributes: true, attributeFilter: ["class"] }); mo.observe(tt, { attributes: true, attributeFilter: ["class"] });
+    d.stop = function () { mo.disconnect(); }; return d;
+  }
+  function controllaRuota(nome, d) {   // tic e pallini coincidono; i pallini si vedono, grandi e piccoli
+    var cv = d.cv, K = +cv.getAttribute("data-spicchi"), p = (cv.getAttribute("data-pallini") || "").split(",").map(Number), h = 360 / K / 2, ko = [];
+    if (p[3] !== 2) no(nome + ": sul disco non ci sono due pallini per spicchio (" + cv.getAttribute("data-pallini") + ")");
+    var prima = null, nPrima = 0, ultimoTic = 0, tic = 0, lenti = 0, suoni = 0, giro = 0;
+    d.f.forEach(function (f) {
+      if (f.a != null && prima != null && !f.fine) {
+        var passa = Math.floor(f.a / h) !== Math.floor(prima.a / h), suona = f.note > nPrima;
+        if (f.tic !== passa) ko.push((f.tic ? "tic nel vuoto" : "pallino senza tic") + " a " + f.a + "° (prima " + prima.a + "°)");
+        if (suona && !f.tic) ko.push("suono senza tic a " + f.a + "°");
+        if (f.tic) { tic++; if (ultimoTic && f.t - ultimoTic > 55) { lenti++; if (!suona) ko.push("tic senza suono a " + f.a + "° (" + (f.t - ultimoTic) + " ms dal tic prima)"); } ultimoTic = f.t; }
+        if (suona) suoni++;
+        giro = f.a;
+      } else if (f.fine && f.tic) ko.push("tic alla fermata");
+      if (f.a != null) prima = f; nPrima = f.note;
+    });
+    if (tic < 40) ko.push("troppo pochi tic: " + tic);
+    if (lenti < 8) ko.push("troppo pochi tic quando rallenta: " + lenti);
+    // i pallini sul disco (fermo): al centro di ognuno l'oro; a 2/3 del pallino grande ancora oro sul grande, già lo spicchio sul piccolo
+    var c = cv.getContext("2d"), dpr = p[2], r = cv.width / dpr / 2, rp = p[0], pg = p[1];
+    function px(x, y) { return c.getImageData(Math.round((r + x) * dpr), Math.round((r + y) * dpr), 1, 1).data; }
+    function oro(q) { return q[0] > 180 && q[1] > 120; }   // (oro o il riflesso chiaro: gli spicchi rosa, viola e azzurri no)
+    for (var j = 0; j < K * 2; j++) {
+      var an = -Math.PI / 2 + j * Math.PI / K, cx = Math.cos(an) * rp, cy = Math.sin(an) * rp, grande = j % 2 === 0;
+      if (!oro(px(cx, cy))) ko.push("il pallino " + (grande ? "grande" : "piccolo") + " " + j + " non si vede (" + [].slice.call(px(cx, cy), 0, 3) + ")");
+      var z = px(cx - Math.sin(an) * pg * 0.68, cy + Math.cos(an) * pg * 0.68);
+      if (oro(z) !== grande) ko.push("il pallino " + j + " non è " + (grande ? "grande" : "piccolo (metà)") + " (" + [].slice.call(z, 0, 3) + ")");
+    }
+    if (ko.length) no(nome + ": " + ko.slice(0, 5).join(" · ") + (ko.length > 5 ? " (… " + ko.length + " in tutto)" : ""));
+    return nome + " " + K + " spicchi, " + (K * 2) + " pallini, " + tic + " tic in " + d.f.length + " fotogrammi (" + lenti + " quando rallenta, " + suoni + " suonati), fermo a " + giro + "°";
+  }
+  COPIONE.aggiungi("ru2", { nome: "🎡 La ruotina online in 3: pallini grandi e piccoli sul disco, il tic solo e sempre quando un pallino passa sotto la lancetta, su tutti i telefoni", fai: async function () {
+    var imp = { formato: "fanta", compra: "buste", giornata: false }, x = [];
+    // online in 3
+    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; A.audioFinto(w); } }), C = await W.apriStanza(P, "Mini Asta Fantacalcio");
+    for (var i = 1; i < 3; i++) await W.apriTel(["Paky", "Giulia", "Luca"][i], { hash: "gioco=astafanta&stanza=" + C, x: 185 * i, prima: function (w) { A.audioFinto(w); } });
+    var NOMI = ["Paky", "Giulia", "Luca"], win = function (n) { return W.finestra(n); };
+    if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3; }, 15000)) no("non entrano in 3");
+    W.clicca(P, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase === "busta" && vm(C).busta && vm(C).busta.gara.length === 3; }, 20000)) no("la prima busta in 3 non arriva");
+    var b = vm(C).busta; await W.dorme(800);
+    var piu = await W.aspetta(function () { return bott(P, ".st-bst button", /^\+$/); }, 4000); for (var k2 = 0; k2 < 40 && parseInt(testoDi(P, ".st-bst .v"), 10) < 16; k2++) piu.click();
+    var ok = bott(P, ".st-bf-tasti .btn", /Chiudo: 16 /); if (!ok) no("Paky non arriva a «Chiudo: 16»"); ok.click();
+    manda("Giulia", { t: "bustaF", n: b.n, q: 16 }); manda("Luca", { t: "bustaF", n: b.n, q: 0 });
+    var oss = {}, t0 = Date.now();
+    while (Date.now() - t0 < 25000 && Object.keys(oss).length < 3) { NOMI.forEach(function (n) { if (!oss[n] && q(win(n), ".st-ruota canvas.disco")) oss[n] = osservaRuota(win(n)); }); await new Promise(function (r) { setTimeout(r, 20); }); }
+    if (Object.keys(oss).length < 3) no("la ruota non arriva su tutti (" + Object.keys(oss).join(", ") + ")");
+    if (!await W.aspetta(function () { return NOMI.every(function (n) { return q(win(n), ".st-ruota .rg-tutto.vinto"); }); }, 16000)) no("la ruota non si ferma su tutti");
+    await W.dorme(300); NOMI.forEach(function (n) { oss[n].stop(); x.push(controllaRuota(n, oss[n])); });
+    return "online: " + x.join(" · ");
+  } });
+  COPIONE.aggiungi("ru3", { nome: "🎡 La ruotina sullo stesso telefono: pallini grandi e piccoli, il tic solo e sempre quando un pallino passa sotto la lancetta", fai: async function () {
+    var imp = { formato: "fanta", compra: "buste", giornata: false }, NOMI = ["Paky", "Giulia", "Luca"];
+    var P = await partitaLocale(imp, NOMI, function (w) { A.audioFinto(w); });
+    W.clicca(P, /Comincia l'asta/);
+    var o = null, fino = Date.now() + 90000;
+    while (Date.now() < fino && !o) {
+      if (/Passa il telefono a/.test(T(P))) { W.clicca(P, /^Sono /); await W.dorme(100); continue; }
+      if (q(P, ".as-bus-testa")) { await scriviBusta(P, function (n) { return n === "Luca" ? 0 : maxDa(P); }); await W.dorme(60); continue; }
+      if (q(P, ".st-ruota canvas.disco")) { o = osservaRuota(P); break; }
+      await new Promise(function (r) { setTimeout(r, 20); });
+    }
+    if (!o) no("sullo stesso telefono la ruota non arriva");
+    if (!await W.aspetta(function () { return q(P, ".st-ruota .rg-tutto.vinto"); }, 16000)) no("sullo stesso telefono la ruota non si ferma");
+    await W.dorme(300); o.stop();
+    return "stesso telefono: " + controllaRuota("Paky", o);
   } });
 })();
