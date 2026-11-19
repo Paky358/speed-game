@@ -10649,6 +10649,7 @@
   }
   function chiaroDi(c, f) { var n = parseInt(String(c).slice(1), 16) || 0, r = n >> 16, g = n >> 8 & 255, b = n & 255; return "rgb(" + Math.round(r + (255 - r) * f) + "," + Math.round(g + (255 - g) * f) + "," + Math.round(b + (255 - b) * f) + ")"; }
   var COL_RUOTA = ["#e0225a", "#7c5cff", "#1c9fd6", "#e0a90a", "#22a37a", "#ff7a2f", "#d6409f", "#3c8ce7", "#8e6cff", "#5fa83b"];
+  var PALLINI_SPICCHIO = 2;   // ● (un pallino grande e uno piccolo per spicchio: un tic per ognuno)
   function discoRuota(cv, K, nomi, lato, vinto) {   // il disco (canvas): K spicchi coi nomi alternati; vinto = gli spicchi degli altri si spengono
     var N = nomi.length, dpr = Math.min(2, window.devicePixelRatio || 1), r = lato / 2, passo = Math.PI * 2 / K;
     cv.width = cv.height = Math.round(lato * dpr); cv.style.width = cv.style.height = lato + "px";
@@ -10660,9 +10661,22 @@
       c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r - 2, a0, a0 + passo); c.closePath(); c.fillStyle = g; c.fill(); c.strokeStyle = "rgba(255,255,255,.75)"; c.lineWidth = 2; c.stroke();
       c.save(); c.rotate(a0 + passo / 2); c.textAlign = "right"; c.textBaseline = "middle"; c.font = "900 " + fs + "px system-ui,sans-serif";
       var t = nomi[i], mx = r * 0.6; while (t.length > 2 && c.measureText(t).width > mx) t = t.slice(0, -2) + "…";
-      c.shadowColor = "rgba(0,0,0,.45)"; c.shadowBlur = 3; c.fillStyle = "#fff"; c.fillText(t, r - lato * 0.06, 0); c.restore();
+      c.shadowColor = "rgba(0,0,0,.45)"; c.shadowBlur = 3; c.fillStyle = "#fff"; c.fillText(t, r - lato * 0.08, 0); c.restore();   // (fuori, i pallini)
       if (vinto != null && i !== vinto) { c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r - 2, a0, a0 + passo); c.closePath(); c.fillStyle = "rgba(8,10,22,.62)"; c.fill(); }
     }
+    // ● I PALLINI (19 nov 2026, il proprietario: il tic si sentiva anche dove non c'era niente; «crea suspense»): girano col disco, uno GRANDE
+    // dove cambia lo spicchio (sulla riga che divide i nomi) e uno PICCOLO (metà) a metà spicchio, d'oro come il bordo. Il tic della lancetta
+    // suona su ognuno (ruotina: PALLINI_SPICCHIO per spicchio), mai nel vuoto. In data-pallini il raggio, la misura e la scala (per le prove)
+    var pg = Math.max(4, Math.round(lato * 0.024 * 10) / 10), rp = r - 5 - pg;
+    c.save(); c.shadowColor = "rgba(0,0,0,.5)"; c.shadowBlur = 3; c.shadowOffsetY = 1;
+    for (var h = 0; h < K * PALLINI_SPICCHIO; h++) {
+      var an = -Math.PI / 2 + h * passo / PALLINI_SPICCHIO, rr = h % PALLINI_SPICCHIO ? pg / 2 : pg, px = Math.cos(an) * rp, py = Math.sin(an) * rp, gp = c.createRadialGradient(px - rr * 0.35, py - rr * 0.35, rr * 0.1, px, py, rr);
+      gp.addColorStop(0, "#fffbe6"); gp.addColorStop(0.55, "#ffd66b"); gp.addColorStop(1, "#d99a12");
+      c.beginPath(); c.arc(px, py, rr, 0, Math.PI * 2); c.fillStyle = gp; c.fill();
+    }
+    c.restore();
+    for (h = 0; h < K * PALLINI_SPICCHIO; h++) { var an2 = -Math.PI / 2 + h * passo / PALLINI_SPICCHIO, rr2 = h % PALLINI_SPICCHIO ? pg / 2 : pg; c.beginPath(); c.arc(Math.cos(an2) * rp, Math.sin(an2) * rp, rr2, 0, Math.PI * 2); c.lineWidth = 1; c.strokeStyle = "rgba(110,64,0,.6)"; c.stroke(); }
+    cv.setAttribute("data-pallini", [rp, pg, dpr, PALLINI_SPICCHIO].join(","));
   }
   function ruotina(S, ru, myId) {
     var k = "r" + ru.n; if (S.apriK === k && S.apriNodo && S.apriNodo.parentNode) return;
@@ -10686,9 +10700,9 @@
     }
     function giro() {
       if (STADIO !== S || S.apriK !== k || !cv.isConnected) return;
-      var x = Math.max(0, Math.min(1, (ora() - parte) / dur)), e = 1 - Math.pow(1 - x, 3), ang = fin * e;
+      var x = Math.max(0, Math.min(1, (ora() - parte) / dur)), e = 1 - Math.pow(1 - x, 3), ang = Math.round(fin * e * 100) / 100;
       cv.style.transform = "rotate(" + ang.toFixed(2) + "deg)";
-      var tq = Math.floor(ang / passoG);
+      var tq = Math.floor(ang / (passoG / PALLINI_SPICCHIO));   // ● un tic per ogni pallino (grande o piccolo) che passa sotto la lancetta, con l'angolo che si vede
       if (tacca !== null && tq !== tacca && x < 1) { var adesso = Date.now(); freccia.classList.remove("tic"); void freccia.offsetWidth; freccia.classList.add("tic"); if (dalVivo && !document.hidden && adesso - ultimoTic > 45) { ultimoTic = adesso; beep([1900], 0.035, "triangle"); } }
       tacca = tq;
       if (x >= 1) { if (!finita) fermata(); return; }

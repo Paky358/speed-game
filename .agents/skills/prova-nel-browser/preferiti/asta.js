@@ -836,6 +836,11 @@
   //     alla classifica
   // bu8 🎡 online in 3: chi tiene la partita (Paky) ricarica mentre si scrive la prima busta (la busta riparte da capo), poi Paky e Giulia
   //     al massimo e Luca passa → subito la ruota su tutti i telefoni («Tutti al massimo»), mai la busta dello spareggio; fino alla classifica
+  // ru2 ● LA RUOTINA, PALLINI E TIC (19 nov 2026, il proprietario: il tic si sentiva anche dove non c'era nessun pallino; «crea suspense»).
+  //     ru2 online in 3 (Paky e Giulia al massimo, Luca passa → subito la ruota; tutti e 3 i telefoni), ru3 sullo stesso telefono: sul disco un
+  //     pallino GRANDE dove cambia lo spicchio e uno PICCOLO (metà) a metà spicchio (si guardano i pixel); fotogramma per fotogramma la
+  //     lancetta scatta SOLO e SEMPRE quando un pallino le passa sotto, anche quando rallenta; il suono del tic solo nei fotogrammi del tic e,
+  //     quando rallenta (tic a più di 55 ms l'uno dall'altro), su ogni pallino. (ru1, la ruota online uguale su tutti, sta in asta-ruota.js)
   function testoDi(w, s) { var e = q(w, s); return e ? e.textContent : ""; }
   function credDi(w, nome) { var sq = qa(w, ".st-sq").filter(function (x) { var b = x.querySelector(".st-sq-nomi b"); return b && b.textContent === nome; })[0]; var m = sq && /(\d+) 💰/.exec(sq.querySelector(".st-sq-nomi small").textContent); return m ? +m[1] : null; }
   function righeApri(w) { return qa(w, ".st-apri .as-buste .r").map(function (r) { return [].map.call(r.childNodes, function (c) { return c.textContent; }).join(" ").replace(/\s+/g, " ").trim(); }); }
@@ -1220,5 +1225,81 @@
     }
     if (vm(C).fase !== "fine") no("non arriva alla fine (" + vm(C).fase + ")");
     return x.join(" · ") + " · fino alla classifica";
+  } });
+  function osservaRuota(w) {   // ogni fotogramma della ruota: l'angolo che si vede, se la lancetta scatta, le note del tic suonate fin lì
+    var cv = w.document.querySelector(".st-ruota canvas.disco"), fr = w.document.querySelector(".st-ruota .rg-freccia"), tt = w.document.querySelector(".st-ruota .rg-tutto"), d = { f: [], cv: cv };
+    var mo = new w.MutationObserver(function (l) {
+      var a = null, tic = false, fine = false;
+      l.forEach(function (m) { if (m.target === cv) { var x = /rotate\(([-\d.]+)deg\)/.exec(cv.style.transform || ""); if (x) a = +x[1]; } if (m.target === fr) tic = true; if (m.target === tt && tt.classList.contains("vinto")) fine = true; });
+      d.f.push({ a: a, tic: tic, fine: fine, t: w.Date.now(), note: (w.__note || []).filter(function (n) { return n.f === 1900; }).length });
+    });
+    mo.observe(cv, { attributes: true, attributeFilter: ["style"] }); mo.observe(fr, { attributes: true, attributeFilter: ["class"] }); mo.observe(tt, { attributes: true, attributeFilter: ["class"] });
+    d.stop = function () { mo.disconnect(); }; return d;
+  }
+  function controllaRuota(nome, d) {   // tic e pallini coincidono; i pallini si vedono, grandi e piccoli
+    var cv = d.cv, K = +cv.getAttribute("data-spicchi"), p = (cv.getAttribute("data-pallini") || "").split(",").map(Number), h = 360 / K / 2, ko = [];
+    if (p[3] !== 2) no(nome + ": sul disco non ci sono due pallini per spicchio (" + cv.getAttribute("data-pallini") + ")");
+    var prima = null, nPrima = 0, ultimoTic = 0, tic = 0, lenti = 0, suoni = 0, giro = 0;
+    d.f.forEach(function (f) {
+      if (f.a != null && prima != null && !f.fine) {
+        var passa = Math.floor(f.a / h) !== Math.floor(prima.a / h), suona = f.note > nPrima;
+        if (f.tic !== passa) ko.push((f.tic ? "tic nel vuoto" : "pallino senza tic") + " a " + f.a + "° (prima " + prima.a + "°)");
+        if (suona && !f.tic) ko.push("suono senza tic a " + f.a + "°");
+        if (f.tic) { tic++; if (ultimoTic && f.t - ultimoTic > 55) { lenti++; if (!suona) ko.push("tic senza suono a " + f.a + "° (" + (f.t - ultimoTic) + " ms dal tic prima)"); } ultimoTic = f.t; }
+        if (suona) suoni++;
+        giro = f.a;
+      } else if (f.fine && f.tic) ko.push("tic alla fermata");
+      if (f.a != null) prima = f; nPrima = f.note;
+    });
+    if (tic < 40) ko.push("troppo pochi tic: " + tic);
+    if (lenti < 8) ko.push("troppo pochi tic quando rallenta: " + lenti);
+    // i pallini sul disco (fermo): al centro di ognuno l'oro; a 2/3 del pallino grande ancora oro sul grande, già lo spicchio sul piccolo
+    var c = cv.getContext("2d"), dpr = p[2], r = cv.width / dpr / 2, rp = p[0], pg = p[1];
+    function px(x, y) { return c.getImageData(Math.round((r + x) * dpr), Math.round((r + y) * dpr), 1, 1).data; }
+    function oro(q) { return q[0] > 180 && q[1] > 120; }   // (oro o il riflesso chiaro: gli spicchi rosa, viola e azzurri no)
+    for (var j = 0; j < K * 2; j++) {
+      var an = -Math.PI / 2 + j * Math.PI / K, cx = Math.cos(an) * rp, cy = Math.sin(an) * rp, grande = j % 2 === 0;
+      if (!oro(px(cx, cy))) ko.push("il pallino " + (grande ? "grande" : "piccolo") + " " + j + " non si vede (" + [].slice.call(px(cx, cy), 0, 3) + ")");
+      var z = px(cx - Math.sin(an) * pg * 0.68, cy + Math.cos(an) * pg * 0.68);
+      if (oro(z) !== grande) ko.push("il pallino " + j + " non è " + (grande ? "grande" : "piccolo (metà)") + " (" + [].slice.call(z, 0, 3) + ")");
+    }
+    if (ko.length) no(nome + ": " + ko.slice(0, 5).join(" · ") + (ko.length > 5 ? " (… " + ko.length + " in tutto)" : ""));
+    return nome + " " + K + " spicchi, " + (K * 2) + " pallini, " + tic + " tic in " + d.f.length + " fotogrammi (" + lenti + " quando rallenta, " + suoni + " suonati), fermo a " + giro + "°";
+  }
+  COPIONE.aggiungi("ru2", { nome: "🎡 La ruotina online in 3: pallini grandi e piccoli sul disco, il tic solo e sempre quando un pallino passa sotto la lancetta, su tutti i telefoni", fai: async function () {
+    var imp = { formato: "fanta", compra: "buste", giornata: false }, x = [];
+    // online in 3
+    var P = await W.apriTel("Paky", { x: 0, pa: true, prima: function (w) { w.__imp = imp; A.audioFinto(w); } }), C = await W.apriStanza(P, "Mini Asta Fantacalcio");
+    for (var i = 1; i < 3; i++) await W.apriTel(["Paky", "Giulia", "Luca"][i], { hash: "gioco=astafanta&stanza=" + C, x: 185 * i, prima: function (w) { A.audioFinto(w); } });
+    var NOMI = ["Paky", "Giulia", "Luca"], win = function (n) { return W.finestra(n); };
+    if (!await W.aspetta(function () { return (vm(C).giocatori || []).length === 3; }, 15000)) no("non entrano in 3");
+    W.clicca(P, /Comincia/);
+    if (!await W.aspetta(function () { return vm(C).fase === "busta" && vm(C).busta && vm(C).busta.gara.length === 3; }, 20000)) no("la prima busta in 3 non arriva");
+    var b = vm(C).busta; await W.dorme(800);
+    var piu = await W.aspetta(function () { return bott(P, ".st-bst button", /^\+$/); }, 4000); for (var k2 = 0; k2 < 40 && parseInt(testoDi(P, ".st-bst .v"), 10) < 16; k2++) piu.click();
+    var ok = bott(P, ".st-bf-tasti .btn", /Chiudo: 16 /); if (!ok) no("Paky non arriva a «Chiudo: 16»"); ok.click();
+    manda("Giulia", { t: "bustaF", n: b.n, q: 16 }); manda("Luca", { t: "bustaF", n: b.n, q: 0 });
+    var oss = {}, t0 = Date.now();
+    while (Date.now() - t0 < 25000 && Object.keys(oss).length < 3) { NOMI.forEach(function (n) { if (!oss[n] && q(win(n), ".st-ruota canvas.disco")) oss[n] = osservaRuota(win(n)); }); await new Promise(function (r) { setTimeout(r, 20); }); }
+    if (Object.keys(oss).length < 3) no("la ruota non arriva su tutti (" + Object.keys(oss).join(", ") + ")");
+    if (!await W.aspetta(function () { return NOMI.every(function (n) { return q(win(n), ".st-ruota .rg-tutto.vinto"); }); }, 16000)) no("la ruota non si ferma su tutti");
+    await W.dorme(300); NOMI.forEach(function (n) { oss[n].stop(); x.push(controllaRuota(n, oss[n])); });
+    return "online: " + x.join(" · ");
+  } });
+  COPIONE.aggiungi("ru3", { nome: "🎡 La ruotina sullo stesso telefono: pallini grandi e piccoli, il tic solo e sempre quando un pallino passa sotto la lancetta", fai: async function () {
+    var imp = { formato: "fanta", compra: "buste", giornata: false }, NOMI = ["Paky", "Giulia", "Luca"];
+    var P = await partitaLocale(imp, NOMI, function (w) { A.audioFinto(w); });
+    W.clicca(P, /Comincia l'asta/);
+    var o = null, fino = Date.now() + 90000;
+    while (Date.now() < fino && !o) {
+      if (/Passa il telefono a/.test(T(P))) { W.clicca(P, /^Sono /); await W.dorme(100); continue; }
+      if (q(P, ".as-bus-testa")) { await scriviBusta(P, function (n) { return n === "Luca" ? 0 : maxDa(P); }); await W.dorme(60); continue; }
+      if (q(P, ".st-ruota canvas.disco")) { o = osservaRuota(P); break; }
+      await new Promise(function (r) { setTimeout(r, 20); });
+    }
+    if (!o) no("sullo stesso telefono la ruota non arriva");
+    if (!await W.aspetta(function () { return q(P, ".st-ruota .rg-tutto.vinto"); }, 16000)) no("sullo stesso telefono la ruota non si ferma");
+    await W.dorme(300); o.stop();
+    return "stesso telefono: " + controllaRuota("Paky", o);
   } });
 })();
