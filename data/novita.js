@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 382,
+    data: "19 novembre 2026",
+    titolo: "Le ruote: il tic solo sui pallini 🎡",
+    descrizione: [
+      "🎡 Nella Ruota della Fortuna, nella ruota di «Scegliamo insieme» e nella Ruota del 100 del Prezzo è Giusto ora si vedono anche i pallini piccoli a metà di ogni spicchio, accanto a quelli grandi tra uno spicchio e l'altro.",
+      "🔊 Il tic suona solo quando un pallino passa sotto la freccia, mai più nel vuoto: quando la ruota rallenta si sentono i colpi uno per uno, pallino dopo pallino, fino all'ultimo."
+    ]
+  },
+  {
     v: 381,
     data: "19 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la ruota dello spareggio coi pallini 🎡",
