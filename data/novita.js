@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 384,
+    data: "19 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la giornata vista come in TV 📺",
+    descrizione: [
+      "📺 La giornata dopo l'asta si guarda come in TV: il campo in prospettiva, con la telecamera che segue l'azione. Quando si attacca verso il basso la vedi da dietro la porta, quando si attacca verso l'alto da dietro chi attacca, con la porta davanti a te.",
+      "🥅 La porta vera, in piedi, con le misure giuste rispetto ai calciatori: pali e traversa con lo spessore e la rete con la sua profondità. Adesso si capisce a colpo d'occhio se il pallone prende il palo, la traversa, se va fuori di poco o se entra (e quando sbatte sul legno, il palo trema).",
+      "🏷️ I nomi dei calciatori sono più piccoli e non si coprono più, e le scritte grandi (GOL!, PALO!, PARATA!) non stanno mai sopra la porta."
+    ]
+  },
+  {
     v: 383,
     data: "19 novembre 2026",
     titolo: "Le ruote: pallini d'oro uguali dappertutto 🎡",
