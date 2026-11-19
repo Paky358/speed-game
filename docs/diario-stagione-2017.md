@@ -774,3 +774,51 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - 19 nov: FACCE DAI FOGLI DA 16 (chiesto dal Cervello per spendere circa un terzo). Il rilevatore di volti di Windows (`D:\SG-stagione-lavoro\volti.ps1`, niente da installare) trova il viso e `foglio.ps1` fa un foglio 4×4 coi visi ritagliati e pid e nome sotto; un aiutante Sonnet guarda il foglio e scrive i 16 (FOGLI.md). Prova su 16 già fatti a mano (le facce del proprietario non si possono leggere senza il suo account: confronto con le foto singole): pelle uguale 15 su 16, tutte entro un tono. Foto: Wikimedia (una richiesta ogni 8 s dopo il blocco, `scarica-foto.js`) e miniature di Google Immagini lette dalla pagina dei risultati (solo per guardarle, mai nel gioco: `google-salva.js`). I 46 senza foto libera guardati a occhio su Google Immagini. In tutto 234 facce «📷 da controllare» (120 in più): 46 da Google a occhio, 72 dai primi 5 fogli (8 null: foto lontane, sfocate o con due persone, da riprovare).
 - 19 nov sera: altre 158 facce dai fogli 6-16 (392 in tutto, «📷 da controllare»). Le miniature di Google si prendono con ricerche normali una dopo l'altra, leggendo la pagina dei risultati (la prima miniatura con il cognome nella didascalia, con squadra e ruolo nella ricerca): le ricerche lanciate da dentro la pagina Google le ferma dopo una trentina (pagina di controllo), quindi non si usano. I null (foto lontane, di spalle, con più persone) si riprovano alla fine con un'altra foto.
 - 19 nov sera: altre 102 facce dai fogli 17-23 (494 in tutto, «📷 da controllare»).
+
+## 19 nov: BATTITORI 2024-25 dal Deep Research
+- Regole: angoli e punizioni da Gemini solo se il calciatore è nel gioco con quella squadra in quella stagione (chi ha cambiato squadra a gennaio vale dove ha finito);
+  «non so» o fuori dal gioco = resta la stima (il primo nome della stima non ancora usato). Rigori: il 1° resta chi ne ha tirati di più nei dati di fantacalcio.it
+  (Gemini solo se nessuno ne ha tirati); 2° e 3° da Gemini. Le caselle ancora «non so» e i nomi scartati: `D:\SG-stagione-lavoro\ricerca\gemini-dr\non-so.txt`.
+- **2024-25**: 41 cambi; 60 caselle «non so» (di cui 15 nomi scartati)
+  - Atalanta angoli: Bellanova, De Roon → Lookman, Samardzic, Bellanova
+  - Bologna punizioni: Orsolini, Ndoye → Orsolini, Odgaard, Ndoye
+  - Cagliari angoli: Augello, Gaetano → Augello, Marin, Viola
+  - Cagliari punizioni: Gaetano, Marin → Viola, Gaetano, Marin
+  - Como angoli: Paz N., Strefezza → Strefezza, Da Cunha, Paz N.
+  - Como punizioni: Paz N., Strefezza → Da Cunha, Strefezza, Paz N.
+  - Empoli angoli: Pezzella Giu., Henderson L. → Henderson L., Pezzella Giu.
+  - Empoli punizioni: Esposito Se., Anjorin → Esposito Se., Fazzini, Anjorin
+  - Fiorentina angoli: Adli, Dodò → Adli, Mandragora, Dodò
+  - Fiorentina punizioni: Adli, Beltran L. → Mandragora, Cataldi, Adli
+  - Fiorentina rigori: Gemini dice 1° Gudmundsson A., resta Beltran L. (ne ha tirati di più nei dati)
+  - Genoa punizioni: Miretti, Frendrup → Martin, Miretti, Frendrup
+  - Inter angoli: Dimarco, Calhanoglu → Calhanoglu, Dimarco
+  - Inter punizioni: Calhanoglu, Barella → Dimarco, Calhanoglu, Barella
+  - Juventus angoli: Thuram K., Koopmeiners → Koopmeiners, Thuram K.
+  - Juventus punizioni: Yildiz, Thuram K. → Vlahovic, Koopmeiners, Yildiz
+  - Juventus rigori: Vlahovic, Kolo Muani, Locatelli → Vlahovic, Locatelli, Kolo Muani
+  - Lazio angoli: Tavares N., Zaccagni → Zaccagni, Isaksen, Tavares N.
+  - Lazio punizioni: Zaccagni, Pedro → Zaccagni, Tavares N., Pedro
+  - Lazio rigori: Gemini dice 1° Zaccagni, resta Castellanos (ne ha tirati di più nei dati)
+  - Lazio rigori: Castellanos, Pedro, Zaccagni → Castellanos, Zaccagni, Pedro
+  - Lecce angoli: Tete Morente, Gallo → Gallo, Tete Morente
+  - Lecce punizioni: Tete Morente, Pierotti → Krstovic, Tete Morente, Pierotti
+  - Milan angoli: Pulisic, Fofana Y. → Pulisic, Hernandez T., Fofana Y.
+  - Milan punizioni: Pulisic, Leao → Hernandez T., Pulisic, Leao
+  - Monza angoli: Kyriakopoulos, Pereira P. → Kyriakopoulos, Caprari, Pereira P.
+  - Monza punizioni: Mota, Caprari → Caprari, Kyriakopoulos, Mota
+  - Napoli angoli: Neres, Zambo Anguissa → Politano, Neres, Zambo Anguissa
+  - Napoli punizioni: McTominay, Zambo Anguissa → Raspadori, McTominay, Zambo Anguissa
+  - Parma angoli: Valeri, Man → Mihaila, Valeri, Man
+  - Parma punizioni: Man, Hernani → Hernani, Bernabé, Man
+  - Roma angoli: Saelemaekers, El Shaarawy → Dybala, Paredes, Soulé
+  - Roma punizioni: Soulé, Saelemaekers → Dybala, Paredes, Soulé
+  - Roma rigori: Dybala, Dovbyk, Paredes → Dybala, Paredes, Dovbyk
+  - Torino angoli: Lazaro, Vlasic → Lazaro, Biraghi, Vlasic
+  - Torino punizioni: Adams C., Vlasic → Biraghi, Coco, Lazaro
+  - Udinese angoli: Kamara H., Ekkelenkamp → Thauvin, Lovric, Kamara H.
+  - Udinese punizioni: Thauvin, Ekkelenkamp → Zemura, Thauvin, Lovric
+  - Verona angoli: Lazovic, Duda → Duda, Bradaric, Lazovic
+  - Verona punizioni: Lazovic, Duda → Duda, Suslov, Lazovic
+  - Verona rigori: Gemini dice 1° Lazovic, resta Tengstedt (ne ha tirati di più nei dati)
+- 19 nov sera: altre 136 facce (fogli 24-34, con 45 calciatori ripresi con una seconda foto perché la prima era lontana, di spalle o di un'altra persona: Pisano aveva la foto di Luca Toni, Ibañez quella di un dirigente). Dei 638 «da fare» ora 626 hanno la faccia dalle foto (630 in tutto nel gioco, «📷 da controllare»); restano senza 12: Di Gaudio, Ekhator, Perica, Bani, Cesar, Mirallas, Altare, Llorente D., Keita S., Kumbulla, Rogerio, Tonev.
