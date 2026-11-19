@@ -211,6 +211,15 @@
       c.fillText(nome, fine, 0);
       c.restore();
     });
+    // i pallini sul bordo (19 nov 2026, il proprietario: il tic si deve sentire SOLO dove si vede un pallino): grandi sul confine
+    // tra due spicchi, piccoli (metà) a metà spicchio. Girano col disco; la freccia batte su tutti e due.
+    var pg = Math.max(3.2, lato * 0.017), rp = r - 2 - pg * 1.5;
+    for (var k = 0; k < n * 2; k++) {
+      var gr = k % 2 === 0, al = -Math.PI / 2 + k * passo / 2, rq = gr ? pg : pg * 0.55, px = Math.cos(al) * rp, py = Math.sin(al) * rp;
+      c.shadowColor = "transparent"; c.shadowBlur = 0;
+      c.beginPath(); c.arc(px, py, rq + 1.3, 0, Math.PI * 2); c.fillStyle = "rgba(20,12,0,.75)"; c.fill();
+      c.beginPath(); c.arc(px - rq * 0.12, py - rq * 0.12, rq, 0, Math.PI * 2); c.fillStyle = "#ffe08a"; c.fill();
+    }
   }
 
   // ---- i suoni (le stesse note della Ruota del giorno), mai vibrazioni: la ruota non l'ha toccata chi guarda ----
@@ -238,8 +247,9 @@
     var sp = o.spicchi || [];
     if (sp.length && sp[0] && sp[0].n != null && sp[0].icona == null) sp = spicchi(o.giochi || [], sp);
     if (!sp.length) { if (typeof o.poi === "function") setTimeout(function () { o.poi(null); }, 0); return null; }
-    var n = sp.length, passo = 360 / n, vince = Math.max(0, Math.min(n - 1, Math.floor(o.vince) || 0));
-    var th = typeof o.theta === "number" && isFinite(o.theta) ? Math.max(0.15, Math.min(0.85, o.theta)) : 0.5;
+    var n = sp.length, passo = 360 / n, mezzo = passo / 2, vince = Math.max(0, Math.min(n - 1, Math.floor(o.vince) || 0));
+    var th = typeof o.theta === "number" && isFinite(o.theta) ? Math.max(0.15, Math.min(0.85, o.theta)) : 0.4;
+    if (Math.abs(th - 0.5) < 0.08) th = th < 0.5 ? 0.42 : 0.58;   // (mai fermi sopra il pallino piccolo di metà spicchio: uguale su tutti i telefoni)
     var meta = 360 * GIRI + (360 - (vince + th) * passo) % 360;   // lo spicchio vinto finisce sotto la freccia (in alto)
     var scarto = +o.scarto || 0;
     function oraHost() { return Date.now() + scarto; }
@@ -292,7 +302,7 @@
       var t = oraHost();
       if (t - parte >= DURATA) { fine(false); return; }
       var g = angoloA(t); metti(g);
-      var tq = Math.floor(g / passo);
+      var tq = Math.floor(g / mezzo);   // un tic per pallino (grande e piccolo), mai nel vuoto
       if (tq !== tacca) { tacca = tq; suono("tic"); freccia.classList.remove("tic"); void freccia.offsetWidth; freccia.classList.add("tic"); }
       requestAnimationFrame(giro);
     }
@@ -303,7 +313,7 @@
     document.body.appendChild(velo);
     if (o.giaFinito || oraHost() - parte >= DURATA) { velo.classList.add("su"); fine(true); }
     else {
-      var g0 = angoloA(oraHost()); metti(g0); tacca = Math.floor(g0 / passo);   // chi arriva a metà giro: niente raffica di tic
+      var g0 = angoloA(oraHost()); metti(g0); tacca = Math.floor(g0 / mezzo);   // chi arriva a metà giro: niente raffica di tic
       requestAnimationFrame(function () { requestAnimationFrame(function () { velo.classList.add("su"); }); });
       requestAnimationFrame(giro);
     }
