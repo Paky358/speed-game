@@ -108,6 +108,12 @@ window.SG_FANTA_FACCE_BOT = {
   "fc393": {"p":3,"c":"nero","t":"ricci","b":"piena","f":"ovale","foto":"Luperto2024.png"},
   "fc566": {"p":2,"c":"biondo","t":"medi","b":"niente","f":"ovale","foto":"Maxi Lopez Catania.jpg"},
   "fc170": {"p":3,"c":"castano scuro","t":"corti","b":"corta","f":"ovale","foto":"Milan Badelj 2023.jpg"},
+  "fc2617": {"p":5,"c":"nessuno","t":"rasato","b":"corta","f":"ovale","foto":"Steven Nzonzi 2018.jpg"},
+  "fc6641": {"p":5,"c":"nero","t":"ricci corti","b":"niente","f":"ovale","foto":"ZION SUZUKI - JPN vs THA - Friendly Match - 2024.01.01.jpg"},
+  "fc4421": {"p":3,"c":"castano scuro","t":"tirati indietro","b":"niente","f":"ovale","foto":"Augello2024.png"},
+  "fc5804": {"p":3,"c":"castano scuro","t":"ricci corti","b":"corta","f":"ovale","foto":"Liberato Cacace 30082025 (1).jpg"},
+  "fc20": {"p":3,"c":"castano","t":"corti col ciuffo","b":"accennata","f":"ovale","foto":"LucaCigarini (cropped).JPG"},
+  "fc2649": {"p":6,"c":"nero","t":"corti","b":"niente","f":"ovale","foto":"Persepolis vs Zob Ahan 20 Jan 2023 03.jpg"},
   "fc7008": {"p":2,"c":"castano","t":"sfumati alti","b":"corta","f":"squadrato","foto":"Santiago Giménez.png"},
   "fc150": {"p":3,"c":"castano scuro","t":"tirati indietro","b":"corta","f":"ovale","foto":"Saponara nel 2013.jpg"},
   "fc6409": {"p":2,"c":"castano","t":"corti","b":"corta","cb":"rosso","f":"ovale","foto":"Lucas Beltran.jpg"}
