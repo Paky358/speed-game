@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 386,
+    data: "19 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la mischia prima del calcio d'angolo 🚩",
+    descrizione: [
+      "🚩 Prima di un calcio d'angolo o di una punizione vicino all'area la telecamera inquadra l'area con tutta la mischia e i nomi dei vostri calciatori, così si vede chi aspetta il pallone (al bordo un'etichetta dice da che parte si batte). Quando parte il pallone la telecamera lo segue come prima."
+    ]
+  },
+  {
     v: 385,
     data: "19 novembre 2026",
     titolo: "Mini Asta Fantacalcio: lo stadio pieno 🏟️",
