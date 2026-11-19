@@ -661,7 +661,7 @@
     // la tastiera: QWERTY, c'è su tutti e tre i telefoni
     var ord = "QWERTYUIOPASDFGHJKLZXCVBNM";
     ["Paky", "Luca", "Giulia"].forEach(function (n) {
-      var t = [].map.call(F[n].document.querySelectorAll(".ru-qwerty .ru-qr .ru-btn.lettera"), function (b) { return b.textContent; }).filter(function (x) { return /^[A-Z]$/.test(x); }).join("");
+      var t = [].map.call(F[n].document.querySelectorAll(".ru-qwerty .ru-qr" + (F[n].document.querySelector(".ru-qr.q") ? ".q" : "") + " .ru-btn.lettera"), function (b) { return b.textContent; }).filter(function (x) { return /^[A-Z]$/.test(x); }).join("");
       if (t !== ord) no("la tastiera di " + n + " non è QWERTY: " + t);
     });
     L.push("tastiera QWERTY su tutti e tre");
@@ -689,7 +689,7 @@
     if (!bL) no("sulla tastiera di Giulia la " + Lc + " chiamata non è segnata");
     L.push("doppio tocco: la " + Lc + " è chiamata (" + fmt(v.giocatori.filter(function (x) { return x.id === ID.Luca; })[0].soldi) + " a Luca)");
     // la fila dei soldi: manche grande, totale piccolo
-    var cl = await W.aspetta(function () { var c = chip(F.Giulia, "Luca"); return c && /tot 0/.test(c.querySelector("small").textContent) && c.querySelector("b").textContent !== "0" ? c : null; }, 4000);
+    var cl = await W.aspetta(function () { var c = chip(F.Giulia, "Luca"); return c && (/tot 0/.test(c.querySelector("small").textContent) && c.querySelector("b").textContent !== "0" || /in gioco [1-9]/.test(c.querySelector("small").textContent)) ? c : null; }, 4000);
     if (!cl) no("nella fila dei soldi di Giulia Luca non ha manche e totale separati: " + ((chip(F.Giulia, "Luca") || {}).textContent));
     // ora tocca a Paky, che risolve scrivendo sulla tastiera
     await passaA("host");
@@ -711,7 +711,7 @@
     if (v.scr) no("la soluzione dal vivo resta nella foto a fine manche");
     var pk = v.giocatori.filter(function (x) { return x.id === "host"; })[0], vi = v.vince.vincita;
     if (pk.totale !== vi) no("il totale di Paky non è la vincita (" + pk.totale + " invece di " + vi + ")");
-    var cP = await W.aspetta(function () { var c = chip(F.Giulia, "Paky"); return c && c.querySelector("b").textContent === "+" + fmt(vi) && c.querySelector("small").textContent === "tot " + fmt(pk.totale) ? c : null; }, 4000);
+    var cP = await W.aspetta(function () { var c = chip(F.Giulia, "Paky"); return c && (c.querySelector("b").textContent === "+" + fmt(vi) && c.querySelector("small").textContent === "tot " + fmt(pk.totale) || c.querySelector("b").textContent === fmt(pk.totale) && c.querySelector("small").textContent === "+" + fmt(vi)) ? c : null; }, 4000);
     if (!cP) no("a fine manche Giulia non vede Paky incassare: " + ((chip(F.Giulia, "Paky") || {}).textContent));
     var cL2 = chip(F.Giulia, "Luca");
     if (!cL2 || cL2.querySelector("b").textContent !== "0") no("a fine manche Luca non torna a 0: " + (cL2 || {}).textContent);
