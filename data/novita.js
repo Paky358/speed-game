@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 387,
+    data: "19 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i cross li fanno i terzini 🏃",
+    descrizione: [
+      "🏃 Nella giornata le azioni dalla fascia (cross dal fondo, sovrapposizioni, uno-due sulla fascia, palla bassa dalla linea di fondo) tra i difensori le fanno solo i terzini: il terzino destro arriva dalla destra, il sinistro dalla sinistra. I difensori centrali fanno l'assist da centrali: lancio lungo dalla difesa, lancio in profondità, filtrante, contropiede, sponda di testa."
+    ]
+  },
+  {
     v: 386,
     data: "19 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la mischia prima del calcio d'angolo 🚩",
