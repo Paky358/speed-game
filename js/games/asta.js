@@ -8077,6 +8077,19 @@
       if (attaccata) { var xs = [g0[0], g1[0], t0[0], t1[0]], ys = [g0[1], g1[1], t0[1], t1[1]]; A.portaBox = { x0: Math.min.apply(null, xs) - sp, x1: Math.max.apply(null, xs) + sp, y0: Math.min.apply(null, ys) - sp, y1: Math.max.apply(null, ys) + sp }; }
       ctx.restore();
     }
+    // 🚩 I PIAZZATI (19 nov 2026 sera, il proprietario: «prima, quando si batteva, si vedevano già tutti i giocatori nella mischia in mezzo…
+    // adesso la telecamera sta solo su chi batte, e chi c'è in mezzo lo scopri quando sta già tirando»): angoli, punizioni e rimesse nella metà
+    // campo di chi attacca, col pallone fermo all'inizio dell'azione. Finché si sistemano (l'annuncio e la rincorsa) la telecamera guarda
+    // l'area con la mischia e i nomi dei vostri (chi batte resta verso il bordo; dalla punizione dal limite a metà tra la barriera e l'area),
+    // poi segue il pallone come sempre. Tutto dai dati di partenza (dov'è il pallone fermo e quando parte): uguale per ogni esito
+    function piazzato(sc) {
+      if (sc.tipo === "rig" || !sc.palla || sc.palla.length < 2) return null;
+      var b0 = sc.palla[0], t = null;
+      for (var i = 1; i < sc.palla.length; i++) { var b = sc.palla[i]; if (Math.abs(b[1] - b0[1]) > 1e-4 || Math.abs(b[2] - b0[2]) > 1e-4 || Math.abs((b[3] || 0) - (b0[3] || 0)) > 1e-4) break; t = b[0]; }
+      if (t == null || t < 0.05 || b0[2] < 0.45) return null;
+      var g = P(sc, 0.5, 0.87), s0 = P(sc, b0[1], b0[2]), wg = b0[2] > 0.88 ? 0.78 : 0.55, wx = b0[2] > 0.88 ? 0.95 : 0.55;
+      return { t: t, cx: g[0] * wx + s0[0] * (1 - wx), cy: g[1] * wg + s0[1] * (1 - wg) };
+    }
     // ---- la telecamera: segue il pallone (un po' di media, così non trema) tenendo d'occhio la porta; nelle rarità si avvicina
     function camera(sc, p) {
       if (!sc) return A.pv ? { cx: A.w / 2, cy: A.h * 0.644, z: 1.45 } : { cx: A.w / 2, cy: A.h / 2, z: 1 };   // (📐 il campo intero: tutto il campo grande, dalla fascia dello stadio in alto alla porta in basso staccata dal bordo)
@@ -8084,6 +8097,8 @@
       var bx = 0, by = 0, k, q, s;
       for (k = 0; k < 5; k++) { q = lungo(sc.palla, Math.max(0, p - k * 0.025), true) || [0, 0.5, 0.5, 0]; s = P(sc, q[1], q[2]); bx += s[0]; by += s[1]; }
       var g = P(sc, 0.5, 0.88), cx = bx / 5 * 0.72 + g[0] * 0.28, cy = by / 5 * 0.72 + g[1] * 0.28, hw = A.w / (2 * z), hh = A.h / (2 * z);
+      var pz = A.pv ? piazzato(sc) : null;   // 🚩 (prima che si batta: l'area con la mischia; poi piano piano sul pallone)
+      if (pz && p < pz.t + 0.1) { var wq = 1 - liscio(Math.max(0, p - pz.t) / 0.1); cx += (pz.cx - cx) * wq; cy += (pz.cy - cy) * wq; }
       if (sc.fest && sc.rete != null && p > sc.rete) { var qf = lungo(sc.fest.pts, p), sf = P(sc, qf[1], qf[2]), wf = liscio((p - sc.rete - 0.04) / 0.2) * 0.75; cx += (sf[0] - cx) * wf; cy += (sf[1] - cy) * wf; }   // (dopo il gol: su chi esulta)
       if (sc.gl && sc.bandiera != null && p > sc.bandiera) { var qg = lungo(sc.gl.pts, p), sg = P(sc, qg[1], qg[2]), wg = liscio((p - sc.bandiera) / 0.12) * (A.pv ? 1 : 0.5); cx += (sg[0] - cx) * wg; cy += (sg[1] - cy) * wg; }   // 🚩 (la bandierina alzata: si vede il guardalinee)
       var lo = A.w / 2 - A.kx * A.w / 2 + hw, hi = A.w / 2 + A.kx * A.w / 2 - hw;   // (📐 il campo più largo: la telecamera ci arriva tutta)
@@ -8482,6 +8497,18 @@
             if (yN - fsN < BARRA_GIU) yN = pyN + fsN * 1.2;   // 📏 (sotto la barra del minuto: il nome va sotto i piedi)
             ctx.strokeText(tN, sxN, yN); ctx.fillText(tN, sxN, yN); ctx.restore();
           }
+        }
+      }
+      var pzE = A.pv ? piazzato(sc) : null;   // 🚩 (prima che si batta: se chi batte è fuori dallo schermo, al bordo un'etichetta che dice da che parte, col nome se è di qualcuno)
+      if (pzE && p < pzE.t) {
+        var b0E = sc.palla[0], gE2 = P(sc, b0E[1], b0E[2]), qE = vS(gE2, gE2[0], gE2[1]);
+        if (qE[0] < 4 || qE[0] > w - 4) {
+          var chiE = null, dE = 9; sc.attori.forEach(function (a) { var q0 = a.pts[0], dd = Math.abs(q0[1] - b0E[1]) + Math.abs(q0[2] - b0E[2]); if (dd < dE) { dE = dd; chiE = a; } });
+          var nomeE = chiE && chiE.chi && chiE.chi.nome ? chiE.chi.nome : "", colE = chiE && chiE.chi && chiE.chi.pc ? chiE.chi.pc : "rgba(12,16,30,.82)", sx2 = qE[0] < 4 ? -1 : 1;
+          var tE = sx2 < 0 ? "◀ 🚩" + (nomeE ? " " + nomeE : "") : (nomeE ? nomeE + " " : "") + "🚩 ▶", fE = Math.max(9, Math.round(fs * 0.85));
+          ctx.font = "900 " + fE + "px system-ui,sans-serif"; var lE = ctx.measureText(tE).width + fE, yE = Math.max(BARRA_GIU + fE + 6, Math.min(h - 10, qE[1]));
+          var xE = sx2 < 0 ? 4 : w - 4 - lE; ctx.fillStyle = colE; ctx.beginPath(); ctx.moveTo(xE + 6, yE - fE); ctx.arcTo(xE + lE, yE - fE, xE + lE, yE + 3, 6); ctx.arcTo(xE + lE, yE + 3, xE, yE + 3, 6); ctx.arcTo(xE, yE + 3, xE, yE - fE, 6); ctx.arcTo(xE, yE - fE, xE + lE, yE - fE, 6); ctx.closePath(); ctx.fill();
+          ctx.textAlign = "center"; ctx.fillStyle = nomeE ? "#14171f" : "#ffffff"; ctx.fillText(tE, xE + lE / 2, yE - 1); ctx.textAlign = "left";
         }
       }
       if (sc.segnaVar && A.doveVar) {   // 📺 la scritta del VAR (sopra i nomi, mai tagliata dal bordo)
