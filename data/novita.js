@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 387,
+    data: "19 novembre 2026",
+    titolo: "La Ruota della Fortuna rifatta 🎡",
+    descrizione: [
+      "📋 Il tabellone non si muove mai: sta sempre in alto, della stessa misura, con le tessere color crema e la cornice della Notte vivace. La categoria è più grande e si legge sempre tutta. Subito sotto i punteggi, anche loro sempre lì: il TOTALE in grande e, a parte, i soldi «in gioco» di questa manche.",
+      "🎡 Mentre pensi la ruota è media; quando gira diventa intera e grande, e 1,5 secondi prima della fine la telecamera va vicino alla lancetta: i pallini passano uno a uno. Succede sempre nello stesso momento, così non svela dove si ferma. La luce si accende esattamente sullo spicchio vinto.",
+      "🔤 Per scegliere la lettera la ruota sparisce e arriva la tastiera in ordine alfabetico, con le lettere grandi e le vocali gialle; per risolvere la tastiera QWERTY, sempre quella del gioco. Le lettere già chiamate sono spente e non si toccano.",
+      "💥 Alla Bancarotta sul punteggio compare «−1.800»: si vede cosa hai perso. A fine manche chi ha risolto, quanto incassa, chi perde i soldi in gioco e la classifica, senza buchi vuoti.",
+      "🤖 I Bot girano la ruota più in fretta: la suspense lunga resta per i giri delle persone."
+    ]
+  },
+  {
     v: 386,
     data: "19 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la mischia prima del calcio d'angolo 🚩",
