@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 389,
+    data: "20 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la telecamera come in TV 🎥",
+    descrizione: [
+      "🎥 Nella giornata la telecamera è larga mentre l'azione si costruisce, nei calci piazzati e col campo fermo: si leggono tutti i nomi dei vostri calciatori in area e attorno («c'è il mio in mezzo!»). Al momento del tiro si avvicina piano, così porta, palo e traversa restano grandi; poi torna larga all'azione dopo.",
+      "🚩 Sul calcio d'angolo la telecamera resta ferma sull'area finché arriva il cross (prima andava verso chi batte e tornava indietro); chi batte lo dice l'etichetta al bordo."
+    ]
+  },
+  {
     v: 388,
     data: "19 novembre 2026",
     titolo: "La Ruota della Fortuna rifatta 🎡",
