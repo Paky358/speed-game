@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 19 nov 2026 18:41 · 🕰️ Stagioni del passato · PUBBLICATO · Mini Asta: caselle «non so» dei battitori cercate da Sonnet: 2023-24 e 2024-25 109 trovate (gerarchie dei tiratori di quelle stagioni + rigori di fantacalcio.it; 54 + 28 cambi nei dati), 2020-21/2022-23 nessuna fonte sicura (restano le stime)
 - 19 nov 2026 18:29 · 🕰️ Stagioni del passato · PUBBLICATO · Mini Asta 2024-25 coi battitori veri di Gemini (41 cambi, 59 caselle «non so» + Napoli 2° rigori in non-so.txt); 136 facce in più dalle foto: 626 dei 638 da fare (630 in tutto, «📷 da controllare»), restano 12 senza foto buona
 - 19 nov 2026 17:55 · 🕰️ Stagioni del passato · PUBBLICATO · Mini Asta: altre 102 facce dalle foto (494 in tutto, «📷 da controllare») · fogli 17-23
 - 19 nov 2026 17:39 · 🕰️ Stagioni del passato · PUBBLICATO · Mini Asta: altre 158 facce dalle foto (392 in tutto, «📷 da controllare»), fogli da 16 con miniature di Google Immagini · 7f3c47d + pubblicazione
