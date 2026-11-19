@@ -7,7 +7,8 @@
 //     pallone arriva sulla porta, sullo schermo il palo è ESATTAMENTE sul palo disegnato, la traversa sulla traversa, il gol tra i pali e
 //     sotto la traversa, il fuori fuori dai pali, l'alto sopra la traversa; verso il basso la porta è in basso (da dietro la porta), verso
 //     l'alto è nella metà di sopra (da dietro chi attacca, sotto la barra del minuto); fino al tiro la telecamera è identica per tutti gli
-//     esiti (niente spoiler); l'interruttore (dal 19 nov 2026 sera «tutti»: tutti in prospettiva).
+//     esiti (niente spoiler); l'interruttore (dal 19 nov 2026 sera «tutti»: tutti in prospettiva); al tiro la telecamera si avvicina (larga
+//     prima, vicina dopo: la telecamera uguale per tutti gli esiti vuol dire anche che l'avvicinamento parte per tutti nello stesso istante).
 // pr2 Online in 2 (IL PAPPONE tiene la partita, Giulia entra): l'asta veloce, poi la giornata dal vivo per 30 secondi. Il campo è in
 //     prospettiva su tutti e due i telefoni se PROSPETTIVA è «tutti» (se è «proprietario», solo su quello di IL PAPPONE); nessun errore; le azioni vanno avanti su tutti e due.
 (function () {
@@ -31,7 +32,7 @@
   }
   function diversi(a, b) { for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 1e-6) return true; return false; }
   COPIONE.aggiungi("pr1", { nome: "📐 La giornata in prospettiva: palo, traversa, gol, fuori e alto proprio sui legni disegnati, verso la porta in basso e quella in alto, telecamera uguale fino al tiro", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), d = w.document, ko = [], conti = { palo: 0, traversa: 0, gol: 0, fuori: 0, alto: 0 }, cam = 0;
+    var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), d = w.document, ko = [], conti = { palo: 0, traversa: 0, gol: 0, fuori: 0, alto: 0 }, cam = 0, avv = 0;
     // l'interruttore
     var tP = { nomeProfilo: function () { return "IL PAPPONE"; } }, tA = { nomeProfilo: function () { return "Paky"; } };
     if (!M.prosp(tP) || M.prosp(tA) !== (M.PROSPETTIVA === "tutti")) no("l'interruttore («" + M.PROSPETTIVA + "»): IL PAPPONE " + M.prosp(tP) + ", Paky " + M.prosp(tA));
@@ -57,6 +58,9 @@
             cam++;
           }
         }
+        // 🎥 (19 nov 2026 sera) larga mentre si costruisce, vicina dal tiro: l'avvicinamento c'è (e per la telecamera uguale qui sopra parte per tutti nello stesso istante)
+        var tT = sc[0].tiroDa != null ? sc[0].tiroDa : sc[0].calcio;
+        if (tT != null && tT > 0.05) { var zA = az.camera(sc[0], tT - 0.02).z, zB = az.camera(sc[0], Math.min(0.99, tT + 0.1)).z; if (zB / zA < 1.15) ko.push(qui + ": al tiro la telecamera non si avvicina (" + zA.toFixed(2) + " → " + zB.toFixed(2) + ")"); else avv++; }
         // nel momento in cui il pallone arriva sulla porta
         sc.forEach(function (s, i) {
           var es = ESITI[i], b = primoSullaPorta(s); if (!b || !(es in conti)) return;
@@ -76,7 +80,7 @@
     box.remove();
     if (ko.length) no(ko.slice(0, 6).join(" · "));
     if (conti.palo < 30 || conti.traversa < 30 || conti.gol < 30 || conti.fuori < 30 || conti.alto < 30) no("troppo pochi casi: " + JSON.stringify(conti));
-    return "interruttore «" + M.PROSPETTIVA + "»: IL PAPPONE sì, gli altri " + (M.prosp(tA) ? "sì" : "no") + " · sui legni disegnati: " + conti.palo + " pali, " + conti.traversa + " traverse, " + conti.gol + " gol tra i pali, " + conti.fuori + " fuori, " + conti.alto + " alti (verso la porta in basso e verso quella in alto) · telecamera uguale per i 7 esiti finché il pallone è lo stesso in " + cam + " momenti";
+    return "interruttore «" + M.PROSPETTIVA + "»: IL PAPPONE sì, gli altri " + (M.prosp(tA) ? "sì" : "no") + " · sui legni disegnati: " + conti.palo + " pali, " + conti.traversa + " traverse, " + conti.gol + " gol tra i pali, " + conti.fuori + " fuori, " + conti.alto + " alti (verso la porta in basso e verso quella in alto) · telecamera uguale per i 7 esiti finché il pallone è lo stesso in " + cam + " momenti · al tiro la telecamera si avvicina in " + avv + " azioni (larga mentre si costruisce)";
   } });
   function vm(C) { return W.vmDi(C) || {}; }
   function q(w, s2) { return w.document.querySelector(s2); }
