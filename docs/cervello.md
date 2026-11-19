@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 19 nov 2026 17:10 · 🕰️ Stagioni del passato · PUBBLICATO · Mini Asta: 120 facce in più dalle foto (234 in tutto, «📷 da controllare»): fogli da 16 visi letti da un aiutante Sonnet + Google Immagini guardate a occhio per i 46 senza foto libera · e1c5b1e + pubblicazione
 - 19 nov 2026 16:46 · 🕰️ Stagioni del passato · PUBBLICATO · Mini Asta 2023-24 coi battitori veri di Gemini (33 cambi, 77 caselle «non so» in non-so.txt); nomi letti meglio (Guðmundsson, Oristanio; Hallfreðsson col 23 nel 2016-17); 6 facce in più dalle foto (114, «📷 da controllare») · b0e0cb5
 - 19 nov 2026 01:34 · 🪟 Saletta di vetro · PUBBLICATO · v383 (pallini della Ruota della Fortuna, Scegliamo insieme e Ruota del 100 nello stile della ruotina della Mini Asta: oro con la luce in alto a sinistra, ombra, filo; grande 2,4% della ruota, piccolo metà; tic al massimo ogni 45 ms e mai in ritardo; prove rp1-rp3, 650, 653, rv8-rv9 ok) · master
 - 19 nov 2026 01:19 · 🪟 Saletta di vetro · PUBBLICATO · v382 (pallini piccoli a metà spicchio, metà dei grandi, e tic solo quando un pallino passa sotto la freccia, anche in frenata: Ruota della Fortuna, Scegliamo insieme, Ruota del 100; la Ruota del giorno è spenta con la città e non è toccata; prove rp1-rp3 in prova-nel-browser/ruote-pallini, 650-654 e rv8-rv10 ok) · master
