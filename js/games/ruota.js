@@ -2403,6 +2403,8 @@
       // ✨ la luce copre ESATTAMENTE lo spicchio vinto (19 nov 2026): si gira della distanza tra il centro dello spicchio e la lancetta
       var off = ((((sotto(a) + 0.5) * 15 + a) % 360) + 540) % 360 - 180;
       luceSu(ui, sp[sotto(a)], off);
+      // 🔍 poco dopo la fermata lo zoom torna indietro: la ruota di nuovo intera (il 15 nov il proprietario: «tagliata in basso non mi va bene»)
+      if (ui.flat && ui.zoomOn) dopo(ui, 1200, function () { if (k === ui.giroK && ui.zoomOn && !ui.rafGiro) { ui.zoomOn = false; ruotaAlta(ui, !!ui.alta, false); } });
       vibra(30);
       var arriva = sp[(sotto(a) + (dir === 1 ? 23 : 1)) % 24];   // (fermata col piolo sulla linguetta proprio prima della Bancarotta: sospiro di sollievo)
       if (manca(a) < PIEGA && arriva && arriva.s === "bancarotta") { try { ST.FX.applauso("piano"); } catch (e) {} }
@@ -2604,7 +2606,20 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     var firma = vm.firma != null ? "  " + firmaTesto(vm.firma) : "";   // ✍️ la frase degli amici: la firma accanto alla categoria
     var tc = f === "lampo" || f === "lampofine" ? titoloLampo(L, cat) : FASI_BUSTA.indexOf(f) >= 0 && vm.busta ? "✉️ LA BUSTA DI " + String(vm.busta.nome || "").toUpperCase() : FASI_FIN.indexOf(f) >= 0 ? (F && F.b ? "🏆 FINALE " + F.b + "/3 · " + FIN_NOMI[F.b - 1].toUpperCase() + " · " + cat : "🏆 FINALE · TRE TABELLONI PER TUTTI") :
       vm.veloce ? "⚡ " + cat + firma + " · ultimo round" : cat + firma + "  ·  " + (firma ? "" : "manche ") + vm.manche + "/" + vm.mancheTot;
-    if (ui.cat.textContent !== tc) { ui.cat.textContent = tc; if (ui.flat) catInDueRighe(ui); }
+    if (!ui.flat) { if (ui.cat.textContent !== tc) ui.cat.textContent = tc; }
+    else {
+      // 🎡 senza studio (19 nov 2026, il proprietario): «manche 1/4» è una pastiglia sulla stessa riga della categoria, mai spezzata;
+      // se la categoria è lunga va a capo lei (e se non ci sta in due righe si rimpicciolisce)
+      var normaleC = !(f === "lampo" || f === "lampofine" || FASI_BUSTA.indexOf(f) >= 0 && vm.busta || FASI_FIN.indexOf(f) >= 0 || vm.veloce);
+      var tcT = normaleC ? cat + firma : tc, tcM = normaleC ? (firma ? "" : "manche ") + vm.manche + "/" + vm.mancheTot : "";
+      var kc = tcT + "|" + tcM;
+      if (ui.kCat !== kc) {
+        ui.kCat = kc; ui.cat.textContent = "";
+        ui.cat.appendChild(ui.el("span", { class: "t", text: tcT }));
+        if (tcM) ui.cat.appendChild(ui.el("span", { class: "m", text: tcM }));
+        catInDueRighe(ui);
+      }
+    }
     // ❓ la ruota si ridisegna solo quando cambia (Mistero che arriva o che viene aperto)
     var kr = (vm.regole && vm.regole.express ? "e" : "") + ":" + (vm.mist || "");
     if (kr !== ui.kRuota) { ui.kRuota = kr; ridisegnaRuote(ui, spicchiDi(vm.regole && vm.regole.express, vm.mist)); }
@@ -3940,7 +3955,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-qv{display:none;gap:6px;justify-content:center}.ru-flat.ru-m-ruota.ru-m-voc .ru-qv{display:flex}",
       ".ru-qv .ru-btn.lettera{flex:0 0 calc((100% - 24px) / 5);max-width:64px;min-height:44px;padding:0;border-radius:10px;font-size:1.25rem}",
       ".ru-flat .ru-btn.prenoto.grande{min-height:calc(var(--alt,640px) * .13)}",
-      ".ru-flat .ru-cat{white-space:normal;overflow:hidden;text-overflow:clip;min-height:0;height:calc(2.36em + 2px);box-sizing:border-box;margin-bottom:3px;line-height:1.18;font-size:clamp(.95rem,4.6vw,1.18rem);display:flex;align-items:center;justify-content:center;padding:0 38px;color:#ffd0dd;letter-spacing:.03em;text-shadow:0 0 14px rgba(224,34,90,.45),0 2px 4px rgba(0,0,0,.9);text-wrap:balance}",
+      ".ru-flat .ru-cat{white-space:normal;overflow:hidden;text-overflow:clip;min-height:0;height:calc(2.36em + 2px);box-sizing:border-box;margin-bottom:3px;line-height:1.18;font-size:clamp(.95rem,4.6vw,1.18rem);display:flex;align-items:center;justify-content:center;gap:8px;padding:0 38px;color:#ffd0dd;letter-spacing:.03em;text-shadow:0 0 14px rgba(224,34,90,.45),0 2px 4px rgba(0,0,0,.9);text-wrap:balance}",
       ".ru-flat .ru-tab{background:linear-gradient(180deg,#171d38,#0f1328);box-shadow:0 0 0 1.5px rgba(224,34,90,.55),0 0 22px rgba(224,34,90,.25),inset 0 1px 0 rgba(255,255,255,.1);padding:6px;gap:3px;border-radius:16px}",
       ".ru-flat .ru-cella{border-radius:6px;background:linear-gradient(180deg,#fbf8f1,#e6e0d1);color:#14182c;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}",
       ".ru-flat .ru-cella.vuota{background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}",
@@ -3959,6 +3974,8 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-flat .ru-chip.scuoti{animation:pzScuotiR .45s}@keyframes pzScuotiR{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}",
       ".ru-flat .ru-chip.incassa b{color:var(--o-oro)}",
       ".ru-msg.nascosto{display:none}",
+      ".ru-flat .ru-cat .t{flex:0 1 auto;min-width:0;text-align:center}",
+      ".ru-flat .ru-cat .m{flex:none;white-space:nowrap;font-size:.66em;letter-spacing:.02em;line-height:1;padding:4px 8px;border-radius:99px;color:var(--o-testo);background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);text-shadow:none}",
       ".ru-flat .ru-sopra .ru-qwerty{pointer-events:auto;margin-top:6px}",
       ".ru-qwerty.alfa .ru-qr.q,.ru-qwerty:not(.alfa) .ru-qr.a{display:none}",
       ".ru-flat .ru-qr.a{gap:6px}",

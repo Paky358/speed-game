@@ -159,14 +159,19 @@
     W.clicca(w, /Contro i Bot/, ".modo-grande"); await W.dorme(300); W.clicca(w, /Comincia/);
     var Rr = w.__RUOTA;
     if (!await W.aspetta(function () { return Rr.ultima && Rr.H && !Rr.H.sigla && w.document.querySelector(".ru-tab.alta"); }, 60000)) no("la partita non comincia");
-    for (var M of [[360, 640], [412, 915]]) {
+    for (var M of [[360, 640], [390, 844], [412, 915]]) {
       f.style.width = M[0] + "px"; f.style.height = M[1] + "px"; w.dispatchEvent(new w.Event("resize")); await W.dorme(700);
-      var cat = w.document.querySelector(".ru-cat"), t1 = posto(w, ".ru-tab"), vecchio = cat.textContent;
-      cat.textContent = "🌍 GIRAMONDO · INDONESIA: «NGOBROL» VUOL DIRE… · manche 2/4"; w.__RUOTA.fitCat(); await W.dorme(300);
-      var t2 = posto(w, ".ru-tab"), r = cat.getBoundingClientRect();
-      if (t1 !== t2) out.push(M.join("×") + ": con la categoria lunga il tabellone si sposta (" + t1 + " → " + t2 + ")");
-      if (cat.scrollWidth > cat.clientWidth + 2 || r.right > w.innerWidth + 1) out.push(M.join("×") + ": la categoria esce");
-      cat.textContent = vecchio; w.__RUOTA.fitCat();
+      var cat = w.document.querySelector(".ru-cat"), t1 = posto(w, ".ru-tab"), vecchio = cat.innerHTML;
+      for (var lunga of ["SCIENZA E NATURA", "CITTÀ E PAESI DEL MONDO DA VISITARE", "🌍 GIRAMONDO · INDONESIA: «NGOBROL» VUOL DIRE…"]) {
+        cat.innerHTML = "<span class='t'>" + lunga + "</span><span class='m'>manche 1/4</span>"; w.__RUOTA.fitCat(); await W.dorme(250);
+        var t2 = posto(w, ".ru-tab"), r = cat.getBoundingClientRect(), tt = cat.querySelector(".t").getBoundingClientRect(), mm = cat.querySelector(".m").getBoundingClientRect();
+        if (t1 !== t2) out.push(M.join("×") + " «" + lunga + "»: il tabellone si sposta (" + t1 + " → " + t2 + ")");
+        if (cat.scrollWidth > cat.clientWidth + 2 || cat.scrollHeight > cat.clientHeight + 1 || r.right > w.innerWidth + 1) out.push(M.join("×") + " «" + lunga + "»: la categoria esce");
+        var lh = parseFloat(w.getComputedStyle(cat.querySelector(".m")).fontSize) * 2.2;   // (una riga sola, col suo bordino)
+        if (mm.height > lh) out.push(M.join("×") + " «" + lunga + "»: «manche 1/4» va a capo");
+        if (mm.left < tt.right - 1 || mm.top > tt.bottom || mm.bottom < tt.top) out.push(M.join("×") + " «" + lunga + "»: «manche 1/4» non sta sulla riga della categoria");
+      }
+      cat.innerHTML = vecchio; w.__RUOTA.fitCat();
       var se = w.document.scrollingElement; if (se.scrollHeight > w.innerHeight + 2) out.push(M.join("×") + ": la pagina scorre");
       [".ru-tab", ".ru-punti"].forEach(function (s) { var e = w.document.querySelector(s).getBoundingClientRect(); if (e.right > w.innerWidth + 1 || e.bottom > w.innerHeight + 1) out.push(M.join("×") + ": " + s + " esce dallo schermo"); });
     }
