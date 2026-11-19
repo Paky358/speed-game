@@ -3940,7 +3940,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-qv{display:none;gap:6px;justify-content:center}.ru-flat.ru-m-ruota.ru-m-voc .ru-qv{display:flex}",
       ".ru-qv .ru-btn.lettera{flex:0 0 calc((100% - 24px) / 5);max-width:64px;min-height:44px;padding:0;border-radius:10px;font-size:1.25rem}",
       ".ru-flat .ru-btn.prenoto.grande{min-height:calc(var(--alt,640px) * .13)}",
-      ".ru-flat .ru-cat{white-space:normal;overflow:hidden;text-overflow:clip;min-height:0;height:calc(2.36em + 2px);box-sizing:border-box;line-height:1.18;font-size:clamp(.95rem,4.6vw,1.18rem);display:flex;align-items:center;justify-content:center;padding:0 38px;color:#ffd0dd;letter-spacing:.03em;text-shadow:0 0 14px rgba(224,34,90,.45),0 2px 4px rgba(0,0,0,.9);text-wrap:balance}",
+      ".ru-flat .ru-cat{white-space:normal;overflow:hidden;text-overflow:clip;min-height:0;height:calc(2.36em + 2px);box-sizing:border-box;margin-bottom:3px;line-height:1.18;font-size:clamp(.95rem,4.6vw,1.18rem);display:flex;align-items:center;justify-content:center;padding:0 38px;color:#ffd0dd;letter-spacing:.03em;text-shadow:0 0 14px rgba(224,34,90,.45),0 2px 4px rgba(0,0,0,.9);text-wrap:balance}",
       ".ru-flat .ru-tab{background:linear-gradient(180deg,#171d38,#0f1328);box-shadow:0 0 0 1.5px rgba(224,34,90,.55),0 0 22px rgba(224,34,90,.25),inset 0 1px 0 rgba(255,255,255,.1);padding:6px;gap:3px;border-radius:16px}",
       ".ru-flat .ru-cella{border-radius:6px;background:linear-gradient(180deg,#fbf8f1,#e6e0d1);color:#14182c;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}",
       ".ru-flat .ru-cella.vuota{background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}",
