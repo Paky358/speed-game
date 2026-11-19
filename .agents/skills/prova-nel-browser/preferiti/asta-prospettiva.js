@@ -7,7 +7,8 @@
 //     pallone arriva sulla porta, sullo schermo il palo è ESATTAMENTE sul palo disegnato, la traversa sulla traversa, il gol tra i pali e
 //     sotto la traversa, il fuori fuori dai pali, l'alto sopra la traversa; verso il basso la porta è in basso (da dietro la porta), verso
 //     l'alto è nella metà di sopra (da dietro chi attacca, sotto la barra del minuto); fino al tiro la telecamera è identica per tutti gli
-//     esiti (niente spoiler); l'interruttore (dal 19 nov 2026 sera «tutti»: tutti in prospettiva).
+//     esiti (niente spoiler); l'interruttore (dal 19 nov 2026 sera «tutti»: tutti in prospettiva); al tiro la telecamera si avvicina (larga
+//     prima, vicina dopo: la telecamera uguale per tutti gli esiti vuol dire anche che l'avvicinamento parte per tutti nello stesso istante).
 // pr2 Online in 2 (IL PAPPONE tiene la partita, Giulia entra): l'asta veloce, poi la giornata dal vivo per 30 secondi. Il campo è in
 //     prospettiva su tutti e due i telefoni se PROSPETTIVA è «tutti» (se è «proprietario», solo su quello di IL PAPPONE); nessun errore; le azioni vanno avanti su tutti e due.
 (function () {
@@ -31,7 +32,7 @@
   }
   function diversi(a, b) { for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 1e-6) return true; return false; }
   COPIONE.aggiungi("pr1", { nome: "📐 La giornata in prospettiva: palo, traversa, gol, fuori e alto proprio sui legni disegnati, verso la porta in basso e quella in alto, telecamera uguale fino al tiro", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), d = w.document, ko = [], conti = { palo: 0, traversa: 0, gol: 0, fuori: 0, alto: 0 }, cam = 0;
+    var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), d = w.document, ko = [], conti = { palo: 0, traversa: 0, gol: 0, fuori: 0, alto: 0 }, cam = 0, avv = 0, diffV = {};
     // l'interruttore
     var tP = { nomeProfilo: function () { return "IL PAPPONE"; } }, tA = { nomeProfilo: function () { return "Paky"; } };
     if (!M.prosp(tP) || M.prosp(tA) !== (M.PROSPETTIVA === "tutti")) no("l'interruttore («" + M.PROSPETTIVA + "»): IL PAPPONE " + M.prosp(tP) + ", Paky " + M.prosp(tA));
@@ -45,7 +46,7 @@
     }
     function primoSullaPorta(sc) { return sc.palla.filter(function (b) { return b[0] >= (sc.tiroDa || 0) && Math.abs(b[1] - 0.5) < 0.2 && Math.abs(b[2] - M.GL) < 0.0045; })[0] || null; }   // (il tiro sulla porta: non il calcio d'angolo, che parte dalla stessa linea)
     SCENE.forEach(function (v) {
-      for (var seme = 1; seme <= 3 && ko.length < 10; seme++) [1, -1].forEach(function (verso) {
+      for (var seme = 1; seme <= 3 && ko.length < 400; seme++) [1, -1].forEach(function (verso) {
         var sc = ESITI.map(function (es) { return nuova(es, v, seme, verso); }), qui = v + " seme " + seme + (verso < 0 ? " (verso l'altra porta)" : "");
         // fino a quando il pallone prende strade diverse (come sp1: il tiro, o l'uscita del portiere) la telecamera è la stessa per tutti gli esiti (entro mezzo pixel: il pallone fa una curva morbida che guarda un filo avanti, anche nel campo di sempre)
         az.foto(sc[0], 0);
@@ -57,6 +58,13 @@
             cam++;
           }
         }
+        // 🎥 (19 nov 2026 sera) larga mentre si costruisce, vicina dal tiro: l'avvicinamento c'è (e per la telecamera uguale qui sopra parte per tutti nello stesso istante)
+        // 🎥 (20 nov 2026, il Cervello: «le scene che segnano senza un tiro vero… quando NON finiscono in gol hanno un tiro?») l'avvicinamento parte nello
+        // STESSO istante in tutti gli esiti della scena: mai solo in quelli col tiro mentre il gol aspetta la rete (o il contrario)
+        var stV = sc.map(function (s) { var t = s.tVicino != null ? s.tVicino : s.tiroDa != null ? s.tiroDa : s.calcio; return t == null ? null : Math.round(t * 1e6) / 1e6; }), nnV = stV.filter(function (t) { return t != null; });
+        if (nnV.length && (nnV.length < stV.length || nnV.some(function (t) { return t !== nnV[0]; }))) { ko.push(qui + ": l'avvicinamento parte in momenti diversi (" + ESITI.map(function (e, i) { return e + " " + (stV[i] == null ? "al gol" : stV[i]); }).join(", ") + ")"); diffV[v] = (diffV[v] || 0) + 1; }
+        var tT = sc[0].tVicino != null ? sc[0].tVicino : sc[0].tiroDa != null ? sc[0].tiroDa : sc[0].calcio;
+        if (tT != null && tT > 0.05) { var zA = az.camera(sc[0], tT - 0.02).z, zB = az.camera(sc[0], Math.min(0.99, tT + 0.1)).z; if (zB / zA < 1.15) ko.push(qui + ": al tiro la telecamera non si avvicina (" + zA.toFixed(2) + " → " + zB.toFixed(2) + ")"); else avv++; }
         // nel momento in cui il pallone arriva sulla porta
         sc.forEach(function (s, i) {
           var es = ESITI[i], b = primoSullaPorta(s); if (!b || !(es in conti)) return;
@@ -74,9 +82,9 @@
       });
     });
     box.remove();
-    if (ko.length) no(ko.slice(0, 6).join(" · "));
+    if (ko.length) no((Object.keys(diffV).length ? "scene con l'avvicinamento in momenti diversi: " + JSON.stringify(diffV) + " · " : "") + ko.slice(0, 4).join(" · "));
     if (conti.palo < 30 || conti.traversa < 30 || conti.gol < 30 || conti.fuori < 30 || conti.alto < 30) no("troppo pochi casi: " + JSON.stringify(conti));
-    return "interruttore «" + M.PROSPETTIVA + "»: IL PAPPONE sì, gli altri " + (M.prosp(tA) ? "sì" : "no") + " · sui legni disegnati: " + conti.palo + " pali, " + conti.traversa + " traverse, " + conti.gol + " gol tra i pali, " + conti.fuori + " fuori, " + conti.alto + " alti (verso la porta in basso e verso quella in alto) · telecamera uguale per i 7 esiti finché il pallone è lo stesso in " + cam + " momenti";
+    return "interruttore «" + M.PROSPETTIVA + "»: IL PAPPONE sì, gli altri " + (M.prosp(tA) ? "sì" : "no") + " · sui legni disegnati: " + conti.palo + " pali, " + conti.traversa + " traverse, " + conti.gol + " gol tra i pali, " + conti.fuori + " fuori, " + conti.alto + " alti (verso la porta in basso e verso quella in alto) · telecamera uguale per i 7 esiti finché il pallone è lo stesso in " + cam + " momenti · al tiro la telecamera si avvicina in " + avv + " azioni (larga mentre si costruisce)";
   } });
   function vm(C) { return W.vmDi(C) || {}; }
   function q(w, s2) { return w.document.querySelector(s2); }

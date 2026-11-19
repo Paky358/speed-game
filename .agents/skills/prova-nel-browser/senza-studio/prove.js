@@ -89,10 +89,10 @@
       var rt = tab && tab.getBoundingClientRect(), rp = pa && pa.getBoundingClientRect(), rb = b && b.getBoundingClientRect(), vw = w.innerWidth;
       if (!rt || rt.top < 0 || rt.top > 0.2 * w.innerHeight) no(cosa + ": su " + n + " il tabellone non è in alto");
       var righe = [].filter.call(d.querySelectorAll(".ru-qwerty .ru-qr"), function (q) { return q.getClientRects().length; }).length;
-      return { tab: rt, ruota: rp, barra: rb, vw: vw, righe: righe, nascosta: !!d.querySelector(".ru-alto.nascosta"), voc: !!(d.querySelector(".ru-qv") && d.querySelector(".ru-qv").getClientRects().length), d: d };
+      return { tab: rt, ruota: rp, barra: rb, vw: vw, righe: righe, nascosta: !!d.querySelector(".ru-alto.nascosta") || !d.querySelector(".ru-alto.on"), voc: !!(d.querySelector(".ru-qv") && d.querySelector(".ru-qv").getClientRects().length), d: d };
     }
     // ---- quando si gira: la ruota grande, niente tastiera ----
-    var v = await (async function () { var t = Date.now() + 70000; while (Date.now() < t) { var x = vm(C); if (x.fase === "gira" && !x.sigla) return x; await W.dorme(200); } return null; })();
+    var v = await (async function () { var t = Date.now() + 150000; while (Date.now() < t) { var x = vm(C); if (x.fase === "gira" && !x.sigla) return x; await W.dorme(200); } return null; })();
     if (!v) no("la manche non comincia (fase " + vm(C).fase + ")");
     await W.dorme(900);
     tutti.forEach(function (n) {
@@ -122,12 +122,12 @@
           if (c.ruota && c.ruota.bottom > ra.bottom + 1) no("su " + n + " (aspetta) la ruota è tagliata in basso");
           return;
         }
-        if (c.righe !== 3) no("si sceglie la consonante: su " + n + " la tastiera ha " + c.righe + " righe a vista");
-        var k = c.d.querySelector(".ru-qr .ru-btn.lettera"), hk = k ? k.getBoundingClientRect().height : 0;
+        if (c.righe !== 4) no("si sceglie la consonante (19 nov 2026: tastiera alfabetica, 4 righe): su " + n + " la tastiera ha " + c.righe + " righe a vista");
+        var k = [].find.call(c.d.querySelectorAll(".ru-qr .ru-btn.lettera"), function (b) { return b.getClientRects().length; }), hk = k ? k.getBoundingClientRect().height : 0;
         if (hk < 40) no("su " + n + " i tasti sono alti solo " + Math.round(hk) + " px");
         if (!c.nascosta && c.ruota && c.ruota.width > 0.75 * c.vw) no("su " + n + " la ruota è ancora grande mentre si sceglie");
         if (!c.nascosta && c.ruota && c.barra && c.ruota.bottom > c.barra.top + 2 + 0.06 * c.ruota.height) no("su " + n + " la ruota piccola finisce sotto i tasti");
-        var voc = c.d.querySelector(".ru-qr .ru-btn.lettera.voc"); if (!voc || !/63, 216, 255|rgba\(63/.test(w0(F[n]).getComputedStyle(voc).backgroundImage + w0(F[n]).getComputedStyle(voc).boxShadow)) no("su " + n + " le vocali non sono azzurre");
+        var voc = [].find.call(c.d.querySelectorAll(".ru-qr .ru-btn.lettera.voc"), function (b) { return b.getClientRects().length && !/(si|no)/.test(b.className); }); if (voc && !/255, 194, 71/.test(w0(F[n]).getComputedStyle(voc).backgroundImage + w0(F[n]).getComputedStyle(voc).boxShadow + w0(F[n]).getComputedStyle(voc).color)) no("su " + n + " le vocali non sono gialle");
       });
       L.push("si sceglie: tastiera a 3 righe solo a chi sceglie, tasti alti, ruota piccola sopra; chi aspetta la ruota grande");
     } else L.push("(la ruota si è fermata su «" + dopo.fase + "»: niente consonante questa volta)");

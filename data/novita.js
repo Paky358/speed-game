@@ -9,6 +9,35 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 389,
+    data: "20 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la telecamera come in TV 🎥",
+    descrizione: [
+      "🎥 Nella giornata la telecamera è larga mentre l'azione si costruisce, nei calci piazzati e col campo fermo: si leggono tutti i nomi dei vostri calciatori in area e attorno («c'è il mio in mezzo!»). Al momento del tiro si avvicina piano, così porta, palo e traversa restano grandi; poi torna larga all'azione dopo.",
+      "🚩 Sul calcio d'angolo la telecamera resta ferma sull'area finché arriva il cross (prima andava verso chi batte e tornava indietro); chi batte lo dice l'etichetta al bordo."
+    ]
+  },
+  {
+    v: 388,
+    data: "19 novembre 2026",
+    titolo: "La Ruota della Fortuna rifatta 🎡",
+    descrizione: [
+      "📋 Il tabellone non si muove mai: sta sempre in alto, della stessa misura, con le tessere color crema e la cornice della Notte vivace. La categoria è più grande e si legge sempre tutta. Subito sotto i punteggi, anche loro sempre lì: il TOTALE in grande e, a parte, i soldi «in gioco» di questa manche.",
+      "🎡 Mentre pensi la ruota è media; quando gira diventa intera e grande, e 1,5 secondi prima della fine la telecamera va vicino alla lancetta: i pallini passano uno a uno. Succede sempre nello stesso momento, così non svela dove si ferma. La luce si accende esattamente sullo spicchio vinto.",
+      "🔤 Per scegliere la lettera la ruota sparisce e arriva la tastiera in ordine alfabetico, con le lettere grandi e le vocali gialle; per risolvere la tastiera QWERTY, sempre quella del gioco. Le lettere già chiamate sono spente e non si toccano.",
+      "💥 Alla Bancarotta sul punteggio compare «−1.800»: si vede cosa hai perso. A fine manche chi ha risolto, quanto incassa, chi perde i soldi in gioco e la classifica, senza buchi vuoti.",
+      "🤖 I Bot girano la ruota più in fretta: la suspense lunga resta per i giri delle persone."
+    ]
+  },
+  {
+    v: 387,
+    data: "19 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: i cross li fanno i terzini 🏃",
+    descrizione: [
+      "🏃 Nella giornata le azioni dalla fascia (cross dal fondo, sovrapposizioni, uno-due sulla fascia, palla bassa dalla linea di fondo) tra i difensori le fanno solo i terzini: il terzino destro arriva dalla destra, il sinistro dalla sinistra. I difensori centrali fanno l'assist da centrali: lancio lungo dalla difesa, lancio in profondità, filtrante, contropiede, sponda di testa."
+    ]
+  },
+  {
     v: 386,
     data: "19 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la mischia prima del calcio d'angolo 🚩",

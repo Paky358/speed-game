@@ -56,7 +56,7 @@
     if (!await W.aspetta(function () { return w.SG_FANTA_CALCIATORI && w.SG_FANTA_SQUADRE && w.SG_FANTA_STATISTICHE && w.SG_FANTA_RUOLI; }, 20000)) no("i dati del fanta (con i ruoli) non arrivano");
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), F = {}, ag = "  function costruisciMazzoFanta(n) {";
     if (src.indexOf(ag) < 0) no("non trovo il mazzo del fanta nel file del gioco");
-    src = src.replace(ag, "FUORI.cl = classificaFanta; FUORI.lista = listaMomenti; FUORI.taglio = taglioGiornata; FUORI.veloce = sceltaVeloce; FUORI.scena = scena; FUORI.campo = campoAzioni; FUORI.kit = kitDi; FUORI.kitP = kitPortiere;" + ag);
+    src = src.replace(ag, "FUORI.cl = classificaFanta; FUORI.lista = listaMomenti; FUORI.taglio = taglioGiornata; FUORI.veloce = sceltaVeloce; FUORI.scena = scena; FUORI.campo = campoAzioni; FUORI.kit = kitDi; FUORI.kitP = kitPortiere; FUORI.latoDifK = latoDifK; FUORI.SC_FASCIA = SC_FASCIA; FUORI.roseSA = roseSerieA;" + ag);
     new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, F);
     F.w = w; return F;
   }
@@ -318,5 +318,32 @@
     });
     if (ko.length) no(ko.length + " problemi: " + ko.slice(0, 6).join(" · "));
     return n + " fuorigioco in 300 giornate, tutti su " + JSON.stringify(doveFg) + " (annullati " + fg.ann + ", convalidati " + fg.ok + "); guardalinee in ogni scena; bandierina solo dopo il gol; quando parte il passaggio tutta la difesa (" + contorno + " difensori di contorno controllati) in linea o più avanti";
+  } });
+  // td1 🏃 LE AZIONI DALLA FASCIA LE FANNO I TERZINI (19 nov 2026, il proprietario: «quella è più una cosa da terzini»): i ruoli Mantra dei
+  //     difensori (Dd;Dc terzino destro, B;Ds;E sinistro, Dd;Ds tutte e due, solo Dc o B centrale, senza ruolo centrale) e, su 300 giornate,
+  //     tra i difensori chi passa dalla fascia (cross, sovrapposizioni, uno-due, palla dal fondo, rimessa) è SEMPRE un terzino; i centrali
+  //     fanno assist (e passaggi) solo in modi da centrale, e ne fanno
+  COPIONE.aggiungi("td1", { nome: "Mini Asta: le azioni dalla fascia le fanno i terzini, i centrali passano solo da centrali", fai: async function () {
+    var F = await motore(), w = F.w, ko = [], R0 = w.SG_FANTA_RUOLI, k;
+    var prova = { "T1 (X)": "Dd;Dc", "T2 (X)": "B;Ds;E", "T3 (X)": "Dc", "T4 (X)": "B;Dc", "T5 (X)": "Dd;Ds", "T6 (X)": "CD" };
+    var atteso = { "T1 (X)": "d", "T2 (X)": "s", "T3 (X)": null, "T4 (X)": null, "T5 (X)": "e", "T6 (X)": "d", "T7 (X)": null };
+    for (k in prova) R0[k] = prova[k];
+    for (k in atteso) if (F.latoDifK(k) !== atteso[k]) ko.push(k + " «" + (prova[k] || "senza ruolo") + "»: " + F.latoDifK(k) + " invece di " + atteso[k]);
+    for (k in prova) delete R0[k];
+    var ruolo = {}, rs = F.roseSA(); Object.keys(rs).forEach(function (sq) { rs[sq].forEach(function (c) { ruolo[c.k] = c.ruolo; }); });
+    var fasciaTerz = 0, centrali = 0, n = 0, scCentrali = {};
+    for (var i = 0; i < 300; i++) {
+      var g = rose(w, 4), SA = {}; F.cl(g, SA, 1, null);
+      SA.partite.forEach(function (P) { P.ev.forEach(function (e) {
+        if (!e.ass || !/^(gol|occ|ann)$/.test(e.t) || ruolo[e.ass] !== "D") return; n++;
+        var ld = F.latoDifK(e.ass);
+        if (!ld) { centrali++; scCentrali[e.v] = (scCentrali[e.v] || 0) + 1; if (F.SC_FASCIA[e.v] && ko.length < 8) ko.push("il centrale " + e.ass + " («" + (R0[e.ass] || "senza ruolo") + "») passa su «" + e.v + "»"); }
+        else if (F.SC_FASCIA[e.v]) fasciaTerz++;
+      }); });
+    }
+    if (!fasciaTerz) ko.push("i terzini non passano mai dalla fascia");
+    if (!centrali) ko.push("i centrali non passano mai");
+    if (ko.length) no(ko.slice(0, 6).join(" · "));
+    return "ruoli dei difensori giusti (Dd;Dc destro, B;Ds;E sinistro, Dc e B centrali, senza ruolo centrale) · in 300 giornate " + n + " passaggi di difensori: " + fasciaTerz + " dalla fascia, tutti di terzini; " + centrali + " di centrali, mai dalla fascia (" + Object.keys(scCentrali).map(function (x) { return x + " " + scCentrali[x]; }).join(", ") + ")";
   } });
 })();
