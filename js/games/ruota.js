@@ -2183,18 +2183,27 @@
       var chiaro = s === "passa" || s === "raddoppia" || COLORI_TESTO[col];
       c.font = "900 " + (s ? (tx.length > 9 ? 21 : 25) : sp.v >= 1000 ? 35 : 40) + "px system-ui, sans-serif";
       c.lineJoin = "round"; c.lineWidth = 6; c.strokeStyle = chiaro ? "rgba(255,255,255,.55)" : "rgba(0,0,0,.6)";
-      c.strokeText(tx, Rs - 22, 1);
+      c.strokeText(tx, Rs - 33, 1);
       c.fillStyle = s === "passa" || s === "raddoppia" ? "#1b1f3a" : s === "express" ? "#ffe9a8" : s === "mistero" ? "#ffc247" : s === "jolly" ? "#fff7d6" : (COLORI_TESTO[col] || "#fff");
-      c.fillText(tx, Rs - 22, 1);
+      c.fillText(tx, Rs - 33, 1);
       c.restore();
     });
     // i chiodi: quelli grandi sul confine tra uno spicchio e l'altro, quelli piccoli (metà) a metà spicchio. La lancetta batte
-    // su tutti e due, e il tic si sente SOLO quando passa un chiodo che si vede (19 nov 2026, il proprietario: «crea suspense»)
-    for (var k = 0; k < spicchi.length * 2; k++) {
-      var gr = k % 2 === 0, al = -Math.PI / 2 + k * passo / 2, rr = gr ? Rs - 11 : Rs - 10, px = Math.cos(al) * rr, py = Math.sin(al) * rr;
-      c.beginPath(); c.arc(px, py, gr ? 6.5 : 3.8, 0, Math.PI * 2); c.fillStyle = "#5a3a06"; c.fill();
-      c.beginPath(); c.arc(px - (gr ? 1 : 0.6), py - (gr ? 1 : 0.6), gr ? 4.6 : 2.7, 0, Math.PI * 2); c.fillStyle = "#ffe08a"; c.fill();
+    // su tutti e due, e il tic si sente SOLO quando passa un chiodo che si vede (19 nov 2026, il proprietario: «crea suspense»).
+    // Stesso stile dei pallini della ruotina della Mini Asta (oro con la luce in alto a sinistra, ombra, filo scuro)
+    pallini(c, spicchi.length * 2, 12, Rs - 5 - 12);
+  }
+  function pallini(c, n, pg, rp) {
+    var h, an, rr, px, py, gp;
+    c.save(); c.shadowColor = "rgba(0,0,0,.5)"; c.shadowBlur = 3; c.shadowOffsetY = 1;
+    for (h = 0; h < n; h++) {
+      an = -Math.PI / 2 + h * Math.PI * 2 / n; rr = h % 2 ? pg / 2 : pg; px = Math.cos(an) * rp; py = Math.sin(an) * rp;
+      gp = c.createRadialGradient(px - rr * 0.35, py - rr * 0.35, rr * 0.1, px, py, rr);
+      gp.addColorStop(0, "#fffbe6"); gp.addColorStop(0.55, "#ffd66b"); gp.addColorStop(1, "#d99a12");
+      c.beginPath(); c.arc(px, py, rr, 0, Math.PI * 2); c.fillStyle = gp; c.fill();
     }
+    c.restore();
+    for (h = 0; h < n; h++) { an = -Math.PI / 2 + h * Math.PI * 2 / n; rr = h % 2 ? pg / 2 : pg; c.beginPath(); c.arc(Math.cos(an) * rp, Math.sin(an) * rp, rr, 0, Math.PI * 2); c.lineWidth = 1.5; c.strokeStyle = "rgba(110,64,0,.6)"; c.stroke(); }
   }
   // l'anello d'oro intorno al disco (fermo) con gli attacchi delle lampadine
   var N_LAMP = 48;
@@ -2396,7 +2405,7 @@
       if (seg !== ult) {   // un piolo scavalca la linguetta: tic (quando va piano è un «toc» più forte; il piolo piccolo un filo più leggero)
         var grande = Math.max(seg, ult) % 2 === 0;   // (i pioli grandi sono sui multipli di 15 gradi)
         ult = seg;
-        if (now - tSuono > 30) { var lento = vel < 160, vol = grande ? 1 : 0.7; bip(grande ? 1650 : 1900, 0.022, "square", (lento ? 0.045 : 0.03) * vol); if (lento) bip(grande ? 380 : 460, 0.05, "triangle", 0.06 * vol); tSuono = now; }
+        if (now - tSuono > 45) { var lento = vel < 160, vol = grande ? 1 : 0.7; bip(grande ? 1650 : 1900, 0.022, "square", (lento ? 0.045 : 0.03) * vol); if (lento) bip(grande ? 380 : 460, 0.05, "triangle", 0.06 * vol); tSuono = now; }
       }
       linguetta(ang, false);
       var qui = sp[sotto(ang)];

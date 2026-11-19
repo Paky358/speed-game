@@ -42,7 +42,7 @@
     });
     for (var i = 1; i < tic.length; i++) {
       var p = Math.abs(Math.floor(tic[i].a / ogni) - Math.floor(tic[i - 1].a / ogni));
-      if (tic[i].t - tic[i - 1].t < 60) continue;   // (ancora veloce: più tic in 30 ms non si sentono distinti, uno si salta)
+      if (tic[i].t - tic[i - 1].t < 95) continue;   // (ancora veloce: al massimo un tic ogni 45 ms, come nella ruotina della Mini Asta: uno si salta)
       if (p > 1 && tic[i].salto) continue;           // (il computer di prova ha saltato dei fotogrammi: due pallini in un fotogramma solo)
       if (p !== 1) no(cosa + ": tra due tic della frenata passano " + p + " pallini (ne deve passare uno)");
     }

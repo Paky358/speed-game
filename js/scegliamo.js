@@ -213,13 +213,17 @@
     });
     // i pallini sul bordo (19 nov 2026, il proprietario: il tic si deve sentire SOLO dove si vede un pallino): grandi sul confine
     // tra due spicchi, piccoli (metà) a metà spicchio. Girano col disco; la freccia batte su tutti e due.
-    var pg = Math.max(3.2, lato * 0.017), rp = r - 2 - pg * 1.5;
-    for (var k = 0; k < n * 2; k++) {
-      var gr = k % 2 === 0, al = -Math.PI / 2 + k * passo / 2, rq = gr ? pg : pg * 0.55, px = Math.cos(al) * rp, py = Math.sin(al) * rp;
-      c.shadowColor = "transparent"; c.shadowBlur = 0;
-      c.beginPath(); c.arc(px, py, rq + 1.3, 0, Math.PI * 2); c.fillStyle = "rgba(20,12,0,.75)"; c.fill();
-      c.beginPath(); c.arc(px - rq * 0.12, py - rq * 0.12, rq, 0, Math.PI * 2); c.fillStyle = "#ffe08a"; c.fill();
+    // Stesso stile dei pallini della ruotina della Mini Asta (oro con la luce in alto a sinistra, ombra, filo scuro)
+    var pg = Math.max(4, Math.round(lato * 0.024 * 10) / 10), rp = r - 5 - pg, h, an, rq, px, py, gp;
+    c.save(); c.shadowColor = "rgba(0,0,0,.5)"; c.shadowBlur = 3; c.shadowOffsetY = 1;
+    for (h = 0; h < n * 2; h++) {
+      an = -Math.PI / 2 + h * passo / 2; rq = h % 2 ? pg / 2 : pg; px = Math.cos(an) * rp; py = Math.sin(an) * rp;
+      gp = c.createRadialGradient(px - rq * 0.35, py - rq * 0.35, rq * 0.1, px, py, rq);
+      gp.addColorStop(0, "#fffbe6"); gp.addColorStop(0.55, "#ffd66b"); gp.addColorStop(1, "#d99a12");
+      c.beginPath(); c.arc(px, py, rq, 0, Math.PI * 2); c.fillStyle = gp; c.fill();
     }
+    c.restore();
+    for (h = 0; h < n * 2; h++) { an = -Math.PI / 2 + h * passo / 2; rq = h % 2 ? pg / 2 : pg; c.beginPath(); c.arc(Math.cos(an) * rp, Math.sin(an) * rp, rq, 0, Math.PI * 2); c.lineWidth = 1; c.strokeStyle = "rgba(110,64,0,.6)"; c.stroke(); }
   }
 
   // ---- i suoni (le stesse note della Ruota del giorno), mai vibrazioni: la ruota non l'ha toccata chi guarda ----
@@ -276,7 +280,7 @@
     var velo = crea("div", "rg-velo sgs-ruota"); velo.appendChild(scheda);
     velo.setAttribute("data-vince", String(vince));
 
-    var fermo = false, finito = false, tPoi = null, ang = 0, tacca = 0;
+    var fermo = false, finito = false, tPoi = null, ang = 0, tacca = 0, tSuono = -1e9;
     function metti(g) { ang = g; cv.style.transform = "rotate(" + g.toFixed(2) + "deg)"; }
     function angoloA(t) { var k = Math.max(0, Math.min(1, (t - parte) / DURATA)); return meta * (1 - Math.pow(1 - k, 4)); }   // lo stesso easing della Ruota del giorno
     function fine(subito) {
@@ -303,7 +307,10 @@
       if (t - parte >= DURATA) { fine(false); return; }
       var g = angoloA(t); metti(g);
       var tq = Math.floor(g / mezzo);   // un tic per pallino (grande e piccolo), mai nel vuoto
-      if (tq !== tacca) { tacca = tq; suono("tic"); freccia.classList.remove("tic"); void freccia.offsetWidth; freccia.classList.add("tic"); }
+      if (tq !== tacca) {   // (al massimo un tic ogni 45 ms: quando è velocissima uno si salta, mai suonato in ritardo nel vuoto)
+        tacca = tq; var oraT = performance.now();
+        if (oraT - tSuono >= 45) { tSuono = oraT; suono("tic"); freccia.classList.remove("tic"); void freccia.offsetWidth; freccia.classList.add("tic"); }
+      }
       requestAnimationFrame(giro);
     }
     velo.chiudi = function () {

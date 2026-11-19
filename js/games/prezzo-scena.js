@@ -492,7 +492,7 @@
       str.style.transform = "translate3d(0," + y.toFixed(1) + "px,0)";
       // un clic per pallino che passa davanti alla freccia (19 nov 2026): grandi tra un numero e l'altro, piccoli a metà numero
       var k = Math.floor(pos * 2);
-      if (k !== ultimoInt) { var gr = Math.max(k, ultimoInt) % 2 !== 0; ultimoInt = k; var ora = performance.now(); if (!opz.mini && ora - ultimoClic > 30) { ultimoClic = ora; FX.clic(Math.min(1, Math.abs(vel) / 14 + 0.25) * (gr ? 1 : 0.7)); } }
+      if (k !== ultimoInt) { var gr = Math.max(k, ultimoInt) % 2 !== 0; ultimoInt = k; var ora = performance.now(); if (!opz.mini && ora - ultimoClic > 45) { ultimoClic = ora; FX.clic(Math.min(1, Math.abs(vel) / 14 + 0.25) * (gr ? 1 : 0.7)); } }
     }
     function valoreA(p) { var k = ((Math.round(p) % SPICCHI.length) + SPICCHI.length) % SPICCHI.length; return SPICCHI[k]; }
     // (la striscia si ripete ogni 20 caselle: si salta avanti o indietro di giri interi, la ruota resta uguale.
@@ -776,10 +776,10 @@
       ".pz-ruota .pz-rstr{position:absolute;left:0;right:0;top:0;will-change:transform}",
       ".pz-rcel{position:relative;height:var(--h);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:calc(var(--h) * .55);border-bottom:2px solid rgba(0,0,0,.35);box-sizing:border-box}",
       // i pallini su cui batte la freccia: grandi tra un numero e l'altro, piccoli (metà) a metà numero
-      ".pz-rcel::before,.pz-rcel::after{content:\"\";position:absolute;z-index:1;border-radius:50%;background:radial-gradient(circle at 38% 35%,#fff6cf,#ffd76a 55%,#b47a0c);box-shadow:0 0 0 1.5px rgba(40,20,0,.8);pointer-events:none}",
+      ".pz-rcel::before,.pz-rcel::after{content:\"\";position:absolute;z-index:1;border-radius:50%;background:radial-gradient(circle at 32% 32%,#fffbe6,#ffd66b 55%,#d99a12);box-shadow:0 0 0 1px rgba(110,64,0,.6),0 1px 3px rgba(0,0,0,.5);pointer-events:none}",
       ".pz-rcel::before{width:calc(var(--h) * .17);height:calc(var(--h) * .17);right:calc(var(--h) * .36);bottom:calc(var(--h) * -.085 - 1px)}",
       ".pz-rcel::after{width:calc(var(--h) * .09);height:calc(var(--h) * .09);right:calc(var(--h) * .4);top:50%;margin-top:calc(var(--h) * -.045)}",
-      ".pz-ruota.mini .pz-rcel::before,.pz-ruota.mini .pz-rcel::after{box-shadow:0 0 0 1px rgba(40,20,0,.8)}",
+      ".pz-ruota.mini .pz-rcel::before,.pz-ruota.mini .pz-rcel::after{box-shadow:0 0 0 1px rgba(110,64,0,.6)}",
       ".pz-rcel.oro{background:linear-gradient(90deg,#b8860b,#ffe066 40%,#fff3bf 50%,#ffe066 60%,#b8860b);color:#3b2a00}",
       ".pz-rcel.arg{background:linear-gradient(90deg,#868e96,#e9ecef 40%,#fff 50%,#e9ecef 60%,#868e96);color:#212529}",
       ".pz-rcel.rosso{background:linear-gradient(90deg,#a61e4d,#ff6b6b 40%,#ffc9c9 50%,#ff6b6b 60%,#a61e4d);color:#fff}",
