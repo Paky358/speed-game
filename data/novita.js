@@ -9,6 +9,24 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 386,
+    data: "19 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la mischia prima del calcio d'angolo 🚩",
+    descrizione: [
+      "🚩 Prima di un calcio d'angolo o di una punizione vicino all'area la telecamera inquadra l'area con tutta la mischia e i nomi dei vostri calciatori, così si vede chi aspetta il pallone (al bordo un'etichetta dice da che parte si batte). Quando parte il pallone la telecamera lo segue come prima."
+    ]
+  },
+  {
+    v: 385,
+    data: "19 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: lo stadio pieno 🏟️",
+    descrizione: [
+      "🏟️ Nella giornata come in TV ora c'è lo stadio: dietro la porta la curva con le gradinate piene di tifosi, ai lati le tribune e i cartelloni a bordo campo. I tifosi hanno i colori della squadra di casa della partita che stai guardando, con un piccolo settore ospiti in un angolo.",
+      "⚽ A inizio giornata lo stadio si riempie (con tifosi di tutte le squadre della giornata che salgono le scalinate), alla fine si svuota piano e la gente scende verso le uscite.",
+      "🔎 La telecamera è più larga (meno zoom) e uguale quando si attacca verso l'alto e verso il basso, così vedi anche chi c'è attorno all'azione; lo stadio è una fascia sopra la porta e il campo ha più spazio; i calciatori davanti alla porta non sono più mezzi trasparenti."
+    ]
+  },
+  {
     v: 384,
     data: "19 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la giornata vista come in TV 📺",
