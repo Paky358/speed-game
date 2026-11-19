@@ -9,6 +9,24 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 383,
+    data: "19 novembre 2026",
+    titolo: "Le ruote: pallini d'oro uguali dappertutto 🎡",
+    descrizione: [
+      "🎡 I pallini della Ruota della Fortuna, di «Scegliamo insieme» e della Ruota del 100 ora sono uguali a quelli della ruota dello spareggio della Mini Asta: d'oro, lucidi, con la loro ombra, più grandi e più facili da vedere.",
+      "🔊 Il tic resta sempre sul pallino che passa sotto la freccia, anche quando la ruota va velocissima."
+    ]
+  },
+  {
+    v: 382,
+    data: "19 novembre 2026",
+    titolo: "Le ruote: il tic solo sui pallini 🎡",
+    descrizione: [
+      "🎡 Nella Ruota della Fortuna, nella ruota di «Scegliamo insieme» e nella Ruota del 100 del Prezzo è Giusto ora si vedono anche i pallini piccoli a metà di ogni spicchio, accanto a quelli grandi tra uno spicchio e l'altro.",
+      "🔊 Il tic suona solo quando un pallino passa sotto la freccia, mai più nel vuoto: quando la ruota rallenta si sentono i colpi uno per uno, pallino dopo pallino, fino all'ultimo."
+    ]
+  },
+  {
     v: 381,
     data: "19 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la ruota dello spareggio coi pallini 🎡",

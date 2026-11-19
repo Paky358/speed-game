@@ -729,3 +729,46 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - 18 nov: facce, lotti 11 e 12 sui da fare: 16 + 14 (tolti Viviano e Babacar: capelli non visibili, valori a memoria). Nel gioco 52 facce proposte. Senza foto libera sicura (da fare a mano): Izzo, Maggiore, Aarón Martín, Okereke, Orban, Di Carmine, Lukić, Rispoli, Gyasi, Cordaz, De Silvestri, Tengstedt, Lucas Castro, Nicolás Domínguez, Alfredo Donnarumma. Wikimedia rispondeva 429: ritmo portato a una richiesta ogni 8 s.
 - 18 nov: facce, lotto 13: 15 con foto (70 proposte nel gioco); senza foto libera sicura Montipò, Mosquera, Sarr A., Silvestri, Zanoli, Bastoni S.; Wikimedia ha risposto 429 anche dopo 15 minuti: pausa di un'ora, i 4 rimasti passano nel lotto 14.
 - 18 nov: facce, lotti 14 e 15: 19 + 19 (tolti Ilić e Danilo Larangeira: non sicuro che la foto fosse lui). Senza foto libera sicura (da fare a mano): Martella, Matheus Henrique, Croce, Folorunsho, Nestorovski, Pussetto, Rômulo, Skov Olsen, Agudelo, Drągowski, Gian Marco Ferrari, Črnigoj, Gagliolo, Gendrey. Ritmo una richiesta ogni 10 s, qualche 429 con attesa di 20 minuti.
+
+## 19 nov: BATTITORI 2023-24 dal Deep Research
+- Regole: angoli e punizioni da Gemini solo se il calciatore è nel gioco con quella squadra in quella stagione (chi ha cambiato squadra a gennaio vale dove ha finito);
+  «non so» o fuori dal gioco = resta la stima (il primo nome della stima non ancora usato). Rigori: il 1° resta chi ne ha tirati di più nei dati di fantacalcio.it
+  (Gemini solo se nessuno ne ha tirati); 2° e 3° da Gemini. Le caselle ancora «non so» e i nomi scartati: `D:\SG-stagione-lavoro\ricerca\gemini-dr\non-so.txt`.
+- **2023-24**: 33 cambi; 78 caselle «non so» (di cui 10 nomi scartati)
+  - Atalanta angoli: De Ketelaere, Pasalic → Koopmeiners, Miranchuk, Ruggeri
+  - Atalanta punizioni: De Ketelaere, Lookman → Koopmeiners, Lookman, De Ketelaere
+  - Bologna angoli: Calafiori, Ferguson → Orsolini, Calafiori, Ferguson
+  - Bologna punizioni: Orsolini, Ferguson → Ferguson, Saelemaekers, Orsolini
+  - Cagliari angoli: Viola, Nandez → Viola, Oristanio, Gaetano
+  - Cagliari punizioni: Luvumbo, Viola → Augello, Luvumbo, Viola
+  - Cagliari rigori: Gaetano, Nandez, Lapadula → Lapadula, Gaetano, Nandez
+  - Empoli punizioni: Cancellieri, Gyasi → Cacace, Cancellieri, Gyasi
+  - Fiorentina angoli: Duncan, Biraghi → Biraghi, Duncan
+  - Fiorentina punizioni: Gonzalez N., Bonaventura → Biraghi, Gonzalez N., Bonaventura
+  - Fiorentina rigori: Gonzalez N., Beltran L., Arthur Melo → Gonzalez N., Beltran L., Bonaventura
+  - Frosinone punizioni: Soulé, Brescianini → Soulé, Mazzitelli, Brescianini
+  - Genoa angoli: Gudmundsson A., Frendrup → Gudmundsson A., Martin, Frendrup
+  - Inter angoli: Dimarco, Mkhitaryan → Calhanoglu, Dimarco, Mkhitaryan
+  - Inter punizioni: Calhanoglu, Mkhitaryan → Calhanoglu, Dimarco, Mkhitaryan
+  - Juventus angoli: McKennie, Locatelli → Kostic, McKennie, Locatelli
+  - Juventus punizioni: McKennie, Chiesa → Vlahovic, Milik, McKennie
+  - Lazio punizioni: Luis Alberto, Felipe Anderson → Luis Alberto, Zaccagni, Pedro
+  - Lecce angoli: Gendrey, Gallo → Oudin, Gendrey, Gallo
+  - Lecce punizioni: Banda, Oudin → Oudin, Banda
+  - Milan angoli: Pulisic, Reijnders → Florenzi, Hernandez T., Reijnders
+  - Monza angoli: Colpani, Kyriakopoulos → Kyriakopoulos, Ciurria, Colpani
+  - Napoli angoli: Politano, Di Lorenzo → Politano, Kvaratskhelia, Zielinski
+  - Napoli punizioni: Politano, Kvaratskhelia → Raspadori, Kvaratskhelia, Politano
+  - Roma angoli: Cristante, Paredes → Dybala, Pellegrini Lo., Cristante
+  - Torino angoli: Bellanova, Lazaro → Lazaro, Vojvoda, Bellanova
+  - Torino punizioni: Vlasic, Ilic → Vlasic, Sanabria, Ilic
+  - Udinese angoli: Pereyra, Samardzic → Samardzic, Pereyra
+  - Udinese rigori: Gemini dice 1° Pereyra, resta Samardzic (ne ha tirati di più nei dati)
+  - Verona angoli: Suslov, Duda → Duda, Suslov
+  - Verona punizioni: Suslov, Duda → Duda, Suslov
+  - Verona rigori: Gemini dice 1° Duda, resta Suslov (ne ha tirati di più nei dati)
+  - Verona rigori: Suslov, Lazovic, Duda → Suslov, Duda, Lazovic
+  - Nomi letti meglio (genera.js): «ð» vale «d» (Albert Guðmundsson = Gudmundsson A., prima scartato nel Genoa) e, se due calciatori della squadra stanno nel nome di Gemini, vale quello del COGNOME (Gaetano Oristanio = Oristanio, non Gaetano). Rifatte tutte le stagioni: l'unico altro cambio è Hallfreðsson (Udinese 2016-17) col numero 23 (Wikipedia e FootballSquads d'accordo).
+  - Le 77 caselle «non so» e da controllare (Milan 1° angoli Florenzi, Lazio 1° punizioni Luca Pellegrini, Bologna 2° angoli Urbański) sono in fondo a non-so.txt per l'aiutante.
+- 19 nov: 6 facce in più dalle foto (lotto 16, fermato a metà dal blocco di Wikimedia della notte): 114 in tutto, sempre «📷 da controllare».
+- 19 nov: FACCE DAI FOGLI DA 16 (chiesto dal Cervello per spendere circa un terzo). Il rilevatore di volti di Windows (`D:\SG-stagione-lavoro\volti.ps1`, niente da installare) trova il viso e `foglio.ps1` fa un foglio 4×4 coi visi ritagliati e pid e nome sotto; un aiutante Sonnet guarda il foglio e scrive i 16 (FOGLI.md). Prova su 16 già fatti a mano (le facce del proprietario non si possono leggere senza il suo account: confronto con le foto singole): pelle uguale 15 su 16, tutte entro un tono. Foto: Wikimedia (una richiesta ogni 8 s dopo il blocco, `scarica-foto.js`) e miniature di Google Immagini lette dalla pagina dei risultati (solo per guardarle, mai nel gioco: `google-salva.js`). I 46 senza foto libera guardati a occhio su Google Immagini. In tutto 234 facce «📷 da controllare» (120 in più): 46 da Google a occhio, 72 dai primi 5 fogli (8 null: foto lontane, sfocate o con due persone, da riprovare).
