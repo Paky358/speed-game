@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 19 nov 2026 01:11 · ⚽🃏 Mini Asta · PUBBLICATO · v381 (la ruotina dello spareggio coi pallini d'oro: grandi dove cambia lo spicchio, piccoli a metà; il tic su ogni pallino, mai nel vuoto, anche quando rallenta; prove nuove ru2 (online, 3 telefoni) e ru3 (stesso telefono) + ru1 OK; foto D:\SG-asta-prove\buste-caso\ruota-pallini.png) · master
 - 18 nov 2026 23:56 · ⚽🃏 Mini Asta · PUBBLICATO · v380 (buste: pari sull'offerta più alta e nessuno dei pari può alzare = niente spareggio, subito la ruota «Tutti al massimo»; se uno può alzare, spareggio come prima; online, stesso telefono e ripresa; prove nuove bu7 (stesso telefono + conti) e bu8 (online con ricarica di chi tiene la partita) + bu1-bu6, tv1, tv2 OK; foto D:\SG-asta-prove\buste-caso\pari-al-massimo.png) · master
 - 18 nov 2026 23:32 · ⚽🃏 Mini Asta · PUBBLICATO · v379 (le buste si aprono in ordine a caso: chi passa per primo, poi mescolate col seme di chi tiene la partita, stesso tempo per ogni busta, 👑 «in testa» sulla più alta finora, l'ultima busta qualunque sia contro la 👑 col rullo; spareggi, ruota e regole invariati; prove bu1-bu6, tv1, tv2 OK; foto D:\SG-asta-prove\buste-caso\buste-prima-dopo.png) · master
 - 18 nov 2026 23:00 · 📅 Stagioni del passato · PUBBLICATO · facce dalle foto sui da fare: lotti 14-15 (+38) · master

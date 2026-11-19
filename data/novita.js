@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 381,
+    data: "19 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: la ruota dello spareggio coi pallini 🎡",
+    descrizione: [
+      "🎡 Sulla ruota che decide i pari ora si vedono i pallini d'oro: uno grande dove cambia lo spicchio e uno piccolo a metà. Il tic suona esattamente quando la lancetta passa su un pallino, grande o piccolo, mai nel vuoto: quando la ruota rallenta si sente ogni pallino che passa."
+    ]
+  },
+  {
     v: 380,
     data: "18 novembre 2026",
     titolo: "Mini Asta Fantacalcio: pari al massimo? Subito la ruota 🎡",
