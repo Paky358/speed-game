@@ -6431,6 +6431,7 @@
       var prs = op.come === "pressing" && /^(amm|esp)$/.test(tipo), durS = prs ? 4.2 : ({ rig: 4, frig: 2, amm: 2.9, esp: 2.9, rec: 2.9, inv: 1.7 })[tipo] || 4.2;   // (🏃 il pressing: come le azioni)   // (quanto dura l'azione a velocità normale, in secondi)
       var canoni = null;   // (la stessa azione costruita col gol e con la parata, con lo stesso seme: chi decide su queste fa la stessa cosa in ogni esito)
       if ((tipo === "gol" || tipo === "occ" || tipo === "ann" || prs) && !op.canone) { var opC = {}; for (var kc in op) opC[kc] = op[kc]; opC.canone = true; var vC = prs ? "pressing" : v, etC = prs ? { tira: et.fallo } : et; canoni = [scena("gol", vC, "gol", null, etC, opC), scena("occ", vC, "parata", null, etC, opC)]; }   // (🏃 falli e furti in pressing: le stesse azioni)
+      if (canoni) sc.tVicino = Math.min.apply(null, canoni.map(function (c) { return c.tiroDa != null ? c.tiroDa : c.calcio != null ? c.calcio : c.dunque || 0.6; }));   // 🎥 (20 nov 2026) quando la telecamera si avvicina: il momento decisivo più presto tra l'azione col gol e quella con la parata, uguale in OGNI esito (prima nel contropiede la parata in uscita, senza tiro, restava larga: spoiler)
       if (sc.dPalo && !FG_LINEA[v] && canoni) arretraPalo(sc, durS, canoni);   // 🦵 il difensore sul palo   // 🦵 (prima dei guardalinee: anche lui è in linea)
       sc.attori.forEach(function (a) { if (a.sq === "arb") arbitroCalmo(a, durS); });   // 👨‍⚖️ (gli arbitri disegnati apposta: mai più veloci di chi corre)
       if (!sc.attori.some(function (a) { return a.sq === "arb"; })) sc.attori.push(arbitroVero(canoni ? canoni[0] : sc, lin, durS));   // (deciso sull'azione col gol: uguale in ogni esito, anche dopo il tiro)   // 👨‍⚖️ (15 nov 2026: mancava in tante azioni)
@@ -8113,13 +8114,14 @@
     // 🎥 LARGA E VICINA (19 nov 2026 sera, il proprietario: dopo la 385 «c'è troppa poca tensione», prima si leggevano i nomi da lontano: «c'è il
     // mio in mezzo!»): come in TV. LARGA (PROSP_LARGO della vicina: circa −38% rispetto alla 384) mentre l'azione si costruisce, nei piazzati e
     // col campo fermo, così si leggono tutti i nomi dei vostri; VICINA (lo zoom della 385, −20%) solo dal tiro: l'avvicinamento morbido parte
-    // nell'istante del tiro (sc.tiroDa, se no sc.calcio: dati di partenza, uguali per gol, parata, palo, traversa, fuori e alto) e dura PROSP_AVV
+    // nell'istante del tiro (sc.tVicino: il momento decisivo più presto tra l'azione col gol e quella con la parata, costruite col seme della scena:
+    // uguale per gol, parata, palo, traversa, fuori e alto, anche dove un esito non ha il tiro, come la parata in uscita) e dura PROSP_AVV
     // dell'azione (circa mezzo secondo); poi resta vicina per l'esito e la festa, e il replay è vicino. Le azioni senza tiro restano larghe
     // (dopo un gol, vicina dal gol: si sa già com'è finita). Uguale verso l'alto e verso il basso
     var PROSP_LARGO = 0.775, PROSP_AVV = 0.07;
     function vicino(sc, p) {
       if (sc.replay) return 1;
-      var t = sc.tiroDa != null ? sc.tiroDa : sc.calcio != null ? sc.calcio : sc.rete;
+      var t = sc.tVicino != null ? sc.tVicino : sc.tiroDa != null ? sc.tiroDa : sc.calcio != null ? sc.calcio : sc.rete;   // (tVicino: uguale per ogni esito della scena)
       return t == null ? PROSP_LARGO : PROSP_LARGO + (1 - PROSP_LARGO) * liscio(Math.max(0, Math.min(1, (p - t) / PROSP_AVV)));
     }
     // ---- la telecamera: segue il pallone (un po' di media, così non trema) tenendo d'occhio la porta; nelle rarità si avvicina
