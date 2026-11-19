@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 383,
+    data: "19 novembre 2026",
+    titolo: "Le ruote: pallini d'oro uguali dappertutto 🎡",
+    descrizione: [
+      "🎡 I pallini della Ruota della Fortuna, di «Scegliamo insieme» e della Ruota del 100 ora sono uguali a quelli della ruota dello spareggio della Mini Asta: d'oro, lucidi, con la loro ombra, più grandi e più facili da vedere.",
+      "🔊 Il tic resta sempre sul pallino che passa sotto la freccia, anche quando la ruota va velocissima."
+    ]
+  },
+  {
     v: 382,
     data: "19 novembre 2026",
     titolo: "Le ruote: il tic solo sui pallini 🎡",
