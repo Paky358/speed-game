@@ -1920,7 +1920,12 @@
     var o = h - Date.now(); if (OROLOGIO.stima == null || o > OROLOGIO.stima) { OROLOGIO.stima = o; OROLOGIO.off = o; }
   }
   function vsDi(im) { return !im || !im.vsScelto ? true : im.vs === true; }   // 🆚 (8 nov 2026: di base acceso; spento solo da chi l'ha spento apposta da allora)
-  function proprietario(t) { return !!(t && t.nomeProfilo && String(t.nomeProfilo() || "").trim().toUpperCase() === "IL PAPPONE"); }   // (la scritta di prova la vede solo lui)
+  function proprietario(t) { return !!(t && t.nomeProfilo && String(t.nomeProfilo() || "").trim().toUpperCase() === "IL PAPPONE"); }
+  // 📐 LA GIORNATA IN PROSPETTIVA (19 nov 2026, il proprietario ha scelto la prospettiva «forte» sulle foto: «l'area di rigore dove c'è l'azione è
+  // molto più zoomata e si capiscono meglio i giocatori»; «nel campo di adesso non si capisce mai quando è traversa e quando no»): la telecamera
+  // dietro la porta dove va l'azione, la porta vera in piedi. PROSPETTIVA: "nessuno" = spenta per tutti · "proprietario" = solo IL PAPPONE · "tutti"
+  var PROSPETTIVA = "proprietario";
+  function prospettivaPer(t) { if (window.__PROSP_FORZA != null) return !!window.__PROSP_FORZA; return PROSPETTIVA === "tutti" || (PROSPETTIVA === "proprietario" && proprietario(t)); }   // (__PROSP_FORZA: solo per le prove e le foto)   // (la scritta di prova la vede solo lui)
   // ⏱️ IL PIANO DOPO L'ASTA: tutto quello che si vede (le rose che si scoprono, la giornata, le pagelle) ha un'ora precisa, scritta
   // sull'orologio di chi tiene la partita: cron = { t0: quando comincia, seg: [[h, g, v]] (da h si corre a velocità v: 1, o 2 col ⏩;
   // g = il «tempo di gioco» in quel momento), salta: (chi tiene la partita ha saltato le rose) }. Ogni telefono fa ogni cosa quando
@@ -4160,7 +4165,7 @@
     }
     fermaRivela(RIVELA);
     if (opz.serieA) caricaStadio();   // 🔊 (i suoni veri: solo adesso, quando arriva la giornata)
-    var el = t.el, R = { el: el, chiave: opz.chiave, opz: opz, righe: righe, timer: [], iv: null, finito: false, conta: [], gufi: {} }, sfondo = el("div", { class: "sa-sfondo" }), quadro = arte("stadio", "");
+    var el = t.el, R = { el: el, chiave: opz.chiave, opz: opz, righe: righe, timer: [], iv: null, finito: false, conta: [], gufi: {}, prosp: prospettivaPer(t) }, sfondo = el("div", { class: "sa-sfondo" }), quadro = arte("stadio", "");
     gufoDallaFoto(R, opz.gufi);
     if (quadro) sfondo.style.backgroundImage = "url(\"" + quadro + "\")";
     var board = maxischermo(el, R, true), conGio = !!(righe[0] && righe[0].gio);
@@ -4421,7 +4426,7 @@
     hc = Math.max(140, hc);
     var lc = hc < w * 1.2 && hc >= w * 0.84 ? Math.round(hc / 1.2) : 0;   // (poca altezza, telefono piccolo e tanti: il campo un po' più stretto, ma sempre in verticale)
     R.azBox.style.height = hc + "px"; R.azBox.style.width = lc ? lc + "px" : ""; R.azBox.style.margin = lc ? "0 auto 8px" : "";
-    R.az = R.az || campoAzioni(el, R.azBox);
+    R.az = R.az || campoAzioni(el, R.azBox); R.az.ps = !!R.prosp;   // 📐 (la prospettiva: solo per chi ce l'ha)
     R.az.misura();
     if (!gia) svuotaNodo(R.gioTab);
     R.gioTab.style.height = (file * qh + (file - 1) * 5) + "px"; R.gioTab.style.setProperty("--qh", qh + "px"); R.gioTab.style.setProperty("--cols", cols);
@@ -7831,7 +7836,20 @@
   }
   var BARRA_GIU = 24;   // 📏 la barra del minuto in cima al campo finisce qui (top 3 + 18, più un filo)
   function campoAzioni(el, box) {
-    var cv = el("canvas", { class: "st-az" }), ctx = cv.getContext("2d"), A = { raf: 0, sc: null };
+    var cv = el("canvas", { class: "st-az" }), ctx = cv.getContext("2d"), A = { raf: 0, sc: null, kx: 1, zl: 1 };
+    // 📐 LA PROSPETTIVA (A.ps, solo in verticale: A.pv). Il campo resta quello di sempre (pixel del campo intero, la telecamera che segue
+    // l'azione), poi ogni punto dello schermo passa per pr(): più è in alto, più è lontano e piccolo (in cima metà, PROSP_K). Gli omini, il
+    // pallone e le ombre si disegnano dritti, alla misura del punto dove hanno i piedi (bb). Il campo si allarga di traverso (PROSP_KX) e il
+    // pallone e i salti salgono un po' di più (PROSP_ZK, PROSP_ZL): così porta e calciatori hanno le misure vere (7,32 × 2,44 m, un
+    // calciatore 1,80 m). L'azione va SEMPRE verso la porta in basso (vrs: chi l'ha vista dall'altra parte la vede da dietro la sua porta):
+    // il lato non dipende mai da come finisce
+    var CAM = null, UU = 1, PROSP_K = 0.5, PROSP_ZM = 1.4, PROSP_KX = 1.6, PROSP_ZK = 1.47, PROSP_ZL = 1.13;
+    function vrs(sc) { return A.pv ? 1 : sc.verso; }
+    function ZKU() { return A.pv ? PROSP_ZK : 1.3; }   // (quanto sale il pallone per ogni «metro» delle azioni, in omini)
+    function pr(sx, sy) { var H = A.h, kT = PROSP_K, q = 1 / (1 + (H - sy) * (1 - kT) / H); if (!(q > 0.04)) q = 0.04; return [A.w / 2 + (sx - A.w / 2) * q, H * (q - kT) / (1 - kT), q]; }
+    function campoSchermo(x, y) { return pr(A.w / 2 + (x - CAM.cx) * CAM.z, A.h / 2 + (y - CAM.cy) * CAM.z); }
+    function bb(x, y) { ctx.save(); var q = campoSchermo(x, y), k = CAM.z * q[2], d = A.d; ctx.setTransform(d * k, 0, 0, d * k, d * (q[0] - x * k), d * (q[1] - y * k)); }   // (disegni dritti, alla misura del punto x, y)
+    function vS(pt, fx, fy) { if (!A.pv) return [A.w / 2 + (pt[0] - CAM.cx) * CAM.z, A.h / 2 + (pt[1] - CAM.cy) * CAM.z]; var q = campoSchermo(fx, fy), k = CAM.z * q[2]; return [q[0] + (pt[0] - fx) * k, q[1] + (pt[1] - fy) * k]; }   // (un punto attaccato a chi ha i piedi in fx, fy: sullo schermo)
     box.appendChild(cv);
     A.misura = function () {
       var w = box.clientWidth, h = box.clientHeight, d = Math.min(2, window.devicePixelRatio || 1); if (!w || !h) return;
@@ -7843,12 +7861,12 @@
       disegna(A.sc || null, 0);
     };
     // dal campo intero (X lungo il campo, Y di traverso, 0-1) ai pixel; in verticale con un po' di margine sopra e sotto per le porte
-    function base(X, Y) { return A.vert ? [(1 - Y) * A.w, (0.04 + X * 0.92) * A.h] : [X * A.w, Y * A.h]; }
-    function pieno(sc, hx, hy) { var X = 0.5 + hy * 0.496, Y = 0.08 + hx * 0.84; return [sc.verso < 0 ? 1 - X : X, Y]; }
+    function base(X, Y) { return A.vert ? [(0.5 + (0.5 - Y) * A.kx) * A.w, (0.04 + X * 0.92) * A.h] : [X * A.w, Y * A.h]; }   // (📐 A.kx: in prospettiva più largo)
+    function pieno(sc, hx, hy) { var X = 0.5 + hy * 0.496, Y = 0.08 + hx * 0.84; return [vrs(sc) < 0 ? 1 - X : X, Y]; }
     function P(sc, hx, hy) { var f = pieno(sc, hx, hy); return base(f[0], f[1]); }
-    A.lontano = function (sc) { return A.vert ? (sc.verso > 0 ? 18 : 82) : 24; };   // dove vanno le scritte: nella metà campo lontana dall'azione (in %)
+    A.lontano = function (sc) { return A.vert ? (vrs(sc) > 0 ? 18 : 82) : 24; };   // dove vanno le scritte: nella metà campo lontana dall'azione (in %)
     function strada(sc, a, p) {   // quanta strada ha fatto (pixel del campo) fino al tempo p: le gambe vanno a tempo coi metri, mai a vuoto
-      var K = A.w + "x" + A.h + "x" + sc.verso, j;
+      var K = A.w + "x" + A.h + "x" + vrs(sc) + "x" + A.kx, j;
       if (a._sk !== K) {
         a._sk = K; a._sd = [0];
         var q = lungo(a.pts, 0), pr = P(sc, q[1], q[2]), tot = 0;
@@ -7865,7 +7883,7 @@
       return g[0] >= s1[0] ? 1 : -1;
     }
     function folla(sc, p) {   // la strada fatta dagli altri fino a p (pixel): seguono il pallone di 0,14 per lungo e 0,12 di traverso
-      var K = A.w + "x" + A.h + "x" + sc.verso, j;
+      var K = A.w + "x" + A.h + "x" + vrs(sc) + "x" + A.kx, j;
       if (sc._fk !== K) {
         sc._fk = K; sc._fd = [0];
         var q = lungo(sc.palla, 0, true) || [0, 0.5, 0.5, 0], f0 = pieno(sc, q[1], q[2]), tot = 0;
@@ -7892,17 +7910,17 @@
       return o;
     }
     // ---- il campo: l'erba a strisce, le linee, le aree, le porte con la rete (disegnato nei pixel del campo intero)
-    function poli(l, chiudi) { ctx.beginPath(); l.forEach(function (p, i) { var s = base(p[0], p[1]); if (i) ctx.lineTo(s[0], s[1]); else ctx.moveTo(s[0], s[1]); }); if (chiudi) ctx.closePath(); }
+    function poli(l, chiudi) { if (A.pj) { ctx.save(); ctx.setTransform(A.d, 0, 0, A.d, 0, 0); } ctx.beginPath(); l.forEach(function (p, i) { var s = base(p[0], p[1]); if (A.pj) s = campoSchermo(s[0], s[1]); if (i) ctx.lineTo(s[0], s[1]); else ctx.moveTo(s[0], s[1]); }); if (chiudi) ctx.closePath(); if (A.pj) ctx.restore(); }   // (📐 A.pj: i punti passano per la prospettiva)
     function arco(cx, cy, rx, ry, a0, a1) { var l = []; for (var i = 0; i <= 28; i++) { var a = a0 + (a1 - a0) * i / 28; l.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]); } poli(l, false); ctx.stroke(); }
     function campo() {
-      ctx.fillStyle = "#2f7a37"; ctx.fillRect(-A.w, -A.h, A.w * 3, A.h * 3);
+      if (!A.pj) { ctx.fillStyle = "#2f7a37"; ctx.fillRect(-A.w, -A.h, A.w * 3, A.h * 3); }
       ctx.fillStyle = "#36873f"; for (var i = 1; i < 18; i += 2) { poli([[0.03 + 0.94 * i / 18, -0.2], [0.03 + 0.94 * (i + 1) / 18, -0.2], [0.03 + 0.94 * (i + 1) / 18, 1.2], [0.03 + 0.94 * i / 18, 1.2]], true); ctx.fill(); }
       var mx = 0.94 / 105, my = 0.88 / 68, lw = Math.max(1, A.u * 0.17);
       ctx.strokeStyle = "rgba(246,250,242,.9)"; ctx.lineWidth = lw;
       poli([[0.03, 0.06], [0.97, 0.06], [0.97, 0.94], [0.03, 0.94]], true); ctx.stroke();
       poli([[0.5, 0.06], [0.5, 0.94]]); ctx.stroke();
       arco(0.5, 0.5, 9.15 * mx, 9.15 * my, 0, Math.PI * 2);
-      var pt = function (X, Y) { var s = base(X, Y); ctx.beginPath(); ctx.arc(s[0], s[1], lw * 1.3, 0, Math.PI * 2); ctx.fillStyle = "rgba(246,250,242,.95)"; ctx.fill(); };
+      var pt = function (X, Y) { var s = base(X, Y); if (A.pj) bb(s[0], s[1]); ctx.beginPath(); ctx.arc(s[0], s[1], lw * 1.3, 0, Math.PI * 2); ctx.fillStyle = "rgba(246,250,242,.95)"; ctx.fill(); if (A.pj) ctx.restore(); };
       pt(0.5, 0.5);
       [[0.03, 1], [0.97, -1]].forEach(function (q) {
         var x = q[0], s = q[1], ap = Math.acos(5.5 / 9.15);
@@ -7910,6 +7928,7 @@
         poli([[x, 0.5 - 9.16 * my], [x + s * 5.5 * mx, 0.5 - 9.16 * my], [x + s * 5.5 * mx, 0.5 + 9.16 * my], [x, 0.5 + 9.16 * my]]); ctx.stroke();
         arco(x + s * 11 * mx, 0.5, 9.15 * mx, 9.15 * my, s > 0 ? -ap : Math.PI - ap, s > 0 ? ap : Math.PI + ap);   // (la lunetta, fuori dall'area)
         pt(x + s * 11 * mx, 0.5);
+        if (A.pj) return;   // (📐 in prospettiva la porta è in piedi: porta3D)
         var gx = x - s * 3.2 * mx, y0 = 0.5 - 5.5 * my, y1 = 0.5 + 5.5 * my, k;   // la porta, con la rete (più grande del vero, come gli omini)
         poli([[x, y0], [gx, y0], [gx, y1], [x, y1]], true); ctx.fillStyle = "rgba(255,255,255,.16)"; ctx.fill();
         ctx.save(); ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.lineWidth = lw * 0.4;
@@ -7918,16 +7937,78 @@
         ctx.restore(); ctx.lineWidth = lw * 1.5; ctx.strokeStyle = "#ffffff"; poli([[x, y0], [gx, y0], [gx, y1], [x, y1]]); ctx.stroke(); ctx.lineWidth = lw; ctx.strokeStyle = "rgba(246,250,242,.9)";
       });
     }
+    // 📐 LA PORTA VERA in prospettiva (19 nov 2026, il proprietario: «deve capirsi a colpo d'occhio se il pallone colpisce il palo, la traversa,
+    // se va fuori di poco o se entra»): in piedi, coi pali e la traversa ESATTAMENTE dove li colpiscono le azioni (pali a 0,5 ± 0,084, traversa a
+    // 2,44: gli stessi numeri del tiro), tubi bianchi con la luce e l'ombra, la rete con la sua profondità fino a NET (il fondo che si gonfia al gol).
+    // Quando il pallone sbatte sul palo o sulla traversa il legno trema un attimo e c'è il colpo. parte: "tutta" (la porta lontana, o il campo
+    // vuoto), "telaio" (ombra, pali, traversa, tetto e fianchi della rete) e "rete" (il fondo, il più vicino alla telecamera)
+    function colpiPorta(sc) {   // quando il pallone colpisce il palo o la traversa (dalle azioni: il punto esatto del colpo)
+      if (sc._colpi) return sc._colpi; var l = [];
+      sc.palla.forEach(function (b) { if (Math.abs(b[2] - GL) > 1e-6) return; var dx = Math.abs(b[1] - 0.5), z = b[3] || 0; if (Math.abs(dx - 0.084) < 0.002 && z < 2.44) l.push({ t: b[0], palo: 1, hx: b[1], z: z }); else if (Math.abs(z - 2.44) < 0.03 && dx < 0.084) l.push({ t: b[0], palo: 0, hx: b[1], z: 2.44 }); });
+      return (sc._colpi = l);
+    }
+    function porta3D(vicina, parte, sc, p) {
+      var sg = vicina ? 1 : -1, Xg = 0.5 + sg * GL * 0.496, Xn = 0.5 + sg * NET * 0.496, Ya = 0.08 + 0.416 * 0.84, Yb = 0.08 + 0.584 * 0.84, HB = 2.44, HR = HB * 0.88;
+      var colpo = null; if (vicina && sc) colpiPorta(sc).forEach(function (c) { if (p >= c.t && p < c.t + 0.09) colpo = c; });
+      var trema = colpo ? Math.sin((p - colpo.t) * 320) * (1 - (p - colpo.t) / 0.09) * 1.8 : 0;
+      function tre(X, Y, H, sc2) { var b = base(X, Y), q = campoSchermo(b[0], b[1]); return [q[0] + (sc2 ? trema * q[2] : 0), q[1] - H * ZKU() * UU * CAM.z * q[2], q[2]]; }
+      function linea(a, b) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+      function rete(q, nu, nv, gonfia) {   // una faccia della rete: q = 4 angoli [X, Y, H] (0-1-2-3), nu × nv quadretti; gonfia(X, Y, H) = quanto esce verso di noi
+        var P = function (a, b) { var X = q[0][0] + (q[1][0] - q[0][0]) * a + (q[3][0] - q[0][0]) * b, Y = q[0][1] + (q[1][1] - q[0][1]) * a + (q[3][1] - q[0][1]) * b, H = q[0][2] + (q[1][2] - q[0][2]) * a + (q[3][2] - q[0][2]) * b; if (gonfia) X += gonfia(Y, H); return tre(X, Y, H); };
+        var c = [P(0, 0), P(1, 0), P(1, 1), P(0, 1)]; ctx.beginPath(); c.forEach(function (z, i) { if (i) ctx.lineTo(z[0], z[1]); else ctx.moveTo(z[0], z[1]); }); ctx.closePath(); ctx.fillStyle = "rgba(255,255,255,.07)"; ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,.42)"; ctx.lineWidth = Math.max(0.6, 0.9 * c[0][2]); var i, j, z;
+        var nj = gonfia ? 6 : 1, ni = gonfia ? 8 : 1; ctx.beginPath();   // (una sola linea per faccia: sui telefoni lenti costa meno; i punti in mezzo solo se la rete si gonfia)
+        for (i = 0; i <= nu; i++) for (j = 0; j <= nj; j++) { z = P(i / nu, j / nj); if (j) ctx.lineTo(z[0], z[1]); else ctx.moveTo(z[0], z[1]); }
+        for (j = 0; j <= nv; j++) for (i = 0; i <= ni; i++) { z = P(i / ni, j / nv); if (i) ctx.lineTo(z[0], z[1]); else ctx.moveTo(z[0], z[1]); }
+        ctx.stroke();
+      }
+      function sbarra(a, b, sp, vert) {   // un palo (vert) o la traversa: il tubo bianco con la luce da una parte e l'ombra dall'altra
+        ctx.lineCap = "round"; ctx.strokeStyle = "rgba(30,38,52,.6)"; ctx.lineWidth = sp + 1.6; linea(a, b);
+        var g = vert ? ctx.createLinearGradient(a[0] - sp / 2, 0, a[0] + sp / 2, 0) : ctx.createLinearGradient(0, a[1] - sp / 2, 0, a[1] + sp / 2);
+        g.addColorStop(0, "#ffffff"); g.addColorStop(0.5, "#eef1f6"); g.addColorStop(1, "#a7b0bf"); ctx.strokeStyle = g; ctx.lineWidth = sp; linea(a, b);
+      }
+      var gonfia = null;
+      if (vicina && sc && sc.rete != null && p >= sc.rete) {   // (il fondo della rete si gonfia dove entra il pallone e torna piano)
+        var tt = p - sc.rete, qb = lungo(sc.palla, sc.rete + 0.03, true) || [0, 0.5, 0.5, 0], yB = pieno(sc, qb[1], qb[2])[1], hB = Math.min(HR, qb[3] || 0.6), amp = 0.009 * Math.exp(-tt * 7) * (0.65 + 0.35 * Math.cos(tt * 38));
+        gonfia = function (Y, H) { return amp * Math.exp(-Math.pow((Y - yB) / 0.03, 2) - Math.pow((H - hB) / 1.1, 2)); };
+      }
+      ctx.save(); ctx.setTransform(A.d, 0, 0, A.d, 0, 0); ctx.lineJoin = "round";
+      var g0 = tre(Xg, Ya, 0, 1), g1 = tre(Xg, Yb, 0, 1), t0 = tre(Xg, Ya, HB, 1), t1 = tre(Xg, Yb, HB, 1), sp = Math.max(2.2, UU * CAM.z * g0[2] * 0.34);
+      function telaio() {
+        var n0 = tre(Xn, Ya, 0), n1 = tre(Xn, Yb, 0);   // l'ombra a terra sotto la rete e ai piedi dei pali
+        ctx.beginPath(); [g0, g1, n1, n0].forEach(function (z, i) { if (i) ctx.lineTo(z[0], z[1]); else ctx.moveTo(z[0], z[1]); }); ctx.closePath(); ctx.fillStyle = "rgba(0,0,0,.14)"; ctx.fill();
+        [g0, g1].forEach(function (z) { ctx.beginPath(); ctx.ellipse(z[0], z[1], sp * 1.4, sp * 0.5, 0, 0, Math.PI * 2); ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.fill(); });
+        sbarra(g0, t0, sp, true); sbarra(g1, t1, sp, true); sbarra(t0, t1, sp, false);
+        ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = Math.max(0.8, sp * 0.22); linea([t0[0], t0[1] - sp * 0.22], [t1[0], t1[1] - sp * 0.22]);   // (la luce sopra la traversa)
+        if (colpo) {   // 💥 il colpo sul legno: un lampo che si allarga dove sbatte il pallone
+          var kc = (p - colpo.t) / 0.09, Yc = 0.08 + (0.5 + (colpo.hx - 0.5)) * 0.84, cz = tre(Xg, pieno(sc, colpo.hx, GL)[1], colpo.z, 1);
+          ctx.save(); ctx.globalAlpha = 1 - kc; ctx.strokeStyle = "#fff"; ctx.lineWidth = Math.max(1, sp * 0.5 * (1 - kc)); ctx.beginPath(); ctx.arc(cz[0], cz[1], sp * (1.2 + 3 * kc), 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+        }
+      }
+      function fianchi() {
+        rete([[Xg, Ya, HB], [Xg, Yb, HB], [Xn, Yb, HR], [Xn, Ya, HR]], 10, 2);   // il tetto
+        rete([[Xg, Ya, 0], [Xn, Ya, 0], [Xn, Ya, HR], [Xg, Ya, HB]], 2, 4); rete([[Xg, Yb, 0], [Xn, Yb, 0], [Xn, Yb, HR], [Xg, Yb, HB]], 2, 4);   // i fianchi
+      }
+      function fondo() { rete([[Xn, Ya, 0], [Xn, Yb, 0], [Xn, Yb, HR], [Xn, Ya, HR]], 12, 5, gonfia); }
+      if (parte === "telaio") { telaio(); fianchi(); }
+      else if (parte === "rete") fondo();
+      else if (vicina) { telaio(); fianchi(); fondo(); }
+      else { fondo(); fianchi(); telaio(); }   // (la porta lontana si vede da davanti: prima il fondo, poi i pali)
+      if (vicina) A.porta = { pali: [g0[0], g1[0]], terra: g0[1], trav: t0[1], sp: sp };   // (per le prove: dove sono i pali e la traversa sullo schermo)
+      if (vicina) { var xs = [g0[0], g1[0], t0[0], t1[0]], ys = [g0[1], g1[1], t0[1], t1[1]]; A.portaBox = { x0: Math.min.apply(null, xs) - sp, x1: Math.max.apply(null, xs) + sp, y0: Math.min.apply(null, ys) - sp, y1: Math.max.apply(null, ys) + sp }; }
+      ctx.restore();
+    }
     // ---- la telecamera: segue il pallone (un po' di media, così non trema) tenendo d'occhio la porta; nelle rarità si avvicina
     function camera(sc, p) {
       if (!sc) return { cx: A.w / 2, cy: A.h / 2, z: 1 };
-      var z = (A.vert ? 1.6 : 1.35) - (sc && sc.bandiera != null && p > sc.bandiera ? 0.3 * liscio((p - sc.bandiera) / 0.12) : 0) + (sc.zoomFine || 0) * liscio((p - (sc.tz || 0.55)) / Math.max(0.05, 1 - (sc.tz || 0.55)) * 1.6) + (sc.replay ? 0.25 : 0);
+      var z = (A.vert ? 1.6 : 1.35) * (A.pv ? PROSP_ZM : 1) - (sc && sc.bandiera != null && p > sc.bandiera ? 0.3 * liscio((p - sc.bandiera) / 0.12) : 0) + (sc.zoomFine || 0) * liscio((p - (sc.tz || 0.55)) / Math.max(0.05, 1 - (sc.tz || 0.55)) * 1.6) + (sc.replay ? 0.25 : 0);
       var bx = 0, by = 0, k, q, s;
       for (k = 0; k < 5; k++) { q = lungo(sc.palla, Math.max(0, p - k * 0.025), true) || [0, 0.5, 0.5, 0]; s = P(sc, q[1], q[2]); bx += s[0]; by += s[1]; }
       var g = P(sc, 0.5, 0.88), cx = bx / 5 * 0.72 + g[0] * 0.28, cy = by / 5 * 0.72 + g[1] * 0.28, hw = A.w / (2 * z), hh = A.h / (2 * z);
       if (sc.fest && sc.rete != null && p > sc.rete) { var qf = lungo(sc.fest.pts, p), sf = P(sc, qf[1], qf[2]), wf = liscio((p - sc.rete - 0.04) / 0.2) * 0.75; cx += (sf[0] - cx) * wf; cy += (sf[1] - cy) * wf; }   // (dopo il gol: su chi esulta)
-      if (sc.gl && sc.bandiera != null && p > sc.bandiera) { var qg = lungo(sc.gl.pts, p), sg = P(sc, qg[1], qg[2]), wg = liscio((p - sc.bandiera) / 0.12) * 0.5; cx += (sg[0] - cx) * wg; cy += (sg[1] - cy) * wg; }   // 🚩 (la bandierina alzata: si vede il guardalinee)
-      return { cx: Math.max(hw, Math.min(A.w - hw, cx)), cy: Math.max(hh, Math.min(A.h - hh, cy)), z: z };
+      if (sc.gl && sc.bandiera != null && p > sc.bandiera) { var qg = lungo(sc.gl.pts, p), sg = P(sc, qg[1], qg[2]), wg = liscio((p - sc.bandiera) / 0.12) * (A.pv ? 0.82 : 0.5); cx += (sg[0] - cx) * wg; cy += (sg[1] - cy) * wg; }   // 🚩 (la bandierina alzata: si vede il guardalinee)
+      var lo = A.w / 2 - A.kx * A.w / 2 + hw, hi = A.w / 2 + A.kx * A.w / 2 - hw;   // (📐 il campo più largo: la telecamera ci arriva tutta)
+      return { cx: Math.max(lo, Math.min(hi, cx)), cy: Math.max(hh, Math.min(A.h - hh, cy)), z: z };
     }
     // ---- un omino in piedi: x, y = i piedi (pixel del campo); u = la misura; dir 1 guarda a destra, -1 a sinistra
     // o: { sw, sv: il passo (apertura delle gambe e quale va avanti), vr: quanto corre su e giù per lo schermo, salto (0-1), ruota (giro del corpo), giu (0 in piedi,
@@ -7945,7 +8026,7 @@
       return OMBRA;
     }
     function omino(x, y, u, dir, kit, o) {
-      var gk = o.ginocchia || 0, pg = o.piega || 0, al = o.allunga || 0, h = o.salto || 0, lift = h * u * 2.4 - gk * u * 0.5 - pg * u * 0.3, sw = o.sw || 0, sv = o.sv || 0, kk = 1 + h * 0.25, gi = o.giu || 0, rt = o.ruota || 0, vr = o.vr || 0;
+      var gk = o.ginocchia || 0, pg = o.piega || 0, al = o.allunga || 0, h = o.salto || 0, lift = h * u * 2.4 * A.zl - gk * u * 0.5 - pg * u * 0.3, sw = o.sw || 0, sv = o.sv || 0, kk = 1 + h * 0.25, gi = o.giu || 0, rt = o.ruota || 0, vr = o.vr || 0;
       var anca = 1.15 * u * (1 - 0.68 * gi * (1 - Math.min(1, h * 3))), hh = Math.max(0, h - 0.05);   // (disteso a terra le anche scendono; in aria le gambe si raccolgono)
       var ox = x + Math.sin(rt) * 0.65 * u * gi, rx = u * (0.72 - h * 0.15 + gi), ry = u * (0.22 + 0.08 * gi);   // l'ombra resta a terra (lunga quanto lui, se è disteso)
       ctx.save(); ctx.globalAlpha = 1 - h * 0.45; ctx.drawImage(ombraMorbida(), ox - rx * 1.45, y - ry * 1.6, rx * 2.9, ry * 3.2); ctx.restore();
@@ -8044,7 +8125,7 @@
       ctx.globalAlpha = 1; ctx.lineWidth = Math.max(1.2, u * 0.13); ctx.strokeStyle = pc; ctx.stroke(); ctx.restore();
     }
     function testaDi(x, y, u, o, faccia) {   // dove sta la testa (pixel del campo) e il punto più alto dell'omino (per il nome)
-      var h = o.salto || 0, k = 1 + h * 0.25, t = o.ruota || 0, gi = o.giu || 0, px = x, py = y - h * u * 2.4 + (o.ginocchia || 0) * u * 0.5 - 1.15 * u * (1 - 0.68 * gi * (1 - Math.min(1, h * 3))), d = (faccia ? 1.3 + 0.2 * gi : 1.05) * k;
+      var h = o.salto || 0, k = 1 + h * 0.25, t = o.ruota || 0, gi = o.giu || 0, px = x, py = y - h * u * 2.4 * A.zl + (o.ginocchia || 0) * u * 0.5 - 1.15 * u * (1 - 0.68 * gi * (1 - Math.min(1, h * 3))), d = (faccia ? 1.3 + 0.2 * gi : 1.05) * k;
       var rot = function (lx, ly) { return [px + lx * Math.cos(t) - ly * Math.sin(t), py + lx * Math.sin(t) + ly * Math.cos(t)]; };
       var testa = rot(0, -d * u), alto = [testa[0], testa[1] - u * (faccia ? 0.94 * k : GRAF2.on ? 0.5 : 0.4)];
       [rot(0.2 * u * k, 1.12 * u * k), rot(-0.2 * u * k, 1.12 * u * k)].forEach(function (q) { if (q[1] < alto[1]) alto = q; });
@@ -8164,23 +8245,31 @@
     }
     function disegna(sc, p) {
       var w = A.w, h = A.h, d = A.d; if (!w) return;
+
       A.p = p;
-      var cam = camera(sc, p), u = A.u * 1.12;   // (🧍 6 nov 2026: gli omini un filo più grandi)
+      A.pv = !!A.ps && A.vert; A.kx = A.pv ? PROSP_KX : 1; A.zl = A.pv ? PROSP_ZL : 1; A.pj = false; A.portaBox = null;   // 📐 (la prospettiva)
+      if (cv.__pv !== A.pv) { cv.__pv = A.pv; cv.setAttribute("data-prosp", A.pv ? "1" : "0"); }   // (per le prove)
+      var cam = camera(sc, p), u = A.u * 1.12; CAM = cam; UU = u; A.cam = cam;   // (🧍 6 nov 2026: gli omini un filo più grandi)
       ctx.setTransform(d, 0, 0, d, 0, 0);
       ctx.save(); ctx.translate(w / 2, h / 2); ctx.scale(cam.z, cam.z); ctx.translate(-cam.cx, -cam.cy);
-      if (cam.z < 1.01) { ctx.fillStyle = "#2f7a37"; ctx.fillRect(0, 0, w, h); }
-      if (A.fondo) ctx.drawImage(A.fondo, 0, 0, w, h);
-      if (sc && sc.rete != null && p >= sc.rete) {   // la rete che si gonfia al gol
-        var xr = sc.verso < 0 ? 0.03 : 0.97, gr = xr + (sc.verso < 0 ? -1 : 1) * 3.2 * 0.94 / 105, yr = 5.5 * 0.88 / 68;
+      if (A.pv) {   // 📐 l'erba (più scura in lontananza), il campo in prospettiva e la porta lontana
+        ctx.save(); ctx.setTransform(d, 0, 0, d, 0, 0); var gE = ctx.createLinearGradient(0, 0, 0, h * 0.35); gE.addColorStop(0, "#22582a"); gE.addColorStop(1, "#2f7a37"); ctx.fillStyle = gE; ctx.fillRect(0, 0, w, h); ctx.restore();
+        A.pj = true; campo(); porta3D(false, "tutta", sc, p);
+      } else {
+        if (cam.z < 1.01) { ctx.fillStyle = "#2f7a37"; ctx.fillRect(0, 0, w, h); }
+        if (A.fondo) ctx.drawImage(A.fondo, 0, 0, w, h);
+      }
+      if (sc && sc.rete != null && p >= sc.rete && !A.pv) {   // la rete che si gonfia al gol
+        var xr = vrs(sc) < 0 ? 0.03 : 0.97, gr = xr + (vrs(sc) < 0 ? -1 : 1) * 3.2 * 0.94 / 105, yr = 5.5 * 0.88 / 68;
         poli([[xr, 0.5 - yr], [gr, 0.5 - yr], [gr, 0.5 + yr], [xr, 0.5 + yr]], true); ctx.fillStyle = "rgba(255,255,255," + (0.55 * Math.max(0, 1 - (p - sc.rete) * 3)).toFixed(2) + ")"; ctx.fill();
         var tt = p - sc.rete;
         if (tt < 0.3) {   // (il fondo della rete si spinge dove entra il pallone e ondeggia due volte)
-          var qb = lungo(sc.palla, sc.rete + 0.03, true) || [0, 0.5, 0.5, 0], yb = pieno(sc, qb[1], qb[2])[1], amp = 0.012 * Math.exp(-tt * 9) * Math.sin(tt * 55), dr = sc.verso < 0 ? -1 : 1;
+          var qb = lungo(sc.palla, sc.rete + 0.03, true) || [0, 0.5, 0.5, 0], yb = pieno(sc, qb[1], qb[2])[1], amp = 0.012 * Math.exp(-tt * 9) * Math.sin(tt * 55), dr = vrs(sc) < 0 ? -1 : 1;
           ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = Math.max(1, A.u * 0.07);
           for (var jr = 0; jr <= 12; jr++) { var yy = 0.5 - yr + 2 * yr * jr / 12; poli([[xr, yy], [gr + dr * amp * Math.exp(-Math.pow((yy - yb) / 0.035, 2)), yy]]); ctx.stroke(); }
         }
       }
-      if (!sc) { ctx.restore(); return; }
+      if (!sc) { if (A.pv) { porta3D(true, "tutta", null, p); A.pj = false; } ctx.restore(); return; }
       var pb = lungo(sc.palla, p, true) || [p, 0.5, 0.5, 0], gp = P(sc, pb[1], pb[2]), ff = pieno(sc, pb[1], pb[2]);
       // la direzione "+hx" sullo schermo: serve per far tuffare e cadere gli omini dalla parte giusta
       var e1 = P(sc, 0.6, 0.8), e0 = P(sc, 0.4, 0.8), ex = e1[0] - e0[0], ey = e1[1] - e0[1], el = Math.sqrt(ex * ex + ey * ey) || 1, tP = Math.atan2(ex / el, -ey / el), tM = Math.atan2(-ex / el, ey / el);
@@ -8191,7 +8280,7 @@
         var fe = sc.fest, T = sc.festT; if (!fe || !T || sc.rete == null || p < T[0] + 0.08 || (fe.sq !== "A" && fe.sq !== "D")) return null;
         if (!sc.abb) {   // (chi va: deciso una volta sola, dalle posizioni di partenza)
           var fin = fe.pts[fe.pts.length - 1], ff2 = pieno(sc, fin[1], fin[2]), l = [];   // (in metri del campo, non in pixel: uguale su tutti i telefoni)
-          (sc.folla || []).forEach(function (q, k) { if (q.sq !== fe.sq) return; var bx2 = sc.verso < 0 ? 1 - q.x : q.x; l.push([k, Math.pow((bx2 - ff2[0]) * 105, 2) + Math.pow((q.y - ff2[1]) * 68, 2)]); });
+          (sc.folla || []).forEach(function (q, k) { if (q.sq !== fe.sq) return; var bx2 = vrs(sc) < 0 ? 1 - q.x : q.x; l.push([k, Math.pow((bx2 - ff2[0]) * 105, 2) + Math.pow((q.y - ff2[1]) * 68, 2)]); });
           l.sort(function (a2, b2) { return (a2[1] - b2[1]) || (a2[0] - b2[0]); }); sc.abb = l.slice(0, 3).map(function (x) { return x[0]; });
         }
         var r = sc.abb.indexOf(j); if (r < 0) return null;
@@ -8202,7 +8291,7 @@
       }
       var fd = folla(sc, p), fv = Math.max(0, folla(sc, Math.min(1, p + 0.015)) - fd);   // (quanta strada fanno gli altri: tutti la stessa, seguono il pallone)
       (sc.folla || []).forEach(function (o, j) {   // gli altri: seguono un po' il pallone, a passi veri (fermi se il pallone è fermo)
-        var bx = sc.verso < 0 ? 1 - o.x : o.x, X = bx + (ff[0] - bx) * (sc.segui || 0.14), Y = o.y + (ff[1] - o.y) * 0.12;
+        var bx = vrs(sc) < 0 ? 1 - o.x : o.x, X = bx + (ff[0] - bx) * (sc.segui || 0.14), Y = o.y + (ff[1] - o.y) * 0.12;
         var s = base(X, Y), cr = Math.min(1, fv / (u * 0.25)), ph = (fd / (u * 2.4) + o.k) * Math.PI * 2, gk = o.sq === "pA" || o.sq === "pD";
         if (!o.dir || Math.abs(gp[0] - s[0]) > u * 0.8) o.dir = gp[0] >= s[0] ? 1 : -1;   // (si girano solo quando il pallone è passato davvero dall'altra parte)
         var ab = abbraccio(o, j, s), br = 0;
@@ -8222,62 +8311,75 @@
           chi: a.chi && a.chi.nome ? a.chi : null, numA: gkA ? gkA.num : a.chi && a.chi.vero ? a.chi.num : a.fig ? a.fig.num : null, ai: i });
       });
       figure.sort(function (a, b) { return a.y - b.y; });
-      var nomi = [];
+      var nomi = [], yG = A.pv ? base(0.5 + GL * 0.496, 0.5)[1] : 0, yN = A.pv ? base(0.5 + NET * 0.496, 0.5)[1] : 0, telaioFatto = false, palloFatto = false;
+      var yPal = gp[1];   // 📐 (in prospettiva: chi è più vicino si disegna dopo; il pallone sopra i calciatori, ma dietro i pali se è davanti alla porta)
       figure.forEach(function (f) {
+        if (A.pv && !telaioFatto && f.y >= yG) { if (yPal < yG - 0.5) pallone(); porta3D(true, "telaio", sc, p); telaioFatto = true; }
         // 🎨 (8 nov 2026, il proprietario: «la faccia è talmente piccola che non si capisce, la gente lo capisce dal colore») i vostri hanno la LORO
         // testa (pelle, capelli, barba veri); di chi sono lo dicono l'alone sotto i piedi e l'etichetta del nome, del colore di chi li ha comprati
-        if (f.chi) { if (f.chi.num != null) f.o.num = f.chi.num; alone(f.x, f.y, u, f.chi.pc || "#ffe066", f.o); }
+        if (f.chi) { if (f.chi.num != null) f.o.num = f.chi.num; if (A.pj) bb(f.x, f.y); alone(f.x, f.y, u, f.chi.pc || "#ffe066", f.o); if (A.pj) ctx.restore(); }
         else if (f.numA != null) f.o.num = f.numA;
         var uk = u * ((f.o.asp && f.o.asp.alt) || 1);   // 📏 (l'altezza vera: l'omino e il nome sulla sua testa; l'alone a terra resta com'è)
-        omino(f.x, f.y, uk, f.dir, f.kit, f.o);
+        if (A.pj) bb(f.x, f.y); omino(f.x, f.y, uk, f.dir, f.kit, f.o); if (A.pj) ctx.restore();
         f.alto = testaDi(f.x, f.y, uk, f.o, false).alto;   // (la cima della testa: lì va il nome, anche di chi non è di nessuno)
-        if (f.chi) nomi.push({ chi: f.chi, alto: f.alto });
+        if (f.chi) nomi.push({ chi: f.chi, alto: f.alto, fx: f.x, fy: f.y });
       });
+      if (A.pv) { if (!telaioFatto) { if (yPal < yG - 0.5) pallone(); porta3D(true, "telaio", sc, p); } if (yPal <= yN + 0.5) pallone(); porta3D(true, "rete", sc, p); }
+      pallone();
+      function pallone() {
+      if (palloFatto) return; palloFatto = true;
       if (sc.paf != null && p >= sc.paf && p < sc.paf + 0.06) {   // 🧤 il colpo sul pallone: un lampo che si allarga e svanisce
         var qp = lungo(sc.palla, sc.paf, true), sp2 = qp ? P(sc, qp[1], qp[2]) : null, kp = (p - sc.paf) / 0.06;
-        if (sp2) { ctx.save(); ctx.globalAlpha = 1 - kp; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = Math.max(1, u * 0.18 * (1 - kp)); ctx.beginPath(); ctx.arc(sp2[0], sp2[1] - (qp[3] || 0) * u * 1.3 - u * 0.2, u * (0.4 + 1.3 * kp), 0, Math.PI * 2); ctx.stroke();
-          for (var rg = 0; rg < 6; rg++) { var an = rg * Math.PI / 3 + 0.3, r1 = u * (0.7 + 1.2 * kp), r2 = r1 + u * 0.45; ctx.beginPath(); ctx.moveTo(sp2[0] + Math.cos(an) * r1, sp2[1] - (qp[3] || 0) * u * 1.3 - u * 0.2 + Math.sin(an) * r1); ctx.lineTo(sp2[0] + Math.cos(an) * r2, sp2[1] - (qp[3] || 0) * u * 1.3 - u * 0.2 + Math.sin(an) * r2); ctx.stroke(); }
-          ctx.restore(); }
+        if (sp2) { if (A.pj) bb(sp2[0], sp2[1]); ctx.save(); ctx.globalAlpha = 1 - kp; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = Math.max(1, u * 0.18 * (1 - kp)); ctx.beginPath(); ctx.arc(sp2[0], sp2[1] - (qp[3] || 0) * u * ZKU() - u * 0.2, u * (0.4 + 1.3 * kp), 0, Math.PI * 2); ctx.stroke();
+          for (var rg = 0; rg < 6; rg++) { var an = rg * Math.PI / 3 + 0.3, r1 = u * (0.7 + 1.2 * kp), r2 = r1 + u * 0.45; ctx.beginPath(); ctx.moveTo(sp2[0] + Math.cos(an) * r1, sp2[1] - (qp[3] || 0) * u * ZKU() - u * 0.2 + Math.sin(an) * r1); ctx.lineTo(sp2[0] + Math.cos(an) * r2, sp2[1] - (qp[3] || 0) * u * ZKU() - u * 0.2 + Math.sin(an) * r2); ctx.stroke(); }
+          ctx.restore(); if (A.pj) ctx.restore(); }
       }
       // il pallone: l'ombra a terra e lui in aria (più è alto, più si stacca); la scia quando va forte
-      var zpx = (pb[3] || 0) * u * 1.3, rs = Math.max(1.6, u * 0.3), rb = rs * (1 + (pb[3] || 0) / 14), k;
-      var pv = lungo(sc.palla, Math.max(0, p - 0.012), true) || pb, sv = P(sc, pv[1], pv[2]), vb = Math.sqrt(Math.pow(gp[0] - sv[0], 2) + Math.pow(gp[1] - zpx - sv[1] + (pv[3] || 0) * u * 1.3, 2));
+      var zpx = (pb[3] || 0) * u * ZKU(), rs = Math.max(1.6, u * 0.3), rb = rs * (1 + (pb[3] || 0) / 14), k;
+      var pv = lungo(sc.palla, Math.max(0, p - 0.012), true) || pb, sv = P(sc, pv[1], pv[2]), vb = Math.sqrt(Math.pow(gp[0] - sv[0], 2) + Math.pow(gp[1] - zpx - sv[1] + (pv[3] || 0) * u * ZKU(), 2));
       if (vb > u * 0.5) for (k = 7; k >= 1; k--) {   // (la scia: anche nei tiri)
         var qq = lungo(sc.palla, Math.max(0, p - k * 0.005), true) || pb, ss = P(sc, qq[1], qq[2]);
-        ctx.beginPath(); ctx.arc(ss[0], ss[1] - (qq[3] || 0) * u * 1.3 - rb * 0.6, rb * (1 - k * 0.08), 0, Math.PI * 2); ctx.fillStyle = "rgba(255,255,255," + (0.36 - k * 0.045).toFixed(2) + ")"; ctx.fill();
+        if (A.pj) bb(ss[0], ss[1]); ctx.beginPath(); ctx.arc(ss[0], ss[1] - (qq[3] || 0) * u * ZKU() - rb * 0.6, rb * (1 - k * 0.08), 0, Math.PI * 2); ctx.fillStyle = "rgba(255,255,255," + (0.36 - k * 0.045).toFixed(2) + ")"; ctx.fill(); if (A.pj) ctx.restore();
       }
+      if (A.pj) bb(gp[0], gp[1]);
       ctx.beginPath(); ctx.ellipse(gp[0], gp[1], rs * 1.05, rs * 0.45, 0, 0, Math.PI * 2); ctx.fillStyle = "rgba(0,0,0," + (0.34 / (1 + (pb[3] || 0) * 0.25)).toFixed(2) + ")"; ctx.fill();   // (l'ombra: più chiara se il pallone è alto)
       ctx.beginPath(); ctx.arc(gp[0], gp[1] - zpx - rb * 0.6, rb, 0, Math.PI * 2); ctx.fillStyle = sc.meteo === "neve" ? "#ff7a1a" : "#fff"; ctx.fill(); ctx.lineWidth = Math.max(0.8, rb * 0.25); ctx.strokeStyle = "#1b1b1b"; ctx.stroke();
-      ctx.beginPath(); ctx.arc(gp[0] - rb * 0.1, gp[1] - zpx - rb * 0.7, rb * 0.36, 0, Math.PI * 2); ctx.fillStyle = "#222"; ctx.fill();
+      ctx.beginPath(); ctx.arc(gp[0] - rb * 0.1, gp[1] - zpx - rb * 0.7, rb * 0.36, 0, Math.PI * 2); ctx.fillStyle = "#222"; ctx.fill(); if (A.pj) ctx.restore();
+      }
       if (sc.lineeVar) [[sc.lineeVar.d, "#4dabf7"], [sc.lineeVar.a, "#ff3b5c"]].forEach(function (l) {   // 📏 le linee del VAR: azzurra il difendente, rossa l'attaccante
-        if (l[0] == null) return; var l0 = P(sc, -0.03, l[0]), l1 = P(sc, 1.03, l[0]);
-        ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = Math.max(3, u * 0.26); ctx.beginPath(); ctx.moveTo(l0[0], l0[1]); ctx.lineTo(l1[0], l1[1]); ctx.stroke();
-        ctx.strokeStyle = l[1]; ctx.lineWidth = Math.max(1.5, u * 0.13); ctx.beginPath(); ctx.moveTo(l0[0], l0[1]); ctx.lineTo(l1[0], l1[1]); ctx.stroke();
+        if (l[0] == null) return; var l0 = P(sc, -0.03, l[0]), l1 = P(sc, 1.03, l[0]), kz = 1;
+        if (A.pj) { ctx.save(); ctx.setTransform(A.d, 0, 0, A.d, 0, 0); l0 = campoSchermo(l0[0], l0[1]); l1 = campoSchermo(l1[0], l1[1]); kz = CAM.z * l0[2]; }   // 📐 (la linea passa per la prospettiva: resta dritta, di traverso al campo)
+        ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = Math.max(3, u * 0.26 * kz); ctx.beginPath(); ctx.moveTo(l0[0], l0[1]); ctx.lineTo(l1[0], l1[1]); ctx.stroke();
+        ctx.strokeStyle = l[1]; ctx.lineWidth = Math.max(1.5, u * 0.13 * kz); ctx.beginPath(); ctx.moveTo(l0[0], l0[1]); ctx.lineTo(l1[0], l1[1]); ctx.stroke(); if (A.pj) ctx.restore();
       });
       if (sc.segnaVar) {   // 📺 il fermo immagine del VAR: chi ha segnato, cerchiato di rosso
         var qv = lungo(sc.segnaVar.pts, p), gv = P(sc, qv[1], qv[2]);
-        ctx.strokeStyle = "#ff3b5c"; ctx.lineWidth = Math.max(1.5, u * 0.16); ctx.beginPath(); ctx.ellipse(gv[0], gv[1], u * 1.0, u * 0.44, 0, 0, Math.PI * 2); ctx.stroke();
-        A.doveVar = [w / 2 + (gv[0] - cam.cx) * cam.z, h / 2 + (gv[1] + u * 0.6 - cam.cy) * cam.z];   // (sotto i piedi: sopra c'è il nome)
+        if (A.pj) bb(gv[0], gv[1]); ctx.strokeStyle = "#ff3b5c"; ctx.lineWidth = Math.max(1.5, u * 0.16); ctx.beginPath(); ctx.ellipse(gv[0], gv[1], u * 1.0, u * 0.44, 0, 0, Math.PI * 2); ctx.stroke(); if (A.pj) ctx.restore();
+        A.doveVar = vS([gv[0], gv[1] + u * 0.6], gv[0], gv[1]);   // (sotto i piedi: sopra c'è il nome)
       }
-      ctx.restore();
-      A.dove = [w / 2 + (gp[0] - cam.cx) * cam.z, h / 2 + (gp[1] - zpx - cam.cy) * cam.z];   // (dov'è il pallone sullo schermo: per le prove)
+      ctx.restore(); A.pj = false;
+      var zpB = (pb[3] || 0) * u * ZKU(); A.dove = vS([gp[0], gp[1] - zpB], gp[0], gp[1]);   // (dov'è il pallone sullo schermo: per le prove)
       sopraCampo(sc, p, w, h);
       // sopra a tutto, nei pixel dello schermo: i nomi dei vostri (con la punta sulla testa), le scritte, il replay
       var fs = Math.round(Math.max(9, Math.min(12, Math.min(w, h) * 0.032)));
       // 🏷️ (16 nov 2026 sera, il proprietario: tanti vostri in area) le etichette non si sovrappongono e non coprono porta e pallone: se toccano,
       // salgono (al massimo 3 volte) con un filo fino alla testa
       var piazzate = [], gA2 = P(sc, 0.38, GL - 0.02), gB2 = P(sc, 0.62, NET + 0.02), bq2 = lungo(sc.palla, p, true), bp2 = bq2 ? P(sc, bq2[1], bq2[2]) : null;
-      var scr = function (q) { return [w / 2 + (q[0] - cam.cx) * cam.z, h / 2 + (q[1] - cam.cy) * cam.z]; }, g1 = scr(gA2), g2 = scr(gB2), bS = bp2 ? scr(bp2) : null;
-      var porta = { x0: Math.min(g1[0], g2[0]), x1: Math.max(g1[0], g2[0]), y0: Math.min(g1[1], g2[1]), y1: Math.max(g1[1], g2[1]) };
+      var scr = function (q) { return vS(q, q[0], q[1]); }, g1 = scr(gA2), g2 = scr(gB2), bS = bp2 ? scr(bp2) : null;
+      var porta = A.pv && A.portaBox ? A.portaBox : { x0: Math.min(g1[0], g2[0]), x1: Math.max(g1[0], g2[0]), y0: Math.min(g1[1], g2[1]), y1: Math.max(g1[1], g2[1]) };
+      if (A.pv && bp2) bS = vS([bp2[0], bp2[1] - (bq2[3] || 0) * u * ZKU()], bp2[0], bp2[1]);   // (📐 il pallone in aria)
+      // 📐 (19 nov 2026, il proprietario: «con lo zoom si leggono anche in piccolo, adesso coprono parecchio») in prospettiva i nomi più piccoli,
+      // e se toccano un altro nome salgono anche più volte (col filo fino alla testa giusta)
+      var fsE = A.pv ? Math.max(8, Math.round(fs * 0.78)) : fs;
       var tocca = function (r, q) { return r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0; };
       nomi.slice().sort(function (a, b) { return b.alto[1] - a.alto[1]; }).forEach(function (n) {
-        var sx = w / 2 + (n.alto[0] - cam.cx) * cam.z, sy = h / 2 + (n.alto[1] - cam.cy) * cam.z; if (sx < -8 || sx > w + 8 || sy < 0 || sy > h + 40) return;
-        ctx.font = "900 " + fs + "px system-ui,sans-serif"; var lw = ctx.measureText(n.chi.nome).width + fs * 0.9, lh = fs * (n.chi.pr && NOME_CHI ? 2.55 : 1.45) + 5, yb = sy - 6, su = 0;
+        var vq = vS(n.alto, n.fx, n.fy), sx = vq[0], sy = vq[1]; if (sx < -8 || sx > w + 8 || sy < 0 || sy > h + 40) return;
+        ctx.font = "900 " + fsE + "px system-ui,sans-serif"; var lw = ctx.measureText(n.chi.nome).width + fsE * 0.9, lh = fsE * (n.chi.pr && NOME_CHI ? 2.55 : 1.45) + (A.pv ? 3 : 5), yb = sy - (A.pv ? 4 : 6), su = 0;
         var rect = function () { return { x0: sx - lw / 2 - 2, x1: sx + lw / 2 + 2, y0: yb - lh, y1: yb }; };
-        while (su < 3 && (piazzate.some(function (q) { return tocca(rect(), q); }) || tocca(rect(), porta) || (bS && tocca(rect(), { x0: bS[0] - 6, x1: bS[0] + 6, y0: bS[1] - 6, y1: bS[1] + 6 })))) { yb -= lh * 0.8; su++; }
+        while (su < (A.pv ? 8 : 3) && (piazzate.some(function (q) { return tocca(rect(), q); }) || tocca(rect(), porta) || (bS && tocca(rect(), { x0: bS[0] - 6, x1: bS[0] + 6, y0: bS[1] - 6, y1: bS[1] + 6 })))) { yb -= lh * 0.8; su++; }
         if (yb - lh < BARRA_GIU) yb = BARRA_GIU + lh;   // 📏 (18 nov 2026, il proprietario: «Handanovic» copriva la barra del minuto e i suoi eventi) sotto la barra
         if (su && yb < sy - 4) { ctx.save(); ctx.strokeStyle = n.chi.pc || "#ffe066"; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.8; ctx.beginPath(); ctx.moveTo(sx, yb); ctx.lineTo(sx, sy - 4); ctx.stroke(); ctx.restore(); }
-        piazzate.push(rect()); etichetta(n.chi.nome, sx, yb, n.chi.pc || "#ffe066", fs, n.chi.pr);
+        piazzate.push(rect()); etichetta(n.chi.nome, sx, yb, n.chi.pc || "#ffe066", fsE, n.chi.pr);
       });
       var np = nomeSottoPiedi(sc, p, function (k) { return !!nomeVero(sc, sc.attori[k]); });   // 🏷️ il nome di chi ha il pallone (se non è di nessuno)
       if (np && np.al > 0.02) {
@@ -8285,13 +8387,14 @@
         if (fN && tN) {
           // 🏷️ (15 nov 2026, il proprietario) SOPRA la testa, piccolo, bianco col filo scuro e senza riquadro (le etichette dei vostri hanno il loro
           // colore e la punta): non si confondono. Se sopra la testa cadrebbe sulla porta va sotto i piedi (mai sopra la porta)
-          var aN = fN.alto || [fN.x, fN.y - u * 3], sxN = w / 2 + (aN[0] - cam.cx) * cam.z, syN = h / 2 + (aN[1] - cam.cy) * cam.z, pyN = h / 2 + (fN.y - cam.cy) * cam.z, fsN = Math.max(8, Math.round(fs * 0.82));
+          var aN = fN.alto || [fN.x, fN.y - u * 3], vN = vS(aN, fN.x, fN.y), sxN = vN[0], syN = vN[1], pyN = vS([fN.x, fN.y], fN.x, fN.y)[1], fsN = A.pv ? Math.max(7.5, Math.round(fs * 0.7)) : Math.max(8, Math.round(fs * 0.82));
           if (sxN > -40 && sxN < w + 40 && syN > -10 && pyN < h + 20) {
             ctx.save(); ctx.font = "700 " + fsN + "px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.lineJoin = "round"; ctx.lineWidth = 2.5;
             ctx.strokeStyle = "rgba(0,0,0," + (0.5 * np.al).toFixed(3) + ")"; ctx.fillStyle = "rgba(255,255,255," + (0.85 * np.al).toFixed(3) + ")";
             var yN = syN - 3, lN = ctx.measureText(tN).width / 2 + 2;
             var gA = P(sc, 0.4, GL - 0.01), gB = P(sc, 0.6, NET + 0.01), gx0 = w / 2 + (Math.min(gA[0], gB[0]) - cam.cx) * cam.z, gx1 = w / 2 + (Math.max(gA[0], gB[0]) - cam.cx) * cam.z;
             var gy0 = h / 2 + (Math.min(gA[1], gB[1]) - cam.cy) * cam.z - fsN * 0.4, gy1 = h / 2 + (Math.max(gA[1], gB[1]) - cam.cy) * cam.z + fsN * 0.4;
+            if (A.pv && A.portaBox) { gx0 = A.portaBox.x0; gx1 = A.portaBox.x1; gy0 = A.portaBox.y0 - fsN * 0.4; gy1 = A.portaBox.y1 + fsN * 0.4; }   // 📐 (la porta in piedi)
             var suPorta = function (y) { return sxN + lN > gx0 && sxN - lN < gx1 && y > gy0 && y - fsN < gy1; };
             if (suPorta(yN) && !suPorta(pyN + fsN * 1.2)) yN = pyN + fsN * 1.2;
             if (yN - fsN < BARRA_GIU) yN = pyN + fsN * 1.2;   // 📏 (sotto la barra del minuto: il nome va sotto i piedi)
@@ -8304,7 +8407,7 @@
         ctx.fillStyle = "rgba(10,10,20,.86)"; ctx.fillRect(vx - lv / 2, vy - fs * 1.6, lv, fs * 1.8); scritta("📺 FUORIGIOCO?", vx, vy - fs * 0.32, fs, "#ff3b5c");   // (14 nov 2026: col punto di domanda, la decisione arriva dopo)
       }
       if (sc.replay) {
-        var rSu = (sc.verso || 1) < 0, yR = rSu ? h - 34 : 0;   // (la porta in alto: le scritte del replay vanno giù, così non coprono la porta)
+        var rSu = (vrs(sc) || 1) < 0, yR = rSu ? h - 34 : 0;   // (la porta in alto: le scritte del replay vanno giù, così non coprono la porta)
         var tR = sc.titRep || "🎬 IL GOL DELLA GIORNATA", fR = Math.round(Math.min(17, w * 0.045)); ctx.font = "900 " + fR + "px system-ui,sans-serif"; var lR = ctx.measureText(tR).width; if (lR > w - 16) fR = Math.floor(fR * (w - 16) / lR);   // (sempre intera)
         ctx.fillStyle = "rgba(6,12,30,.78)"; ctx.fillRect(0, yR, w, 34); scritta(tR, w / 2, yR + 23, fR, "#ffe066");
         ctx.fillStyle = "#e03131"; ctx.beginPath(); ctx.arc(14, rSu ? h - 48 : 48, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.font = "900 11px system-ui,sans-serif"; ctx.textAlign = "left"; ctx.fillStyle = "#fff"; ctx.fillText("REPLAY · RALLENTATORE", 23, rSu ? h - 44 : 52);
@@ -8315,7 +8418,7 @@
         var z = 1 + 0.6 * Math.max(0, 1 - (p - s.t) * 7);
         var fz = Math.round(Math.min(w * 0.11, h * 0.16) * z); ctx.font = "900 " + fz + "px system-ui,sans-serif"; var lz = ctx.measureText(s.testo).width;
         if (lz > w * 0.92) fz = Math.floor(fz * w * 0.92 / lz);   // (le scritte lunghe più piccole: stanno sempre dentro lo schermo)
-        scritta(s.testo, w / 2, h * (A.vert ? (sc.verso > 0 ? 0.5 : 0.56) : 0.6), fz, s.col);
+        scritta(s.testo, w / 2, h * (A.vert ? (vrs(sc) > 0 ? (A.pv ? 0.4 : 0.5) : 0.56) : 0.6), fz, s.col);
       });
     }
     // 🏟️ LO STADIO VIVO (6 nov 2026, foto 6) e 🌦️ IL METEO (foto 9) e 🎬 LA RETE DEL REPLAY (foto 8): tutto su questo canvas, solo DOPO il gol
@@ -8363,7 +8466,8 @@
       }
     }
     function suoniDi(sc) {   // quando suonano il pallone, il palo, la rete, la folla e il fischietto in questa azione
-      var l = [], pp = sc.palla, ts = sc.scritte.map(function (x) { return x.t; }).concat(sc.rete != null ? [sc.rete] : []), i;
+      var l = [], pp = sc.palla, ts = sc.scritte.map(function (x) { return x.t; }).concat(sc.rete != null ? [sc.rete] : []).concat(A.ps && A.vert ? colpiPorta(sc).map(function (c) { return c.t; }) : []), i;
+      if (A.ps && A.vert) colpiPorta(sc).forEach(function (c) { if (!sc.scritte.some(function (x) { return Math.abs(x.t - c.t) < 0.02 && /PALO|TRAVERSA/.test(x.testo); })) l.push({ t: c.t, f: function () { SUONI.palo(); } }); });   // 📐 (il legno si sente anche quando poi entra)
       function vel(a, b) { var dt = b[0] - a[0]; return dt < 1e-4 ? 0 : Math.sqrt(Math.pow(b[1] - a[1], 2) + Math.pow(b[2] - a[2], 2) + Math.pow((b[3] - a[3]) / 40, 2)) / dt; }
       for (i = 0; i + 1 < pp.length; i++) {
         var v1 = vel(pp[i], pp[i + 1]), v0 = i > 0 ? vel(pp[i - 1], pp[i]) : 0, t = pp[i][0];
@@ -8431,6 +8535,7 @@
     A.ferma = function () { if (A.raf) cancelAnimationFrame(A.raf); A.raf = 0; };
     A.fermo = function (sc) { A.ferma(); A.sc = sc; if (sc && !sc.folla) sc.folla = comparse(sc); disegna(sc, sc ? sc.parti || 0 : 0); };   // la scena ferma (prima dell'azione), o il campo intero vuoto
     A.foto = function (sc, p) { A.ferma(); A.sc = sc; if (!sc.folla) sc.folla = comparse(sc); disegna(sc, p); };
+    A.camera = function (sc, p) { return camera(sc, p); };   // (per le prove: la telecamera a un momento, senza disegnare)
     // 📺 (11 nov 2026, il proprietario col Cervello: «il gol in fuorigioco annullato dal VAR») il fermo immagine del VAR: il momento del passaggio a
     // chi ha segnato, lui cerchiato di rosso con la scritta. Solo dopo il gol (si sa già che il VAR sta controllando): non svela niente
     A.fotoVar = function (sc) {
