@@ -15,7 +15,20 @@ window.SG_NOVITA = [
     descrizione: [
       "👥 Nella saletta ogni squadra ha il suo riquadro, uno accanto all'altro: in alto il capo con la 👑, sotto gli altri. La tua squadra è accesa del suo colore e in fondo alle altre c'è «Entra nei Rossi»: un tocco e cambi squadra. Nella tua c'è «👑 Faccio io il capo».",
       "🎨 Il cerchio di ognuno prende il colore della sua squadra, nella saletta e in partita: niente più cerchi rossi nei Blu. Sul palco quelli della stessa squadra stanno vicini.",
-      "💬 In partita la striscia in basso dice «Chat della partita · Apri ▲» e mette in fila gli indizi di tutte le squadre, col numero e il loro colore, e quante parole hanno fatto trovare (✓). Toccandola si apre la chat intera, con gli indizi colorati della loro squadra."
+      "💬 In partita la striscia in basso dice «Chat della partita · Apri ▲» e mette in fila gli indizi di tutte le squadre, col numero e il loro colore, e quante parole hanno fatto trovare (✓). Toccandola si apre la chat intera, con gli indizi colorati della loro squadra.",
+      "🗨️ In tutte le salette i fumetti («Tocca il tuo avatar per le reazioni», «Ciao Marco! 👋») non coprono più i nomi degli altri."
+    ]
+  },
+  {
+    v: 391,
+    data: "20 novembre 2026",
+    titolo: "La Balla Colossale: i ritocchi 🤥",
+    descrizione: [
+      "✍️ La balla può essere lunga fino a 50 lettere, e sotto il campo vedi da subito, ben leggibile, quante ne restano: «50 lettere», «ancora 12 lettere»… fino a «niente più lettere».",
+      "📏 Niente più cose ingrandite per riempire lo schermo: classifica e podio stanno in alto con «Avanti» subito sotto, la scelta dell'argomento al centro, le balle lunghe si leggono intere senza coprire niente.",
+      "👀 Chi guarda col link vede tutta la rivelazione, senza la targhetta sopra; chi non vota legge le risposte grandi quanto c'è posto.",
+      "🔢 In tanti, nei riquadri in alto resta solo il simbolo (✅, ✍️) quando la parola non ci sta; nei premi a pari merito ci sono tutte le faccine.",
+      "🏁 A fine partita online, in tutti i giochi, i tasti stanno subito sotto la classifica (non più in fondo allo schermo)."
     ]
   },
   {

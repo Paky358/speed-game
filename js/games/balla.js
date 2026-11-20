@@ -21,7 +21,7 @@
   "use strict";
 
   var ST = window.SGStudio;
-  var MAX_BALLA = 45;   // caratteri al massimo per una balla
+  var MAX_BALLA = 50;   // caratteri al massimo per una balla (20 nov 2026, il proprietario: da 45 a 50)
   // i caratteri (mai corsivo né scritto a mano: si legge al volo): le risposte col carattere dell'app, chiaro e grosso;
   // il titolo della prima pagina con un carattere da giornale (Playfair Display, licenza SIL Open Font, dentro questo file)
   var TESTO = "'SG Testo','Plus Jakarta Sans',system-ui,sans-serif";
@@ -446,11 +446,12 @@
       else b.disabled = true;
       return b;
     });
-    S.sch.appendChild(el("div", { class: "bc-sch bc-catsch" }, [
+    var box = el("div", { class: "bc-sch bc-catsch" }, [
       el("div", { class: "bc-giro", text: "Round " + (st.giro + 1) + " di " + st.giri }),
       el("div", { class: "bc-chi-sch bc-chi-cat" }, [ i >= 0 ? fac(el, g, "pensa") : null, el("span", { text: io ? "🎯 Scegli tu l'argomento!" : "🎯 " + g.nome + " sceglie l'argomento" }) ]),
       el("div", { class: "bc-perche", text: perche }),
-      el("div", { class: "bc-cats" }, carte) ]));
+      el("div", { class: "bc-cats" }, carte) ]);
+    S.sch.appendChild(box); staSopraBarra(S, box, 1, "centro");
     return carte;
   }
   function segnaCategoria(carte, k) { (carte || []).forEach(function (b, n) { b.disabled = true; b.classList.toggle("scelta", n === k); b.classList.toggle("spenta", n !== k); }); }
@@ -524,13 +525,21 @@
     return righe;
   }
   function stringiTab(box, riserva) {
-    var fs = parseInt(box.style.getPropertyValue("--fs"), 10) || 18, cs = getComputedStyle(box);
-    var b = document.querySelector(".st-barra.on");
-    if (b && box.isConnected) { var sotto = box.getBoundingClientRect().bottom - b.getBoundingClientRect().top + 6; if (sotto > riserva) riserva = sotto; }
+    var fs = 18, cs = getComputedStyle(box);
+    box.classList.remove("soloFacce", "minimo", "corto"); box.style.setProperty("--fs", fs + "px");
+    // lo spazio vero: fin sopra la barra in basso (o sopra «👀 Guardi»), misurata dov'è davvero; prima si contava il posto tenuto
+    // da parte per la barra, più alto della barra stessa: a chi non vota restavano scritte piccole e spazio vuoto sotto (B)
+    var spazio = box.clientHeight - riserva;
+    if (box.isConnected) {
+      var b = document.querySelector(".st-barra.on"), gu = document.querySelector(".sg-guardo"), rb = box.getBoundingClientRect(), lim = null;
+      if (b) lim = b.getBoundingClientRect().top - 6;
+      if (gu && gu.offsetHeight) lim = Math.min(lim == null ? Infinity : lim, gu.getBoundingClientRect().top - 6);
+      if (lim != null && rb.height) spazio = lim - rb.top;
+    }
     var troppo = function () {   // quanto è alto il contenuto (dal primo all'ultimo pezzo visibile) rispetto allo spazio
       var k = [].filter.call(box.children, function (c) { return c.offsetHeight > 0; }); if (!k.length || !box.clientHeight) return false;
       var ul = k[k.length - 1], alto = ul.offsetTop + ul.offsetHeight - k[0].offsetTop + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-      return alto > box.clientHeight - riserva + 1;
+      return alto > spazio + 1;
     };
     while (troppo() && fs > 12) { fs--; box.style.setProperty("--fs", fs + "px"); }
     if (troppo()) box.classList.add("soloFacce");   // ancora troppo: chi ha finito si vede solo dall'avatar
@@ -698,7 +707,15 @@
         return el("textarea", { class: "bc-penna", maxlength: String(MAX_BALLA), rows: doppia ? "1" : "2", autocomplete: "off", autocapitalize: "none", spellcheck: "true",
           enterkeyhint: n === 1 ? "next" : "done", placeholder: o.vero ? "scrivi qui la verità…" : n === 1 ? "il primo pezzo…" : n === 2 ? "il secondo pezzo…" : "scrivi qui la tua balla…" });
       });
-      var inp = campi[0], conte = campi.map(function () { return el("div", { class: "bc-conta", text: "0/" + MAX_BALLA }); });
+      // ✍️ (20 nov 2026, il proprietario: «così tutti sanno dall'inizio che hanno 50 lettere») il conto delle lettere che restano,
+      // da subito: «50 lettere», poi «ancora 49 lettere»… e a zero «niente più lettere»; verso la fine si colora
+      var inp = campi[0], conte = campi.map(function () { return el("div", { class: "bc-conta", text: MAX_BALLA + " lettere" }); });
+      function scriviConto(c, n) {
+        var resta = Math.max(0, MAX_BALLA - c.value.length);
+        var tx = !c.value.length ? MAX_BALLA + " lettere" : resta > 1 ? "ancora " + resta + " lettere" : resta === 1 ? "ancora 1 lettera" : "niente più lettere";
+        if (conte[n].textContent !== tx) conte[n].textContent = tx;
+        conte[n].classList.toggle("on", resta <= 10); conte[n].classList.toggle("poche", resta <= 3);
+      }
       var avviso = el("div", { class: "bc-avviso" });
       var ok = el("button", { class: "btn btn-primario bc-ok", text: o.ms ? "✅ Fatto!" : "✅ Fatto, nascondi", disabled: "disabled" });
       var anteprima = ritaglio(el, st, null, false), buchi = anteprima.querySelectorAll(".bc-buco");
@@ -706,7 +723,7 @@
       function aggiorna() {
         campi.forEach(function (c, n) {
           var v = pulisci(c.value), b = buchi[n];
-          conte[n].textContent = c.value.length + "/" + MAX_BALLA;
+          scriviConto(c, n);
           if (b) { b.textContent = v; b.classList.toggle("pieno", !!v); }   // la balla si vede già dentro la notizia
         });
         ok.disabled = !valore();
@@ -879,17 +896,19 @@
       var gente = el("div", { class: "bc-gente" });
       var timbro = el("div", { class: "bc-timbro " + (sc.vera ? "vero" : "balla"), text: sc.vera ? "Vero!" : "Balla!" });
       // (con «Che balla!» il biglietto tiene un po' di spazio sotto per il tasto 😂: niente salti quando compare)
-      var biglietto = el("div", { class: "bc-big" + (sc.vera ? " vera" : "") + (!sc.vera && st.ride && st.rideFn ? " con-ride" : "") }, [ el("span", { class: "tx", text: vis(sc.testo) }), timbro ]);
+      var lt = vis(sc.testo).length;
+      var biglietto = el("div", { class: "bc-big" + (sc.vera ? " vera" : "") + (!sc.vera && st.ride && st.rideFn ? " con-ride" : "") + (lt > 70 ? " lunghissima" : lt > 34 ? " lunga" : "") }, [ el("span", { class: "tx", text: vis(sc.testo) }), timbro ]);
       var sotto = el("div", { class: "bc-sotto" });
       var nB = (st.ordineRiv || []).length, iB = (st.ordineRiv || []).indexOf(k);
       var etichetta = sc.vera ? "…e la risposta vera era" : nB > 1 && iB >= 0 ? "Balla " + (iB + 1) + " di " + nB + (iB === nB - 1 ? " · la più votata" : "") : "La balla";
       var notizia = ritaglio(el, st, null, false);
       var titGente = el("div", { class: "bc-giro piccolo", text: votanti.length ? (sc.vera ? (st.d.amici ? "L'hanno capita" : "L'hanno trovata") : (votanti.length === 1 ? "Ci è cascato" : "Ci sono cascati")) : "" });
-      S.sch.appendChild(el("div", { class: "bc-sch riv riv2" }, [
+      var palco = el("div", { class: "bc-sch riv riv2" }, [
         el("div", { class: "bc-riv-testa" }, [ notizia ]),
         el("div", { class: "bc-giro", text: etichetta + " · " + (votanti.length ? (votanti.length === 1 ? "1 voto" : votanti.length + " voti") : "nessun voto") }),
         el("div", { class: "bc-riv-centro" }, [ biglietto ]),
-        el("div", { class: "bc-riv-gente" }, [ titGente, gente ]), sotto ]));
+        el("div", { class: "bc-riv-gente" }, [ titGente, gente ]), sotto ]);
+      S.sch.appendChild(palco); staSopraBarra(S, palco, 1, null, true);
       // chi l'ha votata, uno alla volta
       for (var q = 0; q < votanti.length; q++) {
         await ST.dorme(q ? 380 : 650);
@@ -1092,7 +1111,7 @@
     if (o.finale) box.appendChild(el("div", { class: "bc-annuncio" }, [ el("b", { text: "🔥 Adesso la Balla Finale" }), el("small", { text: "due pezzi mancanti, punti tripli: può cambiare tutto!" }) ]));
     else if (o.doppio) box.appendChild(el("div", { class: "bc-annuncio" }, [ el("b", { text: "🔥 Ultimo round" }), el("small", { text: "punti doppi: può cambiare tutto!" }) ]));
     S.sch.appendChild(box);
-    staSopraBarra(S, box);
+    staSopraBarra(S, box, 1, "su");
     return box;
   }
   // 📏 (20 nov 2026) una schermata lunga (classifica in tanti, podio coi premi) si rimpicciolisce quel tanto che basta per stare
@@ -1100,9 +1119,20 @@
   // 💯 (20 nov 2026) coi punti ×100 in 4-5 «1.500» non stava nei riquadri in alto («1.5…»): il numero si stringe quanto basta
   function chipStretti(S) {
     if (!S || !S.puntiEl || S._chipObs || !window.MutationObserver) return;
+    var metro = null;
     var fai = function () {
       (S.L || []).forEach(function (X) {
         var p = X.pt; if (!p || !p.isConnected) return;
+        // C (20 nov 2026): le parole («✅ votato», «✍️ scrive») che non ci stanno diventano solo il simbolo (in 6: prima «vot…»)
+        if (X.disp && X.disp.testo) {
+          p.style.fontSize = ""; p.style.letterSpacing = "";
+          var tx = X.disp.t, cs = getComputedStyle(p);
+          if (!metro) { metro = document.createElement("span"); metro.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;pointer-events:none"; document.body.appendChild(metro); }
+          metro.style.font = cs.font; metro.style.letterSpacing = cs.letterSpacing; metro.textContent = tx;
+          var giusto = metro.getBoundingClientRect().width > p.getBoundingClientRect().width - 0.5 ? String(tx).split(" ")[0] : tx;
+          if (p.textContent !== giusto) p.textContent = giusto;
+          return;
+        }
         // (si misura il testo vero, coi decimali: «1.500» sforava di meno di un pixel e compariva «1.5…»)
         var rg = document.createRange(), largo = function () { rg.selectNodeContents(p); return rg.getBoundingClientRect().width > p.getBoundingClientRect().width - 0.5; };
         p.style.fontSize = ""; p.style.letterSpacing = ""; if (!largo()) return;
@@ -1113,23 +1143,64 @@
     S._chipObs = new MutationObserver(fai); S._chipObs.observe(S.puntiEl, { subtree: true, characterData: true, childList: true });
     window.addEventListener("resize", fai); fai();
   }
-  function staSopraBarra(S, box, max) {
-    max = max || 1.3;
+  // (20 nov 2026, il proprietario: «non rendiamo le cose giganti per riempire») mai più grande della misura normale (max 1):
+  // si stringe solo se serve per stare sopra la barra in basso (e sopra la targhetta «👀 Guardi» di chi guarda); lo spazio che
+  // avanza si usa per SPOSTARE il contenuto: dove = "giu" (attaccato alla barra: la classifica subito sopra «Avanti»),
+  // "centro" (nel mezzo tra i punteggi e la barra), niente = resta in alto. segui = si rifà quando cambia il contenuto.
+  // dove = "su" (20 nov 2026, il proprietario: «in alto, subito sotto i punteggi, Avanti subito sotto, lo spazio vuoto in fondo»):
+  // il contenuto resta in alto e la barra con «Avanti» sale fin subito sotto (torna giù appena la schermata cambia)
+  function staSopraBarra(S, box, max, dove, segui) {
+    max = max || 1;
+    var pad0 = null, barra = S.barraEl;
+    function libera() { if (barra && barra.style.top) { barra.style.top = ""; barra.style.bottom = ""; } }
+    function limite() {
+      var b = S.barraEl, v = S.vista || document.body;
+      var lim = b && b.classList.contains("on") ? v.getBoundingClientRect().top + b.offsetTop : window.innerHeight;
+      var gu = document.querySelector(".sg-guardo"); if (gu && gu.offsetHeight) lim = Math.min(lim, gu.getBoundingClientRect().top - 4);
+      return lim;
+    }
+    function misura() {
+      var su = Infinity, giu = -Infinity;
+      [].forEach.call(box.children, function (c) { var q = c.getBoundingClientRect(); if (!q.height) return; if (q.top < su) su = q.top; if (q.bottom > giu) giu = q.bottom; });
+      return su === Infinity ? null : { su: su, giu: giu };
+    }
     function fai() {
-      if (!box.isConnected) { window.removeEventListener("resize", fai); return; }
+      if (!box.isConnected) { window.removeEventListener("resize", fai); if (oss) oss.disconnect(); if (ossB) ossB.disconnect(); if (dove === "su") libera(); return; }
+      if (dove === "su") libera();
+      if (pad0 == null) { pad0 = parseFloat(getComputedStyle(box).paddingTop) || 0; if (dove) box.style.justifyContent = "flex-start"; }
+      if (dove) box.style.paddingTop = pad0 + "px";
       for (var giro = 0; giro < 2; giro++) {
-        var z = parseFloat(box.style.zoom) || 1, b = S.barraEl, v = S.vista || document.body;
-        var lim = b && b.classList.contains("on") ? v.getBoundingClientRect().top + b.offsetTop : window.innerHeight;
-        var gu = document.querySelector(".sg-guardo"); if (gu && gu.offsetHeight) lim = Math.min(lim, gu.getBoundingClientRect().top - 4);
-        var r = box.getBoundingClientRect(), giu = r.top;
-        [].forEach.call(box.children, function (c) { var q = c.getBoundingClientRect(); if (q.height && q.bottom > giu) giu = q.bottom; });
-        var alto = giu - r.top, spazio = lim - r.top - 10;
+        var z = parseFloat(box.style.zoom) || 1, lim = limite(), m = misura(), r = box.getBoundingClientRect();
+        if (!m) return;
+        var alto = m.giu - m.su, spazio = lim - m.su - 10;
         if (spazio < 80 || alto < 20) return;
         var largo = box.parentNode ? box.parentNode.getBoundingClientRect().width : window.innerWidth;
         var nz = Math.max(0.6, Math.min(max, z * spazio / alto, r.width > 0 ? z * largo / r.width : max));
-        if (Math.abs(nz - z) < 0.01) return;
+        if (Math.abs(nz - z) < 0.01) break;
         box.style.zoom = Math.abs(nz - 1) > 0.005 ? nz.toFixed(3) : "";
       }
+      if (!dove) return;
+      var m2 = misura(); if (!m2) return;
+      if (dove === "su") {
+        if (!barra || !barra.classList.contains("on") || !S.vista) return;
+        var vr = S.vista.getBoundingClientRect(), su = Math.round(m2.giu + 8 - vr.top);
+        if (su + barra.offsetHeight <= vr.height - 2 && su < barra.offsetTop - 4) { barra.style.top = su + "px"; barra.style.bottom = "auto"; }
+        return;
+      }
+      var libero = limite() - 12 - m2.giu, zz = parseFloat(box.style.zoom) || 1;
+      if (libero > 2) box.style.paddingTop = (pad0 + (dove === "centro" ? libero / 2 : libero) / zz) + "px";
+    }
+    var oss = null, inCoda = false;
+    if (segui && window.MutationObserver) {
+      oss = new MutationObserver(function () { if (inCoda) return; inCoda = true; requestAnimationFrame(function () { inCoda = false; fai(); }); });
+      oss.observe(box, { childList: true, subtree: true });
+    }
+    // la barra che compare o se ne va: si rifà subito (andandosene torna giù prima di scivolare via)
+    var ossB = null;
+    if (dove === "su" && barra && window.MutationObserver) {
+      ossB = new MutationObserver(function () { if (!barra.classList.contains("on") || !box.isConnected) libera(); else fai(); });
+      ossB.observe(barra, { attributes: true, attributeFilter: ["class"] });
+      if (box.parentNode) { var ossP = new MutationObserver(function () { if (!box.isConnected) { libera(); ossP.disconnect(); if (ossB) ossB.disconnect(); } }); ossP.observe(box.parentNode, { childList: true }); }
     }
     fai(); requestAnimationFrame(fai); setTimeout(fai, 350); setTimeout(fai, 1000); setTimeout(fai, 2200);
     window.addEventListener("resize", fai);
@@ -1154,7 +1225,7 @@
       var chi = vivi.filter(function (x) { return x.tot && x.tot[pr.k] === max; }).slice(0, 3);
       premi.push(el("div", { class: "bc-premio-riga" }, [ el("span", { class: "ic", text: pr.icona }),
         el("div", { class: "cosa" }, [ el("b", { text: pr.nome }), el("small", { text: chi.map(function (x) { return x.nome; }).join(", ") + " · " + pr.dice(max, chi.length > 1) }) ]),
-        el("div", { class: "chi" }, chi.slice(0, 2).map(function (x) { return fac(el, x, "esulta"); })) ]));
+        el("div", { class: "chi" }, chi.slice(0, 3).map(function (x) { return fac(el, x, "esulta"); })) ]));
     });
     if (!S.vivo()) return;
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
@@ -1172,7 +1243,7 @@
       el("div", { class: "bc-giro", text: "La Balla Colossale · fine" }),
       el("h2", { class: "bc-vince", text: primi.length === 1 ? "🏆 Vince " + primi[0].nome + "!" : primi.length > 1 ? "🏆 Pareggio!" : "🏆 Fine partita" }),
       gradini, premi.length ? el("div", { class: "bc-giro piccolo", text: "🏅 I premi della serata" }) : null, el("div", { class: "bc-premi-lista" }, premi) ]);
-    S.sch.appendChild(box); staSopraBarra(S, box);
+    S.sch.appendChild(box); staSopraBarra(S, box, 1, "su");
     ST.pubblico(S, "ovazione"); ST.coriandoli(); if (ST.FX && ST.FX.fanfara) ST.FX.fanfara();
     try { if (navigator.vibrate) navigator.vibrate([30, 40, 70]); } catch (e) {}
     if (online) await ST.dorme(6500); else await ST.aspettaTasto(S, "Avanti ▶");
@@ -2061,7 +2132,7 @@
       ".bc-fatti>span.ok{background:rgba(55,212,126,.25)}",
       ".bc-fatti .fac{width:30px;height:30px}",
       // il tabellone delle risposte
-      ".bc-sch.tab{justify-content:flex-start;justify-content:safe center;overflow:hidden;gap:10px;padding-top:46px}",
+      ".bc-sch.tab{justify-content:flex-start;justify-content:safe center;overflow:visible;gap:10px;padding-top:46px}",
       ".bc-sch.tab .bc-notizia{font-size:calc(var(--fs,18px) + 1px)}.bc-sch.tab .bc-ritaglio{padding:9px 12px 11px}",
       ".bc-sch.tab.soloFacce .bc-fatti{gap:4px}.bc-sch.tab.soloFacce .bc-fatti>span{padding:2px}.bc-sch.tab.soloFacce .bc-fatti>span>span:not(.fac){display:none}.bc-sch.tab.corto .bc-ritaglio{display:none}",
       ".bc-sch.tab.minimo{gap:6px}.bc-sch.tab.minimo .bc-tab{gap:4px}.bc-sch.tab.minimo .bc-riga{padding:3px 8px 3px 4px}.bc-sch.tab.minimo .bc-riga .n{width:22px;height:22px;font-size:12px}.bc-sch.tab.minimo .bc-chi-sch{font-size:18px}",
@@ -2109,7 +2180,7 @@
       ".bc-pezzo{display:flex;align-items:flex-start;gap:8px;margin-top:4px}.bc-pezzo .nn{flex:0 0 auto;width:26px;height:26px;margin-top:4px;border-radius:50%;background:#c92a2a;color:#fff;display:flex;align-items:center;justify-content:center;font:900 14px " + TESTO + "}.bc-pezzo .cc{flex:1;min-width:0}",
       ".bc-scrivi.doppia .bc-penna{font-size:20px}.bc-scrivi.doppia .bc-conta{margin-top:1px}",
       ".bc-penna:focus{border-bottom-color:#c92a2a}",
-      ".bc-conta{text-align:right;font-size:12px;font-weight:800;color:#8a8fb0;margin-top:3px}",
+      ".bc-conta{text-align:right;font-size:14px;font-weight:800;color:#62668a;margin-top:4px}.bc-conta.on{color:#8a5a00}.bc-conta.poche{color:#c4213f}",
       ".bc-avviso{display:none;background:var(--o-ambra);color:#2a1a00;border-radius:12px;padding:9px 12px;font-weight:800;font-size:15px;line-height:1.35}",
       ".bc-avviso.on{display:block;animation:bcScuoti .4s}",
       "@keyframes bcScuoti{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}",
@@ -2121,7 +2192,7 @@
       ".bc-carta.tastiera{flex:1;min-height:0;width:100%;max-width:520px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto auto;grid-template-areas:'t t' 'n n' 's k' 'a a';gap:6px;animation:none}",
       ".bc-carta.tastiera>.bc-tempo-riga{grid-area:t}.bc-carta.tastiera>.bc-ritaglio{grid-area:n;min-height:0;overflow:hidden;max-width:none;display:flex;flex-direction:column;justify-content:center;padding:8px 12px}.bc-carta.tastiera>.bc-scrivi{grid-area:s;min-width:0}.bc-carta.tastiera>.bc-ok{grid-area:k;width:auto;align-self:stretch;position:static;padding:0 14px;box-shadow:none}.bc-carta.tastiera>.bc-avviso{grid-area:a;padding:6px 10px;font-size:14px}",
       ".bc-carta.tastiera>.bc-chi,.bc-carta.tastiera .bc-testata,.bc-carta.tastiera .bc-griga,.bc-carta.tastiera .bc-occhio,.bc-carta.tastiera .bc-colonne,.bc-carta.tastiera .bc-et{display:none}",
-      ".bc-carta.tastiera .bc-notizia{line-height:1.14}.bc-carta.tastiera .bc-scrivi{padding:6px 10px 4px;border-radius:12px}.bc-carta.tastiera .bc-penna{font-size:18px;line-height:1.25}.bc-carta.tastiera .bc-conta{font-size:11px;margin-top:1px}.bc-carta.tastiera .bc-scrivi.doppia .bc-penna{font-size:17px}",
+      ".bc-carta.tastiera .bc-notizia{line-height:1.14}.bc-carta.tastiera .bc-scrivi{padding:6px 10px 4px;border-radius:12px}.bc-carta.tastiera .bc-penna{font-size:18px;line-height:1.25}.bc-carta.tastiera .bc-conta{font-size:13px;margin-top:1px}.bc-carta.tastiera .bc-scrivi.doppia .bc-penna{font-size:17px}",
       // le scelte da votare
       ".bc-scelte{display:flex;flex-direction:column;gap:8px}",
       ".bc-scelta .n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#1b1610;color:#f5efe0;font-family:" + TESTO + ";font-weight:800;font-size:13px}",
@@ -2239,9 +2310,9 @@
       ".bc-riv-testa .bc-testata,.bc-riv-testa .bc-griga{display:none}",
       ".bc-ritaglio.stampata .bc-buco.pieno{background:linear-gradient(transparent 50%,rgba(255,216,74,.9) 50%);color:#16130c;border:0;animation:bcStampa .6s ease-out both}",
       "@keyframes bcStampa{from{color:transparent;letter-spacing:.3em}to{color:#16130c;letter-spacing:normal}}",
-      ".bc-riv-centro{flex:0 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}.bc-sch.riv2>.bc-giro{margin-top:clamp(8px,calc(var(--alt,640px) * .03),28px);margin-bottom:28px}.bc-sch.riv2>.bc-sotto{margin-bottom:auto}",
+      ".bc-riv-centro{flex:0 0 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}.bc-sch.riv2>.bc-giro{margin-top:clamp(8px,calc(var(--alt,640px) * .03),28px);margin-bottom:28px}.bc-sch.riv2>.bc-sotto{margin-bottom:auto}",
       ".bc-sch.riv2 .bc-big{max-width:460px;padding:clamp(24px,calc(var(--alt,640px) * .05),46px) 18px}",
-      ".bc-sch.riv2 .bc-big .tx{font-size:clamp(26px,calc(var(--alt,640px) * .046),40px)}",
+      ".bc-sch.riv2 .bc-big .tx{font-size:clamp(26px,calc(var(--alt,640px) * .046),40px)}.bc-sch.riv2 .bc-big.lunga .tx{font-size:clamp(22px,calc(var(--alt,640px) * .036),32px)}.bc-sch.riv2 .bc-big.lunghissima .tx{font-size:clamp(18px,calc(var(--alt,640px) * .029),26px)}",
       ".bc-sch.riv2 .bc-big .bc-timbro{bottom:auto;top:-22px;right:6px;font-size:clamp(24px,calc(var(--alt,640px) * .04),34px)}",
       ".bc-big.vera{box-shadow:0 0 0 4px #37d47e,0 0 34px rgba(55,212,126,.5),0 14px 30px rgba(0,0,0,.45)}",
       ".bc-riv-gente{display:flex;flex-direction:column;align-items:center;gap:8px;min-height:calc(var(--alt,640px) * .1)}",

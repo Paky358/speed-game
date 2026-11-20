@@ -323,7 +323,7 @@
   var W = window, A = COPIONE.aiuti, no = A.no;
   function vm(C) { return W.vmDi(C) || {}; }
   function velo(w) { return w && w.document.querySelector(".bc-velo.on:not(.via)"); }
-  function scrivi(w, testo) { var v = velo(w), ok = v && v.querySelector(".bc-ok"); if (!ok || !v.querySelector(".bc-penna")) return false; [].forEach.call(v.querySelectorAll(".bc-penna"), function (t, n) { t.value = n ? "una pentola di rame" : testo; t.dispatchEvent(new w.Event("input", { bubbles: true })); }); ok.click(); return true; }
+  function scrivi(w, testo) { var v = velo(w), ok = v && v.querySelector(".bc-ok"); if (!ok || !v.querySelector(".bc-penna")) return false; [].forEach.call(v.querySelectorAll(".bc-penna"), function (t, n) { t.value = n ? "una pentola di rame comprata al mercato di Porta Portese".slice(0, 50) : testo; t.dispatchEvent(new w.Event("input", { bubbles: true })); }); ok.click(); return true; }
   function vota(w, pred) { var v = velo(w); if (!v) return false; var tutte = [].filter.call(v.querySelectorAll(".bc-scelta"), function (x) { return !x.disabled; }); var b = tutte.filter(function (x) { return pred(x.querySelector(".tx").textContent); })[0] || tutte[0]; if (!b) return false; b.click(); var ok = v.querySelector(".bc-ok"); if (!ok || ok.disabled) return false; ok.click(); return true; }
   async function foto(nome, aspetta) { await W.dorme(aspetta == null ? 900 : aspetta); W.__fotoOra = nome; await W.aspetta(function () { return W.__fotoFatta === nome; }, 20000); }
   var POSTI = [["Paky", 0, 412, 915], ["Luca", 422, 390, 844], ["Bea", 822, 360, 640], ["Gino", 1192, 360, 640], ["Sara", 3000, 360, 640]];
@@ -347,7 +347,9 @@
       await W.apriTel("Bea", { hash: "gioco=balla&stanza=" + C + "&guarda=1", x: 555, spiaBalla: true }); sistema();
       var fatte = {}, fino = Date.now() + 600000, passo = -1, n = 0, gino = false;
       var vera = function () { var v = vm(C), d = v.doppia ? (P.SG_BALLA_FINALE || []).filter(function (x) { return x.domanda === v.domanda; })[0] : (P.SG_BALLA || []).filter(function (x) { return x.domanda === v.domanda; })[0]; return d ? (v.doppia ? d.risposteVere.join(" / ") : d.rispostaVera) : ""; };
-      var BALLE = { Paky: "un pappagallo di Arezzo", Luca: "la nonna di Totò", Sara: "l'ex sindaco di Perugia", Gino: "un idraulico di Bari" };
+      // (balle lunghe 50 lettere, il massimo: devono stare intere ovunque)
+      var BALLE = { Paky: "un pappagallo di Arezzo che recitava Dante a memoria", Luca: "la nonna di Totò, che correva più veloce di un Ape", Sara: "l'ex sindaco di Perugia, già campione di briscola!", Gino: "un idraulico di Bari con tre lauree e un monopattino" };
+      BALLE = Object.keys(BALLE).reduce(function (o, k) { o[k] = BALLE[k].slice(0, 50); return o; }, {});
       var gioca = function () { return (vm(C).players || []).map(function (p) { return p.nome; }).filter(function (x) { return BALLE[x]; }); };
       while (Date.now() < fino) {
         var v = vm(C), f = v.fase, k = f + "|" + v.giro;
@@ -367,6 +369,12 @@
           if (!gino && v.giro === 0) {
             gino = true; await W.apriTel("Gino", { hash: "gioco=balla&stanza=" + C, x: 740, spiaBalla: true }); sistema();
             await W.dorme(4000); await foto("1b-gino-arriva-mentre-si-scrive", 600);
+          }
+          if (v.giro === 0) {   // il conto delle lettere che mancano: Paky a 44 lettere, Luca a 50
+            var tP = velo(P).querySelector(".bc-penna"), tL = velo(W.finestra("Luca")).querySelector(".bc-penna");
+            tP.value = BALLE.Paky.slice(0, 44); tP.dispatchEvent(new P.Event("input", { bubbles: true }));
+            tL.value = BALLE.Luca; tL.dispatchEvent(new (W.finestra("Luca").Event)("input", { bubbles: true }));
+            await foto("1b2-conto-delle-lettere", 600);
           }
           scrivi(P, BALLE.Paky); scrivi(W.finestra("Luca"), BALLE.Luca);
           await foto((v.giro + 1) + "c-scrittura-aspetta", 1200);
