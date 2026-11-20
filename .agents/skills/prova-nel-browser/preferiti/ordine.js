@@ -151,7 +151,7 @@
     var C = X.C, P = X.P, v = vm(C);
     if (v.ritmo !== "show" || v.tempoInd !== 0 || v.vsBot || v.nsq !== 2) no("regole di partenza strane: ritmo " + v.ritmo + ", tempo per indovinare " + v.tempoInd + ", vsBot " + v.vsBot + ", squadre " + v.nsq);
     if (v.gruppoN !== 6 || (v.gruppoDa || []).join(",") !== "Paky,Luca") no("parole vostre: " + v.gruppoN + " di " + (v.gruppoDa || []).join(",") + " invece di 6 di Paky,Luca");
-    if (!/6 parole vostre \(di Paky, Luca\), tutte/.test(T(P))) no("la saletta non dice «📝 6 parole vostre (di Paky, Luca), tutte» («" + T(P).slice(0, 300) + "»)");
+    if (!/6 parole vostre \(di Paky, Luca\), tutte/.test(T(P) + " " + ((P.document.querySelector(".sl-nota") || {}).textContent || ""))) no("la saletta non dice «📝 6 parole vostre (di Paky, Luca), tutte» («" + T(P).slice(0, 300) + "»)");
     if (JSON.stringify(v).indexOf("KEBAB") >= 0) no("le parole di Luca sono nella foto prima della partita");
     nota(N, "saletta: 📝 6 parole vostre (di Paky, Luca), tutte; regole di partenza giuste");
     await capoLuca(X); await comincia(X);
@@ -212,6 +212,7 @@
   COPIONE.aggiungi("po2", { nome: "Parola d'ordine: ⏳ clessidre (capo e squadra), tempo doppio al primo indizio, rossa negli ultimi 10 s, il turno passa", fai: async function () {
     var N = [], X = await stanzaOrdine(["Giulia", "Luca", "Sara"], { tempo: 90, tempoInd: 60 }), C = X.C;
     await capoLuca(X); await comincia(X);
+    await W.aspetta(function () { return vm(C).cless; }, 8000);   // (la clessidra parte finita la presentazione: senza lo studio dura di più)
     var v = vm(C);
     if (!v.cless || v.cless.p !== "indizio" || !v.cless.doppio || v.cless.ms < 170000) no("primo indizio: clessidra del capo " + JSON.stringify(v.cless) + " invece di 3 minuti (doppio)");
     mandaO(X, capoDi(X), { t: "indizio", parola: "ZIGOMAR", n: 2 });
@@ -413,6 +414,7 @@
   COPIONE.aggiungi("po7", { nome: "Parola d'ordine: i mazzi (Classico e 🌶️ Serata; un mazzo a tema vecchio torna al Classico)", fai: async function () {
     var N = [];
     var P = await W.apriTel("Paky", { x: 0, po: true, prima: function (w) { w.__imp = { mazzo: "fanta" }; } });   // (un mazzo a tema che non c'è più)
+    P.SGCuore.precarica("ordine"); await W.aspetta(function () { return P.SG_ORDINE_MAZZI && P.SG_ORDINE_PAROLE; }, 10000);   // (dal 4 nov i giochi si scaricano quando servono)
     var M = P.SG_ORDINE_MAZZI || {}, CL = P.SG_ORDINE_PAROLE || [];
     var l = M.serata || [];
     if (l.length < 120) no("il mazzo 🌶️ Serata ha solo " + l.length + " parole");
@@ -452,7 +454,7 @@
 
   COPIONE.aggiungi("po8", { nome: "Parola d'ordine: ⚡ ritmo veloce (suspense sempre breve)", fai: async function () {
     var N = [], X = await stanzaOrdine(["Giulia", "Luca", "Sara"], { ritmo: "veloce" }), C = X.C;
-    if (vm(C).ritmo !== "veloce" || !/⚡ Ritmo veloce/.test(T(X.P))) no("la saletta non è in ritmo veloce");
+    if (vm(C).ritmo !== "veloce" || !/⚡ Ritmo veloce/.test(T(X.P) + " " + ((X.P.document.querySelector(".sl-nota") || {}).textContent || ""))) no("la saletta non è in ritmo veloce");
     await capoLuca(X); await comincia(X);
     var team = vm(C).turno, key = chiaveCapo(X), sue = [];
     key.forEach(function (c, i) { if (c === team) sue.push(i); });

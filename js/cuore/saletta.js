@@ -677,6 +677,8 @@
       mossi.forEach(function (x) { var nd = x[0]; nd.style.transition = ""; nd.style.transform = ""; if (nd._targa) { nd._targa.style.transition = ""; nd._targa.style.transform = ""; } });
     }
     [].forEach.call(U.bolle.childNodes, function (b) { mettiBolla(U, b); });   // i fumetti seguono chi parla
+    // (20 nov 2026) e si rimettono quando i nomi sono arrivati al loro posto (scivolano in .55 s): così non ne coprono nessuno
+    clearTimeout(U.tBolle); U.tBolle = setTimeout(function () { [].forEach.call(U.bolle.childNodes, function (b) { mettiBolla(U, b); }); }, 620);
   }
   function togliNodo(n) { if (n && n.parentNode) n.parentNode.removeChild(n); }
   // il disegno dell'avatar: con la mano alzata quando è pronto (il braccio passa davanti ai capelli), l'anello sotto i piedi
@@ -1287,6 +1289,7 @@
     [].slice.call(U.bolle.childNodes).forEach(function (b) { if (b._f === f && b._tipo === tipo) U.bolle.removeChild(b); });
     nodo._f = f; nodo._tipo = tipo;
     U.bolle.appendChild(nodo); mettiBolla(U, nodo);
+    setTimeout(function () { if (nodo.parentNode) mettiBolla(U, nodo); }, 620);   // (di nuovo quando i nomi sono fermi: vedi mettiBolla)
     f.nodo.classList.add("parla");   // (intanto "si ricollega…" si nasconde)
     setTimeout(function () {
       if (nodo.parentNode) nodo.parentNode.removeChild(nodo);
@@ -1307,6 +1310,23 @@
       var ox = o._x, ob = o._b, oh = o.offsetHeight, om = o.offsetWidth / 2;
       if (Math.abs(ox - x) < om + mezzo + 4 && giu < ob + oh + 4 && ob < giu + alto + 4) giu = ob + oh + 6 + alto <= H - 4 ? ob + oh + 6 : Math.max(0, ob - alto - 6);
     });
+    // (20 nov 2026) un fumetto non copre i nomi degli altri: se sopra la testa ne coprirebbe uno, va subito sotto il nome di chi
+    // parla (senza punta). Es. «Tocca il tuo avatar per le reazioni» sopra chi sta nella seconda fila copriva i nomi della prima
+    b.classList.remove("sotto");
+    var sr = U.stanza.getBoundingClientRect();
+    function copreNomi(g) {
+      var L = sr.left + x - mezzo, R = sr.left + x + mezzo, B = sr.bottom - g, T = B - alto;
+      return Object.keys(U.figure).some(function (k) {
+        var o = U.figure[k]; if (o === b._f || !o.targa || !o.targa.isConnected) return false;
+        var r = o.targa.getBoundingClientRect(); return r.width > 0 && r.left < R && r.right > L && r.top < B && r.bottom > T;
+      });
+    }
+    if (mezzo && b._f.targa && b._f.targa.isConnected && copreNomi(giu)) {
+      var tr = b._f.targa.getBoundingClientRect(), g2 = sr.bottom - tr.bottom - 4 - alto, g3 = sr.bottom - tr.top + 3;
+      if (g2 >= 0 && !copreNomi(g2)) { giu = g2; b.classList.add("sotto"); }
+      // (sotto non c'è posto, es. sul telefono piccolo: allora sopra il suo nome, sul suo piedistallo)
+      else if (g3 + alto <= H && !copreNomi(g3)) { giu = g3; b.classList.add("sotto"); }
+    }
     b._x = x; b._b = giu;
     b.style.left = x.toFixed(1) + "px";
     b.style.bottom = giu.toFixed(1) + "px";

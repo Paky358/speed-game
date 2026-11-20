@@ -141,6 +141,7 @@
   ];
   COPIONE.aggiungi("o2i1", { nome: "Parola d'ordine, l'indizio: il controllo del gioco con 312 esempi (non vale / è un'altra parola? / vale)", fai: async function () {
     var w = await W.apriTel("Paky", { x: 0 });
+    if (w.SGCuore && w.SGCuore.precarica) w.SGCuore.precarica("ordine");   // (dal 4 nov i giochi si scaricano quando servono)
     if (!await W.aspetta(function () { return w.__ORDINE && w.__ORDINE.controllaIndizio; }, 8000)) no("il gioco non ha il controllo nuovo (__ORDINE.controllaIndizio)");
     var O = w.__ORDINE, sbagli = [], conta = { b: 0, d: 0, ok: 0 };
     CASI.forEach(function (x) {

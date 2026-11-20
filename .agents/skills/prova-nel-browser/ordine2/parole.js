@@ -126,6 +126,7 @@
   COPIONE.aggiungi("o2p1", { nome: "Parola d'ordine, le parole: Classico e 🌶️ Serata, regole, sorelle, 2.000 tabelloni", fai: async function () {
     var N = [];
     var w = await W.apriTel("Paky", { x: 0 });
+    if (w.SGCuore && w.SGCuore.precarica) w.SGCuore.precarica("ordine");   // (dal 4 nov i giochi si scaricano quando servono)
     if (!await W.aspetta(function () { return w.__ORDINE && w.SG_ORDINE_PAROLE; }, 8000)) no("l'app non ha caricato le parole");
     var C = w.SG_ORDINE_PAROLE, M = w.SG_ORDINE_MAZZI || {}, S = w.SG_ORDINE_SORELLE, O = w.__ORDINE;
     if (!Array.isArray(C) || C.length < 1500) no("il Classico ha " + (C && C.length) + " parole");

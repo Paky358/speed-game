@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 392,
+    data: "20 novembre 2026",
+    titolo: "Parola d'ordine: squadre e chat più chiare 🔤",
+    descrizione: [
+      "👥 Nella saletta ogni squadra ha il suo riquadro, uno accanto all'altro: in alto il capo con la 👑, sotto gli altri. La tua squadra è accesa del suo colore e in fondo alle altre c'è «Entra nei Rossi»: un tocco e cambi squadra. Nella tua c'è «👑 Faccio io il capo».",
+      "🎨 Il cerchio di ognuno prende il colore della sua squadra, nella saletta e in partita: niente più cerchi rossi nei Blu. Sul palco quelli della stessa squadra stanno vicini.",
+      "💬 In partita la striscia in basso dice «Chat della partita · Apri ▲» e mette in fila gli indizi di tutte le squadre, col numero e il loro colore, e quante parole hanno fatto trovare (✓). Toccandola si apre la chat intera, con gli indizi colorati della loro squadra."
+    ]
+  },
+  {
     v: 390,
     data: "20 novembre 2026",
     titolo: "La Balla Colossale rifatta 🤥",
