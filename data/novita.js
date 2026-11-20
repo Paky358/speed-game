@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 389,
+    data: "20 novembre 2026",
+    titolo: "La Balla Colossale rifatta 🤥",
+    descrizione: [
+      "🎭 La rivelazione è uno spettacolo: prima le balle a cui non ha creduto nessuno, poi le altre una alla volta al centro, dalla meno votata alla più votata. Per ognuna escono le facce di chi ci è cascato, il timbro BALLA! e chi l'ha scritta, coi punti che volano sul suo punteggio.",
+      "✅ La verità arriva sempre per ultima, col timbro VERO!, e la parola giusta si stampa dentro il giornale.",
+      "🏆 Dopo ogni round la classifica vera: posizioni, frecce di chi sale e chi scende, quanto ha preso ognuno e la frase del momento («Giulia passa in testa!»). Prima dell'ultimo round l'annuncio della Balla Finale a punti tripli.",
+      "🥇 Alla fine il podio coi primi tre e i premi della serata (Re delle balle, Detective, Credulone, Balla d'oro) tutti in una schermata.",
+      "💯 Punti da quiz televisivo: la verità vale 200, ogni amico ingannato 100 (nella Balla Finale 600 e 300). Chi vince è lo stesso di prima: cambia solo come si leggono.",
+      "🗳️ Al voto il foglio è pieno (dietro non si legge più il giornale), la notizia sta sempre in alto e le risposte sono più grandi; la tua è spenta.",
+      "📱 Sul telefono piccolo con la tastiera aperta «Fatto!» non copre più la balla, e chi ricarica la pagina dopo aver scritto rilegge la sua balla."
+    ]
+  },
+  {
     v: 388,
     data: "19 novembre 2026",
     titolo: "La Ruota della Fortuna rifatta 🎡",

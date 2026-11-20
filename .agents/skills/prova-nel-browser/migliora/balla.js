@@ -252,7 +252,7 @@
     if (!tot || tot.risate !== 2 || tot.ori !== 1) no("i numeri della partita di " + nX + " (risate 2, Balle d'oro 1): " + JSON.stringify(tot));
     // (dopo la «fine» il telefono fa vedere ancora la rivelazione dell'ultimo round: i premi arrivano dopo; li guarda chi ha ricaricato)
     var vistoPremi = false;
-    if (!await W.aspetta(function () { var s = T(W.finestra(chiRic)); if (/premi della serata/.test(s)) vistoPremi = true; return vistoPremi && /😂\s*Balla d'oro/.test(s); }, 60000)) no("tra i premi della serata non c'è «Balla d'oro» (premi visti: " + vistoPremi + ", «" + T(W.finestra(chiRic)).slice(0, 100) + "»)");
+    if (!await W.aspetta(function () { var s = T(W.finestra(chiRic)); if (/premi della serata/i.test(s)) vistoPremi = true; return vistoPremi && /😂\s*Balla d'oro/.test(s); }, 60000)) no("tra i premi della serata non c'è «Balla d'oro» (premi visti: " + vistoPremi + ", «" + T(W.finestra(chiRic)).slice(0, 100) + "»)");
     var e = errori(); if (e) no("errori: " + e);
     return "ok · " + note.join(" · ");
   } });
