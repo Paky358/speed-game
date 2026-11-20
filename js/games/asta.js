@@ -6431,6 +6431,7 @@
       var prs = op.come === "pressing" && /^(amm|esp)$/.test(tipo), durS = prs ? 4.2 : ({ rig: 4, frig: 2, amm: 2.9, esp: 2.9, rec: 2.9, inv: 1.7 })[tipo] || 4.2;   // (🏃 il pressing: come le azioni)   // (quanto dura l'azione a velocità normale, in secondi)
       var canoni = null;   // (la stessa azione costruita col gol e con la parata, con lo stesso seme: chi decide su queste fa la stessa cosa in ogni esito)
       if ((tipo === "gol" || tipo === "occ" || tipo === "ann" || prs) && !op.canone) { var opC = {}; for (var kc in op) opC[kc] = op[kc]; opC.canone = true; var vC = prs ? "pressing" : v, etC = prs ? { tira: et.fallo } : et; canoni = [scena("gol", vC, "gol", null, etC, opC), scena("occ", vC, "parata", null, etC, opC)]; }   // (🏃 falli e furti in pressing: le stesse azioni)
+      if (canoni) sc.tVicino = Math.min.apply(null, canoni.map(function (c) { return c.tiroDa != null ? c.tiroDa : c.calcio != null ? c.calcio : c.dunque || 0.6; }));   // 🎥 (20 nov 2026) quando la telecamera si avvicina: il momento decisivo più presto tra l'azione col gol e quella con la parata, uguale in OGNI esito (prima nel contropiede la parata in uscita, senza tiro, restava larga: spoiler)
       if (sc.dPalo && !FG_LINEA[v] && canoni) arretraPalo(sc, durS, canoni);   // 🦵 il difensore sul palo   // 🦵 (prima dei guardalinee: anche lui è in linea)
       sc.attori.forEach(function (a) { if (a.sq === "arb") arbitroCalmo(a, durS); });   // 👨‍⚖️ (gli arbitri disegnati apposta: mai più veloci di chi corre)
       if (!sc.attori.some(function (a) { return a.sq === "arb"; })) sc.attori.push(arbitroVero(canoni ? canoni[0] : sc, lin, durS));   // (deciso sull'azione col gol: uguale in ogni esito, anche dopo il tiro)   // 👨‍⚖️ (15 nov 2026: mancava in tante azioni)
@@ -8106,13 +8107,27 @@
       var b0 = sc.palla[0], t = null;
       for (var i = 1; i < sc.palla.length; i++) { var b = sc.palla[i]; if (Math.abs(b[1] - b0[1]) > 1e-4 || Math.abs(b[2] - b0[2]) > 1e-4 || Math.abs((b[3] || 0) - (b0[3] || 0)) > 1e-4) break; t = b[0]; }
       if (t == null || t < 0.05 || b0[2] < 0.45) return null;
-      var g = P(sc, 0.5, 0.87), s0 = P(sc, b0[1], b0[2]), wg = b0[2] > 0.88 ? 0.78 : 0.55, wx = b0[2] > 0.88 ? 0.95 : 0.55;
-      return { t: t, cx: g[0] * wx + s0[0] * (1 - wx), cy: g[1] * wg + s0[1] * (1 - wg) };
+      var g = P(sc, 0.5, 0.87), s0 = P(sc, b0[1], b0[2]), ang = b0[2] > 0.88, wg = ang ? 0.78 : 0.55, wx = ang ? 0.95 : 0.55, t2 = t;
+      if (ang) for (var j = 1; j < sc.palla.length; j++) if (sc.palla[j][0] > t && Math.abs(sc.palla[j][1] - 0.5) < 0.3) { t2 = sc.palla[j][0]; break; }   // (🎥 l'angolo: ferma sull'area finché il pallone ci arriva, poi lo segue)
+      return { t: t2, cx: g[0] * wx + s0[0] * (1 - wx), cy: g[1] * wg + s0[1] * (1 - wg), batte: t };
+    }
+    // 🎥 LARGA E VICINA (19 nov 2026 sera, il proprietario: dopo la 385 «c'è troppa poca tensione», prima si leggevano i nomi da lontano: «c'è il
+    // mio in mezzo!»): come in TV. LARGA (PROSP_LARGO della vicina: circa −38% rispetto alla 384) mentre l'azione si costruisce, nei piazzati e
+    // col campo fermo, così si leggono tutti i nomi dei vostri; VICINA (lo zoom della 385, −20%) solo dal tiro: l'avvicinamento morbido parte
+    // nell'istante del tiro (sc.tVicino: il momento decisivo più presto tra l'azione col gol e quella con la parata, costruite col seme della scena:
+    // uguale per gol, parata, palo, traversa, fuori e alto, anche dove un esito non ha il tiro, come la parata in uscita) e dura PROSP_AVV
+    // dell'azione (circa mezzo secondo); poi resta vicina per l'esito e la festa, e il replay è vicino. Le azioni senza tiro restano larghe
+    // (dopo un gol, vicina dal gol: si sa già com'è finita). Uguale verso l'alto e verso il basso
+    var PROSP_LARGO = 0.775, PROSP_AVV = 0.07;
+    function vicino(sc, p) {
+      if (sc.replay) return 1;
+      var t = sc.tVicino != null ? sc.tVicino : sc.tiroDa != null ? sc.tiroDa : sc.calcio != null ? sc.calcio : sc.rete;   // (tVicino: uguale per ogni esito della scena)
+      return t == null ? PROSP_LARGO : PROSP_LARGO + (1 - PROSP_LARGO) * liscio(Math.max(0, Math.min(1, (p - t) / PROSP_AVV)));
     }
     // ---- la telecamera: segue il pallone (un po' di media, così non trema) tenendo d'occhio la porta; nelle rarità si avvicina
     function camera(sc, p) {
       if (!sc) return A.pv ? { cx: A.w / 2, cy: A.h * 0.644, z: 1.45 } : { cx: A.w / 2, cy: A.h / 2, z: 1 };   // (📐 il campo intero: tutto il campo grande, dalla fascia dello stadio in alto alla porta in basso staccata dal bordo)
-      var z = (A.vert ? 1.6 : 1.35) * (A.pv ? PROSP_ZM * (sc.verso < 0 ? PROSP_SU : 1) : 1) - (sc && sc.bandiera != null && p > sc.bandiera ? 0.3 * liscio((p - sc.bandiera) / 0.12) : 0) + (sc.zoomFine || 0) * liscio((p - (sc.tz || 0.55)) / Math.max(0.05, 1 - (sc.tz || 0.55)) * 1.6) + (sc.replay ? 0.25 : 0);
+      var z = (A.vert ? 1.6 : 1.35) * (A.pv ? PROSP_ZM * (sc.verso < 0 ? PROSP_SU : 1) * vicino(sc, p) : 1) - (sc && sc.bandiera != null && p > sc.bandiera ? 0.3 * liscio((p - sc.bandiera) / 0.12) : 0) + (sc.zoomFine || 0) * liscio((p - (sc.tz || 0.55)) / Math.max(0.05, 1 - (sc.tz || 0.55)) * 1.6) + (sc.replay ? 0.25 : 0);
       var bx = 0, by = 0, k, q, s;
       for (k = 0; k < 5; k++) { q = lungo(sc.palla, Math.max(0, p - k * 0.025), true) || [0, 0.5, 0.5, 0]; s = P(sc, q[1], q[2]); bx += s[0]; by += s[1]; }
       var g = P(sc, 0.5, 0.88), cx = bx / 5 * 0.72 + g[0] * 0.28, cy = by / 5 * 0.72 + g[1] * 0.28, hw = A.w / (2 * z), hh = A.h / (2 * z);
@@ -8519,7 +8534,7 @@
         }
       }
       var pzE = A.pv ? piazzato(sc) : null;   // 🚩 (prima che si batta: se chi batte è fuori dallo schermo, al bordo un'etichetta che dice da che parte, col nome se è di qualcuno)
-      if (pzE && p < pzE.t) {
+      if (pzE && p < pzE.batte) {
         var b0E = sc.palla[0], gE2 = P(sc, b0E[1], b0E[2]), qE = vS(gE2, gE2[0], gE2[1]);
         if (qE[0] < 4 || qE[0] > w - 4) {
           var chiE = null, dE = 9; sc.attori.forEach(function (a) { var q0 = a.pts[0], dd = Math.abs(q0[1] - b0E[1]) + Math.abs(q0[2] - b0E[2]); if (dd < dE) { dE = dd; chiE = a; } });
