@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 391,
+    data: "20 novembre 2026",
+    titolo: "La Balla Colossale: i ritocchi 🤥",
+    descrizione: [
+      "✍️ La balla può essere lunga fino a 50 lettere, e sotto il campo vedi da subito quante ne restano: «50 lettere», «ancora 12 lettere»… fino a «niente più lettere».",
+      "📏 Niente più cose ingrandite per riempire lo schermo: la classifica sta subito sopra «Avanti», il podio e la scelta dell'argomento al centro, le balle lunghe si leggono intere senza coprire niente.",
+      "👀 Chi guarda col link vede tutta la rivelazione, senza la targhetta sopra; chi non vota legge le risposte grandi quanto c'è posto.",
+      "🔢 In tanti, nei riquadri in alto resta solo il simbolo (✅, ✍️) quando la parola non ci sta; nei premi a pari merito ci sono tutte le faccine.",
+      "🏁 A fine partita online, in tutti i giochi, i tasti stanno subito sotto la classifica (non più in fondo allo schermo)."
+    ]
+  },
+  {
     v: 390,
     data: "20 novembre 2026",
     titolo: "La Balla Colossale rifatta 🤥",

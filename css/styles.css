@@ -4439,6 +4439,9 @@ html.tastiera .gt-cerca-riga{ margin-top:0; }
 /* il gettone ha già il suo anello colorato: nei quadretti della Mini Asta niente secondo anello né fondo */
 .gettoni .st-gio-faccia{ box-shadow:none !important; background:none !important; }
 /* fine partita in tanti (ripasso B16, 12 nov 2026): i tasti attaccati al fondo, la classifica scorre sopra */
+/* (20 nov 2026, il proprietario: «non ingrandiamo per riempire») sul telefono alto i tasti di fine stanno subito sotto la classifica,
+   non in fondo allo schermo con mezzo schermo vuoto in mezzo; con la classifica lunga restano attaccati al fondo come prima */
+.schermata.fine-piede-giu > .contenuto{ flex:0 1 auto; }
 .schermata.fine-piede-giu > .piede{ position:sticky; bottom:0; z-index:3; padding:8px 0 calc(6px + env(safe-area-inset-bottom)); background:var(--o-fondo, #0d1020); box-shadow:0 -12px 14px -8px var(--o-fondo, #0d1020); }
 
 /* =========================================================
