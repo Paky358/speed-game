@@ -282,7 +282,7 @@
       if (!domande.length) return niente(t);
       assicuraStile();
       var st = { t: t, domande: domande, giri: domande.length, giro: 0, g: g, ride: imp.ride !== false };
-      st.S = ST.crea(t, st.g.map(function (g) { return { nome: g.nome }; }), { io: -1, esci: t.esci, titolo: "La Balla Colossale", logo: ["LA BALLA", "COLOSSALE"] });
+      st.S = ST.crea(t, st.g.map(function (g) { return { nome: g.nome }; }), { io: -1, esci: t.esci, titolo: "La Balla Colossale", logo: ["LA BALLA", "COLOSSALE"] }); chipStretti(st.S);
       ST.apertura(st.S).then(function () { round(st); });
     }
   });
@@ -520,10 +520,13 @@
     // (si tiene già il posto per il tasto in basso, che compare quasi sempre col tabellone)
     stringiTab(box, S.vista.classList.contains("con-barra") ? 0 : 94);
     if (window.ResizeObserver) new ResizeObserver(function () { if (box.isConnected) stringiTab(box, 0); }).observe(box);
+    [350, 1000, 2200].forEach(function (ms) { setTimeout(function () { if (box.isConnected) stringiTab(box, 0); }, ms); });
     return righe;
   }
   function stringiTab(box, riserva) {
     var fs = parseInt(box.style.getPropertyValue("--fs"), 10) || 18, cs = getComputedStyle(box);
+    var b = document.querySelector(".st-barra.on");
+    if (b && box.isConnected) { var sotto = box.getBoundingClientRect().bottom - b.getBoundingClientRect().top + 6; if (sotto > riserva) riserva = sotto; }
     var troppo = function () {   // quanto è alto il contenuto (dal primo all'ultimo pezzo visibile) rispetto allo spazio
       var k = [].filter.call(box.children, function (c) { return c.offsetHeight > 0; }); if (!k.length || !box.clientHeight) return false;
       var ul = k[k.length - 1], alto = ul.offsetTop + ul.offsetHeight - k[0].offsetTop + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
@@ -670,7 +673,7 @@
         if (troppo()) v.carta.classList.remove("larga"); else return;
       }
       stringi(); if (!troppo()) return;
-      v.carta.classList.add("piccola"); if (!troppo()) return;
+      v.carta.classList.add("piccola"); stringi(); if (!troppo()) return;
       if (tante) { v.carta.classList.add("due"); stringi(); if (!troppo()) return; }
       if (window.SGStudio && SGStudio.piatto) {   // (senza studio: notizia piccola, scritte fino a 11 px, mai la notizia nascosta)
         v.carta.classList.add("mini"); fs = 12; v.carta.style.setProperty("--fs", fs + "px");
@@ -801,13 +804,23 @@
         bottoni.push(b); lista.appendChild(b);
       });
       bottoni.forEach(function (b, k) { segnaMia(b, st.scelte[k]); });
-      S._segnaMia = function () { bottoni.forEach(function (b, k) { segnaMia(b, st.scelte[k]); }); };
-      function chiudi(k) { if (chiuso) return; chiuso = true; clearTimeout(toFine); S._segnaMia = null; v0.chiudi(function () { fine(k); }); }
+      S._segnaMia = function () { var n = bottoni.filter(function (b) { return b._mia; }).length; bottoni.forEach(function (b, k) { segnaMia(b, st.scelte[k]); }); if (bottoni.filter(function (b) { return b._mia; }).length !== n) rifai(); };
+      var lungo = st.scelte.reduce(function (a, sc) { return sc.testo.length > a.length ? sc.testo : a; }, "");
+      function rifai() {
+        if (!v0 || chiuso || !v0.carta.isConnected) return;
+        ["larga", "piccola", "due", "mini", "senza"].forEach(function (c) { v0.carta.classList.remove(c); });
+        v0.carta.style.removeProperty("--fs"); v0.carta.style.removeProperty("--fsg");
+        adatta(v0, tante, notizia, lungo);
+      }
+      function chiudi(k) { if (chiuso) return; chiuso = true; clearTimeout(toFine); S._segnaMia = null; window.removeEventListener("resize", rifai); v0.chiudi(function () { fine(k); }); }
       ok.addEventListener("click", function () { if (scelto != null) chiudi(scelto); });
       var avviso = el("div", { class: "bc-avviso" + (o.avviso ? " on" : ""), text: o.avviso || "" });
       var v0 = apriVelo(S, el, [ testaSegreta(el, g), notizia, avviso,
         el("div", { class: "bc-et", text: "🔍 Qual è la risposta VERA?" }), lista, ok ], st.scelte.length > 5 ? "stretta" : "", o.ms);
-      adatta(v0, tante, notizia, st.scelte.reduce(function (a, sc) { return sc.testo.length > a.length ? sc.testo : a; }, ""));
+      adatta(v0, tante, notizia, lungo);
+      // (anche quando lo schermo cambia misura, es. la tastiera che si chiude appena si passa al voto)
+      try { document.fonts.ready.then(rifai); } catch (e) {}
+      window.addEventListener("resize", rifai); setTimeout(rifai, 400); setTimeout(rifai, 1200);
       S._chiudiVelo = function () { chiudi(null); };   // il tempo è finito: niente voto
       S._veloFase = "voto";
       if (o.ms) toFine = setTimeout(S._chiudiVelo, o.ms);
@@ -1084,6 +1097,22 @@
   }
   // 📏 (20 nov 2026) una schermata lunga (classifica in tanti, podio coi premi) si rimpicciolisce quel tanto che basta per stare
   // tutta sopra la barra dei tasti (prima in 6 sul telefono piccolo l'annuncio finiva sotto «⏩ Avanti»)
+  // 💯 (20 nov 2026) coi punti ×100 in 4-5 «1.500» non stava nei riquadri in alto («1.5…»): il numero si stringe quanto basta
+  function chipStretti(S) {
+    if (!S || !S.puntiEl || S._chipObs || !window.MutationObserver) return;
+    var fai = function () {
+      (S.L || []).forEach(function (X) {
+        var p = X.pt; if (!p || !p.isConnected) return;
+        // (si misura il testo vero, coi decimali: «1.500» sforava di meno di un pixel e compariva «1.5…»)
+        var rg = document.createRange(), largo = function () { rg.selectNodeContents(p); return rg.getBoundingClientRect().width > p.getBoundingClientRect().width - 0.5; };
+        p.style.fontSize = ""; p.style.letterSpacing = ""; if (!largo()) return;
+        var f = parseFloat(getComputedStyle(p).fontSize) || 15;
+        while (largo() && f > 9.5) { f -= 0.5; p.style.fontSize = f + "px"; if (f < 12) p.style.letterSpacing = "-.03em"; }   // (360 px in 4: «1.500» ci sta a 10 px un po' stretto)
+      });
+    };
+    S._chipObs = new MutationObserver(fai); S._chipObs.observe(S.puntiEl, { subtree: true, characterData: true, childList: true });
+    window.addEventListener("resize", fai); fai();
+  }
   function staSopraBarra(S, box, max) {
     max = max || 1.3;
     function fai() {
@@ -1091,6 +1120,7 @@
       for (var giro = 0; giro < 2; giro++) {
         var z = parseFloat(box.style.zoom) || 1, b = S.barraEl, v = S.vista || document.body;
         var lim = b && b.classList.contains("on") ? v.getBoundingClientRect().top + b.offsetTop : window.innerHeight;
+        var gu = document.querySelector(".sg-guardo"); if (gu && gu.offsetHeight) lim = Math.min(lim, gu.getBoundingClientRect().top - 4);
         var r = box.getBoundingClientRect(), giu = r.top;
         [].forEach.call(box.children, function (c) { var q = c.getBoundingClientRect(); if (q.height && q.bottom > giu) giu = q.bottom; });
         var alto = giu - r.top, spazio = lim - r.top - 10;
@@ -1110,7 +1140,7 @@
   var PREMI = [
     { k: "ingannati", icona: "🤥", nome: "Re delle balle", dice: function (n) { return n === 1 ? "1 amico ingannato" : n + " amici ingannati"; } },
     { k: "trovate", icona: "🔍", nome: "Detective", dice: function (n) { return n === 1 ? "1 verità scovata" : n + " verità scovate"; } },
-    { k: "cascato", icona: "🙈", nome: "Credulone", dice: function (n) { return n === 1 ? "ci è cascato 1 volta" : "ci è cascato " + n + " volte"; } },
+    { k: "cascato", icona: "🙈", nome: "Credulone", dice: function (n, tanti) { return (tanti ? "ci sono cascati " : "ci è cascato ") + (n === 1 ? "1 volta" : n + " volte"); } },
     { k: "risate", icona: "😂", nome: "Balla d'oro", dice: function (n) { return n === 1 ? "1 risata per le sue balle" : n + " risate per le sue balle"; } }
   ];
   // 🏆 (20 nov 2026, il proprietario) il podio coi premi, tutto in una schermata: i primi tre sui gradini, sotto i premi della serata
@@ -1123,7 +1153,7 @@
       if (!max) return;
       var chi = vivi.filter(function (x) { return x.tot && x.tot[pr.k] === max; }).slice(0, 3);
       premi.push(el("div", { class: "bc-premio-riga" }, [ el("span", { class: "ic", text: pr.icona }),
-        el("div", { class: "cosa" }, [ el("b", { text: pr.nome }), el("small", { text: chi.map(function (x) { return x.nome; }).join(", ") + " · " + pr.dice(max) }) ]),
+        el("div", { class: "cosa" }, [ el("b", { text: pr.nome }), el("small", { text: chi.map(function (x) { return x.nome; }).join(", ") + " · " + pr.dice(max, chi.length > 1) }) ]),
         el("div", { class: "chi" }, chi.slice(0, 2).map(function (x) { return fac(el, x, "esulta"); })) ]));
     });
     if (!S.vivo()) return;
@@ -1660,7 +1690,7 @@
     var ids = vm.players.map(function (p) { return p.id; }).join("|");
     if (!RB || RB.t !== t || (!RB.S.vivo() && (vm.fase !== "fine" || !RB.fineFatta))) {
       RB = { t: t, cb: cb, usciti: {}, mie: {}, ids: ids };
-      RB.S = ST.crea(t, vm.players, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(true); }, titolo: "La Balla Colossale", logo: ["LA BALLA", "COLOSSALE"] });
+      RB.S = ST.crea(t, vm.players, { io: idxDi(vm, cb.myId), esci: function () { cb.onEsci(true); }, titolo: "La Balla Colossale", logo: ["LA BALLA", "COLOSSALE"] }); chipStretti(RB.S);
       if (conTarga(t)) RB.S.vista.classList.add("st-con-targa");   // chi guarda soltanto: il posto della targhetta del core in basso
       vm.players.forEach(function (p, i) { ST.puntiLeggio(RB.S, i, P(p.punti), P(0)); });
     } else if (RB.ids !== ids && RB.S.vivo()) {   // è entrato chi aspettava il round dopo: rifaccio i leggii (i posti di prima restano gli stessi)
@@ -2250,7 +2280,7 @@
       ".bc-gradino.p3 .blocco{height:clamp(40px,calc(var(--alt,640px) * .085),74px);background:linear-gradient(180deg,#e39a5c,#8a5025)}",
       ".bc-premi-lista{display:flex;flex-direction:column;gap:7px;width:100%;max-width:440px}",
       ".bc-fine .bc-premio-riga{padding:7px 10px}.bc-fine .bc-premio-riga .ic{font-size:28px}.bc-fine .bc-premio-riga .chi{flex-direction:row}.bc-fine .bc-premio-riga .chi .fac{width:34px;height:34px;margin-left:-6px;box-shadow:0 0 0 2px #151a2e}",
-      ".bc-scelta{font-size:clamp(17px,calc(var(--alt,640px) * .029),22px)}",
+      ".bc-scelta{font-size:clamp(17px,calc(var(--alt,640px) * .029),22px)}.bc-carta.piccola .bc-scelte:not(.tante) .bc-scelta{font-size:var(--fs,16px)}",
       ".bc-carta.larga .bc-scelta{font-size:var(--fsg,22px);padding:calc(var(--fsg,22px) * .5) 14px;gap:12px}.bc-carta.larga .bc-scelta .n{width:calc(var(--fsg,22px) * 1.25);height:calc(var(--fsg,22px) * 1.25);font-size:calc(var(--fsg,22px) * .6)}.bc-carta.larga .bc-scelte{gap:calc(var(--fsg,22px) * .4)}",
       "@media (prefers-reduced-motion:reduce){.bc-autore-sch,.bc-gradino,.bc-ritaglio.stampata .bc-buco.pieno{animation:none}.bc-volapunti{transition:none}}"
     ].join("");

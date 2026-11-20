@@ -315,3 +315,97 @@
   } });
   function BALLA_O(x) { return x; }
 })();
+
+// ===================== bAG: altre foto vere (solo con D:/SG-balla-studio/foto4.js … bAG): chi sceglie, chi guarda, chi arriva tardi =====================
+// online, 3 round «Solo notizie» con «🎯 Sceglie chi è ultimo» (il 3° è la Balla Finale): giocano Paky (412×915), Luca (390×844) e Sara
+// (fuori dalla foto); Bea guarda col link (360×640); Gino arriva durante il 1° round e gioca dal 2° (360×640).
+(function () {
+  var W = window, A = COPIONE.aiuti, no = A.no;
+  function vm(C) { return W.vmDi(C) || {}; }
+  function velo(w) { return w && w.document.querySelector(".bc-velo.on:not(.via)"); }
+  function scrivi(w, testo) { var v = velo(w), ok = v && v.querySelector(".bc-ok"); if (!ok || !v.querySelector(".bc-penna")) return false; [].forEach.call(v.querySelectorAll(".bc-penna"), function (t, n) { t.value = n ? "una pentola di rame" : testo; t.dispatchEvent(new w.Event("input", { bubbles: true })); }); ok.click(); return true; }
+  function vota(w, pred) { var v = velo(w); if (!v) return false; var tutte = [].filter.call(v.querySelectorAll(".bc-scelta"), function (x) { return !x.disabled; }); var b = tutte.filter(function (x) { return pred(x.querySelector(".tx").textContent); })[0] || tutte[0]; if (!b) return false; b.click(); var ok = v.querySelector(".bc-ok"); if (!ok || ok.disabled) return false; ok.click(); return true; }
+  async function foto(nome, aspetta) { await W.dorme(aspetta == null ? 900 : aspetta); W.__fotoOra = nome; await W.aspetta(function () { return W.__fotoFatta === nome; }, 20000); }
+  var POSTI = [["Paky", 0, 412, 915], ["Luca", 422, 390, 844], ["Bea", 822, 360, 640], ["Gino", 1192, 360, 640], ["Sara", 3000, 360, 640]];
+  function sistema() {
+    POSTI.forEach(function (x) {
+      var f = document.getElementById("tel-" + x[0]); if (!f) return;
+      f.style.position = "fixed"; f.style.left = x[1] + "px"; f.style.top = "34px"; f.style.width = x[2] + "px"; f.style.height = x[3] + "px"; f.style.transform = "none"; f.style.zIndex = 50;
+      var w = W.finestra(x[0]); if (w && f.__l !== x[2]) { f.__l = x[2]; w.dispatchEvent(new w.Event("resize")); }
+    });
+  }
+  COPIONE.aggiungi("bAG", { nome: "Balla rifatta: foto di chi sceglie, chi guarda, chi arriva tardi e la Balla Finale", fai: async function () {
+    W.__etichette = [[8, "Paky (host) · 412×915"], [430, "Luca · 390×844"], [830, "Bea guarda · 360×640"], [1200, "Gino arriva tardi · 360×640"]];
+    var P = await W.apriTel("Paky", { x: 0, spiaBalla: true, prima: function (w) { w.__imp = { round: 3, amici: "no", ride: true, sceglie: true }; } });
+    var C = await W.apriStanza(P, "La Balla Colossale");
+    await W.apriTel("Luca", { hash: "gioco=balla&stanza=" + C, x: 185, spiaBalla: true });
+    await W.apriTel("Sara", { hash: "gioco=balla&stanza=" + C, x: 370, spiaBalla: true });
+    sistema(); var tieni = setInterval(sistema, 1500);
+    try {
+      if (!await W.aspetta(function () { return (vm(C).players || []).length === 3; }, 10000)) no("non sono in 3");
+      await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 8000);
+      await W.apriTel("Bea", { hash: "gioco=balla&stanza=" + C + "&guarda=1", x: 555, spiaBalla: true }); sistema();
+      var fatte = {}, fino = Date.now() + 600000, passo = -1, n = 0, gino = false;
+      var vera = function () { var v = vm(C), d = v.doppia ? (P.SG_BALLA_FINALE || []).filter(function (x) { return x.domanda === v.domanda; })[0] : (P.SG_BALLA || []).filter(function (x) { return x.domanda === v.domanda; })[0]; return d ? (v.doppia ? d.risposteVere.join(" / ") : d.rispostaVera) : ""; };
+      var BALLE = { Paky: "un pappagallo di Arezzo", Luca: "la nonna di Totò", Sara: "l'ex sindaco di Perugia", Gino: "un idraulico di Bari" };
+      var gioca = function () { return (vm(C).players || []).map(function (p) { return p.nome; }).filter(function (x) { return BALLE[x]; }); };
+      while (Date.now() < fino) {
+        var v = vm(C), f = v.fase, k = f + "|" + v.giro;
+        if (f === "categoria" && !fatte[k]) {
+          var c = v.cat || {}; if (!c.opz) { await W.dorme(150); continue; }
+          fatte[k] = 1; var nC = ((v.players || []).filter(function (p) { return p.id === c.chi; })[0] || {}).nome;
+          await foto((v.giro + 1) + "0-sceglie-" + nC, 1500);
+          var wc = W.finestra(nC); if (wc) { var cc = wc.document.querySelectorAll(".bc-cat-c"); if (cc[1]) cc[1].click(); }
+          await foto((v.giro + 1) + "0-scelto", 900);
+          continue;
+        }
+        if (f === "notizia" && !fatte[k]) { fatte[k] = 1; await foto((v.giro + 1) + "a-notizia", 1800); continue; }
+        if (f === "scrittura" && !fatte[k]) {
+          var chi = gioca();
+          if (!await W.aspetta(function () { return chi.every(function (x) { return velo(W.finestra(x)); }); }, 8000)) continue;
+          fatte[k] = 1;
+          if (!gino && v.giro === 0) {
+            gino = true; await W.apriTel("Gino", { hash: "gioco=balla&stanza=" + C, x: 740, spiaBalla: true }); sistema();
+            await W.dorme(4000); await foto("1b-gino-arriva-mentre-si-scrive", 600);
+          }
+          scrivi(P, BALLE.Paky); scrivi(W.finestra("Luca"), BALLE.Luca);
+          await foto((v.giro + 1) + "c-scrittura-aspetta", 1200);
+          chi.forEach(function (x) { if (x !== "Paky" && x !== "Luca") scrivi(W.finestra(x), BALLE[x]); });
+          continue;
+        }
+        if (f === "voto" && !fatte[k]) {
+          var chi2 = gioca();
+          if (!await W.aspetta(function () { return chi2.every(function (x) { return velo(W.finestra(x)); }); }, 8000)) continue;
+          fatte[k] = 1;
+          await foto((v.giro + 1) + "d-voto", 900);
+          var ve = vera();
+          vota(P, function (t) { return t.indexOf(BALLE.Luca) === 0; }); vota(W.finestra("Luca"), function (t) { return t.indexOf(BALLE.Sara) === 0; });
+          await foto((v.giro + 1) + "d-voto-due-hanno-votato", 900);
+          vota(W.finestra("Sara"), function (t) { return t === ve; });
+          if (chi2.indexOf("Gino") >= 0) vota(W.finestra("Gino"), function (t) { return t.indexOf(BALLE.Paky) === 0; });
+          continue;
+        }
+        if (f === "rivela") {
+          var d = P.document;
+          if (d.querySelector(".bc-ign-sch") && !fatte[k + "i"]) { fatte[k + "i"] = 1; await foto((v.giro + 1) + "e-nessuno-ci-e-cascato", 1500); continue; }
+          var tb = d.querySelector(".riv2 .bc-timbro.on");
+          if (tb && v.passo !== passo) { passo = v.passo; await foto((v.giro + 1) + "f-rivela-" + (n++) + (d.querySelector(".riv2 .bc-big.vera") ? "-verita" : "-balla"), 1700); continue; }
+        }
+        if (f === "oro" && !fatte[k]) { fatte[k] = 1; await foto((v.giro + 1) + "g-balla-d-oro", 2200); continue; }
+        if (f === "punti" && !fatte[k]) {
+          if (!await W.aspetta(function () { return P.document.querySelector(".bc-clas2") && P.document.querySelector(".bc-avanti"); }, 12000)) continue;
+          fatte[k] = 1; await foto((v.giro + 1) + "h-classifica", 1500);
+          gioca().forEach(function (x) { W.clicca(W.finestra(x), /Avanti/, ".bc-avanti"); });
+          continue;
+        }
+        if (f === "fine") {
+          if (await W.aspetta(function () { return P.document.querySelector(".bc-podio"); }, 40000)) await foto("9-podio", 1800);
+          await W.dorme(6000); await foto("9z-dopo-il-podio", 300);
+          break;
+        }
+        await W.dorme(150);
+      }
+    } finally { clearInterval(tieni); }
+    return "foto fatte";
+  } });
+})();
