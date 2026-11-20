@@ -1111,7 +1111,7 @@
     if (o.finale) box.appendChild(el("div", { class: "bc-annuncio" }, [ el("b", { text: "🔥 Adesso la Balla Finale" }), el("small", { text: "due pezzi mancanti, punti tripli: può cambiare tutto!" }) ]));
     else if (o.doppio) box.appendChild(el("div", { class: "bc-annuncio" }, [ el("b", { text: "🔥 Ultimo round" }), el("small", { text: "punti doppi: può cambiare tutto!" }) ]));
     S.sch.appendChild(box);
-    staSopraBarra(S, box, 1, "giu");
+    staSopraBarra(S, box, 1, "su");
     return box;
   }
   // 📏 (20 nov 2026) una schermata lunga (classifica in tanti, podio coi premi) si rimpicciolisce quel tanto che basta per stare
@@ -1147,9 +1147,12 @@
   // si stringe solo se serve per stare sopra la barra in basso (e sopra la targhetta «👀 Guardi» di chi guarda); lo spazio che
   // avanza si usa per SPOSTARE il contenuto: dove = "giu" (attaccato alla barra: la classifica subito sopra «Avanti»),
   // "centro" (nel mezzo tra i punteggi e la barra), niente = resta in alto. segui = si rifà quando cambia il contenuto.
+  // dove = "su" (20 nov 2026, il proprietario: «in alto, subito sotto i punteggi, Avanti subito sotto, lo spazio vuoto in fondo»):
+  // il contenuto resta in alto e la barra con «Avanti» sale fin subito sotto (torna giù appena la schermata cambia)
   function staSopraBarra(S, box, max, dove, segui) {
     max = max || 1;
-    var pad0 = null;
+    var pad0 = null, barra = S.barraEl;
+    function libera() { if (barra && barra.style.top) { barra.style.top = ""; barra.style.bottom = ""; } }
     function limite() {
       var b = S.barraEl, v = S.vista || document.body;
       var lim = b && b.classList.contains("on") ? v.getBoundingClientRect().top + b.offsetTop : window.innerHeight;
@@ -1162,7 +1165,8 @@
       return su === Infinity ? null : { su: su, giu: giu };
     }
     function fai() {
-      if (!box.isConnected) { window.removeEventListener("resize", fai); if (oss) oss.disconnect(); return; }
+      if (!box.isConnected) { window.removeEventListener("resize", fai); if (oss) oss.disconnect(); if (ossB) ossB.disconnect(); if (dove === "su") libera(); return; }
+      if (dove === "su") libera();
       if (pad0 == null) { pad0 = parseFloat(getComputedStyle(box).paddingTop) || 0; if (dove) box.style.justifyContent = "flex-start"; }
       if (dove) box.style.paddingTop = pad0 + "px";
       for (var giro = 0; giro < 2; giro++) {
@@ -1177,6 +1181,12 @@
       }
       if (!dove) return;
       var m2 = misura(); if (!m2) return;
+      if (dove === "su") {
+        if (!barra || !barra.classList.contains("on") || !S.vista) return;
+        var vr = S.vista.getBoundingClientRect(), su = Math.round(m2.giu + 8 - vr.top);
+        if (su + barra.offsetHeight <= vr.height - 2 && su < barra.offsetTop - 4) { barra.style.top = su + "px"; barra.style.bottom = "auto"; }
+        return;
+      }
       var libero = limite() - 12 - m2.giu, zz = parseFloat(box.style.zoom) || 1;
       if (libero > 2) box.style.paddingTop = (pad0 + (dove === "centro" ? libero / 2 : libero) / zz) + "px";
     }
@@ -1184,6 +1194,13 @@
     if (segui && window.MutationObserver) {
       oss = new MutationObserver(function () { if (inCoda) return; inCoda = true; requestAnimationFrame(function () { inCoda = false; fai(); }); });
       oss.observe(box, { childList: true, subtree: true });
+    }
+    // la barra che compare o se ne va: si rifà subito (andandosene torna giù prima di scivolare via)
+    var ossB = null;
+    if (dove === "su" && barra && window.MutationObserver) {
+      ossB = new MutationObserver(function () { if (!barra.classList.contains("on") || !box.isConnected) libera(); else fai(); });
+      ossB.observe(barra, { attributes: true, attributeFilter: ["class"] });
+      if (box.parentNode) { var ossP = new MutationObserver(function () { if (!box.isConnected) { libera(); ossP.disconnect(); if (ossB) ossB.disconnect(); } }); ossP.observe(box.parentNode, { childList: true }); }
     }
     fai(); requestAnimationFrame(fai); setTimeout(fai, 350); setTimeout(fai, 1000); setTimeout(fai, 2200);
     window.addEventListener("resize", fai);
@@ -1226,7 +1243,7 @@
       el("div", { class: "bc-giro", text: "La Balla Colossale · fine" }),
       el("h2", { class: "bc-vince", text: primi.length === 1 ? "🏆 Vince " + primi[0].nome + "!" : primi.length > 1 ? "🏆 Pareggio!" : "🏆 Fine partita" }),
       gradini, premi.length ? el("div", { class: "bc-giro piccolo", text: "🏅 I premi della serata" }) : null, el("div", { class: "bc-premi-lista" }, premi) ]);
-    S.sch.appendChild(box); staSopraBarra(S, box, 1, "centro");
+    S.sch.appendChild(box); staSopraBarra(S, box, 1, "su");
     ST.pubblico(S, "ovazione"); ST.coriandoli(); if (ST.FX && ST.FX.fanfara) ST.FX.fanfara();
     try { if (navigator.vibrate) navigator.vibrate([30, 40, 70]); } catch (e) {}
     if (online) await ST.dorme(6500); else await ST.aspettaTasto(S, "Avanti ▶");
@@ -2163,7 +2180,7 @@
       ".bc-pezzo{display:flex;align-items:flex-start;gap:8px;margin-top:4px}.bc-pezzo .nn{flex:0 0 auto;width:26px;height:26px;margin-top:4px;border-radius:50%;background:#c92a2a;color:#fff;display:flex;align-items:center;justify-content:center;font:900 14px " + TESTO + "}.bc-pezzo .cc{flex:1;min-width:0}",
       ".bc-scrivi.doppia .bc-penna{font-size:20px}.bc-scrivi.doppia .bc-conta{margin-top:1px}",
       ".bc-penna:focus{border-bottom-color:#c92a2a}",
-      ".bc-conta{text-align:right;font-size:12px;font-weight:800;color:#8a8fb0;margin-top:3px}.bc-conta.on{color:#8a5a00}.bc-conta.poche{color:#c4213f}",
+      ".bc-conta{text-align:right;font-size:14px;font-weight:800;color:#62668a;margin-top:4px}.bc-conta.on{color:#8a5a00}.bc-conta.poche{color:#c4213f}",
       ".bc-avviso{display:none;background:var(--o-ambra);color:#2a1a00;border-radius:12px;padding:9px 12px;font-weight:800;font-size:15px;line-height:1.35}",
       ".bc-avviso.on{display:block;animation:bcScuoti .4s}",
       "@keyframes bcScuoti{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}",
@@ -2175,7 +2192,7 @@
       ".bc-carta.tastiera{flex:1;min-height:0;width:100%;max-width:520px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto auto;grid-template-areas:'t t' 'n n' 's k' 'a a';gap:6px;animation:none}",
       ".bc-carta.tastiera>.bc-tempo-riga{grid-area:t}.bc-carta.tastiera>.bc-ritaglio{grid-area:n;min-height:0;overflow:hidden;max-width:none;display:flex;flex-direction:column;justify-content:center;padding:8px 12px}.bc-carta.tastiera>.bc-scrivi{grid-area:s;min-width:0}.bc-carta.tastiera>.bc-ok{grid-area:k;width:auto;align-self:stretch;position:static;padding:0 14px;box-shadow:none}.bc-carta.tastiera>.bc-avviso{grid-area:a;padding:6px 10px;font-size:14px}",
       ".bc-carta.tastiera>.bc-chi,.bc-carta.tastiera .bc-testata,.bc-carta.tastiera .bc-griga,.bc-carta.tastiera .bc-occhio,.bc-carta.tastiera .bc-colonne,.bc-carta.tastiera .bc-et{display:none}",
-      ".bc-carta.tastiera .bc-notizia{line-height:1.14}.bc-carta.tastiera .bc-scrivi{padding:6px 10px 4px;border-radius:12px}.bc-carta.tastiera .bc-penna{font-size:18px;line-height:1.25}.bc-carta.tastiera .bc-conta{font-size:11px;margin-top:1px}.bc-carta.tastiera .bc-scrivi.doppia .bc-penna{font-size:17px}",
+      ".bc-carta.tastiera .bc-notizia{line-height:1.14}.bc-carta.tastiera .bc-scrivi{padding:6px 10px 4px;border-radius:12px}.bc-carta.tastiera .bc-penna{font-size:18px;line-height:1.25}.bc-carta.tastiera .bc-conta{font-size:13px;margin-top:1px}.bc-carta.tastiera .bc-scrivi.doppia .bc-penna{font-size:17px}",
       // le scelte da votare
       ".bc-scelte{display:flex;flex-direction:column;gap:8px}",
       ".bc-scelta .n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#1b1610;color:#f5efe0;font-family:" + TESTO + ";font-weight:800;font-size:13px}",
